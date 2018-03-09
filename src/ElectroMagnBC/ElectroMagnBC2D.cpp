@@ -10,11 +10,23 @@
 ElectroMagnBC2D::ElectroMagnBC2D( Params &params, Patch* patch, unsigned int _min_max )
   : ElectroMagnBC( params, patch, _min_max )
 {
+    unsigned int global_factor(1);
+    for ( unsigned int iDim = 0 ; iDim < params.nDim_field ; iDim++ )
+        global_factor *= params.global_factor[iDim];
+
     // number of nodes of the primal and dual grid in the x-direction
-    nx_p = params.n_space[0]*params.global_factor[0]+1+2*params.oversize[0];
+    //nx_p = params.n_space[0]*params.global_factor[0]+1+2*params.oversize[0];
+    if (global_factor==1)
+        nx_p = params.n_space[0]+1+2*params.oversize[0];
+    else
+        nx_p = params.n_space_domain[0]+1+2*params.oversize[0];
     nx_d = nx_p+1;
     // number of nodes of the primal and dual grid in the y-direction
-    ny_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
+    //ny_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
+    if (global_factor==1)
+        ny_p = params.n_space[1]+1+2*params.oversize[1];
+    else
+        ny_p = params.n_space_domain[1]+1+2*params.oversize[1];
     ny_d = ny_p+1;
     
     // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the x-direction)

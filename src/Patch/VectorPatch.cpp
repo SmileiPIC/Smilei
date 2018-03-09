@@ -281,7 +281,7 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
     SyncVectorPatch::exchangeB( params, (*this) );
     timers.syncField.update(  params.printNow( itime ) );
 
-    #ifdef _PICSAR
+    //#ifdef _PICSAR
     //if ( (params.is_spectral) && (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
     if (                           (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
         timers.syncField.restart();
@@ -304,7 +304,7 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
         if (params.is_spectral)
             save_old_rho( params );
     }
-    #endif
+    //#endif
 
 
 } // END solveMaxwell
@@ -313,21 +313,21 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
 void VectorPatch::finalize_sync_and_bc_fields(Params& params, SmileiMPI* smpi, SimWindow* simWindow,
                            double time_dual, Timers &timers, int itime)
 {
-    #ifndef _PICSAR
-    if ( (!params.is_spectral) && (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
-        timers.syncField.restart();
-        SyncVectorPatch::finalizeexchangeB( params, (*this) );
-        timers.syncField.update(  params.printNow( itime ) );
-
-        #pragma omp for schedule(static)
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
-            // Applies boundary conditions on B
-            (*this)(ipatch)->EMfields->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
-            // Computes B at time n using B and B_m.
-            (*this)(ipatch)->EMfields->centerMagneticFields();
-        }
-    }
-    #endif
+    //#ifndef _PICSAR
+    //if ( (!params.is_spectral) && (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
+    //    timers.syncField.restart();
+    //    SyncVectorPatch::finalizeexchangeB( params, (*this) );
+    //    timers.syncField.update(  params.printNow( itime ) );
+    //
+    //    #pragma omp for schedule(static)
+    //    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+    //        // Applies boundary conditions on B
+    //        (*this)(ipatch)->EMfields->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
+    //        // Computes B at time n using B and B_m.
+    //        (*this)(ipatch)->EMfields->centerMagneticFields();
+    //    }
+    //}
+    //#endif
 
 } // END finalize_sync_and_bc_fields
 

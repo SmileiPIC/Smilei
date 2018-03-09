@@ -25,12 +25,18 @@ Domain::Domain( Params &params ) :
 
 void Domain::build( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, OpenPMDparams& openPMD )
 {
+    int rk(0);
+    MPI_Comm_rank( MPI_COMM_WORLD, &rk );
+    vecPatch_.refHindex_ = rk;
+
+
     decomposition_ = DomainDecompositionFactory::createGlobal( params );
-    patch_ = PatchesFactory::create( params, smpi, decomposition_, vecPatches.refHindex_ / vecPatches.size() );
+    //patch_ = PatchesFactory::create( params, smpi, decomposition_, vecPatches.refHindex_ / vecPatches.size() );
+    patch_ = PatchesFactory::create( params, smpi, decomposition_, rk );
     patch_->set( params, decomposition_, vecPatches );
     vecPatch_.patches_.push_back( patch_ );
 
-    vecPatch_.refHindex_ = vecPatches.refHindex_ / vecPatches.size();
+    //vecPatch_.refHindex_ = vecPatches.refHindex_ / vecPatches.size();
     vecPatch_.update_field_list();
 
     //vecPatch_.update_field_list(0);

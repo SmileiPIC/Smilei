@@ -27,18 +27,20 @@ cell_length    ( params.cell_length),
 n_species      ( vecSpecies.size() ),
 nDim_field     ( params.nDim_field ),
 cell_volume    ( params.cell_volume),
-n_space        ( params.n_space    ),
 oversize       ( params.oversize   ),
 isXmin(patch->isXmin()),
 isXmax(patch->isXmax()),
 nrj_mw_lost    (  0.               ),
 nrj_new_fields (  0.               )
 {
+    n_space.resize( params.n_space.size() );
     if ( !dynamic_cast<GlobalDomainDecomposition*>( domain_decomposition ) )
         n_space = params.n_space;
     else {
-        for ( unsigned int i = 0 ; i < nDim_field ; i++ ) 
-            n_space[i] = params.n_space[i] * params.global_factor[i];
+        for ( unsigned int i = 0 ; i < nDim_field ; i++ ) {
+            //n_space[i] = params.n_space[i] * params.global_factor[i];
+            n_space[i] = params.n_space_domain[i];
+        }
     }
     
     // take useful things from params

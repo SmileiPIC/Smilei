@@ -607,6 +607,26 @@ void Params::compute()
         patch_dimensions[i] = n_space[i] * cell_length[i];
         n_cell_per_patch *= n_space[i];
     }
+
+
+    n_space_domain.resize(0);
+
+    unsigned int factor(1);
+    for ( unsigned int iDim = 0 ; iDim < nDim_field ; iDim++ )
+        factor *= global_factor[iDim];
+
+    if (factor!=1) {
+        n_space_domain.resize(3,1);
+        int rk(0);
+        MPI_Comm_rank( MPI_COMM_WORLD, &rk );
+        int sz(1);
+        MPI_Comm_size( MPI_COMM_WORLD, &sz );
+        n_space_domain[0] = 4 * n_space[0];
+        if ( (rk==0) || (rk==3) )
+            n_space_domain[1] = 2 * n_space[1];
+        else
+            n_space_domain[1] = 6 * n_space[1];
+    }
     
     // Set clrw if not set by the user
     if ( clrw == -1 ) {

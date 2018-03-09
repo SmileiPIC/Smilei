@@ -220,7 +220,7 @@ int main (int argc, char* argv[])
 
     Domain domain( params ); 
     unsigned int global_factor(1);
-    #ifdef _PICSAR
+    //#ifdef _PICSAR
     for ( unsigned int iDim = 0 ; iDim < params.nDim_field ; iDim++ )
         global_factor *= params.global_factor[iDim];
     // Force temporary usage of double grids, even if global_factor = 1
@@ -228,7 +228,7 @@ int main (int argc, char* argv[])
     //if (global_factor!=1) {
         domain.build( params, &smpi, vecPatches, openPMD );
     //}
-    #endif
+    //#endif
 
     timers.global.reboot();
     
@@ -288,16 +288,16 @@ int main (int argc, char* argv[])
             vecPatches.applyAntennas(time_dual);
             
             // solve Maxwell's equations
-            #ifndef _PICSAR
-            // Force temporary usage of double grids, even if global_factor = 1
-            //    especially to compare solvers           
-            //if ( global_factor==1 )
-            {
-                if( time_dual > params.time_fields_frozen ) {
-                    vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers );
-                }
-            }
-            #else
+            //#ifndef _PICSAR
+            //// Force temporary usage of double grids, even if global_factor = 1
+            ////    especially to compare solvers           
+            ////if ( global_factor==1 )
+            //{
+            //    if( time_dual > params.time_fields_frozen ) {
+            //        vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers );
+            //    }
+            //}
+            //#else
             // Force temporary usage of double grids, even if global_factor = 1
             //    especially to compare solvers           
             //if ( global_factor!=1 )
@@ -308,7 +308,7 @@ int main (int argc, char* argv[])
                     SyncCartesianPatch::cartesianToPatches( domain, vecPatches, params, &smpi, timers, itime );
                 }
             }
-            #endif
+            //#endif
 
             vecPatches.finalize_and_sort_parts(params, &smpi, simWindow, RadiationTables,
                                                MultiphotonBreitWheelerTables,

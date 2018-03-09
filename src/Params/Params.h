@@ -161,8 +161,11 @@ public:
     //! max value for dt (due to usual FDTD CFL condition: should be moved to ElectroMagn solver (MG))
     double dtCFL;
 
-    //! number of cells in every direction of the local domain
+    //! number of cells in every direction of a patch
     std::vector<unsigned int> n_space;
+
+    //! number of cells in every direction of the local domain (can be different from 1 MPI process to another)
+    std::vector<unsigned int> n_space_domain;
 
     //! number of cells in every direction of the global domain
     std::vector<unsigned int> n_space_global;
