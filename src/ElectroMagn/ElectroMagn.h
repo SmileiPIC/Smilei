@@ -207,6 +207,7 @@ public:
     virtual void initE(Patch *patch) = 0;
     virtual void initE_relativistic_Poisson(Patch *patch, double gamma_mean) = 0;
     virtual void initB_relativistic_Poisson(Patch *patch, double gamma_mean) = 0;
+    virtual void center_fields_from_relativistic_Poisson(Patch *patch) = 0; // centers in Yee cells the fields
     virtual void centeringE( std::vector<double> E_Add ) = 0;
     
     virtual double getEx_Xmin() = 0; // 2D !!!

@@ -873,10 +873,10 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi )
     }
 
     // ------------------------------------------
-    // Compute the electromagnetic fields E and B
+    // Compute the electromagnetic fields E and B 
     // ------------------------------------------
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-        {
+        { // begin loop on patches
         (*this)(ipatch)->EMfields->initE_relativistic_Poisson( (*this)(ipatch), gamma_mean );
         (*this)(ipatch)->EMfields->initB_relativistic_Poisson( (*this)(ipatch), gamma_mean );
         } // end loop on patches
@@ -887,139 +887,31 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi )
     SyncVectorPatch::exchangeB( params, *this );
     SyncVectorPatch::finalizeexchangeB( params, *this );
 
-    // Centering of the electromagnetic fields
+    // Proper spatial centering of the electromagnetic fields in the Yee Cell through interpolation
     // -------------------------------------
-    vector<double> E_Add(Ex_[0]->dims_.size(),0.);
-    if ( Ex_[0]->dims_.size()==3 ) {
-        double Ex_avg_local(0.), Ex_avg(0.), Ey_avg_local(0.), Ey_avg(0.), Ez_avg_local(0.), Ez_avg(0.);
-        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-            Ex_avg_local += (*this)(ipatch)->EMfields->computeExSum();
-            Ey_avg_local += (*this)(ipatch)->EMfields->computeEySum();
-            Ez_avg_local += (*this)(ipatch)->EMfields->computeEzSum();
-        }
-
-        MPI_Allreduce(&Ex_avg_local, &Ex_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-        MPI_Allreduce(&Ey_avg_local, &Ey_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-        MPI_Allreduce(&Ez_avg_local, &Ez_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-
-        E_Add[0] = -Ex_avg/((params.n_space[0]+2)*(params.n_space[1]+1)*(params.n_space[2]+1));
-        E_Add[1] = -Ey_avg/((params.n_space[0]+1)*(params.n_space[1]+2)*(params.n_space[2]+1));;
-        E_Add[2] = -Ez_avg/((params.n_space[0]+1)*(params.n_space[1]+1)*(params.n_space[2]+2));;
-    }
-    else if ( Ex_[0]->dims_.size()==2 ) {
-        double Ex_XminYmax = 0.0;
-        double Ey_XminYmax = 0.0;
-        double Ex_XmaxYmin = 0.0;
-        double Ey_XmaxYmin = 0.0;
-
-        //The YmaxXmin patch has Patch coordinates X=0, Y=2^m1-1= number_of_patches[1]-1.
-        std::vector<int> xcall( 2, 0 );
-        xcall[0] = 0;
-        xcall[1] = params.number_of_patches[1]-1;
-        int patch_YmaxXmin = domain_decomposition_->getDomainId( xcall );
-        //The MPI rank owning it is
-        int rank_XminYmax = smpi->hrank(patch_YmaxXmin);
-        //The YminXmax patch has Patch coordinates X=2^m0-1= number_of_patches[0]-1, Y=0.
-        //Its hindex is
-        xcall[0] = params.number_of_patches[0]-1;
-        xcall[1] = 0;
-        int patch_YminXmax = domain_decomposition_->getDomainId( xcall );
-        //The MPI rank owning it is
-        int rank_XmaxYmin = smpi->hrank(patch_YminXmax);
-
-
-        //cout << patch_YmaxXmin << " " << rank_XminYmax << " " << patch_YminXmax << " " << rank_XmaxYmin << endl;
-
-        if ( smpi->getRank() == rank_XminYmax ) {
-            Ex_XminYmax = (*this)(patch_YmaxXmin-((*this).refHindex_))->EMfields->getEx_XminYmax();
-            Ey_XminYmax = (*this)(patch_YmaxXmin-((*this).refHindex_))->EMfields->getEy_XminYmax();
-        }
-
-        // Xmax-Ymin corner
-        if ( smpi->getRank() == rank_XmaxYmin ) {
-            Ex_XmaxYmin = (*this)(patch_YminXmax-((*this).refHindex_))->EMfields->getEx_XmaxYmin();
-            Ey_XmaxYmin = (*this)(patch_YminXmax-((*this).refHindex_))->EMfields->getEy_XmaxYmin();
-        }
-
-        MPI_Bcast(&Ex_XminYmax, 1, MPI_DOUBLE, rank_XminYmax, MPI_COMM_WORLD);
-        MPI_Bcast(&Ey_XminYmax, 1, MPI_DOUBLE, rank_XminYmax, MPI_COMM_WORLD);
-
-        MPI_Bcast(&Ex_XmaxYmin, 1, MPI_DOUBLE, rank_XmaxYmin, MPI_COMM_WORLD);
-        MPI_Bcast(&Ey_XmaxYmin, 1, MPI_DOUBLE, rank_XmaxYmin, MPI_COMM_WORLD);
-
-        //This correction is always done, independantly of the periodicity. Is this correct ?
-        E_Add[0] = -0.5*(Ex_XminYmax+Ex_XmaxYmin);
-        E_Add[1] = -0.5*(Ey_XminYmax+Ey_XmaxYmin);
-
-#ifdef _3D_LIKE_CENTERING
-        double Ex_avg_local(0.), Ex_avg(0.), Ey_avg_local(0.), Ey_avg(0.);
-        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-            Ex_avg_local += (*this)(ipatch)->EMfields->computeExSum();
-            Ey_avg_local += (*this)(ipatch)->EMfields->computeEySum();
-        }
-
-        MPI_Allreduce(&Ex_avg_local, &Ex_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-        MPI_Allreduce(&Ey_avg_local, &Ey_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-
-        E_Add[0] = -Ex_avg/((params.n_space[0]+2)*(params.n_space[1]+1));
-        E_Add[1] = -Ey_avg/((params.n_space[0]+1)*(params.n_space[1]+2));;
-#endif
-
-    }
-    else if( Ex_[0]->dims_.size()==1 ) {
-        double Ex_Xmin = 0.0;
-        double Ex_Xmax = 0.0;
-
-        unsigned int rankXmin = 0;
-        if ( smpi->getRank() == 0 ) {
-            //Ex_Xmin = (*Ex1D)(index_bc_min[0]);
-            Ex_Xmin = (*this)( (0)-((*this).refHindex_))->EMfields->getEx_Xmin();
-        }
-        MPI_Bcast(&Ex_Xmin, 1, MPI_DOUBLE, rankXmin, MPI_COMM_WORLD);
-
-        unsigned int rankXmax = smpi->getSize()-1;
-        if ( smpi->getRank() == smpi->getSize()-1 ) {
-            //Ex_Xmax = (*Ex1D)(index_bc_max[0]);
-            Ex_Xmax = (*this)( (params.number_of_patches[0]-1)-((*this).refHindex_))->EMfields->getEx_Xmax();
-        }
-        MPI_Bcast(&Ex_Xmax, 1, MPI_DOUBLE, rankXmax, MPI_COMM_WORLD);
-        E_Add[0] = -0.5*(Ex_Xmin+Ex_Xmax);
-
-#ifdef _3D_LIKE_CENTERING
-        double Ex_avg_local(0.), Ex_avg(0.);
-        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-            Ex_avg_local += (*this)(ipatch)->EMfields->computeExSum();
-        }
-
-        MPI_Allreduce(&Ex_avg_local, &Ex_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-
-        E_Add[0] = -Ex_avg/((params.n_space[0]+2));
-#endif
-
+    if (!params.is_spectral){
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+            { // begin loop on patches
+            //(*this)(ipatch)->EMfields->center_fields_from_relativistic_Poisson( (*this)(ipatch));
+            } // end loop on patches
+    
+        // re-exchange the properly spatially centered fields
+        SyncVectorPatch::exchangeE( params, *this );
+        SyncVectorPatch::finalizeexchangeE( params, *this );
+        SyncVectorPatch::exchangeB( params, *this );
+        SyncVectorPatch::finalizeexchangeB( params, *this );
     }
 
-    // Centering electrostatic fields
-    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-        (*this)(ipatch)->EMfields->centeringE( E_Add );
-
-
-    // Compute error on the Poisson equation
-    double deltaPoisson_max = 0.0;
-    int i_deltaPoisson_max  = -1;
-
-#ifdef _A_FINALISER
-    for (unsigned int i=0; i<nx_p; i++) {
-        double deltaPoisson = abs( ((*Ex1D)(i+1)-(*Ex1D)(i))/dx - (*rho1D)(i) );
-        if (deltaPoisson > deltaPoisson_max) {
-            deltaPoisson_max   = deltaPoisson;
-            i_deltaPoisson_max = i;
-        }
-    }
-#endif
+    // Saving magnetic fields (to compute centered fields used in the particle pusher)
+    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){ //start loop on patches
+        if (!params.is_spectral){      
+            // Stores B at time n in B_m.
+            (*this)(ipatch)->EMfields->saveMagneticFields(params.is_spectral);}
+                                                                  } // end loop on patches
 
     //!\todo Reduce to find global max
     if (smpi->isMaster())
-        MESSAGE(1,"Relativistic Poisson equation solved. Maximum err = " << deltaPoisson_max << " at i= " << i_deltaPoisson_max);
+        MESSAGE(1,"Relativistic Poisson equation solved. Maximum err = ");
 
     ptimer.update();
     MESSAGE("Time in Relativistic Poisson : " << ptimer.getTime() );

@@ -29,6 +29,7 @@ public:
     void initE(Patch *patch);
     void initE_relativistic_Poisson(Patch *patch, double gamma_mean);
     void initB_relativistic_Poisson(Patch *patch, double gamma_mean);
+    void center_fields_from_relativistic_Poisson(Patch *patch);
     void centeringE( std::vector<double> E_Add );
 
     double getEx_Xmin() { return 0.; }
