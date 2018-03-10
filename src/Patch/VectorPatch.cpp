@@ -875,15 +875,22 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi )
     // ------------------------------------------
     // Compute the electromagnetic fields E and B 
     // ------------------------------------------
+    
+    // E
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
         { // begin loop on patches
         (*this)(ipatch)->EMfields->initE_relativistic_Poisson( (*this)(ipatch), gamma_mean );
-        (*this)(ipatch)->EMfields->initB_relativistic_Poisson( (*this)(ipatch), gamma_mean );
         } // end loop on patches
         
-
     SyncVectorPatch::exchangeE( params, *this );
     SyncVectorPatch::finalizeexchangeE( params, *this );
+
+    // B
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+        { // begin loop on patches
+        (*this)(ipatch)->EMfields->initB_relativistic_Poisson( (*this)(ipatch), gamma_mean );
+        } // end loop on patches
+
     SyncVectorPatch::exchangeB( params, *this );
     SyncVectorPatch::finalizeexchangeB( params, *this );
 
@@ -892,7 +899,7 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi )
     if (!params.is_spectral){
         for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
             { // begin loop on patches
-            //(*this)(ipatch)->EMfields->center_fields_from_relativistic_Poisson( (*this)(ipatch));
+            (*this)(ipatch)->EMfields->center_fields_from_relativistic_Poisson( (*this)(ipatch));
             } // end loop on patches
     
         // re-exchange the properly spatially centered fields

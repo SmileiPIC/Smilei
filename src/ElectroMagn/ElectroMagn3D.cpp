@@ -599,26 +599,26 @@ void ElectroMagn3D::initE_relativistic_Poisson(Patch *patch, double gamma_mean)
 
     // Ex
     DEBUG("Computing Ex from scalar potential, relativistic Poisson problem");
-    for (unsigned int i=1; i<nx_d-2; i++) {
-        for (unsigned int j=0; j<ny_p; j++) {
-            for (unsigned int k=0; k<nz_p; k++) {
+    for (unsigned int i=1; i<Ex_->dims_[0]-1; i++) {
+        for (unsigned int j=0; j<Ex_->dims_[1]-1; j++) {
+            for (unsigned int k=0; k<Ex_->dims_[2]-1; k++) {
                 (*Ex3D)(i,j,k) = ((*phi_)(i-1,j,k)-(*phi_)(i+1,j,k))/2./dx/gamma_mean/gamma_mean;
             }
         }
     }
     // Ey
     DEBUG("Computing Ey from scalar potential, relativistic Poisson problem");
-    for (unsigned int i=0; i<nx_p; i++) {
-        for (unsigned int j=1; j<ny_p-2; j++) {
-            for (unsigned int k=0; k<nz_p; k++) {
+    for (unsigned int i=0; i<Ey_->dims_[0]-1; i++) {
+        for (unsigned int j=1; j<Ey_->dims_[1]-1; j++) {
+            for (unsigned int k=0; k<Ey_->dims_[2]-1; k++) {
                 (*Ey3D)(i,j,k) = ((*phi_)(i,j-1,k)-(*phi_)(i,j+1,k))/2./dy;
             }
         }
     }
     DEBUG("Computing Ez from scalar potential, relativistic Poisson problem");
-    for (unsigned int i=0; i<nx_p; i++) {
-        for (unsigned int j=0; j<ny_p; j++) {
-            for (unsigned int k=1; k<nz_d-1; k++) {
+    for (unsigned int i=0; i<Ez_->dims_[0]-1; i++) {
+        for (unsigned int j=0; j<Ez_->dims_[1]-1; j++) {
+            for (unsigned int k=1; k<Ez_->dims_[2]-1; k++) {
                 (*Ez3D)(i,j,k) = ((*phi_)(i,j,k-1)-(*phi_)(i,j,k+1))/2./dz;
             }
         }
@@ -669,6 +669,8 @@ void ElectroMagn3D::initB_relativistic_Poisson(Patch *patch, double gamma_mean)
     // ------------------------------------------
     // Compute the fields Ex and Ey
     // ------------------------------------------
+    // Bx is identically zero
+
     // By
     DEBUG("Computing By from scalar potential, relativistic Poisson problem");
     for (unsigned int i=0; i<nx_p; i++) {
@@ -1043,54 +1045,54 @@ void ElectroMagn3D::center_fields_from_relativistic_Poisson(Patch *patch){
     // For all the fields, the proper centering (which is given to their "new" version) is reported
   
     // ----- Ex centering : (d,p,p)
-    for (unsigned int i=0 ; i <Ex_->dims_[0]-2; i++){ // x loop
-        for (unsigned int j=0 ; j < Ex_->dims_[1]-1 ; j++){ // y loop
-            for (unsigned int k=0 ; k < Ex_->dims_[2]-1; k++){ // z loop
+    for (unsigned int i=1 ; i <Ex_->dims_[0]-1; i++){ // x loop
+        for (unsigned int j=1 ; j < Ex_->dims_[1]-1 ; j++){ // y loop
+            for (unsigned int k=1 ; k < Ex_->dims_[2]-1; k++){ // z loop
                 (*Ex3Dnew)(i,j,k) = one_over_two*((*Ex3D)(i,j,k)+(*Ex3D)(i+1,j,k));
             } // end z loop
         } // end y loop
     } // end x loop
 
     // ----- Ey centering : (p,d,p)
-    for (unsigned int i=0 ; i <Ey_->dims_[0]-1; i++){ // x loop
-        for (unsigned int j=0 ; j < Ey_->dims_[1]-2 ; j++){ // y loop
-            for (unsigned int k=0 ; k < Ey_->dims_[2]-1; k++){ // z loop
+    for (unsigned int i=1 ; i <Ey_->dims_[0]-1; i++){ // x loop
+        for (unsigned int j=1 ; j < Ey_->dims_[1]-1; j++){ // y loop
+            for (unsigned int k=1 ; k < Ey_->dims_[2]-1; k++){ // z loop
                 (*Ey3Dnew)(i,j,k) = one_over_two*((*Ey3D)(i,j,k)+(*Ey3D)(i,j+1,k));
             } // end z loop
         } // end y loop
     } // end x loop
 
     // ----- Ez centering : (p,p,d)
-    for (unsigned int i=0 ; i <Ez_->dims_[0]-1; i++){ // x loop
-        for (unsigned int j=0 ; j < Ez_->dims_[1]-1 ; j++){ // y loop
-            for (unsigned int k=0 ; k < Ez_->dims_[2]-2; k++){ // z loop
+    for (unsigned int i=1 ; i <Ez_->dims_[0]-1; i++){ // x loop
+        for (unsigned int j=1 ; j < Ez_->dims_[1]-1; j++){ // y loop
+            for (unsigned int k=1 ; k < Ez_->dims_[2]-1; k++){ // z loop
                 (*Ez3Dnew)(i,j,k) = one_over_two*((*Ez3D)(i,j,k)+(*Ez3D)(i,j,k+1));
             } // end z loop
         } // end y loop
     } // end x loop
 
-    // ----- Bx centering : (p,d,d)
-    for (unsigned int i=0 ; i <Bx_->dims_[0]-1; i++){ // x loop
-        for (unsigned int j=0 ; j < Bx_->dims_[1]-2 ; j++){ // y loop
-            for (unsigned int k=0 ; k < Bx_->dims_[2]-2; k++){ // z loop
-                (*Bx3Dnew)(i,j,k) = one_over_four*((*Bx3D)(i,j,k)+(*Bx3D)(i,j+1,k)+(*Bx3D)(i,j,k+1)+(*Bx3D)(i,j,k+1));
+    // ----- Bx centering : (p,d,d) // Bx is identically zero
+    for (unsigned int i=1 ; i <Bx_->dims_[0]-1; i++){ // x loop
+        for (unsigned int j=1 ; j < Bx_->dims_[1]-1; j++){ // y loop
+            for (unsigned int k=1 ; k < Bx_->dims_[2]-1; k++){ // z loop
+                (*Bx3Dnew)(i,j,k) = 0.; // one_over_four*((*Bx3D)(i,j,k)+(*Bx3D)(i,j+1,k)+(*Bx3D)(i,j,k+1)+(*Bx3D)(i,j+1,k+1));
             } // end z loop
         } // end y loop
     } // end x loop
 
     // ----- By centering : (d,p,d)
-    for (unsigned int i=0 ; i <By_->dims_[0]-2; i++){ // x loop
-        for (unsigned int j=0 ; j < By_->dims_[1]-1 ; j++){ // y loop
-            for (unsigned int k=0 ; k < By_->dims_[2]-2; k++){ // z loop
+    for (unsigned int i=1 ; i <By_->dims_[0]-1; i++){ // x loop
+        for (unsigned int j=1 ; j < By_->dims_[1]-1 ; j++){ // y loop
+            for (unsigned int k=1 ; k < By_->dims_[2]-1; k++){ // z loop
                 (*By3Dnew)(i,j,k) = one_over_four*((*By3D)(i,j,k)+(*By3D)(i+1,j,k)+(*By3D)(i,j,k+1)+(*By3D)(i+1,j,k+1));
             } // end z loop
         } // end y loop
     } // end x loop
 
     // ----- Bz centering : (d,d,p)
-    for (unsigned int i=0 ; i <Bz_->dims_[0]-2; i++){ // x loop
-        for (unsigned int j=0 ; j < Bz_->dims_[1]-2 ; j++){ // y loop
-            for (unsigned int k=0 ; k < Bz_->dims_[2]-1; k++){ // z loop
+    for (unsigned int i=1 ; i <Bz_->dims_[0]-1; i++){ // x loop
+        for (unsigned int j=1 ; j < Bz_->dims_[1]-1; j++){ // y loop
+            for (unsigned int k=1 ; k < Bz_->dims_[2]-1; k++){ // z loop
                 (*Bz3Dnew)(i,j,k) = one_over_four*((*Bz3D)(i,j,k)+(*Bz3D)(i+1,j,k)+(*Bz3D)(i,j+1,k)+(*Bz3D)(i+1,j+1,k));
             } // end z loop
         } // end y loop
@@ -1099,7 +1101,7 @@ void ElectroMagn3D::center_fields_from_relativistic_Poisson(Patch *patch){
 
     // -------- Back substitution
     for (unsigned int i=0 ; i <Ex_->dims_[0]-1; i++){ // x loop
-        for (unsigned int j=0 ; j < Ex_->dims_[1]-1 ; j++){ // y loop
+        for (unsigned int j=0 ; j < Ex_->dims_[1]-1; j++){ // y loop
             for (unsigned int k=0 ; k < Ex_->dims_[2]-1; k++){ // z loop
                 (*Ex3D)(i,j,k) = (*Ex3Dnew)(i,j,k);
                 (*Ey3D)(i,j,k) = (*Ey3Dnew)(i,j,k);
