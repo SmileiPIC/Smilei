@@ -607,7 +607,7 @@ void ElectroMagn2D::center_fields_from_relativistic_Poisson(Patch *patch){
     
 
     // ----- Bz centering : (d,d) old centering is like Ey (p,d)
-    for (unsigned int i=0 ; i < Bz_->dims_[0]-2; i++){ // x loop
+    for (unsigned int i=1 ; i < Bz_->dims_[0]-2; i++){ // x loop
         for (unsigned int j=0 ; j < Bz_->dims_[1]-2 ; j++){ // y loop
                 (*Bz2Dnew)(i,j) = one_over_two*((*Bz2D)(i,j)+(*Bz2D)(i-1,j));
         } // end y loop

@@ -1054,8 +1054,8 @@ void ElectroMagn3D::center_fields_from_relativistic_Poisson(Patch *patch){
 
     // ----- By centering : (d,p,d) ; old centering is like Ez (p,p,d)
     for (unsigned int i=1 ; i < By_->dims_[0]-1; i++){ // x loop
-        for (unsigned int j=1 ; j < By_->dims_[1]-1 ; j++){ // y loop
-            for (unsigned int k=1 ; k < By_->dims_[2]-1; k++){ // z loop
+        for (unsigned int j=0 ; j < By_->dims_[1]-1 ; j++){ // y loop
+            for (unsigned int k=0 ; k < By_->dims_[2]-1; k++){ // z loop
                 (*By3Dnew)(i,j,k) = one_over_two*((*By3D)(i,j,k)+(*By3D)(i-1,j,k));
             } // end z loop
         } // end y loop
@@ -1063,7 +1063,7 @@ void ElectroMagn3D::center_fields_from_relativistic_Poisson(Patch *patch){
 
     // ----- Bz centering : (d,d,p) ; old centering is like Ey (p,d,p)
     for (unsigned int i=1 ; i < Bz_->dims_[0]-1; i++){ // x loop
-        for (unsigned int j=1 ; j < Bz_->dims_[1]-1; j++){ // y loop
+        for (unsigned int j=0 ; j < Bz_->dims_[1]-1; j++){ // y loop
             for (unsigned int k=1 ; k < Bz_->dims_[2]-1; k++){ // z loop
                 (*Bz3Dnew)(i,j,k) = one_over_four*((*Bz3D)(i,j,k)+(*Bz3D)(i-1,j,k)+(*Bz3D)(i,j,k+1)+(*Bz3D)(i-1,j,k+1));
             } // end z loop
