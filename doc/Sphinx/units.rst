@@ -134,3 +134,16 @@ for each particle and is never modified afterwards. Its definition reads:
 
 As a consequence, the sum of all weights of the particles in one cell is equal to
 the density of the species in this cell, in units of :math:`N_r`.
+
+The charge carried by a macro-particle (in Coulomb) can therefore be retrieved by the inverse operation:
+
+.. math::
+
+ \textrm{macro-particle charge} = \tilde{w}\tilde{q}V_{\rm cell}N_r
+
+
+:math:`\tilde{w}` and :math:`\tilde{q}` are the normalized weight and charge of the particle.
+:math:`V_{\rm cell}` is the volume of a single cell of the simulation.
+This last equation can be used to derive charge carried by track particles or to initialize weights in the case of a species which positions are initialized via a numpy array (see :ref:`Species`).
+
+
