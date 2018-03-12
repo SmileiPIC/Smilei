@@ -455,7 +455,7 @@ Each species has to be defined in a ``Species`` block::
 
   :red:`Warning` The number of particles of both species must be identical in each cell.
 
-    The particles positions can also be exactly defined by providing the position of each particle. In this case you must also provide the weight of each particle. This is done by passing a two-dimensional numpy array. The first dimension is of size of the simulation dimension + 1. Positions components `x`, `y`, `z` are given along the first columns and the weights are given in the last column of the array. The second dimension is of size total number of particles in the species. Positions and weights must be passed in normalized units. If this mode of intialization is chosen, the parameters `number_density`, `charge_density` and `particles_per_cell` are disregarded.
+    The particles positions can also be exactly defined by providing the position of each particle. In this case you must also provide the weight of each particle. This is done by passing a two-dimensional numpy array. The first dimension is of size of the simulation dimension + 1. Positions components `x`, `y`, `z` are given along the first columns and the weights are given in the last column of the array. The second dimension is of size total number of particles in the species. Positions and weights must be passed in normalized units. If this mode of intialization is chosen, SMILEI will raise an error if the parameters `number_density`, `charge_density` or `particles_per_cell` are defined.
 
 .. py:data:: momentum_initialization
 
@@ -467,7 +467,7 @@ Each species has to be defined in a ``Species`` block::
 
   The first 2 distributions depend on the parameter :py:data:`temperature` explained below.
 
-  If particles positions are initialized via a numpy array, this argument can also take a numpy array giving the value of momentum components. As for the positions, this must be a two-dimensional numpy array. The first dimension is of size of the simulation dimension. Momentum components `px`, `py`, `pz` are given in successive columns. The second dimension is of size total number of particles in the species and must be equal to the size of the second dimension of the position_initialization array. Momentum components must be passed in normalized units. If this mode of intialization is chosen, the parameters `temperature`, and `mean_velocity` are disregarded.
+  If particles positions are initialized via a numpy array, this argument can also take a numpy array giving the value of momentum components. As for the positions, this must be a two-dimensional numpy array. The first dimension is of size of the simulation dimension. Momentum components `px`, `py`, `pz` are given in successive columns. The second dimension is of size total number of particles in the species and must be equal to the size of the second dimension of the position_initialization array. Momentum components must be passed in normalized units. If this mode of intialization is chosen, SMILEI will raise an error if the parameters `temperature`, or `mean_velocity` are defined.
 
 
 .. py:data:: particles_per_cell
