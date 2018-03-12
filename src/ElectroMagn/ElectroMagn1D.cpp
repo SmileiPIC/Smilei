@@ -333,7 +333,7 @@ void ElectroMagn1D::initE_relativistic_Poisson(Patch *patch, double gamma_mean)
     // Compute the electrostatic field Ex
     // ----------------------------------
 
-    // centered finite differences for derivatives
+    
 
     for (unsigned int i=1; i<nx_p-1; i++)
         (*Ex1D)(i) = ((*phi_)(i-1)-(*phi_)(i))/dx/gamma_mean/gamma_mean;

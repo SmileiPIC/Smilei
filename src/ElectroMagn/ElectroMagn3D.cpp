@@ -596,7 +596,7 @@ void ElectroMagn3D::initE_relativistic_Poisson(Patch *patch, double gamma_mean)
     // Compute the fields Ex, Ey and Ez
     // ------------------------------------------
   
-    // centered finite differences for derivatives
+
 
     // Ex
     DEBUG("Computing Ex from scalar potential, relativistic Poisson problem");
@@ -718,7 +718,7 @@ void ElectroMagn3D::initB_relativistic_Poisson(Patch *patch, double gamma_mean)
     Field3D* By3D  = static_cast<Field3D*>(By_);
     Field3D* Bz3D  = static_cast<Field3D*>(Bz_);
   
-    double beta_mean = sqrt(1.-1/gamma_mean/gamma_mean);
+    double beta_mean = sqrt(1.-1./gamma_mean/gamma_mean);
 
     // ------------------------------------------
     // Compute the fields Ex and Ey
@@ -1073,7 +1073,6 @@ void ElectroMagn3D::binomialCurrentFilter()
 void ElectroMagn3D::center_fields_from_relativistic_Poisson(Patch *patch){
 
     double one_over_two  = 1./2.; 
-    double one_over_four = 1./4.; 
 
     // Static-cast of the fields
     Field3D* Ex3D = static_cast<Field3D*>(Ex_);
@@ -1117,8 +1116,8 @@ void ElectroMagn3D::center_fields_from_relativistic_Poisson(Patch *patch){
     // ----- Bz centering : (d,d,p) ; old centering is like Ey (p,d,p)
     for (unsigned int i=1 ; i < Bz_->dims_[0]-1; i++){ // x loop
         for (unsigned int j=0 ; j < Bz_->dims_[1]-1; j++){ // y loop
-            for (unsigned int k=1 ; k < Bz_->dims_[2]-1; k++){ // z loop
-                (*Bz3Dnew)(i,j,k) = one_over_four*((*Bz3D)(i,j,k)+(*Bz3D)(i-1,j,k)+(*Bz3D)(i,j,k+1)+(*Bz3D)(i-1,j,k+1));
+            for (unsigned int k=0 ; k < Bz_->dims_[2]-1; k++){ // z loop
+                (*Bz3Dnew)(i,j,k) = one_over_two*((*Bz3D)(i,j,k)+(*Bz3D)(i-1,j,k));
             } // end z loop
         } // end y loop
     } // end x loop

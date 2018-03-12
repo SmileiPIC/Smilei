@@ -519,7 +519,7 @@ void ElectroMagn2D::initE_relativistic_Poisson(Patch *patch, double gamma_mean)
     // Compute the fields Ex and Ey
     // ------------------------------------------
     
-    // centered finite differences for derivatives
+    
 
     // Ex
     DEBUG("Computing Ex from scalar potential, relativistic Poisson problem");
@@ -589,7 +589,7 @@ void ElectroMagn2D::initB_relativistic_Poisson(Patch *patch, double gamma_mean)
     // Compute the field Bz; Bx and By are identically zero
     // ------------------------------------------
     
-    double beta_mean = sqrt(1.-1/gamma_mean/gamma_mean);
+    double beta_mean = sqrt(1.-1./gamma_mean/gamma_mean);
 
     // Bz
     DEBUG("Computing Bz from scalar potential, relativistic Poisson problem");
