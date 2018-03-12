@@ -513,6 +513,7 @@ void ElectroMagn2D::initE_relativistic_Poisson(Patch *patch, double gamma_mean)
 
     Field2D* Ex2D  = static_cast<Field2D*>(Ex_);
     Field2D* Ey2D  = static_cast<Field2D*>(Ey_);
+    Field2D* rho2D = static_cast<Field2D*>(rho_);
 
     // ------------------------------------------
     // Compute the fields Ex and Ey
@@ -535,20 +536,20 @@ void ElectroMagn2D::initE_relativistic_Poisson(Patch *patch, double gamma_mean)
         }
     }
 
-    // Apply BC on Ex and Ey, Dirichlet
+    // Apply BC on Ex and Ey
     // ---------------------
     // Ex / Xmin
     if (patch->isXmin()) {
         DEBUG("Computing Xmin BC on Ex, relativistic Poisson problem");
         for (unsigned int j=0; j<ny_p; j++) {
-            (*Ex2D)(0,j) = 0.;
+            (*Ex2D)(0,j) = (*Ex2D)(1,j) + ((*Ey2D)(0,j+1)-(*Ey2D)(0,j))*dx/dy  - dx*(*rho2D)(0,j);
         }
     }
     // Ex / Xmax
     if (patch->isXmax()) {
         DEBUG("Computing Xmax BC on Ex, relativistic Poisson problem");
         for (unsigned int j=0; j<ny_p; j++) {
-            (*Ex2D)(nx_d-1,j) = 0.;
+            (*Ex2D)(nx_d-1,j) = (*Ex2D)(nx_d-2,j) - ((*Ey2D)(nx_p-1,j+1)-(*Ey2D)(nx_p-1,j))*dx/dy + dx*(*rho2D)(nx_p-1,j);
         }
     }
 

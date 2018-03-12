@@ -327,6 +327,7 @@ void ElectroMagn1D::initE_relativistic_Poisson(Patch *patch, double gamma_mean)
     // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details 
 
     Field1D* Ex1D  = static_cast<Field1D*>(Ex_);
+    Field1D* rho1D = static_cast<Field1D*>(rho_);
 
     // ----------------------------------
     // Compute the electrostatic field Ex
@@ -337,9 +338,10 @@ void ElectroMagn1D::initE_relativistic_Poisson(Patch *patch, double gamma_mean)
     for (unsigned int i=1; i<nx_p-1; i++)
         (*Ex1D)(i) = ((*phi_)(i-1)-(*phi_)(i))/dx/gamma_mean/gamma_mean;
     
-    // BC on Ex, Dirichlet
-    if (patch->isXmin()) (*Ex1D)(0)      = 0.;
-    if (patch->isXmax()) (*Ex1D)(nx_p-1) = 0.;
+    // BC on Ex
+    if (patch->isXmin()) (*Ex1D)(0)      = (*Ex1D)(1)      - dx*(*rho1D)(0);
+    if (patch->isXmax()) (*Ex1D)(nx_d-1) = (*Ex1D)(nx_d-2) + dx*(*rho1D)(nx_p-1);
+
     
     delete phi_;
     delete r_;
