@@ -287,6 +287,7 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
         timers.syncField.restart();
         if (params.is_spectral)
             SyncVectorPatch::finalizeexchangeE( params, (*this) );
+
         SyncVectorPatch::finalizeexchangeB( params, (*this) );
         timers.syncField.update(  params.printNow( itime ) );
 
@@ -528,8 +529,8 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
             (*this)(ipatch)->EMfields->compute_Ap( (*this)(ipatch) );
 
         // Exchange Ap_ (intra & extra MPI)
-        SyncVectorPatch::exchange( Ap_, *this );
-        SyncVectorPatch::finalizeexchange( Ap_, *this );
+        SyncVectorPatch::exchange_along_all_directions          ( Ap_, *this );
+        SyncVectorPatch::finalize_exchange_along_all_directions ( Ap_, *this );
 
        // scalar product p.Ap
         double p_dot_Ap       = 0.0;

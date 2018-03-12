@@ -6,7 +6,7 @@ compile:
   stage: compile
   only:
     - develop
-    - init_numpy_particles
+    - dev_issue226
     - Niel_performance
 
   script:

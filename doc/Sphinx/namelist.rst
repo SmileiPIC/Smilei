@@ -199,6 +199,20 @@ The block ``Main`` is **mandatory** and has the following syntax::
   | **Syntax 2:** ``[[bc_X], [bc_Y], ...]``, different depending on x, y or z.
   | **Syntax 3:** ``[[bc_Xmin, bc_Xmax], ...]``,  different on each boundary.
 
+  ``"silver-muller"`` is an open boundary condition. The incident wave vector :math:`k_i` on each face is defined by ``"EM_boundary_conditions_k"``.
+  When using ``"silver-muller"`` as an injecting boundary, make sure :math:`k_i` is aligned with the wave you are injecting.
+  When using ``"silver-muller"`` as an absorbing boundary, the optimal wave absorption on a given face will be along :math:`k_{abs}` the specular reflection of :math:`k_i` on face `i`. 
+
+.. py:data:: EM_boundary_conditions_k
+
+  :type: list of lists of floats
+  :default: ``[[1.,0.,0.],[-1.,0.,0.],[0.,1.,0.],[0.,-1.,0.],[0.,0.,1.],[0.,0.,-1.]]``
+
+  `k` is the incident wave vector for each faces sequentially Xmin, Xmax, Ymin, Ymax, Zmin, Zmax defined by its coordinates in the `xyz` frame.  
+  The number of coordinates is equal to the dimension of the simulation. The number of given vectors must be equal to 1 or to the number of faces which is twice the dimension of the simulation.
+
+  | **Syntax 1:** ``[[1,0,0]]``, identical for all boundaries.
+  | **Syntax 2:** ``[[1,0,0],[-1,0,0], ...]``,  different on each boundary.
 
 .. py:data:: time_fields_frozen
 
@@ -330,7 +344,7 @@ The block ``MovingWindow`` is optional. The window does not move it you do not d
 Current filtering
 ^^^^^^^^^^^^^^^^^
 
-The present version of :program:`Smilei` provides one method for current filtering,
+The present version of :program:`Smilei` provides a :ref:`multi-pass binomial filter <multipassBinomialFilter>` on the current densities,
 which parameters are controlled in the following block::
 
   CurrentFilter(
@@ -358,7 +372,8 @@ which parameters are controlled in the following block::
 Field filtering
 ^^^^^^^^^^^^^^^^^
 
-The present version of :program:`Smilei` provides one method for field filtering,
+The present version of :program:`Smilei` provides a method for field filtering
+(at the moment, only the :ref:`Friedman electric field time-filter <EfieldFilter>` is available)
 which parameters are controlled in the following block::
 
   FieldFilter(
