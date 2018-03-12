@@ -102,7 +102,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     Sx1[ip_m_ipo+2] = 0.75-delta2;
     Sx1[ip_m_ipo+3] = 0.5 * (delta2+delta+0.25);
     
-    ypn = particles.position(1, ipart) * dr_inv_;
+    ypn = sqrt (particles.position(1, ipart)*particles.position(1, ipart)+particles.position(2, ipart)*particles.position(2, ipart))*dr_inv ;
     int jp = round(ypn);
     int jpo = iold[1*nparts];
     int jp_m_jpo = jp-jpo-j_domain_begin;
