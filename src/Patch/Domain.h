@@ -28,9 +28,11 @@ public:
 
     void identify_additional_patches(SmileiMPI* smpi, VectorPatch& vecPatches);
     std::vector<int> additional_patches_;
+    std::vector<int> additional_patches_ranks;
     std::vector<int> local_patches_;
     void identify_missing_patches(SmileiMPI* smpi, VectorPatch& vecPatches, Params& params);
     std::vector<int> missing_patches_;
+    std::vector<int> missing_patches_ranks;
 
 
 

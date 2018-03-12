@@ -108,7 +108,7 @@ void Domain::clean()
 void Domain::solveMaxwell( Params& params, SimWindow* simWindow, int itime, double time_dual, Timers& timers )
 {
     MPI_Barrier( MPI_COMM_WORLD );
-    MESSAGE( "in domain solvemaxwell" );
+    //MESSAGE( "in domain solvemaxwell" );
     vecPatch_.solveMaxwell( params, simWindow, itime, time_dual, timers );
 
 }
@@ -124,8 +124,10 @@ void Domain::identify_additional_patches(SmileiMPI* smpi, VectorPatch& vecPatche
             if ( ( center < patch_->getDomainLocalMin(iDim) ) || ( center > patch_->getDomainLocalMax(iDim) ) )
                 patch_is_in = false;
         }
-        if (!patch_is_in)
+        if (!patch_is_in) {
             additional_patches_.push_back( vecPatches(ipatch)->hindex );
+            additional_patches_ranks.push_back( 0 );
+        }
     }
     
     //cout << smpi->getRank() << " - additional : ";
@@ -152,6 +154,8 @@ void Domain::identify_missing_patches(SmileiMPI* smpi, VectorPatch& vecPatches, 
     }
     //cout << patch_min_coord[0] << " " << patch_min_coord[1] << endl;
     //cout << patch_max_coord[0] << " " << patch_max_coord[1] << endl;
+    
+    //MPI_Alltoall or gather/bcast (npatch_domain);
 
     int patch_min_id = vecPatches.domain_decomposition_->getDomainId( patch_min_coord );
     int patch_max_id = vecPatches.domain_decomposition_->getDomainId( patch_max_coord );
@@ -174,8 +178,10 @@ void Domain::identify_missing_patches(SmileiMPI* smpi, VectorPatch& vecPatches, 
     }
 
     for ( int idx = hmin ; idx <=hmax ; idx++ ) {
-        if ( (idx < vecPatches(0)->hindex) || (idx > vecPatches(vecPatches.size()-1)->hindex) )
+        if ( (idx < vecPatches(0)->hindex) || (idx > vecPatches(vecPatches.size()-1)->hindex) ) {
             missing_patches_.push_back( idx );
+            missing_patches_ranks.push_back( 0 );
+        }
         else
             local_patches_.push_back( idx );
     }

@@ -861,10 +861,24 @@ void SmileiMPI::isend(Field* field, int to, int hindex, MPI_Request& request)
 } // End isend ( Field )
 
 
+void SmileiMPI::send(Field* field, int to, int hindex)
+{
+    MPI_Send( &((*field)(0)),field->globalDims_, MPI_DOUBLE, to, hindex, MPI_COMM_WORLD );
+
+} // End isend ( Field )
+
+
 void SmileiMPI::recv(Field* field, int from, int hindex)
 {
     MPI_Status status;
     MPI_Recv( &((*field)(0)),field->globalDims_, MPI_DOUBLE, from, hindex, MPI_COMM_WORLD, &status );
+
+} // End recv ( Field )
+
+
+void SmileiMPI::irecv(Field* field, int from, int hindex, MPI_Request& request)
+{
+    MPI_Irecv( &((*field)(0)),field->globalDims_, MPI_DOUBLE, from, hindex, MPI_COMM_WORLD, &request );
 
 } // End recv ( Field )
 

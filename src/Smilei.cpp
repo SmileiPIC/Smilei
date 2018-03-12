@@ -264,6 +264,40 @@ int main (int argc, char* argv[])
     vecPatches.createPatches(params, &smpi, simWindow);
     vecPatches.exchangePatches(&smpi, params);
     vecPatches.lastIterationPatchesMoved = 0;
+
+    domain.identify_additional_patches( &smpi, vecPatches );
+    if (smpi.getRank()==0) {
+        domain.additional_patches_ranks[0] = 1;
+        domain.additional_patches_ranks[1] = 1;
+    }
+    else if(smpi.getRank()==1) {
+        domain.additional_patches_ranks[0] = 2;
+        domain.additional_patches_ranks[1] = 2;
+        domain.additional_patches_ranks[2] = 2;
+        domain.additional_patches_ranks[3] = 2;
+        domain.additional_patches_ranks[4] = 2;
+    }
+    else if(smpi.getRank()==2) {
+        domain.additional_patches_ranks[0] = 3;
+        domain.additional_patches_ranks[1] = 3;
+    }
+
+    domain.identify_missing_patches( &smpi, vecPatches, params );
+    if (smpi.getRank()==1) {
+        domain.missing_patches_ranks[0] = 0;
+        domain.missing_patches_ranks[1] = 0;
+    }
+    else if(smpi.getRank()==2) {
+        domain.missing_patches_ranks[0] = 1;
+        domain.missing_patches_ranks[1] = 1;
+        domain.missing_patches_ranks[2] = 1;
+        domain.missing_patches_ranks[3] = 1;
+        domain.missing_patches_ranks[4] = 1;
+    }
+    else if(smpi.getRank()==3) {
+        domain.missing_patches_ranks[0] = 2;
+        domain.missing_patches_ranks[1] = 2;
+    }
     MPI_Barrier( MPI_COMM_WORLD );
 
 
@@ -314,22 +348,20 @@ int main (int argc, char* argv[])
             //    especially to compare solvers           
             //if ( global_factor!=1 )
             MPI_Barrier( MPI_COMM_WORLD );
-            MESSAGE("Before domain");
+            //MESSAGE("Before domain");
             {
                 if( time_dual > params.time_fields_frozen ) {
-                    domain.identify_additional_patches( &smpi, vecPatches );
-                    domain.identify_missing_patches( &smpi, vecPatches, params );
                     MPI_Barrier( MPI_COMM_WORLD );
-                    MESSAGE("Before to global");
+                    //MESSAGE("Before to global");
                     SyncCartesianPatch::patchedToCartesian( vecPatches, domain, params, &smpi, timers, itime );
                     MPI_Barrier( MPI_COMM_WORLD );
-                    MESSAGE("Before Maxwell");
+                    //MESSAGE("Before Maxwell");
                     domain.solveMaxwell( params, simWindow, itime, time_dual, timers );
-                    MESSAGE("Before to patchs");
+                    //MESSAGE("Before to patchs");
                     SyncCartesianPatch::cartesianToPatches( domain, vecPatches, params, &smpi, timers, itime );
                 }
             }
-            MESSAGE("After domain");
+            //MESSAGE("After domain");
             //#endif
 
             vecPatches.finalize_and_sort_parts(params, &smpi, simWindow, RadiationTables,
