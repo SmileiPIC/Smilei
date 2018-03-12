@@ -323,8 +323,8 @@ class Species(SmileiComponent):
     charge = None
     charge_density = None
     number_density = None
-    mean_velocity = [0.]
-    temperature = [1e-10]
+    mean_velocity = []
+    temperature = []
     thermal_boundary_temperature = []
     thermal_boundary_velocity = [0.,0.,0.]
     pusher = "boris"
