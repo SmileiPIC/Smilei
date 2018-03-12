@@ -27,6 +27,7 @@ Domain::Domain( Params &params ) :
 
 void Domain::build( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, OpenPMDparams& openPMD )
 {
+    // New_DD
     int rk(0);
     MPI_Comm_rank( MPI_COMM_WORLD, &rk );
     vecPatch_.refHindex_ = rk;
@@ -116,6 +117,11 @@ void Domain::solveMaxwell( Params& params, SimWindow* simWindow, int itime, doub
 
 void Domain::identify_additional_patches(SmileiMPI* smpi, VectorPatch& vecPatches)
 {
+    //cout << "patch_->getDomainLocalMin(0) = " << patch_->getDomainLocalMin(0) << endl;
+    //cout << "patch_->getDomainLocalMax(0) = " << patch_->getDomainLocalMax(0) << endl;
+    //cout << "patch_->getDomainLocalMin(1) = " << patch_->getDomainLocalMin(1) << endl;
+    //cout << "patch_->getDomainLocalMax(1) = " << patch_->getDomainLocalMax(1) << endl;
+
     for ( int ipatch = 0 ; ipatch < vecPatches.size() ; ipatch++ ) {
         
         bool patch_is_in( true );
@@ -178,6 +184,21 @@ void Domain::identify_missing_patches(SmileiMPI* smpi, VectorPatch& vecPatches, 
     }
 
     for ( int idx = hmin ; idx <=hmax ; idx++ ) {
+        
+        // test if (idx is in domain)
+        bool patch_is_in( true );
+
+        vector<unsigned int> Pcoordinates = vecPatches.domain_decomposition_->getDomainCoordinates( idx );
+        for ( int iDim = 0 ; iDim < patch_->getDomainLocalMin().size() ; iDim++ ) {
+            double center = ( 2. * (double)Pcoordinates[iDim] + 1. )* (double)params.n_space[iDim]*params.cell_length[iDim] / 2.;
+            
+            if ( ( center < patch_->getDomainLocalMin(iDim) ) || ( center > patch_->getDomainLocalMax(iDim) ) ) {
+                patch_is_in = false;
+            }
+        }
+        if (!patch_is_in)
+            continue;
+        
         if ( (idx < vecPatches(0)->hindex) || (idx > vecPatches(vecPatches.size()-1)->hindex) ) {
             missing_patches_.push_back( idx );
             missing_patches_ranks.push_back( 0 );
@@ -191,7 +212,7 @@ void Domain::identify_missing_patches(SmileiMPI* smpi, VectorPatch& vecPatches, 
     //for (int i = 0 ; i < missing_patches_.size() ; i++)
     //    cout << missing_patches_[i] << " " ;
     //cout << endl;
-
+    //
     //cout << smpi->getRank() << " - local : " ;
     //for (int i = 0 ; i < local_patches_.size() ; i++)
     //    cout << local_patches_[i] << " " ;

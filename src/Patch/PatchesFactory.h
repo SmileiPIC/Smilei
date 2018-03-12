@@ -46,10 +46,11 @@ public:
         vecPatches.lastIterationPatchesMoved = itime;
 
 
-        smpi->patch_count[0] = 8;
-        smpi->patch_count[1] = 24;
-        smpi->patch_count[2] = 24;
-        smpi->patch_count[3] = 8;
+        // New_DD
+        //smpi->patch_count[0] = 8;
+        //smpi->patch_count[1] = 24;
+        //smpi->patch_count[2] = 24;
+        //smpi->patch_count[3] = 8;
 
         // Compute npatches (1 is std MPI behavior)
         unsigned int npatches, firstpatch;

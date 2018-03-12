@@ -259,6 +259,8 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
         center[i] = (min_local[i]+max_local[i])*0.5;
         radius += pow(max_local[i] - center[i] + params.cell_length[i], 2);
     }
+
+    // New_DD 
     int rk(0);
     MPI_Comm_rank( MPI_COMM_WORLD, &rk );
     int sz(1);
@@ -322,6 +324,13 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
         MPI_neighbor_[0][1] = 3;
         MPI_neighbor_[1][0] = 1;
         MPI_neighbor_[1][1] = 1;
+
+        min_local[0] = 0.;
+        max_local[0] = 2*params.n_space[0]*params.cell_length[0];
+        cell_starting_global_index[0] = 0;
+        min_local[1] = 0.;
+        max_local[1] = 2*params.n_space[1]*params.cell_length[1];
+        cell_starting_global_index[1] = 0;
     }
     else if (rk==1) {
         Pcoordinates[0] = 0;
@@ -334,6 +343,13 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
         MPI_neighbor_[0][1] = 2;
         MPI_neighbor_[1][0] = 0;
         MPI_neighbor_[1][1] = 0;
+
+        min_local[0] = 0.;
+        max_local[0] = 2*params.n_space[0]*params.cell_length[0];
+        cell_starting_global_index[0] = 0;
+        min_local[1] = 2*params.n_space[1]*params.cell_length[1];
+        max_local[1] = 8*params.n_space[1]*params.cell_length[1];
+        cell_starting_global_index[1] = 2*params.n_space[1];
     }
     else if (rk==2) {
         Pcoordinates[1] = 1;
@@ -346,6 +362,13 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
         MPI_neighbor_[0][1] = MPI_PROC_NULL;
         MPI_neighbor_[1][0] = 3;
         MPI_neighbor_[1][1] = 3;
+
+        min_local[0] = 2*params.n_space[0]*params.cell_length[0];
+        max_local[0] = 8*params.n_space[0]*params.cell_length[0];
+        cell_starting_global_index[0] = 2*params.n_space[0];
+        min_local[1] = 2*params.n_space[1]*params.cell_length[1];
+        max_local[1] = 8*params.n_space[1]*params.cell_length[1];
+        cell_starting_global_index[1] = 2*params.n_space[1];
     }
     else if (rk==3) {
         Pcoordinates[1] = 1;
@@ -358,7 +381,16 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
         MPI_neighbor_[0][1] = MPI_PROC_NULL;
         MPI_neighbor_[1][0] = 2;
         MPI_neighbor_[1][1] = 2;
+
+        min_local[0] = 2*params.n_space[0]*params.cell_length[0];
+        max_local[0] = 8*params.n_space[0]*params.cell_length[0];
+        cell_starting_global_index[0] = 2*params.n_space[0];
+        min_local[1] = 0.;
+        max_local[1] = 2*params.n_space[1]*params.cell_length[1];
+        cell_starting_global_index[1] = 0;
     }
+    cell_starting_global_index[0] -= params.oversize[0];
+    cell_starting_global_index[1] -= params.oversize[1];
 
     radius = sqrt(radius);
 

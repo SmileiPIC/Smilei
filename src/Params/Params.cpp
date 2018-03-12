@@ -615,17 +615,36 @@ void Params::compute()
     for ( unsigned int iDim = 0 ; iDim < nDim_field ; iDim++ )
         factor *= global_factor[iDim];
 
+
+    // New_DD 
     if (factor!=1) {
         n_space_domain.resize(3,1);
         int rk(0);
         MPI_Comm_rank( MPI_COMM_WORLD, &rk );
         int sz(1);
         MPI_Comm_size( MPI_COMM_WORLD, &sz );
-        n_space_domain[0] = 4 * n_space[0];
-        if ( (rk==0) || (rk==3) )
+        //n_space_domain[0] = 4 * n_space[0];
+        //if ( (rk==0) || (rk==3) )
+        //    n_space_domain[1] = 2 * n_space[1];
+        //else
+        //    n_space_domain[1] = 6 * n_space[1];
+        if (rk==0) {
+            n_space_domain[0] = 2 * n_space[0];
             n_space_domain[1] = 2 * n_space[1];
-        else
+        }
+        else if (rk==1) {
+            n_space_domain[0] = 2 * n_space[0];
             n_space_domain[1] = 6 * n_space[1];
+        }
+        else if (rk==2) {
+            n_space_domain[0] = 6 * n_space[0];
+            n_space_domain[1] = 6 * n_space[1];
+        }
+        else if (rk==3) {
+            n_space_domain[0] = 6 * n_space[0];
+            n_space_domain[1] = 2 * n_space[1];
+        }
+
     }
     
     // Set clrw if not set by the user
