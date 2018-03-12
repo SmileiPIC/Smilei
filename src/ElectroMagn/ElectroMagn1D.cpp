@@ -334,8 +334,8 @@ void ElectroMagn1D::initE_relativistic_Poisson(Patch *patch, double gamma_mean)
 
     // centered finite differences for derivatives
 
-    for (unsigned int i=1; i<nx_p-2; i++)
-        (*Ex1D)(i) = ((*phi_)(i-1)-(*phi_)(i+1))/2./dx/gamma_mean/gamma_mean;
+    for (unsigned int i=1; i<nx_p-1; i++)
+        (*Ex1D)(i) = ((*phi_)(i-1)-(*phi_)(i))/dx/gamma_mean/gamma_mean;
     
     // BC on Ex, Dirichlet
     if (patch->isXmin()) (*Ex1D)(0)      = 0.;
