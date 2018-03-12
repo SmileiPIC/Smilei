@@ -903,7 +903,7 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi )
     if (!params.is_spectral){
         for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
             { // begin loop on patches
-    //        (*this)(ipatch)->EMfields->center_fields_from_relativistic_Poisson( (*this)(ipatch));
+            (*this)(ipatch)->EMfields->center_fields_from_relativistic_Poisson( (*this)(ipatch));
             } // end loop on patches
     
         // re-exchange the properly spatially centered fields

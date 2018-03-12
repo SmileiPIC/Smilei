@@ -359,33 +359,7 @@ void ElectroMagn1D::initB_relativistic_Poisson(Patch *patch, double gamma_mean)
 
 void ElectroMagn1D::center_fields_from_relativistic_Poisson(Patch *patch){
 
-    double one_over_two  = 1./2.; 
-  
-    // Static-cast of the fields
-    Field1D* Ex1D = static_cast<Field1D*>(Ex_);
-    
-    // Temporary fields for interpolation
-    Field1D* Ex1Dnew  = new Field1D( Ex_->dims_  );
-
-    // ------------ Interpolation to center the fields the Yee cell - before this operation, they are all centered as rho_
-    
-    // p: cell nodes, d: between cell nodes, or cell edges
-    // Rho centering : (p,p,p), the present centering of the E B fields 
-    // (as they were found by centered differences of Phi, the potential centered as Rho)
-    // For all the fields, the proper centering (which is given to their "new" version) is reported
-  
-    // ----- Ex centering : (d,p,p)
-    for (unsigned int i=0 ; i <Ex_->dims_[0]-2; i++){ // x loop
-        (*Ex1Dnew)(i) = one_over_two*((*Ex1D)(i)+(*Ex1D)(i+1));
-    } // end x loop
-
-    // -------- Back substitution
-    for (unsigned int i=0 ; i <Ex_->dims_[0]-1; i++){ // x loop
-        (*Ex1D)(i) = (*Ex1Dnew)(i);
-    } // end x loop
-
-    // Clean the temporary variables
-    delete Ex1Dnew;
+    // In 1D no centering is necessary, as E is already centered and there is no field B in relativistic initialization
 
 } 
 

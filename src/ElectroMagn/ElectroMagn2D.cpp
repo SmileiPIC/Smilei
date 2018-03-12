@@ -569,14 +569,15 @@ void ElectroMagn2D::initB_relativistic_Poisson(Patch *patch, double gamma_mean)
     // Bx is zero everywhere
 
     // ------------------------------------------
-    // Compute the fields By and Bz
+    // Compute the field Bz; Bx and By are identically zero
     // ------------------------------------------
     
     double beta_mean = sqrt(1.-1/gamma_mean/gamma_mean);
+
     // Bz
     DEBUG("Computing Bz from scalar potential, relativistic Poisson problem");
     for (unsigned int i=0; i<nx_p; i++) {
-        for (unsigned int j=0; j<ny_p; j++) {
+        for (unsigned int j=0; j<ny_d; j++) {
             (*Bz2D)(i,j) = beta_mean*(*Ey2D)(i,j);
         }
     }
@@ -586,8 +587,7 @@ void ElectroMagn2D::initB_relativistic_Poisson(Patch *patch, double gamma_mean)
 
 void ElectroMagn2D::center_fields_from_relativistic_Poisson(Patch *patch){
 
-    double one_over_two  = 1./2.; 
-    double one_over_four = 1./4.; 
+    double one_over_two  = 1./2.;  
 
     // Static-cast of the fields
     Field2D* Ex2D = static_cast<Field2D*>(Ex_);
@@ -595,52 +595,34 @@ void ElectroMagn2D::center_fields_from_relativistic_Poisson(Patch *patch){
     Field2D* Bz2D = static_cast<Field2D*>(Bz_);
 
     // Temporary fields for interpolation
-    Field2D* Ex2Dnew  = new Field2D( Ex_->dims_  );
-    Field2D* Ey2Dnew  = new Field2D( Ey_->dims_  );
     Field2D* Bz2Dnew  = new Field2D( Bz_->dims_  );
 
-    // ------------ Interpolation to center the fields the Yee cell - before this operation, they are all centered as rho_
-    
+    // ------------ Interpolation to center the fields the Yee cell - before this operation, the fields B are all centered as E
+    // (see ElectroMagn3D::initB_relativistic_Poisson) 
+    //
     // p: cell nodes, d: between cell nodes, or cell edges
-    // Rho centering : (p,p), the present centering of the E B fields 
-    // (as they were found by centered differences of Phi, the potential centered as Rho)
+    
     // For all the fields, the proper centering (which is given to their "new" version) is reported
-  
-    // ----- Ex centering : (d,p)
-    for (unsigned int i=0 ; i <Ex_->dims_[0]-2; i++){ // x loop
-        for (unsigned int j=0 ; j < Ex_->dims_[1]-1 ; j++){ // y loop
-                (*Ex2Dnew)(i,j) = one_over_two*((*Ex2D)(i,j)+(*Ex2D)(i+1,j));
-        } // end y loop
-    } // end x loop
+    // and then the old centering is reported (see ElectroMagn3D::initB_relativistic_Poisson)  
+    
 
-    // ----- Ey centering : (p,d)
-    for (unsigned int i=0 ; i <Ey_->dims_[0]-1; i++){ // x loop
-        for (unsigned int j=0 ; j < Ey_->dims_[1]-2 ; j++){ // y loop    
-                (*Ey2Dnew)(i,j) = one_over_two*((*Ey2D)(i,j)+(*Ey2D)(i,j+1));
-        } // end y loop
-    } // end x loop
-
-    // ----- Bz centering : (d,d)
-    for (unsigned int i=0 ; i <Bz_->dims_[0]-2; i++){ // x loop
+    // ----- Bz centering : (d,d) old centering is like Ey (p,d)
+    for (unsigned int i=0 ; i < Bz_->dims_[0]-2; i++){ // x loop
         for (unsigned int j=0 ; j < Bz_->dims_[1]-2 ; j++){ // y loop
-                (*Bz2Dnew)(i,j) = one_over_four*((*Bz2D)(i,j)+(*Bz2D)(i+1,j)+(*Bz2D)(i,j+1)+(*Bz2D)(i+1,j+1));
+                (*Bz2Dnew)(i,j) = one_over_two*((*Bz2D)(i,j)+(*Bz2D)(i-1,j));
         } // end y loop
     } // end x loop
 
 
     // -------- Back substitution
-    for (unsigned int i=0 ; i <Ex_->dims_[0]-1; i++){ // x loop
-        for (unsigned int j=0 ; j < Ex_->dims_[1]-1 ; j++){ // y loop
-                (*Ex2D)(i,j) = (*Ex2Dnew)(i,j);
-                (*Ey2D)(i,j) = (*Ey2Dnew)(i,j);
+    for (unsigned int i=0 ; i < Bz_->dims_[0]-1; i++){ // x loop
+        for (unsigned int j=0 ; j < Bz_->dims_[1]-1 ; j++){ // y loop
                 (*Bz2D)(i,j) = (*Bz2Dnew)(i,j);     
         } // end y loop
     } // end x loop
 
 
     // Clean the temporary variables
-    delete Ex2Dnew;
-    delete Ey2Dnew;
     delete Bz2Dnew;
 
 } 
