@@ -455,7 +455,7 @@ Each species has to be defined in a ``Species`` block::
 
   :red:`Warning` The number of particles of both species must be identical in each cell.
 
-    The particles positions can also be exactly defined by providing the position of each particle. In this case you must also provide the weight of each particle. This is done by passing a two-dimensional numpy array. The first dimension is of size of the simulation dimension + 1. Positions components `x`, `y`, `z` are given along the first columns and the weights are given in the last column of the array. The second dimension is of size total number of particles in the species. Positions and weights must be passed in normalized units. If this mode of intialization is chosen, SMILEI will raise an error if the parameters `number_density`, `charge_density` or `particles_per_cell` are defined.
+    The particles positions can also be exactly defined by providing the position of each particle. In this case you must also provide the weight of each particle. This is done by passing a two-dimensional numpy array. The first dimension is of size of the simulation dimension + 1. Positions components `x`, `y`, `z` are given along the first columns and the weights are given in the last column of the array. The second dimension is of size total number of particles in the species. Positions and weights must be passed in normalized units. See :ref:`Weights` for a better understanding of how to define weights of particles. If this mode of intialization is chosen, SMILEI will raise an error if the parameters `number_density`, `charge_density` or `particles_per_cell` are defined.
 
 .. py:data:: momentum_initialization
 
