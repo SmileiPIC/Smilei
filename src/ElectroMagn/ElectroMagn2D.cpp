@@ -553,6 +553,22 @@ void ElectroMagn2D::initE_relativistic_Poisson(Patch *patch, double gamma_mean)
         }
     }
 
+    // Ey / Ymin
+    if (patch->isYmin()) {
+        DEBUG("Computing Ymin BC on Ey, relativistic Poisson problem");
+        for (unsigned int i=0; i<nx_p; i++) {
+            (*Ey2D)(i,0) = (*Ey2D)(i,1) + ((*Ex2D)(i+1,0)-(*Ex2D)(i,0))*dy/dx  - dy*(*rho2D)(i,0);
+        }
+    }
+    
+    // Ey / Ymax
+    if (patch->isYmax()) {
+        DEBUG("Computing Ymax BC on Ey, relativistic Poisson problem");
+        for (unsigned int i=0; i<nx_p; i++) {
+            (*Ey2D)(i,ny_d-1) = (*Ey2D)(i,ny_d-2) - ((*Ex2D)(i+1,ny_p-1)-(*Ex2D)(i,ny_p-1))*dy/dx + dy*(*rho2D)(i,ny_p-1);
+        }
+    }
+
     delete phi_;
     delete r_;
     delete p_;

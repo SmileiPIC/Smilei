@@ -651,6 +651,54 @@ void ElectroMagn3D::initE_relativistic_Poisson(Patch *patch, double gamma_mean)
         }
     }
 
+    // Ey / Ymin
+    if (patch->isYmin()) {
+        DEBUG("Computing Ymin BC on Ey, relativistic Poisson problem");
+        for (unsigned int i=0; i<nx_p; i++) {
+            for (unsigned int k=0; k<nz_p; k++) {
+                (*Ey3D)(i,0,k) = (*Ey3D)(i,1,k) - dy*(*rho3D)(i,0,k)
+                    + ((*Ex3D)(i+1,0,k)-(*Ex3D)(i,0,k))*dy/dx
+                    + ((*Ez3D)(i,0,k+1)-(*Ez3D)(i,0,k))*dy/dz;
+            }
+        }
+    }
+
+    // Ey / Ymax
+    if (patch->isYmax()) {
+        DEBUG("Computing Ymax BC on Ey, relativistic Poisson problem");
+        for (unsigned int i=0; i<nx_p; i++) {
+            for (unsigned int k=0; k<nz_p; k++) {
+                (*Ey3D)(i,ny_d-1,k) = (*Ey3D)(i,ny_d-2,k) + dy*(*rho3D)(i,ny_p-1,k)
+                    - ((*Ex3D)(i+1,ny_p-1,k)-(*Ex3D)(i,ny_p-1,k))*dy/dx
+                    - ((*Ez3D)(i,ny_p-1,k+1)-(*Ez3D)(i,ny_p-1,k))*dy/dz;
+            }
+        }
+    }
+
+    // Ez / Zmin
+    if (patch->isZmin()) {
+        DEBUG("Computing Zmin BC on Ez, relativistic Poisson problem");
+        for (unsigned int i=0; i<nx_p; i++) {
+            for (unsigned int j=0; j<ny_p; j++) {
+                (*Ez3D)(i,j,0) = (*Ez3D)(i,j,1) - dz*(*rho3D)(i,j,0)
+                    + ((*Ey3D)(i,j+1,0)-(*Ey3D)(i,j,0))*dz/dy
+                    + ((*Ex3D)(i+1,j,0)-(*Ex3D)(i,j,0))*dz/dx;
+            }
+        }
+    }
+
+    // Ez / Zmax
+    if (patch->isZmax()) {
+        DEBUG("Computing Zmax BC on Ez, relativistic Poisson problem");
+        for (unsigned int i=0; i<nx_p; i++) {
+            for (unsigned int j=0; j<ny_p; j++) {
+                (*Ez3D)(i,j,nz_d-1) = (*Ez3D)(i,j,nz_d-2) + dz*(*rho3D)(i,j,nz_p-1)
+                    - ((*Ey3D)(i,j+1,nz_p-1)-(*Ey3D)(i,j,nz_p-1))*dz/dy
+                    - ((*Ex3D)(i+1,j,nz_p-1)-(*Ex3D)(i,j,nz_p-1))*dz/dx;
+            }
+        }
+    }
+
     delete phi_;
     delete r_;
     delete p_;
