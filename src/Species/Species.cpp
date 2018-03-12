@@ -1102,8 +1102,6 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
         }
     }
 
-    // Delete map xyz.
-    for (unsigned int idim=0 ; idim<nDim_field ; idim++) delete xyz[idim];
     // Initialize charge profile
     if (this->mass > 0) chargeProfile ->valuesAt(xyz, charge );
 
@@ -1171,6 +1169,10 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
             }//j
         }//k end the loop on all cells
     }
+    
+    // Delete map xyz.
+    for (unsigned int idim=0 ; idim<nDim_field ; idim++) delete xyz[idim];
+
     // defines npart_effective for the Species & create the corresponding particles
     // -----------------------------------------------------------------------
 

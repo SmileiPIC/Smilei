@@ -495,18 +495,20 @@ public:
 
         if (thisSpecies->momentum_initialization_array == NULL){
             // Mean velocity
-            if ( PyTools::extract3Profiles("mean_velocity", ispec, profile1, profile2, profile3) ){
+            //if ( PyTools::extract3Profiles("mean_velocity", ispec, profile1, profile2, profile3) ){
+             PyTools::extract3Profiles("mean_velocity", ispec, profile1, profile2, profile3);
                 thisSpecies->velocityProfile[0] = new Profile(profile1, params.nDim_particle, Tools::merge("mean_velocity[0] ",species_name), true);
                 thisSpecies->velocityProfile[1] = new Profile(profile2, params.nDim_particle, Tools::merge("mean_velocity[1] ",species_name), true);
                 thisSpecies->velocityProfile[2] = new Profile(profile3, params.nDim_particle, Tools::merge("mean_velocity[2] ",species_name), true);
-            }
+            //}
 
             // Temperature
-            if ( PyTools::extract3Profiles("temperature", ispec, profile1, profile2, profile3) ) {
+            //if ( PyTools::extract3Profiles("temperature", ispec, profile1, profile2, profile3) ) {
+            PyTools::extract3Profiles("temperature", ispec, profile1, profile2, profile3);
                 thisSpecies->temperatureProfile[0] = new Profile(profile1, params.nDim_particle, Tools::merge("temperature[0] ",species_name), true);
                 thisSpecies->temperatureProfile[1] = new Profile(profile2, params.nDim_particle, Tools::merge("temperature[1] ",species_name), true);
                 thisSpecies->temperatureProfile[2] = new Profile(profile3, params.nDim_particle, Tools::merge("temperature[2] ",species_name), true);
-            }
+            //}
         } else {
             ok1 = PyTools::extract3Profiles("mean_velocity", ispec, profile1, profile2, profile3) ;
             ok2 = PyTools::extract3Profiles("temperature", ispec, profile1, profile2, profile3) ;
