@@ -19,7 +19,7 @@ void SyncCartesianPatch::patchedToCartesian( VectorPatch& vecPatches, Domain& do
     // Loop / additional_patches_ (identify where goes the additionnal patches regarding patch_count)
     //     patch().send()
     for ( unsigned int i=0 ; i<domain.additional_patches_.size() ; i++ ) {
-        //cout << smpi->getRank() << " will send " << domain.additional_patches_[i] << endl;
+        //cout << smpi->getRank() << " will send " << domain.additional_patches_[i] << " to " << domain.additional_patches_ranks[i] << endl;
         unsigned int ipatch = domain.additional_patches_[i]-vecPatches.refHindex_;
 
         SyncCartesianPatch::sendPatchedToCartesian( vecPatches(ipatch)->EMfields, domain.additional_patches_[i], domain.additional_patches_ranks[i], smpi, vecPatches(ipatch) );
@@ -35,7 +35,7 @@ void SyncCartesianPatch::patchedToCartesian( VectorPatch& vecPatches, Domain& do
     //     put to domain
     for ( unsigned int i=0 ; i<domain.missing_patches_.size() ; i++ ) {
         unsigned int ipatch = domain.missing_patches_[i]-vecPatches.refHindex_;
-        //cout << smpi->getRank() << " will recv " << domain.missing_patches_[i] << endl;
+        //cout << smpi->getRank() << " will recv " << domain.missing_patches_[i] << " from " << domain.missing_patches_ranks[i] << endl;
 
         SyncCartesianPatch::recvPatchedToCartesian( domain.patch_->EMfields, domain.missing_patches_[i], domain.missing_patches_ranks[i], vecPatches, params, smpi, domain );
 

@@ -265,7 +265,7 @@ int main (int argc, char* argv[])
     //vecPatches.lastIterationPatchesMoved = 0;
 
     // New_DD : non local
-    domain.identify_additional_patches( &smpi, vecPatches );
+    domain.identify_additional_patches( &smpi, vecPatches, params );
     //if (smpi.getRank()==0) {
     //    domain.additional_patches_ranks[0] = 1;
     //    domain.additional_patches_ranks[1] = 1;
@@ -281,22 +281,22 @@ int main (int argc, char* argv[])
     //    domain.additional_patches_ranks[0] = 3;
     //    domain.additional_patches_ranks[1] = 3;
     //}
-    if (smpi.getRank()==0) {
-        for (int idx=0 ; idx<4 ; idx++)
-            domain.additional_patches_ranks[idx] = 3;
-        for (int idx=4 ; idx<8 ; idx++)
-            domain.additional_patches_ranks[idx] = 2;
-        for (int idx=8 ; idx<12 ; idx++)
-            domain.additional_patches_ranks[idx] = 1;
-    }
-    else if(smpi.getRank()==1) {
-        for (int idx=0 ; idx<8 ; idx++)
-            domain.additional_patches_ranks[idx] = 2;
-    }
-    else if(smpi.getRank()==3) {
-        for (int idx=0 ; idx<8 ; idx++)
-            domain.additional_patches_ranks[idx] = 2;
-    }
+//    if (smpi.getRank()==0) {
+//        for (int idx=0 ; idx<4 ; idx++)
+//            domain.additional_patches_ranks[idx] = 3;
+//        for (int idx=4 ; idx<8 ; idx++)
+//            domain.additional_patches_ranks[idx] = 2;
+//        for (int idx=8 ; idx<12 ; idx++)
+//            domain.additional_patches_ranks[idx] = 1;
+//    }
+//    else if(smpi.getRank()==1) {
+//        for (int idx=0 ; idx<8 ; idx++)
+//            domain.additional_patches_ranks[idx] = 2;
+//    }
+//    else if(smpi.getRank()==3) {
+//        for (int idx=0 ; idx<8 ; idx++)
+//            domain.additional_patches_ranks[idx] = 2;
+//    }
 
     domain.identify_missing_patches( &smpi, vecPatches, params );
     //if (smpi.getRank()==1) {
@@ -314,22 +314,22 @@ int main (int argc, char* argv[])
     //    domain.missing_patches_ranks[0] = 2;
     //    domain.missing_patches_ranks[1] = 2;
     //}
-    if (smpi.getRank()==1) {
-        for (int idx=0 ; idx<4 ; idx++)
-            domain.missing_patches_ranks[idx] = 0;
-    }
-    else if(smpi.getRank()==2) {
-        for (int idx=0 ; idx<4 ; idx++)
-            domain.missing_patches_ranks[idx] = 0;
-        for (int idx=4 ; idx<12 ; idx++)
-            domain.missing_patches_ranks[idx] = 1;
-        for (int idx=12 ; idx<20 ; idx++)
-            domain.missing_patches_ranks[idx] = 3;
-    }
-    else if(smpi.getRank()==3) {
-        for (int idx=0 ; idx<4 ; idx++)
-            domain.missing_patches_ranks[idx] = 0;
-    }
+//    if (smpi.getRank()==1) {
+//        for (int idx=0 ; idx<4 ; idx++)
+//            domain.missing_patches_ranks[idx] = 0;
+//    }
+//    else if(smpi.getRank()==2) {
+//        for (int idx=0 ; idx<4 ; idx++)
+//            domain.missing_patches_ranks[idx] = 0;
+//        for (int idx=4 ; idx<12 ; idx++)
+//            domain.missing_patches_ranks[idx] = 1;
+//        for (int idx=12 ; idx<20 ; idx++)
+//            domain.missing_patches_ranks[idx] = 3;
+//    }
+//    else if(smpi.getRank()==3) {
+//        for (int idx=0 ; idx<4 ; idx++)
+//            domain.missing_patches_ranks[idx] = 0;
+//    }
     MPI_Barrier( MPI_COMM_WORLD );
     //return 0;
 

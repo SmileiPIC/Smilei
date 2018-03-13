@@ -25,8 +25,9 @@ public:
     Patch* patch_;
     Diagnostic* diag_; 
    
+    int hrank_global_domain( int hindex, Params& params, VectorPatch& vecPatches );
 
-    void identify_additional_patches(SmileiMPI* smpi, VectorPatch& vecPatches);
+    void identify_additional_patches(SmileiMPI* smpi, VectorPatch& vecPatches, Params& params);
     std::vector<int> additional_patches_;
     std::vector<int> additional_patches_ranks;
     std::vector<int> local_patches_;

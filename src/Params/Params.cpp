@@ -431,7 +431,6 @@ namelist("")
                 ERROR("Number of patches in each direction must be a power of 2");
     }
 
-
     if( PyTools::nComponents("LoadBalancing")>0 ) {
         // get parameter "every" which describes a timestep selection
         load_balancing_time_selection = new TimeSelection(
@@ -646,6 +645,31 @@ void Params::compute()
         }
 
     }
+
+
+    number_of_domain.resize( nDim_field, 0 );
+    number_of_domain[0] = 2;
+    number_of_domain[1] = 2;
+    // offset_map, expressed in number of cells
+    offset_map.resize( nDim_field );
+    for ( int iDim = 0 ; iDim < nDim_field ; iDim++ ) {
+        offset_map[iDim].resize( number_of_domain[iDim] );
+    }
+    offset_map[0][0] = 0;
+    offset_map[0][1] = 2 * n_space[0];
+    offset_map[1][0] = 0;
+    offset_map[1][1] = 2 * n_space[1];
+
+    map_rank.resize( number_of_domain[0] );
+    for ( int iDim = 0 ; iDim < number_of_domain[0] ; iDim++ )
+        map_rank[iDim].resize( number_of_domain[1] );
+
+    map_rank[0][0] = 0;
+    map_rank[1][0] = 3;
+    map_rank[0][1] = 1;
+    map_rank[1][1] = 2;
+
+
     
     // Set clrw if not set by the user
     if ( clrw == -1 ) {

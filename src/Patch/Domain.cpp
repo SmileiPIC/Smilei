@@ -115,7 +115,7 @@ void Domain::solveMaxwell( Params& params, SimWindow* simWindow, int itime, doub
 }
 
 
-void Domain::identify_additional_patches(SmileiMPI* smpi, VectorPatch& vecPatches)
+void Domain::identify_additional_patches(SmileiMPI* smpi, VectorPatch& vecPatches, Params& params)
 {
     //cout << "patch_->getDomainLocalMin(0) = " << patch_->getDomainLocalMin(0) << endl;
     //cout << "patch_->getDomainLocalMax(0) = " << patch_->getDomainLocalMax(0) << endl;
@@ -132,7 +132,7 @@ void Domain::identify_additional_patches(SmileiMPI* smpi, VectorPatch& vecPatche
         }
         if (!patch_is_in) {
             additional_patches_.push_back( vecPatches(ipatch)->hindex );
-            additional_patches_ranks.push_back( 0 );
+            additional_patches_ranks.push_back( hrank_global_domain( vecPatches(ipatch)->hindex, params, vecPatches ) );
         }
     }
     
@@ -143,6 +143,29 @@ void Domain::identify_additional_patches(SmileiMPI* smpi, VectorPatch& vecPatche
 
 }
 
+int Domain::hrank_global_domain( int hindex, Params& params, VectorPatch& vecPatches )
+{
+    int rank(0);
+    std::vector<unsigned int> patch_coordinates = vecPatches.domain_decomposition_->getDomainCoordinates( hindex );
+    std::vector<int> rank_coordinates;
+    rank_coordinates.resize( params.nDim_field );
+
+    for ( int iDim = 0 ; iDim < params.nDim_field ; iDim++ ) {
+        int min =  patch_coordinates[iDim]    * params.n_space[iDim];
+        int max = (patch_coordinates[iDim]+1) * params.n_space[iDim];
+        int center = (min+max)/2;
+
+        int idomain(0);
+        while ( ( center > params.offset_map[iDim][idomain] ) && ( idomain < params.number_of_domain[iDim] ) )
+            idomain++;
+
+        rank_coordinates[iDim] = idomain-1;
+
+    }
+    rank = params.map_rank[ rank_coordinates[0] ][ rank_coordinates[1] ];
+
+    return rank;
+}
 
 void Domain::identify_missing_patches(SmileiMPI* smpi, VectorPatch& vecPatches, Params& params)
 {
@@ -201,7 +224,7 @@ void Domain::identify_missing_patches(SmileiMPI* smpi, VectorPatch& vecPatches, 
         
         if ( (idx < vecPatches(0)->hindex) || (idx > vecPatches(vecPatches.size()-1)->hindex) ) {
             missing_patches_.push_back( idx );
-            missing_patches_ranks.push_back( 0 );
+            missing_patches_ranks.push_back(  smpi->hrank( idx ) );
         }
         else
             local_patches_.push_back( idx );
