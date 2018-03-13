@@ -10,9 +10,9 @@ ntrans = 80
 Lx = nx * dx
 Ltrans = ntrans*dtrans
 npatch_x = 128
-bunch_sigma_x = 25.
-bunch_sigma_r = 10. 
-center_bunch = 3*bunch_sigma_x
+bunch_sigma_x = 10.
+bunch_sigma_r = 5. 
+center_bunch = 6*bunch_sigma_x
 n0 = 0.0017
 alpha = 1.
 gamma= 200. # relativistic lorentz factor
@@ -28,7 +28,7 @@ def nbunch_(x,y,z):
 	profile_r = math.exp(-((y-Main.grid_length[1]/2.)**2+(z-Main.grid_length[2]/2.)**2)/2./bunch_sigma_r**2)
         profile = alpha*n0*profile_x*profile_r
 	
-	if ( (  (x-center_bunch)**2/(5.*bunch_sigma_x)**2 + ((y-Main.grid_length[1]/2.)**2+(z-Main.grid_length[2]/2.)**2)/(5.*bunch_sigma_r)**2 ) < 1. ):
+	if ( (  (x-center_bunch)**2/(4.*bunch_sigma_x)**2 + ((y-Main.grid_length[1]/2.)**2+(z-Main.grid_length[2]/2.)**2)/(4.*bunch_sigma_r)**2 ) < 1. ):
 		return profile
 	else:
 		return 0.
@@ -39,7 +39,7 @@ Main(
     interpolation_order = 2,
 
     timestep = dt,
-    simulation_time = int(1*Lx/dt)*dt,
+    simulation_time = dt*1000., #int(1*Lx/dt)*dt,
 
     cell_length  = [dx, dtrans, dtrans],
     grid_length = [ Lx,  Ltrans, Ltrans],
@@ -79,7 +79,7 @@ Species(
     c_part_max = 1.0,
     mass = 1.0,
     charge = -1.0,
-    charge_density = polygonal(xpoints=[center_bunch+50.,center_bunch+100.,200.*bunch_sigma_x,225.*bunch_sigma_x],xvalues=[0.,n0,n0,0.]),
+    charge_density = polygonal(xpoints=[center_bunch+60.,center_bunch+110.,200.*bunch_sigma_x,225.*bunch_sigma_x],xvalues=[0.,n0,n0,0.]),
     mean_velocity = [0.0, 0.0, 0.0],
     temperature = [0.,0.,0.],
     pusher = "boris",
@@ -95,7 +95,7 @@ Species(
 Species(
     name = "bunch_electrons",
     position_initialization = "regular",
-    momentum_initialization = "maxwell-juettner",
+    momentum_initialization = "cold",
     relativistic_field_initialization = True,
     particles_per_cell = 1,
     c_part_max = 1.0,
@@ -103,7 +103,7 @@ Species(
     charge = -1.0,
     charge_density = nbunch_,
     mean_velocity = [beta, 0.0, 0.0], # corresponds to Lorentz factor gamma = 200
-    temperature = [electron_mass_eV*beta**2*beta*gamma*relative_energy_spread**2,electron_mass_eV*beta**2*norm_emittance_m**2/(bunch_sigma_r*1.e-6)**2/gamma**2,electron_mass_eV*beta**2*norm_emittance_m**2/(bunch_sigma_r*1.e-6)**2/gamma**2],
+    #temperature = [electron_mass_eV*beta**2*beta*gamma*relative_energy_spread**2,electron_mass_eV*beta**2*norm_emittance_m**2/(bunch_sigma_r*1.e-6)**2/gamma**2,electron_mass_eV*beta**2*norm_emittance_m**2/(bunch_sigma_r*1.e-6)**2/gamma**2],
     pusher = "boris",
     time_frozen = 0.0,
     boundary_conditions = [
@@ -120,7 +120,7 @@ Checkpoints(
     exit_after_dump = False,
 )
 
-list_fields = ['Ex','Ey','Rho','Jx']
+list_fields = ['Ex','Ey','Ez','Rho','Jx','Jy','Jz','Bx','By','Bz']
 
 DiagFields(
     every = 20,
