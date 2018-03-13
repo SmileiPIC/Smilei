@@ -313,9 +313,33 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
 //        MPI_neighbor_[0][0] = 0;
 //        MPI_neighbor_[0][1] = 0;
 //    }
+
+    for ( int xDom = 0 ; xDom < params.number_of_domain[0] ; xDom++ )
+        for ( int yDom = 0 ; yDom < params.number_of_domain[1] ; yDom++ ) {
+            if (params.map_rank[xDom][yDom] == rk ) {
+                Pcoordinates[0] = xDom;
+                Pcoordinates[1] = yDom;
+                min_local[0] =  params.offset_map[0][xDom]                           * params.cell_length[0];
+                max_local[0] = (params.offset_map[0][xDom]+params.n_space_domain[0]) * params.cell_length[0];
+                min_local[1] =  params.offset_map[1][yDom]                           * params.cell_length[1];
+                max_local[1] = (params.offset_map[1][yDom]+params.n_space_domain[1]) * params.cell_length[1];
+
+                cell_starting_global_index[0] = params.offset_map[0][xDom];
+                cell_starting_global_index[1] = params.offset_map[1][yDom];
+                
+            }
+        }
+
+//    neighbor_[0][0] = MPI_PROC_NULL;
+//    neighbor_[0][1] = 3;
+//    neighbor_[1][0] = 1;
+//    neighbor_[1][1] = 1;
+//    MPI_neighbor_[0][0] = MPI_PROC_NULL;
+//    MPI_neighbor_[0][1] = 3;
+//    MPI_neighbor_[1][0] = 1;
+//    MPI_neighbor_[1][1] = 1;
+
     if (rk==0) {
-        Pcoordinates[0] = 0;
-        Pcoordinates[1] = 0;
         neighbor_[0][0] = MPI_PROC_NULL;
         neighbor_[0][1] = 3;
         neighbor_[1][0] = 1;
@@ -325,16 +349,8 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
         MPI_neighbor_[1][0] = 1;
         MPI_neighbor_[1][1] = 1;
 
-        min_local[0] = 0.;
-        max_local[0] = 2*params.n_space[0]*params.cell_length[0];
-        cell_starting_global_index[0] = 0;
-        min_local[1] = 0.;
-        max_local[1] = 2*params.n_space[1]*params.cell_length[1];
-        cell_starting_global_index[1] = 0;
     }
     else if (rk==1) {
-        Pcoordinates[0] = 0;
-        Pcoordinates[1] = 1;
         neighbor_[0][0] = MPI_PROC_NULL;
         neighbor_[0][1] = 2;
         neighbor_[1][0] = 0;
@@ -344,16 +360,8 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
         MPI_neighbor_[1][0] = 0;
         MPI_neighbor_[1][1] = 0;
 
-        min_local[0] = 0.;
-        max_local[0] = 2*params.n_space[0]*params.cell_length[0];
-        cell_starting_global_index[0] = 0;
-        min_local[1] = 2*params.n_space[1]*params.cell_length[1];
-        max_local[1] = 8*params.n_space[1]*params.cell_length[1];
-        cell_starting_global_index[1] = 2*params.n_space[1];
     }
     else if (rk==2) {
-        Pcoordinates[1] = 1;
-        Pcoordinates[1] = 1;
         neighbor_[0][0] = 1;
         neighbor_[0][1] = MPI_PROC_NULL;
         neighbor_[1][0] = 3;
@@ -363,16 +371,8 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
         MPI_neighbor_[1][0] = 3;
         MPI_neighbor_[1][1] = 3;
 
-        min_local[0] = 2*params.n_space[0]*params.cell_length[0];
-        max_local[0] = 8*params.n_space[0]*params.cell_length[0];
-        cell_starting_global_index[0] = 2*params.n_space[0];
-        min_local[1] = 2*params.n_space[1]*params.cell_length[1];
-        max_local[1] = 8*params.n_space[1]*params.cell_length[1];
-        cell_starting_global_index[1] = 2*params.n_space[1];
     }
     else if (rk==3) {
-        Pcoordinates[1] = 1;
-        Pcoordinates[0] = 0;
         neighbor_[0][0] = 0;
         neighbor_[0][1] = MPI_PROC_NULL;
         neighbor_[1][0] = 2;
@@ -382,15 +382,11 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
         MPI_neighbor_[1][0] = 2;
         MPI_neighbor_[1][1] = 2;
 
-        min_local[0] = 2*params.n_space[0]*params.cell_length[0];
-        max_local[0] = 8*params.n_space[0]*params.cell_length[0];
-        cell_starting_global_index[0] = 2*params.n_space[0];
-        min_local[1] = 0.;
-        max_local[1] = 2*params.n_space[1]*params.cell_length[1];
-        cell_starting_global_index[1] = 0;
     }
     cell_starting_global_index[0] -= params.oversize[0];
     cell_starting_global_index[1] -= params.oversize[1];
+
+
 
     radius = sqrt(radius);
 
