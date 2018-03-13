@@ -326,63 +326,43 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
 
                 cell_starting_global_index[0] = params.offset_map[0][xDom];
                 cell_starting_global_index[1] = params.offset_map[1][yDom];
+
+                if (xDom>0)
+                    MPI_neighbor_[0][0] = params.map_rank[xDom-1][yDom];
+                else if (params.EM_BCs[0][0]=="periodic")
+                    MPI_neighbor_[0][0] = params.map_rank[(xDom-1)%params.number_of_domain[0]][yDom];
+                else 
+                    MPI_neighbor_[0][0] = MPI_PROC_NULL;
+
+                if (xDom<params.number_of_domain[0]-1)
+                    MPI_neighbor_[0][1] = params.map_rank[xDom+1][yDom];
+                else if (params.EM_BCs[0][1]=="periodic")
+                    MPI_neighbor_[0][1] = params.map_rank[(xDom+1)%params.number_of_domain[0]][yDom];
+                else 
+                    MPI_neighbor_[0][1] = MPI_PROC_NULL;
+                               
+                if (yDom>0)
+                    MPI_neighbor_[1][0] = params.map_rank[xDom][yDom-1];
+                else if (params.EM_BCs[1][0]=="periodic")
+                    MPI_neighbor_[1][0] = params.map_rank[xDom][(yDom-1)%params.number_of_domain[1]];
+                else 
+                    MPI_neighbor_[1][0] = MPI_PROC_NULL;
+
+                if (yDom<params.number_of_domain[1]-1)
+                    MPI_neighbor_[1][1] = params.map_rank[xDom][yDom+1];
+                else if (params.EM_BCs[1][1]=="periodic")
+                    MPI_neighbor_[1][1] = params.map_rank[xDom][(yDom+1)%params.number_of_domain[1]];
+                else 
+                    MPI_neighbor_[1][1] = MPI_PROC_NULL;
                 
             }
         }
 
-//    neighbor_[0][0] = MPI_PROC_NULL;
-//    neighbor_[0][1] = 3;
-//    neighbor_[1][0] = 1;
-//    neighbor_[1][1] = 1;
-//    MPI_neighbor_[0][0] = MPI_PROC_NULL;
-//    MPI_neighbor_[0][1] = 3;
-//    MPI_neighbor_[1][0] = 1;
-//    MPI_neighbor_[1][1] = 1;
+    neighbor_[0][0] = MPI_neighbor_[0][0];
+    neighbor_[0][1] = MPI_neighbor_[0][1];
+    neighbor_[1][0] = MPI_neighbor_[1][0];
+    neighbor_[1][1] = MPI_neighbor_[1][1];
 
-    if (rk==0) {
-        neighbor_[0][0] = MPI_PROC_NULL;
-        neighbor_[0][1] = 3;
-        neighbor_[1][0] = 1;
-        neighbor_[1][1] = 1;
-        MPI_neighbor_[0][0] = MPI_PROC_NULL;
-        MPI_neighbor_[0][1] = 3;
-        MPI_neighbor_[1][0] = 1;
-        MPI_neighbor_[1][1] = 1;
-
-    }
-    else if (rk==1) {
-        neighbor_[0][0] = MPI_PROC_NULL;
-        neighbor_[0][1] = 2;
-        neighbor_[1][0] = 0;
-        neighbor_[1][1] = 0;
-        MPI_neighbor_[0][0] = MPI_PROC_NULL;
-        MPI_neighbor_[0][1] = 2;
-        MPI_neighbor_[1][0] = 0;
-        MPI_neighbor_[1][1] = 0;
-
-    }
-    else if (rk==2) {
-        neighbor_[0][0] = 1;
-        neighbor_[0][1] = MPI_PROC_NULL;
-        neighbor_[1][0] = 3;
-        neighbor_[1][1] = 3;
-        MPI_neighbor_[0][0] = 1;
-        MPI_neighbor_[0][1] = MPI_PROC_NULL;
-        MPI_neighbor_[1][0] = 3;
-        MPI_neighbor_[1][1] = 3;
-
-    }
-    else if (rk==3) {
-        neighbor_[0][0] = 0;
-        neighbor_[0][1] = MPI_PROC_NULL;
-        neighbor_[1][0] = 2;
-        neighbor_[1][1] = 2;
-        MPI_neighbor_[0][0] = 0;
-        MPI_neighbor_[0][1] = MPI_PROC_NULL;
-        MPI_neighbor_[1][0] = 2;
-        MPI_neighbor_[1][1] = 2;
-
-    }
     cell_starting_global_index[0] -= params.oversize[0];
     cell_starting_global_index[1] -= params.oversize[1];
 

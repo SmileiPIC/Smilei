@@ -30,7 +30,7 @@ void Domain::build( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, Op
     // New_DD
     int rk(0);
     MPI_Comm_rank( MPI_COMM_WORLD, &rk );
-    vecPatch_.refHindex_ = rk;
+    vecPatch_.refHindex_ = rk; // OK with assertion neighbor_[i][j] = MPI_neighbor_[i][j];
 
 
     decomposition_ = DomainDecompositionFactory::createGlobal( params );
