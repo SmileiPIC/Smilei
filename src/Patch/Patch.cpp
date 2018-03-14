@@ -329,8 +329,9 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
 
                 if (xDom>0)
                     MPI_neighbor_[0][0] = params.map_rank[xDom-1][yDom];
-                else if (params.EM_BCs[0][0]=="periodic")
-                    MPI_neighbor_[0][0] = params.map_rank[(xDom-1)%params.number_of_domain[0]][yDom];
+                else if (params.EM_BCs[0][0]=="periodic") {
+                    MPI_neighbor_[0][0] = params.map_rank[xDom-1+params.number_of_domain[0]][yDom];
+                }
                 else 
                     MPI_neighbor_[0][0] = MPI_PROC_NULL;
 
@@ -343,8 +344,10 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
                                
                 if (yDom>0)
                     MPI_neighbor_[1][0] = params.map_rank[xDom][yDom-1];
-                else if (params.EM_BCs[1][0]=="periodic")
-                    MPI_neighbor_[1][0] = params.map_rank[xDom][(yDom-1)%params.number_of_domain[1]];
+                else if (params.EM_BCs[1][0]=="periodic") {
+                    //cout << "blabla " << yDom << " " << (yDom-1+params.number_of_domain[1])%params.number_of_domain[1] << endl;
+                    MPI_neighbor_[1][0] = params.map_rank[xDom][yDom-1+params.number_of_domain[1]];
+                }
                 else 
                     MPI_neighbor_[1][0] = MPI_PROC_NULL;
 

@@ -664,7 +664,7 @@ void Params::compute()
                 }
             }
         }
-        //MESSAGE( number_of_domain[0] << " " << number_of_domain[1] );
+        cout << "ndomain : " << number_of_domain[0] << " " << number_of_domain[1] << endl;
         //number_of_domain[0] = 2;
         //number_of_domain[1] = 2;
 
@@ -705,6 +705,7 @@ void Params::compute()
                     coordinates[1] = yDom;
                 }
             }
+        cout << "coords = " << coordinates[0] << " " << coordinates[1] << endl;
         for ( int iDim = 0 ; iDim < nDim_field ; iDim++ ) {
             if ( coordinates[iDim] != number_of_domain[iDim]-1 )
                 n_space_domain[iDim] = offset_map[iDim][coordinates[iDim]+1] - offset_map[iDim][coordinates[iDim]];
@@ -713,7 +714,7 @@ void Params::compute()
                 n_space_domain[iDim] = n_space_global[iDim] - offset_map[iDim][coordinates[iDim]];
             }
         }
-        //cout << rk << " " << n_space_domain[0] << " " << n_space_domain[1] << endl;
+        cout << "size :  " << n_space_domain[0] << " " << n_space_domain[1] << endl;
 
     }
 
