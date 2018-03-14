@@ -627,48 +627,65 @@ void Params::compute()
         //    n_space_domain[1] = 2 * n_space[1];
         //else
         //    n_space_domain[1] = 6 * n_space[1];
-        if (rk==0) {
-            n_space_domain[0] = 2 * n_space[0];
-            n_space_domain[1] = 2 * n_space[1];
+//        if (rk==0) {
+//            n_space_domain[0] = 2 * n_space[0];
+//            n_space_domain[1] = 2 * n_space[1];
+//        }
+//        else if (rk==1) {
+//            n_space_domain[0] = 2 * n_space[0];
+//            n_space_domain[1] = 6 * n_space[1];
+//        }
+//        else if (rk==2) {
+//            n_space_domain[0] = 6 * n_space[0];
+//            n_space_domain[1] = 6 * n_space[1];
+//        }
+//        else if (rk==3) {
+//            n_space_domain[0] = 6 * n_space[0];
+//            n_space_domain[1] = 2 * n_space[1];
+//        }
+
+        number_of_domain.resize( nDim_field, 0 );
+        number_of_domain[0] = 2;
+        number_of_domain[1] = 2;
+        // offset_map, expressed in number of cells
+        offset_map.resize( nDim_field );
+        for ( int iDim = 0 ; iDim < nDim_field ; iDim++ ) {
+            offset_map[iDim].resize( number_of_domain[iDim] );
         }
-        else if (rk==1) {
-            n_space_domain[0] = 2 * n_space[0];
-            n_space_domain[1] = 6 * n_space[1];
+        offset_map[0][0] = 0;
+        offset_map[0][1] = 2 * n_space[0];
+        offset_map[1][0] = 0;
+        offset_map[1][1] = 2 * n_space[1];
+
+        map_rank.resize( number_of_domain[0] );
+        for ( int iDim = 0 ; iDim < number_of_domain[0] ; iDim++ )
+            map_rank[iDim].resize( number_of_domain[1] );
+
+        map_rank[0][0] = 0;
+        map_rank[1][0] = 3;
+        map_rank[0][1] = 1;
+        map_rank[1][1] = 2;
+
+        vector<int> coordinates( nDim_field );
+        for ( int xDom = 0 ; xDom < number_of_domain[0] ; xDom++ )
+            for ( int yDom = 0 ; yDom < number_of_domain[1] ; yDom++ ) {
+                if (map_rank[xDom][yDom] == rk ) {
+                    cout << xDom << " " << yDom << endl;
+                    coordinates[0] = xDom;
+                    coordinates[1] = yDom;
+                }
+            }
+        for ( int iDim = 0 ; iDim < nDim_field ; iDim++ ) {
+            if ( coordinates[iDim] != number_of_domain[iDim]-1 )
+                n_space_domain[iDim] = offset_map[iDim][coordinates[iDim]+1] - offset_map[iDim][coordinates[iDim]];
+            else {
+                cout << n_space_global[iDim] << " - "  << offset_map[iDim][coordinates[iDim]] << endl;
+                n_space_domain[iDim] = n_space_global[iDim] - offset_map[iDim][coordinates[iDim]];
+            }
         }
-        else if (rk==2) {
-            n_space_domain[0] = 6 * n_space[0];
-            n_space_domain[1] = 6 * n_space[1];
-        }
-        else if (rk==3) {
-            n_space_domain[0] = 6 * n_space[0];
-            n_space_domain[1] = 2 * n_space[1];
-        }
+        cout << rk << " " << n_space_domain[0] << " " << n_space_domain[1] << endl;
 
     }
-
-
-    number_of_domain.resize( nDim_field, 0 );
-    number_of_domain[0] = 2;
-    number_of_domain[1] = 2;
-    // offset_map, expressed in number of cells
-    offset_map.resize( nDim_field );
-    for ( int iDim = 0 ; iDim < nDim_field ; iDim++ ) {
-        offset_map[iDim].resize( number_of_domain[iDim] );
-    }
-    offset_map[0][0] = 0;
-    offset_map[0][1] = 2 * n_space[0];
-    offset_map[1][0] = 0;
-    offset_map[1][1] = 2 * n_space[1];
-
-    map_rank.resize( number_of_domain[0] );
-    for ( int iDim = 0 ; iDim < number_of_domain[0] ; iDim++ )
-        map_rank[iDim].resize( number_of_domain[1] );
-
-    map_rank[0][0] = 0;
-    map_rank[1][0] = 3;
-    map_rank[0][1] = 1;
-    map_rank[1][1] = 2;
-
 
     
     // Set clrw if not set by the user
