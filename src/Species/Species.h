@@ -385,6 +385,17 @@ public:
     void disableXmax();
     //! Moving window boundary conditions managment
     void setXminBoundaryCondition();
+
+    double sum_gamma () {
+        double s_gamma(0.);
+        for ( unsigned int ipart = 0 ; ipart < getNbrOfParticles() ; ipart++ ) {
+            s_gamma += sqrt( 1. + particles->momentum(0,ipart) * particles->momentum(0,ipart) 
+                             + particles->momentum(1,ipart) * particles->momentum(1,ipart)
+                             + particles->momentum(2,ipart) * particles->momentum(2,ipart) );
+        }
+
+        return s_gamma;
+    }
     
 protected:
 
