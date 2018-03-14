@@ -35,6 +35,8 @@ public:
     std::vector<int> missing_patches_;
     std::vector<int> missing_patches_ranks;
 
+    Patch* fake_patch;
+
 
 
 };

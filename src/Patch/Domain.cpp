@@ -48,6 +48,8 @@ void Domain::build( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, Op
     vecPatch_.nAntennas = vecPatch_(0)->EMfields->antennas.size();
     vecPatch_.initExternals( params );
 
+    fake_patch = PatchesFactory::clone(vecPatches(0), params, smpi, vecPatches.domain_decomposition_, 0, 0, false);
+
 /*    if ( params.nDim_field == 1 )
         diag_ = new DiagnosticFields1D( params, smpi, vecPatch_, 0, openPMD ); 
     else if ( params.nDim_field == 2 )
@@ -103,6 +105,8 @@ void Domain::clean()
     }
     if (patch_!=NULL) delete patch_;
     if (decomposition_ !=NULL) delete decomposition_;
+
+    delete fake_patch;
 
 }
 

@@ -109,7 +109,7 @@ void SyncCartesianPatch::recvPatchedToCartesian( ElectroMagn* globalfields, unsi
     // Jx_
     // define fake_patch
     unsigned int n_moved = 0;
-    Patch* fake_patch = PatchesFactory::clone(vecPatches(0), params, smpi, vecPatches.domain_decomposition_, hindex, n_moved, false);
+    //Patch* fake_patch = PatchesFactory::clone(vecPatches(0), params, smpi, vecPatches.domain_decomposition_, hindex, n_moved, false);
     //smpi->recv( fake_patch->Jx_, hindex, local_patch_rank );
     //    recv(  EM->Bz_m, from, tag ); tag++;
 
@@ -117,17 +117,17 @@ void SyncCartesianPatch::recvPatchedToCartesian( ElectroMagn* globalfields, unsi
 
     //  vecPatches(ipatch) -> need sender patch coordinates : vecPatches.getDomainCoordinates( hindex )
     // Buffer will be resized for each component, fake local patch, which wil have Jxyz, and coordinates to update ?
-    fake_patch->hindex = hindex;
-    fake_patch->Pcoordinates = vecPatches.domain_decomposition_->getDomainCoordinates( hindex );
+    domain.fake_patch->hindex = hindex;
+    domain.fake_patch->Pcoordinates = vecPatches.domain_decomposition_->getDomainCoordinates( hindex );
 
-    smpi->recv( fake_patch->EMfields->Jx_, local_patch_rank, hindex*3 );
-    fake_patch->EMfields->Jx_->put( globalfields->Jx_, params, smpi, fake_patch, domain.patch_ );
+    smpi->recv( domain.fake_patch->EMfields->Jx_, local_patch_rank, hindex*3 );
+    domain.fake_patch->EMfields->Jx_->put( globalfields->Jx_, params, smpi, domain.fake_patch, domain.patch_ );
 
-    smpi->recv( fake_patch->EMfields->Jy_, local_patch_rank, hindex*3+1 );
-    fake_patch->EMfields->Jy_->put( globalfields->Jy_, params, smpi, fake_patch, domain.patch_ );
+    smpi->recv( domain.fake_patch->EMfields->Jy_, local_patch_rank, hindex*3+1 );
+    domain.fake_patch->EMfields->Jy_->put( globalfields->Jy_, params, smpi, domain.fake_patch, domain.patch_ );
 
-    smpi->recv( fake_patch->EMfields->Jz_, local_patch_rank, hindex*3+2 );
-    fake_patch->EMfields->Jz_->put( globalfields->Jz_, params, smpi, fake_patch, domain.patch_ );
+    smpi->recv( domain.fake_patch->EMfields->Jz_, local_patch_rank, hindex*3+2 );
+    domain.fake_patch->EMfields->Jz_->put( globalfields->Jz_, params, smpi, domain.fake_patch, domain.patch_ );
 
 
     //if(params.is_spectral){
@@ -135,7 +135,7 @@ void SyncCartesianPatch::recvPatchedToCartesian( ElectroMagn* globalfields, unsi
     //
     //}
 
-    delete fake_patch;
+    //delete fake_patch;
 
 }
 
@@ -227,7 +227,7 @@ void SyncCartesianPatch::sendCartesianToPatches( ElectroMagn* globalfields, unsi
     // Jx_
     // define fake_patch
     unsigned int n_moved = 0;
-    Patch* fake_patch = PatchesFactory::clone(vecPatches(0), params, smpi, vecPatches.domain_decomposition_, hindex, n_moved, false);
+    //Patch* fake_patch = PatchesFactory::clone(vecPatches(0), params, smpi, vecPatches.domain_decomposition_, hindex, n_moved, false);
     //smpi->recv( fake_patch->Jx_, hindex, local_patch_rank );
     //    recv(  EM->Bz_m, from, tag ); tag++;
 
@@ -237,26 +237,26 @@ void SyncCartesianPatch::sendCartesianToPatches( ElectroMagn* globalfields, unsi
     // Buffer will be resized for each component, fake local patch, which wil have Jxyz, and coordinates to update ?
 
 
-    fake_patch->hindex = hindex;
-    fake_patch->Pcoordinates = vecPatches.domain_decomposition_->getDomainCoordinates( hindex );
+    domain.fake_patch->hindex = hindex;
+    domain.fake_patch->Pcoordinates = vecPatches.domain_decomposition_->getDomainCoordinates( hindex );
 
-    fake_patch->EMfields->Ex_->get( globalfields->Ex_, params, smpi, domain.patch_, fake_patch );
-    smpi->send( fake_patch->EMfields->Ex_, local_patch_rank, hindex*3 );
+    domain.fake_patch->EMfields->Ex_->get( globalfields->Ex_, params, smpi, domain.patch_, domain.fake_patch );
+    smpi->send( domain.fake_patch->EMfields->Ex_, local_patch_rank, hindex*3 );
 
-    fake_patch->EMfields->Ey_->get( globalfields->Ey_, params, smpi, domain.patch_, fake_patch );
-    smpi->send( fake_patch->EMfields->Ey_, local_patch_rank, hindex*3+1 );
+    domain.fake_patch->EMfields->Ey_->get( globalfields->Ey_, params, smpi, domain.patch_, domain.fake_patch );
+    smpi->send( domain.fake_patch->EMfields->Ey_, local_patch_rank, hindex*3+1 );
 
-    fake_patch->EMfields->Ez_->get( globalfields->Ez_, params, smpi, domain.patch_, fake_patch );
-    smpi->send( fake_patch->EMfields->Ez_, local_patch_rank, hindex*3+2 );
+    domain.fake_patch->EMfields->Ez_->get( globalfields->Ez_, params, smpi, domain.patch_, domain.fake_patch );
+    smpi->send( domain.fake_patch->EMfields->Ez_, local_patch_rank, hindex*3+2 );
 
-    fake_patch->EMfields->Bx_m->get( globalfields->Bx_m, params, smpi, domain.patch_, fake_patch );
-    smpi->send( fake_patch->EMfields->Bx_m, local_patch_rank, hindex*3 );
+    domain.fake_patch->EMfields->Bx_m->get( globalfields->Bx_m, params, smpi, domain.patch_, domain.fake_patch );
+    smpi->send( domain.fake_patch->EMfields->Bx_m, local_patch_rank, hindex*3 );
 
-    fake_patch->EMfields->By_m->get( globalfields->By_m, params, smpi, domain.patch_, fake_patch );
-    smpi->send( fake_patch->EMfields->By_m, local_patch_rank, hindex*3+1 );
+    domain.fake_patch->EMfields->By_m->get( globalfields->By_m, params, smpi, domain.patch_, domain.fake_patch );
+    smpi->send( domain.fake_patch->EMfields->By_m, local_patch_rank, hindex*3+1 );
 
-    fake_patch->EMfields->Bz_m->get( globalfields->Bz_m, params, smpi, domain.patch_, fake_patch );
-    smpi->send( fake_patch->EMfields->Bz_m, local_patch_rank, hindex*3+2 );
+    domain.fake_patch->EMfields->Bz_m->get( globalfields->Bz_m, params, smpi, domain.patch_, domain.fake_patch );
+    smpi->send( domain.fake_patch->EMfields->Bz_m, local_patch_rank, hindex*3+2 );
 
 
     //if(params.is_spectral){
@@ -264,7 +264,7 @@ void SyncCartesianPatch::sendCartesianToPatches( ElectroMagn* globalfields, unsi
     //
     //}
 
-    delete fake_patch;
+    //delete fake_patch;
 }
 
 
