@@ -765,6 +765,24 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi )
     // All the parameters for the Poisson problem (e.g. maximum iteration) are the same used in the namelist
     // for the traditional Poisson problem
 
+    double s_gamma(0.);
+    uint64_t nparticles(0);
+    for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size() ; ispec++) {
+        if (species(0, ispec)->relativistic_field_initialization){
+            for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+                s_gamma += species(ipatch, ispec)->sum_gamma();
+                nparticles += species(ipatch, ispec)->getNbrOfParticles();
+            }
+        }
+    }
+    double gamma_global(0.);
+    MPI_Allreduce(&s_gamma, &gamma_global, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    uint64_t nparticles_global(0);
+    MPI_Allreduce(&nparticles, &nparticles_global, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
+    MESSAGE( "GAMMA = " << gamma_global/(double)nparticles_global);
+
+
+
     Timer ptimer("global");
     ptimer.init(smpi);
     ptimer.restart();
