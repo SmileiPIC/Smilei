@@ -199,6 +199,20 @@ The block ``Main`` is **mandatory** and has the following syntax::
   | **Syntax 2:** ``[[bc_X], [bc_Y], ...]``, different depending on x, y or z.
   | **Syntax 3:** ``[[bc_Xmin, bc_Xmax], ...]``,  different on each boundary.
 
+  ``"silver-muller"`` is an open boundary condition. The incident wave vector :math:`k_i` on each face is defined by ``"EM_boundary_conditions_k"``.
+  When using ``"silver-muller"`` as an injecting boundary, make sure :math:`k_i` is aligned with the wave you are injecting.
+  When using ``"silver-muller"`` as an absorbing boundary, the optimal wave absorption on a given face will be along :math:`k_{abs}` the specular reflection of :math:`k_i` on face `i`. 
+
+.. py:data:: EM_boundary_conditions_k
+
+  :type: list of lists of floats
+  :default: ``[[1.,0.,0.],[-1.,0.,0.],[0.,1.,0.],[0.,-1.,0.],[0.,0.,1.],[0.,0.,-1.]]``
+
+  `k` is the incident wave vector for each faces sequentially Xmin, Xmax, Ymin, Ymax, Zmin, Zmax defined by its coordinates in the `xyz` frame.  
+  The number of coordinates is equal to the dimension of the simulation. The number of given vectors must be equal to 1 or to the number of faces which is twice the dimension of the simulation.
+
+  | **Syntax 1:** ``[[1,0,0]]``, identical for all boundaries.
+  | **Syntax 2:** ``[[1,0,0],[-1,0,0], ...]``,  different on each boundary.
 
 .. py:data:: time_fields_frozen
 
@@ -330,7 +344,7 @@ The block ``MovingWindow`` is optional. The window does not move it you do not d
 Current filtering
 ^^^^^^^^^^^^^^^^^
 
-The present version of :program:`Smilei` provides one method for current filtering,
+The present version of :program:`Smilei` provides a :ref:`multi-pass binomial filter <multipassBinomialFilter>` on the current densities,
 which parameters are controlled in the following block::
 
   CurrentFilter(
@@ -358,7 +372,8 @@ which parameters are controlled in the following block::
 Field filtering
 ^^^^^^^^^^^^^^^^^
 
-The present version of :program:`Smilei` provides one method for field filtering,
+The present version of :program:`Smilei` provides a method for field filtering
+(at the moment, only the :ref:`Friedman electric field time-filter <EfieldFilter>` is available)
 which parameters are controlled in the following block::
 
   FieldFilter(
@@ -437,7 +452,7 @@ Each species has to be defined in a ``Species`` block::
    * ``"random"`` for randomly distributed
    * ``"centered"`` for centered in each cell
 
-   You can also decide to initialize species particles on another species particles ("targeted species"). In this case, replace one of the previous option by the name of the "targeted" species. For example, you want initialize position "electron" on randomly distributed "ion" ::
+   You can also decide to initialize species particles on another species particles ("targeted species"). In this case, the argument takes the name of the "targeted" species. For example, if you want to initialize  "electron" positions on randomly distributed "ion" ::
 
     Species(
         name = "ion",
@@ -451,9 +466,11 @@ Each species has to be defined in a ``Species`` block::
         ...
     )
 
-  :red:`Warning` Target species have to be initialize with "random","centered" or "regular"
+  :red:`Warning` Target species have to be initialize with "random","centered" or "regular".
 
-  :red:`Warning` The number of first species particles have to be the same of the second species particles
+  :red:`Warning` The number of particles of both species must be identical in each cell.
+
+    The particles positions can also be exactly defined by providing the position of each particle. In this case you must also provide the weight of each particle. This is done by passing a two-dimensional numpy array. The first dimension is of size of the simulation dimension + 1. Positions components `x`, `y`, `z` are given along the first columns and the weights are given in the last column of the array. The second dimension is of size total number of particles in the species. Positions and weights must be passed in normalized units. See :ref:`Weights` for a better understanding of how to define weights of particles. If this mode of intialization is chosen, SMILEI will raise an error if the parameters `number_density`, `charge_density` or `particles_per_cell` are defined.
 
 .. py:data:: momentum_initialization
 
@@ -464,6 +481,9 @@ Each species has to be defined in a ``Species`` block::
   * ``"cold"`` for zero temperature
 
   The first 2 distributions depend on the parameter :py:data:`temperature` explained below.
+
+  If particles positions are initialized via a numpy array, this argument can also take a numpy array giving the value of momentum components. As for the positions, this must be a two-dimensional numpy array. The first dimension is of size of the simulation dimension. Momentum components `px`, `py`, `pz` are given in successive columns. The second dimension is of size total number of particles in the species and must be equal to the size of the second dimension of the position_initialization array. Momentum components must be passed in normalized units. If this mode of intialization is chosen, SMILEI will raise an error if the parameters `temperature`, or `mean_velocity` are defined.
+
 
 .. py:data:: particles_per_cell
 

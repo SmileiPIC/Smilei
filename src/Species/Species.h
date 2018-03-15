@@ -132,6 +132,12 @@ public:
     Particles particles_sorted[2];
     //std::vector<int> index_of_particles_to_exchange;
     
+    //! Pointer toward position array
+    double *position_initialization_array;
+    //! Number of particles in the init array
+    double *momentum_initialization_array;
+    //! Number of particles in the init array
+    int n_numpy_particles; 
     //! Boolean to know if we initialize particles one specie on another species
     bool position_initialization_on_species;
     //! Index of the species where position initialization is made
