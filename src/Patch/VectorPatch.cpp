@@ -298,14 +298,6 @@ void VectorPatch::sumSusceptibility(Params &params, double time_dual, Timers &ti
         // }
     }
 
-    if(diag_flag){
-        for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
-            if( ! (*this)(0)->vecSpecies[ispec]->particles->is_test ) {
-                update_field_list(ispec);
-                SyncVectorPatch::sumRhoJs( params, (*this), ispec, timers, itime ); // MPI
-            }
-        }
-    }
     timers.syncDens.update( params.printNow( itime ) );
 
 } // End sumSusceptibility
