@@ -522,7 +522,7 @@ public:
         } else {
             ok1 = PyTools::extract3Profiles("mean_velocity", ispec, profile1, profile2, profile3) ;
             ok2 = PyTools::extract3Profiles("temperature", ispec, profile1, profile2, profile3) ;
-            if(  ok1 ||  ok2 ) ERROR("For species '" << species_name << "', cannot define both `mean_velocity` or `temperature` and `momentum_initialization` array.");
+            if(  ok1 ||  ok2 ) MESSAGE("For species '" << species_name << "', cannot define both `mean_velocity` or `temperature` and `momentum_initialization` array.");
         }
 
 
