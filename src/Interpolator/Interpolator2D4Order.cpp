@@ -289,7 +289,7 @@ void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particl
     (*RhoLoc) = compute( &coeffxp_[2], &coeffyp_[2], Rho2D, ip_, jp_);
 
 }
-void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread)
+void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
 {
     std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
     std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);

@@ -30,7 +30,7 @@ void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
 {
 }
 
-void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread)
+void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
 {
     if ( istart[0] == iend[0] ) return; //Don't treat empty cells.
 

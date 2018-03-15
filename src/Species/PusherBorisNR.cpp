@@ -20,7 +20,7 @@ PusherBorisNR::~PusherBorisNR()
     Lorentz Force -- leap-frog (Boris) scheme
 ***********************************************************************/
 
-void PusherBorisNR::operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread)
+void PusherBorisNR::operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ipart_ref)
 {
     std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
     std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);

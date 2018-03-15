@@ -30,7 +30,7 @@ PusherHigueraCary::~PusherHigueraCary()
   Lorentz Force -- leap-frog (HigueraCary) scheme
  ***********************************************************************/
 
-void PusherHigueraCary::operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread)
+void PusherHigueraCary::operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ipart_ref)
 {
     std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
     std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);

@@ -21,7 +21,7 @@ class PusherHigueraCary : public Pusher {
         PusherHigueraCary(Params& params, Species *species);
         ~PusherHigueraCary();
         //! Overloading of () operator
-        virtual void operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread);
+        virtual void operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ipart_ref = 0);
 };
 
 #endif
