@@ -34,7 +34,7 @@ void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
 {
     if ( istart[0] == iend[0] ) return; //Don't treat empty cells.
 
-    int nparts( particles.size() );
+    int nparts( (smpi->dynamics_invgf[ithread]).size() );
 
     double *Epart[3], *Bpart[3];
     double E,E2;
@@ -113,7 +113,7 @@ void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
                     coeff[i][j][1][ipart]    =  (0.75 - delta2);
                     coeff[i][j][2][ipart]    =  0.5 * (delta2+delta+0.25);
     
-                    if (j==0) deltaO[i][ipart+ivect+istart[0]] = delta;
+                    if (j==0) deltaO[i][ipart-ipart_ref+ivect+istart[0]] = delta;
     
                 }
             }
@@ -135,7 +135,7 @@ void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
                         ( (1-dual[0][ipart])*(*Ex2D)(idxO[0]+1+iloc,idxO[1]+1+jloc) + dual[0][ipart]*(*Ex2D)(idxO[0]+2+iloc,idxO[1]+1+jloc ) );
                 }
             }
-            Epart[0][ipart+ivect+istart[0]] = interp_res;
+            Epart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
 
             //Ey(primal, dual)
             interp_res = 0.;
@@ -145,7 +145,7 @@ void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
                         ( (1-dual[1][ipart])*(*Ey2D)(idxO[0]+1+iloc,idxO[1]+1+jloc) + dual[1][ipart]*(*Ey2D)(idxO[0]+1+iloc,idxO[1]+2+jloc ) );
                 }
             }
-            Epart[1][ipart+ivect+istart[0]] = interp_res;
+            Epart[1][ipart-ipart_ref+ivect+istart[0]] = interp_res;
  
  
             //Ez(primal, primal)
@@ -155,7 +155,7 @@ void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
                     interp_res += *(coeffxp+iloc*32) * *(coeffyp+jloc*32) * (*Ez2D)(idxO[0]+1+iloc,idxO[1]+1+jloc);
                 }
             }
-            Epart[2][ipart+ivect+istart[0]] = interp_res;
+            Epart[2][ipart-ipart_ref+ivect+istart[0]] = interp_res;
 
             //Bx(primal, dual)
             interp_res = 0.;
@@ -165,7 +165,7 @@ void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
                         ( ( (1-dual[1][ipart])*(*Bx2D)(idxO[0]+1+iloc,idxO[1]+1+jloc) + dual[1][ipart]*(*Bx2D)(idxO[0]+1+iloc,idxO[1]+2+jloc ) ) );
                 }
             }
-            Bpart[0][ipart+ivect+istart[0]] = interp_res;
+            Bpart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
 
             //By(dual, primal )
             interp_res = 0.;
@@ -175,7 +175,7 @@ void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
                         ( ( (1-dual[0][ipart])*(*By2D)(idxO[0]+1+iloc,idxO[1]+1+jloc) + dual[0][ipart]*(*By2D)(idxO[0]+2+iloc,idxO[1]+1+jloc ) ) );
                 }
             }
-            Bpart[1][ipart+ivect+istart[0]] = interp_res;
+            Bpart[1][ipart-ipart_ref+ivect+istart[0]] = interp_res;
 
             //Bz(dual, dual)
             interp_res = 0.;
@@ -186,7 +186,7 @@ void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
                           +    dual[1][ipart]  * ( (1-dual[0][ipart])*(*Bz2D)(idxO[0]+1+iloc,idxO[1]+2+jloc) + dual[0][ipart]*(*Bz2D)(idxO[0]+2+iloc,idxO[1]+2+jloc ) ) );
                 }
             }
-            Bpart[2][ipart+ivect+istart[0]] = interp_res;
+            Bpart[2][ipart-ipart_ref+ivect+istart[0]] = interp_res;
 
        }
     }

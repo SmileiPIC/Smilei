@@ -10,9 +10,9 @@ public:
     ~Projector3D4OrderV();
 
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_)
-    inline void operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, std::vector<unsigned int> &b_dim, int* iold, double *deltaold);
+    inline void operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, std::vector<unsigned int> &b_dim, int* iold, double *deltaold, int ipart_ref = 0);
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_/rho), diagFields timestep
-    inline void operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double>* invgf, std::vector<unsigned int> &b_dim, int* iold, double* deltaold);
+    inline void operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double>* invgf, std::vector<unsigned int> &b_dim, int* iold, double* deltaold, int ipart_ref = 0);
 
     //! Project global current charge (EMfields->rho_), frozen & diagFields timestep
     void operator() (double* rho, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim) override final;

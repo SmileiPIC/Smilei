@@ -56,14 +56,14 @@ Projector3D2OrderV::~Projector3D2OrderV()
 //!  Project current densities & charge : diagFields timstep (not vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
 //void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
-void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, double *rho, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, std::vector<unsigned int> &b_dim, int* iold, double *deltaold)
+void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, double *rho, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, std::vector<unsigned int> &b_dim, int* iold, double *deltaold, int ipart_ref)
 {
 
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------
 
-    int npart_total = particles.size();
+    int npart_total = invgf->size();
     int ipo = iold[0];
     int jpo = iold[1];
     int kpo = iold[2];
@@ -103,7 +103,7 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, double 
 
             // locate the particle on the primal grid at former time-step & calculate coeff. S0
             //                            X                                 //
-            double delta = deltaold[ivect+ipart+istart];
+            double delta = deltaold[ivect+ipart-ipart_ref+istart];
             double delta2 = delta*delta;
 
             Sx0_buff_vect[          ipart] = 0.5 * (delta2-delta+0.25);
@@ -112,7 +112,7 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, double 
             Sx0_buff_vect[3*vecSize+ipart] = 0.;
 
             //                            Y                                 //
-            delta = deltaold[ivect+ipart+istart+npart_total];
+            delta = deltaold[ivect+ipart-ipart_ref+istart+npart_total];
             delta2 = delta*delta;
 
             Sy0_buff_vect[          ipart] = 0.5 * (delta2-delta+0.25);
@@ -121,7 +121,7 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, double 
             Sy0_buff_vect[3*vecSize+ipart] = 0.;
 
             //                            Z                                 //
-            delta = deltaold[ivect+ipart+istart+2*npart_total];
+            delta = deltaold[ivect+ipart-ipart_ref+istart+2*npart_total];
             delta2 = delta*delta;
 
             Sz0_buff_vect[          ipart] = 0.5 * (delta2-delta+0.25);
@@ -282,7 +282,7 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, double 
 
             // locate the particle on the primal grid at former time-step & calculate coeff. S0
             //                            X                                 //
-            double delta = deltaold[ivect+ipart+istart];
+            double delta = deltaold[ivect+ipart-ipart_ref+istart];
             double delta2 = delta*delta;
 
             Sx0_buff_vect[          ipart] = 0.5 * (delta2-delta+0.25);
@@ -291,7 +291,7 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, double 
             Sx0_buff_vect[3*vecSize+ipart] = 0.;
 
             //                            Y                                 //
-            delta = deltaold[ivect+ipart+istart+npart_total];
+            delta = deltaold[ivect+ipart-ipart_ref+istart+npart_total];
             delta2 = delta*delta;
 
             Sy0_buff_vect[          ipart] = 0.5 * (delta2-delta+0.25);
@@ -300,7 +300,7 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, double 
             Sy0_buff_vect[3*vecSize+ipart] = 0.;
 
             //                            Z                                 //
-            delta = deltaold[ivect+ipart+istart+2*npart_total];
+            delta = deltaold[ivect+ipart-ipart_ref+istart+2*npart_total];
             delta2 = delta*delta;
 
             Sz0_buff_vect[          ipart] = 0.5 * (delta2-delta+0.25);
@@ -454,7 +454,7 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, double 
 
             // locate the particle on the primal grid at former time-step & calculate coeff. S0
             //                            X                                 //
-            double delta = deltaold[ivect+ipart+istart];
+            double delta = deltaold[ivect+ipart-ipart_ref+istart];
             double delta2 = delta*delta;
 
             Sx0_buff_vect[          ipart] = 0.5 * (delta2-delta+0.25);
@@ -463,7 +463,7 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, double 
             Sx0_buff_vect[3*vecSize+ipart] = 0.;
 
             //                            Y                                 //
-            delta = deltaold[ivect+ipart+istart+npart_total];
+            delta = deltaold[ivect+ipart-ipart_ref+istart+npart_total];
             delta2 = delta*delta;
 
             Sy0_buff_vect[          ipart] = 0.5 * (delta2-delta+0.25);
@@ -472,7 +472,7 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, double 
             Sy0_buff_vect[3*vecSize+ipart] = 0.;
 
             //                            Z                                 //
-            delta = deltaold[ivect+ipart+istart+2*npart_total];
+            delta = deltaold[ivect+ipart-ipart_ref+istart+2*npart_total];
             delta2 = delta*delta;
 
             Sz0_buff_vect[          ipart] = 0.5 * (delta2-delta+0.25);
@@ -900,13 +900,13 @@ void Projector3D2OrderV::operator() (Field* Jx, Field* Jy, Field* Jz, Particles 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project current densities : main projector vectorized
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, std::vector<unsigned int> &b_dim, int* iold, double *deltaold)
+void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, std::vector<unsigned int> &b_dim, int* iold, double *deltaold, int ipart_ref)
 {
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------
 
-    int npart_total = particles.size();
+    int npart_total = invgf->size();
     int ipo = iold[0];
     int jpo = iold[1];
     int kpo = iold[2];
@@ -946,7 +946,7 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, Particl
 
             // locate the particle on the primal grid at former time-step & calculate coeff. S0
             //                            X                                 //
-            double delta = deltaold[ivect+ipart+istart];
+            double delta = deltaold[ivect+ipart-ipart_ref+istart];
             double delta2 = delta*delta;
 
             Sx0_buff_vect[          ipart] = 0.5 * (delta2-delta+0.25);
@@ -955,7 +955,7 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, Particl
             Sx0_buff_vect[3*vecSize+ipart] = 0.;
 
             //                            Y                                 //
-            delta = deltaold[ivect+ipart+istart+npart_total];
+            delta = deltaold[ivect+ipart-ipart_ref+istart+npart_total];
             delta2 = delta*delta;
 
             Sy0_buff_vect[          ipart] = 0.5 * (delta2-delta+0.25);
@@ -964,7 +964,7 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, Particl
             Sy0_buff_vect[3*vecSize+ipart] = 0.;
 
             //                            Z                                 //
-            delta = deltaold[ivect+ipart+istart+2*npart_total];
+            delta = deltaold[ivect+ipart-ipart_ref+istart+2*npart_total];
             delta2 = delta*delta;
 
             Sz0_buff_vect[          ipart] = 0.5 * (delta2-delta+0.25);
@@ -1125,7 +1125,7 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, Particl
 
             // locate the particle on the primal grid at former time-step & calculate coeff. S0
             //                            X                                 //
-            double delta = deltaold[ivect+ipart+istart];
+            double delta = deltaold[ivect+ipart-ipart_ref+istart];
             double delta2 = delta*delta;
 
             Sx0_buff_vect[          ipart] = 0.5 * (delta2-delta+0.25);
@@ -1134,7 +1134,7 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, Particl
             Sx0_buff_vect[3*vecSize+ipart] = 0.;
 
             //                            Y                                 //
-            delta = deltaold[ivect+ipart+istart+npart_total];
+            delta = deltaold[ivect+ipart-ipart_ref+istart+npart_total];
             delta2 = delta*delta;
 
             Sy0_buff_vect[          ipart] = 0.5 * (delta2-delta+0.25);
@@ -1143,7 +1143,7 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, Particl
             Sy0_buff_vect[3*vecSize+ipart] = 0.;
 
             //                            Z                                 //
-            delta = deltaold[ivect+ipart+istart+2*npart_total];
+            delta = deltaold[ivect+ipart-ipart_ref+istart+2*npart_total];
             delta2 = delta*delta;
 
             Sz0_buff_vect[          ipart] = 0.5 * (delta2-delta+0.25);
@@ -1297,7 +1297,7 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, Particl
 
             // locate the particle on the primal grid at former time-step & calculate coeff. S0
             //                            X                                 //
-            double delta = deltaold[ivect+ipart+istart];
+            double delta = deltaold[ivect+ipart-ipart_ref+istart];
             double delta2 = delta*delta;
 
             Sx0_buff_vect[          ipart] = 0.5 * (delta2-delta+0.25);
@@ -1306,7 +1306,7 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, Particl
             Sx0_buff_vect[3*vecSize+ipart] = 0.;
 
             //                            Y                                 //
-            delta = deltaold[ivect+ipart+istart+npart_total];
+            delta = deltaold[ivect+ipart-ipart_ref+istart+npart_total];
             delta2 = delta*delta;
 
             Sy0_buff_vect[          ipart] = 0.5 * (delta2-delta+0.25);
@@ -1315,7 +1315,7 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, Particl
             Sy0_buff_vect[3*vecSize+ipart] = 0.;
 
             //                            Z                                 //
-            delta = deltaold[ivect+ipart+istart+2*npart_total];
+            delta = deltaold[ivect+ipart-ipart_ref+istart+2*npart_total];
             delta2 = delta*delta;
 
             Sz0_buff_vect[          ipart] = 0.5 * (delta2-delta+0.25);
@@ -1476,7 +1476,7 @@ void Projector3D2OrderV::operator() (ElectroMagn* EMfields, Particles &particles
             double* b_Jx =  &(*EMfields->Jx_ )(0);
             double* b_Jy =  &(*EMfields->Jy_ )(0);
             double* b_Jz =  &(*EMfields->Jz_ )(0);
-            (*this)(b_Jx , b_Jy , b_Jz , particles,  istart, iend, invgf, b_dim, iold, &(*delta)[0]);
+            (*this)(b_Jx , b_Jy , b_Jz , particles,  istart, iend, invgf, b_dim, iold, &(*delta)[0], ipart_ref);
         }
         else 
             ERROR("TO DO with rho");
@@ -1490,6 +1490,6 @@ void Projector3D2OrderV::operator() (ElectroMagn* EMfields, Particles &particles
         double* b_Jy  = EMfields->Jy_s [ispec] ? &(*EMfields->Jy_s [ispec])(ibin*clrw*(dim1+1)*dim2) : &(*EMfields->Jy_ )(ibin*clrw*(dim1+1)*dim2) ;
         double* b_Jz  = EMfields->Jz_s [ispec] ? &(*EMfields->Jz_s [ispec])(ibin*clrw*dim1*(dim2+1)) : &(*EMfields->Jz_ )(ibin*clrw*dim1*(dim2+1)) ;
         double* b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw* dim1   *dim2) : &(*EMfields->rho_)(ibin*clrw* dim1   *dim2) ;
-        (*this)(b_Jx , b_Jy , b_Jz , b_rho, particles,  istart, iend, invgf, b_dim, iold, &(*delta)[0]);
+        (*this)(b_Jx , b_Jy , b_Jz , b_rho, particles,  istart, iend, invgf, b_dim, iold, &(*delta)[0], ipart_ref);
     }
 }

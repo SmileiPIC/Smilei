@@ -36,7 +36,7 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
 {
     if ( istart[0] == iend[0] ) return; //Don't treat empty cells.
 
-    int nparts( particles.size() );
+    int nparts( (smpi->dynamics_invgf[ithread]).size() );
 
     double *Epart[3], *Bpart[3];
     double E,E2;
@@ -118,7 +118,7 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
                     coeff[i][j][1][ipart]    =  (0.75 - delta2);
                     coeff[i][j][2][ipart]    =  0.5 * (delta2+delta+0.25);
     
-                    if (j==0) deltaO[i][ipart+ivect+istart[0]] = delta;
+                    if (j==0) deltaO[i][ipart-ipart_ref+ivect+istart[0]] = delta;
                 }
             }
         }
@@ -143,7 +143,7 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
                     }
                 }
             }
-            Epart[0][ipart+ivect+istart[0]] = interp_res;
+            Epart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
 
 
             //Ey(primal, dual, primal)
@@ -156,7 +156,7 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
                     }
                 }
             }
-            Epart[1][ipart+ivect+istart[0]] = interp_res;
+            Epart[1][ipart-ipart_ref+ivect+istart[0]] = interp_res;
 
 
             //Ez(primal, primal, dual)
@@ -170,7 +170,7 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
                     }
                 }
             }
-            Epart[2][ipart+ivect+istart[0]] = interp_res;
+            Epart[2][ipart-ipart_ref+ivect+istart[0]] = interp_res;
 
 
             //Bx(primal, dual , dual )
@@ -185,7 +185,7 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
                     }
                 }
             }
-            Bpart[0][ipart+ivect+istart[0]] = interp_res;
+            Bpart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
 
             //By(dual, primal, dual )
             interp_res = 0.;
@@ -199,7 +199,7 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
                     }
                 }
             }
-            Bpart[1][ipart+ivect+istart[0]] = interp_res;
+            Bpart[1][ipart-ipart_ref+ivect+istart[0]] = interp_res;
 
             //Bz(dual, dual, prim )
             interp_res = 0.;
@@ -213,7 +213,7 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
                     }
                 }
             }
-            Bpart[2][ipart+ivect+istart[0]] = interp_res;
+            Bpart[2][ipart-ipart_ref+ivect+istart[0]] = interp_res;
 
         }
 
