@@ -175,6 +175,7 @@ class Main(SmileiSingleton):
     number_of_timesteps = None
     interpolation_order = 2
     number_of_patches = None
+    patch_decomposition = "hilbert"
     clrw = -1
     every_clean_particles_overhead = 100
     timestep = None
@@ -194,7 +195,7 @@ class Main(SmileiSingleton):
     # Default fields
     maxwell_solver = 'Yee'
     EM_boundary_conditions = [["periodic"]]
-    EM_boundary_conditions_theta = [[0.,math.pi]]
+    EM_boundary_conditions_k = [[1.,0.,0.],[-1.,0.,0.],[0.,1.,0.],[0.,-1.,0.],[0.,0.,1.],[0.,0.,-1.]]
     time_fields_frozen = 0.
 
     # Default Misc
@@ -326,7 +327,7 @@ class Species(SmileiComponent):
     charge = None
     charge_density = None
     number_density = None
-    mean_velocity = [0.]
+    mean_velocity = [0]
     temperature = [1e-10]
     thermal_boundary_temperature = []
     thermal_boundary_velocity = [0.,0.,0.]

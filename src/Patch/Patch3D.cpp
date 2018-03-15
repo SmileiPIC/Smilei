@@ -19,7 +19,7 @@ using namespace std;
 Patch3D::Patch3D(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved)
     : Patch( params, smpi, domain_decomposition, ipatch, n_moved)
 {
-    if (dynamic_cast<HilbertDomainDecomposition3D*>( domain_decomposition )) {
+    if (!dynamic_cast<GlobalDomainDecomposition*>( domain_decomposition )) {
         initStep2(params, domain_decomposition);
         initStep3(params, smpi, n_moved);
         finishCreation(params, smpi, domain_decomposition);

@@ -199,6 +199,20 @@ The block ``Main`` is **mandatory** and has the following syntax::
   | **Syntax 2:** ``[[bc_X], [bc_Y], ...]``, different depending on x, y or z.
   | **Syntax 3:** ``[[bc_Xmin, bc_Xmax], ...]``,  different on each boundary.
 
+  ``"silver-muller"`` is an open boundary condition. The incident wave vector :math:`k_i` on each face is defined by ``"EM_boundary_conditions_k"``.
+  When using ``"silver-muller"`` as an injecting boundary, make sure :math:`k_i` is aligned with the wave you are injecting.
+  When using ``"silver-muller"`` as an absorbing boundary, the optimal wave absorption on a given face will be along :math:`k_{abs}` the specular reflection of :math:`k_i` on face `i`. 
+
+.. py:data:: EM_boundary_conditions_k
+
+  :type: list of lists of floats
+  :default: ``[[1.,0.,0.],[-1.,0.,0.],[0.,1.,0.],[0.,-1.,0.],[0.,0.,1.],[0.,0.,-1.]]``
+
+  `k` is the incident wave vector for each faces sequentially Xmin, Xmax, Ymin, Ymax, Zmin, Zmax defined by its coordinates in the `xyz` frame.  
+  The number of coordinates is equal to the dimension of the simulation. The number of given vectors must be equal to 1 or to the number of faces which is twice the dimension of the simulation.
+
+  | **Syntax 1:** ``[[1,0,0]]``, identical for all boundaries.
+  | **Syntax 2:** ``[[1,0,0],[-1,0,0], ...]``,  different on each boundary.
 
 .. py:data:: time_fields_frozen
 
@@ -330,7 +344,7 @@ The block ``MovingWindow`` is optional. The window does not move it you do not d
 Current filtering
 ^^^^^^^^^^^^^^^^^
 
-The present version of :program:`Smilei` provides one method for current filtering,
+The present version of :program:`Smilei` provides a :ref:`multi-pass binomial filter <multipassBinomialFilter>` on the current densities,
 which parameters are controlled in the following block::
 
   CurrentFilter(
@@ -358,7 +372,8 @@ which parameters are controlled in the following block::
 Field filtering
 ^^^^^^^^^^^^^^^^^
 
-The present version of :program:`Smilei` provides one method for field filtering,
+The present version of :program:`Smilei` provides a method for field filtering
+(at the moment, only the :ref:`Friedman electric field time-filter <EfieldFilter>` is available)
 which parameters are controlled in the following block::
 
   FieldFilter(
@@ -431,38 +446,37 @@ Each species has to be defined in a ``Species`` block::
 
 .. py:data:: position_initialization
 
-   The initialization of particle positions:
+   The method for initialization of particle positions. Options are:
 
    * ``"regular"`` for regularly spaced
    * ``"random"`` for randomly distributed
    * ``"centered"`` for centered in each cell
-
-   You can also decide to initialize species particles on another species particles ("targeted species"). In this case, replace one of the previous option by the name of the "targeted" species. For example, you want initialize position "electron" on randomly distributed "ion" ::
-
-    Species(
-        name = "ion",
-        position_initialization = "random",
-        ...
-    )
-
-    Species(
-        name = "electron",
-        position_initialization = "ion",
-        ...
-    )
-
-  :red:`Warning` Target species have to be initialize with "random","centered" or "regular"
-
-  :red:`Warning` The number of first species particles have to be the same of the second species particles
+   * The :py:data:`name` of another species from which the positions are copied.
+     This option requires (1) that the *target* species' positions are initialized
+     using one of the three other options above and (2) that the number of particles
+     of both species are identical in each cell.
+   * A *numpy* array defining all the positions of the species' particles.
+     In this case you must also provide the weight of each particle (see :ref:`Weights`).
+     The array shape must be `(Ndim+1, Npart)` where `Ndim` is the simulation dimension,
+     and `Npart` is the total number of particles. Positions components `x`, `y`, `z` are
+     given along the first columns and the weights are given in the last column of the array.
+     This initialization is incompatible with :py:data:`number_density`, :py:data:`charge_density`
+     and :py:data:`particles_per_cell`.
 
 .. py:data:: momentum_initialization
 
-  The initialization of particle momenta:
+  The method for initialization of particle momenta. Options are:
 
   * ``"maxwell-juettner"`` for a relativistic maxwellian (see :doc:`how it is done<maxwell-juttner>`)
   * ``"rectangular"`` for a rectangular distribution
   * ``"cold"`` for zero temperature
-
+  * A *numpy* array defining all the momenta of the species' particles (requires that
+    :py:data:`position_initialization` also be an array with the same number of particles).
+    The array shape must be `(Ndim, Npart)` where `Ndim` is the simulation dimension,
+    and `Npart` is the total number of particles. Momentum components `px`, `py`, `pz`
+    are given in successive columns.This initialization is incompatible with
+    :py:data:`temperature` and :py:data:`mean_velocity`.
+  
   The first 2 distributions depend on the parameter :py:data:`temperature` explained below.
 
 .. py:data:: particles_per_cell
@@ -582,106 +596,86 @@ Each species has to be defined in a ``Species`` block::
 
   :default: ``"boris"``
 
-  Type of pusher to be used for this species. The default value corresponds to the
-  relativistic Boris pusher. Smilei has the following solvers implemented:
+  Type of pusher to be used for this species. Options are:
 
   * ``"boris"``: The relativistic Boris pusher
   * ``"borisnr"``: The non-relativistic Boris pusher
   * ``"vay"``: The relativistic pusher of J. L. Vay
   * ``"higueracary"``: The relativistic pusher of A. V. Higuera and J. R. Cary
-
-  For photon species, the only pusher available is ``"norm"`` and corresponds to
-  a rectilinear propagation.
+  * ``"norm"``:  For photon species only (rectilinear propagation)
 
 .. py:data:: radiation_model
 
   :default: ``"none"``
 
-  Radiation reaction model used for this species (see :doc:`radiation_loss`).
-  No radiation is actually emitted, unless you use the ``"Monte-Carlo"`` model
-  and you define :py:data:`radiation_photon_species`.
-
+  The **radiation reaction** model used for this species (see :doc:`radiation_loss`).
+  
   * ``"none"``: no radiation
   * ``"Landau-Lifshitz"`` (or ``ll``): Landau-Lifshitz model approximated for high energies
   * ``"corrected-Landau-Lifshitz"`` (or ``cll``): with quantum correction
   * ``""Niel"``: a `stochastic radiation model <https://arxiv.org/abs/1707.02618>`_ based on the work of Niel `et al.`.
   * ``"Monte-Carlo"`` (or ``mc``): Monte-Carlo radiation model. This model can be configured to generate macro-photons with :py:data:`radiation_photon_species`.
-
-  :red:`This parameter cannot be assigned to photons (mass=0).`
+  
+  This parameter cannot be assigned to photons (mass = 0).
+  
+  Radiation is emitted only with the ``"Monte-Carlo"`` model when
+  :py:data:`radiation_photon_species` is defined.
 
 .. py:data:: radiation_photon_species
-
-  :default: ``None``
-
-  :red:`This parameter is an attribute of particle species only (mass>0).`
-
-  This parameter determines whether the Monte-Carlo :py:data:`radiation model`
-  will generate macro-photons. By default, the photon species is set to ``"none"``
-  meaning that no macro-photon will be created. To set the macro-photon generation,
-  a photon species (``mass = 0``) has to be created after the particle species
-  (``mass > 0``) and the parameter ``radiation_photon_species`` set to this
-  photon species name.
-
-  :red:`This parameter cannot be assigned to photons (mass=0).`
+  
+  The :py:data:`name` of the photon species in which the Monte-Carlo :py:data:`radiation_model`
+  will generate macro-photons. If unset (or ``None``), no macro-photon will be created.
+  The *target* photon species must be have its mass set to 0, and appear *after* the
+  particle species in the namelist.
+  
+  This parameter cannot be assigned to photons (mass = 0).
 
 .. py:data:: radiation_photon_sampling
 
   :default: ``1``
-
-  When the macro-photon creation is activated
-  (:py:data:`radiation_photon_species` set to one of the defined photon species),
-  this parameter is the number of macro-photons generated per emission event.
-  By default, a single macro-photon is created per emission but in order to
-  improve the photon statistics, one can decide to increase this number.
-  The weight of each photon is therefore the emitting particle one divided
-  by this number.
-  Obviously, this parameter can not be below 1. Note that a large number will
-  rapidly slow down the application performance and can lead to memory
-  saturation.
-
-  :red:`This parameter cannot be assigned to photons (mass=0).`
+  
+  The number of macro-photons generated per emission event, when the macro-photon creation
+  is activated (see :py:data:`radiation_photon_species`). The total macro-photon weight
+  is still conserved.
+  
+  A large number may rapidly slow down the performances and lead to memory saturation.
+  
+  This parameter cannot be assigned to photons (mass = 0).
 
 .. py:data:: radiation_photon_gamma_threshold
 
   :default: ``2``
-
-  Threshold on the photon energy for the macro-photon emission when using the
+  
+  The threshold on the photon energy for the macro-photon emission when using the
   radiation reaction Monte-Carlo process.
   Under this threshold, the macro-photon from the radiation reaction Monte-Carlo
-  process is not created but taken anyway into account in the energy balance.
+  process is not created but still taken into account in the energy balance.
   The default value corresponds to twice the electron rest mass energy that
   is the required energy to decay into electron-positron pairs.
 
-  :red:`This parameter cannot be assigned to photons (mass=0).`
+  This parameter cannot be assigned to photons (mass = 0).
 
 .. py:data:: multiphoton_Breit_Wheeler
 
   :default: ``[None,None]``
+  
+  An list of the :py:data:`name` of two species: electrons and positrons created through
+  the :doc:`multiphoton_Breit_Wheeler`.
+  By default, the process is not activated.
 
-  :red:`This parameter is an attribute of photon species only (mass=0).`
-
-  This entry is an
-  array of two strings respectively corresponding to one for the previously
-  defined electron and the positron species.
-  By default, ``"none"`` means that the process is not activated.
-  To activate the multiphoton Breit-Wheeler pair creation, just specify
-  a defined electron and positron species. (see :doc:`multiphoton_Breit_Wheeler`)
-
-  :red:`This parameter is an attribute of photon species only (mass=0).`
+  This parameter can **only** be assigned to photons species (mass = 0).
 
 .. py:data:: multiphoton_Breit_Wheeler_sampling
 
   :default: ``[1,1]``
 
-  This entry is an array of two integers respectively corresponding to the
-  number of electrons and positrons generated per photon decay. By default,
-  a single electron and positron are created. This number can be increased
-  to improve the particle statistics. The weight of each particle is therefore
-  the photon one divided by the corresponding number. Obviously, this parameter can not be
-  below 1. Note that large numbers will rapidly slow down the application
-  performance and can lead to memory saturation. (see :doc:`multiphoton_Breit_Wheeler`)
-
-  :red:`This parameter is an attribute of photon species only (mass=0).`
+  A list of two integers: the number of electrons and positrons generated per photon decay
+  in the :doc:`multiphoton_Breit_Wheeler`. The total macro-particle weight is still
+  conserved. 
+  
+  Large numbers may rapidly slow down the performances and lead to memory saturation.
+  
+  This parameter can **only** be assigned to photons species (mass = 0).
 
 ----
 
