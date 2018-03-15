@@ -836,8 +836,9 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi )
             (*this)(ipatch)->EMfields->compute_Ap_relativistic_Poisson( (*this)(ipatch), gamma_mean );
 
         // Exchange Ap_ (intra & extra MPI)
-        SyncVectorPatch::exchange( Ap_, *this );
-        SyncVectorPatch::finalizeexchange( Ap_, *this );
+        SyncVectorPatch::exchange_along_all_directions          ( Ap_, *this );
+        SyncVectorPatch::finalize_exchange_along_all_directions ( Ap_, *this );
+        
 
        // scalar product p.Ap
         double p_dot_Ap       = 0.0;
