@@ -16,6 +16,14 @@ Publications
 
 .. rst-class:: bigcitation
 
+.. [Plotnikov2017]
+
+    I. Plotnikov, A. Grassi and M. Grech, 
+    `Perpendicular relativistic shocks in magnetized pair plasma`,
+    `arXiv:1712.02883 <https://arxiv.org/abs/1712.02883>`_
+
+.. rst-class:: bigcitation
+
 .. [Grassi2017b]
 
    A. Grassi, M. Grech, F. Amiranoff, A. Macchi and C. Riconda,

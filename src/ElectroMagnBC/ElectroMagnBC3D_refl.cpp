@@ -15,22 +15,13 @@ using namespace std;
 
 
 ElectroMagnBC3D_refl::ElectroMagnBC3D_refl( Params &params, Patch* patch, unsigned int _min_max )
-: ElectroMagnBC( params, patch, _min_max )
+: ElectroMagnBC3D( params, patch, _min_max )
 {
     // oversize
     oversize_x = params.oversize[0];
     oversize_y = params.oversize[0];
     oversize_z = params.oversize[0];
     
-    // number of nodes of the primal and dual grid in the x-direction
-    nx_p = params.n_space[0]*params.global_factor[0]+1+2*params.oversize[0];
-    nx_d = nx_p+1;
-    // number of nodes of the primal and dual grid in the y-direction
-    ny_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
-    ny_d = ny_p+1;
-    // number of nodes of the primal and dual grid in the z-direction
-    nz_p = params.n_space[2]*params.global_factor[2]+1+2*params.oversize[2];
-    nz_d = nz_p+1;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

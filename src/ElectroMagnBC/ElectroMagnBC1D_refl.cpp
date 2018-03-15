@@ -20,18 +20,12 @@ using namespace std;
 //      - magnetic fields are constant in the ghost cells
 // ---------------------------------------------------------------------------------------------------------------------
 ElectroMagnBC1D_refl::ElectroMagnBC1D_refl( Params &params, Patch* patch, unsigned int _min_max )
-  : ElectroMagnBC( params, patch, _min_max )
+  : ElectroMagnBC1D( params, patch, _min_max )
 {
     
     // oversize
     oversize_ = params.oversize[0];
     
-    // number of nodes of the primal-grid
-    nx_p = params.n_space[0]*params.global_factor[0]+1 + 2*params.oversize[0];
-    
-    // number of nodes of the dual-grid
-    nx_d = params.n_space[0]*params.global_factor[0]+2 + 2*params.oversize[0];
-
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

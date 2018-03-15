@@ -390,21 +390,26 @@ public:
     }
 
     // extract 3 profiles from namelist (used for part mean velocity and temperature)
-    static void extract3Profiles(std::string varname, int ispec, PyObject*& profx, PyObject*& profy, PyObject*& profz )
+    static bool extract3Profiles(std::string varname, int ispec, PyObject*& profx, PyObject*& profy, PyObject*& profz )
     {
         std::vector<PyObject*> pvec = PyTools::extract_pyVec(varname,"Species",ispec);
         if ( pvec.size()==1 ) {
             if( !PyCallable_Check(pvec[0]) )
                 ERROR("For species #" << ispec << ", "<<varname<<" not understood");
             profx =  profy =  profz = pvec[0];
+            return true;
         } else if (pvec.size()==3) {
             if( !PyCallable_Check(pvec[0]) || !PyCallable_Check(pvec[1]) || !PyCallable_Check(pvec[2]) )
                 ERROR("For species #" << ispec << ", "<<varname<<" not understood");
             profx = pvec[0];
             profy = pvec[1];
             profz = pvec[2];
+            return true;
+        } else if (pvec.size()==0) {
+            return false;
         } else {
             ERROR("For species #" << ispec << ", "<<varname<<" needs 1 or 3 components.");
+            return false;
         }
     }
 

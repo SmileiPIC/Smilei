@@ -41,6 +41,21 @@ LaserGaussian2D(
     time_envelope   = tgaussian()
 )
 
+Species(
+	name = "eon",
+	position_initialization = "regular",
+	momentum_initialization = "cold",
+	particles_per_cell = 0.001,
+	mass = 1.0,
+	charge = -1.0,
+	number_density = 1.,
+	mean_velocity = [0.,0.,0.],
+	boundary_conditions = [
+		["periodic", "periodic"],
+	],
+	is_test = True
+)
+
 
 globalEvery = int(rest)
 
@@ -72,5 +87,12 @@ DiagProbe(
     every = 10,
     origin = [0.1*Lsim[0], 0.5*Lsim[1]],
     fields = []
+)
+
+
+DiagTrackParticles(
+    species = "eon",
+    every = 4*rest,
+	attributes = ["x", "y", "Ex", "Ey", "Ez", "Bx", "By", "Bz"]
 )
 

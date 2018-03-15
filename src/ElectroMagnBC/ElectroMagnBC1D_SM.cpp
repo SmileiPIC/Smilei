@@ -14,18 +14,8 @@
 using namespace std;
 
 ElectroMagnBC1D_SM::ElectroMagnBC1D_SM( Params &params, Patch* patch, unsigned int _min_max )
-: ElectroMagnBC( params, patch, _min_max )
+: ElectroMagnBC1D( params, patch, _min_max )
 {
-    // number of nodes of the primal-grid
-    nx_p = params.n_space[0]*params.global_factor[0]+1 + 2*params.oversize[0];
-    // number of nodes of the dual-grid
-    nx_d = params.n_space[0]*params.global_factor[0]+2 + 2*params.oversize[0];
-    
-    // spatial-step and ratios time-step by spatial-step & spatial-step by time-step
-    dx       = params.cell_length[0];
-    dt_ov_dx = params.timestep/params.cell_length[0];
-    dx_ov_dt = 1.0/dt_ov_dx;
-    
     // Parameters for the Silver-Mueller boundary conditions
     Alpha_SM = 2./(1.+dt_ov_dx);
     Beta_SM  = (dt_ov_dx-1.)/(1.+dt_ov_dx);

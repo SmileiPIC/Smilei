@@ -35,7 +35,7 @@ isXmax(patch->isXmax()),
 nrj_mw_lost    (  0.               ),
 nrj_new_fields (  0.               )
 {
-    if ( dynamic_cast<HilbertDomainDecomposition*>( domain_decomposition ) )
+    if ( !dynamic_cast<GlobalDomainDecomposition*>( domain_decomposition ) )
         n_space = params.n_space;
     else {
         for ( unsigned int i = 0 ; i < nDim_field ; i++ ) 

@@ -1,6 +1,5 @@
 #!/bin/bash
-
-MPIEXEC=mpirun
+mpiexe=${MPIEXEC:-mpirun}
 
 H=$PWD # current dir
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd ) # dir of this script
@@ -98,6 +97,6 @@ for namelist in "${namelist_files[@]}"; do
     cp $namelist $outdir
 done
 cd $outdir
-$MPIEXEC -np $proc $smilei "${namelists[@]}"
+$mpiexe -np $proc $smilei "${namelists[@]}"
 cd $H
 
