@@ -55,7 +55,7 @@ void RadiationMonteCarlo::operator() (
         RadiationTables &RadiationTables,
         int istart,
         int iend,
-        int ithread)
+        int ithread, int ipart_ref)
 {
 
     // _______________________________________________________________

@@ -31,7 +31,7 @@ PusherVay::~PusherVay()
     Lorentz Force -- leap-frog (Vay) scheme
 ***********************************************************************/
 
-void PusherVay::operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread)
+void PusherVay::operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ipart_ref)
 {
     std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
     std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);

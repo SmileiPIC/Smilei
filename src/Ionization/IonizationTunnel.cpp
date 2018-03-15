@@ -32,7 +32,7 @@ IonizationTunnel::IonizationTunnel(Params& params, Species * species) : Ionizati
 
 
 
-void IonizationTunnel::operator() (Particles* particles, unsigned int ipart_min, unsigned int ipart_max, vector<double> *Epart, ElectroMagn* EMfields, Projector* Proj) {
+void IonizationTunnel::operator() (Particles* particles, unsigned int ipart_min, unsigned int ipart_max, vector<double> *Epart, ElectroMagn* EMfields, Projector* Proj, int ipart_ref) {
     
     unsigned int Z, Zp1, newZ, k_times;
     double TotalIonizPot, E, invE, factorJion, delta, ran_p, Mult, D_sum, P_sum, Pint_tunnel;

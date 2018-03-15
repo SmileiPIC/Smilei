@@ -56,7 +56,7 @@ void Radiation::compute_thread_chipa(Particles &particles,
         SmileiMPI* smpi,
         int istart,
         int iend,
-        int ithread)
+        int ithread, int ipart_ref)
 {
     // _______________________________________________________________
     // Parameters

@@ -30,7 +30,7 @@ PusherPhoton::~PusherPhoton()
 ***********************************************************************/
 
 void PusherPhoton::operator() (Particles &particles, SmileiMPI* smpi,
-                              int istart, int iend, int ithread)
+                              int istart, int iend, int ithread, int ipart_ref)
 {
     // Inverse normalized energy
     std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);

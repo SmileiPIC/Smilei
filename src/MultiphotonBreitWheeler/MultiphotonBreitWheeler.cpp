@@ -63,7 +63,7 @@ void MultiphotonBreitWheeler::compute_thread_chiph(Particles &particles,
         SmileiMPI* smpi,
         int istart,
         int iend,
-        int ithread)
+        int ithread, int ipart_ref)
 {
     // _______________________________________________________________
     // Parameters
@@ -128,7 +128,7 @@ void MultiphotonBreitWheeler::operator() (Particles &particles,
         MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
         int istart,
         int iend,
-        int ithread)
+        int ithread, int ipart_ref)
 {
     // _______________________________________________________________
     // Parameters
