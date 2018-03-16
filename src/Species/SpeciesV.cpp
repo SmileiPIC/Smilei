@@ -141,7 +141,9 @@ void SpeciesV::dynamics(double time_dual, unsigned int ispec,
         vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
 
         int npack    =  f_dim0-2*oversize[0];
-        int packsize = (f_dim1-2*oversize[1]) * (f_dim2-2*oversize[2]);
+        int packsize = (f_dim1-2*oversize[1]);
+        if (nDim_particle == 3)
+            packsize *= (f_dim2-2*oversize[2]);
 
         //Prepare for sorting
         for (unsigned int i=0; i<species_loc_bmax.size(); i++)
