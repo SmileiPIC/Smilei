@@ -134,7 +134,7 @@ void SpeciesV::dynamics(double time_dual, unsigned int ispec,
     // -------------------------------
     if (time_dual>time_frozen) { // moving particle
 
-        smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
+        //smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
 
         //Point to local thread dedicated buffers
         //Still needed for ionization
@@ -150,7 +150,7 @@ void SpeciesV::dynamics(double time_dual, unsigned int ispec,
         for ( int ipack = 0 ; ipack < npack ; ipack++ ) {
 
             int nparts_in_pack = bmax[ (ipack+1) * packsize-1 ];
-            smpi->dynamics_resize(0, nDim_particle, nparts_in_pack );
+            smpi->dynamics_resize(ithread, nDim_particle, nparts_in_pack );
 
             // Interpolate the fields at the particle position
             //for (unsigned int scell = 0 ; scell < bmin.size() ; scell++)
