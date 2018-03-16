@@ -308,7 +308,10 @@ namelist("")
     }
     for( unsigned int iDim=0; iDim<nDim_field*2; iDim++ ) {
         if ( EM_BCs_k[iDim].size() < nDim_field )
-            ERROR("EM_boundary_conditions_k must have at least nDim_field (" << nDim_field << ") elements along dimension "<<"xyz"[iDim] );
+            ERROR("EM_boundary_conditions_k must have at least nDim_field (" << nDim_field << ") elements along dimension "<<"-+"[iDim%2]<<"xyz"[iDim/2] );
+        if ( EM_BCs_k[iDim][iDim/2] == 0. )
+            ERROR("EM_boundary_conditions_k must have a non zero normal component along dimension "<<"-+"[iDim%2]<<"xyz"[iDim/2] );
+        
     }
 
     // -----------------------------------
