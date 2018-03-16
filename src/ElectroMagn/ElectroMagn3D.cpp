@@ -1143,11 +1143,11 @@ void ElectroMagn3D::center_fields_from_relativistic_Poisson(Patch *patch){
     // By / Ymin
     if (patch->isYmin()) {
         DEBUG("Computing Ymin BC on By, relativistic Poisson problem");
-        for (unsigned int i=0; i<nx_d-2; i++) {
-            for (unsigned int k=0; k<nz_d-2; k++) {
+        for (unsigned int i=1; i<nx_d-2; i++) {
+            for (unsigned int k=1; k<nz_d-2; k++) {
                   (*By3D)(i,0,k) = (*By3D)(i,1,k) 
-                      + ((*Bx3D)(i+1,0,k)-(*Bx3D)(i,0,k))*dy/dx
-                      + ((*Bz3D)(i,0,k+1)-(*Bz3D)(i,0,k))*dy/dz;
+                     + ((*Bx3D)(i,1,k)  -(*Bx3D)(i-1,1,k  ))*dy/dx
+                     + ((*Bz3D)(i,1,k)  -(*Bz3D)(i  ,1,k-1))*dy/dz;
             }
         }
     }
@@ -1155,11 +1155,11 @@ void ElectroMagn3D::center_fields_from_relativistic_Poisson(Patch *patch){
     // By / Ymax
     if (patch->isYmax()) {
         DEBUG("Computing Ymax BC on By, relativistic Poisson problem");
-        for (unsigned int i=0; i<nx_d-2; i++) {
-            for (unsigned int k=0; k<nz_d-2; k++) {
+        for (unsigned int i=1; i<nx_d-2; i++) {
+            for (unsigned int k=1; k<nz_d-2; k++) {
                   (*By3D)(i,ny_p-1,k) = (*By3D)(i,ny_p-2,k) 
-                      - ((*Bx3D)(i+1,ny_d-1,k)-(*Bx3D)(i,ny_d-1,k))*dy/dx
-                      - ((*Bz3D)(i,ny_d-1,k+1)-(*Bz3D)(i,ny_d-1,k))*dy/dz;
+                     - ((*Bx3D)(i,ny_d-2,k)-(*Bx3D)(i-1,ny_d-2,k  ))*dy/dx
+                     - ((*Bz3D)(i,ny_d-2,k)-(*Bz3D)(i  ,ny_d-2,k-1))*dy/dz;
             }
         }
     }
@@ -1167,11 +1167,11 @@ void ElectroMagn3D::center_fields_from_relativistic_Poisson(Patch *patch){
     // Bz / Zmin
     if (patch->isZmin()) {
         DEBUG("Computing Zmin BC on Bz, relativistic Poisson problem");
-        for (unsigned int i=0; i<nx_d-2; i++) {
-            for (unsigned int j=0; j<ny_d-2; j++) {
-                  (*Bz3D)(i,j,0) = (*Bz3D)(i,j,1) 
-                      + ((*By3D)(i,j+1,0)-(*By3D)(i,j,0))*dz/dy
-                      + ((*Bx3D)(i+1,j,0)-(*Bx3D)(i,j,0))*dz/dx;
+        for (unsigned int i=1; i<nx_d-2; i++) {
+            for (unsigned int j=1; j<ny_d-2; j++) {
+                  (*Bz3D)(i,j,0) = (*Bz3D)(i,j,1)  
+                      + ((*By3D)(i,j,1)-(*By3D)(i  ,j-1,1))*dz/dy
+                      + ((*Bx3D)(i,j,1)-(*Bx3D)(i-1,j  ,1))*dz/dx;
             }
         }
     }
@@ -1179,11 +1179,12 @@ void ElectroMagn3D::center_fields_from_relativistic_Poisson(Patch *patch){
     // Bz / Zmax
     if (patch->isZmax()) {
         DEBUG("Computing Zmax BC on Bz, relativistic Poisson problem");
-        for (unsigned int i=0; i<nx_d-2; i++) {
-            for (unsigned int j=0; j<ny_d-2; j++) {
+        for (unsigned int i=1; i<nx_d-2; i++) {
+            for (unsigned int j=1; j<ny_d-2; j++) {
                   (*Bz3D)(i,j,nz_p-1) = (*Bz3D)(i,j,nz_p-2) 
-                      - ((*By3D)(i,j+1,nz_d-1)-(*By3D)(i,j,nz_d-1))*dz/dy
-                      - ((*Bx3D)(i+1,j,nz_d-1)-(*Bx3D)(i,j,nz_d-1))*dz/dx;
+                    - ((*By3D)(i,j,nz_d-2)-(*By3D)(i  ,j-1,nz_d-2))*dz/dy
+                    - ((*Bx3D)(i,j,nz_d-2)-(*Bx3D)(i-1,j  ,nz_d-2))*dz/dx;
+
             }
         }
     }

@@ -4,14 +4,13 @@ import math
 dx = 0.2 
 dtrans = 1.
 dt = 0.18
-#nx = 896
 nx = 1280
 ntrans = 80
 Lx = nx * dx
 Ltrans = ntrans*dtrans
 npatch_x = 128
-bunch_sigma_x = 10.
-bunch_sigma_r = 5. 
+bunch_sigma_x = 15.
+bunch_sigma_r = 8. 
 center_bunch = 6*bunch_sigma_x
 n0 = 0.0017
 alpha = 1.
