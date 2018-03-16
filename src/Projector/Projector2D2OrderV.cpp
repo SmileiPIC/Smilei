@@ -740,7 +740,7 @@ void Projector2D2OrderV::operator() (ElectroMagn* EMfields, Particles &particles
             double* b_Jx =  &(*EMfields->Jx_ )(0);
             double* b_Jy =  &(*EMfields->Jy_ )(0);
             double* b_Jz =  &(*EMfields->Jz_ )(0);
-            (*this)(b_Jx , b_Jy , b_Jz , particles,  istart, iend, invgf, b_dim, iold, &(*delta)[0]);
+            (*this)(b_Jx , b_Jy , b_Jz , particles,  istart, iend, invgf, b_dim, iold, &(*delta)[0], ipart_ref);
         }
         else 
             ERROR("TO DO with rho");
@@ -757,7 +757,7 @@ void Projector2D2OrderV::operator() (ElectroMagn* EMfields, Particles &particles
             //Do not use cells sorting for now : f(ipart) for now, f(istart) laterfor now,
             //(*iold)[ipart       ] = round( particles.position(0, ipart)* dx_inv_ - dt*particles.momentum(0, ipart)*(*invgf)[ipart] * dx_inv_ ) - i_domain_begin ;
             //(*iold)[ipart+nparts] = round( particles.position(1, ipart)* dy_inv_ - dt*particles.momentum(1, ipart)*(*invgf)[ipart] * dy_inv_ ) - j_domain_begin ;
-            (*this)(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, iold, &(*delta)[ipart]);
+            (*this)(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*invgf)[ipart-ipart_ref], ibin*clrw, b_dim, iold, &(*delta)[ipart-ipart_ref]);
         }
     }
 }
