@@ -66,9 +66,17 @@ ElectroMagnBCRZ_BM::ElectroMagnBCRZ_BM( Params &params, Patch* patch, unsigned i
     // -----------------------------------------------------
 
     // Rmax boundary
-    double phi    = 0.; //  0.45 * M_PI;
+    double cosphi, costheta  ; 
+    double Kx, Kr, Kt;
     double one_ov_rlocal = 1./(params.grid_length[1]+params.oversize[1]*dr); // BM conditions on rmax are written at the last primal r position.
-    CB_BM  = cos(phi)/(1.0 + cos(phi)); // Theta is always taken equal to zero. 
+
+    Kx =  params.EM_BCs_k[3][0];
+    Kr = -params.EM_BCs_k[3][1]; // We're only dealing with the Rmax boundary here. The minus sign is the specular reflexion of the given k on the rmax boundary since users are supposed to provide the injection k.
+    Kt =  params.EM_BCs_k[3][2];
+    cosphi   = Kr/sqrt(Kr*Kr + Kt*Kt); 
+    costheta = sqrt(Kr*Kr + Kt*Kt) / sqrt(Kx*Kx + Kr*Kr + Kt*Kt) ; 
+
+    CB_BM  = cosphi/(costheta + cosphi); // Theta is always taken equal to zero. 
     CE_BM  = 1.0 - CB_BM;
 
     //Coeffs for Bl
