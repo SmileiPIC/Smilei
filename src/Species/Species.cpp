@@ -1105,7 +1105,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
         // Evaluate profiles
         for (unsigned int m=0; m<3; m++) {
             if ( temperatureProfile[m]){
-                temperatureProfile[m]->valuesAt(xyz, temperature[m]); // or put to zero.
+                temperatureProfile[m]->valuesAt(xyz, temperature[m]); 
             } else {
                  temperature[m].put_to(0.0000000001); // default value
             }
@@ -1113,7 +1113,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
             if ( velocityProfile[m]){
                 velocityProfile[m]   ->valuesAt(xyz, velocity   [m]);
             } else {
-                temperature[m].put_to(0.0);  //default value
+                velocity[m].put_to(0.0);  //default value
             }
         }
     }
