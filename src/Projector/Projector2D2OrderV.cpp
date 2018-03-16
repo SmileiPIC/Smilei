@@ -49,7 +49,7 @@ Projector2D2OrderV::~Projector2D2OrderV()
 // ---------------------------------------------------------------------------------------------------------------------
 //!  Project current densities & charge : diagFields timstep (not vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2OrderV::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
+void Projector2D2OrderV::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold, int nparts)
 {
     
     // -------------------------------------
@@ -81,7 +81,7 @@ void Projector2D2OrderV::operator() (double* Jx, double* Jy, double* Jz, double*
     Sy0[0] = 0.;
     Sy0[4] = 0.;
     
-    int nparts = particles.size();
+    //int nparts = particles.size();
     // --------------------------------------------------------
     // Locate particles & Calculate Esirkepov coef. S, DS and W
     // --------------------------------------------------------
@@ -757,7 +757,7 @@ void Projector2D2OrderV::operator() (ElectroMagn* EMfields, Particles &particles
             //Do not use cells sorting for now : f(ipart) for now, f(istart) laterfor now,
             //(*iold)[ipart       ] = round( particles.position(0, ipart)* dx_inv_ - dt*particles.momentum(0, ipart)*(*invgf)[ipart] * dx_inv_ ) - i_domain_begin ;
             //(*iold)[ipart+nparts] = round( particles.position(1, ipart)* dy_inv_ - dt*particles.momentum(1, ipart)*(*invgf)[ipart] * dy_inv_ ) - j_domain_begin ;
-            (*this)(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*invgf)[ipart-ipart_ref], ibin*clrw, b_dim, iold, &(*delta)[ipart-ipart_ref]);
+            (*this)(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*invgf)[ipart-ipart_ref], ibin*clrw, b_dim, iold, &(*delta)[ipart-ipart_ref], invgf->size());
         }
     }
 }
