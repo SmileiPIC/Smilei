@@ -91,6 +91,9 @@ public:
 
     //! logical true if particles are relativistic and require proper electromagnetic field initialization
     bool relativistic_field_initialization;
+
+    //! Time for which the species field is initialized in case of relativistic initialization
+    double time_relativistic_initialization;
     
     //! electron and positron Species for the multiphoton Breit-Wheeler
     std::vector<std::string> multiphoton_Breit_Wheeler;

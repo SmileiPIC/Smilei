@@ -361,7 +361,10 @@ public:
         if (thisSpecies->time_frozen > 0 && thisSpecies->momentum_initialization!="cold") {
             if ( patch->isMaster() ) WARNING("For species '" << species_name << "' possible conflict between time-frozen & not cold initialization");
         }
-
+        // time when the relativistic field initialization is applied, if enabled
+        int n_timesteps_relativistic_initialization   = (int)(thisSpecies->time_frozen/params.timestep);
+        thisSpecies->time_relativistic_initialization = (double)(n_timesteps_relativistic_initialization) * params.timestep;
+  
         if( !PyTools::extract("boundary_conditions", thisSpecies->boundary_conditions, "Species", ispec)  )
             ERROR("For species '" << species_name << "', boundary_conditions not defined" );
 
@@ -603,6 +606,7 @@ public:
         newSpecies->c_part_max                               = species->c_part_max;
         newSpecies->mass                                     = species->mass;
         newSpecies->time_frozen                              = species->time_frozen;
+        newSpecies->time_relativistic_initialization         = species->time_relativistic_initialization;
         newSpecies->radiating                                = species->radiating;
         newSpecies->relativistic_field_initialization        = species->relativistic_field_initialization;
         newSpecies->boundary_conditions                      = species->boundary_conditions;
