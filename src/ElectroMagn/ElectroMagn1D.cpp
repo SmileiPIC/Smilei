@@ -326,7 +326,7 @@ void ElectroMagn1D::initE_relativistic_Poisson(Patch *patch, double gamma_mean)
     // gamma_mean is the average Lorentz factor of the species whose fields will be computed
     // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details 
 
-    Field1D* Ex1D  = static_cast<Field1D*>(Ex_);
+    Field1D* Ex1D  = static_cast<Field1D*>(Ex_rel_);
     Field1D* rho1D = static_cast<Field1D*>(rho_);
 
     // ----------------------------------
@@ -365,6 +365,41 @@ void ElectroMagn1D::center_fields_from_relativistic_Poisson(Patch *patch){
 
 } 
 
+void ElectroMagn1D::initRelativisticPoissonFields(Patch *patch)
+{
+    // init temporary fields for relativistic field initialization, to be added to the already present electromagnetic fields
+
+    Ex_rel_  = new Field1D(dimPrim, 0, false, "Ex_rel");
+    Ey_rel_  = new Field1D(dimPrim, 1, false, "Ey_rel");
+    Ez_rel_  = new Field1D(dimPrim, 2, false, "Ez_rel");
+    Bx_rel_  = new Field1D(dimPrim, 0, true,  "Bx_rel");
+    By_rel_  = new Field1D(dimPrim, 1, true,  "By_rel");
+    Bz_rel_  = new Field1D(dimPrim, 2, true,  "Bz_rel");
+
+} // initRelativisticPoissonFields
+
+void ElectroMagn1D::sum_rel_fields_to_em_fields(Patch *patch)
+{
+    Field1D* Ex1Drel  = static_cast<Field1D*>(Ex_rel_);
+    Field1D* Ex1D  = static_cast<Field1D*>(Ex_);
+    
+
+    // Ex
+    for (unsigned int i=0; i<nx_d; i++) {
+                (*Ex1D)(i) = (*Ex1D)(i) + (*Ex1Drel)(i);
+    }
+
+    // delete temporary fields used for relativistic initialization
+    delete Ex_rel_;
+    delete Ey_rel_;
+    delete Ez_rel_;
+    delete Bx_rel_;
+    delete By_rel_;
+    delete Bz_rel_;
+
+
+} // sum_rel_fields_to_em_fields
+
 
 void ElectroMagn1D::centeringE( std::vector<double> E_Add )
 {
@@ -373,6 +408,14 @@ void ElectroMagn1D::centeringE( std::vector<double> E_Add )
         (*Ex1D)(i) += E_Add[0];
 
 } // centeringE
+
+void ElectroMagn1D::centeringErel( std::vector<double> E_Add )
+{
+    Field1D* Ex1D  = static_cast<Field1D*>(Ex_rel_);
+    for (unsigned int i=0; i<nx_d; i++)
+        (*Ex1D)(i) += E_Add[0];
+
+} // centeringErel
 
 // ---------------------------------------------------------------------------------------------------------------------
 // End of Solve Poisson methods 

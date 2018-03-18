@@ -33,15 +33,26 @@ public:
     void initE_relativistic_Poisson(Patch *patch, double gamma_mean);
     void initB_relativistic_Poisson(Patch *patch, double gamma_mean);
     void center_fields_from_relativistic_Poisson(Patch *patch);
+    void initRelativisticPoissonFields(Patch *patch);
+    void sum_rel_fields_to_em_fields(Patch *patch);
     void centeringE( std::vector<double> E_Add );
+    void centeringErel( std::vector<double> E_Add );
     
     double getEx_Xmin() { return 0.; }
     double getEx_Xmax() { return 0.; }
+
+    double getExrel_Xmin() { return 0.; }
+    double getExrel_Xmax() { return 0.; }
     
     double getEx_XminYmax() { return (*Ex_)(0,ny_p-1); }
     double getEy_XminYmax() { return (*Ey_)(0,ny_d-1); }
     double getEx_XmaxYmin() { return (*Ex_)(nx_d-1,0); }
     double getEy_XmaxYmin() { return (*Ey_)(nx_p-1,0); }
+
+    double getExrel_XminYmax() { return (*Ex_rel_)(0,ny_p-1); }
+    double getEyrel_XminYmax() { return (*Ey_rel_)(0,ny_d-1); }
+    double getExrel_XmaxYmin() { return (*Ex_rel_)(nx_d-1,0); }
+    double getEyrel_XmaxYmin() { return (*Ey_rel_)(nx_p-1,0); }
     
     // --------------------------------------
     //  --------- PATCH IN PROGRESS ---------

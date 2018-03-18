@@ -587,9 +587,9 @@ void ElectroMagn3D::initE_relativistic_Poisson(Patch *patch, double gamma_mean)
     // gamma_mean is the average Lorentz factor of the species whose fields will be computed
     // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details 
 
-    Field3D* Ex3D  = static_cast<Field3D*>(Ex_);
-    Field3D* Ey3D  = static_cast<Field3D*>(Ey_);
-    Field3D* Ez3D  = static_cast<Field3D*>(Ez_);
+    Field3D* Ex3D  = static_cast<Field3D*>(Ex_rel_);
+    Field3D* Ey3D  = static_cast<Field3D*>(Ey_rel_);
+    Field3D* Ez3D  = static_cast<Field3D*>(Ez_rel_);
     Field3D* rho3D = static_cast<Field3D*>(rho_);
 
     // ------------------------------------------
@@ -711,12 +711,12 @@ void ElectroMagn3D::initB_relativistic_Poisson(Patch *patch, double gamma_mean)
     // gamma_mean is the average Lorentz factor of the species whose fields will be computed
     // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details 
 
-    Field3D* Ey3D  = static_cast<Field3D*>(Ey_);
-    Field3D* Ez3D  = static_cast<Field3D*>(Ez_);
+    Field3D* Ey3D  = static_cast<Field3D*>(Ey_rel_);
+    Field3D* Ez3D  = static_cast<Field3D*>(Ez_rel_);
 
     // Bx is zero everywhere
-    Field3D* By3D  = static_cast<Field3D*>(By_);
-    Field3D* Bz3D  = static_cast<Field3D*>(Bz_);
+    Field3D* By3D  = static_cast<Field3D*>(By_rel_);
+    Field3D* Bz3D  = static_cast<Field3D*>(Bz_rel_);
   
     double beta_mean = sqrt(1.-1./gamma_mean/gamma_mean);
 
@@ -747,6 +747,106 @@ void ElectroMagn3D::initB_relativistic_Poisson(Patch *patch, double gamma_mean)
   
 
 } // initB_relativistic_Poisson
+
+void ElectroMagn3D::initRelativisticPoissonFields(Patch *patch)
+{
+    // init temporary fields for relativistic field initialization, to be added to the already present electromagnetic fields
+
+    Ex_rel_  = new Field3D(dimPrim, 0, false, "Ex_rel");
+    Ey_rel_  = new Field3D(dimPrim, 1, false, "Ey_rel");
+    Ez_rel_  = new Field3D(dimPrim, 2, false, "Ez_rel");
+    Bx_rel_  = new Field3D(dimPrim, 0, true,  "Bx_rel");
+    By_rel_  = new Field3D(dimPrim, 1, true,  "By_rel");
+    Bz_rel_  = new Field3D(dimPrim, 2, true,  "Bz_rel");
+
+} // initRelativisticPoissonFields
+
+void ElectroMagn3D::sum_rel_fields_to_em_fields(Patch *patch)
+{
+    Field3D* Ex3Drel  = static_cast<Field3D*>(Ex_rel_);
+    Field3D* Ey3Drel  = static_cast<Field3D*>(Ey_rel_);
+    Field3D* Ez3Drel  = static_cast<Field3D*>(Ez_rel_);
+    Field3D* Bx3Drel  = static_cast<Field3D*>(Bx_rel_);
+    Field3D* By3Drel  = static_cast<Field3D*>(By_rel_);
+    Field3D* Bz3Drel  = static_cast<Field3D*>(Bz_rel_);
+
+    Field3D* Ex3D  = static_cast<Field3D*>(Ex_);
+    Field3D* Ey3D  = static_cast<Field3D*>(Ey_);
+    Field3D* Ez3D  = static_cast<Field3D*>(Ez_);
+    Field3D* Bx3D  = static_cast<Field3D*>(Bx_);
+    Field3D* By3D  = static_cast<Field3D*>(By_);
+    Field3D* Bz3D  = static_cast<Field3D*>(Bz_);
+    Field3D* Bx3D0  = static_cast<Field3D*>(Bx_m);
+    Field3D* By3D0  = static_cast<Field3D*>(By_m);
+    Field3D* Bz3D0  = static_cast<Field3D*>(Bz_m);
+
+    // Ex
+    for (unsigned int i=0; i<nx_d; i++) {
+        for (unsigned int j=0; j<ny_p; j++) {
+            for (unsigned int k=0; k<nz_p; k++) {
+                (*Ex3D)(i,j,k) = (*Ex3D)(i,j,k) + (*Ex3Drel)(i,j,k);
+            }
+        }
+    }
+
+    // Ey
+    for (unsigned int i=0; i<nx_p; i++) {
+        for (unsigned int j=0; j<ny_d; j++) {
+            for (unsigned int k=0; k<nz_p; k++) {
+                (*Ey3D)(i,j,k) = (*Ey3D)(i,j,k) + (*Ey3Drel)(i,j,k);
+            }
+        }
+    }
+
+    // Ez
+    for (unsigned int i=0; i<nx_p; i++) {
+        for (unsigned int j=0; j<ny_p; j++) {
+            for (unsigned int k=0; k<nz_d; k++) {
+                (*Ez3D)(i,j,k) = (*Ez3D)(i,j,k) + (*Ez3Drel)(i,j,k);
+            }
+        }
+    }
+
+    // Bx
+    for (unsigned int i=0; i<nx_p; i++) {
+        for (unsigned int j=0; j<ny_d; j++) {
+            for (unsigned int k=0; k<nz_d; k++) {
+                (*Bx3D)(i,j,k) = (*Bx3D)(i,j,k) + (*Bx3Drel)(i,j,k);
+                (*Bx3D0)(i,j,k)= (*Bx3D)(i,j,k) + (*Bx3Drel)(i,j,k);
+            }
+        }
+    }
+
+    // By
+    for (unsigned int i=0; i<nx_d; i++) {
+        for (unsigned int j=0; j<ny_p; j++) {
+            for (unsigned int k=0; k<nz_d; k++) {
+                (*By3D)(i,j,k) = (*By3D)(i,j,k) + (*By3Drel)(i,j,k);
+                (*By3D0)(i,j,k)= (*By3D)(i,j,k) + (*By3Drel)(i,j,k);
+            }
+        }
+    }
+
+    // Bz
+    for (unsigned int i=0; i<nx_d; i++) {
+        for (unsigned int j=0; j<ny_d; j++) {
+            for (unsigned int k=0; k<nz_p; k++) {
+                (*Bz3D)(i,j,k) = (*Bz3D)(i,j,k) + (*Bz3Drel)(i,j,k);
+                (*Bz3D0)(i,j,k)= (*Bz3D)(i,j,k) + (*Bz3Drel)(i,j,k);
+            }
+        }
+    }
+
+    // delete temporary fields used for relativistic initialization
+    delete Ex_rel_;
+    delete Ey_rel_;
+    delete Ez_rel_;
+    delete Bx_rel_;
+    delete By_rel_;
+    delete Bz_rel_;
+
+
+} // sum_rel_fields_to_em_fields
 
 
 void ElectroMagn3D::centeringE( std::vector<double> E_Add )
@@ -779,6 +879,37 @@ void ElectroMagn3D::centeringE( std::vector<double> E_Add )
     }
 
 } // centeringE
+
+void ElectroMagn3D::centeringErel( std::vector<double> E_Add )
+{
+    Field3D* Ex3D  = static_cast<Field3D*>(Ex_rel_);
+    Field3D* Ey3D  = static_cast<Field3D*>(Ey_rel_);
+    Field3D* Ez3D  = static_cast<Field3D*>(Ez_rel_);
+
+    // Centering electrostatic fields
+    for (unsigned int i=0; i<nx_d; i++) {
+        for (unsigned int j=0; j<ny_p; j++) {
+            for (unsigned int k=0; k<nz_p; k++) {
+                (*Ex3D)(i,j,k) += E_Add[0];
+            }
+        }
+    }
+    for (unsigned int i=0; i<nx_p; i++) {
+        for (unsigned int j=0; j<ny_d; j++) {
+            for (unsigned int k=0; k<nz_p; k++) {
+                (*Ey3D)(i,j,k) += E_Add[1];
+            }
+        }
+    }
+    for (unsigned int i=0; i<nx_p; i++) {
+        for (unsigned int j=0; j<ny_p; j++) {
+            for (unsigned int k=0; k<nz_d; k++) {
+                (*Ez3D)(i,j,k) += E_Add[2];
+            }
+        }
+    }
+
+} // centeringErel
 
 // ---------------------------------------------------------------------------------------------------------------------
 // End of Solve Poisson methods 
@@ -1075,14 +1206,14 @@ void ElectroMagn3D::center_fields_from_relativistic_Poisson(Patch *patch){
     double one_over_two  = 1./2.; 
 
     // Static-cast of the fields
-    Field3D* Bx3D = static_cast<Field3D*>(Bx_);
-    Field3D* By3D = static_cast<Field3D*>(By_);
-    Field3D* Bz3D = static_cast<Field3D*>(Bz_);
+    Field3D* Bx3D = static_cast<Field3D*>(Bx_rel_);
+    Field3D* By3D = static_cast<Field3D*>(By_rel_);
+    Field3D* Bz3D = static_cast<Field3D*>(Bz_rel_);
 
     // Temporary fields for interpolation
-    Field3D* Bx3Dnew  = new Field3D( Bx_->dims_  );
-    Field3D* By3Dnew  = new Field3D( By_->dims_  );
-    Field3D* Bz3Dnew  = new Field3D( Bz_->dims_  );
+    Field3D* Bx3Dnew  = new Field3D( Bx_rel_->dims_  );
+    Field3D* By3Dnew  = new Field3D( By_rel_->dims_  );
+    Field3D* Bz3Dnew  = new Field3D( Bz_rel_->dims_  );
 
     // ------------ Interpolation to center the fields the Yee cell - before this operation, the fields B are all centered as E
     // (see ElectroMagn3D::initB_relativistic_Poisson) 
@@ -1093,27 +1224,27 @@ void ElectroMagn3D::center_fields_from_relativistic_Poisson(Patch *patch){
     // and then the old centering is reported (see ElectroMagn3D::initB_relativistic_Poisson)
 
     // ----- Bx centering : (p,d,d) // Bx is identically zero
-    for (unsigned int i=1 ; i < Bx_->dims_[0]-1; i++){ // x loop
-        for (unsigned int j=1 ; j < Bx_->dims_[1]-1; j++){ // y loop
-            for (unsigned int k=1 ; k < Bx_->dims_[2]-1; k++){ // z loop
+    for (unsigned int i=1 ; i < Bx_rel_->dims_[0]-1; i++){ // x loop
+        for (unsigned int j=1 ; j < Bx_rel_->dims_[1]-1; j++){ // y loop
+            for (unsigned int k=1 ; k < Bx_rel_->dims_[2]-1; k++){ // z loop
                 (*Bx3Dnew)(i,j,k) = 0.; 
             } // end z loop
         } // end y loop
     } // end x loop
 
     // ----- By centering : (d,p,d) ; old centering is like Ez (p,p,d)
-    for (unsigned int i=1 ; i < By_->dims_[0]-1; i++){ // x loop
-        for (unsigned int j=0 ; j < By_->dims_[1]-1 ; j++){ // y loop
-            for (unsigned int k=0 ; k < By_->dims_[2]-1; k++){ // z loop
+    for (unsigned int i=1 ; i < By_rel_->dims_[0]-1; i++){ // x loop
+        for (unsigned int j=0 ; j < By_rel_->dims_[1]-1 ; j++){ // y loop
+            for (unsigned int k=0 ; k < By_rel_->dims_[2]-1; k++){ // z loop
                 (*By3Dnew)(i,j,k) = one_over_two*((*By3D)(i,j,k)+(*By3D)(i-1,j,k));
             } // end z loop
         } // end y loop
     } // end x loop
 
     // ----- Bz centering : (d,d,p) ; old centering is like Ey (p,d,p)
-    for (unsigned int i=1 ; i < Bz_->dims_[0]-1; i++){ // x loop
-        for (unsigned int j=0 ; j < Bz_->dims_[1]-1; j++){ // y loop
-            for (unsigned int k=0 ; k < Bz_->dims_[2]-1; k++){ // z loop
+    for (unsigned int i=1 ; i < Bz_rel_->dims_[0]-1; i++){ // x loop
+        for (unsigned int j=0 ; j < Bz_rel_->dims_[1]-1; j++){ // y loop
+            for (unsigned int k=0 ; k < Bz_rel_->dims_[2]-1; k++){ // z loop
                 (*Bz3Dnew)(i,j,k) = one_over_two*((*Bz3D)(i,j,k)+(*Bz3D)(i-1,j,k));
             } // end z loop
         } // end y loop
@@ -1121,9 +1252,9 @@ void ElectroMagn3D::center_fields_from_relativistic_Poisson(Patch *patch){
 
 
     // -------- Back substitution
-    for (unsigned int i=0 ; i < Bx_->dims_[0]-1; i++){ // x loop
-        for (unsigned int j=0 ; j < Bx_->dims_[1]-1; j++){ // y loop
-            for (unsigned int k=0 ; k < Bx_->dims_[2]-1; k++){ // z loop
+    for (unsigned int i=0 ; i < Bx_rel_->dims_[0]-1; i++){ // x loop
+        for (unsigned int j=0 ; j < Bx_rel_->dims_[1]-1; j++){ // y loop
+            for (unsigned int k=0 ; k < Bx_rel_->dims_[2]-1; k++){ // z loop
                 (*Bx3D)(i,j,k) = (*Bx3Dnew)(i,j,k);
                 (*By3D)(i,j,k) = (*By3Dnew)(i,j,k);
                 (*Bz3D)(i,j,k) = (*Bz3Dnew)(i,j,k);     

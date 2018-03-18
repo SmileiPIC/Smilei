@@ -799,21 +799,36 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi )
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
         (*this)(ipatch)->EMfields->initPoisson( (*this)(ipatch) );
         rnew_dot_rnew_local += (*this)(ipatch)->EMfields->compute_r();
+        (*this)(ipatch)->EMfields->initRelativisticPoissonFields( (*this)(ipatch) );
     }
     MPI_Allreduce(&rnew_dot_rnew_local, &rnew_dot_rnew, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
-    std::vector<Field*> Ex_;
+    //std::vector<Field*> Ex_;
+    std::vector<Field*> Ex_rel_;
+    std::vector<Field*> Ey_rel_;
+    std::vector<Field*> Ez_rel_;
+    std::vector<Field*> Bx_rel_;
+    std::vector<Field*> By_rel_;
+    std::vector<Field*> Bz_rel_;
     std::vector<Field*> Ap_;
 
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-        Ex_.push_back( (*this)(ipatch)->EMfields->Ex_ );
+        //Ex_.push_back( (*this)(ipatch)->EMfields->Ex_ );
+        Ex_rel_.push_back( (*this)(ipatch)->EMfields->Ex_rel_ );
+        Ey_rel_.push_back( (*this)(ipatch)->EMfields->Ey_rel_ );
+        Ez_rel_.push_back( (*this)(ipatch)->EMfields->Ez_rel_ );
+        Bx_rel_.push_back( (*this)(ipatch)->EMfields->Bx_rel_ );
+        By_rel_.push_back( (*this)(ipatch)->EMfields->By_rel_ );
+        Bz_rel_.push_back( (*this)(ipatch)->EMfields->Bz_rel_ );
+       
         Ap_.push_back( (*this)(ipatch)->EMfields->Ap_ );
     }
 
     unsigned int nx_p2_global = (params.n_space_global[0]+1);
-    if ( Ex_[0]->dims_.size()>1 ) {
+    //if ( Ex_[0]->dims_.size()>1 ) {
+    if ( Ex_rel_[0]->dims_.size()>1 ) {
         nx_p2_global *= (params.n_space_global[1]+1);
-        if ( Ex_[0]->dims_.size()>2 ) {
+        if ( Ex_rel_[0]->dims_.size()>2 ) {
             nx_p2_global *= (params.n_space_global[2]+1);
         }
     }
@@ -902,19 +917,25 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi )
         { // begin loop on patches
         (*this)(ipatch)->EMfields->initE_relativistic_Poisson( (*this)(ipatch), gamma_mean );
         } // end loop on patches
-        
-    SyncVectorPatch::exchangeE( params, *this );
-    SyncVectorPatch::finalizeexchangeE( params, *this );
+      
+    SyncVectorPatch::exchange_along_all_directions          ( Ex_rel_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions ( Ex_rel_, *this );
+    SyncVectorPatch::exchange_along_all_directions          ( Ey_rel_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions ( Ey_rel_, *this );  
+    SyncVectorPatch::exchange_along_all_directions          ( Ez_rel_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions ( Ez_rel_, *this );    
+    //SyncVectorPatch::exchangeE( params, *this );
+    //SyncVectorPatch::finalizeexchangeE( params, *this );
 
     // Force to zero the average value of electric field, as in traditional Poisson solver
     //// -------------------------------------
-    vector<double> E_Add(Ex_[0]->dims_.size(),0.);
-    if ( Ex_[0]->dims_.size()==3 ) {
+    vector<double> E_Add(Ex_rel_[0]->dims_.size(),0.);
+    if ( Ex_rel_[0]->dims_.size()==3 ) {
         double Ex_avg_local(0.), Ex_avg(0.), Ey_avg_local(0.), Ey_avg(0.), Ez_avg_local(0.), Ez_avg(0.);
         for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-            Ex_avg_local += (*this)(ipatch)->EMfields->computeExSum();
-            Ey_avg_local += (*this)(ipatch)->EMfields->computeEySum();
-            Ez_avg_local += (*this)(ipatch)->EMfields->computeEzSum();
+            Ex_avg_local += (*this)(ipatch)->EMfields->computeExrelSum();
+            Ey_avg_local += (*this)(ipatch)->EMfields->computeEyrelSum();
+            Ez_avg_local += (*this)(ipatch)->EMfields->computeEzrelSum();
         }
 
         MPI_Allreduce(&Ex_avg_local, &Ex_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
@@ -925,7 +946,7 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi )
         E_Add[1] = -Ey_avg/((params.n_space[0]+1)*(params.n_space[1]+2)*(params.n_space[2]+1));;
         E_Add[2] = -Ez_avg/((params.n_space[0]+1)*(params.n_space[1]+1)*(params.n_space[2]+2));;
     }
-    else if ( Ex_[0]->dims_.size()==2 ) {
+    else if ( Ex_rel_[0]->dims_.size()==2 ) {
         double Ex_XminYmax = 0.0;
         double Ey_XminYmax = 0.0;
         double Ex_XmaxYmin = 0.0;
@@ -950,14 +971,14 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi )
     //cout << patch_YmaxXmin << " " << rank_XminYmax << " " << patch_YminXmax << " " << rank_XmaxYmin << endl;
 
     if ( smpi->getRank() == rank_XminYmax ) {
-            Ex_XminYmax = (*this)(patch_YmaxXmin-((*this).refHindex_))->EMfields->getEx_XminYmax();
-            Ey_XminYmax = (*this)(patch_YmaxXmin-((*this).refHindex_))->EMfields->getEy_XminYmax();
+            Ex_XminYmax = (*this)(patch_YmaxXmin-((*this).refHindex_))->EMfields->getExrel_XminYmax();
+            Ey_XminYmax = (*this)(patch_YmaxXmin-((*this).refHindex_))->EMfields->getEyrel_XminYmax();
         }
 
     // Xmax-Ymin corner
     if ( smpi->getRank() == rank_XmaxYmin ) {
-            Ex_XmaxYmin = (*this)(patch_YminXmax-((*this).refHindex_))->EMfields->getEx_XmaxYmin();
-            Ey_XmaxYmin = (*this)(patch_YminXmax-((*this).refHindex_))->EMfields->getEy_XmaxYmin();
+            Ex_XmaxYmin = (*this)(patch_YminXmax-((*this).refHindex_))->EMfields->getExrel_XmaxYmin();
+            Ey_XmaxYmin = (*this)(patch_YminXmax-((*this).refHindex_))->EMfields->getEyrel_XmaxYmin();
         }
 
     MPI_Bcast(&Ex_XminYmax, 1, MPI_DOUBLE, rank_XminYmax, MPI_COMM_WORLD);
@@ -973,8 +994,8 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi )
 #ifdef _3D_LIKE_CENTERING
         double Ex_avg_local(0.), Ex_avg(0.), Ey_avg_local(0.), Ey_avg(0.);
         for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-            Ex_avg_local += (*this)(ipatch)->EMfields->computeExSum();
-            Ey_avg_local += (*this)(ipatch)->EMfields->computeEySum();
+            Ex_avg_local += (*this)(ipatch)->EMfields->computeExrelSum();
+            Ey_avg_local += (*this)(ipatch)->EMfields->computeEyrelSum();
         }
 
         MPI_Allreduce(&Ex_avg_local, &Ex_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
@@ -986,21 +1007,21 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi )
 
     }
 
-    else if( Ex_[0]->dims_.size()==1 ) {
+    else if( Ex_rel_[0]->dims_.size()==1 ) {
         double Ex_Xmin = 0.0;
         double Ex_Xmax = 0.0;
 
         unsigned int rankXmin = 0;
         if ( smpi->getRank() == 0 ) {
             //Ex_Xmin = (*Ex1D)(index_bc_min[0]);
-            Ex_Xmin = (*this)( (0)-((*this).refHindex_))->EMfields->getEx_Xmin();
+            Ex_Xmin = (*this)( (0)-((*this).refHindex_))->EMfields->getExrel_Xmin();
         }
         MPI_Bcast(&Ex_Xmin, 1, MPI_DOUBLE, rankXmin, MPI_COMM_WORLD);
 
         unsigned int rankXmax = smpi->getSize()-1;
         if ( smpi->getRank() == smpi->getSize()-1 ) {
             //Ex_Xmax = (*Ex1D)(index_bc_max[0]);
-            Ex_Xmax = (*this)( (params.number_of_patches[0]-1)-((*this).refHindex_))->EMfields->getEx_Xmax();
+            Ex_Xmax = (*this)( (params.number_of_patches[0]-1)-((*this).refHindex_))->EMfields->getExrel_Xmax();
         }
         MPI_Bcast(&Ex_Xmax, 1, MPI_DOUBLE, rankXmax, MPI_COMM_WORLD);
         E_Add[0] = -0.5*(Ex_Xmin+Ex_Xmax);
@@ -1008,7 +1029,7 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi )
 #ifdef _3D_LIKE_CENTERING
         double Ex_avg_local(0.), Ex_avg(0.);
         for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-            Ex_avg_local += (*this)(ipatch)->EMfields->computeExSum();
+            Ex_avg_local += (*this)(ipatch)->EMfields->computeExrelSum();
         }
 
         MPI_Allreduce(&Ex_avg_local, &Ex_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
@@ -1020,7 +1041,7 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi )
  
     // Centering electrostatic fields
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-        (*this)(ipatch)->EMfields->centeringE( E_Add );
+        (*this)(ipatch)->EMfields->centeringErel( E_Add );
 
     // compute B and sync
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
@@ -1028,8 +1049,14 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi )
         (*this)(ipatch)->EMfields->initB_relativistic_Poisson( (*this)(ipatch), gamma_mean );
         } // end loop on patches
 
-    SyncVectorPatch::exchangeB( params, *this );
-    SyncVectorPatch::finalizeexchangeB( params, *this );
+    SyncVectorPatch::exchange_along_all_directions          ( Bx_rel_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions ( Bx_rel_, *this );
+    SyncVectorPatch::exchange_along_all_directions          ( By_rel_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions ( By_rel_, *this );  
+    SyncVectorPatch::exchange_along_all_directions          ( Bz_rel_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions ( Bz_rel_, *this );  
+    //SyncVectorPatch::exchangeB( params, *this );
+    //SyncVectorPatch::finalizeexchangeB( params, *this );
 
     // Proper spatial centering of the electromagnetic fields in the Yee Cell through interpolation
     // -------------------------------------
@@ -1040,16 +1067,29 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi )
             } // end loop on patches
     
         // re-exchange the properly spatially centered B field
-        SyncVectorPatch::exchangeB( params, *this );
-        SyncVectorPatch::finalizeexchangeB( params, *this );
+        SyncVectorPatch::exchange_along_all_directions          ( Bx_rel_, *this );
+        SyncVectorPatch::finalize_exchange_along_all_directions ( Bx_rel_, *this );
+        SyncVectorPatch::exchange_along_all_directions          ( By_rel_, *this );
+        SyncVectorPatch::finalize_exchange_along_all_directions ( By_rel_, *this );  
+        SyncVectorPatch::exchange_along_all_directions          ( Bz_rel_, *this );
+        SyncVectorPatch::finalize_exchange_along_all_directions ( Bz_rel_, *this );
+        //SyncVectorPatch::exchangeB( params, *this );
+        //SyncVectorPatch::finalizeexchangeB( params, *this );
     }
 
     // Saving magnetic fields (to compute centered fields used in the particle pusher)
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){ //start loop on patches
-        if (!params.is_spectral){      
-            // Stores B at time n in B_m.
-            (*this)(ipatch)->EMfields->saveMagneticFields(params.is_spectral);}
-                                                                  } // end loop on patches
+    //for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){ //start loop on patches
+    //    if (!params.is_spectral){      
+    //        // Stores B at time n in B_m.
+    //        (*this)(ipatch)->EMfields->saveMagneticFields(params.is_spectral);}
+    //                                                              } // end loop on patches
+
+   // sum the fields found  by relativistic Poisson solver to the existing em fields
+   for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+       { // begin loop on patches
+       (*this)(ipatch)->EMfields->sum_rel_fields_to_em_fields( (*this)(ipatch));
+       } // end loop on patches
+
 
     //!\todo Reduce to find global max
     if (smpi->isMaster())

@@ -511,8 +511,8 @@ void ElectroMagn2D::initE_relativistic_Poisson(Patch *patch, double gamma_mean)
     // gamma_mean is the average Lorentz factor of the species whose fields will be computed
     // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details 
 
-    Field2D* Ex2D  = static_cast<Field2D*>(Ex_);
-    Field2D* Ey2D  = static_cast<Field2D*>(Ey_);
+    Field2D* Ex2D  = static_cast<Field2D*>(Ex_rel_);
+    Field2D* Ey2D  = static_cast<Field2D*>(Ey_rel_);
     Field2D* rho2D = static_cast<Field2D*>(rho_);
 
     // ------------------------------------------
@@ -581,8 +581,8 @@ void ElectroMagn2D::initB_relativistic_Poisson(Patch *patch, double gamma_mean)
     // gamma_mean is the average Lorentz factor of the species whose fields will be computed
     // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details 
 
-    Field2D* Ey2D  = static_cast<Field2D*>(Ey_);
-    Field2D* Bz2D  = static_cast<Field2D*>(Bz_);
+    Field2D* Ey2D  = static_cast<Field2D*>(Ey_rel_);
+    Field2D* Bz2D  = static_cast<Field2D*>(Bz_rel_);
     // Bx is zero everywhere
 
     // ------------------------------------------
@@ -607,12 +607,12 @@ void ElectroMagn2D::center_fields_from_relativistic_Poisson(Patch *patch){
     double one_over_two  = 1./2.;  
 
     // Static-cast of the fields
-    Field2D* Ex2D = static_cast<Field2D*>(Ex_);
-    Field2D* Ey2D = static_cast<Field2D*>(Ey_);
-    Field2D* Bz2D = static_cast<Field2D*>(Bz_);
+    Field2D* Ex2D = static_cast<Field2D*>(Ex_rel_);
+    Field2D* Ey2D = static_cast<Field2D*>(Ey_rel_);
+    Field2D* Bz2D = static_cast<Field2D*>(Bz_rel_);
 
     // Temporary fields for interpolation
-    Field2D* Bz2Dnew  = new Field2D( Bz_->dims_  );
+    Field2D* Bz2Dnew  = new Field2D( Bz_rel_->dims_  );
 
     // ------------ Interpolation to center the fields the Yee cell - before this operation, the fields B are all centered as E
     // (see ElectroMagn3D::initB_relativistic_Poisson) 
@@ -624,16 +624,16 @@ void ElectroMagn2D::center_fields_from_relativistic_Poisson(Patch *patch){
     
 
     // ----- Bz centering : (d,d) old centering is like Ey (p,d)
-    for (unsigned int i=1 ; i < Bz_->dims_[0]-2; i++){ // x loop
-        for (unsigned int j=0 ; j < Bz_->dims_[1]-2 ; j++){ // y loop
+    for (unsigned int i=1 ; i < Bz_rel_->dims_[0]-2; i++){ // x loop
+        for (unsigned int j=0 ; j < Bz_rel_->dims_[1]-2 ; j++){ // y loop
                 (*Bz2Dnew)(i,j) = one_over_two*((*Bz2D)(i,j)+(*Bz2D)(i-1,j));
         } // end y loop
     } // end x loop
 
 
     // -------- Back substitution
-    for (unsigned int i=0 ; i < Bz_->dims_[0]-1; i++){ // x loop
-        for (unsigned int j=0 ; j < Bz_->dims_[1]-1 ; j++){ // y loop
+    for (unsigned int i=0 ; i < Bz_rel_->dims_[0]-1; i++){ // x loop
+        for (unsigned int j=0 ; j < Bz_rel_->dims_[1]-1 ; j++){ // y loop
                 (*Bz2D)(i,j) = (*Bz2Dnew)(i,j);     
         } // end y loop
     } // end x loop
@@ -643,6 +643,94 @@ void ElectroMagn2D::center_fields_from_relativistic_Poisson(Patch *patch){
     delete Bz2Dnew;
 
 } 
+
+void ElectroMagn2D::initRelativisticPoissonFields(Patch *patch)
+{
+    // init temporary fields for relativistic field initialization, to be added to the already present electromagnetic fields
+
+    Ex_rel_  = new Field2D(dimPrim, 0, false, "Ex_rel");
+    Ey_rel_  = new Field2D(dimPrim, 1, false, "Ey_rel");
+    Ez_rel_  = new Field2D(dimPrim, 2, false, "Ez_rel");
+    Bx_rel_  = new Field2D(dimPrim, 0, true,  "Bx_rel");
+    By_rel_  = new Field2D(dimPrim, 1, true,  "By_rel");
+    Bz_rel_  = new Field2D(dimPrim, 2, true,  "Bz_rel");
+
+} // initRelativisticPoissonFields
+
+void ElectroMagn2D::sum_rel_fields_to_em_fields(Patch *patch)
+{
+    Field2D* Ex2Drel  = static_cast<Field2D*>(Ex_rel_);
+    Field2D* Ey2Drel  = static_cast<Field2D*>(Ey_rel_);
+    Field2D* Ez2Drel  = static_cast<Field2D*>(Ez_rel_);
+    Field2D* Bx2Drel  = static_cast<Field2D*>(Bx_rel_);
+    Field2D* By2Drel  = static_cast<Field2D*>(By_rel_);
+    Field2D* Bz2Drel  = static_cast<Field2D*>(Bz_rel_);
+
+    Field2D* Ex2D  = static_cast<Field2D*>(Ex_);
+    Field2D* Ey2D  = static_cast<Field2D*>(Ey_);
+    Field2D* Ez2D  = static_cast<Field2D*>(Ez_);
+    Field2D* Bx2D  = static_cast<Field2D*>(Bx_);
+    Field2D* By2D  = static_cast<Field2D*>(By_);
+    Field2D* Bz2D  = static_cast<Field2D*>(Bz_);
+    Field2D* Bx2D0  = static_cast<Field2D*>(Bx_m);
+    Field2D* By2D0  = static_cast<Field2D*>(By_m);
+    Field2D* Bz2D0  = static_cast<Field2D*>(Bz_m);
+
+    // Ex
+    for (unsigned int i=0; i<nx_d; i++) {
+        for (unsigned int j=0; j<ny_p; j++) {
+                (*Ex2D)(i,j) = (*Ex2D)(i,j) + (*Ex2Drel)(i,j);
+        }
+    }
+
+    // Ey
+    for (unsigned int i=0; i<nx_p; i++) {
+        for (unsigned int j=0; j<ny_d; j++) {
+                (*Ey2D)(i,j) = (*Ey2D)(i,j) + (*Ey2Drel)(i,j);
+        }
+    }
+
+    // Ez
+    for (unsigned int i=0; i<nx_p; i++) {
+        for (unsigned int j=0; j<ny_p; j++) {
+                (*Ez2D)(i,j) = (*Ez2D)(i,j) + (*Ez2Drel)(i,j);
+        }
+    }
+
+    // Bx
+    for (unsigned int i=0; i<nx_p; i++) {
+        for (unsigned int j=0; j<ny_d; j++) {
+                (*Bx2D)(i,j) = (*Bx2D)(i,j) + (*Bx2Drel)(i,j);
+                (*Bx2D0)(i,j)= (*Bx2D)(i,j) + (*Bx2Drel)(i,j);
+        }
+    }
+
+    // By
+    for (unsigned int i=0; i<nx_d; i++) {
+        for (unsigned int j=0; j<ny_p; j++) {
+                (*By2D)(i,j) = (*By2D)(i,j) + (*By2Drel)(i,j);
+                (*By2D0)(i,j)= (*By2D)(i,j) + (*By2Drel)(i,j);
+        }
+    }
+
+    // Bz
+    for (unsigned int i=0; i<nx_d; i++) {
+        for (unsigned int j=0; j<ny_d; j++) {
+                (*Bz2D)(i,j) = (*Bz2D)(i,j) + (*Bz2Drel)(i,j);
+                (*Bz2D0)(i,j)= (*Bz2D)(i,j) + (*Bz2Drel)(i,j);
+        }
+    }
+
+    // delete temporary fields used for relativistic initialization
+    delete Ex_rel_;
+    delete Ey_rel_;
+    delete Ez_rel_;
+    delete Bx_rel_;
+    delete By_rel_;
+    delete Bz_rel_;
+
+
+} // sum_rel_fields_to_em_fields
 
 void ElectroMagn2D::centeringE( std::vector<double> E_Add )
 {
@@ -661,6 +749,24 @@ void ElectroMagn2D::centeringE( std::vector<double> E_Add )
         }
     }
 } // centeringE
+
+void ElectroMagn2D::centeringErel( std::vector<double> E_Add )
+{
+    Field2D* Ex2D  = static_cast<Field2D*>(Ex_rel_);
+    Field2D* Ey2D  = static_cast<Field2D*>(Ey_rel_);
+
+    // Centering electrostatic fields
+    for (unsigned int i=0; i<nx_d; i++) {
+        for (unsigned int j=0; j<ny_p; j++) {
+            (*Ex2D)(i,j) += E_Add[0];
+        }
+    }
+    for (unsigned int i=0; i<nx_p; i++) {
+        for (unsigned int j=0; j<ny_d; j++) {
+            (*Ey2D)(i,j) += E_Add[1];
+        }
+    }
+} // centeringErel
 
 // ---------------------------------------------------------------------------------------------------------------------
 // End of Solve Poisson methods 
