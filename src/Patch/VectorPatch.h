@@ -111,7 +111,7 @@ public :
     void computeCharge();
  
     // compute rho only given by relativistic species which require initialization of the relativistic fields
-    void computeChargeRelativisticSpecies(); 
+    void computeChargeRelativisticSpecies(double time_primal); 
 
     void resetRhoJ();
 

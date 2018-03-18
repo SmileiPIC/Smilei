@@ -199,15 +199,17 @@ void VectorPatch::computeCharge()
 
 } // END computeRho
 
-void VectorPatch::computeChargeRelativisticSpecies()
+void VectorPatch::computeChargeRelativisticSpecies(double time_primal)
 {
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         (*this)(ipatch)->EMfields->restartRhoJ();
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
-            if (species(ipatch, ispec)->relativistic_field_initialization){
+            // project only if species needs relativistic initialization and it is the right time to initialize its fields
+            if ( (species(ipatch, ispec)->relativistic_field_initialization              ) & 
+                 (time_primal==species(ipatch, ispec)->time_relativistic_initialization) ){
                     species(ipatch, ispec)->computeCharge(ispec, emfields(ipatch), proj(ipatch) );
-                                                                          }
+                                                                                           }
         }
     }
 

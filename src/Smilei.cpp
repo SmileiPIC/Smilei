@@ -169,9 +169,11 @@ int main (int argc, char* argv[])
 
         
         // Solve "Relativistic Poisson" problem (including proper centering of fields)
+        // Note: the mean gamma for initialization will be computed for all the species 
+        // whose fields are initialized at this iteration
         if (params.solve_relativistic_poisson == true) {
             // Compute rho only for species needing relativistic field Initialization
-            vecPatches.computeChargeRelativisticSpecies();
+            vecPatches.computeChargeRelativisticSpecies(time_prim);
             vecPatches.sumDensities(params, time_dual, timers, 0, simWindow);
             
             // Initialize the fields for these species
@@ -291,6 +293,24 @@ int main (int argc, char* argv[])
             // apply collisions if requested
             vecPatches.applyCollisions(params, itime, timers);
             
+            // Solve "Relativistic Poisson" problem (including proper centering of fields) 
+            // for species who stop to be frozen
+            // Note: the mean gamma for initialization will be computed for all the species 
+            // whose fields are initialized at this iteration
+            if (params.solve_relativistic_poisson == true) {
+                // Compute rho only for species needing relativistic field Initialization
+                vecPatches.computeChargeRelativisticSpecies(time_prim);
+                vecPatches.sumDensities(params, time_dual, timers, 0, simWindow);
+                
+                // Initialize the fields for these species
+                if (!vecPatches.isRhoNull(&smpi)){
+                    TITLE("Initializing relativistic species fields at time t = 0");
+                    vecPatches.solveRelativisticPoisson( params, &smpi );
+                                                 }
+                // Reset rho and J and return to PIC loop
+                vecPatches.resetRhoJ();
+            }
+
             // (1) interpolate the fields at the particle position
             // (2) move the particle
             // (3) calculate the currents (charge conserving method)
