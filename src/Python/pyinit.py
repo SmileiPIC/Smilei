@@ -196,7 +196,7 @@ class Main(SmileiSingleton):
     # Default fields
     maxwell_solver = 'Yee'
     EM_boundary_conditions = [["periodic"]]
-    EM_boundary_conditions_k = [[1.,0.,0.],[-1.,0.,0.],[0.,1.,0.],[0.,-1.,0.],[0.,0.,1.],[0.,0.,-1.]]
+    EM_boundary_conditions_k = []
     Envelope_boundary_conditions = [["reflective"]]
     time_fields_frozen = 0.
     Laser_Envelope_model = False

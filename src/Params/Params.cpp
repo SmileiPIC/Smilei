@@ -288,7 +288,7 @@ namelist("")
         if( EM_BCs[iDim].size() == 1 ) // if just one type is specified, then take the same bc type in a given dimension
             EM_BCs[iDim].push_back( EM_BCs[iDim][0] );
         else if ( (EM_BCs[iDim][0] != EM_BCs[iDim][1]) &&  (EM_BCs[iDim][0] == "periodic" || EM_BCs[iDim][1] == "periodic") )
-            ERROR("EM_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side");
+            ERROR("EM_boundary_conditions along dimension "<<"012"[iDim]<<" cannot be periodic only on one side");
     }
         
     int n_envlaser = PyTools::nComponents("LaserEnvelope");
@@ -325,17 +325,31 @@ namelist("")
     }
 
     PyTools::extract("EM_boundary_conditions_k", EM_BCs_k, "Main");
+    if( EM_BCs_k.size() == 0 ) {
+        //Gives default value
+        for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
+            std::vector<double> temp_k; 
+            
+            for(  int iiDim=0; iiDim<iDim; iiDim++ ) temp_k.push_back(0.);
+            temp_k.push_back(1.);
+            for(  int iiDim=iDim+1; iiDim<nDim_field; iiDim++ ) temp_k.push_back(0.);
+            EM_BCs_k.push_back(temp_k);
+            for(  int iiDim=0; iiDim<nDim_field; iiDim++ ) temp_k[iiDim] *= -1. ;
+            EM_BCs_k.push_back(temp_k);
+        }
+    }
+
     //Complete with zeros if not defined
     if( EM_BCs_k.size() == 1 ) {
         while( EM_BCs_k.size() < nDim_field*2 ) EM_BCs_k.push_back(EM_BCs_k[0]  );
-    } else if( EM_BCs_k.size() < nDim_field*2 ) {
+    } else if( EM_BCs_k.size() != nDim_field*2 ) {
         ERROR("EM_boundary_conditions_k must be the same size as the number of faces.");
     }
     for( unsigned int iDim=0; iDim<nDim_field*2; iDim++ ) {
-        if ( EM_BCs_k[iDim].size() < nDim_field )
-            ERROR("EM_boundary_conditions_k must have at least nDim_field (" << nDim_field << ") elements along dimension "<<"-+"[iDim%2]<<"xyz"[iDim/2] );
+        if ( EM_BCs_k[iDim].size() != nDim_field )
+            ERROR("EM_boundary_conditions_k must have exactly " << nDim_field << " elements along dimension "<<"-+"[iDim%2]<<"012"[iDim/2] );
         if ( EM_BCs_k[iDim][iDim/2] == 0. )
-            ERROR("EM_boundary_conditions_k must have a non zero normal component along dimension "<<"-+"[iDim%2]<<"xyz"[iDim/2] );
+            ERROR("EM_boundary_conditions_k must have a non zero normal component along dimension "<<"-+"[iDim%2]<<"012"[iDim/2] );
         
     }
 
@@ -722,7 +736,11 @@ void Params::print_init()
         MESSAGE(1,"            - Electromagnetic boundary conditions: " << "(" << EM_BCs[i][0] << ", " << EM_BCs[i][1] << ")");
         if (open_boundaries)
             cout << setprecision(2);
-            cout << "                     - Electromagnetic boundary conditions k    : " << "( [" << EM_BCs_k[2*i][0] << ", " << EM_BCs_k[2*i][1] << ", " << EM_BCs_k[2*i][2]<< "] , [" << EM_BCs_k[2*i+1][0]<< ", " << EM_BCs_k[2*i+1][1]<< ", " << EM_BCs_k[2*i+1][2] << "] )" << endl;
+            cout << "                     - Electromagnetic boundary conditions k    : " << "( [" << EM_BCs_k[2*i][0] ;
+            for ( unsigned int ii=1 ; ii<grid_length.size() ; ii++) cout << ", " << EM_BCs_k[2*i][ii] ;
+            cout << "] , [" << EM_BCs_k[2*i+1][0] ;
+            for ( unsigned int ii=1 ; ii<grid_length.size() ; ii++) cout << ", " << EM_BCs_k[2*i+1][ii] ;
+            cout << "] )" << endl;
     }
 
     if( currentFilter_passes > 0 )
