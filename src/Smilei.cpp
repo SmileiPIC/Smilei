@@ -179,7 +179,7 @@ int main (int argc, char* argv[])
             // Initialize the fields for these species
             if (!vecPatches.isRhoNull(&smpi)){
                 TITLE("Initializing relativistic species fields at time t = 0");
-                vecPatches.solveRelativisticPoisson( params, &smpi );
+                vecPatches.solveRelativisticPoisson( params, &smpi, time_prim );
                                              }
             // Reset rho and J and return to initialization
             vecPatches.resetRhoJ();
@@ -304,8 +304,8 @@ int main (int argc, char* argv[])
                 
                 // Initialize the fields for these species
                 if (!vecPatches.isRhoNull(&smpi)){
-                    TITLE("Initializing relativistic species fields at time t = 0");
-                    vecPatches.solveRelativisticPoisson( params, &smpi );
+                    TITLE("Initializing relativistic species fields");
+                    vecPatches.solveRelativisticPoisson( params, &smpi, time_prim );
                                                  }
                 // Reset rho and J and return to PIC loop
                 vecPatches.resetRhoJ();

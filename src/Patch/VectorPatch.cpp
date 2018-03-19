@@ -753,7 +753,7 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
 } // END solvePoisson
 
 
-void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi )
+void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, double time_primal )
 {
     // Assumption: one or more species move in vacuum with mean lorentz gamma factor gamma_mean in the x direction, 
     // with low energy spread.
@@ -774,8 +774,10 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi )
     for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size() ; ispec++) {
         if (species(0, ispec)->relativistic_field_initialization){
             for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-                s_gamma += species(ipatch, ispec)->sum_gamma();
-                nparticles += species(ipatch, ispec)->getNbrOfParticles();
+                if (time_primal==species(ipatch, ispec)->time_relativistic_initialization){
+                    s_gamma += species(ipatch, ispec)->sum_gamma();
+                    nparticles += species(ipatch, ispec)->getNbrOfParticles();
+                                                                                          }
             }
         }
     }
