@@ -90,133 +90,10 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, double 
     if (nbVec*vecSize != cell_nparts)
         nbVec++;
 
-    // Jx^(d,p,p)
-    #pragma omp simd
-    for (unsigned int j=0; j<1000; j++)
-        bJx[j] = 0.;
 
-    for (int ivect=0 ; ivect < cell_nparts; ivect += vecSize ){
-        
-        int np_computed(min(cell_nparts-ivect,vecSize));
-        int istart0 = (int)istart + ivect;
-
-        #pragma omp simd
-        for (int ipart=0 ; ipart<np_computed; ipart++ ){
-            compute_distances( particles, npart_total, ipart, istart0, ipart_ref, deltaold, iold, Sx0_buff_vect, Sy0_buff_vect, Sz0_buff_vect, DSx, DSy, DSz );
-            charge_weight[ipart] = (double)(particles.charge(ivect+istart+ipart))*particles.weight(ivect+istart+ipart);
-        }
-
-        #pragma omp simd
-        for (int ipart=0 ; ipart<np_computed; ipart++ ){
-            computeJ( ipart, charge_weight, DSx, DSy, DSz, Sy0_buff_vect, Sz0_buff_vect, bJx, dx_ov_dt, 25, 5, 1 );
-        } // END ipart (compute coeffs)
-
-    } // END ivect
-
-
-    int iloc0 = ipom2*b_dim[1]*b_dim[2]+jpom2*b_dim[2]+kpom2;
-
-    int iloc  = iloc0;
-    for (unsigned int i=1 ; i<5 ; i++) {
-        iloc += b_dim[1]*b_dim[2];
-        for (unsigned int j=0 ; j<5 ; j++) {
-            #pragma omp simd
-            for (unsigned int k=0 ; k<5 ; k++) {
-                double tmpJx = 0.;
-                int ilocal = ((i)*25+j*5+k)*vecSize;
-                #pragma unroll(8)
-                for (int ipart=0 ; ipart<8; ipart++ ){
-                    tmpJx += bJx [ilocal+ipart];
-                }
-                Jx[iloc+j*b_dim[2]+k]         += tmpJx;
-            }
-        }
-    }
-
-
-    // Jy^(p,d,p)
-    #pragma omp simd
-    for (unsigned int j=0; j<1000; j++)
-        bJx[j] = 0.;
-
-    cell_nparts = (int)iend-(int)istart;
-    for (int ivect=0 ; ivect < cell_nparts; ivect += vecSize ){
-        
-        int np_computed(min(cell_nparts-ivect,vecSize));
-        int istart0 = (int)istart + ivect;
-
-        #pragma omp simd
-        for (int ipart=0 ; ipart<np_computed; ipart++ ){
-            compute_distances( particles, npart_total, ipart, istart0, ipart_ref, deltaold, iold, Sx0_buff_vect, Sy0_buff_vect, Sz0_buff_vect, DSx, DSy, DSz );
-            charge_weight[ipart] = (double)(particles.charge(ivect+istart+ipart))*particles.weight(ivect+istart+ipart);
-        }
-
-        #pragma omp simd
-        for (int ipart=0 ; ipart<np_computed; ipart++ ){
-            computeJ( ipart, charge_weight, DSy, DSx, DSz, Sx0_buff_vect, Sz0_buff_vect, bJx, dy_ov_dt, 5, 25, 1 );
-        }
-
-    }
-
-    iloc = iloc0+ipom2*b_dim[2];
-    for (unsigned int i=0 ; i<5 ; i++) {
-        for (unsigned int j=1 ; j<5 ; j++) {
-            #pragma omp simd
-            for (unsigned int k=0 ; k<5 ; k++) {
-                double tmpJy = 0.;
-                int ilocal = ((i)*25+j*5+k)*vecSize;
-                #pragma unroll(8)
-                for (int ipart=0 ; ipart<8; ipart++ ){
-                    tmpJy += bJx [ilocal+ipart];                  
-                }
-                Jy[iloc+j*b_dim[2]+k] += tmpJy;
-            }
-        }
-        iloc += (b_dim[1]+1)*b_dim[2];
-    }
-
-
-    // Jz^(p,p,d)
-    cell_nparts = (int)iend-(int)istart;
-    #pragma omp simd
-    for (unsigned int j=0; j<1000; j++)
-        bJx[j] = 0.;
-
-    for (int ivect=0 ; ivect < cell_nparts; ivect += vecSize ){
-
-        int np_computed(min(cell_nparts-ivect,vecSize));
-        int istart0 = (int)istart + ivect;
-
-        #pragma omp simd
-        for (int ipart=0 ; ipart<np_computed; ipart++ ){
-            compute_distances( particles, npart_total, ipart, istart0, ipart_ref, deltaold, iold, Sx0_buff_vect, Sy0_buff_vect, Sz0_buff_vect, DSx, DSy, DSz );
-            charge_weight[ipart] = (double)(particles.charge(ivect+istart+ipart))*particles.weight(ivect+istart+ipart);
-        }
-
-        #pragma omp simd
-        for (int ipart=0 ; ipart<np_computed; ipart++ ){
-            computeJ( ipart, charge_weight, DSz, DSx, DSy, Sx0_buff_vect, Sy0_buff_vect, bJx, dz_ov_dt, 1,25, 5 );
-        } // END ipart (compute coeffs)
-
-    }
-
-    iloc = iloc0  + jpom2 +ipom2*b_dim[1];
-    for (unsigned int i=0 ; i<5 ; i++) {
-        for (unsigned int j=0 ; j<5 ; j++) {
-            #pragma omp simd
-            for (unsigned int k=1 ; k<5 ; k++) {
-                double tmpJz = 0.;
-                int ilocal = ((i)*25+j*5+k)*vecSize;
-                #pragma unroll(8)
-                for (int ipart=0 ; ipart<8; ipart++ ){
-                    tmpJz +=  bJx[ilocal+ipart];
-                }
-                Jz [iloc + (j)*(b_dim[2]+1) + k] +=  tmpJz;
-            }
-        }
-        iloc += b_dim[1]*(b_dim[2]+1);
-    }
-        
+    // Jx, Jy, Jz
+    (*this)(Jx, Jy, Jz, particles, istart, iend, invgf, b_dim, iold, deltaold, ipart_ref);    
+    
 
     // rho^(p,p,d)
     cell_nparts = (int)iend-(int)istart;
@@ -238,7 +115,6 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, double 
         #pragma omp simd
         for (int ipart=0 ; ipart<np_computed; ipart++ ){
             for (unsigned int i=0 ; i<5 ; i++) {
-                iloc += b_dim[1]*b_dim[2];       
                 for (unsigned int j=0 ; j<5 ; j++) {
                     int index( ( i*25 + j*5 )*vecSize+ipart );
                     for (unsigned int k=0 ; k<5 ; k++) {
@@ -251,9 +127,9 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, double 
         } // END ipart (compute coeffs)
 
     }
-    //int iloc0 = ipom2*b_dim[1]*b_dim[2]+jpom2*b_dim[2]+kpom2;
 
-    iloc = iloc0;
+    int iloc0 = ipom2*b_dim[1]*b_dim[2]+jpom2*b_dim[2]+kpom2;
+    int iloc = iloc0;
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
             #pragma omp simd
