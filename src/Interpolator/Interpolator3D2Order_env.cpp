@@ -296,11 +296,8 @@ void Interpolator3D2Order_env::interpolate_envelope_and_susceptibility(ElectroMa
 
     // Indexes of the central nodes
     ip_ = round(xpn);
-    id_ = round(xpn+0.5);
     jp_ = round(ypn);
-    jd_ = round(ypn+0.5);
     kp_ = round(zpn);
-    kd_ = round(zpn+0.5);
 
 
     // Declaration and calculation of the coefficient for interpolation
