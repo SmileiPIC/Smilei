@@ -24,7 +24,7 @@ Main(
     grid_length  = Lsim,
     number_of_patches = [ 32, 4 ],
     timestep = dt,
-    simulation_time = 2*nx*dt,
+    simulation_time = 2.*nx*dt,
      
     EM_boundary_conditions = [
         ["silver-muller","silver-muller"],
@@ -66,18 +66,24 @@ DiagFields(
     fields = ["Br_m_mode_0", "Br_m_mode_1","Bx_m_mode_0","Bx_m_mode_1","Bt_m_mode_0","Bt_m_mode_1","Bt_mode_0","Bt_mode_1","Bx_mode_0","Bx_mode_1","Br_mode_0","Br_mode_1","Er_mode_0","Er_mode_1","Et_mode_0","Et_mode_1","Ex_mode_0","Ex_mode_1" ]
 )
 
-#DiagProbe(
-#    every = 100,
-#    number = [100, 100],
-#    pos = [0., 10.*l0],
-#    pos_first = [20.*l0, 0.*l0],
-#    pos_second = [3.*l0 , 40.*l0],
-#    fields = []
-#)
-#
-#DiagProbe(
-#    every = 10,
-#    pos = [0.1*Lsim[0], 0.5*Lsim[1]],
-#    fields = []
-#)
+DiagProbe(
+    every = 10,
+    origin = [1., 10., 0.],
+    fields = []
+)
+DiagProbe(
+    every = 10,
+    origin = [0., 10., 0.],
+    corners = [[Lsim[0], 10., 0.]],
+    number=[100],
+    fields = []
+)
+DiagProbe(
+    every = 10,
+    origin = [0., -10., 0.],
+    corners = [[Lsim[0], -10., 0.]],
+    number=[100],
+    fields = []
+)
+
 
