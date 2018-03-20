@@ -342,8 +342,8 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
             for( k=1; k<3; k++ ) {
                 mins[k] = numeric_limits<double>::max();
                 maxs[k] = -mins[k];
-                patchMin[k] = -( vecPatches(ipatch)->Pcoordinates[1]+1 )*patch_size[1];
-                patchMax[k] =  ( vecPatches(ipatch)->Pcoordinates[1]+1 )*patch_size[1];
+                patchMax[k] = ( (double)vecPatches(ipatch)->Pcoordinates[1]+1. )*(double)patch_size[1];
+                patchMin[k] = -1. *  patchMax[k] ;
             }
         } else {
             for( k=0; k<nDim_particle; k++ ) {
