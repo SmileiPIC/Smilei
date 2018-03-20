@@ -206,10 +206,10 @@ void VectorPatch::computeChargeRelativisticSpecies(double time_primal)
         (*this)(ipatch)->EMfields->restartRhoJ();
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
             // project only if species needs relativistic initialization and it is the right time to initialize its fields
-            if ( (species(ipatch, ispec)->relativistic_field_initialization              ) & 
-                 (time_primal==species(ipatch, ispec)->time_relativistic_initialization) ){
-                    species(ipatch, ispec)->computeCharge(ispec, emfields(ipatch), proj(ipatch) );
-                                                                                           }
+            if ( ( species(ipatch, ispec)->relativistic_field_initialization               ) && 
+                 ( time_primal == species(ipatch, ispec)->time_relativistic_initialization ) ) {
+                species(ipatch, ispec)->computeCharge(ispec, emfields(ipatch), proj(ipatch) );
+            }
         }
     }
 
@@ -803,8 +803,10 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
         (*this)(ipatch)->EMfields->initPoisson( (*this)(ipatch) );
         rnew_dot_rnew_local += (*this)(ipatch)->EMfields->compute_r();
+        //cout << std::scientific << "rnew_dot_rnew_local = " << rnew_dot_rnew_local << endl;
         (*this)(ipatch)->EMfields->initRelativisticPoissonFields( (*this)(ipatch) );
     }
+    //cout << std::scientific << "rnew_dot_rnew_local = " << rnew_dot_rnew_local << endl;
     MPI_Allreduce(&rnew_dot_rnew_local, &rnew_dot_rnew, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
     //std::vector<Field*> Ex_;
@@ -844,6 +846,7 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
     // Starting iterative loop for the conjugate gradient method
     // ---------------------------------------------------------
     if (smpi->isMaster()) DEBUG("Starting iterative loop for CG method");
+    //cout << std::scientific << ctrl << "\t" << error_max << "\t" << iteration << "\t" << iteration_max << endl;
     while ( (ctrl > error_max) && (iteration<iteration_max) ) {
         iteration++;
         if (smpi->isMaster()) DEBUG("iteration " << iteration << " started with control parameter ctrl = " << ctrl*1.e14 << " x 1e-14");
