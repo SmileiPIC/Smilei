@@ -174,14 +174,15 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
     // Extract the list of requested fields
     vector<string> fs;
     if(!PyTools::extract("fields",fs,"DiagProbe",n_probe)) {
-        fs.resize(10);
+        fs.resize(14);
         fs[0]="Ex"; fs[1]="Ey"; fs[2]="Ez";
         fs[3]="Bx"; fs[4]="By"; fs[5]="Bz";
         fs[6]="Jx"; fs[7]="Jy"; fs[8]="Jz"; fs[9]="Rho";
+        fs[6]="Env_Ar"; fs[7]="Env_Ai"; fs[8]="Env_A_abs"; fs[9]="Env_Chi";
     }
     vector<unsigned int> locations;
-    locations.resize(10);
-    for( unsigned int i=0; i<10; i++) locations[i] = fs.size();
+    locations.resize(14);
+    for( unsigned int i=0; i<14; i++) locations[i] = fs.size();
     for( unsigned int i=0; i<fs.size(); i++) {
         for( unsigned int j=0; j<i; j++) {
             if( fs[i]==fs[j] ) {
@@ -198,6 +199,10 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
         else if( fs[i]=="Jy" ) locations[7] = i;
         else if( fs[i]=="Jz" ) locations[8] = i;
         else if( fs[i]=="Rho") locations[9] = i;
+        else if( fs[i]=="Env_Ar") locations[10] = i;
+        else if( fs[i]=="Env_Ai") locations[11] = i;
+        else if( fs[i]=="Env_A_abs") locations[12] = i;
+        else if( fs[i]=="Env_Chi") locations[13] = i;
         else {
             ERROR("Probe #"<<n_probe<<": unknown field "<<fs[i]);
         }
@@ -531,6 +536,7 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         
         LocalFields Eloc_fields, Bloc_fields, Jloc_fields;
         double Rloc_fields;
+        double Env_ArLoc_fields,Env_AiLoc_fields,Env_AabsLoc_fields,Env_ChiLoc_fields;
         
         for (unsigned int ipart=0; ipart<npart; ipart++) {             
             (*(vecPatches(ipatch)->Interp)) (
@@ -553,6 +559,27 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
             (*probesArray)(fieldlocation[9],iPart_MPI)=Rloc_fields;
             iPart_MPI++;
         }
+        // Probes for envelope
+        if (vecPatches(ipatch)->EMfields->envelope != NULL){ 
+            for (unsigned int ipart=0; ipart<npart; ipart++) {             
+                (static_cast<Interpolator3D2Order_env*>(   (vecPatches(ipatch)->Interp_envelope)        ))->interpolate_envelope_and_susceptibility(
+                    vecPatches(ipatch)->EMfields,
+                    vecPatches(ipatch)->probes[probe_n]->particles,
+                    ipart,
+                    &Env_ArLoc_fields, &Env_AiLoc_fields, &Env_AabsLoc_fields, &Env_ChiLoc_fields
+                 );
+            
+                //! here we fill the probe data!!!         
+                (*probesArray)(fieldlocation[10],iPart_MPI)=Env_ArLoc_fields;
+                (*probesArray)(fieldlocation[11],iPart_MPI)=Env_AiLoc_fields;
+                (*probesArray)(fieldlocation[12],iPart_MPI)=Env_AabsLoc_fields;
+                (*probesArray)(fieldlocation[13],iPart_MPI)=Env_ChiLoc_fields;
+                iPart_MPI++;
+            }
+        }
+
+
+
     }
     
     #pragma omp master

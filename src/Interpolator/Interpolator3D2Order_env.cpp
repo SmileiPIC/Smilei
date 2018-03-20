@@ -279,7 +279,7 @@ void Interpolator3D2Order_env::interpolate_envelope_and_old_envelope(ElectroMagn
 } // END Interpolator3D2Order
 
 
-void Interpolator3D2Order_env::interpolate_envelope_and_susceptibility(ElectroMagn* EMfields, Particles &particles, int ipart, int nparts, double* Env_A_abs_Loc, double* Env_Ar_Loc, double* Env_Ai_Loc, double* Env_Chi_Loc)
+void Interpolator3D2Order_env::interpolate_envelope_and_susceptibility(ElectroMagn* EMfields, Particles &particles, int ipart, double* Env_A_abs_Loc, double* Env_Ar_Loc, double* Env_Ai_Loc, double* Env_Chi_Loc)
 {
     // Static cast of the electromagnetic fields
     Field3D* Env_A_abs_3D = static_cast<Field3D*>(EMfields->Env_A_abs_);
@@ -335,22 +335,22 @@ void Interpolator3D2Order_env::interpolate_envelope_and_susceptibility(ElectroMa
     // -------------------------
     // Interpolation of Env_A_abs_^(p,p,p)
     // -------------------------
-    *(Env_A_abs_Loc+0*nparts) = compute( &coeffxp_[1], &coeffyp_[1], &coeffzp_[1], Env_A_abs_3D, ip_, jp_, kp_);
+    *(Env_A_abs_Loc) = compute( &coeffxp_[1], &coeffyp_[1], &coeffzp_[1], Env_A_abs_3D, ip_, jp_, kp_);
   
     // -------------------------
     // Interpolation of Env_A_r_^(p,p,p)
     // -------------------------
-    *(Env_Ar_Loc+0*nparts) = compute( &coeffxp_[1], &coeffyp_[1], &coeffzp_[1], Env_Ar_3D, ip_, jp_, kp_);
+    *(Env_Ar_Loc) = compute( &coeffxp_[1], &coeffyp_[1], &coeffzp_[1], Env_Ar_3D, ip_, jp_, kp_);
 
     // -------------------------
     // Interpolation of Env_A_i_^(p,p,p)
     // -------------------------
-    *(Env_Ai_Loc+0*nparts) = compute( &coeffxp_[1], &coeffyp_[1], &coeffzp_[1], Env_Ai_3D, ip_, jp_, kp_);
+    *(Env_Ai_Loc) = compute( &coeffxp_[1], &coeffyp_[1], &coeffzp_[1], Env_Ai_3D, ip_, jp_, kp_);
 
     // -------------------------
     // Interpolation of Env_Chi_^(p,p,p)
     // -------------------------
-    *(Env_Chi_Loc+0*nparts) = compute( &coeffxp_[1], &coeffyp_[1], &coeffzp_[1], Env_Chi_3D, ip_, jp_, kp_);
+    *(Env_Chi_Loc) = compute( &coeffxp_[1], &coeffyp_[1], &coeffzp_[1], Env_Chi_3D, ip_, jp_, kp_);
   
 
 } // END Interpolator3D2Order
