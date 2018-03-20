@@ -301,12 +301,16 @@ int main (int argc, char* argv[])
                 // Compute rho only for species needing relativistic field Initialization
                 vecPatches.computeChargeRelativisticSpecies(time_prim);
                 vecPatches.sumDensities(params, time_dual, timers, 0, simWindow);
-                
-                // Initialize the fields for these species
-                if (!vecPatches.isRhoNull(&smpi)){
-                    TITLE("Initializing relativistic species fields");
-                    vecPatches.solveRelativisticPoisson( params, &smpi, time_prim );
-                                                 }
+
+                #pragma omp master
+                {
+                    // Initialize the fields for these species
+                    if (!vecPatches.isRhoNull(&smpi)){
+                        TITLE("Initializing relativistic species fields");
+                        vecPatches.solveRelativisticPoisson( params, &smpi, time_prim );                
+                    }
+                }
+                #pragma omp barrier
                 // Reset rho and J and return to PIC loop
                 vecPatches.resetRhoJ();
             }

@@ -855,8 +855,8 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
             (*this)(ipatch)->EMfields->compute_Ap_relativistic_Poisson( (*this)(ipatch), gamma_mean );
 
         // Exchange Ap_ (intra & extra MPI)
-        SyncVectorPatch::exchange_along_all_directions          ( Ap_, *this );
-        SyncVectorPatch::finalize_exchange_along_all_directions ( Ap_, *this );
+        SyncVectorPatch::exchange_along_all_directions_noomp          ( Ap_, *this );
+        SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Ap_, *this );
         
 
        // scalar product p.Ap
@@ -922,12 +922,12 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
         (*this)(ipatch)->EMfields->initE_relativistic_Poisson( (*this)(ipatch), gamma_mean );
         } // end loop on patches
       
-    SyncVectorPatch::exchange_along_all_directions          ( Ex_rel_, *this );
-    SyncVectorPatch::finalize_exchange_along_all_directions ( Ex_rel_, *this );
-    SyncVectorPatch::exchange_along_all_directions          ( Ey_rel_, *this );
-    SyncVectorPatch::finalize_exchange_along_all_directions ( Ey_rel_, *this );  
-    SyncVectorPatch::exchange_along_all_directions          ( Ez_rel_, *this );
-    SyncVectorPatch::finalize_exchange_along_all_directions ( Ez_rel_, *this );    
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( Ex_rel_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Ex_rel_, *this );
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( Ey_rel_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Ey_rel_, *this );  
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( Ez_rel_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Ez_rel_, *this );    
     //SyncVectorPatch::exchangeE( params, *this );
     //SyncVectorPatch::finalizeexchangeE( params, *this );
 
@@ -1053,12 +1053,12 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
         (*this)(ipatch)->EMfields->initB_relativistic_Poisson( (*this)(ipatch), gamma_mean );
         } // end loop on patches
 
-    SyncVectorPatch::exchange_along_all_directions          ( Bx_rel_, *this );
-    SyncVectorPatch::finalize_exchange_along_all_directions ( Bx_rel_, *this );
-    SyncVectorPatch::exchange_along_all_directions          ( By_rel_, *this );
-    SyncVectorPatch::finalize_exchange_along_all_directions ( By_rel_, *this );  
-    SyncVectorPatch::exchange_along_all_directions          ( Bz_rel_, *this );
-    SyncVectorPatch::finalize_exchange_along_all_directions ( Bz_rel_, *this );  
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( Bx_rel_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bx_rel_, *this );
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( By_rel_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( By_rel_, *this );  
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( Bz_rel_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_rel_, *this );  
     //SyncVectorPatch::exchangeB( params, *this );
     //SyncVectorPatch::finalizeexchangeB( params, *this );
 
@@ -1071,12 +1071,12 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
             } // end loop on patches
     
         // re-exchange the properly spatially centered B field
-        SyncVectorPatch::exchange_along_all_directions          ( Bx_rel_, *this );
-        SyncVectorPatch::finalize_exchange_along_all_directions ( Bx_rel_, *this );
-        SyncVectorPatch::exchange_along_all_directions          ( By_rel_, *this );
-        SyncVectorPatch::finalize_exchange_along_all_directions ( By_rel_, *this );  
-        SyncVectorPatch::exchange_along_all_directions          ( Bz_rel_, *this );
-        SyncVectorPatch::finalize_exchange_along_all_directions ( Bz_rel_, *this );
+        SyncVectorPatch::exchange_along_all_directions_noomp          ( Bx_rel_, *this );
+        SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bx_rel_, *this );
+        SyncVectorPatch::exchange_along_all_directions_noomp          ( By_rel_, *this );
+        SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( By_rel_, *this );  
+        SyncVectorPatch::exchange_along_all_directions_noomp          ( Bz_rel_, *this );
+        SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_rel_, *this );
         //SyncVectorPatch::exchangeB( params, *this );
         //SyncVectorPatch::finalizeexchangeB( params, *this );
     }
