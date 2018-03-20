@@ -111,7 +111,6 @@ namelist("")
     string command = "import signal\nsignal.signal(signal.SIGINT, signal.SIG_DFL)";
     if( !PyRun_SimpleString(command.c_str()) ) PyTools::checkPyError();
 
-
     PyObject* Py_main = PyImport_AddModule("__main__");
     PyObject* globals = PyModule_GetDict(Py_main);
 
@@ -131,6 +130,7 @@ namelist("")
 
     // here we add the larget int, important to get a valid seed for randomization
     PyModule_AddIntConstant(Py_main, "smilei_rand_max", RAND_MAX);
+
 
     // Running the namelists
     for (vector<string>::iterator it=namelistsFiles.begin(); it!=namelistsFiles.end(); it++) {
@@ -158,6 +158,7 @@ namelist("")
         runScript(strNamelist,(*it), globals);
     }
     // Running pycontrol.py
+
     runScript(string(reinterpret_cast<const char*>(pycontrol_py), pycontrol_py_len),"pycontrol.py", globals);
 
     smpi->barrier();
@@ -259,8 +260,7 @@ namelist("")
     for (unsigned int i=0;i<nDim_field;i++){
         res_space[i] = 1.0/cell_length[i];
     }
-
-
+    
     // simulation duration & length
     PyTools::extract("simulation_time", simulation_time, "Main");
 
@@ -286,7 +286,7 @@ namelist("")
         if( EM_BCs[iDim].size() == 1 ) // if just one type is specified, then take the same bc type in a given dimension
             EM_BCs[iDim].push_back( EM_BCs[iDim][0] );
         else if ( (EM_BCs[iDim][0] != EM_BCs[iDim][1]) &&  (EM_BCs[iDim][0] == "periodic" || EM_BCs[iDim][1] == "periodic") )
-            ERROR("EM_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side");
+            ERROR("EM_boundary_conditions along dimension "<<"012"[iDim]<<" cannot be periodic only on one side");
     }
 
     for (unsigned int iDim = 0 ; iDim < nDim_field; iDim++){
@@ -300,17 +300,31 @@ namelist("")
     }
 
     PyTools::extract("EM_boundary_conditions_k", EM_BCs_k, "Main");
+    if( EM_BCs_k.size() == 0 ) {
+        //Gives default value
+        for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
+            std::vector<double> temp_k; 
+            
+            for(  int iiDim=0; iiDim<iDim; iiDim++ ) temp_k.push_back(0.);
+            temp_k.push_back(1.);
+            for(  int iiDim=iDim+1; iiDim<nDim_field; iiDim++ ) temp_k.push_back(0.);
+            EM_BCs_k.push_back(temp_k);
+            for(  int iiDim=0; iiDim<nDim_field; iiDim++ ) temp_k[iiDim] *= -1. ;
+            EM_BCs_k.push_back(temp_k);
+        }
+    }
+
     //Complete with zeros if not defined
     if( EM_BCs_k.size() == 1 ) {
         while( EM_BCs_k.size() < nDim_field*2 ) EM_BCs_k.push_back(EM_BCs_k[0]  );
-    } else if( EM_BCs_k.size() < nDim_field*2 ) {
+    } else if( EM_BCs_k.size() != nDim_field*2 ) {
         ERROR("EM_boundary_conditions_k must be the same size as the number of faces.");
     }
     for( unsigned int iDim=0; iDim<nDim_field*2; iDim++ ) {
-        if ( EM_BCs_k[iDim].size() < nDim_field )
-            ERROR("EM_boundary_conditions_k must have at least nDim_field (" << nDim_field << ") elements along dimension "<<"-+"[iDim%2]<<"xyz"[iDim/2] );
+        if ( EM_BCs_k[iDim].size() != nDim_field )
+            ERROR("EM_boundary_conditions_k must have exactly " << nDim_field << " elements along dimension "<<"-+"[iDim%2]<<"012"[iDim/2] );
         if ( EM_BCs_k[iDim][iDim/2] == 0. )
-            ERROR("EM_boundary_conditions_k must have a non zero normal component along dimension "<<"-+"[iDim%2]<<"xyz"[iDim/2] );
+            ERROR("EM_boundary_conditions_k must have a non zero normal component along dimension "<<"-+"[iDim%2]<<"012"[iDim/2] );
         
     }
 
@@ -446,7 +460,9 @@ namelist("")
     } else {
         load_balancing_time_selection = new TimeSelection();
     }
+
     has_load_balancing = (smpi->getSize()>1)  && (! load_balancing_time_selection->isEmpty());
+
 
     //mi.resize(nDim_field, 0);
     mi.resize(3, 0);
@@ -457,8 +473,12 @@ namelist("")
             while ((number_of_patches[2] >> mi[2]) >1) mi[2]++ ;
     }
 
+    // Activation of the vectorized subroutines
     vecto = false;
-
+    PyTools::extract("vecto", vecto, "Main");
+    if (vecto)
+        MESSAGE( "Apply vectorization" );
+    
     // Read the "print_every" parameter
     print_every = (int)(simulation_time/timestep)/10;
     PyTools::extract("print_every", print_every, "Main");
@@ -688,7 +708,11 @@ void Params::print_init()
         MESSAGE(1,"            - Electromagnetic boundary conditions: " << "(" << EM_BCs[i][0] << ", " << EM_BCs[i][1] << ")");
         if (open_boundaries)
             cout << setprecision(2);
-            cout << "                     - Electromagnetic boundary conditions k    : " << "( [" << EM_BCs_k[2*i][0] << ", " << EM_BCs_k[2*i][1] << ", " << EM_BCs_k[2*i][2]<< "] , [" << EM_BCs_k[2*i+1][0]<< ", " << EM_BCs_k[2*i+1][1]<< ", " << EM_BCs_k[2*i+1][2] << "] )" << endl;
+            cout << "                     - Electromagnetic boundary conditions k    : " << "( [" << EM_BCs_k[2*i][0] ;
+            for ( unsigned int ii=1 ; ii<grid_length.size() ; ii++) cout << ", " << EM_BCs_k[2*i][ii] ;
+            cout << "] , [" << EM_BCs_k[2*i+1][0] ;
+            for ( unsigned int ii=1 ; ii<grid_length.size() ; ii++) cout << ", " << EM_BCs_k[2*i+1][ii] ;
+            cout << "] )" << endl;
     }
 
     if( currentFilter_passes > 0 )
