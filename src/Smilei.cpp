@@ -277,9 +277,6 @@ int main (int argc, char* argv[])
     TITLE("Time-Loop started: number of time-steps n_time = " << params.n_time);
     if ( smpi.isMaster() ) params.print_timestep_headers();
 
-    #pragma omp parallel shared (time_dual,smpi,params, vecPatches, domain, simWindow, checkpoint)
-    {
-        
         unsigned int itime=checkpoint.this_run_start_step+1;
         while ( (itime <= params.n_time) && (!checkpoint.exit_asap) ) {
             
@@ -301,9 +298,9 @@ int main (int argc, char* argv[])
                 // Compute rho only for species needing relativistic field Initialization
                 vecPatches.computeChargeRelativisticSpecies(time_prim);
                 vecPatches.sumDensities(params, time_dual, timers, 0, simWindow);
-
                 #pragma omp master
                 {
+
                     // Initialize the fields for these species
                     if (!vecPatches.isRhoNull(&smpi)){
                         TITLE("Initializing relativistic species fields");
@@ -314,6 +311,9 @@ int main (int argc, char* argv[])
                 // Reset rho and J and return to PIC loop
                 vecPatches.resetRhoJ();
             }
+
+            #pragma omp parallel shared (time_dual,smpi,params, vecPatches, domain, simWindow, checkpoint)
+            {
 
             // (1) interpolate the fields at the particle position
             // (2) move the particle
@@ -362,6 +362,8 @@ int main (int argc, char* argv[])
             timers.movWindow.restart();
             simWindow->operate(vecPatches, &smpi, params, itime, time_dual);
             timers.movWindow.update();
+
+            } //End omp parallel region
             
             // ----------------------------------------------------------------------
             // Validate restart  : to do
@@ -395,8 +397,6 @@ int main (int argc, char* argv[])
             itime++;
             
         }//END of the time loop
-
-    } //End omp parallel region
 
     smpi.barrier();
 
