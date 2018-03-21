@@ -466,9 +466,9 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, unsigned int itim
     
     // Manage the "diag_flag" parameter, which indicates whether Rho and Js were used
     if( diag_flag ) {
-        #pragma omp barrier
-        #pragma omp single
-        diag_flag = false;
+        //#pragma omp barrier
+        //#pragma omp single
+        //diag_flag = false;
         #pragma omp for
         for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
             (*this)(ipatch)->EMfields->restartRhoJs();
