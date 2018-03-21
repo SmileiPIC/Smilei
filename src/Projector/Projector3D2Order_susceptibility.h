@@ -26,7 +26,7 @@ public:
     // projects susceptibility  
     void project_susceptibility(double* Chi_envelope, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim, SmileiMPI* smpi, int ithread, double species_mass);
 
-    double dt, dts2, dts4, one_over_2;
+    double dt, dts2, dts4;
     
 
 private:

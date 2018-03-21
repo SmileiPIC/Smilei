@@ -30,7 +30,6 @@ Projector3D2Order_susceptibility::Projector3D2Order_susceptibility (Params& para
     dt             = params.timestep;
     dts2           = params.timestep/2.;
     dts4           = params.timestep/4.;
-    one_over_2     = 1./2.;
 
     DEBUG("cell_length "<< params.cell_length[0]);
 
@@ -782,7 +781,7 @@ void Projector3D2Order_susceptibility::project_susceptibility(double* Chi_envelo
         pzsm = inv_gamma0 * (charge_over_mass_dts2*(*(Ez+ipart)) - charge_sq_over_mass_dts4*(*(GradPhiz+ipart)) * inv_gamma0 ) * momentum[2];
         
         // update of gamma ponderomotive (more precisely, the inverse)
-        inv_gamma_ponderomotive = 1./( 1./inv_gamma0 + (pxsm+pysm+pzsm)*one_over_2 );
+        inv_gamma_ponderomotive = 1./( 1./inv_gamma0 + (pxsm+pysm+pzsm)*0.5 );
 
         // (x,y,z) components of the current density for the macro-particle
         // IMPORTANT DIVIDE BY MASS

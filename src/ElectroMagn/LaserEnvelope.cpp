@@ -166,7 +166,6 @@ void LaserEnvelope3D::initEnvelope( Patch* patch,ElectroMagn* EMfields )
     vector<double> position(3,0);
     double t;
     double t_previous_timestep;
-    double one_over_2 = 1./2.;    
 
     //! 1/(2dx), where dx is the spatial step dx for 3D3V cartesian simulations
     double one_ov_2dx=1./2./cell_length[0];
@@ -196,8 +195,8 @@ void LaserEnvelope3D::initEnvelope( Patch* patch,ElectroMagn* EMfields )
 
                 (*Env_Aabs3D)(i,j,k)= std::abs((*A3D)(i,j,k));
 
-                (*Phi3D)(i,j,k)   = std::abs((*A3D) (i,j,k)) * std::abs((*A3D) (i,j,k)) * one_over_2;
-                (*Phiold3D)(i,j,k)= std::abs((*A03D)(i,j,k)) * std::abs((*A03D)(i,j,k)) * one_over_2;
+                (*Phi3D)(i,j,k)   = std::abs((*A3D) (i,j,k)) * std::abs((*A3D) (i,j,k)) * 0.5;
+                (*Phiold3D)(i,j,k)= std::abs((*A03D)(i,j,k)) * std::abs((*A03D)(i,j,k)) * 0.5;
 
                 position[2] += cell_length[2];
             }  // end z loop
@@ -336,7 +335,6 @@ void LaserEnvelope3D::compute_Phi_and_gradient_Phi(ElectroMagn* EMfields){
 
     // computes Phi=|A|^2/2 (the ponderomotive potential) and its gradient, old and present values
 
-    double one_over_2      = 1./2.;   
 
     cField3D* A3D          = static_cast<cField3D*>(A_);          // the envelope at timestep n
     cField3D* A03D         = static_cast<cField3D*>(A0_);         // the envelope at timestep n-1
@@ -365,8 +363,8 @@ void LaserEnvelope3D::compute_Phi_and_gradient_Phi(ElectroMagn* EMfields){
     for (unsigned int i=0 ; i <A_->dims_[0]; i++){ // x loop
         for (unsigned int j=0 ; j < A_->dims_[1]; j++){ // y loop
             for (unsigned int k=0 ; k < A_->dims_[2]; k++){ // z loop
-                (*Phi3D)   (i,j,k)       = std::abs((*A3D) (i,j,k)) * std::abs((*A3D) (i,j,k)) * one_over_2;
-                (*Phiold3D)(i,j,k)       = std::abs((*A03D)(i,j,k)) * std::abs((*A03D)(i,j,k)) * one_over_2;
+                (*Phi3D)   (i,j,k)       = std::abs((*A3D) (i,j,k)) * std::abs((*A3D) (i,j,k)) * 0.5;
+                (*Phiold3D)(i,j,k)       = std::abs((*A03D)(i,j,k)) * std::abs((*A03D)(i,j,k)) * 0.5;
                 (*GradPhixold3D)(i,j,k)  = (*GradPhix3D)(i,j,k);
                 (*GradPhiyold3D)(i,j,k)  = (*GradPhiy3D)(i,j,k);
                 (*GradPhizold3D)(i,j,k)  = (*GradPhiy3D)(i,j,k);
