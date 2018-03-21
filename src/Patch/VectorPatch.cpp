@@ -787,9 +787,9 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
     MPI_Allreduce(&nparticles, &nparticles_global, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
     MESSAGE( "GAMMA = " << gamma_global/(double)nparticles_global);
 
-    Timer ptimer("global");
-    ptimer.init(smpi);
-    ptimer.restart();
+    //Timer ptimer("global");
+    //ptimer.init(smpi);
+    //ptimer.restart();
 
     double gamma_mean = gamma_global/(double)nparticles_global; 
 
@@ -1102,8 +1102,8 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
     if (smpi->isMaster())
         MESSAGE(1,"Relativistic Poisson equation solved. Maximum err = ");
 
-    ptimer.update();
-    MESSAGE("Time in Relativistic Poisson : " << ptimer.getTime() );
+    //ptimer.update();
+    //MESSAGE("Time in Relativistic Poisson : " << ptimer.getTime() );
 
 } // END solveRelativisticPoisson
 
