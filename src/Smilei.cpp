@@ -174,7 +174,7 @@ int main (int argc, char* argv[])
         if (params.solve_relativistic_poisson == true) {
             // Compute rho only for species needing relativistic field Initialization
             vecPatches.computeChargeRelativisticSpecies(time_prim);
-            vecPatches.sumDensities(params, time_dual, timers, 0, simWindow);
+            SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, timers, 0 );
             
             // Initialize the fields for these species
             if (!vecPatches.isRhoNull(&smpi)){
@@ -297,7 +297,7 @@ int main (int argc, char* argv[])
             if (params.solve_relativistic_poisson == true) {
                 // Compute rho only for species needing relativistic field Initialization
                 vecPatches.computeChargeRelativisticSpecies(time_prim);
-                vecPatches.sumDensities(params, time_dual, timers, 0, simWindow);
+                SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, timers, 0 );
                 #pragma omp master
                 {
 
