@@ -257,6 +257,8 @@ void LaserEnvelope3D::compute(ElectroMagn* EMfields)
     cField3D* A03D         = static_cast<cField3D*>(A0_);              // the envelope at timestep n-1
     Field3D* Env_Chi3D      = static_cast<Field3D*>(EMfields->Env_Chi_); // source term of envelope equation
     Field3D* Env_Aabs3D      = static_cast<Field3D*>(EMfields->Env_A_abs_); // field for temporary diagnostic
+    Field3D* Env_Ar3D      = static_cast<Field3D*>(EMfields->Env_Ar_); // field for temporary diagnostic
+    Field3D* Env_Ai3D      = static_cast<Field3D*>(EMfields->Env_Ai_); // field for temporary diagnostic
     
     // Field3D* Env_Ai3D = static_cast<Field3D*>(EMfields->Env_Ai_); // field for temporary diagnostic
 
@@ -294,7 +296,9 @@ void LaserEnvelope3D::compute(ElectroMagn* EMfields)
              // final back-substitution
              (*A03D)(i,j,k) = (*A3D)(i,j,k);
              (*A3D)(i,j,k)  = (*A3Dnew)(i,j,k); 
-             (*Env_Aabs3D)(i,j,k) =std::abs((*A3D)(i,j,k));
+             (*Env_Aabs3D)(i,j,k) = std::abs((*A3D)(i,j,k));
+             (*Env_Ar3D)(i,j,k)   = std::real((*A3D)(i,j,k));
+             (*Env_Ai3D)(i,j,k)   = std::imag((*A3D)(i,j,k));
             } // end z loop
         } // end y loop
     } // end x loop
