@@ -557,11 +557,8 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
             (*probesArray)(fieldlocation[7],iPart_MPI)=Jloc_fields.y;
             (*probesArray)(fieldlocation[8],iPart_MPI)=Jloc_fields.z;          
             (*probesArray)(fieldlocation[9],iPart_MPI)=Rloc_fields;
-            iPart_MPI++;
-        }
-        // Probes for envelope
-        if (vecPatches(ipatch)->EMfields->envelope != NULL){ 
-            for (unsigned int ipart=0; ipart<npart; ipart++) {             
+            // Probes for envelope
+            if (vecPatches(ipatch)->EMfields->envelope != NULL){ 
                 (static_cast<Interpolator3D2Order_env*>(   (vecPatches(ipatch)->Interp_envelope)        ))->interpolate_envelope_and_susceptibility(
                     vecPatches(ipatch)->EMfields,
                     vecPatches(ipatch)->probes[probe_n]->particles,
@@ -574,12 +571,10 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
                 (*probesArray)(fieldlocation[11],iPart_MPI)=Env_AiLoc_fields;
                 (*probesArray)(fieldlocation[12],iPart_MPI)=Env_AabsLoc_fields;
                 (*probesArray)(fieldlocation[13],iPart_MPI)=Env_ChiLoc_fields;
-                iPart_MPI++;
-            }
+                                                               }
+            iPart_MPI++;
         }
-
-
-
+        
     }
     
     #pragma omp master
