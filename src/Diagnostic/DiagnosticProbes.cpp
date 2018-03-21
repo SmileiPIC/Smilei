@@ -566,9 +566,9 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
                     vecPatches(ipatch)->EMfields,
                     vecPatches(ipatch)->probes[probe_n]->particles,
                     ipart,
-                    &Env_ArLoc_fields, &Env_AiLoc_fields, &Env_AabsLoc_fields, &Env_ChiLoc_fields
+                    &Env_AabsLoc_fields, &Env_ArLoc_fields, &Env_AiLoc_fields, &Env_ChiLoc_fields
                  );
-            
+          
                 //! here we fill the probe data!!!         
                 (*probesArray)(fieldlocation[10],iPart_MPI)=Env_ArLoc_fields;
                 (*probesArray)(fieldlocation[11],iPart_MPI)=Env_AiLoc_fields;
