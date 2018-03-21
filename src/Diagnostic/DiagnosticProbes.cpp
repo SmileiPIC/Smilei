@@ -536,7 +536,6 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         
         LocalFields Eloc_fields, Bloc_fields, Jloc_fields;
         double Rloc_fields;
-        double Env_ArLoc_fields,Env_AiLoc_fields,Env_AabsLoc_fields,Env_ChiLoc_fields;
         
         for (unsigned int ipart=0; ipart<npart; ipart++) {             
             (*(vecPatches(ipatch)->Interp)) (
@@ -557,23 +556,33 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
             (*probesArray)(fieldlocation[7],iPart_MPI)=Jloc_fields.y;
             (*probesArray)(fieldlocation[8],iPart_MPI)=Jloc_fields.z;          
             (*probesArray)(fieldlocation[9],iPart_MPI)=Rloc_fields;
-            // Probes for envelope
-            if (vecPatches(ipatch)->EMfields->envelope != NULL){ 
-                (static_cast<Interpolator3D2Order_env*>(   (vecPatches(ipatch)->Interp_envelope)        ))->interpolate_envelope_and_susceptibility(
-                    vecPatches(ipatch)->EMfields,
-                    vecPatches(ipatch)->probes[probe_n]->particles,
-                    ipart,
-                    &Env_AabsLoc_fields, &Env_ArLoc_fields, &Env_AiLoc_fields, &Env_ChiLoc_fields
-                 );
-          
-                //! here we fill the probe data!!!         
-                (*probesArray)(fieldlocation[10],iPart_MPI)=Env_ArLoc_fields;
-                (*probesArray)(fieldlocation[11],iPart_MPI)=Env_AiLoc_fields;
-                (*probesArray)(fieldlocation[12],iPart_MPI)=Env_AabsLoc_fields;
-                (*probesArray)(fieldlocation[13],iPart_MPI)=Env_ChiLoc_fields;
-                                                               }
             iPart_MPI++;
         }
+
+
+       // Probes for envelope
+       if (vecPatches(ipatch)->EMfields->envelope != NULL)
+           { 
+           unsigned int iPart_MPI = offset_in_MPI[ipatch];
+           Interpolator3D2Order_env* Interpolator_envelope = (static_cast<Interpolator3D2Order_env*>((vecPatches(ipatch)->Interp_envelope)) );
+           double Env_ArLoc_fields,Env_AiLoc_fields,Env_AabsLoc_fields,Env_ChiLoc_fields;
+
+           for (unsigned int ipart=0; ipart<npart; ipart++) {          
+               Interpolator_envelope->interpolate_envelope_and_susceptibility(
+                   vecPatches(ipatch)->EMfields,
+                   vecPatches(ipatch)->probes[probe_n]->particles,
+                   ipart,
+                   &Env_AabsLoc_fields, &Env_ArLoc_fields, &Env_AiLoc_fields, &Env_ChiLoc_fields
+                                                                             );
+           //! here we fill the probe data!!!         
+           (*probesArray)(fieldlocation[10],iPart_MPI)=Env_ArLoc_fields;
+           (*probesArray)(fieldlocation[11],iPart_MPI)=Env_AiLoc_fields;
+           (*probesArray)(fieldlocation[12],iPart_MPI)=Env_AabsLoc_fields;
+           (*probesArray)(fieldlocation[13],iPart_MPI)=Env_ChiLoc_fields;
+           iPart_MPI++;
+                                                           }
+           }    
+
         
     }
     
