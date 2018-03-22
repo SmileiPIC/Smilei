@@ -553,21 +553,21 @@ void ElectroMagn2D::initE_relativistic_Poisson(Patch *patch, double gamma_mean)
         }
     }
 
-    // Ey / Ymin
-    if (patch->isYmin()) {
-        DEBUG("Computing Ymin BC on Ey, relativistic Poisson problem");
-        for (unsigned int i=0; i<nx_p; i++) {
-            (*Ey2D)(i,0) = (*Ey2D)(i,1) + ((*Ex2D)(i+1,0)-(*Ex2D)(i,0))*dy/dx  - dy*(*rho2D)(i,0);
-        }
-    }
-    
-    // Ey / Ymax
-    if (patch->isYmax()) {
-        DEBUG("Computing Ymax BC on Ey, relativistic Poisson problem");
-        for (unsigned int i=0; i<nx_p; i++) {
-            (*Ey2D)(i,ny_d-1) = (*Ey2D)(i,ny_d-2) - ((*Ex2D)(i+1,ny_p-1)-(*Ex2D)(i,ny_p-1))*dy/dx + dy*(*rho2D)(i,ny_p-1);
-        }
-    }
+    // // Ey / Ymin
+    // if (patch->isYmin()) {
+    //     DEBUG("Computing Ymin BC on Ey, relativistic Poisson problem");
+    //     for (unsigned int i=0; i<nx_p; i++) {
+    //         (*Ey2D)(i,0) = (*Ey2D)(i,1) + ((*Ex2D)(i+1,0)-(*Ex2D)(i,0))*dy/dx  - dy*(*rho2D)(i,0);
+    //     }
+    // }
+    // 
+    // // Ey / Ymax
+    // if (patch->isYmax()) {
+    //     DEBUG("Computing Ymax BC on Ey, relativistic Poisson problem");
+    //     for (unsigned int i=0; i<nx_p; i++) {
+    //         (*Ey2D)(i,ny_d-1) = (*Ey2D)(i,ny_d-2) - ((*Ex2D)(i+1,ny_p-1)-(*Ex2D)(i,ny_p-1))*dy/dx + dy*(*rho2D)(i,ny_p-1);
+    //     }
+    // }
 
     delete phi_;
     delete r_;
@@ -584,12 +584,22 @@ void ElectroMagn2D::initB_relativistic_Poisson(Patch *patch, double gamma_mean)
     Field2D* Ey2D  = static_cast<Field2D*>(Ey_rel_);
     Field2D* Bz2D  = static_cast<Field2D*>(Bz_rel_);
     // Bx is zero everywhere
-
+    Field2D* Bx2D  = static_cast<Field2D*>(Bx_rel_);
     // ------------------------------------------
     // Compute the field Bz; Bx and By are identically zero
     // ------------------------------------------
     
     double beta_mean = sqrt(1.-1./gamma_mean/gamma_mean);
+
+    // Bx is identically zero
+    // (hypothesis of negligible J transverse with respect to Jx)
+    // Bz
+    DEBUG("Computing Bx, relativistic Poisson problem");
+    for (unsigned int i=0; i<nx_d; i++) {
+        for (unsigned int j=0; j<ny_p; j++) {
+            (*Bx2D)(i,j) = 0.;
+        }
+    }
 
     // Bz
     DEBUG("Computing Bz from scalar potential, relativistic Poisson problem");
@@ -608,7 +618,7 @@ void ElectroMagn2D::center_fields_from_relativistic_Poisson(Patch *patch){
 
     // Static-cast of the fields
     Field2D* Ex2D = static_cast<Field2D*>(Ex_rel_);
-    Field2D* Ey2D = static_cast<Field2D*>(Ey_rel_);
+    //Field2D* Ey2D = static_cast<Field2D*>(Ey_rel_);
     Field2D* Bz2D = static_cast<Field2D*>(Bz_rel_);
 
     // Temporary fields for interpolation
@@ -676,28 +686,28 @@ void ElectroMagn2D::sum_rel_fields_to_em_fields(Patch *patch)
     Field2D* By2D0  = static_cast<Field2D*>(By_m);
     Field2D* Bz2D0  = static_cast<Field2D*>(Bz_m);
 
-    // Ex
+    // Ex (d,p,p)
     for (unsigned int i=0; i<nx_d; i++) {
         for (unsigned int j=0; j<ny_p; j++) {
                 (*Ex2D)(i,j) = (*Ex2D)(i,j) + (*Ex2Drel)(i,j);
         }
     }
 
-    // Ey
+    // Ey (p,d,p)
     for (unsigned int i=0; i<nx_p; i++) {
         for (unsigned int j=0; j<ny_d; j++) {
                 (*Ey2D)(i,j) = (*Ey2D)(i,j) + (*Ey2Drel)(i,j);
         }
     }
 
-    // Ez
+    // Ez (p,p,d)
     for (unsigned int i=0; i<nx_p; i++) {
         for (unsigned int j=0; j<ny_p; j++) {
                 (*Ez2D)(i,j) = (*Ez2D)(i,j) + (*Ez2Drel)(i,j);
         }
     }
 
-    // Bx
+    // Bx (p,d,d)
     for (unsigned int i=0; i<nx_p; i++) {
         for (unsigned int j=0; j<ny_d; j++) {
                 (*Bx2D)(i,j) = (*Bx2D)(i,j) + (*Bx2Drel)(i,j);
@@ -705,21 +715,23 @@ void ElectroMagn2D::sum_rel_fields_to_em_fields(Patch *patch)
         }
     }
 
-    // By
-    for (unsigned int i=0; i<nx_d; i++) {
+    // By (d,p,d) - remember that Byrel is centered as Ezrel (p,d,p)
+    for (unsigned int i=1; i<nx_d-1; i++) {
         for (unsigned int j=0; j<ny_p; j++) {
-                (*By2D)(i,j) = (*By2D)(i,j) + (*By2Drel)(i,j);
-                (*By2D0)(i,j)= (*By2D)(i,j) + (*By2Drel)(i,j);
+                (*By2D)(i,j) = (*By2D)(i,j) + 0.5 * ( (*By2Drel)(i,j) + (*By2Drel)(i-1,j) );
+                (*By2D0)(i,j)= (*By2D)(i,j) + 0.5 * ( (*By2Drel)(i,j) + (*By2Drel)(i-1,j) );
         }
     }
 
-    // Bz
-    for (unsigned int i=0; i<nx_d; i++) {
+    // Bz (d,d,p) - remember that Bzrel is centered as Eyrel (p,d,p)
+    for (unsigned int i=1; i<nx_d-1; i++) {
         for (unsigned int j=0; j<ny_d; j++) {
-                (*Bz2D)(i,j) = (*Bz2D)(i,j) + (*Bz2Drel)(i,j);
-                (*Bz2D0)(i,j)= (*Bz2D)(i,j) + (*Bz2Drel)(i,j);
+                (*Bz2D)(i,j) = (*Bz2D)(i,j) + 0.5 * ( (*Bz2Drel)(i,j) + (*Bz2Drel)(i-1,j) );
+                (*Bz2D0)(i,j)= (*Bz2D)(i,j) + 0.5 * ( (*Bz2Drel)(i,j) + (*Bz2Drel)(i-1,j) );
         }
     }
+
+    // BC on the cells which are present in dual but not in primal grid : Brel identically zero at x edges
 
     // delete temporary fields used for relativistic initialization
     delete Ex_rel_;

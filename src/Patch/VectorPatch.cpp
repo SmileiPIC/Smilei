@@ -1067,22 +1067,22 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
 
     // Proper spatial centering of the electromagnetic fields in the Yee Cell through interpolation
     // -------------------------------------
-    if (!params.is_spectral){
-        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-            { // begin loop on patches
-            (*this)(ipatch)->EMfields->center_fields_from_relativistic_Poisson( (*this)(ipatch));
-            } // end loop on patches
-    
-        // re-exchange the properly spatially centered B field
-        SyncVectorPatch::exchange_along_all_directions_noomp          ( Bx_rel_, *this );
-        SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bx_rel_, *this );
-        SyncVectorPatch::exchange_along_all_directions_noomp          ( By_rel_, *this );
-        SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( By_rel_, *this );  
-        SyncVectorPatch::exchange_along_all_directions_noomp          ( Bz_rel_, *this );
-        SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_rel_, *this );
-        //SyncVectorPatch::exchangeB( params, *this );
-        //SyncVectorPatch::finalizeexchangeB( params, *this );
-    }
+    // if (!params.is_spectral){
+    //     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+    //         { // begin loop on patches
+    //         (*this)(ipatch)->EMfields->center_fields_from_relativistic_Poisson( (*this)(ipatch));
+    //         } // end loop on patches
+    // 
+    //     // re-exchange the properly spatially centered B field
+    //     SyncVectorPatch::exchange_along_all_directions_noomp          ( Bx_rel_, *this );
+    //     SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bx_rel_, *this );
+    //     SyncVectorPatch::exchange_along_all_directions_noomp          ( By_rel_, *this );
+    //     SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( By_rel_, *this );  
+    //     SyncVectorPatch::exchange_along_all_directions_noomp          ( Bz_rel_, *this );
+    //     SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_rel_, *this );
+    //     //SyncVectorPatch::exchangeB( params, *this );
+    //     //SyncVectorPatch::finalizeexchangeB( params, *this );
+    // }
 
     // Saving magnetic fields (to compute centered fields used in the particle pusher)
     //for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){ //start loop on patches
@@ -1092,11 +1092,13 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
     //                                                              } // end loop on patches
 
    // sum the fields found  by relativistic Poisson solver to the existing em fields
+   // Includes proper spatial centering of the electromagnetic fields in the Yee Cell through interpolation
    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
        { // begin loop on patches
        (*this)(ipatch)->EMfields->sum_rel_fields_to_em_fields( (*this)(ipatch));
        } // end loop on patches
 
+  
 
     //!\todo Reduce to find global max
     if (smpi->isMaster())
