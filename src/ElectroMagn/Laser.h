@@ -7,6 +7,7 @@
 #include "Field.h"
 #include "Field1D.h"
 #include "Field2D.h"
+#include "Field3D.h"
 
 #include <vector>
 #include <string>
@@ -77,6 +78,8 @@ private:
     //! True if spatio-temporal profile (Bx and By)
     std::vector<bool> spacetime;
     
+    //! Non empty if laser profile read from a file
+    std::string file;
 
 };
 
@@ -118,6 +121,23 @@ public:
     }
 private:
     Profile * spaceAndTimeProfile;
+};
+
+// Laser profile from a file (see LaserOffset)
+class LaserProfileFile : public LaserProfile {
+friend class SmileiMPI;
+public:
+    LaserProfileFile( std::string file_, bool pr_ ) : file(file_), primal(pr_) {};
+    ~LaserProfileFile();
+    void createFields(Params& params, Patch* patch);
+    void initFields  (Params& params, Patch* patch);
+    double getAmplitude(std::vector<double> pos, double t, int j, int k);
+protected:
+    Field *magnitude, *phase;
+private:
+    std::string file;
+    bool primal;
+    std::vector<double> omega;
 };
 
 // Null laser profile

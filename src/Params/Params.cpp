@@ -118,7 +118,11 @@ namelist("")
     runScript(string(reinterpret_cast<const char*>(pyinit_py), pyinit_py_len), "pyinit.py", globals);
 
     runScript(Tools::merge("smilei_version='",string(__VERSION),"'\n"), string(__VERSION), globals);
-
+    
+    // Set the _test_mode to False
+    PyObject_SetAttrString(Py_main, "_test_mode", Py_False);
+    PyTools::checkPyError();
+    
     // Running pyprofiles.py
     runScript(string(reinterpret_cast<const char*>(pyprofiles_py), pyprofiles_py_len), "pyprofiles.py", globals);
 

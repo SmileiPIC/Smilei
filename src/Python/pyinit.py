@@ -358,6 +358,7 @@ class Laser(SmileiComponent):
     space_envelope = [1., 0.]
     phase = [0., 0.]
     space_time_profile = None
+    file = None
 
 class LaserEnvelope(SmileiSingleton):
     """Laser Envelope parameters"""
@@ -527,3 +528,6 @@ class DumpRestart(object):
 class ExtField(object):
     def __init__(self, *args, **kwargs):
         raise Exception("Deprecated `ExtField()` must be replaced by `ExternalField()`")
+
+# Variable to set to False for the actual run (useful for the test mode)
+_test_mode = False
