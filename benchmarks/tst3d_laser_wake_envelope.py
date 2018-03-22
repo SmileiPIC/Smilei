@@ -90,19 +90,19 @@ Checkpoints(
 list_fields = ['Ex','Ey','Rho','Jx','Env_A_abs']
 
 DiagFields(
-   every = 20,
+   every = 100,
         fields = list_fields
 )
 
-#DiagProbe(
-#        every = 10,
-#        origin = [0., Main.grid_length[1]/2., Main.grid_length[2]/2.],
-#        corners = [
-#            [Main.grid_length[0], Main.grid_length[1]/2., Main.grid_length[2]/2.]
-#        ],
-#        number = [nx],
-#        fields = ['Ex','Ey','Rho','Jx']
-#)
+DiagProbe(
+        every = 10,
+        origin = [0., Main.grid_length[1]/2., Main.grid_length[2]/2.],
+        corners = [
+            [Main.grid_length[0], Main.grid_length[1]/2., Main.grid_length[2]/2.]
+        ],
+        number = [nx],
+        fields = ['Ex','Ey','Rho','Jx','Env_A_abs','Env_Chi']
+)
 
 #DiagProbe(
 #        every = 10,
@@ -116,6 +116,7 @@ DiagFields(
 #)
 
 #DiagScalar(every = 10, vars=['Uelm','Ukin_electron','ExMax','ExMaxCell','EyMax','EyMaxCell', 'RhoMin', 'RhoMinCell'])
+DiagScalar(every = 10, vars=['Env_A_absMax'])
 
 #DiagParticleBinning(
 #       deposited_quantity = "weight_charge",
