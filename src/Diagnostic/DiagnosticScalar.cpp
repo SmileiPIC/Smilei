@@ -600,14 +600,13 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     fields.push_back(EMfields->rho_);
 
     // add envelope-related fields
-    if (EMfields->envelope != NULL){
+    if (EMfields->Env_A_abs_ != NULL){
         fields.push_back(EMfields->Env_A_abs_);
         fields.push_back(EMfields->Env_Ar_);
         fields.push_back(EMfields->Env_Ai_);
         fields.push_back(EMfields->Env_Chi_);
                                     }
 
-    #ifdef _DISABLE
     double fieldval;
     unsigned int i_min, j_min, k_min;
     unsigned int i_max, j_max, k_max;
@@ -665,7 +664,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
             }
         }
     }
-    #endif
+   
 
     // ------------------------
     // POYNTING-related scalars
