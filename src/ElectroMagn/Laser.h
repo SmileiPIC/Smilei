@@ -133,7 +133,7 @@ public:
     void initFields  (Params& params, Patch* patch);
     double getAmplitude(std::vector<double> pos, double t, int j, int k);
 protected:
-    Field *magnitude, *phase;
+    Field3D *magnitude, *phase;
 private:
     std::string file;
     bool primal;

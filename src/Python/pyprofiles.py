@@ -801,7 +801,6 @@ if _missing_packages == []:
                 try: MPI_omega_offset = np.flatnonzero(this_proc)[0]
                 except: MPI_omega_offset = 0
                 indices = indices[this_proc]
-            print(indices, MPI_omega_offset)
             k_coordinates[-1] = k_coordinates[-1][indices] # select omegas
             B_FT = [b[..., indices] for b in B_FT]
             

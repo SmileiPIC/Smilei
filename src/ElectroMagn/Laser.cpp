@@ -388,17 +388,19 @@ void LaserProfileFile::createFields(Params& params, Patch* patch)
 
 void LaserProfileFile::initFields(Params& params, Patch* patch)
 {
+    unsigned int ndim = 2;
+    if( params.geometry=="3Dcartesian" ) ndim = 3;
+    
     // Define the part of the array to obtain
     vector<hsize_t> dim(3), offset(3);
     hsize_t ny_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
     hsize_t ny_d = ny_p+1;
     dim[0] = primal ? ny_p : ny_d;
-    dim[1] = 1;
     offset[0] = patch->getCellStartingGlobalIndex(1) + 4;
     offset[1] = 0;
     offset[2] = 0;
     
-    if( params.geometry=="3Dcartesian" ) {
+    if( ndim == 3 ) {
         hsize_t nz_p = params.n_space[2]*params.global_factor[2]+1+2*params.oversize[2];
         hsize_t nz_d = nz_p+1;
         dim[1] = primal ? nz_d : nz_p;
@@ -425,15 +427,15 @@ void LaserProfileFile::initFields(Params& params, Patch* patch)
         H5Dclose(did);
     }
     
-    dim[2] = npoints;
-    hid_t memspace = H5Screate_simple( 3, &dim[0], NULL );
+    dim[ndim-1] = npoints;
+    hid_t memspace = H5Screate_simple( ndim, &dim[0], NULL );
     
     // Obtain the datasets for the magnitude and phase of the field
     did = H5Dopen( fid, (primal?"magnitude1":"magnitude2"), pid );
     if( did >=0 ) {
         hid_t filespace = H5Dget_space( did );
         H5Sselect_hyperslab(filespace, H5S_SELECT_SET, &offset[0], NULL, &dim[0], NULL );
-        H5Dread( did, H5T_NATIVE_DOUBLE, memspace, filespace, H5P_DEFAULT, &magnitude->data_ );
+        H5Dread( did, H5T_NATIVE_DOUBLE, memspace, filespace, H5P_DEFAULT, &magnitude->data_[0] );
         H5Sclose(filespace);
         H5Dclose(did);
     } else {
@@ -443,7 +445,7 @@ void LaserProfileFile::initFields(Params& params, Patch* patch)
     if( did >=0 ) {
         hid_t filespace = H5Dget_space( did );
         H5Sselect_hyperslab(filespace, H5S_SELECT_SET, &offset[0], NULL, &dim[0], NULL );
-        H5Dread( did, H5T_NATIVE_DOUBLE, memspace, filespace, H5P_DEFAULT, &phase->data_ );
+        H5Dread( did, H5T_NATIVE_DOUBLE, memspace, filespace, H5P_DEFAULT, &phase->data_[0] );
         H5Sclose(filespace);
         H5Dclose(did);
     } else {
@@ -467,7 +469,6 @@ double LaserProfileFile::getAmplitude(std::vector<double> pos, double t, int j, 
     for( unsigned int i=0; i<n; i++ ) {
         amp = (*magnitude)(j,k,i) * sin( omega[i] * t + (*phase)(j,k,i) );
     }
-    if(amp) MESSAGE(amp);
     return amp;
 }
 
