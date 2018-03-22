@@ -92,7 +92,7 @@ DiagProbe(
 #)
 
 #DiagScalar(every = 10, vars=['Uelm','Ukin_electron','ExMax','ExMaxCell','EyMax','EyMaxCell', 'RhoMin', 'RhoMinCell'])
-DiagScalar(every = 10, vars=['Env_A_abs'])
+DiagScalar(every = 10, vars=['Env_A_absMax'])
 
 #DiagParticleBinning(
 #       deposited_quantity = "weight_charge",
