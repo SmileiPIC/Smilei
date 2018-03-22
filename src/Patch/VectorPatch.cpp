@@ -1084,13 +1084,6 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
     //     //SyncVectorPatch::finalizeexchangeB( params, *this );
     // }
 
-    // Saving magnetic fields (to compute centered fields used in the particle pusher)
-    //for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){ //start loop on patches
-    //    if (!params.is_spectral){      
-    //        // Stores B at time n in B_m.
-    //        (*this)(ipatch)->EMfields->saveMagneticFields(params.is_spectral);}
-    //                                                              } // end loop on patches
-
    // sum the fields found  by relativistic Poisson solver to the existing em fields
    // Includes proper spatial centering of the electromagnetic fields in the Yee Cell through interpolation
    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)

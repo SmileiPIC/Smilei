@@ -662,8 +662,8 @@ void ElectroMagn2D::initRelativisticPoissonFields(Patch *patch)
     Ey_rel_  = new Field2D(dimPrim, 1, false, "Ey_rel");
     Ez_rel_  = new Field2D(dimPrim, 2, false, "Ez_rel");
     Bx_rel_  = new Field2D(dimPrim, 0, true,  "Bx_rel"); // will be identically zero
-    By_rel_  = new Field2D(dimPrim, 1, false,  "By_rel"); // is equal to -beta*Ez, thus it inherits the same centering of Ez
-    Bz_rel_  = new Field2D(dimPrim, 2, false,  "Bz_rel"); // is equal to  beta*Ey, thus it inherits the same centering of Ey
+    By_rel_  = new Field2D(dimPrim, 2, false,  "By_rel"); // is equal to -beta*Ez, thus it inherits the same centering of Ez
+    Bz_rel_  = new Field2D(dimPrim, 1, false,  "Bz_rel"); // is equal to  beta*Ey, thus it inherits the same centering of Ey
 
 } // initRelativisticPoissonFields
 
