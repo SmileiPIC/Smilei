@@ -305,11 +305,11 @@ namelist("")
         for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
             std::vector<double> temp_k; 
             
-            for(  int iiDim=0; iiDim<iDim; iiDim++ ) temp_k.push_back(0.);
+            for( unsigned int iiDim=0; iiDim<iDim; iiDim++ ) temp_k.push_back(0.);
             temp_k.push_back(1.);
-            for(  int iiDim=iDim+1; iiDim<nDim_field; iiDim++ ) temp_k.push_back(0.);
+            for( unsigned int iiDim=iDim+1; iiDim<nDim_field; iiDim++ ) temp_k.push_back(0.);
             EM_BCs_k.push_back(temp_k);
-            for(  int iiDim=0; iiDim<nDim_field; iiDim++ ) temp_k[iiDim] *= -1. ;
+            for( unsigned int iiDim=0; iiDim<nDim_field; iiDim++ ) temp_k[iiDim] *= -1. ;
             EM_BCs_k.push_back(temp_k);
         }
     }

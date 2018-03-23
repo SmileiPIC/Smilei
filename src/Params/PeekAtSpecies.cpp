@@ -5,9 +5,9 @@ using namespace std;
 
 
 PeekAtSpecies::PeekAtSpecies(Params& p, unsigned int species_id) :
-    params( &p ),
     densityProfile(NULL),
-    ppcProfile(NULL)
+    ppcProfile(NULL),
+    params( &p )
 {
     // Obtain the profiles of the species
     std::string species_name("");
