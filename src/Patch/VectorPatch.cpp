@@ -903,12 +903,12 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
     if (iteration_max>0 && iteration == iteration_max) {
         if (smpi->isMaster())
             WARNING("Relativistic Poisson solver did not converge: reached maximum iteration number: " << iteration
-                    << ", relative err is ctrl = " << 1.0e14*ctrl << " x 1e-14");
+                    << ", relative err is ctrl = " << 1.0e18*ctrl << " x 1e-18");
     }
     else {
         if (smpi->isMaster())
             MESSAGE(1,"Relativistic Poisson solver converged at iteration: " << iteration
-                    << ", relative err is ctrl = " << 1.0e14*ctrl << " x 1e-14");
+                    << ", relative err is ctrl = " << 1.0e18*ctrl << " x 1e-18");
     }
 
     // ------------------------------------------
