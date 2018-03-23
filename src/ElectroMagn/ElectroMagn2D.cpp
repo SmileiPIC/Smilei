@@ -711,7 +711,7 @@ void ElectroMagn2D::sum_rel_fields_to_em_fields(Patch *patch)
     for (unsigned int i=0; i<nx_p; i++) {
         for (unsigned int j=0; j<ny_d; j++) {
                 (*Bx2D)(i,j) = (*Bx2D)(i,j) + (*Bx2Drel)(i,j);
-                (*Bx2D0)(i,j)= (*Bx2D)(i,j) + (*Bx2Drel)(i,j);
+                (*Bx2D0)(i,j)= (*Bx2D0)(i,j) + (*Bx2Drel)(i,j);
         }
     }
 
@@ -719,7 +719,7 @@ void ElectroMagn2D::sum_rel_fields_to_em_fields(Patch *patch)
     for (unsigned int i=1; i<nx_d-1; i++) {
         for (unsigned int j=0; j<ny_p; j++) {
                 (*By2D)(i,j) = (*By2D)(i,j) + 0.5 * ( (*By2Drel)(i,j) + (*By2Drel)(i-1,j) );
-                (*By2D0)(i,j)= (*By2D)(i,j) + 0.5 * ( (*By2Drel)(i,j) + (*By2Drel)(i-1,j) );
+                (*By2D0)(i,j)= (*By2D0)(i,j) + 0.5 * ( (*By2Drel)(i,j) + (*By2Drel)(i-1,j) );
         }
     }
 
@@ -727,7 +727,7 @@ void ElectroMagn2D::sum_rel_fields_to_em_fields(Patch *patch)
     for (unsigned int i=1; i<nx_d-1; i++) {
         for (unsigned int j=0; j<ny_d; j++) {
                 (*Bz2D)(i,j) = (*Bz2D)(i,j) + 0.5 * ( (*Bz2Drel)(i,j) + (*Bz2Drel)(i-1,j) );
-                (*Bz2D0)(i,j)= (*Bz2D)(i,j) + 0.5 * ( (*Bz2Drel)(i,j) + (*Bz2Drel)(i-1,j) );
+                (*Bz2D0)(i,j)= (*Bz2D0)(i,j) + 0.5 * ( (*Bz2Drel)(i,j) + (*Bz2Drel)(i-1,j) );
         }
     }
 

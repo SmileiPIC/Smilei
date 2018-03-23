@@ -822,7 +822,7 @@ void ElectroMagn3D::sum_rel_fields_to_em_fields(Patch *patch)
         for (unsigned int j=0; j<ny_d; j++) {
             for (unsigned int k=0; k<nz_d; k++) {
                 (*Bx3D)(i,j,k) = (*Bx3D)(i,j,k) + (*Bx3Drel)(i,j,k);
-                (*Bx3D0)(i,j,k)= (*Bx3D)(i,j,k) + (*Bx3Drel)(i,j,k);
+                (*Bx3D0)(i,j,k)= (*Bx3D0)(i,j,k) + (*Bx3Drel)(i,j,k);
             }
         }
     }
@@ -832,7 +832,7 @@ void ElectroMagn3D::sum_rel_fields_to_em_fields(Patch *patch)
         for (unsigned int j=0; j<ny_p; j++) {
             for (unsigned int k=0; k<nz_d; k++) {
                 (*By3D)(i,j,k) = (*By3D)(i,j,k) + 0.5 * ( (*By3Drel)(i,j,k) + (*By3Drel)(i-1,j,k) );
-                (*By3D0)(i,j,k)= (*By3D)(i,j,k) + 0.5 * ( (*By3Drel)(i,j,k) + (*By3Drel)(i-1,j,k) );
+                (*By3D0)(i,j,k)= (*By3D0)(i,j,k) + 0.5 * ( (*By3Drel)(i,j,k) + (*By3Drel)(i-1,j,k) );
             }
         }
     }
@@ -842,7 +842,7 @@ void ElectroMagn3D::sum_rel_fields_to_em_fields(Patch *patch)
         for (unsigned int j=0; j<ny_d; j++) {
             for (unsigned int k=0; k<nz_p; k++) {
                 (*Bz3D)(i,j,k) = (*Bz3D)(i,j,k) + 0.5 * ( (*Bz3Drel)(i,j,k) + (*Bz3Drel)(i-1,j,k) );
-                (*Bz3D0)(i,j,k)= (*Bz3D)(i,j,k) + 0.5 * ( (*Bz3Drel)(i,j,k) + (*Bz3Drel)(i-1,j,k) );
+                (*Bz3D0)(i,j,k)= (*Bz3D0)(i,j,k) + 0.5 * ( (*Bz3Drel)(i,j,k) + (*Bz3Drel)(i-1,j,k) );
             }
         }
     }
