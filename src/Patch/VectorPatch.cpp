@@ -793,8 +793,8 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
 
     double gamma_mean = gamma_global/(double)nparticles_global; 
 
-    unsigned int iteration_max = params.poisson_max_iteration;
-    double           error_max = params.poisson_max_error;
+    unsigned int iteration_max = params.relativistic_poisson_max_iteration;
+    double           error_max = params.relativistic_poisson_max_error;
     unsigned int iteration=0;
 
     // Init & Store internal data (phi, r, p, Ap) per patch

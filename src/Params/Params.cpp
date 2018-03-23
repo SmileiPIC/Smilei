@@ -320,10 +320,12 @@ namelist("")
 
     // Poisson Solver
     PyTools::extract("solve_poisson", solve_poisson, "Main");
-    // Relativistic Poisson Solver
-    PyTools::extract("solve_relativistic_poisson", solve_relativistic_poisson, "Main");
     PyTools::extract("poisson_max_iteration", poisson_max_iteration, "Main");
     PyTools::extract("poisson_max_error", poisson_max_error, "Main");
+    // Relativistic Poisson Solver
+    PyTools::extract("solve_relativistic_poisson", solve_relativistic_poisson, "Main");
+    PyTools::extract("relativistic_poisson_max_iteration", relativistic_poisson_max_iteration, "Main");
+    PyTools::extract("relativistic_poisson_max_error", relativistic_poisson_max_error, "Main");
 
     // PXR parameters
     PyTools::extract("is_spectral", is_spectral, "Main");

@@ -189,9 +189,13 @@ class Main(SmileiSingleton):
 
     # Poisson tuning
     solve_poisson = True
-    solve_relativistic_poisson = False
     poisson_max_iteration = 50000
     poisson_max_error = 1.e-14
+    
+    # Relativistic Poisson tuning
+    solve_relativistic_poisson = False
+    relativistic_poisson_max_iteration = 50000
+    relativistic_poisson_max_error = 1.e-18
 
     # Default fields
     maxwell_solver = 'Yee'
