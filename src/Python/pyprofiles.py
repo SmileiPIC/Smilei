@@ -615,7 +615,7 @@ if _missing_packages == []:
         """
         
         def __init__(self, N, L, comm):
-            from numpy.fft import fftfreq, rfftfreq
+            from numpy.fft import fftfreq
             self.comm = comm
             self.MPI_rank = comm.Get_rank()
             self.MPI_size = comm.Get_size()
@@ -644,8 +644,8 @@ if _missing_packages == []:
             )
             # Arrays of wavenumbers (kx, ky, ky) owning to the current processor
             self.local_k = (
-                fftfreq (self.N[0], 1./self.N[0]) / np.pi ,
-                fftfreq (self.N[1], 1./self.N[1])[self.K_slice[1]] / np.pi ,
+                fftfreq(self.N[0], self.L[0]/self.N[0]) *2.*np.pi ,
+                fftfreq(self.N[1], self.L[1]/self.N[1])[self.K_slice[1]] *2.*np.pi,
             )
             
             if self.N.size == 3:
@@ -654,7 +654,7 @@ if _missing_packages == []:
                 self.K_shape += (self.N[2],)
                 self.X_slice += (slice(0, self.N[2], 1),)
                 self.K_slice += (slice(0, self.N[2], 1),)
-                self.local_k += (rfftfreq(self.N[2], 1./self.N[2]) / np.pi,)
+                self.local_k += (fftfreq(self.N[2], self.L[2]/self.N[2]) *2.*np.pi,)
                 self.fft  = self._fft3
                 self.ifft = self._ifft3
         

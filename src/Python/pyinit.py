@@ -530,4 +530,4 @@ class ExtField(object):
         raise Exception("Deprecated `ExtField()` must be replaced by `ExternalField()`")
 
 # Variable to set to False for the actual run (useful for the test mode)
-_test_mode = False
+_test_mode = True

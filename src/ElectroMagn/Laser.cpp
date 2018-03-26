@@ -460,14 +460,14 @@ void LaserProfileFile::initFields(Params& params, Patch* patch)
 // Amplitude of a laser profile from a file (see LaserOffset)
 double LaserProfileFile::getAmplitude(std::vector<double> pos, double t, int j, int k)
 {
-    double amp;
+    double amp = 0;
     //#pragma omp critical
     //{
     //    timeProfile->valueAt(t)
     //}
     unsigned int n = omega.size();
     for( unsigned int i=0; i<n; i++ ) {
-        amp = (*magnitude)(j,k,i) * sin( omega[i] * t + (*phase)(j,k,i) );
+        amp += (*magnitude)(j,k,i) * sin( omega[i] * t + (*phase)(j,k,i) );
     }
     return amp;
 }
