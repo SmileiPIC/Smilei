@@ -296,11 +296,11 @@ public:
             PyArrayObject *np_ret = reinterpret_cast<PyArrayObject*>(py_pos_init);
             thisSpecies->position_initialization_array = (double*) PyArray_GETPTR1( np_ret , 0);
             //Check dimensions
-            int ndim_local = PyArray_NDIM(np_ret) ;//Ok
+            unsigned int ndim_local = PyArray_NDIM(np_ret);//Ok
             if (ndim_local != 2) ERROR("For species '" << species_name << "' Provide a 2-dimensional array in order to init particle position from a numpy array.")
 
             //Check number of coordinates provided
-            ndim_local =  PyArray_SHAPE(np_ret)[0];// ok
+            ndim_local = PyArray_SHAPE(np_ret)[0];// ok
             if (ndim_local != params.nDim_particle + 1)
                 ERROR("For species '" << species_name << "' position_initializtion must provide a 2-dimensional array with " <<  params.nDim_particle + 1 << " columns." )
             
@@ -347,7 +347,7 @@ public:
             PyArrayObject *np_ret_mom = reinterpret_cast<PyArrayObject*>(py_mom_init);
             thisSpecies->momentum_initialization_array = (double*) PyArray_GETPTR1( np_ret_mom , 0);
             //Check dimensions
-            int ndim_local = PyArray_NDIM(np_ret_mom) ;//Ok
+            unsigned int ndim_local = PyArray_NDIM(np_ret_mom) ;//Ok
             if (ndim_local != 2) ERROR("For species '" << species_name << "' Provide a 2-dimensional array in order to init particle momentum from a numpy array.")
 
             //Check number of coordinates provided

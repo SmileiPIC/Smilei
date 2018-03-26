@@ -1106,8 +1106,9 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     if (this->mass > 0) chargeProfile ->valuesAt(xyz, charge );
 
     if ( position_initialization_array != NULL ){
-        for (unsigned int idim = 0; idim < nDim_particle; idim++) position[idim] = &(position_initialization_array[idim*n_numpy_particles]);
-                                                                  weight_arr     = &(position_initialization_array[nDim_particle*n_numpy_particles]);
+        for (unsigned int idim = 0; idim < nDim_particle; idim++)
+            position[idim] = &(position_initialization_array[idim*n_numpy_particles]);
+        weight_arr = &(position_initialization_array[nDim_particle*n_numpy_particles]);
         //Idea to speed up selection, provides xmin, xmax of the bunch and check if there is an intersection with the patch instead of going through all particles for all patches.
         for (int ip = 0; ip < n_numpy_particles; ip++){
             //If the particle belongs to this patch
