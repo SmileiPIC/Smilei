@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <fstream>
 #include <cstring>
+#include <math.h>
 //#include <string>
 
 #include "Collisions.h"
@@ -839,8 +840,11 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
         }
     }
 
+    
     // compute control parameter
-    double ctrl = rnew_dot_rnew / (double)(nx_p2_global);
+    double norm2_source_term = sqrt(rnew_dot_rnew);
+    //double ctrl = rnew_dot_rnew / (double)(nx_p2_global);
+    double ctrl = sqrt(rnew_dot_rnew) / norm2_source_term; // initially is equal to one
 
     // ---------------------------------------------------------
     // Starting iterative loop for the conjugate gradient method
@@ -849,7 +853,7 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
     //cout << std::scientific << ctrl << "\t" << error_max << "\t" << iteration << "\t" << iteration_max << endl;
     while ( (ctrl > error_max) && (iteration<iteration_max) ) {
         iteration++;
-        if (smpi->isMaster()) MESSAGE("iteration " << iteration << " started with control parameter ctrl = " << ctrl*1.e14 << " x 1e-14");
+        if (smpi->isMaster()) MESSAGE("iteration " << iteration << " started with control parameter ctrl = " << 1.0e22*ctrl << " x 1.e-22");
 
         // scalar product of the residual
         double r_dot_r = rnew_dot_rnew;
@@ -891,8 +895,9 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
         }
 
         // compute control parameter
-        ctrl = rnew_dot_rnew / (double)(nx_p2_global);
-        if (smpi->isMaster()) DEBUG("iteration " << iteration << " done, exiting with control parameter ctrl = " << ctrl);
+        //ctrl = rnew_dot_rnew / (double)(nx_p2_global);
+        ctrl = sqrt(rnew_dot_rnew)/norm2_source_term;
+        if (smpi->isMaster()) DEBUG("iteration " << iteration << " done, exiting with control parameter ctrl = " << 1.0e22*ctrl << " x 1.e-22");
 
     }//End of the iterative loop
 
@@ -903,12 +908,12 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
     if (iteration_max>0 && iteration == iteration_max) {
         if (smpi->isMaster())
             WARNING("Relativistic Poisson solver did not converge: reached maximum iteration number: " << iteration
-                    << ", relative err is ctrl = " << 1.0e18*ctrl << " x 1e-18");
+                    << ", relative err is ctrl = " << 1.0e22*ctrl << "x 1.e-22" );
     }
     else {
         if (smpi->isMaster())
             MESSAGE(1,"Relativistic Poisson solver converged at iteration: " << iteration
-                    << ", relative err is ctrl = " << 1.0e18*ctrl << " x 1e-18");
+                    << ", relative err is ctrl = " << 1.0e22*ctrl << " x 1.e-22" );
     }
 
     // ------------------------------------------
