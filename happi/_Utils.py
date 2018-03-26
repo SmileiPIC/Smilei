@@ -602,6 +602,7 @@ class VTKfile:
 		connec.SetCells(ncel, id)
 		
 		points = self.vtk.vtkPoints()
+                points.SetDataTypeToFloat()
 		points.SetData(pcoords)
 		
 		pdata = self.vtk.vtkPolyData()
@@ -612,6 +613,7 @@ class VTKfile:
 			pdata.GetPointData().SetScalars(a)
 		
 		writer = self.vtk.vtkPolyDataWriter()
+                #writer = self.vtk.vtkXMLDataSetWriter()
 		writer.SetFileName(file)
 		if float(self.vtk.VTK_VERSION[:3]) < 6:
 		    writer.SetInput(pdata)
