@@ -709,17 +709,15 @@ if _missing_packages == []:
             else:
                 return ifft2(Hslab, axes=(1,))
     
-    def LaserOffset(box_side="xmin", offset=0., B1_profile=None, B2_profile=None):
+    def LaserOffset(box_side="xmin", B_profiles=[], offset=0.):
         global _N_LaserOffset
         
         profiles = []
         profiles_n = []
-        if B1_profile:
-            profiles.append( B1_profile )
-            profiles_n.append( 1 )
-        if B2_profile:
-            profiles.append( B2_profile )
-            profiles_n.append( 2 )
+        for i,p in enumerate(B_profiles):
+            if p:
+                profiles.append( p )
+                profiles_n.append( str(i+1) )
         if len(profiles) == 0:
             raise Exception("LaserOffset requires at least one profile defined")
         
@@ -807,12 +805,12 @@ if _missing_packages == []:
             # Calculate kx (direction of propagation)
             k_mesh = np.meshgrid(*k_coordinates, indexing="ij")
             kx = k_mesh[-1]**2 # omega^2
-            for i in range(1,len(k_mesh)): kx -= k_mesh[i]**2;
+            for i in range(0,len(k_mesh)-1): kx -= k_mesh[i]**2;
             kx[kx<0.] = 0.
             kx = np.sqrt(kx)
             
             # Backwards propagation
-            P = np.exp( -1j * kx * offset )
+            P = np.exp( 1j * kx * offset )
             B_FT = [b*P for b in B_FT]
             
             # Fourier transform back to real space
@@ -840,11 +838,11 @@ if _missing_packages == []:
                 i = 0
                 for b in B:
                     A = np.abs(b)
-                    dataset = f.create_dataset('magnitude'+str(profiles_n[i]), N_FT, dtype=A.dtype)
+                    dataset = f.create_dataset('magnitude'+profiles_n[i], N_FT, dtype=A.dtype)
                     if len(indices)>0:
                         dataset[region] = A
                     A = np.angle(b)
-                    dataset = f.create_dataset('phase'+str(profiles_n[i]), N_FT, dtype=A.dtype)
+                    dataset = f.create_dataset('phase'+profiles_n[i], N_FT, dtype=A.dtype)
                     if len(indices)>0:
                          dataset[region] = A
                     i += 1
@@ -859,7 +857,7 @@ if _missing_packages == []:
 
 else:
     
-    def LaserOffset(box_side="xmin", offset=0., B1_profile=None, B2_profile=None):
+    def LaserOffset(box_side="xmin", B_profiles=[], offset=0.):
         print("WARNING: LaserOffset unavailable due to missing packages: "+", ".join(_missing_packages))
 
 """
