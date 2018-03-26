@@ -26,8 +26,9 @@
 #include "Patch.h"
 
 #include "Tools.h"
+#ifdef SMILEI_USE_NUMPY
 #include <numpy/arrayobject.h>
-
+#endif
 
 class SpeciesFactory {
 public:
@@ -287,23 +288,27 @@ public:
                       &&(thisSpecies->position_initialization!="centered" )) {
                   thisSpecies->position_initialization_on_species=true;
             }
-        } else if (PyArray_Check(py_pos_init)){ 
+        }
+#ifdef SMILEI_USE_NUMPY
+        else if (PyArray_Check(py_pos_init)){ 
             //Initialize position from this array
 
             PyArrayObject *np_ret = reinterpret_cast<PyArrayObject*>(py_pos_init);
             thisSpecies->position_initialization_array = (double*) PyArray_GETPTR1( np_ret , 0);
             //Check dimensions
-            int ndim_local = PyArray_NDIM(np_ret) ;//Ok
+            unsigned int ndim_local = PyArray_NDIM(np_ret);//Ok
             if (ndim_local != 2) ERROR("For species '" << species_name << "' Provide a 2-dimensional array in order to init particle position from a numpy array.")
 
             //Check number of coordinates provided
-            ndim_local =  PyArray_SHAPE(np_ret)[0];// ok
+            ndim_local = PyArray_SHAPE(np_ret)[0];// ok
             if (ndim_local != params.nDim_particle + 1)
                 ERROR("For species '" << species_name << "' position_initializtion must provide a 2-dimensional array with " <<  params.nDim_particle + 1 << " columns." )
             
             //Get number of particles
             thisSpecies->n_numpy_particles =  PyArray_SHAPE(np_ret)[1];//  ok
-        } else {
+        }
+#endif
+        else {
             ERROR("For species '" << species_name << "' non valid position_initialization. It must be either a string or a numpy array.");
         }
 
@@ -332,7 +337,9 @@ public:
                                                     <<thisSpecies->momentum_initialization);
                 }
             }
-        } else if (PyArray_Check(py_mom_init)){ 
+        }
+#ifdef SMILEI_USE_NUMPY        
+        else if (PyArray_Check(py_mom_init)){ 
 
             if ( !thisSpecies->position_initialization_array )
                 ERROR("For species '" << species_name << "'. Momentum initialization by a numpy array is only possible if positions are initialized with a numpy array as well. ");
@@ -340,7 +347,7 @@ public:
             PyArrayObject *np_ret_mom = reinterpret_cast<PyArrayObject*>(py_mom_init);
             thisSpecies->momentum_initialization_array = (double*) PyArray_GETPTR1( np_ret_mom , 0);
             //Check dimensions
-            int ndim_local = PyArray_NDIM(np_ret_mom) ;//Ok
+            unsigned int ndim_local = PyArray_NDIM(np_ret_mom) ;//Ok
             if (ndim_local != 2) ERROR("For species '" << species_name << "' Provide a 2-dimensional array in order to init particle momentum from a numpy array.")
 
             //Check number of coordinates provided
@@ -352,7 +359,9 @@ public:
             if ( thisSpecies->n_numpy_particles != PyArray_SHAPE(np_ret_mom)[1] )
                 ERROR("For species '" << species_name << "' momentum_initializtion must provide as many particles as position_initialization." )
 
-        } else {
+        }
+#endif
+        else {
             ERROR("For species '" << species_name << "' non valid momentum_initialization. It must be either a string or a numpy array.");
         }
 
