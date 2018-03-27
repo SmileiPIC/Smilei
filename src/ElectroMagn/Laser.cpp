@@ -489,6 +489,10 @@ double LaserProfileFile::getAmplitude(std::vector<double> pos, double t, int j, 
 //Destructor
 LaserProfileFile::~LaserProfileFile()
 {
-    if(magnitude) delete magnitude;
-    if(phase    ) delete phase    ;
+    #pragma omp critical
+    {
+        if(magnitude  ) { delete magnitude  ; magnitude  =NULL; }
+        if(phase      ) { delete phase      ; phase      =NULL; }
+        if(timeProfile) { delete timeProfile; timeProfile=NULL; }
+    }
 }

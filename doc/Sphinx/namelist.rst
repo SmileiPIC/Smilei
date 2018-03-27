@@ -722,7 +722,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   .. code-block:: python
 
     Laser(
-        box_side        = "xmin",
+        box_side       = "xmin",
         omega          = 1.,
         chirp_profile  = tconstant(),
         time_envelope  = tgaussian(),
@@ -789,11 +789,11 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
     LaserPlanar1D(
         box_side         = "xmin",
-        a0              = 1.,
-        omega           = 1.,
+        a0               = 1.,
+        omega            = 1.,
         polarization_phi = 0.,
-        ellipticity     = 0.,
-        time_envelope   = tconstant()
+        ellipticity      = 0.,
+        time_envelope    = tconstant()
     )
 
   .. py:data:: a0
@@ -824,14 +824,14 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
     LaserGaussian2D(
         box_side         = "xmin",
-        a0              = 1.,
-        omega           = 1.,
-        focus           = [50., 40.],
-        waist           = 3.,
-        incidence_angle = 0.,
+        a0               = 1.,
+        omega            = 1.,
+        focus            = [50., 40.],
+        waist            = 3.,
+        incidence_angle  = 0.,
         polarization_phi = 0.,
-        ellipticity     = 0.,
-        time_envelope   = tconstant()
+        ellipticity      = 0.,
+        time_envelope    = tconstant()
     )
 
   .. py:data:: focus
@@ -863,20 +863,53 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
     LaserGaussian3D(
         box_side         = "xmin",
-        a0              = 1.,
-        omega           = 1.,
-        focus           = [50., 40., 40.],
-        waist           = 3.,
-        incidence_angle = [0., 0.1],
+        a0               = 1.,
+        omega            = 1.,
+        focus            = [50., 40., 40.],
+        waist            = 3.,
+        incidence_angle  = [0., 0.1],
         polarization_phi = 0.,
-        ellipticity     = 0.,
-        time_envelope   = tconstant()
+        ellipticity      = 0.,
+        time_envelope    = tconstant()
     )
 
   This is almost the same as ``LaserGaussian2D``, with the ``focus`` parameter having
   now 3 elements (focus position in 3D), and the ``incidence_angle`` being a list of
   two angles, corresponding to rotations around `y` and `z`, respectively.
 
+.. rubric:: 5. Defining a generic wave at some distance from the boundary
+
+..
+
+  In some cases, the laser field is not known at the box boundary, but rather at some
+  plane inside the box. Smilei can pre-calculate the corresponding wave at the boundary
+  using the *angular spectrum method*. This technique requires additional python
+  packages: *numpy*, *mpi4py* and the package *h5py*, that should be built with parallel
+  capabilities (not the standard *h5py* package). It is introduced using the laser
+  creator::
+
+    LaserOffset(
+        box_side           = "xmin",
+        space_time_profile = [ By_profile, Bz_profile ],
+        offset             = 10.,
+        time_envelope      = tconstant()
+    )
+
+  .. py:data:: offset
+     
+     The distance from the box boundary to the plane where :py:data:`space_time_profile`
+     is defined.
+  
+  .. py:data:: time_envelope
+    
+    :type: a *python* function or a :ref:`time profile <profiles>`
+    :default:  ``tconstant()``
+    
+    An extra temporal envelope on top of the :py:data:`space_time_profile`. As the wave
+    propagation technique stores a limited Fourier transform (in the time domain) of the
+    wave, some periodicity can be obtained in the actual laser. One may thus observe that
+    the laser pulse is repeated several times. The temporal envelope can be used to remove
+    these spurious repetitions.
 
 
 ----

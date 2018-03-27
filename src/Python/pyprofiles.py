@@ -709,12 +709,12 @@ if _missing_packages == []:
             else:
                 return ifft2(Hslab, axes=(1,))
     
-    def LaserOffset(box_side="xmin", B_profiles=[], offset=0., time_envelope=1.):
+    def LaserOffset(box_side="xmin", space_time_profile=[], offset=0., time_envelope=1.):
         global _N_LaserOffset
         
         profiles = []
         profiles_n = []
-        for i,p in enumerate(B_profiles):
+        for i,p in enumerate(space_time_profile):
             if p:
                 profiles.append( p )
                 profiles_n.append( str(i+1) )
@@ -859,7 +859,7 @@ if _missing_packages == []:
 
 else:
     
-    def LaserOffset(box_side="xmin", B_profiles=[], offset=0., time_envelope=1.):
+    def LaserOffset(box_side="xmin", space_time_profile=[], offset=0., time_envelope=1.):
         print("WARNING: LaserOffset unavailable due to missing packages: "+", ".join(_missing_packages))
 
 """
