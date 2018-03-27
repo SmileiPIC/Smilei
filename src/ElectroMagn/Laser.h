@@ -127,7 +127,10 @@ private:
 class LaserProfileFile : public LaserProfile {
 friend class SmileiMPI;
 public:
-    LaserProfileFile( std::string file_, bool pr_ ) : file(file_), primal(pr_) {};
+    LaserProfileFile( std::string file_, Profile * tp_, bool pr_ )
+      : file(file_), timeProfile(tp_), primal(pr_) {};
+    LaserProfileFile( LaserProfileFile* lp )
+      : file(lp->file), timeProfile(new Profile(lp->timeProfile)), primal(lp->primal) {};
     ~LaserProfileFile();
     void createFields(Params& params, Patch* patch);
     void initFields  (Params& params, Patch* patch);
@@ -136,6 +139,7 @@ protected:
     Field3D *magnitude, *phase;
 private:
     std::string file;
+    Profile *timeProfile;
     bool primal;
     std::vector<double> omega;
 };

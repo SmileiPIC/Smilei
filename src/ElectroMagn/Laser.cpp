@@ -89,8 +89,22 @@ Laser::Laser(Params &params, int ilaser, Patch* patch)
         
     } else if( has_file ) {
         
-        profiles.push_back( new LaserProfileFile(file, true ) );
-        profiles.push_back( new LaserProfileFile(file, false) );
+        info << "\t\t" << errorPrefix << " (defined from LaserOffset)" << endl;
+        info << "\t\t\tData in file : " << file << endl;
+        
+        if( has_time ) {
+            // time envelope
+            name.str("");
+            name << "Laser[" << ilaser <<"].time_envelope";
+            ptime = new Profile(time_profile, 1, name.str());
+            ptime2 = new Profile(time_profile, 1, name.str());
+            info << "\t\t\ttime envelope: " << ptime->getInfo();
+        } else {
+            ERROR(errorPrefix << ": `time_envelope` missing or not understood");
+        }
+        
+        profiles.push_back( new LaserProfileFile(file, ptime , true ) );
+        profiles.push_back( new LaserProfileFile(file, ptime2, false) );
         
     } else {
         
@@ -183,8 +197,8 @@ Laser::Laser(Laser* laser, Params& params)
             profiles.push_back( new LaserProfileNULL() );
         }
     } else if( file != "" ) {
-        profiles.push_back( new LaserProfileFile(file, true ) );
-        profiles.push_back( new LaserProfileFile(file, false) );
+        profiles.push_back( new LaserProfileFile(static_cast<LaserProfileFile*>(laser->profiles[0])) );
+        profiles.push_back( new LaserProfileFile(static_cast<LaserProfileFile*>(laser->profiles[1])) );
     } else {
         profiles.push_back( new LaserProfileSeparable(static_cast<LaserProfileSeparable*>(laser->profiles[0])) );
         profiles.push_back( new LaserProfileSeparable(static_cast<LaserProfileSeparable*>(laser->profiles[1])) );
@@ -461,13 +475,13 @@ void LaserProfileFile::initFields(Params& params, Patch* patch)
 double LaserProfileFile::getAmplitude(std::vector<double> pos, double t, int j, int k)
 {
     double amp = 0;
-    //#pragma omp critical
-    //{
-    //    timeProfile->valueAt(t)
-    //}
     unsigned int n = omega.size();
     for( unsigned int i=0; i<n; i++ ) {
         amp += (*magnitude)(j,k,i) * sin( omega[i] * t + (*phase)(j,k,i) );
+    }
+    #pragma omp critical
+    {
+        amp *= timeProfile->valueAt(t);
     }
     return amp;
 }
