@@ -11,6 +11,9 @@ Lx = nx * dx
 Ltrans = ntrans*dtrans
 npatch_x = 128
 
+lambda0_laser     = 0.8e-6              # laser central frequency, m
+c_over_omega0     = lambda_0/2./math.pi # converts from c/omega0 to um
+
 # Plasma plateau density
 n0 = 0.0017
 
@@ -25,13 +28,13 @@ waist = 15. #94.26
 
 # Bunch parameters
 npart = 2000000
-Q_bunch = 2.e-12                       # C
-sigma_x = 3.                           # bunch longitudinal rms size
-sigma_r = 4.                           # bunch transverse rms size (cylindrical symmetry)
-bunch_energy_spread = 0.01             # sigma_gamma/gamma (not in percent)
-bunch_normalized_emittance = 1.e-6     # for both planes, m-rad
-center_bunch = 40.                     # bunch at 0.5*lambdap behind the laser (ok a little more because of relativistic elongation of plasma wavelength)  
-gamma_bunch = 200.                     # relativistic lorentz factor
+Q_bunch = -2.e-12                                        # C (negative for electrons as usual)
+sigma_x = 3.                                             # bunch longitudinal rms size
+sigma_r = 4.                                             # bunch transverse rms size (cylindrical symmetry)
+bunch_energy_spread = 0.01                               # sigma_gamma/gamma (not in percent)
+bunch_normalized_emittance = 1.e-6/c_over_omega0         # for both planes, m-rad /c_over_omega0
+center_bunch = 40.                                       # bunch at 0.5*lambdap behind the laser (ok a little more because of relativistic elongation of plasma wavelength)  
+gamma_bunch = 200.                                       # relativistic lorentz factor
 
 
 Main(
@@ -127,7 +130,7 @@ array_momentum[2,:] = np.multiply(random_number_pz_plane,bunch_normalized_emitta
 #array_position[0,:] = x*1.6
 #array_position[1,:] = y
 #array_position[2,:] = 0.
-array_position[3,:] = np.multiply(np.ones(npart),-1.*weight)
+array_position[3,:] = np.multiply(np.ones(npart),weight)
 #array_momentum[0,:] = 500.
 #array_momentum[1,:] = 0.
 #array_momentum[2,:] = 0.
