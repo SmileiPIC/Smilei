@@ -11,8 +11,10 @@ public:
     ProjectorRZ2Order(Params&, Patch* patch);
     ~ProjectorRZ2Order();
 
-    //! Project global current densities (EMfields->Jx_/Jy_/Jz_)
+    //! Project global current densities for m=0 (EMfields->Jx_/Jy_/Jz_)
     inline void operator() (std::complex<double>* Jl, std::complex<double>* Jr, std::complex<double>* Jt, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold);
+
+    inline void operator() (std::complex<double>* Jl, std::complex<double>* Jr, std::complex<double>* Jt, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold, int imode);
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_/rho), diagFields timestep
     inline void operator() (std::complex<double>* Jl, std::complex<double>* Jr, std::complex<double>* Jt, std::complex<double>* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold);
 
