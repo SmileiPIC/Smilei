@@ -814,7 +814,8 @@ if _missing_packages == []:
             B_FT = [b*P for b in B_FT]
             
             # Fourier transform back to real space
-            B = [ FFT.ifft(b, last_axis=False) for b in B_FT ]
+            P = np.exp( -1j * k_mesh[-1] * offset ) / Lt # add time offset and divide by omega increment
+            B = [ P * FFT.ifft(b, last_axis=False) for b in B_FT ]
             
             # Find the file region where each proc will write
             if _2D:
