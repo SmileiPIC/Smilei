@@ -535,6 +535,9 @@ class VTKfile:
 		self.vtk = vtk
 
 	def Array(self, data, name):
+		"""
+		Convert a numpy array in a vtkFloatArray
+		"""
 		shape = data.shape
 		if len(shape)==1:   npoints, nComponents = shape[0], 1
 		elif len(shape)==2: npoints, nComponents = shape
@@ -584,6 +587,33 @@ class VTKfile:
 		    writer.SetInputData(grid)
 		writer.Write()
 
+	def WriteCloud(self, pcoords, attributes, file):
+		"""
+		Create a vtk file that describes a cloud of points (using vtkPolyData)
+		"""
+
+		points = self.vtk.vtkPoints()
+		#points.SetDataTypeToFloat()
+		points.SetData(pcoords)
+
+		pdata = self.vtk.vtkPolyData()
+		pdata.SetPoints(points)
+
+		for attribute in attributes:
+			#pdata.GetPointData().SetScalars(attribute)
+			pdata.GetPointData().AddArray(attribute)
+		if len(attributes) > 0:
+			pdata.GetPointData().SetActiveScalars(attributes[0].GetName())
+
+		writer = self.vtk.vtkPolyDataWriter()
+		#writer = self.vtk.vtkXMLDataSetWriter()
+		writer.SetFileName(file)
+		if float(self.vtk.VTK_VERSION[:3]) < 6:
+		    writer.SetInput(pdata)
+		else:
+		    writer.SetInputData(pdata)
+		writer.Write()
+
 	def WritePoints(self, pcoords, file):
 		points = self.vtk.vtkPoints()
 		points.SetData(pcoords)
@@ -598,6 +628,9 @@ class VTKfile:
 		writer.Write()
 
 	def WriteLines(self, pcoords, connectivity, attributes, file):
+		"""
+		Create a vtk file that describes lines such as trajectories
+		"""
 		ncel = len(connectivity)
 		connectivity = connectivity.flatten()
 
@@ -620,7 +653,7 @@ class VTKfile:
 			pdata.GetPointData().SetScalars(a)
 
 		writer = self.vtk.vtkPolyDataWriter()
-                #writer = self.vtk.vtkXMLDataSetWriter()
+		#writer = self.vtk.vtkXMLDataSetWriter()
 		writer.SetFileName(file)
 		if float(self.vtk.VTK_VERSION[:3]) < 6:
 		    writer.SetInput(pdata)
