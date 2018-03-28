@@ -27,8 +27,9 @@
 #include "Patch.h"
 
 #include "Tools.h"
+#ifdef SMILEI_USE_NUMPY
 #include <numpy/arrayobject.h>
-
+#endif
 
 class SpeciesFactory {
 public:
@@ -293,23 +294,27 @@ public:
                       &&(thisSpecies->position_initialization!="centered" )) {
                   thisSpecies->position_initialization_on_species=true;
             }
-        } else if (PyArray_Check(py_pos_init)){ 
+        }
+#ifdef SMILEI_USE_NUMPY
+        else if (PyArray_Check(py_pos_init)){ 
             //Initialize position from this array
 
             PyArrayObject *np_ret = reinterpret_cast<PyArrayObject*>(py_pos_init);
             thisSpecies->position_initialization_array = (double*) PyArray_GETPTR1( np_ret , 0);
             //Check dimensions
-            int ndim_local = PyArray_NDIM(np_ret) ;//Ok
+            unsigned int ndim_local = PyArray_NDIM(np_ret);//Ok
             if (ndim_local != 2) ERROR("For species '" << species_name << "' Provide a 2-dimensional array in order to init particle position from a numpy array.")
 
             //Check number of coordinates provided
-            ndim_local =  PyArray_SHAPE(np_ret)[0];// ok
+            ndim_local = PyArray_SHAPE(np_ret)[0];// ok
             if (ndim_local != params.nDim_particle + 1)
                 ERROR("For species '" << species_name << "' position_initializtion must provide a 2-dimensional array with " <<  params.nDim_particle + 1 << " columns." )
             
             //Get number of particles
             thisSpecies->n_numpy_particles =  PyArray_SHAPE(np_ret)[1];//  ok
-        } else {
+        }
+#endif
+        else {
             ERROR("For species '" << species_name << "' non valid position_initialization. It must be either a string or a numpy array.");
         }
 
@@ -338,7 +343,9 @@ public:
                                                     <<thisSpecies->momentum_initialization);
                 }
             }
-        } else if (PyArray_Check(py_mom_init)){ 
+        }
+#ifdef SMILEI_USE_NUMPY        
+        else if (PyArray_Check(py_mom_init)){ 
 
             if ( !thisSpecies->position_initialization_array )
                 ERROR("For species '" << species_name << "'. Momentum initialization by a numpy array is only possible if positions are initialized with a numpy array as well. ");
@@ -346,7 +353,7 @@ public:
             PyArrayObject *np_ret_mom = reinterpret_cast<PyArrayObject*>(py_mom_init);
             thisSpecies->momentum_initialization_array = (double*) PyArray_GETPTR1( np_ret_mom , 0);
             //Check dimensions
-            int ndim_local = PyArray_NDIM(np_ret_mom) ;//Ok
+            unsigned int ndim_local = PyArray_NDIM(np_ret_mom) ;//Ok
             if (ndim_local != 2) ERROR("For species '" << species_name << "' Provide a 2-dimensional array in order to init particle momentum from a numpy array.")
 
             //Check number of coordinates provided
@@ -358,7 +365,9 @@ public:
             if ( thisSpecies->n_numpy_particles != PyArray_SHAPE(np_ret_mom)[1] )
                 ERROR("For species '" << species_name << "' momentum_initializtion must provide as many particles as position_initialization." )
 
-        } else {
+        }
+#endif
+        else {
             ERROR("For species '" << species_name << "' non valid momentum_initialization. It must be either a string or a numpy array.");
         }
 
@@ -501,24 +510,23 @@ public:
 
         if (thisSpecies->momentum_initialization_array == NULL){
             // Mean velocity
-            //if ( PyTools::extract3Profiles("mean_velocity", ispec, profile1, profile2, profile3) ){
-             PyTools::extract3Profiles("mean_velocity", ispec, profile1, profile2, profile3);
+            if ( PyTools::extract3Profiles("mean_velocity", ispec, profile1, profile2, profile3) ){
                 thisSpecies->velocityProfile[0] = new Profile(profile1, params.nDim_particle, Tools::merge("mean_velocity[0] ",species_name), true);
                 thisSpecies->velocityProfile[1] = new Profile(profile2, params.nDim_particle, Tools::merge("mean_velocity[1] ",species_name), true);
                 thisSpecies->velocityProfile[2] = new Profile(profile3, params.nDim_particle, Tools::merge("mean_velocity[2] ",species_name), true);
-            //}
+            }
 
             // Temperature
-            //if ( PyTools::extract3Profiles("temperature", ispec, profile1, profile2, profile3) ) {
-            PyTools::extract3Profiles("temperature", ispec, profile1, profile2, profile3);
+            if ( PyTools::extract3Profiles("temperature", ispec, profile1, profile2, profile3) ) {
                 thisSpecies->temperatureProfile[0] = new Profile(profile1, params.nDim_particle, Tools::merge("temperature[0] ",species_name), true);
                 thisSpecies->temperatureProfile[1] = new Profile(profile2, params.nDim_particle, Tools::merge("temperature[1] ",species_name), true);
                 thisSpecies->temperatureProfile[2] = new Profile(profile3, params.nDim_particle, Tools::merge("temperature[2] ",species_name), true);
-            //}
+            }
         } else {
             ok1 = PyTools::extract3Profiles("mean_velocity", ispec, profile1, profile2, profile3) ;
             ok2 = PyTools::extract3Profiles("temperature", ispec, profile1, profile2, profile3) ;
-            if(  ok1 ||  ok2 ) MESSAGE("For species '" << species_name << "', cannot define both `mean_velocity` or `temperature` and `momentum_initialization` array.");
+            if(  ok1 ) ERROR("For species '" << species_name << "', cannot define both `mean_velocity` and `momentum_initialization` array.");
+            if(  ok2 ) ERROR("For species '" << species_name << "', cannot define both `temperature` and `momentum_initialization` array.");
         }
 
 
@@ -610,10 +618,13 @@ public:
         }
         newSpecies->velocityProfile.resize(3);
         newSpecies->temperatureProfile.resize(3);
-        if ( !species->momentum_initialization_array ){ 
+        //if ( !species->momentum_initialization_array ){ 
+        if ( species->velocityProfile[0] ){ 
             newSpecies->velocityProfile[0]                   = new Profile(species->velocityProfile[0]);
             newSpecies->velocityProfile[1]                   = new Profile(species->velocityProfile[1]);
             newSpecies->velocityProfile[2]                   = new Profile(species->velocityProfile[2]);
+        }
+        if ( species->temperatureProfile[0] ){ 
             newSpecies->temperatureProfile[0]                = new Profile(species->temperatureProfile[0]);
             newSpecies->temperatureProfile[1]                = new Profile(species->temperatureProfile[1]);
             newSpecies->temperatureProfile[2]                = new Profile(species->temperatureProfile[2]);
