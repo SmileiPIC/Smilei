@@ -733,7 +733,10 @@ class TrackParticles(Diagnostic):
 		return 1
 
 	# Convert data to VTK format
-	def toVTK(self, numberOfPieces=1, rendering="trajectory"):
+	def toVTK(self, numberOfPieces=1, rendering="trajectory", format="xml"):
+		"""
+		Export the data to Vtk
+		"""
 		if not self._validate(): return
 
 		if not self._sort:
@@ -745,13 +748,22 @@ class TrackParticles(Diagnostic):
 			return
 
 		if rendering not in ["trajectory","cloud"]:
-			print ("Rendering of type {} is not valid.".format(rendering))
+			print ("Rendering of type {} is not valid. It should be `trajectory` or `cloud`.".format(rendering))
+			return
+
+		if format not in ["xml","ascii"]:
+			print ("Format of type {} is not valid.".format(format))
 			return
 
 		self._mkdir(self._exportDir)
 		fileprefix = self._exportDir + self._exportPrefix
 
 		ntimes = len(self._timesteps)
+
+		if format == "xml":
+			extension = "vtp"
+		else:
+			extension = "vtk"
 
 		# Creation of a customed vtk object
 		vtk = VTKfile()
@@ -762,14 +774,17 @@ class TrackParticles(Diagnostic):
 				print("Error exporting tracked particles to VTK: axes 'x', 'y' and 'z' are required")
 				return
 
+			# Cloud mode: each time step is a separated cloud of particles
+			# If there is only one timestep, the trajectory mode becomes a cloud
 			if (ntimes == 1)or(rendering == "cloud"):
 
 				data = self.getData()
-				pcoords = self._np.stack((data["x"],data["y"],data["z"]))
-				nd, nt, npoints = pcoords.shape
+				#pcoords = self._np.stack((data["x"],data["y"],data["z"]))
+				#nd, nt, npoints = pcoords.shape
 
 				for istep,step in enumerate(self._timesteps):
-					pcoords_step = self._np.stack((pcoords[0][istep],pcoords[1][istep],pcoords[2][istep])).transpose()
+					#pcoords_step = self._np.stack((pcoords[0][istep],pcoords[1][istep],pcoords[2][istep])).transpose()
+					pcoords_step = self._np.stack((data["x"][istep],data["y"][istep],data["z"][istep])).transpose()
 					pcoords_step = self._np.ascontiguousarray(pcoords_step, dtype='float32')
 
 					# Convert pcoords that is a numpy array into vtkFloatArray
@@ -781,11 +796,12 @@ class TrackParticles(Diagnostic):
 						if ax!="x" and  ax!="y" and  ax!="z":
 							attributes += [vtk.Array(self._np.ascontiguousarray(data[ax][istep].flatten(),'float32'),ax)]
 
-					vtk.WriteCloud(pcoords_step, attributes, fileprefix+"_{:06d}.vtk".format(step))
+					vtk.WriteCloud(pcoords_step, attributes, format, fileprefix+"_{:06d}.{}".format(step,extension))
 					print("Exportation of {}_{:06d}.vtk".format(fileprefix,step))
 
 				print("Successfully exported tracked particles to VTK, folder='"+self._exportDir)
 
+			# Trajectory mode
 			elif (rendering == "trajectory"):
 
 				data = self.getData()
@@ -807,5 +823,5 @@ class TrackParticles(Diagnostic):
 					if ax!="x" and  ax!="y" and  ax!="z":
 						attributes += [vtk.Array(self._np.ascontiguousarray(data[ax].flatten(),'float32'),ax)]
 
-				vtk.WriteLines(pcoords, connectivity, attributes, fileprefix+".vtk")
+				vtk.WriteLines(pcoords, connectivity, attributes, format, fileprefix+".{}".format(extension))
 				print("Successfully exported tracked particles to VTK, folder='"+self._exportDir)

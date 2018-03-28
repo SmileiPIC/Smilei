@@ -587,7 +587,7 @@ class VTKfile:
 		    writer.SetInputData(grid)
 		writer.Write()
 
-	def WriteCloud(self, pcoords, attributes, file):
+	def WriteCloud(self, pcoords, attributes, format, file):
 		"""
 		Create a vtk file that describes a cloud of points (using vtkPolyData)
 		"""
@@ -599,14 +599,22 @@ class VTKfile:
 		pdata = self.vtk.vtkPolyData()
 		pdata.SetPoints(points)
 
+		# Add scalars
 		for attribute in attributes:
+			# SetScalar allows only one scalar
 			#pdata.GetPointData().SetScalars(attribute)
 			pdata.GetPointData().AddArray(attribute)
+
+		# The first attribute (first scalar) is the main one
 		if len(attributes) > 0:
 			pdata.GetPointData().SetActiveScalars(attributes[0].GetName())
 
 		writer = self.vtk.vtkPolyDataWriter()
-		#writer = self.vtk.vtkXMLDataSetWriter()
+
+		# For XML output
+		if format == "xml":
+			writer = self.vtk.vtkXMLDataSetWriter()
+
 		writer.SetFileName(file)
 		if float(self.vtk.VTK_VERSION[:3]) < 6:
 		    writer.SetInput(pdata)
@@ -627,7 +635,7 @@ class VTKfile:
 		    writer.SetInputData(grid)
 		writer.Write()
 
-	def WriteLines(self, pcoords, connectivity, attributes, file):
+	def WriteLines(self, pcoords, connectivity, attributes, format, file):
 		"""
 		Create a vtk file that describes lines such as trajectories
 		"""
@@ -649,11 +657,22 @@ class VTKfile:
 		pdata.SetPoints(points)
 		pdata.SetLines(connec)
 
-		for a in attributes:
-			pdata.GetPointData().SetScalars(a)
+		# Add scalars
+		for attribute in attributes:
+			# SetScalar allows only one scalar
+			#pdata.GetPointData().SetScalars(attribute)
+			pdata.GetPointData().AddArray(attribute)
+
+		# The first attribute (first scalar) is the main one
+		if len(attributes) > 0:
+			pdata.GetPointData().SetActiveScalars(attributes[0].GetName())
 
 		writer = self.vtk.vtkPolyDataWriter()
-		#writer = self.vtk.vtkXMLDataSetWriter()
+
+		# For XML output
+		if format == "xml":
+			writer = self.vtk.vtkXMLDataSetWriter()
+
 		writer.SetFileName(file)
 		if float(self.vtk.VTK_VERSION[:3]) < 6:
 		    writer.SetInput(pdata)
