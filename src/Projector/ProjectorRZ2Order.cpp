@@ -731,12 +731,54 @@ void ProjectorRZ2Order::operator() (double* rho, Particles &particles, unsigned 
     // Variable declaration & initialization
     // -------------------------------------
 
-    
-    int iloc,jloc;
+    int iloc;
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
 
-   
+    // variable declaration
+    double xpn, ypn;
+    double delta, delta2;
+    double Sx1[5], Sy1[5]; // arrays used for the Esirkepov projection method
+
+// Initialize all current-related arrays to zero
+    for (unsigned int i=0; i<5; i++) {
+        Sx1[i] = 0.;
+        Sy1[i] = 0.;
+    }
+
+    // --------------------------------------------------------
+    // Locate particles & Calculate Esirkepov coef. S, DS and W
+    // --------------------------------------------------------
+
+    // locate the particle on the primal grid at current time-step & calculate coeff. S1
+    xpn = particles.position(0, ipart) * dl_inv_;
+    int ip = round(xpn);
+    delta  = xpn - (double)ip;
+    delta2 = delta*delta;
+    Sx1[1] = 0.5 * (delta2-delta+0.25);
+    Sx1[2] = 0.75-delta2;
+    Sx1[3] = 0.5 * (delta2+delta+0.25);
+
+    ypn = particles.position(1, ipart) * dr_inv_;
+    int jp = round(ypn);
+    delta  = ypn - (double)jp;
+    delta2 = delta*delta;
+    Sy1[1] = 0.5 * (delta2-delta+0.25);
+    Sy1[2] = 0.75-delta2;
+    Sy1[3] = 0.5 * (delta2+delta+0.25);
+
+    // ---------------------------
+    // Calculate the total charge
+    // ---------------------------
+    ip -= i_domain_begin + bin +2;
+    jp -= j_domain_begin + 2;
+
+    for (unsigned int i=0 ; i<5 ; i++) {
+        iloc = (i+ip)*b_dim[1]+jp;
+        for (unsigned int j=0 ; j<5 ; j++) {
+            rho[iloc+j] += charge_weight * Sx1[i]*Sy1[j];
+            }
+    }//i
 
 } // END Project local current densities (Frozen species)
 
@@ -795,27 +837,27 @@ void ProjectorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles,
            } 
          }       // Otherwise, the projection may apply to the species-specific arrays
      } 
-     //else {
-        // Loop on modes ?
-       // for ( unsigned int imode = 0; imode<Nmode;imode++){
-       //     if (imode==0){
-       //         complex<double>* b_Jl  = emRZ->Jl_s [ispec] ? &(* static_cast<cField2D*>(emRZ->Jl_s [ispec]) )(ibin*clrw* dim1   *dim2) : &(*emRZ->Jl_[imode] )(ibin*clrw* dim1   *dim2) ;
-       //         complex<double>* b_Jr  = emRZ->Jr_s [ispec] ? &(* static_cast<cField2D*>(emRZ->Jr_s [ispec]) )(ibin*clrw*(dim1+1)*dim2) : &(*emRZ->Jr_[imode] )(ibin*clrw*(dim1+1)*dim2) ;
-       //         complex<double>* b_Jt  = emRZ->Jt_s [ispec] ? &(* static_cast<cField2D*>(emRZ->Jt_s [ispec]) )(ibin*clrw*dim1*(dim2+1)) : &(*emRZ->Jt_[imode] )(ibin*clrw*dim1*(dim2+1)) ;
-       //         complex<double>* b_rho = emRZ->rho_s[ispec] ? &(* static_cast<cField2D*>(emRZ->rho_s[ispec]) )(ibin*clrw* dim1   *dim2) : &(*emRZ->rho_RZ_[imode])(ibin*clrw* dim1   *dim2) ;
-       //         for ( int ipart=istart ; ipart<iend; ipart++ )
-       //             (*this)(b_Jl , b_Jr , b_Jt ,b_rho, particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[3*ipart], &(*delta)[3*ipart]);
-//}
-  //           else{    
+     else {
+         //Loop on modes 
+        for ( unsigned int imode = 0; imode<Nmode;imode++){
+            if (imode==0){
+                complex<double>* b_Jl  = emRZ->Jl_s [ispec] ? &(* static_cast<cField2D*>(emRZ->Jl_s [ispec]) )(ibin*clrw* dim1   *dim2) : &(*emRZ->Jl_[imode] )(ibin*clrw* dim1   *dim2) ;
+                complex<double>* b_Jr  = emRZ->Jr_s [ispec] ? &(* static_cast<cField2D*>(emRZ->Jr_s [ispec]) )(ibin*clrw*(dim1+1)*dim2) : &(*emRZ->Jr_[imode] )(ibin*clrw*(dim1+1)*dim2) ;
+                complex<double>* b_Jt  = emRZ->Jt_s [ispec] ? &(* static_cast<cField2D*>(emRZ->Jt_s [ispec]) )(ibin*clrw*dim1*(dim2+1)) : &(*emRZ->Jt_[imode] )(ibin*clrw*dim1*(dim2+1)) ;
+                complex<double>* b_rho = emRZ->rho_s[ispec] ? &(* static_cast<cField2D*>(emRZ->rho_s[ispec]) )(ibin*clrw* dim1   *dim2) : &(*emRZ->rho_RZ_[imode])(ibin*clrw* dim1   *dim2) ;
+                for ( int ipart=istart ; ipart<iend; ipart++ )
+                    (*this)(b_Jl , b_Jr , b_Jt ,b_rho, particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[3*ipart], &(*delta)[3*ipart]);
+}
+             else{    
 
-   //             complex<double>* b_Jl  = emRZ->Jl_s [ispec] ? &(* static_cast<cField2D*>(emRZ->Jl_s [ispec]) )(ibin*clrw* dim1   *dim2) : &(*emRZ->Jl_[imode] )(ibin*clrw* dim1   *dim2) ;
-   //             complex<double>* b_Jr  = emRZ->Jr_s [ispec] ? &(* static_cast<cField2D*>(emRZ->Jr_s [ispec]) )(ibin*clrw*(dim1+1)*dim2) : &(*emRZ->Jr_[imode] )(ibin*clrw*(dim1+1)*dim2) ;
-   //             complex<double>* b_Jt  = emRZ->Jt_s [ispec] ? &(* static_cast<cField2D*>(emRZ->Jt_s [ispec]) )(ibin*clrw*dim1*(dim2+1)) : &(*emRZ->Jt_[imode] )(ibin*clrw*dim1*(dim2+1)) ;
-    //            complex<double>* b_rho = emRZ->rho_s[ispec] ? &(* static_cast<cField2D*>(emRZ->rho_s[ispec]) )(ibin*clrw* dim1   *dim2) : &(*emRZ->rho_RZ_[imode])(ibin*clrw* dim1   *dim2) ;
-     //           for ( int ipart=istart ; ipart<iend; ipart++ )
-      //              (*this)(b_Jl , b_Jr , b_Jt ,b_rho, particles,  ipart, ibin*clrw, b_dim, &(*iold)[3*ipart], &(*delta)[3*ipart], imode);
-      //           }
+                complex<double>* b_Jl  = emRZ->Jl_s [ispec] ? &(* static_cast<cField2D*>(emRZ->Jl_s [ispec]) )(ibin*clrw* dim1   *dim2) : &(*emRZ->Jl_[imode] )(ibin*clrw* dim1   *dim2) ;
+                complex<double>* b_Jr  = emRZ->Jr_s [ispec] ? &(* static_cast<cField2D*>(emRZ->Jr_s [ispec]) )(ibin*clrw*(dim1+1)*dim2) : &(*emRZ->Jr_[imode] )(ibin*clrw*(dim1+1)*dim2) ;
+                complex<double>* b_Jt  = emRZ->Jt_s [ispec] ? &(* static_cast<cField2D*>(emRZ->Jt_s [ispec]) )(ibin*clrw*dim1*(dim2+1)) : &(*emRZ->Jt_[imode] )(ibin*clrw*dim1*(dim2+1)) ;
+                complex<double>* b_rho = emRZ->rho_s[ispec] ? &(* static_cast<cField2D*>(emRZ->rho_s[ispec]) )(ibin*clrw* dim1   *dim2) : &(*emRZ->rho_RZ_[imode])(ibin*clrw* dim1   *dim2) ;
+                for ( int ipart=istart ; ipart<iend; ipart++ )
+                    (*this)(b_Jl , b_Jr , b_Jt ,b_rho, particles,  ipart, ibin*clrw, b_dim, &(*iold)[3*ipart], &(*delta)[3*ipart], imode);
+                 }
 
-       //}
-   //}
+       }
+   }
 }
