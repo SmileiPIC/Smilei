@@ -165,7 +165,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     
     int iloc, jloc, linindex;
     
-    // Jx^(d,p,p)
+    // Jl^(d,p)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
@@ -175,22 +175,22 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             }
     }//i
     
-    // Jy^(p,d,p)
+    // Jr^(p,d)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            linindex = iloc*(b_dim[1]+1)+jloc*b_dim[2];
+            linindex = iloc*(b_dim[1]+1)+jloc;
             Jr [linindex] += Jy_p[i][j]; //
             }
     }//i
     
-    // Jz^(p,p,d)
+    // Jt^(p,p)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            linindex = iloc*(b_dim[2]+1)*b_dim[1]+jloc*(b_dim[2]+1);
+            linindex = iloc*b_dim[1]+jloc;
             Jt [linindex] += Jz_p[i][j]; //
             }
     }//i
@@ -335,7 +335,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     
     int iloc, jloc, linindex;
     
-    // Jx^(d,p,p)
+    // Jl^(d,p)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
@@ -345,22 +345,22 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             }
     }//i
     
-    // Jy^(p,d,p)
+    // Jr^(p,d)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            linindex = iloc*(b_dim[1]+1)+jloc*b_dim[2];
+            linindex = iloc*(b_dim[1]+1)+jloc;
             Jr [linindex] += Jy_p[i][j]; //
             }
     }//i
     
-    // Jz^(p,p,d)
+    // Jt^(p,p)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            linindex = iloc*(b_dim[2]+1)*b_dim[1]+jloc*(b_dim[2]+1);
+            linindex = iloc*b_dim[1]+jloc;
             Jt [linindex] += Jz_p[i][j]; //
             }
     }//i
@@ -495,7 +495,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     
     int iloc, jloc, linindex;
     
-    // Jx^(d,p,p)
+    // Jl^(d,p)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
@@ -505,32 +505,32 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             }
     }//i
     
-    // Jy^(p,d,p)
+    // Jr^(p,d)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            linindex = iloc*(b_dim[1]+1)+jloc*b_dim[2];
+            linindex = iloc*(b_dim[1]+1)+jloc;
             Jr [linindex] += Jy_p[i][j]; //
             }
     }//i
     
-    // Jz^(p,p,d)
+    // Jt^(p,p)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            linindex = iloc*(b_dim[2]+1)*b_dim[1]+jloc*(b_dim[2]+1);
+            linindex = iloc*b_dim[1]+jloc;
             Jt [linindex] += Jz_p[i][j]; //
             }
     }//i
 
-    // Rho^(p,p,p)
+    // Rho^(p,p)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            linindex = iloc*b_dim[2]*b_dim[1]+jloc*b_dim[2];
+            linindex = iloc*b_dim[1]+jloc;
             rho[linindex] += charge_weight * Sx1[i]*Sy1[j];
         }
     }//i
@@ -674,7 +674,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     
     int iloc, jloc, linindex;
     
-    // Jx^(d,p,p)
+    // Jl^(d,p)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
@@ -684,32 +684,32 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             }
     }//i
     
-    // Jy^(p,d,p)
+    // Jr^(p,d)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            linindex = iloc*(b_dim[1]+1)+jloc*b_dim[2];
+            linindex = iloc*(b_dim[1]+1)+jloc;
             Jr [linindex] += Jy_p[i][j]; //
             }
     }//i
     
-    // Jz^(p,p,d)
+    // Jt^(p,p)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            linindex = iloc*(b_dim[2]+1)*b_dim[1]+jloc*(b_dim[2]+1);
+            linindex = iloc*b_dim[1]+jloc;
             Jt [linindex] += Jz_p[i][j]; //
             }
     }//i
     
-     // Rho^(p,p,p)
+     // Rho^(p,p)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            linindex = iloc*b_dim[2]*b_dim[1]+jloc*b_dim[2];
+            linindex = iloc*b_dim[1]+jloc;
             rho[linindex] += charge_weight * Sx1[i]*Sy1[j];
         }
     }//i
@@ -758,8 +758,7 @@ void ProjectorRZ2Order::operator() (double* rho, Particles &particles, unsigned 
     Sx1[1] = 0.5 * (delta2-delta+0.25);
     Sx1[2] = 0.75-delta2;
     Sx1[3] = 0.5 * (delta2+delta+0.25);
-
-    ypn = particles.position(1, ipart) * dr_inv_;
+    ypn = sqrt (particles.position(1, ipart)*particles.position(1, ipart)+particles.position(2, ipart)*particles.position(2, ipart))*dr_inv_ ;
     int jp = round(ypn);
     delta  = ypn - (double)jp;
     delta2 = delta*delta;
@@ -804,9 +803,8 @@ void ProjectorRZ2Order::operator() (Field* Jl, Field* Jr, Field* Jt, Particles &
     double Jz_ion = Jion.z * particles.weight(ipart);
     
     //Locate particle on the grid
-    xpn    = particles.position(0, ipart) * dl_inv_;  // normalized distance to the first node
-    ypn    = particles.position(1, ipart) * dr_inv_;  // normalized distance to the first node
-    
+    xpn    = particles.position(0, ipart) * dl_inv_;  // normalized distance to the first node 
+    ypn = sqrt (particles.position(1, ipart)*particles.position(1, ipart)+particles.position(2, ipart)*particles.position(2, ipart))*dr_inv_ ;
     // x-primal index
     ip      = round(xpn);                    // x-index of the central node
     xpmxip  = xpn - (double)ip;              // normalized distance to the nearest grid point
