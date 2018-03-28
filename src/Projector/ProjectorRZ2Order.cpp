@@ -783,7 +783,7 @@ void ProjectorRZ2Order::operator() (double* rho, Particles &particles, unsigned 
 } // END Project local current densities (Frozen species)
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! Project global current densities (ionize)
+//! Project global current densities : ionization
 // ---------------------------------------------------------------------------------------------------------------------
 void ProjectorRZ2Order::operator() (Field* Jl, Field* Jr, Field* Jt, Particles &particles, int ipart, LocalFields Jion)
 {
@@ -791,16 +791,84 @@ void ProjectorRZ2Order::operator() (Field* Jl, Field* Jr, Field* Jt, Particles &
     cField2D* Jr3D  = static_cast<cField2D*>(Jr);
     cField2D* Jt3D  = static_cast<cField2D*>(Jt);
     
+    
+    //Declaration of local variables
+    int ip, id, jp, jd;
+    double xpn, xpmxip, xpmxip2, xpmxid, xpmxid2;
+    double ypn, ypmyjp, ypmyjp2, ypmyjd, ypmyjd2;
+    double Sxp[3], Sxd[3], Syp[3], Syd[3];
+    
     // weighted currents
     double Jx_ion = Jion.x * particles.weight(ipart);
     double Jy_ion = Jion.y * particles.weight(ipart);
     double Jz_ion = Jion.z * particles.weight(ipart);
     
+    //Locate particle on the grid
+    xpn    = particles.position(0, ipart) * dl_inv_;  // normalized distance to the first node
+    ypn    = particles.position(1, ipart) * dr_inv_;  // normalized distance to the first node
+    
+    // x-primal index
+    ip      = round(xpn);                    // x-index of the central node
+    xpmxip  = xpn - (double)ip;              // normalized distance to the nearest grid point
+    xpmxip2 = xpmxip*xpmxip;                 // square of the normalized distance to the nearest grid point
+    
+    // x-dual index
+    id      = round(xpn+0.5);                // x-index of the central node
+    xpmxid  = xpn - (double)id + 0.5;        // normalized distance to the nearest grid point
+    xpmxid2 = xpmxid*xpmxid;                 // square of the normalized distance to the nearest grid point
+    
+    // y-primal index
+    jp      = round(ypn);                    // y-index of the central node
+    ypmyjp  = ypn - (double)jp;              // normalized distance to the nearest grid point
+    ypmyjp2 = ypmyjp*ypmyjp;                 // square of the normalized distance to the nearest grid point
+    
+    // y-dual index
+    jd      = round(ypn+0.5);                // y-index of the central node
+    ypmyjd  = ypn - (double)jd + 0.5;        // normalized distance to the nearest grid point
+    ypmyjd2 = ypmyjd*ypmyjd;                 // square of the normalized distance to the nearest grid point
+    
+    Sxp[0] = 0.5 * (xpmxip2-xpmxip+0.25);
+    Sxp[1] = (0.75-xpmxip2);
+    Sxp[2] = 0.5 * (xpmxip2+xpmxip+0.25);
+    
+    Sxd[0] = 0.5 * (xpmxid2-xpmxid+0.25);
+    Sxd[1] = (0.75-xpmxid2);
+    Sxd[2] = 0.5 * (xpmxid2+xpmxid+0.25);
+    
+    Syp[0] = 0.5 * (ypmyjp2-ypmyjp+0.25);
+    Syp[1] = (0.75-ypmyjp2);
+    Syp[2] = 0.5 * (ypmyjp2+ypmyjp+0.25);
+    
+    Syd[0] = 0.5 * (ypmyjd2-ypmyjd+0.25);
+    Syd[1] = (0.75-ypmyjd2);
+    Syd[2] = 0.5 * (ypmyjd2+ypmyjd+0.25);
+    
+    ip  -= i_domain_begin;
+    id  -= i_domain_begin;
+    jp  -= j_domain_begin;
+    jd  -= j_domain_begin;
+    
+    for (unsigned int i=0 ; i<3 ; i++) {
+        int iploc=ip+i-1;
+        int idloc=id+i-1;
+        for (unsigned int j=0 ; j<3 ; j++) {
+            int jploc=jp+j-1;
+            int jdloc=jd+j-1;
+            // Jx^(d,p)
+            (*Jl3D)(idloc,jploc) += Jx_ion * Sxd[i]*Syp[j];
+            // Jy^(p,d)
+            (*Jr3D)(iploc,jdloc) += Jy_ion * Sxp[i]*Syd[j];
+            // Jz^(p,p)
+            (*Jt3D)(iploc,jploc) += Jz_ion * Sxp[i]*Syp[j];
+        }
+    }//i
 
 
 } // END Project global current densities (ionize)
 
+//------------------------------------//
 //Wrapper for projection
+//-----------------------------------//
 void ProjectorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec)
 {
     if (is_spectral)
