@@ -306,13 +306,13 @@ void SpeciesV::dynamics(double time_dual, unsigned int ispec,
             for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
 
                 if (nDim_field==2)
-                    b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1) : &(*EMfields->rho_)(ibin*clrw*f_dim1) ;
+                    b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0*clrw*f_dim1) : &(*EMfields->rho_)(0*clrw*f_dim1) ;
                 if (nDim_field==3)
-                    b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1*f_dim2) : &(*EMfields->rho_)(ibin*clrw*f_dim1*f_dim2) ;
+                    b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0*clrw*f_dim1*f_dim2) : &(*EMfields->rho_)(0*clrw*f_dim1*f_dim2) ;
                 else if (nDim_field==1)
-                    b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw) : &(*EMfields->rho_)(ibin*clrw) ;
+                    b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0*clrw) : &(*EMfields->rho_)(0*clrw) ;
                 for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
-                    (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_dim);
+                    (*Proj)(b_rho, (*particles), iPart, 0*clrw, b_dim);
                 } //End loop on particles
             }//End loop on bins
 
