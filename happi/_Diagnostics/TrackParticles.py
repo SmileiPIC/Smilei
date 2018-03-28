@@ -733,7 +733,7 @@ class TrackParticles(Diagnostic):
 		return 1
 
 	# Convert data to VTK format
-	def toVTK(self, numberOfPieces=1, rendering="trajectory", format="xml"):
+	def toVTK(self, numberOfPieces=1, rendering="trajectory", data_format="xml"):
 		"""
 		Export the data to Vtk
 		"""
@@ -751,8 +751,8 @@ class TrackParticles(Diagnostic):
 			print ("Rendering of type {} is not valid. It should be `trajectory` or `cloud`.".format(rendering))
 			return
 
-		if format not in ["xml","ascii"]:
-			print ("Format of type {} is not valid.".format(format))
+		if data_format not in ["xml","ascii"]:
+			print ("Format of type {} is not valid.".format(data_format))
 			return
 
 		self._mkdir(self._exportDir)
@@ -760,7 +760,7 @@ class TrackParticles(Diagnostic):
 
 		ntimes = len(self._timesteps)
 
-		if format == "xml":
+		if data_format == "xml":
 			extension = "vtp"
 		else:
 			extension = "vtk"
@@ -796,7 +796,7 @@ class TrackParticles(Diagnostic):
 						if ax!="x" and  ax!="y" and  ax!="z":
 							attributes += [vtk.Array(self._np.ascontiguousarray(data[ax][istep].flatten(),'float32'),ax)]
 
-					vtk.WriteCloud(pcoords_step, attributes, format, fileprefix+"_{:06d}.{}".format(step,extension))
+					vtk.WriteCloud(pcoords_step, attributes, data_format, fileprefix+"_{:06d}.{}".format(step,extension))
 					print("Exportation of {}_{:06d}.vtk".format(fileprefix,step))
 
 				print("Successfully exported tracked particles to VTK, folder='"+self._exportDir)
@@ -823,5 +823,5 @@ class TrackParticles(Diagnostic):
 					if ax!="x" and  ax!="y" and  ax!="z":
 						attributes += [vtk.Array(self._np.ascontiguousarray(data[ax].flatten(),'float32'),ax)]
 
-				vtk.WriteLines(pcoords, connectivity, attributes, format, fileprefix+".{}".format(extension))
+				vtk.WriteLines(pcoords, connectivity, attributes, data_format, fileprefix+".{}".format(extension))
 				print("Successfully exported tracked particles to VTK, folder='"+self._exportDir)

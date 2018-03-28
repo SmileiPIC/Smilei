@@ -587,7 +587,7 @@ class VTKfile:
 		    writer.SetInputData(grid)
 		writer.Write()
 
-	def WriteCloud(self, pcoords, attributes, format, file):
+	def WriteCloud(self, pcoords, attributes, data_format, file):
 		"""
 		Create a vtk file that describes a cloud of points (using vtkPolyData)
 		"""
@@ -612,7 +612,7 @@ class VTKfile:
 		writer = self.vtk.vtkPolyDataWriter()
 
 		# For XML output
-		if format == "xml":
+		if data_format == "xml":
 			writer = self.vtk.vtkXMLDataSetWriter()
 
 		writer.SetFileName(file)
@@ -635,7 +635,7 @@ class VTKfile:
 		    writer.SetInputData(grid)
 		writer.Write()
 
-	def WriteLines(self, pcoords, connectivity, attributes, format, file):
+	def WriteLines(self, pcoords, connectivity, attributes, data_format, file):
 		"""
 		Create a vtk file that describes lines such as trajectories
 		"""
@@ -670,7 +670,7 @@ class VTKfile:
 		writer = self.vtk.vtkPolyDataWriter()
 
 		# For XML output
-		if format == "xml":
+		if data_format == "xml":
 			writer = self.vtk.vtkXMLDataSetWriter()
 
 		writer.SetFileName(file)
