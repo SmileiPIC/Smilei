@@ -31,10 +31,6 @@ public:
     
 private:
     
-    
-    //! Conversion factor from degree to radian
-    double conv_deg2rad;
-    
     //! Number of nodes on the primal grid in the x-direction
     unsigned int nl_p;
     
@@ -67,21 +63,20 @@ private:
    
     
     //! Constant used for the Buneman boundary conditions (+R)
-    double Alpha_BM_Rmax;
+    double Alpha_Bl_Rmax, Beta_Bl_Rmax, Gamma_Bl_Rmax ;
     
     //! Constant used for the Buneman boundary conditions (+R)
-    double Beta_BM_Rmax;
-    
-    //! Constant used for the Buneman boundary conditions (+R)
-    double Gamma_BM_Rmax;
+    double  Alpha_Bt_Rmax, Beta_Bt_Rmax, Gamma_Bt_Rmax, Delta_Bt_Rmax, Epsilon_Bt_Rmax ;
+
     //! Constant used for the Buneman boundary conditions (+R)
     double CB_BM;
     //! Constant used for the Buneman boundary conditions (+R)
     double CE_BM;
-	//! Number of modes
-	unsigned int Nmode;
+    //! Number of modes
+    unsigned int Nmode;
     
 };
 
 #endif
+
 

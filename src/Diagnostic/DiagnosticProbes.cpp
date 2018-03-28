@@ -72,6 +72,8 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
 {
     probe_n = n_probe;
     nDim_particle = params.nDim_particle;
+    nDim_field = params.nDim_field;
+    geometry = params.geometry;
     fileId_ = 0;
     hasRhoJs = false;
     last_iteration_points_calculated = 0;
@@ -329,7 +331,7 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
     unsigned int numCorners = 1<<nDim_particle; // number of patch corners
     unsigned int ntot, IP, ipart_local, i, k, iDim;
     bool is_in_domain;
-    vector<double> point(nDim_particle), mins(nDim_particle), maxs(nDim_particle);  
+    vector<double> point(nDim_particle), mins(nDim_particle), maxs(nDim_particle);  //warning, works only if nDim_particle >= nDim_field
     vector<double> patchMin(nDim_particle), patchMax(nDim_particle);
     vector<unsigned int> minI(nDim_particle), maxI(nDim_particle), nI(nDim_particle);
     
@@ -337,16 +339,29 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
         
         // The first step is to reduce the area of the probe to search in this patch
-        for( k=0; k<nDim_particle; k++ ) {
-            mins[k] = numeric_limits<double>::max();
-            maxs[k] = numeric_limits<double>::lowest();
-            patchMin[k] = ( vecPatches(ipatch)->Pcoordinates[k]   )*patch_size[k];
-            patchMax[k] = ( vecPatches(ipatch)->Pcoordinates[k]+1 )*patch_size[k];
+        if (geometry == "3drz"){
+                mins[0] = numeric_limits<double>::max();
+                maxs[0] = numeric_limits<double>::lowest();
+                patchMin[0] = ( vecPatches(ipatch)->Pcoordinates[0]   )*patch_size[0];
+                patchMax[0] = ( vecPatches(ipatch)->Pcoordinates[0]+1 )*patch_size[0];
+            for( k=1; k<3; k++ ) {
+                mins[k] = numeric_limits<double>::max();
+                maxs[k] = -mins[k];
+                patchMin[k] = -( vecPatches(ipatch)->Pcoordinates[1]+1 )*patch_size[1];
+                patchMax[k] =  ( vecPatches(ipatch)->Pcoordinates[1]+1 )*patch_size[1];
+            }
+        } else {
+            for( k=0; k<nDim_particle; k++ ) {
+                mins[k] = numeric_limits<double>::max();
+                maxs[k] =  numeric_limits<double>::lowest();
+                patchMin[k] = ( vecPatches(ipatch)->Pcoordinates[k]   )*patch_size[k];
+                patchMax[k] = ( vecPatches(ipatch)->Pcoordinates[k]+1 )*patch_size[k];
+            }
         }
         // loop patch corners
         for( i=0; i<numCorners; i++ ) {
             // Get coordinates of the current corner in terms of x,y,...
-            for( k=0; k<nDim_particle; k++ )
+            for( k=0; k<nDim_particle; k++ )                          
                 point[k] = ( (((i>>k)&1)==0) ? patchMin[k] : patchMax[k] ) - origin[k];
             // Get position of the current corner in the probe's coordinate system
             point = matrixTimesVector( axesInverse, point );
@@ -357,8 +372,9 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
             }
         }
         // Loop directions to figure out the range of useful indices
+
         for( i=0; i<dimProbe; i++ ) {
-            if( mins[i]<0. ) mins[i]=0.;
+            if( mins[i]<0. ) mins[i]=0.;   // Why ?
             if( mins[i]>1. ) mins[i]=1.;
             minI[i] = ((unsigned int) floor(mins[i]*((double)(vecNumber[i]-1))));
             if( maxs[i]<0. ) maxs[i]=0.;
@@ -396,8 +412,12 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
             point = matrixTimesVector( axes, point );
             // Check if point is in patch
             is_in_domain = true;
-            for( i=0; i<nDim_particle; i++ ) {
-                point[i] += origin[i];
+            for( i=0; i<nDim_field; i++ ) {
+                if (i == 1 && geometry == "3drz"){
+                    point[1] += sqrt(origin[1]*origin[1] + origin[2]*origin[2]);
+                }else{
+                    point[i] += origin[i];
+                }
                 if (point[i] < patchMin[i] || point[i] >= patchMax[i] ) {
                     is_in_domain = false;
                     break;

@@ -115,8 +115,8 @@ public:
 
     //! Boundary conditions for ElectroMagnetic Fields
     std::vector< std::vector<std::string> > EM_BCs;
-    //! Theta parameter for some kinds of ElectroMagnetic boundary conditions
-    std::vector< std::vector<double> > EM_BCs_theta;
+    //! k parameters for some kinds of ElectroMagnetic boundary conditions
+    std::vector< std::vector<double> > EM_BCs_k;
     //! Are open boundaries used ?
     bool open_boundaries;
     
@@ -166,8 +166,9 @@ public:
 
     //! dt for the simulation
     double timestep;
-	//! Number of modes
-	unsigned int Nmode;
+
+    //! Number of modes
+    unsigned int nmodes;
 
     //! max value for dt (due to usual FDTD CFL condition: should be moved to ElectroMagn solver (MG))
     double dtCFL;
@@ -206,6 +207,8 @@ public:
     unsigned int tot_number_of_patches;
     //! Number of patches per direction
     std::vector<unsigned int> number_of_patches;
+    //! Domain decomposition
+    std::string patch_decomposition;
 
     //! Time selection for load balancing
     TimeSelection * load_balancing_time_selection;

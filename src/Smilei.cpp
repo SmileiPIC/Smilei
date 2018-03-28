@@ -169,9 +169,6 @@ int main (int argc, char* argv[])
         vecPatches.computeCharge();
         vecPatches.sumDensities(params, time_dual, timers, 0, simWindow);
 
-        TITLE("Applying external fields at time t = 0");
-        vecPatches.applyExternalFields();
-
         // ---------------------------------------------------------------------
         // Init and compute tables for radiation effects
         // (nonlinear inverse Compton scattering)
@@ -195,6 +192,9 @@ int main (int argc, char* argv[])
             TITLE("Solving Poisson at time t = 0");
             vecPatches.solvePoisson( params, &smpi );
         }
+
+        TITLE("Applying external fields at time t = 0");
+        vecPatches.applyExternalFields();
 
         vecPatches.dynamics(params, &smpi, simWindow, RadiationTables,
                             MultiphotonBreitWheelerTables, time_dual, timers, 0);

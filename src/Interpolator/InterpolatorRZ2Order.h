@@ -45,6 +45,8 @@ private:
     double coeffxp_[3], coeffyp_[3];
     // Interpolation coefficient on Dual grid
     double coeffxd_[3], coeffyd_[3];
+    //! Number of modes;
+    unsigned int nmodes;
 
 
 };//END class

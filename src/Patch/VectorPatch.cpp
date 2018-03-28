@@ -359,6 +359,7 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
         timers.syncField.restart();
         if (params.is_spectral)
             SyncVectorPatch::finalizeexchangeE( params, (*this) );
+
         SyncVectorPatch::finalizeexchangeB( params, (*this) );
         timers.syncField.update(  params.printNow( itime ) );
 
@@ -632,8 +633,8 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
             (*this)(ipatch)->EMfields->compute_Ap( (*this)(ipatch) );
 
         // Exchange Ap_ (intra & extra MPI)
-        SyncVectorPatch::exchange( Ap_, *this );
-        SyncVectorPatch::finalizeexchange( Ap_, *this );
+        SyncVectorPatch::exchange_along_all_directions          ( Ap_, *this );
+        SyncVectorPatch::finalize_exchange_along_all_directions ( Ap_, *this );
 
        // scalar product p.Ap
         double p_dot_Ap       = 0.0;
@@ -1311,14 +1312,14 @@ void VectorPatch::update_field_list()
         unsigned int nmodes = static_cast<ElectroMagn3DRZ*>(patches_[0]->EMfields)->El_.size();
         for (unsigned int imode=0 ; imode < nmodes ; imode++) {
             for ( unsigned int ifields = 0 ; ifields < listBl_[imode].size() ; ifields++ ) {
-                listJl_[imode][ifields]->MPIbuff.defineTags( patches_[ifields], 1 );
-                listJr_[imode][ifields]->MPIbuff.defineTags( patches_[ifields], 2 );
-                listJr_[imode][ifields]->MPIbuff.defineTags( patches_[ifields], 3 );
-                listBl_[imode][ifields]->MPIbuff.defineTags( patches_[ifields], 6 );
-                listBr_[imode][ifields]->MPIbuff.defineTags( patches_[ifields], 7 );
-                listBt_[imode][ifields]->MPIbuff.defineTags( patches_[ifields], 8 );
+                listJl_[imode][ifields]->MPIbuff.defineTags( patches_[ifields], 0 );
+                listJr_[imode][ifields]->MPIbuff.defineTags( patches_[ifields], 0 );
+                listJt_[imode][ifields]->MPIbuff.defineTags( patches_[ifields], 0 );
+                listBl_[imode][ifields]->MPIbuff.defineTags( patches_[ifields], 0 );
+                listBr_[imode][ifields]->MPIbuff.defineTags( patches_[ifields], 0 );
+                listBt_[imode][ifields]->MPIbuff.defineTags( patches_[ifields], 0 );
 
-                listrho_RZ_[imode][ifields]->MPIbuff.defineTags( patches_[ifields], 4 );
+                listrho_RZ_[imode][ifields]->MPIbuff.defineTags( patches_[ifields], 0 );
             }
         }
     }

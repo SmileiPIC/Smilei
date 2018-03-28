@@ -11,6 +11,7 @@
 #include "VectorPatch.h"
 #include "DomainDecomposition.h"
 #include "Hilbert_functions.h"
+#include "CartesianDomainDecomposition.h"
 
 using namespace std;
 
@@ -36,7 +37,7 @@ DiagnosticFields3D::DiagnosticFields3D( Params &params, SmileiMPI* smpi, VectorP
     for( unsigned int i=0; i<3; i++) {
         findSubgridIntersection(
             subgrid_start[i], subgrid_stop[i], subgrid_step[i],
-            0, patch_size[i]+1,
+            subgrid_start[i], subgrid_start[i]+patch_size[i]+1,
             istart_in_patch[i], istart_in_file[i], nsteps[i]
         );
     }
@@ -52,6 +53,8 @@ DiagnosticFields3D::DiagnosticFields3D( Params &params, SmileiMPI* smpi, VectorP
     int nproc = smpi->getSize(), iproc = smpi->getRank();
     int npatch = params.tot_number_of_patches;
     int npatch_local = 1<<int(log2( ((double)npatch)/nproc ));
+    if (dynamic_cast<CartesianDomainDecomposition3D*>( vecPatches.domain_decomposition_ ))
+        npatch_local = vecPatches.size();
     int first_proc_with_less_patches = (npatch-npatch_local*nproc)/npatch_local;
     int first_patch_of_this_proc;
     if( iproc < first_proc_with_less_patches ) {

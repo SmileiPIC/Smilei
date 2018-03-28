@@ -276,7 +276,6 @@ void SmileiMPI::init_patch_count( Params& params, DomainDecomposition* domain_de
                 Lcur += local_load; //Add grid contribution to the load.
                 Ncur++; // Try to assign current patch to rank r.
 
-                //if (isMaster()) cout <<"h= " << hindex << " Tcur = " << Tcur << " Lcur = " << Lcur <<" Ncur = " << Ncur <<" r= " << r << endl;
                 if (r < (unsigned int)smilei_sz-1){
 
                     if ( Lcur > Tcur || smilei_sz-r >= Npatches-hindex){ //Load target is exceeded or we have as many patches as procs left.
@@ -348,7 +347,6 @@ void SmileiMPI::init_patch_count( Params& params, DomainDecomposition* domain_de
 void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, double time_dual )
 {
 
-    //cout << "Start recompute" << endl;
     unsigned int ncells_perpatch, j;
     int Ncur;
     double Tload,Tload_loc,Tcur, cells_load, target, Tscan;
@@ -571,7 +569,6 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
         params.hasNielRadiation)
     {
 
-        int k = 0;
         double temp;
         for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++){
             if ( patch->vecSpecies[ispec]->getNbrOfParticles() > 0
@@ -582,16 +579,20 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
 
                 MPI_Isend(&temp,
                 1, MPI_DOUBLE, to, tag + maxtag, SMILEI_COMM_WORLD,
-                &patch->requests_[2*patch->vecSpecies.size()+k]);
+                //&patch->requests_[2*patch->vecSpecies.size()+k]);
+                &patch->requests_[maxtag]);
 
                 maxtag ++;
-
-                k++;
             }
         }
     }
-
-    isend( patch->EMfields, to, maxtag, patch->requests_,tag);
+    
+    // Send fields
+    if ( params.geometry != "3drz" ) {
+        isend( patch->EMfields, to, maxtag, patch->requests_,tag);
+    } else {
+        isend( patch->EMfields, to, maxtag, patch->requests_,tag, static_cast<ElectroMagn3DRZ*>(patch->EMfields)->El_.size());
+    }
 
 } // END isend( Patch )
 
@@ -635,7 +636,6 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
         patch->vecSpecies[ispec]->bmin[0]=0;
         //Prepare patch for receiving particles
         nbrOfPartsRecv = patch->vecSpecies[ispec]->bmax.back();
-        //cout << smilei_rk << " recv " << nbrOfPartsRecv << endl;
         patch->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv, params.nDim_particle );
         //Receive particles
         if ( nbrOfPartsRecv > 0 ) {
@@ -655,7 +655,6 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
 
         MPI_Status status;
         double temp;
-        int k = 0;
         for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
         {
             if ( patch->vecSpecies[ispec]->getNbrOfParticles() > 0
@@ -669,16 +668,17 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
 
                 //patch->vecSpecies[ispec]->Radiate->setRadiatedEnergy(temp);
                 patch->vecSpecies[ispec]->setNrjRadiation(temp);
-
-                k++;
             }
         }
     }
 
     // Receive EM fields
     patch->EMfields->initAntennas(patch);
-    recv( patch->EMfields, from, maxtag );
-
+    if ( params.geometry != "3drz" ) {
+        recv( patch->EMfields, from, maxtag );
+    } else {
+        recv( patch->EMfields, from, maxtag, static_cast<ElectroMagn3DRZ*>(patch->EMfields)->El_.size() );
+    }
 
 } // END recv ( Patch )
 
@@ -804,6 +804,80 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& req
     }
 } // End isend ( ElectroMagn )
 
+void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& requests, int mpi_tag, unsigned int nmodes)
+{
+
+    ElectroMagn3DRZ* EMRZ = static_cast<ElectroMagn3DRZ*>(EM);
+    for (unsigned int imode =0; imode < nmodes; imode++){
+        isendComplex( EMRZ->El_[imode] , to, mpi_tag+tag, requests[tag]); tag++;
+        isendComplex( EMRZ->Er_[imode] , to, mpi_tag+tag, requests[tag]); tag++;
+        isendComplex( EMRZ->Et_[imode] , to, mpi_tag+tag, requests[tag]); tag++;
+        isendComplex( EMRZ->Bl_[imode] , to, mpi_tag+tag, requests[tag]); tag++;
+        isendComplex( EMRZ->Br_[imode] , to, mpi_tag+tag, requests[tag]); tag++;
+        isendComplex( EMRZ->Bt_[imode] , to, mpi_tag+tag, requests[tag]); tag++;
+        isendComplex( EMRZ->Bl_m[imode], to, mpi_tag+tag, requests[tag]); tag++;
+        isendComplex( EMRZ->Br_m[imode], to, mpi_tag+tag, requests[tag]); tag++;
+        isendComplex( EMRZ->Bt_m[imode], to, mpi_tag+tag, requests[tag]); tag++;
+    }
+
+    for( unsigned int idiag=0; idiag<EM->allFields_avg.size(); idiag++) {
+        for( unsigned int ifield=0; ifield<EM->allFields_avg[idiag].size(); ifield++) {
+            isend( EM->allFields_avg[idiag][ifield], to, mpi_tag+tag, requests[tag]); tag++;
+        }
+    }
+
+    for (unsigned int antennaId=0 ; antennaId<EM->antennas.size() ; antennaId++) {
+        isend( EM->antennas[antennaId].field, to, mpi_tag+tag, requests[tag] ); tag++;
+    }
+
+    for (unsigned int bcId=0 ; bcId<EM->emBoundCond.size() ; bcId++ ) {
+        if(! EM->emBoundCond[bcId]) continue;
+
+        for (unsigned int laserId=0 ; laserId < EM->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
+
+            Laser * laser = EM->emBoundCond[bcId]->vecLaser[laserId];
+            if( !(laser->spacetime[0]) && !(laser->spacetime[1]) ){
+                LaserProfileSeparable* profile;
+                profile = static_cast<LaserProfileSeparable*> ( laser->profiles[0] );
+                if( ! profile->space_envelope ) continue;
+                isend( profile->space_envelope, to , mpi_tag+tag, requests[tag] ); tag++;
+                isend( profile->phase, to, mpi_tag+tag, requests[tag]); tag++;
+                profile = static_cast<LaserProfileSeparable*> ( laser->profiles[1] );
+                isend( profile->space_envelope, to , mpi_tag+tag, requests[tag] ); tag++;
+                isend( profile->phase, to, mpi_tag+tag, requests[tag]); tag++;
+            }
+        }
+
+         if ( EM->extFields.size()>0 ) {
+
+             if (dynamic_cast<ElectroMagnBC1D_SM*>(EM->emBoundCond[bcId]) ) {
+                 ElectroMagnBC1D_SM* embc = static_cast<ElectroMagnBC1D_SM*>(EM->emBoundCond[bcId]);
+                 MPI_Isend( &(embc->By_val), 1, MPI_DOUBLE, to, mpi_tag+tag, MPI_COMM_WORLD, &requests[tag] ); tag++;
+                 MPI_Isend( &(embc->Bz_val), 1, MPI_DOUBLE, to, mpi_tag+tag, MPI_COMM_WORLD, &requests[tag] ); tag++;
+             }
+             else if ( dynamic_cast<ElectroMagnBC2D_SM*>(EM->emBoundCond[bcId]) ) {
+                 // BCs at the x-border
+                 ElectroMagnBC2D_SM* embc = static_cast<ElectroMagnBC2D_SM*>(EM->emBoundCond[bcId]);
+
+                 if (embc->Bx_val.size()) { isend(&embc->Bx_val, to, mpi_tag+tag, requests[tag]); tag++; }
+                 if (embc->By_val.size()) { isend(&embc->By_val, to, mpi_tag+tag, requests[tag]); tag++; }
+                 if (embc->Bz_val.size()) { isend(&embc->Bz_val, to, mpi_tag+tag, requests[tag]); tag++; }
+
+             }
+             else if ( dynamic_cast<ElectroMagnBC3D_SM*>(EM->emBoundCond[bcId]) ) {
+                ElectroMagnBC3D_SM* embc = static_cast<ElectroMagnBC3D_SM*>(EM->emBoundCond[bcId]);
+
+                 // BCs at the border
+                 if (embc->Bx_val) { isend( embc->Bx_val, to, mpi_tag+tag, requests[tag]); tag++;}
+                 if (embc->By_val) { isend( embc->By_val, to, mpi_tag+tag, requests[tag]); tag++;}
+                 if (embc->Bz_val) { isend( embc->Bz_val, to, mpi_tag+tag, requests[tag]); tag++;}
+
+             }
+         }
+
+    }
+} // End isend ( ElectroMagn LRT )
+
 
 void SmileiMPI::recv(ElectroMagn* EM, int from, int tag)
 {
@@ -881,6 +955,79 @@ void SmileiMPI::recv(ElectroMagn* EM, int from, int tag)
 
 } // End recv ( ElectroMagn )
 
+void SmileiMPI::recv(ElectroMagn* EM, int from, int tag, unsigned int nmodes)
+{
+    ElectroMagn3DRZ* EMRZ = static_cast<ElectroMagn3DRZ*>(EM);
+    for (unsigned int imode =0; imode < nmodes; imode++){
+        recvComplex( EMRZ->El_[imode] , from, tag ); tag++;
+        recvComplex( EMRZ->Er_[imode] , from, tag ); tag++;
+        recvComplex( EMRZ->Et_[imode] , from, tag ); tag++;
+        recvComplex( EMRZ->Bl_[imode] , from, tag ); tag++;
+        recvComplex( EMRZ->Br_[imode] , from, tag ); tag++;
+        recvComplex( EMRZ->Bt_[imode] , from, tag ); tag++;
+        recvComplex( EMRZ->Bl_m[imode], from, tag ); tag++;
+        recvComplex( EMRZ->Br_m[imode], from, tag ); tag++;
+        recvComplex( EMRZ->Bt_m[imode], from, tag ); tag++;
+    }
+
+    for( unsigned int idiag=0; idiag<EM->allFields_avg.size(); idiag++) {
+        for( unsigned int ifield=0; ifield<EM->allFields_avg[idiag].size(); ifield++) {
+            recv( EM->allFields_avg[idiag][ifield], from, tag); tag++;
+        }
+    }
+
+    for (int antennaId=0 ; antennaId<(int)EM->antennas.size() ; antennaId++) {
+        recv( EM->antennas[antennaId].field, from, tag); tag++;
+    }
+
+    for (unsigned int bcId=0 ; bcId<EM->emBoundCond.size() ; bcId++ ) {
+        if(! EM->emBoundCond[bcId]) continue;
+
+        for (unsigned int laserId=0 ; laserId<EM->emBoundCond[bcId]->vecLaser.size() ; laserId++ ) {
+            Laser * laser = EM->emBoundCond[bcId]->vecLaser[laserId];
+            if( !(laser->spacetime[0]) && !(laser->spacetime[1]) ){
+                LaserProfileSeparable* profile;
+                profile = static_cast<LaserProfileSeparable*> ( laser->profiles[0] );
+                if( ! profile->space_envelope ) continue;
+                recv( profile->space_envelope, from , tag ); tag++;
+                recv( profile->phase, from, tag ); tag++;
+                profile = static_cast<LaserProfileSeparable*> ( laser->profiles[1] );
+                recv( profile->space_envelope, from , tag ); tag++;
+                recv( profile->phase, from, tag ); tag++;
+            }
+        }
+
+        if ( EM->extFields.size()>0 ) {
+
+            if (dynamic_cast<ElectroMagnBC1D_SM*>(EM->emBoundCond[bcId]) ) {
+                ElectroMagnBC1D_SM* embc = static_cast<ElectroMagnBC1D_SM*>(EM->emBoundCond[bcId]);
+                MPI_Status status;
+                MPI_Recv( &(embc->By_val), 1, MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status ); tag++;
+                MPI_Recv( &(embc->Bz_val), 1, MPI_DOUBLE, from, tag, MPI_COMM_WORLD, &status ); tag++;
+            }
+            else if ( dynamic_cast<ElectroMagnBC2D_SM*>(EM->emBoundCond[bcId]) ) {
+                // BCs at the x-border
+                ElectroMagnBC2D_SM* embc = static_cast<ElectroMagnBC2D_SM*>(EM->emBoundCond[bcId]);
+
+                if (embc->Bx_val.size()) { recv(&embc->Bx_val, from, tag); tag++; }
+                if (embc->By_val.size()) { recv(&embc->By_val, from, tag); tag++; }
+                if (embc->Bz_val.size()) { recv(&embc->Bz_val, from, tag); tag++; }
+
+            }
+             else if ( dynamic_cast<ElectroMagnBC3D_SM*>(EM->emBoundCond[bcId]) ) {
+                ElectroMagnBC3D_SM* embc = static_cast<ElectroMagnBC3D_SM*>(EM->emBoundCond[bcId]);
+
+                 // BCs at the border
+                 if (embc->Bx_val) { recv( embc->Bx_val, from, tag); tag++;}
+                 if (embc->By_val) { recv( embc->By_val, from, tag); tag++;}
+                 if (embc->Bz_val) { recv( embc->Bz_val, from, tag); tag++;}
+
+             }
+        }
+
+    }
+
+} // End recv ( ElectroMagn LRT )
 
 void SmileiMPI::isend(Field* field, int to, int hindex, MPI_Request& request)
 {

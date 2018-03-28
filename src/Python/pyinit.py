@@ -175,10 +175,11 @@ class Main(SmileiSingleton):
     number_of_timesteps = None
     interpolation_order = 2
     number_of_patches = None
+    patch_decomposition = "hilbert"
     clrw = -1
     every_clean_particles_overhead = 100
     timestep = None
-    Nmode = 2
+    nmodes = 2
     timestep_over_CFL = None
 
     # PXR tuning
@@ -195,7 +196,7 @@ class Main(SmileiSingleton):
     # Default fields
     maxwell_solver = 'Yee'
     EM_boundary_conditions = [["periodic"]]
-    EM_boundary_conditions_theta = [[0.,math.pi]]
+    EM_boundary_conditions_k = []
     Envelope_boundary_conditions = [["reflective"]]
     time_fields_frozen = 0.
     Laser_Envelope_model = False
@@ -249,7 +250,13 @@ class Main(SmileiSingleton):
                 # None recognized solver
                 else:
                     raise Exception("timestep: maxwell_solver not implemented "+Main.maxwell_solver)
-
+        
+        # Initialize simulation_time if not defined by the user
+        if Main.simulation_time is None:
+            if Main.number_of_timesteps is None:
+                raise Exception("simulation_time and number_of_timesteps are not defined")
+            Main.simulation_time = Main.timestep * Main.number_of_timesteps
+        
         # Initialize grid_length if not defined based on number_of_cells and cell_length
         if (    len(Main.grid_length + Main.number_of_cells) == 0
              or len(Main.grid_length + Main.cell_length) == 0
@@ -323,8 +330,8 @@ class Species(SmileiComponent):
     charge = None
     charge_density = None
     number_density = None
-    mean_velocity = [0.]
-    temperature = [1e-10]
+    mean_velocity = []  # Default value is     0, set in createParticles function in species.cpp
+    temperature = []    # Default value is 1e-10, set in createParticles function in species.cpp
     thermal_boundary_temperature = []
     thermal_boundary_velocity = [0.,0.,0.]
     pusher = "boris"

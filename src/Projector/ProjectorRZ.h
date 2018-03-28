@@ -22,10 +22,10 @@ public:
 
 protected:
     //! Inverse of the spatial step 1/dx
-    double dx_inv_;
-    double dy_inv_;
-    double dx_ov_dt;
-    double dy_ov_dt;
+    double dl_inv_;
+    double dr_inv_;
+    double dl_ov_dt;
+    double dr_ov_dt;
     int i_domain_begin;
     int j_domain_begin;
 };

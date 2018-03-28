@@ -13,7 +13,7 @@ public:
     virtual std::vector<unsigned int> getDomainCoordinates( unsigned int Id ) = 0;
 
 protected:
-    std::vector<unsigned int> block_size_;
+    std::vector<unsigned int> mi_;
 
 };
 

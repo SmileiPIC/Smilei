@@ -237,19 +237,29 @@ void LaserProfileSeparable::createFields(Params& params, Patch* patch)
     
     if( params.geometry!="1Dcartesian" && params.geometry!="2Dcartesian" && params.geometry!="3Dcartesian" && params.geometry!="3drz")
         ERROR("Unknown geometry in laser");
-    
-    if( params.geometry!="1Dcartesian" ) {
+   
+    // dim[0] for 2D and 3D Cartesian 
+    if( params.geometry=="2Dcartesian" || params.geometry=="3Dcartesian" ) {
         unsigned int ny_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
         unsigned int ny_d = ny_p+1;
         dim[0] = primal ? ny_p : ny_d;
-        
-        if( params.geometry=="3Dcartesian" ) {
-            unsigned int nz_p = params.n_space[2]*params.global_factor[2]+1+2*params.oversize[2];
-            unsigned int nz_d = nz_p+1;
-            dim[1] = primal ? nz_d : nz_p;
-        }
     }
-    
+
+    // dim[0] for LRT
+    if( params.geometry=="3drz" ) {
+        unsigned int nr_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
+        unsigned int nr_d = nr_p+1;
+        dim[0] = nr_p + nr_d;
+    }
+       
+    // dim[1] for 3D Cartesian 
+    if( params.geometry=="3Dcartesian" ) {
+        unsigned int nz_p = params.n_space[2]*params.global_factor[2]+1+2*params.oversize[2];
+        unsigned int nz_d = nz_p+1;
+        dim[1] = primal ? nz_d : nz_p;
+    }
+   
+    //Create laser fields 
     space_envelope = new Field2D(dim);
     phase          = new Field2D(dim);
 }
@@ -264,7 +274,7 @@ void LaserProfileSeparable::initFields(Params& params, Patch* patch)
         (*space_envelope)(0,0) = spaceProfile->valueAt(pos);
         (*phase         )(0,0) = phaseProfile->valueAt(pos);
         
-    } else if( params.geometry=="2Dcartesian" || params.geometry=="3drz") {
+    } else if( params.geometry=="2Dcartesian" ) {
         
         unsigned int ny_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
         unsigned int ny_d = ny_p+1;
@@ -276,11 +286,27 @@ void LaserProfileSeparable::initFields(Params& params, Patch* patch)
         vector<double> pos(1);
         pos[0] = patch->getDomainLocalMin(1) - ((primal?0.:0.5) + params.oversize[1])*dy;
         for (unsigned int j=0 ; j<dim[0] ; j++) {
+            (*space_envelope)(j,0) = spaceProfile->valueAt(pos);
+            (*phase         )(j,0) = phaseProfile->valueAt(pos);
             pos[0] += dy;
+        }
+
+    } else if( params.geometry=="3drz") {
+        
+        unsigned int nr_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
+        unsigned int nr_d = nr_p+1;
+        double dr = params.cell_length[1];
+        vector<unsigned int> dim(1);
+        dim[0] = nr_p + nr_d; // Need to account for both primal and dual positions
+        
+        // Assign profile
+        vector<double> pos(1);
+        for (unsigned int j=0 ; j<dim[0] ; j++) {
+            pos[0] = patch->getDomainLocalMin(1) + ( j*0.5 - 0.5 - params.oversize[1])*dr ; // Increment half cells
             (*space_envelope)(j,0) = spaceProfile->valueAt(pos);
             (*phase         )(j,0) = phaseProfile->valueAt(pos);
         }
-        
+  
     } else if( params.geometry=="3Dcartesian" ) {
         
         unsigned int ny_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
@@ -297,13 +323,13 @@ void LaserProfileSeparable::initFields(Params& params, Patch* patch)
         vector<double> pos(2);
         pos[0] = patch->getDomainLocalMin(1) - ((primal?0.:0.5) + params.oversize[1])*dy;
         for (unsigned int j=0 ; j<dim[0] ; j++) {
-            pos[0] += dy;
             pos[1] = patch->getDomainLocalMin(2) - ((primal?0.5:0.) + params.oversize[2])*dz;
             for (unsigned int k=0 ; k<dim[1] ; k++) {
-                pos[1] += dz;
                 (*space_envelope)(j,k) = spaceProfile->valueAt(pos);
                 (*phase         )(j,k) = phaseProfile->valueAt(pos);
+                pos[1] += dz;
             }
+            pos[0] += dy;
         }
     }
 }

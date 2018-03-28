@@ -6,7 +6,6 @@ compile:
   stage: compile
   only:
     - develop
-    #- complex_vecto
 
   script:
     # Force workdir cleaning in case of retried
@@ -31,7 +30,6 @@ makerun1D:
   stage: makerun
   only:
     - develop
-    #- complex_vecto
 
   script:
     # Move in test dir
@@ -43,7 +41,6 @@ makerun2D:
   stage: makerun
   only:
     - develop
-    #- complex_vecto
 
   script:
     # Move in test dir
@@ -55,7 +52,6 @@ makerun3D:
   stage: makerun
   only:
     - develop
-    #- complex_vecto
 
   script:
     # Move in test dir

@@ -260,8 +260,8 @@ namelist("")
     for (unsigned int i=0;i<nDim_field;i++){
         res_space[i] = 1.0/cell_length[i];
     }
-    // Number of modes
-    PyTools::extract("Nmode", Nmode, "Main");
+    // Number of modes in LRT geometry
+    PyTools::extract("nmodes", nmodes, "Main");
     
     // simulation duration & length
     PyTools::extract("simulation_time", simulation_time, "Main");
@@ -288,7 +288,7 @@ namelist("")
         if( EM_BCs[iDim].size() == 1 ) // if just one type is specified, then take the same bc type in a given dimension
             EM_BCs[iDim].push_back( EM_BCs[iDim][0] );
         else if ( (EM_BCs[iDim][0] != EM_BCs[iDim][1]) &&  (EM_BCs[iDim][0] == "periodic" || EM_BCs[iDim][1] == "periodic") )
-            ERROR("EM_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side");
+            ERROR("EM_boundary_conditions along dimension "<<"012"[iDim]<<" cannot be periodic only on one side");
     }
         
     int n_envlaser = PyTools::nComponents("LaserEnvelope");
@@ -324,18 +324,33 @@ namelist("")
         }
     }
 
-    PyTools::extract("EM_boundary_conditions_theta", EM_BCs_theta, "Main");
-    //Complete with zeros if not defined
-    if( EM_BCs_theta.size() == 1 ) {
-        while( EM_BCs_theta.size() < nDim_field ) EM_BCs_theta.push_back(EM_BCs_theta[0]  );
-    } else if( EM_BCs_theta.size() != nDim_field ) {
-        ERROR("EM_boundary_conditions_theta must be the same size as the number of dimensions");
+    PyTools::extract("EM_boundary_conditions_k", EM_BCs_k, "Main");
+    if( EM_BCs_k.size() == 0 ) {
+        //Gives default value
+        for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
+            std::vector<double> temp_k; 
+            
+            for(  int iiDim=0; iiDim<iDim; iiDim++ ) temp_k.push_back(0.);
+            temp_k.push_back(1.);
+            for(  int iiDim=iDim+1; iiDim<nDim_field; iiDim++ ) temp_k.push_back(0.);
+            EM_BCs_k.push_back(temp_k);
+            for(  int iiDim=0; iiDim<nDim_field; iiDim++ ) temp_k[iiDim] *= -1. ;
+            EM_BCs_k.push_back(temp_k);
+        }
     }
-    for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
-        if( EM_BCs_theta[iDim].size() == 1 ) // if just one theta is specified, then take the same theta for both sides of the dimension.
-            EM_BCs_theta[iDim].push_back( EM_BCs_theta[iDim][0] );
-        else if ( EM_BCs[iDim].size() > 2 )
-            ERROR("Too many EM_boundary_conditions_theta along dimension "<<"xyz"[iDim] );
+
+    //Complete with zeros if not defined
+    if( EM_BCs_k.size() == 1 ) {
+        while( EM_BCs_k.size() < nDim_field*2 ) EM_BCs_k.push_back(EM_BCs_k[0]  );
+    } else if( EM_BCs_k.size() != nDim_field*2 ) {
+        ERROR("EM_boundary_conditions_k must be the same size as the number of faces.");
+    }
+    for( unsigned int iDim=0; iDim<nDim_field*2; iDim++ ) {
+        if ( EM_BCs_k[iDim].size() != nDim_field )
+            ERROR("EM_boundary_conditions_k must have exactly " << nDim_field << " elements along dimension "<<"-+"[iDim%2]<<"012"[iDim/2] );
+        if ( EM_BCs_k[iDim][iDim/2] == 0. )
+            ERROR("EM_boundary_conditions_k must have a non zero normal component along dimension "<<"-+"[iDim%2]<<"012"[iDim/2] );
+        
     }
 
     // -----------------------------------
@@ -399,7 +414,7 @@ namelist("")
         res_space2 += res_space[i]*res_space[i];
     }
     if (geometry == "3drz") {
-        res_space2 += ((Nmode-1)*(Nmode-1)-1)*res_space[1]*res_space[1];	    
+        res_space2 += ((nmodes-1)*(nmodes-1)-1)*res_space[1]*res_space[1];	    
     }
     dtCFL=1.0/sqrt(res_space2);
     if ( timestep>dtCFL ) {
@@ -419,9 +434,6 @@ namelist("")
     if ( !PyTools::extract("number_of_patches", number_of_patches, "Main") ) {
         ERROR("The parameter `number_of_patches` must be defined as a list of integers");
     }
-    for ( unsigned int iDim=0 ; iDim<nDim_field ; iDim++ )
-        if( (number_of_patches[iDim] & (number_of_patches[iDim]-1)) != 0)
-            ERROR("Number of patches in each direction must be a power of 2");
 
     tot_number_of_patches = 1;
     for ( unsigned int iDim=0 ; iDim<nDim_field ; iDim++ )
@@ -447,6 +459,23 @@ namelist("")
     //norderx=norder[0];
     //nordery=norder[1];
     //norderz=norder[2];
+
+
+    if (PyTools::extract("patch_decomposition", patch_decomposition, "Main")) {
+        WARNING( "Change patches distribution to " << patch_decomposition );
+    }
+    else {
+        patch_decomposition = "hilbert";
+        WARNING( "Use default distribution : " << patch_decomposition );
+    }
+
+
+    if (patch_decomposition == "hilbert") {
+        for ( unsigned int iDim=0 ; iDim<nDim_field ; iDim++ )
+            if( (number_of_patches[iDim] & (number_of_patches[iDim]-1)) != 0)
+                ERROR("Number of patches in each direction must be a power of 2");
+    }
+
 
     if( PyTools::nComponents("LoadBalancing")>0 ) {
         // get parameter "every" which describes a timestep selection
@@ -593,8 +622,7 @@ void Params::compute()
     simulation_time = (double)(n_time) * timestep;
     if (simulation_time!=entered_simulation_time)
         WARNING("simulation_time has been redefined from " << entered_simulation_time
-        << " to " << simulation_time << " to match nxtimestep ("
-        << scientific << setprecision(4) << simulation_time - entered_simulation_time<< ")" );
+        << " to " << simulation_time << " to match timestep.");
 
 
     // grid/cell-related parameters
@@ -707,7 +735,12 @@ void Params::print_init()
         MESSAGE(1,"            - (Number of cells,    Cell length)  : " << "(" << n_space_global[i] << ", " << cell_length[i] << ")");
         MESSAGE(1,"            - Electromagnetic boundary conditions: " << "(" << EM_BCs[i][0] << ", " << EM_BCs[i][1] << ")");
         if (open_boundaries)
-            MESSAGE(1,"            - Electromagnetic boundary conditions theta: " << "(" << EM_BCs_theta[i][0] << ", " << EM_BCs_theta[i][1] << ")");
+            cout << setprecision(2);
+            cout << "                     - Electromagnetic boundary conditions k    : " << "( [" << EM_BCs_k[2*i][0] ;
+            for ( unsigned int ii=1 ; ii<grid_length.size() ; ii++) cout << ", " << EM_BCs_k[2*i][ii] ;
+            cout << "] , [" << EM_BCs_k[2*i+1][0] ;
+            for ( unsigned int ii=1 ; ii<grid_length.size() ; ii++) cout << ", " << EM_BCs_k[2*i+1][ii] ;
+            cout << "] )" << endl;
     }
 
     if( currentFilter_passes > 0 )

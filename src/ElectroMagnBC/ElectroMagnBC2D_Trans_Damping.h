@@ -2,12 +2,12 @@
 #ifndef ELECTROMAGNBC2D_Trans_DAMPING_H
 #define ELECTROMAGNBC2D_Trans_DAMPING_H
 
-#include "ElectroMagnBC.h" 
+#include "ElectroMagnBC2D.h" 
 
 class Params;
 class ElectroMagn;
 
-class ElectroMagnBC2D_Trans_Damping : public ElectroMagnBC {
+class ElectroMagnBC2D_Trans_Damping : public ElectroMagnBC2D {
 public:
     ElectroMagnBC2D_Trans_Damping( Params &params, Patch* patch, unsigned int _min_max );
     ~ElectroMagnBC2D_Trans_Damping() {};
