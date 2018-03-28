@@ -49,8 +49,8 @@ ElectroMagnBC2D_SM::ElectroMagnBC2D_SM( Params &params, Patch* patch, unsigned i
     // Parameters for the Silver-Mueller boundary conditions
     // -----------------------------------------------------
     
-    double pyKx, pyKy, pyKz;
-    double kx, ky, kz;
+    double pyKx, pyKy; //, pyKz;
+    double kx, ky; //, kz;
     double Knorm;
     double omega = 1. ;
     //! \todo (MG) Check optimal angle for Silver-Muller BCs
