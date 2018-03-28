@@ -1,6 +1,5 @@
 from .Diagnostic import Diagnostic
 from .._Utils import *
-import vtk as _vtk
 
 class TrackParticles(Diagnostic):
 	"""Class for loading a TrackParticles diagnostic"""
