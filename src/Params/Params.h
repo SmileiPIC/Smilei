@@ -197,6 +197,8 @@ public:
     std::vector<unsigned int> number_of_patches;
     //! Domain decomposition
     std::string patch_decomposition;
+    //! Domain orientation
+    std::string patch_orientation;
 
     //! Time selection for load balancing
     TimeSelection * load_balancing_time_selection;
