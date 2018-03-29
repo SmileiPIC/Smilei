@@ -89,7 +89,7 @@ Laser::Laser(Params &params, int ilaser, Patch* patch)
         
     } else if( has_file ) {
         
-        info << "\t\t" << errorPrefix << " (defined from LaserOffset)" << endl;
+        info << "\t\t" << errorPrefix << endl;
         info << "\t\t\tData in file : " << file << endl;
         
         if( has_time ) {
@@ -103,8 +103,8 @@ Laser::Laser(Params &params, int ilaser, Patch* patch)
             ERROR(errorPrefix << ": `time_envelope` missing or not understood");
         }
         
-        profiles.push_back( new LaserProfileFile(file, ptime , params.n_omega[ilaser], true ) );
-        profiles.push_back( new LaserProfileFile(file, ptime2, params.n_omega[ilaser], false) );
+        profiles.push_back( new LaserProfileFile(file, ptime , true ) );
+        profiles.push_back( new LaserProfileFile(file, ptime2, false) );
         
     } else {
         
@@ -365,23 +365,8 @@ void LaserProfileFile::createFields(Params& params, Patch* patch)
     if( params.geometry!="2Dcartesian" && params.geometry!="3Dcartesian" )
         ERROR("Unknown geometry in LaserOffset (cartesian 2D or 3D only)");
     
-    vector<unsigned int> dim(3);
-    
-    unsigned int ny_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
-    unsigned int ny_d = ny_p+1;
-    dim[0] = primal ? ny_p : ny_d;
-    dim[1] = 1;
-    
-    if( params.geometry=="3Dcartesian" ) {
-        unsigned int nz_p = params.n_space[2]*params.global_factor[2]+1+2*params.oversize[2];
-        unsigned int nz_d = nz_p+1;
-        dim[1] = primal ? nz_d : nz_p;
-    }
-    
-    dim[2] = n_omega;
-    
-    magnitude = new Field3D(dim);
-    phase     = new Field3D(dim);
+    magnitude = new Field3D();
+    phase     = new Field3D();
 }
 
 void LaserProfileFile::initFields(Params& params, Patch* patch)
@@ -394,6 +379,7 @@ void LaserProfileFile::initFields(Params& params, Patch* patch)
     hsize_t ny_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
     hsize_t ny_d = ny_p+1;
     dim[0] = primal ? ny_p : ny_d;
+    dim[1] = 1;
     offset[0] = patch->getCellStartingGlobalIndex(1) + params.oversize[1];
     offset[1] = 0;
     offset[2] = 0;
@@ -428,10 +414,13 @@ void LaserProfileFile::initFields(Params& params, Patch* patch)
         ERROR("File " << file << " does not contain the `omega` dataset");
     }
     
-    dim[ndim-1] = npoints;
-    hid_t memspace = H5Screate_simple( ndim, &dim[0], NULL );
+    // Allocate the fields
+    magnitude->allocateDims(dim[0], dim[1], npoints);
+    phase    ->allocateDims(dim[0], dim[1], npoints);
     
     // Obtain the datasets for the magnitude and phase of the field
+    dim[ndim-1] = npoints;
+    hid_t memspace = H5Screate_simple( ndim, &dim[0], NULL );
     string magnitude_name = primal?"magnitude1":"magnitude2";
     if( H5Lexists( fid, magnitude_name.c_str(), H5P_DEFAULT ) >0 ) {
         hid_t did = H5Dopen( fid, magnitude_name.c_str(), pid );
@@ -443,7 +432,7 @@ void LaserProfileFile::initFields(Params& params, Patch* patch)
     } else {
         magnitude->put_to(0.);
     }
-    string phase_name = primal?"magnitude1":"magnitude2";
+    string phase_name = primal?"phase1":"phase2";
     if( H5Lexists( fid, phase_name.c_str(), H5P_DEFAULT ) >0 ) {
         hid_t did = H5Dopen( fid, phase_name.c_str(), pid );
         hid_t filespace = H5Dget_space( did );

@@ -585,7 +585,6 @@ namelist("")
     unsigned int n_laser = PyTools::nComponents("Laser");
     unsigned int n_laser_offset = 0;
     LaserPropagator propagateX;
-    n_omega.resize(n_laser, 0);
     
     for( unsigned int i_laser=0; i_laser<n_laser; i_laser++ ) {
         double offset = 0.;
@@ -637,7 +636,7 @@ namelist("")
             
             // Make the propagation happen and write out the file
             if( ! smpi->test_mode )
-                n_omega[i_laser] = propagateX(profiles, profiles_n, offset, file);
+                propagateX(profiles, profiles_n, offset, file);
             
             n_laser_offset ++;
         }

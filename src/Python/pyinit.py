@@ -359,6 +359,7 @@ class Laser(SmileiComponent):
     phase = [0., 0.]
     space_time_profile = None
     file = None
+    _offset = None
 
 class LaserEnvelope(SmileiSingleton):
     """Laser Envelope parameters"""

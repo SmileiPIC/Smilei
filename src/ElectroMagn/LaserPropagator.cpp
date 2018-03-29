@@ -109,10 +109,10 @@ void LaserPropagator::init(Params* params, SmileiMPI* smpi, unsigned int side)
 
 }
 
-unsigned int LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profiles_n, double offset, string file)
+void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profiles_n, double offset, string file)
 {
 #ifdef SMILEI_USE_NUMPY
-    const complex<double> i1 (0., 1.); // the imaginary number
+    const complex<double> i_ (0., 1.); // the imaginary number
     
     unsigned int nprofiles = profiles.size();
     
@@ -284,17 +284,22 @@ unsigned int LaserPropagator::operator() (vector<PyObject*> profiles, vector<int
         n_omega_local = n_omega;
     }
     
+    // Make a list of the omegas
+    vector<double> omega(n_omega_local);
+    for(unsigned int i=0; i<n_omega_local; i++)
+        omega[i] = local_k[ndim-1][indices[i]];
+    
     ostringstream t("");
     t<<"\trank "<<MPI_rank<<" indices ( ";
-    for( unsigned int i=0;i<indices.size();i++ ) 
+    for( unsigned int i=0;i<n_omega_local;i++ ) 
         t<<indices[i]<<" ";
     t<<" )"<<endl;
     cout<< t.str();
     
     t.str("");
     t<<"\trank "<<MPI_rank<<" omega ( ";
-    for( unsigned int i=0;i<indices.size();i++ ) 
-        t<<local_k[1][indices[i]]<<" ";
+    for( unsigned int i=0;i<n_omega_local;i++ ) 
+        t<<omega[i]<<" ";
     t<<" )"<<endl;
     cout<< t.str();
     
@@ -313,7 +318,7 @@ unsigned int LaserPropagator::operator() (vector<PyObject*> profiles, vector<int
             for(unsigned int j=0; j<N[0]; j++) 
                 for(unsigned int k=0; k<n_omega_local; k++) 
                     z[j + N[0]*k] = z0[j + N[0]*indices[k]]
-                        * exp( i1 * offset * sqrt( max(0., pow(local_k[1][indices[k]],2) - pow(local_k[0][j],2)) ) );
+                        * exp( i_ * offset * sqrt( max(0., pow(omega[k],2) - pow(local_k[0][j],2)) ) );
             Py_DECREF(arrays[i]);
             arrays[i] = a;
         } else {
@@ -325,7 +330,7 @@ unsigned int LaserPropagator::operator() (vector<PyObject*> profiles, vector<int
                 for(unsigned int k=0; k<Nlocal[1]; k++) 
                     for(unsigned int l=0; l<n_omega_local; l++) 
                         z[j + N[0]*( k + Nlocal[1]*l )] = z0[j + N[0]*( k + Nlocal[1]*indices[l] )]
-                            * exp( i1 * offset * sqrt( max(0., pow(local_k[2][indices[l]],2) - pow(local_k[0][j],2) - pow(local_k[1][k],2)) ) );
+                            * exp( i_ * offset * sqrt( max(0., pow(omega[l],2) - pow(local_k[0][j],2) - pow(local_k[1][k],2)) ) );
             Py_DECREF(arrays[i]);
             arrays[i] = a;
         }
@@ -373,7 +378,6 @@ unsigned int LaserPropagator::operator() (vector<PyObject*> profiles, vector<int
     // --------------------------------
     unsigned int local_size = (_2D ? N[0] : Nlocal[0]*N[1]) * n_omega_local;
     vector<vector<double> > magnitude(nprofiles), phase(nprofiles);
-    vector<double> * omega = &local_k[ ndim-1 ];
     double coeff_magnitude = 1./L.back(); // divide by omega increment
     
     for( unsigned int i=0; i<nprofiles; i++ ) {
@@ -388,7 +392,7 @@ unsigned int LaserPropagator::operator() (vector<PyObject*> profiles, vector<int
                     i0 = j + N[0]*k;
                     i1 = k + n_omega_local*j;
                     magnitude[i][i1] = abs(z[i0]) * coeff_magnitude;
-                    phase    [i][i1] = arg(z[i0]) - (*omega)[k] * offset;
+                    phase    [i][i1] = arg(z[i0] * exp(-i_ * omega[k] * offset));
                 }
             }
         } else {
@@ -399,7 +403,7 @@ unsigned int LaserPropagator::operator() (vector<PyObject*> profiles, vector<int
                         i0 = j + Nlocal[0]*(k + N[1]*l);
                         i1 = l + n_omega_local*(k + N[1]*j);
                         magnitude[i][i1] = abs(z[i0]) * coeff_magnitude;
-                        phase    [i][i1] = arg(z[i0]) - (*omega)[l] * offset;
+                        phase    [i][i1] = arg(z[i0] * exp(-i_ * omega[l] * offset));
                     }
                 }
             }
@@ -449,7 +453,7 @@ unsigned int LaserPropagator::operator() (vector<PyObject*> profiles, vector<int
     }
     hid_t transfer = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(transfer, H5FD_MPIO_COLLECTIVE);
-    H5Dwrite( did, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &((*omega)[0] ));
+    H5Dwrite( did, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &omega[0] );
     H5Sclose(filespace);
     H5Sclose(memspace);
     H5Dclose(did);
@@ -487,8 +491,6 @@ unsigned int LaserPropagator::operator() (vector<PyObject*> profiles, vector<int
     Py_DECREF(emptyComplex    );
     Py_DECREF(reshapeTranspose);
     Py_DECREF(transposeReshape);
-    
-    return n_omega;
     
 #else
     return 0;
