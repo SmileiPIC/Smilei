@@ -20,7 +20,7 @@ public:
     void init(Params* params, SmileiMPI* smpi, unsigned int side);
     
     // Propagates the fields profiles with some offset, and writes result to file
-    void operator() (std::vector<PyObject*> profiles, std::vector<int> profiles_n, double offset, std::string file);
+    void operator() (std::vector<PyObject*>, std::vector<int>, double, std::string, int);
     
 protected:
     

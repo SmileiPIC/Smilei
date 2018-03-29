@@ -14,15 +14,15 @@ using namespace std;
 
 // equivalent of the numpy function fftfreq
 // start or stop define a range where the array is actually returned
-vector<double> fftfreq(unsigned int n, double d, unsigned int start, unsigned int stop)
+void fftfreq(vector<double>& freqs, unsigned int n, double d, unsigned int start, unsigned int stop)
 {
-    vector<double> ret(stop-start);
+    freqs.resize(stop-start);
     unsigned int N = (n-1) / 2 + 1;
     double nm = -((double)n);
     double val = 2.*M_PI/(n*d);
-    for( unsigned int i=start; i<N; i++ ) ret[i-start] = val*i;
-    for( unsigned int i=N;  i<stop; i++ ) ret[i-start] = val*(nm+i);
-    return ret;
+    unsigned int imax = min(N,stop);
+    for( unsigned int i=start       ; i<imax; i++ ) freqs[i-start] = val*i;
+    for( unsigned int i=max(N,start); i<stop; i++ ) freqs[i-start] = val*(nm+i);
 }
 
 // equivalent of the numpy function linspace
@@ -98,10 +98,10 @@ void LaserPropagator::init(Params* params, SmileiMPI* smpi, unsigned int side)
     
     // Arrays of wavenumbers (ky, kz, w) owning to the current processor
     local_k.resize(ndim);
-    local_k[0] = fftfreq(N[0], L[0]/N[0], 0, N[0]);
-    local_k[1] = fftfreq(N[1], L[1]/N[1], MPI_rank*Nlocal[1], (MPI_rank+1)*Nlocal[1]);
+    fftfreq(local_k[0], N[0], L[0]/N[0], 0, N[0]);
+    fftfreq(local_k[1], N[1], L[1]/N[1], MPI_rank*Nlocal[1], (MPI_rank+1)*Nlocal[1]);
     if( ! _2D )
-        local_k[2] = fftfreq(N[2], L[2]/N[2], 0, N[2]);
+        fftfreq(local_k[2], N[2], L[2]/N[2], 0, N[2]);
     
 #else
     ERROR("Cannot use LaserOffset without numpy");
@@ -109,14 +109,18 @@ void LaserPropagator::init(Params* params, SmileiMPI* smpi, unsigned int side)
 
 }
 
-void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profiles_n, double offset, string file)
+void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profiles_n, double offset, string file, int keep_n_best_frequencies)
 {
 #ifdef SMILEI_USE_NUMPY
     const complex<double> i_ (0., 1.); // the imaginary number
     
     unsigned int nprofiles = profiles.size();
     
-    MESSAGE("0");
+    ostringstream ro_("");
+    for(unsigned int i=0;i<MPI_rank;i++) ro_<<"             ";
+    
+    MPI_Barrier(MPI_COMM_WORLD);
+    cout << ro_.str() << "0" << endl;;
     MESSAGE(1,"nprofiles = "<<nprofiles);
     MESSAGE(1,"N = "<<N[0]<<" "<<N[1]);
     MESSAGE(1,"Nlocal = "<<Nlocal[0]<<" "<<Nlocal[1]);
@@ -147,7 +151,8 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
     Py_DECREF(complex128_dtype);
     Py_DECREF(complex128);
     
-    MESSAGE(1);
+    MPI_Barrier(MPI_COMM_WORLD);
+    cout << ro_.str() << 1 << endl;;
     // 1- Calculate the value of the profiles at all points (y,z,t)
     // --------------------------------
     
@@ -168,13 +173,14 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
     Py_DECREF(tuple_profiles);
     // Recover the several arrays
     vector<PyObject*> arrays( nprofiles );
-    for( unsigned int i=0; i<nprofiles; i++ ) {
+    for( unsigned int i=0; i<nprofiles; i++ )
         arrays[i] = PySequence_GetItem(ret, i);
+    for( unsigned int i=0; i<ndim; i++ )
         Py_DECREF(coords[i]);
-    }
     Py_DECREF(ret);
     
-    MESSAGE(2);
+    MPI_Barrier(MPI_COMM_WORLD);
+    cout << ro_.str() << 2 << endl;;
     // 2- Fourier transform of the fields at destination
     // --------------------------------
     
@@ -209,7 +215,8 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
         Py_DECREF(a);
     }
     
-    MESSAGE("3      is complex? " << PyArray_ISCOMPLEX((PyArrayObject*)arrays[0]));
+    MPI_Barrier(MPI_COMM_WORLD);
+    cout << ro_.str() << 3 << endl;;
     // 3- Select only interesting omegas
     // --------------------------------
     
@@ -247,11 +254,11 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
         MPI_Reduce( &local_spectrum[0], &spectrum[0], lmax, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     }
     
-    // Rank 0 finds the 100 most intense points of the spectrum
+    // Rank 0 finds the most intense points of the spectrum
     unsigned int n_omega, n_omega_local;
     vector<unsigned int> indices;
     if( MPI_rank == 0 ) {
-        indices = partial_reverse_argsort(spectrum, 100);
+        indices = partial_reverse_argsort(spectrum, keep_n_best_frequencies);
         sort(indices.begin(), indices.end());
         n_omega = indices.size();
     }
@@ -267,12 +274,13 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
     if( _2D ) {
         // Find the range [imin, imax[ of indices in this proc
         unsigned int imin=0;
-        unsigned int proc_min=min(n_omega,  MPI_rank   *Nlocal[1]);
-        unsigned int proc_max=min(n_omega, (MPI_rank+1)*Nlocal[1]);
-        while( indices[imin] < proc_min ) imin++;
+        unsigned int proc_min= MPI_rank   *Nlocal[1];
+        unsigned int proc_max=(MPI_rank+1)*Nlocal[1];
+        while( imin < n_omega && indices[imin] < proc_min ) imin++;
         unsigned int imax = imin;
-        while( indices[imax] < proc_max ) imax++;
+        while( imax < n_omega && indices[imax] < proc_max ) imax++;
         n_omega_local = imax-imin;
+        cout<<ro_.str()<<imin<<" ! " <<imax<<endl;
         // Restrict to that range
         unsigned int i0=0;
         for( unsigned int i1=imin; i1<imax; i1++ ) {
@@ -294,16 +302,24 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
     for( unsigned int i=0;i<n_omega_local;i++ ) 
         t<<indices[i]<<" ";
     t<<" )"<<endl;
-    cout<< t.str();
+    MPI_Barrier(MPI_COMM_WORLD);
+    for( unsigned int i=0; i<MPI_size; i++) {
+        if( i==MPI_rank ) cout<< t.str();
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
     
     t.str("");
     t<<"\trank "<<MPI_rank<<" omega ( ";
     for( unsigned int i=0;i<n_omega_local;i++ ) 
         t<<omega[i]<<" ";
     t<<" )"<<endl;
-    cout<< t.str();
+    for( unsigned int i=0; i<MPI_size; i++) {
+        if( i==MPI_rank ) cout<< t.str();
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
     
-    MESSAGE("4");
+    MPI_Barrier(MPI_COMM_WORLD);
+    cout << ro_.str() << "4" << endl;;
     MESSAGE(1,"n_omega = "<<n_omega);
     MESSAGE(1,"n_omega_local = "<<n_omega_local);
     // 4- Multiply by the propagation term, while extracting only selected omegas
@@ -336,7 +352,8 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
         }
     }
     
-    MESSAGE(5);
+    MPI_Barrier(MPI_COMM_WORLD);
+    cout << ro_.str() << 5 << endl;;
     MESSAGE(1," is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)arrays[0]));
     // 5- Fourier transform back to real space, excluding the omega axis
     // --------------------------------
@@ -373,7 +390,8 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
         }
     }
     
-    MESSAGE(6);
+    MPI_Barrier(MPI_COMM_WORLD);
+    cout << ro_.str() << 6 << endl;;
     // 6- Obtain the magnitude and the phase of the complex values
     // --------------------------------
     unsigned int local_size = (_2D ? N[0] : Nlocal[0]*N[1]) * n_omega_local;
@@ -411,7 +429,8 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
         Py_DECREF( arrays[i] );
     }
     
-    MESSAGE(7);
+    MPI_Barrier(MPI_COMM_WORLD);
+    cout << ro_.str() << 7 << endl;;
     // 7- Store all info in HDF5 file
     // --------------------------------
     
@@ -432,14 +451,16 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
         dims[2] = n_omega; start[2] = 0                 ; count[2] = n_omega  ;
     }
     
-    MESSAGE(8);
+    MPI_Barrier(MPI_COMM_WORLD);
+    cout << ro_.str() << 8 << endl;;
     // Create File with parallel access
     hid_t faid = H5Pcreate(H5P_FILE_ACCESS);
     H5Pset_fapl_mpio(faid, MPI_COMM_WORLD, MPI_INFO_NULL);
     hid_t fid  = H5Fcreate( file.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, faid);
     H5Pclose(faid);
     
-    MESSAGE(9);
+    MPI_Barrier(MPI_COMM_WORLD);
+    cout << ro_.str() << 9 << endl;;
     // Store "omega" dataset
     hsize_t len = n_omega, len_local = n_omega_local;
     hid_t filespace = H5Screate_simple(1, &len, NULL);
@@ -458,7 +479,8 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
     H5Sclose(memspace);
     H5Dclose(did);
     
-    MESSAGE(10);
+    MPI_Barrier(MPI_COMM_WORLD);
+    cout << ro_.str() << 10 << endl;;
     // Store the magnitude and the phase
     filespace = H5Screate_simple(ndim, dims, NULL);
     H5Sselect_hyperslab(filespace, H5S_SELECT_SET, start, NULL, count, NULL);

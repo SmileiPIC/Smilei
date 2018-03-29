@@ -634,14 +634,17 @@ namelist("")
                 ERROR("For LaserOffset #" << n_laser_offset << ": box_side must be a 'xmin' or 'xmax'");
             //unsigned int side = string("xyz").find(box_side[0]);
             
+            // Extract _keep_n_best_frequencies
+            int keep_n_best_frequencies=0;
+            if( !PyTools::extract("_keep_n_best_frequencies", keep_n_best_frequencies, "Laser", i_laser) || keep_n_best_frequencies<1)
+                ERROR("For LaserOffset #" << n_laser_offset << ": keep_n_best_frequencies must be a positive integer");
+            
             // Make the propagation happen and write out the file
             if( ! smpi->test_mode )
-                propagateX(profiles, profiles_n, offset, file);
+                propagateX(profiles, profiles_n, offset, file, keep_n_best_frequencies);
             
             n_laser_offset ++;
         }
-        
-        
     }
 }
 
