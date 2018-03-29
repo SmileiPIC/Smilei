@@ -61,7 +61,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     double delta, delta2;
     // arrays used for the Esirkepov projection method
     double  Sx0[5], Sx1[5], Sy0[5], Sy1[5], DSx[5], DSy[5], tmpJl[5];
-    complex<double>  Wx[5][5], Wy[5][5], Wz[5][5], Jx_p[5][5], Jy_p[5][5], Jz_p[5][5];
+    double  Wx[5][5], Wy[5][5], Wz[5][5], Jx_p[5][5], Jy_p[5][5], Jz_p[5][5];
     for (unsigned int i=0; i<5; i++) {
         Sx1[i] = 0.;
         Sy1[i] = 0.;
@@ -281,7 +281,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     Sy1[jp_m_jpo+3] = 0.5 * (delta2+delta+0.25);
     
     //defining crt_p 
-    complex<double> crt_p = charge_weight*Icpx*dr_ov_dt*(double)jp/(imode*2.*M_PI)*pow((e_theta*e_theta_old),(imode/2.)); 
+    complex<double> crt_p = charge_weight*Icpx*dr_ov_dt*(double)jp/(imode*2.*M_PI*pow((e_theta*e_theta_old),(imode/2.))); 
 
     for (unsigned int i=0; i < 5; i++) {
         DSx[i] = Sx1[i] - Sx0[i];
@@ -391,7 +391,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     double delta, delta2;
     // arrays used for the Esirkepov projection method
     double  Sx0[5], Sx1[5], Sy0[5], Sy1[5], DSx[5], DSy[5], tmpJl[5];
-    complex<double>  Wx[5][5], Wy[5][5], Wz[5][5], Jx_p[5][5], Jy_p[5][5], Jz_p[5][5];
+    double  Wx[5][5], Wy[5][5], Wz[5][5], Jx_p[5][5], Jy_p[5][5], Jz_p[5][5];
     for (unsigned int i=0; i<5; i++) {
         Sx1[i] = 0.;
         Sy1[i] = 0.;
@@ -888,7 +888,7 @@ void ProjectorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles,
         // Loop on modes ?
         for ( unsigned int imode = 0; imode<Nmode;imode++){
             if (imode==0){
-                complex<double>* b_Jl =  &(*emRZ->Jl_[imode] )(ibin*clrw* dim1   * dim2   );
+                complex< double>* b_Jl =  &(*emRZ->Jl_[imode] )(ibin*clrw* dim1   * dim2   );
                 complex<double>* b_Jr =  &(*emRZ->Jr_[imode] )(ibin*clrw*(dim1+1)* dim2   );
                 complex<double>* b_Jt =  &(*emRZ->Jt_[imode] )(ibin*clrw* dim1   *(dim2+1));
                 for ( int ipart=istart ; ipart<iend; ipart++ )
