@@ -155,7 +155,7 @@ void ElectroMagn::finishInitialization(int nspecies, Patch* patch)
     allFields.push_back(Jy_ );
     allFields.push_back(Jz_ );
     allFields.push_back(rho_);
-    if ( Env_Ar_ ) {
+    if ( Env_Ar_ != NULL ) {
         allFields.push_back(Env_Ar_);
         allFields.push_back(Env_Ai_);
         allFields.push_back(Env_A_abs_);
@@ -167,7 +167,7 @@ void ElectroMagn::finishInitialization(int nspecies, Patch* patch)
         allFields.push_back(Jy_s[ispec] );
         allFields.push_back(Jz_s[ispec] );
         allFields.push_back(rho_s[ispec]);
-        if ( Env_Ar_ ) {allFields.push_back(Env_Chi_s[ispec]);}
+        if ( Env_Ar_ != NULL ) {allFields.push_back(Env_Chi_s[ispec]);}
     }
     
 }
@@ -192,8 +192,11 @@ ElectroMagn::~ElectroMagn()
    if(Jz_ != NULL) delete Jz_;
    if(rho_ != NULL) delete rho_;
  
-   if(Env_Chi_ != NULL) delete Env_Chi_;
-    
+   if(Env_A_abs_ != NULL) delete Env_A_abs_;
+   if(Env_Ar_    != NULL) delete Env_Ar_;
+   if(Env_Ai_    != NULL) delete Env_Ai_; 
+   if(Env_Chi_   != NULL) delete Env_Chi_;
+
     for( unsigned int idiag=0; idiag<allFields_avg.size(); idiag++ )
         for( unsigned int ifield=0; ifield<allFields_avg[idiag].size(); ifield++ )
             delete allFields_avg[idiag][ifield];

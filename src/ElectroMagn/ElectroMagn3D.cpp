@@ -163,10 +163,12 @@ void ElectroMagn3D::initElectroMagn3DQuantities(Params &params, Patch* patch)
     Bx_m = new Field3D(dimPrim, 0, true,  "Bx_m");
     By_m = new Field3D(dimPrim, 1, true,  "By_m");
     Bz_m = new Field3D(dimPrim, 2, true,  "Bz_m");
-    Env_Ar_=new Field3D(dimPrim, 0, false, "Env_Ar");
-    Env_Ai_=new Field3D(dimPrim, 0, false, "Env_Ai");
-    Env_A_abs_=new Field3D(dimPrim, 0, false, "Env_A_abs");
-    Env_Chi_=new Field3D(dimPrim, 0, false, "Env_Chi");
+    if (params.Laser_Envelope_model){
+        Env_Ar_=new Field3D(dimPrim, "Env_Ar");
+        Env_Ai_=new Field3D(dimPrim, "Env_Ai");
+        Env_A_abs_=new Field3D(dimPrim, "Env_A_abs");
+        Env_Chi_=new Field3D(dimPrim, "Env_Chi");
+                                    }
     
     // Total charge currents and densities
     Jx_   = new Field3D(dimPrim, 0, false, "Jx");
