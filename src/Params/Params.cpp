@@ -305,11 +305,11 @@ namelist("")
         for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
             std::vector<double> temp_k; 
             
-            for(  int iiDim=0; iiDim<iDim; iiDim++ ) temp_k.push_back(0.);
+            for( unsigned int iiDim=0; iiDim<iDim; iiDim++ ) temp_k.push_back(0.);
             temp_k.push_back(1.);
-            for(  int iiDim=iDim+1; iiDim<nDim_field; iiDim++ ) temp_k.push_back(0.);
+            for( unsigned int iiDim=iDim+1; iiDim<nDim_field; iiDim++ ) temp_k.push_back(0.);
             EM_BCs_k.push_back(temp_k);
-            for(  int iiDim=0; iiDim<nDim_field; iiDim++ ) temp_k[iiDim] *= -1. ;
+            for( unsigned int iiDim=0; iiDim<nDim_field; iiDim++ ) temp_k[iiDim] *= -1. ;
             EM_BCs_k.push_back(temp_k);
         }
     }
@@ -447,6 +447,8 @@ namelist("")
             if( (number_of_patches[iDim] & (number_of_patches[iDim]-1)) != 0)
                 ERROR("Number of patches in each direction must be a power of 2");
     }
+    else
+        PyTools::extract("patch_orientation", patch_orientation, "Main");
 
 
     if( PyTools::nComponents("LoadBalancing")>0 ) {
@@ -706,13 +708,14 @@ void Params::print_init()
         MESSAGE(1,"dimension " << i << " - (Spatial resolution, Grid length) : (" << res_space[i] << ", " << grid_length[i] << ")");
         MESSAGE(1,"            - (Number of cells,    Cell length)  : " << "(" << n_space_global[i] << ", " << cell_length[i] << ")");
         MESSAGE(1,"            - Electromagnetic boundary conditions: " << "(" << EM_BCs[i][0] << ", " << EM_BCs[i][1] << ")");
-        if (open_boundaries)
+        if (open_boundaries){
             cout << setprecision(2);
             cout << "                     - Electromagnetic boundary conditions k    : " << "( [" << EM_BCs_k[2*i][0] ;
             for ( unsigned int ii=1 ; ii<grid_length.size() ; ii++) cout << ", " << EM_BCs_k[2*i][ii] ;
             cout << "] , [" << EM_BCs_k[2*i+1][0] ;
             for ( unsigned int ii=1 ; ii<grid_length.size() ; ii++) cout << ", " << EM_BCs_k[2*i+1][ii] ;
             cout << "] )" << endl;
+        }
     }
 
     if( currentFilter_passes > 0 )
