@@ -11,6 +11,7 @@
 #include "Tools.h"
 #include "SmileiMPI.h"
 #include "H5.h"
+#include "LaserPropagator.h"
 
 #include "pyinit.pyh"
 #include "pyprofiles.pyh"
@@ -571,10 +572,78 @@ namelist("")
     // -------------------------------------------------------
     compute();
 
+    // -------------------------------------------------------
     // Print
+    // -------------------------------------------------------
     smpi->barrier();
     if ( smpi->isMaster() ) print_init();
     smpi->barrier();
+    
+    // -------------------------------------------------------
+    // Handle the pre-processing of LaserOffset
+    // -------------------------------------------------------
+    unsigned int n_laser = PyTools::nComponents("Laser");
+    unsigned int n_laser_offset = 0;
+    LaserPropagator propagateX;
+    n_omega.resize(n_laser, 0);
+    
+    for( unsigned int i_laser=0; i_laser<n_laser; i_laser++ ) {
+        double offset = 0.;
+        
+        // If this laser has the hidden _offset attribute
+        if( PyTools::extract("_offset", offset, "Laser", i_laser) ) {
+            
+            if( n_laser_offset == 0 ) {
+                TITLE("Pre-processing LaserOffset");
+                propagateX.init(this, smpi, 0);
+            }
+            
+            // Extract the file name
+            string file("");
+            PyTools::extract("file", file, "Laser", i_laser);
+            
+            // Extract the list of profiles and verify their content
+            PyObject * p = PyTools::extract_py("_profiles", "Laser", i_laser);
+            vector<PyObject*> profiles;
+            vector<int> profiles_n = {1, 2};
+            if( ! PyTools::convert(p, profiles) )
+                ERROR("For LaserOffset #" << n_laser_offset << ": space_time_profile must be a list of 2 profiles");
+            Py_DECREF(p);
+            if( profiles.size()!=2 )
+                ERROR("For LaserOffset #" << n_laser_offset << ": space_time_profile needs 2 profiles.");
+            if( profiles[1] == Py_None ) {
+                profiles  .pop_back();
+                profiles_n.pop_back();
+            }
+            if( profiles[0] == Py_None ) {
+                profiles  .erase(profiles  .begin());
+                profiles_n.erase(profiles_n.begin());
+            }
+            if( profiles.size() == 0 )
+                ERROR("For LaserOffset #" << n_laser_offset << ": space_time_profile cannot be [None, None]");
+            for( int i=0; i<2; i++) {
+                int nargs = PyTools::function_nargs(profiles[i]);
+                if( nargs<0 )
+                    ERROR("For LaserOffset #" << n_laser_offset << ": space_time_profile["<<i<<"] not callable");
+                if( nargs != (int) nDim_field )
+                    ERROR("For LaserOffset #" << n_laser_offset << ": space_time_profile["<<i<<"] requires " << nDim_field << " arguments but has " << nargs);
+            }
+            
+            // Extract the box side 
+            string box_side;
+            if( !PyTools::extract("box_side", box_side, "Laser", i_laser) || (box_side!="xmin" && box_side!="xmax"))
+                ERROR("For LaserOffset #" << n_laser_offset << ": box_side must be a 'xmin' or 'xmax'");
+            //unsigned int side = string("xyz").find(box_side[0]);
+            
+            // Make the propagation happen and write out the file
+            if( ! smpi->test_mode )
+                n_omega[i_laser] = propagateX(profiles, profiles_n, offset, file);
+            
+            n_laser_offset ++;
+        }
+        
+        
+    }
 }
 
 Params::~Params() {

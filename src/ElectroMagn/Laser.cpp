@@ -96,15 +96,15 @@ Laser::Laser(Params &params, int ilaser, Patch* patch)
             // time envelope
             name.str("");
             name << "Laser[" << ilaser <<"].time_envelope";
-            ptime = new Profile(time_profile, 1, name.str());
+            ptime  = new Profile(time_profile, 1, name.str());
             ptime2 = new Profile(time_profile, 1, name.str());
             info << "\t\t\ttime envelope: " << ptime->getInfo();
         } else {
             ERROR(errorPrefix << ": `time_envelope` missing or not understood");
         }
         
-        profiles.push_back( new LaserProfileFile(file, ptime , true ) );
-        profiles.push_back( new LaserProfileFile(file, ptime2, false) );
+        profiles.push_back( new LaserProfileFile(file, ptime , params.n_omega[ilaser], true ) );
+        profiles.push_back( new LaserProfileFile(file, ptime2, params.n_omega[ilaser], false) );
         
     } else {
         
@@ -378,23 +378,7 @@ void LaserProfileFile::createFields(Params& params, Patch* patch)
         dim[1] = primal ? nz_d : nz_p;
     }
     
-    // Obtain the size of the omega dataset in the file
-    if( H5Fis_hdf5( file.c_str() ) <= 0 )
-        ERROR("File " << file << " not found");
-    hid_t fid = H5Fopen(file.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
-    hid_t pid = H5Pcreate( H5P_DATASET_ACCESS );
-    hid_t did = H5Dopen( fid, "omega", pid);
-    if( did<0 ) {
-        ERROR("File " << file << " does not contain the `omega` dataset");
-    } else {
-        hid_t filespace = H5Dget_space( did );
-        hssize_t npoints = H5Sget_simple_extent_npoints( filespace );
-        dim[2] = npoints;
-        H5Sclose(filespace);
-        H5Dclose(did);
-    }
-    H5Pclose(pid);
-    H5Fclose(fid);
+    dim[2] = n_omega;
     
     magnitude = new Field3D(dim);
     phase     = new Field3D(dim);
@@ -410,7 +394,7 @@ void LaserProfileFile::initFields(Params& params, Patch* patch)
     hsize_t ny_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
     hsize_t ny_d = ny_p+1;
     dim[0] = primal ? ny_p : ny_d;
-    offset[0] = patch->getCellStartingGlobalIndex(1) + 4;
+    offset[0] = patch->getCellStartingGlobalIndex(1) + params.oversize[1];
     offset[1] = 0;
     offset[2] = 0;
     
@@ -418,35 +402,39 @@ void LaserProfileFile::initFields(Params& params, Patch* patch)
         hsize_t nz_p = params.n_space[2]*params.global_factor[2]+1+2*params.oversize[2];
         hsize_t nz_d = nz_p+1;
         dim[1] = primal ? nz_d : nz_p;
-        offset[1] = patch->getCellStartingGlobalIndex(2) + 4;
+        offset[1] = patch->getCellStartingGlobalIndex(2) + params.oversize[2];
     }
     
     // Open file
-    if( H5Fis_hdf5( file.c_str() ) <= 0 )
+    ifstream f(file.c_str());
+    if( !f.good() )
         ERROR("File " << file << " not found");
+    if( H5Fis_hdf5( file.c_str() ) <= 0 )
+        ERROR("File " << file << " is not HDF5");
     hid_t fid = H5Fopen(file.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
     
     // Obtain the omega dataset containing the different values of omega
     hid_t pid = H5Pcreate( H5P_DATASET_ACCESS );
-    hid_t did = H5Dopen( fid, "omega", pid );
     hssize_t npoints;
-    if( did<0 ) {
-        ERROR("File " << file << " does not contain the `omega` dataset");
-    } else {
+    if( H5Lexists( fid, "omega", H5P_DEFAULT ) >0 ) {
+        hid_t did = H5Dopen( fid, "omega", pid );
         hid_t filespace = H5Dget_space( did );
         npoints = H5Sget_simple_extent_npoints( filespace );
         omega.resize( npoints );
         H5Dread( did, H5T_NATIVE_DOUBLE, filespace, filespace, H5P_DEFAULT, &omega[0] );
         H5Sclose(filespace);
         H5Dclose(did);
+    } else {
+        ERROR("File " << file << " does not contain the `omega` dataset");
     }
     
     dim[ndim-1] = npoints;
     hid_t memspace = H5Screate_simple( ndim, &dim[0], NULL );
     
     // Obtain the datasets for the magnitude and phase of the field
-    did = H5Dopen( fid, (primal?"magnitude1":"magnitude2"), pid );
-    if( did >=0 ) {
+    string magnitude_name = primal?"magnitude1":"magnitude2";
+    if( H5Lexists( fid, magnitude_name.c_str(), H5P_DEFAULT ) >0 ) {
+        hid_t did = H5Dopen( fid, magnitude_name.c_str(), pid );
         hid_t filespace = H5Dget_space( did );
         H5Sselect_hyperslab(filespace, H5S_SELECT_SET, &offset[0], NULL, &dim[0], NULL );
         H5Dread( did, H5T_NATIVE_DOUBLE, memspace, filespace, H5P_DEFAULT, &magnitude->data_[0] );
@@ -455,8 +443,9 @@ void LaserProfileFile::initFields(Params& params, Patch* patch)
     } else {
         magnitude->put_to(0.);
     }
-    did = H5Dopen( fid, (primal?"phase1":"phase2"), pid );
-    if( did >=0 ) {
+    string phase_name = primal?"magnitude1":"magnitude2";
+    if( H5Lexists( fid, phase_name.c_str(), H5P_DEFAULT ) >0 ) {
+        hid_t did = H5Dopen( fid, phase_name.c_str(), pid );
         hid_t filespace = H5Dget_space( did );
         H5Sselect_hyperslab(filespace, H5S_SELECT_SET, &offset[0], NULL, &dim[0], NULL );
         H5Dread( did, H5T_NATIVE_DOUBLE, memspace, filespace, H5P_DEFAULT, &phase->data_[0] );

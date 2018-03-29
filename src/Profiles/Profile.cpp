@@ -165,26 +165,13 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name, boo
 #endif
         
         // Verify that the profile has the right number of arguments
-        PyObject* inspect=PyImport_ImportModule("inspect");
-        PyTools::checkPyError();
-        PyObject *tuple = PyObject_CallMethod(inspect,const_cast<char *>("getargspec"),const_cast<char *>("(O)"),py_profile);
-        PyObject *arglist = PyTuple_GetItem(tuple,0);
-        int size = PyObject_Size(arglist);
-        if (size != (int)nvariables) {
-            string args("");
-            for (int i=0; i<size; i++){
-                PyObject *arg=PyList_GetItem(arglist,i);
-                PyObject* repr = PyObject_Repr(arg);
-                PyTools::convert(repr, message);
-                args += message+" ";
-                Py_XDECREF(repr);
-            }
-            WARNING ("Profile `" << name << "` takes "<< size <<" variables (" << args << ") but it is created with " << nvariables);
-        }
-        Py_XDECREF(tuple);
-        Py_XDECREF(inspect);
+        int nargs = PyTools::function_nargs(py_profile);
+        if( nargs < 0 )
+            ERROR("Profile `" << name << "` does not seem to be callable");
+        if( nargs != (int) nvariables )
+            WARNING("Profile `" << name << "` takes "<< nargs <<" arguments but requires " << nvariables);
         if( nvariables<1 || nvariables>3 )
-            ERROR("Profile `"<<name<<"`: defined with unsupported number of variables");
+            ERROR("Profile `"<<name<<"`: defined with unsupported number of variables (" << nvariables << ")");
         
         
         // Verify that the profile transforms a float in a float

@@ -257,6 +257,9 @@ public:
     //! Boolean for printing the expected disk usage or not
     bool print_expected_disk_usage;
     
+    //! Number of omega points in the LaserOffset propagation system
+    std::vector<unsigned int> n_omega;
+    
     // ---------------------------------------------
     // Constants
     // ---------------------------------------------

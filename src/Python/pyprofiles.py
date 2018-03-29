@@ -581,286 +581,50 @@ def LaserGaussian3D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
         phase          = [ lambda y,z:phase(y,z)-phaseZero+dephasing, lambda y,z:phase(y,z)-phaseZero ],
     )
 
-# Define the tools for the MPI fft and the propagation of a laser profile
-_missing_packages = []
-try   : import numpy as np
-except: _missing_packages += ["numpy"]
-try   : from mpi4py import MPI
-except: _missing_packages += ["mpi4py"]
-try   :
-    import h5py
-    if not h5py.h5.get_config().mpi:
-        _missing_packages += ["h5py built with MPI"]
-except:
-    _missing_packages += ["h5py"]
-
-if _missing_packages == []:
+# Define the tools for the propagation of a laser profile
+try:
+    import numpy as np
+    
+    def _applyProfiles( coordinates, profiles ):
+        mesh = np.meshgrid(*coordinates, indexing="ij")
+        return [np.vectorize(p)(*mesh) for p in profiles]
+    
+    def _emptyComplex( shape ):
+        return np.ascontiguousarray(np.empty(shape, dtype=np.complex))
+    
+    def _reshapeTranspose( array, shape, transpose ):
+        return np.ascontiguousarray(array.reshape(shape).transpose(transpose))
+    
+    def _transposeReshape( array, shape, transpose ):
+        return array.transpose(transpose).reshape(shape)
+    
     _N_LaserOffset = 0
-    
-    try   : from inspect import getfullargspec as getargspec
-    except: from inspect import getargspec
-    
-    # Gets the number of arguments of a function
-    def _nargs(f):
-        return len(getargspec(f)[0])
-    
-    # Gets the smallest multiple of M greater or equal to N
-    def _optimalFFTsize(M, N):
-        return int(np.ceil(N/float(M))*M)
-    
-    class MPI_FFT(object):
-        """
-        2D & 3D FFT using MPI domain decomposition
-        The first two axes of the global domain must be divisible by the MPI size
-        """
-        
-        def __init__(self, N, L, comm):
-            from numpy.fft import fftfreq
-            self.comm = comm
-            self.MPI_rank = comm.Get_rank()
-            self.MPI_size = comm.Get_size()
-            self.N = np.array(N, dtype=np.int   ) # Arrays shape
-            self.L = np.array(L, dtype=np.double) # Physical dimensions of the arrays
-            assert self.N.ndim == 1
-            assert self.L.ndim == 1
-            assert self.N.size == self.L.size
-            assert self.N.size in [2,3]
-            assert self.N[0] % self.MPI_size == 0
-            self.Nlocal = self.N // self.MPI_size # Size in the current proc
-            
-            # Array shape in the 'real space', for the current processor
-            self.X_shape = (self.Nlocal[0], self.N[1])
-            # Array shape in the 'frequency space', for the current processor
-            self.K_shape = (self.N[0], self.Nlocal[1])
-            # Slice of the global array in 'real space', for the current processor
-            self.X_slice = (
-                slice(self.MPI_rank*self.Nlocal[0], (self.MPI_rank+1)*self.Nlocal[0], 1),
-                slice(0, self.N[1], 1),
-            )
-            # Slice of the global array in 'frequency space', for the current processor
-            self.K_slice = (
-                slice(0, self.N[0], 1),
-                slice(self.MPI_rank*self.Nlocal[1], (self.MPI_rank+1)*self.Nlocal[1], 1),
-            )
-            # Arrays of wavenumbers (kx, ky, ky) owning to the current processor
-            self.local_k = (
-                fftfreq(self.N[0], self.L[0]/self.N[0]) *2.*np.pi ,
-                fftfreq(self.N[1], self.L[1]/self.N[1])[self.K_slice[1]] *2.*np.pi,
-            )
-            
-            if self.N.size == 3:
-                assert self.N[1] % self.MPI_size == 0
-                self.X_shape += (self.N[2],)
-                self.K_shape += (self.N[2],)
-                self.X_slice += (slice(0, self.N[2], 1),)
-                self.K_slice += (slice(0, self.N[2], 1),)
-                self.local_k += (fftfreq(self.N[2], self.L[2]/self.N[2]) *2.*np.pi,)
-                self.fft  = self._fft3
-                self.ifft = self._ifft3
-        
-        def fft(self, A):
-            from numpy.fft import fft
-            # Last direction
-            Hslab = fft(A, axis=1)
-            # Transpose MPI decomposition
-            blocks = np.ascontiguousarray(Hslab.reshape((self.Nlocal[0], self.MPI_size, self.Nlocal[1])).transpose((1,0,2)))
-            Vslab = np.ascontiguousarray(np.empty((self.N[0], self.Nlocal[1]), dtype=np.complex))
-            self.comm.Alltoall([blocks, MPI.C_DOUBLE_COMPLEX], [Vslab, MPI.C_DOUBLE_COMPLEX])
-            # First direction
-            return fft(Vslab, axis=0)
-        
-        def ifft(self, A, last_axis=True):
-            from numpy.fft import ifft
-            # First direction
-            Vslab = np.ascontiguousarray(ifft(A, axis=0))
-            if last_axis:
-                # Transpose MPI decomposition
-                blocks = np.ascontiguousarray(np.empty( (self.MPI_size, self.Nlocal[0], self.Nlocal[1]), dtype=np.complex))
-                self.comm.Alltoall([Vslab, MPI.C_DOUBLE_COMPLEX], [blocks, MPI.C_DOUBLE_COMPLEX])
-                Hslab = blocks.transpose((1,0,2)).reshape((self.Nlocal[0], self.N[1]))
-                # Other direction
-                return ifft(Hslab, axis=1)
-            else:
-                return Vslab
-        
-        def _fft3(self, A):
-            from numpy.fft import fft, fft2
-            # Last two directions
-            Hslab = fft2(A, axes=(1,2))
-            # Transpose MPI decomposition
-            blocks = np.ascontiguousarray(Hslab.reshape((self.Nlocal[0], self.MPI_size, self.Nlocal[1], self.N[2])).transpose((1,0,2,3)))
-            Vslab = np.ascontiguousarray(np.empty((self.N[0], self.Nlocal[1], self.N[2]), dtype=np.complex))
-            self.comm.Alltoall([blocks, MPI.C_DOUBLE_COMPLEX], [Vslab, MPI.C_DOUBLE_COMPLEX])
-            # First direction
-            return fft(Vslab, axis=0)
-        
-        def _ifft3(self, A, last_axis=True):
-            from numpy.fft import ifft, ifft2
-            N2 = A.shape[2]
-            # First direction
-            Vslab = np.ascontiguousarray(ifft(A, axis=0))
-            # Transpose MPI decomposition
-            blocks = np.ascontiguousarray(np.empty( (self.MPI_size, self.Nlocal[0], self.Nlocal[1], N2), dtype=np.complex))
-            self.comm.Alltoall([Vslab, MPI.C_DOUBLE_COMPLEX], [blocks, MPI.C_DOUBLE_COMPLEX])
-            Hslab = blocks.transpose((1,0,2,3)).reshape((self.Nlocal[0], self.N[1], N2))
-            # Other directions
-            if last_axis:
-                return ifft2(Hslab, axes=(1,2))
-            else:
-                return ifft2(Hslab, axes=(1,))
     
     def LaserOffset(box_side="xmin", space_time_profile=[], offset=0., time_envelope=1.):
         global _N_LaserOffset
         
-        profiles = []
-        profiles_n = []
-        for i,p in enumerate(space_time_profile):
-            if p:
-                profiles.append( p )
-                profiles_n.append( str(i+1) )
-        if len(profiles) == 0:
-            raise Exception("LaserOffset requires at least one profile defined")
-        
-        # Obtain the size of the array from Main()
-        global Main
-        if len(Main)==0:
-            raise Exception("LaserOffset has been defined before `Main()`")
-        N = np.array(Main.number_of_cells) + 8 # includes oversize of 4 cells
-        L = np.array(Main.grid_length) + np.array(Main.cell_length)*8
-        Nt = int( Main.simulation_time / Main.timestep )
-        Lt = Main.simulation_time
-        side = {"x":0, "y":1, "z":2}[box_side[0]]
-        ndim = N.size
-        if ndim not in [2,3]:
-            raise Exception("LaserOffset cannot be defined in "+str(ndim)+"D")
-        _2D = ndim == 2
-        _3D = ndim == 3
-        if _2D:
-            N = np.array([N[1-side], Nt])
-            L = np.array([L[1-side], Lt])
-        else:
-            N = np.array([N[(side+1)%3], N[(side+2)%3], Nt])
-            L = np.array([L[(side+1)%3], L[(side+2)%3], Lt])
-        
-        # Define the file name
         file = 'LaserOffset'+str(_N_LaserOffset)+'.h5'
         
-        # Test the profiles
-        for p in profiles:
-            if _nargs(p) != ndim:
-                raise Exception("LaserOffset requires profiles with "+str(ndim)+" arguments ("+("y,t" if ndim==2 else "y,z,t")+"), found "+str(n))
-        # Convert profiles for numpy
-        profiles = [np.vectorize(p) for p in profiles]
-        
-        if not _test_mode:
-            
-            comm = MPI.COMM_WORLD
-            rank = comm.Get_rank()
-            size = comm.Get_size()
-            
-            # Make the array bigger in order to accomodate for the FFT
-            N = np.vectorize(_optimalFFTsize)(size, N)
-            
-            # Define the FFT procedure
-            FFT = MPI_FFT(N, L, comm)
-            
-            # Calculate grid coordinates
-            coordinates = [np.linspace(0., L[i], N[i])[FFT.X_slice[i]] for i in range(len(N))]
-            mesh = np.meshgrid(*coordinates, indexing="ij")
-            
-            # Calculate the profiles as arrays
-            B = [p(*mesh) for p in profiles]
-            
-            # Fourier transform of the fields at destination (keep only positive time frequencies)
-            B_FT = [FFT.fft(b) for b in B]
-            
-            # Get lists of ky, kz and omega
-            k_coordinates = list(FFT.local_k)
-            
-            # Select only interesting omegas
-            local_spectrum = sum([np.abs(b)**2 for b in B_FT])
-            while local_spectrum.ndim>1: local_spectrum = np.sum( local_spectrum, axis=0 )
-            if _2D:
-                # In 2D, the spectrum is scattered across processors, so we gather
-                spectrum = np.empty((size, len(local_spectrum)))
-                comm.Allgather( local_spectrum, spectrum )
-                spectrum = spectrum.reshape((-1,))
-            else:
-                # In 3D, each processor has the full spectrum, so we sum all contributions
-                spectrum = np.empty_like(local_spectrum)
-                comm.Allreduce( local_spectrum, spectrum )
-            indices = np.sort(np.argsort( spectrum[:Nt//2] )[-100:]) # select 100 most intense omegas
-            N_FT = N.copy()
-            N_FT[-1] = len(indices)
-            if _2D:
-                # Keep only indices in this proc
-                indices -= rank*FFT.Nlocal[1]
-                this_proc = (0<indices) * (indices<FFT.Nlocal[1])
-                try: MPI_omega_offset = np.flatnonzero(this_proc)[0]
-                except: MPI_omega_offset = 0
-                indices = indices[this_proc]
-            k_coordinates[-1] = k_coordinates[-1][indices] # select omegas
-            B_FT = [b[..., indices] for b in B_FT]
-            
-            # Calculate kx (direction of propagation)
-            k_mesh = np.meshgrid(*k_coordinates, indexing="ij")
-            kx = k_mesh[-1]**2 # omega^2
-            for i in range(0,len(k_mesh)-1): kx -= k_mesh[i]**2;
-            kx[kx<0.] = 0.
-            kx = np.sqrt(kx)
-            
-            # Backwards propagation
-            P = np.exp( 1j * kx * offset )
-            B_FT = [b*P for b in B_FT]
-            
-            # Fourier transform back to real space
-            P = np.exp( -1j * k_mesh[-1] * offset ) / Lt # add time offset and divide by omega increment
-            B = [ P * FFT.ifft(b, last_axis=False) for b in B_FT ]
-            
-            # Find the file region where each proc will write
-            if _2D:
-                region = (slice(None), slice(MPI_omega_offset, MPI_omega_offset+len(indices), 1))
-            else:
-                region = (FFT.X_slice[0], FFT.X_slice[1], slice(None))
-            
-            # Store omega in hdf5 file
-            if _2D:
-                with h5py.File(file, 'w', driver='mpio', comm=comm) as f:
-                    dataset = f.create_dataset('omega', (N_FT[-1],), dtype=k_coordinates[-1].dtype)
-                    if len(indices)>0:
-                        dataset[region[1]] = k_coordinates[-1]
-            elif rank == 0: # only rank 0 needed in 3D
-                with h5py.File(file, 'w') as f:
-                    f.create_dataset('omega', data=k_coordinates[-1])
-            comm.barrier()
-            
-            # Now store the absolute value and the phase, via MPI
-            with h5py.File(file, 'r+', driver='mpio', comm=comm) as f:
-                i = 0
-                for b in B:
-                    A = np.abs(b)
-                    dataset = f.create_dataset('magnitude'+profiles_n[i], N_FT, dtype=A.dtype)
-                    if len(indices)>0:
-                        dataset[region] = A
-                    A = np.angle(b)
-                    dataset = f.create_dataset('phase'+profiles_n[i], N_FT, dtype=A.dtype)
-                    if len(indices)>0:
-                         dataset[region] = A
-                    i += 1
-        
-        # Create the Laser object
-        Laser(
+        L = Laser(
             box_side = "xmin",
             file = file,
             time_envelope = time_envelope
         )
         
+        L._offset = offset
+        L._profiles = space_time_profile
+        
         _N_LaserOffset += 1
 
-else:
+except:
     
     def LaserOffset(box_side="xmin", space_time_profile=[], offset=0., time_envelope=1.):
-        print("WARNING: LaserOffset unavailable due to missing packages: "+", ".join(_missing_packages))
+        L = Laser(
+            box_side = "xmin",
+            file = "none",
+            time_envelope = time_envelope
+        )
+        print("WARNING: LaserOffset unavailable because numpy was not found")
 
 """
 -----------------------------------------------------------------------

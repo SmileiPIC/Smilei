@@ -93,6 +93,7 @@ TimeSelection::TimeSelection(PyObject* timeSelection, string name)
     if( groupWidth > period )
         ERROR(name << ": time selection must have repeat*spacing<period");
     
+    Py_DECREF(timeSelection);
 }
 
 

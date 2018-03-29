@@ -345,7 +345,7 @@ void VectorPatch::initExternals(Params& params)
             iBC = 1;
         }
         else continue;
-        // If patch is on border, then fill the fields arrays
+        // If patch is on border, then fill the laser arrays
         unsigned int nlaser = 0;
         if ( (iBC!=-1) && ( (*this)(ipatch)->EMfields->emBoundCond[iBC] != NULL ) )
             nlaser = (*this)(ipatch)->EMfields->emBoundCond[iBC]->vecLaser.size();
