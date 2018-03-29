@@ -447,6 +447,8 @@ namelist("")
             if( (number_of_patches[iDim] & (number_of_patches[iDim]-1)) != 0)
                 ERROR("Number of patches in each direction must be a power of 2");
     }
+    else
+        PyTools::extract("patch_orientation", patch_orientation, "Main");
 
 
     if( PyTools::nComponents("LoadBalancing")>0 ) {
