@@ -87,6 +87,31 @@ public:
         }
 #endif
 
+        //Cleaning arrays and pointer
+        for (unsigned int ispec=0 ; ispec<vecPatches(0)->vecSpecies.size(); ispec++) {
+            //If a species was initialized via a numpy array
+            if (vecPatches.patches_[0]->vecSpecies[ispec]->position_initialization_array){
+                //delete the array
+                delete vecPatches.patches_[0]->vecSpecies[ispec]->position_initialization_array;
+                //and null all pointers to it
+                for (unsigned int ipatch=1 ; ipatch < npatches ; ipatch++){
+                    vecPatches.patches_[ipatch]->vecSpecies[ispec]->position_initialization_array = NULL;
+                }
+            }
+        }
+        for (unsigned int ispec=0 ; ispec<vecPatches(0)->vecSpecies.size(); ispec++) {
+            //If a species was initialized via a numpy array
+            if (vecPatches.patches_[0]->vecSpecies[ispec]->momentum_initialization_array){
+                //delete the array
+                delete vecPatches.patches_[0]->vecSpecies[ispec]->momentum_initialization_array;
+                //and null all pointers to it
+                for (unsigned int ipatch=1 ; ipatch < npatches ; ipatch++){
+                    vecPatches.patches_[ipatch]->vecSpecies[ispec]->momentum_initialization_array = NULL;
+                }
+            }
+        }
+        
+
 
         MESSAGE(1,"All patches created");
 

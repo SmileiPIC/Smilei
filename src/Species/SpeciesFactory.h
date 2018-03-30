@@ -350,7 +350,6 @@ public:
                 ERROR("For species '" << species_name << "'. Momentum initialization by a numpy array is only possible if positions are initialized with a numpy array as well. ");
 
             PyArrayObject *np_ret_mom = reinterpret_cast<PyArrayObject*>(py_mom_init);
-            thisSpecies->momentum_initialization_array = (double*) PyArray_GETPTR1( np_ret_mom , 0);
             //Check dimensions
             unsigned int ndim_local = PyArray_NDIM(np_ret_mom) ;//Ok
             if (ndim_local != 2) ERROR("For species '" << species_name << "' Provide a 2-dimensional array in order to init particle momentum from a numpy array.")
@@ -364,6 +363,12 @@ public:
             if ( thisSpecies->n_numpy_particles != PyArray_SHAPE(np_ret_mom)[1] )
                 ERROR("For species '" << species_name << "' momentum_initializtion must provide as many particles as position_initialization." )
 
+            thisSpecies->momentum_initialization_array = new double[ndim_local*thisSpecies->n_numpy_particles] ;
+            for (unsigned int idim = 0; idim < ndim_local ; idim++){
+                for (unsigned int ipart = 0; ipart < thisSpecies->n_numpy_particles; ipart++){
+                    thisSpecies->momentum_initialization_array[idim*thisSpecies->n_numpy_particles+ipart] = *((double*)PyArray_GETPTR2( np_ret_mom , idim, ipart));
+                }
+            }     
         }
 #endif
         else {
@@ -623,7 +628,6 @@ public:
         }
         newSpecies->velocityProfile.resize(3);
         newSpecies->temperatureProfile.resize(3);
-        //if ( !species->momentum_initialization_array ){ 
         if ( species->velocityProfile[0] ){ 
             newSpecies->velocityProfile[0]                   = new Profile(species->velocityProfile[0]);
             newSpecies->velocityProfile[1]                   = new Profile(species->velocityProfile[1]);
