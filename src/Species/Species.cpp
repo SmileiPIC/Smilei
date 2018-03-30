@@ -267,8 +267,8 @@ void Species::initCharge(unsigned int nPart, unsigned int iPart, double q)
 //   - either using regular distribution in the mesh (position_initialization = regular)
 //   - or using uniform random distribution (position_initialization = random)
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::initPosition(unsigned int nPart, unsigned int iPart, double *indexes)
-{
+void Species::initPosition(unsigned int nPart, unsigned int iPart, double *indexes, Params& params)
+{   double particles_r, particles_theta;
     if (position_initialization == "regular") {
 
         double coeff = pow((double)nPart,inv_nDim_field);
@@ -286,13 +286,26 @@ void Species::initPosition(unsigned int nPart, unsigned int iPart, double *index
         }
 
     } else if (position_initialization == "random") {
-
+	if (params.geometry=="3drz"){
+        for (unsigned int p= iPart; p<iPart+nPart; p++){
+            particles->position(0,p)=indexes[0]+Rand::uniform()*cell_length[0];
+            particles_r=indexes[1]+Rand::uniform()*cell_length[1];
+	    particles_theta=Rand::uniform()*2*M_PI;
+            particles->position(2,p)=particles_r*sin(particles_theta);
+            if (particles_theta >= M_PI/2. || particles_theta <= 3./2.*M_PI)
+                particles->position(1,p)= - sqrt(particles_r*particles_r - particles->position(2,p)* particles->position(2,p));
+            else
+                particles->position(1,p)=sqrt(particles_r*particles_r - particles->position(2,p)* particles->position(2,p));
+		
+	    }
+	
+	} else{
         for (unsigned int p= iPart; p<iPart+nPart; p++) {
             for (unsigned int i=0; i<nDim_particle ; i++) {
                 particles->position(i,p)=indexes[i]+Rand::uniform()*cell_length[i];
-            }
-        }
-
+           	}
+             }
+	}	
     } else if (position_initialization == "centered") {
 
         for (unsigned int p=iPart; p<iPart+nPart; p++)
@@ -1240,7 +1253,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                             }
                         }
                         if (position_initialization_on_species==false){
-                            initPosition(nPart, iPart, indexes);
+                            initPosition(nPart, iPart, indexes, params);
                         }
                         initMomentum(nPart,iPart, temp, vel);
                         initWeight(nPart, iPart, density(i,j,k));
