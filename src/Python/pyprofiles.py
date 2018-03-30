@@ -589,14 +589,11 @@ try:
         mesh = np.meshgrid(*coordinates, indexing="ij")
         return [np.vectorize(p)(*mesh) for p in profiles]
     
-    def _emptyComplex( shape ):
-        return np.ascontiguousarray(np.empty(shape, dtype=np.complex))
-    
     def _reshapeTranspose( array, shape, transpose ):
         return np.ascontiguousarray(array.reshape(shape).transpose(transpose))
     
     def _transposeReshape( array, shape, transpose ):
-        return array.transpose(transpose).reshape(shape)
+        return np.asfortranarray(array.transpose(transpose).reshape(shape))
     
     _N_LaserOffset = 0
     

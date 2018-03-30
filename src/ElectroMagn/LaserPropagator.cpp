@@ -138,7 +138,6 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
     
     // Import other functions (see pyprofiles.py)
     PyObject* applyProfiles    = PyObject_GetAttrString(PyImport_AddModule("__main__"), "_applyProfiles");
-    PyObject* emptyComplex     = PyObject_GetAttrString(PyImport_AddModule("__main__"), "_emptyComplex");
     PyObject* reshapeTranspose = PyObject_GetAttrString(PyImport_AddModule("__main__"), "_reshapeTranspose");
     PyObject* transposeReshape = PyObject_GetAttrString(PyImport_AddModule("__main__"), "_transposeReshape");
     
@@ -188,6 +187,7 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
     
     MPI_Barrier(MPI_COMM_WORLD);
     cout << ro_.str() << 2 << endl;;
+    MESSAGE(1," applyProfiles is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)arrays[0]));
     // 2- Fourier transform of the fields at destination
     // --------------------------------
     
@@ -198,15 +198,21 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
         if( _2D ) a = PyCall( fft , Py_BuildValue("(O)", arrays[i]), Py_BuildValue("{s:i}"    , "axis", 1   ) );
         else      a = PyCall( fft2, Py_BuildValue("(O)", arrays[i]), Py_BuildValue("{s:(i,i)}", "axes", 1, 2) );
         Py_DECREF(arrays[i]);
+    MESSAGE(1," fft is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)a));
         
         // Change the array shape to prepare the MPI comms
         if( _2D ) arrays[i] = PyCall( reshapeTranspose, Py_BuildValue("(O, (i,i,i), (i,i,i))"    , a, Nlocal[0], MPI_size, Nlocal[1]      , 1, 0, 2   ), NULL );
         else      arrays[i] = PyCall( reshapeTranspose, Py_BuildValue("(O, (i,i,i,i), (i,i,i,i))", a, Nlocal[0], MPI_size, Nlocal[1], N[2], 1, 0, 2, 3), NULL );
         Py_DECREF(a);
+    MESSAGE(1," reshapeTranspose is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)arrays[0]));
         
         // Make a new empty array for MPI comms
-        if( _2D ) a = PyCall( emptyComplex, Py_BuildValue("((i,i))"  , N[0], Nlocal[1]      ), NULL );
-        else      a = PyCall( emptyComplex, Py_BuildValue("((i,i,i))", N[0], Nlocal[1], N[2]), NULL );
+        npy_intp dims[ndim];
+        dims[0] = N[0];
+        dims[1] = Nlocal[1];
+        if( ! _2D ) dims[2] = N[2];
+        a = PyArray_EMPTY(ndim, dims, complex_type_num, 0);
+    MESSAGE(1," empty is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)a));
         
         // Communicate blocks to transpose the MPI decomposition
         int block_size = Nlocal[0]*Nlocal[1]* (_2D?1:N[2]);
@@ -216,10 +222,12 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
             MPI_COMM_WORLD
         );
         Py_DECREF(arrays[i]);
+    MESSAGE(1," alltoall is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)a));
         
         // Call FFT along the first direction
         arrays[i] = PyCall( fft, Py_BuildValue("(O)", a), Py_BuildValue("{s:i}", "axis", 0) );
         Py_DECREF(a);
+    MESSAGE(1," fft is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)arrays[0]));
     }
     
     MPI_Barrier(MPI_COMM_WORLD);
@@ -268,6 +276,12 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
         indices = partial_reverse_argsort(spectrum, keep_n_best_frequencies);
         sort(indices.begin(), indices.end());
         n_omega = indices.size();
+    ostringstream t("");
+    t<<"\tspectrum ( ";
+    for( unsigned int i=0;i<spectrum.size();i++ ) 
+        t<<spectrum[i]<<" ";
+    t<<" )"<<endl;
+    cout<<t.str();
     }
     
     // Broadcast the number of selected points
@@ -287,7 +301,6 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
         unsigned int imax = imin;
         while( imax < n_omega && indices[imax] < proc_max ) imax++;
         n_omega_local = imax-imin;
-        cout<<ro_.str()<<imin<<" ! " <<imax<<endl;
         // Restrict to that range
         unsigned int i0=0;
         for( unsigned int i1=imin; i1<imax; i1++ ) {
@@ -331,7 +344,7 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
     MESSAGE(1,"n_omega_local = "<<n_omega_local);
     // 4- Multiply by the propagation term, while extracting only selected omegas
     // --------------------------------
-        
+    
     for( unsigned int i=0; i<nprofiles; i++ ) {
         if( _2D ) {
             npy_intp dims[2] = {N[0], n_omega_local};
@@ -371,12 +384,20 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
         // Call FFT along the first direction
         a = PyCall( ifft, Py_BuildValue("(O)", arrays[i]), Py_BuildValue("{s:i}", "axis", 0) );
         Py_DECREF(arrays[i]);
+    MESSAGE(1," ifft is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)a));
         
         if( _2D ) {
             arrays[i] = a;
         } else {
             // Make a new empty array for MPI comms
-            arrays[i] = PyCall( emptyComplex, Py_BuildValue("((i,i,i,i))", MPI_size, Nlocal[0], Nlocal[1], n_omega_local), NULL );
+            npy_intp dims[4];
+            dims[0] = MPI_size;
+            dims[1] = Nlocal[0];
+            dims[2] = Nlocal[1];
+            dims[3] = n_omega_local;
+            arrays[i] = PyArray_EMPTY(4, dims, complex_type_num, 1);
+            
+    MESSAGE(1," empty is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)arrays[0]));
             
             // Communicate blocks to transpose the MPI decomposition
             int block_size = Nlocal[0]*Nlocal[1]*n_omega_local;
@@ -386,19 +407,22 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
                 MPI_COMM_WORLD
             );
             Py_DECREF(a);
+    MESSAGE(1," alltoall is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)arrays[0]));
             
-            // Change the array shape to prepare the MPI comms
-            a = PyCall( transposeReshape, Py_BuildValue("(O, (i,i,i), (i,i,i,i))", arrays[i], Nlocal[0], N[1], n_omega_local, 1, 0, 2, 3), NULL );
+            // Change the array shape to accomodate the MPI comms
+            a = PyCall( transposeReshape, Py_BuildValue("(O, (i,i,i), (i,i,i,i))", arrays[i], Nlocal[0], N[1], n_omega_local, 2, 0, 1, 3), NULL );
             Py_DECREF(arrays[i]);
+    MESSAGE(1," transpose is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)a));
             
             // Call FFT along the second direction
-            arrays[i] = PyCall( ifft2, Py_BuildValue("(O)", a), Py_BuildValue("{s:(i)}", "axes", 1) );
+            arrays[i] = PyCall( ifft, Py_BuildValue("(O)", a), Py_BuildValue("{s:i}", "axis", 0) );
             Py_DECREF(a);
         }
     }
     
     MPI_Barrier(MPI_COMM_WORLD);
     cout << ro_.str() << 6 << endl;;
+    MESSAGE(1,"ifft is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)arrays[0]));
     // 6- Obtain the magnitude and the phase of the complex values
     // --------------------------------
     unsigned int local_size = (_2D ? N[0] : Nlocal[0]*N[1]) * n_omega_local;
@@ -520,7 +544,6 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
     Py_DECREF(fft2 );
     Py_DECREF(ifft2);
     Py_DECREF(applyProfiles   );
-    Py_DECREF(emptyComplex    );
     Py_DECREF(reshapeTranspose);
     Py_DECREF(transposeReshape);
     
