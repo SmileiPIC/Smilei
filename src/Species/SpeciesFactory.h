@@ -294,7 +294,6 @@ public:
             //Initialize position from this array
 
             PyArrayObject *np_ret = reinterpret_cast<PyArrayObject*>(py_pos_init);
-            thisSpecies->position_initialization_array = (double*) PyArray_GETPTR1( np_ret , 0);
             //Check dimensions
             unsigned int ndim_local = PyArray_NDIM(np_ret);//Ok
             if (ndim_local != 2) ERROR("For species '" << species_name << "' Provide a 2-dimensional array in order to init particle position from a numpy array.")
@@ -306,6 +305,12 @@ public:
             
             //Get number of particles
             thisSpecies->n_numpy_particles =  PyArray_SHAPE(np_ret)[1];//  ok
+            thisSpecies->position_initialization_array = new double[ndim_local*thisSpecies->n_numpy_particles] ;
+            for (unsigned int idim = 0; idim < ndim_local ; idim++){
+                for (unsigned int ipart = 0; ipart < thisSpecies->n_numpy_particles; ipart++){
+                    thisSpecies->position_initialization_array[idim*thisSpecies->n_numpy_particles+ipart] = *((double*)PyArray_GETPTR2( np_ret , idim, ipart));
+                }
+            }     
         }
 #endif
         else {
