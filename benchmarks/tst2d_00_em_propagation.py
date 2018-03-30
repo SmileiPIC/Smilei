@@ -46,9 +46,9 @@ Main(
 LaserOffset(
     space_time_profile = [None, lambda y,t: exp( -(400.*(y/Lsim[1]-0.5))**2 - (10.*(t-40.-Tsim/5.)/Tsim)**2 ) * sin(t)],
     offset = 40.,
-    time_envelope = 1.#tpolygonal(points=[t0, Tsim/2.], values=[1., 1.])
+    time_envelope = tpolygonal(points=[t0, Tsim/2.], values=[1., 1.]),
+    keep_n_best_frequencies = 800
 )
-
 
 Species(
 	name = "eon",
