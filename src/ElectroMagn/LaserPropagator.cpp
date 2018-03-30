@@ -40,6 +40,7 @@ vector<unsigned int> partial_reverse_argsort(vector<double> x, unsigned int nmax
     unsigned int n = x.size();
     std::vector<unsigned int> y(n);
     for(unsigned int i=0; i<n; i++) y[i] = i;
+    nmax = min(nmax,n);
     std::partial_sort(  y.begin(), y.begin()+nmax, y.end(),
                 [&](unsigned int i1, unsigned int i2) { return x[i1] > x[i2]; } );
     y.resize(nmax);
@@ -162,6 +163,7 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
         npy_intp dims = local_x[i].size();
         coords[i] = PyArray_SimpleNewFromData(1, &dims, NPY_DOUBLE, (double*)(local_x[i].data()));
     }
+    
     // Call the python function _applyProfiles
     PyObject *ret, *tuple_coords, *tuple_profiles;
     if( _2D ) tuple_coords = Py_BuildValue("(O,O)"  , coords[0], coords[1]           );
@@ -171,6 +173,11 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
     ret = PyCall(applyProfiles, Py_BuildValue("(O,O)", tuple_coords, tuple_profiles), NULL);
     Py_DECREF(tuple_coords);
     Py_DECREF(tuple_profiles);
+    if( ret == NULL ) {
+        PyTools::checkPyError();
+        ERROR("Error in a profile of LaserOffset");
+    }
+    
     // Recover the several arrays
     vector<PyObject*> arrays( nprofiles );
     for( unsigned int i=0; i<nprofiles; i++ )
@@ -216,7 +223,7 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
     }
     
     MPI_Barrier(MPI_COMM_WORLD);
-    cout << ro_.str() << 3 << endl;;
+    cout << ro_.str() << 3 << endl;
     // 3- Select only interesting omegas
     // --------------------------------
     
@@ -467,10 +474,13 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
     hid_t memspace  = H5Screate_simple(1, &len_local, NULL);
     hid_t dcid = H5Pcreate(H5P_DATASET_CREATE);
     hid_t did = H5Dcreate( fid, "omega", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, dcid, H5P_DEFAULT);
-    if( (_2D && n_omega_local > 0) || (!_2D && MPI_rank==0) ) { // Only rank 0 writes in 3D
+    if( _2D && n_omega_local > 0 ) {
         H5Sselect_hyperslab(filespace, H5S_SELECT_SET, &start[1], NULL, &count[1], NULL);
+    } else if( !_2D && MPI_rank==0 ) { // Only rank 0 writes in 3D
+        H5Sselect_hyperslab(filespace, H5S_SELECT_SET, &start[2], NULL, &count[2], NULL);
     } else {
         H5Sselect_none(filespace);
+        H5Sselect_none(memspace);
     }
     hid_t transfer = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(transfer, H5FD_MPIO_COLLECTIVE);
