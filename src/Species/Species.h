@@ -129,13 +129,24 @@ public:
     Particles particles_sorted[2];
     //std::vector<int> index_of_particles_to_exchange;
     
+    //! Pointer toward position array
+    double *position_initialization_array;
+    //! Number of particles in the init array
+    double *momentum_initialization_array;
+    //! Number of particles in the init array
+    int n_numpy_particles; 
+    //! Boolean to know if we initialize particles one specie on another species
+    bool position_initialization_on_species;
+    //! Index of the species where position initialization is made
+    int position_initialization_on_species_index;
+
     //! Pointer to the species where field-ionized electrons go
     Species *electron_species;
     //! Index of the species where field-ionized electrons go
     int electron_species_index;
     //! Name of the species where field-ionized electrons go
     std::string ionization_electrons;
-    
+
     //! Pointer to the species where radiated photon go
     Species *photon_species;
     //! Index of the species where radiated photons go
@@ -371,7 +382,7 @@ public:
     int  createParticles(std::vector<unsigned int> n_space_to_create, Params& params, Patch * patch, int new_bin_idx);
     
     //! Method to import particles in this species while conserving the sorting among bins
-    void importParticles( Params&, Patch*, Particles&, std::vector<Diagnostic*>& );
+    virtual void importParticles( Params&, Patch*, Particles&, std::vector<Diagnostic*>& );
     
     //! Moving window boundary conditions managment
     void disableXmax();

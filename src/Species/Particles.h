@@ -299,9 +299,9 @@ public:
     std::vector< std::vector<uint64_t>*> uint64_prop;
 
 
-    //bool test_move( int iPartStart, int iPartEnd, Params& params );
-
 #ifdef __DEBUG
+    bool test_move( int iPartStart, int iPartEnd, Params& params );
+
     inline double dist2( unsigned int iPart ) {
         double dist(0.);
         for ( unsigned int iDim = 0 ; iDim < Position.size() ; iDim++ ) {
@@ -318,7 +318,7 @@ public:
 
     Particle operator()(unsigned int iPart);
 
-    //! Methods to obtain the any property, given its index in the arrays double_prop, uint64_prop, or short_prop
+    //! Methods to obtain any property, given its index in the arrays double_prop, uint64_prop, or short_prop
     void getProperty(unsigned int iprop, std::vector<uint64_t>* &prop) {
         prop = uint64_prop[iprop];
     }

@@ -87,6 +87,24 @@ private :
     
     //! Approximate total number of particles
     double npart_total;
+    
+    //! Number of particles shared among patches in this proc
+    uint32_t nParticles_local;
+    
+    //! Booleans to determine which attributes to write out
+    std::vector<bool> write_position;
+    std::vector<bool> write_momentum;
+    bool write_charge;
+    bool write_weight;
+    bool write_chi   ;
+    std::vector<bool> write_E;
+    std::vector<bool> write_B;
+    bool interpolate;
+    bool write_any_position;
+    bool write_any_momentum;
+    bool write_any_E;
+    bool write_any_B;
+
 };
 
 #endif

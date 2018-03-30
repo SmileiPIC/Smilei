@@ -15,29 +15,8 @@
 using namespace std;
 
 ElectroMagnBC2D_SM::ElectroMagnBC2D_SM( Params &params, Patch* patch, unsigned int _min_max )
-: ElectroMagnBC( params, patch, _min_max )
+: ElectroMagnBC2D( params, patch, _min_max )
 {
-    // conversion factor from degree to radian
-    conv_deg2rad = M_PI/180.0;
-    
-    // number of nodes of the primal and dual grid in the x-direction
-    nx_p = params.n_space[0]+1+2*params.oversize[0];
-    nx_d = nx_p+1;
-    // number of nodes of the primal and dual grid in the y-direction
-    ny_p = params.n_space[1]+1+2*params.oversize[1];
-    ny_d = ny_p+1;
-    
-    // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the x-direction)
-    dx       = params.cell_length[0];
-    dt_ov_dx = dt/dx;
-    dx_ov_dt = 1.0/dt_ov_dx;
-    
-    // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the y-direction)
-    dy       = params.cell_length[1];
-    dt_ov_dy = dt/dy;
-    dy_ov_dt = 1.0/dt_ov_dy;
-    
-    
     if (min_max == 0 && patch->isXmin() ) {
         // BCs at the x-border min
         Bx_val.resize(ny_d,0.); // dual in the y-direction
@@ -70,42 +49,71 @@ ElectroMagnBC2D_SM::ElectroMagnBC2D_SM( Params &params, Patch* patch, unsigned i
     // Parameters for the Silver-Mueller boundary conditions
     // -----------------------------------------------------
     
+    double pyKx, pyKy; //, pyKz;
+    double kx, ky; //, kz;
+    double Knorm;
+    double omega = 1. ;
     //! \todo (MG) Check optimal angle for Silver-Muller BCs
     
     // Xmin boundary
-    double theta  = 0.0*conv_deg2rad; //0.0;
-    double factor = 1.0 / (cos(theta) + dt_ov_dx);
+    pyKx = params.EM_BCs_k[0][0];
+    pyKy = params.EM_BCs_k[0][1];
+    Knorm = sqrt(pyKx*pyKx + pyKy*pyKy ) ;
+    kx = omega*pyKx/Knorm;
+    ky = omega*pyKy/Knorm;
+
+    double factor = 1.0 / ( kx + dt_ov_dx);
     Alpha_SM_W    = 2.0                     * factor;
-    Beta_SM_W     = - (cos(theta)-dt_ov_dx) * factor;
-    Gamma_SM_W    = 4.0 * cos(theta)        * factor;
-    Delta_SM_W    = - (sin(theta)+dt_ov_dy) * factor;
-    Epsilon_SM_W  = - (sin(theta)-dt_ov_dy) * factor;
+    Beta_SM_W     = - ( kx - dt_ov_dx) * factor;
+    Gamma_SM_W    = 4.0 * kx        * factor;
+    Delta_SM_W    = - ( ky + dt_ov_dy) * factor;
+    Epsilon_SM_W  = - ( ky - dt_ov_dy) * factor;
     
     // Xmax boundary
-    theta         = M_PI;
-    factor        = 1.0 / (cos(theta) - dt_ov_dx);
+    pyKx = params.EM_BCs_k[1][0];
+    pyKy = params.EM_BCs_k[1][1];
+    Knorm = sqrt(pyKx*pyKx + pyKy*pyKy ) ;
+    kx = omega*pyKx/Knorm;
+    ky = omega*pyKy/Knorm;
+
+    factor        = 1.0 / ( kx - dt_ov_dx);
     Alpha_SM_E    = 2.0                      * factor;
-    Beta_SM_E     = - (cos(theta)+dt_ov_dx)  * factor;
-    Gamma_SM_E    = 4.0 * cos(theta)         * factor;
-    Delta_SM_E    = - (sin(theta)+dt_ov_dy)  * factor;
-    Epsilon_SM_E  = - (sin(theta)-dt_ov_dy)  * factor;
+    Beta_SM_E     = - ( kx + dt_ov_dx)  * factor;
+    Gamma_SM_E    = 4.0 * kx         * factor;
+    Delta_SM_E    = - ( ky + dt_ov_dy)  * factor;
+    Epsilon_SM_E  = - ( ky - dt_ov_dy)  * factor;
     
     // Ymin boundary
-    theta  = 0.0;
-    factor = 1.0 / (cos(theta) + dt_ov_dy );
+    pyKx = params.EM_BCs_k[2][0];
+    pyKy = params.EM_BCs_k[2][1];
+    Knorm = sqrt(pyKx*pyKx + pyKy*pyKy ) ;
+    kx = omega*pyKx/Knorm;
+    ky = omega*pyKy/Knorm;
+
+    factor = 1.0 / ( ky + dt_ov_dy );
     Alpha_SM_S    = 2.0                     * factor;
-    Beta_SM_S     = - (cos(theta)-dt_ov_dy) * factor;
-    Delta_SM_S    = - (sin(theta)+dt_ov_dx) * factor;
-    Epsilon_SM_S  = - (sin(theta)-dt_ov_dx) * factor;
+    Beta_SM_S     = - ( ky - dt_ov_dy) * factor;
+    Delta_SM_S    = - ( kx + dt_ov_dx) * factor;
+    Epsilon_SM_S  = - ( kx - dt_ov_dx) * factor;
     
     // Ymax boundary
-    theta  = M_PI;
-    factor = 1.0 / (cos(theta) - dt_ov_dy);
+    pyKx = params.EM_BCs_k[3][0];
+    pyKy = params.EM_BCs_k[3][1];
+    Knorm = sqrt(pyKx*pyKx + pyKy*pyKy ) ;
+    kx = omega*pyKx/Knorm;
+    ky = omega*pyKy/Knorm;
+
+    factor = 1.0 / ( ky - dt_ov_dy);
     Alpha_SM_N    = 2.0                     * factor;
-    Beta_SM_N     = - (cos(theta)+dt_ov_dy) * factor;
-    Delta_SM_N    = - (sin(theta)+dt_ov_dx) * factor;
-    Epsilon_SM_N  = - (sin(theta)-dt_ov_dx) * factor;
-    
+    Beta_SM_N     = - ( ky + dt_ov_dy) * factor;
+    Delta_SM_N    = - ( kx + dt_ov_dx) * factor;
+    Epsilon_SM_N  = - ( kx - dt_ov_dx) * factor;
+
+
+    if (params.is_pxr)
+        pxr_offset = params.oversize[0];
+    else 
+        pxr_offset = 0;
 }
 
 
@@ -216,22 +224,21 @@ void ElectroMagnBC2D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         
         // for By^(d,p)
         vector<double> yp(1);
-        yp[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dy;
         for (unsigned int j=0 ; j<ny_p ; j++) {
             
             double byW = 0.;
-            yp[0] += dy;
+            yp[0] = patch->getDomainLocalMin(1) + (j - EMfields->oversize[1])*dy;
             
             // Lasers
             for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
                 byW += vecLaser[ilaser]->getAmplitude0(yp, time_dual, j, 0);
             }
             
-            (*By2D)(0,j) = Alpha_SM_W   * (*Ez2D)(0,j)
-            +              Beta_SM_W    *( (*By2D)(1,j)-By_val[j])
+            (*By2D)(0+pxr_offset,j) = Alpha_SM_W   * (*Ez2D)(0+pxr_offset,j)
+            +              Beta_SM_W    *( (*By2D)(1+pxr_offset,j)-By_val[j])
             +              Gamma_SM_W   * byW
-            +              Delta_SM_W   *( (*Bx2D)(0,j+1)-Bx_val[j+1] )
-            +              Epsilon_SM_W *( (*Bx2D)(0,j)-Bx_val[j] )
+            +              Delta_SM_W   *( (*Bx2D)(0+pxr_offset,j+1)-Bx_val[j+1] )
+            +              Epsilon_SM_W *( (*Bx2D)(0+pxr_offset,j)-Bx_val[j] )
             +              By_val[j];
             
         }//j  ---end compute By
@@ -239,11 +246,10 @@ void ElectroMagnBC2D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         
         // for Bz^(d,d)
         vector<double> yd(1);
-        yd[0] = patch->getDomainLocalMin(1) - (0.5+EMfields->oversize[1])*dy;
         for (unsigned int j=0 ; j<ny_d ; j++) {
             
             double bzW = 0.;
-            yd[0] += dy;
+            yd[0] = patch->getDomainLocalMin(1) + (j - 0.5 - EMfields->oversize[1])*dy;
             
             // Lasers
             for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
@@ -253,8 +259,8 @@ void ElectroMagnBC2D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
             /*(*Bz2D)(0,j) = -Alpha_SM_W * (*Ey2D)(0,j)
              +               Beta_SM_W  * (*Bz2D)(1,j)
              +               Gamma_SM_W * bzW;*/
-            (*Bz2D)(0,j) = -Alpha_SM_W * (*Ey2D)(0,j)
-            +               Beta_SM_W  *( (*Bz2D)(1,j)- Bz_val[j])
+            (*Bz2D)(0+pxr_offset,j) = -Alpha_SM_W * (*Ey2D)(0+pxr_offset,j)
+            +               Beta_SM_W  *( (*Bz2D)(1+pxr_offset,j)- Bz_val[j])
             +               Gamma_SM_W * bzW
             +               Bz_val[j];
             
@@ -273,11 +279,10 @@ void ElectroMagnBC2D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         
         // for By^(d,p)
         vector<double> yp(1);
-        yp[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dy;
         for (unsigned int j=0 ; j<ny_p ; j++) {
             
             double byE = 0.;
-            yp[0] += dy;
+            yp[0] = patch->getDomainLocalMin(1) + (j - EMfields->oversize[1])*dy;
             
             // Lasers
             for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
@@ -289,11 +294,11 @@ void ElectroMagnBC2D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
              +                   Gamma_SM_E   * byE
              +                   Delta_SM_E   * (*Bx2D)(nx_p-1,j+1) // Check x-index
              +                   Epsilon_SM_E * (*Bx2D)(nx_p-1,j);*/
-            (*By2D)(nx_d-1,j) = Alpha_SM_E   * (*Ez2D)(nx_p-1,j)
-            +                   Beta_SM_E    *( (*By2D)(nx_d-2,j) -By_val[j])
+            (*By2D)(nx_d-1-pxr_offset,j) = Alpha_SM_E   * (*Ez2D)(nx_p-1-pxr_offset,j)
+            +                   Beta_SM_E    *( (*By2D)(nx_d-2-pxr_offset,j) -By_val[j])
             +                   Gamma_SM_E   * byE
-            +                   Delta_SM_E   *( (*Bx2D)(nx_p-1,j+1) -Bx_val[j+1])// Check x-index
-            +                   Epsilon_SM_E *( (*Bx2D)(nx_p-1,j) -Bx_val[j])
+            +                   Delta_SM_E   *( (*Bx2D)(nx_p-1-pxr_offset,j+1) -Bx_val[j+1])// Check x-index
+            +                   Epsilon_SM_E *( (*Bx2D)(nx_p-1-pxr_offset,j) -Bx_val[j])
             +                   By_val[j];
             
         }//j  ---end compute By
@@ -301,11 +306,10 @@ void ElectroMagnBC2D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         
         // for Bz^(d,d)
         vector<double> yd(1);
-        yd[0] = patch->getDomainLocalMin(1) - (0.5+EMfields->oversize[1])*dy;
         for (unsigned int j=0 ; j<ny_d ; j++) {
             
             double bzE = 0.;
-            yd[0] += dy;
+            yd[0] = patch->getDomainLocalMin(1) + (j - 0.5 - EMfields->oversize[1])*dy;
             
             // Lasers
             for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
@@ -315,8 +319,8 @@ void ElectroMagnBC2D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
             /*(*Bz2D)(nx_d-1,j) = -Alpha_SM_E * (*Ey2D)(nx_p-1,j)
              +                    Beta_SM_E  * (*Bz2D)(nx_d-2,j)
              +                    Gamma_SM_E * bzE;*/
-            (*Bz2D)(nx_d-1,j) = -Alpha_SM_E * (*Ey2D)(nx_p-1,j)
-            +                    Beta_SM_E  *( (*Bz2D)(nx_d-2,j) -Bz_val[j])
+            (*Bz2D)(nx_d-1-pxr_offset,j) = -Alpha_SM_E * (*Ey2D)(nx_p-1-pxr_offset,j)
+            +                    Beta_SM_E  *( (*Bz2D)(nx_d-2-pxr_offset,j) -Bz_val[j])
             +                    Gamma_SM_E * bzE
             +                    Bz_val[j];
             
@@ -338,10 +342,10 @@ void ElectroMagnBC2D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
              +               Beta_SM_S    * (*Bx2D)(j,1)
              +               Delta_SM_S   * (*By2D)(j+1,0)
              +               Epsilon_SM_S * (*By2D)(j,0);*/
-            (*Bx2D)(j,0) = -Alpha_SM_S   * (*Ez2D)(j,0)
-            +               Beta_SM_S    *( (*Bx2D)(j,1)-Bx_val[j])
-            +               Delta_SM_S   *( (*By2D)(j+1,0)-By_val[j+1])
-            +               Epsilon_SM_S *( (*By2D)(j,0)-By_val[j])
+            (*Bx2D)(j,0+pxr_offset) = -Alpha_SM_S   * (*Ez2D)(j,0+pxr_offset)
+            +               Beta_SM_S    *( (*Bx2D)(j,1+pxr_offset)-Bx_val[j])
+            +               Delta_SM_S   *( (*By2D)(j+1,0+pxr_offset)-By_val[j+1])
+            +               Epsilon_SM_S *( (*By2D)(j,0+pxr_offset)-By_val[j])
             +               Bx_val[j];
         }//j  ---end Bx
         
@@ -350,8 +354,8 @@ void ElectroMagnBC2D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         for (unsigned int j=0 ; j<nx_d ; j++) {
             /*(*Bz2D)(j,0) = Alpha_SM_S * (*Ex2D)(j,0)
              +               Beta_SM_S * (*Bz2D)(j,1);*/
-            (*Bz2D)(j,0) = Alpha_SM_S * (*Ex2D)(j,0)
-            +               Beta_SM_S  *( (*Bz2D)(j,1)-Bz_val[j])
+            (*Bz2D)(j,0+pxr_offset) = Alpha_SM_S * (*Ex2D)(j,0+pxr_offset)
+            +               Beta_SM_S  *( (*Bz2D)(j,1+pxr_offset)-Bz_val[j])
             +               Bz_val[j];
         }//j  ---end Bz
         
@@ -372,10 +376,10 @@ void ElectroMagnBC2D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
              +                    Beta_SM_N    * (*Bx2D)(j,ny_d-2)
              +                    Delta_SM_N   * (*By2D)(j+1,ny_p-1)
              +                    Epsilon_SM_N * (*By2D)(j,ny_p-1);*/
-            (*Bx2D)(j,ny_d-1) = -Alpha_SM_N   * (*Ez2D)(j,ny_p-1)
-            +                   Beta_SM_N    *( (*Bx2D)(j,ny_d-2) -Bx_val[j])
-            +                   Delta_SM_N   *( (*By2D)(j+1,ny_p-1) -By_val[j+1])
-            +                   Epsilon_SM_N *( (*By2D)(j,ny_p-1) -By_val[j])
+            (*Bx2D)(j,ny_d-1-pxr_offset) = -Alpha_SM_N   * (*Ez2D)(j,ny_p-1-pxr_offset)
+            +                   Beta_SM_N    *( (*Bx2D)(j,ny_d-2-pxr_offset) -Bx_val[j])
+            +                   Delta_SM_N   *( (*By2D)(j+1,ny_p-1-pxr_offset) -By_val[j+1])
+            +                   Epsilon_SM_N *( (*By2D)(j,ny_p-1-pxr_offset) -By_val[j])
             +                   Bx_val[j];
         }//j  ---end Bx
         
@@ -384,8 +388,8 @@ void ElectroMagnBC2D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         for (unsigned int j=0 ; j<nx_d ; j++) {
             /*(*Bz2D)(j,ny_d-1) = Alpha_SM_N * (*Ex2D)(j,ny_p-1)
              +                   Beta_SM_N  * (*Bz2D)(j,ny_d-2);*/
-            (*Bz2D)(j,ny_d-1) = Alpha_SM_N * (*Ex2D)(j,ny_p-1)
-            +                   Beta_SM_N  *( (*Bz2D)(j,ny_d-2)- Bz_val[j])
+            (*Bz2D)(j,ny_d-1-pxr_offset) = Alpha_SM_N * (*Ex2D)(j,ny_p-1-pxr_offset)
+            +                   Beta_SM_N  *( (*Bz2D)(j,ny_d-2-pxr_offset)- Bz_val[j])
             +                   Bz_val[j];
         }//j  ---end Bx
         

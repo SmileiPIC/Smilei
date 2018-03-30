@@ -39,7 +39,7 @@ class SmileiComponentType(type):
         self.current += 1
         return self._list[self.current - 1]
     __next__ = next #python3
-    
+
     # Function to return one given instance, for example DiagParticleBinning[0]
     # Special case: species can also be indexed by their name: Species["ion1"]
     def __getitem__(self, key):
@@ -156,7 +156,7 @@ class SmileiSingleton(SmileiComponent):
         # Change all methods to static
         for k,v in cls.__dict__.items():
             if k[0]!='_' and hasattr(v,"__get__"):
-                setattr(cls, k, staticmethod(v))
+               setattr(cls, k, staticmethod(v))
 
 class ParticleData(object):
     """Container for particle data at run-time (for exposing particles in numpy)"""
@@ -164,7 +164,7 @@ class ParticleData(object):
 
 class Main(SmileiSingleton):
     """Main parameters"""
-    
+
     # Default geometry info
     geometry = None
     cell_length = []
@@ -175,21 +175,33 @@ class Main(SmileiSingleton):
     number_of_timesteps = None
     interpolation_order = 2
     number_of_patches = None
+    patch_decomposition = "hilbert"
+    patch_orientation = ""
     clrw = -1
     every_clean_particles_overhead = 100
     timestep = None
+    nmodes = 2
     timestep_over_CFL = None
-    
+
+    # PXR tuning
+    global_factor = []
+    norder = []
+    is_spectral = False
+    is_pxr = False
+
     # Poisson tuning
     solve_poisson = True
     poisson_max_iteration = 50000
     poisson_max_error = 1.e-14
-    
+
     # Default fields
     maxwell_solver = 'Yee'
     EM_boundary_conditions = [["periodic"]]
+    EM_boundary_conditions_k = []
+    Envelope_boundary_conditions = [["reflective"]]
     time_fields_frozen = 0.
-    
+    Laser_Envelope_model = False
+
     # Default Misc
     reference_angular_frequency_SI = 0.
     print_every = None
@@ -202,11 +214,11 @@ class Main(SmileiSingleton):
     def __init__(self, **kwargs):
         # Load all arguments to Main()
         super(Main, self).__init__(**kwargs)
-        
+
         # Deprecation error for the "geometry" argument
         if Main.geometry in ["1d3v", "2d3v", "3d3v"]:
             raise Exception("Deprecated geometry = \""+Main.geometry+"\". Use \""+Main.geometry[0]+"Dcartesian\" instead")
-        
+
         # Initialize timestep if not defined based on timestep_over_CFL
         if Main.timestep is None:
             if Main.timestep_over_CFL is None:
@@ -214,37 +226,43 @@ class Main(SmileiSingleton):
             else:
                 if Main.cell_length is None:
                     raise Exception("Need cell_length to calculate timestep")
-                
+
                 # Yee solver
                 if Main.maxwell_solver == 'Yee':
                     dim = int(Main.geometry[0])
                     if dim<1 or dim>3:
                         raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
                     Main.timestep = Main.timestep_over_CFL / math.sqrt(sum([1./l**2 for l in Main.cell_length]))
-                
+
                 # Grassi
                 elif Main.maxwell_solver == 'Grassi':
                     if Main.geometry == '2Dcartesian':
                         Main.timestep = Main.timestep_over_CFL * 0.7071067811*Main.cell_length[0];
                     else:
                         raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
-                
+
                 # GrassiSpL
                 elif Main.maxwell_solver == 'GrassiSpL':
                     if Main.geometry == '2Dcartesian':
                         Main.timestep = Main.timestep_over_CFL * 0.6471948469*Main.cell_length[0];
                     else:
                         raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
-                
+
                 # None recognized solver
                 else:
                     raise Exception("timestep: maxwell_solver not implemented "+Main.maxwell_solver)
-                
+        
+        # Initialize simulation_time if not defined by the user
+        if Main.simulation_time is None:
+            if Main.number_of_timesteps is None:
+                raise Exception("simulation_time and number_of_timesteps are not defined")
+            Main.simulation_time = Main.timestep * Main.number_of_timesteps
+        
         # Initialize grid_length if not defined based on number_of_cells and cell_length
-        if (    len(Main.grid_length + Main.number_of_cells) == 0 
-             or len(Main.grid_length + Main.cell_length) == 0 
-             or len(Main.number_of_cells + Main.cell_length) == 0  
-             or len(Main.number_of_cells) * len(Main.grid_length) * len(Main.cell_length) != 0 
+        if (    len(Main.grid_length + Main.number_of_cells) == 0
+             or len(Main.grid_length + Main.cell_length) == 0
+             or len(Main.number_of_cells + Main.cell_length) == 0
+             or len(Main.number_of_cells) * len(Main.grid_length) * len(Main.cell_length) != 0
            ):
                 raise Exception("Main: you must define two (and only two) between grid_length, number_of_cells and cell_length")
 
@@ -265,7 +283,7 @@ class Main(SmileiSingleton):
 
 class LoadBalancing(SmileiSingleton):
     """Load balancing parameters"""
-    
+
     every = 150
     initial_balance = True
     cell_load = 1.0
@@ -274,14 +292,14 @@ class LoadBalancing(SmileiSingleton):
 
 class MovingWindow(SmileiSingleton):
     """Moving window parameters"""
-    
+
     time_start = 0.
     velocity_x = 1.
 
 
 class Checkpoints(SmileiSingleton):
     """Checkpoints parameters"""
-    
+
     restart_dir = None
     restart_number = None
     dump_step = 0
@@ -313,8 +331,8 @@ class Species(SmileiComponent):
     charge = None
     charge_density = None
     number_density = None
-    mean_velocity = [0.]
-    temperature = [1e-10]
+    mean_velocity = []  # Default value is     0, set in createParticles function in species.cpp
+    temperature = []    # Default value is 1e-10, set in createParticles function in species.cpp
     thermal_boundary_temperature = []
     thermal_boundary_velocity = [0.,0.,0.]
     pusher = "boris"
@@ -330,6 +348,7 @@ class Species(SmileiComponent):
     ionization_electrons = None
     atomic_number = None
     is_test = False
+    ponderomotive_dynamics = False
 
 class Laser(SmileiComponent):
     """Laser parameters"""
@@ -340,6 +359,15 @@ class Laser(SmileiComponent):
     space_envelope = [1., 0.]
     phase = [0., 0.]
     space_time_profile = None
+
+class LaserEnvelope(SmileiSingleton):
+    """Laser Envelope parameters"""
+    omega = 1.
+    #time_envelope = 1.
+    #space_envelope = [1., 0.]
+    envelope_solver = "explicit"
+    envelope_profile = 0.
+
 
 class Collisions(SmileiComponent):
     """Collisions parameters"""
@@ -394,6 +422,7 @@ class DiagFields(SmileiComponent):
     every = None
     fields = []
     time_average = 1
+    subgrid = None
     flush_every = 1
 
 class DiagTrackParticles(SmileiComponent):
@@ -402,6 +431,7 @@ class DiagTrackParticles(SmileiComponent):
     every = 0
     flush_every = 1
     filter = None
+    attributes = ["x", "y", "z", "px", "py", "pz"]
 
 class DiagPerformances(SmileiSingleton):
     """Performances diagnostic"""
@@ -433,13 +463,14 @@ class PartWall(SmileiComponent):
 # Radiation reaction configuration (continuous and MC algorithms)
 class RadiationReaction(SmileiComponent):
     """
-    Fine-tuning of synchrotron-like radiation loss
+    Fine-tuning of synchrotron-like radiation reaction
     (classical continuous, quantum correction, stochastics and MC algorithms)
     """
     # Table h parameters
     h_chipa_min = 1e-3
     h_chipa_max = 1e1
     h_dim = 128
+    h_computation_method = "table"
     # Table integfochi parameters
     integfochi_chipa_min = 1e-3
     integfochi_chipa_max = 1e1
@@ -497,4 +528,3 @@ class DumpRestart(object):
 class ExtField(object):
     def __init__(self, *args, **kwargs):
         raise Exception("Deprecated `ExtField()` must be replaced by `ExternalField()`")
-

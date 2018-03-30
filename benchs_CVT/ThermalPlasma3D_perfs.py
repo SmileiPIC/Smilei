@@ -37,6 +37,12 @@ t_sim   = 64.*TimeSCALING       # simulation time
 # --------------------------------------
 PatchSizex = PatchSizey = PatchSizez = 8    # number of cells per patch (NB: clrw is also fixed to PatchSizex)
 NPatchx    = NPatchy    = NPatchz = int( (Lx/dx)/PatchSizex )
+
+#1 less cell per patch along Z so that PatchSizez + 1 can be divided by 4.
+Lz = Lz - NPatchz*dz
+PatchSizez = 7
+
+
 LoadBalancingFreq = 320
 
 

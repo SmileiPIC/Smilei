@@ -50,7 +50,7 @@ class RadiationMonteCarlo : public Radiation {
                 RadiationTables &RadiationTables,
                 int istart,
                 int iend,
-                int ithread);
+                int ithread, int ipart_ref = 0);
 
         // ---------------------------------------------------------------------
         //! Perform the phoon emission (creation of a super-photon

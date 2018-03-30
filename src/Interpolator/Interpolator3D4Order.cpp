@@ -38,7 +38,7 @@ Interpolator3D4Order::Interpolator3D4Order(Params &params, Patch *patch) : Inter
 // ---------------------------------------------------------------------------------------------------------------------
 // 2nd Order Interpolation of the fields at a the particle position (3 nodes are used)
 // ---------------------------------------------------------------------------------------------------------------------
-void Interpolator3D4Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, double* ELoc, double* BLoc)
+void Interpolator3D4Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, int nparts, double* ELoc, double* BLoc)
 {
     // Static cast of the electromagnetic fields
     Field3D* Ex3D = static_cast<Field3D*>(EMfields->Ex_);
@@ -137,8 +137,6 @@ void Interpolator3D4Order::operator() (ElectroMagn* EMfields, Particles &particl
     kp_ = kp_ - k_domain_begin;
     kd_ = kd_ - k_domain_begin;
     
-    int nparts( particles.size() );
-    
     // -------------------------
     // Interpolation of Ex^(d,p,p)
     // -------------------------
@@ -171,8 +169,15 @@ void Interpolator3D4Order::operator() (ElectroMagn* EMfields, Particles &particl
 
 } // END Interpolator3D4Order
 
-void Interpolator3D4Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc)
+
+void Interpolator3D4Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc)
 {
+    int ipart = *istart;
+
+    double *ELoc = &(smpi->dynamics_Epart[ithread][ipart]);
+    double *BLoc = &(smpi->dynamics_Bpart[ithread][ipart]);
+
+
     // Interpolate E, B
     // Compute coefficient for ipart position
     // Static cast of the electromagnetic fields
@@ -272,36 +277,38 @@ void Interpolator3D4Order::operator() (ElectroMagn* EMfields, Particles &particl
     kp_ = kp_ - k_domain_begin;
     kd_ = kd_ - k_domain_begin;
 
-
+    int nparts( particles.size() );
+    
     // -------------------------
     // Interpolation of Ex^(d,p,p)
     // -------------------------
-    (*ELoc).x = compute( &coeffxd_[2], &coeffyp_[2], &coeffzp_[2], Ex3D, id_, jp_, kp_);
+    *(ELoc+0*nparts) = compute( &coeffxd_[2], &coeffyp_[2], &coeffzp_[2], Ex3D, id_, jp_, kp_);
 
     // -------------------------
     // Interpolation of Ey^(p,d,p)
     // -------------------------
-    (*ELoc).y = compute( &coeffxp_[2], &coeffyd_[2], &coeffzp_[2], Ey3D, ip_, jd_, kp_);
+    *(ELoc+1*nparts) = compute( &coeffxp_[2], &coeffyd_[2], &coeffzp_[2], Ey3D, ip_, jd_, kp_);
 
     // -------------------------
     // Interpolation of Ez^(p,p,d)
     // -------------------------
-    (*ELoc).z = compute( &coeffxp_[2], &coeffyp_[2], &coeffzd_[2], Ez3D, ip_, jp_, kd_);
+    *(ELoc+2*nparts) = compute( &coeffxp_[2], &coeffyp_[2], &coeffzd_[2], Ez3D, ip_, jp_, kd_);
 
     // -------------------------
     // Interpolation of Bx^(p,d,d)
     // -------------------------
-    (*BLoc).x = compute( &coeffxp_[2], &coeffyd_[2], &coeffzd_[2], Bx3D, ip_, jd_, kd_);
+    *(BLoc+0*nparts) = compute( &coeffxp_[2], &coeffyd_[2], &coeffzd_[2], Bx3D, ip_, jd_, kd_);
 
     // -------------------------
     // Interpolation of By^(d,p,d)
     // -------------------------
-    (*BLoc).y = compute( &coeffxd_[2], &coeffyp_[2], &coeffzd_[2], By3D, id_, jp_, kd_);
-
+    *(BLoc+1*nparts) = compute( &coeffxd_[2], &coeffyp_[2], &coeffzd_[2], By3D, id_, jp_, kd_);
+    
     // -------------------------
     // Interpolation of Bz^(d,d,p)
     // -------------------------
-    (*BLoc).z = compute( &coeffxd_[2], &coeffyd_[2], &coeffzp_[2], Bz3D, id_, jd_, kp_);
+    *(BLoc+2*nparts) = compute( &coeffxd_[2], &coeffyd_[2], &coeffzp_[2], Bz3D, id_, jd_, kp_);
+
 
     // Static cast of the electromagnetic fields
     Field3D* Jx3D = static_cast<Field3D*>(EMfields->Jx_);
@@ -332,7 +339,7 @@ void Interpolator3D4Order::operator() (ElectroMagn* EMfields, Particles &particl
 
 }
 
-void Interpolator3D4Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread)
+void Interpolator3D4Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
 {
     std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
     std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);
@@ -343,7 +350,7 @@ void Interpolator3D4Order::operator() (ElectroMagn* EMfields, Particles &particl
     int nparts( particles.size() );
     for (int ipart=*istart ; ipart<*iend; ipart++ ) {
         //Interpolation on current particle
-        (*this)(EMfields, particles, ipart, &(*Epart)[ipart], &(*Bpart)[ipart]);
+        (*this)(EMfields, particles, ipart, nparts, &(*Epart)[ipart], &(*Bpart)[ipart]);
         //Buffering of iol and delta
         (*iold)[ipart+0*nparts]  = ip_;
         (*iold)[ipart+1*nparts]  = jp_;
@@ -354,3 +361,26 @@ void Interpolator3D4Order::operator() (ElectroMagn* EMfields, Particles &particl
     }
 
 }
+
+
+// Interpolator specific to tracked particles. A selection of particles may be provided
+void Interpolator3D4Order::operator() (ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, vector<unsigned int> * selection)
+{
+    if( selection ) {
+        
+        int nsel_tot = selection->size();
+        for (int isel=0 ; isel<nsel_tot; isel++ ) {
+            (*this)(EMfields, particles, (*selection)[isel], offset, buffer+isel, buffer+isel+3*offset);
+        }
+        
+    } else {
+        
+        int npart_tot = particles.size();
+        for (int ipart=0 ; ipart<npart_tot; ipart++ ) {
+            (*this)(EMfields, particles, ipart, offset, buffer+ipart, buffer+ipart+3*offset);
+        }
+        
+    }
+}
+
+

@@ -152,21 +152,21 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
 
 .. py:data:: clrw
- 
+
   :default: set to minimize the memory footprint of the particles pusher, especially interpolation and projection processes
- 
-  Advanced users. Integer specifying the cluster width along X direction in number of cells. 
-  The "cluster" is a sub-patch structure in which particles are sorted for cache improvement. 
-  clrw must divide the number of cells in one patch (in dimension X). 
+
+  Advanced users. Integer specifying the cluster width along X direction in number of cells.
+  The "cluster" is a sub-patch structure in which particles are sorted for cache improvement.
+  clrw must divide the number of cells in one patch (in dimension X).
   The finest sorting is achieved with clrw=1 and no sorting with clrw equal to the full size of a patch along dimension X.
-  The cluster size in dimension Y and Z is always the full extent of the patch. 
+  The cluster size in dimension Y and Z is always the full extent of the patch.
 
 .. py:data:: maxwell_solver
 
   :default: 'Yee'
 
   The solver for Maxwell's equations. Only ``"Yee"`` is available for all geometries at the moment. ``"Cowan"``, ``"Grassi"`` and ``"Lehe"``
-  are available for 2DCartesian and ``"Lehe"`` is available for 3DCartesian. Lehe solver is described in this `paper <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.021301>`_  
+  are available for 2DCartesian and ``"Lehe"`` is available for 3DCartesian. Lehe solver is described in this `paper <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.021301>`_
 
 .. py:data:: solve_poisson
 
@@ -199,6 +199,20 @@ The block ``Main`` is **mandatory** and has the following syntax::
   | **Syntax 2:** ``[[bc_X], [bc_Y], ...]``, different depending on x, y or z.
   | **Syntax 3:** ``[[bc_Xmin, bc_Xmax], ...]``,  different on each boundary.
 
+  ``"silver-muller"`` is an open boundary condition. The incident wave vector :math:`k_i` on each face is defined by ``"EM_boundary_conditions_k"``.
+  When using ``"silver-muller"`` as an injecting boundary, make sure :math:`k_i` is aligned with the wave you are injecting.
+  When using ``"silver-muller"`` as an absorbing boundary, the optimal wave absorption on a given face will be along :math:`k_{abs}` the specular reflection of :math:`k_i` on face `i`. 
+
+.. py:data:: EM_boundary_conditions_k
+
+  :type: list of lists of floats
+  :default: ``[[1.,0.,0.],[-1.,0.,0.],[0.,1.,0.],[0.,-1.,0.],[0.,0.,1.],[0.,0.,-1.]]``
+
+  `k` is the incident wave vector for each faces sequentially Xmin, Xmax, Ymin, Ymax, Zmin, Zmax defined by its coordinates in the `xyz` frame.  
+  The number of coordinates is equal to the dimension of the simulation. The number of given vectors must be equal to 1 or to the number of faces which is twice the dimension of the simulation.
+
+  | **Syntax 1:** ``[[1,0,0]]``, identical for all boundaries.
+  | **Syntax 2:** ``[[1,0,0],[-1,0,0], ...]``,  different on each boundary.
 
 .. py:data:: time_fields_frozen
 
@@ -246,7 +260,7 @@ Load Balancing
 ^^^^^^^^^^^^^^
 
 Load balancing (explained :ref:`here <LoadBalancingExplanation>`) consists in exchanging
-patches (domains of the simulation box) between MPI processes to reduce the 
+patches (domains of the simulation box) between MPI processes to reduce the
 computational load imbalance.
 The block ``LoadBalancing`` is optional. If you do not define it, load balancing will
 occur every 150 iterations.
@@ -280,7 +294,7 @@ occur every 150 iterations.
 
   Computational load of a single grid cell considered by the dynamic load balancing algorithm.
   This load is normalized to the load of a single particle.
- 
+
 .. py:data:: frozen_particle_load
 
   :default: 0.1
@@ -330,7 +344,7 @@ The block ``MovingWindow`` is optional. The window does not move it you do not d
 Current filtering
 ^^^^^^^^^^^^^^^^^
 
-The present version of :program:`Smilei` provides one method for current filtering,
+The present version of :program:`Smilei` provides a :ref:`multi-pass binomial filter <multipassBinomialFilter>` on the current densities,
 which parameters are controlled in the following block::
 
   CurrentFilter(
@@ -358,7 +372,8 @@ which parameters are controlled in the following block::
 Field filtering
 ^^^^^^^^^^^^^^^^^
 
-The present version of :program:`Smilei` provides one method for field filtering,
+The present version of :program:`Smilei` provides a method for field filtering
+(at the moment, only the :ref:`Friedman electric field time-filter <EfieldFilter>` is available)
 which parameters are controlled in the following block::
 
   FieldFilter(
@@ -431,21 +446,37 @@ Each species has to be defined in a ``Species`` block::
 
 .. py:data:: position_initialization
 
-   The initialization of particle positions:
+   The method for initialization of particle positions. Options are:
 
    * ``"regular"`` for regularly spaced
    * ``"random"`` for randomly distributed
    * ``"centered"`` for centered in each cell
-
+   * The :py:data:`name` of another species from which the positions are copied.
+     This option requires (1) that the *target* species' positions are initialized
+     using one of the three other options above and (2) that the number of particles
+     of both species are identical in each cell.
+   * A *numpy* array defining all the positions of the species' particles.
+     In this case you must also provide the weight of each particle (see :ref:`Weights`).
+     The array shape must be `(Ndim+1, Npart)` where `Ndim` is the simulation dimension,
+     and `Npart` is the total number of particles. Positions components `x`, `y`, `z` are
+     given along the first columns and the weights are given in the last column of the array.
+     This initialization is incompatible with :py:data:`number_density`, :py:data:`charge_density`
+     and :py:data:`particles_per_cell`.
 
 .. py:data:: momentum_initialization
 
-  The initialization of particle momenta:
+  The method for initialization of particle momenta. Options are:
 
   * ``"maxwell-juettner"`` for a relativistic maxwellian (see :doc:`how it is done<maxwell-juttner>`)
   * ``"rectangular"`` for a rectangular distribution
   * ``"cold"`` for zero temperature
-
+  * A *numpy* array defining all the momenta of the species' particles (requires that
+    :py:data:`position_initialization` also be an array with the same number of particles).
+    The array shape must be `(Ndim, Npart)` where `Ndim` is the simulation dimension,
+    and `Npart` is the total number of particles. Momentum components `px`, `py`, `pz`
+    are given in successive columns.This initialization is incompatible with
+    :py:data:`temperature` and :py:data:`mean_velocity`.
+  
   The first 2 distributions depend on the parameter :py:data:`temperature` explained below.
 
 .. py:data:: particles_per_cell
@@ -565,106 +596,86 @@ Each species has to be defined in a ``Species`` block::
 
   :default: ``"boris"``
 
-  Type of pusher to be used for this species. The default value corresponds to the
-  relativistic Boris pusher. Smilei has the following solvers implemented:
+  Type of pusher to be used for this species. Options are:
 
   * ``"boris"``: The relativistic Boris pusher
   * ``"borisnr"``: The non-relativistic Boris pusher
   * ``"vay"``: The relativistic pusher of J. L. Vay
   * ``"higueracary"``: The relativistic pusher of A. V. Higuera and J. R. Cary
-
-  For photon species, the only pusher available is ``"norm"`` and corresponds to
-  a rectilinear propagation.
+  * ``"norm"``:  For photon species only (rectilinear propagation)
 
 .. py:data:: radiation_model
 
   :default: ``"none"``
 
-  Radiation reaction model used for this species (see :doc:`radiation_loss`).
-  No radiation is actually emitted, unless you use the ``"Monte-Carlo"`` model
-  and you define :py:data:`radiation_photon_species`.
-
+  The **radiation reaction** model used for this species (see :doc:`radiation_loss`).
+  
   * ``"none"``: no radiation
-  * ``"Landau-Lifshitz"``: Landau-Lifshitz model approximated for high energies
-  * ``"corrected-Landau-Lifshitz"``: with quantum correction
+  * ``"Landau-Lifshitz"`` (or ``ll``): Landau-Lifshitz model approximated for high energies
+  * ``"corrected-Landau-Lifshitz"`` (or ``cll``): with quantum correction
   * ``""Niel"``: a `stochastic radiation model <https://arxiv.org/abs/1707.02618>`_ based on the work of Niel `et al.`.
-  * ``"Monte-Carlo"``: Monte-Carlo radiation model. This model can be configured to generate macro-photons with :py:data:`radiation_photon_species`.
-
-  :red:`This parameter cannot be assigned to photons (mass=0).`
+  * ``"Monte-Carlo"`` (or ``mc``): Monte-Carlo radiation model. This model can be configured to generate macro-photons with :py:data:`radiation_photon_species`.
+  
+  This parameter cannot be assigned to photons (mass = 0).
+  
+  Radiation is emitted only with the ``"Monte-Carlo"`` model when
+  :py:data:`radiation_photon_species` is defined.
 
 .. py:data:: radiation_photon_species
-
-  :default: ``None``
-
-  :red:`This parameter is an attribute of particle species only (mass>0).`
-
-  This parameter determines whether the Monte-Carlo :py:data:`radiation model`
-  will generate macro-photons. By default, the photon species is set to ``"none"``
-  meaning that no macro-photon will be created. To set the macro-photon generation,
-  a photon species (``mass = 0``) has to be created after the particle species
-  (``mass > 0``) and the parameter ``radiation_photon_species`` set to this
-  photon species name.
-
-  :red:`This parameter cannot be assigned to photons (mass=0).`
+  
+  The :py:data:`name` of the photon species in which the Monte-Carlo :py:data:`radiation_model`
+  will generate macro-photons. If unset (or ``None``), no macro-photon will be created.
+  The *target* photon species must be have its mass set to 0, and appear *after* the
+  particle species in the namelist.
+  
+  This parameter cannot be assigned to photons (mass = 0).
 
 .. py:data:: radiation_photon_sampling
 
   :default: ``1``
-
-  When the macro-photon creation is activated
-  (:py:data:`radiation_photon_species` set to one of the defined photon species),
-  this parameter is the number of macro-photons generated per emission event.
-  By default, a single macro-photon is created per emission but in order to
-  improve the photon statistics, one can decide to increase this number.
-  The weight of each photon is therefore the emitting particle one divided
-  by this number.
-  Obviously, this parameter can not be below 1. Note that a large number will
-  rapidly slow down the application performance and can lead to memory
-  saturation.
-
-  :red:`This parameter cannot be assigned to photons (mass=0).`
+  
+  The number of macro-photons generated per emission event, when the macro-photon creation
+  is activated (see :py:data:`radiation_photon_species`). The total macro-photon weight
+  is still conserved.
+  
+  A large number may rapidly slow down the performances and lead to memory saturation.
+  
+  This parameter cannot be assigned to photons (mass = 0).
 
 .. py:data:: radiation_photon_gamma_threshold
 
   :default: ``2``
-
-  Threshold on the photon energy for the macro-photon emission when using the
+  
+  The threshold on the photon energy for the macro-photon emission when using the
   radiation reaction Monte-Carlo process.
   Under this threshold, the macro-photon from the radiation reaction Monte-Carlo
-  process is not created but taken anyway into account in the energy balance.
+  process is not created but still taken into account in the energy balance.
   The default value corresponds to twice the electron rest mass energy that
   is the required energy to decay into electron-positron pairs.
 
-  :red:`This parameter cannot be assigned to photons (mass=0).`
+  This parameter cannot be assigned to photons (mass = 0).
 
 .. py:data:: multiphoton_Breit_Wheeler
 
   :default: ``[None,None]``
+  
+  An list of the :py:data:`name` of two species: electrons and positrons created through
+  the :doc:`multiphoton_Breit_Wheeler`.
+  By default, the process is not activated.
 
-  :red:`This parameter is an attribute of photon species only (mass=0).`
-
-  This entry is an
-  array of two strings respectively corresponding to one for the previously
-  defined electron and the positron species.
-  By default, ``"none"`` means that the process is not activated.
-  To activate the multiphoton Breit-Wheeler pair creation, just specify
-  a defined electron and positron species. (see :doc:`multiphoton_Breit_Wheeler`)
-
-  :red:`This parameter is an attribute of photon species only (mass=0).`
+  This parameter can **only** be assigned to photons species (mass = 0).
 
 .. py:data:: multiphoton_Breit_Wheeler_sampling
 
   :default: ``[1,1]``
 
-  This entry is an array of two integers respectively corresponding to the
-  number of electrons and positrons generated per photon decay. By default,
-  a single electron and positron are created. This number can be increased
-  to improve the particle statistics. The weight of each particle is therefore
-  the photon one divided by the corresponding number. Obviously, this parameter can not be
-  below 1. Note that large numbers will rapidly slow down the application
-  performance and can lead to memory saturation. (see :doc:`multiphoton_Breit_Wheeler`)
-
-  :red:`This parameter is an attribute of photon species only (mass=0).`
+  A list of two integers: the number of electrons and positrons generated per photon decay
+  in the :doc:`multiphoton_Breit_Wheeler`. The total macro-particle weight is still
+  conserved. 
+  
+  Large numbers may rapidly slow down the performances and lead to memory saturation.
+  
+  This parameter can **only** be assigned to photons species (mass = 0).
 
 ----
 
@@ -1265,6 +1276,7 @@ tables.
      h_chipa_min = 1E-3,
      h_chipa_max = 1E1,
      h_dim = 128,
+     h_computation_method = "table",
 
      # Parameter to generate the table integfochi used by the Monte-Carlo model
      integfochi_chipa_min = 1e-4,
@@ -1304,11 +1316,31 @@ tables.
 
   Dimension of the table *h* of Niel `et al`.
 
+.. py:data:: h_computation_method
+
+  :default: "table"
+
+  Method to compute the value of the table *h* of Niel `et al` during the emission process.
+  The possible values are:
+
+  * "table": the *h* function is tabulated. The table is computed at initialization or read from an external file.
+  * "fit5": A polynomial fit of order 5 is used. No table is required.
+    The maximal relative error to the reference data is of maximum of 0.02.
+    The fit is valid for quantum parameters :math:`\chi` between 1e-3 and 10.
+  * "fit10":  A polynomial fit of order 10 is used. No table is required.
+    The precision if better than the fit of order 5 with a maximal relative error of 0.0002.
+    The fit is valid for quantum parameters :math:`\chi` between 1e-3 and 10.
+  * "ridgers": The fit of Ridgers given in Ridgers et al., ArXiv 1708.04511 (2017)
+
+  The use of tabulated values is best for accuracy but not for performance.
+  Table access prevent total vectorization.
+  Fits are vectorizable.
+
 .. py:data:: integfochi_chipa_min
 
   :default: 1e-3
 
-  Minimum value of the quantum parameter :math:`\chi` for the table containing
+  Minimum value of the quantum parameter c for the table containing
   the integration of :math:`F/\chi`.
 
 .. py:data:: integfochi_chipa_max
@@ -1603,7 +1635,8 @@ This is done by including a block ``DiagFields``::
   DiagFields(
       every = 10,
       time_average = 2,
-      fields = ["Ex", "Ey", "Ez"]
+      fields = ["Ex", "Ey", "Ez"],
+      #subgrid = None
   )
 
 .. py:data:: every
@@ -1633,37 +1666,62 @@ This is done by including a block ``DiagFields``::
   :default: ``[]`` *(all fields are written)*
 
   List of the field names that are saved. By default, they all are.
+  The full list of fields that are saved by this diagnostic:
+  
+  .. rst-class:: nowrap
+  
+  +----------------+-------------------------------------------------------+
+  | | Bx           | |                                                     |
+  | | By           | | Components of the magnetic field                    |
+  | | Bz           | |                                                     |
+  +----------------+-------------------------------------------------------+
+  | | Bx_m         | |                                                     |
+  | | By_m         | | Components of the magnetic field (time-centered)    |
+  | | Bz_m         | |                                                     |
+  +----------------+-------------------------------------------------------+
+  | | Ex           | |                                                     |
+  | | Ey           | | Components of the electric field                    |
+  | | Ez           | |                                                     |
+  +----------------+-------------------------------------------------------+
+  | | Jx           | |                                                     |
+  | | Jy           | | Components of the total current                     |
+  | | Jz           | |                                                     |
+  +----------------+-------------------------------------------------------+
+  | | Jx_abc       | |                                                     |
+  | | Jy_abc       | | Components of the current due to species "abc"      |
+  | | Jz_abc       | |                                                     |
+  +----------------+-------------------------------------------------------+
+  | | Rho          | |  Total density                                      |
+  | | Rho_abc      | |  Density of species "abc"                           |
+  +----------------+-------------------------------------------------------+
 
+.. py:data:: subgrid
 
-The full list of fields that are saved by this diagnostic:
+  :default: ``None`` *(the whole grid is used)*
 
-
-.. rst-class:: nowrap
-
-+----------------+-------------------------------------------------------+
-| | Bx           | |                                                     |
-| | By           | | Components of the magnetic field                    |
-| | Bz           | |                                                     |
-+----------------+-------------------------------------------------------+
-| | Bx_m         | |                                                     |
-| | By_m         | | Components of the magnetic field (time-centered)    |
-| | Bz_m         | |                                                     |
-+----------------+-------------------------------------------------------+
-| | Ex           | |                                                     |
-| | Ey           | | Components of the electric field                    |
-| | Ez           | |                                                     |
-+----------------+-------------------------------------------------------+
-| | Jx           | |                                                     |
-| | Jy           | | Components of the total current                     |
-| | Jz           | |                                                     |
-+----------------+-------------------------------------------------------+
-| | Jx_abc       | |                                                     |
-| | Jy_abc       | | Components of the current due to species "abc"      |
-| | Jz_abc       | |                                                     |
-+----------------+-------------------------------------------------------+
-| | Rho          | |  Total density                                      |
-| | Rho_abc      | |  Density of species "abc"                           |
-+----------------+-------------------------------------------------------+
+  A list of slices indicating a portion of the simulation grid to be written by this
+  diagnostic. This list must have as many elements as the simulation dimension.
+  For example, in a 3D simulation, the list has 3 elements. Each element can be:
+  
+  * ``None``, to select the whole grid along that dimension
+  * an integer, to select only the corresponding cell index along that dimension
+  * a *python* `slice object <https://docs.python.org/3/library/functions.html#slice>`_
+    to select regularly-spaced cell indices along that dimension.
+  
+  This can be easily implemented using the
+  `numpy.s_ expression <https://docs.scipy.org/doc/numpy/reference/generated/numpy.s_.html>`_.
+  For instance, in a 3D simulation, the following subgrid selects only every other element
+  in each dimension::
+    
+    from numpy import s_
+    DiagFields( #...
+    	subgrid = s_[::2, ::2, ::2]
+    )
+  
+  while this one selects cell indices included in a contiguous parallelepiped::
+    
+    	subgrid = s_[100:300, 300:500, 300:600]
+  
 
 
 ----
@@ -1842,15 +1900,15 @@ for instance::
     containing the data of all particles in one patch. The function must return a *numpy*
     array of the same shape, containing the desired deposition of each particle. For example,
     defining the following function::
-      
+
       def stuff(particles):
           return particles.weight * particles.px
-    
+
     passed as ``deposited_quantity=stuff``, the diagnostic will sum the weights
     :math:`\times\; p_x`.
-    
+
     You may also pass directly an implicit (*lambda*) function using::
-    
+
       deposited_quantity = lambda p: p.weight * p.px
 
 
@@ -1886,11 +1944,11 @@ for instance::
 
   A list of "axes" that define the grid.
   There may be as many axes as wanted (there may be zero axes).
-  
+
   Syntax of one axis: ``[type, min, max, nsteps, "logscale", "edge_inclusive"]``
-  
+
   * ``type`` is one of:
-  
+
     * ``"x"``, ``"y"``, ``"z"``: spatial coordinates (``"moving_x"`` with a :ref:`moving window<movingWindow>`)
     * ``"px"``, ``"py"``, ``"pz"``, ``"p"``: momenta
     * ``"vx"``, ``"vy"``, ``"vz"``, ``"v"``: velocities
@@ -1898,13 +1956,13 @@ for instance::
     * ``"chi"``: quantum parameter
     * ``"charge"``: the particles' electric charge
     * or a *python function* with the same syntax as the ``deposited_quantity``.
-      Namely, this function must accept one argument only, for instance ``particles``, 
+      Namely, this function must accept one argument only, for instance ``particles``,
       which holds the attributes ``x``, ``y``, ``z``, ``px``, ``py``, ``pz``, ``charge``,
       ``weight`` and ``id``. Each of these attributes is a *numpy* array containing the
       data of all particles in one patch. The function must return a *numpy* array of
       the same shape, containing the desired quantity of each particle that will decide
       its location in the histogram binning.
-      
+
   * The axis is discretized for ``type`` from ``min`` to ``max`` in ``nsteps`` bins.
   * The optional keyword ``logscale`` sets the axis scale to logarithmic instead of linear.
   * The optional keyword ``edge_inclusive`` includes the particles outside the range
@@ -2093,7 +2151,7 @@ for instance::
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A *particle tracking diagnostic* records the macro-particle positions and momenta at various timesteps.
-Typically, this is used for plotting trajectories.
+Typically, this is used for plotting trajectories. 
 
 You can add a tracking diagnostic by including a block ``DiagTrackParticles()`` in the namelist,
 for instance::
@@ -2103,6 +2161,7 @@ for instance::
       every = 10,
   #    flush_every = 100,
   #    filter = my_filter,
+  #    attributes = ["x", "px", "py", "Ex", "Ey", "Bz"]
   )
 
 .. py:data:: species
@@ -2147,15 +2206,25 @@ for instance::
     def my_filter(particles):
         return (particles.px>-1.)*(particles.px<1.) + (particles.pz>3.)
 
-.. Note:: The ``id`` attribute contains the particles identification number.
-  This number is set to 0 at the beginning of the simulation. Only after particles have
-  passed the filter, they acquire a positive ``id``.
+.. Note:: The ``id`` attribute contains the :doc:`particles identification number<ids>`.
+  This number is set to 0 at the beginning of the simulation. **Only after particles have
+  passed the filter**, they acquire a positive ``id``.
 
 .. Note:: For advanced filtration, Smilei provides the quantity ``Main.iteration``,
   accessible within the ``filter`` function. Its value is always equal to the current
   iteration number of the PIC loop. The current time of the simulation is thus
   ``Main.iteration * Main.timestep``.
 
+.. py:data:: attributes
+
+  :default: ``["x","y","z","px","py","pz"]``
+
+  A list of strings indicating the particle attributes to be written in the output.
+  The attributes may be the particles' spatial coordinates (``"x"``, ``"y"``, ``"z"``),
+  their momenta (``"px"``, ``"py"``, ``"pz"``), their electrical charge (``"q"``),
+  their statistical weight (``"w"``), their quantum parameter
+  (``"chi"``, only for species with radiation losses) or the fields interpolated
+  at their  positions (``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"``, ``"Bz"``).
 
 ----
 

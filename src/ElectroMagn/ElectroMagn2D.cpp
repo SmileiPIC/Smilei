@@ -20,8 +20,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Electromagn2D
 // ---------------------------------------------------------------------------------------------------------------------
-ElectroMagn2D::ElectroMagn2D(Params &params, vector<Species*>& vecSpecies, Patch* patch) : 
-  ElectroMagn(params, vecSpecies, patch),
+ElectroMagn2D::ElectroMagn2D(Params &params, DomainDecomposition* domain_decomposition, vector<Species*>& vecSpecies, Patch* patch) : 
+  ElectroMagn(params, domain_decomposition, vecSpecies, patch),
 isYmin(patch->isYmin()),
 isYmax(patch->isYmax())
 {    
@@ -155,6 +155,22 @@ void ElectroMagn2D::initElectroMagn2DQuantities(Params &params, Patch* patch)
     Jz_   = new Field2D(dimPrim, 2, false, "Jz");
     rho_  = new Field2D(dimPrim, "Rho" );
     
+    if(params.is_pxr == true) {
+        rhoold_ = new Field2D(dimPrim,"Rho");
+        Ex_pxr  = new Field2D(dimDual);
+        Ey_pxr  = new Field2D(dimDual);
+        Ez_pxr  = new Field2D(dimDual);
+        Bx_pxr  = new Field2D(dimDual);
+        By_pxr  = new Field2D(dimDual);
+        Bz_pxr  = new Field2D(dimDual);
+        Jx_pxr  = new Field2D(dimDual);
+        Jy_pxr  = new Field2D(dimDual);
+        Jz_pxr  = new Field2D(dimDual);
+        rho_pxr = new Field2D(dimDual);
+        rhoold_pxr  = new Field2D(dimDual);
+    }
+
+
     // ----------------------------------------------------------------
     // Definition of the min and max index according to chosen oversize
     // ----------------------------------------------------------------
@@ -453,44 +469,50 @@ void ElectroMagn2D::centeringE( std::vector<double> E_Add )
 // ---------------------------------------------------------------------------------------------------------------------
 // Save the former Magnetic-Fields (used to center them)
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagn2D::saveMagneticFields()
+void ElectroMagn2D::saveMagneticFields(bool is_spectral)
 {
     // Static cast of the fields
-    Field2D* Bx2D   = static_cast<Field2D*>(Bx_);
-    Field2D* By2D   = static_cast<Field2D*>(By_);
-    Field2D* Bz2D   = static_cast<Field2D*>(Bz_);
-    Field2D* Bx2D_m = static_cast<Field2D*>(Bx_m);
-    Field2D* By2D_m = static_cast<Field2D*>(By_m);
-    Field2D* Bz2D_m = static_cast<Field2D*>(Bz_m);
-    
-    // Magnetic field Bx^(p,d)
-    for (unsigned int i=0 ; i<nx_p ; i++) {
-        memcpy(&((*Bx2D_m)(i,0)), &((*Bx2D)(i,0)),ny_d*sizeof(double) );
-        //for (unsigned int j=0 ; j<ny_d ; j++) {
-        //    (*Bx2D_m)(i,j)=(*Bx2D)(i,j);
-        //}
-    
-    // Magnetic field By^(d,p)
-        memcpy(&((*By2D_m)(i,0)), &((*By2D)(i,0)),ny_p*sizeof(double) );
-        //for (unsigned int j=0 ; j<ny_p ; j++) {
-        //    (*By2D_m)(i,j)=(*By2D)(i,j);
-        //}
-    
-    // Magnetic field Bz^(d,d)
-        memcpy(&((*Bz2D_m)(i,0)), &((*Bz2D)(i,0)),ny_d*sizeof(double) );
-        //for (unsigned int j=0 ; j<ny_d ; j++) {
-        //    (*Bz2D_m)(i,j)=(*Bz2D)(i,j);
-        //}
-    }// end for i
-        memcpy(&((*By2D_m)(nx_p,0)), &((*By2D)(nx_p,0)),ny_p*sizeof(double) );
-        //for (unsigned int j=0 ; j<ny_p ; j++) {
-        //    (*By2D_m)(nx_p,j)=(*By2D)(nx_p,j);
-        //}
-        memcpy(&((*Bz2D_m)(nx_p,0)), &((*Bz2D)(nx_p,0)),ny_d*sizeof(double) );
-        //for (unsigned int j=0 ; j<ny_d ; j++) {
-        //    (*Bz2D_m)(nx_p,j)=(*Bz2D)(nx_p,j);
-        //}
-    
+    if(!is_spectral  ){
+   	 Field2D* Bx2D   = static_cast<Field2D*>(Bx_);
+   	 Field2D* By2D   = static_cast<Field2D*>(By_);
+   	 Field2D* Bz2D   = static_cast<Field2D*>(Bz_);
+   	 Field2D* Bx2D_m = static_cast<Field2D*>(Bx_m);
+   	 Field2D* By2D_m = static_cast<Field2D*>(By_m);
+   	 Field2D* Bz2D_m = static_cast<Field2D*>(Bz_m);
+   	 
+   	 // Magnetic field Bx^(p,d)
+   	 for (unsigned int i=0 ; i<nx_p ; i++) {
+   	     memcpy(&((*Bx2D_m)(i,0)), &((*Bx2D)(i,0)),ny_d*sizeof(double) );
+   	     //for (unsigned int j=0 ; j<ny_d ; j++) {
+   	     //    (*Bx2D_m)(i,j)=(*Bx2D)(i,j);
+   	     //}
+   	 
+   	 // Magnetic field By^(d,p)
+   	     memcpy(&((*By2D_m)(i,0)), &((*By2D)(i,0)),ny_p*sizeof(double) );
+   	     //for (unsigned int j=0 ; j<ny_p ; j++) {
+   	     //    (*By2D_m)(i,j)=(*By2D)(i,j);
+   	     //}
+   	 
+   	 // Magnetic field Bz^(d,d)
+   	     memcpy(&((*Bz2D_m)(i,0)), &((*Bz2D)(i,0)),ny_d*sizeof(double) );
+   	     //for (unsigned int j=0 ; j<ny_d ; j++) {
+   	     //    (*Bz2D_m)(i,j)=(*Bz2D)(i,j);
+   	     //}
+   	 }// end for i
+   	     memcpy(&((*By2D_m)(nx_p,0)), &((*By2D)(nx_p,0)),ny_p*sizeof(double) );
+   	     //for (unsigned int j=0 ; j<ny_p ; j++) {
+   	     //    (*By2D_m)(nx_p,j)=(*By2D)(nx_p,j);
+   	     //}
+   	     memcpy(&((*Bz2D_m)(nx_p,0)), &((*Bz2D)(nx_p,0)),ny_d*sizeof(double) );
+   	     //for (unsigned int j=0 ; j<ny_d ; j++) {
+   	     //    (*Bz2D_m)(nx_p,j)=(*Bz2D)(nx_p,j);
+   	     //}
+    }
+    else{
+        Bx_m = Bx_;
+        By_m = By_;
+        Bz_m = Bz_;
+    }   
 }//END saveMagneticFields
 
 
