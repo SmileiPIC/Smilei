@@ -186,6 +186,23 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   Maximum error for the Poisson solver.
 
+.. py:data:: solve_relativistic_poisson
+
+   :default: True
+
+   Decides if relativistic Poisson problem must be solved for at least one species
+
+.. py:data:: relativistic_poisson_max_iteration
+
+  :default: 50000
+
+  Maximum number of iteration for the Poisson solver.
+
+.. py:data:: relativistic_poisson_max_error
+
+  :default: 1e-22
+
+  Maximum error for the Poisson solver.
 
 .. py:data:: EM_boundary_conditions
 
@@ -218,7 +235,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   :default: 0.
 
-  Time, at the beginning of the simulation, during which fields are frozen.
+  Time, at the beginning of the simulation, during which fields are frozen. 
 
 
 .. _reference_angular_frequency_SI:
@@ -434,6 +451,9 @@ Each species has to be defined in a ``Species`` block::
       radiation_photon_species = "photon",
       radiation_photon_sampling = 1,
       radiation_photon_gamma_threshold = 2,
+
+      # Relativistic field initialization:
+      relativistic_field_initialization = "False",
 
       # For photon species only:
       multiphoton_Breit_Wheeler = ["electron","positron"],
@@ -654,6 +674,15 @@ Each species has to be defined in a ``Species`` block::
   is the required energy to decay into electron-positron pairs.
 
   This parameter cannot be assigned to photons (mass = 0).
+
+.. py:data:: relativistic_field_initialization
+
+  :default: ``False``
+  
+  Flag for relativistic particles. If ``True``, the electromagnetic fields of this species will added to the simulation electromagnetic fields.
+  This operation will be performed when time equals :py:data:`time_frozen`. See :doc:`relativistic_fields_initialization` for details on the computation of the electromagentic fiels of a relativistic species.  
+
+    
 
 .. py:data:: multiphoton_Breit_Wheeler
 
