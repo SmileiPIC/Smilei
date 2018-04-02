@@ -756,6 +756,12 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
 
 void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, double time_primal )
 {
+
+
+    Timer ptimer("global");
+    ptimer.init(smpi);
+    ptimer.restart();
+
     // Assumption: one or more species move in vacuum with mean lorentz gamma factor gamma_mean in the x direction, 
     // with low energy spread.
     // The electromagnetic fields of this species can be initialized solving a Poisson-like problem (here informally 
@@ -1104,6 +1110,10 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
 
     //ptimer.update();
     //MESSAGE("Time in Relativistic Poisson : " << ptimer.getTime() );
+
+
+    ptimer.update();
+    MESSAGE("Time in Relativistic Poisson : " << ptimer.getTime() );
 
 } // END solveRelativisticPoisson
 

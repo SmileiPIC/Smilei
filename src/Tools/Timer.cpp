@@ -55,6 +55,7 @@ void Timer::reboot()
     smpi_->barrier();
     last_start_ =  MPI_Wtime();
     time_acc_ = 0.;
+    register_timers.clear();
 }
 
 void Timer::print(double tot)
