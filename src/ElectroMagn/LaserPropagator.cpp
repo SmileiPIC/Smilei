@@ -67,7 +67,7 @@ void LaserPropagator::init(Params* params, SmileiMPI* smpi, unsigned int side)
     MPI_size = smpi->getSize();
     MPI_rank = smpi->getRank();
     
-    N     .resize( ndim );
+    N     .resize( 3, 0 ); // third value not used in 2D
     L     .resize( ndim );
     Nlocal.resize( ndim );
     
@@ -136,7 +136,6 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
     PyObject* fft      = PyObject_GetAttrString(numpyfft, "fft"  );
     PyObject* ifft     = PyObject_GetAttrString(numpyfft, "ifft" );
     PyObject* fft2     = PyObject_GetAttrString(numpyfft, "fft2" );
-    PyObject* ifft2    = PyObject_GetAttrString(numpyfft, "ifft2");
     Py_DECREF(numpyfft);
     int complex_type_num=0;
     
@@ -145,11 +144,6 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
     PyTools::convert(numpy_version, version);
     MESSAGE("NUMPY VERSION : " << version );
     Py_DECREF(numpy_version);
-    
-    // Import other functions (see pyprofiles.py)
-    PyObject* applyProfiles    = PyObject_GetAttrString(PyImport_AddModule("__main__"), "_applyProfiles");
-    PyObject* reshapeTranspose = PyObject_GetAttrString(PyImport_AddModule("__main__"), "_reshapeTranspose");
-    PyObject* transposeReshape = PyObject_GetAttrString(PyImport_AddModule("__main__"), "_transposeReshape");
     
     MPI_Barrier(MPI_COMM_WORLD);
     cout << ro_.str() << 1 << endl;;
@@ -163,27 +157,27 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
         coords[i] = PyArray_SimpleNewFromData(1, &dims, NPY_DOUBLE, (double*)(local_x[i].data()));
     }
     
-    // Call the python function _applyProfiles
-    PyObject *ret, *tuple_coords, *tuple_profiles;
-    if( _2D ) tuple_coords = Py_BuildValue("(O,O)"  , coords[0], coords[1]           );
-    else      tuple_coords = Py_BuildValue("(O,O,O)", coords[0], coords[1], coords[2]);
-    if( nprofiles==1 ) tuple_profiles = Py_BuildValue("(O)"  , profiles[0]             );
-    else               tuple_profiles = Py_BuildValue("(O,O)", profiles[0], profiles[1]);
-    ret = PyCall(applyProfiles, Py_BuildValue("(O,O)", tuple_coords, tuple_profiles), NULL);
-    Py_DECREF(tuple_coords);
-    Py_DECREF(tuple_profiles);
-    if( ret == NULL ) {
-        PyTools::checkPyError();
-        ERROR("Error in a profile of LaserOffset");
-    }
-    
-    // Recover the several arrays
-    vector<PyObject*> arrays( nprofiles );
-    for( unsigned int i=0; i<nprofiles; i++ )
-        arrays[i] = PySequence_GetItem(ret, i);
+    // Make a "meshgrid" using the coordinates
+    PyObject* meshgrid = PyObject_GetAttrString(numpy, "meshgrid");
+    PyObject* m;
+    if( _2D ) m = PyCall(meshgrid, Py_BuildValue("(O,O)"  , coords[0], coords[1]           ), Py_BuildValue("{s:s}", "indexing", "ij"));
+    else      m = PyCall(meshgrid, Py_BuildValue("(O,O,O)", coords[0], coords[1], coords[2]), Py_BuildValue("{s:s}", "indexing", "ij"));
+    PyObject* mesh = PySequence_Tuple(m);
     for( unsigned int i=0; i<ndim; i++ )
         Py_DECREF(coords[i]);
-    Py_DECREF(ret);
+    Py_DECREF(meshgrid);
+    Py_DECREF(m);
+    
+    // Apply each profile
+    vector<PyObject*> arrays( nprofiles );
+    for( unsigned int i=0; i<nprofiles; i++ ) {
+        // Vectorize the profile
+        PyObject* profile = PyObject_CallMethod(numpy, "vectorize", "O", profiles[i]);
+        // Apply to the mesh
+        arrays[i] = PyObject_CallObject(profile, mesh);
+        Py_DECREF(profile);
+    }
+    Py_DECREF(mesh);
     
     MPI_Barrier(MPI_COMM_WORLD);
     cout << ro_.str() << 2 << endl;;
@@ -200,10 +194,18 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
         Py_DECREF(arrays[i]);
     MESSAGE(1," fft is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)a));
         
-        // Change the array shape to prepare the MPI comms
-        if( _2D ) arrays[i] = PyCall( reshapeTranspose, Py_BuildValue("(O, (i,i,i), (i,i,i))"    , a, Nlocal[0], MPI_size, Nlocal[1]      , 1, 0, 2   ), NULL );
-        else      arrays[i] = PyCall( reshapeTranspose, Py_BuildValue("(O, (i,i,i,i), (i,i,i,i))", a, Nlocal[0], MPI_size, Nlocal[1], N[2], 1, 0, 2, 3), NULL );
+        // Change the array shape to prepare the MPI comms (reshape, transpose, C ordering)
+        npy_intp D[4] = {Nlocal[0], MPI_size, Nlocal[1], N[2]};
+        PyArray_Dims shape; shape.len=ndim+1; shape.ptr=D;
+        arrays[i] = PyArray_Newshape((PyArrayObject*)a, &shape, NPY_CORDER);
         Py_DECREF(a);
+        npy_intp P[4] = {1, 0, 2, 3};
+        PyArray_Dims permute; permute.len=ndim+1; permute.ptr=P;
+        a = PyArray_Transpose((PyArrayObject*)arrays[i], &permute);
+        Py_DECREF(arrays[i]);
+        arrays[i] = PyArray_FROM_OF(a, NPY_ARRAY_C_CONTIGUOUS);
+        Py_DECREF(a);
+        
     MESSAGE(1," reshapeTranspose is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)arrays[0]));
         
         // Obtain the number associated to the complex type in numpy
@@ -245,8 +247,8 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
         vector<double> local_spectrum( Nlocal[1], 0. );
         for( unsigned int i=0; i<nprofiles; i++ ) {
             complex<double> * z = (complex<double> *) PyArray_GETPTR1((PyArrayObject*) arrays[i],0);
-            for(unsigned int j=0; j<N[0]; j++) 
-                for(unsigned int k=0; k<Nlocal[1]; k++) 
+            for(unsigned int k=0; k<Nlocal[1]; k++) 
+                for(unsigned int j=0; j<N[0]; j++) 
                     local_spectrum[k] += abs(z[j + N[0]*k]);
         }
         // In 2D, the spectrum is scattered across processors, so we gather to root
@@ -262,9 +264,9 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
         vector<double> local_spectrum( lmax, 0. );
         for( unsigned int i=0; i<nprofiles; i++ ) {
             complex<double> * z = (complex<double> *) PyArray_GETPTR1((PyArrayObject*) arrays[i],0);
-            for(unsigned int j=0; j<N[0]; j++) 
+            for(unsigned int l=0; l<lmax; l++) 
                 for(unsigned int k=0; k<Nlocal[1]; k++) 
-                    for(unsigned int l=0; l<lmax; l++) 
+                    for(unsigned int j=0; j<N[0]; j++) 
                         local_spectrum[l] += abs(z[j + N[0]*( k + Nlocal[1]*l )]);
         }
         // In 3D, each processor has the full spectrum, so we sum all contributions
@@ -354,8 +356,8 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
             PyObject* a = PyArray_New(&PyArray_Type, 2, dims, complex_type_num, NULL, NULL, 128, NPY_ARRAY_F_CONTIGUOUS, NULL);
             complex<double> * z0 = (complex<double> *) PyArray_GETPTR1((PyArrayObject*) arrays[i],0);
             complex<double> * z  = (complex<double> *) PyArray_GETPTR1((PyArrayObject*) a        ,0);
-            for(unsigned int j=0; j<N[0]; j++) 
-                for(unsigned int k=0; k<n_omega_local; k++) 
+            for(unsigned int k=0; k<n_omega_local; k++) 
+                for(unsigned int j=0; j<N[0]; j++) 
                     z[j + N[0]*k] = z0[j + N[0]*indices[k]]
                         * exp( i_ * offset * sqrt( max(0., pow(omega[k],2) - pow(local_k[0][j],2)) ) );
             Py_DECREF(arrays[i]);
@@ -363,32 +365,11 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
         } else {
             npy_intp dims[3] = {N[0], Nlocal[1], n_omega_local};
             PyObject* a = PyArray_New(&PyArray_Type, 3, dims, complex_type_num, NULL, NULL, 128, NPY_ARRAY_F_CONTIGUOUS, NULL);
-            
-            //ostringstream t("");
-            //t<<"k0 ";
-            //for(unsigned int j=0; j<N[0]; j++) t<<local_k[0][j]<<" ";
-            //t<<endl;
-            //MESSAGE(t.str());
-            //
-            //t.str("");
-            //t<<"k1 ";
-            //for(unsigned int k=0; k<Nlocal[1]; k++)  t<<local_k[1][k]<<" ";
-            //t<<endl;
-            //MESSAGE(t.str());
-            //
-            //t.str("");
-            //t<<"omega ";
-            //for(unsigned int l=0; l<n_omega_local; l++)   t<<omega[l]<<" ";
-            //t<<endl;
-            //MESSAGE(t.str());
-            
-            MESSAGE("offset " << offset);
-            
             complex<double> * z0 = (complex<double> *) PyArray_GETPTR1((PyArrayObject*) arrays[i],0);
             complex<double> * z  = (complex<double> *) PyArray_GETPTR1((PyArrayObject*) a        ,0);
-            for(unsigned int j=0; j<N[0]; j++) 
+            for(unsigned int l=0; l<n_omega_local; l++) 
                 for(unsigned int k=0; k<Nlocal[1]; k++) 
-                    for(unsigned int l=0; l<n_omega_local; l++) 
+                    for(unsigned int j=0; j<N[0]; j++) 
                         z[j + N[0]*( k + Nlocal[1]*l )] = z0[j + N[0]*( k + Nlocal[1]*indices[l] )]
                             * exp( i_ * offset * sqrt( max(0., pow(omega[l],2) - pow(local_k[0][j],2) - pow(local_k[1][k],2)) ) );
             Py_DECREF(arrays[i]);
@@ -437,8 +418,17 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
     MESSAGE(1," alltoall is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)a));
             
             // Change the array shape to accomodate the MPI comms
-            arrays[i] = PyCall( transposeReshape, Py_BuildValue("(O, (i,i,i), (i,i,i,i))", a, Nlocal[0], N[1], n_omega_local, 1, 0, 2, 3), NULL );
+            npy_intp P[4] = {1, 0, 2, 3};
+            PyArray_Dims permute; permute.len=4; permute.ptr=P;
+            arrays[i] = PyArray_Transpose((PyArrayObject*)a, &permute);
             Py_DECREF(a);
+            npy_intp D[3] = {Nlocal[0], N[1], n_omega_local};
+            PyArray_Dims shape; shape.len=3; shape.ptr=D;
+            a = PyArray_Newshape((PyArrayObject*)arrays[i], &shape, NPY_CORDER);
+            Py_DECREF(arrays[i]);
+            arrays[i] = PyArray_FROM_OF(a, NPY_ARRAY_C_CONTIGUOUS);
+            Py_DECREF(a);
+            
     MESSAGE(1," transpose is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)arrays[i]));
             
             // Call FFT along the second direction
@@ -569,10 +559,6 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
     Py_DECREF(fft  );
     Py_DECREF(ifft );
     Py_DECREF(fft2 );
-    Py_DECREF(ifft2);
-    Py_DECREF(applyProfiles   );
-    Py_DECREF(reshapeTranspose);
-    Py_DECREF(transposeReshape);
     
 #else
     return 0;

@@ -585,16 +585,6 @@ def LaserGaussian3D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
 try:
     import numpy as np
     
-    def _applyProfiles( coordinates, profiles ):
-        mesh = np.meshgrid(*coordinates, indexing="ij")
-        return [np.vectorize(p)(*mesh) for p in profiles]
-    
-    def _reshapeTranspose( array, shape, transpose ):
-        return np.ascontiguousarray(array.reshape(shape).transpose(transpose))
-    
-    def _transposeReshape( array, shape, transpose ):
-        return np.ascontiguousarray(array.transpose(transpose).reshape(shape))
-    
     _N_LaserOffset = 0
     
     def LaserOffset(box_side="xmin", space_time_profile=[], offset=0., time_envelope=1., keep_n_best_frequencies=100):
