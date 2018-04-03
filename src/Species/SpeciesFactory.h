@@ -622,12 +622,14 @@ public:
         newSpecies->ionization_model                         = species->ionization_model;
         newSpecies->densityProfileType                       = species->densityProfileType;
         newSpecies->chargeProfile                            = new Profile(species->chargeProfile);
-        if ( !species->position_initialization_array ){ 
+        
+        if ( species->densityProfile ){ 
             newSpecies->densityProfile                       = new Profile(species->densityProfile);
             newSpecies->ppcProfile                           = new Profile(species->ppcProfile);
         }
         newSpecies->velocityProfile.resize(3);
         newSpecies->temperatureProfile.resize(3);
+
         if ( species->velocityProfile[0] ){ 
             newSpecies->velocityProfile[0]                   = new Profile(species->velocityProfile[0]);
             newSpecies->velocityProfile[1]                   = new Profile(species->velocityProfile[1]);
@@ -651,6 +653,7 @@ public:
         newSpecies->particles->tracked                       = species->particles->tracked;
         newSpecies->particles->isQuantumParameter            = species->particles->isQuantumParameter;
         newSpecies->particles->isMonteCarlo                  = species->particles->isMonteCarlo;
+
 
         // \todo : NOT SURE HOW THIS BEHAVES WITH RESTART
         if ( (!params.restart) && (with_particles) ) {
