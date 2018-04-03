@@ -122,10 +122,13 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
     
     MPI_Barrier(MPI_COMM_WORLD);
     cout << ro_.str() << "0" << endl;;
+    
     MESSAGE(1,"nprofiles = "<<nprofiles);
-    MESSAGE(1,"N = "<<N[0]<<" "<<N[1]);
+    MESSAGE(1,"N = "<<N[0]<<" "<<N[1]<<" "<<(_2D ? 0 : N[2]));
     MESSAGE(1,"Nlocal = "<<Nlocal[0]<<" "<<Nlocal[1]);
-    MESSAGE(1,"L = "<<L[0]<<" "<<L[1]);
+    MESSAGE(1,"L = "<<L[0]<<" "<<L[1]<<" "<<(_2D ? 0 : L[2]));
+    
+    MESSAGE(1," Size of complex : " << sizeof(complex<double>));
     
     // Import several functions from numpy
     PyObject* numpy = PyImport_AddModule("numpy");
@@ -135,21 +138,18 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
     PyObject* fft2     = PyObject_GetAttrString(numpyfft, "fft2" );
     PyObject* ifft2    = PyObject_GetAttrString(numpyfft, "ifft2");
     Py_DECREF(numpyfft);
+    int complex_type_num=0;
+    
+    string version = "error";
+    PyObject* numpy_version = PyObject_GetAttrString(numpy   , "__version__"  );
+    PyTools::convert(numpy_version, version);
+    MESSAGE("NUMPY VERSION : " << version );
+    Py_DECREF(numpy_version);
     
     // Import other functions (see pyprofiles.py)
     PyObject* applyProfiles    = PyObject_GetAttrString(PyImport_AddModule("__main__"), "_applyProfiles");
     PyObject* reshapeTranspose = PyObject_GetAttrString(PyImport_AddModule("__main__"), "_reshapeTranspose");
     PyObject* transposeReshape = PyObject_GetAttrString(PyImport_AddModule("__main__"), "_transposeReshape");
-    
-    // Obtain the number associated to the complex type in numpy
-    unsigned int complex_type_num=0;
-    PyObject* complex128 = PyObject_GetAttrString(numpy, "complex128");
-    PyObject* complex128_dtype = PyObject_CallMethod(numpy, "dtype", "O", complex128);
-    PyObject* complex128_num = PyObject_GetAttrString(complex128_dtype, "num");
-    PyTools::convert( complex128_num, complex_type_num );
-    Py_DECREF(complex128_num);
-    Py_DECREF(complex128_dtype);
-    Py_DECREF(complex128);
     
     MPI_Barrier(MPI_COMM_WORLD);
     cout << ro_.str() << 1 << endl;;
@@ -206,6 +206,9 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
         Py_DECREF(a);
     MESSAGE(1," reshapeTranspose is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)arrays[0]));
         
+        // Obtain the number associated to the complex type in numpy
+        complex_type_num = PyArray_TYPE((PyArrayObject*) arrays[i]);
+        
         // Make a new empty array for MPI comms
         npy_intp dims[ndim];
         dims[0] = N[0];
@@ -227,7 +230,7 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
         // Call FFT along the first direction
         arrays[i] = PyCall( fft, Py_BuildValue("(O)", a), Py_BuildValue("{s:i}", "axis", 0) );
         Py_DECREF(a);
-    MESSAGE(1," fft is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)arrays[0]));
+    MESSAGE(1," fft is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)arrays[0]) << PyArray_ISONESEGMENT((PyArrayObject*)arrays[0])<< " " << PyArray_ITEMSIZE((PyArrayObject*)arrays[0]));
     }
     
     MPI_Barrier(MPI_COMM_WORLD);
@@ -348,7 +351,7 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
     for( unsigned int i=0; i<nprofiles; i++ ) {
         if( _2D ) {
             npy_intp dims[2] = {N[0], n_omega_local};
-            PyObject* a = PyArray_New(&PyArray_Type, 2, dims, complex_type_num, NULL, NULL, 128, 1, NULL);
+            PyObject* a = PyArray_New(&PyArray_Type, 2, dims, complex_type_num, NULL, NULL, 128, NPY_ARRAY_F_CONTIGUOUS, NULL);
             complex<double> * z0 = (complex<double> *) PyArray_GETPTR1((PyArrayObject*) arrays[i],0);
             complex<double> * z  = (complex<double> *) PyArray_GETPTR1((PyArrayObject*) a        ,0);
             for(unsigned int j=0; j<N[0]; j++) 
@@ -359,7 +362,28 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
             arrays[i] = a;
         } else {
             npy_intp dims[3] = {N[0], Nlocal[1], n_omega_local};
-            PyObject* a = PyArray_New(&PyArray_Type, 3, dims, complex_type_num, NULL, NULL, 128, 1, NULL);
+            PyObject* a = PyArray_New(&PyArray_Type, 3, dims, complex_type_num, NULL, NULL, 128, NPY_ARRAY_F_CONTIGUOUS, NULL);
+            
+            //ostringstream t("");
+            //t<<"k0 ";
+            //for(unsigned int j=0; j<N[0]; j++) t<<local_k[0][j]<<" ";
+            //t<<endl;
+            //MESSAGE(t.str());
+            //
+            //t.str("");
+            //t<<"k1 ";
+            //for(unsigned int k=0; k<Nlocal[1]; k++)  t<<local_k[1][k]<<" ";
+            //t<<endl;
+            //MESSAGE(t.str());
+            //
+            //t.str("");
+            //t<<"omega ";
+            //for(unsigned int l=0; l<n_omega_local; l++)   t<<omega[l]<<" ";
+            //t<<endl;
+            //MESSAGE(t.str());
+            
+            MESSAGE("offset " << offset);
+            
             complex<double> * z0 = (complex<double> *) PyArray_GETPTR1((PyArrayObject*) arrays[i],0);
             complex<double> * z  = (complex<double> *) PyArray_GETPTR1((PyArrayObject*) a        ,0);
             for(unsigned int j=0; j<N[0]; j++) 
@@ -374,7 +398,7 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
     
     MPI_Barrier(MPI_COMM_WORLD);
     cout << ro_.str() << 5 << endl;;
-    MESSAGE(1," is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)arrays[0]));
+    MESSAGE(1," is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)arrays[0]) << PyArray_ISONESEGMENT((PyArrayObject*)arrays[0])<< " " << PyArray_ITEMSIZE((PyArrayObject*)arrays[0]));
     // 5- Fourier transform back to real space, excluding the omega axis
     // --------------------------------
     
@@ -384,38 +408,45 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
         // Call FFT along the first direction
         a = PyCall( ifft, Py_BuildValue("(O)", arrays[i]), Py_BuildValue("{s:i}", "axis", 0) );
         Py_DECREF(arrays[i]);
-    MESSAGE(1," ifft is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)a));
         
-        if( _2D ) {
-            arrays[i] = a;
-        } else {
+        // Convert the array to C order
+        arrays[i] = PyArray_FROM_OF(a, NPY_ARRAY_C_CONTIGUOUS);
+        Py_DECREF(a);
+    MESSAGE(1," FROM_OF is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)arrays[i]));
+        
+        if( ! _2D ) {
+            
             // Make a new empty array for MPI comms
             npy_intp dims[4];
             dims[0] = MPI_size;
             dims[1] = Nlocal[0];
             dims[2] = Nlocal[1];
             dims[3] = n_omega_local;
-            arrays[i] = PyArray_EMPTY(4, dims, complex_type_num, 1);
+            a = PyArray_EMPTY(4, dims, complex_type_num, 0);
             
-    MESSAGE(1," empty is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)arrays[0]));
+    MESSAGE(1," empty is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)a));
             
             // Communicate blocks to transpose the MPI decomposition
             int block_size = Nlocal[0]*Nlocal[1]*n_omega_local;
             MPI_Alltoall(
-                PyArray_GETPTR1((PyArrayObject*) a        ,0), block_size, MPI_DOUBLE_COMPLEX,
                 PyArray_GETPTR1((PyArrayObject*) arrays[i],0), block_size, MPI_DOUBLE_COMPLEX,
+                PyArray_GETPTR1((PyArrayObject*) a        ,0), block_size, MPI_DOUBLE_COMPLEX,
                 MPI_COMM_WORLD
             );
-            Py_DECREF(a);
-    MESSAGE(1," alltoall is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)arrays[0]));
+            Py_DECREF(arrays[i]);
+    MESSAGE(1," alltoall is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)a));
             
             // Change the array shape to accomodate the MPI comms
-            a = PyCall( transposeReshape, Py_BuildValue("(O, (i,i,i), (i,i,i,i))", arrays[i], Nlocal[0], N[1], n_omega_local, 2, 0, 1, 3), NULL );
-            Py_DECREF(arrays[i]);
-    MESSAGE(1," transpose is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)a));
+            arrays[i] = PyCall( transposeReshape, Py_BuildValue("(O, (i,i,i), (i,i,i,i))", a, Nlocal[0], N[1], n_omega_local, 1, 0, 2, 3), NULL );
+            Py_DECREF(a);
+    MESSAGE(1," transpose is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)arrays[i]));
             
             // Call FFT along the second direction
-            arrays[i] = PyCall( ifft, Py_BuildValue("(O)", a), Py_BuildValue("{s:i}", "axis", 0) );
+            a = PyCall( ifft, Py_BuildValue("(O)", arrays[i]), Py_BuildValue("{s:i}", "axis", 1) );
+            Py_DECREF(arrays[i]);
+            
+            // Convert the array to C order
+            arrays[i] = PyArray_FROM_OF(a, NPY_ARRAY_C_CONTIGUOUS);
             Py_DECREF(a);
         }
     }
@@ -433,26 +464,22 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
         complex<double> * z = (complex<double> *) PyArray_GETPTR1((PyArrayObject*) arrays[i],0);
         magnitude[i].resize( local_size );
         phase    [i].resize( local_size );
-        unsigned int i0, i1;
+        unsigned int i1;
         if( _2D) {
             for(unsigned int j=0; j<N[0]; j++) {
                 for(unsigned int k=0; k<n_omega_local; k++) {
-                    // Note that we transpose for converting fortran order to C order
-                    i0 = j + N[0]*k;
                     i1 = k + n_omega_local*j;
-                    magnitude[i][i1] = abs(z[i0]) * coeff_magnitude;
-                    phase    [i][i1] = arg(z[i0] * exp(-i_ * omega[k] * offset));
+                    magnitude[i][i1] = abs(z[i1]) * coeff_magnitude;
+                    phase    [i][i1] = arg(z[i1] * exp(-i_ * omega[k] * offset));
                 }
             }
         } else {
             for(unsigned int j=0; j<Nlocal[0]; j++) {
                 for(unsigned int k=0; k<N[1]; k++) {
                     for(unsigned int l=0; l<n_omega_local; l++) {
-                        // Note that we transpose for converting fortran order to C order
-                        i0 = j + Nlocal[0]*(k + N[1]*l);
                         i1 = l + n_omega_local*(k + N[1]*j);
-                        magnitude[i][i1] = abs(z[i0]) * coeff_magnitude;
-                        phase    [i][i1] = arg(z[i0] * exp(-i_ * omega[l] * offset));
+                        magnitude[i][i1] = abs(z[i1]) * coeff_magnitude;
+                        phase    [i][i1] = arg(z[i1] * exp(-i_ * omega[l] * offset));
                     }
                 }
             }

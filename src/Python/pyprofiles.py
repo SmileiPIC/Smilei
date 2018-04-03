@@ -593,7 +593,7 @@ try:
         return np.ascontiguousarray(array.reshape(shape).transpose(transpose))
     
     def _transposeReshape( array, shape, transpose ):
-        return np.asfortranarray(array.transpose(transpose).reshape(shape))
+        return np.ascontiguousarray(array.transpose(transpose).reshape(shape))
     
     _N_LaserOffset = 0
     
