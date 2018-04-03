@@ -303,8 +303,8 @@ public:
             if (ndim_local != params.nDim_particle + 1)
                 ERROR("For species '" << species_name << "' position_initializtion must provide a 2-dimensional array with " <<  params.nDim_particle + 1 << " columns." )
             
-            //Get number of particles
-            thisSpecies->n_numpy_particles =  PyArray_SHAPE(np_ret)[1];//  ok
+            //Get number of particles. Do not initialize any more if this is a restart.
+            if (!params.restart) thisSpecies->n_numpy_particles =  PyArray_SHAPE(np_ret)[1];//  ok
             thisSpecies->position_initialization_array = new double[ndim_local*thisSpecies->n_numpy_particles] ;
             for (unsigned int idim = 0; idim < ndim_local ; idim++){
                 for (unsigned int ipart = 0; ipart < thisSpecies->n_numpy_particles; ipart++){
