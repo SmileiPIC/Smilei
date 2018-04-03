@@ -12,11 +12,10 @@ the quantities :math:`\nabla\cdot\mathbf{B}`, :math:`\nabla\cdot\mathbf{E}-\rho`
 
 .. math::
 
-  \partial_t \left( \nabla\cdot\mathbf{B} \right ) = 0, 
-
-.. math::
-
-  \partial_t \left( \nabla\cdot\mathbf{E}-\rho \right ) = \nabla\cdot\partial_t\mathbf{E}-\partial_t\rho = \nabla\cdot\left(\nabla\times\mathbf{B}-\mathbf{J}\right)-\partial_t\rho = - \left(\nabla\cdot\mathbf{J}+\partial_t \rho\right).
+  \begin{eqnarray}
+  \partial_t \left( \nabla\cdot\mathbf{B} \right ) &=& 0, \\
+  \partial_t \left( \nabla\cdot\mathbf{E}-\rho \right ) &=& \nabla\cdot\partial_t\mathbf{E}-\partial_t\rho = \nabla\cdot\left(\nabla\times\mathbf{B}-\mathbf{J}\right)-\partial_t\rho = - \left(\nabla\cdot\mathbf{J}+\partial_t \rho\right).
+  \end{eqnarray}
 
 Thus, if a simulation starts with :math:`\rho\neq0`, the electromagnetic fields must be properly initialized. 
 
@@ -32,7 +31,7 @@ In general when the initial current :math:`\mathbf{J}` is not zero, the electric
 
 For physical setups where a species is already relativistic when the simulation starts, e.g. a relativistic electron bunch, the initial electromagnetic fields can be computed through a simplified procedure, described in [Vay2008]_, [Londrillo2014]_ and [Massimo2016]_. 
 
-An important assumption of this calculation is that the species is highly relativistic, moving in the positive :math:`x` direction, with negligible velocity spread. Under this hypothesis, the transverse components of the species current density are neglected and the four-current quadrivector can be written as:
+An important assumption of this calculation is that the species is highly relativistic, moving in the positive :math:`x` direction, with negligible momentum spread. Under this hypothesis, the transverse components of the species current density are neglected and the four-current quadrivector can be written as:
 
 .. math::
 
@@ -87,32 +86,21 @@ Once the potential :math:`\Phi` is found, we can compute all the components of t
 
 .. math::
   
-  A_x = \gamma_0(A_x'+\beta_0 \Phi'/c)=\gamma_0\beta_0 \Phi'/c=\beta_0\Phi/c,\quad A_y = A_y'=0, \quad A_z = A_z'=0,
+  A_x = \gamma_0(A_x'+\beta_0 \Phi'/c)=\gamma_0\beta_0 \Phi'/c=\beta_0\Phi/c,\quad A_y = A_y'=0, \quad A_z = A_z'=0.
+
+From all these relations, the electromagnetic field can be computed as usual, through the definitions of potentials :math:`\mathbf{E}=-\nabla\Phi-\partial_t\mathbf{A}`, :math:`\mathbf{B}=-\nabla\times\mathbf{A}`:
 
 .. math::
+  \begin{eqnarray}
+  E_x &=& -\partial_x \Phi - \partial_t A_x = -\partial_x \Phi + \beta_0^2 \partial_x \Phi = -\frac{1}{\gamma_0^2}\partial_x \Phi,\\ 
+  E_y &=& -\partial_y \Phi - \partial_t A_y = -\partial_y \Phi,\\ 
+  E_z &=& -\partial_z \Phi - \partial_t A_z = -\partial_z \Phi,\newline\\
+  B_x &=& \partial_y A_z - \partial_z A_y = 0 ,\\ 
+  B_y &=& \partial_z A_x - \partial_x A_z = \partial_z A_x = \frac{\beta_0}{c} \partial_z \Phi = - \frac{\beta_0}{c} E_z,\\   
+  B_z &=& \partial_x A_y - \partial_y A_x = - \partial_y A_x = - \frac{\beta_0}{c} \partial_y \Phi = \frac{\beta_0}{c} E_y,
+  \end{eqnarray} 
 
-  E_x = -\partial_x \Phi - \partial_t A_x = -\partial_x \Phi + \beta_0^2 \partial_x \Phi = -\frac{1}{\gamma_0^2}\partial_x \Phi,\\ 
-
-.. math::
-
-  E_y = -\partial_y \Phi - \partial_t A_y = -\partial_y \Phi,\\ 
-
-.. math::
-
-  E_z = -\partial_z \Phi - \partial_t A_z = -\partial_z \Phi,\\
-
-.. math::
-
-  B_x = \partial_y A_z - \partial_z A_y = 0 ,\\ 
-
-.. math::
-
-  B_y = \partial_z A_x - \partial_x A_z = \partial_z A_x = \frac{\beta_0}{c} \partial_z \Phi = - \frac{\beta_0}{c} E_z,\\ 
-
-.. math::
-  
-  B_z = \partial_x A_y - \partial_y A_x = - \partial_y A_x = - \frac{\beta_0}{c} \partial_y \Phi = \frac{\beta_0}{c} E_y.
-   
+or in more compact form: :math:`\mathbf{E}=\left( -\frac{1}{\gamma_0^2}\partial_x \Phi, -\partial_y \Phi,-\partial_z \Phi \right)`, :math:`\mathbf{B}=\frac{\beta_0}{c}\mathbf{\hat{x}}\times\mathbf{E}`. 
   
 
 
