@@ -1118,6 +1118,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                  && ( nDim_particle < 2  || ( position[1][ip] >= patch->getDomainLocalMin(1) && position[1][ip] < patch->getDomainLocalMax(1)) )
                  && ( nDim_particle < 3  || ( position[2][ip] >= patch->getDomainLocalMin(2) && position[2][ip] < patch->getDomainLocalMax(2)) ) ){
                 my_particles_indices.push_back(ip); //This vector stores particles initially sittinig in the current patch.
+                cout << " Keeping particle " << ip << " " << position[0][ip] << " " << position[1][ip] << " " << position[2][ip] << " " << position_initialization_array[0*n_numpy_particles+ip] << " " << position_initialization_array[1*n_numpy_particles+ip]<< " " << position_initialization_array[2*n_numpy_particles+ip] << endl;
             }
         }
         npart_effective = my_particles_indices.size();
@@ -1262,7 +1263,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                 tot += oc;
         }
         for (int i=0; i < nbins   ; i++) bmin[i] = indices[i] ;
-        for (int i=0; i < nbins-1 ; i++) bmax[i] = bmin[i] ;
+        for (int i=0; i < nbins-1 ; i++) bmax[i] = bmin[i+1] ;
         bmax[nbins-1] = npart_effective ;
 
         //Now initialize particles at thier proper indices
@@ -1275,6 +1276,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
             
             for(unsigned int idim=0; idim<nDim_particle; idim++)
                 particles->position(idim,ip) = position[idim][ippy] ;
+            cout << "creating part ippy = " << ippy << " ip= " << ip << " x= " <<  particles->position(0,ip)  << " y= " <<  particles->position(1,ip)<< " z= " <<  particles->position(2,ip) << endl;
             //If momentum is not initialized by a numpy array
             unsigned int i =  (unsigned int)( (particles->position(0,ip) - min_loc_vec[0])/cell_length[0] );
             unsigned int j =  (unsigned int)( (particles->position(1,ip) - min_loc_vec[1])/cell_length[1] );
