@@ -597,6 +597,8 @@ namelist("")
                 propagateX.init(this, smpi, 0);
             }
             
+            MESSAGE(1, "LaserOffset #"<< n_laser_offset);
+            
             // Extract the file name
             string file("");
             PyTools::extract("file", file, "Laser", i_laser);
@@ -634,14 +636,14 @@ namelist("")
                 ERROR("For LaserOffset #" << n_laser_offset << ": box_side must be a 'xmin' or 'xmax'");
             //unsigned int side = string("xyz").find(box_side[0]);
             
-            // Extract _keep_n_best_frequencies
-            int keep_n_best_frequencies=0;
-            if( !PyTools::extract("_keep_n_best_frequencies", keep_n_best_frequencies, "Laser", i_laser) || keep_n_best_frequencies<1)
-                ERROR("For LaserOffset #" << n_laser_offset << ": keep_n_best_frequencies must be a positive integer");
+            // Extract _keep_n_strongest_modes
+            int keep_n_strongest_modes=0;
+            if( !PyTools::extract("_keep_n_strongest_modes", keep_n_strongest_modes, "Laser", i_laser) || keep_n_strongest_modes<1)
+                ERROR("For LaserOffset #" << n_laser_offset << ": keep_n_strongest_modes must be a positive integer");
             
             // Make the propagation happen and write out the file
             if( ! smpi->test_mode )
-                propagateX(profiles, profiles_n, offset, file, keep_n_best_frequencies);
+                propagateX(profiles, profiles_n, offset, file, keep_n_strongest_modes);
             
             n_laser_offset ++;
         }

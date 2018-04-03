@@ -110,25 +110,12 @@ void LaserPropagator::init(Params* params, SmileiMPI* smpi, unsigned int side)
 
 }
 
-void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profiles_n, double offset, string file, int keep_n_best_frequencies)
+void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profiles_n, double offset, string file, int keep_n_strongest_modes)
 {
 #ifdef SMILEI_USE_NUMPY
     const complex<double> i_ (0., 1.); // the imaginary number
     
     unsigned int nprofiles = profiles.size();
-    
-    ostringstream ro_("");
-    for(unsigned int i=0;i<MPI_rank;i++) ro_<<"             ";
-    
-    MPI_Barrier(MPI_COMM_WORLD);
-    cout << ro_.str() << "0" << endl;;
-    
-    MESSAGE(1,"nprofiles = "<<nprofiles);
-    MESSAGE(1,"N = "<<N[0]<<" "<<N[1]<<" "<<(_2D ? 0 : N[2]));
-    MESSAGE(1,"Nlocal = "<<Nlocal[0]<<" "<<Nlocal[1]);
-    MESSAGE(1,"L = "<<L[0]<<" "<<L[1]<<" "<<(_2D ? 0 : L[2]));
-    
-    MESSAGE(1," Size of complex : " << sizeof(complex<double>));
     
     // Import several functions from numpy
     PyObject* numpy = PyImport_AddModule("numpy");
@@ -139,14 +126,6 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
     Py_DECREF(numpyfft);
     int complex_type_num=0;
     
-    string version = "error";
-    PyObject* numpy_version = PyObject_GetAttrString(numpy   , "__version__"  );
-    PyTools::convert(numpy_version, version);
-    MESSAGE("NUMPY VERSION : " << version );
-    Py_DECREF(numpy_version);
-    
-    MPI_Barrier(MPI_COMM_WORLD);
-    cout << ro_.str() << 1 << endl;;
     // 1- Calculate the value of the profiles at all points (y,z,t)
     // --------------------------------
     
@@ -179,9 +158,6 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
     }
     Py_DECREF(mesh);
     
-    MPI_Barrier(MPI_COMM_WORLD);
-    cout << ro_.str() << 2 << endl;;
-    MESSAGE(1," applyProfiles is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)arrays[0]));
     // 2- Fourier transform of the fields at destination
     // --------------------------------
     
@@ -192,7 +168,6 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
         if( _2D ) a = PyCall( fft , Py_BuildValue("(O)", arrays[i]), Py_BuildValue("{s:i}"    , "axis", 1   ) );
         else      a = PyCall( fft2, Py_BuildValue("(O)", arrays[i]), Py_BuildValue("{s:(i,i)}", "axes", 1, 2) );
         Py_DECREF(arrays[i]);
-    MESSAGE(1," fft is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)a));
         
         // Change the array shape to prepare the MPI comms (reshape, transpose, C ordering)
         npy_intp D[4] = {Nlocal[0], MPI_size, Nlocal[1], N[2]};
@@ -206,7 +181,6 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
         arrays[i] = PyArray_FROM_OF(a, NPY_ARRAY_C_CONTIGUOUS);
         Py_DECREF(a);
         
-    MESSAGE(1," reshapeTranspose is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)arrays[0]));
         
         // Obtain the number associated to the complex type in numpy
         complex_type_num = PyArray_TYPE((PyArrayObject*) arrays[i]);
@@ -217,7 +191,6 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
         dims[1] = Nlocal[1];
         if( ! _2D ) dims[2] = N[2];
         a = PyArray_EMPTY(ndim, dims, complex_type_num, 0);
-    MESSAGE(1," empty is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)a));
         
         // Communicate blocks to transpose the MPI decomposition
         int block_size = Nlocal[0]*Nlocal[1]* (_2D?1:N[2]);
@@ -227,16 +200,12 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
             MPI_COMM_WORLD
         );
         Py_DECREF(arrays[i]);
-    MESSAGE(1," alltoall is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)a));
         
         // Call FFT along the first direction
         arrays[i] = PyCall( fft, Py_BuildValue("(O)", a), Py_BuildValue("{s:i}", "axis", 0) );
         Py_DECREF(a);
-    MESSAGE(1," fft is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)arrays[0]) << PyArray_ISONESEGMENT((PyArrayObject*)arrays[0])<< " " << PyArray_ITEMSIZE((PyArrayObject*)arrays[0]));
     }
     
-    MPI_Barrier(MPI_COMM_WORLD);
-    cout << ro_.str() << 3 << endl;
     // 3- Select only interesting omegas
     // --------------------------------
     
@@ -278,15 +247,9 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
     unsigned int n_omega, n_omega_local;
     vector<unsigned int> indices;
     if( MPI_rank == 0 ) {
-        indices = partial_reverse_argsort(spectrum, keep_n_best_frequencies);
+        indices = partial_reverse_argsort(spectrum, keep_n_strongest_modes);
         sort(indices.begin(), indices.end());
         n_omega = indices.size();
-    ostringstream t("");
-    t<<"\tspectrum ( ";
-    for( unsigned int i=0;i<spectrum.size();i++ ) 
-        t<<spectrum[i]<<" ";
-    t<<" )"<<endl;
-    cout<<t.str();
     }
     
     // Broadcast the number of selected points
@@ -295,6 +258,8 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
     
     // Broadcast the selected indices to all processes
     MPI_Bcast(&indices[0], n_omega, MPI_UNSIGNED, 0, MPI_COMM_WORLD);
+    
+    MESSAGE(2, "keeping the "<<n_omega<<" strongest temporal modes");
     
     // Find the indices belonging to this process
     if( _2D ) {
@@ -322,31 +287,6 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
     for(unsigned int i=0; i<n_omega_local; i++)
         omega[i] = local_k[ndim-1][indices[i]];
     
-    ostringstream t("");
-    t<<"\trank "<<MPI_rank<<" indices ( ";
-    for( unsigned int i=0;i<n_omega_local;i++ ) 
-        t<<indices[i]<<" ";
-    t<<" )"<<endl;
-    MPI_Barrier(MPI_COMM_WORLD);
-    for( unsigned int i=0; i<MPI_size; i++) {
-        if( i==MPI_rank ) cout<< t.str();
-        MPI_Barrier(MPI_COMM_WORLD);
-    }
-    
-    t.str("");
-    t<<"\trank "<<MPI_rank<<" omega ( ";
-    for( unsigned int i=0;i<n_omega_local;i++ ) 
-        t<<omega[i]<<" ";
-    t<<" )"<<endl;
-    for( unsigned int i=0; i<MPI_size; i++) {
-        if( i==MPI_rank ) cout<< t.str();
-        MPI_Barrier(MPI_COMM_WORLD);
-    }
-    
-    MPI_Barrier(MPI_COMM_WORLD);
-    cout << ro_.str() << "4" << endl;;
-    MESSAGE(1,"n_omega = "<<n_omega);
-    MESSAGE(1,"n_omega_local = "<<n_omega_local);
     // 4- Multiply by the propagation term, while extracting only selected omegas
     // --------------------------------
     
@@ -377,9 +317,6 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
         }
     }
     
-    MPI_Barrier(MPI_COMM_WORLD);
-    cout << ro_.str() << 5 << endl;;
-    MESSAGE(1," is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)arrays[0]) << PyArray_ISONESEGMENT((PyArrayObject*)arrays[0])<< " " << PyArray_ITEMSIZE((PyArrayObject*)arrays[0]));
     // 5- Fourier transform back to real space, excluding the omega axis
     // --------------------------------
     
@@ -393,7 +330,6 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
         // Convert the array to C order
         arrays[i] = PyArray_FROM_OF(a, NPY_ARRAY_C_CONTIGUOUS);
         Py_DECREF(a);
-    MESSAGE(1," FROM_OF is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)arrays[i]));
         
         if( ! _2D ) {
             
@@ -405,8 +341,6 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
             dims[3] = n_omega_local;
             a = PyArray_EMPTY(4, dims, complex_type_num, 0);
             
-    MESSAGE(1," empty is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)a));
-            
             // Communicate blocks to transpose the MPI decomposition
             int block_size = Nlocal[0]*Nlocal[1]*n_omega_local;
             MPI_Alltoall(
@@ -415,7 +349,6 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
                 MPI_COMM_WORLD
             );
             Py_DECREF(arrays[i]);
-    MESSAGE(1," alltoall is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)a));
             
             // Change the array shape to accomodate the MPI comms
             npy_intp P[4] = {1, 0, 2, 3};
@@ -429,8 +362,6 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
             arrays[i] = PyArray_FROM_OF(a, NPY_ARRAY_C_CONTIGUOUS);
             Py_DECREF(a);
             
-    MESSAGE(1," transpose is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)arrays[i]));
-            
             // Call FFT along the second direction
             a = PyCall( ifft, Py_BuildValue("(O)", arrays[i]), Py_BuildValue("{s:i}", "axis", 1) );
             Py_DECREF(arrays[i]);
@@ -441,9 +372,6 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
         }
     }
     
-    MPI_Barrier(MPI_COMM_WORLD);
-    cout << ro_.str() << 6 << endl;;
-    MESSAGE(1,"ifft is fortran ? "<< PyArray_ISFORTRAN((PyArrayObject*)arrays[0]));
     // 6- Obtain the magnitude and the phase of the complex values
     // --------------------------------
     unsigned int local_size = (_2D ? N[0] : Nlocal[0]*N[1]) * n_omega_local;
@@ -477,8 +405,6 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
         Py_DECREF( arrays[i] );
     }
     
-    MPI_Barrier(MPI_COMM_WORLD);
-    cout << ro_.str() << 7 << endl;;
     // 7- Store all info in HDF5 file
     // --------------------------------
     
@@ -490,25 +416,18 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
         MPI_omega_offset -= n_omega_local;
         dims[0] = N[0]   ; start[0] = 0               ; count[0] = N[0]         ;
         dims[1] = n_omega; start[1] = MPI_omega_offset; count[1] = n_omega_local;
-        cout<<MPI_rank<<" dims  " << dims[0]  << " " << dims[1] <<endl;
-        cout<<MPI_rank<<" start " << start[0] << " " << start[1]<<endl;
-        cout<<MPI_rank<<" count " << count[0] << " " << count[1]<<endl;
     } else {
         dims[0] = N[0]   ; start[0] = MPI_rank*Nlocal[0]; count[0] = Nlocal[0];
         dims[1] = N[1]   ; start[1] = 0                 ; count[1] = N[1]     ;
         dims[2] = n_omega; start[2] = 0                 ; count[2] = n_omega  ;
     }
     
-    MPI_Barrier(MPI_COMM_WORLD);
-    cout << ro_.str() << 8 << endl;;
     // Create File with parallel access
     hid_t faid = H5Pcreate(H5P_FILE_ACCESS);
     H5Pset_fapl_mpio(faid, MPI_COMM_WORLD, MPI_INFO_NULL);
     hid_t fid  = H5Fcreate( file.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, faid);
     H5Pclose(faid);
     
-    MPI_Barrier(MPI_COMM_WORLD);
-    cout << ro_.str() << 9 << endl;;
     // Store "omega" dataset
     hsize_t len = n_omega, len_local = n_omega_local;
     hid_t filespace = H5Screate_simple(1, &len, NULL);
@@ -530,8 +449,6 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
     H5Sclose(memspace);
     H5Dclose(did);
     
-    MPI_Barrier(MPI_COMM_WORLD);
-    cout << ro_.str() << 10 << endl;;
     // Store the magnitude and the phase
     filespace = H5Screate_simple(ndim, dims, NULL);
     H5Sselect_hyperslab(filespace, H5S_SELECT_SET, start, NULL, count, NULL);
