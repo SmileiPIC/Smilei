@@ -176,6 +176,7 @@ class Main(SmileiSingleton):
     interpolation_order = 2
     number_of_patches = None
     patch_decomposition = "hilbert"
+    patch_orientation = ""
     clrw = -1
     every_clean_particles_overhead = 100
     timestep = None
