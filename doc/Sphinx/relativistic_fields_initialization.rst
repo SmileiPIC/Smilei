@@ -62,7 +62,7 @@ where the Laplacian operator is computed in the reference frame :math:`S'`:
 
 .. math::
   
-  \nabla'^2=\partial^2_{x'}+\partial^2_{y'}+\partial^2_{z'}`.
+  \nabla'^2=\partial^2_{x'}+\partial^2_{y'}+\partial^2_{z'}.
 
 The vector potential in the species rest frame can be set to zero: :math:`\mathbf{A'}=0`. Through the above mentioned assumptions, it is possible to rewrite Eq. :eq:`Poisson` only in terms of laboratory frame quantities. 
 
