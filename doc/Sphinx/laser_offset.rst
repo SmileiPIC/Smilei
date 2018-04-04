@@ -14,6 +14,11 @@ calculated field is then injected from then boundary like a normal laser. From t
 perspective, this simply requires the definition of the laser profile at some arbitrary
 plane.
 
+The general technique is taken from [Thiele2016]_ but it has been improved for parallel
+computation in both 2D and 3D geometries.
+
+----
+
 Theoretical background
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -23,7 +28,7 @@ valid for all components of a field satisfying a wave equation:
 
   .. math::
   
-    c \Delta A(x,y,z,t) = \partial_t^2 A(x,y,z,t)
+    c^2 \Delta A(x,y,z,t) = \partial_t^2 A(x,y,z,t)
 
 The 3D Fourier transform of this equation for the variables :math:`y`, :math:`z` and
 :math:`t` gives:
@@ -35,7 +40,7 @@ The 3D Fourier transform of this equation for the variables :math:`y`, :math:`z`
 where :math:`k_y`, :math:`k_z` and :math:`\omega` are the conjugate variables in the
 frequency domain, and :math:`k_x(k_y,k_z,\omega) \equiv \sqrt{\omega^2/c^2-k_y^2-k_z^2}`.
 This equation has general solutions proportional to :math:`\exp(-i k_x x)` for waves
-propagating towards large :math:`x`. This means that, if the profile is known at some
+propagating towards positive :math:`x`. This means that, if the profile is known at some
 plane :math:`x=x_0+\delta`, the profile at :math:`x=x_0` is obtained after multiplying
 :math:`\hat A` by :math:`\exp(i k_x \delta)`:
 
@@ -46,8 +51,8 @@ plane :math:`x=x_0+\delta`, the profile at :math:`x=x_0` is obtained after multi
 To recover the field profile in real space, a 3D inverse Fourier transform would be
 sufficient. However, storing all values of the :math:`(y,z,t)` profile would consume too
 much time and disk space.
-Instead, Smilei does only a 2D inverse Fourier transform on :math:`y` and
-:math:`z`. This results in a :math:`\tilde A(y,z,\omega)` profile, where :math:`\omega` are
+Instead, Smilei does only a 2D inverse Fourier transform on :math:`k_y` and
+:math:`k_z`. This results in a :math:`\tilde A(y,z,\omega)` profile, where :math:`\omega` are
 the temporal Fourier modes. Keeping only a few of these modes (the most intense ones)
 ensures a reasonable disk space usage.
 
@@ -135,3 +140,14 @@ timesteps.
   an additional :py:data:`time_envelope`, defined by the user.
   This time envelope helps removing spurious repetitions of the laser pulse that can
   occur due to the limited number of frequencies that are kept.
+
+
+
+----
+
+References
+^^^^^^^^^^
+
+.. [Thiele2016] `Illia Thiele et al., J. Comput. Phys. 321, 1110 (2016) <https://doi.org/10.1016/j.jcp.2016.06.004>`_
+
+
