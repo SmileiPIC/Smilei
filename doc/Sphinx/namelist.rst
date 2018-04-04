@@ -679,6 +679,8 @@ Each species has to be defined in a ``Species`` block::
 
 ----
 
+.. _Lasers:
+
 Lasers
 ^^^^^^
 
@@ -883,18 +885,26 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
   In some cases, the laser field is not known at the box boundary, but rather at some
   plane inside the box. Smilei can pre-calculate the corresponding wave at the boundary
-  using the *angular spectrum method*. This technique requires additional python
-  packages: *numpy*, *mpi4py* and the package *h5py*, that should be built with parallel
-  capabilities (not the standard *h5py* package). It is introduced using the laser
-  creator::
+  using the *angular spectrum method*. This technique is only available in 2D and 3D
+  cartesian geometries and requires the python packages *numpy*.
+  A :doc:`detailed explanation <laser_offset>` of the method is available.
+  The laser is introduced using::
 
     LaserOffset(
-        box_side           = "xmin",
-        space_time_profile = [ By_profile, Bz_profile ],
-        offset             = 10.,
-        time_envelope      = tconstant()
+        box_side               = "xmin",
+        space_time_profile     = [ By_profile, Bz_profile ],
+        offset                 = 10.,
+        time_envelope          = tconstant(),
+        keep_n_strongest_modes = 100,
     )
 
+  .. py:data:: space_time_profile
+
+    :type: A list of two *python* functions
+    
+    The magnetic field profiles at some arbitrary plane, as a function of space and time.
+    The arguments of these profiles are ``(y,t)`` in 2D and ``(y,z,t)`` in 3D.
+    
   .. py:data:: offset
      
      The distance from the box boundary to the plane where :py:data:`space_time_profile`
@@ -911,6 +921,12 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     the laser pulse is repeated several times. The temporal envelope can be used to remove
     these spurious repetitions.
 
+  .. py:data:: keep_n_strongest_modes
+    
+    :default: 100
+    
+    The number of temporal Fourier modes that are kept during the pre-processing.
+    See :doc:`this page <laser_offset>` for more details.
 
 ----
 
