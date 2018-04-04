@@ -1,7 +1,19 @@
 .. _relativisticfieldsinitializationPage:
 
-Relativistic electromagnetic field initialization
+Field initialization for relativistic species
 --------------------------------------------------------------------------------
+As explained in :doc:`algorithms`, if a net charge is present at the beginning of the simulation, the initial electromagnetic fields are computed.
+For static charge distributions, the solution of Poisson's equation will be necessary to find the initial electrostatic field. 
+If the initial charge has a non-zero initial speed, in general the electric and magnetic field should be computed solving the full set of Maxwell's equations or equivalently the potentials equations.
+In some physical setups of interest, one or more relativistic species are injected in a plasma. In these cases, the computation of the initial electromagnetic fields can be reduced to the solution of a modified version of Poisson's equation.
+
+
+----
+
+The relativistic Poisson's equation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+
 From Maxwell's equations it can be shown that, provided that continuity equation holds, i.e.
 
 .. math::
@@ -27,9 +39,9 @@ In the case of an static charge distribution, i.e. :math:`\rho\neq0`, :math:`\ma
 
 and then be derived to find the initial electric field: :math:`\mathbf{E}=-\nabla\Phi`. The initial magnetic field :math:`\mathbf{B}` will be zero.
 
-In general when the initial current :math:`\mathbf{J}` is not zero, the electric and magnetic fields will not be zero and the full set of Maxwell's equations or equivalently the potentials equations should be solved. 
+In general when the initial current :math:`\mathbf{J}` is not zero, the full set of fields equations should be solved to correctly initialize the electromagnetic fields. 
 
-For physical setups where a species is already relativistic when the simulation starts, e.g. a relativistic electron bunch, the initial electromagnetic fields can be computed through a simplified procedure, described in [Vay2008]_, [Londrillo2014]_ and [Massimo2016]_. 
+However, if a species is already relativistic when the simulation starts, e.g. a relativistic electron bunch, its initial electromagnetic fields can be computed through a simplified procedure, described in [Vay2008]_, [Londrillo2014]_, [Massimo2016]_ and [Marocchino2018]_. 
 
 An important assumption of this calculation is that the species is highly relativistic, moving in the positive :math:`x` direction, with negligible momentum spread. Under this hypothesis, the transverse components of the species current density are neglected and the four-current quadrivector can be written as:
 
@@ -80,7 +92,7 @@ Equation :eq:`Poisson` can thus be rewritten as
 
   \left( \frac{1}{\gamma^2_0}\partial^2_x+\nabla_{\perp}^2\right) \Phi = -\rho,
 
-here referred to as relativistic Poisson's equation.
+here informally referred to as relativistic Poisson's equation. In :program:`Smilei`, as for Eq. :eq:`Poisson`, the solution of the relativistic Poisson's equation is performed through the conjugate gradient method.
 
 Once the potential :math:`\Phi` is found, we can compute all the components of the electromagnetic field, using again the relations :math:`\partial_t=-\beta c\partial_x`, :math:`\Phi'=-\Phi/\gamma_0` and the Lorentz back-transformation of the vector potential :math:`\mathbf{A}`:
 
@@ -122,5 +134,9 @@ References
 .. [Londrillo2014] `P. Londrillo, C. Gatti and M. Ferrario, Nucl. Instr. and Meth. A 740, 236-241 (2014) <https://doi.org/10.1016/j.nima.2013.10.028>`_
 
 .. [Massimo2016] `F. Massimo, A. Marocchino and A. R. Rossi, Nucl. Instr. and Meth. A 829, 378-382 (2016) <https://doi.org/10.1016/j.nima.2016.02.043>`_
+
+.. [Marocchino2018] `A. Marocchino, E. Chiadroni, M. Ferrario, F. Mira and A.R. Rossi, Nucl. Instr. and Meth. A (2018) <https://doi.org/10.1016/j.nima.2018.02.068>`_
+
+
 
 
