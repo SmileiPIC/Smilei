@@ -3,7 +3,6 @@
 # ----------------------------------------------------------------------------------------
 
 import math
-from numpy import exp, sin
 
 l0 = 2.0*math.pi        # laser wavelength
 t0 = l0                 # optical cycle
@@ -33,21 +32,13 @@ Main(
     random_seed = smilei_mpi_rank
 )
 
-#LaserGaussian2D(
-#    a0              = 1.,
-#    omega           = 1.,
-#    focus           = [Lsim[0], Lsim[1]/2.],
-#    waist           = 8.,
-#    incidence_angle = 0.5,
-#    time_envelope   = tgaussian()
-#)
-
-
-LaserOffset(
-    space_time_profile = [None, lambda y,t: exp( -(400.*(y/Lsim[1]-0.5))**2 - (10.*(t-40.-Tsim/5.)/Tsim)**2 ) * sin(t)],
-    offset = 40.,
-    time_envelope = tpolygonal(points=[t0, Tsim/2.], values=[1., 1.]),
-    keep_n_best_frequencies = 800
+LaserGaussian2D(
+    a0              = 1.,
+    omega           = 1.,
+    focus           = [Lsim[0], Lsim[1]/2.],
+    waist           = 8.,
+    incidence_angle = 0.5,
+    time_envelope   = tgaussian()
 )
 
 Species(
@@ -71,8 +62,8 @@ globalEvery = int(rest)
 DiagScalar(every=globalEvery)
 
 DiagFields(
-    every = 25,
-    fields = ['Ex','Ey','Ez','Bx','By','Bz']
+    every = globalEvery,
+    fields = ['Ex','Ey','Ez']
 )
 from numpy import s_
 DiagFields(
