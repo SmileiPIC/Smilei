@@ -1052,10 +1052,6 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     // n_space_to_create_generalized = n_space_to_create, + copy of 2nd direction data among 3rd direction
     // same for local Species::cell_length[2]
     vector<unsigned int> n_space_to_create_generalized( n_space_to_create );    
-    if ( params.geometry == "3drz") {
-        n_space_to_create_generalized[2]  = n_space_to_create[1];
-        cell_length[2] = cell_length[1];
-    }
     
     unsigned int nPart, i,j,k, idim;
     unsigned int npart_effective = 0 ;
@@ -1072,11 +1068,6 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
         cell_index   [idim] = (double) patch->getCellStartingGlobalIndex(idim);
         xyz[idim] = new Field3D(n_space_to_create_generalized);
         //}
-    }
-    if ( params.geometry == "3drz") {
-        cell_position[2] = cell_position[1];
-        cell_index   [2] = cell_index   [1];
-        xyz[2] = new Field3D(n_space_to_create_generalized);
     }
     
     // Create the x,y,z maps where profiles will be evaluated
