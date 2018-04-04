@@ -1616,18 +1616,33 @@ void ElectroMagn3D::applyExternalField(Field* my_field,  Profile *profile, Patch
     int N2 = (int)field3D->dims()[2];
     
     // UNSIGNED INT LEADS TO PB IN PERIODIC BCs
+    // Create the x,y,z maps where profiles will be evaluated
+    vector<Field*> xyz(3);
+    vector<unsigned int> n_space_to_create(3);
+    n_space_to_create[0] = N0;
+    n_space_to_create[1] = N1;
+    n_space_to_create[2] = N2;
+
+    for (unsigned int idim=0 ; idim<3 ; idim++) {
+        xyz[idim] = new Field3D(n_space_to_create);
+    }
+
     for (int i=0 ; i<N0 ; i++) {
         pos[1] = pos1;
         for (int j=0 ; j<N1 ; j++) {
             pos[2] = pos2;
             for (int k=0 ; k<N2 ; k++) {
-                (*field3D)(i,j,k) += profile->valueAt(pos);
+                //(*field3D)(i,j,k) += profile->valueAt(pos);
+                for (unsigned int idim=0 ; idim<3 ; idim++){
+                    (*xyz[idim])(i,j,k) = pos[idim];}
                 pos[2] += dz;
             }
             pos[1] += dy;
         }
         pos[0] += dx;
     }
+
+    profile->valuesAt(xyz,*my_field);
     
     for (auto& embc: emBoundCond) {
         if (embc) embc->save_fields(my_field, patch);
