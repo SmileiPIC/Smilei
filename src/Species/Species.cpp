@@ -1116,7 +1116,6 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                  && ( nDim_particle < 2  || ( position[1][ip] >= patch->getDomainLocalMin(1) && position[1][ip] < patch->getDomainLocalMax(1)) )
                  && ( nDim_particle < 3  || ( position[2][ip] >= patch->getDomainLocalMin(2) && position[2][ip] < patch->getDomainLocalMax(2)) ) ){
                 my_particles_indices.push_back(ip); //This vector stores particles initially sittinig in the current patch.
-                cout << " Keeping particle " << ip << " " << position[0][ip] << " " << position[1][ip] << " " << position[2][ip] << " " << position_initialization_array[0*n_numpy_particles+ip] << " " << position_initialization_array[1*n_numpy_particles+ip]<< " " << position_initialization_array[2*n_numpy_particles+ip] << endl;
             }
         }
         npart_effective = my_particles_indices.size();
