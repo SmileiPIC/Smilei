@@ -426,6 +426,7 @@ Each species has to be defined in a ``Species`` block::
       # ionization_model = "none",
       # ionization_electrons = None,
       is_test = False,
+      # ponderomotive_dynamics = False,
       c_part_max = 1.0,
       pusher = "boris",
 
@@ -586,6 +587,14 @@ Each species has to be defined in a ``Species`` block::
   Flag for test particles. If ``True``, this species will contain only test particles
   which do not participate in the charge and currents.
 
+.. py:data:: ponderomotive_dynamics
+
+  :default: ``False``
+
+  Flag for particles interacting with an envelope model for the laser, if present. 
+  If ``True``, this species will project its susceptibility and be influenced by the laser envelope field.
+  See :doc:`laser_envelope` for details on the dynamics of particles in presence of a laser envelope field. 
+
 
 .. py:data:: c_part_max
 
@@ -603,6 +612,7 @@ Each species has to be defined in a ``Species`` block::
   * ``"vay"``: The relativistic pusher of J. L. Vay
   * ``"higueracary"``: The relativistic pusher of A. V. Higuera and J. R. Cary
   * ``"norm"``:  For photon species only (rectilinear propagation)
+  * ``"ponderomotive_boris"``: modified relativistic Boris pusher for species whose flag ``"ponderomotive_dynamics"`` is ``True``. Valid only if the species has non-zero mass 
 
 .. py:data:: radiation_model
 
@@ -1714,6 +1724,18 @@ This is done by including a block ``DiagFields``::
   +------------------------------+-----------------------------------------+
   |  The same notation works for Jx, Jr, Jt, and Rho                       |
   +------------------------------+-----------------------------------------+
+
+  In the case of an envelope model for the laser, the following fields are also available:
+
+  .. rst-class:: nowrap
+  
+  +----------------+-------------------------------------------------------+
+  | | Env_A_abs    | |                                                     |
+  | | Env_Ai       | | Module, real and imaginary part of envelope field   |
+  | | Env_Ar       | |                                                     |
+  +----------------+-------------------------------------------------------+
+  | | Env_Chi      | | Total  susceptibility                               |
+  +----------------+-------------------------------------------------------+
   
 .. py:data:: subgrid
 
@@ -1819,6 +1841,9 @@ To add one probe diagnostic, include the block ``DiagProbe``::
   fields will be saved.
   Note that it does NOT speed up calculation much, but it saves disk space.
 
+  In the case of an envelope model for the laser, the following fields are also available: ``"Env_A_abs"``, ``"Env_Ar"``, ``"Env_Ai"``,
+  ``"Env_Chi"``.
+  
 
 **Examples of probe diagnostics**
 
