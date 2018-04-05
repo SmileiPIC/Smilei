@@ -24,7 +24,7 @@ ProjectorRZ2Order::ProjectorRZ2Order (Params& params, Patch* patch) : ProjectorR
     dr_ov_dt  = params.cell_length[1] / params.timestep;
     Nmode=params.nmodes; 
     one_third = 1.0/3.0;
-
+    dr = params.cell_length[1];
     i_domain_begin = patch->getCellStartingGlobalIndex(0);
     j_domain_begin = patch->getCellStartingGlobalIndex(1);
 
@@ -141,17 +141,17 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // ------------------------------------------------
     for (unsigned int i=1 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
-                Jx_p[i][j]= Jx_p[i-1][j] - crl_p * Wx[i-1][j];
+                Jx_p[i][j]= Jx_p[i-1][j] - crl_p/((j+ j_domain_begin)*dr) * Wx[i-1][j];
             }
         }
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=1 ; j<5 ; j++) {
-                Jy_p[i][j] = Jy_p[i][j-1] - crr_p * Wy[i][j-1];
+                Jy_p[i][j] = Jy_p[i][j-1] - crr_p /((j+ j_domain_begin)*dr) * Wy[i][j-1];
             }
         }
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
-                Jz_p[i][j] = crt_p * Wz[i][j];
+                Jz_p[i][j] = crt_p /((j+ j_domain_begin)*dr) * Wz[i][j];
             }
         }
 
@@ -311,17 +311,17 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // ------------------------------------------------
     for (unsigned int i=1 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
-                Jx_p[i][j]= Jx_p[i-1][j] - crl_p * Wx[i-1][j];
+                Jx_p[i][j]= Jx_p[i-1][j] - crl_p /((j+ j_domain_begin)*dr) * Wx[i-1][j];
             }
         }
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=1 ; j<5 ; j++) {
-                Jy_p[i][j] = Jy_p[i][j-1] - crr_p * Wy[i][j-1];
+                Jy_p[i][j] = Jy_p[i][j-1] - crr_p /((j+ j_domain_begin)*dr) * Wy[i][j-1];
             }
         }
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
-                Jz_p[i][j] = crt_p * Wz[i][j];
+                Jz_p[i][j] = crt_p /((j+ j_domain_begin)*dr) * Wz[i][j];
             }
         }
 
@@ -471,17 +471,17 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // ------------------------------------------------
     for (unsigned int i=1 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
-                Jx_p[i][j]= Jx_p[i-1][j] - crl_p * Wx[i-1][j];
+                Jx_p[i][j]= Jx_p[i-1][j] - crl_p /((j+ j_domain_begin)*dr) * Wx[i-1][j];
             }
         }
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=1 ; j<5 ; j++) {
-                Jy_p[i][j] = Jy_p[i][j-1] - crr_p * Wy[i][j-1];
+                Jy_p[i][j] = Jy_p[i][j-1] - crr_p /((j+ j_domain_begin)*dr) * Wy[i][j-1];
             }
         }
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
-                Jz_p[i][j] = crt_p * Wz[i][j];
+                Jz_p[i][j] = crt_p /((j+ j_domain_begin)*dr) * Wz[i][j];
             }
         }
 
@@ -531,7 +531,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
             linindex = iloc*b_dim[1]+jloc;
-            rho[linindex] += charge_weight * Sx1[i]*Sy1[j];
+            rho[linindex] += charge_weight /((j+ j_domain_begin)*dr) * Sx1[i]*Sy1[j];
         }
     }//i
 
@@ -650,17 +650,17 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // ------------------------------------------------
     for (unsigned int i=1 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
-                Jx_p[i][j]= Jx_p[i-1][j] - crl_p * Wx[i-1][j];
+                Jx_p[i][j]= Jx_p[i-1][j] - crl_p /((j+ j_domain_begin)*dr) * Wx[i-1][j];
             }
         }
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=1 ; j<5 ; j++) {
-                Jy_p[i][j] = Jy_p[i][j-1] - crr_p * Wy[i][j-1];
+                Jy_p[i][j] = Jy_p[i][j-1] - crr_p /((j+ j_domain_begin)*dr) * Wy[i][j-1];
             }
         }
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
-                Jz_p[i][j] = crt_p * Wz[i][j];
+                Jz_p[i][j] = crt_p /((j+ j_domain_begin)*dr) * Wz[i][j];
             }
         }
 
@@ -710,7 +710,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
             linindex = iloc*b_dim[1]+jloc;
-            rho[linindex] += charge_weight * Sx1[i]*Sy1[j];
+            rho[linindex] += charge_weight /((j+ j_domain_begin)*dr) * Sx1[i]*Sy1[j];
         }
     }//i
 
@@ -775,7 +775,7 @@ void ProjectorRZ2Order::operator() (double* rho, Particles &particles, unsigned 
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = (i+ip)*b_dim[1]+jp;
         for (unsigned int j=0 ; j<5 ; j++) {
-            rho[iloc+j] += charge_weight * Sx1[i]*Sy1[j];
+            rho[iloc+j] += charge_weight /((j+ j_domain_begin)*dr) * Sx1[i]*Sy1[j];
             }
     }//i
 
@@ -853,11 +853,11 @@ void ProjectorRZ2Order::operator() (Field* Jl, Field* Jr, Field* Jt, Particles &
             int jploc=jp+j-1;
             int jdloc=jd+j-1;
             // Jx^(d,p)
-            (*Jl3D)(idloc,jploc) += Jx_ion * Sxd[i]*Syp[j];
+            (*Jl3D)(idloc,jploc) += Jx_ion /((j+ j_domain_begin)*dr) * Sxd[i]*Syp[j];
             // Jy^(p,d)
-            (*Jr3D)(iploc,jdloc) += Jy_ion * Sxp[i]*Syd[j];
+            (*Jr3D)(iploc,jdloc) += Jy_ion /((j+ j_domain_begin)*dr) * Sxp[i]*Syd[j];
             // Jz^(p,p)
-            (*Jt3D)(iploc,jploc) += Jz_ion * Sxp[i]*Syp[j];
+            (*Jt3D)(iploc,jploc) += Jz_ion /((j+ j_domain_begin)*dr) * Sxp[i]*Syp[j];
         }
     }//i
 

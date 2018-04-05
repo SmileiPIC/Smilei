@@ -33,6 +33,7 @@ private:
     double one_third;
     // Number of theta modes
     int nmodes;
+    double dr;
 };
 
 #endif
