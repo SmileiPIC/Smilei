@@ -888,6 +888,42 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   two angles, corresponding to rotations around `y` and `z`, respectively.
 
 
+----
+
+Laser envelope model
+^^^^^^^^^^^^^^^^^^^^^^
+
+In geometry (``"3Dcartesian"``) it is possible to model a laser pulse propagating in the ``x`` direction through an envelope model (see :doc:`laser_envelope` for the advantages and limits of this approximation).
+The fast oscillations of the laser are neglected and all the physical quantities of the simulation, including the electromagnetic fields and their source terms, as well as the particles positions and momenta, are meant to be an average over one or more optical cycles.
+Effects involving characteristic lengths comparable to the laser central wavelength, or effects dependent on the polarization of the laser, cannot be modeled with this option.
+
+For the moment the only way to specify a laser pulse through this model in :program:`Smilei` is through a cylindrically symmetric 3D gaussian beam.
+Contrarily to a standard Laser, the laser envelope will be entirely initialized inside the simulation box at the start of the simulation.
+
+Following is the laser envelope creator::
+
+    LaserEnvelopeGaussian3D(
+        a0              = 1.,
+        focus           = [150., 40., 40.],
+        waist           = 30.,
+        time_envelope   = tgaussian(center=150., fwhm=40.),
+        envelope_solver = 'explicit',
+    )
+
+The arguments appearing ``LaserEnvelopeGaussian3D`` have the same meaning they would have in a normal LaserGaussian3D, with some differences
+
+.. py:data:: time_envelope
+
+   Since the envelope will be entirely initialized in the simulation box already at the start of the simulation, the time envelope will be applied in the ``x`` direction instead of time.
+
+.. py:data:: envelope_solver
+
+  :default: ``explicit``
+
+  For the moment the only available solver for the laser envelope equation is an explicit solver with centered finite differences in space and time.
+
+
+
 
 ----
 
@@ -1725,7 +1761,7 @@ This is done by including a block ``DiagFields``::
   |  The same notation works for Jx, Jr, Jt, and Rho                       |
   +------------------------------+-----------------------------------------+
 
-  In the case of an envelope model for the laser, the following fields are also available:
+  In the case of an envelope model for the laser (see :doc:`laser_envelope`), the following fields are also available:
 
   .. rst-class:: nowrap
   
@@ -1841,7 +1877,7 @@ To add one probe diagnostic, include the block ``DiagProbe``::
   fields will be saved.
   Note that it does NOT speed up calculation much, but it saves disk space.
 
-  In the case of an envelope model for the laser, the following fields are also available: ``"Env_A_abs"``, ``"Env_Ar"``, ``"Env_Ai"``,
+  In the case of an envelope model for the laser (see :doc:`laser_envelope`), the following fields are also available: ``"Env_A_abs"``, ``"Env_Ar"``, ``"Env_Ai"``,
   ``"Env_Chi"``.
   
 
