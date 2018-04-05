@@ -1179,8 +1179,11 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                         if(charge(i,j,k)==0.) ERROR("Encountered non-zero charge density and zero charge at the same location");
                         density(i,j,k) /= charge(i,j,k);
                     }
-                    density(i,j,k) = abs(density(i,j,k));
-
+		    if (params.geometry=="3drz"){
+			density(i,j,k)=abs(density(i,j,k)*(j+cell_index[1])*cell_length[1]);
+		    } else{
+                    	density(i,j,k) = abs(density(i,j,k));
+		    }
                     // increment the effective number of particle by n_part_in_cell(i,j,k)
                     // for each cell with as non-zero density
                     npart_effective += (unsigned int) n_part_in_cell(i,j,k);
