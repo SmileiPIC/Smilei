@@ -23,16 +23,16 @@ as long as they correspond to several :ref:`restarts <Checkpoints>` of the same 
   * ``results_path``: path or list of paths to the directory-ies
     where the results of the simulation-s are stored. It can also contain wildcards,
     such as ``*`` and ``?`` in order to include several simulations at once.
-  
+
   * ``reference_angular_frequency_SI``: overrides the value of the simulation parameter
     :py:data:`reference_angular_frequency_SI`, in order to re-scale units.
-  
+
   * ``show``: if ``False``, figures will not plot on screen. Make sure that
     you have not loaded another simulation or the matplotlib package. You may need to
     restart python.
-  
+
   * ``verbose``: if ``False``, less information is printed while post-processing.
-  
+
   * ``scan``: if ``False``, HDF5 output files are not scanned initially.
 
 
@@ -72,12 +72,12 @@ several instances may exist, you can directly iterate over them::
       print "species "+species.name+" has mass "+str(species.mass)
 
 You can also access to a specific component by referencing its number::
-  
+
   F = S.namelist.ExternalField[0]  # get the first external field
   print "An external field "+F.field+" was applied"
 
 In the case of the species, you can also obtain a given species by its name::
-  
+
   species = S.namelist.Species["electron1"]
   print "species "+species.name+" has mass "+str(species.mass)
 
@@ -111,7 +111,7 @@ Open a Field diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 .. py:method:: Field(diagNumber=None, field=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, **kwargs)
-  
+
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``diagNumber``: The number of the fields diagnostic
      | If not given, then a list of available diagnostic numbers is printed.
@@ -150,7 +150,7 @@ Open a Probe diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 .. py:method:: Probe(probeNumber=None, field=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, **kwargs)
-  
+
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``probeNumber``: number of the probe (the first one has number 0).
      | If not given, a list of available probes is printed.
@@ -173,7 +173,7 @@ Open a ParticleBinning diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. py:method:: ParticleBinning(diagNumber=None, timesteps=None, subset=None, sum=None, units=[""], data_log=False, **kwargs)
-  
+
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``diagNumber``: number of the particle binning diagnostic (starts at 0).
      | If not given, a list of available diagnostics is printed.
@@ -181,16 +181,16 @@ Open a ParticleBinning diagnostic
      | For example, ``"#0/#1"`` computes the division by diagnostics 0 and 1.
   * ``subset`` is similar to that of :py:meth:`Field`, although the axis must be one of
      ``"x"``, ``"y"``, ``"z"``, ``"px"``, ``"py"``, ``"pz"``, ``"p"``, ``"gamma"``, ``"ekin"``, ``"vx"``, ``"vy"``, ``"vz"``, ``"v"`` or ``"charge"``.
-     
+
      **WARNING:** With the syntax ``subset={axis:[start, stop, step]}``, the value of ``step``
      is a number of bins.
   * ``sum``: a selection of coordinates on which to sum the data.
      | Syntax 1: ``sum = { axis : "all", ... }``
      | Syntax 2: ``sum = { axis : location, ... }``
      | Syntax 3: ``sum = { axis : [begin, end] , ... }``
-     
+
      ``axis`` must be ``"x"``, ``"y"``, ``"z"``, ``"px"``, ``"py"``, ``"pz"``, ``"p"``, ``"gamma"``, ``"ekin"``, ``"vx"``, ``"vy"``, ``"vz"``, ``"v"`` or ``"charge"``.
-     
+
      | The chosen axes will be removed:
      | - With syntax 1, a sum is performed over all the axis.
      | - With syntax 2, only the bin closest to ``location`` is kept.
@@ -211,7 +211,7 @@ Open a Screen diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. py:method:: Screen(diagNumber=None, timesteps=None, subset=None, sum=None, units=[""], data_log=False, **kwargs)
-  
+
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``diagNumber``: number of the screen diagnostic (the first one has number 0).
      | If not given, a list of available screen diagnostics is printed.
@@ -363,12 +363,12 @@ It has three different syntaxes:
 .. rubric:: Requirements for changing units
 
 * The `Pint module <https://pypi.python.org/pypi/Pint/>`_.
-* To obtain units in a non-normalized system (e.g. SI), the simulation must have the 
-  parameter :py:data:`reference_angular_frequency_SI` set to a finite value. 
-  Otherwise, this parameter can be set during post-processing as an argument to the 
+* To obtain units in a non-normalized system (e.g. SI), the simulation must have the
+  parameter :py:data:`reference_angular_frequency_SI` set to a finite value.
+  Otherwise, this parameter can be set during post-processing as an argument to the
   :py:meth:`Open` function.
-  
-  
+
+
 ----
 
 Units of ParticleBinning and Screen
@@ -403,13 +403,13 @@ has to be divided by the number of cells *relevant* to each bin.
 * For each axis of the diagnostic :py:data:`axes`:
 
   * If the axis is one of ``"x"``, ``"y"`` or ``"z"``:
-  
+
     * Multiply the outputs by the simulation length along that axis.
     * If the axis is included in a ``subset`` or a ``sum``: divide by the corresponding *length*.
     * Otherwise, divide by the length of each bin.
-    
+
   * Otherwise:
-  
+
     * If the axis is included in a ``subset`` or a ``sum``: do nothing.
     * Otherwise, divide by the length of each bin.
 
@@ -474,9 +474,9 @@ Obtain the data
 
   Returns the list of positions of the diagnostic data along the requested axis.
   If the axis is not available, returns an empty list.
-  By default, axis positions are in the code's units, but are converted to 
+  By default, axis positions are in the code's units, but are converted to
   the diagnostic's units defined by the ``units`` argument, if provided.
-  
+
   * ``axis``: the name of the requested axis.
 
 
@@ -717,17 +717,49 @@ Update the plotting options
 
 ----
 
+VTK data conversion
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Happi embeddes a method for certain diagnostic classes that enables to
+convert 3d data into the vtk file format.
+
+.. py:function:: diag.toVTK(**kwargs)
+
+  Convert the data contained in the ``diag`` diagnostic object (prepared
+  by ``Scalar()``, ``Field()``, ``Probe()``, ``trackParticles``, etc.) in the vtk format.
+  The optinal arguments ``**kwargs`` depend on the diag type.
+
+  Keyword-arguments ``kwargs`` are:
+
+  * ``rendering``: only for ``trackParticles`` diagnostics, can be ``trajectory`` or ``cloud``:
+
+    * ``trajectory``: the vtk file is adapted to show particle trajectories. A file is generated for all trajectories.
+    * ``cloud``: the vtk file is adapted to show cloud of particles. A file is generated per iteration.
+
+  * ``data_format``: only for ``trackParticles`` diagnostics, enables to specify the output data format: ``vtk`` or ``xml``
+
+  **Example for tracked particles**::
+
+    S = happi.Open("path/to/my/results")
+    tracked_particles = S.TrackParticles("electron", axes=["x","y","z","px","py","pz","Id"], timesteps=[1,10])
+    # Create cloud of particles in separate files for each iteration
+    tracked_particles.toVTK(rendering="cloud",data_format="xml");
+    # Create trajectory in a single file
+    tracked_particles.toVTK(rendering="trajectory",data_format="xml");
+
+----
+
 Other tools in ``happi``
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. py:method:: happi.openNamelist(namelist)
 
   Reads a namelist and stores all its content in the returned object.
-  
+
   * ``namelist``: the path to the namelist.
-  
+
 **Example**::
-  
+
   namelist = happi.openNamelist("path/no/my/namelist.py")
   print namelist.Main.timestep
 

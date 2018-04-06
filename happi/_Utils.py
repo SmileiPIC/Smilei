@@ -538,22 +538,48 @@ class VTKfile:
 		"""
 		Convert a numpy array in a vtkFloatArray
 		"""
+
+		from numpy import float32
+		from numpy import int32
+
 		shape = data.shape
 		if len(shape)==1:   npoints, nComponents = shape[0], 1
 		elif len(shape)==2: npoints, nComponents = shape
 		else: raise Exception("impossible")
-		arr = self.vtk.vtkFloatArray()
-		arr.SetNumberOfTuples(npoints)
-		arr.SetNumberOfComponents(nComponents)
-		# Replace the pointer in arr by the pointer to the data
-		arr.SetVoidArray(data, npoints*nComponents, 1)
-		arr.SetName(name)
-		# keep reference to "data" to not have a null reference
-		# else pcoords would be deleted
-		# (see the trick: http://vtk.1045678.n5.nabble.com/More-zero-copy-array-support-for-Python-td5743662.html)
-		arr.array = data
 
-		return arr
+		if (data.dtype == int32):
+
+			arr = self.vtk.vtkIntArray()
+			arr.SetNumberOfTuples(npoints)
+			arr.SetNumberOfComponents(nComponents)
+			# Replace the pointer in arr by the pointer to the data
+			arr.SetVoidArray(data, npoints*nComponents, 1)
+			arr.SetName(name)
+			# keep reference to "data" to not have a null reference
+			# else pcoords would be deleted
+			# (see the trick: http://vtk.1045678.n5.nabble.com/More-zero-copy-array-support-for-Python-td5743662.html)
+			arr.array = data
+
+			return arr
+
+		elif (data.dtype == float32):
+
+			arr = self.vtk.vtkFloatArray()
+			arr.SetNumberOfTuples(npoints)
+			arr.SetNumberOfComponents(nComponents)
+			# Replace the pointer in arr by the pointer to the data
+			arr.SetVoidArray(data, npoints*nComponents, 1)
+			arr.SetName(name)
+			# keep reference to "data" to not have a null reference
+			# else pcoords would be deleted
+			# (see the trick: http://vtk.1045678.n5.nabble.com/More-zero-copy-array-support-for-Python-td5743662.html)
+			arr.array = data
+
+			return arr
+
+		else:
+			raise Exception("In Array: Unknown data type for data {data.dtype}".format())
+
 
 	def WriteImage(self, array, origin, extent, spacings, file, numberOfPieces):
 		img = self.vtk.vtkImageData()
@@ -602,7 +628,7 @@ class VTKfile:
 		# Add scalars
 		for attribute in attributes:
 			# SetScalar allows only one scalar
-			#pdata.GetPointData().SetScalars(attribute)
+			# pdata.GetPointData().SetScalars(attribute)
 			pdata.GetPointData().AddArray(attribute)
 
 		# The first attribute (first scalar) is the main one
@@ -638,6 +664,12 @@ class VTKfile:
 	def WriteLines(self, pcoords, connectivity, attributes, data_format, file):
 		"""
 		Create a vtk file that describes lines such as trajectories
+
+		Inputs:
+
+		pcoodrs: vtk array that describes the point coordinates
+		connectivity:
+		attributes: Vtk arrays containing additional values for each point
 		"""
 		ncel = len(connectivity)
 		connectivity = connectivity.flatten()

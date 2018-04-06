@@ -746,11 +746,13 @@ class TrackParticles(Diagnostic):
 			print ("Cannot export tracked particles of a "+str(self._ndim)+"D simulation to VTK")
 			return
 
+		# The specified rendering option is checked
 		if rendering not in ["trajectory","cloud"]:
 			print ("Rendering of type {} is not valid. It should be `trajectory` or `cloud`.".format(rendering))
 			return
 
-		if data_format not in ["xml","ascii"]:
+		# The specified data format is checked
+		if data_format not in ["xml","vtk"]:
 			print ("Format of type {} is not valid.".format(data_format))
 			return
 
@@ -792,11 +794,14 @@ class TrackParticles(Diagnostic):
 					# List of scalar arrays
 					attributes = []
 					for ax in self.axes:
-						if ax!="x" and  ax!="y" and  ax!="z":
+						if ax!="x" and  ax!="y" and  ax!="z" and ax!="Id":
 							attributes += [vtk.Array(self._np.ascontiguousarray(data[ax][istep].flatten(),'float32'),ax)]
+						# Integer arrays
+						if ax=="Id":
+							attributes += [vtk.Array(self._np.ascontiguousarray(data[ax][istep].flatten(),'int32'),ax)]
 
 					vtk.WriteCloud(pcoords_step, attributes, data_format, fileprefix+"_{:06d}.{}".format(step,extension))
-					print("Exportation of {}_{:06d}.vtk".format(fileprefix,step))
+					print("Exportation of {}_{:06d}.{}".format(fileprefix,step,extension))
 
 				print("Successfully exported tracked particles to VTK, folder='"+self._exportDir)
 
@@ -819,8 +824,11 @@ class TrackParticles(Diagnostic):
 				# List of scalar arrays
 				attributes = []
 				for ax in self.axes:
-					if ax!="x" and  ax!="y" and  ax!="z":
+					if ax!="x" and  ax!="y" and  ax!="z" and ax!="Id":
 						attributes += [vtk.Array(self._np.ascontiguousarray(data[ax].flatten(),'float32'),ax)]
+					# Integer arrays
+					if ax=="Id":
+						attributes += [vtk.Array(self._np.ascontiguousarray(data[ax].flatten(),'int32'),ax)]
 
 				vtk.WriteLines(pcoords, connectivity, attributes, data_format, fileprefix+".{}".format(extension))
 				print("Successfully exported tracked particles to VTK, folder='"+self._exportDir)
