@@ -3,11 +3,11 @@
 # ----------------------------------------------------------------------------------------
 
 import math
-from numpy import exp, sin
+from numpy import exp, sin, cos, tan, sqrt, pi
 
 l0 = 2.0*math.pi        # laser wavelength
 t0 = l0                 # optical cycle
-Lsim = [10.*l0,50.*l0]  # length of the simulation
+Lsim = [16.*l0,40.*l0]  # length of the simulation
 Tsim = 25.*t0           # duration of the simulation
 resx = 28.              # nb of cells in on laser wavelength
 rest = 40.              # time of timestep in one optical cycle 
@@ -33,11 +33,14 @@ Main(
     random_seed = smilei_mpi_rank
 )
 
+angle = 30./180.*pi
+
 LaserOffset(
-    space_time_profile = [None, lambda y,t: exp( -(600.*(y/Lsim[1]-0.5))**2 - (10.*(t-40.-Tsim/5.)/Tsim)**2 ) * sin(t)],
-    offset = 40.,
-    time_envelope = tpolygonal(points=[t0, Tsim/2.], values=[1., 1.]),
-    keep_n_strongest_modes = 800
+    space_time_profile = [None, lambda y,t: exp( -(70.*(y/Lsim[1]-0.2))**2 - (5.*(t-10.-Tsim/5.)/Tsim)**2 ) * sin(t)],
+    offset = 30. - (1.-0.2)*Lsim[1]*sin(angle),
+    time_envelope = 1.,
+    keep_n_strongest_modes = 10000,
+    angle = angle
 )
 
 DiagFields(
@@ -45,3 +48,6 @@ DiagFields(
     fields = ['Ex','Ey','Ez','Bx','By','Bz']
 )
 
+DiagScalar(
+    every = 10,
+)

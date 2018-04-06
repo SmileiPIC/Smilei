@@ -110,7 +110,7 @@ void LaserPropagator::init(Params* params, SmileiMPI* smpi, unsigned int side)
 
 }
 
-void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profiles_n, double offset, string file, int keep_n_strongest_modes)
+void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profiles_n, double offset, string file, int keep_n_strongest_modes, double angle_z)
 {
 #ifdef SMILEI_USE_NUMPY
     const complex<double> i_ (0., 1.); // the imaginary number
@@ -287,19 +287,55 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
     for(unsigned int i=0; i<n_omega_local; i++)
         omega[i] = local_k[ndim-1][indices[i]];
     
-    // 4- Multiply by the propagation term, while extracting only selected omegas
+    // Make arrays of ky^2, kz^2
+    vector<double> ky2(N[0]), kz2;
+    for(unsigned int i=0; i<N[0]; i++)
+        ky2[i] = local_k[0][i] * local_k[0][i];
+    if( ! _2D ) {
+        kz2.resize(Nlocal[1]);
+        for(unsigned int i=0; i<Nlocal[1]; i++)
+            kz2[i] = local_k[1][i] * local_k[1][i];
+    }
+    
+    // 4- Propagate and rotate in k-space, while extracting only selected omegas
     // --------------------------------
     
+    // Define the rotation parameters
+    double cz = cos(angle_z), sz = sin(angle_z);
+    double coeff_y = L[0] / 2. / M_PI;
+    double kx, j_, j_max=(double)((N[0]-1)/2), j_min=-(double)(N[0]/2), j_tot=N[0];
+    unsigned int i1, i0;
+    
+    // Interpolate arrays on new k space
+    double omega2;
     for( unsigned int i=0; i<nprofiles; i++ ) {
         if( _2D ) {
             npy_intp dims[2] = {N[0], n_omega_local};
             PyObject* a = PyArray_New(&PyArray_Type, 2, dims, complex_type_num, NULL, NULL, 128, NPY_ARRAY_F_CONTIGUOUS, NULL);
             complex<double> * z0 = (complex<double> *) PyArray_GETPTR1((PyArrayObject*) arrays[i],0);
             complex<double> * z  = (complex<double> *) PyArray_GETPTR1((PyArrayObject*) a        ,0);
-            for(unsigned int k=0; k<n_omega_local; k++) 
-                for(unsigned int j=0; j<N[0]; j++) 
-                    z[j + N[0]*k] = z0[j + N[0]*indices[k]]
-                        * exp( i_ * offset * sqrt( max(0., pow(omega[k],2) - pow(local_k[0][j],2)) ) );
+            for(unsigned int k=0; k<n_omega_local; k++) {
+                omega2 = omega[k] * omega[k];
+                i1 = N[0]*k;
+                i0 = N[0]*indices[k];
+                for(unsigned int j=0; j<N[0]; j++) {
+                    if( ky2[j] >= omega2 ) {
+                        z[j + i1] = 0.;
+                    } else {
+                        kx = sqrt(omega2 - ky2[j]);
+                        j_ = coeff_y * (sz * kx + cz * local_k[0][j]); // index of ky before rotation
+                        if( j_ < j_min || j_ > j_max ) { // out of bounds of FFT
+                            z[j + i1] = 0.;
+                        } else {
+                            if( j_ < 0. ) j_ += j_tot; // unwrap negative frequencies
+                            z[j + i1] = complex_interpolate(&z0[i0], N[0], j_, // interpolate
+                                abs(cz - sz * local_k[0][j]/kx), // compensate for the k-space compression
+                                offset* kx  // add the propagation term to the phase
+                            );
+                        }
+                    }
+                }
+            }
             Py_DECREF(arrays[i]);
             arrays[i] = a;
         } else {
@@ -307,11 +343,30 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
             PyObject* a = PyArray_New(&PyArray_Type, 3, dims, complex_type_num, NULL, NULL, 128, NPY_ARRAY_F_CONTIGUOUS, NULL);
             complex<double> * z0 = (complex<double> *) PyArray_GETPTR1((PyArrayObject*) arrays[i],0);
             complex<double> * z  = (complex<double> *) PyArray_GETPTR1((PyArrayObject*) a        ,0);
-            for(unsigned int l=0; l<n_omega_local; l++) 
-                for(unsigned int k=0; k<Nlocal[1]; k++) 
-                    for(unsigned int j=0; j<N[0]; j++) 
-                        z[j + N[0]*( k + Nlocal[1]*l )] = z0[j + N[0]*( k + Nlocal[1]*indices[l] )]
-                            * exp( i_ * offset * sqrt( max(0., pow(omega[l],2) - pow(local_k[0][j],2) - pow(local_k[1][k],2)) ) );
+            for(unsigned int l=0; l<n_omega_local; l++) {
+                omega2 = omega[l] * omega[l];
+                for(unsigned int k=0; k<Nlocal[1]; k++) {
+                    i1 = N[0]*( k + Nlocal[1]*l );
+                    i0 = N[0]*( k + Nlocal[1]*indices[l] );
+                    for(unsigned int j=0; j<N[0]; j++) {
+                        if( ky2[j] + kz2[k] >= omega2 ) {
+                            z[j + i1] = 0.;
+                        } else {
+                            kx = sqrt(omega2 - ky2[j] - kz2[k]);
+                            j_ = coeff_y * (sz * kx + cz * local_k[0][j]); // index of ky before rotation
+                            if( j_ < j_min || j_ > j_max ) { // out of bounds of FFT
+                                z[j + i1] = 0.;
+                            } else {
+                                if( j_ < 0. ) j_ += j_tot; // unwrap negative frequencies
+                                z[j + i1] = complex_interpolate(&z0[i0], N[0], j_, // interpolate
+                                    abs(cz - sz * local_k[0][j]/kx), // compensate for the k-space compression
+                                    offset* kx  // add the propagation term to the phase
+                                );
+                            }
+                        }
+                    }
+                }
+            }
             Py_DECREF(arrays[i]);
             arrays[i] = a;
         }
@@ -376,7 +431,7 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
     // --------------------------------
     unsigned int local_size = (_2D ? N[0] : Nlocal[0]*N[1]) * n_omega_local;
     vector<vector<double> > magnitude(nprofiles), phase(nprofiles);
-    double coeff_magnitude = 1./L.back(); // divide by omega increment
+    double coeff_magnitude = 1./L.back()/M_PI; // multiply by omega increment
     
     for( unsigned int i=0; i<nprofiles; i++ ) {
         complex<double> * z = (complex<double> *) PyArray_GETPTR1((PyArrayObject*) arrays[i],0);
@@ -388,7 +443,7 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
                 for(unsigned int k=0; k<n_omega_local; k++) {
                     i1 = k + n_omega_local*j;
                     magnitude[i][i1] = abs(z[i1]) * coeff_magnitude;
-                    phase    [i][i1] = arg(z[i1] * exp(-i_ * omega[k] * offset));
+                    phase    [i][i1] = arg(z[i1] * exp(-i_ * omega[k] * offset)); // temporal delay
                 }
             }
         } else {
@@ -397,7 +452,7 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
                     for(unsigned int l=0; l<n_omega_local; l++) {
                         i1 = l + n_omega_local*(k + N[1]*j);
                         magnitude[i][i1] = abs(z[i1]) * coeff_magnitude;
-                        phase    [i][i1] = arg(z[i1] * exp(-i_ * omega[l] * offset));
+                        phase    [i][i1] = arg(z[i1] * exp(-i_ * omega[l] * offset)); // temporal delay
                     }
                 }
             }

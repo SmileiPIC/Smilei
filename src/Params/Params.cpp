@@ -643,9 +643,13 @@ namelist("")
             if( !PyTools::extract("_keep_n_strongest_modes", keep_n_strongest_modes, "Laser", i_laser) || keep_n_strongest_modes<1)
                 ERROR("For LaserOffset #" << n_laser_offset << ": keep_n_strongest_modes must be a positive integer");
             
+            // Extract the angle
+            double angle_z = 0.;
+            PyTools::extract("_angle", angle_z, "Laser", i_laser);
+            
             // Make the propagation happen and write out the file
             if( ! smpi->test_mode )
-                propagateX(profiles, profiles_n, offset, file, keep_n_strongest_modes);
+                propagateX(profiles, profiles_n, offset, file, keep_n_strongest_modes, angle_z);
             
             n_laser_offset ++;
         }
