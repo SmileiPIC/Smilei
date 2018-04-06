@@ -512,11 +512,11 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
     restartFieldsPerProc(patch_gid, EMfields->By_m);
     restartFieldsPerProc(patch_gid, EMfields->Bz_m);
 
-    if (EMfields->envelope!=NULL) {
+    if (EMfields->envelope!=NULL) {MESSAGE("restarting envelope");
         restart_cFieldsPerProc(patch_gid, EMfields->envelope->A_);
         restart_cFieldsPerProc(patch_gid, EMfields->envelope->A0_);
         restartFieldsPerProc(patch_gid, EMfields->Env_Chi_);
-    }
+    }else{MESSAGE("envelope is null");}
 
     
     // filtered Electric fields

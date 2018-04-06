@@ -1708,3 +1708,14 @@ void VectorPatch::ponderomotive_update_position_and_currents(Params& params,
 
 
 } // END ponderomotive_update_position_and_currents
+
+
+void VectorPatch::init_new_envelope(Params& params)
+{
+    if ((*this)(0)->EMfields->envelope!=NULL) {
+        // for all patches, init new envelope from input namelist parameters
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+            (*this)(ipatch)->EMfields->envelope->initEnvelope( (*this)(ipatch), (*this)(ipatch)->EMfields );
+        } // end loop on patches
+    }
+} // END init_new_envelope
