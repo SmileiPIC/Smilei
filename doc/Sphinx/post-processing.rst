@@ -736,7 +736,8 @@ convert 3d data into the vtk file format.
     * ``trajectory``: the vtk file is adapted to show particle trajectories. A file is generated for all trajectories.
     * ``cloud``: the vtk file is adapted to show cloud of particles. A file is generated per iteration.
 
-  * ``data_format``: only for ``trackParticles`` diagnostics, enables to specify the output data format: ``vtk`` or ``xml``
+  * ``data_format``: only for ``trackParticles`` diagnostics, enables to specify the output data format: ``vtk`` or ``xml``.
+    If ``vtk`` is specified the resulting file is in ascii.
 
   **Example for tracked particles**::
 

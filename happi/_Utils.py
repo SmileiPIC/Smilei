@@ -616,6 +616,14 @@ class VTKfile:
 	def WriteCloud(self, pcoords, attributes, data_format, file):
 		"""
 		Create a vtk file that describes a cloud of points (using vtkPolyData)
+
+		Inputs:
+
+			pcoodrs: vtk array that describes the point coordinates
+			attributes: Vtk arrays containing additional values for each point
+			data_format: the output data format
+			file: output file path
+
 		"""
 
 		points = self.vtk.vtkPoints()
@@ -625,15 +633,28 @@ class VTKfile:
 		pdata = self.vtk.vtkPolyData()
 		pdata.SetPoints(points)
 
-		# Add scalars
-		for attribute in attributes:
-			# SetScalar allows only one scalar
-			# pdata.GetPointData().SetScalars(attribute)
-			pdata.GetPointData().AddArray(attribute)
+		# Add scalars for xml
+		if data_format == "xml":
 
-		# The first attribute (first scalar) is the main one
-		if len(attributes) > 0:
-			pdata.GetPointData().SetActiveScalars(attributes[0].GetName())
+			for attribute in attributes:
+				# SetScalar allows only one scalar
+				# pdata.GetPointData().SetScalars(attribute)
+
+				# AddArray creates scalar and then fields
+				pdata.GetPointData().AddArray(attribute)
+
+			# The first attribute (first scalar) is the main one
+			if len(attributes) > 0:
+				pdata.GetPointData().SetActiveScalars(attributes[0].GetName())
+
+		# Add scalars for vtk
+		else:
+
+			if len(attributes) > 0:
+				pdata.GetPointData().SetScalars(attributes[0])
+				pdata.GetPointData().SetActiveScalars(attributes[0].GetName())
+
+
 
 		writer = self.vtk.vtkPolyDataWriter()
 
@@ -647,6 +668,24 @@ class VTKfile:
 		else:
 		    writer.SetInputData(pdata)
 		writer.Write()
+
+		# Add the following attributes by hand because the API
+		# limits vtk to 1 scalar
+		if data_format == "vtk":
+			file_object = open(file, 'a')
+			for attribute in attributes[1:]:
+				if (attribute.GetDataType() == 6):
+					data_type = "int"
+				elif (attribute.GetDataType() == 10):
+					data_type = "float"
+				size = attribute.GetSize()
+				file_object.write("Scalar {} {} \n".format(attribute.GetName(),data_type))
+				file_object.write("LOOKUP_TABLE default \n")
+				for i in range(0,size,8):
+					for j in range(8):
+						file_object.write("{} ".format(attribute.GetValue(i + j)))
+					file_object.write("\n")
+
 
 	def WritePoints(self, pcoords, file):
 		points = self.vtk.vtkPoints()
@@ -667,9 +706,11 @@ class VTKfile:
 
 		Inputs:
 
-		pcoodrs: vtk array that describes the point coordinates
-		connectivity:
-		attributes: Vtk arrays containing additional values for each point
+			pcoodrs: vtk array that describes the point coordinates
+			connectivity: connection betwwen coordiantes in pcoords to form trajectories
+			attributes: Vtk arrays containing additional values for each point
+			data_format: the output data format
+			file: output file path
 		"""
 		ncel = len(connectivity)
 		connectivity = connectivity.flatten()

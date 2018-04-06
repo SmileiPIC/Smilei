@@ -753,7 +753,7 @@ class TrackParticles(Diagnostic):
 
 		# The specified data format is checked
 		if data_format not in ["xml","vtk"]:
-			print ("Format of type {} is not valid.".format(data_format))
+			print ("Format of type {} is not valid. Should be `xml` or `vtk` ".format(data_format))
 			return
 
 		self._mkdir(self._exportDir)
@@ -761,6 +761,7 @@ class TrackParticles(Diagnostic):
 
 		ntimes = len(self._timesteps)
 
+		# Determine the correct file extension according to the given data format
 		if data_format == "xml":
 			extension = "vtp"
 		else:
