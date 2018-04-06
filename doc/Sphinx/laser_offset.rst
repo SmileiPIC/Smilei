@@ -15,7 +15,8 @@ perspective, this simply requires the definition of the laser profile at some ar
 plane.
 
 The general technique is taken from [Thiele2016]_ but it has been improved for parallel
-computation in both 2D and 3D geometries.
+computation in both 2D and 3D geometries. Further below, another improvement is presented:
+the propagation towards a tilted plane.
 
 ----
 
@@ -58,6 +59,8 @@ ensures a reasonable disk space usage.
 
 The full :math:`A(y,z,t)` profile is calculated during the actual PIC simulation, summing
 over the different :math:`\omega`.
+
+----
 
 Numerical process
 ^^^^^^^^^^^^^^^^^^
@@ -142,12 +145,51 @@ timesteps.
   occur due to the limited number of frequencies that are kept.
 
 
+----
+
+Tilted plane
+^^^^^^^^^^^^^
+
+The method above describes a wave propagation between two parallel planes. In Smilei, a
+technique inspired from [Matsushima2003]_ allows for the propagation from a title plane.
+
+This rotation happens in the Fourier space: wave vectors :math:`k_x` and :math:`k_y` are
+rotated around :math:`k_z` by an angle :math:`\theta`, according to
+
+.. math::
+
+  \begin{array}{rcl}
+    k_x & = & k_x^\prime \cos\theta  - k_y^\prime \sin\theta \\
+    k_y & = & k_x^\prime \sin\theta  + k_y^\prime \cos\theta \\
+    k_z & = & k_z^\prime
+  \end{array}
+
+This transforms :math:`\hat A(x,k_y,k_z,\omega)` into
+:math:`\hat A(x,k_y^\prime,k_z,\omega)`, thus the operation is merely a change of one
+variable (:math:`k_y`).
+
+Numerically, the process is not that straightforward because :math:`\hat A^\prime` is an
+array in which the axis :math:`k_y^\prime` is linearly sampled, but the corresponding
+values :math:`k_y` do not match this linear sampling. We developed an interpolation method
+to obtain the transformed values at any point.
+
+In the end, the prescribed laser profile lies in a plane located at a distance
+:math:`\delta` and rotated around :math:`z` by an angle :math:`\theta`, according to the
+following figure.
+
+.. figure:: _static/LaserOffsetAngle.png
+  :width: 9cm
+  
+  The position of the plane where the laser profile is defined, with respect to the box.
+
 
 ----
 
 References
 ^^^^^^^^^^
 
-.. [Thiele2016] `Illia Thiele et al., J. Comput. Phys. 321, 1110 (2016) <https://doi.org/10.1016/j.jcp.2016.06.004>`_
+.. [Thiele2016] `I. Thiele et al., J. Comput. Phys. 321, 1110 (2016) <https://doi.org/10.1016/j.jcp.2016.06.004>`_
+
+.. [Matsushima2003] `K. Matsushima et al., J. Opt. Soc. Am. A 20, 1755 (2003) <https://doi.org/10.1364/JOSAA.20.001755>`_ 
 
 

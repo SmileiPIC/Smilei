@@ -28,7 +28,7 @@ Main(
 
 
 LaserOffset(
-    space_time_profile = [None, lambda y,z,t: exp( -(20.*(y/Lsim[1]-0.6))**2-(20.*(z/Lsim[2]-0.5))**2 - (3.*(t-20.)/Tsim)**2 ) * sin(t)],
+    space_time_profile = [None, lambda y,z,t: exp( -(10.*(y/Lsim[1]-0.6))**2-(10.*(z/Lsim[2]-0.5))**2 - (3.*(t-20.)/Tsim)**2 ) * sin(t)],
     offset = 4.,
     time_envelope = 1.,
     keep_n_strongest_modes = 100,

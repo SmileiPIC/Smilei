@@ -896,6 +896,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
         offset                 = 10.,
         time_envelope          = tconstant(),
         keep_n_strongest_modes = 100,
+        angle = 10./180.*3.14159
     )
 
   .. py:data:: space_time_profile
@@ -928,6 +929,14 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     The number of temporal Fourier modes that are kept during the pre-processing.
     See :doc:`this page <laser_offset>` for more details.
 
+  .. py:data:: angle
+    
+    :default: 0.
+    
+    Angle between the boundary and the profile's plane, the rotation being around :math:`z`.
+    See :doc:`this page <laser_offset>` for more details.
+
+  
 ----
 
 .. _ExternalField:
