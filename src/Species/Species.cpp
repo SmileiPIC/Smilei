@@ -1273,7 +1273,6 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
             
             for(unsigned int idim=0; idim<nDim_particle; idim++)
                 particles->position(idim,ip) = position[idim][ippy] ;
-            cout << "creating part ippy = " << ippy << " ip= " << ip << " x= " <<  particles->position(0,ip)  << " y= " <<  particles->position(1,ip)<< " z= " <<  particles->position(2,ip) << endl;
             //If momentum is not initialized by a numpy array
             unsigned int i =  (unsigned int)( (particles->position(0,ip) - min_loc_vec[0])/cell_length[0] );
             unsigned int j =  (unsigned int)( (particles->position(1,ip) - min_loc_vec[1])/cell_length[1] );
