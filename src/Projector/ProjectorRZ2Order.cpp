@@ -146,7 +146,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         }
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=1 ; j<5 ; j++) {
-                Jy_p[i][j] = Jy_p[i][j-1] - crr_p /((j+ j_domain_begin)*dr) * Wy[i][j-1];
+                Jy_p[i][j] = Jy_p[i][j-1] - crr_p /((j+ j_domain_begin+0.5)*dr) * Wy[i][j-1];
             }
         }
     for (unsigned int i=0 ; i<5 ; i++) {
@@ -316,7 +316,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         }
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=1 ; j<5 ; j++) {
-                Jy_p[i][j] = Jy_p[i][j-1] - crr_p /((j+ j_domain_begin)*dr) * Wy[i][j-1];
+                Jy_p[i][j] = Jy_p[i][j-1] - crr_p /((j+ j_domain_begin+0.5)*dr) * Wy[i][j-1];
             }
         }
     for (unsigned int i=0 ; i<5 ; i++) {
@@ -476,7 +476,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         }
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=1 ; j<5 ; j++) {
-                Jy_p[i][j] = Jy_p[i][j-1] - crr_p /((j+ j_domain_begin)*dr) * Wy[i][j-1];
+                Jy_p[i][j] = Jy_p[i][j-1] - crr_p /((j+ j_domain_begin+0.5)*dr) * Wy[i][j-1];
             }
         }
     for (unsigned int i=0 ; i<5 ; i++) {
@@ -655,7 +655,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         }
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=1 ; j<5 ; j++) {
-                Jy_p[i][j] = Jy_p[i][j-1] - crr_p /((j+ j_domain_begin)*dr) * Wy[i][j-1];
+                Jy_p[i][j] = Jy_p[i][j-1] - crr_p /((j+ j_domain_begin+0.5)*dr) * Wy[i][j-1];
             }
         }
     for (unsigned int i=0 ; i<5 ; i++) {
@@ -855,7 +855,7 @@ void ProjectorRZ2Order::operator() (Field* Jl, Field* Jr, Field* Jt, Particles &
             // Jx^(d,p)
             (*Jl3D)(idloc,jploc) += Jx_ion /((j+ j_domain_begin)*dr) * Sxd[i]*Syp[j];
             // Jy^(p,d)
-            (*Jr3D)(iploc,jdloc) += Jy_ion /((j+ j_domain_begin)*dr) * Sxp[i]*Syd[j];
+            (*Jr3D)(iploc,jdloc) += Jy_ion /((j+ j_domain_begin+0.5)*dr) * Sxp[i]*Syd[j];
             // Jz^(p,p)
             (*Jt3D)(iploc,jploc) += Jz_ion /((j+ j_domain_begin)*dr) * Sxp[i]*Syp[j];
         }
