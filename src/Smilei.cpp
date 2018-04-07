@@ -201,6 +201,10 @@ int main (int argc, char* argv[])
 
         // if Laser Envelope is used, execute particles and envelope sections of ponderomotive loop
         if (params.Laser_Envelope_model){ 
+
+            // initialize new envelope from scratch, following the input namelist
+            vecPatches.init_new_envelope(params);
+
             // interpolate envelope for susceptibility deposition, project susceptibility for envelope equation, momentum advance
             vecPatches.ponderomotive_update_susceptibilty_and_momentum(params, &smpi, simWindow, time_dual, timers, 0);    
           
