@@ -1,9 +1,9 @@
 ############################# Laser envelope propagation in vacuum
 dx = 0.69 
-dtrans = 11.1 
-dt = 0.45
+dtrans = 5. 
+dt = 0.57
 nx = 1000
-ntrans = 80
+ntrans = 180
 Lx = nx * dx
 Ltrans = ntrans*dtrans
 npatch_x=8

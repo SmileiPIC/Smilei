@@ -1,9 +1,9 @@
 ################### 3D Laser Wakefield with envelope
 dx = 0.69 
-dtrans = 11.1
+dtrans = 5.
 dt = 0.45
 nx = 1000
-ntrans = 36 
+ntrans = 80 
 Lx = nx * dx
 Ltrans = ntrans*dtrans
 npatch_x = 8
@@ -18,7 +18,7 @@ Main(
     interpolation_order = 2,
 
     timestep = dt,
-    simulation_time = 3*Lx,
+    simulation_time = 1750.*dt,
 
     cell_length  = [dx, dtrans, dtrans],
     grid_length = [ Lx,  Ltrans, Ltrans],
