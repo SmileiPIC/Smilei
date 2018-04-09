@@ -118,7 +118,6 @@ LaserEnvelope3D::LaserEnvelope3D( Params& params, Patch* patch, ElectroMagn* EMf
     GradPhiz_    = new Field3D( dimPrim );
     GradPhizold_ = new Field3D( dimPrim );
 
-    initEnvelope( patch,EMfields );
 }
 
 
@@ -140,7 +139,6 @@ LaserEnvelope3D::LaserEnvelope3D( LaserEnvelope *envelope, Patch* patch,ElectroM
     GradPhiz_    = new Field3D( envelope->GradPhiz_->dims_ );
     GradPhizold_ = new Field3D( envelope->GradPhizold_->dims_ );
 
-    initEnvelope( patch,EMfields );
 }
 
 

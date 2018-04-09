@@ -173,6 +173,9 @@ public :
     //! Write in a file patches communications
     void output_exchanges(SmileiMPI* smpi);
 
+    //! Init new envelope from input namelist
+    void init_new_envelope(Params& params);
+
     // Lists of fields
     std::vector<Field*> densities;
 

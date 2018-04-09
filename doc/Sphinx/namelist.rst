@@ -914,7 +914,7 @@ The arguments appearing ``LaserEnvelopeGaussian3D`` have the same meaning they w
 
 .. py:data:: time_envelope
 
-   Since the envelope will be entirely initialized in the simulation box already at the start of the simulation, the time envelope will be applied in the ``x`` direction instead of time.
+   Since the envelope will be entirely initialized in the simulation box already at the start of the simulation, the time envelope will be applied in the ``x`` direction instead of time. It is recommended to initialize the laser envelope in vacuum, separated from the plasma, to avoid unphysical results.
 
 .. py:data:: envelope_solver
 
