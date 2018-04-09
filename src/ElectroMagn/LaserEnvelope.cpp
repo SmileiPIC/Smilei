@@ -103,8 +103,8 @@ LaserEnvelope3D::LaserEnvelope3D( Params& params, Patch* patch, ElectroMagn* EMf
     }
 
 
-    A_  = new cField3D( dimPrim );
-    A0_ = new cField3D( dimPrim );
+    A_  = new cField3D( dimPrim, "A" );
+    A0_ = new cField3D( dimPrim, "Aold" );
 
     Phi_         = new Field3D( dimPrim );
     Phiold_      = new Field3D( dimPrim );
@@ -124,8 +124,8 @@ LaserEnvelope3D::LaserEnvelope3D( Params& params, Patch* patch, ElectroMagn* EMf
 LaserEnvelope3D::LaserEnvelope3D( LaserEnvelope *envelope, Patch* patch,ElectroMagn* EMfields, Params& params )
     : LaserEnvelope(envelope,patch,EMfields,params)
 {
-    A_           = new cField3D( envelope->A_->dims_  );
-    A0_          = new cField3D( envelope->A0_->dims_ );
+    A_           = new cField3D( envelope->A_->dims_ , "A"    );
+    A0_          = new cField3D( envelope->A0_->dims_, "Aold" );
 
     Phi_         = new Field3D( envelope->Phi_->dims_ );
     Phiold_      = new Field3D( envelope->Phiold_->dims_ );
