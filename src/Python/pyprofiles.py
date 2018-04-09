@@ -587,7 +587,7 @@ try:
     
     _N_LaserOffset = 0
     
-    def LaserOffset(box_side="xmin", space_time_profile=[], offset=0., time_envelope=1., keep_n_strongest_modes=100, angle=0.):
+    def LaserOffset(box_side="xmin", space_time_profile=[], offset=0., extra_envelope=lambda *a:1., keep_n_strongest_modes=100, angle=0.):
         global _N_LaserOffset
         
         file = 'LaserOffset'+str(_N_LaserOffset)+'.h5'
@@ -595,10 +595,10 @@ try:
         L = Laser(
             box_side = "xmin",
             file = file,
-            time_envelope = time_envelope
         )
         
         L._offset = offset
+        L._extra_envelope = extra_envelope
         L._profiles = space_time_profile
         L._keep_n_strongest_modes = keep_n_strongest_modes
         L._angle = angle

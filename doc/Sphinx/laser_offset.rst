@@ -137,11 +137,11 @@ timesteps.
   
   .. math::
   
-    B(y,z,t) = f(t) \sum_\omega \left| \tilde B(y,z,\omega) \right| \sin(\omega t + \phi(y,z,\omega))
+    B(y,z,t) = f(y,z,t) \sum_\omega \left| \tilde B(y,z,\omega) \right| \sin\left(\omega t + \phi(y,z,\omega)\right)
     
-  where :math:`\phi` is the complex argument of :math:`\tilde B` and :math:`f(t)` is
-  an additional :py:data:`time_envelope`, defined by the user.
-  This time envelope helps removing spurious repetitions of the laser pulse that can
+  where :math:`\phi` is the complex argument of :math:`\tilde B` and :math:`f(y,z,t)` is
+  an additional :py:data:`extra_envelope`, defined by the user.
+  This envelope helps removing spurious repetitions of the laser pulse that can
   occur due to the limited number of frequencies that are kept.
 
 
@@ -165,7 +165,7 @@ rotated around :math:`k_z` by an angle :math:`\theta`, according to
   \end{array}
 
 This transforms :math:`\hat A(x,k_y,k_z,\omega)` into
-:math:`\hat A(x,k_y^\prime,k_z,\omega)`, thus the operation is merely a change of one
+:math:`\hat A^\prime(x,k_y^\prime,k_z,\omega)`, thus the operation is merely a change of one
 variable (:math:`k_y`).
 
 Numerically, the process is not that straightforward because :math:`\hat A^\prime` is an
@@ -188,8 +188,8 @@ following figure.
 References
 ^^^^^^^^^^
 
-.. [Thiele2016] `I. Thiele et al., J. Comput. Phys. 321, 1110 (2016) <https://doi.org/10.1016/j.jcp.2016.06.004>`_
-
 .. [Matsushima2003] `K. Matsushima et al., J. Opt. Soc. Am. A 20, 1755 (2003) <https://doi.org/10.1364/JOSAA.20.001755>`_ 
+
+.. [Thiele2016] `I. Thiele et al., J. Comput. Phys. 321, 1110 (2016) <https://doi.org/10.1016/j.jcp.2016.06.004>`_
 
 

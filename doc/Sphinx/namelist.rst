@@ -894,7 +894,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
         box_side               = "xmin",
         space_time_profile     = [ By_profile, Bz_profile ],
         offset                 = 10.,
-        time_envelope          = tconstant(),
+        extra_envelope          = tconstant(),
         keep_n_strongest_modes = 100,
         angle = 10./180.*3.14159
     )
@@ -911,16 +911,18 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
      The distance from the box boundary to the plane where :py:data:`space_time_profile`
      is defined.
   
-  .. py:data:: time_envelope
+  .. py:data:: extra_envelope
     
-    :type: a *python* function or a :ref:`time profile <profiles>`
-    :default:  ``tconstant()``
+    :type: a *python* function or a :ref:`python profile <profiles>`
+    :default:  ``lambda *z: 1.``, which means a profile of value 1 everywhere
     
-    An extra temporal envelope on top of the :py:data:`space_time_profile`. As the wave
-    propagation technique stores a limited Fourier transform (in the time domain) of the
-    wave, some periodicity can be obtained in the actual laser. One may thus observe that
-    the laser pulse is repeated several times. The temporal envelope can be used to remove
-    these spurious repetitions.
+    An extra envelope applied at the boundary, on top of the :py:data:`space_time_profile`.
+    This envelope takes two arguments (`y`, `t`) in 2D, and three arguments (`y`, `z`, `t`)
+    in 3D.
+    As the wave propagation technique stores a limited Fourier transform (in the time
+    domain) of the wave, some periodicity can be obtained in the actual laser.
+    One may thus observe that the laser pulse is repeated several times.
+    The envelope can be used to remove these spurious repetitions.
 
   .. py:data:: keep_n_strongest_modes
     

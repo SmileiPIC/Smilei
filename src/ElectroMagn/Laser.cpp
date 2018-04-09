@@ -45,6 +45,7 @@ Laser::Laser(Params &params, int ilaser, Patch* patch)
     if( has_space_time && has_file )
         ERROR(errorPrefix << ": `space_time_profile` and `file` cannot both be set");
     
+    unsigned int space_dims = (params.geometry=="3Dcartesian" ? 2 : 1);
     
     spacetime.resize(2, false);
     if( has_space_time ) {
@@ -92,15 +93,15 @@ Laser::Laser(Params &params, int ilaser, Patch* patch)
         info << "\t\t" << errorPrefix << endl;
         info << "\t\t\tData in file : " << file << endl;
         
-        if( has_time ) {
-            // time envelope
+        if( PyTools::extract_pyProfile("_extra_envelope", time_profile , "Laser", ilaser) ) {
+            // extra envelope
             name.str("");
-            name << "Laser[" << ilaser <<"].time_envelope";
-            ptime  = new Profile(time_profile, 1, name.str());
-            ptime2 = new Profile(time_profile, 1, name.str());
-            info << "\t\t\ttime envelope: " << ptime->getInfo();
+            name << "Laser[" << ilaser <<"].extra_envelope";
+            ptime  = new Profile(time_profile, space_dims+1, name.str());
+            ptime2 = new Profile(time_profile, space_dims+1, name.str());
+            info << "\t\t\tExtra envelope: " << ptime->getInfo();
         } else {
-            ERROR(errorPrefix << ": `time_envelope` missing or not understood");
+            ERROR(errorPrefix << ": `extra_envelope` missing or not understood");
         }
         
         profiles.push_back( new LaserProfileFile(file, ptime , true ) );
@@ -121,8 +122,6 @@ Laser::Laser(Params &params, int ilaser, Patch* patch)
         
         info << "\t\t" << errorPrefix << ": custom profile" << endl;
         
-        unsigned int space_dims = (params.geometry=="3Dcartesian" ? 2 : 1);
- 
         // omega
         info << "\t\t\tomega              : " << omega << endl;
         
@@ -459,7 +458,7 @@ double LaserProfileFile::getAmplitude(std::vector<double> pos, double t, int j, 
     }
     #pragma omp critical
     {
-        amp *= timeProfile->valueAt(t);
+         amp *= extraProfile->valueAt( pos, t );
     }
     return amp;
 }
@@ -469,8 +468,8 @@ LaserProfileFile::~LaserProfileFile()
 {
     #pragma omp critical
     {
-        if(magnitude  ) { delete magnitude  ; magnitude  =NULL; }
-        if(phase      ) { delete phase      ; phase      =NULL; }
-        if(timeProfile) { delete timeProfile; timeProfile=NULL; }
+        if(magnitude   ) { delete magnitude   ; magnitude   =NULL; }
+        if(phase       ) { delete phase       ; phase       =NULL; }
+        if(extraProfile) { delete extraProfile; extraProfile=NULL; }
     }
 }
