@@ -7,7 +7,7 @@ from numpy import exp, sin, cos, tan, sqrt, pi
 
 l0 = 2.0*math.pi        # laser wavelength
 t0 = l0                 # optical cycle
-Lsim = [16.*l0,40.*l0]  # length of the simulation
+Lsim = [10.*l0,40.*l0]  # length of the simulation
 Tsim = 25.*t0           # duration of the simulation
 resx = 28.              # nb of cells in on laser wavelength
 rest = 40.              # time of timestep in one optical cycle 
@@ -33,12 +33,14 @@ Main(
     random_seed = smilei_mpi_rank
 )
 
-angle = 30./180.*pi
+angle = 25./180.*pi
+offset_x = 15.
+offset_y = Lsim[1]*0.7
 
 LaserOffset(
-    space_time_profile = [None, lambda y,t: exp( -(70.*(y/Lsim[1]-0.2))**2 - (5.*(t-10.-Tsim/5.)/Tsim)**2 ) * sin(t)],
-    offset = 30. - (1.-0.2)*Lsim[1]*sin(angle),
-    time_envelope = 1.,
+    space_time_profile = [None, lambda y,t: exp( -(100.*(y-offset_y)/Lsim[1])**2 - (5.*(t-80.)/Tsim)**2 ) * sin(t)],
+    offset = offset_x - (Lsim[1]-offset_y)*sin(angle),
+    extra_envelope = lambda y,t: 0. if t < 20. else 1.,
     keep_n_strongest_modes = 10000,
     angle = angle
 )

@@ -27,12 +27,16 @@ Main(
 )
 
 
+angle = 20./180.*pi
+offset_x = 4.
+offset_y = Lsim[1]*0.6
+offset_z = Lsim[2]*0.5
+
 LaserOffset(
-    space_time_profile = [None, lambda y,z,t: exp( -(10.*(y/Lsim[1]-0.6))**2-(10.*(z/Lsim[2]-0.5))**2 - (3.*(t-20.)/Tsim)**2 ) * sin(t)],
+    space_time_profile = [None, lambda y,z,t: exp( -(20.*(y-offset_y)/Lsim[1])**2-(20.*(z-offset_z)/Lsim[2])**2 - (3.*(t-30.)/Tsim)**2 ) * sin(t)],
     offset = 4.,
-    time_envelope = 1.,
     keep_n_strongest_modes = 100,
-    angle = 20./180.*pi
+    angle = angle
 )
 
 DiagFields(

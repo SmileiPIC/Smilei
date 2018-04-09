@@ -431,7 +431,7 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
     // --------------------------------
     unsigned int local_size = (_2D ? N[0] : Nlocal[0]*N[1]) * n_omega_local;
     vector<vector<double> > magnitude(nprofiles), phase(nprofiles);
-    double coeff_magnitude = 1./L.back()/M_PI; // multiply by omega increment
+    double coeff_magnitude = sqrt(0.5/M_PI)/L.back(); // multiply by omega increment
     
     for( unsigned int i=0; i<nprofiles; i++ ) {
         complex<double> * z = (complex<double> *) PyArray_GETPTR1((PyArrayObject*) arrays[i],0);
@@ -443,7 +443,7 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
                 for(unsigned int k=0; k<n_omega_local; k++) {
                     i1 = k + n_omega_local*j;
                     magnitude[i][i1] = abs(z[i1]) * coeff_magnitude;
-                    phase    [i][i1] = arg(z[i1] * exp(-i_ * omega[k] * offset)); // temporal delay
+                    phase    [i][i1] = arg(z[i1]);
                 }
             }
         } else {
@@ -452,7 +452,7 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
                     for(unsigned int l=0; l<n_omega_local; l++) {
                         i1 = l + n_omega_local*(k + N[1]*j);
                         magnitude[i][i1] = abs(z[i1]) * coeff_magnitude;
-                        phase    [i][i1] = arg(z[i1] * exp(-i_ * omega[l] * offset)); // temporal delay
+                        phase    [i][i1] = arg(z[i1]);
                     }
                 }
             }
