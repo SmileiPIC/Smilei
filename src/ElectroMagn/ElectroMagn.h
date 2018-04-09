@@ -273,6 +273,7 @@ public:
     
     //! Method used to impose external fields (apply to all Fields)
     void applyExternalFields(Patch*);
+    void saveExternalFields(Patch*);
     
     //! Method used to impose external fields (apply to a given Field)
     virtual void applyExternalField(Field*, Profile*, Patch*) = 0 ;
