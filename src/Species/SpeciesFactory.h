@@ -474,6 +474,7 @@ public:
         if (thisSpecies->position_initialization_array == NULL){
             //These quantities are disregarded if positioning of the species is directly specified by the user 
             // Matter particles
+            MESSAGE("position initialization");
             if (thisSpecies->mass > 0)
             {
                 ok1 = PyTools::extract_pyProfile("number_density", profile1, "Species", ispec);

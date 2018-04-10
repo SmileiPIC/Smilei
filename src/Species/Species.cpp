@@ -1058,7 +1058,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     double *momentum[nDim_particle], *position[nDim_particle], *weight_arr;
     std::vector<int> my_particles_indices;
     vector<Field*> xyz(nDim_particle);
-
+    MESSAGE("creating particles");
     // Create particles in a space starting at cell_position
     vector<double> cell_position(3,0);
     vector<double> cell_index(3,0);
