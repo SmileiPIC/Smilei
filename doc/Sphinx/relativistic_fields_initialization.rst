@@ -114,14 +114,20 @@ From all these relations, the electromagnetic field can be computed as usual, th
 
 or in more compact form: :math:`\mathbf{E}=\left( -\frac{1}{\gamma_0^2}\partial_x \Phi, -\partial_y \Phi,-\partial_z \Phi \right)`, :math:`\mathbf{B}=\frac{\beta_0}{c}\mathbf{\hat{x}}\times\mathbf{E}`. 
   
+From the previous equations, it can be inferred that in 1DCartesian geometry the fields computed through this procedure equal those obtained through the standard Poisson's problem. 
+This can also be inferred from the relativistic transformations of fields, which conserve the :math:`x` components of the electromagnetic fields for boosts in the :math:`x` direction. 
 
+----
 
+Recommendations to use the field initialization for relativistic species
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+In :program:`Smilei`, each species can independently benefit from this field initialization procedure. Its field will be initialized when the species will start to move, in order not to interfer with the other species' dynamics. 
+The initialized fields will be superimposed to the electromagnetic fields already present in the simulation. To have physically meaningful results, we recommend to place a species which requires this method of field initialization far from other species, otherwise the latter could experience instantly turned-on unphysical forces by the relativistic species’ fields.
 
-
-
-
-
+A relativistic mean velocity in the :math:`x` direction and a negligible energy spread are assumed in the hypotheses of this procedure, so the user must ensure these conditions when defining the species requiring field initialization in the namelist. 
+The procedure can be extended to non-monoenergetic species, dividing the species particles in monoenergetic energy bins and then superimposing the fields by each of the monoenergetic bins, computed with the same procedure. 
+For the moment, this energy binning technique is not available in :program:`Smilei`.  
 
 
 ----
