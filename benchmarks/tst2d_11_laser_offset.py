@@ -36,9 +36,11 @@ Main(
 angle = 25./180.*pi
 offset_x = 15.
 offset_y = Lsim[1]*0.7
+FWHM_y = l0
+FWHM_t = 50.
 
 LaserOffset(
-    space_time_profile = [None, lambda y,t: exp( -(100.*(y-offset_y)/Lsim[1])**2 - (5.*(t-80.)/Tsim)**2 ) * sin(t)],
+    space_time_profile = [None, lambda y,t: exp( -2.77259*((y-offset_y)/FWHM_y)**2 - (2.77259*(t-80.)/FWHM_t)**2 ) * sin(t)],
     offset = offset_x - (Lsim[1]-offset_y)*sin(angle),
     extra_envelope = lambda y,t: 0. if t < 20. else 1.,
     keep_n_strongest_modes = 10000,
