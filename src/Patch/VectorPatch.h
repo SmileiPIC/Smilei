@@ -149,6 +149,8 @@ public :
     //! For each patch, apply external fields
     void applyExternalFields();
 
+    void saveExternalFields( Params &params );
+
     //  Balancing methods
     // ------------------
 

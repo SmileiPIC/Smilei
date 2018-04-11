@@ -1629,6 +1629,16 @@ void VectorPatch::applyExternalFields()
 }
 
 
+// For each patch, apply external fields
+void VectorPatch::saveExternalFields( Params &params )
+{
+    if (params.save_magnectic_fields_for_SM) {
+        for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
+            patches_[ipatch]->EMfields->saveExternalFields( (*this)(ipatch) ); // Must be patch
+    }
+}
+
+
 // Print information on the memory consumption
 void VectorPatch::check_memory_consumption(SmileiMPI* smpi)
 {
