@@ -103,40 +103,13 @@ public:
         }
         // iDim = 1 & 2
         else {
-            if ( particles.distance2_to_axis(ipart) <  y_min ) {
-                if (bc_ymin==NULL) keep_part = 0;
-                else {
-                    keep_part *= (*bc_ymin)( particles, ipart, -1, 2.*y_min, species,nrj_iPart );
-                }
-            }
-            else if ( particles.distance2_to_axis(ipart) >= y_max ) {
+             if ( particles.distance2_to_axis(ipart) >= y_max ) {
                 if (bc_ymax==NULL) keep_part = 0;
                 else {
                     keep_part *= (*bc_ymax)( particles, ipart, -1, 2.*y_max, species,nrj_iPart );
                 }
             }
-//<<<<<<< HEAD
         }
-//=======
-//
-//            if (nDim_particle == 3) {
-//
-//                if ( particles.position(2, ipart) <  z_min ) {
-//                    if (bc_zmin==NULL) keep_part = 0;
-//                    else {
-//                        keep_part *= (*bc_zmin)( particles, ipart, 2, 2.*z_min, species,nrj_iPart );
-//                    }
-//                }
-//                else if ( particles.position(2, ipart) >= z_max ) {
-//                    if (bc_zmax==NULL) keep_part = 0;
-//                    else {
-//                        keep_part *= (*bc_zmax)( particles, ipart, 2, 2.*z_max, species,nrj_iPart );
-//                    }
-//                }
-//            } // end if (nDim_particle == 3)
-//        } // end if (nDim_particle >= 2)
-//
-//>>>>>>> develop
 
         return keep_part;
     };
