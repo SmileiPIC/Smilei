@@ -1,8 +1,8 @@
 
 {# THEME BASED ON ALABASTER, BUT SIGNIFICANTLY MODIFIED #}
 
-{% set page_width = 50 %}
-{% set sidebar_width = 25 %}
+{% set page_width = 210 %}
+{% set sidebar_width = 105 %}
 
 {% set theme_sidebar_header = theme_sidebar_header or theme_gray_1 %}
 {% set theme_sidebar_link = theme_sidebar_link or theme_gray_1 %}
@@ -71,8 +71,8 @@ div.document {
 }
 
 div.documentwrapper {
-    max-width: {{ page_width }}em;
-    margin: {{ theme_head_height }}em auto 0 auto;
+    max-width: {{ page_width }}mm;
+    margin: {{ theme_head_height }}mm auto 0 auto;
 }
 
 div.bodywrapper {
@@ -90,7 +90,7 @@ div.body {
 }
 
 div.footer {
-    max-width: {{ page_width }}em;
+    max-width: {{ page_width }}mm;
     margin: 1.5em auto;
     font-size: 14px;
     color: {{ theme_footer_text }};
@@ -130,7 +130,7 @@ div.logo {
     padding-right: 2em;
     margin: 0;
     text-align: left;
-    height:{{ theme_head_height }}em;
+    height:{{ theme_head_height }}mm;
 }
 
 div.sphinxsidebarwrapper h1.logo {
@@ -501,14 +501,14 @@ table.docutils.citation, table.docutils.citation td, table.docutils.citation th 
 div.headercolor {
     position:fixed;
     top:0;
-	height: {{ theme_head_height }}em;
+	height: {{ theme_head_height }}mm;
 	width: 100%;
 	background-color:{{ theme_main_color_bold }};
 }
 
 div.hpositioner {
 	position: relative;
-	max-width: {{ page_width }}em;
+	max-width: {{ page_width }}mm;
 	margin: 0 auto;
 	height:100%;
 }
@@ -533,7 +533,7 @@ div.header > * {
     margin:0;
 }
 .menu {
-    height: {{ theme_head_height }}em;
+    height: {{ theme_head_height }}mm;
 }
 #nav_positioner {
     position: fixed;
@@ -544,14 +544,14 @@ div.header > * {
 
 #nav {
     position:absolute;
-    right:-{{ page_width|float * 0.5 }}em;
+    right:-{{ page_width|float * 0.5 }}mm;
     top:0;
 	text-align: left;
     white-space: nowrap;
     max-height:100%;
-    min-height:{{ theme_head_height }}em;
+    min-height:{{ theme_head_height }}mm;
     min-width :6em;
-	padding: {{ theme_head_height }}em 12px 0 5px;
+	padding: {{ theme_head_height }}mm 12px 0 5px;
 	box-sizing: border-box;
 }
 #nav_button {
@@ -582,7 +582,7 @@ div.header > * {
     padding:0.3em 1em;
 }
 #nav_title {
-    line-height: {{ theme_head_height |float *0.8 }}em;
+    line-height: {{ theme_head_height |float *0.8 }}mm;
     border-left: 1px solid #aaa;
     border-right: 1px solid #aaa;
     background-color: #eee;
@@ -609,12 +609,12 @@ div.header > * {
 .menuButton {
     cursor:pointer;
     padding: 0 2em;
-    line-height: {{ theme_head_height }}em;
+    line-height: {{ theme_head_height }}mm;
     height: 100%;
 }
 
 .menuButton > span {
-    font-size: {{ theme_head_height|float * 0.48 }}em;
+    font-size: {{ theme_head_height|float * 0.48 }}mm;
 }
 
 .menuButton.pushed {
@@ -625,9 +625,9 @@ div.header > * {
     font-size: 1em;
     position: absolute;
     left:-1px;
-    top: {{ theme_head_height }}em;
+    top: {{ theme_head_height }}mm;
     white-space: nowrap;
-    min-width: 10em;
+    min-width: 40mm;
     -moz-box-shadow: 0 6px 12px rgba(0,0,0,0.175);
     -webkit-box-shadow: 0 6px 12px rgba(0,0,0,0.175);
     box-shadow: 0 6px 12px rgba(0,0,0,0.175);
@@ -646,8 +646,8 @@ div.header > * {
 }
 
 #smallScreenMenuButton {
-	width: {{ theme_head_height|float * 1.2 }}em;
-	height:{{ theme_head_height }}em;
+	width: {{ theme_head_height|float * 1.2 }}mm;
+	height:{{ theme_head_height }}mm;
 	cursor:pointer;
     float:right;
     text-align: center;
@@ -655,8 +655,8 @@ div.header > * {
 }
 
 #smallScreenMenuButton svg, #nav_button svg {
-    width: {{ theme_head_height }}em;
-    height:{{ theme_head_height }}em;
+    width: {{ theme_head_height }}mm;
+    height:{{ theme_head_height }}mm;
     margin:0 auto;
 }
 
@@ -671,7 +671,7 @@ div.header > * {
 #smallScreenMenu {
     width: 100%;
     position:fixed;
-    top:{{ theme_head_height }}em;
+    top:{{ theme_head_height }}mm;
     bottom:0;
     left:0;
     padding:0.3em 0 0 0;
@@ -751,7 +751,7 @@ table.docutils thead {
 /* --------------------------------------------------------------------*/
 /* Logos and icons */
 img.logo {
-	height:{{ theme_head_height }}em;
+	height:{{ theme_head_height }}mm;
 }
 .icon {
 	display:inline-block;
@@ -897,8 +897,8 @@ h1, h2, h3, h4, h5, h6 {
 	font-weight:bold !important;
 }
 .section {
-    padding-top:{{ theme_head_height | float * 0.5 }}em;
-    margin-top:-{{ theme_head_height }}em;
+    padding-top:{{ theme_head_height | float * 0.5 }}mm;
+    margin-top:-{{ theme_head_height }}mm;
 }
 
 /* --------------------------------------------------------------------*/
@@ -964,26 +964,26 @@ div.admonition p {
 /* Search box */
 
 #searchicon, #closesearchicon {
-	width:{{ theme_head_height }}em;
+	width:{{ theme_head_height }}mm;
 	text-align: center;
 	cursor:pointer;
 }
 #searchicon > svg, #closesearchicon > svg {
-	height:{{ theme_head_height }}em;
+	height:{{ theme_head_height }}mm;
 }
 #searchbox {
 	position: absolute;
-	right:{{ theme_head_height }}em;
-	height:{{ theme_head_height }}em;
+	right:{{ theme_head_height }}mm;
+	height:{{ theme_head_height }}mm;
 }
 #searchinput {
-	height:{{ theme_head_height|float - 1.4 }}em;
-	width: 20em;
+	height:{{ theme_head_height|float * 0.6 }}mm;
+	width: 80mm;
 	font-size: 1em;
-	padding:0.3em 0.6em;
-	margin:0.3em 0;
+	padding:{{ theme_head_height|float * 0.1 }}mm 0.6em;
+	margin:{{ theme_head_height|float * 0.05 }}mm 0;
 	border-radius:0.5em;
-	border:0.1em solid #bbb;
+	border:{{ theme_head_height|float * 0.05 }}mm solid #bbb;
 }
 #search-results {
 	padding-top: 5px;
@@ -991,7 +991,7 @@ div.admonition p {
 
 
 
-@media screen and (max-width:  {{ page_width | float * 1.01 }}em) {
+@media screen and (max-width:  {{ page_width | float * 1.01 }}mm) {
 
 	body, div.documentwrapper, .bodywrapper {
 		margin:0;
@@ -1024,7 +1024,7 @@ div.admonition p {
 	}
 	
 	div.document {
-	    margin: {{ theme_head_height }}em 0 0 0;
+	    margin: {{ theme_head_height }}mm 0 0 0;
 	    padding: 0 1em 1em 1em;
 	}
 	
@@ -1047,8 +1047,8 @@ div.admonition p {
 	}
 	#searchbox {
 		display:block !important;
-		left:{{ theme_head_height|float * 2.5 + 0.7 }}em;
-		right:{{ theme_head_height|float * 1.5 + 0.7 }}em;
+		left:{{ theme_head_height|float * 2.8 }}mm;
+		right:{{ theme_head_height|float * 1.9 }}mm;
 	}
 	#searchinput {
 		display:block !important;
@@ -1057,7 +1057,7 @@ div.admonition p {
 }
 
 
-@media screen and (min-width: {{ page_width | float * 1.01 }}em) {
+@media screen and (min-width: {{ page_width | float * 1.01 }}mm) {
 	#smallScreenMenu {
 	    display: none !important;
 	}
