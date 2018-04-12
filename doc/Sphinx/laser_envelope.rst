@@ -20,9 +20,10 @@ In the following, the equations of the envelope model are presented, following m
 The envelope approximation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The use of envelope models to describe a laser pulse is well known in PIC codes [Mora1997]_, [Gordon2000]_, [Huang2006]_, [Cowan2011]_, [Benedetti2012]_. The basic blocks to build a PIC code using an envelope description for the laser are an envelope equation, to describe the evolution of the laser, and equations of motion for the macroparticles, to take into account their interactions with the laser.
+The use of envelope models to describe a laser pulse is well known in PIC codes [Mora1997]_, [Quesnel1998]_, [Gordon2000]_, [Huang2006]_, [Cowan2011]_, [Benedetti2012]_. The basic blocks of a PIC code using an envelope description for the laser are an envelope equation, to describe the evolution of the laser, and equations of motion for the macroparticles, to take into account their interactions with the laser. 
+The effect of the plasma on laser propagation is taken into account in the envelope equation through the plasma susceptibility, as described in the following section.
 The various PIC codes using an envelope model for the laser solve different versions of the envelope equation, depending mostly on which terms are retained and which ones are neglected, or the set of coordinates used to derive the envelope equation. Also the numerical schemes used to solve the envelope equation and the equations of motion of the particles vary accordingly.
-In :program:`Smilei`, the version of the envelope model first demonstrated in the PIC code :program:`ALaDyn` [Benedetti2008]_, [ALaDynZenodo]_ is implemented, including the same numerical schemes.
+In :program:`Smilei`, the version of the envelope model written in laboratory frame coordinates, first demonstrated in the PIC code :program:`ALaDyn` [Benedetti2008]_, [ALaDynZenodo]_, is implemented, including the same numerical schemes.
 
 The basic assumption of the model is the description of the laser pulse vector potential in the complex polarization direction :math:`\hat{A}(\mathbf{x},t)` as a slowly varying envelope :math:`\tilde{A}(\mathbf{x},t)` modulated by fast oscillations at wavelength :math:`\lambda_0`, moving at the speed of light :math:`c`:
 
@@ -73,6 +74,8 @@ where :math:`\bar{\gamma}_p` is the averaged Lorentz factor of the particle :mat
   :label: gamma_ponderomotive
 
   \bar{\gamma}_p = \sqrt{1+\mathbf{\bar{u}}^2_p+\frac{|\tilde{A}(\mathbf{\bar{x}}_p)|^2}{2}}.
+
+The term at the right hand side of Eq. :eq:`envelope`, where the plasma susceptibility :math:`\chi` appears, allows to describe phenomena where the plasma alters the propagation of the laser pulse, as relativistic self-focusing.
 
 Note that if in Eq. :eq:`envelope` the temporal variation of the envelope :math:`\tilde{A}` is neglected, and :math:`\partial^2_x \tilde{A} \ll 2i\partial_x \tilde{A}` is assumed, the well-known paraxial wave equation is retrieved in vacuum (:math:`\chi=0`):
 
@@ -207,7 +210,9 @@ fields can be advanced solving Maxwell's equations :eq:`Maxwell_envelope`. Their
 References
 ^^^^^^^^^^
 
-.. [Mora1997] `Patrick Mora and Jr. Thomas M. Antonsen, Physics of Plasmas 4, 217–229 (1997) <https://doi.org/10.1063/1.872134>`_
+.. [Mora1997] `P. Mora and T. M. Antonsen Jr, Physics of Plasmas 4, 217 (1997) <https://doi.org/10.1063/1.872134>`_
+
+.. [Quesnel1998] `B. Quesnel and P. Mora, Physics Review E 58, 3719 (1998) <https://doi.org/10.1103/PhysRevE.58.3719>`_
 
 .. [Gordon2000] `D. F. Gordon et al.,IEEE Transactions on Plasma Science 28, 4 (2000) <http://dx.doi.org/10.1109/27.893300>`_
 
