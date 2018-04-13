@@ -135,6 +135,8 @@ private:
 
     //! Space dimension of a particle
     int nDim_particle;
+   //! Space dimension of field
+    int nDim_field;
 //<<<<<<< HEAD
     bool isRZ;
     

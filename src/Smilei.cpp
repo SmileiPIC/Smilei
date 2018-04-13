@@ -125,18 +125,17 @@ int main (int argc, char* argv[])
     if( smpi.test_mode ) {
         execute_test_mode( vecPatches, &smpi, simWindow, params, checkpoint, openPMD );
         return 0;
+	MESSAGE("TEST MODE");
     }
 
     // reading from dumped file the restart values
     if (params.restart) {
-
         // smpi.patch_count recomputed in readPatchDistribution
         checkpoint.readPatchDistribution( &smpi, simWindow );
-        // allocate patches according to smpi.patch_count
+	// allocate patches according to smpi.patch_count
         vecPatches = PatchesFactory::createVector(params, &smpi, openPMD, checkpoint.this_run_start_step+1, simWindow->getNmoved());
-        // vecPatches data read in restartAll according to smpi.patch_count
+	// vecPatches data read in restartAll according to smpi.patch_count
         checkpoint.restartAll( vecPatches, &smpi, simWindow, params, openPMD);
-
         // time at integer time-steps (primal grid)
         time_prim = checkpoint.this_run_start_step * params.timestep;
         // time at half-integer time-steps (dual grid)
@@ -163,12 +162,13 @@ int main (int argc, char* argv[])
     } else {
 
         vecPatches = PatchesFactory::createVector(params, &smpi, openPMD, 0);
-
+	MESSAGE ("create vector");
         // Initialize the electromagnetic fields
         // -------------------------------------
         vecPatches.computeCharge();
+	MESSAGE("compute charge");
         vecPatches.sumDensities(params, time_dual, timers, 0, simWindow);
-
+	MESSAGE("sum densities");
         // ---------------------------------------------------------------------
         // Init and compute tables for radiation effects
         // (nonlinear inverse Compton scattering)

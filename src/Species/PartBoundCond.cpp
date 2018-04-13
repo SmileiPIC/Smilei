@@ -16,11 +16,11 @@ using namespace std;
 
 PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch ) :
     isRZ( params.geometry == "3drz" )
-{
+{   
     // number of dimensions for the particle
     //!\todo (MG to JD) isn't it always 3?
     nDim_particle = params.nDim_particle;
-
+    nDim_field = params.nDim_field;
     // Absolute global values
     double x_min_global = 0;
     double x_max_global = params.cell_length[0]*(params.n_space_global[0]);
@@ -42,11 +42,13 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch ) :
     if (params.EM_BCs[0][0]=="periodic" || params.hasWindow) {
         x_min = patch->getDomainLocalMin(0);
         x_max = patch->getDomainLocalMax(0);
+        MESSAGE("xmin max");
     }
     else {
         x_min = max( x_min_global, patch->getDomainLocalMin(0) );
         x_max = min( x_max_global, patch->getDomainLocalMax(0) );
-    }
+
+	}
 
     if ( nDim_particle > 1 ) {
         if (params.EM_BCs[1][0]=="periodic") {
@@ -56,7 +58,8 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch ) :
         else {
             y_min = max( y_min_global, patch->getDomainLocalMin(1) );
             y_max = min( y_max_global, patch->getDomainLocalMax(1) );
-        }
+        MESSAGE("YMIN MAX");
+	}
         
         if ( ( nDim_particle > 2 ) && (!isRZ) ) {
             if (params.EM_BCs[2][0]=="periodic") {
@@ -70,19 +73,20 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch ) :
         }
     }
 
-
+    MESSAGE("hey there !");
     // Can be done after parsing
-
+    MESSAGE(! species->particles->tracked);
     // Check for inconsistencies between EM and particle BCs
     if (! species->particles->tracked) {
-        for( unsigned int iDim=0; iDim<(unsigned int)nDim_particle; iDim++ ) {
+        for( unsigned int iDim=0; iDim<(unsigned int)nDim_field; iDim++ ) {
             if ( ((params.EM_BCs[iDim][0]=="periodic")&&(species->boundary_conditions[iDim][0]!="periodic"))  
              ||  ((params.EM_BCs[iDim][1]=="periodic")&&(species->boundary_conditions[iDim][1]!="periodic")) ) {
                 ERROR("For species " << species->name << ", periodic EM "<<"xyz"[iDim]<<"-boundary conditions require particle BCs to be periodic.");
-            }
+        MESSAGE("check");    
+        }
         }
     }
-    
+    MESSAGE("CHECK");
     // ----------------------------------------------
     // Define the kind of applied boundary conditions
     // ----------------------------------------------
@@ -93,13 +97,14 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch ) :
     } else {
         remove = &remove_particle;
     }
-    
+    MESSAGE("check remove ");
     // Xmin
     if ( species->boundary_conditions[0][0] == "reflective" ) {
         if (patch->isXmin()) bc_xmin = &reflect_particle;
     }
     else if ( species->boundary_conditions[0][0] == "remove" ) {
         if (patch->isXmin()) bc_xmin = remove;
+        MESSAGE("Xmin and max");    
     }
     else if ( species->boundary_conditions[0][0] == "stop" ) {
         if (patch->isXmin()) bc_xmin = &stop_particle;
@@ -119,6 +124,7 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch ) :
     }
     else if ( species->boundary_conditions[0][1] == "remove" ) {
         if (patch->isXmax()) bc_xmax = remove;
+        MESSAGE("Xmin and max");    
     }
     else if ( species->boundary_conditions[0][1] == "stop" ) {
         if (patch->isXmax()) bc_xmax = &stop_particle;
@@ -131,7 +137,7 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch ) :
     else {
         ERROR( "Xmax boundary condition `"<<species->boundary_conditions[0][1]<<"`  unknown" );
     }
-    
+
     
     if ( ( nDim_particle > 1 ) && (!isRZ) ) {
         // Ymin
@@ -210,41 +216,44 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch ) :
     else if (isRZ) {
         #ifdef _TODO_RZ
         // rmin !!!
-        §§ none !!!
+        //        §§ none !!!
         #endif
         // Ymin
-        if ( species->boundary_conditions[1][0] == "reflective" ) {
-            if (patch->isYmin()) bc_ymin = &refl_particle_rz;
-        }
-        else if ( species->boundary_conditions[1][0] == "remove" ) {
-            if (patch->isYmin()) bc_ymin = &remove_particle;
-        }
-        else if ( species->boundary_conditions[1][0] == "stop" ) {
-            if (patch->isYmin()) bc_ymin = &stop_particle_rz;
-        }
-        else if ( species->boundary_conditions[1][0] == "none" ) {
-            if (patch->isMaster()) MESSAGE(2,"Ymin boundary condition for species " << species->name << " is 'none', which means the same as fields");
-        }
-        else {
-            ERROR( "Ymin boundary condition undefined : " << species->boundary_conditions[1][0]  );
-        }
-        
+        //if ( species->boundary_conditions[1][0] == "reflective" ) {
+        //    if (patch->isYmin()) bc_ymin = &refl_particle_rz;
+        //}
+        //else if ( species->boundary_conditions[1][0] == "remove" ) {
+        //    if (patch->isYmin()) bc_ymin = &remove_particle;
+        //}
+        //else if ( species->boundary_conditions[1][0] == "stop" ) {
+        //    if (patch->isYmin()) bc_ymin = &stop_particle_rz;
+        //}
+        //else if ( species->boundary_conditions[1][0] == "none" ) {
+        //    if (patch->isMaster()) MESSAGE(2,"Ymin boundary condition for species " << species->name << " is 'none', which means the same as fields");
+        //}
+        //else {
+        //    ERROR( "Ymin boundary condition undefined : " << species->boundary_conditions[1][0]  );
+        //}
+
+       MESSAGE(isRZ); 
         // Ymax
-        if ( species->boundary_conditions[1][1] == "reflective" ) {
-            if (patch->isYmax()) bc_ymax = &refl_particle_rz;
-        }
-        else if ( species->boundary_conditions[1][1] == "remove" ) {
+       // if ( species->boundary_conditions[1][1] == "reflective" ) {
+       //     if (patch->isYmax()) bc_ymax = &refl_particle_rz;
+       // }
+         if ( species->boundary_conditions[1][1] == "remove" ) {
             if (patch->isYmax()) bc_ymax = &remove_particle;
+		MESSAGE("Rmax bc");
         }
-        else if ( species->boundary_conditions[1][1] == "stop" ) {
-            if (patch->isYmax()) bc_ymax = &stop_particle_rz;
-        }
-        else if ( species->boundary_conditions[1][1] == "none" ) {
-            if (patch->isMaster()) MESSAGE(2,"Ymax boundary condition for species " << species->name << " is 'none', which means the same as fields");
-        }
+        //else if ( species->boundary_conditions[1][1] == "stop" ) {
+        //    if (patch->isYmax()) bc_ymax = &stop_particle_rz;
+        //}
+        //else if ( species->boundary_conditions[1][1] == "none" ) {
+        //    if (patch->isMaster()) MESSAGE(2,"Ymax boundary condition for species " << species->name << " is 'none', which means the same as fields");
+        //}
         else {
-            ERROR( "Ymax boundary condition undefined : " << species->boundary_conditions[1][1]  );
-        }
+            //ERROR( "Ymax boundary condition undefined : " << species->boundary_conditions[1][1]  );
+            ERROR("Only Remove boundary conditions can be applied to particles in Rz geometry ");
+	}
     }
     
     

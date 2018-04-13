@@ -69,30 +69,33 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi, OpenPMDparams& op
 
     // Delete all unused fields
     for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++) {
+	MESSAGE((*this)(ipatch)->EMfields->Jx_s.size());
         for (unsigned int ifield=0 ; ifield<(*this)(ipatch)->EMfields->Jx_s.size(); ifield++) {
+	MESSAGE((*this)(ipatch)->EMfields->Jx_s[ifield]->data_);
             if( (*this)(ipatch)->EMfields->Jx_s[ifield]->data_ == NULL ){
                 delete (*this)(ipatch)->EMfields->Jx_s[ifield];
                 (*this)(ipatch)->EMfields->Jx_s[ifield]=NULL;
             }
-        }
+	    MESSAGE("ifield");
+        } MESSAGE("jx");
         for (unsigned int ifield=0 ; ifield<(*this)(ipatch)->EMfields->Jy_s.size(); ifield++) {
             if( (*this)(ipatch)->EMfields->Jy_s[ifield]->data_ == NULL ){
                 delete (*this)(ipatch)->EMfields->Jy_s[ifield];
                 (*this)(ipatch)->EMfields->Jy_s[ifield]=NULL;
             }
-        }
+        } MESSAGE("jy");
         for (unsigned int ifield=0 ; ifield<(*this)(ipatch)->EMfields->Jz_s.size(); ifield++) {
             if( (*this)(ipatch)->EMfields->Jz_s[ifield]->data_ == NULL ){
                 delete (*this)(ipatch)->EMfields->Jz_s[ifield];
                 (*this)(ipatch)->EMfields->Jz_s[ifield]=NULL;
             }
-        }
+        } MESSAGE("jz");
         for (unsigned int ifield=0 ; ifield<(*this)(ipatch)->EMfields->rho_s.size(); ifield++) {
             if( (*this)(ipatch)->EMfields->rho_s[ifield]->data_ == NULL ){
                 delete (*this)(ipatch)->EMfields->rho_s[ifield];
                 (*this)(ipatch)->EMfields->rho_s[ifield]=NULL;
             }
-        }
+        }MESSAGE("rho");
 
         if (params.Laser_Envelope_model){
             for (unsigned int ifield=0 ; ifield<(*this)(ipatch)->EMfields->Env_Chi_s.size(); ifield++) {
@@ -106,6 +109,8 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi, OpenPMDparams& op
 
 
     }
+
+MESSAGE("create Diags");
 }
 
 
