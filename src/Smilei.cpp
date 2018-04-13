@@ -125,7 +125,6 @@ int main (int argc, char* argv[])
     if( smpi.test_mode ) {
         execute_test_mode( vecPatches, &smpi, simWindow, params, checkpoint, openPMD );
         return 0;
-	MESSAGE("TEST MODE");
     }
 
     // reading from dumped file the restart values

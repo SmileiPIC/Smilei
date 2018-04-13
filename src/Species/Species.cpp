@@ -1131,7 +1131,6 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
         for (unsigned int idim = 0; idim < nDim_particle; idim++) position[idim] = &(position_initialization_array[idim*n_numpy_particles]);
                                                                   weight_arr     = &(position_initialization_array[nDim_particle*n_numpy_particles]);
         //Idea to speed up selection, provides xmin, xmax of the bunch and check if there is an intersection with the patch instead of going through all particles for all patches.
-        MESSAGE("1");
 	for (unsigned int ip = 0; ip < n_numpy_particles; ip++){
             //If the particle belongs to this patch
             if (                              position[0][ip] >= patch->getDomainLocalMin(0) && position[0][ip] < patch->getDomainLocalMax(0)
@@ -1146,7 +1145,6 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
         //Initialize density and ppc profiles
         densityProfile->valuesAt(xyz, density       );
         ppcProfile    ->valuesAt(xyz, n_part_in_cell);
-	MESSAGE("2");
         //Now compute number of particles per cell
         double remainder, nppc;
         for (i=0; i<n_space_to_create_generalized[0]; i++) {
@@ -1265,7 +1263,6 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
             if (i%clrw == clrw -1) bmax[new_bin_idx+i/clrw] = iPart;
 
         }//i
-	MESSAGE("3");
     } else if ( n_existing_particles == 0  ) {  //Do not recreate particles from numpy array again after initialization. Is this condition enough ?
         //Initializing particles from numpy array and based on a count sort to comply with initial sorting.
         int nbins = bmin.size();
@@ -1324,11 +1321,9 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
         }
     }
 
-MESSAGE("4");
     delete [] indexes;
     delete [] temp;
     delete [] vel;
-MESSAGE(patch->isXmax());
     // Recalculate former position using the particle velocity
     // (necessary to calculate currents at time t=0 using the Esirkepov projection scheme)
     if (patch->isXmax()) {
@@ -1342,7 +1337,6 @@ MESSAGE(patch->isXmax());
                 nrj_new_particles += particles->weight(iPart)*(particles->lor_fac(iPart)-1.0);
 	        MESSAGE("Recalculate former position using the particle velocity");
             }
-MESSAGE("5");
         }
         // Photon case
         else if (mass == 0)
@@ -1354,12 +1348,10 @@ MESSAGE("5");
                 nrj_new_particles += particles->weight(iPart)*(particles->momentum_norm(iPart));
             }
         }
-MESSAGE("6");
     }
 
     if (particles->tracked)
         particles->resetIds();
-MESSAGE(npart_effective);
     return npart_effective;
 
 } // End createParticles
