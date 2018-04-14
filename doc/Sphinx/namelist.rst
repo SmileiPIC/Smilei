@@ -757,7 +757,37 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
     The variation of the laser frequency over time, such that
     :math:`\omega(t)=\mathtt{omega}\times\mathtt{chirp\_profile}(t)`.
-
+    
+  .. warning::
+  
+    This definition of the chirp profile is not standard.
+    Indeed, :math:`\omega(t)` as defined here **is not** the instantaneous frequency, :math:`\omega_{\rm inst}(t)`,
+    which is obtained from the time derivative of the phase :math:`\omega(t) t`.
+    
+    Should one define the chirp as :math:`C(t) = \omega_{\rm inst}(t)/\omega` (with :math:`\omega` defined by the input
+    parameter :math:`\mathtt{omega}`), the user can easily obtain the corresponding chirp profile as defined in 
+    :program:`Smilei` as:
+    
+    .. math:: 
+    
+        \mathtt{chirp\_profile}(t) = \frac{1}{t} \int_0^t dt' C(t')\,.
+        
+    Let us give as an example the case of a *linear chirp*, with the instantaneous frequency 
+    :math:`\omega_{\rm inst}(t) = \omega [1+\alpha\,\omega(t-t_0)]`.
+    :math:`C(t) = 1+\alpha\,\omega(t-t_0)`. The corresponding input chirp profile reads:
+    
+    .. math:: 
+    
+        \mathtt{chirp\_profile}(t) = 1 - \alpha\, \omega t_0 + \frac{\alpha}{2} \omega t
+        
+    Similarly, for a *geometric (exponential) chirp* such that :math:`\omega_{\rm inst}(t) = \omega\, \alpha^{\omega t}`,
+    :math:`C(t) = \alpha^{\omega t}`, and the corresponding input chirp profile reads:
+    
+    .. math:: 
+    
+        \mathtt{chirp\_profile}(t) = \frac{\alpha^{\omega t} - 1}{\omega t \, \ln \alpha}\,.
+    
+        
   .. py:data:: time_envelope
 
     :type: a *python* function or a :ref:`time profile <profiles>`
