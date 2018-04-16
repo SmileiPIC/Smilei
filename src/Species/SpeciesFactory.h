@@ -192,13 +192,13 @@ public:
         thisSpecies->speciesNumber = ispec;
 
         // Vectorized operators
-        if (!params.vecto)
+        if (params.vecto)
         {
-            thisSpecies->vectorized_operators = false;
+            thisSpecies->vectorized_operators = true;
         }
         else
         {
-            thisSpecies->vectorized_operators = true;
+            thisSpecies->vectorized_operators = false;
         }
 
         // Extract various parameters from the namelist
@@ -622,6 +622,7 @@ public:
         newSpecies->atomic_number                            = species->atomic_number;
         newSpecies->ionization_model                         = species->ionization_model;
         newSpecies->densityProfileType                       = species->densityProfileType;
+        newSpecies->vectorized_operators                     = species->vectorized_operators;
         newSpecies->chargeProfile                            = new Profile(species->chargeProfile);
         if ( !species->position_initialization_array ){
             newSpecies->densityProfile                       = new Profile(species->densityProfile);

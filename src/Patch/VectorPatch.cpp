@@ -124,13 +124,35 @@ void VectorPatch::dynamics(Params& params,
         (*this)(ipatch)->EMfields->restartRhoJ();
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
             if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
-                species(ipatch, ispec)->dynamics(time_dual, ispec,
-                                                 emfields(ipatch),
-                                                 params, diag_flag, partwalls(ipatch),
-                                                 (*this)(ipatch), smpi,
-                                                 RadiationTables,
-                                                 MultiphotonBreitWheelerTables,
-                                                 localDiags);
+                // Dynamics with vectorized operators
+                if ((*this)(ipatch)->vecSpecies[ispec]->vectorized_operators)
+                {
+                    species(ipatch, ispec)->dynamics(time_dual, ispec,
+                                                     emfields(ipatch),
+                                                     params, diag_flag, partwalls(ipatch),
+                                                     (*this)(ipatch), smpi,
+                                                     RadiationTables,
+                                                     MultiphotonBreitWheelerTables,
+                                                     localDiags);
+                }
+                // Dynamics with scalar operators
+                else
+                {
+                    /*species(ipatch, ispec)->Species::dynamics(time_dual, ispec,
+                                                     emfields(ipatch),
+                                                     params, diag_flag, partwalls(ipatch),
+                                                     (*this)(ipatch), smpi,
+                                                     RadiationTables,
+                                                     MultiphotonBreitWheelerTables,
+                                                     localDiags);*/
+                    species(ipatch, ispec)->scalar_dynamics(time_dual, ispec,
+                                                  emfields(ipatch),
+                                                  params, diag_flag, partwalls(ipatch),
+                                                  (*this)(ipatch), smpi,
+                                                  RadiationTables,
+                                                  MultiphotonBreitWheelerTables,
+                                                  localDiags);
+                }
             }
         }
 

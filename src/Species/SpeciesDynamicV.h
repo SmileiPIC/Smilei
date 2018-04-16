@@ -28,6 +28,8 @@ class SpeciesDynamicV : public Species
 
     void initCluster(Params& params) override;
 
+    void resizeCluster(Params& params) override;
+
 //virtual void dynamics(double time, unsigned int ispec, ElectroMagn* EMfields, Interpolator* interp,
 //                      Projector* proj, Params &params, bool diag_flag,
 //                      PartWalls* partWalls, Patch* patch, SmileiMPI* smpi) override;
@@ -41,6 +43,15 @@ class SpeciesDynamicV : public Species
                           RadiationTables &RadiationTables,
                           MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
                           std::vector<Diagnostic*>& localDiags) override;
+
+    //! Method calculating the Particle dynamics (interpolation, pusher, projection)
+    void scalar_dynamics(double time, unsigned int ispec,
+                        ElectroMagn* EMfields,
+                        Params &params, bool diag_flag,
+                        PartWalls* partWalls, Patch* patch, SmileiMPI* smpi,
+                        RadiationTables &RadiationTables,
+                        MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
+                        std::vector<Diagnostic*>& localDiags);
 
     //! Method calculating the Particle charge on the grid (projection)
     void computeCharge(unsigned int ispec, ElectroMagn* EMfields) override;

@@ -139,6 +139,12 @@ void Species::initCluster(Params& params)
 
 }//END initCluster
 
+void Species::resizeCluster(Params& params)
+{
+    // Arrays of the min and max indices of the particle bins
+    bmin.resize(params.n_space[0]/clrw);
+    bmax.resize(params.n_space[0]/clrw);
+}// end resizeCluster
 
 // Initialize the operators (Push, Ionize, PartBoundCond)
 // This must be separate from the parameters because the Species cloning copies
@@ -521,7 +527,6 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
 
-
             // Interpolate the fields at the particle position
             (*Interp)(EMfields, *particles, smpi, &(bmin[ibin]), &(bmax[ibin]), ithread );
 
@@ -689,7 +694,28 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 
 }//END dynamic
 
+// ---------------------------------------------------------------------------------------------------------------------
+// For all particles of the species
+//   - interpolate the fields at the particle position
+//   - perform ionization
+//   - perform the radiation reaction
+//   - perform the multiphoton Breit-Wheeler
+//   - calculate the new velocity
+//   - calculate the new position
+//   - apply the boundary conditions
+//   - increment the currents (projection)
+// ---------------------------------------------------------------------------------------------------------------------
+void Species::scalar_dynamics(double time_dual, unsigned int ispec,
+                       ElectroMagn* EMfields,
+                       Params &params, bool diag_flag,
+                       PartWalls* partWalls,
+                       Patch* patch, SmileiMPI* smpi,
+                       RadiationTables & RadiationTables,
+                       MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
+                       vector<Diagnostic*>& localDiags)
+{
 
+}
 
 // -----------------------------------------------------------------------------
 //! For all particles of the species, import the new particles generated
@@ -805,7 +831,8 @@ void Species::sort_part(Params& params)
                 ii--;
                 iPart = indexes_of_particles_to_exchange[ii];
             }
-            if (iPart >= bmin[ibin] && iPart < bmax[ibin]) { //On traite la dernière particule (qui peut aussi etre la premiere)
+            //On traite la dernière particule (qui peut aussi etre la premiere)
+            if (iPart >= bmin[ibin] && iPart < bmax[ibin]) {
                 particles->overwrite_part(bmax[ibin]-1, iPart );
                 bmax[ibin]--;
             }

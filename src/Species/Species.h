@@ -248,6 +248,8 @@ public:
 
     virtual void initCluster(Params&);
 
+    virtual void resizeCluster(Params&);
+
     //! Initialize operators (must be separate from parameters init, because of cloning)
     void initOperators(Params&, Patch*);
 
@@ -277,6 +279,15 @@ public:
                           RadiationTables &RadiationTables,
                           MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
                           std::vector<Diagnostic*>& localDiags);
+
+    //! Method calculating the Particle dynamics (interpolation, pusher, projection)
+    virtual void scalar_dynamics(double time, unsigned int ispec,
+                        ElectroMagn* EMfields,
+                        Params &params, bool diag_flag,
+                        PartWalls* partWalls, Patch* patch, SmileiMPI* smpi,
+                        RadiationTables &RadiationTables,
+                        MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
+                        std::vector<Diagnostic*>& localDiags);
 
     //! Method performing the importation of new particles
     virtual void dynamics_import_particles(double time, unsigned int ispec,
