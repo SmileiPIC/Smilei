@@ -104,12 +104,12 @@
         
         <div class="menu" id="menu_{{ menu_here }}"{% if menu_start.current == this_menu[0] %} style="font-weight:bold"{% endif %}>
             <div id="menuButton_{{ menu_here }}" class="menuButton"
-                 onmouseenter="thisMenuOnly('menu_{{ menu_here }}')"
+                 onmouseenter="prepareMenu('menu_{{ menu_here }}')"
                  onmousedown="event.preventDefault()"
             >
                 <span>{{ menu_title.next() }}</span>
             </div>
-            <div class="off">
+            <div class="off" onmouseleave="leaveMenu('menu_{{ menu_here }}',this)">
                 <div class="toctree-smilei">
                     <ul>
         {%- endif %}
@@ -132,7 +132,6 @@
             var es=document.getElementsByClassName("menuButton"), i=0;
             var evt = "ontouchend" in document ? "touchend" : "click";
             for( var i=0; i<es.length; i+=1 ) {
-                console.log(es[i]);
                 es[i].addEventListener(evt, function(a){ return function(){toggleMenu(a)};}(es[i].parentNode.id));
             }
         </script>
@@ -332,6 +331,18 @@
                 smallScreenMenu.className = "off";
                 smallScreenMenuButton.className = "";
             }
+        }
+        
+        function prepareMenu(menu_id) {
+            var menu = document.getElementById(menu_id);
+            menu.timer1 = setTimeout(function(a){ return function(){thisMenuOnly(a)};}(menu_id), 100);
+            menu.addEventListener("mouseleave", function(a){ return function(){clearTimeout(a.timer1)};}(menu) );
+        }
+        
+        function leaveMenu(menu_id, source) {
+            var menu = document.getElementById(menu_id);
+            menu.timer2 = setTimeout(function(a){ return function(){menuOff(a)};}(menu), 1000);
+            source.addEventListener("mouseenter", function(a){ return function(){clearTimeout(a.timer2)};}(menu) );
         }
         
         function menuOn( menu ) {
