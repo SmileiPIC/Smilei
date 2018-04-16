@@ -2,9 +2,9 @@
 # 					SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
 # ----------------------------------------------------------------------------------------
 
-import math
+from math import pi
 
-l0 = 2.0*math.pi        # laser wavelength
+l0 = 2.0*pi        # laser wavelength
 t0 = l0                 # optical cycle
 Lsim = [20.*l0,50.*l0]  # length of the simulation
 Tsim = 50.*t0           # duration of the simulation
@@ -38,6 +38,7 @@ LaserGaussian2D(
     focus           = [Lsim[0], Lsim[1]/2.],
     waist           = 8.,
     incidence_angle = 0.5,
+    polarization_phi = 20./180.*pi,
     time_envelope   = tgaussian()
 )
 
