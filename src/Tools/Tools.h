@@ -106,7 +106,8 @@ if (__i==__rk) {std::cout << "Proc [" << __i << "] " <<__txt << std::endl;} MPI_
 class Tools {
 public:
     static void printMemFootPrint(std::string tag);
-    
+    static double getMemFootPrint();
+
     //! Converts a number of Bytes in a readable string in KiB, MiB, GiB or TiB
     static std::string printBytes(uint64_t nbytes);
     
