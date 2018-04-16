@@ -1,5 +1,5 @@
-#ifndef SPECIESV_H
-#define SPECIESV_H
+#ifndef SPECIESDYNAMICV_H
+#define SPECIESDYNAMICV_H
 
 #include <vector>
 #include <string>
@@ -18,13 +18,13 @@ class SimWindow;
 
 
 //! class Species
-class SpeciesV : public Species
+class SpeciesDynamicV : public Species
 {
  public:
     //! Species creator
-    SpeciesV(Params&, Patch*);
+    SpeciesDynamicV(Params&, Patch*);
     //! Species destructor
-    virtual ~SpeciesV();
+    virtual ~SpeciesDynamicV();
 
     void initCluster(Params& params) override;
 
@@ -47,6 +47,9 @@ class SpeciesV : public Species
 
     //! Method used to sort particles
     void sort_part(Params& params) override;
+
+    void reconfiguration( Params& params, Patch * patch) override;
+
     //void count_sort_part(Params& param);
     void compute_part_cell_keys(Params &params);
 
@@ -59,6 +62,11 @@ class SpeciesV : public Species
     void importParticles( Params&, Patch*, Particles&, std::vector<Diagnostic*>& )override;
 
 private:
+
+    // Metrics for the dynamic vectorization
+    int max_number_of_particles_per_cells;
+    int min_number_of_particles_per_cells;
+    double ratio_number_of_vecto_cells;
 
 };
 

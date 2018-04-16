@@ -125,7 +125,7 @@ void VectorPatch::dynamics(Params& params,
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
             if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
                 species(ipatch, ispec)->dynamics(time_dual, ispec,
-                                                 emfields(ipatch), interp(ipatch), proj(ipatch),
+                                                 emfields(ipatch),
                                                  params, diag_flag, partwalls(ipatch),
                                                  (*this)(ipatch), smpi,
                                                  RadiationTables,
@@ -176,6 +176,16 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
         }
     }
 
+    // Species reconfiguration for best performance
+    // Change the status to use vectorized or not-vectorized operators as a function of the metrics
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+        // Particle importation for all species
+        for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
+            species(ipatch, ispec)->reconfiguration(params, (*this)(ipatch));
+        }
+    }
+
     if (itime%params.every_clean_particles_overhead==0) {
         #pragma omp master
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
@@ -193,7 +203,7 @@ void VectorPatch::computeCharge()
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         (*this)(ipatch)->EMfields->restartRhoJ();
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
-            species(ipatch, ispec)->computeCharge(ispec, emfields(ipatch), proj(ipatch) );
+            species(ipatch, ispec)->computeCharge(ispec, emfields(ipatch));
         }
     }
 
@@ -369,7 +379,7 @@ void VectorPatch::initAllDiags(Params& params, SmileiMPI* smpi)
         if( smpi->isMaster() )
             globalDiags[idiag]->openFile( params, smpi, true );
     }
-    
+
     // Local diags : fields, probes, tracks
     for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++)
         localDiags[idiag]->init(params, smpi, *this);
@@ -383,7 +393,7 @@ void VectorPatch::closeAllDiags(SmileiMPI* smpi)
     if ( smpi->isMaster() )
         for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++)
             globalDiags[idiag]->closeFile();
-    
+
     // All MPI close local diags
     for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++)
         localDiags[idiag]->closeFile();
@@ -396,7 +406,7 @@ void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
     if ( smpi->isMaster() )
         for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++)
             globalDiags[idiag]->openFile( params, smpi, false );
-    
+
     // All MPI open local diags
     for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++)
         localDiags[idiag]->openFile( params, smpi, false );
@@ -430,7 +440,7 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, unsigned int itim
             globalDiags[idiag]->write( itime , smpi );
         }
     }
-    
+
     // Local diags : fields, probes, tracks
     for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++) {
         #pragma omp single
@@ -440,7 +450,7 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, unsigned int itim
         if( localDiags[idiag]->theTimeIsNow )
             localDiags[idiag]->run( smpi, *this, itime, simWindow, timers );
     }
-    
+
     // Manage the "diag_flag" parameter, which indicates whether Rho and Js were used
     if( diag_flag ) {
         #pragma omp barrier
@@ -1320,18 +1330,18 @@ void VectorPatch::save_old_rho(Params &params)
                 std::memcpy((*this)(ipatch)->EMfields->rhoold_->data_,(*this)(ipatch)->EMfields->rho_->data_,sizeof(double)*n);
         }
 }
-        
+
 
 
 // Print information on the memory consumption
 void VectorPatch::check_expected_disk_usage( SmileiMPI* smpi, Params& params, Checkpoint& checkpoint)
 {
     if( smpi->isMaster() ){
-        
+
         MESSAGE(1, "WARNING: disk usage by non-uniform particles maybe strongly underestimated," );
         MESSAGE(1, "   especially when particles are created at runtime (ionization, pair generation, etc.)" );
         MESSAGE(1, "" );
-        
+
         // Find the initial and final timesteps for this simulation
         int istart = 0, istop = params.n_time;
         // If restarting simulation define the starting point
@@ -1344,7 +1354,7 @@ void VectorPatch::check_expected_disk_usage( SmileiMPI* smpi, Params& params, Ch
             int nextdumptime = ncheckpoint * (int)checkpoint.dump_step;
             if( nextdumptime < istop ) istop = nextdumptime;
         }
-        
+
         MESSAGE(1, "Expected disk usage for diagnostics:" );
         // Calculate the footprint from local then global diagnostics
         uint64_t diagnostics_footprint = 0;
@@ -1360,11 +1370,11 @@ void VectorPatch::check_expected_disk_usage( SmileiMPI* smpi, Params& params, Ch
         }
         MESSAGE(1, "Total disk usage for diagnostics: " << Tools::printBytes(diagnostics_footprint) );
         MESSAGE(1, "" );
-        
+
         // If checkpoints to be written, estimate their size
         if( checkpoint.dump_step > 0 || checkpoint.dump_minutes > 0 ) {
             MESSAGE(1, "Expected disk usage for each checkpoint:");
-            
+
             // - Contribution from the grid
             ElectroMagn* EM = patches_[0]->EMfields;
             //     * Calculate first the number of grid points in total
@@ -1381,7 +1391,7 @@ void VectorPatch::check_expected_disk_usage( SmileiMPI* smpi, Params& params, Ch
             //     * Conclude the total field disk footprint
             uint64_t checkpoint_fields_footprint = n_grid_points * (uint64_t)(n_fields * sizeof(double));
             MESSAGE(2, "For fields: " << Tools::printBytes(checkpoint_fields_footprint));
-            
+
             // - Contribution from particles
             uint64_t checkpoint_particles_footprint = 0;
             for (unsigned int ispec=0 ; ispec<patches_[0]->vecSpecies.size() ; ispec++) {
@@ -1402,7 +1412,7 @@ void VectorPatch::check_expected_disk_usage( SmileiMPI* smpi, Params& params, Ch
                 checkpoint_particles_footprint += one_particle_size*number_of_particles + b_size;
             }
             MESSAGE(2, "For particles: " << Tools::printBytes(checkpoint_particles_footprint));
-            
+
             // - Contribution from diagnostics
             uint64_t checkpoint_diags_footprint = 0;
             //     * Averaged field diagnostics
@@ -1415,12 +1425,10 @@ void VectorPatch::check_expected_disk_usage( SmileiMPI* smpi, Params& params, Ch
                 if( DiagnosticScreen* screen = dynamic_cast<DiagnosticScreen*>(globalDiags[idiag]) )
                     checkpoint_diags_footprint += screen->data_sum.size() * sizeof(double);
             MESSAGE(2, "For diagnostics: " << Tools::printBytes(checkpoint_diags_footprint));
-            
+
             uint64_t checkpoint_footprint = checkpoint_fields_footprint + checkpoint_particles_footprint + checkpoint_diags_footprint;
             MESSAGE(1, "Total disk usage for one checkpoint: " << Tools::printBytes(checkpoint_footprint) );
         }
-        
+
     }
 }
-
-

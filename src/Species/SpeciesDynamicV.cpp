@@ -1,4 +1,4 @@
-#include "SpeciesV.h"
+#include "SpeciesDynamicV.h"
 
 #include <cmath>
 #include <ctime>
@@ -43,22 +43,22 @@ using namespace std;
 // Constructor for Species
 // input: simulation parameters & Species index
 // ---------------------------------------------------------------------------------------------------------------------
-SpeciesV::SpeciesV(Params& params, Patch* patch) :
+SpeciesDynamicV::SpeciesDynamicV(Params& params, Patch* patch) :
     Species(params, patch)
 {
     initCluster( params );
 
-}//END SpeciesV creator
+}//END SpeciesDynamicV creator
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Destructor for Species
 // ---------------------------------------------------------------------------------------------------------------------
-SpeciesV::~SpeciesV()
+SpeciesDynamicV::~SpeciesDynamicV()
 {
 }
 
 
-void SpeciesV::initCluster(Params& params)
+void SpeciesDynamicV::initCluster(Params& params)
 {
     //Temporary BECK
     int ncells = 1;
@@ -104,7 +104,7 @@ void SpeciesV::initCluster(Params& params)
 }//END initCluster
 
 
-void SpeciesV::dynamics(double time_dual, unsigned int ispec,
+void SpeciesDynamicV::dynamics(double time_dual, unsigned int ispec,
                        ElectroMagn* EMfields, Params &params, bool diag_flag,
                        PartWalls* partWalls,
                        Patch* patch, SmileiMPI* smpi,
@@ -249,7 +249,7 @@ void SpeciesV::dynamics(double time_dual, unsigned int ispec,
                             }
                             else {
                                 //First reduction of the count sort algorithm. Lost particles are not included.
-                                species_loc_bmax[(*particles).cell_keys[iPart]] ++;
+                                species_loc_bmax[(*particles).cell_keys[iPart]] ++; //First reduction of the count sort algorithm. Lost particles are not included.
                             }
                         }
 
@@ -275,7 +275,7 @@ void SpeciesV::dynamics(double time_dual, unsigned int ispec,
                         }
                         else {
                             //First reduction of the count sort algorithm. Lost particles are not included.
-                            species_loc_bmax[(*particles).cell_keys[iPart]] ++;
+                            species_loc_bmax[(*particles).cell_keys[iPart]] ++; //First reduction of the count sort algorithm. Lost particles are not included.
 
                         }
                     }
@@ -326,7 +326,7 @@ void SpeciesV::dynamics(double time_dual, unsigned int ispec,
 //   - increment the charge (projection)
 //   - used at initialisation for Poisson (and diags if required, not for now dynamics )
 // ---------------------------------------------------------------------------------------------------------------------
-void SpeciesV::computeCharge(unsigned int ispec, ElectroMagn* EMfields)
+void SpeciesDynamicV::computeCharge(unsigned int ispec, ElectroMagn* EMfields)
 {
     // -------------------------------
     // calculate the particle charge
@@ -345,7 +345,7 @@ void SpeciesV::computeCharge(unsigned int ispec, ElectroMagn* EMfields)
 // ---------------------------------------------------------------------------------------------------------------------
 // Sort particles
 // ---------------------------------------------------------------------------------------------------------------------
-void SpeciesV::sort_part(Params &params)
+void SpeciesDynamicV::sort_part(Params &params)
 {
     unsigned int npart, ncell;
     int ip_dest, cell_target;
@@ -489,7 +489,7 @@ void SpeciesV::sort_part(Params &params)
 }
 
 
-void SpeciesV::compute_part_cell_keys(Params &params)
+void SpeciesDynamicV::compute_part_cell_keys(Params &params)
 {
     //Compute part_cell_keys at patch creation. This operation is normally done in the pusher to avoid additional particles pass.
 
@@ -518,7 +518,7 @@ void SpeciesV::compute_part_cell_keys(Params &params)
 }
 
 
-void SpeciesV::importParticles( Params& params, Patch* patch, Particles& source_particles, vector<Diagnostic*>& localDiags )
+void SpeciesDynamicV::importParticles( Params& params, Patch* patch, Particles& source_particles, vector<Diagnostic*>& localDiags )
 {
     unsigned int npart = source_particles.size(), ibin, ii, nbin=bmin.size();
     double inv_cell_length = 1./ params.cell_length[0];
@@ -561,4 +561,75 @@ void SpeciesV::importParticles( Params& params, Patch* patch, Particles& source_
     }
 
     source_particles.clear();
+}
+
+
+void SpeciesDynamicV::reconfiguration(Params &params, Patch * patch)
+{
+    unsigned int ncell;
+    bool reasign_operators = false;
+
+    //split cell into smaller sub_cells for refined sorting
+    ncell = (params.n_space[0]+1);
+    for ( unsigned int i=1; i < params.nDim_field; i++) ncell *= (params.n_space[i]+1);
+
+    // Computation of metrics for the dynamic vectorization:
+    // - max_number_of_particles_per_cells: the maximum number of particles
+    //   per cell in this patch for this species
+    // - min_number_of_particles_per_cells: the minimum number of particles
+    //   per cell in this patch for this species
+    // Loop on all cells
+    int number_of_vecto_cells = 0;
+    int number_of_non_zero_cells = 0;
+    min_number_of_particles_per_cells = species_loc_bmax[0];
+    max_number_of_particles_per_cells = 0;
+    #pragma omp simd
+    for (unsigned int ic=1; ic < ncell; ic++)
+    {
+        max_number_of_particles_per_cells = max(species_loc_bmax[ic-1],max_number_of_particles_per_cells);
+        min_number_of_particles_per_cells = min(species_loc_bmax[ic-1],min_number_of_particles_per_cells);
+        if (species_loc_bmax[ic-1] >= 8)
+        {
+            number_of_vecto_cells ++;
+        }
+        if (species_loc_bmax[ic-1] > 0)
+        {
+            number_of_non_zero_cells++;
+        }
+    }
+    this->ratio_number_of_vecto_cells = double(number_of_vecto_cells) / double(number_of_non_zero_cells);
+
+    // Test metrics, if necessary we reasign operators
+    if ( (ratio_number_of_vecto_cells > 0.5 && this->vectorized_operators == false)
+      || (ratio_number_of_vecto_cells < 0.5 && this->vectorized_operators == true))
+    {
+        reasign_operators = true;
+    }
+
+    // Operator reasignment if required by the metrics
+    if (reasign_operators)
+    {
+        // The type of operator is changed
+        this->vectorized_operators = !this->vectorized_operators;
+
+        // Destroy current operators
+        delete Push;
+        delete Interp;
+        delete Proj;
+
+        // Reassign the correct Pusher to Push
+        Push = PusherFactory::create(params, this);
+        // Reassign the correct Interpolator
+        Interp = InterpolatorFactory::create(params, patch, this->vectorized_operators); // + patchId -> idx_domain_begin (now = ref smpi)
+        // Reassign the correct Projector
+        Proj = ProjectorFactory::create(params, patch, this->vectorized_operators); // + patchId -> idx_domain_begin (now = ref smpi)
+    }
+
+    std::cout << "Vectorized_operators = " << this->vectorized_operators
+              << " ratio_number_of_vecto_cells = " << this->ratio_number_of_vecto_cells
+              << " number_of_vecto_cells = " << number_of_vecto_cells
+              << " number_of_non_zero_cells = " << number_of_non_zero_cells
+              << " ncells = " << ncell
+              << '\n';
+
 }

@@ -34,7 +34,7 @@ public:
     Patch(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved);
     //! Cloning Constructor for Patch
     Patch(Patch* patch, Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved, bool with_particles);
-    
+
     //! First initialization step for patches
     void initStep1(Params& params);
     //! Second initialization step for patches
@@ -66,11 +66,6 @@ public:
     PartWalls * partWalls;
     //! Optional binary collisions operators
     std::vector<Collisions*> vecCollisions;
-
-    //! Interpolator (used to push particles and for probes)
-    Interpolator* Interp;
-    //! Projector
-    Projector* Proj;
 
     //! "fake" particles for the probe diagnostics
     std::vector<ProbeParticles*> probes;

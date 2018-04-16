@@ -15,7 +15,7 @@
 #include "SpeciesNorm.h"
 
 #ifdef _VECTO
-#include "SpeciesV.h"
+#include "SpeciesDynamicV.h"
 #include "SpeciesNormV.h"
 #endif
 
@@ -168,13 +168,14 @@ public:
             }
 
         }
+
         // Photon species
         else if (mass == 0)
         {
             if ( !params.vecto )
                 thisSpecies = new SpeciesNorm(params, patch);
 #ifdef _VECTO
-            else 
+            else
                 thisSpecies = new SpeciesNormV(params, patch);
 #endif
             // Photon can not radiate
@@ -189,6 +190,16 @@ public:
         thisSpecies->name = species_name;
         thisSpecies->mass = mass;
         thisSpecies->speciesNumber = ispec;
+
+        // Vectorized operators
+        if (!params.vecto)
+        {
+            thisSpecies->vectorized_operators = false;
+        }
+        else
+        {
+            thisSpecies->vectorized_operators = true;
+        }
 
         // Extract various parameters from the namelist
 
@@ -296,7 +307,7 @@ public:
             }
         }
 #ifdef SMILEI_USE_NUMPY
-        else if (PyArray_Check(py_pos_init)){ 
+        else if (PyArray_Check(py_pos_init)){
             //Initialize position from this array
 
             PyArrayObject *np_ret = reinterpret_cast<PyArrayObject*>(py_pos_init);
@@ -309,7 +320,7 @@ public:
             ndim_local = PyArray_SHAPE(np_ret)[0];// ok
             if (ndim_local != params.nDim_particle + 1)
                 ERROR("For species '" << species_name << "' position_initializtion must provide a 2-dimensional array with " <<  params.nDim_particle + 1 << " columns." )
-            
+
             //Get number of particles
             thisSpecies->n_numpy_particles =  PyArray_SHAPE(np_ret)[1];//  ok
         }
@@ -344,8 +355,8 @@ public:
                 }
             }
         }
-#ifdef SMILEI_USE_NUMPY        
-        else if (PyArray_Check(py_mom_init)){ 
+#ifdef SMILEI_USE_NUMPY
+        else if (PyArray_Check(py_mom_init)){
 
             if ( !thisSpecies->position_initialization_array )
                 ERROR("For species '" << species_name << "'. Momentum initialization by a numpy array is only possible if positions are initialized with a numpy array as well. ");
@@ -360,7 +371,7 @@ public:
             ndim_local =  PyArray_SHAPE(np_ret_mom)[0];// ok
             if (ndim_local != params.nDim_particle )
                 ERROR("For species '" << species_name << "' momentum_initializtion must provide a 2-dimensional array with " <<  params.nDim_particle << " columns." )
-            
+
             //Get number of particles
             if ( thisSpecies->n_numpy_particles != PyArray_SHAPE(np_ret_mom)[1] )
                 ERROR("For species '" << species_name << "' momentum_initializtion must provide as many particles as position_initialization." )
@@ -468,7 +479,7 @@ public:
 
 
         if (thisSpecies->position_initialization_array == NULL){
-            //These quantities are disregarded if positioning of the species is directly specified by the user 
+            //These quantities are disregarded if positioning of the species is directly specified by the user
             // Matter particles
             if (thisSpecies->mass > 0)
             {
@@ -612,19 +623,19 @@ public:
         newSpecies->ionization_model                         = species->ionization_model;
         newSpecies->densityProfileType                       = species->densityProfileType;
         newSpecies->chargeProfile                            = new Profile(species->chargeProfile);
-        if ( !species->position_initialization_array ){ 
+        if ( !species->position_initialization_array ){
             newSpecies->densityProfile                       = new Profile(species->densityProfile);
             newSpecies->ppcProfile                           = new Profile(species->ppcProfile);
         }
         newSpecies->velocityProfile.resize(3);
         newSpecies->temperatureProfile.resize(3);
-        //if ( !species->momentum_initialization_array ){ 
-        if ( species->velocityProfile[0] ){ 
+        //if ( !species->momentum_initialization_array ){
+        if ( species->velocityProfile[0] ){
             newSpecies->velocityProfile[0]                   = new Profile(species->velocityProfile[0]);
             newSpecies->velocityProfile[1]                   = new Profile(species->velocityProfile[1]);
             newSpecies->velocityProfile[2]                   = new Profile(species->velocityProfile[2]);
         }
-        if ( species->temperatureProfile[0] ){ 
+        if ( species->temperatureProfile[0] ){
             newSpecies->temperatureProfile[0]                = new Profile(species->temperatureProfile[0]);
             newSpecies->temperatureProfile[1]                = new Profile(species->temperatureProfile[1]);
             newSpecies->temperatureProfile[2]                = new Profile(species->temperatureProfile[2]);

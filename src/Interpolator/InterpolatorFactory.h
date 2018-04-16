@@ -23,7 +23,7 @@
 
 class InterpolatorFactory {
 public:
-    static Interpolator* create(Params& params, Patch *patch) {
+    static Interpolator* create(Params& params, Patch *patch, bool vectorization) {
         Interpolator* Interp = NULL;
         // ---------------
         // 1Dcartesian simulation
@@ -38,7 +38,7 @@ public:
         // 2Dcartesian simulation
         // ---------------
         else if ( ( params.geometry == "2Dcartesian" ) && ( params.interpolation_order == 2 ) ) {
-            if (!params.vecto)
+            if (!vectorization)
                 Interp = new Interpolator2D2Order(params, patch);
 #ifdef _VECTO
             else
@@ -52,7 +52,7 @@ public:
         // 3Dcartesian simulation
         // ---------------
         else if ( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == 2 ) ) {
-            if (!params.vecto)
+            if (!vectorization)
                 Interp = new Interpolator3D2Order(params, patch);
 #ifdef _VECTO
             else
@@ -60,7 +60,7 @@ public:
 #endif
         }
         else if ( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == 4 ) ) {
-            if (!params.vecto)
+            if (!vectorization)
                 Interp = new Interpolator3D4Order(params, patch);
 #ifdef _VECTO
             else
