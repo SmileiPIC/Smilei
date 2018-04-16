@@ -67,6 +67,9 @@ public:
     //! atomic number
     unsigned int atomic_number;
     
+    //! maximum charge state
+    unsigned int maximum_charge_state;
+    
     //! thermalizing temperature for thermalizing BCs [\f$m_e c^2\f$]
     std::vector<double> thermal_boundary_temperature;
     //! mean velocity used when thermalizing BCs are used [\f$c\f$]

@@ -24,6 +24,15 @@ public:
                 ERROR( "Cannot ionize test species " << species->name );
             
             Ionize = new IonizationTunnel( params, species );
+        }
+
+        else if ( model == "from_rate" ) {
+            if (species->max_charge > (int)species->maximum_charge_state)
+                ERROR( "Charge > atomic_number for species " << species->name );
+            if( species->particles->is_test )
+                ERROR( "Cannot ionize test species " << species->name );
+                
+            Ionize = new IonizationTunnel( params, species );
             
         } else if ( model != "none" ) {
             WARNING( "For species " << species->name << ": unknown ionization model `" << model << "` ... assuming no ionization");

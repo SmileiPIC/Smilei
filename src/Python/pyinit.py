@@ -348,6 +348,7 @@ class Species(SmileiComponent):
     ionization_model = "none"
     ionization_electrons = None
     atomic_number = None
+    maximum_charge_state = None
     is_test = False
     ponderomotive_dynamics = False
 

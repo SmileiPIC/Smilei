@@ -447,6 +447,9 @@ public:
         {
             thisSpecies->atomic_number = 0;
             PyTools::extract("atomic_number", thisSpecies->atomic_number, "Species",ispec);
+            
+            thisSpecies->maximum_charge_state = 0;
+            PyTools::extract("maximum_charge_state", thisSpecies->maximum_charge_state, "Species",ispec);
 
             std::string model;
             if( PyTools::extract("ionization_model", model, "Species",ispec) && model!="none" ) {
@@ -454,13 +457,19 @@ public:
                 thisSpecies->ionization_model = model;
 
                 if( ! PyTools::extract("ionization_electrons", thisSpecies->ionization_electrons, "Species",ispec) ) {
-                    ERROR("For species '" << species_name << "' undefined ionization_electrons (required for ionization)");
+                    ERROR("For species '" << species_name << " undefined ionization_electrons (required for ionization)");
                 }
 
-                if( thisSpecies->atomic_number==0 ) {
-                    ERROR("For species '" << species_name << "' undefined atomic_number (required for ionization)");
+                if( (thisSpecies->atomic_number==0)&&(thisSpecies->maximum_charge_state==0) ) {
+                    ERROR("For species '" << species_name << " undefined atomic_number & maximum_charge_state (required for ionization)");
+                }
+                
+                if ( (thisSpecies->ionization_model == "from_rate") && (thisSpecies->maximum_charge_state == 0) ) {
+                    thisSpecies->maximum_charge_state = thisSpecies->atomic_number;
+                    WARNING("For species '" << species_name << " ionization 'from_rate' is used with maximum_charge_state = "<<thisSpecies->maximum_charge_state << " taken from atomic_number");
                 }
             }
+            
         }
 
         // Species geometry
@@ -619,6 +628,7 @@ public:
         newSpecies->thermalVelocity                          = species->thermalVelocity;
         newSpecies->thermalMomentum                          = species->thermalMomentum;
         newSpecies->atomic_number                            = species->atomic_number;
+        newSpecies->maximum_charge_state                     = species->maximum_charge_state;
         newSpecies->ionization_model                         = species->ionization_model;
         newSpecies->densityProfileType                       = species->densityProfileType;
         newSpecies->chargeProfile                            = new Profile(species->chargeProfile);
@@ -735,8 +745,14 @@ public:
                     retSpecies[ispec1]->Ionize->new_electrons.tracked = retSpecies[ispec1]->electron_species->particles->tracked;
                     retSpecies[ispec1]->Ionize->new_electrons.initialize(0, params.nDim_particle );
                     if ( ( !retSpecies[ispec1]->getNbrOfParticles() ) && ( !retSpecies[ispec2]->getNbrOfParticles() ) ) {
-                        int max_eon_number = retSpecies[ispec1]->getNbrOfParticles() * retSpecies[ispec1]->atomic_number;
-                        retSpecies[ispec2]->particles->reserve( max_eon_number, retSpecies[ispec2]->particles->dimension() );
+                        if (retSpecies[ispec1]->atomic_number!=0) {
+                            int max_eon_number = retSpecies[ispec1]->getNbrOfParticles() * retSpecies[ispec1]->atomic_number;
+                            retSpecies[ispec2]->particles->reserve( max_eon_number, retSpecies[ispec2]->particles->dimension() );
+                        }
+                        else if (retSpecies[ispec1]->maximum_charge_state!=0) {
+                            int max_eon_number = retSpecies[ispec1]->getNbrOfParticles() * retSpecies[ispec1]->maximum_charge_state;
+                            retSpecies[ispec2]->particles->reserve( max_eon_number, retSpecies[ispec2]->particles->dimension() );
+                        }
                     }
                     break;
                 }
