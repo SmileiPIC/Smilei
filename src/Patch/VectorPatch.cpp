@@ -242,6 +242,7 @@ void VectorPatch::computeCharge()
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         (*this)(ipatch)->EMfields->restartRhoJ();
+	MESSAGE("restartRhoJ");
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
             species(ipatch, ispec)->computeCharge(ispec, emfields(ipatch), proj(ipatch) );
         }
@@ -265,12 +266,15 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
         return;
 
     timers.densities.restart();
+    MESSAGE("kharya");
     if  (diag_flag){
+        MESSAGE("diag_flag");
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
              // Per species in global, Attention if output -> Sync / per species fields
             (*this)(ipatch)->EMfields->computeTotalRhoJ();
         }
+	MESSAGE("sucess");
     }
     timers.densities.update();
 

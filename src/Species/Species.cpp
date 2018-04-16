@@ -24,7 +24,7 @@
 #include "InterpolatorFactory.h"
 #include "ProjectorFactory.h"
 #include "Profile.h"
-
+#include "ElectroMagn3DRZ.h"
 #include "Projector.h"
 
 #include "SimWindow.h"
@@ -759,21 +759,39 @@ void Species::computeCharge(unsigned int ispec, ElectroMagn* EMfields, Projector
     // calculate the particle charge
     // -------------------------------
     if ( (!particles->is_test) ) {
+	MESSAGE("yes");
         double* b_rho=nullptr;
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
             unsigned int bin_start = ibin*clrw*f_dim1*f_dim2;
+	    MESSAGE("yes yes");
             // Not for now, else rho is incremented twice. Here and dynamics. Must add restartRhoJs and manage independantly diags output
             //b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(bin_start) : &(*EMfields->rho_)(bin_start);
-            b_rho = &(*EMfields->rho_)(bin_start);
-
+            if (!dynamic_cast<ElectroMagn3DRZ*>(EMfields)){
+	        b_rho = &(*EMfields->rho_)(bin_start);
             for (unsigned int iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
                 (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_dim);
+		}
+	    } else {
+#ifdef _TODO_RZ_ 
+    		ElectroMagn3DRZ* emRZ = static_cast<ElectroMagn3DRZ*>( EMfields );
+		int Nmode = emRZ->rho_RZ_.size();
+		for (unsigned int imode=0; imode<Nmode;imode++){
+		
+		b_rho = (double*)((*emRZ->rho_RZ_[imode])(bin_start));
+            for (unsigned int iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_dim);
+	}
+		}
+#endif
+	    MESSAGE("compute charge brho");
 
-            } //End loop on particles
+
+             //End loop on particles
         }//End loop on bins
 
     }
 
+}
 }//END computeCharge
 
 

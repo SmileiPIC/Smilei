@@ -581,20 +581,32 @@ void ElectroMagn3DRZ::computeTotalRhoJ()
         cField2D* Jr3DRZ    = static_cast<cField2D*>(Jr_[imode]);
         cField2D* Jt3DRZ    = static_cast<cField2D*>(Jt_[imode]);
         cField2D* rho3DRZ   = static_cast<cField2D*>(rho_RZ_[imode]);    
-    
+        MESSAGE("c");
         // -----------------------------------
         // Species currents and charge density
         // -----------------------------------
         for (unsigned int ispec=0; ispec<n_species; ispec++) {
 
             int ifield = imode*n_species+ispec;
-
-            if( Jl_s[ifield] ) {
+            MESSAGE("cc");
+	    MESSAGE(Jl_s.size());
+	    MESSAGE(Jl_.size());
+	    MESSAGE(ifield);
+	    if( Jl_s[ifield] ) {
                 cField2D* Jl2D_s  = static_cast<cField2D*>(Jl_s[ifield]);
-                for (unsigned int i=0 ; i<=nl_p ; i++)
-                    for (unsigned int j=0 ; j<nr_p ; j++)
-                        (*Jl3DRZ)(i,j) += (*Jl2D_s)(i,j);
+                MESSAGE(Jl2D_s->dims_[0]);
+	        MESSAGE(Jl2D_s->dims_[1]);
+		MESSAGE(Jl3DRZ->dims_[0]);
+		MESSAGE(Jl3DRZ->dims_[1]);
+                for (unsigned int i=0 ; i<=nl_p ; i++){
+		    MESSAGE("here");
+		    MESSAGE(nr_p);
+		    MESSAGE(nl_p);
+                    for (unsigned int j=0 ; j<nr_p ; j++){
+			MESSAGE("here i=" <<i << "  j="<<j);
+                        (*Jl3DRZ)(i,j) += (*Jl2D_s)(i,j);}}
             }
+	    MESSAGE("or here");
             if( Jr_s[ifield] ) {
                 cField2D* Jr2D_s  = static_cast<cField2D*>(Jr_s[ifield]);
                 for (unsigned int i=0 ; i<nl_p ; i++)

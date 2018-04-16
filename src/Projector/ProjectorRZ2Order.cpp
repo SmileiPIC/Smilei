@@ -27,7 +27,7 @@ ProjectorRZ2Order::ProjectorRZ2Order (Params& params, Patch* patch) : ProjectorR
     dr = params.cell_length[1];
     i_domain_begin = patch->getCellStartingGlobalIndex(0);
     j_domain_begin = patch->getCellStartingGlobalIndex(1);
-
+    n_species = patch->vecSpecies.size();
     DEBUG("cell_length "<< params.cell_length[0]);
 
 }
@@ -877,7 +877,7 @@ void ProjectorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles,
     std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
     
     int dim1 = EMfields->dimPrim[1];
-    int dim2 = EMfields->dimPrim[2];
+    //int dim2 = EMfields->dimPrim[2];
 
     ElectroMagn3DRZ* emRZ = static_cast<ElectroMagn3DRZ*>( EMfields );
 
@@ -887,19 +887,20 @@ void ProjectorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles,
         
         // Loop on modes ?
         for ( unsigned int imode = 0; imode<Nmode;imode++){
+
             if (imode==0){
 		MESSAGE("wrapper mode 0");
-                complex< double>* b_Jl =  &(*emRZ->Jl_[imode] )(ibin*clrw* dim1   * dim2   );
-                complex<double>* b_Jr =  &(*emRZ->Jr_[imode] )(ibin*clrw*(dim1+1)* dim2   );
-                complex<double>* b_Jt =  &(*emRZ->Jt_[imode] )(ibin*clrw* dim1   *(dim2+1));
+                complex< double>* b_Jl =  &(*emRZ->Jl_[imode] )(ibin*clrw* dim1 );
+                complex<double>* b_Jr =  &(*emRZ->Jr_[imode] )(ibin*clrw*(dim1+1) );
+                complex<double>* b_Jt =  &(*emRZ->Jt_[imode] )(ibin*clrw* dim1 );
                 for ( int ipart=istart ; ipart<iend; ipart++ )
                      (*this)(b_Jl , b_Jr , b_Jt , particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[3*ipart], &(*delta)[3*ipart]);
             }
             else{	
 		MESSAGE("wrapper mode> 0");
-                complex<double>* b_Jl =  &(*emRZ->Jl_[imode] )(ibin*clrw* dim1   * dim2   );
-                complex<double>* b_Jr =  &(*emRZ->Jr_[imode] )(ibin*clrw*(dim1+1)* dim2   );
-                complex<double>* b_Jt =  &(*emRZ->Jt_[imode] )(ibin*clrw* dim1   *(dim2+1));
+                complex<double>* b_Jl =  &(*emRZ->Jl_[imode] )(ibin*clrw* dim1 );
+                complex<double>* b_Jr =  &(*emRZ->Jr_[imode] )(ibin*clrw*(dim1+1) );
+                complex<double>* b_Jt =  &(*emRZ->Jt_[imode] )(ibin*clrw* dim1 );
                 for ( int ipart=istart ; ipart<iend; ipart++ )
                     (*this)(b_Jl , b_Jr , b_Jt , particles,  ipart, ibin*clrw, b_dim, &(*iold)[3*ipart], &(*delta)[3*ipart], imode);
            } 
@@ -908,20 +909,21 @@ void ProjectorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles,
      else {
          //Loop on modes 
         for ( unsigned int imode = 0; imode<Nmode;imode++){
+	    int ifield = imode*n_species+ispec;
             if (imode==0){
-                complex<double>* b_Jl  = emRZ->Jl_s [ispec] ? &(* static_cast<cField2D*>(emRZ->Jl_s [ispec]) )(ibin*clrw* dim1   *dim2) : &(*emRZ->Jl_[imode] )(ibin*clrw* dim1   *dim2) ;
-                complex<double>* b_Jr  = emRZ->Jr_s [ispec] ? &(* static_cast<cField2D*>(emRZ->Jr_s [ispec]) )(ibin*clrw*(dim1+1)*dim2) : &(*emRZ->Jr_[imode] )(ibin*clrw*(dim1+1)*dim2) ;
-                complex<double>* b_Jt  = emRZ->Jt_s [ispec] ? &(* static_cast<cField2D*>(emRZ->Jt_s [ispec]) )(ibin*clrw*dim1*(dim2+1)) : &(*emRZ->Jt_[imode] )(ibin*clrw*dim1*(dim2+1)) ;
-                complex<double>* b_rho = emRZ->rho_s[ispec] ? &(* static_cast<cField2D*>(emRZ->rho_s[ispec]) )(ibin*clrw* dim1   *dim2) : &(*emRZ->rho_RZ_[imode])(ibin*clrw* dim1   *dim2) ;
+                complex<double>* b_Jl  = emRZ->Jl_s [ifield] ? &(* static_cast<cField2D*>(emRZ->Jl_s [ifield]) )(ibin*clrw* dim1) : &(*emRZ->Jl_[imode] )(ibin*clrw* dim1 ) ;
+                complex<double>* b_Jr  = emRZ->Jr_s [ifield] ? &(* static_cast<cField2D*>(emRZ->Jr_s [ifield]) )(ibin*clrw*(dim1+1)) : &(*emRZ->Jr_[imode] )(ibin*clrw*(dim1+1)) ;
+                complex<double>* b_Jt  = emRZ->Jt_s [ifield] ? &(* static_cast<cField2D*>(emRZ->Jt_s [ifield]) )(ibin*clrw*dim1) : &(*emRZ->Jt_[imode] )(ibin*clrw*dim1) ;
+                complex<double>* b_rho = emRZ->rho_s[ifield] ? &(* static_cast<cField2D*>(emRZ->rho_s[ifield]) )(ibin*clrw* dim1) : &(*emRZ->rho_RZ_[imode])(ibin*clrw* dim1 ) ;
                 for ( int ipart=istart ; ipart<iend; ipart++ )
                     (*this)(b_Jl , b_Jr , b_Jt ,b_rho, particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[3*ipart], &(*delta)[3*ipart]);
 }
              else{    
 
-                complex<double>* b_Jl  = emRZ->Jl_s [ispec] ? &(* static_cast<cField2D*>(emRZ->Jl_s [ispec]) )(ibin*clrw* dim1   *dim2) : &(*emRZ->Jl_[imode] )(ibin*clrw* dim1   *dim2) ;
-                complex<double>* b_Jr  = emRZ->Jr_s [ispec] ? &(* static_cast<cField2D*>(emRZ->Jr_s [ispec]) )(ibin*clrw*(dim1+1)*dim2) : &(*emRZ->Jr_[imode] )(ibin*clrw*(dim1+1)*dim2) ;
-                complex<double>* b_Jt  = emRZ->Jt_s [ispec] ? &(* static_cast<cField2D*>(emRZ->Jt_s [ispec]) )(ibin*clrw*dim1*(dim2+1)) : &(*emRZ->Jt_[imode] )(ibin*clrw*dim1*(dim2+1)) ;
-                complex<double>* b_rho = emRZ->rho_s[ispec] ? &(* static_cast<cField2D*>(emRZ->rho_s[ispec]) )(ibin*clrw* dim1   *dim2) : &(*emRZ->rho_RZ_[imode])(ibin*clrw* dim1   *dim2) ;
+                complex<double>* b_Jl  = emRZ->Jl_s [ifield] ? &(* static_cast<cField2D*>(emRZ->Jl_s [ifield]) )(ibin*clrw* dim1) : &(*emRZ->Jl_[imode] )(ibin*clrw* dim1) ;
+                complex<double>* b_Jr  = emRZ->Jr_s [ifield] ? &(* static_cast<cField2D*>(emRZ->Jr_s [ifield]) )(ibin*clrw*(dim1+1)) : &(*emRZ->Jr_[imode] )(ibin*clrw*(dim1+1)) ;
+                complex<double>* b_Jt  = emRZ->Jt_s [ifield] ? &(* static_cast<cField2D*>(emRZ->Jt_s [ifield]) )(ibin*clrw*dim1) : &(*emRZ->Jt_[imode])(ibin*clrw*dim1) ;
+                complex<double>* b_rho = emRZ->rho_s[ifield] ? &(* static_cast<cField2D*>(emRZ->rho_s[ifield]) )(ibin*clrw* dim1 ) : &(*emRZ->rho_RZ_[imode])(ibin*clrw* dim1 ) ;
                 for ( int ipart=istart ; ipart<iend; ipart++ )
                     (*this)(b_Jl , b_Jr , b_Jt ,b_rho, particles,  ipart, ibin*clrw, b_dim, &(*iold)[3*ipart], &(*delta)[3*ipart], imode);
                  }
