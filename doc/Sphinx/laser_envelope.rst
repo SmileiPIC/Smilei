@@ -32,7 +32,7 @@ The basic assumption of the model is the description of the laser pulse vector p
 
   \hat{A}(\mathbf{x},t)=\textit{Re}\left[\tilde{A}(\mathbf{x},t)e^{ik_0(x-ct)}\right],
 
-where :math:`k_0=2\pi/\lambda_0`. As the laser is the source term of the phenomena of interest, in general any physical quantity :math:`A` will be therefore given by the summation of a slowly varying part :math:`\bar{A}` and a fast oscillating part :math:`\hat{A}`:
+where :math:`k_0=2\pi/\lambda_0`. As the laser is the source term of the phenomena of interest, in general any physical quantity :math:`A` will be therefore given by the summation of a slowly varying part :math:`\bar{A}` and a fast oscillating part :math:`\hat{A}` with the same form of Eq. :eq:`envelope`:
 
 .. math::
 
@@ -84,7 +84,7 @@ Note that if in Eq. :eq:`envelope` the temporal variation of the envelope :math:
 
   \nabla_{\perp}^2 \tilde{A}+2i\partial_x \tilde{A}=0. 
 
-In :program:`Smilei`, none of these assumptions are made and the full version of Eq. :eq:`envelope` is solved.
+In :program:`Smilei`, none of these assumptions are made and the full version of Eq. :eq:`envelope_equation` is solved.
 
 ----
 
