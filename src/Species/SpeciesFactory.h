@@ -25,6 +25,8 @@
 #include "Params.h"
 #include "Patch.h"
 
+#include "ParticleData.h"
+
 #include "Tools.h"
 #ifdef SMILEI_USE_NUMPY
 #include <numpy/arrayobject.h>
@@ -468,7 +470,27 @@ public:
                     thisSpecies->maximum_charge_state = thisSpecies->atomic_number;
                     WARNING("For species '" << species_name << " ionization 'from_rate' is used with maximum_charge_state = "<<thisSpecies->maximum_charge_state << " taken from atomic_number");
                 }
+                
+                if (thisSpecies->ionization_model == "from_rate") {
+                    thisSpecies->ionization_rate = PyTools::extract_py("ionization_rate", "Species", ispec);
+                    if( thisSpecies->ionization_rate==Py_None ) {
+                        ERROR("For species '" << species_name << " ionization 'from_rate' requires 'ionization_rate' ");
+                    }
+                    else {
+#ifdef SMILEI_USE_NUMPY
+                        PyTools::setIteration( 0 );
+                        // Test the ionization_rate function with temporary, "fake" particles
+                        std::ostringstream name("");
+                        name << " ionization_rate:";
+                        double * dummy = NULL;
+                        ParticleData test( params.nDim_particle, thisSpecies->ionization_rate, name.str(), dummy );
+#else
+                        ERROR("For species '" << species_name << " ionization 'from_rate' requires Numpy package ");
+#endif
+                    }
+                }
             }
+            
             
         }
 
@@ -629,6 +651,8 @@ public:
         newSpecies->thermalMomentum                          = species->thermalMomentum;
         newSpecies->atomic_number                            = species->atomic_number;
         newSpecies->maximum_charge_state                     = species->maximum_charge_state;
+        newSpecies->ionization_rate                          = species->ionization_rate;
+        if (newSpecies->ionization_rate!=Py_None) Py_INCREF(newSpecies->ionization_rate);
         newSpecies->ionization_model                         = species->ionization_model;
         newSpecies->densityProfileType                       = species->densityProfileType;
         newSpecies->chargeProfile                            = new Profile(species->chargeProfile);
@@ -896,8 +920,7 @@ public:
                     retSpecies[i]->Radiate->new_photons.isMonteCarlo = retSpecies[i]->photon_species->particles->isMonteCarlo;
                     //retSpecies[i]->Radiate->new_photons.initialize(retSpecies[i]->getNbrOfParticles(),
                     //                                               params.nDim_particle );
-                    retSpecies[i]->Radiate->new_photons.initialize(0,
-                                                                  params.nDim_particle );
+                    retSpecies[i]->Radiate->new_photons.initialize(0,params.nDim_particle );
                 }
                 else
                 {

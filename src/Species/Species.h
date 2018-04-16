@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+//#include "PyTools.h"
 
 #include "Particles.h"
 #include "Params.h"
@@ -69,6 +70,9 @@ public:
     
     //! maximum charge state
     unsigned int maximum_charge_state;
+    
+    //! user defined ionization rate profile
+    PyObject* ionization_rate;
     
     //! thermalizing temperature for thermalizing BCs [\f$m_e c^2\f$]
     std::vector<double> thermal_boundary_temperature;

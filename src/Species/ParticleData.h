@@ -18,6 +18,7 @@ public:
         Py_DECREF(ParticleDataClass);
         
         dims[0] = nparticles;
+        start = 0;
     };
     
     // Special constructor for initialization test only
@@ -72,15 +73,19 @@ public:
         dims[0] = nparticles;
     };
     
+    inline void startAt(unsigned int i) {
+        start = i;
+    };
+    
     // Expose a vector to numpy
     inline PyArrayObject* vector2numpy( std::vector<double> &vec ) {
-        return (PyArrayObject*) PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(vec.data()));
+        return (PyArrayObject*) PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(&vec[start]));
     };
     inline PyArrayObject* vector2numpy( std::vector<uint64_t> &vec ) {
-        return (PyArrayObject*) PyArray_SimpleNewFromData(1, dims, NPY_UINT64, (uint64_t*)(vec.data()));
+        return (PyArrayObject*) PyArray_SimpleNewFromData(1, dims, NPY_UINT64, (uint64_t*)(&vec[start]));
     };
     inline PyArrayObject* vector2numpy( std::vector<short> &vec ) {
-        return (PyArrayObject*) PyArray_SimpleNewFromData(1, dims, NPY_SHORT, (short*)(vec.data()));
+        return (PyArrayObject*) PyArray_SimpleNewFromData(1, dims, NPY_SHORT, (short*)(&vec[start]));
     };
     
     // Add a C++ vector as an attribute, but exposed as a numpy array
@@ -123,6 +128,7 @@ private:
     PyObject* particles;
     std::vector<PyArrayObject*> attrs;
     npy_intp dims[1];
+    unsigned int start; // particles are read starting at that index
     
     void checkType( PyObject *obj, std::string &errorPrefix, bool * dummy) {
         if( !PyArray_ISBOOL((PyArrayObject *)obj) )

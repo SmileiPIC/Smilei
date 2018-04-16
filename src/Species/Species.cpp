@@ -202,6 +202,7 @@ Species::~Species()
         delete velocityProfile[i];
     for (unsigned int i=0; i<temperatureProfile.size(); i++)
         delete temperatureProfile[i];
+    if (ionization_rate!=Py_None) Py_DECREF(ionization_rate);
 
     DEBUG("Species deleted");
 }

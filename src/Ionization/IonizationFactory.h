@@ -3,6 +3,7 @@
 
 #include "Ionization.h"
 #include "IonizationTunnel.h"
+#include "IonizationFromRate.h"
 
 #include "Params.h"
 
@@ -32,7 +33,7 @@ public:
             if( species->particles->is_test )
                 ERROR( "Cannot ionize test species " << species->name );
                 
-            Ionize = new IonizationTunnel( params, species );
+            Ionize = new IonizationFromRate( params, species );
             
         } else if ( model != "none" ) {
             WARNING( "For species " << species->name << ": unknown ionization model `" << model << "` ... assuming no ionization");
