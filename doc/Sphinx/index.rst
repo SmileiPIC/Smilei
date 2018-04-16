@@ -89,6 +89,7 @@ interaction to astrophysics.
    namelist
    run
    post-processing
+   contribute
 
    material
    partners
