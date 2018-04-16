@@ -66,12 +66,12 @@ Checkpoints(
 list_fields = ['Ex','Ey','Rho','Jx','Env_A_abs']
 
 DiagFields(
-    every = 200,
+    every = 400,
         fields = list_fields
 )
 
 DiagProbe(
-        every = 10,
+        every = 200,
         origin = [0., Main.grid_length[1]/2., Main.grid_length[2]/2.],
         corners = [
             [Main.grid_length[0], Main.grid_length[1]/2., Main.grid_length[2]/2.]
