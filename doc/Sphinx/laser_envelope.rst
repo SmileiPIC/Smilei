@@ -20,9 +20,10 @@ In the following, the equations of the envelope model are presented, following m
 The envelope approximation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The use of envelope models to describe a laser pulse is well known in PIC codes [Mora1997]_, [Gordon2000]_, [Huang2006]_, [Cowan2011]_, [Benedetti2012]_. The basic blocks to build a PIC code using an envelope description for the laser are an envelope equation, to describe the evolution of the laser, and equations of motion for the macroparticles, to take into account their interactions with the laser.
+The use of envelope models to describe a laser pulse is well known in PIC codes [Mora1997]_, [Quesnel1998]_, [Gordon2000]_, [Huang2006]_, [Cowan2011]_, [Benedetti2012]_. The basic blocks of a PIC code using an envelope description for the laser are an envelope equation, to describe the evolution of the laser, and equations of motion for the macroparticles, to take into account their interactions with the laser. 
+The effect of the plasma on laser propagation is taken into account in the envelope equation through the plasma susceptibility, as described in the following section.
 The various PIC codes using an envelope model for the laser solve different versions of the envelope equation, depending mostly on which terms are retained and which ones are neglected, or the set of coordinates used to derive the envelope equation. Also the numerical schemes used to solve the envelope equation and the equations of motion of the particles vary accordingly.
-In :program:`Smilei`, the version of the envelope model first demonstrated in the PIC code :program:`ALaDyn` [Benedetti2008]_, [ALaDynZenodo]_ is implemented, including the same numerical schemes.
+In :program:`Smilei`, the version of the envelope model written in laboratory frame coordinates, first demonstrated in the PIC code :program:`ALaDyn` [Benedetti2008]_, [ALaDynZenodo]_, is implemented, including the same numerical schemes.
 
 The basic assumption of the model is the description of the laser pulse vector potential in the complex polarization direction :math:`\hat{A}(\mathbf{x},t)` as a slowly varying envelope :math:`\tilde{A}(\mathbf{x},t)` modulated by fast oscillations at wavelength :math:`\lambda_0`, moving at the speed of light :math:`c`:
 
@@ -37,7 +38,7 @@ where :math:`k_0=2\pi/\lambda_0`. As the laser is the source term of the phenome
 
   A=\bar{A} + \hat{A}
 
-In the envelope model context, "slowly varying" means that the variations of :math:`\bar{A}` and :math:`\tilde{A}` are small enough to be treated perturbatively with respect to the ratio :math:`\lambda_0/\lambda_p`, as described in detail in REFERENCE. Equivalently, the slowly varying quantity :math:`\bar{A}` can be seen as the average of :math:`A` over an optic cycle.
+In the envelope model context, "slowly varying" means that the variations of :math:`\bar{A}` and :math:`\tilde{A}` are small enough to be treated perturbatively with respect to the ratio :math:`\lambda_0/\lambda_p`, as described in detail in [Cowan2011]_. Equivalently, the slowly varying quantity :math:`\bar{A}` can be seen as the average of :math:`A` over the time scale of a laser oscillation period [Cowan2011]_.
 
 
 ----
@@ -46,7 +47,7 @@ In the envelope model context, "slowly varying" means that the variations of :ma
 The envelope equation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The evolution of the laser pulse is described by d'Alembert's equation
+The evolution of the laser pulse is described by d'Alembert's equation, which in normalized units reads:
 
 .. math::
   :label: dalembert
@@ -60,33 +61,45 @@ where :math:`\hat{J}` is the fast oscillating part of the current density in the
 
   \nabla^2 \tilde{A}+2i\left(\partial_x \tilde{A} + \partial_t \tilde{A}\right)-\partial^2_t\tilde{A}=\chi \tilde{A},
 
-describing the evolution of the laser pulse only in terms of the laser envelope :math:`\tilde{A}`. The function :math:`\chi` represents the plasma susceptibility, which is computed similarly to the charge density (see :doc:`algorithms`) as
+which describes the evolution of the laser pulse only in terms of the laser envelope :math:`\tilde{A}`. The function :math:`\chi` represents the plasma susceptibility, which is computed similarly to the charge density (see :doc:`algorithms`) as
 
 .. math::
   :label: susceptibility
 
-  \chi(\mathbf{x}) = \sum_s\,\frac{q^2_s}{m_s}\,\sum_p\,\frac{w_p}{\bar{\gamma}_p}\,S\big(\mathbf{x}-\mathbf{x}_p\big)\,
+  \chi(\mathbf{x}) = \sum_s\,\frac{q^2_s}{m_s}\,\sum_p\,\frac{w_p}{\bar{\gamma}_p}\,S\big(\mathbf{x}-\mathbf{\bar{x}}_p\big)\,
 
 where :math:`\bar{\gamma}_p` is the averaged Lorentz factor of the particle :math:`p`. This averaged quantity is computed from the averaged particle momentum :math:`\mathbf{\bar{u}}_p=\mathbf{\bar{p}}_p/m_s` and the envelope :math:`\tilde{A}`:
 
 .. math::
   :label: gamma_ponderomotive
 
-  \bar{\gamma}_p = \sqrt{1+\mathbf{\bar{u}}^2_p+\frac{|\tilde{A}(\mathbf{x}_p)|^2}{2}}.
+  \bar{\gamma}_p = \sqrt{1+\mathbf{\bar{u}}^2_p+\frac{|\tilde{A}(\mathbf{\bar{x}}_p)|^2}{2}}.
+
+The term at the right hand side of Eq. :eq:`envelope`, where the plasma susceptibility :math:`\chi` appears, allows to describe phenomena where the plasma alters the propagation of the laser pulse, as relativistic self-focusing.
+
+Note that if in Eq. :eq:`envelope` the temporal variation of the envelope :math:`\tilde{A}` is neglected, and :math:`\partial^2_x \tilde{A} \ll 2i\partial_x \tilde{A}` is assumed, the well-known paraxial wave equation is retrieved in vacuum (:math:`\chi=0`):
+
+.. math::
+  :label: paraxial_wave_equation
+
+  \nabla_{\perp}^2 \tilde{A}+2i\partial_x \tilde{A}=0. 
+
+In :program:`Smilei`, none of these assumptions are made and the full version of Eq. :eq:`envelope` is solved.
 
 ----
 
 The ponderomotive equations of motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The process of averaging over an optical cycle yields a simple result for the particles equations of motion. The averaged position :math:`\mathbf{\bar{x}}_p` and momenta :math:`\mathbf{\bar{u}}_p` of the particle :math:`p` are related to the averaged electromagnetic fields :math:`\mathbf{\bar{E}}_p=\mathbf{\bar{E}}(\mathbf{\bar{x}}_p)`, :math:`\mathbf{\bar{B}}_p=\mathbf{\bar{B}}(\mathbf{\bar{x}}_p)` through the usual equations of motion, with the addiction of a ponderomotive force term, which models the interaction with the laser:
+The process of averaging over the time scale of a laser oscillation period yields a simple result for the particles equations of motion. 
+The averaged position :math:`\mathbf{\bar{x}}_p` and momenta :math:`\mathbf{\bar{u}}_p` of the particle :math:`p` are related to the averaged electromagnetic fields :math:`\mathbf{\bar{E}}_p=\mathbf{\bar{E}}(\mathbf{\bar{x}}_p)`, :math:`\mathbf{\bar{B}}_p=\mathbf{\bar{B}}(\mathbf{\bar{x}}_p)` through the usual equations of motion, with the addiction of a ponderomotive force term which models the interaction with the laser:
 
 .. math::
   :label: ponderomotive_equations_of_motion
  
   \begin{eqnarray}
   \frac{d\mathbf{\bar{x}}_p}{dt} &=& \frac{\mathbf{\bar{u}_p}}{\bar{\gamma}_p}\,\\
-  \frac{d\mathbf{\bar{u}}_p}{dt} &=& r_s \, \left( \mathbf{\bar{E}}_p + \frac{\mathbf{\bar{u}}_p}{\bar{\gamma}_p} \times \mathbf{\bar{B}}_p \right)-r^2_s\thinspace\frac{1}{4\bar{\gamma}_p}\nabla\left(|\tilde{A}(\mathbf{x}_p)|^2\right),
+  \frac{d\mathbf{\bar{u}}_p}{dt} &=& r_s \, \left( \mathbf{\bar{E}}_p + \frac{\mathbf{\bar{u}}_p}{\bar{\gamma}_p} \times \mathbf{\bar{B}}_p \right)-r^2_s\thinspace\frac{1}{4\bar{\gamma}_p}\nabla\left(|\tilde{A}_p|^2\right),
   \end{eqnarray}
 
 where :math:`r_s = q_s/m_s` is the charge-over-mass ratio (for species :math:`s`). The presence of the ponderomotive force :math:`\mathbf{F}_{pond}=-r^2_s\thinspace\frac{1}{4\bar{\gamma}_p}\nabla\left(|\tilde{A}|^2\right)` and of the ponderomotive potential :math:`\Phi_{pond}=\frac{|\tilde{A}|^2}{2}` in the envelope and particle equations is the reason why the envelope model is also called ponderomotive guiding center model [Gordon2000]_. 
@@ -109,7 +122,7 @@ In the envelope model, Maxwell's equations remain unaltered, except for the fact
   \nabla \times \mathbf{\bar{E}} &=& -\partial_t \mathbf{\bar{B}} \,.
   \end{eqnarray}
 
-Note that the averaged electromagnetic fields do not include the laser fields.
+Note that the averaged electromagnetic fields do not include the laser fields. Thus, also in the diagnostics of :program:`Smilei`, the fields will include only the averaged fields.
 
 ----
 
@@ -139,13 +152,13 @@ The electromagnetic fields and ponderomotive potential interpolation at the part
 .. math::
 
   \begin{eqnarray}
-  \mathbf{E}_p^{(n)} = V_c^{-1} \int d\mathbf{x}\, S\left(\mathbf{x}-\mathbf{x}_p^{(n)}\right) \mathbf{E}^{(n)}(\mathbf{x})\,,\\
-  \mathbf{B}_p^{(n)} = V_c^{-1} \int d\mathbf{x}\, S\left(\mathbf{x}-\mathbf{x}_p^{(n)}\right) \mathbf{B}^{(n)}(\mathbf{x})\,,\\
-  \mathbf{\Phi}_p^{(n)} = V_c^{-1} \int d\mathbf{x}\, S\left(\mathbf{x}-\mathbf{x}_p^{(n)}\right) \mathbf{\Phi}^{(n)}(\mathbf{x})\,,
+  \mathbf{\bar{E}}_p^{(n)} = V_c^{-1} \int d\mathbf{x}\, S\left(\mathbf{x}-\mathbf{\bar{x}}_p^{(n)}\right) \mathbf{\bar{E}}^{(n)}(\mathbf{x})\,,\\
+  \mathbf{\bar{B}}_p^{(n)} = V_c^{-1} \int d\mathbf{x}\, S\left(\mathbf{x}-\mathbf{\bar{x}}_p^{(n)}\right) \mathbf{\bar{B}}^{(n)}(\mathbf{x})\,,\\
+  \mathbf{\Phi}_p^{(n)} = V_c^{-1} \int d\mathbf{x}\, S\left(\mathbf{x}-\mathbf{\bar{x}}_p^{(n)}\right) \mathbf{\Phi}^{(n)}(\mathbf{x})\,,
   \end{eqnarray}
 
 where we have used the time-centered magnetic fields
-:math:`\mathbf{B}^{(n)}=\tfrac{1}{2}[\mathbf{B}^{(n+1/2) } + \mathbf{B}^{(n-1/2)}]`,
+:math:`\mathbf{\bar{B}}^{(n)}=\tfrac{1}{2}[\mathbf{\bar{B}}^{(n+1/2) } + \mathbf{\bar{B}}^{(n-1/2)}]`,
 and :math:`V_c` denotes the volume of a cell.
 
 Susceptibility deposition
@@ -174,11 +187,6 @@ The updated ponderomotive Lorentz factor :math:`\bar{\gamma}_p^{(n+1/2)}` can be
   \mathbf{\bar{x}}_p^{n+1}=\mathbf{\bar{x}}_p^{n} + \Delta t \, \frac{\mathbf{\bar{p}}_p^{n+\tfrac{1}{2}}}{m_s\bar{\gamma}_p^{(n+1/2)}},
 
  
-
-
-
-
-
 Current deposition
 """"""""""""""""""
 The averaged charge deposition (i.e. charge and current density projection onto the grid) is then
@@ -202,7 +210,9 @@ fields can be advanced solving Maxwell's equations :eq:`Maxwell_envelope`. Their
 References
 ^^^^^^^^^^
 
-.. [Mora1997] `Patrick Mora and Jr. Thomas M. Antonsen, Physics of Plasmas 4, 217–229 (1997) <https://doi.org/10.1063/1.872134>`_
+.. [Mora1997] `P. Mora and T. M. Antonsen Jr, Physics of Plasmas 4, 217 (1997) <https://doi.org/10.1063/1.872134>`_
+
+.. [Quesnel1998] `B. Quesnel and P. Mora, Physics Review E 58, 3719 (1998) <https://doi.org/10.1103/PhysRevE.58.3719>`_
 
 .. [Gordon2000] `D. F. Gordon et al.,IEEE Transactions on Plasma Science 28, 4 (2000) <http://dx.doi.org/10.1109/27.893300>`_
 

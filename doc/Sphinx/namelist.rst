@@ -214,6 +214,13 @@ The block ``Main`` is **mandatory** and has the following syntax::
   | **Syntax 1:** ``[[1,0,0]]``, identical for all boundaries.
   | **Syntax 2:** ``[[1,0,0],[-1,0,0], ...]``,  different on each boundary.
 
+.. py:data:: Envelope_boundary_conditions
+
+  :type: list of lists of strings
+  :default: ``[["reflective"]]``
+
+  For the moment, only reflective boundary conditions are implemented in case the laser is modeled through an envelope model.
+
 .. py:data:: time_fields_frozen
 
   :default: 0.
