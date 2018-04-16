@@ -186,6 +186,23 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   Maximum error for the Poisson solver.
 
+.. py:data:: solve_relativistic_poisson
+
+   :default: True
+
+   Decides if relativistic Poisson problem must be solved for at least one species
+
+.. py:data:: relativistic_poisson_max_iteration
+
+  :default: 50000
+
+  Maximum number of iteration for the Poisson solver.
+
+.. py:data:: relativistic_poisson_max_error
+
+  :default: 1e-22
+
+  Maximum error for the Poisson solver.
 
 .. py:data:: EM_boundary_conditions
 
@@ -218,7 +235,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   :default: 0.
 
-  Time, at the beginning of the simulation, during which fields are frozen.
+  Time, at the beginning of the simulation, during which fields are frozen. 
 
 
 .. _reference_angular_frequency_SI:
@@ -434,6 +451,9 @@ Each species has to be defined in a ``Species`` block::
       radiation_photon_species = "photon",
       radiation_photon_sampling = 1,
       radiation_photon_gamma_threshold = 2,
+
+      # Relativistic field initialization:
+      relativistic_field_initialization = "False",
 
       # For photon species only:
       multiphoton_Breit_Wheeler = ["electron","positron"],
@@ -655,6 +675,16 @@ Each species has to be defined in a ``Species`` block::
 
   This parameter cannot be assigned to photons (mass = 0).
 
+.. py:data:: relativistic_field_initialization
+
+  :default: ``False``
+  
+  Flag for relativistic particles. If ``True``, the electromagnetic fields of this species will added to the electromagnetic fields already present in the simulation.
+  This operation will be performed when time equals :py:data:`time_frozen`. See :doc:`relativistic_fields_initialization` for details on the computation of the electromagentic fields of a relativistic species.
+  To have physically meaningful results, we recommend to place a species which requires this method of field initialization far from other species, otherwise the latter could experience instantly turned-on unphysical forces by the relativistic species' fields.   
+
+    
+
 .. py:data:: multiphoton_Breit_Wheeler
 
   :default: ``[None,None]``
@@ -757,7 +787,37 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
     The variation of the laser frequency over time, such that
     :math:`\omega(t)=\mathtt{omega}\times\mathtt{chirp\_profile}(t)`.
-
+    
+  .. warning::
+  
+    This definition of the chirp profile is not standard.
+    Indeed, :math:`\omega(t)` as defined here **is not** the instantaneous frequency, :math:`\omega_{\rm inst}(t)`,
+    which is obtained from the time derivative of the phase :math:`\omega(t) t`.
+    
+    Should one define the chirp as :math:`C(t) = \omega_{\rm inst}(t)/\omega` (with :math:`\omega` defined by the input
+    parameter :math:`\mathtt{omega}`), the user can easily obtain the corresponding chirp profile as defined in 
+    :program:`Smilei` as:
+    
+    .. math:: 
+    
+        \mathtt{chirp\_profile}(t) = \frac{1}{t} \int_0^t dt' C(t')\,.
+        
+    Let us give as an example the case of a *linear chirp*, with the instantaneous frequency 
+    :math:`\omega_{\rm inst}(t) = \omega [1+\alpha\,\omega(t-t_0)]`.
+    :math:`C(t) = 1+\alpha\,\omega(t-t_0)`. The corresponding input chirp profile reads:
+    
+    .. math:: 
+    
+        \mathtt{chirp\_profile}(t) = 1 - \alpha\, \omega t_0 + \frac{\alpha}{2} \omega t
+        
+    Similarly, for a *geometric (exponential) chirp* such that :math:`\omega_{\rm inst}(t) = \omega\, \alpha^{\omega t}`,
+    :math:`C(t) = \alpha^{\omega t}`, and the corresponding input chirp profile reads:
+    
+    .. math:: 
+    
+        \mathtt{chirp\_profile}(t) = \frac{\alpha^{\omega t} - 1}{\omega t \, \ln \alpha}\,.
+    
+        
   .. py:data:: time_envelope
 
     :type: a *python* function or a :ref:`time profile <profiles>`

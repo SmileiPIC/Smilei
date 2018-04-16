@@ -33,6 +33,8 @@ public :
 
     static void exchange_along_all_directions         ( std::vector<Field*> fields, VectorPatch& vecPatches );
     static void finalize_exchange_along_all_directions( std::vector<Field*> fields, VectorPatch& vecPatches );
+    static void exchange_along_all_directions_noomp         ( std::vector<Field*> fields, VectorPatch& vecPatches );
+    static void finalize_exchange_along_all_directions_noomp( std::vector<Field*> fields, VectorPatch& vecPatches );
     static void exchange_synchronized_per_direction   ( std::vector<Field*> fields, VectorPatch& vecPatches );
 
     static void exchange_all_components_along_X          ( std::vector<Field*>& fields, VectorPatch& vecPatches );

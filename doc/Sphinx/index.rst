@@ -84,11 +84,13 @@ interaction to astrophysics.
    field_ionization
    radiation_loss
    multiphoton_Breit_Wheeler
+   relativistic_fields_initialization
 
    installation
    namelist
    run
    post-processing
+   contribute
 
    material
    partners

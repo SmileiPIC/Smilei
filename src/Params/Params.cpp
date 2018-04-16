@@ -327,6 +327,8 @@ namelist("")
             ERROR("EM_boundary_conditions_k must have a non zero normal component along dimension "<<"-+"[iDim%2]<<"012"[iDim/2] );
         
     }
+    save_magnectic_fields_for_SM = true;
+    PyTools::extract("save_magnectic_fields_for_SM", save_magnectic_fields_for_SM, "Main");
 
     // -----------------------------------
     // MAXWELL SOLVERS & FILTERING OPTIONS
@@ -339,6 +341,10 @@ namelist("")
     PyTools::extract("solve_poisson", solve_poisson, "Main");
     PyTools::extract("poisson_max_iteration", poisson_max_iteration, "Main");
     PyTools::extract("poisson_max_error", poisson_max_error, "Main");
+    // Relativistic Poisson Solver
+    PyTools::extract("solve_relativistic_poisson", solve_relativistic_poisson, "Main");
+    PyTools::extract("relativistic_poisson_max_iteration", relativistic_poisson_max_iteration, "Main");
+    PyTools::extract("relativistic_poisson_max_error", relativistic_poisson_max_error, "Main");
 
     // PXR parameters
     PyTools::extract("is_spectral", is_spectral, "Main");
@@ -447,6 +453,8 @@ namelist("")
             if( (number_of_patches[iDim] & (number_of_patches[iDim]-1)) != 0)
                 ERROR("Number of patches in each direction must be a power of 2");
     }
+    else
+        PyTools::extract("patch_orientation", patch_orientation, "Main");
 
 
     if( PyTools::nComponents("LoadBalancing")>0 ) {

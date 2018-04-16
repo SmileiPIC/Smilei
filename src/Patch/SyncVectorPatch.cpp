@@ -755,6 +755,91 @@ void SyncVectorPatch::finalize_exchange_along_all_directions( std::vector<Field*
 
 }
 
+// fields : contains a single field component (X, Y or Z) for all patches of vecPatches
+// timers and itime were here introduced for debugging
+void SyncVectorPatch::exchange_along_all_directions_noomp( std::vector<Field*> fields, VectorPatch& vecPatches )
+{
+    for ( unsigned int iDim=0 ; iDim<fields[0]->dims_.size() ; iDim++ ) {
+        for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
+            vecPatches(ipatch)->initExchange( fields[ipatch], iDim );
+    } // End for iDim
+
+
+    unsigned int nx_, ny_(1), nz_(1), h0, oversize[3], n_space[3], gsp[3];
+    double *pt1,*pt2;
+    h0 = vecPatches(0)->hindex;
+
+    oversize[0] = vecPatches(0)->EMfields->oversize[0];
+    oversize[1] = vecPatches(0)->EMfields->oversize[1];
+    oversize[2] = vecPatches(0)->EMfields->oversize[2];
+
+    n_space[0] = vecPatches(0)->EMfields->n_space[0];
+    n_space[1] = vecPatches(0)->EMfields->n_space[1];
+    n_space[2] = vecPatches(0)->EMfields->n_space[2];
+
+    nx_ = fields[0]->dims_[0];
+    if (fields[0]->dims_.size()>1) {
+        ny_ = fields[0]->dims_[1];
+        if (fields[0]->dims_.size()>2)
+            nz_ = fields[0]->dims_[2];
+    }
+
+
+    gsp[0] = ( oversize[0] + 1 + fields[0]->isDual_[0] ); //Ghost size primal
+
+    for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++) {
+
+        if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[0][0]){
+            pt1 = &(*fields[vecPatches(ipatch)->neighbor_[0][0]-h0])((n_space[0])*ny_*nz_);
+            pt2 = &(*fields[ipatch])(0);
+            memcpy( pt2, pt1, oversize[0]*ny_*nz_*sizeof(double));
+            memcpy( pt1+gsp[0]*ny_*nz_, pt2+gsp[0]*ny_*nz_, oversize[0]*ny_*nz_*sizeof(double));
+        } // End if ( MPI_me_ == MPI_neighbor_[0][0] )
+
+        if (fields[0]->dims_.size()>1) {
+            gsp[1] = ( oversize[1] + 1 + fields[0]->isDual_[1] ); //Ghost size primal
+            if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[1][0]){
+                pt1 = &(*fields[vecPatches(ipatch)->neighbor_[1][0]-h0])(n_space[1]*nz_);
+                pt2 = &(*fields[ipatch])(0);
+                for (unsigned int i = 0 ; i < nx_*ny_*nz_ ; i += ny_*nz_){
+                    for (unsigned int j = 0 ; j < oversize[1]*nz_ ; j++ ){
+                        // Rewrite with memcpy ?
+                        pt2[i+j] = pt1[i+j] ;
+                        pt1[i+j+gsp[1]*nz_] = pt2[i+j+gsp[1]*nz_] ;
+                    }
+                }
+            } // End if ( MPI_me_ == MPI_neighbor_[1][0] )
+
+            if (fields[0]->dims_.size()>2) {
+                gsp[2] = ( oversize[2] + 1 + fields[0]->isDual_[2] ); //Ghost size primal
+                if (vecPatches(ipatch)->MPI_me_ == vecPatches(ipatch)->MPI_neighbor_[2][0]){
+                    pt1 = &(*fields[vecPatches(ipatch)->neighbor_[2][0]-h0])(n_space[2]);
+                    pt2 = &(*fields[ipatch])(0);
+                    for (unsigned int i = 0 ; i < nx_*ny_*nz_ ; i += ny_*nz_){
+                        for (unsigned int j = 0 ; j < ny_*nz_ ; j += nz_){
+                            for (unsigned int k = 0 ; k < oversize[2] ; k++ ){
+                                pt2[i+j+k] = pt1[i+j+k] ;
+                                pt1[i+j+k+gsp[2]] = pt2[i+j+k+gsp[2]] ;
+                            }
+                        }
+                    }
+                }// End if ( MPI_me_ == MPI_neighbor_[2][0] )
+            }// End if dims_.size()>2
+        } // End if dims_.size()>1
+    } // End for( ipatch )
+
+}
+
+// MPI_Wait for all communications initialised in exchange_along_all_directions
+void SyncVectorPatch::finalize_exchange_along_all_directions_noomp( std::vector<Field*> fields, VectorPatch& vecPatches )
+{
+    for ( unsigned int iDim=0 ; iDim<fields[0]->dims_.size() ; iDim++ ) {
+        for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
+            vecPatches(ipatch)->finalizeExchange( fields[ipatch], iDim );
+    } // End for iDim
+
+}
+
 
 //Proceed to the synchronization of field including corner ghost cells.
 //This is done by exchanging one dimension at a time
