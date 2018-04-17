@@ -33,30 +33,26 @@ void IonizationFromRate::operator() (Particles* particles, unsigned int ipart_mi
     if( ipart_min >= ipart_max ) return;
     
 #ifdef SMILEI_USE_NUMPY
-    
-    // Set a python variable "Main.iteration" to itime so that it can be accessed in the filter
-    #pragma omp critical
-    PyTools::setIteration( itime );
-    
     // Run python to evaluate the ionization rate for each particle
     PyArrayObject *ret;
     unsigned int npart = ipart_max - ipart_min;
-    ParticleData particleData(npart);
-    particleData.startAt( ipart_min );
-    //Particles * p = particles;
-    particleData.set( particles );
     #pragma omp critical
-    ret = (PyArrayObject*)PyObject_CallFunctionObjArgs(ionization_rate, particleData.get(), NULL);
-    PyTools::checkPyError();
-    if( ret == NULL )
-        ERROR("ionization_rate profile has not provided a correct result");
-    // Loop the return value and store the particle IDs 
-    double* arr = (double*) PyArray_GETPTR1( ret, 0 );
-
-    rate.resize(npart);
-    for(unsigned int i=0; i<npart; i++)
-        rate[i] = arr[i];
-    Py_DECREF(ret);
+    {
+        ParticleData particleData(npart);
+        particleData.startAt( ipart_min );
+        PyTools::setIteration( itime );
+        particleData.set( particles );
+        ret = (PyArrayObject*)PyObject_CallFunctionObjArgs(ionization_rate, particleData.get(), NULL);
+        PyTools::checkPyError();
+        if( ret == NULL )
+            ERROR("ionization_rate profile has not provided a correct result");
+        double* arr = (double*) PyArray_GETPTR1( ret, 0 );
+        rate.resize(npart);
+        // Loop the return value and store
+        for(unsigned int i=0; i<npart; i++)
+            rate[i] = arr[i];
+        Py_DECREF(ret);
+    }
 #endif
 
     
