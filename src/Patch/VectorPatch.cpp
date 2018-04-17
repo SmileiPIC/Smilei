@@ -138,20 +138,20 @@ void VectorPatch::dynamics(Params& params,
                 // Dynamics with scalar operators
                 else
                 {
-                    /*species(ipatch, ispec)->Species::dynamics(time_dual, ispec,
+                    species(ipatch, ispec)->Species::dynamics(time_dual, ispec,
                                                      emfields(ipatch),
                                                      params, diag_flag, partwalls(ipatch),
                                                      (*this)(ipatch), smpi,
                                                      RadiationTables,
                                                      MultiphotonBreitWheelerTables,
-                                                     localDiags);*/
-                    species(ipatch, ispec)->scalar_dynamics(time_dual, ispec,
+                                                     localDiags);
+                    /*species(ipatch, ispec)->scalar_dynamics(time_dual, ispec,
                                                   emfields(ipatch),
                                                   params, diag_flag, partwalls(ipatch),
                                                   (*this)(ipatch), smpi,
                                                   RadiationTables,
                                                   MultiphotonBreitWheelerTables,
-                                                  localDiags);
+                                                  localDiags);*/
                 }
             }
         }

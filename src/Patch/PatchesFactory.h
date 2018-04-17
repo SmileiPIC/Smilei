@@ -75,7 +75,17 @@ public:
         }
 
 #ifdef _VECTO
-        if (params.vecto) {
+        if (params.vecto == "normal") {
+            //Need to sort because particles are not well sorted at creation
+            for (unsigned int ipatch=0 ; ipatch < npatches ; ipatch++){
+                for (unsigned int ispec=0 ; ispec<vecPatches(ipatch)->vecSpecies.size(); ispec++) {
+                    if ( dynamic_cast<SpeciesV*>(vecPatches.patches_[ipatch]->vecSpecies[ispec]) )
+                        dynamic_cast<SpeciesV*>(vecPatches.patches_[ipatch]->vecSpecies[ispec])->compute_part_cell_keys(params);
+                    vecPatches.patches_[ipatch]->vecSpecies[ispec]->sort_part(params);
+                }
+            }
+        }
+        else if (params.vecto == "dynamic") {
             //Need to sort because particles are not well sorted at creation
             for (unsigned int ipatch=0 ; ipatch < npatches ; ipatch++){
                 for (unsigned int ispec=0 ; ispec<vecPatches(ipatch)->vecSpecies.size(); ispec++) {

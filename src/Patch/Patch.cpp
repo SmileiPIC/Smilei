@@ -630,17 +630,17 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
     //La recopie finale doit se faire au traitement de la dernière dimension seulement !!
     if (iDim == ndim-1){
 
-        vecSpecies[ispec]->sort_part(params);
+        //vecSpecies[ispec]->sort_part(params);
 
         // For DynamicV
-        /*if (vecSpecies[ispec]->vectorized_operators)
+        if (vecSpecies[ispec]->vectorized_operators)
         {
             vecSpecies[ispec]->sort_part(params);
         }
         else
         {
             vecSpecies[ispec]->Species::sort_part(params);
-        }*/
+        }
 
     }//End Recv_buffers ==> particles
 

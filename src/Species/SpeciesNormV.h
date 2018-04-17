@@ -1,7 +1,7 @@
 #ifndef SPECIESNORMV_H
 #define SPECIESNORMV_H
 
-#include "SpeciesDynamicV.h"
+#include "SpeciesV.h"
 
 class ElectroMagn;
 class Pusher;
@@ -10,7 +10,7 @@ class Projector;
 class Params;
 
 //! class SpeciesNorm (Species for which the dynamics is governed by the Lorentz force (Boris pusher))
-class SpeciesNormV : public SpeciesDynamicV
+class SpeciesNormV : public SpeciesV
 {
 
 public:

@@ -775,6 +775,7 @@ void SpeciesDynamicV::importParticles( Params& params, Patch* patch, Particles& 
 
 void SpeciesDynamicV::reconfiguration(Params &params, Patch * patch)
 {
+
     unsigned int ncell;
     bool reasign_operators = false;
 
@@ -838,7 +839,7 @@ void SpeciesDynamicV::reconfiguration(Params &params, Patch * patch)
 
         // If we switch from non-vectorized to vectozied,
         // we have to reactivate the cell-sorting algorithm
-        /*if (this->vectorized_operators)
+        if (this->vectorized_operators)
         {
             // We resize the bins
             this->resizeCluster(params);
@@ -854,7 +855,7 @@ void SpeciesDynamicV::reconfiguration(Params &params, Patch * patch)
 
             // We perform the sorting
             this->Species::sort_part(params);
-        }*/
+        }
     }
 
     std::cout << "Vectorized_operators = " << this->vectorized_operators

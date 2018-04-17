@@ -92,8 +92,8 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, double 
 
 
     // Jx, Jy, Jz
-    (*this)(Jx, Jy, Jz, particles, istart, iend, invgf, b_dim, iold, deltaold, ipart_ref);    
-    
+    (*this)(Jx, Jy, Jz, particles, istart, iend, invgf, b_dim, iold, deltaold, ipart_ref);
+
 
     // rho^(p,p,d)
     cell_nparts = (int)iend-(int)istart;
@@ -145,7 +145,7 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, double 
         }
         iloc += b_dim[1]*(b_dim[2]);
     }
-    
+
 } // END Project local current densities at dag timestep.
 
 
@@ -233,86 +233,86 @@ void Projector3D2OrderV::operator() (Field* Jx, Field* Jy, Field* Jz, Particles 
     Field3D* Jx3D  = static_cast<Field3D*>(Jx);
     Field3D* Jy3D  = static_cast<Field3D*>(Jy);
     Field3D* Jz3D  = static_cast<Field3D*>(Jz);
-    
-    
+
+
     //Declaration of local variables
     int ip, id, jp, jd, kp, kd;
     double xpn, xpmxip, xpmxip2, xpmxid, xpmxid2;
     double ypn, ypmyjp, ypmyjp2, ypmyjd, ypmyjd2;
     double zpn, zpmzkp, zpmzkp2, zpmzkd, zpmzkd2;
     double Sxp[3], Sxd[3], Syp[3], Syd[3], Szp[3], Szd[3];
-    
+
     // weighted currents
     double Jx_ion = Jion.x * particles.weight(ipart);
     double Jy_ion = Jion.y * particles.weight(ipart);
     double Jz_ion = Jion.z * particles.weight(ipart);
-    
+
     //Locate particle on the grid
     xpn    = particles.position(0, ipart) * dx_inv_;  // normalized distance to the first node
     ypn    = particles.position(1, ipart) * dy_inv_;  // normalized distance to the first node
     zpn    = particles.position(1, ipart) * dz_inv_;  // normalized distance to the first node
-    
+
     // x-primal index
     ip      = round(xpn);                    // x-index of the central node
     xpmxip  = xpn - (double)ip;              // normalized distance to the nearest grid point
     xpmxip2 = xpmxip*xpmxip;                 // square of the normalized distance to the nearest grid point
-    
+
     // x-dual index
     id      = round(xpn+0.5);                // x-index of the central node
     xpmxid  = xpn - (double)id + 0.5;        // normalized distance to the nearest grid point
     xpmxid2 = xpmxid*xpmxid;                 // square of the normalized distance to the nearest grid point
-    
+
     // y-primal index
     jp      = round(ypn);                    // y-index of the central node
     ypmyjp  = ypn - (double)jp;              // normalized distance to the nearest grid point
     ypmyjp2 = ypmyjp*ypmyjp;                 // square of the normalized distance to the nearest grid point
-    
+
     // y-dual index
     jd      = round(ypn+0.5);                // y-index of the central node
     ypmyjd  = ypn - (double)jd + 0.5;        // normalized distance to the nearest grid point
     ypmyjd2 = ypmyjd*ypmyjd;                 // square of the normalized distance to the nearest grid point
-    
+
     // z-primal index
     kp      = round(zpn);                    // z-index of the central node
     zpmzkp  = zpn - (double)kp;              // normalized distance to the nearest grid point
     zpmzkp2 = zpmzkp*zpmzkp;                 // square of the normalized distance to the nearest grid point
-    
+
     // z-dual index
     kd      = round(zpn+0.5);                // z-index of the central node
     zpmzkd  = zpn - (double)kd + 0.5;        // normalized distance to the nearest grid point
     zpmzkd2 = zpmzkd*zpmzkd;                 // square of the normalized distance to the nearest grid point
-    
+
     Sxp[0] = 0.5 * (xpmxip2-xpmxip+0.25);
     Sxp[1] = (0.75-xpmxip2);
     Sxp[2] = 0.5 * (xpmxip2+xpmxip+0.25);
-    
+
     Sxd[0] = 0.5 * (xpmxid2-xpmxid+0.25);
     Sxd[1] = (0.75-xpmxid2);
     Sxd[2] = 0.5 * (xpmxid2+xpmxid+0.25);
-    
+
     Syp[0] = 0.5 * (ypmyjp2-ypmyjp+0.25);
     Syp[1] = (0.75-ypmyjp2);
     Syp[2] = 0.5 * (ypmyjp2+ypmyjp+0.25);
-    
+
     Syd[0] = 0.5 * (ypmyjd2-ypmyjd+0.25);
     Syd[1] = (0.75-ypmyjd2);
     Syd[2] = 0.5 * (ypmyjd2+ypmyjd+0.25);
-    
+
     Szp[0] = 0.5 * (zpmzkp2-zpmzkp+0.25);
     Szp[1] = (0.75-zpmzkp2);
     Szp[2] = 0.5 * (zpmzkp2+zpmzkp+0.25);
-    
+
     Szd[0] = 0.5 * (zpmzkd2-zpmzkd+0.25);
     Szd[1] = (0.75-zpmzkd2);
     Szd[2] = 0.5 * (zpmzkd2+zpmzkd+0.25);
-    
+
     ip  -= i_domain_begin;
     id  -= i_domain_begin;
     jp  -= j_domain_begin;
     jd  -= j_domain_begin;
     kp  -= k_domain_begin;
     kd  -= k_domain_begin;
-    
+
     for (unsigned int i=0 ; i<3 ; i++) {
         int iploc=ip+i-1;
         int idloc=id+i-1;
@@ -331,7 +331,7 @@ void Projector3D2OrderV::operator() (Field* Jx, Field* Jy, Field* Jz, Particles 
             }//k
         }//j
     }//i
-    
+
 } // END Project global current densities (ionize)
 
 
@@ -377,7 +377,7 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, Particl
         bJx[j] = 0.;
 
     for (int ivect=0 ; ivect < cell_nparts; ivect += vecSize ){
-        
+
         int np_computed(min(cell_nparts-ivect,vecSize));
         int istart0 = (int)istart + ivect;
 
@@ -422,7 +422,7 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, Particl
 
     cell_nparts = (int)iend-(int)istart;
     for (int ivect=0 ; ivect < cell_nparts; ivect += vecSize ){
-        
+
         int np_computed(min(cell_nparts-ivect,vecSize));
         int istart0 = (int)istart + ivect;
 
@@ -434,7 +434,7 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, Particl
 
         #pragma omp simd
         for (int ipart=0 ; ipart<np_computed; ipart++ ){
-            computeJ( ipart, charge_weight, DSy, DSx, DSz, Sx0_buff_vect, Sz0_buff_vect, bJx, dy_ov_dt, 5, 25, 1 );   
+            computeJ( ipart, charge_weight, DSy, DSx, DSz, Sx0_buff_vect, Sz0_buff_vect, bJx, dy_ov_dt, 5, 25, 1 );
         } // END ipart (compute coeffs)
     }
 
@@ -447,7 +447,7 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, Particl
                 int ilocal = ((i)*25+j*5+k)*vecSize;
                 #pragma unroll(8)
                 for (int ipart=0 ; ipart<8; ipart++ ){
-                    tmpJy += bJx [ilocal+ipart];                  
+                    tmpJy += bJx [ilocal+ipart];
                 }
                 Jy[iloc+j*b_dim[2]+k] += tmpJy;
             }
@@ -496,43 +496,50 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, Particl
         }
         iloc += b_dim[1]*(b_dim[2]+1);
     }
-        
-    
+
+
 } // END Project vectorized
 
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Wrapper for projection
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D2OrderV::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int scell, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec, int ipart_ref)
+void Projector3D2OrderV::operator() (ElectroMagn* EMfields,
+                                    Particles &particles,
+                                    SmileiMPI* smpi,
+                                    int istart, int iend,
+                                    int ithread, int scell,
+                                    int clrw, bool diag_flag,
+                                    bool is_spectral,
+                                    std::vector<unsigned int> &b_dim,
+                                    int ispec, int ipart_ref)
 {
     if ( istart == iend ) return; //Don't treat empty cells.
 
     //Independent of cell. Should not be here
-    //{   
+    //{
     std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
     std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
     //}
     int iold[3];
 
-
     iold[0] = scell/(nprimy*nprimz)+oversize[0];
 
     iold[1] = ( (scell%(nprimy*nprimz)) / nprimz )+oversize[1];
     iold[2] = ( (scell%(nprimy*nprimz)) % nprimz )+oversize[2];
-   
-    
+
+
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
-    if (!diag_flag){ 
+    if (!diag_flag){
         if (!is_spectral) {
             double* b_Jx =  &(*EMfields->Jx_ )(0);
             double* b_Jy =  &(*EMfields->Jy_ )(0);
             double* b_Jz =  &(*EMfields->Jz_ )(0);
             (*this)(b_Jx , b_Jy , b_Jz , particles,  istart, iend, invgf, b_dim, iold, &(*delta)[0], ipart_ref);
         }
-        else 
+        else
             ERROR("TO DO with rho");
-        
+
     // Otherwise, the projection may apply to the species-specific arrays
     } else {
         int ibin = 0; // Trick to make it compatible for the moment.

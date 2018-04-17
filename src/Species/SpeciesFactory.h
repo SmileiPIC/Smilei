@@ -94,11 +94,20 @@ public:
                  // Species with nonrelativistic Boris pusher == 'borisnr'
                  // Species with J.L. Vay pusher if == "vay"
                  // Species with Higuary Cary pusher if == "higueracary"
-                if ( !params.vecto )
+                if ( params.vecto == "disable")
+                {
                     thisSpecies = new SpeciesNorm(params, patch);
+                }
+
 #ifdef _VECTO
-                else
+                else if ( params.vecto == "normal")
+                {
                     thisSpecies = new SpeciesNormV(params, patch);
+                }
+                else if (params.vecto == "dynamic")
+                {
+                    thisSpecies = new SpeciesDynamicV(params, patch);
+                }
 #endif
             } else {
                 ERROR("For species `" << species_name << "`, pusher must be 'boris', 'borisnr', 'vay', 'higueracary'");
@@ -172,11 +181,19 @@ public:
         // Photon species
         else if (mass == 0)
         {
-            if ( !params.vecto )
+            if ( params.vecto == "disable" )
+            {
                 thisSpecies = new SpeciesNorm(params, patch);
+            }
 #ifdef _VECTO
-            else
+            else if ( params.vecto == "normal" )
+            {
                 thisSpecies = new SpeciesNormV(params, patch);
+            }
+            else if ( params.vecto == "dynamic" )
+            {
+                thisSpecies = new SpeciesDynamicV(params, patch);
+            }
 #endif
             // Photon can not radiate
             thisSpecies->radiation_model = "none";
@@ -192,13 +209,13 @@ public:
         thisSpecies->speciesNumber = ispec;
 
         // Vectorized operators
-        if (params.vecto)
-        {
-            thisSpecies->vectorized_operators = true;
-        }
-        else
+        if (params.vecto == "disable")
         {
             thisSpecies->vectorized_operators = false;
+        }
+        else if (params.vecto == "normal" || params.vecto == "dynamic")
+        {
+            thisSpecies->vectorized_operators = true;
         }
 
         // Extract various parameters from the namelist
@@ -587,11 +604,13 @@ public:
         Species * newSpecies = NULL;
 
         // Boris, Vay or Higuera-Cary
-        if ( !params.vecto )
+        if ( params.vecto == "disable")
             newSpecies = new SpeciesNorm(params, patch);
 #ifdef _VECTO
-        else
+        else if (params.vecto == "normal")
             newSpecies = new SpeciesNormV(params, patch);
+        else if (params.vecto == "dynamic")
+            newSpecies = new SpeciesDynamicV(params, patch);
 #endif
 
         // Copy members
