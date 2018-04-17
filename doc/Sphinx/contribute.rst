@@ -93,7 +93,7 @@ Usage:
   * Option ``-g``: Generation of references only (no validation)
   * Option ``-s``: Plot differences with references only (no validation)
   * Option ``-c``: Compilation only (no run, no validation)
-  * Option ``-r <nRrestarts>``: Force the simulation to be broken in several restarts.
+  * Option ``-r <nRestarts>``: Force the simulation to be broken in several restarts.
   * Option ``-v``: Verbose
   * Option ``-h``: Help
 
@@ -123,19 +123,19 @@ Examples:
   
     ./validation.py -v -b tst1d_00_em_propagation.py 
   
-  Validates only the benchmark `tst1d_00_em_propagation.py`.
+  Validates only the benchmark ``tst1d_00_em_propagation.py``.
   
   .. code-block:: bash
   
     ./validation.py -v -b tst1d_00_em_propagation.py -g
   
-  Generates the reference file for the benchmark `tst1d_00_em_propagation.py`.
+  Generates the reference file for the benchmark ``tst1d_00_em_propagation.py``.
   
   .. code-block:: bash
   
     ./validation.py -v -b tst1d_00_em_propagation.py -s
   
-  Runs the benchmark `tst1d_00_em_propagation.py`, and plots the differences with the reference file.
+  Runs the benchmark ``tst1d_00_em_propagation.py``, and plots the differences with the reference file.
 
 
 
@@ -180,7 +180,7 @@ The ``validate_*`` script should load the simulation results using whatever mean
 the benchmark the best. In many cases, the :doc:`happi <post-processing>` module is
 employed to extract diagnostics results.
 
-Any *python* instructions may be used to processed the simulation results. Once the data
+Any *python* instructions may be used to process the simulation results. Once the data
 has been crunched into a meaningful value, string, or array, then it must be passed to the
 following predefined function:
 
@@ -190,7 +190,7 @@ following predefined function:
   * ``data``: a float, a *numpy* float array, or any other python data
   * ``epsilon`` (optional): acceptable difference between data and reference
 
-The data passed to this function constitutes the *analysis* that is compared to previous
+The ``data`` passed to this function constitutes the *analysis* that is compared to previous
 reference files. It is the same analysis that is used to generate those reference files
 in the first place.
 

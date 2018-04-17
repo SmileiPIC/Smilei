@@ -188,10 +188,11 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
 .. py:data:: solve_relativistic_poisson
 
-   :default: True
+   :default: False
 
-   Decides if relativistic Poisson problem must be solved for at least one species
-
+   Decides if relativistic Poisson problem must be solved for at least one species.
+   See :doc:`relativistic_fields_initialization` for more details.
+   
 .. py:data:: relativistic_poisson_max_iteration
 
   :default: 50000

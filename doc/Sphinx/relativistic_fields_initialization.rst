@@ -1,7 +1,6 @@
-.. _relativisticfieldsinitializationPage:
-
 Field initialization for relativistic species
 --------------------------------------------------------------------------------
+
 As explained in :doc:`algorithms`, if a net charge is present at the beginning of the simulation, the initial electromagnetic fields are computed.
 For static charge distributions, the solution of Poisson's equation will be necessary to find the initial electrostatic field. 
 If the initial charge has a non-zero initial speed, in general the electric and magnetic field should be computed solving the full set of Maxwell's equations or equivalently the potentials equations.
@@ -13,14 +12,8 @@ In some physical setups of interest, one or more relativistic species are inject
 The relativistic Poisson's equation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-
-From Maxwell's equations it can be shown that, provided that continuity equation holds, i.e.
-
-.. math::
-
-  \partial_t \rho + \nabla \cdot \mathbf{J} = 0,
-
-the quantities :math:`\nabla\cdot\mathbf{B}`, :math:`\nabla\cdot\mathbf{E}-\rho` do not change over time:
+From the continuity equation :math:`\partial_t \rho + \nabla \cdot \mathbf{J} = 0`
+and Maxwell's equations, it can be shown that the quantities :math:`\nabla\cdot\mathbf{B}` and :math:`\nabla\cdot\mathbf{E}-\rho` do not change over time:
 
 .. math::
 
@@ -31,13 +24,13 @@ the quantities :math:`\nabla\cdot\mathbf{B}`, :math:`\nabla\cdot\mathbf{E}-\rho`
 
 Thus, if a simulation starts with :math:`\rho\neq0`, the electromagnetic fields must be properly initialized. 
 
-In the case of an static charge distribution, i.e. :math:`\rho\neq0`, :math:`\mathbf{J}=0`, the initial electrostatic potential :math:`\Phi` can be computed solving Poisson's equation:
+In the case of a static charge distribution, i.e. :math:`\rho\neq0`, :math:`\mathbf{J}=0`, the initial electrostatic potential :math:`\Phi` can be computed solving Poisson's equation:
 
 .. math::
 
   \nabla^2 \Phi = -\rho,
 
-and then be derived to find the initial electric field: :math:`\mathbf{E}=-\nabla\Phi`. The initial magnetic field :math:`\mathbf{B}` will be zero.
+and then be integrated to find the initial electric field: :math:`\mathbf{E}=-\nabla\Phi`. The initial magnetic field :math:`\mathbf{B}` will be zero.
 
 In general when the initial current :math:`\mathbf{J}` is not zero, the full set of fields equations should be solved to correctly initialize the electromagnetic fields. 
 
@@ -92,7 +85,7 @@ Equation :eq:`Poisson` can thus be rewritten as
 
   \left( \frac{1}{\gamma^2_0}\partial^2_x+\nabla_{\perp}^2\right) \Phi = -\rho,
 
-here informally referred to as relativistic Poisson's equation. In :program:`Smilei`, as for Eq. :eq:`Poisson`, the solution of the relativistic Poisson's equation is performed through the conjugate gradient method.
+here informally referred to as the relativistic Poisson's equation. In :program:`Smilei`, as for Eq. :eq:`Poisson`, the solution of the relativistic Poisson's equation is performed through the conjugate gradient method.
 
 Once the potential :math:`\Phi` is found, we can compute all the components of the electromagnetic field, using again the relations :math:`\partial_t=-\beta c\partial_x`, :math:`\Phi'=-\Phi/\gamma_0` and the Lorentz back-transformation of the vector potential :math:`\mathbf{A}`:
 
@@ -114,20 +107,20 @@ From all these relations, the electromagnetic field can be computed as usual, th
 
 or in more compact form: :math:`\mathbf{E}=\left( -\frac{1}{\gamma_0^2}\partial_x \Phi, -\partial_y \Phi,-\partial_z \Phi \right)`, :math:`\mathbf{B}=\frac{\beta_0}{c}\mathbf{\hat{x}}\times\mathbf{E}`. 
   
-From the previous equations, it can be inferred that in 1DCartesian geometry the fields computed through this procedure equal those obtained through the standard Poisson's problem. 
+From the previous equations, it can be inferred that, in a 1D cartesian geometry, the fields computed through this procedure equal those obtained through the standard Poisson's problem. 
 This can also be inferred from the relativistic transformations of fields, which conserve the :math:`x` components of the electromagnetic fields for boosts in the :math:`x` direction. 
 
 ----
 
-Recommendations to use the field initialization for relativistic species
+Recommendations for relativistic species field initialization
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In :program:`Smilei`, each species can independently benefit from this field initialization procedure. Its field will be initialized when the species will start to move, in order not to interfer with the other species' dynamics. 
-The initialized fields will be superimposed to the electromagnetic fields already present in the simulation. To have physically meaningful results, we recommend to place a species which requires this method of field initialization far from other species, otherwise the latter could experience instantly turned-on unphysical forces by the relativistic species’ fields.
+In :program:`Smilei`, each species can independently benefit from this field initialization procedure. Its field will be initialized when the species will start to move, in order not to interfere with the other species' dynamics. 
+The initialized fields will be superimposed to the electromagnetic fields already present in the simulation. To have physically meaningful results, we recommend to place a species which requires this method of field initialization far from other species, otherwise the latter could experience instantaneous unphysical forces by the relativistic species’ fields.
 
 A relativistic mean velocity in the :math:`x` direction and a negligible energy spread are assumed in the hypotheses of this procedure, so the user must ensure these conditions when defining the species requiring field initialization in the namelist. 
-The procedure can be extended to non-monoenergetic species, dividing the species particles in monoenergetic energy bins and then superimposing the fields by each of the monoenergetic bins, computed with the same procedure. 
-For the moment, this energy binning technique is not available in :program:`Smilei`.  
+The procedure could be extended to non-monoenergetic species, dividing the species particles in monoenergetic energy bins and then superimposing the fields by each of the monoenergetic bins, computed with the same procedure. 
+At the moment, this energy binning technique is not available in :program:`Smilei`.  
 
 
 ----

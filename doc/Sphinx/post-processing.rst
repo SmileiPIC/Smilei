@@ -506,6 +506,38 @@ Obtain the data
 
 ----
 
+Export 2D or 3D data to VTK
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. py:method:: Field.toVTK( numberOfPieces=1 )
+               Probe.toVTK( numberOfPieces=1 )
+               ParticleBinning.toVTK( numberOfPieces=1 )
+               Screen.toVTK( numberOfPieces=1 )
+               TrackParticles.toVTK( rendering="trajectory", data_format="xml" )
+
+  Converts the data from a diagnostic object to the vtk format.
+  
+  * ``numberOfPieces``: the number of files into which the data will be split.
+  
+  * ``rendering``: the type of output in the case of :py:meth:`TrackParticles`:
+
+    * ``"trajectory"``: show particle trajectories. One file is generated for all trajectories.
+    * ``"cloud"``: show a cloud of particles. One file is generated for each iteration.
+
+  * ``data_format``: the data formatting in the case of :py:meth:`TrackParticles`,
+    either ``"vtk"`` or ``"xml"``. The format ``"vtk"`` results in ascii.
+
+  **Example for tracked particles**::
+
+    S = happi.Open("path/to/my/results")
+    tracked_particles = S.TrackParticles("electron", axes=["x","y","z","px","py","pz","Id"], timesteps=[1,10])
+    # Create cloud of particles in separate files for each iteration
+    tracked_particles.toVTK(rendering="cloud",data_format="xml");
+    # Create trajectory in a single file
+    tracked_particles.toVTK(rendering="trajectory",data_format="xml");
+
+----
+
 Plot the data at one timestep
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -651,6 +683,7 @@ Simultaneous plotting of multiple diagnostics
 
 Advanced plotting options
 ^^^^^^^^^^^^^^^^^^^^^^^^^
+
 In addition to ``figure``, ``vmin``, ``vmax``, ``xmin``, ``xmax``, ``ymin`` and ``ymax``,
 there are many more optional arguments. They are directly passed to the *matplotlib* package.
 
@@ -714,39 +747,6 @@ Update the plotting options
     A.plot( figure=2 )
     A.set( vmax=2 )
     A.plot()
-
-----
-
-VTK data conversion
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-Happi embeddes a method for certain diagnostic classes that enables to
-convert 3d data into the vtk file format.
-
-.. py:function:: diag.toVTK(**kwargs)
-
-  Convert the data contained in the ``diag`` diagnostic object (prepared
-  by ``Scalar()``, ``Field()``, ``Probe()``, ``trackParticles``, etc.) in the vtk format.
-  The optinal arguments ``**kwargs`` depend on the diag type.
-
-  Keyword-arguments ``kwargs`` are:
-
-  * ``rendering``: only for ``trackParticles`` diagnostics, can be ``trajectory`` or ``cloud``:
-
-    * ``trajectory``: the vtk file is adapted to show particle trajectories. A file is generated for all trajectories.
-    * ``cloud``: the vtk file is adapted to show cloud of particles. A file is generated per iteration.
-
-  * ``data_format``: only for ``trackParticles`` diagnostics, enables to specify the output data format: ``vtk`` or ``xml``.
-    If ``vtk`` is specified the resulting file is in ascii.
-
-  **Example for tracked particles**::
-
-    S = happi.Open("path/to/my/results")
-    tracked_particles = S.TrackParticles("electron", axes=["x","y","z","px","py","pz","Id"], timesteps=[1,10])
-    # Create cloud of particles in separate files for each iteration
-    tracked_particles.toVTK(rendering="cloud",data_format="xml");
-    # Create trajectory in a single file
-    tracked_particles.toVTK(rendering="trajectory",data_format="xml");
 
 ----
 

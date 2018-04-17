@@ -732,7 +732,7 @@ class TrackParticles(Diagnostic):
 		return 1
 
 	# Convert data to VTK format
-	def toVTK(self, numberOfPieces=1, rendering="trajectory", data_format="xml"):
+	def toVTK(self, rendering="trajectory", data_format="xml"):
 		"""
 		Export the data to Vtk
 		"""

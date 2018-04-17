@@ -190,6 +190,8 @@ External (divergence-free) electric and/or magnetic fields can then be added to 
 resulting electrostatic fields, provided they fullfill Maxwell's equations :eq:`Maxwell`,
 and in particular Gauss' and Poisson's.
 
+Note that a relativistic plasma needs :doc:`special treatment <relativistic_fields_initialization>`.
+
 ----
 
 The PIC loop
