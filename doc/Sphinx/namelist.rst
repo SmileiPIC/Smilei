@@ -577,8 +577,8 @@ Each species has to be defined in a ``Species`` block::
 
   :default: ``"none"``
 
-  The model for ionization. Currently, only ``"tunnel"`` (corresponding to :ref:`field ionization <TopFieldIonization>`)
-  and ``"from_rate"`` (relying on a :ref:`user-defined ionization rate <TopFromRateIonization>`) are available.
+  The model for ionization. Currently, only ``"tunnel"`` (corresponding to :doc:`field ionization <field_ionization>`)
+  and ``"from_rate"`` (relying on a :doc:`user-defined ionization rate <fromRate_ionization>`) are available.
   In the latter case, the additional parameter ``ionization_rate`` has to be defined.
   Note also that field ionization (``"tunnel"``) requires the definition of the species ``atomic_number`` while
   ionization using a user-defined rate (``"from_rate"``) requires the definition of the species ``maximum_charge_state``.

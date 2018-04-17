@@ -1,5 +1,3 @@
-.. _TopFieldIonization:
-
 Field ionization
 ----------------
 
@@ -132,7 +130,7 @@ implemented in :program:`Smilei`.
 Both benchmarks consist in irradiating a thin (one cell long) neutral material (hydrogen or carbon)
 with a short (few optical-cycle long) laser with wavelength :math:`\lambda_0 = 0.8~{\mu m}`.
 
-.. _FieldIonization:
+.. _FigFieldIonization:
 
 .. figure:: _static/FieldIonization.png
   
@@ -158,7 +156,7 @@ The second benchmark features carbon ions. The laser has a peak intensity
 :math:`I_L = 5 \times 10^{16}~{\rm W/cm^2}`, corresponding to a normalized
 vector potential :math:`a_0 \simeq 1.52 \times 10^{-1}`, and a gaussian time profile
 with FWHM :math:`\tau_L=5~\lambda_0/c` (in terms of
-electric field). :numref:`FieldIonization` (bottom) shows, as function of time,
+electric field). :numref:`FigFieldIonization` (bottom) shows, as function of time,
 the relative distribution of carbon ions for different charge states
 (from 0 to :math:`+4`). These numerical results are shown to be in excellent
 agreement with theoretical predictions obtained by numerically solving the coupled
