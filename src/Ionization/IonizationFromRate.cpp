@@ -43,6 +43,8 @@ void IonizationFromRate::operator() (Particles* particles, unsigned int ipart_mi
     unsigned int npart = ipart_max - ipart_min;
     ParticleData particleData(npart);
     particleData.startAt( ipart_min );
+    //Particles * p = particles;
+    particleData.set( particles );
     #pragma omp critical
     ret = (PyArrayObject*)PyObject_CallFunctionObjArgs(ionization_rate, particleData.get(), NULL);
     PyTools::checkPyError();
@@ -70,7 +72,7 @@ void IonizationFromRate::operator() (Particles* particles, unsigned int ipart_mi
         // k_times will give the nb of ionization events
         k_times = 0;
         double ran_p = Rand::uniform();
-        if ( ran_p < 1.0 - exp(-rate[ipart-ipart_min]) ) {
+        if ( ran_p < 1.0 - exp(-rate[ipart-ipart_min]*dt) ) {
             k_times        = 1;
         }
         
@@ -87,7 +89,7 @@ void IonizationFromRate::operator() (Particles* particles, unsigned int ipart_mi
         // Creation of the new electrons
         // (variable weights are used)
         // -----------------------------
-        if (k_times !=0) {
+        if (k_times!=0) {
             new_electrons.create_particle();
             //new_electrons.initialize( new_electrons.size()+1, new_electrons.dimension() );
             int idNew = new_electrons.size() - 1;
