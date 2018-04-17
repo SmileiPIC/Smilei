@@ -95,31 +95,32 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi, OpenPMDparams& op
                     (*this)(ipatch)->EMfields->rho_s[ifield]=NULL;
                 }
             }
-	    }
+	}
         else{
             ElectroMagn3DRZ* EMfields = static_cast<ElectroMagn3DRZ*>((*this)(ipatch)->EMfields );
             for (unsigned int ifield=0 ; ifield<EMfields->Jl_s.size(); ifield++) {
-	    MESSAGE(EMfields->Jl_s[ifield]->data_);
-                if( EMfields->Jl_s[ifield]->data_ == NULL ){
+                if( EMfields->Jl_s[ifield]->cdata_ == NULL ){
+                    MESSAGE("deleting Jl");
                     delete EMfields->Jl_s[ifield];
                     EMfields->Jl_s[ifield]=NULL;
                 }
              } 
             for (unsigned int ifield=0 ; ifield<EMfields->Jr_s.size(); ifield++) {
-                if( EMfields->Jr_s[ifield]->data_ == NULL ){
+                if( EMfields->Jr_s[ifield]->cdata_ == NULL ){
                     delete EMfields->Jr_s[ifield];
                     EMfields->Jr_s[ifield]=NULL;
                 }
             } 
             for (unsigned int ifield=0 ; ifield<EMfields->Jt_s.size(); ifield++) {
-                if(EMfields->Jt_s[ifield]->data_ == NULL ){
+                if(EMfields->Jt_s[ifield]->cdata_ == NULL ){
                     delete EMfields->Jt_s[ifield];
                     EMfields->Jt_s[ifield]=NULL;
                 }
             } 
 	
             for (unsigned int ifield=0 ; ifield<EMfields->rho_s.size(); ifield++) {
-                if( EMfields->rho_s[ifield]->data_ == NULL ){
+                cField2D * crho_s = static_cast<cField2D*>(EMfields->rho_s[ifield]);
+                if( crho_s->cdata_ == NULL ){
                     delete EMfields->rho_s[ifield];
                     EMfields->rho_s[ifield]=NULL;
                }

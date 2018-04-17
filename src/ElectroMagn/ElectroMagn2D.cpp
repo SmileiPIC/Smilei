@@ -695,9 +695,7 @@ void ElectroMagn2D::computeTotalRhoJ()
     // -----------------------------------
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
         if( Jx_s[ispec] ) {
-	    MESSAGE("ComputeTotalRhoJ before cast: ispec " <<  ispec << " dim0 " <<  Jx_s[ispec]->dims_[0] <<" dim1 " <<  Jx_s[ispec]->dims_[1] << " global = " << Jx_s[ispec]->globalDims_ );
             Field2D* Jx2D_s  = static_cast<Field2D*>(Jx_s[ispec]);
-	    MESSAGE("ComputeTotalRhoJ: ispec " <<  ispec << " dim0 " <<  Jx2D_s->dims_[0] <<" dim1 " <<  Jx2D_s->dims_[1] << " global = " << Jx2D_s->globalDims_ );
             for (unsigned int i=0 ; i<=nx_p ; i++)
                 for (unsigned int j=0 ; j<ny_p ; j++)
                     (*Jx2D)(i,j) += (*Jx2D_s)(i,j);
