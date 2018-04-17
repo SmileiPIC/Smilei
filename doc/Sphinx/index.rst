@@ -82,6 +82,7 @@ interaction to astrophysics.
    parallelization
    collisions
    field_ionization
+   fromRate_ionization
    radiation_loss
    multiphoton_Breit_Wheeler
 

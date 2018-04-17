@@ -410,6 +410,7 @@ Each species has to be defined in a ``Species`` block::
       particles_per_cell = 100,
       mass = 1.,
       atomic_number = None,
+      #maximum_charge_state = None,
       number_density = 10.,
       # charge_density = None,
       charge = -1.,
@@ -425,6 +426,7 @@ Each species has to be defined in a ``Species`` block::
       time_frozen = 0.0,
       # ionization_model = "none",
       # ionization_electrons = None,
+      # ionization_rate = None,
       is_test = False,
       c_part_max = 1.0,
       pusher = "boris",
@@ -498,6 +500,11 @@ Each species has to be defined in a ``Species`` block::
   The atomic number of the particles, required only for ionization.
   It must be lower than 101.
 
+.. py:data:: maximum_charge_state
+
+  :default: 0
+
+  The maximum charge state of a species for which the ionization model is ``"from_rate"``.
 
 .. py:data:: number_density
              charge_density
@@ -570,9 +577,46 @@ Each species has to be defined in a ``Species`` block::
 
   :default: ``"none"``
 
-  The model for field ionization. Currently, only ``"tunnel"`` is available.
+  The model for ionization. Currently, only ``"tunnel"`` (corresponding to :ref:`field ionization <TopFieldIonization>`)
+  and ``"from_rate"`` (relying on a :ref:`user-defined ionization rate <TopFromRateIonization>`) are available.
+  In the latter case, the additional parameter ``ionization_rate`` has to be defined.
+  Note also that field ionization (``"tunnel"``) requires the definition of the species ``atomic_number`` while
+  ionization using a user-defined rate (``"from_rate"``) requires the definition of the species ``maximum_charge_state``.
+  
   See :ref:`this <CollisionalIonization>` for collisional ionization instead.
 
+.. py:data:: ionization_rate
+
+  A python function giving the user-defined ionisation rate.
+  To use this option, the `numpy package <http://www.numpy.org/>`_ must be available in your python installation.
+  The function must have one argument, that you may call, for instance, ``particles``.
+  This object has several attributes ``x``, ``y``, ``z``, ``px``, ``py``, ``pz``, ``charge``, ``weight`` and ``id``. 
+  Each of these attributes are provided as **numpy** arrays where each cell corresponds to one particle.
+
+  The following example defines, for a species with maximum charge state of 2, a constant ionization rate that depends 
+  only on the initial particle charge (``r0`` the ionisation rate from charge state 0 to 1 and 
+  ``r1``  the ionisation rate from charge state 1 to 2):
+
+  .. code-block:: python
+  
+    def my_rate(particles):
+        rate = numpy.empty_like(particles.x)
+        rate[particles.charge==0] = r0
+        rate[particles.charge==1] = r1
+        return rate
+
+  The following example defines an ionization rate [:math:`r(x) = r0*f(x)`] that depends on the x-coordinate 
+  of the particle only:
+
+  .. code-block:: python
+  
+    def f(x):
+        return numpy.exp(-x**2/2.)
+        
+    def my_rate(particles):
+        x = particles.x
+        rate = numpy.full_like(particles.x, r0) * f(x)
+        return rate
 
 .. py:data:: ionization_electrons
 
