@@ -31,6 +31,8 @@ isYmax(patch->isYmax())
     // Charge currents currents and density for each species
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
         Jx_s[ispec]  = new Field2D(Tools::merge("Jx_" ,vecSpecies[ispec]->name).c_str(), dimPrim);
+	MESSAGE("ispec = " << ispec << "Creation jx_s dim1 =" <<  Jx_s[ispec]->dims_[1] << " dim2 = " <<  Jx_s[ispec]->dims_[2] << " global = " << Jx_s[ispec]->globalDims_ );
+        
         Jy_s[ispec]  = new Field2D(Tools::merge("Jy_" ,vecSpecies[ispec]->name).c_str(), dimPrim);
         Jz_s[ispec]  = new Field2D(Tools::merge("Jz_" ,vecSpecies[ispec]->name).c_str(), dimPrim);
         rho_s[ispec] = new Field2D(Tools::merge("Rho_",vecSpecies[ispec]->name).c_str(), dimPrim);
@@ -48,6 +50,7 @@ isYmax(patch->isYmax())
 {
     
     initElectroMagn2DQuantities(params, patch);
+    MESSAGE(" Done init 2D quantities. Now allocating J_s ");
     
     // Charge currents currents and density for each species
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
@@ -684,13 +687,17 @@ void ElectroMagn2D::computeTotalRhoJ()
     Field2D* Jy2D    = static_cast<Field2D*>(Jy_);
     Field2D* Jz2D    = static_cast<Field2D*>(Jz_);
     Field2D* rho2D   = static_cast<Field2D*>(rho_);
+   
     
+ 
     // -----------------------------------
     // Species currents and charge density
     // -----------------------------------
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
         if( Jx_s[ispec] ) {
+	    MESSAGE("ComputeTotalRhoJ before cast: ispec " <<  ispec << " dim0 " <<  Jx_s[ispec]->dims_[0] <<" dim1 " <<  Jx_s[ispec]->dims_[1] << " global = " << Jx_s[ispec]->globalDims_ );
             Field2D* Jx2D_s  = static_cast<Field2D*>(Jx_s[ispec]);
+	    MESSAGE("ComputeTotalRhoJ: ispec " <<  ispec << " dim0 " <<  Jx2D_s->dims_[0] <<" dim1 " <<  Jx2D_s->dims_[1] << " global = " << Jx2D_s->globalDims_ );
             for (unsigned int i=0 ; i<=nx_p ; i++)
                 for (unsigned int j=0 ; j<ny_p ; j++)
                     (*Jx2D)(i,j) += (*Jx2D_s)(i,j);
