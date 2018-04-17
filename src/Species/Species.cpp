@@ -46,6 +46,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 Species::Species(Params& params, Patch* patch) :
 c_part_max(1),
+ionization_rate(Py_None),
 pusher("boris"),
 radiation_model("none"),
 time_frozen(0),
