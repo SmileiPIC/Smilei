@@ -209,7 +209,8 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
     for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
         if ( (*this)(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
             SyncVectorPatch::finalize_and_sort_parts((*this), ispec, params, smpi, timers, itime ); // Included sort_part
-        }
+        MESSAGE("finalize and sort parts");
+	}
     }
 
     #pragma omp for schedule(runtime)
@@ -279,7 +280,7 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
     }
     timers.densities.update();
 
-
+    MESSAGE("lokza");
     timers.syncDens.restart();
     if ( params.geometry != "3drz" ) {
         SyncVectorPatch::sumRhoJ( params, (*this), timers, itime ); // MPI
@@ -287,24 +288,25 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
     else {
         for (unsigned int imode = 0 ; imode < static_cast<ElectroMagn3DRZ*>(patches_[0]->EMfields)->Jl_.size() ; imode++  ) {
             SyncVectorPatch::sumRhoJ( params, (*this), imode, timers, itime );
+    	    MESSAGE("sumRhoJ");
         }
     }
 
     if(diag_flag){
+	MESSAGE("flag");
         for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
             if( ! (*this)(0)->vecSpecies[ispec]->particles->is_test ) {
                 update_field_list(ispec);
                 SyncVectorPatch::sumRhoJs( params, (*this), ispec, timers, itime ); // MPI
             }
         }
-    }
+    } MESSAGE("end flag");
     timers.syncDens.update( params.printNow( itime ) );
-
+MESSAGE("end of sumDen");
 } // End sumDensities
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::sumSusceptibility(Params &params, double time_dual, Timers &timers, int itime, SimWindow* simWindow )
 {

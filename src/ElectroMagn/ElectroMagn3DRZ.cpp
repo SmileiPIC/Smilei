@@ -577,10 +577,10 @@ void ElectroMagn3DRZ::computeTotalRhoJ()
     for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
 
         // static cast of the total currents and densities
-        cField2D* Jl3DRZ    = static_cast<cField2D*>(Jl_[imode]);
-        cField2D* Jr3DRZ    = static_cast<cField2D*>(Jr_[imode]);
-        cField2D* Jt3DRZ    = static_cast<cField2D*>(Jt_[imode]);
-        cField2D* rho3DRZ   = static_cast<cField2D*>(rho_RZ_[imode]);    
+        cField2D* JlRZ    = static_cast<cField2D*>(Jl_[imode]);
+        cField2D* JrRZ    = static_cast<cField2D*>(Jr_[imode]);
+        cField2D* JtRZ    = static_cast<cField2D*>(Jt_[imode]);
+        cField2D* rhoRZ   = static_cast<cField2D*>(rho_RZ_[imode]);    
         MESSAGE("c");
         // -----------------------------------
         // Species currents and charge density
@@ -596,34 +596,34 @@ void ElectroMagn3DRZ::computeTotalRhoJ()
                 cField2D* Jl2D_s  = static_cast<cField2D*>(Jl_s[ifield]);
                 MESSAGE(Jl2D_s->dims_[0]);
 	        MESSAGE(Jl2D_s->dims_[1]);
-		MESSAGE(Jl3DRZ->dims_[0]);
-		MESSAGE(Jl3DRZ->dims_[1]);
+		MESSAGE(JlRZ->dims_[0]);
+		MESSAGE(JlRZ->dims_[1]);
                 for (unsigned int i=0 ; i<=nl_p ; i++){
 		    MESSAGE("here");
 		    MESSAGE(nr_p);
 		    MESSAGE(nl_p);
                     for (unsigned int j=0 ; j<nr_p ; j++){
 			MESSAGE("here i=" <<i << "  j="<<j);
-                        (*Jl3DRZ)(i,j) += (*Jl2D_s)(i,j);}}
+                        (*JlRZ)(i,j) += (*Jl2D_s)(i,j);}}
             }
 	    MESSAGE("or here");
             if( Jr_s[ifield] ) {
                 cField2D* Jr2D_s  = static_cast<cField2D*>(Jr_s[ifield]);
                 for (unsigned int i=0 ; i<nl_p ; i++)
                     for (unsigned int j=0 ; j<=nr_p ; j++)
-                        (*Jr3DRZ)(i,j) += (*Jr2D_s)(i,j);
+                        (*JrRZ)(i,j) += (*Jr2D_s)(i,j);
             }
             if( Jt_s[ifield] ) {
                 cField2D* Jt2D_s  = static_cast<cField2D*>(Jt_s[ifield]);
                 for (unsigned int i=0 ; i<nl_p ; i++)
                     for (unsigned int j=0 ; j<nr_p ; j++)
-                        (*Jt3DRZ)(i,j) += (*Jt2D_s)(i,j);
+                        (*JtRZ)(i,j) += (*Jt2D_s)(i,j);
             }
             if( rho_s[ifield] ) {
                 cField2D* rho2D_s  = static_cast<cField2D*>(rho_s[ifield]);
                 for (unsigned int i=0 ; i<nl_p ; i++)
                     for (unsigned int j=0 ; j<nr_p ; j++)
-                        (*rho3DRZ)(i,j) += (*rho2D_s)(i,j);
+                        (*rhoRZ)(i,j) += (*rho2D_s)(i,j);
             }
         
         }//END loop on species ispec
