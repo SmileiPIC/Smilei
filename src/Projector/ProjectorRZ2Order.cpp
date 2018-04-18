@@ -364,18 +364,18 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             Jt [linindex] += Jz_p[i][j] /((jloc+ j_domain_begin)*dr); //
             }
     }//i
-    
- MESSAGE("projection m>0"); 
 
-    
+MESSAGE("projection for m>0 done");    
 } // END Project local current densities (Jl, Jr, Jt, sort)
 
-// ---------------------------------------------------------------------------------------------------------------------
-//! Project local current densities (sort) diagfields:timesteps for m=0
-// ---------------------------------------------------------------------------------------------------------------------
-void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, complex<double>* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
-{
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! Project local currents (sort) for mode=0
+// ---------------------------------------------------------------------------------------------------------------------
+
+void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, complex<double>* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
+{   MESSAGE("start projection m=0");
     int nparts= particles.size();
     // -------------------------------------
     // Variable declaration & initialization
@@ -384,6 +384,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double crl_p = charge_weight*dl_ov_dt;
     double crr_p = charge_weight*dr_ov_dt;
+ 
     double crt_p= charge_weight*particles.momentum(2,ipart)*invgf;
 
     // variable declaration
