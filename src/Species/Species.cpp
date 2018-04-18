@@ -139,11 +139,40 @@ void Species::initCluster(Params& params)
 
 }//END initCluster
 
+// -----------------------------------------------------------------------------
+//! This function enables to resize the number of bins
+// -----------------------------------------------------------------------------
 void Species::resizeCluster(Params& params)
 {
+
+    // We keep the current number of particles
+    int npart = bmax[bmax.size()-1];
+    int size = params.n_space[0]/clrw;
+
     // Arrays of the min and max indices of the particle bins
-    bmin.resize(params.n_space[0]/clrw);
-    bmax.resize(params.n_space[0]/clrw);
+    bmin.resize(size);
+    bmax.resize(size);
+
+    // We redistribute the particles between the bins
+    int quotient = npart / size; // Fixed part for all bin
+    int remainder = npart - quotient*size; // To be distributed among the first bin
+
+    for (int ibin=0 ; ibin < size ; ibin++)
+    {
+        if (ibin < remainder)
+        {
+            bmin[ibin] = ibin*quotient + ibin;
+            bmax[ibin] = bmin[ibin] + quotient + 1;
+        }
+        else
+        {
+            bmin[ibin] = ibin*quotient + remainder;
+            bmax[ibin] = bmin[ibin] + quotient;
+        }
+    }
+
+    // Recommended: A sorting process may be needed for best porfermance after this step
+
 }// end resizeCluster
 
 // Initialize the operators (Push, Ionize, PartBoundCond)
@@ -526,6 +555,8 @@ void Species::dynamics(double time_dual, unsigned int ispec,
         vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
 
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
+
+            //std::cout << bmin[ibin] << " " << bmax[ibin] << " " << bmin.size() << '\n';
 
             // Interpolate the fields at the particle position
             (*Interp)(EMfields, *particles, smpi, &(bmin[ibin]), &(bmax[ibin]), ithread );

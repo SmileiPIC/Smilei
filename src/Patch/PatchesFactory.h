@@ -90,8 +90,17 @@ public:
             for (unsigned int ipatch=0 ; ipatch < npatches ; ipatch++){
                 for (unsigned int ispec=0 ; ispec<vecPatches(ipatch)->vecSpecies.size(); ispec++) {
                     if ( dynamic_cast<SpeciesDynamicV*>(vecPatches.patches_[ipatch]->vecSpecies[ispec]) )
+                    {
                         dynamic_cast<SpeciesDynamicV*>(vecPatches.patches_[ipatch]->vecSpecies[ispec])->compute_part_cell_keys(params);
-                    vecPatches.patches_[ipatch]->vecSpecies[ispec]->sort_part(params);
+                        if (dynamic_cast<SpeciesDynamicV*>(vecPatches.patches_[ipatch]->vecSpecies[ispec])->vectorized_operators)
+                        {
+                            vecPatches.patches_[ipatch]->vecSpecies[ispec]->sort_part(params);
+                        }
+                        else
+                        {
+                            vecPatches.patches_[ipatch]->vecSpecies[ispec]->Species::sort_part(params);
+                        }
+                    }
                 }
             }
         }

@@ -276,7 +276,14 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                         else if (params.vecto == "dynamic") {
                             if ( dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec]) )
                                 dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
-                            mypatch->vecSpecies[ispec]->sort_part(params);
+                            if (dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->vectorized_operators)
+                            {
+                                dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->sort_part(params);
+                            }
+                            else
+                            {
+                                dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->Species::sort_part(params);
+                            }
                         }
 #endif
                     }

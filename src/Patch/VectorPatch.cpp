@@ -187,13 +187,24 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
         // Particle importation for all species
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
             if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
-
-                species(ipatch, ispec)->dynamics_import_particles(time_dual, ispec,
-                                                                  params,
-                                                                  (*this)(ipatch), smpi,
-                                                                  RadiationTables,
-                                                                  MultiphotonBreitWheelerTables,
-                                                                  localDiags);
+                if ((*this)(ipatch)->vecSpecies[ispec]->vectorized_operators)
+                {
+                    species(ipatch, ispec)->dynamics_import_particles(time_dual, ispec,
+                                                                      params,
+                                                                      (*this)(ipatch), smpi,
+                                                                      RadiationTables,
+                                                                      MultiphotonBreitWheelerTables,
+                                                                      localDiags);
+                }
+                else
+                {
+                    species(ipatch, ispec)->Species::dynamics_import_particles(time_dual, ispec,
+                                                                      params,
+                                                                      (*this)(ipatch), smpi,
+                                                                      RadiationTables,
+                                                                      MultiphotonBreitWheelerTables,
+                                                                      localDiags);
+                }
             }
         }
     }
@@ -225,7 +236,14 @@ void VectorPatch::computeCharge()
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         (*this)(ipatch)->EMfields->restartRhoJ();
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
-            species(ipatch, ispec)->computeCharge(ispec, emfields(ipatch));
+            if ((*this)(ipatch)->vecSpecies[ispec]->vectorized_operators)
+            {
+                species(ipatch, ispec)->computeCharge(ispec, emfields(ipatch));
+            }
+            else
+            {
+                species(ipatch, ispec)->Species::computeCharge(ispec, emfields(ipatch));
+            }
         }
     }
 

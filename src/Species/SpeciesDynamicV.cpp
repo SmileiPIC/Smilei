@@ -105,14 +105,28 @@ void SpeciesDynamicV::initCluster(Params& params)
 
 void SpeciesDynamicV::resizeCluster(Params& params)
 {
+
     // We recompute the number of cells
-    int ncells = 1;
-    for (int iDim=0 ; iDim<nDim_particle ; iDim++)
-        ncells *= (params.n_space[iDim]+1);
+    int ncells = (params.n_space[0]+1);
+    for ( unsigned int i=1; i < params.nDim_field; i++) ncells *= (params.n_space[i]+1);
+
+    // We keep the current number of particles
+    int npart = bmax[bmax.size()-1];
+    int size = params.n_space[0]/clrw;
 
     bmax.resize(ncells,0);
     bmin.resize(ncells,0);
     //species_loc_bmax.resize(ncells,0);
+
+    bmin[0] = 0;
+    for (unsigned int ic=1; ic < ncells; ic++)
+    {
+        bmin[ic] = bmin[ic-1] + species_loc_bmax[ic-1];
+        bmax[ic-1]= bmin[ic];
+    }
+    //New total number of particles is stored as last element of bmax
+    bmax[ncells-1] = bmax[ncells-2] + species_loc_bmax.back() ;
+
 }// end resizeCluster
 
 void SpeciesDynamicV::dynamics(double time_dual, unsigned int ispec,
@@ -556,6 +570,9 @@ void SpeciesDynamicV::computeCharge(unsigned int ispec, ElectroMagn* EMfields)
 // ---------------------------------------------------------------------------------------------------------------------
 void SpeciesDynamicV::sort_part(Params &params)
 {
+
+    std::cout << "SpeciesDynamicV::sort_part " << this->vectorized_operators<< '\n';
+
     unsigned int npart, ncell;
     int ip_dest, cell_target;
     unsigned int length[3];
@@ -697,23 +714,34 @@ void SpeciesDynamicV::sort_part(Params &params)
 
 }
 
+// -----------------------------------------------------------------------------
 //! Compute part_cell_keys at patch creation.
 //! This operation is normally done in the pusher to avoid additional particles pass.
+// -----------------------------------------------------------------------------
 void SpeciesDynamicV::compute_part_cell_keys(Params &params)
 {
 
-    unsigned int ip, npart, ixy;
+    unsigned int ip, nparts, ixy;
     int IX;
     double X;
     unsigned int length[3];
 
-    npart = (*particles).size(); //Number of particles before exchange
+    //Number of particles before exchange
+    nparts = (*particles).size();
+
+    // Cell_keys is resized at the current number of particles
+    (*particles).cell_keys.resize(nparts);
+
     length[0]=0;
     length[1]=params.n_space[1]+1;
     length[2]=params.n_space[2]+1;
 
+    // Reinitialize species_loc_bmax to 0
+    for (int ic=0; ic < species_loc_bmax.size() ; ic++)
+        species_loc_bmax[ic] = 0 ;
+
     #pragma omp simd
-    for (ip=0; ip < npart ; ip++){
+    for (ip=0; ip < nparts ; ip++){
     // Counts the # of particles in each cell (or sub_cell) and store it in sbmax.
         for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
             X = (*particles).position(ipos,ip)-min_loc_vec[ipos]+0.00000000000001;
@@ -721,7 +749,9 @@ void SpeciesDynamicV::compute_part_cell_keys(Params &params)
             (*particles).cell_keys[ip] = (*particles).cell_keys[ip] * length[ipos] + IX;
         }
     }
-    for (ip=0; ip < npart ; ip++)
+
+    // Reduction of the number of particles per cell in species_loc_bmax
+    for (ip=0; ip < nparts ; ip++)
         species_loc_bmax[(*particles).cell_keys[ip]] ++ ;
 
 }
@@ -772,7 +802,10 @@ void SpeciesDynamicV::importParticles( Params& params, Patch* patch, Particles& 
     source_particles.clear();
 }
 
-
+// -----------------------------------------------------------------------------
+//! This function reconfigures the type of species according
+//! to the vectorization mode
+// -----------------------------------------------------------------------------
 void SpeciesDynamicV::reconfiguration(Params &params, Patch * patch)
 {
 
@@ -784,7 +817,11 @@ void SpeciesDynamicV::reconfiguration(Params &params, Patch * patch)
     for ( unsigned int i=1; i < params.nDim_field; i++) ncell *= (params.n_space[i]+1);
 
     // We first compute cell_keys: the number of particles per cell
-    // this->compute_part_cell_keys(params);
+    // if the current mode is without vectorization
+    if (!this->vectorized_operators)
+    {
+        this->compute_part_cell_keys(params);
+    }
 
     // Computation of metrics for the dynamic vectorization:
     // - max_number_of_particles_per_cells: the maximum number of particles
@@ -819,11 +856,20 @@ void SpeciesDynamicV::reconfiguration(Params &params, Patch * patch)
         reasign_operators = true;
     }
 
+    std::cout << "Vectorized_operators: " << this->vectorized_operators
+              << " ratio_number_of_vecto_cells: " << this->ratio_number_of_vecto_cells
+              << " number_of_vecto_cells: " << number_of_vecto_cells
+              << " number_of_non_zero_cells: " << number_of_non_zero_cells
+              << " ncells: " << ncell << "\n";
+
     // Operator reasignment if required by the metrics
     if (reasign_operators)
     {
+
         // The type of operator is changed
         this->vectorized_operators = !this->vectorized_operators;
+
+        std::cout << "reasign_operator: " << this->vectorized_operators << "\n";
 
         // Destroy current operators
         delete Interp;
@@ -858,11 +904,8 @@ void SpeciesDynamicV::reconfiguration(Params &params, Patch * patch)
         }
     }
 
-    std::cout << "Vectorized_operators = " << this->vectorized_operators
-              << " ratio_number_of_vecto_cells = " << this->ratio_number_of_vecto_cells
-              << " number_of_vecto_cells = " << number_of_vecto_cells
-              << " number_of_non_zero_cells = " << number_of_non_zero_cells
-              << " ncells = " << ncell
+    std::cout << " bin number: " << bmin.size()
+              << " nb particles: " << bmax[bmax.size()-1]
               << '\n';
 
 }
