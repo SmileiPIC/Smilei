@@ -1,7 +1,7 @@
 ################### 3D Laser Wakefield with envelope
 dx = 0.69 
 dtrans = 5.
-dt = 0.45
+dt = 0.57
 nx = 1000
 ntrans = 80 
 Lx = nx * dx
@@ -87,7 +87,7 @@ Checkpoints(
     exit_after_dump = False,
 )
 
-list_fields = ['Ex','Ey','Rho','Jx','Env_A_abs']
+list_fields = ['Ex','Ey','Rho','Jx','Env_A_abs','Env_Chi']
 
 DiagFields(
    every = 100,
