@@ -4,6 +4,7 @@
 #include "Species.h"
 #ifdef _VECTO
 #include "SpeciesDynamicV.h"
+#include "SpeciesDynamicV2.h"
 #include "SpeciesV.h"
 #endif
 #include "ElectroMagn.h"
@@ -267,7 +268,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                     for (unsigned int ispec=0 ; ispec<nSpecies ; ispec++) {
                         mypatch->vecSpecies[ispec]->createParticles(params.n_space, params, mypatch, 0 );
 #ifdef _VECTO
-                        if (params.vecto == "normal")
+                        if (params.vecto == "normal" || params.vecto == "dynamic2")
                         {
                             if ( dynamic_cast<SpeciesV*>(mypatch->vecSpecies[ispec]) )
                                 dynamic_cast<SpeciesV*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);

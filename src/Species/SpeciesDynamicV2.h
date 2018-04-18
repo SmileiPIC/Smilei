@@ -1,5 +1,5 @@
-#ifndef SPECIESDYNAMICV_H
-#define SPECIESDYNAMICV_H
+#ifndef SPECIESDYNAMICV2_H
+#define SPECIESDYNAMICV2_H
 
 #include <vector>
 #include <string>
@@ -18,13 +18,13 @@ class SimWindow;
 
 
 //! class Species
-class SpeciesDynamicV : public Species
+class SpeciesDynamicV2 : public Species
 {
  public:
     //! Species creator
-    SpeciesDynamicV(Params&, Patch*);
+    SpeciesDynamicV2(Params&, Patch*);
     //! Species destructor
-    virtual ~SpeciesDynamicV();
+    virtual ~SpeciesDynamicV2();
 
     void initCluster(Params& params) override;
 
@@ -43,6 +43,15 @@ class SpeciesDynamicV : public Species
                           RadiationTables &RadiationTables,
                           MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
                           std::vector<Diagnostic*>& localDiags) override;
+
+    //! Method calculating the Particle dynamics (interpolation, pusher, projection)
+    void scalar_dynamics(double time, unsigned int ispec,
+                        ElectroMagn* EMfields,
+                        Params &params, bool diag_flag,
+                        PartWalls* partWalls, Patch* patch, SmileiMPI* smpi,
+                        RadiationTables &RadiationTables,
+                        MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
+                        std::vector<Diagnostic*>& localDiags);
 
     //! Method calculating the Particle charge on the grid (projection)
     void computeCharge(unsigned int ispec, ElectroMagn* EMfields) override;

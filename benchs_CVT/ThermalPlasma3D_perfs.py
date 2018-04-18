@@ -13,11 +13,11 @@ import math as m
 
 ### SCALING PARAMETER
 
-SpaceSCALING = 0.5 
+SpaceSCALING = 0.5
 TimeSCALING  = 1
 NbDiagOut    = 32
 
-# PLASMA PARAMETERS 
+# PLASMA PARAMETERS
 # -----------------
 n0      = 1.0                   # plasma density
 lde     = 1./8.                 # here I fixe the Debye length (to ensure I have a resolution of 1./8., see below)
@@ -62,7 +62,7 @@ Main(
      EM_boundary_conditions = [ ['periodic'] ],
      random_seed = smilei_mpi_rank,
      print_every = int(t_sim/dt/100.),
-     vecto = True
+     vecto = "normal"
 )
 
 LoadBalancing(
@@ -114,8 +114,3 @@ Species(
 #         every = int(t_sim/dt/NbDiagOut) ,
 #         fields = ['Ex','Ey','Ez','Bx','By','Bz','Rho_ion','Rho_eon']
 #)
-
-
-
-
-

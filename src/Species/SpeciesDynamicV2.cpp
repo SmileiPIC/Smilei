@@ -1,4 +1,4 @@
-#include "SpeciesDynamicV.h"
+#include "SpeciesDynamicV2.h"
 
 #include <cmath>
 #include <ctime>
@@ -43,22 +43,22 @@ using namespace std;
 // Constructor for Species
 // input: simulation parameters & Species index
 // ---------------------------------------------------------------------------------------------------------------------
-SpeciesDynamicV::SpeciesDynamicV(Params& params, Patch* patch) :
+SpeciesDynamicV2::SpeciesDynamicV2(Params& params, Patch* patch) :
     Species(params, patch)
 {
     initCluster( params );
 
-}//END SpeciesDynamicV creator
+}//END SpeciesDynamicV2 creator
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Destructor for Species
 // ---------------------------------------------------------------------------------------------------------------------
-SpeciesDynamicV::~SpeciesDynamicV()
+SpeciesDynamicV2::~SpeciesDynamicV2()
 {
 }
 
 
-void SpeciesDynamicV::initCluster(Params& params)
+void SpeciesDynamicV2::initCluster(Params& params)
 {
     //Temporary BECK
     int ncells = 1;
@@ -103,7 +103,7 @@ void SpeciesDynamicV::initCluster(Params& params)
 
 }//END initCluster
 
-void SpeciesDynamicV::resizeCluster(Params& params)
+void SpeciesDynamicV2::resizeCluster(Params& params)
 {
 
     // We recompute the number of cells
@@ -129,7 +129,7 @@ void SpeciesDynamicV::resizeCluster(Params& params)
 
 }// end resizeCluster
 
-void SpeciesDynamicV::dynamics(double time_dual, unsigned int ispec,
+void SpeciesDynamicV2::dynamics(double time_dual, unsigned int ispec,
                        ElectroMagn* EMfields, Params &params, bool diag_flag,
                        PartWalls* partWalls,
                        Patch* patch, SmileiMPI* smpi,
@@ -345,12 +345,211 @@ void SpeciesDynamicV::dynamics(double time_dual, unsigned int ispec,
 
 }//END dynamic
 
+
+void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
+                       ElectroMagn* EMfields, Params &params, bool diag_flag,
+                       PartWalls* partWalls,
+                       Patch* patch, SmileiMPI* smpi,
+                       RadiationTables & RadiationTables,
+                       MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
+                       vector<Diagnostic*>& localDiags)
+{
+    int ithread;
+    #ifdef _OPENMP
+        ithread = omp_get_thread_num();
+    #else
+        ithread = 0;
+    #endif
+
+    unsigned int iPart;
+
+    // Reset list of particles to exchange
+    clearExchList();
+
+    int tid(0);
+    double ener_iPart(0.);
+    std::vector<double> nrj_lost_per_thd(1, 0.);
+
+    // -------------------------------
+    // calculate the particle dynamics
+    // -------------------------------
+    if (time_dual>time_frozen)
+    { // moving particle
+
+        smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
+
+        //Point to local thread dedicated buffers
+        //Still needed for ionization
+        vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
+
+        //Prepare for sorting
+        for (unsigned int i=0; i<species_loc_bmax.size(); i++)
+            species_loc_bmax[i] = 0;
+
+        // Interpolate the fields at the particle position
+        //for (unsigned int scell = 0 ; scell < bmin.size() ; scell++)
+        //    (*Interp)(EMfields, *particles, smpi, &(bmin[scell]), &(bmax[scell]), ithread );
+        for (unsigned int scell = 0 ; scell < bmin.size() ; scell++)
+        {
+            (*Interp)(EMfields, *particles, smpi, &(bmin[scell]), &(bmax[scell]), ithread);
+
+            // Ionization
+            if (Ionize)
+                (*Ionize)(particles, bmin[scell], bmax[scell], Epart, EMfields, Proj);
+
+            // Radiation losses
+            if (Radiate)
+            {
+
+                // Radiation process
+                (*Radiate)(*particles, this->photon_species, smpi,
+                           RadiationTables,
+                           bmin[scell], bmax[scell], ithread );
+
+                // Update scalar variable for diagnostics
+                nrj_radiation += (*Radiate).getRadiatedEnergy();
+
+                // Update the quantum parameter chi
+                (*Radiate).compute_thread_chipa(*particles,
+                                                smpi,
+                                                bmin[scell],
+                                                bmax[scell],
+                                                ithread );
+            }
+
+            // Multiphoton Breit-Wheeler
+            if (Multiphoton_Breit_Wheeler_process)
+            {
+
+                // Pair generation process
+                (*Multiphoton_Breit_Wheeler_process)(*particles,
+                                                     smpi,
+                                                     MultiphotonBreitWheelerTables,
+                                                     bmin[scell], bmax[scell], ithread );
+
+                // Update scalar variable for diagnostics
+                // We reuse nrj_radiation for the pairs
+                nrj_radiation += (*Multiphoton_Breit_Wheeler_process).getPairEnergy();
+
+                // Update the photon quantum parameter chi of all photons
+                (*Multiphoton_Breit_Wheeler_process).compute_thread_chiph(*particles,
+                                                                          smpi,
+                                                                          bmin[scell],
+                                                                          bmax[scell],
+                                                                          ithread );
+
+                // Suppression of the decayed photons into pairs
+                (*Multiphoton_Breit_Wheeler_process).decayed_photon_cleaning(
+                                                                             *particles,scell, bmin.size(), &bmin[0], &bmax[0]);
+
+            }
+        }
+
+        // Push the particles and the photons
+        //(*Push)(*particles, smpi, 0, bmax[bmax.size()-1], ithread );
+        (*Push)(*particles, smpi, 0, bmax[bmax.size()-1], ithread, 0.);
+        //particles->test_move( bmin[ibin], bmax[ibin], params );
+
+        for (unsigned int scell = 0 ; scell < bmin.size() ; scell++)
+        {
+            // Apply wall and boundary conditions
+            if (mass>0)
+            {
+                for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
+                    for (iPart=bmin[scell] ; (int)iPart<bmax[scell]; iPart++ ) {
+                        double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
+                        if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
+                            nrj_lost_per_thd[tid] += mass * ener_iPart;
+                        }
+                    }
+                }
+
+                // Boundary Condition may be physical or due to domain decomposition
+                // apply returns 0 if iPart is not in the local domain anymore
+                //        if omp, create a list per thread
+                //for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                for (iPart=bmin[scell] ; (int)iPart<bmax[scell]; iPart++ ) {
+                    if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
+                        addPartInExchList( iPart );
+                        nrj_lost_per_thd[tid] += mass * ener_iPart;
+                        (*particles).cell_keys[iPart] = -1;
+                    }
+                    else {
+                        //First reduction of the count sort algorithm. Lost particles are not included.
+                        species_loc_bmax[(*particles).cell_keys[iPart]] ++;
+                    }
+                }
+            } else if (mass==0) {
+                for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
+                    for (iPart=bmin[scell] ; (int)iPart<bmax[scell]; iPart++ ) {
+                        double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
+                        if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
+                            nrj_lost_per_thd[tid] += ener_iPart;
+                        }
+                    }
+                }
+
+                // Boundary Condition may be physical or due to domain decomposition
+                // apply returns 0 if iPart is not in the local domain anymore
+                //        if omp, create a list per thread
+                for (iPart=bmin[scell] ; (int)iPart<bmax[scell]; iPart++ ) {
+                    if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
+                        addPartInExchList( iPart );
+                        nrj_lost_per_thd[tid] += ener_iPart;
+                        (*particles).cell_keys[iPart] = -1;
+                    }
+                    else {
+                        //First reduction of the count sort algorithm. Lost particles are not included.
+                        species_loc_bmax[(*particles).cell_keys[iPart]] ++;
+
+                    }
+                }
+            } // end if mass > 0
+
+            // Project currents if not a Test species and charges as well if a diag is needed.
+            // Do not project if a photon
+            if ((!particles->is_test) && (mass > 0))
+                (*Proj)(EMfields, *particles, smpi, bmin[scell],
+                                                    bmax[scell],
+                                                    ithread, scell,
+                                                    0, diag_flag,
+                                                    params.is_spectral,
+                                                    b_dim, ispec);
+
+        } // end loop on cells
+
+        for (unsigned int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
+            nrj_bc_lost += nrj_lost_per_thd[tid];
+
+    }
+    else { // immobile particle (at the moment only project density)
+        if ( diag_flag &&(!particles->is_test)){
+            double* b_rho=nullptr;
+            for (unsigned int scell = 0 ; scell < bmin.size() ; scell ++) { //Loop for projection on buffer_proj
+
+                if (nDim_field==2)
+                    b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0*clrw*f_dim1) : &(*EMfields->rho_)(0*clrw*f_dim1) ;
+                if (nDim_field==3)
+                    b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0*clrw*f_dim1*f_dim2) : &(*EMfields->rho_)(0*clrw*f_dim1*f_dim2) ;
+                else if (nDim_field==1)
+                    b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0*clrw) : &(*EMfields->rho_)(0*clrw) ;
+                for (iPart=bmin[scell] ; (int)iPart<bmax[scell]; iPart++ ) {
+                    (*Proj)(b_rho, (*particles), iPart, 0*clrw, b_dim);
+                } //End loop on particles
+            }//End loop on bins
+
+        }
+    }//END if time vs. time_frozen
+
+}//END scalar_dynamics
+
+
 // ---------------------------------------------------------------------------------------------------------------------
 // For all particles of the species
 //   - increment the charge (projection)
 //   - used at initialisation for Poisson (and diags if required, not for now dynamics )
 // ---------------------------------------------------------------------------------------------------------------------
-void SpeciesDynamicV::computeCharge(unsigned int ispec, ElectroMagn* EMfields)
+void SpeciesDynamicV2::computeCharge(unsigned int ispec, ElectroMagn* EMfields)
 {
     // -------------------------------
     // calculate the particle charge
@@ -369,7 +568,7 @@ void SpeciesDynamicV::computeCharge(unsigned int ispec, ElectroMagn* EMfields)
 // ---------------------------------------------------------------------------------------------------------------------
 // Sort particles
 // ---------------------------------------------------------------------------------------------------------------------
-void SpeciesDynamicV::sort_part(Params &params)
+void SpeciesDynamicV2::sort_part(Params &params)
 {
 
     unsigned int npart, ncell;
@@ -517,7 +716,7 @@ void SpeciesDynamicV::sort_part(Params &params)
 //! Compute part_cell_keys at patch creation.
 //! This operation is normally done in the pusher to avoid additional particles pass.
 // -----------------------------------------------------------------------------
-void SpeciesDynamicV::compute_part_cell_keys(Params &params)
+void SpeciesDynamicV2::compute_part_cell_keys(Params &params)
 {
 
     unsigned int ip, nparts, ixy;
@@ -534,10 +733,6 @@ void SpeciesDynamicV::compute_part_cell_keys(Params &params)
     length[0]=0;
     length[1]=params.n_space[1]+1;
     length[2]=params.n_space[2]+1;
-
-    // Reinitialize species_loc_bmax to 0
-    for (int ic=0; ic < species_loc_bmax.size() ; ic++)
-        species_loc_bmax[ic] = 0 ;
 
     #pragma omp simd
     for (ip=0; ip < nparts ; ip++){
@@ -556,7 +751,7 @@ void SpeciesDynamicV::compute_part_cell_keys(Params &params)
 }
 
 
-void SpeciesDynamicV::importParticles( Params& params, Patch* patch, Particles& source_particles, vector<Diagnostic*>& localDiags )
+void SpeciesDynamicV2::importParticles( Params& params, Patch* patch, Particles& source_particles, vector<Diagnostic*>& localDiags )
 {
     unsigned int npart = source_particles.size(), ibin, ii, nbin=bmin.size();
     double inv_cell_length = 1./ params.cell_length[0];
@@ -605,7 +800,7 @@ void SpeciesDynamicV::importParticles( Params& params, Patch* patch, Particles& 
 //! This function reconfigures the type of species according
 //! to the vectorization mode
 // -----------------------------------------------------------------------------
-void SpeciesDynamicV::reconfiguration(Params &params, Patch * patch)
+void SpeciesDynamicV2::reconfiguration(Params &params, Patch * patch)
 {
 
     unsigned int ncell;
@@ -614,13 +809,6 @@ void SpeciesDynamicV::reconfiguration(Params &params, Patch * patch)
     //split cell into smaller sub_cells for refined sorting
     ncell = (params.n_space[0]+1);
     for ( unsigned int i=1; i < params.nDim_field; i++) ncell *= (params.n_space[i]+1);
-
-    // We first compute cell_keys: the number of particles per cell
-    // if the current mode is without vectorization
-    if (!this->vectorized_operators)
-    {
-        this->compute_part_cell_keys(params);
-    }
 
     // Computation of metrics for the dynamic vectorization:
     // - max_number_of_particles_per_cells: the maximum number of particles
@@ -672,35 +860,16 @@ void SpeciesDynamicV::reconfiguration(Params &params, Patch * patch)
 
         // Destroy current operators
         delete Interp;
-        delete Push;
+        //delete Push;
         delete Proj;
 
         // Reassign the correct Interpolator
         Interp = InterpolatorFactory::create(params, patch, this->vectorized_operators);
         // Reassign the correct Pusher to Push
-        Push = PusherFactory::create(params, this);
+        //Push = PusherFactory::create(params, this);
         // Reassign the correct Projector
         Proj = ProjectorFactory::create(params, patch, this->vectorized_operators);
 
-        // If we switch from non-vectorized to vectozied,
-        // we have to reactivate the cell-sorting algorithm
-        if (this->vectorized_operators)
-        {
-            // We resize the bins
-            this->resizeCluster(params);
-
-            // We perform the sorting
-            this->sort_part(params);
-        }
-        // If we switch from vectorized to non-vectozied,
-        else
-        {
-            // We resize the bins
-            this->Species::resizeCluster(params);
-
-            // We perform the sorting
-            this->Species::sort_part(params);
-        }
     }
 
     /*std::cout << " bin number: " << bmin.size()

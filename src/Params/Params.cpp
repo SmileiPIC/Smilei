@@ -478,9 +478,9 @@ namelist("")
     // Activation of the vectorized subroutines
     vecto = "disable";
     PyTools::extract("vecto", vecto, "Main");
-    if (!(vecto == "disable" || vecto == "normal" || vecto == "dynamic"))
+    if (!(vecto == "disable" || vecto == "normal" || vecto == "dynamic" || vecto == "dynamic2"))
     {
-        ERROR("The parameter `vecto` must be `disable`, `normal`, `dynamic`");
+        ERROR("The parameter `vecto` must be `disable`, `normal`, `dynamic`, `dynamic2`");
     }
 
     // Read the "print_every" parameter
@@ -746,6 +746,10 @@ void Params::print_init()
     else if (vecto == "dynamic")
     {
         MESSAGE(1,"Apply the dynamic vectorization mode" );
+    }
+    else if (vecto == "dynamic2")
+    {
+        MESSAGE(1,"Apply the dynamic2 vectorization mode" );
     }
     else if (vecto == "disable")
     {

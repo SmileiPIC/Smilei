@@ -16,6 +16,7 @@
 
 #ifdef _VECTO
 #include "SpeciesDynamicV.h"
+#include "SpeciesDynamicV2.h"
 #include "SpeciesNormV.h"
 #endif
 
@@ -108,6 +109,10 @@ public:
                 {
                     thisSpecies = new SpeciesDynamicV(params, patch);
                 }
+                else if (params.vecto == "dynamic2")
+                {
+                    thisSpecies = new SpeciesDynamicV2(params, patch);
+                }
 #endif
             } else {
                 ERROR("For species `" << species_name << "`, pusher must be 'boris', 'borisnr', 'vay', 'higueracary'");
@@ -194,6 +199,10 @@ public:
             {
                 thisSpecies = new SpeciesDynamicV(params, patch);
             }
+            else if ( params.vecto == "dynamic2" )
+            {
+                thisSpecies = new SpeciesDynamicV2(params, patch);
+            }
 #endif
             // Photon can not radiate
             thisSpecies->radiation_model = "none";
@@ -213,7 +222,7 @@ public:
         {
             thisSpecies->vectorized_operators = false;
         }
-        else if (params.vecto == "normal" || params.vecto == "dynamic")
+        else if (params.vecto == "normal" || params.vecto == "dynamic" || params.vecto == "dynamic2")
         {
             thisSpecies->vectorized_operators = true;
         }
@@ -611,6 +620,8 @@ public:
             newSpecies = new SpeciesNormV(params, patch);
         else if (params.vecto == "dynamic")
             newSpecies = new SpeciesDynamicV(params, patch);
+        else if (params.vecto == "dynamic2")
+            newSpecies = new SpeciesDynamicV2(params, patch);
 #endif
 
         // Copy members

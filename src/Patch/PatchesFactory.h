@@ -10,7 +10,9 @@
 #include "Tools.h"
 
 #ifdef _VECTO
+#include "SpeciesV.h"
 #include "SpeciesDynamicV.h"
+#include "SpeciesDynamicV2.h"
 #endif
 
 class PatchesFactory {
@@ -92,15 +94,27 @@ public:
                     if ( dynamic_cast<SpeciesDynamicV*>(vecPatches.patches_[ipatch]->vecSpecies[ispec]) )
                     {
                         dynamic_cast<SpeciesDynamicV*>(vecPatches.patches_[ipatch]->vecSpecies[ispec])->compute_part_cell_keys(params);
-                        if (dynamic_cast<SpeciesDynamicV*>(vecPatches.patches_[ipatch]->vecSpecies[ispec])->vectorized_operators)
-                        {
-                            vecPatches.patches_[ipatch]->vecSpecies[ispec]->sort_part(params);
-                        }
-                        else
-                        {
-                            vecPatches.patches_[ipatch]->vecSpecies[ispec]->Species::sort_part(params);
-                        }
                     }
+                    if (dynamic_cast<SpeciesDynamicV*>(vecPatches.patches_[ipatch]->vecSpecies[ispec])->vectorized_operators)
+                    {
+                        vecPatches.patches_[ipatch]->vecSpecies[ispec]->sort_part(params);
+                    }
+                    else
+                    {
+                        vecPatches.patches_[ipatch]->vecSpecies[ispec]->Species::sort_part(params);
+                    }
+                }
+            }
+        }
+        else if (params.vecto == "dynamic2") {
+            //Need to sort because particles are not well sorted at creation
+            for (unsigned int ipatch=0 ; ipatch < npatches ; ipatch++){
+                for (unsigned int ispec=0 ; ispec<vecPatches(ipatch)->vecSpecies.size(); ispec++) {
+                    if ( dynamic_cast<SpeciesDynamicV2*>(vecPatches.patches_[ipatch]->vecSpecies[ispec]) )
+                    {
+                        dynamic_cast<SpeciesDynamicV2*>(vecPatches.patches_[ipatch]->vecSpecies[ispec])->compute_part_cell_keys(params);
+                    }
+                    dynamic_cast<SpeciesDynamicV2*>(vecPatches.patches_[ipatch]->vecSpecies[ispec])->sort_part(params);
                 }
             }
         }
