@@ -100,7 +100,6 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi, OpenPMDparams& op
             ElectroMagn3DRZ* EMfields = static_cast<ElectroMagn3DRZ*>((*this)(ipatch)->EMfields );
             for (unsigned int ifield=0 ; ifield<EMfields->Jl_s.size(); ifield++) {
                 if( EMfields->Jl_s[ifield]->cdata_ == NULL ){
-                    MESSAGE("deleting Jl");
                     delete EMfields->Jl_s[ifield];
                     EMfields->Jl_s[ifield]=NULL;
                 }
@@ -209,7 +208,6 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
     for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
         if ( (*this)(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
             SyncVectorPatch::finalize_and_sort_parts((*this), ispec, params, smpi, timers, itime ); // Included sort_part
-        MESSAGE("finalize and sort parts");
 	}
     }
 
@@ -244,7 +242,6 @@ void VectorPatch::computeCharge()
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         (*this)(ipatch)->EMfields->restartRhoJ();
-	MESSAGE("restartRhoJ");
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
             species(ipatch, ispec)->computeCharge(ispec, emfields(ipatch), proj(ipatch) );
         }
@@ -268,19 +265,15 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
         return;
 
     timers.densities.restart();
-    MESSAGE("kharya");
     if  (diag_flag){
-        MESSAGE("diag_flag");
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
              // Per species in global, Attention if output -> Sync / per species fields
             (*this)(ipatch)->EMfields->computeTotalRhoJ();
         }
-	MESSAGE("sucess");
     }
     timers.densities.update();
 
-    MESSAGE("lokza");
     timers.syncDens.restart();
     if ( params.geometry != "3drz" ) {
         SyncVectorPatch::sumRhoJ( params, (*this), timers, itime ); // MPI
@@ -288,21 +281,18 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
     else {
         for (unsigned int imode = 0 ; imode < static_cast<ElectroMagn3DRZ*>(patches_[0]->EMfields)->Jl_.size() ; imode++  ) {
             SyncVectorPatch::sumRhoJ( params, (*this), imode, timers, itime );
-    	    MESSAGE("sumRhoJ");
         }
     }
 
     if(diag_flag){
-	MESSAGE("flag");
         for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
             if( ! (*this)(0)->vecSpecies[ispec]->particles->is_test ) {
                 update_field_list(ispec);
                 SyncVectorPatch::sumRhoJs( params, (*this), ispec, timers, itime ); // MPI
             }
         }
-    } MESSAGE("end flag");
+    } 
     timers.syncDens.update( params.printNow( itime ) );
-MESSAGE("end of sumDen");
 } // End sumDensities
 
 

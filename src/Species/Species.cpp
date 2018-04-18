@@ -1071,6 +1071,9 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     // n_space_to_create_generalized = n_space_to_create, + copy of 2nd direction data among 3rd direction
     // same for local Species::cell_length[2]
     vector<unsigned int> n_space_to_create_generalized( n_space_to_create );    
+    MESSAGE(n_space_to_create_generalized[0]);
+    MESSAGE(n_space_to_create_generalized[1]);
+    MESSAGE(n_space_to_create_generalized[2]);
     
     unsigned int nPart, i,j,k, idim;
     unsigned int npart_effective = 0 ;
@@ -1367,11 +1370,11 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
             }
         }
     }
-
+    MESSAGE("particles created");
     if (particles->tracked)
         particles->resetIds();
     return npart_effective;
-
+  
 } // End createParticles
 
 
