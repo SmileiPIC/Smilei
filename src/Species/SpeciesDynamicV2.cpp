@@ -447,7 +447,7 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
 
         // Push the particles and the photons
         //(*Push)(*particles, smpi, 0, bmax[bmax.size()-1], ithread );
-        (*Push)(*particles, smpi, 0, bmax[bmax.size()-1], ithread, 0.);
+        (*Push)(*particles, smpi, 0, bmax.back(), ithread, 0.);
         //particles->test_move( bmin[ibin], bmax[ibin], params );
 
         for (unsigned int scell = 0 ; scell < bmin.size() ; scell++)
