@@ -9,7 +9,7 @@ Validate("Env_A_abs field at iteration 8400", Env_A_abs, 0.01)
 
 # 1-D PROBE IN 3D
 Env_A_abs = S.Probe.Probe0.Env_A_abs(timesteps=8400).getData()[0]
-Validate("1-D probe Ey at iteration 8400", Env_A_abs, 0.01)
+Validate("1-D probe Env_A_abs at iteration 8400", Env_A_abs, 0.01)
 
 # TEST THE GRID PARAMETERS
 with h5py.File("./restart000/Fields0.h5") as f:
