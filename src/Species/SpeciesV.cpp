@@ -223,6 +223,11 @@ void SpeciesV::dynamics(double time_dual, unsigned int ispec,
             //for (unsigned int i=0; i<species_loc_bmax.size(); i++)
             //    species_loc_bmax[i] = 0;
 
+            unsigned int length[3];
+            length[0]=0;
+            length[1]=params.n_space[1]+1;
+            length[2]=params.n_space[2]+1;
+
             //for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
             for (unsigned int ibin = 0 ; ibin < packsize ; ibin++) {
                 // Apply wall and boundary conditions
@@ -241,11 +246,6 @@ void SpeciesV::dynamics(double time_dual, unsigned int ispec,
                         // apply returns 0 if iPart is not in the local domain anymore
                         //        if omp, create a list per thread
                         //for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
-                        unsigned int length[3];
-                        length[0]=0;
-                        length[1]=params.n_space[1]+1;
-                        length[2]=params.n_space[2]+1;
-
                         for (iPart=bmin[ipack*packsize+ibin] ; (int)iPart<bmax[ipack*packsize+ibin]; iPart++ ) {
                             if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
                                 addPartInExchList( iPart );
@@ -254,7 +254,7 @@ void SpeciesV::dynamics(double time_dual, unsigned int ispec,
                             }
                             else {
                                 //Compute cell_keys of remaining particles
-                                for ( int i = 0 ; i<nDim_particle; i++ ){ 
+                                for ( int i = 0 ; i<nDim_particle; i++ ){
                                     (*particles).cell_keys[iPart] *= length[i];
                                     (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]+0.00000000000001) * dx_inv_[i] );
                                 }
@@ -284,6 +284,11 @@ void SpeciesV::dynamics(double time_dual, unsigned int ispec,
                             (*particles).cell_keys[iPart] = -1;
                         }
                         else {
+                            //Compute cell_keys of remaining particles
+                            for ( int i = 0 ; i<nDim_particle; i++ ){
+                                (*particles).cell_keys[iPart] *= length[i];
+                                (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]+0.00000000000001) * dx_inv_[i] );
+                            }
                             //First reduction of the count sort algorithm. Lost particles are not included.
                             species_loc_bmax[(*particles).cell_keys[iPart]] ++;
 
