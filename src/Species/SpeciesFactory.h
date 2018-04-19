@@ -504,7 +504,7 @@ public:
                 thisSpecies->densityProfileType = "nb";
             }
 
-            thisSpecies->densityProfile = new Profile(profile1, params.nDim_particle, Tools::merge(thisSpecies->densityProfileType,"_density ",species_name), true);
+            thisSpecies->densityProfile = new Profile(profile1, params.nDim_field, Tools::merge(thisSpecies->densityProfileType,"_density ",species_name), true);
 	    MESSAGE("creating density profile");
             // Number of particles per cell
             if( !PyTools::extract_pyProfile("particles_per_cell", profile1, "Species", ispec))

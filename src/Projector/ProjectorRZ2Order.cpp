@@ -865,7 +865,6 @@ void ProjectorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles,
         // Loop on modes ?
         for ( unsigned int imode = 0; imode<Nmode;imode++){
 
-    // ---------------------------
             if (imode==0){
 		MESSAGE("wrapper mode 0");
                 complex< double>* b_Jl =  &(*emRZ->Jl_[imode] )(ibin*clrw* dim1 );

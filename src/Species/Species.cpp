@@ -1071,10 +1071,9 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     // n_space_to_create_generalized = n_space_to_create, + copy of 2nd direction data among 3rd direction
     // same for local Species::cell_length[2]
     vector<unsigned int> n_space_to_create_generalized( n_space_to_create );    
-    MESSAGE(n_space_to_create_generalized[0]);
-    MESSAGE(n_space_to_create_generalized[1]);
-    MESSAGE(n_space_to_create_generalized[2]);
-    
+    MESSAGE(n_space_to_create_generalized[0]); 
+    MESSAGE(n_space_to_create_generalized[1]); 
+    MESSAGE(n_space_to_create_generalized[2]); 
     unsigned int nPart, i,j,k, idim;
     unsigned int npart_effective = 0 ;
     double *momentum[nDim_particle], *position[nDim_particle], *weight_arr;
@@ -1097,7 +1096,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
         for (ijk[1]=0; ijk[1]<n_space_to_create_generalized[1]; ijk[1]++){
             for (ijk[2]=0; ijk[2]<n_space_to_create_generalized[2]; ijk[2]++){
                 for (idim=0 ; idim<nDim_field ; idim++){
-	            (*xyz[idim])((int)ijk[0],(int)ijk[1],(int)ijk[2]) = cell_position[idim] + (ijk[idim]+0.5)*cell_length[idim];
+	            (*xyz[idim])(ijk[0],ijk[1],ijk[2]) = cell_position[idim] + (ijk[idim]+0.5)*cell_length[idim];
     }
 	}
 	    }
@@ -1123,13 +1122,15 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     Field3D velocity[3];
 
     if ( momentum_initialization_array != NULL ){
+        MESSAGE("momentum non null");
         for (unsigned int idim = 0; idim < nDim_particle; idim++) momentum[idim] = &(momentum_initialization_array[idim*n_numpy_particles]);
     } else {
         //Initialize velocity and temperature profiles
         for (unsigned int i=0; i<3; i++) {
             velocity[i].allocateDims(n_space_to_create_generalized);
             temperature[i].allocateDims(n_space_to_create_generalized);
-        }
+            MESSAGE("allocating vel and temp");
+	}
         // Evaluate profiles
         for (unsigned int m=0; m<3; m++) {
             if ( temperatureProfile[m]){
@@ -1147,8 +1148,9 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     }
     // Initialize charge profile
     if (this->mass > 0) chargeProfile ->valuesAt(xyz, charge );
-
+    MESSAGE("mass="<< this->mass);
     if ( position_initialization_array != NULL ){
+        MESSAGE("position init non null");
         for (unsigned int idim = 0; idim < nDim_particle; idim++) position[idim] = &(position_initialization_array[idim*n_numpy_particles]);
                                                                   weight_arr     = &(position_initialization_array[nDim_particle*n_numpy_particles]);
         //Idea to speed up selection, provides xmin, xmax of the bunch and check if there is an intersection with the patch instead of going through all particles for all patches.
@@ -1165,6 +1167,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
      else {
         //Initialize density and ppc profiles
         densityProfile->valuesAt(xyz, density       );
+	MESSAGE("nDim"<<(xyz).size()); MESSAGE("size"<<(xyz)[0]->globalDims_);
         ppcProfile    ->valuesAt(xyz, n_part_in_cell);
         //Now compute number of particles per cell
         double remainder, nppc;
@@ -1174,6 +1177,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
 
                     // Obtain the number of particles per cell
                     nppc = n_part_in_cell(i,j,k);
+		    MESSAGE("nppc="<< nppc); MESSAGE("density"<< density(i,j,k));
                     n_part_in_cell(i,j,k) = floor(nppc);
                     // If not a round number, then we need to decide how to round
                     double intpart;
@@ -1192,6 +1196,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
 
                     // If zero or less, zero particles
                     if( n_part_in_cell(i,j,k)<=0. || density(i,j,k)==0. ) {
+                    //    MESSAGE(" n_part_in_cell(i,j,k)<=0. || density(i,j,k)==0." );
                         n_part_in_cell(i,j,k) = 0.;
                         density(i,j,k) = 0.;
                         continue;
@@ -1203,6 +1208,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                         density(i,j,k) /= charge(i,j,k);
                     }
                     	density(i,j,k) = abs(density(i,j,k));
+			MESSAGE(abs(density(i,j,k)));
                     // increment the effective number of particle by n_part_in_cell(i,j,k)
                     // for each cell with as non-zero density
                     npart_effective += (unsigned int) n_part_in_cell(i,j,k);
