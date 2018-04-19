@@ -493,6 +493,7 @@ public:
                 if( !ok1 && !ok2 ) ERROR("For species '" << species_name << "', must define `number_density ` or `charge_density`.");
                 if( ok1 ) thisSpecies->densityProfileType = "nb";
                 if( ok2 ) thisSpecies->densityProfileType = "charge";
+                MESSAGE(thisSpecies->densityProfileType);
             }
             // Photons
             else if (thisSpecies->mass == 0)

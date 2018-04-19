@@ -1148,7 +1148,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     }
     // Initialize charge profile
     if (this->mass > 0) chargeProfile ->valuesAt(xyz, charge );
-    MESSAGE("mass="<< this->mass);
+    MESSAGE("mass="<< this->mass); MESSAGE("charge=" << charge(i,j,k));
     if ( position_initialization_array != NULL ){
         MESSAGE("position init non null");
         for (unsigned int idim = 0; idim < nDim_particle; idim++) position[idim] = &(position_initialization_array[idim*n_numpy_particles]);
