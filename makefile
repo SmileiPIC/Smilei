@@ -89,7 +89,8 @@ else ifneq (,$(findstring advisor,$(config)))
 
 # With Intel Inspector
 else ifneq (,$(findstring inspector,$(config)))
-    CXXFLAGS += -g -O0
+    CXXFLAGS += -g -O0 -I$(INSPECTOR_ROOT_DIR)/include/
+    LDFLAGS += $(INSPECTOR_ROOT_DIR)/lib64/libittnotify.a
 
 # Optimization report
 else ifneq (,$(findstring opt-report,$(config)))
@@ -279,7 +280,7 @@ help:
 	@echo '  make env              : print important internal makefile variables'
 	@echo '  make print-XXX        : print internal makefile variable XXX'
 	@echo ''
-	@echo 'Environment variables :'
+	@echo 'Environment variables:'
 	@echo '  SMILEICXX             : mpi c++ compiler [$(SMILEICXX)]'
 	@echo '  HDF5_ROOT_DIR         : HDF5 dir [$(HDF5_ROOT_DIR)]'
 	@echo '  BUILD_DIR             : directory used to store build files [$(BUILD_DIR)]'
@@ -287,7 +288,10 @@ help:
 	@echo '  PYTHONEXE             : python executable [$(PYTHONEXE)]'	
 	@echo '  FFTW3_LIB             : FFTW3 libraries directory [$(FFTW3_LIB)]'
 	@echo '  LIB PXR               : Picsar library directory [$(LIBPXR)]'
-	@echo 
+	@echo
+	@echo 'Intel Inspector environment:'
+	@echo '  INSPECTOR_ROOT_DIR    : only needed to use the inspector API (__itt functions) [$(INSPECTOR_ROOT_DIR)]'
+	@echo
 	@echo 'http://www.maisondelasimulation.fr/smilei'
 	@echo 'https://github.com/SmileiPIC/Smilei'
 	@echo
