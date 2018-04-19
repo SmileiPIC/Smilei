@@ -72,17 +72,17 @@ void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particl
     coeffxp_[1] = 0.75 - delta2;
     coeffxp_[2] = 0.5 * (delta2+deltax+0.25);
 
-    deltay   = rpn - (double)jd_ + 0.5;
-    delta2  = deltay*deltay;
-    coeffyd_[0] = 0.5 * (delta2-deltay+0.25);
+    deltar   = rpn - (double)jd_ + 0.5;
+    delta2  = deltar*deltar;
+    coeffyd_[0] = 0.5 * (delta2-deltar+0.25);
     coeffyd_[1] = 0.75 - delta2;
-    coeffyd_[2] = 0.5 * (delta2+deltay+0.25);
+    coeffyd_[2] = 0.5 * (delta2+deltar+0.25);
 
-    deltay   = rpn - (double)jp_;
-    delta2  = deltay*deltay;
-    coeffyp_[0] = 0.5 * (delta2-deltay+0.25);
+    deltar   = rpn - (double)jp_;
+    delta2  = deltar*deltar;
+    coeffyp_[0] = 0.5 * (delta2-deltar+0.25);
     coeffyp_[1] = 0.75 - delta2;
-    coeffyp_[2] = 0.5 * (delta2+deltay+0.25);
+    coeffyp_[2] = 0.5 * (delta2+deltar+0.25);
 
     //!\todo CHECK if this is correct for both primal & dual grids !!!
     // First index for summation
@@ -165,7 +165,7 @@ void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particl
     double xpn = particles.position(0, ipart) * dl_inv_;
     double r = sqrt (particles.position(1, ipart)*particles.position(1, ipart)+particles.position(2, ipart)*particles.position(2, ipart)) ;
     double rpn = r * dr_inv_;
-    complex<double> exp_m_theta = ( particles.position(1, ipart) - Icpx * particles.position(2, ipart) ) / r ;
+    exp_m_theta = ( particles.position(1, ipart) - Icpx * particles.position(2, ipart) ) / r ;
     complex<double> exp_mm_theta = 1. ;
     
     
@@ -191,17 +191,17 @@ void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particl
     coeffxp_[1] = 0.75 - delta2;
     coeffxp_[2] = 0.5 * (delta2+deltax+0.25);
     
-    deltay   = rpn - (double)jd_ + 0.5;
-    delta2  = deltay*deltay;
-    coeffyd_[0] = 0.5 * (delta2-deltay+0.25);
+    deltar   = rpn - (double)jd_ + 0.5;
+    delta2  = deltar*deltar;
+    coeffyd_[0] = 0.5 * (delta2-deltar+0.25);
     coeffyd_[1] = 0.75 - delta2;
-    coeffyd_[2] = 0.5 * (delta2+deltay+0.25);
+    coeffyd_[2] = 0.5 * (delta2+deltar+0.25);
     
-    deltay   = rpn - (double)jp_;
-    delta2  = deltay*deltay;
-    coeffyp_[0] = 0.5 * (delta2-deltay+0.25);
+    deltar   = rpn - (double)jp_;
+    delta2  = deltar*deltar;
+    coeffyp_[0] = 0.5 * (delta2-deltar+0.25);
     coeffyp_[1] = 0.75 - delta2;
-    coeffyp_[2] = 0.5 * (delta2+deltay+0.25);
+    coeffyp_[2] = 0.5 * (delta2+deltar+0.25);
     
     
     //!\todo CHECK if this is correct for both primal & dual grids !!!
@@ -297,6 +297,7 @@ void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particl
     std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);
     std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
     std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
+    std::vector<std::complex<double>> *exp_m_theta_old = &(smpi->dynamics_thetaold[ithread]);
 
     //Loop on bin particles
     int nparts( particles.size() );
@@ -307,7 +308,8 @@ void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particl
         (*iold)[ipart+0*nparts]  = ip_;
         (*iold)[ipart+1*nparts]  = jp_;
         (*delta)[ipart+0*nparts] = deltax;
-        (*delta)[ipart+1*nparts] = deltay;
+        (*delta)[ipart+1*nparts] = deltar;
+        (*exp_m_theta_old)[ipart] = exp_m_theta;
     }
 
 }

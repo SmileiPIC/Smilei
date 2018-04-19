@@ -134,7 +134,7 @@ void SpeciesV::dynamics(double time_dual, unsigned int ispec,
     // -------------------------------
     if (time_dual>time_frozen) { // moving particle
 
-        smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
+        smpi->dynamics_resize(ithread, nDim_field, bmax.back(), params.geometry=="3drz");
 
         //Point to local thread dedicated buffers
         //Still needed for ionization
@@ -599,7 +599,7 @@ void SpeciesV::ponderomotive_momentum_update(double time_dual, unsigned int ispe
     // -------------------------------
     if (time_dual>time_frozen) { // moving particle
 
-        smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
+        smpi->dynamics_resize(ithread, nDim_field, bmax.back(), params.geometry=="3drz");
 
         // Interpolate the fields at the particle position
         for (unsigned int scell = 0 ; scell < bmin.size() ; scell++)

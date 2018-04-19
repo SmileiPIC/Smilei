@@ -40,7 +40,9 @@ private:
     // Last dual index computed
     int id_, jd_;
     // Last delta computed
-    double deltax, deltay;
+    double deltax, deltar ;
+    // exp m theta
+    std::complex<double> exp_m_theta;
     // Interpolation coefficient on Prim grid
     double coeffxp_[3], coeffyp_[3];
     // Interpolation coefficient on Dual grid

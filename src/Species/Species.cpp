@@ -522,7 +522,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
     // -------------------------------
     if (time_dual>time_frozen) { // moving particle
 
-        smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
+        smpi->dynamics_resize(ithread, nDim_field, bmax.back(), params.geometry=="3drz");
 
         //Point to local thread dedicated buffers
         //Still needed for ionization
@@ -1546,7 +1546,7 @@ void Species::ponderomotive_update_susceptibilty_and_momentum(double time_dual, 
     // -------------------------------
     if (time_dual>time_frozen) { // moving particle
 
-        smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
+        smpi->dynamics_resize(ithread, nDim_field, bmax.back(), params.geometry=="3drz");
 
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) { // loop on ibin
             
@@ -1626,7 +1626,7 @@ void Species::ponderomotive_update_position_and_currents(double time_dual, unsig
     // -------------------------------
     if (time_dual>time_frozen) { // moving particle
     
-        smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
+        smpi->dynamics_resize(ithread, nDim_field, bmax.back(), params.geometry=="3drz");
     
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
     
