@@ -493,6 +493,7 @@ public:
                 if( !ok1 && !ok2 ) ERROR("For species '" << species_name << "', must define `number_density ` or `charge_density`.");
                 if( ok1 ) thisSpecies->densityProfileType = "nb";
                 if( ok2 ) thisSpecies->densityProfileType = "charge";
+                MESSAGE(thisSpecies->densityProfileType);
             }
             // Photons
             else if (thisSpecies->mass == 0)
@@ -504,12 +505,12 @@ public:
                 thisSpecies->densityProfileType = "nb";
             }
 
-            thisSpecies->densityProfile = new Profile(profile1, params.nDim_particle, Tools::merge(thisSpecies->densityProfileType,"_density ",species_name), true);
+            thisSpecies->densityProfile = new Profile(profile1, params.nDim_field, Tools::merge(thisSpecies->densityProfileType,"_density ",species_name), true);
 	    MESSAGE("creating density profile");
             // Number of particles per cell
             if( !PyTools::extract_pyProfile("particles_per_cell", profile1, "Species", ispec))
                 ERROR("For species '" << species_name << "', particles_per_cell not found or not understood");
-            thisSpecies->ppcProfile = new Profile(profile1, params.nDim_particle, Tools::merge("particles_per_cell ",species_name), true);
+            thisSpecies->ppcProfile = new Profile(profile1, params.nDim_field, Tools::merge("particles_per_cell ",species_name), true);
         } else {
             if( PyTools::extract_pyProfile("particles_per_cell", profile1, "Species", ispec))
                ERROR("For species '" << species_name << "', cannot define both `particles_per_cell` and  `position_initialization` array.");
@@ -521,21 +522,21 @@ public:
         // Charge
         if( !PyTools::extract_pyProfile("charge", profile1, "Species", ispec))
             ERROR("For species '" << species_name << "', charge not found or not understood");
-        thisSpecies->chargeProfile = new Profile(profile1, params.nDim_particle, Tools::merge("charge ",species_name), true);
+        thisSpecies->chargeProfile = new Profile(profile1, params.nDim_field, Tools::merge("charge ",species_name), true);
 	MESSAGE("creating charge profile");
         if (thisSpecies->momentum_initialization_array == NULL){
             // Mean velocity
             if ( PyTools::extract3Profiles("mean_velocity", ispec, profile1, profile2, profile3) ){
-                thisSpecies->velocityProfile[0] = new Profile(profile1, params.nDim_particle, Tools::merge("mean_velocity[0] ",species_name), true);
-                thisSpecies->velocityProfile[1] = new Profile(profile2, params.nDim_particle, Tools::merge("mean_velocity[1] ",species_name), true);
-                thisSpecies->velocityProfile[2] = new Profile(profile3, params.nDim_particle, Tools::merge("mean_velocity[2] ",species_name), true);
+                thisSpecies->velocityProfile[0] = new Profile(profile1, params.nDim_field, Tools::merge("mean_velocity[0] ",species_name), true);
+                thisSpecies->velocityProfile[1] = new Profile(profile2, params.nDim_field, Tools::merge("mean_velocity[1] ",species_name), true);
+                thisSpecies->velocityProfile[2] = new Profile(profile3, params.nDim_field, Tools::merge("mean_velocity[2] ",species_name), true);
             }
 	MESSAGE("velocity profile");
             // Temperature
             if ( PyTools::extract3Profiles("temperature", ispec, profile1, profile2, profile3) ) {
-                thisSpecies->temperatureProfile[0] = new Profile(profile1, params.nDim_particle, Tools::merge("temperature[0] ",species_name), true);
-                thisSpecies->temperatureProfile[1] = new Profile(profile2, params.nDim_particle, Tools::merge("temperature[1] ",species_name), true);
-                thisSpecies->temperatureProfile[2] = new Profile(profile3, params.nDim_particle, Tools::merge("temperature[2] ",species_name), true);
+                thisSpecies->temperatureProfile[0] = new Profile(profile1, params.nDim_field, Tools::merge("temperature[0] ",species_name), true);
+                thisSpecies->temperatureProfile[1] = new Profile(profile2, params.nDim_field, Tools::merge("temperature[1] ",species_name), true);
+                thisSpecies->temperatureProfile[2] = new Profile(profile3, params.nDim_field, Tools::merge("temperature[2] ",species_name), true);
             } MESSAGE("TEMPERATURE");
         } else {
             ok1 = PyTools::extract3Profiles("mean_velocity", ispec, profile1, profile2, profile3) ;

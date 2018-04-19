@@ -60,8 +60,8 @@ public:
     void put( Field* outField, Params &params, SmileiMPI* smpi, Patch* thisPatch, Patch* outPatch  ) = 0;
     void get( Field*  inField, Params &params, SmileiMPI* smpi, Patch*   inPatch, Patch* thisPatch ) = 0;
 
-protected:
     std::complex<double> *cdata_;
+protected:
 };
 
 #endif

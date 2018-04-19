@@ -95,31 +95,31 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi, OpenPMDparams& op
                     (*this)(ipatch)->EMfields->rho_s[ifield]=NULL;
                 }
             }
-	    }
+	}
         else{
             ElectroMagn3DRZ* EMfields = static_cast<ElectroMagn3DRZ*>((*this)(ipatch)->EMfields );
             for (unsigned int ifield=0 ; ifield<EMfields->Jl_s.size(); ifield++) {
-	    MESSAGE(EMfields->Jl_s[ifield]->data_);
-                if( EMfields->Jl_s[ifield]->data_ == NULL ){
+                if( EMfields->Jl_s[ifield]->cdata_ == NULL ){
                     delete EMfields->Jl_s[ifield];
                     EMfields->Jl_s[ifield]=NULL;
                 }
              } 
             for (unsigned int ifield=0 ; ifield<EMfields->Jr_s.size(); ifield++) {
-                if( EMfields->Jr_s[ifield]->data_ == NULL ){
+                if( EMfields->Jr_s[ifield]->cdata_ == NULL ){
                     delete EMfields->Jr_s[ifield];
                     EMfields->Jr_s[ifield]=NULL;
                 }
             } 
             for (unsigned int ifield=0 ; ifield<EMfields->Jt_s.size(); ifield++) {
-                if(EMfields->Jt_s[ifield]->data_ == NULL ){
+                if(EMfields->Jt_s[ifield]->cdata_ == NULL ){
                     delete EMfields->Jt_s[ifield];
                     EMfields->Jt_s[ifield]=NULL;
                 }
             } 
 	
             for (unsigned int ifield=0 ; ifield<EMfields->rho_s.size(); ifield++) {
-                if( EMfields->rho_s[ifield]->data_ == NULL ){
+                cField2D * crho_s = static_cast<cField2D*>(EMfields->rho_s[ifield]);
+                if( crho_s->cdata_ == NULL ){
                     delete EMfields->rho_s[ifield];
                     EMfields->rho_s[ifield]=NULL;
                }
@@ -208,7 +208,7 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
     for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
         if ( (*this)(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
             SyncVectorPatch::finalize_and_sort_parts((*this), ispec, params, smpi, timers, itime ); // Included sort_part
-        }
+	}
     }
 
     #pragma omp for schedule(runtime)
@@ -242,7 +242,6 @@ void VectorPatch::computeCharge()
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         (*this)(ipatch)->EMfields->restartRhoJ();
-	MESSAGE("restartRhoJ");
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
             species(ipatch, ispec)->computeCharge(ispec, emfields(ipatch), proj(ipatch) );
         }
@@ -266,18 +265,14 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
         return;
 
     timers.densities.restart();
-    MESSAGE("kharya");
     if  (diag_flag){
-        MESSAGE("diag_flag");
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
              // Per species in global, Attention if output -> Sync / per species fields
             (*this)(ipatch)->EMfields->computeTotalRhoJ();
         }
-	MESSAGE("sucess");
     }
     timers.densities.update();
-
 
     timers.syncDens.restart();
     if ( params.geometry != "3drz" ) {
@@ -296,14 +291,12 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
                 SyncVectorPatch::sumRhoJs( params, (*this), ispec, timers, itime ); // MPI
             }
         }
-    }
+    } 
     timers.syncDens.update( params.printNow( itime ) );
-
 } // End sumDensities
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::sumSusceptibility(Params &params, double time_dual, Timers &timers, int itime, SimWindow* simWindow )
 {

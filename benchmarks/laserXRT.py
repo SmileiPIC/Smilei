@@ -14,7 +14,7 @@ nx = 800
 nr = 100
 Lsim = [dx*nx,nr*dr] # length of the simulation
 dt = 0.18
-npatch_x=32
+npatch_x=1
 Main(
     geometry = "3drz",
     nmodes = 2,
@@ -22,7 +22,7 @@ Main(
     solve_poisson = False,
     cell_length = [dx, dr],
     grid_length  = Lsim,
-    number_of_patches = [npatch_x, 4 ],
+    number_of_patches = [npatch_x, 1 ],
     timestep = dt,
     simulation_time = 2*nx*dt,
     clrw = nx/npatch_x, 
@@ -77,11 +77,11 @@ Species(
 
 globalEvery = int(1)
 
-Checkpoints(
-    dump_step = 0,
-    dump_minutes = 0.0,
-    exit_after_dump = False,
-)
+#Checkpoints(
+#    dump_step = 0,
+#    dump_minutes = 0.0,
+#    exit_after_dump = False,
+#)
 #DiagScalar(every=globalEvery)
 
 DiagFields(
