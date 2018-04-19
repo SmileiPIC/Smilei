@@ -870,8 +870,9 @@ void ProjectorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles,
                 complex< double>* b_Jl =  &(*emRZ->Jl_[imode] )(ibin*clrw* dim1 );
                 complex<double>* b_Jr =  &(*emRZ->Jr_[imode] )(ibin*clrw*(dim1+1) );
                 complex<double>* b_Jt =  &(*emRZ->Jt_[imode] )(ibin*clrw* dim1 );
+		MESSAGE("nparts here"<< iend-istart);
                 for ( int ipart=istart ; ipart<iend; ipart++ )
-                     (*this)(b_Jl , b_Jr , b_Jt , particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[3*ipart], &(*delta)[3*ipart]);
+                     (*this)(b_Jl , b_Jr , b_Jt , particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[ipart], &(*delta)[ipart]);
             }
             else{	
 		MESSAGE("wrapper mode> 0");
@@ -879,7 +880,7 @@ void ProjectorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles,
                 complex<double>* b_Jr =  &(*emRZ->Jr_[imode] )(ibin*clrw*(dim1+1) );
                 complex<double>* b_Jt =  &(*emRZ->Jt_[imode] )(ibin*clrw* dim1 );
                 for ( int ipart=istart ; ipart<iend; ipart++ )
-                    (*this)(b_Jl , b_Jr , b_Jt , particles,  ipart, ibin*clrw, b_dim, &(*iold)[3*ipart], &(*delta)[3*ipart], imode);
+                    (*this)(b_Jl , b_Jr , b_Jt , particles,  ipart, ibin*clrw, b_dim, &(*iold)[ipart], &(*delta)[ipart], imode);
            } 
          }       // Otherwise, the projection may apply to the species-specific arrays
      } 
@@ -893,7 +894,7 @@ void ProjectorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles,
                 complex<double>* b_Jt  = emRZ->Jt_s [ifield] ? &(* static_cast<cField2D*>(emRZ->Jt_s [ifield]) )(ibin*clrw*dim1) : &(*emRZ->Jt_[imode] )(ibin*clrw*dim1) ;
                 complex<double>* b_rho = emRZ->rho_s[ifield] ? &(* static_cast<cField2D*>(emRZ->rho_s[ifield]) )(ibin*clrw* dim1) : &(*emRZ->rho_RZ_[imode])(ibin*clrw* dim1 ) ;
                 for ( int ipart=istart ; ipart<iend; ipart++ )
-                    (*this)(b_Jl , b_Jr , b_Jt ,b_rho, particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[3*ipart], &(*delta)[3*ipart]);
+                    (*this)(b_Jl , b_Jr , b_Jt ,b_rho, particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[ipart], &(*delta)[ipart]);
 }
              else{    
 
@@ -902,7 +903,7 @@ void ProjectorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles,
                 complex<double>* b_Jt  = emRZ->Jt_s [ifield] ? &(* static_cast<cField2D*>(emRZ->Jt_s [ifield]) )(ibin*clrw*dim1) : &(*emRZ->Jt_[imode])(ibin*clrw*dim1) ;
                 complex<double>* b_rho = emRZ->rho_s[ifield] ? &(* static_cast<cField2D*>(emRZ->rho_s[ifield]) )(ibin*clrw* dim1 ) : &(*emRZ->rho_RZ_[imode])(ibin*clrw* dim1 ) ;
                 for ( int ipart=istart ; ipart<iend; ipart++ )
-                    (*this)(b_Jl , b_Jr , b_Jt ,b_rho, particles,  ipart, ibin*clrw, b_dim, &(*iold)[3*ipart], &(*delta)[3*ipart], imode);
+                    (*this)(b_Jl , b_Jr , b_Jt ,b_rho, particles,  ipart, ibin*clrw, b_dim, &(*iold)[ipart], &(*delta)[ipart], imode);
                  }
 
        }
