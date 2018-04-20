@@ -360,21 +360,17 @@ void VectorPatch::initExternals(Params& params)
 {
     // Init all lasers
     for( unsigned int ipatch=0; ipatch<size(); ipatch++ ) {
-        // check if patch is on the border
-        int iBC(-1);
-        if     ( (*this)(ipatch)->isXmin() ) {
-            iBC = 0;
+        if( (*this)(ipatch)->isXmin() && (*this)(ipatch)->EMfields->emBoundCond[0] != NULL ) {
+            unsigned int nlaser = (*this)(ipatch)->EMfields->emBoundCond[0]->vecLaser.size();
+            for (unsigned int ilaser = 0; ilaser < nlaser; ilaser++)
+                (*this)(ipatch)->EMfields->emBoundCond[0]->vecLaser[ilaser]->initFields(params, (*this)(ipatch));
         }
-        else if( (*this)(ipatch)->isXmax() ) {
-            iBC = 1;
+        
+        if( (*this)(ipatch)->isXmax() && (*this)(ipatch)->EMfields->emBoundCond[1] != NULL ) {
+            unsigned int nlaser = (*this)(ipatch)->EMfields->emBoundCond[1]->vecLaser.size();
+            for (unsigned int ilaser = 0; ilaser < nlaser; ilaser++)
+                (*this)(ipatch)->EMfields->emBoundCond[1]->vecLaser[ilaser]->initFields(params, (*this)(ipatch));
         }
-        else continue;
-        // If patch is on border, then fill the fields arrays
-        unsigned int nlaser = 0;
-        if ( (iBC!=-1) && ( (*this)(ipatch)->EMfields->emBoundCond[iBC] != NULL ) )
-            nlaser = (*this)(ipatch)->EMfields->emBoundCond[iBC]->vecLaser.size();
-        for (unsigned int ilaser = 0; ilaser < nlaser; ilaser++)
-             (*this)(ipatch)->EMfields->emBoundCond[iBC]->vecLaser[ilaser]->initFields(params, (*this)(ipatch));
     }
 
     // Init all antennas
