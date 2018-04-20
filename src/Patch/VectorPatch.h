@@ -222,6 +222,7 @@ public :
 
     std::vector<Field*> listA_;
     std::vector<Field*> listA0_;
+    std::vector<Field*> listPhi_;
     std::vector<Field*> listGradPhix_;
     std::vector<Field*> listGradPhiy_;
     std::vector<Field*> listGradPhiz_;  

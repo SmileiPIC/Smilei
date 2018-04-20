@@ -895,6 +895,26 @@ void SyncVectorPatch::finalizeexchangeA( Params& params, VectorPatch& vecPatches
 //    SyncVectorPatch::finalizeexchangeComplex( vecPatches.listA0_, vecPatches );
 }
 
+
+void SyncVectorPatch::exchangePhi( Params& params, VectorPatch& vecPatches )
+{
+    // current ponderomotive potential
+    SyncVectorPatch::exchange_along_all_directions( vecPatches.listPhi_, vecPatches );
+    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listPhi_, vecPatches );
+
+    // value of ponderomotive potential at previous timestep
+    //SyncVectorPatch::exchange_along_all_directions( vecPatches.listPhiold_, vecPatches );
+    //SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listPhiold_, vecPatches );
+}
+
+void SyncVectorPatch::finalizeexchangePhi( Params& params, VectorPatch& vecPatches )
+{
+  
+}
+
+
+
+
 void SyncVectorPatch::exchangeGradPhi( Params& params, VectorPatch& vecPatches )
 {
     // current Gradient value

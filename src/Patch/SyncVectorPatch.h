@@ -44,6 +44,8 @@ public :
 
     static void exchangeA( Params& params, VectorPatch& vecPatches );
     static void finalizeexchangeA( Params& params, VectorPatch& vecPatches );
+    static void exchangePhi( Params& params, VectorPatch& vecPatches );
+    static void finalizeexchangePhi( Params& params, VectorPatch& vecPatches );
     static void exchangeGradPhi( Params& params, VectorPatch& vecPatches );
     static void finalizeexchangeGradPhi( Params& params, VectorPatch& vecPatches );
     static void exchangeEnvChi( Params& params, VectorPatch& vecPatches );

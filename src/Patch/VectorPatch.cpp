@@ -404,6 +404,10 @@ void VectorPatch::solveEnvelope(Params& params, SimWindow* simWindow, int itime,
             // Computes gradients of Phi=|A|^2/2 in all points
             (*this)(ipatch)->EMfields->envelope->compute_Phi_and_gradient_Phi(  (*this)(ipatch)->EMfields );
         }
+
+        // Exchange Phi
+        SyncVectorPatch::exchangePhi(params, (*this));
+        SyncVectorPatch::finalizeexchangePhi( params, (*this) );
      
         // Exchange GradPhi
         SyncVectorPatch::exchangeGradPhi( params, (*this) );
@@ -1080,6 +1084,7 @@ void VectorPatch::update_field_list()
     if (patches_[0]->EMfields->envelope != NULL){
       listA_.resize ( size() ) ;
       listA0_.resize( size() ) ;
+      listPhi_.resize ( size() ) ;
       listGradPhix_.resize( size() ) ;
       listGradPhiy_.resize( size() ) ;
       listGradPhiz_.resize( size() ) ;
@@ -1100,6 +1105,7 @@ void VectorPatch::update_field_list()
         if (patches_[ipatch]->EMfields->envelope != NULL){
           listA_[ipatch]  = patches_[ipatch]->EMfields->envelope->A_ ;
           listA0_[ipatch] = patches_[ipatch]->EMfields->envelope->A0_ ;
+          listPhi_[ipatch]  = patches_[ipatch]->EMfields->envelope->Phi_ ;
           listGradPhix_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhix_ ;
           listGradPhiy_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhiy_ ;
           listGradPhiz_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhiz_ ;
@@ -1327,6 +1333,7 @@ void VectorPatch::update_field_list()
         for ( unsigned int ifields = 0 ; ifields < listA_.size() ; ifields++ ) {
             listA_ [ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
             listA0_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
+            listPhi_ [ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
             listGradPhix_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
             listGradPhiy_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
             listGradPhiz_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
