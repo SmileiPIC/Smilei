@@ -672,10 +672,6 @@ void ElectroMagn1D::applyExternalField(Field* my_field,  Profile *profile, Patch
         pos[0] += dx;
     }
     
-    for (auto& embc: emBoundCond) {
-        if (embc) embc->save_fields(my_field, patch);
-    }
-
 }
 
 
