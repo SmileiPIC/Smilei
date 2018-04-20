@@ -493,7 +493,7 @@ public:
                 if( !ok1 && !ok2 ) ERROR("For species '" << species_name << "', must define `number_density ` or `charge_density`.");
                 if( ok1 ) thisSpecies->densityProfileType = "nb";
                 if( ok2 ) thisSpecies->densityProfileType = "charge";
-                MESSAGE(thisSpecies->densityProfileType);
+                //MESSAGE(thisSpecies->densityProfileType);
             }
             // Photons
             else if (thisSpecies->mass == 0)
@@ -506,7 +506,7 @@ public:
             }
 
             thisSpecies->densityProfile = new Profile(profile1, params.nDim_field, Tools::merge(thisSpecies->densityProfileType,"_density ",species_name), true);
-	    MESSAGE("creating density profile");
+	    //MESSAGE("creating density profile");
             // Number of particles per cell
             if( !PyTools::extract_pyProfile("particles_per_cell", profile1, "Species", ispec))
                 ERROR("For species '" << species_name << "', particles_per_cell not found or not understood");
@@ -523,7 +523,7 @@ public:
         if( !PyTools::extract_pyProfile("charge", profile1, "Species", ispec))
             ERROR("For species '" << species_name << "', charge not found or not understood");
         thisSpecies->chargeProfile = new Profile(profile1, params.nDim_field, Tools::merge("charge ",species_name), true);
-	MESSAGE("creating charge profile");
+	//MESSAGE("creating charge profile");
         if (thisSpecies->momentum_initialization_array == NULL){
             // Mean velocity
             if ( PyTools::extract3Profiles("mean_velocity", ispec, profile1, profile2, profile3) ){
@@ -531,13 +531,13 @@ public:
                 thisSpecies->velocityProfile[1] = new Profile(profile2, params.nDim_field, Tools::merge("mean_velocity[1] ",species_name), true);
                 thisSpecies->velocityProfile[2] = new Profile(profile3, params.nDim_field, Tools::merge("mean_velocity[2] ",species_name), true);
             }
-	MESSAGE("velocity profile");
+	//MESSAGE("velocity profile");
             // Temperature
             if ( PyTools::extract3Profiles("temperature", ispec, profile1, profile2, profile3) ) {
                 thisSpecies->temperatureProfile[0] = new Profile(profile1, params.nDim_field, Tools::merge("temperature[0] ",species_name), true);
                 thisSpecies->temperatureProfile[1] = new Profile(profile2, params.nDim_field, Tools::merge("temperature[1] ",species_name), true);
                 thisSpecies->temperatureProfile[2] = new Profile(profile3, params.nDim_field, Tools::merge("temperature[2] ",species_name), true);
-            } MESSAGE("TEMPERATURE");
+            } //MESSAGE("TEMPERATURE");
         } else {
             ok1 = PyTools::extract3Profiles("mean_velocity", ispec, profile1, profile2, profile3) ;
             ok2 = PyTools::extract3Profiles("temperature", ispec, profile1, profile2, profile3) ;
@@ -571,7 +571,7 @@ public:
             // does a loop over all cells in the simulation
             // considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
             thisSpecies->createParticles(params.n_space, params, patch, 0 );
-	MESSAGE(" PARTICLES");
+	//MESSAGE(" PARTICLES");
         }
         else
         {
@@ -579,7 +579,7 @@ public:
         }
 
         thisSpecies->initOperators(params, patch);
-	MESSAGE("init operators");
+	//MESSAGE("init operators");
         return thisSpecies;
     } // End Species* create()
 
