@@ -523,16 +523,16 @@ void Species::dynamics(double time_dual, unsigned int ispec,
     if (time_dual>time_frozen) { // moving particle
 
         smpi->dynamics_resize(ithread, nDim_field, bmax.back(), params.geometry=="3drz");
-
+        MESSAGE("dynamics resize");
         //Point to local thread dedicated buffers
         //Still needed for ionization
         vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
-
+        
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
 
             // Interpolate the fields at the particle position
             (*Interp)(EMfields, *particles, smpi, &(bmin[ibin]), &(bmax[ibin]), ithread );
-            //MESSAGE("interpolation");    
+            MESSAGE("interpolation");    
             // Ionization
             if (Ionize)
                 (*Ionize)(particles, bmin[ibin], bmax[ibin], Epart, EMfields, Proj);
@@ -587,7 +587,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
             // Push the particles and the photons
             (*Push)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
             //particles->test_move( bmin[ibin], bmax[ibin], params );
-	    //MESSAGE("PARTICLE PUSH");
+	    MESSAGE("PARTICLE PUSH");
             // Apply wall and boundary conditions
             if (mass>0)
             {
@@ -599,7 +599,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                         }
                     }
                 }
-		//MESSAGE("BC PARTICLE");
+		MESSAGE("BC PARTICLE");
                 // Boundary Condition may be physical or due to domain decomposition
                 // apply returns 0 if iPart is not in the local domain anymore
                 //        if omp, create a list per thread
@@ -609,7 +609,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                         nrj_lost_per_thd[tid] += mass * ener_iPart;
                     }
                  }
-
+		MESSAGE("addpartinexchangelist");
 
             } else if (mass==0) {
                 for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
@@ -637,11 +637,12 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 
              // Project currents if not a Test species and charges as well if a diag is needed.
              // Do not project if a photon
-             if ((!particles->is_test) && (mass > 0))
+             if ((!particles->is_test) && (mass > 0)){
                  (*Proj)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread, ibin, clrw, diag_flag, params.is_spectral, b_dim, ispec );
-
+                  MESSAGE("PROJECTION");
+	     }
         }// ibin
-        //MESSAGE("PROJECTION");
+
         for (unsigned int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
             nrj_bc_lost += nrj_lost_per_thd[tid];
 
@@ -694,7 +695,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 
         }
     }//END if time vs. time_frozen
-	//MESSAGE("particle dynamics");
+	MESSAGE("particle dynamics");
 }//END dynamic
 
 

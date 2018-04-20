@@ -170,6 +170,7 @@ void VectorPatch::dynamics(Params& params,
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         (*this)(ipatch)->EMfields->restartRhoJ();
+	MESSAGE("restart rhoj");
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
             if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
                 if (!(*this)(ipatch)->vecSpecies[ispec]->ponderomotive_dynamics){
@@ -180,9 +181,11 @@ void VectorPatch::dynamics(Params& params,
                                                      RadiationTables,
                                                      MultiphotonBreitWheelerTables,
                                                      localDiags);
+
                 } // end if condition on envelope dynamics
             } // end if condition on species
         } // end loop on species
+        MESSAGE("species dynamics");
     } // end loop on patches
 
     timers.particles.update( params.printNow( itime ) );
@@ -195,6 +198,7 @@ void VectorPatch::dynamics(Params& params,
             } // end condition on species
         } // end condition on envelope dynamics
     } // end loop on species
+    MESSAGE("exchange particles");
     timers.syncPart.update( params.printNow( itime ) );
 } // END dynamics
 
