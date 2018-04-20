@@ -36,6 +36,8 @@
 
 #include "DiagnosticTrack.h"
 
+#include "SpeciesMetrics.h"
+
 using namespace std;
 
 
@@ -623,12 +625,12 @@ void SpeciesDynamicV::importParticles( Params& params, Patch* patch, Particles& 
 void SpeciesDynamicV::reconfiguration(Params &params, Patch * patch)
 {
 
-    unsigned int ncell;
+    //unsigned int ncell;
     bool reasign_operators = false;
 
     //split cell into smaller sub_cells for refined sorting
-    ncell = (params.n_space[0]+1);
-    for ( unsigned int i=1; i < params.nDim_field; i++) ncell *= (params.n_space[i]+1);
+    //ncell = (params.n_space[0]+1);
+    //for ( unsigned int i=1; i < params.nDim_field; i++) ncell *= (params.n_space[i]+1);
 
     // We first compute cell_keys: the number of particles per cell
     // if the current mode is without vectorization
@@ -637,31 +639,8 @@ void SpeciesDynamicV::reconfiguration(Params &params, Patch * patch)
         this->compute_part_cell_keys(params);
     }
 
-    // Computation of metrics for the dynamic vectorization:
-    // - max_number_of_particles_per_cells: the maximum number of particles
-    //   per cell in this patch for this species
-    // - min_number_of_particles_per_cells: the minimum number of particles
-    //   per cell in this patch for this species
-    // Loop on all cells
-    int number_of_vecto_cells = 0;
-    int number_of_non_zero_cells = 0;
-    min_number_of_particles_per_cells = species_loc_bmax[0];
-    max_number_of_particles_per_cells = 0;
-    #pragma omp simd
-    for (unsigned int ic=1; ic < ncell; ic++)
-    {
-        max_number_of_particles_per_cells = max(species_loc_bmax[ic-1],max_number_of_particles_per_cells);
-        min_number_of_particles_per_cells = min(species_loc_bmax[ic-1],min_number_of_particles_per_cells);
-        if (species_loc_bmax[ic-1] >= 8)
-        {
-            number_of_vecto_cells ++;
-        }
-        if (species_loc_bmax[ic-1] > 0)
-        {
-            number_of_non_zero_cells++;
-        }
-    }
-    this->ratio_number_of_vecto_cells = double(number_of_vecto_cells) / double(number_of_non_zero_cells);
+    // Compute the number of cells that contain more than 8 particles
+    ratio_number_of_vecto_cells = SpeciesMetrics::get_ratio_number_of_vecto_cells(species_loc_bmax,8);
 
     // Test metrics, if necessary we reasign operators
     if ( (ratio_number_of_vecto_cells > 0.5 && this->vectorized_operators == false)
