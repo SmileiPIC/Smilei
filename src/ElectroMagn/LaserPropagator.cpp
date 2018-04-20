@@ -431,13 +431,13 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
     // --------------------------------
     unsigned int local_size = (_2D ? N[0] : Nlocal[0]*N[1]) * n_omega_local;
     vector<vector<double> > magnitude(nprofiles), phase(nprofiles);
-    //double coeff_magnitude = 1./M_PI/L.back(); // multiply by omega increment
-    double coeff_magnitude = 2./N[ndim-1]; // multiply by omega increment
     
     for( unsigned int i=0; i<nprofiles; i++ ) {
         complex<double> * z = (complex<double> *) PyArray_GETPTR1((PyArrayObject*) arrays[i],0);
         magnitude[i].resize( local_size );
         phase    [i].resize( local_size );
+        double coeff_magnitude = 2./N[ndim-1]; // multiply by omega increment
+        if( profiles_n[i]==1 ) coeff_magnitude *= cz; // multiply by cosine for By only
         for(unsigned int j=0; j<local_size; j++) {
             magnitude[i][j] = abs(z[j]) * coeff_magnitude;
             phase    [i][j] = arg(z[j]);
