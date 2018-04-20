@@ -9,7 +9,10 @@
 
 #include "SpeciesMetrics.h"
 
-//! Return the number of cells that contain more than `particle_threshold` particles
+// -----------------------------------------------------------------------------
+//! Return the number of cells that contain more than
+//! `particle_threshold` particles
+// -----------------------------------------------------------------------------
 float SpeciesMetrics::get_ratio_number_of_vecto_cells(const std::vector<int> & species_loc_bmax,
                                               const int particle_threshold)
 {
@@ -24,7 +27,7 @@ float SpeciesMetrics::get_ratio_number_of_vecto_cells(const std::vector<int> & s
     //min_number_of_particles_per_cells = species_loc_bmax[0];
     //max_number_of_particles_per_cells = 0;
     #pragma omp simd
-    for (unsigned int ic=1; ic < species_loc_bmax.size(); ic++)
+    for (unsigned int ic=0; ic < species_loc_bmax.size(); ic++)
     {
         //max_number_of_particles_per_cells = max(species_loc_bmax[ic-1],max_number_of_particles_per_cells);
         //min_number_of_particles_per_cells = min(species_loc_bmax[ic-1],min_number_of_particles_per_cells);
@@ -40,4 +43,32 @@ float SpeciesMetrics::get_ratio_number_of_vecto_cells(const std::vector<int> & s
     ratio_number_of_vecto_cells = float(number_of_vecto_cells) / float(number_of_non_zero_cells);
 
     return ratio_number_of_vecto_cells;
+}
+
+// -----------------------------------------------------------------------------
+//! Evaluate the time to compute all particles
+//! in the current patch with vectorized operators
+// -----------------------------------------------------------------------------
+void SpeciesMetrics::get_computation_time(const std::vector<int> & species_loc_bmax,
+                                          double & vecto_time,
+                                          double & scalar_time)
+{
+
+    double log_particle_number;
+
+    //std::cout << SpeciesMetrics::get_particle_computation_time_vectorization(log(32.0)) << " "
+    //          << SpeciesMetrics::get_particle_computation_time_scalar(log(32.0)) << '\n';
+
+    // Loop over the cells
+    // #pragma omp simd reduction(+:vecto_time,scalar_time)
+    for (unsigned int ic=0; ic < species_loc_bmax.size(); ic++)
+    {
+        if (species_loc_bmax[ic] > 0)
+        {
+            log_particle_number = log(double(species_loc_bmax[ic]));
+            vecto_time += SpeciesMetrics::get_particle_computation_time_vectorization(log_particle_number)*species_loc_bmax[ic];
+            scalar_time += SpeciesMetrics::get_particle_computation_time_scalar(log_particle_number)*species_loc_bmax[ic];
+        }
+    }
+
 }

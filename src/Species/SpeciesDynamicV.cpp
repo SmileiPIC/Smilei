@@ -627,6 +627,9 @@ void SpeciesDynamicV::reconfiguration(Params &params, Patch * patch)
 
     //unsigned int ncell;
     bool reasign_operators = false;
+    //float ratio_number_of_vecto_cells;
+    double vecto_time = 0;
+    double scalar_time = 0;
 
     //split cell into smaller sub_cells for refined sorting
     //ncell = (params.n_space[0]+1);
@@ -639,15 +642,33 @@ void SpeciesDynamicV::reconfiguration(Params &params, Patch * patch)
         this->compute_part_cell_keys(params);
     }
 
+    // --------------------------------------------------------------------
+    // Metrics 1 - based on the ratio of vectorized cells
     // Compute the number of cells that contain more than 8 particles
-    ratio_number_of_vecto_cells = SpeciesMetrics::get_ratio_number_of_vecto_cells(species_loc_bmax,8);
+    //ratio_number_of_vecto_cells = SpeciesMetrics::get_ratio_number_of_vecto_cells(species_loc_bmax,8);
 
     // Test metrics, if necessary we reasign operators
-    if ( (ratio_number_of_vecto_cells > 0.5 && this->vectorized_operators == false)
-      || (ratio_number_of_vecto_cells < 0.5 && this->vectorized_operators == true))
+    //if ( (ratio_number_of_vecto_cells > 0.5 && this->vectorized_operators == false)
+    //  || (ratio_number_of_vecto_cells < 0.5 && this->vectorized_operators == true))
+    //{
+    //    reasign_operators = true;
+    //}
+    // --------------------------------------------------------------------
+
+    // --------------------------------------------------------------------
+    // Metrics 2 - based on the evaluation of the computational time
+    SpeciesMetrics::get_computation_time(species_loc_bmax,
+                                        vecto_time,
+                                        scalar_time);
+
+    //std::cout << "vecto_time " << vecto_time << " " << scalar_time << '\n';
+
+    if ( (vecto_time < scalar_time && this->vectorized_operators == false)
+      || (vecto_time > scalar_time && this->vectorized_operators == true))
     {
         reasign_operators = true;
     }
+    // --------------------------------------------------------------------
 
     /*std::cout << "Vectorized_operators: " << this->vectorized_operators
               << " ratio_number_of_vecto_cells: " << this->ratio_number_of_vecto_cells
