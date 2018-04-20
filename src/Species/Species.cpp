@@ -293,10 +293,11 @@ void Species::initPosition(unsigned int nPart, unsigned int iPart, double *index
             particles_r=indexes[1]+Rand::uniform()*cell_length[1];
             particles_theta=Rand::uniform()*2*M_PI;
             particles->position(2,p)=particles_r*sin(particles_theta);
-            if (particles_theta >= M_PI/2. || particles_theta <= 3./2.*M_PI)
-                particles->position(1,p)= - sqrt(particles_r*particles_r - particles->position(2,p)* particles->position(2,p));
-            else
-                particles->position(1,p)=sqrt(particles_r*particles_r - particles->position(2,p)* particles->position(2,p));
+            //if (particles_theta >= M_PI/2. || particles_theta <= 3./2.*M_PI)
+            particles->position(1,p)= particles_r*cos(particles_theta);
+		//- sqrt(particles_r*particles_r - particles->position(2,p)* particles->position(2,p));
+            //else
+              //  particles->position(1,p)=sqrt(particles_r*particles_r - particles->position(2,p)* particles->position(2,p));
                 
             }
         //MESSAGE("random RZ position");
@@ -606,6 +607,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                 for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
                     if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
                         addPartInExchList( iPart );
+			MESSAGE("we are removing parts");
                         nrj_lost_per_thd[tid] += mass * ener_iPart;
                     }
                  }

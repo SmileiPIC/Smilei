@@ -170,7 +170,7 @@ void VectorPatch::dynamics(Params& params,
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         (*this)(ipatch)->EMfields->restartRhoJ();
-	MESSAGE("restart rhoj");
+        MESSAGE("restart rhoj");
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
             if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
                 if (!(*this)(ipatch)->vecSpecies[ispec]->ponderomotive_dynamics){

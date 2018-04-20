@@ -875,7 +875,7 @@ void ProjectorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles,
                 MESSAGE("ibin"<< ibin);
                 for ( int ipart=istart ; ipart<iend; ipart++ )
                     (*this)(b_Jl , b_Jr , b_Jt , particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[ipart], &(*delta)[ipart]);
-            MESSAGE("finish m0 proj");
+                MESSAGE("finish m0 proj");
 	    }
             else{	
 		MESSAGE("wrapper mode> 0");
