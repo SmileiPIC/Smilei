@@ -195,7 +195,7 @@ MESSAGE("projection for m=0 done");
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents (sort) for m>0
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold, int imode)
+void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold, complex<double>* exp_m_theta_old, int imode)
 {   MESSAGE("start projection m>0");
     int nparts= particles.size();
     // -------------------------------------
@@ -247,7 +247,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     double yp = particles.position(1,ipart);
     double zp = particles.position(2,ipart);
     e_theta = (yp+Icpx*zp)/sqrt(yp*yp+zp*zp);
-    e_theta_old = (ypold +Icpx*zpold)/sqrt(ypold*ypold+zpold*zpold);
+    e_theta_old = exp_m_theta_old[ipart];
     e_delta =pow((e_theta/e_theta_old),(imode/2.));
     e_delta_inv =1./e_delta;   
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
@@ -523,7 +523,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents (sort) diagfields:timesteps for m>0
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, complex<double>* rho, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold, int imode)
+void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, complex<double>* rho, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold,complex<double>* exp_m_theta_old,  int imode)
 {   MESSAGE("start projection with diag for m>0");
     int nparts= particles.size();
     // -------------------------------------
@@ -575,7 +575,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     double yp = particles.position(1,ipart);
     double zp = particles.position(2,ipart);
     e_theta = (yp+Icpx*zp)/sqrt(yp*yp+zp*zp);
-    e_theta_old = (ypold +Icpx*zpold)/sqrt(ypold*ypold+zpold*zpold);
+    e_theta_old = exp_m_theta_old[ipart];
     e_delta =pow((e_theta/e_theta_old),(imode/2.));
     e_delta_inv =1./e_delta;   
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
@@ -880,7 +880,7 @@ void ProjectorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles,
                 complex<double>* b_Jr =  &(*emRZ->Jr_[imode] )(ibin*clrw*(dim1+1) );
                 complex<double>* b_Jt =  &(*emRZ->Jt_[imode] )(ibin*clrw* dim1 );
                 for ( int ipart=istart ; ipart<iend; ipart++ )
-                    (*this)(b_Jl , b_Jr , b_Jt , particles,  ipart, ibin*clrw, b_dim, &(*iold)[ipart], &(*delta)[ipart], imode);
+                    (*this)(b_Jl , b_Jr , b_Jt , particles,  ipart, ibin*clrw, b_dim, &(*iold)[ipart], &(*delta)[ipart],&(*exp_m_theta_old)[ipart], imode);
            } 
          }       // Otherwise, the projection may apply to the species-specific arrays
      } 
@@ -894,7 +894,7 @@ void ProjectorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles,
                 complex<double>* b_Jt  = emRZ->Jt_s [ifield] ? &(* static_cast<cField2D*>(emRZ->Jt_s [ifield]) )(ibin*clrw*dim1) : &(*emRZ->Jt_[imode] )(ibin*clrw*dim1) ;
                 complex<double>* b_rho = emRZ->rho_s[ifield] ? &(* static_cast<cField2D*>(emRZ->rho_s[ifield]) )(ibin*clrw* dim1) : &(*emRZ->rho_RZ_[imode])(ibin*clrw* dim1 ) ;
                 for ( int ipart=istart ; ipart<iend; ipart++ )
-                    (*this)(b_Jl , b_Jr , b_Jt ,b_rho, particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[ipart], &(*delta)[ipart]);
+                   (*this)(b_Jl , b_Jr , b_Jt ,b_rho, particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[ipart], &(*delta)[ipart]);
 }
              else{    
 
@@ -903,7 +903,7 @@ void ProjectorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles,
                 complex<double>* b_Jt  = emRZ->Jt_s [ifield] ? &(* static_cast<cField2D*>(emRZ->Jt_s [ifield]) )(ibin*clrw*dim1) : &(*emRZ->Jt_[imode])(ibin*clrw*dim1) ;
                 complex<double>* b_rho = emRZ->rho_s[ifield] ? &(* static_cast<cField2D*>(emRZ->rho_s[ifield]) )(ibin*clrw* dim1 ) : &(*emRZ->rho_RZ_[imode])(ibin*clrw* dim1 ) ;
                 for ( int ipart=istart ; ipart<iend; ipart++ )
-                    (*this)(b_Jl , b_Jr , b_Jt ,b_rho, particles,  ipart, ibin*clrw, b_dim, &(*iold)[ipart], &(*delta)[ipart], imode);
+                    (*this)(b_Jl , b_Jr , b_Jt ,b_rho, particles,  ipart, ibin*clrw, b_dim, &(*iold)[ipart], &(*delta)[ipart], &(*exp_m_theta_old)[ipart], imode);
                  }
 
        }
