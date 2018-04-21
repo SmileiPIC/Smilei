@@ -396,19 +396,26 @@ void VectorPatch::solveEnvelope(Params& params, SimWindow* simWindow, int itime,
             (*this)(ipatch)->EMfields->envelope->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
         }
       
-        // Exchange envelope
+        // Exchange envelope A
         SyncVectorPatch::exchangeA( params, (*this) );
         SyncVectorPatch::finalizeexchangeA( params, (*this) );
 
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
-            // Computes gradients of Phi=|A|^2/2 in all points
-            (*this)(ipatch)->EMfields->envelope->compute_Phi_and_gradient_Phi(  (*this)(ipatch)->EMfields );
+
+        // Compute ponderomotive potential Phi=|A|^2/2
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){ 
+            (*this)(ipatch)->EMfields->envelope->compute_Phi(  (*this)(ipatch)->EMfields );
         }
 
         // Exchange Phi
         SyncVectorPatch::exchangePhi(params, (*this));
         SyncVectorPatch::finalizeexchangePhi( params, (*this) );
      
+
+        // Compute gradients of Phi
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+            (*this)(ipatch)->EMfields->envelope->compute_gradient_Phi(  (*this)(ipatch)->EMfields );
+        }
+
         // Exchange GradPhi
         SyncVectorPatch::exchangeGradPhi( params, (*this) );
         SyncVectorPatch::finalizeexchangeGradPhi( params, (*this) );
@@ -1085,9 +1092,13 @@ void VectorPatch::update_field_list()
       listA_.resize ( size() ) ;
       listA0_.resize( size() ) ;
       listPhi_.resize ( size() ) ;
+      listPhi0_.resize ( size() ) ;
       listGradPhix_.resize( size() ) ;
       listGradPhiy_.resize( size() ) ;
       listGradPhiz_.resize( size() ) ;
+      listGradPhix0_.resize( size() ) ;
+      listGradPhiy0_.resize( size() ) ;
+      listGradPhiz0_.resize( size() ) ;
       listEnv_Chi_.resize( size() ) ;
                                                       }
 

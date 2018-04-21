@@ -305,7 +305,7 @@ void LaserEnvelope3D::compute(ElectroMagn* EMfields)
     } // end x loop
 
     delete A3Dnew;
-}
+} // end LaserEnvelope3D::compute
 
 
 void LaserEnvelope::boundaryConditions(int itime, double time_dual, Patch* patch, Params &params, SimWindow* simWindow)
@@ -330,16 +330,37 @@ void LaserEnvelope::boundaryConditions(int itime, double time_dual, Patch* patch
         }
     }
 
-}
+} // end LaserEnvelope::boundaryConditions
 
 
-void LaserEnvelope3D::compute_Phi_and_gradient_Phi(ElectroMagn* EMfields){
+void LaserEnvelope3D::compute_Phi(ElectroMagn* EMfields){
 
-    // computes Phi=|A|^2/2 (the ponderomotive potential) and its gradient, old and present values
-
+    // computes Phi=|A|^2/2 (the ponderomotive potential) old and present values
 
     cField3D* A3D          = static_cast<cField3D*>(A_);          // the envelope at timestep n
     cField3D* A03D         = static_cast<cField3D*>(A0_);         // the envelope at timestep n-1
+
+    Field3D* Phi3D         = static_cast<Field3D*>(Phi_);         //Phi=|A|^2/2 is the ponderomotive potential
+    Field3D* Phiold3D      = static_cast<Field3D*>(Phiold_); 
+
+
+    // Compute ponderomotive potential Phi=|A|^2/2, at timesteps n and n-1, including ghost cells and 
+    // and old value of gradientPhi
+    for (unsigned int i=1 ; i <A_->dims_[0]-1; i++){ // x loop
+        for (unsigned int j=1 ; j < A_->dims_[1]-1; j++){ // y loop
+            for (unsigned int k=1 ; k < A_->dims_[2]-1; k++){ // z loop
+                (*Phi3D)   (i,j,k)       = std::abs((*A3D) (i,j,k)) * std::abs((*A3D) (i,j,k)) * 0.5;
+                (*Phiold3D)(i,j,k)       = std::abs((*A03D)(i,j,k)) * std::abs((*A03D)(i,j,k)) * 0.5;
+            } // end z loop
+        } // end y loop
+    } // end x loop
+
+} // end LaserEnvelope3D::compute_Phi
+
+
+void LaserEnvelope3D::compute_gradient_Phi(ElectroMagn* EMfields){
+
+    // computes gradient of Phi=|A|^2/2 (the ponderomotive potential), old and present values
 
     Field3D* GradPhix3D    = static_cast<Field3D*>(GradPhix_);
     Field3D* GradPhixold3D = static_cast<Field3D*>(GradPhixold_); 
@@ -360,24 +381,16 @@ void LaserEnvelope3D::compute_Phi_and_gradient_Phi(ElectroMagn* EMfields){
     //! 1/(2dz), where dz is the spatial step dz for 3D3V cartesian simulations
     double one_ov_2dz=1./2./cell_length[2];
 
-    // Compute ponderomotive potential Phi=|A|^2/2, at timesteps n and n-1, including ghost cells and 
-    // and old value of gradientPhi
-    for (unsigned int i=0 ; i <A_->dims_[0]; i++){ // x loop
-        for (unsigned int j=0 ; j < A_->dims_[1]; j++){ // y loop
-            for (unsigned int k=0 ; k < A_->dims_[2]; k++){ // z loop
-                (*Phi3D)   (i,j,k)       = std::abs((*A3D) (i,j,k)) * std::abs((*A3D) (i,j,k)) * 0.5;
-                (*Phiold3D)(i,j,k)       = std::abs((*A03D)(i,j,k)) * std::abs((*A03D)(i,j,k)) * 0.5;
-                (*GradPhixold3D)(i,j,k)  = (*GradPhix3D)(i,j,k);
-                (*GradPhiyold3D)(i,j,k)  = (*GradPhiy3D)(i,j,k);
-                (*GradPhizold3D)(i,j,k)  = (*GradPhiy3D)(i,j,k);
-            } // end z loop
-        } // end y loop
-    } // end x loop
-
-    // Compute gradients of Phi, at timesteps n - need to exchange ghost cells
+    // Compute gradients of Phi, at timesteps n 
     for (unsigned int i=1 ; i <A_->dims_[0]-1; i++){ // x loop
         for (unsigned int j=1 ; j < A_->dims_[1]-1 ; j++){ // y loop
             for (unsigned int k=1 ; k < A_->dims_[2]-1; k++){ // z loop
+
+             // old gradient values
+             (*GradPhixold3D)(i,j,k)  = (*GradPhix3D)(i,j,k);
+             (*GradPhiyold3D)(i,j,k)  = (*GradPhiy3D)(i,j,k);
+             (*GradPhizold3D)(i,j,k)  = (*GradPhiy3D)(i,j,k);
+
              // gradient in x direction
              (*GradPhix3D)   (i,j,k) = ( (*Phi3D)   (i+1,j  ,k  )-(*Phi3D)   (i-1,j  ,k  ) ) * one_ov_2dx;
              // gradient in y direction
@@ -388,4 +401,4 @@ void LaserEnvelope3D::compute_Phi_and_gradient_Phi(ElectroMagn* EMfields){
         } // end y loop
     } // end x loop
 
-}
+} // end LaserEnvelope3D::compute_gradient_Phi

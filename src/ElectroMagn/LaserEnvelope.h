@@ -21,7 +21,8 @@ public:
     virtual void initEnvelope( Patch* patch , ElectroMagn* EMfields) = 0;
     virtual ~LaserEnvelope();
     virtual void compute(ElectroMagn* EMfields) = 0;
-    virtual void compute_Phi_and_gradient_Phi(ElectroMagn* EMfields) = 0;
+    virtual void compute_Phi(ElectroMagn* EMfields) = 0;
+    virtual void compute_gradient_Phi(ElectroMagn* EMfields) = 0;
     void boundaryConditions(int itime, double time_dual, Patch* patch, Params &params, SimWindow* simWindow);
     
     Profile *profile_;
@@ -54,7 +55,8 @@ public:
     void initEnvelope( Patch* patch,ElectroMagn* EMfields ) override final;
     ~LaserEnvelope3D();
      void compute(ElectroMagn* EMfields) override final;
-     void compute_Phi_and_gradient_Phi(ElectroMagn* EMfields) override final;
+     void compute_Phi(ElectroMagn* EMfields) override final;
+     void compute_gradient_Phi(ElectroMagn* EMfields) override final;
 };
 
 #endif
