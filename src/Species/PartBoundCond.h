@@ -103,7 +103,7 @@ public:
         }
         // iDim = 1 & 2
         else {
-             if ( particles.distance2_to_axis(ipart) >= y_max ) {
+             if ( particles.distance2_to_axis(ipart) >= y_max2 ) {
                 if (bc_ymax==NULL) keep_part = 0;
                 else {
                     keep_part *= (*bc_ymax)( particles, ipart, -1, 2.*y_max, species,nrj_iPart );
@@ -128,6 +128,7 @@ private:
     double y_min;
     //! Max value of the y coordinate of particles on the current processor
     double y_max;
+    double y_max2;
     //! Min value of the z coordinate of particles on the current processor
     double z_min;
     //! Max value of the z coordinate of particles on the current processor
