@@ -396,15 +396,26 @@ void VectorPatch::solveEnvelope(Params& params, SimWindow* simWindow, int itime,
             (*this)(ipatch)->EMfields->envelope->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
         }
       
-        // Exchange envelope
+        // Exchange envelope A
         SyncVectorPatch::exchangeA( params, (*this) );
         SyncVectorPatch::finalizeexchangeA( params, (*this) );
 
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
-            // Computes gradients of Phi=|A|^2/2 in all points
-            (*this)(ipatch)->EMfields->envelope->compute_Phi_and_gradient_Phi(  (*this)(ipatch)->EMfields );
+
+        // Compute ponderomotive potential Phi=|A|^2/2
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){ 
+            (*this)(ipatch)->EMfields->envelope->compute_Phi(  (*this)(ipatch)->EMfields );
         }
+
+        // Exchange Phi
+        SyncVectorPatch::exchangePhi(params, (*this));
+        SyncVectorPatch::finalizeexchangePhi( params, (*this) );
      
+
+        // Compute gradients of Phi
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+            (*this)(ipatch)->EMfields->envelope->compute_gradient_Phi(  (*this)(ipatch)->EMfields );
+        }
+
         // Exchange GradPhi
         SyncVectorPatch::exchangeGradPhi( params, (*this) );
         SyncVectorPatch::finalizeexchangeGradPhi( params, (*this) );
@@ -1080,9 +1091,14 @@ void VectorPatch::update_field_list()
     if (patches_[0]->EMfields->envelope != NULL){
       listA_.resize ( size() ) ;
       listA0_.resize( size() ) ;
+      listPhi_.resize ( size() ) ;
+      listPhi0_.resize ( size() ) ;
       listGradPhix_.resize( size() ) ;
       listGradPhiy_.resize( size() ) ;
       listGradPhiz_.resize( size() ) ;
+      listGradPhix0_.resize( size() ) ;
+      listGradPhiy0_.resize( size() ) ;
+      listGradPhiz0_.resize( size() ) ;
       listEnv_Chi_.resize( size() ) ;
                                                       }
 
@@ -1100,9 +1116,14 @@ void VectorPatch::update_field_list()
         if (patches_[ipatch]->EMfields->envelope != NULL){
           listA_[ipatch]  = patches_[ipatch]->EMfields->envelope->A_ ;
           listA0_[ipatch] = patches_[ipatch]->EMfields->envelope->A0_ ;
+          listPhi_[ipatch]  = patches_[ipatch]->EMfields->envelope->Phi_ ;
+          listPhi0_[ipatch]  = patches_[ipatch]->EMfields->envelope->Phiold_ ;
           listGradPhix_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhix_ ;
           listGradPhiy_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhiy_ ;
           listGradPhiz_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhiz_ ;
+          listGradPhix0_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhixold_ ;
+          listGradPhiy0_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhiyold_ ;
+          listGradPhiz0_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhizold_ ;
           listEnv_Chi_[ipatch] = patches_[ipatch]->EMfields->Env_Chi_ ;
                                                         }
     }
@@ -1327,9 +1348,14 @@ void VectorPatch::update_field_list()
         for ( unsigned int ifields = 0 ; ifields < listA_.size() ; ifields++ ) {
             listA_ [ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
             listA0_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
+            listPhi_ [ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
+            listPhi0_ [ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
             listGradPhix_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
             listGradPhiy_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
             listGradPhiz_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
+            listGradPhix0_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
+            listGradPhiy0_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
+            listGradPhiz0_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
             listEnv_Chi_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
         }
     }
