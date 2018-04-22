@@ -1058,7 +1058,6 @@ void Species::count_sort_part(Params &params)
         iy = floor(y * dx_inv_[2]) ;
 
         ixy = iy + ix*params.n_space[1];
-
         particles->overwrite_part(ip, particles_sorted[token] , indices[ixy]);
         indices[ixy]++;
     }
@@ -1184,6 +1183,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                     nppc = n_part_in_cell(i,j,k);
 		  //  MESSAGE("nppc="<< nppc); MESSAGE("density"<< density(i,j,k)*100000);
                     n_part_in_cell(i,j,k) = floor(nppc);
+	            if (n_part_in_cell(i,j,k)= 0) MESSAGE("nppc"<<n_part_in_cell(i,j,k));
                     // If not a round number, then we need to decide how to round
                     double intpart;
                     if ( modf(nppc, &intpart) > 0) {
