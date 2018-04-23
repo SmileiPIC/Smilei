@@ -195,9 +195,10 @@ void Patch::finalizeMPIenvironment(Params& params) {
     int nb_comms(9); // E, B, B_m : min number of comms
     if (params.geometry == "3drz")
         nb_comms += 9*(params.nmodes - 1);
-    // if envelope is present, add A,A0 to comms
+    // if envelope is present, 
+    // add to comms A, A0, Phi, Phi_old, GradPhi (x,y,z components), GradPhi_old (x,y,z components) 
     if (params.Laser_Envelope_model){  
-        nb_comms += 2;
+        nb_comms += 10;
     }
     // add comms for species
     nb_comms += 2*vecSpecies.size();

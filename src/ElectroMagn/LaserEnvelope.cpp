@@ -106,17 +106,17 @@ LaserEnvelope3D::LaserEnvelope3D( Params& params, Patch* patch, ElectroMagn* EMf
     A_  = new cField3D( dimPrim, "A" );
     A0_ = new cField3D( dimPrim, "Aold" );
 
-    Phi_         = new Field3D( dimPrim );
-    Phiold_      = new Field3D( dimPrim );
+    Phi_         = new Field3D( dimPrim, "Phi" );
+    Phiold_      = new Field3D( dimPrim, "Phiold" );
 
-    GradPhix_    = new Field3D( dimPrim );
-    GradPhixold_ = new Field3D( dimPrim );
+    GradPhix_    = new Field3D( dimPrim, "GradPhix" );
+    GradPhixold_ = new Field3D( dimPrim, "GradPhixold" );
 
-    GradPhiy_    = new Field3D( dimPrim );
-    GradPhiyold_ = new Field3D( dimPrim );
+    GradPhiy_    = new Field3D( dimPrim, "GradPhiy" );
+    GradPhiyold_ = new Field3D( dimPrim, "GradPhiyold" );
 
-    GradPhiz_    = new Field3D( dimPrim );
-    GradPhizold_ = new Field3D( dimPrim );
+    GradPhiz_    = new Field3D( dimPrim, "GradPhiz" );
+    GradPhizold_ = new Field3D( dimPrim, "GradPhizold" );
 
 }
 
@@ -372,7 +372,7 @@ void LaserEnvelope3D::compute_gradient_Phi(ElectroMagn* EMfields){
     Field3D* GradPhizold3D = static_cast<Field3D*>(GradPhizold_); 
 
     Field3D* Phi3D         = static_cast<Field3D*>(Phi_);         //Phi=|A|^2/2 is the ponderomotive potential
-    Field3D* Phiold3D      = static_cast<Field3D*>(Phiold_); 
+
 
     //! 1/(2dx), where dx is the spatial step dx for 3D3V cartesian simulations
     double one_ov_2dx=1./2./cell_length[0];
