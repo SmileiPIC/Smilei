@@ -52,6 +52,9 @@ double Tools::getMemFootPrint() {
     numpro = getpid();
 
     sprintf(filename, "/proc/%ld/status", (long)numpro);
+    
+    if( ! file_exists(filename) ) return 0;
+    
     int fd = open(filename, O_RDONLY, 0);
     int num_read=read(fd,sbuf,(sizeof sbuf)-1);
     close(fd);
