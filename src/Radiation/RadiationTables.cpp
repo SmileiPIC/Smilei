@@ -13,6 +13,7 @@
 #include <cstring>
 #include <iostream>
 #include <fstream>
+#include <iomanip>
 
 #include <cmath>
 
@@ -166,11 +167,11 @@ void RadiationTables::initParams(Params& params)
         params.hasLLRadiation ||
         params.hasNielRadiation)
     {
-        MESSAGE( "        Threshold on the quantum parameter for radiation: " << chipa_radiation_threshold);
+        MESSAGE( "        Threshold on the quantum parameter for radiation: " << std::setprecision(5) << chipa_radiation_threshold);
     }
     if (params.hasMCRadiation)
     {
-        MESSAGE( "        Threshold on the quantum parameter for discontinuous radiation: " << chipa_disc_min_threshold);
+        MESSAGE( "        Threshold on the quantum parameter for discontinuous radiation: " << std::setprecision(5) << chipa_disc_min_threshold);
     }
     if (params.hasMCRadiation ||
         params.hasNielRadiation)
@@ -300,7 +301,9 @@ void RadiationTables::compute_h_table(SmileiMPI *smpi)
         // Allocation of the local buffer
         buffer = new double [length_table[rank]];
 
-
+        MESSAGE(std::setprecision(5) << "            min(chipa): " << h_chipa_min
+              << " - max(chipa): " << h_chipa_max
+              << " - dimension: " << h_dim);
         MESSAGE("            MPI repartition:");
         // Print repartition
         if (rank==0)
@@ -1424,7 +1427,7 @@ double RadiationTables::compute_sync_emissivity_ritus(double chipa,
 
         // Computation of Part. 1
         // Call the modified Bessel function to get K
-        userFunctions::modified_bessel_IK(2./3.,2*y,I,dI,K,dK,50000,eps);
+        userFunctions::modified_bessel_IK(2./3.,2*y,I,dI,K,dK,50000,eps,false);
 
         part1 = (2. + 3.*chiph*y)*(K);
 
@@ -1438,7 +1441,7 @@ double RadiationTables::compute_sync_emissivity_ritus(double chipa,
         for(i=0 ; i< nbit ; i++)
         {
             y = pow(10.,gauleg_x[i]);
-            userFunctions::modified_bessel_IK(1./3.,y,I,dI,K,dK,50000,eps);
+            userFunctions::modified_bessel_IK(1./3.,y,I,dI,K,dK,50000,eps,false);
             part2 += gauleg_w[i]*K*y*log(10.);
         }
 
@@ -1492,9 +1495,9 @@ double RadiationTables::compute_h_Niel(double chipa,
 
         nu = pow(10.,gauleg_x[i]);
 
-        userFunctions::modified_bessel_IK(5./3.,nu,I,dI,K53,dK,50000,eps);
+        userFunctions::modified_bessel_IK(5./3.,nu,I,dI,K53,dK,50000,eps,false);
 
-        userFunctions::modified_bessel_IK(2./3.,nu,I,dI,K23,dK,50000,eps);
+        userFunctions::modified_bessel_IK(2./3.,nu,I,dI,K23,dK,50000,eps,false);
 
         h += gauleg_w[i]*log(10.)*nu
           *  (( 2.*pow(chipa*nu,3) / pow(2. + 3.*nu*chipa,3)*K53 )
