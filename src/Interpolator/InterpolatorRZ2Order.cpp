@@ -96,32 +96,32 @@ void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particl
     // -------------------------
     // Interpolation of Ex^(d,p)
     // -------------------------
-    *(ELoc+0*nparts) = compute( &coeffxd_[1], &coeffyp_[1], ElRZ, id_, jp_);
+    *(ELoc+0*nparts) = real (compute( &coeffxd_[1], &coeffyp_[1], ElRZ, id_, jp_));
 
     // -------------------------
     // Interpolation of Er^(p,d)
     // -------------------------
-    *(ELoc+1*nparts) = compute( &coeffxp_[1], &coeffyd_[1], ErRZ, ip_, jd_);
+    *(ELoc+1*nparts) = real (compute( &coeffxp_[1], &coeffyd_[1], ErRZ, ip_, jd_));
 
     // -------------------------
     // Interpolation of Et^(p,p)
     // -------------------------
-    *(ELoc+2*nparts) = compute( &coeffxp_[1], &coeffyp_[1], EtRZ, ip_, jp_);
+    *(ELoc+2*nparts) = real (compute( &coeffxp_[1], &coeffyp_[1], EtRZ, ip_, jp_));
 
     // -------------------------
     // Interpolation of Bx^(p,d)
     // -------------------------
-    *(BLoc+0*nparts) = compute( &coeffxp_[1], &coeffyd_[1], BlRZ, ip_, jd_);
+    *(BLoc+0*nparts) = real (compute( &coeffxp_[1], &coeffyd_[1], BlRZ, ip_, jd_));
 
     // -------------------------
     // Interpolation of Br^(d,p)
     // -------------------------
-    *(BLoc+1*nparts) = compute( &coeffxd_[1], &coeffyp_[1], BrRZ, id_, jp_);
+    *(BLoc+1*nparts) = real (compute( &coeffxd_[1], &coeffyp_[1], BrRZ, id_, jp_));
 
     // -------------------------
     // Interpolation of Bt^(d,d)
     // -------------------------
-    *(BLoc+2*nparts) = compute( &coeffxd_[1], &coeffyd_[1], BtRZ, id_, jd_);
+    *(BLoc+2*nparts) = real (compute( &coeffxd_[1], &coeffyd_[1], BtRZ, id_, jd_));
 
     for (unsigned int imode = 1; imode < nmodes ; imode++){
 
@@ -215,51 +215,51 @@ void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particl
     // -------------------------
     // Interpolation of Ex^(d,p)
     // -------------------------
-    (*ELoc).x =  compute( &coeffxd_[1], &coeffyp_[1], ElRZ, id_, jp_);
+    (*ELoc).x = real(compute( &coeffxd_[1], &coeffyp_[1], ElRZ, id_, jp_));
     
     // -------------------------
     // Interpolation of Ey^(p,d)
     // -------------------------
-    (*ELoc).y = compute( &coeffxp_[1], &coeffyd_[1], ErRZ, ip_, jd_);
+    (*ELoc).y = real(compute( &coeffxp_[1], &coeffyd_[1], ErRZ, ip_, jd_));
     
     // -------------------------
     // Interpolation of Ez^(p,p)
     // -------------------------
-    (*ELoc).z = compute( &coeffxp_[1], &coeffyp_[1], EtRZ, ip_, jp_);
+    (*ELoc).z = real(compute( &coeffxp_[1], &coeffyp_[1], EtRZ, ip_, jp_));
     
     // -------------------------
     // Interpolation of Bx^(p,d)
     // -------------------------
-    (*BLoc).x = compute( &coeffxp_[1], &coeffyd_[1], BlRZ, ip_, jd_);
+    (*BLoc).x = real(compute( &coeffxp_[1], &coeffyd_[1], BlRZ, ip_, jd_));
     
     // -------------------------
     // Interpolation of By^(d,p)
     // -------------------------
-    (*BLoc).y = compute( &coeffxd_[1], &coeffyp_[1], BrRZ, id_, jp_);
+    (*BLoc).y = real(compute( &coeffxd_[1], &coeffyp_[1], BrRZ, id_, jp_));
     
     // -------------------------
     // Interpolation of Bz^(d,d)
     // -------------------------
-    (*BLoc).z = compute( &coeffxd_[1], &coeffyd_[1], BtRZ, id_, jd_);
+    (*BLoc).z = real(compute( &coeffxd_[1], &coeffyd_[1], BtRZ, id_, jd_));
     // -------------------------
     // Interpolation of Jx^(d,p,p)
     // -------------------------
-    (*JLoc).x = compute( &coeffxd_[1], &coeffyp_[1], JlRZ, id_, jp_);
+    (*JLoc).x = real(compute( &coeffxd_[1], &coeffyp_[1], JlRZ, id_, jp_));
     
     // -------------------------
     // Interpolation of Jy^(p,d,p)
     // -------------------------
-    (*JLoc).y = compute( &coeffxp_[1], &coeffyd_[1], JrRZ, ip_, jd_);
+    (*JLoc).y = real(compute( &coeffxp_[1], &coeffyd_[1], JrRZ, ip_, jd_));
     
     // -------------------------
     // Interpolation of Jz^(p,p,d)
     // -------------------------
-    (*JLoc).z = compute( &coeffxp_[1], &coeffyp_[1], JtRZ, ip_, jp_);
+    (*JLoc).z = real(compute( &coeffxp_[1], &coeffyp_[1], JtRZ, ip_, jp_));
     
     // -------------------------
     // Interpolation of Rho^(p,p,p)
     // -------------------------
-    (*RhoLoc) = compute( &coeffxp_[1], &coeffyp_[1], RhoRZ, ip_, jp_);
+    (*RhoLoc) = real(compute( &coeffxp_[1], &coeffyp_[1], RhoRZ, ip_, jp_));
 
     for (unsigned int imode = 1; imode < nmodes ; imode++){
 

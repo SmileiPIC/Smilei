@@ -47,6 +47,7 @@ ProjectorRZ2Order::~ProjectorRZ2Order()
 void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
 {   MESSAGE("start projection m=0");
     int nparts= particles.size();
+    MESSAGE("nparts"<< nparts);
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------   int iloc,
@@ -55,7 +56,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     double crl_p = charge_weight*dl_ov_dt;
     double crr_p = charge_weight*dr_ov_dt;
     double crt_p= charge_weight*particles.momentum(2,ipart)*invgf;
-
+    MESSAGE("defining cr_p coeffecients");
     // variable declaration
     double xpn, ypn;
     double delta, delta2;
@@ -88,18 +89,22 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     Sy0[2] = 0.75-delta2;
     Sy0[3] = 0.5 * (delta2+delta+0.25);
     
+    MESSAGE("Sx0,Sy0");
     
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
     xpn = particles.position(0, ipart) * dl_inv_;
     int ip = round(xpn);
     int ipo = iold[0*nparts];
     int ip_m_ipo = ip-ipo-i_domain_begin;
+    MESSAGE("idomainbegin "<<i_domain_begin<<" jdomainbegin "<<j_domain_begin  ); 
+    MESSAGE("ipo "<<ipo);
+    MESSAGE("ip_m_ipo "<< ip_m_ipo);
     delta  = xpn - (double)ip;
     delta2 = delta*delta;
     Sx1[ip_m_ipo+1] = 0.5 * (delta2-delta+0.25);
     Sx1[ip_m_ipo+2] = 0.75-delta2;
     Sx1[ip_m_ipo+3] = 0.5 * (delta2+delta+0.25);
-    
+    MESSAGE("Sx1");
     ypn = sqrt (particles.position(1, ipart)*particles.position(1, ipart)+particles.position(2, ipart)*particles.position(2, ipart))*dr_inv_ ;
     int jp = round(ypn);
     int jpo = iold[1*nparts];
@@ -110,6 +115,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     Sy1[jp_m_jpo+2] = 0.75-delta2;
     Sy1[jp_m_jpo+3] = 0.5 * (delta2+delta+0.25);
     
+    MESSAGE("Sy1");
     for (unsigned int i=0; i < 5; i++) {
         DSx[i] = Sx1[i] - Sx0[i];
         DSy[i] = Sy1[i] - Sy0[i];
@@ -129,6 +135,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             }
         }
     
+    MESSAGE("W");
     // ------------------------------------------------
     // Local current created by the particle
     // calculate using the charge conservation equation
@@ -148,7 +155,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
                 Jz_p[i][j] = crt_p  * Wz[i][j];
             }
         }
-
+    MESSAGE("calculating j_p");
     // ---------------------------
     // Calculate the total current
     // ---------------------------
@@ -752,7 +759,7 @@ void ProjectorRZ2Order::operator() (double* rho, Particles &particles, unsigned 
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = (i+ip)*b_dim[1]+jp;
         for (unsigned int j=0 ; j<5 ; j++) {
-            rho[iloc+j] += charge_weight /((j+jp+2* j_domain_begin)*dr) * Sx1[i]*Sy1[j];
+            rho[iloc+j] += charge_weight /((j+jp+ j_domain_begin)*dr) * Sx1[i]*Sy1[j];
             }
     }//i
     //MESSAGE("end projection for frozen species");
@@ -830,11 +837,11 @@ void ProjectorRZ2Order::operator() (Field* Jl, Field* Jr, Field* Jt, Particles &
             int jploc=jp+j-1;
             int jdloc=jd+j-1;
             // Jx^(d,p)
-            (*Jl3D)(idloc,jploc) += Jx_ion /((jploc+2* j_domain_begin)*dr) * Sxd[i]*Syp[j];
+            (*Jl3D)(idloc,jploc) += Jx_ion /((jploc+ j_domain_begin)*dr) * Sxd[i]*Syp[j];
             // Jy^(p,d)
-            (*Jr3D)(iploc,jdloc) += Jy_ion /((jdloc+2* j_domain_begin-0.5)*dr) * Sxp[i]*Syd[j];
+            (*Jr3D)(iploc,jdloc) += Jy_ion /((jdloc+ j_domain_begin-0.5)*dr) * Sxp[i]*Syd[j];
             // Jz^(p,p)
-            (*Jt3D)(iploc,jploc) += Jz_ion /((jploc+2* j_domain_begin)*dr) * Sxp[i]*Syp[j];
+            (*Jt3D)(iploc,jploc) += Jz_ion /((jploc+ j_domain_begin)*dr) * Sxp[i]*Syp[j];
         }
     }//i
 
