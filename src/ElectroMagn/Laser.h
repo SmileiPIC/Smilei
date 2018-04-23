@@ -90,7 +90,7 @@ class LaserProfileSeparable : public LaserProfile {
 friend class SmileiMPI;
 friend class Patch;
 public:
-    LaserProfileSeparable(double, Profile*, Profile*, Profile*, Profile*, bool);
+    LaserProfileSeparable(double, Profile*, Profile*, Profile*, Profile*, double, bool);
     LaserProfileSeparable(LaserProfileSeparable*);
     ~LaserProfileSeparable();
     void createFields(Params& params, Patch* patch);
@@ -102,6 +102,7 @@ private:
     bool primal;
     double omega;
     Profile *timeProfile, *chirpProfile, *spaceProfile, *phaseProfile;
+    double delay_phase;
 };
 
 // Laser profile for non-separable space and time

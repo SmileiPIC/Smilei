@@ -167,7 +167,7 @@ class Performances(Diagnostic):
 		for index_in_file, q in enumerate(self._availableQuantities_double):
 			if self._re.search(r"\b%s\b"%q,self._operation):
 				self._operation = self._re.sub(r"\b%s\b"%q,"C["+str(index_in_output)+"]",self._operation)
-				units = {"t":"seconds", "h":"1", "n":"1"}[q[0]]
+				units = {"t":"seconds", "h":"1", "n":"1", "m":"1"}[q[0]]
 				self._operationunits = self._operationunits.replace(q, units)
 				self._quantities_double.append(index_in_file)
 				used_quantities.append( q )

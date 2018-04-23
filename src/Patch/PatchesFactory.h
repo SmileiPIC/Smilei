@@ -94,7 +94,7 @@ public:
                 //delete the array
                 delete vecPatches.patches_[0]->vecSpecies[ispec]->position_initialization_array;
                 //and never again create particles from this array. Pointer is kept to not NULL to remember this species was initialized from an array.
-                for (unsigned int ipatch=1 ; ipatch < npatches ; ipatch++){
+                for (unsigned int ipatch=0 ; ipatch < npatches ; ipatch++){
                     vecPatches.patches_[ipatch]->vecSpecies[ispec]->n_numpy_particles = 0 ;
                 }
             }

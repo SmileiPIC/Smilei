@@ -35,7 +35,7 @@ def updateMatplotLibColormaps():
 	register(u"smileiD", {
 			'red'  :((0., 0.028, 0.028), (0.0625 , 0.027, 0.027), (0.109375, 0.049, 0.049), (0.1875 , 0.122, 0.122), (0.296875, 0.464, 0.464), (0.5 , 1. , 1. ), (0.546875, 0.942, 0.942), (0.609375, 0.816, 0.816), (0.71875 , 0.532, 0.532), (0.765625, 0.366, 0.366), (0.8125 , 0.187, 0.187), (0.84375 , 0.114, 0.114), (0.875 , 0.083, 0.083), (1.0 , 0.061, 0.061)),
 			'green':((0., 0.163, 0.163), (0.5 , 1. , 1. ), (0.546875, 0.936, 0.936), (0.625 , 0.805, 0.805), (0.78125 , 0.612, 0.612), (0.84375 , 0.517, 0.517), (1.0 , 0.251, 0.251)),
-			'blue' :((0., 0.328, 0.328), (0.078125, 0.525, 0.525), (0.25 , 0.668, 0.668), (0.3125 , 0.727, 0.727), (0.390625, 0.822, 0.822), (0.484375, 0.965, 0.965), (0.5 , 1. , 1. ), (0.515625, 0.962, 0.962), (0.75 , 0.187, 0.187), (0.765625, 0.157, 0.157), (0.78125 , 0.157, 0.157), (0.828125, 0.217, 0.217), (0.859375, 0.243, 0.243), (0.890625, 0.255, 0.255), (0.9375 , 0.254, 0.254), (1.0 , 0.232, 0.232)) 
+			'blue' :((0., 0.328, 0.328), (0.078125, 0.525, 0.525), (0.25 , 0.668, 0.668), (0.3125 , 0.727, 0.727), (0.390625, 0.822, 0.822), (0.484375, 0.965, 0.965), (0.5 , 1. , 1. ), (0.515625, 0.962, 0.962), (0.75 , 0.187, 0.187), (0.765625, 0.157, 0.157), (0.78125 , 0.157, 0.157), (0.828125, 0.217, 0.217), (0.859375, 0.243, 0.243), (0.890625, 0.255, 0.255), (0.9375 , 0.254, 0.254), (1.0 , 0.232, 0.232))
 		})
 	register(u"smileiD_r", {
 			'red'  :((0.0, 0.061, 0.061), (0.125, 0.083, 0.083), (0.15625, 0.114, 0.114), (0.1875, 0.187, 0.187), (0.234375, 0.366, 0.366), (0.28125, 0.532, 0.532), (0.390625, 0.816, 0.816), (0.453125, 0.942, 0.942), (0.5, 1.0, 1.0), (0.703125, 0.464, 0.464), (0.8125, 0.122, 0.122), (0.890625, 0.049, 0.049), (0.9375, 0.027, 0.027), (1.0, 0.028, 0.028)),
@@ -47,12 +47,12 @@ def updateMatplotLibColormaps():
 def openNamelist(namelist):
 	"""
 	Function to execute a namelist and store all its content in the returned object.
-	
+
 	Example:
 		namelist = happi.openNamelist("path/no/my/namelist.py")
 		print( namelist.Main.timestep)
 	"""
-	
+
 	from . import happi_directory
 	from os import sep
 	from os.path import isdir, exists
@@ -77,7 +77,7 @@ def openNamelist(namelist):
 
 class Options(object):
 	""" Class to contain matplotlib plotting options """
-	
+
 	def __init__(self, **kwargs):
 		self.figure  = 1
 		self.xfactor = None
@@ -99,7 +99,7 @@ class Options(object):
 		self.ytick = {"useOffset":False}
 		self.side = "left"
 		self.transparent = None
-	
+
 	# Method to set optional plotting arguments
 	def set(self, **kwargs):
 		# First, we manage the main optional arguments
@@ -154,10 +154,10 @@ PintWarningIssued = False
 
 class Units(object):
 	""" Units()
-	
+
 	Class to handle units smartly. Based on the *pint* package.
 	"""
-	
+
 	def __init__(self, *args, **kwargs):
 		# All args are parsed
 		self.requestedUnits = []
@@ -179,7 +179,7 @@ class Units(object):
 				elif kwa == "y": self.requestedY = val
 				elif kwa == "v": self.requestedV = val
 				else: raise TypeError("Units() got an unexpected keyword argument '"+kwa+"'")
-		
+
 		# We try to import the pint package
 		self.UnitRegistry = None
 		try:
@@ -192,12 +192,12 @@ class Units(object):
 				print("       : The results will stay in code units.")
 				PintWarningIssued = True
 			return
-	
+
 	def _divide(self,units1, units2):
 		division = self.ureg("("+units1+") / ("+units2+")").to_base_units()
 		if not division.dimensionless: raise
 		return division.magnitude or 1., units2
-	
+
 	def _convert(self, knownUnits, requestedUnits):
 		if knownUnits:
 			if requestedUnits:
@@ -220,7 +220,7 @@ class Units(object):
 					print("WARNING: units unknown: "+str(knownUnits))
 				return 1., ""
 		return 1., ""
-	
+
 	def prepare(self, reference_angular_frequency_SI=None, xunits="", yunits="", vunits="", tunits=""):
 		if self.UnitRegistry:
 			if reference_angular_frequency_SI:
@@ -268,7 +268,7 @@ class Units(object):
 
 
 class Movie:
-	
+
 	def __init__(self, fig, movie="", fps=15, dpi=200):
 		import os.path as ospath
 		self.writer = None
@@ -297,13 +297,13 @@ class Movie:
 			except:
 				print("ERROR: you need the '"+writer+"' software to make movies")
 				return
-				
+
 			self.writer.setup(fig, movie, dpi)
-	
+
 	def finish(self):
 		if self.writer is not None:
 			self.writer.finish()
-	
+
 	def grab_frame(self):
 		if self.writer is not None:
 			self.writer.grab_frame()
@@ -311,13 +311,13 @@ class Movie:
 
 
 class SaveAs:
-	
+
 	def __init__(self, smartPath, fig, plt):
 		import os.path as p
 		from os import sep as sep
 		default_extension = ".png"
 		self.figure = fig
-		
+
 		self.prefix = False
 		if type(smartPath) is str:
 			path = smartPath
@@ -338,11 +338,11 @@ class SaveAs:
 					self.suffix = "`"+path+"` is not a directory"
 		else:
 			return
-		
+
 		if not self.prefix:
 			print("WARNING: "+self.suffix)
 			print("         Will not save figures to files")
-		
+
 		# For some reason, the following freezes the animation; removed temporarily
 		#else:
 		#	supportedTypes=plt.matplotlib.backend_bases.FigureCanvasBase(fig).get_supported_filetypes()
@@ -350,7 +350,7 @@ class SaveAs:
 		#		print("WARNING: file format not supported, will not save figures to files")
 		#		print("         Supported formats: "+",".join(supportedTypes.keys()))
 		#		self.prefix = False
-	
+
 	def frame(self, id=None):
 		if self.prefix:
 			file = self.prefix + ("" if id is None else "%010d"%int(id)) + self.suffix
@@ -364,9 +364,9 @@ def multiPlot(*Diags, **kwargs):
 	              movie="", fps=15, dpi=200, saveAs=None,
 	              skipAnimation=False
 	              )
-	
+
 	Plots simultaneously several diagnostics.
-	
+
 	Parameters:
 	-----------
 	Diag1, Diag2, ... : Several objects of classes 'Scalar', 'Field', 'Probe' or 'ParticleBinning'
@@ -377,9 +377,9 @@ def multiPlot(*Diags, **kwargs):
 	saveAs : path where to store individual frames as pictures, e.g. "my/path/fig.png"
 	skipAnimation : if True, plots only the last frame.
 	"""
-	
+
 	from _Diagnostics import TrackParticles
-	
+
 	# Verify Diags are valid
 	nDiags = len(Diags)
 	if nDiags == 0: return
@@ -479,7 +479,7 @@ def multiPlot(*Diags, **kwargs):
 	if option_xmax: xmax = max([xmax]+option_xmax)
 	if option_ymin: ymin = min([ymin]+option_ymin)
 	if option_ymax: ymax = max([ymax]+option_ymax)
-	
+
 	# Static plot
 	if sameAxes and Diags[0].dim==0:
 		for Diag in Diags:
@@ -524,28 +524,63 @@ def multiPlot(*Diags, **kwargs):
 
 
 class VTKfile:
-	
+
 	def __init__(self):
 		try:
 			import vtk
 		except:
 			print("Python module 'vtk' not found. Could not export to VTK format")
 			return
-		
+
 		self.vtk = vtk
-	
+
 	def Array(self, data, name):
+		"""
+		Convert a numpy array in a vtkFloatArray
+		"""
+
+		from numpy import float32
+		from numpy import int32
+
 		shape = data.shape
 		if len(shape)==1:   npoints, nComponents = shape[0], 1
 		elif len(shape)==2: npoints, nComponents = shape
 		else: raise Exception("impossible")
-		arr = self.vtk.vtkFloatArray()
-		arr.SetNumberOfTuples(npoints)
-		arr.SetNumberOfComponents(nComponents)
-		arr.SetVoidArray(data, npoints*nComponents, 1)
-		arr.SetName(name)
-		return arr
-	
+
+		if (data.dtype == int32):
+
+			arr = self.vtk.vtkIntArray()
+			arr.SetNumberOfTuples(npoints)
+			arr.SetNumberOfComponents(nComponents)
+			# Replace the pointer in arr by the pointer to the data
+			arr.SetVoidArray(data, npoints*nComponents, 1)
+			arr.SetName(name)
+			# keep reference to "data" to not have a null reference
+			# else pcoords would be deleted
+			# (see the trick: http://vtk.1045678.n5.nabble.com/More-zero-copy-array-support-for-Python-td5743662.html)
+			arr.array = data
+
+			return arr
+
+		elif (data.dtype == float32):
+
+			arr = self.vtk.vtkFloatArray()
+			arr.SetNumberOfTuples(npoints)
+			arr.SetNumberOfComponents(nComponents)
+			# Replace the pointer in arr by the pointer to the data
+			arr.SetVoidArray(data, npoints*nComponents, 1)
+			arr.SetName(name)
+			# keep reference to "data" to not have a null reference
+			# else pcoords would be deleted
+			# (see the trick: http://vtk.1045678.n5.nabble.com/More-zero-copy-array-support-for-Python-td5743662.html)
+			arr.array = data
+
+			return arr
+
+		else:
+			raise Exception("In Array: Unknown data type for data {data.dtype}".format())
+
+
 	def WriteImage(self, array, origin, extent, spacings, file, numberOfPieces):
 		img = self.vtk.vtkImageData()
 		img.SetOrigin(origin)
@@ -562,7 +597,7 @@ class VTKfile:
 		else:
 		    writer.SetInputData(img)
 		writer.Write()
-	
+
 	def WriteRectilinearGrid(self, dimensions, xcoords, ycoords, zcoords, array, file):
 		grid = self.vtk.vtkRectilinearGrid()
 		grid.SetDimensions(dimensions)
@@ -577,7 +612,81 @@ class VTKfile:
 		else:
 		    writer.SetInputData(grid)
 		writer.Write()
-	
+
+	def WriteCloud(self, pcoords, attributes, data_format, file):
+		"""
+		Create a vtk file that describes a cloud of points (using vtkPolyData)
+
+		Inputs:
+
+			pcoodrs: vtk array that describes the point coordinates
+			attributes: Vtk arrays containing additional values for each point
+			data_format: the output data format
+			file: output file path
+
+		"""
+
+		points = self.vtk.vtkPoints()
+		#points.SetDataTypeToFloat()
+		points.SetData(pcoords)
+
+		pdata = self.vtk.vtkPolyData()
+		pdata.SetPoints(points)
+
+		# Add scalars for xml
+		if data_format == "xml":
+
+			for attribute in attributes:
+				# SetScalar allows only one scalar
+				# pdata.GetPointData().SetScalars(attribute)
+
+				# AddArray creates scalar and then fields
+				pdata.GetPointData().AddArray(attribute)
+
+			# The first attribute (first scalar) is the main one
+			if len(attributes) > 0:
+				pdata.GetPointData().SetActiveScalars(attributes[0].GetName())
+
+		# Add scalars for vtk
+		else:
+
+			if len(attributes) > 0:
+				pdata.GetPointData().SetScalars(attributes[0])
+				pdata.GetPointData().SetActiveScalars(attributes[0].GetName())
+
+
+
+		writer = self.vtk.vtkPolyDataWriter()
+
+		# For XML output
+		if data_format == "xml":
+			writer = self.vtk.vtkXMLDataSetWriter()
+
+		writer.SetFileName(file)
+		if float(self.vtk.VTK_VERSION[:3]) < 6:
+		    writer.SetInput(pdata)
+		else:
+		    writer.SetInputData(pdata)
+		writer.Write()
+
+		# Add the following attributes by hand because the API
+		# limits vtk to 1 scalar
+		if data_format == "vtk":
+			file_object = open(file, 'a')
+			for attribute in attributes[1:]:
+				if (attribute.GetDataType() == 6):
+					data_type = "int"
+				elif (attribute.GetDataType() == 10):
+					data_type = "float"
+				size = attribute.GetSize()
+				file_object.write("Scalar {} {} \n".format(attribute.GetName(),data_type))
+				file_object.write("LOOKUP_TABLE default \n")
+				for i in range(0,size,8):
+					for j in range(8):
+						file_object.write("{} ".format(attribute.GetValue(i + j)))
+					file_object.write("\n")
+
+
 	def WritePoints(self, pcoords, file):
 		points = self.vtk.vtkPoints()
 		points.SetData(pcoords)
@@ -590,33 +699,56 @@ class VTKfile:
 		else:
 		    writer.SetInputData(grid)
 		writer.Write()
-	
-	def WriteLines(self, pcoords, connectivity, attributes, file):
+
+	def WriteLines(self, pcoords, connectivity, attributes, data_format, file):
+		"""
+		Create a vtk file that describes lines such as trajectories
+
+		Inputs:
+
+			pcoodrs: vtk array that describes the point coordinates
+			connectivity: connection betwwen coordiantes in pcoords to form trajectories
+			attributes: Vtk arrays containing additional values for each point
+			data_format: the output data format
+			file: output file path
+		"""
 		ncel = len(connectivity)
 		connectivity = connectivity.flatten()
+
 		id = self.vtk.vtkIdTypeArray()
 		id.SetNumberOfTuples(connectivity.size)
 		id.SetNumberOfComponents(1)
 		id.SetVoidArray(connectivity, connectivity.size, 1)
 		connec = self.vtk.vtkCellArray()
 		connec.SetCells(ncel, id)
-		
+
 		points = self.vtk.vtkPoints()
+		#points.SetDataTypeToFloat()
 		points.SetData(pcoords)
-		
+
 		pdata = self.vtk.vtkPolyData()
 		pdata.SetPoints(points)
 		pdata.SetLines(connec)
-		
-		for a in attributes:
-			pdata.GetPointData().SetScalars(a)
-		
+
+		# Add scalars
+		for attribute in attributes:
+			# SetScalar allows only one scalar
+			#pdata.GetPointData().SetScalars(attribute)
+			pdata.GetPointData().AddArray(attribute)
+
+		# The first attribute (first scalar) is the main one
+		if len(attributes) > 0:
+			pdata.GetPointData().SetActiveScalars(attributes[0].GetName())
+
 		writer = self.vtk.vtkPolyDataWriter()
+
+		# For XML output
+		if data_format == "xml":
+			writer = self.vtk.vtkXMLDataSetWriter()
+
 		writer.SetFileName(file)
 		if float(self.vtk.VTK_VERSION[:3]) < 6:
 		    writer.SetInput(pdata)
 		else:
 		    writer.SetInputData(pdata)
 		writer.Write()
-
-

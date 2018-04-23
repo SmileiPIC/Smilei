@@ -597,7 +597,7 @@ class SmileiSimulation(object):
 		# Import packages
 		import h5py
 		import numpy as np
-		import os, glob, re, sys
+		import os, glob, re
 		setMatplotLibBackend(show=show)
 		updateMatplotLibColormaps()
 		import matplotlib.pyplot

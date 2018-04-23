@@ -193,11 +193,17 @@ class Main(SmileiSingleton):
     solve_poisson = True
     poisson_max_iteration = 50000
     poisson_max_error = 1.e-14
+    
+    # Relativistic Poisson tuning
+    solve_relativistic_poisson = False
+    relativistic_poisson_max_iteration = 50000
+    relativistic_poisson_max_error = 1.e-22
 
     # Default fields
     maxwell_solver = 'Yee'
     EM_boundary_conditions = [["periodic"]]
     EM_boundary_conditions_k = []
+    save_magnectic_fields_for_SM = True
     Envelope_boundary_conditions = [["reflective"]]
     time_fields_frozen = 0.
     Laser_Envelope_model = False
@@ -348,6 +354,7 @@ class Species(SmileiComponent):
     ionization_electrons = None
     atomic_number = None
     is_test = False
+    relativistic_field_initialization = False
     ponderomotive_dynamics = False
 
 class Laser(SmileiComponent):
@@ -358,6 +365,7 @@ class Laser(SmileiComponent):
     time_envelope = 1.
     space_envelope = [1., 0.]
     phase = [0., 0.]
+    delay_phase = [0., 0.]
     space_time_profile = None
     file = None
     _offset = None
