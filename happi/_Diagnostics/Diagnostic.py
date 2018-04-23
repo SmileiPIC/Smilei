@@ -418,7 +418,6 @@ class Diagnostic(object):
 			self._plt.pause(0.00001)
 			# Catch ctrl-C
 			if hasattr(sys,"last_type"):
-				print sys.last_type
 				if sys.last_type is KeyboardInterrupt: break
 			# Copy to movie or file
 			mov.grab_frame()

@@ -224,10 +224,12 @@ The block ``Main`` is **mandatory** and has the following syntax::
 .. py:data:: EM_boundary_conditions_k
 
   :type: list of lists of floats
-  :default: ``[[1.,0.,0.],[-1.,0.,0.],[0.,1.,0.],[0.,-1.,0.],[0.,0.,1.],[0.,0.,-1.]]``
+  :default: ``[[1.,0.],[-1.,0.],[0.,1.],[0.,-1.]]`` in 2D
+  :default: ``[[1.,0.,0.],[-1.,0.,0.],[0.,1.,0.],[0.,-1.,0.],[0.,0.,1.],[0.,0.,-1.]]`` in 3D
 
-  `k` is the incident wave vector for each faces sequentially Xmin, Xmax, Ymin, Ymax, Zmin, Zmax defined by its coordinates in the `xyz` frame.  
-  The number of coordinates is equal to the dimension of the simulation. The number of given vectors must be equal to 1 or to the number of faces which is twice the dimension of the simulation.
+  The incident unit wave vector for each face (sequentially Xmin, Xmax, Ymin, Ymax, Zmin, Zmax)
+  defined by its coordinates in the `xyz` frame.  
+  The number of coordinates is equal to the dimension of the simulation.
 
   | **Syntax 1:** ``[[1,0,0]]``, identical for all boundaries.
   | **Syntax 2:** ``[[1,0,0],[-1,0,0], ...]``,  different on each boundary.
@@ -758,22 +760,25 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
         chirp_profile  = tconstant(),
         time_envelope  = tgaussian(),
         space_envelope = [ By_profile  , Bz_profile   ],
-        phase          = [ PhiY_profile, PhiZ_profile ]
+        phase          = [ PhiY_profile, PhiZ_profile ],
+        delay_phase    = [ 0., 0. ]
     )
 
   This implements a wave of the form:
 
   .. math::
 
-    B_y(\mathbf{x}, t) = S_y(\mathbf{x})\; T\left[t-\phi_y(\mathbf{x})/\omega(t)\right]
+    B_y(\mathbf{x}, t) = S_y(\mathbf{x})\; T\left(t-t_{0y}\right)
     \;\sin\left( \omega(t) t - \phi_y(\mathbf{x}) \right)
 
-    B_z(\mathbf{x}, t) = S_z(\mathbf{x})\; T\left[t-\phi_z(\mathbf{x})/\omega(t)\right]
+    B_z(\mathbf{x}, t) = S_z(\mathbf{x})\; T\left(t-t_{0z}\right)
     \;\sin\left( \omega(t) t - \phi_z(\mathbf{x}) \right)
 
-  where :math:`T` is the temporal envelope, :math:`S_y` and :math:`S_y` are the
-  spatial envelopes, :math:`\omega` is the time-varying frequency, and
-  :math:`\phi_y` and :math:`\phi_z` are the phases.
+  where :math:`T` is the temporal envelope, :math:`S_y` and :math:`S_z` are the
+  spatial envelopes, :math:`\omega` is the time-varying frequency,
+  :math:`\phi_y` and :math:`\phi_z` are the phases, and we defined the delays
+  :math:`t_{0y} = (\phi_y(\mathbf{x})-\varphi_y)/\omega(t)` and
+  :math:`t_{0z} = (\phi_z(\mathbf{x})-\varphi_z)/\omega(t)`.
 
   .. py:data:: omega
 
@@ -839,6 +844,15 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     :default: ``[ 0., 0. ]``
 
     The two spatially-varying phases :math:`\phi_y` and :math:`\phi_z`.
+
+  .. py:data:: delay_phase
+
+    :type: a list of two floats
+    :default: ``[ 0., 0. ]``
+
+    An extra phase for the time envelopes of :math:`B_y` and :math:`B_z`. Useful in the
+    case of elliptical polarization where the two temporal profiles might have a slight 
+    delay due to the mismatched :py:data:`phase`.
 
 
 

@@ -92,10 +92,10 @@ Laser::Laser(Params &params, int ilaser, Patch* patch)
         if( !phase )
             ERROR(errorPrefix << ": missing `phase`");
         
-        info << "\t\t" << errorPrefix << ": custom profile" << endl;
+        info << "\t\t" << errorPrefix << ": separable profile" << endl;
         
         unsigned int space_dims = (params.geometry=="3Dcartesian" ? 2 : 1);
- 
+        
         // omega
         info << "\t\t\tomega              : " << omega_value << endl;
         
@@ -137,9 +137,15 @@ Laser::Laser(Params &params, int ilaser, Patch* patch)
         pphase2 = new Profile(phase_profile[1], space_dims, name.str());
         info << endl << "\t\t\tphase          (z) : " << pphase2->getInfo();
         
+        // delay phase
+        vector<double> delay_phase(2, 0.);
+        PyTools::extract("delay_phase",delay_phase,"Laser",ilaser);
+        info << endl << "\t\tdelay phase      (y) : " << delay_phase[0];
+        info << endl << "\t\tdelay phase      (z) : " << delay_phase[1];
+        
         // Create the LaserProfiles
-        profiles.push_back( new LaserProfileSeparable(omega_value, pchirp, ptime, pspace1, pphase1, true ) );
-        profiles.push_back( new LaserProfileSeparable(omega_value, pchirp2, ptime2, pspace2, pphase2, false) );
+        profiles.push_back( new LaserProfileSeparable(omega_value, pchirp , ptime , pspace1, pphase1, delay_phase[0], true ) );
+        profiles.push_back( new LaserProfileSeparable(omega_value, pchirp2, ptime2, pspace2, pphase2, delay_phase[1], false) );
     
     }
     
@@ -192,14 +198,15 @@ void Laser::disable()
 // Separable laser profile constructor
 LaserProfileSeparable::LaserProfileSeparable(
     double omega, Profile* chirpProfile, Profile* timeProfile,
-    Profile* spaceProfile, Profile* phaseProfile, bool primal
+    Profile* spaceProfile, Profile* phaseProfile, double delay_phase, bool primal
 ):
     primal       ( primal       ),
     omega        ( omega        ),
     timeProfile  ( timeProfile  ),
     chirpProfile ( chirpProfile ),
     spaceProfile ( spaceProfile ),
-    phaseProfile ( phaseProfile )
+    phaseProfile ( phaseProfile ),
+    delay_phase  ( delay_phase  )
 {
     space_envelope = NULL;
     phase = NULL;
@@ -211,7 +218,8 @@ LaserProfileSeparable::LaserProfileSeparable(LaserProfileSeparable * lp) :
     timeProfile  ( new Profile(lp->timeProfile ) ),
     chirpProfile ( new Profile(lp->chirpProfile) ),
     spaceProfile ( new Profile(lp->spaceProfile) ),
-    phaseProfile ( new Profile(lp->phaseProfile) )
+    phaseProfile ( new Profile(lp->phaseProfile) ),
+    delay_phase  ( lp->delay_phase )
 {
     space_envelope = NULL;
     phase = NULL;
@@ -317,8 +325,8 @@ double LaserProfileSeparable::getAmplitude(std::vector<double> pos, double t, in
     #pragma omp critical
     {
         double omega_ = omega * chirpProfile->valueAt(t);
-        double t0 = (*phase)(j, k) / omega_;
-        amp = timeProfile->valueAt(t-t0) * (*space_envelope)(j, k) * sin( omega_*(t - t0) );
+        double phi = (*phase)(j, k);
+        amp = timeProfile->valueAt(t-(phi+delay_phase)/omega_) * (*space_envelope)(j, k) * sin( omega_*t - phi );
     }
     return amp;
 }

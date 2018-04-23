@@ -365,6 +365,7 @@ class Laser(SmileiComponent):
     time_envelope = 1.
     space_envelope = [1., 0.]
     phase = [0., 0.]
+    delay_phase = [0., 0.]
     space_time_profile = None
 
 class LaserEnvelope(SmileiSingleton):
