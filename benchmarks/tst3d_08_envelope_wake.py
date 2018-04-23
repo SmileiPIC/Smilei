@@ -54,7 +54,7 @@ Species(
     name = "electron",
     position_initialization = "regular",
     momentum_initialization = "cold",
-    particles_per_cell = 8,
+    particles_per_cell = 1,
     c_part_max = 1.0,
     ponderomotive_dynamics = True, # = this species interacts with laser envelope
     mass = 1.0,
