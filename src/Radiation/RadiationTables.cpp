@@ -1658,7 +1658,9 @@ bool RadiationTables::read_h_table(SmileiMPI *smpi)
         }
 
         // Bcast table_exists
-        MPI_Bcast(&table_exists, 1, MPI_INTEGER, 0,smpi->getGlobalComm());
+        int TE = table_exists;
+        MPI_Bcast(&TE, 1, MPI_INTEGER, 0,smpi->getGlobalComm());
+        table_exists = TE;
 
     }
 
@@ -1783,7 +1785,9 @@ bool RadiationTables::read_integfochi_table(SmileiMPI *smpi)
         }
 
         // Bcast table_exists
-        MPI_Bcast(&table_exists, 1, MPI_INTEGER, 0,smpi->getGlobalComm());
+        int TE = table_exists;
+        MPI_Bcast(&TE, 1, MPI_INTEGER, 0,smpi->getGlobalComm());
+        table_exists = TE;
 
     }
 
