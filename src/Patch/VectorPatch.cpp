@@ -216,7 +216,8 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
     }
 
     // Species reconfiguration for best performance
-    // Change the status to use vectorized or not-vectorized operators as a function of the metrics
+    // Change the status to use vectorized or not-vectorized operators
+    // as a function of the metrics
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         // Particle importation for all species
@@ -231,6 +232,7 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
             (*this)(ipatch)->cleanParticlesOverhead(params);
         #pragma omp barrier
     }
+
     timers.syncPart.update( params.printNow( itime ) );
 
 } // END finalize_and_sort_parts
