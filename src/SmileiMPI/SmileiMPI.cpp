@@ -904,6 +904,14 @@ void SmileiMPI::recv(ElectroMagn* EM, int from, int tag)
     if (EM->envelope!=NULL){
         recvComplex( EM->envelope->A_ , from, tag ); tag++;
         recvComplex( EM->envelope->A0_, from, tag ); tag++;
+        recv( EM->envelope->Phi_ , from, tag ); tag++;
+        recv( EM->envelope->Phiold_ , from, tag ); tag++;
+        recv( EM->envelope->GradPhix_ , from, tag ); tag++;
+        recv( EM->envelope->GradPhixold_ , from, tag ); tag++;
+        recv( EM->envelope->GradPhiy_ , from, tag ); tag++;
+        recv( EM->envelope->GradPhiyold_ , from, tag ); tag++;
+        recv( EM->envelope->GradPhiz_ , from, tag ); tag++;
+        recv( EM->envelope->GradPhizold_ , from, tag ); tag++;
                            }
 
     for( unsigned int idiag=0; idiag<EM->allFields_avg.size(); idiag++) {
