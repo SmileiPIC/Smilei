@@ -301,9 +301,12 @@ void RadiationTables::compute_h_table(SmileiMPI *smpi)
         // Allocation of the local buffer
         buffer = new double [length_table[rank]];
 
-        MESSAGE(std::setprecision(5) << "            min(chipa): " << h_chipa_min
-              << " - max(chipa): " << h_chipa_max
-              << " - dimension: " << h_dim);
+        MESSAGE(std::setprecision(5) <<std::setprecision(5) <<"            Dimension quantum parameter: "
+                               << h_dim);
+        MESSAGE(std::setprecision(5) <<"            Minimum particle quantum parameter chi: "
+                               << h_chipa_min);
+        MESSAGE(std::setprecision(5) <<"            Maximum particle quantum parameter chi: "
+                               << h_chipa_max);
         MESSAGE("            MPI repartition:");
         // Print repartition
         if (rank==0)
@@ -346,8 +349,8 @@ void RadiationTables::compute_h_table(SmileiMPI *smpi)
         h_computed = true;
 
         // Free memory
-        // delete buffer;
-        // delete imin_table;
+        delete buffer;
+        delete imin_table;
         delete length_table;
 
     }
@@ -468,8 +471,8 @@ void RadiationTables::compute_integfochi_table(SmileiMPI *smpi)
         integfochi_computed = true;
 
         // Free memory
-        // delete buffer;
-        // delete imin_table;
+        delete buffer;
+        delete imin_table;
         delete length_table;
 
     }
