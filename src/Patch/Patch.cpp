@@ -449,42 +449,34 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, Params& params)
         }
     }
     else { //if (geometry == "3drz")
+        double r_min2, r_max2;
+        r_max2 = max_local[1] * max_local[1] ;
+        r_min2 = min_local[1] * min_local[1] ;
         for (int i=0 ; i<n_part_send ; i++) {
             iPart = (*indexes_of_particles_to_exchange)[i];
-            check = 0;
-            idim = 0;
             //Put indexes of particles in the first direction they will be exchanged and correct their position according to periodicity for the first exchange only.
-            while (check == 0 && idim<ndim){ // dim = nDim_field
-                double position(0.);
-                double min_limit(0.);
-                double max_limit(0.);
-                if (idim==0) {
-                    position = cuParticles.position(0,iPart);
-                    min_limit = min_local[0];
-                    max_limit = max_local[0];
+            if ( cuParticles.position(0,iPart) < min_local[0] ){
+                if ( neighbor_[0][0]!=MPI_PROC_NULL) {
+                    vecSpecies[ispec]->MPIbuff.part_index_send[0][0].push_back( iPart );
                 }
-                else { // look at square
-                    position = cuParticles.position(1,iPart) * cuParticles.position(1,iPart)
-                        + cuParticles.position(2,iPart) * cuParticles.position(2,iPart);
-                    min_limit = min_local[0] * min_local[0];
-                    max_limit = max_local[1] * max_local[1];
-                }
-                
-                if ( position < min_limit ){
-                    if ( neighbor_[idim][0]!=MPI_PROC_NULL) {
-                        vecSpecies[ispec]->MPIbuff.part_index_send[idim][0].push_back( iPart );
-                    }
-                    //If particle is outside of the global domain (has no neighbor), it will not be put in a send buffer and will simply be deleted.
-                    check = 1;
-                }
-                else if ( position >= max_limit ){
-                    if( neighbor_[idim][1]!=MPI_PROC_NULL) {
-                        vecSpecies[ispec]->MPIbuff.part_index_send[idim][1].push_back( iPart );
-                    }
-                    check = 1;
-                }
-                idim++;
+                //If particle is outside of the global domain (has no neighbor), it will not be put in a send buffer and will simply be deleted.
             }
+            else if ( cuParticles.position(0,iPart) >= max_local[0] ){
+                if( neighbor_[0][1]!=MPI_PROC_NULL) {
+                    vecSpecies[ispec]->MPIbuff.part_index_send[0][1].push_back( iPart );
+                }
+            }
+            else if ( cuParticles.distance2_to_axis(iPart) < r_min2 ){
+                if ( neighbor_[1][0]!=MPI_PROC_NULL) {
+                    vecSpecies[ispec]->MPIbuff.part_index_send[1][0].push_back( iPart );
+                }
+            }
+            else if ( cuParticles.distance2_to_axis(iPart) >= r_min2 ){
+                if( neighbor_[1][1]!=MPI_PROC_NULL) {
+                    vecSpecies[ispec]->MPIbuff.part_index_send[1][1].push_back( iPart );
+                }
+            }
+
         }
     }
 
