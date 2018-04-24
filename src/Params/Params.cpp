@@ -661,6 +661,18 @@ void Params::compute()
                 clrw = 1;
             WARNING( "Particles cluster width set to : " << clrw );
         }
+
+    }
+
+    // clrw != n_space[0] is not compatible
+    // with the dynamic vecto for the moment
+    if (vecto == "dynamic" && vecto == "dynamic2")
+    {
+        if (clrw != (int)(n_space[0]))
+        {
+            clrw = (int)(n_space[0]);
+            WARNING( "Particles cluster width set to : " << clrw << " for the dynamic vectorization mode");
+        }
     }
 
     // Verify that clrw divides n_space[0]

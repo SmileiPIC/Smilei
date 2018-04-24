@@ -197,6 +197,9 @@ int main (int argc, char* argv[])
         TITLE("Applying external fields at time t = 0");
         vecPatches.applyExternalFields();
 
+        // Patch reconfiguration
+        vecPatches.configuration(params);
+
         vecPatches.dynamics(params, &smpi, simWindow, RadiationTables,
                             MultiphotonBreitWheelerTables, time_dual, timers, 0);
 
