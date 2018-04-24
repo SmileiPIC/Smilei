@@ -22,26 +22,11 @@ void SyncVectorPatch::exchangeParticles(VectorPatch& vecPatches, int ispec, Para
         vecPatches(ipatch)->initExchParticles(smpi, ispec, params);
     }
 
-    // Per direction
-    for (unsigned int iDim=0 ; iDim<1 ; iDim++) {
-        #pragma omp for schedule(runtime)
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-            vecPatches(ipatch)->initCommParticles(smpi, ispec, params, iDim, &vecPatches);
-        }
-
-        //#pragma omp for schedule(runtime)
-        //for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-        //    vecPatches(ipatch)->CommParticles(smpi, ispec, params, iDim, &vecPatches);
-        //}
-        //#pragma omp for schedule(runtime)
-        //for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-        //    vecPatches(ipatch)->finalizeCommParticles(smpi, ispec, params, iDim, &vecPatches);
-        //}
+    // Init comm in direction 0
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+        vecPatches(ipatch)->initCommParticles(smpi, ispec, params, 0, &vecPatches);
     }
-
-    //#pragma omp for schedule(runtime)
-    //for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-    //    vecPatches(ipatch)->vecSpecies[ispec]->sort_part();
 }
 
 

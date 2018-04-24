@@ -502,7 +502,7 @@ void Patch::initCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iD
             if (is_a_MPI_neighbor(iDim, iNeighbor)) {
                 //If neighbour is MPI ==> I send him the number of particles I'll send later.
                 int tag = buildtag( hindex, iDim+1, iNeighbor+3 );
-                      MPI_Isend( &(vecSpecies[ispec]->MPIbuff.part_index_send_sz[iDim][iNeighbor]), 1, MPI_INT, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(vecSpecies[ispec]->MPIbuff.srequest[iDim][iNeighbor]) );
+                MPI_Isend( &(vecSpecies[ispec]->MPIbuff.part_index_send_sz[iDim][iNeighbor]), 1, MPI_INT, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(vecSpecies[ispec]->MPIbuff.srequest[iDim][iNeighbor]) );
             }
             else {
                 //Else, I directly set the receive size to the correct value.
