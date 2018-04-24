@@ -200,7 +200,6 @@ bool DiagnosticTrack::prepare( int itime )
 
 void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, SimWindow* simWindow, Timers & timers )
 {
-    uint32_t nParticles_local = 0;
     uint64_t nParticles_global = 0;
     string xyz = "xyz";
     
@@ -209,6 +208,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
     #pragma omp master
     {
         // Obtain the particle partition of all the patches in this MPI
+        nParticles_local = 0;
         patch_start.resize( vecPatches.size() );
         
         if( has_filter ) {
@@ -258,8 +258,8 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
         }
         
         // Specify the memory dataspace (the size of the local buffer)
-        hsize_t count_[1] = {(hsize_t)nParticles_local};
-        mem_space = H5Screate_simple(1, count_, NULL);
+        hsize_t count_ = nParticles_local;
+        mem_space = H5Screate_simple(1, &count_, NULL);
         
         // Get the number of offset for this MPI rank
         uint64_t np_local = nParticles_local, offset;

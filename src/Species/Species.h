@@ -88,6 +88,12 @@ public:
     
     //! logical true if particles radiate
     bool radiating;
+
+    //! logical true if particles are relativistic and require proper electromagnetic field initialization
+    bool relativistic_field_initialization;
+
+    //! Time for which the species field is initialized in case of relativistic initialization
+    double time_relativistic_initialization;
     
     //! electron and positron Species for the multiphoton Breit-Wheeler
     std::vector<std::string> multiphoton_Breit_Wheeler;
@@ -129,6 +135,12 @@ public:
     Particles particles_sorted[2];
     //std::vector<int> index_of_particles_to_exchange;
     
+    //! Pointer toward position array
+    double *position_initialization_array;
+    //! Number of particles in the init array
+    double *momentum_initialization_array;
+    //! Number of particles in the init array
+    int n_numpy_particles; 
     //! Boolean to know if we initialize particles one specie on another species
     bool position_initialization_on_species;
     //! Index of the species where position initialization is made
@@ -382,6 +394,17 @@ public:
     void disableXmax();
     //! Moving window boundary conditions managment
     void setXminBoundaryCondition();
+
+    double sum_gamma () {
+        double s_gamma(0.);
+        for ( unsigned int ipart = 0 ; ipart < getNbrOfParticles() ; ipart++ ) {
+            s_gamma += sqrt( 1. + particles->momentum(0,ipart) * particles->momentum(0,ipart) 
+                             + particles->momentum(1,ipart) * particles->momentum(1,ipart)
+                             + particles->momentum(2,ipart) * particles->momentum(2,ipart) );
+        }
+
+        return s_gamma;
+    }
     
 protected:
 

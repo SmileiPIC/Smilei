@@ -67,16 +67,12 @@ namelist("")
 {
 
     MESSAGE("HDF5 version "<<H5_VERS_MAJOR << "." << H5_VERS_MINOR << "." << H5_VERS_RELEASE);
-
-    if((((H5_VERS_MAJOR==1) && (H5_VERS_MINOR==8) && (H5_VERS_RELEASE>16)) || \
-        ((H5_VERS_MAJOR==1) && (H5_VERS_MINOR>8)) || \
-        (H5_VERS_MAJOR>1))) {
-        WARNING("Smilei suggests using HDF5 version 1.8.16");
-        WARNING("Newer version are not tested and may cause the code to behave incorrectly");
-        WARNING("See http://hdf-forum.184993.n3.nabble.com/Segmentation-fault-using-H5Dset-extent-in-parallel-td4029082.html");
-    }
-
-
+    
+    if(  (H5_VERS_MAJOR< 1) ||
+       ( (H5_VERS_MAJOR==1) && (H5_VERS_MINOR< 8) ) ||
+       ( (H5_VERS_MAJOR==1) && (H5_VERS_MINOR==8) && (H5_VERS_RELEASE<16) ) )
+        WARNING("Smilei suggests using HDF5 version 1.8.16 or newer");
+    
     if (namelistsFiles.size()==0) ERROR("No namelists given!");
 
     //string commandLineStr("");
@@ -91,14 +87,7 @@ namelist("")
     // https://github.com/numpy/numpy/issues/5856
     // We basically call the command numpy.seterr(all="ignore")
     PyObject* numpy = PyImport_ImportModule("numpy");
-    PyObject* seterr = PyObject_GetAttrString(numpy, "seterr");
-    PyObject* args = PyTuple_New(0);
-    PyObject* kwargs = Py_BuildValue("{s:s}", "all", "ignore");
-    PyObject* ret = PyObject_Call(seterr, args, kwargs);
-    Py_DECREF(ret);
-    Py_DECREF(args);
-    Py_DECREF(kwargs);
-    Py_DECREF(seterr);
+    Py_DECREF(PyObject_CallMethod(numpy, "seterr", "s", "ignore"));
     Py_DECREF(numpy);
 #endif
 
@@ -110,7 +99,6 @@ namelist("")
     PyTools::checkPyError();
     string command = "import signal\nsignal.signal(signal.SIGINT, signal.SIG_DFL)";
     if( !PyRun_SimpleString(command.c_str()) ) PyTools::checkPyError();
-
 
     PyObject* Py_main = PyImport_AddModule("__main__");
     PyObject* globals = PyModule_GetDict(Py_main);
@@ -131,6 +119,7 @@ namelist("")
 
     // here we add the larget int, important to get a valid seed for randomization
     PyModule_AddIntConstant(Py_main, "smilei_rand_max", RAND_MAX);
+
 
     // Running the namelists
     for (vector<string>::iterator it=namelistsFiles.begin(); it!=namelistsFiles.end(); it++) {
@@ -158,6 +147,7 @@ namelist("")
         runScript(strNamelist,(*it), globals);
     }
     // Running pycontrol.py
+
     runScript(string(reinterpret_cast<const char*>(pycontrol_py), pycontrol_py_len),"pycontrol.py", globals);
 
     smpi->barrier();
@@ -259,8 +249,7 @@ namelist("")
     for (unsigned int i=0;i<nDim_field;i++){
         res_space[i] = 1.0/cell_length[i];
     }
-
-
+    
     // simulation duration & length
     PyTools::extract("simulation_time", simulation_time, "Main");
 
@@ -286,7 +275,7 @@ namelist("")
         if( EM_BCs[iDim].size() == 1 ) // if just one type is specified, then take the same bc type in a given dimension
             EM_BCs[iDim].push_back( EM_BCs[iDim][0] );
         else if ( (EM_BCs[iDim][0] != EM_BCs[iDim][1]) &&  (EM_BCs[iDim][0] == "periodic" || EM_BCs[iDim][1] == "periodic") )
-            ERROR("EM_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side");
+            ERROR("EM_boundary_conditions along dimension "<<"012"[iDim]<<" cannot be periodic only on one side");
     }
 
     for (unsigned int iDim = 0 ; iDim < nDim_field; iDim++){
@@ -299,19 +288,36 @@ namelist("")
         }
     }
 
-    PyTools::extract("EM_boundary_conditions_theta", EM_BCs_theta, "Main");
+    PyTools::extract("EM_boundary_conditions_k", EM_BCs_k, "Main");
+    if( EM_BCs_k.size() == 0 ) {
+        //Gives default value
+        for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
+            std::vector<double> temp_k; 
+            
+            for( unsigned int iiDim=0; iiDim<iDim; iiDim++ ) temp_k.push_back(0.);
+            temp_k.push_back(1.);
+            for( unsigned int iiDim=iDim+1; iiDim<nDim_field; iiDim++ ) temp_k.push_back(0.);
+            EM_BCs_k.push_back(temp_k);
+            for( unsigned int iiDim=0; iiDim<nDim_field; iiDim++ ) temp_k[iiDim] *= -1. ;
+            EM_BCs_k.push_back(temp_k);
+        }
+    }
+
     //Complete with zeros if not defined
-    if( EM_BCs_theta.size() == 1 ) {
-        while( EM_BCs_theta.size() < nDim_field ) EM_BCs_theta.push_back(EM_BCs_theta[0]  );
-    } else if( EM_BCs_theta.size() != nDim_field ) {
-        ERROR("EM_boundary_conditions_theta must be the same size as the number of dimensions");
+    if( EM_BCs_k.size() == 1 ) {
+        while( EM_BCs_k.size() < nDim_field*2 ) EM_BCs_k.push_back(EM_BCs_k[0]  );
+    } else if( EM_BCs_k.size() != nDim_field*2 ) {
+        ERROR("EM_boundary_conditions_k must be the same size as the number of faces.");
     }
-    for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
-        if( EM_BCs_theta[iDim].size() == 1 ) // if just one theta is specified, then take the same theta for both sides of the dimension.
-            EM_BCs_theta[iDim].push_back( EM_BCs_theta[iDim][0] );
-        else if ( EM_BCs[iDim].size() > 2 )
-            ERROR("Too many EM_boundary_conditions_theta along dimension "<<"xyz"[iDim] );
+    for( unsigned int iDim=0; iDim<nDim_field*2; iDim++ ) {
+        if ( EM_BCs_k[iDim].size() != nDim_field )
+            ERROR("EM_boundary_conditions_k must have exactly " << nDim_field << " elements along dimension "<<"-+"[iDim%2]<<"012"[iDim/2] );
+        if ( EM_BCs_k[iDim][iDim/2] == 0. )
+            ERROR("EM_boundary_conditions_k must have a non zero normal component along dimension "<<"-+"[iDim%2]<<"012"[iDim/2] );
+        
     }
+    save_magnectic_fields_for_SM = true;
+    PyTools::extract("save_magnectic_fields_for_SM", save_magnectic_fields_for_SM, "Main");
 
     // -----------------------------------
     // MAXWELL SOLVERS & FILTERING OPTIONS
@@ -324,6 +330,10 @@ namelist("")
     PyTools::extract("solve_poisson", solve_poisson, "Main");
     PyTools::extract("poisson_max_iteration", poisson_max_iteration, "Main");
     PyTools::extract("poisson_max_error", poisson_max_error, "Main");
+    // Relativistic Poisson Solver
+    PyTools::extract("solve_relativistic_poisson", solve_relativistic_poisson, "Main");
+    PyTools::extract("relativistic_poisson_max_iteration", relativistic_poisson_max_iteration, "Main");
+    PyTools::extract("relativistic_poisson_max_error", relativistic_poisson_max_error, "Main");
 
     // PXR parameters
     PyTools::extract("is_spectral", is_spectral, "Main");
@@ -391,9 +401,6 @@ namelist("")
     if ( !PyTools::extract("number_of_patches", number_of_patches, "Main") ) {
         ERROR("The parameter `number_of_patches` must be defined as a list of integers");
     }
-    for ( unsigned int iDim=0 ; iDim<nDim_field ; iDim++ )
-        if( (number_of_patches[iDim] & (number_of_patches[iDim]-1)) != 0)
-            ERROR("Number of patches in each direction must be a power of 2");
 
     tot_number_of_patches = 1;
     for ( unsigned int iDim=0 ; iDim<nDim_field ; iDim++ )
@@ -421,6 +428,24 @@ namelist("")
     //norderz=norder[2];
 
 
+    if (PyTools::extract("patch_decomposition", patch_decomposition, "Main")) {
+        WARNING( "Change patches distribution to " << patch_decomposition );
+    }
+    else {
+        patch_decomposition = "hilbert";
+        WARNING( "Use default distribution : " << patch_decomposition );
+    }
+
+
+    if (patch_decomposition == "hilbert") {
+        for ( unsigned int iDim=0 ; iDim<nDim_field ; iDim++ )
+            if( (number_of_patches[iDim] & (number_of_patches[iDim]-1)) != 0)
+                ERROR("Number of patches in each direction must be a power of 2");
+    }
+    else
+        PyTools::extract("patch_orientation", patch_orientation, "Main");
+
+
     if( PyTools::nComponents("LoadBalancing")>0 ) {
         // get parameter "every" which describes a timestep selection
         load_balancing_time_selection = new TimeSelection(
@@ -432,7 +457,9 @@ namelist("")
     } else {
         load_balancing_time_selection = new TimeSelection();
     }
+
     has_load_balancing = (smpi->getSize()>1)  && (! load_balancing_time_selection->isEmpty());
+
 
     //mi.resize(nDim_field, 0);
     mi.resize(3, 0);
@@ -443,8 +470,12 @@ namelist("")
             while ((number_of_patches[2] >> mi[2]) >1) mi[2]++ ;
     }
 
+    // Activation of the vectorized subroutines
     vecto = false;
-
+    PyTools::extract("vecto", vecto, "Main");
+    if (vecto)
+        MESSAGE( "Apply vectorization" );
+    
     // Read the "print_every" parameter
     print_every = (int)(simulation_time/timestep)/10;
     PyTools::extract("print_every", print_every, "Main");
@@ -564,46 +595,33 @@ void Params::compute()
     simulation_time = (double)(n_time) * timestep;
     if (simulation_time!=entered_simulation_time)
         WARNING("simulation_time has been redefined from " << entered_simulation_time
-        << " to " << simulation_time << " to match nxtimestep ("
-        << scientific << setprecision(4) << simulation_time - entered_simulation_time<< ")" );
+        << " to " << simulation_time << " to match timestep.");
 
 
     // grid/cell-related parameters
     // ----------------------------
-    n_space.resize(3);
-    cell_length.resize(3);
-    cell_volume=1.0;
-    if (nDim_field==res_space.size() && nDim_field==grid_length.size()) {
-
-        // compute number of cells & normalized lengths
-        for (unsigned int i=0; i<nDim_field; i++) {
-            n_space[i]         = round(grid_length[i]/cell_length[i]);
-
-            double entered_grid_length = grid_length[i];
-            grid_length[i]      = (double)(n_space[i])*cell_length[i]; // ensure that nspace = grid_length/cell_length
-            if (grid_length[i]!=entered_grid_length)
-                WARNING("grid_length[" << i << "] has been redefined from " << entered_grid_length << " to " << grid_length[i] << " to match n x cell_length (" << scientific << setprecision(4) << grid_length[i]-entered_grid_length <<")");
-            cell_volume   *= cell_length[i];
-        }
-        // create a 3d equivalent of n_space & cell_length
-        for (unsigned int i=nDim_field; i<3; i++) {
-            n_space[i]=1;
-            cell_length[i]=0.0;
-        }
-
-    } else {
-        ERROR("Problem with the definition of nDim_field");
-    }
-
-    //!\todo (MG to JD) Are these 2 lines really necessary ? It seems to me it has just been done before
     n_space.resize(3, 1);
-    cell_length.resize(3, 0.);            //! \todo{3 but not real size !!! Pbs in Species::Species}
-    n_space_global.resize(3, 1);        //! \todo{3 but not real size !!! Pbs in Species::Species}
+    cell_length.resize(3);
+    n_space_global.resize(3, 1);  //! \todo{3 but not real size !!! Pbs in Species::Species}
     oversize.resize(3, 0);
     patch_dimensions.resize(3, 0.);
-
-    //n_space_global.resize(nDim_field, 0);
+    cell_volume=1.0;
     n_cell_per_patch = 1;
+    
+    // compute number of cells & normalized lengths
+    for (unsigned int i=0; i<nDim_field; i++) {
+        n_space[i] = round(grid_length[i]/cell_length[i]);
+        double entered_grid_length = grid_length[i];
+        grid_length[i] = (double)(n_space[i])*cell_length[i]; // ensure that nspace = grid_length/cell_length
+        if (grid_length[i]!=entered_grid_length)
+            WARNING("grid_length[" << i << "] has been redefined from " << entered_grid_length << " to " << grid_length[i] << " to match n x cell_length (" << scientific << setprecision(4) << grid_length[i]-entered_grid_length <<")");
+        cell_volume *= cell_length[i];
+    }
+    // create a 3d equivalent of n_space & cell_length
+    for (unsigned int i=nDim_field; i<3; i++) {
+        cell_length[i]=0.0;
+    }
+    
     for (unsigned int i=0; i<nDim_field; i++){
         oversize[i]  = max(interpolation_order,(unsigned int)(norder[i]/2+1)) + (exchange_particles_each-1);;
         n_space_global[i] = n_space[i];
@@ -613,7 +631,7 @@ void Params::compute()
         patch_dimensions[i] = n_space[i] * cell_length[i];
         n_cell_per_patch *= n_space[i];
     }
-
+    
     // Set clrw if not set by the user
     if ( clrw == -1 ) {
 
@@ -689,8 +707,14 @@ void Params::print_init()
         MESSAGE(1,"dimension " << i << " - (Spatial resolution, Grid length) : (" << res_space[i] << ", " << grid_length[i] << ")");
         MESSAGE(1,"            - (Number of cells,    Cell length)  : " << "(" << n_space_global[i] << ", " << cell_length[i] << ")");
         MESSAGE(1,"            - Electromagnetic boundary conditions: " << "(" << EM_BCs[i][0] << ", " << EM_BCs[i][1] << ")");
-        if (open_boundaries)
-            MESSAGE(1,"            - Electromagnetic boundary conditions theta: " << "(" << EM_BCs_theta[i][0] << ", " << EM_BCs_theta[i][1] << ")");
+        if (open_boundaries){
+            cout << setprecision(2);
+            cout << "                     - Electromagnetic boundary conditions k    : " << "( [" << EM_BCs_k[2*i][0] ;
+            for ( unsigned int ii=1 ; ii<grid_length.size() ; ii++) cout << ", " << EM_BCs_k[2*i][ii] ;
+            cout << "] , [" << EM_BCs_k[2*i+1][0] ;
+            for ( unsigned int ii=1 ; ii<grid_length.size() ; ii++) cout << ", " << EM_BCs_k[2*i+1][ii] ;
+            cout << "] )" << endl;
+        }
     }
 
     if( currentFilter_passes > 0 )

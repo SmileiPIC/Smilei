@@ -295,9 +295,9 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                 energy_part_lost[ispec] += mypatch->vecSpecies[ispec]->computeNRJ();
         }
 
-        for (unsigned int j=0; j<2;j++) //directions (xmin/xmax, ymin/ymax, zmin/zmax)
+        for (unsigned int jp=0; jp<2;jp++) //directions (xmin/xmax, ymin/ymax, zmin/zmax)
             for (unsigned int i=0 ; i<params.nDim_field ; i++) //axis 0=x, 1=y, 2=z
-                poynting[j][i] += mypatch->EMfields->poynting[j][i];
+                poynting[jp][i] += mypatch->EMfields->poynting[jp][i];
 
 
         delete  mypatch;

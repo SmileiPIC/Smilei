@@ -71,8 +71,8 @@ class Performances(Diagnostic):
 			self._h5items.update( dict(f) )
 			# Verify all simulations have all quantities
 			try:
-				quantities_uint   = list(f.attrs["quantities_uint"  ])
-				quantities_double = list(f.attrs["quantities_double"])
+				quantities_uint   = [bytes.decode(a) for a in f.attrs["quantities_uint"  ]]
+				quantities_double = [bytes.decode(a) for a in f.attrs["quantities_double"]]
 				if self._availableQuantities_uint   and self._availableQuantities_uint  !=quantities_uint  : raise
 				if self._availableQuantities_double and self._availableQuantities_double!=quantities_double: raise
 				self._availableQuantities_uint   = quantities_uint
@@ -156,8 +156,8 @@ class Performances(Diagnostic):
 		self._quantities_uint = []
 		used_quantities = []
 		for index_in_file, q in enumerate(self._availableQuantities_uint):
-			if self._re.search(r"\b"+q+r"\b",self._operation):
-				self._operation = self._re.sub(r"\b"+q+r"\b","C["+str(index_in_output)+"]",self._operation)
+			if self._re.search(r"\b%s\b"%q,self._operation):
+				self._operation = self._re.sub(r"\b%s\b"%q,"C["+str(index_in_output)+"]",self._operation)
 				units = {"t":"seconds", "h":"1", "n":"1"}[q[0]]
 				self._operationunits = self._operationunits.replace(q, units)
 				self._quantities_uint.append(index_in_file)
@@ -165,9 +165,9 @@ class Performances(Diagnostic):
 				index_in_output += 1
 		self._quantities_double = []
 		for index_in_file, q in enumerate(self._availableQuantities_double):
-			if self._re.search(r"\b"+q+r"\b",self._operation):
-				self._operation = self._re.sub(r"\b"+q+r"\b","C["+str(index_in_output)+"]",self._operation)
-				units = {"t":"seconds", "h":"1", "n":"1"}[q[0]]
+			if self._re.search(r"\b%s\b"%q,self._operation):
+				self._operation = self._re.sub(r"\b%s\b"%q,"C["+str(index_in_output)+"]",self._operation)
+				units = {"t":"seconds", "h":"1", "n":"1", "m":"1"}[q[0]]
 				self._operationunits = self._operationunits.replace(q, units)
 				self._quantities_double.append(index_in_file)
 				used_quantities.append( q )

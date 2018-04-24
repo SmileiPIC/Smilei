@@ -248,6 +248,7 @@ void SmileiMPI::init_patch_count( Params& params, DomainDecomposition* domain_de
     Ncur = 0; // Number of patches assigned to current rank r.
     Lcur = 0.; //Load assigned to current rank r.
 
+    int res_distributed (0);
     // MPI master loops patches and figures the best arrangement
     if( smilei_rk==0 ) {
         int rk = 0;
@@ -274,6 +275,17 @@ void SmileiMPI::init_patch_count( Params& params, DomainDecomposition* domain_de
                             Ncur = 0;
                             //Lcur = 0.;
                         }
+                        res_distributed += patch_count[r];
+                        if ( Npatches - res_distributed <= smilei_sz-1-(r+1) ) {
+                            // look for the last rank with more than one patch
+                            int lrwmtop = r;
+                            while (patch_count[lrwmtop]<=1)
+                                lrwmtop--;
+                            patch_count[lrwmtop]--;
+                            res_distributed--;
+                            Ncur++;
+                        }
+
                         r++; //Move on to the next rank.
                         //Tcur = Tload * capabilities[r];  //Target load for current rank r.
                         Tcur += Tload * capabilities[r];  //Target load for current rank r.

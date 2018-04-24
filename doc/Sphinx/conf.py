@@ -66,13 +66,9 @@ def get_version():
     """
     from subprocess import Popen, PIPE
     pipe = Popen('git describe --tags --always', stdout=PIPE, shell=True)
-    version = pipe.stdout.read()
-
-    if version:
-        return version
-    else:
-        return 'X.Y'
-
+    
+    return str(pipe.stdout.read() or 'X.Y')
+    
 version = get_version()
 
 # The full version, including alpha/beta/rc tags.

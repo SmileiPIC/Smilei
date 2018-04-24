@@ -115,10 +115,11 @@ public:
 
     //! Boundary conditions for ElectroMagnetic Fields
     std::vector< std::vector<std::string> > EM_BCs;
-    //! Theta parameter for some kinds of ElectroMagnetic boundary conditions
-    std::vector< std::vector<double> > EM_BCs_theta;
+    //! k parameters for some kinds of ElectroMagnetic boundary conditions
+    std::vector< std::vector<double> > EM_BCs_k;
     //! Are open boundaries used ?
     bool open_boundaries;
+    bool save_magnectic_fields_for_SM;
     
     //Poisson solver
     //! Do we solve poisson
@@ -127,6 +128,14 @@ public:
     unsigned int poisson_max_iteration;
     //! Maxium poisson error tolerated
     double poisson_max_error;
+
+    //"Relativistic" Poisson solver
+    //! Do we solve "relativistic poisson problem" for relativistic species
+    bool solve_relativistic_poisson;
+    //! Maxium number of relativistic poisson iteration
+    unsigned int relativistic_poisson_max_iteration;
+    //! Maxium relativistic poisson error tolerated
+    double relativistic_poisson_max_error;
 
     //! Do we need to exchange full B (default=0 <=> only 2 components are exchanged by dimension)
     bool full_B_exchange;
@@ -195,6 +204,10 @@ public:
     unsigned int tot_number_of_patches;
     //! Number of patches per direction
     std::vector<unsigned int> number_of_patches;
+    //! Domain decomposition
+    std::string patch_decomposition;
+    //! Domain orientation
+    std::string patch_orientation;
 
     //! Time selection for load balancing
     TimeSelection * load_balancing_time_selection;

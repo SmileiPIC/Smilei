@@ -60,7 +60,7 @@ def _smilei_check():
                     # pick those file that match the restart_number
                     my_files = filter(lambda a: Checkpoints.restart_number==int(re.search(r'dump-([0-9]*)-[0-9]*.h5$',a).groups()[-1]),my_files)
                 
-                Checkpoints.restart_files = my_files
+                Checkpoints.restart_files = list(my_files)
                 
                 if not len(Checkpoints.restart_files):
                     raise Exception(

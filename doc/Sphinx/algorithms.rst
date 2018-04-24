@@ -190,6 +190,8 @@ External (divergence-free) electric and/or magnetic fields can then be added to 
 resulting electrostatic fields, provided they fullfill Maxwell's equations :eq:`Maxwell`,
 and in particular Gauss' and Poisson's.
 
+Note that a relativistic plasma needs :doc:`special treatment <relativistic_fields_initialization>`.
+
 ----
 
 The PIC loop
@@ -365,3 +367,60 @@ to absorb outgoing electromagnetic waves.
 In contrast, the reflective electromagnetic BC will reflect any outgoing
 electromagnetic wave reaching the simulation boundary.
 Lastly, periodic BCs correspond to applying the fields from the opposite boundary.
+
+
+----
+
+.. _multipassBinomialFilter:
+
+Multi-pass binomial filtering of the current densities
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A multi-pass binomial filter on the current densities is available in :program:`Smilei`,
+which implementation follows that `presented by Vay et al. (2011) <https://www.sciencedirect.com/science/article/pii/S0021999111002270?via%3Dihub>`_.
+Each pass consists in a 3-points spatial averaging (in all spatial dimensions) of the current densities, 
+so that the filtered current density (here defined at location i on a one-dimensional grid) is recomputed as:
+
+.. math::
+
+    J_{f,i} = \frac{1}{2}\,J_i + \frac{J_{i+1}+J_{i-1}}{4}.
+
+
+Current filtering, if required by the user, is applied before solving
+Maxwell’s equation, and the number of passes is an :ref:`input parameter <CurrentFilter>`
+defined by the user.
+
+
+
+----
+
+.. _EfieldFilter:
+
+Friedman filter on the electric field
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A method for temporal filtering of the electric field is also available in :program:`Smilei`.
+It is the so-called Friedman filter detailed in `Greenwood et al. (2004) <https://www.sciencedirect.com/science/article/pii/S0021999104002608?via%3Dihub>`_.
+This method consists in computing the filtered electric field at time-step :math:`n`:
+
+.. math::
+
+    {\bf E}_f^{(n)} = \left(1+\frac{\theta}{2}\right) {\bf E}^{(n)} - \theta \left(1-\frac{\theta}{2}\right) {\bf E}^{(n-1)} + \frac{1}{2} \theta \big(1-\theta\big)^2 \bar{\bf E}^{(n-2)},
+
+where:
+
+.. math::
+
+    \bar{\bf E}^{(n-2)} = {\bf E}^{(n-2)} + \theta \bar{\bf E}^{(n-3)},
+
+and :math:`\theta \in [0,1[` is an :ref:`input parameter <FieldFilter>` defined by the user.
+Note that the filtered field :math:`E_f` is not used to push particles, but is used when solving the Maxwell-Faraday equation.
+Also note that, as underlined in `Greenwood et al. (2004) <https://www.sciencedirect.com/science/article/pii/S0021999104002608?via%3Dihub>`_,
+using this particular filter modifies the CFL condition of the Maxwell solver.
+A simple trick to ensure that this condition is still verified is to use (for :math:`\Delta x = \Delta y = \Delta z`) the 
+magic time-step :math:`\Delta t = \Delta x/2` whenever the Friedman filter is employed.
+
+Both filters on the :ref:`currents <multipassBinomialFilter>` and :ref:`electric fields <EfieldFilter>` can be used together or
+separately. They can be used, e.g., to mitigate the numerical Cherenkov instability that plagues PIC simulations dealing with 
+relativistically drifting flows. 
+An exemple of their use to mitigate this effect is highlighted in the work by `Plotnikov et al. (2017) <https://arxiv.org/abs/1712.02883>`_.

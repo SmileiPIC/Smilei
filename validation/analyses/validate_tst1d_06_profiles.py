@@ -37,7 +37,7 @@ for i, (name, tprofile) in enumerate(S.namelist.tprofiles):
 
 # Verify that "time_fields_frozen" and external fields works
 #for field in ["Ex", "Ey", "Ez", "Bx", "By", "Bz"]:
-for field in ["Ey", "Ez", "Bx", "By", "Bz"]:
+for field in ["Ex", "Ey", "Ez", "Bx", "By", "Bz"]:
 	F = S.Field.Field0(field, timesteps=190).getData()[0]
 	Validate(field+" field at late time", F, 0.01)
 

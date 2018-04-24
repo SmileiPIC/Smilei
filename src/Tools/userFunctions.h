@@ -10,10 +10,12 @@ class userFunctions {
 
         //! Modified Bessel function of first and second kind
         static void modified_bessel_IK(double n, double x, double & I, double & dI,
-                double & K, double & dK, long maxit, double eps);
+                double & K, double & dK, long maxit, double eps,
+                bool warning = true);
 
         static double modified_bessel_K(double n, double x,
-                long maxit, double eps);
+                long maxit, double eps,
+                bool warning = true);
 
         //! Chebychev evaluation
         static double chebychev_eval(const double * c, const int m, const double x);

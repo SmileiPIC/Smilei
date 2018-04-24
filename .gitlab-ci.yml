@@ -6,8 +6,8 @@ compile:
   stage: compile
   only:
     - develop
-    - couplage_picsar_smilei
-    - Niel_performance
+    - dev_issue226
+    - fix_numpy_part
     - radiationSpectrum
 
   script:
@@ -33,8 +33,8 @@ makerun1D:
   stage: makerun
   only:
     - develop
-    - couplage_picsar_smilei
-    - Niel_performance
+    - dev_issue226
+    - fix_numpy_part
     - radiationSpectrum
 
   script:
@@ -47,8 +47,8 @@ makerun2D:
   stage: makerun
   only:
     - develop
-    - couplage_picsar_smilei
-    - Niel_performance
+    - dev_issue226
+    - fix_numpy_part
     - radiationSpectrum
 
   script:
@@ -61,8 +61,8 @@ makerun3D:
   stage: makerun
   only:
     - develop
-    - couplage_picsar_smilei
-    - Niel_performance
+    - dev_issue226
+    - fix_numpy_part
     - radiationSpectrum
 
   script:
@@ -75,10 +75,10 @@ makerunCollisions:
   stage: makerun
   only:
     - develop
-    - couplage_picsar_smilei
-    - Niel_performance
+    - dev_issue226
+    - fix_numpy_part
     - radiationSpectrum
-
+    
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation

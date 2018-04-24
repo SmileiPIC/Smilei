@@ -25,8 +25,8 @@ void copy_field_2d(Field2D* out, Field2D * in)
         n1 = ((in->dims_[0]) < (out->dims_[0]) ? (in->dims_[0]) : (out->dims_[0]));
         n2 = ((in->dims_[1]) < (out->dims_[1]) ? (in->dims_[1]) : (out->dims_[1]));
 	#pragma omp parallel for collapse(2) private(i , j )  schedule(runtime)
-        for(int i=0;i<n1;i++){
-                for(int j=0;j<n2;j++){
+        for(i=0;i<n1;i++){
+                for(j=0;j<n2;j++){
                                 (*out)(i,j) =  (*in)(i,j);
                         }
                 }

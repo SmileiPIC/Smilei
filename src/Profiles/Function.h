@@ -46,7 +46,8 @@ class Function_Python1D : public Function
 {
 public:
     Function_Python1D(PyObject *pp) : py_profile(pp) {};
-    Function_Python1D(Function_Python1D *f) : py_profile(f->py_profile) {};
+    Function_Python1D(Function_Python1D *f) : py_profile(f->py_profile) { Py_INCREF(py_profile); };
+    ~Function_Python1D() { Py_DECREF(py_profile); };
     double valueAt(double); // time
     double valueAt(std::vector<double>, double); // time (space discarded)
     double valueAt(std::vector<double>); // space
@@ -62,7 +63,8 @@ class Function_Python2D : public Function
 {
 public:
     Function_Python2D(PyObject *pp) : py_profile(pp) {};
-    Function_Python2D(Function_Python2D *f) : py_profile(f->py_profile) {};
+    Function_Python2D(Function_Python2D *f) : py_profile(f->py_profile) { Py_INCREF(py_profile); };
+    ~Function_Python2D() { Py_DECREF(py_profile); };
     double valueAt(std::vector<double>, double); // space + time
     double valueAt(std::vector<double>); // space
 #ifdef SMILEI_USE_NUMPY
@@ -77,7 +79,8 @@ class Function_Python3D : public Function
 {
 public:
     Function_Python3D(PyObject *pp) : py_profile(pp) {};
-    Function_Python3D(Function_Python3D *f) : py_profile(f->py_profile) {};
+    Function_Python3D(Function_Python3D *f) : py_profile(f->py_profile) { Py_INCREF(py_profile); };
+    ~Function_Python3D() { Py_DECREF(py_profile); };
     double valueAt(std::vector<double>, double); // space + time
     double valueAt(std::vector<double>); // space
 #ifdef SMILEI_USE_NUMPY
@@ -92,7 +95,8 @@ class Function_Python4D : public Function
 {
 public:
     Function_Python4D(PyObject *pp) : py_profile(pp) {};
-    Function_Python4D(Function_Python4D *f) : py_profile(f->py_profile) {};
+    Function_Python4D(Function_Python4D *f) : py_profile(f->py_profile) { Py_INCREF(py_profile); };
+    ~Function_Python4D() { Py_DECREF(py_profile); };
     double valueAt(std::vector<double>, double); // space + time
 private:
     PyObject *py_profile;

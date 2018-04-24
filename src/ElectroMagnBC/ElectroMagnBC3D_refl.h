@@ -2,12 +2,12 @@
 #ifndef ELECTROMAGNBC3D_refl_H
 #define ELECTROMAGNBC3D_refl_H
 
-#include "ElectroMagnBC.h"
+#include "ElectroMagnBC3D.h"
 
 class Params;
 class ElectroMagn;
 
-class ElectroMagnBC3D_refl : public ElectroMagnBC {
+class ElectroMagnBC3D_refl : public ElectroMagnBC3D {
 public:
     ElectroMagnBC3D_refl( Params &params, Patch* patch, unsigned int _min_max );
     ~ElectroMagnBC3D_refl() {};
@@ -18,24 +18,6 @@ private:
     
     //! Oversize (nb of ghost cells)
     unsigned int oversize_x, oversize_y, oversize_z;
-    
-    //! Number of nodes on the primal grid in the x-direction
-    unsigned int nx_p;
-    
-    //! Number of nodes on the dual grid in the x-direction
-    unsigned int nx_d;
-    
-    //! Number of nodes on the primal grid in the y-direction
-    unsigned int ny_p;
-    
-    //! Number of nodes on the dual grid in the y-direction
-    unsigned int ny_d;
-    
-    //! Number of nodes on the primal grid in the z-direction
-    unsigned int nz_p;
-    
-    //! Number of nodes on the dual grid in the z-direction
-    unsigned int nz_d;
     
 };
 

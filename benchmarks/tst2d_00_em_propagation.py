@@ -2,14 +2,16 @@
 # 					SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
 # ----------------------------------------------------------------------------------------
 
-import math
+from math import pi, cos, sin
 
-l0 = 2.0*math.pi        # laser wavelength
+l0 = 2.0*pi        # laser wavelength
 t0 = l0                 # optical cycle
 Lsim = [20.*l0,50.*l0]  # length of the simulation
 Tsim = 50.*t0           # duration of the simulation
 resx = 28.              # nb of cells in on laser wavelength
 rest = 40.              # time of timestep in one optical cycle 
+
+ang = 0.5
 
 Main(
     geometry = "2Dcartesian",
@@ -29,6 +31,8 @@ Main(
         ['silver-muller'],
     ],
     
+    EM_boundary_conditions_k = [[cos(ang), sin(ang)],[-1.,0.],[0.,1.],[0.,-1.]],
+    
     random_seed = smilei_mpi_rank
 )
 
@@ -37,8 +41,24 @@ LaserGaussian2D(
     omega           = 1.,
     focus           = [Lsim[0], Lsim[1]/2.],
     waist           = 8.,
-    incidence_angle = 0.5,
+    incidence_angle = ang,
+    polarization_phi = 20./180.*pi,
     time_envelope   = tgaussian()
+)
+
+Species(
+	name = "eon",
+	position_initialization = "regular",
+	momentum_initialization = "cold",
+	particles_per_cell = 0.001,
+	mass = 1.0,
+	charge = -1.0,
+	number_density = 1.,
+	mean_velocity = [0.,0.,0.],
+	boundary_conditions = [
+		["periodic", "periodic"],
+	],
+	is_test = True
 )
 
 
@@ -72,5 +92,12 @@ DiagProbe(
     every = 10,
     origin = [0.1*Lsim[0], 0.5*Lsim[1]],
     fields = []
+)
+
+
+DiagTrackParticles(
+    species = "eon",
+    every = 4*rest,
+	attributes = ["x", "y", "Ex", "Ey", "Ez", "Bx", "By", "Bz"]
 )
 

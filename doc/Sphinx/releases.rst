@@ -21,9 +21,15 @@ the GitHub page.
 Upcoming changes
 ^^^^^^^^^^^^^^^^
 
-* Moving window along y and z
-* Tracking particles in *Screens*
 * Vectorization
+* Interface with the PICSAR library
+* Compatibility with Python 3
+* New 'Performances' diagnostic
+* Tracked particles may output the fields at their location
+* 'subgrid' option in Fields diagnostics
+* Printout of the expected disk usage
+* Laser propagation pre-processing
+* Bugfixes: circular polarization
 
 ----
 

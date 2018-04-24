@@ -400,6 +400,10 @@ class Diagnostic(object):
 		ax = self._make_axes(axes)
 		fig = ax.figure
 		
+		# Reset ctrl-C exception
+		import sys
+		if hasattr(sys,"last_type"): del sys.last_type
+		
 		# Movie requested ?
 		mov = Movie(fig, movie, fps, dpi)
 		# Save to file requested ?
@@ -412,6 +416,10 @@ class Diagnostic(object):
 			if self._animateOnAxes(ax, time) is None: return
 			self._plt.draw()
 			self._plt.pause(0.00001)
+			# Catch ctrl-C
+			if hasattr(sys,"last_type"):
+				if sys.last_type is KeyboardInterrupt: break
+			# Copy to movie or file
 			mov.grab_frame()
 			save.frame(time)
 		# Movie ?

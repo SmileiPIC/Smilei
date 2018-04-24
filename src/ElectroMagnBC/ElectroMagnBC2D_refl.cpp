@@ -34,18 +34,10 @@ using namespace std;
 
 
 ElectroMagnBC2D_refl::ElectroMagnBC2D_refl( Params &params, Patch* patch, unsigned int _min_max )
-: ElectroMagnBC( params, patch, _min_max )
+: ElectroMagnBC2D( params, patch, _min_max )
 {
     // oversize
     oversize_ = params.oversize[0];
-    
-    // number of nodes of the primal and dual grid in the x-direction
-    nx_p = params.n_space[0]*params.global_factor[0]+1+2*params.oversize[0];
-    nx_d = params.n_space[0]*params.global_factor[0]+2+2*params.oversize[0];
-    
-    // number of nodes of the primal and dual grid in the y-direction
-    ny_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
-    ny_d = params.n_space[1]*params.global_factor[1]+2+2*params.oversize[1];
     
 }
 
