@@ -146,7 +146,7 @@ void Species::resizeCluster(Params& params)
 {
 
     // We keep the current number of particles
-    int npart = bmax[bmax.size()-1];
+    int npart = (*particles).size();
     int size = params.n_space[0]/clrw;
 
     // Arrays of the min and max indices of the particle bins
@@ -170,6 +170,8 @@ void Species::resizeCluster(Params& params)
             bmax[ibin] = bmin[ibin] + quotient;
         }
     }
+
+    //std::cout << "size: " << size << " " << npart << " " << bmin[0] << " " << bmax[0] << '\n';
 
     // Recommended: A sorting process may be needed for best porfermance after this step
 
@@ -840,7 +842,6 @@ void Species::sort_part(Params& params)
     // Delete Particles included in the index of particles to exchange. Assumes indexes are sorted.
     /********************************************************************************/
     int ii, iPart;
-
 
     // Push lost particles at the end of bins
     for (unsigned int ibin = 0 ; ibin < bmax.size() ; ibin++ ) {

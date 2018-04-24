@@ -683,9 +683,9 @@ void SpeciesDynamicV::reconfiguration(Params &params, Patch * patch)
         // The type of operator is changed
         this->vectorized_operators = !this->vectorized_operators;
 
-        /*MESSAGE(1,"> Species " << this->name << " reconfiguration (" << this->vectorized_operators
+        MESSAGE(1,"> Species " << this->name << " reconfiguration (" << this->vectorized_operators
                   << ") in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ")"
-                  << " of MPI process "<< patch->MPI_me_);*/
+                  << " of MPI process "<< patch->MPI_me_);
 
         // Destroy current operators
         delete Interp;
@@ -712,11 +712,13 @@ void SpeciesDynamicV::reconfiguration(Params &params, Patch * patch)
         // If we switch from vectorized to non-vectozied,
         else
         {
+
             // We resize the bins
             this->Species::resizeCluster(params);
 
             // We perform the sorting
             this->Species::sort_part(params);
+
         }
     }
 

@@ -91,6 +91,9 @@ public :
     // Interfaces between main programs & main PIC operators
     // -----------------------------------------------------
 
+    //! Reconfigure all patches for the new time step
+    void configuration(Params& params);
+
     //! For all patch, move particles (restartRhoJ(s), dynamics and exchangeParticles)
     void dynamics(Params& params,
                   SmileiMPI* smpi,

@@ -360,6 +360,25 @@ void Patch::updateMPIenv(SmileiMPI* smpi)
 
 } // END updateMPIenv
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Clean the MPI buffers for communications
+// ---------------------------------------------------------------------------------------------------------------------
+void Patch::cleanMPIBuffers(int ispec, Params& params)
+{
+    int ndim = params.nDim_field;
+
+    for (int iDim=0 ; iDim < ndim ; iDim++){
+        for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+            vecSpecies[ispec]->MPIbuff.partRecv[iDim][iNeighbor].clear();//resize(0,ndim);
+            vecSpecies[ispec]->MPIbuff.partSend[iDim][iNeighbor].clear();//resize(0,ndim);
+            vecSpecies[ispec]->MPIbuff.part_index_send[iDim][iNeighbor].clear();
+            //vecSpecies[ispec]->MPIbuff.part_index_send[iDim][iNeighbor].resize(0);
+            vecSpecies[ispec]->MPIbuff.part_index_recv_sz[iDim][iNeighbor] = 0;
+        }
+    }
+    vecSpecies[ispec]->indexes_of_particles_to_exchange.clear();
+} // cleanMPIBuffers
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Split particles Id to send in per direction and per patch neighbor dedicated buffers
@@ -410,8 +429,6 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, Params& params)
             idim++;
         }
     }
-
-
 
 } // initExchParticles(... iDim)
 

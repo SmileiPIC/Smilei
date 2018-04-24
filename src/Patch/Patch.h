@@ -85,6 +85,8 @@ public:
     //   - fields communication specified per geometry (pure virtual)
     // --------------------------------------------------------------
 
+    //! Clean the MPI buffers for communications
+    void cleanMPIBuffers(int ispec, Params& params);
     //! manage Idx of particles per direction,
     void initExchParticles(SmileiMPI* smpi, int ispec, Params& params);
     //!init comm  nbr of particles/

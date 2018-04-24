@@ -410,6 +410,24 @@ public:
     //! Moving window boundary conditions managment
     void setXminBoundaryCondition();
 
+    //! Check function that enables to control the results of some operators
+    void check(std::string title)
+    {
+        double sum_x = 0;
+        double sum_y = 0;
+        double sum_px = 0;
+        for (unsigned int ip=0; ip < (*particles).size() ; ip++){
+            sum_x += (*particles).position(0,ip);
+            sum_y += (*particles).position(1,ip);
+            sum_px += (*particles).momentum(0,ip);
+        }
+        std::cout << "Check sum at " << title << " for "<< this->name << " - nbp: "
+                  << (*particles).size() << " - "
+                  << sum_x << " - "
+                  << sum_y << " - "
+                  << sum_px << '\n';
+    }
+
 protected:
 
     //! Accumulate nrj lost by the particle with the radiation
