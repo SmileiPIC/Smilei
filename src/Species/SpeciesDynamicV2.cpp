@@ -154,6 +154,10 @@ void SpeciesDynamicV2::dynamics(double time_dual, unsigned int ispec,
         for (unsigned int i=0; i<species_loc_bmax.size(); i++)
             species_loc_bmax[i] = 0;
 
+        // Resize Cell_keys
+        // Need to check if this is necessary here
+        (*particles).cell_keys.resize((*particles).size());
+
         for ( int ipack = 0 ; ipack < npack ; ipack++ ) {
 
             int nparts_in_pack = bmax[ (ipack+1) * packsize-1 ];
@@ -224,14 +228,8 @@ void SpeciesDynamicV2::dynamics(double time_dual, unsigned int ispec,
             //(*Push)(*particles, smpi, 0, bmax[bmax.size()-1], ithread );
             (*Push)(*particles, smpi, bmin[ipack*packsize], bmax[ipack*packsize+packsize-1], ithread, bmin[ipack*packsize] );
 
-            //Prepare for sorting
-            //for (unsigned int i=0; i<species_loc_bmax.size(); i++)
-            //    species_loc_bmax[i] = 0;
-
-            unsigned int length[3];
-            length[0]=0;
-            length[1]=params.n_space[1]+1;
-            length[2]=params.n_space[2]+1;
+            // Computation of the particle cell keys for all particles
+            this->compute_bin_cell_keys(params, bmin[ipack*packsize], bmax[ipack*packsize+packsize-1]);
 
             //for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
             for (unsigned int ibin = 0 ; ibin < packsize ; ibin++) {
@@ -259,11 +257,6 @@ void SpeciesDynamicV2::dynamics(double time_dual, unsigned int ispec,
                                 (*particles).cell_keys[iPart] = -1;
                             }
                             else {
-                                //Compute cell_keys of remaining particles
-                                for ( int i = 0 ; i<nDim_particle; i++ ){
-                                    (*particles).cell_keys[iPart] *= length[i];
-                                    (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]+0.00000000000001) * dx_inv_[i] );
-                                }
                                 //First reduction of the count sort algorithm. Lost particles are not included.
                                 species_loc_bmax[(*particles).cell_keys[iPart]] ++;
                             }
@@ -290,11 +283,6 @@ void SpeciesDynamicV2::dynamics(double time_dual, unsigned int ispec,
                             (*particles).cell_keys[iPart] = -1;
                         }
                         else {
-                            //Compute cell_keys of remaining particles
-                            for ( int i = 0 ; i<nDim_particle; i++ ){
-                                (*particles).cell_keys[iPart] *= length[i];
-                                (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]+0.00000000000001) * dx_inv_[i] );
-                            }
                             //First reduction of the count sort algorithm. Lost particles are not included.
                             species_loc_bmax[(*particles).cell_keys[iPart]] ++;
 
@@ -382,6 +370,10 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
         for (unsigned int i=0; i<species_loc_bmax.size(); i++)
             species_loc_bmax[i] = 0;
 
+        // Resize Cell_keys
+        // Need to check if this is necessary here
+        (*particles).cell_keys.resize((*particles).size());
+
         // Interpolate the fields at the particle position
         //for (unsigned int scell = 0 ; scell < bmin.size() ; scell++)
         //    (*Interp)(EMfields, *particles, smpi, &(bmin[scell]), &(bmax[scell]), ithread );
@@ -442,14 +434,10 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
         }
 
         // Push the particles and the photons
-        //(*Push)(*particles, smpi, 0, bmax[bmax.size()-1], ithread );
         (*Push)(*particles, smpi, 0, bmax.back(), ithread, 0.);
-        //particles->test_move( bmin[ibin], bmax[ibin], params );
 
-        unsigned int length[3];
-        length[0]=0;
-        length[1]=params.n_space[1]+1;
-        length[2]=params.n_space[2]+1;
+        // Computation of the particle cell keys for all particles
+        this->compute_bin_cell_keys(params,0, bmax.back());
 
         for (unsigned int scell = 0 ; scell < bmin.size() ; scell++)
         {
@@ -472,11 +460,6 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
                         (*particles).cell_keys[iPart] = -1;
                     }
                     else {
-                        //Compute cell_keys of remaining particles
-                        for ( int i = 0 ; i<nDim_particle; i++ ){
-                            (*particles).cell_keys[iPart] *= length[i];
-                            (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]+0.00000000000001) * dx_inv_[i] );
-                        }
                         //First reduction of the count sort algorithm. Lost particles are not included.
                         species_loc_bmax[(*particles).cell_keys[iPart]] ++;
                     }
@@ -502,11 +485,6 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
                         (*particles).cell_keys[iPart] = -1;
                     }
                     else {
-                        //Compute cell_keys of remaining particles
-                        for ( int i = 0 ; i<nDim_particle; i++ ){
-                            (*particles).cell_keys[iPart] *= length[i];
-                            (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]+0.00000000000001) * dx_inv_[i] );
-                        }
                         //First reduction of the count sort algorithm. Lost particles are not included.
                         species_loc_bmax[(*particles).cell_keys[iPart]] ++;
                     }
@@ -757,6 +735,31 @@ void SpeciesDynamicV2::compute_part_cell_keys(Params &params)
 
 }
 
+// -----------------------------------------------------------------------------
+//! Compute cell_keys for the specified bin boundaries.
+//! params object that contains the global parameters
+//! istart first bin index
+//! iend last bin index
+// -----------------------------------------------------------------------------
+void SpeciesDynamicV2::compute_bin_cell_keys(Params &params, int istart, int iend)
+{
+
+    unsigned int ip, ixy;
+    unsigned int length[3];
+
+    length[0]=0;
+    length[1]=params.n_space[1]+1;
+    length[2]=params.n_space[2]+1;
+
+    #pragma omp simd
+    for (ip=istart; ip < iend; ip++){
+    // Counts the # of particles in each cell (or sub_cell) and store it in sbmax.
+        for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
+            (*particles).cell_keys[ip] *= length[ipos];
+            (*particles).cell_keys[ip] += round( ((*particles).position(ipos,ip)-min_loc_vec[ipos]+0.00000000000001) * dx_inv_[ipos] );
+        }
+    }
+}
 
 void SpeciesDynamicV2::importParticles( Params& params, Patch* patch, Particles& source_particles, vector<Diagnostic*>& localDiags )
 {

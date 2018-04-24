@@ -572,12 +572,6 @@ void SpeciesDynamicV::compute_bin_cell_keys(Params &params, int istart, int iend
     unsigned int ip, ixy;
     unsigned int length[3];
 
-    //Number of particles before exchange
-    //nparts = (*particles).size();
-
-    // Cell_keys is resized at the current number of particles
-    //(*particles).cell_keys.resize(nparts);
-
     length[0]=0;
     length[1]=params.n_space[1]+1;
     length[2]=params.n_space[2]+1;
