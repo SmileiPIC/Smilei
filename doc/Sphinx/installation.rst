@@ -81,7 +81,7 @@ that you can install following `these instructions <https://www.macports.org/ins
 Via HomeBrew
 """"""""""""
 
-This installation procedure has been tested on OS X 10.12
+This installation procedure has been tested on macOS 10.13
 
 #. `HomeBrew <http://brew.sh>`_ can easily installed via:
 
@@ -93,22 +93,10 @@ This installation procedure has been tested on OS X 10.12
 
    .. code-block:: bash
 
-     brew install gcc
+     brew install gcc python numpy
      brew install openmpi --with-mpi-thread-multiple
-     brew install hdf5 --with-mpi     
-     brew install python numpy
-     export LC_ALL=en_US.UTF-8
-     export LANG=en_US.UTF-8
-     pip2 install ipython h5py pint sphinx matplotlib pylab
-
-#. To be able to use the gcc with openmpi, you need to set the ``OMPI_CXX`` variable :
-     
-   .. code-block:: bash
-
-     export OMPI_CXX=g++-7 # the number version might vary
-
-#. You can put the above line in a shell rc file (e.g. ``.bash_profile``) 
-   or you can just add it before the ``make`` command (``OMPI_CXX=g++-7 make`` ...)
+     brew install hdf5 --with-mpi
+     pip3 install ipython h5py pint sphinx matplotlib scipy
 
 #. now you can compile :program:`smilei` (see :ref:`compile` for other options)
 

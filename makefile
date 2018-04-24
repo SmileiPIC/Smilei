@@ -217,10 +217,11 @@ tar:
 # Python module rules
 
 # Install the python module in the user python path
+
 happi:
 	@echo "Installing $(SITEDIR)/smilei.pth"
 	$(Q) mkdir -p "$(SITEDIR)"
-	$(Q) echo "$(PWD)" > "$(SITEDIR)/smilei.pth"
+	$(Q) echo "$(CURDIR)" > "$(SITEDIR)/smilei.pth"
 
 uninstall_happi:
 	@echo "Uninstalling $(SITEDIR)/smilei.pth"
