@@ -50,12 +50,16 @@ class SpeciesDynamicV : public Species
     //! Method used to sort particles
     void sort_part(Params& params) override;
 
+    //! This function reconfigures the species according to the vectorization mode
     void reconfiguration( Params& params, Patch * patch) override;
 
-    //void count_sort_part(Params& param);
+    //! Compute cell_keys for all particles of the current species
     void compute_part_cell_keys(Params &params);
 
-    //!
+    //! Compute cell_keys for the specified bin boundaries.
+    void compute_bin_cell_keys(Params &params, int istart, int iend);
+
+    //! Create a new entry for a particle
     void add_space_for_a_particle() override {
         particles->cell_keys.push_back(-1);
     }

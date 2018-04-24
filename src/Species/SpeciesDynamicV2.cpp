@@ -223,7 +223,6 @@ void SpeciesDynamicV2::dynamics(double time_dual, unsigned int ispec,
             // Push the particles and the photons
             //(*Push)(*particles, smpi, 0, bmax[bmax.size()-1], ithread );
             (*Push)(*particles, smpi, bmin[ipack*packsize], bmax[ipack*packsize+packsize-1], ithread, bmin[ipack*packsize] );
-            //particles->test_move( bmin[ibin], bmax[ibin], params );
 
             //Prepare for sorting
             //for (unsigned int i=0; i<species_loc_bmax.size(); i++)
@@ -814,8 +813,8 @@ void SpeciesDynamicV2::reconfiguration(Params &params, Patch * patch)
     //unsigned int ncell;
     bool reasign_operators = false;
     //float ratio_number_of_vecto_cells;
-    double vecto_time = 0.;
-    double scalar_time = 0.;
+    float vecto_time = 0.;
+    float scalar_time = 0.;
 
     //split cell into smaller sub_cells for refined sorting
     // cell = (params.n_space[0]+1);
