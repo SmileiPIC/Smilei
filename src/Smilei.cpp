@@ -198,7 +198,7 @@ int main (int argc, char* argv[])
         vecPatches.applyExternalFields();
 
         // Patch reconfiguration
-        vecPatches.configuration(params);
+        vecPatches.configuration(params,timers, 0);
 
         vecPatches.dynamics(params, &smpi, simWindow, RadiationTables,
                             MultiphotonBreitWheelerTables, time_dual, timers, 0);
@@ -276,7 +276,7 @@ int main (int argc, char* argv[])
             }
 
             // Patch reconfiguration
-            vecPatches.configuration(params);
+            vecPatches.configuration(params, timers, itime);
 
             // apply collisions if requested
             vecPatches.applyCollisions(params, itime, timers);

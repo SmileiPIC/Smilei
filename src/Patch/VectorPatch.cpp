@@ -105,8 +105,11 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi, OpenPMDparams& op
 // ---------------------------------------------------------------------------------------------------------------------
 // Reconfigure all patches for the new time step
 // ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::configuration(Params& params)
+void VectorPatch::configuration(Params& params, Timers &timers, int itime)
 {
+
+    timers.reconfiguration.restart();
+
     // Species reconfiguration for best performance
     // Change the status to use vectorized or not-vectorized operators
     // as a function of the metrics
@@ -129,6 +132,9 @@ void VectorPatch::configuration(Params& params)
             species(ipatch, ispec)->reconfiguration(params, (*this)(ipatch));
         }
     }
+
+    timers.reconfiguration.update( params.printNow( itime ) );
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

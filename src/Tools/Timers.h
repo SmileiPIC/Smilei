@@ -17,7 +17,7 @@ public:
     Timers(SmileiMPI *smpi );
     //! Destructor
     ~Timers();
-    
+
     Timer global    ;
     Timer particles ;
     Timer maxwell   ;
@@ -30,11 +30,12 @@ public:
     Timer syncField ;
     Timer syncDens  ;
     Timer diagsNEW  ;
+    Timer reconfiguration  ;
 
     void profile(SmileiMPI * smpi);
     std::vector<Timer*> consolidate(SmileiMPI * smpi);
     void reboot();
-    
+
 private:
     std::vector<Timer*> timers;
 
@@ -42,4 +43,3 @@ private:
 
 
 #endif
-
