@@ -1181,9 +1181,9 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
 
                     // Obtain the number of particles per cell
                     nppc = n_part_in_cell(i,j,k);
-		    MESSAGE("nppc="<< nppc); MESSAGE("density"<< density(i,j,k)*100000);
+		    //MESSAGE("nppc="<< nppc); MESSAGE("density"<< density(i,j,k)*100000);
                     n_part_in_cell(i,j,k) = floor(nppc);
-	            MESSAGE("n_part_in_cell"<<n_part_in_cell(i,j,k));
+	            //MESSAGE("n_part_in_cell"<<n_part_in_cell(i,j,k));
                     // If not a round number, then we need to decide how to round
                     double intpart;
                     if ( modf(nppc, &intpart) > 0) {
@@ -1201,7 +1201,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
 
                     // If zero or less, zero particles
                     if( n_part_in_cell(i,j,k)<=0. || density(i,j,k)==0. ) {
-                        MESSAGE(" n_part_in_cell(i,j,k)<=0. || density(i,j,k)==0." );
+                        //MESSAGE(" n_part_in_cell(i,j,k)<=0. || density(i,j,k)==0." );
                         n_part_in_cell(i,j,k) = 0.;
                         density(i,j,k) = 0.;
                         continue;
@@ -1281,7 +1281,11 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                         }
                         initMomentum(nPart,iPart, temp, vel);
                         if (params.geometry=="3drz"){
+			    if (j+cell_index[1]==0){
+                            initWeight(nPart, iPart, density(i,j,k)*(j+cell_index[1])*cell_length[1]/8.);
+                            }else {
                             initWeight(nPart, iPart, density(i,j,k)*(j+cell_index[1]+0.5)*cell_length[1]);
+                            }
                         }else{
                             initWeight(nPart, iPart, density(i,j,k));
 				

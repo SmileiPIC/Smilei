@@ -320,6 +320,7 @@ int main (int argc, char* argv[])
             {
                 if( time_dual > params.time_fields_frozen ) {
                     vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers );
+                    MESSAGE("solve maxwell");
                 }
             }
             #else
