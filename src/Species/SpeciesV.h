@@ -48,7 +48,12 @@ class SpeciesV : public Species
     //! Method used to sort particles
     void sort_part(Params& params) override;
     //void count_sort_part(Params& param);
+
+    //! Compute cell_keys for all particles of the current species
     void compute_part_cell_keys(Params &params);
+
+    //! Compute cell_keys for the specified bin boundaries.
+    void compute_bin_cell_keys(Params &params, int istart, int iend);
 
     //!
     void add_space_for_a_particle() override {
