@@ -148,6 +148,10 @@ void SpeciesV::dynamics(double time_dual, unsigned int ispec,
         for (unsigned int i=0; i<species_loc_bmax.size(); i++)
             species_loc_bmax[i] = 0;
 
+        // Resize Cell_keys
+        // Need to check if this is necessary here
+        (*particles).cell_keys.resize((*particles).size());
+
         for ( int ipack = 0 ; ipack < npack ; ipack++ ) {
 
             int nparts_in_pack = bmax[ (ipack+1) * packsize-1 ];
