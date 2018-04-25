@@ -501,7 +501,8 @@ void SpeciesV::compute_part_cell_keys(Params &params)
     double X;
     unsigned int length[3];
 
-    npart = (*particles).size(); //Number of particles before exchange
+    npart = (*particles).size(); //Number of particles
+
     length[0]=0;
     length[1]=params.n_space[1]+1;
     length[2]=params.n_space[2]+1;
@@ -529,15 +530,18 @@ void SpeciesV::compute_part_cell_keys(Params &params)
 void SpeciesV::compute_bin_cell_keys(Params &params, int istart, int iend)
 {
 
-    unsigned int ip, ixy;
     unsigned int length[3];
 
     length[0]=0;
     length[1]=params.n_space[1]+1;
     length[2]=params.n_space[2]+1;
 
+    std::cout << istart << " " << iend << '\n';
+
+    (*particles).cell_keys.resize((*particles).size());
+
     #pragma omp simd
-    for (ip=istart; ip < iend; ip++){
+    for (int ip=istart; ip < iend; ip++){
     // Counts the # of particles in each cell (or sub_cell) and store it in sbmax.
         for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
             (*particles).cell_keys[ip] *= length[ipos];
