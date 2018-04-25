@@ -1,11 +1,16 @@
 Contribute
 ----------
 
-Contributions to the development of :program:`Smilei` are welcome. You may freely *fork*
+Contributions to the development of :program:`Smilei` are welcome.
+
+To report bugs, please create an issue on the
+`GitHub website <https://github.com/SmileiPIC/Smilei/issues/new>`_.
+
+To develop new features in :program:`Smilei`, you may freely *fork*
 the source code from the `GitHub website <https://github.com/SmileiPIC/Smilei>`_. When
 your modifications to the code are ready, you can make a `pull request
-<https://github.com/SmileiPIC/Smilei/pulls>`_ for your modifications to be reviewed and
-merged with the main repository.
+<https://github.com/SmileiPIC/Smilei/pulls>`_ for review and
+merge with the main repository.
 
 Guidelines for new developments are:
 
@@ -20,20 +25,29 @@ Write documentation
 
 The documentation you are currently reading is written in the
 `reStructuredText <www.sphinx-doc.org/en/stable/rest.html>`_ (rST) language, and included
-in the main :program:`Smilei` repository. To transform it into an *html* website, it is
+in the main :program:`Smilei` repository. This is a fairly simple markup language. You
+can see examples from the source files, which are located in the
+``doc/Sphinx`` folder and have the extension ``.rst``.
+
+To transform it into an *html* website, it is
 processed using the `sphinx <www.sphinx-doc.org>`_ python package that you may have to
 install.
 
-All the source files for the documentation are located in the ``doc/Sphinx`` folder, and
-have the extension ``.rst``. If you have sphinx installed, you may simply go to the
+ If you have sphinx installed, you may simply go to the
 main :program:`Smilei` folder from a command line terminal, then run the command
 
 .. code-block:: bash
 
    make doc
 
-This creates a local *html* website accessible in the ``build/html/`` folder.
+This creates a local *html* website accessible in the ``build/html/`` folder. Simply
+open the ``build/html/index.html`` file in your favorite web browser.
 
+To document a new feature, please modify the file ``namelist.rst`` to indicate the
+syntax changes in the input file. If the feature requires detailed physical or numerical
+background, you may add a new page in the "Understand" section of the website.
+To do that, create a new ``.rst`` file, then reference it in the table of contents
+located in ``index.rst``.
 
 ----
 
