@@ -150,7 +150,7 @@ void SpeciesV::dynamics(double time_dual, unsigned int ispec,
 
         // Resize Cell_keys
         // Need to check if this is necessary here
-        (*particles).cell_keys.resize((*particles).size());
+        // (*particles).cell_keys.resize((*particles).size());
 
         for ( int ipack = 0 ; ipack < npack ; ipack++ ) {
 
@@ -536,8 +536,9 @@ void SpeciesV::compute_bin_cell_keys(Params &params, int istart, int iend)
     length[1]=params.n_space[1]+1;
     length[2]=params.n_space[2]+1;
 
-    std::cout << istart << " " << iend << '\n';
+    //std::cout << istart << " " << iend << '\n';
 
+    // Resize of cell_keys seems necessary here
     (*particles).cell_keys.resize((*particles).size());
 
     #pragma omp simd

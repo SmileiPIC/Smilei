@@ -177,7 +177,7 @@ void SpeciesDynamicV::dynamics(double time_dual, unsigned int ispec,
 
         // Resize Cell_keys
         // Need to check if this is necessary here
-        (*particles).cell_keys.resize((*particles).size());
+        // (*particles).cell_keys.resize((*particles).size());
 
         for ( int ipack = 0 ; ipack < npack ; ipack++ ) {
 
@@ -569,15 +569,17 @@ void SpeciesDynamicV::compute_part_cell_keys(Params &params)
 void SpeciesDynamicV::compute_bin_cell_keys(Params &params, int istart, int iend)
 {
 
-    unsigned int ip, ixy;
     unsigned int length[3];
 
     length[0]=0;
     length[1]=params.n_space[1]+1;
     length[2]=params.n_space[2]+1;
 
+    // Resize of cell_keys seems necessary here
+    (*particles).cell_keys.resize((*particles).size());
+
     #pragma omp simd
-    for (ip=istart; ip < iend; ip++){
+    for (int ip=istart; ip < iend; ip++){
     // Counts the # of particles in each cell (or sub_cell) and store it in sbmax.
         for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
             (*particles).cell_keys[ip] *= length[ipos];
