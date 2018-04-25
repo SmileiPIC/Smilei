@@ -224,7 +224,7 @@ void SpeciesV::dynamics(double time_dual, unsigned int ispec,
             //particles->test_move( bmin[ibin], bmax[ibin], params );
 
             // Computation of the particle cell keys for all particles
-            this->compute_bin_cell_keys(params, bmin[ipack*packsize], bmax[ipack*packsize+packsize-1]);
+            // this->compute_bin_cell_keys(params, bmin[ipack*packsize], bmax[ipack*packsize+packsize-1]);
 
             //for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
             for (unsigned int ibin = 0 ; ibin < packsize ; ibin++) {
@@ -251,6 +251,11 @@ void SpeciesV::dynamics(double time_dual, unsigned int ispec,
                                 (*particles).cell_keys[iPart] = -1;
                             }
                             else {
+                                //Compute cell_keys of remaining particles
+                                for ( int i = 0 ; i<nDim_particle; i++ ){
+                                    (*particles).cell_keys[iPart] *= this->length[i];
+                                    (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]+0.00000000000001) * dx_inv_[i] );
+                                }
                                 //First reduction of the count sort algorithm. Lost particles are not included.
                                 species_loc_bmax[(*particles).cell_keys[iPart]] ++;
                             }
@@ -277,6 +282,11 @@ void SpeciesV::dynamics(double time_dual, unsigned int ispec,
                             (*particles).cell_keys[iPart] = -1;
                         }
                         else {
+                            //Compute cell_keys of remaining particles
+                            for ( int i = 0 ; i<nDim_particle; i++ ){
+                                (*particles).cell_keys[iPart] *= length[i];
+                                (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]+0.00000000000001) * dx_inv_[i] );
+                            }
                             //First reduction of the count sort algorithm. Lost particles are not included.
                             species_loc_bmax[(*particles).cell_keys[iPart]] ++;
 
@@ -503,17 +513,13 @@ void SpeciesV::compute_part_cell_keys(Params &params)
 
     npart = (*particles).size(); //Number of particles
 
-    length[0]=0;
-    length[1]=params.n_space[1]+1;
-    length[2]=params.n_space[2]+1;
-
     #pragma omp simd
     for (ip=0; ip < npart ; ip++){
     // Counts the # of particles in each cell (or sub_cell) and store it in sbmax.
         for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
             X = (*particles).position(ipos,ip)-min_loc_vec[ipos]+0.00000000000001;
             IX = round(X * dx_inv_[ipos] );
-            (*particles).cell_keys[ip] = (*particles).cell_keys[ip] * length[ipos] + IX;
+            (*particles).cell_keys[ip] = (*particles).cell_keys[ip] * this->length[ipos] + IX;
         }
     }
     for (ip=0; ip < npart ; ip++)
@@ -529,13 +535,6 @@ void SpeciesV::compute_part_cell_keys(Params &params)
 // -----------------------------------------------------------------------------
 void SpeciesV::compute_bin_cell_keys(Params &params, int istart, int iend)
 {
-
-    unsigned int length[3];
-
-    length[0]=0;
-    length[1]=params.n_space[1]+1;
-    length[2]=params.n_space[2]+1;
-
     //std::cout << istart << " " << iend << '\n';
 
     // Resize of cell_keys seems necessary here
@@ -545,7 +544,7 @@ void SpeciesV::compute_bin_cell_keys(Params &params, int istart, int iend)
     for (int ip=istart; ip < iend; ip++){
     // Counts the # of particles in each cell (or sub_cell) and store it in sbmax.
         for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
-            (*particles).cell_keys[ip] *= length[ipos];
+            (*particles).cell_keys[ip] *= this->length[ipos];
             (*particles).cell_keys[ip] += round( ((*particles).position(ipos,ip)-min_loc_vec[ipos]+0.00000000000001) * dx_inv_[ipos] );
         }
     }

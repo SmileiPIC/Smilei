@@ -433,6 +433,9 @@ protected:
     //! Accumulate nrj lost by the particle with the radiation
     double nrj_radiation;
 
+    //! Patch length
+    unsigned int length[3];
+
 private:
     //! Number of steps for Maxwell-Juettner cumulative function integration
     //! \todo{Put in a code constant class}

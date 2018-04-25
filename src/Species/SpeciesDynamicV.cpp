@@ -550,7 +550,7 @@ void SpeciesDynamicV::compute_part_cell_keys(Params &params)
         for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
             X = (*particles).position(ipos,ip)-min_loc_vec[ipos]+0.00000000000001;
             IX = round(X * dx_inv_[ipos] );
-            (*particles).cell_keys[ip] = (*particles).cell_keys[ip] * length[ipos] + IX;
+            (*particles).cell_keys[ip] = (*particles).cell_keys[ip] * this->length[ipos] + IX;
         }
     }
 
@@ -569,12 +569,6 @@ void SpeciesDynamicV::compute_part_cell_keys(Params &params)
 void SpeciesDynamicV::compute_bin_cell_keys(Params &params, int istart, int iend)
 {
 
-    unsigned int length[3];
-
-    length[0]=0;
-    length[1]=params.n_space[1]+1;
-    length[2]=params.n_space[2]+1;
-
     // Resize of cell_keys seems necessary here
     (*particles).cell_keys.resize((*particles).size());
 
@@ -582,7 +576,7 @@ void SpeciesDynamicV::compute_bin_cell_keys(Params &params, int istart, int iend
     for (int ip=istart; ip < iend; ip++){
     // Counts the # of particles in each cell (or sub_cell) and store it in sbmax.
         for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
-            (*particles).cell_keys[ip] *= length[ipos];
+            (*particles).cell_keys[ip] *= this->length[ipos];
             (*particles).cell_keys[ip] += round( ((*particles).position(ipos,ip)-min_loc_vec[ipos]+0.00000000000001) * dx_inv_[ipos] );
         }
     }

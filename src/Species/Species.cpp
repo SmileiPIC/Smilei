@@ -95,6 +95,10 @@ min_loc(patch->getDomainLocalMin(0))
     nDim_field = params.nDim_field;
     inv_nDim_field = 1./((double)nDim_field);
 
+    length[0]=0;
+    length[1]=params.n_space[1]+1;
+    length[2]=params.n_space[2]+1;
+
 }//END Species creator
 
 void Species::initCluster(Params& params)
