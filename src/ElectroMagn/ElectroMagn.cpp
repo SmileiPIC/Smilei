@@ -69,6 +69,7 @@ n_space        ( emFields->n_space     ),
 oversize       ( emFields->oversize    ),
 isXmin(patch->isXmin()),
 isXmax(patch->isXmax()),
+is_pxr         (  emFields->is_pxr    ),
 nrj_mw_lost    ( 0. ),
 nrj_new_fields ( 0. )
 {
