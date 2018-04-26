@@ -71,7 +71,7 @@ void SpeciesV::initCluster(Params& params)
     //Size in each dimension of the buffers on which each bin are projected
     //In 1D the particles of a given bin can be projected on 6 different nodes at the second order (oversize = 2)
 
-    //Primal dimension of fields. 
+    //Primal dimension of fields.
     f_dim0 =  params.n_space[0] + 2 * oversize[0] +1;
     f_dim1 =  params.n_space[1] + 2 * oversize[1] +1;
     f_dim2 =  params.n_space[2] + 2 * oversize[2] +1;
@@ -224,6 +224,11 @@ void SpeciesV::dynamics(double time_dual, unsigned int ispec,
             //for (unsigned int i=0; i<species_loc_bmax.size(); i++)
             //    species_loc_bmax[i] = 0;
 
+            unsigned int length[3];
+            length[0]=0;
+            length[1]=params.n_space[1]+1;
+            length[2]=params.n_space[2]+1;
+
             //for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
             for (unsigned int ibin = 0 ; ibin < packsize ; ibin++) {
                 // Apply wall and boundary conditions
@@ -242,10 +247,6 @@ void SpeciesV::dynamics(double time_dual, unsigned int ispec,
                         // apply returns 0 if iPart is not in the local domain anymore
                         //        if omp, create a list per thread
                         //for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
-                        unsigned int length[3];
-                        length[0]=0;
-                        length[1]=params.n_space[1]+1;
-                        length[2]=params.n_space[2]+1;
 
                         for (iPart=bmin[ipack*packsize+ibin] ; (int)iPart<bmax[ipack*packsize+ibin]; iPart++ ) {
                             if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
@@ -255,7 +256,7 @@ void SpeciesV::dynamics(double time_dual, unsigned int ispec,
                             }
                             else {
                                 //Compute cell_keys of remaining particles
-                                for ( int i = 0 ; i<nDim_particle; i++ ){ 
+                                for ( int i = 0 ; i<nDim_particle; i++ ){
                                     (*particles).cell_keys[iPart] *= length[i];
                                     (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]+0.00000000000001) * dx_inv_[i] );
                                 }
@@ -285,6 +286,11 @@ void SpeciesV::dynamics(double time_dual, unsigned int ispec,
                             (*particles).cell_keys[iPart] = -1;
                         }
                         else {
+                            //Compute cell_keys of remaining particles
+                            for ( int i = 0 ; i<nDim_particle; i++ ){
+                                (*particles).cell_keys[iPart] *= length[i];
+                                (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]+0.00000000000001) * dx_inv_[i] );
+                            }
                             //First reduction of the count sort algorithm. Lost particles are not included.
                             species_loc_bmax[(*particles).cell_keys[iPart]] ++; //First reduction of the count sort algorithm. Lost particles are not included.
 
@@ -381,7 +387,7 @@ void SpeciesV::sort_part(Params &params)
     for (unsigned int idim=0; idim < nDim_particle ; idim++){
         for (unsigned int ineighbor=0 ; ineighbor < 2 ; ineighbor++){
             buf_cell_keys[idim][ineighbor].resize( MPIbuff.part_index_recv_sz[idim][ineighbor]);
-            #pragma omp simd 
+            #pragma omp simd
             for (unsigned int ip=0; ip < MPIbuff.part_index_recv_sz[idim][ineighbor]; ip++){
                 for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
                     double X = MPIbuff.partRecv[idim][ineighbor].position(ipos,ip)-min_loc_vec[ipos]+0.00000000000001;
@@ -410,7 +416,7 @@ void SpeciesV::sort_part(Params &params)
 
     if (MPIbuff.partRecv[0][0].size() == 0) MPIbuff.partRecv[0][0].initialize(0, *particles); //Is this correct ?
 
-    // Resize the particle vector 
+    // Resize the particle vector
     if (bmax.back() > npart){
         (*particles).resize(bmax.back(), nDim_particle);
         (*particles).cell_keys.resize(bmax.back(),-1); // Merge this in particles.resize(..) ?
@@ -423,14 +429,14 @@ void SpeciesV::sort_part(Params &params)
             for (unsigned int ip=0; ip < MPIbuff.part_index_recv_sz[idim][ineighbor]; ip++){
                 cycle.resize(1);
                 cell_target = buf_cell_keys[idim][ineighbor][ip];
-                ip_dest = bmin[cell_target]; 
+                ip_dest = bmin[cell_target];
                 while ( (*particles).cell_keys[ip_dest] == cell_target ) ip_dest++;
                 bmin[cell_target] = ip_dest + 1 ;
                 cycle[0] = ip_dest;
                 cell_target = (*particles).cell_keys[ip_dest];
                 //As long as the particle is not erased, we can build up the cycle.
                 while (cell_target != -1){
-                    ip_dest = bmin[cell_target]; 
+                    ip_dest = bmin[cell_target];
                     while ( (*particles).cell_keys[ip_dest] == cell_target ) ip_dest++;
                     bmin[cell_target] = ip_dest + 1 ;
                     cycle.push_back(ip_dest);
@@ -452,7 +458,7 @@ void SpeciesV::sort_part(Params &params)
         cycle.push_back(ip);
         //As long as the particle is not erased, we can build up the cycle.
         while (cell_target != -1){
-            ip_dest = bmin[cell_target]; 
+            ip_dest = bmin[cell_target];
             while ( (*particles).cell_keys[ip_dest] == cell_target ) ip_dest++;
             bmin[cell_target] = ip_dest + 1 ;
             cycle.push_back(ip_dest);
@@ -462,7 +468,7 @@ void SpeciesV::sort_part(Params &params)
         (*particles).translate_parts(cycle);
     }
 
-    // Resize the particle vector 
+    // Resize the particle vector
     if (bmax.back() < npart){
         (*particles).resize(bmax.back(), nDim_particle);
         (*particles).cell_keys.resize(bmax.back()); // Merge this in particles.resize(..) ?
@@ -472,7 +478,7 @@ void SpeciesV::sort_part(Params &params)
     //Loop over all cells
     for (unsigned int icell = 0 ; icell < ncell; icell++){
         for (unsigned int ip=bmin[icell]; ip < bmax[icell] ; ip++){
-            //update value of current cell 'icell' if necessary 
+            //update value of current cell 'icell' if necessary
             //if particle changes cell, build a cycle of exchange as long as possible. Treats all particles
             if ((*particles).cell_keys[ip] != icell ){
                 cycle.resize(1);
@@ -503,7 +509,7 @@ void SpeciesV::sort_part(Params &params)
 
 void SpeciesV::compute_part_cell_keys(Params &params)
 {
-    //Compute part_cell_keys at patch creation. This operation is normally done in the pusher to avoid additional particles pass.  
+    //Compute part_cell_keys at patch creation. This operation is normally done in the pusher to avoid additional particles pass.
 
     unsigned int ip, npart, ixy;
     int IX;
@@ -515,7 +521,7 @@ void SpeciesV::compute_part_cell_keys(Params &params)
     length[1]=params.n_space[1]+1;
     length[2]=params.n_space[2]+1;
 
-    #pragma omp simd 
+    #pragma omp simd
     for (ip=0; ip < npart ; ip++){
     // Counts the # of particles in each cell (or sub_cell) and store it in sbmax.
         for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
@@ -549,7 +555,7 @@ void SpeciesV::importParticles( Params& params, Patch* patch, Particles& source_
 
     // Move particles
     for( unsigned int i=0; i<npart; i++ ) {
-        
+
         ibin = 0;
         for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
             X = source_particles.position(ipos,i)-min_loc_vec[ipos]+0.00000000000001;
@@ -559,7 +565,7 @@ void SpeciesV::importParticles( Params& params, Patch* patch, Particles& source_
 
         // Copy particle to the correct bin
         source_particles.cp_particle(i, *particles, bmax[ibin] );
-      
+
         // Update the bin counts
         bmax[ibin]++;
         for (ii=ibin+1; ii<nbin; ii++) {
@@ -569,7 +575,7 @@ void SpeciesV::importParticles( Params& params, Patch* patch, Particles& source_
 
         particles->cell_keys.insert( particles->cell_keys.begin() + bmin[ibin] + species_loc_bmax[ibin], ibin);
         species_loc_bmax[ibin] ++ ;
-        
+
     }
 
     source_particles.clear();
