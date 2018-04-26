@@ -617,18 +617,17 @@ void ElectroMagn2D::center_fields_from_relativistic_Poisson(Patch *patch){
     double one_over_two  = 1./2.;  
 
     // Static-cast of the fields
-    Field2D* Ex2D = static_cast<Field2D*>(Ex_rel_);
-    //Field2D* Ey2D = static_cast<Field2D*>(Ey_rel_);
     Field2D* Bz2D = static_cast<Field2D*>(Bz_rel_);
 
     // Temporary fields for interpolation
     Field2D* Bz2Dnew  = new Field2D( Bz_rel_->dims_  );
 
-    // ------------ Interpolation to center the fields the Yee cell - before this operation, the fields B are all centered as E
-    // (see ElectroMagn3D::initB_relativistic_Poisson) 
+    // ------------ Interpolation to center the fields the Yee cell
+    //              before this operation, the fields B are all centered as E
+    //             (see ElectroMagn3D::initB_relativistic_Poisson)
     //
     // p: cell nodes, d: between cell nodes, or cell edges
-    
+    //
     // For all the fields, the proper centering (which is given to their "new" version) is reported
     // and then the old centering is reported (see ElectroMagn3D::initB_relativistic_Poisson)  
     
@@ -656,14 +655,15 @@ void ElectroMagn2D::center_fields_from_relativistic_Poisson(Patch *patch){
 
 void ElectroMagn2D::initRelativisticPoissonFields(Patch *patch)
 {
-    // init temporary fields for relativistic field initialization, to be added to the already present electromagnetic fields
+    // init temporary fields for relativistic field initialization,
+    // to be added to the already present electromagnetic fields
 
     Ex_rel_  = new Field2D(dimPrim, 0, false, "Ex_rel");
     Ey_rel_  = new Field2D(dimPrim, 1, false, "Ey_rel");
     Ez_rel_  = new Field2D(dimPrim, 2, false, "Ez_rel");
-    Bx_rel_  = new Field2D(dimPrim, 0, true,  "Bx_rel"); // will be identically zero
-    By_rel_  = new Field2D(dimPrim, 2, false,  "By_rel"); // is equal to -beta*Ez, thus it inherits the same centering of Ez
-    Bz_rel_  = new Field2D(dimPrim, 1, false,  "Bz_rel"); // is equal to  beta*Ey, thus it inherits the same centering of Ey
+    Bx_rel_  = new Field2D(dimPrim, 0, true,  "Bx_rel");  // will be identically zero
+    By_rel_  = new Field2D(dimPrim, 2, false,  "By_rel"); // is equal to -beta*Ez thus inherits the same centering of Ez
+    Bz_rel_  = new Field2D(dimPrim, 1, false,  "Bz_rel"); // is equal to  beta*Ey thus inherits the same centering of Ey
 
 } // initRelativisticPoissonFields
 
