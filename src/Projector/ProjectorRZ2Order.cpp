@@ -56,10 +56,10 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double crl_p = charge_weight*dl_ov_dt;
     double crr_p = charge_weight*dr_ov_dt;
-    double crt_p= charge_weight*particles.momentum(2,ipart)*invgf;
+
     MESSAGE("defining cr_p coeffecients");
     // variable declaration
-    double xpn, ypn;
+    double xpn, ypn, rp;
     double delta, delta2;
     // arrays used for the Esirkepov projection method
     double  Sx0[5], Sx1[5], Sy0[5], Sy1[5], DSx[5], DSy[5];
@@ -107,7 +107,9 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     Sx1[ip_m_ipo+2] = 0.75-delta2;
     Sx1[ip_m_ipo+3] = 0.5 * (delta2+delta+0.25);
     MESSAGE("Sx1");
-    ypn = sqrt (particles.position(1, ipart)*particles.position(1, ipart)+particles.position(2, ipart)*particles.position(2, ipart))*dr_inv_ ;
+    rp = sqrt (particles.position(1, ipart)*particles.position(1, ipart)+particles.position(2, ipart)*particles.position(2, ipart));
+    ypn =  rp * dr_inv_ ;
+    double crt_p= charge_weight*(particles.momentum(2,ipart)*particles.position(1,ipart)-particles.momentum(1,ipart)*particles.position(2,ipart))/(rp)*invgf;
     int jp = round(ypn);
     int jpo = iold[1*nparts];
     int jp_m_jpo = jp-jpo-j_domain_begin;
@@ -441,11 +443,8 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double crl_p = charge_weight*dl_ov_dt;
     double crr_p = charge_weight*dr_ov_dt;
- 
-    double crt_p= charge_weight*particles.momentum(2,ipart)*invgf;
-
     // variable declaration
-    double xpn, ypn;
+    double xpn, ypn, rp;
     double delta, delta2;
     // arrays used for the Esirkepov projection method
     double  Sx0[5], Sx1[5], Sy0[5], Sy1[5], DSx[5], DSy[5];
@@ -487,8 +486,9 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     Sx1[ip_m_ipo+1] = 0.5 * (delta2-delta+0.25);
     Sx1[ip_m_ipo+2] = 0.75-delta2;
     Sx1[ip_m_ipo+3] = 0.5 * (delta2+delta+0.25);
-    
-    ypn = sqrt (particles.position(1, ipart)*particles.position(1, ipart)+particles.position(2, ipart)*particles.position(2, ipart))*dr_inv_ ;
+    rp = sqrt (particles.position(1, ipart)*particles.position(1, ipart)+particles.position(2, ipart)*particles.position(2, ipart));
+    ypn = rp * dr_inv_ ;
+    double crt_p= charge_weight*particles.momentum(2,ipart)*invgf;
     int jp = round(ypn);
     int jpo = iold[1*nparts];
     int jp_m_jpo = jp-jpo-j_domain_begin;
