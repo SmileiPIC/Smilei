@@ -35,19 +35,31 @@ inline int refl_particle_rz( Particles &particles, int ipart, int direction, dou
                              double &nrj_iPart) {
     nrj_iPart = 0.;     // no energy loss during reflection
 
-    double distance_to_axis = sqrt( particles.distance2_to_axis(ipart) );
-    // limit_pos = 2*limit_pos
-    double new_dist_to_axis = limit_pos - distance_to_axis;
+    //limite_pos = 2*Rmax.
+    //We look for the coordiunate of the point at which the particle crossed the boundary
+    //We need to fine the parameter t at which (y + py*t)+(z+pz*t) = Rmax^2
+    double b = 2*( particles.position(1, ipart)*particles.momentum(1, ipart) + particles.position(2, ipart)*particles.momentum(2, ipart));
+    double r2 = ( particles.position(1, ipart)*particles.position(1, ipart) + particles.position(2, ipart)*particles.position(2, ipart));
+    double pr2 = ( particles.momentum(1, ipart)*particles.momentum(1, ipart) + particles.momentum(2, ipart)*particles.momentum(2, ipart));
+    double delta = b*b - pr2*( 4*r2 - limit_pos*limit_pos );
+  
+    //b and delta are neceseraliy >=0 otherwise there are no solution which means that something unsual happened
+    if (b < 0 || delta < 0 ) ERROR ("There are no solution to reflexion. This should never happen");
+ 
+    double t = (-b + sqrt(delta))/pr2*0.5;
 
-    double delta = distance_to_axis - new_dist_to_axis;
-    double cos = particles.position(1, ipart) / distance_to_axis;
-    double sin = particles.position(2, ipart) / distance_to_axis;
+    double y0,z0; //Coordinates of the crossing point 0
+    y0 =  particles.position(1, ipart) + particles.momentum(1, ipart)*t ;
+    z0 =  particles.position(2, ipart) + particles.momentum(2, ipart)*t ;
+
+    //Update new particle position as a reflexion to the plane tangent to the circle at 0.
+
+    particles.position(1, ipart) -= 4*(particles.position(1, ipart)-y0)*y0/limit_pos ;
+    particles.position(2, ipart) -= 4*(particles.position(2, ipart)-z0)*z0/limit_pos ;
+
+    particles.momentum(1, ipart) *= 1 - 2*y0/limit_pos ;
+    particles.momentum(2, ipart) *= 1 - 2*z0/limit_pos ;
     
-    particles.position(1, ipart) -= delta * cos ;
-    particles.position(2, ipart) -= delta * sin ;
-    
-    particles.momentum(1, ipart) = -particles.momentum(1, ipart);
-    particles.momentum(2, ipart) = -particles.momentum(2, ipart);
     
     return 1;
 }
