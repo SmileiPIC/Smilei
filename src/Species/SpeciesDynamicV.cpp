@@ -109,12 +109,12 @@ void SpeciesDynamicV::resizeCluster(Params& params)
 {
 
     // We recompute the number of cells
-    int ncells = (params.n_space[0]+1);
+    unsigned int ncells = (params.n_space[0]+1);
     for ( unsigned int i=1; i < params.nDim_field; i++) ncells *= (params.n_space[i]+1);
 
     // We keep the current number of particles
-    int npart = bmax[bmax.size()-1];
-    int size = params.n_space[0]/clrw;
+    // int npart = bmax[bmax.size()-1];
+    // int size = params.n_space[0]/clrw;
 
     bmax.resize(ncells,0);
     bmin.resize(ncells,0);
@@ -389,7 +389,6 @@ void SpeciesDynamicV::sort_part(Params &params)
 
     unsigned int npart, ncell;
     int ip_dest, cell_target;
-    unsigned int length[3];
     vector<int> buf_cell_keys[3][2];
     std::vector<unsigned int> cycle;
     unsigned int ip_src;
@@ -399,10 +398,6 @@ void SpeciesDynamicV::sort_part(Params &params)
     for ( unsigned int i=1; i < params.nDim_field; i++) ncell *= (params.n_space[i]+1);
 
     npart = (*particles).size(); //Number of particles before exchange
-
-    length[0]=0;
-    length[1]=params.n_space[1]+1;
-    length[2]=params.n_space[2]+1;
 
     //species_loc_bmax stores the # of particles in a given cell quadrant.
 
@@ -415,7 +410,7 @@ void SpeciesDynamicV::sort_part(Params &params)
                 for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
                     double X = MPIbuff.partRecv[idim][ineighbor].position(ipos,ip)-min_loc_vec[ipos]+0.00000000000001;
                     int IX = round(X * dx_inv_[ipos] );
-                    buf_cell_keys[idim][ineighbor][ip] = buf_cell_keys[idim][ineighbor][ip] * length[ipos] + IX;
+                    buf_cell_keys[idim][ineighbor][ip] = buf_cell_keys[idim][ineighbor][ip] * this->length[ipos] + IX;
                 }
             }
             //Can we vectorize this reduction ?
@@ -535,10 +530,9 @@ void SpeciesDynamicV::sort_part(Params &params)
 void SpeciesDynamicV::compute_part_cell_keys(Params &params)
 {
 
-    unsigned int ip, nparts, ixy;
+    unsigned int ip, nparts;
     int IX;
     double X;
-    unsigned int length[3];
 
     //Number of particles before exchange
     nparts = (*particles).size();
@@ -546,12 +540,8 @@ void SpeciesDynamicV::compute_part_cell_keys(Params &params)
     // Cell_keys is resized at the current number of particles
     (*particles).cell_keys.resize(nparts);
 
-    length[0]=0;
-    length[1]=params.n_space[1]+1;
-    length[2]=params.n_space[2]+1;
-
     // Reinitialize species_loc_bmax to 0
-    for (int ic=0; ic < species_loc_bmax.size() ; ic++)
+    for (unsigned int ic=0; ic < species_loc_bmax.size() ; ic++)
         species_loc_bmax[ic] = 0 ;
 
     #pragma omp simd
@@ -596,16 +586,11 @@ void SpeciesDynamicV::compute_bin_cell_keys(Params &params, int istart, int iend
 void SpeciesDynamicV::importParticles( Params& params, Patch* patch, Particles& source_particles, vector<Diagnostic*>& localDiags )
 {
     unsigned int npart = source_particles.size(), ibin, ii, nbin=bmin.size();
-    double inv_cell_length = 1./ params.cell_length[0];
+    // double inv_cell_length = 1./ params.cell_length[0];
 
     // If this species is tracked, set the particle IDs
     if( particles->tracked )
         dynamic_cast<DiagnosticTrack*>(localDiags[tracking_diagnostic])->setIDs( source_particles );
-
-    unsigned int length[3];
-    length[0]=0;
-    length[1]=params.n_space[1]+1;
-    length[2]=params.n_space[2]+1;
 
     int IX;
     double X;
@@ -617,7 +602,7 @@ void SpeciesDynamicV::importParticles( Params& params, Patch* patch, Particles& 
         for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
             X = source_particles.position(ipos,i)-min_loc_vec[ipos]+0.00000000000001;
             IX = round(X * dx_inv_[ipos] );
-            ibin = ibin * length[ipos] + IX;
+            ibin = ibin * this->length[ipos] + IX;
         }
 
         // Copy particle to the correct bin
