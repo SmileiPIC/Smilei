@@ -371,6 +371,7 @@ public:
     std::vector<std::vector<double>> S_edge;
 
 protected :
+    bool is_pxr;
     
     
 private:
