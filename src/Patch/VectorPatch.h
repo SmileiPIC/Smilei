@@ -281,6 +281,8 @@ private :
 
     //! Current intensity of antennas
     double antenna_intensity;
+
+    std::vector<Timer*> diag_timers;
     
 };
 
