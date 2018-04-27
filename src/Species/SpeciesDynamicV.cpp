@@ -155,6 +155,10 @@ void SpeciesDynamicV::dynamics(double time_dual, unsigned int ispec,
     double ener_iPart(0.);
     std::vector<double> nrj_lost_per_thd(1, 0.);
 
+    std::cerr << "> Species " << this->name << " dynamic (" << this->vectorized_operators
+              << ") in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ")"
+              << " of MPI process "<< patch->MPI_me_ << std::endl;
+
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
@@ -694,17 +698,8 @@ void SpeciesDynamicV::reconfiguration(Params &params, Patch * patch)
                   << ") in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ")"
                   << " of MPI process "<< patch->MPI_me_);
 
-        // Destroy current operators
-        delete Interp;
-        delete Push;
-        delete Proj;
-
-        // Reassign the correct Interpolator
-        Interp = InterpolatorFactory::create(params, patch, this->vectorized_operators);
-        // Reassign the correct Pusher to Push
-        Push = PusherFactory::create(params, this);
-        // Reassign the correct Projector
-        Proj = ProjectorFactory::create(params, patch, this->vectorized_operators);
+        // Destroy and reconfigure operators
+        this->reconfigure_operators(params, patch);
 
         // If we switch from non-vectorized to vectozied,
         // we have to reactivate the cell-sorting algorithm
@@ -728,9 +723,107 @@ void SpeciesDynamicV::reconfiguration(Params &params, Patch * patch)
 
         }
     }
-
     /*std::cout << " bin number: " << bmin.size()
               << " nb particles: " << bmax[bmax.size()-1]
               << '\n';*/
+}
 
+// -----------------------------------------------------------------------------
+//! This function reconfigures the type of species according
+//! to the vectorization mode
+//! params object containing global Parameters
+//! patch object containing the current patch data and properties
+// -----------------------------------------------------------------------------
+void SpeciesDynamicV::configuration(Params &params, Patch * patch)
+{
+    //float ratio_number_of_vecto_cells;
+    float vecto_time = 0.;
+    float scalar_time = 0.;
+
+    //split cell into smaller sub_cells for refined sorting
+    //ncell = (params.n_space[0]+1);
+    //for ( unsigned int i=1; i < params.nDim_field; i++) ncell *= (params.n_space[i]+1);
+
+    // --------------------------------------------------------------------
+    // Metrics 1 - based on the ratio of vectorized cells
+    // Compute the number of cells that contain more than 8 particles
+    //ratio_number_of_vecto_cells = SpeciesMetrics::get_ratio_number_of_vecto_cells(species_loc_bmax,8);
+
+
+    // --------------------------------------------------------------------
+
+    // --------------------------------------------------------------------
+    // Metrics 2 - based on the evaluation of the computational time
+    SpeciesMetrics::get_computation_time(species_loc_bmax,
+                                        vecto_time,
+                                        scalar_time);
+
+    //std::cout << "vecto_time " << vecto_time << " " << scalar_time << '\n';
+
+    if (vecto_time <= scalar_time)
+    {
+        this->vectorized_operators = true;
+    }
+    else if (vecto_time > scalar_time)
+    {
+        this->vectorized_operators = false;
+    }
+    // --------------------------------------------------------------------
+
+    // We first compute cell_keys: the number of particles per cell
+    // if the current mode is without vectorization
+    this->compute_part_cell_keys(params);
+
+    /*std::cout << "Vectorized_operators: " << this->vectorized_operators
+              << " ratio_number_of_vecto_cells: " << this->ratio_number_of_vecto_cells
+              << " number_of_vecto_cells: " << number_of_vecto_cells
+              << " number_of_non_zero_cells: " << number_of_non_zero_cells
+              << " ncells: " << ncell << "\n";*/
+
+    MESSAGE(1,"> Species " << this->name << " configuration (" << this->vectorized_operators
+              << ") in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ")"
+              << " of MPI process "<< patch->MPI_me_);
+
+    // Destroy and reconfigure operators
+    this->reconfigure_operators(params, patch);
+
+    // If we switch from non-vectorized to vectozied,
+    // we have to reactivate the cell-sorting algorithm
+    if (this->vectorized_operators)
+    {
+        // We resize the bins
+        this->resizeCluster(params);
+
+        // We perform the sorting
+        this->sort_part(params);
+    }
+    // If we switch from vectorized to non-vectozied,
+    else
+    {
+        // We resize the bins
+        this->Species::resizeCluster(params);
+
+        // We perform the sorting
+        this->Species::sort_part(params);
+
+    }
+
+}
+
+// -----------------------------------------------------------------------------
+//! This function reconfigures the operators
+// -----------------------------------------------------------------------------
+void SpeciesDynamicV::reconfigure_operators(Params &params, Patch * patch)
+{
+    // Destroy current operators
+    delete Interp;
+    delete Push;
+    delete Proj;
+
+    // Reassign the correct Interpolator
+    Interp = InterpolatorFactory::create(params, patch, this->vectorized_operators);
+    // Reassign the correct Pusher to Push
+    Push = PusherFactory::create(params, this);
+    // Reassign the correct Projector
+    Proj = ProjectorFactory::create(params, patch, this->vectorized_operators);
 }

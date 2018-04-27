@@ -267,6 +267,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                     mypatch = vecPatches.patches_[patch_to_be_created[ithread][j]];
                     for (unsigned int ispec=0 ; ispec<nSpecies ; ispec++) {
                         mypatch->vecSpecies[ispec]->createParticles(params.n_space, params, mypatch, 0 );
+                        //mypatch->vecSpecies[ispec]->check(mypatch,"MovWindows");
 #ifdef _VECTO
                         if (params.vecto == "normal")
                         {
@@ -283,13 +284,17 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                         else if (params.vecto == "dynamic") {
                             if ( dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec]) )
                             {
-                                dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
+                                dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->configuration(params, mypatch);
+                                std::cerr << "> Species " << mypatch->vecSpecies[ispec]->name << " MovWindows (" << mypatch->vecSpecies[ispec]->vectorized_operators
+                                          << ") in patch (" << mypatch->Pcoordinates[0] << "," <<  mypatch->Pcoordinates[1] << "," <<  mypatch->Pcoordinates[2] << ")"
+                                          << " of MPI process "<< mypatch->MPI_me_ << std::endl;
+                                //dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
                             }
                             // If the patch is in vectorized mode, we apply the sorting
-                            if (dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->vectorized_operators)
+                            /*if (mypatch->vecSpecies[ispec]->vectorized_operators)
                             {
                                 dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->sort_part(params);
-                            }
+                            }*/
                         }
 #endif
                     }

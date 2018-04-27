@@ -315,6 +315,9 @@ public:
     //! Method used to sort particles
     virtual void sort_part(Params& param);
 
+    //! This function configures the species according to the vectorization mode
+    virtual void configuration( Params& params, Patch * patch) ;
+
     virtual void reconfiguration(Params& param, Patch  * patch);
 
     void count_sort_part(Params& param);
@@ -411,26 +414,7 @@ public:
     void setXminBoundaryCondition();
 
     //! Check function that enables to control the results of some operators
-    void check(std::string title)
-    {
-        double sum_x = 0;
-        double sum_y = 0;
-        double sum_px = 0;
-        double sum_py = 0;
-        for (unsigned int ip=0; ip < (*particles).size() ; ip++){
-            sum_x += (*particles).position(0,ip);
-            sum_y += (*particles).position(1,ip);
-            sum_px += (*particles).momentum(0,ip);
-            sum_py += (*particles).momentum(1,ip);
-        }
-        std::cout << "Check sum at " << title << " for "<< this->name << " - nbp: "
-                  << (*particles).size() << " - "
-                  << sum_x << " - "
-                  << sum_y << " - "
-                  << sum_px << " - "
-                  << sum_py << " - "
-                  << '\n';
-    }
+    void check(Patch * patch, std::string title);
 
 protected:
 

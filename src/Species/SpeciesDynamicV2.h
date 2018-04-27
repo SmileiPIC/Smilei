@@ -59,7 +59,14 @@ class SpeciesDynamicV2 : public Species
     //! Method used to sort particles
     void sort_part(Params& params) override;
 
+    //! This function configures the species according to the vectorization mode
+    void configuration( Params& params, Patch * patch) override;
+
+    //! This function reconfigures the species according to the vectorization mode
     void reconfiguration( Params& params, Patch * patch) override;
+
+    //! This function reconfigures the species operators
+    void reconfigure_operators(Params& param, Patch  * patch);
 
     //void count_sort_part(Params& param);
     void compute_part_cell_keys(Params &params);

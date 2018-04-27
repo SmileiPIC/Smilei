@@ -1031,9 +1031,12 @@ void Species::sort_part(Params& params)
     }
 }
 
+void Species::configuration(Params& param, Patch * patch)
+{
+}
+
 void Species::reconfiguration(Params& param, Patch * patch)
 {
-
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1556,6 +1559,30 @@ vector<double> Species::maxwellJuttner(unsigned int npoints, double temperature)
 
     return energies;
 }
+
+void Species::check(Patch * patch, std::string title)
+{
+    double sum_x = 0;
+    double sum_y = 0;
+    double sum_px = 0;
+    double sum_py = 0;
+    for (unsigned int ip=0; ip < (*particles).size() ; ip++){
+        sum_x += (*particles).position(0,ip);
+        sum_y += (*particles).position(1,ip);
+        sum_px += (*particles).momentum(0,ip);
+        sum_py += (*particles).momentum(1,ip);
+    }
+    std::cerr << "Check sum at " << title
+              << " for "<< this->name
+              << " in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ") "
+              << " nb bin: " << bmin.size() << " - "
+              << " - nbp: " << (*particles).size() << " - "
+              << sum_x << " - "
+              << sum_y << " - "
+              << sum_px << " - "
+              << sum_py << " - "
+              << '\n';
+};
 
 // Array used in the Maxwell-Juttner sampling
 const double Species::lnInvF[1000] = {

@@ -883,17 +883,7 @@ void SpeciesDynamicV2::reconfiguration(Params &params, Patch * patch)
                   << ") in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ")"
                   << " of MPI process "<< patch->MPI_me_);*/
 
-        // Destroy current operators
-        delete Interp;
-        //delete Push;
-        delete Proj;
-
-        // Reassign the correct Interpolator
-        Interp = InterpolatorFactory::create(params, patch, this->vectorized_operators);
-        // Reassign the correct Pusher to Push
-        //Push = PusherFactory::create(params, this);
-        // Reassign the correct Projector
-        Proj = ProjectorFactory::create(params, patch, this->vectorized_operators);
+        this->reconfigure_operators(params, patch);
 
     }
 
@@ -901,4 +891,70 @@ void SpeciesDynamicV2::reconfiguration(Params &params, Patch * patch)
               << " nb particles: " << bmax[bmax.size()-1]
               << '\n';*/
 
+}
+
+// -----------------------------------------------------------------------------
+//! This function reconfigures the type of species according
+//! to the vectorization mode
+// -----------------------------------------------------------------------------
+void SpeciesDynamicV2::configuration(Params &params, Patch * patch)
+{
+    //float ratio_number_of_vecto_cells;
+    float vecto_time = 0.;
+    float scalar_time = 0.;
+
+    //split cell into smaller sub_cells for refined sorting
+    // cell = (params.n_space[0]+1);
+    //for ( unsigned int i=1; i < params.nDim_field; i++) ncell *= (params.n_space[i]+1);
+
+    // --------------------------------------------------------------------
+    // Metrics 1 - based on the ratio of vectorized cells
+    // Compute the number of cells that contain more than 8 particles
+    //ratio_number_of_vecto_cells = SpeciesMetrics::get_ratio_number_of_vecto_cells(species_loc_bmax,8);
+
+
+    // --------------------------------------------------------------------
+
+    // --------------------------------------------------------------------
+    // Metrics 2 - based on the evaluation of the computational time
+    SpeciesMetrics::get_computation_time(species_loc_bmax,
+                                        vecto_time,
+                                        scalar_time);
+
+    if (vecto_time <= scalar_time )
+    {
+        this->vectorized_operators = true;
+    }
+    else if (vecto_time > scalar_time)
+    {
+        this->vectorized_operators = false;
+    }
+    // --------------------------------------------------------------------
+
+    /*std::cout << "Vectorized_operators: " << this->vectorized_operators
+              << " ratio_number_of_vecto_cells: " << this->ratio_number_of_vecto_cells
+              << " number_of_vecto_cells: " << number_of_vecto_cells
+              << " number_of_non_zero_cells: " << number_of_non_zero_cells
+              << " ncells: " << ncell << "\n";*/
+
+    this->reconfigure_operators(params, patch);
+
+}
+
+// -----------------------------------------------------------------------------
+//! This function reconfigures the operators
+// -----------------------------------------------------------------------------
+void SpeciesDynamicV2::reconfigure_operators(Params &params, Patch * patch)
+{
+    // Destroy current operators
+    delete Interp;
+    //delete Push;
+    delete Proj;
+
+    // Reassign the correct Interpolator
+    Interp = InterpolatorFactory::create(params, patch, this->vectorized_operators);
+    // Reassign the correct Pusher to Push
+    //Push = PusherFactory::create(params, this);
+    // Reassign the correct Projector
+    Proj = ProjectorFactory::create(params, patch, this->vectorized_operators);
 }
