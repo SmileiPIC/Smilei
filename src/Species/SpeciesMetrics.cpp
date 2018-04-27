@@ -63,7 +63,7 @@ void SpeciesMetrics::get_computation_time(const std::vector<int> & species_loc_b
     //          << SpeciesMetrics::get_particle_computation_time_scalar(log(32.0)) << '\n';
 
     // Loop over the cells
-    #pragma omp simd reduction(+:vecto_time,scalar_time)
+    #pragma omp simd reduction(+:vecto_time,scalar_time) private(particle_number,log_particle_number)
     for (unsigned int ic=0; ic < species_loc_bmax.size(); ic++)
     {
         if (species_loc_bmax[ic] > 0)
@@ -94,7 +94,7 @@ void SpeciesMetrics::get_computation_time(const std::vector<int> & species_loc_b
     //          << SpeciesMetrics::get_particle_computation_time_scalar(log(32.0)) << '\n';
 
     // Loop over the cells
-    #pragma omp simd reduction(+:vecto_time,scalar_time)
+    #pragma omp simd reduction(+:vecto_time,scalar_time) private(particle_number,log_particle_number)
     for (unsigned int ic=0; ic < species_loc_bmax.size(); ic++)
     {
         if (species_loc_bmax[ic] > 0)

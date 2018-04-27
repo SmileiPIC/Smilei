@@ -268,22 +268,27 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                     for (unsigned int ispec=0 ; ispec<nSpecies ; ispec++) {
                         mypatch->vecSpecies[ispec]->createParticles(params.n_space, params, mypatch, 0 );
 #ifdef _VECTO
-                        if (params.vecto == "normal" || params.vecto == "dynamic2")
+                        if (params.vecto == "normal")
                         {
                             if ( dynamic_cast<SpeciesV*>(mypatch->vecSpecies[ispec]) )
                                 dynamic_cast<SpeciesV*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
                             mypatch->vecSpecies[ispec]->sort_part(params);
                         }
+                        else if (params.vecto == "dynamic2")
+                        {
+                            if ( dynamic_cast<SpeciesDynamicV2*>(mypatch->vecSpecies[ispec]) )
+                                dynamic_cast<SpeciesDynamicV2*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
+                            mypatch->vecSpecies[ispec]->sort_part(params);
+                        }
                         else if (params.vecto == "dynamic") {
                             if ( dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec]) )
+                            {
                                 dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
+                            }
+                            // If the patch is in vectorized mode, we apply the sorting
                             if (dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->vectorized_operators)
                             {
                                 dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->sort_part(params);
-                            }
-                            else
-                            {
-                                dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->Species::sort_part(params);
                             }
                         }
 #endif
