@@ -32,6 +32,7 @@ n_space        ( params.n_space    ),
 oversize       ( params.oversize   ),
 isXmin(patch->isXmin()),
 isXmax(patch->isXmax()),
+is_pxr         (  params.is_pxr    ),
 nrj_mw_lost    (  0.               ),
 nrj_new_fields (  0.               )
 {
@@ -68,6 +69,7 @@ n_space        ( emFields->n_space     ),
 oversize       ( emFields->oversize    ),
 isXmin(patch->isXmin()),
 isXmax(patch->isXmax()),
+is_pxr         (  emFields->is_pxr    ),
 nrj_mw_lost    ( 0. ),
 nrj_new_fields ( 0. )
 {
@@ -184,9 +186,11 @@ ElectroMagn::~ElectroMagn()
    if(Bx_ != NULL) delete Bx_;
    if(By_ != NULL) delete By_;
    if(Bz_ != NULL) delete Bz_;
-//   if(Bx_m != NULL) delete Bx_m;
-//   if(By_m != NULL) delete By_m;
-//   if(Bz_m != NULL) delete Bz_m;
+   if (!is_pxr) {
+      if(Bx_m != NULL) delete Bx_m;
+      if(By_m != NULL) delete By_m;
+      if(Bz_m != NULL) delete Bz_m;
+   }
    if(Jx_ != NULL) delete Jx_;
    if(Jy_ != NULL) delete Jy_;
    if(Jz_ != NULL) delete Jz_;
