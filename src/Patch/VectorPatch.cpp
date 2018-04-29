@@ -48,6 +48,20 @@ void VectorPatch::close(SmileiMPI * smpiData)
 {
     closeAllDiags( smpiData );
 
+
+    if ( diag_timers.size() )
+        MESSAGE( "\n\tDiagnostics profile :" );
+    for ( unsigned int idiag = 0 ;  idiag < diag_timers.size() ; idiag++ ) {
+        double sum(0);
+        MPI_Reduce( &diag_timers[idiag]->time_acc_, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+        MESSAGE( "\t\t" << setw(20) << diag_timers[idiag]->name_ << "\t" << sum/(double)smpiData->getSize() );
+    }
+
+    for ( unsigned int idiag = 0 ;  idiag < diag_timers.size() ; idiag++ )
+        delete diag_timers[idiag];
+    diag_timers.clear();
+
+
     for (unsigned int idiag=0 ; idiag<localDiags.size(); idiag++)
         delete localDiags[idiag];
     localDiags.clear();
@@ -94,6 +108,17 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi, OpenPMDparams& op
             }
         }
     }
+
+    for ( unsigned int idiag = 0 ;  idiag < globalDiags.size() ; idiag++ )
+        diag_timers.push_back( new Timer( globalDiags[idiag]->filename ) );
+    for ( unsigned int idiag = 0 ;  idiag < localDiags.size() ; idiag++ )
+        diag_timers.push_back( new Timer( localDiags[idiag]->filename ) );
+
+    for ( unsigned int idiag = 0 ;  idiag < diag_timers.size() ; idiag++ )
+        diag_timers[idiag]->init(smpi);
+
+
+
 }
 
 
@@ -430,10 +455,11 @@ void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, unsigned int itime, Timers & timers, SimWindow* simWindow)
 {
-
     // Global diags: scalars + particles
     timers.diags.restart();
     for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
+        diag_timers[idiag]->restart();
+
         #pragma omp single
         globalDiags[idiag]->theTimeIsNow = globalDiags[idiag]->prepare( itime );
         #pragma omp barrier
@@ -449,16 +475,22 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, unsigned int itim
             #pragma omp single
             globalDiags[idiag]->write( itime , smpi );
         }
+
+        diag_timers[idiag]->update();
     }
     
     // Local diags : fields, probes, tracks
     for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++) {
+        diag_timers[globalDiags.size()+idiag]->restart();
+
         #pragma omp single
         localDiags[idiag]->theTimeIsNow = localDiags[idiag]->prepare( itime );
         #pragma omp barrier
         // All MPI run their stuff and write out
         if( localDiags[idiag]->theTimeIsNow )
             localDiags[idiag]->run( smpi, *this, itime, simWindow, timers );
+
+        diag_timers[globalDiags.size()+idiag]->update();
     }
     
     // Manage the "diag_flag" parameter, which indicates whether Rho and Js were used
