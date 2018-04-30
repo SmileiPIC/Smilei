@@ -238,12 +238,12 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch ) :
 
        MESSAGE(isRZ); 
         // Ymax
-       // if ( species->boundary_conditions[1][1] == "reflective" ) {
-       //     if (patch->isYmax()) bc_ymax = &refl_particle_rz;
-       // }
          if ( species->boundary_conditions[1][1] == "remove" ) {
             if (patch->isYmax()) bc_ymax = &remove_particle;
 		MESSAGE("Rmax bc");
+        }
+        else if ( species->boundary_conditions[1][1] == "reflective" ) {
+            if (patch->isYmax()) bc_ymax = &refl_particle_rz;
         }
         //else if ( species->boundary_conditions[1][1] == "stop" ) {
         //    if (patch->isYmax()) bc_ymax = &stop_particle_rz;
@@ -253,7 +253,7 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch ) :
         //}
         else {
             //ERROR( "Ymax boundary condition undefined : " << species->boundary_conditions[1][1]  );
-            ERROR("Only Remove boundary conditions can be applied to particles in Rz geometry ");
+            ERROR("Only Remove and reflective boundary conditions can be applied to particles in Rz geometry ");
 	}
     }
     
