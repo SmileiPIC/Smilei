@@ -887,7 +887,10 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
     //cout << std::scientific << ctrl << "\t" << error_max << "\t" << iteration << "\t" << iteration_max << endl;
     while ( (ctrl > error_max) && (iteration<iteration_max) ) {
         iteration++;
-        if (smpi->isMaster()) MESSAGE("iteration " << iteration << " started with control parameter ctrl = " << 1.0e22*ctrl << " x 1.e-22");
+        
+        if ( (smpi->isMaster()) && (iteration%1000==0) ) {
+            MESSAGE("iteration " << iteration << " started with control parameter ctrl = " << 1.0e22*ctrl << " x 1.e-22");
+        }
 
         // scalar product of the residual
         double r_dot_r = rnew_dot_rnew;
@@ -931,7 +934,9 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
         // compute control parameter
         //ctrl = rnew_dot_rnew / (double)(nx_p2_global);
         ctrl = sqrt(rnew_dot_rnew)/norm2_source_term;
-        if (smpi->isMaster()) DEBUG("iteration " << iteration << " done, exiting with control parameter ctrl = " << 1.0e22*ctrl << " x 1.e-22");
+        if (smpi->isMaster()) {
+            DEBUG("iteration " << iteration << " done, exiting with control parameter ctrl = " << 1.0e22*ctrl << " x 1.e-22");
+        }
 
     }//End of the iterative loop
 
