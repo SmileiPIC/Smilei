@@ -349,6 +349,9 @@ class Species(SmileiComponent):
     multiphoton_Breit_Wheeler = [None,None]
     multiphoton_Breit_Wheeler_sampling = [1,1]
     time_frozen = 0.0
+    radiating = False
+    relativistic_field_initialization = False
+    time_relativistic_initialization = 0.0
     boundary_conditions = [["periodic"]]
     ionization_model = "none"
     ionization_electrons = None

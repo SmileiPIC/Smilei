@@ -361,7 +361,7 @@ public:
             
             //Get number of particles
             if ( thisSpecies->n_numpy_particles != PyArray_SHAPE(np_ret_mom)[1] )
-                ERROR("For species '" << species_name << "' momentum_initializtion must provide as many particles as position_initialization." )
+                ERROR("For species '" << species_name << "' momentum_initialization must provide as many particles as position_initialization." )
 
             thisSpecies->momentum_initialization_array = new double[ndim_local*thisSpecies->n_numpy_particles] ;
             for (unsigned int idim = 0; idim < ndim_local ; idim++){
@@ -627,9 +627,9 @@ public:
         newSpecies->c_part_max                               = species->c_part_max;
         newSpecies->mass                                     = species->mass;
         newSpecies->time_frozen                              = species->time_frozen;
-        newSpecies->time_relativistic_initialization         = species->time_relativistic_initialization;
         newSpecies->radiating                                = species->radiating;
         newSpecies->relativistic_field_initialization        = species->relativistic_field_initialization;
+        newSpecies->time_relativistic_initialization         = species->time_relativistic_initialization;
         newSpecies->boundary_conditions                      = species->boundary_conditions;
         newSpecies->thermal_boundary_temperature             = species->thermal_boundary_temperature;
         newSpecies->thermal_boundary_velocity                = species->thermal_boundary_velocity;

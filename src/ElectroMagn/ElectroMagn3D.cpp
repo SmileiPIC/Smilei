@@ -646,7 +646,7 @@ void ElectroMagn3D::initE_relativistic_Poisson(Patch *patch, double gamma_mean)
             for (unsigned int k=0; k<nz_p; k++) {
                 (*Ex3D)(nx_d-1,j,k) = (*Ex3D)(nx_d-2,j,k) + dx*(*rho3D)(nx_p-1,j,k)
                     - ((*Ey3D)(nx_p-1,j+1,k)-(*Ey3D)(nx_p-1,j,k))*dx/dy 
-                    - ((*Ey3D)(nx_p-1,j,k+1)-(*Ez3D)(nx_p-1,j,k))*dx/dz;
+                    - ((*Ez3D)(nx_p-1,j,k+1)-(*Ez3D)(nx_p-1,j,k))*dx/dz;
             }
         }
     }
