@@ -590,27 +590,29 @@ void ElectroMagn2D::initB_relativistic_Poisson(Patch *patch, double gamma_mean)
     // ------------------------------------------
     
     double beta_mean = sqrt(1.-1./gamma_mean/gamma_mean);
+    MESSAGE(0,"In relativistic Poisson solver, gamma_mean = " << gamma_mean);
 
-    // Bx is identically zero
+    // Bx^(p,d) is identically zero
     // (hypothesis of negligible J transverse with respect to Jx)
-    // Bz
-    DEBUG("Computing Bx, relativistic Poisson problem");
-    for (unsigned int i=0; i<nx_d; i++) {
-        for (unsigned int j=0; j<ny_p; j++) {
+    MESSAGE(1,"Computing Bx, relativistic Poisson problem");
+    for (unsigned int i=0; i<nx_p; i++) {
+        for (unsigned int j=0; j<ny_d; j++) {
             (*Bx2D)(i,j) = 0.;
         }
     }
+    MESSAGE(1,"Bx: done");
 
-    // Bz
-    DEBUG("Computing Bz from scalar potential, relativistic Poisson problem");
+    // Bz^(d,d) from Ey^(p,d)
+    MESSAGE(1,"Computing Bz from scalar potential, relativistic Poisson problem");
     for (unsigned int i=0; i<nx_p; i++) {
         for (unsigned int j=0; j<ny_d; j++) {
             (*Bz2D)(i,j) = beta_mean*(*Ey2D)(i,j);
         }
     }
+    MESSAGE(1,"Bz: done");
 
 
-} // initE_relativistic_Poisson
+} // initB_relativistic_Poisson
 
 void ElectroMagn2D::center_fields_from_relativistic_Poisson(Patch *patch){
 
