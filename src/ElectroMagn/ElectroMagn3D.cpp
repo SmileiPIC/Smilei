@@ -599,7 +599,7 @@ void ElectroMagn3D::initE_relativistic_Poisson(Patch *patch, double gamma_mean)
 
 
     // Ex
-    DEBUG("Computing Ex from scalar potential, relativistic Poisson problem");
+    MESSAGE(1,"Computing Ex from scalar potential, relativistic Poisson problem");
     for (unsigned int i=1; i<nx_d-1; i++) {
         for (unsigned int j=0; j<ny_p; j++) {
             for (unsigned int k=0; k<nz_p; k++) {
@@ -607,8 +607,9 @@ void ElectroMagn3D::initE_relativistic_Poisson(Patch *patch, double gamma_mean)
             }
         }
     }
+    MESSAGE(1,"Ex: done");
     // Ey
-    DEBUG("Computing Ey from scalar potential, relativistic Poisson problem");
+    MESSAGE(1,"Computing Ey from scalar potential, relativistic Poisson problem");
     for (unsigned int i=0; i<nx_p; i++) {
         for (unsigned int j=1; j<ny_d-1; j++) {
             for (unsigned int k=0; k<nz_p; k++) {
@@ -616,8 +617,9 @@ void ElectroMagn3D::initE_relativistic_Poisson(Patch *patch, double gamma_mean)
             }
         }
     }
+    MESSAGE(1,"Ey: done");
     // Ez
-    DEBUG("Computing Ez from scalar potential, relativistic Poisson problem");
+    MESSAGE(1,"Computing Ez from scalar potential, relativistic Poisson problem");
     for (unsigned int i=0; i<nx_p; i++) {
         for (unsigned int j=0; j<ny_p; j++) {
             for (unsigned int k=1; k<nz_d-1; k++) {
@@ -625,6 +627,7 @@ void ElectroMagn3D::initE_relativistic_Poisson(Patch *patch, double gamma_mean)
             }
         }
     }
+    MESSAGE(1,"Ez: done");
 
     // Apply BC on Ex, Ey and Ez
     // ---------------------
@@ -726,17 +729,18 @@ void ElectroMagn3D::initB_relativistic_Poisson(Patch *patch, double gamma_mean)
     // ------------------------------------------
     // Bx is identically zero
     // (hypothesis of negligible J transverse with respect to Jx)
-    DEBUG("Computing Bx relativistic Poisson problem");
+    MESSAGE(1,"Computing Bx relativistic Poisson problem");
     for (unsigned int i=0; i<nx_p; i++) {
         for (unsigned int j=0; j<ny_d; j++) {
             for (unsigned int k=0; k<nz_d; k++) {
                 (*Bx3D)(i,j,k) = 0.;
             }
         }
-    }    
+    } 
+    MESSAGE(1,"Bx: done");   
 
     // By
-    DEBUG("Computing By from scalar potential, relativistic Poisson problem");
+    MESSAGE(1,"Computing By from scalar potential, relativistic Poisson problem");
     for (unsigned int i=0; i<nx_p; i++) {
         for (unsigned int j=0; j<ny_p; j++) {
             for (unsigned int k=0; k<nz_d; k++) {
@@ -744,8 +748,9 @@ void ElectroMagn3D::initB_relativistic_Poisson(Patch *patch, double gamma_mean)
             }
         }
     }
+    MESSAGE(1,"By: done");
     // Bz
-    DEBUG("Computing Bz from scalar potential, relativistic Poisson problem");
+    MESSAGE(1,"Computing Bz from scalar potential, relativistic Poisson problem");
     for (unsigned int i=0; i<nx_p; i++) {
         for (unsigned int j=0; j<ny_d; j++) {
             for (unsigned int k=0; k<nz_p; k++) {
@@ -753,6 +758,7 @@ void ElectroMagn3D::initB_relativistic_Poisson(Patch *patch, double gamma_mean)
             }
         }
     }
+    MESSAGE(1,"Bz: done");
 
   
 
@@ -821,7 +827,7 @@ void ElectroMagn3D::sum_rel_fields_to_em_fields(Patch *patch)
     for (unsigned int i=0; i<nx_p; i++) {
         for (unsigned int j=0; j<ny_d; j++) {
             for (unsigned int k=0; k<nz_d; k++) {
-                (*Bx3D)(i,j,k) = (*Bx3D)(i,j,k) + (*Bx3Drel)(i,j,k);
+                (*Bx3D) (i,j,k)= (*Bx3D) (i,j,k) + (*Bx3Drel)(i,j,k);
                 (*Bx3D0)(i,j,k)= (*Bx3D0)(i,j,k) + (*Bx3Drel)(i,j,k);
             }
         }
@@ -831,7 +837,7 @@ void ElectroMagn3D::sum_rel_fields_to_em_fields(Patch *patch)
     for (unsigned int i=1; i<nx_d-1; i++) {
         for (unsigned int j=0; j<ny_p; j++) {
             for (unsigned int k=0; k<nz_d; k++) {
-                (*By3D)(i,j,k) = (*By3D)(i,j,k) + 0.5 * ( (*By3Drel)(i,j,k) + (*By3Drel)(i-1,j,k) );
+                (*By3D) (i,j,k)= (*By3D) (i,j,k) + 0.5 * ( (*By3Drel)(i,j,k) + (*By3Drel)(i-1,j,k) );
                 (*By3D0)(i,j,k)= (*By3D0)(i,j,k) + 0.5 * ( (*By3Drel)(i,j,k) + (*By3Drel)(i-1,j,k) );
             }
         }
@@ -841,7 +847,7 @@ void ElectroMagn3D::sum_rel_fields_to_em_fields(Patch *patch)
     for (unsigned int i=1; i<nx_d-1; i++) {
         for (unsigned int j=0; j<ny_d; j++) {
             for (unsigned int k=0; k<nz_p; k++) {
-                (*Bz3D)(i,j,k) = (*Bz3D)(i,j,k) + 0.5 * ( (*Bz3Drel)(i,j,k) + (*Bz3Drel)(i-1,j,k) );
+                (*Bz3D) (i,j,k)= (*Bz3D) (i,j,k) + 0.5 * ( (*Bz3Drel)(i,j,k) + (*Bz3Drel)(i-1,j,k) );
                 (*Bz3D0)(i,j,k)= (*Bz3D0)(i,j,k) + 0.5 * ( (*Bz3Drel)(i,j,k) + (*Bz3Drel)(i-1,j,k) );
             }
         }

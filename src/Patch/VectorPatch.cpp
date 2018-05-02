@@ -1127,7 +1127,8 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
     //     //SyncVectorPatch::exchangeB( params, *this );
     //     //SyncVectorPatch::finalizeexchangeB( params, *this );
     // }
-
+   
+   MESSAGE(0,"Summing fields of relativistic species to the grid fields");
    // sum the fields found  by relativistic Poisson solver to the existing em fields
    // Includes proper spatial centering of the electromagnetic fields in the Yee Cell through interpolation
    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
@@ -1136,10 +1137,10 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
        } // end loop on patches
 
   
-
+    MESSAGE(0,"Fields of relativistic species initialized");
     //!\todo Reduce to find global max
-    if (smpi->isMaster())
-        MESSAGE(1,"Relativistic Poisson equation solved. Maximum err = ");
+    //if (smpi->isMaster())
+    //  MESSAGE(1,"Relativistic Poisson equation solved. Maximum err = ");
 
     //ptimer.update();
     //MESSAGE("Time in Relativistic Poisson : " << ptimer.getTime() );
