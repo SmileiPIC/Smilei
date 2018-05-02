@@ -19,7 +19,7 @@ PusherPonderomotiveBoris::~PusherPonderomotiveBoris()
 }
 
 /**************************************************************************
-    Lorentz Force + Ponderomotive force -- leap-frog (Boris-style) scheme
+    Lorentz Force + Ponderomotive force -- leap-frog (Boris-style) scheme, momentum advance
 **************************************************************************/
 
 void PusherPonderomotiveBoris::operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread)

@@ -1,4 +1,4 @@
-#include "PusherPonderomotivePositionBoris.h"
+#include "PusherPonderomotivePositionBorisV.h"
 
 #include <iostream>
 #include <cmath>
@@ -9,12 +9,12 @@
 
 using namespace std;
 // Pushes only position of particles interacting with envelope, not their momentum
-PusherPonderomotivePositionBoris::PusherPonderomotivePositionBoris(Params& params, Species *species)
+PusherPonderomotivePositionBorisV::PusherPonderomotivePositionBorisV(Params& params, Species *species)
     : Pusher(params, species)
 {
 }
 
-PusherPonderomotivePositionBoris::~PusherPonderomotivePositionBoris()
+PusherPonderomotivePositionBorisV::~PusherPonderomotivePositionBorisV()
 {
 }
 
@@ -22,8 +22,9 @@ PusherPonderomotivePositionBoris::~PusherPonderomotivePositionBoris()
     Lorentz Force + Ponderomotive force -- leap-frog (Boris-style) scheme, position advance
 **************************************************************************/
 
-void PusherPonderomotivePositionBoris::operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread)
+void PusherPonderomotivePositionBorisV::operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread)
 {
+/////////// not vectorized
     std::vector<double> *Phipart        = &(smpi->dynamics_PHIpart[ithread]);
     std::vector<double> *GradPhipart    = &(smpi->dynamics_GradPHIpart[ithread]);
     std::vector<double> *Phioldpart     = &(smpi->dynamics_PHIoldpart[ithread]);
@@ -33,6 +34,8 @@ void PusherPonderomotivePositionBoris::operator() (Particles &particles, SmileiM
     double inv_gamma0,inv_gamma_ponderomotive;
     double pxsm, pysm, pzsm;
     
+    int* cell_keys;
+
     double* momentum[3];
     for ( int i = 0 ; i<3 ; i++ )
         momentum[i] =  &( particles.momentum(i,0) );
@@ -58,6 +61,9 @@ void PusherPonderomotivePositionBoris::operator() (Particles &particles, SmileiM
     double* GradPhioldy = &( (*GradPhioldpart)[1*nparts] );
     double* GradPhioldz = &( (*GradPhioldpart)[2*nparts] );
     
+    particles.cell_keys.resize(nparts);
+    cell_keys = &( particles.cell_keys[0]);
+
     #pragma omp simd
     for (int ipart=istart ; ipart<iend; ipart++ ) { // begin loop on particles
     
@@ -86,4 +92,16 @@ void PusherPonderomotivePositionBoris::operator() (Particles &particles, SmileiM
             position[i][ipart]     += dt*momentum[i][ipart]*inv_gamma_ponderomotive;
 
     } // end loop on particles
+
+    #pragma omp simd
+    for (int ipart=0 ; ipart<nparts; ipart++ ) {
+    
+        for ( int i = 0 ; i<nDim_ ; i++ ){ 
+            cell_keys[ipart] *= nspace[i];
+            cell_keys[ipart] += round( (position[i][ipart]-min_loc_vec[i]) * dx_inv_[i] );
+        }
+        
+    } // end loop on particles
+
+
 }

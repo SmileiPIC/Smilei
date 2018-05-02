@@ -1,23 +1,23 @@
-/*! @file PusherPonderomotivePositionBoris.h
+/*! @file PusherPonderomotivePositionBorisV.h
 
 generic class for the particle pusher of Boris adapted for envelope model. Only pushes position, not their momentum
 
  
  */
 
-#ifndef PUSHERPONDEROMOTIVEPOSITIONBORIS_H
-#define PUSHERPONDEROMOTIVEPOSITIONBORIS_H
+#ifndef PUSHERPONDEROMOTIVEPOSITIONBORISV_H
+#define PUSHERPONDEROMOTIVEPOSITIONBORISV_H
 
 #include "Pusher.h"
 
 //  --------------------------------------------------------------------------------------------------------------------
-//! Class PusherPonderomotiveBoris, only pushes momentum of particles interacting with envelope, not their position
+//! Class PusherPonderomotiveBorisV, only pushes momentum of particles interacting with envelope, not their position
 //  --------------------------------------------------------------------------------------------------------------------
-class PusherPonderomotivePositionBoris : public Pusher {
+class PusherPonderomotivePositionBorisV : public Pusher {
 public:
     //! Creator for Pusher
-    PusherPonderomotivePositionBoris(Params& params, Species *species);
-    ~PusherPonderomotivePositionBoris();
+    PusherPonderomotivePositionBorisV(Params& params, Species *species);
+    ~PusherPonderomotivePositionBorisV();
     //! Overloading of () operator
     virtual void operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread);
 

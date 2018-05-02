@@ -19,7 +19,7 @@ PusherPonderomotiveBorisV::~PusherPonderomotiveBorisV()
 }
 
 /**************************************************************************
-    Lorentz Force + Ponderomotive force -- leap-frog (Boris-style) scheme
+    Lorentz Force + Ponderomotive force -- leap-frog (Boris-style) scheme, momentum advance
 **************************************************************************/
 
 void PusherPonderomotiveBorisV::operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread)
@@ -31,15 +31,10 @@ void PusherPonderomotiveBorisV::operator() (Particles &particles, SmileiMPI* smp
     std::vector<double> *GradPhipart = &(smpi->dynamics_GradPHIpart[ithread]);
 
     double charge_over_mass_dts2,charge_sq_over_mass_dts4;
-    double umx, umy, umz, upx, upy, upz;
     double alpha, inv_det_T, Tx, Ty, Tz, Tx2, Ty2, Tz2;
     double TxTy, TyTz, TzTx;
-    double pxsm, pysm, pzsm;
-    double local_invgf;
     double inv_gamma0,inv_gamma_ponderomotive;
     double charge_sq_over_mass_sq;
-
-    int* cell_keys;
 
     double* momentum[3];
     for ( int i = 0 ; i<3 ; i++ )
@@ -58,9 +53,6 @@ void PusherPonderomotiveBorisV::operator() (Particles &particles, SmileiMPI* smp
     double* GradPhix = &( (*GradPhipart)[0*nparts] );
     double* GradPhiy = &( (*GradPhipart)[1*nparts] );
     double* GradPhiz = &( (*GradPhipart)[2*nparts] );
-  
-    particles.cell_keys.resize(nparts);
-    cell_keys = &( particles.cell_keys[0]);
 
     double dcharge[nparts];
     #pragma omp simd
