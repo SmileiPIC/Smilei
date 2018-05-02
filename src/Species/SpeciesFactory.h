@@ -359,7 +359,7 @@ public:
                 ERROR("For species '" << species_name << "' momentum_initializtion must provide a 2-dimensional array with " <<  params.nDim_particle << " columns." )
             
             //Get number of particles
-            if ( thisSpecies->n_numpy_particles != PyArray_SHAPE(np_ret_mom)[1] )
+            if ( !params.restart && thisSpecies->n_numpy_particles != PyArray_SHAPE(np_ret_mom)[1] )
                 ERROR("For species '" << species_name << "' momentum_initialization must provide as many particles as position_initialization." )
 
             thisSpecies->momentum_initialization_array = new double[ndim_local*thisSpecies->n_numpy_particles] ;

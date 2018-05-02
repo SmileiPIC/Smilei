@@ -480,11 +480,12 @@ Each species has to be defined in a ``Species`` block::
      of both species are identical in each cell.
    * A *numpy* array defining all the positions of the species' particles.
      In this case you must also provide the weight of each particle (see :ref:`Weights`).
-     The array shape must be `(Ndim+1, Npart)` where `Ndim` is the simulation dimension,
+     The array shape must be `(Ndim+1, Npart)` where `Ndim` is the simulation dimension (of the particles),
      and `Npart` is the total number of particles. Positions components `x`, `y`, `z` are
-     given along the first columns and the weights are given in the last column of the array.
+     given along the first `Ndim` columns and the weights are given in the last column of the array.
      This initialization is incompatible with :py:data:`number_density`, :py:data:`charge_density`
-     and :py:data:`particles_per_cell`.
+     and :py:data:`particles_per_cell`. Particles initialized outside of the initial simulation domain
+     will not be created. This initalization is disregarded when running a `restart`.
 
 .. py:data:: momentum_initialization
 
