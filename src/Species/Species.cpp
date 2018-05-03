@@ -51,20 +51,23 @@ pusher("boris"),
 radiation_model("none"),
 time_frozen(0),
 radiating(false),
+relativistic_field_initialization(false),
+time_relativistic_initialization(0),
 multiphoton_Breit_Wheeler(2,""),
 ionization_model("none"),
-ppcProfile(NULL),
+densityProfileType("none"),
 chargeProfile(NULL),
 densityProfile(NULL),
-densityProfileType("none"),
-position_initialization_array(NULL),
-momentum_initialization_array(NULL),
-position_initialization_on_species(false),
-position_initialization_on_species_index(-1),
 velocityProfile(3,NULL),
 temperatureProfile(3,NULL),
+ppcProfile(NULL),
 max_charge(0.),
 particles(&particles_sorted[0]),
+position_initialization_array(NULL),
+momentum_initialization_array(NULL),
+n_numpy_particles(0),
+position_initialization_on_species(false),
+position_initialization_on_species_index(-1),
 electron_species(NULL),
 electron_species_index(-1),
 photon_species(NULL),
@@ -78,7 +81,6 @@ min_loc_vec(patch->getDomainLocalMin()),
 tracking_diagnostic(10000),
 nDim_particle(params.nDim_particle),
 partBoundCond(NULL),
-n_numpy_particles(0),
 min_loc(patch->getDomainLocalMin(0))
 
 {
@@ -1122,10 +1124,11 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     if (this->mass > 0) chargeProfile ->valuesAt(xyz, charge );
 
     if ( position_initialization_array != NULL ){
-        for (unsigned int idim = 0; idim < nDim_particle; idim++) position[idim] = &(position_initialization_array[idim*n_numpy_particles]);
-                                                                  weight_arr     = &(position_initialization_array[nDim_particle*n_numpy_particles]);
+        for (unsigned int idim = 0; idim < nDim_particle; idim++)
+            position[idim] = &(position_initialization_array[idim*n_numpy_particles]);
+        weight_arr = &(position_initialization_array[nDim_particle*n_numpy_particles]);
         //Idea to speed up selection, provides xmin, xmax of the bunch and check if there is an intersection with the patch instead of going through all particles for all patches.
-        for (unsigned int ip = 0; ip < n_numpy_particles; ip++){
+        for (int ip = 0; ip < n_numpy_particles; ip++){
             //If the particle belongs to this patch
             if (                              position[0][ip] >= patch->getDomainLocalMin(0) && position[0][ip] < patch->getDomainLocalMax(0)
                  && ( nDim_particle < 2  || ( position[1][ip] >= patch->getDomainLocalMin(1) && position[1][ip] < patch->getDomainLocalMax(1)) )
@@ -1138,6 +1141,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
         //Initialize density and ppc profiles
         densityProfile->valuesAt(xyz, density       );
         ppcProfile    ->valuesAt(xyz, n_part_in_cell);
+        weight_arr = NULL;
 
         //Now compute number of particles per cell
         double remainder, nppc;
@@ -1258,7 +1262,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
         int indices[nbins];
         double one_ov_dbin = 1. / (cell_length[0] * clrw) ;
 
-        for (unsigned int i=0; i < nbins ; i++) indices[i] = 0 ;
+        for (int i=0; i < nbins ; i++) indices[i] = 0 ;
         
         ///Compute proper indices for particle susing a count sort
         for (unsigned int ipart = 0; ipart < npart_effective ; ipart++){
@@ -1268,13 +1272,13 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                 indices[ix] ++;
         }
         unsigned int tot=0;
-        for (unsigned int ibin=0; ibin < nbins; ibin++){
+        for (int ibin=0; ibin < nbins; ibin++){
                 unsigned int oc = indices[ibin];
                 indices[ibin] = tot;
                 tot += oc;
         }
-        for (unsigned int i=0; i < nbins ; i++) bmin[i] = indices[i] ;
-        for (unsigned int i=0; i < nbins-1 ; i++) bmax[i] = bmin[i] ;
+        for (int i=0; i < nbins   ; i++) bmin[i] = indices[i] ;
+        for (int i=0; i < nbins-1 ; i++) bmax[i] = bmin[i+1] ;
         bmax[nbins-1] = npart_effective ;
 
         //Now initialize particles at thier proper indices

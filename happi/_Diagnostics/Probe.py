@@ -282,8 +282,9 @@ class Probe(Diagnostic):
 	
 	# destructor
 	def __del__(self):
-		for file in self._h5probe:
-			file.close()
+		if hasattr(self, "_h5probe"):
+			for file in self._h5probe:
+				file.close()
 	
 	# Method to print info previously obtained with getInfo
 	def _info(self, info=None):

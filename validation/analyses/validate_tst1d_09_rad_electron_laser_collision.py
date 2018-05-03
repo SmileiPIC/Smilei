@@ -51,9 +51,9 @@ for i,radiation in enumerate(radiation_list):
 
   utot = ukin+urad
 
-  print ' Electron_'+radiation+':'
-  print ' Final kinetic energy: ', ukin[-1]
-  print ' Maximum radiated energy: ', urad.max()
+  print(' Electron_'+radiation+':')
+  print(' Final kinetic energy: '+str(ukin[-1]))
+  print(' Maximum radiated energy: '+str(urad.max()))
 
   # Validation of the kinetic energy
   Validate("Kinetic energy evolution: ", ukin/ukin[0], thresholds[i] )
@@ -74,10 +74,10 @@ for i,radiation in enumerate(radiation_list):
 urad_rel_err_Niel = abs(urad_dict["Niel"] - urad_dict["CLL"]) / urad_dict["CLL"].max()
 ukin_rel_err_Niel = abs(ukin_dict["Niel"] - ukin_dict["CLL"]) / ukin_dict["CLL"][0]
 
-print
-print ' Comparison Landau-Lifshitz/Niel radiation model'
-print ' Maximum relative error kinetic energy',ukin_rel_err_Niel.max()
-print ' Maximum relative error radiative energy',urad_rel_err_Niel.max()
+print('')
+print(' Comparison Landau-Lifshitz/Niel radiation model')
+print(' Maximum relative error kinetic energy'+str(ukin_rel_err_Niel.max()))
+print (' Maximum relative error radiative energy'+str(urad_rel_err_Niel.max()))
 
 # Validation difference between Landau-Lifshitz and Niel methods
 Validate("Relative error on the kinetic energy / ukin at t=0: " , ukin_rel_err_Niel.max(), 0.03 )
@@ -89,10 +89,10 @@ Validate("Relative error on the radiative energy / urad max " , urad_rel_err_Nie
 urad_rel_err_MC = abs(urad_dict["MC"] - urad_dict["CLL"]) / urad_dict["CLL"].max()
 ukin_rel_err_MC = abs(ukin_dict["MC"] - ukin_dict["CLL"]) / ukin_dict["CLL"][0]
 
-print ''
-print ' Comparison Landau-Lifshitz/Monte-Carlo radiation model'
-print ' Maximum relative error kinetic energy',ukin_rel_err_MC.max()
-print ' Maximum relative error radiative energy',urad_rel_err_MC.max()
+print('')
+print(' Comparison Landau-Lifshitz/Monte-Carlo radiation model')
+print(' Maximum relative error kinetic energy'+str(ukin_rel_err_MC.max()))
+print(' Maximum relative error radiative energy'+str(urad_rel_err_MC.max()))
 
 # Validation difference between Landau-Lifshitz and Monte-Carlo methods
 Validate("Relative error on the kinetic energy / ukin at t=0: " , ukin_rel_err_MC.max(), 0.03 )

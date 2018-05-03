@@ -63,7 +63,6 @@ makerunCollisions:
   stage: makerun
   only:
     - develop
-    #- complex_vecto
     
   script:
     # Move in test dir

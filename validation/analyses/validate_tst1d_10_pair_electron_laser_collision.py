@@ -38,14 +38,14 @@ ntot_electron = np.array(S.Scalar("Ntot_electron").get()["data"])
 ntot_positron = np.array(S.Scalar("Ntot_positron").get()["data"])
 ntot_photon = np.array(S.Scalar("Ntot_photon").get()["data"])
 
-print ' Final electron energy / initial electron energy: ',ukin_electron[-1] / ukin_electron[0]
-print ' Final positron energy / initial electron energy: ',ukin_positron[-1] / ukin_electron[0]
-print ' Final photon energy / initial electron energy: ',ukin_photon[-1] / ukin_electron[0]
-print ' Final radiated energy / initial electron energy: ',urad[-1] / ukin_electron[0]
+print(' Final electron energy / initial electron energy: '+str(ukin_electron[-1] / ukin_electron[0]))
+print(' Final positron energy / initial electron energy: '+str(ukin_positron[-1] / ukin_electron[0]))
+print(' Final photon energy / initial electron energy: '+str(ukin_photon[-1] / ukin_electron[0]))
+print(' Final radiated energy / initial electron energy: '+str(urad[-1] / ukin_electron[0]))
 
-print ' Final number of electrons:',ntot_electron[-1]
-print ' Final number of positrons: ',ntot_positron[-1]
-print ' Final number of photons: ',ntot_photon[-1]
+print(' Final number of electrons:'+str(ntot_electron[-1]))
+print(' Final number of positrons: '+str(ntot_positron[-1]))
+print(' Final number of photons: '+str(ntot_photon[-1]))
 
 # Validation of the kinetic energy
 Validate("Electron kinetic energy evolution: ", ukin_electron/ukin_electron[0], 3e-2 )

@@ -161,10 +161,3 @@ Known issues
   
     $ mpirun --mca btl ^vader -n 4 ~/Smilei/smilei my_namelist   # Disable vader
 
-
-----
-
-Reporting bugs
-^^^^^^^^^^^^^^
-
-To report bugs, please create an issue on the `github page <https://github.com/SmileiPIC/Smilei/issues/new>`_ .

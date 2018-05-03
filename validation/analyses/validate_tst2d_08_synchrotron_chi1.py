@@ -75,7 +75,7 @@ print(" Checking of the particle binning diagnostics")
 
 maximal_iteration = 5500
 period = 500
-number_of_files = maximal_iteration/period
+number_of_files = maximal_iteration//period
 
 chi_max = np.zeros([number_of_files,len(radiation_list)])
 chi_ave = np.zeros([number_of_files,len(radiation_list)])
