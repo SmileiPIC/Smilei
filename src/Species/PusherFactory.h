@@ -46,7 +46,7 @@ public:
             // assign the correct Pusher to Push
             if ( species->pusher == "boris")
             {
-                if (!params.vecto)
+                if (!species->vectorized_operators)
                     Push = new PusherBoris( params, species );
 #ifdef _VECTO
                 else

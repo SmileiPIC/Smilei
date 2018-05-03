@@ -22,7 +22,7 @@
 
 class Field;
 class Timer;
-class SimWindow; 
+class SimWindow;
 class DomainDecomposition;
 
 //! Class Patch : sub MPI domain
@@ -34,7 +34,7 @@ public :
     VectorPatch();
     VectorPatch( Params &params );
     ~VectorPatch();
-    void save_old_rho(Params &params); 
+    void save_old_rho(Params &params);
 
     void close(SmileiMPI*);
 
@@ -91,6 +91,9 @@ public :
     // Interfaces between main programs & main PIC operators
     // -----------------------------------------------------
 
+    //! Reconfigure all patches for the new time step
+    void configuration(Params& params, Timers &timers, int itime);
+
     //! For all patch, move particles (restartRhoJ(s), dynamics and exchangeParticles)
     void dynamics(Params& params,
                   SmileiMPI* smpi,
@@ -100,7 +103,7 @@ public :
                   double time_dual,
                   Timers &timers, int itime);
 
-    void finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWindow* simWindow, 
+    void finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWindow* simWindow,
                   RadiationTables & RadiationTables,
                   MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
                   double time_dual,
@@ -117,7 +120,7 @@ public :
     //! For all patch, update E and B (Ampere, Faraday, boundary conditions, exchange B and center B)
     void solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual,
                       Timers & timers);
-    
+
     //! For all patch, Compute and Write all diags (Scalars, Probes, Phases, TrackParticles, Fields, Average fields)
     void runAllDiags(Params& params, SmileiMPI* smpi, unsigned int itime, Timers & timers, SimWindow* simWindow);
     void initAllDiags(Params& params, SmileiMPI* smpi);
@@ -224,7 +227,7 @@ public :
     }
 
     void check_memory_consumption(SmileiMPI* smpi);
-    
+
     void check_expected_disk_usage( SmileiMPI* smpi, Params& params, Checkpoint& checkpoint);
 
     // Keep track if we need the needsRhoJsNow
@@ -236,7 +239,7 @@ public :
     unsigned int lastIterationPatchesMoved;
 
     DomainDecomposition* domain_decomposition_;
-        
+
 
     //! Methods to access readably to patch PIC operators.
     //!   - patches_ should not be access outsied of VectorPatch
@@ -245,16 +248,16 @@ public :
         return (*this)(ipatch)->vecSpecies[ispec];
     }
 
+    inline Interpolator * inter(int ipatch, int ispec){
+        return (*this)(ipatch)->vecSpecies[ispec]->Interp;
+    }
+
     inline ElectroMagn* emfields(int ipatch) {
         return (*this)(ipatch)->EMfields;
     }
 
-    inline Interpolator* interp(int ipatch){
-        return (*this)(ipatch)->Interp;
-    }
-
-    inline Projector* proj(int ipatch){
-        return (*this)(ipatch)->Proj;
+    inline Projector* proj(int ipatch, int ispec){
+        return (*this)(ipatch)->vecSpecies[ispec]->Proj;
     }
 
     inline PartWalls* partwalls(int ipatch){
@@ -262,7 +265,7 @@ public :
     }
 
 private :
-    
+
     //  Internal balancing members
     // ---------------------------
     std::vector<Patch*> recv_patches_;
@@ -272,7 +275,7 @@ private :
 
     //! Current intensity of antennas
     double antenna_intensity;
-    
+
 };
 
 

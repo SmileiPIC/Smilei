@@ -29,8 +29,6 @@
 #include "Particles.h"
 #include "ElectroMagnFactory.h"
 #include "ElectroMagnBC_Factory.h"
-#include "InterpolatorFactory.h"
-#include "ProjectorFactory.h"
 #include "DiagnosticFactory.h"
 #include "CollisionsFactory.h"
 
@@ -55,7 +53,7 @@ Patch::Patch(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomp
 
 // Cloning patch constructor
 Patch::Patch(Patch* patch, Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved, bool with_particles = true) {
-    
+
     hindex = ipatch;
     nDim_fields_ = patch->nDim_fields_;
 
@@ -68,7 +66,7 @@ void Patch::initStep1(Params& params)
     // for nDim_fields = 1 : bug if Pcoordinates.size = 1 !!
     //Pcoordinates.resize(nDim_fields_);
     Pcoordinates.resize( 2 );
-    
+
     nbNeighbors_ = 2;
     neighbor_.resize(nDim_fields_);
     tmp_neighbor_.resize(nDim_fields_);
@@ -126,11 +124,6 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi, DomainDecomposition
 
     // initialize the electromagnetic fields (virtual)
     EMfields   = ElectroMagnFactory::create(params, domain_decomposition, vecSpecies, this);
-    
-    // interpolation operator (virtual)
-    Interp     = InterpolatorFactory::create(params, this); // + patchId -> idx_domain_begin (now = ref smpi)
-    // projection operator (virtual)
-    Proj       = ProjectorFactory::create(params, this);    // + patchId -> idx_domain_begin (now = ref smpi)
 
     // Initialize the collisions
     vecCollisions = CollisionsFactory::create(params, this, vecSpecies);
@@ -153,11 +146,6 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool w
 
     // clone the electromagnetic fields (virtual)
     EMfields   = ElectroMagnFactory::clone(patch->EMfields, params, vecSpecies, this);
-
-    // interpolation operator (virtual)
-    Interp     = InterpolatorFactory::create(params, this);
-    // projection operator (virtual)
-    Proj       = ProjectorFactory::create(params, this);
 
     // clone the collisions
     vecCollisions = CollisionsFactory::clone(patch->vecCollisions, params);
@@ -221,7 +209,7 @@ void Patch::finalizeMPIenvironment(Params& params) {
 void Patch::set( Params& params, DomainDecomposition* domain_decomposition, VectorPatch& vecPatch )
 {
     Pcoordinates.resize( params.nDim_field );
-    
+
 
     min_local = vecPatch(0)->min_local;
     max_local = vecPatch(0)->max_local;
@@ -231,11 +219,11 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
 
     // Constraint to enforce 1 neighboor per side
     double nppp_root = pow( vecPatch.size(), 1./(double)nDim_fields_ );
-    if ( fabs( (double)(int)nppp_root - nppp_root ) > 0. ) 
+    if ( fabs( (double)(int)nppp_root - nppp_root ) > 0. )
         ERROR( "Bad choice of decomposition" );
 
     for (int i = 0 ; i<nDim_fields_ ; i++) {
-        
+
         for ( unsigned int ipatch = 0 ; ipatch < vecPatch.size() ; ipatch++  ) {
             if ( vecPatch(ipatch)->min_local[i] <= min_local[i] ) {
                 min_local[i] = vecPatch(ipatch)->min_local[i];
@@ -255,7 +243,7 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
                 cell_starting_global_index[i] = vecPatch(ipatch)->cell_starting_global_index[i];
         }
         Pcoordinates[i] = (cell_starting_global_index[i]+params.oversize[i]) / params.n_space[i] / params.global_factor[i];
-        
+
         center[i] = (min_local[i]+max_local[i])*0.5;
         radius += pow(max_local[i] - center[i] + params.cell_length[i], 2);
     }
@@ -263,7 +251,7 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
 
     //cout << hindex << " " << Pcoordinates[0] << " " << Pcoordinates[1] << endl;
     //cout << "X = " << Pcoordinates[0]  << " " << min_local[0] << " " << max_local[0] << " - Y = " << Pcoordinates[1] << " " << min_local[1] << " " << max_local[1] << endl;
-    
+
     //cart_updateMPIenv(smpi);
 
     MPI_me_ = vecPatch(0)->MPI_me_;
@@ -277,8 +265,8 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
         if ((neighbor_[i][1]==MPI_me_) && (params.EM_BCs[i][0]!="periodic"))
             neighbor_[i][1] = MPI_PROC_NULL;
     }
-            
-    
+
+
     //cout << "MPI Nei\t"  << "\t" << MPI_neighbor_[1][1] << endl;
     //cout << "MPI Nei\t"  << MPI_neighbor_[0][0] << "\t" << MPI_me_ << "\t" << MPI_neighbor_[0][1] << endl;
     //cout << "MPI Nei\t"  << "\t" << MPI_neighbor_[1][0] << endl;
@@ -293,15 +281,13 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
     EMfields   = ElectroMagnFactory::create(params, domain_decomposition, vecPatch(0)->vecSpecies, this);
 
     vecSpecies.resize(0);
-    Interp     = NULL;
-    Proj       = NULL;
     vecCollisions.resize(0);
     partWalls = NULL;
     probes.resize(0);
-    
+
     if (has_an_MPI_neighbor())
         createType2(params);
-    
+
 
 }
 
@@ -315,11 +301,9 @@ Patch::~Patch() {
 
     for(unsigned int i=0; i<vecCollisions.size(); i++) delete vecCollisions[i];
     vecCollisions.clear();
-    
+
     if (partWalls!=NULL) delete partWalls;
-    if (Proj     !=NULL) delete Proj;
-    if (Interp   !=NULL) delete Interp;
-    
+
     if (EMfields !=NULL) delete EMfields;
 
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
@@ -376,6 +360,25 @@ void Patch::updateMPIenv(SmileiMPI* smpi)
 
 } // END updateMPIenv
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Clean the MPI buffers for communications
+// ---------------------------------------------------------------------------------------------------------------------
+void Patch::cleanMPIBuffers(int ispec, Params& params)
+{
+    int ndim = params.nDim_field;
+
+    for (int iDim=0 ; iDim < ndim ; iDim++){
+        for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+            vecSpecies[ispec]->MPIbuff.partRecv[iDim][iNeighbor].clear();//resize(0,ndim);
+            vecSpecies[ispec]->MPIbuff.partSend[iDim][iNeighbor].clear();//resize(0,ndim);
+            vecSpecies[ispec]->MPIbuff.part_index_send[iDim][iNeighbor].clear();
+            //vecSpecies[ispec]->MPIbuff.part_index_send[iDim][iNeighbor].resize(0);
+            vecSpecies[ispec]->MPIbuff.part_index_recv_sz[iDim][iNeighbor] = 0;
+        }
+    }
+    vecSpecies[ispec]->indexes_of_particles_to_exchange.clear();
+} // cleanMPIBuffers
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Split particles Id to send in per direction and per patch neighbor dedicated buffers
@@ -426,8 +429,6 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, Params& params)
             idim++;
         }
     }
-
-
 
 } // initExchParticles(... iDim)
 
@@ -646,8 +647,17 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
     //La recopie finale doit se faire au traitement de la dernière dimension seulement !!
     if (iDim == ndim-1){
 
+        //vecSpecies[ispec]->sort_part(params);
 
-        vecSpecies[ispec]->sort_part(params);
+        // For DynamicV
+        if (vecSpecies[ispec]->vectorized_operators)
+        {
+            vecSpecies[ispec]->sort_part(params);
+        }
+        else
+        {
+            vecSpecies[ispec]->Species::sort_part(params);
+        }
 
     }//End Recv_buffers ==> particles
 
