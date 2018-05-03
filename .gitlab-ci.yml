@@ -30,6 +30,7 @@ makerun1D:
   stage: makerun
   only:
     - develop
+
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -40,6 +41,7 @@ makerun2D:
   stage: makerun
   only:
     - develop
+
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -50,6 +52,7 @@ makerun3D:
   stage: makerun
   only:
     - develop
+
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -60,6 +63,7 @@ makerunCollisions:
   stage: makerun
   only:
     - develop
+    
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation

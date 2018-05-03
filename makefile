@@ -108,8 +108,8 @@ ifeq (,$(findstring noopenmp,$(config)))
     OPENMP_FLAG += -D_OMP
     LDFLAGS += $(OPENMP_FLAG)
     CXXFLAGS += $(OPENMP_FLAG)
-else
-    LDFLAGS += -mt_mpi
+else 
+    LDFLAGS += -mt_mpi # intelmpi only
 endif
 
 

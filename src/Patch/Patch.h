@@ -70,6 +70,9 @@ public:
     //! "fake" particles for the probe diagnostics
     std::vector<ProbeParticles*> probes;
 
+    //!
+    Interpolator* probesInterp;
+
 
     // Geometrical description
     // -----------------------

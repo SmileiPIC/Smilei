@@ -112,7 +112,11 @@ public :
                   double time_dual, Timers &timers, int itime);
 
     void computeCharge();
+ 
+    // compute rho only given by relativistic species which require initialization of the relativistic fields
+    void computeChargeRelativisticSpecies(double time_primal); 
 
+    void resetRhoJ();
 
     //! For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
     void sumDensities(Params &params, double time_dual, Timers &timers, int itime, SimWindow* simWindow );
@@ -133,6 +137,9 @@ public :
     //! Solve Poisson to initialize E
     void solvePoisson( Params &params, SmileiMPI* smpi );
 
+    //! Solve relativistic Poisson problem to initialize E and B of a relativistic bunch
+    void solveRelativisticPoisson( Params &params, SmileiMPI* smpi, double time_primal );
+
     //! For all patch initialize the externals (lasers, fields, antennas)
     void initExternals(Params& params);
 
@@ -144,6 +151,8 @@ public :
 
     //! For each patch, apply external fields
     void applyExternalFields();
+
+    void saveExternalFields( Params &params );
 
     //  Balancing methods
     // ------------------
@@ -276,6 +285,8 @@ private :
     //! Current intensity of antennas
     double antenna_intensity;
 
+    std::vector<Timer*> diag_timers;
+    
 };
 
 

@@ -542,7 +542,7 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
             int iparticle(ipart); // Compatibility
             int false_idx(0);     // Use in classical interp for now, not for probes
             //     virtual void operator()  (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc) override = 0;
-            (*(vecPatches.species(ipatch,0)->Interp)) (
+            (*(vecPatches(ipatch)->probesInterp)) (
                 vecPatches(ipatch)->EMfields,
                 vecPatches(ipatch)->probes[probe_n]->particles, smpi,
                 &iparticle, &false_idx, ithread,

@@ -134,6 +134,8 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi, DomainDecomposition
     // Initialize the probes
     probes = DiagnosticFactory::createProbes();
 
+    probesInterp = InterpolatorFactory::create(params, this, false);
+
     if (has_an_MPI_neighbor())
         createType(params);
 
@@ -155,6 +157,8 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool w
 
     // clone the probes
     probes = DiagnosticFactory::cloneProbes(patch->probes);
+
+    probesInterp = InterpolatorFactory::create(params, this, false);
 
     if (has_an_MPI_neighbor())
         createType(params);
@@ -296,6 +300,9 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
 // Delete Patch members
 // ---------------------------------------------------------------------------------------------------------------------
 Patch::~Patch() {
+
+    delete probesInterp;
+
     for(unsigned int i=0; i<probes.size(); i++)
         delete probes[i];
 
