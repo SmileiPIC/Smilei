@@ -784,7 +784,6 @@ void Projector3D2Order_susceptibility::project_susceptibility(double* Chi_envelo
         inv_gamma_ponderomotive = 1./( 1./inv_gamma0 + (pxsm+pysm+pzsm)*0.5 );
 
         // (x,y,z) components of the current density for the macro-particle
-        // IMPORTANT DIVIDE BY MASS
         double charge_weight = (double)(particles.charge(ipart))*(double)(particles.charge(ipart))*particles.weight(ipart)*inv_gamma_ponderomotive*one_over_mass; 
 
         // variable declaration

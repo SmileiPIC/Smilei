@@ -573,44 +573,17 @@ void SpeciesV::importParticles( Params& params, Patch* patch, Particles& source_
     source_particles.clear();
 }
 
+//! Method calculating the Particle updated momentum (interpolation, momentum pusher, only particles interacting with envelope)
+void SpeciesV::ponderomotive_update_susceptibilty_and_momentum(double time_dual, unsigned int ispec,
+                           ElectroMagn* EMfields, Interpolator* Interp_envelope, Projector* Proj_susceptibility,
+                           Params &params, bool diag_flag,
+                           Patch* patch, SmileiMPI* smpi,
+                           std::vector<Diagnostic*>& localDiags){}
 
-// ---------------------------------------------------------------------------------------------------------------------
-// For all particles of the species reacting to laser envelope
-//   - interpolate the fields at the particle position
-//   - calculate the new momentum
-// ---------------------------------------------------------------------------------------------------------------------
-void SpeciesV::ponderomotive_momentum_update(double time_dual, unsigned int ispec,
-                       ElectroMagn* EMfields, Interpolator* Interp,
-                       Params &params, bool diag_flag,
-                       Patch* patch, SmileiMPI* smpi,
-                       vector<Diagnostic*>& localDiags)
-{
-    int ithread;
-    #ifdef _OPENMP
-        ithread = omp_get_thread_num();
-    #else
-        ithread = 0;
-    #endif
-
-    unsigned int iPart;
-
-    // -------------------------------
-    // calculate the particle dynamics
-    // -------------------------------
-    if (time_dual>time_frozen) { // moving particle
-
-        smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
-
-        // Interpolate the fields at the particle position
-        for (unsigned int scell = 0 ; scell < bmin.size() ; scell++)
-            (*Interp)(EMfields, *particles, smpi, &(bmin[scell]), &(bmax[scell]), ithread );
-
-        // Push the particles and the photons
-        (*Push)(*particles, smpi, 0, bmax[bmax.size()-1], ithread );
-        //particles->test_move( bmin[ibin], bmax[ibin], params );
-
-    }
-    else { // immobile particle (at the moment only project density)
-         }//END if time vs. time_frozen
-
-} // End ponderomotive_momentum_update
+//! Method calculating the Particle updated position (interpolation, position pusher, only particles interacting with envelope)
+// and projecting charge density and thus current density (through Esirkepov method) for Maxwell's Equations
+void SpeciesV::ponderomotive_update_position_and_currents(double time_dual, unsigned int ispec,
+                           ElectroMagn* EMfields, Interpolator* Interp_envelope, Projector* Proj,
+                           Params &params, bool diag_flag, PartWalls* partWalls,
+                           Patch* patch, SmileiMPI* smpi,
+                           std::vector<Diagnostic*>& localDiags){}
