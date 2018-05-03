@@ -142,10 +142,10 @@ void SmileiMPI::init( Params& params, DomainDecomposition* domain_decomposition 
     dynamics_deltaold.resize(1);
 
     if ( n_envlaser > 0 ) {
-        dynamics_GradPHI.resize(1);
-        dynamics_GradPHIold.resize(1);
-        dynamics_PHI.resize(1);
-        dynamics_PHIold.resize(1);
+        dynamics_GradPHIpart.resize(1);
+        dynamics_GradPHIoldpart.resize(1);
+        dynamics_PHIpart.resize(1);
+        dynamics_PHIoldpart.resize(1);
     }
 #endif
 
