@@ -1,35 +1,43 @@
-###### Namelist for the field initialization of a relativistic electron bunch, with cylindrical uniform density
+###### Namelist for plasma wake excited by a relativistic electron bunch
 
 import math
 dx = 0.2 
 dtrans = 1.
 dt = 0.18
+#nx = 896
 nx = 1280
-ntrans = 200
+ntrans = 80
 Lx = nx * dx
 Ltrans = ntrans*dtrans
 npatch_x = 128
+bunch_sigma_x = 15.
+bunch_sigma_r = 10. 
+center_bunch = 6*bunch_sigma_x
+n0 = 0.0017
+alpha = 1.
+gamma= 100. # relativistic lorentz factor
+beta = math.sqrt(1.-1/gamma**2)
+relative_energy_spread = 0.01
+electron_mass_eV = 0.511e6
+norm_emittance_m = 1.e-6 # transverse normalized emittance
+L_bunch = 2.*bunch_sigma_x   
+R_bunch = bunch_sigma_r
 
-###################################
 
-# Electron bunch parameters
-center_bunch = nx*dx/2.           # centered at half the grid length
-n0 = 0.0017                       # plasma density
-alpha = 1.                        # bunch density normalized to plasma density
-gamma= 100.                       # relativistic lorentz factor of the bunch, moving in the positive x direction
-beta = math.sqrt(1.-1/gamma**2)   # bunch velocity, normalized to c
-L_bunch = 30.                     # bunch length
-R_bunch = 20.                     # bunch radius
 
-# Normalized density of a cylindrical uniformly charged bunch
+
+# normalized density of a cylindrical bunch, uniformly charged
 def nbunch_uniform_cylindrical(x,y,z):
+
         bunch_density = alpha*n0
+
         if ( (abs(x-center_bunch)<L_bunch/2.) and   ( (y-Main.grid_length[1]/2.)**2+(z-Main.grid_length[2]/2.)**2) < R_bunch**2 ):
                 return bunch_density
         else:
                 return 0.
 
-###################################
+
+
 
 
 Main(
@@ -52,11 +60,22 @@ Main(
     solve_poisson = False,
     
     solve_relativistic_poisson = True,
-    time_fields_frozen = 100.,
-   
+    
     print_every = 100,
 
     random_seed = smilei_mpi_rank
+)
+
+MovingWindow(
+    time_start = Main.grid_length[0]/2.-center_bunch,
+    velocity_x = beta
+)
+
+LoadBalancing(
+    initial_balance = False,
+        every = 20,
+    cell_load = 1.,
+    frozen_particle_load = 0.1
 )
 
 
@@ -70,7 +89,7 @@ Species(
     mass = 1.0,
     charge = -1.0,
     charge_density = nbunch_uniform_cylindrical,
-    mean_velocity = [beta, 0.0, 0.0], 
+    mean_velocity = [beta, 0.0, 0.0],
     pusher = "boris",
     time_frozen = 0.0,
     boundary_conditions = [
@@ -81,7 +100,13 @@ Species(
 )
 
 
-list_fields = ['Ex','Ey','Ez','Rho','Jx','Jy','Jz','Bx','By','Bz']
+Checkpoints(
+    dump_step = 0,
+    dump_minutes = 0.0,
+    exit_after_dump = False,
+)
+
+list_fields = ['Ex','Ey','Ez','Rho','Jx']
 
 DiagFields(
     every = 1,
@@ -89,7 +114,7 @@ DiagFields(
 )
 
 DiagProbe(
-        every = 1,
+        every = 10,
         origin = [0., Main.grid_length[1]/2., Main.grid_length[2]/2.],
         corners = [
             [Main.grid_length[0], Main.grid_length[1]/2., Main.grid_length[2]/2.]
@@ -97,4 +122,27 @@ DiagProbe(
         number = [nx],
         fields = ['Ex','Ey','Rho','Jx']
 )
+
+DiagProbe(
+        every = 10,
+        origin = [0., Main.grid_length[1]/4., Main.grid_length[2]/2.],
+        corners = [
+            [Main.grid_length[0], Main.grid_length[1]/4., Main.grid_length[2]/2.],
+            [0., 3*Main.grid_length[1]/4., Main.grid_length[2]/2.],
+        ],
+        number = [nx, ntrans],
+        fields = ['Ex','Ey','Rho','Jx']
+)
+
+#DiagScalar(every = 10, vars=['Uelm','Ukin_electron','ExMax','ExMaxCell','EyMax','EyMaxCell', 'RhoMin', 'RhoMinCell'])
+
+#DiagParticleBinning(
+#       deposited_quantity = "weight_charge",
+#       every = 50,
+#       species = ["electron"],
+#       axes = [
+#               ["moving_x", 0, Main.grid_length[0], nx],
+#               ["px", -1, 2., 100]
+#       ]
+#)
                                                                                                                                                                  

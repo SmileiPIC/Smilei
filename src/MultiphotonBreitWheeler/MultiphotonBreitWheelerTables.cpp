@@ -207,7 +207,7 @@ double MultiphotonBreitWheelerTables::compute_Erber_T(double chiph,int nbit,
     double K;
 
     //userFunctions::modified_bessel_IK(1./3.,4./(3.*chiph),I,dI,K,dK,nbit,eps);
-    K = userFunctions::modified_bessel_K(1./3.,4./(3.*chiph),nbit,eps);
+    K = userFunctions::modified_bessel_K(1./3.,4./(3.*chiph),nbit,eps, false);
 
     return 0.16*K*K/chiph;
 }
@@ -386,7 +386,7 @@ double MultiphotonBreitWheelerTables::compute_Ritus_dTdchi(double chiph,
     //userFunctions::modified_bessel_IK(2./3.,2.*y,I,dI,K,dK,500,1e-16);
     //p1 = (2. - 3.*chiph*y)*K;
 
-    p1 = (2. - 3.*chiph*y)*userFunctions::modified_bessel_K(2./3.,2*y,500,1e-16);
+    p1 = (2. - 3.*chiph*y)*userFunctions::modified_bessel_K(2./3.,2*y,500,1e-16,false);
 
     // gauss Legendre coefficients
     userFunctions::gauss_legendre_coef(log10(2*y),log10(2*y)+50.,
@@ -398,7 +398,7 @@ double MultiphotonBreitWheelerTables::compute_Ritus_dTdchi(double chiph,
     for(i=0 ; i< nbit ; i++)
     {
         u = pow(10.,gauleg_x[i]);
-        p2 += gauleg_w[i]*userFunctions::modified_bessel_K(1./3.,u,500,1e-16)*u*log(10.);
+        p2 += gauleg_w[i]*userFunctions::modified_bessel_K(1./3.,u,500,1e-16,false)*u*log(10.);
         //userFunctions::modified_bessel_IK(1./3.,u,I,dI,K,dK,500,1e-16);
         //p2 += gauleg_w[i]*K*u*log(10.);
     }

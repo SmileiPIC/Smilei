@@ -39,6 +39,37 @@ void Tools::printMemFootPrint(std::string tag) {
 
 }
 
+double Tools::getMemFootPrint() {
+
+    int val[4];
+
+    char filename[80];
+    char sbuf[1024];
+    char* S;
+    //long lmem;
+    pid_t numpro;
+
+    numpro = getpid();
+
+    sprintf(filename, "/proc/%ld/status", (long)numpro);
+    
+    if( ! file_exists(filename) ) return 0;
+    
+    int fd = open(filename, O_RDONLY, 0);
+    int num_read=read(fd,sbuf,(sizeof sbuf)-1);
+    close(fd);
+
+    if (!num_read) return 0;
+
+    // Peak resident set size
+    S=strstr(sbuf,"VmRSS:")+8;
+    val[1] = (int)atoi(S);
+
+    // Return RSS in Gb
+    return (double)val[1]/1024./1024.;
+
+}
+
 
 std::string Tools::printBytes(uint64_t nbytes) {
     std::ostringstream t("");

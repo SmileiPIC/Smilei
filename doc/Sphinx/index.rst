@@ -85,6 +85,7 @@ interaction to astrophysics.
    radiation_loss
    multiphoton_Breit_Wheeler
    laser_envelope
+   relativistic_fields_initialization
 
    installation
    namelist
