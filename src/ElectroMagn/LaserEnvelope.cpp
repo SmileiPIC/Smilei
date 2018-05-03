@@ -235,9 +235,21 @@ LaserEnvelope3D::~LaserEnvelope3D()
 
 void LaserEnvelope3D::compute(ElectroMagn* EMfields)
 {
-    //// solves envelope equation in lab frame:
-    //full_laplacian(A)+2ik0*(dA/dz+(1/c)*dA/dt)-d^2A/dt^2*(1/c^2)=kp^2 n/n0 A/gamma_ponderomotive
-    // where kp^2 n/n0 a/gamma_ponderomotive is gathered in charge deposition
+    //// solves envelope equation in lab frame (see doc):
+    // full_laplacian(A)+2ik0*(dA/dz+(1/c)*dA/dt)-d^2A/dt^2*(1/c^2)=Chi*A
+    // where Chi is the plasma susceptibility [= sum(q^2*rho/mass/gamma_ponderomotive) for all species]
+    // gamma_ponderomotive=sqrt(1+p^2+|A|^2/2) in normalized units
+
+    // For an envelope moving from right to left, replace the imaginary unit i with its opposite (-i)
+    // if using an envelope moving to the left, change the sign of the phase in the envelope initialization
+
+    // the following explicit finite difference scheme is obtained through centered finite difference derivatives
+    // e.g. (dA/dx) @ time n and indices ijk = (A^n    _{i+1,j,k} - A^n    _{i-1,j,k}) /2/dx
+    //      (dA/dt) @ time n and indices ijk = (A^{n+1}_{i  ,j,k} - A^{n-1}_{i  ,j,k}) /2/dt
+    // A0 is A^{n-1}
+    //      (d^2A/dx^2) @ time n and indices ijk = (A^{n}_{i+1,j,k}-2*A^{n}_{i,j,k}+A^{n}_{i-1,j,k})/dx^2  
+
+
     
     //// auxiliary quantities
     //! laser wavenumber, i.e. omega0/c
@@ -261,7 +273,6 @@ void LaserEnvelope3D::compute(ElectroMagn* EMfields)
     Field3D* Env_Ar3D      = static_cast<Field3D*>(EMfields->Env_Ar_); // field for temporary diagnostic
     Field3D* Env_Ai3D      = static_cast<Field3D*>(EMfields->Env_Ai_); // field for temporary diagnostic
     
-    // Field3D* Env_Ai3D = static_cast<Field3D*>(EMfields->Env_Ai_); // field for temporary diagnostic
 
     //! 1/(2dx), where dx is the spatial step dx for 3D3V cartesian simulations
     double one_ov_2dx      = 1./2./cell_length[0];
