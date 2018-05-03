@@ -1289,7 +1289,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                            //     MESSAGE("j+cell_index[1] "<< j+cell_index[1]);
                            //     initWeight(nPart, iPart, density(i,j,k)*abs(j+cell_index[1])*cell_length[1]);
                            // }
-                           initWeight(nPart, iPart, density(i,j,k)*xyz[1][j]);
+                           initWeight(nPart, iPart, density(i,j,k)*(*xyz[1])(i,j,k));
                         }else{
                             initWeight(nPart, iPart, density(i,j,k));
 				
