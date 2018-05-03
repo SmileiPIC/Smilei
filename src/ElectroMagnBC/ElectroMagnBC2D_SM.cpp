@@ -90,11 +90,11 @@ ElectroMagnBC2D_SM::ElectroMagnBC2D_SM( Params &params, Patch* patch, unsigned i
     kx = omega*pyKx/Knorm;
     ky = omega*pyKy/Knorm;
 
-    factor = 1.0 / ( kx + dt_ov_dy );
+    factor = 1.0 / ( ky + dt_ov_dy );
     Alpha_SM_S    = 2.0                     * factor;
-    Beta_SM_S     = - ( kx - dt_ov_dy) * factor;
-    Delta_SM_S    = - ( ky + dt_ov_dx) * factor;
-    Epsilon_SM_S  = - ( ky - dt_ov_dx) * factor;
+    Beta_SM_S     = - ( ky - dt_ov_dy) * factor;
+    Delta_SM_S    = - ( kx + dt_ov_dx) * factor;
+    Epsilon_SM_S  = - ( kx - dt_ov_dx) * factor;
     
     // Ymax boundary
     pyKx = params.EM_BCs_k[3][0];
@@ -103,11 +103,11 @@ ElectroMagnBC2D_SM::ElectroMagnBC2D_SM( Params &params, Patch* patch, unsigned i
     kx = omega*pyKx/Knorm;
     ky = omega*pyKy/Knorm;
 
-    factor = 1.0 / ( kx - dt_ov_dy);
+    factor = 1.0 / ( ky - dt_ov_dy);
     Alpha_SM_N    = 2.0                     * factor;
-    Beta_SM_N     = - ( kx + dt_ov_dy) * factor;
-    Delta_SM_N    = - ( ky + dt_ov_dx) * factor;
-    Epsilon_SM_N  = - ( ky - dt_ov_dx) * factor;
+    Beta_SM_N     = - ( ky + dt_ov_dy) * factor;
+    Delta_SM_N    = - ( kx + dt_ov_dx) * factor;
+    Epsilon_SM_N  = - ( kx - dt_ov_dx) * factor;
 
 
     if (params.is_pxr)

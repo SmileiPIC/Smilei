@@ -110,14 +110,15 @@ void PusherBorisV::operator() (Particles &particles, SmileiMPI* smpi, int istart
 
     }
 
-    #pragma omp simd
-    for (int ipart=istart ; ipart<iend; ipart++ )  {
-    
-        for ( int i = 0 ; i<nDim_ ; i++ ){ 
-            cell_keys[ipart] *= nspace[i];
-            cell_keys[ipart] += round( (position[i][ipart]-min_loc_vec[i]+0.00000000000001) * dx_inv_[i] );
-        }
-        
-    }
+    // This is temporarily moved to SpeciesV.cpp
+    //#pragma omp simd
+    //for (int ipart=istart ; ipart<iend; ipart++ )  {
+    //
+    //    for ( int i = 0 ; i<nDim_ ; i++ ){ 
+    //        cell_keys[ipart] *= nspace[i];
+    //        cell_keys[ipart] += round( (position[i][ipart]-min_loc_vec[i]+0.00000000000001) * dx_inv_[i] );
+    //    }
+    //    
+    //}
 
 }

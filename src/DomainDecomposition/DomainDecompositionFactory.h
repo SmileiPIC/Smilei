@@ -24,10 +24,18 @@ public:
         else if(params.patch_decomposition=="cartesian") {
             if ( ( params.geometry == "1Dcartesian" ) )
                 domain_decomposition = new CartesianDomainDecomposition1D( params );
-            else if ( ( params.geometry == "2Dcartesian" ) ) 
-                domain_decomposition = new CartesianDomainDecomposition2D( params );
-            else if ( ( params.geometry == "3Dcartesian" ) ) 
-                domain_decomposition = new CartesianDomainDecomposition3D( params );
+            else if ( ( params.geometry == "2Dcartesian" ) ) {
+                if (params.patch_orientation!="YX")
+                    domain_decomposition = new CartesianDomainDecomposition2D( params );
+                else 
+                    domain_decomposition = new CartesianDomainDecomposition2D_YX( params );
+            }
+            else if ( ( params.geometry == "3Dcartesian" ) ) {
+                if (params.patch_orientation!="ZYX")
+                    domain_decomposition = new CartesianDomainDecomposition3D( params );
+                else
+                    domain_decomposition = new CartesianDomainDecomposition3D_ZYX( params );
+            }
             else
                 ERROR( "Unknown geometry" );
         }

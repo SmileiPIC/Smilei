@@ -1,2 +1,2 @@
-CXXFLAGS += -xMIC-AVX512 -qopt-report=5
+CXXFLAGS += -xMIC-AVX512 -ip -ipo -inline-factor=1000
 

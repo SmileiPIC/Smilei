@@ -66,8 +66,8 @@ Field3D::~Field3D()
 {
     if (data_!=NULL) {
         delete [] data_;
-        for (unsigned int i=0; i<dims_[0]; i++) delete [] data_3D[i];
-        delete [] data_3D;
+        for (unsigned int i=0; i<dims_[0]; i++) delete [] this->data_3D[i];
+        delete [] this->data_3D;
     }
 }
 
@@ -90,7 +90,7 @@ void Field3D::allocateDims() {
         for (unsigned int j=0; j<dims_[1]; j++)
         {
             data_3D[i][j] = data_ + i*dims_[1]*dims_[2] + j*dims_[2];
-            for (unsigned int k=0; k<dims_[2]; k++) data_3D[i][j][k] = 0.0;
+            for (unsigned int k=0; k<dims_[2]; k++) this->data_3D[i][j][k] = 0.0;
         }
     }//i
     
@@ -147,8 +147,8 @@ void Field3D::allocateDims(unsigned int mainDim, bool isPrimal ) {
         data_3D[i]= new double*[dims_[1]];
         for (unsigned int j=0; j<dims_[1]; j++)
         {
-            data_3D[i][j] = data_ + i*dims_[1]*dims_[2] + j*dims_[2];
-            for (unsigned int k=0; k<dims_[2]; k++) data_3D[i][j][k] = 0.0;
+            this->data_3D[i][j] = data_ + i*dims_[1]*dims_[2] + j*dims_[2];
+            for (unsigned int k=0; k<dims_[2]; k++) this->data_3D[i][j][k] = 0.0;
         }
     }//i
     
