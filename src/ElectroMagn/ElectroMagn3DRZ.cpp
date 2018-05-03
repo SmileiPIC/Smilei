@@ -836,3 +836,10 @@ void ElectroMagn3DRZ::initAntennas(Patch* patch)
 
 }
 
+//! Fold EM fields modes correctly around axis
+void ElectroMagn3DRZ::fold_fields(bool diag_flag)
+{
+    MESSAGE("folding fields");
+    return;
+}
+

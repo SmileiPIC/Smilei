@@ -645,6 +645,11 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 	     }
         }// ibin
 
+        if (params.geometry == "3drz") {
+            ElectroMagn3DRZ* emRZ = static_cast<ElectroMagn3DRZ*>( EMfields );
+            emRZ->fold_fields(diag_flag);
+        }
+
         for (unsigned int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
             nrj_bc_lost += nrj_lost_per_thd[tid];
 
@@ -1290,6 +1295,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                            //     initWeight(nPart, iPart, density(i,j,k)*abs(j+cell_index[1])*cell_length[1]);
                            // }
                            initWeight(nPart, iPart, density(i,j,k)*(*xyz[1])(i,j,k));
+                           if (j==0 && i==0) MESSAGE("xyz in first cell = " << (*xyz[1])(i,j,k) )
                         }else{
                             initWeight(nPart, iPart, density(i,j,k));
 				
