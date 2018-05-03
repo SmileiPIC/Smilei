@@ -1223,8 +1223,6 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
         }//k end the loop on all cells
     }
     
-    // Delete map xyz.
-    for (unsigned int idim=0 ; idim<nDim_field ; idim++) delete xyz[idim];
 
     // defines npart_effective for the Species & create the corresponding particles
     // -----------------------------------------------------------------------
@@ -1285,12 +1283,13 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                            //    initWeight(nPart, iPart, density(i,j,k));
                            // } 
 			   // else
-                             if (j+cell_index[1]==0){
-                                initWeight(nPart, iPart, density(i,j,k)*cell_length[1]/8.);
-                            }else {
-                                MESSAGE("j+cell_index[1] "<< j+cell_index[1]);
-                                initWeight(nPart, iPart, density(i,j,k)*abs(j+cell_index[1])*cell_length[1]);
-                            }
+                           //  if (j+cell_index[1]==0){
+                           //     initWeight(nPart, iPart, density(i,j,k)*cell_length[1]/8.);
+                           // }else {
+                           //     MESSAGE("j+cell_index[1] "<< j+cell_index[1]);
+                           //     initWeight(nPart, iPart, density(i,j,k)*abs(j+cell_index[1])*cell_length[1]);
+                           // }
+                           initWeight(nPart, iPart, density(i,j,k)*xyz[1][j]);
                         }else{
                             initWeight(nPart, iPart, density(i,j,k));
 				
@@ -1361,6 +1360,9 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
             indices[ibin]++;
         }
     }
+
+    // Delete map xyz.
+    for (unsigned int idim=0 ; idim<nDim_field ; idim++) delete xyz[idim];
 
     delete [] indexes;
     delete [] temp;
