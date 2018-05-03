@@ -645,10 +645,6 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 	     }
         }// ibin
 
-        if (params.geometry == "3drz") {
-            ElectroMagn3DRZ* emRZ = static_cast<ElectroMagn3DRZ*>( EMfields );
-            emRZ->fold_fields(diag_flag);
-        }
 
         for (unsigned int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
             nrj_bc_lost += nrj_lost_per_thd[tid];
