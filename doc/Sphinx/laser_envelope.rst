@@ -38,7 +38,7 @@ where :math:`k_0=2\pi/\lambda_0`. As the laser is the source term of the phenome
 
   A=\bar{A} + \hat{A}
 
-In the envelope model context, "slowly varying" means that the variations of :math:`\bar{A}` and :math:`\tilde{A}` are small enough to be treated perturbatively with respect to the ratio :math:`\lambda_0/\lambda_p`, as described in detail in [Cowan2011]_. Equivalently, the slowly varying quantity :math:`\bar{A}` can be seen as the average of :math:`A` over the time scale of a laser oscillation period [Cowan2011]_.
+In the envelope model context, "slowly varying" means that the variations of :math:`\bar{A}` and :math:`\tilde{A}` are small enough to be treated perturbatively with respect to the ratio :math:`\lambda_0/\lambda_p`, as described in detail in [Cowan2011]_. 
 
 
 ----
