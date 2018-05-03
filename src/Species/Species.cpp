@@ -1281,10 +1281,15 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                         }
                         initMomentum(nPart,iPart, temp, vel);
                         if (params.geometry=="3drz"){
-			    if (j+cell_index[1]==0){
-                            initWeight(nPart, iPart, density(i,j,k)*(j+cell_index[1])*cell_length[1]/8.);
+                            //if (j+cell_index[1]<0){
+                           //    initWeight(nPart, iPart, density(i,j,k));
+                           // } 
+			   // else
+                             if (j+cell_index[1]==0){
+                                initWeight(nPart, iPart, density(i,j,k)*cell_length[1]/8.);
                             }else {
-                            initWeight(nPart, iPart, density(i,j,k)*(j+cell_index[1]+0.5)*cell_length[1]);
+                                MESSAGE("j+cell_index[1] "<< j+cell_index[1]);
+                                initWeight(nPart, iPart, density(i,j,k)*abs(j+cell_index[1])*cell_length[1]);
                             }
                         }else{
                             initWeight(nPart, iPart, density(i,j,k));
