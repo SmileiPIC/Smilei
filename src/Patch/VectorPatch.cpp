@@ -185,10 +185,6 @@ void VectorPatch::dynamics(Params& params,
                 } // end if condition on envelope dynamics
             } // end if condition on species
         } // end loop on species
-       // if (params.geometry == "3drz") {
-       //     ElectroMagn3DRZ* emRZ = static_cast<ElectroMagn3DRZ*>( (*this)(ipatch)->EMfields );
-       //     emRZ->fold_fields(diag_flag);
-       // }
         MESSAGE("species dynamics");
     } // end loop on patches
 
@@ -300,6 +296,13 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
             }
         }
     } 
+    if (params.geometry == "3drz") {
+        #pragma omp for schedule(static)
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+            ElectroMagn3DRZ* emRZ = static_cast<ElectroMagn3DRZ*>( (*this)(ipatch)->EMfields );
+            emRZ->fold_fields(diag_flag);
+        }
+    }
     timers.syncDens.update( params.printNow( itime ) );
 } // End sumDensities
 
