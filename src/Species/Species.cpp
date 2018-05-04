@@ -1104,6 +1104,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
             }
         }
     }
+    //MESSAGE("cell position " << cell_position[1]);
     // ---------------------------------------------------------
     // Calculate density and number of particles for the species
     // ---------------------------------------------------------
@@ -1291,7 +1292,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                            //     initWeight(nPart, iPart, density(i,j,k)*abs(j+cell_index[1])*cell_length[1]);
                            // }
                            initWeight(nPart, iPart, density(i,j,k)*(*xyz[1])(i,j,k));
-                           if (j==0 && i==0) MESSAGE("xyz in first cell = " << (*xyz[1])(i,j,k) )
+                           //MESSAGE("xyz in first cell = " << density(i,j,k)*(*xyz[1])(i,j,k) )
                         }else{
                             initWeight(nPart, iPart, density(i,j,k));
 				
