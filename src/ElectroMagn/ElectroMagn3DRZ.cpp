@@ -856,17 +856,16 @@ void ElectroMagn3DRZ::fold_fields(bool diag_flag)
              JtRZ    = static_cast<cField2D*>(Jt_[imode]);
         
              for (unsigned int i=0; i<nl_d; i++){
-                 (*JlRZ)(i,3)+= (*JlRZ)(i,1) ;
-                 (*JlRZ)(i,4)+= (*JlRZ)(i,0);
+                 for (unsigned int j=0; i<oversize[1]; j++)
+                     (*JlRZ)(i,2*oversize[1]-1)+= (*JlRZ)(i,j) ;
              }
              for (unsigned int i=0; i<nl_p; i++){
-                 (*JtRZ)(i,3)+= (*JtRZ)(i,1);
-                 (*JtRZ)(i,4)+= (*JtRZ)(i,0);
+                 for (unsigned int j=0; i<oversize[1]; j++)
+                     (*JtRZ)(i,2*oversize[1]-1)+= (*JtRZ)(i,j) ;
              }
              for (unsigned int i=0; i<nl_p; i++){
-                 (*JrRZ)(i,3)+= (*JrRZ)(i,2);
-                 (*JrRZ)(i,4)+= (*JrRZ)(i,1);
-                 (*JrRZ)(i,5)+= (*JrRZ)(i,0);
+                 for (unsigned int j=0; i<oversize[1]+1; j++)
+                     (*JrRZ)(i,2*oversize[1]-1)+= (*JrRZ)(i,j) ;
              }
          }
      
@@ -875,8 +874,8 @@ void ElectroMagn3DRZ::fold_fields(bool diag_flag)
              for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
                  cField2D* rhoRZ   = static_cast<cField2D*>(rho_RZ_[imode]);
                  for (unsigned int i=0; i<nl_p; i++){
-                     (*rhoRZ)(i,3)+= (*rhoRZ)(i,1);
-                     (*rhoRZ)(i,4)+= (*rhoRZ)(i,0);
+                     for (unsigned int j=0; i<oversize[1]; j++)
+                         (*rhoRZ)(i,2*oversize[1]-1)+= (*rhoRZ)(i,j) ;
                  } 
              }
 
@@ -886,17 +885,16 @@ void ElectroMagn3DRZ::fold_fields(bool diag_flag)
                  JrRZ    = static_cast<cField2D*>(Jr_s[ism]);
                  JtRZ    = static_cast<cField2D*>(Jt_s[ism]);
                  for (unsigned int i=0; i<nl_d; i++){
-                     (*JlRZ)(i,3)+= (*JlRZ)(i,1) ;
-                     (*JlRZ)(i,4)+= (*JlRZ)(i,0);
+                     for (unsigned int j=0; i<oversize[1]; j++)
+                         (*JlRZ)(i,2*oversize[1]-1)+= (*JlRZ)(i,j) ;
                  }
                  for (unsigned int i=0; i<nl_p; i++){
-                     (*JtRZ)(i,3)+= (*JtRZ)(i,1);
-                     (*JtRZ)(i,4)+= (*JtRZ)(i,0);
+                     for (unsigned int j=0; i<oversize[1]; j++)
+                         (*JtRZ)(i,2*oversize[1]-1)+= (*JtRZ)(i,j) ;
                  }
                  for (unsigned int i=0; i<nl_p; i++){
-                     (*JrRZ)(i,3)+= (*JrRZ)(i,2);
-                     (*JrRZ)(i,4)+= (*JrRZ)(i,1);
-                     (*JrRZ)(i,5)+= (*JrRZ)(i,0);
+                     for (unsigned int j=0; i<oversize[1]+1; j++)
+                         (*JrRZ)(i,2*oversize[1]-1)+= (*JrRZ)(i,j) ;
                  }
 
              }
