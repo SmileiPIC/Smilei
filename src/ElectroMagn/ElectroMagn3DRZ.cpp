@@ -838,15 +838,23 @@ void ElectroMagn3DRZ::initAntennas(Patch* patch)
 
 //! Fold EM fields modes correctly around axis
 void ElectroMagn3DRZ::fold_fields(bool diag_flag)
-{    if (isYmin){
+{  
+
+    // Are static casts really necesary here ?
+
+    if (isYmin){
+
+         cField2D* JlRZ ;
+         cField2D* JrRZ ;
+         cField2D* JtRZ ;
+
          for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
 
              //static cast of the total currents and densities
-             cField2D* JlRZ    = static_cast<cField2D*>(Jl_[imode]);
-             cField2D* JrRZ    = static_cast<cField2D*>(Jr_[imode]);
-             cField2D* JtRZ    = static_cast<cField2D*>(Jt_[imode]);
-             cField2D* rhoRZ   = static_cast<cField2D*>(rho_RZ_[imode]);
-         
+             JlRZ    = static_cast<cField2D*>(Jl_[imode]);
+             JrRZ    = static_cast<cField2D*>(Jr_[imode]);
+             JtRZ    = static_cast<cField2D*>(Jt_[imode]);
+        
              for (unsigned int i=0; i<nl_d; i++){
                  (*JlRZ)(i,3)+= (*JlRZ)(i,1) ;
                  (*JlRZ)(i,4)+= (*JlRZ)(i,0);
@@ -860,12 +868,41 @@ void ElectroMagn3DRZ::fold_fields(bool diag_flag)
                  (*JrRZ)(i,4)+= (*JrRZ)(i,1);
                  (*JrRZ)(i,5)+= (*JrRZ)(i,0);
              }
-             for (unsigned int i=0; i<nl_p; i++){
-                 (*rhoRZ)(i,3)+= (*rhoRZ)(i,1);
-                 (*rhoRZ)(i,4)+= (*rhoRZ)(i,0);
-             } 
          }
-      } 
+     
+         if(diag_flag){
+             //Loop on modes for rho
+             for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
+                 cField2D* rhoRZ   = static_cast<cField2D*>(rho_RZ_[imode]);
+                 for (unsigned int i=0; i<nl_p; i++){
+                     (*rhoRZ)(i,3)+= (*rhoRZ)(i,1);
+                     (*rhoRZ)(i,4)+= (*rhoRZ)(i,0);
+                 } 
+             }
+
+             //Loop on all modes and species for J_s
+             for (unsigned int ism=0; ism <  Jl_s.size(); ism++){
+                 JlRZ    = static_cast<cField2D*>(Jl_s[ism]);
+                 JrRZ    = static_cast<cField2D*>(Jr_s[ism]);
+                 JtRZ    = static_cast<cField2D*>(Jt_s[ism]);
+                 for (unsigned int i=0; i<nl_d; i++){
+                     (*JlRZ)(i,3)+= (*JlRZ)(i,1) ;
+                     (*JlRZ)(i,4)+= (*JlRZ)(i,0);
+                 }
+                 for (unsigned int i=0; i<nl_p; i++){
+                     (*JtRZ)(i,3)+= (*JtRZ)(i,1);
+                     (*JtRZ)(i,4)+= (*JtRZ)(i,0);
+                 }
+                 for (unsigned int i=0; i<nl_p; i++){
+                     (*JrRZ)(i,3)+= (*JrRZ)(i,2);
+                     (*JrRZ)(i,4)+= (*JrRZ)(i,1);
+                     (*JrRZ)(i,5)+= (*JrRZ)(i,0);
+                 }
+
+             }
+         }
+
+    } 
     MESSAGE("folding fields");
     return;
 }
