@@ -185,10 +185,10 @@ void VectorPatch::dynamics(Params& params,
                 } // end if condition on envelope dynamics
             } // end if condition on species
         } // end loop on species
-        if (params.geometry == "3drz") {
-            ElectroMagn3DRZ* emRZ = static_cast<ElectroMagn3DRZ*>( (*this)(ipatch)->EMfields );
-            emRZ->fold_fields(diag_flag);
-        }
+       // if (params.geometry == "3drz") {
+       //     ElectroMagn3DRZ* emRZ = static_cast<ElectroMagn3DRZ*>( (*this)(ipatch)->EMfields );
+       //     emRZ->fold_fields(diag_flag);
+       // }
         MESSAGE("species dynamics");
     } // end loop on patches
 

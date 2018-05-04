@@ -640,11 +640,11 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
             linindex = iloc*b_dim[1]+jloc;
-            if (jloc+ j_domain_begin > 0){
+            if (jloc+ j_domain_begin != 0){
                 rho [linindex] += 0.5*charge_weight* Sx1[i]*Sy1[j]/abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
                 if (abs(rho [linindex])*100>0.){MESSAGE("rho0 "<<rho [linindex]*100 );}
                 }
-            else if (jloc+ j_domain_begin == 0){
+            else {
                 rho [linindex] += 0.5*charge_weight*8.* Sx1[i]*Sy1[j] /dr; // iloc = (i+ipo)*b_dim[1];
                 //rho [linindex+1] += rho [linindex-1];
                 //rho [linindex+2] += rho [linindex-2];
