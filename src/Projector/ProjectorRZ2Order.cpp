@@ -43,7 +43,7 @@ ProjectorRZ2Order::~ProjectorRZ2Order()
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! Project local currents (sort) for mode=0
+//! Project local currents for mode=0
 // ---------------------------------------------------------------------------------------------------------------------
 void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
 {   //MESSAGE("start projection m=0");
@@ -234,9 +234,12 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
                 //MESSAGE("Jr "<< Jr [linindex]);    
              }
             //if (jloc+j_domain_begin == 0){
-                Jr [linindex+1] += Jr [linindex];
+             //   Jr [linindex+1] += Jr [linindex];
              //   Jr [linindex+2] += Jr [linindex-1];
              //   Jr [linindex+3] += Jr [linindex-2];
+            //    Jr [linindex+1] += Jr [linindex];
+            //    Jr [linindex+2] += Jr [linindex-1];
+            //    Jr [linindex+3] += Jr [linindex-2];
             //}
         }//i
 
@@ -251,6 +254,8 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
                     Jt [linindex] += Jz_p[i][j]*8. /dr; // iloc = (i+ipo)*b_dim[1];
                //     Jt [linindex+1] += Jt [linindex-1];
                //     Jt [linindex+2] += Jt [linindex-2];
+                    //Jt [linindex+1] += Jt [linindex-1];
+                    //Jt [linindex+2] += Jt [linindex-2];
                 }
                 else {
                     Jt [linindex] += Jz_p[i][j] /abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
@@ -264,7 +269,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
 } // END Project local current densities (Jl, Jr, Jt, sort)
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! Project local currents (sort) for m>0
+//! Project local currents for m>0
 // ---------------------------------------------------------------------------------------------------------------------
 void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, Particles &particles, unsigned int ipart,double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold, complex<double>* exp_m_theta_old, int imode)
 { //  MESSAGE("start projection m>0");
@@ -427,6 +432,9 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             //Jr [linindex+1] += Jr [linindex];
             //Jr [linindex+2] += Jr [linindex-1];
             //Jr [linindex+3] += Jr [linindex-2];
+        //    Jr [linindex+1] += Jr [linindex];
+        //    Jr [linindex+2] += Jr [linindex-1];
+        //    Jr [linindex+3] += Jr [linindex-2];
         //}
     }//i
     
@@ -439,10 +447,14 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             Jt [linindex] += Jz_p[i][j]; // iloc = (i+ipo)*b_dim[1];
             //MESSAGE("Jtm "<< Jt [linindex]);    
         }
-        if (jloc+j_domain_begin == 0){
+        //if (jloc+j_domain_begin == 0){
             //Jt [linindex+1] += Jt [linindex-1];
             //Jt [linindex+2] += Jt [linindex-2];
-        }
+        //}
+        //if (jloc+j_domain_begin == 0){
+        //    Jt [linindex+1] += Jt [linindex-1];
+        //    Jt [linindex+2] += Jt [linindex-2];
+        //}
     }//i
 
 //MESSAGE("projection for m>0 done");    
@@ -451,7 +463,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! Project local currents (sort) for mode=0
+//! Project local currents with diag for mode=0 
 // ---------------------------------------------------------------------------------------------------------------------
 
 void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, complex<double>* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
@@ -597,6 +609,9 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             //Jr [linindex+1] += Jr [linindex];
             //Jr [linindex+2] += Jr [linindex-1];
             //Jr [linindex+3] += Jr [linindex-2];
+        //    Jr [linindex+1] += Jr [linindex];
+        //    Jr [linindex+2] += Jr [linindex-1];
+        //    Jr [linindex+3] += Jr [linindex-2];
         //}
     }//i
     
@@ -610,6 +625,8 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
                 Jt [linindex] += Jz_p[i][j]*8. /dr; // iloc = (i+ipo)*b_dim[1];
               //  Jt [linindex+1] += Jt [linindex-1];
               //  Jt [linindex+2] += Jt [linindex-2];
+                //Jt [linindex+1] += Jt [linindex-1];
+                //Jt [linindex+2] += Jt [linindex-2];
                 }
             else {
                 Jt [linindex] += Jz_p[i][j] /abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
@@ -639,7 +656,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
 } // END Project local densities (Jl, Jr, Jt, rho, sort)
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! Project local currents (sort) diagfields:timesteps for m>0
+//! Project local currents with diag for m>0
 // ---------------------------------------------------------------------------------------------------------------------
 void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, complex<double>* rho, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold,complex<double>* exp_m_theta_old,  int imode)
 {//   MESSAGE("start projection with diag for m>0");
@@ -810,6 +827,10 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
        //     Jt [linindex+1] += Jt [linindex-1];
        //     Jt [linindex+2] += Jt [linindex-2];
        // }
+        //if (jloc+j_domain_begin == 0){
+        //    Jt [linindex+1] += Jt [linindex-1];
+        //    Jt [linindex+2] += Jt [linindex-2];
+        //}
             }
     }//i
     complex<double> C_m = 1./pow(e_theta,imode); 
@@ -839,7 +860,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! Project local densities only (Frozen species)
+//! Project local densities only (Frozen species) NOT DONE YET
 // ---------------------------------------------------------------------------------------------------------------------
 void ProjectorRZ2Order::operator() (double* rho, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim)
 { //  MESSAGE("frozen species projection");
@@ -907,7 +928,7 @@ void ProjectorRZ2Order::operator() (double* rho, Particles &particles, unsigned 
 } // END Project local current densities (Frozen species)
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! Project global current densities : ionization
+//! Project global current densities : ionization NOT DONE YET
 // ---------------------------------------------------------------------------------------------------------------------
 void ProjectorRZ2Order::operator() (Field* Jl, Field* Jr, Field* Jt, Particles &particles, int ipart, LocalFields Jion)
 {  // MESSAGE("pROJE");
