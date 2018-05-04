@@ -32,7 +32,7 @@ IonizationTunnel::IonizationTunnel(Params& params, Species * species) : Ionizati
 
 
 
-void IonizationTunnel::operator() (Particles* particles, unsigned int ipart_min, unsigned int ipart_max, vector<double> *Epart, ElectroMagn* EMfields, Projector* Proj) {
+void IonizationTunnel::operator() (Particles* particles, unsigned int ipart_min, unsigned int ipart_max, vector<double> *Epart, ElectroMagn* EMfields, Projector* Proj, int ipart_ref) {
     
     unsigned int Z, Zp1, newZ, k_times;
     double TotalIonizPot, E, invE, factorJion, delta, ran_p, Mult, D_sum, P_sum, Pint_tunnel;
@@ -40,7 +40,7 @@ void IonizationTunnel::operator() (Particles* particles, unsigned int ipart_min,
     LocalFields Jion;
     double factorJion_0 = au_to_mec2 * EC_to_au*EC_to_au * invdt;
     
-    int nparts = particles->size();
+    int nparts = Epart->size()/3;
     double* Ex = &( (*Epart)[0*nparts] );
     double* Ey = &( (*Epart)[1*nparts] );
     double* Ez = &( (*Epart)[2*nparts] );
@@ -54,9 +54,9 @@ void IonizationTunnel::operator() (Particles* particles, unsigned int ipart_min,
         if (Z==atomic_number_) continue;
         
         // Absolute value of the electric field normalized in atomic units
-        E = EC_to_au * sqrt( pow(*(Ex+ipart),2)
-                            +pow(*(Ey+ipart),2) 
-                            +pow(*(Ez+ipart),2) );
+        E = EC_to_au * sqrt( pow(*(Ex+ipart-ipart_ref),2)
+                            +pow(*(Ey+ipart-ipart_ref),2) 
+                            +pow(*(Ez+ipart-ipart_ref),2) );
         if (E<1e-10) continue;
         
         // --------------------------------

@@ -49,7 +49,7 @@ public:
             // assign the correct Pusher to Push
             if ( species->pusher == "boris")
             {
-                if (!params.vecto)
+                if (!species->vectorized_operators)
                     Push = new PusherBoris( params, species );
 #ifdef _VECTO
                 else
@@ -58,7 +58,7 @@ public:
             }
             else if ( species->pusher == "ponderomotive_boris" )
             {
-                if (!params.vecto)
+                if (!species->vectorized_operators)
                     Push = new PusherPonderomotiveBoris( params, species );
 #ifdef _VECTO
                 else
@@ -118,7 +118,7 @@ public:
             // assign the correct Pusher to Push_ponderomotive_position
             if ( species->pusher == "ponderomotive_boris" )
             {
-                if (!params.vecto)
+                if (!species->vectorized_operators)
                     Push_ponderomotive_position = new PusherPonderomotivePositionBoris( params, species );
 #ifdef _VECTO
                 else

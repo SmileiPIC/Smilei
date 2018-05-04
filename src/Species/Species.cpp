@@ -26,6 +26,7 @@
 #include "Profile.h"
 
 #include "Projector.h"
+#include "ProjectorFactory.h"
 
 #include "SimWindow.h"
 #include "Patch.h"
@@ -97,6 +98,10 @@ min_loc(patch->getDomainLocalMin(0))
     nDim_field = params.nDim_field;
     inv_nDim_field = 1./((double)nDim_field);
 
+    length[0]=0;
+    length[1]=params.n_space[1]+1;
+    length[2]=params.n_space[2]+1;
+
 }//END Species creator
 
 void Species::initCluster(Params& params)
@@ -141,17 +146,61 @@ void Species::initCluster(Params& params)
 
 }//END initCluster
 
+// -----------------------------------------------------------------------------
+//! This function enables to resize the number of bins
+// -----------------------------------------------------------------------------
+void Species::resizeCluster(Params& params)
+{
+
+    // We keep the current number of particles
+    int npart = (*particles).size();
+    int size = params.n_space[0]/clrw;
+
+    // Arrays of the min and max indices of the particle bins
+    bmin.resize(size);
+    bmax.resize(size);
+
+    // We redistribute the particles between the bins
+    int quotient = npart / size; // Fixed part for all bin
+    int remainder = npart - quotient*size; // To be distributed among the first bin
+
+    for (int ibin=0 ; ibin < size ; ibin++)
+    {
+        if (ibin < remainder)
+        {
+            bmin[ibin] = ibin*quotient + ibin;
+            bmax[ibin] = bmin[ibin] + quotient + 1;
+        }
+        else
+        {
+            bmin[ibin] = ibin*quotient + remainder;
+            bmax[ibin] = bmin[ibin] + quotient;
+        }
+    }
+
+    //std::cout << "size: " << size << " " << npart << " " << bmin[0] << " " << bmax[0] << '\n';
+
+    // Recommended: A sorting process may be needed for best porfermance after this step
+
+}// end resizeCluster
 
 // Initialize the operators (Push, Ionize, PartBoundCond)
 // This must be separate from the parameters because the Species cloning copies
 // the parameters but not the operators.
 void Species::initOperators(Params& params, Patch* patch)
 {
+
+    // interpolation operator (virtual)
+    Interp = InterpolatorFactory::create(params, patch, this->vectorized_operators); // + patchId -> idx_domain_begin (now = ref smpi)
+
     // assign the correct Pusher to Push
     Push = PusherFactory::create(params, this);
     if (this->ponderomotive_dynamics){
         Push_ponderomotive_position = PusherFactory::create_ponderomotive_position_updater(params, this);
     }
+
+    // projection operator (virtual)
+    Proj = ProjectorFactory::create(params, patch, this->vectorized_operators);    // + patchId -> idx_domain_begin (now = ref smpi)
 
     // Assign the Ionization model (if needed) to Ionize
     //  Needs to be placed after createParticles() because requires the knowledge of max_charge
@@ -197,6 +246,7 @@ void Species::initOperators(Params& params, Patch* patch)
 Species::~Species()
 {
     delete Push;
+    delete Interp;
     if (Ionize) delete Ionize;
     if (Radiate) delete Radiate;
     if (Multiphoton_Breit_Wheeler_process) delete Multiphoton_Breit_Wheeler_process;
@@ -319,33 +369,33 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
     // -------------------------------------------------------------------------
     if (mass > 0)
     {
-        
+
         // Cold distribution
         if (momentum_initialization == "cold") {
-            
+
             for (unsigned int p=iPart; p<iPart+nPart; p++) {
                 particles->momentum(0,p) = 0.0;
                 particles->momentum(1,p) = 0.0;
                 particles->momentum(2,p) = 0.0;
             }
-            
+
         // Maxwell-Juttner distribution
         } else if (momentum_initialization == "maxwell-juettner") {
-            
+
             // Sample the energies in the MJ distribution
             vector<double> energies = maxwellJuttner(nPart, temp[0]/mass);
-            
+
             // Sample angles randomly and calculate the momentum
             for (unsigned int p=iPart; p<iPart+nPart; p++) {
                 double phi   = acos(-Rand::uniform2());
                 double theta = 2.0*M_PI*Rand::uniform();
                 double psm = sqrt(pow(1.0+energies[p-iPart],2)-1.0);
-                
+
                 particles->momentum(0,p) = psm*cos(theta)*sin(phi);
                 particles->momentum(1,p) = psm*sin(theta)*sin(phi);
                 particles->momentum(2,p) = psm*cos(phi);
             }
-            
+
             // Trick to have non-isotropic distribution (not good)
             double t1 = sqrt(temp[1]/temp[0]), t2 = sqrt(temp[2]/temp[0]);
             if( t1!=1. || t2 !=1. ) {
@@ -354,10 +404,10 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
                     particles->momentum(2,p) *= t2;
                 }
             }
-            
+
         // Rectangular distribution
         } else if (momentum_initialization == "rectangular") {
-            
+
             double t0 = sqrt(temp[0]/mass), t1 = sqrt(temp[1]/mass), t2 = sqrt(temp[2]/mass);
             for (unsigned int p= iPart; p<iPart+nPart; p++) {
                 particles->momentum(0,p) = Rand::uniform2() * t0;
@@ -365,7 +415,7 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
                 particles->momentum(2,p) = Rand::uniform2() * t2;
             }
         }
-        
+
         // Adding the mean velocity (using relativistic composition)
         // Also relies on the method proposed in Zenitani, Phys. Plasmas 22, 042116 (2015)
         // to ensure the correct properties of a boosted distribution function
@@ -377,10 +427,10 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
         vz  = -vel[2];
         v2  = vx*vx + vy*vy + vz*vz;
         if ( v2>0. ){
-            
+
             g   = 1.0/sqrt(1.0-v2);
             gm1 = g - 1.0;
-            
+
             // compute the different component of the Matrix block of the Lorentz transformation
             Lxx = 1.0 + gm1 * vx*vx/v2;
             Lyy = 1.0 + gm1 * vy*vy/v2;
@@ -388,26 +438,26 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
             Lxy = gm1 * vx*vy/v2;
             Lxz = gm1 * vx*vz/v2;
             Lyz = gm1 * vy*vz/v2;
-            
+
             // Volume transformation method (here is the correction by Zenitani)
             double Volume_Acc;
             double CheckVelocity;
-            
+
             // Lorentz transformation of the momentum
             for (unsigned int p=iPart; p<iPart+nPart; p++)
             {
                 gp = sqrt(1.0 + pow(particles->momentum(0,p), 2)
                               + pow(particles->momentum(1,p), 2)
                               + pow(particles->momentum(2,p), 2) );
-                
+
                 CheckVelocity = ( vx*particles->momentum(0,p) + vy*particles->momentum(1,p) + vz*particles->momentum(2,p) ) / gp;
                 Volume_Acc = Rand::uniform();
                 if (CheckVelocity > Volume_Acc){
-                    
+
                     double Phi , Theta , vfl ,vflx , vfly, vflz, vpx , vpy , vpz ;
                     Phi = atan2(sqrt(vx*vx +vy*vy), vz);
                     Theta = atan2(vy, vx);
-                    
+
                     vpx = particles->momentum(0,p)/gp ;
                     vpy = particles->momentum(1,p)/gp ;
                     vpz = particles->momentum(2,p)/gp ;
@@ -422,20 +472,20 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
                     particles->momentum(0,p) = vpx*gp ;
                     particles->momentum(1,p) = vpy*gp ;
                     particles->momentum(2,p) = vpz*gp ;
-                    
+
                 }//here ends the corrections by Zenitani
-                
+
                 px = -gp*g*vx + Lxx * particles->momentum(0,p) + Lxy * particles->momentum(1,p) + Lxz * particles->momentum(2,p);
                 py = -gp*g*vy + Lxy * particles->momentum(0,p) + Lyy * particles->momentum(1,p) + Lyz * particles->momentum(2,p);
                 pz = -gp*g*vz + Lxz * particles->momentum(0,p) + Lyz * particles->momentum(1,p) + Lzz * particles->momentum(2,p);
-                
+
                 particles->momentum(0,p) = px;
                 particles->momentum(1,p) = py;
                 particles->momentum(2,p) = pz;
             }
-        
+
         }//ENDif vel != 0
-    
+
     }
     // -------------------------------------------------------------------------
     // Photons
@@ -481,8 +531,8 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
 //   - increment the currents (projection)
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::dynamics(double time_dual, unsigned int ispec,
-                       ElectroMagn* EMfields, Interpolator* Interp,
-                       Projector* Proj, Params &params, bool diag_flag,
+                       ElectroMagn* EMfields,
+                       Params &params, bool diag_flag,
                        PartWalls* partWalls,
                        Patch* patch, SmileiMPI* smpi,
                        RadiationTables & RadiationTables,
@@ -685,7 +735,28 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 
 }//END dynamic
 
+// ---------------------------------------------------------------------------------------------------------------------
+// For all particles of the species
+//   - interpolate the fields at the particle position
+//   - perform ionization
+//   - perform the radiation reaction
+//   - perform the multiphoton Breit-Wheeler
+//   - calculate the new velocity
+//   - calculate the new position
+//   - apply the boundary conditions
+//   - increment the currents (projection)
+// ---------------------------------------------------------------------------------------------------------------------
+void Species::scalar_dynamics(double time_dual, unsigned int ispec,
+                       ElectroMagn* EMfields,
+                       Params &params, bool diag_flag,
+                       PartWalls* partWalls,
+                       Patch* patch, SmileiMPI* smpi,
+                       RadiationTables & RadiationTables,
+                       MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
+                       vector<Diagnostic*>& localDiags)
+{
 
+}
 
 // -----------------------------------------------------------------------------
 //! For all particles of the species, import the new particles generated
@@ -741,7 +812,7 @@ void Species::dynamics_import_particles(double time_dual, unsigned int ispec,
 //   - increment the charge (projection)
 //   - used at initialisation for Poisson (and diags if required, not for now dynamics )
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::computeCharge(unsigned int ispec, ElectroMagn* EMfields, Projector* Proj)
+void Species::computeCharge(unsigned int ispec, ElectroMagn* EMfields)
 {
     // -------------------------------
     // calculate the particle charge
@@ -780,7 +851,6 @@ void Species::sort_part(Params& params)
     /********************************************************************************/
     int ii, iPart;
 
-
     // Push lost particles at the end of bins
     for (unsigned int ibin = 0 ; ibin < bmax.size() ; ibin++ ) {
         ii = indexes_of_particles_to_exchange.size()-1;
@@ -801,7 +871,8 @@ void Species::sort_part(Params& params)
                 ii--;
                 iPart = indexes_of_particles_to_exchange[ii];
             }
-            if (iPart >= bmin[ibin] && iPart < bmax[ibin]) { //On traite la dernière particule (qui peut aussi etre la premiere)
+            //On traite la dernière particule (qui peut aussi etre la premiere)
+            if (iPart >= bmin[ibin] && iPart < bmax[ibin]) {
                 particles->overwrite_part(bmax[ibin]-1, iPart );
                 bmax[ibin]--;
             }
@@ -964,6 +1035,14 @@ void Species::sort_part(Params& params)
     }
 }
 
+void Species::configuration(Params& param, Patch * patch)
+{
+}
+
+void Species::reconfiguration(Params& param, Patch * patch)
+{
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Sort particles
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1107,7 +1186,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
         // Evaluate profiles
         for (unsigned int m=0; m<3; m++) {
             if ( temperatureProfile[m]){
-                temperatureProfile[m]->valuesAt(xyz, temperature[m]); 
+                temperatureProfile[m]->valuesAt(xyz, temperature[m]);
             } else {
                  temperature[m].put_to(0.0000000001); // default value
             }
@@ -1189,7 +1268,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
             }//j
         }//k end the loop on all cells
     }
-    
+
     // Delete map xyz.
     for (unsigned int idim=0 ; idim<nDim_field ; idim++) delete xyz[idim];
 
@@ -1263,7 +1342,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
         double one_ov_dbin = 1. / (cell_length[0] * clrw) ;
 
         for (int i=0; i < nbins ; i++) indices[i] = 0 ;
-        
+
         ///Compute proper indices for particle susing a count sort
         for (unsigned int ipart = 0; ipart < npart_effective ; ipart++){
                 unsigned int ip = my_particles_indices[ipart];
@@ -1287,8 +1366,8 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
             double x = position[0][ippy]-min_loc ;
             unsigned int ibin = int(x * one_ov_dbin) ;
             int ip = indices[ibin] ; //Indice of the position of the particle in the particles array.
-            
-            
+
+
             for(unsigned int idim=0; idim<nDim_particle; idim++)
                 particles->position(idim,ip) = position[idim][ippy] ;
             //If momentum is not initialized by a numpy array
@@ -1717,6 +1796,30 @@ void Species::ponderomotive_update_position_and_currents(double time_dual, unsig
   
          }//END if time vs. time_frozen  
 } // End ponderomotive_position_update
+
+void Species::check(Patch * patch, std::string title)
+{
+    double sum_x = 0;
+    double sum_y = 0;
+    double sum_px = 0;
+    double sum_py = 0;
+    for (unsigned int ip=0; ip < (*particles).size() ; ip++){
+        sum_x += (*particles).position(0,ip);
+        sum_y += (*particles).position(1,ip);
+        sum_px += (*particles).momentum(0,ip);
+        sum_py += (*particles).momentum(1,ip);
+    }
+    std::cerr << "Check sum at " << title
+              << " for "<< this->name
+              << " in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ") "
+              << " nb bin: " << bmin.size() << " - "
+              << " - nbp: " << (*particles).size() << " - "
+              << sum_x << " - "
+              << sum_y << " - "
+              << sum_px << " - "
+              << sum_py << " - "
+              << '\n';
+};
 
 // Array used in the Maxwell-Juttner sampling
 const double Species::lnInvF[1000] = {

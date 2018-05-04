@@ -22,7 +22,7 @@ PusherPonderomotiveBoris::~PusherPonderomotiveBoris()
     Lorentz Force + Ponderomotive force -- leap-frog (Boris-style) scheme, momentum advance
 **************************************************************************/
 
-void PusherPonderomotiveBoris::operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread)
+void PusherPonderomotiveBoris::operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ipart_ref)
 {
     std::vector<double> *Epart       = &(smpi->dynamics_Epart[ithread]);
     std::vector<double> *Bpart       = &(smpi->dynamics_Bpart[ithread]);

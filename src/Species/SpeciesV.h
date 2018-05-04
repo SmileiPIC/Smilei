@@ -36,8 +36,7 @@ class SpeciesV : public Species
     //! Method calculating the Particle dynamics (interpolation, pusher, projection)
     void dynamics(double time, unsigned int ispec,
                           ElectroMagn* EMfields,
-                          Interpolator* interp,
-                          Projector* proj, Params &params, bool diag_flag,
+                          Params &params, bool diag_flag,
                           PartWalls* partWalls, Patch* patch, SmileiMPI* smpi,
                           RadiationTables &RadiationTables,
                           MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
@@ -59,14 +58,19 @@ class SpeciesV : public Species
                                std::vector<Diagnostic*>& localDiags) override;
 
     //! Method calculating the Particle charge on the grid (projection)
-    void computeCharge(unsigned int ispec, ElectroMagn* EMfields, Projector* Proj) override;
+    void computeCharge(unsigned int ispec, ElectroMagn* EMfields) override;
 
     //! Method used to sort particles
     void sort_part(Params& params) override;
     //void count_sort_part(Params& param);
+
+    //! Compute cell_keys for all particles of the current species
     void compute_part_cell_keys(Params &params);
-    
-    //! 
+
+    //! Compute cell_keys for the specified bin boundaries.
+    void compute_bin_cell_keys(Params &params, int istart, int iend);
+
+    //!
     void add_space_for_a_particle() override {
         particles->cell_keys.push_back(-1);
     }
@@ -79,4 +83,3 @@ private:
 };
 
 #endif
-

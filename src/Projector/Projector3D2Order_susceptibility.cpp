@@ -685,7 +685,7 @@ void Projector3D2Order_susceptibility::operator() (Field* Jx, Field* Jy, Field* 
 } // END Project global current densities (ionize)
 
 //Wrapper for projection
-void Projector3D2Order_susceptibility::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec)
+void Projector3D2Order_susceptibility::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec, int ipart_ref)
 {
     // std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
     // std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);

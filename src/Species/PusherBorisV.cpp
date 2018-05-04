@@ -22,7 +22,7 @@ PusherBorisV::~PusherBorisV()
     Lorentz Force -- leap-frog (Boris) scheme
 ***********************************************************************/
 
-void PusherBorisV::operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread)
+void PusherBorisV::operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ipart_ref)
 {
     std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
     std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);
@@ -48,7 +48,7 @@ void PusherBorisV::operator() (Particles &particles, SmileiMPI* smpi, int istart
 #endif
     short* charge = &( particles.charge(0) );
 
-    int nparts = particles.size();
+    int nparts = Epart->size()/3;
     double* Ex = &( (*Epart)[0*nparts] );
     double* Ey = &( (*Epart)[1*nparts] );
     double* Ez = &( (*Epart)[2*nparts] );
@@ -61,19 +61,19 @@ void PusherBorisV::operator() (Particles &particles, SmileiMPI* smpi, int istart
 
     double dcharge[nparts];
     #pragma omp simd
-    for (int ipart=0 ; ipart<nparts; ipart++ ) 
+    for (int ipart=istart ; ipart<iend; ipart++ )
         dcharge[ipart] = (double)(charge[ipart]);
 
     #pragma omp simd
-    for (int ipart=0 ; ipart<nparts; ipart++ ) {
+    for (int ipart=istart ; ipart<iend; ipart++ ) {
         double psm[3], um[3];
 
         charge_over_mass_dts2 = dcharge[ipart]*one_over_mass_*dts2;
 
         // init Half-acceleration in the electric field
-        psm[0] = charge_over_mass_dts2*(*(Ex+ipart));
-        psm[1] = charge_over_mass_dts2*(*(Ey+ipart));
-        psm[2] = charge_over_mass_dts2*(*(Ez+ipart));
+        psm[0] = charge_over_mass_dts2*(*(Ex+ipart-ipart_ref));
+        psm[1] = charge_over_mass_dts2*(*(Ey+ipart-ipart_ref));
+        psm[2] = charge_over_mass_dts2*(*(Ez+ipart-ipart_ref));
 
         //(*this)(particles, ipart, (*Epart)[ipart], (*Bpart)[ipart] , (*invgf)[ipart]);
         um[0] = momentum[0][ipart] + psm[0];
@@ -82,9 +82,9 @@ void PusherBorisV::operator() (Particles &particles, SmileiMPI* smpi, int istart
 
         // Rotation in the magnetic field
         local_invgf = charge_over_mass_dts2 / sqrt( 1.0 + um[0]*um[0] + um[1]*um[1] + um[2]*um[2] );
-        Tx    = local_invgf * (*(Bx+ipart));
-        Ty    = local_invgf * (*(By+ipart));
-        Tz    = local_invgf * (*(Bz+ipart));
+        Tx    = local_invgf * (*(Bx+ipart-ipart_ref));
+        Ty    = local_invgf * (*(By+ipart-ipart_ref));
+        Tz    = local_invgf * (*(Bz+ipart-ipart_ref));
         inv_det_T = 1.0/(1.0+Tx*Tx+Ty*Ty+Tz*Tz);
 
         psm[0] += (  (1.0+Tx*Tx-Ty*Ty-Tz*Tz)* um[0]  +      2.0*(Tx*Ty+Tz)* um[1]  +      2.0*(Tz*Tx-Ty)* um[2]  )*inv_det_T;
@@ -93,7 +93,7 @@ void PusherBorisV::operator() (Particles &particles, SmileiMPI* smpi, int istart
 
         // finalize Half-acceleration in the electric field
         local_invgf = 1. / sqrt( 1.0 + psm[0]*psm[0] + psm[1]*psm[1] + psm[2]*psm[2] );
-        invgf[ipart] = local_invgf;
+        invgf[ipart-ipart_ref] = local_invgf;
 
         momentum[0][ipart] = psm[0];
         momentum[1][ipart] = psm[1];
@@ -110,14 +110,15 @@ void PusherBorisV::operator() (Particles &particles, SmileiMPI* smpi, int istart
 
     }
 
-    #pragma omp simd
-    for (int ipart=0 ; ipart<nparts; ipart++ ) {
-    
-        for ( int i = 0 ; i<nDim_ ; i++ ){ 
-            cell_keys[ipart] *= nspace[i];
-            cell_keys[ipart] += round( (position[i][ipart]-min_loc_vec[i]) * dx_inv_[i] );
-        }
-        
-    }
+    // This is temporarily moved to SpeciesV.cpp
+    //#pragma omp simd
+    //for (int ipart=istart ; ipart<iend; ipart++ )  {
+    //
+    //    for ( int i = 0 ; i<nDim_ ; i++ ){ 
+    //        cell_keys[ipart] *= nspace[i];
+    //        cell_keys[ipart] += round( (position[i][ipart]-min_loc_vec[i]+0.00000000000001) * dx_inv_[i] );
+    //    }
+    //    
+    //}
 
 }

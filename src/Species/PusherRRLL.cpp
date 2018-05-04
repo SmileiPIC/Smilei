@@ -81,7 +81,7 @@ void PusherRRLL::operator() (Particles &particles, int ipart, LocalFields Epart,
     //DEBUG(5, "\t END "<< particles.position(0, ipart) );
 
 }
-void PusherRRLL::operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread)
+void PusherRRLL::operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ipart_ref)
 {
     std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
     std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);

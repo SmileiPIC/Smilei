@@ -317,8 +317,8 @@ namelist("")
     if( EM_BCs_k.size() == 0 ) {
         //Gives default value
         for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
-            std::vector<double> temp_k; 
-            
+            std::vector<double> temp_k;
+
             for( unsigned int iiDim=0; iiDim<iDim; iiDim++ ) temp_k.push_back(0.);
             temp_k.push_back(1.);
             for( unsigned int iiDim=iDim+1; iiDim<nDim_field; iiDim++ ) temp_k.push_back(0.);
@@ -339,7 +339,7 @@ namelist("")
             ERROR("EM_boundary_conditions_k must have exactly " << nDim_field << " elements along dimension "<<"-+"[iDim%2]<<"012"[iDim/2] );
         if ( EM_BCs_k[iDim][iDim/2] == 0. )
             ERROR("EM_boundary_conditions_k must have a non zero normal component along dimension "<<"-+"[iDim%2]<<"012"[iDim/2] );
-        
+
     }
     save_magnectic_fields_for_SM = true;
     PyTools::extract("save_magnectic_fields_for_SM", save_magnectic_fields_for_SM, "Main");
@@ -499,11 +499,13 @@ namelist("")
     }
 
     // Activation of the vectorized subroutines
-    vecto = false;
+    vecto = "disable";
     PyTools::extract("vecto", vecto, "Main");
-    if (vecto)
-        MESSAGE( "Apply vectorization" );
-    
+    if (!(vecto == "disable" || vecto == "normal" || vecto == "dynamic" || vecto == "dynamic2"))
+    {
+        ERROR("The parameter `vecto` must be `disable`, `normal`, `dynamic`, `dynamic2`");
+    }
+
     // Read the "print_every" parameter
     print_every = (int)(simulation_time/timestep)/10;
     PyTools::extract("print_every", print_every, "Main");
@@ -631,7 +633,7 @@ void Params::compute()
     patch_dimensions.resize(3, 0.);
     cell_volume=1.0;
     n_cell_per_patch = 1;
-    
+
     // compute number of cells & normalized lengths
     for (unsigned int i=0; i<nDim_field; i++) {
         n_space[i] = round(grid_length[i]/cell_length[i]);
@@ -645,7 +647,7 @@ void Params::compute()
     for (unsigned int i=nDim_field; i<3; i++) {
         cell_length[i]=0.0;
     }
-    
+
     for (unsigned int i=0; i<nDim_field; i++){
         oversize[i]  = max(interpolation_order,(unsigned int)(norder[i]/2+1)) + (exchange_particles_each-1);;
         n_space_global[i] = n_space[i];
@@ -655,7 +657,7 @@ void Params::compute()
         patch_dimensions[i] = n_space[i] * cell_length[i];
         n_cell_per_patch *= n_space[i];
     }
-    
+
     // Set clrw if not set by the user
     if ( clrw == -1 ) {
 
@@ -681,6 +683,18 @@ void Params::compute()
             else
                 clrw = 1;
             WARNING( "Particles cluster width set to : " << clrw );
+        }
+
+    }
+
+    // clrw != n_space[0] is not compatible
+    // with the dynamic vecto for the moment
+    if (vecto == "dynamic" && vecto == "dynamic2")
+    {
+        if (clrw != (int)(n_space[0]))
+        {
+            clrw = (int)(n_space[0]);
+            WARNING( "Particles cluster width set to : " << clrw << " for the dynamic vectorization mode");
         }
     }
 
@@ -759,6 +773,24 @@ void Params::print_init()
         MESSAGE(1,"Cell load coefficient = " << cell_load );
         MESSAGE(1,"Frozen particle load coefficient = " << frozen_particle_load );
     }
+
+    if (vecto == "normal")
+    {
+        MESSAGE(1,"Apply the constant vectorization mode" );
+    }
+    else if (vecto == "dynamic")
+    {
+        MESSAGE(1,"Apply the dynamic vectorization mode" );
+    }
+    else if (vecto == "dynamic2")
+    {
+        MESSAGE(1,"Apply the dynamic2 vectorization mode" );
+    }
+    else if (vecto == "disable")
+    {
+        MESSAGE(1,"Vectorization disable" );
+    }
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

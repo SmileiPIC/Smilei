@@ -16,7 +16,7 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, VectorPatch& 
     IDs_done( params.restart ),
     nDim_particle(params.nDim_particle)
 {
-    
+
     // Extract the species
     string species_name;
     if( !PyTools::extract("species",species_name,"DiagTrackParticles",iDiagTrackParticles) )
@@ -28,25 +28,25 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, VectorPatch& 
     if( species_ids.size() < 1 )
         ERROR("DiagTrackParticles #" << iDiagTrackParticles << " does not correspond to any existing species");
     speciesId_ = species_ids[0];
-    
+
     // Define the transfer type (collective is faster than independent)
     transfer = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio( transfer, H5FD_MPIO_COLLECTIVE);
-    
+
     ostringstream name("");
     name << "Tracking species '" << species_name << "'";
-    
+
     // Get parameter "every" which describes an iteration selection
     timeSelection = new TimeSelection( PyTools::extract_py("every", "DiagTrackParticles", iDiagTrackParticles), name.str() );
-    
+
     // Get parameter "flush_every" which decides the file flushing time selection
     flush_timeSelection = new TimeSelection( PyTools::extract_py("flush_every", "DiagTrackParticles", iDiagTrackParticles), name.str() );
-    
+
     // Inform each patch about this diag
     for( unsigned int ipatch=0; ipatch<vecPatches.size(); ipatch++ ) {
         vecPatches(ipatch)->vecSpecies[speciesId_]->tracking_diagnostic = idiag;
     }
-    
+
     // Get parameter "filter" which gives a python function to select particles
     filter = PyTools::extract_py("filter", "DiagTrackParticles", iDiagTrackParticles);
     has_filter = (filter != Py_None);
@@ -61,7 +61,7 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, VectorPatch& 
         ERROR(name.str() << " with a filter requires the numpy package");
 #endif
     }
-    
+
     // Get the parameter "attributes": a list of attribute name that must be written
     vector<string> attributes(0);
     if( !PyTools::extract("attributes",attributes,"DiagTrackParticles",iDiagTrackParticles) )
@@ -105,18 +105,18 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI* smpi, VectorPatch& 
     write_any_B = write_B[0] || write_B[1] || write_B[2];
     if( write_chi && ! vecPatches(0)->vecSpecies[speciesId_]->particles->isQuantumParameter )
         ERROR("DiagTrackParticles #" << iDiagTrackParticles << ": attribute `chi` not available for this species");
-    
+
     // Create the filename
     ostringstream hdf_filename("");
     hdf_filename << "TrackParticlesDisordered_" << species_name  << ".h5" ;
     filename = hdf_filename.str();
-    
+
     // Print some info
     if ( smpi->isMaster() ) {
         MESSAGE(1, "Created TrackParticles #" << iDiagTrackParticles << ": species " << species_name);
         MESSAGE(2, attr_list.str());
     }
-    
+
     // Obtain the approximate number of particles in the species
     if( params.print_expected_disk_usage ) {
         PeekAtSpecies peek(params, speciesId_);
@@ -144,13 +144,13 @@ void DiagnosticTrack::openFile( Params& params, SmileiMPI* smpi, bool newfile )
         H5Pset_fapl_mpio(pid, MPI_COMM_WORLD, MPI_INFO_NULL);
         fileId_ = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid);
         H5Pclose(pid);
-        
+
         // Attributes for openPMD
         openPMD->writeRootAttributes( fileId_, "no_meshes", "particles/" );
-        
+
         // Create "data" group for openPMD compatibility
         data_group_id = H5::group(fileId_, "data");
-        
+
     }
     else {
         // Open the file
@@ -202,7 +202,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
 {
     uint64_t nParticles_global = 0;
     string xyz = "xyz";
-    
+
     hid_t momentum_group=0, position_group=0, iteration_group=0, particles_group=0, species_group=0;
     hid_t plist=0, file_space=0, mem_space=0;
     #pragma omp master
@@ -210,13 +210,13 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
         // Obtain the particle partition of all the patches in this MPI
         nParticles_local = 0;
         patch_start.resize( vecPatches.size() );
-        
+
         if( has_filter ) {
-        
+
 #ifdef SMILEI_USE_NUMPY
             // Set a python variable "Main.iteration" to itime so that it can be accessed in the filter
             PyTools::setIteration( itime );
-            
+
             patch_selection.resize( vecPatches.size() );
             PyArrayObject *ret;
             ParticleData particleData(0);
@@ -249,43 +249,43 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
                 nParticles_local += patch_selection[ipatch].size();
             }
 #endif
-        
+
         } else {
             for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
                 patch_start[ipatch] = nParticles_local;
                 nParticles_local += vecPatches(ipatch)->vecSpecies[speciesId_]->getNbrOfParticles();
             }
         }
-        
+
         // Specify the memory dataspace (the size of the local buffer)
         hsize_t count_ = nParticles_local;
         mem_space = H5Screate_simple(1, &count_, NULL);
-        
+
         // Get the number of offset for this MPI rank
         uint64_t np_local = nParticles_local, offset;
         MPI_Scan( &np_local, &offset, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, MPI_COMM_WORLD );
         nParticles_global = offset;
         offset -= np_local;
         MPI_Bcast( &nParticles_global, 1, MPI_UNSIGNED_LONG_LONG, smpi->getSize()-1, MPI_COMM_WORLD );
-        
+
         // Make a new group for this iteration
         ostringstream t("");
         t << setfill('0') << setw(10) << itime;
         iteration_group = H5::group( data_group_id, t.str().c_str() );
         particles_group = H5::group( iteration_group, "particles" );
         species_group = H5::group( particles_group, vecPatches(0)->vecSpecies[speciesId_]->name.c_str() );
-        
+
         // Add openPMD attributes ( "basePath" )
         openPMD->writeBasePathAttributes( iteration_group, itime );
         // Add openPMD attributes ( "particles" )
         openPMD->writeParticlesAttributes( particles_group );
         // Add openPMD attributes ( path of a given species )
         openPMD->writeSpeciesAttributes( species_group );
-        
+
         // Set the dataset parameters
         plist = H5Pcreate(H5P_DATASET_CREATE);
         H5Pset_alloc_time(plist, H5D_ALLOC_TIME_EARLY); // necessary for collective dump
-        
+
         if( nParticles_global>0 ){
             // Set the chunk size
             unsigned int maximum_chunk_size = 100000000;
@@ -300,11 +300,11 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
                 H5Pset_chunk(plist, 1, &chunk_dims);
             }
         }
-        
+
         // Define maximum size
         hsize_t dims = nParticles_global;
         file_space = H5Screate_simple(1, &dims, NULL);
-        
+
         // Select locations that this proc will write
         if(nParticles_local>0) {
             hsize_t start=offset, count=1, block=nParticles_local;
@@ -312,7 +312,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
         } else {
             H5Sselect_none(file_space);
         }
-        
+
         // Create the "latest_IDs" dataset
         // Create file space and select one element for each proc
         hsize_t numel = smpi->getSize();
@@ -336,7 +336,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
         H5Sclose( filespace );
         H5Sclose( memspace );
     }
-    
+
     // Id
     #pragma omp master
     data_uint64.resize( nParticles_local, 1 );
@@ -347,7 +347,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
         write_scalar( species_group, "id", data_uint64[0], H5T_NATIVE_UINT64, file_space, mem_space, plist, SMILEI_UNIT_NONE, nParticles_global );
         data_uint64.resize(0);
     }
-    
+
     // Charge
     if( write_charge ) {
         #pragma omp master
@@ -360,10 +360,10 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
             data_short.resize(0);
         }
     }
-    
+
     #pragma omp master
     data_double.resize( nParticles_local, 0 );
-    
+
     // Weight
     if( write_weight ) {
         #pragma omp barrier
@@ -371,7 +371,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
         #pragma omp master
         write_scalar( species_group, "weight", data_double[0], H5T_NATIVE_DOUBLE, file_space, mem_space, plist, SMILEI_UNIT_DENSITY, nParticles_global );
     }
-    
+
     // Momentum
     if( write_any_momentum ) {
         #pragma omp master
@@ -390,7 +390,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
         #pragma omp master
         H5Gclose( momentum_group );
     }
-    
+
     // Position
     if( write_any_position ) {
         #pragma omp master
@@ -409,7 +409,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
         #pragma omp master
         H5Gclose( position_group );
     }
-    
+
     // Chi - quantum parameter
     if( write_chi )
     {
@@ -424,24 +424,24 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
         #pragma omp master
         write_scalar( species_group, "chi", data_double[0], H5T_NATIVE_DOUBLE, file_space, mem_space, plist, SMILEI_UNIT_NONE, nParticles_global );
     }
-    
+
     #pragma omp barrier
-    
+
     // If field interpolation necessary
     if( interpolate ) {
-        
-        
+
+
         #pragma omp master
         data_double.resize( nParticles_local*6 );
-        
+
         // Do the interpolation
         unsigned int nPatches=vecPatches.size();
         #pragma omp barrier
-        
+
         if( has_filter ) {
             #pragma omp for schedule(static)
             for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
-                (*(vecPatches.interp(ipatch))) (
+                (*(vecPatches.species(ipatch,speciesId_)->Interp)) (
                     vecPatches.emfields(ipatch),
                     *(vecPatches.species(ipatch,speciesId_)->particles),
                     &data_double[patch_start[ipatch]],
@@ -452,7 +452,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
         } else {
             #pragma omp for schedule(static)
             for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
-                (*(vecPatches.interp(ipatch))) (
+                (*(vecPatches.species(ipatch,speciesId_)->Interp)) (
                     vecPatches.emfields(ipatch),
                     *(vecPatches.species(ipatch,speciesId_)->particles),
                     &data_double[patch_start[ipatch]],
@@ -462,7 +462,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
             }
         }
         #pragma omp barrier
-        
+
         // Write out the fields
         #pragma omp master
         {
@@ -476,7 +476,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
                 }
                 H5Gclose( Efield_group );
             }
-            
+
             if( write_any_B ) {
                 hid_t Bfield_group = H5::group(species_group, "B");
                 openPMD->writeRecordAttributes( Bfield_group, SMILEI_UNIT_BFIELD );
@@ -489,11 +489,11 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
             }
         }
     } // END if interpolate
-    
+
     #pragma omp master
     {
         data_double.resize(0);
-        
+
         // PositionOffset (for OpenPMD)
         hid_t positionoffset_group = H5::group(species_group, "positionOffset");
         openPMD->writeRecordAttributes( positionoffset_group, SMILEI_UNIT_POSITION );
@@ -506,17 +506,17 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
             H5Gclose( xyz_group );
         }
         H5Gclose( positionoffset_group );
-        
+
         // Close and flush
         patch_selection.resize(0);
-        
+
         H5Pclose(plist);
         H5Sclose(file_space);
         H5Sclose( mem_space );
         H5Gclose( species_group );
         H5Gclose( particles_group );
         H5Gclose( iteration_group );
-        
+
         if( flush_timeSelection->theTimeIsNow(itime) ) H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
     }
     #pragma omp barrier
@@ -553,7 +553,7 @@ void DiagnosticTrack::fill_buffer(VectorPatch& vecPatches, unsigned int iprop, v
 {
     unsigned int patch_nParticles, i, j, nPatches=vecPatches.size();
     vector<T>* property = NULL;
-    
+
     if( has_filter ) {
         #pragma omp for schedule(runtime)
         for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
@@ -607,21 +607,21 @@ void DiagnosticTrack::write_component( hid_t location, string name, T& buffer, h
 uint64_t DiagnosticTrack::getDiskFootPrint(int istart, int istop, Patch* patch)
 {
     uint64_t footprint = 0;
-    
+
     // Calculate the number of dumps between istart and istop
     uint64_t ndumps = timeSelection->howManyTimesBefore(istop) - timeSelection->howManyTimesBefore(istart);
-    
+
     // Calculate the number of written parameters
     int nparams = 6 + nDim_particle;
-    
+
     // Add necessary global headers approximately
     footprint += 2500;
-    
+
     // Add necessary timestep headers approximately
     footprint += ndumps * 11250;
-    
+
     // Add size of each parameter
     footprint += ndumps * (uint64_t)(nparams * npart_total * 8);
-    
+
     return footprint;
 }

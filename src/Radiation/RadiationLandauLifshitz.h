@@ -54,7 +54,7 @@ class RadiationLandauLifshitz : public Radiation {
                 RadiationTables &RadiationTables,
                 int istart,
                 int iend,
-                int ithread);
+                int ithread, int ipart_ref = 0);
 
     protected:
 

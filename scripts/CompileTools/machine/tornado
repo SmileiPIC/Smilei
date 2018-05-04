@@ -1,4 +1,4 @@
-CXXFLAGS +=  -xHost -O3
+CXXFLAGS +=  -xHost -O3 -inline-factor=1000
 
 #PLIB8_DIR = /opt/exp_soft/vo.llr.in2p3.fr/plibs8/gcc492-py363/
 #CXXFLAGS += -I${PLIB8_DIR}include/PLIBS_8/PLIB_MATH/PMathAlgebra/POperands 

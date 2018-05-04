@@ -97,8 +97,14 @@ void Interpolator1D4Order::operator() (ElectroMagn* EMfields, Particles &particl
 
 }//END Interpolator1D4Order
 
-void Interpolator1D4Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc){
+void Interpolator1D4Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc)
+{
     
+    int ipart = *istart;
+
+    double *ELoc = &(smpi->dynamics_Epart[ithread][ipart]);
+    double *BLoc = &(smpi->dynamics_Bpart[ithread][ipart]);
+
     // Interpolate E, B
     // Compute coefficient for ipart position    (*this)(EMfields, particles, ipart, ELoc, BLoc);
    // Variable declaration
@@ -134,9 +140,11 @@ void Interpolator1D4Order::operator() (ElectroMagn* EMfields, Particles &particl
     
     id_ -= index_domain_begin;
     
-    (*ELoc).x = compute(coeffd_, Ex1D,   id_);  
-    (*BLoc).y = compute(coeffd_, By1D_m, id_);  
-    (*BLoc).z = compute(coeffd_, Bz1D_m, id_);  
+    int nparts( particles.size() );
+    
+    *(ELoc+0*nparts) = compute(coeffd_, Ex1D,   id_);  
+    *(BLoc+1*nparts) = compute(coeffd_, By1D_m, id_);  
+    *(BLoc+2*nparts) = compute(coeffd_, Bz1D_m, id_);  
     
     // --------------------------------------------------------
     // Interpolate the fields from the Primal grid : Ey, Ez, Bx
@@ -156,9 +164,9 @@ void Interpolator1D4Order::operator() (ElectroMagn* EMfields, Particles &particl
     
     ip_ -= index_domain_begin;
     
-    (*ELoc).y = compute(coeffp_, Ey1D,   ip_);  
-    (*ELoc).z = compute(coeffp_, Ez1D,   ip_);  
-    (*BLoc).x = compute(coeffp_, Bx1D_m, ip_);
+    *(ELoc+1*nparts) = compute(coeffp_, Ey1D,   ip_);  
+    *(ELoc+2*nparts) = compute(coeffp_, Ez1D,   ip_);  
+    *(BLoc+0*nparts) = compute(coeffp_, Bx1D_m, ip_);
     
     // Static cast of the electromagnetic fields
     Field1D* Jx1D     = static_cast<Field1D*>(EMfields->Jx_);
@@ -179,7 +187,7 @@ void Interpolator1D4Order::operator() (ElectroMagn* EMfields, Particles &particl
     (*JLoc).x = compute(coeffd_, Jx1D,  id_);  
     
 }
-void Interpolator1D4Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread)
+void Interpolator1D4Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
 {
     std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
     std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);

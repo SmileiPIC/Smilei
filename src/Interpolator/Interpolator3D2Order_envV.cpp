@@ -32,7 +32,7 @@ void Interpolator3D2Order_envV::operator() (ElectroMagn* EMfields, Particles &pa
 {
 }
 
-void Interpolator3D2Order_envV::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread)
+void Interpolator3D2Order_envV::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
 {
     if ( istart[0] == iend[0] ) return; //Don't treat empty cells.
 
@@ -173,6 +173,6 @@ void Interpolator3D2Order_envV::operator() (ElectroMagn* EMfields, Particles &pa
 
 } // END Interpolator3D2Order_envV
 
-void Interpolator3D2Order_envV::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc)
+void Interpolator3D2Order_envV::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc)
 {
 }

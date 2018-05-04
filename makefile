@@ -29,7 +29,7 @@ SITEDIR = $(shell $(PYTHONEXE) -c 'import site; site._script()' --user-site)
 # Flags 
 
 # Smilei version
-CXXFLAGS += -D__VERSION=\"$(VERSION)\"
+CXXFLAGS += -D__VERSION=\"$(VERSION)\" -D_VECTO
 # C++ version
 CXXFLAGS += -std=c++11 -Wall 
 # HDF5 library
@@ -73,7 +73,7 @@ ifneq (,$(findstring debug,$(config)))
     CXXFLAGS += -g -pg -D__DEBUG -O0
 # With gdb
 else ifneq (,$(findstring gdb,$(config)))
-    CXXFLAGS += -v -da -Q
+    CXXFLAGS += -g -v -da -Q
 
 # With valgrind
 else ifneq (,$(findstring valgrind,$(config)))
@@ -86,7 +86,12 @@ else ifneq (,$(findstring scalasca,$(config)))
 
 # With Intel Advisor / Vtune
 else ifneq (,$(findstring advisor,$(config)))
-    CXXFLAGS += -g -O3 -debug inline-debug-info -shared-intel -parallel-source-info=2
+    CXXFLAGS += -g -O3 -shared-intel -debug inline-debug-info -qopenmp-link dynamic -parallel-source-info=2
+
+# With Intel Inspector
+else ifneq (,$(findstring inspector,$(config)))
+    CXXFLAGS += -g -O0 -I$(INSPECTOR_ROOT_DIR)/include/
+    LDFLAGS += $(INSPECTOR_ROOT_DIR)/lib64/libittnotify.a
 
 # Optimization report
 else ifneq (,$(findstring opt-report,$(config)))
@@ -104,8 +109,8 @@ ifeq (,$(findstring noopenmp,$(config)))
     OPENMP_FLAG += -D_OMP
     LDFLAGS += $(OPENMP_FLAG)
     CXXFLAGS += $(OPENMP_FLAG)
-#else 
-#    LDFLAGS += -mt_mpi # intelmpi only
+else 
+    LDFLAGS += -mt_mpi # intelmpi only
 endif
 
 
@@ -154,7 +159,7 @@ $(BUILD_DIR)/%.d: %.cpp
 
 $(BUILD_DIR)/src/Diagnostic/DiagnosticScalar.o : src/Diagnostic/DiagnosticScalar.cpp
 	@echo "SPECIAL COMPILATION FOR $<"
-	$(Q) $(SMILEICXX) $(CXXFLAGS) -O2 -c $< -o $@
+	$(Q) $(SMILEICXX) $(CXXFLAGS) -O1 -c $< -o $@
 
 # Compile cpps
 $(BUILD_DIR)/%.o : %.cpp
@@ -253,6 +258,9 @@ help:
 	@echo '    debug                : to compile in debug mode (code runs really slow)'
 	@echo '    scalasca             : to compile using scalasca'
 	@echo '    noopenmp             : to compile without openmp'
+	@echo '    advisor              : to compile for Intel Advisor analysis'
+	@echo '    vtune                : to compile for Intel Vtune analysis'
+	@echo '    inspector            : to compile for Intel Inspector analysis'
 	@echo
 	@echo 'Examples:'
 	@echo '  make config=verbose'
@@ -273,7 +281,7 @@ help:
 	@echo '  make env              : print important internal makefile variables'
 	@echo '  make print-XXX        : print internal makefile variable XXX'
 	@echo ''
-	@echo 'Environment variables :'
+	@echo 'Environment variables:'
 	@echo '  SMILEICXX             : mpi c++ compiler [$(SMILEICXX)]'
 	@echo '  HDF5_ROOT_DIR         : HDF5 dir [$(HDF5_ROOT_DIR)]'
 	@echo '  BUILD_DIR             : directory used to store build files [$(BUILD_DIR)]'
@@ -281,7 +289,10 @@ help:
 	@echo '  PYTHONEXE             : python executable [$(PYTHONEXE)]'	
 	@echo '  FFTW3_LIB             : FFTW3 libraries directory [$(FFTW3_LIB)]'
 	@echo '  LIB PXR               : Picsar library directory [$(LIBPXR)]'
-	@echo 
+	@echo
+	@echo 'Intel Inspector environment:'
+	@echo '  INSPECTOR_ROOT_DIR    : only needed to use the inspector API (__itt functions) [$(INSPECTOR_ROOT_DIR)]'
+	@echo
 	@echo 'http://www.maisondelasimulation.fr/smilei'
 	@echo 'https://github.com/SmileiPIC/Smilei'
 	@echo

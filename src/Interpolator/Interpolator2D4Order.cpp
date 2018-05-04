@@ -146,8 +146,15 @@ void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particl
 
 } // END Interpolator2D4Order
 
-void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc)
+void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc)
 {
+
+    int ipart = *istart;
+
+    double *ELoc = &(smpi->dynamics_Epart[ithread][ipart]);
+    double *BLoc = &(smpi->dynamics_Bpart[ithread][ipart]);
+
+
     // Interpolate E, B
     // Compute coefficient for ipart position
     // Static cast of the electromagnetic fields
@@ -221,36 +228,37 @@ void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particl
     jp_ = jp_ - j_domain_begin;
     jd_ = jd_ - j_domain_begin;
 
+    int nparts( particles.size() );    
 
     // -------------------------
     // Interpolation of Ex^(d,p)
     // -------------------------
-    (*ELoc).x =  compute( &coeffxd_[2], &coeffyp_[2], Ex2D, id_, jp_);
+    *(ELoc+0*nparts) =  compute( &coeffxd_[2], &coeffyp_[2], Ex2D, id_, jp_);
 
     // -------------------------
     // Interpolation of Ey^(p,d)
     // -------------------------
-    (*ELoc).y = compute( &coeffxp_[2], &coeffyd_[2], Ey2D, ip_, jd_);
+    *(ELoc+1*nparts) = compute( &coeffxp_[2], &coeffyd_[2], Ey2D, ip_, jd_);
 
     // -------------------------
     // Interpolation of Ez^(p,p)
     // -------------------------
-    (*ELoc).z = compute( &coeffxp_[2], &coeffyp_[2], Ez2D, ip_, jp_);
+    *(ELoc+2*nparts) = compute( &coeffxp_[2], &coeffyp_[2], Ez2D, ip_, jp_);
 
     // -------------------------
     // Interpolation of Bx^(p,d)
     // -------------------------
-    (*BLoc).x = compute( &coeffxp_[2], &coeffyd_[2], Bx2D, ip_, jd_);
+    *(BLoc+0*nparts) = compute( &coeffxp_[2], &coeffyd_[2], Bx2D, ip_, jd_);
 
     // -------------------------
     // Interpolation of By^(d,p)
     // -------------------------
-    (*BLoc).y = compute( &coeffxd_[2], &coeffyp_[2], By2D, id_, jp_);
+    *(BLoc+1*nparts) = compute( &coeffxd_[2], &coeffyp_[2], By2D, id_, jp_);
 
     // -------------------------
     // Interpolation of Bz^(d,d)
     // -------------------------
-    (*BLoc).z = compute( &coeffxd_[2], &coeffyd_[2], Bz2D, id_, jd_);
+    *(BLoc+2*nparts) = compute( &coeffxd_[2], &coeffyd_[2], Bz2D, id_, jd_);
 
     // Static cast of the electromagnetic fields
     Field2D* Jx2D = static_cast<Field2D*>(EMfields->Jx_);
@@ -281,7 +289,7 @@ void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particl
     (*RhoLoc) = compute( &coeffxp_[2], &coeffyp_[2], Rho2D, ip_, jp_);
 
 }
-void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread)
+void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
 {
     std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
     std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);

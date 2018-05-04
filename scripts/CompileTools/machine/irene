@@ -1,0 +1,7 @@
+#module unload mpi/wi4mpi/3.2.0 .tuning/openmpi/2.0.2 flavor/wi4mpi/standard feature/wi4mpi/from/wi4mpi feature/wi4mpi/to/openmpi/2.0.2 flavor/buildmpi/wi4mpi/3
+#source /opt/mpi/openmpi-icc-mt/2.0.2/bin/mpivars.sh
+#export HDF5_ROOT_DIR=//ccc/products/hdf5-1.8.16/intel--17.0.4.196__openmpi--2.0.2/parallel
+#export LD_LIBRARY_PATH=$HDF5_ROOT_DIR/lib:$LD_LIBRARY_PATH
+
+CXXFLAGS += -xCOMMON-AVX512 -ip -ipo -inline-factor=1000
+

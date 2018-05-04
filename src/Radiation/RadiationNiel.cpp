@@ -52,7 +52,7 @@ void RadiationNiel::operator() (
         RadiationTables &RadiationTables,
         int istart,
         int iend,
-        int ithread)
+        int ithread, int ipart_ref)
 {
 
     // _______________________________________________________________
@@ -60,7 +60,7 @@ void RadiationNiel::operator() (
     std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
     std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);
 
-    int nparts = particles.size();
+    int nparts = Epart->size()/3;
     double* Ex = &( (*Epart)[0*nparts] );
     double* Ey = &( (*Epart)[1*nparts] );
     double* Ez = &( (*Epart)[2*nparts] );
@@ -140,8 +140,8 @@ void RadiationNiel::operator() (
         chipa[ipart] = Radiation::compute_chipa(charge_over_mass2,
                      momentum[0][ipart],momentum[1][ipart],momentum[2][ipart],
                      gamma[ipart],
-                     (*(Ex+ipart)),(*(Ey+ipart)),(*(Ez+ipart)),
-                     (*(Bx+ipart)),(*(By+ipart)),(*(Bz+ipart)) );
+                     (*(Ex+ipart-ipart_ref)),(*(Ey+ipart-ipart_ref)),(*(Ez+ipart-ipart_ref)),
+                     (*(Bx+ipart-ipart_ref)),(*(By+ipart-ipart_ref)),(*(Bz+ipart-ipart_ref)) );
     }
 
     //double t1 = MPI_Wtime();

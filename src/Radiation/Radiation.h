@@ -46,7 +46,7 @@ class Radiation
                 RadiationTables &RadiationTables,
                 int istart,
                 int iend,
-                int ithread) = 0;
+                int ithread, int ipart_ref = 0) = 0;
 
         //! Computation of the Lorentz invariant quantum parameter
         //! for the given particle properties
@@ -100,7 +100,7 @@ class Radiation
                 SmileiMPI* smpi,
                 int istart,
                 int iend,
-                int ithread);
+                int ithread, int ipart_ref = 0);
 
         // Local array of new photons
         Particles new_photons;

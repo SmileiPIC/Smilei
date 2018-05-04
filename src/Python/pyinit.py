@@ -215,8 +215,8 @@ class Main(SmileiSingleton):
     print_expected_disk_usage = True
 
     # Vectorization flag
-    vecto = False
-    
+    vecto = "disable"
+
     def __init__(self, **kwargs):
         # Load all arguments to Main()
         super(Main, self).__init__(**kwargs)
@@ -257,13 +257,13 @@ class Main(SmileiSingleton):
                 # None recognized solver
                 else:
                     raise Exception("timestep: maxwell_solver not implemented "+Main.maxwell_solver)
-        
+
         # Initialize simulation_time if not defined by the user
         if Main.simulation_time is None:
             if Main.number_of_timesteps is None:
                 raise Exception("simulation_time and number_of_timesteps are not defined")
             Main.simulation_time = Main.timestep * Main.number_of_timesteps
-        
+
         # Initialize grid_length if not defined based on number_of_cells and cell_length
         if (    len(Main.grid_length + Main.number_of_cells) == 0
              or len(Main.grid_length + Main.cell_length) == 0

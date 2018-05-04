@@ -69,7 +69,7 @@ int main (int argc, char* argv[])
     TITLE("Reading the simulation parameters");
     Params params(&smpi,vector<string>(argv + 1, argv + argc));
     OpenPMDparams openPMD(params);
-    
+
     // Need to move it here because of domain decomposition need in smpi->init(_patch_count)
     //     abstraction of Hilbert curve
     VectorPatch vecPatches( params );
@@ -77,7 +77,7 @@ int main (int argc, char* argv[])
     // Initialize MPI environment with simulation parameters
     TITLE("Initializing MPI");
     smpi.init(params, vecPatches.domain_decomposition_);
-    
+
     // Create timers
     Timers timers(&smpi);
 
@@ -216,6 +216,9 @@ int main (int argc, char* argv[])
         vecPatches.applyExternalFields();
         vecPatches.saveExternalFields( params );
 
+        // Patch reconfiguration
+        vecPatches.configuration(params,timers, 0);
+
         vecPatches.dynamics(params, &smpi, simWindow, RadiationTables,
                             MultiphotonBreitWheelerTables, time_dual, timers, 0);
 
@@ -238,7 +241,7 @@ int main (int argc, char* argv[])
         vecPatches.sumDensities(params, time_dual, timers, 0, simWindow );
 
         vecPatches.finalize_and_sort_parts(params, &smpi, simWindow,
-            RadiationTables,MultiphotonBreitWheelerTables, 
+            RadiationTables,MultiphotonBreitWheelerTables,
             time_dual, timers, 0);
 
         TITLE("Initializing diagnostics");
@@ -253,7 +256,7 @@ int main (int argc, char* argv[])
     timers.reboot();
 
 
-    Domain domain( params ); 
+    Domain domain( params );
     unsigned int global_factor(1);
     #ifdef _PICSAR
     for ( unsigned int iDim = 0 ; iDim < params.nDim_field ; iDim++ )
@@ -266,16 +269,16 @@ int main (int argc, char* argv[])
     #endif
 
     timers.global.reboot();
-    
+
     // ------------------------------------------------------------------------
     // Check memory consumption & expected disk usage
     // ------------------------------------------------------------------------
     TITLE("Memory consumption");
     vecPatches.check_memory_consumption( &smpi );
-    
+
     TITLE("Expected disk usage (approximate)");
     vecPatches.check_expected_disk_usage( &smpi, params, checkpoint );
-    
+
     // ------------------------------------------------------------------------
     // check here if we can close the python interpreter
     // ------------------------------------------------------------------------
@@ -298,7 +301,7 @@ int main (int argc, char* argv[])
 
         unsigned int itime=checkpoint.this_run_start_step+1;
         while ( (itime <= params.n_time) && (!checkpoint.exit_asap) ) {
-            
+
             // calculate new times
             // -------------------
             #pragma omp single
@@ -306,6 +309,10 @@ int main (int argc, char* argv[])
                 time_prim += params.timestep;
                 time_dual += params.timestep;
             }
+
+            // Patch reconfiguration
+            vecPatches.configuration(params, timers, itime);
+
             // apply collisions if requested
             vecPatches.applyCollisions(params, itime, timers);
             
@@ -355,14 +362,14 @@ int main (int argc, char* argv[])
 
             // Sum densities
             vecPatches.sumDensities(params, time_dual, timers, itime, simWindow );
-            
+
             // apply currents from antennas
             vecPatches.applyAntennas(time_dual);
-            
+
             // solve Maxwell's equations
             #ifndef _PICSAR
             // Force temporary usage of double grids, even if global_factor = 1
-            //    especially to compare solvers           
+            //    especially to compare solvers
             //if ( global_factor==1 )
             {
                 if( time_dual > params.time_fields_frozen ) {
@@ -371,7 +378,7 @@ int main (int argc, char* argv[])
             }
             #else
             // Force temporary usage of double grids, even if global_factor = 1
-            //    especially to compare solvers           
+            //    especially to compare solvers
             //if ( global_factor!=1 )
             {
                 if( time_dual > params.time_fields_frozen ) {
@@ -385,11 +392,12 @@ int main (int argc, char* argv[])
             vecPatches.finalize_and_sort_parts(params, &smpi, simWindow, RadiationTables,
                                                MultiphotonBreitWheelerTables,
                                                time_dual, timers, itime);
+
             vecPatches.finalize_sync_and_bc_fields(params, &smpi, simWindow, time_dual, timers, itime);
 
             // call the various diagnostics
             vecPatches.runAllDiags(params, &smpi, itime, timers, simWindow);
-            
+
             timers.movWindow.restart();
             simWindow->operate(vecPatches, &smpi, params, itime, time_dual);
             timers.movWindow.update();
@@ -401,8 +409,8 @@ int main (int argc, char* argv[])
             checkpoint.dump(vecPatches, itime, &smpi, simWindow, params);
             #pragma omp barrier
             // ----------------------------------------------------------------------
-            
-            
+
+
             if( params.has_load_balancing ) {
                 if( params.load_balancing_time_selection->theTimeIsNow(itime) ) {
                     timers.loadBal.restart();
@@ -411,12 +419,12 @@ int main (int argc, char* argv[])
                     timers.loadBal.update( params.printNow( itime ) );
                 }
             }
-            
+
             // print message at given time-steps
             // --------------------------------
             if ( smpi.isMaster() &&  params.printNow( itime ) )
                 params.print_timestep(itime, time_dual, timers.global); //contain a timer.update !!!
-            
+
             if ( params.printNow( itime ) ) {
                 #pragma omp master
                 timers.consolidate( &smpi );
@@ -424,7 +432,7 @@ int main (int argc, char* argv[])
             }
 
             itime++;
-            
+
         }//END of the time loop
         
     } //End omp parallel region
@@ -452,7 +460,7 @@ int main (int argc, char* argv[])
     // ------------------------------
     //  Cleanup & End the simulation
     // ------------------------------
-    if (global_factor!=1) 
+    if (global_factor!=1)
         domain.clean();
     vecPatches.close( &smpi );
     smpi.barrier(); // Don't know why but sync needed by HDF5 Phasespace managment
@@ -473,23 +481,23 @@ int execute_test_mode( VectorPatch &vecPatches, SmileiMPI* smpi, SimWindow* simW
 {
     int itime = 0;
     int moving_window_movement = 0;
-    
+
     if (params.restart) {
         checkpoint.readPatchDistribution( smpi, simWindow );
         itime = checkpoint.this_run_start_step+1;
         moving_window_movement = simWindow->getNmoved();
     }
-    
+
     vecPatches = PatchesFactory::createVector(params, smpi, openPMD, itime, moving_window_movement );
-    
+
     if (params.restart)
         checkpoint.restartAll( vecPatches, smpi, simWindow, params, openPMD);
-    
+
     if( params.print_expected_disk_usage ) {
         TITLE("Expected disk usage (approximate)");
         vecPatches.check_expected_disk_usage( smpi, params, checkpoint );
     }
-    
+
     // If test mode enable, code stops here
     TITLE("Cleaning up python runtime environement");
     params.cleanup(smpi);
