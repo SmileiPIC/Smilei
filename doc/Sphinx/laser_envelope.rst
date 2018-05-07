@@ -135,11 +135,11 @@ The PIC loop described in :doc:`algorithms` is thus modified to self-consistentl
 
 #. interpolating the electromagnetic fields and the ponderomotive potential at the particle positions,
 #. projecting the new plasma susceptibility on the grid,
-#. computating the new particle velocities, 
-#. computating the new envelope values on the grid, 
-#. computating the new particle positions, 
+#. computing the new particle velocities, 
+#. computing the new envelope values on the grid, 
+#. computing the new particle positions, 
 #. projecting the new charge and current densities on the grid,
-#. computating the new electromagnetic fields on the grid.
+#. computing the new electromagnetic fields on the grid.
 
 Note that the momentum advance and position advance are separated by the envelope equation solution in this modified PIC loop.
 In this section, we describe these steps which advance the time from time-step :math:`(n)` to time-step :math:`(n+1)`.  
