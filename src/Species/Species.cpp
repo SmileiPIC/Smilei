@@ -1198,7 +1198,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                     // Obtain the number of particles per cell
                     nppc = n_part_in_cell(i,j,k);
 		    //MESSAGE("i,j,k = " << i << " " << j << " " << k << " x,y,z = " << (*xyz[0])(i,j,k) << " " << (*xyz[1])(i,j,k) << " " << (*xyz[2])(i,j,k) << " nppc= "<< nppc); 
-		    MESSAGE("i,j,k = " << i << " " << j << " " << k << " x,y,z = " << " nppc= "<< nppc << "density "<< density(i,j,k)); 
+		   // MESSAGE("i,j,k = " << i << " " << j << " " << k << " x,y,z = " << " nppc= "<< nppc << "density "<< density(i,j,k)); 
                     n_part_in_cell(i,j,k) = floor(nppc);
 	            //MESSAGE("n_part_in_cell"<<n_part_in_cell(i,j,k));
                     // If not a round number, then we need to decide how to round
@@ -1218,7 +1218,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
 
                     // If zero or less, zero particles
                     if( n_part_in_cell(i,j,k)<=0. || density(i,j,k)==0. ) {
-                        MESSAGE(" n_part_in_cell(i,j,k)<=0. || density(i,j,k)==0." );
+                        //MESSAGE(" n_part_in_cell(i,j,k)<=0. || density(i,j,k)==0." );
                         n_part_in_cell(i,j,k) = 0.;
                         density(i,j,k) = 0.;
                         continue;
@@ -1308,10 +1308,10 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                            // }
                            //if (j==0) { initWeight(nPart, iPart, density(i,j,k)*(*xyz[1])(i,j,k)*2.);}
                            initWeight(nPart, iPart, density(i,j,k)*(*xyz[1])(i,j,k));
-                           if (j==0){
-		               MESSAGE("xyz in first cell = " << (*xyz[1])(i,j,k)<< "density " << density(i,j,k) );
-                               MESSAGE("weight in first cell = " <<density(i,j,k)*(*xyz[1])(i,j,k) );
-                               }
+                           //if (j==0){
+		           //    MESSAGE("xyz in first cell = " << (*xyz[1])(i,j,k)<< "density " << density(i,j,k) );
+                           //    MESSAGE("weight in first cell = " <<density(i,j,k)*(*xyz[1])(i,j,k) );
+                           //    }
                         }else{
                             initWeight(nPart, iPart, density(i,j,k));
 				
