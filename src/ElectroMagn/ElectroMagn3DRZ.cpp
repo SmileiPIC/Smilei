@@ -888,7 +888,6 @@ void ElectroMagn3DRZ::fold_fields(bool diag_flag)
                  if ( JlRZ != NULL ) {
                      for (unsigned int i=0; i<nl_d; i++){
                          for (unsigned int j=0; j<oversize[1]; j++){
-                             MESSAGE("i = " << i << " j = " << j << " over = " << oversize[1]  );
                              (*JlRZ)(i,2*oversize[1]-j)+= (*JlRZ)(i,j) ;
                          }
                      }
