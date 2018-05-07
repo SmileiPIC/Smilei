@@ -617,7 +617,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // arrays used for the Esirkepov projection method
     double  Sx0[5], Sx1[5], Sy0[5], Sy1[5], DSx[5], DSy[5];
     complex<double>  Wx[5][5], Wy[5][5], Wz[5][5], Jx_p[5][5], Jy_p[5][5], Jz_p[5][5];
-    complex<double> e_delta, e_delta_inv, e_theta,e_theta_old;
+    complex<double> e_delta, e_delta_inv, e_theta,e_theta_old, C_m;
  
      for (unsigned int i=0; i<5; i++) {
         Sx1[i] = 0.;
@@ -774,7 +774,10 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         //}
             }
     }//i
-    complex<double> C_m = pow(e_theta,imode);
+    C_m = 1.;
+    for (unsigned int i=0; i<imode; i++){
+    C_m *= e_theta;
+    }
     MESSAGE("Cm "<< C_m); 
      // Rho^(p,p)
     for (unsigned int i=0 ; i<5 ; i++) {
