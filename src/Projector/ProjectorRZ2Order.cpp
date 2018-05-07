@@ -748,7 +748,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
             linindex = iloc*(b_dim[1]+1)+jloc;
-            Jr [linindex] += Jy_p[i][j] /abs((jloc+ j_domain_begin+0.5)*dr); //
+            Jr [linindex] += Jy_p[i][j] /abs((jloc+ j_domain_begin-0.5)*dr); //
         //if (jloc+j_domain_begin == 0){
         //    Jr [linindex+1] += Jr [linindex];
         //    Jr [linindex+2] += Jr [linindex-1];
