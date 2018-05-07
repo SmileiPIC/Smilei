@@ -774,7 +774,8 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         //}
             }
     }//i
-    complex<double> C_m = 1./pow(e_theta,imode); 
+    complex<double> C_m = pow(e_theta,imode);
+    MESSAGE("Cm "<< C_m); 
      // Rho^(p,p)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
