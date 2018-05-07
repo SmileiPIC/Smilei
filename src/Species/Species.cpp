@@ -278,12 +278,26 @@ void Species::initPosition(unsigned int nPart, unsigned int iPart, double *index
 
         int coeff_ = coeff;
         coeff = 1./coeff;
-        for (unsigned int  p=iPart; p<iPart+nPart; p++) {
-            int i = (int)(p-iPart);
-            for(unsigned int idim=0; idim<nDim_particle; idim++) {
-                particles->position(idim,p) = indexes[idim] + cell_length[idim] * coeff * (0.5 + i%coeff_);
-                i /= coeff_; // integer division
+
+        if (params.geometry != "3drz"){
+            for (unsigned int  p=iPart; p<iPart+nPart; p++) {
+                int i = (int)(p-iPart);
+                for(unsigned int idim=0; idim<nDim_particle; idim++) {
+                    particles->position(idim,p) = indexes[idim] + cell_length[idim] * coeff * (0.5 + i%coeff_);
+                    i /= coeff_; // integer division
+                }
             }
+        } else {
+            // Trick to initalize particles regularly in the theta = 0 plane
+            for (unsigned int  p=iPart; p<iPart+nPart; p++) {
+                int i = (int)(p-iPart);
+                for(unsigned int idim=0; idim<2; idim++) {
+                    particles->position(idim,p) = indexes[idim] + cell_length[idim] * coeff * (0.5 + i%coeff_);
+                    i /= coeff_; // integer division
+                }
+                particles->position(2,p) = 0;
+            }
+
         }
 
     } else if (position_initialization == "random") {
@@ -1183,7 +1197,8 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
 
                     // Obtain the number of particles per cell
                     nppc = n_part_in_cell(i,j,k);
-		    //MESSAGE("nppc="<< nppc); MESSAGE("density"<< density(i,j,k)*100000);
+		    //MESSAGE("i,j,k = " << i << " " << j << " " << k << " x,y,z = " << (*xyz[0])(i,j,k) << " " << (*xyz[1])(i,j,k) << " " << (*xyz[2])(i,j,k) << " nppc= "<< nppc); 
+		    MESSAGE("i,j,k = " << i << " " << j << " " << k << " x,y,z = " << " nppc= "<< nppc); 
                     n_part_in_cell(i,j,k) = floor(nppc);
 	            //MESSAGE("n_part_in_cell"<<n_part_in_cell(i,j,k));
                     // If not a round number, then we need to decide how to round
