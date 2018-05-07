@@ -240,7 +240,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // arrays used for the Esirkepov projection method
     double  Sx0[5], Sx1[5], Sy0[5], Sy1[5], DSx[5], DSy[5];
     complex<double>  Wx[5][5], Wy[5][5], Wz[5][5], Jx_p[5][5], Jy_p[5][5], Jz_p[5][5];
-    complex<double> e_delta, e_delta_inv, e_theta,e_theta_old;
+    complex<double> e_delta, e_delta_inv, e_theta,e_theta_old, e_bar;
  
      for (unsigned int i=0; i<5; i++) {
         Sx1[i] = 0.;
@@ -273,7 +273,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     double zp = particles.position(2,ipart);
     e_theta = (yp-Icpx*zp)/sqrt(yp*yp+zp*zp);
     e_theta_old =exp_m_theta_old[0];
-    e_delta =pow((e_theta/e_theta_old),(imode/2.));
+    e_delta = 1;
     e_delta_inv =1./e_delta;
     //MESSAGE("e_theta "<< e_theta<< "e_theta_old "<< e_theta_old<< " e_delta "<<  e_delta<< " e_delta_inv "<<  e_delta_inv);   
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
@@ -296,9 +296,14 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     Sy1[jp_m_jpo+1] = 0.5 * (delta2-delta+0.25);
     Sy1[jp_m_jpo+2] = 0.75-delta2;
     Sy1[jp_m_jpo+3] = 0.5 * (delta2+delta+0.25);
-    
+    for (unsigned int i=0 ; i<imode; i++) {
+        e_delta *= sqrt(e_theta/e_theta_old);
+        e_bar *= sqrt(e_theta*e_theta_old);
+
+    }
+     e_delta_inv =1./e_delta;
     //defining crt_p 
-    complex<double> crt_p = charge_weight* Icpx*pow((e_theta*e_theta_old),(imode/2.))/(dt* imode*2.*M_PI); 
+     complex<double> crt_p = charge_weight*e_bar*Icpx/(dt*imode*2.*M_PI);   
    // MESSAGE ("crt_p "<< crt_p);
     for (unsigned int i=0; i < 5; i++) {
         DSx[i] = Sx1[i] - Sx0[i];
@@ -526,7 +531,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // ---------------------------
     // Calculate the total current
     // ---------------------------
-    MESSAGE("jpo before "<< jpo);
+    //MESSAGE("jpo before "<< jpo);
     ipo -= bin+2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
     // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
     jpo -= 2;
