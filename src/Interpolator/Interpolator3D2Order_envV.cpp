@@ -181,7 +181,7 @@ void Interpolator3D2Order_envV::operator() (ElectroMagn* EMfields, Particles &pa
 }
 
 
-void interpolate_em_fields_and_envelope(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread)
+void Interpolator3D2Order_envV::interpolate_em_fields_and_envelope(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread)
 {
     if ( istart[0] == iend[0] ) return; //Don't treat empty cells.
 
@@ -206,13 +206,13 @@ void interpolate_em_fields_and_envelope(ElectroMagn* EMfields, Particles &partic
     }
 
     int idx[3], idxO[3];
-    // //Primal indices are constant over the all cell
-    // idx[0]  = round( particles.position(0,*istart) * D_inv[0] );
-    // idxO[0] = idx[0] - i_domain_begin -1 ;
-    // idx[1]  = round( particles.position(1,*istart) * D_inv[1] );
-    // idxO[1] = idx[1] - j_domain_begin -1 ;
-    // idx[2]  = round( particles.position(2,*istart) * D_inv[2] );
-    // idxO[2] = idx[2] - k_domain_begin -1 ;
+    //Primal indices are constant over the all cell
+    idx[0]  = round( particles.position(0,*istart) * D_inv[0] );
+    idxO[0] = idx[0] - i_domain_begin -1 ;
+    idx[1]  = round( particles.position(1,*istart) * D_inv[1] );
+    idxO[1] = idx[1] - j_domain_begin -1 ;
+    idx[2]  = round( particles.position(2,*istart) * D_inv[2] );
+    idxO[2] = idx[2] - k_domain_begin -1 ;
 
     double ***Egrid[3], ***Bgrid[3], ***Phigrid[1], ***GradPhigrid[3];
 
