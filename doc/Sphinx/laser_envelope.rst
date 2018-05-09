@@ -38,7 +38,7 @@ where :math:`k_0=2\pi/\lambda_0`. As the laser is the source term of the phenome
 
   A=\bar{A} + \hat{A}
 
-In the envelope model context, "slowly varying" means that the variations of :math:`\bar{A}` and :math:`\tilde{A}` are small enough to be treated perturbatively with respect to the ratio :math:`\lambda_0/\lambda_p`, as described in detail in [Cowan2011]_. Equivalently, the slowly varying quantity :math:`\bar{A}` can be seen as the average of :math:`A` over the time scale of a laser oscillation period [Cowan2011]_.
+In the envelope model context, "slowly varying" means that the spatial and temporal variations of :math:`\bar{A}` and :math:`\tilde{A}` are small enough to be treated perturbatively with respect to the ratio :math:`\epsilon=\lambda_0/\lambda_p`, as described in detail in [Mora1997]_, [Quesnel1998]_, [Cowan2011]_. The laser envelope transverse size :math:`R` and longitudinal size :math:`L` are thus assumed to scale as :math:`R \approx L \approx \lambda_0 / \epsilon` [Mora1997]_, [Quesnel1998]_.
 
 
 ----
@@ -135,11 +135,11 @@ The PIC loop described in :doc:`algorithms` is thus modified to self-consistentl
 
 #. interpolating the electromagnetic fields and the ponderomotive potential at the particle positions,
 #. projecting the new plasma susceptibility on the grid,
-#. computating the new particle velocities, 
-#. computating the new envelope values on the grid, 
-#. computating the new particle positions, 
+#. computing the new particle velocities, 
+#. computing the new envelope values on the grid, 
+#. computing the new particle positions, 
 #. projecting the new charge and current densities on the grid,
-#. computating the new electromagnetic fields on the grid.
+#. computing the new electromagnetic fields on the grid.
 
 Note that the momentum advance and position advance are separated by the envelope equation solution in this modified PIC loop.
 In this section, we describe these steps which advance the time from time-step :math:`(n)` to time-step :math:`(n+1)`.  
