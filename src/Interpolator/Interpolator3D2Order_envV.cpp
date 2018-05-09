@@ -240,6 +240,150 @@ void Interpolator3D2Order_envV::interpolate_em_fields_and_envelope(ElectroMagn* 
 
 
 
+    double coeff[3][2][3][32]; 
+    int dual[3][32]; // Size ndim. Boolean indicating if the part has a dual indice equal to the primal one (dual=0) or if it is +1 (dual=1).
+
+    int vecSize = 32;
+
+    int cell_nparts( (int)iend[0]-(int)istart[0] );
+    int nbVec = ( iend[0]-istart[0]+(cell_nparts-1)-((iend[0]-istart[0]-1)&(cell_nparts-1)) ) / vecSize;
+
+    if (nbVec*vecSize != cell_nparts)
+        nbVec++;
+
+    for (int iivect=0 ; iivect<nbVec; iivect++ ){
+        int ivect = vecSize*iivect;
+
+        int np_computed(0);
+        if (cell_nparts > vecSize ) {
+            np_computed = vecSize;
+            cell_nparts -= vecSize;
+        }       
+        else
+            np_computed = cell_nparts;
+
+        #pragma omp simd
+        for (int ipart=0 ; ipart<np_computed; ipart++ ){
+
+            double delta0, delta;
+            double delta2;
+            
+
+            for (int i=0;i<3;i++) { // for X/Y
+                delta0 = particles.position(i,ipart+ivect+istart[0])*D_inv[i];
+                dual [i][ipart] = ( delta0 - (double)idx[i] >=0. );
+
+                for (int j=0;j<2;j++) { // for dual
+
+                    delta   = delta0 - (double)idx[i] + (double)j*(0.5-dual[i][ipart]);
+                    delta2  = delta*delta;
+
+                    coeff[i][j][0][ipart]    =  0.5 * (delta2-delta+0.25);
+                    coeff[i][j][1][ipart]    =  (0.75 - delta2);
+                    coeff[i][j][2][ipart]    =  0.5 * (delta2+delta+0.25);
+    
+                    if (j==0) deltaO[i][ipart-ipart_ref+ivect+istart[0]] = delta;
+                }
+            }
+        }
+
+        #pragma omp simd
+        for (int ipart=0 ; ipart<np_computed; ipart++ ){
+
+            double* coeffyp = &(coeff[1][0][1][ipart]);
+            double* coeffyd = &(coeff[1][1][1][ipart]);
+            double* coeffxd = &(coeff[0][1][1][ipart]);
+            double* coeffxp = &(coeff[0][0][1][ipart]);
+            double* coeffzp = &(coeff[2][0][1][ipart]);
+            double* coeffzd = &(coeff[2][1][1][ipart]);
+
+            //Ex(dual, primal, primal)
+            double interp_res = 0.;
+            for (int iloc=-1 ; iloc<2 ; iloc++) {
+                for (int jloc=-1 ; jloc<2 ; jloc++) {
+                    for (int kloc=-1 ; kloc<2 ; kloc++) {
+                        interp_res += *(coeffxd+iloc*32) * *(coeffyp+jloc*32) * *(coeffzp+kloc*32) *
+                            ( (1-dual[0][ipart])*(*Ex3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc) + dual[0][ipart]*(*Ex3D)(idxO[0]+2+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc ) );
+                    }
+                }
+            }
+            Epart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
+
+
+            //Ey(primal, dual, primal)
+            interp_res = 0.;
+            for (int iloc=-1 ; iloc<2 ; iloc++) {
+                for (int jloc=-1 ; jloc<2 ; jloc++) {
+                    for (int kloc=-1 ; kloc<2 ; kloc++) {
+                        interp_res += *(coeffxp+iloc*32) * *(coeffyd+jloc*32) * *(coeffzp+kloc*32) *
+                            ( (1-dual[1][ipart])*(*Ey3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc) + dual[1][ipart]*(*Ey3D)(idxO[0]+1+iloc,idxO[1]+2+jloc,idxO[2]+1+kloc ) );
+                    }
+                }
+            }
+            Epart[1][ipart-ipart_ref+ivect+istart[0]] = interp_res;
+
+
+            //Ez(primal, primal, dual)
+            interp_res = 0.;
+            for (int iloc=-1 ; iloc<2 ; iloc++) {
+                for (int jloc=-1 ; jloc<2 ; jloc++) {
+                    for (int kloc=-1 ; kloc<2 ; kloc++) {
+                        //interp_res += *(coeffxp+iloc*32) * *(coeffyd+jloc*32) * *(coeffzp+kloc*32) *
+                        interp_res += *(coeffxp+iloc*32) * *(coeffyp+jloc*32) * *(coeffzd+kloc*32) *
+                            ( (1-dual[2][ipart])*(*Ez3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc) + dual[2][ipart]*(*Ez3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+2+kloc ) );
+                    }
+                }
+            }
+            Epart[2][ipart-ipart_ref+ivect+istart[0]] = interp_res;
+
+
+            //Bx(primal, dual , dual )
+            interp_res = 0.;
+            for (int iloc=-1 ; iloc<2 ; iloc++) {
+                for (int jloc=-1 ; jloc<2 ; jloc++) {
+                    for (int kloc=-1 ; kloc<2 ; kloc++) {
+                        //interp_res += *(coeffxp+iloc*32) * *(coeffyd+jloc*32) * *(coeffzp+kloc*32) * 
+                        interp_res += *(coeffxp+iloc*32) * *(coeffyd+jloc*32) * *(coeffzd+kloc*32) * 
+                            ( (1-dual[2][ipart]) * ( (1-dual[1][ipart])*(*Bx3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc) + dual[1][ipart]*(*Bx3D)(idxO[0]+1+iloc,idxO[1]+2+jloc,idxO[2]+1+kloc ) )
+                            +    dual[2][ipart]  * ( (1-dual[1][ipart])*(*Bx3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+2+kloc) + dual[1][ipart]*(*Bx3D)(idxO[0]+1+iloc,idxO[1]+2+jloc,idxO[2]+2+kloc ) ) );
+                    }
+                }
+            }
+            Bpart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
+
+            //By(dual, primal, dual )
+            interp_res = 0.;
+            for (int iloc=-1 ; iloc<2 ; iloc++) {
+                for (int jloc=-1 ; jloc<2 ; jloc++) {
+                    for (int kloc=-1 ; kloc<2 ; kloc++) {
+                        //interp_res += *(coeffxp+iloc*32) * *(coeffyd+jloc*32) * *(coeffzp+kloc*32) * 
+                        interp_res += *(coeffxd+iloc*32) * *(coeffyp+jloc*32) * *(coeffzd+kloc*32) * 
+                            ( (1-dual[2][ipart]) * ( (1-dual[0][ipart])*(*By3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc) + dual[0][ipart]*(*By3D)(idxO[0]+2+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc ) )
+                            +    dual[2][ipart]  * ( (1-dual[0][ipart])*(*By3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+2+kloc) + dual[0][ipart]*(*By3D)(idxO[0]+2+iloc,idxO[1]+1+jloc,idxO[2]+2+kloc ) ) );
+                    }
+                }
+            }
+            Bpart[1][ipart-ipart_ref+ivect+istart[0]] = interp_res;
+
+            //Bz(dual, dual, prim )
+            interp_res = 0.;
+            for (int iloc=-1 ; iloc<2 ; iloc++) {
+                for (int jloc=-1 ; jloc<2 ; jloc++) {
+                    for (int kloc=-1 ; kloc<2 ; kloc++) {
+                        //interp_res += *(coeffxp+iloc*32) * *(coeffyd+jloc*32) * *(coeffzp+kloc*32) * 
+                        interp_res += *(coeffxd+iloc*32) * *(coeffyd+jloc*32) * *(coeffzp+kloc*32) * 
+                            ( (1-dual[1][ipart]) * ( (1-dual[0][ipart])*(*Bz3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc) + dual[0][ipart]*(*Bz3D)(idxO[0]+2+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc ) )
+                            +    dual[1][ipart]  * ( (1-dual[0][ipart])*(*Bz3D)(idxO[0]+1+iloc,idxO[1]+2+jloc,idxO[2]+1+kloc) + dual[0][ipart]*(*Bz3D)(idxO[0]+2+iloc,idxO[1]+2+jloc,idxO[2]+1+kloc ) ) );
+                    }
+                }
+            }
+            Bpart[2][ipart-ipart_ref+ivect+istart[0]] = interp_res;
+
+        }
+
+    }
+    //}
+
 
 
 
