@@ -8,6 +8,7 @@
 #include "Particles.h"
 #include "LaserEnvelope.h"
 
+
 using namespace std;
 
 
@@ -182,80 +183,63 @@ void Interpolator3D2Order_envV::operator() (ElectroMagn* EMfields, Particles &pa
 
 void interpolate_em_fields_and_envelope(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread)
 {
-if ( istart[0] == iend[0] ) return; //Don't treat empty cells.
+    if ( istart[0] == iend[0] ) return; //Don't treat empty cells.
 
-int nparts( particles.size() );
+    int nparts( particles.size() );
 
-double *Epart[3], *Bpart[3],*Phipart[1], *GradPhipart[3];
-double E,E2;
+    double *Epart[3], *Bpart[3],*Phipart[1], *GradPhipart[3];
+    double E,E2;
 
-double *deltaO[3];
-deltaO[0] = &(smpi->dynamics_deltaold[ithread][0]);
-deltaO[1] = &(smpi->dynamics_deltaold[ithread][nparts]);
-deltaO[2] = &(smpi->dynamics_deltaold[ithread][2*nparts]);
+    double *deltaO[3];
+    deltaO[0] = &(smpi->dynamics_deltaold[ithread][0]);
+    deltaO[1] = &(smpi->dynamics_deltaold[ithread][nparts]);
+    deltaO[2] = &(smpi->dynamics_deltaold[ithread][2*nparts]);
 
-for (unsigned int k=0; k<3;k++) {
+    for (unsigned int k=0; k<3;k++) {
 
-    if (k==0){     // scalar field, only one component
-    Phipart[k]     = &(smpi->dynamics_PHIpart[ithread][k*nparts]);}
+       if (k==0){     // scalar field, only one component
+       Phipart[k]     = &(smpi->dynamics_PHIpart[ithread][k*nparts]);}
 
-    Epart[k]       = &(smpi->dynamics_Epart[ithread][k*nparts]);
-    Bpart[k]       = &(smpi->dynamics_Bpart[ithread][k*nparts]);
-    GradPhipart[k] = &(smpi->dynamics_GradPHIpart[ithread][k*nparts]);
-}
+       Epart[k]       = &(smpi->dynamics_Epart[ithread][k*nparts]);
+       Bpart[k]       = &(smpi->dynamics_Bpart[ithread][k*nparts]);
+       GradPhipart[k] = &(smpi->dynamics_GradPHIpart[ithread][k*nparts]);
+    }
 
-// int idx[3], idxO[3];
-// //Primal indices are constant over the all cell
-// idx[0]  = round( particles.position(0,*istart) * D_inv[0] );
-// idxO[0] = idx[0] - i_domain_begin ;
-// idx[1]  = round( particles.position(1,*istart) * D_inv[1] );
-// idxO[1] = idx[1] - j_domain_begin ;
-// idx[2]  = round( particles.position(2,*istart) * D_inv[2] );
-// idxO[2] = idx[2] - k_domain_begin ;
+    int idx[3], idxO[3];
+    // //Primal indices are constant over the all cell
+    // idx[0]  = round( particles.position(0,*istart) * D_inv[0] );
+    // idxO[0] = idx[0] - i_domain_begin -1 ;
+    // idx[1]  = round( particles.position(1,*istart) * D_inv[1] );
+    // idxO[1] = idx[1] - j_domain_begin -1 ;
+    // idx[2]  = round( particles.position(2,*istart) * D_inv[2] );
+    // idxO[2] = idx[2] - k_domain_begin -1 ;
 
-double ***Egrid[3], ***Bgrid[3], ***Phigrid[1], ***GradPhigrid[3];
+    double ***Egrid[3], ***Bgrid[3], ***Phigrid[1], ***GradPhigrid[3];
 
-Egrid[0]            = (static_cast<Field3D*>(EMfields->Ex_))->data_3D;
-Egrid[1]            = (static_cast<Field3D*>(EMfields->Ey_))->data_3D;
-Egrid[2]            = (static_cast<Field3D*>(EMfields->Ez_))->data_3D;
-Bgrid[0]            = (static_cast<Field3D*>(EMfields->Bx_m))->data_3D;
-Bgrid[1]            = (static_cast<Field3D*>(EMfields->By_m))->data_3D;
-Bgrid[2]            = (static_cast<Field3D*>(EMfields->Bz_m))->data_3D;
-Phigrid[0]          = (static_cast<Field3D*>(EMfields->envelope->Phi_))->data_3D;
-GradPhigrid[0]      = (static_cast<Field3D*>(EMfields->envelope->GradPhix_))->data_3D;
-GradPhigrid[1]      = (static_cast<Field3D*>(EMfields->envelope->GradPhiy_))->data_3D;
-GradPhigrid[2]      = (static_cast<Field3D*>(EMfields->envelope->GradPhiz_))->data_3D;
+    Egrid[0]            = (static_cast<Field3D*>(EMfields->Ex_))->data_3D;
+    Egrid[1]            = (static_cast<Field3D*>(EMfields->Ey_))->data_3D;
+    Egrid[2]            = (static_cast<Field3D*>(EMfields->Ez_))->data_3D;
+    Bgrid[0]            = (static_cast<Field3D*>(EMfields->Bx_m))->data_3D;
+    Bgrid[1]            = (static_cast<Field3D*>(EMfields->By_m))->data_3D;
+    Bgrid[2]            = (static_cast<Field3D*>(EMfields->Bz_m))->data_3D;
+    Phigrid[0]          = (static_cast<Field3D*>(EMfields->envelope->Phi_))->data_3D;
+    GradPhigrid[0]      = (static_cast<Field3D*>(EMfields->envelope->GradPhix_))->data_3D;
+    GradPhigrid[1]      = (static_cast<Field3D*>(EMfields->envelope->GradPhiy_))->data_3D;
+    GradPhigrid[2]      = (static_cast<Field3D*>(EMfields->envelope->GradPhiz_))->data_3D;
 
-Field3D* Ex3D       = static_cast<Field3D*>(EMfields->Ex_);
-Field3D* Ey3D       = static_cast<Field3D*>(EMfields->Ey_);
-Field3D* Ez3D       = static_cast<Field3D*>(EMfields->Ez_);
-Field3D* Bx3D       = static_cast<Field3D*>(EMfields->Bx_m);
-Field3D* By3D       = static_cast<Field3D*>(EMfields->By_m);
-Field3D* Bz3D       = static_cast<Field3D*>(EMfields->Bz_m);
-Field3D* Phi3D      = static_cast<Field3D*>(EMfields->envelope->Phi_);
-Field3D* GradPhix3D = static_cast<Field3D*>(EMfields->envelope->GradPhix_);
-Field3D* GradPhiy3D = static_cast<Field3D*>(EMfields->envelope->GradPhiy_);
-Field3D* GradPhiz3D = static_cast<Field3D*>(EMfields->envelope->GradPhiz_);
+    Field3D* Ex3D       = static_cast<Field3D*>(EMfields->Ex_);
+    Field3D* Ey3D       = static_cast<Field3D*>(EMfields->Ey_);
+    Field3D* Ez3D       = static_cast<Field3D*>(EMfields->Ez_);
+    Field3D* Bx3D       = static_cast<Field3D*>(EMfields->Bx_m);
+    Field3D* By3D       = static_cast<Field3D*>(EMfields->By_m);
+    Field3D* Bz3D       = static_cast<Field3D*>(EMfields->Bz_m);
+    Field3D* Phi3D      = static_cast<Field3D*>(EMfields->envelope->Phi_);
+    Field3D* GradPhix3D = static_cast<Field3D*>(EMfields->envelope->GradPhix_);
+    Field3D* GradPhiy3D = static_cast<Field3D*>(EMfields->envelope->GradPhiy_);
+    Field3D* GradPhiz3D = static_cast<Field3D*>(EMfields->envelope->GradPhiz_);
 
 
-// double *gradPHI[3]
-// double *PHI
-// 
-// Field3D* AA;
-// Field3D* AAold;
-// 
-// if (EMfields->envelope!=NULL) {
-//     for (unsigned int k=0; k<3;k++) {   
-//         gradPHI   [k]= &(smpi->dynamics_GradPHIpart   [ithread][k*nparts]);
-//         gradPHIold[k]= &(smpi->dynamics_GradPHIoldpart[ithread][k*nparts]);
-//     }
-//     PHI    = &(smpi->dynamics_PHIpart[ithread][0]);
-//     PHIold = &(smpi->dynamics_PHIoldpart[ithread][0]);
-// 
-//     //AA    = static_cast<Field3D*>(EMfields->envelope->AA_);
-//     //AAold = static_cast<Field3D*>(EMfields->envelope->AA_old);
-// 
-// }
+
 
 
 

@@ -613,6 +613,8 @@ void SpeciesV::ponderomotive_update_susceptibilty_and_momentum(double time_dual,
                            Patch* patch, SmileiMPI* smpi,
                            std::vector<Diagnostic*>& localDiags)
 {
+
+////////////////////////////// new vectorized 
     int ithread;
     #ifdef _OPENMP
         ithread = omp_get_thread_num();
@@ -627,36 +629,40 @@ void SpeciesV::ponderomotive_update_susceptibilty_and_momentum(double time_dual,
 
     int tid(0);
     double ener_iPart(0.);
-    std::vector<double> nrj_lost_per_thd(1, 0.);
+  
 
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
-    if (time_dual>time_frozen) { // moving particle
+    if (time_dual>time_frozen) { // advance particle momentum
 
-        smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
+        int npack    =  f_dim0-2*oversize[0];
+        int packsize = (f_dim1-2*oversize[1]);
+        if (nDim_particle == 3)
+            packsize *= (f_dim2-2*oversize[2]);
 
-        // Interpolate the fields at the particle position
-  //      for (unsigned int scell = 0 ; scell < bmin.size() ; scell++)
-  //          (*Interp)(EMfields, *particles, smpi, &(bmin[scell]), &(bmax[scell]), ithread );
+        for ( int ipack = 0 ; ipack < npack ; ipack++ ) {
 
-        // // Project susceptibility, the source term of envelope equation
-        // double* b_Chi_envelope=nullptr;
-        // if (nDim_field==3)
-        //     b_Chi_envelope =  &(*EMfields->Env_Chi_)(ibin*clrw*f_dim1*f_dim2) ;
-        // else {ERROR("Envelope model not yet implemented in this geometry");}
-        // 
-        // for (unsigned int iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
-        //     (static_cast<Projector3D2Order_susceptibility*>(Proj_susceptibility))->project_susceptibility(b_Chi_envelope, *particles, iPart, ibin, b_dim, smpi, ithread, mass );                                              
-        //                                                                       }
+            int nparts_in_pack = bmax[ (ipack+1) * packsize-1 ];
+            smpi->dynamics_resize(ithread, nDim_particle, nparts_in_pack );
 
-        // Push only the particle momenta
-        (*Push)(*particles, smpi, 0, bmax[bmax.size()-1], ithread );
-        
-      
+            // Interpolate the fields at the particle position    
+            for (unsigned int scell = 0 ; scell < packsize ; scell++)
+                (*Interp)(EMfields, *particles, smpi, &(bmin[ipack*packsize+scell]), &(bmax[ipack*packsize+scell]), ithread, bmin[ipack*packsize] );
+
+
+            // Project susceptibility, the source term of envelope equation
+
+            // Push the particles 
+            (*Push)(*particles, smpi, bmin[ipack*packsize], bmax[ipack*packsize+packsize-1], ithread, bmin[ipack*packsize] );
+            //(*Push)(*particles, smpi, 0, bmax[bmax.size()-1], ithread );
+            }
+
     }
     else { // immobile particle (at the moment only project density)
+        
     }//END if time vs. time_frozen
+      
 
 } // end ponderomotive_update_susceptibilty_and_momentum
 
@@ -674,7 +680,7 @@ void SpeciesV::ponderomotive_update_position_and_currents(double time_dual, unsi
                            std::vector<Diagnostic*>& localDiags)
 {
    
-   ////////// vectorized , without envelope
+   
    int ithread;
    #ifdef _OPENMP
        ithread = omp_get_thread_num();
