@@ -181,7 +181,7 @@ void Interpolator3D2Order_envV::operator() (ElectroMagn* EMfields, Particles &pa
 }
 
 
-void Interpolator3D2Order_envV::interpolate_em_fields_and_envelope(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread)
+void Interpolator3D2Order_envV::interpolate_em_fields_and_envelope(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
 {
     if ( istart[0] == iend[0] ) return; //Don't treat empty cells.
 
