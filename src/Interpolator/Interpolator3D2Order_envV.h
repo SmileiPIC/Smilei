@@ -23,6 +23,10 @@ public:
     void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc) override final;
     void operator() (ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, std::vector<unsigned int> * selection) override final {};
 
+    void interpolate_em_fields_and_envelope(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread);
+    //void interpolate_envelope_and_old_envelope(ElectroMagn* EMfields, Particles &particles, int ipart, int nparts, double* PHILoc, double* GradPHILoc, double* PHIoldLoc, double* GradPHIoldLoc);
+    //void interpolate_envelope_and_susceptibility(ElectroMagn* EMfields, Particles &particles, int ipart, double* Env_A_abs_Loc, double* Env_Ar_Loc, double* Env_Ai_Loc, double* Env_Chi_Loc);
+
     inline double compute( double* coeffx, double* coeffy, double* coeffz, Field3D* f, int idx, int idy, int idz) {
 	double interp_res(0.);
         //unroll ?
