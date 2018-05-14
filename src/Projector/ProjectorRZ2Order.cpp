@@ -95,7 +95,6 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
     xpn = particles.position(0, ipart) * dl_inv_;
     int ip = round(xpn);
-    MESSAGE("ip "<< ip<< "xpn "<<xpn);
     int ipo = iold[0*nparts];
     int ip_m_ipo = ip-ipo-i_domain_begin;
     //MESSAGE("idomainbegin "<<i_domain_begin<<" jdomainbegin "<<j_domain_begin  ); 
@@ -145,6 +144,9 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // Local current created by the particle
     // calculate using the charge conservation equation
     // ------------------------------------------------
+    for (unsigned int j=0 ; j<5 ; j++) Jx_p[0][j]= 0.;
+    for (unsigned int i=0 ; i<5 ; i++) Jy_p[i][0]= 0.;
+
     for (unsigned int i=1 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
             Jx_p[i][j]= Jx_p[i-1][j] - crl_p * Wx[i-1][j];
@@ -329,6 +331,9 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // Local current created by the particle
     // calculate using the charge conservation equation
     // ------------------------------------------------
+    for (unsigned int j=0 ; j<5 ; j++) Jx_p[0][j]= 0.;
+    for (unsigned int i=0 ; i<5 ; i++) Jy_p[i][0]= 0.;
+
     for (unsigned int i=1 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
                 Jx_p[i][j]= Jx_p[i-1][j] - crl_p * Wx[i-1][j];
@@ -481,7 +486,6 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     
     int jp = round(ypn);
     int jpo = iold[1*nparts];
-    MESSAGE("jp "<< jp << "jpo "<< jpo);
     int jp_m_jpo = jp-jpo-j_domain_begin;
     delta  = ypn - (double)jp;
     delta2 = delta*delta;
@@ -512,6 +516,10 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // Local current created by the particle
     // calculate using the charge conservation equation
     // ------------------------------------------------
+    for (unsigned int j=0 ; j<5 ; j++) Jx_p[0][j]= 0.;
+    for (unsigned int i=0 ; i<5 ; i++) Jy_p[i][0]= 0.;
+        
+
     for (unsigned int i=1 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
                 Jx_p[i][j]= Jx_p[i-1][j] - crl_p * Wx[i-1][j];
@@ -587,15 +595,13 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             linindex = iloc*b_dim[1]+jloc;
             MESSAGE("jloc "<< jloc<< "j_domain_begin "<< j_domain_begin); 
          if (jloc+ j_domain_begin != 0){
-                rho [linindex] += charge_weight* Sx1[i]*Sy1[j]/abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
-                if (abs(rho [linindex])>1.){MESSAGE("rho0 "<<rho [linindex] << "jloc+jbe "<< jloc+ j_domain_begin  );}
+                rho [linindex] += charge_weight * Wz[i][j] /abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
                 }
             else {
-                rho [linindex] += charge_weight*8.* Sx1[i]*Sy1[j] /dr; // iloc = (i+ipo)*b_dim[1];
+                rho [linindex] += charge_weight* Wz[i][j] * 8./dr; // iloc = (i+ipo)*b_dim[1];
                 //rho [linindex+1] += rho [linindex-1];
                 //rho [linindex+2] += rho [linindex-2];
                 //MESSAGE ("Sx1 "<< Sx1[i] << "Sy1 "<< Sy1[i]);
-                if (abs(rho [linindex])>1.) {MESSAGE("on axis rho0 "<<rho [linindex]<< "jloc+jbe "<< jloc+ j_domain_begin   );}
                  }
         }
     }//i
@@ -711,6 +717,9 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // Local current created by the particle
     // calculate using the charge conservation equation
     // ------------------------------------------------
+    for (unsigned int j=0 ; j<5 ; j++) Jx_p[0][j]= 0.;
+    for (unsigned int i=0 ; i<5 ; i++) Jy_p[i][0]= 0.;
+
     for (unsigned int i=1 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
                 Jx_p[i][j]= Jx_p[i-1][j] - crl_p * Wx[i-1][j];
