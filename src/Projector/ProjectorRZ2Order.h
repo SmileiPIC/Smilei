@@ -35,6 +35,7 @@ private:
     int nmodes;
     double dr;
     double dt;
+    //int n_r_max;
 };
 
 #endif

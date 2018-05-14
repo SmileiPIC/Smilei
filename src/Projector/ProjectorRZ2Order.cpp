@@ -29,6 +29,7 @@ ProjectorRZ2Order::ProjectorRZ2Order (Params& params, Patch* patch) : ProjectorR
     i_domain_begin = patch->getCellStartingGlobalIndex(0);
     j_domain_begin = patch->getCellStartingGlobalIndex(1);
     n_species = patch->vecSpecies.size();
+    //n_r_max = params.n_space_global[1];
     DEBUG("cell_length "<< params.cell_length[0]);
 
 }
@@ -72,7 +73,18 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     Sx0[4] = 0.;
     Sy0[0] = 0.;
     Sy0[4] = 0.;
-    
+
+
+    for (unsigned int i=0; i<5; i++) {
+       for (unsigned int j=0; j<5; j++) {
+           Jx_p[i][j] = 0.;
+           Jy_p[i][j]= 0.;
+           Jz_p[i][j] = 0.;
+        }
+    }    
+
+
+
     // --------------------------------------------------------
     // Locate particles & Calculate Esirkepov coef. S, DS and W
     // --------------------------------------------------------
@@ -161,7 +173,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     }
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
-            Jz_p[i][j] = crt_p  * Wz[i][j];
+            Jz_p[i][j] = Jz_p[i][j] - crt_p  * Wz[i][j];
             //MESSAGE("Jzp"<< Jz_p[i][j]);     
         }
     }
@@ -252,7 +264,13 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     Sx0[4] = 0.;
     Sy0[0] = 0.;
     Sy0[4] = 0.;
-    
+    for (unsigned int i=0; i<5; i++) {
+        for (unsigned int j=0; j<5; j++) {
+            Jx_p[i][j] = 0.;
+            Jy_p[i][j]= 0.;
+            Jz_p[i][j] = 0.;
+        }
+    } 
     // --------------------------------------------------------
     // Locate particles & Calculate Esirkepov coef. S, DS and W
     // --------------------------------------------------------
@@ -276,7 +294,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     e_theta = (yp-Icpx*zp)/sqrt(yp*yp+zp*zp);
     e_theta_old =exp_m_theta_old[0];
     e_delta = 1;
-    e_delta_inv =1./e_delta;
+    e_bar = 1;
     //MESSAGE("e_theta "<< e_theta<< "e_theta_old "<< e_theta_old<< " e_delta "<<  e_delta<< " e_delta_inv "<<  e_delta_inv);   
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
     xpn = particles.position(0, ipart) * dl_inv_;
@@ -305,7 +323,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     }
      e_delta_inv =1./e_delta;
     //defining crt_p 
-     complex<double> crt_p = charge_weight*e_bar*Icpx/(dt*imode*2.*M_PI);   
+     complex<double> crt_p = charge_weight*e_bar*Icpx/(2*M_PI*dt*imode);   
    // MESSAGE ("crt_p "<< crt_p);
     for (unsigned int i=0; i < 5; i++) {
         DSx[i] = Sx1[i] - Sx0[i];
@@ -346,6 +364,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         }
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
+                // ?? not sure about this ?
                 Jz_p[i][j] = crt_p  * Wz[i][j];
                 //MESSAGE("Jzpm "<<  Jz_p[i][j] );
             }
@@ -451,7 +470,13 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     Sx0[4] = 0.;
     Sy0[0] = 0.;
     Sy0[4] = 0.;
-    
+    for (unsigned int i=0; i<5; i++) {
+       for (unsigned int j=0; j<5; j++) {
+            Jx_p[i][j] = 0.;
+            Jy_p[i][j]= 0.;
+            Jz_p[i][j] = 0.;
+        }
+    }
     // --------------------------------------------------------
     // Locate particles & Calculate Esirkepov coef. S, DS and W
     // --------------------------------------------------------
@@ -532,7 +557,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         }
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
-                Jz_p[i][j] = crt_p  * Wz[i][j];
+                Jz_p[i][j] = Jz_p[i][j] - crt_p  * Wz[i][j];
             }
         }
 
@@ -593,7 +618,6 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;    
             linindex = iloc*b_dim[1]+jloc;
-            MESSAGE("jloc "<< jloc<< "j_domain_begin "<< j_domain_begin); 
          if (jloc+ j_domain_begin != 0){
                 rho [linindex] += charge_weight * Wz[i][j] /abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
                 }
@@ -639,7 +663,13 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     Sx0[4] = 0.;
     Sy0[0] = 0.;
     Sy0[4] = 0.;
-    
+    for (unsigned int i=0; i<5; i++) {
+       for (unsigned int j=0; j<5; j++) {
+           Jx_p[i][j] = 0.;
+           Jy_p[i][j]= 0.;
+           Jz_p[i][j] = 0.;
+        }
+    } 
     // --------------------------------------------------------
     // Locate particles & Calculate Esirkepov coef. S, DS and W
     // --------------------------------------------------------
@@ -693,7 +723,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     }
      e_delta_inv =1./e_delta;
     //defining crt_p 
-    complex<double> crt_p = charge_weight*e_bar*Icpx/(dt*imode*2.*M_PI);
+    complex<double> crt_p = charge_weight*e_bar*Icpx/(2*M_PI*dt*imode);
     for (unsigned int i=0; i < 5; i++) {
         DSx[i] = Sx1[i] - Sx0[i];
         DSy[i] = Sy1[i] - Sy0[i];
@@ -732,6 +762,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         }
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
+               // ?? same not sure
                 Jz_p[i][j] = crt_p * Wz[i][j];
             }
         }
@@ -799,23 +830,23 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     for (unsigned int i=0; i<imode; i++){
     C_m *= e_theta;
     }
-    MESSAGE("Cm "<< C_m); 
+    //MESSAGE("Cm "<< C_m); 
      // Rho^(p,p)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
             linindex = iloc*b_dim[1]+jloc;
-            MESSAGE("jloc "<< jloc<< "j_domain_begin "<< j_domain_begin);
+           // MESSAGE("jloc "<< jloc<< "j_domain_begin "<< j_domain_begin);
             if (jloc+ j_domain_begin != 0){
-                rho [linindex] += C_m*charge_weight* Sx1[i]*Sy1[j]/abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
-                if (abs(rho [linindex])>1.) {MESSAGE("rhom "<< rho [linindex]<< "jloc+jbe "<< jloc+ j_domain_begin  );}
+                rho [linindex] += C_m/(2*M_PI)*charge_weight* Sx1[i]*Sy1[j]/abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
+                //if (abs(rho [linindex])>1.) {MESSAGE("rhom "<< rho [linindex]<< "jloc+jbe "<< jloc+ j_domain_begin  );}
                 }
             else {
-                rho [linindex] += C_m*charge_weight*8.* Sx1[i]*Sy1[j] /dr; // iloc = (i+ipo)*b_dim[1];
+                rho [linindex] += C_m/(2*M_PI)*charge_weight*8.* Sx1[i]*Sy1[j] /dr; // iloc = (i+ipo)*b_dim[1];
                 //rho [linindex+1] += rho [linindex-1];
                 //rho [linindex+2] += rho [linindex-2];
-                if (abs(rho [linindex])>1.) {MESSAGE("on axis rhom "<< rho [linindex]<< "jloc+jbe "<< jloc+ j_domain_begin  );}
+                //if (abs(rho [linindex])>1.) {MESSAGE("on axis rhom "<< rho [linindex]<< "jloc+jbe "<< jloc+ j_domain_begin  );}
                 }
         }
     }//i
