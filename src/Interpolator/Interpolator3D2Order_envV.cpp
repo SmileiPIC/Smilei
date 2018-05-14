@@ -379,14 +379,53 @@ void Interpolator3D2Order_envV::interpolate_em_fields_and_envelope(ElectroMagn* 
             }
             Bpart[2][ipart-ipart_ref+ivect+istart[0]] = interp_res;
 
-        }
+            // Interpolation of Phi^(p,p,p)
+            interp_res = 0.;
+            for (int iloc=-1 ; iloc<2 ; iloc++) {
+                for (int jloc=-1 ; jloc<2 ; jloc++) {
+                    for (int kloc=-1 ; kloc<2 ; kloc++) {
+                        interp_res += *(coeffxp+iloc*1) * *(coeffyp+jloc*1) * *(coeffzp+kloc*1) * (*Phi3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
+                    }
+                }
+            }
+            Phipart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
 
+            // Interpolation of GradPhiX^(p,p,p)
+            interp_res = 0.;
+            for (int iloc=-1 ; iloc<2 ; iloc++) {
+                for (int jloc=-1 ; jloc<2 ; jloc++) {
+                    for (int kloc=-1 ; kloc<2 ; kloc++) {
+                        interp_res += *(coeffxp+iloc*1) * *(coeffyp+jloc*1) * *(coeffzp+kloc*1) * (*GradPhix3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
+                    }
+                }
+            }
+            GradPhipart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
+
+            // Interpolation of GradPhiY^(p,p,p)
+            interp_res = 0.;
+            for (int iloc=-1 ; iloc<2 ; iloc++) {
+                for (int jloc=-1 ; jloc<2 ; jloc++) {
+                    for (int kloc=-1 ; kloc<2 ; kloc++) {
+                        interp_res += *(coeffxp+iloc*1) * *(coeffyp+jloc*1) * *(coeffzp+kloc*1) * (*GradPhiy3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
+                    }
+                }
+            }
+            GradPhipart[1][ipart-ipart_ref+ivect+istart[0]] = interp_res;
+
+            // Interpolation of GradPhiZ^(p,p,p)
+            interp_res = 0.;
+            for (int iloc=-1 ; iloc<2 ; iloc++) {
+                for (int jloc=-1 ; jloc<2 ; jloc++) {
+                    for (int kloc=-1 ; kloc<2 ; kloc++) {
+                        interp_res += *(coeffxp+iloc*1) * *(coeffyp+jloc*1) * *(coeffzp+kloc*1) * (*GradPhiz3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
+                    }
+                }
+            }
+            GradPhipart[2][ipart-ipart_ref+ivect+istart[0]] = interp_res;
+            
+        }
     }
     //}
-
-
-
-
 
 
 }
