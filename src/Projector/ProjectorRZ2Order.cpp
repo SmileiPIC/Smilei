@@ -75,16 +75,6 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     Sy0[4] = 0.;
 
 
-    for (unsigned int i=0; i<5; i++) {
-       for (unsigned int j=0; j<5; j++) {
-           Jx_p[i][j] = 0.;
-           Jy_p[i][j]= 0.;
-           Jz_p[i][j] = 0.;
-        }
-    }    
-
-
-
     // --------------------------------------------------------
     // Locate particles & Calculate Esirkepov coef. S, DS and W
     // --------------------------------------------------------
@@ -173,7 +163,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     }
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
-            Jz_p[i][j] = Jz_p[i][j] - crt_p  * Wz[i][j];
+            Jz_p[i][j] =  - crt_p  * Wz[i][j];
             //MESSAGE("Jzp"<< Jz_p[i][j]);     
         }
     }
@@ -264,13 +254,6 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     Sx0[4] = 0.;
     Sy0[0] = 0.;
     Sy0[4] = 0.;
-    for (unsigned int i=0; i<5; i++) {
-        for (unsigned int j=0; j<5; j++) {
-            Jx_p[i][j] = 0.;
-            Jy_p[i][j]= 0.;
-            Jz_p[i][j] = 0.;
-        }
-    } 
     // --------------------------------------------------------
     // Locate particles & Calculate Esirkepov coef. S, DS and W
     // --------------------------------------------------------
@@ -470,13 +453,6 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     Sx0[4] = 0.;
     Sy0[0] = 0.;
     Sy0[4] = 0.;
-    for (unsigned int i=0; i<5; i++) {
-       for (unsigned int j=0; j<5; j++) {
-            Jx_p[i][j] = 0.;
-            Jy_p[i][j]= 0.;
-            Jz_p[i][j] = 0.;
-        }
-    }
     // --------------------------------------------------------
     // Locate particles & Calculate Esirkepov coef. S, DS and W
     // --------------------------------------------------------
@@ -557,7 +533,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         }
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
-                Jz_p[i][j] = Jz_p[i][j] - crt_p  * Wz[i][j];
+                Jz_p[i][j] =  - crt_p  * Wz[i][j];
             }
         }
 
@@ -663,13 +639,6 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     Sx0[4] = 0.;
     Sy0[0] = 0.;
     Sy0[4] = 0.;
-    for (unsigned int i=0; i<5; i++) {
-       for (unsigned int j=0; j<5; j++) {
-           Jx_p[i][j] = 0.;
-           Jy_p[i][j]= 0.;
-           Jz_p[i][j] = 0.;
-        }
-    } 
     // --------------------------------------------------------
     // Locate particles & Calculate Esirkepov coef. S, DS and W
     // --------------------------------------------------------
