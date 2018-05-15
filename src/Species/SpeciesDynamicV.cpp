@@ -670,20 +670,12 @@ void SpeciesDynamicV::reconfiguration(Params &params, Patch * patch)
                                         vecto_time,
                                         scalar_time);
 
-    //std::cout << "vecto_time " << vecto_time << " " << scalar_time << '\n';
-
     if ( (vecto_time < scalar_time && this->vectorized_operators == false)
       || (vecto_time > scalar_time && this->vectorized_operators == true))
     {
         reasign_operators = true;
     }
     // --------------------------------------------------------------------
-
-    /*std::cout << "Vectorized_operators: " << this->vectorized_operators
-              << " ratio_number_of_vecto_cells: " << this->ratio_number_of_vecto_cells
-              << " number_of_vecto_cells: " << number_of_vecto_cells
-              << " number_of_non_zero_cells: " << number_of_non_zero_cells
-              << " ncells: " << ncell << "\n";*/
 
     // Operator reasignment if required by the metrics
     if (reasign_operators)
@@ -727,9 +719,6 @@ void SpeciesDynamicV::reconfiguration(Params &params, Patch * patch)
 
         }
     }
-    /*std::cout << " bin number: " << bmin.size()
-              << " nb particles: " << bmax[bmax.size()-1]
-              << '\n';*/
 }
 
 // -----------------------------------------------------------------------------
@@ -775,7 +764,7 @@ void SpeciesDynamicV::configuration(Params &params, Patch * patch)
     // We first compute cell_keys: the number of particles per cell
     this->compute_part_cell_keys(params);
 
-    #ifdef  __DEBUG
+#ifdef  __DEBUG
             std::cerr << "  > Species " << this->name << " configuration (" << this->vectorized_operators
                       << ") in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ")"
                       << " of MPI process " << patch->MPI_me_
@@ -783,7 +772,7 @@ void SpeciesDynamicV::configuration(Params &params, Patch * patch)
                       << ", scalar time: " << scalar_time
                       << ", particle number: " << (*particles).size()
                       << ")" << '\n';
-    #endif
+#endif
 
     // Destroy and reconfigure operators
     this->reconfigure_operators(params, patch);
