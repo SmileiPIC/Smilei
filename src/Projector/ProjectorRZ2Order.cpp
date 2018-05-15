@@ -163,7 +163,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     }
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
-            Jz_p[i][j] =  - crt_p  * Wz[i][j];
+            Jz_p[i][j] =   crt_p  * Wz[i][j];
             //MESSAGE("Jzp"<< Jz_p[i][j]);     
         }
     }
@@ -533,7 +533,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         }
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
-                Jz_p[i][j] =  - crt_p  * Wz[i][j];
+                Jz_p[i][j] =   crt_p  * Wz[i][j];
             }
         }
 
