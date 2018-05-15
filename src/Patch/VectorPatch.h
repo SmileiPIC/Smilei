@@ -94,6 +94,9 @@ public :
     //! Reconfigure all patches for the new time step
     void configuration(Params& params, Timers &timers, int itime);
 
+    //! Reconfigure all patches for the new time step
+    void reconfiguration(Params& params, Timers &timers, int itime);
+
     //! For all patch, move particles (restartRhoJ(s), dynamics and exchangeParticles)
     void dynamics(Params& params,
                   SmileiMPI* smpi,

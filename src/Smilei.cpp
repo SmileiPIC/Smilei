@@ -137,6 +137,9 @@ int main (int argc, char* argv[])
         // vecPatches data read in restartAll according to smpi.patch_count
         checkpoint.restartAll( vecPatches, &smpi, simWindow, params, openPMD);
 
+        // Patch reconfiguration for the dynamic vectorization
+        vecPatches.configuration(params,timers, 0);
+
         // time at integer time-steps (primal grid)
         time_prim = checkpoint.this_run_start_step * params.timestep;
         // time at half-integer time-steps (dual grid)
@@ -198,7 +201,7 @@ int main (int argc, char* argv[])
         vecPatches.applyExternalFields();
 
         // Patch reconfiguration
-        vecPatches.configuration(params,timers, 0);
+        vecPatches.reconfiguration(params,timers, 0);
 
         vecPatches.dynamics(params, &smpi, simWindow, RadiationTables,
                             MultiphotonBreitWheelerTables, time_dual, timers, 0);
@@ -276,7 +279,7 @@ int main (int argc, char* argv[])
             }
 
             // Patch reconfiguration
-            vecPatches.configuration(params, timers, itime);
+            vecPatches.reconfiguration(params, timers, itime);
 
             // apply collisions if requested
             vecPatches.applyCollisions(params, itime, timers);

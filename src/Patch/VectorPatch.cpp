@@ -103,38 +103,79 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi, OpenPMDparams& op
 // ---------------------------------------------------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Reconfigure all patches for the new time step
+// Configure all patches for the new time step
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::configuration(Params& params, Timers &timers, int itime)
 {
 
-    timers.reconfiguration.restart();
+    if (params.vecto == "dynamic" || params.vecto == "dynamic2")
+    {
 
-    // Species reconfiguration for best performance
-    // Change the status to use vectorized or not-vectorized operators
-    // as a function of the metrics
-    #pragma omp master
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-        // Particle importation for all species
-        for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
-            (*this)(ipatch)->cleanMPIBuffers(ispec, params);
+        timers.reconfiguration.restart();
+
+        // Species reconfiguration for best performance
+        // Change the status to use vectorized or not-vectorized operators
+        // as a function of the metrics
+        #pragma omp master
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+            // Particle importation for all species
+            for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
+                (*this)(ipatch)->cleanMPIBuffers(ispec, params);
+            }
         }
-    }
-    #pragma omp barrier
+        #pragma omp barrier
 
-    // Species reconfiguration for best performance
-    // Change the status to use vectorized or not-vectorized operators
-    // as a function of the metrics
-    #pragma omp for schedule(runtime)
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-        // Particle importation for all species
-        for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
-            species(ipatch, ispec)->reconfiguration(params, (*this)(ipatch));
+        // Species reconfiguration for best performance
+        // Change the status to use vectorized or not-vectorized operators
+        // as a function of the metrics
+        #pragma omp for schedule(runtime)
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+            // Particle importation for all species
+            for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
+                species(ipatch, ispec)->configuration(params, (*this)(ipatch));
+            }
         }
+
+        timers.reconfiguration.update( params.printNow( itime ) );
     }
 
-    timers.reconfiguration.update( params.printNow( itime ) );
+}
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Reconfigure all patches for the new time step
+// ---------------------------------------------------------------------------------------------------------------------
+void VectorPatch::reconfiguration(Params& params, Timers &timers, int itime)
+{
+    if (params.vecto == "dynamic" || params.vecto == "dynamic2")
+    {
+
+        timers.reconfiguration.restart();
+
+        // Species reconfiguration for best performance
+        // Change the status to use vectorized or not-vectorized operators
+        // as a function of the metrics
+        #pragma omp master
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+            // Particle importation for all species
+            for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
+                (*this)(ipatch)->cleanMPIBuffers(ispec, params);
+            }
+        }
+        #pragma omp barrier
+
+        // Species reconfiguration for best performance
+        // Change the status to use vectorized or not-vectorized operators
+        // as a function of the metrics
+        #pragma omp for schedule(runtime)
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+            // Particle importation for all species
+            for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
+                species(ipatch, ispec)->reconfiguration(params, (*this)(ipatch));
+            }
+        }
+
+        timers.reconfiguration.update( params.printNow( itime ) );
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

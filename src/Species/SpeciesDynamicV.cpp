@@ -733,6 +733,9 @@ void SpeciesDynamicV::configuration(Params &params, Patch * patch)
     float vecto_time = 0.;
     float scalar_time = 0.;
 
+    // We first compute cell_keys: the number of particles per cell
+    this->compute_part_cell_keys(params);
+
     //split cell into smaller sub_cells for refined sorting
     //ncell = (params.n_space[0]+1);
     //for ( unsigned int i=1; i < params.nDim_field; i++) ncell *= (params.n_space[i]+1);
@@ -747,7 +750,7 @@ void SpeciesDynamicV::configuration(Params &params, Patch * patch)
 
     // --------------------------------------------------------------------
     // Metrics 2 - based on the evaluation of the computational time
-    SpeciesMetrics::get_computation_time(species_loc_bmax,
+    SpeciesMetrics::get_computation_time(this->species_loc_bmax,
                                         vecto_time,
                                         scalar_time);
 
@@ -760,9 +763,6 @@ void SpeciesDynamicV::configuration(Params &params, Patch * patch)
         this->vectorized_operators = false;
     }
     // --------------------------------------------------------------------
-
-    // We first compute cell_keys: the number of particles per cell
-    this->compute_part_cell_keys(params);
 
 #ifdef  __DEBUG
             std::cerr << "  > Species " << this->name << " configuration (" << this->vectorized_operators

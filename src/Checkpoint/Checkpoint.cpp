@@ -46,31 +46,31 @@ dump_deflate(0),
 dump_request(smpi->getSize()),
 file_grouping(0)
 {
-    
+
     if( PyTools::nComponents("Checkpoints") > 0 ) {
-        
+
         if (PyTools::extract("dump_step", dump_step, "Checkpoints")) {
             if (dump_step)
                 MESSAGE(1,"Code will dump after " << dump_step << " steps");
         }
-        
+
         if (PyTools::extract("dump_minutes", dump_minutes, "Checkpoints")) {
             if (dump_minutes>0)
                 MESSAGE(1,"Code will stop after " << dump_minutes << " minutes");
         }
-        
+
         PyTools::extract("keep_n_dumps", keep_n_dumps, "Checkpoints");
         if(keep_n_dumps<1) keep_n_dumps=1;
-        
+
         if(keep_n_dumps > keep_n_dumps_max) {
             WARNING("Smilei supports a maximum of keep_n_dumps of "<< keep_n_dumps_max);
             keep_n_dumps = keep_n_dumps_max;
         }
-        
+
         PyTools::extract("exit_after_dump", exit_after_dump, "Checkpoints");
-        
+
         PyTools::extract("dump_deflate", dump_deflate, "Checkpoints");
-        
+
         if (PyTools::extract("file_grouping", file_grouping, "Checkpoints") && file_grouping > 0) {
             if( file_grouping > (unsigned int)(smpi->getSize()) ) file_grouping = smpi->getSize();
             MESSAGE(1,"Code will group checkpoint files by "<< file_grouping);
@@ -108,7 +108,7 @@ file_grouping(0)
 
         }
     }
-    
+
     if (dump_step>0 || dump_minutes>0.) {
         if (exit_after_dump) {
             MESSAGE(1,"Code will exit after dump");
@@ -121,7 +121,7 @@ file_grouping(0)
             MESSAGE(1,message.str());
         }
     }
-        
+
     // registering signal handler
     if (SIG_ERR == signal(SIGUSR1, Checkpoint::signal_callback_handler)) {
         WARNING("Cannot catch signal SIGUSR1");
@@ -129,12 +129,12 @@ file_grouping(0)
     if (SIG_ERR == signal(SIGUSR2, Checkpoint::signal_callback_handler)) {
         WARNING("Cannot catch signal SIGUSR2");
     }
-    
+
     nDim_particle=params.nDim_particle;
 }
 
 void Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI* smpi, SimWindow* simWindow, Params &params ) {
-    
+
     // check for excedeed time
     if (dump_minutes != 0.0) {
         // master checks whenever we passed the time limit
@@ -156,7 +156,7 @@ void Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI* s
             }
         }
     }
-    
+
     if (signal_received!=0 ||
         (dump_step != 0 && ( (itime-this_run_start_step) % dump_step == 0)) ||
         (time_dump_step!=0 && itime==time_dump_step)) {
@@ -185,22 +185,22 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
 
     hid_t fid = H5Fcreate( dumpName.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
     dump_number++;
-    
+
 #ifdef  __DEBUG
     MESSAGEALL("Step " << itime << " : DUMP fields and particles " << dumpName);
 #else
     MESSAGE("Step " << itime << " : DUMP fields and particles " << num_dump);
 #endif
-    
-    
+
+
     // Write basic attributes
     H5::attr(fid, "Version", string(__VERSION));
-    
+
     H5::attr(fid, "dump_step", itime);
     H5::attr(fid, "dump_number", dump_number);
-    
+
     H5::vect( fid, "patch_count", smpi->patch_count );
-    
+
     // Write diags scalar data
     DiagnosticScalar* scalars = static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0]);
     H5::attr(fid, "Energy_time_zero",  scalars->Energy_time_zero );
@@ -218,7 +218,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
             }
         }
     }
-    
+
     // Write the diags screen data
     ostringstream diagName("");
     if( smpi->isMaster() ) {
@@ -230,23 +230,23 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
             }
         }
     }
-    
+
     // Write all the patch data
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size(); ipatch++) {
-        
+
         // Open a group
         ostringstream patch_name("");
         patch_name << setfill('0') << setw(6) << vecPatches(ipatch)->Hindex();
         string patchName=Tools::merge("patch-", patch_name.str());
         hid_t patch_gid = H5::group(fid, patchName.c_str());
-        
+
         dumpPatch( vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, patch_gid );
-        
+
         // Close a group
         H5Gclose(patch_gid);
-        
+
     }
-    
+
     // Write the latest Id that the MPI processes have given to each species
     for( unsigned int idiag=0; idiag<vecPatches.localDiags.size(); idiag++ ) {
         if( DiagnosticTrack* track = dynamic_cast<DiagnosticTrack*>(vecPatches.localDiags[idiag]) ) {
@@ -255,18 +255,18 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
             H5::attr(fid, n.str().c_str(), track->latest_Id, H5T_NATIVE_UINT64);
         }
     }
-    
+
     // Write the moving window status
     if (simWin!=NULL)
         dumpMovingWindow(fid, simWin);
-    
+
     H5Fclose( fid );
-    
+
 }
 
 void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpecies, hid_t patch_gid )
 {
-    
+
     dumpFieldsPerProc(patch_gid, EMfields->Ex_);
     dumpFieldsPerProc(patch_gid, EMfields->Ey_);
     dumpFieldsPerProc(patch_gid, EMfields->Ez_);
@@ -291,19 +291,19 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
         dumpFieldsPerProc(patch_gid, EMfields->Byfilter[i]);
     for (unsigned int i=0; i<EMfields->Bzfilter.size(); i++)
         dumpFieldsPerProc(patch_gid, EMfields->Bzfilter[i]);
-    
+
     // Fields required for DiagFields
     for( unsigned int idiag=0; idiag<EMfields->allFields_avg.size(); idiag++ ) {
         ostringstream group_name("");
         group_name << "FieldsForDiag" << idiag;
         hid_t diag_gid = H5::group(patch_gid, group_name.str());
-        
+
         for( unsigned int ifield=0; ifield<EMfields->allFields_avg[idiag].size(); ifield++ )
             dumpFieldsPerProc( diag_gid, EMfields->allFields_avg[idiag][ifield] );
-        
+
         H5Gclose(diag_gid);
     }
-    
+
     if ( EMfields->extFields.size()>0 ) {
         for (unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
             if(! EMfields->emBoundCond[bcId]) continue;
@@ -339,53 +339,53 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
                 if (embc->Bx_val) dumpFieldsPerProc(gid, embc->Bx_val );
                 if (embc->By_val) dumpFieldsPerProc(gid, embc->By_val );
                 if (embc->Bz_val) dumpFieldsPerProc(gid, embc->Bz_val );
-                                       
+
                 H5Gclose(gid);
             }
         }
     }
-    
+
     H5Fflush( patch_gid, H5F_SCOPE_GLOBAL );
     H5::attr(patch_gid, "species", vecSpecies.size());
-    
+
     for (unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++) {
         ostringstream name("");
         name << setfill('0') << setw(2) << ispec;
         string groupName=Tools::merge("species-",name.str(),"-",vecSpecies[ispec]->name);
         hid_t gid = H5::group(patch_gid, groupName);
-        
+
         H5::attr(gid, "partCapacity", vecSpecies[ispec]->particles->capacity());
         H5::attr(gid, "partSize", vecSpecies[ispec]->particles->size());
-        
+
         if (vecSpecies[ispec]->particles->size()>0) {
-            
+
             for (unsigned int i=0; i<vecSpecies[ispec]->particles->Position.size(); i++) {
                 ostringstream my_name("");
                 my_name << "Position-" << i;
                 H5::vect(gid,my_name.str(), vecSpecies[ispec]->particles->Position[i], dump_deflate);
             }
-            
+
             for (unsigned int i=0; i<vecSpecies[ispec]->particles->Momentum.size(); i++) {
                 ostringstream my_name("");
                 my_name << "Momentum-" << i;
                 H5::vect(gid,my_name.str(), vecSpecies[ispec]->particles->Momentum[i], dump_deflate);
             }
-            
+
             H5::vect(gid,"Weight", vecSpecies[ispec]->particles->Weight, dump_deflate);
             H5::vect(gid,"Charge", vecSpecies[ispec]->particles->Charge, dump_deflate);
-            
+
             if (vecSpecies[ispec]->particles->tracked) {
                 H5::vect(gid,"Id", vecSpecies[ispec]->particles->Id, H5T_NATIVE_UINT64, dump_deflate);
             }
-            
-            
+
+
             H5::vect(gid,"bmin", vecSpecies[ispec]->bmin);
             H5::vect(gid,"bmax", vecSpecies[ispec]->bmax);
-            
+
         } // End if partSize
-        
+
         H5Gclose(gid);
-        
+
     } // End for ispec
 };
 
@@ -393,15 +393,15 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
 void Checkpoint::readPatchDistribution( SmileiMPI* smpi, SimWindow* simWin )
 {
     hid_t fid = H5Fopen( restart_file.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
-    if (fid < 0) ERROR(restart_file << " is not a valid HDF5 file");    
-    
+    if (fid < 0) ERROR(restart_file << " is not a valid HDF5 file");
+
     // Read basic attributes
     string dump_version;
     H5::getAttr(fid, "Version", dump_version);
-    
+
     string dump_date;
     H5::getAttr(fid, "CommitDate", dump_date);
-    
+
     if (dump_version != string(__VERSION)) {
         WARNING ("The code version that dumped the file is " << dump_version);
         WARNING ("                while running version is " << string(__VERSION));
@@ -421,10 +421,10 @@ void Checkpoint::readPatchDistribution( SmileiMPI* smpi, SimWindow* simWin )
 void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindow* simWin, Params &params, OpenPMDparams& openPMD )
 {
     MESSAGE(1, "READING fields and particles for restart");
-    
+
     hid_t fid = H5Fopen( restart_file.c_str(), H5F_ACC_RDWR, H5P_DEFAULT);
-    if (fid < 0) ERROR(restart_file << " is not a valid HDF5 file");    
-    
+    if (fid < 0) ERROR(restart_file << " is not a valid HDF5 file");
+
     // Write diags scalar data
     DiagnosticScalar* scalars = static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0]);
     H5::getAttr(fid, "Energy_time_zero",  scalars->Energy_time_zero );
@@ -440,7 +440,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
             }
         }
     }
-    
+
     // Read the diags screen data
     ostringstream diagName("");
     if( smpi->isMaster() ) {
@@ -461,21 +461,21 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
             }
         }
     }
-    
+
     // Read all the patch data
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size(); ipatch++) {
-        
+
         ostringstream patch_name("");
         patch_name << setfill('0') << setw(6) << vecPatches(ipatch)->Hindex();
         string patchName=Tools::merge("patch-",patch_name.str());
         hid_t patch_gid = H5Gopen(fid, patchName.c_str(),H5P_DEFAULT);
-        
+
         restartPatch( vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, params, patch_gid );
-        
+
         H5Gclose(patch_gid);
-        
+
     }
-    
+
     // Read the latest Id that the MPI processes have given to each species
     for( unsigned int idiag=0; idiag<vecPatches.localDiags.size(); idiag++ ) {
         if( DiagnosticTrack* track = dynamic_cast<DiagnosticTrack*>(vecPatches.localDiags[idiag]) ) {
@@ -488,9 +488,9 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
             }
         }
     }
-    
+
     H5Fclose( fid );
-    
+
 }
 
 
@@ -505,7 +505,7 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
     restartFieldsPerProc(patch_gid, EMfields->Bx_m);
     restartFieldsPerProc(patch_gid, EMfields->By_m);
     restartFieldsPerProc(patch_gid, EMfields->Bz_m);
-    
+
     // filtered Electric fields
     for (unsigned int i=0; i<EMfields->Exfilter.size(); i++)
         restartFieldsPerProc(patch_gid, EMfields->Exfilter[i]);
@@ -528,10 +528,10 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
         htri_t status = H5Lexists(patch_gid, group_name.str().c_str(), H5P_DEFAULT);
         if( status > 0 ) {
             hid_t diag_gid = H5Gopen(patch_gid, group_name.str().c_str(),H5P_DEFAULT);
-            
+
             for( unsigned int ifield=0; ifield<EMfields->allFields_avg[idiag].size(); ifield++ )
                 restartFieldsPerProc( diag_gid, EMfields->allFields_avg[idiag][ifield] );
-            
+
             H5Gclose(diag_gid);
 
         } else if( EMfields->allFields_avg[idiag].size() > 0 ) {
@@ -539,8 +539,8 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
             // there is missing data that will cause wrong results on the first output after restart
             WARNING("New average Field diag "<<idiag<<" may produce wrong first output after restart");
         }
-    } 
-    
+    }
+
     if ( EMfields->extFields.size()>0 ) {
         for (unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
             if(! EMfields->emBoundCond[bcId]) continue;
@@ -553,7 +553,7 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
                 H5::getAttr(gid, "By_val", embc->By_val );
                 H5::getAttr(gid, "Bz_val", embc->Bz_val );
                 H5Gclose(gid);
-                
+
             }
             else if ( dynamic_cast<ElectroMagnBC2D_SM*>(EMfields->emBoundCond[bcId]) ) {
                 ElectroMagnBC2D_SM* embc = static_cast<ElectroMagnBC2D_SM*>(EMfields->emBoundCond[bcId]);
@@ -572,7 +572,7 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
                 name << setfill('0') << setw(2) << bcId;
                 string groupName=Tools::merge("EM_boundary-species-",name.str());
                 hid_t gid = H5Gopen(patch_gid, groupName.c_str(),H5P_DEFAULT);
-    
+
                 if (embc->Bx_val) restartFieldsPerProc(gid, embc->Bx_val );
                 if (embc->By_val) restartFieldsPerProc(gid, embc->By_val );
                 if (embc->Bz_val) restartFieldsPerProc(gid, embc->Bz_val );
@@ -580,59 +580,64 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
             }
         }
     }
-    
+
     unsigned int vecSpeciesSize=0;
     H5::getAttr(patch_gid, "species", vecSpeciesSize );
-    
+
     if (vecSpeciesSize != vecSpecies.size()) {
         ERROR("Number of species differs between dump (" << vecSpeciesSize << ") and namelist ("<<vecSpecies.size()<<")");
     }
-    
-    
+
+
     for (unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++) {
         ostringstream name("");
         name << setfill('0') << setw(2) << ispec;
         string groupName=Tools::merge("species-",name.str(),"-",vecSpecies[ispec]->name);
         hid_t gid = H5Gopen(patch_gid, groupName.c_str(),H5P_DEFAULT);
-        
+
         unsigned int partCapacity=0;
         H5::getAttr(gid, "partCapacity", partCapacity );
         vecSpecies[ispec]->particles->reserve(partCapacity,nDim_particle);
-        
+
         unsigned int partSize=0;
         H5::getAttr(gid, "partSize", partSize );
         vecSpecies[ispec]->particles->initialize(partSize,nDim_particle);
-        
-        
+
+
         if (partSize>0) {
             for (unsigned int i=0; i<vecSpecies[ispec]->particles->Position.size(); i++) {
                 ostringstream namePos("");
                 namePos << "Position-" << i;
                 H5::getVect(gid,namePos.str(),vecSpecies[ispec]->particles->Position[i]);
             }
-            
+
             for (unsigned int i=0; i<vecSpecies[ispec]->particles->Momentum.size(); i++) {
                 ostringstream namePos("");
                 namePos << "Momentum-" << i;
                 H5::getVect(gid,namePos.str(),vecSpecies[ispec]->particles->Momentum[i]);
             }
-            
+
             H5::getVect(gid,"Weight",vecSpecies[ispec]->particles->Weight);
-            
+
             H5::getVect(gid,"Charge",vecSpecies[ispec]->particles->Charge);
-            
+
             if (vecSpecies[ispec]->particles->tracked) {
                 H5::getVect(gid,"Id",vecSpecies[ispec]->particles->Id, H5T_NATIVE_UINT64);
             }
-            
-            H5::getVect(gid,"bmin",vecSpecies[ispec]->bmin,true);
-            H5::getVect(gid,"bmax",vecSpecies[ispec]->bmax,true);
-            
+
+            if (params.vecto == "disable" || params.vecto == "normal")
+            {
+                H5::getVect(gid,"bmin",vecSpecies[ispec]->bmin,true);
+                H5::getVect(gid,"bmax",vecSpecies[ispec]->bmax,true);
+            }
+            // In the dynamic vectorization case, the bins will be recomputed
+            // latter in the patch reconfiguration
+
         }
-        
+
         H5Gclose(gid);
     }
-    
+
 }
 
 void Checkpoint::dumpFieldsPerProc(hid_t fid, Field* field)
@@ -656,23 +661,17 @@ void Checkpoint::dumpMovingWindow(hid_t fid, SimWindow* simWin)
 {
     H5::attr(fid, "x_moved", simWin->getXmoved());
     H5::attr(fid, "n_moved", simWin->getNmoved());
-    
+
 }
 void Checkpoint::restartMovingWindow(hid_t fid, SimWindow* simWin)
 {
-    
+
     double x_moved=0.;
     H5::getAttr(fid, "x_moved", x_moved );
     simWin->setXmoved(x_moved);
-    
+
     unsigned int n_moved=0;
     H5::getAttr(fid, "n_moved", n_moved );
     simWin->setNmoved(n_moved);
-    
+
 }
-
-
-
-
-
-
