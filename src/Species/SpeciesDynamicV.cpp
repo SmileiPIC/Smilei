@@ -155,9 +155,7 @@ void SpeciesDynamicV::dynamics(double time_dual, unsigned int ispec,
     double ener_iPart(0.);
     std::vector<double> nrj_lost_per_thd(1, 0.);
 
-    std::cerr << "> Species " << this->name << " dynamic (" << this->vectorized_operators
-              << ") in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ")"
-              << " of MPI process "<< patch->MPI_me_ << std::endl;
+    //this->check(patch,"dynamics t0");
 
     // -------------------------------
     // calculate the particle dynamics
@@ -694,9 +692,13 @@ void SpeciesDynamicV::reconfiguration(Params &params, Patch * patch)
         // The type of operator is changed
         this->vectorized_operators = !this->vectorized_operators;
 
-        MESSAGE(1,"> Species " << this->name << " reconfiguration (" << this->vectorized_operators
+        std::cerr << "  > Species " << this->name << " reconfiguration (" << this->vectorized_operators
                   << ") in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ")"
-                  << " of MPI process "<< patch->MPI_me_);
+                  << " of MPI process " << patch->MPI_me_
+                  << " (vecto time: " << vecto_time
+                  << ", scalar time: " << scalar_time
+                  << ", particle number: " << (*particles).size()
+                  << ")" << '\n';
 
         // Destroy and reconfigure operators
         this->reconfigure_operators(params, patch);
@@ -771,7 +773,6 @@ void SpeciesDynamicV::configuration(Params &params, Patch * patch)
     // --------------------------------------------------------------------
 
     // We first compute cell_keys: the number of particles per cell
-    // if the current mode is without vectorization
     this->compute_part_cell_keys(params);
 
     /*std::cout << "Vectorized_operators: " << this->vectorized_operators
@@ -780,9 +781,9 @@ void SpeciesDynamicV::configuration(Params &params, Patch * patch)
               << " number_of_non_zero_cells: " << number_of_non_zero_cells
               << " ncells: " << ncell << "\n";*/
 
-    MESSAGE(1,"> Species " << this->name << " configuration (" << this->vectorized_operators
+    /*MESSAGE(1,"> Species " << this->name << " configuration (" << this->vectorized_operators
               << ") in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ")"
-              << " of MPI process "<< patch->MPI_me_);
+              << " of MPI process "<< patch->MPI_me_);*/
 
     // Destroy and reconfigure operators
     this->reconfigure_operators(params, patch);

@@ -72,7 +72,7 @@ ifneq (,$(findstring debug,$(config)))
     CXXFLAGS += -g -pg -D__DEBUG -O0
 # With gdb
 else ifneq (,$(findstring gdb,$(config)))
-    CXXFLAGS += -g -v -da -Q
+    CXXFLAGS += -g -D__DEBUG -O0
 
 # With valgrind
 else ifneq (,$(findstring valgrind,$(config)))

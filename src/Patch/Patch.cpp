@@ -163,7 +163,15 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool w
 
 void Patch::finalizeMPIenvironment(Params& params) {
     int nb_comms(9); // E, B, B_m : min number of comms
+
+    // Particles
     nb_comms += 2*vecSpecies.size();
+
+    // Dynamic vectorization:
+    if (params.vecto == "dynamic" || params.vecto == "dynamic2")
+    {
+        nb_comms += 2;
+    }
 
     // Radiated energy
     if (params.hasMCRadiation ||

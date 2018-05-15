@@ -1575,6 +1575,7 @@ void Species::check(Patch * patch, std::string title)
     std::cerr << "Check sum at " << title
               << " for "<< this->name
               << " in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ") "
+              << " mpi process " << patch->MPI_me_ << " - "
               << " nb bin: " << bmin.size() << " - "
               << " - nbp: " << (*particles).size() << " - "
               << sum_x << " - "

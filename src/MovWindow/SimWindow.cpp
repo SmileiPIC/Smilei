@@ -40,6 +40,7 @@ SimWindow::SimWindow(Params& params)
     max_threads = 1;
 #endif
     patch_to_be_created.resize(max_threads);
+    patch_particle_created.resize(max_threads);
 
     if( PyTools::nComponents("MovingWindow") ) {
         active = true;
@@ -100,7 +101,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     int my_thread = 0;
 #endif
     (patch_to_be_created[my_thread]).clear();
-
+    (patch_particle_created[my_thread]).clear();
 
     #pragma omp single
     {
@@ -125,6 +126,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         // be created later.
         if (mypatch->MPI_neighbor_[0][1] != mypatch->MPI_me_){
             (patch_to_be_created[my_thread]).push_back(ipatch);
+            (patch_particle_created[my_thread]).push_back(true);
         }
 
         // Do not sent Xmax conditions
@@ -184,7 +186,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         //Receive Patch if necessary
         if (mypatch->MPI_neighbor_[0][1] != MPI_PROC_NULL){
             smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], (mypatch->hindex)*nmessage, params );
-            patch_to_be_created[my_thread][j] = nPatches ; //Mark no needs of particles
+            patch_particle_created[my_thread][j] = false ; //Mark no needs of particles
         }
 
         // Create Xmin condition which could not be received
@@ -262,39 +264,38 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     {
         for (int ithread=0; ithread < max_threads ; ithread++){
             for (unsigned int j=0; j< (patch_to_be_created[ithread]).size(); j++){
-                //If new particles are required
-                if (patch_to_be_created[ithread][j] != nPatches){
-                    mypatch = vecPatches.patches_[patch_to_be_created[ithread][j]];
+
+                // Current newly created patch
+                mypatch = vecPatches.patches_[patch_to_be_created[ithread][j]];
+
+                // If new particles are required
+                if (patch_particle_created[ithread][j]){
                     for (unsigned int ispec=0 ; ispec<nSpecies ; ispec++) {
                         mypatch->vecSpecies[ispec]->createParticles(params.n_space, params, mypatch, 0 );
                         //mypatch->vecSpecies[ispec]->check(mypatch,"MovWindows");
 #ifdef _VECTO
+                        // Classical vectorized mode
                         if (params.vecto == "normal")
                         {
                             if ( dynamic_cast<SpeciesV*>(mypatch->vecSpecies[ispec]) )
                                 dynamic_cast<SpeciesV*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
                             mypatch->vecSpecies[ispec]->sort_part(params);
                         }
+                        // First dynamic vectorization mode
+                        else if (params.vecto == "dynamic")
+                        {
+                            if ( dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec]) )
+                            {
+                                dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->configuration(params, mypatch);
+                            }
+                            //dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->check(mypatch,"Moving Windows");
+                        }
+                        // Second dynamic vectorization mode
                         else if (params.vecto == "dynamic2")
                         {
                             if ( dynamic_cast<SpeciesDynamicV2*>(mypatch->vecSpecies[ispec]) )
                                 dynamic_cast<SpeciesDynamicV2*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
                             mypatch->vecSpecies[ispec]->sort_part(params);
-                        }
-                        else if (params.vecto == "dynamic") {
-                            if ( dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec]) )
-                            {
-                                dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->configuration(params, mypatch);
-                                std::cerr << "> Species " << mypatch->vecSpecies[ispec]->name << " MovWindows (" << mypatch->vecSpecies[ispec]->vectorized_operators
-                                          << ") in patch (" << mypatch->Pcoordinates[0] << "," <<  mypatch->Pcoordinates[1] << "," <<  mypatch->Pcoordinates[2] << ")"
-                                          << " of MPI process "<< mypatch->MPI_me_ << std::endl;
-                                //dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
-                            }
-                            // If the patch is in vectorized mode, we apply the sorting
-                            /*if (mypatch->vecSpecies[ispec]->vectorized_operators)
-                            {
-                                dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->sort_part(params);
-                            }*/
                         }
 #endif
                     }
@@ -303,8 +304,38 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                         if( DiagnosticTrack* track = dynamic_cast<DiagnosticTrack*>(vecPatches.localDiags[idiag]) )
                             track->setIDs( mypatch );
                 }
-            }
-        }
+#ifdef _VECTO
+                // Patches that have received particles from another patch
+                // without the creation of new particles
+                else // (patch_particle_created[ithread][j] == false)
+                {
+                    for (unsigned int ispec=0 ; ispec<nSpecies ; ispec++)
+                    {
+                        // For the dynamic vectorization, we partially reconfigure the patch
+                        // We do not have to sort, but operators may have to be reconfigured
+                        // First dynamic vectorization mode:
+                        if (params.vecto == "dynamic") {
+                            if ( dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec]) )
+                            {
+                                //std::cerr << ithread << " " << patch_to_be_created[ithread][j] << " " << (patch_to_be_created[ithread]).size() << '\n';
+                                //mypatch->vecSpecies[ispec]->check(mypatch,"Moving window");
+                                dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
+                                dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->reconfigure_operators(params, mypatch);
+                            }
+                        }
+                        // Second dynamic vectorization mode:
+                        else if (params.vecto == "dynamic2")
+                        {
+                            if ( dynamic_cast<SpeciesDynamicV2*>(mypatch->vecSpecies[ispec]) )
+                            {
+                                dynamic_cast<SpeciesDynamicV2*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
+                            }
+                        }
+                    }
+                } // end test patch_particle_created[ithread][j]
+#endif
+            } // end j loop
+        } // End ithread loop
     }
 
     #pragma omp single nowait
