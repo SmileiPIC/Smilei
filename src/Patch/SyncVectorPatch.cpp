@@ -136,7 +136,15 @@ void SyncVectorPatch::sumRhoJs(Params& params, VectorPatch& vecPatches, int ispe
     // Sum rho_s(ispec)
     if(vecPatches.listrhos_.size()>0) SyncVectorPatch::sum( vecPatches.listrhos_, vecPatches, timers, itime  );
 }
-
+void SyncVectorPatch::sumRhoJs(Params& params, VectorPatch& vecPatches,int imode, int ispec , Timers &timers, int itime)
+{
+    // Sum Jx_s(ispec), Jy_s(ispec) and Jz_s(ispec)
+    if(vecPatches.listJxs_.size()>0) SyncVectorPatch::sumComplex( vecPatches.listJxs_ , vecPatches, timers, itime  );
+    if(vecPatches.listJys_.size()>0) SyncVectorPatch::sumComplex( vecPatches.listJys_ , vecPatches, timers, itime  );
+    if(vecPatches.listJzs_ .size()>0) SyncVectorPatch::sumComplex( vecPatches.listJzs_, vecPatches, timers, itime  );
+    // Sum rho_s(ispec)
+    if(vecPatches.listrhos_.size()>0) SyncVectorPatch::sumComplex( vecPatches.listrhos_, vecPatches, timers, itime  );
+}
 
 // fields : contains a single field component for all patches of vecPatches
 // timers and itime were here introduced for debugging
