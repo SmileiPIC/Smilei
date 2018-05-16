@@ -27,6 +27,12 @@ Projector3D2Order_susceptibilityV::Projector3D2Order_susceptibilityV (Params& pa
     j_domain_begin = patch->getCellStartingGlobalIndex(1);
     k_domain_begin = patch->getCellStartingGlobalIndex(2);
 
+    nprimy = params.n_space[1] + 1;
+    nprimz = params.n_space[2] + 1;
+    oversize[0] = params.oversize[0];
+    oversize[1] = params.oversize[1];
+    oversize[2] = params.oversize[2];
+
     dt             = params.timestep;
     dts2           = params.timestep/2.;
     dts4           = params.timestep/4.;
