@@ -273,10 +273,6 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                     for (unsigned int ispec=0 ; ispec<nSpecies ; ispec++) {
                         mypatch->vecSpecies[ispec]->createParticles(params.n_space, params, mypatch, 0 );
                     }
-                    // We define the IDs of the new particles
-                    for( unsigned int idiag=0; idiag<vecPatches.localDiags.size(); idiag++ )
-                        if( DiagnosticTrack* track = dynamic_cast<DiagnosticTrack*>(vecPatches.localDiags[idiag]) )
-                            track->setIDs( mypatch );
                 }
 
             } // end j loop
@@ -294,7 +290,8 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             mypatch = vecPatches.patches_[patch_to_be_created[ithread][j]];
 
             // If new particles are required
-            if (patch_particle_created[ithread][j]){
+            if (patch_particle_created[ithread][j])
+            {
                 for (unsigned int ispec=0 ; ispec<nSpecies ; ispec++)
                 {
                     // Classical vectorized mode
@@ -321,6 +318,10 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                         mypatch->vecSpecies[ispec]->sort_part(params);
                     }
                 }
+                // We define the IDs of the new particles
+                for( unsigned int idiag=0; idiag<vecPatches.localDiags.size(); idiag++ )
+                    if( DiagnosticTrack* track = dynamic_cast<DiagnosticTrack*>(vecPatches.localDiags[idiag]) )
+                        track->setIDs( mypatch );
             }
             // Patches that have received particles from another patch
             // without the creation of new particles
