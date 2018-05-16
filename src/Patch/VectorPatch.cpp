@@ -224,7 +224,7 @@ void VectorPatch::dynamics(Params& params,
                                                       MultiphotonBreitWheelerTables,
                                                       localDiags);
                     }
-                    else
+                    else if (!(*this)(ipatch)->vecSpecies[ispec]->ponderomotive_dynamics)
                     {
                         species(ipatch, ispec)->Species::dynamics(time_dual, ispec,
                                                          emfields(ipatch),

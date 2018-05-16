@@ -38,7 +38,7 @@ void Interpolator3D2Order_envV::operator() (ElectroMagn* EMfields, Particles &pa
 {
     if ( istart[0] == iend[0] ) return; //Don't treat empty cells.
 
-    int nparts( particles.size() );
+    int nparts( (smpi->dynamics_invgf[ithread]).size() );
 
     double *Epart[3], *Bpart[3];
     double E,E2;
@@ -185,7 +185,7 @@ void Interpolator3D2Order_envV::interpolate_em_fields_and_envelope(ElectroMagn* 
 {
     if ( istart[0] == iend[0] ) return; //Don't treat empty cells.
 
-    int nparts( particles.size() );
+    int nparts( (smpi->dynamics_invgf[ithread]).size() );
 
     double *Epart[3], *Bpart[3],*Phipart[1], *GradPhipart[3];
     double E,E2;
@@ -435,7 +435,7 @@ void Interpolator3D2Order_envV::interpolate_envelope_and_old_envelope(ElectroMag
 {
     if ( istart[0] == iend[0] ) return; //Don't treat empty cells.
 
-    int nparts( particles.size() );
+    int nparts( (smpi->dynamics_invgf[ithread]).size() );
 
     double *Phipart[1], *GradPhipart[3];
     double *Phioldpart[1], *GradPhioldpart[3];
@@ -638,7 +638,7 @@ void Interpolator3D2Order_envV::interpolate_envelope_and_susceptibility(ElectroM
     // probes are interpolated one by one for now
 
     int ipart = *istart;
-    int nparts( particles.size() );
+    int nparts( (smpi->dynamics_invgf[ithread]).size() );
 
     int idx[3], idxO[3];
     //Primal indices are constant over the all cell
