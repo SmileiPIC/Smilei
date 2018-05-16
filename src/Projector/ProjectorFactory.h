@@ -14,6 +14,7 @@
 #ifdef _VECTO
 #include "Projector2D2OrderV.h"
 #include "Projector3D2OrderV.h"
+#include "Projector3D2Order_susceptibilityV.h"
 #include "Projector3D4OrderV.h"
 #endif
 

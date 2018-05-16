@@ -121,8 +121,15 @@ void Projector3D2Order_susceptibilityV::operator() (ElectroMagn* EMfields, Parti
 
 // Projector for susceptibility used as source term in envelope equation
                                                      
-void Projector3D2Order_susceptibilityV::project_susceptibility(double* Chi_envelope, Particles &particles, int istart, int iend, unsigned int bin, std::vector<unsigned int> &b_dim, SmileiMPI* smpi, int ithread, double species_mass, int* iold, int ipart_ref)
+void Projector3D2Order_susceptibilityV::project_susceptibility(double* Chi_envelope, Particles &particles, int istart, int iend, unsigned int scell, std::vector<unsigned int> &b_dim, SmileiMPI* smpi, int ithread, double species_mass, int* iold2, int ipart_ref)
 {
+    int iold[3];
+
+    iold[0] = scell/(nprimy*nprimz)+oversize[0];
+    iold[1] = ( (scell%(nprimy*nprimz)) / nprimz )+oversize[1];
+    iold[2] = ( (scell%(nprimy*nprimz)) % nprimz )+oversize[2];
+
+
     std::vector<double> *Epart       = &(smpi->dynamics_Epart[ithread]);
     std::vector<double> *Phipart     = &(smpi->dynamics_PHIpart[ithread]);
     std::vector<double> *GradPhipart = &(smpi->dynamics_GradPHIpart[ithread]);
