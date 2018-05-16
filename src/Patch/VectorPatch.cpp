@@ -113,12 +113,10 @@ void VectorPatch::configuration(Params& params, Timers &timers, int itime)
 
         timers.reconfiguration.restart();
 
-        // Species reconfiguration for best performance
-        // Change the status to use vectorized or not-vectorized operators
-        // as a function of the metrics
+        // Clean buffers
         #pragma omp master
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-            // Particle importation for all species
+            // For all species
             for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
                 (*this)(ipatch)->cleanMPIBuffers(ispec, params);
             }
@@ -151,12 +149,10 @@ void VectorPatch::reconfiguration(Params& params, Timers &timers, int itime)
 
         timers.reconfiguration.restart();
 
-        // Species reconfiguration for best performance
-        // Change the status to use vectorized or not-vectorized operators
-        // as a function of the metrics
+        // Clean buffers
         #pragma omp master
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-            // Particle importation for all species
+            // For all species
             for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
                 (*this)(ipatch)->cleanMPIBuffers(ispec, params);
             }

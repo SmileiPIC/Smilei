@@ -140,11 +140,11 @@ void SpeciesDynamicV::dynamics(double time_dual, unsigned int ispec,
                        vector<Diagnostic*>& localDiags)
 {
     int ithread;
-    #ifdef _OPENMP
+#ifdef _OPENMP
         ithread = omp_get_thread_num();
-    #else
+#else
         ithread = 0;
-    #endif
+#endif
 
     unsigned int iPart;
 

@@ -272,7 +272,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                 if (patch_particle_created[ithread][j]){
                     for (unsigned int ispec=0 ; ispec<nSpecies ; ispec++) {
                         mypatch->vecSpecies[ispec]->createParticles(params.n_space, params, mypatch, 0 );
-                        //mypatch->vecSpecies[ispec]->check(mypatch,"MovWindows");
+
 #ifdef _VECTO
                         // Classical vectorized mode
                         if (params.vecto == "normal")
