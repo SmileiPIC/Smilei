@@ -2211,7 +2211,7 @@ void VectorPatch::ponderomotive_update_susceptibilty_and_momentum(Params& params
             if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
                 if (species(ipatch, ispec)->ponderomotive_dynamics){
                 species(ipatch, ispec)->ponderomotive_update_susceptibilty_and_momentum(time_dual, ispec,
-                                                 emfields(ipatch), interp_envelope(ipatch),proj_susceptibility(ipatch),
+                                                                                        emfields(ipatch), interp_envelope(ipatch),
                                                  params, diag_flag,
                                                  (*this)(ipatch), smpi,
                                                  localDiags); 

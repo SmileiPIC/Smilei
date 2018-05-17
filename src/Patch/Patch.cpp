@@ -128,8 +128,8 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi, DomainDecomposition
     // Create ad hoc interpolators and projectors for envelope
     if (params.Laser_Envelope_model){
         Interp_envelope      = InterpolatorFactory::create_env_interpolator(params, this, params.vecto == "normal");
-        Proj_susceptibility  = ProjectorFactory::create_susceptibility_projector(params, this, params.vecto == "normal"); 
-                                     } // + patchId -> idx_domain_begin (now = ref smpi) 
+        //Proj_susceptibility  = ProjectorFactory::create_susceptibility_projector(params, this, params.vecto == "normal"); 
+    } // + patchId -> idx_domain_begin (now = ref smpi) 
 
     // Initialize the collisions
     vecCollisions = CollisionsFactory::create(params, this, vecSpecies);
@@ -158,7 +158,7 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool w
     // Create ad hoc interpolators and projectors for envelope
     if (params.Laser_Envelope_model){
         Interp_envelope  = InterpolatorFactory::create_env_interpolator(params, this, params.vecto == "normal"); 
-        Proj_susceptibility  = ProjectorFactory::create_susceptibility_projector(params, this, params.vecto == "normal");
+        //Proj_susceptibility  = ProjectorFactory::create_susceptibility_projector(params, this, params.vecto == "normal");
     }
                                                           
     // clone the collisions

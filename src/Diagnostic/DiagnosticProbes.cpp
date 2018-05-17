@@ -590,27 +590,55 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
 
 
        // Probes for envelope
-       if (vecPatches(ipatch)->EMfields->envelope != NULL)
-           { 
+       if (vecPatches(ipatch)->EMfields->envelope != NULL) { 
            unsigned int iPart_MPI = offset_in_MPI[ipatch];
-           Interpolator3D2Order_env* Interpolator_envelope = (static_cast<Interpolator3D2Order_env*>((vecPatches(ipatch)->Interp_envelope)) );
-           double Env_ArLoc_fields,Env_AiLoc_fields,Env_AabsLoc_fields,Env_ChiLoc_fields;
 
-           for (unsigned int ipart=0; ipart<npart; ipart++) {          
-               Interpolator_envelope->interpolate_envelope_and_susceptibility(
-                   vecPatches(ipatch)->EMfields,
-                   vecPatches(ipatch)->probes[probe_n]->particles,
-                   ipart,
-                   &Env_AabsLoc_fields, &Env_ArLoc_fields, &Env_AiLoc_fields, &Env_ChiLoc_fields
-                                                                             );
-           //! here we fill the probe data!!!         
-           (*probesArray)(fieldlocation[10],iPart_MPI)=Env_ArLoc_fields;
-           (*probesArray)(fieldlocation[11],iPart_MPI)=Env_AiLoc_fields;
-           (*probesArray)(fieldlocation[12],iPart_MPI)=Env_AabsLoc_fields;
-           (*probesArray)(fieldlocation[13],iPart_MPI)=Env_ChiLoc_fields;
-           iPart_MPI++;
-                                                           }
-           }    
+           
+           if ( dynamic_cast<Interpolator3D2Order_envV*>((vecPatches(ipatch)->Interp_envelope)) ) {
+               Interpolator3D2Order_envV* Interpolator_envelope = (static_cast<Interpolator3D2Order_envV*>((vecPatches(ipatch)->Interp_envelope)) );
+               double Env_ArLoc_fields,Env_AiLoc_fields,Env_AabsLoc_fields,Env_ChiLoc_fields;
+
+               for (unsigned int ipart=0; ipart<npart; ipart++) {          
+                   int iparticle(ipart); // Compatibility
+                   int false_idx(0);     // Use in classical interp for now, not for probes
+                   Interpolator_envelope->interpolate_envelope_and_susceptibility(
+                                                                                  vecPatches(ipatch)->EMfields,
+                                                                                  vecPatches(ipatch)->probes[probe_n]->particles, smpi, &iparticle,  &false_idx, ithread,
+                                                                                  &Env_AabsLoc_fields, &Env_ArLoc_fields, &Env_AiLoc_fields, &Env_ChiLoc_fields
+                                                                                  );
+                   //! here we fill the probe data!!!         
+                   (*probesArray)(fieldlocation[10],iPart_MPI)=Env_ArLoc_fields;
+                   (*probesArray)(fieldlocation[11],iPart_MPI)=Env_AiLoc_fields;
+                   (*probesArray)(fieldlocation[12],iPart_MPI)=Env_AabsLoc_fields;
+                   (*probesArray)(fieldlocation[13],iPart_MPI)=Env_ChiLoc_fields;
+                   iPart_MPI++;
+               }
+           }
+           else if ( dynamic_cast<Interpolator3D2Order_env*>((vecPatches(ipatch)->Interp_envelope)) ) {
+               Interpolator3D2Order_env* Interpolator_envelope = (static_cast<Interpolator3D2Order_env*>((vecPatches(ipatch)->Interp_envelope)) );
+               double Env_ArLoc_fields,Env_AiLoc_fields,Env_AabsLoc_fields,Env_ChiLoc_fields;
+
+               for (unsigned int ipart=0; ipart<npart; ipart++) {          
+                   int iparticle(ipart); // Compatibility
+                   int false_idx(0);     // Use in classical interp for now, not for probes
+
+                   Interpolator_envelope->interpolate_envelope_and_susceptibility(
+                                                                                  vecPatches(ipatch)->EMfields,
+                                                                                  vecPatches(ipatch)->probes[probe_n]->particles,
+                                                                                  ipart,
+                                                                                  &Env_AabsLoc_fields, &Env_ArLoc_fields, &Env_AiLoc_fields, &Env_ChiLoc_fields
+                                                                                  );
+                   //! here we fill the probe data!!!         
+                   (*probesArray)(fieldlocation[10],iPart_MPI)=Env_ArLoc_fields;
+                   (*probesArray)(fieldlocation[11],iPart_MPI)=Env_AiLoc_fields;
+                   (*probesArray)(fieldlocation[12],iPart_MPI)=Env_AabsLoc_fields;
+                   (*probesArray)(fieldlocation[13],iPart_MPI)=Env_ChiLoc_fields;
+                   iPart_MPI++;
+               }
+           }
+           else
+               ERROR("GOTO Hell");
+       }
 
         
     }

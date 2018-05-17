@@ -44,7 +44,7 @@ class SpeciesV : public Species
 
     //! Method calculating the Particle updated momentum (interpolation, momentum pusher, only particles interacting with envelope)
     void ponderomotive_update_susceptibilty_and_momentum(double time_dual, unsigned int ispec,
-                               ElectroMagn* EMfields, Interpolator* Interp_envelope, Projector* Proj_susceptibility,
+                               ElectroMagn* EMfields, Interpolator* Interp_envelope, 
                                Params &params, bool diag_flag,
                                Patch* patch, SmileiMPI* smpi,
                                std::vector<Diagnostic*>& localDiags) override;

@@ -608,7 +608,7 @@ void SpeciesV::importParticles( Params& params, Patch* patch, Particles& source_
 //   - calculate the new momentum
 // ---------------------------------------------------------------------------------------------------------------------
 void SpeciesV::ponderomotive_update_susceptibilty_and_momentum(double time_dual, unsigned int ispec,
-                           ElectroMagn* EMfields, Interpolator* Interp_envelope, Projector* Proj_susceptibility,
+                           ElectroMagn* EMfields, Interpolator* Interp_envelope, 
                            Params &params, bool diag_flag,
                            Patch* patch, SmileiMPI* smpi,
                            std::vector<Diagnostic*>& localDiags)

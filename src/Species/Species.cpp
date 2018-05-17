@@ -201,6 +201,8 @@ void Species::initOperators(Params& params, Patch* patch)
 
     // projection operator (virtual)
     Proj = ProjectorFactory::create(params, patch, this->vectorized_operators);    // + patchId -> idx_domain_begin (now = ref smpi)
+    if (params.Laser_Envelope_model)
+        Proj_susceptibility  = ProjectorFactory::create_susceptibility_projector(params, patch, params.vecto == "normal");
 
     // Assign the Ionization model (if needed) to Ionize
     //  Needs to be placed after createParticles() because requires the knowledge of max_charge
@@ -1584,7 +1586,7 @@ vector<double> Species::maxwellJuttner(unsigned int npoints, double temperature)
 //   - calculate the new momentum
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::ponderomotive_update_susceptibilty_and_momentum(double time_dual, unsigned int ispec,
-                       ElectroMagn* EMfields, Interpolator* Interp_envelope, Projector* Proj_susceptibility,
+                       ElectroMagn* EMfields, Interpolator* Interp_envelope,
                        Params &params, bool diag_flag,
                        Patch* patch, SmileiMPI* smpi,
                        vector<Diagnostic*>& localDiags){
