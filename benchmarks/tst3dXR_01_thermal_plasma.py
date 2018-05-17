@@ -52,34 +52,34 @@ Main(
 )
 
 
-LoadBalancing(
-    every = 20,
-    cell_load = 1.,
-    frozen_particle_load = 0.1
-)
+#LoadBalancing(
+#    every = 20,
+#    cell_load = 1.,
+#    frozen_particle_load = 0.1
+#)
 
 
-Species(
-    name = "proton",
-    position_initialization = "random",
-    momentum_initialization = "mj",
-    particles_per_cell = 1, 
-    c_part_max = 1.0,
-    mass = 1836.0,
-    charge = 1.0,
-    charge_density = n0,
-    mean_velocity = [0., 0.0, 0.0],
-    temperature = [T],
-    pusher = "boris",
-    boundary_conditions = [
-    	["reflective", "reflective"],
-    	["reflective", "reflective"],
-    ],
-)
+#Species(
+#    name = "proton",
+#    position_initialization = "random",
+#    momentum_initialization = "maxwell-juettner",
+#    particles_per_cell = 1, 
+#    c_part_max = 1.0,
+#    mass = 1836.0,
+#    charge = 1.0,
+#    charge_density = n0,
+#    mean_velocity = [0., 0.0, 0.0],
+#    temperature = [T],
+#    pusher = "boris",
+#    boundary_conditions = [
+#    	["remove", "remove"],
+#    	["remove", "remove"],
+#    ],
+#)
 Species(
     name = "electron",
-    position_initialization = "proton",
-    momentum_initialization = "mj",
+    position_initialization = "random",
+    momentum_initialization = "maxwell-juettner",
     particles_per_cell = 1, 
     c_part_max = 1.0,
     mass = 1.0,
@@ -89,19 +89,20 @@ Species(
     temperature = [T],
     pusher = "boris",
     boundary_conditions = [
-    	["reflective", "reflective"],
-    	["reflective", "reflective"],
+    	["remove", "remove"],
+    	["remove", "remove"],
     ],
 )
 
-Checkpoints(
-    dump_step = 0,
-    dump_minutes = 0.0,
-    exit_after_dump = False,
-)
+#Checkpoints(
+#    dump_step = 0,
+#    dump_minutes = 0.0,
+#    exit_after_dump = False,
+#)
 
 DiagFields(
-    every = 20
+    every = 20,
+    fields = ["Br_m_mode_0", "Br_m_mode_1","Bx_m_mode_0","Bx_m_mode_1","Bt_m_mode_0","Bt_m_mode_1","Bt_mode_0","Bt_mode_1","Bx_mode_0","Bx_mode_1","Br_mode_0","Br_mode_1","Er_mode_0","Er_mode_1","Et_mode_0","Et_mode_1","Ex_mode_0","Ex_mode_1","Rho_mode_0", "Rho_mode_1", "Jx_mode_0", "Jx_mode_1", "Jl_mode_0", "Jl_mode_1", "Jt_mode_0", "Jt_mode_1" ]
 )
 
 #DiagScalar(every = 1)
