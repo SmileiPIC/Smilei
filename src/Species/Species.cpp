@@ -1291,6 +1291,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                                 indexes[2]=k*cell_length[2]+cell_position[2];
                             }
                         }
+                        if (j==0) {MESSAGE("indexes "<< indexes[1] << "cellpos "<< cell_position[1] );}
                         if (position_initialization_on_species==false){
                             initPosition(nPart, iPart, indexes, params);
                         }

@@ -629,7 +629,7 @@ void ElectroMagn3DRZ::computeTotalRhoJ()
         }//END loop on species ispec
         
     }//END loop on mmodes
-    
+    MESSAGE("totalRj");
 } //END computeTotalRhoJ
 
 // ---------------------------------------------------------------------------------------------------------------------

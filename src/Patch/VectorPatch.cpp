@@ -275,7 +275,7 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
              // Per species in global, Attention if output -> Sync / per species fields
             (*this)(ipatch)->EMfields->computeTotalRhoJ();
         }
-    }
+    } MESSAGE ("bug before");
     timers.densities.update();
 
     timers.syncDens.restart();
@@ -287,22 +287,28 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
             SyncVectorPatch::sumRhoJ( params, (*this), imode, timers, itime );
         }
     }
-
+    MESSAGE ("bug after");
     if(diag_flag){
         for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
             if( ! (*this)(0)->vecSpecies[ispec]->particles->is_test ) {
                 update_field_list(ispec);
-                SyncVectorPatch::sumRhoJs( params, (*this), ispec, timers, itime ); // MPI
+                if ( params.geometry != "3drz" ) {
+                    SyncVectorPatch::sumRhoJs( params, (*this), ispec, timers, itime ); // MPI
+                 } 
+                else{
+                    for (unsigned int imode = 0 ; imode < static_cast<ElectroMagn3DRZ*>(patches_[0]->EMfields)->Jl_.size() ; imode++  ) {
+            SyncVectorPatch::sumRhoJs( params, (*this), imode, ispec, timers, itime );
+        }
             }
         }
-    } 
+    }  MESSAGE ("bug sumRhoJ"); 
     if (params.geometry == "3drz") {
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
             ElectroMagn3DRZ* emRZ = static_cast<ElectroMagn3DRZ*>( (*this)(ipatch)->EMfields );
             emRZ->fold_fields(diag_flag);
         }
-    }
+    }  MESSAGE ("bug fold");
     timers.syncDens.update( params.printNow( itime ) );
 } // End sumDensities
 

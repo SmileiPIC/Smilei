@@ -21,6 +21,8 @@ public :
     static void sumRhoJ  ( Params& params, VectorPatch& vecPatches, Timers &timers, int itime );
     //! Densities synchronization per species
     static void sumRhoJs ( Params& params, VectorPatch& vecPatches, int ispec, Timers &timers, int itime );
+    //! Densities synchronization per species
+    static void sumRhoJs ( Params& params, VectorPatch& vecPatches,int imode, int ispec, Timers &timers, int itime );
     //! Densities synchronization per mode
     static void sumRhoJ  ( Params& params, VectorPatch& vecPatches, int imode, Timers &timers, int itime );
     //! Densities synchronization, including envelope
