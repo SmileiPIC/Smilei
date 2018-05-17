@@ -306,7 +306,7 @@ void ElectroMagn3DRZ::restartRhoJ()
 
 void ElectroMagn3DRZ::restartRhoJs()
 {
-    for (unsigned int ispec=0 ; ispec < n_species ; ispec++) {
+    for (unsigned int ispec=0 ; ispec < n_species*nmodes ; ispec++) {
         if( Jl_s [ispec] ) Jl_s [ispec]->put_to(0.);
         if( Jr_s [ispec] ) Jr_s [ispec]->put_to(0.);
         if( Jt_s [ispec] ) Jt_s [ispec]->put_to(0.);
