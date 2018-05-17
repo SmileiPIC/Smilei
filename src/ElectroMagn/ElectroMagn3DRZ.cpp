@@ -37,7 +37,7 @@ isYmax(patch->isYmax())
             Jl_s[imode*n_species+ispec]  = new cField2D(("Jx_" + species_mode_name.str()).c_str(), dimPrim);
             Jr_s[imode*n_species+ispec]  = new cField2D(("Jr_" + species_mode_name.str()).c_str(), dimPrim);
             Jt_s[imode*n_species+ispec]  = new cField2D(("Jt_" + species_mode_name.str()).c_str(), dimPrim);
-            rho_s[imode*n_species+ispec] = new cField2D(("Rho_"+ species_mode_name.str()).c_str(), dimPrim);
+            rho_RZ_s[imode*n_species+ispec] = new cField2D(("Rho_"+ species_mode_name.str()).c_str(), dimPrim);
         }
     }
     
@@ -76,11 +76,11 @@ isYmax(patch->isYmax())
                 else
                     Jt_s[ifield]  = new cField2D(emFields->Jt_s[ifield]->name, dimPrim);
             }
-            if ( emFields->rho_s[ifield] != NULL ) {
-                if ( emFields->rho_s[ifield]->data_ != NULL )
-                    rho_s[ifield] = new cField2D(dimPrim, emFields->rho_s[ifield]->name );
+            if ( emFields->rho_RZ_s[ifield] != NULL ) {
+                if ( emFields->rho_RZ_s[ifield]->data_ != NULL )
+                    rho_RZ_s[ifield] = new cField2D(dimPrim, emFields->rho_RZ_s[ifield]->name );
                 else
-                    rho_s[ifield]  = new cField2D(emFields->rho_s[ifield]->name, dimPrim);
+                    rho_RZ_s[ifield]  = new cField2D(emFields->rho_RZ_s[ifield]->name, dimPrim);
             }
         }
 
@@ -99,12 +99,12 @@ void ElectroMagn3DRZ::initElectroMagn3DRZQuantities(Params &params, Patch* patch
     Jl_s.resize(n_species*nmodes);
     Jr_s.resize(n_species*nmodes);
     Jt_s.resize(n_species*nmodes);
-    rho_s.resize(n_species*nmodes);
+    rho_RZ_s.resize(n_species*nmodes);
     for (unsigned int ispec=0; ispec<n_species*nmodes; ispec++) {
         Jl_s[ispec]  = NULL;
         Jr_s[ispec]  = NULL;
         Jt_s[ispec]  = NULL;
-        rho_s[ispec] = NULL;
+        rho_RZ_s[ispec] = NULL;
     }
 
     // --------------------------------------------------
@@ -263,7 +263,7 @@ void ElectroMagn3DRZ::finishInitialization(int nspecies, Patch* patch)
         allFields.push_back(Jl_s[ispec] );
         allFields.push_back(Jr_s[ispec] );
         allFields.push_back(Jt_s[ispec] );
-        allFields.push_back(rho_s[ispec]);
+        allFields.push_back(rho_RZ_s[ispec]);
     }
 
 }
@@ -310,7 +310,7 @@ void ElectroMagn3DRZ::restartRhoJs()
         if( Jl_s [ispec] ) Jl_s [ispec]->put_to(0.);
         if( Jr_s [ispec] ) Jr_s [ispec]->put_to(0.);
         if( Jt_s [ispec] ) Jt_s [ispec]->put_to(0.);
-        if( rho_s[ispec] ) rho_s[ispec]->put_to(0.);
+        if( rho_RZ_s[ispec] ) rho_RZ_s[ispec]->put_to(0.);
     }
     
     for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
@@ -619,8 +619,8 @@ void ElectroMagn3DRZ::computeTotalRhoJ()
                     for (unsigned int j=0 ; j<nr_p ; j++)
                         (*JtRZ)(i,j) += (*Jt2D_s)(i,j);
             }
-            if( rho_s[ifield] ) {
-                cField2D* rho2D_s  = static_cast<cField2D*>(rho_s[ifield]);
+            if( rho_RZ_s[ifield] ) {
+                cField2D* rho2D_s  = static_cast<cField2D*>(rho_RZ_s[ifield]);
                 for (unsigned int i=0 ; i<nl_p ; i++)
                     for (unsigned int j=0 ; j<nr_p ; j++)
                         (*rhoRZ)(i,j) += (*rho2D_s)(i,j);

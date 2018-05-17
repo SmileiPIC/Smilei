@@ -36,6 +36,7 @@ public:
     std::vector<cField2D*> Jl_s;
     std::vector<cField2D*> Jr_s;
     std::vector<cField2D*> Jt_s;
+    std::vector<cField2D*> rho_RZ_s;
     void restartRhoJ() override;
     void restartRhoJs() override;
 

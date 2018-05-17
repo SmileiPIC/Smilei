@@ -229,6 +229,10 @@ public :
     std::vector<std::vector< Field *>> listJr_;
     std::vector<std::vector< Field *>> listJt_;
     std::vector<std::vector< Field *>> listrho_RZ_;
+    std::vector<std::vector< Field *>> listJls_;
+    std::vector<std::vector< Field *>> listJrs_;
+    std::vector<std::vector< Field *>> listJts_;
+    std::vector<std::vector< Field *>> listrhos_RZ_;
     std::vector<std::vector< Field *>> listEl_;
     std::vector<std::vector< Field *>> listEr_;
     std::vector<std::vector< Field *>> listEt_;
