@@ -119,11 +119,10 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi, OpenPMDparams& op
                 }
             } 
 	
-            for (unsigned int ifield=0 ; ifield<EMfields->rho_s.size(); ifield++) {
-                cField2D * crho_s = static_cast<cField2D*>(EMfields->rho_s[ifield]);
-                if( crho_s->cdata_ == NULL ){
-                    delete EMfields->rho_s[ifield];
-                    EMfields->rho_s[ifield]=NULL;
+            for (unsigned int ifield=0 ; ifield<EMfields->rho_RZ_s.size(); ifield++) {
+                if( EMfields->rho_RZ_s[ifield]->cdata_ == NULL ){
+                    delete EMfields->rho_RZ_s[ifield];
+                    EMfields->rho_RZ_s[ifield]=NULL;
                }
             }
 	
@@ -299,12 +298,12 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
                  } 
                 else{
                     for (unsigned int imode = 0 ; imode < static_cast<ElectroMagn3DRZ*>(patches_[0]->EMfields)->Jl_.size() ; imode++  ) {
-                         SyncVectorPatch::sumRhoJs( params, (*this), imode, ispec, timers, itime );
-                     }
+                        SyncVectorPatch::sumRhoJs( params, (*this), imode, ispec, timers, itime );
+                    }
+                }
             }
-        }
-        }
-    }  MESSAGE ("bug sumRhoJ"); 
+           }  MESSAGE ("bug sumRhoJ"); 
+    }
     if (params.geometry == "3drz") {
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
@@ -1178,6 +1177,10 @@ void VectorPatch::update_field_list()
         listJr_.resize( nmodes ) ;
         listJt_.resize( nmodes ) ;
         listrho_RZ_.resize( nmodes ) ;
+        listJls_.resize( nmodes ) ;
+        listJrs_.resize( nmodes ) ;
+        listJts_.resize( nmodes ) ;
+        listrhos_RZ_.resize( nmodes ) ;
         listEl_.resize( nmodes ) ;
         listEr_.resize( nmodes ) ;
         listEt_.resize( nmodes ) ;
@@ -1400,61 +1403,104 @@ void VectorPatch::update_field_list()
 void VectorPatch::update_field_list(int ispec)
 {
     #pragma omp barrier
-    #pragma omp single
-    {
-        if(patches_[0]->EMfields->Jx_s [ispec]) listJxs_.resize( size() ) ;
-        else
-            listJxs_.clear();
-        if(patches_[0]->EMfields->Jy_s [ispec]) listJys_.resize( size() ) ;
-        else
-            listJys_.clear();
-        if(patches_[0]->EMfields->Jz_s [ispec]) listJzs_.resize( size() ) ;
-        else
-            listJzs_.clear();
-        if(patches_[0]->EMfields->rho_s[ispec]) listrhos_.resize( size() ) ;
-        else
-            listrhos_.clear();
+    if ( dynamic_cast<ElectroMagn3DRZ*>(patches_[0]->EMfields) ) {
 
-        if (patches_[0]->EMfields->envelope != NULL){
-             if(patches_[0]->EMfields->Env_Chi_s[ispec]) listEnv_Chis_.resize( size() ) ;
-             else
-                 listEnv_Chis_.clear();
-                                                    }
+        ElectroMagn3DRZ* emRZ =  static_cast<ElectroMagn3DRZ*>(patches_[0]->EMfields);
+        unsigned int nmodes = emRZ->El_.size();
+        unsigned int n_species = emRZ->n_species;
+        #pragma omp single
+        {
+            for (unsigned int imode=0 ; imode < nmodes ; imode++) {
+                unsigned int ifield = imode*n_species + ispec ;
+                if(emRZ->Jl_s [ifield]) listJls_[imode].resize( size() ) ;
+                else
+                     listJls_[imode].clear();
+                if(emRZ->Jr_s [ifield]) listJrs_[imode].resize( size() ) ;
+                else
+                     listJrs_[imode].clear();
+                if(emRZ->Jt_s [ifield]) listJts_[imode].resize( size() ) ;
+                else
+                     listJts_[imode].clear();
+                if(emRZ->rho_RZ_s [ifield]) listrhos_RZ_[imode].resize( size() ) ;
+                else
+                     listrhos_RZ_[imode].clear();
+            }
+        }
+        for (unsigned int imode=0 ; imode < nmodes ; imode++) {
+            unsigned int ifield = imode*n_species + ispec ;
+            #pragma omp for schedule(static)
+            for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
+                emRZ =  static_cast<ElectroMagn3DRZ*>(patches_[ipatch]->EMfields);
+                if(emRZ->Jl_s [ifield]) {
+                    listJls_[imode][ipatch] = emRZ->Jl_s [ifield];
+                    listJls_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
+                }
+                if(emRZ->Jr_s [ifield]) {
+                    listJrs_[imode][ipatch] = emRZ->Jr_s [ifield];
+                    listJrs_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
+                }
+                if(emRZ->Jt_s [ifield]) {
+                    listJts_[imode][ipatch] = emRZ->Jt_s [ifield];
+                    listJts_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
+                }
+                if(emRZ->rho_RZ_s [ifield]) {
+                    listrhos_RZ_[imode][ipatch] = emRZ->rho_RZ_s [ifield];
+                    listrhos_RZ_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
+                }
+            }
+        }
+
+    } else {
+
+        #pragma omp single
+        {
+            if(patches_[0]->EMfields->Jx_s [ispec]) listJxs_.resize( size() ) ;
+            else
+                listJxs_.clear();
+            if(patches_[0]->EMfields->Jy_s [ispec]) listJys_.resize( size() ) ;
+            else
+                listJys_.clear();
+            if(patches_[0]->EMfields->Jz_s [ispec]) listJzs_.resize( size() ) ;
+            else
+                listJzs_.clear();
+            if(patches_[0]->EMfields->rho_s[ispec]) listrhos_.resize( size() ) ;
+            else
+                listrhos_.clear();
+
+            if (patches_[0]->EMfields->envelope != NULL){
+                 if(patches_[0]->EMfields->Env_Chi_s[ispec]) listEnv_Chis_.resize( size() ) ;
+                 else
+                     listEnv_Chis_.clear();
+            }
+        }
+
+        #pragma omp for schedule(static)
+        for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
+            if(patches_[ipatch]->EMfields->Jx_s [ispec]) {
+                listJxs_ [ipatch] = patches_[ipatch]->EMfields->Jx_s [ispec];
+                listJxs_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
+            }
+            if(patches_[ipatch]->EMfields->Jy_s [ispec]) {
+                listJys_ [ipatch] = patches_[ipatch]->EMfields->Jy_s [ispec];
+                listJys_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
+            }
+            if(patches_[ipatch]->EMfields->Jz_s [ispec]) {
+                listJzs_ [ipatch] = patches_[ipatch]->EMfields->Jz_s [ispec];
+                listJzs_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
+            }
+            if(patches_[ipatch]->EMfields->rho_s[ispec]) {
+                listrhos_[ipatch] = patches_[ipatch]->EMfields->rho_s[ispec];
+                listrhos_[ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
+            }
+
+            if (patches_[0]->EMfields->envelope != NULL){
+                 if(patches_[ipatch]->EMfields->Env_Chi_s[ispec]) {
+                     listEnv_Chis_[ipatch] = patches_[ipatch]->EMfields->Env_Chi_s[ispec];
+                     listEnv_Chis_[ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
+                 }
+            }
+        }
     }
-
-    #pragma omp for schedule(static)
-    for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
-        if(patches_[ipatch]->EMfields->Jx_s [ispec]) {
-            listJxs_ [ipatch] = patches_[ipatch]->EMfields->Jx_s [ispec];
-            listJxs_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
-        }
-        if(patches_[ipatch]->EMfields->Jy_s [ispec]) {
-            listJys_ [ipatch] = patches_[ipatch]->EMfields->Jy_s [ispec];
-            listJys_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
-        }
-        if(patches_[ipatch]->EMfields->Jz_s [ispec]) {
-            listJzs_ [ipatch] = patches_[ipatch]->EMfields->Jz_s [ispec];
-            listJzs_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
-        }
-        if(patches_[ipatch]->EMfields->rho_s[ispec]) {
-            listrhos_[ipatch] = patches_[ipatch]->EMfields->rho_s[ispec];
-            listrhos_[ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
-        }
-
-        if (patches_[0]->EMfields->envelope != NULL){
-             if(patches_[ipatch]->EMfields->Env_Chi_s[ispec]) {
-                 listEnv_Chis_[ipatch] = patches_[ipatch]->EMfields->Env_Chi_s[ispec];
-                 listEnv_Chis_[ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
-             }
-                                                    }
-
-
-
-    }
-
-
-
-
 }
 
 

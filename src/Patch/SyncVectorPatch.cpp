@@ -139,11 +139,11 @@ void SyncVectorPatch::sumRhoJs(Params& params, VectorPatch& vecPatches, int ispe
 void SyncVectorPatch::sumRhoJs(Params& params, VectorPatch& vecPatches,int imode, int ispec , Timers &timers, int itime)
 {
     // Sum Jx_s(ispec), Jy_s(ispec) and Jz_s(ispec)
-    if(vecPatches.listJxs_.size()>0) SyncVectorPatch::sumComplex( vecPatches.listJxs_ , vecPatches, timers, itime  );
-    if(vecPatches.listJys_.size()>0) SyncVectorPatch::sumComplex( vecPatches.listJys_ , vecPatches, timers, itime  );
-    if(vecPatches.listJzs_ .size()>0) SyncVectorPatch::sumComplex( vecPatches.listJzs_, vecPatches, timers, itime  );
+    if(vecPatches.listJls_[imode].size()>0) SyncVectorPatch::sumComplex( vecPatches.listJls_[imode] , vecPatches, timers, itime  );
+    if(vecPatches.listJrs_[imode].size()>0) SyncVectorPatch::sumComplex( vecPatches.listJrs_[imode] , vecPatches, timers, itime  );
+    if(vecPatches.listJts_[imode] .size()>0) SyncVectorPatch::sumComplex( vecPatches.listJts_[imode], vecPatches, timers, itime  );
     // Sum rho_s(ispec)
-    if(vecPatches.listrhos_.size()>0) SyncVectorPatch::sumComplex( vecPatches.listrhos_, vecPatches, timers, itime  );
+    if(vecPatches.listrhos_RZ_[imode].size()>0) SyncVectorPatch::sumComplex( vecPatches.listrhos_RZ_[imode], vecPatches, timers, itime  );
 }
 
 // fields : contains a single field component for all patches of vecPatches
