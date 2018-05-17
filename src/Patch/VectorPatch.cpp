@@ -76,25 +76,27 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi, OpenPMDparams& op
                     (*this)(ipatch)->EMfields->Jx_s[ifield]=NULL;
                 }
 	        
-             } 
+             } MESSAGE("BUG IN DIAG 2");
             for (unsigned int ifield=0 ; ifield<(*this)(ipatch)->EMfields->Jy_s.size(); ifield++) {
                 if( (*this)(ipatch)->EMfields->Jy_s[ifield]->data_ == NULL ){
                     delete (*this)(ipatch)->EMfields->Jy_s[ifield];
                     (*this)(ipatch)->EMfields->Jy_s[ifield]=NULL;
                 }
-            } 
+            } MESSAGE("BUG IN DIAG 1");
             for (unsigned int ifield=0 ; ifield<(*this)(ipatch)->EMfields->Jz_s.size(); ifield++) {
                 if( (*this)(ipatch)->EMfields->Jz_s[ifield]->data_ == NULL ){
                     delete (*this)(ipatch)->EMfields->Jz_s[ifield];
                     (*this)(ipatch)->EMfields->Jz_s[ifield]=NULL;
                 }
-            } 
+            } MESSAGE("BUG IN DIAG 0"); 
             for (unsigned int ifield=0 ; ifield<(*this)(ipatch)->EMfields->rho_s.size(); ifield++) {
                 if( (*this)(ipatch)->EMfields->rho_s[ifield]->data_ == NULL ){
                     delete (*this)(ipatch)->EMfields->rho_s[ifield];
                     (*this)(ipatch)->EMfields->rho_s[ifield]=NULL;
                 }
             }
+
+           MESSAGE("BUG IN DIAG ");
 	}
         else{
             ElectroMagn3DRZ* EMfields = static_cast<ElectroMagn3DRZ*>((*this)(ipatch)->EMfields );
@@ -297,9 +299,10 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
                  } 
                 else{
                     for (unsigned int imode = 0 ; imode < static_cast<ElectroMagn3DRZ*>(patches_[0]->EMfields)->Jl_.size() ; imode++  ) {
-            SyncVectorPatch::sumRhoJs( params, (*this), imode, ispec, timers, itime );
-        }
+                         SyncVectorPatch::sumRhoJs( params, (*this), imode, ispec, timers, itime );
+                     }
             }
+        }
         }
     }  MESSAGE ("bug sumRhoJ"); 
     if (params.geometry == "3drz") {
