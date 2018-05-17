@@ -595,10 +595,12 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             jloc = j+jpo;    
             linindex = iloc*b_dim[1]+jloc;
          if (jloc+ j_domain_begin != 0){
-                rho [linindex] += charge_weight * Wz[i][j] /abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
+                //rho [linindex] += charge_weight * Wz[i][j] /abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
+                rho [linindex] += charge_weight * Sx1[i]*Sy1[j] /abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
                 }
             else {
-                rho [linindex] += charge_weight* Wz[i][j] * 8./dr; // iloc = (i+ipo)*b_dim[1];
+                //rho [linindex] += charge_weight* Wz[i][j] * 8./dr; // iloc = (i+ipo)*b_dim[1];
+                rho [linindex] += charge_weight*8.* Sx1[i]*Sy1[j] /dr; // iloc = (i+ipo)*b_dim[1]
                 //rho [linindex+1] += rho [linindex-1];
                 //rho [linindex+2] += rho [linindex-2];
                 //MESSAGE ("Sx1 "<< Sx1[i] << "Sy1 "<< Sy1[i]);
