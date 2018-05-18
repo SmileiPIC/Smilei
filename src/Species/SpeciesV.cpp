@@ -668,7 +668,7 @@ void SpeciesV::ponderomotive_update_position_and_currents(double time_dual, unsi
    // -------------------------------
    if (time_dual>time_frozen) { // moving particle
 
-       smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
+       smpi->dynamics_resize(ithread, nDim_particle, bmax.back(), params.geometry=="3drz");
  
 //        // Interpolate the fields at the particle position
 //        for (unsigned int scell = 0 ; scell < bmin.size() ; scell++)
