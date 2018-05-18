@@ -213,7 +213,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
                 jloc = j+jpo;
                 linindex = iloc*b_dim[1]+jloc;
                 if (jloc+ j_domain_begin == 0){
-                    Jt [linindex] += Jz_p[i][j]*6. /dr; // iloc = (i+ipo)*b_dim[1];
+                    Jt [linindex] = 0. ; // Jz_p[i][j]*6. /dr; // iloc = (i+ipo)*b_dim[1];
                 }
                 else {
                     Jt [linindex] += Jz_p[i][j] /abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
@@ -245,7 +245,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // arrays used for the Esirkepov projection method
     double  Sx0[5], Sx1[5], Sy0[5], Sy1[5], DSx[5], DSy[5];
     complex<double>  Wx[5][5], Wy[5][5], Wz[5][5], Jx_p[5][5], Jy_p[5][5], Jz_p[5][5];
-    complex<double> e_delta, e_delta_inv, e_theta,e_theta_old, e_bar;
+    complex<double> e_delta, e_delta_inv, e_theta,e_theta_old, e_bar, C_m;
  
      for (unsigned int i=0; i<5; i++) {
         Sx1[i] = 0.;
@@ -363,6 +363,11 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     jpo -= 2;
     
     int iloc, jloc, linindex;
+
+    C_m = 1.;
+    for (unsigned int i=0; i<imode; i++){
+    C_m *= e_theta;
+    }
     
     // Jl^(d,p)
     for (unsigned int i=0 ; i<5 ; i++) {
@@ -371,12 +376,12 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             jloc = j+jpo;
             linindex = iloc*b_dim[1]+jloc;
             if (jloc+ j_domain_begin == 0){
-                Jl [linindex] += Jx_p[i][j]*6. /dr; // iloc = (i+ipo)*b_dim[1];
+                Jl [linindex] += C_m * Jx_p[i][j]*6. /dr; // iloc = (i+ipo)*b_dim[1];
                 //Jl [linindex+1] += Jl [linindex-1];
                 //Jl [linindex+2] += Jl [linindex-2];
                 }
             else {
-                Jl [linindex] += Jx_p[i][j] /abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
+                Jl [linindex] += C_m * Jx_p[i][j] /abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
                 }
            
             //MESSAGE("Jlm "<< Jl [linindex]);    
@@ -389,7 +394,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
             linindex = iloc*(b_dim[1]+1)+jloc;
-            Jr [linindex] += Jy_p[i][j] /abs((jloc+ j_domain_begin-0.5)*dr); //
+            Jr [linindex] += C_m * Jy_p[i][j] /abs((jloc+ j_domain_begin-0.5)*dr); //
             //MESSAGE("Jrm "<< Jr [linindex]);    
         }
         //if (jloc+j_domain_begin == 0){
@@ -408,7 +413,12 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
             linindex = iloc*b_dim[1]+jloc;
-            Jt [linindex] += Jz_p[i][j]; // iloc = (i+ipo)*b_dim[1];
+            if (jloc+j_domain_begin ==0 ){
+                Jt [linindex] = 0.;
+            }
+            else {
+                Jt [linindex] += Jz_p[i][j]; // iloc = (i+ipo)*b_dim[1];
+            }
             //MESSAGE("Jtm "<< Jt [linindex]);    
         }
      //   if (jloc+j_domain_begin == 0){
@@ -581,7 +591,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             jloc = j+jpo;
             linindex = iloc*b_dim[1]+jloc;
             if (jloc+ j_domain_begin == 0){
-                Jt [linindex] += Jz_p[i][j]*6. /dr; // iloc = (i+ipo)*b_dim[1];
+                Jt [linindex] = 0.; // iloc = (i+ipo)*b_dim[1];
                 }
             else {
                 Jt [linindex] += Jz_p[i][j] /abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
@@ -746,6 +756,11 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     jpo -= 2;
     
     int iloc, jloc, linindex;
+
+    C_m = 1.;
+    for (unsigned int i=0; i<imode; i++){
+    C_m *= e_theta;
+    }
     
     // Jl^(d,p)
     for (unsigned int i=0 ; i<5 ; i++) {
@@ -754,12 +769,12 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             jloc = j+jpo;
             linindex = iloc*b_dim[1]+jloc;
             if (jloc+ j_domain_begin == 0){
-                Jl [linindex] += Jx_p[i][j]*6. /dr; // iloc = (i+ipo)*b_dim[1];
+                Jl [linindex] += C_m * Jx_p[i][j]*6. /dr; // iloc = (i+ipo)*b_dim[1];
                 //Jl [linindex+1] += Jl [linindex-1];
                 //Jl [linindex+2] += Jl [linindex-2];
                 }
             else {
-                Jl [linindex] += Jx_p[i][j] /abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
+                Jl [linindex] += C_m * Jx_p[i][j] /abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
                 }
             }
     }//i
@@ -770,7 +785,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
             linindex = iloc*(b_dim[1]+1)+jloc;
-            Jr [linindex] += Jy_p[i][j] /abs((jloc+ j_domain_begin-0.5)*dr); //
+            Jr [linindex] += C_m * Jy_p[i][j] /abs((jloc+ j_domain_begin-0.5)*dr); //
         //if (jloc+j_domain_begin == 0){
         //    Jr [linindex+1] += Jr [linindex];
         //    Jr [linindex+2] += Jr [linindex-1];
@@ -785,7 +800,11 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
             linindex = iloc*b_dim[1]+jloc;
-            Jt [linindex] += Jz_p[i][j]; // iloc = (i+ipo)*b_dim[1];
+            if (jloc+j_domain_begin ==0){
+                Jt [linindex] =0;
+            } else{
+                Jt [linindex] += Jz_p[i][j]; // iloc = (i+ipo)*b_dim[1];
+            }
        // if (jloc+j_domain_begin == 0){
        //     Jt [linindex+1] += Jt [linindex-1];
        //     Jt [linindex+2] += Jt [linindex-2];
@@ -796,10 +815,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         //}
             }
     }//i
-    C_m = 1.;
-    for (unsigned int i=0; i<imode; i++){
-    C_m *= e_theta;
-    }
+
     //MESSAGE("Cm "<< C_m); 
      // Rho^(p,p)
     for (unsigned int i=0 ; i<5 ; i++) {
@@ -883,7 +899,7 @@ void ProjectorRZ2Order::operator() (double* rho, Particles &particles, unsigned 
         iloc = (i+ip)*b_dim[1]+jp;
         for (unsigned int j=0 ; j<5 ; j++) {
             if (j+jp+2* j_domain_begin == 0){
-                rho [iloc+j] += charge_weight*8.* Sx1[i]*Sy1[j] /dr; // iloc = (i+ipo)*b_dim[1];
+                rho [iloc+j] += charge_weight*6.* Sx1[i]*Sy1[j] /dr; // iloc = (i+ipo)*b_dim[1];
                 //rho [iloc+j+1] += rho [iloc+j-1];
                 //rho [iloc+j+2] += rho [iloc+j-2];
          }
