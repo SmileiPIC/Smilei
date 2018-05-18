@@ -688,7 +688,7 @@ void Interpolator3D2Order_envV::interpolate_envelope_and_susceptibility(ElectroM
     double* coeffzp = &(coeff[2][0][1]);
     double* coeffzd = &(coeff[2][1][1]);
 
-    // Interpolation of Env_A_abs^(p,p,p)
+    // Interpolation of Env_A_abs^(p,p,p) (absolute value of envelope A)
     double interp_res = 0.;
     for (int iloc=-1 ; iloc<2 ; iloc++) {
         for (int jloc=-1 ; jloc<2 ; jloc++) {
@@ -699,7 +699,7 @@ void Interpolator3D2Order_envV::interpolate_envelope_and_susceptibility(ElectroM
     }
     *Env_A_abs_Loc= interp_res;
 
-    // Interpolation of Env_A_abs^(p,p,p)
+    // Interpolation of Env_Ar^(p,p,p) (real part of envelope A)
     interp_res = 0.;
     for (int iloc=-1 ; iloc<2 ; iloc++) {
         for (int jloc=-1 ; jloc<2 ; jloc++) {
@@ -710,7 +710,7 @@ void Interpolator3D2Order_envV::interpolate_envelope_and_susceptibility(ElectroM
     }
     *Env_Ar_Loc= interp_res;
 
-    // Interpolation of Env_A_abs^(p,p,p)
+    // Interpolation of Env_Ai^(p,p,p) (imaginary part of envelope A)
     interp_res = 0.;
     for (int iloc=-1 ; iloc<2 ; iloc++) {
         for (int jloc=-1 ; jloc<2 ; jloc++) {
@@ -721,7 +721,7 @@ void Interpolator3D2Order_envV::interpolate_envelope_and_susceptibility(ElectroM
     }
     *Env_Ai_Loc= interp_res;
 
-    // Interpolation of Env_A_abs^(p,p,p)
+    // Interpolation of Env_Chi^(p,p,p)
     interp_res = 0.;
     for (int iloc=-1 ; iloc<2 ; iloc++) {
         for (int jloc=-1 ; jloc<2 ; jloc++) {
