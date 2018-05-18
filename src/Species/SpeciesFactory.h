@@ -417,13 +417,14 @@ public:
 	} else if (params.geometry == "3drz"){
             if( thisSpecies->boundary_conditions.size() == 0 ) {
                 ERROR("For species '" << species_name << "', boundary_conditions cannot be empty");
-		    } else if( thisSpecies->boundary_conditions.size() == 1 ) {
-        	        while( thisSpecies->boundary_conditions.size() < params.nDim_particle )
-                	    thisSpecies->boundary_conditions.push_back( thisSpecies->boundary_conditions[0] );
-        	    } else if( thisSpecies->boundary_conditions.size() != 2 ) {
-            	    ERROR("For RZ geometry boundary_conditions must not be the same size as the number of dimensions it is applied only for Rmax Xmin and Xmax");
-        	    }	
-
+	    } else if( thisSpecies->boundary_conditions.size() == 1 ) {
+        	while( thisSpecies->boundary_conditions.size() < params.nDim_particle )
+                    thisSpecies->boundary_conditions.push_back( thisSpecies->boundary_conditions[0] );
+            } else if( thisSpecies->boundary_conditions.size() != 2 ) {
+            	ERROR("For RZ geometry boundary_conditions must not be the same size as the number of dimensions it is applied only for Rmax Xmin and Xmax");
+            }	
+            if ( (thisSpecies->boundary_conditions[1][1] != "remove") &&  (thisSpecies->boundary_conditions[1][1] != "stop"))
+                ERROR(" In 3dRZ geometry particle boundary conditions supported in Rmax are 'remove' and 'stop' ");
 	}
         bool has_thermalize = false;
 	if (params.geometry != "3drz"){
