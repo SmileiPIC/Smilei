@@ -67,16 +67,12 @@ namelist("")
 {
 
     MESSAGE("HDF5 version "<<H5_VERS_MAJOR << "." << H5_VERS_MINOR << "." << H5_VERS_RELEASE);
-
-    if((((H5_VERS_MAJOR==1) && (H5_VERS_MINOR==8) && (H5_VERS_RELEASE>16)) || \
-        ((H5_VERS_MAJOR==1) && (H5_VERS_MINOR>8)) || \
-        (H5_VERS_MAJOR>1))) {
-        WARNING("Smilei suggests using HDF5 version 1.8.16");
-        WARNING("Newer version are not tested and may cause the code to behave incorrectly");
-        WARNING("See http://hdf-forum.184993.n3.nabble.com/Segmentation-fault-using-H5Dset-extent-in-parallel-td4029082.html");
-    }
-
-
+    
+    if(  (H5_VERS_MAJOR< 1) ||
+       ( (H5_VERS_MAJOR==1) && (H5_VERS_MINOR< 8) ) ||
+       ( (H5_VERS_MAJOR==1) && (H5_VERS_MINOR==8) && (H5_VERS_RELEASE<16) ) )
+        WARNING("Smilei suggests using HDF5 version 1.8.16 or newer");
+    
     if (namelistsFiles.size()==0) ERROR("No namelists given!");
 
     //string commandLineStr("");
@@ -91,14 +87,7 @@ namelist("")
     // https://github.com/numpy/numpy/issues/5856
     // We basically call the command numpy.seterr(all="ignore")
     PyObject* numpy = PyImport_ImportModule("numpy");
-    PyObject* seterr = PyObject_GetAttrString(numpy, "seterr");
-    PyObject* args = PyTuple_New(0);
-    PyObject* kwargs = Py_BuildValue("{s:s}", "all", "ignore");
-    PyObject* ret = PyObject_Call(seterr, args, kwargs);
-    Py_DECREF(ret);
-    Py_DECREF(args);
-    Py_DECREF(kwargs);
-    Py_DECREF(seterr);
+    Py_DECREF(PyObject_CallMethod(numpy, "seterr", "s", "ignore"));
     Py_DECREF(numpy);
 #endif
 
@@ -330,11 +319,11 @@ namelist("")
         for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
             std::vector<double> temp_k; 
             
-            for(  int iiDim=0; iiDim<iDim; iiDim++ ) temp_k.push_back(0.);
+            for( unsigned int iiDim=0; iiDim<iDim; iiDim++ ) temp_k.push_back(0.);
             temp_k.push_back(1.);
-            for(  int iiDim=iDim+1; iiDim<nDim_field; iiDim++ ) temp_k.push_back(0.);
+            for( unsigned int iiDim=iDim+1; iiDim<nDim_field; iiDim++ ) temp_k.push_back(0.);
             EM_BCs_k.push_back(temp_k);
-            for(  int iiDim=0; iiDim<nDim_field; iiDim++ ) temp_k[iiDim] *= -1. ;
+            for( unsigned int iiDim=0; iiDim<nDim_field; iiDim++ ) temp_k[iiDim] *= -1. ;
             EM_BCs_k.push_back(temp_k);
         }
     }
@@ -352,6 +341,8 @@ namelist("")
             ERROR("EM_boundary_conditions_k must have a non zero normal component along dimension "<<"-+"[iDim%2]<<"012"[iDim/2] );
         
     }
+    save_magnectic_fields_for_SM = true;
+    PyTools::extract("save_magnectic_fields_for_SM", save_magnectic_fields_for_SM, "Main");
 
     // -----------------------------------
     // MAXWELL SOLVERS & FILTERING OPTIONS
@@ -364,6 +355,10 @@ namelist("")
     PyTools::extract("solve_poisson", solve_poisson, "Main");
     PyTools::extract("poisson_max_iteration", poisson_max_iteration, "Main");
     PyTools::extract("poisson_max_error", poisson_max_error, "Main");
+    // Relativistic Poisson Solver
+    PyTools::extract("solve_relativistic_poisson", solve_relativistic_poisson, "Main");
+    PyTools::extract("relativistic_poisson_max_iteration", relativistic_poisson_max_iteration, "Main");
+    PyTools::extract("relativistic_poisson_max_error", relativistic_poisson_max_error, "Main");
 
     // PXR parameters
     PyTools::extract("is_spectral", is_spectral, "Main");
@@ -475,6 +470,8 @@ namelist("")
             if( (number_of_patches[iDim] & (number_of_patches[iDim]-1)) != 0)
                 ERROR("Number of patches in each direction must be a power of 2");
     }
+    else
+        PyTools::extract("patch_orientation", patch_orientation, "Main");
 
 
     if( PyTools::nComponents("LoadBalancing")>0 ) {
@@ -734,13 +731,14 @@ void Params::print_init()
         MESSAGE(1,"dimension " << i << " - (Spatial resolution, Grid length) : (" << res_space[i] << ", " << grid_length[i] << ")");
         MESSAGE(1,"            - (Number of cells,    Cell length)  : " << "(" << n_space_global[i] << ", " << cell_length[i] << ")");
         MESSAGE(1,"            - Electromagnetic boundary conditions: " << "(" << EM_BCs[i][0] << ", " << EM_BCs[i][1] << ")");
-        if (open_boundaries)
+        if (open_boundaries){
             cout << setprecision(2);
             cout << "                     - Electromagnetic boundary conditions k    : " << "( [" << EM_BCs_k[2*i][0] ;
             for ( unsigned int ii=1 ; ii<grid_length.size() ; ii++) cout << ", " << EM_BCs_k[2*i][ii] ;
             cout << "] , [" << EM_BCs_k[2*i+1][0] ;
             for ( unsigned int ii=1 ; ii<grid_length.size() ; ii++) cout << ", " << EM_BCs_k[2*i+1][ii] ;
             cout << "] )" << endl;
+        }
     }
 
     if( currentFilter_passes > 0 )

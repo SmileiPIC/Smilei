@@ -44,11 +44,19 @@ class SpeciesV : public Species
                           std::vector<Diagnostic*>& localDiags) override;
 
     //! Method calculating the Particle updated momentum (interpolation, momentum pusher, only particles interacting with envelope)
-    void ponderomotive_momentum_update(double time_dual, unsigned int ispec,
-                       ElectroMagn* EMfields, Interpolator* Interp,
-                       Params &params, bool diag_flag,
-                       Patch* patch, SmileiMPI* smpi,
-                       std::vector<Diagnostic*>& localDiags);
+    void ponderomotive_update_susceptibilty_and_momentum(double time_dual, unsigned int ispec,
+                               ElectroMagn* EMfields, Interpolator* Interp_envelope, Projector* Proj_susceptibility,
+                               Params &params, bool diag_flag,
+                               Patch* patch, SmileiMPI* smpi,
+                               std::vector<Diagnostic*>& localDiags) override;
+
+    //! Method calculating the Particle updated position (interpolation, position pusher, only particles interacting with envelope)
+    // and projecting charge density and thus current density (through Esirkepov method) for Maxwell's Equations
+    void ponderomotive_update_position_and_currents(double time_dual, unsigned int ispec,
+                               ElectroMagn* EMfields, Interpolator* Interp_envelope, Projector* Proj,
+                               Params &params, bool diag_flag, PartWalls* partWalls,
+                               Patch* patch, SmileiMPI* smpi,
+                               std::vector<Diagnostic*>& localDiags) override;
 
     //! Method calculating the Particle charge on the grid (projection)
     void computeCharge(unsigned int ispec, ElectroMagn* EMfields, Projector* Proj) override;

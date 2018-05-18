@@ -144,10 +144,10 @@ void SmileiMPI::init( Params& params, DomainDecomposition* domain_decomposition 
     if (params.geometry == "3drz") dynamics_thetaold.resize(1); 
 
     if ( n_envlaser > 0 ) {
-        dynamics_GradPHI.resize(1);
-        dynamics_GradPHIold.resize(1);
-        dynamics_PHI.resize(1);
-        dynamics_PHIold.resize(1);
+        dynamics_GradPHIpart.resize(1);
+        dynamics_GradPHIoldpart.resize(1);
+        dynamics_PHIpart.resize(1);
+        dynamics_PHIoldpart.resize(1);
     }
 #endif
 
@@ -742,10 +742,20 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& req
     isend( EM->By_m, to, mpi_tag+tag, requests[tag]); tag++;
     isend( EM->Bz_m, to, mpi_tag+tag, requests[tag]); tag++;
 
-    //if laser envelope is present, send it
+    // if laser envelope is present, send it
+    // send also Phi, Phi_old, GradPhi, GradPhiold
     if (EM->envelope!=NULL){
         isendComplex( EM->envelope->A_, to, mpi_tag+tag, requests[tag]); tag++;
         isendComplex( EM->envelope->A0_, to, mpi_tag+tag, requests[tag]); tag++;
+        isend( EM->envelope->Phi_, to, mpi_tag+tag, requests[tag]); tag++;
+        isend( EM->envelope->Phiold_, to, mpi_tag+tag, requests[tag]); tag++;
+        isend( EM->envelope->GradPhix_, to, mpi_tag+tag, requests[tag]); tag++;
+        isend( EM->envelope->GradPhixold_, to, mpi_tag+tag, requests[tag]); tag++;
+        isend( EM->envelope->GradPhiy_, to, mpi_tag+tag, requests[tag]); tag++;
+        isend( EM->envelope->GradPhiyold_, to, mpi_tag+tag, requests[tag]); tag++;
+        isend( EM->envelope->GradPhiz_, to, mpi_tag+tag, requests[tag]); tag++;
+        isend( EM->envelope->GradPhizold_, to, mpi_tag+tag, requests[tag]); tag++;
+        
                            }
 
     for( unsigned int idiag=0; idiag<EM->allFields_avg.size(); idiag++) {
@@ -896,6 +906,14 @@ void SmileiMPI::recv(ElectroMagn* EM, int from, int tag)
     if (EM->envelope!=NULL){
         recvComplex( EM->envelope->A_ , from, tag ); tag++;
         recvComplex( EM->envelope->A0_, from, tag ); tag++;
+        recv( EM->envelope->Phi_ , from, tag ); tag++;
+        recv( EM->envelope->Phiold_ , from, tag ); tag++;
+        recv( EM->envelope->GradPhix_ , from, tag ); tag++;
+        recv( EM->envelope->GradPhixold_ , from, tag ); tag++;
+        recv( EM->envelope->GradPhiy_ , from, tag ); tag++;
+        recv( EM->envelope->GradPhiyold_ , from, tag ); tag++;
+        recv( EM->envelope->GradPhiz_ , from, tag ); tag++;
+        recv( EM->envelope->GradPhizold_ , from, tag ); tag++;
                            }
 
     for( unsigned int idiag=0; idiag<EM->allFields_avg.size(); idiag++) {

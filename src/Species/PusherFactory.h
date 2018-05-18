@@ -102,6 +102,11 @@ public:
             }
         }
 
+        if (species->ponderomotive_dynamics){
+            if (species->pusher != "ponderomotive_boris"){
+                ERROR( "For species " << species->name << " the flag ponderomotive_dynamics is True - the only pusher available to interact with the envelope is ponderomotive_boris");
+                }
+            }
         return Push;
     }
 

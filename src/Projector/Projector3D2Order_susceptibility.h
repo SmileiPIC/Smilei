@@ -23,11 +23,10 @@ public:
     //!Wrapper
     void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec) override final;
 
-    // projects susceptibility
-    //void project_susceptibility(double* Chi_envelope, Particles &particles, unsigned int bin, std::vector<unsigned int> &b_dim, SmileiMPI* smpi, int ithread,int istart, int iend, double species_mass);
-    void project_susceptibility(double* Chi_envelope, Particles &particles, unsigned int bin, std::vector<unsigned int> &b_dim, SmileiMPI* smpi, int ithread,int istart, int iend, double species_mass);
+    // projects susceptibility  
+    void project_susceptibility(double* Chi_envelope, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim, SmileiMPI* smpi, int ithread, double species_mass);
 
-    double dt, dts2, dts4, one_over_2;
+    double dt, dts2, dts4;
     
 
 private:

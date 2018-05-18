@@ -1,8 +1,8 @@
-/*! @file PusherBoris.h
+/*! @file PusherPonderomotivePositionBoris.h
 
- @brief PusherBoris.h  generic class for the particle pusher of Boris adapted for envelope model. Only pushes momentum, not their position
+generic class for the particle pusher of Boris adapted for envelope model. Only pushes position, not their momentum
 
- @date 2013-02-15
+ 
  */
 
 #ifndef PUSHERPONDEROMOTIVEPOSITIONBORIS_H

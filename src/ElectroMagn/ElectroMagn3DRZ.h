@@ -43,21 +43,36 @@ public:
     void initPoisson(Patch *patch);
     double compute_r();
     void compute_Ap(Patch *patch);
+    void compute_Ap_relativistic_Poisson(Patch* patch, double gamma_mean) {;}
     //Access to Ap
     double compute_pAp();
     void update_pand_r(double r_dot_r, double p_dot_Ap);
     void update_p(double rnew_dot_rnew, double r_dot_r);
     void initE(Patch *patch);
+    void initE_relativistic_Poisson(Patch *patch, double gamma_mean) {;}
+    void initB_relativistic_Poisson(Patch *patch, double gamma_mean) {;}
+    void center_fields_from_relativistic_Poisson(Patch *patch) {;}
+    void initRelativisticPoissonFields(Patch *patch) {;}
+    void sum_rel_fields_to_em_fields(Patch *patch) {;}
     void centeringE( std::vector<double> E_Add );
+    void centeringErel( std::vector<double> E_Add ) {;}
 
     double getEx_Xmin() { return 0.; }
     double getEx_Xmax() { return 0.; }
+
+    double getExrel_Xmin() { return 0.; }
+    double getExrel_Xmax() { return 0.; }
 
     double getEx_XminYmax() { return 0.; }
     double getEy_XminYmax() { return 0.; }
     double getEx_XmaxYmin() { return 0.; }
     double getEy_XmaxYmin() { return 0.; }
   
+    double getExrel_XminYmax() { return 0.; }
+    double getEyrel_XminYmax() { return 0.; }
+    double getExrel_XmaxYmin() { return 0.; }
+    double getEyrel_XmaxYmin() { return 0.; }
+
     //! Total number of modes in Fourier poloidal decomposition.
     const unsigned int nmodes = 2;
 
@@ -123,8 +138,6 @@ public:
     void computePoynting();
 
     //! Method used to impose external fields
-    void applyExternalFields(Patch* patch) override;
-    //
     void applyExternalField(Field*, Profile*, Patch*);
     
     void initAntennas(Patch* patch);

@@ -166,6 +166,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     //Creation of new Patches
     for (unsigned int j = 0; j < patch_to_be_created[my_thread].size();  j++){
         //create patch without particle.
+        #pragma omp critical
         mypatch = PatchesFactory::clone(vecPatches(0),params, smpi, vecPatches.domain_decomposition_, h0 + patch_to_be_created[my_thread][j], n_moved, false );
 
         // Do not receive Xmin condition

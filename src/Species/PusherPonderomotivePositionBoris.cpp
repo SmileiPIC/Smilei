@@ -29,7 +29,6 @@ void PusherPonderomotivePositionBoris::operator() (Particles &particles, SmileiM
     std::vector<double> *Phioldpart     = &(smpi->dynamics_PHIoldpart[ithread]);
     std::vector<double> *GradPhioldpart = &(smpi->dynamics_GradPHIoldpart[ithread]);
     
-    double one_over_2 = 1./2.;
     double charge_sq_over_mass_dts4,charge_over_mass_sq;
     double inv_gamma0,inv_gamma_ponderomotive;
     double pxsm, pysm, pzsm;
@@ -60,7 +59,7 @@ void PusherPonderomotivePositionBoris::operator() (Particles &particles, SmileiM
     double* GradPhioldz = &( (*GradPhioldpart)[2*nparts] );
     
     #pragma omp simd
-    for (int ipart=istart ; ipart<iend; ipart++ ) {
+    for (int ipart=istart ; ipart<iend; ipart++ ) { // begin loop on particles
     
         // ! ponderomotive force is proportional to charge squared and the field is divided by 4 instead of 2
         charge_sq_over_mass_dts4 = (double)(charge[ipart])*(double)(charge[ipart])*one_over_mass_*dts4;         
@@ -68,12 +67,12 @@ void PusherPonderomotivePositionBoris::operator() (Particles &particles, SmileiM
         charge_over_mass_sq      = (double)(charge[ipart])*one_over_mass_*(charge[ipart])*one_over_mass_;
 
         // compute initial ponderomotive gamma (more precisely, its inverse) 
-        inv_gamma0 = 1./sqrt( 1. + momentum[0][ipart]*momentum[0][ipart] + momentum[1][ipart]*momentum[1][ipart] + momentum[2][ipart]*momentum[2][ipart] + (*(Phi+ipart)+*(Phiold+ipart))*charge_over_mass_sq*one_over_2 );
+        inv_gamma0 = 1./sqrt( 1. + momentum[0][ipart]*momentum[0][ipart] + momentum[1][ipart]*momentum[1][ipart] + momentum[2][ipart]*momentum[2][ipart] + (*(Phi+ipart)+*(Phiold+ipart))*charge_over_mass_sq*0.5 );
     
         // ponderomotive force for ponderomotive gamma advance (Grad Phi is interpolated in time, hence the division by 2)
-        pxsm = charge_sq_over_mass_dts4 * ( *(GradPhix+ipart) + *(GradPhioldx+ipart) ) * one_over_2 * inv_gamma0 ;
-        pysm = charge_sq_over_mass_dts4 * ( *(GradPhiy+ipart) + *(GradPhioldy+ipart) ) * one_over_2 * inv_gamma0 ;
-        pzsm = charge_sq_over_mass_dts4 * ( *(GradPhiz+ipart) + *(GradPhioldz+ipart) ) * one_over_2 * inv_gamma0 ;
+        pxsm = charge_sq_over_mass_dts4 * ( *(GradPhix+ipart) + *(GradPhioldx+ipart) ) * 0.5 * inv_gamma0 ;
+        pysm = charge_sq_over_mass_dts4 * ( *(GradPhiy+ipart) + *(GradPhioldy+ipart) ) * 0.5 * inv_gamma0 ;
+        pzsm = charge_sq_over_mass_dts4 * ( *(GradPhiz+ipart) + *(GradPhioldz+ipart) ) * 0.5 * inv_gamma0 ;
     
         // update of gamma ponderomotive (more precisely, the inverse)
         inv_gamma_ponderomotive = 1./( 1./inv_gamma0 + (pxsm*momentum[0][ipart]+pysm*momentum[1][ipart]+pzsm*momentum[2][ipart])*inv_gamma0 );

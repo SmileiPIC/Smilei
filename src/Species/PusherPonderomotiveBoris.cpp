@@ -19,7 +19,7 @@ PusherPonderomotiveBoris::~PusherPonderomotiveBoris()
 }
 
 /**************************************************************************
-    Lorentz Force + Ponderomotive force -- leap-frog (Boris-style) scheme
+    Lorentz Force + Ponderomotive force -- leap-frog (Boris-style) scheme, momentum advance
 **************************************************************************/
 
 void PusherPonderomotiveBoris::operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread)
@@ -31,7 +31,6 @@ void PusherPonderomotiveBoris::operator() (Particles &particles, SmileiMPI* smpi
 
 
     //std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
-    double one_over_2 = 1./2.;
     double charge_over_mass_dts2,charge_sq_over_mass_dts4;
     double umx, umy, umz, upx, upy, upz;
     double alpha, inv_det_T, Tx, Ty, Tz, Tx2, Ty2, Tz2;
@@ -77,7 +76,7 @@ void PusherPonderomotiveBoris::operator() (Particles &particles, SmileiMPI* smpi
         pzsm = inv_gamma0 * (charge_over_mass_dts2*(*(Ez+ipart)) - charge_sq_over_mass_dts4*(*(GradPhiz+ipart)) * inv_gamma0 ) * momentum[2][ipart];
         
         // update of gamma ponderomotive (more precisely, the inverse)
-        inv_gamma_ponderomotive = 1./( 1./inv_gamma0 + (pxsm+pysm+pzsm)*one_over_2 );
+        inv_gamma_ponderomotive = 1./( 1./inv_gamma0 + (pxsm+pysm+pzsm)*0.5 );
 
         // init Half-acceleration in the electric field and ponderomotive force 
         pxsm = charge_over_mass_dts2 * (*(Ex+ipart)) - charge_sq_over_mass_dts4 * (*(GradPhix+ipart)) * inv_gamma_ponderomotive ;

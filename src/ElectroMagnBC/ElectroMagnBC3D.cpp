@@ -45,9 +45,9 @@ ElectroMagnBC3D::~ElectroMagnBC3D()
 void ElectroMagnBC3D::applyBConEdges( ElectroMagn* EMfields, Patch* patch )
 {
     // Static cast of the fields
-   Field3D* Ex3D = static_cast<Field3D*>(EMfields->Ex_);
-   Field3D* Ey3D = static_cast<Field3D*>(EMfields->Ey_);
-   Field3D* Ez3D = static_cast<Field3D*>(EMfields->Ez_);
+   //Field3D* Ex3D = static_cast<Field3D*>(EMfields->Ex_);
+   //Field3D* Ey3D = static_cast<Field3D*>(EMfields->Ey_);
+   //Field3D* Ez3D = static_cast<Field3D*>(EMfields->Ez_);
    Field3D* Bx3D = static_cast<Field3D*>(EMfields->Bx_);
    Field3D* By3D = static_cast<Field3D*>(EMfields->By_);
    Field3D* Bz3D = static_cast<Field3D*>(EMfields->Bz_);

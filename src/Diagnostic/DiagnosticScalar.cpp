@@ -132,6 +132,13 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
         fields.push_back(EMfields->Jy_ ->name);
         fields.push_back(EMfields->Jz_ ->name);
         fields.push_back(EMfields->rho_->name);
+        // add envelope-related fields
+        if (params.Laser_Envelope_model){
+            fields.push_back(EMfields->Env_A_abs_->name);
+            fields.push_back(EMfields->Env_Ar_->name);
+            fields.push_back(EMfields->Env_Ai_->name);
+            fields.push_back(EMfields->Env_Chi_->name);
+                                        }
     }
     else {
         ElectroMagn3DRZ* emfields = static_cast<ElectroMagn3DRZ*>(EMfields);
@@ -217,9 +224,15 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     // ----------------------------------------------------------
 
     values_SUM   .reserve( 13 + nspec*5 + 6 + 2*npoy);
-    values_MINLOC.reserve( 10 );
-    values_MAXLOC.reserve( 10 );
 
+    if (!params.Laser_Envelope_model){
+        values_MINLOC.reserve( 10 );
+        values_MAXLOC.reserve( 10 ); }
+    else{
+        values_MINLOC.reserve( 14 );
+        values_MAXLOC.reserve( 14 );
+        }
+    
     // General scalars
     Ubal_norm    = newScalar_SUM( "Ubal_norm"    );
     Ubal         = newScalar_SUM( "Ubal"         );
@@ -586,7 +599,14 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     fields.push_back(EMfields->Jz_);
     fields.push_back(EMfields->rho_);
 
-    #ifdef _DISABLE
+    // add envelope-related fields
+    if (EMfields->Env_A_abs_ != NULL){
+        fields.push_back(EMfields->Env_A_abs_);
+        fields.push_back(EMfields->Env_Ar_);
+        fields.push_back(EMfields->Env_Ai_);
+        fields.push_back(EMfields->Env_Chi_);
+                                    }
+
     double fieldval;
     unsigned int i_min, j_min, k_min;
     unsigned int i_max, j_max, k_max;
@@ -644,7 +664,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
             }
         }
     }
-    #endif
+   
 
     // ------------------------
     // POYNTING-related scalars
@@ -761,6 +781,13 @@ uint64_t DiagnosticScalar::getDiskFootPrint(int istart, int istop, Patch* patch)
             scalars.push_back( Tools::merge(patch->EMfields->Jy_ ->name, minmax, cell) );
             scalars.push_back( Tools::merge(patch->EMfields->Jz_ ->name, minmax, cell) );
             scalars.push_back( Tools::merge(patch->EMfields->rho_->name, minmax, cell) );
+            // add envelope-related fields
+            if (params.Laser_Envelope_model){
+                scalars.push_back( Tools::merge(patch->EMfields->Env_A_abs_->name, minmax, cell) );
+                scalars.push_back( Tools::merge(patch->EMfields->Env_Ar_->name, minmax, cell) );
+                scalars.push_back( Tools::merge(patch->EMfields->Env_Ai_->name, minmax, cell) );
+                scalars.push_back( Tools::merge(patch->EMfields->Env_Chi_->name, minmax, cell) );
+                                            }
         }
     }
     #endif

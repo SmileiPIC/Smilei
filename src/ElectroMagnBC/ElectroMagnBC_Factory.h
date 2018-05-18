@@ -30,7 +30,7 @@ public:
 
         // periodic (=NULL) boundary conditions
         emBoundCond.resize(2*params.nDim_field, NULL);
-        MESSAGE(params.geometry);
+
         // -----------------
         // For 1Dcartesian Geometry
         // -----------------

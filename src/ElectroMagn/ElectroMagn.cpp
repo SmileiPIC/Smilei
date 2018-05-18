@@ -32,6 +32,7 @@ n_space        ( params.n_space    ),
 oversize       ( params.oversize   ),
 isXmin(patch->isXmin()),
 isXmax(patch->isXmax()),
+is_pxr         (  params.is_pxr    ),
 nrj_mw_lost    (  0.               ),
 nrj_new_fields (  0.               )
 {
@@ -68,6 +69,7 @@ n_space        ( emFields->n_space     ),
 oversize       ( emFields->oversize    ),
 isXmin(patch->isXmin()),
 isXmax(patch->isXmax()),
+is_pxr         (  emFields->is_pxr    ),
 nrj_mw_lost    ( 0. ),
 nrj_new_fields ( 0. )
 {
@@ -155,7 +157,7 @@ void ElectroMagn::finishInitialization(int nspecies, Patch* patch)
     allFields.push_back(Jy_ );
     allFields.push_back(Jz_ );
     allFields.push_back(rho_);
-    if ( Env_Ar_ ) {
+    if ( Env_Ar_ != NULL ) {
         allFields.push_back(Env_Ar_);
         allFields.push_back(Env_Ai_);
         allFields.push_back(Env_A_abs_);
@@ -167,7 +169,7 @@ void ElectroMagn::finishInitialization(int nspecies, Patch* patch)
         allFields.push_back(Jy_s[ispec] );
         allFields.push_back(Jz_s[ispec] );
         allFields.push_back(rho_s[ispec]);
-        if ( Env_Ar_ ) {allFields.push_back(Env_Chi_s[ispec]);}
+        if ( Env_Ar_ != NULL ) {allFields.push_back(Env_Chi_s[ispec]);}
     }
     
 }
@@ -184,16 +186,21 @@ ElectroMagn::~ElectroMagn()
    if(Bx_ != NULL) delete Bx_;
    if(By_ != NULL) delete By_;
    if(Bz_ != NULL) delete Bz_;
-//   if(Bx_m != NULL) delete Bx_m;
-//   if(By_m != NULL) delete By_m;
-//   if(Bz_m != NULL) delete Bz_m;
+   if (!is_pxr) {
+       if(Bx_m != NULL) delete Bx_m;
+       if(By_m != NULL) delete By_m;
+       if(Bz_m != NULL) delete Bz_m;
+   }
    if(Jx_ != NULL) delete Jx_;
    if(Jy_ != NULL) delete Jy_;
    if(Jz_ != NULL) delete Jz_;
    if(rho_ != NULL) delete rho_;
  
-   if(Env_Chi_ != NULL) delete Env_Chi_;
-    
+   if(Env_A_abs_ != NULL) delete Env_A_abs_;
+   if(Env_Ar_    != NULL) delete Env_Ar_;
+   if(Env_Ai_    != NULL) delete Env_Ai_; 
+   if(Env_Chi_   != NULL) delete Env_Chi_;
+
     for( unsigned int idiag=0; idiag<allFields_avg.size(); idiag++ )
         for( unsigned int ifield=0; ifield<allFields_avg[idiag].size(); ifield++ )
             delete allFields_avg[idiag][ifield];
@@ -392,6 +399,17 @@ void ElectroMagn::applyExternalFields(Patch* patch) {
     By_m->copyFrom(By_);
     Bz_m->copyFrom(Bz_);
 }
+
+void ElectroMagn::saveExternalFields(Patch* patch) {    
+    for (vector<ExtField>::iterator extfield=extFields.begin(); extfield!=extFields.end(); extfield++ ) {
+        if( extfield->index < allFields.size() ) {
+            for (auto& embc: emBoundCond) {
+                if (embc) embc->save_fields( allFields[extfield->index], patch);
+            }
+        }
+    }
+}
+
 
 
 void ElectroMagn::applyAntenna(unsigned int iAntenna, double intensity) {

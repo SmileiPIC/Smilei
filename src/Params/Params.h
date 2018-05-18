@@ -119,6 +119,7 @@ public:
     std::vector< std::vector<double> > EM_BCs_k;
     //! Are open boundaries used ?
     bool open_boundaries;
+    bool save_magnectic_fields_for_SM;
     
     //! Boundary conditions for Envelope Field
     std::vector< std::vector<std::string> > Env_BCs;
@@ -136,6 +137,14 @@ public:
     unsigned int poisson_max_iteration;
     //! Maxium poisson error tolerated
     double poisson_max_error;
+
+    //"Relativistic" Poisson solver
+    //! Do we solve "relativistic poisson problem" for relativistic species
+    bool solve_relativistic_poisson;
+    //! Maxium number of relativistic poisson iteration
+    unsigned int relativistic_poisson_max_iteration;
+    //! Maxium relativistic poisson error tolerated
+    double relativistic_poisson_max_error;
 
     //! Do we need to exchange full B (default=0 <=> only 2 components are exchanged by dimension)
     bool full_B_exchange;
@@ -209,6 +218,8 @@ public:
     std::vector<unsigned int> number_of_patches;
     //! Domain decomposition
     std::string patch_decomposition;
+    //! Domain orientation
+    std::string patch_orientation;
 
     //! Time selection for load balancing
     TimeSelection * load_balancing_time_selection;

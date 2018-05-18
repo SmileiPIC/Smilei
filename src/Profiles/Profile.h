@@ -1,6 +1,7 @@
 #ifndef Profile_H
 #define Profile_H
 
+
 #include <vector>
 #include <string>
 #include <complex>
@@ -60,7 +61,7 @@ public:
         } else
 #endif
         // Otherwise, calculate profile for each point
-        {
+        { 
             std::vector<double> x(ndim);
             for( unsigned int i=0; i<size; i++ ) {
               // MESSAGE("  - "<<size);
