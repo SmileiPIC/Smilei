@@ -340,7 +340,7 @@ public:
     std::vector<ExtField> extFields;
     
     //! Method used to impose external fields (apply to all Fields)
-    void applyExternalFields(Patch*);
+    virtual void applyExternalFields(Patch*);
     void saveExternalFields(Patch*);
     
     //! Method used to impose external fields (apply to a given Field)

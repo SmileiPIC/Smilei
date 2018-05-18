@@ -213,11 +213,12 @@ int main (int argc, char* argv[])
 
         TITLE("Applying external fields at time t = 0");
         vecPatches.applyExternalFields();
+        MESSAGE("APPLY EXTERNAL");
         vecPatches.saveExternalFields( params );
-
+        MESSAGE("BEFORE DYNAMICS");
         vecPatches.dynamics(params, &smpi, simWindow, RadiationTables,
                             MultiphotonBreitWheelerTables, time_dual, timers, 0);
-
+        MESSAGE("AFTER DYNAMICS");
         // if Laser Envelope is used, execute particles and envelope sections of ponderomotive loop
         if (params.Laser_Envelope_model){ 
 

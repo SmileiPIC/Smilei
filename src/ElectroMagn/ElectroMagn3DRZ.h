@@ -136,7 +136,8 @@ public:
 
     //! compute Poynting on borders
     void computePoynting();
-
+    //! Method used to impose external fields
+    void applyExternalFields(Patch* patch) override;
     //! Method used to impose external fields
     void applyExternalField(Field*, Profile*, Patch*);
     
