@@ -461,22 +461,26 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, Params& params)
             if ( cuParticles.position(0,iPart) < min_local[0] ){
                 if ( neighbor_[0][0]!=MPI_PROC_NULL) {
                     vecSpecies[ispec]->MPIbuff.part_index_send[0][0].push_back( iPart );
+                    MESSAGE("Sending particle to the left x= " << cuParticles.position(0,iPart) <<  " xmin = " <<  min_local[0] );
                 }
                 //If particle is outside of the global domain (has no neighbor), it will not be put in a send buffer and will simply be deleted.
             }
             else if ( cuParticles.position(0,iPart) >= max_local[0] ){
                 if( neighbor_[0][1]!=MPI_PROC_NULL) {
                     vecSpecies[ispec]->MPIbuff.part_index_send[0][1].push_back( iPart );
+                    MESSAGE("Sending particle to the right x= " << cuParticles.position(0,iPart) <<  " xmax = " <<  max_local[0] );
                 }
             }
             else if ( cuParticles.distance2_to_axis(iPart) < r_min2 ){
                 if ( neighbor_[1][0]!=MPI_PROC_NULL) {
                     vecSpecies[ispec]->MPIbuff.part_index_send[1][0].push_back( iPart );
+                    MESSAGE("Sending particle to the south r= " << cuParticles.distance2_to_axis(iPart) <<  " rmin2 = " <<  r_min2 );
                 }
             }
-            else if ( cuParticles.distance2_to_axis(iPart) >= r_min2 ){
+            else if ( cuParticles.distance2_to_axis(iPart) >= r_max2 ){
                 if( neighbor_[1][1]!=MPI_PROC_NULL) {
                     vecSpecies[ispec]->MPIbuff.part_index_send[1][1].push_back( iPart );
+                    MESSAGE("Sending particle to the north r= " << cuParticles.distance2_to_axis(iPart) <<  " rmax2 = " <<  r_max2 << " rmin2= " << r_min2 );
                 }
             }
 
@@ -700,6 +704,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
                     r_min2 = min_local[1]*min_local[1];
                     r_max2 = max_local[1]*max_local[1];
                     for (int iPart=n_part_recv-1 ; iPart>=0; iPart-- ) {
+                            MESSAGE("test particle diag r2 = " << (vecSpecies[ispec]->MPIbuff.partRecv[0][(iNeighbor+1)%2]).distance2_to_axis(iPart) << "rmin2 = " << r_min2 << " rmax2 = " << r_max2 );
                             if ( (vecSpecies[ispec]->MPIbuff.partRecv[0][(iNeighbor+1)%2]).distance2_to_axis(iPart) < r_min2 ){
                                 if (neighbor_[1][0]!=MPI_PROC_NULL){ //if neighbour exists
                                     //... copy it at the back of the local particle vector ...
@@ -718,6 +723,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
                             //Other side of idim
                             else if ( (vecSpecies[ispec]->MPIbuff.partRecv[0][(iNeighbor+1)%2]).distance2_to_axis(iPart) >= r_max2) {
                                 if (neighbor_[1][1]!=MPI_PROC_NULL){ //if neighbour exists
+                                    MESSAGE("particle diag +R");
                                     (vecSpecies[ispec]->MPIbuff.partRecv[0][(iNeighbor+1)%2]).cp_particle(iPart, cuParticles);
                                     //...adjust bmax or cell_keys ...
                                     vecSpecies[ispec]->add_space_for_a_particle();
