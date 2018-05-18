@@ -32,7 +32,7 @@ The basic assumption of the model is the description of the laser pulse vector p
 
   \hat{A}(\mathbf{x},t)=\textit{Re}\left[\tilde{A}(\mathbf{x},t)e^{ik_0(x-ct)}\right],
 
-where :math:`k_0=2\pi/\lambda_0`. As the laser is the source term of the phenomena of interest, in general any physical quantity :math:`A` will be therefore given by the summation of a slowly varying part :math:`\bar{A}` and a fast oscillating part :math:`\hat{A}` with the same form of Eq. :eq:`envelope`:
+where :math:`k_0=2\pi/\lambda_0`. In the language of signal processing, :math:`\tilde{A}` is the complex envelope of :math:`\hat{A}`. In other words, the spectral content of :math:`\tilde{A}` is given by the positive frequency components of :math:`\hat{A}` around :math:`k_0`, but centered around the origin of the frequency :math:`k` axis. As the laser is the source term of the phenomena of interest, in general any physical quantity :math:`A` will be therefore given by the summation of a slowly varying part :math:`\bar{A}` and a fast oscillating part :math:`\hat{A}` with the same form of Eq. :eq:`envelope`:
 
 .. math::
 
