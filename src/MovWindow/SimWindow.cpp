@@ -333,6 +333,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             } // end j loop
         } // End ithread loop
     } // End omp master region
+    #pragma omp barrier
 
 
     //Fill necessary patches with particles
