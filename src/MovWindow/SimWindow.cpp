@@ -339,7 +339,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     //Fill necessary patches with particles
     //#pragma omp for schedule(static) private(mypatch)
     #pragma omp master
-    //{
+    {
         for (int ithread=0; ithread < max_threads ; ithread++){
             for (unsigned int j=0; j< (patch_to_be_created[ithread]).size(); j++){
 
