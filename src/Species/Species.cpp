@@ -1329,7 +1329,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
             if (i%clrw == clrw -1) bmax[new_bin_idx+i/clrw] = iPart;
 
         }//i
-    } else if ( n_existing_particles == 0  ) {  //Do not recreate particles from numpy array again after initialization. Is this condition enough ?
+    } else if ( n_existing_particles == 0  ) {  //Here position are created from a numpy array. Do not recreate particles from numpy array again after initialization. Is this condition enough ?
         //Initializing particles from numpy array and based on a count sort to comply with initial sorting.
         int nbins = bmin.size();
         int indices[nbins];

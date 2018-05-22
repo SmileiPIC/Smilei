@@ -60,6 +60,7 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch ) :
             y_max = min( y_max_global, patch->getDomainLocalMax(1) );
         MESSAGE("YMIN MAX");
             y_max2 = y_max * y_max;
+            y_min2 = y_min * y_min;
 	}
         
         if ( ( nDim_particle > 2 ) && (!isRZ) ) {

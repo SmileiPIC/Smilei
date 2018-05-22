@@ -108,7 +108,11 @@ public:
                 else {
                     keep_part *= (*bc_ymax)( particles, ipart, -1, 2.*y_max, species,nrj_iPart );
                 }
-            }
+             }
+             if ( particles.distance2_to_axis(ipart) < y_min2 ) {
+                keep_part = 0; //bc_ymin is always NULL because there are no y_min BC in RZ geometry for particles. 
+             }
+
         }
 
         return keep_part;
@@ -126,6 +130,7 @@ private:
     double x_max;
     //! Min value of the y coordinate of particles on the current processor
     double y_min;
+    double y_min2;
     //! Max value of the y coordinate of particles on the current processor
     double y_max;
     double y_max2;
