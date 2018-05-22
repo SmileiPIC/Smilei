@@ -337,9 +337,9 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
 
 
     //Fill necessary patches with particles
-    //#pragma omp for schedule(static) private(mypatch)
-    #pragma omp master
-    {
+    //#pragma omp master
+    //{
+    #pragma omp for schedule(static) private(mypatch)
         for (int ithread=0; ithread < max_threads ; ithread++){
             for (unsigned int j=0; j< (patch_to_be_created[ithread]).size(); j++){
 
@@ -362,6 +362,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                     // First dynamic vectorization mode
                     else if (params.vecto == "dynamic")
                     {
+                        //dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->check(mypatch,"mov win 0");
                         if ( dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec]) )
                         {
                             dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->configuration(params, mypatch);
@@ -411,7 +412,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
 #endif
         } // end j loop
     } // End ithread loop
-    }
+    //}
 
 
     #pragma omp single nowait
