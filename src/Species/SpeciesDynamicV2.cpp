@@ -724,7 +724,7 @@ void SpeciesDynamicV2::sort_part(Params &params)
 void SpeciesDynamicV2::compute_part_cell_keys(Params &params)
 {
 
-    unsigned int ip, nparts, ixy;
+    unsigned int ip, nparts;
     int IX;
     double X;
     unsigned int length[3];
@@ -779,7 +779,7 @@ void SpeciesDynamicV2::compute_bin_cell_keys(Params &params, int istart, int ien
 void SpeciesDynamicV2::importParticles( Params& params, Patch* patch, Particles& source_particles, vector<Diagnostic*>& localDiags )
 {
     unsigned int npart = source_particles.size(), ibin, ii, nbin=bmin.size();
-    double inv_cell_length = 1./ params.cell_length[0];
+    //double inv_cell_length = 1./ params.cell_length[0];
 
     // If this species is tracked, set the particle IDs
     if( particles->tracked )
