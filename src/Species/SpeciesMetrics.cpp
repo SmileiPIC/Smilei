@@ -58,8 +58,8 @@ void SpeciesMetrics::get_computation_time(const std::vector<int> & species_loc_b
 
     double log_particle_number;
     int particle_number;
-    float vecto_time_loc;
-    float scalar_time_loc;
+    float vecto_time_loc = 0;
+    float scalar_time_loc = 0;
 
     //std::cout << SpeciesMetrics::get_particle_computation_time_vectorization(log(32.0)) << " "
     //          << SpeciesMetrics::get_particle_computation_time_scalar(log(32.0)) << '\n';
@@ -93,8 +93,8 @@ void SpeciesMetrics::get_computation_time(const std::vector<int> & species_loc_b
 
     float log_particle_number;
     float particle_number;
-    float vecto_time_loc;
-    float scalar_time_loc;
+    float vecto_time_loc = 0;
+    float scalar_time_loc = 0;
 
     //std::cout << SpeciesMetrics::get_particle_computation_time_vectorization(log(32.0)) << " "
     //          << SpeciesMetrics::get_particle_computation_time_scalar(log(32.0)) << '\n';
