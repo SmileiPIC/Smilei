@@ -58,12 +58,14 @@ void SpeciesMetrics::get_computation_time(const std::vector<int> & species_loc_b
 
     double log_particle_number;
     int particle_number;
+    float vecto_time_loc;
+    float scalar_time_loc;
 
     //std::cout << SpeciesMetrics::get_particle_computation_time_vectorization(log(32.0)) << " "
     //          << SpeciesMetrics::get_particle_computation_time_scalar(log(32.0)) << '\n';
 
     // Loop over the cells
-    #pragma omp simd reduction(+:vecto_time,scalar_time) private(particle_number,log_particle_number)
+    #pragma omp simd reduction(+:vecto_time_loc,scalar_time_loc) private(particle_number,log_particle_number)
     for (unsigned int ic=0; ic < species_loc_bmax.size(); ic++)
     {
         if (species_loc_bmax[ic] > 0)
@@ -72,10 +74,12 @@ void SpeciesMetrics::get_computation_time(const std::vector<int> & species_loc_b
             particle_number = std::min(species_loc_bmax[ic],256);
             // Convesion in log
             log_particle_number = log(double(particle_number));
-            vecto_time += SpeciesMetrics::get_particle_computation_time_vectorization(log_particle_number)*species_loc_bmax[ic];
-            scalar_time += SpeciesMetrics::get_particle_computation_time_scalar(log_particle_number)*species_loc_bmax[ic];
+            vecto_time_loc += SpeciesMetrics::get_particle_computation_time_vectorization(log_particle_number)*species_loc_bmax[ic];
+            scalar_time_loc += SpeciesMetrics::get_particle_computation_time_scalar(log_particle_number)*species_loc_bmax[ic];
         }
     }
+    vecto_time = vecto_time_loc;
+    scalar_time = scalar_time_loc;
 }
 
 // -----------------------------------------------------------------------------
@@ -89,12 +93,14 @@ void SpeciesMetrics::get_computation_time(const std::vector<int> & species_loc_b
 
     float log_particle_number;
     float particle_number;
+    float vecto_time_loc;
+    float scalar_time_loc;
 
     //std::cout << SpeciesMetrics::get_particle_computation_time_vectorization(log(32.0)) << " "
     //          << SpeciesMetrics::get_particle_computation_time_scalar(log(32.0)) << '\n';
 
     // Loop over the cells
-    #pragma omp simd reduction(+:vecto_time,scalar_time) private(particle_number,log_particle_number)
+    #pragma omp simd reduction(+:vecto_time_loc,scalar_time_loc) private(particle_number,log_particle_number)
     for (unsigned int ic=0; ic < species_loc_bmax.size(); ic++)
     {
         if (species_loc_bmax[ic] > 0)
@@ -103,10 +109,12 @@ void SpeciesMetrics::get_computation_time(const std::vector<int> & species_loc_b
             particle_number = fmin(float(species_loc_bmax[ic]),256.0);
             // Convesion in log
             log_particle_number = log(particle_number);
-            vecto_time += SpeciesMetrics::get_particle_computation_time_vectorization(log_particle_number)*species_loc_bmax[ic];
-            scalar_time += SpeciesMetrics::get_particle_computation_time_scalar(log_particle_number)*species_loc_bmax[ic];
+            vecto_time_loc += get_particle_computation_time_vectorization(log_particle_number)*species_loc_bmax[ic];
+            scalar_time_loc += get_particle_computation_time_scalar(log_particle_number)*species_loc_bmax[ic];
         }
     }
+    vecto_time = vecto_time_loc;
+    scalar_time = scalar_time_loc;
 }
 
 //! Evaluate the time necessary to compute `particle_number` particles
