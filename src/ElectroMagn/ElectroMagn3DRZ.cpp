@@ -865,9 +865,18 @@ void ElectroMagn3DRZ::fold_fields(bool diag_flag)
                  for (unsigned int j=0; j<oversize[1]; j++)
                      (*JtRZ)(i,2*oversize[1]-j)+= (*JtRZ)(i,j) ;
              }
-             for (unsigned int i=0; i<nl_p; i++){
-                 for (unsigned int j=0; j<oversize[1]+1; j++)
-                     (*JrRZ)(i,2*oversize[1]+1-j)+= (*JrRZ)(i,j) ;
+             if (imode==0){
+                 for (unsigned int i=0; i<nl_p; i++){
+                      for (unsigned int j=0; j<oversize[1]; j++)
+                         (*JrRZ)(i,2*oversize[1]+1-j)+= (*JrRZ)(i,j) ;
+                      (*JrRZ)(i,oversize[1]+1)= -(*JrRZ)(i,oversize[1]) ;
+                 }
+             }
+             else{
+                 for (unsigned int i=0; i<nl_p; i++){
+                      for (unsigned int j=0; j<oversize[1]+1; j++)
+                         (*JrRZ)(i,2*oversize[1]+1-j)+= (*JrRZ)(i,j) ;
+                 }
              }
          }
      

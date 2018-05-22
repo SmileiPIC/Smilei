@@ -213,7 +213,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
                 jloc = j+jpo;
                 linindex = iloc*b_dim[1]+jloc;
                 if (jloc+ j_domain_begin == 0){
-                    Jt [linindex] = 0. ; // Jz_p[i][j]*6. /dr; // iloc = (i+ipo)*b_dim[1];
+                    Jt [linindex] = 0.; // iloc = (i+ipo)*b_dim[1];
                 }
                 else {
                     Jt [linindex] += Jz_p[i][j] /abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
@@ -801,7 +801,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             jloc = j+jpo;
             linindex = iloc*b_dim[1]+jloc;
             if (jloc+j_domain_begin ==0){
-                Jt [linindex] =0;
+                Jt [linindex] = 0.;
             } else{
                 Jt [linindex] += Jz_p[i][j]; // iloc = (i+ipo)*b_dim[1];
             }
