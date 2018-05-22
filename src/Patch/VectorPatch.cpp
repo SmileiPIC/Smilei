@@ -108,8 +108,8 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi, OpenPMDparams& op
 void VectorPatch::configuration(Params& params, Timers &timers, int itime)
 {
 
-    if (params.vecto == "dynamic" || params.vecto == "dynamic2")
-    {
+    //if (params.vecto == "dynamic" || params.vecto == "dynamic2")
+    //{
 
         timers.reconfiguration.restart();
 
@@ -135,7 +135,7 @@ void VectorPatch::configuration(Params& params, Timers &timers, int itime)
         }
 
         timers.reconfiguration.update( params.printNow( itime ) );
-    }
+    //}
 
 }
 
@@ -144,8 +144,8 @@ void VectorPatch::configuration(Params& params, Timers &timers, int itime)
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::reconfiguration(Params& params, Timers &timers, int itime)
 {
-    if (params.vecto == "dynamic" || params.vecto == "dynamic2")
-    {
+    //if (params.vecto == "dynamic" || params.vecto == "dynamic2")
+    //{
 
         timers.reconfiguration.restart();
 
@@ -171,7 +171,7 @@ void VectorPatch::reconfiguration(Params& params, Timers &timers, int itime)
         }
 
         timers.reconfiguration.update( params.printNow( itime ) );
-    }
+    //}
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

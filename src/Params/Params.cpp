@@ -477,10 +477,24 @@ namelist("")
 
     // Activation of the vectorized subroutines
     vecto = "disable";
+    has_dynamic_vectorization = false;
     PyTools::extract("vecto", vecto, "Main");
     if (!(vecto == "disable" || vecto == "normal" || vecto == "dynamic" || vecto == "dynamic2"))
     {
         ERROR("The parameter `vecto` must be `disable`, `normal`, `dynamic`, `dynamic2`");
+    }
+    else if (vecto == "dynamic" || vecto == "dynamic2")
+    {
+        has_dynamic_vectorization = true;
+    }
+
+    if( PyTools::nComponents("DynamicVectorization")>0 ) {
+        // get parameter "every" which describes a timestep selection
+        dynamic_vecto_time_selection = new TimeSelection(
+            PyTools::extract_py("every", "DynamicVectorization"), "Dynamic vectorization"
+        );
+    } else {
+        dynamic_vecto_time_selection  = new TimeSelection(1);
     }
 
     // Read the "print_every" parameter
@@ -579,6 +593,7 @@ namelist("")
 
 Params::~Params() {
     if( load_balancing_time_selection ) delete load_balancing_time_selection;
+    if( dynamic_vecto_time_selection ) delete dynamic_vecto_time_selection;
     PyTools::closePython();
 }
 
@@ -757,11 +772,13 @@ void Params::print_init()
     }
     else if (vecto == "dynamic")
     {
-        MESSAGE(1,"Apply the dynamic vectorization mode" );
+        MESSAGE(1,"Apply the dynamic vectorization mode 1" );
+        MESSAGE(1,"Happens: " << dynamic_vecto_time_selection->info());
     }
     else if (vecto == "dynamic2")
     {
-        MESSAGE(1,"Apply the dynamic2 vectorization mode" );
+        MESSAGE(1,"Apply the dynamic vectorization mode 2" );
+        MESSAGE(1,"Happens: " << dynamic_vecto_time_selection->info());
     }
     else if (vecto == "disable")
     {
@@ -817,6 +834,10 @@ void Params::print_parallelism_params(SmileiMPI* smpi)
             MESSAGE(2, "dimension " << iDim << " - n_space : " << n_space[iDim] << " cells.");
 
         MESSAGE(1, "Dynamic load balancing: " << load_balancing_time_selection->info() );
+        if (this->has_dynamic_vectorization)
+        {
+            MESSAGE(1, "Dynamic vectorization: " << dynamic_vecto_time_selection->info() );
+        }
     }
 
     if (smpi->isMaster()) {

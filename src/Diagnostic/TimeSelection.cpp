@@ -10,16 +10,16 @@ using namespace std;
 // Constructor
 TimeSelection::TimeSelection(PyObject* timeSelection, string name)
 {
-    
+
     start   = 0.;
     end     = std::numeric_limits<double>::max();
     period  = 1.;
     repeat  = 1;
     spacing = 1.;
-    
+
     // If the selection is an int
     if( PyNumber_Check(timeSelection) ) {
-        
+
         // Interpret as the period
         if( !PyTools::convert(timeSelection, period) )
             ERROR(name << ": time selection must be a number or a list of numbers");
@@ -28,25 +28,25 @@ TimeSelection::TimeSelection(PyObject* timeSelection, string name)
             start = std::numeric_limits<double>::max();
             return;
         }
-        
+
     }
     // If the selection is a list or tuple
     else if( PyTuple_Check(timeSelection) || PyList_Check(timeSelection) ) {
-        
+
         PyObject* seq = PySequence_Fast(timeSelection, "expected a sequence");
         int nitems = PySequence_Size(seq);
-        
+
         if ( nitems<1 )
             ERROR(name << ": time selection must have at least one argument");
         if ( nitems>5 )
             ERROR(name << ": time selection must not have more than 5 arguments");
-        
+
         // Extract all values
         vector<double> items (nitems);
         for( int i=0; i<nitems; i++ )
             if (!PyTools::convert(PySequence_Fast_GET_ITEM(seq, i), items[i]))
                 ERROR(name << ": time selection must be a list of numbers");
-        
+
         // Depending on the number of values, they mean different things (see doc)
         if        ( nitems==1 ) {
             if(items[0]) period  = items[0];
@@ -69,20 +69,20 @@ TimeSelection::TimeSelection(PyObject* timeSelection, string name)
             if(items[3]) repeat  = (int)round(items[3]);
             if(items[4]) spacing = items[4];
         }
-        
+
         Py_DECREF(seq);
-        
+
     } else {
-        
+
         ERROR(name << ": time selection (`every`) must be a number or a list of numbers");
-        
+
     }
-    
+
     // Calculate the smallest interval
     SmallestInterval = (repeat<=1) ? ((int)period) : ((int)spacing);
     // Calculate the group width
     groupWidth = (repeat-1)*spacing + 1.;
-    
+
     // Verify a few things
     if( period<1. )
         ERROR(name << ": time selection's period must be >= 1.");
@@ -92,7 +92,7 @@ TimeSelection::TimeSelection(PyObject* timeSelection, string name)
         ERROR(name << ": time selection's spacing must be >= 1.");
     if( groupWidth > period )
         ERROR(name << ": time selection must have repeat*spacing<period");
-    
+
 }
 
 
@@ -108,6 +108,20 @@ TimeSelection::TimeSelection()
     TheTimeIsNow = false;
     NextTime     = std::numeric_limits<int>::max();
     PreviousTime = std::numeric_limits<int>::max();
+}
+
+// Empty time selection
+TimeSelection::TimeSelection(int period)
+{
+    start         = 0;
+    end           = std::numeric_limits<double>::max();
+    this->period  = period;
+    repeat        = 1;
+    spacing       = 1.;
+    groupWidth    = 0.;
+    TheTimeIsNow  = false;
+    NextTime      = std::numeric_limits<int>::max();
+    PreviousTime  = 0;
 }
 
 // Cloning Constructor
@@ -148,15 +162,15 @@ bool TimeSelection::theTimeIsNow(int timestep)
 // Returns the same timestep if already within the selection
 int TimeSelection::nextTime(int timestep)
 {
-    if( timestep<=round(start) ) { 
+    if( timestep<=round(start) ) {
         NextTime = start;
-    } else if( timestep>round(end) ) { 
+    } else if( timestep>round(end) ) {
         NextTime = std::numeric_limits<int>::max();
     } else {
         double t = (double)(timestep)-start + 0.4999; // number of timesteps since the start
         double p = floor(t/period)*period; // previous period
         double T = t - p; // time to the previous period
-        
+
         // If within group
         if( T < groupWidth ) {
             double r = floor(T/spacing)*spacing; // previous repeat
@@ -183,7 +197,7 @@ int TimeSelection::previousTime(int timestep)
         double t = (double)(timestep)-start + 0.4999; // number of timesteps since the start
         double p = floor(t/period)*period; // previous period
         double T = t - p; // time to the previous period
-        
+
         // If within group
         if( T < groupWidth ) {
             PreviousTime = (int) round(start + p + floor(T/spacing)*spacing); // return previous good timestep
@@ -208,7 +222,7 @@ int TimeSelection::howManyTimesBefore(int timestep)
         double p = floor(t/period); // previous period number
         nt = p * repeat; // number of occurences before this period
         double T = t - p*period; // time to the previous period
-        
+
         // If within group
         if( T < groupWidth ) {
             nt += (int) floor(T/spacing); // add number of repeats to account for
@@ -218,6 +232,14 @@ int TimeSelection::howManyTimesBefore(int timestep)
         }
     }
     return nt;
+}
+
+//! Set the parameters of the time selection
+void TimeSelection::set(double start, double end, double period)
+{
+    this->start = start;
+    this->end = end;
+    this->period = period;
 }
 
 //! Obtain some information about the time selection
@@ -232,7 +254,7 @@ std::string TimeSelection::info()
         } else {
             t << "every " << fixed << setprecision(1) << period << " iterations";
         }
-        
+
         if( repeat > 1 ) {
             t << " (" << repeat << " repeats each";
             if( spacing > 1. ) {
@@ -244,7 +266,7 @@ std::string TimeSelection::info()
             }
             t << ")";
         }
-        
+
         if( start > 0. ) {
             if( round(start) == start ) {
                 t << " from " <<  (int) start;
@@ -252,7 +274,7 @@ std::string TimeSelection::info()
                 t << " from " << fixed << setprecision(1) << start;
             }
         }
-        
+
         if( end < std::numeric_limits<double>::max() ) {
             if( round(end) == end ) {
                 t << " until " <<  (int) end;
@@ -261,6 +283,6 @@ std::string TimeSelection::info()
             }
         }
     }
-    
+
     return t.str();
 }

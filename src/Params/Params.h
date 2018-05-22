@@ -200,6 +200,11 @@ public:
     //! Domain orientation
     std::string patch_orientation;
 
+    //! Time selection for dynamic vecto
+    TimeSelection * dynamic_vecto_time_selection;
+    //! Flag for the dynamic vecto
+    bool has_dynamic_vectorization;
+
     //! Time selection for load balancing
     TimeSelection * load_balancing_time_selection;
     //! True if must balance at some point
