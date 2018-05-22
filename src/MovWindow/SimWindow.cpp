@@ -335,8 +335,36 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     } // End omp master region
     #pragma omp barrier
 
-
     //Fill necessary patches with particles
+#ifdef _VECTO
+    if (params.vecto == "normal")
+    {
+
+        //#pragma omp master
+        //{
+        #pragma omp for schedule(static) private(mypatch)
+        for (int ithread=0; ithread < max_threads ; ithread++){
+            for (unsigned int j=0; j< (patch_to_be_created[ithread]).size(); j++){
+
+                // Current newly created patch
+                mypatch = vecPatches.patches_[patch_to_be_created[ithread][j]];
+
+                // If new particles are required
+                if (patch_particle_created[ithread][j])
+                {
+                    for (unsigned int ispec=0 ; ispec<nSpecies ; ispec++)
+                    {
+                        if ( dynamic_cast<SpeciesV*>(mypatch->vecSpecies[ispec]) )
+                            dynamic_cast<SpeciesV*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
+                        mypatch->vecSpecies[ispec]->sort_part(params);
+                    }
+                } // end test patch_particle_created[ithread][j]
+            } // end j loop
+        } // End ithread loop
+        //}
+    }
+#endif
+
     //#pragma omp master
     //{
     #pragma omp for schedule(static) private(mypatch)
@@ -352,15 +380,8 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
 #ifdef _VECTO
                 for (unsigned int ispec=0 ; ispec<nSpecies ; ispec++)
                 {
-                    // Classical vectorized mode
-                    if (params.vecto == "normal")
-                    {
-                        if ( dynamic_cast<SpeciesV*>(mypatch->vecSpecies[ispec]) )
-                            dynamic_cast<SpeciesV*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
-                        mypatch->vecSpecies[ispec]->sort_part(params);
-                    }
                     // First dynamic vectorization mode
-                    else if (params.vecto == "dynamic")
+                    if (params.vecto == "dynamic")
                     {
                         //dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->check(mypatch,"mov win 0");
                         if ( dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec]) )
@@ -377,10 +398,6 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                     }
                 }
 #endif
-                // We define the IDs of the new particles
-                for( unsigned int idiag=0; idiag<vecPatches.localDiags.size(); idiag++ )
-                    if( DiagnosticTrack* track = dynamic_cast<DiagnosticTrack*>(vecPatches.localDiags[idiag]) )
-                        track->setIDs( mypatch );
             }
 #ifdef _VECTO
             // Patches that have received particles from another patch
@@ -414,6 +431,24 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     } // End ithread loop
     //}
 
+    // Diagnostic Track Particles
+    #pragma omp for schedule(static) private(mypatch)
+    for (int ithread=0; ithread < max_threads ; ithread++){
+        for (unsigned int j=0; j< (patch_to_be_created[ithread]).size(); j++){
+
+            // Current newly created patch
+            mypatch = vecPatches.patches_[patch_to_be_created[ithread][j]];
+
+            // If new particles are required
+            if (patch_particle_created[ithread][j])
+            {
+                // We define the IDs of the new particles
+                for( unsigned int idiag=0; idiag<vecPatches.localDiags.size(); idiag++ )
+                    if( DiagnosticTrack* track = dynamic_cast<DiagnosticTrack*>(vecPatches.localDiags[idiag]) )
+                        track->setIDs( mypatch );
+            } // end test patch_particle_created[ithread][j]
+        } // end j loop
+    } // End ithread loop
 
     #pragma omp single nowait
     {

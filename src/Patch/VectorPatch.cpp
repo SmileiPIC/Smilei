@@ -1012,6 +1012,37 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
 
     }
 
+#ifdef _VECTO
+    if (params.vecto == "dynamic")
+    {
+        // Dynamic vecto
+        // Recompute the cell keys before the next step and configure operators
+        for (unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++) {
+            for (unsigned int ispec=0 ; ispec< recv_patches_[ipatch]->vecSpecies.size() ; ispec++)
+            {
+                if ( dynamic_cast<SpeciesDynamicV*>(recv_patches_[ipatch]->vecSpecies[ispec]) )
+                {
+                    dynamic_cast<SpeciesDynamicV*>(recv_patches_[ipatch]->vecSpecies[ispec])->compute_part_cell_keys(params);
+                    dynamic_cast<SpeciesDynamicV*>(recv_patches_[ipatch]->vecSpecies[ispec])->reconfigure_operators(params, recv_patches_[ipatch]);
+                }
+            }
+        }
+    }
+    else if (params.vecto == "dynamic2")
+    {
+        // Dynamic vecto mode 2
+        // Recompute the cell keys before the next step and configure operators
+        for (unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++) {
+            for (unsigned int ispec=0 ; ispec< recv_patches_[ipatch]->vecSpecies.size() ; ispec++)
+            {
+                if ( dynamic_cast<SpeciesDynamicV*>(recv_patches_[ipatch]->vecSpecies[ispec]) )
+                {
+                    dynamic_cast<SpeciesDynamicV*>(recv_patches_[ipatch]->vecSpecies[ispec])->compute_part_cell_keys(params);
+                }
+            }
+        }
+    }
+#endif
 
     //Put received patches in the global vecPatches
     for (unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++) {
