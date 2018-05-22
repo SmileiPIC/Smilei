@@ -59,25 +59,25 @@ isYmax(patch->isYmax())
             int ifield = imode*n_species+ispec;
 
             if ( emFields->Jl_s[ifield] != NULL ) {
-                if ( emFields->Jl_s[ifield]->data_ != NULL )
+                if ( emFields->Jl_s[ifield]->cdata_ != NULL )
                     Jl_s[ifield]  = new cField2D(dimPrim, 0, false, emFields->Jl_s[ifield]->name);
                 else
                     Jl_s[ifield]  = new cField2D(emFields->Jl_s[ifield]->name, dimPrim);
             }
             if ( emFields->Jr_s[ifield] != NULL ) {
-                if ( emFields->Jr_s[ifield]->data_ != NULL )
+                if ( emFields->Jr_s[ifield]->cdata_ != NULL )
                     Jr_s[ifield]  = new cField2D(dimPrim, 1, false, emFields->Jr_s[ifield]->name);
                 else
                     Jr_s[ifield]  = new cField2D(emFields->Jr_s[ifield]->name, dimPrim);
             }
             if ( emFields->Jt_s[ifield] != NULL ) {
-                if ( emFields->Jt_s[ifield]->data_ != NULL )
+                if ( emFields->Jt_s[ifield]->cdata_ != NULL )
                     Jt_s[ifield]  = new cField2D(dimPrim, 2, false, emFields->Jt_s[ifield]->name);
                 else
                     Jt_s[ifield]  = new cField2D(emFields->Jt_s[ifield]->name, dimPrim);
             }
             if ( emFields->rho_RZ_s[ifield] != NULL ) {
-                if ( emFields->rho_RZ_s[ifield]->data_ != NULL )
+                if ( emFields->rho_RZ_s[ifield]->cdata_ != NULL )
                     rho_RZ_s[ifield] = new cField2D(dimPrim, emFields->rho_RZ_s[ifield]->name );
                 else
                     rho_RZ_s[ifield]  = new cField2D(emFields->rho_RZ_s[ifield]->name, dimPrim);
