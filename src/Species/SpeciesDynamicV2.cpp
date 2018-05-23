@@ -380,16 +380,14 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
         for (unsigned int i=0; i<species_loc_bmax.size(); i++)
             species_loc_bmax[i] = 0;
 
-        // Resize Cell_keys
-        // Need to check if this is necessary here
-        // (*particles).cell_keys.resize((*particles).size());
+        // Interpolate the fields at the particle position
+        (*Interp)(EMfields, *particles, smpi, &(bmin[0]), &(bmax[bmin.size()-1]), ithread );
 
         // Interpolate the fields at the particle position
         //for (unsigned int scell = 0 ; scell < bmin.size() ; scell++)
         //    (*Interp)(EMfields, *particles, smpi, &(bmin[scell]), &(bmax[scell]), ithread );
         for (unsigned int scell = 0 ; scell < bmin.size() ; scell++)
         {
-            (*Interp)(EMfields, *particles, smpi, &(bmin[scell]), &(bmax[scell]), ithread);
 
             // Ionization
             if (Ionize)
@@ -471,7 +469,7 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
                     }
                     else {
                         //Compute cell_keys of remaining particles
-                        for ( int i = 0 ; i<nDim_particle; i++ ){
+                        for ( unsigned int i = 0 ; i<nDim_particle; i++ ){
                             (*particles).cell_keys[iPart] *= this->length[i];
                             (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]+0.00000000000001) * dx_inv_[i] );
                         }
@@ -501,7 +499,7 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
                     }
                     else {
                         //Compute cell_keys of remaining particles
-                        for ( int i = 0 ; i<nDim_particle; i++ ){
+                        for ( unsigned int i = 0 ; i<nDim_particle; i++ ){
                             (*particles).cell_keys[iPart] *= this->length[i];
                             (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]+0.00000000000001) * dx_inv_[i] );
                         }
@@ -510,18 +508,17 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
                     }
                 }
             } // end if mass > 0
-
-            // Project currents if not a Test species and charges as well if a diag is needed.
-            // Do not project if a photon
-            if ((!particles->is_test) && (mass > 0))
-                (*Proj)(EMfields, *particles, smpi, bmin[scell],
-                                                    bmax[scell],
-                                                    ithread, scell,
-                                                    0, diag_flag,
-                                                    params.is_spectral,
-                                                    b_dim, ispec);
-
         } // end loop on cells
+
+        // Project currents if not a Test species and charges as well if a diag is needed.
+        // Do not project if a photon
+        if ((!particles->is_test) && (mass > 0))
+            (*Proj)(EMfields, *particles, smpi, bmin[0],
+                                                bmax.back(),
+                                                ithread, 0,
+                                                0, diag_flag,
+                                                params.is_spectral,
+                                                b_dim, ispec);
 
         for (unsigned int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
             nrj_bc_lost += nrj_lost_per_thd[tid];
