@@ -1035,9 +1035,10 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
         for (unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++) {
             for (unsigned int ispec=0 ; ispec< recv_patches_[ipatch]->vecSpecies.size() ; ispec++)
             {
-                if ( dynamic_cast<SpeciesDynamicV*>(recv_patches_[ipatch]->vecSpecies[ispec]) )
+                if ( dynamic_cast<SpeciesDynamicV2*>(recv_patches_[ipatch]->vecSpecies[ispec]) )
                 {
-                    dynamic_cast<SpeciesDynamicV*>(recv_patches_[ipatch]->vecSpecies[ispec])->compute_part_cell_keys(params);
+                    dynamic_cast<SpeciesDynamicV2*>(recv_patches_[ipatch]->vecSpecies[ispec])->compute_part_cell_keys(params);
+                    dynamic_cast<SpeciesDynamicV2*>(recv_patches_[ipatch]->vecSpecies[ispec])->reconfigure_operators(params, recv_patches_[ipatch]);
                 }
             }
         }

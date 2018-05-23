@@ -420,8 +420,12 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                     for (unsigned int ispec=0 ; ispec<nSpecies ; ispec++)
                     {
                             if ( dynamic_cast<SpeciesDynamicV2*>(mypatch->vecSpecies[ispec]) )
+                            {
                                 dynamic_cast<SpeciesDynamicV2*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
+                                dynamic_cast<SpeciesDynamicV2*>(mypatch->vecSpecies[ispec])->configuration(params, mypatch);
+                            }
                             mypatch->vecSpecies[ispec]->sort_part(params);
+
                     }
                 }
                 // Patches that have received particles from another patch
@@ -435,6 +439,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                         if ( dynamic_cast<SpeciesDynamicV2*>(mypatch->vecSpecies[ispec]) )
                         {
                             dynamic_cast<SpeciesDynamicV2*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
+                            dynamic_cast<SpeciesDynamicV2*>(mypatch->vecSpecies[ispec])->reconfigure_operators(params, mypatch);
                         }
                     }
                 } // end test patch_particle_created[ithread][j]
