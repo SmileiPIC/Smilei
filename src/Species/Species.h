@@ -89,6 +89,12 @@ public:
     //! logical true if particles radiate
     bool radiating;
 
+    //! logical true if particles are relativistic and require proper electromagnetic field initialization
+    bool relativistic_field_initialization;
+
+    //! Time for which the species field is initialized in case of relativistic initialization
+    double time_relativistic_initialization;
+
     //! electron and positron Species for the multiphoton Breit-Wheeler
     std::vector<std::string> multiphoton_Breit_Wheeler;
 
@@ -415,6 +421,19 @@ public:
 
     //! Check function that enables to control the results of some operators
     void check(Patch * patch, std::string title);
+
+    //! Perform the sum of all Lorentz factor
+    double sum_gamma () {
+        double s_gamma(0.);
+        for ( unsigned int ipart = 0 ; ipart < getNbrOfParticles() ; ipart++ ) {
+            s_gamma += sqrt( 1. + particles->momentum(0,ipart) * particles->momentum(0,ipart)
+                             + particles->momentum(1,ipart) * particles->momentum(1,ipart)
+                             + particles->momentum(2,ipart) * particles->momentum(2,ipart) );
+        }
+
+        return s_gamma;
+    }
+
 
 protected:
 

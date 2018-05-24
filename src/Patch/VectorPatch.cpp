@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <fstream>
 #include <cstring>
+#include <math.h>
 //#include <string>
 
 #include "Collisions.h"
@@ -46,6 +47,20 @@ VectorPatch::~VectorPatch()
 void VectorPatch::close(SmileiMPI * smpiData)
 {
     closeAllDiags( smpiData );
+
+
+    if ( diag_timers.size() )
+        MESSAGE( "\n\tDiagnostics profile :" );
+    for ( unsigned int idiag = 0 ;  idiag < diag_timers.size() ; idiag++ ) {
+        double sum(0);
+        MPI_Reduce( &diag_timers[idiag]->time_acc_, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+        MESSAGE( "\t\t" << setw(20) << diag_timers[idiag]->name_ << "\t" << sum/(double)smpiData->getSize() );
+    }
+
+    for ( unsigned int idiag = 0 ;  idiag < diag_timers.size() ; idiag++ )
+        delete diag_timers[idiag];
+    diag_timers.clear();
+
 
     for (unsigned int idiag=0 ; idiag<localDiags.size(); idiag++)
         delete localDiags[idiag];
@@ -93,6 +108,17 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi, OpenPMDparams& op
             }
         }
     }
+
+    for ( unsigned int idiag = 0 ;  idiag < globalDiags.size() ; idiag++ )
+        diag_timers.push_back( new Timer( globalDiags[idiag]->filename ) );
+    for ( unsigned int idiag = 0 ;  idiag < localDiags.size() ; idiag++ )
+        diag_timers.push_back( new Timer( localDiags[idiag]->filename ) );
+
+    for ( unsigned int idiag = 0 ;  idiag < diag_timers.size() ; idiag++ )
+        diag_timers[idiag]->init(smpi);
+
+
+
 }
 
 
@@ -328,6 +354,29 @@ void VectorPatch::computeCharge()
 
 } // END computeRho
 
+void VectorPatch::computeChargeRelativisticSpecies(double time_primal)
+{
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+        (*this)(ipatch)->EMfields->restartRhoJ();
+        for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
+            // project only if species needs relativistic initialization and it is the right time to initialize its fields
+            if ( ( species(ipatch, ispec)->relativistic_field_initialization               ) && 
+                 ( time_primal == species(ipatch, ispec)->time_relativistic_initialization ) ) {
+                species(ipatch, ispec)->computeCharge(ispec, emfields(ipatch), proj(ipatch) );
+            }
+        }
+    }
+
+} // END computeRho
+
+void VectorPatch::resetRhoJ()
+{
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+        (*this)(ipatch)->EMfields->restartRhoJ();
+    }
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
@@ -465,21 +514,17 @@ void VectorPatch::initExternals(Params& params)
 {
     // Init all lasers
     for( unsigned int ipatch=0; ipatch<size(); ipatch++ ) {
-        // check if patch is on the border
-        int iBC(-1);
-        if     ( (*this)(ipatch)->isXmin() ) {
-            iBC = 0;
+        if( (*this)(ipatch)->isXmin() && (*this)(ipatch)->EMfields->emBoundCond[0] != NULL ) {
+            unsigned int nlaser = (*this)(ipatch)->EMfields->emBoundCond[0]->vecLaser.size();
+            for (unsigned int ilaser = 0; ilaser < nlaser; ilaser++)
+                (*this)(ipatch)->EMfields->emBoundCond[0]->vecLaser[ilaser]->initFields(params, (*this)(ipatch));
         }
-        else if( (*this)(ipatch)->isXmax() ) {
-            iBC = 1;
+        
+        if( (*this)(ipatch)->isXmax() && (*this)(ipatch)->EMfields->emBoundCond[1] != NULL ) {
+            unsigned int nlaser = (*this)(ipatch)->EMfields->emBoundCond[1]->vecLaser.size();
+            for (unsigned int ilaser = 0; ilaser < nlaser; ilaser++)
+                (*this)(ipatch)->EMfields->emBoundCond[1]->vecLaser[ilaser]->initFields(params, (*this)(ipatch));
         }
-        else continue;
-        // If patch is on border, then fill the fields arrays
-        unsigned int nlaser = 0;
-        if ( (iBC!=-1) && ( (*this)(ipatch)->EMfields->emBoundCond[iBC] != NULL ) )
-            nlaser = (*this)(ipatch)->EMfields->emBoundCond[iBC]->vecLaser.size();
-        for (unsigned int ilaser = 0; ilaser < nlaser; ilaser++)
-             (*this)(ipatch)->EMfields->emBoundCond[iBC]->vecLaser[ilaser]->initFields(params, (*this)(ipatch));
     }
 
     // Init all antennas
@@ -539,10 +584,11 @@ void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, unsigned int itime, Timers & timers, SimWindow* simWindow)
 {
-
     // Global diags: scalars + particles
     timers.diags.restart();
     for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
+        diag_timers[idiag]->restart();
+
         #pragma omp single
         globalDiags[idiag]->theTimeIsNow = globalDiags[idiag]->prepare( itime );
         #pragma omp barrier
@@ -558,16 +604,22 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, unsigned int itim
             #pragma omp single
             globalDiags[idiag]->write( itime , smpi );
         }
+
+        diag_timers[idiag]->update();
     }
 
     // Local diags : fields, probes, tracks
     for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++) {
+        diag_timers[globalDiags.size()+idiag]->restart();
+
         #pragma omp single
         localDiags[idiag]->theTimeIsNow = localDiags[idiag]->prepare( itime );
         #pragma omp barrier
         // All MPI run their stuff and write out
         if( localDiags[idiag]->theTimeIsNow )
             localDiags[idiag]->run( smpi, *this, itime, simWindow, timers );
+
+        diag_timers[globalDiags.size()+idiag]->update();
     }
 
     // Manage the "diag_flag" parameter, which indicates whether Rho and Js were used
@@ -857,6 +909,376 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
     MESSAGE("Time in Poisson : " << ptimer.getTime() );
 
 } // END solvePoisson
+
+
+void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, double time_primal )
+{
+
+
+    Timer ptimer("global");
+    ptimer.init(smpi);
+    ptimer.restart();
+
+    // Assumption: one or more species move in vacuum with mean lorentz gamma factor gamma_mean in the x direction, 
+    // with low energy spread.
+    // The electromagnetic fields of this species can be initialized solving a Poisson-like problem (here informally 
+    // referred to as "relativistic Poisson problem") and then performing a Lorentz back-transformation to find the 
+    // electromagnetic fields of the species in the lab frame.
+    // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details 
+    // In case of non-monoenergetic relativistic distribution (NOT IMPLEMENTED AT THE MOMENT), the linearity of Maxwell's equations can be exploited:
+    // divide the species in quasi-monoenergetic bins with gamma_i and repeat the same procedure for described above 
+    // for all bins. Finally, in the laboratory frame sum all the fields of the various energy-bin ensembles of particles.
+    
+    // All the parameters for the Poisson problem (e.g. maximum iteration) are the same used in the namelist
+    // for the traditional Poisson problem
+
+    // compute gamma_mean for the species for which the field is initialized
+    double s_gamma(0.);
+    uint64_t nparticles(0);
+    for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size() ; ispec++) {
+        if (species(0, ispec)->relativistic_field_initialization){
+            for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+                if (time_primal==species(ipatch, ispec)->time_relativistic_initialization){
+                    s_gamma += species(ipatch, ispec)->sum_gamma();
+                    nparticles += species(ipatch, ispec)->getNbrOfParticles();
+                                                                                          }
+            }
+        }
+    }
+    double gamma_global(0.);
+    MPI_Allreduce(&s_gamma, &gamma_global, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    uint64_t nparticles_global(0);
+    MPI_Allreduce(&nparticles, &nparticles_global, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
+    MESSAGE( "GAMMA = " << gamma_global/(double)nparticles_global);
+
+    //Timer ptimer("global");
+    //ptimer.init(smpi);
+    //ptimer.restart();
+
+    double gamma_mean = gamma_global/(double)nparticles_global; 
+
+    unsigned int iteration_max = params.relativistic_poisson_max_iteration;
+    double           error_max = params.relativistic_poisson_max_error;
+    unsigned int iteration=0;
+
+    // Init & Store internal data (phi, r, p, Ap) per patch
+    double rnew_dot_rnew_local(0.);
+    double rnew_dot_rnew(0.);
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+        (*this)(ipatch)->EMfields->initPoisson( (*this)(ipatch) );
+        rnew_dot_rnew_local += (*this)(ipatch)->EMfields->compute_r();
+        //cout << std::scientific << "rnew_dot_rnew_local = " << rnew_dot_rnew_local << endl;
+        (*this)(ipatch)->EMfields->initRelativisticPoissonFields( (*this)(ipatch) );
+    }
+    //cout << std::scientific << "rnew_dot_rnew_local = " << rnew_dot_rnew_local << endl;
+    MPI_Allreduce(&rnew_dot_rnew_local, &rnew_dot_rnew, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+    //std::vector<Field*> Ex_;
+    std::vector<Field*> Ex_rel_;
+    std::vector<Field*> Ey_rel_;
+    std::vector<Field*> Ez_rel_;
+    std::vector<Field*> Bx_rel_;
+    std::vector<Field*> By_rel_;
+    std::vector<Field*> Bz_rel_;
+    std::vector<Field*> Ap_;
+
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+        //Ex_.push_back( (*this)(ipatch)->EMfields->Ex_ );
+        Ex_rel_.push_back( (*this)(ipatch)->EMfields->Ex_rel_ );
+        Ey_rel_.push_back( (*this)(ipatch)->EMfields->Ey_rel_ );
+        Ez_rel_.push_back( (*this)(ipatch)->EMfields->Ez_rel_ );
+        Bx_rel_.push_back( (*this)(ipatch)->EMfields->Bx_rel_ );
+        By_rel_.push_back( (*this)(ipatch)->EMfields->By_rel_ );
+        Bz_rel_.push_back( (*this)(ipatch)->EMfields->Bz_rel_ );
+       
+        Ap_.push_back( (*this)(ipatch)->EMfields->Ap_ );
+    }
+
+    unsigned int nx_p2_global = (params.n_space_global[0]+1);
+    //if ( Ex_[0]->dims_.size()>1 ) {
+    if ( Ex_rel_[0]->dims_.size()>1 ) {
+        nx_p2_global *= (params.n_space_global[1]+1);
+        if ( Ex_rel_[0]->dims_.size()>2 ) {
+            nx_p2_global *= (params.n_space_global[2]+1);
+        }
+    }
+
+    
+    // compute control parameter
+    double norm2_source_term = sqrt(rnew_dot_rnew);
+    //double ctrl = rnew_dot_rnew / (double)(nx_p2_global);
+    double ctrl = sqrt(rnew_dot_rnew) / norm2_source_term; // initially is equal to one
+
+    // ---------------------------------------------------------
+    // Starting iterative loop for the conjugate gradient method
+    // ---------------------------------------------------------
+    if (smpi->isMaster()) DEBUG("Starting iterative loop for CG method");
+    //cout << std::scientific << ctrl << "\t" << error_max << "\t" << iteration << "\t" << iteration_max << endl;
+    while ( (ctrl > error_max) && (iteration<iteration_max) ) {
+        iteration++;
+        
+        if ( (smpi->isMaster()) && (iteration%1000==0) ) {
+            MESSAGE("iteration " << iteration << " started with control parameter ctrl = " << 1.0e22*ctrl << " x 1.e-22");
+        }
+
+        // scalar product of the residual
+        double r_dot_r = rnew_dot_rnew;
+
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+            (*this)(ipatch)->EMfields->compute_Ap_relativistic_Poisson( (*this)(ipatch), gamma_mean );
+
+        // Exchange Ap_ (intra & extra MPI)
+        SyncVectorPatch::exchange_along_all_directions_noomp          ( Ap_, *this );
+        SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Ap_, *this );
+        
+
+       // scalar product p.Ap
+        double p_dot_Ap       = 0.0;
+        double p_dot_Ap_local = 0.0;
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            p_dot_Ap_local += (*this)(ipatch)->EMfields->compute_pAp();
+        }
+        MPI_Allreduce(&p_dot_Ap_local, &p_dot_Ap, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+
+        // compute new potential and residual
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            (*this)(ipatch)->EMfields->update_pand_r( r_dot_r, p_dot_Ap );
+        }
+
+        // compute new residual norm
+        rnew_dot_rnew       = 0.0;
+        rnew_dot_rnew_local = 0.0;
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            rnew_dot_rnew_local += (*this)(ipatch)->EMfields->compute_r();
+        }
+        MPI_Allreduce(&rnew_dot_rnew_local, &rnew_dot_rnew, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        if (smpi->isMaster()) DEBUG("new residual norm: rnew_dot_rnew = " << rnew_dot_rnew);
+
+        // compute new directio
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            (*this)(ipatch)->EMfields->update_p( rnew_dot_rnew, r_dot_r );
+        }
+
+        // compute control parameter
+        //ctrl = rnew_dot_rnew / (double)(nx_p2_global);
+        ctrl = sqrt(rnew_dot_rnew)/norm2_source_term;
+        if (smpi->isMaster()) {
+            DEBUG("iteration " << iteration << " done, exiting with control parameter ctrl = " << 1.0e22*ctrl << " x 1.e-22");
+        }
+
+    }//End of the iterative loop
+
+
+    // --------------------------------
+    // Status of the solver convergence
+    // --------------------------------
+    if (iteration_max>0 && iteration == iteration_max) {
+        if (smpi->isMaster())
+            WARNING("Relativistic Poisson solver did not converge: reached maximum iteration number: " << iteration
+                    << ", relative err is ctrl = " << 1.0e22*ctrl << "x 1.e-22" );
+    }
+    else {
+        if (smpi->isMaster())
+            MESSAGE(1,"Relativistic Poisson solver converged at iteration: " << iteration
+                    << ", relative err is ctrl = " << 1.0e22*ctrl << " x 1.e-22" );
+    }
+
+    // ------------------------------------------
+    // Compute the electromagnetic fields E and B 
+    // ------------------------------------------
+    
+    // sync the potential
+    //SyncVectorPatch::exchange( (*this)(ipatch)->EMfields->phi_, *this );
+    //SyncVectorPatch::finalizeexchange( (*this)(ipatch)->EMfields->phi_, *this );
+
+    // compute E and sync
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+        { // begin loop on patches
+        (*this)(ipatch)->EMfields->initE_relativistic_Poisson( (*this)(ipatch), gamma_mean );
+        } // end loop on patches
+      
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( Ex_rel_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Ex_rel_, *this );
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( Ey_rel_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Ey_rel_, *this );  
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( Ez_rel_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Ez_rel_, *this );    
+    //SyncVectorPatch::exchangeE( params, *this );
+    //SyncVectorPatch::finalizeexchangeE( params, *this );
+
+    // Force to zero the average value of electric field, as in traditional Poisson solver
+    //// -------------------------------------
+    vector<double> E_Add(Ex_rel_[0]->dims_.size(),0.);
+    if ( Ex_rel_[0]->dims_.size()==3 ) {
+        double Ex_avg_local(0.), Ex_avg(0.), Ey_avg_local(0.), Ey_avg(0.), Ez_avg_local(0.), Ez_avg(0.);
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            Ex_avg_local += (*this)(ipatch)->EMfields->computeExrelSum();
+            Ey_avg_local += (*this)(ipatch)->EMfields->computeEyrelSum();
+            Ez_avg_local += (*this)(ipatch)->EMfields->computeEzrelSum();
+        }
+
+        MPI_Allreduce(&Ex_avg_local, &Ex_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        MPI_Allreduce(&Ey_avg_local, &Ey_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        MPI_Allreduce(&Ez_avg_local, &Ez_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+        E_Add[0] = -Ex_avg/((params.n_space[0]+2)*(params.n_space[1]+1)*(params.n_space[2]+1));
+        E_Add[1] = -Ey_avg/((params.n_space[0]+1)*(params.n_space[1]+2)*(params.n_space[2]+1));;
+        E_Add[2] = -Ez_avg/((params.n_space[0]+1)*(params.n_space[1]+1)*(params.n_space[2]+2));;
+    }
+    else if ( Ex_rel_[0]->dims_.size()==2 ) {
+        double Ex_XminYmax = 0.0;
+        double Ey_XminYmax = 0.0;
+        double Ex_XmaxYmin = 0.0;
+        double Ey_XmaxYmin = 0.0;
+
+    //The YmaxXmin patch has Patch coordinates X=0, Y=2^m1-1= number_of_patches[1]-1.
+    std::vector<int> xcall( 2, 0 );
+    xcall[0] = 0;
+    xcall[1] = params.number_of_patches[1]-1;
+    int patch_YmaxXmin = domain_decomposition_->getDomainId( xcall );
+    //The MPI rank owning it is
+    int rank_XminYmax = smpi->hrank(patch_YmaxXmin);
+    //The YminXmax patch has Patch coordinates X=2^m0-1= number_of_patches[0]-1, Y=0.
+    //Its hindex is
+    xcall[0] = params.number_of_patches[0]-1;
+    xcall[1] = 0;
+    int patch_YminXmax = domain_decomposition_->getDomainId( xcall );
+    //The MPI rank owning it is
+    int rank_XmaxYmin = smpi->hrank(patch_YminXmax);
+    
+
+    //cout << patch_YmaxXmin << " " << rank_XminYmax << " " << patch_YminXmax << " " << rank_XmaxYmin << endl;
+
+    if ( smpi->getRank() == rank_XminYmax ) {
+            Ex_XminYmax = (*this)(patch_YmaxXmin-((*this).refHindex_))->EMfields->getExrel_XminYmax();
+            Ey_XminYmax = (*this)(patch_YmaxXmin-((*this).refHindex_))->EMfields->getEyrel_XminYmax();
+        }
+
+    // Xmax-Ymin corner
+    if ( smpi->getRank() == rank_XmaxYmin ) {
+            Ex_XmaxYmin = (*this)(patch_YminXmax-((*this).refHindex_))->EMfields->getExrel_XmaxYmin();
+            Ey_XmaxYmin = (*this)(patch_YminXmax-((*this).refHindex_))->EMfields->getEyrel_XmaxYmin();
+        }
+
+    MPI_Bcast(&Ex_XminYmax, 1, MPI_DOUBLE, rank_XminYmax, MPI_COMM_WORLD);
+    MPI_Bcast(&Ey_XminYmax, 1, MPI_DOUBLE, rank_XminYmax, MPI_COMM_WORLD);
+
+    MPI_Bcast(&Ex_XmaxYmin, 1, MPI_DOUBLE, rank_XmaxYmin, MPI_COMM_WORLD);
+    MPI_Bcast(&Ey_XmaxYmin, 1, MPI_DOUBLE, rank_XmaxYmin, MPI_COMM_WORLD);
+
+    //This correction is always done, independantly of the periodicity. Is this correct ?
+    E_Add[0] = -0.5*(Ex_XminYmax+Ex_XmaxYmin);
+    E_Add[1] = -0.5*(Ey_XminYmax+Ey_XmaxYmin);
+    
+#ifdef _3D_LIKE_CENTERING
+        double Ex_avg_local(0.), Ex_avg(0.), Ey_avg_local(0.), Ey_avg(0.);
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            Ex_avg_local += (*this)(ipatch)->EMfields->computeExrelSum();
+            Ey_avg_local += (*this)(ipatch)->EMfields->computeEyrelSum();
+        }
+
+        MPI_Allreduce(&Ex_avg_local, &Ex_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        MPI_Allreduce(&Ey_avg_local, &Ey_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+        E_Add[0] = -Ex_avg/((params.n_space[0]+2)*(params.n_space[1]+1));
+        E_Add[1] = -Ey_avg/((params.n_space[0]+1)*(params.n_space[1]+2));;
+#endif
+
+    }
+
+    else if( Ex_rel_[0]->dims_.size()==1 ) {
+        double Ex_Xmin = 0.0;
+        double Ex_Xmax = 0.0;
+
+        unsigned int rankXmin = 0;
+        if ( smpi->getRank() == 0 ) {
+            //Ex_Xmin = (*Ex1D)(index_bc_min[0]);
+            Ex_Xmin = (*this)( (0)-((*this).refHindex_))->EMfields->getExrel_Xmin();
+        }
+        MPI_Bcast(&Ex_Xmin, 1, MPI_DOUBLE, rankXmin, MPI_COMM_WORLD);
+
+        unsigned int rankXmax = smpi->getSize()-1;
+        if ( smpi->getRank() == smpi->getSize()-1 ) {
+            //Ex_Xmax = (*Ex1D)(index_bc_max[0]);
+            Ex_Xmax = (*this)( (params.number_of_patches[0]-1)-((*this).refHindex_))->EMfields->getExrel_Xmax();
+        }
+        MPI_Bcast(&Ex_Xmax, 1, MPI_DOUBLE, rankXmax, MPI_COMM_WORLD);
+        E_Add[0] = -0.5*(Ex_Xmin+Ex_Xmax);
+
+#ifdef _3D_LIKE_CENTERING
+        double Ex_avg_local(0.), Ex_avg(0.);
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+            Ex_avg_local += (*this)(ipatch)->EMfields->computeExrelSum();
+        }
+
+        MPI_Allreduce(&Ex_avg_local, &Ex_avg, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+        E_Add[0] = -Ex_avg/((params.n_space[0]+2));
+#endif
+
+    }
+ 
+    // Centering electrostatic fields
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+        (*this)(ipatch)->EMfields->centeringErel( E_Add );
+
+    // compute B and sync
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+        { // begin loop on patches
+        (*this)(ipatch)->EMfields->initB_relativistic_Poisson( (*this)(ipatch), gamma_mean );
+        } // end loop on patches
+
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( Bx_rel_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bx_rel_, *this );
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( By_rel_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( By_rel_, *this );  
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( Bz_rel_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_rel_, *this );  
+    //SyncVectorPatch::exchangeB( params, *this );
+    //SyncVectorPatch::finalizeexchangeB( params, *this );
+
+    // Proper spatial centering of the electromagnetic fields in the Yee Cell through interpolation
+    // -------------------------------------
+    // if (!params.is_spectral){
+    //     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+    //         { // begin loop on patches
+    //         (*this)(ipatch)->EMfields->center_fields_from_relativistic_Poisson( (*this)(ipatch));
+    //         } // end loop on patches
+    // 
+    //     // re-exchange the properly spatially centered B field
+    //     SyncVectorPatch::exchange_along_all_directions_noomp          ( Bx_rel_, *this );
+    //     SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bx_rel_, *this );
+    //     SyncVectorPatch::exchange_along_all_directions_noomp          ( By_rel_, *this );
+    //     SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( By_rel_, *this );  
+    //     SyncVectorPatch::exchange_along_all_directions_noomp          ( Bz_rel_, *this );
+    //     SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_rel_, *this );
+    //     //SyncVectorPatch::exchangeB( params, *this );
+    //     //SyncVectorPatch::finalizeexchangeB( params, *this );
+    // }
+   
+   MESSAGE(0,"Summing fields of relativistic species to the grid fields");
+   // sum the fields found  by relativistic Poisson solver to the existing em fields
+   // Includes proper spatial centering of the electromagnetic fields in the Yee Cell through interpolation
+   for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+       { // begin loop on patches
+       (*this)(ipatch)->EMfields->sum_rel_fields_to_em_fields( (*this)(ipatch));
+       } // end loop on patches
+
+  
+    MESSAGE(0,"Fields of relativistic species initialized");
+    //!\todo Reduce to find global max
+    //if (smpi->isMaster())
+    //  MESSAGE(1,"Relativistic Poisson equation solved. Maximum err = ");
+
+    //ptimer.update();
+    //MESSAGE("Time in Relativistic Poisson : " << ptimer.getTime() );
+
+
+    ptimer.update();
+    MESSAGE("Time in Relativistic Poisson : " << ptimer.getTime() );
+
+} // END solveRelativisticPoisson
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1399,6 +1821,16 @@ void VectorPatch::applyExternalFields()
 {
     for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
         patches_[ipatch]->EMfields->applyExternalFields( (*this)(ipatch) ); // Must be patch
+}
+
+
+// For each patch, apply external fields
+void VectorPatch::saveExternalFields( Params &params )
+{
+    if (params.save_magnectic_fields_for_SM) {
+        for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
+            patches_[ipatch]->EMfields->saveExternalFields( (*this)(ipatch) ); // Must be patch
+    }
 }
 
 

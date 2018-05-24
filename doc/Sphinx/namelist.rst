@@ -149,6 +149,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   A list of integers: the number of patches in each direction.
   Each integer must be a power of 2, and the total number of patches must be
   greater or equal than the number of MPI processes.
+  It is also advised to have more patches than the total number of openMP threads even if this is not a strict requirement.
   See :doc:`parallelization`.
 
 
@@ -211,6 +212,24 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   Maximum error for the Poisson solver.
 
+.. py:data:: solve_relativistic_poisson
+
+   :default: False
+
+   Decides if relativistic Poisson problem must be solved for at least one species.
+   See :doc:`relativistic_fields_initialization` for more details.
+
+.. py:data:: relativistic_poisson_max_iteration
+
+  :default: 50000
+
+  Maximum number of iteration for the Poisson solver.
+
+.. py:data:: relativistic_poisson_max_error
+
+  :default: 1e-22
+
+  Maximum error for the Poisson solver.
 
 .. py:data:: EM_boundary_conditions
 
@@ -231,10 +250,12 @@ The block ``Main`` is **mandatory** and has the following syntax::
 .. py:data:: EM_boundary_conditions_k
 
   :type: list of lists of floats
-  :default: ``[[1.,0.,0.],[-1.,0.,0.],[0.,1.,0.],[0.,-1.,0.],[0.,0.,1.],[0.,0.,-1.]]``
+  :default: ``[[1.,0.],[-1.,0.],[0.,1.],[0.,-1.]]`` in 2D
+  :default: ``[[1.,0.,0.],[-1.,0.,0.],[0.,1.,0.],[0.,-1.,0.],[0.,0.,1.],[0.,0.,-1.]]`` in 3D
 
-  `k` is the incident wave vector for each faces sequentially Xmin, Xmax, Ymin, Ymax, Zmin, Zmax defined by its coordinates in the `xyz` frame.
-  The number of coordinates is equal to the dimension of the simulation. The number of given vectors must be equal to 1 or to the number of faces which is twice the dimension of the simulation.
+  The incident unit wave vector for each face (sequentially Xmin, Xmax, Ymin, Ymax, Zmin, Zmax)
+  defined by its coordinates in the `xyz` frame.
+  The number of coordinates is equal to the dimension of the simulation.
 
   | **Syntax 1:** ``[[1,0,0]]``, identical for all boundaries.
   | **Syntax 2:** ``[[1,0,0],[-1,0,0], ...]``,  different on each boundary.
@@ -481,6 +502,9 @@ Each species has to be defined in a ``Species`` block::
       radiation_photon_sampling = 1,
       radiation_photon_gamma_threshold = 2,
 
+      # Relativistic field initialization:
+      relativistic_field_initialization = "False",
+
       # For photon species only:
       multiphoton_Breit_Wheeler = ["electron","positron"],
       multiphoton_Breit_Wheeler_sampling = [1,1]
@@ -503,11 +527,12 @@ Each species has to be defined in a ``Species`` block::
      of both species are identical in each cell.
    * A *numpy* array defining all the positions of the species' particles.
      In this case you must also provide the weight of each particle (see :ref:`Weights`).
-     The array shape must be `(Ndim+1, Npart)` where `Ndim` is the simulation dimension,
+     The array shape must be `(Ndim+1, Npart)` where `Ndim` is the simulation dimension (of the particles),
      and `Npart` is the total number of particles. Positions components `x`, `y`, `z` are
-     given along the first columns and the weights are given in the last column of the array.
+     given along the first `Ndim` columns and the weights are given in the last column of the array.
      This initialization is incompatible with :py:data:`number_density`, :py:data:`charge_density`
-     and :py:data:`particles_per_cell`.
+     and :py:data:`particles_per_cell`. Particles initialized outside of the initial simulation domain
+     will not be created. This initalization is disregarded when running a `restart`.
 
 .. py:data:: momentum_initialization
 
@@ -701,6 +726,16 @@ Each species has to be defined in a ``Species`` block::
 
   This parameter cannot be assigned to photons (mass = 0).
 
+.. py:data:: relativistic_field_initialization
+
+  :default: ``False``
+
+  Flag for relativistic particles. If ``True``, the electromagnetic fields of this species will added to the electromagnetic fields already present in the simulation.
+  This operation will be performed when time equals :py:data:`time_frozen`. See :doc:`relativistic_fields_initialization` for details on the computation of the electromagentic fields of a relativistic species.
+  To have physically meaningful results, we recommend to place a species which requires this method of field initialization far from other species, otherwise the latter could experience instantly turned-on unphysical forces by the relativistic species' fields.
+
+
+
 .. py:data:: multiphoton_Breit_Wheeler
 
   :default: ``[None,None]``
@@ -773,22 +808,25 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
         chirp_profile  = tconstant(),
         time_envelope  = tgaussian(),
         space_envelope = [ By_profile  , Bz_profile   ],
-        phase          = [ PhiY_profile, PhiZ_profile ]
+        phase          = [ PhiY_profile, PhiZ_profile ],
+        delay_phase    = [ 0., 0. ]
     )
 
   This implements a wave of the form:
 
   .. math::
 
-    B_y(\mathbf{x}, t) = S_y(\mathbf{x})\; T\left[t-\phi_y(\mathbf{x})/\omega(t)\right]
+    B_y(\mathbf{x}, t) = S_y(\mathbf{x})\; T\left(t-t_{0y}\right)
     \;\sin\left( \omega(t) t - \phi_y(\mathbf{x}) \right)
 
-    B_z(\mathbf{x}, t) = S_z(\mathbf{x})\; T\left[t-\phi_z(\mathbf{x})/\omega(t)\right]
+    B_z(\mathbf{x}, t) = S_z(\mathbf{x})\; T\left(t-t_{0z}\right)
     \;\sin\left( \omega(t) t - \phi_z(\mathbf{x}) \right)
 
-  where :math:`T` is the temporal envelope, :math:`S_y` and :math:`S_y` are the
-  spatial envelopes, :math:`\omega` is the time-varying frequency, and
-  :math:`\phi_y` and :math:`\phi_z` are the phases.
+  where :math:`T` is the temporal envelope, :math:`S_y` and :math:`S_z` are the
+  spatial envelopes, :math:`\omega` is the time-varying frequency,
+  :math:`\phi_y` and :math:`\phi_z` are the phases, and we defined the delays
+  :math:`t_{0y} = (\phi_y(\mathbf{x})-\varphi_y)/\omega(t)` and
+  :math:`t_{0z} = (\phi_z(\mathbf{x})-\varphi_z)/\omega(t)`.
 
   .. py:data:: omega
 
@@ -803,6 +841,36 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
     The variation of the laser frequency over time, such that
     :math:`\omega(t)=\mathtt{omega}\times\mathtt{chirp\_profile}(t)`.
+
+  .. warning::
+
+    This definition of the chirp profile is not standard.
+    Indeed, :math:`\omega(t)` as defined here **is not** the instantaneous frequency, :math:`\omega_{\rm inst}(t)`,
+    which is obtained from the time derivative of the phase :math:`\omega(t) t`.
+
+    Should one define the chirp as :math:`C(t) = \omega_{\rm inst}(t)/\omega` (with :math:`\omega` defined by the input
+    parameter :math:`\mathtt{omega}`), the user can easily obtain the corresponding chirp profile as defined in
+    :program:`Smilei` as:
+
+    .. math::
+
+        \mathtt{chirp\_profile}(t) = \frac{1}{t} \int_0^t dt' C(t')\,.
+
+    Let us give as an example the case of a *linear chirp*, with the instantaneous frequency
+    :math:`\omega_{\rm inst}(t) = \omega [1+\alpha\,\omega(t-t_0)]`.
+    :math:`C(t) = 1+\alpha\,\omega(t-t_0)`. The corresponding input chirp profile reads:
+
+    .. math::
+
+        \mathtt{chirp\_profile}(t) = 1 - \alpha\, \omega t_0 + \frac{\alpha}{2} \omega t
+
+    Similarly, for a *geometric (exponential) chirp* such that :math:`\omega_{\rm inst}(t) = \omega\, \alpha^{\omega t}`,
+    :math:`C(t) = \alpha^{\omega t}`, and the corresponding input chirp profile reads:
+
+    .. math::
+
+        \mathtt{chirp\_profile}(t) = \frac{\alpha^{\omega t} - 1}{\omega t \, \ln \alpha}\,.
+
 
   .. py:data:: time_envelope
 
@@ -824,6 +892,15 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     :default: ``[ 0., 0. ]``
 
     The two spatially-varying phases :math:`\phi_y` and :math:`\phi_z`.
+
+  .. py:data:: delay_phase
+
+    :type: a list of two floats
+    :default: ``[ 0., 0. ]``
+
+    An extra phase for the time envelopes of :math:`B_y` and :math:`B_z`. Useful in the
+    case of elliptical polarization where the two temporal profiles might have a slight
+    delay due to the mismatched :py:data:`phase`.
 
 
 

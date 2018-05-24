@@ -1,4 +1,6 @@
 LDFLAGS  += -L/ccc/products/gcc-4.8.1/default/lib64 -lstdc++ -lgcc_s
 CXXFLAGS += -xAVX 
 
-
+# module load python
+# export PYTHONHOME=/ccc/products/ccc_python/2.7.8_201409
+#

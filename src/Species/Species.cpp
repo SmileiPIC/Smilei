@@ -51,6 +51,8 @@ pusher("boris"),
 radiation_model("none"),
 time_frozen(0),
 radiating(false),
+relativistic_field_initialization(false),
+time_relativistic_initialization(0),
 multiphoton_Breit_Wheeler(2,""),
 ionization_model("none"),
 densityProfileType("none"),
@@ -1340,7 +1342,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                 tot += oc;
         }
         for (int i=0; i < nbins   ; i++) bmin[i] = indices[i] ;
-        for (int i=0; i < nbins-1 ; i++) bmax[i] = bmin[i] ;
+        for (int i=0; i < nbins-1 ; i++) bmax[i] = bmin[i+1] ;
         bmax[nbins-1] = npart_effective ;
 
         //Now initialize particles at thier proper indices

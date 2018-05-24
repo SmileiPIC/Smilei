@@ -171,6 +171,28 @@ int main (int argc, char* argv[])
 
         // Initialize the electromagnetic fields
         // -------------------------------------
+
+        TITLE("Applying external fields at time t = 0");
+        vecPatches.applyExternalFields();
+        vecPatches.saveExternalFields( params );
+
+        // Solve "Relativistic Poisson" problem (including proper centering of fields)
+        // Note: the mean gamma for initialization will be computed for all the species
+        // whose fields are initialized at this iteration
+        if (params.solve_relativistic_poisson == true) {
+            // Compute rho only for species needing relativistic field Initialization
+            vecPatches.computeChargeRelativisticSpecies(time_prim);
+            SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, timers, 0 );
+
+            // Initialize the fields for these species
+            if (!vecPatches.isRhoNull(&smpi)){
+                TITLE("Initializing relativistic species fields at time t = 0");
+                vecPatches.solveRelativisticPoisson( params, &smpi, time_prim );
+                                             }
+            // Reset rho and J and return to initialization
+            vecPatches.resetRhoJ();
+        }
+
         vecPatches.computeCharge();
         vecPatches.sumDensities(params, time_dual, timers, 0, simWindow);
 
@@ -199,8 +221,6 @@ int main (int argc, char* argv[])
             vecPatches.solvePoisson( params, &smpi );
         }
 
-        TITLE("Applying external fields at time t = 0");
-        vecPatches.applyExternalFields();
 
         // Patch reconfiguration
         if( params.has_dynamic_vectorization ) {
@@ -291,6 +311,28 @@ int main (int argc, char* argv[])
 
             // apply collisions if requested
             vecPatches.applyCollisions(params, itime, timers);
+            
+            // Solve "Relativistic Poisson" problem (including proper centering of fields)
+            // for species who stop to be frozen
+            // Note: the mean gamma for initialization will be computed for all the species
+            // whose fields are initialized at this iteration
+            if (params.solve_relativistic_poisson == true) {
+                // Compute rho only for species needing relativistic field Initialization
+                vecPatches.computeChargeRelativisticSpecies(time_prim);
+                SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, timers, 0 );
+                #pragma omp master
+                {
+
+                    // Initialize the fields for these species
+                    if (!vecPatches.isRhoNull(&smpi)){
+                        TITLE("Initializing relativistic species fields");
+                        vecPatches.solveRelativisticPoisson( params, &smpi, time_prim );
+                    }
+                }
+                #pragma omp barrier
+                // Reset rho and J and return to PIC loop
+                vecPatches.resetRhoJ();
+            }
 
             // (1) interpolate the fields at the particle position
             // (2) move the particle

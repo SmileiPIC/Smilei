@@ -362,6 +362,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         } // End ithread loop
         //}
     }
+
     // First dynamic vectorization mode
     else if (params.vecto == "dynamic")
     {
@@ -467,7 +468,6 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             } // end test patch_particle_created[ithread][j]
         } // end j loop
     } // End ithread loop
-
     #pragma omp single nowait
     {
         x_moved += cell_length_x_*params.n_space[0];
