@@ -17,7 +17,7 @@ class SimWindow;
 class LaserEnvelope {
 public:
     LaserEnvelope( Params& params, Patch* patch, ElectroMagn* EMfields ); // Main constructor
-    LaserEnvelope( LaserEnvelope *envelope, Patch* patch, ElectroMagn* EMfields, Params& params ); // Cloning constructor
+    LaserEnvelope( LaserEnvelope *envelope, Patch* patch, ElectroMagn* EMfields, Params& params, unsigned int n_moved ); // Cloning constructor
     virtual void initEnvelope( Patch* patch , ElectroMagn* EMfields) = 0;
     virtual ~LaserEnvelope();
     virtual void compute(ElectroMagn* EMfields) = 0;
@@ -51,7 +51,7 @@ public:
 class LaserEnvelope3D : public LaserEnvelope {
 public:
     LaserEnvelope3D( Params& params, Patch* patch, ElectroMagn* EMfields );
-    LaserEnvelope3D( LaserEnvelope *envelope, Patch* patch, ElectroMagn* EMfields, Params& params );
+    LaserEnvelope3D( LaserEnvelope *envelope, Patch* patch, ElectroMagn* EMfields, Params& params, unsigned int n_moved );
     void initEnvelope( Patch* patch,ElectroMagn* EMfields ) override final;
     ~LaserEnvelope3D();
      void compute(ElectroMagn* EMfields) override final;

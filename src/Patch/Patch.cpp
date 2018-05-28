@@ -140,6 +140,10 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi, DomainDecomposition
         Interp_envelope      = InterpolatorFactory::create_env_interpolator(params, this);
         Proj_susceptibility  = ProjectorFactory::create_susceptibility_projector(params, this); 
                                      } // + patchId -> idx_domain_begin (now = ref smpi) 
+    else {
+        Interp_envelope      = NULL;
+        Proj_susceptibility  = NULL;
+    }
 
     // projection operator (virtual)
     Proj       = ProjectorFactory::create(params, this);    // + patchId -> idx_domain_begin (now = ref smpi)
@@ -159,12 +163,12 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi, DomainDecomposition
 }
 
 
-void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool with_particles = true ) {
+void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, unsigned int n_moved, bool with_particles = true ) {
     // clone vector of Species (virtual)
     vecSpecies = SpeciesFactory::cloneVector(patch->vecSpecies, params, this, with_particles);
 
     // clone the electromagnetic fields (virtual)
-    EMfields   = ElectroMagnFactory::clone(patch->EMfields, params, vecSpecies, this);
+    EMfields   = ElectroMagnFactory::clone(patch->EMfields, params, vecSpecies, this, n_moved);
 
     // interpolation operator (virtual)
     Interp     = InterpolatorFactory::create(params, this);
@@ -338,6 +342,9 @@ Patch::~Patch() {
 
     for(unsigned int i=0; i<vecCollisions.size(); i++) delete vecCollisions[i];
     vecCollisions.clear();
+
+    if (Interp_envelope     != NULL) delete Interp_envelope;
+    if (Proj_susceptibility != NULL) delete Proj_susceptibility;
     
     if (partWalls!=NULL) delete partWalls;
     if (Proj     !=NULL) delete Proj;
