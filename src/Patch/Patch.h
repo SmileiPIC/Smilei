@@ -67,8 +67,17 @@ public:
     //! Optional binary collisions operators
     std::vector<Collisions*> vecCollisions;
 
+    //! Interpolator ad hoc for envelope 
+    Interpolator* Interp_envelope = NULL;
+
+    //! Projector ad hoc for Proj_susceptibility
+    //Projector* Proj_susceptibility = NULL;
+
     //! "fake" particles for the probe diagnostics
     std::vector<ProbeParticles*> probes;
+
+    //!
+    Interpolator* probesInterp;
 
 
     // Geometrical description
@@ -110,12 +119,20 @@ public:
 
     //! init comm / exchange fields
     virtual void initExchange( Field* field ) = 0;
+    //! init comm / exchange complex fields
+    virtual void initExchangeComplex( Field* field ) = 0;
     //! finalize comm / exchange fields
     virtual void finalizeExchange( Field* field ) = 0;
+    //! finalize comm / exchange complex fields
+    virtual void finalizeExchangeComplex( Field* field ) = 0;
     //! init comm / exchange fields in direction iDim only
     virtual void initExchange( Field* field, int iDim ) = 0;
-    //! finalize comm / exchange fields in direction iDim only
+    //! init comm / exchange complex fields in direction iDim only
+    virtual void initExchangeComplex( Field* field, int iDim ) = 0;
+    //! finalize comm / exchange fields
     virtual void finalizeExchange( Field* field, int iDim ) = 0;
+    //! finalize comm / exchange complex fields in direction iDim only
+    virtual void finalizeExchangeComplex( Field* field, int iDim ) = 0;
 
     // Create MPI_Datatype to exchange fields
     virtual void createType( Params& params ) = 0;

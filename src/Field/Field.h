@@ -72,9 +72,6 @@ public:
     //! Virtual method to deallocate Field
     virtual void deallocateDims() = 0;
 
-    //! Virtual method used to make a dump of the Field data
-    virtual void dump(std::vector<unsigned int> dims) = 0;
-
     //! Virtual method to shift field in space
     virtual void shift_x(unsigned int delta) = 0;
 
@@ -117,7 +114,7 @@ public:
         return data_[i];
     };
     //! method used to put all entry of a field at a given value val
-    inline void put_to(double val)
+    virtual void put_to(double val)
     {
         if (data_)
             for (unsigned int i=0; i<globalDims_; i++) data_[i] = val;

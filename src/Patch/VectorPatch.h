@@ -119,14 +119,30 @@ public :
     // compute rho only given by relativistic species which require initialization of the relativistic fields
     void computeChargeRelativisticSpecies(double time_primal);
 
+    //! For all patches, deposit susceptibility, then advance momentum of particles interacting with envelope
+    void ponderomotive_update_susceptibilty_and_momentum(Params& params,
+                                 SmileiMPI* smpi,
+                                 SimWindow* simWindow,
+                                 double time_dual, Timers &timers, int itime);
+    //! For all patches, advance position of particles interacting with envelope, comm particles, project charge and current density
+    void ponderomotive_update_position_and_currents(Params& params,
+                                 SmileiMPI* smpi,
+                                 SimWindow* simWindow,
+                                 double time_dual, Timers &timers, int itime);
     void resetRhoJ();
 
     //! For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
     void sumDensities(Params &params, double time_dual, Timers &timers, int itime, SimWindow* simWindow );
 
+    //! For all patch, sum susceptibility on ghost cells (sum per species if needed, sync per patch and MPI sync)
+    void sumSusceptibility(Params &params, double time_dual, Timers &timers, int itime, SimWindow* simWindow );
+
     //! For all patch, update E and B (Ampere, Faraday, boundary conditions, exchange B and center B)
     void solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual,
                       Timers & timers);
+
+    //! For all patch, update envelope field A (envelope equation, boundary contitions, exchange A)
+    void solveEnvelope(Params& params, SimWindow* simWindow, int itime, double time_dual, Timers & timers);
 
     //! For all patch, Compute and Write all diags (Scalars, Probes, Phases, TrackParticles, Fields, Average fields)
     void runAllDiags(Params& params, SmileiMPI* smpi, unsigned int itime, Timers & timers, SimWindow* simWindow);
@@ -172,6 +188,9 @@ public :
     //! Write in a file patches communications
     void output_exchanges(SmileiMPI* smpi);
 
+    //! Init new envelope from input namelist
+    void init_new_envelope(Params& params);
+
     // Lists of fields
     std::vector<Field*> densities;
 
@@ -215,6 +234,31 @@ public :
     std::vector<Field*> listBx_;
     std::vector<Field*> listBy_;
     std::vector<Field*> listBz_;
+
+    std::vector<Field*> listA_;
+    std::vector<Field*> listA0_;
+    std::vector<Field*> listPhi_;
+    std::vector<Field*> listPhi0_;
+    std::vector<Field*> listGradPhix_;
+    std::vector<Field*> listGradPhiy_;
+    std::vector<Field*> listGradPhiz_;
+    std::vector<Field*> listGradPhix0_;
+    std::vector<Field*> listGradPhiy0_;
+    std::vector<Field*> listGradPhiz0_;
+    std::vector<Field*> listEnv_Chi_;
+    std::vector<Field*> listEnv_Chis_;
+
+    std::vector<std::vector< Field *>> listJl_;
+    std::vector<std::vector< Field *>> listJr_;
+    std::vector<std::vector< Field *>> listJt_;
+    std::vector<std::vector< Field *>> listrho_RZ_;
+    std::vector<std::vector< Field *>> listEl_;
+    std::vector<std::vector< Field *>> listEr_;
+    std::vector<std::vector< Field *>> listEt_;
+    std::vector<std::vector< Field *>> listBl_;
+    std::vector<std::vector< Field *>> listBr_;
+    std::vector<std::vector< Field *>> listBt_;
+
 
     //! True if any antennas
     unsigned int nAntennas;
@@ -268,8 +312,16 @@ public :
         return (*this)(ipatch)->EMfields;
     }
 
+    inline Interpolator* interp_envelope(int ipatch){
+        return (*this)(ipatch)->Interp_envelope;
+    }
+
     inline Projector* proj(int ipatch, int ispec){
         return (*this)(ipatch)->vecSpecies[ispec]->Proj;
+    }
+
+    inline Projector* proj_susceptibility(int ipatch, int ispec){
+        return (*this)(ipatch)->vecSpecies[ispec]->Proj_susceptibility;
     }
 
     inline PartWalls* partwalls(int ipatch){
@@ -289,7 +341,6 @@ private :
     double antenna_intensity;
 
     std::vector<Timer*> diag_timers;
-
 };
 
 

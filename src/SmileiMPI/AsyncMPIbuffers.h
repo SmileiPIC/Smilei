@@ -3,6 +3,7 @@
 
 #include <mpi.h>
 #include <vector>
+#include <complex>
 
 #include "Particles.h"
 
@@ -17,6 +18,7 @@ public:
     virtual void allocate(unsigned int nDim_field);
 
     virtual void allocate(unsigned int nDim_field, Field* f, std::vector<unsigned int>& oversize);
+    virtual void iallocate(unsigned int nDim_field, Field* f, std::vector<unsigned int>& oversize);
     void defineTags(Patch* patch, int tag ) ;
     
     //! ndim vectors of 2 sent requests (1 per direction) 
@@ -24,6 +26,7 @@ public:
     //! ndim vectors of 2 received requests (1 per direction) 
     std::vector< std::vector<MPI_Request> > rrequest;
     std::vector< double >  buf[3][2];
+    std::vector< std::complex<double> >  ibuf[3][2];
 
     std::vector< std::vector<int> > send_tags_, recv_tags_;
 

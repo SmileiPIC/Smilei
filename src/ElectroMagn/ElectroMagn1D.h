@@ -75,6 +75,9 @@ public:
     
     //! Method used to compute the total charge density and currents by summing over all species
     void computeTotalRhoJ();
+
+    //! Method used to compute the total susceptibility by summing over all species
+    void computeTotalEnvChi();
     
     //! Number of nodes on the primal grid
     unsigned int nx_p;

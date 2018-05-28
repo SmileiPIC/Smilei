@@ -67,12 +67,12 @@ namelist("")
 {
 
     MESSAGE("HDF5 version "<<H5_VERS_MAJOR << "." << H5_VERS_MINOR << "." << H5_VERS_RELEASE);
-    
+
     if(  (H5_VERS_MAJOR< 1) ||
        ( (H5_VERS_MAJOR==1) && (H5_VERS_MINOR< 8) ) ||
        ( (H5_VERS_MAJOR==1) && (H5_VERS_MINOR==8) && (H5_VERS_RELEASE<16) ) )
         WARNING("Smilei suggests using HDF5 version 1.8.16 or newer");
-    
+
     if (namelistsFiles.size()==0) ERROR("No namelists given!");
 
     //string commandLineStr("");
@@ -249,6 +249,8 @@ namelist("")
     for (unsigned int i=0;i<nDim_field;i++){
         res_space[i] = 1.0/cell_length[i];
     }
+    // Number of modes in LRT geometry
+    PyTools::extract("nmodes", nmodes, "Main");
 
     // simulation duration & length
     PyTools::extract("simulation_time", simulation_time, "Main");
@@ -276,6 +278,29 @@ namelist("")
             EM_BCs[iDim].push_back( EM_BCs[iDim][0] );
         else if ( (EM_BCs[iDim][0] != EM_BCs[iDim][1]) &&  (EM_BCs[iDim][0] == "periodic" || EM_BCs[iDim][1] == "periodic") )
             ERROR("EM_boundary_conditions along dimension "<<"012"[iDim]<<" cannot be periodic only on one side");
+    }
+
+    int n_envlaser = PyTools::nComponents("LaserEnvelope");
+    if ( n_envlaser >=1 ){
+        Laser_Envelope_model = true;
+        //! Boundary conditions for Envelope Field
+        if( !PyTools::extract("Envelope_boundary_conditions", Env_BCs, "Main")  )
+            ERROR("Envelope_boundary_conditions not defined" );
+
+        if( Env_BCs.size() == 0 ) {
+            ERROR("Envelope_boundary_conditions cannot be empty");
+        } else if( Env_BCs.size() == 1 ) {
+            while( Env_BCs.size() < nDim_field ) Env_BCs.push_back( Env_BCs[0] );
+        } else if( Env_BCs.size() != nDim_field ) {
+            ERROR("Envelope_boundary_conditions must be the same size as the number of dimensions");
+         }
+
+        for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
+            if( Env_BCs[iDim].size() == 1 ) // if just one type is specified, then take the same bc type in a given dimension
+                 Env_BCs[iDim].push_back( Env_BCs[iDim][0] );
+        //    else if ( (Env_BCs[iDim][0] != Env_BCs[iDim][1]) &&  (Env_BCs[iDim][0] == "periodic" || Env_BCs[iDim][1] == "periodic") )
+        //        ERROR("Envelope_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side");
+        }
     }
 
     for (unsigned int iDim = 0 ; iDim < nDim_field; iDim++){
@@ -382,6 +407,9 @@ namelist("")
     double res_space2=0;
     for (unsigned int i=0; i<nDim_field; i++) {
         res_space2 += res_space[i]*res_space[i];
+    }
+    if (geometry == "3drz") {
+        res_space2 += ((nmodes-1)*(nmodes-1)-1)*res_space[1]*res_space[1];
     }
     dtCFL=1.0/sqrt(res_space2);
     if ( timestep>dtCFL ) {
@@ -658,7 +686,7 @@ void Params::compute()
         for ( unsigned int idim = 1 ; idim < nDim_field ; idim++ )
             bin_size *= ( n_space[idim]+1+2*oversize[idim] );
 
-        // IF Ionize r pair generation : clrw = n_space_x_pp ?
+        // IF Ionize or pair generation : clrw = n_space_x_pp ?
         if ( ( clrw+1+2*oversize[0]) * bin_size > (unsigned int) cache_threshold ) {
             int clrw_max = cache_threshold / bin_size - 1 - 2*oversize[0];
             if ( clrw_max > 0 ) {
@@ -676,12 +704,12 @@ void Params::compute()
 
     // clrw != n_space[0] is not compatible
     // with the dynamic vecto for the moment
-    if (vecto == "dynamic" && vecto == "dynamic2")
+    if (vecto == "dynamic" || vecto == "dynamic2")
     {
         if (clrw != (int)(n_space[0]))
         {
             clrw = (int)(n_space[0]);
-            WARNING( "Particles cluster width set to : " << clrw << " for the dynamic vectorization mode");
+            WARNING( "Particles cluster width set to: " << clrw << " for the dynamic vectorization mode");
         }
     }
 

@@ -15,6 +15,8 @@
 #include "SpeciesNorm.h"
 
 #ifdef _VECTO
+#include "SpeciesNormV.h"
+#include "SpeciesV.h"
 #include "SpeciesDynamicV.h"
 #include "SpeciesDynamicV2.h"
 #include "SpeciesNormV.h"
@@ -89,7 +91,8 @@ public:
             if (pusher == "boris"
              || pusher == "borisnr"
              || pusher == "vay"
-             || pusher == "higueracary") {
+             || pusher == "higueracary"
+             || pusher == "ponderomotive_boris") {
                  // Species with relativistic Boris pusher if  =='boris'
                  // Species with nonrelativistic Boris pusher == 'borisnr'
                  // Species with J.L. Vay pusher if == "vay"
@@ -114,7 +117,7 @@ public:
                 }
 #endif
             } else {
-                ERROR("For species `" << species_name << "`, pusher must be 'boris', 'borisnr', 'vay', 'higueracary'");
+                ERROR("For species `" << species_name << "`, pusher must be 'boris', 'borisnr', 'vay', 'higueracary', 'ponderomotive_boris'");
             }
             thisSpecies->pusher = pusher;
 
@@ -345,6 +348,9 @@ public:
             if (ndim_local != params.nDim_particle + 1)
                 ERROR("For species '" << species_name << "' position_initializtion must provide a 2-dimensional array with " <<  params.nDim_particle + 1 << " columns." )
 
+            // OLD //Get number of particles
+            // OLD thisSpecies->n_numpy_particles =  PyArray_SHAPE(np_ret)[1];//  ok
+
             //Get number of particles. Do not initialize any more if this is a restart.
             if (!params.restart) thisSpecies->n_numpy_particles =  PyArray_SHAPE(np_ret)[1];//  ok
             thisSpecies->position_initialization_array = new double[ndim_local*thisSpecies->n_numpy_particles] ;
@@ -358,6 +364,17 @@ public:
         else {
             ERROR("For species '" << species_name << "' non valid position_initialization. It must be either a string or a numpy array.");
         }
+
+
+        PyTools::extract("ponderomotive_dynamics",thisSpecies->ponderomotive_dynamics ,"Species",ispec);
+        if ( thisSpecies->ponderomotive_dynamics && ( params.geometry != "3Dcartesian" ) )
+            ERROR( "Ponderomotive/Envelope model only available in 3D3V" );
+        int n_envlaser = PyTools::nComponents("LaserEnvelope");
+        if ( thisSpecies->ponderomotive_dynamics && ( n_envlaser < 1 ) ){
+            MESSAGE( "No Laser Envelope is specified - Standard PIC dynamics will be used for all species" );
+            thisSpecies->ponderomotive_dynamics = false;
+        }
+
 
         PyObject *py_mom_init = PyTools::extract_py("momentum_initialization", "Species",ispec);
         if ( PyTools::convert(py_mom_init, thisSpecies->momentum_initialization) ){
@@ -679,7 +696,6 @@ public:
         newSpecies->densityProfileType                       = species->densityProfileType;
         newSpecies->vectorized_operators                     = species->vectorized_operators;
         newSpecies->chargeProfile                            = new Profile(species->chargeProfile);
-
         if ( species->densityProfile ){
             newSpecies->densityProfile                       = new Profile(species->densityProfile);
             newSpecies->ppcProfile                           = new Profile(species->ppcProfile);
@@ -699,6 +715,8 @@ public:
         }
         newSpecies->max_charge                               = species->max_charge;
         newSpecies->tracking_diagnostic                      = species->tracking_diagnostic;
+        newSpecies->ponderomotive_dynamics                   = species->ponderomotive_dynamics;
+
         if (newSpecies->mass==0) {
             newSpecies->multiphoton_Breit_Wheeler[0]         = species->multiphoton_Breit_Wheeler[0];
             newSpecies->multiphoton_Breit_Wheeler[1]         = species->multiphoton_Breit_Wheeler[1];

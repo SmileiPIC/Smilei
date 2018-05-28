@@ -6,7 +6,9 @@
 #include "ElectroMagn1D.h"
 #include "ElectroMagn2D.h"
 #include "ElectroMagn3D.h"
+#include "ElectroMagn3DRZ.h"
 #include "ElectroMagnBC.h"
+#include "EnvelopeFactory.h"
 
 #include "Patch.h"
 #include "Params.h"
@@ -27,11 +29,20 @@ public:
         else if ( params.geometry == "3Dcartesian" ) {
             EMfields = new ElectroMagn3D(params, domain_decomposition, vecSpecies, patch);
         }
+        else if ( params.geometry == "3drz" ) {
+            EMfields = new ElectroMagn3DRZ(params, domain_decomposition, vecSpecies, patch);
+        }
         else {
             ERROR( "Unknown geometry : " << params.geometry << "!" );
         }
         
         EMfields->finishInitialization(vecSpecies.size(), patch);
+        
+        // initialize the envelope if used
+        int n_envlaser = PyTools::nComponents("LaserEnvelope");
+        if ( n_envlaser ==1 ) // for the moment it works only with one envelope
+            EMfields->envelope = EnvelopeFactory::create(params, patch, EMfields);
+        
         
         // -----------------
         // Lasers properties
@@ -51,7 +62,7 @@ public:
             else
                 delete laser;
         }
-        
+
         // -----------------
         // ExtFields properties
         // -----------------
@@ -81,10 +92,11 @@ public:
                 ERROR("ExternalField #"<<n_extfield<<": field "<<extField.field<<" not found");
             }
             
+
             EMfields->extFields.push_back(extField);
         }
-        
-        
+
+
         // -----------------
         // Antenna properties
         // -----------------
@@ -98,14 +110,14 @@ public:
                 ERROR("Antenna #"<<n_antenna<<": parameter 'field' not provided'");
             if (antenna.fieldName != "Jx" && antenna.fieldName != "Jy" && antenna.fieldName != "Jz")
                 ERROR("Antenna #"<<n_antenna<<": parameter 'field' must be one of Jx, Jy, Jz");
-            
+
             // Extract the space profile
             name.str("");
             name << "Antenna[" << n_antenna <<"].space_profile";
             if (!PyTools::extract_pyProfile("space_profile",profile,"Antenna",n_antenna))
                 ERROR(" Antenna #"<<n_antenna<<": parameter 'space_profile' not understood");
             antenna.space_profile = new Profile(profile, params.nDim_field, name.str());
-            
+
             // Extract the time profile
             name.str("");
             name << "Antenna[" << n_antenna <<"].time_profile";
@@ -129,10 +141,11 @@ public:
             EMfields->antennas.push_back(antenna);
         }
         
+
         return EMfields;
     }
-    
-    
+
+
     static ElectroMagn* clone(ElectroMagn* EMfields, Params& params, std::vector<Species*>& vecSpecies,  Patch* patch)
     {
         ElectroMagn* newEMfields = NULL;
@@ -142,9 +155,15 @@ public:
             newEMfields = new ElectroMagn2D(static_cast<ElectroMagn2D*>(EMfields), params, patch);
         } else if ( params.geometry == "3Dcartesian" ) {
             newEMfields = new ElectroMagn3D(static_cast<ElectroMagn3D*>(EMfields), params, patch);
+        } else if ( params.geometry == "3drz" ) {
+            newEMfields = new ElectroMagn3DRZ(static_cast<ElectroMagn3DRZ*>(EMfields), params, patch);
         }
         
         newEMfields->finishInitialization(vecSpecies.size(), patch);
+
+        // initialize the envelope if used
+        if ( EMfields->envelope != NULL )
+            newEMfields->envelope = EnvelopeFactory::clone(EMfields->envelope, patch, newEMfields, params);
         
         // -----------------
         // Clone time-average fields
@@ -156,14 +175,14 @@ public:
                     newEMfields->createField( EMfields->allFields_avg[idiag][ifield]->name )
                 );
         }
-        
+
         // -----------------
         // Clone Lasers properties
         // -----------------
         int nlaser;
         for( int iBC=0; iBC<2; iBC++ ) { // xmax and xmin
             if(! newEMfields->emBoundCond[iBC]) continue;
-            
+
             newEMfields->emBoundCond[iBC]->vecLaser.resize(0);
             nlaser = EMfields->emBoundCond[iBC]->vecLaser.size();
             // Create lasers one by one
@@ -178,7 +197,7 @@ public:
                 newEMfields->emBoundCond[iBC]->vecLaser.push_back( laser );
             }
         }
-        
+
         // -----------------
         // Clone ExternalFields properties
         // -----------------
@@ -189,7 +208,7 @@ public:
             extField.index   = EMfields->extFields[n_extfield].index;
             newEMfields->extFields.push_back(extField);
         }
-        
+
         // -----------------
         // Clone Antenna properties
         // -----------------
@@ -202,10 +221,12 @@ public:
             antenna.index         = EMfields->antennas[n_antenna].index        ;
             newEMfields->antennas.push_back(antenna);
         }
-        
+
+        //newEMfields->finishInitialization(vecSpecies.size(), patch);
+
         return newEMfields;
     }
-    
+
 };
 
 #endif

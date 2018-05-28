@@ -628,6 +628,11 @@ void ElectroMagn1D::computeTotalRhoJ()
     }//END loop on species ispec
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+// Compute the total susceptibility from species susceptibility
+// ---------------------------------------------------------------------------------------------------------------------
+void ElectroMagn1D::computeTotalEnvChi()
+{} // END computeTotalEnvChi
 // --------------------------------------------------------------------------
 // Compute Poynting (return the electromagnetic energy injected at the border
 // --------------------------------------------------------------------------

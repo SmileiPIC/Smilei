@@ -120,7 +120,16 @@ public:
     //! Are open boundaries used ?
     bool open_boundaries;
     bool save_magnectic_fields_for_SM;
-    
+
+    //! Boundary conditions for Envelope Field
+    std::vector< std::vector<std::string> > Env_BCs;
+
+    //! Define if the ponderomotive force is computed (default = false)
+    //bool ponderomotive_force;
+
+    //! Define if laser envelope model is used (default = false)
+    bool Laser_Envelope_model=false;
+
     //Poisson solver
     //! Do we solve poisson
     bool solve_poisson;
@@ -166,6 +175,9 @@ public:
 
     //! dt for the simulation
     double timestep;
+
+    //! Number of modes
+    unsigned int nmodes;
 
     //! max value for dt (due to usual FDTD CFL condition: should be moved to ElectroMagn solver (MG))
     double dtCFL;

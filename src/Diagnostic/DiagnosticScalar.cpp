@@ -120,16 +120,43 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     // Make the list of fields
     ElectroMagn* EMfields = vecPatches(0)->EMfields;
     vector<string> fields;
-    fields.push_back(EMfields->Ex_ ->name);
-    fields.push_back(EMfields->Ey_ ->name);
-    fields.push_back(EMfields->Ez_ ->name);
-    fields.push_back(EMfields->Bx_m->name);
-    fields.push_back(EMfields->By_m->name);
-    fields.push_back(EMfields->Bz_m->name);
-    fields.push_back(EMfields->Jx_ ->name);
-    fields.push_back(EMfields->Jy_ ->name);
-    fields.push_back(EMfields->Jz_ ->name);
-    fields.push_back(EMfields->rho_->name);
+    unsigned int  nmodes(0);
+    if (params.geometry != "3drz") {
+        fields.push_back(EMfields->Ex_ ->name);
+        fields.push_back(EMfields->Ey_ ->name);
+        fields.push_back(EMfields->Ez_ ->name);
+        fields.push_back(EMfields->Bx_m->name);
+        fields.push_back(EMfields->By_m->name);
+        fields.push_back(EMfields->Bz_m->name);
+        fields.push_back(EMfields->Jx_ ->name);
+        fields.push_back(EMfields->Jy_ ->name);
+        fields.push_back(EMfields->Jz_ ->name);
+        fields.push_back(EMfields->rho_->name);
+        // add envelope-related fields
+        if (params.Laser_Envelope_model){
+            fields.push_back(EMfields->Env_A_abs_->name);
+            fields.push_back(EMfields->Env_Ar_->name);
+            fields.push_back(EMfields->Env_Ai_->name);
+            fields.push_back(EMfields->Env_Chi_->name);
+                                        }
+    }
+    else {
+        ElectroMagn3DRZ* emfields = static_cast<ElectroMagn3DRZ*>(EMfields);
+        nmodes = emfields->El_.size();
+        for (unsigned int imode=0 ; imode < nmodes ; imode++) {
+            fields.push_back( "Uelm_"+emfields->El_[imode] ->name );
+            fields.push_back( "Uelm_"+emfields->Er_[imode] ->name );
+            fields.push_back( "Uelm_"+emfields->Et_[imode] ->name );
+            fields.push_back( "Uelm_"+emfields->Bl_m[imode]->name );
+            fields.push_back( "Uelm_"+emfields->Br_m[imode]->name );
+            fields.push_back( "Uelm_"+emfields->Bt_m[imode]->name );
+            fields.push_back(emfields->Jl_[imode]->name);
+            fields.push_back(emfields->Jr_[imode]->name);
+            fields.push_back(emfields->Jt_[imode]->name);
+            fields.push_back(emfields->rho_RZ_[imode]->name);
+        }
+        
+    }
 
     // 1 - Prepare the booleans that tell which scalars are necessary to compute
     // -------------------------------------------------------------------------
@@ -197,9 +224,15 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     // ----------------------------------------------------------
 
     values_SUM   .reserve( 13 + nspec*5 + 6 + 2*npoy);
-    values_MINLOC.reserve( 10 );
-    values_MAXLOC.reserve( 10 );
 
+    if (!params.Laser_Envelope_model){
+        values_MINLOC.reserve( 10 );
+        values_MAXLOC.reserve( 10 ); }
+    else{
+        values_MINLOC.reserve( 14 );
+        values_MAXLOC.reserve( 14 );
+        }
+    
     // General scalars
     Ubal_norm    = newScalar_SUM( "Ubal_norm"    );
     Ubal         = newScalar_SUM( "Ubal"         );
@@ -234,7 +267,8 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     }
 
     // Scalars related to field's electromagnetic energy
-    nfield = 6;
+    //nfield = 6;
+    nfield = (params.geometry == "3drz") ? nmodes * 6 : 6;
     fieldUelm.resize(nfield, NULL);
     for( unsigned int ifield=0; ifield<nfield; ifield++ )
         fieldUelm[ifield] = newScalar_SUM( Tools::merge("Uelm_", fields[ifield]) );
@@ -283,6 +317,7 @@ bool DiagnosticScalar::prepare( int timestep )
 
 void DiagnosticScalar::run( Patch* patch, int timestep, SimWindow* simWindow )
 {
+
     // Must keep track of Poynting flux even without diag
     patch->EMfields->computePoynting();
 
@@ -474,12 +509,26 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
 
     vector<Field*> fields;
 
-    fields.push_back(EMfields->Ex_);
-    fields.push_back(EMfields->Ey_);
-    fields.push_back(EMfields->Ez_);
-    fields.push_back(EMfields->Bx_m);
-    fields.push_back(EMfields->By_m);
-    fields.push_back(EMfields->Bz_m);
+    if ((!dynamic_cast<ElectroMagn3DRZ*>(patch->EMfields))) {
+        fields.push_back(EMfields->Ex_);
+        fields.push_back(EMfields->Ey_);
+        fields.push_back(EMfields->Ez_);
+        fields.push_back(EMfields->Bx_m);
+        fields.push_back(EMfields->By_m);
+        fields.push_back(EMfields->Bz_m);
+    }
+    else {
+        ElectroMagn3DRZ* emfields = static_cast<ElectroMagn3DRZ*>(patch->EMfields);
+        unsigned int nmodes = emfields->El_.size(); 
+        for (unsigned int imode=0 ; imode < nmodes ; imode++) {
+            fields.push_back(emfields->El_[imode]);
+            fields.push_back(emfields->Er_[imode]);
+            fields.push_back(emfields->Et_[imode]);
+            fields.push_back(emfields->Bl_m[imode]);
+            fields.push_back(emfields->Br_m[imode]);
+            fields.push_back(emfields->Bt_m[imode]);
+        }
+    }
 
     double Uelm_=0.0; // total electromagnetic energy in the fields
 
@@ -498,15 +547,18 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
                 iFieldGlobalSize[i] = field->dims_[i];
             }
 
+
             // loop on all (none-ghost) cells & add-up the squared-field to the energy density
-            for (unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++) {
-                for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
-                    for (unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++) {
-                        unsigned int ii = k+ (j + i*iFieldGlobalSize[1]) *iFieldGlobalSize[2];
-                        Utot_crtField += (*field)(ii) * (*field)(ii);
-                    }
-                }
-            }
+            //for (unsigned int k=iFieldStart[2]; k<iFieldEnd[2]; k++) {
+            //    for (unsigned int j=iFieldStart[1]; j<iFieldEnd[1]; j++) {
+            //        for (unsigned int i=iFieldStart[0]; i<iFieldEnd[0]; i++) {
+            //            unsigned int ii = k+ (j + i*iFieldGlobalSize[1]) *iFieldGlobalSize[2];
+            //            Utot_crtField += (*field)(ii) * (*field)(ii);
+            //        }
+            //    }
+            //}
+            Utot_crtField += field->norm2( EMfields->istart, EMfields->bufsize );
+                
             // Utot = Dx^N/2 * Field^2
             Utot_crtField *= 0.5*cell_volume;
 
@@ -546,6 +598,14 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     fields.push_back(EMfields->Jy_);
     fields.push_back(EMfields->Jz_);
     fields.push_back(EMfields->rho_);
+
+    // add envelope-related fields
+    if (EMfields->Env_A_abs_ != NULL){
+        fields.push_back(EMfields->Env_A_abs_);
+        fields.push_back(EMfields->Env_Ar_);
+        fields.push_back(EMfields->Env_Ai_);
+        fields.push_back(EMfields->Env_Chi_);
+                                    }
 
     double fieldval;
     unsigned int i_min, j_min, k_min;
@@ -604,6 +664,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
             }
         }
     }
+   
 
     // ------------------------
     // POYNTING-related scalars
@@ -666,6 +727,8 @@ uint64_t DiagnosticScalar::getDiskFootPrint(int istart, int istop, Patch* patch)
     // Calculate the number of dumps between istart and istop
     uint64_t ndumps = timeSelection->howManyTimesBefore(istop) - timeSelection->howManyTimesBefore(istart);
     
+    if( ndumps == 0 ) return 0;
+    
     // Calculate the number of scalars
     // 1 - general scalars
     vector<string> scalars = {"Ubal_norm", "Ubal", "Utot", "Uexp", "Ukin", "Urad", "UmBWpairs", "Uelm", "Ukin_bnd", "Ukin_out_mvw", "Ukin_inj_mvw", "Uelm_bnd", "Uelm_out_mvw", "Uelm_inj_mvw"};
@@ -682,13 +745,28 @@ uint64_t DiagnosticScalar::getDiskFootPrint(int istart, int istop, Patch* patch)
         }
     }
     // 3 - Field scalars
-    scalars.push_back( Tools::merge("Uelm_", patch->EMfields->Ex_ ->name) );
-    scalars.push_back( Tools::merge("Uelm_", patch->EMfields->Ey_ ->name) );
-    scalars.push_back( Tools::merge("Uelm_", patch->EMfields->Ez_ ->name) );
-    scalars.push_back( Tools::merge("Uelm_", patch->EMfields->Bx_m->name) );
-    scalars.push_back( Tools::merge("Uelm_", patch->EMfields->By_m->name) );
-    scalars.push_back( Tools::merge("Uelm_", patch->EMfields->Bz_m->name) );
+    if (!dynamic_cast<ElectroMagn3DRZ*>(patch->EMfields)) {
+        scalars.push_back( Tools::merge("Uelm_", patch->EMfields->Ex_ ->name ) );
+        scalars.push_back( Tools::merge("Uelm_", patch->EMfields->Ey_ ->name ) );
+        scalars.push_back( Tools::merge("Uelm_", patch->EMfields->Ez_ ->name ) );
+        scalars.push_back( Tools::merge("Uelm_", patch->EMfields->Bx_m->name ) );
+        scalars.push_back( Tools::merge("Uelm_", patch->EMfields->By_m->name ) );
+        scalars.push_back( Tools::merge("Uelm_", patch->EMfields->Bz_m->name ) );
+    }
+    else {
+        ElectroMagn3DRZ* emfields = static_cast<ElectroMagn3DRZ*>(patch->EMfields);
+        unsigned int nmodes = emfields->El_.size();
+        for (unsigned int imode=0 ; imode < nmodes ; imode++) {
+            scalars.push_back( Tools::merge("Uelm_", emfields->El_[imode] ->name ) );
+            scalars.push_back( Tools::merge("Uelm_", emfields->Er_[imode] ->name ) );
+            scalars.push_back( Tools::merge("Uelm_", emfields->Et_[imode] ->name ) );
+            scalars.push_back( Tools::merge("Uelm_", emfields->Bl_m[imode]->name ) );
+            scalars.push_back( Tools::merge("Uelm_", emfields->Br_m[imode]->name ) );
+            scalars.push_back( Tools::merge("Uelm_", emfields->Bt_m[imode]->name ) );
+        }
+    }
     // 4 - Scalars related to fields min and max
+    #ifdef _RZ__TODO
     for( unsigned int i=0; i<2; i++ ) {
         string minmax = (i==0) ? "Min" : "Max";
         for( unsigned int j=0; j<2; j++ ) {
@@ -703,8 +781,16 @@ uint64_t DiagnosticScalar::getDiskFootPrint(int istart, int istop, Patch* patch)
             scalars.push_back( Tools::merge(patch->EMfields->Jy_ ->name, minmax, cell) );
             scalars.push_back( Tools::merge(patch->EMfields->Jz_ ->name, minmax, cell) );
             scalars.push_back( Tools::merge(patch->EMfields->rho_->name, minmax, cell) );
+            // add envelope-related fields
+            if (params.Laser_Envelope_model){
+                scalars.push_back( Tools::merge(patch->EMfields->Env_A_abs_->name, minmax, cell) );
+                scalars.push_back( Tools::merge(patch->EMfields->Env_Ar_->name, minmax, cell) );
+                scalars.push_back( Tools::merge(patch->EMfields->Env_Ai_->name, minmax, cell) );
+                scalars.push_back( Tools::merge(patch->EMfields->Env_Chi_->name, minmax, cell) );
+                                            }
         }
     }
+    #endif
     // 5 - Scalars related to the Poynting flux
     unsigned int k = 0;
     string poy_name;

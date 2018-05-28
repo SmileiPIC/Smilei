@@ -277,6 +277,12 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
     dumpFieldsPerProc(patch_gid, EMfields->By_m);
     dumpFieldsPerProc(patch_gid, EMfields->Bz_m);
 
+    if (EMfields->envelope!=NULL) {
+        dump_cFieldsPerProc(patch_gid, EMfields->envelope->A_);
+        dump_cFieldsPerProc(patch_gid, EMfields->envelope->A0_);
+        dumpFieldsPerProc(patch_gid, EMfields->Env_Chi_);
+    }
+
     // filtered Electric fields
     for (unsigned int i=0; i<EMfields->Exfilter.size(); i++)
         dumpFieldsPerProc(patch_gid, EMfields->Exfilter[i]);
@@ -506,6 +512,13 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
     restartFieldsPerProc(patch_gid, EMfields->By_m);
     restartFieldsPerProc(patch_gid, EMfields->Bz_m);
 
+    if (EMfields->envelope!=NULL) {MESSAGE("restarting envelope");
+        restart_cFieldsPerProc(patch_gid, EMfields->envelope->A_);
+        restart_cFieldsPerProc(patch_gid, EMfields->envelope->A0_);
+        restartFieldsPerProc(patch_gid, EMfields->Env_Chi_);
+    }else{MESSAGE("envelope is null");}
+
+    
     // filtered Electric fields
     for (unsigned int i=0; i<EMfields->Exfilter.size(); i++)
         restartFieldsPerProc(patch_gid, EMfields->Exfilter[i]);
@@ -650,10 +663,29 @@ void Checkpoint::dumpFieldsPerProc(hid_t fid, Field* field)
     H5Sclose(sid);
 }
 
+void Checkpoint::dump_cFieldsPerProc(hid_t fid, Field* field)
+{
+    cField* cfield = static_cast<cField*>( field );
+    hsize_t dims[1]={2*field->globalDims_}; //*2 : to manage complex data
+    hid_t sid = H5Screate_simple (1, dims, NULL);
+    hid_t did = H5Dcreate (fid, field->name.c_str(), H5T_NATIVE_DOUBLE, sid, H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
+    H5Dwrite(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &cfield->cdata_[0]);
+    H5Dclose (did);
+    H5Sclose(sid);
+}
+
 void Checkpoint::restartFieldsPerProc(hid_t fid, Field* field)
 {
     hid_t did = H5Dopen (fid, field->name.c_str(),H5P_DEFAULT);
     H5Dread(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &field->data_[0]);
+    H5Dclose (did);
+}
+
+void Checkpoint::restart_cFieldsPerProc(hid_t fid, Field* field)
+{
+    cField* cfield = static_cast<cField*>( field );
+    hid_t did = H5Dopen (fid, field->name.c_str(),H5P_DEFAULT);
+    H5Dread(did, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &cfield->cdata_[0]);
     H5Dclose (did);
 }
 

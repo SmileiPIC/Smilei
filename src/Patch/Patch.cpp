@@ -125,6 +125,12 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi, DomainDecomposition
     // initialize the electromagnetic fields (virtual)
     EMfields   = ElectroMagnFactory::create(params, domain_decomposition, vecSpecies, this);
 
+    // Create ad hoc interpolators and projectors for envelope
+    if (params.Laser_Envelope_model){
+        Interp_envelope      = InterpolatorFactory::create_env_interpolator(params, this, params.vecto == "normal");
+        //Proj_susceptibility  = ProjectorFactory::create_susceptibility_projector(params, this, params.vecto == "normal");
+    } // + patchId -> idx_domain_begin (now = ref smpi)
+
     // Initialize the collisions
     vecCollisions = CollisionsFactory::create(params, this, vecSpecies);
 
@@ -133,6 +139,8 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi, DomainDecomposition
 
     // Initialize the probes
     probes = DiagnosticFactory::createProbes();
+
+    probesInterp = InterpolatorFactory::create(params, this, false);
 
     if (has_an_MPI_neighbor())
         createType(params);
@@ -147,6 +155,12 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool w
     // clone the electromagnetic fields (virtual)
     EMfields   = ElectroMagnFactory::clone(patch->EMfields, params, vecSpecies, this);
 
+    // Create ad hoc interpolators and projectors for envelope
+    if (params.Laser_Envelope_model){
+        Interp_envelope  = InterpolatorFactory::create_env_interpolator(params, this, params.vecto == "normal");
+        //Proj_susceptibility  = ProjectorFactory::create_susceptibility_projector(params, this, params.vecto == "normal");
+    }
+
     // clone the collisions
     vecCollisions = CollisionsFactory::clone(patch->vecCollisions, params);
 
@@ -156,6 +170,8 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool w
     // clone the probes
     probes = DiagnosticFactory::cloneProbes(patch->probes);
 
+    probesInterp = InterpolatorFactory::create(params, this, false);
+
     if (has_an_MPI_neighbor())
         createType(params);
 
@@ -164,7 +180,15 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool w
 void Patch::finalizeMPIenvironment(Params& params) {
     int nb_comms(9); // E, B, B_m : min number of comms
 
-    // Particles
+    if (params.geometry == "3drz")
+        nb_comms += 9*(params.nmodes - 1);
+    // if envelope is present,
+    // add to comms A, A0, Phi, Phi_old, GradPhi (x,y,z components), GradPhi_old (x,y,z components)
+    if (params.Laser_Envelope_model){
+        nb_comms += 10;
+    }
+    
+    // add comms for species
     nb_comms += 2*vecSpecies.size();
 
     // Dynamic vectorization:
@@ -257,9 +281,6 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
     }
     radius = sqrt(radius);
 
-    //cout << hindex << " " << Pcoordinates[0] << " " << Pcoordinates[1] << endl;
-    //cout << "X = " << Pcoordinates[0]  << " " << min_local[0] << " " << max_local[0] << " - Y = " << Pcoordinates[1] << " " << min_local[1] << " " << max_local[1] << endl;
-
     //cart_updateMPIenv(smpi);
 
     MPI_me_ = vecPatch(0)->MPI_me_;
@@ -304,6 +325,9 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
 // Delete Patch members
 // ---------------------------------------------------------------------------------------------------------------------
 Patch::~Patch() {
+
+    delete probesInterp;
+
     for(unsigned int i=0; i<probes.size(); i++)
         delete probes[i];
 
@@ -415,26 +439,67 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, Params& params)
 
     // Define where particles are going
     //Put particles in the send buffer it belongs to. Priority to lower dimensions.
-    for (int i=0 ; i<n_part_send ; i++) {
-        iPart = (*indexes_of_particles_to_exchange)[i];
-        check = 0;
-        idim = 0;
-        //Put indexes of particles in the first direction they will be exchanged and correct their position according to periodicity for the first exchange only.
-        while (check == 0 && idim<ndim){
-            if ( cuParticles.position(idim,iPart) < min_local[idim]){
-                if ( neighbor_[idim][0]!=MPI_PROC_NULL) {
-                    vecSpecies[ispec]->MPIbuff.part_index_send[idim][0].push_back( iPart );
+    if ( params.geometry != "3drz") {
+        for (int i=0 ; i<n_part_send ; i++) {
+            iPart = (*indexes_of_particles_to_exchange)[i];
+            check = 0;
+            idim = 0;
+            //Put indexes of particles in the first direction they will be exchanged and correct their position according to periodicity for the first exchange only.
+            while (check == 0 && idim<ndim){
+                if ( cuParticles.position(idim,iPart) < min_local[idim]){
+                    if ( neighbor_[idim][0]!=MPI_PROC_NULL) {
+                        vecSpecies[ispec]->MPIbuff.part_index_send[idim][0].push_back( iPart );
+                    }
+                    //If particle is outside of the global domain (has no neighbor), it will not be put in a send buffer and will simply be deleted.
+                    check = 1;
                 }
-                //If particle is outside of the global domain (has no neighbor), it will not be put in a send buffer and will simply be deleted.
-                check = 1;
-            }
-            else if ( cuParticles.position(idim,iPart) >= max_local[idim]){
-                if( neighbor_[idim][1]!=MPI_PROC_NULL) {
-                    vecSpecies[ispec]->MPIbuff.part_index_send[idim][1].push_back( iPart );
+                else if ( cuParticles.position(idim,iPart) >= max_local[idim]){
+                    if( neighbor_[idim][1]!=MPI_PROC_NULL) {
+                        vecSpecies[ispec]->MPIbuff.part_index_send[idim][1].push_back( iPart );
+                    }
+                    check = 1;
                 }
-                check = 1;
+                idim++;
             }
-            idim++;
+        }
+    }
+    else { //if (geometry == "3drz")
+        for (int i=0 ; i<n_part_send ; i++) {
+            iPart = (*indexes_of_particles_to_exchange)[i];
+            check = 0;
+            idim = 0;
+            //Put indexes of particles in the first direction they will be exchanged and correct their position according to periodicity for the first exchange only.
+            while (check == 0 && idim<ndim){ // dim = nDim_field
+                double position(0.);
+                double min_limit(0.);
+                double max_limit(0.);
+                if (idim==0) {
+                    position = cuParticles.position(0,iPart);
+                    min_limit = min_local[0];
+                    max_limit = max_local[0];
+                }
+                else { // look at square
+                    position = cuParticles.position(1,iPart) * cuParticles.position(1,iPart)
+                        + cuParticles.position(2,iPart) * cuParticles.position(2,iPart);
+                    min_limit = min_local[0] * min_local[0];
+                    max_limit = max_local[1] * max_local[1];
+                }
+
+                if ( position < min_limit ){
+                    if ( neighbor_[idim][0]!=MPI_PROC_NULL) {
+                        vecSpecies[ispec]->MPIbuff.part_index_send[idim][0].push_back( iPart );
+                    }
+                    //If particle is outside of the global domain (has no neighbor), it will not be put in a send buffer and will simply be deleted.
+                    check = 1;
+                }
+                else if ( position >= max_limit ){
+                    if( neighbor_[idim][1]!=MPI_PROC_NULL) {
+                        vecSpecies[ispec]->MPIbuff.part_index_send[idim][1].push_back( iPart );
+                    }
+                    check = 1;
+                }
+                idim++;
+            }
         }
     }
 

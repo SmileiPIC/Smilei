@@ -22,6 +22,7 @@
 #include "ElectroMagn.h"
 #include "Interpolator.h"
 #include "InterpolatorFactory.h"
+#include "ProjectorFactory.h"
 #include "Profile.h"
 
 #include "Projector.h"
@@ -194,9 +195,14 @@ void Species::initOperators(Params& params, Patch* patch)
 
     // assign the correct Pusher to Push
     Push = PusherFactory::create(params, this);
+    if (this->ponderomotive_dynamics){
+        Push_ponderomotive_position = PusherFactory::create_ponderomotive_position_updater(params, this);
+    }
 
     // projection operator (virtual)
     Proj = ProjectorFactory::create(params, patch, this->vectorized_operators);    // + patchId -> idx_domain_begin (now = ref smpi)
+    if (params.Laser_Envelope_model)
+        Proj_susceptibility  = ProjectorFactory::create_susceptibility_projector(params, patch, params.vecto == "normal");
 
     // Assign the Ionization model (if needed) to Ionize
     //  Needs to be placed after createParticles() because requires the knowledge of max_charge
@@ -564,11 +570,9 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
 
-            //std::cout << bmin[ibin] << " " << bmax[ibin] << " " << bmin.size() << '\n';
-
             // Interpolate the fields at the particle position
             (*Interp)(EMfields, *particles, smpi, &(bmin[ibin]), &(bmax[ibin]), ithread );
-
+            
             // Ionization
             if (Ionize)
                 (*Ionize)(particles, bmin[ibin], bmax[ibin], Epart, EMfields, Proj);
@@ -1115,29 +1119,42 @@ void Species::count_sort_part(Params &params)
 
 int Species::createParticles(vector<unsigned int> n_space_to_create, Params& params, Patch *patch, int new_bin_idx)
 {
+    // n_space_to_create_generalized = n_space_to_create, + copy of 2nd direction data among 3rd direction
+    // same for local Species::cell_length[2]
+    vector<unsigned int> n_space_to_create_generalized( n_space_to_create );    
+    if ( params.geometry == "3drz") {
+        n_space_to_create_generalized[2]  = n_space_to_create[1];
+        cell_length[2] = cell_length[1];
+    }
+    
     unsigned int nPart, i,j,k, idim;
     unsigned int npart_effective = 0 ;
     double *momentum[nDim_particle], *position[nDim_particle], *weight_arr;
     std::vector<int> my_particles_indices;
-    vector<Field*> xyz(nDim_field);
+    vector<Field*> xyz(nDim_particle);
 
     // Create particles in a space starting at cell_position
     vector<double> cell_position(3,0);
     vector<double> cell_index(3,0);
     for (unsigned int idim=0 ; idim<nDim_field ; idim++) {
-        if (params.cell_length[idim]!=0) {
-            cell_position[idim] = patch->getDomainLocalMin(idim);
-            cell_index   [idim] = (double) patch->getCellStartingGlobalIndex(idim);
-            xyz[idim] = new Field3D(n_space_to_create);
-        }
+        //if (params.cell_length[idim]!=0) { // Useless, nDim_field defined for (params.cell_length[idim>=nDim_field]==0)
+        cell_position[idim] = patch->getDomainLocalMin(idim);
+        cell_index   [idim] = (double) patch->getCellStartingGlobalIndex(idim);
+        xyz[idim] = new Field3D(n_space_to_create_generalized);
+        //}
     }
-
+    if ( params.geometry == "3drz") {
+        cell_position[2] = cell_position[1];
+        cell_index   [2] = cell_index   [1];
+        xyz[2] = new Field3D(n_space_to_create_generalized);
+    }
+    
     // Create the x,y,z maps where profiles will be evaluated
     vector<double> ijk(3);
-    for (ijk[0]=0; ijk[0]<n_space_to_create[0]; ijk[0]++)
-        for (ijk[1]=0; ijk[1]<n_space_to_create[1]; ijk[1]++)
-            for (ijk[2]=0; ijk[2]<n_space_to_create[2]; ijk[2]++)
-                for (idim=0 ; idim<nDim_field ; idim++)
+    for (ijk[0]=0; ijk[0]<n_space_to_create_generalized[0]; ijk[0]++)
+        for (ijk[1]=0; ijk[1]<n_space_to_create_generalized[1]; ijk[1]++)
+            for (ijk[2]=0; ijk[2]<n_space_to_create_generalized[2]; ijk[2]++)
+                for (idim=0 ; idim<nDim_particle ; idim++)
                     (*xyz[idim])(ijk[0],ijk[1],ijk[2]) = cell_position[idim] + (ijk[idim]+0.5)*cell_length[idim];
 
     // ---------------------------------------------------------
@@ -1145,14 +1162,14 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     // ---------------------------------------------------------
 
     // field containing the charge distribution (always 3d)
-    Field3D charge(n_space_to_create);
+    Field3D charge(n_space_to_create_generalized);
     max_charge = 0.;
 
     // field containing the number of particles in each cell
-    Field3D n_part_in_cell(n_space_to_create);
+    Field3D n_part_in_cell(n_space_to_create_generalized);
 
     // field containing the density distribution (always 3d)
-    Field3D density(n_space_to_create);
+    Field3D density(n_space_to_create_generalized);
 
     // field containing the temperature distribution along all 3 momentum coordinates (always 3d * 3)
     Field3D temperature[3];
@@ -1164,8 +1181,8 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     } else {
         //Initialize velocity and temperature profiles
         for (unsigned int i=0; i<3; i++) {
-            velocity[i].allocateDims(n_space_to_create);
-            temperature[i].allocateDims(n_space_to_create);
+            velocity[i].allocateDims(n_space_to_create_generalized);
+            temperature[i].allocateDims(n_space_to_create_generalized);
         }
 
         // Evaluate profiles
@@ -1209,9 +1226,9 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
 
         //Now compute number of particles per cell
         double remainder, nppc;
-        for (i=0; i<n_space_to_create[0]; i++) {
-            for (j=0; j<n_space_to_create[1]; j++) {
-                for (k=0; k<n_space_to_create[2]; k++) {
+        for (i=0; i<n_space_to_create_generalized[0]; i++) {
+            for (j=0; j<n_space_to_create_generalized[1]; j++) {
+                for (k=0; k<n_space_to_create_generalized[2]; k++) {
 
                     // Obtain the number of particles per cell
                     nppc = n_part_in_cell(i,j,k);
@@ -1285,10 +1302,10 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     //if bmax = bmin, bin is empty of particle.
 
     if ( position_initialization_array == NULL ){
-        for (i=0; i<n_space_to_create[0]; i++) {
+        for (i=0; i<n_space_to_create_generalized[0]; i++) {
             if (i%clrw == 0) bmin[new_bin_idx+i/clrw] = iPart;
-            for (j=0; j<n_space_to_create[1]; j++) {
-                for (k=0; k<n_space_to_create[2]; k++) {
+            for (j=0; j<n_space_to_create_generalized[1]; j++) {
+                for (k=0; k<n_space_to_create_generalized[2]; k++) {
                     // initialize particles in meshes where the density is non-zero
                     if (density(i,j,k)>0) {
 
@@ -1561,6 +1578,226 @@ vector<double> Species::maxwellJuttner(unsigned int npoints, double temperature)
 
     return energies;
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// For all particles of the species reacting to laser envelope
+//   - interpolate the fields at the particle position
+//   - deposit susceptibility
+//   - calculate the new momentum
+// ---------------------------------------------------------------------------------------------------------------------
+void Species::ponderomotive_update_susceptibilty_and_momentum(double time_dual, unsigned int ispec,
+                       ElectroMagn* EMfields, Interpolator* Interp_envelope,
+                       Params &params, bool diag_flag,
+                       Patch* patch, SmileiMPI* smpi,
+                       vector<Diagnostic*>& localDiags){
+
+    int ithread;
+    #ifdef _OPENMP
+        ithread = omp_get_thread_num();
+    #else
+        ithread = 0;
+    #endif
+
+    
+    // -------------------------------
+    // calculate the particle updated momentum
+    // -------------------------------
+    if (time_dual>time_frozen) { // moving particle
+
+        smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
+
+        for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) { // loop on ibin
+            
+            int istart = (bmin[ibin]);
+            int iend   = (bmax[ibin]);
+         
+            std::vector<double> *Epart          = &(smpi->dynamics_Epart[ithread]);
+            std::vector<double> *Bpart          = &(smpi->dynamics_Bpart[ithread]);
+            std::vector<double> *PHIpart        = &(smpi->dynamics_PHIpart[ithread]);
+            std::vector<double> *GradPHIpart    = &(smpi->dynamics_GradPHIpart[ithread]);
+          
+            std::vector<int> *iold              = &(smpi->dynamics_iold[ithread]);
+            std::vector<double> *delta          = &(smpi->dynamics_deltaold[ithread]);
+            
+            int nparts( particles->size() );
+            for (int ipart=istart ; ipart<iend; ipart++ ) {//Loop on bin particles
+                //Interpolation on current particle
+                (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->interpolate_em_fields_and_envelope(EMfields, *particles, ipart, nparts, &(*Epart)[ipart], &(*Bpart)[ipart], &(*PHIpart)[ipart], &(*GradPHIpart)[ipart]); 
+                //Buffering of iol and delta
+                (*iold)[ipart+0*nparts]  = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->ip_;
+                (*iold)[ipart+1*nparts]  = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->jp_;
+                (*iold)[ipart+2*nparts]  = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->kp_;
+                (*delta)[ipart+0*nparts] = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->deltax;
+                (*delta)[ipart+1*nparts] = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->deltay;
+                (*delta)[ipart+2*nparts] = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->deltaz;
+            } // end loop on bin particles
+                
+
+            // Project susceptibility, the source term of envelope equation
+            double* b_Chi_envelope=nullptr;
+            if (nDim_field==3)
+                b_Chi_envelope =  &(*EMfields->Env_Chi_)(ibin*clrw*f_dim1*f_dim2) ;
+            else {ERROR("Envelope model not yet implemented in this geometry");}
+
+            for (unsigned int iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                (static_cast<Projector3D2Order_susceptibility*>(Proj_susceptibility))->project_susceptibility(b_Chi_envelope, *particles, iPart, ibin, b_dim, smpi, ithread, mass );                                              
+                                                                                  } //End loop on particles
+           
+          
+                                                     
+            // Push only the particle momenta
+            (*Push)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
+          
+                                                                   } // end loop on ibin
+                                 }
+    else { // immobile particle      
+         } //END if time vs. time_frozen    
+} // End ponderomotive_momentum_update
+
+// ---------------------------------------------------------------------------------------------------------------------
+// For all particles of the species reacting to laser envelope
+//   - interpolate the ponderomotive potential and its gradient at the particle position, for present and previous timestep
+//   - calculate the new particle position
+//   - particles BC
+//   - project charge and current density
+// ---------------------------------------------------------------------------------------------------------------------
+void Species::ponderomotive_update_position_and_currents(double time_dual, unsigned int ispec,
+                       ElectroMagn* EMfields, Interpolator* Interp_envelope, Projector* Proj,
+                       Params &params, bool diag_flag, PartWalls* partWalls,
+                       Patch* patch, SmileiMPI* smpi,
+                       vector<Diagnostic*>& localDiags){
+
+    int ithread;
+    #ifdef _OPENMP
+        ithread = omp_get_thread_num();
+    #else
+        ithread = 0;
+    #endif
+
+    unsigned int iPart;
+
+    // Reset list of particles to exchange - WARNING Should it be reset?
+    clearExchList();
+
+    int tid(0);
+    double ener_iPart(0.);
+    std::vector<double> nrj_lost_per_thd(1, 0.);
+    
+    // -------------------------------
+    // calculate the particle updated position
+    // -------------------------------
+    if (time_dual>time_frozen) { // moving particle
+    
+        smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
+    
+        for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
+    
+            // Interpolate the ponderomotive potential and its gradient at the particle position, present and previous timestep
+            int istart = (bmin[ibin]);
+            int iend   = (bmax[ibin]);
+            
+            std::vector<double> *PHIpart        = &(smpi->dynamics_PHIpart[ithread]);
+            std::vector<double> *GradPHIpart    = &(smpi->dynamics_GradPHIpart[ithread]);
+            std::vector<double> *PHIoldpart     = &(smpi->dynamics_PHIoldpart[ithread]);
+            std::vector<double> *GradPHIoldpart = &(smpi->dynamics_GradPHIoldpart[ithread]);
+          
+            std::vector<int> *iold              = &(smpi->dynamics_iold[ithread]);
+            std::vector<double> *delta          = &(smpi->dynamics_deltaold[ithread]);
+
+            int nparts( particles->size() );
+            for (int ipart=istart ; ipart<iend; ipart++ ) { //Loop on bin particles
+                //Interpolation on current particle
+                (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->interpolate_envelope_and_old_envelope(EMfields, *particles, ipart, nparts, &(*PHIpart)[ipart], &(*GradPHIpart)[ipart],&(*PHIoldpart)[ipart], &(*GradPHIoldpart)[ipart]);
+                //Buffering of iol and delta
+                (*iold)[ipart+0*nparts]  = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->ip_;
+                (*iold)[ipart+1*nparts]  = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->jp_;
+                (*iold)[ipart+2*nparts]  = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->kp_;
+                (*delta)[ipart+0*nparts] = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->deltax;
+                (*delta)[ipart+1*nparts] = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->deltay;
+                (*delta)[ipart+2*nparts] = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->deltaz;
+            } // end loop on particles
+
+            // Push only the particle position
+            (*Push_ponderomotive_position)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
+
+            // Apply wall and boundary conditions
+            if (mass>0)
+            {
+                for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
+                    for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                        double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
+                        if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
+                            nrj_lost_per_thd[tid] += mass * ener_iPart;
+                        }
+                    }
+                }
+
+                // Boundary Condition may be physical or due to domain decomposition
+                // apply returns 0 if iPart is not in the local domain anymore
+                //        if omp, create a list per thread
+                for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                    if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
+                        addPartInExchList( iPart );
+                        nrj_lost_per_thd[tid] += mass * ener_iPart;
+                    }
+                 }
+
+            } else if (mass==0) { 
+                  ERROR("Particles with zero mass cannot interact with envelope");
+                // for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
+                //     for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                //         double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
+                //         if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
+                //                 nrj_lost_per_thd[tid] += ener_iPart;
+                //         }
+                //     }
+                // }
+                // 
+                // // Boundary Condition may be physical or due to domain decomposition
+                // // apply returns 0 if iPart is not in the local domain anymore
+                // //        if omp, create a list per thread
+                // for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                //     if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
+                //         addPartInExchList( iPart );
+                //         nrj_lost_per_thd[tid] += ener_iPart;
+                //     }
+                //  }
+
+            } // end mass = 0? condition
+
+            //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
+
+             // Project currents if not a Test species and charges as well if a diag is needed.
+             // Do not project if a photon
+             if ((!particles->is_test) && (mass > 0))
+                 (*Proj)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread, ibin, clrw, diag_flag, params.is_spectral, b_dim, ispec );
+
+            } // end ibin loop
+
+         for (unsigned int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
+             nrj_bc_lost += nrj_lost_per_thd[tid];
+
+         } // end case of moving particle
+    else { // immobile particle    
+
+            if ( diag_flag &&(!particles->is_test)){
+                double* b_rho=nullptr;
+                for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
+                    // only 3D is implemented actually
+                    if (nDim_field==2)
+                        b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1) : &(*EMfields->rho_)(ibin*clrw*f_dim1) ;
+                    if (nDim_field==3)  
+                        b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1*f_dim2) : &(*EMfields->rho_)(ibin*clrw*f_dim1*f_dim2) ;
+                    else if (nDim_field==1)
+                        b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw) : &(*EMfields->rho_)(ibin*clrw) ;
+                    for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                        (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_dim);
+                    } //End loop on particles
+                }//End loop on bins
+            } // end condition on diag and not particle test
+  
+         }//END if time vs. time_frozen  
+} // End ponderomotive_position_update
 
 void Species::check(Patch * patch, std::string title)
 {

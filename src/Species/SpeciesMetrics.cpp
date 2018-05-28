@@ -55,11 +55,10 @@ void SpeciesMetrics::get_computation_time(const std::vector<int> & species_loc_b
                                           double & vecto_time,
                                           double & scalar_time)
 {
-
     double log_particle_number;
-    int particle_number;
-    float vecto_time_loc = 0;
-    float scalar_time_loc = 0;
+    double particle_number;
+    double vecto_time_loc = 0;
+    double scalar_time_loc = 0;
 
     //std::cout << SpeciesMetrics::get_particle_computation_time_vectorization(log(32.0)) << " "
     //          << SpeciesMetrics::get_particle_computation_time_scalar(log(32.0)) << '\n';
@@ -71,15 +70,15 @@ void SpeciesMetrics::get_computation_time(const std::vector<int> & species_loc_b
         if (species_loc_bmax[ic] > 0)
         {
             // Max of the fit
-            particle_number = std::min(species_loc_bmax[ic],256);
+            particle_number = fmin(double(species_loc_bmax[ic]),256.0);
             // Convesion in log
-            log_particle_number = log(double(particle_number));
+            log_particle_number = log(particle_number);
             vecto_time_loc += SpeciesMetrics::get_particle_computation_time_vectorization(log_particle_number)*species_loc_bmax[ic];
             scalar_time_loc += SpeciesMetrics::get_particle_computation_time_scalar(log_particle_number)*species_loc_bmax[ic];
         }
     }
-    vecto_time = vecto_time_loc;
     scalar_time = scalar_time_loc;
+    vecto_time = vecto_time_loc;
 }
 
 // -----------------------------------------------------------------------------
@@ -90,7 +89,6 @@ void SpeciesMetrics::get_computation_time(const std::vector<int> & species_loc_b
                                           float & vecto_time,
                                           float & scalar_time)
 {
-
     float log_particle_number;
     float particle_number;
     float vecto_time_loc = 0;

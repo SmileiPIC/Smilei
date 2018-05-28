@@ -20,6 +20,7 @@
 #include <Python.h>
 #include <vector>
 #include <sstream>
+#include <complex> 
 #include "Tools.h"
 
 #ifdef SMILEI_USE_NUMPY
@@ -45,7 +46,7 @@ private:
         }
         return false;
     }
-    
+
     //! convert Python object to any integer type (short, uint, int, etc.)
     template<typename T>
     static bool pyconvert(PyObject* py_val, T &val) {
@@ -57,7 +58,7 @@ private:
         }
         return false;
     }
-    
+
     //! convert Python object to double
     static bool pyconvert(PyObject* py_val, double &val) {
         if (py_val && PyNumber_Check(py_val)) {
@@ -68,7 +69,17 @@ private:
         }
         return false;
     }
-    
+
+    //! convert Python object to complex
+    static bool pyconvert(PyObject* py_val, std::complex<double> &val) {
+        if (py_val && PyComplex_Check(py_val)) {
+            val.real( PyComplex_RealAsDouble(py_val) );
+            val.imag( PyComplex_ImagAsDouble(py_val) );
+            return true;
+        }
+        return false;
+    }
+
     //! convert Python object to string
     static bool pyconvert(PyObject* py_val, std::string &val) {
         if (py_val) {
@@ -83,7 +94,7 @@ private:
         }
         return false;
     }
-    
+
     //! check error and display message
     static double get_py_result(PyObject* pyresult) {
         checkPyError();
@@ -100,6 +111,21 @@ private:
         }
         return cppresult;
     }
+    static std::complex<double> get_py_result_complex(PyObject* pyresult) {
+        checkPyError();
+        std::complex<double> cppresult=0;
+        if (pyresult) {
+            if(!convert(pyresult,cppresult)) {
+                PyObject *ptype, *pvalue, *ptraceback;
+                PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+                ERROR("function does not return complex but " << pyresult->ob_type->tp_name);
+            }
+        } else {
+            // we should never reach this point... something is weird
+            ERROR("Function does not return a valid Python object");
+        }
+        return cppresult;
+    }
 
 public:
 
@@ -108,12 +134,12 @@ public:
             Py_Initialize();
         }
     }
-    
+
     static void closePython() {
         if (Py_IsInitialized())
             Py_Finalize();
     }
-    
+
     static std::string python_version()
     {
         std::string version;
@@ -125,7 +151,7 @@ public:
         PyErr_Print();
         return version;
     }
-    
+
     //! convert Python object to C++ value
     //! REFERENCE COUNT: py_val keeps its reference
     template <typename T>
@@ -133,7 +159,7 @@ public:
         bool retval=pyconvert(py_val, val);
         return retval;
     }
-    
+
     //! convert vector of Python objects to vector of C++ values
     //! REFERENCE COUNT: all elements of py_vec keep their reference
     template <typename T>
@@ -146,7 +172,7 @@ public:
         }
         return retval;
     }
-    
+
     //! convert python list to vector of python objects
     //! REFERENCE COUNT: py_list keeps its reference, and all elements of py_vec are a new reference
     static bool convert(PyObject * py_list, std::vector<PyObject*> & py_vec) {
@@ -162,7 +188,7 @@ public:
         PyTools::checkPyError();
         return false; // error
     }
-    
+
     //! convert python list to vector of c++ values
     //! REFERENCE COUNT: py_list keeps its reference
     template <typename T>
@@ -173,14 +199,14 @@ public:
             Py_DECREF(py_vec[i]);
         return success;
     }
-    
+
     //! check if there has been a python error
     static void checkPyError(bool exitOnError=false, bool print=true) {
         if (PyErr_Occurred()) {
             PyObject *type, *value, *traceback;
             PyErr_Fetch(&type, &value, &traceback);
             PyErr_Clear();
-            
+
             std::string message("");
             if (type) {
                 std::string str("");
@@ -203,7 +229,7 @@ public:
             }
         }
     }
-    
+
     //! run void python function
     static void runPyFunction(std::string name) {
         PyObject* myFunction = PyObject_GetAttrString(PyImport_AddModule("__main__"),name.c_str());
@@ -216,7 +242,7 @@ public:
             MESSAGE(1,"python " << name << " function does not exist");
         }
     }
-    
+
     //! run typed python function without arguments
     template <typename T=double>
     static T runPyFunction(std::string name, std::string component=std::string("")) {
@@ -235,7 +261,7 @@ public:
         }
         return retval;
     }
-    
+
     //! run typed python function with one argument
     //! REFERENCE COUNT: pyFunction keeps its reference
     template <typename T=double>
@@ -245,7 +271,7 @@ public:
         Py_XDECREF(pyresult);
         return retval;
     }
-    
+
     //! run typed python function with two arguments
     //! REFERENCE COUNT: pyFunction keeps its reference
     template <typename T=double>
@@ -255,7 +281,7 @@ public:
         Py_XDECREF(pyresult);
         return retval;
     }
-    
+
     //! run typed python function with three arguments
     //! REFERENCE COUNT: pyFunction keeps its reference
     template <typename T=double>
@@ -265,7 +291,7 @@ public:
         Py_XDECREF(pyresult);
         return retval;
     }
-    
+
     //! run typed python function with four arguments
     //! REFERENCE COUNT: pyFunction keeps its reference
     template <typename T=double>
@@ -275,7 +301,14 @@ public:
         Py_XDECREF(pyresult);
         return retval;
     }
-    
+
+    static std::complex<double> runPyFunction_complex(PyObject *pyFunction, double x1, double x2, double x3, double x4) {
+        PyObject *pyresult = PyObject_CallFunction(pyFunction, const_cast<char *>("dddd"), x1, x2, x3, x4);
+        std::complex<double> retval = get_py_result_complex(pyresult);
+        Py_XDECREF(pyresult);
+        return retval;
+    }
+
     //! get T from python
     template< typename T>
     static bool extract(std::string name, T &val, std::string component=std::string(""), int nComponent=0) {
@@ -288,7 +321,7 @@ public:
         Py_DECREF(py_val);
         return success;
     }
-    
+
     //! extract vector
     template< typename T>
     static bool extract(std::string name, std::vector<T> &val, std::string component=std::string(""), int nComponent=0) {
@@ -300,7 +333,7 @@ public:
             Py_DECREF(py_val[i]);
         return success;
     }
-    
+
     //! extract vector of vectors
     template< typename T>
     static bool extract(std::string name, std::vector<std::vector<T> > &val, std::string component=std::string(""), int nComponent=0) {
@@ -317,7 +350,7 @@ public:
         }
         return true;
     }
-    
+
     //! retrieve python object
     //! REFERENCE COUNT: returns a new reference that must be decreased later
     static PyObject* extract_py(std::string name, std::string component=std::string(""), int nComponent=0) {
@@ -346,7 +379,7 @@ public:
         PyTools::checkPyError();
         return py_return;
     }
-    
+
     //! retrieve a vector of python objects
     //! REFERENCE COUNT: returns a vector of new references that must each be decreased later
     static std::vector<PyObject*> extract_pyVec(std::string name, std::string component=std::string(""), int nComponent=0) {
@@ -374,7 +407,7 @@ public:
         Py_DECREF(myPytmp);
         return false;
     }
-    
+
     // extract 3 profiles from namelist (used for part mean velocity and temperature)
     //! REFERENCE COUNT: upon success, profx, profy and profz are new references
     static bool extract3Profiles(std::string varname, int ispec, PyObject*& profx, PyObject*& profy, PyObject*& profz )
@@ -401,7 +434,7 @@ public:
             return false;
         }
     }
-    
+
     // extract 2 profiles from namelist (used for laser profile)
     //! REFERENCE COUNT: upon success, profiles is a vector of new references
     static bool extract2Profiles(std::string varname, int ilaser, std::vector<PyObject*> &profiles )
@@ -409,24 +442,48 @@ public:
         PyObject* py_obj = extract_py(varname,"Laser",ilaser);
         // Return false if None
         if( py_obj==Py_None ) return false;
-        
+
         // Error if not list
         if( ! convert(py_obj, profiles) )
             ERROR("For laser #" << ilaser << ": " << varname << " must be a list of 2 profiles");
-        
+
         // Error if wrong size
         if( profiles.size()!=2 )
             ERROR("For Laser #" << ilaser << ": "<<varname<<" needs 2 profiles.");
-        
+
         // Error if not callable
         for( int i=0; i<2; i++) {
             if ( !PyCallable_Check(profiles[i]) )
                 ERROR("For Laser #" << ilaser << ": "<<varname<<"["<<i<<"] not understood");
         }
-        
+
         return true;
     }
-    
+
+    // extract 2 envelope profiles from namelist (used for laser profile)
+    // static bool extract2EnvelopeProfiles(std::string varname, int ienvlaser, std::vector<PyObject*> &profiles )
+    // {
+    //     PyObject* py_obj = extract_py(varname,"LaserEnvelope",ienvlaser);
+    //     // Return false if None
+    //     if( py_obj==Py_None ) return false;
+    //
+    //     // Error if not list
+    //     if( ! convert(py_obj, profiles) )
+    //         ERROR("For laser envelope #" << ienvlaser << ": " << varname << " must be a list of 2 profiles");
+    //
+    //     // Error if wrong size
+    //     if( profiles.size()!=2 )
+    //         ERROR("For Laser Envelope #" << ienvlaser << ": "<<varname<<" needs 2 profiles.");
+    //
+    //     // Error if not callable
+    //     for( int i=0; i<2; i++) {
+    //         if ( !PyCallable_Check(profiles[i]) )
+    //             ERROR("For Laser Envelope #" << ienvlaser << ": "<<varname<<"["<<i<<"] not understood");
+    //     }
+    //
+    //     return true;
+    // }
+
     //! return the number of components (see pyinit.py)
     static unsigned int nComponents(std::string componentName) {
         // Get the selected component (e.g. "Species" or "Laser")
@@ -440,7 +497,7 @@ public:
         Py_DECREF(py_obj);
         return retval;
     }
-    
+
     //! Get an object's attribute ( int, double, etc.)
     //! REFERENCE COUNT: object keeps its reference
     template <typename T>
@@ -453,7 +510,7 @@ public:
         }
         return success;
     }
-    
+
     //! Get an object's attribute for lists
     //! REFERENCE COUNT: object keeps its reference
     template <typename T>
@@ -466,7 +523,7 @@ public:
         }
         return success;
     }
-    
+
     //! Get an object's attribute for lists of list
     //! REFERENCE COUNT: object keeps its reference
     template <typename T>
@@ -491,7 +548,7 @@ public:
         //This should never happen
         return false;
     }
-    
+
     //! Get an object's repr
     //! REFERENCE COUNT: obj keeps its reference
     static std::string repr(PyObject* obj) {
@@ -501,7 +558,7 @@ public:
         Py_XDECREF(s);
         return str;
     }
-    
+
     // Set a python variable to itime so that it can be accessed at run-time
     inline static void setIteration( int itime ) {
         PyObject* Main = PyObject_GetAttrString(PyImport_AddModule("__main__"),"Main");
@@ -510,7 +567,7 @@ public:
         Py_DECREF(iteration);
         Py_DECREF(Main);
     }
-    
+
     // Test whether a python object is a function
     // Return the number of arguments, or -1 if failure
     //! REFERENCE COUNT: obj keeps its reference

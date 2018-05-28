@@ -52,7 +52,6 @@ Main(
     solve_poisson = False,
     
     solve_relativistic_poisson = True,
- 
     time_fields_frozen = 100.,
    
     print_every = 100,

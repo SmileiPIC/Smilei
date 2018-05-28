@@ -24,6 +24,7 @@ Pusher::Pusher(Params& params, Species *species) :
     }
     dt             = params.timestep;
     dts2           = params.timestep/2.;
+    dts4           = params.timestep/4.;
 
     nDim_          = params.nDim_particle;
 

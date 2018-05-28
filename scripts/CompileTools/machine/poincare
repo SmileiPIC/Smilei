@@ -2,5 +2,4 @@
 # unset LD_PRELOAD 
 # export PYTHONHOME=/gpfslocal/pub/python/anaconda/Anaconda-2.1.0
 
-#LDFLAGS += -lgpfs -lz -L/gpfslocal/pub/python/anaconda/Anaconda-2.1.0/lib
 CXXFLAGS += -xAVX -ip -ipo # -qopt-report=5 #-ip  -ipo -inline-forceinline -qopt-report=5 #-ipo

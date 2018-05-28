@@ -145,7 +145,8 @@ public:
     bool position_initialization_on_species;
     //! Index of the species where position initialization is made
     int position_initialization_on_species_index;
-
+    //! Boolean to know if species follows ponderomotive loop (laser modeled with envelope)
+    bool ponderomotive_dynamics;
     //! Pointer to the species where field-ionized electrons go
     Species *electron_species;
     //! Index of the species where field-ionized electrons go
@@ -240,14 +241,19 @@ public:
     //! Boundary condition for the Particles of the considered Species
     PartBoundCond* partBoundCond;
 
+    //! Particles pusher (change momentum & change position, only momentum in case envelope model is used)
+    Pusher* Push;
+
+    //! Particles position pusher (change change position)
+    Pusher* Push_ponderomotive_position = NULL;
+
+
     //! Interpolator (used to push particles and for probes)
     Interpolator* Interp;
 
-    //! Particles pusher (change momentum & change position)
-    Pusher* Push;
-
     //! Projector
     Projector* Proj;
+    Projector* Proj_susceptibility;
 
     // -----------------------------------------------------------------------------
     //  5. Methods
@@ -286,6 +292,20 @@ public:
                           MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
                           std::vector<Diagnostic*>& localDiags);
 
+    //! Method calculating the Particle updated momentum (interpolation, momentum pusher, only particles interacting with envelope)
+    virtual void ponderomotive_update_susceptibilty_and_momentum(double time_dual, unsigned int ispec,
+                           ElectroMagn* EMfields, Interpolator* Interp_envelope,
+                           Params &params, bool diag_flag,
+                           Patch* patch, SmileiMPI* smpi,
+                           std::vector<Diagnostic*>& localDiags);
+
+    //! Method calculating the Particle updated position (interpolation, position pusher, only particles interacting with envelope)
+    // and projecting charge density and thus current density (through Esirkepov method) for Maxwell's Equations
+    virtual void ponderomotive_update_position_and_currents(double time_dual, unsigned int ispec,
+                           ElectroMagn* EMfields, Interpolator* Interp_envelope, Projector* Proj,
+                           Params &params, bool diag_flag, PartWalls* partWalls,
+                           Patch* patch, SmileiMPI* smpi,
+                           std::vector<Diagnostic*>& localDiags);
     //! Method calculating the Particle dynamics (interpolation, pusher, projection)
     virtual void scalar_dynamics(double time, unsigned int ispec,
                         ElectroMagn* EMfields,

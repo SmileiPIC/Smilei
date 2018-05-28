@@ -5,6 +5,7 @@
 #include "Patch1D.h"
 #include "Patch2D.h"
 #include "Patch3D.h"
+#include "PatchRZ.h"
 #include "DomainDecomposition.h"
 
 #include "Tools.h"
@@ -26,6 +27,8 @@ public:
             return new Patch2D(params, smpi, domain_decomposition, ipatch, n_moved);
         else if (params.geometry == "3Dcartesian")
             return new Patch3D(params, smpi, domain_decomposition, ipatch, n_moved);
+        else if (params.geometry == "3drz") 
+            return new PatchRZ(params, smpi, domain_decomposition, ipatch, n_moved);
         return nullptr;
     }
 
@@ -37,6 +40,8 @@ public:
             return new Patch2D(static_cast<Patch2D*>(patch), params, smpi, domain_decomposition, ipatch, n_moved, with_particles);
         else if (params.geometry == "3Dcartesian")
             return new Patch3D(static_cast<Patch3D*>(patch), params, smpi, domain_decomposition, ipatch, n_moved, with_particles);
+        else if (params.geometry == "3drz") 
+            return new PatchRZ(static_cast<PatchRZ*>(patch), params, smpi, domain_decomposition, ipatch, n_moved, with_particles);
         return nullptr;
     }
 

@@ -66,6 +66,7 @@ ifeq ($(PICSAR),TRUE)
 	LDFLAGS += -L$(FFTW3_LIB) -lfftw3
 	LDFLAGS += -lgfortran
 endif
+CXXFLAGS += -D_VECTO
 
 # Manage options in the "config" parameter
 ifneq (,$(findstring debug,$(config)))
@@ -108,8 +109,8 @@ ifeq (,$(findstring noopenmp,$(config)))
     OPENMP_FLAG += -D_OMP
     LDFLAGS += $(OPENMP_FLAG)
     CXXFLAGS += $(OPENMP_FLAG)
-#else 
-#    LDFLAGS += -mt_mpi # intelmpi only
+else 
+    LDFLAGS += -mt_mpi # intelmpi only
 endif
 
 

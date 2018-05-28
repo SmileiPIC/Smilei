@@ -107,7 +107,7 @@ Usage:
   * Option ``-g``: Generation of references only (no validation)
   * Option ``-s``: Plot differences with references only (no validation)
   * Option ``-c``: Compilation only (no run, no validation)
-  * Option ``-r <nRestarts>``: Force the simulation to be broken in several restarts.
+  * Option ``-r <nRrestarts>``: Force the simulation to be broken in several restarts.
   * Option ``-v``: Verbose
   * Option ``-h``: Help
 

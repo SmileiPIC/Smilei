@@ -72,6 +72,8 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
 {
     probe_n = n_probe;
     nDim_particle = params.nDim_particle;
+    nDim_field = params.nDim_field;
+    geometry = params.geometry;
     fileId_ = 0;
     hasRhoJs = false;
     last_iteration_points_calculated = 0;
@@ -174,14 +176,15 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
     // Extract the list of requested fields
     vector<string> fs;
     if(!PyTools::extract("fields",fs,"DiagProbe",n_probe)) {
-        fs.resize(10);
+        fs.resize(14);
         fs[0]="Ex"; fs[1]="Ey"; fs[2]="Ez";
         fs[3]="Bx"; fs[4]="By"; fs[5]="Bz";
         fs[6]="Jx"; fs[7]="Jy"; fs[8]="Jz"; fs[9]="Rho";
+        fs[10]="Env_Ar"; fs[11]="Env_Ai"; fs[12]="Env_A_abs"; fs[13]="Env_Chi";
     }
     vector<unsigned int> locations;
-    locations.resize(10);
-    for( unsigned int i=0; i<10; i++) locations[i] = fs.size();
+    locations.resize(14);
+    for( unsigned int i=0; i<14; i++) locations[i] = fs.size();
     for( unsigned int i=0; i<fs.size(); i++) {
         for( unsigned int j=0; j<i; j++) {
             if( fs[i]==fs[j] ) {
@@ -198,6 +201,10 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
         else if( fs[i]=="Jy" ) locations[7] = i;
         else if( fs[i]=="Jz" ) locations[8] = i;
         else if( fs[i]=="Rho") locations[9] = i;
+        else if( fs[i]=="Env_Ar") locations[10] = i;
+        else if( fs[i]=="Env_Ai") locations[11] = i;
+        else if( fs[i]=="Env_A_abs") locations[12] = i;
+        else if( fs[i]=="Env_Chi") locations[13] = i;
         else {
             ERROR("Probe #"<<n_probe<<": unknown field "<<fs[i]);
         }
@@ -324,7 +331,7 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
     unsigned int numCorners = 1<<nDim_particle; // number of patch corners
     unsigned int ntot, IP, ipart_local, i, k, iDim;
     bool is_in_domain;
-    vector<double> point(nDim_particle), mins(nDim_particle), maxs(nDim_particle);
+    vector<double> point(nDim_particle), mins(nDim_particle), maxs(nDim_particle);  //warning, works only if nDim_particle >= nDim_field
     vector<double> patchMin(nDim_particle), patchMax(nDim_particle);
     vector<unsigned int> minI(nDim_particle), maxI(nDim_particle), nI(nDim_particle);
 
@@ -332,16 +339,29 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
 
         // The first step is to reduce the area of the probe to search in this patch
-        for( k=0; k<nDim_particle; k++ ) {
-            mins[k] = numeric_limits<double>::max();
-            maxs[k] = numeric_limits<double>::lowest();
-            patchMin[k] = ( vecPatches(ipatch)->Pcoordinates[k]   )*patch_size[k];
-            patchMax[k] = ( vecPatches(ipatch)->Pcoordinates[k]+1 )*patch_size[k];
+        if (geometry == "3drz"){
+                mins[0] = numeric_limits<double>::max();
+                maxs[0] = numeric_limits<double>::lowest();
+                patchMin[0] = ( vecPatches(ipatch)->Pcoordinates[0]   )*patch_size[0];
+                patchMax[0] = ( vecPatches(ipatch)->Pcoordinates[0]+1 )*patch_size[0];
+            for( k=1; k<3; k++ ) {
+                mins[k] = numeric_limits<double>::max();
+                maxs[k] = -mins[k];
+                patchMin[k] = -( vecPatches(ipatch)->Pcoordinates[1]+1 )*patch_size[1];
+                patchMax[k] =  ( vecPatches(ipatch)->Pcoordinates[1]+1 )*patch_size[1];
+            }
+        } else {
+            for( k=0; k<nDim_particle; k++ ) {
+                mins[k] = numeric_limits<double>::max();
+                maxs[k] =  numeric_limits<double>::lowest();
+                patchMin[k] = ( vecPatches(ipatch)->Pcoordinates[k]   )*patch_size[k];
+                patchMax[k] = ( vecPatches(ipatch)->Pcoordinates[k]+1 )*patch_size[k];
+            }
         }
         // loop patch corners
         for( i=0; i<numCorners; i++ ) {
             // Get coordinates of the current corner in terms of x,y,...
-            for( k=0; k<nDim_particle; k++ )
+            for( k=0; k<nDim_particle; k++ )                          
                 point[k] = ( (((i>>k)&1)==0) ? patchMin[k] : patchMax[k] ) - origin[k];
             // Get position of the current corner in the probe's coordinate system
             point = matrixTimesVector( axesInverse, point );
@@ -352,8 +372,9 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
             }
         }
         // Loop directions to figure out the range of useful indices
+
         for( i=0; i<dimProbe; i++ ) {
-            if( mins[i]<0. ) mins[i]=0.;
+            if( mins[i]<0. ) mins[i]=0.;   // Why ?
             if( mins[i]>1. ) mins[i]=1.;
             minI[i] = ((unsigned int) floor(mins[i]*((double)(vecNumber[i]-1))));
             if( maxs[i]<0. ) maxs[i]=0.;
@@ -391,8 +412,12 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
             point = matrixTimesVector( axes, point );
             // Check if point is in patch
             is_in_domain = true;
-            for( i=0; i<nDim_particle; i++ ) {
-                point[i] += origin[i];
+            for( i=0; i<nDim_field; i++ ) {
+                if (i == 1 && geometry == "3drz"){
+                    point[1] += sqrt(origin[1]*origin[1] + origin[2]*origin[2]);
+                }else{
+                    point[i] += origin[i];
+                }
                 if (point[i] < patchMin[i] || point[i] >= patchMax[i] ) {
                     is_in_domain = false;
                     break;
@@ -542,7 +567,7 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
             int iparticle(ipart); // Compatibility
             int false_idx(0);     // Use in classical interp for now, not for probes
             //     virtual void operator()  (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc) override = 0;
-            (*(vecPatches.species(ipatch,0)->Interp)) (
+            (*(vecPatches(ipatch)->probesInterp)) (
                 vecPatches(ipatch)->EMfields,
                 vecPatches(ipatch)->probes[probe_n]->particles, smpi,
                 &iparticle, &false_idx, ithread,
@@ -562,6 +587,60 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
             (*probesArray)(fieldlocation[9],iPart_MPI)=Rloc_fields;
             iPart_MPI++;
         }
+
+
+       // Probes for envelope
+       if (vecPatches(ipatch)->EMfields->envelope != NULL) { 
+           unsigned int iPart_MPI = offset_in_MPI[ipatch];
+
+           
+           if ( dynamic_cast<Interpolator3D2Order_envV*>((vecPatches(ipatch)->Interp_envelope)) ) {
+               Interpolator3D2Order_envV* Interpolator_envelope = (static_cast<Interpolator3D2Order_envV*>((vecPatches(ipatch)->Interp_envelope)) );
+               double Env_ArLoc_fields,Env_AiLoc_fields,Env_AabsLoc_fields,Env_ChiLoc_fields;
+
+               for (unsigned int ipart=0; ipart<npart; ipart++) {          
+                   int iparticle(ipart); // Compatibility
+                   int false_idx(0);     // Use in classical interp for now, not for probes
+                   Interpolator_envelope->interpolate_envelope_and_susceptibility(
+                                                                                  vecPatches(ipatch)->EMfields,
+                                                                                  vecPatches(ipatch)->probes[probe_n]->particles, smpi, &iparticle,  &false_idx, ithread,
+                                                                                  &Env_AabsLoc_fields, &Env_ArLoc_fields, &Env_AiLoc_fields, &Env_ChiLoc_fields
+                                                                                  );
+                   //! here we fill the probe data!!!         
+                   (*probesArray)(fieldlocation[10],iPart_MPI)=Env_ArLoc_fields;
+                   (*probesArray)(fieldlocation[11],iPart_MPI)=Env_AiLoc_fields;
+                   (*probesArray)(fieldlocation[12],iPart_MPI)=Env_AabsLoc_fields;
+                   (*probesArray)(fieldlocation[13],iPart_MPI)=Env_ChiLoc_fields;
+                   iPart_MPI++;
+               }
+           }
+           else if ( dynamic_cast<Interpolator3D2Order_env*>((vecPatches(ipatch)->Interp_envelope)) ) {
+               Interpolator3D2Order_env* Interpolator_envelope = (static_cast<Interpolator3D2Order_env*>((vecPatches(ipatch)->Interp_envelope)) );
+               double Env_ArLoc_fields,Env_AiLoc_fields,Env_AabsLoc_fields,Env_ChiLoc_fields;
+
+               for (unsigned int ipart=0; ipart<npart; ipart++) {          
+                   int iparticle(ipart); // Compatibility
+                   int false_idx(0);     // Use in classical interp for now, not for probes
+
+                   Interpolator_envelope->interpolate_envelope_and_susceptibility(
+                                                                                  vecPatches(ipatch)->EMfields,
+                                                                                  vecPatches(ipatch)->probes[probe_n]->particles,
+                                                                                  ipart,
+                                                                                  &Env_AabsLoc_fields, &Env_ArLoc_fields, &Env_AiLoc_fields, &Env_ChiLoc_fields
+                                                                                  );
+                   //! here we fill the probe data!!!         
+                   (*probesArray)(fieldlocation[10],iPart_MPI)=Env_ArLoc_fields;
+                   (*probesArray)(fieldlocation[11],iPart_MPI)=Env_AiLoc_fields;
+                   (*probesArray)(fieldlocation[12],iPart_MPI)=Env_AabsLoc_fields;
+                   (*probesArray)(fieldlocation[13],iPart_MPI)=Env_ChiLoc_fields;
+                   iPart_MPI++;
+               }
+           }
+           else
+               ERROR("GOTO Hell");
+       }
+
+        
     }
 
     #pragma omp master

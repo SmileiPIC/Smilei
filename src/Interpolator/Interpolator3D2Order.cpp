@@ -282,7 +282,7 @@ void Interpolator3D2Order::operator() (ElectroMagn* EMfields, Particles &particl
     std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);
     std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
     std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
-
+  
     //Loop on bin particles
     int nparts( particles.size() );
     for (int ipart=*istart ; ipart<*iend; ipart++ ) {

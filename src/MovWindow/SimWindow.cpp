@@ -121,7 +121,6 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     #pragma omp for schedule(static)
     for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
          mypatch = vecPatches_old[ipatch];
-
         //If my right neighbor does not belong to me store it as a patch to
         // be created later.
         if (mypatch->MPI_neighbor_[0][1] != mypatch->MPI_me_){
@@ -155,7 +154,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             //stores indices in tmp buffers so that original values can be read by other patches.
             mypatch->tmp_neighbor_[0][0] = vecPatches_old[mypatch->hindex - h0 ]->neighbor_[0][0];
             mypatch->tmp_MPI_neighbor_[0][0] = vecPatches_old[mypatch->hindex - h0 ]->MPI_neighbor_[0][0];
-            for (unsigned int idim = 1; idim < params.nDim_particle ; idim++){
+            for (unsigned int idim = 1; idim < params.nDim_field ; idim++){
                 mypatch->tmp_neighbor_[idim][0] = vecPatches_old[mypatch->hindex - h0 ]->neighbor_[idim][0];
                 mypatch->tmp_neighbor_[idim][1] = vecPatches_old[mypatch->hindex - h0 ]->neighbor_[idim][1];
                 mypatch->tmp_MPI_neighbor_[idim][0] = vecPatches_old[mypatch->hindex - h0 ]->MPI_neighbor_[idim][0];
@@ -174,6 +173,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     //Creation of new Patches
     for (unsigned int j = 0; j < patch_to_be_created[my_thread].size();  j++){
         //create patch without particle.
+        #pragma omp critical
         mypatch = PatchesFactory::clone(vecPatches(0),params, smpi, vecPatches.domain_decomposition_, h0 + patch_to_be_created[my_thread][j], n_moved, false );
 
         // Do not receive Xmin condition
@@ -216,7 +216,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         mypatch = update_patches_[j];
         mypatch->MPI_neighbor_[0][0] = mypatch->tmp_MPI_neighbor_[0][0];
         mypatch->neighbor_[0][0] = mypatch->tmp_neighbor_[0][0];
-        for (unsigned int idim = 1; idim < params.nDim_particle ; idim++){
+        for (unsigned int idim = 1; idim < params.nDim_field ; idim++){
             mypatch->MPI_neighbor_[idim][0] = mypatch->tmp_MPI_neighbor_[idim][0];
             mypatch->MPI_neighbor_[idim][1] = mypatch->tmp_MPI_neighbor_[idim][1];
             mypatch->neighbor_[idim][0] = mypatch->tmp_neighbor_[idim][0];
@@ -486,15 +486,16 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     for (unsigned int j=0; j < delete_patches_.size(); j++){
         mypatch = delete_patches_[j];
 
-        if (mypatch->isXmin()) {
-            energy_field_lost += mypatch->EMfields->computeNRJ();
-            for ( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ )
-                energy_part_lost[ispec] += mypatch->vecSpecies[ispec]->computeNRJ();
-        }
+        //if (mypatch->isXmin()) {
+        //    energy_field_lost += mypatch->EMfields->computeNRJ();
+        //    for ( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ )
+        //        energy_part_lost[ispec] += mypatch->vecSpecies[ispec]->computeNRJ();
+        //}
 
         for (unsigned int jp=0; jp<2;jp++) //directions (xmin/xmax, ymin/ymax, zmin/zmax)
-            for (unsigned int i=0 ; i<params.nDim_field ; i++) //axis 0=x, 1=y, 2=z
+            for (unsigned int i=0 ; i<params.nDim_field ; i++){ //axis 0=x, 1=y, 2=z
                 poynting[jp][i] += mypatch->EMfields->poynting[jp][i];
+            }
 
 
         delete  mypatch;

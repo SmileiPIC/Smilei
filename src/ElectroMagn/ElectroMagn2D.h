@@ -77,6 +77,10 @@ public:
     void computeTotalRhoJ();
     void addToGlobalRho(int ispec, unsigned int clrw);
     void computeTotalRhoJs(unsigned int clrw);
+
+    //! Method used to compute the total susceptibility by summing over all species
+    void computeTotalEnvChi();
+    
     //! Method used to gather species densities and currents on a single array
     void synchronizePatch(unsigned int clrw);
     void finalizePatch(unsigned int clrw);

@@ -260,6 +260,13 @@ The block ``Main`` is **mandatory** and has the following syntax::
   | **Syntax 1:** ``[[1,0,0]]``, identical for all boundaries.
   | **Syntax 2:** ``[[1,0,0],[-1,0,0], ...]``,  different on each boundary.
 
+.. py:data:: Envelope_boundary_conditions
+
+  :type: list of lists of strings
+  :default: ``[["reflective"]]``
+
+  For the moment, only reflective boundary conditions are implemented in case the laser is modeled through an envelope model.
+
 .. py:data:: time_fields_frozen
 
   :default: 0.
@@ -493,6 +500,7 @@ Each species has to be defined in a ``Species`` block::
       # ionization_model = "none",
       # ionization_electrons = None,
       is_test = False,
+      # ponderomotive_dynamics = False,
       c_part_max = 1.0,
       pusher = "boris",
 
@@ -657,6 +665,14 @@ Each species has to be defined in a ``Species`` block::
   Flag for test particles. If ``True``, this species will contain only test particles
   which do not participate in the charge and currents.
 
+.. py:data:: ponderomotive_dynamics
+
+  :default: ``False``
+
+  Flag for particles interacting with an envelope model for the laser, if present.
+  If ``True``, this species will project its susceptibility and be influenced by the laser envelope field.
+  See :doc:`laser_envelope` for details on the dynamics of particles in presence of a laser envelope field.
+
 
 .. py:data:: c_part_max
 
@@ -674,6 +690,7 @@ Each species has to be defined in a ``Species`` block::
   * ``"vay"``: The relativistic pusher of J. L. Vay
   * ``"higueracary"``: The relativistic pusher of A. V. Higuera and J. R. Cary
   * ``"norm"``:  For photon species only (rectilinear propagation)
+  * ``"ponderomotive_boris"``: modified relativistic Boris pusher for species whose flag ``"ponderomotive_dynamics"`` is ``True``. Valid only if the species has non-zero mass
 
 .. py:data:: radiation_model
 
@@ -999,6 +1016,42 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   This is almost the same as ``LaserGaussian2D``, with the ``focus`` parameter having
   now 3 elements (focus position in 3D), and the ``incidence_angle`` being a list of
   two angles, corresponding to rotations around `y` and `z`, respectively.
+
+
+----
+
+Laser envelope model
+^^^^^^^^^^^^^^^^^^^^^^
+
+In geometry (``"3Dcartesian"``) it is possible to model a laser pulse propagating in the ``x`` direction through an envelope model (see :doc:`laser_envelope` for the advantages and limits of this approximation).
+The fast oscillations of the laser are neglected and all the physical quantities of the simulation, including the electromagnetic fields and their source terms, as well as the particles positions and momenta, are meant to be an average over one or more optical cycles.
+Effects involving characteristic lengths comparable to the laser central wavelength, or effects dependent on the polarization of the laser, cannot be modeled with this option.
+
+For the moment the only way to specify a laser pulse through this model in :program:`Smilei` is through a cylindrically symmetric 3D gaussian beam.
+Contrarily to a standard Laser, the laser envelope will be entirely initialized inside the simulation box at the start of the simulation.
+
+Following is the laser envelope creator::
+
+    LaserEnvelopeGaussian3D(
+        a0              = 1.,
+        focus           = [150., 40., 40.],
+        waist           = 30.,
+        time_envelope   = tgaussian(center=150., fwhm=40.),
+        envelope_solver = 'explicit',
+    )
+
+The arguments appearing ``LaserEnvelopeGaussian3D`` have the same meaning they would have in a normal LaserGaussian3D, with some differences
+
+.. py:data:: time_envelope
+
+   Since the envelope will be entirely initialized in the simulation box already at the start of the simulation, the time envelope will be applied in the ``x`` direction instead of time. It is recommended to initialize the laser envelope in vacuum, separated from the plasma, to avoid unphysical results.
+
+.. py:data:: envelope_solver
+
+  :default: ``explicit``
+
+  For the moment the only available solver for the laser envelope equation is an explicit solver with centered finite differences in space and time.
+
 
 
 
@@ -1789,7 +1842,8 @@ This is done by including a block ``DiagFields``::
   :default: ``[]`` *(all fields are written)*
 
   List of the field names that are saved. By default, they all are.
-  The full list of fields that are saved by this diagnostic:
+
+  Available fields:
 
   .. rst-class:: nowrap
 
@@ -1816,6 +1870,37 @@ This is done by including a block ``DiagFields``::
   +----------------+-------------------------------------------------------+
   | | Rho          | |  Total density                                      |
   | | Rho_abc      | |  Density of species "abc"                           |
+  +----------------+-------------------------------------------------------+
+
+  In the case of spectral cylindrical geometry (``3drz``), the ``x``, ``y`` and ``z``
+  indices are replaced by ``x``, ``r`` and ``t`` (theta). In addition,
+  the angular Fourier modes are denoted by the suffix ``_mode_i`` where ``i``
+  is the mode number. In summary, the list of fields reads as follows.
+
+  .. rst-class:: nowrap
+
+  +------------------------------+-----------------------------------------+
+  | | Bx_mode_0, Bx_mode_1, etc. | |                                       |
+  | | Br_mode_0, Br_mode_1, etc. | | Components of the magnetic field      |
+  | | Bt_mode_0, Bt_mode_1, etc. | |                                       |
+  +------------------------------+-----------------------------------------+
+  | | Ex_mode_0, Ex_mode_1, etc. | |                                       |
+  | | Er_mode_0, Er_mode_1, etc. | | Components of the electric field      |
+  | | Et_mode_0, Et_mode_1, etc. | |                                       |
+  +------------------------------+-----------------------------------------+
+  |  The same notation works for Jx, Jr, Jt, and Rho                       |
+  +------------------------------+-----------------------------------------+
+
+  In the case of an envelope model for the laser (see :doc:`laser_envelope`), the following fields are also available:
+
+  .. rst-class:: nowrap
+
+  +----------------+-------------------------------------------------------+
+  | | Env_A_abs    | |                                                     |
+  | | Env_Ai       | | Module, real and imaginary part of envelope field   |
+  | | Env_Ar       | |                                                     |
+  +----------------+-------------------------------------------------------+
+  | | Env_Chi      | | Total  susceptibility                               |
   +----------------+-------------------------------------------------------+
 
 .. py:data:: subgrid
@@ -1921,6 +2006,9 @@ To add one probe diagnostic, include the block ``DiagProbe``::
   ``"Bx"``, ``"By"``, ``"Bz"``, ``"Jx"``, ``"Jy"``, ``"Jz"`` and ``"Rho"``. Only these
   fields will be saved.
   Note that it does NOT speed up calculation much, but it saves disk space.
+
+  In the case of an envelope model for the laser (see :doc:`laser_envelope`), the following fields are also available: ``"Env_A_abs"``, ``"Env_Ar"``, ``"Env_Ai"``,
+  ``"Env_Chi"``.
 
 
 **Examples of probe diagnostics**
