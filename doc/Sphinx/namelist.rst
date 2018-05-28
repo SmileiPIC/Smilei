@@ -187,6 +187,8 @@ The block ``Main`` is **mandatory** and has the following syntax::
   with the ``DynamicVectorization`` panel.
   By default, the reconfiguration is done at every timesteps.
 
+  In ``dynamic`` and ``dynamic2`` mode, ``clrw`` is set to the maximum by default.
+
 .. py:data:: maxwell_solver
 
   :default: 'Yee'
