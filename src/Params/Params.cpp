@@ -67,16 +67,12 @@ namelist("")
 {
 
     MESSAGE("HDF5 version "<<H5_VERS_MAJOR << "." << H5_VERS_MINOR << "." << H5_VERS_RELEASE);
-
-    if((((H5_VERS_MAJOR==1) && (H5_VERS_MINOR==8) && (H5_VERS_RELEASE>16)) || \
-        ((H5_VERS_MAJOR==1) && (H5_VERS_MINOR>8)) || \
-        (H5_VERS_MAJOR>1))) {
-        WARNING("Smilei suggests using HDF5 version 1.8.16");
-        WARNING("Newer version are not tested and may cause the code to behave incorrectly");
-        WARNING("See http://hdf-forum.184993.n3.nabble.com/Segmentation-fault-using-H5Dset-extent-in-parallel-td4029082.html");
-    }
-
-
+    
+    if(  (H5_VERS_MAJOR< 1) ||
+       ( (H5_VERS_MAJOR==1) && (H5_VERS_MINOR< 8) ) ||
+       ( (H5_VERS_MAJOR==1) && (H5_VERS_MINOR==8) && (H5_VERS_RELEASE<16) ) )
+        WARNING("Smilei suggests using HDF5 version 1.8.16 or newer");
+    
     if (namelistsFiles.size()==0) ERROR("No namelists given!");
 
     //string commandLineStr("");
@@ -91,14 +87,7 @@ namelist("")
     // https://github.com/numpy/numpy/issues/5856
     // We basically call the command numpy.seterr(all="ignore")
     PyObject* numpy = PyImport_ImportModule("numpy");
-    PyObject* seterr = PyObject_GetAttrString(numpy, "seterr");
-    PyObject* args = PyTuple_New(0);
-    PyObject* kwargs = Py_BuildValue("{s:s}", "all", "ignore");
-    PyObject* ret = PyObject_Call(seterr, args, kwargs);
-    Py_DECREF(ret);
-    Py_DECREF(args);
-    Py_DECREF(kwargs);
-    Py_DECREF(seterr);
+    Py_DECREF(PyObject_CallMethod(numpy, "seterr", "s", "ignore"));
     Py_DECREF(numpy);
 #endif
 
@@ -327,6 +316,8 @@ namelist("")
             ERROR("EM_boundary_conditions_k must have a non zero normal component along dimension "<<"-+"[iDim%2]<<"012"[iDim/2] );
         
     }
+    save_magnectic_fields_for_SM = true;
+    PyTools::extract("save_magnectic_fields_for_SM", save_magnectic_fields_for_SM, "Main");
 
     // -----------------------------------
     // MAXWELL SOLVERS & FILTERING OPTIONS
@@ -339,6 +330,10 @@ namelist("")
     PyTools::extract("solve_poisson", solve_poisson, "Main");
     PyTools::extract("poisson_max_iteration", poisson_max_iteration, "Main");
     PyTools::extract("poisson_max_error", poisson_max_error, "Main");
+    // Relativistic Poisson Solver
+    PyTools::extract("solve_relativistic_poisson", solve_relativistic_poisson, "Main");
+    PyTools::extract("relativistic_poisson_max_iteration", relativistic_poisson_max_iteration, "Main");
+    PyTools::extract("relativistic_poisson_max_error", relativistic_poisson_max_error, "Main");
 
     // PXR parameters
     PyTools::extract("is_spectral", is_spectral, "Main");

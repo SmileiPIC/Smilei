@@ -244,12 +244,12 @@ void MultiphotonBreitWheeler::operator() (Particles &particles,
                     // Update of the position
                     // Move the photons
 
-#ifdef  __DEBUG
-                    for ( int i = 0 ; i<nDim_ ; i++ )
-                        particles.position_old(i,ipart) = position[i][ipart];
-#endif
-                    for ( int i = 0 ; i<nDim_ ; i++ )
-                        position[i][ipart]     += event_time*momentum[i][ipart]/(*gamma)[ipart];
+//#ifdef  __DEBUG
+//                    for ( int i = 0 ; i<nDim_ ; i++ )
+//                        particles.position_old(i,ipart) = position[i][ipart];
+//#endif
+//                    for ( int i = 0 ; i<nDim_ ; i++ )
+//                        position[i][ipart]     += event_time*momentum[i][ipart]/(*gamma)[ipart];
 
 
                     // Generation of the pairs
@@ -338,8 +338,8 @@ void MultiphotonBreitWheeler::pair_emission(int ipart,
 
             // Positions
             for (i=0; i<nDim_; i++) {
-                new_pair[k].position(i,idNew)=particles.position(i,ipart)
-               + new_pair[k].momentum(i,idNew)*remaining_dt*inv_gamma;
+                new_pair[k].position(i,idNew)=particles.position(i,ipart);
+//               + new_pair[k].momentum(i,idNew)*remaining_dt*inv_gamma;
             }
 
             // Old positions

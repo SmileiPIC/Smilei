@@ -7,7 +7,7 @@ compile:
   only:
     - develop
     - dev_issue226
-    - Niel_performance
+    - fix_numpy_part
 
   script:
     # Force workdir cleaning in case of retried
@@ -33,7 +33,7 @@ makerun1D:
   only:
     - develop
     - dev_issue226
-    - Niel_performance
+    - fix_numpy_part
 
   script:
     # Move in test dir
@@ -46,7 +46,7 @@ makerun2D:
   only:
     - develop
     - dev_issue226
-    - Niel_performance
+    - fix_numpy_part
 
   script:
     # Move in test dir
@@ -59,7 +59,7 @@ makerun3D:
   only:
     - develop
     - dev_issue226
-    - Niel_performance
+    - fix_numpy_part
 
   script:
     # Move in test dir
@@ -72,7 +72,7 @@ makerunCollisions:
   only:
     - develop
     - dev_issue226
-    - Niel_performance
+    - fix_numpy_part
     
   script:
     # Move in test dir

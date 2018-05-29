@@ -218,12 +218,13 @@ void ElectroMagn1D::initPoisson(Patch *patch)
     p_   = new Field1D(dimPrim);    // direction vector
     Ap_  = new Field1D(dimPrim);    // A*p vector
     
-    double       dx_sq          = dx*dx;
+    // double       dx_sq          = dx*dx;
     
     // phi: scalar potential, r: residual and p: direction
     for (unsigned int i=0 ; i<dimPrim[0] ; i++) {
         (*phi_)(i)   = 0.0;
-        (*r_)(i)     = -dx_sq * (*rho1D)(i);
+        //(*r_)(i)     = -dx_sq * (*rho1D)(i);
+        (*r_)(i)     = - (*rho1D)(i);
         (*p_)(i)     = (*r_)(i);
     }
 } // initPoisson
@@ -238,15 +239,38 @@ double ElectroMagn1D::compute_r()
 
 void ElectroMagn1D::compute_Ap(Patch *patch)
 {
+    
+    double one_ov_dx_sq       = 1.0/(dx*dx);
+    double two_ov_dx2         = 2.0*( 1.0/(dx*dx));
+  
     // vector product Ap = A*p
     for (unsigned int i=1 ; i<dimPrim[0]-1 ; i++)
-        (*Ap_)(i) = (*p_)(i-1) - 2.0*(*p_)(i) + (*p_)(i+1);
+        (*Ap_)(i) = one_ov_dx_sq * ((*p_)(i-1) + (*p_)(i+1))  - two_ov_dx2*(*p_)(i)   ;
         
     // apply BC on Ap
-    if (patch->isXmin()) (*Ap_)(0)      = (*p_)(1)      - 2.0*(*p_)(0);
-    if (patch->isXmax()) (*Ap_)(nx_p-1) = (*p_)(nx_p-2) - 2.0*(*p_)(nx_p-1); 
+    if (patch->isXmin()) (*Ap_)(0)      = one_ov_dx_sq * ((*p_)(1))      - two_ov_dx2*(*p_)(0);
+    if (patch->isXmax()) (*Ap_)(nx_p-1) = one_ov_dx_sq * ((*p_)(nx_p-2)) - two_ov_dx2*(*p_)(nx_p-1); 
     
 } // compute_Ap
+
+void ElectroMagn1D::compute_Ap_relativistic_Poisson(Patch* patch, double gamma_mean)
+{
+
+    // gamma_mean is the average Lorentz factor of the species whose fields will be computed
+    // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details 
+
+    double one_ov_dx_sq_ov_gamma_sq       = 1.0/(dx*dx)/(gamma_mean*gamma_mean);
+    double two_ov_dxgam2                  = 2.0*( 1.0/(dx*dx)/(gamma_mean*gamma_mean) );
+
+    // vector product Ap = A*p
+    for (unsigned int i=1 ; i<dimPrim[0]-1 ; i++)
+        (*Ap_)(i) = one_ov_dx_sq_ov_gamma_sq * ( (*p_)(i-1) + (*p_)(i+1) ) - two_ov_dxgam2 *(*p_)(i)   ;
+        
+    // apply BC on Ap
+    if (patch->isXmin()) (*Ap_)(0)      = one_ov_dx_sq_ov_gamma_sq * ( (*p_)(1) )     - two_ov_dxgam2 * (*p_)(0);
+    if (patch->isXmax()) (*Ap_)(nx_p-1) = one_ov_dx_sq_ov_gamma_sq * ( (*p_)(nx_p-2) )- two_ov_dxgam2 * (*p_)(nx_p-1); 
+    
+} // compute_Ap_relativistic_Poisson
 
 double ElectroMagn1D::compute_pAp()
 {
@@ -297,6 +321,86 @@ void ElectroMagn1D::initE(Patch *patch)
 
 } // initE
 
+void ElectroMagn1D::initE_relativistic_Poisson(Patch *patch, double gamma_mean)
+{
+    // gamma_mean is the average Lorentz factor of the species whose fields will be computed
+    // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details 
+
+    Field1D* Ex1D  = static_cast<Field1D*>(Ex_rel_);
+    Field1D* rho1D = static_cast<Field1D*>(rho_);
+
+    // ----------------------------------
+    // Compute the electrostatic field Ex
+    // ----------------------------------
+
+    
+
+    for (unsigned int i=1; i<nx_p-1; i++)
+        (*Ex1D)(i) = ((*phi_)(i-1)-(*phi_)(i))/dx/gamma_mean/gamma_mean;
+    
+    // BC on Ex
+    if (patch->isXmin()) (*Ex1D)(0)      = (*Ex1D)(1)      - dx*(*rho1D)(0);
+    if (patch->isXmax()) (*Ex1D)(nx_d-1) = (*Ex1D)(nx_d-2) + dx*(*rho1D)(nx_p-1);
+
+    
+    delete phi_;
+    delete r_;
+    delete p_;
+    delete Ap_;
+
+} // initE_relativistic_Poisson
+
+void ElectroMagn1D::initB_relativistic_Poisson(Patch *patch, double gamma_mean)
+{
+    // gamma_mean is the average Lorentz factor of the species whose fields will be computed
+    // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details 
+
+    // For some inconsistency the B field in 1D seems zero - am I wrong?
+
+} // initB_relativistic_Poisson
+
+void ElectroMagn1D::center_fields_from_relativistic_Poisson(Patch *patch){
+
+    // In 1D no centering is necessary, as E is already centered and there is no field B in relativistic initialization
+
+} 
+
+void ElectroMagn1D::initRelativisticPoissonFields(Patch *patch)
+{
+    // init temporary fields for relativistic field initialization, to be added to the already present electromagnetic fields
+
+    Ex_rel_  = new Field1D(dimPrim, 0, false, "Ex_rel");
+    Ey_rel_  = new Field1D(dimPrim, 1, false, "Ey_rel");
+    Ez_rel_  = new Field1D(dimPrim, 2, false, "Ez_rel");
+    Bx_rel_  = new Field1D(dimPrim, 0, true,  "Bx_rel"); // will be identically zero
+    By_rel_  = new Field1D(dimPrim, 1, false,  "By_rel"); // is equal to -beta*Ez, thus it inherits the same centering of Ez
+    Bz_rel_  = new Field1D(dimPrim, 2, false,  "Bz_rel"); // is equal to  beta*Ey, thus it inherits the same centering of Ey
+
+} // initRelativisticPoissonFields
+
+void ElectroMagn1D::sum_rel_fields_to_em_fields(Patch *patch)
+{
+    Field1D* Ex1Drel  = static_cast<Field1D*>(Ex_rel_);
+    Field1D* Ex1D  = static_cast<Field1D*>(Ex_);
+    
+
+    // Ex
+    for (unsigned int i=0; i<nx_d; i++) {
+                (*Ex1D)(i) = (*Ex1D)(i) + (*Ex1Drel)(i);
+    }
+
+    // delete temporary fields used for relativistic initialization
+    delete Ex_rel_;
+    delete Ey_rel_;
+    delete Ez_rel_;
+    delete Bx_rel_;
+    delete By_rel_;
+    delete Bz_rel_;
+
+
+} // sum_rel_fields_to_em_fields
+
+
 void ElectroMagn1D::centeringE( std::vector<double> E_Add )
 {
     Field1D* Ex1D  = static_cast<Field1D*>(Ex_);
@@ -304,6 +408,14 @@ void ElectroMagn1D::centeringE( std::vector<double> E_Add )
         (*Ex1D)(i) += E_Add[0];
 
 } // centeringE
+
+void ElectroMagn1D::centeringErel( std::vector<double> E_Add )
+{
+    Field1D* Ex1D  = static_cast<Field1D*>(Ex_rel_);
+    for (unsigned int i=0; i<nx_d; i++)
+        (*Ex1D)(i) += E_Add[0];
+
+} // centeringErel
 
 // ---------------------------------------------------------------------------------------------------------------------
 // End of Solve Poisson methods 
@@ -560,10 +672,6 @@ void ElectroMagn1D::applyExternalField(Field* my_field,  Profile *profile, Patch
         pos[0] += dx;
     }
     
-    for (auto& embc: emBoundCond) {
-        if (embc) embc->save_fields(my_field, patch);
-    }
-
 }
 
 

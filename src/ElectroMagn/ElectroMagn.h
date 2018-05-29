@@ -120,6 +120,15 @@ public:
     //! Total charge density
     Field* rho_;
     Field* rhoold_;
+
+    // Fields for relativistic Initialization
+    Field* Ex_rel_;
+    Field* Ey_rel_;
+    Field* Ez_rel_;
+    Field* Bx_rel_;
+    Field* By_rel_;
+    Field* Bz_rel_;
+
     //PXR quantities:
     Field* Ex_pxr;
     Field* Ey_pxr;
@@ -199,20 +208,35 @@ public:
     virtual void initPoisson(Patch *patch) = 0;
     virtual double compute_r() = 0;
     virtual void compute_Ap(Patch *patch) = 0;
+    virtual void compute_Ap_relativistic_Poisson(Patch *patch, double gamma_mean) = 0;
     //Access to Ap
     virtual double compute_pAp() = 0;
     virtual void update_pand_r(double r_dot_r, double p_dot_Ap) = 0;
     virtual void update_p(double rnew_dot_rnew, double r_dot_r) = 0;
     virtual void initE(Patch *patch) = 0;
+    virtual void initE_relativistic_Poisson(Patch *patch, double gamma_mean) = 0;
+    virtual void initB_relativistic_Poisson(Patch *patch, double gamma_mean) = 0;
+    virtual void center_fields_from_relativistic_Poisson(Patch *patch) = 0; // centers in Yee cells the fields
+    virtual void sum_rel_fields_to_em_fields(Patch *patch) = 0;
+    virtual void initRelativisticPoissonFields(Patch *patch) = 0;
     virtual void centeringE( std::vector<double> E_Add ) = 0;
+    virtual void centeringErel( std::vector<double> E_Add ) = 0;
     
     virtual double getEx_Xmin() = 0; // 2D !!!
     virtual double getEx_Xmax() = 0; // 2D !!!
+
+    virtual double getExrel_Xmin() = 0; // 2D !!!
+    virtual double getExrel_Xmax() = 0; // 2D !!!
     
     virtual double getEx_XminYmax() = 0; // 1D !!!
     virtual double getEy_XminYmax() = 0; // 1D !!!
     virtual double getEx_XmaxYmin() = 0; // 1D !!!
     virtual double getEy_XmaxYmin() = 0; // 1D !!!
+
+    virtual double getExrel_XminYmax() = 0; // 1D !!!
+    virtual double getEyrel_XminYmax() = 0; // 1D !!!
+    virtual double getExrel_XmaxYmin() = 0; // 1D !!!
+    virtual double getEyrel_XmaxYmin() = 0; // 1D !!!
     
     std::vector<unsigned int> index_min_p_;
     std::vector<unsigned int> index_max_p_;
@@ -267,12 +291,26 @@ public:
     inline double computeEzSum() {
         return Ez_->sum(istart, bufsize);
     }
+
+    //! Compute local sum of Ex_rel_
+    inline double computeExrelSum() {
+        return Ex_rel_->sum(istart, bufsize);
+    }
+    //! Compute local sum of Ey_rel_
+    inline double computeEyrelSum() {
+        return Ey_rel_->sum(istart, bufsize);
+    }
+    //! Compute local sum of Ez_rel_
+    inline double computeEzrelSum() {
+        return Ez_rel_->sum(istart, bufsize);
+    }
     
     //! external fields parameters the key string is the name of the field and the value is a vector of ExtField
     std::vector<ExtField> extFields;
     
     //! Method used to impose external fields (apply to all Fields)
     void applyExternalFields(Patch*);
+    void saveExternalFields(Patch*);
     
     //! Method used to impose external fields (apply to a given Field)
     virtual void applyExternalField(Field*, Profile*, Patch*) = 0 ;
@@ -333,6 +371,7 @@ public:
     std::vector<std::vector<double>> S_edge;
 
 protected :
+    bool is_pxr;
     
     
 private:
