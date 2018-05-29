@@ -15,12 +15,12 @@ public:
         else
             return NULL;
     }
-    static LaserEnvelope* clone( LaserEnvelope *envelope, Patch* patch, ElectroMagn* EMfields, Params& params ) {
+    static LaserEnvelope* clone( LaserEnvelope *envelope, Patch* patch, ElectroMagn* EMfields, Params& params, unsigned int n_moved ) {
         if  (envelope == NULL)
             return NULL;
 
         if ( dynamic_cast<LaserEnvelope3D*>( envelope ) ) {
-            return new LaserEnvelope3D( envelope, patch , EMfields, params );
+            return new LaserEnvelope3D( envelope, patch , EMfields, params, n_moved );
         }
         else
             return NULL;

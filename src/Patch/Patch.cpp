@@ -126,10 +126,12 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi, DomainDecomposition
     EMfields   = ElectroMagnFactory::create(params, domain_decomposition, vecSpecies, this);
 
     // Create ad hoc interpolators and projectors for envelope
-    if (params.Laser_Envelope_model){
+    if (params.Laser_Envelope_model) {
         Interp_envelope      = InterpolatorFactory::create_env_interpolator(params, this, params.vecto == "normal");
-        //Proj_susceptibility  = ProjectorFactory::create_susceptibility_projector(params, this, params.vecto == "normal");
     } // + patchId -> idx_domain_begin (now = ref smpi)
+    else {
+        Interp_envelope      = NULL;
+    }
 
     // Initialize the collisions
     vecCollisions = CollisionsFactory::create(params, this, vecSpecies);
@@ -148,17 +150,16 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi, DomainDecomposition
 }
 
 
-void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool with_particles = true ) {
+void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, unsigned int n_moved, bool with_particles = true ) {
     // clone vector of Species (virtual)
     vecSpecies = SpeciesFactory::cloneVector(patch->vecSpecies, params, this, with_particles);
 
     // clone the electromagnetic fields (virtual)
-    EMfields   = ElectroMagnFactory::clone(patch->EMfields, params, vecSpecies, this);
+    EMfields   = ElectroMagnFactory::clone(patch->EMfields, params, vecSpecies, this, n_moved);
 
     // Create ad hoc interpolators and projectors for envelope
     if (params.Laser_Envelope_model){
         Interp_envelope  = InterpolatorFactory::create_env_interpolator(params, this, params.vecto == "normal");
-        //Proj_susceptibility  = ProjectorFactory::create_susceptibility_projector(params, this, params.vecto == "normal");
     }
 
     // clone the collisions
@@ -333,6 +334,8 @@ Patch::~Patch() {
 
     for(unsigned int i=0; i<vecCollisions.size(); i++) delete vecCollisions[i];
     vecCollisions.clear();
+
+    if (Interp_envelope     != NULL) delete Interp_envelope;
 
     if (partWalls!=NULL) delete partWalls;
 
