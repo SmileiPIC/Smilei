@@ -139,10 +139,8 @@ void SpeciesV::dynamics(double time_dual, unsigned int ispec,
         //Still needed for ionization
         vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
 
-        //int npack    =  f_dim0-2*oversize[0];
-        //int packsize = (f_dim1-2*oversize[1]);
-        int npack    = 1 ;
-        int packsize = (f_dim0-2*oversize[0])*(f_dim1-2*oversize[1]);
+        int npack    =  f_dim0-2*oversize[0];
+        int packsize = (f_dim1-2*oversize[1]);
         if (nDim_particle == 3)
             packsize *= (f_dim2-2*oversize[2]);
 
@@ -626,27 +624,21 @@ void SpeciesV::ponderomotive_update_susceptibilty_and_momentum(double time_dual,
 
     unsigned int iPart;
 
-    // Reset list of particles to exchange
-    clearExchList();
-
-    int tid(0);
-    double ener_iPart(0.);
-  
-
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
     if (time_dual>time_frozen) { // advance particle momentum
 
-        //int npack    =  f_dim0-2*oversize[0];
-        //int packsize = (f_dim1-2*oversize[1]);
-        int npack    = 1 ;
-        int packsize = (f_dim0-2*oversize[0])*(f_dim1-2*oversize[1]);
+        int npack    =  f_dim0-2*oversize[0];
+        int packsize = (f_dim1-2*oversize[1]);
         if (nDim_particle == 3)
             packsize *= (f_dim2-2*oversize[2]);
 
         for ( int ipack = 0 ; ipack < npack ; ipack++ ) {
 
+            // ipack start @ bmin [ ipack * packsize ]
+            // ipack end   @ bmax [ ipack * packsize + packsize - 1 ]
+            //int nparts_in_pack = bmax[ (ipack+1) * packsize-1 ] - bmin [ ipack * packsize ];
             int nparts_in_pack = bmax[ (ipack+1) * packsize-1 ];
             smpi->dynamics_resize(ithread, nDim_particle, nparts_in_pack );
 
@@ -672,7 +664,6 @@ void SpeciesV::ponderomotive_update_susceptibilty_and_momentum(double time_dual,
     else { // immobile particle (at the moment only project density)
         
     }//END if time vs. time_frozen
-      
 
 } // end ponderomotive_update_susceptibilty_and_momentum
 
@@ -712,15 +703,18 @@ void SpeciesV::ponderomotive_update_position_and_currents(double time_dual, unsi
    // -------------------------------
    if (time_dual>time_frozen) { // moving particle
 
-        //int npack    =  f_dim0-2*oversize[0];
-        //int packsize = (f_dim1-2*oversize[1]);
-        int npack    =  1;
-        int packsize = (f_dim0-2*oversize[0])*(f_dim1-2*oversize[1]);
+        int npack    =  f_dim0-2*oversize[0];
+        int packsize = (f_dim1-2*oversize[1]);
         if (nDim_particle == 3)
             packsize *= (f_dim2-2*oversize[2]);
 
+        //Prepare for sorting
+        for (unsigned int i=0; i<species_loc_bmax.size(); i++)
+            species_loc_bmax[i] = 0;
+
         for ( int ipack = 0 ; ipack < npack ; ipack++ ) {
 
+            //int nparts_in_pack = bmax[ (ipack+1) * packsize-1 ] - bmin [ ipack * packsize ];
             int nparts_in_pack = bmax[ (ipack+1) * packsize-1 ];
             smpi->dynamics_resize(ithread, nDim_particle, nparts_in_pack );
  
@@ -730,12 +724,12 @@ void SpeciesV::ponderomotive_update_position_and_currents(double time_dual, unsi
 
             // Push only the particle position
             (*Push_ponderomotive_position)(*particles, smpi, bmin[ipack*packsize], bmax[ipack*packsize+packsize-1], ithread, bmin[ipack*packsize] );
+            unsigned int length[3];
+            length[0]=0;
+            length[1]=params.n_space[1]+1;
+            length[2]=params.n_space[2]+1;
 
-            //Prepare for sorting
-            for (unsigned int i=0; i<species_loc_bmax.size(); i++)
-                species_loc_bmax[i] = 0;
-
-            for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
+            for (unsigned int ibin = 0 ; ibin < packsize ; ibin++) {
                 // Apply wall and boundary conditions
                 if (mass>0)
                     { // condition mass>0
@@ -751,7 +745,8 @@ void SpeciesV::ponderomotive_update_position_and_currents(double time_dual, unsi
                         // Boundary Condition may be physical or due to domain decomposition
                         // apply returns 0 if iPart is not in the local domain anymore
                         //        if omp, create a list per thread
-                        for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                        //for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                        for (iPart=bmin[ipack*packsize+ibin] ; (int)iPart<bmax[ipack*packsize+ibin]; iPart++ ) {
                             if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
                                 addPartInExchList( iPart );
                                 nrj_lost_per_thd[tid] += mass * ener_iPart;
@@ -759,6 +754,10 @@ void SpeciesV::ponderomotive_update_position_and_currents(double time_dual, unsi
                             }
                             else {
                                 //First reduction of the count sort algorithm. Lost particles are not included.
+                                for ( int i = 0 ; i<nDim_particle; i++ ){
+                                    (*particles).cell_keys[iPart] *= length[i];
+                                    (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]+0.00000000000001) * dx_inv_[i] );
+                                }
                                 species_loc_bmax[(*particles).cell_keys[iPart]] ++; //First reduction of the count sort algorithm. Lost particles are not included.
                             }
                         }
