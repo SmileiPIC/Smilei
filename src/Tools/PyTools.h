@@ -213,7 +213,7 @@ public:
             checkPyError(true);
             Py_DECREF(myFunction);
         } else {
-            MESSAGE(1,"python " << name << " function does not exists");
+            MESSAGE(1,"python " << name << " function does not exist");
         }
     }
     

@@ -29,6 +29,7 @@ Upcoming changes
 * 'subgrid' option in Fields diagnostics
 * Printout of the expected disk usage
 * Laser propagation pre-processing
+* Bugfixes: circular polarization
 
 ----
 

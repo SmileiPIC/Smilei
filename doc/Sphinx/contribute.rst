@@ -1,11 +1,16 @@
 Contribute
 ----------
 
-Contributions to the development of :program:`Smilei` are welcome. You may freely *fork*
+Contributions to the development of :program:`Smilei` are welcome.
+
+To report bugs, please create an issue on the
+`GitHub website <https://github.com/SmileiPIC/Smilei/issues/new>`_.
+
+To develop new features in :program:`Smilei`, you may freely *fork*
 the source code from the `GitHub website <https://github.com/SmileiPIC/Smilei>`_. When
 your modifications to the code are ready, you can make a `pull request
-<https://github.com/SmileiPIC/Smilei/pulls>`_ for your modifications to be reviewed and
-merged with the main repository.
+<https://github.com/SmileiPIC/Smilei/pulls>`_ for review and
+merge with the main repository.
 
 Guidelines for new developments are:
 
@@ -20,20 +25,29 @@ Write documentation
 
 The documentation you are currently reading is written in the
 `reStructuredText <www.sphinx-doc.org/en/stable/rest.html>`_ (rST) language, and included
-in the main :program:`Smilei` repository. To transform it into an *html* website, it is
+in the main :program:`Smilei` repository. This is a fairly simple markup language. You
+can see examples from the source files, which are located in the
+``doc/Sphinx`` folder and have the extension ``.rst``.
+
+To transform it into an *html* website, it is
 processed using the `sphinx <www.sphinx-doc.org>`_ python package that you may have to
 install.
 
-All the source files for the documentation are located in the ``doc/Sphinx`` folder, and
-have the extension ``.rst``. If you have sphinx installed, you may simply go to the
+ If you have sphinx installed, you may simply go to the
 main :program:`Smilei` folder from a command line terminal, then run the command
 
 .. code-block:: bash
 
    make doc
 
-This creates a local *html* website accessible in the ``build/html/`` folder.
+This creates a local *html* website accessible in the ``build/html/`` folder. Simply
+open the ``build/html/index.html`` file in your favorite web browser.
 
+To document a new feature, please modify the file ``namelist.rst`` to indicate the
+syntax changes in the input file. If the feature requires detailed physical or numerical
+background, you may add a new page in the "Understand" section of the website.
+To do that, create a new ``.rst`` file, then reference it in the table of contents
+located in ``index.rst``.
 
 ----
 
@@ -93,7 +107,7 @@ Usage:
   * Option ``-g``: Generation of references only (no validation)
   * Option ``-s``: Plot differences with references only (no validation)
   * Option ``-c``: Compilation only (no run, no validation)
-  * Option ``-r <nRrestarts>``: Force the simulation to be broken in several restarts.
+  * Option ``-r <nRestarts>``: Force the simulation to be broken in several restarts.
   * Option ``-v``: Verbose
   * Option ``-h``: Help
 
@@ -123,19 +137,19 @@ Examples:
   
     ./validation.py -v -b tst1d_00_em_propagation.py 
   
-  Validates only the benchmark `tst1d_00_em_propagation.py`.
+  Validates only the benchmark ``tst1d_00_em_propagation.py``.
   
   .. code-block:: bash
   
     ./validation.py -v -b tst1d_00_em_propagation.py -g
   
-  Generates the reference file for the benchmark `tst1d_00_em_propagation.py`.
+  Generates the reference file for the benchmark ``tst1d_00_em_propagation.py``.
   
   .. code-block:: bash
   
     ./validation.py -v -b tst1d_00_em_propagation.py -s
   
-  Runs the benchmark `tst1d_00_em_propagation.py`, and plots the differences with the reference file.
+  Runs the benchmark ``tst1d_00_em_propagation.py``, and plots the differences with the reference file.
 
 
 
@@ -180,7 +194,7 @@ The ``validate_*`` script should load the simulation results using whatever mean
 the benchmark the best. In many cases, the :doc:`happi <post-processing>` module is
 employed to extract diagnostics results.
 
-Any *python* instructions may be used to processed the simulation results. Once the data
+Any *python* instructions may be used to process the simulation results. Once the data
 has been crunched into a meaningful value, string, or array, then it must be passed to the
 following predefined function:
 
@@ -190,7 +204,7 @@ following predefined function:
   * ``data``: a float, a *numpy* float array, or any other python data
   * ``epsilon`` (optional): acceptable difference between data and reference
 
-The data passed to this function constitutes the *analysis* that is compared to previous
+The ``data`` passed to this function constitutes the *analysis* that is compared to previous
 reference files. It is the same analysis that is used to generate those reference files
 in the first place.
 

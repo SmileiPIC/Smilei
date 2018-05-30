@@ -148,6 +148,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   A list of integers: the number of patches in each direction.
   Each integer must be a power of 2, and the total number of patches must be
   greater or equal than the number of MPI processes.
+  It is also advised to have more patches than the total number of openMP threads even if this is not a strict requirement.
   See :doc:`parallelization`.
 
 
@@ -188,10 +189,11 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
 .. py:data:: solve_relativistic_poisson
 
-   :default: True
+   :default: False
 
-   Decides if relativistic Poisson problem must be solved for at least one species
-
+   Decides if relativistic Poisson problem must be solved for at least one species.
+   See :doc:`relativistic_fields_initialization` for more details.
+   
 .. py:data:: relativistic_poisson_max_iteration
 
   :default: 50000
@@ -216,17 +218,19 @@ The block ``Main`` is **mandatory** and has the following syntax::
   | **Syntax 2:** ``[[bc_X], [bc_Y], ...]``, different depending on x, y or z.
   | **Syntax 3:** ``[[bc_Xmin, bc_Xmax], ...]``,  different on each boundary.
 
-  ``"silver-muller"`` is an open boundary condition. The incident wave vector :math:`k_i` on each face is defined by ``"EM_boundary_conditions_k"``.
-  When using ``"silver-muller"`` as an injecting boundary, make sure :math:`k_i` is aligned with the wave you are injecting.
-  When using ``"silver-muller"`` as an absorbing boundary, the optimal wave absorption on a given face will be along :math:`k_{abs}` the specular reflection of :math:`k_i` on face `i`. 
+  ``"silver-muller"`` is an open boundary condition. The incident wave vector :math:`k_{inc}` on each face is defined by ``"EM_boundary_conditions_k"``.
+  When using ``"silver-muller"`` as an injecting boundary, make sure :math:`k_{inc}` is aligned with the wave you are injecting.
+  When using ``"silver-muller"`` as an absorbing boundary, the optimal wave absorption on a given face will be along :math:`k_{abs}` the specular reflection of :math:`k_{inc}` on the considered face. 
 
 .. py:data:: EM_boundary_conditions_k
 
   :type: list of lists of floats
-  :default: ``[[1.,0.,0.],[-1.,0.,0.],[0.,1.,0.],[0.,-1.,0.],[0.,0.,1.],[0.,0.,-1.]]``
+  :default: ``[[1.,0.],[-1.,0.],[0.,1.],[0.,-1.]]`` in 2D
+  :default: ``[[1.,0.,0.],[-1.,0.,0.],[0.,1.,0.],[0.,-1.,0.],[0.,0.,1.],[0.,0.,-1.]]`` in 3D
 
-  `k` is the incident wave vector for each faces sequentially Xmin, Xmax, Ymin, Ymax, Zmin, Zmax defined by its coordinates in the `xyz` frame.  
-  The number of coordinates is equal to the dimension of the simulation. The number of given vectors must be equal to 1 or to the number of faces which is twice the dimension of the simulation.
+  The incident unit wave vector `k` for each face (sequentially Xmin, Xmax, Ymin, Ymax, Zmin, Zmax) is
+  defined by its coordinates in the `xyz` frame.  
+  The number of coordinates is equal to the dimension of the simulation. The number of given vectors must be equal to 1 or to the number of faces which is twice the dimension of the simulation. In cylindrical geometry, `k` coordinates are given in the `xr` frame and only the Rmax face is affected.
 
   | **Syntax 1:** ``[[1,0,0]]``, identical for all boundaries.
   | **Syntax 2:** ``[[1,0,0],[-1,0,0], ...]``,  different on each boundary.
@@ -477,11 +481,12 @@ Each species has to be defined in a ``Species`` block::
      of both species are identical in each cell.
    * A *numpy* array defining all the positions of the species' particles.
      In this case you must also provide the weight of each particle (see :ref:`Weights`).
-     The array shape must be `(Ndim+1, Npart)` where `Ndim` is the simulation dimension,
+     The array shape must be `(Ndim+1, Npart)` where `Ndim` is the simulation dimension (of the particles),
      and `Npart` is the total number of particles. Positions components `x`, `y`, `z` are
-     given along the first columns and the weights are given in the last column of the array.
+     given along the first `Ndim` columns and the weights are given in the last column of the array.
      This initialization is incompatible with :py:data:`number_density`, :py:data:`charge_density`
-     and :py:data:`particles_per_cell`.
+     and :py:data:`particles_per_cell`. Particles initialized outside of the initial simulation domain
+     will not be created. This initalization is disregarded when running a `restart`.
 
 .. py:data:: momentum_initialization
 
@@ -757,22 +762,25 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
         chirp_profile  = tconstant(),
         time_envelope  = tgaussian(),
         space_envelope = [ By_profile  , Bz_profile   ],
-        phase          = [ PhiY_profile, PhiZ_profile ]
+        phase          = [ PhiY_profile, PhiZ_profile ],
+        delay_phase    = [ 0., 0. ]
     )
 
   This implements a wave of the form:
 
   .. math::
 
-    B_y(\mathbf{x}, t) = S_y(\mathbf{x})\; T\left[t-\phi_y(\mathbf{x})/\omega(t)\right]
+    B_y(\mathbf{x}, t) = S_y(\mathbf{x})\; T\left(t-t_{0y}\right)
     \;\sin\left( \omega(t) t - \phi_y(\mathbf{x}) \right)
 
-    B_z(\mathbf{x}, t) = S_z(\mathbf{x})\; T\left[t-\phi_z(\mathbf{x})/\omega(t)\right]
+    B_z(\mathbf{x}, t) = S_z(\mathbf{x})\; T\left(t-t_{0z}\right)
     \;\sin\left( \omega(t) t - \phi_z(\mathbf{x}) \right)
 
-  where :math:`T` is the temporal envelope, :math:`S_y` and :math:`S_y` are the
-  spatial envelopes, :math:`\omega` is the time-varying frequency, and
-  :math:`\phi_y` and :math:`\phi_z` are the phases.
+  where :math:`T` is the temporal envelope, :math:`S_y` and :math:`S_z` are the
+  spatial envelopes, :math:`\omega` is the time-varying frequency,
+  :math:`\phi_y` and :math:`\phi_z` are the phases, and we defined the delays
+  :math:`t_{0y} = (\phi_y(\mathbf{x})-\varphi_y)/\omega(t)` and
+  :math:`t_{0z} = (\phi_z(\mathbf{x})-\varphi_z)/\omega(t)`.
 
   .. py:data:: omega
 
@@ -838,6 +846,15 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     :default: ``[ 0., 0. ]``
 
     The two spatially-varying phases :math:`\phi_y` and :math:`\phi_z`.
+
+  .. py:data:: delay_phase
+
+    :type: a list of two floats
+    :default: ``[ 0., 0. ]``
+
+    An extra phase for the time envelopes of :math:`B_y` and :math:`B_z`. Useful in the
+    case of elliptical polarization where the two temporal profiles might have a slight 
+    delay due to the mismatched :py:data:`phase`.
 
 
 

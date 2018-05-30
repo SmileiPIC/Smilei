@@ -167,6 +167,9 @@ int main (int argc, char* argv[])
         // Initialize the electromagnetic fields
         // -------------------------------------
 
+        TITLE("Applying external fields at time t = 0");
+        vecPatches.applyExternalFields();
+        vecPatches.saveExternalFields( params );
         
         // Solve "Relativistic Poisson" problem (including proper centering of fields)
         // Note: the mean gamma for initialization will be computed for all the species 
@@ -213,9 +216,6 @@ int main (int argc, char* argv[])
             vecPatches.solvePoisson( params, &smpi );
         }
 
-        TITLE("Applying external fields at time t = 0");
-        vecPatches.applyExternalFields();
-        vecPatches.saveExternalFields( params );
 
         vecPatches.dynamics(params, &smpi, simWindow, RadiationTables,
                             MultiphotonBreitWheelerTables, time_dual, timers, 0);

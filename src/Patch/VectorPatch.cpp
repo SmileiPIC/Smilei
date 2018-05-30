@@ -48,6 +48,20 @@ void VectorPatch::close(SmileiMPI * smpiData)
 {
     closeAllDiags( smpiData );
 
+
+    if ( diag_timers.size() )
+        MESSAGE( "\n\tDiagnostics profile :" );
+    for ( unsigned int idiag = 0 ;  idiag < diag_timers.size() ; idiag++ ) {
+        double sum(0);
+        MPI_Reduce( &diag_timers[idiag]->time_acc_, &sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD );
+        MESSAGE( "\t\t" << setw(20) << diag_timers[idiag]->name_ << "\t" << sum/(double)smpiData->getSize() );
+    }
+
+    for ( unsigned int idiag = 0 ;  idiag < diag_timers.size() ; idiag++ )
+        delete diag_timers[idiag];
+    diag_timers.clear();
+
+
     for (unsigned int idiag=0 ; idiag<localDiags.size(); idiag++)
         delete localDiags[idiag];
     localDiags.clear();
@@ -94,6 +108,17 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi, OpenPMDparams& op
             }
         }
     }
+
+    for ( unsigned int idiag = 0 ;  idiag < globalDiags.size() ; idiag++ )
+        diag_timers.push_back( new Timer( globalDiags[idiag]->filename ) );
+    for ( unsigned int idiag = 0 ;  idiag < localDiags.size() ; idiag++ )
+        diag_timers.push_back( new Timer( localDiags[idiag]->filename ) );
+
+    for ( unsigned int idiag = 0 ;  idiag < diag_timers.size() ; idiag++ )
+        diag_timers[idiag]->init(smpi);
+
+
+
 }
 
 
@@ -360,21 +385,17 @@ void VectorPatch::initExternals(Params& params)
 {
     // Init all lasers
     for( unsigned int ipatch=0; ipatch<size(); ipatch++ ) {
-        // check if patch is on the border
-        int iBC(-1);
-        if     ( (*this)(ipatch)->isXmin() ) {
-            iBC = 0;
+        if( (*this)(ipatch)->isXmin() && (*this)(ipatch)->EMfields->emBoundCond[0] != NULL ) {
+            unsigned int nlaser = (*this)(ipatch)->EMfields->emBoundCond[0]->vecLaser.size();
+            for (unsigned int ilaser = 0; ilaser < nlaser; ilaser++)
+                (*this)(ipatch)->EMfields->emBoundCond[0]->vecLaser[ilaser]->initFields(params, (*this)(ipatch));
         }
-        else if( (*this)(ipatch)->isXmax() ) {
-            iBC = 1;
+        
+        if( (*this)(ipatch)->isXmax() && (*this)(ipatch)->EMfields->emBoundCond[1] != NULL ) {
+            unsigned int nlaser = (*this)(ipatch)->EMfields->emBoundCond[1]->vecLaser.size();
+            for (unsigned int ilaser = 0; ilaser < nlaser; ilaser++)
+                (*this)(ipatch)->EMfields->emBoundCond[1]->vecLaser[ilaser]->initFields(params, (*this)(ipatch));
         }
-        else continue;
-        // If patch is on border, then fill the fields arrays
-        unsigned int nlaser = 0;
-        if ( (iBC!=-1) && ( (*this)(ipatch)->EMfields->emBoundCond[iBC] != NULL ) )
-            nlaser = (*this)(ipatch)->EMfields->emBoundCond[iBC]->vecLaser.size();
-        for (unsigned int ilaser = 0; ilaser < nlaser; ilaser++)
-             (*this)(ipatch)->EMfields->emBoundCond[iBC]->vecLaser[ilaser]->initFields(params, (*this)(ipatch));
     }
 
     // Init all antennas
@@ -434,10 +455,11 @@ void VectorPatch::openAllDiags(Params& params,SmileiMPI* smpi)
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, unsigned int itime, Timers & timers, SimWindow* simWindow)
 {
-
     // Global diags: scalars + particles
     timers.diags.restart();
     for (unsigned int idiag = 0 ; idiag < globalDiags.size() ; idiag++) {
+        diag_timers[idiag]->restart();
+
         #pragma omp single
         globalDiags[idiag]->theTimeIsNow = globalDiags[idiag]->prepare( itime );
         #pragma omp barrier
@@ -453,16 +475,22 @@ void VectorPatch::runAllDiags(Params& params, SmileiMPI* smpi, unsigned int itim
             #pragma omp single
             globalDiags[idiag]->write( itime , smpi );
         }
+
+        diag_timers[idiag]->update();
     }
     
     // Local diags : fields, probes, tracks
     for (unsigned int idiag = 0 ; idiag < localDiags.size() ; idiag++) {
+        diag_timers[globalDiags.size()+idiag]->restart();
+
         #pragma omp single
         localDiags[idiag]->theTimeIsNow = localDiags[idiag]->prepare( itime );
         #pragma omp barrier
         // All MPI run their stuff and write out
         if( localDiags[idiag]->theTimeIsNow )
             localDiags[idiag]->run( smpi, *this, itime, simWindow, timers );
+
+        diag_timers[globalDiags.size()+idiag]->update();
     }
     
     // Manage the "diag_flag" parameter, which indicates whether Rho and Js were used
@@ -859,7 +887,10 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
     //cout << std::scientific << ctrl << "\t" << error_max << "\t" << iteration << "\t" << iteration_max << endl;
     while ( (ctrl > error_max) && (iteration<iteration_max) ) {
         iteration++;
-        if (smpi->isMaster()) MESSAGE("iteration " << iteration << " started with control parameter ctrl = " << 1.0e22*ctrl << " x 1.e-22");
+        
+        if ( (smpi->isMaster()) && (iteration%1000==0) ) {
+            MESSAGE("iteration " << iteration << " started with control parameter ctrl = " << 1.0e22*ctrl << " x 1.e-22");
+        }
 
         // scalar product of the residual
         double r_dot_r = rnew_dot_rnew;
@@ -903,7 +934,9 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
         // compute control parameter
         //ctrl = rnew_dot_rnew / (double)(nx_p2_global);
         ctrl = sqrt(rnew_dot_rnew)/norm2_source_term;
-        if (smpi->isMaster()) DEBUG("iteration " << iteration << " done, exiting with control parameter ctrl = " << 1.0e22*ctrl << " x 1.e-22");
+        if (smpi->isMaster()) {
+            DEBUG("iteration " << iteration << " done, exiting with control parameter ctrl = " << 1.0e22*ctrl << " x 1.e-22");
+        }
 
     }//End of the iterative loop
 
@@ -1094,7 +1127,8 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
     //     //SyncVectorPatch::exchangeB( params, *this );
     //     //SyncVectorPatch::finalizeexchangeB( params, *this );
     // }
-
+   
+   MESSAGE(0,"Summing fields of relativistic species to the grid fields");
    // sum the fields found  by relativistic Poisson solver to the existing em fields
    // Includes proper spatial centering of the electromagnetic fields in the Yee Cell through interpolation
    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
@@ -1103,10 +1137,10 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
        } // end loop on patches
 
   
-
+    MESSAGE(0,"Fields of relativistic species initialized");
     //!\todo Reduce to find global max
-    if (smpi->isMaster())
-        MESSAGE(1,"Relativistic Poisson equation solved. Maximum err = ");
+    //if (smpi->isMaster())
+    //  MESSAGE(1,"Relativistic Poisson equation solved. Maximum err = ");
 
     //ptimer.update();
     //MESSAGE("Time in Relativistic Poisson : " << ptimer.getTime() );
