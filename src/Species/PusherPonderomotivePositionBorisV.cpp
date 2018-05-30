@@ -93,15 +93,15 @@ void PusherPonderomotivePositionBorisV::operator() (Particles &particles, Smilei
 
     } // end loop on particles
 
-    #pragma omp simd
-    for (int ipart=0 ; ipart<nparts; ipart++ ) {
-    
-        for ( int i = 0 ; i<nDim_ ; i++ ){ 
-            cell_keys[ipart] *= nspace[i];
-            cell_keys[ipart] += round( (position[i][ipart]-min_loc_vec[i]) * dx_inv_[i] );
-        }
-        
-    } // end loop on particles
+//    #pragma omp simd
+//    for (int ipart=0 ; ipart<nparts; ipart++ ) {
+//    
+//        for ( int i = 0 ; i<nDim_ ; i++ ){ 
+//            cell_keys[ipart] *= nspace[i];
+//            cell_keys[ipart] += round( (position[i][ipart]-min_loc_vec[i]) * dx_inv_[i] );
+//        }
+//        
+//    } // end loop on particles
 
 
 }

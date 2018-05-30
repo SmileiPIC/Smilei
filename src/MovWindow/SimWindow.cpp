@@ -449,7 +449,6 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     }
 #endif
 
-
     // Diagnostic Track Particles
     #pragma omp for schedule(static) private(mypatch)
     for (int ithread=0; ithread < max_threads ; ithread++){

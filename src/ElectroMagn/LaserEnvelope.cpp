@@ -53,10 +53,11 @@ cell_length    ( params.cell_length) ,timestep( params.timestep)
 }
 
 // Cloning constructor
-LaserEnvelope::LaserEnvelope( LaserEnvelope *envelope, Patch* patch, ElectroMagn* EMfields, Params& params ) :
+LaserEnvelope::LaserEnvelope( LaserEnvelope *envelope, Patch* patch, ElectroMagn* EMfields, Params& params, unsigned int n_moved ) :
 cell_length    ( envelope->cell_length ), timestep( envelope->timestep)
 {
-    profile_ = envelope->profile_;
+    if (n_moved ==0)
+        profile_ = new Profile( envelope->profile_ );
     EnvBoundCond = EnvelopeBC_Factory::create(params, patch);  
 }
 
@@ -121,8 +122,8 @@ LaserEnvelope3D::LaserEnvelope3D( Params& params, Patch* patch, ElectroMagn* EMf
 }
 
 
-LaserEnvelope3D::LaserEnvelope3D( LaserEnvelope *envelope, Patch* patch,ElectroMagn* EMfields, Params& params )
-    : LaserEnvelope(envelope,patch,EMfields,params)
+LaserEnvelope3D::LaserEnvelope3D( LaserEnvelope *envelope, Patch* patch,ElectroMagn* EMfields, Params& params, unsigned int n_moved )
+    : LaserEnvelope(envelope,patch,EMfields,params, n_moved)
 {
     A_           = new cField3D( envelope->A_->dims_ , "A"    );
     A0_          = new cField3D( envelope->A0_->dims_, "Aold" );

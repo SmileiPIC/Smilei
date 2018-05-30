@@ -50,7 +50,7 @@ Patch2D::Patch2D(Patch2D* patch, Params& params, SmileiMPI* smpi, DomainDecompos
 {
     initStep2(params, domain_decomposition);
     initStep3(params, smpi, n_moved);
-    finishCloning(patch, params, smpi, with_particles);
+    finishCloning(patch, params, smpi, n_moved, with_particles);
 } // End Patch2D::Patch2D
 
 
