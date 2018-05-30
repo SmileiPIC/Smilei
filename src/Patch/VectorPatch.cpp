@@ -193,7 +193,7 @@ void VectorPatch::dynamics(Params& params,
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         (*this)(ipatch)->EMfields->restartRhoJ();
-        MESSAGE("restart rhoj");
+        //MESSAGE("restart rhoj");
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
             if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
                 if (!(*this)(ipatch)->vecSpecies[ispec]->ponderomotive_dynamics){
@@ -208,7 +208,7 @@ void VectorPatch::dynamics(Params& params,
                 } // end if condition on envelope dynamics
             } // end if condition on species
         } // end loop on species
-        MESSAGE("species dynamics");
+        //MESSAGE("species dynamics");
     } // end loop on patches
 
     timers.particles.update( params.printNow( itime ) );
@@ -221,7 +221,7 @@ void VectorPatch::dynamics(Params& params,
             } // end condition on species
         } // end condition on envelope dynamics
     } // end loop on species
-    MESSAGE("exchange particles");
+    //MESSAGE("exchange particles");
     timers.syncPart.update( params.printNow( itime ) );
 } // END dynamics
 
@@ -316,12 +316,13 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
 
     timers.densities.restart();
     if  (diag_flag){
+        MESSAGE("size here "<< (*this).size());
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
              // Per species in global, Attention if output -> Sync / per species fields
             (*this)(ipatch)->EMfields->computeTotalRhoJ();
         }
-    } MESSAGE ("bug before");
+    } //MESSAGE ("bug before");
     timers.densities.update();
 
     timers.syncDens.restart();
@@ -333,7 +334,7 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
             SyncVectorPatch::sumRhoJ( params, (*this), imode, timers, itime );
         }
     }
-    MESSAGE ("bug after");
+    //MESSAGE ("bug after");
     if(diag_flag){
         for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
             if( ! (*this)(0)->vecSpecies[ispec]->particles->is_test ) {
@@ -350,6 +351,7 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
            }  
     } 
     if (params.geometry == "3drz") {
+        MESSAGE("size"<< (*this).size());
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
             ElectroMagn3DRZ* emRZ = static_cast<ElectroMagn3DRZ*>( (*this)(ipatch)->EMfields );
@@ -1840,7 +1842,7 @@ void VectorPatch::update_field_list(int ispec)
 {
     #pragma omp barrier
     if ( dynamic_cast<ElectroMagn3DRZ*>(patches_[0]->EMfields) ) {
-        MESSAGE("if dynamic cast");
+        //MESSAGE("if dynamic cast");
         ElectroMagn3DRZ* emRZ =  static_cast<ElectroMagn3DRZ*>(patches_[0]->EMfields);
         unsigned int nmodes = emRZ->El_.size();
         unsigned int n_species = emRZ->n_species;
@@ -1851,7 +1853,7 @@ void VectorPatch::update_field_list(int ispec)
                 if(emRZ->Jl_s [ifield]) listJls_[imode].resize( size() ) ;
                 else{
                      listJls_[imode].clear();
-                     MESSAGE("CLEAR");
+                     //MESSAGE("CLEAR");
                      }
                 if(emRZ->Jr_s [ifield]) listJrs_[imode].resize( size() ) ;
                 else
@@ -1863,35 +1865,35 @@ void VectorPatch::update_field_list(int ispec)
                 else
                      listrhos_RZ_[imode].clear();
             }
-        } MESSAGE("RESIZE");
+        } //MESSAGE("RESIZE");
         for (unsigned int imode=0 ; imode < nmodes ; imode++) {
             unsigned int ifield = imode*n_species + ispec ;
             #pragma omp for schedule(static)
             for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
-                MESSAGE("boucle sur les patchs");
+                //MESSAGE("boucle sur les patchs");
                 emRZ =  static_cast<ElectroMagn3DRZ*>(patches_[ipatch]->EMfields);
                 if(emRZ->Jl_s [ifield]) {
-                    MESSAGE("JLS");
+                    //MESSAGE("JLS");
                     listJls_[imode][ipatch] = emRZ->Jl_s [ifield];
                     listJls_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
                 }
                 if(emRZ->Jr_s [ifield]) {
-                    MESSAGE("JRS");
+                    //MESSAGE("JRS");
                     listJrs_[imode][ipatch] = emRZ->Jr_s [ifield];
                     listJrs_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
                 }
                 if(emRZ->Jt_s [ifield]) {
-                    MESSAGE("JTS");
+                    //MESSAGE("JTS");
                     listJts_[imode][ipatch] = emRZ->Jt_s [ifield];
                     listJts_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
                 }
                 if(emRZ->rho_RZ_s [ifield]) {
-                    MESSAGE("RHOS");
+                    //MESSAGE("RHOS");
                     listrhos_RZ_[imode][ipatch] = emRZ->rho_RZ_s [ifield];
                     listrhos_RZ_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
                 }
             }
-        } MESSAGE("MPI");
+        } //MESSAGE("MPI");
 
     } else {
 
@@ -1943,7 +1945,7 @@ void VectorPatch::update_field_list(int ispec)
                  }
             }
         }
-    }  MESSAGE("update field list");
+    }  //MESSAGE("update field list");
 }
 
 

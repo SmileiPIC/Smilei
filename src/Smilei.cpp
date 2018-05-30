@@ -161,7 +161,7 @@ int main (int argc, char* argv[])
     } else {
 
         vecPatches = PatchesFactory::createVector(params, &smpi, openPMD, 0);
-	MESSAGE ("create vector");
+	//MESSAGE ("create vector");
         // Initialize the electromagnetic fields
         // -------------------------------------
 
@@ -184,9 +184,9 @@ int main (int argc, char* argv[])
         }
         
         vecPatches.computeCharge();
-	MESSAGE("compute charge");
+	//MESSAGE("compute charge");
         vecPatches.sumDensities(params, time_dual, timers, 0, simWindow);
-	MESSAGE("sum densities");
+	//MESSAGE("sum densities");
         // ---------------------------------------------------------------------
         // Init and compute tables for radiation effects
         // (nonlinear inverse Compton scattering)
@@ -213,12 +213,12 @@ int main (int argc, char* argv[])
 
         TITLE("Applying external fields at time t = 0");
         vecPatches.applyExternalFields();
-        MESSAGE("APPLY EXTERNAL");
+        //MESSAGE("APPLY EXTERNAL");
         vecPatches.saveExternalFields( params );
-        MESSAGE("BEFORE DYNAMICS");
+        //MESSAGE("BEFORE DYNAMICS");
         vecPatches.dynamics(params, &smpi, simWindow, RadiationTables,
                             MultiphotonBreitWheelerTables, time_dual, timers, 0);
-        MESSAGE("AFTER DYNAMICS");
+        //MESSAGE("AFTER DYNAMICS");
         // if Laser Envelope is used, execute particles and envelope sections of ponderomotive loop
         if (params.Laser_Envelope_model){ 
 
@@ -337,7 +337,7 @@ int main (int argc, char* argv[])
             vecPatches.dynamics(params, &smpi, simWindow, RadiationTables,
                                 MultiphotonBreitWheelerTables,
                                 time_dual, timers, itime);
-            MESSAGE("vectorpatch dynamics");            
+            //MESSAGE("vectorpatch dynamics");            
             // if Laser Envelope is used, execute particles and envelope sections of ponderomotive loop
             if (params.Laser_Envelope_model){
                 // interpolate envelope for susceptibility deposition, project susceptibility for envelope equation, momentum advance
@@ -355,7 +355,7 @@ int main (int argc, char* argv[])
 
             // Sum densities
             vecPatches.sumDensities(params, time_dual, timers, itime, simWindow );
-            MESSAGE("summing densities"); 
+            //MESSAGE("summing densities"); 
             // apply currents from antennas
             vecPatches.applyAntennas(time_dual);
             
@@ -367,7 +367,7 @@ int main (int argc, char* argv[])
             {
                 if( time_dual > params.time_fields_frozen ) {
                     vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers );
-                    MESSAGE("solve maxwell");
+                    //MESSAGE("solve maxwell");
                 }
             }
             #else
@@ -389,11 +389,11 @@ int main (int argc, char* argv[])
             vecPatches.finalize_sync_and_bc_fields(params, &smpi, simWindow, time_dual, timers, itime);
             // call the various diagnostics
             vecPatches.runAllDiags(params, &smpi, itime, timers, simWindow);
-            MESSAGE("run all diags"); 
+            //MESSAGE("run all diags"); 
             timers.movWindow.restart();
             simWindow->operate(vecPatches, &smpi, params, itime, time_dual);
             timers.movWindow.update();
-            MESSAGE("operate +mov");
+            //MESSAGE("operate +mov");
             // ----------------------------------------------------------------------
             // Validate restart  : to do
             // Restart patched moving window : to do

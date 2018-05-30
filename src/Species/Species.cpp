@@ -540,7 +540,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
     if (time_dual>time_frozen) { // moving particle
 
         smpi->dynamics_resize(ithread, nDim_field, bmax.back(), params.geometry=="3drz");
-        MESSAGE("dynamics resize");
+        //MESSAGE("dynamics resize");
         //Point to local thread dedicated buffers
         //Still needed for ionization
         vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
@@ -549,7 +549,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 
             // Interpolate the fields at the particle position
             (*Interp)(EMfields, *particles, smpi, &(bmin[ibin]), &(bmax[ibin]), ithread );
-            MESSAGE("interpolation");    
+            //MESSAGE("interpolation");    
             // Ionization
             if (Ionize)
                 (*Ionize)(particles, bmin[ibin], bmax[ibin], Epart, EMfields, Proj);
@@ -604,7 +604,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
             // Push the particles and the photons
             (*Push)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
             //particles->test_move( bmin[ibin], bmax[ibin], params );
-	    MESSAGE("PARTICLE PUSH");
+	    //MESSAGE("PARTICLE PUSH");
             // Apply wall and boundary conditions
             if (mass>0)
             {
@@ -616,18 +616,18 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                         }
                     }
                 }
-		MESSAGE("BC PARTICLE");
+		//MESSAGE("BC PARTICLE");
                 // Boundary Condition may be physical or due to domain decomposition
                 // apply returns 0 if iPart is not in the local domain anymore
                 //        if omp, create a list per thread
                 for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
                     if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
                         addPartInExchList( iPart );
-			MESSAGE("we are removing parts");
+			//MESSAGE("we are removing parts");
                         nrj_lost_per_thd[tid] += mass * ener_iPart;
                     }
                  }
-		MESSAGE("addpartinexchangelist");
+		//MESSAGE("addpartinexchangelist");
 
             } else if (mass==0) {
                 for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
@@ -657,7 +657,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
              // Do not project if a photon
              if ((!particles->is_test) && (mass > 0)){
                  (*Proj)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread, ibin, clrw, diag_flag, params.is_spectral, b_dim, ispec );
-                  MESSAGE("PROJECTION");
+                  //MESSAGE("PROJECTION");
 	     }
         }// ibin
 
@@ -714,7 +714,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 
         }
     }//END if time vs. time_frozen
-	MESSAGE("particle dynamics");
+	//MESSAGE("particle dynamics");
 }//END dynamic
 
 
@@ -1294,7 +1294,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                                 indexes[2]=k*cell_length[2]+cell_position[2];
                             }
                         }
-                        if (j==0) {MESSAGE("indexes "<< indexes[1] << "cellpos "<< cell_position[1] );}
+                        //if (j==0) {MESSAGE("indexes "<< indexes[1] << "cellpos "<< cell_position[1] );}
                         if (position_initialization_on_species==false){
                             initPosition(nPart, iPart, indexes, params);
                         }

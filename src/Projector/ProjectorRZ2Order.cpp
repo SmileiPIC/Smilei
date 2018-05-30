@@ -47,9 +47,8 @@ ProjectorRZ2Order::~ProjectorRZ2Order()
 //! Project local currents for mode=0
 // ---------------------------------------------------------------------------------------------------------------------
 void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
-{   //MESSAGE("start projection m=0");
-    int nparts= particles.size();
-    //MESSAGE("nparts"<< nparts);
+{   int nparts= particles.size();
+
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------   int iloc,
@@ -1024,7 +1023,7 @@ void ProjectorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles,
         for ( unsigned int imode = 0; imode<Nmode;imode++){
 
             if (imode==0){
-		MESSAGE("wrapper mode 0");
+		//MESSAGE("wrapper mode 0");
                 complex< double>* b_Jl =  &(*emRZ->Jl_[imode] )(ibin*clrw* dim1 );
                 complex<double>* b_Jr =  &(*emRZ->Jr_[imode] )(ibin*clrw*(dim1+1) );
                 complex<double>* b_Jt =  &(*emRZ->Jt_[imode] )(ibin*clrw* dim1 );
@@ -1036,7 +1035,7 @@ void ProjectorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles,
                 //MESSAGE("finish m0 proj");
 	    }
             else{	
-		MESSAGE("wrapper mode> 0");
+		//MESSAGE("wrapper mode> 0");
                 complex<double>* b_Jl =  &(*emRZ->Jl_[imode] )(ibin*clrw* dim1 );
                 complex<double>* b_Jr =  &(*emRZ->Jr_[imode] )(ibin*clrw*(dim1+1) );
                 complex<double>* b_Jt =  &(*emRZ->Jt_[imode] )(ibin*clrw* dim1 );
@@ -1050,7 +1049,7 @@ void ProjectorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles,
         for ( unsigned int imode = 0; imode<Nmode;imode++){
 	    int ifield = imode*n_species+ispec;
             if (imode==0){
-                MESSAGE("proj m=0 with diag");
+               // MESSAGE("proj m=0 with diag");
                 complex<double>* b_Jl  = emRZ->Jl_s [ifield] ? &(* static_cast<cField2D*>(emRZ->Jl_s [ifield]) )(ibin*clrw* dim1) : &(*emRZ->Jl_[imode] )(ibin*clrw* dim1 ) ;
                 complex<double>* b_Jr  = emRZ->Jr_s [ifield] ? &(* static_cast<cField2D*>(emRZ->Jr_s [ifield]) )(ibin*clrw*(dim1+1)) : &(*emRZ->Jr_[imode] )(ibin*clrw*(dim1+1)) ;
                 complex<double>* b_Jt  = emRZ->Jt_s [ifield] ? &(* static_cast<cField2D*>(emRZ->Jt_s [ifield]) )(ibin*clrw*dim1) : &(*emRZ->Jt_[imode] )(ibin*clrw*dim1) ;
@@ -1059,7 +1058,7 @@ void ProjectorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles,
                    (*this)(b_Jl , b_Jr , b_Jt ,b_rho, particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[ipart], &(*delta)[ipart]);
 }
              else{    
-                MESSAGE("proj m>0 with diag");
+                //MESSAGE("proj m>0 with diag");
                 complex<double>* b_Jl  = emRZ->Jl_s [ifield] ? &(* static_cast<cField2D*>(emRZ->Jl_s [ifield]) )(ibin*clrw* dim1) : &(*emRZ->Jl_[imode] )(ibin*clrw* dim1) ;
                 complex<double>* b_Jr  = emRZ->Jr_s [ifield] ? &(* static_cast<cField2D*>(emRZ->Jr_s [ifield]) )(ibin*clrw*(dim1+1)) : &(*emRZ->Jr_[imode] )(ibin*clrw*(dim1+1)) ;
                 complex<double>* b_Jt  = emRZ->Jt_s [ifield] ? &(* static_cast<cField2D*>(emRZ->Jt_s [ifield]) )(ibin*clrw*dim1) : &(*emRZ->Jt_[imode])(ibin*clrw*dim1) ;
