@@ -240,7 +240,7 @@ public:
     bool initial_balance;
 
     //! String containing the vectorization mode: disable, normal, dynamic
-    std::string vecto;
+    std::string vectorization_mode;
 
     //! Tells whether there is a moving window
     bool hasWindow;

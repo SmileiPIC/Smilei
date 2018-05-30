@@ -499,14 +499,14 @@ namelist("")
     }
 
     // Activation of the vectorized subroutines
-    vecto = "disable";
+    vectorization_mode = "disable";
     has_dynamic_vectorization = false;
-    PyTools::extract("vecto", vecto, "Main");
-    if (!(vecto == "disable" || vecto == "normal" || vecto == "dynamic" || vecto == "dynamic2"))
+    PyTools::extract("vecto", vectorization_mode, "Main");
+    if (!(vectorization_mode == "disable" || vectorization_mode == "normal" || vectorization_mode == "dynamic" || vectorization_mode == "dynamic2"))
     {
         ERROR("The parameter `vecto` must be `disable`, `normal`, `dynamic`, `dynamic2`");
     }
-    else if (vecto == "dynamic" || vecto == "dynamic2")
+    else if (vectorization_mode == "dynamic" || vectorization_mode == "dynamic2")
     {
         has_dynamic_vectorization = true;
     }
@@ -704,7 +704,7 @@ void Params::compute()
 
     // clrw != n_space[0] is not compatible
     // with the dynamic vecto for the moment
-    if (vecto == "dynamic" || vecto == "dynamic2")
+    if (vectorization_mode == "dynamic" || vectorization_mode == "dynamic2")
     {
         if (clrw != (int)(n_space[0]))
         {
@@ -789,21 +789,21 @@ void Params::print_init()
         MESSAGE(1,"Frozen particle load coefficient = " << frozen_particle_load );
     }
 
-    if (vecto == "normal")
+    if (vectorization_mode == "normal")
     {
         MESSAGE(1,"Apply the constant vectorization mode" );
     }
-    else if (vecto == "dynamic")
+    else if (vectorization_mode == "dynamic")
     {
         MESSAGE(1,"Apply the dynamic vectorization mode 1" );
         MESSAGE(1,"Happens: " << dynamic_vecto_time_selection->info());
     }
-    else if (vecto == "dynamic2")
+    else if (vectorization_mode == "dynamic2")
     {
         MESSAGE(1,"Apply the dynamic vectorization mode 2" );
         MESSAGE(1,"Happens: " << dynamic_vecto_time_selection->info());
     }
-    else if (vecto == "disable")
+    else if (vectorization_mode == "disable")
     {
         MESSAGE(1,"Vectorization disable" );
     }

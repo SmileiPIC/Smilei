@@ -518,7 +518,7 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
         restartFieldsPerProc(patch_gid, EMfields->Env_Chi_);
     }else{MESSAGE("envelope is null");}
 
-    
+
     // filtered Electric fields
     for (unsigned int i=0; i<EMfields->Exfilter.size(); i++)
         restartFieldsPerProc(patch_gid, EMfields->Exfilter[i]);
@@ -638,7 +638,7 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
                 H5::getVect(gid,"Id",vecSpecies[ispec]->particles->Id, H5T_NATIVE_UINT64);
             }
 
-            if (params.vecto == "disable" || params.vecto == "normal")
+            if (params.vectorization_mode == "disable" || params.vectorization_mode == "normal")
             {
                 H5::getVect(gid,"bmin",vecSpecies[ispec]->bmin,true);
                 H5::getVect(gid,"bmax",vecSpecies[ispec]->bmax,true);

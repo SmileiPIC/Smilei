@@ -147,7 +147,7 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi, OpenPMDparams& op
 void VectorPatch::configuration(Params& params, Timers &timers, int itime)
 {
 
-    //if (params.vecto == "dynamic" || params.vecto == "dynamic2")
+    //if (params.has_dynamic_vectorization)
     //{
 
     timers.reconfiguration.restart();
@@ -188,7 +188,7 @@ void VectorPatch::configuration(Params& params, Timers &timers, int itime)
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::reconfiguration(Params& params, Timers &timers, int itime)
 {
-    //if (params.vecto == "dynamic" || params.vecto == "dynamic2")
+    //if (params.has_dynamic_vectorization)
     //{
 
         timers.reconfiguration.restart();
@@ -257,7 +257,7 @@ void VectorPatch::dynamics(Params& params,
                 // Dynamics with scalar operators
                 else
                 {
-                    if (params.vecto == "dynamic2")
+                    if (params.vectorization_mode == "dynamic2")
                     {
                         species(ipatch, ispec)->scalar_dynamics(time_dual, ispec,
                                                       emfields(ipatch),
@@ -1565,7 +1565,7 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
     }
 
 #ifdef _VECTO
-    if (params.vecto == "dynamic")
+    if (params.vectorization_mode == "dynamic")
     {
         // Dynamic vecto
         // Recompute the cell keys before the next step and configure operators
@@ -1580,7 +1580,7 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
             }
         }
     }
-    else if (params.vecto == "dynamic2")
+    else if (params.vectorization_mode == "dynamic2")
     {
         // Dynamic vecto mode 2
         // Recompute the cell keys before the next step and configure operators

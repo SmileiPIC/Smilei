@@ -556,7 +556,7 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
     // In the case of the dynamic Vectorization,
     // we have to communicate the bin number (bmax.size())
     // and operator state (vectorized_operators variable)
-    if (params.vecto == "dynamic" || params.vecto == "dynamic2")
+    if (params.has_dynamic_vectorization)
     {
 
         // Number of bins
@@ -656,7 +656,7 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
     // In the case of the dynamic Vectorization,
     // we have to communicate the bin number (bmax.size())
     // and operator state (vectorized_operators variable)
-    if (params.vecto == "dynamic" || params.vecto == "dynamic2")
+    if (params.has_dynamic_vectorization)
     {
         // Number of bins
         // All sizes are received in a single buffer
