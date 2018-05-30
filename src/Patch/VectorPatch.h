@@ -126,7 +126,7 @@ public :
     void resetRhoJ();
 
     //! For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
-    void sumDensities(Params &params, double time_dual, Timers &timers, int itime, SimWindow* simWindow );
+    void sumDensities(Params &params, double time_dual, Timers &timers, int itime, SimWindow* simWindow);
   
     //! For all patch, sum susceptibility on ghost cells (sum per species if needed, sync per patch and MPI sync)
     void sumSusceptibility(Params &params, double time_dual, Timers &timers, int itime, SimWindow* simWindow );

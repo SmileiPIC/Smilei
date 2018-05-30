@@ -47,19 +47,19 @@ void SyncVectorPatch::finalize_and_sort_parts(VectorPatch& vecPatches, int ispec
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
             vecPatches(ipatch)->initCommParticles(smpi, ispec, params, iDim, &vecPatches);
         }
-MESSAGE("after");
+//MESSAGE("after");
         #pragma omp for schedule(runtime)
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
             vecPatches(ipatch)->CommParticles(smpi, ispec, params, iDim, &vecPatches);
         }
 
-MESSAGE("before");
+//MESSAGE("before");
         #pragma omp for schedule(runtime)
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
             vecPatches(ipatch)->finalizeCommParticles(smpi, ispec, params, iDim, &vecPatches);
         }
 
-MESSAGE("before 1");
+//MESSAGE("before 1");
     }
 
     //#pragma omp for schedule(runtime)

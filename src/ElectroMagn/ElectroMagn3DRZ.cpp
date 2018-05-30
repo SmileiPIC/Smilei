@@ -870,6 +870,9 @@ void ElectroMagn3DRZ::fold_fields(bool diag_flag)
                       for (unsigned int j=0; j<oversize[1]; j++)
                          (*JrRZ)(i,2*oversize[1]+1-j)+= (*JrRZ)(i,j) ;
                       (*JrRZ)(i,oversize[1]+1)= -(*JrRZ)(i,oversize[1]) ;
+                      if (abs((*JrRZ)(i,oversize[1]+1)+ (*JrRZ)(i,oversize[1]))*100!=0.){
+                      MESSAGE("careful! "<<abs((*JrRZ)(i,oversize[1]+1)+ (*JrRZ)(i,oversize[1]))*100000 )
+                      }
                  }
              }
              else{
@@ -918,7 +921,7 @@ void ElectroMagn3DRZ::fold_fields(bool diag_flag)
          }
 
     } 
-    MESSAGE("folding fields");
+    //MESSAGE("folding fields");
     return;
 }
 

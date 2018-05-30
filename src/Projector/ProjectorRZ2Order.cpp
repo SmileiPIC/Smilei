@@ -375,7 +375,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             jloc = j+jpo;
             linindex = iloc*b_dim[1]+jloc;
             if (jloc+ j_domain_begin == 0){
-                Jl [linindex] += C_m * Jx_p[i][j]*6. /dr; // iloc = (i+ipo)*b_dim[1];
+                Jl [linindex] = 0.; // iloc = (i+ipo)*b_dim[1];
                 //Jl [linindex+1] += Jl [linindex-1];
                 //Jl [linindex+2] += Jl [linindex-2];
                 }
@@ -413,7 +413,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             jloc = j+jpo;
             linindex = iloc*b_dim[1]+jloc;
             if (jloc+j_domain_begin ==0 ){
-                Jt [linindex] = 0.;
+                Jt [linindex] = 0.; // not sure about this
             }
             else {
                 Jt [linindex] += Jz_p[i][j]; // iloc = (i+ipo)*b_dim[1];
@@ -768,7 +768,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             jloc = j+jpo;
             linindex = iloc*b_dim[1]+jloc;
             if (jloc+ j_domain_begin == 0){
-                Jl [linindex] += C_m * Jx_p[i][j]*6. /dr; // iloc = (i+ipo)*b_dim[1];
+                Jl [linindex] = 0. ; // iloc = (i+ipo)*b_dim[1];
                 //Jl [linindex+1] += Jl [linindex-1];
                 //Jl [linindex+2] += Jl [linindex-2];
                 }
@@ -800,7 +800,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             jloc = j+jpo;
             linindex = iloc*b_dim[1]+jloc;
             if (jloc+j_domain_begin ==0){
-                Jt [linindex] = 0.;
+                Jt [linindex] = 0.;// not sure about this value ??
             } else{
                 Jt [linindex] += Jz_p[i][j]; // iloc = (i+ipo)*b_dim[1];
             }
@@ -828,7 +828,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
                 //if (abs(rho [linindex])>1.) {MESSAGE("rhom "<< rho [linindex]<< "jloc+jbe "<< jloc+ j_domain_begin  );}
                 }
             else {
-                rho [linindex] += C_m/(2*M_PI)*charge_weight*6.* Sx1[i]*Sy1[j] /dr; // iloc = (i+ipo)*b_dim[1];
+                rho [linindex] = 0.; // iloc = (i+ipo)*b_dim[1];
                 //rho [linindex+1] += rho [linindex-1];
                 //rho [linindex+2] += rho [linindex-2];
                 //if (abs(rho [linindex])>1.) {MESSAGE("on axis rhom "<< rho [linindex]<< "jloc+jbe "<< jloc+ j_domain_begin  );}

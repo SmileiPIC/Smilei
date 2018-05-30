@@ -303,7 +303,7 @@ void VectorPatch::resetRhoJ()
 // ---------------------------------------------------------------------------------------------------------------------
 // For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
 // ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers, int itime, SimWindow* simWindow )
+void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers, int itime, SimWindow* simWindow)
 {
     bool some_particles_are_moving = false;
     unsigned int n_species( (*this)(0)->vecSpecies.size() );
@@ -316,7 +316,6 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
 
     timers.densities.restart();
     if  (diag_flag){
-        MESSAGE("size here "<< (*this).size());
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
              // Per species in global, Attention if output -> Sync / per species fields
@@ -351,7 +350,6 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
            }  
     } 
     if (params.geometry == "3drz") {
-        MESSAGE("size"<< (*this).size());
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
             ElectroMagn3DRZ* emRZ = static_cast<ElectroMagn3DRZ*>( (*this)(ipatch)->EMfields );

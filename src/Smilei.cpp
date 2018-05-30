@@ -185,7 +185,7 @@ int main (int argc, char* argv[])
         
         vecPatches.computeCharge();
 	//MESSAGE("compute charge");
-        vecPatches.sumDensities(params, time_dual, timers, 0, simWindow);
+        vecPatches.sumDensities(params, time_dual, timers, 0, simWindow );
 	//MESSAGE("sum densities");
         // ---------------------------------------------------------------------
         // Init and compute tables for radiation effects
