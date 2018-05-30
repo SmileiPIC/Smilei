@@ -2,8 +2,8 @@
 Laser envelope model
 --------------------
 
-In many physical situations the temporal scales of interests, e.g. the plasma wavelength :math:`\lambda_p`, are much larger than the scales related to the laser central wavelength :math:`\lambda_0`.
-In these cases, if the laser pulse is much longer than :math:`\lambda_0`, the simulation time can be substatially reduced if only the laser envelope needs to be finely sampled instead of :math:`\lambda_0`, as depicted in the following figure.
+In many physical situations, the spatial and temporal scales of interest (e.g. the plasma wavelength :math:`\lambda_p`) are much larger than the scales related to the laser central wavelength :math:`\lambda_0`.
+In these cases, if the laser pulse is much longer than :math:`\lambda_0`, the computation time can be substantially reduced: one may need to sample only the laser envelope  instead of :math:`\lambda_0`, as depicted in the following figure.
 
 .. figure:: _static/Envelope_Figure.png
   :width: 10cm
@@ -30,7 +30,7 @@ The basic assumption of the model is the description of the laser pulse vector p
 .. math::
   :label: envelope
 
-  \hat{A}(\mathbf{x},t)=\textit{Re}\left[\tilde{A}(\mathbf{x},t)e^{ik_0(x-ct)}\right],
+  \hat{A}(\mathbf{x},t)=\textrm{Re}\left[\tilde{A}(\mathbf{x},t)e^{ik_0(x-ct)}\right],
 
 where :math:`k_0=2\pi/\lambda_0`. As the laser is the source term of the phenomena of interest, in general any physical quantity :math:`A` will be therefore given by the summation of a slowly varying part :math:`\bar{A}` and a fast oscillating part :math:`\hat{A}` with the same form of Eq. :eq:`envelope`:
 
@@ -92,7 +92,7 @@ The ponderomotive equations of motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The process of averaging over the time scale of a laser oscillation period yields a simple result for the particles equations of motion. 
-The averaged position :math:`\mathbf{\bar{x}}_p` and momenta :math:`\mathbf{\bar{u}}_p` of the particle :math:`p` are related to the averaged electromagnetic fields :math:`\mathbf{\bar{E}}_p=\mathbf{\bar{E}}(\mathbf{\bar{x}}_p)`, :math:`\mathbf{\bar{B}}_p=\mathbf{\bar{B}}(\mathbf{\bar{x}}_p)` through the usual equations of motion, with the addiction of a ponderomotive force term which models the interaction with the laser:
+The averaged position :math:`\mathbf{\bar{x}}_p` and momentum :math:`\mathbf{\bar{u}}_p` of the particle :math:`p` are related to the averaged electromagnetic fields :math:`\mathbf{\bar{E}}_p=\mathbf{\bar{E}}(\mathbf{\bar{x}}_p)`, :math:`\mathbf{\bar{B}}_p=\mathbf{\bar{B}}(\mathbf{\bar{x}}_p)` through the usual equations of motion, with the addition of a ponderomotive force term which models the interaction with the laser:
 
 .. math::
   :label: ponderomotive_equations_of_motion
@@ -130,7 +130,7 @@ The ponderomotive PIC loop
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Since Maxwell's equations :eq:`Maxwell_envelope` remain unaltered, their solution can employ the same techniques used in a standard PIC code. The main difficulty in the solution of the other equations, namely the envelope equation Eq. :eq:`envelope_equation` and the macroparticles equations of motion Eqs. :eq:`ponderomotive_equations_of_motion`, is that the source terms contain the unknown terms.
-For example, in the envelope equations, the source term involves the unknown envelope :math:`\tilde{A}` itself and :math:`\chi`, which depends on the envelope. The equations of motion contains the term :math:`\bar{\gamma}`, which depends on the envelope :math:`\tilde{A}`.
+For example, in the envelope equations, the source term involves the unknown envelope :math:`\tilde{A}` itself and :math:`\chi`, which depends on the envelope. The equations of motion contain the term :math:`\bar{\gamma}`, which depends on the envelope :math:`\tilde{A}`.
 The PIC loop described in :doc:`algorithms` is thus modified to self-consistently solve the envelope model equations. At each timestep, the code performs the following operations
 
 #. interpolating the electromagnetic fields and the ponderomotive potential at the particle positions,
