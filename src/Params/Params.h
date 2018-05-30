@@ -120,7 +120,7 @@ public:
     //! Are open boundaries used ?
     bool open_boundaries;
     bool save_magnectic_fields_for_SM;
-    
+
     //! Boundary conditions for Envelope Field
     std::vector< std::vector<std::string> > Env_BCs;
 
@@ -129,7 +129,7 @@ public:
 
     //! Define if laser envelope model is used (default = false)
     bool Laser_Envelope_model=false;
-    
+
     //Poisson solver
     //! Do we solve poisson
     bool solve_poisson;
@@ -220,6 +220,11 @@ public:
     std::string patch_decomposition;
     //! Domain orientation
     std::string patch_orientation;
+
+    //! Time selection for dynamic vecto
+    TimeSelection * dynamic_vecto_time_selection;
+    //! Flag for the dynamic vecto
+    bool has_dynamic_vectorization;
 
     //! Time selection for load balancing
     TimeSelection * load_balancing_time_selection;

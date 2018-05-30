@@ -63,7 +63,7 @@ makerunCollisions:
   stage: makerun
   only:
     - develop
-    
+
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation

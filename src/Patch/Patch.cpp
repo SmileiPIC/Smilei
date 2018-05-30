@@ -124,12 +124,14 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi, DomainDecomposition
 
     // initialize the electromagnetic fields (virtual)
     EMfields   = ElectroMagnFactory::create(params, domain_decomposition, vecSpecies, this);
-    
+
     // Create ad hoc interpolators and projectors for envelope
-    if (params.Laser_Envelope_model){
+    if (params.Laser_Envelope_model) {
         Interp_envelope      = InterpolatorFactory::create_env_interpolator(params, this, params.vecto == "normal");
-        //Proj_susceptibility  = ProjectorFactory::create_susceptibility_projector(params, this, params.vecto == "normal"); 
-    } // + patchId -> idx_domain_begin (now = ref smpi) 
+    } // + patchId -> idx_domain_begin (now = ref smpi)
+    else {
+        Interp_envelope      = NULL;
+    }
 
     // Initialize the collisions
     vecCollisions = CollisionsFactory::create(params, this, vecSpecies);
@@ -148,19 +150,18 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi, DomainDecomposition
 }
 
 
-void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool with_particles = true ) {
+void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, unsigned int n_moved, bool with_particles = true ) {
     // clone vector of Species (virtual)
     vecSpecies = SpeciesFactory::cloneVector(patch->vecSpecies, params, this, with_particles);
 
     // clone the electromagnetic fields (virtual)
-    EMfields   = ElectroMagnFactory::clone(patch->EMfields, params, vecSpecies, this);
+    EMfields   = ElectroMagnFactory::clone(patch->EMfields, params, vecSpecies, this, n_moved);
 
     // Create ad hoc interpolators and projectors for envelope
     if (params.Laser_Envelope_model){
-        Interp_envelope  = InterpolatorFactory::create_env_interpolator(params, this, params.vecto == "normal"); 
-        //Proj_susceptibility  = ProjectorFactory::create_susceptibility_projector(params, this, params.vecto == "normal");
+        Interp_envelope  = InterpolatorFactory::create_env_interpolator(params, this, params.vecto == "normal");
     }
-                                                          
+
     // clone the collisions
     vecCollisions = CollisionsFactory::clone(patch->vecCollisions, params);
 
@@ -179,15 +180,23 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool w
 
 void Patch::finalizeMPIenvironment(Params& params) {
     int nb_comms(9); // E, B, B_m : min number of comms
+
     if (params.geometry == "3drz")
         nb_comms += 9*(params.nmodes - 1);
-    // if envelope is present, 
-    // add to comms A, A0, Phi, Phi_old, GradPhi (x,y,z components), GradPhi_old (x,y,z components) 
-    if (params.Laser_Envelope_model){  
+    // if envelope is present,
+    // add to comms A, A0, Phi, Phi_old, GradPhi (x,y,z components), GradPhi_old (x,y,z components)
+    if (params.Laser_Envelope_model){
         nb_comms += 10;
     }
+    
     // add comms for species
     nb_comms += 2*vecSpecies.size();
+
+    // Dynamic vectorization:
+    if (params.vecto == "dynamic" || params.vecto == "dynamic2")
+    {
+        nb_comms += 2;
+    }
 
     // Radiated energy
     if (params.hasMCRadiation ||
@@ -325,6 +334,8 @@ Patch::~Patch() {
 
     for(unsigned int i=0; i<vecCollisions.size(); i++) delete vecCollisions[i];
     vecCollisions.clear();
+
+    if (Interp_envelope     != NULL) delete Interp_envelope;
 
     if (partWalls!=NULL) delete partWalls;
 
@@ -476,7 +487,7 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, Params& params)
                     min_limit = min_local[0] * min_local[0];
                     max_limit = max_local[1] * max_local[1];
                 }
-                
+
                 if ( position < min_limit ){
                     if ( neighbor_[idim][0]!=MPI_PROC_NULL) {
                         vecSpecies[ispec]->MPIbuff.part_index_send[idim][0].push_back( iPart );

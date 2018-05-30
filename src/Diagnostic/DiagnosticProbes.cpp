@@ -558,9 +558,9 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         double Rloc_fields;
 
         int ithread = 0;
-        #ifdef _OPENMP
+#ifdef _OPENMP
         ithread = omp_get_thread_num();
-        #endif
+#endif
         smpi->dynamics_resize(ithread, nDim_particle, npart);
 
         for (unsigned int ipart=0; ipart<npart; ipart++) {

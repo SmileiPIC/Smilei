@@ -295,6 +295,13 @@ class LoadBalancing(SmileiSingleton):
     cell_load = 1.0
     frozen_particle_load = 0.1
 
+# Radiation reaction configuration (continuous and MC algorithms)
+class DynamicVectorization(SmileiComponent):
+    """
+    Dynamic vectorization parameters
+    """
+    every = 1
+
 
 class MovingWindow(SmileiSingleton):
     """Moving window parameters"""

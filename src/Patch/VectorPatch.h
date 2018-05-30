@@ -94,6 +94,9 @@ public :
     //! Reconfigure all patches for the new time step
     void configuration(Params& params, Timers &timers, int itime);
 
+    //! Reconfigure all patches for the new time step
+    void reconfiguration(Params& params, Timers &timers, int itime);
+
     //! For all patch, move particles (restartRhoJ(s), dynamics and exchangeParticles)
     void dynamics(Params& params,
                   SmileiMPI* smpi,
@@ -112,9 +115,9 @@ public :
                   double time_dual, Timers &timers, int itime);
 
     void computeCharge();
- 
+
     // compute rho only given by relativistic species which require initialization of the relativistic fields
-    void computeChargeRelativisticSpecies(double time_primal); 
+    void computeChargeRelativisticSpecies(double time_primal);
 
     //! For all patches, deposit susceptibility, then advance momentum of particles interacting with envelope
     void ponderomotive_update_susceptibilty_and_momentum(Params& params,
@@ -130,7 +133,7 @@ public :
 
     //! For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
     void sumDensities(Params &params, double time_dual, Timers &timers, int itime, SimWindow* simWindow );
-  
+
     //! For all patch, sum susceptibility on ghost cells (sum per species if needed, sync per patch and MPI sync)
     void sumSusceptibility(Params &params, double time_dual, Timers &timers, int itime, SimWindow* simWindow );
 
@@ -140,7 +143,7 @@ public :
 
     //! For all patch, update envelope field A (envelope equation, boundary contitions, exchange A)
     void solveEnvelope(Params& params, SimWindow* simWindow, int itime, double time_dual, Timers & timers);
-    
+
     //! For all patch, Compute and Write all diags (Scalars, Probes, Phases, TrackParticles, Fields, Average fields)
     void runAllDiags(Params& params, SmileiMPI* smpi, unsigned int itime, Timers & timers, SimWindow* simWindow);
     void initAllDiags(Params& params, SmileiMPI* smpi);
@@ -241,9 +244,9 @@ public :
     std::vector<Field*> listGradPhiz_;
     std::vector<Field*> listGradPhix0_;
     std::vector<Field*> listGradPhiy0_;
-    std::vector<Field*> listGradPhiz0_;  
-    std::vector<Field*> listEnv_Chi_;    
-    std::vector<Field*> listEnv_Chis_;    
+    std::vector<Field*> listGradPhiz0_;
+    std::vector<Field*> listEnv_Chi_;
+    std::vector<Field*> listEnv_Chis_;
 
     std::vector<std::vector< Field *>> listJl_;
     std::vector<std::vector< Field *>> listJr_;
@@ -256,7 +259,7 @@ public :
     std::vector<std::vector< Field *>> listBr_;
     std::vector<std::vector< Field *>> listBt_;
 
-    
+
     //! True if any antennas
     unsigned int nAntennas;
 
@@ -338,7 +341,6 @@ private :
     double antenna_intensity;
 
     std::vector<Timer*> diag_timers;
-    
 };
 
 

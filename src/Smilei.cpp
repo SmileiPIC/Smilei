@@ -137,6 +137,11 @@ int main (int argc, char* argv[])
         // vecPatches data read in restartAll according to smpi.patch_count
         checkpoint.restartAll( vecPatches, &smpi, simWindow, params, openPMD);
 
+        // Patch reconfiguration for the dynamic vectorization
+        if( params.has_dynamic_vectorization ) {
+            vecPatches.configuration(params,timers, 0);
+        }
+
         // time at integer time-steps (primal grid)
         time_prim = checkpoint.this_run_start_step * params.timestep;
         // time at half-integer time-steps (dual grid)
@@ -167,15 +172,18 @@ int main (int argc, char* argv[])
         // Initialize the electromagnetic fields
         // -------------------------------------
 
-        
+        TITLE("Applying external fields at time t = 0");
+        vecPatches.applyExternalFields();
+        vecPatches.saveExternalFields( params );
+
         // Solve "Relativistic Poisson" problem (including proper centering of fields)
-        // Note: the mean gamma for initialization will be computed for all the species 
+        // Note: the mean gamma for initialization will be computed for all the species
         // whose fields are initialized at this iteration
         if (params.solve_relativistic_poisson == true) {
             // Compute rho only for species needing relativistic field Initialization
             vecPatches.computeChargeRelativisticSpecies(time_prim);
             SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, timers, 0 );
-            
+
             // Initialize the fields for these species
             if (!vecPatches.isRhoNull(&smpi)){
                 TITLE("Initializing relativistic species fields at time t = 0");
@@ -184,7 +192,7 @@ int main (int argc, char* argv[])
             // Reset rho and J and return to initialization
             vecPatches.resetRhoJ();
         }
-        
+
         vecPatches.computeCharge();
         vecPatches.sumDensities(params, time_dual, timers, 0, simWindow);
 
@@ -212,12 +220,11 @@ int main (int argc, char* argv[])
             vecPatches.solvePoisson( params, &smpi );
         }
 
-        TITLE("Applying external fields at time t = 0");
-        vecPatches.applyExternalFields();
-        vecPatches.saveExternalFields( params );
 
         // Patch reconfiguration
-        vecPatches.configuration(params,timers, 0);
+        if( params.has_dynamic_vectorization ) {
+            vecPatches.reconfiguration(params,timers, 0);
+        }
 
         vecPatches.dynamics(params, &smpi, simWindow, RadiationTables,
                             MultiphotonBreitWheelerTables, time_dual, timers, 0);
@@ -311,14 +318,18 @@ int main (int argc, char* argv[])
             }
 
             // Patch reconfiguration
-            vecPatches.configuration(params, timers, itime);
+            if( params.has_dynamic_vectorization ) {
+                if ( params.load_balancing_time_selection->theTimeIsNow(itime) ) {
+                    vecPatches.reconfiguration(params, timers, itime);
+                }
+            }
 
             // apply collisions if requested
             vecPatches.applyCollisions(params, itime, timers);
             
-            // Solve "Relativistic Poisson" problem (including proper centering of fields) 
+            // Solve "Relativistic Poisson" problem (including proper centering of fields)
             // for species who stop to be frozen
-            // Note: the mean gamma for initialization will be computed for all the species 
+            // Note: the mean gamma for initialization will be computed for all the species
             // whose fields are initialized at this iteration
             if (params.solve_relativistic_poisson == true) {
                 // Compute rho only for species needing relativistic field Initialization
@@ -330,7 +341,7 @@ int main (int argc, char* argv[])
                     // Initialize the fields for these species
                     if (!vecPatches.isRhoNull(&smpi)){
                         TITLE("Initializing relativistic species fields");
-                        vecPatches.solveRelativisticPoisson( params, &smpi, time_prim );                
+                        vecPatches.solveRelativisticPoisson( params, &smpi, time_prim );
                     }
                 }
                 #pragma omp barrier
@@ -434,7 +445,7 @@ int main (int argc, char* argv[])
             itime++;
 
         }//END of the time loop
-        
+
     } //End omp parallel region
 
     smpi.barrier();

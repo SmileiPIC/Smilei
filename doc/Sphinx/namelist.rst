@@ -90,6 +90,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
       timestep    = 0.005,
       number_of_patches = [64],
       clrw = 5,
+      vecto = "disable",
       maxwell_solver = 'Yee',
       EM_boundary_conditions = [
           ["silver-muller", "silver-muller"],
@@ -148,6 +149,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   A list of integers: the number of patches in each direction.
   Each integer must be a power of 2, and the total number of patches must be
   greater or equal than the number of MPI processes.
+  It is also advised to have more patches than the total number of openMP threads even if this is not a strict requirement.
   See :doc:`parallelization`.
 
 
@@ -160,6 +162,32 @@ The block ``Main`` is **mandatory** and has the following syntax::
   clrw must divide the number of cells in one patch (in dimension X).
   The finest sorting is achieved with clrw=1 and no sorting with clrw equal to the full size of a patch along dimension X.
   The cluster size in dimension Y and Z is always the full extent of the patch.
+
+.. py:data:: vecto
+
+  :default: ``disable``
+
+  Enable the use of the vectorized operators
+
+  Advanced users. Sevevecto ral vectorization modes are available:
+    * ``disable``: non-vectorized operators are used.
+      This mode is recommended when the number of particles per cell keeps low
+      (below 8 particles per cell) all along the simulation.
+    * ``normal``: only vectorized operators are used
+    * ``dynamic``: in this mode, the best set of operators (scalar or vectorized)
+      is determined dynamically per patch.
+      In ``vectorized`` state, the cell sorting method is used whereas
+      in ``scalar`` state, the original sorting method is applied.
+      This means that a small overhead can be induced due to the patch reconfiguration.
+    * ``dynamic2``: this is the second dynamic mode.
+    Here, the cell sorting method is used in both ``scalar``
+    and ``vectorized`` state.
+
+  In ``dynamic`` mode, the reconfiguration period can be tuned
+  with the ``DynamicVectorization`` panel.
+  By default, the reconfiguration is done at every timesteps.
+
+  In ``dynamic`` and ``dynamic2`` mode, ``clrw`` is set to the maximum by default.
 
 .. py:data:: maxwell_solver
 
@@ -192,7 +220,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
    Decides if relativistic Poisson problem must be solved for at least one species.
    See :doc:`relativistic_fields_initialization` for more details.
-   
+
 .. py:data:: relativistic_poisson_max_iteration
 
   :default: 50000
@@ -219,7 +247,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   ``"silver-muller"`` is an open boundary condition. The incident wave vector :math:`k_i` on each face is defined by ``"EM_boundary_conditions_k"``.
   When using ``"silver-muller"`` as an injecting boundary, make sure :math:`k_i` is aligned with the wave you are injecting.
-  When using ``"silver-muller"`` as an absorbing boundary, the optimal wave absorption on a given face will be along :math:`k_{abs}` the specular reflection of :math:`k_i` on face `i`. 
+  When using ``"silver-muller"`` as an absorbing boundary, the optimal wave absorption on a given face will be along :math:`k_{abs}` the specular reflection of :math:`k_i` on face `i`.
 
 .. py:data:: EM_boundary_conditions_k
 
@@ -228,7 +256,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   :default: ``[[1.,0.,0.],[-1.,0.,0.],[0.,1.,0.],[0.,-1.,0.],[0.,0.,1.],[0.,0.,-1.]]`` in 3D
 
   The incident unit wave vector for each face (sequentially Xmin, Xmax, Ymin, Ymax, Zmin, Zmax)
-  defined by its coordinates in the `xyz` frame.  
+  defined by its coordinates in the `xyz` frame.
   The number of coordinates is equal to the dimension of the simulation.
 
   | **Syntax 1:** ``[[1,0,0]]``, identical for all boundaries.
@@ -245,7 +273,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   :default: 0.
 
-  Time, at the beginning of the simulation, during which fields are frozen. 
+  Time, at the beginning of the simulation, during which fields are frozen.
 
 
 .. _reference_angular_frequency_SI:
@@ -328,6 +356,27 @@ occur every 150 iterations.
 
   Computational load of a single frozen particle considered by the dynamic load balancing algorithm.
   This load is normalized to the load of a single particle.
+
+----
+
+.. _dynamicVectorization:
+
+Dynamic vectorization
+^^^^^^^^^^^^^^^^^^^^^
+
+The block ``DynamicVectorization`` is optional. The dynamic vectorization mode is done at every timestep by default.
+
+.. code-block:: python
+
+  DynamicVectorization(
+      every = [5]
+  )
+
+.. py:data:: every
+
+  :default: 1
+
+  The time selection for the patch reconfiguration when the ``dynamic`` vectorization is activated.
 
 ----
 
@@ -508,7 +557,7 @@ Each species has to be defined in a ``Species`` block::
     and `Npart` is the total number of particles. Momentum components `px`, `py`, `pz`
     are given in successive columns.This initialization is incompatible with
     :py:data:`temperature` and :py:data:`mean_velocity`.
-  
+
   The first 2 distributions depend on the parameter :py:data:`temperature` explained below.
 
 .. py:data:: particles_per_cell
@@ -622,9 +671,9 @@ Each species has to be defined in a ``Species`` block::
 
   :default: ``False``
 
-  Flag for particles interacting with an envelope model for the laser, if present. 
+  Flag for particles interacting with an envelope model for the laser, if present.
   If ``True``, this species will project its susceptibility and be influenced by the laser envelope field.
-  See :doc:`laser_envelope` for details on the dynamics of particles in presence of a laser envelope field. 
+  See :doc:`laser_envelope` for details on the dynamics of particles in presence of a laser envelope field.
 
 
 .. py:data:: c_part_max
@@ -643,50 +692,50 @@ Each species has to be defined in a ``Species`` block::
   * ``"vay"``: The relativistic pusher of J. L. Vay
   * ``"higueracary"``: The relativistic pusher of A. V. Higuera and J. R. Cary
   * ``"norm"``:  For photon species only (rectilinear propagation)
-  * ``"ponderomotive_boris"``: modified relativistic Boris pusher for species whose flag ``"ponderomotive_dynamics"`` is ``True``. Valid only if the species has non-zero mass 
+  * ``"ponderomotive_boris"``: modified relativistic Boris pusher for species whose flag ``"ponderomotive_dynamics"`` is ``True``. Valid only if the species has non-zero mass
 
 .. py:data:: radiation_model
 
   :default: ``"none"``
 
   The **radiation reaction** model used for this species (see :doc:`radiation_loss`).
-  
+
   * ``"none"``: no radiation
   * ``"Landau-Lifshitz"`` (or ``ll``): Landau-Lifshitz model approximated for high energies
   * ``"corrected-Landau-Lifshitz"`` (or ``cll``): with quantum correction
   * ``""Niel"``: a `stochastic radiation model <https://arxiv.org/abs/1707.02618>`_ based on the work of Niel `et al.`.
   * ``"Monte-Carlo"`` (or ``mc``): Monte-Carlo radiation model. This model can be configured to generate macro-photons with :py:data:`radiation_photon_species`.
-  
+
   This parameter cannot be assigned to photons (mass = 0).
-  
+
   Radiation is emitted only with the ``"Monte-Carlo"`` model when
   :py:data:`radiation_photon_species` is defined.
 
 .. py:data:: radiation_photon_species
-  
+
   The :py:data:`name` of the photon species in which the Monte-Carlo :py:data:`radiation_model`
   will generate macro-photons. If unset (or ``None``), no macro-photon will be created.
   The *target* photon species must be have its mass set to 0, and appear *after* the
   particle species in the namelist.
-  
+
   This parameter cannot be assigned to photons (mass = 0).
 
 .. py:data:: radiation_photon_sampling
 
   :default: ``1``
-  
+
   The number of macro-photons generated per emission event, when the macro-photon creation
   is activated (see :py:data:`radiation_photon_species`). The total macro-photon weight
   is still conserved.
-  
+
   A large number may rapidly slow down the performances and lead to memory saturation.
-  
+
   This parameter cannot be assigned to photons (mass = 0).
 
 .. py:data:: radiation_photon_gamma_threshold
 
   :default: ``2``
-  
+
   The threshold on the photon energy for the macro-photon emission when using the
   radiation reaction Monte-Carlo process.
   Under this threshold, the macro-photon from the radiation reaction Monte-Carlo
@@ -699,17 +748,17 @@ Each species has to be defined in a ``Species`` block::
 .. py:data:: relativistic_field_initialization
 
   :default: ``False``
-  
+
   Flag for relativistic particles. If ``True``, the electromagnetic fields of this species will added to the electromagnetic fields already present in the simulation.
   This operation will be performed when time equals :py:data:`time_frozen`. See :doc:`relativistic_fields_initialization` for details on the computation of the electromagentic fields of a relativistic species.
-  To have physically meaningful results, we recommend to place a species which requires this method of field initialization far from other species, otherwise the latter could experience instantly turned-on unphysical forces by the relativistic species' fields.   
+  To have physically meaningful results, we recommend to place a species which requires this method of field initialization far from other species, otherwise the latter could experience instantly turned-on unphysical forces by the relativistic species' fields.
 
-    
+
 
 .. py:data:: multiphoton_Breit_Wheeler
 
   :default: ``[None,None]``
-  
+
   An list of the :py:data:`name` of two species: electrons and positrons created through
   the :doc:`multiphoton_Breit_Wheeler`.
   By default, the process is not activated.
@@ -722,10 +771,10 @@ Each species has to be defined in a ``Species`` block::
 
   A list of two integers: the number of electrons and positrons generated per photon decay
   in the :doc:`multiphoton_Breit_Wheeler`. The total macro-particle weight is still
-  conserved. 
-  
+  conserved.
+
   Large numbers may rapidly slow down the performances and lead to memory saturation.
-  
+
   This parameter can **only** be assigned to photons species (mass = 0).
 
 ----
@@ -811,37 +860,37 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
     The variation of the laser frequency over time, such that
     :math:`\omega(t)=\mathtt{omega}\times\mathtt{chirp\_profile}(t)`.
-    
+
   .. warning::
-  
+
     This definition of the chirp profile is not standard.
     Indeed, :math:`\omega(t)` as defined here **is not** the instantaneous frequency, :math:`\omega_{\rm inst}(t)`,
     which is obtained from the time derivative of the phase :math:`\omega(t) t`.
-    
+
     Should one define the chirp as :math:`C(t) = \omega_{\rm inst}(t)/\omega` (with :math:`\omega` defined by the input
-    parameter :math:`\mathtt{omega}`), the user can easily obtain the corresponding chirp profile as defined in 
+    parameter :math:`\mathtt{omega}`), the user can easily obtain the corresponding chirp profile as defined in
     :program:`Smilei` as:
-    
-    .. math:: 
-    
+
+    .. math::
+
         \mathtt{chirp\_profile}(t) = \frac{1}{t} \int_0^t dt' C(t')\,.
-        
-    Let us give as an example the case of a *linear chirp*, with the instantaneous frequency 
+
+    Let us give as an example the case of a *linear chirp*, with the instantaneous frequency
     :math:`\omega_{\rm inst}(t) = \omega [1+\alpha\,\omega(t-t_0)]`.
     :math:`C(t) = 1+\alpha\,\omega(t-t_0)`. The corresponding input chirp profile reads:
-    
-    .. math:: 
-    
+
+    .. math::
+
         \mathtt{chirp\_profile}(t) = 1 - \alpha\, \omega t_0 + \frac{\alpha}{2} \omega t
-        
+
     Similarly, for a *geometric (exponential) chirp* such that :math:`\omega_{\rm inst}(t) = \omega\, \alpha^{\omega t}`,
     :math:`C(t) = \alpha^{\omega t}`, and the corresponding input chirp profile reads:
-    
-    .. math:: 
-    
+
+    .. math::
+
         \mathtt{chirp\_profile}(t) = \frac{\alpha^{\omega t} - 1}{\omega t \, \ln \alpha}\,.
-    
-        
+
+
   .. py:data:: time_envelope
 
     :type: a *python* function or a :ref:`time profile <profiles>`
@@ -869,7 +918,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     :default: ``[ 0., 0. ]``
 
     An extra phase for the time envelopes of :math:`B_y` and :math:`B_z`. Useful in the
-    case of elliptical polarization where the two temporal profiles might have a slight 
+    case of elliptical polarization where the two temporal profiles might have a slight
     delay due to the mismatched :py:data:`phase`.
 
 
@@ -1795,11 +1844,11 @@ This is done by including a block ``DiagFields``::
   :default: ``[]`` *(all fields are written)*
 
   List of the field names that are saved. By default, they all are.
-  
+
   Available fields:
-  
+
   .. rst-class:: nowrap
-  
+
   +----------------+-------------------------------------------------------+
   | | Bx           | |                                                     |
   | | By           | | Components of the magnetic field                    |
@@ -1824,14 +1873,14 @@ This is done by including a block ``DiagFields``::
   | | Rho          | |  Total density                                      |
   | | Rho_abc      | |  Density of species "abc"                           |
   +----------------+-------------------------------------------------------+
-  
+
   In the case of spectral cylindrical geometry (``3drz``), the ``x``, ``y`` and ``z``
   indices are replaced by ``x``, ``r`` and ``t`` (theta). In addition,
   the angular Fourier modes are denoted by the suffix ``_mode_i`` where ``i``
   is the mode number. In summary, the list of fields reads as follows.
-  
+
   .. rst-class:: nowrap
-  
+
   +------------------------------+-----------------------------------------+
   | | Bx_mode_0, Bx_mode_1, etc. | |                                       |
   | | Br_mode_0, Br_mode_1, etc. | | Components of the magnetic field      |
@@ -1847,7 +1896,7 @@ This is done by including a block ``DiagFields``::
   In the case of an envelope model for the laser (see :doc:`laser_envelope`), the following fields are also available:
 
   .. rst-class:: nowrap
-  
+
   +----------------+-------------------------------------------------------+
   | | Env_A_abs    | |                                                     |
   | | Env_Ai       | | Module, real and imaginary part of envelope field   |
@@ -1855,7 +1904,7 @@ This is done by including a block ``DiagFields``::
   +----------------+-------------------------------------------------------+
   | | Env_Chi      | | Total  susceptibility                               |
   +----------------+-------------------------------------------------------+
-  
+
 .. py:data:: subgrid
 
   :default: ``None`` *(the whole grid is used)*
@@ -1863,24 +1912,24 @@ This is done by including a block ``DiagFields``::
   A list of slices indicating a portion of the simulation grid to be written by this
   diagnostic. This list must have as many elements as the simulation dimension.
   For example, in a 3D simulation, the list has 3 elements. Each element can be:
-  
+
   * ``None``, to select the whole grid along that dimension
   * an integer, to select only the corresponding cell index along that dimension
   * a *python* `slice object <https://docs.python.org/3/library/functions.html#slice>`_
     to select regularly-spaced cell indices along that dimension.
-  
+
   This can be easily implemented using the
   `numpy.s_ expression <https://docs.scipy.org/doc/numpy/reference/generated/numpy.s_.html>`_.
   For instance, in a 3D simulation, the following subgrid selects only every other element
   in each dimension::
-    
+
     from numpy import s_
     DiagFields( #...
     	subgrid = s_[::2, ::2, ::2]
     )
-  
+
   while this one selects cell indices included in a contiguous parallelepiped::
-    
+
     	subgrid = s_[100:300, 300:500, 300:600]
 
 
@@ -1962,7 +2011,7 @@ To add one probe diagnostic, include the block ``DiagProbe``::
 
   In the case of an envelope model for the laser (see :doc:`laser_envelope`), the following fields are also available: ``"Env_A_abs"``, ``"Env_Ar"``, ``"Env_Ai"``,
   ``"Env_Chi"``.
-  
+
 
 **Examples of probe diagnostics**
 
@@ -2315,7 +2364,7 @@ for instance::
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A *particle tracking diagnostic* records the macro-particle positions and momenta at various timesteps.
-Typically, this is used for plotting trajectories. 
+Typically, this is used for plotting trajectories.
 
 You can add a tracking diagnostic by including a block ``DiagTrackParticles()`` in the namelist,
 for instance::

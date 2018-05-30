@@ -350,15 +350,15 @@ public:
 
             // OLD //Get number of particles
             // OLD thisSpecies->n_numpy_particles =  PyArray_SHAPE(np_ret)[1];//  ok
-            
+
             //Get number of particles. Do not initialize any more if this is a restart.
             if (!params.restart) thisSpecies->n_numpy_particles =  PyArray_SHAPE(np_ret)[1];//  ok
             thisSpecies->position_initialization_array = new double[ndim_local*thisSpecies->n_numpy_particles] ;
             for (unsigned int idim = 0; idim < ndim_local ; idim++){
-                for (unsigned int ipart = 0; ipart < (unsigned int)thisSpecies->n_numpy_particles; ipart++){
+                for (unsigned int ipart = 0; ipart < thisSpecies->n_numpy_particles; ipart++){
                     thisSpecies->position_initialization_array[idim*thisSpecies->n_numpy_particles+ipart] = *((double*)PyArray_GETPTR2( np_ret , idim, ipart));
                 }
-            }     
+            }
         }
 #endif
         else {
@@ -424,10 +424,10 @@ public:
 
             thisSpecies->momentum_initialization_array = new double[ndim_local*thisSpecies->n_numpy_particles] ;
             for (unsigned int idim = 0; idim < ndim_local ; idim++){
-                for (unsigned int ipart = 0; ipart < (unsigned int)thisSpecies->n_numpy_particles; ipart++){
+                for (unsigned int ipart = 0; ipart < thisSpecies->n_numpy_particles; ipart++){
                     thisSpecies->momentum_initialization_array[idim*thisSpecies->n_numpy_particles+ipart] = *((double*)PyArray_GETPTR2( np_ret_mom , idim, ipart));
                 }
-            }     
+            }
         }
 #endif
         else {
@@ -443,7 +443,7 @@ public:
         // time when the relativistic field initialization is applied, if enabled
         int n_timesteps_relativistic_initialization   = (int)(thisSpecies->time_frozen/params.timestep);
         thisSpecies->time_relativistic_initialization = (double)(n_timesteps_relativistic_initialization) * params.timestep;
-  
+
         if( !PyTools::extract("boundary_conditions", thisSpecies->boundary_conditions, "Species", ispec)  )
             ERROR("For species '" << species_name << "', boundary_conditions not defined" );
 
@@ -532,7 +532,7 @@ public:
             if ( patch->isMaster() )
             WARNING("For species '" << species_name << "', relativistic_field_initialization not defined: assumed = 'false'.");
             }
-        thisSpecies->relativistic_field_initialization = relativistic_field_initialization;    
+        thisSpecies->relativistic_field_initialization = relativistic_field_initialization;
 
 
 
@@ -696,14 +696,14 @@ public:
         newSpecies->densityProfileType                       = species->densityProfileType;
         newSpecies->vectorized_operators                     = species->vectorized_operators;
         newSpecies->chargeProfile                            = new Profile(species->chargeProfile);
-        if ( species->densityProfile ){ 
+        if ( species->densityProfile ){
             newSpecies->densityProfile                       = new Profile(species->densityProfile);
             newSpecies->ppcProfile                           = new Profile(species->ppcProfile);
         }
         newSpecies->velocityProfile.resize(3);
         newSpecies->temperatureProfile.resize(3);
 
-        if ( species->velocityProfile[0] ){ 
+        if ( species->velocityProfile[0] ){
             newSpecies->velocityProfile[0]                   = new Profile(species->velocityProfile[0]);
             newSpecies->velocityProfile[1]                   = new Profile(species->velocityProfile[1]);
             newSpecies->velocityProfile[2]                   = new Profile(species->velocityProfile[2]);
