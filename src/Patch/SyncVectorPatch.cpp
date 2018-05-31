@@ -384,7 +384,7 @@ void SyncVectorPatch::sumComplex( std::vector<Field*> fields, VectorPatch& vecPa
                 //Sum 2 ==> 1
                 for (unsigned int i = 0; i < gsp[0]* ny_*nz_ ; i++) pt1[i] += pt2[i];
                 //Copy back the results to 2
-                memcpy( pt2, pt1, gsp[0]*ny_*nz_*sizeof(double));
+                memcpy( pt2, pt1, gsp[0]*ny_*nz_*sizeof(complex<double>));
             }
         }
     }
@@ -433,7 +433,7 @@ void SyncVectorPatch::sumComplex( std::vector<Field*> fields, VectorPatch& vecPa
                     pt2 = &(*cfield2)(0);
                     for (unsigned int j = 0; j < nx_ ; j++){
                         for (unsigned int i = 0; i < gsp[1]*nz_ ; i++) pt1[i] += pt2[i];
-                        memcpy( pt2, pt1, gsp[1]*nz_*sizeof(double));
+                        memcpy( pt2, pt1, gsp[1]*nz_*sizeof(complex<double>));
                         pt1 += ny_*nz_;
                         pt2 += ny_*nz_;
                     }
