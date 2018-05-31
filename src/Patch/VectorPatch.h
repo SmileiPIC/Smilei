@@ -109,6 +109,12 @@ public :
                   double time_dual, Timers &timers, int itime);
 
     void computeCharge();
+
+    void projection_for_diags(Params& params,
+                  SmileiMPI* smpi,
+                  SimWindow* simWindow,
+                  double time_dual,
+                  Timers &timers, int itime);
  
     // compute rho only given by relativistic species which require initialization of the relativistic fields
     void computeChargeRelativisticSpecies(double time_primal); 

@@ -217,8 +217,7 @@ int main (int argc, char* argv[])
         }
 
 
-        vecPatches.dynamics(params, &smpi, simWindow, RadiationTables,
-                            MultiphotonBreitWheelerTables, time_dual, timers, 0);
+        vecPatches.projection_for_diags(params, &smpi, simWindow, time_dual, timers, 0);
 
         vecPatches.sumDensities(params, time_dual, timers, 0, simWindow );
 

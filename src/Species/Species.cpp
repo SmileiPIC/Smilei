@@ -485,7 +485,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                        MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
                        vector<Diagnostic*>& localDiags)
 {
-    int ithread;
+    int ithread, tid(0);
     #ifdef _OPENMP
         ithread = omp_get_thread_num();
     #else
@@ -497,7 +497,6 @@ void Species::dynamics(double time_dual, unsigned int ispec,
     // Reset list of particles to exchange
     clearExchList();
 
-    int tid(0);
     double ener_iPart(0.);
     std::vector<double> nrj_lost_per_thd(1, 0.);
 
@@ -664,6 +663,8 @@ void Species::dynamics(double time_dual, unsigned int ispec,
     else { // immobile particle (at the moment only project density)
         if ( diag_flag &&(!particles->is_test)){
             double* b_rho=nullptr;
+            unsigned int iPart;
+
             for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
 
                 if (nDim_field==2)
@@ -682,6 +683,28 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 
 }//END dynamic
 
+void Species::projection_for_diags(double time_dual, unsigned int ispec,
+                       ElectroMagn* EMfields, 
+                       Projector* Proj, Params &params, bool diag_flag,
+                       Patch* patch, SmileiMPI* smpi)
+{
+    if ( diag_flag &&(!particles->is_test)){
+        double* b_rho=nullptr;
+        for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
+
+            if (nDim_field==2)
+                b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1) : &(*EMfields->rho_)(ibin*clrw*f_dim1) ;
+            if (nDim_field==3)
+                b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1*f_dim2) : &(*EMfields->rho_)(ibin*clrw*f_dim1*f_dim2) ;
+            else if (nDim_field==1)
+                b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw) : &(*EMfields->rho_)(ibin*clrw) ;
+            for (int iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
+                (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_dim);
+            } //End loop on particles
+        }//End loop on bins
+
+    }
+}
 
 
 // -----------------------------------------------------------------------------
