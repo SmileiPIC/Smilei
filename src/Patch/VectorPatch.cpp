@@ -786,9 +786,9 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
 {
 
 
-    Timer ptimer("global");
-    ptimer.init(smpi);
-    ptimer.restart();
+    //Timer ptimer("global");
+    //ptimer.init(smpi);
+    //ptimer.restart();
 
     // Assumption: one or more species move in vacuum with mean lorentz gamma factor gamma_mean in the x direction, 
     // with low energy spread.
@@ -1146,8 +1146,9 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
     //MESSAGE("Time in Relativistic Poisson : " << ptimer.getTime() );
 
 
-    ptimer.update();
-    MESSAGE("Time in Relativistic Poisson : " << ptimer.getTime() );
+    //ptimer.update();
+    //MESSAGE("Time in Relativistic Poisson : " << ptimer.getTime() );
+    MESSAGE("Relativistic Poisson finished" );
 
 } // END solveRelativisticPoisson
 
