@@ -87,6 +87,7 @@ interaction to astrophysics.
    relativistic_fields_initialization
 
    installation
+   supercomputers
    namelist
    run
    post-processing
