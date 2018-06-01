@@ -689,15 +689,29 @@ void Species::projection_for_diags(double time_dual, unsigned int ispec,
                        Patch* patch, SmileiMPI* smpi)
 {
     if ( diag_flag &&(!particles->is_test)){
-        double* b_rho=nullptr;
+
+        double *b_Jx, *b_Jy, *b_Jz, *b_rho;
+
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
 
-            if (nDim_field==2)
-                b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1) : &(*EMfields->rho_)(ibin*clrw*f_dim1) ;
-            if (nDim_field==3)
-                b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1*f_dim2) : &(*EMfields->rho_)(ibin*clrw*f_dim1*f_dim2) ;
-            else if (nDim_field==1)
+            if (nDim_field==3){
+                b_Jx  = EMfields->Jx_s [ispec] ? &(*EMfields->Jx_s [ispec])(ibin*clrw* f_dim1   *f_dim2) : &(*EMfields->Jx_ )(ibin*clrw* f_dim1   *f_dim2) ;
+                b_Jy  = EMfields->Jy_s [ispec] ? &(*EMfields->Jy_s [ispec])(ibin*clrw*(f_dim1+1)*f_dim2) : &(*EMfields->Jy_ )(ibin*clrw*(f_dim1+1)*f_dim2) ;
+                b_Jz  = EMfields->Jz_s [ispec] ? &(*EMfields->Jz_s [ispec])(ibin*clrw*f_dim1*(f_dim2+1)) : &(*EMfields->Jz_ )(ibin*clrw*f_dim1*(f_dim2+1)) ;
+                b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw* f_dim1   *f_dim2) : &(*EMfields->rho_)(ibin*clrw* f_dim1   *f_dim2) ;
+            }
+            else if (nDim_field==2){
+                b_Jx  = EMfields->Jx_s [ispec] ? &(*EMfields->Jx_s [ispec])(ibin*clrw* f_dim1   ) : &(*EMfields->Jx_ )(ibin*clrw* f_dim1   ) ;
+                b_Jy  = EMfields->Jy_s [ispec] ? &(*EMfields->Jy_s [ispec])(ibin*clrw*(f_dim1+1)) : &(*EMfields->Jy_ )(ibin*clrw*(f_dim1+1)) ;
+                b_Jz  = EMfields->Jz_s [ispec] ? &(*EMfields->Jz_s [ispec])(ibin*clrw* f_dim1   ) : &(*EMfields->Jz_ )(ibin*clrw* f_dim1   ) ;
+                b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw* f_dim1   ) : &(*EMfields->rho_)(ibin*clrw* f_dim1   ) ;
+            }
+            else {   //Last case nDim_field == 1
+                b_Jx  = EMfields->Jx_s [ispec] ? &(*EMfields->Jx_s [ispec])(ibin*clrw) : &(*EMfields->Jx_ )(ibin*clrw) ;
+                b_Jy  = EMfields->Jy_s [ispec] ? &(*EMfields->Jy_s [ispec])(ibin*clrw) : &(*EMfields->Jy_ )(ibin*clrw) ;
+                b_Jz  = EMfields->Jz_s [ispec] ? &(*EMfields->Jz_s [ispec])(ibin*clrw) : &(*EMfields->Jz_ )(ibin*clrw) ;
                 b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw) : &(*EMfields->rho_)(ibin*clrw) ;
+            }
             for (int iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
                 (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_dim);
             } //End loop on particles
