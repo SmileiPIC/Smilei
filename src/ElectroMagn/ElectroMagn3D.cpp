@@ -789,13 +789,13 @@ void ElectroMagn3D::sum_rel_fields_to_em_fields(Patch *patch)
     Field3D* Bz3Drel  = static_cast<Field3D*>(Bz_rel_);
 
     // B field advanced by dt/2
-    Bx_rel_t_plus_halfdt  = new Field3D(dimPrim, 0, true,  "Bx_rel_t_plus_halfdt");  
-    By_rel_t_plus_halfdt  = new Field3D(dimPrim, 1, true,  "By_rel_t_plus_halfdt"); 
-    Bz_rel_t_plus_halfdt  = new Field3D(dimPrim, 2, true,  "Bz_rel_t_plus_halfdt"); 
+    Field3D* Bx_rel_t_plus_halfdt  = new Field3D(dimPrim, 0, true,  "Bx_rel_t_plus_halfdt");  
+    Field3D* By_rel_t_plus_halfdt  = new Field3D(dimPrim, 1, true,  "By_rel_t_plus_halfdt"); 
+    Field3D* Bz_rel_t_plus_halfdt  = new Field3D(dimPrim, 2, true,  "Bz_rel_t_plus_halfdt"); 
     // B field "advanced" by -dt/2
-    Bx_rel_t_minus_halfdt  = new Field3D(dimPrim, 0, true,  "Bx_rel_t_plus_halfdt");  
-    By_rel_t_minus_halfdt  = new Field3D(dimPrim, 1, true,  "By_rel_t_plus_halfdt"); 
-    Bz_rel_t_minus_halfdt  = new Field3D(dimPrim, 2, true,  "Bz_rel_t_plus_halfdt"); 
+    Field3D* Bx_rel_t_minus_halfdt  = new Field3D(dimPrim, 0, true,  "Bx_rel_t_plus_halfdt");  
+    Field3D* By_rel_t_minus_halfdt  = new Field3D(dimPrim, 1, true,  "By_rel_t_plus_halfdt"); 
+    Field3D* Bz_rel_t_minus_halfdt  = new Field3D(dimPrim, 2, true,  "Bz_rel_t_plus_halfdt"); 
 
     Field3D* Ex3D  = static_cast<Field3D*>(Ex_);
     Field3D* Ey3D  = static_cast<Field3D*>(Ey_);
@@ -873,9 +873,9 @@ void ElectroMagn3D::sum_rel_fields_to_em_fields(Patch *patch)
     // Use FDTD scheme to integrate Maxwell-Faraday equation backwards in time by dt/2 to obtain Bm
     // Add the forward-evolved and backward-evolved fields to the grid fields
   
-  	half_dt_ov_dx = 0.5 * params.timestep / params.cell_length[0];
-  	half_dt_ov_dy = 0.5 * params.timestep / params.cell_length[1];
-  	half_dt_ov_dz = 0.5 * params.timestep / params.cell_length[2];
+  	double half_dt_ov_dx = 0.5 * timestep / dx;
+  	double half_dt_ov_dy = 0.5 * timestep / dy;
+  	double half_dt_ov_dz = 0.5 * timestep / dz;
 
     // Magnetic field Bx^(p,d,d)
     for (unsigned int i=0 ; i<nx_p;  i++) {
@@ -912,9 +912,9 @@ void ElectroMagn3D::sum_rel_fields_to_em_fields(Patch *patch)
         for (unsigned int j=1 ; j<ny_d-1 ; j++) {
             for (unsigned int k=0 ; k<nz_p ; k++) {
                 // forward advance by dt/2
-                (*Bz_rel_t_plus_halfdt)(i,j,k) += -dt_ov_dx * 0.5 * ( (*Ey3Drel)(i,j,k) - (*Ey3Drel)(i-1,j,k) ) + dt_ov_dy * 0.5 * ( (*Ex3Drel)(i,j,k) - (*Ex3Drel)(i,j-1,k) );
+                (*Bz_rel_t_plus_halfdt)(i,j,k) += -half_dt_ov_dx * ( (*Ey3Drel)(i,j,k) - (*Ey3Drel)(i-1,j,k) ) + half_dt_ov_dy * ( (*Ex3Drel)(i,j,k) - (*Ex3Drel)(i,j-1,k) );
                 // backward advance by dt/2
-                (*Bz_rel_t_plus_halfdt)(i,j,k) -= -dt_ov_dx * 0.5 * ( (*Ey3Drel)(i,j,k) - (*Ey3Drel)(i-1,j,k) ) + dt_ov_dy * 0.5 * ( (*Ex3Drel)(i,j,k) - (*Ex3Drel)(i,j-1,k) );
+                (*Bz_rel_t_plus_halfdt)(i,j,k) -= -half_dt_ov_dx * ( (*Ey3Drel)(i,j,k) - (*Ey3Drel)(i-1,j,k) ) + half_dt_ov_dy * ( (*Ex3Drel)(i,j,k) - (*Ex3Drel)(i,j-1,k) );
                 // sum to the fields on grid
                 (*Bz3D) (i,j,k) += (*Bz_rel_t_plus_halfdt) (i,j,k);
                 (*Bz3D0)(i,j,k) += (*Bz_rel_t_minus_halfdt)(i,j,k);
