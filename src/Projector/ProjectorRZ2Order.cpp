@@ -564,8 +564,8 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             jloc = j+jpo;
             linindex = iloc*b_dim[1]+jloc;
             if (jloc+ j_domain_begin == 0){
-                Jl [linindex] += Jx_p[i][j]*6. /dr; // iloc = (i+ipo)*b_dim[1];
-                }
+                Jl [linindex] += Jx_p[i][j]*6./dr;
+            }
             else {
                 Jl [linindex] += Jx_p[i][j] /abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
                 }
@@ -604,11 +604,11 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;    
             linindex = iloc*b_dim[1]+jloc;
-         if (jloc+ j_domain_begin != 0){
-                rho [linindex] += charge_weight * Sx1[i]*Sy1[j] /abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
+         if (jloc+ j_domain_begin == 0){
+                rho [linindex] += charge_weight * Sx1[i]*Sy1[j] * 6./dr;
                 }
             else {
-                rho [linindex] += charge_weight * Sx1[i]*Sy1[j] * 6./dr; // iloc = (i+ipo)*b_dim[1];
+                rho [linindex] += charge_weight * Sx1[i]*Sy1[j] /abs((jloc+ j_domain_begin)*dr);
                 //rho [linindex+1] += rho [linindex-1];
                 //rho [linindex+2] += rho [linindex-2];
                 //MESSAGE ("Sx1 "<< Sx1[i] << "Sy1 "<< Sy1[i]);
@@ -799,11 +799,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
             linindex = iloc*b_dim[1]+jloc;
-            if (jloc+j_domain_begin ==0){
-                Jt [linindex] = 0.;// not sure about this value ??
-            } else{
-                Jt [linindex] += Jz_p[i][j]; // iloc = (i+ipo)*b_dim[1];
-            }
+            Jt [linindex] += Jz_p[i][j]; // iloc = (i+ipo)*b_dim[1];
        // if (jloc+j_domain_begin == 0){
        //     Jt [linindex+1] += Jt [linindex-1];
        //     Jt [linindex+2] += Jt [linindex-2];

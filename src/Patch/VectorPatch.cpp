@@ -354,6 +354,7 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
             ElectroMagn3DRZ* emRZ = static_cast<ElectroMagn3DRZ*>( (*this)(ipatch)->EMfields );
             emRZ->fold_fields(diag_flag);
+            emRZ->on_axis_fields(diag_flag);
         }
     }  
     timers.syncDens.update( params.printNow( itime ) );

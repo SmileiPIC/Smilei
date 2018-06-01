@@ -4,7 +4,8 @@
 
 #include <iostream>
 #include <sstream>
-
+#include <complex>
+#include "dcomplex.h"
 #include "Params.h"
 #include "Field2D.h"
 #include "cField2D.h"
@@ -850,17 +851,13 @@ void ElectroMagn3DRZ::fold_fields(bool diag_flag)
          for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
 
              //static cast of the total currents and densities
-             //JlRZ    = static_cast<cField2D*>(Jl_[imode]);
-             //JrRZ    = static_cast<cField2D*>(Jr_[imode]);
-             //JtRZ    = static_cast<cField2D*>(Jt_[imode]);
              JlRZ    = Jl_[imode];
              JrRZ    = Jr_[imode];
              JtRZ    = Jt_[imode];
-        
              for (unsigned int i=0; i<nl_d; i++){
                  for (unsigned int j=0; j<oversize[1]; j++)
                      (*JlRZ)(i,2*oversize[1]-j)+= (*JlRZ)(i,j) ;
-             }
+             } 
              for (unsigned int i=0; i<nl_p; i++){
                  for (unsigned int j=0; j<oversize[1]; j++)
                      (*JtRZ)(i,2*oversize[1]-j)+= (*JtRZ)(i,j) ;
@@ -913,14 +910,72 @@ void ElectroMagn3DRZ::fold_fields(bool diag_flag)
                  JrRZ    = Jr_s[ism];
                  if ( JrRZ != NULL ) {
                      for (unsigned int i=0; i<nl_p; i++){
-                         for (unsigned int j=0; j<oversize[1]+1; j++)
+                         for (unsigned int j=0; j<oversize[1]; j++)
                              (*JrRZ)(i,2*oversize[1]+1-j)+= (*JrRZ)(i,j) ;
+                         (*JrRZ)(i,oversize[1]+1)= -(*JrRZ)(i,oversize[1]) ;
+                         
                      }
                  }
              }
          }
 
     } 
+    //MESSAGE("folding fields");
+    return;
+}
+
+//! Evaluating EM fields modes correctly on axis
+void ElectroMagn3DRZ::on_axis_fields(bool diag_flag)
+{  
+
+    // Are static casts really necesary here ?
+
+    if (isYmin){
+
+         cField2D* JlRZ ;
+         cField2D* JrRZ ;
+         cField2D* JtRZ ;
+
+         for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
+
+             //static cast of the total currents and densities
+             //JlRZ    = static_cast<cField2D*>(Jl_[imode]);
+             //JrRZ    = static_cast<cField2D*>(Jr_[imode]);
+             //JtRZ    = static_cast<cField2D*>(Jt_[imode]);
+             JlRZ    = Jl_[imode];
+             JrRZ    = Jr_[imode];
+             JtRZ    = Jt_[imode];
+
+             if (imode==0){
+                 for (unsigned int i=0; i<nl_p; i++)
+                     (*JtRZ)(i,oversize[1]) = - 1./3.* (4.* Icpx * (*JrRZ)(i,oversize[1]+1) + (*JtRZ)(i,oversize[1]));
+
+                 for (unsigned int i=0; i<nl_p; i++)
+                      (*JrRZ)(i,oversize[1])= 2.*Icpx* (*JtRZ)(i,oversize[1])-(*JrRZ)(i,oversize[1]+1) ;
+             }
+         } 
+         if(diag_flag){
+             for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) { 
+                 if (imode == 0){
+                     //Loop on all modes and species for J_s
+                     for (unsigned int ism=0; ism <  n_species*nmodes; ism++){
+                         JtRZ    = Jt_s[ism];
+                         if ( JtRZ != NULL ) {
+                             for (unsigned int i=0; i<nl_p; i++){
+                                 (*JtRZ)(i,oversize[1]) = - 1./3.* (4.* Icpx * (*JrRZ)(i,oversize[1]+1) + (*JtRZ)(i,oversize[1]));
+                             }
+                         }
+                         JrRZ    = Jr_s[ism];
+                         if ( JrRZ != NULL ) {
+                             for (unsigned int i=0; i<nl_p; i++){
+                                 (*JrRZ)(i,oversize[1])= 2.*Icpx* (*JtRZ)(i,oversize[1])-(*JrRZ)(i,oversize[1]+1) ;
+                             } 
+                         }
+                      }
+                   }
+              }
+            }
+        } 
     //MESSAGE("folding fields");
     return;
 }
