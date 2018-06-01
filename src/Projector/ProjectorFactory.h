@@ -14,6 +14,7 @@
 #ifdef _VECTO
 #include "Projector2D2OrderV.h"
 #include "Projector3D2OrderV.h"
+#include "Projector3D2Order_susceptibilityV.h"
 #include "Projector3D4OrderV.h"
 #endif
 
@@ -112,7 +113,7 @@ static Projector* create_susceptibility_projector(Params& params, Patch* patch, 
               Proj_susceptibility = new Projector3D2Order_susceptibility(params, patch);
 #ifdef _VECTO
           else
-              ERROR( "Projector for susceptibility not yet implemented for this geometry in vectorized version" );
+              Proj_susceptibility = new Projector3D2Order_susceptibilityV(params, patch);
 #endif
       }
       else if ( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == (unsigned int)4 ) ) {

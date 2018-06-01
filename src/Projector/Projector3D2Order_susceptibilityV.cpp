@@ -27,6 +27,12 @@ Projector3D2Order_susceptibilityV::Projector3D2Order_susceptibilityV (Params& pa
     j_domain_begin = patch->getCellStartingGlobalIndex(1);
     k_domain_begin = patch->getCellStartingGlobalIndex(2);
 
+    nprimy = params.n_space[1] + 1;
+    nprimz = params.n_space[2] + 1;
+    oversize[0] = params.oversize[0];
+    oversize[1] = params.oversize[1];
+    oversize[2] = params.oversize[2];
+
     dt             = params.timestep;
     dts2           = params.timestep/2.;
     dts4           = params.timestep/4.;
@@ -121,8 +127,15 @@ void Projector3D2Order_susceptibilityV::operator() (ElectroMagn* EMfields, Parti
 
 // Projector for susceptibility used as source term in envelope equation
                                                      
-void Projector3D2Order_susceptibilityV::project_susceptibility(double* Chi_envelope, Particles &particles, int istart, int iend, unsigned int bin, std::vector<unsigned int> &b_dim, SmileiMPI* smpi, int ithread, double species_mass, int* iold, int ipart_ref)
+void Projector3D2Order_susceptibilityV::project_susceptibility(double* Chi_envelope, Particles &particles, int istart, int iend, unsigned int scell, std::vector<unsigned int> &b_dim, SmileiMPI* smpi, int ithread, double species_mass, int* iold2, int ipart_ref)
 {
+    int iold[3];
+
+    iold[0] = scell/(nprimy*nprimz)+oversize[0];
+    iold[1] = ( (scell%(nprimy*nprimz)) / nprimz )+oversize[1];
+    iold[2] = ( (scell%(nprimy*nprimz)) % nprimz )+oversize[2];
+
+
     std::vector<double> *Epart       = &(smpi->dynamics_Epart[ithread]);
     std::vector<double> *Phipart     = &(smpi->dynamics_PHIpart[ithread]);
     std::vector<double> *GradPhipart = &(smpi->dynamics_GradPHIpart[ithread]);
@@ -173,28 +186,28 @@ void Projector3D2Order_susceptibilityV::project_susceptibility(double* Chi_envel
             double pxsm, pysm, pzsm;
             double one_over_mass=1./species_mass;
 
-            charge_over_mass_dts2    = particles.charge(istart+ipart)*dts2*one_over_mass;
+            charge_over_mass_dts2    = particles.charge(istart0+ipart)*dts2*one_over_mass;
             // ! ponderomotive force is proportional to charge squared and the field is divided by 4 instead of 2
-            charge_sq_over_mass_dts4 = particles.charge(istart+ipart)*dts4*one_over_mass;      
+            charge_sq_over_mass_dts4 = particles.charge(istart0+ipart)*dts4*one_over_mass;      
             // (charge over mass)^2
-            charge_sq_over_mass_sq   = particles.charge(istart+ipart)*particles.charge(istart+ipart)*one_over_mass*one_over_mass;
+            charge_sq_over_mass_sq   = particles.charge(istart0+ipart)*particles.charge(istart0+ipart)*one_over_mass*one_over_mass;
 
             for ( int i = 0 ; i<3 ; i++ )
-                momentum[i] = particles.momentum(i,istart+ipart);
+                momentum[i] = particles.momentum(i,istart0+ipart);
  
             // compute initial ponderomotive gamma (more precisely, its inverse) 
-            inv_gamma0 = 1./sqrt( 1. + momentum[0]*momentum[0]+ momentum[1]*momentum[1] + momentum[2]*momentum[2] + *(Phi+istart-ipart_ref+ipart)*charge_sq_over_mass_sq );
+            inv_gamma0 = 1./sqrt( 1. + momentum[0]*momentum[0]+ momentum[1]*momentum[1] + momentum[2]*momentum[2] + *(Phi+istart0-ipart_ref+ipart)*charge_sq_over_mass_sq );
          
             // ( electric field + ponderomotive force for ponderomotive gamma advance ) scalar multiplied by momentum
-            pxsm = inv_gamma0 * (charge_over_mass_dts2*(*(Ex+istart-ipart_ref+ipart)) - charge_sq_over_mass_dts4*(*(GradPhix+istart-ipart_ref+ipart)) * inv_gamma0 ) * momentum[0];
-            pysm = inv_gamma0 * (charge_over_mass_dts2*(*(Ey+istart-ipart_ref+ipart)) - charge_sq_over_mass_dts4*(*(GradPhiy+istart-ipart_ref+ipart)) * inv_gamma0 ) * momentum[1];
-            pzsm = inv_gamma0 * (charge_over_mass_dts2*(*(Ez+istart-ipart_ref+ipart)) - charge_sq_over_mass_dts4*(*(GradPhiz+istart-ipart_ref+ipart)) * inv_gamma0 ) * momentum[2];
+            pxsm = inv_gamma0 * (charge_over_mass_dts2*(*(Ex+istart0-ipart_ref+ipart)) - charge_sq_over_mass_dts4*(*(GradPhix+istart0-ipart_ref+ipart)) * inv_gamma0 ) * momentum[0];
+            pysm = inv_gamma0 * (charge_over_mass_dts2*(*(Ey+istart0-ipart_ref+ipart)) - charge_sq_over_mass_dts4*(*(GradPhiy+istart0-ipart_ref+ipart)) * inv_gamma0 ) * momentum[1];
+            pzsm = inv_gamma0 * (charge_over_mass_dts2*(*(Ez+istart0-ipart_ref+ipart)) - charge_sq_over_mass_dts4*(*(GradPhiz+istart0-ipart_ref+ipart)) * inv_gamma0 ) * momentum[2];
          
             // update of gamma ponderomotive (more precisely, the inverse)
             inv_gamma_ponderomotive = 1./( 1./inv_gamma0 + (pxsm+pysm+pzsm)*0.5 );
  
             // (x,y,z) components of the current density for the macro-particle
-            charge_weight[ipart] = (double)(particles.charge(istart+ipart))*(double)(particles.charge(istart+ipart))*particles.weight(istart+ipart)*inv_gamma_ponderomotive*one_over_mass; 
+            charge_weight[ipart] = (double)(particles.charge(istart0+ipart))*(double)(particles.charge(istart0+ipart))*particles.weight(istart0+ipart)*inv_gamma_ponderomotive*one_over_mass; 
  
             // variable declaration
             double xpn, ypn, zpn;
@@ -212,7 +225,7 @@ void Projector3D2Order_susceptibilityV::project_susceptibility(double* Chi_envel
             // --------------------------------------------------------
  
             // locate the particle on the primal grid at current time-step & calculate coeff. S1
-            xpn = particles.position(0, istart+ipart) * dx_inv_;
+            xpn = particles.position(0, istart0+ipart) * dx_inv_;
             int ip = round(xpn);
             delta  = xpn - (double)ip;
             delta2 = delta*delta;
@@ -220,7 +233,7 @@ void Projector3D2Order_susceptibilityV::project_susceptibility(double* Chi_envel
             Sx1[2*vecSize+ipart] = 0.75-delta2;
             Sx1[3*vecSize+ipart] = 0.5 * (delta2+delta+0.25);
  
-            ypn = particles.position(1, istart+ipart) * dy_inv_;
+            ypn = particles.position(1, istart0+ipart) * dy_inv_;
             int jp = round(ypn);
             delta  = ypn - (double)jp;
             delta2 = delta*delta;
@@ -228,7 +241,7 @@ void Projector3D2Order_susceptibilityV::project_susceptibility(double* Chi_envel
             Sy1[2*vecSize+ipart] = 0.75-delta2;
             Sy1[3*vecSize+ipart] = 0.5 * (delta2+delta+0.25);
  
-            zpn = particles.position(2, istart+ipart) * dz_inv_;
+            zpn = particles.position(2, istart0+ipart) * dz_inv_;
             int kp = round(zpn);
             delta  = zpn - (double)kp;
             delta2 = delta*delta;

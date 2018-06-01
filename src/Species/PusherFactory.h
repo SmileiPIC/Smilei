@@ -22,6 +22,7 @@
 #ifdef _VECTO
 #include "PusherBorisV.h"
 #include "PusherPonderomotiveBorisV.h"
+#include "PusherPonderomotivePositionBorisV.h"
 #endif
 
 #include "Params.h"
@@ -62,8 +63,7 @@ public:
                     Push = new PusherPonderomotiveBoris( params, species );
 #ifdef _VECTO
                 else
-                    ERROR("Ponderomotive pusher not yet implemented for vectorised version");
-                    //Push = new PusherPonderomotiveBorisV( params, species );
+                    Push = new PusherPonderomotiveBorisV( params, species );
 #endif
             }
             else if ( species->pusher == "borisnr" )
@@ -122,8 +122,7 @@ public:
                     Push_ponderomotive_position = new PusherPonderomotivePositionBoris( params, species );
 #ifdef _VECTO
                 else
-                    ERROR("Ponderomotive pusher not yet implemented for vectorised version");
-                    //Push = new PusherPonderomotiveBorisV( params, species );
+                    Push_ponderomotive_position = new PusherPonderomotivePositionBorisV( params, species );
 #endif
             }
           

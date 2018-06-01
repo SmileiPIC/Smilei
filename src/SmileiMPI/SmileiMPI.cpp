@@ -38,10 +38,10 @@ using namespace std;
 SmileiMPI::SmileiMPI( int* argc, char*** argv )
 {
     test_mode = false;
-    
+
     // Send information on current simulation
     int mpi_provided;
-    
+
 #ifdef _OPENMP
     MPI_Init_thread( argc, argv, MPI_THREAD_MULTIPLE, &mpi_provided );
     if (mpi_provided != MPI_THREAD_MULTIPLE){
@@ -200,7 +200,7 @@ void SmileiMPI::init_patch_count( Params& params, DomainDecomposition* domain_de
     vector<double> x_cell(3,0.);
     for (unsigned int i = 0; i < params.nDim_field; i++)
         tot_ncells_perpatch *= params.n_space[i]+2*params.oversize[i];
-    
+
     // First, distribute all patches evenly
     unsigned int Npatches_local = Npatches / smilei_sz, FirstPatch_local;
     int remainder = Npatches % smilei_sz;
@@ -221,7 +221,7 @@ void SmileiMPI::init_patch_count( Params& params, DomainDecomposition* domain_de
     for (unsigned int ispecies = 0; ispecies < tot_species_number; ispecies++){
         peek.push_back( new PeekAtSpecies(params, ispecies) );
     }
-    
+
     // Third, loop over local patches to obtain their approximate load
     vector<double> PatchLoad (Npatches_local, 1.);
     if( ! (params.has_load_balancing && params.initial_balance) ){
@@ -253,7 +253,7 @@ void SmileiMPI::init_patch_count( Params& params, DomainDecomposition* domain_de
     for (unsigned int i=0 ; i<tot_species_number ; i++)
         delete peek[i];
     peek.clear();
-    
+
     // Fourth, the arrangement of patches is balanced
 
     // Initialize loads
@@ -552,12 +552,39 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
     // Count number max of comms :
     int maxtag = 0;
 
+    // Dynamic vectorization:
+    // In the case of the dynamic Vectorization,
+    // we have to communicate the bin number (bmax.size())
+    // and operator state (vectorized_operators variable)
+    if (params.has_dynamic_vectorization)
+    {
+
+        // Number of bins
+        // We put all bin number in a list before exchanging
+        std::vector<int> bin_number_list (patch->vecSpecies.size());
+        for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
+        {
+            bin_number_list[ispec] = patch->vecSpecies[ispec]->bmax.size();
+        }
+        isend( &bin_number_list, to, tag+maxtag, patch->requests_[maxtag] );
+        maxtag ++;
+
+        // Parameter vectorized_operators
+        std::vector<int> vectorized_operators_list (patch->vecSpecies.size());
+        for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
+        {
+            vectorized_operators_list[ispec] = (int) (patch->vecSpecies[ispec]->vectorized_operators);
+        }
+        isend( &vectorized_operators_list, to, tag+maxtag, patch->requests_[maxtag] );
+        maxtag ++;
+    }
+
     // For the particles
     for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++){
-        isend( &(patch->vecSpecies[ispec]->bmax), to, tag+2*ispec+1, patch->requests_[2*ispec] );
+        isend( &(patch->vecSpecies[ispec]->bmax), to, tag+maxtag+2*ispec+1, patch->requests_[maxtag+2*ispec] );
         if ( patch->vecSpecies[ispec]->getNbrOfParticles() > 0 ){
             patch->vecSpecies[ispec]->exchangePatch = createMPIparticles( patch->vecSpecies[ispec]->particles );
-            isend( patch->vecSpecies[ispec]->particles, to, tag+2*ispec, patch->vecSpecies[ispec]->exchangePatch, patch->requests_[2*ispec+1] );
+            isend( patch->vecSpecies[ispec]->particles, to, tag+maxtag+2*ispec, patch->vecSpecies[ispec]->exchangePatch, patch->requests_[maxtag+2*ispec+1] );
         }
     }
 
@@ -579,14 +606,12 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
 
                 MPI_Isend(&temp,
                 1, MPI_DOUBLE, to, tag + maxtag, SMILEI_COMM_WORLD,
-                //&patch->requests_[2*patch->vecSpecies.size()+k]);
                 &patch->requests_[maxtag]);
-
                 maxtag ++;
             }
         }
     }
-    
+
     // Send fields
     if ( params.geometry != "3drz" ) {
         isend( patch->EMfields, to, maxtag, patch->requests_,tag);
@@ -628,9 +653,39 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
     // Count number max of comms :int tag
     int maxtag = tag;
 
+    // In the case of the dynamic Vectorization,
+    // we have to communicate the bin number (bmax.size())
+    // and operator state (vectorized_operators variable)
+    if (params.has_dynamic_vectorization)
+    {
+        // Number of bins
+        // All sizes are received in a single buffer
+        std::vector<int> bin_number_list (patch->vecSpecies.size());
+        recv( &bin_number_list, from, maxtag);
+        // We resize the bmin bmax arrays in consequence
+        for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
+        {
+            //std::cerr << "Size received: " << bin_number_list[ispec] << '\n';
+            patch->vecSpecies[ispec]->bmax.resize(bin_number_list[ispec]);
+            patch->vecSpecies[ispec]->bmin.resize(bin_number_list[ispec]);
+        }
+        maxtag ++;
+
+        // Parameter vectorized_operators
+        // All parameters are received in a single buffer
+        std::vector<int> vectorized_operators_list (patch->vecSpecies.size());
+        recv( &vectorized_operators_list, from, maxtag);
+        for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
+        {
+            //std::cerr << "Vecto received: " << vectorized_operators_list[ispec] << '\n';
+            patch->vecSpecies[ispec]->vectorized_operators = (bool)(vectorized_operators_list[ispec]);
+        }
+        maxtag ++;
+    }
+
     for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++){
         //Receive bmax
-        recv( &patch->vecSpecies[ispec]->bmax, from, tag+2*ispec+1 );
+        recv( &patch->vecSpecies[ispec]->bmax, from, maxtag+2*ispec+1 );
         //Reconstruct bmin from bmax
         memcpy(&(patch->vecSpecies[ispec]->bmin[1]), &(patch->vecSpecies[ispec]->bmax[0]), (patch->vecSpecies[ispec]->bmax.size()-1)*sizeof(int) );
         patch->vecSpecies[ispec]->bmin[0]=0;
@@ -640,9 +695,12 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
         //Receive particles
         if ( nbrOfPartsRecv > 0 ) {
             recvParts = createMPIparticles( patch->vecSpecies[ispec]->particles );
-            recv( patch->vecSpecies[ispec]->particles, from, tag+2*ispec, recvParts );
+            recv( patch->vecSpecies[ispec]->particles, from, maxtag+2*ispec, recvParts );
             MPI_Type_free( &(recvParts) );
         }
+        /*std::cerr << "Species: " << ispec
+                  << " bmax: " <<  patch->vecSpecies[ispec]->bmax[0]
+                  << " Number of particles: " << patch->vecSpecies[ispec]->particles->size() <<'\n';*/
     }
 
     maxtag += 2*patch->vecSpecies.size();
@@ -753,7 +811,7 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& req
         isend( EM->envelope->GradPhiyold_, to, mpi_tag+tag, requests[tag]); tag++;
         isend( EM->envelope->GradPhiz_, to, mpi_tag+tag, requests[tag]); tag++;
         isend( EM->envelope->GradPhizold_, to, mpi_tag+tag, requests[tag]); tag++;
-        
+
                            }
 
     for( unsigned int idiag=0; idiag<EM->allFields_avg.size(); idiag++) {
@@ -1110,6 +1168,18 @@ void SmileiMPI::recv( ProbeParticles* probe, int from, int tag, unsigned int nDi
 
 } // End recv ( probes )
 
+//! Wrapper for integer MPI communication
+void SmileiMPI::isend( int * integer, int to, int tag, unsigned int nDim_particles, MPI_Request& request )
+{
+    MPI_Isend( &integer, 1, MPI_INT, to, tag, MPI_COMM_WORLD, &request );
+} // End isend ( integer )
+
+//! Wrapper for integer MPI communication
+void SmileiMPI::recv( int * integer, int from, int tag, unsigned int nDim_particles )
+{
+    MPI_Status status;
+    MPI_Recv( &integer, 1, MPI_INT, from, tag, MPI_COMM_WORLD, &status );
+} // End recv ( integer )
 
 // ---------------------------------------------------------------------------------------------------------------------
 // ---------------------------------------------------------------------------------------------------------------------

@@ -44,7 +44,7 @@ public:
     //! Last creation step
     void finishCreation( Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition );
     //! Last cloning step
-    void finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool with_particles );
+    void finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, unsigned int n_moved, bool with_particles );
 
     //! Finalize MPI environment : especially requests array for non blocking communications
     void finalizeMPIenvironment(Params& params);
@@ -71,7 +71,7 @@ public:
     Interpolator* Interp_envelope = NULL;
 
     //! Projector ad hoc for Proj_susceptibility
-    Projector* Proj_susceptibility = NULL;
+    //Projector* Proj_susceptibility = NULL;
 
     //! "fake" particles for the probe diagnostics
     std::vector<ProbeParticles*> probes;

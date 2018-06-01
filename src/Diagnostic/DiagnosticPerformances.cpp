@@ -16,44 +16,50 @@ DiagnosticPerformances::DiagnosticPerformances( Params & params, SmileiMPI* smpi
     timestep = params.timestep;
     cell_load = params.cell_load;
     frozen_particle_load = params.frozen_particle_load;
-    
+
     ostringstream name("");
     name << "Diagnostic performances";
     string errorPrefix = name.str();
-    
+
     // get parameter "every" which describes a timestep selection
     timeSelection = new TimeSelection(
         PyTools::extract_py("every", "DiagPerformances"),
         name.str()
     );
-    
+
     // get parameter "flush_every" which describes a timestep selection for flushing the file
     flush_timeSelection = new TimeSelection(
         PyTools::extract_py("flush_every", "DiagPerformances"),
         name.str()
     );
-    
+
+    // Get patch information flag
+    PyTools::extract("patch_information", patch_information, "DiagPerformances");
+
     // Output info on diagnostics
     if ( smpi->isMaster() ) {
         MESSAGE(1,"Created performances diagnostic");
     }
     filename = "Performances.h5";
-    
-    mpi_size = smpi->getSize();
-    
+
+    this->mpi_size = smpi->getSize();
+    this->mpi_rank = smpi->getRank();
+    this->ndim     = params.nDim_field;
+    this->has_dynamic_vectorization = params.has_dynamic_vectorization;
+
     // Define the HDF5 file and memory spaces
-    setHDF5spaces(filespace_double, memspace_double, n_quantities_double, mpi_size, smpi->getRank());
-    setHDF5spaces(filespace_uint  , memspace_uint  , n_quantities_uint  , mpi_size, smpi->getRank());
-    
+    setHDF5spaces(filespace_double, memspace_double, n_quantities_double, mpi_size, this->mpi_rank);
+    setHDF5spaces(filespace_uint  , memspace_uint  , n_quantities_uint  , mpi_size, this->mpi_rank);
+
     // Define HDF5 file access
     write_plist = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_COLLECTIVE);
-    
+
     // Calculate the number of cells per patch
     ncells_per_patch = 1;
     for (unsigned int idim = 0; idim < params.nDim_field; idim++)
         ncells_per_patch *= params.n_space[idim]+2*params.oversize[idim];
-    
+
 } // END DiagnosticPerformances::DiagnosticPerformances
 
 
@@ -69,23 +75,23 @@ DiagnosticPerformances::~DiagnosticPerformances()
 void DiagnosticPerformances::openFile( Params& params, SmileiMPI* smpi, bool newfile )
 {
     if( fileId_>0 ) return;
-    
+
     if ( newfile ) {
         hid_t pid = H5Pcreate(H5P_FILE_ACCESS);
         H5Pset_fapl_mpio(pid, MPI_COMM_WORLD, MPI_INFO_NULL);
         fileId_  = H5Fcreate( filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, pid);
         H5Pclose(pid);
-        
+
         // write all parameters as HDF5 attributes
         H5::attr(fileId_, "MPI_SIZE", smpi->getSize());
-        
+
         vector<string> quantities_uint(n_quantities_uint);
         quantities_uint[0] = "hindex"                    ;
         quantities_uint[1] = "number_of_cells"           ;
         quantities_uint[2] = "number_of_particles"       ;
         quantities_uint[3] = "number_of_frozen_particles";
         H5::attr(fileId_, "quantities_uint", quantities_uint);
-        
+
         vector<string> quantities_double(n_quantities_double);
         quantities_double[ 0] = "total_load"      ;
         quantities_double[ 1] = "timer_global"    ;
@@ -102,7 +108,7 @@ void DiagnosticPerformances::openFile( Params& params, SmileiMPI* smpi, bool new
         quantities_double[12] = "timer_total"     ;
         quantities_double[13] = "memory_total"     ;
         H5::attr(fileId_, "quantities_double", quantities_double);
-        
+
     }
     else {
         // Open the existing file
@@ -146,7 +152,7 @@ bool DiagnosticPerformances::prepare( int itime )
 
 void DiagnosticPerformances::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, SimWindow* simWindow, Timers & timers )
 {
-    
+
     #pragma omp master
     {
         // Create group for this iteration
@@ -160,10 +166,10 @@ void DiagnosticPerformances::run( SmileiMPI* smpi, VectorPatch& vecPatches, int 
         if( status < 0 ) WARNING("Performances diagnostic could not write");
     }
     #pragma omp barrier
-    
+
     // Do not output diag if this iteration has already been written or if problem with file
     if( status != 0 ) return;
-    
+
     #pragma omp master
     {
         // Calculate the loads
@@ -185,21 +191,21 @@ void DiagnosticPerformances::run( SmileiMPI* smpi, VectorPatch& vecPatches, int 
             ((double)number_of_particles)
             + ((double)number_of_frozen_particles) * frozen_particle_load
             + ((double)number_of_cells) * cell_load;
-        
+
         hid_t create_plist = H5Pcreate( H5P_DATASET_CREATE );
-        
+
         // Fill the vector for uint quantities
         vector<unsigned int> quantities_uint(n_quantities_uint);
         quantities_uint[0] = vecPatches(0)->Hindex()   ;
         quantities_uint[1] = number_of_cells           ;
         quantities_uint[2] = number_of_particles       ;
         quantities_uint[3] = number_of_frozen_particles;
-        
+
         // Write uints to file
         hid_t dset_uint  = H5Dcreate( iteration_group_id, "quantities_uint", H5T_NATIVE_UINT, filespace_uint, H5P_DEFAULT, create_plist, H5P_DEFAULT);
         H5Dwrite( dset_uint, H5T_NATIVE_UINT, memspace_uint, filespace_uint, write_plist, &quantities_uint[0] );
         H5Dclose( dset_uint );
-        
+
         // Fill the vector for double quantities
         vector<double> quantities_double(n_quantities_double);
         quantities_double[ 0] = total_load                 ;
@@ -225,18 +231,120 @@ void DiagnosticPerformances::run( SmileiMPI* smpi, VectorPatch& vecPatches, int 
         quantities_double[12] = timer_total;
 
         quantities_double[13] = Tools::getMemFootPrint();
-        
+
         // Write doubles to file
         hid_t dset_double  = H5Dcreate( iteration_group_id, "quantities_double", H5T_NATIVE_DOUBLE, filespace_double, H5P_DEFAULT, create_plist, H5P_DEFAULT);
         H5Dwrite( dset_double, H5T_NATIVE_DOUBLE, memspace_double, filespace_double, write_plist, &quantities_double[0] );
         H5Dclose( dset_double );
-        
+
+        // Patch information
+        if (patch_information) {
+
+            // Creation of the group
+            ostringstream group_name;
+            group_name.str("");
+            group_name << "patches";
+            hid_t patch_group = H5::group(iteration_group_id, group_name.str().c_str());
+
+            // Get the number of patches per MPI processes
+            vector<unsigned int> patches_per_mpi(smpi->getSize());
+
+            // We get the number of patches for each MPI process
+            // Global communication, this may impact the global code performances
+            MPI_Allgather(&number_of_patches, 1,MPI_UNSIGNED,
+                          &patches_per_mpi[0], 1,MPI_UNSIGNED,
+                          smpi->getGlobalComm());
+
+            // Checking
+            /*if (smpi->getRank() == 1)
+            {
+                for(unsigned int impi=0; impi < smpi->getSize(); impi++){
+                std::cerr << patches_per_mpi[impi] << '\n';
+                }
+            }*/
+
+            // Prepapre the hyperslab
+            set_HDF5_patch_spaces(filespace_patches, memspace_patches, patches_per_mpi, this->mpi_rank);
+
+            // Gather x patch position in a buffer
+            vector <unsigned int> buffer(number_of_patches);
+            for(unsigned int ipatch=0; ipatch < number_of_patches; ipatch++){
+                buffer[ipatch] = vecPatches(ipatch)->Pcoordinates[0];
+                //std::cerr << vecPatches(ipatch)->hindex << '\n';
+            }
+
+            // Write x patch position to file
+            hid_t dset_patches  = H5Dcreate( patch_group, "x", H5T_NATIVE_UINT, filespace_patches, H5P_DEFAULT, create_plist, H5P_DEFAULT);
+            H5Dwrite( dset_patches, H5T_NATIVE_UINT, memspace_patches, filespace_patches, write_plist, &buffer[0] );
+            H5Dclose( dset_patches );
+
+            if (ndim > 0)
+            {
+                // Gather y patch position in a buffer
+                for(unsigned int ipatch=0; ipatch < number_of_patches; ipatch++){
+                    buffer[ipatch] = vecPatches(ipatch)->Pcoordinates[1];
+                }
+
+                // Write y patch position to file
+                dset_patches  = H5Dcreate( patch_group, "y", H5T_NATIVE_UINT, filespace_patches, H5P_DEFAULT, create_plist, H5P_DEFAULT);
+                H5Dwrite( dset_patches, H5T_NATIVE_UINT, memspace_patches, filespace_patches, write_plist, &buffer[0] );
+                H5Dclose( dset_patches );
+            }
+
+            if (ndim > 1)
+            {
+                // Gather z patch position in a buffer
+                for(unsigned int ipatch=0; ipatch < number_of_patches; ipatch++){
+                    buffer[ipatch] = vecPatches(ipatch)->Pcoordinates[2];
+                }
+
+                // Write z patch position to file
+                dset_patches  = H5Dcreate( patch_group, "z", H5T_NATIVE_UINT, filespace_patches, H5P_DEFAULT, create_plist, H5P_DEFAULT);
+                H5Dwrite( dset_patches, H5T_NATIVE_UINT, memspace_patches, filespace_patches, write_plist, &buffer[0] );
+                H5Dclose( dset_patches );
+            }
+
+            // Gather patch hindex in a buffer
+            for(unsigned int ipatch=0; ipatch < number_of_patches; ipatch++){
+                buffer[ipatch] = vecPatches(ipatch)->hindex;
+            }
+            // Write patch index to file
+            dset_patches  = H5Dcreate( patch_group, "index", H5T_NATIVE_UINT, filespace_patches, H5P_DEFAULT, create_plist, H5P_DEFAULT);
+            H5Dwrite( dset_patches, H5T_NATIVE_UINT, memspace_patches, filespace_patches, write_plist, &buffer[0] );
+            H5Dclose( dset_patches );
+
+            // Creation and treatment of the species groups
+            hid_t species_group;
+            for (unsigned int ispecies = 0; ispecies < number_of_species; ispecies++) {
+                species_group = H5::group(patch_group, vecPatches(0)->vecSpecies[ispecies]->name);
+
+                // Vectorization properties
+                if (has_dynamic_vectorization)
+                {
+                    // Gather patch vectorization status in a buffer
+                    for(unsigned int ipatch=0; ipatch < number_of_patches; ipatch++){
+                        buffer[ipatch] = (unsigned int)(vecPatches(ipatch)->vecSpecies[ispecies]->vectorized_operators);
+                    }
+                    // Write patch vectorization status  to file
+                    dset_patches  = H5Dcreate( species_group, "vecto", H5T_NATIVE_UINT, filespace_patches, H5P_DEFAULT, create_plist, H5P_DEFAULT);
+                    H5Dwrite( dset_patches, H5T_NATIVE_UINT, memspace_patches, filespace_patches, write_plist, &buffer[0] );
+                    H5Dclose( dset_patches );
+                }
+
+                // Close patch group
+                H5Gclose(species_group);
+            }
+            
+            // Close patch group
+            H5Gclose(patch_group);
+        }
+
         // Close and flush
         H5Pclose(create_plist);
         H5Gclose(iteration_group_id);
         if( flush_timeSelection->theTimeIsNow(itime) ) H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
     }
-    
+
 } // END run
 
 
@@ -244,22 +352,22 @@ void DiagnosticPerformances::run( SmileiMPI* smpi, VectorPatch& vecPatches, int 
 uint64_t DiagnosticPerformances::getDiskFootPrint(int istart, int istop, Patch* patch)
 {
     uint64_t footprint = 0;
-    
+
     // Calculate the number of dumps between istart and istop
     uint64_t ndumps = timeSelection->howManyTimesBefore(istop) - timeSelection->howManyTimesBefore(istart);
-    
+
     // Add necessary global headers approximately
     footprint += 1000;
-    
+
     // Add necessary timestep headers approximately
     footprint += ndumps * 800;
-    
+
     // Add necessary dataset headers approximately
     footprint += ndumps * 2 * 600;
-    
+
     // Add size of each dump
     footprint += ndumps * (uint64_t)(mpi_size) * (uint64_t)(n_quantities_double * sizeof(double) + n_quantities_uint * sizeof(unsigned int));
-    
+
     return footprint;
 }
 
@@ -275,3 +383,32 @@ void DiagnosticPerformances::setHDF5spaces(hid_t &filespace, hid_t &memspace, un
     H5Sselect_hyperslab(filespace, H5S_SELECT_SET, &start[0], NULL, &count[0], &block[0] );
 }
 
+//! Set the hdf5 spaces for 1D arrays for patches
+void DiagnosticPerformances::set_HDF5_patch_spaces(hid_t &filespace, hid_t &memspace,
+                                                   vector<unsigned int> & patches_per_mpi,
+                                                   const unsigned int mpi_rank)
+{
+
+    // Compute the total number of patches in the simulation
+    unsigned int global_number_of_patches = 0;
+    for(std::vector<unsigned int>::iterator it = patches_per_mpi.begin(); it != patches_per_mpi.end(); ++it)
+    {
+        global_number_of_patches += *it;
+    }
+
+    // Compute the start position of this mpi process in the global array
+    unsigned int start_ = 0;
+    for(unsigned int impi = 0 ; impi < mpi_rank ; impi++)
+    {
+        start_ += patches_per_mpi[impi];
+    }
+
+    hsize_t matrix [1] = {global_number_of_patches};
+    hsize_t portion[2] = {patches_per_mpi[mpi_rank]};
+    filespace = H5Screate_simple(1, &matrix [0], NULL);
+    memspace  = H5Screate_simple(1, &portion[0], NULL );
+    hsize_t start[1] = {start_};
+    hsize_t count[1] = {1};
+    hsize_t block[1] = {patches_per_mpi[mpi_rank]};
+    H5Sselect_hyperslab(filespace, H5S_SELECT_SET, &start[0], NULL, &count[0], &block[0] );
+}

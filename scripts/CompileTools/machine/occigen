@@ -1,3 +1,4 @@
-CXXFLAGS +=  -xHost -O3 -ip  -ipo
+CXXFLAGS +=  -xHost -O3 -ip  -ipo -inline-factor=1000
+
 
 
