@@ -844,7 +844,16 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
     //cout << std::scientific << "rnew_dot_rnew_local = " << rnew_dot_rnew_local << endl;
     MPI_Allreduce(&rnew_dot_rnew_local, &rnew_dot_rnew, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
-    //std::vector<Field*> Ex_;
+    std::vector<Field*> Ex_;
+    std::vector<Field*> Ey_;
+    std::vector<Field*> Ez_;
+    std::vector<Field*> Bx_;
+    std::vector<Field*> By_;
+    std::vector<Field*> Bz_;
+    std::vector<Field*> Bx_m;
+    std::vector<Field*> By_m;
+    std::vector<Field*> Bz_m;
+
     std::vector<Field*> Ex_rel_;
     std::vector<Field*> Ey_rel_;
     std::vector<Field*> Ez_rel_;
@@ -863,7 +872,15 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
     std::vector<Field*> Ap_;
 
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-        //Ex_.push_back( (*this)(ipatch)->EMfields->Ex_ );
+        Ex_.push_back( (*this)(ipatch)->EMfields->Ex_ );
+        Ey_.push_back( (*this)(ipatch)->EMfields->Ey_ );
+        Ez_.push_back( (*this)(ipatch)->EMfields->Ez_ );
+        Bx_.push_back( (*this)(ipatch)->EMfields->Bx_ );
+        By_.push_back( (*this)(ipatch)->EMfields->By_ );
+        Bz_.push_back( (*this)(ipatch)->EMfields->Bz_ );
+        Bx_m.push_back( (*this)(ipatch)->EMfields->Bx_m );
+        By_m.push_back( (*this)(ipatch)->EMfields->By_m );
+        Bz_m.push_back( (*this)(ipatch)->EMfields->Bz_m );
         Ex_rel_.push_back( (*this)(ipatch)->EMfields->Ex_rel_ );
         Ey_rel_.push_back( (*this)(ipatch)->EMfields->Ey_rel_ );
         Ez_rel_.push_back( (*this)(ipatch)->EMfields->Ez_rel_ );
@@ -1158,7 +1175,19 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
        (*this)(ipatch)->EMfields->sum_rel_fields_to_em_fields( (*this)(ipatch));
        } // end loop on patches
 
-  
+    // Exchange the fields after the addition of the relativistic species fields
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( Ex_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Ey_, *this );
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( Ez_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bx_, *this );  
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( By_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bx_m, *this );  
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( By_m, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_m, *this );    
+
+
+
     MESSAGE(0,"Fields of relativistic species initialized");
     //!\todo Reduce to find global max
     //if (smpi->isMaster())
