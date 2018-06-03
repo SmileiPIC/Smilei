@@ -1177,17 +1177,24 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
 
     // Exchange the fields after the addition of the relativistic species fields
     SyncVectorPatch::exchange_along_all_directions_noomp          ( Ex_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Ex_, *this );
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( Ey_, *this );
     SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Ey_, *this );
     SyncVectorPatch::exchange_along_all_directions_noomp          ( Ez_, *this );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bx_, *this );  
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Ez_, *this );
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( Bx_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bx_, *this );
     SyncVectorPatch::exchange_along_all_directions_noomp          ( By_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( By_, *this );
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( Bz_, *this );
     SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_, *this );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bx_m, *this );  
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( Bx_m, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bx_m, *this );
     SyncVectorPatch::exchange_along_all_directions_noomp          ( By_m, *this );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_m, *this );    
-
-
-
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( By_m, *this );
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( Bz_m, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_m, *this );
+    
     MESSAGE(0,"Fields of relativistic species initialized");
     //!\todo Reduce to find global max
     //if (smpi->isMaster())
