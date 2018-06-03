@@ -617,42 +617,42 @@ void ElectroMagn2D::initB_relativistic_Poisson(Patch *patch, double gamma_mean)
 
 void ElectroMagn2D::center_fields_from_relativistic_Poisson(Patch *patch){
 
-    double one_over_two  = 1./2.;  
-
-    // Static-cast of the fields
-    Field2D* Bz2D = static_cast<Field2D*>(Bz_rel_);
-
-    // Temporary fields for interpolation
-    Field2D* Bz2Dnew  = new Field2D( Bz_rel_->dims_  );
-
-    // ------------ Interpolation to center the fields the Yee cell
-    //              before this operation, the fields B are all centered as E
-    //             (see ElectroMagn3D::initB_relativistic_Poisson)
-    //
-    // p: cell nodes, d: between cell nodes, or cell edges
-    //
-    // For all the fields, the proper centering (which is given to their "new" version) is reported
-    // and then the old centering is reported (see ElectroMagn3D::initB_relativistic_Poisson)  
-    
-
-    // ----- Bz centering : (d,d) old centering is like Ey (p,d)
-    for (unsigned int i=1 ; i < Bz_rel_->dims_[0]-2; i++){ // x loop
-        for (unsigned int j=0 ; j < Bz_rel_->dims_[1]-2 ; j++){ // y loop
-                (*Bz2Dnew)(i,j) = one_over_two*((*Bz2D)(i,j)+(*Bz2D)(i-1,j));
-        } // end y loop
-    } // end x loop
-
-
-    // -------- Back substitution
-    for (unsigned int i=0 ; i < Bz_rel_->dims_[0]-1; i++){ // x loop
-        for (unsigned int j=0 ; j < Bz_rel_->dims_[1]-1 ; j++){ // y loop
-                (*Bz2D)(i,j) = (*Bz2Dnew)(i,j);     
-        } // end y loop
-    } // end x loop
+    // double one_over_two  = 1./2.;  
+    // 
+    // // Static-cast of the fields
+    // Field2D* Bz2D = static_cast<Field2D*>(Bz_rel_);
+    // 
+    // // Temporary fields for interpolation
+    // Field2D* Bz2Dnew  = new Field2D( Bz_rel_->dims_  );
+    // 
+    // // ------------ Interpolation to center the fields the Yee cell
+    // //              before this operation, the fields B are all centered as E
+    // //             (see ElectroMagn3D::initB_relativistic_Poisson)
+    // //
+    // // p: cell nodes, d: between cell nodes, or cell edges
+    // //
+    // // For all the fields, the proper centering (which is given to their "new" version) is reported
+    // // and then the old centering is reported (see ElectroMagn3D::initB_relativistic_Poisson)  
+    // 
+    // 
+    // // ----- Bz centering : (d,d) old centering is like Ey (p,d)
+    // for (unsigned int i=1 ; i < Bz_rel_->dims_[0]-2; i++){ // x loop
+    //     for (unsigned int j=0 ; j < Bz_rel_->dims_[1]-2 ; j++){ // y loop
+    //             (*Bz2Dnew)(i,j) = one_over_two*((*Bz2D)(i,j)+(*Bz2D)(i-1,j));
+    //     } // end y loop
+    // } // end x loop
+    // 
+    // 
+    // // -------- Back substitution
+    // for (unsigned int i=0 ; i < Bz_rel_->dims_[0]-1; i++){ // x loop
+    //     for (unsigned int j=0 ; j < Bz_rel_->dims_[1]-1 ; j++){ // y loop
+    //             (*Bz2D)(i,j) = (*Bz2Dnew)(i,j);     
+    //     } // end y loop
+    // } // end x loop
 
 
     // Clean the temporary variables
-    delete Bz2Dnew;
+    //delete Bz2Dnew;
 
 } 
 

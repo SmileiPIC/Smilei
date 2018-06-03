@@ -851,6 +851,15 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
     std::vector<Field*> Bx_rel_;
     std::vector<Field*> By_rel_;
     std::vector<Field*> Bz_rel_;
+
+    std::vector<Field*> Bx_rel_t_plus_halfdt_;
+    std::vector<Field*> By_rel_t_plus_halfdt_;
+    std::vector<Field*> Bz_rel_t_plus_halfdt_;
+    std::vector<Field*> Bx_rel_t_minus_halfdt_;
+    std::vector<Field*> By_rel_t_minus_halfdt_;
+    std::vector<Field*> Bz_rel_t_minus_halfdt_;
+    
+
     std::vector<Field*> Ap_;
 
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
@@ -861,6 +870,12 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
         Bx_rel_.push_back( (*this)(ipatch)->EMfields->Bx_rel_ );
         By_rel_.push_back( (*this)(ipatch)->EMfields->By_rel_ );
         Bz_rel_.push_back( (*this)(ipatch)->EMfields->Bz_rel_ );
+        Bx_rel_t_plus_halfdt_.push_back( (*this)(ipatch)->EMfields->Bx_rel_t_plus_halfdt_ );
+        By_rel_t_plus_halfdt_.push_back( (*this)(ipatch)->EMfields->By_rel_t_plus_halfdt_ );
+        Bz_rel_t_plus_halfdt_.push_back( (*this)(ipatch)->EMfields->Bz_rel_t_plus_halfdt_ );
+        Bx_rel_t_minus_halfdt_.push_back( (*this)(ipatch)->EMfields->Bx_rel_t_minus_halfdt_ );
+        By_rel_t_minus_halfdt_.push_back( (*this)(ipatch)->EMfields->By_rel_t_minus_halfdt_ );
+        Bz_rel_t_minus_halfdt_.push_back( (*this)(ipatch)->EMfields->Bz_rel_t_minus_halfdt_ );
        
         Ap_.push_back( (*this)(ipatch)->EMfields->Ap_ );
     }
@@ -1106,31 +1121,38 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
     SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( By_rel_, *this );  
     SyncVectorPatch::exchange_along_all_directions_noomp          ( Bz_rel_, *this );
     SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_rel_, *this );  
-    //SyncVectorPatch::exchangeB( params, *this );
-    //SyncVectorPatch::finalizeexchangeB( params, *this );
 
-    // Proper spatial centering of the electromagnetic fields in the Yee Cell through interpolation
-    // -------------------------------------
-    // if (!params.is_spectral){
-    //     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-    //         { // begin loop on patches
-    //         (*this)(ipatch)->EMfields->center_fields_from_relativistic_Poisson( (*this)(ipatch));
-    //         } // end loop on patches
-    // 
-    //     // re-exchange the properly spatially centered B field
-    //     SyncVectorPatch::exchange_along_all_directions_noomp          ( Bx_rel_, *this );
-    //     SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bx_rel_, *this );
-    //     SyncVectorPatch::exchange_along_all_directions_noomp          ( By_rel_, *this );
-    //     SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( By_rel_, *this );  
-    //     SyncVectorPatch::exchange_along_all_directions_noomp          ( Bz_rel_, *this );
-    //     SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_rel_, *this );
-    //     //SyncVectorPatch::exchangeB( params, *this );
-    //     //SyncVectorPatch::finalizeexchangeB( params, *this );
-    // }
+
+    // Proper spatial centering of the B fields in the Yee Cell through interpolation 
+    // (from B_rel to B_rel_t_plus_halfdt and B_rel_t_minus_halfdt)    
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+        { // begin loop on patches
+            (*this)(ipatch)->EMfields->center_fields_from_relativistic_Poisson( (*this)(ipatch));
+        } // end loop on patches
+    
+    // Re-exchange the properly spatially centered B field
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( Bx_rel_t_plus_halfdt_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bx_rel_t_plus_halfdt_, *this );
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( By_rel_t_plus_halfdt_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( By_rel_t_plus_halfdt_, *this );  
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( Bz_rel_t_plus_halfdt_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_rel_t_plus_halfdt_, *this );  
+
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( Bx_rel_t_minus_halfdt_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bx_rel_t_minus_halfdt_, *this );
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( By_rel_t_minus_halfdt_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( By_rel_t_minus_halfdt_, *this );  
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( Bz_rel_t_minus_halfdt_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_rel_t_minus_halfdt_, *this );  
+        
+    
    
    MESSAGE(0,"Summing fields of relativistic species to the grid fields");
    // sum the fields found  by relativistic Poisson solver to the existing em fields
-   // Includes proper spatial centering of the electromagnetic fields in the Yee Cell through interpolation
+   // E  = E  + E_rel
+   // B  = B  + B_rel_t_plus_halfdt
+   // Bm = Bm + B_rel_t_minus_halfdt
+
    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
        { // begin loop on patches
        (*this)(ipatch)->EMfields->sum_rel_fields_to_em_fields( (*this)(ipatch));
