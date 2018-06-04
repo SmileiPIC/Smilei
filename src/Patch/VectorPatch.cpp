@@ -355,6 +355,7 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
             ElectroMagn3DRZ* emRZ = static_cast<ElectroMagn3DRZ*>( (*this)(ipatch)->EMfields );
             emRZ->fold_fields(diag_flag);
             emRZ->on_axis_fields(diag_flag);
+            MESSAGE("bc for rho j and fold fields");
         }
     }  
     timers.syncDens.update( params.printNow( itime ) );

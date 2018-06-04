@@ -945,8 +945,16 @@ void ElectroMagn3DRZ::on_axis_fields(bool diag_flag)
              JlRZ    = Jl_[imode];
              JrRZ    = Jr_[imode];
              JtRZ    = Jt_[imode];
+             
+             if (imode ==0){
+                 for (unsigned int i=0; i<nl_p; i++)
+                     (*JtRZ)(i,oversize[1]) = 0.;
 
-             if (imode==0){
+                 for (unsigned int i=0; i<nl_p; i++)
+                      (*JrRZ)(i,oversize[1])= 0. ;
+
+             }
+             else if (imode==1){
                  for (unsigned int i=0; i<nl_p; i++)
                      (*JtRZ)(i,oversize[1]) = - 1./3.* (4.* Icpx * (*JrRZ)(i,oversize[1]+1) + (*JtRZ)(i,oversize[1]));
 
@@ -955,8 +963,29 @@ void ElectroMagn3DRZ::on_axis_fields(bool diag_flag)
              }
          } 
          if(diag_flag){
-             for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) { 
-                 if (imode == 0){
+             for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
+                 cField2D* rhoRZ   = static_cast<cField2D*>(rho_RZ_[imode]); 
+                 if (imode ==0){
+                     for (unsigned int ism=0; ism <  n_species*nmodes; ism++){
+                         JtRZ    = Jt_s[ism];
+                         if ( JtRZ != NULL ) { 
+                             for (unsigned int i=0; i<nl_p; i++){
+                                 (*JtRZ)(i,oversize[1]) = 0.;
+                             }
+                         }
+                         JrRZ    = Jr_s[ism];
+                         if ( JrRZ != NULL ) { 
+                             for (unsigned int i=0; i<nl_p; i++){ 
+                                 (*JrRZ)(i,oversize[1])= 0. ;
+                             }
+                         }
+                      }
+                 }
+                 else if (imode == 1){
+                     for (unsigned int i=0; i<nl_p; i++){
+                         for (unsigned int j=0; j<oversize[1]; j++)
+                             (*rhoRZ)(i,2*oversize[1]-j)+= (*rhoRZ)(i,j) ;
+                      }
                      //Loop on all modes and species for J_s
                      for (unsigned int ism=0; ism <  n_species*nmodes; ism++){
                          JtRZ    = Jt_s[ism];
