@@ -800,11 +800,6 @@ void ElectroMagn3D::sum_rel_fields_to_em_fields(Patch *patch)
     Field3D* Ey3Drel  = static_cast<Field3D*>(Ey_rel_);
     Field3D* Ez3Drel  = static_cast<Field3D*>(Ez_rel_);
 
-    // B field centered in time as E field
-    Field3D* Bx3Drel  = static_cast<Field3D*>(Bx_rel_);
-    Field3D* By3Drel  = static_cast<Field3D*>(By_rel_);
-    Field3D* Bz3Drel  = static_cast<Field3D*>(Bz_rel_);
-
     // B_t_plus_halfdt
     Field3D* Bx_rel_t_plus_halfdt = static_cast<Field3D*>(Bx_rel_t_plus_halfdt_);
     Field3D* By_rel_t_plus_halfdt = static_cast<Field3D*>(By_rel_t_plus_halfdt_);
@@ -911,9 +906,6 @@ void ElectroMagn3D::sum_rel_fields_to_em_fields(Patch *patch)
         }
     }
 
-
-   
-    
 
     // delete temporary fields used for relativistic initialization
     delete Ex_rel_;

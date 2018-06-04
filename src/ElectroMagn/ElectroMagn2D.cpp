@@ -617,42 +617,50 @@ void ElectroMagn2D::initB_relativistic_Poisson(Patch *patch, double gamma_mean)
 
 void ElectroMagn2D::center_fields_from_relativistic_Poisson(Patch *patch){
 
-    // double one_over_two  = 1./2.;  
-    // 
-    // // Static-cast of the fields
-    // Field2D* Bz2D = static_cast<Field2D*>(Bz_rel_);
-    // 
-    // // Temporary fields for interpolation
-    // Field2D* Bz2Dnew  = new Field2D( Bz_rel_->dims_  );
-    // 
-    // // ------------ Interpolation to center the fields the Yee cell
-    // //              before this operation, the fields B are all centered as E
-    // //             (see ElectroMagn3D::initB_relativistic_Poisson)
-    // //
-    // // p: cell nodes, d: between cell nodes, or cell edges
-    // //
-    // // For all the fields, the proper centering (which is given to their "new" version) is reported
-    // // and then the old centering is reported (see ElectroMagn3D::initB_relativistic_Poisson)  
-    // 
-    // 
-    // // ----- Bz centering : (d,d) old centering is like Ey (p,d)
-    // for (unsigned int i=1 ; i < Bz_rel_->dims_[0]-2; i++){ // x loop
-    //     for (unsigned int j=0 ; j < Bz_rel_->dims_[1]-2 ; j++){ // y loop
-    //             (*Bz2Dnew)(i,j) = one_over_two*((*Bz2D)(i,j)+(*Bz2D)(i-1,j));
-    //     } // end y loop
-    // } // end x loop
-    // 
-    // 
-    // // -------- Back substitution
-    // for (unsigned int i=0 ; i < Bz_rel_->dims_[0]-1; i++){ // x loop
-    //     for (unsigned int j=0 ; j < Bz_rel_->dims_[1]-1 ; j++){ // y loop
-    //             (*Bz2D)(i,j) = (*Bz2Dnew)(i,j);     
-    //     } // end y loop
-    // } // end x loop
+    // B field centered in time as E field, at time t
+    Field2D* Bx2Drel  = static_cast<Field2D*>(Bx_rel_);
+    Field2D* By2Drel  = static_cast<Field2D*>(By_rel_);
+    Field2D* Bz2Drel  = static_cast<Field2D*>(Bz_rel_);
+
+    // B field centered in time at time t+dt/2
+    Field2D* Bx2D  = static_cast<Field2D*>(Bx_rel_t_plus_halfdt_);
+    Field2D* By2D  = static_cast<Field2D*>(By_rel_t_plus_halfdt_);
+    Field2D* Bz2D  = static_cast<Field2D*>(Bz_rel_t_plus_halfdt_);
+    // B field centered in time at time t-dt/2
+    Field2D* Bx2D0  = static_cast<Field2D*>(Bx_rel_t_minus_halfdt_);
+    Field2D* By2D0  = static_cast<Field2D*>(By_rel_t_minus_halfdt_);
+    Field2D* Bz2D0  = static_cast<Field2D*>(Bz_rel_t_minus_halfdt_);
 
 
-    // Clean the temporary variables
-    //delete Bz2Dnew;
+    // The B_rel fields, centered as B, will be advanced by dt/2 and -dt/2
+    // for proper centering in FDTD, but first they have to be centered in space
+    // The advance by dt and -dt and the sum to the existing grid fields is performed in
+    // ElectroMagn2D::sum_rel_fields_to_em_fields
+
+    // Bx (p,d)   Bx_rel is identically zero and centered as Bx, no special interpolation of indices
+    for (unsigned int i=0; i<nx_p; i++) {
+        for (unsigned int j=0; j<ny_d; j++) {
+                (*Bx2D) (i,j)= (*Bx2Drel)(i,j);
+                (*Bx2D0)(i,j)= (*Bx2Drel)(i,j);
+        }
+    }
+
+    // ---------- center the B fields 
+    // By (d,p) - remember that Byrel is centered as Ezrel (p,p)
+    for (unsigned int i=1; i<nx_d-1; i++) {
+        for (unsigned int j=0; j<ny_p; j++) {
+                (*By2D) (i,j)= 0.5 * ( (*By2Drel)(i,j) + (*By2Drel)(i-1,j) );
+                (*By2D0)(i,j)= 0.5 * ( (*By2Drel)(i,j) + (*By2Drel)(i-1,j) );
+        }
+    }
+
+    // Bz (d,d) - remember that Bzrel is centered as Eyrel (p,d)
+    for (unsigned int i=1; i<nx_d-1; i++) {
+        for (unsigned int j=0; j<ny_d; j++) {
+                (*Bz2D) (i,j)= 0.5 * ( (*Bz2Drel)(i,j) + (*Bz2Drel)(i-1,j) );
+                (*Bz2D0)(i,j)= 0.5 * ( (*Bz2Drel)(i,j) + (*Bz2Drel)(i-1,j) );
+        }
+    }
 
 } 
 
@@ -668,6 +676,19 @@ void ElectroMagn2D::initRelativisticPoissonFields(Patch *patch)
     By_rel_  = new Field2D(dimPrim, 2, false,  "By_rel"); // is equal to -beta*Ez thus inherits the same centering of Ez
     Bz_rel_  = new Field2D(dimPrim, 1, false,  "Bz_rel"); // is equal to  beta*Ey thus inherits the same centering of Ey
 
+    // ----- B fields centered as in FDTD, to be added to the already present magnetic fields
+
+    // B field advanced by dt/2
+    Bx_rel_t_plus_halfdt_  = new Field2D(dimPrim, 0, true,  "Bx_rel_t_plus_halfdt");  
+    By_rel_t_plus_halfdt_  = new Field2D(dimPrim, 1, true,  "By_rel_t_plus_halfdt"); 
+    Bz_rel_t_plus_halfdt_  = new Field2D(dimPrim, 2, true,  "Bz_rel_t_plus_halfdt"); 
+    // B field "advanced" by -dt/2
+    Bx_rel_t_minus_halfdt_  = new Field2D(dimPrim, 0, true,  "Bx_rel_t_plus_halfdt");  
+    By_rel_t_minus_halfdt_  = new Field2D(dimPrim, 1, true,  "By_rel_t_plus_halfdt"); 
+    Bz_rel_t_minus_halfdt_  = new Field2D(dimPrim, 2, true,  "Bz_rel_t_plus_halfdt"); 
+
+
+
 } // initRelativisticPoissonFields
 
 void ElectroMagn2D::sum_rel_fields_to_em_fields(Patch *patch)
@@ -675,10 +696,18 @@ void ElectroMagn2D::sum_rel_fields_to_em_fields(Patch *patch)
     Field2D* Ex2Drel  = static_cast<Field2D*>(Ex_rel_);
     Field2D* Ey2Drel  = static_cast<Field2D*>(Ey_rel_);
     Field2D* Ez2Drel  = static_cast<Field2D*>(Ez_rel_);
-    Field2D* Bx2Drel  = static_cast<Field2D*>(Bx_rel_);
-    Field2D* By2Drel  = static_cast<Field2D*>(By_rel_);
-    Field2D* Bz2Drel  = static_cast<Field2D*>(Bz_rel_);
 
+    // B_t_plus_halfdt
+    Field2D* Bx_rel_t_plus_halfdt = static_cast<Field2D*>(Bx_rel_t_plus_halfdt_);
+    Field2D* By_rel_t_plus_halfdt = static_cast<Field2D*>(By_rel_t_plus_halfdt_);
+    Field2D* Bz_rel_t_plus_halfdt = static_cast<Field2D*>(Bz_rel_t_plus_halfdt_);
+
+    // B_t_minus_halfdt
+    Field2D* Bx_rel_t_minus_halfdt = static_cast<Field2D*>(Bx_rel_t_minus_halfdt_);
+    Field2D* By_rel_t_minus_halfdt = static_cast<Field2D*>(By_rel_t_minus_halfdt_);
+    Field2D* Bz_rel_t_minus_halfdt = static_cast<Field2D*>(Bz_rel_t_minus_halfdt_);
+    
+    // E and B fields already existing on the grid
     Field2D* Ex2D  = static_cast<Field2D*>(Ex_);
     Field2D* Ey2D  = static_cast<Field2D*>(Ey_);
     Field2D* Ez2D  = static_cast<Field2D*>(Ez_);
@@ -710,31 +739,56 @@ void ElectroMagn2D::sum_rel_fields_to_em_fields(Patch *patch)
         }
     }
 
-    // Bx (p,d)
-    for (unsigned int i=0; i<nx_p; i++) {
-        for (unsigned int j=0; j<ny_d; j++) {
-                (*Bx2D) (i,j)= (*Bx2D) (i,j) + (*Bx2Drel)(i,j);
-                (*Bx2D0)(i,j)= (*Bx2D0)(i,j) + (*Bx2Drel)(i,j);
+
+
+    // Since Brel is centered in time as E, it is inconsistent with FDTD,
+    // where E and B are staggered in time. 
+    // Possible solution:
+    // Use FDTD scheme to integrate Maxwell-Faraday equation forward in time by dt/2 to obtain B
+    // Use FDTD scheme to integrate Maxwell-Faraday equation backwards in time by dt/2 to obtain Bm
+    // Add the forward-evolved and backward-evolved fields to the grid fields
+  
+  	double half_dt_ov_dx = 0.5 * timestep / dx;
+  	double half_dt_ov_dy = 0.5 * timestep / dy;
+
+    // Magnetic field Bx^(p,d,d)
+    for (unsigned int i=0 ; i<nx_p;  i++) {
+        for (unsigned int j=1 ; j<ny_d-1 ; j++) {
+                // forward advance by dt/2
+                (*Bx_rel_t_plus_halfdt) (i,j) += -1.* half_dt_ov_dy * ( (*Ez2Drel)(i,j) - (*Ez2Drel)(i,j-1) );
+                // backward advance by dt/2
+                (*Bx_rel_t_minus_halfdt)(i,j) -= -1.* half_dt_ov_dy * ( (*Ez2Drel)(i,j) - (*Ez2Drel)(i,j-1) );
+                // sum to the fields on grid
+                (*Bx2D) (i,j) += (*Bx_rel_t_plus_halfdt) (i,j);
+                (*Bx2D0)(i,j) += (*Bx_rel_t_minus_halfdt)(i,j);
         }
     }
 
-    // By (d,p) - remember that Byrel is centered as Ezrel (p,p)
-    for (unsigned int i=1; i<nx_d-1; i++) {
-        for (unsigned int j=0; j<ny_p; j++) {
-                (*By2D) (i,j)= (*By2D) (i,j) + 0.5 * ( (*By2Drel)(i,j) + (*By2Drel)(i-1,j) );
-                (*By2D0)(i,j)= (*By2D0)(i,j) + 0.5 * ( (*By2Drel)(i,j) + (*By2Drel)(i-1,j) );
+    // Magnetic field By^(d,p,d)
+    for (unsigned int i=1 ; i<nx_d-1 ; i++) {
+        for (unsigned int j=0 ; j<ny_p ; j++) {
+                // forward advance by dt/2
+                (*By_rel_t_plus_halfdt) (i,j) +=  half_dt_ov_dx * ( (*Ez2Drel)(i,j) - (*Ez2Drel)(i-1,j) );
+                // backward advance by dt/2
+                (*By_rel_t_minus_halfdt)(i,j) -=  half_dt_ov_dx * ( (*Ez2Drel)(i,j) - (*Ez2Drel)(i-1,j) );
+                // sum to the fields on grid
+                (*By2D) (i,j) += (*By_rel_t_plus_halfdt) (i,j);
+                (*By2D0)(i,j) += (*By_rel_t_minus_halfdt)(i,j);
         }
     }
-
-    // Bz (d,d) - remember that Bzrel is centered as Eyrel (p,d)
-    for (unsigned int i=1; i<nx_d-1; i++) {
-        for (unsigned int j=0; j<ny_d; j++) {
-                (*Bz2D) (i,j)= (*Bz2D) (i,j) + 0.5 * ( (*Bz2Drel)(i,j) + (*Bz2Drel)(i-1,j) );
-                (*Bz2D0)(i,j)= (*Bz2D0)(i,j) + 0.5 * ( (*Bz2Drel)(i,j) + (*Bz2Drel)(i-1,j) );
+        
+    // Magnetic field Bz^(d,d,p)
+    for (unsigned int i=1 ; i<nx_d-1 ; i++) {
+        for (unsigned int j=1 ; j<ny_d-1 ; j++) {
+                // forward advance by dt/2
+                (*Bz_rel_t_plus_halfdt)(i,j)  += -half_dt_ov_dx * ( (*Ey2Drel)(i,j) - (*Ey2Drel)(i-1,j) ) + half_dt_ov_dy * ( (*Ex2Drel)(i,j) - (*Ex2Drel)(i,j-1) );
+                // backward advance by dt/2
+                (*Bz_rel_t_minus_halfdt)(i,j) -= -half_dt_ov_dx * ( (*Ey2Drel)(i,j) - (*Ey2Drel)(i-1,j) ) + half_dt_ov_dy * ( (*Ex2Drel)(i,j) - (*Ex2Drel)(i,j-1) );
+                // sum to the fields on grid
+                (*Bz2D) (i,j) += (*Bz_rel_t_plus_halfdt) (i,j);
+                (*Bz2D0)(i,j) += (*Bz_rel_t_minus_halfdt)(i,j);
         }
     }
-
-    // BC on the cells which are present in dual but not in primal grid : Brel identically zero at x edges
 
     // delete temporary fields used for relativistic initialization
     delete Ex_rel_;
@@ -743,6 +797,15 @@ void ElectroMagn2D::sum_rel_fields_to_em_fields(Patch *patch)
     delete Bx_rel_;
     delete By_rel_;
     delete Bz_rel_;
+
+    delete Bx_rel_t_plus_halfdt;
+    delete By_rel_t_plus_halfdt;
+    delete Bz_rel_t_plus_halfdt;
+    delete Bx_rel_t_minus_halfdt;
+    delete By_rel_t_minus_halfdt;
+    delete Bz_rel_t_minus_halfdt;
+
+
 
 
 } // sum_rel_fields_to_em_fields
