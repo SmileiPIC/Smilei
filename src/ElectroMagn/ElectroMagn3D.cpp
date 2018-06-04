@@ -1325,7 +1325,7 @@ void ElectroMagn3D::center_fields_from_relativistic_Poisson(Patch *patch){
             for (unsigned int j=0; j<ny_p; j++) {
                 for (unsigned int k=0; k<nz_d; k++) {
                     (*By3D) (i,j,k)= 0.5 * ( (*By3Drel)(i,j,k) + (*By3Drel)(i-1,j,k) );
-                    (*Bx3D0)(i,j,k)= 0.5 * ( (*By3Drel)(i,j,k) + (*By3Drel)(i-1,j,k) );
+                    (*By3D0)(i,j,k)= 0.5 * ( (*By3Drel)(i,j,k) + (*By3Drel)(i-1,j,k) );
                 }
             }
         }
