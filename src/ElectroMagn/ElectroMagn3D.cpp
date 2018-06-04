@@ -888,7 +888,7 @@ void ElectroMagn3D::sum_rel_fields_to_em_fields(Patch *patch)
                 // forward advance by dt/2
                 (*By_rel_t_plus_halfdt)(i,j,k) += -half_dt_ov_dz *  ( (*Ex3Drel)(i,j,k) - (*Ex3Drel)(i,j,k-1) ) + half_dt_ov_dx * ( (*Ez3Drel)(i,j,k) - (*Ez3Drel)(i-1,j,k) );
                 // backward advance by dt/2
-                (*By_rel_t_plus_halfdt)(i,j,k) -= -half_dt_ov_dz *  ( (*Ex3Drel)(i,j,k) - (*Ex3Drel)(i,j,k-1) ) + half_dt_ov_dx * ( (*Ez3Drel)(i,j,k) - (*Ez3Drel)(i-1,j,k) );
+                (*By_rel_t_minus_halfdt)(i,j,k) -= -half_dt_ov_dz *  ( (*Ex3Drel)(i,j,k) - (*Ex3Drel)(i,j,k-1) ) + half_dt_ov_dx * ( (*Ez3Drel)(i,j,k) - (*Ez3Drel)(i-1,j,k) );
                 // sum to the fields on grid
                 (*By3D) (i,j,k) += (*By_rel_t_plus_halfdt) (i,j,k);
                 (*By3D0)(i,j,k) += (*By_rel_t_minus_halfdt)(i,j,k);
@@ -903,7 +903,7 @@ void ElectroMagn3D::sum_rel_fields_to_em_fields(Patch *patch)
                 // forward advance by dt/2
                 (*Bz_rel_t_plus_halfdt)(i,j,k) += -half_dt_ov_dx * ( (*Ey3Drel)(i,j,k) - (*Ey3Drel)(i-1,j,k) ) + half_dt_ov_dy * ( (*Ex3Drel)(i,j,k) - (*Ex3Drel)(i,j-1,k) );
                 // backward advance by dt/2
-                (*Bz_rel_t_plus_halfdt)(i,j,k) -= -half_dt_ov_dx * ( (*Ey3Drel)(i,j,k) - (*Ey3Drel)(i-1,j,k) ) + half_dt_ov_dy * ( (*Ex3Drel)(i,j,k) - (*Ex3Drel)(i,j-1,k) );
+                (*Bz_rel_t_minus_halfdt)(i,j,k) -= -half_dt_ov_dx * ( (*Ey3Drel)(i,j,k) - (*Ey3Drel)(i-1,j,k) ) + half_dt_ov_dy * ( (*Ex3Drel)(i,j,k) - (*Ex3Drel)(i,j-1,k) );
                 // sum to the fields on grid
                 (*Bz3D) (i,j,k) += (*Bz_rel_t_plus_halfdt) (i,j,k);
                 (*Bz3D0)(i,j,k) += (*Bz_rel_t_minus_halfdt)(i,j,k);
