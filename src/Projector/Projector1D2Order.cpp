@@ -201,10 +201,14 @@ void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project charge : frozen & diagFields timstep
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector1D2Order::operator() (double* rho, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim)
+void Projector1D2Order::operator() (double* rho, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim)
 {
 
-    //Warning : this function is used for frozen species only. It is assumed that position = position_old !!!
+    //Warning : this function is used for frozen species or initialization only and doesn't use the standard scheme.
+    //rho type = 0
+    //Jx type = 1
+    //Jy type = 2
+    //Jz type = 3
 
     // The variable bin received is  number of bin * cluster width.
     // Declare local variables
@@ -220,16 +224,9 @@ void Projector1D2Order::operator() (double* rho, Particles &particles, unsigned 
         S1[i]=0.;
     }//i
 
-
-    // Locate particle old position on the primal grid
-    //xjn        = particles.position_old(0, ipart) * dx_inv_;
-    //ipo        = round(xjn);                          // index of the central node
-    //xj_m_xipo  = xjn - (double)ipo;                   // normalized distance to the nearest grid point
-    //xj_m_xipo2 = xj_m_xipo*xj_m_xipo;                 // square of the normalized distance to the nearest grid point
-
     // Locate particle new position on the primal grid
     xjn       = particles.position(0, ipart) * dx_inv_;
-    ip        = round(xjn);                           // index of the central node
+    ip        = round(xjn + 0.5 * (type==1));                           // index of the central node
     xj_m_xip  = xjn - (double)ip;                     // normalized distance to the nearest grid point
     xj_m_xip2 = xj_m_xip*xj_m_xip;                    // square of the normalized distance to the nearest grid point
 

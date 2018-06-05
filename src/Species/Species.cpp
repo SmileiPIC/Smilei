@@ -667,14 +667,10 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 
             for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
 
-                if (nDim_field==2)
-                    b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
-                if (nDim_field==3)
-                    b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
-                else if (nDim_field==1)
-                    b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
+                b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
+
                 for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
-                    (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_dim);
+                    (*Proj)(b_rho, (*particles), iPart, 0, b_dim);
                 } //End loop on particles
             }//End loop on bins
 
@@ -694,37 +690,22 @@ void Species::projection_for_diags(double time_dual, unsigned int ispec,
 
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
 
-            if (nDim_field==3){
-                b_Jx  = EMfields->Jx_s [ispec] ? &(*EMfields->Jx_s [ispec])(ibin*clrw* f_dim1   *f_dim2) : &(*EMfields->Jx_ )(ibin*clrw* f_dim1   *f_dim2) ;
-                b_Jy  = EMfields->Jy_s [ispec] ? &(*EMfields->Jy_s [ispec])(ibin*clrw*(f_dim1+1)*f_dim2) : &(*EMfields->Jy_ )(ibin*clrw*(f_dim1+1)*f_dim2) ;
-                b_Jz  = EMfields->Jz_s [ispec] ? &(*EMfields->Jz_s [ispec])(ibin*clrw*f_dim1*(f_dim2+1)) : &(*EMfields->Jz_ )(ibin*clrw*f_dim1*(f_dim2+1)) ;
-                b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw* f_dim1   *f_dim2) : &(*EMfields->rho_)(ibin*clrw* f_dim1   *f_dim2) ;
-            }
-            else if (nDim_field==2){
-                b_Jx  = EMfields->Jx_s [ispec] ? &(*EMfields->Jx_s [ispec])(ibin*clrw* f_dim1   ) : &(*EMfields->Jx_ )(ibin*clrw* f_dim1   ) ;
-                b_Jy  = EMfields->Jy_s [ispec] ? &(*EMfields->Jy_s [ispec])(ibin*clrw*(f_dim1+1)) : &(*EMfields->Jy_ )(ibin*clrw*(f_dim1+1)) ;
-                b_Jz  = EMfields->Jz_s [ispec] ? &(*EMfields->Jz_s [ispec])(ibin*clrw* f_dim1   ) : &(*EMfields->Jz_ )(ibin*clrw* f_dim1   ) ;
-                b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw* f_dim1   ) : &(*EMfields->rho_)(ibin*clrw* f_dim1   ) ;
-            }
-            else {   //Last case nDim_field == 1
-                b_Jx  = EMfields->Jx_s [ispec] ? &(*EMfields->Jx_s [ispec])(ibin*clrw) : &(*EMfields->Jx_ )(ibin*clrw) ;
-                b_Jy  = EMfields->Jy_s [ispec] ? &(*EMfields->Jy_s [ispec])(ibin*clrw) : &(*EMfields->Jy_ )(ibin*clrw) ;
-                b_Jz  = EMfields->Jz_s [ispec] ? &(*EMfields->Jz_s [ispec])(ibin*clrw) : &(*EMfields->Jz_ )(ibin*clrw) ;
-                b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw) : &(*EMfields->rho_)(ibin*clrw) ;
-            }
+                b_Jx  = EMfields->Jx_s [ispec] ? &(*EMfields->Jx_s [ispec])(0) : &(*EMfields->Jx_ )(0) ;
+                b_Jy  = EMfields->Jy_s [ispec] ? &(*EMfields->Jy_s [ispec])(0) : &(*EMfields->Jy_ )(0) ;
+                b_Jz  = EMfields->Jz_s [ispec] ? &(*EMfields->Jz_s [ispec])(0) : &(*EMfields->Jz_ )(0) ;
+                b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
+
             for (int iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
-                (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_dim);
+                (*Proj)(b_rho, (*particles), iPart, 0, b_dim);
                 //dual, primal, primal
-                 b_dim[0] += 1;
-                (*Proj)(b_Jx, (*particles), iPart, ibin*clrw, b_dim);
+                (*Proj)(b_Jx, (*particles), iPart, 1, b_dim);
                 //primal, dual, primal
-                 b_dim[0] -= 1;
                  b_dim[1] += 1;
-                (*Proj)(b_Jy, (*particles), iPart, ibin*clrw, b_dim);
+                (*Proj)(b_Jy, (*particles), iPart, 2, b_dim);
                 //primal, primal, dual
                  b_dim[1] -= 1;
                  b_dim[2] += 1;
-                (*Proj)(b_Jz, (*particles), iPart, ibin*clrw, b_dim);
+                (*Proj)(b_Jz, (*particles), iPart, 3, b_dim);
                  b_dim[2] -= 1;
             } //End loop on particles
         }//End loop on bins

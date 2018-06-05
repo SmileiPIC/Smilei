@@ -500,9 +500,13 @@ void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local densities only (Frozen species)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D2Order::operator() (double* rho, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim)
+void Projector3D2Order::operator() (double* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim)
 {
-    //Warning : this function is used for frozen species only. It is assumed that position = position_old !!!
+    //Warning : this function is used for frozen species or initialization only and doesn't use the standard scheme.
+    //rho type = 0
+    //Jx type = 1
+    //Jy type = 2
+    //Jz type = 3
 
     // -------------------------------------
     // Variable declaration & initialization
@@ -530,7 +534,7 @@ void Projector3D2Order::operator() (double* rho, Particles &particles, unsigned 
 
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
     xpn = particles.position(0, ipart) * dx_inv_;
-    int ip = round(xpn);
+    int ip = round(xpn + 0.5*(type==1));
     delta  = xpn - (double)ip;
     delta2 = delta*delta;
     Sx1[1] = 0.5 * (delta2-delta+0.25);
@@ -538,7 +542,7 @@ void Projector3D2Order::operator() (double* rho, Particles &particles, unsigned 
     Sx1[3] = 0.5 * (delta2+delta+0.25);
 
     ypn = particles.position(1, ipart) * dy_inv_;
-    int jp = round(ypn);
+    int jp = round(ypn + 0.5*(type==2));
     delta  = ypn - (double)jp;
     delta2 = delta*delta;
     Sy1[1] = 0.5 * (delta2-delta+0.25);
@@ -546,7 +550,7 @@ void Projector3D2Order::operator() (double* rho, Particles &particles, unsigned 
     Sy1[3] = 0.5 * (delta2+delta+0.25);
 
     zpn = particles.position(2, ipart) * dz_inv_;
-    int kp = round(zpn);
+    int kp = round(zpn + 0.5*(type==3));
     delta  = zpn - (double)kp;
     delta2 = delta*delta;
     Sz1[1] = 0.5 * (delta2-delta+0.25);
@@ -565,7 +569,7 @@ void Projector3D2Order::operator() (double* rho, Particles &particles, unsigned 
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = (jp+j)*b_dim[2];
             for (unsigned int k=0 ; k<5 ; k++) {
-                rho[iloc+jloc+kp+k] += charge_weight * Sx1[i]*Sy1[j]*Sz1[k];
+                rhoj[iloc+jloc+kp+k] += charge_weight * Sx1[i]*Sy1[j]*Sz1[k];
             }
         }
     }//i
