@@ -215,9 +215,19 @@ void Projector1D2Order::operator() (double* rho, Particles &particles, unsigned 
     //int ipo, ip, iloc;
     int ip;
     //int ip_m_ipo;
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double xjn, xj_m_xip, xj_m_xip2;
     double S1[5];            // arrays used for the Esirkepov projection method
+
+    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    if (type > 0) {
+        charge_weight *= 1./sqrt(1.0 + particles.momentum(0,ipart)*particles.momentum(0,ipart)
+                                     + particles.momentum(1,ipart)*particles.momentum(1,ipart)
+                                     + particles.momentum(2,ipart)*particles.momentum(2,ipart));
+
+        if (type == 1)       charge_weight *= particles.momentum(0,ipart);
+        else if (type == 2)  charge_weight *= particles.momentum(1,ipart);
+        else                 charge_weight *= particles.momentum(2,ipart); 
+    }
 
     // Initialize variables
     for (unsigned int i=0; i<5; i++) {

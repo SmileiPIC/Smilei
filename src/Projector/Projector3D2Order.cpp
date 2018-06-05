@@ -514,12 +514,22 @@ void Projector3D2Order::operator() (double* rhoj, Particles &particles, unsigned
 
     int iloc,jloc;
     // (x,y,z) components of the current density for the macro-particle
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
 
     // variable declaration
     double xpn, ypn, zpn;
     double delta, delta2;
     double Sx1[5], Sy1[5], Sz1[5]; // arrays used for the Esirkepov projection method
+
+    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    if (type > 0) {
+        charge_weight *= 1./sqrt(1.0 + particles.momentum(0,ipart)*particles.momentum(0,ipart)
+                                     + particles.momentum(1,ipart)*particles.momentum(1,ipart)
+                                     + particles.momentum(2,ipart)*particles.momentum(2,ipart));
+
+        if (type == 1)       charge_weight *= particles.momentum(0,ipart);
+        else if (type == 2)  charge_weight *= particles.momentum(1,ipart);
+        else                 charge_weight *= particles.momentum(2,ipart); 
+    }
 
 // Initialize all current-related arrays to zero
     for (unsigned int i=0; i<5; i++) {
