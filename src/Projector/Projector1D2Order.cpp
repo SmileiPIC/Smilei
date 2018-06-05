@@ -239,7 +239,7 @@ void Projector1D2Order::operator() (double* rho, Particles &particles, unsigned 
     S1[2] = (0.75-xj_m_xip2);
     S1[3] = 0.5 * (xj_m_xip2+xj_m_xip+0.25);
 
-    ip -= index_domain_begin + bin + 2;
+    ip -= index_domain_begin + 2;
 
     // 2nd order projection for charge density
     // At the 2nd order, oversize = 2.
