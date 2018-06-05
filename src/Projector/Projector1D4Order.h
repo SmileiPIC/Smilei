@@ -15,6 +15,8 @@ public:
 
     //! Project global current charge (EMfields->rho_), frozen & diagFields timestep
     void operator() (double* rho, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim) override final;
+    //! Project global current charge for initialization
+    void operator() (double* rho, double* Jx,double* Jy,double* Jz, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim) override final;
 
     //! Project global current densities if Ionization in Species::dynamics,
     void operator() (Field* Jx, Field* Jy, Field* Jz, Particles &particles, int ipart, LocalFields Jion) override final;

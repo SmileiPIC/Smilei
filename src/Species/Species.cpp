@@ -713,19 +713,7 @@ void Species::projection_for_diags(double time_dual, unsigned int ispec,
                 b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw) : &(*EMfields->rho_)(ibin*clrw) ;
             }
             for (int iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
-                (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_dim);
-                //dual, primal, primal
-                 b_dim[0] += 1;
-                (*Proj)(b_Jx, (*particles), iPart, ibin*clrw, b_dim);
-                //primal, dual, primal
-                 b_dim[0] -= 1;
-                 b_dim[1] += 1;
-                (*Proj)(b_Jy, (*particles), iPart, ibin*clrw, b_dim);
-                //primal, primal, dual
-                 b_dim[1] -= 1;
-                 b_dim[2] += 1;
-                (*Proj)(b_Jz, (*particles), iPart, ibin*clrw, b_dim);
-                 b_dim[2] -= 1;
+                (*Proj)(b_rho,b_Jx,b_Jy,b_Jz, (*particles), iPart, ibin*clrw, b_dim);
             } //End loop on particles
         }//End loop on bins
 
