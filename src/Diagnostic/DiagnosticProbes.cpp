@@ -176,11 +176,19 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
     // Extract the list of requested fields
     vector<string> fs;
     if(!PyTools::extract("fields",fs,"DiagProbe",n_probe)) {
-        fs.resize(14);
-        fs[0]="Ex"; fs[1]="Ey"; fs[2]="Ez";
-        fs[3]="Bx"; fs[4]="By"; fs[5]="Bz";
-        fs[6]="Jx"; fs[7]="Jy"; fs[8]="Jz"; fs[9]="Rho";
-        fs[10]="Env_Ar"; fs[11]="Env_Ai"; fs[12]="Env_A_abs"; fs[13]="Env_Chi";
+        if (params.Laser_Envelope_model) {
+            fs.resize(14);
+            fs[0]="Ex"; fs[1]="Ey"; fs[2]="Ez";
+            fs[3]="Bx"; fs[4]="By"; fs[5]="Bz";
+            fs[6]="Jx"; fs[7]="Jy"; fs[8]="Jz"; fs[9]="Rho";
+            fs[10]="Env_Ar"; fs[11]="Env_Ai"; fs[12]="Env_A_abs"; fs[13]="Env_Chi";
+        }
+        else {
+            fs.resize(10);
+            fs[0]="Ex"; fs[1]="Ey"; fs[2]="Ez";
+            fs[3]="Bx"; fs[4]="By"; fs[5]="Bz";
+            fs[6]="Jx"; fs[7]="Jy"; fs[8]="Jz"; fs[9]="Rho";
+        }
     }
     vector<unsigned int> locations;
     locations.resize(14);
