@@ -277,62 +277,6 @@ void Projector1D4Order::operator() (double* rho, Particles &particles, unsigned 
 
 }
 
-// ---------------------------------------------------------------------------------------------------------------------
-//! Project charge and currents : initialization
-// ---------------------------------------------------------------------------------------------------------------------
-void Projector1D4Order::operator() (double* rho, double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim)
-{
-
-    //Warning : this function is used for initialization only and not based oin Esirkepov scheme.
-
-    // The variable bin received is  number of bin * cluster width.
-    // Declare local variables
-    int ip, id;
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
-    double xjn, xj_m_xip, xj_m_xip2, xj_m_xid, xj_m_xid2;
-    double S1[5],S1d[5],invgf;            // arrays used for the Esirkepov projection method
-
-    //Compute gamma factor
-    invgf = 1./sqrt(1.0 + particles.momentum(0,ipart)*particles.momentum(0,ipart)
-                        + particles.momentum(1,ipart)*particles.momentum(1,ipart)
-                        + particles.momentum(2,ipart)*particles.momentum(2,ipart)
-                   );
-    // Initialize variables
-    for (unsigned int i=0; i<5; i++) {
-        S1[i]=0.;
-        S1d[i]=0.;
-    }//i
-
-    // Locate particle new position on the primal grid
-    xjn       = particles.position(0, ipart) * dx_inv_;
-    ip        = round(xjn);                           // index of the central node
-    id        = round(xjn+0.5);                           // index of the central node
-    xj_m_xip  = xjn - (double)ip;                     // normalized distance to the nearest grid point
-    xj_m_xid  = xjn - (double)id;                     // normalized distance to the nearest grid point
-    xj_m_xip2 = xj_m_xip*xj_m_xip;                    // square of the normalized distance to the nearest grid point
-    xj_m_xid2 = xj_m_xid*xj_m_xid;                    // square of the normalized distance to the nearest grid point
-
-    // coefficients 2nd order interpolation on 3 nodes
-    //ip_m_ipo = ip-ipo;
-    S1[1] = 0.5 * (xj_m_xip2-xj_m_xip+0.25);
-    S1[2] = (0.75-xj_m_xip2);
-    S1[3] = 0.5 * (xj_m_xip2+xj_m_xip+0.25);
-    S1d[1] = 0.5 * (xj_m_xid2-xj_m_xid+0.25);
-    S1d[2] = (0.75- xj_m_xid2);
-    S1d[3] = 0.5 * (xj_m_xid2+xj_m_xid+0.25);
-
-    ip -= index_domain_begin + bin + 2;
-
-    // 2nd order projection for charge density
-    // At the 2nd order, oversize = 2.
-    for (unsigned int i=0; i<5; i++) {
-        rho[i + ip ] += charge_weight * S1[i];
-        Jx[i + ip ]  += charge_weight * particles.momentum(0,ipart)*invgf * S1d[i];
-        Jy[i + ip ]  += charge_weight * particles.momentum(1,ipart)*invgf * S1[i];
-        Jz[i + ip ]  += charge_weight * particles.momentum(2,ipart)*invgf * S1[i];
-    }//i
-
-}
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project global current densities (ionize)
