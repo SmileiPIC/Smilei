@@ -686,23 +686,19 @@ void Species::projection_for_diags(double time_dual, unsigned int ispec,
 {
     if ( diag_flag &&(!particles->is_test)){
 
-        double *b_Jx, *b_Jy, *b_Jz, *b_rho;
+        double *buf[4];
 
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
 
-                b_Jx  = EMfields->Jx_s [ispec] ? &(*EMfields->Jx_s [ispec])(0) : &(*EMfields->Jx_ )(0) ;
-                b_Jy  = EMfields->Jy_s [ispec] ? &(*EMfields->Jy_s [ispec])(0) : &(*EMfields->Jy_ )(0) ;
-                b_Jz  = EMfields->Jz_s [ispec] ? &(*EMfields->Jz_s [ispec])(0) : &(*EMfields->Jz_ )(0) ;
-                b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
+                buf[0] = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
+                buf[1] = EMfields->Jx_s [ispec] ? &(*EMfields->Jx_s [ispec])(0) : &(*EMfields->Jx_ )(0) ;
+                buf[2] = EMfields->Jy_s [ispec] ? &(*EMfields->Jy_s [ispec])(0) : &(*EMfields->Jy_ )(0) ;
+                buf[3] = EMfields->Jz_s [ispec] ? &(*EMfields->Jz_s [ispec])(0) : &(*EMfields->Jz_ )(0) ;
 
             for (int iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
-                (*Proj)(b_rho, (*particles), iPart, 0, b_dim);
-                //dual, primal, primal
-                (*Proj)(b_Jx, (*particles), iPart, 1, b_dim);
-                //primal, dual, primal
-                (*Proj)(b_Jy, (*particles), iPart, 2, b_dim);
-                //primal, primal, dual
-                (*Proj)(b_Jz, (*particles), iPart, 3, b_dim);
+                for (unsigned int quantity=0; quantity < 4; quantity++) {
+                    (*Proj)(buf[quantity], (*particles), iPart, quantity, b_dim);
+                }
             } //End loop on particles
         }//End loop on bins
 
