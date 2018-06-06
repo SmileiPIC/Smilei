@@ -29,6 +29,8 @@ protected:
     int i_domain_begin;
     int j_domain_begin;
     int nprimy;
+    int oversize[2];
+    double dq_inv[2];
 };
 
 #endif
