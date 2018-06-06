@@ -23,7 +23,10 @@ Projector3D2Order::Projector3D2Order (Params& params, Patch* patch) : Projector3
     dy_ov_dt  = params.cell_length[1] / params.timestep;
     dz_inv_   = 1.0/params.cell_length[2];
     dz_ov_dt  = params.cell_length[2] / params.timestep;
-    
+   
+    nprimz = params.n_space[2] + 2*params.oversize[2] + 1;
+    nprimy = params.n_space[1] + 2*params.oversize[1] + 1;
+ 
     one_third = 1.0/3.0;
 
     i_domain_begin = patch->getCellStartingGlobalIndex(0);
@@ -513,6 +516,7 @@ void Projector3D2Order::operator() (double* rhoj, Particles &particles, unsigned
     // -------------------------------------
 
     int iloc,jloc;
+    int ny(nprimy), nz(nprimz), nyz;
     // (x,y,z) components of the current density for the macro-particle
 
     // variable declaration
@@ -526,10 +530,19 @@ void Projector3D2Order::operator() (double* rhoj, Particles &particles, unsigned
                                      + particles.momentum(1,ipart)*particles.momentum(1,ipart)
                                      + particles.momentum(2,ipart)*particles.momentum(2,ipart));
 
-        if (type == 1)       charge_weight *= particles.momentum(0,ipart);
-        else if (type == 2)  charge_weight *= particles.momentum(1,ipart);
-        else                 charge_weight *= particles.momentum(2,ipart); 
+        if (type == 1){
+            charge_weight *= particles.momentum(0,ipart);
+        }
+        else if (type == 2){
+            charge_weight *= particles.momentum(1,ipart);
+            ny ++;
+        }
+        else {
+            charge_weight *= particles.momentum(2,ipart); 
+            nz ++;
+        }
     }
+    nyz = ny*nz;
 
 // Initialize all current-related arrays to zero
     for (unsigned int i=0; i<5; i++) {
@@ -575,9 +588,9 @@ void Projector3D2Order::operator() (double* rhoj, Particles &particles, unsigned
     kp -= k_domain_begin + 2;
 
     for (unsigned int i=0 ; i<5 ; i++) {
-        iloc = (i+ip)*b_dim[2]*b_dim[1];
+        iloc = (i+ip) * nyz;
         for (unsigned int j=0 ; j<5 ; j++) {
-            jloc = (jp+j)*b_dim[2];
+            jloc = (jp+j) * nz;
             for (unsigned int k=0 ; k<5 ; k++) {
                 rhoj[iloc+jloc+kp+k] += charge_weight * Sx1[i]*Sy1[j]*Sz1[k];
             }

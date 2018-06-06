@@ -33,8 +33,6 @@ protected:
     int k_domain_begin;
     int nprimy;
     int nprimz;
-    int oversize[3];
-    double dq_inv[3];
 };
 
 #endif

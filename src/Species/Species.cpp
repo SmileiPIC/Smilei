@@ -700,13 +700,9 @@ void Species::projection_for_diags(double time_dual, unsigned int ispec,
                 //dual, primal, primal
                 (*Proj)(b_Jx, (*particles), iPart, 1, b_dim);
                 //primal, dual, primal
-                 b_dim[1] += 1;
                 (*Proj)(b_Jy, (*particles), iPart, 2, b_dim);
                 //primal, primal, dual
-                 b_dim[1] -= 1;
-                 b_dim[2] += 1;
                 (*Proj)(b_Jz, (*particles), iPart, 3, b_dim);
-                 b_dim[2] -= 1;
             } //End loop on particles
         }//End loop on bins
 
