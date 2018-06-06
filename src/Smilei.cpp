@@ -221,10 +221,6 @@ int main (int argc, char* argv[])
 
         vecPatches.sumDensities(params, time_dual, timers, 0, simWindow );
 
-        vecPatches.finalize_and_sort_parts(params, &smpi, simWindow,
-            RadiationTables,MultiphotonBreitWheelerTables, 
-            time_dual, timers, 0);
-
         TITLE("Initializing diagnostics");
         vecPatches.initAllDiags( params, &smpi );
         TITLE("Running diags at time t = 0");
