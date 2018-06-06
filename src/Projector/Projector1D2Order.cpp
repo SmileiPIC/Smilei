@@ -201,7 +201,7 @@ void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project charge : frozen & diagFields timstep
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector1D2Order::operator() (double* rho, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim)
+void Projector1D2Order::operator() (double* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim)
 {
 
     //Warning : this function is used for frozen species or initialization only and doesn't use the standard scheme.
@@ -251,7 +251,7 @@ void Projector1D2Order::operator() (double* rho, Particles &particles, unsigned 
     // 2nd order projection for charge density
     // At the 2nd order, oversize = 2.
     for (unsigned int i=0; i<5; i++) {
-        rho[i + ip ] += charge_weight * S1[i];
+        rhoj[i + ip ] += charge_weight * S1[i];
     }//i
 
 }
