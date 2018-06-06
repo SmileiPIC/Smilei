@@ -289,16 +289,32 @@ class Performances(Diagnostic):
 			C.append( B )
 
 		# Calculate the operation
-		if self.operation=="vecto":
+		# First patch performance information
+		if  self.operation in ["vecto", "mpi_rank"]:
+
 			if "patches" not in self._h5items[index].keys():
 				print("No patches group in timestep {}".format(str(t)))
 				return []
+
+			# Get the position of the patches
 			x_patches = self._np.array(self._h5items[index]["patches"]["x"][:])
 			y_patches = self._np.array(self._h5items[index]["patches"]["y"][:])
 			z_patches = self._np.array(self._h5items[index]["patches"]["z"][:])
-			if self._species not in self._h5items[index]["patches"].keys():
-				print("Requested species {} does not have a group".format(self._species))
-			vecto_patches = self._np.array(self._h5items[index]["patches"][self._species]["vecto"])
+
+			if self.operation=="vecto":
+
+				if self._species not in self._h5items[index]["patches"].keys():
+					print("Requested species {} does not have a group".format(self._species))
+					return []
+				patches_buffer = self._np.array(self._h5items[index]["patches"][self._species]["vecto"])
+
+			elif self.operation=="mpi_rank":
+
+				if "mpi_rank" not in self._h5items[index]["patches"].keys():
+					print("Requested mpi_rank does not have a dataset")
+					return []
+
+				patches_buffer = self._np.array(self._h5items[index]["patches"]["mpi_rank"])
 
 			# Get the dimension of the patch matrix
 			x_max = x_patches.max()
@@ -307,9 +323,10 @@ class Performances(Diagnostic):
 
 			# Matrix of patches reconstituted
 			A = self._np.zeros([x_max+1,y_max+1,z_max+1])
-			for i in range(len(vecto_patches)):
-				A[x_patches[i],y_patches[i],z_patches[i]] = vecto_patches[i]
+			for i in range(len(patches_buffer)):
+				A[x_patches[i],y_patches[i],z_patches[i]] = patches_buffer[i]
 
+		# Or global performance information
 		else:
 			A = eval(self._operation)
 
