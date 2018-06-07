@@ -236,7 +236,7 @@ public:
             checkPyError(true);
             Py_DECREF(myFunction);
         } else {
-            MESSAGE(1,"python " << name << " function does not exists");
+            MESSAGE(1,"python " << name << " function does not exist");
         }
     }
 
@@ -379,7 +379,7 @@ public:
         }
         return retvec;
     }
-
+    
     static bool extract_pyProfile(std::string name, PyObject*& myPy, std::string component=std::string(""), int nComponent=0) {
         PyObject* myPytmp=extract_py(name,component,nComponent);
         if (PyCallable_Check(myPytmp)) {

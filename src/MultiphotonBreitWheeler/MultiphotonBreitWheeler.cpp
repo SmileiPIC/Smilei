@@ -339,7 +339,7 @@ void MultiphotonBreitWheeler::pair_emission(int ipart,
             // Positions
             for (i=0; i<nDim_; i++) {
                 new_pair[k].position(i,idNew)=particles.position(i,ipart);
-                //+ new_pair[k].momentum(i,idNew)*remaining_dt*inv_gamma;
+//               + new_pair[k].momentum(i,idNew)*remaining_dt*inv_gamma;
             }
 
             // Old positions

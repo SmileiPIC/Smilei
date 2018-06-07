@@ -270,6 +270,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             }
         }
     }
+    #pragma omp barrier
 
     #pragma omp single nowait
     {

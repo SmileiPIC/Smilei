@@ -187,9 +187,9 @@ ElectroMagn::~ElectroMagn()
    if(By_ != NULL) delete By_;
    if(Bz_ != NULL) delete Bz_;
    if (!is_pxr) {
-      if(Bx_m != NULL) delete Bx_m;
-      if(By_m != NULL) delete By_m;
-      if(Bz_m != NULL) delete Bz_m;
+       if(Bx_m != NULL) delete Bx_m;
+       if(By_m != NULL) delete By_m;
+       if(Bz_m != NULL) delete Bz_m;
    }
    if(Jx_ != NULL) delete Jx_;
    if(Jy_ != NULL) delete Jy_;
@@ -399,6 +399,17 @@ void ElectroMagn::applyExternalFields(Patch* patch) {
     By_m->copyFrom(By_);
     Bz_m->copyFrom(Bz_);
 }
+
+void ElectroMagn::saveExternalFields(Patch* patch) {    
+    for (vector<ExtField>::iterator extfield=extFields.begin(); extfield!=extFields.end(); extfield++ ) {
+        if( extfield->index < allFields.size() ) {
+            for (auto& embc: emBoundCond) {
+                if (embc) embc->save_fields( allFields[extfield->index], patch);
+            }
+        }
+    }
+}
+
 
 
 void ElectroMagn::applyAntenna(unsigned int iAntenna, double intensity) {

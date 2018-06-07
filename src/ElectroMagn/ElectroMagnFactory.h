@@ -79,7 +79,6 @@ public:
             if (!PyTools::extract_pyProfile("profile",profile,"ExternalField",n_extfield))
                 ERROR("ExternalField #"<<n_extfield<<": parameter 'profile' not understood");
             extField.profile = new Profile(profile, params.nDim_field, name.str(),true);
-
             // Find which index the field is in the allFields vector
             extField.index = 1000;
             for( unsigned int ifield=0; ifield<EMfields->allFields.size(); ifield++ ) {
@@ -147,8 +146,16 @@ public:
     }
 
 
-    static ElectroMagn* clone(ElectroMagn* EMfields, Params& params, std::vector<Species*>& vecSpecies,  Patch* patch)
+    static ElectroMagn* clone(ElectroMagn* EMfields, Params& params, std::vector<Species*>& vecSpecies,  Patch* patch, unsigned int n_moved)
     {
+        // Workaround for a Laser bug
+        // count laser for later
+        int nlaser_tot(0);
+        for( int iBC=0; iBC<2; iBC++ ) { // xmax and xmin
+            if(! EMfields->emBoundCond[iBC]) continue;
+            nlaser_tot += EMfields->emBoundCond[iBC]->vecLaser.size();
+        }
+
         ElectroMagn* newEMfields = NULL;
         if ( params.geometry == "1Dcartesian" ) {
             newEMfields = new ElectroMagn1D(static_cast<ElectroMagn1D*>(EMfields), params, patch);
@@ -164,7 +171,7 @@ public:
 
         // initialize the envelope if used
         if ( EMfields->envelope != NULL )
-            newEMfields->envelope = EnvelopeFactory::clone(EMfields->envelope, patch, newEMfields, params);
+            newEMfields->envelope = EnvelopeFactory::clone(EMfields->envelope, patch, EMfields, params, n_moved);
         
         // -----------------
         // Clone time-average fields
@@ -180,22 +187,24 @@ public:
         // -----------------
         // Clone Lasers properties
         // -----------------
-        int nlaser;
-        for( int iBC=0; iBC<2; iBC++ ) { // xmax and xmin
-            if(! newEMfields->emBoundCond[iBC]) continue;
+        if (nlaser_tot>0) {
+            int nlaser;
+            for( int iBC=0; iBC<2; iBC++ ) { // xmax and xmin
+                if(! newEMfields->emBoundCond[iBC]) continue;
 
-            newEMfields->emBoundCond[iBC]->vecLaser.resize(0);
-            nlaser = EMfields->emBoundCond[iBC]->vecLaser.size();
-            // Create lasers one by one
-            for (int ilaser = 0; ilaser < nlaser; ilaser++) {
-                // Create laser
-                Laser * laser = new Laser(EMfields->emBoundCond[iBC]->vecLaser[ilaser], params);
-                // If patch is on border, then fill the fields arrays
-                if( (iBC==0 && patch->isXmin())
-                   || (iBC==1 && patch->isXmax()) )
-                    laser->createFields(params, patch);
-                // Append the laser to the vector
-                newEMfields->emBoundCond[iBC]->vecLaser.push_back( laser );
+                newEMfields->emBoundCond[iBC]->vecLaser.resize(0);
+                nlaser = EMfields->emBoundCond[iBC]->vecLaser.size();
+                // Create lasers one by one
+                for (int ilaser = 0; ilaser < nlaser; ilaser++) {
+                    // Create laser
+                    Laser * laser = new Laser(EMfields->emBoundCond[iBC]->vecLaser[ilaser], params);
+                    // If patch is on border, then fill the fields arrays
+                    if( (iBC==0 && patch->isXmin())
+                        || (iBC==1 && patch->isXmax()) )
+                        laser->createFields(params, patch);
+                    // Append the laser to the vector
+                    newEMfields->emBoundCond[iBC]->vecLaser.push_back( laser );
+                }
             }
         }
 
@@ -205,7 +214,10 @@ public:
         for (unsigned int n_extfield = 0; n_extfield < EMfields->extFields.size(); n_extfield++) {
             ExtField extField;
             extField.field   = EMfields->extFields[n_extfield].field;
-            extField.profile = EMfields->extFields[n_extfield].profile;
+            if (n_moved==0)
+                extField.profile = EMfields->extFields[n_extfield].profile;
+            else 
+                extField.profile = NULL;
             extField.index   = EMfields->extFields[n_extfield].index;
             newEMfields->extFields.push_back(extField);
         }

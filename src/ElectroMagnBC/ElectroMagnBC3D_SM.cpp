@@ -25,56 +25,56 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch, unsigned i
     if (min_max==0 && patch->isXmin() ) {
         // BCs at the x-border min
         dims = { ny_d, nz_d }; // Bx^(p,d,d)
-        Bx_val = new Field2D(dims); Bx_val->put_to(0.);
+        Bx_val = new Field2D(dims, "Bx_val"); Bx_val->put_to(0.);
         dims = { ny_p, nz_d }; // By^(d,p,d)
-        By_val = new Field2D(dims); By_val->put_to(0.);
+        By_val = new Field2D(dims, "By_val"); By_val->put_to(0.);
         dims = { ny_d, nz_p }; // Bz^(d,d,p)
-        Bz_val = new Field2D(dims); Bz_val->put_to(0.);
+        Bz_val = new Field2D(dims, "Bz_val"); Bz_val->put_to(0.);
     }
     else if (min_max==1 && patch->isXmax() ) {
         // BCs at the x-border max
         dims = { ny_d, nz_d }; // Bx^(p,d,d)
-        Bx_val = new Field2D(dims); Bx_val->put_to(0.);
+        Bx_val = new Field2D(dims, "Bx_val"); Bx_val->put_to(0.);
         dims = { ny_p, nz_d }; // By^(d,p,d)
-        By_val = new Field2D(dims); By_val->put_to(0.);
+        By_val = new Field2D(dims, "By_val"); By_val->put_to(0.);
         dims = { ny_d, nz_p }; // Bz^(d,d,p)
-        Bz_val = new Field2D(dims); Bz_val->put_to(0.);
+        Bz_val = new Field2D(dims, "Bz_val"); Bz_val->put_to(0.);
     }
     else if (min_max==2 && patch->isYmin() ) {
         // BCs in the y-border min
         dims = { nx_p, nz_d }; // Bx^(p,d,d)
-        Bx_val = new Field2D(dims); Bx_val->put_to(0.);
+        Bx_val = new Field2D(dims, "Bx_val"); Bx_val->put_to(0.);
         dims = { nx_d, nz_d }; // By^(d,p,d)
-        By_val = new Field2D(dims); By_val->put_to(0.);
+        By_val = new Field2D(dims, "By_val"); By_val->put_to(0.);
         dims = { nx_d, nz_p }; // Bz^(d,d,p)
-        Bz_val = new Field2D(dims); Bz_val->put_to(0.);
+        Bz_val = new Field2D(dims, "Bz_val"); Bz_val->put_to(0.);
     }
     else if (min_max==3 && patch->isYmax() ) {
         // BCs in the y-border mix
         dims = { nx_p, nz_d }; // Bx^(p,d,d)
-        Bx_val = new Field2D(dims); Bx_val->put_to(0.);
+        Bx_val = new Field2D(dims, "Bx_val"); Bx_val->put_to(0.);
         dims = { nx_d, nz_d }; // By^(d,p,d)
-        By_val = new Field2D(dims); By_val->put_to(0.);
+        By_val = new Field2D(dims, "By_val"); By_val->put_to(0.);
         dims = { nx_d, nz_p }; // Bz^(d,d,p)
-        Bz_val = new Field2D(dims); Bz_val->put_to(0.);
+        Bz_val = new Field2D(dims, "Bz_val"); Bz_val->put_to(0.);
     }
     else if (min_max==4 && patch->isZmin() ) {
         // BCs in the z-border min
         dims = { nx_p, ny_d }; // Bx^(p,d,d)
-        Bx_val = new Field2D(dims); Bx_val->put_to(0.);
+        Bx_val = new Field2D(dims, "Bx_val"); Bx_val->put_to(0.);
         dims = { nx_d, ny_p }; // By^(d,p,d)
-        By_val = new Field2D(dims); By_val->put_to(0.);
+        By_val = new Field2D(dims, "By_val"); By_val->put_to(0.);
         dims = { nx_d, ny_d }; // Bz^(d,d,p)
-        Bz_val = new Field2D(dims); Bz_val->put_to(0.);
+        Bz_val = new Field2D(dims, "Bz_val"); Bz_val->put_to(0.);
     }
     else if (min_max==5 && patch->isZmax() ) {
         // BCs in the z-border max
         dims = { nx_p, ny_d }; // Bx^(p,d,d)
-        Bx_val = new Field2D(dims); Bx_val->put_to(0.);
+        Bx_val = new Field2D(dims, "Bx_val"); Bx_val->put_to(0.);
         dims = { nx_d, ny_p }; // By^(d,p,d)
-        By_val = new Field2D(dims); By_val->put_to(0.);
+        By_val = new Field2D(dims, "By_val"); By_val->put_to(0.);
         dims = { nx_d, ny_d }; // Bz^(d,d,p)
-        Bz_val = new Field2D(dims); Bz_val->put_to(0.);
+        Bz_val = new Field2D(dims, "Bz_val"); Bz_val->put_to(0.);
     }
     
     
@@ -314,9 +314,9 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         
         // for By^(d,p,d)
         for (unsigned int j=patch->isYmin() ; j<ny_p-patch->isYmax() ; j++) {
-            pos[0] = patch->getDomainLocalMin(1) + (j - EMfields->oversize[1])*dy;
+            pos[0] = patch->getDomainLocalMin(1) + ((int)j - (int)EMfields->oversize[1])*dy;
             for (unsigned int k=patch->isZmin() ; k<nz_d-patch->isZmax() ; k++) {
-                pos[1] = patch->getDomainLocalMin(2) + (k -0.5 - EMfields->oversize[2])*dz;
+                pos[1] = patch->getDomainLocalMin(2) + ((int)k -0.5 - (int)EMfields->oversize[2])*dz;
                 // Lasers
                 double byW = 0.;
                 for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
@@ -334,9 +334,9 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         
         // for Bz^(d,d,p)
          for (unsigned int j=patch->isYmin() ; j<ny_d-patch->isYmax() ; j++) {
-            pos[0] = patch->getDomainLocalMin(1) + (j - 0.5 - EMfields->oversize[1])*dy;
+            pos[0] = patch->getDomainLocalMin(1) + ((int)j - 0.5 - (int)EMfields->oversize[1])*dy;
             for (unsigned int k=patch->isZmin() ; k<nz_p-patch->isZmax() ; k++) {
-                pos[1] = patch->getDomainLocalMin(2) + (k - EMfields->oversize[2])*dz;
+                pos[1] = patch->getDomainLocalMin(2) + ((int)k - (int)EMfields->oversize[2])*dz;
                 // Lasers
                 double bzW = 0.;
                 for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
@@ -357,9 +357,9 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         
         // for By^(d,p,d)
         for (unsigned int j=patch->isYmin() ; j<ny_p-patch->isYmax() ; j++) {
-            pos[0] = patch->getDomainLocalMin(1) + (j - EMfields->oversize[1])*dy;
+            pos[0] = patch->getDomainLocalMin(1) + ((int)j - (int)EMfields->oversize[1])*dy;
             for (unsigned int k=patch->isZmin() ; k<nz_d-patch->isZmax() ; k++) {
-                pos[1] = patch->getDomainLocalMin(2) + (k - 0.5 - EMfields->oversize[2])*dz;
+                pos[1] = patch->getDomainLocalMin(2) + ((int)k - 0.5 - (int)EMfields->oversize[2])*dz;
                 // Lasers
                 double byE = 0.;
                 for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {
@@ -378,9 +378,9 @@ void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         
         // for Bz^(d,d,p)
         for (unsigned int j=patch->isYmin() ; j<ny_d-patch->isYmax(); j++) {
-            pos[0] = patch->getDomainLocalMin(1) + (j - 0.5 - EMfields->oversize[1])*dy;
+            pos[0] = patch->getDomainLocalMin(1) + ((int)j - 0.5 - (int)EMfields->oversize[1])*dy;
             for (unsigned int k=patch->isZmin() ; k<nz_p-patch->isZmax() ; k++) {
-                pos[1] = patch->getDomainLocalMin(2) + (k - EMfields->oversize[2])*dz;
+                pos[1] = patch->getDomainLocalMin(2) + ((int)k - (int)EMfields->oversize[2])*dz;
                 // Lasers
                 double bzE = 0.;
                 for (unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++) {

@@ -39,12 +39,32 @@ public:
     std::vector<unsigned int> getDomainCoordinates( unsigned int Id ) override final;
 };
 
+class CartesianDomainDecomposition2D_YX : public CartesianDomainDecomposition
+{
+public:
+    CartesianDomainDecomposition2D_YX( Params& params );
+    ~CartesianDomainDecomposition2D_YX( ) override final;
+
+    unsigned int getDomainId( std::vector<int> Coordinates ) override final;
+    std::vector<unsigned int> getDomainCoordinates( unsigned int Id ) override final;
+};
+
 
 class CartesianDomainDecomposition3D : public CartesianDomainDecomposition
 {
 public:
     CartesianDomainDecomposition3D( Params& params );
     ~CartesianDomainDecomposition3D( ) override final;
+
+    unsigned int getDomainId( std::vector<int> Coordinates ) override final;
+    std::vector<unsigned int> getDomainCoordinates( unsigned int Id ) override final;
+};
+
+class CartesianDomainDecomposition3D_ZYX : public CartesianDomainDecomposition
+{
+public:
+    CartesianDomainDecomposition3D_ZYX( Params& params );
+    ~CartesianDomainDecomposition3D_ZYX( ) override final;
 
     unsigned int getDomainId( std::vector<int> Coordinates ) override final;
     std::vector<unsigned int> getDomainCoordinates( unsigned int Id ) override final;
