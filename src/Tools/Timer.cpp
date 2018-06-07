@@ -7,6 +7,7 @@
 
 #include "SmileiMPI.h"
 #include "Tools.h"
+#include "VectorPatch.h"
 
 using namespace std;
 
@@ -15,7 +16,7 @@ name_(name),
 time_acc_(0.0),
 smpi_(NULL)
 {
-    register_timers.resize(0,0.);    
+    register_timers.resize(0,0.);
 }
 
 Timer::~Timer()
@@ -29,7 +30,7 @@ void Timer::init(SmileiMPI *smpi)
     last_start_ = MPI_Wtime();
 }
 
-
+//! Accumulate time couting from last init/restart
 void Timer::update(bool store)
 {
     #pragma omp barrier
@@ -40,6 +41,28 @@ void Timer::update(bool store)
         if (store) register_timers.push_back( time_acc_ );
     }
 }
+
+#ifdef __DETAILED_TIMERS
+//!Accumulate time couting from last init/restart using patch detailed timers
+void Timer::update(VectorPatch &vecPatches, bool store)
+{
+    #pragma omp barrier
+    #pragma omp master
+    {
+        // Reduce the time spent in all patches in time_tmp
+        double time_tmp = 0.;
+        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
+        {
+            time_tmp += vecPatches(ipatch)->patch_timers[this->patch_timer_id];
+        }
+
+        // Average over all patches
+        this->time_acc_  += time_tmp / vecPatches.size();
+
+        if (store) register_timers.push_back( time_acc_ );
+    }
+}
+#endif
 
 void Timer::restart()
 {

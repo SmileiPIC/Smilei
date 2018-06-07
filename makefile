@@ -102,6 +102,10 @@ else
     CXXFLAGS += -O3 #-xHost -no-prec-div -ipo
 endif
 
+# Manage options in the "config" parameter
+ifneq (,$(findstring detailed_timers,$(config)))
+    CXXFLAGS += -D__DETAILED_TIMERS
+endif
 
 ifeq (,$(findstring noopenmp,$(config)))
     OPENMP_FLAG ?= -fopenmp
@@ -109,7 +113,7 @@ ifeq (,$(findstring noopenmp,$(config)))
     OPENMP_FLAG += -D_OMP
     LDFLAGS += $(OPENMP_FLAG)
     CXXFLAGS += $(OPENMP_FLAG)
-else 
+else
     LDFLAGS += -mt_mpi # intelmpi only
 endif
 

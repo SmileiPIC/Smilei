@@ -146,6 +146,10 @@ void SpeciesDynamicV::dynamics(double time_dual, unsigned int ispec,
         ithread = 0;
 #endif
 
+#ifdef  __DETAILED_TIMERS
+        double timer;
+#endif
+
     unsigned int iPart;
 
     // Reset list of particles to exchange
@@ -186,18 +190,34 @@ void SpeciesDynamicV::dynamics(double time_dual, unsigned int ispec,
             int nparts_in_pack = bmax[ (ipack+1) * packsize-1 ];
             smpi->dynamics_resize(ithread, nDim_particle, nparts_in_pack );
 
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
+
             // Interpolate the fields at the particle position
             //for (unsigned int scell = 0 ; scell < bmin.size() ; scell++)
             //    (*Interp)(EMfields, *particles, smpi, &(bmin[scell]), &(bmax[scell]), ithread );
             for (unsigned int scell = 0 ; scell < packsize ; scell++)
                 (*Interp)(EMfields, *particles, smpi, &(bmin[ipack*packsize+scell]), &(bmax[ipack*packsize+scell]), ithread, bmin[ipack*packsize] );
 
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[0] += MPI_Wtime() - timer;
+            timer = MPI_Wtime();
+#endif
+
+            // Ionization
+            if (Ionize)
+            {
+                for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
+                    (*Ionize)(particles, bmin[ibin], bmax[ibin], Epart, EMfields, Proj);
+                }
+            }
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[4] += MPI_Wtime() - timer;
+#endif
 
             for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
-
-                // Ionization
-                if (Ionize)
-                    (*Ionize)(particles, bmin[ibin], bmax[ibin], Epart, EMfields, Proj);
 
                 // Radiation losses
                 if (Radiate)
@@ -247,9 +267,18 @@ void SpeciesDynamicV::dynamics(double time_dual, unsigned int ispec,
                     }
             }
 
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
+
             // Push the particles and the photons
             //(*Push)(*particles, smpi, 0, bmax[bmax.size()-1], ithread );
             (*Push)(*particles, smpi, bmin[ipack*packsize], bmax[ipack*packsize+packsize-1], ithread, bmin[ipack*packsize] );
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[1] += MPI_Wtime() - timer;
+            timer = MPI_Wtime();
+#endif
 
             // Computation of the particle cell keys for all particles
             // this->compute_bin_cell_keys(params, bmin[ipack*packsize], bmax[ipack*packsize+packsize-1]);
@@ -326,14 +355,26 @@ void SpeciesDynamicV::dynamics(double time_dual, unsigned int ispec,
             }
             //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
 
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[3] += MPI_Wtime() - timer;
+#endif
 
             // Project currents if not a Test species and charges as well if a diag is needed.
             // Do not project if a photon
             if ((!particles->is_test) && (mass > 0))
                 //for (unsigned int scell = 0 ; scell < bmin.size() ; scell++)
                 //    (*Proj)(EMfields, *particles, smpi, bmin[scell], bmax[scell], ithread, scell, clrw, diag_flag, params.is_spectral, b_dim, ispec );
+
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
+
                 for (unsigned int scell = 0 ; scell < packsize ; scell++)
                     (*Proj)(EMfields, *particles, smpi, bmin[ipack*packsize+scell], bmax[ipack*packsize+scell], ithread, ipack*packsize+scell, clrw, diag_flag, params.is_spectral, b_dim, ispec, bmin[ipack*packsize] );
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[2] += MPI_Wtime() - timer;
+#endif
 
             for (unsigned int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
                 nrj_bc_lost += nrj_lost_per_thd[tid];

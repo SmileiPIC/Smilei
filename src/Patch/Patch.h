@@ -67,7 +67,7 @@ public:
     //! Optional binary collisions operators
     std::vector<Collisions*> vecCollisions;
 
-    //! Interpolator ad hoc for envelope 
+    //! Interpolator ad hoc for envelope
     Interpolator* Interp_envelope = NULL;
 
     //! Projector ad hoc for Proj_susceptibility
@@ -76,7 +76,7 @@ public:
     //! "fake" particles for the probe diagnostics
     std::vector<ProbeParticles*> probes;
 
-    //!
+    //! Classical interpolator for the probe diagnostic only
     Interpolator* probesInterp;
 
 
@@ -89,6 +89,13 @@ public:
     //!Cartesian coordinates of the patch. X,Y,Z of the Patch according to its Hilbert index.
     std::vector<unsigned int> Pcoordinates;
 
+    // Detailed timers
+    // -----------------------
+
+#ifdef  __DETAILED_TIMERS
+    //! Timers for the patch
+    std::vector<double> patch_timers;
+#endif
 
     // MPI exchange/sum methods for particles/fields
     //   - fields communication specified per geometry (pure virtual)

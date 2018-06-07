@@ -22,6 +22,15 @@ Timers::Timers( SmileiMPI * smpi ) :
     syncDens  ("Sync Densities"),  // If necessary the following timers can be reintroduced
     diagsNEW  ("DiagnosticsNEW" ), // Diags.runAllDiags + MPI & Patch sync
     reconfiguration("Reconfiguration")
+#ifdef __DETAILED_TIMERS
+    ,interpolator("Interpolator"),
+    pusher("Pusher"             ),
+    projector("Projector"       ),
+    particles_boundaries("Particles boundaries"),
+    ionization("Ionization"       ),
+    radiation("Radiation"       ),
+    multiphoton_Breit_Wheeler_timer("Multiphoton"       )
+#endif
 {
     timers.resize(0);
     timers.push_back( &global     );
@@ -37,6 +46,23 @@ Timers::Timers( SmileiMPI * smpi ) :
     timers.push_back( &syncDens   );
     timers.push_back( &diagsNEW   );
     timers.push_back( &reconfiguration   );
+#ifdef __DETAILED_TIMERS
+    patch_timer_id_start = timers.size()-1;
+    timers.push_back( &interpolator   );
+    timers.back()->patch_timer_id = 0;
+    timers.push_back( &pusher   );
+    timers.back()->patch_timer_id = 1;
+    timers.push_back( &projector   );
+    timers.back()->patch_timer_id = 2;
+    timers.push_back( &particles_boundaries   );
+    timers.back()->patch_timer_id = 3;
+    timers.push_back( &ionization   );
+    timers.back()->patch_timer_id = 4;
+    timers.push_back( &radiation   );
+    timers.back()->patch_timer_id = 5;
+    timers.push_back( &multiphoton_Breit_Wheeler_timer   );
+    timers.back()->patch_timer_id = 6;
+#endif
 
     for( unsigned int i=0; i<timers.size(); i++)
         timers[i]->init(smpi);
@@ -60,6 +86,7 @@ void Timers::reboot()
         timers[i]->reboot();
 }
 
+//! Output the timer profile
 void Timers::profile(SmileiMPI * smpi)
 {
     std::vector<Timer*> avg_timers = consolidate(smpi);
@@ -71,15 +98,34 @@ void Timers::profile(SmileiMPI * smpi)
 
         MESSAGE("Time in time loop :\t" << global.getTime() << "\t"<<coverage/global.getTime()*100.<< "% coverage" );
 
+#ifdef __DETAILED_TIMERS
+
+        for (unsigned int i=0 ; i<patch_timer_id_start ; i++)
+            avg_timers[i]->print(global.getTime());
+
+        MESSAGE(0, "\n\t Patch timers:" );
+
+        for (unsigned int i=patch_timer_id_start ; i<avg_timers.size() ; i++)
+            avg_timers[i]->print(global.getTime());
+
+        MESSAGE(0, "\n\t Printed times are averaged per MPI process" );
+        MESSAGE(0, "\t\t See advanced metrics in profil.txt");
+
+#else
+
         for (unsigned int i=0 ; i<avg_timers.size() ; i++)
             avg_timers[i]->print(global.getTime());
         MESSAGE(0, "\n\t Printed times are averaged per MPI process" );
         MESSAGE(0, "\t\t See advanced metrics in profil.txt");
+
+#endif
+
     }
     for (unsigned int i=0 ; i<avg_timers.size() ; i++)
         delete avg_timers[i];
 }
 
+//! Perform the required processing on the timers for output
 std::vector<Timer*> Timers::consolidate(SmileiMPI * smpi)
 {
     std::vector<Timer*> avg_timers;

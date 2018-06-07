@@ -284,6 +284,15 @@ void VectorPatch::dynamics(Params& params,
 
 
     timers.particles.update( params.printNow( itime ) );
+#ifdef __DETAILED_TIMERS
+    timers.interpolator.update( *this, params.printNow( itime ) );
+    timers.pusher.update( *this, params.printNow( itime ) );
+    timers.projector.update( *this, params.printNow( itime ) );
+    timers.particles_boundaries.update( *this, params.printNow( itime ) );
+    timers.ionization.update( *this, params.printNow( itime ) );
+    timers.radiation.update( *this, params.printNow( itime ) );
+    timers.multiphoton_Breit_Wheeler_timer.update( *this, params.printNow( itime ) );
+#endif
 
     timers.syncPart.restart();
     for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {

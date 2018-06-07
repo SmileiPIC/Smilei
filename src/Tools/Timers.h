@@ -31,9 +31,25 @@ public:
     Timer syncDens  ;
     Timer diagsNEW  ;
     Timer reconfiguration  ;
+#ifdef __DETAILED_TIMERS
+    Timer interpolator  ;
+    Timer pusher  ;
+    Timer projector  ;
+    Timer particles_boundaries  ;
+    Timer ionization  ;
+    Timer radiation  ;
+    Timer multiphoton_Breit_Wheeler_timer  ;
 
+    // Where the patch timers start in the timer vector
+    unsigned int patch_timer_id_start ;
+#endif
+
+    //! Output the timer profile
     void profile(SmileiMPI * smpi);
+
+    //! Perform the required processing on the timers for output
     std::vector<Timer*> consolidate(SmileiMPI * smpi);
+
     void reboot();
 
 private:
