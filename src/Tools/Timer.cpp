@@ -97,9 +97,9 @@ void Timer::print(double tot)
         double perc=100.0*time_acc_/tot;
         if (perc<0.001) return;
         if (perc<1) {
-            MESSAGE(0, "\t" << setw(14) << name_ << "\t" << time_acc_  << "\t" << "<1%");
+            MESSAGE(0, "\t" << setw(20) << name_ << "\t" << time_acc_  << "\t" << "<1%");
         } else {
-            MESSAGE(0, "\t" << setw(14) << name_ << "\t" << time_acc_  << "\t" << perc << "%");
+            MESSAGE(0, "\t" << setw(20) << name_ << "\t" << time_acc_  << "\t" << perc << "%");
         }
     }
 }

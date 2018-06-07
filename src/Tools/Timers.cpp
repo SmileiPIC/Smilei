@@ -103,7 +103,7 @@ void Timers::profile(SmileiMPI * smpi)
         for (unsigned int i=0 ; i<patch_timer_id_start ; i++)
             avg_timers[i]->print(global.getTime());
 
-        MESSAGE(0, "\n\t Patch average timers:" );
+        MESSAGE("\n Patch average timers:" );
 
         for (unsigned int i=patch_timer_id_start ; i<avg_timers.size() ; i++)
             avg_timers[i]->print(global.getTime());
