@@ -548,6 +548,10 @@ void Species::dynamics(double time_dual, unsigned int ispec,
         ithread = 0;
 #endif
 
+#ifdef  __DETAILED_TIMERS
+    double timer;
+#endif
+
     unsigned int iPart;
 
     // Reset list of particles to exchange
@@ -570,16 +574,39 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
 
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
+
             // Interpolate the fields at the particle position
             (*Interp)(EMfields, *particles, smpi, &(bmin[ibin]), &(bmax[ibin]), ithread );
 
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[0] += MPI_Wtime() - timer;
+#endif
+
             // Ionization
             if (Ionize)
+            {
+                
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
+
                 (*Ionize)(particles, bmin[ibin], bmax[ibin], Epart, EMfields, Proj);
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[4] += MPI_Wtime() - timer;
+#endif
+            }
 
             // Radiation losses
             if (Radiate)
             {
+
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
 
                 // Radiation process
                 (*Radiate)(*particles, this->photon_species, smpi,
@@ -595,11 +622,20 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                                                 bmin[ibin],
                                                 bmax[ibin],
                                                 ithread );
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[5] += MPI_Wtime() - timer;
+#endif
+
             }
+
 
             // Multiphoton Breit-Wheeler
             if (Multiphoton_Breit_Wheeler_process)
             {
+
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
 
                 // Pair generation process
                 (*Multiphoton_Breit_Wheeler_process)(*particles,
@@ -622,11 +658,24 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                  (*Multiphoton_Breit_Wheeler_process).decayed_photon_cleaning(
                                  *particles,ibin, bmin.size(), &bmin[0], &bmax[0]);
 
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[6] += MPI_Wtime() - timer;
+#endif
+
             }
+
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
 
             // Push the particles and the photons
             (*Push)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
             //particles->test_move( bmin[ibin], bmax[ibin], params );
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[1] += MPI_Wtime() - timer;
+            timer = MPI_Wtime();
+#endif
 
             // Apply wall and boundary conditions
             if (mass>0)
@@ -673,12 +722,24 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 
             }
 
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[3] += MPI_Wtime() - timer;
+#endif
+
             //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
+
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
 
              // Project currents if not a Test species and charges as well if a diag is needed.
              // Do not project if a photon
              if ((!particles->is_test) && (mass > 0))
                  (*Proj)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread, ibin, clrw, diag_flag, params.is_spectral, b_dim, ispec );
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[2] += MPI_Wtime() - timer;
+#endif
 
         }// ibin
 

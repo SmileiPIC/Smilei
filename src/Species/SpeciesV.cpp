@@ -173,25 +173,28 @@ int ithread;
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[0] += MPI_Wtime() - timer;
-            timer = MPI_Wtime();
 #endif
 
             // Ionization
             if (Ionize)
             {
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
                 for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
                     (*Ionize)(particles, bmin[ibin], bmax[ibin], Epart, EMfields, Proj);
                 }
-            }
-
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[4] += MPI_Wtime() - timer;
-            timer = MPI_Wtime();
 #endif
+            }
 
             // Radiation losses
             if (Radiate)
             {
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
                 for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
                     // Radiation process
                     (*Radiate)(*particles, this->photon_species, smpi,
@@ -208,16 +211,17 @@ int ithread;
                                                     bmax[ibin],
                                                     ithread );
                 }
-            }
-
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[5] += MPI_Wtime() - timer;
-            timer = MPI_Wtime();
 #endif
+            }
 
             // Multiphoton Breit-Wheeler
             if (Multiphoton_Breit_Wheeler_process)
             {
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
                 for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
 
                     // Pair generation process
@@ -242,10 +246,12 @@ int ithread;
                             *particles,ibin, bmin.size(), &bmin[0], &bmax[0]);
 
                 }
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[6] += MPI_Wtime() - timer;
+#endif
             }
 
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[6] += MPI_Wtime() - timer;
             timer = MPI_Wtime();
 #endif
 
@@ -352,7 +358,6 @@ int ithread;
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
-
 
                 for (unsigned int scell = 0 ; scell < packsize ; scell++)
                     (*Proj)(EMfields, *particles, smpi, bmin[ipack*packsize+scell], bmax[ipack*packsize+scell], ithread, ipack*packsize+scell, clrw, diag_flag, params.is_spectral, b_dim, ispec, bmin[ipack*packsize] );

@@ -202,25 +202,28 @@ void SpeciesDynamicV::dynamics(double time_dual, unsigned int ispec,
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[0] += MPI_Wtime() - timer;
-            timer = MPI_Wtime();
 #endif
 
             // Ionization
             if (Ionize)
             {
+#ifdef  __DETAILED_TIMERS
+                timer = MPI_Wtime();
+#endif
                 for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
                     (*Ionize)(particles, bmin[ibin], bmax[ibin], Epart, EMfields, Proj);
                 }
-            }
-
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[4] += MPI_Wtime() - timer;
-            timer = MPI_Wtime();
+                patch->patch_timers[4] += MPI_Wtime() - timer;
 #endif
+            }
 
             // Radiation losses
             if (Radiate)
             {
+#ifdef  __DETAILED_TIMERS
+                timer = MPI_Wtime();
+#endif
                 for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
                     // Radiation process
                     (*Radiate)(*particles, this->photon_species, smpi,
@@ -237,16 +240,18 @@ void SpeciesDynamicV::dynamics(double time_dual, unsigned int ispec,
                                                     bmax[ibin],
                                                     ithread );
                 }
-            }
-
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[5] += MPI_Wtime() - timer;
-            timer = MPI_Wtime();
+                patch->patch_timers[5] += MPI_Wtime() - timer;
 #endif
+            }
 
             // Multiphoton Breit-Wheeler
             if (Multiphoton_Breit_Wheeler_process)
             {
+
+#ifdef  __DETAILED_TIMERS
+                timer = MPI_Wtime();
+#endif
 
                 for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
 
@@ -272,10 +277,14 @@ void SpeciesDynamicV::dynamics(double time_dual, unsigned int ispec,
                         *particles,ibin, bmin.size(), &bmin[0], &bmax[0]);
 
                 }
-            }
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[6] += MPI_Wtime() - timer;
+#endif
+
+            }
+
+#ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
 
