@@ -1,15 +1,15 @@
 ############################# Laser envelope propagation in vacuum
-dx = 0.69 
-dtrans = 5. 
-dt = 0.57
-nx = 1000
-ntrans = 180
+dx = 1. 
+dtrans = 3. 
+dt = 0.8*dx
+nx = 128
+ntrans = 64
 Lx = nx * dx
 Ltrans = ntrans*dtrans
-npatch_x=8
-laser_fwhm = 70.7 
+npatch_x=16
+laser_fwhm = 20. 
 center_laser = 2*laser_fwhm # here is the same as waist position of laser but in principle they can differ
-time_start_moving_window = Lx/2.
+time_start_moving_window = 0.
 
 
 Main(
@@ -18,12 +18,12 @@ Main(
     interpolation_order = 2,
 
     timestep = dt,
-    simulation_time = 7*Lx,
+    simulation_time = 300.*dt,
 
     cell_length  = [dx, dtrans, dtrans],
     grid_length = [ Lx,  Ltrans, Ltrans],
 
-    number_of_patches = [npatch_x,4,4],
+    number_of_patches = [npatch_x,8,8],
     clrw = nx/npatch_x,
 
     EM_boundary_conditions = [ ["silver-muller"] ],
@@ -50,9 +50,9 @@ LoadBalancing(
 )
 
 LaserEnvelopeGaussian3D(
-    a0              = 6.,
+    a0              = 1.,
     focus           = [center_laser, Main.grid_length[1]/2.,Main.grid_length[2]/2.],
-    waist           = 94.26,
+    waist           = 30.,
     time_envelope   = tgaussian(center=center_laser, fwhm=laser_fwhm),
     envelope_solver = 'explicit',
 )
