@@ -124,7 +124,7 @@ double SpeciesMetrics::get_particle_computation_time_vectorization(const double 
              -1.098932029397253e-02 * pow(log_particle_number,3)
             + 2.082361496483696e-01 * pow(log_particle_number,2)
              -1.249205460664252e+00 * log_particle_number
-            + 2.972768514189865e+00
+            + 2.972768514189865e+00;
 };
 
 //! Evaluate the time necessary to compute `particle_number` particles
@@ -136,7 +136,7 @@ float SpeciesMetrics::get_particle_computation_time_vectorization(const float lo
              -1.098932029397253e-02 * pow(log_particle_number,3)
             + 2.082361496483696e-01 * pow(log_particle_number,2)
              -1.249205460664252e+00 * log_particle_number
-            + 2.972768514189865e+00
+            + 2.972768514189865e+00;
 };
 
 //! Evaluate the time necessary to compute `particle_number` particles
@@ -145,7 +145,7 @@ float SpeciesMetrics::get_particle_computation_time_vectorization(const float lo
 double SpeciesMetrics::get_particle_computation_time_scalar(const double log_particle_number)
 {
     return  -1.461728711711814e-02 * log_particle_number
-            + 9.536782251176835e-01
+            + 9.536782251176835e-01;
 };
 
 //! Evaluate the time necessary to compute `particle_number` particles
@@ -154,5 +154,5 @@ double SpeciesMetrics::get_particle_computation_time_scalar(const double log_par
 float SpeciesMetrics::get_particle_computation_time_scalar(const float log_particle_number)
 {
     return  -1.461728711711814e-02 * log_particle_number
-            + 9.536782251176835e-01
+            + 9.536782251176835e-01;
 };
