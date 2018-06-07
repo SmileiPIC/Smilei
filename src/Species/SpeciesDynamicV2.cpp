@@ -125,6 +125,10 @@ void SpeciesDynamicV2::dynamics(double time_dual, unsigned int ispec,
         ithread = 0;
 #endif
 
+#ifdef  __DETAILED_TIMERS
+    double timer;
+#endif
+
     unsigned int iPart;
 
     // Reset list of particles to exchange
@@ -163,18 +167,33 @@ void SpeciesDynamicV2::dynamics(double time_dual, unsigned int ispec,
             int nparts_in_pack = bmax[ (ipack+1) * packsize-1 ];
             smpi->dynamics_resize(ithread, nDim_particle, nparts_in_pack );
 
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
+
             // Interpolate the fields at the particle position
             //for (unsigned int scell = 0 ; scell < bmin.size() ; scell++)
             //    (*Interp)(EMfields, *particles, smpi, &(bmin[scell]), &(bmax[scell]), ithread );
             for (unsigned int scell = 0 ; scell < packsize ; scell++)
                 (*Interp)(EMfields, *particles, smpi, &(bmin[ipack*packsize+scell]), &(bmax[ipack*packsize+scell]), ithread, bmin[ipack*packsize] );
 
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[0] += MPI_Wtime() - timer;
+#endif
 
             for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
+
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
 
                 // Ionization
                 if (Ionize)
                     (*Ionize)(particles, bmin[ibin], bmax[ibin], Epart, EMfields, Proj);
+
+#ifdef  __DETAILED_TIMERS
+                patch->patch_timers[4] += MPI_Wtime() - timer;
+#endif
 
                 // Radiation losses
                 if (Radiate)
