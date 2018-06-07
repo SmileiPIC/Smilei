@@ -459,6 +459,8 @@ int main (int argc, char* argv[])
     TITLE("Time profiling : (print time > 0.001%)");
     timers.profile(&smpi);
 
+    smpi.barrier();
+
 /*tommaso
     // ------------------------------------------------------------------
     //                      Temporary validation diagnostics

@@ -29,7 +29,7 @@ Timers::Timers( SmileiMPI * smpi ) :
     particles_boundaries("Particles boundaries"),
     ionization("Ionization"       ),
     radiation("Radiation"       ),
-    multiphoton_Breit_Wheeler_timer("Multiphoton"       )
+    multiphoton_Breit_Wheeler_timer("Multiphoton Breit-Wheeler"       )
 #endif
 {
     timers.resize(0);

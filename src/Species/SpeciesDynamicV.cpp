@@ -141,13 +141,13 @@ void SpeciesDynamicV::dynamics(double time_dual, unsigned int ispec,
 {
     int ithread;
 #ifdef _OPENMP
-        ithread = omp_get_thread_num();
+    ithread = omp_get_thread_num();
 #else
-        ithread = 0;
+    ithread = 0;
 #endif
 
 #ifdef  __DETAILED_TIMERS
-        double timer;
+    double timer;
 #endif
 
     unsigned int iPart;
@@ -215,59 +215,67 @@ void SpeciesDynamicV::dynamics(double time_dual, unsigned int ispec,
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[4] += MPI_Wtime() - timer;
+            timer = MPI_Wtime();
 #endif
 
-            for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
+            // Radiation losses
+            if (Radiate)
+            {
+                for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
+                    // Radiation process
+                    (*Radiate)(*particles, this->photon_species, smpi,
+                               RadiationTables,
+                               bmin[ibin], bmax[ibin], ithread );
 
-                // Radiation losses
-                if (Radiate)
-                    {
+                    // Update scalar variable for diagnostics
+                    nrj_radiation += (*Radiate).getRadiatedEnergy();
 
-                        // Radiation process
-                        (*Radiate)(*particles, this->photon_species, smpi,
-                                   RadiationTables,
-                                   bmin[ibin], bmax[ibin], ithread );
-
-                        // Update scalar variable for diagnostics
-                        nrj_radiation += (*Radiate).getRadiatedEnergy();
-
-                        // Update the quantum parameter chi
-                        (*Radiate).compute_thread_chipa(*particles,
-                                                        smpi,
-                                                        bmin[ibin],
-                                                        bmax[ibin],
-                                                        ithread );
-                    }
-
-                // Multiphoton Breit-Wheeler
-                if (Multiphoton_Breit_Wheeler_process)
-                    {
-
-                        // Pair generation process
-                        (*Multiphoton_Breit_Wheeler_process)(*particles,
-                                                             smpi,
-                                                             MultiphotonBreitWheelerTables,
-                                                             bmin[ibin], bmax[ibin], ithread );
-
-                        // Update scalar variable for diagnostics
-                        // We reuse nrj_radiation for the pairs
-                        nrj_radiation += (*Multiphoton_Breit_Wheeler_process).getPairEnergy();
-
-                        // Update the photon quantum parameter chi of all photons
-                        (*Multiphoton_Breit_Wheeler_process).compute_thread_chiph(*particles,
-                                                                                  smpi,
-                                                                                  bmin[ibin],
-                                                                                  bmax[ibin],
-                                                                                  ithread );
-
-                        // Suppression of the decayed photons into pairs
-                        (*Multiphoton_Breit_Wheeler_process).decayed_photon_cleaning(
-                                                                                     *particles,ibin, bmin.size(), &bmin[0], &bmax[0]);
-
-                    }
+                    // Update the quantum parameter chi
+                    (*Radiate).compute_thread_chipa(*particles,
+                                                    smpi,
+                                                    bmin[ibin],
+                                                    bmax[ibin],
+                                                    ithread );
+                }
             }
 
 #ifdef  __DETAILED_TIMERS
+            patch->patch_timers[5] += MPI_Wtime() - timer;
+            timer = MPI_Wtime();
+#endif
+
+            // Multiphoton Breit-Wheeler
+            if (Multiphoton_Breit_Wheeler_process)
+            {
+
+                for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
+
+                    // Pair generation process
+                    (*Multiphoton_Breit_Wheeler_process)(*particles,
+                                                         smpi,
+                                                         MultiphotonBreitWheelerTables,
+                                                         bmin[ibin], bmax[ibin], ithread );
+
+                    // Update scalar variable for diagnostics
+                    // We reuse nrj_radiation for the pairs
+                    nrj_radiation += (*Multiphoton_Breit_Wheeler_process).getPairEnergy();
+
+                    // Update the photon quantum parameter chi of all photons
+                    (*Multiphoton_Breit_Wheeler_process).compute_thread_chiph(*particles,
+                                                                              smpi,
+                                                                              bmin[ibin],
+                                                                              bmax[ibin],
+                                                                              ithread );
+
+                    // Suppression of the decayed photons into pairs
+                    (*Multiphoton_Breit_Wheeler_process).decayed_photon_cleaning(
+                        *particles,ibin, bmin.size(), &bmin[0], &bmax[0]);
+
+                }
+            }
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[6] += MPI_Wtime() - timer;
             timer = MPI_Wtime();
 #endif
 
