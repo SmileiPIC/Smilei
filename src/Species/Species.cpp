@@ -768,13 +768,12 @@ void Species::computeCharge(unsigned int ispec, ElectroMagn* EMfields, Projector
     if ( (!particles->is_test) ) {
         double* b_rho=nullptr;
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
-            unsigned int bin_start = ibin*clrw*f_dim1*f_dim2;
             // Not for now, else rho is incremented twice. Here and dynamics. Must add restartRhoJs and manage independantly diags output
             //b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(bin_start) : &(*EMfields->rho_)(bin_start);
-            b_rho = &(*EMfields->rho_)(bin_start);
+            b_rho = &(*EMfields->rho_)(0);
 
             for (unsigned int iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
-                (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_dim);
+                (*Proj)(b_rho, (*particles), iPart, 0, b_dim);
 
             } //End loop on particles
         }//End loop on bins
