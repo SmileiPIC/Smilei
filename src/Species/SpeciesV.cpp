@@ -260,7 +260,7 @@ void SpeciesV::dynamics(double time_dual, unsigned int ispec,
                                 //Compute cell_keys of remaining particles
                                 for ( int i = 0 ; i<nDim_particle; i++ ){
                                     (*particles).cell_keys[iPart] *= this->length[i];
-                                    (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]) * dx_inv_[i] );
+                                    (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]+0.00000000000001) * dx_inv_[i] );
                                 }
                                 //First reduction of the count sort algorithm. Lost particles are not included.
                                 species_loc_bmax[(*particles).cell_keys[iPart]] ++;
@@ -291,7 +291,7 @@ void SpeciesV::dynamics(double time_dual, unsigned int ispec,
                             //Compute cell_keys of remaining particles
                             for ( int i = 0 ; i<nDim_particle; i++ ){
                                 (*particles).cell_keys[iPart] *= length[i];
-                                (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]) * dx_inv_[i] );
+                                (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]+0.00000000000001) * dx_inv_[i] );
                             }
                             //First reduction of the count sort algorithm. Lost particles are not included.
                             species_loc_bmax[(*particles).cell_keys[iPart]] ++;
@@ -392,7 +392,7 @@ void SpeciesV::sort_part(Params &params)
             #pragma omp simd
             for (unsigned int ip=0; ip < MPIbuff.part_index_recv_sz[idim][ineighbor]; ip++){
                 for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
-                    double X = MPIbuff.partRecv[idim][ineighbor].position(ipos,ip)-min_loc_vec[ipos];
+                    double X = MPIbuff.partRecv[idim][ineighbor].position(ipos,ip)-min_loc_vec[ipos]+0.00000000000001;
                     int IX = round(X * dx_inv_[ipos] );
                     buf_cell_keys[idim][ineighbor][ip] = buf_cell_keys[idim][ineighbor][ip] * length[ipos] + IX;
                 }
@@ -523,7 +523,7 @@ void SpeciesV::compute_part_cell_keys(Params &params)
     for (ip=0; ip < npart ; ip++){
     // Counts the # of particles in each cell (or sub_cell) and store it in sbmax.
         for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
-            X = (*particles).position(ipos,ip)-min_loc_vec[ipos];
+            X = (*particles).position(ipos,ip)-min_loc_vec[ipos]+0.00000000000001;
             IX = round(X * dx_inv_[ipos] );
             (*particles).cell_keys[ip] = (*particles).cell_keys[ip] * this->length[ipos] + IX;
         }
@@ -551,7 +551,7 @@ void SpeciesV::compute_bin_cell_keys(Params &params, int istart, int iend)
     // Counts the # of particles in each cell (or sub_cell) and store it in sbmax.
         for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
             (*particles).cell_keys[ip] *= this->length[ipos];
-            (*particles).cell_keys[ip] += round( ((*particles).position(ipos,ip)-min_loc_vec[ipos]) * dx_inv_[ipos] );
+            (*particles).cell_keys[ip] += round( ((*particles).position(ipos,ip)-min_loc_vec[ipos]+0.00000000000001) * dx_inv_[ipos] );
         }
     }
 }
@@ -578,7 +578,7 @@ void SpeciesV::importParticles( Params& params, Patch* patch, Particles& source_
 
         ibin = 0;
         for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
-            X = source_particles.position(ipos,i)-min_loc_vec[ipos];
+            X = source_particles.position(ipos,i)-min_loc_vec[ipos]+0.00000000000001;
             IX = round(X * dx_inv_[ipos] );
             ibin = ibin * length[ipos] + IX;
         }
@@ -756,7 +756,7 @@ void SpeciesV::ponderomotive_update_position_and_currents(double time_dual, unsi
                                 //First reduction of the count sort algorithm. Lost particles are not included.
                                 for ( int i = 0 ; i<nDim_particle; i++ ){
                                     (*particles).cell_keys[iPart] *= length[i];
-                                    (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]) * dx_inv_[i] );
+                                    (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]+0.00000000000001) * dx_inv_[i] );
                                 }
                                 species_loc_bmax[(*particles).cell_keys[iPart]] ++; //First reduction of the count sort algorithm. Lost particles are not included.
                             }

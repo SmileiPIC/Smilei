@@ -334,7 +334,7 @@ void Species::initPosition(unsigned int nPart, unsigned int iPart, double *index
         for (unsigned int  p=iPart; p<iPart+nPart; p++) {
             int i = (int)(p-iPart);
             for(unsigned int idim=0; idim<nDim_particle; idim++) {
-                particles->position(idim,p) = indexes[idim] + cell_length[idim] * coeff * 0.975 * (0.5 + i%coeff_);
+                particles->position(idim,p) = indexes[idim] + cell_length[idim] * coeff * (0.5 + i%coeff_);
                 i /= coeff_; // integer division
             }
         }
