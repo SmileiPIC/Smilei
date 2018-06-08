@@ -541,7 +541,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                        MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
                        vector<Diagnostic*>& localDiags)
 {
-    int ithread;
+    int ithread, tid(0);
 #ifdef _OPENMP
         ithread = omp_get_thread_num();
 #else
@@ -553,7 +553,6 @@ void Species::dynamics(double time_dual, unsigned int ispec,
     // Reset list of particles to exchange
     clearExchList();
 
-    int tid(0);
     double ener_iPart(0.);
     std::vector<double> nrj_lost_per_thd(1, 0.);
 
@@ -719,16 +718,14 @@ void Species::dynamics(double time_dual, unsigned int ispec,
     else { // immobile particle (at the moment only project density)
         if ( diag_flag &&(!particles->is_test)){
             double* b_rho=nullptr;
+            unsigned int iPart;
+
             for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
 
-                if (nDim_field==2)
-                    b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1) : &(*EMfields->rho_)(ibin*clrw*f_dim1) ;
-                if (nDim_field==3)
-                    b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1*f_dim2) : &(*EMfields->rho_)(ibin*clrw*f_dim1*f_dim2) ;
-                else if (nDim_field==1)
-                    b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw) : &(*EMfields->rho_)(ibin*clrw) ;
+                b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
+
                 for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
-                    (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_dim);
+                    (*Proj)(b_rho, (*particles), iPart, 0, b_dim);
                 } //End loop on particles
             }//End loop on bins
 
@@ -736,6 +733,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
     }//END if time vs. time_frozen
 
 }//END dynamic
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all particles of the species
@@ -758,6 +756,32 @@ void Species::scalar_dynamics(double time_dual, unsigned int ispec,
                        vector<Diagnostic*>& localDiags)
 {
 
+}
+
+void Species::projection_for_diags(double time_dual, unsigned int ispec,
+                       ElectroMagn* EMfields, 
+                       Params &params, bool diag_flag,
+                       Patch* patch, SmileiMPI* smpi)
+{
+    if ( diag_flag &&(!particles->is_test)){
+
+        double *buf[4];
+
+        for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
+
+                buf[0] = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
+                buf[1] = EMfields->Jx_s [ispec] ? &(*EMfields->Jx_s [ispec])(0) : &(*EMfields->Jx_ )(0) ;
+                buf[2] = EMfields->Jy_s [ispec] ? &(*EMfields->Jy_s [ispec])(0) : &(*EMfields->Jy_ )(0) ;
+                buf[3] = EMfields->Jz_s [ispec] ? &(*EMfields->Jz_s [ispec])(0) : &(*EMfields->Jz_ )(0) ;
+
+            for (int iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
+                for (unsigned int quantity=0; quantity < 4; quantity++) {
+                    (*Proj)(buf[quantity], (*particles), iPart, quantity, b_dim);
+                }
+            } //End loop on particles
+        }//End loop on bins
+
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -822,13 +846,12 @@ void Species::computeCharge(unsigned int ispec, ElectroMagn* EMfields)
     if ( (!particles->is_test) ) {
         double* b_rho=nullptr;
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
-            unsigned int bin_start = ibin*clrw*f_dim1*f_dim2;
             // Not for now, else rho is incremented twice. Here and dynamics. Must add restartRhoJs and manage independantly diags output
             //b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(bin_start) : &(*EMfields->rho_)(bin_start);
-            b_rho = &(*EMfields->rho_)(bin_start);
+            b_rho = &(*EMfields->rho_)(0);
 
             for (unsigned int iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
-                (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_dim);
+                (*Proj)(b_rho, (*particles), iPart, 0, b_dim);
 
             } //End loop on particles
         }//End loop on bins

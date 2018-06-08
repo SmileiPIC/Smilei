@@ -1,4 +1,5 @@
+# module purge
+# module load intel intelmpi hdf5/1.8.18 qt/4.8.6 python/2.7.12 mesa/17.2.4 VTK/7.0.0
+
 CXXFLAGS +=  -xHost -O3 -ip  -ipo -inline-factor=1000
-
-
 

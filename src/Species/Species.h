@@ -315,6 +315,11 @@ public:
                         MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
                         std::vector<Diagnostic*>& localDiags);
 
+    virtual void projection_for_diags(double time, unsigned int ispec,
+                          ElectroMagn* EMfields,
+                          Params &params, bool diag_flag,
+                          Patch* patch, SmileiMPI* smpi);
+    
     //! Method performing the importation of new particles
     virtual void dynamics_import_particles(double time, unsigned int ispec,
                         Params &params,

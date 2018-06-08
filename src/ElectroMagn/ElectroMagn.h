@@ -136,6 +136,12 @@ public:
     Field* Bx_rel_;
     Field* By_rel_;
     Field* Bz_rel_;
+    Field* Bx_rel_t_minus_halfdt_;
+    Field* By_rel_t_minus_halfdt_;
+    Field* Bz_rel_t_minus_halfdt_;
+    Field* Bx_rel_t_plus_halfdt_;
+    Field* By_rel_t_plus_halfdt_;
+    Field* Bz_rel_t_plus_halfdt_;
 
     //PXR quantities:
     Field* Ex_pxr;
