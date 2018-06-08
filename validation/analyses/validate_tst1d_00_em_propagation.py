@@ -18,6 +18,11 @@ Ez1 = S.Field.Field1("Ez", timesteps=timesteps[-1]).getData()[0]
 subgrid = S.namelist.DiagFields[1].subgrid
 Validate("Field subgrid works", (Ez1==Ez[subgrid]).all())
 
+# TIME-AVERAGED FIELD DIAG
+timesteps = list(S.Field.Field2().getAvailableTimesteps())
+Ez = S.Field.Field2("Ez", timesteps=timesteps[-1]).getData()[0]
+Validate("Last Ez profile in Field2", Ez, 1e-7 )
+
 # 0-D PROBE
 Ez = S.Probe(0,"Ez").getData()
 Validate("Ez vs time in Probe0", Ez, 1e-7 )
