@@ -152,22 +152,46 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, double 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project charge : frozen & diagFields timstep (not vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D2OrderV::operator() (double* rho, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim)
+void Projector3D2OrderV::operator() (double* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim)
 {
-    //Warning : this function is used for frozen species only. It is assumed that position = position_old !!!
+    //Warning : this function is used for frozen species or initialization only and doesn't use the standard scheme.
+    //rho type = 0
+    //Jx type = 1
+    //Jy type = 2
+    //Jz type = 3
 
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------
 
     int iloc,jloc;
+    int ny(nprimy), nz(nprimz), nyz;
     // (x,y,z) components of the current density for the macro-particle
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
 
     // variable declaration
     double xpn, ypn, zpn;
     double delta, delta2;
     double Sx1[5], Sy1[5], Sz1[5]; // arrays used for the Esirkepov projection method
+
+    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    if (type > 0) {
+        charge_weight *= 1./sqrt(1.0 + particles.momentum(0,ipart)*particles.momentum(0,ipart)
+                                     + particles.momentum(1,ipart)*particles.momentum(1,ipart)
+                                     + particles.momentum(2,ipart)*particles.momentum(2,ipart));
+
+        if (type == 1){
+            charge_weight *= particles.momentum(0,ipart);
+        }
+        else if (type == 2){
+            charge_weight *= particles.momentum(1,ipart);
+            ny ++;
+        }
+        else {
+            charge_weight *= particles.momentum(2,ipart); 
+            nz ++;
+        }
+    }
+    nyz = ny*nz;
 
 // Initialize all current-related arrays to zero
     for (unsigned int i=0; i<5; i++) {
@@ -182,7 +206,7 @@ void Projector3D2OrderV::operator() (double* rho, Particles &particles, unsigned
 
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
     xpn = particles.position(0, ipart) * dx_inv_;
-    int ip = round(xpn);
+    int ip = round(xpn + 0.5*(type==1));
     delta  = xpn - (double)ip;
     delta2 = delta*delta;
     Sx1[1] = 0.5 * (delta2-delta+0.25);
@@ -190,7 +214,7 @@ void Projector3D2OrderV::operator() (double* rho, Particles &particles, unsigned
     Sx1[3] = 0.5 * (delta2+delta+0.25);
 
     ypn = particles.position(1, ipart) * dy_inv_;
-    int jp = round(ypn);
+    int jp = round(ypn + 0.5*(type==2));
     delta  = ypn - (double)jp;
     delta2 = delta*delta;
     Sy1[1] = 0.5 * (delta2-delta+0.25);
@@ -198,7 +222,7 @@ void Projector3D2OrderV::operator() (double* rho, Particles &particles, unsigned
     Sy1[3] = 0.5 * (delta2+delta+0.25);
 
     zpn = particles.position(2, ipart) * dz_inv_;
-    int kp = round(zpn);
+    int kp = round(zpn + 0.5*(type==3));
     delta  = zpn - (double)kp;
     delta2 = delta*delta;
     Sz1[1] = 0.5 * (delta2-delta+0.25);
@@ -208,21 +232,21 @@ void Projector3D2OrderV::operator() (double* rho, Particles &particles, unsigned
     // ---------------------------
     // Calculate the total charge
     // ---------------------------
-    ip -= i_domain_begin + bin +2;
+    ip -= i_domain_begin + 2;
     jp -= j_domain_begin + 2;
     kp -= k_domain_begin + 2;
 
     for (unsigned int i=0 ; i<5 ; i++) {
-        iloc = (i+ip)*b_dim[2]*b_dim[1];
+        iloc = (i+ip) * nyz;
         for (unsigned int j=0 ; j<5 ; j++) {
-            jloc = (jp+j)*b_dim[2];
+            jloc = (jp+j) * nz;
             for (unsigned int k=0 ; k<5 ; k++) {
-                rho[iloc+jloc+kp+k] += charge_weight * Sx1[i]*Sy1[j]*Sz1[k];
+                rhoj[iloc+jloc+kp+k] += charge_weight * Sx1[i]*Sy1[j]*Sz1[k];
             }
         }
     }//i
 
-} // END Project local current densities frozen.
+} // END Project local current densities (Frozen species)
 
 
 // ---------------------------------------------------------------------------------------------------------------------
