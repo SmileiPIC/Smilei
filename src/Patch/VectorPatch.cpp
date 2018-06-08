@@ -130,7 +130,7 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi, OpenPMDparams& op
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// For all patch, move particles (restartRhoJ(s), dynamics and exchangeParticles)
+// For all patches, move particles (restartRhoJ(s), dynamics and exchangeParticles)
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::dynamics(Params& params,
                            SmileiMPI* smpi,
@@ -173,6 +173,33 @@ void VectorPatch::dynamics(Params& params,
 
 } // END dynamics
 
+// ---------------------------------------------------------------------------------------------------------------------
+// For all patches, project charge and current densities with standard scheme for diag purposes at t=0 
+// ---------------------------------------------------------------------------------------------------------------------
+void VectorPatch::projection_for_diags(Params& params,
+                           SmileiMPI* smpi,
+                           SimWindow* simWindow,
+                           double time_dual, Timers &timers, int itime)
+{
+
+    #pragma omp single
+    diag_flag = needsRhoJsNow(itime);
+
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+        (*this)(ipatch)->EMfields->restartRhoJ();
+        for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
+            if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
+                species(ipatch, ispec)->projection_for_diags(time_dual, ispec,
+                                                 emfields(ipatch),  proj(ipatch),
+                                                 params, diag_flag,
+                                                 (*this)(ipatch), smpi);
+            }
+        }
+
+    }
+
+} // END projection for diags
 
 void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWindow* simWindow,
                            RadiationTables & RadiationTables,
