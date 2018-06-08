@@ -120,11 +120,11 @@ void SpeciesMetrics::get_computation_time(const std::vector<int> & species_loc_b
 #pragma omp declare simd
 double SpeciesMetrics::get_particle_computation_time_vectorization(const double log_particle_number)
 {
-    return  -1.057477108911021e-04 * pow(log_particle_number,4)
-             -1.098932029397253e-02 * pow(log_particle_number,3)
-            + 2.082361496483696e-01 * pow(log_particle_number,2)
-             -1.249205460664252e+00 * log_particle_number
-            + 2.972768514189865e+00;
+    return   -7.983397022180499e-05 * pow(log_particle_number,4)
+ -1.220834603123080e-02 * pow(log_particle_number,3)
++ 2.262009704511124e-01 * pow(log_particle_number,2)
+ -1.346529777726451e+00 * log_particle_number
++ 3.053068997965275e+00;
 };
 
 //! Evaluate the time necessary to compute `particle_number` particles
@@ -132,11 +132,11 @@ double SpeciesMetrics::get_particle_computation_time_vectorization(const double 
 #pragma omp declare simd
 float SpeciesMetrics::get_particle_computation_time_vectorization(const float log_particle_number)
 {
-    return  -1.057477108911021e-04 * pow(log_particle_number,4)
-             -1.098932029397253e-02 * pow(log_particle_number,3)
-            + 2.082361496483696e-01 * pow(log_particle_number,2)
-             -1.249205460664252e+00 * log_particle_number
-            + 2.972768514189865e+00;
+    return   -7.983397022180499e-05 * pow(log_particle_number,4)
+ -1.220834603123080e-02 * pow(log_particle_number,3)
++ 2.262009704511124e-01 * pow(log_particle_number,2)
+ -1.346529777726451e+00 * log_particle_number
++ 3.053068997965275e+00;
 };
 
 //! Evaluate the time necessary to compute `particle_number` particles
@@ -144,8 +144,8 @@ float SpeciesMetrics::get_particle_computation_time_vectorization(const float lo
 #pragma omp declare simd
 double SpeciesMetrics::get_particle_computation_time_scalar(const double log_particle_number)
 {
-    return  -1.461728711711814e-02 * log_particle_number
-            + 9.536782251176835e-01;
+    return   -1.476070257489217e-02 * log_particle_number
++ 9.539747447809775e-01;
 };
 
 //! Evaluate the time necessary to compute `particle_number` particles
@@ -153,6 +153,6 @@ double SpeciesMetrics::get_particle_computation_time_scalar(const double log_par
 #pragma omp declare simd
 float SpeciesMetrics::get_particle_computation_time_scalar(const float log_particle_number)
 {
-    return  -1.461728711711814e-02 * log_particle_number
-            + 9.536782251176835e-01;
+    return   -1.476070257489217e-02 * log_particle_number
++ 9.539747447809775e-01;
 };

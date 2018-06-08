@@ -337,8 +337,8 @@ Advanced compilation options for detailed timers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The code contains more timers than in the default configuration that can
-be activated using a specific option called `detailed_timers`.
-This flag will add the following line to the compilation flags `-D__DETAILED_TIMERS`
+be activated using a specific option called ``detailed_timers``.
+This flag will add the following line to the compilation flags ``-D__DETAILED_TIMERS``
 and therefore activate in the code their computation.
 These timers are not available in the default compilation
 because they are more intrusive and may impact the overall performance in production.
@@ -356,6 +356,9 @@ the following ``make`` command will activate the additional timers:
 .. code-block:: bash
 
   make config="detailed_timers"      : compilation that activates the detailed timers inside the patch
+
+Additional timers will be shown at the end of the simulation and are also
+in ``profile.txt``
 
 ----
 
