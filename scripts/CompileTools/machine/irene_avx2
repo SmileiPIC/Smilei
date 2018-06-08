@@ -1,5 +1,5 @@
 #
-# Machien file for Irene Joliot-Curie using AVX512
+# Machien file for Irene Joliot-Curie using AVX2
 # __________________________________________________________
 #
 # Load the correct modules:
@@ -12,7 +12,7 @@
 # export PATH=${HDF5_ROOT}/bin:${PATH}
 # export LD_LIBRARY_PATH=${HDF5_ROOT}/lib:${LD_LIBRARY_PATH}
 # export HDF5_ROOT_DIR=${HDF5_ROOT}
+#
 
-
-CXXFLAGS += -xCOMMON-AVX512 -ip -ipo -inline-factor=1000
+CXXFLAGS += -xCORE-AVX2 -ip -ipo -inline-factor=1000
 
