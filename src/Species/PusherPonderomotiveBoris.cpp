@@ -67,7 +67,7 @@ void PusherPonderomotiveBoris::operator() (Particles &particles, SmileiMPI* smpi
         // (charge over mass)^2
         charge_sq_over_mass_sq   = (double)(charge[ipart])*one_over_mass_*(charge[ipart])*one_over_mass_;
 
-        // compute initial ponderomotive gamma (more precisely, its inverse) 
+        // compute initial ponderomotive gamma 
         gamma0_sq  = 1. + momentum[0][ipart]*momentum[0][ipart] + momentum[1][ipart]*momentum[1][ipart] + momentum[2][ipart]*momentum[2][ipart] + *(Phi+ipart)*charge_sq_over_mass_sq ;
         gamma0     = sqrt(gamma0_sq) ;
         // ( electric field + ponderomotive force for ponderomotive gamma advance ) scalar multiplied by momentum
@@ -75,7 +75,7 @@ void PusherPonderomotiveBoris::operator() (Particles &particles, SmileiMPI* smpi
         pysm = (gamma0*charge_over_mass_dts2*(*(Ey+ipart)) - charge_sq_over_mass_dts4*(*(GradPhiy+ipart))  ) * momentum[1][ipart] / gamma0_sq;
         pzsm = (gamma0*charge_over_mass_dts2*(*(Ez+ipart)) - charge_sq_over_mass_dts4*(*(GradPhiz+ipart))  ) * momentum[2][ipart] / gamma0_sq;
         
-        // update of gamma ponderomotive (more precisely, the inverse)
+        // update of gamma ponderomotive 
         gamma_ponderomotive = gamma0 + (pxsm+pysm+pzsm)*0.5 ;
 
         // init Half-acceleration in the electric field and ponderomotive force 

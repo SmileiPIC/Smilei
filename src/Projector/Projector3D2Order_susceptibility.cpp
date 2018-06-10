@@ -763,16 +763,16 @@ void Projector3D2Order_susceptibility::project_susceptibility(double* Chi_envelo
 
     
     
-        charge_over_mass_dts2    = particles.charge(ipart)*dts2*one_over_mass;
+        charge_over_mass_dts2    = (double)(particles.charge(ipart))*dts2*one_over_mass;
         // ! ponderomotive force is proportional to charge squared and the field is divided by 4 instead of 2
-        charge_sq_over_mass_dts4 = particles.charge(ipart)*particles.charge(ipart)*dts4*one_over_mass;      
+        charge_sq_over_mass_dts4 = (double)(particles.charge(ipart))*(double)(particles.charge(ipart))*dts4*one_over_mass;      
         // (charge over mass)^2
-        charge_sq_over_mass_sq   = particles.charge(ipart)*particles.charge(ipart)*one_over_mass*one_over_mass;
+        charge_sq_over_mass_sq   = (double)(particles.charge(ipart))*(double)(particles.charge(ipart))*one_over_mass*one_over_mass;
 
         for ( int i = 0 ; i<3 ; i++ )
             momentum[i] = particles.momentum(i,ipart);
 
-        // compute initial ponderomotive gamma (more precisely, its inverse) 
+        // compute initial ponderomotive gamma 
         gamma0_sq = 1. + momentum[0]*momentum[0]+ momentum[1]*momentum[1] + momentum[2]*momentum[2] + *(Phi+ipart)*charge_sq_over_mass_sq ;
         gamma0    = sqrt(gamma0_sq) ;
 
@@ -781,7 +781,7 @@ void Projector3D2Order_susceptibility::project_susceptibility(double* Chi_envelo
         pysm = (gamma0 * charge_over_mass_dts2*(*(Ey+ipart)) - charge_sq_over_mass_dts4*(*(GradPhiy+ipart)) ) * momentum[1] / gamma0_sq;
         pzsm = (gamma0 * charge_over_mass_dts2*(*(Ez+ipart)) - charge_sq_over_mass_dts4*(*(GradPhiz+ipart)) ) * momentum[2] / gamma0_sq;
         
-        // update of gamma ponderomotive (more precisely, the inverse)
+        // update of gamma ponderomotive 
         gamma_ponderomotive = gamma0 + (pxsm+pysm+pzsm)*0.5 ;
 
         // (x,y,z) components of the current density for the macro-particle

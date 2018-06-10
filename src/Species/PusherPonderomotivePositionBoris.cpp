@@ -66,7 +66,7 @@ void PusherPonderomotivePositionBoris::operator() (Particles &particles, SmileiM
         // (charge over mass)^2
         charge_sq_over_mass_sq      = (double)(charge[ipart])*one_over_mass_*(charge[ipart])*one_over_mass_;
 
-        // compute initial ponderomotive gamma (more precisely, its inverse) 
+        // compute initial ponderomotive gamma 
         gamma0_sq = 1. + momentum[0][ipart]*momentum[0][ipart] + momentum[1][ipart]*momentum[1][ipart] + momentum[2][ipart]*momentum[2][ipart] + (*(Phi+ipart)+*(Phiold+ipart))*charge_sq_over_mass_sq*0.5 ;
         gamma0    = sqrt(gamma0_sq) ;
         // ponderomotive force for ponderomotive gamma advance (Grad Phi is interpolated in time, hence the division by 2)
@@ -74,7 +74,7 @@ void PusherPonderomotivePositionBoris::operator() (Particles &particles, SmileiM
         pysm = charge_sq_over_mass_dts4 * ( *(GradPhiy+ipart) + *(GradPhioldy+ipart) ) * 0.5 / gamma0_sq ;
         pzsm = charge_sq_over_mass_dts4 * ( *(GradPhiz+ipart) + *(GradPhioldz+ipart) ) * 0.5 / gamma0_sq ;
     
-        // update of gamma ponderomotive (more precisely, the inverse)
+        // update of gamma ponderomotive 
         gamma_ponderomotive = gamma0 + (pxsm*momentum[0][ipart]+pysm*momentum[1][ipart]+pzsm*momentum[2][ipart]) ;
   
         // Move the particle
