@@ -116,7 +116,7 @@ void PusherBorisV::operator() (Particles &particles, SmileiMPI* smpi, int istart
     //
     //    for ( int i = 0 ; i<nDim_ ; i++ ){ 
     //        cell_keys[ipart] *= nspace[i];
-    //        cell_keys[ipart] += round( (position[i][ipart]-min_loc_vec[i]) * dx_inv_[i] );
+    //        cell_keys[ipart] += round( (position[i][ipart]-min_loc_vec[i]+0.00000000000001) * dx_inv_[i] );
     //    }
     //    
     //}

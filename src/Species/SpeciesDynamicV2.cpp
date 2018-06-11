@@ -260,7 +260,7 @@ void SpeciesDynamicV2::dynamics(double time_dual, unsigned int ispec,
                                 //Compute cell_keys of remaining particles
                                 for ( int i = 0 ; i<nDim_particle; i++ ){
                                     (*particles).cell_keys[iPart] *= this->length[i];
-                                    (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]) * dx_inv_[i] );
+                                    (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]+0.00000000000001) * dx_inv_[i] );
                                 }
                                 //First reduction of the count sort algorithm. Lost particles are not included.
                                 species_loc_bmax[(*particles).cell_keys[iPart]] ++;
@@ -291,7 +291,7 @@ void SpeciesDynamicV2::dynamics(double time_dual, unsigned int ispec,
                             //Compute cell_keys of remaining particles
                             for ( int i = 0 ; i<nDim_particle; i++ ){
                                 (*particles).cell_keys[iPart] *= this->length[i];
-                                (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]) * dx_inv_[i] );
+                                (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]+0.00000000000001) * dx_inv_[i] );
                             }
                             //First reduction of the count sort algorithm. Lost particles are not included.
                             species_loc_bmax[(*particles).cell_keys[iPart]] ++;
@@ -471,7 +471,7 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
                         //Compute cell_keys of remaining particles
                         for ( unsigned int i = 0 ; i<nDim_particle; i++ ){
                             (*particles).cell_keys[iPart] *= this->length[i];
-                            (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]) * dx_inv_[i] );
+                            (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]+0.00000000000001) * dx_inv_[i] );
                         }
                         //First reduction of the count sort algorithm. Lost particles are not included.
                         species_loc_bmax[(*particles).cell_keys[iPart]] ++;
@@ -501,7 +501,7 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
                         //Compute cell_keys of remaining particles
                         for ( unsigned int i = 0 ; i<nDim_particle; i++ ){
                             (*particles).cell_keys[iPart] *= this->length[i];
-                            (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]) * dx_inv_[i] );
+                            (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]+0.00000000000001) * dx_inv_[i] );
                         }
                         //First reduction of the count sort algorithm. Lost particles are not included.
                         species_loc_bmax[(*particles).cell_keys[iPart]] ++;
@@ -599,7 +599,7 @@ void SpeciesDynamicV2::sort_part(Params &params)
             #pragma omp simd
             for (unsigned int ip=0; ip < MPIbuff.part_index_recv_sz[idim][ineighbor]; ip++){
                 for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
-                    double X = MPIbuff.partRecv[idim][ineighbor].position(ipos,ip)-min_loc_vec[ipos];
+                    double X = MPIbuff.partRecv[idim][ineighbor].position(ipos,ip)-min_loc_vec[ipos]+0.00000000000001;
                     int IX = round(X * dx_inv_[ipos] );
                     buf_cell_keys[idim][ineighbor][ip] = buf_cell_keys[idim][ineighbor][ip] * length[ipos] + IX;
                 }
@@ -740,7 +740,7 @@ void SpeciesDynamicV2::compute_part_cell_keys(Params &params)
     for (ip=0; ip < nparts ; ip++){
     // Counts the # of particles in each cell (or sub_cell) and store it in sbmax.
         for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
-            X = (*particles).position(ipos,ip)-min_loc_vec[ipos];
+            X = (*particles).position(ipos,ip)-min_loc_vec[ipos]+0.00000000000001;
             IX = round(X * dx_inv_[ipos] );
             (*particles).cell_keys[ip] = (*particles).cell_keys[ip] * length[ipos] + IX;
         }
@@ -768,7 +768,7 @@ void SpeciesDynamicV2::compute_bin_cell_keys(Params &params, int istart, int ien
     // Counts the # of particles in each cell (or sub_cell) and store it in sbmax.
         for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
             (*particles).cell_keys[ip] *= this->length[ipos];
-            (*particles).cell_keys[ip] += round( ((*particles).position(ipos,ip)-min_loc_vec[ipos]) * dx_inv_[ipos] );
+            (*particles).cell_keys[ip] += round( ((*particles).position(ipos,ip)-min_loc_vec[ipos]+0.00000000000001) * dx_inv_[ipos] );
         }
     }
 }
@@ -795,7 +795,7 @@ void SpeciesDynamicV2::importParticles( Params& params, Patch* patch, Particles&
 
         ibin = 0;
         for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
-            X = source_particles.position(ipos,i)-min_loc_vec[ipos];
+            X = source_particles.position(ipos,i)-min_loc_vec[ipos]+0.00000000000001;
             IX = round(X * dx_inv_[ipos] );
             ibin = ibin * length[ipos] + IX;
         }

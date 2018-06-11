@@ -116,8 +116,14 @@ public :
 
     void computeCharge();
 
+    void projection_for_diags(Params& params,
+                  SmileiMPI* smpi,
+                  SimWindow* simWindow,
+                  double time_dual,
+                  Timers &timers, int itime);
+ 
     // compute rho only given by relativistic species which require initialization of the relativistic fields
-    void computeChargeRelativisticSpecies(double time_primal);
+    void computeChargeRelativisticSpecies(double time_primal); 
 
     //! For all patches, deposit susceptibility, then advance momentum of particles interacting with envelope
     void ponderomotive_update_susceptibilty_and_momentum(Params& params,
