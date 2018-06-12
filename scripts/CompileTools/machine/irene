@@ -14,5 +14,4 @@
 # export HDF5_ROOT_DIR=${HDF5_ROOT}
 
 
-CXXFLAGS += -xCOMMON-AVX512 -ip -ipo -inline-factor=1000
-
+CXXFLAGS += -xCOMMON-AVX512 -ip -ipo -inline-factor=1000 -D__INTEL_SKYLAKE_8168

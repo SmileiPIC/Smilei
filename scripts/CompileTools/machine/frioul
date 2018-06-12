@@ -1,2 +1,1 @@
-CXXFLAGS += -xMIC-AVX512 -ip -ipo -inline-factor=1000
-
+CXXFLAGS += -xMIC-AVX512 -ip -ipo -inline-factor=1000 -D__INTEL_KNL_7250

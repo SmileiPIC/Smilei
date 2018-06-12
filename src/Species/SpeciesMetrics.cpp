@@ -133,14 +133,14 @@ double SpeciesMetrics::get_particle_computation_time_vectorization(const double 
 float SpeciesMetrics::get_particle_computation_time_vectorization(const float log_particle_number)
 {
 // Skylake 8168 (Ex: Irene)
-#if defined INTEL_SKYLAKE_8168
+#if defined __INTEL_SKYLAKE_8168
     return    -5.500324176161280e-03 * pow(log_particle_number,4)
 + 5.302690106220765e-02 * pow(log_particle_number,3)
  -2.390999177899332e-02 * pow(log_particle_number,2)
  -1.018178658950980e+00 * log_particle_number
 + 2.873965603217334e+00;
 // Knight Landings Intel Xeon Phi 7250 (Ex: Frioul)
-#elif defined INTEL_KNL_7250
+#elif defined __INTEL_KNL_7250
     return    + 9.287025545185804e-03 * pow(log_particle_number,4)
  -1.252595460426959e-01 * pow(log_particle_number,3)
 + 6.609030611761257e-01 * pow(log_particle_number,2)
@@ -172,11 +172,11 @@ double SpeciesMetrics::get_particle_computation_time_scalar(const double log_par
 float SpeciesMetrics::get_particle_computation_time_scalar(const float log_particle_number)
 {
 // Skylake 8168 (Ex: Irene)
-#if defined INTEL_SKYLAKE_8168
+#if defined __INTEL_SKYLAKE_8168
     return   -1.476070257489217e-02 * log_particle_number
 + 9.539747447809775e-01;
 // Knight Landings Intel Xeon Phi 7250 (Ex: Frioul)
-#elif defined INTEL_KNL_7250
+#elif defined __INTEL_KNL_7250
     return   -1.693420314189753e-02 * log_particle_number
 + 9.640406193625433e-01
 // General fit
