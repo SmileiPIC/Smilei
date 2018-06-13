@@ -334,7 +334,17 @@ void DiagnosticPerformances::run( SmileiMPI* smpi, VectorPatch& vecPatches, int 
                 // Close patch group
                 H5Gclose(species_group);
             }
-            
+
+            // Write MPI process the owns the patch
+            // Gather patch hindex in a buffer
+            for(unsigned int ipatch=0; ipatch < number_of_patches; ipatch++){
+                buffer[ipatch] = this->mpi_rank;
+            }
+            // Write patch index to file
+            dset_patches  = H5Dcreate( patch_group, "mpi_rank", H5T_NATIVE_UINT, filespace_patches, H5P_DEFAULT, create_plist, H5P_DEFAULT);
+            H5Dwrite( dset_patches, H5T_NATIVE_UINT, memspace_patches, filespace_patches, write_plist, &buffer[0] );
+            H5Dclose( dset_patches );
+
             // Close patch group
             H5Gclose(patch_group);
         }

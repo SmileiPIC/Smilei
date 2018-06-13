@@ -54,9 +54,9 @@ def PartitionMatrix( matrix, listOfValues, oversize=0 ):
 
 class Performances(Diagnostic):
 	"""Class for loading a Performances diagnostic"""
-	
-	def _init(self, raw=None, map=None, histogram=None, timesteps=None, data_log=False, **kwargs):
-		
+
+	def _init(self, raw=None, map=None, histogram=None, timesteps=None, data_log=False, species=None, **kwargs):
+
 		# Open the file(s) and load the data
 		self._h5items = {}
 		self._availableQuantities_uint   = []
@@ -82,35 +82,35 @@ class Performances(Diagnostic):
 				return
 		# Converted to ordered list
 		self._h5items = sorted(self._h5items.values(), key=lambda x:int(x.name[1:]))
-		
+
 		nargs = (raw is not None) + (map is not None) + (histogram is not None)
-		
+
 		if nargs>1:
 			self._error += "Diagnostic not loaded: choose only one of `raw`, `map` or `histogram`"
 			return
-		
+
 		if nargs == 0:
 			self._error += "Diagnostic not loaded: must define raw='quantity', map='quantity' or histogram=['quantity',min,max,nsteps]\n"
 			self._error += "Available quantities: "+", ".join([str(q) for q in self.getAvailableQuantities()])
 			return
-		
+
 		# Get available times
 		self._timesteps = self.getAvailableTimesteps()
 		if self._timesteps.size == 0:
 			self._error = "Diagnostic not loaded: No fields found"
 			return
-		
+
 		# Get the number of procs of the data
 		self._nprocs = self._h5items[0]["quantities_uint"].shape[1]
 		for item in self._h5items:
 			if item["quantities_uint"].shape[1] != self._nprocs:
 				self._error = "Diagnostic not loaded: incompatible simulations"
 				return
-		
+
 		# Get the shape of patches
 		self._number_of_patches = self.simulation.namelist.Main.number_of_patches
 		self._tot_number_of_patches = self._np.prod( self._number_of_patches )
-		
+
 		# 1 - verifications, initialization
 		# -------------------------------------------------------------------
 		# Parse the `map` or `histogram` arguments
@@ -120,7 +120,7 @@ class Performances(Diagnostic):
 				return
 			self.operation = raw
 			self._mode = 0
-			
+
 		elif map is not None:
 			if type(map) is not str:
 				self._error += "Diagnostic not loaded: argument `map` must be a string"
@@ -131,7 +131,7 @@ class Performances(Diagnostic):
 			self.operation = map
 			self._mode = 1
 			self._m = [int(self._np.log2(n)) for n in self._number_of_patches]
-			
+
 		elif histogram is not None:
 			if type(histogram) is not list or len(histogram) != 4:
 				self._error += "Diagnostic not loaded: argument `histogram` must be a list with 4 elements"
@@ -148,7 +148,7 @@ class Performances(Diagnostic):
 				self._error += "Diagnostic not loaded: argument `histogram` must be a list like ['quantity',min,max,nsteps]"
 				return
 			self._mode = 2
-		
+
 		# Parse the operation
 		self._operation = self.operation
 		self._operationunits = self.operation
@@ -172,11 +172,11 @@ class Performances(Diagnostic):
 				self._quantities_double.append(index_in_file)
 				used_quantities.append( q )
 				index_in_output += 1
-		
+
 		# Put data_log as object's variable
 		self._data_log = data_log
-		
-		
+
+
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
 		# fill the "data" dictionary with indices to the data arrays
@@ -190,13 +190,20 @@ class Performances(Diagnostic):
 			except:
 				self._error = "Argument `timesteps` must be one or two non-negative integers"
 				return
-		
+
+		if species is not None:
+			if type(species) is not str:
+				print("Species must a string and refers to the name of one of the available species")
+				return
+			else:
+				self._species = species
+
 		# Need at least one timestep
 		if self._timesteps.size < 1:
 			self._error = "Timesteps not found"
 			return
-		
-		
+
+
 		# 3 - Manage axes
 		# -------------------------------------------------------------------
 		if raw is not None:
@@ -208,7 +215,7 @@ class Performances(Diagnostic):
 			self._log    .append(False)
 			self._vunits = self._operationunits
 			self._title  = self.operation
-		
+
 		elif map is not None:
 			self._patch_length = [0]*self._ndim
 			for iaxis in range(self._ndim):
@@ -223,7 +230,7 @@ class Performances(Diagnostic):
 				self._log    .append(False)
 			self._vunits = self._operationunits
 			self._title  = self.operation
-		
+
 		elif histogram is not None:
 			bin_length = (histogram_max - histogram_min) / histogram_nsteps
 			self._edges = self._np.linspace(histogram_min, histogram_max, histogram_nsteps+1)
@@ -236,29 +243,29 @@ class Performances(Diagnostic):
 			self._log    .append(False)
 			self._vunits = "1"
 			self._title  = "number of processes"
-		
+
 		# Set the directory in case of exporting
 		self._exportPrefix = "Performances_"+"".join(used_quantities)
 		self._exportDir = self._setExportDir(self._exportPrefix)
-		
+
 		# Finish constructor
 		self.valid = True
 		return kwargs
-	
+
 	# Method to print info
 	def _info(self):
 		return "Performances diagnostic "+self._title
-	
+
 	# get all available timesteps
 	def getAvailableTimesteps(self):
 		try:    times = [float(a.name[1:]) for a in self._h5items]
 		except: times = []
 		return self._np.double(times)
-	
+
 	# get all available quantities
 	def getAvailableQuantities(self):
 		return self._availableQuantities_uint + self._availableQuantities_double
-	
+
 	# Method to obtain the data only
 	def _getDataAtTime(self, t):
 		if not self._validate(): return
@@ -280,24 +287,65 @@ class Performances(Diagnostic):
 			B = self._np.empty((self._nprocs,), dtype="double")
 			h5item.read_direct( B, source_sel=self._np.s_[index_in_file,:] )
 			C.append( B )
+
 		# Calculate the operation
-		A = eval(self._operation)
+		# First patch performance information
+		if  self.operation in ["vecto", "mpi_rank"]:
+
+			if "patches" not in self._h5items[index].keys():
+				print("No patches group in timestep {}".format(str(t)))
+				return []
+
+			# Get the position of the patches
+			x_patches = self._np.array(self._h5items[index]["patches"]["x"][:])
+			y_patches = self._np.array(self._h5items[index]["patches"]["y"][:])
+			z_patches = self._np.array(self._h5items[index]["patches"]["z"][:])
+
+			if self.operation=="vecto":
+
+				if self._species not in self._h5items[index]["patches"].keys():
+					print("Requested species {} does not have a group".format(self._species))
+					return []
+				patches_buffer = self._np.array(self._h5items[index]["patches"][self._species]["vecto"])
+
+			elif self.operation=="mpi_rank":
+
+				if "mpi_rank" not in self._h5items[index]["patches"].keys():
+					print("Requested mpi_rank does not have a dataset")
+					return []
+
+				patches_buffer = self._np.array(self._h5items[index]["patches"]["mpi_rank"])
+
+			# Get the dimension of the patch matrix
+			x_max = x_patches.max()
+			y_max = y_patches.max()
+			z_max = z_patches.max()
+
+			# Matrix of patches reconstituted
+			A = self._np.zeros([x_max+1,y_max+1,z_max+1])
+			for i in range(len(patches_buffer)):
+				A[x_patches[i],y_patches[i],z_patches[i]] = patches_buffer[i]
+
+		# Or global performance information
+		else:
+			A = eval(self._operation)
+
 		# log scale if requested
 		if self._data_log: A = self._np.log10(A)
-		
+
 		# If raw requested
 		if self._mode == 0:
 			return A
-		
+
 		# If map requested
 		elif self._mode == 1:
-			
+
 			# Extract the array "hindex"
 			hindices = self._np.empty((self._nprocs,), dtype="uint")
 			h5item = self._h5items[index]["quantities_uint"]
 			index_in_file = self._availableQuantities_uint.index("hindex")
 			h5item.read_direct( hindices, source_sel=self._np.s_[index_in_file,:] )
-			
+
 			if self._ndim == 1:
 				# Make a matrix with MPI ranks at each patch location
 				ranks = self._np.empty((self._number_of_patches[0],), dtype=self._np.uint32)
@@ -308,40 +356,40 @@ class Performances(Diagnostic):
 					rank += 1
 					previous_h = h
 				ranks[h:] = rank
-				
+
 				# For each patch, associate the data of corresponding MPI rank
 				return A[ranks]
-			
+
 			elif self._ndim == 2:
 				# Make a matrix with patch indices on the Hilbert curve
 				if not hasattr(self, "_hilbert"):
 					self._hilbert = HilbertCurveMatrix2D(self._m[0], self._m[1], oversize=1)
-				
+
 				# Make a matrix with MPI ranks at each patch location
 				self._ranks = PartitionMatrix( self._hilbert, hindices, oversize=1 )
-				
+
 				# For each patch, associate the data of corresponding MPI rank
 				return A[self._ranks[1:-1,1:-1]]
-		
+
 		# If histogram requested
 		elif self._mode == 2:
 			histogram, _ = self._np.histogram( A, self._edges )
 			return histogram
-	
-	
+
+
 	def _prepare4(self):
 		if self._mode == 1 and self._ndim==2:
 			self._extent = [
 				0., self._xfactor*self._number_of_patches[0]*self._patch_length[0],
 				0., self._yfactor*self._number_of_patches[1]*self._patch_length[1]
 			]
-	
-	
+
+
 	def _animateOnAxes_2D_(self, ax, A):
 		# Display the data
 		im = ax.imshow( self._np.flipud(A),
 			vmin = self.options.vmin, vmax = self.options.vmax, extent=self._extent, **self.options.image)
-		
+
 		# Add lines to visualize MPI contours
 		# Vertical lines
 		vlines_i    = []
@@ -358,7 +406,7 @@ class Performances(Diagnostic):
 		vlines_jmin = self._np.concatenate( vlines_jmin )*self._yfactor*self._patch_length[1]
 		vlines_jmax = self._np.concatenate( vlines_jmax )*self._yfactor*self._patch_length[1]
 		ax.vlines( vlines_i, vlines_jmin, vlines_jmax, **self.options.plot)
-		
+
 		# Horizontal lines
 		hlines_j    = []
 		hlines_imin = []
@@ -374,5 +422,5 @@ class Performances(Diagnostic):
 		hlines_imin = self._np.concatenate( hlines_imin )*self._xfactor*self._patch_length[0]
 		hlines_imax = self._np.concatenate( hlines_imax )*self._xfactor*self._patch_length[0]
 		ax.hlines( hlines_j, hlines_imin, hlines_imax, **self.options.plot)
-		
+
 		return im

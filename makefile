@@ -102,6 +102,10 @@ else
     CXXFLAGS += -O3 #-xHost -no-prec-div -ipo
 endif
 
+# Manage options in the "config" parameter
+ifneq (,$(findstring detailed_timers,$(config)))
+    CXXFLAGS += -D__DETAILED_TIMERS
+endif
 
 ifeq (,$(findstring noopenmp,$(config)))
     OPENMP_FLAG ?= -fopenmp
@@ -109,7 +113,7 @@ ifeq (,$(findstring noopenmp,$(config)))
     OPENMP_FLAG += -D_OMP
     LDFLAGS += $(OPENMP_FLAG)
     CXXFLAGS += $(OPENMP_FLAG)
-else 
+else
     LDFLAGS += -mt_mpi # intelmpi only
 endif
 
@@ -256,9 +260,9 @@ help:
 	@echo '  make config="[ verbose ] [ debug ] [ scalasca ] [ noopenmp ]"'
 	@echo '    verbose              : to print compile command lines'
 	@echo '    debug                : to compile in debug mode (code runs really slow)'
+	@echo '    noopenmp             : to compile without openmp'
 	@echo '    opt-report           : to generate a report about optimization, vectorization and inlining (Intel compiler)'
 	@echo '    scalasca             : to compile using scalasca'
-	@echo '    noopenmp             : to compile without openmp'
 	@echo '    advisor              : to compile for Intel Advisor analysis'
 	@echo '    vtune                : to compile for Intel Vtune analysis'
 	@echo '    inspector            : to compile for Intel Inspector analysis'

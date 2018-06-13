@@ -117,42 +117,71 @@ void SpeciesMetrics::get_computation_time(const std::vector<int> & species_loc_b
 
 //! Evaluate the time necessary to compute `particle_number` particles
 //! using vectorized operators
-#pragma omp declare simd
+/*#pragma omp declare simd
 double SpeciesMetrics::get_particle_computation_time_vectorization(const double log_particle_number)
 {
-    return 2.256571100133911e-04 * pow(log_particle_number,4)
-            -1.449556673054744e-02 * pow(log_particle_number,3)
-            + 2.420020465803237e-01 * pow(log_particle_number,2)
-            -1.458141566746112e+00 * log_particle_number
-            + 3.305409065610623e+00;
-};
+    return   -7.983397022180499e-05 * pow(log_particle_number,4)
+ -1.220834603123080e-02 * pow(log_particle_number,3)
++ 2.262009704511124e-01 * pow(log_particle_number,2)
+ -1.346529777726451e+00 * log_particle_number
++ 3.053068997965275e+00;
+};*/
 
 //! Evaluate the time necessary to compute `particle_number` particles
 //! using vectorized operators
 #pragma omp declare simd
 float SpeciesMetrics::get_particle_computation_time_vectorization(const float log_particle_number)
 {
-    return 2.256571100133911e-04 * pow(log_particle_number,4)
-            -1.449556673054744e-02 * pow(log_particle_number,3)
-            + 2.420020465803237e-01 * pow(log_particle_number,2)
-            -1.458141566746112e+00 * log_particle_number
-            + 3.305409065610623e+00;
+// Skylake 8168 (Ex: Irene)
+#if defined INTEL_SKYLAKE_8168
+    return    -5.500324176161280e-03 * pow(log_particle_number,4)
++ 5.302690106220765e-02 * pow(log_particle_number,3)
+ -2.390999177899332e-02 * pow(log_particle_number,2)
+ -1.018178658950980e+00 * log_particle_number
++ 2.873965603217334e+00;
+// Knight Landings Intel Xeon Phi 7250 (Ex: Frioul)
+#elif defined INTEL_KNL_7250
+    return    + 9.287025545185804e-03 * pow(log_particle_number,4)
+ -1.252595460426959e-01 * pow(log_particle_number,3)
++ 6.609030611761257e-01 * pow(log_particle_number,2)
+ -1.948861281215199e+00 * log_particle_number
++ 3.391615458521049e+00
+// General fit
+#else
+    return   -7.983397022180499e-05 * pow(log_particle_number,4)
+ -1.220834603123080e-02 * pow(log_particle_number,3)
++ 2.262009704511124e-01 * pow(log_particle_number,2)
+ -1.346529777726451e+00 * log_particle_number
++ 3.053068997965275e+00;
+#endif
+
 };
 
 //! Evaluate the time necessary to compute `particle_number` particles
 //! using scalar operators
-#pragma omp declare simd
+/*#pragma omp declare simd
 double SpeciesMetrics::get_particle_computation_time_scalar(const double log_particle_number)
 {
-    return -1.713248324100330e-02 * log_particle_number
-            + 9.513949488639722e-01;
-};
+    return   -1.476070257489217e-02 * log_particle_number
++ 9.539747447809775e-01;
+};*/
 
 //! Evaluate the time necessary to compute `particle_number` particles
 //! using scalar operators
 #pragma omp declare simd
 float SpeciesMetrics::get_particle_computation_time_scalar(const float log_particle_number)
 {
-    return -1.713248324100330e-02 * log_particle_number
-            + 9.513949488639722e-01;
+// Skylake 8168 (Ex: Irene)
+#if defined INTEL_SKYLAKE_8168
+    return   -1.476070257489217e-02 * log_particle_number
++ 9.539747447809775e-01;
+// Knight Landings Intel Xeon Phi 7250 (Ex: Frioul)
+#elif defined INTEL_KNL_7250
+    return   -1.693420314189753e-02 * log_particle_number
++ 9.640406193625433e-01
+// General fit
+#else
+    return   -3.227685432492503e-02 * log_particle_number
++ 9.344604887689714e-01;
+#endif
 };

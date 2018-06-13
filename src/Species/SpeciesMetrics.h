@@ -33,7 +33,7 @@ class SpeciesMetrics
 
         //! Evaluate the time necessary to compute `particle_number` particles
         //! using vectorized operators
-        static double get_particle_computation_time_vectorization(const double log_particle_number);
+        //static double get_particle_computation_time_vectorization(const double log_particle_number);
 
         //! Evaluate the time necessary to compute `particle_number` particles
         //! using vectorized operators
@@ -41,7 +41,7 @@ class SpeciesMetrics
 
         //! Evaluate the time necessary to compute `particle_number` particles
         //! using scalar operators
-        static double get_particle_computation_time_scalar(const double log_particle_number);
+        //static double get_particle_computation_time_scalar(const double log_particle_number);
 
         //! Evaluate the time necessary to compute `particle_number` particles
         //! using scalar operators
