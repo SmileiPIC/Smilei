@@ -14,5 +14,5 @@
 # export LD_LIBRARY_PATH=${HDF5_ROOT}/lib:${LD_LIBRARY_PATH}
 # export HDF5_ROOT_DIR=${HDF5_ROOT}
 
-CXXFLAGS += -xCOMMON-AVX512 -ip -ipo -inline-factor=1000
+CXXFLAGS += -xCOMMON-AVX512 -ip -ipo -inline-factor=1000 -fno-alias
 
