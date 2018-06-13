@@ -506,7 +506,6 @@ void VectorPatch::sumSusceptibility(Params &params, double time_dual, Timers &ti
     if ( !some_particles_are_moving  && !diag_flag )
         return;
 
-    timers.densities.restart();
     if  (diag_flag){
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
@@ -514,10 +513,9 @@ void VectorPatch::sumSusceptibility(Params &params, double time_dual, Timers &ti
             (*this)(ipatch)->EMfields->computeTotalEnvChi();
         }
     }
-    timers.densities.update();
 
 
-    timers.syncDens.restart();
+    timers.susceptibility.restart();
     if ( params.geometry == "3Dcartesian" ) {
         SyncVectorPatch::sumEnvChi( params, (*this), timers, itime ); // MPI
     }
@@ -527,7 +525,7 @@ void VectorPatch::sumSusceptibility(Params &params, double time_dual, Timers &ti
         // }
     }
 
-    timers.syncDens.update( params.printNow( itime ) );
+    timers.susceptibility.update();
 
 } // End sumSusceptibility
 
@@ -615,6 +613,7 @@ void VectorPatch::solveEnvelope(Params& params, SimWindow* simWindow, int itime,
 
     if ((*this)(0)->EMfields->envelope!=NULL) {
 
+        timers.envelope.restart();
         // Exchange susceptibility
         SyncVectorPatch::exchangeEnvChi( params, (*this) );
 
@@ -648,6 +647,7 @@ void VectorPatch::solveEnvelope(Params& params, SimWindow* simWindow, int itime,
         // Exchange GradPhi
         SyncVectorPatch::exchangeGradPhi( params, (*this) );
         SyncVectorPatch::finalizeexchangeGradPhi( params, (*this) );
+        timers.envelope.update();
     }
 
 } // END solveEnvelope
@@ -2380,6 +2380,8 @@ void VectorPatch::ponderomotive_update_susceptibilty_and_momentum(Params& params
     #pragma omp single
     diag_flag = needsRhoJsNow(itime);
 
+    timers.particles.restart();
+
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         (*this)(ipatch)->EMfields->restartEnvChi();
@@ -2396,6 +2398,8 @@ void VectorPatch::ponderomotive_update_susceptibilty_and_momentum(Params& params
         } // end loop on species
     } // end loop on patches
 
+    timers.particles.update( );
+
 } // END ponderomotive_update_susceptibilty_and_momentum
 
 void VectorPatch::ponderomotive_update_position_and_currents(Params& params,
@@ -2406,6 +2410,8 @@ void VectorPatch::ponderomotive_update_position_and_currents(Params& params,
 
     #pragma omp single
     diag_flag = needsRhoJsNow(itime);
+
+    timers.particles.restart();
 
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {

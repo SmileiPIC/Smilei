@@ -21,7 +21,9 @@ Timers::Timers( SmileiMPI * smpi ) :
     syncField ("Sync Fields"   ), // Call sumRhoJ(s), exchangeB (MPI & Patch sync)
     syncDens  ("Sync Densities"),  // If necessary the following timers can be reintroduced
     diagsNEW  ("DiagnosticsNEW" ), // Diags.runAllDiags + MPI & Patch sync
-    reconfiguration("Reconfiguration")
+    reconfiguration("Reconfiguration"),
+    envelope  ("Envelope"),
+    susceptibility("Sync Susceptibility")
 #ifdef __DETAILED_TIMERS
     ,interpolator("Interpolator"),
     pusher("Pusher"             ),
@@ -46,6 +48,8 @@ Timers::Timers( SmileiMPI * smpi ) :
     timers.push_back( &syncDens   );
     timers.push_back( &diagsNEW   );
     timers.push_back( &reconfiguration   );
+    timers.push_back( &envelope   );
+    timers.push_back( &susceptibility   );
 #ifdef __DETAILED_TIMERS
     patch_timer_id_start = timers.size()-1;
     timers.push_back( &interpolator   );

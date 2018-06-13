@@ -31,6 +31,8 @@ public:
     Timer syncDens  ;
     Timer diagsNEW  ;
     Timer reconfiguration  ;
+    Timer envelope  ;
+    Timer susceptibility ;
 #ifdef __DETAILED_TIMERS
     Timer interpolator  ;
     Timer pusher  ;
