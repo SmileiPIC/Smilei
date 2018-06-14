@@ -157,6 +157,14 @@ void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particl
         
     }
 
+    //Translate field into the cartesian y,z coordinates
+    delta2 = std::real(exp_m_theta) * *(ELoc+1*nparts) + std::imag(exp_m_theta) * *(ELoc+2*nparts);
+    *(ELoc+2*nparts) = -std::imag(exp_m_theta) * *(ELoc+1*nparts) + std::real(exp_m_theta) * *(ELoc+2*nparts);
+    *(ELoc+1*nparts) = delta2 ;
+    delta2 = std::real(exp_m_theta) * *(BLoc+1*nparts) + std::imag(exp_m_theta) * *(BLoc+2*nparts);
+    *(BLoc+2*nparts) = -std::imag(exp_m_theta) * *(BLoc+1*nparts) + std::real(exp_m_theta) * *(BLoc+2*nparts);
+    *(BLoc+1*nparts) = delta2 ;
+
 } // END InterpolatorRZ2Order
 
 void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc)
