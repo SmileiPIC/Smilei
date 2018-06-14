@@ -300,13 +300,15 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     Sy1[jp_m_jpo+2] = 0.75-delta2;
     Sy1[jp_m_jpo+3] = 0.5 * (delta2+delta+0.25);
     for (unsigned int i=0 ; i<imode; i++) {
+        MESSAGE("calcul e_theta");
         e_delta *= sqrt(e_theta/e_theta_old);
         e_bar *= sqrt(e_theta*e_theta_old);
 
     }
      e_delta_inv =1./e_delta;
+     MESSAGE("calcul e_theta inv");
     //defining crt_p 
-     complex<double> crt_p = charge_weight*e_bar*Icpx/(2*M_PI*dt*imode);   
+     complex<double> crt_p = - charge_weight*Icpx/(e_bar*dt*imode);   
    // MESSAGE ("crt_p "<< crt_p);
     for (unsigned int i=0; i < 5; i++) {
         DSx[i] = Sx1[i] - Sx0[i];
@@ -367,7 +369,9 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     for (unsigned int i=0; i<imode; i++){
     C_m *= e_theta;
     }
-    
+    MESSAGE("Cm " <<C_m);
+    C_m = 1./C_m; 
+    MESSAGE("Cm inv "<< C_m);
     // Jl^(d,p)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
@@ -697,7 +701,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     }
      e_delta_inv =1./e_delta;
     //defining crt_p 
-    complex<double> crt_p = charge_weight*e_bar*Icpx/(2*M_PI*dt*imode);
+    complex<double> crt_p = -charge_weight*Icpx/(dt*imode*e_bar);
     for (unsigned int i=0; i < 5; i++) {
         DSx[i] = Sx1[i] - Sx0[i];
         DSy[i] = Sy1[i] - Sy0[i];
@@ -755,7 +759,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     for (unsigned int i=0; i<imode; i++){
     C_m *= e_theta;
     }
-    
+    C_m= 1./C_m; 
     // Jl^(d,p)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
@@ -815,11 +819,11 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             linindex = iloc*b_dim[1]+jloc;
            // MESSAGE("jloc "<< jloc<< "j_domain_begin "<< j_domain_begin);
             if (jloc+ j_domain_begin != 0){
-                rho [linindex] += C_m/(2*M_PI)*charge_weight* Sx1[i]*Sy1[j]/abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
+                rho [linindex] += C_m*charge_weight* Sx1[i]*Sy1[j]/abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
                 //if (abs(rho [linindex])>1.) {MESSAGE("rhom "<< rho [linindex]<< "jloc+jbe "<< jloc+ j_domain_begin  );}
                 }
             else {
-                rho [linindex] =  C_m/(2*M_PI)*charge_weight* Sx1[i]*Sy1[j]*6./dr; // iloc = (i+ipo)*b_dim[1];
+                rho [linindex] =  C_m*charge_weight* Sx1[i]*Sy1[j]*6./dr; // iloc = (i+ipo)*b_dim[1];
                 //rho [linindex+1] += rho [linindex-1];
                 //rho [linindex+2] += rho [linindex-2];
                 //if (abs(rho [linindex])>1.) {MESSAGE("on axis rhom "<< rho [linindex]<< "jloc+jbe "<< jloc+ j_domain_begin  );}
