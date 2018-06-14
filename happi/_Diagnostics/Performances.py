@@ -376,6 +376,44 @@ class Performances(Diagnostic):
 			histogram, _ = self._np.histogram( A, self._edges )
 			return histogram
 
+	# Convert data to VTK format
+	def toVTK(self,numberOfPieces=1):
+		"""
+		Export the data to Vtk
+		"""
+
+		# Creation of the directory and base name
+		self._mkdir(self._exportDir)
+		fileprefix = self._exportDir + self._exportPrefix + self.operation
+
+		vtk = VTKfile()
+
+		# If 2D data, then do a streak plot
+		if self._ndim == 2:
+
+			if self._verbose: print("2D non implemented for VTK conversion")
+
+		# Else 3D data
+		elif self._ndim == 3:
+
+			# Loop over the requested time steps
+			for istep,step in enumerate(self._timesteps):
+
+				if self._verbose: print("Step: {}, file {}_{}.pvti".format(istep, fileprefix, istep))
+
+				raw = self._getDataAtTime(self._timesteps[istep])
+				shape = list(raw.shape)
+				origin = [0,0,0]
+				extent = []
+				for i in range(self._ndim):
+					extent += [0,shape[i]-1]
+				spacings = [1,1,1]
+
+				data = self._np.ascontiguousarray(raw.flatten(order='F'), dtype='float32')
+				arr = vtk.Array(data, self._title)
+				vtk.WriteImage(arr, origin, extent, spacings, fileprefix+"_"+str(istep)+".pvti", numberOfPieces)
+
+			if self._verbose: print("Successfully exported to VTK, folder='"+self._exportDir)
 
 	def _prepare4(self):
 		if self._mode == 1 and self._ndim==2:

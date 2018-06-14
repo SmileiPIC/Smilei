@@ -1,1 +1,6 @@
-CXXFLAGS += -axCORE-AVX2 -ip -ipo -inline-factor=1000 -D__INTEL_HSW_E5_2680_v3
+#
+# Machien file for Jureca using AVX2
+# __________________________________________________________
+#
+
+CXXFLAGS += -axCORE-AVX2 -ip -ipo -inline-factor=1000 -D__INTEL_HSW_E5_2680_v3 -fno-alias
