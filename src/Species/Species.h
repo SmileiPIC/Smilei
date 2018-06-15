@@ -281,7 +281,7 @@ public:
                           std::vector<Diagnostic*>& localDiags);
 
     //! Method calculating the Particle updated momentum (interpolation, momentum pusher, only particles interacting with envelope)
-    virtual void ponderomotive_update_susceptibilty_and_momentum(double time_dual, unsigned int ispec,
+    virtual void ponderomotive_update_susceptibility_and_momentum(double time_dual, unsigned int ispec,
                            ElectroMagn* EMfields, Interpolator* Interp_envelope, Projector* Proj_susceptibility,
                            Params &params, bool diag_flag,
                            Patch* patch, SmileiMPI* smpi,

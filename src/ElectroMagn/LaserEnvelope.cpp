@@ -357,7 +357,7 @@ void LaserEnvelope3D::compute_Phi(ElectroMagn* EMfields){
 
 
     // Compute ponderomotive potential Phi=|A|^2/2, at timesteps n and n-1, including ghost cells and 
-    // and old value of gradientPhi
+    // and old value of Phi
     for (unsigned int i=1 ; i <A_->dims_[0]-1; i++){ // x loop
         for (unsigned int j=1 ; j < A_->dims_[1]-1; j++){ // y loop
             for (unsigned int k=1 ; k < A_->dims_[2]-1; k++){ // z loop

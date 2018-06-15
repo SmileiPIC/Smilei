@@ -579,7 +579,7 @@ void SpeciesV::importParticles( Params& params, Patch* patch, Particles& source_
 //   - deposit susceptibility
 //   - calculate the new momentum
 // ---------------------------------------------------------------------------------------------------------------------
-void SpeciesV::ponderomotive_update_susceptibilty_and_momentum(double time_dual, unsigned int ispec,
+void SpeciesV::ponderomotive_update_susceptibility_and_momentum(double time_dual, unsigned int ispec,
                            ElectroMagn* EMfields, Interpolator* Interp_envelope, Projector* Proj_susceptibility,
                            Params &params, bool diag_flag,
                            Patch* patch, SmileiMPI* smpi,
@@ -630,7 +630,7 @@ void SpeciesV::ponderomotive_update_susceptibilty_and_momentum(double time_dual,
     else { // immobile particle (at the moment only project density)
     }//END if time vs. time_frozen
 
-} // end ponderomotive_update_susceptibilty_and_momentum
+} // end ponderomotive_update_susceptibility_and_momentum
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all particles of the species reacting to laser envelope
