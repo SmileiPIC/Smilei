@@ -1682,6 +1682,9 @@ void Species::ponderomotive_update_susceptibilty_and_momentum(double time_dual, 
         ithread = 0;
     #endif
 
+#ifdef  __DETAILED_TIMERS
+    double timer;
+#endif
 
     // -------------------------------
     // calculate the particle updated momentum
@@ -1703,6 +1706,9 @@ void Species::ponderomotive_update_susceptibilty_and_momentum(double time_dual, 
             std::vector<int> *iold              = &(smpi->dynamics_iold[ithread]);
             std::vector<double> *delta          = &(smpi->dynamics_deltaold[ithread]);
 
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
             int nparts( particles->size() );
             for (int ipart=istart ; ipart<iend; ipart++ ) {//Loop on bin particles
                 //Interpolation on current particle
@@ -1715,6 +1721,9 @@ void Species::ponderomotive_update_susceptibilty_and_momentum(double time_dual, 
                 (*delta)[ipart+1*nparts] = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->deltay;
                 (*delta)[ipart+2*nparts] = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->deltaz;
             } // end loop on bin particles
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[7] += MPI_Wtime() - timer;
+#endif
 
 
             // Project susceptibility, the source term of envelope equation
@@ -1723,14 +1732,25 @@ void Species::ponderomotive_update_susceptibilty_and_momentum(double time_dual, 
                 b_Chi_envelope =  &(*EMfields->Env_Chi_)(ibin*clrw*f_dim1*f_dim2) ;
             else {ERROR("Envelope model not yet implemented in this geometry");}
 
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
             for (unsigned int iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
                 (static_cast<Projector3D2Order_susceptibility*>(Proj_susceptibility))->project_susceptibility(b_Chi_envelope, *particles, iPart, ibin, b_dim, smpi, ithread, mass );
                                                                                   } //End loop on particles
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[8] += MPI_Wtime() - timer;
+#endif
 
 
-
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
             // Push only the particle momenta
             (*Push)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[9] += MPI_Wtime() - timer;
+#endif
 
                                                                    } // end loop on ibin
                                  }
@@ -1757,6 +1777,10 @@ void Species::ponderomotive_update_position_and_currents(double time_dual, unsig
     #else
         ithread = 0;
     #endif
+
+#ifdef  __DETAILED_TIMERS
+    double timer;
+#endif
 
     unsigned int iPart;
 
@@ -1789,6 +1813,9 @@ void Species::ponderomotive_update_position_and_currents(double time_dual, unsig
             std::vector<double> *delta          = &(smpi->dynamics_deltaold[ithread]);
 
             int nparts( particles->size() );
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
             for (int ipart=istart ; ipart<iend; ipart++ ) { //Loop on bin particles
                 //Interpolation on current particle
                 (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->interpolate_envelope_and_old_envelope(EMfields, *particles, ipart, nparts, &(*PHIpart)[ipart], &(*GradPHIpart)[ipart],&(*PHIoldpart)[ipart], &(*GradPHIoldpart)[ipart]);
@@ -1800,9 +1827,18 @@ void Species::ponderomotive_update_position_and_currents(double time_dual, unsig
                 (*delta)[ipart+1*nparts] = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->deltay;
                 (*delta)[ipart+2*nparts] = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->deltaz;
             } // end loop on particles
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[10] += MPI_Wtime() - timer;
+#endif
 
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
             // Push only the particle position
             (*Push_ponderomotive_position)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[11] += MPI_Wtime() - timer;
+#endif
 
             // Apply wall and boundary conditions
             if (mass>0)
@@ -1853,8 +1889,14 @@ void Species::ponderomotive_update_position_and_currents(double time_dual, unsig
 
              // Project currents if not a Test species and charges as well if a diag is needed.
              // Do not project if a photon
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
              if ((!particles->is_test) && (mass > 0))
                  (*Proj)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread, ibin, clrw, diag_flag, params.is_spectral, b_dim, ispec );
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[12] += MPI_Wtime() - timer;
+#endif
 
             } // end ibin loop
 
