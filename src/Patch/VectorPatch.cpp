@@ -2399,6 +2399,11 @@ void VectorPatch::ponderomotive_update_susceptibilty_and_momentum(Params& params
     } // end loop on patches
 
     timers.particles.update( );
+#ifdef __DETAILED_TIMERS
+    timers.interp_fields_env.update( *this, params.printNow( itime ) );
+    timers.proj_susceptibility.update( *this, params.printNow( itime ) );
+    timers.push_mom.update( *this, params.printNow( itime ) );
+#endif
 
 } // END ponderomotive_update_susceptibilty_and_momentum
 
@@ -2429,6 +2434,11 @@ void VectorPatch::ponderomotive_update_position_and_currents(Params& params,
     } // end loop on patches
 
     timers.particles.update( params.printNow( itime ) );
+#ifdef __DETAILED_TIMERS
+    timers.interp_env_old.update( *this, params.printNow( itime ) );
+    timers.proj_currents.update( *this, params.printNow( itime ) );
+    timers.push_pos.update( *this, params.printNow( itime ) );
+#endif
 
     timers.syncPart.restart();
     for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {

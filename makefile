@@ -99,7 +99,7 @@ else ifneq (,$(findstring opt-report,$(config)))
 
 # Default configuration
 else
-    CXXFLAGS += -O3 #-xHost -no-prec-div -ipo
+    CXXFLAGS += -O3 -g #-xHost -no-prec-div -ipo
 endif
 
 # Manage options in the "config" parameter

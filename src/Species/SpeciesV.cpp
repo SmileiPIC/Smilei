@@ -673,6 +673,10 @@ void SpeciesV::ponderomotive_update_susceptibilty_and_momentum(double time_dual,
         ithread = 0;
     #endif
 
+#ifdef  __DETAILED_TIMERS
+    double timer;
+#endif
+
     unsigned int iPart;
 
     // -------------------------------
@@ -693,9 +697,15 @@ void SpeciesV::ponderomotive_update_susceptibilty_and_momentum(double time_dual,
             int nparts_in_pack = bmax[ (ipack+1) * packsize-1 ];
             smpi->dynamics_resize(ithread, nDim_particle, nparts_in_pack );
 
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
             // Interpolate the fields at the particle position
             for (unsigned int scell = 0 ; scell < packsize ; scell++)
                 (static_cast<Interpolator3D2Order_envV*>(Interp_envelope))->interpolate_em_fields_and_envelope(EMfields, *particles, smpi, &(bmin[ipack*packsize+scell]), &(bmax[ipack*packsize+scell]), ithread, bmin[ipack*packsize] );
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[7] += MPI_Wtime() - timer;
+#endif
 
             // Project susceptibility, the source term of envelope equation
             double* b_Chi_envelope=nullptr;
@@ -704,11 +714,23 @@ void SpeciesV::ponderomotive_update_susceptibilty_and_momentum(double time_dual,
             else {ERROR("Envelope model not yet implemented in this geometry");}
 
             int* iold = NULL;
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
             for (unsigned int scell = 0 ; scell < packsize ; scell++)
                 (static_cast<Projector3D2Order_susceptibilityV*>(Proj_susceptibility))->project_susceptibility( b_Chi_envelope, *particles, bmin[ipack*packsize+scell], bmax[ipack*packsize+scell], ipack*packsize+scell, b_dim, smpi, ithread, mass, iold, bmin[ipack*packsize] );
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[8] += MPI_Wtime() - timer;
+#endif
 
             // Push the particles
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
             (*Push)(*particles, smpi, bmin[ipack*packsize], bmax[ipack*packsize+packsize-1], ithread, bmin[ipack*packsize] );
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[9] += MPI_Wtime() - timer;
+#endif
         }
 
     }
@@ -740,6 +762,10 @@ void SpeciesV::ponderomotive_update_position_and_currents(double time_dual, unsi
        ithread = 0;
    #endif
 
+#ifdef  __DETAILED_TIMERS
+    double timer;
+#endif
+
    unsigned int iPart;
 
    // Reset list of particles to exchange
@@ -769,12 +795,24 @@ void SpeciesV::ponderomotive_update_position_and_currents(double time_dual, unsi
             int nparts_in_pack = bmax[ (ipack+1) * packsize-1 ];
             smpi->dynamics_resize(ithread, nDim_particle, nparts_in_pack );
 
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
             // Interpolate the fields at the particle position
             for (unsigned int scell = 0 ; scell < packsize ; scell++)
                 (static_cast<Interpolator3D2Order_envV*>(Interp_envelope))->interpolate_envelope_and_old_envelope(EMfields, *particles, smpi, &(bmin[ipack*packsize+scell]), &(bmax[ipack*packsize+scell]), ithread, bmin[ipack*packsize] );
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[10] += MPI_Wtime() - timer;
+#endif
 
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
             // Push only the particle position
             (*Push_ponderomotive_position)(*particles, smpi, bmin[ipack*packsize], bmax[ipack*packsize+packsize-1], ithread, bmin[ipack*packsize] );
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[11] += MPI_Wtime() - timer;
+#endif
             unsigned int length[3];
             length[0]=0;
             length[1]=params.n_space[1]+1;
@@ -823,10 +861,16 @@ void SpeciesV::ponderomotive_update_position_and_currents(double time_dual, unsi
 
             // Project currents if not a Test species and charges as well if a diag is needed.
             // Do not project if a photon
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
             if ((!particles->is_test) && (mass > 0))
                 for (unsigned int scell = 0 ; scell < packsize ; scell++)
                     (*Proj)(EMfields, *particles, smpi, bmin[ipack*packsize+scell], bmax[ipack*packsize+scell], ithread, ipack*packsize+scell, clrw, diag_flag, params.is_spectral, b_dim, ispec, bmin[ipack*packsize] );
 
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[12] += MPI_Wtime() - timer;
+#endif
         }
 
 
