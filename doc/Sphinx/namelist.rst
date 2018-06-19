@@ -2454,6 +2454,7 @@ Only one block ``DiagPerformances()`` may be added in the namelist, for instance
   DiagPerformances(
       every = 100,
   #    flush_every = 100,
+      patch_information = True,
   )
 
 .. py:data:: every
@@ -2471,6 +2472,11 @@ Only one block ``DiagPerformances()`` may be added in the namelist, for instance
   When ``flush_every`` coincides with ``every``, the output file is actually written
   ("flushed" from the buffer). Flushing too often might *dramatically* slow down the simulation.
 
+.. py:data:: patch_information
+
+  :default: False
+
+  Activation of the performance per patch output.
 
 ----
 
