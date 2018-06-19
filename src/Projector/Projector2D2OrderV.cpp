@@ -184,7 +184,7 @@ void Projector2D2OrderV::operator() (double* Jx, double* Jy, double* Jz, double*
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project charge : frozen & diagFields timstep (not vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2OrderV::operator() (double* rho, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim)
+void Projector2D2OrderV::operator() (double* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim)
 {
     //Warning : this function is used for frozen species only. It is assumed that position = position_old !!!
     
@@ -192,9 +192,26 @@ void Projector2D2OrderV::operator() (double* rho, Particles &particles, unsigned
     // Variable declaration & initialization
     // -------------------------------------
     
-    int iloc;
+    int iloc, ny(nprimy);
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+
+    if (type > 0) {
+        charge_weight *= 1./sqrt(1.0 + particles.momentum(0,ipart)*particles.momentum(0,ipart)
+                                     + particles.momentum(1,ipart)*particles.momentum(1,ipart)
+                                     + particles.momentum(2,ipart)*particles.momentum(2,ipart));
+
+        if (type == 1){
+            charge_weight *= particles.momentum(0,ipart);
+        }
+        else if (type == 2){
+            charge_weight *= particles.momentum(1,ipart);
+            ny ++;
+        }
+        else {
+            charge_weight *= particles.momentum(2,ipart); 
+        }
+    }
     
     // variable declaration
     double xpn, ypn;
@@ -213,7 +230,7 @@ void Projector2D2OrderV::operator() (double* rho, Particles &particles, unsigned
     
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
     xpn = particles.position(0, ipart) * dx_inv_;
-    int ip = round(xpn);
+    int ip        = round(xpn + 0.5 * (type==1));                           // index of the central node
     delta  = xpn - (double)ip;
     delta2 = delta*delta;
     Sx1[1] = 0.5 * (delta2-delta+0.25);
@@ -221,7 +238,7 @@ void Projector2D2OrderV::operator() (double* rho, Particles &particles, unsigned
     Sx1[3] = 0.5 * (delta2+delta+0.25);
     
     ypn = particles.position(1, ipart) * dy_inv_;
-    int jp = round(ypn);
+    int jp = round(ypn + 0.5*(type==2));
     delta  = ypn - (double)jp;
     delta2 = delta*delta;
     Sy1[1] = 0.5 * (delta2-delta+0.25);
@@ -231,16 +248,16 @@ void Projector2D2OrderV::operator() (double* rho, Particles &particles, unsigned
     // ---------------------------
     // Calculate the total current
     // ---------------------------
-    ip -= i_domain_begin + bin +2;
+    ip -= i_domain_begin + 2;
     jp -= j_domain_begin + 2;
     
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = (i+ip)*b_dim[1]+jp;
         for (unsigned int j=0 ; j<5 ; j++) {
-            rho[iloc+j] += charge_weight * Sx1[i]*Sy1[j];
+            rhoj[iloc+j] += charge_weight * Sx1[i]*Sy1[j];
         }
     }//i
-} // END Project local current densities frozen.
+} // END Project local current densities (sort)
 
 
 // ---------------------------------------------------------------------------------------------------------------------

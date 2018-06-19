@@ -31,6 +31,8 @@ public:
     Timer syncDens  ;
     Timer diagsNEW  ;
     Timer reconfiguration  ;
+    Timer envelope  ;
+    Timer susceptibility ;
 #ifdef __DETAILED_TIMERS
     Timer interpolator  ;
     Timer pusher  ;
@@ -39,6 +41,13 @@ public:
     Timer ionization  ;
     Timer radiation  ;
     Timer multiphoton_Breit_Wheeler_timer  ;
+
+    Timer interp_fields_env  ;
+    Timer proj_susceptibility  ;
+    Timer push_mom ;
+    Timer interp_env_old  ;
+    Timer proj_currents  ;
+    Timer push_pos ;
 
     // Where the patch timers start in the timer vector
     unsigned int patch_timer_id_start ;

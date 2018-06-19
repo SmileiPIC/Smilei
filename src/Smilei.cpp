@@ -226,8 +226,7 @@ int main (int argc, char* argv[])
             vecPatches.reconfiguration(params,timers, 0);
         }
 
-        vecPatches.dynamics(params, &smpi, simWindow, RadiationTables,
-                            MultiphotonBreitWheelerTables, time_dual, timers, 0);
+        vecPatches.projection_for_diags(params, &smpi, simWindow, time_dual, timers, 0);
 
         // if Laser Envelope is used, execute particles and envelope sections of ponderomotive loop
         if (params.Laser_Envelope_model){
@@ -246,10 +245,6 @@ int main (int argc, char* argv[])
                                         } // end condition if Laser Envelope Model is used
 
         vecPatches.sumDensities(params, time_dual, timers, 0, simWindow );
-
-        vecPatches.finalize_and_sort_parts(params, &smpi, simWindow,
-            RadiationTables,MultiphotonBreitWheelerTables,
-            time_dual, timers, 0);
 
         TITLE("Initializing diagnostics");
         vecPatches.initAllDiags( params, &smpi );
