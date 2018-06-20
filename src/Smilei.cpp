@@ -137,6 +137,11 @@ int main (int argc, char* argv[])
         // vecPatches data read in restartAll according to smpi.patch_count
         checkpoint.restartAll( vecPatches, &smpi, simWindow, params, openPMD);
 
+        // Patch reconfiguration for the dynamic vectorization
+        if( params.has_dynamic_vectorization ) {
+            vecPatches.configuration(params,timers, 0);
+        }
+
         // time at integer time-steps (primal grid)
         time_prim = checkpoint.this_run_start_step * params.timestep;
         // time at half-integer time-steps (dual grid)
@@ -167,15 +172,18 @@ int main (int argc, char* argv[])
         // Initialize the electromagnetic fields
         // -------------------------------------
 
-        
+        TITLE("Applying external fields at time t = 0");
+        vecPatches.applyExternalFields();
+        vecPatches.saveExternalFields( params );
+
         // Solve "Relativistic Poisson" problem (including proper centering of fields)
-        // Note: the mean gamma for initialization will be computed for all the species 
+        // Note: the mean gamma for initialization will be computed for all the species
         // whose fields are initialized at this iteration
         if (params.solve_relativistic_poisson == true) {
             // Compute rho only for species needing relativistic field Initialization
             vecPatches.computeChargeRelativisticSpecies(time_prim);
             SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, timers, 0 );
-            
+
             // Initialize the fields for these species
             if (!vecPatches.isRhoNull(&smpi)){
                 TITLE("Initializing relativistic species fields at time t = 0");
@@ -184,7 +192,7 @@ int main (int argc, char* argv[])
             // Reset rho and J and return to initialization
             vecPatches.resetRhoJ();
         }
-        
+
         vecPatches.computeCharge();
         vecPatches.sumDensities(params, time_dual, timers, 0, simWindow);
 
@@ -212,18 +220,16 @@ int main (int argc, char* argv[])
             vecPatches.solvePoisson( params, &smpi );
         }
 
-        TITLE("Applying external fields at time t = 0");
-        vecPatches.applyExternalFields();
-        vecPatches.saveExternalFields( params );
 
         // Patch reconfiguration
-        vecPatches.configuration(params,timers, 0);
+        if( params.has_dynamic_vectorization ) {
+            vecPatches.reconfiguration(params,timers, 0);
+        }
 
-        vecPatches.dynamics(params, &smpi, simWindow, RadiationTables,
-                            MultiphotonBreitWheelerTables, time_dual, timers, 0);
+        vecPatches.projection_for_diags(params, &smpi, simWindow, time_dual, timers, 0);
 
         // if Laser Envelope is used, execute particles and envelope sections of ponderomotive loop
-        if (params.Laser_Envelope_model){ 
+        if (params.Laser_Envelope_model){
 
             // initialize new envelope from scratch, following the input namelist
             vecPatches.init_new_envelope(params);
@@ -235,14 +241,10 @@ int main (int argc, char* argv[])
             vecPatches.sumSusceptibility(params, time_dual, timers, 0, simWindow );
 
             // interp updated envelope for position advance, update positions and currents for Maxwell's equations
-            vecPatches.ponderomotive_update_position_and_currents(params, &smpi, simWindow, time_dual, timers, 0);        
-                                        } // end condition if Laser Envelope Model is used 
+            vecPatches.ponderomotive_update_position_and_currents(params, &smpi, simWindow, time_dual, timers, 0);
+                                        } // end condition if Laser Envelope Model is used
 
         vecPatches.sumDensities(params, time_dual, timers, 0, simWindow );
-
-        vecPatches.finalize_and_sort_parts(params, &smpi, simWindow,
-            RadiationTables,MultiphotonBreitWheelerTables,
-            time_dual, timers, 0);
 
         TITLE("Initializing diagnostics");
         vecPatches.initAllDiags( params, &smpi );
@@ -311,14 +313,18 @@ int main (int argc, char* argv[])
             }
 
             // Patch reconfiguration
-            vecPatches.configuration(params, timers, itime);
+            if( params.has_dynamic_vectorization ) {
+                if ( params.dynamic_vecto_time_selection->theTimeIsNow(itime) ) {
+                    vecPatches.reconfiguration(params, timers, itime);
+                }
+            }
 
             // apply collisions if requested
             vecPatches.applyCollisions(params, itime, timers);
-            
-            // Solve "Relativistic Poisson" problem (including proper centering of fields) 
+
+            // Solve "Relativistic Poisson" problem (including proper centering of fields)
             // for species who stop to be frozen
-            // Note: the mean gamma for initialization will be computed for all the species 
+            // Note: the mean gamma for initialization will be computed for all the species
             // whose fields are initialized at this iteration
             if (params.solve_relativistic_poisson == true) {
                 // Compute rho only for species needing relativistic field Initialization
@@ -330,7 +336,7 @@ int main (int argc, char* argv[])
                     // Initialize the fields for these species
                     if (!vecPatches.isRhoNull(&smpi)){
                         TITLE("Initializing relativistic species fields");
-                        vecPatches.solveRelativisticPoisson( params, &smpi, time_prim );                
+                        vecPatches.solveRelativisticPoisson( params, &smpi, time_prim );
                     }
                 }
                 #pragma omp barrier
@@ -344,21 +350,25 @@ int main (int argc, char* argv[])
             vecPatches.dynamics(params, &smpi, simWindow, RadiationTables,
                                 MultiphotonBreitWheelerTables,
                                 time_dual, timers, itime);
-            
+
             // if Laser Envelope is used, execute particles and envelope sections of ponderomotive loop
             if (params.Laser_Envelope_model){
                 // interpolate envelope for susceptibility deposition, project susceptibility for envelope equation, momentum advance
+<<<<<<< HEAD
                 vecPatches.ponderomotive_update_susceptibility_and_momentum(params, &smpi, simWindow, time_dual, timers, itime);    
+=======
+                vecPatches.ponderomotive_update_susceptibilty_and_momentum(params, &smpi, simWindow, time_dual, timers, itime);
+>>>>>>> e36b01e8bf9070422cae478160be652c5497afa0
 
                 // comm and sum susceptibility
                 vecPatches.sumSusceptibility(params, time_dual, timers, itime, simWindow );
 
-                // solve envelope equation and comm envelope         
-                vecPatches.solveEnvelope( params, simWindow, itime, time_dual, timers ); 
+                // solve envelope equation and comm envelope
+                vecPatches.solveEnvelope( params, simWindow, itime, time_dual, timers );
 
                 // interp updated envelope for position advance, update positions and currents for Maxwell's equations
-                vecPatches.ponderomotive_update_position_and_currents(params, &smpi, simWindow, time_dual, timers, itime);      
-                                             } // end condition if Laser Envelope Model is used 
+                vecPatches.ponderomotive_update_position_and_currents(params, &smpi, simWindow, time_dual, timers, itime);
+                                             } // end condition if Laser Envelope Model is used
 
             // Sum densities
             vecPatches.sumDensities(params, time_dual, timers, itime, simWindow );
@@ -434,7 +444,7 @@ int main (int argc, char* argv[])
             itime++;
 
         }//END of the time loop
-        
+
     } //End omp parallel region
 
     smpi.barrier();
@@ -447,6 +457,8 @@ int main (int argc, char* argv[])
 
     TITLE("Time profiling : (print time > 0.001%)");
     timers.profile(&smpi);
+
+    smpi.barrier();
 
 /*tommaso
     // ------------------------------------------------------------------

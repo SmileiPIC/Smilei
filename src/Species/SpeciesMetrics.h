@@ -33,41 +33,19 @@ class SpeciesMetrics
 
         //! Evaluate the time necessary to compute `particle_number` particles
         //! using vectorized operators
-        static double inline get_particle_computation_time_vectorization(const double log_particle_number)
-        {
-            return 2.256571100133911e-04 * pow(log_particle_number,4)
-                    -1.449556673054744e-02 * pow(log_particle_number,3)
-                    + 2.420020465803237e-01 * pow(log_particle_number,2)
-                    -1.458141566746112e+00 * log_particle_number
-                    + 3.305409065610623e+00;
-        };
+        //static double get_particle_computation_time_vectorization(const double log_particle_number);
 
         //! Evaluate the time necessary to compute `particle_number` particles
         //! using vectorized operators
-        static float inline get_particle_computation_time_vectorization(const float log_particle_number)
-        {
-            return 2.256571100133911e-04 * pow(log_particle_number,4)
-                    -1.449556673054744e-02 * pow(log_particle_number,3)
-                    + 2.420020465803237e-01 * pow(log_particle_number,2)
-                    -1.458141566746112e+00 * log_particle_number
-                    + 3.305409065610623e+00;
-        };
+        static float get_particle_computation_time_vectorization(const float log_particle_number);
 
         //! Evaluate the time necessary to compute `particle_number` particles
         //! using scalar operators
-        static double inline get_particle_computation_time_scalar(const double log_particle_number)
-        {
-            return -1.713248324100330e-02 * log_particle_number
-                    + 9.513949488639722e-01;
-        };
+        //static double get_particle_computation_time_scalar(const double log_particle_number);
 
         //! Evaluate the time necessary to compute `particle_number` particles
         //! using scalar operators
-        static float inline get_particle_computation_time_scalar(const float log_particle_number)
-        {
-            return -1.713248324100330e-02 * log_particle_number
-                    + 9.513949488639722e-01;
-        };
+        static float get_particle_computation_time_scalar(const float log_particle_number);
 
     private:
 

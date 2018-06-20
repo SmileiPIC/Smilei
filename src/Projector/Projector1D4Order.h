@@ -13,8 +13,8 @@ public:
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_/rho), diagFields timestep
     inline void operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* delta);
 
-    //! Project global current charge (EMfields->rho_), frozen & diagFields timestep
-    void operator() (double* rho, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim) override final;
+    //! Project global current charge (EMfields->rho_ , J), for initialization and diags
+    void operator() (double* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim) override final;
 
     //! Project global current densities if Ionization in Species::dynamics,
     void operator() (Field* Jx, Field* Jy, Field* Jz, Particles &particles, int ipart, LocalFields Jion) override final;

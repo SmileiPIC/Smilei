@@ -193,7 +193,7 @@ class Main(SmileiSingleton):
     solve_poisson = True
     poisson_max_iteration = 50000
     poisson_max_error = 1.e-14
-    
+
     # Relativistic Poisson tuning
     solve_relativistic_poisson = False
     relativistic_poisson_max_iteration = 50000
@@ -294,6 +294,13 @@ class LoadBalancing(SmileiSingleton):
     initial_balance = True
     cell_load = 1.0
     frozen_particle_load = 0.1
+
+# Radiation reaction configuration (continuous and MC algorithms)
+class DynamicVectorization(SmileiComponent):
+    """
+    Dynamic vectorization parameters
+    """
+    every = 1
 
 
 class MovingWindow(SmileiSingleton):
@@ -448,6 +455,7 @@ class DiagPerformances(SmileiSingleton):
     """Performances diagnostic"""
     every = 0
     flush_every = 1
+    patch_information = True
 
 # external fields
 class ExternalField(SmileiComponent):

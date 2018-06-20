@@ -214,19 +214,6 @@ void Interpolator3D2Order_envV::interpolate_em_fields_and_envelope(ElectroMagn* 
     idx[2]  = round( particles.position(2,*istart) * D_inv[2] );
     idxO[2] = idx[2] - k_domain_begin -1 ;
 
-    double ***Egrid[3], ***Bgrid[3], ***Phigrid[1], ***GradPhigrid[3];
-
-    Egrid[0]            = (static_cast<Field3D*>(EMfields->Ex_))->data_3D;
-    Egrid[1]            = (static_cast<Field3D*>(EMfields->Ey_))->data_3D;
-    Egrid[2]            = (static_cast<Field3D*>(EMfields->Ez_))->data_3D;
-    Bgrid[0]            = (static_cast<Field3D*>(EMfields->Bx_m))->data_3D;
-    Bgrid[1]            = (static_cast<Field3D*>(EMfields->By_m))->data_3D;
-    Bgrid[2]            = (static_cast<Field3D*>(EMfields->Bz_m))->data_3D;
-    Phigrid[0]          = (static_cast<Field3D*>(EMfields->envelope->Phi_))->data_3D;
-    GradPhigrid[0]      = (static_cast<Field3D*>(EMfields->envelope->GradPhix_))->data_3D;
-    GradPhigrid[1]      = (static_cast<Field3D*>(EMfields->envelope->GradPhiy_))->data_3D;
-    GradPhigrid[2]      = (static_cast<Field3D*>(EMfields->envelope->GradPhiz_))->data_3D;
-
     Field3D* Ex3D       = static_cast<Field3D*>(EMfields->Ex_);
     Field3D* Ey3D       = static_cast<Field3D*>(EMfields->Ey_);
     Field3D* Ez3D       = static_cast<Field3D*>(EMfields->Ez_);
@@ -384,7 +371,7 @@ void Interpolator3D2Order_envV::interpolate_em_fields_and_envelope(ElectroMagn* 
             for (int iloc=-1 ; iloc<2 ; iloc++) {
                 for (int jloc=-1 ; jloc<2 ; jloc++) {
                     for (int kloc=-1 ; kloc<2 ; kloc++) {
-                        interp_res += *(coeffxp+iloc*1) * *(coeffyp+jloc*1) * *(coeffzp+kloc*1) * (*Phi3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
+                        interp_res += *(coeffxp+iloc*32) * *(coeffyp+jloc*32) * *(coeffzp+kloc*32) * (*Phi3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
                     }
                 }
             }
@@ -395,7 +382,7 @@ void Interpolator3D2Order_envV::interpolate_em_fields_and_envelope(ElectroMagn* 
             for (int iloc=-1 ; iloc<2 ; iloc++) {
                 for (int jloc=-1 ; jloc<2 ; jloc++) {
                     for (int kloc=-1 ; kloc<2 ; kloc++) {
-                        interp_res += *(coeffxp+iloc*1) * *(coeffyp+jloc*1) * *(coeffzp+kloc*1) * (*GradPhix3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
+                        interp_res += *(coeffxp+iloc*32) * *(coeffyp+jloc*32) * *(coeffzp+kloc*32) * (*GradPhix3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
                     }
                 }
             }
@@ -406,7 +393,7 @@ void Interpolator3D2Order_envV::interpolate_em_fields_and_envelope(ElectroMagn* 
             for (int iloc=-1 ; iloc<2 ; iloc++) {
                 for (int jloc=-1 ; jloc<2 ; jloc++) {
                     for (int kloc=-1 ; kloc<2 ; kloc++) {
-                        interp_res += *(coeffxp+iloc*1) * *(coeffyp+jloc*1) * *(coeffzp+kloc*1) * (*GradPhiy3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
+                        interp_res += *(coeffxp+iloc*32) * *(coeffyp+jloc*32) * *(coeffzp+kloc*32) * (*GradPhiy3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
                     }
                 }
             }
@@ -417,7 +404,7 @@ void Interpolator3D2Order_envV::interpolate_em_fields_and_envelope(ElectroMagn* 
             for (int iloc=-1 ; iloc<2 ; iloc++) {
                 for (int jloc=-1 ; jloc<2 ; jloc++) {
                     for (int kloc=-1 ; kloc<2 ; kloc++) {
-                        interp_res += *(coeffxp+iloc*1) * *(coeffyp+jloc*1) * *(coeffzp+kloc*1) * (*GradPhiz3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
+                        interp_res += *(coeffxp+iloc*32) * *(coeffyp+jloc*32) * *(coeffzp+kloc*32) * (*GradPhiz3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
                     }
                 }
             }
@@ -538,7 +525,7 @@ void Interpolator3D2Order_envV::interpolate_envelope_and_old_envelope(ElectroMag
             for (int iloc=-1 ; iloc<2 ; iloc++) {
                 for (int jloc=-1 ; jloc<2 ; jloc++) {
                     for (int kloc=-1 ; kloc<2 ; kloc++) {
-                        interp_res += *(coeffxp+iloc*1) * *(coeffyp+jloc*1) * *(coeffzp+kloc*1) * (*Phi3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
+                        interp_res += *(coeffxp+iloc*32) * *(coeffyp+jloc*32) * *(coeffzp+kloc*32) * (*Phi3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
                     }
                 }
             }
@@ -549,7 +536,7 @@ void Interpolator3D2Order_envV::interpolate_envelope_and_old_envelope(ElectroMag
             for (int iloc=-1 ; iloc<2 ; iloc++) {
                 for (int jloc=-1 ; jloc<2 ; jloc++) {
                     for (int kloc=-1 ; kloc<2 ; kloc++) {
-                        interp_res += *(coeffxp+iloc*1) * *(coeffyp+jloc*1) * *(coeffzp+kloc*1) * (*GradPhix3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
+                        interp_res += *(coeffxp+iloc*32) * *(coeffyp+jloc*32) * *(coeffzp+kloc*32) * (*GradPhix3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
                     }
                 }
             }
@@ -560,7 +547,7 @@ void Interpolator3D2Order_envV::interpolate_envelope_and_old_envelope(ElectroMag
             for (int iloc=-1 ; iloc<2 ; iloc++) {
                 for (int jloc=-1 ; jloc<2 ; jloc++) {
                     for (int kloc=-1 ; kloc<2 ; kloc++) {
-                        interp_res += *(coeffxp+iloc*1) * *(coeffyp+jloc*1) * *(coeffzp+kloc*1) * (*GradPhiy3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
+                        interp_res += *(coeffxp+iloc*32) * *(coeffyp+jloc*32) * *(coeffzp+kloc*32) * (*GradPhiy3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
                     }
                 }
             }
@@ -571,7 +558,7 @@ void Interpolator3D2Order_envV::interpolate_envelope_and_old_envelope(ElectroMag
             for (int iloc=-1 ; iloc<2 ; iloc++) {
                 for (int jloc=-1 ; jloc<2 ; jloc++) {
                     for (int kloc=-1 ; kloc<2 ; kloc++) {
-                        interp_res += *(coeffxp+iloc*1) * *(coeffyp+jloc*1) * *(coeffzp+kloc*1) * (*GradPhiz3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
+                        interp_res += *(coeffxp+iloc*32) * *(coeffyp+jloc*32) * *(coeffzp+kloc*32) * (*GradPhiz3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
                     }
                 }
             }
@@ -585,7 +572,7 @@ void Interpolator3D2Order_envV::interpolate_envelope_and_old_envelope(ElectroMag
             for (int iloc=-1 ; iloc<2 ; iloc++) {
                 for (int jloc=-1 ; jloc<2 ; jloc++) {
                     for (int kloc=-1 ; kloc<2 ; kloc++) {
-                        interp_res += *(coeffxp+iloc*1) * *(coeffyp+jloc*1) * *(coeffzp+kloc*1) * (*PhiOld3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
+                        interp_res += *(coeffxp+iloc*32) * *(coeffyp+jloc*32) * *(coeffzp+kloc*32) * (*PhiOld3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
                     }
                 }
             }
@@ -596,7 +583,7 @@ void Interpolator3D2Order_envV::interpolate_envelope_and_old_envelope(ElectroMag
             for (int iloc=-1 ; iloc<2 ; iloc++) {
                 for (int jloc=-1 ; jloc<2 ; jloc++) {
                     for (int kloc=-1 ; kloc<2 ; kloc++) {
-                        interp_res += *(coeffxp+iloc*1) * *(coeffyp+jloc*1) * *(coeffzp+kloc*1) * (*GradPhiOldx3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
+                        interp_res += *(coeffxp+iloc*32) * *(coeffyp+jloc*32) * *(coeffzp+kloc*32) * (*GradPhiOldx3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
                     }
                 }
             }
@@ -607,7 +594,7 @@ void Interpolator3D2Order_envV::interpolate_envelope_and_old_envelope(ElectroMag
             for (int iloc=-1 ; iloc<2 ; iloc++) {
                 for (int jloc=-1 ; jloc<2 ; jloc++) {
                     for (int kloc=-1 ; kloc<2 ; kloc++) {
-                        interp_res += *(coeffxp+iloc*1) * *(coeffyp+jloc*1) * *(coeffzp+kloc*1) * (*GradPhiOldy3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
+                        interp_res += *(coeffxp+iloc*32) * *(coeffyp+jloc*32) * *(coeffzp+kloc*32) * (*GradPhiOldy3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
                     }
                 }
             }
@@ -618,7 +605,7 @@ void Interpolator3D2Order_envV::interpolate_envelope_and_old_envelope(ElectroMag
             for (int iloc=-1 ; iloc<2 ; iloc++) {
                 for (int jloc=-1 ; jloc<2 ; jloc++) {
                     for (int kloc=-1 ; kloc<2 ; kloc++) {
-                        interp_res += *(coeffxp+iloc*1) * *(coeffyp+jloc*1) * *(coeffzp+kloc*1) * (*GradPhiOldz3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
+                        interp_res += *(coeffxp+iloc*32) * *(coeffyp+jloc*32) * *(coeffzp+kloc*32) * (*GradPhiOldz3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
                     }
                 }
             }

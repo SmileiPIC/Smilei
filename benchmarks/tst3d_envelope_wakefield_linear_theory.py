@@ -1,15 +1,15 @@
 ################### 3D Laser Wakefield with envelope
-dx = 1. 
-dtrans = 3.
-dt = 0.8*dx
-nx = 192
-ntrans = 64 
+dx = 0.69 
+dtrans = 5.
+dt = 0.57
+nx = 1000
+ntrans = 80 
 Lx = nx * dx
 Ltrans = ntrans*dtrans
-npatch_x = 32
-laser_fwhm = 20. 
-center_laser = Lx-2.*laser_fwhm # the temporal center here is the same as waist position, but in principle they can differ
-time_start_moving_window =  0.
+npatch_x = 8
+laser_fwhm = 70.7 
+center_laser = 2.*laser_fwhm # the temporal center here is the same as waist position, but in principle they can differ
+time_start_moving_window =  Lx/2.
 
 
 Main(
@@ -18,12 +18,12 @@ Main(
     interpolation_order = 2,
 
     timestep = dt,
-    simulation_time = 350.*dt,
+    simulation_time = 1750.*dt,
 
     cell_length  = [dx, dtrans, dtrans],
     grid_length = [ Lx,  Ltrans, Ltrans],
 
-    number_of_patches =[npatch_x, 8, 8],
+    number_of_patches = [npatch_x, 4, 4],
     
     clrw = nx/npatch_x,
 
@@ -59,7 +59,7 @@ Species(
     ponderomotive_dynamics = True, # = this species interacts with laser envelope
     mass = 1.0,
     charge = -1.0,
-    charge_density = polygonal(xpoints=[center_laser+2.*laser_fwhm,center_laser+2.1*laser_fwhm,15000,20000],xvalues=[0.,0.0045,0.0045,0.]),
+    charge_density = polygonal(xpoints=[3.*laser_fwhm,3.5*laser_fwhm,24.5*laser_fwhm,25.*laser_fwhm],xvalues=[0.,0.0017,0.0017,0.]),
     mean_velocity = [0.0, 0.0, 0.0],
     temperature = [0.0],
     pusher = "ponderomotive_boris", # pusher to interact with envelope
@@ -73,9 +73,9 @@ Species(
 )
 
 LaserEnvelopeGaussian3D( # linear regime of LWFA
-    a0              = 0.1,     
+    a0              = 0.01,     
     focus           = [center_laser, Main.grid_length[1]/2.,Main.grid_length[2]/2.],
-    waist           = 30.,
+    waist           = 94.26,
     time_envelope   = tgaussian(center=center_laser, fwhm=laser_fwhm),
     envelope_solver = 'explicit',
 )
@@ -90,12 +90,12 @@ Checkpoints(
 list_fields = ['Ex','Ey','Rho','Jx','Env_A_abs','Env_Chi']
 
 DiagFields(
-   every = 50,
+   every = 100,
         fields = list_fields
 )
 
 DiagProbe(
-        every = 50,
+        every = 10,
         origin = [0., Main.grid_length[1]/2., Main.grid_length[2]/2.],
         corners = [
             [Main.grid_length[0], Main.grid_length[1]/2., Main.grid_length[2]/2.]

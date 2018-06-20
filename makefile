@@ -1,13 +1,13 @@
 #-----------------------------------------------------
 # Variables that can be defined by the user:
-# 
+#
 # SMILEICXX     : the MPI C++ executable (for instance mpicxx, mpiicpc, etc.)
 # HDF5_ROOT_DIR : the local path to the HDF5 library
 # BUILD_DIR     : the path to the build directory (default: ./build)
 # PYTHON_CONFIG : the executable `python-config` usually shipped with python installation
 
 SMILEICXX ?= mpicxx
-HDF5_ROOT_DIR ?= 
+HDF5_ROOT_DIR ?=
 BUILD_DIR ?= build
 PYTHONEXE ?= python
 
@@ -26,18 +26,18 @@ DEPS := $(addprefix $(BUILD_DIR)/, $(SRCS:.cpp=.d))
 SITEDIR = $(shell $(PYTHONEXE) -c 'import site; site._script()' --user-site)
 
 #-----------------------------------------------------
-# Flags 
+# Flags
 
 # Smilei version
 CXXFLAGS += -D__VERSION=\"$(VERSION)\" -D_VECTO
 # C++ version
-CXXFLAGS += -std=c++11 -Wall 
+CXXFLAGS += -std=c++11 -Wall
 # HDF5 library
 ifneq ($(strip $(HDF5_ROOT_DIR)),)
-CXXFLAGS += -I${HDF5_ROOT_DIR}/include 
+CXXFLAGS += -I${HDF5_ROOT_DIR}/include
 LDFLAGS := -L${HDF5_ROOT_DIR}/lib $(LDFLAGS)
 endif
-LDFLAGS += -lhdf5 
+LDFLAGS += -lhdf5
 # Include subdirs
 CXXFLAGS += $(DIRS:%=-I%)
 # Python-related flags
@@ -50,7 +50,7 @@ PY_LDFLAGS := $(shell $(PYTHONCONFIG) --ldflags)
 LDFLAGS += $(PY_LDFLAGS)
 ifneq ($(strip $(PYTHONHOME)),)
     LDFLAGS += -L$(PYTHONHOME)/lib
-endif 
+endif
 
 
 PICSAR=FALSE
@@ -73,7 +73,7 @@ ifneq (,$(findstring debug,$(config)))
     CXXFLAGS += -g -pg -D__DEBUG -O0
 # With gdb
 else ifneq (,$(findstring gdb,$(config)))
-    CXXFLAGS += -g -v -da -Q
+    CXXFLAGS += -g -D__DEBUG -O0
 
 # With valgrind
 else ifneq (,$(findstring valgrind,$(config)))
@@ -99,17 +99,21 @@ else ifneq (,$(findstring opt-report,$(config)))
 
 # Default configuration
 else
-    CXXFLAGS += -O3 #-xHost -no-prec-div -ipo
+    CXXFLAGS += -O3 -g #-xHost -no-prec-div -ipo
 endif
 
+# Manage options in the "config" parameter
+ifneq (,$(findstring detailed_timers,$(config)))
+    CXXFLAGS += -D__DETAILED_TIMERS
+endif
 
 ifeq (,$(findstring noopenmp,$(config)))
-    OPENMP_FLAG ?= -fopenmp 
+    OPENMP_FLAG ?= -fopenmp
     LDFLAGS += -lm
     OPENMP_FLAG += -D_OMP
     LDFLAGS += $(OPENMP_FLAG)
     CXXFLAGS += $(OPENMP_FLAG)
-else 
+else
     LDFLAGS += -mt_mpi # intelmpi only
 endif
 
@@ -126,7 +130,7 @@ endif
 ifeq (,$(findstring verbose,$(config)))
     Q := @
 else
-    Q := 
+    Q :=
 endif
 
 #-----------------------------------------------------
@@ -138,12 +142,12 @@ default: $(EXEC) $(EXEC)_test
 
 clean:
 	@echo "Cleaning $(BUILD_DIR)"
-	$(Q) rm -rf $(BUILD_DIR) 
+	$(Q) rm -rf $(BUILD_DIR)
 	$(Q) rm -rf $(EXEC)-$(VERSION).tgz
 
 distclean: clean uninstall_happi
 	$(Q) rm -f $(EXEC) $(EXEC)_test
-	
+
 
 # Create python header files
 $(BUILD_DIR)/%.pyh: %.py
@@ -169,7 +173,7 @@ $(BUILD_DIR)/%.o : %.cpp
 # Link the main program
 $(EXEC): $(OBJS)
 	@echo "Linking $@"
-	$(Q) $(SMILEICXX) $(OBJS) -o $(BUILD_DIR)/$@ $(LDFLAGS) 
+	$(Q) $(SMILEICXX) $(OBJS) -o $(BUILD_DIR)/$@ $(LDFLAGS)
 	$(Q) cp $(BUILD_DIR)/$@ $@
 
 # Compile the the main program again for test mode
@@ -185,8 +189,8 @@ $(EXEC)_test : $(OBJS:Smilei.o=Smilei_test.o)
 
 # Avoid to check dependencies and to create .pyh if not necessary
 FILTER_RULES=clean distclean help env debug doc tar happi uninstall_happi
-ifeq ($(filter-out $(wildcard print-*),$(MAKECMDGOALS)),) 
-    ifeq ($(filter $(FILTER_RULES),$(MAKECMDGOALS)),) 
+ifeq ($(filter-out $(wildcard print-*),$(MAKECMDGOALS)),)
+    ifeq ($(filter $(FILTER_RULES),$(MAKECMDGOALS)),)
         # Let's try to make the next lines clear: we include $(DEPS) and pygenerator
         -include $(DEPS) pygenerator
         # and pygenerator will create all the $(PYHEADERS) (which are files)
@@ -207,7 +211,7 @@ doc:
 	else \
 		echo "Cannot build Sphinx doc because Sphinx is not installed";\
 	fi
-	
+
 #-----------------------------------------------------
 # Archive in tgz file
 
@@ -238,7 +242,7 @@ uninstall_happi:
 print-% :
 	$(info $* : $($*)) @true
 
-env: print-SMILEICXX print-PYTHONEXE print-MPIVERSION print-VERSION print-OPENMP_FLAG print-HDF5_ROOT_DIR print-SITEDIR print-PY_CXXFLAGS print-PY_LDFLAGS print-CXXFLAGS print-LDFLAGS	
+env: print-SMILEICXX print-PYTHONEXE print-MPIVERSION print-VERSION print-OPENMP_FLAG print-HDF5_ROOT_DIR print-SITEDIR print-PY_CXXFLAGS print-PY_LDFLAGS print-CXXFLAGS print-LDFLAGS
 
 
 #-----------------------------------------------------
@@ -256,8 +260,9 @@ help:
 	@echo '  make config="[ verbose ] [ debug ] [ scalasca ] [ noopenmp ]"'
 	@echo '    verbose              : to print compile command lines'
 	@echo '    debug                : to compile in debug mode (code runs really slow)'
-	@echo '    scalasca             : to compile using scalasca'
 	@echo '    noopenmp             : to compile without openmp'
+	@echo '    opt-report           : to generate a report about optimization, vectorization and inlining (Intel compiler)'
+	@echo '    scalasca             : to compile using scalasca'
 	@echo '    advisor              : to compile for Intel Advisor analysis'
 	@echo '    vtune                : to compile for Intel Vtune analysis'
 	@echo '    inspector            : to compile for Intel Inspector analysis'
@@ -286,7 +291,7 @@ help:
 	@echo '  HDF5_ROOT_DIR         : HDF5 dir [$(HDF5_ROOT_DIR)]'
 	@echo '  BUILD_DIR             : directory used to store build files [$(BUILD_DIR)]'
 	@echo '  OPENMP_FLAG           : openmp flag [$(OPENMP_FLAG)]'
-	@echo '  PYTHONEXE             : python executable [$(PYTHONEXE)]'	
+	@echo '  PYTHONEXE             : python executable [$(PYTHONEXE)]'
 	@echo '  FFTW3_LIB             : FFTW3 libraries directory [$(FFTW3_LIB)]'
 	@echo '  LIB PXR               : Picsar library directory [$(LIBPXR)]'
 	@echo
@@ -296,5 +301,6 @@ help:
 	@echo 'http://www.maisondelasimulation.fr/smilei'
 	@echo 'https://github.com/SmileiPIC/Smilei'
 	@echo
-	@if [ -f  scripts/CompileTools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/CompileTools/machine/$(machine); fi
+	@if [ -f  scripts/CompileTools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/CompileTools/machine/$(machine)|| echo "None"; fi
+	@if [ -f scripts/CompileTools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/CompileTools/machine/$(machine) || echo "None"; else echo "Available machines:"; ls -1 scripts/CompileTools/machine; fi
 

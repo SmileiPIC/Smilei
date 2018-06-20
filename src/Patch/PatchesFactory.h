@@ -27,7 +27,7 @@ public:
             return new Patch2D(params, smpi, domain_decomposition, ipatch, n_moved);
         else if (params.geometry == "3Dcartesian")
             return new Patch3D(params, smpi, domain_decomposition, ipatch, n_moved);
-        else if (params.geometry == "3drz") 
+        else if (params.geometry == "3drz")
             return new PatchRZ(params, smpi, domain_decomposition, ipatch, n_moved);
         return nullptr;
     }
@@ -40,7 +40,7 @@ public:
             return new Patch2D(static_cast<Patch2D*>(patch), params, smpi, domain_decomposition, ipatch, n_moved, with_particles);
         else if (params.geometry == "3Dcartesian")
             return new Patch3D(static_cast<Patch3D*>(patch), params, smpi, domain_decomposition, ipatch, n_moved, with_particles);
-        else if (params.geometry == "3drz") 
+        else if (params.geometry == "3drz")
             return new PatchRZ(static_cast<PatchRZ*>(patch), params, smpi, domain_decomposition, ipatch, n_moved, with_particles);
         return nullptr;
     }
@@ -82,7 +82,7 @@ public:
         }
 
 #ifdef _VECTO
-        if (params.vecto == "normal") {
+        if (params.vectorization_mode == "normal") {
             //Need to sort because particles are not well sorted at creation
             for (unsigned int ipatch=0 ; ipatch < npatches ; ipatch++){
                 for (unsigned int ispec=0 ; ispec<vecPatches(ipatch)->vecSpecies.size(); ispec++) {
@@ -92,7 +92,7 @@ public:
                 }
             }
         }
-        else if (params.vecto == "dynamic") {
+        else if (params.vectorization_mode == "dynamic") {
             //Need to sort because particles are not well sorted at creation
             for (unsigned int ipatch=0 ; ipatch < npatches ; ipatch++){
                 for (unsigned int ispec=0 ; ispec<vecPatches(ipatch)->vecSpecies.size(); ispec++) {
@@ -111,7 +111,7 @@ public:
                 }
             }
         }
-        else if (params.vecto == "dynamic2") {
+        else if (params.vectorization_mode == "dynamic2") {
             //Need to sort because particles are not well sorted at creation
             for (unsigned int ipatch=0 ; ipatch < npatches ; ipatch++){
                 for (unsigned int ispec=0 ; ispec<vecPatches(ipatch)->vecSpecies.size(); ispec++) {
@@ -144,7 +144,7 @@ public:
                 delete vecPatches.patches_[0]->vecSpecies[ispec]->momentum_initialization_array;
             }
         }
-        
+
 
 
         MESSAGE(1,"All patches created");
