@@ -1585,7 +1585,7 @@ vector<double> Species::maxwellJuttner(unsigned int npoints, double temperature)
 //   - deposit susceptibility
 //   - calculate the new momentum
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::ponderomotive_update_susceptibilty_and_momentum(double time_dual, unsigned int ispec,
+void Species::ponderomotive_update_susceptibility_and_momentum(double time_dual, unsigned int ispec,
                        ElectroMagn* EMfields, Interpolator* Interp_envelope,
                        Params &params, bool diag_flag,
                        Patch* patch, SmileiMPI* smpi,

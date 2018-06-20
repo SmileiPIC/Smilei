@@ -229,7 +229,7 @@ int main (int argc, char* argv[])
             vecPatches.init_new_envelope(params);
 
             // interpolate envelope for susceptibility deposition, project susceptibility for envelope equation, momentum advance
-            vecPatches.ponderomotive_update_susceptibilty_and_momentum(params, &smpi, simWindow, time_dual, timers, 0);    
+            vecPatches.ponderomotive_update_susceptibility_and_momentum(params, &smpi, simWindow, time_dual, timers, 0);    
           
             // comm and synch susceptibility
             vecPatches.sumSusceptibility(params, time_dual, timers, 0, simWindow );
@@ -348,7 +348,7 @@ int main (int argc, char* argv[])
             // if Laser Envelope is used, execute particles and envelope sections of ponderomotive loop
             if (params.Laser_Envelope_model){
                 // interpolate envelope for susceptibility deposition, project susceptibility for envelope equation, momentum advance
-                vecPatches.ponderomotive_update_susceptibilty_and_momentum(params, &smpi, simWindow, time_dual, timers, itime);    
+                vecPatches.ponderomotive_update_susceptibility_and_momentum(params, &smpi, simWindow, time_dual, timers, itime);    
 
                 // comm and sum susceptibility
                 vecPatches.sumSusceptibility(params, time_dual, timers, itime, simWindow );
