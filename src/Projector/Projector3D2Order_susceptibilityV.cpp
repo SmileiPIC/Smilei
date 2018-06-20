@@ -200,9 +200,9 @@ void Projector3D2Order_susceptibilityV::project_susceptibility(double* Chi_envel
             gamma0    = sqrt(gamma0_sq) ;
          
             // ( electric field + ponderomotive force for ponderomotive gamma advance ) scalar multiplied by momentum
-            pxsm = (gamma0 * charge_over_mass_dts2*(*(Ex+istart-ipart_ref+ipart)) - charge_sq_over_mass_dts4*(*(GradPhix+istart-ipart_ref+ipart)) * inv_gamma0 ) * momentum[0] / gamma0_sq;
-            pysm = (gamma0 * charge_over_mass_dts2*(*(Ey+istart-ipart_ref+ipart)) - charge_sq_over_mass_dts4*(*(GradPhiy+istart-ipart_ref+ipart)) * inv_gamma0 ) * momentum[1] / gamma0_sq;
-            pzsm = (gamma0 * charge_over_mass_dts2*(*(Ez+istart-ipart_ref+ipart)) - charge_sq_over_mass_dts4*(*(GradPhiz+istart-ipart_ref+ipart)) * inv_gamma0 ) * momentum[2] / gamma0_sq;
+            pxsm = (gamma0 * charge_over_mass_dts2*(*(Ex+istart-ipart_ref+ipart)) - charge_sq_over_mass_dts4*(*(GradPhix+istart-ipart_ref+ipart)) ) * momentum[0] / gamma0_sq;
+            pysm = (gamma0 * charge_over_mass_dts2*(*(Ey+istart-ipart_ref+ipart)) - charge_sq_over_mass_dts4*(*(GradPhiy+istart-ipart_ref+ipart)) ) * momentum[1] / gamma0_sq;
+            pzsm = (gamma0 * charge_over_mass_dts2*(*(Ez+istart-ipart_ref+ipart)) - charge_sq_over_mass_dts4*(*(GradPhiz+istart-ipart_ref+ipart)) ) * momentum[2] / gamma0_sq;
              
             // update of gamma ponderomotive 
             gamma_ponderomotive = gamma0 + (pxsm+pysm+pzsm)*0.5 ;
