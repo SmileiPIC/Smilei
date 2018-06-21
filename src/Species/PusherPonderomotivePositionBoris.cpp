@@ -22,7 +22,7 @@ PusherPonderomotivePositionBoris::~PusherPonderomotivePositionBoris()
     Lorentz Force + Ponderomotive force -- leap-frog (Boris-style) scheme, position advance
 **************************************************************************/
 
-void PusherPonderomotivePositionBoris::operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread)
+void PusherPonderomotivePositionBoris::operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ipart_ref)
 {
     std::vector<double> *Phipart        = &(smpi->dynamics_PHIpart[ithread]);
     std::vector<double> *GradPhipart    = &(smpi->dynamics_GradPHIpart[ithread]);

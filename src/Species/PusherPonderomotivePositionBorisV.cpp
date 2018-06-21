@@ -90,7 +90,7 @@ void PusherPonderomotivePositionBorisV::operator() (Particles &particles, Smilei
           position_old[i][ipart] = position[i][ipart];
 #endif
         for ( int i = 0 ; i<nDim_ ; i++ ) 
-            position[i][ipart]     += dt*momentum[i][ipart]*inv_gamma_ponderomotive;
+            position[i][ipart]     += dt*momentum[i][ipart]/gamma_ponderomotive;
 
     } // end loop on particles
 
