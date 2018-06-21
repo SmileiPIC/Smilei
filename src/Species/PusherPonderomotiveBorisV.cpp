@@ -71,7 +71,7 @@ void PusherPonderomotiveBorisV::operator() (Particles &particles, SmileiMPI* smp
 
 
         // compute initial ponderomotive gamma 
-        gamma0 = 1. + momentum[0][ipart]*momentum[0][ipart] + momentum[1][ipart]*momentum[1][ipart] + momentum[2][ipart]*momentum[2][ipart] + *(Phi+ipart-ipart_ref)*charge_sq_over_mass_sq ;
+        gamma0_sq = 1. + momentum[0][ipart]*momentum[0][ipart] + momentum[1][ipart]*momentum[1][ipart] + momentum[2][ipart]*momentum[2][ipart] + *(Phi+ipart-ipart_ref)*charge_sq_over_mass_sq ;
         gamma0 = sqrt(gamma0_sq) ;        
 
         // ( electric field + ponderomotive force for ponderomotive gamma advance ) scalar multiplied by momentum
