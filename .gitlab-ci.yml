@@ -61,7 +61,19 @@ makerun3D:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -b "tst3d_*_*.py" -m 4 -o 4 -v -r 1
+    - python validation.py -b "tst3d_??_*.py" -m 4 -o 4 -v -r 1
+
+makerunV:
+  stage: makerun
+  only:
+    - develop
+    - integrate_dev
+
+  script:
+    # Move in test dir
+    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    # Run validation script
+    - python validation.py -b "tst3d_v_??_*.py" -m 4 -o 4 -v
 
 makerunCollisions:
   stage: makerun
