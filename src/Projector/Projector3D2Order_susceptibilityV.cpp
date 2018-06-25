@@ -174,7 +174,7 @@ void Projector3D2Order_susceptibilityV::project_susceptibility(double* Chi_envel
         int istart0 = (int)istart + ivect;
         
         //for (unsigned int ipart=istart ; (int)ipart<iend; ipart++ ) {
-        //#pragma omp simd
+        #pragma omp simd
         for (int ipart=0 ; ipart<np_computed; ipart++ ) {
             
             int iloc,jloc;
@@ -252,6 +252,7 @@ void Projector3D2Order_susceptibilityV::project_susceptibility(double* Chi_envel
  
         } // end ipart loop
 
+        #pragma omp simd
         for (int ipart=0 ; ipart<np_computed; ipart++ ) {
             for (unsigned int i=0 ; i<5 ; i++) {
                 for (unsigned int j=0 ; j<5 ; j++) {
