@@ -684,8 +684,8 @@ void SpeciesV::ponderomotive_update_susceptibility_and_momentum(double time_dual
     // -------------------------------
     if (time_dual>time_frozen) { // advance particle momentum
 
-        int npack    =  f_dim0-2*oversize[0];
-        int packsize = (f_dim1-2*oversize[1]);
+        int npack    =  1;
+        int packsize = (f_dim0-2*oversize[0])*(f_dim1-2*oversize[1]);
         if (nDim_particle == 3)
             packsize *= (f_dim2-2*oversize[2]);
 
@@ -780,8 +780,8 @@ void SpeciesV::ponderomotive_update_position_and_currents(double time_dual, unsi
    // -------------------------------
    if (time_dual>time_frozen) { // moving particle
 
-        int npack    =  f_dim0-2*oversize[0];
-        int packsize = (f_dim1-2*oversize[1]);
+        int npack    = 1 ;
+        int packsize = (f_dim0-2*oversize[0])*(f_dim1-2*oversize[1]);
         if (nDim_particle == 3)
             packsize *= (f_dim2-2*oversize[2]);
 
@@ -812,6 +812,7 @@ void SpeciesV::ponderomotive_update_position_and_currents(double time_dual, unsi
             (*Push_ponderomotive_position)(*particles, smpi, bmin[ipack*packsize], bmax[ipack*packsize+packsize-1], ithread, bmin[ipack*packsize] );
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[11] += MPI_Wtime() - timer;
+            timer = MPI_Wtime();
 #endif
             unsigned int length[3];
             length[0]=0;
@@ -857,6 +858,9 @@ void SpeciesV::ponderomotive_update_position_and_currents(double time_dual, unsi
                 }
             }
             //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[3] += MPI_Wtime() - timer;
+#endif
 
 
             // Project currents if not a Test species and charges as well if a diag is needed.

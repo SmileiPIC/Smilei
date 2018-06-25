@@ -2438,6 +2438,7 @@ void VectorPatch::ponderomotive_update_position_and_currents(Params& params,
     timers.interp_env_old.update( *this, params.printNow( itime ) );
     timers.proj_currents.update( *this, params.printNow( itime ) );
     timers.push_pos.update( *this, params.printNow( itime ) );
+    timers.particles_boundaries.update( *this, params.printNow( itime ) );
 #endif
 
     timers.syncPart.restart();
