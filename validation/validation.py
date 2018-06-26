@@ -700,6 +700,7 @@ for BENCH in SMILEI_BENCH_LIST :
 				"tst2d_08_synchrotron_chi1.py",
 				"tst2d_09_synchrotron_chi0.1.py",
 				"tst2d_v_09_synchrotron_chi0.1.py",
+				"tst2d_v_10_multiphoton_Breit_Wheeler.py",
 				"tst1d_09_rad_electron_laser_collision.py",
 				"tst1d_10_pair_electron_laser_collision.py",
 				"tst2d_10_multiphoton_Breit_Wheeler.py"
