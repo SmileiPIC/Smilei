@@ -279,10 +279,10 @@ void Projector3D2Order_susceptibilityV::project_susceptibility(double* Chi_envel
 
     int iloc0 = ipom2*b_dim[1]*b_dim[2]+jpom2*b_dim[2]+kpom2;
     int iloc = iloc0;
-    for (unsigned int i=0 ; i<5 ; i++) {
-        for (unsigned int j=0 ; j<5 ; j++) {
+    for (unsigned int i=1 ; i<4 ; i++) {
+        for (unsigned int j=1 ; j<4 ; j++) {
             #pragma omp simd
-            for (unsigned int k=0 ; k<5 ; k++) {
+            for (unsigned int k=1 ; k<4 ; k++) {
                 double tmpChi = 0.;
                 int ilocal = ((i)*25+j*5+k)*vecSize;
                 #pragma unroll(8)
