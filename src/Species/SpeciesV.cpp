@@ -146,7 +146,7 @@ int ithread;
         int npack    = 1;
         int packsize = (f_dim1-2*oversize[1]);
 
-	if ( getNbrOfParticles() < 100000 )
+	if ( ( getNbrOfParticles() < 100000 ) || (Radiate) || (Ionize) || (Multiphoton_Breit_Wheeler_process) )
             packsize *= (f_dim0-2*oversize[0]);
 	else 
             npack *= (f_dim0-2*oversize[0]);
