@@ -150,12 +150,12 @@ void Projector3D2Order_susceptibilityV::project_susceptibility(double* Chi_envel
     double* GradPhiz = &( (*GradPhipart)[2*nparts] );
 
     int vecSize = 8;
-    int bsize = 5*5*5*vecSize; // primal grid, particles did not yet move (3x3x3 enough)
+    int bsize = 3*3*3*vecSize; // primal grid, particles did not yet move (3x3x3 enough)
     double bChi[bsize] __attribute__((aligned(64)));
     
-    double Sx1[40] __attribute__((aligned(64)));
-    double Sy1[40] __attribute__((aligned(64)));
-    double Sz1[40] __attribute__((aligned(64)));
+    double Sx1[24] __attribute__((aligned(64)));
+    double Sy1[24] __attribute__((aligned(64)));
+    double Sz1[24] __attribute__((aligned(64)));
     double charge_weight[8] __attribute__((aligned(64)));
 
     // Closest multiple of 8 higher or equal than npart = iend-istart.
@@ -215,7 +215,7 @@ void Projector3D2Order_susceptibilityV::project_susceptibility(double* Chi_envel
             double delta, delta2;
  
             // Initialize all current-related arrays to zero
-            for (unsigned int i=0; i<5; i++) {
+            for (unsigned int i=0; i<3; i++) {
                 Sx1[i*vecSize+ipart] = 0.;
                 Sy1[i*vecSize+ipart] = 0.;
                 Sz1[i*vecSize+ipart] = 0.;
@@ -230,34 +230,34 @@ void Projector3D2Order_susceptibilityV::project_susceptibility(double* Chi_envel
             int ip = round(xpn);
             delta  = xpn - (double)ip;
             delta2 = delta*delta;
-            Sx1[1*vecSize+ipart] = 0.5 * (delta2-delta+0.25);
-            Sx1[2*vecSize+ipart] = 0.75-delta2;
-            Sx1[3*vecSize+ipart] = 0.5 * (delta2+delta+0.25);
+            Sx1[0*vecSize+ipart] = 0.5 * (delta2-delta+0.25);
+            Sx1[1*vecSize+ipart] = 0.75-delta2;
+            Sx1[2*vecSize+ipart] = 0.5 * (delta2+delta+0.25);
  
             ypn = particles.position(1, istart0+ipart) * dy_inv_;
             int jp = round(ypn);
             delta  = ypn - (double)jp;
             delta2 = delta*delta;
-            Sy1[1*vecSize+ipart] = 0.5 * (delta2-delta+0.25);
-            Sy1[2*vecSize+ipart] = 0.75-delta2;
-            Sy1[3*vecSize+ipart] = 0.5 * (delta2+delta+0.25);
+            Sy1[0*vecSize+ipart] = 0.5 * (delta2-delta+0.25);
+            Sy1[1*vecSize+ipart] = 0.75-delta2;
+            Sy1[2*vecSize+ipart] = 0.5 * (delta2+delta+0.25);
  
             zpn = particles.position(2, istart0+ipart) * dz_inv_;
             int kp = round(zpn);
             delta  = zpn - (double)kp;
             delta2 = delta*delta;
-            Sz1[1*vecSize+ipart] = 0.5 * (delta2-delta+0.25);
-            Sz1[2*vecSize+ipart] = 0.75-delta2;
-            Sz1[3*vecSize+ipart] = 0.5 * (delta2+delta+0.25);
+            Sz1[0*vecSize+ipart] = 0.5 * (delta2-delta+0.25);
+            Sz1[1*vecSize+ipart] = 0.75-delta2;
+            Sz1[2*vecSize+ipart] = 0.5 * (delta2+delta+0.25);
  
         } // end ipart loop
 
         #pragma omp simd
         for (int ipart=0 ; ipart<np_computed; ipart++ ) {
-            for (unsigned int i=1 ; i<4 ; i++) {
-                for (unsigned int j=1 ; j<4 ; j++) {
-                    int index( ( i*25 + j*5 )*vecSize+ipart );
-                    for (unsigned int k=1 ; k<4 ; k++) {
+            for (unsigned int i=0 ; i<3 ; i++) {
+                for (unsigned int j=0 ; j<3 ; j++) {
+                    int index( ( i*9 + j*3 )*vecSize+ipart );
+                    for (unsigned int k=0 ; k<3 ; k++) {
                         bChi [ index+k*vecSize ] +=  charge_weight[ipart] * Sx1[i*vecSize+ipart]*Sy1[j*vecSize+ipart]*Sz1[k*vecSize+ipart];
                     }
                 }
@@ -279,12 +279,12 @@ void Projector3D2Order_susceptibilityV::project_susceptibility(double* Chi_envel
 
     int iloc0 = ipom2*b_dim[1]*b_dim[2]+jpom2*b_dim[2]+kpom2;
     int iloc = iloc0;
-    for (unsigned int i=1 ; i<4 ; i++) {
-        for (unsigned int j=1 ; j<4 ; j++) {
+    for (unsigned int i=0 ; i<3 ; i++) {
+        for (unsigned int j=0 ; j<3 ; j++) {
             #pragma omp simd
-            for (unsigned int k=1 ; k<4 ; k++) {
+            for (unsigned int k=0 ; k<3 ; k++) {
                 double tmpChi = 0.;
-                int ilocal = ((i)*25+j*5+k)*vecSize;
+                int ilocal = ((i)*9+j*3+k)*vecSize;
                 #pragma unroll(8)
                 for (int ipart=0 ; ipart<8; ipart++ ){
                     tmpChi +=  bChi[ilocal+ipart];
