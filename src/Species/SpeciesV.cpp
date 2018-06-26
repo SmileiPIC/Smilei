@@ -143,8 +143,14 @@ int ithread;
         //Still needed for ionization
         vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
 
-        int npack    =  f_dim0-2*oversize[0];
+        int npack    = 1;
         int packsize = (f_dim1-2*oversize[1]);
+
+	if ( getNbrOfParticles() < 100000 )
+            packsize *= (f_dim0-2*oversize[0]);
+	else 
+            npack *= (f_dim0-2*oversize[0]);
+
         if (nDim_particle == 3)
             packsize *= (f_dim2-2*oversize[2]);
 
@@ -684,8 +690,14 @@ void SpeciesV::ponderomotive_update_susceptibility_and_momentum(double time_dual
     // -------------------------------
     if (time_dual>time_frozen) { // advance particle momentum
 
-        int npack    =  1;
-        int packsize = (f_dim0-2*oversize[0])*(f_dim1-2*oversize[1]);
+        int npack    = 1;
+        int packsize = (f_dim1-2*oversize[1]);
+
+	if ( getNbrOfParticles() < 100000 )
+            packsize *= (f_dim0-2*oversize[0]);
+	else 
+            npack *= (f_dim0-2*oversize[0]);
+
         if (nDim_particle == 3)
             packsize *= (f_dim2-2*oversize[2]);
 
@@ -780,8 +792,14 @@ void SpeciesV::ponderomotive_update_position_and_currents(double time_dual, unsi
    // -------------------------------
    if (time_dual>time_frozen) { // moving particle
 
-        int npack    = 1 ;
-        int packsize = (f_dim0-2*oversize[0])*(f_dim1-2*oversize[1]);
+        int npack    = 1;
+        int packsize = (f_dim1-2*oversize[1]);
+
+	if ( getNbrOfParticles() < 100000 )
+            packsize *= (f_dim0-2*oversize[0]);
+	else 
+            npack *= (f_dim0-2*oversize[0]);
+
         if (nDim_particle == 3)
             packsize *= (f_dim2-2*oversize[2]);
 
