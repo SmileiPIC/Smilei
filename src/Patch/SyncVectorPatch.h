@@ -25,7 +25,7 @@ public :
     static void sumRhoJ  ( Params& params, VectorPatch& vecPatches, int imode, Timers &timers, int itime );
     //! Densities synchronization, including envelope
     static void sumEnvChi  ( Params& params, VectorPatch& vecPatches, Timers &timers, int itime );
-    //static void sumEnvChis ( Params& params, VectorPatch& vecPatches, int ispec, Timers &timers, int itime );
+    static void sumEnvChis ( Params& params, VectorPatch& vecPatches, int ispec, Timers &timers, int itime );
 
     static void sum      ( std::vector<Field*> fields, VectorPatch& vecPatches, Timers &timers, int itime );
     static void sumComplex( std::vector<Field*> fields, VectorPatch& vecPatches, Timers &timers, int itime );

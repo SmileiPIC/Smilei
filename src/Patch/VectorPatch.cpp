@@ -327,13 +327,25 @@ void VectorPatch::sumSusceptibility(Params &params, double time_dual, Timers &ti
         return;
 
     timers.densities.restart();
-    //if  (diag_flag){
-    //    #pragma omp for schedule(static)
-    //    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-    //         // Per species in global, Attention if output -> Sync / per species fields
-    //        (*this)(ipatch)->EMfields->computeTotalEnvChi();
-    //    }
-    //}
+    if  (diag_flag){
+       #pragma omp for schedule(static)
+       for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+            // Per species in global, Attention if output -> Sync / per species fields
+           (*this)(ipatch)->EMfields->computeTotalEnvChi();
+       }
+    }
+
+    if(diag_flag){
+        for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
+            if( ! (*this)(0)->vecSpecies[ispec]->particles->is_test ) {
+                if (species(0, ispec)->ponderomotive_dynamics){
+                update_field_list(ispec);
+                SyncVectorPatch::sumEnvChis( params, (*this), ispec, timers, itime );
+                                                                                     } // MPI
+            }
+        }
+    }
+
     timers.densities.update();
 
 
