@@ -254,10 +254,10 @@ void Projector3D2Order_susceptibilityV::project_susceptibility(double* Chi_envel
 
         #pragma omp simd
         for (int ipart=0 ; ipart<np_computed; ipart++ ) {
-            for (unsigned int i=0 ; i<5 ; i++) {
-                for (unsigned int j=0 ; j<5 ; j++) {
+            for (unsigned int i=1 ; i<4 ; i++) {
+                for (unsigned int j=1 ; j<4 ; j++) {
                     int index( ( i*25 + j*5 )*vecSize+ipart );
-                    for (unsigned int k=0 ; k<5 ; k++) {
+                    for (unsigned int k=1 ; k<4 ; k++) {
                         bChi [ index+k*vecSize ] +=  charge_weight[ipart] * Sx1[i*vecSize+ipart]*Sy1[j*vecSize+ipart]*Sz1[k*vecSize+ipart];
                     }
                 }
