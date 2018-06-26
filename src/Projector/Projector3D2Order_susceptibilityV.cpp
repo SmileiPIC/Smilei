@@ -186,11 +186,13 @@ void Projector3D2Order_susceptibilityV::project_susceptibility(double* Chi_envel
             double pxsm, pysm, pzsm;
             double one_over_mass=1./species_mass;
 
-            charge_over_mass_dts2    = particles.charge(istart0+ipart)*dts2*one_over_mass;
+	    double c = particles.charge(istart0+ipart);
+
+            charge_over_mass_dts2    = c *dts2*one_over_mass;
             // ! ponderomotive force is proportional to charge squared and the field is divided by 4 instead of 2
-            charge_sq_over_mass_dts4 = particles.charge(istart+ipart)*particles.charge(istart+ipart)*dts4*one_over_mass;      
+            charge_sq_over_mass_dts4 = c*c*dts4*one_over_mass;      
             // (charge over mass)^2
-            charge_sq_over_mass_sq   = particles.charge(istart0+ipart)*particles.charge(istart0+ipart)*one_over_mass*one_over_mass;
+            charge_sq_over_mass_sq   = c*c*one_over_mass*one_over_mass;
 
             for ( int i = 0 ; i<3 ; i++ )
                 momentum[i] = particles.momentum(i,istart0+ipart);
@@ -208,7 +210,7 @@ void Projector3D2Order_susceptibilityV::project_susceptibility(double* Chi_envel
             gamma_ponderomotive = gamma0 + (pxsm+pysm+pzsm)*0.5 ;
  
             // susceptibility for the macro-particle
-            charge_weight[ipart] = (double)(particles.charge(istart+ipart))*(double)(particles.charge(istart+ipart))*particles.weight(istart+ipart)*one_over_mass/gamma_ponderomotive ; 
+            charge_weight[ipart] = c*c*particles.weight(istart+ipart)*one_over_mass/gamma_ponderomotive ; 
  
             // variable declaration
             double xpn, ypn, zpn;
