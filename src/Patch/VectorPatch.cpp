@@ -327,13 +327,13 @@ void VectorPatch::sumSusceptibility(Params &params, double time_dual, Timers &ti
         return;
 
     timers.densities.restart();
-    if  (diag_flag){
-        #pragma omp for schedule(static)
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
-             // Per species in global, Attention if output -> Sync / per species fields
-            (*this)(ipatch)->EMfields->computeTotalEnvChi();
-        }
-    }
+    //if  (diag_flag){
+    //    #pragma omp for schedule(static)
+    //    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+    //         // Per species in global, Attention if output -> Sync / per species fields
+    //        (*this)(ipatch)->EMfields->computeTotalEnvChi();
+    //    }
+    //}
     timers.densities.update();
 
 
