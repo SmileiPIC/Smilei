@@ -1783,63 +1783,62 @@ void VectorPatch::update_field_list()
     MPIyIdx.clear();
     MPIzIdx.clear();
 
-    listJx_.resize( size() ) ;
-    listJy_.resize( size() ) ;
-    listJz_.resize( size() ) ;
-    listrho_.resize( size() ) ;
-    listEx_.resize( size() ) ;
-    listEy_.resize( size() ) ;
-    listEz_.resize( size() ) ;
-    listBx_.resize( size() ) ;
-    listBy_.resize( size() ) ;
-    listBz_.resize( size() ) ;
+    if ( !dynamic_cast<ElectroMagn3DRZ*>(patches_[0]->EMfields) ) {
 
-    if (patches_[0]->EMfields->envelope != NULL){
-      listA_.resize ( size() ) ;
-      listA0_.resize( size() ) ;
-      listPhi_.resize ( size() ) ;
-      listPhi0_.resize ( size() ) ;
-      listGradPhix_.resize( size() ) ;
-      listGradPhiy_.resize( size() ) ;
-      listGradPhiz_.resize( size() ) ;
-      listGradPhix0_.resize( size() ) ;
-      listGradPhiy0_.resize( size() ) ;
-      listGradPhiz0_.resize( size() ) ;
-      listEnv_Chi_.resize( size() ) ;
-                                                      }
+        listJx_.resize( size() ) ;
+        listJy_.resize( size() ) ;
+        listJz_.resize( size() ) ;
+        listrho_.resize( size() ) ;
+        listEx_.resize( size() ) ;
+        listEy_.resize( size() ) ;
+        listEz_.resize( size() ) ;
+        listBx_.resize( size() ) ;
+        listBy_.resize( size() ) ;
+        listBz_.resize( size() ) ;
+        
+        if (patches_[0]->EMfields->envelope != NULL){
+          listA_.resize ( size() ) ;
+          listA0_.resize( size() ) ;
+          listPhi_.resize ( size() ) ;
+          listPhi0_.resize ( size() ) ;
+          listGradPhix_.resize( size() ) ;
+          listGradPhiy_.resize( size() ) ;
+          listGradPhiz_.resize( size() ) ;
+          listGradPhix0_.resize( size() ) ;
+          listGradPhiy0_.resize( size() ) ;
+          listGradPhiz0_.resize( size() ) ;
+          listEnv_Chi_.resize( size() ) ;
+        }
 
-    for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
-        listJx_[ipatch] = patches_[ipatch]->EMfields->Jx_ ;
-        listJy_[ipatch] = patches_[ipatch]->EMfields->Jy_ ;
-        listJz_[ipatch] = patches_[ipatch]->EMfields->Jz_ ;
-        listrho_[ipatch] =patches_[ipatch]->EMfields->rho_;
-        listEx_[ipatch] = patches_[ipatch]->EMfields->Ex_ ;
-        listEy_[ipatch] = patches_[ipatch]->EMfields->Ey_ ;
-        listEz_[ipatch] = patches_[ipatch]->EMfields->Ez_ ;
-        listBx_[ipatch] = patches_[ipatch]->EMfields->Bx_ ;
-        listBy_[ipatch] = patches_[ipatch]->EMfields->By_ ;
-        listBz_[ipatch] = patches_[ipatch]->EMfields->Bz_ ;
-        if (patches_[ipatch]->EMfields->envelope != NULL){
-          listA_[ipatch]  = patches_[ipatch]->EMfields->envelope->A_ ;
-          listA0_[ipatch] = patches_[ipatch]->EMfields->envelope->A0_ ;
-          listPhi_[ipatch]  = patches_[ipatch]->EMfields->envelope->Phi_ ;
-          listPhi0_[ipatch]  = patches_[ipatch]->EMfields->envelope->Phiold_ ;
-          listGradPhix_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhix_ ;
-          listGradPhiy_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhiy_ ;
-          listGradPhiz_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhiz_ ;
-          listGradPhix0_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhixold_ ;
-          listGradPhiy0_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhiyold_ ;
-          listGradPhiz0_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhizold_ ;
-          listEnv_Chi_[ipatch] = patches_[ipatch]->EMfields->Env_Chi_ ;
-                                                        }
-    }
+        for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
+            listJx_[ipatch] = patches_[ipatch]->EMfields->Jx_ ;
+            listJy_[ipatch] = patches_[ipatch]->EMfields->Jy_ ;
+            listJz_[ipatch] = patches_[ipatch]->EMfields->Jz_ ;
+            listrho_[ipatch] =patches_[ipatch]->EMfields->rho_;
+            listEx_[ipatch] = patches_[ipatch]->EMfields->Ex_ ;
+            listEy_[ipatch] = patches_[ipatch]->EMfields->Ey_ ;
+            listEz_[ipatch] = patches_[ipatch]->EMfields->Ez_ ;
+            listBx_[ipatch] = patches_[ipatch]->EMfields->Bx_ ;
+            listBy_[ipatch] = patches_[ipatch]->EMfields->By_ ;
+            listBz_[ipatch] = patches_[ipatch]->EMfields->Bz_ ;
+        }
+        if (patches_[0]->EMfields->envelope != NULL){
+            for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
+                listA_[ipatch]         = patches_[ipatch]->EMfields->envelope->A_ ;
+                listA0_[ipatch]        = patches_[ipatch]->EMfields->envelope->A0_ ;
+                listPhi_[ipatch]       = patches_[ipatch]->EMfields->envelope->Phi_ ;
+                listPhi0_[ipatch]      = patches_[ipatch]->EMfields->envelope->Phiold_ ;
+                listGradPhix_[ipatch]  = patches_[ipatch]->EMfields->envelope->GradPhix_ ;
+                listGradPhiy_[ipatch]  = patches_[ipatch]->EMfields->envelope->GradPhiy_ ;
+                listGradPhiz_[ipatch]  = patches_[ipatch]->EMfields->envelope->GradPhiz_ ;
+                listGradPhix0_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhixold_ ;
+                listGradPhiy0_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhiyold_ ;
+                listGradPhiz0_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhizold_ ;
+                listEnv_Chi_[ipatch]   = patches_[ipatch]->EMfields->Env_Chi_ ;
+           }
+        }
 
-
-    #ifdef _TODO_RZ
-    // Manage RZ & cartesian
-    #endif
-
-    if ( dynamic_cast<ElectroMagn3DRZ*>(patches_[0]->EMfields) ) {
+    } else {
         unsigned int nmodes = static_cast<ElectroMagn3DRZ*>(patches_[0]->EMfields)->El_.size();
         listJl_.resize( nmodes ) ;
         listJr_.resize( nmodes ) ;
@@ -1851,7 +1850,7 @@ void VectorPatch::update_field_list()
         listBl_.resize( nmodes ) ;
         listBr_.resize( nmodes ) ;
         listBt_.resize( nmodes ) ;
-
+    
         for (unsigned int imode=0 ; imode < nmodes ; imode++) {
             listJl_[imode].resize( size() );
             listJr_[imode].resize( size() );
@@ -1864,23 +1863,19 @@ void VectorPatch::update_field_list()
             listBr_[imode].resize( size() );
             listBt_[imode].resize( size() );
             for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++) {
-                listJl_[imode][ipatch] = static_cast<ElectroMagn3DRZ*>(patches_[ipatch]->EMfields)->Jl_[imode] ;
-                listJr_[imode][ipatch] = static_cast<ElectroMagn3DRZ*>(patches_[ipatch]->EMfields)->Jr_[imode] ;
-                listJt_[imode][ipatch] = static_cast<ElectroMagn3DRZ*>(patches_[ipatch]->EMfields)->Jt_[imode] ;
+                listJl_[imode][ipatch]     = static_cast<ElectroMagn3DRZ*>(patches_[ipatch]->EMfields)->Jl_[imode] ;
+                listJr_[imode][ipatch]     = static_cast<ElectroMagn3DRZ*>(patches_[ipatch]->EMfields)->Jr_[imode] ;
+                listJt_[imode][ipatch]     = static_cast<ElectroMagn3DRZ*>(patches_[ipatch]->EMfields)->Jt_[imode] ;
                 listrho_RZ_[imode][ipatch] =static_cast<ElectroMagn3DRZ*>(patches_[ipatch]->EMfields)->rho_RZ_[imode];
-                listEl_[imode][ipatch] = static_cast<ElectroMagn3DRZ*>(patches_[ipatch]->EMfields)->El_[imode] ;
-                listEr_[imode][ipatch] = static_cast<ElectroMagn3DRZ*>(patches_[ipatch]->EMfields)->Er_[imode] ;
-                listEt_[imode][ipatch] = static_cast<ElectroMagn3DRZ*>(patches_[ipatch]->EMfields)->Et_[imode] ;
-                listBl_[imode][ipatch] = static_cast<ElectroMagn3DRZ*>(patches_[ipatch]->EMfields)->Bl_[imode] ;
-                listBr_[imode][ipatch] = static_cast<ElectroMagn3DRZ*>(patches_[ipatch]->EMfields)->Br_[imode] ;
-                listBt_[imode][ipatch] = static_cast<ElectroMagn3DRZ*>(patches_[ipatch]->EMfields)->Bt_[imode] ;
+                listEl_[imode][ipatch]     = static_cast<ElectroMagn3DRZ*>(patches_[ipatch]->EMfields)->El_[imode] ;
+                listEr_[imode][ipatch]     = static_cast<ElectroMagn3DRZ*>(patches_[ipatch]->EMfields)->Er_[imode] ;
+                listEt_[imode][ipatch]     = static_cast<ElectroMagn3DRZ*>(patches_[ipatch]->EMfields)->Et_[imode] ;
+                listBl_[imode][ipatch]     = static_cast<ElectroMagn3DRZ*>(patches_[ipatch]->EMfields)->Bl_[imode] ;
+                listBr_[imode][ipatch]     = static_cast<ElectroMagn3DRZ*>(patches_[ipatch]->EMfields)->Br_[imode] ;
+                listBt_[imode][ipatch]     = static_cast<ElectroMagn3DRZ*>(patches_[ipatch]->EMfields)->Bt_[imode] ;
             }
         }
     }
-    #ifdef _TODO_RZ
-    // Manage RZ & cartesian
-    #endif
-
 
     B_localx.clear();
     B_MPIx.clear();
@@ -2024,45 +2019,43 @@ void VectorPatch::update_field_list()
     }
 
     if ( !dynamic_cast<ElectroMagn3DRZ*>(patches_[0]->EMfields) ) {
-        for ( unsigned int ifields = 0 ; ifields < listBx_.size() ; ifields++ ) {
-            listJx_[ifields]->MPIbuff.defineTags( patches_[ifields], 1 );
-            listJy_[ifields]->MPIbuff.defineTags( patches_[ifields], 2 );
-            listJz_[ifields]->MPIbuff.defineTags( patches_[ifields], 3 );
-            listBx_[ifields]->MPIbuff.defineTags( patches_[ifields], 6 );
-            listBy_[ifields]->MPIbuff.defineTags( patches_[ifields], 7 );
-            listBz_[ifields]->MPIbuff.defineTags( patches_[ifields], 8 );
-
-            listrho_[ifields]->MPIbuff.defineTags( patches_[ifields], 4 );
+        for ( unsigned int ipatch = 0 ; ipatch < size() ; ipatch++ ) {
+            listJx_[ipatch]->MPIbuff.defineTags( patches_[ipatch], 1 );
+            listJy_[ipatch]->MPIbuff.defineTags( patches_[ipatch], 2 );
+            listJz_[ipatch]->MPIbuff.defineTags( patches_[ipatch], 3 );
+            listBx_[ipatch]->MPIbuff.defineTags( patches_[ipatch], 6 );
+            listBy_[ipatch]->MPIbuff.defineTags( patches_[ipatch], 7 );
+            listBz_[ipatch]->MPIbuff.defineTags( patches_[ipatch], 8 );
+            listrho_[ipatch]->MPIbuff.defineTags( patches_[ipatch], 4 );
+        }
+        if (patches_[0]->EMfields->envelope != NULL){
+            for ( unsigned int ipatch = 0 ; ipatch < size() ; ipatch++ ) {
+                listA_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 ) ;
+                listA0_[ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 ) ;
+                listPhi_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 ) ;
+                listPhi0_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 ) ;
+                listGradPhix_[ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 ) ;
+                listGradPhiy_[ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 ) ;
+                listGradPhiz_[ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 ) ;
+                listGradPhix0_[ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 ) ;
+                listGradPhiy0_[ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 ) ;
+                listGradPhiz0_[ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 ) ;
+                listEnv_Chi_[ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 ) ;
+            }
         }
     }
     else {
         unsigned int nmodes = static_cast<ElectroMagn3DRZ*>(patches_[0]->EMfields)->El_.size();
         for (unsigned int imode=0 ; imode < nmodes ; imode++) {
-            for ( unsigned int ifields = 0 ; ifields < listBl_[imode].size() ; ifields++ ) {
-                listJl_[imode][ifields]->MPIbuff.defineTags( patches_[ifields], 0 );
-                listJr_[imode][ifields]->MPIbuff.defineTags( patches_[ifields], 0 );
-                listJt_[imode][ifields]->MPIbuff.defineTags( patches_[ifields], 0 );
-                listBl_[imode][ifields]->MPIbuff.defineTags( patches_[ifields], 0 );
-                listBr_[imode][ifields]->MPIbuff.defineTags( patches_[ifields], 0 );
-                listBt_[imode][ifields]->MPIbuff.defineTags( patches_[ifields], 0 );
-
-                listrho_RZ_[imode][ifields]->MPIbuff.defineTags( patches_[ifields], 0 );
+            for ( unsigned int ipatch = 0 ; ipatch < size() ; ipatch++ ) {
+                listJl_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
+                listJr_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
+                listJt_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
+                listBl_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
+                listBr_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
+                listBt_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
+                listrho_RZ_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 );
             }
-        }
-    }
-    if (patches_[0]->EMfields->envelope != NULL){
-        for ( unsigned int ifields = 0 ; ifields < listA_.size() ; ifields++ ) {
-            listA_ [ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
-            listA0_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
-            listPhi_ [ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
-            listPhi0_ [ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
-            listGradPhix_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
-            listGradPhiy_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
-            listGradPhiz_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
-            listGradPhix0_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
-            listGradPhiy0_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
-            listGradPhiz0_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
-            listEnv_Chi_[ifields]->MPIbuff.defineTags( patches_[ifields], 0 ) ;
         }
     }
 }
