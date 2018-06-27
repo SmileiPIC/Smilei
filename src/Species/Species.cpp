@@ -1293,7 +1293,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
             position[idim] = &(position_initialization_array[idim*n_numpy_particles]);
         weight_arr = &(position_initialization_array[nDim_particle*n_numpy_particles]);
         //Idea to speed up selection, provides xmin, xmax of the bunch and check if there is an intersection with the patch instead of going through all particles for all patches.
-        for (int ip = 0; ip < n_numpy_particles; ip++){
+        for (unsigned int ip = 0; ip < n_numpy_particles; ip++){
             //If the particle belongs to this patch
             if (                              position[0][ip] >= patch->getDomainLocalMin(0) && position[0][ip] < patch->getDomainLocalMax(0)
                  && ( nDim_particle < 2  || ( position[1][ip] >= patch->getDomainLocalMin(1) && position[1][ip] < patch->getDomainLocalMax(1)) )

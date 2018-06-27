@@ -65,7 +65,7 @@ void SpeciesV::initCluster(Params& params)
 {
     //Temporary BECK
     int ncells = 1;
-    for (int iDim=0 ; iDim<nDim_particle ; iDim++)
+    for (unsigned int iDim=0 ; iDim<nDim_particle ; iDim++)
         ncells *= (params.n_space[iDim]+1);
     bmax.resize(ncells,0);
     bmin.resize(ncells,0);
