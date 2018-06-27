@@ -79,6 +79,8 @@ class SpeciesV : public Species
     void importParticles( Params&, Patch*, Particles&, std::vector<Diagnostic*>& )override;
 
 private:
+    int npack_;
+    int packsize_;
 
 };
 
