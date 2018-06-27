@@ -376,11 +376,15 @@ public:
     inline int getMemFootPrint() {
     
         int emSize = 9+4; // 3 x (E, B, Bm) + 3 x J, rho
+
+        if(Env_Chi_) emSize += 4; //Env_Chi, Env_Ar, Env_Ai, Env_A_abs;
+
         for (unsigned int ispec=0 ; ispec<Jx_s.size() ; ispec++) {
             if (Jx_s [ispec]) emSize++;
             if (Jy_s [ispec]) emSize++;
             if (Jz_s [ispec]) emSize++;
             if (rho_s [ispec]) emSize++;
+            if (Env_Chi_s [ispec]) emSize++;
         }
 
         for ( unsigned int idiag = 0 ; idiag < allFields_avg.size() ; idiag++)
