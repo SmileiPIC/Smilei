@@ -292,8 +292,14 @@ public:
                           MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
                           std::vector<Diagnostic*>& localDiags);
 
-    //! Method calculating the Particle updated momentum (interpolation, momentum pusher, only particles interacting with envelope)
+    //! Method projecting susceptibility and calculating the particles updated momentum (interpolation, momentum pusher), only particles interacting with envelope
     virtual void ponderomotive_update_susceptibility_and_momentum(double time_dual, unsigned int ispec,
+                           ElectroMagn* EMfields, Interpolator* Interp_envelope,
+                           Params &params, bool diag_flag,
+                           Patch* patch, SmileiMPI* smpi,
+                           std::vector<Diagnostic*>& localDiags);
+    //! Method projecting susceptibility, only particles interacting with envelope
+    virtual void ponderomotive_project_susceptibility(double time_dual, unsigned int ispec,
                            ElectroMagn* EMfields, Interpolator* Interp_envelope,
                            Params &params, bool diag_flag,
                            Patch* patch, SmileiMPI* smpi,
