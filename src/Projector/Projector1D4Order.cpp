@@ -223,10 +223,15 @@ void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, double* 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project charge : frozen & diagFields timstep
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector1D4Order::operator() (double* rho, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim)
+void Projector1D4Order::operator() (double* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim)
 {
 
-    //Warning : this function is used for frozen species only. It is assumed that position = position_old !!!
+    //Warning : this function is used for frozen species or initialization only and doesn't use the standard scheme.
+    //rho type = 0
+    //Jx type = 1
+    //Jy type = 2
+    //Jz type = 3
+
 
     // Declare local variables
     //int ipo, ip, iloc;
@@ -240,18 +245,19 @@ void Projector1D4Order::operator() (double* rho, Particles &particles, unsigned 
         S1[i]=0.;
     }//i
 
+    if (type > 0) {
+        charge_weight *= 1./sqrt(1.0 + particles.momentum(0,ipart)*particles.momentum(0,ipart)
+                                     + particles.momentum(1,ipart)*particles.momentum(1,ipart)
+                                     + particles.momentum(2,ipart)*particles.momentum(2,ipart));
 
-    // Locate particle old position on the primal grid
-    //xjn        = particles.position_old(0, ipart) * dx_inv_;
-    //ipo        = round(xjn);                          // index of the central node
-    //xj_m_xipo  = xjn - (double)ipo;                   // normalized distance to the nearest grid point
-    //xj_m_xipo2 = xj_m_xipo  * xj_m_xipo;                 // square of the normalized distance to the nearest grid point
-    //xj_m_xipo3 = xj_m_xipo2 * xj_m_xipo;              // cube of the normalized distance to the nearest grid point
-    //xj_m_xipo4 = xj_m_xipo3 * xj_m_xipo;              // 4th power of the normalized distance to the nearest grid point
+        if (type == 1)       charge_weight *= particles.momentum(0,ipart);
+        else if (type == 2)  charge_weight *= particles.momentum(1,ipart);
+        else                 charge_weight *= particles.momentum(2,ipart); 
+    }
 
     // Locate particle new position on the primal grid
     xjn       = particles.position(0, ipart) * dx_inv_;
-    ip        = round(xjn);                           // index of the central node
+    ip        = round(xjn + 0.5 * (type==1));                           // index of the central node
     xj_m_xip  = xjn - (double)ip;                     // normalized distance to the nearest grid point
     xj_m_xip2 = xj_m_xip  * xj_m_xip;                    // square of the normalized distance to the nearest grid point
     xj_m_xip3 = xj_m_xip2 * xj_m_xip;                 // cube of the normalized distance to the nearest grid point
@@ -266,13 +272,13 @@ void Projector1D4Order::operator() (double* rho, Particles &particles, unsigned 
     S1[4] = dble_19_ov_96   + dble_11_ov_24 * xj_m_xip  + dble_1_ov_4 * xj_m_xip2  - dble_1_ov_6  * xj_m_xip3 - dble_1_ov_6  * xj_m_xip4;
     S1[5] = dble_1_ov_384   + dble_1_ov_48  * xj_m_xip  + dble_1_ov_16 * xj_m_xip2 + dble_1_ov_12 * xj_m_xip3 + dble_1_ov_24 * xj_m_xip4;
 
-    ip -= index_domain_begin + bin + 3 ;
+    ip -= index_domain_begin + 3 ;
 
     // 4th order projection for the charge density
     // At the 4th order, oversize = 3.
     for (unsigned int i=0; i<7; i++) {
         //iloc = i  + ipo - 3;
-        rho[i  + ip ] += charge_weight * S1[i];
+        rhoj[i  + ip ] += charge_weight * S1[i];
     }//i
 
 }
@@ -288,7 +294,7 @@ void Projector1D4Order::operator() (Field* Jx, Field* Jy, Field* Jz, Particles &
 } // END Project global current densities (ionize)
 
 
-void Projector1D4Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec)
+void Projector1D4Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec, int ipart_ref)
 {
     std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
     std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);

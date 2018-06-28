@@ -63,7 +63,7 @@ void MultiphotonBreitWheeler::compute_thread_chiph(Particles &particles,
         SmileiMPI* smpi,
         int istart,
         int iend,
-        int ithread)
+        int ithread, int ipart_ref)
 {
     // _______________________________________________________________
     // Parameters
@@ -84,7 +84,7 @@ void MultiphotonBreitWheeler::compute_thread_chiph(Particles &particles,
     // _______________________________________________________________
     // Computation
 
-    int nparts = particles.size();
+    int nparts = Epart->size()/3;
     double* Ex = &( (*Epart)[0*nparts] );
     double* Ey = &( (*Epart)[1*nparts] );
     double* Ez = &( (*Epart)[2*nparts] );
@@ -105,8 +105,8 @@ void MultiphotonBreitWheeler::compute_thread_chiph(Particles &particles,
         chi[ipart] = compute_chiph(
                  momentum[0][ipart],momentum[1][ipart],momentum[2][ipart],
                  gamma,
-                 (*(Ex+ipart)),(*(Ey+ipart)),(*(Ez+ipart)),
-                 (*(Bx+ipart)),(*(By+ipart)),(*(Bz+ipart)) );
+                 (*(Ex+ipart-ipart_ref)),(*(Ey+ipart-ipart_ref)),(*(Ez+ipart-ipart_ref)),
+                 (*(Bx+ipart-ipart_ref)),(*(By+ipart-ipart_ref)),(*(Bz+ipart-ipart_ref)) );
 
     }
 }
@@ -128,7 +128,7 @@ void MultiphotonBreitWheeler::operator() (Particles &particles,
         MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
         int istart,
         int iend,
-        int ithread)
+        int ithread, int ipart_ref)
 {
     // _______________________________________________________________
     // Parameters
@@ -137,7 +137,7 @@ void MultiphotonBreitWheeler::operator() (Particles &particles,
     // We use dynamics_invgf to store gamma
     std::vector<double> * gamma = &(smpi->dynamics_invgf[ithread]);
 
-    int nparts = particles.size();
+    int nparts = Epart->size()/3;
     double* Ex = &( (*Epart)[0*nparts] );
     double* Ey = &( (*Epart)[1*nparts] );
     double* Ez = &( (*Epart)[2*nparts] );
@@ -193,8 +193,8 @@ void MultiphotonBreitWheeler::operator() (Particles &particles,
         chiph[ipart] = MultiphotonBreitWheeler::compute_chiph(
                  momentum[0][ipart],momentum[1][ipart],momentum[2][ipart],
                  (*gamma)[ipart],
-                 (*(Ex+ipart)),(*(Ey+ipart)),(*(Ez+ipart)),
-                 (*(Bx+ipart)),(*(By+ipart)),(*(Bz+ipart)) );
+                 (*(Ex+ipart-ipart_ref)),(*(Ey+ipart-ipart_ref)),(*(Ez+ipart-ipart_ref)),
+                 (*(Bx+ipart-ipart_ref)),(*(By+ipart-ipart_ref)),(*(Bz+ipart-ipart_ref)) );
     }
 
     // 2. Monte-Carlo process

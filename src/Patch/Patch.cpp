@@ -29,8 +29,6 @@
 #include "Particles.h"
 #include "ElectroMagnFactory.h"
 #include "ElectroMagnBC_Factory.h"
-#include "InterpolatorFactory.h"
-#include "ProjectorFactory.h"
 #include "DiagnosticFactory.h"
 #include "CollisionsFactory.h"
 
@@ -48,6 +46,11 @@ Patch::Patch(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomp
 
     initStep1(params);
 
+#ifdef  __DETAILED_TIMERS
+    // Initialize timers
+    patch_timers.resize(13,0.);
+#endif
+
 } // END Patch::Patch
 
 
@@ -55,11 +58,16 @@ Patch::Patch(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomp
 
 // Cloning patch constructor
 Patch::Patch(Patch* patch, Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved, bool with_particles = true) {
-    
+
     hindex = ipatch;
     nDim_fields_ = patch->nDim_fields_;
 
     initStep1(params);
+
+#ifdef  __DETAILED_TIMERS
+    // Initialize timers
+    patch_timers.resize(13,0.);
+#endif
 
 }
 
@@ -68,11 +76,6 @@ void Patch::initStep1(Params& params)
     // for nDim_fields = 1 : bug if Pcoordinates.size = 1 !!
     //Pcoordinates.resize(nDim_fields_);
     Pcoordinates.resize( 2 );
-
-    // else if ( params.geometry == "2Dcartesian" ) {
-    //     Pcoordinates.resize(3);
-    //     generalhilbertindexinv(params.mi[0], params.mi[1], params.mi[2], &Pcoordinates[0], &Pcoordinates[1], &Pcoordinates[2], hindex);
-    // }
 
     nbNeighbors_ = 2;
     neighbor_.resize(nDim_fields_);
@@ -131,22 +134,15 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi, DomainDecomposition
 
     // initialize the electromagnetic fields (virtual)
     EMfields   = ElectroMagnFactory::create(params, domain_decomposition, vecSpecies, this);
-    
-    // interpolation operator (virtual)
-    Interp           = InterpolatorFactory::create(params, this); // + patchId -> idx_domain_begin (now = ref smpi)
 
     // Create ad hoc interpolators and projectors for envelope
     if (params.Laser_Envelope_model){
-        Interp_envelope      = InterpolatorFactory::create_env_interpolator(params, this);
-        Proj_susceptibility  = ProjectorFactory::create_susceptibility_projector(params, this); 
-                                     } // + patchId -> idx_domain_begin (now = ref smpi) 
+        Interp_envelope      = InterpolatorFactory::create_env_interpolator(params, this, params.vectorization_mode == "normal");
+        //Proj_susceptibility  = ProjectorFactory::create_susceptibility_projector(params, this, params.vectorization_mode == "normal");
+    } // + patchId -> idx_domain_begin (now = ref smpi)
     else {
         Interp_envelope      = NULL;
-        Proj_susceptibility  = NULL;
     }
-
-    // projection operator (virtual)
-    Proj       = ProjectorFactory::create(params, this);    // + patchId -> idx_domain_begin (now = ref smpi)
 
     // Initialize the collisions
     vecCollisions = CollisionsFactory::create(params, this, vecSpecies);
@@ -156,6 +152,8 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi, DomainDecomposition
 
     // Initialize the probes
     probes = DiagnosticFactory::createProbes();
+
+    probesInterp = InterpolatorFactory::create(params, this, false);
 
     if (has_an_MPI_neighbor())
         createType(params);
@@ -170,16 +168,11 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, unsign
     // clone the electromagnetic fields (virtual)
     EMfields   = ElectroMagnFactory::clone(patch->EMfields, params, vecSpecies, this, n_moved);
 
-    // interpolation operator (virtual)
-    Interp     = InterpolatorFactory::create(params, this);
-    
     // Create ad hoc interpolators and projectors for envelope
     if (params.Laser_Envelope_model){
-        Interp_envelope  = InterpolatorFactory::create_env_interpolator(params, this); 
-        Proj_susceptibility  = ProjectorFactory::create_susceptibility_projector(params, this);}
-                                                          
-    // projection operator (virtual)
-    Proj       = ProjectorFactory::create(params, this);  
+        Interp_envelope  = InterpolatorFactory::create_env_interpolator(params, this, params.vectorization_mode == "normal");
+        //Proj_susceptibility  = ProjectorFactory::create_susceptibility_projector(params, this, params.vectorization_mode == "normal");
+    }
 
     // clone the collisions
     vecCollisions = CollisionsFactory::clone(patch->vecCollisions, params);
@@ -190,6 +183,8 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, unsign
     // clone the probes
     probes = DiagnosticFactory::cloneProbes(patch->probes);
 
+    probesInterp = InterpolatorFactory::create(params, this, false);
+
     if (has_an_MPI_neighbor())
         createType(params);
 
@@ -197,15 +192,23 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, unsign
 
 void Patch::finalizeMPIenvironment(Params& params) {
     int nb_comms(9); // E, B, B_m : min number of comms
+
     if (params.geometry == "3drz")
         nb_comms += 9*(params.nmodes - 1);
-    // if envelope is present, 
-    // add to comms A, A0, Phi, Phi_old, GradPhi (x,y,z components), GradPhi_old (x,y,z components) 
-    if (params.Laser_Envelope_model){  
+    // if envelope is present,
+    // add to comms A, A0, Phi, Phi_old, GradPhi (x,y,z components), GradPhi_old (x,y,z components)
+    if (params.Laser_Envelope_model){
         nb_comms += 10;
     }
+
     // add comms for species
     nb_comms += 2*vecSpecies.size();
+
+    // Dynamic vectorization:
+    if (params.has_dynamic_vectorization)
+    {
+        nb_comms += 2;
+    }
 
     // Radiated energy
     if (params.hasMCRadiation ||
@@ -251,7 +254,7 @@ void Patch::finalizeMPIenvironment(Params& params) {
 void Patch::set( Params& params, DomainDecomposition* domain_decomposition, VectorPatch& vecPatch )
 {
     Pcoordinates.resize( params.nDim_field );
-    
+
 
     min_local = vecPatch(0)->min_local;
     max_local = vecPatch(0)->max_local;
@@ -261,11 +264,11 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
 
     // Constraint to enforce 1 neighboor per side
     double nppp_root = pow( vecPatch.size(), 1./(double)nDim_fields_ );
-    if ( fabs( (double)(int)nppp_root - nppp_root ) > 0. ) 
+    if ( fabs( (double)(int)nppp_root - nppp_root ) > 0. )
         ERROR( "Bad choice of decomposition" );
 
     for (int i = 0 ; i<nDim_fields_ ; i++) {
-        
+
         for ( unsigned int ipatch = 0 ; ipatch < vecPatch.size() ; ipatch++  ) {
             if ( vecPatch(ipatch)->min_local[i] <= min_local[i] ) {
                 min_local[i] = vecPatch(ipatch)->min_local[i];
@@ -285,7 +288,7 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
                 cell_starting_global_index[i] = vecPatch(ipatch)->cell_starting_global_index[i];
         }
         Pcoordinates[i] = (cell_starting_global_index[i]+params.oversize[i]) / params.n_space[i] / params.global_factor[i];
-        
+
         center[i] = (min_local[i]+max_local[i])*0.5;
         radius += pow(max_local[i] - center[i] + params.cell_length[i], 2);
     }
@@ -304,8 +307,8 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
         if ((neighbor_[i][1]==MPI_me_) && (params.EM_BCs[i][0]!="periodic"))
             neighbor_[i][1] = MPI_PROC_NULL;
     }
-            
-    
+
+
     //cout << "MPI Nei\t"  << "\t" << MPI_neighbor_[1][1] << endl;
     //cout << "MPI Nei\t"  << MPI_neighbor_[0][0] << "\t" << MPI_me_ << "\t" << MPI_neighbor_[0][1] << endl;
     //cout << "MPI Nei\t"  << "\t" << MPI_neighbor_[1][0] << endl;
@@ -320,15 +323,13 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
     EMfields   = ElectroMagnFactory::create(params, domain_decomposition, vecPatch(0)->vecSpecies, this);
 
     vecSpecies.resize(0);
-    Interp     = NULL;
-    Proj       = NULL;
     vecCollisions.resize(0);
     partWalls = NULL;
     probes.resize(0);
-    
+
     if (has_an_MPI_neighbor())
         createType2(params);
-    
+
 
 }
 
@@ -337,6 +338,9 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
 // Delete Patch members
 // ---------------------------------------------------------------------------------------------------------------------
 Patch::~Patch() {
+
+    delete probesInterp;
+
     for(unsigned int i=0; i<probes.size(); i++)
         delete probes[i];
 
@@ -344,12 +348,9 @@ Patch::~Patch() {
     vecCollisions.clear();
 
     if (Interp_envelope     != NULL) delete Interp_envelope;
-    if (Proj_susceptibility != NULL) delete Proj_susceptibility;
-    
+
     if (partWalls!=NULL) delete partWalls;
-    if (Proj     !=NULL) delete Proj;
-    if (Interp   !=NULL) delete Interp;
-    
+
     if (EMfields !=NULL) delete EMfields;
 
     for (unsigned int ispec=0 ; ispec<vecSpecies.size(); ispec++) delete vecSpecies[ispec];
@@ -405,6 +406,25 @@ void Patch::updateMPIenv(SmileiMPI* smpi)
         }
 
 } // END updateMPIenv
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Clean the MPI buffers for communications
+// ---------------------------------------------------------------------------------------------------------------------
+void Patch::cleanMPIBuffers(int ispec, Params& params)
+{
+    int ndim = params.nDim_field;
+
+    for (int iDim=0 ; iDim < ndim ; iDim++){
+        for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+            vecSpecies[ispec]->MPIbuff.partRecv[iDim][iNeighbor].clear();//resize(0,ndim);
+            vecSpecies[ispec]->MPIbuff.partSend[iDim][iNeighbor].clear();//resize(0,ndim);
+            vecSpecies[ispec]->MPIbuff.part_index_send[iDim][iNeighbor].clear();
+            //vecSpecies[ispec]->MPIbuff.part_index_send[iDim][iNeighbor].resize(0);
+            vecSpecies[ispec]->MPIbuff.part_index_recv_sz[iDim][iNeighbor] = 0;
+        }
+    }
+    vecSpecies[ispec]->indexes_of_particles_to_exchange.clear();
+} // cleanMPIBuffers
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -479,7 +499,7 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, Params& params)
                     min_limit = min_local[0] * min_local[0];
                     max_limit = max_local[1] * max_local[1];
                 }
-                
+
                 if ( position < min_limit ){
                     if ( neighbor_[idim][0]!=MPI_PROC_NULL) {
                         vecSpecies[ispec]->MPIbuff.part_index_send[idim][0].push_back( iPart );
@@ -497,7 +517,6 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, Params& params)
             }
         }
     }
-
 
 } // initExchParticles(... iDim)
 
@@ -716,8 +735,17 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
     //La recopie finale doit se faire au traitement de la dernière dimension seulement !!
     if (iDim == ndim-1){
 
+        //vecSpecies[ispec]->sort_part(params);
 
-        vecSpecies[ispec]->sort_part(params);
+        // For DynamicV
+        if (vecSpecies[ispec]->vectorized_operators)
+        {
+            vecSpecies[ispec]->sort_part(params);
+        }
+        else
+        {
+            vecSpecies[ispec]->Species::sort_part(params);
+        }
 
     }//End Recv_buffers ==> particles
 

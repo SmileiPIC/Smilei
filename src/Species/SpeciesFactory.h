@@ -17,6 +17,9 @@
 #ifdef _VECTO
 #include "SpeciesNormV.h"
 #include "SpeciesV.h"
+#include "SpeciesDynamicV.h"
+#include "SpeciesDynamicV2.h"
+#include "SpeciesNormV.h"
 #endif
 
 #include "PusherFactory.h"
@@ -94,12 +97,24 @@ public:
                  // Species with nonrelativistic Boris pusher == 'borisnr'
                  // Species with J.L. Vay pusher if == "vay"
                  // Species with Higuary Cary pusher if == "higueracary"
-                 // Species with relativistic Boris pusher interacting with laser envelope if == "ponderomotive_boris"
-                if ( (!params.vecto) )
+                if ( params.vectorization_mode == "disable")
+                {
                     thisSpecies = new SpeciesNorm(params, patch);
+                }
+
 #ifdef _VECTO
-                else
+                else if ( params.vectorization_mode == "normal")
+                {
                     thisSpecies = new SpeciesNormV(params, patch);
+                }
+                else if (params.vectorization_mode == "dynamic")
+                {
+                    thisSpecies = new SpeciesDynamicV(params, patch);
+                }
+                else if (params.vectorization_mode == "dynamic2")
+                {
+                    thisSpecies = new SpeciesDynamicV2(params, patch);
+                }
 #endif
             } else {
                 ERROR("For species `" << species_name << "`, pusher must be 'boris', 'borisnr', 'vay', 'higueracary', 'ponderomotive_boris'");
@@ -169,14 +184,27 @@ public:
             }
 
         }
+
         // Photon species
         else if (mass == 0)
         {
-            if ( (!params.vecto) )
+            if ( params.vectorization_mode == "disable" )
+            {
                 thisSpecies = new SpeciesNorm(params, patch);
+            }
 #ifdef _VECTO
-            else 
+            else if ( params.vectorization_mode == "normal" )
+            {
                 thisSpecies = new SpeciesNormV(params, patch);
+            }
+            else if ( params.vectorization_mode == "dynamic" )
+            {
+                thisSpecies = new SpeciesDynamicV(params, patch);
+            }
+            else if ( params.vectorization_mode == "dynamic2" )
+            {
+                thisSpecies = new SpeciesDynamicV2(params, patch);
+            }
 #endif
             // Photon can not radiate
             thisSpecies->radiation_model = "none";
@@ -190,6 +218,16 @@ public:
         thisSpecies->name = species_name;
         thisSpecies->mass = mass;
         thisSpecies->speciesNumber = ispec;
+
+        // Vectorized operators
+        if (params.vectorization_mode == "disable")
+        {
+            thisSpecies->vectorized_operators = false;
+        }
+        else if (params.vectorization_mode == "normal" || params.vectorization_mode == "dynamic" || params.vectorization_mode == "dynamic2")
+        {
+            thisSpecies->vectorized_operators = true;
+        }
 
         // Extract various parameters from the namelist
 
@@ -297,7 +335,7 @@ public:
             }
         }
 #ifdef SMILEI_USE_NUMPY
-        else if (PyArray_Check(py_pos_init)){ 
+        else if (PyArray_Check(py_pos_init)){
             //Initialize position from this array
 
             PyArrayObject *np_ret = reinterpret_cast<PyArrayObject*>(py_pos_init);
@@ -309,7 +347,10 @@ public:
             ndim_local = PyArray_SHAPE(np_ret)[0];// ok
             if (ndim_local != params.nDim_particle + 1)
                 ERROR("For species '" << species_name << "' position_initializtion must provide a 2-dimensional array with " <<  params.nDim_particle + 1 << " columns." )
-            
+
+            // OLD //Get number of particles
+            // OLD thisSpecies->n_numpy_particles =  PyArray_SHAPE(np_ret)[1];//  ok
+
             //Get number of particles. Do not initialize any more if this is a restart.
             if (!params.restart) thisSpecies->n_numpy_particles =  PyArray_SHAPE(np_ret)[1];//  ok
             thisSpecies->position_initialization_array = new double[ndim_local*thisSpecies->n_numpy_particles] ;
@@ -317,7 +358,7 @@ public:
                 for (unsigned int ipart = 0; ipart < thisSpecies->n_numpy_particles; ipart++){
                     thisSpecies->position_initialization_array[idim*thisSpecies->n_numpy_particles+ipart] = *((double*)PyArray_GETPTR2( np_ret , idim, ipart));
                 }
-            }     
+            }
         }
 #endif
         else {
@@ -361,8 +402,8 @@ public:
                 }
             }
         }
-#ifdef SMILEI_USE_NUMPY        
-        else if (PyArray_Check(py_mom_init)){ 
+#ifdef SMILEI_USE_NUMPY
+        else if (PyArray_Check(py_mom_init)){
 
             if ( !thisSpecies->position_initialization_array )
                 ERROR("For species '" << species_name << "'. Momentum initialization by a numpy array is only possible if positions are initialized with a numpy array as well. ");
@@ -376,7 +417,7 @@ public:
             ndim_local =  PyArray_SHAPE(np_ret_mom)[0];// ok
             if (ndim_local != params.nDim_particle )
                 ERROR("For species '" << species_name << "' momentum_initializtion must provide a 2-dimensional array with " <<  params.nDim_particle << " columns." )
-            
+
             //Get number of particles
             if ( !params.restart && thisSpecies->n_numpy_particles != PyArray_SHAPE(np_ret_mom)[1] )
                 ERROR("For species '" << species_name << "' momentum_initialization must provide as many particles as position_initialization." )
@@ -386,7 +427,7 @@ public:
                 for (unsigned int ipart = 0; ipart < thisSpecies->n_numpy_particles; ipart++){
                     thisSpecies->momentum_initialization_array[idim*thisSpecies->n_numpy_particles+ipart] = *((double*)PyArray_GETPTR2( np_ret_mom , idim, ipart));
                 }
-            }     
+            }
         }
 #endif
         else {
@@ -402,7 +443,7 @@ public:
         // time when the relativistic field initialization is applied, if enabled
         int n_timesteps_relativistic_initialization   = (int)(thisSpecies->time_frozen/params.timestep);
         thisSpecies->time_relativistic_initialization = (double)(n_timesteps_relativistic_initialization) * params.timestep;
-  
+
         if( !PyTools::extract("boundary_conditions", thisSpecies->boundary_conditions, "Species", ispec)  )
             ERROR("For species '" << species_name << "', boundary_conditions not defined" );
 
@@ -491,7 +532,7 @@ public:
             if ( patch->isMaster() )
             WARNING("For species '" << species_name << "', relativistic_field_initialization not defined: assumed = 'false'.");
             }
-        thisSpecies->relativistic_field_initialization = relativistic_field_initialization;    
+        thisSpecies->relativistic_field_initialization = relativistic_field_initialization;
 
 
 
@@ -504,7 +545,7 @@ public:
 
 
         if (thisSpecies->position_initialization_array == NULL){
-            //These quantities are disregarded if positioning of the species is directly specified by the user 
+            //These quantities are disregarded if positioning of the species is directly specified by the user
             // Matter particles
             if (thisSpecies->mass > 0)
             {
@@ -612,13 +653,17 @@ public:
         Species * newSpecies = NULL;
 
         // Boris, Vay or Higuera-Cary
-        if ( (!params.vecto) )
+        if ( params.vectorization_mode == "disable")
             newSpecies = new SpeciesNorm(params, patch);
 #ifdef _VECTO
-        else
+        else if (params.vectorization_mode == "normal")
             newSpecies = new SpeciesNormV(params, patch);
+        else if (params.vectorization_mode == "dynamic")
+            newSpecies = new SpeciesDynamicV(params, patch);
+        else if (params.vectorization_mode == "dynamic2")
+            newSpecies = new SpeciesDynamicV2(params, patch);
 #endif
-        
+
         // Copy members
         newSpecies->name                                     = species->name;
         newSpecies->pusher                                   = species->pusher;
@@ -649,21 +694,21 @@ public:
         newSpecies->atomic_number                            = species->atomic_number;
         newSpecies->ionization_model                         = species->ionization_model;
         newSpecies->densityProfileType                       = species->densityProfileType;
+        newSpecies->vectorized_operators                     = species->vectorized_operators;
         newSpecies->chargeProfile                            = new Profile(species->chargeProfile);
-        
-        if ( species->densityProfile ){ 
+        if ( species->densityProfile ){
             newSpecies->densityProfile                       = new Profile(species->densityProfile);
             newSpecies->ppcProfile                           = new Profile(species->ppcProfile);
         }
         newSpecies->velocityProfile.resize(3);
         newSpecies->temperatureProfile.resize(3);
 
-        if ( species->velocityProfile[0] ){ 
+        if ( species->velocityProfile[0] ){
             newSpecies->velocityProfile[0]                   = new Profile(species->velocityProfile[0]);
             newSpecies->velocityProfile[1]                   = new Profile(species->velocityProfile[1]);
             newSpecies->velocityProfile[2]                   = new Profile(species->velocityProfile[2]);
         }
-        if ( species->temperatureProfile[0] ){ 
+        if ( species->temperatureProfile[0] ){
             newSpecies->temperatureProfile[0]                = new Profile(species->temperatureProfile[0]);
             newSpecies->temperatureProfile[1]                = new Profile(species->temperatureProfile[1]);
             newSpecies->temperatureProfile[2]                = new Profile(species->temperatureProfile[2]);

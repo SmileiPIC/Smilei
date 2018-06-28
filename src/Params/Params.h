@@ -120,7 +120,7 @@ public:
     //! Are open boundaries used ?
     bool open_boundaries;
     bool save_magnectic_fields_for_SM;
-    
+
     //! Boundary conditions for Envelope Field
     std::vector< std::vector<std::string> > Env_BCs;
 
@@ -129,7 +129,7 @@ public:
 
     //! Define if laser envelope model is used (default = false)
     bool Laser_Envelope_model=false;
-    
+
     //Poisson solver
     //! Do we solve poisson
     bool solve_poisson;
@@ -151,10 +151,10 @@ public:
 
     //! Maxwell Solver (default='Yee')
     std::string maxwell_sol;
-    
+
     //! Current spatial filter: number of binomial passes
     unsigned int currentFilter_passes;
-    
+
     //! is Friedman filter applied [Greenwood et al., J. Comp. Phys. 201, 665 (2004)]
     bool Friedman_filter;
 
@@ -187,19 +187,19 @@ public:
 
     //! number of cells in every direction of the global domain
     std::vector<unsigned int> n_space_global;
-    
+
     //! spatial step (cell dimension in every direction)
     std::vector<double> cell_length;
-    
+
     //! Size of a patch in each direction
     std::vector<double> patch_dimensions;
-    
+
     //! volume of cell (this will be removed by untructured mesh!)
     double cell_volume;
 
     //! wavelength (in SI units)
     double reference_angular_frequency_SI;
-    
+
     //! Oversize domain to exchange less particles
     std::vector<unsigned int> oversize;
 
@@ -208,7 +208,7 @@ public:
 
     //! frequency of exchange particles (default = 1, disabled for now, incompatible with sort)
     int exchange_particles_each;
-    
+
     //! frequency to apply shrink_to_fit on particles structure
     int every_clean_particles_overhead;
 
@@ -220,6 +220,11 @@ public:
     std::string patch_decomposition;
     //! Domain orientation
     std::string patch_orientation;
+
+    //! Time selection for dynamic vecto
+    TimeSelection * dynamic_vecto_time_selection;
+    //! Flag for the dynamic vecto
+    bool has_dynamic_vectorization;
 
     //! Time selection for load balancing
     TimeSelection * load_balancing_time_selection;
@@ -234,7 +239,8 @@ public:
     //! Compute an initially balanced patch distribution right from the start
     bool initial_balance;
 
-    bool vecto;
+    //! String containing the vectorization mode: disable, normal, dynamic
+    std::string vectorization_mode;
 
     //! Tells whether there is a moving window
     bool hasWindow;
@@ -261,7 +267,7 @@ public:
     //! check if python can be closed (e.g. there is no laser python profile)
     //! by calling the _keep_python_running python function (part of pycontrol.pyh)
     void cleanup(SmileiMPI*);
-    
+
     //! Method to find the numbers of requested species, sorted, and duplicates removed
     static std::vector<unsigned int> FindSpecies(std::vector<Species*>&, std::vector<std::string>);
 
@@ -272,14 +278,14 @@ public:
     std::vector<unsigned int> global_factor;
     bool  is_spectral=false ;
     bool  is_pxr=false ;
-    int   norderx = 2; 
-    int   nordery = 2; 
+    int   norderx = 2;
+    int   nordery = 2;
     int   norderz = 2;
     std::vector<int> norder;
-    
+
     //! Boolean for printing the expected disk usage or not
     bool print_expected_disk_usage;
-    
+
     // ---------------------------------------------
     // Constants
     // ---------------------------------------------

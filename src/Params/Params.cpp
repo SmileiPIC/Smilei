@@ -67,12 +67,12 @@ namelist("")
 {
 
     MESSAGE("HDF5 version "<<H5_VERS_MAJOR << "." << H5_VERS_MINOR << "." << H5_VERS_RELEASE);
-    
+
     if(  (H5_VERS_MAJOR< 1) ||
        ( (H5_VERS_MAJOR==1) && (H5_VERS_MINOR< 8) ) ||
        ( (H5_VERS_MAJOR==1) && (H5_VERS_MINOR==8) && (H5_VERS_RELEASE<16) ) )
         WARNING("Smilei suggests using HDF5 version 1.8.16 or newer");
-    
+
     if (namelistsFiles.size()==0) ERROR("No namelists given!");
 
     //string commandLineStr("");
@@ -251,7 +251,7 @@ namelist("")
     }
     // Number of modes in LRT geometry
     PyTools::extract("nmodes", nmodes, "Main");
-    
+
     // simulation duration & length
     PyTools::extract("simulation_time", simulation_time, "Main");
 
@@ -279,7 +279,7 @@ namelist("")
         else if ( (EM_BCs[iDim][0] != EM_BCs[iDim][1]) &&  (EM_BCs[iDim][0] == "periodic" || EM_BCs[iDim][1] == "periodic") )
             ERROR("EM_boundary_conditions along dimension "<<"012"[iDim]<<" cannot be periodic only on one side");
     }
-        
+
     int n_envlaser = PyTools::nComponents("LaserEnvelope");
     if ( n_envlaser >=1 ){
         Laser_Envelope_model = true;
@@ -317,8 +317,8 @@ namelist("")
     if( EM_BCs_k.size() == 0 ) {
         //Gives default value
         for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
-            std::vector<double> temp_k; 
-            
+            std::vector<double> temp_k;
+
             for( unsigned int iiDim=0; iiDim<iDim; iiDim++ ) temp_k.push_back(0.);
             temp_k.push_back(1.);
             for( unsigned int iiDim=iDim+1; iiDim<nDim_field; iiDim++ ) temp_k.push_back(0.);
@@ -339,7 +339,7 @@ namelist("")
             ERROR("EM_boundary_conditions_k must have exactly " << nDim_field << " elements along dimension "<<"-+"[iDim%2]<<"012"[iDim/2] );
         if ( EM_BCs_k[iDim][iDim/2] == 0. )
             ERROR("EM_boundary_conditions_k must have a non zero normal component along dimension "<<"-+"[iDim%2]<<"012"[iDim/2] );
-        
+
     }
     save_magnectic_fields_for_SM = true;
     PyTools::extract("save_magnectic_fields_for_SM", save_magnectic_fields_for_SM, "Main");
@@ -409,7 +409,7 @@ namelist("")
         res_space2 += res_space[i]*res_space[i];
     }
     if (geometry == "3drz") {
-        res_space2 += ((nmodes-1)*(nmodes-1)-1)*res_space[1]*res_space[1];	    
+        res_space2 += ((nmodes-1)*(nmodes-1)-1)*res_space[1]*res_space[1];
     }
     dtCFL=1.0/sqrt(res_space2);
     if ( timestep>dtCFL ) {
@@ -499,11 +499,27 @@ namelist("")
     }
 
     // Activation of the vectorized subroutines
-    vecto = false;
-    PyTools::extract("vecto", vecto, "Main");
-    if (vecto)
-        MESSAGE( "Apply vectorization" );
-    
+    vectorization_mode = "disable";
+    has_dynamic_vectorization = false;
+    PyTools::extract("vecto", vectorization_mode, "Main");
+    if (!(vectorization_mode == "disable" || vectorization_mode == "normal" || vectorization_mode == "dynamic" || vectorization_mode == "dynamic2"))
+    {
+        ERROR("The parameter `vecto` must be `disable`, `normal`, `dynamic`, `dynamic2`");
+    }
+    else if (vectorization_mode == "dynamic" || vectorization_mode == "dynamic2")
+    {
+        has_dynamic_vectorization = true;
+    }
+
+    if( PyTools::nComponents("DynamicVectorization")>0 ) {
+        // get parameter "every" which describes a timestep selection
+        dynamic_vecto_time_selection = new TimeSelection(
+            PyTools::extract_py("every", "DynamicVectorization"), "Dynamic vectorization"
+        );
+    } else {
+        dynamic_vecto_time_selection  = new TimeSelection(1);
+    }
+
     // Read the "print_every" parameter
     print_every = (int)(simulation_time/timestep)/10;
     PyTools::extract("print_every", print_every, "Main");
@@ -600,6 +616,7 @@ namelist("")
 
 Params::~Params() {
     if( load_balancing_time_selection ) delete load_balancing_time_selection;
+    if( dynamic_vecto_time_selection ) delete dynamic_vecto_time_selection;
     PyTools::closePython();
 }
 
@@ -631,7 +648,7 @@ void Params::compute()
     patch_dimensions.resize(3, 0.);
     cell_volume=1.0;
     n_cell_per_patch = 1;
-    
+
     // compute number of cells & normalized lengths
     for (unsigned int i=0; i<nDim_field; i++) {
         n_space[i] = round(grid_length[i]/cell_length[i]);
@@ -645,7 +662,7 @@ void Params::compute()
     for (unsigned int i=nDim_field; i<3; i++) {
         cell_length[i]=0.0;
     }
-    
+
     for (unsigned int i=0; i<nDim_field; i++){
         oversize[i]  = max(interpolation_order,(unsigned int)(norder[i]/2+1)) + (exchange_particles_each-1);;
         n_space_global[i] = n_space[i];
@@ -655,7 +672,7 @@ void Params::compute()
         patch_dimensions[i] = n_space[i] * cell_length[i];
         n_cell_per_patch *= n_space[i];
     }
-    
+
     // Set clrw if not set by the user
     if ( clrw == -1 ) {
 
@@ -669,7 +686,7 @@ void Params::compute()
         for ( unsigned int idim = 1 ; idim < nDim_field ; idim++ )
             bin_size *= ( n_space[idim]+1+2*oversize[idim] );
 
-        // IF Ionize r pair generation : clrw = n_space_x_pp ?
+        // IF Ionize or pair generation : clrw = n_space_x_pp ?
         if ( ( clrw+1+2*oversize[0]) * bin_size > (unsigned int) cache_threshold ) {
             int clrw_max = cache_threshold / bin_size - 1 - 2*oversize[0];
             if ( clrw_max > 0 ) {
@@ -681,6 +698,18 @@ void Params::compute()
             else
                 clrw = 1;
             WARNING( "Particles cluster width set to : " << clrw );
+        }
+
+    }
+
+    // clrw != n_space[0] is not compatible
+    // with the dynamic vecto for the moment
+    if (vectorization_mode == "dynamic" || vectorization_mode == "dynamic2")
+    {
+        if (clrw != (int)(n_space[0]))
+        {
+            clrw = (int)(n_space[0]);
+            WARNING( "Particles cluster width set to: " << clrw << " for the dynamic vectorization mode");
         }
     }
 
@@ -759,6 +788,26 @@ void Params::print_init()
         MESSAGE(1,"Cell load coefficient = " << cell_load );
         MESSAGE(1,"Frozen particle load coefficient = " << frozen_particle_load );
     }
+
+    if (vectorization_mode == "normal")
+    {
+        MESSAGE(1,"Apply the constant vectorization mode" );
+    }
+    else if (vectorization_mode == "dynamic")
+    {
+        MESSAGE(1,"Apply the dynamic vectorization mode 1" );
+        MESSAGE(1,"Happens: " << dynamic_vecto_time_selection->info());
+    }
+    else if (vectorization_mode == "dynamic2")
+    {
+        MESSAGE(1,"Apply the dynamic vectorization mode 2" );
+        MESSAGE(1,"Happens: " << dynamic_vecto_time_selection->info());
+    }
+    else if (vectorization_mode == "disable")
+    {
+        MESSAGE(1,"Vectorization disable" );
+    }
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -808,6 +857,10 @@ void Params::print_parallelism_params(SmileiMPI* smpi)
             MESSAGE(2, "dimension " << iDim << " - n_space : " << n_space[iDim] << " cells.");
 
         MESSAGE(1, "Dynamic load balancing: " << load_balancing_time_selection->info() );
+        if (this->has_dynamic_vectorization)
+        {
+            MESSAGE(1, "Dynamic vectorization: " << dynamic_vecto_time_selection->info() );
+        }
     }
 
     if (smpi->isMaster()) {

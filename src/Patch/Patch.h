@@ -34,7 +34,7 @@ public:
     Patch(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved);
     //! Cloning Constructor for Patch
     Patch(Patch* patch, Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved, bool with_particles);
-    
+
     //! First initialization step for patches
     void initStep1(Params& params);
     //! Second initialization step for patches
@@ -67,18 +67,17 @@ public:
     //! Optional binary collisions operators
     std::vector<Collisions*> vecCollisions;
 
-    //! Interpolator (used to push particles and for probes)
-    Interpolator* Interp;
-    //! Interpolator ad hoc for envelope 
+    //! Interpolator ad hoc for envelope
     Interpolator* Interp_envelope = NULL;
 
-    //! Projector
-    Projector* Proj;
     //! Projector ad hoc for Proj_susceptibility
-    Projector* Proj_susceptibility = NULL;
+    //Projector* Proj_susceptibility = NULL;
 
     //! "fake" particles for the probe diagnostics
     std::vector<ProbeParticles*> probes;
+
+    //! Classical interpolator for the probe diagnostic only
+    Interpolator* probesInterp;
 
 
     // Geometrical description
@@ -90,11 +89,20 @@ public:
     //!Cartesian coordinates of the patch. X,Y,Z of the Patch according to its Hilbert index.
     std::vector<unsigned int> Pcoordinates;
 
+    // Detailed timers
+    // -----------------------
+
+#ifdef  __DETAILED_TIMERS
+    //! Timers for the patch
+    std::vector<double> patch_timers;
+#endif
 
     // MPI exchange/sum methods for particles/fields
     //   - fields communication specified per geometry (pure virtual)
     // --------------------------------------------------------------
 
+    //! Clean the MPI buffers for communications
+    void cleanMPIBuffers(int ispec, Params& params);
     //! manage Idx of particles per direction,
     void initExchParticles(SmileiMPI* smpi, int ispec, Params& params);
     //!init comm  nbr of particles/

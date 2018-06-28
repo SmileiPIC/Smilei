@@ -201,35 +201,42 @@ void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project charge : frozen & diagFields timstep
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector1D2Order::operator() (double* rho, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim)
+void Projector1D2Order::operator() (double* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim)
 {
 
-    //Warning : this function is used for frozen species only. It is assumed that position = position_old !!!
+    //Warning : this function is used for frozen species or initialization only and doesn't use the standard scheme.
+    //rho type = 0
+    //Jx type = 1
+    //Jy type = 2
+    //Jz type = 3
 
     // The variable bin received is  number of bin * cluster width.
     // Declare local variables
     //int ipo, ip, iloc;
     int ip;
     //int ip_m_ipo;
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double xjn, xj_m_xip, xj_m_xip2;
     double S1[5];            // arrays used for the Esirkepov projection method
+
+    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    if (type > 0) {
+        charge_weight *= 1./sqrt(1.0 + particles.momentum(0,ipart)*particles.momentum(0,ipart)
+                                     + particles.momentum(1,ipart)*particles.momentum(1,ipart)
+                                     + particles.momentum(2,ipart)*particles.momentum(2,ipart));
+
+        if (type == 1)       charge_weight *= particles.momentum(0,ipart);
+        else if (type == 2)  charge_weight *= particles.momentum(1,ipart);
+        else                 charge_weight *= particles.momentum(2,ipart); 
+    }
 
     // Initialize variables
     for (unsigned int i=0; i<5; i++) {
         S1[i]=0.;
     }//i
 
-
-    // Locate particle old position on the primal grid
-    //xjn        = particles.position_old(0, ipart) * dx_inv_;
-    //ipo        = round(xjn);                          // index of the central node
-    //xj_m_xipo  = xjn - (double)ipo;                   // normalized distance to the nearest grid point
-    //xj_m_xipo2 = xj_m_xipo*xj_m_xipo;                 // square of the normalized distance to the nearest grid point
-
     // Locate particle new position on the primal grid
     xjn       = particles.position(0, ipart) * dx_inv_;
-    ip        = round(xjn);                           // index of the central node
+    ip        = round(xjn + 0.5 * (type==1));                           // index of the central node
     xj_m_xip  = xjn - (double)ip;                     // normalized distance to the nearest grid point
     xj_m_xip2 = xj_m_xip*xj_m_xip;                    // square of the normalized distance to the nearest grid point
 
@@ -239,12 +246,12 @@ void Projector1D2Order::operator() (double* rho, Particles &particles, unsigned 
     S1[2] = (0.75-xj_m_xip2);
     S1[3] = 0.5 * (xj_m_xip2+xj_m_xip+0.25);
 
-    ip -= index_domain_begin + bin + 2;
+    ip -= index_domain_begin + 2;
 
     // 2nd order projection for charge density
     // At the 2nd order, oversize = 2.
     for (unsigned int i=0; i<5; i++) {
-        rho[i + ip ] += charge_weight * S1[i];
+        rhoj[i + ip ] += charge_weight * S1[i];
     }//i
 
 }
@@ -321,7 +328,7 @@ void Projector1D2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Particles &
 
 } // END Project global current densities (ionize)
 
-void Projector1D2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec)
+void Projector1D2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec, int ipart_ref)
 {
     std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
     std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);

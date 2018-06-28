@@ -43,7 +43,7 @@ class MultiphotonBreitWheeler
                 MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
                 int istart,
                 int iend,
-                int ithread);
+                int ithread, int ipart_ref = 0);
 
         //! Computation of the photon Lorentz invariant quantum parameter
         //! for the given photon properties
@@ -82,7 +82,7 @@ class MultiphotonBreitWheeler
                 SmileiMPI* smpi,
                 int istart,
                 int iend,
-                int ithread);
+                int ithread, int ipart_ref = 0);
 
         //! Second version of pair_emission:
         //! Perform the creation of pairs from a photon with particles as an argument

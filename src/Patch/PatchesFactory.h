@@ -12,6 +12,8 @@
 
 #ifdef _VECTO
 #include "SpeciesV.h"
+#include "SpeciesDynamicV.h"
+#include "SpeciesDynamicV2.h"
 #endif
 
 class PatchesFactory {
@@ -21,11 +23,11 @@ public:
     static Patch* create(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved=0) {
         if (params.geometry == "1Dcartesian")
             return new Patch1D(params, smpi, domain_decomposition, ipatch, n_moved);
-        else if (params.geometry == "2Dcartesian") 
+        else if (params.geometry == "2Dcartesian")
             return new Patch2D(params, smpi, domain_decomposition, ipatch, n_moved);
-        else if (params.geometry == "3Dcartesian") 
+        else if (params.geometry == "3Dcartesian")
             return new Patch3D(params, smpi, domain_decomposition, ipatch, n_moved);
-        else if (params.geometry == "3drz") 
+        else if (params.geometry == "3drz")
             return new PatchRZ(params, smpi, domain_decomposition, ipatch, n_moved);
         return nullptr;
     }
@@ -38,7 +40,7 @@ public:
             return new Patch2D(static_cast<Patch2D*>(patch), params, smpi, domain_decomposition, ipatch, n_moved, with_particles);
         else if (params.geometry == "3Dcartesian")
             return new Patch3D(static_cast<Patch3D*>(patch), params, smpi, domain_decomposition, ipatch, n_moved, with_particles);
-        else if (params.geometry == "3drz") 
+        else if (params.geometry == "3drz")
             return new PatchRZ(static_cast<PatchRZ*>(patch), params, smpi, domain_decomposition, ipatch, n_moved, with_particles);
         return nullptr;
     }
@@ -58,17 +60,17 @@ public:
             firstpatch += smpi->patch_count[impi];
         }
         DEBUG( smpi->getRank() << ", nPatch = " << npatches << " - starting at " << firstpatch );
-        
+
         // If test mode, only 1 patch created
         if( smpi->test_mode ) npatches = 1;
-        
+
         // Create patches (create patch#0 then clone it)
         vecPatches.resize(npatches);
         vecPatches.patches_[0] = create(params, smpi, vecPatches.domain_decomposition_, firstpatch, n_moved);
-        
+
         TITLE("Initializing Patches");
         MESSAGE(1,"First patch created");
-        
+
         // If normal mode (not test mode) clone the first patch to create the others
         unsigned int percent=10;
         for (unsigned int ipatch = 1 ; ipatch < npatches ; ipatch++) {
@@ -80,13 +82,44 @@ public:
         }
 
 #ifdef _VECTO
-        if (params.vecto) {
+        if (params.vectorization_mode == "normal") {
             //Need to sort because particles are not well sorted at creation
             for (unsigned int ipatch=0 ; ipatch < npatches ; ipatch++){
                 for (unsigned int ispec=0 ; ispec<vecPatches(ipatch)->vecSpecies.size(); ispec++) {
                     if ( dynamic_cast<SpeciesV*>(vecPatches.patches_[ipatch]->vecSpecies[ispec]) )
                         dynamic_cast<SpeciesV*>(vecPatches.patches_[ipatch]->vecSpecies[ispec])->compute_part_cell_keys(params);
                     vecPatches.patches_[ipatch]->vecSpecies[ispec]->sort_part(params);
+                }
+            }
+        }
+        else if (params.vectorization_mode == "dynamic") {
+            //Need to sort because particles are not well sorted at creation
+            for (unsigned int ipatch=0 ; ipatch < npatches ; ipatch++){
+                for (unsigned int ispec=0 ; ispec<vecPatches(ipatch)->vecSpecies.size(); ispec++) {
+                    if ( dynamic_cast<SpeciesDynamicV*>(vecPatches.patches_[ipatch]->vecSpecies[ispec]) )
+                    {
+                        dynamic_cast<SpeciesDynamicV*>(vecPatches.patches_[ipatch]->vecSpecies[ispec])->compute_part_cell_keys(params);
+                    }
+                    if (dynamic_cast<SpeciesDynamicV*>(vecPatches.patches_[ipatch]->vecSpecies[ispec])->vectorized_operators)
+                    {
+                        vecPatches.patches_[ipatch]->vecSpecies[ispec]->sort_part(params);
+                    }
+                    else
+                    {
+                        vecPatches.patches_[ipatch]->vecSpecies[ispec]->Species::sort_part(params);
+                    }
+                }
+            }
+        }
+        else if (params.vectorization_mode == "dynamic2") {
+            //Need to sort because particles are not well sorted at creation
+            for (unsigned int ipatch=0 ; ipatch < npatches ; ipatch++){
+                for (unsigned int ispec=0 ; ispec<vecPatches(ipatch)->vecSpecies.size(); ispec++) {
+                    if ( dynamic_cast<SpeciesDynamicV2*>(vecPatches.patches_[ipatch]->vecSpecies[ispec]) )
+                    {
+                        dynamic_cast<SpeciesDynamicV2*>(vecPatches.patches_[ipatch]->vecSpecies[ispec])->compute_part_cell_keys(params);
+                    }
+                    dynamic_cast<SpeciesDynamicV2*>(vecPatches.patches_[ipatch]->vecSpecies[ispec])->sort_part(params);
                 }
             }
         }
@@ -111,7 +144,7 @@ public:
                 delete vecPatches.patches_[0]->vecSpecies[ispec]->momentum_initialization_array;
             }
         }
-        
+
 
 
         MESSAGE(1,"All patches created");

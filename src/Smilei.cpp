@@ -69,7 +69,7 @@ int main (int argc, char* argv[])
     TITLE("Reading the simulation parameters");
     Params params(&smpi,vector<string>(argv + 1, argv + argc));
     OpenPMDparams openPMD(params);
-    
+
     // Need to move it here because of domain decomposition need in smpi->init(_patch_count)
     //     abstraction of Hilbert curve
     VectorPatch vecPatches( params );
@@ -77,7 +77,7 @@ int main (int argc, char* argv[])
     // Initialize MPI environment with simulation parameters
     TITLE("Initializing MPI");
     smpi.init(params, vecPatches.domain_decomposition_);
-    
+
     // Create timers
     Timers timers(&smpi);
 
@@ -137,6 +137,11 @@ int main (int argc, char* argv[])
         // vecPatches data read in restartAll according to smpi.patch_count
         checkpoint.restartAll( vecPatches, &smpi, simWindow, params, openPMD);
 
+        // Patch reconfiguration for the dynamic vectorization
+        if( params.has_dynamic_vectorization ) {
+            vecPatches.configuration(params,timers, 0);
+        }
+
         // time at integer time-steps (primal grid)
         time_prim = checkpoint.this_run_start_step * params.timestep;
         // time at half-integer time-steps (dual grid)
@@ -167,15 +172,18 @@ int main (int argc, char* argv[])
         // Initialize the electromagnetic fields
         // -------------------------------------
 
-        
+        TITLE("Applying external fields at time t = 0");
+        vecPatches.applyExternalFields();
+        vecPatches.saveExternalFields( params );
+
         // Solve "Relativistic Poisson" problem (including proper centering of fields)
-        // Note: the mean gamma for initialization will be computed for all the species 
+        // Note: the mean gamma for initialization will be computed for all the species
         // whose fields are initialized at this iteration
         if (params.solve_relativistic_poisson == true) {
             // Compute rho only for species needing relativistic field Initialization
             vecPatches.computeChargeRelativisticSpecies(time_prim);
             SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, timers, 0 );
-            
+
             // Initialize the fields for these species
             if (!vecPatches.isRhoNull(&smpi)){
                 TITLE("Initializing relativistic species fields at time t = 0");
@@ -184,7 +192,7 @@ int main (int argc, char* argv[])
             // Reset rho and J and return to initialization
             vecPatches.resetRhoJ();
         }
-        
+
         vecPatches.computeCharge();
         vecPatches.sumDensities(params, time_dual, timers, 0, simWindow);
 
@@ -212,15 +220,16 @@ int main (int argc, char* argv[])
             vecPatches.solvePoisson( params, &smpi );
         }
 
-        TITLE("Applying external fields at time t = 0");
-        vecPatches.applyExternalFields();
-        vecPatches.saveExternalFields( params );
 
-        vecPatches.dynamics(params, &smpi, simWindow, RadiationTables,
-                            MultiphotonBreitWheelerTables, time_dual, timers, 0);
+        // Patch reconfiguration
+        if( params.has_dynamic_vectorization ) {
+            vecPatches.reconfiguration(params,timers, 0);
+        }
+
+        vecPatches.projection_for_diags(params, &smpi, simWindow, time_dual, timers, 0);
 
         // if Laser Envelope is used, execute particles and envelope sections of ponderomotive loop
-        if (params.Laser_Envelope_model){ 
+        if (params.Laser_Envelope_model){
 
             // initialize new envelope from scratch, following the input namelist
             vecPatches.init_new_envelope(params);
@@ -232,14 +241,10 @@ int main (int argc, char* argv[])
             vecPatches.sumSusceptibility(params, time_dual, timers, 0, simWindow );
 
             // interp updated envelope for position advance, update positions and currents for Maxwell's equations
-            vecPatches.ponderomotive_update_position_and_currents(params, &smpi, simWindow, time_dual, timers, 0);        
-                                        } // end condition if Laser Envelope Model is used 
+            vecPatches.ponderomotive_update_position_and_currents(params, &smpi, simWindow, time_dual, timers, 0);
+                                        } // end condition if Laser Envelope Model is used
 
         vecPatches.sumDensities(params, time_dual, timers, 0, simWindow );
-
-        vecPatches.finalize_and_sort_parts(params, &smpi, simWindow,
-            RadiationTables,MultiphotonBreitWheelerTables, 
-            time_dual, timers, 0);
 
         TITLE("Initializing diagnostics");
         vecPatches.initAllDiags( params, &smpi );
@@ -253,7 +258,7 @@ int main (int argc, char* argv[])
     timers.reboot();
 
 
-    Domain domain( params ); 
+    Domain domain( params );
     unsigned int global_factor(1);
     #ifdef _PICSAR
     for ( unsigned int iDim = 0 ; iDim < params.nDim_field ; iDim++ )
@@ -266,16 +271,16 @@ int main (int argc, char* argv[])
     #endif
 
     timers.global.reboot();
-    
+
     // ------------------------------------------------------------------------
     // Check memory consumption & expected disk usage
     // ------------------------------------------------------------------------
     TITLE("Memory consumption");
     vecPatches.check_memory_consumption( &smpi );
-    
+
     TITLE("Expected disk usage (approximate)");
     vecPatches.check_expected_disk_usage( &smpi, params, checkpoint );
-    
+
     // ------------------------------------------------------------------------
     // check here if we can close the python interpreter
     // ------------------------------------------------------------------------
@@ -298,7 +303,7 @@ int main (int argc, char* argv[])
 
         unsigned int itime=checkpoint.this_run_start_step+1;
         while ( (itime <= params.n_time) && (!checkpoint.exit_asap) ) {
-            
+
             // calculate new times
             // -------------------
             #pragma omp single
@@ -306,12 +311,20 @@ int main (int argc, char* argv[])
                 time_prim += params.timestep;
                 time_dual += params.timestep;
             }
+
+            // Patch reconfiguration
+            if( params.has_dynamic_vectorization ) {
+                if ( params.dynamic_vecto_time_selection->theTimeIsNow(itime) ) {
+                    vecPatches.reconfiguration(params, timers, itime);
+                }
+            }
+
             // apply collisions if requested
             vecPatches.applyCollisions(params, itime, timers);
-            
-            // Solve "Relativistic Poisson" problem (including proper centering of fields) 
+
+            // Solve "Relativistic Poisson" problem (including proper centering of fields)
             // for species who stop to be frozen
-            // Note: the mean gamma for initialization will be computed for all the species 
+            // Note: the mean gamma for initialization will be computed for all the species
             // whose fields are initialized at this iteration
             if (params.solve_relativistic_poisson == true) {
                 // Compute rho only for species needing relativistic field Initialization
@@ -323,7 +336,7 @@ int main (int argc, char* argv[])
                     // Initialize the fields for these species
                     if (!vecPatches.isRhoNull(&smpi)){
                         TITLE("Initializing relativistic species fields");
-                        vecPatches.solveRelativisticPoisson( params, &smpi, time_prim );                
+                        vecPatches.solveRelativisticPoisson( params, &smpi, time_prim );
                     }
                 }
                 #pragma omp barrier
@@ -337,7 +350,7 @@ int main (int argc, char* argv[])
             vecPatches.dynamics(params, &smpi, simWindow, RadiationTables,
                                 MultiphotonBreitWheelerTables,
                                 time_dual, timers, itime);
-            
+
             // if Laser Envelope is used, execute particles and envelope sections of ponderomotive loop
             if (params.Laser_Envelope_model){
                 // interpolate envelope for susceptibility deposition, project susceptibility for envelope equation, momentum advance
@@ -346,23 +359,23 @@ int main (int argc, char* argv[])
                 // comm and sum susceptibility
                 vecPatches.sumSusceptibility(params, time_dual, timers, itime, simWindow );
 
-                // solve envelope equation and comm envelope         
-                vecPatches.solveEnvelope( params, simWindow, itime, time_dual, timers ); 
+                // solve envelope equation and comm envelope
+                vecPatches.solveEnvelope( params, simWindow, itime, time_dual, timers );
 
                 // interp updated envelope for position advance, update positions and currents for Maxwell's equations
-                vecPatches.ponderomotive_update_position_and_currents(params, &smpi, simWindow, time_dual, timers, itime);      
-                                             } // end condition if Laser Envelope Model is used 
+                vecPatches.ponderomotive_update_position_and_currents(params, &smpi, simWindow, time_dual, timers, itime);
+                                             } // end condition if Laser Envelope Model is used
 
             // Sum densities
             vecPatches.sumDensities(params, time_dual, timers, itime, simWindow );
-            
+
             // apply currents from antennas
             vecPatches.applyAntennas(time_dual);
-            
+
             // solve Maxwell's equations
             #ifndef _PICSAR
             // Force temporary usage of double grids, even if global_factor = 1
-            //    especially to compare solvers           
+            //    especially to compare solvers
             //if ( global_factor==1 )
             {
                 if( time_dual > params.time_fields_frozen ) {
@@ -371,7 +384,7 @@ int main (int argc, char* argv[])
             }
             #else
             // Force temporary usage of double grids, even if global_factor = 1
-            //    especially to compare solvers           
+            //    especially to compare solvers
             //if ( global_factor!=1 )
             {
                 if( time_dual > params.time_fields_frozen ) {
@@ -385,11 +398,12 @@ int main (int argc, char* argv[])
             vecPatches.finalize_and_sort_parts(params, &smpi, simWindow, RadiationTables,
                                                MultiphotonBreitWheelerTables,
                                                time_dual, timers, itime);
+
             vecPatches.finalize_sync_and_bc_fields(params, &smpi, simWindow, time_dual, timers, itime);
 
             // call the various diagnostics
             vecPatches.runAllDiags(params, &smpi, itime, timers, simWindow);
-            
+
             timers.movWindow.restart();
             simWindow->operate(vecPatches, &smpi, params, itime, time_dual);
             timers.movWindow.update();
@@ -401,8 +415,8 @@ int main (int argc, char* argv[])
             checkpoint.dump(vecPatches, itime, &smpi, simWindow, params);
             #pragma omp barrier
             // ----------------------------------------------------------------------
-            
-            
+
+
             if( params.has_load_balancing ) {
                 if( params.load_balancing_time_selection->theTimeIsNow(itime) ) {
                     timers.loadBal.restart();
@@ -411,12 +425,12 @@ int main (int argc, char* argv[])
                     timers.loadBal.update( params.printNow( itime ) );
                 }
             }
-            
+
             // print message at given time-steps
             // --------------------------------
             if ( smpi.isMaster() &&  params.printNow( itime ) )
                 params.print_timestep(itime, time_dual, timers.global); //contain a timer.update !!!
-            
+
             if ( params.printNow( itime ) ) {
                 #pragma omp master
                 timers.consolidate( &smpi );
@@ -424,9 +438,9 @@ int main (int argc, char* argv[])
             }
 
             itime++;
-            
+
         }//END of the time loop
-        
+
     } //End omp parallel region
 
     smpi.barrier();
@@ -440,6 +454,8 @@ int main (int argc, char* argv[])
     TITLE("Time profiling : (print time > 0.001%)");
     timers.profile(&smpi);
 
+    smpi.barrier();
+
 /*tommaso
     // ------------------------------------------------------------------
     //                      Temporary validation diagnostics
@@ -452,7 +468,7 @@ int main (int argc, char* argv[])
     // ------------------------------
     //  Cleanup & End the simulation
     // ------------------------------
-    if (global_factor!=1) 
+    if (global_factor!=1)
         domain.clean();
     vecPatches.close( &smpi );
     smpi.barrier(); // Don't know why but sync needed by HDF5 Phasespace managment
@@ -473,23 +489,23 @@ int execute_test_mode( VectorPatch &vecPatches, SmileiMPI* smpi, SimWindow* simW
 {
     int itime = 0;
     int moving_window_movement = 0;
-    
+
     if (params.restart) {
         checkpoint.readPatchDistribution( smpi, simWindow );
         itime = checkpoint.this_run_start_step+1;
         moving_window_movement = simWindow->getNmoved();
     }
-    
+
     vecPatches = PatchesFactory::createVector(params, smpi, openPMD, itime, moving_window_movement );
-    
+
     if (params.restart)
         checkpoint.restartAll( vecPatches, smpi, simWindow, params, openPMD);
-    
+
     if( params.print_expected_disk_usage ) {
         TITLE("Expected disk usage (approximate)");
         vecPatches.check_expected_disk_usage( smpi, params, checkpoint );
     }
-    
+
     // If test mode enable, code stops here
     TITLE("Cleaning up python runtime environement");
     params.cleanup(smpi);

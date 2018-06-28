@@ -16,6 +16,7 @@
 #include "Interpolator2D2OrderV.h"
 #include "Interpolator3D2OrderV.h"
 #include "Interpolator3D2Order_envV.h"
+#include "Interpolator3D4OrderV.h"
 #endif
 
 #include "Params.h"
@@ -25,7 +26,7 @@
 
 class InterpolatorFactory {
 public:
-    static Interpolator* create(Params& params, Patch *patch) {
+    static Interpolator* create(Params& params, Patch *patch, bool vectorization) {
         Interpolator* Interp = NULL;
         // ---------------
         // 1Dcartesian simulation
@@ -40,7 +41,7 @@ public:
         // 2Dcartesian simulation
         // ---------------
         else if ( ( params.geometry == "2Dcartesian" ) && ( params.interpolation_order == 2 ) ) {
-            if (!params.vecto)
+            if (!vectorization)
                 Interp = new Interpolator2D2Order(params, patch);
 #ifdef _VECTO
             else
@@ -53,16 +54,21 @@ public:
         // ---------------
         // 3Dcartesian simulation
         // ---------------
-         else if ( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == 2 ) ) {
-            if (!params.vecto)
+        else if ( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == 2 ) ) {
+            if (!vectorization)
                 Interp = new Interpolator3D2Order(params, patch);
 #ifdef _VECTO
             else
                 Interp = new Interpolator3D2OrderV(params, patch);                    
 #endif
         }
-        else if ( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == 4 ) ){
-            Interp = new Interpolator3D4Order(params, patch);
+        else if ( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == 4 ) ) {
+            if (!vectorization)
+                Interp = new Interpolator3D4Order(params, patch);
+#ifdef _VECTO
+            else
+                Interp = new Interpolator3D4OrderV(params, patch);
+#endif
         }
         // ---------------
         // 3dRZ simulation
@@ -79,7 +85,7 @@ public:
     } // end InterpolatorFactory::create
 
 
-static Interpolator* create_env_interpolator(Params& params, Patch *patch) {
+static Interpolator* create_env_interpolator(Params& params, Patch *patch, bool vectorization) {
     Interpolator* Interp_envelope = NULL;
     // ---------------
     // 1Dcartesian simulation
@@ -94,7 +100,7 @@ static Interpolator* create_env_interpolator(Params& params, Patch *patch) {
     // 2Dcartesian simulation
     // ---------------
     else if ( ( params.geometry == "2Dcartesian" ) && ( params.interpolation_order == 2 ) ) {
-        if (!params.vecto){
+        if (!vectorization){
             ERROR("Envelope not yet implemented in 2Dcartesian geometry");}
 #ifdef _VECTO
         else{
@@ -108,7 +114,7 @@ static Interpolator* create_env_interpolator(Params& params, Patch *patch) {
     // 3Dcartesian simulation
     // ---------------
      else if ( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == 2 ) ) {
-        if (!params.vecto)  
+        if (!vectorization)  
             Interp_envelope = new Interpolator3D2Order_env(params, patch);                   
 #ifdef _VECTO
         else

@@ -33,55 +33,55 @@ class Field
 {
 public:
     AsyncMPIbuffers MPIbuff;
-    
+
     //! name of the field
     std::string name;
-    
+
     //! Constructor for Field: with no input argument
     Field() {
     };
-    
+
     //! Constructor for Field: with the Field dimensions as input argument
     Field( std::vector<unsigned int> dims ) {
     };
     //! Constructor, isPrimal define if mainDim is Primal or Dual
     Field( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal ) {
     };
-    
+
     //! Constructor for Field: with the Field dimensions and dump file name as input argument
     Field( std::vector<unsigned int> dims, std::string name_in ) : name(name_in) {
     } ;
-    
+
     //! Constructor for Field: isPrimal define if mainDim is Primal or Dual
     Field( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, std::string name_in ) : name(name_in) {
     } ;
-    
+
     //! Destructor for Field
     virtual ~Field() {
         ;
     } ;
-    
+
     //! Virtual method used to allocate Field
     virtual void allocateDims() = 0;
     virtual void allocateDims(std::vector<unsigned int> dims) = 0;
-    
+
     //! Virtual method used to allocate Field, isPrimal define if mainDim is Primal or Dual
     virtual void allocateDims(unsigned int mainDim, bool isPrimal) = 0;
     virtual void allocateDims(std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal) = 0;
-    
+
     //! Virtual method to deallocate Field
     virtual void deallocateDims() = 0;
-    
+
     //! Virtual method to shift field in space
     virtual void shift_x(unsigned int delta) = 0;
-    
+
     //! vector containing the dimensions of the Field
     //! \todo private/friend/modify (JD)
     std::vector<unsigned int> dims_;
-    
+
     //! keep track ofwich direction of the Field is dual
     std::vector<unsigned int> isDual_;
-    
+
     //! Return 0 if direction i is primal, 1 if dual
     inline unsigned int isDual(unsigned int i) {
         if (i<dims_.size())
@@ -89,7 +89,7 @@ public:
         else
             return 0;
     }
-    
+
     //! returns the dimension of the Field
     inline std::vector<unsigned int> dims () {return dims_;}
     //! All arrays may be viewed as a 1D array
@@ -97,12 +97,12 @@ public:
     unsigned int globalDims_;
     //! pointer to the linearized array
     double* data_;
-    
+
     inline double* data() {return data_;}
     //! reference access to the linearized array (with check in DEBUG mode)
     inline double& operator () (unsigned int i)
     {
-        DEBUGEXEC(if (i>=globalDims_) ERROR(name << " Out of limits "<< i << " < " <<dims_[0] ));
+        DEBUGEXEC(if (i>=globalDims_) ERROR(name << " Out of limits "<< i << " < " << globalDims_ ));
         DEBUGEXEC(if (!std::isfinite(data_[i])) ERROR(name << " Not finite "<< i << " = " << data_[i]));
         return data_[i];
     };
@@ -119,15 +119,15 @@ public:
         if (data_)
             for (unsigned int i=0; i<globalDims_; i++) data_[i] = val;
     }
-    
+
     //! method used to put all entry of a field at a given value val
     inline void multiply(double val)
     {
         if (data_)
             for (unsigned int i=0; i<globalDims_; i++) data_[i] *= val;
     }
-    
-    
+
+
     //! 2D reference access to the linearized array (with check in DEBUG mode)
     inline double& operator () (unsigned int i,unsigned int j)
     {
@@ -166,7 +166,7 @@ public:
 
     double sum(unsigned int istart[3][2], unsigned int bufsize[3][2]) {
         double sum(0.);
-    
+
         int idxlocalstart[3];
         int idxlocalend[3];
         int globalsize[3];
@@ -191,7 +191,7 @@ public:
                 }
             }
         }
-    
+
         return sum;
     }
 
@@ -200,14 +200,14 @@ public:
         for (unsigned int i=0;i<globalDims_;i++) sum+= data_[i]*data_[i];
         return sum;
     }
-    
+
     inline void copyFrom(Field *from_field) {
         DEBUGEXEC(if (globalDims_!=from_field->globalDims_) ERROR("Field size do not match "<< name << " " << from_field->name));
         for (unsigned int i=0;i< globalDims_; i++) {
             (*this)(i)=(*from_field)(i);
         }
     }
-    
+
     virtual void put( Field* outField, Params &params, SmileiMPI* smpi, Patch* thisPatch, Patch*  outPatch ) = 0;
     virtual void get( Field*  inField, Params &params, SmileiMPI* smpi, Patch*   inPatch, Patch* thisPatch ) = 0;
 

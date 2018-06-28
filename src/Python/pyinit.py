@@ -193,7 +193,7 @@ class Main(SmileiSingleton):
     solve_poisson = True
     poisson_max_iteration = 50000
     poisson_max_error = 1.e-14
-    
+
     # Relativistic Poisson tuning
     solve_relativistic_poisson = False
     relativistic_poisson_max_iteration = 50000
@@ -215,8 +215,8 @@ class Main(SmileiSingleton):
     print_expected_disk_usage = True
 
     # Vectorization flag
-    vecto = False
-    
+    vecto = "disable"
+
     def __init__(self, **kwargs):
         # Load all arguments to Main()
         super(Main, self).__init__(**kwargs)
@@ -257,13 +257,13 @@ class Main(SmileiSingleton):
                 # None recognized solver
                 else:
                     raise Exception("timestep: maxwell_solver not implemented "+Main.maxwell_solver)
-        
+
         # Initialize simulation_time if not defined by the user
         if Main.simulation_time is None:
             if Main.number_of_timesteps is None:
                 raise Exception("simulation_time and number_of_timesteps are not defined")
             Main.simulation_time = Main.timestep * Main.number_of_timesteps
-        
+
         # Initialize grid_length if not defined based on number_of_cells and cell_length
         if (    len(Main.grid_length + Main.number_of_cells) == 0
              or len(Main.grid_length + Main.cell_length) == 0
@@ -294,6 +294,13 @@ class LoadBalancing(SmileiSingleton):
     initial_balance = True
     cell_load = 1.0
     frozen_particle_load = 0.1
+
+# Radiation reaction configuration (continuous and MC algorithms)
+class DynamicVectorization(SmileiComponent):
+    """
+    Dynamic vectorization parameters
+    """
+    every = 1
 
 
 class MovingWindow(SmileiSingleton):
@@ -448,6 +455,7 @@ class DiagPerformances(SmileiSingleton):
     """Performances diagnostic"""
     every = 0
     flush_every = 1
+    patch_information = True
 
 # external fields
 class ExternalField(SmileiComponent):
