@@ -28,6 +28,10 @@ inline std::string LowerCase(std::string in){
     return out;
 }
 
+inline double decimal_part(double number){
+return number - floor(number);
+}
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! This structure contains the properties of each ExtField
