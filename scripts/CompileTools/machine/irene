@@ -1,5 +1,5 @@
 #
-# Machien file for Irene Joliot-Curie using AVX512
+# Machine file for Irene Joliot-Curie using AVX512
 # __________________________________________________________
 #
 # Load the correct modules:

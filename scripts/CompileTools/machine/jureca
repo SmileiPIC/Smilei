@@ -1,2 +1,6 @@
-CXXFLAGS += -axCORE-AVX2 -ip -ipo -inline-factor=1000
+#
+# Machine file for Jureca
+# ______________________________________________________ 
+
+CXXFLAGS += -axCORE-AVX2 -ip -ipo -inline-factor=1000 -qopt-zmm-usage=high -fno-alias
 
