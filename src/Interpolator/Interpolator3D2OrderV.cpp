@@ -107,19 +107,27 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
 
             for (int i=0;i<3;i++) { // for X/Y
                 delta0 = particles.position(i,ipart+ivect+istart[0])*D_inv[i];
-                dual [i][ipart] = ( delta0 - (double)idx[i] >=0. );
+                //dual [i][ipart] = ( delta0 - (double)idx[i] >=0. );
 
-                for (int j=0;j<2;j++) { // for dual
+                //for (int j=0;j<2;j++) { // for dual
 
-                    delta   = delta0 - (double)idx[i] + (double)j*(0.5-dual[i][ipart]);
+                    delta   = delta0%1.;
+                    dual [i][ipart] = ( delta < 0.5 );
                     delta2  = delta*delta;
 
-                    coeff[i][j][0][ipart]    =  0.5 * (delta2-delta+0.25);
-                    coeff[i][j][1][ipart]    =  (0.75 - delta2);
-                    coeff[i][j][2][ipart]    =  0.5 * (delta2+delta+0.25);
+                    coeff[i][0][0][ipart]    =  0.5 * (delta2-delta+0.25);
+                    coeff[i][0][1][ipart]    =  (0.75 - delta2);
+                    coeff[i][0][2][ipart]    =  0.5 * (delta2+delta+0.25);
     
-                    if (j==0) deltaO[i][ipart-ipart_ref+ivect+istart[0]] = delta;
-                }
+                    deltaO[i][ipart-ipart_ref+ivect+istart[0]] = delta;
+
+                    delta   = (delta0 + 0.5)%1.;
+                    delta2  = delta*delta;
+
+                    coeff[i][1][0][ipart]    =  0.5 * (delta2-delta+0.25);
+                    coeff[i][1][1][ipart]    =  (0.75 - delta2);
+                    coeff[i][1][2][ipart]    =  0.5 * (delta2+delta+0.25);
+                //}
             }
         }
 
