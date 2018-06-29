@@ -164,7 +164,6 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
             for (int iloc=-1 ; iloc<2 ; iloc++) {
                 for (int jloc=-1 ; jloc<2 ; jloc++) {
                     for (int kloc=-1 ; kloc<2 ; kloc++) {
-                        //interp_res += *(coeffxp+iloc*32) * *(coeffyd+jloc*32) * *(coeffzp+kloc*32) *
                         interp_res += *(coeffxp+iloc*32) * *(coeffyp+jloc*32) * *(coeffzd+kloc*32) *
                             ( (1-dual[2][ipart])*(*Ez3D)(idxO[0]+iloc,idxO[1]+jloc,idxO[2]+kloc) + dual[2][ipart]*(*Ez3D)(idxO[0]+iloc,idxO[1]+jloc,idxO[2]+1+kloc ) );
                     }
@@ -178,7 +177,6 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
             for (int iloc=-1 ; iloc<2 ; iloc++) {
                 for (int jloc=-1 ; jloc<2 ; jloc++) {
                     for (int kloc=-1 ; kloc<2 ; kloc++) {
-                        //interp_res += *(coeffxp+iloc*32) * *(coeffyd+jloc*32) * *(coeffzp+kloc*32) * 
                         interp_res += *(coeffxp+iloc*32) * *(coeffyd+jloc*32) * *(coeffzd+kloc*32) * 
                             ( (1-dual[2][ipart]) * ( (1-dual[1][ipart])*(*Bx3D)(idxO[0]+iloc,idxO[1]+jloc,idxO[2]+kloc) + dual[1][ipart]*(*Bx3D)(idxO[0]+iloc,idxO[1]+1+jloc,idxO[2]+kloc ) )
                             +    dual[2][ipart]  * ( (1-dual[1][ipart])*(*Bx3D)(idxO[0]+iloc,idxO[1]+jloc,idxO[2]+1+kloc) + dual[1][ipart]*(*Bx3D)(idxO[0]+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc ) ) );
@@ -192,7 +190,6 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
             for (int iloc=-1 ; iloc<2 ; iloc++) {
                 for (int jloc=-1 ; jloc<2 ; jloc++) {
                     for (int kloc=-1 ; kloc<2 ; kloc++) {
-                        //interp_res += *(coeffxp+iloc*32) * *(coeffyd+jloc*32) * *(coeffzp+kloc*32) * 
                         interp_res += *(coeffxd+iloc*32) * *(coeffyp+jloc*32) * *(coeffzd+kloc*32) * 
                             ( (1-dual[2][ipart]) * ( (1-dual[0][ipart])*(*By3D)(idxO[0]+iloc,idxO[1]+jloc,idxO[2]+kloc) + dual[0][ipart]*(*By3D)(idxO[0]+1+iloc,idxO[1]+jloc,idxO[2]+kloc ) )
                             +    dual[2][ipart]  * ( (1-dual[0][ipart])*(*By3D)(idxO[0]+iloc,idxO[1]+jloc,idxO[2]+1+kloc) + dual[0][ipart]*(*By3D)(idxO[0]+1+iloc,idxO[1]+jloc,idxO[2]+1+kloc ) ) );
@@ -206,7 +203,6 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
             for (int iloc=-1 ; iloc<2 ; iloc++) {
                 for (int jloc=-1 ; jloc<2 ; jloc++) {
                     for (int kloc=-1 ; kloc<2 ; kloc++) {
-                        //interp_res += *(coeffxp+iloc*32) * *(coeffyd+jloc*32) * *(coeffzp+kloc*32) * 
                         interp_res += *(coeffxd+iloc*32) * *(coeffyd+jloc*32) * *(coeffzp+kloc*32) * 
                             ( (1-dual[1][ipart]) * ( (1-dual[0][ipart])*(*Bz3D)(idxO[0]+iloc,idxO[1]+jloc,idxO[2]+kloc) + dual[0][ipart]*(*Bz3D)(idxO[0]+1+iloc,idxO[1]+jloc,idxO[2]+kloc ) )
                             +    dual[1][ipart]  * ( (1-dual[0][ipart])*(*Bz3D)(idxO[0]+iloc,idxO[1]+1+jloc,idxO[2]+kloc) + dual[0][ipart]*(*Bz3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+kloc ) ) );
@@ -214,12 +210,8 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
                 }
             }
             Bpart[2][ipart-ipart_ref+ivect+istart[0]] = interp_res;
-
         }
-
     }
-    //}
-
 } // END Interpolator3D2OrderV
 
 
