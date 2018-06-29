@@ -236,12 +236,13 @@ int main (int argc, char* argv[])
         // Project charge and current densities (and susceptibility if envelope is used) only for diags at t=0
         vecPatches.projection_for_diags(params, &smpi, simWindow, time_dual, timers, 0);
 
-        // If Laser Envelope is used, comm and synch susceptibility
+        // If Laser Envelope is used, comm and synch susceptibility at t=0
         if (params.Laser_Envelope_model){    
             // comm and synch susceptibility
             vecPatches.sumSusceptibility(params, time_dual, timers, 0, simWindow );
                                          } // end condition if Laser Envelope Model is used
 
+        // Comm and synch charge and current densities
         vecPatches.sumDensities(params, time_dual, timers, 0, simWindow );
 
         TITLE("Initializing diagnostics");

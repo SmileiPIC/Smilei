@@ -1840,8 +1840,7 @@ void Species::ponderomotive_project_susceptibility(double time_dual, unsigned in
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
-            // Push only the particle momenta
-            (*Push)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
+            
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[9] += MPI_Wtime() - timer;
 #endif
