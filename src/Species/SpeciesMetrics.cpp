@@ -129,7 +129,7 @@ double SpeciesMetrics::get_particle_computation_time_vectorization(const double 
 
 //! Evaluate the time necessary to compute `particle_number` particles
 //! using vectorized operators
-#pragma omp declare simd
+//#pragma omp declare simd
 float SpeciesMetrics::get_particle_computation_time_vectorization(const float log_particle_number)
 {
 // Skylake 8168 (Ex: Irene)
@@ -182,7 +182,7 @@ double SpeciesMetrics::get_particle_computation_time_scalar(const double log_par
 
 //! Evaluate the time necessary to compute `particle_number` particles
 //! using scalar operators
-#pragma omp declare simd
+//#pragma omp declare simd
 float SpeciesMetrics::get_particle_computation_time_scalar(const float log_particle_number)
 {
 // Skylake 8168 (Ex: Irene)
