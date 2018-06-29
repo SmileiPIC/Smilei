@@ -62,9 +62,8 @@ SpeciesDynamicV::~SpeciesDynamicV()
 
 void SpeciesDynamicV::initCluster(Params& params)
 {
-    //Temporary BECK
-    int ncells = 1;
-    for (int iDim=0 ; iDim<nDim_particle ; iDim++)
+    unsigned int ncells = 1;
+    for (unsigned int iDim=0 ; iDim<nDim_particle ; iDim++)
         ncells *= (params.n_space[iDim]+1);
     bmax.resize(ncells,0);
     bmin.resize(ncells,0);
@@ -172,8 +171,8 @@ void SpeciesDynamicV::dynamics(double time_dual, unsigned int ispec,
         //Still needed for ionization
         vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
 
-        int npack    =  f_dim0-2*oversize[0];
-        int packsize = (f_dim1-2*oversize[1]);
+        unsigned int npack    =  f_dim0-2*oversize[0];
+        unsigned int packsize = (f_dim1-2*oversize[1]);
         if (nDim_particle == 3)
             packsize *= (f_dim2-2*oversize[2]);
 
@@ -185,9 +184,9 @@ void SpeciesDynamicV::dynamics(double time_dual, unsigned int ispec,
         // Need to check if this is necessary here
         // (*particles).cell_keys.resize((*particles).size());
 
-        for ( int ipack = 0 ; ipack < npack ; ipack++ ) {
+        for ( unsigned int ipack = 0 ; ipack < npack ; ipack++ ) {
 
-            int nparts_in_pack = bmax[ (ipack+1) * packsize-1 ];
+            unsigned int nparts_in_pack = bmax[ (ipack+1) * packsize-1 ];
             smpi->dynamics_resize(ithread, nDim_particle, nparts_in_pack );
 
 #ifdef  __DETAILED_TIMERS
@@ -327,7 +326,7 @@ void SpeciesDynamicV::dynamics(double time_dual, unsigned int ispec,
                             else
                             {
                                 //Compute cell_keys of remaining particles
-                                for ( int i = 0 ; i<nDim_particle; i++ ){
+                                for ( unsigned int i = 0 ; i<nDim_particle; i++ ){
                                     (*particles).cell_keys[iPart] *= this->length[i];
                                     (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]+0.00000000000001) * dx_inv_[i] );
                                 }
@@ -359,7 +358,7 @@ void SpeciesDynamicV::dynamics(double time_dual, unsigned int ispec,
                         else
                         {
                             //Compute cell_keys of remaining particles
-                            for ( int i = 0 ; i<nDim_particle; i++ ){
+                            for ( unsigned int i = 0 ; i<nDim_particle; i++ ){
                                 (*particles).cell_keys[iPart] *= this->length[i];
                                 (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]+0.00000000000001) * dx_inv_[i] );
                             }
@@ -447,7 +446,7 @@ void SpeciesDynamicV::computeCharge(unsigned int ispec, ElectroMagn* EMfields)
 void SpeciesDynamicV::sort_part(Params &params)
 {
 
-    unsigned int npart, ncell;
+    unsigned int ncell, npart;
     int ip_dest, cell_target;
     vector<int> buf_cell_keys[3][2];
     std::vector<unsigned int> cycle;
@@ -494,10 +493,10 @@ void SpeciesDynamicV::sort_part(Params &params)
     if (MPIbuff.partRecv[0][0].size() == 0) MPIbuff.partRecv[0][0].initialize(0, *particles); //Is this correct ?
 
     // Resize the particle vector
-    if (bmax.back() > npart){
+    if (bmax.back() > (int)npart){
         (*particles).resize(bmax.back(), nDim_particle);
         (*particles).cell_keys.resize(bmax.back(),-1); // Merge this in particles.resize(..) ?
-        for (unsigned int ipart = npart; ipart < bmax.back(); ipart ++) addPartInExchList(ipart);
+        for ( int ipart = (int)npart; ipart < bmax.back(); ipart ++) addPartInExchList(ipart);
     }
 
     //Copy all particles from MPI buffers back to the writable particles via cycle sort pass.
@@ -546,15 +545,15 @@ void SpeciesDynamicV::sort_part(Params &params)
     }
 
     // Resize the particle vector
-    if (bmax.back() < npart){
+    if (bmax.back() < (int)npart){
         (*particles).resize(bmax.back(), nDim_particle);
         (*particles).cell_keys.resize(bmax.back()); // Merge this in particles.resize(..) ?
     }
 
 
     //Loop over all cells
-    for (unsigned int icell = 0 ; icell < ncell; icell++){
-        for (unsigned int ip=bmin[icell]; ip < bmax[icell] ; ip++){
+    for (int icell = 0 ; icell < (int)ncell; icell++){
+        for (int ip=bmin[icell]; ip < bmax[icell] ; ip++){
             //update value of current cell 'icell' if necessary
             //if particle changes cell, build a cycle of exchange as long as possible. Treats all particles
             if ((*particles).cell_keys[ip] != icell ){

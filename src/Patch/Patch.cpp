@@ -48,7 +48,7 @@ Patch::Patch(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomp
 
 #ifdef  __DETAILED_TIMERS
     // Initialize timers
-    patch_timers.resize(7,0.);
+    patch_timers.resize(13,0.);
 #endif
 
 } // END Patch::Patch
@@ -66,7 +66,7 @@ Patch::Patch(Patch* patch, Params& params, SmileiMPI* smpi, DomainDecomposition*
 
 #ifdef  __DETAILED_TIMERS
     // Initialize timers
-    patch_timers.resize(7,0.);
+    patch_timers.resize(13,0.);
 #endif
 
 }

@@ -94,7 +94,7 @@ Main(
 
     EM_boundary_conditions = [['periodic'],['periodic']],
 
-    random_seed = random_seed,
+    random_seed = smilei_mpi_rank,
 
     reference_angular_frequency_SI = wr
 

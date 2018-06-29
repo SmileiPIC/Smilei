@@ -99,7 +99,7 @@ else ifneq (,$(findstring opt-report,$(config)))
 
 # Default configuration
 else
-    CXXFLAGS += -O3 #-xHost -no-prec-div -ipo
+    CXXFLAGS += -O3 -g #-xHost -no-prec-div -ipo
 endif
 
 # Manage options in the "config" parameter
@@ -301,4 +301,6 @@ help:
 	@echo 'http://www.maisondelasimulation.fr/smilei'
 	@echo 'https://github.com/SmileiPIC/Smilei'
 	@echo
-	@if [ -f  scripts/CompileTools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/CompileTools/machine/$(machine); fi
+	@if [ -f  scripts/CompileTools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/CompileTools/machine/$(machine)|| echo "None"; fi
+	@if [ -f scripts/CompileTools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/CompileTools/machine/$(machine) || echo "None"; else echo "Available machines:"; ls -1 scripts/CompileTools/machine; fi
+

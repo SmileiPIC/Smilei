@@ -145,7 +145,21 @@ float SpeciesMetrics::get_particle_computation_time_vectorization(const float lo
  -1.252595460426959e-01 * pow(log_particle_number,3)
 + 6.609030611761257e-01 * pow(log_particle_number,2)
  -1.948861281215199e+00 * log_particle_number
-+ 3.391615458521049e+00
++ 3.391615458521049e+00;
+// Broadwell Intel Xeon E5-2697 v4 (Ex: Tornado)
+#elif defined __INTEL_BDW_E5_2697_V4
+    return     -4.732086199743545e-03 * pow(log_particle_number,4)
++ 3.249709067117774e-02 * pow(log_particle_number,3)
++ 1.940828611778672e-01 * pow(log_particle_number,2)
+ -2.010116307618810e+00 * log_particle_number
++ 4.661824411143119e+00;
+// Haswell Intel Xeon E5-2680 v3 (Ex: Jureca)
+#elif defined __INTEL_HSW_E5_2680_v3
+    return     -4.127980207551420e-03 * pow(log_particle_number,4)
++ 3.688297004269906e-02 * pow(log_particle_number,3)
++ 3.666171703120181e-02 * pow(log_particle_number,2)
+ -1.066920754145127e+00 * log_particle_number
++ 2.893485213852858e+00;
 // General fit
 #else
     return   -7.983397022180499e-05 * pow(log_particle_number,4)
@@ -178,7 +192,15 @@ float SpeciesMetrics::get_particle_computation_time_scalar(const float log_parti
 // Knight Landings Intel Xeon Phi 7250 (Ex: Frioul)
 #elif defined __INTEL_KNL_7250
     return   -1.693420314189753e-02 * log_particle_number
-+ 9.640406193625433e-01
++ 9.640406193625433e-01;
+// Broadwell Intel Xeon E5-2697 v4 (Ex: Tornado)
+#elif defined __INTEL_BDW_E5_2697_V4
+    return   + 6.694852027937652e-03 * log_particle_number
++ 9.382353109818060e-01;
+// Haswell Intel Xeon E5-2680 v3 (Ex: Jureca)
+#elif defined __INTEL_HSW_E5_2680_v3
+    return    -1.716273243387051e-02 * log_particle_number
++ 9.761935025470106e-01;
 // General fit
 #else
     return   -3.227685432492503e-02 * log_particle_number

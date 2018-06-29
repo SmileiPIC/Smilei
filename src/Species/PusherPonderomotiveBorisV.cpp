@@ -33,7 +33,7 @@ void PusherPonderomotiveBorisV::operator() (Particles &particles, SmileiMPI* smp
     double charge_over_mass_dts2,charge_sq_over_mass_dts4;
     double alpha, inv_det_T, Tx, Ty, Tz, Tx2, Ty2, Tz2;
     double TxTy, TyTz, TzTx;
-    double inv_gamma0,inv_gamma_ponderomotive;
+    double gamma0,gamma0_sq,gamma_ponderomotive;
     double charge_sq_over_mass_sq;
 
     double* momentum[3];
@@ -70,28 +70,29 @@ void PusherPonderomotiveBorisV::operator() (Particles &particles, SmileiMPI* smp
         charge_sq_over_mass_sq   = dcharge[ipart]*one_over_mass_*dcharge[ipart]*one_over_mass_;
 
 
-        // compute initial ponderomotive gamma (more precisely, its inverse) 
-        inv_gamma0 = 1./sqrt( 1. + momentum[0][ipart]*momentum[0][ipart] + momentum[1][ipart]*momentum[1][ipart] + momentum[2][ipart]*momentum[2][ipart] + *(Phi+ipart-ipart_ref)*charge_sq_over_mass_sq );
-        
+        // compute initial ponderomotive gamma 
+        gamma0_sq = 1. + momentum[0][ipart]*momentum[0][ipart] + momentum[1][ipart]*momentum[1][ipart] + momentum[2][ipart]*momentum[2][ipart] + *(Phi+ipart-ipart_ref)*charge_sq_over_mass_sq ;
+        gamma0 = sqrt(gamma0_sq) ;        
+
         // ( electric field + ponderomotive force for ponderomotive gamma advance ) scalar multiplied by momentum
-        psm[0] = inv_gamma0 * (charge_over_mass_dts2*(*(Ex+ipart-ipart_ref)) - charge_sq_over_mass_dts4*(*(GradPhix+ipart-ipart_ref)) * inv_gamma0 ) * momentum[0][ipart];
-        psm[1] = inv_gamma0 * (charge_over_mass_dts2*(*(Ey+ipart-ipart_ref)) - charge_sq_over_mass_dts4*(*(GradPhiy+ipart-ipart_ref)) * inv_gamma0 ) * momentum[1][ipart];
-        psm[2] = inv_gamma0 * (charge_over_mass_dts2*(*(Ez+ipart-ipart_ref)) - charge_sq_over_mass_dts4*(*(GradPhiz+ipart-ipart_ref)) * inv_gamma0 ) * momentum[2][ipart];
-        
-        // update of gamma ponderomotive (more precisely, the inverse)
-        inv_gamma_ponderomotive = 1./( 1./inv_gamma0 + (psm[0]+psm[1]+psm[2])*0.5 );
+        psm[0] = (gamma0*charge_over_mass_dts2*(*(Ex+ipart-ipart_ref)) - charge_sq_over_mass_dts4*(*(GradPhix+ipart-ipart_ref)) ) * momentum[0][ipart] / gamma0_sq;
+        psm[1] = (gamma0*charge_over_mass_dts2*(*(Ey+ipart-ipart_ref)) - charge_sq_over_mass_dts4*(*(GradPhiy+ipart-ipart_ref)) ) * momentum[1][ipart] / gamma0_sq;
+        psm[2] = (gamma0*charge_over_mass_dts2*(*(Ez+ipart-ipart_ref)) - charge_sq_over_mass_dts4*(*(GradPhiz+ipart-ipart_ref)) ) * momentum[2][ipart] / gamma0_sq;
+
+        // update of gamma ponderomotive
+        gamma_ponderomotive = gamma0 + (psm[0]+psm[1]+psm[2])*0.5 ;
 
         // init Half-acceleration in the electric field and ponderomotive force 
-        psm[0] = charge_over_mass_dts2 * (*(Ex+ipart-ipart_ref)) - charge_sq_over_mass_dts4 * (*(GradPhix+ipart-ipart_ref)) * inv_gamma_ponderomotive ;
-        psm[1] = charge_over_mass_dts2 * (*(Ey+ipart-ipart_ref)) - charge_sq_over_mass_dts4 * (*(GradPhiy+ipart-ipart_ref)) * inv_gamma_ponderomotive ;
-        psm[2] = charge_over_mass_dts2 * (*(Ez+ipart-ipart_ref)) - charge_sq_over_mass_dts4 * (*(GradPhiz+ipart-ipart_ref)) * inv_gamma_ponderomotive ;
+        psm[0] = charge_over_mass_dts2 * (*(Ex+ipart-ipart_ref)) - charge_sq_over_mass_dts4 * (*(GradPhix+ipart-ipart_ref)) / gamma_ponderomotive ;
+        psm[1] = charge_over_mass_dts2 * (*(Ey+ipart-ipart_ref)) - charge_sq_over_mass_dts4 * (*(GradPhiy+ipart-ipart_ref)) / gamma_ponderomotive ;
+        psm[2] = charge_over_mass_dts2 * (*(Ez+ipart-ipart_ref)) - charge_sq_over_mass_dts4 * (*(GradPhiz+ipart-ipart_ref)) / gamma_ponderomotive ;
 
         um[0] = momentum[0][ipart] + psm[0];
         um[1] = momentum[1][ipart] + psm[1];
         um[2] = momentum[2][ipart] + psm[2];
 
         // Rotation in the magnetic field, using updated gamma ponderomotive
-        alpha = charge_over_mass_dts2 * inv_gamma_ponderomotive;
+        alpha = charge_over_mass_dts2 / gamma_ponderomotive;
         Tx    = alpha * (*(Bx+ipart-ipart_ref));
         Ty    = alpha * (*(By+ipart-ipart_ref));
         Tz    = alpha * (*(Bz+ipart-ipart_ref));

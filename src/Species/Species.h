@@ -140,7 +140,7 @@ public:
     //! Number of particles in the init array
     double *momentum_initialization_array;
     //! Number of particles in the init array
-    int n_numpy_particles;
+    unsigned int n_numpy_particles;
     //! Boolean to know if we initialize particles one specie on another species
     bool position_initialization_on_species;
     //! Index of the species where position initialization is made
@@ -293,7 +293,7 @@ public:
                           std::vector<Diagnostic*>& localDiags);
 
     //! Method calculating the Particle updated momentum (interpolation, momentum pusher, only particles interacting with envelope)
-    virtual void ponderomotive_update_susceptibilty_and_momentum(double time_dual, unsigned int ispec,
+    virtual void ponderomotive_update_susceptibility_and_momentum(double time_dual, unsigned int ispec,
                            ElectroMagn* EMfields, Interpolator* Interp_envelope,
                            Params &params, bool diag_flag,
                            Patch* patch, SmileiMPI* smpi,
@@ -315,6 +315,11 @@ public:
                         MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
                         std::vector<Diagnostic*>& localDiags);
 
+    virtual void projection_for_diags(double time, unsigned int ispec,
+                          ElectroMagn* EMfields,
+                          Params &params, bool diag_flag,
+                          Patch* patch, SmileiMPI* smpi);
+    
     //! Method performing the importation of new particles
     virtual void dynamics_import_particles(double time, unsigned int ispec,
                         Params &params,

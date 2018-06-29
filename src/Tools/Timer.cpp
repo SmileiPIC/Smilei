@@ -54,6 +54,7 @@ void Timer::update(VectorPatch &vecPatches, bool store)
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
         {
             time_tmp += vecPatches(ipatch)->patch_timers[this->patch_timer_id];
+            vecPatches(ipatch)->patch_timers[this->patch_timer_id] = 0;
         }
 
         // Get the number of threads per MPI in order to evaluate the mean per patch
@@ -65,7 +66,7 @@ void Timer::update(VectorPatch &vecPatches, bool store)
 #endif
 
         // Average over all patches
-        this->time_acc_  = time_tmp / (double)(thread_number);
+        this->time_acc_  += time_tmp / (double)(thread_number);
 
         if (store) register_timers.push_back( time_acc_ );
     }

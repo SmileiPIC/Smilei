@@ -21,7 +21,9 @@ Timers::Timers( SmileiMPI * smpi ) :
     syncField ("Sync Fields"   ), // Call sumRhoJ(s), exchangeB (MPI & Patch sync)
     syncDens  ("Sync Densities"),  // If necessary the following timers can be reintroduced
     diagsNEW  ("DiagnosticsNEW" ), // Diags.runAllDiags + MPI & Patch sync
-    reconfiguration("Reconfiguration")
+    reconfiguration("Reconfiguration"),
+    envelope      ("Envelope"           ),
+    susceptibility("Sync Susceptibility")
 #ifdef __DETAILED_TIMERS
     ,interpolator("Interpolator"),
     pusher("Pusher"             ),
@@ -29,7 +31,14 @@ Timers::Timers( SmileiMPI * smpi ) :
     particles_boundaries("Particles boundaries"),
     ionization("Ionization"       ),
     radiation("Radiation"       ),
-    multiphoton_Breit_Wheeler_timer("Multiphoton Breit-Wheeler"       )
+    multiphoton_Breit_Wheeler_timer("Multiphoton Breit-Wheeler"       ),
+    interp_fields_env   ( "Interp Fields_Env" ),
+    proj_susceptibility ( "Proj Susceptibility"),
+    push_mom            ( "Push Momentum"     ),
+    interp_env_old      ( "Interp Env_Old"    ),
+    proj_currents       ( "Proj Currents"     ),
+    push_pos            ( "Push Pos"          )
+
 #endif
 {
     timers.resize(0);
@@ -46,6 +55,8 @@ Timers::Timers( SmileiMPI * smpi ) :
     timers.push_back( &syncDens   );
     timers.push_back( &diagsNEW   );
     timers.push_back( &reconfiguration   );
+    timers.push_back( &envelope   );
+    timers.push_back( &susceptibility   );
 #ifdef __DETAILED_TIMERS
     patch_timer_id_start = timers.size()-1;
     timers.push_back( &interpolator   );
@@ -62,6 +73,22 @@ Timers::Timers( SmileiMPI * smpi ) :
     timers.back()->patch_timer_id = 5;
     timers.push_back( &multiphoton_Breit_Wheeler_timer   );
     timers.back()->patch_timer_id = 6;
+
+    timers.push_back( &interp_fields_env  );
+    timers.back()->patch_timer_id = 7;
+    timers.push_back( &proj_susceptibility  );
+    timers.back()->patch_timer_id = 8;
+    timers.push_back( &push_mom );
+    timers.back()->patch_timer_id = 9;
+
+    timers.push_back( &interp_env_old  );
+    timers.back()->patch_timer_id = 10;
+    timers.push_back( &push_pos );
+    timers.back()->patch_timer_id = 11;
+    timers.push_back( &proj_currents ) ;
+    timers.back()->patch_timer_id = 12;
+
+
 #endif
 
     for( unsigned int i=0; i<timers.size(); i++)
@@ -129,7 +156,6 @@ void Timers::profile(SmileiMPI * smpi)
 std::vector<Timer*> Timers::consolidate(SmileiMPI * smpi)
 {
     std::vector<Timer*> avg_timers;
-
     int sz = smpi->getSize(), rk = smpi->getRank();
 
     ofstream fout;

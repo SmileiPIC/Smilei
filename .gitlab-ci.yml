@@ -6,6 +6,7 @@ compile:
   stage: compile
   only:
     - develop
+    - integrate_dev
 
   script:
     # Force workdir cleaning in case of retried
@@ -30,6 +31,7 @@ makerun1D:
   stage: makerun
   only:
     - develop
+    - integrate_dev
 
   script:
     # Move in test dir
@@ -41,6 +43,7 @@ makerun2D:
   stage: makerun
   only:
     - develop
+    - integrate_dev
 
   script:
     # Move in test dir
@@ -52,18 +55,32 @@ makerun3D:
   stage: makerun
   only:
     - develop
+    - integrate_dev
 
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -b "tst3d_*_*.py" -m 4 -o 4 -v -r 1
+    - python validation.py -b "tst3d_??_*.py" -m 4 -o 4 -v -r 1
+
+makerunV:
+  stage: makerun
+  only:
+    - develop
+    - integrate_dev
+
+  script:
+    # Move in test dir
+    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    # Run validation script
+    - python validation.py -b "tst?d_v_??_*.py" -m 4 -o 4 -v
 
 makerunCollisions:
   stage: makerun
   only:
     - develop
-
+    - integrate_dev
+    
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation

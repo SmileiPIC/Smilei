@@ -31,7 +31,7 @@ void PusherPonderomotivePositionBorisV::operator() (Particles &particles, Smilei
     std::vector<double> *GradPhioldpart = &(smpi->dynamics_GradPHIoldpart[ithread]);
     
     double charge_sq_over_mass_dts4,charge_over_mass_sq;
-    double inv_gamma0,inv_gamma_ponderomotive;
+    double gamma0,gamma0_sq,gamma_ponderomotive;
     double pxsm, pysm, pzsm;
     
     int* cell_keys;
@@ -72,24 +72,25 @@ void PusherPonderomotivePositionBorisV::operator() (Particles &particles, Smilei
         // (charge over mass)^2
         charge_over_mass_sq      = (double)(charge[ipart])*one_over_mass_*(charge[ipart])*one_over_mass_;
 
-        // compute initial ponderomotive gamma (more precisely, its inverse) 
-        inv_gamma0 = 1./sqrt( 1. + momentum[0][ipart]*momentum[0][ipart] + momentum[1][ipart]*momentum[1][ipart] + momentum[2][ipart]*momentum[2][ipart] + (*(Phi+ipart-ipart_ref)+*(Phiold+ipart-ipart_ref))*charge_over_mass_sq*0.5 );
-    
-        // ponderomotive force for ponderomotive gamma advance (Grad Phi is interpolated in time, hence the division by 2)
-        pxsm = charge_sq_over_mass_dts4 * ( *(GradPhix+ipart-ipart_ref) + *(GradPhioldx+ipart-ipart_ref) ) * 0.5 * inv_gamma0 ;
-        pysm = charge_sq_over_mass_dts4 * ( *(GradPhiy+ipart-ipart_ref) + *(GradPhioldy+ipart-ipart_ref) ) * 0.5 * inv_gamma0 ;
-        pzsm = charge_sq_over_mass_dts4 * ( *(GradPhiz+ipart-ipart_ref) + *(GradPhioldz+ipart-ipart_ref) ) * 0.5 * inv_gamma0 ;
-    
-        // update of gamma ponderomotive (more precisely, the inverse)
-        inv_gamma_ponderomotive = 1./( 1./inv_gamma0 + (pxsm*momentum[0][ipart]+pysm*momentum[1][ipart]+pzsm*momentum[2][ipart])*inv_gamma0 );
+        // compute initial ponderomotive gamma 
+        gamma0_sq = 1. + momentum[0][ipart]*momentum[0][ipart] + momentum[1][ipart]*momentum[1][ipart] + momentum[2][ipart]*momentum[2][ipart] + (*(Phi+ipart-ipart_ref)+*(Phiold+ipart-ipart_ref))*charge_over_mass_sq*0.5 ;
+        gamma0    = sqrt(gamma0_sq) ;      
   
+        // ponderomotive force for ponderomotive gamma advance (Grad Phi is interpolated in time, hence the division by 2)
+        pxsm = charge_sq_over_mass_dts4 * ( *(GradPhix+ipart-ipart_ref) + *(GradPhioldx+ipart-ipart_ref) ) * 0.5 / gamma0_sq ;
+        pysm = charge_sq_over_mass_dts4 * ( *(GradPhiy+ipart-ipart_ref) + *(GradPhioldy+ipart-ipart_ref) ) * 0.5 / gamma0_sq ;
+        pzsm = charge_sq_over_mass_dts4 * ( *(GradPhiz+ipart-ipart_ref) + *(GradPhioldz+ipart-ipart_ref) ) * 0.5 / gamma0_sq ;
+
+        // update of gamma ponderomotive 
+        gamma_ponderomotive = gamma0 + (pxsm*momentum[0][ipart]+pysm*momentum[1][ipart]+pzsm*momentum[2][ipart]) ;
+
         // Move the particle
 #ifdef  __DEBUG
         for ( int i = 0 ; i<nDim_ ; i++ ) 
           position_old[i][ipart] = position[i][ipart];
 #endif
         for ( int i = 0 ; i<nDim_ ; i++ ) 
-            position[i][ipart]     += dt*momentum[i][ipart]*inv_gamma_ponderomotive;
+            position[i][ipart]     += dt*momentum[i][ipart]/gamma_ponderomotive;
 
     } // end loop on particles
 

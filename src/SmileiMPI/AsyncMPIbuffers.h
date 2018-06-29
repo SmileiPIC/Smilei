@@ -49,9 +49,9 @@ public:
     //    - used to sort Species::indexes_of_particles_to_exchange built in Species::dynamics
     std::vector< std::vector< std::vector<int> > > part_index_send;
     //! ndim vectors of 2 numbers of particles to send (1 per direction) 
-    std::vector< std::vector< int > > part_index_send_sz;
+    std::vector< std::vector< unsigned int > > part_index_send_sz;
     //! ndim vectors of 2 numbers of particles to receive (1 per direction) 
-    std::vector< std::vector< int > > part_index_recv_sz;
+    std::vector< std::vector< unsigned int > > part_index_recv_sz;
 
 };
 

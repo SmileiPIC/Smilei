@@ -63,6 +63,7 @@ cField3D::~cField3D()
 
     if (cdata_!=NULL) {
         delete [] cdata_;
+        for (unsigned int i=0; i<dims_[0]; i++) delete [] data_3D[i];
         delete [] data_3D;
     }
 }

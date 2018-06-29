@@ -9,9 +9,9 @@
 #
 # You have to install your own hdf5:
 # export HDF5_ROOT=<path to your installation folder>
+# export HDF5_ROOT=/ccc/work/cont003/smilei/derouilj/hdf5-1.8.16-intelmpi2018.18
 # export PATH=${HDF5_ROOT}/bin:${PATH}
 # export LD_LIBRARY_PATH=${HDF5_ROOT}/lib:${LD_LIBRARY_PATH}
 # export HDF5_ROOT_DIR=${HDF5_ROOT}
-
 
 CXXFLAGS += -xCOMMON-AVX512 -ip -ipo -inline-factor=1000 -D__INTEL_SKYLAKE_8168 -qopt-zmm-usage=high -fno-alias
