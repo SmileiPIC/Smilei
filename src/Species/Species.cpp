@@ -1729,14 +1729,14 @@ void Species::ponderomotive_update_susceptibility_and_momentum(double time_dual,
             // Project susceptibility, the source term of envelope equation
             double* b_Chi_envelope=nullptr;
             if (nDim_field==3)
-                b_Chi_envelope =  &(*EMfields->Env_Chi_)(ibin*clrw*f_dim1*f_dim2) ;
+                b_Chi_envelope =  &(*EMfields->Env_Chi_)(0) ;
             else {ERROR("Envelope model not yet implemented in this geometry");}
 
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
             for (unsigned int iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
-                (static_cast<Projector3D2Order_susceptibility*>(Proj_susceptibility))->project_susceptibility(b_Chi_envelope, *particles, iPart, ibin, b_dim, smpi, ithread, mass );
+                (static_cast<Projector3D2Order_susceptibility*>(Proj_susceptibility))->project_susceptibility(b_Chi_envelope, *particles, iPart, 0, b_dim, smpi, ithread, mass );
                                                                                   } //End loop on particles
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[8] += MPI_Wtime() - timer;
@@ -1823,14 +1823,14 @@ void Species::ponderomotive_project_susceptibility(double time_dual, unsigned in
             // Project susceptibility, the source term of envelope equation
             double* b_Chi_envelope=nullptr;
             if (nDim_field==3)
-                b_Chi_envelope =  &(*EMfields->Env_Chi_)(ibin*clrw*f_dim1*f_dim2) ;
+                b_Chi_envelope =  &(*EMfields->Env_Chi_)(0) ;
             else {ERROR("Envelope model not yet implemented in this geometry");}
 
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
             for (unsigned int iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
-                (static_cast<Projector3D2Order_susceptibility*>(Proj_susceptibility))->project_susceptibility(b_Chi_envelope, *particles, iPart, ibin, b_dim, smpi, ithread, mass );
+                (static_cast<Projector3D2Order_susceptibility*>(Proj_susceptibility))->project_susceptibility(b_Chi_envelope, *particles, iPart, 0, b_dim, smpi, ithread, mass );
                                                                                   } //End loop on particles
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[8] += MPI_Wtime() - timer;
