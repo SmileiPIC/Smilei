@@ -727,15 +727,6 @@ void SpeciesV::ponderomotive_update_susceptibility_and_momentum(double time_dual
             patch->patch_timers[7] += MPI_Wtime() - timer;
 #endif
 
-            // Push the particles
-#ifdef  __DETAILED_TIMERS
-            timer = MPI_Wtime();
-#endif
-            (*Push)(*particles, smpi, bmin[ipack*packsize_], bmax[ipack*packsize_+packsize_-1], ithread, bmin[ipack*packsize_] );
-#ifdef  __DETAILED_TIMERS
-            patch->patch_timers[9] += MPI_Wtime() - timer;
-#endif
-
             // Project susceptibility, the source term of envelope equation
             double* b_Chi_envelope=nullptr;
             if (nDim_field==3)
@@ -752,6 +743,14 @@ void SpeciesV::ponderomotive_update_susceptibility_and_momentum(double time_dual
             patch->patch_timers[8] += MPI_Wtime() - timer;
 #endif
 
+            // Push the particles
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
+            (*Push)(*particles, smpi, bmin[ipack*packsize_], bmax[ipack*packsize_+packsize_-1], ithread, bmin[ipack*packsize_] );
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[9] += MPI_Wtime() - timer;
+#endif
         }
 
     }
