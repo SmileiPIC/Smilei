@@ -839,14 +839,6 @@ void SpeciesV::ponderomotive_project_susceptibility(double time_dual, unsigned i
             patch->patch_timers[8] += MPI_Wtime() - timer;
 #endif
 
-            // Push the particles
-#ifdef  __DETAILED_TIMERS
-            timer = MPI_Wtime();
-#endif
-
-#ifdef  __DETAILED_TIMERS
-            patch->patch_timers[9] += MPI_Wtime() - timer;
-#endif
         }
 
     }
