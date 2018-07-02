@@ -1725,6 +1725,14 @@ void Species::ponderomotive_update_susceptibility_and_momentum(double time_dual,
             patch->patch_timers[7] += MPI_Wtime() - timer;
 #endif
 
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
+            // Push only the particle momenta
+            (*Push)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[9] += MPI_Wtime() - timer;
+#endif
 
             // Project susceptibility, the source term of envelope equation
             double* b_Chi_envelope=nullptr;
@@ -1743,17 +1751,8 @@ void Species::ponderomotive_update_susceptibility_and_momentum(double time_dual,
 #endif
 
 
-#ifdef  __DETAILED_TIMERS
-            timer = MPI_Wtime();
-#endif
-            // Push only the particle momenta
-            (*Push)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
-#ifdef  __DETAILED_TIMERS
-            patch->patch_timers[9] += MPI_Wtime() - timer;
-#endif
-
-                                                                   } // end loop on ibin
-                                 }
+        } // end loop on ibin
+    }
     else { // immobile particle
          } //END if time vs. time_frozen
 } // ponderomotive_update_susceptibility_and_momentum
@@ -1835,19 +1834,8 @@ void Species::ponderomotive_project_susceptibility(double time_dual, unsigned in
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[8] += MPI_Wtime() - timer;
 #endif
-
-
-#ifdef  __DETAILED_TIMERS
-            timer = MPI_Wtime();
-#endif
-            // Push only the particle momenta
-            (*Push)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
-#ifdef  __DETAILED_TIMERS
-            patch->patch_timers[9] += MPI_Wtime() - timer;
-#endif
-
-                                                                   } // end loop on ibin
-                                 }
+        } // end loop on ibin
+    }
     else { // immobile particle
          } //END if time vs. time_frozen
 } // ponderomotive_project_susceptibility
