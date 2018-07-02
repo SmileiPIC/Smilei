@@ -94,7 +94,7 @@ Timers::Timers( SmileiMPI * smpi ) :
     for( unsigned int i=0; i<timers.size(); i++)
         timers[i]->init(smpi);
 
-    if (smpi->getRank()==0) {
+    if (smpi->getRank()==0 && ! smpi->test_mode ) {
         remove ("profil.txt");
         ofstream fout;
         fout.open ("profil.txt");
@@ -159,8 +159,10 @@ std::vector<Timer*> Timers::consolidate(SmileiMPI * smpi)
     int sz = smpi->getSize(), rk = smpi->getRank();
 
     ofstream fout;
-    if (rk==0) fout.open ("profil.txt", ofstream::out | ofstream::app );
-    fout << endl << endl << "--- Timestep = " << (timers[1]->register_timers.size()-1) << " x Main.print_every = " <<  " ---" << endl;
+    if (rk==0 && ! smpi->test_mode) {
+        fout.open ("profil.txt", ofstream::out | ofstream::app );
+        fout << endl << endl << "--- Timestep = " << (timers[1]->register_timers.size()-1) << " x Main.print_every = " <<  " ---" << endl;
+    }
 
     // timers[0] is the global PIC loop timer, naturally synchronized
     for ( unsigned int itimer = 1 ; itimer < timers.size() ; itimer++ ) {
@@ -197,7 +199,7 @@ std::vector<Timer*> Timers::consolidate(SmileiMPI * smpi)
 
         delete [] tmp;
 
-        if ((max>0.) && (rk==0)) {
+        if ((max>0.) && (rk==0) && ! smpi->test_mode ) {
             fout.setf( ios::fixed,  ios::floatfield );
             fout << setw(14) << scientific << setprecision(3)
                  << timers[itimer]->name_ << "\t : " << "Min time =  " << min
@@ -214,7 +216,7 @@ std::vector<Timer*> Timers::consolidate(SmileiMPI * smpi)
         }
 
     }
-    if (rk==0) fout.close();
+    if (rk==0 && ! smpi->test_mode) fout.close();
 
     return avg_timers;
 
