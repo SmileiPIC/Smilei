@@ -7,6 +7,7 @@ compile:
   only:
     - develop
     - integrate_dev
+    - compute_delta
 
   script:
     # Force workdir cleaning in case of retried
@@ -32,6 +33,7 @@ makerun1D:
   only:
     - develop
     - integrate_dev
+    - compute_delta
 
   script:
     # Move in test dir
@@ -44,6 +46,7 @@ makerun2D:
   only:
     - develop
     - integrate_dev
+    - compute_delta
 
   script:
     # Move in test dir
@@ -56,6 +59,7 @@ makerun3D:
   only:
     - develop
     - integrate_dev
+    - compute_delta
 
   script:
     # Move in test dir
@@ -68,6 +72,7 @@ makerunV:
   only:
     - develop
     - integrate_dev
+    - compute_delta
 
   script:
     # Move in test dir
@@ -80,6 +85,7 @@ makerunCollisions:
   only:
     - develop
     - integrate_dev
+    - compute_delta
     
   script:
     # Move in test dir
