@@ -42,12 +42,20 @@ class SpeciesV : public Species
                           MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
                           std::vector<Diagnostic*>& localDiags) override;
 
-    //! Method calculating the Particle updated momentum (interpolation, momentum pusher, only particles interacting with envelope)
+    //! Method projecting susceptibility and calculating the particles updated momentum (interpolation, momentum pusher), only particles interacting with envelope
     void ponderomotive_update_susceptibility_and_momentum(double time_dual, unsigned int ispec,
                                ElectroMagn* EMfields, Interpolator* Interp_envelope, 
                                Params &params, bool diag_flag,
                                Patch* patch, SmileiMPI* smpi,
                                std::vector<Diagnostic*>& localDiags) override;
+   
+    //! Method projecting susceptibility, only particles interacting with envelope
+    void ponderomotive_project_susceptibility(double time_dual, unsigned int ispec,
+                               ElectroMagn* EMfields, Interpolator* Interp_envelope, 
+                               Params &params, bool diag_flag,
+                               Patch* patch, SmileiMPI* smpi,
+                               std::vector<Diagnostic*>& localDiags) override;
+
 
     //! Method calculating the Particle updated position (interpolation, position pusher, only particles interacting with envelope)
     // and projecting charge density and thus current density (through Esirkepov method) for Maxwell's Equations

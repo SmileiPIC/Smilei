@@ -226,23 +226,21 @@ int main (int argc, char* argv[])
             vecPatches.reconfiguration(params,timers, 0);
         }
 
-        vecPatches.projection_for_diags(params, &smpi, simWindow, time_dual, timers, 0);
-
-        // if Laser Envelope is used, execute particles and envelope sections of ponderomotive loop
+ 
+        // If Laser Envelope is used, initialize envelope
         if (params.Laser_Envelope_model){
-
             // initialize new envelope from scratch, following the input namelist
             vecPatches.init_new_envelope(params);
+                                         } // end condition if Laser Envelope Model is used
 
-            // interpolate envelope for susceptibility deposition, project susceptibility for envelope equation, momentum advance
-            vecPatches.ponderomotive_update_susceptibility_and_momentum(params, &smpi, simWindow, time_dual, timers, 0);    
-          
+        // Project charge and current densities (and susceptibility if envelope is used) only for diags at t=0
+        vecPatches.projection_for_diags(params, &smpi, simWindow, time_dual, timers, 0);
+
+        // If Laser Envelope is used, comm and synch susceptibility
+        if (params.Laser_Envelope_model){    
             // comm and synch susceptibility
             vecPatches.sumSusceptibility(params, time_dual, timers, 0, simWindow );
-
-            // interp updated envelope for position advance, update positions and currents for Maxwell's equations
-            vecPatches.ponderomotive_update_position_and_currents(params, &smpi, simWindow, time_dual, timers, 0);
-                                        } // end condition if Laser Envelope Model is used
+                                         } // end condition if Laser Envelope Model is used
 
         vecPatches.sumDensities(params, time_dual, timers, 0, simWindow );
 

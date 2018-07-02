@@ -330,6 +330,25 @@ void VectorPatch::projection_for_diags(Params& params,
         }
 
     }
+ 
+    // if Envelope is used, project the susceptibility of the particles interacting with the envelope
+    if (params.Laser_Envelope_model){
+        #pragma omp for schedule(runtime)
+        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+            (*this)(ipatch)->EMfields->restartEnvChi();
+            for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
+                if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
+                    if (species(ipatch, ispec)->ponderomotive_dynamics){
+                    species(ipatch, ispec)->ponderomotive_project_susceptibility(time_dual, ispec,
+                                                 emfields(ipatch), interp_envelope(ipatch),
+                                                 params, diag_flag,
+                                                 (*this)(ipatch), smpi,
+                                                 localDiags);
+                                                                        } // end condition on ponderomotive dynamics
+                } // end diagnostic or projection if condition on species
+            } // end loop on species
+        } // end loop on patches
+    }
 
 } // END projection for diags
 
@@ -2042,6 +2061,7 @@ void VectorPatch::update_field_list()
                 listGradPhiz0_[ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 ) ;
                 listEnv_Chi_[ipatch]->MPIbuff.defineTags( patches_[ipatch], 0 ) ;
             }
+
         }
     }
     else {
@@ -2395,7 +2415,7 @@ void VectorPatch::ponderomotive_update_susceptibility_and_momentum(Params& param
             if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
                 if (species(ipatch, ispec)->ponderomotive_dynamics){
                 species(ipatch, ispec)->ponderomotive_update_susceptibility_and_momentum(time_dual, ispec,
-                                                                                        emfields(ipatch), interp_envelope(ipatch),
+                                                 emfields(ipatch), interp_envelope(ipatch),
                                                  params, diag_flag,
                                                  (*this)(ipatch), smpi,
                                                  localDiags);
@@ -2430,7 +2450,7 @@ void VectorPatch::ponderomotive_update_position_and_currents(Params& params,
             if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
                 if (species(ipatch, ispec)->ponderomotive_dynamics){
                 species(ipatch, ispec)->ponderomotive_update_position_and_currents(time_dual, ispec,
-                                                                                   emfields(ipatch), interp_envelope(ipatch), proj(ipatch,ispec),
+                                                 emfields(ipatch), interp_envelope(ipatch), proj(ipatch,ispec),
                                                  params, diag_flag, partwalls(ipatch),
                                                  (*this)(ipatch), smpi,
                                                  localDiags);

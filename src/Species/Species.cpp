@@ -1729,14 +1729,14 @@ void Species::ponderomotive_update_susceptibility_and_momentum(double time_dual,
             // Project susceptibility, the source term of envelope equation
             double* b_Chi_envelope=nullptr;
             if (nDim_field==3)
-                b_Chi_envelope =  &(*EMfields->Env_Chi_)(ibin*clrw*f_dim1*f_dim2) ;
+                b_Chi_envelope =  &(*EMfields->Env_Chi_)(0) ;
             else {ERROR("Envelope model not yet implemented in this geometry");}
 
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
             for (unsigned int iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
-                (static_cast<Projector3D2Order_susceptibility*>(Proj_susceptibility))->project_susceptibility(b_Chi_envelope, *particles, iPart, ibin, b_dim, smpi, ithread, mass );
+                (static_cast<Projector3D2Order_susceptibility*>(Proj_susceptibility))->project_susceptibility(b_Chi_envelope, *particles, iPart, 0, b_dim, smpi, ithread, mass );
                                                                                   } //End loop on particles
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[8] += MPI_Wtime() - timer;
@@ -1756,7 +1756,93 @@ void Species::ponderomotive_update_susceptibility_and_momentum(double time_dual,
                                  }
     else { // immobile particle
          } //END if time vs. time_frozen
-} // End ponderomotive_momentum_update
+} // ponderomotive_update_susceptibility_and_momentum
+
+// ---------------------------------------------------------------------------------------------------------------------
+// For all particles of the species reacting to laser envelope
+//   - interpolate the fields at the particle position
+//   - deposit susceptibility
+// ---------------------------------------------------------------------------------------------------------------------
+void Species::ponderomotive_project_susceptibility(double time_dual, unsigned int ispec,
+                       ElectroMagn* EMfields, Interpolator* Interp_envelope,
+                       Params &params, bool diag_flag,
+                       Patch* patch, SmileiMPI* smpi,
+                       vector<Diagnostic*>& localDiags){
+
+    int ithread;
+    #ifdef _OPENMP
+        ithread = omp_get_thread_num();
+    #else
+        ithread = 0;
+    #endif
+
+#ifdef  __DETAILED_TIMERS
+    double timer;
+#endif
+
+    // -------------------------------
+    // calculate the particle updated momentum
+    // -------------------------------
+    if (time_dual>time_frozen) { // moving particle
+
+        smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
+
+        for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) { // loop on ibin
+
+            int istart = (bmin[ibin]);
+            int iend   = (bmax[ibin]);
+
+            std::vector<double> *Epart          = &(smpi->dynamics_Epart[ithread]);
+            std::vector<double> *Bpart          = &(smpi->dynamics_Bpart[ithread]);
+            std::vector<double> *PHIpart        = &(smpi->dynamics_PHIpart[ithread]);
+            std::vector<double> *GradPHIpart    = &(smpi->dynamics_GradPHIpart[ithread]);
+
+            std::vector<int> *iold              = &(smpi->dynamics_iold[ithread]);
+            std::vector<double> *delta          = &(smpi->dynamics_deltaold[ithread]);
+
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
+            int nparts( particles->size() );
+            for (int ipart=istart ; ipart<iend; ipart++ ) {//Loop on bin particles
+                //Interpolation on current particle
+                (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->interpolate_em_fields_and_envelope(EMfields, *particles, ipart, nparts, &(*Epart)[ipart], &(*Bpart)[ipart], &(*PHIpart)[ipart], &(*GradPHIpart)[ipart]);
+                //Buffering of iol and delta
+                (*iold)[ipart+0*nparts]  = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->ip_;
+                (*iold)[ipart+1*nparts]  = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->jp_;
+                (*iold)[ipart+2*nparts]  = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->kp_;
+                (*delta)[ipart+0*nparts] = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->deltax;
+                (*delta)[ipart+1*nparts] = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->deltay;
+                (*delta)[ipart+2*nparts] = (static_cast<Interpolator3D2Order_env*>(Interp_envelope))->deltaz;
+            } // end loop on bin particles
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[7] += MPI_Wtime() - timer;
+#endif
+
+
+            // Project susceptibility, the source term of envelope equation
+            double* b_Chi_envelope=nullptr;
+            if (nDim_field==3)
+                b_Chi_envelope =  &(*EMfields->Env_Chi_)(0) ;
+            else {ERROR("Envelope model not yet implemented in this geometry");}
+
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
+            for (unsigned int iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                (static_cast<Projector3D2Order_susceptibility*>(Proj_susceptibility))->project_susceptibility(b_Chi_envelope, *particles, iPart, 0, b_dim, smpi, ithread, mass );
+                                                                                  } //End loop on particles
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[8] += MPI_Wtime() - timer;
+#endif
+
+
+                                                                   } // end loop on ibin
+                                 }
+    else { // immobile particle
+         } //END if time vs. time_frozen
+} // ponderomotive_project_susceptibility
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all particles of the species reacting to laser envelope
