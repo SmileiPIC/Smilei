@@ -19,7 +19,7 @@ public:
     PusherBoris(Params& params, Species *species);
     ~PusherBoris();
     //! Overloading of () operator
-    virtual void operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread);
+    virtual void operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ipart_ref = 0);
 
 };
 

@@ -13,6 +13,7 @@
 #include "DiagnosticFields1D.h"
 #include "DiagnosticFields2D.h"
 #include "DiagnosticFields3D.h"
+#include "DiagnosticFieldsRZ.h"
 
 //  --------------------------------------------------------------------------------------------------------------------
 //! Create appropriate IO environment for the geometry 
@@ -31,6 +32,9 @@ public:
         }
         else if ( params.geometry == "3Dcartesian" ) {
             diag = new DiagnosticFields3D(params, smpi, vecPatches, idiag, openPMD);
+        }
+        else if ( params.geometry == "3drz" ) {
+            diag = new DiagnosticFieldsRZ(params, smpi, vecPatches, idiag, openPMD);
         }
         else {
             ERROR( "Geometry " << params.geometry << " not implemented" );

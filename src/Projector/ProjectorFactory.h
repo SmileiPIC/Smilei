@@ -7,21 +7,25 @@
 #include "Projector2D2Order.h"
 #include "Projector2D4Order.h"
 #include "Projector3D2Order.h"
+#include "Projector3D2Order_susceptibility.h"
 #include "Projector3D4Order.h"
+#include "ProjectorRZ2Order.h"
 
 #ifdef _VECTO
 #include "Projector2D2OrderV.h"
 #include "Projector3D2OrderV.h"
+#include "Projector3D2Order_susceptibilityV.h"
+#include "Projector3D4OrderV.h"
 #endif
 
 #include "Params.h"
-#include "Patch.h" 
+#include "Patch.h"
 
 #include "Tools.h"
 
 class ProjectorFactory {
 public:
-  static Projector* create(Params& params, Patch* patch) {
+  static Projector* create(Params& params, Patch* patch, bool vectorization) {
         Projector* Proj = NULL;
         // ---------------
         // 1Dcartesian simulation
@@ -36,7 +40,7 @@ public:
         // 2Dcartesian simulation
         // ---------------
         else if ( ( params.geometry == "2Dcartesian" ) && ( params.interpolation_order == (unsigned int)2 ) ) {
-            if (!params.vecto)
+            if (!vectorization)
                 Proj = new Projector2D2Order(params, patch);
 #ifdef _VECTO
             else
@@ -50,7 +54,7 @@ public:
         // 3Dcartesian simulation
         // ---------------
         else if ( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == (unsigned int)2 ) ) {
-            if (!params.vecto)
+            if (!vectorization)
                 Proj = new Projector3D2Order(params, patch);
 #ifdef _VECTO
             else
@@ -58,13 +62,75 @@ public:
 #endif
         }
         else if ( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == (unsigned int)4 ) ) {
-            Proj = new Projector3D4Order(params, patch);
+            if (!vectorization)
+                Proj = new Projector3D4Order(params, patch);
+#ifdef _VECTO
+            else
+                Proj = new Projector3D4OrderV(params, patch);
+#endif
+
+        }
+        // ---------------
+        // 3dRZ simulation
+        // ---------------
+        else if ( params.geometry == "3drz" ) {
+            Proj = new ProjectorRZ2Order(params, patch);
         }
         else {
             ERROR( "Unknwon parameters : " << params.geometry << ", Order : " << params.interpolation_order );
         }
 
         return Proj;
+    }
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+
+// Projector for susceptibility, the source term of envelope equation
+
+
+static Projector* create_susceptibility_projector(Params& params, Patch* patch, bool vectorization) {
+      Projector* Proj_susceptibility = NULL;
+
+      // ---------------
+      // 1Dcartesian simulation
+      // ---------------
+      if (  params.geometry == "1Dcartesian" ) {
+          ERROR( "Projector for susceptibility not yet implemented for this geometry" );
+      }
+      
+      // ---------------
+      // 2Dcartesian simulation
+      // ---------------
+      else if ( ( params.geometry == "2Dcartesian" ) && ( params.interpolation_order == (unsigned int)2 ) ) {
+          ERROR( "Projector for susceptibility not yet implemented for this geometry" );
+      }
+      
+      // ---------------
+      // 3Dcartesian simulation
+      // ---------------
+      else if ( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == (unsigned int)2 ) ) {
+          if (!vectorization)
+              Proj_susceptibility = new Projector3D2Order_susceptibility(params, patch);
+#ifdef _VECTO
+          else
+              Proj_susceptibility = new Projector3D2Order_susceptibilityV(params, patch);
+#endif
+      }
+      else if ( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == (unsigned int)4 ) ) {
+          MESSAGE("Warning: order 2 will be used to project susceptibility");
+          Proj_susceptibility = new Projector3D2Order_susceptibility(params, patch);
+      }
+      // ---------------
+      // 3dRZ simulation
+      // ---------------
+      else if ( params.geometry == "3drz" ) {
+          ERROR( "Projector for susceptibility not yet implemented for this geometry" );
+      }
+      else {
+          ERROR( "Unknwon parameters : " << params.geometry << ", Order : " << params.interpolation_order );
+      }
+
+      return Proj_susceptibility;
     }
 
 };

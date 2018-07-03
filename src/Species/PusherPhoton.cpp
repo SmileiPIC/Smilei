@@ -30,7 +30,7 @@ PusherPhoton::~PusherPhoton()
 ***********************************************************************/
 
 void PusherPhoton::operator() (Particles &particles, SmileiMPI* smpi,
-                              int istart, int iend, int ithread)
+                              int istart, int iend, int ithread, int ipart_ref)
 {
     // Inverse normalized energy
     std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
@@ -63,4 +63,21 @@ void PusherPhoton::operator() (Particles &particles, SmileiMPI* smpi,
             position[i][ipart]     += dt*momentum[i][ipart]*(*invgf)[ipart];
             
     }
+
+    if (vecto) {
+        int* cell_keys;
+        particles.cell_keys.resize(iend-istart);
+        cell_keys = &( particles.cell_keys[0]);
+    
+        #pragma omp simd
+        for (int ipart=istart ; ipart<iend; ipart++ ) {
+    
+            for ( int i = 0 ; i<nDim_ ; i++ ){ 
+                cell_keys[ipart] *= nspace[i];
+                cell_keys[ipart] += round( (position[i][ipart]-min_loc_vec[i]) * dx_inv_[i] );
+            }
+        
+        }
+    }
+
 }

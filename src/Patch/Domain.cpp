@@ -246,3 +246,10 @@ void Domain::identify_missing_patches(SmileiMPI* smpi, VectorPatch& vecPatches, 
     //cout << endl;
 
 }
+
+void Domain::solveEnvelope( Params& params, SimWindow* simWindow, int itime, double time_dual, Timers& timers )
+{
+    vecPatch_.solveEnvelope( params, simWindow, itime, time_dual, timers );
+
+}
+

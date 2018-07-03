@@ -11,6 +11,8 @@
 
 #include "Pusher.h"
 #include "PusherBoris.h"
+#include "PusherPonderomotiveBoris.h"
+#include "PusherPonderomotivePositionBoris.h"
 #include "PusherVay.h"
 #include "PusherBorisNR.h"
 #include "PusherRRLL.h"
@@ -19,6 +21,8 @@
 
 #ifdef _VECTO
 #include "PusherBorisV.h"
+#include "PusherPonderomotiveBorisV.h"
+#include "PusherPonderomotivePositionBorisV.h"
 #endif
 
 #include "Params.h"
@@ -46,11 +50,20 @@ public:
             // assign the correct Pusher to Push
             if ( species->pusher == "boris")
             {
-                if (!params.vecto)
+                if (!species->vectorized_operators)
                     Push = new PusherBoris( params, species );
 #ifdef _VECTO
                 else
                     Push = new PusherBorisV( params, species );
+#endif
+            }
+            else if ( species->pusher == "ponderomotive_boris" )
+            {
+                if (!species->vectorized_operators)
+                    Push = new PusherPonderomotiveBoris( params, species );
+#ifdef _VECTO
+                else
+                    Push = new PusherPonderomotiveBorisV( params, species );
 #endif
             }
             else if ( species->pusher == "borisnr" )
@@ -89,7 +102,37 @@ public:
             }
         }
 
+        if (species->ponderomotive_dynamics){
+            if (species->pusher != "ponderomotive_boris"){
+                ERROR( "For species " << species->name << " the flag ponderomotive_dynamics is True - the only pusher available to interact with the envelope is ponderomotive_boris");
+                }
+            }
         return Push;
+    }
+
+    static Pusher* create_ponderomotive_position_updater(Params& params, Species * species) {
+        Pusher* Push_ponderomotive_position = NULL;
+
+        // Particle of matter
+        if (species->mass > 0) {
+            // assign the correct Pusher to Push_ponderomotive_position
+            if ( species->pusher == "ponderomotive_boris" )
+            {
+                if (!species->vectorized_operators)
+                    Push_ponderomotive_position = new PusherPonderomotivePositionBoris( params, species );
+#ifdef _VECTO
+                else
+                    Push_ponderomotive_position = new PusherPonderomotivePositionBorisV( params, species );
+#endif
+            }
+          
+            else {
+                ERROR( "For species " << species->name
+                                      << ": unknown pusher `"
+                                      << species->pusher << "`");
+            }
+        } else {ERROR("Ponderomotive pusher is not a valid choice for photons"); }
+        return Push_ponderomotive_position;
     }
 
 };

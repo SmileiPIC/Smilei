@@ -418,7 +418,7 @@ else:
 			MPIRUN = "mpirun -mca btl tcp,sm,self -np "
 	else:
 		MPIRUN = "mpirun -np "
-	
+
 	COMPILE_COMMAND = 'make -j4 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
 	SMILEI_DATABASE = SMILEI_ROOT + '/databases/'
@@ -699,6 +699,8 @@ for BENCH in SMILEI_BENCH_LIST :
 		if BENCH in [
 				"tst2d_08_synchrotron_chi1.py",
 				"tst2d_09_synchrotron_chi0.1.py",
+				"tst2d_v_09_synchrotron_chi0.1.py",
+				"tst2d_v_10_multiphoton_Breit_Wheeler.py",
 				"tst1d_09_rad_electron_laser_collision.py",
 				"tst1d_10_pair_electron_laser_collision.py",
 				"tst2d_10_multiphoton_Breit_Wheeler.py"
@@ -708,7 +710,7 @@ for BENCH in SMILEI_BENCH_LIST :
 				check_call(['cp '+SMILEI_DATABASE+'/*.h5 '+RESTART_WORKDIR], shell=True)
 			except CalledProcessError:
 				if VERBOSE :
-					print(  "Execution failed for copy databases in ",RESTART_WORKDIR)
+					print(  "Execution failed to copy databases in ",RESTART_WORKDIR)
 				sys.exit(2)
 
 		# If there are restarts, adds the Checkpoints block

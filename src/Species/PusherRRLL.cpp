@@ -81,7 +81,7 @@ void PusherRRLL::operator() (Particles &particles, int ipart, LocalFields Epart,
     //DEBUG(5, "\t END "<< particles.position(0, ipart) );
 
 }
-void PusherRRLL::operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread)
+void PusherRRLL::operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ipart_ref)
 {
     std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
     std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);
@@ -145,4 +145,24 @@ void PusherRRLL::operator() (Particles &particles, SmileiMPI* smpi, int istart, 
         particles.chi(ipart)=0.5;
         //DEBUG(5, "\t END "<< particles.position(0, ipart) );
     }
+
+    if (vecto) {
+        double* position[3];
+        for ( int i = 0 ; i<nDim_ ; i++ )
+            position[i] =  &( particles.position(i,0) );
+        int* cell_keys;
+        particles.cell_keys.resize(iend-istart);
+        cell_keys = &( particles.cell_keys[0]);
+    
+        #pragma omp simd
+        for (int ipart=istart ; ipart<iend; ipart++ ) {
+    
+            for ( int i = 0 ; i<nDim_ ; i++ ){ 
+                cell_keys[ipart] *= nspace[i];
+                cell_keys[ipart] += round( (position[i][ipart]-min_loc_vec[i]) * dx_inv_[i] );
+            }
+        
+        }
+    }
+
 }

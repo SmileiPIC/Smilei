@@ -68,14 +68,10 @@ namelist("")
 
     MESSAGE("HDF5 version "<<H5_VERS_MAJOR << "." << H5_VERS_MINOR << "." << H5_VERS_RELEASE);
 
-    if((((H5_VERS_MAJOR==1) && (H5_VERS_MINOR==8) && (H5_VERS_RELEASE>16)) || \
-        ((H5_VERS_MAJOR==1) && (H5_VERS_MINOR>8)) || \
-        (H5_VERS_MAJOR>1))) {
-        WARNING("Smilei suggests using HDF5 version 1.8.16");
-        WARNING("Newer version are not tested and may cause the code to behave incorrectly");
-        WARNING("See http://hdf-forum.184993.n3.nabble.com/Segmentation-fault-using-H5Dset-extent-in-parallel-td4029082.html");
-    }
-
+    if(  (H5_VERS_MAJOR< 1) ||
+       ( (H5_VERS_MAJOR==1) && (H5_VERS_MINOR< 8) ) ||
+       ( (H5_VERS_MAJOR==1) && (H5_VERS_MINOR==8) && (H5_VERS_RELEASE<16) ) )
+        WARNING("Smilei suggests using HDF5 version 1.8.16 or newer");
 
     if (namelistsFiles.size()==0) ERROR("No namelists given!");
 
@@ -91,14 +87,7 @@ namelist("")
     // https://github.com/numpy/numpy/issues/5856
     // We basically call the command numpy.seterr(all="ignore")
     PyObject* numpy = PyImport_ImportModule("numpy");
-    PyObject* seterr = PyObject_GetAttrString(numpy, "seterr");
-    PyObject* args = PyTuple_New(0);
-    PyObject* kwargs = Py_BuildValue("{s:s}", "all", "ignore");
-    PyObject* ret = PyObject_Call(seterr, args, kwargs);
-    Py_DECREF(ret);
-    Py_DECREF(args);
-    Py_DECREF(kwargs);
-    Py_DECREF(seterr);
+    Py_DECREF(PyObject_CallMethod(numpy, "seterr", "s", "ignore"));
     Py_DECREF(numpy);
 #endif
 
@@ -110,7 +99,6 @@ namelist("")
     PyTools::checkPyError();
     string command = "import signal\nsignal.signal(signal.SIGINT, signal.SIG_DFL)";
     if( !PyRun_SimpleString(command.c_str()) ) PyTools::checkPyError();
-
 
     PyObject* Py_main = PyImport_AddModule("__main__");
     PyObject* globals = PyModule_GetDict(Py_main);
@@ -131,6 +119,7 @@ namelist("")
 
     // here we add the larget int, important to get a valid seed for randomization
     PyModule_AddIntConstant(Py_main, "smilei_rand_max", RAND_MAX);
+
 
     // Running the namelists
     for (vector<string>::iterator it=namelistsFiles.begin(); it!=namelistsFiles.end(); it++) {
@@ -158,6 +147,7 @@ namelist("")
         runScript(strNamelist,(*it), globals);
     }
     // Running pycontrol.py
+
     runScript(string(reinterpret_cast<const char*>(pycontrol_py), pycontrol_py_len),"pycontrol.py", globals);
 
     smpi->barrier();
@@ -259,7 +249,8 @@ namelist("")
     for (unsigned int i=0;i<nDim_field;i++){
         res_space[i] = 1.0/cell_length[i];
     }
-
+    // Number of modes in LRT geometry
+    PyTools::extract("nmodes", nmodes, "Main");
 
     // simulation duration & length
     PyTools::extract("simulation_time", simulation_time, "Main");
@@ -286,7 +277,30 @@ namelist("")
         if( EM_BCs[iDim].size() == 1 ) // if just one type is specified, then take the same bc type in a given dimension
             EM_BCs[iDim].push_back( EM_BCs[iDim][0] );
         else if ( (EM_BCs[iDim][0] != EM_BCs[iDim][1]) &&  (EM_BCs[iDim][0] == "periodic" || EM_BCs[iDim][1] == "periodic") )
-            ERROR("EM_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side");
+            ERROR("EM_boundary_conditions along dimension "<<"012"[iDim]<<" cannot be periodic only on one side");
+    }
+
+    int n_envlaser = PyTools::nComponents("LaserEnvelope");
+    if ( n_envlaser >=1 ){
+        Laser_Envelope_model = true;
+        //! Boundary conditions for Envelope Field
+        if( !PyTools::extract("Envelope_boundary_conditions", Env_BCs, "Main")  )
+            ERROR("Envelope_boundary_conditions not defined" );
+
+        if( Env_BCs.size() == 0 ) {
+            ERROR("Envelope_boundary_conditions cannot be empty");
+        } else if( Env_BCs.size() == 1 ) {
+            while( Env_BCs.size() < nDim_field ) Env_BCs.push_back( Env_BCs[0] );
+        } else if( Env_BCs.size() != nDim_field ) {
+            ERROR("Envelope_boundary_conditions must be the same size as the number of dimensions");
+         }
+
+        for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
+            if( Env_BCs[iDim].size() == 1 ) // if just one type is specified, then take the same bc type in a given dimension
+                 Env_BCs[iDim].push_back( Env_BCs[iDim][0] );
+        //    else if ( (Env_BCs[iDim][0] != Env_BCs[iDim][1]) &&  (Env_BCs[iDim][0] == "periodic" || Env_BCs[iDim][1] == "periodic") )
+        //        ERROR("Envelope_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side");
+        }
     }
 
     for (unsigned int iDim = 0 ; iDim < nDim_field; iDim++){
@@ -300,16 +314,35 @@ namelist("")
     }
 
     PyTools::extract("EM_boundary_conditions_k", EM_BCs_k, "Main");
+    if( EM_BCs_k.size() == 0 ) {
+        //Gives default value
+        for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
+            std::vector<double> temp_k;
+
+            for( unsigned int iiDim=0; iiDim<iDim; iiDim++ ) temp_k.push_back(0.);
+            temp_k.push_back(1.);
+            for( unsigned int iiDim=iDim+1; iiDim<nDim_field; iiDim++ ) temp_k.push_back(0.);
+            EM_BCs_k.push_back(temp_k);
+            for( unsigned int iiDim=0; iiDim<nDim_field; iiDim++ ) temp_k[iiDim] *= -1. ;
+            EM_BCs_k.push_back(temp_k);
+        }
+    }
+
     //Complete with zeros if not defined
     if( EM_BCs_k.size() == 1 ) {
         while( EM_BCs_k.size() < nDim_field*2 ) EM_BCs_k.push_back(EM_BCs_k[0]  );
-    } else if( EM_BCs_k.size() < nDim_field*2 ) {
+    } else if( EM_BCs_k.size() != nDim_field*2 ) {
         ERROR("EM_boundary_conditions_k must be the same size as the number of faces.");
     }
     for( unsigned int iDim=0; iDim<nDim_field*2; iDim++ ) {
-        if ( EM_BCs_k[iDim].size() < nDim_field )
-            ERROR("EM_boundary_conditions_k must have at least nDim_field (" << nDim_field << ") elements along dimension "<<"xyz"[iDim] );
+        if ( EM_BCs_k[iDim].size() != nDim_field )
+            ERROR("EM_boundary_conditions_k must have exactly " << nDim_field << " elements along dimension "<<"-+"[iDim%2]<<"012"[iDim/2] );
+        if ( EM_BCs_k[iDim][iDim/2] == 0. )
+            ERROR("EM_boundary_conditions_k must have a non zero normal component along dimension "<<"-+"[iDim%2]<<"012"[iDim/2] );
+
     }
+    save_magnectic_fields_for_SM = true;
+    PyTools::extract("save_magnectic_fields_for_SM", save_magnectic_fields_for_SM, "Main");
 
     // -----------------------------------
     // MAXWELL SOLVERS & FILTERING OPTIONS
@@ -322,6 +355,10 @@ namelist("")
     PyTools::extract("solve_poisson", solve_poisson, "Main");
     PyTools::extract("poisson_max_iteration", poisson_max_iteration, "Main");
     PyTools::extract("poisson_max_error", poisson_max_error, "Main");
+    // Relativistic Poisson Solver
+    PyTools::extract("solve_relativistic_poisson", solve_relativistic_poisson, "Main");
+    PyTools::extract("relativistic_poisson_max_iteration", relativistic_poisson_max_iteration, "Main");
+    PyTools::extract("relativistic_poisson_max_error", relativistic_poisson_max_error, "Main");
 
     // PXR parameters
     PyTools::extract("is_spectral", is_spectral, "Main");
@@ -370,6 +407,9 @@ namelist("")
     double res_space2=0;
     for (unsigned int i=0; i<nDim_field; i++) {
         res_space2 += res_space[i]*res_space[i];
+    }
+    if (geometry == "3drz") {
+        res_space2 += ((nmodes-1)*(nmodes-1)-1)*res_space[1]*res_space[1];
     }
     dtCFL=1.0/sqrt(res_space2);
     if ( timestep>dtCFL ) {
@@ -430,6 +470,8 @@ namelist("")
             if( (number_of_patches[iDim] & (number_of_patches[iDim]-1)) != 0)
                 ERROR("Number of patches in each direction must be a power of 2");
     }
+    else
+        PyTools::extract("patch_orientation", patch_orientation, "Main");
 
     if( PyTools::nComponents("LoadBalancing")>0 ) {
         // get parameter "every" which describes a timestep selection
@@ -442,7 +484,9 @@ namelist("")
     } else {
         load_balancing_time_selection = new TimeSelection();
     }
+
     has_load_balancing = (smpi->getSize()>1)  && (! load_balancing_time_selection->isEmpty());
+
 
     //mi.resize(nDim_field, 0);
     mi.resize(3, 0);
@@ -453,7 +497,27 @@ namelist("")
             while ((number_of_patches[2] >> mi[2]) >1) mi[2]++ ;
     }
 
-    vecto = false;
+    // Activation of the vectorized subroutines
+    vectorization_mode = "disable";
+    has_dynamic_vectorization = false;
+    PyTools::extract("vecto", vectorization_mode, "Main");
+    if (!(vectorization_mode == "disable" || vectorization_mode == "normal" || vectorization_mode == "dynamic" || vectorization_mode == "dynamic2"))
+    {
+        ERROR("The parameter `vecto` must be `disable`, `normal`, `dynamic`, `dynamic2`");
+    }
+    else if (vectorization_mode == "dynamic" || vectorization_mode == "dynamic2")
+    {
+        has_dynamic_vectorization = true;
+    }
+
+    if( PyTools::nComponents("DynamicVectorization")>0 ) {
+        // get parameter "every" which describes a timestep selection
+        dynamic_vecto_time_selection = new TimeSelection(
+            PyTools::extract_py("every", "DynamicVectorization"), "Dynamic vectorization"
+        );
+    } else {
+        dynamic_vecto_time_selection  = new TimeSelection(1);
+    }
 
     // Read the "print_every" parameter
     print_every = (int)(simulation_time/timestep)/10;
@@ -551,6 +615,7 @@ namelist("")
 
 Params::~Params() {
     if( load_balancing_time_selection ) delete load_balancing_time_selection;
+    if( dynamic_vecto_time_selection ) delete dynamic_vecto_time_selection;
     PyTools::closePython();
 }
 
@@ -582,7 +647,7 @@ void Params::compute()
     patch_dimensions.resize(3, 0.);
     cell_volume=1.0;
     n_cell_per_patch = 1;
-    
+
     // compute number of cells & normalized lengths
     for (unsigned int i=0; i<nDim_field; i++) {
         n_space[i] = round(grid_length[i]/cell_length[i]);
@@ -596,7 +661,7 @@ void Params::compute()
     for (unsigned int i=nDim_field; i<3; i++) {
         cell_length[i]=0.0;
     }
-    
+
     for (unsigned int i=0; i<nDim_field; i++){
         oversize[i]  = max(interpolation_order,(unsigned int)(norder[i]/2+1)) + (exchange_particles_each-1);;
         n_space_global[i] = n_space[i];
@@ -606,7 +671,6 @@ void Params::compute()
         patch_dimensions[i] = n_space[i] * cell_length[i];
         n_cell_per_patch *= n_space[i];
     }
-
 
     n_space_domain.resize(0);
 
@@ -732,7 +796,7 @@ void Params::compute()
         for ( unsigned int idim = 1 ; idim < nDim_field ; idim++ )
             bin_size *= ( n_space[idim]+1+2*oversize[idim] );
 
-        // IF Ionize r pair generation : clrw = n_space_x_pp ?
+        // IF Ionize or pair generation : clrw = n_space_x_pp ?
         if ( ( clrw+1+2*oversize[0]) * bin_size > (unsigned int) cache_threshold ) {
             int clrw_max = cache_threshold / bin_size - 1 - 2*oversize[0];
             if ( clrw_max > 0 ) {
@@ -744,6 +808,18 @@ void Params::compute()
             else
                 clrw = 1;
             WARNING( "Particles cluster width set to : " << clrw );
+        }
+
+    }
+
+    // clrw != n_space[0] is not compatible
+    // with the dynamic vecto for the moment
+    if (vectorization_mode == "dynamic" || vectorization_mode == "dynamic2")
+    {
+        if (clrw != (int)(n_space[0]))
+        {
+            clrw = (int)(n_space[0]);
+            WARNING( "Particles cluster width set to: " << clrw << " for the dynamic vectorization mode");
         }
     }
 
@@ -794,9 +870,14 @@ void Params::print_init()
         MESSAGE(1,"dimension " << i << " - (Spatial resolution, Grid length) : (" << res_space[i] << ", " << grid_length[i] << ")");
         MESSAGE(1,"            - (Number of cells,    Cell length)  : " << "(" << n_space_global[i] << ", " << cell_length[i] << ")");
         MESSAGE(1,"            - Electromagnetic boundary conditions: " << "(" << EM_BCs[i][0] << ", " << EM_BCs[i][1] << ")");
-        if (open_boundaries)
+        if (open_boundaries){
             cout << setprecision(2);
-            cout << "                     - Electromagnetic boundary conditions k    : " << "( [" << EM_BCs_k[2*i][0] << ", " << EM_BCs_k[2*i][1] << ", " << EM_BCs_k[2*i][2]<< "] , [" << EM_BCs_k[2*i+1][0]<< ", " << EM_BCs_k[2*i+1][1]<< ", " << EM_BCs_k[2*i+1][2] << "] )" << endl;
+            cout << "                     - Electromagnetic boundary conditions k    : " << "( [" << EM_BCs_k[2*i][0] ;
+            for ( unsigned int ii=1 ; ii<grid_length.size() ; ii++) cout << ", " << EM_BCs_k[2*i][ii] ;
+            cout << "] , [" << EM_BCs_k[2*i+1][0] ;
+            for ( unsigned int ii=1 ; ii<grid_length.size() ; ii++) cout << ", " << EM_BCs_k[2*i+1][ii] ;
+            cout << "] )" << endl;
+        }
     }
 
     if( currentFilter_passes > 0 )
@@ -817,6 +898,26 @@ void Params::print_init()
         MESSAGE(1,"Cell load coefficient = " << cell_load );
         MESSAGE(1,"Frozen particle load coefficient = " << frozen_particle_load );
     }
+
+    if (vectorization_mode == "normal")
+    {
+        MESSAGE(1,"Apply the constant vectorization mode" );
+    }
+    else if (vectorization_mode == "dynamic")
+    {
+        MESSAGE(1,"Apply the dynamic vectorization mode 1" );
+        MESSAGE(1,"Happens: " << dynamic_vecto_time_selection->info());
+    }
+    else if (vectorization_mode == "dynamic2")
+    {
+        MESSAGE(1,"Apply the dynamic vectorization mode 2" );
+        MESSAGE(1,"Happens: " << dynamic_vecto_time_selection->info());
+    }
+    else if (vectorization_mode == "disable")
+    {
+        MESSAGE(1,"Vectorization disable" );
+    }
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -866,6 +967,10 @@ void Params::print_parallelism_params(SmileiMPI* smpi)
             MESSAGE(2, "dimension " << iDim << " - n_space : " << n_space[iDim] << " cells.");
 
         MESSAGE(1, "Dynamic load balancing: " << load_balancing_time_selection->info() );
+        if (this->has_dynamic_vectorization)
+        {
+            MESSAGE(1, "Dynamic vectorization: " << dynamic_vecto_time_selection->info() );
+        }
     }
 
     if (smpi->isMaster()) {

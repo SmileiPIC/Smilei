@@ -1,8 +1,10 @@
 #ifndef Profile_H
 #define Profile_H
 
+
 #include <vector>
 #include <string>
+#include <complex>
 #include "SmileiMPI.h"
 #include "Tools.h"
 #include "PyTools.h"
@@ -31,6 +33,10 @@ public:
     inline double valueAt(std::vector<double> coordinates, double time) {
         return function->valueAt(coordinates, time);
     };
+    //! Get the complex value of the profile at some location (spatio-temporal)
+    inline std::complex<double> complexValueAt(std::vector<double> coordinates, double time) {
+        return function->complexValueAt(coordinates, time);
+    };
     
     //! Get the value of the profile at several locations (spatial)
     inline void valuesAt(std::vector<Field*> &coordinates, Field &ret) {
@@ -55,7 +61,7 @@ public:
         } else
 #endif
         // Otherwise, calculate profile for each point
-        {
+        { 
             std::vector<double> x(ndim);
             for( unsigned int i=0; i<size; i++ ) {
                //MESSAGE("  - "<<i);

@@ -23,7 +23,7 @@ public:
     PusherPhoton(Params& params, Species *species);
     ~PusherPhoton();
     //! Overloading of () operator
-    virtual void operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread);
+    virtual void operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ipart_ref = 0);
 
 };
 

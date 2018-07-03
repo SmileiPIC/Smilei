@@ -16,7 +16,7 @@ class SmileiMPI;
 //! Class SimWindow
 //  --------------------------------------------------------------------------------------------------------------------
 class SimWindow {
-    
+
  public:
     //! SimWindow creator
     SimWindow(Params& params);
@@ -27,7 +27,7 @@ class SimWindow {
 
     //! Tells whether there is a moving window or not
     inline bool isActive() { return active; }
-    
+
     //! Returns a boolean : True if the window should be moved, False if it should not.
     //! Warning : Actually moving the window (function operate) changes the value of x_moved so the returned value of isMoving changes
     //! directly after moving the window.
@@ -43,12 +43,12 @@ class SimWindow {
     void   setXmoved(double new_val) {x_moved = new_val;}
     //! Set total number of cells the window has moved (restart case)
     void   setNmoved(int new_val) {n_moved = new_val;}
-    
+
 
  private:
     //! Tells whether there is a moving window or not
     bool active;
-    
+
     //! Store locally params.cell_length[0], window slides only in x
     double cell_length_x_;
     //! Total length the window has moved along x up to now.
@@ -63,10 +63,11 @@ class SimWindow {
     std::vector<Patch*> vecPatches_old;
     //! Keep track of patches to create
     std::vector< std::vector<unsigned int>> patch_to_be_created;
+    //! Keep track of patches that receive particles
+    std::vector< std::vector<bool>> patch_particle_created;
     //! Max number of threads
     int max_threads;
 
 };
 
 #endif /* SIMWINDOW_H */
-

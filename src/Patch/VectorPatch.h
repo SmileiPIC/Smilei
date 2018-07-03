@@ -22,7 +22,7 @@
 
 class Field;
 class Timer;
-class SimWindow; 
+class SimWindow;
 class DomainDecomposition;
 
 //! Class Patch : sub MPI domain
@@ -34,7 +34,7 @@ public :
     VectorPatch();
     VectorPatch( Params &params );
     ~VectorPatch();
-    void save_old_rho(Params &params); 
+    void save_old_rho(Params &params);
 
     void close(SmileiMPI*);
 
@@ -91,6 +91,12 @@ public :
     // Interfaces between main programs & main PIC operators
     // -----------------------------------------------------
 
+    //! Reconfigure all patches for the new time step
+    void configuration(Params& params, Timers &timers, int itime);
+
+    //! Reconfigure all patches for the new time step
+    void reconfiguration(Params& params, Timers &timers, int itime);
+
     //! For all patch, move particles (restartRhoJ(s), dynamics and exchangeParticles)
     void dynamics(Params& params,
                   SmileiMPI* smpi,
@@ -100,7 +106,7 @@ public :
                   double time_dual,
                   Timers &timers, int itime);
 
-    void finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWindow* simWindow, 
+    void finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWindow* simWindow,
                   RadiationTables & RadiationTables,
                   MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
                   double time_dual,
@@ -110,14 +116,40 @@ public :
 
     void computeCharge();
 
+    void projection_for_diags(Params& params,
+                  SmileiMPI* smpi,
+                  SimWindow* simWindow,
+                  double time_dual,
+                  Timers &timers, int itime);
+ 
+    // compute rho only given by relativistic species which require initialization of the relativistic fields
+    void computeChargeRelativisticSpecies(double time_primal); 
+
+    //! For all patches, deposit susceptibility, then advance momentum of particles interacting with envelope
+    void ponderomotive_update_susceptibility_and_momentum(Params& params,
+                                 SmileiMPI* smpi,
+                                 SimWindow* simWindow,
+                                 double time_dual, Timers &timers, int itime);
+    //! For all patches, advance position of particles interacting with envelope, comm particles, project charge and current density
+    void ponderomotive_update_position_and_currents(Params& params,
+                                 SmileiMPI* smpi,
+                                 SimWindow* simWindow,
+                                 double time_dual, Timers &timers, int itime);
+    void resetRhoJ();
 
     //! For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
     void sumDensities(Params &params, double time_dual, Timers &timers, int itime, SimWindow* simWindow );
 
+    //! For all patch, sum susceptibility on ghost cells (sum per species if needed, sync per patch and MPI sync)
+    void sumSusceptibility(Params &params, double time_dual, Timers &timers, int itime, SimWindow* simWindow );
+
     //! For all patch, update E and B (Ampere, Faraday, boundary conditions, exchange B and center B)
     void solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual,
                       Timers & timers);
-    
+
+    //! For all patch, update envelope field A (envelope equation, boundary contitions, exchange A)
+    void solveEnvelope(Params& params, SimWindow* simWindow, int itime, double time_dual, Timers & timers);
+
     //! For all patch, Compute and Write all diags (Scalars, Probes, Phases, TrackParticles, Fields, Average fields)
     void runAllDiags(Params& params, SmileiMPI* smpi, unsigned int itime, Timers & timers, SimWindow* simWindow);
     void initAllDiags(Params& params, SmileiMPI* smpi);
@@ -130,6 +162,9 @@ public :
     //! Solve Poisson to initialize E
     void solvePoisson( Params &params, SmileiMPI* smpi );
 
+    //! Solve relativistic Poisson problem to initialize E and B of a relativistic bunch
+    void solveRelativisticPoisson( Params &params, SmileiMPI* smpi, double time_primal );
+
     //! For all patch initialize the externals (lasers, fields, antennas)
     void initExternals(Params& params);
 
@@ -141,6 +176,8 @@ public :
 
     //! For each patch, apply external fields
     void applyExternalFields();
+
+    void saveExternalFields( Params &params );
 
     //  Balancing methods
     // ------------------
@@ -156,6 +193,9 @@ public :
 
     //! Write in a file patches communications
     void output_exchanges(SmileiMPI* smpi);
+
+    //! Init new envelope from input namelist
+    void init_new_envelope(Params& params);
 
     // Lists of fields
     std::vector<Field*> densities;
@@ -201,6 +241,31 @@ public :
     std::vector<Field*> listBy_;
     std::vector<Field*> listBz_;
 
+    std::vector<Field*> listA_;
+    std::vector<Field*> listA0_;
+    std::vector<Field*> listPhi_;
+    std::vector<Field*> listPhi0_;
+    std::vector<Field*> listGradPhix_;
+    std::vector<Field*> listGradPhiy_;
+    std::vector<Field*> listGradPhiz_;
+    std::vector<Field*> listGradPhix0_;
+    std::vector<Field*> listGradPhiy0_;
+    std::vector<Field*> listGradPhiz0_;
+    std::vector<Field*> listEnv_Chi_;
+    std::vector<Field*> listEnv_Chis_;
+
+    std::vector<std::vector< Field *>> listJl_;
+    std::vector<std::vector< Field *>> listJr_;
+    std::vector<std::vector< Field *>> listJt_;
+    std::vector<std::vector< Field *>> listrho_RZ_;
+    std::vector<std::vector< Field *>> listEl_;
+    std::vector<std::vector< Field *>> listEr_;
+    std::vector<std::vector< Field *>> listEt_;
+    std::vector<std::vector< Field *>> listBl_;
+    std::vector<std::vector< Field *>> listBr_;
+    std::vector<std::vector< Field *>> listBt_;
+
+
     //! True if any antennas
     unsigned int nAntennas;
 
@@ -224,7 +289,7 @@ public :
     }
 
     void check_memory_consumption(SmileiMPI* smpi);
-    
+
     void check_expected_disk_usage( SmileiMPI* smpi, Params& params, Checkpoint& checkpoint);
 
     // Keep track if we need the needsRhoJsNow
@@ -236,7 +301,7 @@ public :
     unsigned int lastIterationPatchesMoved;
 
     DomainDecomposition* domain_decomposition_;
-        
+
 
     //! Methods to access readably to patch PIC operators.
     //!   - patches_ should not be access outsied of VectorPatch
@@ -245,16 +310,24 @@ public :
         return (*this)(ipatch)->vecSpecies[ispec];
     }
 
+    inline Interpolator * inter(int ipatch, int ispec){
+        return (*this)(ipatch)->vecSpecies[ispec]->Interp;
+    }
+
     inline ElectroMagn* emfields(int ipatch) {
         return (*this)(ipatch)->EMfields;
     }
 
-    inline Interpolator* interp(int ipatch){
-        return (*this)(ipatch)->Interp;
+    inline Interpolator* interp_envelope(int ipatch){
+        return (*this)(ipatch)->Interp_envelope;
     }
 
-    inline Projector* proj(int ipatch){
-        return (*this)(ipatch)->Proj;
+    inline Projector* proj(int ipatch, int ispec){
+        return (*this)(ipatch)->vecSpecies[ispec]->Proj;
+    }
+
+    inline Projector* proj_susceptibility(int ipatch, int ispec){
+        return (*this)(ipatch)->vecSpecies[ispec]->Proj_susceptibility;
     }
 
     inline PartWalls* partwalls(int ipatch){
@@ -262,7 +335,7 @@ public :
     }
 
 private :
-    
+
     //  Internal balancing members
     // ---------------------------
     std::vector<Patch*> recv_patches_;
@@ -272,7 +345,8 @@ private :
 
     //! Current intensity of antennas
     double antenna_intensity;
-    
+
+    std::vector<Timer*> diag_timers;
 };
 
 

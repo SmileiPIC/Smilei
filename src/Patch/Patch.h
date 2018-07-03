@@ -34,7 +34,7 @@ public:
     Patch(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved);
     //! Cloning Constructor for Patch
     Patch(Patch* patch, Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved, bool with_particles);
-    
+
     //! First initialization step for patches
     void initStep1(Params& params);
     //! Second initialization step for patches
@@ -44,7 +44,7 @@ public:
     //! Last creation step
     void finishCreation( Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition );
     //! Last cloning step
-    void finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool with_particles );
+    void finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, unsigned int n_moved, bool with_particles );
 
     //! Finalize MPI environment : especially requests array for non blocking communications
     void finalizeMPIenvironment(Params& params);
@@ -67,13 +67,17 @@ public:
     //! Optional binary collisions operators
     std::vector<Collisions*> vecCollisions;
 
-    //! Interpolator (used to push particles and for probes)
-    Interpolator* Interp;
-    //! Projector
-    Projector* Proj;
+    //! Interpolator ad hoc for envelope
+    Interpolator* Interp_envelope = NULL;
+
+    //! Projector ad hoc for Proj_susceptibility
+    //Projector* Proj_susceptibility = NULL;
 
     //! "fake" particles for the probe diagnostics
     std::vector<ProbeParticles*> probes;
+
+    //! Classical interpolator for the probe diagnostic only
+    Interpolator* probesInterp;
 
 
     // Geometrical description
@@ -85,11 +89,20 @@ public:
     //!Cartesian coordinates of the patch. X,Y,Z of the Patch according to its Hilbert index.
     std::vector<unsigned int> Pcoordinates;
 
+    // Detailed timers
+    // -----------------------
+
+#ifdef  __DETAILED_TIMERS
+    //! Timers for the patch
+    std::vector<double> patch_timers;
+#endif
 
     // MPI exchange/sum methods for particles/fields
     //   - fields communication specified per geometry (pure virtual)
     // --------------------------------------------------------------
 
+    //! Clean the MPI buffers for communications
+    void cleanMPIBuffers(int ispec, Params& params);
     //! manage Idx of particles per direction,
     void initExchParticles(SmileiMPI* smpi, int ispec, Params& params);
     //!init comm  nbr of particles/
@@ -113,12 +126,20 @@ public:
 
     //! init comm / exchange fields
     virtual void initExchange( Field* field ) = 0;
+    //! init comm / exchange complex fields
+    virtual void initExchangeComplex( Field* field ) = 0;
     //! finalize comm / exchange fields
     virtual void finalizeExchange( Field* field ) = 0;
+    //! finalize comm / exchange complex fields
+    virtual void finalizeExchangeComplex( Field* field ) = 0;
     //! init comm / exchange fields in direction iDim only
     virtual void initExchange( Field* field, int iDim ) = 0;
-    //! finalize comm / exchange fields in direction iDim only
+    //! init comm / exchange complex fields in direction iDim only
+    virtual void initExchangeComplex( Field* field, int iDim ) = 0;
+    //! finalize comm / exchange fields
     virtual void finalizeExchange( Field* field, int iDim ) = 0;
+    //! finalize comm / exchange complex fields in direction iDim only
+    virtual void finalizeExchangeComplex( Field* field, int iDim ) = 0;
 
     // Create MPI_Datatype to exchange fields
     virtual void createType( Params& params ) = 0;

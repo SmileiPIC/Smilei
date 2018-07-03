@@ -129,6 +129,11 @@ public:
     inline double& position( unsigned int idim, unsigned int ipart )       {
         return Position[idim][ipart];
     }
+    
+    //! Method used to get the Particle position
+    inline double distance2_to_axis( unsigned int ipart ) const {
+        return Position[1][ipart] * Position[1][ipart] + Position[2][ipart] * Position[2][ipart];
+    }
 
     //! Method used to get the Particle position
     inline double  position_old( unsigned int idim, unsigned int ipart ) const {
@@ -299,9 +304,9 @@ public:
     std::vector< std::vector<uint64_t>*> uint64_prop;
 
 
-    //bool test_move( int iPartStart, int iPartEnd, Params& params );
-
 #ifdef __DEBUG
+    bool test_move( int iPartStart, int iPartEnd, Params& params );
+
     inline double dist2( unsigned int iPart ) {
         double dist(0.);
         for ( unsigned int iDim = 0 ; iDim < Position.size() ; iDim++ ) {

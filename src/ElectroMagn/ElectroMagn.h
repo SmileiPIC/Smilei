@@ -19,6 +19,14 @@ class SimWindow;
 class Patch;
 class Solver;
 class DomainDecomposition;
+class LaserEnvelope;
+
+
+inline std::string LowerCase(std::string in){
+    std::string out=in;
+    std::transform(out.begin(), out.end(), out.begin(), ::tolower);
+    return out;
+}
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -58,7 +66,7 @@ public:
     ElectroMagn( ElectroMagn* emFields, Params &params, Patch* patch );
     void initElectroMagnQuantities();
     //! Extra initialization. Used in ElectroMagnFactory
-    void finishInitialization(int nspecies, Patch* patch);
+    virtual void finishInitialization(int nspecies, Patch* patch);
     
     //! Destructor for Electromagn
     virtual ~ElectroMagn();
@@ -120,6 +128,21 @@ public:
     //! Total charge density
     Field* rho_;
     Field* rhoold_;
+
+    // Fields for relativistic Initialization
+    Field* Ex_rel_;
+    Field* Ey_rel_;
+    Field* Ez_rel_;
+    Field* Bx_rel_;
+    Field* By_rel_;
+    Field* Bz_rel_;
+    Field* Bx_rel_t_minus_halfdt_;
+    Field* By_rel_t_minus_halfdt_;
+    Field* Bz_rel_t_minus_halfdt_;
+    Field* Bx_rel_t_plus_halfdt_;
+    Field* By_rel_t_plus_halfdt_;
+    Field* Bz_rel_t_plus_halfdt_;
+
     //PXR quantities:
     Field* Ex_pxr;
     Field* Ey_pxr;
@@ -133,6 +156,20 @@ public:
     Field* rho_pxr;
     Field* rhoold_pxr;
 
+    //! Laser envelope
+    LaserEnvelope* envelope;
+    
+    //! Envelope, real part
+    Field* Env_Ar_;
+    
+    //! Envelope, imaginary part
+    Field* Env_Ai_;
+
+    //! Envelope, absolute value
+    Field* Env_A_abs_;
+
+    //! Chi field (i.e. susceptibility) for envelope equation 
+    Field* Env_Chi_;
     
     //! Vector of electric fields used when a filter is applied
     std::vector<Field*> Exfilter;
@@ -157,6 +194,9 @@ public:
     std::vector<Field*> Jy_s;
     std::vector<Field*> Jz_s;
     std::vector<Field*> rho_s;
+
+    // vector of susceptibility for each species
+    std::vector<Field*> Env_Chi_s;
     
     //! Creates a new field with the right characteristics, depending on the name
     virtual Field * createField(std::string fieldname) = 0;
@@ -185,34 +225,55 @@ public:
     //! Constructor for Electromagn
     ElectroMagn( Params &params, Patch* patch );
     
-    //! Method used to dump data contained in ElectroMagn
-    void dump();
-    
     //! Method used to initialize the total charge currents and densities
-    void restartRhoJ();
+    virtual void restartRhoJ();
     //! Method used to initialize the total charge currents and densities of species
-    void restartRhoJs();
+    virtual void restartRhoJs();
+
+    //! Method used to initialize the total susceptibility
+    virtual void restartEnvChi();
+    //! Method used to initialize the total susceptibility of species
+    virtual void restartEnvChis();
+
     
     //! Method used to sum all species densities and currents to compute the total charge density and currents
     virtual void computeTotalRhoJ() = 0;
+
+    //! Method used to sum all species susceptibility to compute the total susceptibility
+    virtual void computeTotalEnvChi() = 0;
     
     virtual void initPoisson(Patch *patch) = 0;
     virtual double compute_r() = 0;
     virtual void compute_Ap(Patch *patch) = 0;
+    virtual void compute_Ap_relativistic_Poisson(Patch *patch, double gamma_mean) = 0;
     //Access to Ap
     virtual double compute_pAp() = 0;
     virtual void update_pand_r(double r_dot_r, double p_dot_Ap) = 0;
     virtual void update_p(double rnew_dot_rnew, double r_dot_r) = 0;
     virtual void initE(Patch *patch) = 0;
+    virtual void initE_relativistic_Poisson(Patch *patch, double gamma_mean) = 0;
+    virtual void initB_relativistic_Poisson(Patch *patch, double gamma_mean) = 0;
+    virtual void center_fields_from_relativistic_Poisson(Patch *patch) = 0; // centers in Yee cells the fields
+    virtual void sum_rel_fields_to_em_fields(Patch *patch) = 0;
+    virtual void initRelativisticPoissonFields(Patch *patch) = 0;
     virtual void centeringE( std::vector<double> E_Add ) = 0;
+    virtual void centeringErel( std::vector<double> E_Add ) = 0;
     
     virtual double getEx_Xmin() = 0; // 2D !!!
     virtual double getEx_Xmax() = 0; // 2D !!!
+
+    virtual double getExrel_Xmin() = 0; // 2D !!!
+    virtual double getExrel_Xmax() = 0; // 2D !!!
     
     virtual double getEx_XminYmax() = 0; // 1D !!!
     virtual double getEy_XminYmax() = 0; // 1D !!!
     virtual double getEx_XmaxYmin() = 0; // 1D !!!
     virtual double getEy_XmaxYmin() = 0; // 1D !!!
+
+    virtual double getExrel_XminYmax() = 0; // 1D !!!
+    virtual double getEyrel_XminYmax() = 0; // 1D !!!
+    virtual double getExrel_XmaxYmin() = 0; // 1D !!!
+    virtual double getEyrel_XmaxYmin() = 0; // 1D !!!
     
     std::vector<unsigned int> index_min_p_;
     std::vector<unsigned int> index_max_p_;
@@ -251,7 +312,7 @@ public:
     std::vector<double> poynting_inst[2];
     
     //! Compute local square norm of charge denisty is not null
-    inline double computeRhoNorm2() {
+    virtual double computeRhoNorm2() {
         return rho_->norm2(istart, bufsize);
     }
 
@@ -267,12 +328,26 @@ public:
     inline double computeEzSum() {
         return Ez_->sum(istart, bufsize);
     }
+
+    //! Compute local sum of Ex_rel_
+    inline double computeExrelSum() {
+        return Ex_rel_->sum(istart, bufsize);
+    }
+    //! Compute local sum of Ey_rel_
+    inline double computeEyrelSum() {
+        return Ey_rel_->sum(istart, bufsize);
+    }
+    //! Compute local sum of Ez_rel_
+    inline double computeEzrelSum() {
+        return Ez_rel_->sum(istart, bufsize);
+    }
     
     //! external fields parameters the key string is the name of the field and the value is a vector of ExtField
     std::vector<ExtField> extFields;
     
     //! Method used to impose external fields (apply to all Fields)
     void applyExternalFields(Patch*);
+    void saveExternalFields(Patch*);
     
     //! Method used to impose external fields (apply to a given Field)
     virtual void applyExternalField(Field*, Profile*, Patch*) = 0 ;
@@ -301,11 +376,15 @@ public:
     inline int getMemFootPrint() {
     
         int emSize = 9+4; // 3 x (E, B, Bm) + 3 x J, rho
+
+        if(Env_Chi_) emSize += 4; //Env_Chi, Env_Ar, Env_Ai, Env_A_abs;
+
         for (unsigned int ispec=0 ; ispec<Jx_s.size() ; ispec++) {
             if (Jx_s [ispec]) emSize++;
             if (Jy_s [ispec]) emSize++;
             if (Jz_s [ispec]) emSize++;
             if (rho_s [ispec]) emSize++;
+            if (Env_Chi_s [ispec]) emSize++;
         }
 
         for ( unsigned int idiag = 0 ; idiag < allFields_avg.size() ; idiag++)
@@ -333,7 +412,7 @@ public:
     std::vector<std::vector<double>> S_edge;
 
 protected :
-    
+    bool is_pxr;
     
 private:
     

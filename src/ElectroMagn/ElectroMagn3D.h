@@ -21,20 +21,35 @@ public:
     void initPoisson(Patch *patch);
     double compute_r();
     void compute_Ap(Patch *patch);
+    void compute_Ap_relativistic_Poisson(Patch* patch, double gamma_mean);
     //Access to Ap
     double compute_pAp();
     void update_pand_r(double r_dot_r, double p_dot_Ap);
     void update_p(double rnew_dot_rnew, double r_dot_r);
     void initE(Patch *patch);
+    void initE_relativistic_Poisson(Patch *patch, double gamma_mean);
+    void initB_relativistic_Poisson(Patch *patch, double gamma_mean);
+    void center_fields_from_relativistic_Poisson(Patch *patch);
+    void initRelativisticPoissonFields(Patch *patch);
+    void sum_rel_fields_to_em_fields(Patch *patch);
     void centeringE( std::vector<double> E_Add );
+    void centeringErel( std::vector<double> E_Add );
 
     double getEx_Xmin() { return 0.; }
     double getEx_Xmax() { return 0.; }
+
+    double getExrel_Xmin() { return 0.; }
+    double getExrel_Xmax() { return 0.; }
 
     double getEx_XminYmax() { return 0.; }
     double getEy_XminYmax() { return 0.; }
     double getEx_XmaxYmin() { return 0.; }
     double getEy_XmaxYmin() { return 0.; }
+
+    double getExrel_XminYmax() { return 0.; }
+    double getEyrel_XminYmax() { return 0.; }
+    double getExrel_XmaxYmin() { return 0.; }
+    double getEyrel_XmaxYmin() { return 0.; }
 
 //    //! Method used to solve Maxwell-Ampere equation
 //    void solveMaxwellAmpere();
@@ -55,6 +70,12 @@ public:
     void computeTotalRhoJ();
     void addToGlobalRho(int ispec, unsigned int clrw);
     void computeTotalRhoJs(unsigned int clrw);
+
+    //! Method used to compute the total susceptibility by summing over all species
+    void computeTotalEnvChi();
+    //void addToGlobalEnvChi(int ispec, unsigned int clrw);
+    //void computeTotalEnvChis(unsigned int clrw);
+
     //! Method used to gather species densities and currents on a single array
     void synchronizePatch(unsigned int clrw);
     void finalizePatch(unsigned int clrw);

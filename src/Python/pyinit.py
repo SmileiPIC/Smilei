@@ -156,7 +156,7 @@ class SmileiSingleton(SmileiComponent):
         # Change all methods to static
         for k,v in cls.__dict__.items():
             if k[0]!='_' and hasattr(v,"__get__"):
-                setattr(cls, k, staticmethod(v))
+               setattr(cls, k, staticmethod(v))
 
 class ParticleData(object):
     """Container for particle data at run-time (for exposing particles in numpy)"""
@@ -176,9 +176,11 @@ class Main(SmileiSingleton):
     interpolation_order = 2
     number_of_patches = None
     patch_decomposition = "hilbert"
+    patch_orientation = ""
     clrw = -1
     every_clean_particles_overhead = 100
     timestep = None
+    nmodes = 2
     timestep_over_CFL = None
 
     # PXR tuning
@@ -192,17 +194,28 @@ class Main(SmileiSingleton):
     poisson_max_iteration = 50000
     poisson_max_error = 1.e-14
 
+    # Relativistic Poisson tuning
+    solve_relativistic_poisson = False
+    relativistic_poisson_max_iteration = 50000
+    relativistic_poisson_max_error = 1.e-22
+
     # Default fields
     maxwell_solver = 'Yee'
     EM_boundary_conditions = [["periodic"]]
-    EM_boundary_conditions_k = [[1.,0.,0.],[-1.,0.,0.],[0.,1.,0.],[0.,-1.,0.],[0.,0.,1.],[0.,0.,-1.]]
+    EM_boundary_conditions_k = []
+    save_magnectic_fields_for_SM = True
+    Envelope_boundary_conditions = [["reflective"]]
     time_fields_frozen = 0.
+    Laser_Envelope_model = False
 
     # Default Misc
     reference_angular_frequency_SI = 0.
     print_every = None
     random_seed = None
     print_expected_disk_usage = True
+
+    # Vectorization flag
+    vecto = "disable"
 
     def __init__(self, **kwargs):
         # Load all arguments to Main()
@@ -244,13 +257,13 @@ class Main(SmileiSingleton):
                 # None recognized solver
                 else:
                     raise Exception("timestep: maxwell_solver not implemented "+Main.maxwell_solver)
-        
+
         # Initialize simulation_time if not defined by the user
         if Main.simulation_time is None:
             if Main.number_of_timesteps is None:
                 raise Exception("simulation_time and number_of_timesteps are not defined")
             Main.simulation_time = Main.timestep * Main.number_of_timesteps
-        
+
         # Initialize grid_length if not defined based on number_of_cells and cell_length
         if (    len(Main.grid_length + Main.number_of_cells) == 0
              or len(Main.grid_length + Main.cell_length) == 0
@@ -281,6 +294,13 @@ class LoadBalancing(SmileiSingleton):
     initial_balance = True
     cell_load = 1.0
     frozen_particle_load = 0.1
+
+# Radiation reaction configuration (continuous and MC algorithms)
+class DynamicVectorization(SmileiComponent):
+    """
+    Dynamic vectorization parameters
+    """
+    every = 1
 
 
 class MovingWindow(SmileiSingleton):
@@ -324,8 +344,8 @@ class Species(SmileiComponent):
     charge = None
     charge_density = None
     number_density = None
-    mean_velocity = [0.]
-    temperature = [1e-10]
+    mean_velocity = []  # Default value is     0, set in createParticles function in species.cpp
+    temperature = []    # Default value is 1e-10, set in createParticles function in species.cpp
     thermal_boundary_temperature = []
     thermal_boundary_velocity = [0.,0.,0.]
     pusher = "boris"
@@ -336,11 +356,16 @@ class Species(SmileiComponent):
     multiphoton_Breit_Wheeler = [None,None]
     multiphoton_Breit_Wheeler_sampling = [1,1]
     time_frozen = 0.0
+    radiating = False
+    relativistic_field_initialization = False
+    time_relativistic_initialization = 0.0
     boundary_conditions = [["periodic"]]
     ionization_model = "none"
     ionization_electrons = None
     atomic_number = None
     is_test = False
+    relativistic_field_initialization = False
+    ponderomotive_dynamics = False
 
 class Laser(SmileiComponent):
     """Laser parameters"""
@@ -350,7 +375,17 @@ class Laser(SmileiComponent):
     time_envelope = 1.
     space_envelope = [1., 0.]
     phase = [0., 0.]
+    delay_phase = [0., 0.]
     space_time_profile = None
+
+class LaserEnvelope(SmileiSingleton):
+    """Laser Envelope parameters"""
+    omega = 1.
+    #time_envelope = 1.
+    #space_envelope = [1., 0.]
+    envelope_solver = "explicit"
+    envelope_profile = 0.
+
 
 class Collisions(SmileiComponent):
     """Collisions parameters"""
@@ -420,6 +455,7 @@ class DiagPerformances(SmileiSingleton):
     """Performances diagnostic"""
     every = 0
     flush_every = 1
+    patch_information = True
 
 # external fields
 class ExternalField(SmileiComponent):

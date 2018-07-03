@@ -21,12 +21,13 @@ OpenPMDparams::OpenPMDparams(Params& p):
     gridGlobalOffset.resize( params->nDim_field );
     gridOffset      .resize( params->nDim_field );
     position        .resize( params->nDim_field );
-    gridSpacing = params->cell_length;
+    gridSpacing     .resize( params->nDim_field );
     for( unsigned int idim=0; idim<params->nDim_field; idim++ ) {
         axisLabels.addString( xyz.substr(idim, 1) );
         gridGlobalOffset[idim] = 0.;
         gridOffset      [idim] = 0.;
         position        [idim] = 0.;
+        gridSpacing     [idim] = params->cell_length[idim];
     }
     fieldSolverParameters = "";
     if       ( params->maxwell_sol == "Yee" ) {

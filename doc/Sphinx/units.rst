@@ -86,10 +86,10 @@ For example, let us assume that you know your problem size in units of the wavel
 Knowing that the reference wavelength is :math:`2\pi L_r`, you can multiply all your
 lengths by :math:`2\pi`::
   
-  import math
-  lambda_ = 2. * math.pi
-  cell_length = [0.05 * lambda_]
-  grid_length  = [100. * lambda_]
+  from math import pi
+  wavelength = 2. * pi
+  cell_length = [0.05 * wavelength]
+  grid_length  = [100. * wavelength]
 
 
 ----
@@ -103,7 +103,7 @@ In these situations, equations cannot be normalized to dimension-less terms, and
 the code must know the value of :math:`\omega_r` in physical units. This requires
 defining an :ref:`extra parameter in the namelist <reference_angular_frequency_SI>`.
 
-For instance, ``reference_angular_frequency_SI = 2.*math.pi*3e8/1e-6`` means that
+For instance, ``reference_angular_frequency_SI = 2.*pi*3e8/1e-6`` means that
 :math:`L_r = 1\,\mathrm{\mu m} /(2\pi)`.
 This information will be used only in some specific parts of the code (collisions, ionization, ...)
 but not in the main PIC algorithms.
@@ -134,3 +134,16 @@ for each particle and is never modified afterwards. Its definition reads:
 
 As a consequence, the sum of all weights of the particles in one cell is equal to
 the density of the species in this cell, in units of :math:`N_r`.
+
+The charge carried by a macro-particle (in Coulomb) can therefore be retrieved by the inverse operation:
+
+.. math::
+
+ \textrm{macro-particle charge} = \tilde{w}\tilde{q}V_{\rm cell}N_r
+
+
+:math:`\tilde{w}` and :math:`\tilde{q}` are the normalized weight and charge of the particle.
+:math:`V_{\rm cell}` is the volume of a single cell of the simulation.
+This last equation can be used to derive charge carried by track particles or to initialize weights in the case of a species which positions are initialized via a numpy array (see :ref:`Species`).
+
+

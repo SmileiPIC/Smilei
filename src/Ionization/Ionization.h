@@ -20,7 +20,7 @@ public:
     virtual ~Ionization();
     
     //! Overloading of () operator
-    virtual void operator() (Particles*, unsigned int, unsigned int, std::vector<double>*, ElectroMagn*, Projector*) {};
+    virtual void operator() (Particles*, unsigned int, unsigned int, std::vector<double>*, ElectroMagn*, Projector*, int ipart_ref = 0) {};
     
     Particles new_electrons;
 

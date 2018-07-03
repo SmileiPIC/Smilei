@@ -50,7 +50,7 @@ Patch2D::Patch2D(Patch2D* patch, Params& params, SmileiMPI* smpi, DomainDecompos
 {
     initStep2(params, domain_decomposition);
     initStep3(params, smpi, n_moved);
-    finishCloning(patch, params, smpi, with_particles);
+    finishCloning(patch, params, smpi, n_moved, with_particles);
 } // End Patch2D::Patch2D
 
 
@@ -308,6 +308,11 @@ void Patch2D::initExchange( Field* field )
     } // END for iDim
 } // END initExchange( Field* field )
 
+void Patch2D::initExchangeComplex( Field* field )
+{
+    ERROR("2D initExchangeComplex not implemented");
+} // END initExchangeComplex( Field* field )
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Initialize current patch exhange Fields communications through MPI  (includes loop / nDim_fields_)
@@ -336,6 +341,11 @@ void Patch2D::finalizeExchange( Field* field )
     } // END for iDim
 
 } // END finalizeExchange( Field* field )
+
+void Patch2D::finalizeExchangeComplex( Field* field )
+{
+    ERROR("2D finalizeExchangeComplex not implemented");
+} // END finalizeExchangeComplex( Field* field )
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -400,6 +410,11 @@ void Patch2D::initExchange( Field* field, int iDim )
 
 } // END initExchange( Field* field, int iDim )
 
+void Patch2D::initExchangeComplex( Field* field, int iDim )
+{
+    ERROR("2D initExchangeComplex not implemented");
+} // END initExchangeComplex( Field* field, int iDim )
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Initialize current patch exhange Fields communications through MPI for direction iDim
@@ -424,6 +439,11 @@ void Patch2D::finalizeExchange( Field* field, int iDim )
     }
 
 } // END finalizeExchange( Field* field, int iDim )
+
+void Patch2D::finalizeExchangeComplex( Field* field, int iDim )
+{
+    ERROR("2D finalizeExchangeComplex not implemented");
+} // END finalizeExchangeComplex( Field* field, int iDim )
 
 
 // ---------------------------------------------------------------------------------------------------------------------
