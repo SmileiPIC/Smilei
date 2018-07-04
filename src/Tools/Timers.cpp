@@ -23,7 +23,8 @@ Timers::Timers( SmileiMPI * smpi ) :
     diagsNEW  ("DiagnosticsNEW" ), // Diags.runAllDiags + MPI & Patch sync
     reconfiguration("Reconfiguration"),
     envelope      ("Envelope"           ),
-    susceptibility("Sync Susceptibility")
+    susceptibility("Sync Susceptibility"),
+    grids("Grids")
 #ifdef __DETAILED_TIMERS
     ,interpolator("Interpolator"),
     pusher("Pusher"             ),
@@ -57,6 +58,7 @@ Timers::Timers( SmileiMPI * smpi ) :
     timers.push_back( &reconfiguration   );
     timers.push_back( &envelope   );
     timers.push_back( &susceptibility   );
+    timers.push_back( &grids   );
 #ifdef __DETAILED_TIMERS
     patch_timer_id_start = timers.size()-1;
     timers.push_back( &interpolator   );

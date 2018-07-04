@@ -13,6 +13,8 @@ using namespace std;
 
 void SyncCartesianPatch::patchedToCartesian( VectorPatch& vecPatches, Domain& domain, Params &params, SmileiMPI* smpi, Timers &timers, int itime )
 {
+    timers.grids.restart();
+
     // Loop / local_patches_ -> OK
     //     put()
 
@@ -79,6 +81,7 @@ void SyncCartesianPatch::patchedToCartesian( VectorPatch& vecPatches, Domain& do
 
     }
     //cout << endl;
+    timers.grids.update();
 }
 
 void SyncCartesianPatch::sendPatchedToCartesian( ElectroMagn* localfields, unsigned int hindex, int send_to_global_patch_rank, SmileiMPI* smpi, Patch* patch )
@@ -142,7 +145,8 @@ void SyncCartesianPatch::recvPatchedToCartesian( ElectroMagn* globalfields, unsi
 
 void SyncCartesianPatch::cartesianToPatches( Domain& domain, VectorPatch& vecPatches, Params &params, SmileiMPI* smpi, Timers &timers, int itime )
 {
-    
+    timers.grids.restart();
+
     // Loop / additional_patches_ (regarding cartesian), get data from cartesian
     for ( unsigned int i=0 ; i<domain.additional_patches_.size() ; i++ ) {
         unsigned int ipatch = domain.additional_patches_[i]-vecPatches.refHindex_;
@@ -198,6 +202,7 @@ void SyncCartesianPatch::cartesianToPatches( Domain& domain, VectorPatch& vecPat
 
     }
 
+    timers.grids.update();
 }
 
 

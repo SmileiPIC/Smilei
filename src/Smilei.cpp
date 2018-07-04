@@ -295,7 +295,6 @@ int main (int argc, char* argv[])
         domain.identify_additional_patches( &smpi, vecPatches, params );
         domain.identify_missing_patches( &smpi, vecPatches, params );
     }
-    MPI_Barrier( MPI_COMM_WORLD );
 
 
     TITLE("Time-Loop started: number of time-steps n_time = " << params.n_time);
@@ -377,29 +376,19 @@ int main (int argc, char* argv[])
 
             // solve Maxwell's equations
             //#ifndef _PICSAR
-            // Force temporary usage of double grids, even if global_factor = 1
-            //    especially to compare solvers           
             if ( global_factor==1 ) {
                 if( time_dual > params.time_fields_frozen ) {
                     vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers );
                 }
             }
             //#else
-            // Force temporary usage of double grids, even if global_factor = 1
-            //    especially to compare solvers
-            if ( global_factor!=1 ) {
+            else { //if ( global_factor!=1 ) {
                 if( time_dual > params.time_fields_frozen ) {
-                    MPI_Barrier( MPI_COMM_WORLD );
-                    //MESSAGE("Before to global");
                     SyncCartesianPatch::patchedToCartesian( vecPatches, domain, params, &smpi, timers, itime );
-                    MPI_Barrier( MPI_COMM_WORLD );
-                    //MESSAGE("Before Maxwell");
-                    domain.solveMaxwell( params, simWindow, itime, time_dual, timers );
-                    //MESSAGE("Before to patchs");
+                    domain.solveMaxwell( params, simWindow, itime, time_dual, timers);
                     SyncCartesianPatch::cartesianToPatches( domain, vecPatches, params, &smpi, timers, itime );
                 }
             }
-            //MESSAGE("After domain");
             //#endif
 
             vecPatches.finalize_and_sort_parts(params, &smpi, simWindow, RadiationTables,

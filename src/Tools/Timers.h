@@ -33,6 +33,7 @@ public:
     Timer reconfiguration  ;
     Timer envelope  ;
     Timer susceptibility ;
+    Timer grids ;
 #ifdef __DETAILED_TIMERS
     Timer interpolator  ;
     Timer pusher  ;
