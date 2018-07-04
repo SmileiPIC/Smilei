@@ -151,6 +151,21 @@ The block ``Main`` is **mandatory** and has the following syntax::
   See :doc:`parallelization`.
 
 
+.. py:data:: patch_decomposition
+
+  :default: 'hilbert'
+
+  The patches distribution. ``"cartesian"`` is available too.
+  See :doc:`parallelization`.
+
+
+.. py:data:: patch_orientation
+
+  Only for a ``"cartesian"`` patches distribution.
+  ``"YX"`` and ``"ZYX"`` respectively available for 2D and 3D simulations.
+  See :doc:`parallelization`.
+
+
 .. py:data:: clrw
 
   :default: set to minimize the memory footprint of the particles pusher, especially interpolation and projection processes
