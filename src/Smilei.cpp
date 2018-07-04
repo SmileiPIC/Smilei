@@ -261,11 +261,10 @@ int main (int argc, char* argv[])
     //#ifdef _PICSAR
     for ( unsigned int iDim = 0 ; iDim < params.nDim_field ; iDim++ )
         global_factor *= params.global_factor[iDim];
-    // Force temporary usage of double grids, even if global_factor = 1
-    //    especially to compare solvers
-    //if (global_factor!=1) {
+
+    if (global_factor!=1) {
         domain.build( params, &smpi, vecPatches, openPMD );
-    //}
+    }
     //#endif
 
     timers.global.reboot();
@@ -292,9 +291,10 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------
     //                     HERE STARTS THE PIC LOOP
     // ------------------------------------------------------------------
-
-    domain.identify_additional_patches( &smpi, vecPatches, params );
-    domain.identify_missing_patches( &smpi, vecPatches, params );
+    if (global_factor!=1) {
+        domain.identify_additional_patches( &smpi, vecPatches, params );
+        domain.identify_missing_patches( &smpi, vecPatches, params );
+    }
     MPI_Barrier( MPI_COMM_WORLD );
 
 
@@ -377,21 +377,17 @@ int main (int argc, char* argv[])
 
             // solve Maxwell's equations
             //#ifndef _PICSAR
-            //// Force temporary usage of double grids, even if global_factor = 1
-            ////    especially to compare solvers           
-            ////if ( global_factor==1 )
-            //{
-            //    if( time_dual > params.time_fields_frozen ) {
-            //        vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers );
-            //    }
-            //}
+            // Force temporary usage of double grids, even if global_factor = 1
+            //    especially to compare solvers           
+            if ( global_factor==1 ) {
+                if( time_dual > params.time_fields_frozen ) {
+                    vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers );
+                }
+            }
             //#else
             // Force temporary usage of double grids, even if global_factor = 1
             //    especially to compare solvers
-            //if ( global_factor!=1 )
-            MPI_Barrier( MPI_COMM_WORLD );
-            //MESSAGE("Before domain");
-            {
+            if ( global_factor!=1 ) {
                 if( time_dual > params.time_fields_frozen ) {
                     MPI_Barrier( MPI_COMM_WORLD );
                     //MESSAGE("Before to global");
