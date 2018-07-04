@@ -46,13 +46,13 @@ void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
             (*ElRZ)(i,j) += -dt*(*JlRZ)(i,j)
                 +                 dt/((j_glob+j)*dr)*((j+j_glob+0.5)*(*BtRZ)(i,j+1) - (j+j_glob-0.5)*(*BtRZ)(i,j) )
                 +                 Icpx*dt*(double)imode/((j_glob+j)*dr)*(*BrRZ)(i,j);
-             if (std::abs((*ElRZ)(i,j))>1.)
-             {
-                MESSAGE("ElRZMA");                
-                MESSAGE(i);    
-                MESSAGE(j);
-                MESSAGE((*ElRZ)(i,j));
-                }
+             //if (std::abs((*ElRZ)(i,j))>1.)
+             //{
+             //   MESSAGE("ElRZMA");                
+             //   MESSAGE(i);    
+             //   MESSAGE(j);
+             //   MESSAGE((*ElRZ)(i,j));
+              //  }
         }
     }
     //MESSAGE("ElRZ");
@@ -64,12 +64,12 @@ void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
                 -                  dt_ov_dl * ( (*BtRZ)(i+1,j) - (*BtRZ)(i,j) )
                 -                  Icpx*dt*(double)imode/((j_glob+j)*dr)* (*BlRZ)(i,j);
 
-             if (std::abs((*ErRZ)(i,j))>1.){
-                MESSAGE("ErRZMA");                
-                MESSAGE(i);
-               	MESSAGE(j);    
-                MESSAGE((*ErRZ)(i,j));
-                }
+             //if (std::abs((*ErRZ)(i,j))>1.){
+             //   MESSAGE("ErRZMA");                
+             //   MESSAGE(i);
+             //  	MESSAGE(j);    
+             //   MESSAGE((*ErRZ)(i,j));
+             //   }
         }
     }
     //MESSAGE("ErRZ");
@@ -80,12 +80,12 @@ void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
             (*EtRZ)(i,j) += -dt*(*JtRZ)(i,j)
                 +                  dt_ov_dl * ( (*BrRZ)(i+1,j) - (*BrRZ)(i,j) )
                 -                  dt_ov_dr * ( (*BlRZ)(i,j+1) - (*BlRZ)(i,j) );        
-             if (std::abs((*EtRZ)(i,j))>1.){
-                MESSAGE("EtRZMA ");
-                MESSAGE(i);
-                MESSAGE(j);    
-                MESSAGE((*EtRZ)(i,j));
-             }        
+             //if (std::abs((*EtRZ)(i,j))>1.){
+             //   MESSAGE("EtRZMA ");
+             //   MESSAGE(i);
+             //   MESSAGE(j);    
+             //   MESSAGE((*EtRZ)(i,j));
+             //}        
         }
     }
     //MESSAGE("EtRZ");
@@ -108,32 +108,32 @@ void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
 			//MF
 			for (unsigned int i=0 ; i<nl_d  ; i++) {
 				(*ElRZ)(i,j)= 0;
-                if (std::abs((*ElRZ)(i,j))>1.){
-                MESSAGE("ElRZA");                
-                MESSAGE(i);
-                MESSAGE(j);    
-                MESSAGE((*ElRZ)(i,j));
-                }
+                //if (std::abs((*ElRZ)(i,j))>1.){
+                //MESSAGE("ElRZA");                
+                //MESSAGE(i);
+                //MESSAGE(j);    
+                //MESSAGE((*ElRZ)(i,j));
+                //}
 			}
 			for (unsigned int i=0 ; i<nl_p  ; i++) {
 				//(*EtRZ)(i,j)= (*EtRZ)(i,j+1);
 				(*EtRZ)(i,j)= -1./3*(4.*Icpx*(*ErRZ)(i,j+1)+(*EtRZ)(i,j+1));
-                if (std::abs((*EtRZ)(i,j))>1.){
-                MESSAGE("EtRZA");                
-                MESSAGE(i);
-                MESSAGE(j);    
-                MESSAGE((*EtRZ)(i,j));
-                }
+                //if (std::abs((*EtRZ)(i,j))>1.){
+                //MESSAGE("EtRZA");                
+                //MESSAGE(i);
+                //MESSAGE(j);    
+                //MESSAGE((*EtRZ)(i,j));
+                //}
 			}
 			for (unsigned int i=0 ; i<nl_p ; i++) {
 				//(*ErRZ)(i,j)= -(*ErRZ)(i,j+1);
 				(*ErRZ)(i,j)=2.*Icpx*(*EtRZ)(i,j)-(*ErRZ)(i,j+1);
-                if (std::abs((*ErRZ)(i,j))>1.){
-                MESSAGE("ErRZA");                
-                MESSAGE(i);
-                MESSAGE(j);    
-                MESSAGE((*ErRZ)(i,j));
-                }
+                //if (std::abs((*ErRZ)(i,j))>1.){
+                //MESSAGE("ErRZA");                
+                //MESSAGE(i);
+                //MESSAGE(j);    
+                //MESSAGE((*ErRZ)(i,j));
+                //}
 			}
 		}
 		else {	
