@@ -686,27 +686,6 @@ void Params::compute()
         MPI_Comm_rank( MPI_COMM_WORLD, &rk );
         int sz(1);
         MPI_Comm_size( MPI_COMM_WORLD, &sz );
-        //n_space_domain[0] = 4 * n_space[0];
-        //if ( (rk==0) || (rk==3) )
-        //    n_space_domain[1] = 2 * n_space[1];
-        //else
-        //    n_space_domain[1] = 6 * n_space[1];
-//        if (rk==0) {
-//            n_space_domain[0] = 2 * n_space[0];
-//            n_space_domain[1] = 2 * n_space[1];
-//        }
-//        else if (rk==1) {
-//            n_space_domain[0] = 2 * n_space[0];
-//            n_space_domain[1] = 6 * n_space[1];
-//        }
-//        else if (rk==2) {
-//            n_space_domain[0] = 6 * n_space[0];
-//            n_space_domain[1] = 6 * n_space[1];
-//        }
-//        else if (rk==3) {
-//            n_space_domain[0] = 6 * n_space[0];
-//            n_space_domain[1] = 2 * n_space[1];
-//        }
 
         number_of_domain.resize( nDim_field, 0 );
 
@@ -729,8 +708,6 @@ void Params::compute()
             }
         }
         cout << "ndomain : " << number_of_domain[0] << " " << number_of_domain[1] << endl;
-        //number_of_domain[0] = 2;
-        //number_of_domain[1] = 2;
 
         map_rank.resize( number_of_domain[0] );
         for ( int iDim = 0 ; iDim < number_of_domain[0] ; iDim++ )
@@ -742,10 +719,6 @@ void Params::compute()
                 map_rank[xDom][yDom] = new_rk;
                 new_rk++;
             }
-        //map_rank[0][0] = 0;
-        //map_rank[1][0] = 3;
-        //map_rank[0][1] = 1;
-        //map_rank[1][1] = 2;
 
         // offset_map, expressed in number of cells
         offset_map.resize( nDim_field );
@@ -755,10 +728,6 @@ void Params::compute()
                 offset_map[iDim][iDom] = iDom * number_of_patches[iDim] / number_of_domain[iDim] * n_space[iDim];
             }
         }
-//        offset_map[0][0] = 0;
-//        offset_map[0][1] = 2 * n_space[0];
-//        offset_map[1][0] = 0;
-//        offset_map[1][1] = 2 * n_space[1];
 
         vector<int> coordinates( nDim_field );
         for ( int xDom = 0 ; xDom < number_of_domain[0] ; xDom++ )

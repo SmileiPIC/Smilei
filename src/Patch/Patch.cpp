@@ -298,54 +298,6 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
     MPI_Comm_rank( MPI_COMM_WORLD, &rk );
     int sz(1);
     MPI_Comm_size( MPI_COMM_WORLD, &sz );
-//    if (rk==0) {
-//        Pcoordinates[0] = 0;
-//        Pcoordinates[1] = 0;
-//        neighbor_[1][0] = 1;
-//        neighbor_[1][1] = 1;
-//        neighbor_[0][0] = 3;
-//        neighbor_[0][1] = 3;
-//        MPI_neighbor_[1][0] = 1;
-//        MPI_neighbor_[1][1] = 1;
-//        MPI_neighbor_[0][0] = 3;
-//        MPI_neighbor_[0][1] = 3;
-//    }
-//    else if (rk==1) {
-//        Pcoordinates[0] = 0;
-//        Pcoordinates[1] = 1;
-//        neighbor_[1][0] = 0;
-//        neighbor_[1][1] = 0;
-//        neighbor_[0][0] = 2;
-//        neighbor_[0][1] = 2;
-//        MPI_neighbor_[1][0] = 0;
-//        MPI_neighbor_[1][1] = 0;
-//        MPI_neighbor_[0][0] = 2;
-//        MPI_neighbor_[0][1] = 2;
-//    }
-//    else if (rk==2) {
-//        Pcoordinates[0] = 1;
-//        Pcoordinates[1] = 1;
-//        neighbor_[1][0] = 3;
-//        neighbor_[1][1] = 3;
-//        neighbor_[0][0] = 1;
-//        neighbor_[0][1] = 1;
-//        MPI_neighbor_[1][0] = 3;
-//        MPI_neighbor_[1][1] = 3;
-//        MPI_neighbor_[0][0] = 1;
-//        MPI_neighbor_[0][1] = 1;
-//    }
-//    else if (rk==3) {
-//        Pcoordinates[0] = 1;
-//        Pcoordinates[1] = 0;
-//        neighbor_[1][0] = 2;
-//        neighbor_[1][1] = 2;
-//        neighbor_[0][0] = 0;
-//        neighbor_[0][1] = 0;
-//        MPI_neighbor_[1][0] = 2;
-//        MPI_neighbor_[1][1] = 2;
-//        MPI_neighbor_[0][0] = 0;
-//        MPI_neighbor_[0][1] = 0;
-//    }
 
     for ( int xDom = 0 ; xDom < params.number_of_domain[0] ; xDom++ )
         for ( int yDom = 0 ; yDom < params.number_of_domain[1] ; yDom++ ) {

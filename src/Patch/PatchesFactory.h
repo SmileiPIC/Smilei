@@ -52,13 +52,6 @@ public:
         vecPatches.diag_flag = (params.restart? false : true);
         vecPatches.lastIterationPatchesMoved = itime;
 
-
-        // New_DD
-        //smpi->patch_count[0] = 8;
-        //smpi->patch_count[1] = 24;
-        //smpi->patch_count[2] = 24;
-        //smpi->patch_count[3] = 8;
-
         // Compute npatches (1 is std MPI behavior)
         unsigned int npatches, firstpatch;
         npatches = smpi->patch_count[smpi->getRank()];// Number of patches owned by current MPI process.
