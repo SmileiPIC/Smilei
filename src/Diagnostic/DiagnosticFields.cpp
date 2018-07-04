@@ -121,13 +121,15 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
     MESSAGE(2, ss.str() );
     
     // Create new fields in each patch, for time-average storage
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-        vecPatches(ipatch)->EMfields->allFields_avg.resize( diag_n+1 );
-        if( time_average > 1 ) {
-            for( unsigned int ifield=0; ifield<fields_names.size(); ifield++)
-                vecPatches(ipatch)->EMfields->allFields_avg[diag_n].push_back(
-                    vecPatches(ipatch)->EMfields->createField(fields_names[ifield])
-                );
+    if( ! smpi->test_mode ) {
+        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+            vecPatches(ipatch)->EMfields->allFields_avg.resize( diag_n+1 );
+            if( time_average > 1 ) {
+                for( unsigned int ifield=0; ifield<fields_names.size(); ifield++)
+                    vecPatches(ipatch)->EMfields->allFields_avg[diag_n].push_back(
+                        vecPatches(ipatch)->EMfields->createField(fields_names[ifield])
+                    );
+            }
         }
     }
     

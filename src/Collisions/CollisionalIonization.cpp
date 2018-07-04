@@ -47,7 +47,8 @@ CollisionalIonization::CollisionalIonization(CollisionalIonization* CI)
     new_electrons.tracked = CI->new_electrons.tracked;
     new_electrons.initialize(0, nDim); // to be removed if bins removed
     
-    assignDatabase(CI->dataBaseIndex);
+    dataBaseIndex = CI->dataBaseIndex;
+    assignDatabase(dataBaseIndex);
 
 }
 
