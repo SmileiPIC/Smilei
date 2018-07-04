@@ -854,15 +854,15 @@ void ElectroMagn3DRZ::fold_fields(bool diag_flag)
              JlRZ    = Jl_[imode];
              JrRZ    = Jr_[imode];
              JtRZ    = Jt_[imode];
-             for (unsigned int i=0; i<nl_d; i++){
-                 for (unsigned int j=0; j<oversize[1]; j++)
-                     (*JlRZ)(i,2*oversize[1]-j)+= (*JlRZ)(i,j) ;
-             } 
-             for (unsigned int i=0; i<nl_p; i++){
-                 for (unsigned int j=0; j<oversize[1]; j++)
-                     (*JtRZ)(i,2*oversize[1]-j)+= (*JtRZ)(i,j) ;
-             }
              if (imode==0){
+                 for (unsigned int i=0; i<nl_d; i++){
+                     for (unsigned int j=0; j<oversize[1]; j++)
+                         (*JlRZ)(i,2*oversize[1]-j)+= (*JlRZ)(i,j) ;
+                 }
+                 for (unsigned int i=0; i<nl_p; i++){
+                     for (unsigned int j=0; j<oversize[1]; j++)
+                         (*JtRZ)(i,2*oversize[1]-j)+= (*JtRZ)(i,j) ;
+                 }
                  for (unsigned int i=0; i<nl_p; i++){
                       for (unsigned int j=0; j<oversize[1]; j++)
                          (*JrRZ)(i,2*oversize[1]+1-j)+= (*JrRZ)(i,j) ;
@@ -873,25 +873,42 @@ void ElectroMagn3DRZ::fold_fields(bool diag_flag)
                  }
              }
              else{
+                 for (unsigned int i=0; i<nl_d; i++){
+                     for (unsigned int j=0; j<oversize[1]; j++)
+                         (*JlRZ)(i,2*oversize[1]-j)-= (*JlRZ)(i,j) ;
+                 }
+                 for (unsigned int i=0; i<nl_p; i++){
+                     for (unsigned int j=0; j<oversize[1]; j++)
+                         (*JtRZ)(i,2*oversize[1]-j)-= (*JtRZ)(i,j) ;
+                 }
                  for (unsigned int i=0; i<nl_p; i++){
                       for (unsigned int j=0; j<oversize[1]+1; j++)
-                         (*JrRZ)(i,2*oversize[1]+1-j)+= (*JrRZ)(i,j) ;
+                         (*JrRZ)(i,2*oversize[1]+1-j)-= (*JrRZ)(i,j) ;
                  }
              }
          }
      
          if(diag_flag){
+           
              //Loop on modes for rho
              for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
                  cField2D* rhoRZ   = static_cast<cField2D*>(rho_RZ_[imode]);
-                 for (unsigned int i=0; i<nl_p; i++){
-                     for (unsigned int j=0; j<oversize[1]; j++)
-                         (*rhoRZ)(i,2*oversize[1]-j)+= (*rhoRZ)(i,j) ;
-                 } 
-             }
+                 if (imode == 0){
+                     for (unsigned int i=0; i<nl_p; i++){
+                         for (unsigned int j=0; j<oversize[1]; j++)
+                             (*rhoRZ)(i,2*oversize[1]-j)+= (*rhoRZ)(i,j) ;
+                     } 
+                 }
+                 else {
+                     for (unsigned int i=0; i<nl_p; i++){
+                         for (unsigned int j=0; j<oversize[1]; j++)
+                             (*rhoRZ)(i,2*oversize[1]-j)-= (*rhoRZ)(i,j) ;
+                     }
 
+                 }
+             }
              //Loop on all modes and species for J_s
-             for (unsigned int ism=0; ism <  n_species*nmodes; ism++){
+             for (unsigned int ism=0; ism < n_species; ism++){
                  JlRZ    = Jl_s[ism];
                  if ( JlRZ != NULL ) {
                      for (unsigned int i=0; i<nl_d; i++){
@@ -914,6 +931,33 @@ void ElectroMagn3DRZ::fold_fields(bool diag_flag)
                              (*JrRZ)(i,2*oversize[1]+1-j)+= (*JrRZ)(i,j) ;
                          (*JrRZ)(i,oversize[1]+1)= -(*JrRZ)(i,oversize[1]) ;
                          
+                     }
+                 }
+             }
+
+             for (unsigned int ism=n_species; ism <  n_species*nmodes; ism++){
+                 JlRZ    = Jl_s[ism];
+                 if ( JlRZ != NULL ) {
+                     for (unsigned int i=0; i<nl_d; i++){
+                         for (unsigned int j=0; j<oversize[1]; j++){
+                             (*JlRZ)(i,2*oversize[1]-j)-= (*JlRZ)(i,j) ;
+                         }
+                     }
+                 }
+                 JtRZ    = Jt_s[ism];
+                 if ( JtRZ != NULL ) {
+                     for (unsigned int i=0; i<nl_p; i++){
+                         for (unsigned int j=0; j<oversize[1]; j++)
+                             (*JtRZ)(i,2*oversize[1]-j)-= (*JtRZ)(i,j) ;
+                     }
+                 }
+                 JrRZ    = Jr_s[ism];
+                 if ( JrRZ != NULL ) {
+                     for (unsigned int i=0; i<nl_p; i++){
+                         for (unsigned int j=0; j<oversize[1]; j++)
+                             (*JrRZ)(i,2*oversize[1]+1-j)-= (*JrRZ)(i,j) ;
+                         //(*JrRZ)(i,oversize[1]+1)= -(*JrRZ)(i,oversize[1]) ;
+
                      }
                  }
              }
@@ -966,7 +1010,7 @@ void ElectroMagn3DRZ::on_axis_fields(bool diag_flag)
              for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
                  cField2D* rhoRZ   = static_cast<cField2D*>(rho_RZ_[imode]); 
                  if (imode ==0){
-                     for (unsigned int ism=0; ism <  n_species*nmodes; ism++){
+                     for (unsigned int ism=0; ism <  n_species; ism++){
                          JtRZ    = Jt_s[ism];
                          if ( JtRZ != NULL ) { 
                              for (unsigned int i=0; i<nl_p; i++){
@@ -983,11 +1027,10 @@ void ElectroMagn3DRZ::on_axis_fields(bool diag_flag)
                  }
                  else if (imode == 1){
                      for (unsigned int i=0; i<nl_p; i++){
-                         for (unsigned int j=0; j<oversize[1]; j++)
-                             (*rhoRZ)(i,2*oversize[1]-j)+= (*rhoRZ)(i,j) ;
+                         (*rhoRZ)(i,oversize[1])= 0.;
                       }
                      //Loop on all modes and species for J_s
-                     for (unsigned int ism=0; ism <  n_species*nmodes; ism++){
+                     for (unsigned int ism=n_species; ism <  2*n_species; ism++){
                          JtRZ    = Jt_s[ism];
                          if ( JtRZ != NULL ) {
                              for (unsigned int i=0; i<nl_p; i++){

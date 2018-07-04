@@ -42,7 +42,6 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch ) :
     if (params.EM_BCs[0][0]=="periodic" || params.hasWindow) {
         x_min = patch->getDomainLocalMin(0);
         x_max = patch->getDomainLocalMax(0);
-        MESSAGE("xmin max");
     }
     else {
         x_min = max( x_min_global, patch->getDomainLocalMin(0) );
@@ -58,7 +57,6 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch ) :
         else {
             y_min = max( y_min_global, patch->getDomainLocalMin(1) );
             y_max = min( y_max_global, patch->getDomainLocalMax(1) );
-        MESSAGE("YMIN MAX");
             y_max2 = y_max * y_max;
             y_min2 = y_min * y_min;
 	}
@@ -75,20 +73,16 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch ) :
         }
     }
 
-    MESSAGE("hey there !");
     // Can be done after parsing
-    MESSAGE(! species->particles->tracked);
     // Check for inconsistencies between EM and particle BCs
     if (! species->particles->tracked) {
         for( unsigned int iDim=0; iDim<(unsigned int)nDim_field; iDim++ ) {
             if ( ((params.EM_BCs[iDim][0]=="periodic")&&(species->boundary_conditions[iDim][0]!="periodic"))  
              ||  ((params.EM_BCs[iDim][1]=="periodic")&&(species->boundary_conditions[iDim][1]!="periodic")) ) {
                 ERROR("For species " << species->name << ", periodic EM "<<"xyz"[iDim]<<"-boundary conditions require particle BCs to be periodic.");
-        MESSAGE("check");    
         }
         }
     }
-    MESSAGE("CHECK");
     // ----------------------------------------------
     // Define the kind of applied boundary conditions
     // ----------------------------------------------
@@ -99,14 +93,12 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch ) :
     } else {
         remove = &remove_particle;
     }
-    MESSAGE("check remove ");
     // Xmin
     if ( species->boundary_conditions[0][0] == "reflective" ) {
         if (patch->isXmin()) bc_xmin = &reflect_particle;
     }
     else if ( species->boundary_conditions[0][0] == "remove" ) {
         if (patch->isXmin()) bc_xmin = remove;
-        MESSAGE("Xmin and max");    
     }
     else if ( species->boundary_conditions[0][0] == "stop" ) {
         if (patch->isXmin()) bc_xmin = &stop_particle;
@@ -126,7 +118,6 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch ) :
     }
     else if ( species->boundary_conditions[0][1] == "remove" ) {
         if (patch->isXmax()) bc_xmax = remove;
-        MESSAGE("Xmin and max");    
     }
     else if ( species->boundary_conditions[0][1] == "stop" ) {
         if (patch->isXmax()) bc_xmax = &stop_particle;
@@ -237,11 +228,9 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch ) :
         //    ERROR( "Ymin boundary condition undefined : " << species->boundary_conditions[1][0]  );
         //}
 
-       MESSAGE(isRZ); 
         // Ymax
          if ( species->boundary_conditions[1][1] == "remove" ) {
             if (patch->isYmax()) bc_ymax = &remove_particle;
-		MESSAGE("Rmax bc");
         }
         else if ( species->boundary_conditions[1][1] == "reflective" ) {
             if (patch->isYmax()) bc_ymax = &refl_particle_rz;

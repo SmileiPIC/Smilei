@@ -46,11 +46,9 @@ void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particl
     double xpn = particles.position(0, ipart) * dl_inv_;
     double r = sqrt (particles.position(1, ipart)*particles.position(1, ipart)+particles.position(2, ipart)*particles.position(2, ipart)) ;
     double rpn = r * dr_inv_;
-    //MESSAGE("rpn "<< rpn);
     exp_m_theta = ( particles.position(1, ipart) - Icpx * particles.position(2, ipart) ) / r ;   //exp(-i theta)
     
     complex<double> exp_mm_theta = 1. ;                                                                          //exp(-i m theta)
-    //MESSAGE("expm "<< exp_m_theta);
 
     // Indexes of the central nodes
     ip_ = round(xpn);
@@ -124,12 +122,6 @@ void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particl
     // Interpolation of Bt^(d,d)
     // -------------------------
     *(BLoc+2*nparts) = std::real (compute( &coeffxd_[1], &coeffyd_[1], BtRZ, id_, jd_));
-    //MESSAGE("Elocx "<< *(ELoc+0*nparts));
-    //MESSAGE("Elocy "<< *(ELoc+1*nparts));
-    //MESSAGE("Elocz "<< *(ELoc+2*nparts));
-    //MESSAGE("Blocx "<< *(BLoc+0*nparts));
-    //MESSAGE("Blocy "<< *(BLoc+1*nparts));
-    //MESSAGE("Blocz "<< *(BLoc+2*nparts));
  
     for (unsigned int imode = 1; imode < nmodes ; imode++){
 
@@ -148,12 +140,6 @@ void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particl
         *(BLoc+0*nparts) += std::real ( compute( &coeffxp_[1], &coeffyd_[1], BlRZ, ip_, jd_) * exp_mm_theta ) ;
         *(BLoc+1*nparts) += std::real ( compute( &coeffxd_[1], &coeffyp_[1], BrRZ, id_, jp_) * exp_mm_theta ) ;
         *(BLoc+2*nparts) += std::real ( compute( &coeffxd_[1], &coeffyd_[1], BtRZ, id_, jd_) * exp_mm_theta ) ;
-        //MESSAGE("Elocx "<< *(ELoc+0*nparts));
-        //MESSAGE("Elocy "<< *(ELoc+1*nparts));
-        //MESSAGE("Elocz "<< *(ELoc+2*nparts));
-        //MESSAGE("Blocx "<< *(BLoc+0*nparts));
-        //MESSAGE("Blocy "<< *(BLoc+1*nparts));
-        //MESSAGE("Blocz "<< *(BLoc+2*nparts));
         
     }
 
@@ -308,12 +294,6 @@ void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particl
         (*JLoc).y += std::real ( compute( &coeffxp_[1], &coeffyd_[1], JrRZ, ip_, jd_) * exp_mm_theta ) ;
         (*JLoc).z += std::real ( compute( &coeffxp_[1], &coeffyp_[1], JtRZ, ip_, jp_) * exp_mm_theta ) ;
         (*RhoLoc) += std::real ( compute( &coeffxp_[1], &coeffyp_[1], RhoRZ, ip_, jp_)* exp_mm_theta ) ;
-        //MESSAGE("Elocx "<< (*ELoc).x);
-        //MESSAGE("Elocy "<< (*ELoc).y);
-        //MESSAGE("Elocz "<< (*ELoc).z);
-        //MESSAGE("Blocx "<<(*BLoc).x);
-        //MESSAGE("Blocy "<<(*BLoc).y);
-        //MESSAGE("Blocz "<<(*BLoc).z);
     }
 
 }
@@ -337,7 +317,6 @@ void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particl
         (*delta)[ipart+0*nparts] = deltax;
         (*delta)[ipart+1*nparts] = deltar;
         (*exp_m_theta_old)[ipart] = exp_m_theta;
-        //MESSAGE("exp_m_theta "<< exp_m_theta);
     }
 
 }

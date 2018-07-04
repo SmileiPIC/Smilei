@@ -59,7 +59,7 @@ public:
             vecDiagnostics.push_back( new DiagnosticScreen(params, smpi, vecPatches(0), n_diag_screen) );
         }
         
-MESSAGE ("Glob diag");   
+//MESSAGE ("Glob diag");   
         return vecDiagnostics;
 
  } // END createGlobalDiagnostics
@@ -87,7 +87,7 @@ MESSAGE ("Glob diag");
             vecDiagnostics.push_back( new DiagnosticPerformances(params, smpi) );
         }
         
-MESSAGE("local diag");
+//MESSAGE("local diag");
         return vecDiagnostics;
 
     } // END createLocalDiagnostics
