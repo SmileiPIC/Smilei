@@ -190,7 +190,8 @@ public:
 
     std::vector<unsigned int> number_of_domain;
     std::vector< std::vector<int> > offset_map;
-    std::vector< std::vector<int> > map_rank;
+    std::vector< std::vector< std::vector<int> > > map_rank;
+    std::vector<int> coordinates;
 
     //! number of cells in every direction of the global domain
     std::vector<unsigned int> n_space_global;
@@ -281,9 +282,16 @@ public:
     //! every for the standard pic timeloop output
     unsigned int print_every;
 
-    // PXR parameters
+    // Double grids parameters (particles and fields)
     std::vector<unsigned int> global_factor;
+    void uncoupled_decomposition();
+    void uncoupled_decomposition_1D();
+    void uncoupled_decomposition_2D();
+    void uncoupled_decomposition_3D();
+    void print_uncoupled_params();
     bool uncoupled_grids;
+
+    // PXR parameters
     bool  is_spectral=false ;
     bool  is_pxr=false ;
     int   norderx = 2;

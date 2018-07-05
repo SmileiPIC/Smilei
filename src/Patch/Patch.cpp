@@ -300,48 +300,50 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
 
     for ( int xDom = 0 ; xDom < params.number_of_domain[0] ; xDom++ )
         for ( int yDom = 0 ; yDom < params.number_of_domain[1] ; yDom++ ) {
-            if (params.map_rank[xDom][yDom] == rk ) {
-                Pcoordinates[0] = xDom;
-                Pcoordinates[1] = yDom;
-                min_local[0] =  params.offset_map[0][xDom]                           * params.cell_length[0];
-                max_local[0] = (params.offset_map[0][xDom]+params.n_space_domain[0]) * params.cell_length[0];
-                min_local[1] =  params.offset_map[1][yDom]                           * params.cell_length[1];
-                max_local[1] = (params.offset_map[1][yDom]+params.n_space_domain[1]) * params.cell_length[1];
+            for ( int zDom = 0 ; zDom < params.number_of_domain[2] ; zDom++ ) {
 
-                cell_starting_global_index[0] = params.offset_map[0][xDom];
-                cell_starting_global_index[1] = params.offset_map[1][yDom];
+                if (params.map_rank[xDom][yDom][zDom] == rk ) {
+                    Pcoordinates[0] = xDom;
+                    Pcoordinates[1] = yDom;
+                    min_local[0] =  params.offset_map[0][xDom]                           * params.cell_length[0];
+                    max_local[0] = (params.offset_map[0][xDom]+params.n_space_domain[0]) * params.cell_length[0];
+                    min_local[1] =  params.offset_map[1][yDom]                           * params.cell_length[1];
+                    max_local[1] = (params.offset_map[1][yDom]+params.n_space_domain[1]) * params.cell_length[1];
 
-                if (xDom>0)
-                    MPI_neighbor_[0][0] = params.map_rank[xDom-1][yDom];
-                else if (params.EM_BCs[0][0]=="periodic") {
-                    MPI_neighbor_[0][0] = params.map_rank[xDom-1+params.number_of_domain[0]][yDom];
-                }
-                else 
-                    MPI_neighbor_[0][0] = MPI_PROC_NULL;
+                    cell_starting_global_index[0] = params.offset_map[0][xDom];
+                    cell_starting_global_index[1] = params.offset_map[1][yDom];
 
-                if (xDom<params.number_of_domain[0]-1)
-                    MPI_neighbor_[0][1] = params.map_rank[xDom+1][yDom];
-                else if (params.EM_BCs[0][1]=="periodic")
-                    MPI_neighbor_[0][1] = params.map_rank[(xDom+1)%params.number_of_domain[0]][yDom];
-                else 
-                    MPI_neighbor_[0][1] = MPI_PROC_NULL;
+                    if (xDom>0)
+                        MPI_neighbor_[0][0] = params.map_rank[xDom-1][yDom][zDom];
+                    else if (params.EM_BCs[0][0]=="periodic") {
+                        MPI_neighbor_[0][0] = params.map_rank[xDom-1+params.number_of_domain[0]][yDom][zDom];
+                    }
+                    else 
+                        MPI_neighbor_[0][0] = MPI_PROC_NULL;
+
+                    if (xDom<params.number_of_domain[0]-1)
+                        MPI_neighbor_[0][1] = params.map_rank[xDom+1][yDom][zDom];
+                    else if (params.EM_BCs[0][1]=="periodic")
+                        MPI_neighbor_[0][1] = params.map_rank[(xDom+1)%params.number_of_domain[0]][yDom][zDom];
+                    else 
+                        MPI_neighbor_[0][1] = MPI_PROC_NULL;
                                
-                if (yDom>0)
-                    MPI_neighbor_[1][0] = params.map_rank[xDom][yDom-1];
-                else if (params.EM_BCs[1][0]=="periodic") {
-                    //cout << "blabla " << yDom << " " << (yDom-1+params.number_of_domain[1])%params.number_of_domain[1] << endl;
-                    MPI_neighbor_[1][0] = params.map_rank[xDom][yDom-1+params.number_of_domain[1]];
-                }
-                else 
-                    MPI_neighbor_[1][0] = MPI_PROC_NULL;
+                    if (yDom>0)
+                        MPI_neighbor_[1][0] = params.map_rank[xDom][yDom-1][zDom];
+                    else if (params.EM_BCs[1][0]=="periodic") {
+                        //cout << "blabla " << yDom << " " << (yDom-1+params.number_of_domain[1])%params.number_of_domain[1] << endl;
+                        MPI_neighbor_[1][0] = params.map_rank[xDom][yDom-1+params.number_of_domain[1]][zDom];
+                    }
+                    else 
+                        MPI_neighbor_[1][0] = MPI_PROC_NULL;
 
-                if (yDom<params.number_of_domain[1]-1)
-                    MPI_neighbor_[1][1] = params.map_rank[xDom][yDom+1];
-                else if (params.EM_BCs[1][1]=="periodic")
-                    MPI_neighbor_[1][1] = params.map_rank[xDom][(yDom+1)%params.number_of_domain[1]];
-                else 
-                    MPI_neighbor_[1][1] = MPI_PROC_NULL;
-                
+                    if (yDom<params.number_of_domain[1]-1)
+                        MPI_neighbor_[1][1] = params.map_rank[xDom][yDom+1][zDom];
+                    else if (params.EM_BCs[1][1]=="periodic")
+                        MPI_neighbor_[1][1] = params.map_rank[xDom][(yDom+1)%params.number_of_domain[1]][zDom];
+                    else 
+                        MPI_neighbor_[1][1] = MPI_PROC_NULL;
+                }                
             }
         }
 

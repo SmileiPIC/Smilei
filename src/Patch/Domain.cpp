@@ -152,7 +152,8 @@ int Domain::hrank_global_domain( int hindex, Params& params, VectorPatch& vecPat
     int rank(0);
     std::vector<unsigned int> patch_coordinates = vecPatches.domain_decomposition_->getDomainCoordinates( hindex );
     std::vector<int> rank_coordinates;
-    rank_coordinates.resize( params.nDim_field );
+    //rank_coordinates.resize( params.nDim_field );
+    rank_coordinates.resize( 3, 0 );
 
     for ( int iDim = 0 ; iDim < params.nDim_field ; iDim++ ) {
         int min =  patch_coordinates[iDim]    * params.n_space[iDim];
@@ -166,7 +167,7 @@ int Domain::hrank_global_domain( int hindex, Params& params, VectorPatch& vecPat
         rank_coordinates[iDim] = idomain-1;
 
     }
-    rank = params.map_rank[ rank_coordinates[0] ][ rank_coordinates[1] ];
+    rank = params.map_rank[ rank_coordinates[0] ][ rank_coordinates[1] ][ rank_coordinates[2] ];
 
     return rank;
 }
