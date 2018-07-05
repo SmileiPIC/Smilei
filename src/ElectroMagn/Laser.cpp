@@ -274,6 +274,10 @@ void LaserProfileSeparable::createFields(Params& params, Patch* patch)
 
 void LaserProfileSeparable::initFields(Params& params, Patch* patch)
 {
+    std::vector<unsigned int> n_space(params.n_space);
+    if (params.uncoupled_grids)
+        n_space = params.n_space_domain;
+
     if( params.geometry=="1Dcartesian" ) {
         
         // Assign profile (only one point in 1D)
@@ -284,8 +288,7 @@ void LaserProfileSeparable::initFields(Params& params, Patch* patch)
         
     } else if( params.geometry=="2Dcartesian" ) {
         
-        //unsigned int ny_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
-        unsigned int ny_p = params.n_space_domain[1]+1+2*params.oversize[1];
+        unsigned int ny_p = n_space[1]+1+2*params.oversize[1];
         unsigned int ny_d = ny_p+1;
         double dy = params.cell_length[1];
         vector<unsigned int> dim(1);
@@ -302,7 +305,7 @@ void LaserProfileSeparable::initFields(Params& params, Patch* patch)
 
     } else if( params.geometry=="3drz") {
         
-        unsigned int nr_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
+        unsigned int nr_p = n_space[1]+1+2*params.oversize[1];
         unsigned int nr_d = nr_p+1;
         double dr = params.cell_length[1];
         vector<unsigned int> dim(1);
@@ -318,11 +321,9 @@ void LaserProfileSeparable::initFields(Params& params, Patch* patch)
   
     } else if( params.geometry=="3Dcartesian" ) {
         
-        //unsigned int ny_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
-        unsigned int ny_p = params.n_space_domain[1]+1+2*params.oversize[1];
+        unsigned int ny_p = n_space[1]+1+2*params.oversize[1];
         unsigned int ny_d = ny_p+1;
-        //unsigned int nz_p = params.n_space[2]*params.global_factor[2]+1+2*params.oversize[2];
-        unsigned int nz_p = params.n_space_domain[2]+1+2*params.oversize[2];
+        unsigned int nz_p = n_space[2]+1+2*params.oversize[2];
         unsigned int nz_d = nz_p+1;
         double dy = params.cell_length[1];
         double dz = params.cell_length[2];
