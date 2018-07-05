@@ -1035,36 +1035,43 @@ void Params::print_uncoupled_params()
 
 void Params::uncoupled_decomposition_1D()
 {
-//    int rk(0);
-//    int sz(1);
-//
-//    MPI_Comm_rank( MPI_COMM_WORLD, &rk );
-//    MPI_Comm_size( MPI_COMM_WORLD, &sz );
-//
-//    // Number of domain in 2D
-//    if (number_of_domain[0]==0) {
-//        number_of_domain[0] = sz;
-//    }
-//    //cout << "ndomain : " << number_of_domain[0] << endl;
-//
-//    map_rank.resize( number_of_domain[0] );
-//
-//    int new_rk(0);
-//    // Build the map of MPI ranks in 2D
-//    for ( int xDom = 0 ; xDom < number_of_domain[0] ; xDom++ ) {
-//        map_rank[xDom] = new_rk;
-//        new_rk++;
-//    }
-//
-//    coordinates.resize( nDim_field );
-//    // Compute coordinates of current patch in 2D
-//    for ( int xDom = 0 ; xDom < number_of_domain[0] ; xDom++ )
-//        if (map_rank[xDom] == rk ) {
-//            //cout << xDom << " " << yDom << endl;
-//            coordinates[0] = xDom;
-//        }
-//
-//    //cout << "coords = " << coordinates[0] << " " << coordinates[1] << endl;
+    int rk(0);
+    int sz(1);
+
+    MPI_Comm_rank( MPI_COMM_WORLD, &rk );
+    MPI_Comm_size( MPI_COMM_WORLD, &sz );
+
+    // Number of domain in 1D
+    number_of_domain[0] = sz;
+
+    map_rank.resize( number_of_domain[0] );
+    for ( int iDim = 0 ; iDim < number_of_domain[0] ; iDim++ ) {
+        map_rank[iDim].resize( number_of_domain[1] );
+        for ( int jDim = 0 ; jDim < number_of_domain[1] ; jDim++ ) {
+            map_rank[iDim][jDim].resize( number_of_domain[2] );
+        }
+    }
+
+    int new_rk(0);
+    // Build the map of MPI ranks in 1D
+    for ( int xDom = 0 ; xDom < number_of_domain[0] ; xDom++ )
+        for ( int yDom = 0 ; yDom < number_of_domain[1] ; yDom++ ) {
+            for ( int zDom = 0 ; zDom < number_of_domain[2] ; zDom++ ) {
+                map_rank[xDom][yDom][zDom] = new_rk;
+                new_rk++;
+            }
+        }
+
+    coordinates.resize( nDim_field );
+    // Compute coordinates of current patch in 1D
+    for ( int xDom = 0 ; xDom < number_of_domain[0] ; xDom++ )
+        for ( int yDom = 0 ; yDom < number_of_domain[1] ; yDom++ ) {
+            for ( int zDom = 0 ; zDom < number_of_domain[2] ; zDom++ ) {
+                if (map_rank[xDom][yDom][zDom] == rk ) {
+                    coordinates[0] = xDom;
+                }
+            }
+        }
 }
 
 
