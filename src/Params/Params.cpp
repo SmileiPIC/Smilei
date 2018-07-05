@@ -971,6 +971,15 @@ void Params::uncoupled_decomposition()
     n_space_domain.resize(3,1);
     number_of_domain.resize( 3, 1 );
 
+    int rk(0);
+    MPI_Comm_rank( MPI_COMM_WORLD, &rk );
+    if (rk==0) {
+        cout << "Number of patches : ";
+        for ( int iDim  = 0 ; iDim < nDim_field ; iDim++ )
+            cout << number_of_patches[iDim] << " ";
+        cout << endl;
+    }
+
     if (nDim_field==1)
         uncoupled_decomposition_1D();
     else if (nDim_field==2)
@@ -1147,31 +1156,38 @@ void Params::uncoupled_decomposition_3D()
     MPI_Comm_size( MPI_COMM_WORLD, &sz );
 
     // Number of domain in 3D
+    // Decomposition in 2 times, X and larger side
     double tmp(0.);
-    tmp  = number_of_patches[0] / (number_of_patches[1]*number_of_patches[2]);
+    tmp  = (double)number_of_patches[0] / (double)(max(number_of_patches[1],number_of_patches[2]));
     number_of_domain[0] = min( sz, max(1, (int)sqrt ( (double)sz*tmp*tmp ) ) );
-    tmp = (int)( (double)sz / (double)number_of_domain[0] );
-    double tmp2 = tmp / number_of_patches[2];
-    number_of_domain[1] = min( sz, max(1, (int)sqrt ( (double)sz*tmp2*tmp2 ) ) );
-    number_of_domain[2] = (int)( (double)sz / (double)number_of_domain[0] / (double)number_of_domain[1] );
-
+    int rest = (int)(sz / number_of_domain[0]);
+    while ( number_of_domain[0]*rest != sz ) {
+        if (number_of_domain[0]>=rest ) {
+            number_of_domain[0]++;
+            rest = (int)(sz / number_of_domain[0]);
+        }
+        else {
+            rest++;
+            number_of_domain[0] = (int)(sz / rest);
+        }
+    }
+    // then the 2 last sides
+    double tmp2 = number_of_patches[1] / number_of_patches[2];
+    number_of_domain[1] = min( rest, max(1, (int)sqrt ( (double)rest*tmp2*tmp2 ) ) );
+    number_of_domain[2] = (int)( (double)rest / (double)number_of_domain[1] );
+    while ( number_of_domain[1]*number_of_domain[2] != rest ) {
+        if (number_of_domain[1]>=number_of_domain[2] ) {
+            number_of_domain[1]++;
+            number_of_domain[2] = (int)(rest / number_of_domain[1]);
+        }
+        else {
+            rest++;
+            number_of_domain[1] = (int)(rest / number_of_domain[2]);
+        }
+    }
     if (number_of_domain[0]*number_of_domain[1]*number_of_domain[2] != sz ) 
         ERROR( "Decomposition à affiner : " << number_of_domain[0] << " " << number_of_domain[1] << " " << number_of_domain[2] );
 
-    //while ( number_of_domain[0]*number_of_domain[1]*number_of_domain[2] != sz ) {
-    //
-    //    if (number_of_domain[0]>=number_of_domain[1] ) {
-    //        number_of_domain[0]++;
-    //        number_of_domain[1] = (int)(sz / number_of_domain[0]);
-    //    }
-    //
-    //    else {
-    //        number_of_domain[1]++;
-    //        number_of_domain[0] = (int)(sz / number_of_domain[1]);
-    //    }
-    //
-    //}
-    //cout << "ndomain : " << number_of_domain[0] << " " << number_of_domain[1] << " " << number_of_domain[2] << endl;
 
     map_rank.resize( number_of_domain[0] );
     for ( int iDim = 0 ; iDim < number_of_domain[0] ; iDim++ ) {
