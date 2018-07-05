@@ -13,27 +13,14 @@ public:
     //! Creator for Solver
     Solver2D(Params &params) : Solver(params) {
         
-        //nx_p = params.n_space[0] * params.global_factor[0]+1+2*params.oversize[0];
-        //nx_d = params.n_space[0] * params.global_factor[0]+2+2*params.oversize[0];
-        //ny_p = params.n_space[1] * params.global_factor[1]+1+2*params.oversize[1];
-        //ny_d = params.n_space[1] * params.global_factor[1]+2+2*params.oversize[1];
+        std::vector<unsigned int> n_space(params.n_space);
+        if (params.uncoupled_grids)
+            n_space = params.n_space_domain;
 
-        unsigned int global_factor(1);
-        for ( unsigned int iDim = 0 ; iDim < params.nDim_field ; iDim++ )
-            global_factor *= params.global_factor[iDim];
-
-        if (global_factor==1) {
-            nx_p = params.n_space[0] +1+2*params.oversize[0];
-            nx_d = params.n_space[0] +2+2*params.oversize[0];
-            ny_p = params.n_space[1] +1+2*params.oversize[1];
-            ny_d = params.n_space[1] +2+2*params.oversize[1];
-        }
-        else {
-            nx_p = params.n_space_domain[0] +1+2*params.oversize[0];
-            nx_d = params.n_space_domain[0] +2+2*params.oversize[0];
-            ny_p = params.n_space_domain[1] +1+2*params.oversize[1];
-            ny_d = params.n_space_domain[1] +2+2*params.oversize[1];
-        }
+        nx_p = n_space[0] +1+2*params.oversize[0];
+        nx_d = n_space[0] +2+2*params.oversize[0];
+        ny_p = n_space[1] +1+2*params.oversize[1];
+        ny_d = n_space[1] +2+2*params.oversize[1];
 
         dt = params.timestep;
         dt_ov_dx = params.timestep / params.cell_length[0];

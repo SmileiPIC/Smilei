@@ -446,6 +446,7 @@ namelist("")
         WARNING( "Resources allocated "<<(smpi->getSize()*smpi->getOMPMaxThreads())<<" underloaded regarding the total number of patches "<<tot_number_of_patches );
 #endif
 
+    PyTools::extract( "uncoupled_grids", uncoupled_grids, "Main" );
     global_factor.resize( nDim_field, 1 );
     PyTools::extract( "global_factor", global_factor, "Main" );
     norder.resize(nDim_field,1);
@@ -674,13 +675,8 @@ void Params::compute()
 
     n_space_domain.resize(0);
 
-    unsigned int factor(1);
-    for ( unsigned int iDim = 0 ; iDim < nDim_field ; iDim++ )
-        factor *= global_factor[iDim];
-
-
     // New_DD 
-    if (factor!=1) {
+    if (uncoupled_grids) {
         n_space_domain.resize(3,1);
         int rk(0);
         MPI_Comm_rank( MPI_COMM_WORLD, &rk );

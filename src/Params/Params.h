@@ -283,6 +283,7 @@ public:
 
     // PXR parameters
     std::vector<unsigned int> global_factor;
+    bool uncoupled_grids;
     bool  is_spectral=false ;
     bool  is_pxr=false ;
     int   norderx = 2;

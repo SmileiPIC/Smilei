@@ -184,6 +184,7 @@ class Main(SmileiSingleton):
     timestep_over_CFL = None
 
     # PXR tuning
+    uncoupled_grids = False
     global_factor = []
     norder = []
     is_spectral = False

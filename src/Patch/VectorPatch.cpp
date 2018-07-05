@@ -612,13 +612,8 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
     }
     timers.syncField.update(  params.printNow( itime ) );
 
-    unsigned int global_factor(1);
-    for ( unsigned int iDim = 0 ; iDim < params.nDim_field ; iDim++ )
-        global_factor *= params.global_factor[iDim];
-    
     //#ifdef _PICSAR
-    if (   (global_factor != 1) && (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
-    //if ( (params.is_spectral) && (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
+    if ( (params.uncoupled_grids) && (itime!=0) && ( time_dual > params.time_fields_frozen ) ) { // uncoupled_grids = true -> is_spectral = true 
         timers.syncField.restart();
         if (params.is_spectral)
             SyncVectorPatch::finalizeexchangeE( params, (*this) );
@@ -691,13 +686,8 @@ void VectorPatch::solveEnvelope(Params& params, SimWindow* simWindow, int itime,
 void VectorPatch::finalize_sync_and_bc_fields(Params& params, SmileiMPI* smpi, SimWindow* simWindow,
                            double time_dual, Timers &timers, int itime)
 {
-    unsigned int global_factor(1);
-    for ( unsigned int iDim = 0 ; iDim < params.nDim_field ; iDim++ )
-        global_factor *= params.global_factor[iDim];
-
     //#ifndef _PICSAR
-    //if ( (!params.is_spectral) && (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
-    if (   (global_factor == 1)  && (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
+    if ( (!params.uncoupled_grids) && (itime!=0) && ( time_dual > params.time_fields_frozen ) ) { // uncoupled_grids = true -> is_spectral = true 
         if ( params.geometry != "3drz" ) {
             timers.syncField.restart();
             SyncVectorPatch::finalizeexchangeB( params, (*this) );

@@ -23,9 +23,13 @@ void PXR_Solver3D_GPSTD::coupling( Params &params, ElectroMagn* EMfields )
     int ov0,ov1,ov2;
     // unable to convert unsigned int to an iso_c_binding supported type 
 
-    n0=(int) (1 +  params.n_space[0]*params.global_factor[0]);
-    n1=(int) (1 +  params.n_space[1]*params.global_factor[1]);
-    n2=(int) (1 +  params.n_space[2]*params.global_factor[2]);
+    std::vector<unsigned int> n_space(params.n_space);
+    if (params.uncoupled_grids)
+        n_space = params.n_space_domain;
+
+    n0=(int) (1 + n_space[0]);
+    n1=(int) (1 + n_space[1]);
+    n2=(int) (1 + n_space[2]);
 
     ov0=(int) params.oversize[0];
     ov1=(int) params.oversize[1];

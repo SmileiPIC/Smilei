@@ -257,12 +257,8 @@ int main (int argc, char* argv[])
 
 
     Domain domain( params );
-    unsigned int global_factor(1);
     //#ifdef _PICSAR
-    for ( unsigned int iDim = 0 ; iDim < params.nDim_field ; iDim++ )
-        global_factor *= params.global_factor[iDim];
-
-    if (global_factor!=1) {
+    if (params.uncoupled_grids) {
         domain.build( params, &smpi, vecPatches, openPMD );
     }
     //#endif
@@ -291,7 +287,7 @@ int main (int argc, char* argv[])
     // ------------------------------------------------------------------
     //                     HERE STARTS THE PIC LOOP
     // ------------------------------------------------------------------
-    if (global_factor!=1) {
+    if (params.uncoupled_grids) {
         domain.identify_additional_patches( &smpi, vecPatches, params );
         domain.identify_missing_patches( &smpi, vecPatches, params );
     }
@@ -376,13 +372,13 @@ int main (int argc, char* argv[])
 
             // solve Maxwell's equations
             //#ifndef _PICSAR
-            if ( global_factor==1 ) {
+            if (!params.uncoupled_grids) {
                 if( time_dual > params.time_fields_frozen ) {
                     vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers );
                 }
             }
             //#else
-            else { //if ( global_factor!=1 ) {
+            else { //if ( params.uncoupled_grids ) {
                 if( time_dual > params.time_fields_frozen ) {
                     SyncCartesianPatch::patchedToCartesian( vecPatches, domain, params, &smpi, timers, itime );
                     domain.solveMaxwell( params, simWindow, itime, time_dual, timers);
@@ -464,7 +460,7 @@ int main (int argc, char* argv[])
     // ------------------------------
     //  Cleanup & End the simulation
     // ------------------------------
-    if (global_factor!=1)
+    if (params.uncoupled_grids)
         domain.clean();
     vecPatches.close( &smpi );
     smpi.barrier(); // Don't know why but sync needed by HDF5 Phasespace managment

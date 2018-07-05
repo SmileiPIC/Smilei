@@ -12,12 +12,17 @@ class Solver3D : public Solver
 public:
     //! Creator for Solver
     Solver3D(Params &params) : Solver(params) {
-	nx_p = params.n_space[0] * params.global_factor[0]+1+2*params.oversize[0];
-	nx_d = params.n_space[0] * params.global_factor[0]+2+2*params.oversize[0];
-	ny_p = params.n_space[1] * params.global_factor[1]+1+2*params.oversize[1];
-	ny_d = params.n_space[1] * params.global_factor[1]+2+2*params.oversize[1];
-	nz_p = params.n_space[2] * params.global_factor[2]+1+2*params.oversize[2];
-	nz_d = params.n_space[2] * params.global_factor[2]+2+2*params.oversize[2];
+
+        std::vector<unsigned int> n_space(params.n_space);
+        if (params.uncoupled_grids)
+            n_space = params.n_space_domain;
+        
+	nx_p = n_space[0] +1+2*params.oversize[0];
+	nx_d = n_space[0] +2+2*params.oversize[0];
+	ny_p = n_space[1] +1+2*params.oversize[1];
+	ny_d = n_space[1] +2+2*params.oversize[1];
+	nz_p = n_space[2] +1+2*params.oversize[2];
+	nz_d = n_space[2] +2+2*params.oversize[2];
 
         dt = params.timestep;
 	dt_ov_dx = params.timestep / params.cell_length[0];

@@ -505,8 +505,8 @@ void PatchRZ::createType2( Params& params )
     if (ntype_[0][0][0] != MPI_DATATYPE_NULL)
         return;
 
-    int nx0 = params.n_space[0]*params.global_factor[0] + 1 + 2*params.oversize[0];
-    int ny0 = params.n_space[1]*params.global_factor[1] + 1 + 2*params.oversize[1];
+    int nx0 = params.n_space_domain[0] + 1 + 2*params.oversize[0];
+    int ny0 = params.n_space_domain[1] + 1 + 2*params.oversize[1];
     
     // MPI_Datatype ntype_[nDim][primDual][primDual]
     int nx, ny;

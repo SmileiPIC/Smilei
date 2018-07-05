@@ -287,7 +287,6 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
             if ( vecPatch(ipatch)->cell_starting_global_index[i] <= cell_starting_global_index[i] )
                 cell_starting_global_index[i] = vecPatch(ipatch)->cell_starting_global_index[i];
         }
-        //Pcoordinates[i] = (cell_starting_global_index[i]+params.oversize[i]) / params.n_space[i] / params.global_factor[i];
         
         center[i] = (min_local[i]+max_local[i])*0.5;
         radius += pow(max_local[i] - center[i] + params.cell_length[i], 2);

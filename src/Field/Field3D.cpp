@@ -238,9 +238,9 @@ void Field3D::put( Field* outField, Params &params, SmileiMPI* smpi, Patch* this
 
     std::vector<unsigned int> dual =  this->isDual_;
 
-    int iout = thisPatch->Pcoordinates[0]*params.n_space[0] - outPatch->Pcoordinates[0]*params.n_space[0]*params.global_factor[0] ;
-    int jout = thisPatch->Pcoordinates[1]*params.n_space[1] - outPatch->Pcoordinates[1]*params.n_space[1]*params.global_factor[1] ;
-    int kout = thisPatch->Pcoordinates[2]*params.n_space[2] - outPatch->Pcoordinates[2]*params.n_space[2]*params.global_factor[2] ;
+    int iout = thisPatch->Pcoordinates[0]*params.n_space[0] - ( outPatch->getCellStartingGlobalIndex(0) + params.oversize[0] ) ;
+    int jout = thisPatch->Pcoordinates[1]*params.n_space[1] - ( outPatch->getCellStartingGlobalIndex(1) + params.oversize[1] ) ;
+    int kout = thisPatch->Pcoordinates[2]*params.n_space[2] - ( outPatch->getCellStartingGlobalIndex(2) + params.oversize[2] ) ;
 
     for ( unsigned int i = 0 ; i < this->dims_[0] ; i++ ) {
         for ( unsigned int j = 0 ; j < this->dims_[1] ; j++ ) {
@@ -259,9 +259,9 @@ void Field3D::get( Field* inField, Params &params, SmileiMPI* smpi, Patch* inPat
 
     std::vector<unsigned int> dual =  in3D->isDual_;
 
-    int iin = thisPatch->Pcoordinates[0]*params.n_space[0] - inPatch->Pcoordinates[0]*params.n_space[0]*params.global_factor[0] ;
-    int jin = thisPatch->Pcoordinates[1]*params.n_space[1] - inPatch->Pcoordinates[1]*params.n_space[1]*params.global_factor[1] ;
-    int kin = thisPatch->Pcoordinates[2]*params.n_space[2] - inPatch->Pcoordinates[2]*params.n_space[2]*params.global_factor[2] ;
+    int iin = thisPatch->Pcoordinates[0]*params.n_space[0] - ( inPatch->getCellStartingGlobalIndex(0) + params.oversize[0] );
+    int jin = thisPatch->Pcoordinates[1]*params.n_space[1] - ( inPatch->getCellStartingGlobalIndex(1) + params.oversize[1] );
+    int kin = thisPatch->Pcoordinates[2]*params.n_space[2] - ( inPatch->getCellStartingGlobalIndex(2) + params.oversize[2] );
 
     for ( unsigned int i = 0 ; i < this->dims_[0] ; i++ ) {
         for ( unsigned int j = 0 ; j < this->dims_[1] ; j++ ) {
