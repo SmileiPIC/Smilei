@@ -723,5 +723,7 @@ class Diagnostic(object):
 				# Output using the diag number
 				#vtk.WriteImage(arr, origin, extent, spacings, fileprefix+"_"+str(itime)+".pvti", numberOfPieces)
 				# Output using the timestep number
-				vtk.WriteImage(arr, origin, extent, spacings, fileprefix+"_{:08d}.pvti".format(int(self._timesteps[itime])), numberOfPieces)
+				filename = fileprefix+"_{:08d}.pvti".format(int(self._timesteps[itime]))
+				if self._verbose: print("* Processing {}".format(filename))
+				vtk.WriteImage(arr, origin, extent, spacings, filename, numberOfPieces)
 			if self._verbose: print("Successfully exported 3D plot to VTK, folder='"+self._exportDir)
