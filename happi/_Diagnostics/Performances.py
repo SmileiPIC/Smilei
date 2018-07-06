@@ -399,7 +399,7 @@ class Performances(Diagnostic):
 			# Loop over the requested time steps
 			for istep,step in enumerate(self._timesteps):
 
-				if self._verbose: print("Step: {}, file {}_{}.pvti".format(istep, fileprefix, step))
+				if self._verbose: print("Step: {}, file {}_{}.pvti".format(istep, fileprefix, int(step)))
 
 				raw = self._getDataAtTime(self._timesteps[istep])
 				shape = list(raw.shape)
@@ -411,7 +411,7 @@ class Performances(Diagnostic):
 
 				data = self._np.ascontiguousarray(raw.flatten(order='F'), dtype='float32')
 				arr = vtk.Array(data, self._title)
-				vtk.WriteImage(arr, origin, extent, spacings, fileprefix+"_{:08d}.pvti".format(step), numberOfPieces)
+				vtk.WriteImage(arr, origin, extent, spacings, fileprefix+"_{:08d}.pvti".format(int(step)), numberOfPieces)
 
 			if self._verbose: print("Successfully exported to VTK, folder='"+self._exportDir)
 
