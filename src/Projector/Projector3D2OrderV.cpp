@@ -237,9 +237,9 @@ void Projector3D2OrderV::operator() (double* rhoj, Particles &particles, unsigne
     kp -= k_domain_begin + 2;
 
     for (unsigned int i=0 ; i<5 ; i++) {
-        iloc = (i+ip) * nyz;
+        iloc = (i+ip) * b_dim[2]*b_dim[1];
         for (unsigned int j=0 ; j<5 ; j++) {
-            jloc = (jp+j) * nz;
+            jloc = (jp+j) * b_dim[2];
             for (unsigned int k=0 ; k<5 ; k++) {
                 rhoj[iloc+jloc+kp+k] += charge_weight * Sx1[i]*Sy1[j]*Sz1[k];
             }
