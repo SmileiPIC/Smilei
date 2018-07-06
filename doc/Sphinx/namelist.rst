@@ -153,6 +153,21 @@ The block ``Main`` is **mandatory** and has the following syntax::
   See :doc:`parallelization`.
 
 
+.. py:data:: patch_decomposition
+
+  :default: 'hilbert'
+
+  The patches distribution. ``"cartesian"`` is available too.
+  See :doc:`parallelization`.
+
+
+.. py:data:: patch_orientation
+
+  Only for a ``"cartesian"`` patches distribution.
+  ``"YX"`` and ``"ZYX"`` respectively available for 2D and 3D simulations.
+  See :doc:`parallelization`.
+
+
 .. py:data:: clrw
 
   :default: set to minimize the memory footprint of the particles pusher, especially interpolation and projection processes
@@ -2435,7 +2450,7 @@ for instance::
   A list of strings indicating the particle attributes to be written in the output.
   The attributes may be the particles' spatial coordinates (``"x"``, ``"y"``, ``"z"``),
   their momenta (``"px"``, ``"py"``, ``"pz"``), their electrical charge (``"q"``),
-  their statistical weight (``"w"``), their quantum parameter
+  their statistical weight (``"weight"``), their quantum parameter
   (``"chi"``, only for species with radiation losses) or the fields interpolated
   at their  positions (``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"``, ``"Bz"``).
 
