@@ -108,7 +108,7 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, double 
 
         #pragma omp simd
         for (int ipart=0 ; ipart<np_computed; ipart++ ){
-            compute_distances( particles, npart_total, ipart, istart0, ipart_ref, deltaold, iold, Sx0_buff_vect, Sy0_buff_vect, Sz0_buff_vect, DSx, DSy, DSz );
+            compute_distances( particles, npart_total, ipart, istart0, ipart_ref, deltaold, iold, DSx, DSy, DSz );
             charge_weight[ipart] = (double)(particles.charge(ivect+istart+ipart))*particles.weight(ivect+istart+ipart);
         }
 

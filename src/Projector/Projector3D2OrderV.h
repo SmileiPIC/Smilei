@@ -117,6 +117,69 @@ private:
 
     };
 
+    inline void compute_distances( Particles& particles, int npart_total, int ipart, int istart, int ipart_ref, double* delta0, int* iold, double* Sx1, double* Sy1, double* Sz1) {
+
+        int ipo = iold[0];
+        int jpo = iold[1];
+        int kpo = iold[2];
+
+        int vecSize = 8;
+
+        // locate the particle on the primal grid at current time-step & calculate coeff. S1
+        //                            X                                 //
+        double pos = particles.position(0, istart+ipart) * dx_inv_;
+        int cell = round(pos);
+        int cell_shift = cell-ipo-i_domain_begin;
+        double delta  = pos - (double)cell;
+        double delta2 = delta*delta;
+        double deltam =  0.5 * (delta2-delta+0.25);
+        double deltap =  0.5 * (delta2+delta+0.25);
+        delta2 = 0.75 - delta2;
+        double m1 = (cell_shift == -1);
+        double c0 = (cell_shift ==  0);
+        double p1 = (cell_shift ==  1);
+        Sx1 [          ipart] = m1 * deltam                            ;
+        Sx1 [  vecSize+ipart] = c0 * deltam + m1 * delta2              ;
+        Sx1 [2*vecSize+ipart] = p1 * deltam + c0 * delta2 + m1* deltap ;
+        Sx1 [3*vecSize+ipart] =               p1 * delta2 + c0* deltap ;
+        Sx1 [4*vecSize+ipart] =                             p1* deltap ;
+        //                            Y                                 //
+        pos = particles.position(1, istart+ipart) * dy_inv_;
+        cell = round(pos);
+        cell_shift = cell-jpo-j_domain_begin;
+        delta  = pos - (double)cell;
+        delta2 = delta*delta;
+        deltam =  0.5 * (delta2-delta+0.25);
+        deltap =  0.5 * (delta2+delta+0.25);
+        delta2 = 0.75 - delta2;
+        m1 = (cell_shift == -1);
+        c0 = (cell_shift ==  0);
+        p1 = (cell_shift ==  1);
+        Sy1 [          ipart] = m1 * deltam                             ;
+        Sy1 [  vecSize+ipart] = c0 * deltam + m1 * delta2               ;
+        Sy1 [2*vecSize+ipart] = p1 * deltam + c0 * delta2 + m1* deltap  ;
+        Sy1 [3*vecSize+ipart] =               p1 * delta2 + c0* deltap  ;
+        Sy1 [4*vecSize+ipart] =                             p1* deltap  ;
+        //                            Z                                 //
+        pos = particles.position(2, istart+ipart) * dz_inv_;
+        cell = round(pos);
+        cell_shift = cell-kpo-k_domain_begin;
+        delta  = pos - (double)cell;
+        delta2 = delta*delta;
+        deltam =  0.5 * (delta2-delta+0.25);
+        deltap =  0.5 * (delta2+delta+0.25);
+        delta2 = 0.75 - delta2;
+        m1 = (cell_shift == -1);
+        c0 = (cell_shift ==  0);
+        p1 = (cell_shift ==  1);
+        Sz1 [          ipart] = m1 * deltam                             ;
+        Sz1 [  vecSize+ipart] = c0 * deltam + m1 * delta2               ;
+        Sz1 [2*vecSize+ipart] = p1 * deltam + c0 * delta2 + m1* deltap  ;
+        Sz1 [3*vecSize+ipart] =               p1 * delta2 + c0* deltap  ;
+        Sz1 [4*vecSize+ipart] =                             p1* deltap  ;
+
+    };
+
     inline void computeJ( int ipart, double* charge_weight, double* DSx, double* DSy, double* DSz, double* Sy0, double* Sz0, double *bJx, double dxovdt, int nx, int ny, int nz ) {
         //optrpt complains about the following loop but not unrolling it actually seems to give better result.
         double crx_p = charge_weight[ipart]*dxovdt;
