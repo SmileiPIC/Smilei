@@ -234,7 +234,7 @@ void VectorPatch::dynamics(Params& params,
 {
 
     #pragma omp single
-    diag_flag = needsRhoJsNow(itime);
+    diag_flag = (needsRhoJsNow(itime) || params.is_spectral );
 
     timers.particles.restart();
     ostringstream t;

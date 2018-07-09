@@ -24,7 +24,7 @@ void SyncCartesianPatch::patchedToCartesian( VectorPatch& vecPatches, Domain& do
         //cout << smpi->getRank() << " will send " << domain.additional_patches_[i] << " to " << domain.additional_patches_ranks[i] << endl;
         unsigned int ipatch = domain.additional_patches_[i]-vecPatches.refHindex_;
 
-        SyncCartesianPatch::sendPatchedToCartesian( vecPatches(ipatch)->EMfields, domain.additional_patches_[i], domain.additional_patches_ranks[i], smpi, vecPatches(ipatch) );
+        SyncCartesianPatch::sendPatchedToCartesian( vecPatches(ipatch)->EMfields, domain.additional_patches_[i], domain.additional_patches_ranks[i], smpi, vecPatches(ipatch), params );
 
         // who = smpi->hrank_THEORIQUE( domain.additional_patches_[i] );
         //     MANAGED WITH --> domain.additional_patches_ranks !!!
@@ -49,7 +49,7 @@ void SyncCartesianPatch::patchedToCartesian( VectorPatch& vecPatches, Domain& do
         //cout << smpi->getRank() << " finaliser send " << domain.additional_patches_[i] << " to " << domain.additional_patches_ranks[i] << endl;
         unsigned int ipatch = domain.additional_patches_[i]-vecPatches.refHindex_;
 
-        SyncCartesianPatch::finalize_sendPatchedToCartesian( vecPatches(ipatch)->EMfields, domain.additional_patches_[i], domain.additional_patches_ranks[i], smpi, vecPatches(ipatch) );
+        SyncCartesianPatch::finalize_sendPatchedToCartesian( vecPatches(ipatch)->EMfields, domain.additional_patches_[i], domain.additional_patches_ranks[i], smpi, vecPatches(ipatch), params );
 
         // who = smpi->hrank_THEORIQUE( domain.additional_patches_[i] );
         //     MANAGED WITH --> domain.additional_patches_ranks !!!
@@ -60,23 +60,14 @@ void SyncCartesianPatch::patchedToCartesian( VectorPatch& vecPatches, Domain& do
     //for ( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ ) {
     for ( unsigned int i=0 ; i<domain.local_patches_.size() ; i++ ) {
         unsigned int ipatch = domain.local_patches_[i]-vecPatches.refHindex_;
-        //cout << ipatch << " ";
-        //vecPatches(ipatch)->EMfields->Ex_->put( domain.patch_->EMfields->Ex_, params, smpi, vecPatches(ipatch), domain.patch_ );
-        //vecPatches(ipatch)->EMfields->Ey_->put( domain.patch_->EMfields->Ey_, params, smpi, vecPatches(ipatch), domain.patch_ );
-        //vecPatches(ipatch)->EMfields->Ez_->put( domain.patch_->EMfields->Ez_, params, smpi, vecPatches(ipatch), domain.patch_ );
-	//
-        //vecPatches(ipatch)->EMfields->Bx_->put( domain.patch_->EMfields->Bx_, params, smpi, vecPatches(ipatch), domain.patch_ );
-        //vecPatches(ipatch)->EMfields->By_->put( domain.patch_->EMfields->By_, params, smpi, vecPatches(ipatch), domain.patch_ );
-        //vecPatches(ipatch)->EMfields->Bz_->put( domain.patch_->EMfields->Bz_, params, smpi, vecPatches(ipatch), domain.patch_ );
 
         vecPatches(ipatch)->EMfields->Jx_->put( domain.patch_->EMfields->Jx_, params, smpi, vecPatches(ipatch), domain.patch_ );
         vecPatches(ipatch)->EMfields->Jy_->put( domain.patch_->EMfields->Jy_, params, smpi, vecPatches(ipatch), domain.patch_ );
         vecPatches(ipatch)->EMfields->Jz_->put( domain.patch_->EMfields->Jz_, params, smpi, vecPatches(ipatch), domain.patch_ );
 	if(params.is_spectral){
-          vecPatches(ipatch)->EMfields->rho_->put( domain.patch_->EMfields->rho_, params, smpi, vecPatches(ipatch), domain.patch_ );
+          vecPatches(ipatch)->EMfields->rho_->put( domain.patch_->EMfields->rho_,       params, smpi, vecPatches(ipatch), domain.patch_ );
           // useless rho_old is save directly on vecPatches concerned by the Maxwell soler see VectorPatches::solveMaxwell()
-          //vecPatches(ipatch)->EMfields->rhoold_->put( domain.patch_->EMfields->rhoold_, params, smpi, vecPatches(ipatch),
-	  //domain.patch_ );
+          //vecPatches(ipatch)->EMfields->rhoold_->put( domain.patch_->EMfields->rhoold_, params, smpi, vecPatches(ipatch), domain.patch_ );
 	}
 
     }
@@ -84,27 +75,32 @@ void SyncCartesianPatch::patchedToCartesian( VectorPatch& vecPatches, Domain& do
     timers.grids.update();
 }
 
-void SyncCartesianPatch::sendPatchedToCartesian( ElectroMagn* localfields, unsigned int hindex, int send_to_global_patch_rank, SmileiMPI* smpi, Patch* patch )
+void SyncCartesianPatch::sendPatchedToCartesian( ElectroMagn* localfields, unsigned int hindex, int send_to_global_patch_rank, SmileiMPI* smpi, Patch* patch, Params& params )
 {
     //smpi->send( localfields->Jx_, hindex, send_to_global_patch_rank );
     //    isend( EM->Bz_m, to, mpi_tag+tag, requests[tag]); tag++;
-    smpi->isend( localfields->Jx_, send_to_global_patch_rank, hindex*3  , patch->requests_[0] );
-    smpi->isend( localfields->Jy_, send_to_global_patch_rank, hindex*3+1, patch->requests_[1] );
-    smpi->isend( localfields->Jz_, send_to_global_patch_rank, hindex*3+2, patch->requests_[2] );
+    smpi->isend( localfields->Jx_, send_to_global_patch_rank, hindex*5  , patch->requests_[0] );
+    smpi->isend( localfields->Jy_, send_to_global_patch_rank, hindex*5+1, patch->requests_[1] );
+    smpi->isend( localfields->Jz_, send_to_global_patch_rank, hindex*5+2, patch->requests_[2] );
     
 
-    //if(params.is_spectral){
-    //    smpi->send( localfields->rho_, hindex, global_patch_rank, params, smpi );
-    //
-    //}
+    if(params.is_spectral) {
+        smpi->isend( localfields->rho_,    send_to_global_patch_rank, hindex*5+3, patch->requests_[3] );
+        //smpi->isend( localfields->rhoold_, send_to_global_patch_rank, hindex*5+4, patch->requests_[4] );
+    }
+
 }
 
-void SyncCartesianPatch::finalize_sendPatchedToCartesian( ElectroMagn* localfields, unsigned int hindex, int send_to_global_patch_rank, SmileiMPI* smpi, Patch* patch )
+void SyncCartesianPatch::finalize_sendPatchedToCartesian( ElectroMagn* localfields, unsigned int hindex, int send_to_global_patch_rank, SmileiMPI* smpi, Patch* patch, Params& params )
 {
     MPI_Status status;
     MPI_Wait( &(patch->requests_[0]), &status );
     MPI_Wait( &(patch->requests_[1]), &status );
     MPI_Wait( &(patch->requests_[2]), &status );
+    if(params.is_spectral) {
+        MPI_Wait( &(patch->requests_[3]), &status );
+        //MPI_Wait( &(patch->requests_[4]), &status ); 
+    }
 }
 
 void SyncCartesianPatch::recvPatchedToCartesian( ElectroMagn* globalfields, unsigned int hindex, int local_patch_rank, VectorPatch& vecPatches, Params &params, SmileiMPI* smpi, Domain& domain )
@@ -123,20 +119,21 @@ void SyncCartesianPatch::recvPatchedToCartesian( ElectroMagn* globalfields, unsi
     domain.fake_patch->hindex = hindex;
     domain.fake_patch->Pcoordinates = vecPatches.domain_decomposition_->getDomainCoordinates( hindex );
 
-    smpi->recv( domain.fake_patch->EMfields->Jx_, local_patch_rank, hindex*3 );
+    smpi->recv( domain.fake_patch->EMfields->Jx_, local_patch_rank, hindex*5 );
     domain.fake_patch->EMfields->Jx_->put( globalfields->Jx_, params, smpi, domain.fake_patch, domain.patch_ );
 
-    smpi->recv( domain.fake_patch->EMfields->Jy_, local_patch_rank, hindex*3+1 );
+    smpi->recv( domain.fake_patch->EMfields->Jy_, local_patch_rank, hindex*5+1 );
     domain.fake_patch->EMfields->Jy_->put( globalfields->Jy_, params, smpi, domain.fake_patch, domain.patch_ );
 
-    smpi->recv( domain.fake_patch->EMfields->Jz_, local_patch_rank, hindex*3+2 );
+    smpi->recv( domain.fake_patch->EMfields->Jz_, local_patch_rank, hindex*5+2 );
     domain.fake_patch->EMfields->Jz_->put( globalfields->Jz_, params, smpi, domain.fake_patch, domain.patch_ );
 
-
-    //if(params.is_spectral){
-    //    smpi->send( localfields->rho_, hindex, global_patch_rank, params, smpi );
-    //
-    //}
+    if(params.is_spectral) {
+        smpi->recv( domain.fake_patch->EMfields->rho_, local_patch_rank, hindex*5+3 );
+        domain.fake_patch->EMfields->rho_->put( globalfields->rho_, params, smpi, domain.fake_patch, domain.patch_ );
+        //smpi->recv( domain.fake_patch->EMfields->rhoold_, local_patch_rank, hindex*5+4 );
+        //domain.fake_patch->EMfields->rhoold_->put( globalfields->rhoold_, params, smpi, domain.fake_patch, domain.patch_ );
+    }
 
     //delete fake_patch;
 
