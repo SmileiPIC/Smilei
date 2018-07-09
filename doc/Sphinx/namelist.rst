@@ -208,7 +208,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
    Decides if relativistic Poisson problem must be solved for at least one species.
    See :doc:`relativistic_fields_initialization` for more details.
-   
+
 .. py:data:: relativistic_poisson_max_iteration
 
   :default: 50000
@@ -235,7 +235,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   ``"silver-muller"`` is an open boundary condition. The incident wave vector :math:`k_{inc}` on each face is defined by ``"EM_boundary_conditions_k"``.
   When using ``"silver-muller"`` as an injecting boundary, make sure :math:`k_{inc}` is aligned with the wave you are injecting.
-  When using ``"silver-muller"`` as an absorbing boundary, the optimal wave absorption on a given face will be along :math:`k_{abs}` the specular reflection of :math:`k_{inc}` on the considered face. 
+  When using ``"silver-muller"`` as an absorbing boundary, the optimal wave absorption on a given face will be along :math:`k_{abs}` the specular reflection of :math:`k_{inc}` on the considered face.
 
 .. py:data:: EM_boundary_conditions_k
 
@@ -244,7 +244,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   :default: ``[[1.,0.,0.],[-1.,0.,0.],[0.,1.,0.],[0.,-1.,0.],[0.,0.,1.],[0.,0.,-1.]]`` in 3D
 
   The incident unit wave vector `k` for each face (sequentially Xmin, Xmax, Ymin, Ymax, Zmin, Zmax) is
-  defined by its coordinates in the `xyz` frame.  
+  defined by its coordinates in the `xyz` frame.
   The number of coordinates is equal to the dimension of the simulation. The number of given vectors must be equal to 1 or to the number of faces which is twice the dimension of the simulation. In cylindrical geometry, `k` coordinates are given in the `xr` frame and only the Rmax face is affected.
 
   | **Syntax 1:** ``[[1,0,0]]``, identical for all boundaries.
@@ -254,7 +254,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   :default: 0.
 
-  Time, at the beginning of the simulation, during which fields are frozen. 
+  Time, at the beginning of the simulation, during which fields are frozen.
 
 
 .. _reference_angular_frequency_SI:
@@ -518,7 +518,7 @@ Each species has to be defined in a ``Species`` block::
     and `Npart` is the total number of particles. Momentum components `px`, `py`, `pz`
     are given in successive columns.This initialization is incompatible with
     :py:data:`temperature` and :py:data:`mean_velocity`.
-  
+
   The first 2 distributions depend on the parameter :py:data:`temperature` explained below.
 
 .. py:data:: particles_per_cell
@@ -618,11 +618,11 @@ Each species has to be defined in a ``Species`` block::
   :default: ``"none"``
 
   The model for ionization. Currently, only ``"tunnel"`` (corresponding to :doc:`field ionization <field_ionization>`)
-  and ``"from_rate"`` (relying on a :doc:`user-defined ionization rate <fromRate_ionization>`) are available.
+  and ``"from_rate"`` (relying on a :doc:`user-defined ionization rate <field_ionization>`) are available.
   In the latter case, the additional parameter ``ionization_rate`` has to be defined.
   Note also that field ionization (``"tunnel"``) requires the definition of the species ``atomic_number`` while
   ionization using a user-defined rate (``"from_rate"``) requires the definition of the species ``maximum_charge_state``.
-  
+
   See :ref:`this <CollisionalIonization>` for collisional ionization instead.
 
 .. py:data:: ionization_rate
@@ -630,29 +630,29 @@ Each species has to be defined in a ``Species`` block::
   A python function giving the user-defined ionisation rate.
   To use this option, the `numpy package <http://www.numpy.org/>`_ must be available in your python installation.
   The function must have one argument, that you may call, for instance, ``particles``.
-  This object has several attributes ``x``, ``y``, ``z``, ``px``, ``py``, ``pz``, ``charge``, ``weight`` and ``id``. 
+  This object has several attributes ``x``, ``y``, ``z``, ``px``, ``py``, ``pz``, ``charge``, ``weight`` and ``id``.
   Each of these attributes are provided as **numpy** arrays where each cell corresponds to one particle.
 
-  The following example defines, for a species with maximum charge state of 2, a constant ionization rate that depends 
-  only on the initial particle charge (``r0`` the ionisation rate from charge state 0 to 1 and 
+  The following example defines, for a species with maximum charge state of 2, a constant ionization rate that depends
+  only on the initial particle charge (``r0`` the ionisation rate from charge state 0 to 1 and
   ``r1``  the ionisation rate from charge state 1 to 2):
 
   .. code-block:: python
-  
+
     def my_rate(particles):
         rate = numpy.empty_like(particles.x)
         rate[particles.charge==0] = r0
         rate[particles.charge==1] = r1
         return rate
 
-  The following example defines an ionization rate [:math:`r(x) = r0*f(x)`] that depends on the x-coordinate 
+  The following example defines an ionization rate [:math:`r(x) = r0*f(x)`] that depends on the x-coordinate
   of the particle only:
 
   .. code-block:: python
-  
+
     def f(x):
         return numpy.exp(-x**2/2.)
-        
+
     def my_rate(particles):
         x = particles.x
         rate = numpy.full_like(particles.x, r0) * f(x)
@@ -693,43 +693,43 @@ Each species has to be defined in a ``Species`` block::
   :default: ``"none"``
 
   The **radiation reaction** model used for this species (see :doc:`radiation_loss`).
-  
+
   * ``"none"``: no radiation
   * ``"Landau-Lifshitz"`` (or ``ll``): Landau-Lifshitz model approximated for high energies
   * ``"corrected-Landau-Lifshitz"`` (or ``cll``): with quantum correction
   * ``""Niel"``: a `stochastic radiation model <https://arxiv.org/abs/1707.02618>`_ based on the work of Niel `et al.`.
   * ``"Monte-Carlo"`` (or ``mc``): Monte-Carlo radiation model. This model can be configured to generate macro-photons with :py:data:`radiation_photon_species`.
-  
+
   This parameter cannot be assigned to photons (mass = 0).
-  
+
   Radiation is emitted only with the ``"Monte-Carlo"`` model when
   :py:data:`radiation_photon_species` is defined.
 
 .. py:data:: radiation_photon_species
-  
+
   The :py:data:`name` of the photon species in which the Monte-Carlo :py:data:`radiation_model`
   will generate macro-photons. If unset (or ``None``), no macro-photon will be created.
   The *target* photon species must be have its mass set to 0, and appear *after* the
   particle species in the namelist.
-  
+
   This parameter cannot be assigned to photons (mass = 0).
 
 .. py:data:: radiation_photon_sampling
 
   :default: ``1``
-  
+
   The number of macro-photons generated per emission event, when the macro-photon creation
   is activated (see :py:data:`radiation_photon_species`). The total macro-photon weight
   is still conserved.
-  
+
   A large number may rapidly slow down the performances and lead to memory saturation.
-  
+
   This parameter cannot be assigned to photons (mass = 0).
 
 .. py:data:: radiation_photon_gamma_threshold
 
   :default: ``2``
-  
+
   The threshold on the photon energy for the macro-photon emission when using the
   radiation reaction Monte-Carlo process.
   Under this threshold, the macro-photon from the radiation reaction Monte-Carlo
@@ -742,17 +742,17 @@ Each species has to be defined in a ``Species`` block::
 .. py:data:: relativistic_field_initialization
 
   :default: ``False``
-  
+
   Flag for relativistic particles. If ``True``, the electromagnetic fields of this species will added to the electromagnetic fields already present in the simulation.
   This operation will be performed when time equals :py:data:`time_frozen`. See :doc:`relativistic_fields_initialization` for details on the computation of the electromagentic fields of a relativistic species.
-  To have physically meaningful results, we recommend to place a species which requires this method of field initialization far from other species, otherwise the latter could experience instantly turned-on unphysical forces by the relativistic species' fields.   
+  To have physically meaningful results, we recommend to place a species which requires this method of field initialization far from other species, otherwise the latter could experience instantly turned-on unphysical forces by the relativistic species' fields.
 
-    
+
 
 .. py:data:: multiphoton_Breit_Wheeler
 
   :default: ``[None,None]``
-  
+
   An list of the :py:data:`name` of two species: electrons and positrons created through
   the :doc:`multiphoton_Breit_Wheeler`.
   By default, the process is not activated.
@@ -765,10 +765,10 @@ Each species has to be defined in a ``Species`` block::
 
   A list of two integers: the number of electrons and positrons generated per photon decay
   in the :doc:`multiphoton_Breit_Wheeler`. The total macro-particle weight is still
-  conserved. 
-  
+  conserved.
+
   Large numbers may rapidly slow down the performances and lead to memory saturation.
-  
+
   This parameter can **only** be assigned to photons species (mass = 0).
 
 ----
@@ -854,37 +854,37 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
     The variation of the laser frequency over time, such that
     :math:`\omega(t)=\mathtt{omega}\times\mathtt{chirp\_profile}(t)`.
-    
+
   .. warning::
-  
+
     This definition of the chirp profile is not standard.
     Indeed, :math:`\omega(t)` as defined here **is not** the instantaneous frequency, :math:`\omega_{\rm inst}(t)`,
     which is obtained from the time derivative of the phase :math:`\omega(t) t`.
-    
+
     Should one define the chirp as :math:`C(t) = \omega_{\rm inst}(t)/\omega` (with :math:`\omega` defined by the input
-    parameter :math:`\mathtt{omega}`), the user can easily obtain the corresponding chirp profile as defined in 
+    parameter :math:`\mathtt{omega}`), the user can easily obtain the corresponding chirp profile as defined in
     :program:`Smilei` as:
-    
-    .. math:: 
-    
+
+    .. math::
+
         \mathtt{chirp\_profile}(t) = \frac{1}{t} \int_0^t dt' C(t')\,.
-        
-    Let us give as an example the case of a *linear chirp*, with the instantaneous frequency 
+
+    Let us give as an example the case of a *linear chirp*, with the instantaneous frequency
     :math:`\omega_{\rm inst}(t) = \omega [1+\alpha\,\omega(t-t_0)]`.
     :math:`C(t) = 1+\alpha\,\omega(t-t_0)`. The corresponding input chirp profile reads:
-    
-    .. math:: 
-    
+
+    .. math::
+
         \mathtt{chirp\_profile}(t) = 1 - \alpha\, \omega t_0 + \frac{\alpha}{2} \omega t
-        
+
     Similarly, for a *geometric (exponential) chirp* such that :math:`\omega_{\rm inst}(t) = \omega\, \alpha^{\omega t}`,
     :math:`C(t) = \alpha^{\omega t}`, and the corresponding input chirp profile reads:
-    
-    .. math:: 
-    
+
+    .. math::
+
         \mathtt{chirp\_profile}(t) = \frac{\alpha^{\omega t} - 1}{\omega t \, \ln \alpha}\,.
-    
-        
+
+
   .. py:data:: time_envelope
 
     :type: a *python* function or a :ref:`time profile <profiles>`
@@ -912,7 +912,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     :default: ``[ 0., 0. ]``
 
     An extra phase for the time envelopes of :math:`B_y` and :math:`B_z`. Useful in the
-    case of elliptical polarization where the two temporal profiles might have a slight 
+    case of elliptical polarization where the two temporal profiles might have a slight
     delay due to the mismatched :py:data:`phase`.
 
 
@@ -1803,9 +1803,9 @@ This is done by including a block ``DiagFields``::
 
   List of the field names that are saved. By default, they all are.
   The full list of fields that are saved by this diagnostic:
-  
+
   .. rst-class:: nowrap
-  
+
   +----------------+-------------------------------------------------------+
   | | Bx           | |                                                     |
   | | By           | | Components of the magnetic field                    |
@@ -1838,26 +1838,26 @@ This is done by including a block ``DiagFields``::
   A list of slices indicating a portion of the simulation grid to be written by this
   diagnostic. This list must have as many elements as the simulation dimension.
   For example, in a 3D simulation, the list has 3 elements. Each element can be:
-  
+
   * ``None``, to select the whole grid along that dimension
   * an integer, to select only the corresponding cell index along that dimension
   * a *python* `slice object <https://docs.python.org/3/library/functions.html#slice>`_
     to select regularly-spaced cell indices along that dimension.
-  
+
   This can be easily implemented using the
   `numpy.s_ expression <https://docs.scipy.org/doc/numpy/reference/generated/numpy.s_.html>`_.
   For instance, in a 3D simulation, the following subgrid selects only every other element
   in each dimension::
-    
+
     from numpy import s_
     DiagFields( #...
     	subgrid = s_[::2, ::2, ::2]
     )
-  
+
   while this one selects cell indices included in a contiguous parallelepiped::
-    
+
     	subgrid = s_[100:300, 300:500, 300:600]
-  
+
 
 
 ----
@@ -2287,7 +2287,7 @@ for instance::
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A *particle tracking diagnostic* records the macro-particle positions and momenta at various timesteps.
-Typically, this is used for plotting trajectories. 
+Typically, this is used for plotting trajectories.
 
 You can add a tracking diagnostic by including a block ``DiagTrackParticles()`` in the namelist,
 for instance::

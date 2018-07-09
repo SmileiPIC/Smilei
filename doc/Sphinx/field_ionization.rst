@@ -1,21 +1,29 @@
-Field ionization
-----------------
+Field (or user defined) ionization
+----------------------------------
 
 Field ionization is a process of particular importance for laser-plasma interaction
 in the ultra-high intensity regime.
 It can affect ion acceleration driven by irradiating a solid target with
 an ultra-intense laser, or can be used to inject electrons through
-the accelerating field in laser wakefield acceleration. 
+the accelerating field in laser wakefield acceleration.
 This process is not described in the standard PIC (Vlasov-Maxwell) formulation,
 and an *ad hoc* description needs to be implemented.
 A Monte-Carlo module for field ionization has thus been developed in :program:`Smilei`,
 closely following the method proposed in [Nuter2011]_.
 
+Alternatively, :program:`Smilei` now allows for the treatment of ionization considering a user-defined rate.
+The ionization rates are defined, for a given ``Species``, as described :ref:`here <Species>`.
+The Monte-Carlo procedure behind the treatment of ionization in this case closely follows
+that developed for field ionization.
+
+.. warning::
+  Note that, in the case of a user-defined ionization rate, only single ionization event per timestep are possible.
+
 
 ----
 
-Physical model
-^^^^^^^^^^^^^^
+Physical model for field ionization
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This scheme relies on the quasi-static rate for tunnel ionization derived in
 [Perelomov1966]_, [Perelomov1967]_ and [Ammosov1986]_.
@@ -25,14 +33,14 @@ of magnitude :math:`\vert E\vert`, the ionization rate reads:
 
 .. math::
   :label: ionizationRate
-  
+
   \Gamma_{\rm qs} = A_{n^\star,l^\star}\,B_{l,\vert m\vert}\,
   I_p\,\left( \frac{2 (2 I_p)^{3/2}}{\vert E\vert} \right)^{2n^\star-\vert m \vert -1}\,
   \exp\!\left( -\frac{2 (2 I_p)^{3/2}}{3 \vert E\vert}  \right)\,,
 
 where :math:`I_p` is the :math:`Z^{\star}-1` ionization potential of the ion,
 :math:`n^\star=Z^\star/\sqrt{2 I_p}` and :math:`l^\star=n^\star-1` denote
-the effective principal quantum number and angular momentum, 
+the effective principal quantum number and angular momentum,
 and :math:`l` and :math:`m` denote the angular momentum and its projection on
 the laser polarization direction, respectively.
 :math:`\Gamma_{\rm qs}`, :math:`I_p` and :math:`E` are here expressed in atomic units
@@ -52,7 +60,7 @@ over a period :math:`2\pi/\omega` leads to the well-known cycle-averaged ionizat
 
 .. math::
   :label: ADKrate
-  
+
   \Gamma_{\rm ADK} = \sqrt{\frac{6}{\pi}}A_{n^\star,l^\star}\,B_{l,\vert m\vert}
   \,I_p\,\left( \frac{2 (2 I_p)^{3/2}}{\vert E\vert} \right)^{2n^\star-\vert m \vert -3/2}\,
   \exp\!\left( -\frac{2 (2 I_p)^{3/2}}{3 \vert E\vert}  \right)\,.
@@ -63,7 +71,7 @@ Indeed, as shown in [Ammosov1986]_, the ratio :math:`R` of the ionization rate
 computed for :math:`\vert m\vert=0` by the rate computed for :math:`\vert m\vert=1` is:
 
 .. math::
-  
+
   R = \frac{\Gamma_{{\rm qs},\vert m \vert = 0}}{\Gamma_{{\rm qs},\vert m \vert = 1}}
   =  2\frac{(2\,I_p)^{3/2}}{\vert E\vert}
   \simeq 7.91\,10^{-3} \,\,\frac{(I_p[\rm eV])^{3/2}}{a_0\,\hbar\omega_0[\rm eV]}\,,
@@ -87,16 +95,16 @@ Monte-Carlo scheme
 
 In :program:`Smilei`, tunnel ionization is treated for each species
 (defined by the user as subject to field ionization) right after field interpolation
-and before applying the pusher. 
+and before applying the pusher.
 For all quasi-particles (henceforth referred to as quasi-ion) of the considered species,
 a Monte-Carlo procedure has been implemented that allows to treat multiple ionization
 events in a single timestep. It relies on the cumulative probability derived
 in Ref. [Nuter2011]_:
 
 .. math::
- 
+
   F_k^{Z^{\star}-1} = \sum_{j=0}^k p_j^{Z^{\star}-1}\,,
-  
+
 to ionize from 0 to :math:`k` times a quasi-ion with initial charge state
 :math:`Z^{\star}-1` during a simulation timestep :math:`\Delta t`,
 :math:`p_j^{Z^{\star}-1}` being the probability to ionize exactly :math:`j` times this ion.
@@ -106,34 +114,34 @@ A random number :math:`r` with uniform distribution between 0 and 1 is picked.
 If :math:`r` is smaller than the probability :math:`p_0^{Z^{\star}-1}`
 to not ionize the quasi-ion, then the quasi-ion is not ionized during this time step.
 Otherwise, we loop over the number of ionization events :math:`k`,
-from :math:`k=1` to :math:`k_{\rm max}=Z-Z^{\star}+1` 
-(for which :math:`F_{k_{\rm max}}^{Z^{\star}-1}=1` by construction), 
-until :math:`r<F_k^{Z^{\star}-1}`. At that point, :math:`k` is the number of 
+from :math:`k=1` to :math:`k_{\rm max}=Z-Z^{\star}+1`
+(for which :math:`F_{k_{\rm max}}^{Z^{\star}-1}=1` by construction),
+until :math:`r<F_k^{Z^{\star}-1}`. At that point, :math:`k` is the number of
 ionization events for the quasi-ion. A quasi-electron is created with
-the numerical weight equal to :math:`k` times that of the quasi-ion, 
-and with the same velocity as this quasi-ion. 
+the numerical weight equal to :math:`k` times that of the quasi-ion,
+and with the same velocity as this quasi-ion.
 The quasi-ion charge is also increased by :math:`k`.
 
-Finally, to ensure energy conservation, an ionization current 
+Finally, to ensure energy conservation, an ionization current
 :math:`{\bf J}_{\rm ion}` is projected onto the simulation grid such that
 
 .. math::
-  
+
   {\bf J}_{\rm ion} \cdot {\bf E} = \Delta t^{-1}\,\sum_{j=1}^k I_p(Z^{\star}-1+k)\,.
 
 
 Benchmarks
 ^^^^^^^^^^
 
-In what follows, we present two benchmarks of the field ionization model
-implemented in :program:`Smilei`.
+In what follows, we present two benchmarks of the field ionization model,
+and two additional benchmarks for the user-defined ionization rate.
 Both benchmarks consist in irradiating a thin (one cell long) neutral material (hydrogen or carbon)
 with a short (few optical-cycle long) laser with wavelength :math:`\lambda_0 = 0.8~{\mu m}`.
 
 .. _FigFieldIonization:
 
 .. figure:: _static/FieldIonization.png
-  
+
   Results of two benchmarks for the field ionization Model.
   Top: Average charge state of hydrogen ions as a function of time when irradiated by a laser.
   The red solid line corresponds to PIC results, the dashed line corresponds to
@@ -164,10 +172,10 @@ rate equations on the population :math:`N_i` of each level :math:`i`:
 
 .. math::
   :label: rateEqs
-  
+
   \frac{d}{dt}N_i =
   (1-\delta_{i,0}) \, \Gamma_{i-1}\,N_{i-1}  -  (1-\delta_{i,Z})\, \Gamma_{i}\,N_{i}\,,
-  
+
 with :math:`\delta_{i,j}` the Kroenecker delta, and :math:`\Gamma_i` the ionization
 rate of level :math:`i`. Note also that, for this configuration,
 :math:`\Delta t \simeq 0.04~{\rm fs}` is about ten times larger than
@@ -177,6 +185,29 @@ so that multiple ionization from :math:`{\rm C}^{2+}` to :math:`{\rm C}^{4+}`
 during a single timestep does occur and is found to be correctly accounted for
 in our simulations.
 
+
+Let us now introduce two benchmarks for which the rate of ionization is defined by the user.
+The first benchmark considers an initially neutral species that can be potentially ionized twice.
+To run this case, a constant and uniform ionization rate is considered that depends only on the particle current charge
+state. For this particular case, we have considered a rate :math:`r_0 = 0.1` (in code units) for ionization from
+charge state 0 to 1, and a rate :math:`r_1 = 0.05` (in code units) for ionization from charge state 1 to 2.
+The simulation results presented in Fig. :numref:`FigFromRateIonization` (top panel) shows the time evolution of the
+fraction in each possible charge states (:math:`Z=0`, :math:`Z=1` and :math:`Z=2`).
+Super-imposed (dashed lines) are the corresponding theoretical predictions.
+
+The second benchmark features an initially neutral species homogeneously distributed in the simulation box.
+The ionization rate is here chosen as a function of the spatial coordinate :math:`x`,
+and reads :math:`r(x) = r_0 \exp(-(x-x_c)^2/2)` with :math:`r_0 = 0.02` the maximum ionization rate and
+:math:`x_c=5` the center of the simulation box.
+The simulation results presented in Fig. :numref:`FigFromRateIonization` (bottom panel) shows,
+at the end of the simulation :math:`t=20`, the electron number density as a function of space.
+Super-imposed (in red) is the corresponding theoretical prediction.
+
+.. _FigFromRateIonization:
+
+.. figure:: _static/userDefinedRate.png
+
+  Results of the two benchmarks for the ionization model using user-defined rates as described above.
 
 ----
 
@@ -190,7 +221,3 @@ References
 .. [Perelomov1966] `A. M. Perelomov, V. S. Popov, and M. V. Terent’ev, Sov. Phys. JETP 23, 924 (1966) <http://www.jetp.ac.ru/cgi-bin/dn/e_023_05_0924.pdf>`_
 
 .. [Perelomov1967] `A. M. Perelomov, V. S. Popov, and M. V. Terent’ev, Sov. Phys. JETP 24, 207 (1967) <http://www.jetp.ac.ru/cgi-bin/dn/e_024_01_0207.pdf>`_
-
-
-
-

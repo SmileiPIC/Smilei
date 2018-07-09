@@ -10,7 +10,7 @@ interaction to astrophysics.
 
 
 .. raw:: html
-  
+
   <div style="width:100%; text-align:center; margin-bottom:8em;">
   <a href="releases.html#current-release-3-3" class="icon">
 
@@ -64,7 +64,7 @@ interaction to astrophysics.
 .. raw:: html
 
   Tutorials</a>
-  
+
   </div>
 
 
@@ -76,13 +76,12 @@ interaction to astrophysics.
    synopsis
    highlights
    releases
-   
+
    units
    algorithms
    parallelization
    collisions
    field_ionization
-   fromRate_ionization
    radiation_loss
    multiphoton_Breit_Wheeler
    relativistic_fields_initialization
