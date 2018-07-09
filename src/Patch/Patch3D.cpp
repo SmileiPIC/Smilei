@@ -808,12 +808,14 @@ void Patch3D::cleanType()
                 MPI_Type_free( &(ntypeSum_[1][ix_isPrim][iy_isPrim][iz_isPrim]) );    
                 MPI_Type_free( &(ntypeSum_[2][ix_isPrim][iy_isPrim][iz_isPrim]) ); 
 
-                MPI_Type_free( &(ntype_complex_[0][ix_isPrim][iy_isPrim][iz_isPrim]) );
-                MPI_Type_free( &(ntype_complex_[1][ix_isPrim][iy_isPrim][iz_isPrim]) );
-                MPI_Type_free( &(ntype_complex_[2][ix_isPrim][iy_isPrim][iz_isPrim]) );
-                //MPI_Type_free( &(ntypeSum_complex_[0][ix_isPrim][iy_isPrim][iz_isPrim]) );
-                //MPI_Type_free( &(ntypeSum_complex_[1][ix_isPrim][iy_isPrim][iz_isPrim]) );    
-                //MPI_Type_free( &(ntypeSum_complex_[2][ix_isPrim][iy_isPrim][iz_isPrim]) );     
+                if (ntype_complex_[0][0][0][0] != MPI_DATATYPE_NULL) {
+                    MPI_Type_free( &(ntype_complex_[0][ix_isPrim][iy_isPrim][iz_isPrim]) );
+                    MPI_Type_free( &(ntype_complex_[1][ix_isPrim][iy_isPrim][iz_isPrim]) );
+                    MPI_Type_free( &(ntype_complex_[2][ix_isPrim][iy_isPrim][iz_isPrim]) );
+                    //MPI_Type_free( &(ntypeSum_complex_[0][ix_isPrim][iy_isPrim][iz_isPrim]) );
+                    //MPI_Type_free( &(ntypeSum_complex_[1][ix_isPrim][iy_isPrim][iz_isPrim]) );    
+                    //MPI_Type_free( &(ntypeSum_complex_[2][ix_isPrim][iy_isPrim][iz_isPrim]) );     
+                }
             }        
         }
     }

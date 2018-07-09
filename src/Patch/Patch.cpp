@@ -519,6 +519,9 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
     vecCollisions.resize(0);
     partWalls = NULL;
     probes.resize(0);
+    
+    probesInterp    = NULL;
+    Interp_envelope = NULL;
 
     if (has_an_MPI_neighbor())
         createType2(params);
@@ -532,7 +535,7 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
 // ---------------------------------------------------------------------------------------------------------------------
 Patch::~Patch() {
 
-    delete probesInterp;
+    if (probesInterp) delete probesInterp;
 
     for(unsigned int i=0; i<probes.size(); i++)
         delete probes[i];
