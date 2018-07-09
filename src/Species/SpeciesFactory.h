@@ -54,7 +54,6 @@ public:
         if (!PyTools::extract("pusher", pusher ,"Species",ispec) )
             if ( patch->isMaster() ) WARNING("For species '" << species_name << "', pusher not defined: assumed = 'boris'.");
 
-
         // Extract type of species radiation from namelist
         std::string radiation_model = "none"; // default value
         if (!PyTools::extract("radiation_model", radiation_model ,"Species",ispec) )
@@ -309,7 +308,7 @@ public:
             if (!params.restart) thisSpecies->n_numpy_particles =  PyArray_SHAPE(np_ret)[1];//  ok
             thisSpecies->position_initialization_array = new double[ndim_local*thisSpecies->n_numpy_particles] ;
             for (unsigned int idim = 0; idim < ndim_local ; idim++){
-                for (unsigned int ipart = 0; ipart < (unsigned int)thisSpecies->n_numpy_particles; ipart++){
+                for (unsigned int ipart = 0; ipart < thisSpecies->n_numpy_particles; ipart++){
                     thisSpecies->position_initialization_array[idim*thisSpecies->n_numpy_particles+ipart] = *((double*)PyArray_GETPTR2( np_ret , idim, ipart));
                 }
             }     
@@ -362,12 +361,12 @@ public:
                 ERROR("For species '" << species_name << "' momentum_initializtion must provide a 2-dimensional array with " <<  params.nDim_particle << " columns." )
             
             //Get number of particles
-            if ( thisSpecies->n_numpy_particles != PyArray_SHAPE(np_ret_mom)[1] )
-                ERROR("For species '" << species_name << "' momentum_initializtion must provide as many particles as position_initialization." )
+            if ( !params.restart && thisSpecies->n_numpy_particles != PyArray_SHAPE(np_ret_mom)[1] )
+                ERROR("For species '" << species_name << "' momentum_initialization must provide as many particles as position_initialization." )
 
             thisSpecies->momentum_initialization_array = new double[ndim_local*thisSpecies->n_numpy_particles] ;
             for (unsigned int idim = 0; idim < ndim_local ; idim++){
-                for (unsigned int ipart = 0; ipart < (unsigned int)thisSpecies->n_numpy_particles; ipart++){
+                for (unsigned int ipart = 0; ipart < thisSpecies->n_numpy_particles; ipart++){
                     thisSpecies->momentum_initialization_array[idim*thisSpecies->n_numpy_particles+ipart] = *((double*)PyArray_GETPTR2( np_ret_mom , idim, ipart));
                 }
             }     
@@ -383,7 +382,10 @@ public:
         if (thisSpecies->time_frozen > 0 && thisSpecies->momentum_initialization!="cold") {
             if ( patch->isMaster() ) WARNING("For species '" << species_name << "' possible conflict between time-frozen & not cold initialization");
         }
-
+        // time when the relativistic field initialization is applied, if enabled
+        int n_timesteps_relativistic_initialization   = (int)(thisSpecies->time_frozen/params.timestep);
+        thisSpecies->time_relativistic_initialization = (double)(n_timesteps_relativistic_initialization) * params.timestep;
+  
         if( !PyTools::extract("boundary_conditions", thisSpecies->boundary_conditions, "Species", ispec)  )
             ERROR("For species '" << species_name << "', boundary_conditions not defined" );
 
@@ -493,6 +495,17 @@ public:
             
             
         }
+
+        // Extract if the species is relativistic and needs ad hoc fields initialization
+        bool relativistic_field_initialization = false;
+        if (!PyTools::extract("relativistic_field_initialization", relativistic_field_initialization ,"Species",ispec) )
+            {
+            if ( patch->isMaster() )
+            WARNING("For species '" << species_name << "', relativistic_field_initialization not defined: assumed = 'false'.");
+            }
+        thisSpecies->relativistic_field_initialization = relativistic_field_initialization;    
+
+
 
         // Species geometry
         // ----------------
@@ -644,6 +657,8 @@ public:
         newSpecies->mass                                     = species->mass;
         newSpecies->time_frozen                              = species->time_frozen;
         newSpecies->radiating                                = species->radiating;
+        newSpecies->relativistic_field_initialization        = species->relativistic_field_initialization;
+        newSpecies->time_relativistic_initialization         = species->time_relativistic_initialization;
         newSpecies->boundary_conditions                      = species->boundary_conditions;
         newSpecies->thermal_boundary_temperature             = species->thermal_boundary_temperature;
         newSpecies->thermal_boundary_velocity                = species->thermal_boundary_velocity;

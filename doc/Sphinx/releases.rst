@@ -21,16 +21,33 @@ the GitHub page.
 Upcoming changes
 ^^^^^^^^^^^^^^^^
 
-* Moving window along y and z
-* Tracking particles in *Screens*
 * Vectorization
+* Interface with the PICSAR library
 
 ----
 
 .. _latestVersion:
 
-Current release 3.3
+Current release 3.4
 ^^^^^^^^^^^^^^^^^^^
+
+**Download**: `Smilei v3.4 <_downloads/smilei-v3.3.tar.gz>`_
+
+* Compatibility with Python 3
+* New 'Performances' diagnostic
+* Tracked particles may output the fields at their location
+* 'subgrid' option in Fields diagnostics
+* Printout of the expected disk usage
+* Laser propagation pre-processing
+* More flexible domain decomposition
+* Relativistic initialization
+* Particles injection using Numpy arrays
+* Bugfixes: circular polarization, collisional ionization 
+
+----
+
+Release 3.3
+^^^^^^^^^^^
 
 **Download**: `Smilei v3.3 <_downloads/smilei-v3.3.tar.gz>`_
 

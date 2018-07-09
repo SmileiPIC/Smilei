@@ -358,7 +358,71 @@ void ElectroMagn2D::compute_Ap(Patch* patch)
             -                   two_ov_dx2dy2*(*p_)(nx_p-1,ny_p-1);
     }
         
-} // compute_pAp
+} // compute_Ap
+
+void ElectroMagn2D::compute_Ap_relativistic_Poisson(Patch* patch, double gamma_mean)
+{
+    // gamma_mean is the average Lorentz factor of the species whose fields will be computed
+    // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details 
+
+    double one_ov_dx_sq_ov_gamma_sq       = 1.0/(dx*dx)/(gamma_mean*gamma_mean);
+    double one_ov_dy_sq                   = 1.0/(dy*dy);
+    double two_ov_dxgam2dy2               = 2.0*(1.0/(dx*dx)/(gamma_mean*gamma_mean)+1.0/(dy*dy));
+    
+    // vector product Ap = A*p
+    for (unsigned int i=1; i<nx_p-1; i++) {
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            (*Ap_)(i,j) = one_ov_dx_sq_ov_gamma_sq*((*p_)(i-1,j)+(*p_)(i+1,j))
+                + one_ov_dy_sq*((*p_)(i,j-1)+(*p_)(i,j+1))
+                - two_ov_dxgam2dy2*(*p_)(i,j);
+        }//j
+    }//i
+        
+        
+    // Xmin BC
+    if ( patch->isXmin() ) {
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            //Ap_(0,j)      = one_ov_dx_sq*(pXmin[j]+p_(1,j))
+            (*Ap_)(0,j)      = one_ov_dx_sq_ov_gamma_sq*((*p_)(1,j))
+                +              one_ov_dy_sq*((*p_)(0,j-1)+(*p_)(0,j+1))
+                -              two_ov_dxgam2dy2*(*p_)(0,j);
+        }
+        // at corners
+        //Ap_(0,0)           = one_ov_dx_sq*(pXmin[0]+p_(1,0))               // Xmin/Ymin
+        //    +                   one_ov_dy_sq*(pYmin[0]+p_(0,1))
+        (*Ap_)(0,0)           = one_ov_dx_sq_ov_gamma_sq*((*p_)(1,0))               // Xmin/Ymin
+            +                   one_ov_dy_sq*((*p_)(0,1))
+            -                   two_ov_dxgam2dy2*(*p_)(0,0);
+        //Ap_(0,ny_p-1)      = one_ov_dx_sq*(pXmin[ny_p-1]+p_(1,ny_p-1))     // Xmin/Ymax
+        //    +                   one_ov_dy_sq*(p_(0,ny_p-2)+pYmax[0])
+        (*Ap_)(0,ny_p-1)      = one_ov_dx_sq_ov_gamma_sq*((*p_)(1,ny_p-1))     // Xmin/Ymax
+            +                   one_ov_dy_sq*((*p_)(0,ny_p-2))
+            -                   two_ov_dxgam2dy2*(*p_)(0,ny_p-1);
+    }
+        
+    // Xmax BC
+    if ( patch->isXmax() ) {
+            
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            //Ap_(nx_p-1,j) = one_ov_dx_sq*(p_(nx_p-2,j)+pXmax[j])
+            (*Ap_)(nx_p-1,j) = one_ov_dx_sq_ov_gamma_sq*((*p_)(nx_p-2,j))
+                +              one_ov_dy_sq*((*p_)(nx_p-1,j-1)+(*p_)(nx_p-1,j+1))
+                -              two_ov_dxgam2dy2*(*p_)(nx_p-1,j);
+        }
+        // at corners
+        //Ap_(nx_p-1,0)      = one_ov_dx_sq*(p_(nx_p-2,0)+pXmax[0])                 // Xmax/Ymin
+        //    +                   one_ov_dy_sq*(pYmin[nx_p-1]+p_(nx_p-1,1))
+        (*Ap_)(nx_p-1,0)      = one_ov_dx_sq_ov_gamma_sq*((*p_)(nx_p-2,0))                 // Xmax/Ymin
+            +                   one_ov_dy_sq*((*p_)(nx_p-1,1))
+            -                   two_ov_dxgam2dy2*(*p_)(nx_p-1,0);
+        //Ap_(nx_p-1,ny_p-1) = one_ov_dx_sq*(p_(nx_p-2,ny_p-1)+pXmax[ny_p-1])       // Xmax/Ymax
+        //    +                   one_ov_dy_sq*(p_(nx_p-1,ny_p-2)+pYmax[nx_p-1])
+        (*Ap_)(nx_p-1,ny_p-1) = one_ov_dx_sq_ov_gamma_sq*((*p_)(nx_p-2,ny_p-1))       // Xmax/Ymax
+            +                   one_ov_dy_sq*((*p_)(nx_p-1,ny_p-2))
+            -                   two_ov_dxgam2dy2*(*p_)(nx_p-1,ny_p-1);
+    }
+        
+} // compute_Ap_relativistic_Poisson
 
 double ElectroMagn2D::compute_pAp()
 {
@@ -404,14 +468,14 @@ void ElectroMagn2D::initE(Patch *patch)
     // ------------------------------------------
     
     // Ex
-    DEBUG("Computing Ex from scalar potential");
+    DEBUG("Computing Ex from scalar potential, Poisson problem");
     for (unsigned int i=1; i<nx_d-1; i++) {
         for (unsigned int j=0; j<ny_p; j++) {
             (*Ex2D)(i,j) = ((*phi_)(i-1,j)-(*phi_)(i,j))/dx;
         }
     }
     // Ey
-    DEBUG("Computing Ey from scalar potential");
+    DEBUG("Computing Ey from scalar potential, Poisson problem");
     for (unsigned int i=0; i<nx_p; i++) {
         for (unsigned int j=1; j<ny_d-1; j++) {
             (*Ey2D)(i,j) = ((*phi_)(i,j-1)-(*phi_)(i,j))/dy;
@@ -422,14 +486,14 @@ void ElectroMagn2D::initE(Patch *patch)
     // ---------------------
     // Ex / Xmin
     if (patch->isXmin()) {
-        DEBUG("Computing Xmin BC on Ex");
+        DEBUG("Computing Xmin BC on Ex, Poisson problem");
         for (unsigned int j=0; j<ny_p; j++) {
             (*Ex2D)(0,j) = (*Ex2D)(1,j) + ((*Ey2D)(0,j+1)-(*Ey2D)(0,j))*dx/dy  - dx*(*rho2D)(0,j);
         }
     }
     // Ex / Xmax
     if (patch->isXmax()) {
-        DEBUG("Computing Xmax BC on Ex");
+        DEBUG("Computing Xmax BC on Ex, Poisson problem");
         for (unsigned int j=0; j<ny_p; j++) {
             (*Ex2D)(nx_d-1,j) = (*Ex2D)(nx_d-2,j) - ((*Ey2D)(nx_p-1,j+1)-(*Ey2D)(nx_p-1,j))*dx/dy + dx*(*rho2D)(nx_p-1,j);
         }
@@ -442,6 +506,309 @@ void ElectroMagn2D::initE(Patch *patch)
 
 } // initE
 
+void ElectroMagn2D::initE_relativistic_Poisson(Patch *patch, double gamma_mean)
+{
+    // gamma_mean is the average Lorentz factor of the species whose fields will be computed
+    // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details 
+
+    Field2D* Ex2D  = static_cast<Field2D*>(Ex_rel_);
+    Field2D* Ey2D  = static_cast<Field2D*>(Ey_rel_);
+    Field2D* rho2D = static_cast<Field2D*>(rho_);
+
+    // ------------------------------------------
+    // Compute the fields Ex and Ey
+    // ------------------------------------------
+    
+    
+
+    // Ex
+    MESSAGE(1,"Computing Ex from scalar potential, relativistic Poisson problem");
+    for (unsigned int i=1; i<nx_p-1; i++) {
+        for (unsigned int j=0; j<ny_p; j++) {
+            (*Ex2D)(i,j) = ((*phi_)(i-1,j)-(*phi_)(i,j))/dx/gamma_mean/gamma_mean;
+        }
+    }
+    MESSAGE(1,"Ex: done");
+    // Ey
+    MESSAGE(1,"Computing Ey from scalar potential, relativistic Poisson problem");
+    for (unsigned int i=0; i<nx_p; i++) {
+        for (unsigned int j=1; j<ny_p-1; j++) {
+            (*Ey2D)(i,j) = ((*phi_)(i,j-1)-(*phi_)(i,j))/dy;
+        }
+    }
+    MESSAGE(1,"Ey: done");
+    // Apply BC on Ex and Ey
+    // ---------------------
+    // Ex / Xmin
+    if (patch->isXmin()) {
+        DEBUG("Computing Xmin BC on Ex, relativistic Poisson problem");
+        for (unsigned int j=0; j<ny_p; j++) {
+            (*Ex2D)(0,j) = (*Ex2D)(1,j) + ((*Ey2D)(0,j+1)-(*Ey2D)(0,j))*dx/dy  - dx*(*rho2D)(0,j);
+        }
+    }
+    // Ex / Xmax
+    if (patch->isXmax()) {
+        DEBUG("Computing Xmax BC on Ex, relativistic Poisson problem");
+        for (unsigned int j=0; j<ny_p; j++) {
+            (*Ex2D)(nx_d-1,j) = (*Ex2D)(nx_d-2,j) - ((*Ey2D)(nx_p-1,j+1)-(*Ey2D)(nx_p-1,j))*dx/dy + dx*(*rho2D)(nx_p-1,j);
+        }
+    }
+
+    // // Ey / Ymin
+    // if (patch->isYmin()) {
+    //     DEBUG("Computing Ymin BC on Ey, relativistic Poisson problem");
+    //     for (unsigned int i=0; i<nx_p; i++) {
+    //         (*Ey2D)(i,0) = (*Ey2D)(i,1) + ((*Ex2D)(i+1,0)-(*Ex2D)(i,0))*dy/dx  - dy*(*rho2D)(i,0);
+    //     }
+    // }
+    // 
+    // // Ey / Ymax
+    // if (patch->isYmax()) {
+    //     DEBUG("Computing Ymax BC on Ey, relativistic Poisson problem");
+    //     for (unsigned int i=0; i<nx_p; i++) {
+    //         (*Ey2D)(i,ny_d-1) = (*Ey2D)(i,ny_d-2) - ((*Ex2D)(i+1,ny_p-1)-(*Ex2D)(i,ny_p-1))*dy/dx + dy*(*rho2D)(i,ny_p-1);
+    //     }
+    // }
+
+    delete phi_;
+    delete r_;
+    delete p_;
+    delete Ap_;
+
+} // initE_relativistic_Poisson
+
+void ElectroMagn2D::initB_relativistic_Poisson(Patch *patch, double gamma_mean)
+{
+    // gamma_mean is the average Lorentz factor of the species whose fields will be computed
+    // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details 
+
+    Field2D* Ey2D  = static_cast<Field2D*>(Ey_rel_);
+    Field2D* Bz2D  = static_cast<Field2D*>(Bz_rel_);
+    // Bx is zero everywhere
+    Field2D* Bx2D  = static_cast<Field2D*>(Bx_rel_);
+    // ------------------------------------------
+    // Compute the field Bz; Bx and By are identically zero
+    // ------------------------------------------
+    
+    double beta_mean = sqrt(1.-1./gamma_mean/gamma_mean);
+    MESSAGE(0,"In relativistic Poisson solver, gamma_mean = " << gamma_mean);
+
+    // Bx^(p,d) is identically zero
+    // (hypothesis of negligible J transverse with respect to Jx)
+    MESSAGE(1,"Computing Bx, relativistic Poisson problem");
+    for (unsigned int i=0; i<nx_p; i++) {
+        for (unsigned int j=0; j<ny_d; j++) {
+            (*Bx2D)(i,j) = 0.;
+        }
+    }
+    MESSAGE(1,"Bx: done");
+
+    // Bz^(d,d) from Ey^(p,d)
+    MESSAGE(1,"Computing Bz from scalar potential, relativistic Poisson problem");
+    for (unsigned int i=0; i<nx_p; i++) {
+        for (unsigned int j=0; j<ny_d; j++) {
+            (*Bz2D)(i,j) = beta_mean*(*Ey2D)(i,j);
+        }
+    }
+    MESSAGE(1,"Bz: done");
+
+
+} // initB_relativistic_Poisson
+
+void ElectroMagn2D::center_fields_from_relativistic_Poisson(Patch *patch){
+
+    // B field centered in time as E field, at time t
+    Field2D* Bx2Drel  = static_cast<Field2D*>(Bx_rel_);
+    Field2D* By2Drel  = static_cast<Field2D*>(By_rel_);
+    Field2D* Bz2Drel  = static_cast<Field2D*>(Bz_rel_);
+
+    // B field centered in time at time t+dt/2
+    Field2D* Bx2D  = static_cast<Field2D*>(Bx_rel_t_plus_halfdt_);
+    Field2D* By2D  = static_cast<Field2D*>(By_rel_t_plus_halfdt_);
+    Field2D* Bz2D  = static_cast<Field2D*>(Bz_rel_t_plus_halfdt_);
+    // B field centered in time at time t-dt/2
+    Field2D* Bx2D0  = static_cast<Field2D*>(Bx_rel_t_minus_halfdt_);
+    Field2D* By2D0  = static_cast<Field2D*>(By_rel_t_minus_halfdt_);
+    Field2D* Bz2D0  = static_cast<Field2D*>(Bz_rel_t_minus_halfdt_);
+
+
+    // The B_rel fields, centered as B, will be advanced by dt/2 and -dt/2
+    // for proper centering in FDTD, but first they have to be centered in space
+    // The advance by dt and -dt and the sum to the existing grid fields is performed in
+    // ElectroMagn2D::sum_rel_fields_to_em_fields
+
+    // Bx (p,d)   Bx_rel is identically zero and centered as Bx, no special interpolation of indices
+    for (unsigned int i=0; i<nx_p; i++) {
+        for (unsigned int j=0; j<ny_d; j++) {
+                (*Bx2D) (i,j)= (*Bx2Drel)(i,j);
+                (*Bx2D0)(i,j)= (*Bx2Drel)(i,j);
+        }
+    }
+
+    // ---------- center the B fields 
+    // By (d,p) - remember that Byrel is centered as Ezrel (p,p)
+    for (unsigned int i=1; i<nx_d-1; i++) {
+        for (unsigned int j=0; j<ny_p; j++) {
+                (*By2D) (i,j)= 0.5 * ( (*By2Drel)(i,j) + (*By2Drel)(i-1,j) );
+                (*By2D0)(i,j)= 0.5 * ( (*By2Drel)(i,j) + (*By2Drel)(i-1,j) );
+        }
+    }
+
+    // Bz (d,d) - remember that Bzrel is centered as Eyrel (p,d)
+    for (unsigned int i=1; i<nx_d-1; i++) {
+        for (unsigned int j=0; j<ny_d; j++) {
+                (*Bz2D) (i,j)= 0.5 * ( (*Bz2Drel)(i,j) + (*Bz2Drel)(i-1,j) );
+                (*Bz2D0)(i,j)= 0.5 * ( (*Bz2Drel)(i,j) + (*Bz2Drel)(i-1,j) );
+        }
+    }
+
+} 
+
+void ElectroMagn2D::initRelativisticPoissonFields(Patch *patch)
+{
+    // init temporary fields for relativistic field initialization,
+    // to be added to the already present electromagnetic fields
+
+    Ex_rel_  = new Field2D(dimPrim, 0, false, "Ex_rel");
+    Ey_rel_  = new Field2D(dimPrim, 1, false, "Ey_rel");
+    Ez_rel_  = new Field2D(dimPrim, 2, false, "Ez_rel");
+    Bx_rel_  = new Field2D(dimPrim, 0, true,  "Bx_rel");  // will be identically zero
+    By_rel_  = new Field2D(dimPrim, 2, false,  "By_rel"); // is equal to -beta*Ez thus inherits the same centering of Ez
+    Bz_rel_  = new Field2D(dimPrim, 1, false,  "Bz_rel"); // is equal to  beta*Ey thus inherits the same centering of Ey
+
+    // ----- B fields centered as in FDTD, to be added to the already present magnetic fields
+
+    // B field advanced by dt/2
+    Bx_rel_t_plus_halfdt_  = new Field2D(dimPrim, 0, true,  "Bx_rel_t_plus_halfdt");  
+    By_rel_t_plus_halfdt_  = new Field2D(dimPrim, 1, true,  "By_rel_t_plus_halfdt"); 
+    Bz_rel_t_plus_halfdt_  = new Field2D(dimPrim, 2, true,  "Bz_rel_t_plus_halfdt"); 
+    // B field "advanced" by -dt/2
+    Bx_rel_t_minus_halfdt_  = new Field2D(dimPrim, 0, true,  "Bx_rel_t_plus_halfdt");  
+    By_rel_t_minus_halfdt_  = new Field2D(dimPrim, 1, true,  "By_rel_t_plus_halfdt"); 
+    Bz_rel_t_minus_halfdt_  = new Field2D(dimPrim, 2, true,  "Bz_rel_t_plus_halfdt"); 
+
+
+
+} // initRelativisticPoissonFields
+
+void ElectroMagn2D::sum_rel_fields_to_em_fields(Patch *patch)
+{
+    Field2D* Ex2Drel  = static_cast<Field2D*>(Ex_rel_);
+    Field2D* Ey2Drel  = static_cast<Field2D*>(Ey_rel_);
+    Field2D* Ez2Drel  = static_cast<Field2D*>(Ez_rel_);
+
+    // B_t_plus_halfdt
+    Field2D* Bx_rel_t_plus_halfdt = static_cast<Field2D*>(Bx_rel_t_plus_halfdt_);
+    Field2D* By_rel_t_plus_halfdt = static_cast<Field2D*>(By_rel_t_plus_halfdt_);
+    Field2D* Bz_rel_t_plus_halfdt = static_cast<Field2D*>(Bz_rel_t_plus_halfdt_);
+
+    // B_t_minus_halfdt
+    Field2D* Bx_rel_t_minus_halfdt = static_cast<Field2D*>(Bx_rel_t_minus_halfdt_);
+    Field2D* By_rel_t_minus_halfdt = static_cast<Field2D*>(By_rel_t_minus_halfdt_);
+    Field2D* Bz_rel_t_minus_halfdt = static_cast<Field2D*>(Bz_rel_t_minus_halfdt_);
+    
+    // E and B fields already existing on the grid
+    Field2D* Ex2D  = static_cast<Field2D*>(Ex_);
+    Field2D* Ey2D  = static_cast<Field2D*>(Ey_);
+    Field2D* Ez2D  = static_cast<Field2D*>(Ez_);
+    Field2D* Bx2D  = static_cast<Field2D*>(Bx_);
+    Field2D* By2D  = static_cast<Field2D*>(By_);
+    Field2D* Bz2D  = static_cast<Field2D*>(Bz_);
+    Field2D* Bx2D0  = static_cast<Field2D*>(Bx_m);
+    Field2D* By2D0  = static_cast<Field2D*>(By_m);
+    Field2D* Bz2D0  = static_cast<Field2D*>(Bz_m);
+
+    // Ex (d,p)
+    for (unsigned int i=0; i<nx_d; i++) {
+        for (unsigned int j=0; j<ny_p; j++) {
+                (*Ex2D)(i,j) = (*Ex2D)(i,j) + (*Ex2Drel)(i,j);
+        }
+    }
+
+    // Ey (p,d)
+    for (unsigned int i=0; i<nx_p; i++) {
+        for (unsigned int j=0; j<ny_d; j++) {
+                (*Ey2D)(i,j) = (*Ey2D)(i,j) + (*Ey2Drel)(i,j);
+        }
+    }
+
+    // Ez (p,p)
+    for (unsigned int i=0; i<nx_p; i++) {
+        for (unsigned int j=0; j<ny_p; j++) {
+                (*Ez2D)(i,j) = (*Ez2D)(i,j) + (*Ez2Drel)(i,j);
+        }
+    }
+
+
+
+    // Since Brel is centered in time as E, it is inconsistent with FDTD,
+    // where E and B are staggered in time. 
+    // Possible solution:
+    // Use FDTD scheme to integrate Maxwell-Faraday equation forward in time by dt/2 to obtain B
+    // Use FDTD scheme to integrate Maxwell-Faraday equation backwards in time by dt/2 to obtain Bm
+    // Add the forward-evolved and backward-evolved fields to the grid fields
+  
+  	double half_dt_ov_dx = 0.5 * timestep / dx;
+  	double half_dt_ov_dy = 0.5 * timestep / dy;
+
+    // Magnetic field Bx^(p,d,d)
+    for (unsigned int i=0 ; i<nx_p;  i++) {
+        for (unsigned int j=1 ; j<ny_d-1 ; j++) {
+                // forward advance by dt/2
+                (*Bx_rel_t_plus_halfdt) (i,j) += -1.* half_dt_ov_dy * ( (*Ez2Drel)(i,j) - (*Ez2Drel)(i,j-1) );
+                // backward advance by dt/2
+                (*Bx_rel_t_minus_halfdt)(i,j) -= -1.* half_dt_ov_dy * ( (*Ez2Drel)(i,j) - (*Ez2Drel)(i,j-1) );
+                // sum to the fields on grid
+                (*Bx2D) (i,j) += (*Bx_rel_t_plus_halfdt) (i,j);
+                (*Bx2D0)(i,j) += (*Bx_rel_t_minus_halfdt)(i,j);
+        }
+    }
+
+    // Magnetic field By^(d,p,d)
+    for (unsigned int i=1 ; i<nx_d-1 ; i++) {
+        for (unsigned int j=0 ; j<ny_p ; j++) {
+                // forward advance by dt/2
+                (*By_rel_t_plus_halfdt) (i,j) +=  half_dt_ov_dx * ( (*Ez2Drel)(i,j) - (*Ez2Drel)(i-1,j) );
+                // backward advance by dt/2
+                (*By_rel_t_minus_halfdt)(i,j) -=  half_dt_ov_dx * ( (*Ez2Drel)(i,j) - (*Ez2Drel)(i-1,j) );
+                // sum to the fields on grid
+                (*By2D) (i,j) += (*By_rel_t_plus_halfdt) (i,j);
+                (*By2D0)(i,j) += (*By_rel_t_minus_halfdt)(i,j);
+        }
+    }
+        
+    // Magnetic field Bz^(d,d,p)
+    for (unsigned int i=1 ; i<nx_d-1 ; i++) {
+        for (unsigned int j=1 ; j<ny_d-1 ; j++) {
+                // forward advance by dt/2
+                (*Bz_rel_t_plus_halfdt)(i,j)  += -half_dt_ov_dx * ( (*Ey2Drel)(i,j) - (*Ey2Drel)(i-1,j) ) + half_dt_ov_dy * ( (*Ex2Drel)(i,j) - (*Ex2Drel)(i,j-1) );
+                // backward advance by dt/2
+                (*Bz_rel_t_minus_halfdt)(i,j) -= -half_dt_ov_dx * ( (*Ey2Drel)(i,j) - (*Ey2Drel)(i-1,j) ) + half_dt_ov_dy * ( (*Ex2Drel)(i,j) - (*Ex2Drel)(i,j-1) );
+                // sum to the fields on grid
+                (*Bz2D) (i,j) += (*Bz_rel_t_plus_halfdt) (i,j);
+                (*Bz2D0)(i,j) += (*Bz_rel_t_minus_halfdt)(i,j);
+        }
+    }
+
+    // delete temporary fields used for relativistic initialization
+    delete Ex_rel_;
+    delete Ey_rel_;
+    delete Ez_rel_;
+    delete Bx_rel_;
+    delete By_rel_;
+    delete Bz_rel_;
+
+    delete Bx_rel_t_plus_halfdt;
+    delete By_rel_t_plus_halfdt;
+    delete Bz_rel_t_plus_halfdt;
+    delete Bx_rel_t_minus_halfdt;
+    delete By_rel_t_minus_halfdt;
+    delete Bz_rel_t_minus_halfdt;
+
+
+
+
+} // sum_rel_fields_to_em_fields
 
 void ElectroMagn2D::centeringE( std::vector<double> E_Add )
 {
@@ -460,6 +827,24 @@ void ElectroMagn2D::centeringE( std::vector<double> E_Add )
         }
     }
 } // centeringE
+
+void ElectroMagn2D::centeringErel( std::vector<double> E_Add )
+{
+    Field2D* Ex2D  = static_cast<Field2D*>(Ex_rel_);
+    Field2D* Ey2D  = static_cast<Field2D*>(Ey_rel_);
+
+    // Centering electrostatic fields
+    for (unsigned int i=0; i<nx_d; i++) {
+        for (unsigned int j=0; j<ny_p; j++) {
+            (*Ex2D)(i,j) += E_Add[0];
+        }
+    }
+    for (unsigned int i=0; i<nx_p; i++) {
+        for (unsigned int j=0; j<ny_d; j++) {
+            (*Ey2D)(i,j) += E_Add[1];
+        }
+    }
+} // centeringErel
 
 // ---------------------------------------------------------------------------------------------------------------------
 // End of Solve Poisson methods 

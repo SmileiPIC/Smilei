@@ -85,11 +85,14 @@ interaction to astrophysics.
    fromRate_ionization
    radiation_loss
    multiphoton_Breit_Wheeler
+   relativistic_fields_initialization
 
    installation
+   supercomputers
    namelist
    run
    post-processing
+   contribute
 
    material
    partners

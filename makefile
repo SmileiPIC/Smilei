@@ -103,8 +103,8 @@ ifeq (,$(findstring noopenmp,$(config)))
     OPENMP_FLAG += -D_OMP
     LDFLAGS += $(OPENMP_FLAG)
     CXXFLAGS += $(OPENMP_FLAG)
-else
-    LDFLAGS += -mt_mpi
+#else 
+#    LDFLAGS += -mt_mpi # intelmpi only
 endif
 
 
@@ -217,10 +217,11 @@ tar:
 # Python module rules
 
 # Install the python module in the user python path
+
 happi:
 	@echo "Installing $(SITEDIR)/smilei.pth"
 	$(Q) mkdir -p "$(SITEDIR)"
-	$(Q) echo "$(PWD)" > "$(SITEDIR)/smilei.pth"
+	$(Q) echo "$(CURDIR)" > "$(SITEDIR)/smilei.pth"
 
 uninstall_happi:
 	@echo "Uninstalling $(SITEDIR)/smilei.pth"
@@ -284,5 +285,6 @@ help:
 	@echo 'http://www.maisondelasimulation.fr/smilei'
 	@echo 'https://github.com/SmileiPIC/Smilei'
 	@echo
-	@if [ -f  scripts/CompileTools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/CompileTools/machine/$(machine); fi
+	@if [ -f  scripts/CompileTools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/CompileTools/machine/$(machine)|| echo "None"; fi
+	@if [ -f scripts/CompileTools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/CompileTools/machine/$(machine) || echo "None"; else echo "Available machines:"; ls -1 scripts/CompileTools/machine; fi
 

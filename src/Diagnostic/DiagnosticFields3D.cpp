@@ -46,6 +46,8 @@ DiagnosticFields3D::DiagnosticFields3D( Params &params, SmileiMPI* smpi, VectorP
     filespace_firstwrite = H5Screate_simple(1, &file_size, NULL);
     memspace_firstwrite  = H5Screate_simple(1, &file_size, NULL);
     
+    if( smpi->test_mode ) return;
+    
     // Define a second portion of the grid, which is unrelated to the current 
     // composition of vecPatches. It is used for a second writing of the file
     // in order to fold the Hilbert curve. This new portion is necessarily

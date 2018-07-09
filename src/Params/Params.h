@@ -129,6 +129,14 @@ public:
     //! Maxium poisson error tolerated
     double poisson_max_error;
 
+    //"Relativistic" Poisson solver
+    //! Do we solve "relativistic poisson problem" for relativistic species
+    bool solve_relativistic_poisson;
+    //! Maxium number of relativistic poisson iteration
+    unsigned int relativistic_poisson_max_iteration;
+    //! Maxium relativistic poisson error tolerated
+    double relativistic_poisson_max_error;
+
     //! Do we need to exchange full B (default=0 <=> only 2 components are exchanged by dimension)
     bool full_B_exchange;
 

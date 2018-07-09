@@ -15,6 +15,10 @@ Ey1 = S.Field.Field1.Ey(timesteps=1500).getData()[0]
 subgrid = S.namelist.DiagFields[1].subgrid
 Validate("Field subgrid works", (Ey1==Ey[subgrid]).all())
 
+# TIME-AVERAGED FIELD DIAG
+Ey = S.Field.Field2("Ey", subset={"x":100}, timesteps=1500).getData()[0]
+Validate("Ey profile in Field2", Ey, 1e-7 )
+
 # 2-D probe in 2D
 Ey = S.Probe.Probe0.Ey(timesteps=1500).getData()[0]
 Validate("Ey probe at iteration 1500", Ey, 0.01)
