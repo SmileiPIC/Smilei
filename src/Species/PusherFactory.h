@@ -59,6 +59,15 @@ public:
             }
             else if ( species->pusher == "ponderomotive_boris" )
             {
+
+                int n_envlaser = PyTools::nComponents("LaserEnvelope");
+                if ( n_envlaser <1 ){
+                    ERROR( "No Laser Envelope present. The pusher ponderomotive_boris can be used only in presence of a Laser Envelope.");
+                                    }
+
+                if (!species->ponderomotive_dynamics){
+                    ERROR("if ponderomotive_boris pusher is chosen for a species, the flag ponderomotive_dynamics for that species must be set to true.");}
+
                 if (!species->vectorized_operators)
                     Push = new PusherPonderomotiveBoris( params, species );
 #ifdef _VECTO
