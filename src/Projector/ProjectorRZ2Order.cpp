@@ -287,7 +287,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     }
      e_delta_inv =1./e_delta;
     //defining crt_p 
-     complex<double> crt_p = - charge_weight*Icpx/(e_bar*dt*imode);   
+     complex<double> crt_p = - charge_weight*Icpx/(2*M_PI*e_bar*dt*imode);   
     for (unsigned int i=0; i < 5; i++) {
         DSx[i] = Sx1[i] - Sx0[i];
         DSy[i] = Sy1[i] - Sy0[i];
@@ -668,7 +668,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     }
      e_delta_inv =1./e_delta;
     //defining crt_p 
-    complex<double> crt_p = -charge_weight*Icpx/(dt*imode*e_bar);
+    complex<double> crt_p = -charge_weight*Icpx/(2*M_PI*dt*imode*e_bar);
     for (unsigned int i=0; i < 5; i++) {
         DSx[i] = Sx1[i] - Sx0[i];
         DSy[i] = Sy1[i] - Sy0[i];
