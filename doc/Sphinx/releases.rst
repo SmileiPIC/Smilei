@@ -13,7 +13,7 @@ reserved for the :doc:`partners`. It is regularly synchronized with
 the GitHub page.
 
 .. warning::
-  
+
   In v3.3, :doc:`significant changes<syntax_changes>` have been made to the input syntax.
 
 ----
@@ -42,7 +42,8 @@ Current release 3.4
 * More flexible domain decomposition
 * Relativistic initialization
 * Particles injection using Numpy arrays
-* Bugfixes: circular polarization, collisional ionization 
+* Possibility to use user-defined ionization rates
+* Bugfixes: circular polarization, collisional ionization
 
 ----
 
@@ -141,4 +142,3 @@ Release 1.0
 * Hybrid MPI-OpenMP parallelization
 * Field ionization
 * Some python diagnostics
-

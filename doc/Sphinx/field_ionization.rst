@@ -155,7 +155,7 @@ In the first benchmark, featuring hydrogen, the laser intensity is kept constant
 at :math:`I_L = 10^{14}~{\rm W/cm^2}`, corresponding to a normalized vector
 potential :math:`a_0 \simeq 6.81 \times 10^{-3}`, over 10 optical cycles.
 The resulting averaged ion charge in the simulation is presented as a function of
-time in :numref:`FieldIonization` (top). It is found to be in excellent agreement
+time in :numref:`FigFieldIonization` (left). It is found to be in excellent agreement
 with the theoretical prediction considering the cycle averaged ionization rate
 :math:`\Gamma_{\rm ADK} \simeq 2.55\times10^{12}~{\rm s^{-1}}` computed
 from :eq:`ADKrate`.
@@ -164,7 +164,7 @@ The second benchmark features carbon ions. The laser has a peak intensity
 :math:`I_L = 5 \times 10^{16}~{\rm W/cm^2}`, corresponding to a normalized
 vector potential :math:`a_0 \simeq 1.52 \times 10^{-1}`, and a gaussian time profile
 with FWHM :math:`\tau_L=5~\lambda_0/c` (in terms of
-electric field). :numref:`FigFieldIonization` (bottom) shows, as function of time,
+electric field). :numref:`FigFieldIonization` (right) shows, as function of time,
 the relative distribution of carbon ions for different charge states
 (from 0 to :math:`+4`). These numerical results are shown to be in excellent
 agreement with theoretical predictions obtained by numerically solving the coupled
