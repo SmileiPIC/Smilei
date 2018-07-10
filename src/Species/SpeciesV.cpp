@@ -762,6 +762,94 @@ void SpeciesV::ponderomotive_update_susceptibility_and_momentum(double time_dual
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all particles of the species reacting to laser envelope
+//   - interpolate the fields at the particle position
+//   - deposit susceptibility
+// ---------------------------------------------------------------------------------------------------------------------
+void SpeciesV::ponderomotive_project_susceptibility(double time_dual, unsigned int ispec,
+                           ElectroMagn* EMfields, Interpolator* Interp_envelope, 
+                           Params &params, bool diag_flag,
+                           Patch* patch, SmileiMPI* smpi,
+                           std::vector<Diagnostic*>& localDiags)
+{
+
+////////////////////////////// new vectorized
+    int ithread;
+    #ifdef _OPENMP
+        ithread = omp_get_thread_num();
+    #else
+        ithread = 0;
+    #endif
+
+#ifdef  __DETAILED_TIMERS
+    double timer;
+#endif
+
+    unsigned int iPart;
+
+    if (npack_==0) {
+        npack_    = 1;
+        packsize_ = (f_dim1-2*oversize[1]);
+
+        if ( (long int)bmax.back() < (long int)60000 || (Radiate) || (Ionize) || (Multiphoton_Breit_Wheeler_process) )
+            packsize_ *= (f_dim0-2*oversize[0]);
+        else 
+            npack_ *= (f_dim0-2*oversize[0]);
+
+        if (nDim_particle == 3)
+            packsize_ *= (f_dim2-2*oversize[2]);
+    }
+
+
+    // -------------------------------
+    // calculate the particle dynamics
+    // -------------------------------
+    if (time_dual>time_frozen) { // advance particle momentum
+
+        for ( int ipack = 0 ; ipack < npack_ ; ipack++ ) {
+
+            // ipack start @ bmin [ ipack * packsize_ ]
+            // ipack end   @ bmax [ ipack * packsize_ + packsize_ - 1 ]
+            //int nparts_in_pack = bmax[ (ipack+1) * packsize_-1 ] - bmin [ ipack * packsize_ ];
+            int nparts_in_pack = bmax[ (ipack+1) * packsize_-1 ];
+            smpi->dynamics_resize(ithread, nDim_particle, nparts_in_pack );
+
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
+            // Interpolate the fields at the particle position
+            for (unsigned int scell = 0 ; scell < packsize_ ; scell++)
+                (static_cast<Interpolator3D2Order_envV*>(Interp_envelope))->interpolate_em_fields_and_envelope(EMfields, *particles, smpi, &(bmin[ipack*packsize_+scell]), &(bmax[ipack*packsize_+scell]), ithread, bmin[ipack*packsize_] );
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[7] += MPI_Wtime() - timer;
+#endif
+
+            // Project susceptibility, the source term of envelope equation
+            double* b_Chi_envelope=nullptr;
+            if (nDim_field==3)
+                b_Chi_envelope =  &(*EMfields->Env_Chi_)(0) ;
+            else {ERROR("Envelope model not yet implemented in this geometry");}
+
+            int* iold = NULL;
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
+            for (unsigned int scell = 0 ; scell < packsize_ ; scell++)
+                (static_cast<Projector3D2Order_susceptibilityV*>(Proj_susceptibility))->project_susceptibility( b_Chi_envelope, *particles, bmin[ipack*packsize_+scell], bmax[ipack*packsize_+scell], ipack*packsize_+scell, b_dim, smpi, ithread, mass, iold, bmin[ipack*packsize_] );
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[8] += MPI_Wtime() - timer;
+#endif
+
+        }
+
+    }
+    else { // immobile particle (at the moment only project density)
+
+    }//END if time vs. time_frozen
+
+} // end ponderomotive_project_susceptibility
+
+// ---------------------------------------------------------------------------------------------------------------------
+// For all particles of the species reacting to laser envelope
 //   - interpolate the ponderomotive potential and its gradient at the particle position, for present and previous timestep
 //   - calculate the new particle position
 //   - particles BC

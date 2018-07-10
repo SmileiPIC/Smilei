@@ -2450,7 +2450,7 @@ for instance::
   A list of strings indicating the particle attributes to be written in the output.
   The attributes may be the particles' spatial coordinates (``"x"``, ``"y"``, ``"z"``),
   their momenta (``"px"``, ``"py"``, ``"pz"``), their electrical charge (``"q"``),
-  their statistical weight (``"w"``), their quantum parameter
+  their statistical weight (``"weight"``), their quantum parameter
   (``"chi"``, only for species with radiation losses) or the fields interpolated
   at their  positions (``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"``, ``"Bz"``).
 

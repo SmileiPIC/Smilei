@@ -81,7 +81,7 @@ that you can install following `these instructions <https://www.macports.org/ins
 Via HomeBrew
 """"""""""""
 
-This installation procedure has been tested on OS X 10.12
+This installation procedure has been tested on macOS 10.13
 
 #. `HomeBrew <http://brew.sh>`_ can easily installed via:
 
@@ -93,13 +93,12 @@ This installation procedure has been tested on OS X 10.12
 
    .. code-block:: bash
 
-     brew install gcc
+     brew install gcc python numpy
      brew install openmpi --with-mpi-thread-multiple
      brew install hdf5 --with-mpi
-     brew install python numpy
      export LC_ALL=en_US.UTF-8
      export LANG=en_US.UTF-8
-     pip2 install ipython h5py pint sphinx matplotlib pylab
+     pip3 install ipython h5py pint sphinx matplotlib scipy pylab
 
 #. To be able to use the gcc with openmpi, you need to set the ``OMPI_CXX`` variable :
 

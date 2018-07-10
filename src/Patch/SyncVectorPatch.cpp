@@ -152,7 +152,9 @@ void SyncVectorPatch::sumEnvChis(Params& params, VectorPatch& vecPatches, int is
 {
     // Sum EnvChi_s(ispec)
     if(vecPatches.listEnv_Chis_ .size()>0) SyncVectorPatch::sum( vecPatches.listEnv_Chis_ , vecPatches, timers, itime  );
+    
 }
+
 
 // fields : contains a single field component for all patches of vecPatches
 // timers and itime were here introduced for debugging

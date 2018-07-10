@@ -44,4 +44,4 @@ Validate("Patch size", patchSize)
 attributes = ["Ex", "Ey", "Ez", "Bx", "By", "Bz"]
 data = S.TrackParticles.eon(axes=attributes, select="any(t==0, Id==100)").getData()
 for f in attributes:
-	Validate("Field "+f+" of tracked electrons", data[f].flatten(), 1e-4)
+	Validate("Field "+f+" of tracked electrons", data[f].flatten(), 5e-4)
