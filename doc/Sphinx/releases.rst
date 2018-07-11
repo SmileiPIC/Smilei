@@ -28,10 +28,19 @@ Upcoming changes
 
 .. _latestVersion:
 
-Current release 3.4
-^^^^^^^^^^^^^^^^^^^
+Current release 3.4.1
+^^^^^^^^^^^^^^^^^^^^^
 
-**Download**: `Smilei v3.4 <_downloads/smilei-v3.3.tar.gz>`_
+**Download**: `Smilei v3.4.1 <_downloads/smilei-v3.4.1.tar.gz>`_
+
+* Ionization considering a user-defined rate
+
+----
+
+Release 3.4
+^^^^^^^^^^^
+
+**Download**: `Smilei v3.4 <_downloads/smilei-v3.4.tar.gz>`_
 
 * Compatibility with Python 3
 * New 'Performances' diagnostic
