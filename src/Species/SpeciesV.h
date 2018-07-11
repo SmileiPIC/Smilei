@@ -44,14 +44,14 @@ class SpeciesV : public Species
 
     //! Method projecting susceptibility and calculating the particles updated momentum (interpolation, momentum pusher), only particles interacting with envelope
     void ponderomotive_update_susceptibility_and_momentum(double time_dual, unsigned int ispec,
-                               ElectroMagn* EMfields, Interpolator* Interp_envelope, 
+                               ElectroMagn* EMfields, Interpolator* Interp_envelope,
                                Params &params, bool diag_flag,
                                Patch* patch, SmileiMPI* smpi,
                                std::vector<Diagnostic*>& localDiags) override;
-   
+
     //! Method projecting susceptibility, only particles interacting with envelope
     void ponderomotive_project_susceptibility(double time_dual, unsigned int ispec,
-                               ElectroMagn* EMfields, Interpolator* Interp_envelope, 
+                               ElectroMagn* EMfields, Interpolator* Interp_envelope,
                                Params &params, bool diag_flag,
                                Patch* patch, SmileiMPI* smpi,
                                std::vector<Diagnostic*>& localDiags) override;
@@ -78,7 +78,7 @@ class SpeciesV : public Species
     //! Compute cell_keys for the specified bin boundaries.
     void compute_bin_cell_keys(Params &params, int istart, int iend);
 
-    //!
+    //! Create a new entry for a particle
     void add_space_for_a_particle() override {
         particles->cell_keys.push_back(-1);
     }
@@ -87,7 +87,10 @@ class SpeciesV : public Species
     void importParticles( Params&, Patch*, Particles&, std::vector<Diagnostic*>& )override;
 
 private:
+
+    //! Number of packs of particles that divides the total number of particles
     unsigned int npack_;
+    //! Size of the pack in number of particles
     unsigned int packsize_;
 
 };

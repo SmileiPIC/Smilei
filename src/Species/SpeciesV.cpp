@@ -132,7 +132,7 @@ int ithread;
 
         if ( ( (long int)bmax.back() < (long int)60000 ) || (Radiate) || (Ionize) || (Multiphoton_Breit_Wheeler_process) )
             packsize_ *= (f_dim0-2*oversize[0]);
-        else 
+        else
             npack_ *= (f_dim0-2*oversize[0]);
 
         if (nDim_particle == 3)
@@ -163,10 +163,6 @@ int ithread;
         for (unsigned int i=0; i<species_loc_bmax.size(); i++)
             species_loc_bmax[i] = 0;
 
-        // Resize Cell_keys
-        // Need to check if this is necessary here
-        // (*particles).cell_keys.resize((*particles).size());
-
         for ( int ipack = 0 ; ipack < npack_ ; ipack++ ) {
 
             int nparts_in_pack = bmax[ (ipack+1) * packsize_-1 ];
@@ -180,7 +176,9 @@ int ithread;
             //for (unsigned int scell = 0 ; scell < bmin.size() ; scell++)
             //    (*Interp)(EMfields, *particles, smpi, &(bmin[scell]), &(bmax[scell]), ithread );
             for (unsigned int scell = 0 ; scell < packsize_ ; scell++)
-                (*Interp)(EMfields, *particles, smpi, &(bmin[ipack*packsize_+scell]), &(bmax[ipack*packsize_+scell]), ithread, bmin[ipack*packsize_] );
+                (*Interp)(EMfields, *particles, smpi, &(bmin[ipack*packsize_+scell]),
+                                                      &(bmax[ipack*packsize_+scell]),
+                                                      ithread, bmin[ipack*packsize_] );
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[0] += MPI_Wtime() - timer;
@@ -268,7 +266,9 @@ int ithread;
 
             // Push the particles and the photons
             //(*Push)(*particles, smpi, 0, bmax[bmax.size()-1], ithread );
-            (*Push)(*particles, smpi, bmin[ipack*packsize_], bmax[ipack*packsize_+packsize_-1], ithread, bmin[ipack*packsize_] );
+            (*Push)(*particles, smpi, bmin[ipack*packsize_],
+                                      bmax[ipack*packsize_+packsize_-1],
+                                      ithread, bmin[ipack*packsize_] );
             //particles->test_move( bmin[ibin], bmax[ibin], params );
 
 #ifdef  __DETAILED_TIMERS
@@ -371,7 +371,11 @@ int ithread;
 #endif
 
                 for (unsigned int scell = 0 ; scell < packsize_ ; scell++)
-                    (*Proj)(EMfields, *particles, smpi, bmin[ipack*packsize_+scell], bmax[ipack*packsize_+scell], ithread, ipack*packsize_+scell, clrw, diag_flag, params.is_spectral, b_dim, ispec, bmin[ipack*packsize_] );
+                    (*Proj)(EMfields, *particles, smpi, bmin[ipack*packsize_+scell],
+                                                        bmax[ipack*packsize_+scell],
+                                                        ithread, ipack*packsize_+scell,
+                                                        clrw, diag_flag, params.is_spectral,
+                                                        b_dim, ispec, bmin[ipack*packsize_] );
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[2] += MPI_Wtime() - timer;
@@ -670,7 +674,7 @@ void SpeciesV::importParticles( Params& params, Patch* patch, Particles& source_
 //   - calculate the new momentum
 // ---------------------------------------------------------------------------------------------------------------------
 void SpeciesV::ponderomotive_update_susceptibility_and_momentum(double time_dual, unsigned int ispec,
-                           ElectroMagn* EMfields, Interpolator* Interp_envelope, 
+                           ElectroMagn* EMfields, Interpolator* Interp_envelope,
                            Params &params, bool diag_flag,
                            Patch* patch, SmileiMPI* smpi,
                            std::vector<Diagnostic*>& localDiags)
@@ -696,7 +700,7 @@ void SpeciesV::ponderomotive_update_susceptibility_and_momentum(double time_dual
 
         if ( (long int)bmax.back() < (long int)60000 || (Radiate) || (Ionize) || (Multiphoton_Breit_Wheeler_process) )
             packsize_ *= (f_dim0-2*oversize[0]);
-        else 
+        else
             npack_ *= (f_dim0-2*oversize[0]);
 
         if (nDim_particle == 3)
@@ -766,7 +770,7 @@ void SpeciesV::ponderomotive_update_susceptibility_and_momentum(double time_dual
 //   - deposit susceptibility
 // ---------------------------------------------------------------------------------------------------------------------
 void SpeciesV::ponderomotive_project_susceptibility(double time_dual, unsigned int ispec,
-                           ElectroMagn* EMfields, Interpolator* Interp_envelope, 
+                           ElectroMagn* EMfields, Interpolator* Interp_envelope,
                            Params &params, bool diag_flag,
                            Patch* patch, SmileiMPI* smpi,
                            std::vector<Diagnostic*>& localDiags)
@@ -792,7 +796,7 @@ void SpeciesV::ponderomotive_project_susceptibility(double time_dual, unsigned i
 
         if ( (long int)bmax.back() < (long int)60000 || (Radiate) || (Ionize) || (Multiphoton_Breit_Wheeler_process) )
             packsize_ *= (f_dim0-2*oversize[0]);
-        else 
+        else
             npack_ *= (f_dim0-2*oversize[0]);
 
         if (nDim_particle == 3)
