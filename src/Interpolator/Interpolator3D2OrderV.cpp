@@ -853,3 +853,103 @@ void Interpolator3D2OrderV::interpolate_envelope_and_old_envelope(ElectroMagn* E
 
 
 }
+
+// probes like diagnostic !
+void Interpolator3D2OrderV::interpolate_envelope_and_susceptibility(ElectroMagn* EMfields, Particles &particles, int ipart, double* Env_A_abs_Loc, double* Env_Ar_Loc, double* Env_Ai_Loc, double* Env_Chi_Loc)
+{
+    // probes are interpolated one by one for now
+
+    int idx[3], idxO[3];
+    //Primal indices are constant over the all cell
+    idx[0]  = round( particles.position(0,ipart) * D_inv[0] );
+    idxO[0] = idx[0] - i_domain_begin -1 ;
+    idx[1]  = round( particles.position(1,ipart) * D_inv[1] );
+    idxO[1] = idx[1] - j_domain_begin -1 ;
+    idx[2]  = round( particles.position(2,ipart) * D_inv[2] );
+    idxO[2] = idx[2] - k_domain_begin -1 ;
+
+    Field3D* Env_A_abs_3D = static_cast<Field3D*>(EMfields->Env_A_abs_);
+    Field3D* Env_Ar_3D    = static_cast<Field3D*>(EMfields->Env_Ar_);
+    Field3D* Env_Ai_3D    = static_cast<Field3D*>(EMfields->Env_Ai_);
+    Field3D* Env_Chi_3D   = static_cast<Field3D*>(EMfields->Env_Chi_);
+
+    double coeff[3][2][3]; 
+    int dual[3]; // Size ndim. Boolean indicating if the part has a dual indice equal to the primal one (dual=0) or if it is +1 (dual=1).
+
+    int vecSize = 32;
+
+    int np_computed(1);
+
+    double delta0, delta;
+    double delta2;
+            
+
+    for (int i=0;i<3;i++) { // for X/Y
+        delta0 = particles.position(i,ipart)*D_inv[i];
+        dual [i] = ( delta0 - (double)idx[i] >=0. );
+
+        for (int j=0;j<2;j++) { // for dual
+
+            delta   = delta0 - (double)idx[i] + (double)j*(0.5-dual[i]);
+            delta2  = delta*delta;
+
+            coeff[i][j][0]    =  0.5 * (delta2-delta+0.25);
+            coeff[i][j][1]    =  (0.75 - delta2);
+            coeff[i][j][2]    =  0.5 * (delta2+delta+0.25);
+        }
+    }
+
+
+    double* coeffyp = &(coeff[1][0][1]);
+    double* coeffyd = &(coeff[1][1][1]);
+    double* coeffxd = &(coeff[0][1][1]);
+    double* coeffxp = &(coeff[0][0][1]);
+    double* coeffzp = &(coeff[2][0][1]);
+    double* coeffzd = &(coeff[2][1][1]);
+
+    // Interpolation of Env_A_abs^(p,p,p) (absolute value of envelope A)
+    double interp_res = 0.;
+    for (int iloc=-1 ; iloc<2 ; iloc++) {
+        for (int jloc=-1 ; jloc<2 ; jloc++) {
+            for (int kloc=-1 ; kloc<2 ; kloc++) {
+                interp_res += *(coeffxp+iloc*1) * *(coeffyp+jloc*1) * *(coeffzp+kloc*1) * (*Env_A_abs_3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
+            }
+        }
+    }
+    *Env_A_abs_Loc= interp_res;
+
+    // Interpolation of Env_Ar^(p,p,p) (real part of envelope A)
+    interp_res = 0.;
+    for (int iloc=-1 ; iloc<2 ; iloc++) {
+        for (int jloc=-1 ; jloc<2 ; jloc++) {
+            for (int kloc=-1 ; kloc<2 ; kloc++) {
+                interp_res += *(coeffxp+iloc*1) * *(coeffyp+jloc*1) * *(coeffzp+kloc*1) * (*Env_Ar_3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
+            }
+        }
+    }
+    *Env_Ar_Loc= interp_res;
+
+    // Interpolation of Env_Ai^(p,p,p) (imaginary part of envelope A)
+    interp_res = 0.;
+    for (int iloc=-1 ; iloc<2 ; iloc++) {
+        for (int jloc=-1 ; jloc<2 ; jloc++) {
+            for (int kloc=-1 ; kloc<2 ; kloc++) {
+                interp_res += *(coeffxp+iloc*1) * *(coeffyp+jloc*1) * *(coeffzp+kloc*1) * (*Env_Ai_3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
+            }
+        }
+    }
+    *Env_Ai_Loc= interp_res;
+
+    // Interpolation of Env_Chi^(p,p,p)
+    interp_res = 0.;
+    for (int iloc=-1 ; iloc<2 ; iloc++) {
+        for (int jloc=-1 ; jloc<2 ; jloc++) {
+            for (int kloc=-1 ; kloc<2 ; kloc++) {
+                interp_res += *(coeffxp+iloc*1) * *(coeffyp+jloc*1) * *(coeffzp+kloc*1) * (*Env_Chi_3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
+            }
+        }
+    }
+    *Env_Chi_Loc= interp_res;
+
+}
+
