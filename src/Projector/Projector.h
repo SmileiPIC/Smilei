@@ -38,22 +38,6 @@ public:
         ERROR( "Envelope not implemented with this geometry and this order" );
     };
 
-//    // Species call
-//    for (unsigned int iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ )
-//        Proj_susceptibility->project_susceptibility(b_Chi_envelope, *particles,
-//                                                    iPart,
-//                                                    0, 
-//                                                    b_dim, smpi, ithread, mass
-//                                                    );
-//    // SpeciesV call
-//    Proj_susceptibility->project_susceptibility( b_Chi_envelope, *particles, 
-//                                                 bmin[ipack*packsize_+scell], bmax[ipack*packsize_+scell], 
-//                                                 ipack*packsize_+scell,  // ibin
-//                                                 b_dim, smpi, ithread, mass, 
-//                                                 iold, bmin[ipack*packsize_] ); //ipart_ref
-
-
-
 private:
 
 };

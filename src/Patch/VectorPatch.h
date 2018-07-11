@@ -326,10 +326,6 @@ public :
         return (*this)(ipatch)->vecSpecies[ispec]->Proj;
     }
 
-    inline Projector* proj_susceptibility(int ipatch, int ispec){
-        return (*this)(ipatch)->vecSpecies[ispec]->Proj_susceptibility;
-    }
-
     inline PartWalls* partwalls(int ipatch){
         return (*this)(ipatch)->partWalls;
     }

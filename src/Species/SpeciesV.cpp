@@ -728,17 +728,12 @@ void SpeciesV::ponderomotive_update_susceptibility_and_momentum(double time_dual
 #endif
 
             // Project susceptibility, the source term of envelope equation
-            double* b_Chi_envelope=nullptr;
-            if (nDim_field==3)
-                b_Chi_envelope =  &(*EMfields->Env_Chi_)(0) ;
-            else {ERROR("Envelope model not yet implemented in this geometry");}
-
-            int* iold = NULL;
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
             for (unsigned int scell = 0 ; scell < packsize_ ; scell++)
-                (static_cast<Projector3D2Order_susceptibilityV*>(Proj_susceptibility))->project_susceptibility( b_Chi_envelope, *particles, bmin[ipack*packsize_+scell], bmax[ipack*packsize_+scell], ipack*packsize_+scell, b_dim, smpi, ithread, mass, iold, bmin[ipack*packsize_] );
+                Proj->project_susceptibility( EMfields, *particles, mass, smpi, bmin[ipack*packsize_+scell], bmax[ipack*packsize_+scell], ithread, ipack*packsize_+scell, b_dim, bmin[ipack*packsize_] );
+
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[8] += MPI_Wtime() - timer;
 #endif
@@ -824,17 +819,12 @@ void SpeciesV::ponderomotive_project_susceptibility(double time_dual, unsigned i
 #endif
 
             // Project susceptibility, the source term of envelope equation
-            double* b_Chi_envelope=nullptr;
-            if (nDim_field==3)
-                b_Chi_envelope =  &(*EMfields->Env_Chi_)(0) ;
-            else {ERROR("Envelope model not yet implemented in this geometry");}
-
-            int* iold = NULL;
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
             for (unsigned int scell = 0 ; scell < packsize_ ; scell++)
-                (static_cast<Projector3D2Order_susceptibilityV*>(Proj_susceptibility))->project_susceptibility( b_Chi_envelope, *particles, bmin[ipack*packsize_+scell], bmax[ipack*packsize_+scell], ipack*packsize_+scell, b_dim, smpi, ithread, mass, iold, bmin[ipack*packsize_] );
+                Proj->project_susceptibility( EMfields, *particles, mass, smpi, bmin[ipack*packsize_+scell], bmax[ipack*packsize_+scell], ithread, ipack*packsize_+scell, b_dim, bmin[ipack*packsize_] );
+
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[8] += MPI_Wtime() - timer;
 #endif

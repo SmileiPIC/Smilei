@@ -253,7 +253,6 @@ public:
 
     //! Projector
     Projector* Proj;
-    Projector* Proj_susceptibility;
 
     // -----------------------------------------------------------------------------
     //  5. Methods

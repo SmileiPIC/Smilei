@@ -201,8 +201,6 @@ void Species::initOperators(Params& params, Patch* patch)
 
     // projection operator (virtual)
     Proj = ProjectorFactory::create(params, patch, this->vectorized_operators);    // + patchId -> idx_domain_begin (now = ref smpi)
-    if (params.Laser_Envelope_model)
-        Proj_susceptibility  = ProjectorFactory::create_susceptibility_projector(params, patch, params.vectorization_mode == "normal");
 
     // Assign the Ionization model (if needed) to Ionize
     //  Needs to be placed after createParticles() because requires the knowledge of max_charge
@@ -1730,7 +1728,7 @@ void Species::ponderomotive_update_susceptibility_and_momentum(double time_dual,
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
-            Proj_susceptibility->project_susceptibility(EMfields, *particles, mass, smpi, bmin[ibin], bmax[ibin], ithread, 0, b_dim );
+            Proj->project_susceptibility(EMfields, *particles, mass, smpi, bmin[ibin], bmax[ibin], ithread, 0, b_dim );
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[8] += MPI_Wtime() - timer;
 #endif
@@ -1817,7 +1815,7 @@ void Species::ponderomotive_project_susceptibility(double time_dual, unsigned in
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
-            Proj_susceptibility->project_susceptibility(EMfields, *particles, mass, smpi, bmin[ibin], bmax[ibin], ithread, 0, b_dim );
+            Proj->project_susceptibility(EMfields, *particles, mass, smpi, bmin[ibin], bmax[ibin], ithread, 0, b_dim );
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[8] += MPI_Wtime() - timer;
 #endif

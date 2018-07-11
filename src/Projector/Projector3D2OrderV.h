@@ -23,9 +23,11 @@ public:
     //!Wrapper
     void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int icell, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec, int ipart_ref = 0) override final;
 
+    void project_susceptibility(ElectroMagn* EMfields, Particles &particles, double species_mass, SmileiMPI* smpi, int istart, int iend,  int ithread, int ibin, std::vector<unsigned int> &b_dim, int ipart_ref = 0);
+
 private:
     double one_third;
-
+    double dt, dts2, dts4;
 
     inline void compute_distances( Particles& particles, int npart_total, int ipart, int istart, int ipart_ref, double* delta0, int* iold, double* Sx0, double* Sy0, double* Sz0, double* DSx, double* DSy, double* DSz  ) {
 
