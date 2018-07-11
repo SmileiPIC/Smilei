@@ -318,10 +318,6 @@ public :
         return (*this)(ipatch)->EMfields;
     }
 
-    inline Interpolator* interp_envelope(int ipatch){
-        return (*this)(ipatch)->Interp_envelope;
-    }
-
     inline Projector* proj(int ipatch, int ispec){
         return (*this)(ipatch)->vecSpecies[ispec]->Proj;
     }

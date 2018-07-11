@@ -67,9 +67,6 @@ public:
     //! Optional binary collisions operators
     std::vector<Collisions*> vecCollisions;
 
-    //! Interpolator ad hoc for envelope
-    Interpolator* Interp_envelope = NULL;
-
     //! "fake" particles for the probe diagnostics
     std::vector<ProbeParticles*> probes;
 
