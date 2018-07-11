@@ -1668,7 +1668,7 @@ vector<double> Species::maxwellJuttner(unsigned int npoints, double temperature)
 //   - calculate the new momentum
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::ponderomotive_update_susceptibility_and_momentum(double time_dual, unsigned int ispec,
-                       ElectroMagn* EMfields, Interpolator* Interp_envelope,
+                       ElectroMagn* EMfields,
                        Params &params, bool diag_flag,
                        Patch* patch, SmileiMPI* smpi,
                        vector<Diagnostic*>& localDiags){
@@ -1733,7 +1733,7 @@ void Species::ponderomotive_update_susceptibility_and_momentum(double time_dual,
 //   - deposit susceptibility
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::ponderomotive_project_susceptibility(double time_dual, unsigned int ispec,
-                       ElectroMagn* EMfields, Interpolator* Interp_envelope,
+                       ElectroMagn* EMfields,
                        Params &params, bool diag_flag,
                        Patch* patch, SmileiMPI* smpi,
                        vector<Diagnostic*>& localDiags){
@@ -1792,7 +1792,7 @@ void Species::ponderomotive_project_susceptibility(double time_dual, unsigned in
 //   - project charge and current density
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::ponderomotive_update_position_and_currents(double time_dual, unsigned int ispec,
-                       ElectroMagn* EMfields, Interpolator* Interp_envelope, Projector* Proj,
+                       ElectroMagn* EMfields,
                        Params &params, bool diag_flag, PartWalls* partWalls,
                        Patch* patch, SmileiMPI* smpi,
                        vector<Diagnostic*>& localDiags){

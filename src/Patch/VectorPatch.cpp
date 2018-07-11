@@ -340,7 +340,7 @@ void VectorPatch::projection_for_diags(Params& params,
                 if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
                     if (species(ipatch, ispec)->ponderomotive_dynamics){
                     species(ipatch, ispec)->ponderomotive_project_susceptibility(time_dual, ispec,
-                                                 emfields(ipatch), interp_envelope(ipatch),
+                                                 emfields(ipatch),
                                                  params, diag_flag,
                                                  (*this)(ipatch), smpi,
                                                  localDiags);
@@ -2415,7 +2415,7 @@ void VectorPatch::ponderomotive_update_susceptibility_and_momentum(Params& param
             if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
                 if (species(ipatch, ispec)->ponderomotive_dynamics){
                 species(ipatch, ispec)->ponderomotive_update_susceptibility_and_momentum(time_dual, ispec,
-                                                 emfields(ipatch), interp_envelope(ipatch),
+                                                 emfields(ipatch),
                                                  params, diag_flag,
                                                  (*this)(ipatch), smpi,
                                                  localDiags);
@@ -2450,7 +2450,7 @@ void VectorPatch::ponderomotive_update_position_and_currents(Params& params,
             if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
                 if (species(ipatch, ispec)->ponderomotive_dynamics){
                 species(ipatch, ispec)->ponderomotive_update_position_and_currents(time_dual, ispec,
-                                                 emfields(ipatch), interp_envelope(ipatch), proj(ipatch,ispec),
+                                                 emfields(ipatch),
                                                  params, diag_flag, partwalls(ipatch),
                                                  (*this)(ipatch), smpi,
                                                  localDiags);
