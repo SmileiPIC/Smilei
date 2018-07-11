@@ -89,6 +89,11 @@ private:
     int min_number_of_particles_per_cells;
     double ratio_number_of_vecto_cells;
 
+    //! Number of packs of particles that divides the total number of particles
+    unsigned int npack_;
+    //! Size of the pack in number of particles
+    unsigned int packsize_;
+
 };
 
 #endif
