@@ -577,12 +577,17 @@ void SpeciesDynamicV::reconfigure_operators(Params &params, Patch * patch)
     // Destroy current operators
     delete Interp;
     delete Push;
+    if (Push_ponderomotive_position)
+        delete Push_ponderomotive_position;
     delete Proj;
 
     // Reassign the correct Interpolator
     Interp = InterpolatorFactory::create(params, patch, this->vectorized_operators);
     // Reassign the correct Pusher to Push
     Push = PusherFactory::create(params, this);
+    // Reassign the correct Ponderomotive Pusher if used
+    if (Push_ponderomotive_position)
+        Push_ponderomotive_position = PusherFactory::create_ponderomotive_position_updater(params, this);
     // Reassign the correct Projector
     Proj = ProjectorFactory::create(params, patch, this->vectorized_operators);
 }
