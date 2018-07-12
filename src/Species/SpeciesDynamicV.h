@@ -26,15 +26,7 @@ class SpeciesDynamicV : public SpeciesV
     //! Species destructor
     virtual ~SpeciesDynamicV();
 
-    void initCluster(Params& params) override;
-
     void resizeCluster(Params& params) override;
-
-    //! Method calculating the Particle charge on the grid (projection)
-    void computeCharge(unsigned int ispec, ElectroMagn* EMfields) override;
-
-    //! Method used to sort particles
-    void sort_part(Params& params) override;
 
     //! This function configures the species according to the vectorization mode
     void configuration( Params& params, Patch * patch) override;
@@ -47,17 +39,6 @@ class SpeciesDynamicV : public SpeciesV
 
     //! Compute cell_keys for all particles of the current species
     void compute_part_cell_keys(Params &params);
-
-    //! Compute cell_keys for the specified bin boundaries.
-    void compute_bin_cell_keys(Params &params, int istart, int iend);
-
-    //! Create a new entry for a particle
-    void add_space_for_a_particle() override {
-        particles->cell_keys.push_back(-1);
-    }
-
-    //! Method to import particles in this species while conserving the sorting among bins
-    void importParticles( Params&, Patch*, Particles&, std::vector<Diagnostic*>& )override;
 
 private:
 
