@@ -96,7 +96,7 @@ void MF_SolverRZ_Yee::operator() ( ElectroMagn* fields )
 		if (imode==0){
 			//MF_Solver_Yee
 			for (unsigned int i=1 ; i<nl_d-1 ; i++) {
-				(*BrRZ)(i,j)=0;
+				(*BrRZ)(i,j)=0.;
 			}
 			for (unsigned int i=1 ; i<nl_d-1 ; i++) {
 				(*BtRZ)(i,j)= -(*BtRZ)(i,j+1);
@@ -110,7 +110,7 @@ void MF_SolverRZ_Yee::operator() ( ElectroMagn* fields )
 		else if (imode==1){
 			//MF
 			for (unsigned int i=0 ; i<nl_p  ; i++) {
-				(*BlRZ)(i,j)= -(*BlRZ)(i,j+1);
+				(*BlRZ)(i,j)= (*BlRZ)(i,j+1);
                 //if (std::abs((*BlRZ)(i,j))>1.){
                 //MESSAGE("BlRZA");                
                 //MESSAGE(i);
