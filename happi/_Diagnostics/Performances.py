@@ -377,10 +377,15 @@ class Performances(Diagnostic):
 			return histogram
 
 	# Convert data to VTK format
-	def toVTK(self,numberOfPieces=1):
+	def toVTK(self,numberOfPieces=1,axis_quantity="patch"):
 		"""
-		Export the data to Vtk
+		Export the performance data to Vtk
 		"""
+
+		# Checking of the arguments
+		if axis_quantity not in ["patch","grid"]:
+			print("axis_quantity must be `patch` or `grid`")
+			return []
 
 		# Creation of the directory and base name
 		self._mkdir(self._exportDir)
@@ -407,7 +412,12 @@ class Performances(Diagnostic):
 				extent = []
 				for i in range(self._ndim):
 					extent += [0,shape[i]-1]
-				spacings = [1,1,1]
+				if (axis_quantity == "grid"):
+					spacings = [0,0,0]
+					for i in range(self._ndim):
+						spacings[i] = self.simulation.namelist.Main.grid_length[i] / shape[i]
+				else:
+					spacings = [1,1,1]
 
 				data = self._np.ascontiguousarray(raw.flatten(order='F'), dtype='float32')
 				arr = vtk.Array(data, self._title)

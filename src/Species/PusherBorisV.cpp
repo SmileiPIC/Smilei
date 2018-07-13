@@ -55,7 +55,7 @@ void PusherBorisV::operator() (Particles &particles, SmileiMPI* smpi, int istart
     double* Bx = &( (*Bpart)[0*nparts] );
     double* By = &( (*Bpart)[1*nparts] );
     double* Bz = &( (*Bpart)[2*nparts] );
-  
+
     particles.cell_keys.resize(nparts);
     cell_keys = &( particles.cell_keys[0]);
 
@@ -101,7 +101,7 @@ void PusherBorisV::operator() (Particles &particles, SmileiMPI* smpi, int istart
 
         // Move the particle
 #ifdef  __DEBUG
-        for ( int i = 0 ; i<nDim_ ; i++ ) 
+        for ( int i = 0 ; i<nDim_ ; i++ )
           position_old[i][ipart] = position[i][ipart];
 #endif
         local_invgf *= dt;
@@ -114,11 +114,11 @@ void PusherBorisV::operator() (Particles &particles, SmileiMPI* smpi, int istart
     //#pragma omp simd
     //for (int ipart=istart ; ipart<iend; ipart++ )  {
     //
-    //    for ( int i = 0 ; i<nDim_ ; i++ ){ 
+    //    for ( int i = 0 ; i<nDim_ ; i++ ){
     //        cell_keys[ipart] *= nspace[i];
-    //        cell_keys[ipart] += round( (position[i][ipart]-min_loc_vec[i]+0.00000000000001) * dx_inv_[i] );
+    //        cell_keys[ipart] += round( (position[i][ipart]-min_loc_vec[i]) * dx_inv_[i] );
     //    }
-    //    
+    //
     //}
 
 }

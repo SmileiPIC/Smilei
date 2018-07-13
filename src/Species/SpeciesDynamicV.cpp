@@ -478,7 +478,7 @@ void SpeciesDynamicV::sort_part(Params &params)
             #pragma omp simd
             for (unsigned int ip=0; ip < MPIbuff.part_index_recv_sz[idim][ineighbor]; ip++){
                 for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
-                    double X = MPIbuff.partRecv[idim][ineighbor].position(ipos,ip)-min_loc_vec[ipos]+0.00000000000001;
+                    double X = MPIbuff.partRecv[idim][ineighbor].position(ipos,ip)-min_loc_vec[ipos];
                     int IX = round(X * dx_inv_[ipos] );
                     buf_cell_keys[idim][ineighbor][ip] = buf_cell_keys[idim][ineighbor][ip] * this->length[ipos] + IX;
                 }
