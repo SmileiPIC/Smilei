@@ -2414,12 +2414,19 @@ void VectorPatch::ponderomotive_update_susceptibility_and_momentum(Params& param
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
             if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
                 if (species(ipatch, ispec)->ponderomotive_dynamics){
-                species(ipatch, ispec)->ponderomotive_update_susceptibility_and_momentum(time_dual, ispec,
-                                                 emfields(ipatch),
-                                                 params, diag_flag,
-                                                 (*this)(ipatch), smpi,
-                                                 localDiags);
-                                                                    } // end condition on ponderomotive dynamics
+                    if ((*this)(ipatch)->vecSpecies[ispec]->vectorized_operators)
+                        species(ipatch, ispec)->ponderomotive_update_susceptibility_and_momentum(time_dual, ispec,
+                                                                                                 emfields(ipatch),
+                                                                                                 params, diag_flag,
+                                                                                                 (*this)(ipatch), smpi,
+                                                                                                 localDiags);
+                    else
+                        species(ipatch, ispec)->Species::ponderomotive_update_susceptibility_and_momentum(time_dual, ispec,
+                                                                                                          emfields(ipatch),
+                                                                                                          params, diag_flag,
+                                                                                                          (*this)(ipatch), smpi,
+                                                                                                          localDiags);
+                } // end condition on ponderomotive dynamics
             } // end diagnostic or projection if condition on species
         } // end loop on species
     } // end loop on patches
@@ -2449,12 +2456,19 @@ void VectorPatch::ponderomotive_update_position_and_currents(Params& params,
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
             if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
                 if (species(ipatch, ispec)->ponderomotive_dynamics){
-                species(ipatch, ispec)->ponderomotive_update_position_and_currents(time_dual, ispec,
-                                                 emfields(ipatch),
-                                                 params, diag_flag, partwalls(ipatch),
-                                                 (*this)(ipatch), smpi,
-                                                 localDiags);
-                                                                    } // end condition on ponderomotive dynamics
+                    if ((*this)(ipatch)->vecSpecies[ispec]->vectorized_operators)
+                        species(ipatch, ispec)->ponderomotive_update_position_and_currents(time_dual, ispec,
+                                                                                           emfields(ipatch),
+                                                                                           params, diag_flag, partwalls(ipatch),
+                                                                                           (*this)(ipatch), smpi,
+                                                                                           localDiags);
+                    else
+                        species(ipatch, ispec)->Species::ponderomotive_update_position_and_currents(time_dual, ispec,
+                                                                                                    emfields(ipatch),
+                                                                                                    params, diag_flag, partwalls(ipatch),
+                                                                                                    (*this)(ipatch), smpi,
+                                                                                                    localDiags);
+                } // end condition on ponderomotive dynamics
             } // end diagnostic or projection if condition on species
         } // end loop on species
     } // end loop on patches
