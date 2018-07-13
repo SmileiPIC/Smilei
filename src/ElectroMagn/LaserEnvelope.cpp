@@ -38,11 +38,11 @@ cell_length    ( params.cell_length) ,timestep( params.timestep)
     // double omega_value(0);
     // PyTools::extract("omega",omega_value,"LaserEnvelope");
 
-    double a0_laser;
-    PyTools::extract("a0",a0_laser,"LaserEnvelope");
+    //double a0_laser;
+    //PyTools::extract("a0",a0_laser,"LaserEnvelope");
 
-    double waist_laser;
-    PyTools::extract("waist",waist_laser,"LaserEnvelope");
+    //double waist_laser;
+    //PyTools::extract("waist",waist_laser,"LaserEnvelope");
   
     
     info << "\t Laser Envelope parameters: "<< endl;
