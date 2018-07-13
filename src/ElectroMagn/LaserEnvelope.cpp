@@ -49,9 +49,9 @@ cell_length    ( params.cell_length) ,timestep( params.timestep)
     // envelope solver
     info << "\t\t\tenvelope solver    : " << envelope_solver << endl;
     // a0
-    info << "\t\t\ta0                 : " << a0_laser << endl;
+    //info << "\t\t\ta0                 : " << a0_laser << endl;
     // waist
-    info << "\t\t\twaist              : " << waist_laser << endl;
+    //info << "\t\t\twaist              : " << waist_laser << endl;
     
     // Display info
     if( patch->isMaster() ) {
