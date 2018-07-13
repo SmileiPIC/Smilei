@@ -17,6 +17,7 @@ compile:
     - cp -r $CI_PROJECT_DIR /sps2/gitlab-runner/$CI_PIPELINE_ID
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
     # Set the environment
+    - make uninstall_happi
     - make happi
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     - module purge
