@@ -415,6 +415,13 @@ int main (int argc, char* argv[])
                     #pragma omp single
                     vecPatches.load_balance( params, time_dual, &smpi, simWindow, itime );
                     timers.loadBal.update( params.printNow( itime ) );
+
+                    if (params.uncoupled_grids) {
+                        domain.reset_mapping();
+                        domain.identify_additional_patches( &smpi, vecPatches, params );
+                        domain.identify_missing_patches( &smpi, vecPatches, params );
+                    }
+
                 }
             }
 

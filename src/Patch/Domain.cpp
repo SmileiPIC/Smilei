@@ -286,3 +286,11 @@ void Domain::solveEnvelope( Params& params, SimWindow* simWindow, int itime, dou
 
 }
 
+void Domain::reset_mapping()
+{
+    additional_patches_.clear();
+    additional_patches_ranks.clear();
+    local_patches_.clear();
+    missing_patches_.clear();
+    missing_patches_ranks.clear();
+}

@@ -36,6 +36,8 @@ public:
     std::vector<int> missing_patches_;
     std::vector<int> missing_patches_ranks;
 
+    void reset_mapping();
+
     Patch* fake_patch;
 
 
