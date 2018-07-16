@@ -288,7 +288,7 @@ int main (int argc, char* argv[])
     //                     HERE STARTS THE PIC LOOP
     // ------------------------------------------------------------------
     if (params.uncoupled_grids) {
-        domain.identify_additional_patches( &smpi, vecPatches, params );
+        domain.identify_additional_patches( &smpi, vecPatches, params, simWindow );
         domain.identify_missing_patches( &smpi, vecPatches, params );
     }
 
@@ -418,7 +418,7 @@ int main (int argc, char* argv[])
 
                     if (params.uncoupled_grids) {
                         domain.reset_mapping();
-                        domain.identify_additional_patches( &smpi, vecPatches, params );
+                        domain.identify_additional_patches( &smpi, vecPatches, params, simWindow );
                         domain.identify_missing_patches( &smpi, vecPatches, params );
                     }
 

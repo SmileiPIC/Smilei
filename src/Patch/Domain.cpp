@@ -119,8 +119,10 @@ void Domain::solveMaxwell( Params& params, SimWindow* simWindow, int itime, doub
 }
 
 
-void Domain::identify_additional_patches(SmileiMPI* smpi, VectorPatch& vecPatches, Params& params)
+void Domain::identify_additional_patches(SmileiMPI* smpi, VectorPatch& vecPatches, Params& params, SimWindow* simWindow)
 {
+    double delta_moving_win( simWindow->getNmoved()*params.cell_length[0] );
+    
     //cout << "patch_->getDomainLocalMin(0) = " << patch_->getDomainLocalMin(0) << endl;
     //cout << "patch_->getDomainLocalMax(0) = " << patch_->getDomainLocalMax(0) << endl;
     //cout << "patch_->getDomainLocalMin(1) = " << patch_->getDomainLocalMin(1) << endl;
@@ -130,7 +132,7 @@ void Domain::identify_additional_patches(SmileiMPI* smpi, VectorPatch& vecPatche
         
         bool patch_is_in( true );
         for ( int iDim = 0 ; iDim < patch_->getDomainLocalMin().size() ; iDim++ ) {
-            double center = ( vecPatches(ipatch)->getDomainLocalMin(iDim) + vecPatches(ipatch)->getDomainLocalMax(iDim) ) /2.;
+            double center = ( vecPatches(ipatch)->getDomainLocalMin(iDim) + vecPatches(ipatch)->getDomainLocalMax(iDim) - 2. * delta_moving_win *(iDim==0)  ) /2.;
             if ( ( center < patch_->getDomainLocalMin(iDim) ) || ( center > patch_->getDomainLocalMax(iDim) ) )
                 patch_is_in = false;
         }
