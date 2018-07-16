@@ -520,17 +520,17 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
 
 void SimWindow::operate(Domain& domain,  VectorPatch& vecPatches, SmileiMPI* smpi, Params& params, double time_dual)
 {
-    static_cast<Patch2D*>( domain.patch_ )->exchangeField_movewin( domain.patch_->EMfields->Ex_, params.n_space[0] );
-    static_cast<Patch2D*>( domain.patch_ )->exchangeField_movewin( domain.patch_->EMfields->Ey_, params.n_space[0] );
-    static_cast<Patch2D*>( domain.patch_ )->exchangeField_movewin( domain.patch_->EMfields->Ez_, params.n_space[0] );
+    domain.patch_->exchangeField_movewin( domain.patch_->EMfields->Ex_, params.n_space[0] );
+    domain.patch_->exchangeField_movewin( domain.patch_->EMfields->Ey_, params.n_space[0] );
+    domain.patch_->exchangeField_movewin( domain.patch_->EMfields->Ez_, params.n_space[0] );
 
-    static_cast<Patch2D*>( domain.patch_ )->exchangeField_movewin( domain.patch_->EMfields->Bx_, params.n_space[0] );
-    static_cast<Patch2D*>( domain.patch_ )->exchangeField_movewin( domain.patch_->EMfields->By_, params.n_space[0] );
-    static_cast<Patch2D*>( domain.patch_ )->exchangeField_movewin( domain.patch_->EMfields->Bz_, params.n_space[0] );
+    domain.patch_->exchangeField_movewin( domain.patch_->EMfields->Bx_, params.n_space[0] );
+    domain.patch_->exchangeField_movewin( domain.patch_->EMfields->By_, params.n_space[0] );
+    domain.patch_->exchangeField_movewin( domain.patch_->EMfields->Bz_, params.n_space[0] );
 
-    static_cast<Patch2D*>( domain.patch_ )->exchangeField_movewin( domain.patch_->EMfields->Bx_m, params.n_space[0] );
-    static_cast<Patch2D*>( domain.patch_ )->exchangeField_movewin( domain.patch_->EMfields->By_m, params.n_space[0] );
-    static_cast<Patch2D*>( domain.patch_ )->exchangeField_movewin( domain.patch_->EMfields->Bz_m, params.n_space[0] );
+    domain.patch_->exchangeField_movewin( domain.patch_->EMfields->Bx_m, params.n_space[0] );
+    domain.patch_->exchangeField_movewin( domain.patch_->EMfields->By_m, params.n_space[0] );
+    domain.patch_->exchangeField_movewin( domain.patch_->EMfields->Bz_m, params.n_space[0] );
 
 
     domain.patch_->EMfields->laserDisabled();
