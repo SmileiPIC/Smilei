@@ -513,7 +513,8 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                 vecPatches(0)->EMfields->poynting[j][i] += poynting[j][i];
     }
 
-    operate(domain, vecPatches, smpi, params, time_dual);
+    if (params.uncoupled_grids)
+        operate(domain, vecPatches, smpi, params, time_dual);
 
 }
 
