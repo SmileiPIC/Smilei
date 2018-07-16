@@ -141,6 +141,9 @@ public:
     //! finalize comm / exchange complex fields in direction iDim only
     virtual void finalizeExchangeComplex( Field* field, int iDim ) = 0;
 
+    virtual void exchangeField_movewin ( Field* field, int clrw ) = 0;
+
+
     // Create MPI_Datatype to exchange fields
     virtual void createType( Params& params ) = 0;
     virtual void createType2( Params& params ) = 0;

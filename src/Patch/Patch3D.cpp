@@ -33,6 +33,7 @@ Patch3D::Patch3D(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_de
                     ntype_[0][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
                     ntype_[1][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
                     ntype_[2][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                    ntype_[3][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
                     ntypeSum_[0][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
                     ntypeSum_[1][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;    
                     ntypeSum_[2][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;  
@@ -667,7 +668,12 @@ void Patch3D::createType2( Params& params ) {
                 MPI_Type_vector(nx*ny, params.oversize[2], nz, 
                                 MPI_DOUBLE, &(ntype_[2][ix_isPrim][iy_isPrim][iz_isPrim]));
                 MPI_Type_commit( &(ntype_[2][ix_isPrim][iy_isPrim][iz_isPrim]) );
-            
+
+
+                // Still used ???
+                ntype_[3][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                MPI_Type_contiguous(nz*ny*params.n_space[0], MPI_DOUBLE, &(ntype_[3][ix_isPrim][iy_isPrim][iz_isPrim]));   //clrw lines
+                MPI_Type_commit( &(ntype_[3][ix_isPrim][iy_isPrim][iz_isPrim]) ); 
 
                 nx_sum = 1 + 2*params.oversize[0] + ix_isPrim;
                 ny_sum = 1 + 2*params.oversize[1] + iy_isPrim;
@@ -804,6 +810,8 @@ void Patch3D::cleanType()
                 MPI_Type_free( &(ntype_[0][ix_isPrim][iy_isPrim][iz_isPrim]) );
                 MPI_Type_free( &(ntype_[1][ix_isPrim][iy_isPrim][iz_isPrim]) );
                 MPI_Type_free( &(ntype_[2][ix_isPrim][iy_isPrim][iz_isPrim]) );
+                if (ntype_[3][0][0][0] == MPI_DATATYPE_NULL) 
+                    MPI_Type_free( &(ntype_[3][ix_isPrim][iy_isPrim][iz_isPrim]) ); 
                 MPI_Type_free( &(ntypeSum_[0][ix_isPrim][iy_isPrim][iz_isPrim]) );
                 MPI_Type_free( &(ntypeSum_[1][ix_isPrim][iy_isPrim][iz_isPrim]) );    
                 MPI_Type_free( &(ntypeSum_[2][ix_isPrim][iy_isPrim][iz_isPrim]) ); 
@@ -820,3 +828,58 @@ void Patch3D::cleanType()
         }
     }
 }
+
+
+void Patch3D::exchangeField_movewin( Field* field, int clrw )
+{
+    std::vector<unsigned int> n_elem   = field->dims_;
+    std::vector<unsigned int> isDual = field->isDual_;
+    Field3D* f3D =  static_cast<Field3D*>(field);
+    int istart, ix, iy, iz, iDim, iNeighbor,bufsize;
+    void* b;
+
+    bufsize = clrw*n_elem[1]*n_elem[2]*sizeof(double)+ 2 * MPI_BSEND_OVERHEAD; //Max number of doubles in the buffer. Careful, there might be MPI overhead to take into account.
+    b=(void *)malloc(bufsize);
+    MPI_Buffer_attach( b, bufsize);
+    iDim = 0; // We exchange only in the X direction for movewin.
+    iNeighbor = 0; // We send only towards the West and receive from the East.
+
+    MPI_Datatype ntype = ntype_[3][isDual[0]][isDual[1]][isDual[2]]; //ntype_[3] is clrw plans.
+    MPI_Status rstat    ;
+    MPI_Request rrequest;
+
+
+    int patch_ndims_(3);
+    int patch_nbNeighbors_(2);
+    vector<int> idx( patch_ndims_,0 );
+    idx[iDim] = 1;
+
+    if (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
+        istart =  2*oversize[iDim] + 1 + isDual[iDim] ;
+        ix = idx[0]*istart;
+        iy = idx[1]*istart;
+        iz = idx[2]*istart;
+        MPI_Bsend( &(f3D->data_3D[ix][iy][iz]), 1, ntype, neighbor_[iDim][iNeighbor], 0, MPI_COMM_WORLD);
+    } // END of Send
+
+    //Once the message is in the buffer we can safely shift the field in memory. 
+    field->shift_x(clrw);
+    // and then receive the complementary field from the East.
+
+    if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
+        istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - clrw ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
+        ix = idx[0]*istart;
+        iy = idx[1]*istart;
+        iz = idx[2]*istart;
+        MPI_Irecv( &(f3D->data_3D[ix][iy][iz]), 1, ntype, neighbor_[iDim][(iNeighbor+1)%2], 0, MPI_COMM_WORLD, &rrequest);
+    } // END of Recv
+
+
+    if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
+        MPI_Wait( &rrequest, &rstat);
+    }
+    MPI_Buffer_detach( &b, &bufsize);
+    free(b);
+
+
+} // END exchangeField_movewin
