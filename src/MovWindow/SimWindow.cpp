@@ -12,6 +12,7 @@
 #include "Projector.h"
 #include "SmileiMPI.h"
 #include "VectorPatch.h"
+#include "Domain.h"
 #include "DiagnosticProbes.h"
 #include "DiagnosticTrack.h"
 #include "Hilbert_functions.h"
@@ -78,7 +79,7 @@ bool SimWindow::isMoving(double time_dual)
     return active && ((time_dual - time_start)*velocity_x > x_moved);
 }
 
-void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params, unsigned int itime, double time_dual)
+void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params, unsigned int itime, double time_dual, Domain& domain)
 {
     if ( ! isMoving(time_dual) ) return;
 
@@ -512,6 +513,35 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                 vecPatches(0)->EMfields->poynting[j][i] += poynting[j][i];
     }
 
+    operate(domain, vecPatches, smpi, params, time_dual);
+
+}
+
+void SimWindow::operate(Domain& domain,  VectorPatch& vecPatches, SmileiMPI* smpi, Params& params, double time_dual)
+{
+    static_cast<Patch2D*>( domain.patch_ )->exchangeField_movewin( domain.patch_->EMfields->Ex_, params.n_space[0] );
+    static_cast<Patch2D*>( domain.patch_ )->exchangeField_movewin( domain.patch_->EMfields->Ey_, params.n_space[0] );
+    static_cast<Patch2D*>( domain.patch_ )->exchangeField_movewin( domain.patch_->EMfields->Ez_, params.n_space[0] );
+
+    static_cast<Patch2D*>( domain.patch_ )->exchangeField_movewin( domain.patch_->EMfields->Bx_, params.n_space[0] );
+    static_cast<Patch2D*>( domain.patch_ )->exchangeField_movewin( domain.patch_->EMfields->By_, params.n_space[0] );
+    static_cast<Patch2D*>( domain.patch_ )->exchangeField_movewin( domain.patch_->EMfields->Bz_, params.n_space[0] );
+
+    static_cast<Patch2D*>( domain.patch_ )->exchangeField_movewin( domain.patch_->EMfields->Bx_m, params.n_space[0] );
+    static_cast<Patch2D*>( domain.patch_ )->exchangeField_movewin( domain.patch_->EMfields->By_m, params.n_space[0] );
+    static_cast<Patch2D*>( domain.patch_ )->exchangeField_movewin( domain.patch_->EMfields->Bz_m, params.n_space[0] );
 
 
+    domain.patch_->EMfields->laserDisabled();
+    // External fields
+
+    //mypatch->EMfields->emBoundCond[1]->disableExternalFields();
+
+    // Deadlock if moving window & load balancing enabled
+    //     Recompute patch distribution does not change
+    //if (params.uncoupled_grids) {
+    //    domain.reset_mapping();
+    //    domain.identify_additional_patches( smpi, vecPatches, params );
+    //    domain.identify_missing_patches( smpi, vecPatches, params );
+    //}
 }

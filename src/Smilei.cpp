@@ -397,7 +397,7 @@ int main (int argc, char* argv[])
             vecPatches.runAllDiags(params, &smpi, itime, timers, simWindow);
 
             timers.movWindow.restart();
-            simWindow->operate(vecPatches, &smpi, params, itime, time_dual);
+            simWindow->operate(vecPatches, &smpi, params, itime, time_dual, domain);
             timers.movWindow.update();
 
             // ----------------------------------------------------------------------

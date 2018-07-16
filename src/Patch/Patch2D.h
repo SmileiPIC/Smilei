@@ -50,6 +50,8 @@ public:
     //! finalize comm / exchange fields in direction iDim only
     void finalizeExchangeComplex( Field* field, int iDim ) override final;
 
+    void exchangeField_movewin( Field* field, int clrw );
+
     // Create MPI_Datatype to exchange fields
     void createType( Params& params ) override final;
     void createType2( Params& params ) override final;
