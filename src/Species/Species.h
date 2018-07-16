@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+//#include "PyTools.h"
 
 #include "Particles.h"
 #include "Params.h"
@@ -66,6 +67,12 @@ public:
     
     //! atomic number
     unsigned int atomic_number;
+    
+    //! maximum charge state
+    unsigned int maximum_charge_state;
+    
+    //! user defined ionization rate profile
+    PyObject* ionization_rate;
     
     //! thermalizing temperature for thermalizing BCs [\f$m_e c^2\f$]
     std::vector<double> thermal_boundary_temperature;
@@ -276,6 +283,11 @@ public:
                           RadiationTables &RadiationTables,
                           MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
                           std::vector<Diagnostic*>& localDiags);
+
+    virtual void projection_for_diags(double time, unsigned int ispec,
+                          ElectroMagn* EMfields,
+                          Projector* proj, Params &params, bool diag_flag,
+                          Patch* patch, SmileiMPI* smpi);
     
     //! Method performing the importation of new particles
     virtual void dynamics_import_particles(double time, unsigned int ispec,

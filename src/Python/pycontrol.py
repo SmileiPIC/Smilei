@@ -133,6 +133,11 @@ def _keep_python_running():
         for ax in d.axes:
             if type(ax[0]) is not str:
                 return True
+    # Verify if ionization from rate is used
+    for s in Species:
+        if s.ionization_rate is not None:
+            return True
+    # else False 
     return False
 
 # Prevent creating new components (by mistake)

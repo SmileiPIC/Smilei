@@ -130,7 +130,7 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi, OpenPMDparams& op
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// For all patch, move particles (restartRhoJ(s), dynamics and exchangeParticles)
+// For all patches, move particles (restartRhoJ(s), dynamics and exchangeParticles)
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::dynamics(Params& params,
                            SmileiMPI* smpi,
@@ -173,6 +173,33 @@ void VectorPatch::dynamics(Params& params,
 
 } // END dynamics
 
+// ---------------------------------------------------------------------------------------------------------------------
+// For all patches, project charge and current densities with standard scheme for diag purposes at t=0 
+// ---------------------------------------------------------------------------------------------------------------------
+void VectorPatch::projection_for_diags(Params& params,
+                           SmileiMPI* smpi,
+                           SimWindow* simWindow,
+                           double time_dual, Timers &timers, int itime)
+{
+
+    #pragma omp single
+    diag_flag = needsRhoJsNow(itime);
+
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+        (*this)(ipatch)->EMfields->restartRhoJ();
+        for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
+            if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
+                species(ipatch, ispec)->projection_for_diags(time_dual, ispec,
+                                                 emfields(ipatch),  proj(ipatch),
+                                                 params, diag_flag,
+                                                 (*this)(ipatch), smpi);
+            }
+        }
+
+    }
+
+} // END projection for diags
 
 void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWindow* simWindow,
                            RadiationTables & RadiationTables,
@@ -786,9 +813,9 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
 {
 
 
-    Timer ptimer("global");
-    ptimer.init(smpi);
-    ptimer.restart();
+    //Timer ptimer("global");
+    //ptimer.init(smpi);
+    //ptimer.restart();
 
     // Assumption: one or more species move in vacuum with mean lorentz gamma factor gamma_mean in the x direction, 
     // with low energy spread.
@@ -844,23 +871,55 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
     //cout << std::scientific << "rnew_dot_rnew_local = " << rnew_dot_rnew_local << endl;
     MPI_Allreduce(&rnew_dot_rnew_local, &rnew_dot_rnew, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
-    //std::vector<Field*> Ex_;
+    std::vector<Field*> Ex_;
+    std::vector<Field*> Ey_;
+    std::vector<Field*> Ez_;
+    std::vector<Field*> Bx_;
+    std::vector<Field*> By_;
+    std::vector<Field*> Bz_;
+    std::vector<Field*> Bx_m;
+    std::vector<Field*> By_m;
+    std::vector<Field*> Bz_m;
+
     std::vector<Field*> Ex_rel_;
     std::vector<Field*> Ey_rel_;
     std::vector<Field*> Ez_rel_;
     std::vector<Field*> Bx_rel_;
     std::vector<Field*> By_rel_;
     std::vector<Field*> Bz_rel_;
+
+    std::vector<Field*> Bx_rel_t_plus_halfdt_;
+    std::vector<Field*> By_rel_t_plus_halfdt_;
+    std::vector<Field*> Bz_rel_t_plus_halfdt_;
+    std::vector<Field*> Bx_rel_t_minus_halfdt_;
+    std::vector<Field*> By_rel_t_minus_halfdt_;
+    std::vector<Field*> Bz_rel_t_minus_halfdt_;
+    
+
     std::vector<Field*> Ap_;
 
     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
-        //Ex_.push_back( (*this)(ipatch)->EMfields->Ex_ );
+        Ex_.push_back( (*this)(ipatch)->EMfields->Ex_ );
+        Ey_.push_back( (*this)(ipatch)->EMfields->Ey_ );
+        Ez_.push_back( (*this)(ipatch)->EMfields->Ez_ );
+        Bx_.push_back( (*this)(ipatch)->EMfields->Bx_ );
+        By_.push_back( (*this)(ipatch)->EMfields->By_ );
+        Bz_.push_back( (*this)(ipatch)->EMfields->Bz_ );
+        Bx_m.push_back( (*this)(ipatch)->EMfields->Bx_m );
+        By_m.push_back( (*this)(ipatch)->EMfields->By_m );
+        Bz_m.push_back( (*this)(ipatch)->EMfields->Bz_m );
         Ex_rel_.push_back( (*this)(ipatch)->EMfields->Ex_rel_ );
         Ey_rel_.push_back( (*this)(ipatch)->EMfields->Ey_rel_ );
         Ez_rel_.push_back( (*this)(ipatch)->EMfields->Ez_rel_ );
         Bx_rel_.push_back( (*this)(ipatch)->EMfields->Bx_rel_ );
         By_rel_.push_back( (*this)(ipatch)->EMfields->By_rel_ );
         Bz_rel_.push_back( (*this)(ipatch)->EMfields->Bz_rel_ );
+        Bx_rel_t_plus_halfdt_.push_back( (*this)(ipatch)->EMfields->Bx_rel_t_plus_halfdt_ );
+        By_rel_t_plus_halfdt_.push_back( (*this)(ipatch)->EMfields->By_rel_t_plus_halfdt_ );
+        Bz_rel_t_plus_halfdt_.push_back( (*this)(ipatch)->EMfields->Bz_rel_t_plus_halfdt_ );
+        Bx_rel_t_minus_halfdt_.push_back( (*this)(ipatch)->EMfields->Bx_rel_t_minus_halfdt_ );
+        By_rel_t_minus_halfdt_.push_back( (*this)(ipatch)->EMfields->By_rel_t_minus_halfdt_ );
+        Bz_rel_t_minus_halfdt_.push_back( (*this)(ipatch)->EMfields->Bz_rel_t_minus_halfdt_ );
        
         Ap_.push_back( (*this)(ipatch)->EMfields->Ap_ );
     }
@@ -1106,47 +1165,75 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
     SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( By_rel_, *this );  
     SyncVectorPatch::exchange_along_all_directions_noomp          ( Bz_rel_, *this );
     SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_rel_, *this );  
-    //SyncVectorPatch::exchangeB( params, *this );
-    //SyncVectorPatch::finalizeexchangeB( params, *this );
 
-    // Proper spatial centering of the electromagnetic fields in the Yee Cell through interpolation
-    // -------------------------------------
-    // if (!params.is_spectral){
-    //     for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
-    //         { // begin loop on patches
-    //         (*this)(ipatch)->EMfields->center_fields_from_relativistic_Poisson( (*this)(ipatch));
-    //         } // end loop on patches
-    // 
-    //     // re-exchange the properly spatially centered B field
-    //     SyncVectorPatch::exchange_along_all_directions_noomp          ( Bx_rel_, *this );
-    //     SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bx_rel_, *this );
-    //     SyncVectorPatch::exchange_along_all_directions_noomp          ( By_rel_, *this );
-    //     SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( By_rel_, *this );  
-    //     SyncVectorPatch::exchange_along_all_directions_noomp          ( Bz_rel_, *this );
-    //     SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_rel_, *this );
-    //     //SyncVectorPatch::exchangeB( params, *this );
-    //     //SyncVectorPatch::finalizeexchangeB( params, *this );
-    // }
 
+    // Proper spatial centering of the B fields in the Yee Cell through interpolation 
+    // (from B_rel to B_rel_t_plus_halfdt and B_rel_t_minus_halfdt)    
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
+        { // begin loop on patches
+            (*this)(ipatch)->EMfields->center_fields_from_relativistic_Poisson( (*this)(ipatch));
+        } // end loop on patches
+    
+    // Re-exchange the properly spatially centered B field
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( Bx_rel_t_plus_halfdt_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bx_rel_t_plus_halfdt_, *this );
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( By_rel_t_plus_halfdt_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( By_rel_t_plus_halfdt_, *this );  
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( Bz_rel_t_plus_halfdt_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_rel_t_plus_halfdt_, *this );  
+
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( Bx_rel_t_minus_halfdt_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bx_rel_t_minus_halfdt_, *this );
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( By_rel_t_minus_halfdt_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( By_rel_t_minus_halfdt_, *this );  
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( Bz_rel_t_minus_halfdt_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_rel_t_minus_halfdt_, *this );  
+        
+    
+   
+   MESSAGE(0,"Summing fields of relativistic species to the grid fields");
    // sum the fields found  by relativistic Poisson solver to the existing em fields
-   // Includes proper spatial centering of the electromagnetic fields in the Yee Cell through interpolation
+   // E  = E  + E_rel
+   // B  = B  + B_rel_t_plus_halfdt
+   // Bm = Bm + B_rel_t_minus_halfdt
+
    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
        { // begin loop on patches
        (*this)(ipatch)->EMfields->sum_rel_fields_to_em_fields( (*this)(ipatch));
        } // end loop on patches
 
-  
-
+    // Exchange the fields after the addition of the relativistic species fields
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( Ex_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Ex_, *this );
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( Ey_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Ey_, *this );
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( Ez_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Ez_, *this );
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( Bx_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bx_, *this );
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( By_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( By_, *this );
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( Bz_, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_, *this );
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( Bx_m, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bx_m, *this );
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( By_m, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( By_m, *this );
+    SyncVectorPatch::exchange_along_all_directions_noomp          ( Bz_m, *this );
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_m, *this );
+    
+    MESSAGE(0,"Fields of relativistic species initialized");
     //!\todo Reduce to find global max
-    if (smpi->isMaster())
-        MESSAGE(1,"Relativistic Poisson equation solved. Maximum err = ");
+    //if (smpi->isMaster())
+    //  MESSAGE(1,"Relativistic Poisson equation solved. Maximum err = ");
 
     //ptimer.update();
     //MESSAGE("Time in Relativistic Poisson : " << ptimer.getTime() );
 
 
-    ptimer.update();
-    MESSAGE("Time in Relativistic Poisson : " << ptimer.getTime() );
+    //ptimer.update();
+    //MESSAGE("Time in Relativistic Poisson : " << ptimer.getTime() );
+    MESSAGE("Relativistic Poisson finished" );
 
 } // END solveRelativisticPoisson
 

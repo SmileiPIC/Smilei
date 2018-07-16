@@ -10,9 +10,9 @@ interaction to astrophysics.
 
 
 .. raw:: html
-  
+
   <div style="width:100%; text-align:center; margin-bottom:8em;">
-  <a href="releases.html#current-release-3-3" class="icon">
+  <a href="releases.html#current-release-3-4.1" class="icon">
 
 .. image:: _static/download.svg
 
@@ -64,7 +64,7 @@ interaction to astrophysics.
 .. raw:: html
 
   Tutorials</a>
-  
+
   </div>
 
 
@@ -76,7 +76,7 @@ interaction to astrophysics.
    synopsis
    highlights
    releases
-   
+
    units
    algorithms
    parallelization
@@ -87,6 +87,7 @@ interaction to astrophysics.
    relativistic_fields_initialization
 
    installation
+   supercomputers
    namelist
    run
    post-processing
