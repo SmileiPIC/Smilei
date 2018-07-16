@@ -142,7 +142,7 @@ Open a Field diagnostic
   available. You must choose one of ``theta`` or ``build3d``, defined below, in order
   to construct fields from their complex angular Fourier modes. In addition, the ``modes``
   argument is optional.
-  
+
   * ``theta``: An angle (in radians)
      | Calculates the field in a plane passing through the :math:`r=0` axis
      | and making an angle ``theta`` with the :math:`xz` plane.
@@ -152,7 +152,7 @@ Open a Field diagnostic
      | the end and the step of this grid.
   * ``modes``: An integer or a list of integers
      | Only these modes numbers will be used in the calculation
-  
+
 **Example**::
 
   S = happi.Open("path/to/my/results")
@@ -302,7 +302,7 @@ The post-processing of the *performances* diagnostic may be achieved in three di
 modes: ``raw``, ``map``, or ``histogram``, described further below. You must choose one
 and only one mode between those three.
 
-.. py:method:: Performances(raw=None, map=None, histogram=None, timesteps=None, units=[""], data_log=False, **kwargs)
+.. py:method:: Performances(raw=None, map=None, histogram=None, timesteps=None, units=[""], data_log=False, species=None, **kwargs)
 
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``raw`` : The name of a quantity, or an operation between them (see quantities below).
@@ -314,7 +314,15 @@ and only one mode between those three.
     The ``"quantity"`` may be an operation between the quantities listed further below.
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
-**Available quantities**:
+There are two kinds of quantities. Some are computed at the MPI process level
+and are therefore averaged other the patches.
+Some are provided at the patch level.
+In the latter case, ``patch_information = True`` has to be put in the namelist.
+
+  **WARNING**: The patch quantities are only compatible with the ``raw`` mode in 3D.
+  The result is the patch matrix with the quantity on each patch
+
+**Available quantities at the MPI level**:
 
   * ``hindex``                     : the starting index of each proc in the hilbert curve
   * ``number_of_cells``            : the number of cells in each proc
@@ -334,17 +342,25 @@ and only one mode between those three.
   * ``timer_diags``                : time spent by each proc calculating and writing diagnostics
   * ``timer_total``                : the sum of all timers above (except timer_global)
 
+**Available quantities at the patch level**:
+  * ``mpi_rank``                   : the MPI rank that contains the current patch
+  * ``vecto``                      : the mode of the specified species in the current patch
+  (vectorized of scalar) when the dynamic mode is activated. Here the ``species`` argument has to be specified.
+
   **WARNING**: The timers ``loadBal`` and ``diags`` span parts of the code where *global*
   communications take place. This means they will include time spent doing no calculations,
   waiting for  other processes. The timers ``syncPart``, ``syncField`` and ``syncDens``
   contain *proc-to-proc* communications, which also represents some waiting time.
 
-**Example**::
+**Example**:: performance diagnostic at the MPI level
 
   S = happi.Open("path/to/my/results")
   Diag = S.Performances(map="total_load")
 
+**Example**:: performance diagnostic at the patch level
 
+  S = happi.Open("path/to/my/results")
+  Diag = S.Performances(raw="vecto", species="electron")
 
 ----
 
@@ -531,9 +547,9 @@ Export 2D or 3D data to VTK
                TrackParticles.toVTK( rendering="trajectory", data_format="xml" )
 
   Converts the data from a diagnostic object to the vtk format.
-  
+
   * ``numberOfPieces``: the number of files into which the data will be split.
-  
+
   * ``rendering``: the type of output in the case of :py:meth:`TrackParticles`:
 
     * ``"trajectory"``: show particle trajectories. One file is generated for all trajectories.
