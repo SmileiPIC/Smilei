@@ -116,6 +116,7 @@ class Options(object):
 		self.side        = kwargs.pop("side"       , self.side )
 		self.transparent = kwargs.pop("transparent", self.transparent )
 		# Second, we manage all the other arguments that are directly the ones of matplotlib
+		to_remove = []
 		for kwa, val in kwargs.items():
 			if kwa in ["figsize"]:
 				self.figure0[kwa] = val
@@ -142,6 +143,8 @@ class Options(object):
 				self.ytick[kwa] = val
 			else:
 				continue
+			to_remove += [kwa]
+		for kwa in to_remove:
 			kwargs.pop(kwa)
 		# special case: "aspect" is ambiguous because it exists for both imshow and colorbar
 		if "cbaspect" in kwargs:
@@ -378,7 +381,7 @@ def multiPlot(*Diags, **kwargs):
 	skipAnimation : if True, plots only the last frame.
 	"""
 
-	from _Diagnostics import TrackParticles
+	from ._Diagnostics import TrackParticles
 
 	# Verify Diags are valid
 	nDiags = len(Diags)

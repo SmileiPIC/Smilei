@@ -195,8 +195,8 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
         // Communicate blocks to transpose the MPI decomposition
         int block_size = Nlocal[0]*Nlocal[1]* (_2D?1:N[2]);
         MPI_Alltoall(
-            PyArray_GETPTR1((PyArrayObject*) arrays[i],0), block_size, MPI_DOUBLE_COMPLEX,
-            PyArray_GETPTR1((PyArrayObject*) a        ,0), block_size, MPI_DOUBLE_COMPLEX,
+            PyArray_GETPTR1((PyArrayObject*) arrays[i],0), block_size, MPI_C_DOUBLE_COMPLEX,
+            PyArray_GETPTR1((PyArrayObject*) a        ,0), block_size, MPI_C_DOUBLE_COMPLEX,
             MPI_COMM_WORLD
         );
         Py_DECREF(arrays[i]);
@@ -399,8 +399,8 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
             // Communicate blocks to transpose the MPI decomposition
             int block_size = Nlocal[0]*Nlocal[1]*n_omega_local;
             MPI_Alltoall(
-                PyArray_GETPTR1((PyArrayObject*) arrays[i],0), block_size, MPI_DOUBLE_COMPLEX,
-                PyArray_GETPTR1((PyArrayObject*) a        ,0), block_size, MPI_DOUBLE_COMPLEX,
+                PyArray_GETPTR1((PyArrayObject*) arrays[i],0), block_size, MPI_C_DOUBLE_COMPLEX,
+                PyArray_GETPTR1((PyArrayObject*) a        ,0), block_size, MPI_C_DOUBLE_COMPLEX,
                 MPI_COMM_WORLD
             );
             Py_DECREF(arrays[i]);
