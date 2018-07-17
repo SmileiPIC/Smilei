@@ -36,6 +36,10 @@ class MultiphotonBreitWheelerFactory {
             if ( !species->multiphoton_Breit_Wheeler[0].empty()  )
             {
                 Multiphoton_Breit_Wheeler_process = new MultiphotonBreitWheeler( params, species );
+                int n_envlaser = PyTools::nComponents("LaserEnvelope");
+                if ( (n_envlaser >=1) & (species->ponderomotive_dynamics) ){
+                    ERROR( "Multiphoton Breit-Wheeler model is not yet implemented for species interacting with Laser Envelope model.");
+                                                                           }
             }
 
             return Multiphoton_Breit_Wheeler_process;

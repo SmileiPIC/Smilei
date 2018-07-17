@@ -32,6 +32,12 @@ public:
 
    //!Wrapper
     virtual void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec, int ipart_ref = 0) = 0;
+
+
+    virtual void project_susceptibility(ElectroMagn* EMfields, Particles &particles, double species_mass, SmileiMPI* smpi, int istart, int iend,  int ithread, int ibin, std::vector<unsigned int> &b_dim, int ipart_ref = 0) {
+        ERROR( "Envelope not implemented with this geometry and this order" );
+    };
+
 private:
 
 };

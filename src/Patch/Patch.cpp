@@ -135,15 +135,6 @@ void Patch::finishCreation( Params& params, SmileiMPI* smpi, DomainDecomposition
     // initialize the electromagnetic fields (virtual)
     EMfields   = ElectroMagnFactory::create(params, domain_decomposition, vecSpecies, this);
 
-    // Create ad hoc interpolators and projectors for envelope
-    if (params.Laser_Envelope_model){
-        Interp_envelope      = InterpolatorFactory::create_env_interpolator(params, this, params.vectorization_mode == "normal");
-        //Proj_susceptibility  = ProjectorFactory::create_susceptibility_projector(params, this, params.vectorization_mode == "normal");
-    } // + patchId -> idx_domain_begin (now = ref smpi)
-    else {
-        Interp_envelope      = NULL;
-    }
-
     // Initialize the collisions
     vecCollisions = CollisionsFactory::create(params, this, vecSpecies);
 
@@ -167,12 +158,6 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, unsign
 
     // clone the electromagnetic fields (virtual)
     EMfields   = ElectroMagnFactory::clone(patch->EMfields, params, vecSpecies, this, n_moved);
-
-    // Create ad hoc interpolators and projectors for envelope
-    if (params.Laser_Envelope_model){
-        Interp_envelope  = InterpolatorFactory::create_env_interpolator(params, this, params.vectorization_mode == "normal");
-        //Proj_susceptibility  = ProjectorFactory::create_susceptibility_projector(params, this, params.vectorization_mode == "normal");
-    }
 
     // clone the collisions
     vecCollisions = CollisionsFactory::clone(patch->vecCollisions, params);
@@ -346,8 +331,6 @@ Patch::~Patch() {
 
     for(unsigned int i=0; i<vecCollisions.size(); i++) delete vecCollisions[i];
     vecCollisions.clear();
-
-    if (Interp_envelope     != NULL) delete Interp_envelope;
 
     if (partWalls!=NULL) delete partWalls;
 

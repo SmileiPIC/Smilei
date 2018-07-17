@@ -7,6 +7,7 @@ compile:
   only:
     - develop
     - integrate_dev
+    - clean_dynamic_vecto
 
   script:
     # Force workdir cleaning in case of retried
@@ -68,6 +69,7 @@ makerunV:
   only:
     - develop
     - integrate_dev
+    - clean_dynamic_vecto
 
   script:
     # Move in test dir

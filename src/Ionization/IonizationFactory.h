@@ -24,7 +24,12 @@ public:
                 ERROR( "Cannot ionize test species " << species->name );
             
             Ionize = new IonizationTunnel( params, species );
-            
+
+            int n_envlaser = PyTools::nComponents("LaserEnvelope");
+            if ( (n_envlaser >=1) & (species->ponderomotive_dynamics) ){
+                ERROR( "Ionization is not yet implemented for species interacting with Laser Envelope model.");
+                                                                       }
+                       
         } else if ( model != "none" ) {
             WARNING( "For species " << species->name << ": unknown ionization model `" << model << "` ... assuming no ionization");
         }

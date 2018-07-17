@@ -35,14 +35,23 @@ cell_length    ( params.cell_length) ,timestep( params.timestep)
     std:: string envelope_solver  = "explicit"; // default value
     bool envelope_solver_read          = PyTools::extract("envelope_solver",envelope_solver,"LaserEnvelope");
     
-    double omega_value(0);
-    PyTools::extract("omega",omega_value,"LaserEnvelope");
+    // double omega_value(0);
+    // PyTools::extract("omega",omega_value,"LaserEnvelope");
+
+    //double a0_laser;
+    //PyTools::extract("a0",a0_laser,"LaserEnvelope");
+
+    //double waist_laser;
+    //PyTools::extract("waist",waist_laser,"LaserEnvelope");
+  
     
     info << "\t Laser Envelope parameters: "<< endl;
-    // omega
-    info << "\t\t\tomega              : " << omega_value << endl;
     // envelope solver
     info << "\t\t\tenvelope solver    : " << envelope_solver << endl;
+    // a0
+    //info << "\t\t\ta0                 : " << a0_laser << endl;
+    // waist
+    //info << "\t\t\twaist              : " << waist_laser << endl;
     
     // Display info
     if( patch->isMaster() ) {
