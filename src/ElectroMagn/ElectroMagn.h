@@ -199,7 +199,7 @@ public:
     std::vector<Field*> Env_Chi_s;
     
     //! Creates a new field with the right characteristics, depending on the name
-    virtual Field * createField(std::string fieldname) = 0;
+    virtual Field * createField(std::string fieldname, Params& params) = 0;
     
     //! nDim_field (from params)
     const unsigned int nDim_field;
@@ -359,7 +359,7 @@ public:
     void applyAntenna(unsigned int iAntenna, double intensity);
     
     //! Method that fills the initial spatial profile of the antenna
-    virtual void initAntennas(Patch* patch) {};
+    virtual void initAntennas(Patch* patch, Params& params) {};
     
     double computeNRJ();
     double getLostNrjMW() const {return nrj_mw_lost;}

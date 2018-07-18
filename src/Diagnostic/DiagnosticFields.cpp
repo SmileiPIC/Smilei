@@ -126,7 +126,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
         if( time_average > 1 ) {
             for( unsigned int ifield=0; ifield<fields_names.size(); ifield++)
                 vecPatches(ipatch)->EMfields->allFields_avg[diag_n].push_back(
-                    vecPatches(ipatch)->EMfields->createField(fields_names[ifield])
+                                                                              vecPatches(ipatch)->EMfields->createField(fields_names[ifield], params)
                 );
         }
     }

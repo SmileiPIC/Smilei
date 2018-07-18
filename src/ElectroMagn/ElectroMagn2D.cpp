@@ -1042,7 +1042,7 @@ void ElectroMagn2D::centerMagneticFields()
 
 
 // Create a new field
-Field * ElectroMagn2D::createField(string fieldname)
+Field * ElectroMagn2D::createField(string fieldname, Params& params)
 {
     if     (fieldname.substr(0,2)=="Ex" ) return new Field2D(dimPrim, 0, false, fieldname);
     else if(fieldname.substr(0,2)=="Ey" ) return new Field2D(dimPrim, 1, false, fieldname);
@@ -1237,7 +1237,7 @@ void ElectroMagn2D::applyExternalField(Field* my_field,  Profile *profile, Patch
 }
 
 
-void ElectroMagn2D::initAntennas(Patch* patch)
+void ElectroMagn2D::initAntennas(Patch* patch, Params& params)
 {
     
     // Filling the space profiles of antennas

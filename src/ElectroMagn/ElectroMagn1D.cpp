@@ -580,7 +580,7 @@ void ElectroMagn1D::binomialCurrentFilter()
 
 
 // Create a new field
-Field * ElectroMagn1D::createField(string fieldname)
+Field * ElectroMagn1D::createField(string fieldname, Params& params)
 {
     if     (fieldname.substr(0,2)=="Ex" ) return new Field1D(dimPrim, 0, false, fieldname);
     else if(fieldname.substr(0,2)=="Ey" ) return new Field1D(dimPrim, 1, false, fieldname);
@@ -680,7 +680,7 @@ void ElectroMagn1D::applyExternalField(Field* my_field,  Profile *profile, Patch
 }
 
 
-void ElectroMagn1D::initAntennas(Patch* patch)
+void ElectroMagn1D::initAntennas(Patch* patch, Params& params)
 {
     
     // Filling the space profiles of antennas

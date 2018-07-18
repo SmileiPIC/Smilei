@@ -23,6 +23,17 @@ public:
             return nullptr;
     }
 
+    static Field* create( std::string name, std::vector<unsigned int> dims, Params& params ) {
+        if (params.geometry == "1Dcartesian")
+            return new Field1D( name, dims );
+        else if (params.geometry == "2Dcartesian")
+            return new Field2D( name, dims );
+        else if (params.geometry == "3Dcartesian")
+            return new Field3D( name, dims );
+        else
+            return nullptr;
+    }
+
 };
 
 #endif

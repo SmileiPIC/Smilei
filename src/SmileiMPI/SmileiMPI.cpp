@@ -731,7 +731,7 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
     }
 
     // Receive EM fields
-    patch->EMfields->initAntennas(patch);
+    patch->EMfields->initAntennas(patch, params);
     if ( params.geometry != "3drz" ) {
         recv( patch->EMfields, from, maxtag );
     } else {

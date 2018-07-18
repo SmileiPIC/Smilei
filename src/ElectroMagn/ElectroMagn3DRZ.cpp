@@ -500,7 +500,7 @@ void ElectroMagn3DRZ::saveMagneticFields(bool is_spectral)
 
 
 // Create a new field
-Field * ElectroMagn3DRZ::createField(string fieldname)
+Field * ElectroMagn3DRZ::createField(string fieldname, Params& params)
 {
     if     (fieldname.substr(0,2)=="Ex" ) return new cField2D(dimPrim, 0, false, fieldname);
     else if(fieldname.substr(0,2)=="Er" ) return new cField2D(dimPrim, 1, false, fieldname);
@@ -773,7 +773,7 @@ void ElectroMagn3DRZ::applyExternalField(Field* my_field,  Profile *profile, Pat
 }
 
 
-void ElectroMagn3DRZ::initAntennas(Patch* patch)
+void ElectroMagn3DRZ::initAntennas(Patch* patch, Params& params)
 {
     
     // Filling the space profiles of antennas

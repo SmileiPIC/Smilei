@@ -33,9 +33,9 @@ isZmin(patch->isZmin())
     
     // Charge currents currents and density for each species
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
-        Jx_s[ispec]  = new Field3D(Tools::merge("Jx_" ,vecSpecies[ispec]->name).c_str(), dimPrim);
-        Jy_s[ispec]  = new Field3D(Tools::merge("Jy_" ,vecSpecies[ispec]->name).c_str(), dimPrim);
-        Jz_s[ispec]  = new Field3D(Tools::merge("Jz_" ,vecSpecies[ispec]->name).c_str(), dimPrim);
+        Jx_s[ispec]  = FieldFactory::create(Tools::merge("Jx_" ,vecSpecies[ispec]->name).c_str(), dimPrim, params);
+        Jy_s[ispec]  = FieldFactory::create(Tools::merge("Jy_" ,vecSpecies[ispec]->name).c_str(), dimPrim, params);
+        Jz_s[ispec]  = FieldFactory::create(Tools::merge("Jz_" ,vecSpecies[ispec]->name).c_str(), dimPrim, params);
         rho_s[ispec] = new Field3D(Tools::merge("Rho_",vecSpecies[ispec]->name).c_str(), dimPrim);
 
         if (params.Laser_Envelope_model){
@@ -63,21 +63,21 @@ isZmin(patch->isZmin())
     for (unsigned int ispec=0; ispec<n_species; ispec++) { // end loop on ispec
         if ( emFields->Jx_s[ispec] != NULL ) {
             if ( emFields->Jx_s[ispec]->data_ != NULL )
-                Jx_s[ispec]  = new Field3D(dimPrim, 0, false, emFields->Jx_s[ispec]->name);
+                Jx_s[ispec]  = FieldFactory::create(dimPrim, 0, false, emFields->Jx_s[ispec]->name, params);
             else
-                Jx_s[ispec]  = new Field3D(emFields->Jx_s[ispec]->name, dimPrim);
+                Jx_s[ispec]  = FieldFactory::create(emFields->Jx_s[ispec]->name, dimPrim, params);
         }
         if ( emFields->Jy_s[ispec] != NULL ) {
             if ( emFields->Jy_s[ispec]->data_ != NULL )
-                Jy_s[ispec]  = new Field3D(dimPrim, 1, false, emFields->Jy_s[ispec]->name);
+                Jy_s[ispec]  = FieldFactory::create(dimPrim, 1, false, emFields->Jy_s[ispec]->name, params);
             else
-                Jy_s[ispec]  = new Field3D(emFields->Jy_s[ispec]->name, dimPrim);
+                Jy_s[ispec]  = FieldFactory::create(emFields->Jy_s[ispec]->name, dimPrim, params);
         }
         if ( emFields->Jz_s[ispec] != NULL ) {
             if ( emFields->Jz_s[ispec]->data_ != NULL )
-                Jz_s[ispec]  = new Field3D(dimPrim, 2, false, emFields->Jz_s[ispec]->name);
+                Jz_s[ispec]  = FieldFactory::create(dimPrim, 2, false, emFields->Jz_s[ispec]->name, params);
             else
-                Jz_s[ispec]  = new Field3D(emFields->Jz_s[ispec]->name, dimPrim);
+                Jz_s[ispec]  = FieldFactory::create(emFields->Jz_s[ispec]->name, dimPrim, params);
         }
         if ( emFields->rho_s[ispec] != NULL ) {
             if ( emFields->rho_s[ispec]->data_ != NULL )
@@ -1098,17 +1098,17 @@ void ElectroMagn3D::saveMagneticFields(bool is_spectral)
 
 
 // Create a new field
-Field * ElectroMagn3D::createField(string fieldname)
+Field * ElectroMagn3D::createField(string fieldname, Params& params)
 {
-    if     (fieldname.substr(0,2)=="Ex" ) return new Field3D(dimPrim, 0, false, fieldname);
-    else if(fieldname.substr(0,2)=="Ey" ) return new Field3D(dimPrim, 1, false, fieldname);
-    else if(fieldname.substr(0,2)=="Ez" ) return new Field3D(dimPrim, 2, false, fieldname);
-    else if(fieldname.substr(0,2)=="Bx" ) return new Field3D(dimPrim, 0, true,  fieldname);
-    else if(fieldname.substr(0,2)=="By" ) return new Field3D(dimPrim, 1, true,  fieldname);
-    else if(fieldname.substr(0,2)=="Bz" ) return new Field3D(dimPrim, 2, true,  fieldname);
-    else if(fieldname.substr(0,2)=="Jx" ) return new Field3D(dimPrim, 0, false, fieldname);
-    else if(fieldname.substr(0,2)=="Jy" ) return new Field3D(dimPrim, 1, false, fieldname);
-    else if(fieldname.substr(0,2)=="Jz" ) return new Field3D(dimPrim, 2, false, fieldname);
+    if     (fieldname.substr(0,2)=="Ex" ) return FieldFactory::create(dimPrim, 0, false, fieldname, params);
+    else if(fieldname.substr(0,2)=="Ey" ) return FieldFactory::create(dimPrim, 1, false, fieldname, params);
+    else if(fieldname.substr(0,2)=="Ez" ) return FieldFactory::create(dimPrim, 2, false, fieldname, params);
+    else if(fieldname.substr(0,2)=="Bx" ) return FieldFactory::create(dimPrim, 0, true,  fieldname, params);
+    else if(fieldname.substr(0,2)=="By" ) return FieldFactory::create(dimPrim, 1, true,  fieldname, params);
+    else if(fieldname.substr(0,2)=="Bz" ) return FieldFactory::create(dimPrim, 2, true,  fieldname, params);
+    else if(fieldname.substr(0,2)=="Jx" ) return FieldFactory::create(dimPrim, 0, false, fieldname, params);
+    else if(fieldname.substr(0,2)=="Jy" ) return FieldFactory::create(dimPrim, 1, false, fieldname, params);
+    else if(fieldname.substr(0,2)=="Jz" ) return FieldFactory::create(dimPrim, 2, false, fieldname, params);
     else if(fieldname.substr(0,3)=="Rho") return new Field3D(dimPrim, fieldname );
     else if(fieldname.substr(0,6)=="Env_Ar" ) return new Field3D(dimPrim, 0, false, fieldname);
     else if(fieldname.substr(0,6)=="Env_Ai" ) return new Field3D(dimPrim, 0, false, fieldname);
@@ -1698,17 +1698,17 @@ void ElectroMagn3D::applyExternalField(Field* my_field,  Profile *profile, Patch
 
 
 
-void ElectroMagn3D::initAntennas(Patch* patch)
+void ElectroMagn3D::initAntennas(Patch* patch, Params& params)
 {
     
     // Filling the space profiles of antennas
     for (unsigned int i=0; i<antennas.size(); i++) {
         if      (antennas[i].fieldName == "Jx")
-            antennas[i].field = new Field3D(dimPrim, 0, false, "Jx");
+            antennas[i].field = FieldFactory::create(dimPrim, 0, false, "Jx", params);
         else if (antennas[i].fieldName == "Jy")
-            antennas[i].field = new Field3D(dimPrim, 1, false, "Jy");
+            antennas[i].field = FieldFactory::create(dimPrim, 1, false, "Jy", params);
         else if (antennas[i].fieldName == "Jz")
-            antennas[i].field = new Field3D(dimPrim, 2, false, "Jz");
+            antennas[i].field = FieldFactory::create(dimPrim, 2, false, "Jz", params);
         else {
             ERROR("Antenna cannot be applied to field "<<antennas[i].fieldName);
         }

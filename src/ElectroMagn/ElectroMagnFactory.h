@@ -180,7 +180,7 @@ public:
         for( unsigned int idiag=0; idiag<EMfields->allFields_avg.size(); idiag++) {
             for( unsigned int ifield=0; ifield<EMfields->allFields_avg[idiag].size(); ifield++)
                 newEMfields->allFields_avg[idiag].push_back(
-                    newEMfields->createField( EMfields->allFields_avg[idiag][ifield]->name )
+                                                            newEMfields->createField( EMfields->allFields_avg[idiag][ifield]->name, params )
                 );
         }
 

@@ -726,7 +726,7 @@ void VectorPatch::initExternals(Params& params)
 
     // Init all antennas
     for( unsigned int ipatch=0; ipatch<size(); ipatch++ ) {
-        (*this)(ipatch)->EMfields->initAntennas((*this)(ipatch));
+        (*this)(ipatch)->EMfields->initAntennas((*this)(ipatch), params);
     }
 }
 

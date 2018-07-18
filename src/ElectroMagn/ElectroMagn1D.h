@@ -71,7 +71,7 @@ public:
     void binomialCurrentFilter();
     
     //! Creates a new field with the right characteristics, depending on the name
-    Field * createField(std::string fieldname);
+    Field * createField(std::string fieldname, Params& params);
     
     //! Method used to compute the total charge density and currents by summing over all species
     void computeTotalRhoJ();
@@ -100,7 +100,7 @@ public:
     //! Method used to impose external fields
     void applyExternalField(Field*, Profile*, Patch*);
     
-    void initAntennas(Patch* patch);
+    void initAntennas(Patch* patch, Params& params);
     
 private:
     //! Initialize quantities needed in the creators of ElectroMagn1D
