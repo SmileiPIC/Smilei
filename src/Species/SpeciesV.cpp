@@ -163,6 +163,8 @@ int ithread;
         for (unsigned int i=0; i<species_loc_bmax.size(); i++)
             species_loc_bmax[i] = 0;
 
+        this->check(patch,"Dynamic");
+
         for ( int ipack = 0 ; ipack < npack_ ; ipack++ ) {
 
             int nparts_in_pack = bmax[ (ipack+1) * packsize_-1 ];
@@ -270,6 +272,8 @@ int ithread;
                                       bmax[ipack*packsize_+packsize_-1],
                                       ithread, bmin[ipack*packsize_] );
             //particles->test_move( bmin[ibin], bmax[ibin], params );
+
+        this->check(patch,"Pusher");
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[1] += MPI_Wtime() - timer;

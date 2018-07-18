@@ -578,6 +578,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
             // Interpolate the fields at the particle position
             (*Interp)(EMfields, *particles, smpi, &(bmin[ibin]), &(bmax[ibin]), ithread );
 
+
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[0] += MPI_Wtime() - timer;
 #endif
@@ -585,7 +586,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
             // Ionization
             if (Ionize)
             {
-                
+
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
@@ -818,7 +819,7 @@ void Species::scalar_dynamics(double time_dual, unsigned int ispec,
 }
 
 void Species::projection_for_diags(double time_dual, unsigned int ispec,
-                       ElectroMagn* EMfields, 
+                       ElectroMagn* EMfields,
                        Params &params, bool diag_flag,
                        Patch* patch, SmileiMPI* smpi)
 {
@@ -1933,24 +1934,31 @@ void Species::check(Patch * patch, std::string title)
 {
     double sum_x = 0;
     double sum_y = 0;
+    double sum_z = 0;
     double sum_px = 0;
     double sum_py = 0;
+    double sum_pz = 0;
     for (unsigned int ip=0; ip < (*particles).size() ; ip++){
         sum_x += (*particles).position(0,ip);
         sum_y += (*particles).position(1,ip);
+        sum_z += (*particles).position(2,ip);
         sum_px += (*particles).momentum(0,ip);
         sum_py += (*particles).momentum(1,ip);
+        sum_pz += (*particles).momentum(1,ip);
     }
     std::cerr << "Check sum at " << title
               << " for "<< this->name
               << " in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ") "
               << " mpi process " << patch->MPI_me_ << " - "
+              << " mode: " << this->vectorized_operators << " - "
               << " nb bin: " << bmin.size() << " - "
               << " - nbp: " << (*particles).size() << " - "
-              << sum_x << " - "
-              << sum_y << " - "
-              << sum_px << " - "
-              << sum_py << " - "
+              << " - x: " << sum_x
+              << " - y: " << sum_y
+              << " - z: " << sum_z
+              << " - px: " << sum_px
+              << " - py: " << sum_py
+              << " - pz: " << sum_pz
               << '\n';
 };
 
