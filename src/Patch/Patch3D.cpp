@@ -126,6 +126,7 @@ void Patch3D::initStep2(Params& params, DomainDecomposition* domain_decompositio
                 ntype_[0][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
                 ntype_[1][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
                 ntype_[2][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                ntype_[3][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
                 ntypeSum_[0][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
                 ntypeSum_[1][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
                 ntypeSum_[2][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
@@ -810,7 +811,7 @@ void Patch3D::cleanType()
                 MPI_Type_free( &(ntype_[0][ix_isPrim][iy_isPrim][iz_isPrim]) );
                 MPI_Type_free( &(ntype_[1][ix_isPrim][iy_isPrim][iz_isPrim]) );
                 MPI_Type_free( &(ntype_[2][ix_isPrim][iy_isPrim][iz_isPrim]) );
-                if (ntype_[3][0][0][0] == MPI_DATATYPE_NULL) 
+                if (ntype_[3][0][0][0] != MPI_DATATYPE_NULL) 
                     MPI_Type_free( &(ntype_[3][ix_isPrim][iy_isPrim][iz_isPrim]) ); 
                 MPI_Type_free( &(ntypeSum_[0][ix_isPrim][iy_isPrim][iz_isPrim]) );
                 MPI_Type_free( &(ntypeSum_[1][ix_isPrim][iy_isPrim][iz_isPrim]) );    

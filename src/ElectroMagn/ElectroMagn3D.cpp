@@ -7,6 +7,7 @@
 
 #include "Params.h"
 #include "Field3D.h"
+#include "FieldFactory.h"
 
 #include "Patch.h"
 #include <cstring>
@@ -153,16 +154,15 @@ void ElectroMagn3D::initElectroMagn3DQuantities(Params &params, Patch* patch)
     nz_d = n_space[2]+2+2*oversize[2];
     
     // Allocation of the EM fields
-    
-    Ex_  = new Field3D(dimPrim, 0, false, "Ex");
-    Ey_  = new Field3D(dimPrim, 1, false, "Ey");
-    Ez_  = new Field3D(dimPrim, 2, false, "Ez");
-    Bx_  = new Field3D(dimPrim, 0, true,  "Bx");
-    By_  = new Field3D(dimPrim, 1, true,  "By");
-    Bz_  = new Field3D(dimPrim, 2, true,  "Bz");
-    Bx_m = new Field3D(dimPrim, 0, true,  "Bx_m");
-    By_m = new Field3D(dimPrim, 1, true,  "By_m");
-    Bz_m = new Field3D(dimPrim, 2, true,  "Bz_m");
+    Ex_  = FieldFactory::create(dimPrim, 0, false, "Ex", params);
+    Ey_  = FieldFactory::create(dimPrim, 1, false, "Ey", params);
+    Ez_  = FieldFactory::create(dimPrim, 2, false, "Ez", params);
+    Bx_  = FieldFactory::create(dimPrim, 0, true,  "Bx", params);
+    By_  = FieldFactory::create(dimPrim, 1, true,  "By", params);
+    Bz_  = FieldFactory::create(dimPrim, 2, true,  "Bz", params);
+    Bx_m = FieldFactory::create(dimPrim, 0, true,  "Bx_m", params);
+    By_m = FieldFactory::create(dimPrim, 1, true,  "By_m", params);
+    Bz_m = FieldFactory::create(dimPrim, 2, true,  "Bz_m", params);
     if (params.Laser_Envelope_model){
         Env_Ar_=new Field3D(dimPrim, "Env_Ar");
         Env_Ai_=new Field3D(dimPrim, "Env_Ai");
@@ -171,9 +171,9 @@ void ElectroMagn3D::initElectroMagn3DQuantities(Params &params, Patch* patch)
                                     }
     
     // Total charge currents and densities
-    Jx_   = new Field3D(dimPrim, 0, false, "Jx");
-    Jy_   = new Field3D(dimPrim, 1, false, "Jy");
-    Jz_   = new Field3D(dimPrim, 2, false, "Jz");
+    Jx_   = FieldFactory::create(dimPrim, 0, false, "Jx", params);
+    Jy_   = FieldFactory::create(dimPrim, 1, false, "Jy", params);
+    Jz_   = FieldFactory::create(dimPrim, 2, false, "Jz", params);
     rho_  = new Field3D(dimPrim, "Rho" );
 
   
