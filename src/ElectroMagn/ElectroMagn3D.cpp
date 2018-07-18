@@ -138,20 +138,20 @@ void ElectroMagn3D::initElectroMagn3DQuantities(Params &params, Patch* patch)
     for (size_t i=0 ; i<nDim_field ; i++) {
         // Standard scheme
         dimPrim[i] = n_space[i]+1;
-        dimDual[i] = n_space[i]+2;
+        dimDual[i] = n_space[i]+1+(!params.is_pxr);
         // + Ghost domain
         dimPrim[i] += 2*oversize[i];
         dimDual[i] += 2*oversize[i];
     }
     // number of nodes of the primal and dual grid in the x-direction
     nx_p = n_space[0]+1+2*oversize[0];
-    nx_d = n_space[0]+2+2*oversize[0];
+    nx_d = n_space[0]+1+(!params.is_pxr)+2*oversize[0];
     // number of nodes of the primal and dual grid in the y-direction
     ny_p = n_space[1]+1+2*oversize[1];
-    ny_d = n_space[1]+2+2*oversize[1];
+    ny_d = n_space[1]+1+(!params.is_pxr)+2*oversize[1];
     // number of nodes of the primal and dual grid in the z-direction
     nz_p = n_space[2]+1+2*oversize[2];
-    nz_d = n_space[2]+2+2*oversize[2];
+    nz_d = n_space[2]+1+(!params.is_pxr)+2*oversize[2];
     
     // Allocation of the EM fields
     Ex_  = FieldFactory::create(dimPrim, 0, false, "Ex", params);
@@ -1382,7 +1382,7 @@ void ElectroMagn3D::computeTotalRhoJ()
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
         if( Jx_s[ispec] ) {
             Field3D* Jx3D_s  = static_cast<Field3D*>(Jx_s[ispec]);
-            for (unsigned int i=0 ; i<=nx_p ; i++)
+            for (unsigned int i=0 ; i<nx_d ; i++)
                 for (unsigned int j=0 ; j<ny_p ; j++)
                     for (unsigned int k=0 ; k<nz_p ; k++)
                         (*Jx3D)(i,j,k) += (*Jx3D_s)(i,j,k);
@@ -1390,7 +1390,7 @@ void ElectroMagn3D::computeTotalRhoJ()
         if( Jy_s[ispec] ) {
             Field3D* Jy3D_s  = static_cast<Field3D*>(Jy_s[ispec]);
             for (unsigned int i=0 ; i<nx_p ; i++)
-                for (unsigned int j=0 ; j<=ny_p ; j++)
+                for (unsigned int j=0 ; j<ny_d ; j++)
                     for (unsigned int k=0 ; k<nz_p ; k++)
                         (*Jy3D)(i,j,k) += (*Jy3D_s)(i,j,k);
         }
@@ -1398,7 +1398,7 @@ void ElectroMagn3D::computeTotalRhoJ()
             Field3D* Jz3D_s  = static_cast<Field3D*>(Jz_s[ispec]);
             for (unsigned int i=0 ; i<nx_p ; i++)
                 for (unsigned int j=0 ; j<ny_p ; j++)
-                    for (unsigned int k=0 ; k<=nz_p ; k++)
+                    for (unsigned int k=0 ; k<nz_d ; k++)
                         (*Jz3D)(i,j,k) += (*Jz3D_s)(i,j,k);
         }
         if( rho_s[ispec] ) {

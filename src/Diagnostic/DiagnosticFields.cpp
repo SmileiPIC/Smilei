@@ -56,10 +56,18 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
                 for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
                     Field * field = vecPatches(ipatch)->EMfields->allFields[i];
                     if( field->data_ != NULL ) continue;
-                    if     ( field_name.substr(0,2)=="Jx" ) field->allocateDims(0,false);
-                    else if( field_name.substr(0,2)=="Jy" ) field->allocateDims(1,false);
-                    else if( field_name.substr(0,2)=="Jz" ) field->allocateDims(2,false);
-                    else if( field_name.substr(0,2)=="Rh" ) field->allocateDims();
+                    if( field_name.substr(0,2)=="Rh" ) field->allocateDims();
+                    else if (!params.is_pxr) { // FDTD, staggered grids
+                        if     ( field_name.substr(0,2)=="Jx" ) field->allocateDims(0,false);
+                        else if( field_name.substr(0,2)=="Jy" ) field->allocateDims(1,false);
+                        else if( field_name.substr(0,2)=="Jz" ) field->allocateDims(2,false);
+                    }
+                    else { // if PXR, same size for all grids 
+                        if     ( field_name.substr(0,2)=="Jx" ) field->allocateDims();
+                        else if( field_name.substr(0,2)=="Jy" ) field->allocateDims();
+                        else if( field_name.substr(0,2)=="Jz" ) field->allocateDims();
+                    }
+
                 }
             }
         }
