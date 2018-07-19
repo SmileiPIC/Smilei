@@ -506,6 +506,11 @@ Obtain the data
       # Calculate the average px
       mean_px = sum_px / npart
 
+.. py:method:: Field.getXmoved( timestep )
+
+  Specific to Field diagnostics, this method returns the displacement of the moving
+  window at the required ``timestep``.
+
 ----
 
 Export 2D or 3D data to VTK

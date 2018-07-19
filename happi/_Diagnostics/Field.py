@@ -224,6 +224,18 @@ class Field(Diagnostic):
 		except: times = []
 		return self._np.double(times)
 	
+	# get the value of x_moved for a requested timestep
+	def getXmoved(self, t):
+		if not self._validate(): return
+		# Verify that the timestep is valid
+		if t not in self._timesteps:
+			print("Timestep "+str(t)+" not found in this diagnostic")
+			return []
+		# get h5 iteration group
+		index = self._data[t]
+		h5item = self._h5items[index]
+		return h5item.attrs["x_moved"] if "x_moved" in h5item.attrs else 0.
+	
 	# Method to obtain the data only
 	def _getDataAtTime(self, t):
 		if not self._validate(): return
@@ -232,21 +244,19 @@ class Field(Diagnostic):
 			print("Timestep "+str(t)+" not found in this diagnostic")
 			return []
 		# Get arrays from requested field
-		# get data
 		index = self._data[t]
 		C = {}
 		h5item = self._h5items[index]
 		
-		for field in self._fieldname: # for each field in operation
-			
-			# Handle moving window
-			if self.moving and "x_moved" in h5item.attrs:
-				self._xoffset = h5item.attrs["x_moved"]
-				if self.dim>1:
-					self._extent[0] = self._xoffset + self._xfactor*self._centers[0][0]
-					self._extent[1] = self._xoffset + self._xfactor*self._centers[0][-1]
-			
-			# Obtain the data
+		# Handle moving window
+		if self.moving and "x_moved" in h5item.attrs and 'x' in self._type:
+			self._xoffset = h5item.attrs["x_moved"]
+			if self.dim>1 and hasattr(self,"_extent"):
+				self._extent[0] = self._xoffset + self._xfactor*self._centers[0][0]
+				self._extent[1] = self._xoffset + self._xfactor*self._centers[0][-1]
+		
+		 # for each field in operation, obtain the data
+		for field in self._fieldname:
 			B = self._np.empty(self._finalShape)
 			try:
 				h5item[field].read_direct(B, source_sel=self._selection) # get array
