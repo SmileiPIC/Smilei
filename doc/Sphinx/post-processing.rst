@@ -60,8 +60,8 @@ Once a simulation is opened as shown above, you can access the content of the na
 using the attribute ``namelist``::
 
   S = happi.Open("path/to/my/results") # Open a simulation
-  print S.namelist.Main.timestep   # print the timestep
-  print S.namelist.Main.geometry   # print the simulation dimensions
+  print(S.namelist.Main.timestep)   # print the timestep
+  print(S.namelist.Main.geometry)   # print the simulation dimensions
 
 All the variables defined in the original namelist are copied into this variable.
 
@@ -69,17 +69,17 @@ Concerning components like :ref:`Species`, :ref:`ExternalField` or :ref:`DiagPro
 several instances may exist, you can directly iterate over them::
 
   for species in S.namelist.Species:
-      print "species "+species.name+" has mass "+str(species.mass)
+      print("species "+species.name+" has mass "+str(species.mass))
 
 You can also access to a specific component by referencing its number::
 
   F = S.namelist.ExternalField[0]  # get the first external field
-  print "An external field "+F.field+" was applied"
+  print("An external field "+F.field+" was applied")
 
 In the case of the species, you can also obtain a given species by its name::
 
   species = S.namelist.Species["electron1"]
-  print "species "+species.name+" has mass "+str(species.mass)
+  print("species "+species.name+" has mass "+str(species.mass))
 
 
 ----
@@ -110,7 +110,7 @@ Open a Scalar diagnostic
 Open a Field diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Field(diagNumber=None, field=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, **kwargs)
+.. py:method:: Field(diagNumber=None, field=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, moving=False, **kwargs)
 
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``diagNumber``: The number of the fields diagnostic
@@ -136,6 +136,8 @@ Open a Field diagnostic
      | - With syntax 2, only the bin closest to ``location`` is kept.
      | - With syntax 3, an average is performed from ``start`` to ``stop``.
      | Example: ``average = {"x":[4,5]}`` will average for :math:`x` within [4,5].
+  * ``moving``: If ``True``, plots will display the X coordinates evolving according to the
+    :ref:`moving window<movingWindow>`
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
 **Example**::

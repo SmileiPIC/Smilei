@@ -4,7 +4,9 @@ from .._Utils import *
 class Field(Diagnostic):
 	"""Class for loading a Field diagnostic"""
 	
-	def _init(self, diagNumber=None, field=None, timesteps=None, subset=None, average=None, data_log=False, **kwargs):
+	def _init(self, diagNumber=None, field=None, timesteps=None, subset=None, average=None, data_log=False, moving=False, **kwargs):
+		
+		self.moving = moving
 		
 		# Search available diags
 		diags = self.getDiags()
@@ -234,7 +236,17 @@ class Field(Diagnostic):
 		index = self._data[t]
 		C = {}
 		h5item = self._h5items[index]
+		
 		for field in self._fieldname: # for each field in operation
+			
+			# Handle moving window
+			if self.moving and "x_moved" in h5item.attrs:
+				self._xoffset = h5item.attrs["x_moved"]
+				if self.dim>1:
+					self._extent[0] = self._xoffset + self._xfactor*self._centers[0][0]
+					self._extent[1] = self._xoffset + self._xfactor*self._centers[0][-1]
+			
+			# Obtain the data
 			B = self._np.empty(self._finalShape)
 			try:
 				h5item[field].read_direct(B, source_sel=self._selection) # get array
@@ -243,6 +255,7 @@ class Field(Diagnostic):
 				h5item[field].read_direct(B, source_sel=self._selection) # get array
 				B = self._np.reshape(B, self._finalShape)
 			C.update({ field:B })
+		
 		# Calculate the operation
 		A = eval(self._operation)
 		# Apply the averaging

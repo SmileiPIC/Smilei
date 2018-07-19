@@ -524,6 +524,7 @@ class Diagnostic(object):
 		self._yfactor = (self.options.yfactor or 1.) * self.units.ycoeff
 		self._vfactor = self.units.vcoeff
 		self._tfactor = (self.options.xfactor or 1.) * self.units.tcoeff * self.timestep
+		self._xoffset = 0.
 	def _prepare2(self):
 		# prepare the animating function
 		if not self._animateOnAxes:
@@ -605,7 +606,7 @@ class Diagnostic(object):
 		return im
 	def _animateOnAxes_1D(self, ax, t, cax_id=0):
 		A = self._getDataAtTime(t)
-		im, = ax.plot(self._xfactor*self._centers[0], self._vfactor*A, **self.options.plot)
+		im, = ax.plot(self._xoffset+self._xfactor*self._centers[0], self._vfactor*A, **self.options.plot)
 		if self._log[0]: ax.set_xscale("log")
 		ax.set_xlabel(self._xlabel)
 		ax.set_ylabel(self._ylabel)

@@ -345,6 +345,12 @@ occur every 150 iterations.
 Moving window
 ^^^^^^^^^^^^^
 
+The simulated box can move relative to the initial plasma position. This "moving window"
+basically consists in removing periodically some plasma from the ``x_min`` border and
+adding new plasma after the ``x_max`` border, thus changing the physical domain that the
+simulation represents but keeping the same box size. This is particularly useful to
+*follow* plasma moving at high speed.
+
 The block ``MovingWindow`` is optional. The window does not move it you do not define it.
 
 .. code-block:: python
