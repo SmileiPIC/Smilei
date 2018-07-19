@@ -137,21 +137,21 @@ void ElectroMagn3D::initElectroMagn3DQuantities(Params &params, Patch* patch)
     // Dimension of the primal and dual grids
     for (size_t i=0 ; i<nDim_field ; i++) {
         // Standard scheme
-        dimPrim[i] = n_space[i]+1;
-        dimDual[i] = n_space[i]+1+(!params.is_pxr);
+        dimPrim[i] = n_space[i]+1+(params.is_pxr);
+        dimDual[i] = n_space[i]+2;
         // + Ghost domain
         dimPrim[i] += 2*oversize[i];
         dimDual[i] += 2*oversize[i];
     }
     // number of nodes of the primal and dual grid in the x-direction
-    nx_p = n_space[0]+1+2*oversize[0];
-    nx_d = n_space[0]+1+(!params.is_pxr)+2*oversize[0];
+    nx_p = n_space[0]+1+2*oversize[0]+(params.is_pxr);
+    nx_d = n_space[0]+2+2*oversize[0];
     // number of nodes of the primal and dual grid in the y-direction
-    ny_p = n_space[1]+1+2*oversize[1];
-    ny_d = n_space[1]+1+(!params.is_pxr)+2*oversize[1];
+    ny_p = n_space[1]+1+2*oversize[1]+(params.is_pxr);
+    ny_d = n_space[1]+2+2*oversize[1];
     // number of nodes of the primal and dual grid in the z-direction
-    nz_p = n_space[2]+1+2*oversize[2];
-    nz_d = n_space[2]+1+(!params.is_pxr)+2*oversize[2];
+    nz_p = n_space[2]+1+2*oversize[2]+(params.is_pxr);
+    nz_d = n_space[2]+2+2*oversize[2];
     
     // Allocation of the EM fields
     Ex_  = FieldFactory::create(dimPrim, 0, false, "Ex", params);
