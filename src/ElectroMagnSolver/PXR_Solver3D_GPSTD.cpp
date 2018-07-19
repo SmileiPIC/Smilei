@@ -39,17 +39,17 @@ void PXR_Solver3D_GPSTD::coupling( Params &params, ElectroMagn* EMfields )
     params.nordery = params.norder[1];
     params.norderz = params.norder[2];
 
-    Field3D* Ex3D_pxr = static_cast<Field3D*>( EMfields->Ex_pxr);
-    Field3D* Ey3D_pxr = static_cast<Field3D*>( EMfields->Ey_pxr);
-    Field3D* Ez3D_pxr = static_cast<Field3D*>( EMfields->Ez_pxr);
-    Field3D* Bx3D_pxr = static_cast<Field3D*>( EMfields->Bx_pxr);
-    Field3D* By3D_pxr = static_cast<Field3D*>( EMfields->By_pxr);
-    Field3D* Bz3D_pxr = static_cast<Field3D*>( EMfields->Bz_pxr);
-    Field3D* Jx3D_pxr = static_cast<Field3D*>( EMfields->Jx_pxr);
-    Field3D* Jy3D_pxr = static_cast<Field3D*>( EMfields->Jy_pxr);
-    Field3D* Jz3D_pxr = static_cast<Field3D*>( EMfields->Jz_pxr);
-    Field3D* rho3D_pxr = static_cast<Field3D*>( EMfields->rho_pxr);
-    Field3D* rhoold3D_pxr = static_cast<Field3D*>( EMfields->rhoold_pxr);
+    Field3D* Ex3D_pxr = static_cast<Field3D*>( EMfields->Ex_);
+    Field3D* Ey3D_pxr = static_cast<Field3D*>( EMfields->Ey_);
+    Field3D* Ez3D_pxr = static_cast<Field3D*>( EMfields->Ez_);
+    Field3D* Bx3D_pxr = static_cast<Field3D*>( EMfields->Bx_);
+    Field3D* By3D_pxr = static_cast<Field3D*>( EMfields->By_);
+    Field3D* Bz3D_pxr = static_cast<Field3D*>( EMfields->Bz_);
+    Field3D* Jx3D_pxr = static_cast<Field3D*>( EMfields->Jx_);
+    Field3D* Jy3D_pxr = static_cast<Field3D*>( EMfields->Jy_);
+    Field3D* Jz3D_pxr = static_cast<Field3D*>( EMfields->Jz_);
+    Field3D* rho3D_pxr = static_cast<Field3D*>( EMfields->rho_);
+    Field3D* rhoold3D_pxr = static_cast<Field3D*>( EMfields->rhoold_);
 
     //call of extern init routine (defined in picsar)
     picsar::init_params_picsar(&n0,&n1,&n2,
@@ -77,7 +77,7 @@ void PXR_Solver3D_GPSTD::coupling( Params &params, ElectroMagn* EMfields )
 
 void PXR_Solver3D_GPSTD::operator() ( ElectroMagn* fields )
 {
-    duplicate_field_into_pxr( fields );
+    //duplicate_field_into_pxr( fields );
 
 #ifdef _PICSAR
     picsar::push_psatd_ebfield_3d_();
@@ -85,7 +85,7 @@ void PXR_Solver3D_GPSTD::operator() ( ElectroMagn* fields )
     ERROR( "Smilei not linked with picsar" );
 #endif
 
-    duplicate_field_into_smilei( fields );
+    //duplicate_field_into_smilei( fields );
 
 }
 
