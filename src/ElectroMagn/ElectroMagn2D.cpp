@@ -7,6 +7,7 @@
 
 #include "Params.h"
 #include "Field2D.h"
+#include "FieldFactory.h"
 
 #include "Patch.h"
 #include <cstring>
@@ -30,9 +31,9 @@ isYmax(patch->isYmax())
     
     // Charge currents currents and density for each species
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
-        Jx_s[ispec]  = new Field2D(Tools::merge("Jx_" ,vecSpecies[ispec]->name).c_str(), dimPrim);
-        Jy_s[ispec]  = new Field2D(Tools::merge("Jy_" ,vecSpecies[ispec]->name).c_str(), dimPrim);
-        Jz_s[ispec]  = new Field2D(Tools::merge("Jz_" ,vecSpecies[ispec]->name).c_str(), dimPrim);
+        Jx_s[ispec]  = FieldFactory::create(Tools::merge("Jx_" ,vecSpecies[ispec]->name).c_str(), dimPrim, params);
+        Jy_s[ispec]  = FieldFactory::create(Tools::merge("Jy_" ,vecSpecies[ispec]->name).c_str(), dimPrim, params);
+        Jz_s[ispec]  = FieldFactory::create(Tools::merge("Jz_" ,vecSpecies[ispec]->name).c_str(), dimPrim, params);
         rho_s[ispec] = new Field2D(Tools::merge("Rho_",vecSpecies[ispec]->name).c_str(), dimPrim);
     }
     
@@ -53,21 +54,21 @@ isYmax(patch->isYmax())
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
         if ( emFields->Jx_s[ispec] != NULL ) {
             if ( emFields->Jx_s[ispec]->data_ != NULL )
-                Jx_s[ispec]  = new Field2D(dimPrim, 0, false, emFields->Jx_s[ispec]->name);
+                Jx_s[ispec]  = FieldFactory::create(dimPrim, 0, false, emFields->Jx_s[ispec]->name, params);
             else
-                Jx_s[ispec]  = new Field2D(emFields->Jx_s[ispec]->name, dimPrim);
+                Jx_s[ispec]  = FieldFactory::create(emFields->Jx_s[ispec]->name, dimPrim, params);
         }
         if ( emFields->Jy_s[ispec] != NULL ) {
             if ( emFields->Jy_s[ispec]->data_ != NULL )
-                Jy_s[ispec]  = new Field2D(dimPrim, 1, false, emFields->Jy_s[ispec]->name);
+                Jy_s[ispec]  = FieldFactory::create(dimPrim, 1, false, emFields->Jy_s[ispec]->name, params);
             else
-                Jy_s[ispec]  = new Field2D(emFields->Jy_s[ispec]->name, dimPrim);
+                Jy_s[ispec]  = FieldFactory::create(emFields->Jy_s[ispec]->name, dimPrim, params);
         }
         if ( emFields->Jz_s[ispec] != NULL ) {
             if ( emFields->Jz_s[ispec]->data_ != NULL )
-                Jz_s[ispec]  = new Field2D(dimPrim, 2, false, emFields->Jz_s[ispec]->name);
+                Jz_s[ispec]  = FieldFactory::create(dimPrim, 2, false, emFields->Jz_s[ispec]->name, params);
             else
-                Jz_s[ispec]  = new Field2D(emFields->Jz_s[ispec]->name, dimPrim);
+                Jz_s[ispec]  = FieldFactory::create(emFields->Jz_s[ispec]->name, dimPrim, params);
         }
         if ( emFields->rho_s[ispec] != NULL ) {
             if ( emFields->rho_s[ispec]->data_ != NULL )
@@ -109,29 +110,29 @@ void ElectroMagn2D::initElectroMagn2DQuantities(Params &params, Patch* patch)
     // Dimension of the primal and dual grids
     for (size_t i=0 ; i<nDim_field ; i++) {
         // Standard scheme
-        dimPrim[i] = n_space[i]+1;
+        dimPrim[i] = n_space[i]+1+(params.is_pxr);
         dimDual[i] = n_space[i]+2;
         // + Ghost domain
         dimPrim[i] += 2*oversize[i];
         dimDual[i] += 2*oversize[i];
     }
     // number of nodes of the primal and dual grid in the x-direction
-    nx_p = n_space[0]+1+2*oversize[0];
+    nx_p = n_space[0]+1+2*oversize[0]+(params.is_pxr);
     nx_d = n_space[0]+2+2*oversize[0];
     // number of nodes of the primal and dual grid in the y-direction
-    ny_p = n_space[1]+1+2*oversize[1];
+    ny_p = n_space[1]+1+2*oversize[1]+(params.is_pxr);
     ny_d = n_space[1]+2+2*oversize[1];
     
     // Allocation of the EM fields
-    Ex_  = new Field2D(dimPrim, 0, false, "Ex");
-    Ey_  = new Field2D(dimPrim, 1, false, "Ey");
-    Ez_  = new Field2D(dimPrim, 2, false, "Ez");
-    Bx_  = new Field2D(dimPrim, 0, true,  "Bx");
-    By_  = new Field2D(dimPrim, 1, true,  "By");
-    Bz_  = new Field2D(dimPrim, 2, true,  "Bz");
-    Bx_m = new Field2D(dimPrim, 0, true,  "Bx_m");
-    By_m = new Field2D(dimPrim, 1, true,  "By_m");
-    Bz_m = new Field2D(dimPrim, 2, true,  "Bz_m");
+    Ex_  = FieldFactory::create(dimPrim, 0, false, "Ex", params);
+    Ey_  = FieldFactory::create(dimPrim, 1, false, "Ey", params);
+    Ez_  = FieldFactory::create(dimPrim, 2, false, "Ez", params);
+    Bx_  = FieldFactory::create(dimPrim, 0, true,  "Bx", params);
+    By_  = FieldFactory::create(dimPrim, 1, true,  "By", params);
+    Bz_  = FieldFactory::create(dimPrim, 2, true,  "Bz", params);
+    Bx_m = FieldFactory::create(dimPrim, 0, true,  "Bx_m", params);
+    By_m = FieldFactory::create(dimPrim, 1, true,  "By_m", params);
+    Bz_m = FieldFactory::create(dimPrim, 2, true,  "Bz_m", params);
     
     // Allocation of filtered fields when Friedman filtering is required
     if (params.Friedman_filter){
@@ -150,9 +151,9 @@ void ElectroMagn2D::initElectroMagn2DQuantities(Params &params, Patch* patch)
     }
     
     // Total charge currents and densities
-    Jx_   = new Field2D(dimPrim, 0, false, "Jx");
-    Jy_   = new Field2D(dimPrim, 1, false, "Jy");
-    Jz_   = new Field2D(dimPrim, 2, false, "Jz");
+    Jx_   = FieldFactory::create(dimPrim, 0, false, "Jx", params);
+    Jy_   = FieldFactory::create(dimPrim, 1, false, "Jy", params);
+    Jz_   = FieldFactory::create(dimPrim, 2, false, "Jz", params);
     rho_  = new Field2D(dimPrim, "Rho" );
     
     if(params.is_pxr == true) {
@@ -1044,15 +1045,15 @@ void ElectroMagn2D::centerMagneticFields()
 // Create a new field
 Field * ElectroMagn2D::createField(string fieldname, Params& params)
 {
-    if     (fieldname.substr(0,2)=="Ex" ) return new Field2D(dimPrim, 0, false, fieldname);
-    else if(fieldname.substr(0,2)=="Ey" ) return new Field2D(dimPrim, 1, false, fieldname);
-    else if(fieldname.substr(0,2)=="Ez" ) return new Field2D(dimPrim, 2, false, fieldname);
-    else if(fieldname.substr(0,2)=="Bx" ) return new Field2D(dimPrim, 0, true,  fieldname);
-    else if(fieldname.substr(0,2)=="By" ) return new Field2D(dimPrim, 1, true,  fieldname);
-    else if(fieldname.substr(0,2)=="Bz" ) return new Field2D(dimPrim, 2, true,  fieldname);
-    else if(fieldname.substr(0,2)=="Jx" ) return new Field2D(dimPrim, 0, false, fieldname);
-    else if(fieldname.substr(0,2)=="Jy" ) return new Field2D(dimPrim, 1, false, fieldname);
-    else if(fieldname.substr(0,2)=="Jz" ) return new Field2D(dimPrim, 2, false, fieldname);
+    if     (fieldname.substr(0,2)=="Ex" ) return FieldFactory::create(dimPrim, 0, false, fieldname, params);
+    else if(fieldname.substr(0,2)=="Ey" ) return FieldFactory::create(dimPrim, 1, false, fieldname, params);
+    else if(fieldname.substr(0,2)=="Ez" ) return FieldFactory::create(dimPrim, 2, false, fieldname, params);
+    else if(fieldname.substr(0,2)=="Bx" ) return FieldFactory::create(dimPrim, 0, true,  fieldname, params);
+    else if(fieldname.substr(0,2)=="By" ) return FieldFactory::create(dimPrim, 1, true,  fieldname, params);
+    else if(fieldname.substr(0,2)=="Bz" ) return FieldFactory::create(dimPrim, 2, true,  fieldname, params);
+    else if(fieldname.substr(0,2)=="Jx" ) return FieldFactory::create(dimPrim, 0, false, fieldname, params);
+    else if(fieldname.substr(0,2)=="Jy" ) return FieldFactory::create(dimPrim, 1, false, fieldname, params);
+    else if(fieldname.substr(0,2)=="Jz" ) return FieldFactory::create(dimPrim, 2, false, fieldname, params);
     else if(fieldname.substr(0,3)=="Rho") return new Field2D(dimPrim, fieldname );
     
     ERROR("Cannot create field "<<fieldname);
@@ -1076,14 +1077,14 @@ void ElectroMagn2D::computeTotalRhoJ()
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
         if( Jx_s[ispec] ) {
             Field2D* Jx2D_s  = static_cast<Field2D*>(Jx_s[ispec]);
-            for (unsigned int i=0 ; i<=nx_p ; i++)
+            for (unsigned int i=0 ; i<nx_d ; i++)
                 for (unsigned int j=0 ; j<ny_p ; j++)
                     (*Jx2D)(i,j) += (*Jx2D_s)(i,j);
         }
         if( Jy_s[ispec] ) {
             Field2D* Jy2D_s  = static_cast<Field2D*>(Jy_s[ispec]);
             for (unsigned int i=0 ; i<nx_p ; i++)
-                for (unsigned int j=0 ; j<=ny_p ; j++)
+                for (unsigned int j=0 ; j<ny_d ; j++)
                     (*Jy2D)(i,j) += (*Jy2D_s)(i,j);
         }
         if( Jz_s[ispec] ) {
@@ -1243,12 +1244,12 @@ void ElectroMagn2D::initAntennas(Patch* patch, Params& params)
     // Filling the space profiles of antennas
     for (unsigned int i=0; i<antennas.size(); i++) {
         if      (antennas[i].fieldName == "Jx")
-            antennas[i].field = new Field2D(dimPrim, 0, false, "Jx");
+            antennas[i].field = FieldFactory::create(dimPrim, 0, false, "Jx", params);
         else if (antennas[i].fieldName == "Jy")
-            antennas[i].field = new Field2D(dimPrim, 1, false, "Jy");
+            antennas[i].field = FieldFactory::create(dimPrim, 1, false, "Jy", params);
         else if (antennas[i].fieldName == "Jz")
-            antennas[i].field = new Field2D(dimPrim, 2, false, "Jz");
-        
+            antennas[i].field = FieldFactory::create(dimPrim, 2, false, "Jz", params);
+       
         if (antennas[i].field) 
             applyExternalField(antennas[i].field, antennas[i].space_profile, patch);
     }

@@ -37,17 +37,17 @@ void PXR_Solver2D_GPSTD::coupling( Params &params, ElectroMagn* EMfields )
     params.nordery = params.norder[1];
     params.norderz = 2;
 
-    Field2D* Ex2D_pxr = static_cast<Field2D*>( EMfields->Ex_pxr);
-    Field2D* Ey2D_pxr = static_cast<Field2D*>( EMfields->Ey_pxr);
-    Field2D* Ez2D_pxr = static_cast<Field2D*>( EMfields->Ez_pxr);
-    Field2D* Bx2D_pxr = static_cast<Field2D*>( EMfields->Bx_pxr);
-    Field2D* By2D_pxr = static_cast<Field2D*>( EMfields->By_pxr);
-    Field2D* Bz2D_pxr = static_cast<Field2D*>( EMfields->Bz_pxr);
-    Field2D* Jx2D_pxr = static_cast<Field2D*>( EMfields->Jx_pxr);
-    Field2D* Jy2D_pxr = static_cast<Field2D*>( EMfields->Jy_pxr);
-    Field2D* Jz2D_pxr = static_cast<Field2D*>( EMfields->Jz_pxr);
-    Field2D* rho2D_pxr = static_cast<Field2D*>( EMfields->rho_pxr);
-    Field2D* rhoold2D_pxr = static_cast<Field2D*>( EMfields->rhoold_pxr);
+    Field2D* Ex2D_pxr = static_cast<Field2D*>( EMfields->Ex_);
+    Field2D* Ey2D_pxr = static_cast<Field2D*>( EMfields->Ey_);
+    Field2D* Ez2D_pxr = static_cast<Field2D*>( EMfields->Ez_);
+    Field2D* Bx2D_pxr = static_cast<Field2D*>( EMfields->Bx_);
+    Field2D* By2D_pxr = static_cast<Field2D*>( EMfields->By_);
+    Field2D* Bz2D_pxr = static_cast<Field2D*>( EMfields->Bz_);
+    Field2D* Jx2D_pxr = static_cast<Field2D*>( EMfields->Jx_);
+    Field2D* Jy2D_pxr = static_cast<Field2D*>( EMfields->Jy_);
+    Field2D* Jz2D_pxr = static_cast<Field2D*>( EMfields->Jz_);
+    Field2D* rho2D_pxr = static_cast<Field2D*>( EMfields->rho_);
+    Field2D* rhoold2D_pxr = static_cast<Field2D*>( EMfields->rhoold_);
 
     picsar::init_params_picsar(&n0,&n2,&n1,
                        &params.cell_length[0],&dzz,&params.cell_length[1],&params.timestep,
@@ -73,7 +73,7 @@ void PXR_Solver2D_GPSTD::coupling( Params &params, ElectroMagn* EMfields )
 
 void PXR_Solver2D_GPSTD::operator() ( ElectroMagn* fields )
 {
-    duplicate_field_into_pxr( fields );
+    //duplicate_field_into_pxr( fields );
 
 #ifdef _PICSAR
     picsar::push_psatd_ebfield_2d_();
@@ -81,7 +81,7 @@ void PXR_Solver2D_GPSTD::operator() ( ElectroMagn* fields )
     ERROR( "Smilei not linked with picsar" );
 #endif
 
-    duplicate_field_into_smilei( fields );
+    //duplicate_field_into_smilei( fields );
 
 }
 
