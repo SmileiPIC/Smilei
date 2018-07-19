@@ -81,7 +81,6 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
     double timer;
 #endif
 
-
     unsigned int iPart;
 
     // Reset list of particles to exchange
@@ -107,14 +106,12 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
         for (unsigned int i=0; i<species_loc_bmax.size(); i++)
             species_loc_bmax[i] = 0;
 
-        this->check(patch,"Dynamic");
-
 #ifdef  __DETAILED_TIMERS
         timer = MPI_Wtime();
 #endif
 
         // Interpolate the fields at the particle position
-        (*Interp)(EMfields, *particles, smpi, &(bmin[0]), &(bmax[bmax.size()-1]), ithread );
+        (*Interp)(EMfields, *particles, smpi, &(bmin[0]), &(bmax[bmax.size()-1]), ithread, bmin[0]);
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[0] += MPI_Wtime() - timer;
@@ -205,8 +202,6 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
         patch->patch_timers[1] += MPI_Wtime() - timer;
         timer = MPI_Wtime();
 #endif
-
-        this->check(patch,"Pusher");
 
         // Computation of the particle cell keys for all particles
         // this->compute_bin_cell_keys(params,0, bmax.back());
@@ -305,16 +300,13 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
     else { // immobile particle (at the moment only project density)
         if ( diag_flag &&(!particles->is_test)){
             double* b_rho=nullptr;
-            for (unsigned int scell = 0 ; scell < bmin.size() ; scell ++) { //Loop for projection on buffer_proj
 
-                if (nDim_field==2)
-                    b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0*clrw*f_dim1) : &(*EMfields->rho_)(0*clrw*f_dim1) ;
-                if (nDim_field==3)
-                    b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0*clrw*f_dim1*f_dim2) : &(*EMfields->rho_)(0*clrw*f_dim1*f_dim2) ;
-                else if (nDim_field==1)
-                    b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0*clrw) : &(*EMfields->rho_)(0*clrw) ;
-                for (iPart=bmin[scell] ; (int)iPart<bmax[scell]; iPart++ ) {
-                    (*Proj)(b_rho, (*particles), iPart, 0*clrw, b_dim);
+            for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
+
+                b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
+
+                for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                    (*Proj)(b_rho, (*particles), iPart, 0, b_dim);
                 } //End loop on particles
             }//End loop on bins
 
@@ -328,7 +320,7 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
 //! Compute part_cell_keys at patch creation.
 //! This operation is normally done in the pusher to avoid additional particles pass.
 // -----------------------------------------------------------------------------
-void SpeciesDynamicV2::compute_part_cell_keys(Params &params)
+/*void SpeciesDynamicV2::compute_part_cell_keys(Params &params)
 {
 
     unsigned int ip, nparts;
@@ -359,8 +351,7 @@ void SpeciesDynamicV2::compute_part_cell_keys(Params &params)
     // Reduction of the number of particles per cell in species_loc_bmax
     for (ip=0; ip < nparts ; ip++)
         species_loc_bmax[(*particles).cell_keys[ip]] ++ ;
-
-}
+}*/
 
 
 // -----------------------------------------------------------------------------
@@ -490,13 +481,13 @@ void SpeciesDynamicV2::reconfigure_operators(Params &params, Patch * patch)
 {
     // Destroy current operators
     delete Interp;
-    delete Push;
+    //delete Push;
     delete Proj;
 
     // Reassign the correct Interpolator
-    Interp = InterpolatorFactory::create(params, patch, this->vectorized_operators);
+    this->Interp = InterpolatorFactory::create(params, patch, this->vectorized_operators);
     // Reassign the correct Pusher to Push
-    Push = PusherFactory::create(params, this);
+    //Push = PusherFactory::create(params, this);
     // Reassign the correct Projector
-    Proj = ProjectorFactory::create(params, patch, this->vectorized_operators);
+    this->Proj = ProjectorFactory::create(params, patch, this->vectorized_operators);
 }

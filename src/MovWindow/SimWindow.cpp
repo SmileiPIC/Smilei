@@ -398,6 +398,8 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                             dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
                             dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->reconfigure_operators(params, mypatch);
                         }
+                        // sorting will be necessary when clrw compatible
+                        //mypatch->vecSpecies[ispec]->sort_part(params);
                     }
                 } // end test patch_particle_created[ithread][j]
             } // end j loop

@@ -115,11 +115,11 @@ public:
             //Need to sort because particles are not well sorted at creation
             for (unsigned int ipatch=0 ; ipatch < npatches ; ipatch++){
                 for (unsigned int ispec=0 ; ispec<vecPatches(ipatch)->vecSpecies.size(); ispec++) {
-                    if ( dynamic_cast<SpeciesDynamicV2*>(vecPatches.patches_[ipatch]->vecSpecies[ispec]) )
+                    if (dynamic_cast<SpeciesDynamicV2*>(vecPatches.patches_[ipatch]->vecSpecies[ispec]) )
                     {
                         dynamic_cast<SpeciesDynamicV2*>(vecPatches.patches_[ipatch]->vecSpecies[ispec])->compute_part_cell_keys(params);
                     }
-                    dynamic_cast<SpeciesDynamicV2*>(vecPatches.patches_[ipatch]->vecSpecies[ispec])->sort_part(params);
+                    vecPatches.patches_[ipatch]->vecSpecies[ispec]->sort_part(params);
                 }
             }
         }

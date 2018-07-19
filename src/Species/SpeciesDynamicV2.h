@@ -46,7 +46,7 @@ class SpeciesDynamicV2 : public SpeciesV
     void reconfigure_operators(Params& param, Patch  * patch);
 
     //void count_sort_part(Params& param);
-    void compute_part_cell_keys(Params &params);
+    //void compute_part_cell_keys(Params &params);
 
 private:
 

@@ -1938,6 +1938,8 @@ void Species::check(Patch * patch, std::string title)
     double sum_px = 0;
     double sum_py = 0;
     double sum_pz = 0;
+    double sum_w = 0;
+    unsigned int sum_ck = 0;
     for (unsigned int ip=0; ip < (*particles).size() ; ip++){
         sum_x += (*particles).position(0,ip);
         sum_y += (*particles).position(1,ip);
@@ -1945,6 +1947,8 @@ void Species::check(Patch * patch, std::string title)
         sum_px += (*particles).momentum(0,ip);
         sum_py += (*particles).momentum(1,ip);
         sum_pz += (*particles).momentum(1,ip);
+        sum_w += (*particles).weight(ip);
+        sum_ck += (*particles).cell_keys[ip];
     }
     std::cerr << "Check sum at " << title
               << " for "<< this->name
@@ -1952,13 +1956,15 @@ void Species::check(Patch * patch, std::string title)
               << " mpi process " << patch->MPI_me_ << " - "
               << " mode: " << this->vectorized_operators << " - "
               << " nb bin: " << bmin.size() << " - "
-              << " - nbp: " << (*particles).size() << " - "
+              << " - nbp: " << (*particles).size()
+              << " - w: " << sum_w
               << " - x: " << sum_x
               << " - y: " << sum_y
               << " - z: " << sum_z
               << " - px: " << sum_px
               << " - py: " << sum_py
               << " - pz: " << sum_pz
+              << " - ck: " << sum_ck
               << '\n';
 };
 
