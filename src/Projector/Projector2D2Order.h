@@ -25,6 +25,7 @@ public:
 
 private:
     double one_third;
+    int pxr;
 };
 
 #endif

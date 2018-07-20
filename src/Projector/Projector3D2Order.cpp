@@ -35,6 +35,7 @@ Projector3D2Order::Projector3D2Order (Params& params, Patch* patch) : Projector3
 
     DEBUG("cell_length "<< params.cell_length[0]);
 
+    pxr = !params.is_pxr;
 }
 
 
@@ -219,7 +220,7 @@ void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
 
 
     // Jy^(p,d,p)
-    yz_size = b_dim[2]*(b_dim[1]+1);
+    yz_size = b_dim[2]*(b_dim[1]+1*pxr);
     linindex0 = ipo*yz_size+jpo*z_size+kpo;
     tmp = 0.;
     linindex = linindex0;
@@ -270,8 +271,8 @@ void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     }//i
 
     // Jz^(p,p,d)
-    z_size =  b_dim[2]+1;
-    yz_size = (b_dim[2]+1)*b_dim[1];
+    z_size =  b_dim[2]+1*pxr;
+    yz_size = (b_dim[2]+1*pxr)*b_dim[1];
     linindex0 = ipo*yz_size+jpo*z_size+kpo;
     tmp = 0.;
     linindex = linindex0;
@@ -464,7 +465,7 @@ void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
             for (unsigned int k=0 ; k<5 ; k++) {
                 tmpJy[i][k] -= cry_p * DSy[j-1] * (Sz0[k]*Sx0[i] + 0.5*DSz[k]*Sx0[i] + 0.5*DSx[i]*Sz0[k] + one_third*DSz[k]*DSx[i]);
                 kloc = k+kpo;
-                linindex = iloc*b_dim[2]*(b_dim[1]+1)+jloc*b_dim[2]+kloc;
+                linindex = iloc*b_dim[2]*(b_dim[1]+1*pxr)+jloc*b_dim[2]+kloc;
                 Jy [linindex] += tmpJy[i][k]; //
             }
         }
@@ -478,7 +479,7 @@ void Projector3D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
             for (unsigned int k=1 ; k<5 ; k++) {
                 tmpJz[i][j] -= crz_p * DSz[k-1] * (Sx0[i]*Sy0[j] + 0.5*DSx[i]*Sy0[j] + 0.5*DSy[j]*Sx0[i] + one_third*DSx[i]*DSy[j]);
                 kloc = k+kpo;
-                linindex = iloc*(b_dim[2]+1)*b_dim[1]+jloc*(b_dim[2]+1)+kloc;
+                linindex = iloc*(b_dim[2]+1*pxr)*b_dim[1]+jloc*(b_dim[2]+1*pxr)+kloc;
                 Jz [linindex] += tmpJz[i][j]; //
             }
         }

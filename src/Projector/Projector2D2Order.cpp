@@ -31,6 +31,7 @@ Projector2D2Order::Projector2D2Order (Params& params, Patch* patch) : Projector2
 
     DEBUG("cell_length "<< params.cell_length[0]);
 
+    pxr = !params.is_pxr;
 }
 
 
@@ -146,7 +147,7 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
         tmpY = Sx0[0] + 0.5*DSx[0];
         for (unsigned int j=1 ; j<5 ; j++) {
             tmp -= cry_p * DSy[j-1] * tmpY;
-            Jy[iloc+j+ipo]  += tmp; //Because size of Jy in Y is b_dim[1]+1.
+            Jy[iloc+j+pxr*ipo]  += tmp; //Because size of Jy in Y is b_dim[1]+1.
             Jz[iloc+j]  += crz_p * one_third * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
         }
     }//i
@@ -164,7 +165,7 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
             tmpJx[j] -= crx_p * DSx[i-1] * (Sy0[j] + 0.5*DSy[j]);
             Jx[iloc+j]  += tmpJx[j];
             tmp -= cry_p * DSy[j-1] * tmpY;
-            Jy[iloc+j+i+ipo]  += tmp; //Because size of Jy in Y is b_dim[1]+1.
+            Jy[iloc+j+pxr*(i+ipo)]  += tmp; //Because size of Jy in Y is b_dim[1]+1.
             Jz[iloc+j]  += crz_p * one_third * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
         }
     }//i
@@ -275,7 +276,7 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
         tmpY = Sx0[0] + 0.5*DSx[0];
         for (unsigned int j=1 ; j<5 ; j++) {
             tmp -= cry_p * DSy[j-1] * tmpY;
-            Jy[iloc+j+ipo]  += tmp; //Because size of Jy in Y is b_dim[1]+1.
+            Jy[iloc+j+pxr*ipo]  += tmp; //Because size of Jy in Y is b_dim[1]+1.
             Jz[iloc+j]  += crz_p * one_third * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
             rho[iloc+j] += charge_weight * Sx1[0]*Sy1[j];
         }
@@ -297,7 +298,7 @@ void Projector2D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
             tmpJx[j] -= crx_p * DSx[i-1] * (Sy0[j] + 0.5*DSy[j]);
             Jx[iloc+j]  += tmpJx[j];
             tmp -= cry_p * DSy[j-1] * tmpY;
-            Jy[iloc+j+i+ipo]  += tmp; //Because size of Jy in Y is b_dim[1]+1.
+            Jy[iloc+j+pxr*(i+ipo)]  += tmp; //Because size of Jy in Y is b_dim[1]+1.
             Jz[iloc+j]  += crz_p * one_third * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
             rho[iloc+j] += charge_weight * Sx1[i]*Sy1[j];
         }
