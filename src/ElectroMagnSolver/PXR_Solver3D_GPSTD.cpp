@@ -27,9 +27,9 @@ void PXR_Solver3D_GPSTD::coupling( Params &params, ElectroMagn* EMfields )
     if (params.uncoupled_grids)
         n_space = params.n_space_domain;
 
-    n0=(int) (1 + n_space[0]);
-    n1=(int) (1 + n_space[1]);
-    n2=(int) (1 + n_space[2]);
+    n0=(int) (0 + n_space[0]);
+    n1=(int) (0 + n_space[1]);
+    n2=(int) (0 + n_space[2]);
 
     ov0=(int) params.oversize[0];
     ov1=(int) params.oversize[1];

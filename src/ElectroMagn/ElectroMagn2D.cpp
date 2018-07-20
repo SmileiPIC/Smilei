@@ -157,18 +157,7 @@ void ElectroMagn2D::initElectroMagn2DQuantities(Params &params, Patch* patch)
     rho_  = new Field2D(dimPrim, "Rho" );
     
     if(params.is_pxr == true) {
-        rhoold_ = new Field2D(dimPrim,"Rho");
-        Ex_pxr  = new Field2D(dimDual);
-        Ey_pxr  = new Field2D(dimDual);
-        Ez_pxr  = new Field2D(dimDual);
-        Bx_pxr  = new Field2D(dimDual);
-        By_pxr  = new Field2D(dimDual);
-        Bz_pxr  = new Field2D(dimDual);
-        Jx_pxr  = new Field2D(dimDual);
-        Jy_pxr  = new Field2D(dimDual);
-        Jz_pxr  = new Field2D(dimDual);
-        rho_pxr = new Field2D(dimDual);
-        rhoold_pxr  = new Field2D(dimDual);
+        rhoold_ = new Field2D(dimPrim,"RhoOld");
     }
 
 
