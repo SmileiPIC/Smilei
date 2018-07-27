@@ -195,6 +195,10 @@ ElectroMagnBC3D_SM::ElectroMagnBC3D_SM( Params &params, Patch* patch, unsigned i
     Zeta_SM_T     = - ( ky + dt_ov_dy) * factor;
     Eta_SM_T      = - ( ky - dt_ov_dy) * factor;
     
+    if (params.is_pxr)
+        pxr_offset = params.oversize[0];
+    else
+        pxr_offset = 0;
 }
 
 ElectroMagnBC3D_SM::~ElectroMagnBC3D_SM()
@@ -300,6 +304,13 @@ void ElectroMagnBC3D_SM::disableExternalFields()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBC3D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
+    if (pxr_offset) {
+        if (nx_p==nx_d) {
+            nx_p--;
+            ny_p--;
+            nz_p--;
+        }
+    }
 
     // Static cast of the fields
    Field3D* Ex3D = static_cast<Field3D*>(EMfields->Ex_);
