@@ -149,7 +149,7 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, double 
         iloc += b_dim[1]*(b_dim[2]);
     }
 
-} // END Project local current densities at dag timestep.
+} // END Project local current densities at diagFields timestep.
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -190,13 +190,13 @@ void Projector3D2OrderV::operator() (double* rhoj, Particles &particles, unsigne
             ny ++;
         }
         else {
-            charge_weight *= particles.momentum(2,ipart); 
+            charge_weight *= particles.momentum(2,ipart);
             nz ++;
         }
     }
     nyz = ny*nz;
 
-// Initialize all current-related arrays to zero
+    // Initialize all current-related arrays to zero
     for (unsigned int i=0; i<5; i++) {
         Sx1[i] = 0.;
         Sy1[i] = 0.;
@@ -610,7 +610,7 @@ void Projector3D2OrderV::project_susceptibility(ElectroMagn* EMfields, Particles
     int vecSize = 8;
     int bsize = 3*3*3*vecSize; // primal grid, particles did not yet move (3x3x3 enough)
     double bChi[bsize] __attribute__((aligned(64)));
-    
+
     double Sx1[24] __attribute__((aligned(64)));
     double Sy1[24] __attribute__((aligned(64)));
     double Sz1[24] __attribute__((aligned(64)));
@@ -625,20 +625,20 @@ void Projector3D2OrderV::project_susceptibility(ElectroMagn* EMfields, Particles
     #pragma omp simd
     for (unsigned int j=0; j<bsize; j++)
         bChi[j] = 0.;
-    
+
     for (int ivect=0 ; ivect < cell_nparts; ivect += vecSize ){
 
         int np_computed(min(cell_nparts-ivect,vecSize));
         int istart0 = (int)istart + ivect;
-        
+
         //for (unsigned int ipart=istart ; (int)ipart<iend; ipart++ ) {
         #pragma omp simd
         for (int ipart=0 ; ipart<np_computed; ipart++ ) {
-            
+
             int iloc,jloc;
-     
+
             double momentum[3];
-        
+
             double gamma_ponderomotive,gamma0,gamma0_sq;
             double charge_over_mass_dts2,charge_sq_over_mass_dts4,charge_sq_over_mass_sq;
             double pxsm, pysm, pzsm;
@@ -648,32 +648,32 @@ void Projector3D2OrderV::project_susceptibility(ElectroMagn* EMfields, Particles
 
             charge_over_mass_dts2    = c *dts2*one_over_mass;
             // ! ponderomotive force is proportional to charge squared and the field is divided by 4 instead of 2
-            charge_sq_over_mass_dts4 = c*c*dts4*one_over_mass;      
+            charge_sq_over_mass_dts4 = c*c*dts4*one_over_mass;
             // (charge over mass)^2
             charge_sq_over_mass_sq   = c*c*one_over_mass*one_over_mass;
 
             for ( int i = 0 ; i<3 ; i++ )
                 momentum[i] = particles.momentum(i,istart0+ipart);
- 
-            // compute initial ponderomotive gamma 
+
+            // compute initial ponderomotive gamma
             gamma0_sq = 1. + momentum[0]*momentum[0]+ momentum[1]*momentum[1] + momentum[2]*momentum[2] + *(Phi+istart-ipart_ref+ipart)*charge_sq_over_mass_sq ;
             gamma0    = sqrt(gamma0_sq) ;
-         
+
             // ( electric field + ponderomotive force for ponderomotive gamma advance ) scalar multiplied by momentum
             pxsm = (gamma0 * charge_over_mass_dts2*(*(Ex+istart-ipart_ref+ipart)) - charge_sq_over_mass_dts4*(*(GradPhix+istart-ipart_ref+ipart)) ) * momentum[0] / gamma0_sq;
             pysm = (gamma0 * charge_over_mass_dts2*(*(Ey+istart-ipart_ref+ipart)) - charge_sq_over_mass_dts4*(*(GradPhiy+istart-ipart_ref+ipart)) ) * momentum[1] / gamma0_sq;
             pzsm = (gamma0 * charge_over_mass_dts2*(*(Ez+istart-ipart_ref+ipart)) - charge_sq_over_mass_dts4*(*(GradPhiz+istart-ipart_ref+ipart)) ) * momentum[2] / gamma0_sq;
-             
-            // update of gamma ponderomotive 
+
+            // update of gamma ponderomotive
             gamma_ponderomotive = gamma0 + (pxsm+pysm+pzsm)*0.5 ;
- 
+
             // susceptibility for the macro-particle
-            charge_weight[ipart] = c*c*particles.weight(istart+ipart)*one_over_mass/gamma_ponderomotive ; 
- 
+            charge_weight[ipart] = c*c*particles.weight(istart+ipart)*one_over_mass/gamma_ponderomotive ;
+
             // variable declaration
             double xpn, ypn, zpn;
             double delta, delta2;
- 
+
             // Initialize all current-related arrays to zero
             for (unsigned int i=0; i<3; i++) {
                 Sx1[i*vecSize+ipart] = 0.;
@@ -684,7 +684,7 @@ void Projector3D2OrderV::project_susceptibility(ElectroMagn* EMfields, Particles
             // --------------------------------------------------------
             // Locate particles & Calculate Esirkepov coef. S, DS and W
             // --------------------------------------------------------
- 
+
             // locate the particle on the primal grid at current time-step & calculate coeff. S1
             xpn = particles.position(0, istart0+ipart) * dx_inv_;
             int ip = round(xpn);
@@ -693,7 +693,7 @@ void Projector3D2OrderV::project_susceptibility(ElectroMagn* EMfields, Particles
             Sx1[0*vecSize+ipart] = 0.5 * (delta2-delta+0.25);
             Sx1[1*vecSize+ipart] = 0.75-delta2;
             Sx1[2*vecSize+ipart] = 0.5 * (delta2+delta+0.25);
- 
+
             ypn = particles.position(1, istart0+ipart) * dy_inv_;
             int jp = round(ypn);
             delta  = ypn - (double)jp;
@@ -701,7 +701,7 @@ void Projector3D2OrderV::project_susceptibility(ElectroMagn* EMfields, Particles
             Sy1[0*vecSize+ipart] = 0.5 * (delta2-delta+0.25);
             Sy1[1*vecSize+ipart] = 0.75-delta2;
             Sy1[2*vecSize+ipart] = 0.5 * (delta2+delta+0.25);
- 
+
             zpn = particles.position(2, istart0+ipart) * dz_inv_;
             int kp = round(zpn);
             delta  = zpn - (double)kp;
@@ -709,7 +709,7 @@ void Projector3D2OrderV::project_susceptibility(ElectroMagn* EMfields, Particles
             Sz1[0*vecSize+ipart] = 0.5 * (delta2-delta+0.25);
             Sz1[1*vecSize+ipart] = 0.75-delta2;
             Sz1[2*vecSize+ipart] = 0.5 * (delta2+delta+0.25);
- 
+
         } // end ipart loop
 
         #pragma omp simd
@@ -724,12 +724,12 @@ void Projector3D2OrderV::project_susceptibility(ElectroMagn* EMfields, Particles
             }//i
 
         } // end ipart loop
-        
+
     } // end ivect
 
     // ---------------------------
     // Calculate the total charge
-    // ---------------------------    
+    // ---------------------------
     int ipo = iold[0];
     int jpo = iold[1];
     int kpo = iold[2];
@@ -755,6 +755,6 @@ void Projector3D2OrderV::project_susceptibility(ElectroMagn* EMfields, Particles
         iloc += b_dim[1]*(b_dim[2]);
     }
 
-    
-    
+
+
 }
