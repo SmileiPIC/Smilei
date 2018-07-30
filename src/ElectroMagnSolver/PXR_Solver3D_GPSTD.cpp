@@ -51,9 +51,13 @@ void PXR_Solver3D_GPSTD::coupling( Params &params, ElectroMagn* EMfields )
     Field3D* rho3D_pxr = static_cast<Field3D*>( EMfields->rho_);
     Field3D* rhoold3D_pxr = static_cast<Field3D*>( EMfields->rhoold_);
 
+    double pxr_dx = -params.cell_length[0];
+    double pxr_dy = -params.cell_length[1];
+    double pxr_dz = -params.cell_length[2];
+
     //call of extern init routine (defined in picsar)
     picsar::init_params_picsar(&n0,&n1,&n2,
-                       &params.cell_length[0],&params.cell_length[1],&params.cell_length[2],&params.timestep,
+                       &pxr_dx,&pxr_dy,&pxr_dz,&params.timestep,
                        &ov0,&ov1,&ov2,
                        &params.norderx,&params.nordery,&params.norderz,
                        &params.is_spectral,
