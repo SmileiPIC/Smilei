@@ -212,6 +212,13 @@ void ElectroMagnBC2D_SM::disableExternalFields()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBC2D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
+    if (pxr_offset) {
+        if (nx_p==nx_d) {
+            nx_p--;
+            ny_p--;
+        }
+    }
+
     if (min_max == 0 && patch->isXmin() ) {
         
         // Static cast of the fields
@@ -224,8 +231,8 @@ void ElectroMagnBC2D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         
         // for By^(d,p)
         vector<double> yp(1);
-        for (unsigned int j=0 ; j<ny_p ; j++) {
-            
+        for (unsigned int j=patch->isYmin() ; j<ny_p-patch->isYmax() ; j++) {
+
             double byW = 0.;
             yp[0] = patch->getDomainLocalMin(1) + ((int)j - (int)EMfields->oversize[1])*dy;
             
@@ -246,7 +253,7 @@ void ElectroMagnBC2D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         
         // for Bz^(d,d)
         vector<double> yd(1);
-        for (unsigned int j=0 ; j<ny_d ; j++) {
+        for (unsigned int j=patch->isYmin() ; j<ny_d-patch->isYmax() ; j++) {
             
             double bzW = 0.;
             yd[0] = patch->getDomainLocalMin(1) + ((int)j - 0.5 - (int)EMfields->oversize[1])*dy;
@@ -279,8 +286,8 @@ void ElectroMagnBC2D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         
         // for By^(d,p)
         vector<double> yp(1);
-        for (unsigned int j=0 ; j<ny_p ; j++) {
-            
+        for (unsigned int j=patch->isYmin() ; j<ny_p-patch->isYmax() ; j++) {
+
             double byE = 0.;
             yp[0] = patch->getDomainLocalMin(1) + ((int)j - (int)EMfields->oversize[1])*dy;
             
@@ -306,8 +313,8 @@ void ElectroMagnBC2D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         
         // for Bz^(d,d)
         vector<double> yd(1);
-        for (unsigned int j=0 ; j<ny_d ; j++) {
-            
+        for (unsigned int j=patch->isYmin() ; j<ny_d-patch->isYmax() ; j++) {
+ 
             double bzE = 0.;
             yd[0] = patch->getDomainLocalMin(1) + ((int)j - 0.5 - (int)EMfields->oversize[1])*dy;
             
@@ -337,7 +344,7 @@ void ElectroMagnBC2D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         Field2D* Bz2D = static_cast<Field2D*>(EMfields->Bz_);
         
         // for Bx^(p,d)
-        for (unsigned int j=0 ; j<nx_p ; j++) {
+        for (unsigned int j=patch->isXmin() ; j<nx_p-patch->isXmax() ; j++) {
             /*(*Bx2D)(j,0) = -Alpha_SM_S   * (*Ez2D)(j,0)
              +               Beta_SM_S    * (*Bx2D)(j,1)
              +               Delta_SM_S   * (*By2D)(j+1,0)
@@ -351,7 +358,7 @@ void ElectroMagnBC2D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         
         
         // for Bz^(d,d)
-        for (unsigned int j=0 ; j<nx_d ; j++) {
+        for (unsigned int j=patch->isXmin() ; j<nx_d-patch->isXmax() ; j++) {
             /*(*Bz2D)(j,0) = Alpha_SM_S * (*Ex2D)(j,0)
              +               Beta_SM_S * (*Bz2D)(j,1);*/
             (*Bz2D)(j,0+pxr_offset) = Alpha_SM_S * (*Ex2D)(j,0+pxr_offset)
@@ -371,7 +378,7 @@ void ElectroMagnBC2D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         Field2D* Bz2D = static_cast<Field2D*>(EMfields->Bz_);
         
         // for Bx^(p,d)
-        for (unsigned int j=0 ; j<nx_p ; j++) {
+        for (unsigned int j=patch->isXmin() ; j<nx_p-patch->isXmax() ; j++) {
             /*(*Bx2D)(j,ny_d-1) = -Alpha_SM_N   * (*Ez2D)(j,ny_p-1)
              +                    Beta_SM_N    * (*Bx2D)(j,ny_d-2)
              +                    Delta_SM_N   * (*By2D)(j+1,ny_p-1)
@@ -385,7 +392,7 @@ void ElectroMagnBC2D_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
         
         
         // for Bz^(d,d)
-        for (unsigned int j=0 ; j<nx_d ; j++) {
+        for (unsigned int j=patch->isXmin() ; j<nx_d-patch->isXmax() ; j++) {
             /*(*Bz2D)(j,ny_d-1) = Alpha_SM_N * (*Ex2D)(j,ny_p-1)
              +                   Beta_SM_N  * (*Bz2D)(j,ny_d-2);*/
             (*Bz2D)(j,ny_d-1-pxr_offset) = Alpha_SM_N * (*Ex2D)(j,ny_p-1-pxr_offset)
