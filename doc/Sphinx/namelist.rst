@@ -1910,7 +1910,7 @@ This is done by including a block ``DiagFields``::
   | | Env_Chi      | | Total  susceptibility :math:`\chi`                  |
   +----------------+-------------------------------------------------------+
   | |              | | Module of laser electric field's complex envelope   |
-  | | Env_E        | | :math:`\tilde{E}` (component along the polarization |
+  | | Env_E_abs    | | :math:`\tilde{E}` (component along the polarization |
   | |              | | direction)                                          |
   +----------------+-------------------------------------------------------+
 
@@ -2019,7 +2019,7 @@ To add one probe diagnostic, include the block ``DiagProbe``::
   Note that it does NOT speed up calculation much, but it saves disk space.
 
   In the case of an envelope model for the laser (see :doc:`laser_envelope`), the following fields are also available: ``"Env_A_abs"``, ``"Env_Ar"``, ``"Env_Ai"``,
-  ``"Env_Chi"``, ``"Env_E"``.
+  ``"Env_Chi"``, ``"Env_E_abs"``.
 
 
 **Examples of probe diagnostics**
