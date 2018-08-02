@@ -619,7 +619,7 @@ void Interpolator3D2Order_envV::interpolate_envelope_and_old_envelope(ElectroMag
 }
 
 // probes like diagnostic !
-void Interpolator3D2Order_envV::interpolate_envelope_and_susceptibility(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, double* Env_A_abs_Loc, double* Env_Ar_Loc, double* Env_Ai_Loc, double* Env_Chi_Loc)
+void Interpolator3D2Order_envV::interpolate_envelope_and_susceptibility(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, double* Env_A_abs_Loc, double* Env_Ar_Loc, double* Env_Ai_Loc, double* Env_Chi_Loc, double* Env_E_abs_Loc)
 {
     // iend not used for now
     // probes are interpolated one by one for now
@@ -640,6 +640,7 @@ void Interpolator3D2Order_envV::interpolate_envelope_and_susceptibility(ElectroM
     Field3D* Env_Ar_3D    = static_cast<Field3D*>(EMfields->Env_Ar_);
     Field3D* Env_Ai_3D    = static_cast<Field3D*>(EMfields->Env_Ai_);
     Field3D* Env_Chi_3D   = static_cast<Field3D*>(EMfields->Env_Chi_);
+    Field3D* Env_E_abs_3D = static_cast<Field3D*>(EMfields->Env_E_abs_);
 
     double coeff[3][2][3]; 
     int dual[3]; // Size ndim. Boolean indicating if the part has a dual indice equal to the primal one (dual=0) or if it is +1 (dual=1).
@@ -718,5 +719,17 @@ void Interpolator3D2Order_envV::interpolate_envelope_and_susceptibility(ElectroM
         }
     }
     *Env_Chi_Loc= interp_res;
+
+    // Interpolation of Env_E_abs^(p,p,p) (absolute value of envelope E)
+    interp_res = 0.;
+    for (int iloc=-1 ; iloc<2 ; iloc++) {
+        for (int jloc=-1 ; jloc<2 ; jloc++) {
+            for (int kloc=-1 ; kloc<2 ; kloc++) {
+                interp_res += *(coeffxp+iloc*1) * *(coeffyp+jloc*1) * *(coeffzp+kloc*1) * (*Env_E_abs_3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
+            }
+        }
+    }
+    *Env_E_abs_Loc= interp_res;
+
 
 }
