@@ -43,7 +43,7 @@ As described thoroughly in the same references, the coupling between the laser e
 
 Modeling the laser through a complex envelope and its coupling with the plasma through the ponderomotive force will yield physically meaningful results only if the variation scales in space and time are greater than :math:`\lambda_0`, :math:`1/\omega_0`. Examples violating these hypotheses include, but are not limited to, tightly focused lasers, few optical cycles lasers, sharp gradients in the plasma density. 
 
-From Eq. :eq:`envelope`, the laser electric field's complex envelope :math:`\tilde{E}` can be derived. In the context of the perturbative treatment, the laser scalar potential :math:`\Phi` can be neglected, yielding:
+From Eq. :eq:`envelope`, the laser electric field's complex envelope :math:`\tilde{E}` can be derived. In the context of the perturbative treatment, the laser scalar potential can be neglected [Cowan2011]_, yielding:
 
 .. math::
 
