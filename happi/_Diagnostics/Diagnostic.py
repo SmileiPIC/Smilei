@@ -505,8 +505,8 @@ class Diagnostic(object):
 				finalShape = 1
 			else:
 				if edgeInclusive:
-					axismin = "-\infty" if indices[ 0]==0                 else meshpoints[indices[ 0]]+" "+axisunits
-					axismax =  "\infty" if indices[-1]==len(meshpoints)-1 else meshpoints[indices[-1]]+" "+axisunits
+					axismin = "-infinity" if indices[ 0]==0                 else str(meshpoints[indices[ 0]])+" "+axisunits
+					axismax =  "infinity" if indices[-1]==len(meshpoints)-1 else str(meshpoints[indices[-1]])+" "+axisunits
 					info = operation+" for "+axisname+" from "+axismin+" to "+axismax
 				else:
 					info = operation+" for "+axisname+" from "+str(meshpoints[indices[0]])+" to "+str(meshpoints[indices[-1]])+" "+axisunits
