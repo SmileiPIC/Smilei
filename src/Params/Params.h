@@ -239,8 +239,10 @@ public:
     //! Compute an initially balanced patch distribution right from the start
     bool initial_balance;
 
-    //! String containing the vectorization mode: disable, normal, dynamic
+    //! String containing the vectorization mode: disable, normal, dynamic, dynamic2
     std::string vectorization_mode;
+    //! Initial state of the patches in dynamic mode
+    std::string dynamic_default_mode;
 
     //! Tells whether there is a moving window
     bool hasWindow;

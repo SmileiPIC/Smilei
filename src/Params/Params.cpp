@@ -501,21 +501,36 @@ namelist("")
     // Activation of the vectorized subroutines
     vectorization_mode = "disable";
     has_dynamic_vectorization = false;
-    PyTools::extract("vecto", vectorization_mode, "Main");
-    if (!(vectorization_mode == "disable" || vectorization_mode == "normal" || vectorization_mode == "dynamic" || vectorization_mode == "dynamic2"))
-    {
-        ERROR("The parameter `vecto` must be `disable`, `normal`, `dynamic`, `dynamic2`");
-    }
-    else if (vectorization_mode == "dynamic" || vectorization_mode == "dynamic2")
-    {
-        has_dynamic_vectorization = true;
-    }
 
-    if( PyTools::nComponents("DynamicVectorization")>0 ) {
+    if( PyTools::nComponents("Vectorization")>0 ) {
+
+        // Extraction of the vectorization mode
+        PyTools::extract("mode", vectorization_mode, "Vectorization");
+        if (!(vectorization_mode == "disable" ||
+              vectorization_mode == "normal" ||
+              vectorization_mode == "dynamic" ||
+              vectorization_mode == "dynamic2"))
+        {
+            ERROR("The parameter `vecto` must be `disable`, `normal`, `dynamic`, `dynamic2`");
+        }
+        else if (vectorization_mode == "dynamic" || vectorization_mode == "dynamic2")
+        {
+            has_dynamic_vectorization = true;
+        }
+
         // get parameter "every" which describes a timestep selection
         dynamic_vecto_time_selection = new TimeSelection(
-            PyTools::extract_py("every", "DynamicVectorization"), "Dynamic vectorization"
+            PyTools::extract_py("every", "Vectorization"), "Dynamic vectorization"
         );
+
+        // Default mode for the dynamic mode
+        PyTools::extract("default", dynamic_default_mode, "Vectorization");
+        if (!(dynamic_default_mode == "scalar" ||
+              dynamic_default_mode == "vectorized"))
+        {
+            ERROR("The parameter `dynamic_default_mode` must be `disable` or `vectorized`");
+        }
+
     } else {
         dynamic_vecto_time_selection  = new TimeSelection(1);
     }
@@ -789,23 +804,12 @@ void Params::print_init()
         MESSAGE(1,"Frozen particle load coefficient = " << frozen_particle_load );
     }
 
-    if (vectorization_mode == "normal")
+    TITLE("Vectorization: ");
+    MESSAGE(1,"Mode: " << vectorization_mode);
+    if (vectorization_mode == "dynamic" || vectorization_mode == "dynamic2")
     {
-        MESSAGE(1,"Apply the constant vectorization mode" );
-    }
-    else if (vectorization_mode == "dynamic")
-    {
-        MESSAGE(1,"Apply the dynamic vectorization mode 1" );
-        MESSAGE(1,"Happens: " << dynamic_vecto_time_selection->info());
-    }
-    else if (vectorization_mode == "dynamic2")
-    {
-        MESSAGE(1,"Apply the dynamic vectorization mode 2" );
-        MESSAGE(1,"Happens: " << dynamic_vecto_time_selection->info());
-    }
-    else if (vectorization_mode == "disable")
-    {
-        MESSAGE(1,"Vectorization disable" );
+        MESSAGE(1,"Default mode: " << dynamic_default_mode);
+        MESSAGE(1,"Time selection: " << dynamic_vecto_time_selection->info());
     }
 
 }
@@ -857,10 +861,6 @@ void Params::print_parallelism_params(SmileiMPI* smpi)
             MESSAGE(2, "dimension " << iDim << " - n_space : " << n_space[iDim] << " cells.");
 
         MESSAGE(1, "Dynamic load balancing: " << load_balancing_time_selection->info() );
-        if (this->has_dynamic_vectorization)
-        {
-            MESSAGE(1, "Dynamic vectorization: " << dynamic_vecto_time_selection->info() );
-        }
     }
 
     if (smpi->isMaster()) {

@@ -444,8 +444,6 @@ void SpeciesDynamicV2::configuration(Params &params, Patch * patch)
     // Metrics 1 - based on the ratio of vectorized cells
     // Compute the number of cells that contain more than 8 particles
     //ratio_number_of_vecto_cells = SpeciesMetrics::get_ratio_number_of_vecto_cells(species_loc_bmax,8);
-
-
     // --------------------------------------------------------------------
 
     // --------------------------------------------------------------------
@@ -454,13 +452,18 @@ void SpeciesDynamicV2::configuration(Params &params, Patch * patch)
                                         vecto_time,
                                         scalar_time);
 
-    if (vecto_time <= scalar_time )
+    if (vecto_time < scalar_time )
     {
         this->vectorized_operators = true;
     }
     else if (vecto_time > scalar_time)
     {
         this->vectorized_operators = false;
+    }
+    // Default mode where there is no particles
+    else
+    {
+        this->vectorized_operators = (params.dynamic_default_mode == "vectorized");
     }
     // --------------------------------------------------------------------
 

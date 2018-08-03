@@ -178,32 +178,6 @@ The block ``Main`` is **mandatory** and has the following syntax::
   The finest sorting is achieved with clrw=1 and no sorting with clrw equal to the full size of a patch along dimension X.
   The cluster size in dimension Y and Z is always the full extent of the patch.
 
-.. py:data:: vecto
-
-  :default: ``disable``
-
-  Enable the use of the vectorized operators
-
-  Advanced users. Sevevecto ral vectorization modes are available:
-    * ``disable``: non-vectorized operators are used.
-      This mode is recommended when the number of particles per cell keeps low
-      (below 8 particles per cell) all along the simulation.
-    * ``normal``: only vectorized operators are used
-    * ``dynamic``: in this mode, the best set of operators (scalar or vectorized)
-      is determined dynamically per patch.
-      In ``vectorized`` state, the cell sorting method is used whereas
-      in ``scalar`` state, the original sorting method is applied.
-      This means that a small overhead can be induced due to the patch reconfiguration.
-    * ``dynamic2``: this is the second dynamic mode.
-    Here, the cell sorting method is used in both ``scalar``
-    and ``vectorized`` state.
-
-  In ``dynamic`` mode, the reconfiguration period can be tuned
-  with the ``DynamicVectorization`` panel.
-  By default, the reconfiguration is done at every timesteps.
-
-  In ``dynamic`` and ``dynamic2`` mode, ``clrw`` is set to the maximum by default.
-
 .. py:data:: maxwell_solver
 
   :default: 'Yee'
@@ -376,22 +350,58 @@ occur every 150 iterations.
 
 .. _dynamicVectorization:
 
-Dynamic vectorization
+Vectorization
 ^^^^^^^^^^^^^^^^^^^^^
 
-The block ``DynamicVectorization`` is optional. The dynamic vectorization mode is done at every timestep by default.
+The block ``Vectorization`` is optional. The dynamic vectorization mode is done at every timestep by default.
 
 .. code-block:: python
 
-  DynamicVectorization(
-      every = [5]
+  Vectorization(
+      mode = "normal",
+      every = [5],
+      default = "scalar"
   )
+
+.. py:data:: mode
+
+  :default: ``disable``
+
+  Enable the use of the vectorized operators
+
+  Advanced users. Sevevecto ral vectorization modes are available:
+    * ``disable``: non-vectorized operators are used.
+      This mode is recommended when the number of particles per cell keeps low
+      (below 8 particles per cell) all along the simulation.
+    * ``normal``: only vectorized operators are used
+    * ``dynamic``: in this mode, the best set of operators (scalar or vectorized)
+      is determined dynamically per patch.
+      In ``vectorized`` state, the cell sorting method is used whereas
+      in ``scalar`` state, the original sorting method is applied.
+      This means that a small overhead can be induced due to the patch reconfiguration.
+    * ``dynamic2``: this is the second dynamic mode.
+    Here, the cell sorting method is used in both ``scalar``
+    and ``vectorized`` state.
+
+  In ``dynamic`` mode, the reconfiguration period can be tuned
+  with the ``Vectorization`` panel.
+  By default, the reconfiguration is done at every timesteps.
+
+  In ``dynamic`` and ``dynamic2`` mode, ``clrw`` is set to the maximum by default.
 
 .. py:data:: every
 
   :default: 1
 
   The time selection for the patch reconfiguration when the ``dynamic`` vectorization is activated.
+
+.. py:data:: default
+
+  :default: ``vectorized``
+
+  Default species state when one of the dynamic computational mode is activated
+  and no particle are present in the patch.
+
 
 ----
 
@@ -689,7 +699,7 @@ Each species has to be defined in a ``Species`` block::
   Flag for particles interacting with an envelope model for the laser, if present.
   If ``True``, this species will project its susceptibility and be influenced by the laser envelope field.
   See :doc:`laser_envelope` for details on the dynamics of particles in presence of a laser envelope field.
-.. note:: Ionization, Radiation and Multiphoton Breit-Wheeler pair creation are not yet implemented for species interacting with an envelope model for the laser. 
+.. note:: Ionization, Radiation and Multiphoton Breit-Wheeler pair creation are not yet implemented for species interacting with an envelope model for the laser.
 
 
 .. py:data:: c_part_max

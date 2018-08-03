@@ -214,9 +214,6 @@ class Main(SmileiSingleton):
     random_seed = None
     print_expected_disk_usage = True
 
-    # Vectorization flag
-    vecto = "disable"
-
     def __init__(self, **kwargs):
         # Load all arguments to Main()
         super(Main, self).__init__(**kwargs)
@@ -290,17 +287,19 @@ class Main(SmileiSingleton):
 class LoadBalancing(SmileiSingleton):
     """Load balancing parameters"""
 
-    every = 150
-    initial_balance = True
-    cell_load = 1.0
+    every                = 150
+    initial_balance      = True
+    cell_load            = 1.0
     frozen_particle_load = 0.1
 
 # Radiation reaction configuration (continuous and MC algorithms)
-class DynamicVectorization(SmileiComponent):
+class Vectorization(SmileiComponent):
     """
-    Dynamic vectorization parameters
+    Vectorization parameters
     """
-    every = 1
+    mode    = "disable"
+    every   = 1
+    default = "vectorized"
 
 
 class MovingWindow(SmileiSingleton):

@@ -38,7 +38,7 @@ def _smilei_check():
             "DiagTrackParticles","DiagPerformances","ExternalField",
             "SmileiSingleton","Main","Checkpoints","LoadBalancing","MovingWindow",
             "RadiationReaction", "ParticleData", "MultiphotonBreitWheeler",
-            "DynamicVectorization"]:
+            "Vectorization"]:
         CheckClass = globals()[CheckClassName]
         try:
             if not CheckClass._verify: raise Exception("")
