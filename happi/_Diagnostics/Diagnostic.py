@@ -476,7 +476,7 @@ class Diagnostic(object):
 		return info, selection, finalShape
 	
 	# Method to select portion of a mesh based on a range
-	def _selectRange(self, portion, meshpoints, axisname, axisunits, operation):
+	def _selectRange(self, portion, meshpoints, axisname, axisunits, operation, edgeInclusive=False):
 		# if portion is "all", then select all the axis
 		if portion == "all":
 			info = operation+" for all "+axisname
@@ -504,7 +504,12 @@ class Diagnostic(object):
 				selection = slice(indices[0],indices[0]+1)
 				finalShape = 1
 			else:
-				info = operation+" for "+axisname+" from "+str(meshpoints[indices[0]])+" to "+str(meshpoints[indices[-1]])+" "+axisunits
+				if edgeInclusive:
+					axismin = "-\infty" if indices[ 0]==0                 else meshpoints[indices[ 0]]+" "+axisunits
+					axismax =  "\infty" if indices[-1]==len(meshpoints)-1 else meshpoints[indices[-1]]+" "+axisunits
+					info = operation+" for "+axisname+" from "+axismin+" to "+axismax
+				else:
+					info = operation+" for "+axisname+" from "+str(meshpoints[indices[0]])+" to "+str(meshpoints[indices[-1]])+" "+axisunits
 				selection = slice(indices[0],indices[-1])
 				finalShape = indices[-1] - indices[0]
 		return info, selection, finalShape
