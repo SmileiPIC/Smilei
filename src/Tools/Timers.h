@@ -49,6 +49,8 @@ public:
     Timer proj_currents  ;
     Timer push_pos ;
 
+    Timer sorting ;
+
     // Where the patch timers start in the timer vector
     unsigned int patch_timer_id_start ;
 #endif

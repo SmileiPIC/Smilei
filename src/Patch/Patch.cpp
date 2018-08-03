@@ -48,7 +48,14 @@ Patch::Patch(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomp
 
 #ifdef  __DETAILED_TIMERS
     // Initialize timers
-    patch_timers.resize(13,0.);
+    // 0 - Interpolation
+    // 1 - Pusher
+    // 2 - Projection
+    // 3 - exchange init + cell_keys
+    // 4 - ionization
+    // 5 - radiation
+    // 6 - Breit-Wheeler
+    patch_timers.resize(14,0.);
 #endif
 
 } // END Patch::Patch
@@ -66,7 +73,7 @@ Patch::Patch(Patch* patch, Params& params, SmileiMPI* smpi, DomainDecomposition*
 
 #ifdef  __DETAILED_TIMERS
     // Initialize timers
-    patch_timers.resize(13,0.);
+    patch_timers.resize(14,0.);
 #endif
 
 }
@@ -643,6 +650,10 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
     int ndim = params.nDim_field;
     int idim, check;
 
+#ifdef  __DETAILED_TIMERS
+    double timer;
+#endif
+
     Particles &cuParticles = (*vecSpecies[ispec]->particles);
 
     int n_part_send, n_part_recv;
@@ -718,6 +729,10 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
     //La recopie finale doit se faire au traitement de la dernière dimension seulement !!
     if (iDim == ndim-1){
 
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
+
         //vecSpecies[ispec]->sort_part(params);
 
         // For DynamicV
@@ -736,6 +751,10 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
                 vecSpecies[ispec]->Species::sort_part(params);
             }
         }
+
+#ifdef  __DETAILED_TIMERS
+            this->patch_timers[13] += MPI_Wtime() - timer;
+#endif
 
     }//End Recv_buffers ==> particles
 

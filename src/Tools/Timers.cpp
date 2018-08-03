@@ -25,6 +25,7 @@ Timers::Timers( SmileiMPI * smpi ) :
     envelope      ("Envelope"           ),
     susceptibility("Sync Susceptibility")
 #ifdef __DETAILED_TIMERS
+    // Details of Dynamic
     ,interpolator("Interpolator"),
     pusher("Pusher"             ),
     projector("Projector"       ),
@@ -32,13 +33,15 @@ Timers::Timers( SmileiMPI * smpi ) :
     ionization("Ionization"       ),
     radiation("Radiation"       ),
     multiphoton_Breit_Wheeler_timer("Multiphoton Breit-Wheeler"       ),
+    // Details of Envelop
     interp_fields_env   ( "Interp Fields_Env" ),
     proj_susceptibility ( "Proj Susceptibility"),
     push_mom            ( "Push Momentum"     ),
     interp_env_old      ( "Interp Env_Old"    ),
     proj_currents       ( "Proj Currents"     ),
-    push_pos            ( "Push Pos"          )
-
+    push_pos            ( "Push Pos"          ),
+    // Details of Sync Particles
+    sorting            ( "Sorting"          )
 #endif
 {
     timers.resize(0);
@@ -88,6 +91,9 @@ Timers::Timers( SmileiMPI * smpi ) :
     timers.push_back( &proj_currents ) ;
     timers.back()->patch_timer_id = 12;
 
+    // Details for sync part
+    timers.push_back( &sorting ) ;
+    timers.back()->patch_timer_id = 13;
 
 #endif
 
@@ -120,7 +126,9 @@ void Timers::profile(SmileiMPI * smpi)
 
     if ( smpi->isMaster() ) {
         double coverage(0.);
-        for (unsigned int i=1 ; i<timers.size() ; i++)
+        // Computation of the coverage: it only takes into account
+        // the main timers (14)
+        for (unsigned int i=1 ; i<14 ; i++)
             coverage += timers[i]->getTime();
 
         MESSAGE("Time in time loop :\t" << global.getTime() << "\t"<<coverage/global.getTime()*100.<< "% coverage" );
