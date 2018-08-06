@@ -37,6 +37,9 @@ class SpeciesDynamicV : public SpeciesV
     //! This function reconfigures the species operators
     void reconfigure_operators(Params& param, Patch  * patch);
 
+    //! This function reconfigures the species to be imported
+    void reconfigure_particle_importation();
+
     //! Compute cell_keys for all particles of the current species
     void compute_part_cell_keys(Params &params);
 

@@ -369,6 +369,7 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
 
     // Particle importation
     // ----------------------------------------
+    
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         // Particle importation for all species

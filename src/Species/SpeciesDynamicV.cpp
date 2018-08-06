@@ -234,21 +234,8 @@ void SpeciesDynamicV::reconfiguration(Params &params, Patch * patch)
 
         }
 
-        // Local species for importation
-        if (electron_species)
-        {
-            this->electron_species->vectorized_operators = this->vectorized_operators;
-        }
-        if (photon_species)
-        {
-            this->photon_species->vectorized_operators = this->vectorized_operators;
-        }
-        for (int k=0; k<2; k++) {
-            if (mBW_pair_species[k])
-            {
-                this->mBW_pair_species[k]->vectorized_operators = this->vectorized_operators;
-            }
-        }
+        // Reconfigure species to be imported
+        this->reconfigure_particle_importation();
     }
 }
 
@@ -332,21 +319,9 @@ void SpeciesDynamicV::configuration(Params &params, Patch * patch)
 
     }
 
-    // Local species for importation
-    if (electron_species)
-    {
-        this->electron_species->vectorized_operators = this->vectorized_operators;
-    }
-    if (photon_species)
-    {
-        this->photon_species->vectorized_operators = this->vectorized_operators;
-    }
-    for (int k=0; k<2; k++) {
-        if (mBW_pair_species[k])
-        {
-            this->mBW_pair_species[k]->vectorized_operators = this->vectorized_operators;
-        }
-    }
+    // Reconfigure species to be imported
+    this->reconfigure_particle_importation();
+
 }
 
 // -----------------------------------------------------------------------------
@@ -370,4 +345,25 @@ void SpeciesDynamicV::reconfigure_operators(Params &params, Patch * patch)
         Push_ponderomotive_position = PusherFactory::create_ponderomotive_position_updater(params, this);
     // Reassign the correct Projector
     Proj = ProjectorFactory::create(params, patch, this->vectorized_operators);
+}
+
+// -----------------------------------------------------------------------------
+//! This function reconfigures the operators
+// -----------------------------------------------------------------------------
+void SpeciesDynamicV::reconfigure_particle_importation()
+{
+    // Local species for importation
+    if (this->Ionize)
+    {
+        this->electron_species->vectorized_operators = this->vectorized_operators;
+    }
+    if (this->Radiate)
+    {
+        this->photon_species->vectorized_operators = this->vectorized_operators;
+    }
+    if (this->Multiphoton_Breit_Wheeler_process){
+        for (int k=0; k<2; k++) {
+            this->mBW_pair_species[k]->vectorized_operators = this->vectorized_operators;
+        }
+    }
 }
