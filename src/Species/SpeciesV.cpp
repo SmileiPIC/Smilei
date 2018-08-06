@@ -624,6 +624,7 @@ void SpeciesV::compute_bin_cell_keys(Params &params, int istart, int iend)
 
 void SpeciesV::importParticles( Params& params, Patch* patch, Particles& source_particles, vector<Diagnostic*>& localDiags )
 {
+
     unsigned int npart = source_particles.size(), ibin, ii, nbin=bmin.size();
     double inv_cell_length = 1./ params.cell_length[0];
 
@@ -639,9 +640,19 @@ void SpeciesV::importParticles( Params& params, Patch* patch, Particles& source_
     int IX;
     double X;
 
+    // std::cerr << "SpeciesV::importParticles "
+    //           << " for "<< this->name
+    //           << " in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ") "
+    //           << " mpi process " << patch->MPI_me_ << " - "
+    //           << " mode: " << this->vectorized_operators << " - "
+    //           << " nb bin: " << bmin.size() << " - "
+    //           << " nbp: " << npart
+    //           << std::endl;
+
     // Move particles
     for( unsigned int i=0; i<npart; i++ ) {
 
+        // Compute the receiving bin index
         ibin = 0;
         for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
             X = source_particles.position(ipos,i)-min_loc_vec[ipos];

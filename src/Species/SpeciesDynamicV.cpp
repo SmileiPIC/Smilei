@@ -127,6 +127,18 @@ void SpeciesDynamicV::compute_part_cell_keys(Params &params)
 
 }
 
+void SpeciesDynamicV::importParticles( Params& params, Patch* patch, Particles& source_particles, vector<Diagnostic*>& localDiags )
+{
+
+    if (this->vectorized_operators)
+    {
+        this->SpeciesV::importParticles(params, patch, source_particles, localDiags );
+    }
+    else
+    {
+        this->Species::importParticles(params, patch, source_particles, localDiags );
+    }
+}
 
 // -----------------------------------------------------------------------------
 //! This function reconfigures the type of species according
@@ -221,6 +233,22 @@ void SpeciesDynamicV::reconfiguration(Params &params, Patch * patch)
             this->Species::sort_part(params);
 
         }
+
+        // Local species for importation
+        if (electron_species)
+        {
+            this->electron_species->vectorized_operators = this->vectorized_operators;
+        }
+        if (photon_species)
+        {
+            this->photon_species->vectorized_operators = this->vectorized_operators;
+        }
+        for (int k=0; k<2; k++) {
+            if (mBW_pair_species[k])
+            {
+                this->mBW_pair_species[k]->vectorized_operators = this->vectorized_operators;
+            }
+        }
     }
 }
 
@@ -304,6 +332,21 @@ void SpeciesDynamicV::configuration(Params &params, Patch * patch)
 
     }
 
+    // Local species for importation
+    if (electron_species)
+    {
+        this->electron_species->vectorized_operators = this->vectorized_operators;
+    }
+    if (photon_species)
+    {
+        this->photon_species->vectorized_operators = this->vectorized_operators;
+    }
+    for (int k=0; k<2; k++) {
+        if (mBW_pair_species[k])
+        {
+            this->mBW_pair_species[k]->vectorized_operators = this->vectorized_operators;
+        }
+    }
 }
 
 // -----------------------------------------------------------------------------

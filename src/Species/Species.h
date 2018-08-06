@@ -155,7 +155,7 @@ public:
     std::string ionization_electrons;
 
     //! Pointer to the species where radiated photon go
-    Species *photon_species;
+    Species * photon_species;
     //! Index of the species where radiated photons go
     int photon_species_index;
     //! radiation photon species for the Monte-Carlo model.
@@ -324,7 +324,7 @@ public:
                           ElectroMagn* EMfields,
                           Params &params, bool diag_flag,
                           Patch* patch, SmileiMPI* smpi);
-    
+
     //! Method performing the importation of new particles
     virtual void dynamics_import_particles(double time, unsigned int ispec,
                         Params &params,

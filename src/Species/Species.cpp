@@ -1522,6 +1522,15 @@ void Species::importParticles( Params& params, Patch* patch, Particles& source_p
     unsigned int npart = source_particles.size(), ibin, ii, nbin=bmin.size();
     double inv_cell_length = 1./ params.cell_length[0];
 
+    // std::cerr << "Species::importParticles "
+    //           << " for "<< this->name
+    //           << " in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ") "
+    //           << " mpi process " << patch->MPI_me_ << " - "
+    //           << " mode: " << this->vectorized_operators << " - "
+    //           << " nb bin: " << bmin.size() << " - "
+    //           << " nbp: " << npart
+    //           << std::endl;
+
     // If this species is tracked, set the particle IDs
     if( particles->tracked )
         dynamic_cast<DiagnosticTrack*>(localDiags[tracking_diagnostic])->setIDs( source_particles );
@@ -1953,9 +1962,9 @@ void Species::check(Patch * patch, std::string title)
     std::cerr << "Check sum at " << title
               << " for "<< this->name
               << " in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ") "
-              << " mpi process " << patch->MPI_me_ << " - "
-              << " mode: " << this->vectorized_operators << " - "
-              << " nb bin: " << bmin.size() << " - "
+              << " mpi process " << patch->MPI_me_
+              << " - mode: " << this->vectorized_operators
+              << " - nb bin: " << bmin.size()
               << " - nbp: " << (*particles).size()
               << " - w: " << sum_w
               << " - x: " << sum_x
