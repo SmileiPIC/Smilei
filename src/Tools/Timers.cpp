@@ -29,7 +29,7 @@ Timers::Timers( SmileiMPI * smpi ) :
     ,interpolator("Interpolator"),
     pusher("Pusher"             ),
     projector("Projector"       ),
-    particles_boundaries("Particles boundaries"),
+    cell_keys("Cell keys"),
     ionization("Ionization"       ),
     radiation("Radiation"       ),
     multiphoton_Breit_Wheeler_timer("Multiphoton Breit-Wheeler"       ),
@@ -68,7 +68,7 @@ Timers::Timers( SmileiMPI * smpi ) :
     timers.back()->patch_timer_id = 1;
     timers.push_back( &projector   );
     timers.back()->patch_timer_id = 2;
-    timers.push_back( &particles_boundaries   );
+    timers.push_back( &cell_keys   );
     timers.back()->patch_timer_id = 3;
     timers.push_back( &ionization   );
     timers.back()->patch_timer_id = 4;

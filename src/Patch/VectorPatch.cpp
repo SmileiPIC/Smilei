@@ -288,7 +288,7 @@ void VectorPatch::dynamics(Params& params,
     timers.interpolator.update( *this, params.printNow( itime ) );
     timers.pusher.update( *this, params.printNow( itime ) );
     timers.projector.update( *this, params.printNow( itime ) );
-    timers.particles_boundaries.update( *this, params.printNow( itime ) );
+    timers.cell_keys.update( *this, params.printNow( itime ) );
     timers.ionization.update( *this, params.printNow( itime ) );
     timers.radiation.update( *this, params.printNow( itime ) );
     timers.multiphoton_Breit_Wheeler_timer.update( *this, params.printNow( itime ) );
@@ -2472,7 +2472,7 @@ void VectorPatch::ponderomotive_update_position_and_currents(Params& params,
     timers.interp_env_old.update( *this, params.printNow( itime ) );
     timers.proj_currents.update( *this, params.printNow( itime ) );
     timers.push_pos.update( *this, params.printNow( itime ) );
-    timers.particles_boundaries.update( *this, params.printNow( itime ) );
+    timers.cell_keys.update( *this, params.printNow( itime ) );
 #endif
 
     timers.syncPart.restart();
