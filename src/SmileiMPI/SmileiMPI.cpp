@@ -259,7 +259,6 @@ void SmileiMPI::init_patch_count( Params& params, DomainDecomposition* domain_de
                 Lcur += local_load; //Add grid contribution to the load.
                 Ncur++; // Try to assign current patch to rank r.
 
-                //if (isMaster()) cout <<"h= " << hindex << " Tcur = " << Tcur << " Lcur = " << Lcur <<" Ncur = " << Ncur <<" r= " << r << endl;
                 if (r < (unsigned int)smilei_sz-1){
 
                     if ( Lcur > Tcur || smilei_sz-r >= Npatches-hindex){ //Load target is exceeded or we have as many patches as procs left.
@@ -331,7 +330,6 @@ void SmileiMPI::init_patch_count( Params& params, DomainDecomposition* domain_de
 void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, double time_dual )
 {
 
-    //cout << "Start recompute" << endl;
     unsigned int ncells_perpatch, j;
     int Ncur;
     double Tload,Tload_loc,Tcur, cells_load, target, Tscan, largest_patch_loc, largest_patch;
@@ -466,9 +464,6 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     //Ncur is the variation of number of patches owned by current rank.
     //Stores in Ncur the final patch count of this rank
     Ncur += patch_count[smilei_rk] ;
-
-    if (smilei_rk == 16) cout << " final patch count = " << Ncur << endl;
-
 
     //Ncur now has to be gathered to all as target_patch_count[smilei_rk]
     MPI_Allgather(&Ncur,1,MPI_INT,&patch_count[0], 1, MPI_INT,MPI_COMM_WORLD);
@@ -641,7 +636,6 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
         patch->vecSpecies[ispec]->bmin[0]=0;
         //Prepare patch for receiving particles
         nbrOfPartsRecv = patch->vecSpecies[ispec]->bmax.back();
-        //cout << smilei_rk << " recv " << nbrOfPartsRecv << endl;
         patch->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv, params.nDim_particle );
         //Receive particles
         if ( nbrOfPartsRecv > 0 ) {
