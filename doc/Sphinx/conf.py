@@ -31,8 +31,12 @@ import shlex
 # ones.
 extensions = [
     'sphinx.ext.todo',
-    'sphinx.ext.mathjax'
+    'sphinx.ext.mathjax',
+# In order to generate the doc in pdf:
+#    'rst2pdf.pdfbuilder'
 ]
+
+pdf_documents = [('index', u'rst2pdf', u'Sample rst2pdf doc', u'Your Name'),]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -66,9 +70,9 @@ def get_version():
     """
     from subprocess import Popen, PIPE
     pipe = Popen('git describe --tags --always', stdout=PIPE, shell=True)
-    
+
     return str(pipe.stdout.read() or 'X.Y')
-    
+
 version = get_version()
 
 # The full version, including alpha/beta/rc tags.

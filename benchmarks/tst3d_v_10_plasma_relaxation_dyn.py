@@ -77,11 +77,12 @@ Main(
 
     patch_decomposition = "cartesian",
 
-    vecto = "dynamic",
-
     random_seed = smilei_mpi_rank
 )
 
+Vectorization(
+    vecto = "dynamic",
+)
 
 Species(
     name = "positron",
