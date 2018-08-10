@@ -283,11 +283,13 @@ void SpeciesDynamicV::configuration(Params &params, Patch * patch)
     {
         this->vectorized_operators = (params.dynamic_default_mode == "vectorized");
     }
+
     // --------------------------------------------------------------------
 
 #ifdef  __DEBUG
             std::cerr << "  > Species " << this->name << " configuration (" << this->vectorized_operators
-                      << ") in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ")"
+                      << ") default: " << params.dynamic_default_mode
+                      << " in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ")"
                       << " of MPI process " << patch->MPI_me_
                       << " (vecto time: " << vecto_time
                       << ", scalar time: " << scalar_time

@@ -138,7 +138,7 @@ int main (int argc, char* argv[])
         checkpoint.restartAll( vecPatches, &smpi, simWindow, params, openPMD);
 
         // Patch reconfiguration for the dynamic vectorization
-        if( params.has_dynamic_vectorization ) {
+        if( params.has_dynamic_vectorization) {
             vecPatches.configuration(params,timers, 0);
         }
 
@@ -223,10 +223,10 @@ int main (int argc, char* argv[])
 
         // Patch reconfiguration
         if( params.has_dynamic_vectorization ) {
-            vecPatches.reconfiguration(params,timers, 0);
+            vecPatches.configuration(params,timers, 0);
         }
 
- 
+
         // If Laser Envelope is used, initialize envelope
         if (params.Laser_Envelope_model){
             // initialize new envelope from scratch, following the input namelist
@@ -237,7 +237,7 @@ int main (int argc, char* argv[])
         vecPatches.projection_for_diags(params, &smpi, simWindow, time_dual, timers, 0);
 
         // If Laser Envelope is used, comm and synch susceptibility
-        if (params.Laser_Envelope_model){    
+        if (params.Laser_Envelope_model){
             // comm and synch susceptibility
             vecPatches.sumSusceptibility(params, time_dual, timers, 0, simWindow );
                                          } // end condition if Laser Envelope Model is used
@@ -352,7 +352,7 @@ int main (int argc, char* argv[])
             // if Laser Envelope is used, execute particles and envelope sections of ponderomotive loop
             if (params.Laser_Envelope_model){
                 // interpolate envelope for susceptibility deposition, project susceptibility for envelope equation, momentum advance
-                vecPatches.ponderomotive_update_susceptibility_and_momentum(params, &smpi, simWindow, time_dual, timers, itime);    
+                vecPatches.ponderomotive_update_susceptibility_and_momentum(params, &smpi, simWindow, time_dual, timers, itime);
 
                 // comm and sum susceptibility
                 vecPatches.sumSusceptibility(params, time_dual, timers, itime, simWindow );
