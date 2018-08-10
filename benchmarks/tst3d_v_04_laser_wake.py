@@ -34,7 +34,7 @@ Main(
 )
 
 Vectorization(
-    vecto = "normal",
+    mode = "normal",
 )
 
 MovingWindow(

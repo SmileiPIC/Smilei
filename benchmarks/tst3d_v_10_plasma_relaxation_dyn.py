@@ -81,7 +81,7 @@ Main(
 )
 
 Vectorization(
-    vecto = "dynamic",
+    mode = "dynamic",
 )
 
 Species(
