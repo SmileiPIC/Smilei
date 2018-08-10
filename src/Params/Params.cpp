@@ -528,7 +528,7 @@ namelist("")
         if (!(dynamic_default_mode == "scalar" ||
               dynamic_default_mode == "vectorized"))
         {
-            ERROR("The parameter `dynamic_default_mode` must be `disable` or `vectorized`");
+            ERROR("The parameter `dynamic_default_mode` must be `scalar` or `vectorized`");
         }
 
     } else {
