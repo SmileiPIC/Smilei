@@ -91,7 +91,7 @@ Timers::Timers( SmileiMPI * smpi ) :
     timers.push_back( &proj_currents ) ;
     timers.back()->patch_timer_id = 12;
 
-    // Details for sync part
+    // Details of Sync Particles
     timers.push_back( &sorting ) ;
     timers.back()->patch_timer_id = 13;
 
@@ -128,7 +128,7 @@ void Timers::profile(SmileiMPI * smpi)
         double coverage(0.);
         // Computation of the coverage: it only takes into account
         // the main timers (14)
-        for (unsigned int i=1 ; i<14 ; i++)
+        for (unsigned int i=1 ; i<patch_timer_id_start ; i++)
             coverage += timers[i]->getTime();
 
         MESSAGE("Time in time loop :\t" << global.getTime() << "\t"<<coverage/global.getTime()*100.<< "% coverage" );
