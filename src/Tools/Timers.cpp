@@ -60,8 +60,8 @@ Timers::Timers( SmileiMPI * smpi ) :
     timers.push_back( &reconfiguration   );
     timers.push_back( &envelope   );
     timers.push_back( &susceptibility   );
-#ifdef __DETAILED_TIMERS
     patch_timer_id_start = timers.size()-1;
+#ifdef __DETAILED_TIMERS
     timers.push_back( &interpolator   );
     timers.back()->patch_timer_id = 0;
     timers.push_back( &pusher   );
@@ -128,7 +128,7 @@ void Timers::profile(SmileiMPI * smpi)
         double coverage(0.);
         // Computation of the coverage: it only takes into account
         // the main timers (14)
-        for (unsigned int i=1 ; i<patch_timer_id_start ; i++)
+        for (unsigned int i=1 ; i<patch_timer_id_start+1 ; i++)
             coverage += timers[i]->getTime();
 
         MESSAGE("Time in time loop :\t" << global.getTime() << "\t"<<coverage/global.getTime()*100.<< "% coverage" );

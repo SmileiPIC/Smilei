@@ -51,9 +51,10 @@ public:
 
     Timer sorting ;
 
+#endif
+
     // Where the patch timers start in the timer vector
     unsigned int patch_timer_id_start ;
-#endif
 
     //! Output the timer profile
     void profile(SmileiMPI * smpi);
