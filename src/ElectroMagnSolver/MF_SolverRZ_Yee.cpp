@@ -65,7 +65,7 @@ void MF_SolverRZ_Yee::operator() ( ElectroMagn* fields )
         // Magnetic field Br^(d,p)
     for (unsigned int i=1 ; i<nl_d-1 ; i++) {
         #pragma omp simd
-        for (unsigned int j=isYmin*3 ; j<nr_p-1 ; j++) {
+        for (unsigned int j=isYmin*3 ; j<nr_p ; j++) {
             (*BrRZ)(i,j) += dt_ov_dl * ( (*EtRZ)(i,j) - (*EtRZ)(i-1,j) )
              +Icpx*dt*(double)imode/((double)(j_glob+j)*dr)*(*ElRZ)(i,j) ;
 		//	 if (std::abs((*BrRZ)(i,j))>1.){
@@ -129,7 +129,7 @@ void MF_SolverRZ_Yee::operator() ( ElectroMagn* fields )
                 //MESSAGE((*BrRZ)(i,j));
                 //}
 			}
-			for (unsigned int i=1 ; i<nl_d-1 ; i++) {
+			for (unsigned int i=1; i<nl_d-1 ; i++) {
 				//(*BtRZ)(i,0)+= -dt_ov_dl*((*ErRZ)(i+1,0)-(*ErRZ)(i,0)+(*ErRZ)(i+1,1)-(*ErRZ)(i,1))
 				//+				2*dt_ov_dr*(*ElRZ)(i+1,1) - (*BtRZ_old)(i,1)+ (*BtRZ)(i,1);
 				(*BtRZ)(i,j)= -2.*Icpx*(*BrRZ)(i,j)-(*BtRZ)(i,j+1);

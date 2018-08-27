@@ -983,12 +983,12 @@ void ElectroMagn3DRZ::on_axis_fields(bool diag_flag)
          for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
 
              //static cast of the total currents and densities
-             //JlRZ    = static_cast<cField2D*>(Jl_[imode]);
-             //JrRZ    = static_cast<cField2D*>(Jr_[imode]);
-             //JtRZ    = static_cast<cField2D*>(Jt_[imode]);
-             JlRZ    = Jl_[imode];
-             JrRZ    = Jr_[imode];
-             JtRZ    = Jt_[imode];
+             JlRZ    = static_cast<cField2D*>(Jl_[imode]);
+             JrRZ    = static_cast<cField2D*>(Jr_[imode]);
+             JtRZ    = static_cast<cField2D*>(Jt_[imode]);
+             //JlRZ    = Jl_[imode];
+             //JrRZ    = Jr_[imode];
+             //JtRZ    = Jt_[imode];
              
              if (imode ==0){
                  for (unsigned int i=0; i<nl_p; i++)
@@ -1000,7 +1000,7 @@ void ElectroMagn3DRZ::on_axis_fields(bool diag_flag)
              }
              else if (imode==1){
                  for (unsigned int i=0; i<nl_p; i++)
-                     (*JtRZ)(i,oversize[1]) = - 1./3.* (4.* Icpx * (*JrRZ)(i,oversize[1]+1) + (*JtRZ)(i,oversize[1]));
+                     (*JtRZ)(i,oversize[1]) = - 1./3.* (4.* Icpx * (*JrRZ)(i,oversize[1]+1) + (*JtRZ)(i,oversize[1]+1));
 
                  for (unsigned int i=0; i<nl_p; i++)
                       (*JrRZ)(i,oversize[1])= 2.*Icpx* (*JtRZ)(i,oversize[1])-(*JrRZ)(i,oversize[1]+1) ;
@@ -1034,7 +1034,8 @@ void ElectroMagn3DRZ::on_axis_fields(bool diag_flag)
                          JtRZ    = Jt_s[ism];
                          if ( JtRZ != NULL ) {
                              for (unsigned int i=0; i<nl_p; i++){
-                                 (*JtRZ)(i,oversize[1]) = - 1./3.* (4.* Icpx * (*JrRZ)(i,oversize[1]+1) + (*JtRZ)(i,oversize[1]));
+                                 (*JtRZ)(i,oversize[1]) = - 1./3.* (4.* Icpx * (*JrRZ)(i,oversize[1]+1) + (*JtRZ)(i,oversize[1]+1));
+
                              }
                          }
                          JrRZ    = Jr_s[ism];

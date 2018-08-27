@@ -327,6 +327,10 @@ void Species::initPosition(unsigned int nPart, unsigned int iPart, double *index
                 particles->position(i,p)=indexes[i]+0.5*cell_length[i];
 
     }
+
+    //std::cout<<"particle position in x "<< particles->position(0,iPart)<<std::endl;
+    //std::cout<<"particle position in y "<< particles->position(1,iPart)<<std::endl;
+    //std::cout<<"particle position in z "<< particles->position(2,iPart)<<std::endl;
 }
 
 
@@ -490,6 +494,9 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
         }
     }
 
+    //std::cout<<"particle momentum in x "<< particles->momentum(0,0)*10<<std::endl;
+    //std::cout<<"particle momentum in y "<< particles->momentum(1,0)*10<<std::endl;
+    //std::cout<<"particle momentum in z "<< particles->momentum(2,0)*10<<std::endl;
 }//END initMomentum
 
 
@@ -614,6 +621,9 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                     if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
                         addPartInExchList( iPart );
                         nrj_lost_per_thd[tid] += mass * ener_iPart;
+                    //}
+                    //else if ( partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
+                    //std::cout<<"removed particle position"<< particles->position(0,iPart)<<" , "<<particles->position(1,iPart)<<" ,"<<particles->position(2,iPart)<<std::endl;
                     }
                  }
 

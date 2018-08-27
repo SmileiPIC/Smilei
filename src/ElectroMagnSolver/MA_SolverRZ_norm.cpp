@@ -42,8 +42,8 @@ void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
 
     // Electric field Elr^(d,p)
     for (unsigned int i=0 ; i<nl_d ; i++) {
-        for (unsigned int j=isYmin*3 ; j<nr_p ; j++) {
-            (*ElRZ)(i,j) += -dt*(*JlRZ)(i,j)
+        for (unsigned int j=isYmin*3 ; j<nr_p ; j++) {  
+            (*ElRZ)(i,j) += -dt*(*JlRZ)(i,j) 
                 +                 dt/((j_glob+j)*dr)*((j+j_glob+0.5)*(*BtRZ)(i,j+1) - (j+j_glob-0.5)*(*BtRZ)(i,j) )
                 +                 Icpx*dt*(double)imode/((j_glob+j)*dr)*(*BrRZ)(i,j);
              //if (std::abs((*ElRZ)(i,j))>1.)

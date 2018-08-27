@@ -55,6 +55,7 @@ public:
         int keep_part = 1;
         // iDim = 0
         if ( particles.position(0, ipart) <  x_min ) {
+            //std::cout<<"xmin  "<<x_min<<std::endl ; 
             if (bc_xmin==NULL) keep_part = 0;
             else {
                 keep_part = (*bc_xmin)( particles, ipart, 0, 2.*x_min, species,nrj_iPart );
@@ -110,7 +111,8 @@ public:
                 }
              }
              if ( particles.distance2_to_axis(ipart) < y_min2 ) {
-                keep_part = 0; //bc_ymin is always NULL because there are no y_min BC in RZ geometry for particles. 
+                keep_part = 0; //bc_ymin is always NULL because there are no y_min BC in RZ geometry for particles.
+                //std::cout<<"removed particle position"<<particles.position(0,iPart)<<" , "<< particles.position(1,iPart)<<" , "<<particles.position(2,iPart)<<std::endl; 
              }
 
         }

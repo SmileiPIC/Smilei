@@ -22,7 +22,8 @@ InterpolatorRZ2Order::InterpolatorRZ2Order(Params &params, Patch *patch) : Inter
     dl_inv_ = 1.0/params.cell_length[0];
     dr_inv_ = 1.0/params.cell_length[1];
     nmodes = params.nmodes;
-
+    dr =  params.cell_length[1];
+    //j_domain_begin = patch->getCellStartingGlobalIndex(1);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -46,8 +47,12 @@ void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particl
     double xpn = particles.position(0, ipart) * dl_inv_;
     double r = sqrt (particles.position(1, ipart)*particles.position(1, ipart)+particles.position(2, ipart)*particles.position(2, ipart)) ;
     double rpn = r * dr_inv_;
-    exp_m_theta = ( particles.position(1, ipart) - Icpx * particles.position(2, ipart) ) / r ;   //exp(-i theta)
-    
+    if (r> 0.){
+        exp_m_theta = ( particles.position(1, ipart) - Icpx * particles.position(2, ipart) ) / r ;   //exp(-i theta)
+    }
+    else {
+        exp_m_theta= 1.;
+    }
     complex<double> exp_mm_theta = 1. ;                                                                          //exp(-i m theta)
 
     // Indexes of the central nodes
@@ -55,7 +60,8 @@ void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particl
     id_ = round(xpn+0.5);
     jp_ = round(rpn);
     jd_ = round(rpn+0.5);
-
+    //std::cout<<"ip avant "<<ip_ <<std::endl;
+    //std::cout<<"jd avant "<<jd_<<std::endl;
 
     // Declaration and calculation of the coefficient for interpolation
     double delta2;
@@ -90,7 +96,6 @@ void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particl
     id_ = id_ - i_domain_begin;
     jp_ = jp_ - j_domain_begin;
     jd_ = jd_ - j_domain_begin;
-
 //Here we assume that mode 0 is real !!
 
     // -------------------------
@@ -134,14 +139,41 @@ void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particl
 
         exp_mm_theta *= exp_m_theta ;
         
-        *(ELoc+0*nparts) += std::real ( compute( &coeffxd_[1], &coeffyp_[1], ElRZ, id_, jp_) * exp_mm_theta ) ;
-        *(ELoc+1*nparts) += std::real ( compute( &coeffxp_[1], &coeffyd_[1], ErRZ, ip_, jd_) * exp_mm_theta ) ;
-        *(ELoc+2*nparts) += std::real ( compute( &coeffxp_[1], &coeffyp_[1], EtRZ, ip_, jp_) * exp_mm_theta ) ;
-        *(BLoc+0*nparts) += std::real ( compute( &coeffxp_[1], &coeffyd_[1], BlRZ, ip_, jd_) * exp_mm_theta ) ;
-        *(BLoc+1*nparts) += std::real ( compute( &coeffxd_[1], &coeffyp_[1], BrRZ, id_, jp_) * exp_mm_theta ) ;
-        *(BLoc+2*nparts) += std::real ( compute( &coeffxd_[1], &coeffyd_[1], BtRZ, id_, jd_) * exp_mm_theta ) ;
+        *(ELoc+0*nparts) += std::real ( compute( &coeffxd_[1], &coeffyp_[1], ElRZ, id_, jp_)* exp_mm_theta ) ;
+        *(ELoc+1*nparts) += std::real ( compute( &coeffxp_[1], &coeffyd_[1], ErRZ, ip_, jd_)* exp_mm_theta ) ;
+        *(ELoc+2*nparts) += std::real ( compute( &coeffxp_[1], &coeffyp_[1], EtRZ, ip_, jp_)* exp_mm_theta ) ;
+        *(BLoc+0*nparts) += std::real ( compute( &coeffxp_[1], &coeffyd_[1], BlRZ, ip_, jd_)* exp_mm_theta ) ;
+        *(BLoc+1*nparts) += std::real ( compute( &coeffxd_[1], &coeffyp_[1], BrRZ, id_, jp_)* exp_mm_theta ) ;
+        *(BLoc+2*nparts) += std::real ( compute( &coeffxd_[1], &coeffyd_[1], BtRZ, id_, jd_)* exp_mm_theta ) ;
         
     }
+    //division by r_g in S_r
+    //if (jp_ ==0) {
+    //*(ELoc+0*nparts) = *(ELoc+0*nparts)*6./dr;
+    //*(ELoc+0*nparts) = *(ELoc+0*nparts)/abs ((jd_-0.5)*dr);
+    /* *(ELoc+2*nparts) = *(ELoc+2*nparts)*6./dr;
+    *(BLoc+0*nparts) = *(BLoc+0*nparts)/abs ((jd_-0.5)*dr);
+    *(BLoc+1*nparts) = *(BLoc+1*nparts) *6./dr;
+    *(BLoc+2*nparts) = *(BLoc+2*nparts)/abs ((jd_-0.5)*dr); 
+    }
+    else{
+    *(ELoc+0*nparts) = *(ELoc+0*nparts)/abs (jp_*dr);;
+    *(ELoc+0*nparts) = *(ELoc+0*nparts)/abs ((jd_-0.5)*dr);
+    *(ELoc+2*nparts) = *(ELoc+2*nparts)/abs ((jp_)*dr);
+    *(BLoc+0*nparts) = *(BLoc+0*nparts)/abs ((jd_-0.5)*dr);
+    *(BLoc+1*nparts) = *(BLoc+1*nparts) /abs ((jp_)*dr);
+    *(BLoc+2*nparts) = *(BLoc+2*nparts)/abs ((jd_-0.5)*dr);
+
+    }*/
+
+    //std::cout<<"Ex "<<*(ELoc+0*nparts)<<std::endl;
+    //std::cout<<"Er "<<*(ELoc+1*nparts)*10<<std::endl;
+    //std::cout<<"ip "<<ip_<<std::endl;
+    //std::cout<<"jd "<<jd_<<std::endl;
+    //std::cout<<"Et "<<*(ELoc+2*nparts)<<std::endl;
+    //std::cout<<"Bx "<<*(BLoc+0*nparts)<<std::endl;
+    //std::cout<<"Br "<<*(BLoc+1*nparts)<<std::endl;
+    //std::cout<<"Bt "<<*(BLoc+2*nparts)<<std::endl;
 
     //Translate field into the cartesian y,z coordinates
     delta2 = std::real(exp_m_theta) * *(ELoc+1*nparts) + std::imag(exp_m_theta) * *(ELoc+2*nparts);
@@ -150,11 +182,17 @@ void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particl
     delta2 = std::real(exp_m_theta) * *(BLoc+1*nparts) + std::imag(exp_m_theta) * *(BLoc+2*nparts);
     *(BLoc+2*nparts) = -std::imag(exp_m_theta) * *(BLoc+1*nparts) + std::real(exp_m_theta) * *(BLoc+2*nparts);
     *(BLoc+1*nparts) = delta2 ;
+    //std::cout<<"Ex "<<*(ELoc+0*nparts)<<std::endl;
+    //std::cout<<"Ey "<<*(ELoc+1*nparts)<<std::endl;
+    //std::cout<<"Ez "<<*(ELoc+2*nparts)<<std::endl;
+    //std::cout<<"Bx "<<*(BLoc+0*nparts)<<std::endl;
+    //std::cout<<"By "<<*(BLoc+1*nparts)<<std::endl;
+    //std::cout<<"Bz "<<*(BLoc+2*nparts)<<std::endl;
 
 } // END InterpolatorRZ2Order
 
 void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, LocalFields* ELoc, LocalFields* BLoc, LocalFields* JLoc, double* RhoLoc)
-{
+{  
 
     // Interpolate E, B
     cField2D* ElRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->El_[0];
@@ -223,51 +261,51 @@ void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particl
     // -------------------------
     // Interpolation of Ex^(d,p)
     // -------------------------
-    (*ELoc).x = std::real(compute( &coeffxd_[1], &coeffyp_[1], ElRZ, id_, jp_));
+    (*ELoc).x = std::real(compute_p( &coeffxd_[1], &coeffyp_[1], ElRZ, id_, jp_));
     
     // -------------------------
     // Interpolation of Ey^(p,d)
     // -------------------------
-    (*ELoc).y = std::real(compute( &coeffxp_[1], &coeffyd_[1], ErRZ, ip_, jd_));
+    (*ELoc).y = std::real(compute_d( &coeffxp_[1], &coeffyd_[1], ErRZ, ip_, jd_));
     
     // -------------------------
     // Interpolation of Ez^(p,p)
     // -------------------------
-    (*ELoc).z = std::real(compute( &coeffxp_[1], &coeffyp_[1], EtRZ, ip_, jp_));
+    (*ELoc).z = std::real(compute_p( &coeffxp_[1], &coeffyp_[1], EtRZ, ip_, jp_));
     
     // -------------------------
     // Interpolation of Bx^(p,d)
     // -------------------------
-    (*BLoc).x = std::real(compute( &coeffxp_[1], &coeffyd_[1], BlRZ, ip_, jd_));
+    (*BLoc).x = std::real(compute_d( &coeffxp_[1], &coeffyd_[1], BlRZ, ip_, jd_));
     
     // -------------------------
     // Interpolation of By^(d,p)
     // -------------------------
-    (*BLoc).y = std::real(compute( &coeffxd_[1], &coeffyp_[1], BrRZ, id_, jp_));
+    (*BLoc).y = std::real(compute_p( &coeffxd_[1], &coeffyp_[1], BrRZ, id_, jp_));
     
     // -------------------------
     // Interpolation of Bz^(d,d)
     // -------------------------
-    (*BLoc).z = std::real(compute( &coeffxd_[1], &coeffyd_[1], BtRZ, id_, jd_));
+    (*BLoc).z = std::real(compute_d( &coeffxd_[1], &coeffyd_[1], BtRZ, id_, jd_));
     // -------------------------
     // Interpolation of Jx^(d,p,p)
     // -------------------------
-    (*JLoc).x = std::real(compute( &coeffxd_[1], &coeffyp_[1], JlRZ, id_, jp_));
+    (*JLoc).x = std::real(compute_p( &coeffxd_[1], &coeffyp_[1], JlRZ, id_, jp_));
     
     // -------------------------
     // Interpolation of Jy^(p,d,p)
     // -------------------------
-    (*JLoc).y = std::real(compute( &coeffxp_[1], &coeffyd_[1], JrRZ, ip_, jd_));
+    (*JLoc).y = std::real(compute_d( &coeffxp_[1], &coeffyd_[1], JrRZ, ip_, jd_));
     
     // -------------------------
     // Interpolation of Jz^(p,p,d)
     // -------------------------
-    (*JLoc).z = std::real(compute( &coeffxp_[1], &coeffyp_[1], JtRZ, ip_, jp_));
+    (*JLoc).z = std::real(compute_p( &coeffxp_[1], &coeffyp_[1], JtRZ, ip_, jp_));
     
     // -------------------------
     // Interpolation of Rho^(p,p,p)
     // -------------------------
-    (*RhoLoc) = std::real(compute( &coeffxp_[1], &coeffyp_[1], RhoRZ, ip_, jp_));
+    (*RhoLoc) = std::real(compute_p( &coeffxp_[1], &coeffyp_[1], RhoRZ, ip_, jp_));
 
     for (unsigned int imode = 1; imode < nmodes ; imode++){
 
@@ -284,18 +322,29 @@ void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particl
 
         exp_mm_theta *= exp_m_theta ;
         
-        (*ELoc).x += std::real ( compute( &coeffxd_[1], &coeffyp_[1], ElRZ, id_, jp_) * exp_mm_theta ) ;
-        (*ELoc).y += std::real ( compute( &coeffxp_[1], &coeffyd_[1], ErRZ, ip_, jd_) * exp_mm_theta ) ;
-        (*ELoc).z += std::real ( compute( &coeffxp_[1], &coeffyp_[1], EtRZ, ip_, jp_) * exp_mm_theta ) ;
-        (*BLoc).x += std::real ( compute( &coeffxp_[1], &coeffyd_[1], BlRZ, ip_, jd_) * exp_mm_theta ) ;
-        (*BLoc).y += std::real ( compute( &coeffxd_[1], &coeffyp_[1], BrRZ, id_, jp_) * exp_mm_theta ) ;
-        (*BLoc).z += std::real ( compute( &coeffxd_[1], &coeffyd_[1], BtRZ, id_, jd_) * exp_mm_theta ) ;
-        (*JLoc).x += std::real ( compute( &coeffxd_[1], &coeffyp_[1], JlRZ, id_, jp_) * exp_mm_theta ) ;
-        (*JLoc).y += std::real ( compute( &coeffxp_[1], &coeffyd_[1], JrRZ, ip_, jd_) * exp_mm_theta ) ;
-        (*JLoc).z += std::real ( compute( &coeffxp_[1], &coeffyp_[1], JtRZ, ip_, jp_) * exp_mm_theta ) ;
-        (*RhoLoc) += std::real ( compute( &coeffxp_[1], &coeffyp_[1], RhoRZ, ip_, jp_)* exp_mm_theta ) ;
+        (*ELoc).x += std::real ( compute_p( &coeffxd_[1], &coeffyp_[1], ElRZ, id_, jp_) * exp_mm_theta ) ;
+        (*ELoc).y += std::real ( compute_d( &coeffxp_[1], &coeffyd_[1], ErRZ, ip_, jd_) * exp_mm_theta ) ;
+        (*ELoc).z += std::real ( compute_p( &coeffxp_[1], &coeffyp_[1], EtRZ, ip_, jp_) * exp_mm_theta ) ;
+        (*BLoc).x += std::real ( compute_d( &coeffxp_[1], &coeffyd_[1], BlRZ, ip_, jd_) * exp_mm_theta ) ;
+        (*BLoc).y += std::real ( compute_p( &coeffxd_[1], &coeffyp_[1], BrRZ, id_, jp_) * exp_mm_theta ) ;
+        (*BLoc).z += std::real ( compute_d( &coeffxd_[1], &coeffyd_[1], BtRZ, id_, jd_) * exp_mm_theta ) ;
+        (*JLoc).x += std::real ( compute_p( &coeffxd_[1], &coeffyp_[1], JlRZ, id_, jp_) * exp_mm_theta ) ;
+        (*JLoc).y += std::real ( compute_d( &coeffxp_[1], &coeffyd_[1], JrRZ, ip_, jd_) * exp_mm_theta ) ;
+        (*JLoc).z += std::real ( compute_p( &coeffxp_[1], &coeffyp_[1], JtRZ, ip_, jp_) * exp_mm_theta ) ;
+        (*RhoLoc) += std::real ( compute_p( &coeffxp_[1], &coeffyp_[1], RhoRZ, ip_, jp_)* exp_mm_theta ) ;
     }
+    delta2 = std::real(exp_m_theta) * (*ELoc).y + std::imag(exp_m_theta) * (*ELoc).z;
+    (*ELoc).z = -std::imag(exp_m_theta) * (*ELoc).y + std::real(exp_m_theta) * (*ELoc).z;
+    (*ELoc).y = delta2 ;
+    delta2 = std::real(exp_m_theta) * (*BLoc).y + std::imag(exp_m_theta) * (*BLoc).z;
+    (*BLoc).z = -std::imag(exp_m_theta) * (*BLoc).y + std::real(exp_m_theta) * (*BLoc).z;
+    (*BLoc).y = delta2 ;
+    delta2 = std::real(exp_m_theta) * (*JLoc).y + std::imag(exp_m_theta) * (*JLoc).z;
+    (*JLoc).z = -std::imag(exp_m_theta) * (*JLoc).y + std::real(exp_m_theta) * (*JLoc).z;
+    (*JLoc).y = delta2 ;
+    
 
+    
 }
 
 void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread)

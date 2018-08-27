@@ -353,8 +353,8 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
             ElectroMagn3DRZ* emRZ = static_cast<ElectroMagn3DRZ*>( (*this)(ipatch)->EMfields );
-            //emRZ->fold_fields(diag_flag);
-            //emRZ->on_axis_fields(diag_flag);
+            emRZ->fold_fields(diag_flag);
+            emRZ->on_axis_fields(diag_flag);
             //MESSAGE("bc for rho j and fold fields");
         }
     }  
@@ -428,9 +428,11 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
         // Computes Ex_, Ey_, Ez_ on all points.
         // E is already synchronized because J has been synchronized before.
         (*(*this)(ipatch)->EMfields->MaxwellAmpereSolver_)((*this)(ipatch)->EMfields);
+        MESSAGE("SOLVE MAXWELL AMPERE");
         // Computes Bx_, By_, Bz_ at time n+1 on interior points.
         //for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         (*(*this)(ipatch)->EMfields->MaxwellFaradaySolver_)((*this)(ipatch)->EMfields);
+        MESSAGE("SOLVE MAXWELL FARADAY");
     }
     //Synchronize B fields between patches.
     timers.maxwell.update( params.printNow( itime ) );
