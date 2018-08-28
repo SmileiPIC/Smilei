@@ -1903,9 +1903,9 @@ This is done by including a block ``DiagFields``::
   .. rst-class:: nowrap
 
   +----------------+-------------------------------------------------------+
-  | | Env_A_abs    | | Module, real and imaginary part of laser vector     |                                               
-  | | Env_Ar       | | potential's complex envelope :math:`\tilde{A}`      |
-  | | Env_Ai       | | (component along the polarization direction)        |                                           
+  | |              | | Module of laser vector potential's complex envelope |                                               
+  | | Env_A_abs    | | :math:`\tilde{A}` (component along the polarization |
+  | |              | | direction)                                          |                                           
   +----------------+-------------------------------------------------------+
   | | Env_Chi      | | Total  susceptibility :math:`\chi`                  |
   +----------------+-------------------------------------------------------+
@@ -2018,7 +2018,7 @@ To add one probe diagnostic, include the block ``DiagProbe``::
   fields will be saved.
   Note that it does NOT speed up calculation much, but it saves disk space.
 
-  In the case of an envelope model for the laser (see :doc:`laser_envelope`), the following fields are also available: ``"Env_A_abs"``, ``"Env_Ar"``, ``"Env_Ai"``,
+  In the case of an envelope model for the laser (see :doc:`laser_envelope`), the following fields are also available: ``"Env_A_abs"``,
   ``"Env_Chi"``, ``"Env_E_abs"``.
 
 
