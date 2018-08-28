@@ -158,12 +158,6 @@ public:
 
     //! Laser envelope
     LaserEnvelope* envelope;
-    
-    //! Envelope of the laser vector potential component along the polarization direction, real part
-    Field* Env_Ar_;
-    
-    //! Envelope of the laser vector potential component along the polarization direction, imaginary part
-    Field* Env_Ai_;
 
     //! Envelope of the laser vector potential component along the polarization direction, absolute value
     Field* Env_A_abs_;
@@ -380,7 +374,7 @@ public:
     
         int emSize = 9+4; // 3 x (E, B, Bm) + 3 x J, rho
 
-        if(Env_Chi_) emSize += 5; //Env_Chi, Env_Ar, Env_Ai, Env_A_abs, Env_E_abs;
+        if(Env_Chi_) emSize += 3; //Env_Chi, Env_A_abs, Env_E_abs;
 
         for (unsigned int ispec=0 ; ispec<Jx_s.size() ; ispec++) {
             if (Jx_s [ispec]) emSize++;
