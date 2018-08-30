@@ -428,11 +428,11 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
         // Computes Ex_, Ey_, Ez_ on all points.
         // E is already synchronized because J has been synchronized before.
         (*(*this)(ipatch)->EMfields->MaxwellAmpereSolver_)((*this)(ipatch)->EMfields);
-        MESSAGE("SOLVE MAXWELL AMPERE");
+        //MESSAGE("SOLVE MAXWELL AMPERE");
         // Computes Bx_, By_, Bz_ at time n+1 on interior points.
         //for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         (*(*this)(ipatch)->EMfields->MaxwellFaradaySolver_)((*this)(ipatch)->EMfields);
-        MESSAGE("SOLVE MAXWELL FARADAY");
+        //MESSAGE("SOLVE MAXWELL FARADAY");
     }
     //Synchronize B fields between patches.
     timers.maxwell.update( params.printNow( itime ) );

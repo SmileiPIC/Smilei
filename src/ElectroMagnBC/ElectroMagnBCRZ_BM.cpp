@@ -69,14 +69,12 @@ ElectroMagnBCRZ_BM::ElectroMagnBCRZ_BM( Params &params, Patch* patch, unsigned i
     double cosphi ; 
     double Kx, Kr ;
     double one_ov_rlocal = 1./(params.grid_length[1]+params.oversize[1]*dr); // BM conditions on rmax are written at the last primal r position.
-    std::cout<< "rlocal " <<params.grid_length[1]+params.oversize[1]*dr<< "one_ov"<< one_ov_rlocal*10<< std::endl;
-    std::cout<< "grid length " <<params.grid_length[1]<< "   oversize*dr  "<< params.oversize[1]*dr<< std::endl;
+    //std::cout<< "rlocal " <<params.grid_length[1]+params.oversize[1]*dr<< "one_ov"<< one_ov_rlocal*10<< std::endl;
+    //std::cout<< "grid length " <<params.grid_length[1]<< "   oversize*dr  "<< params.oversize[1]*dr<< std::endl;
     Kx =  params.EM_BCs_k[3][0];
     Kr = -params.EM_BCs_k[3][1]; // We're only dealing with the Rmax boundary here. The minus sign is the specular reflexion of the given k on the rmax boundary since users are supposed to provide the injection k.
-    double phi =0.45*M_PI;
-    cosphi=cos(phi);
-    //cosphi = Kr / sqrt( Kx*Kx + Kr*Kr ) ; 
-    std::cout<<"cosphi  "<<cosphi<<std::endl;
+    cosphi = Kr / sqrt( Kx*Kx + Kr*Kr ) ; 
+    //std::cout<<"cosphi  "<<cosphi<<std::endl;
     CB_BM  = cosphi/(1. + cosphi); // Theta is always taken equal to zero. 
     CE_BM  = 1.0 - CB_BM;
 
@@ -211,8 +209,8 @@ void ElectroMagnBCRZ_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 
 
          //   MESSAGE("JGLOB "<< patch->getCellStartingGlobalIndex(1)+j);
-         std::cout<<"come heree "<<patch->getCellStartingGlobalIndex(1)<<"  "<<j<<" \n " ;
-         std::cout<<"come here "<<nr_p <<" nr*dr "<<nr_p*dr<<" \n " ;
+         //std::cout<<"come heree "<<patch->getCellStartingGlobalIndex(1)<<"  "<<j<<" \n " ;
+         //std::cout<<"come here "<<nr_p <<" nr*dr "<<nr_p*dr<<" \n " ;
 	    // for Bl^(p,d)
 	    for (unsigned int i=0 ; i<nl_p-1; i++) {
 	         (*BlRZ)(i,j+1) =                         (*BlRZ_old)(i,j) 

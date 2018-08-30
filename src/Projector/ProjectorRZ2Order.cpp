@@ -1018,7 +1018,7 @@ void ProjectorRZ2Order::operator() (Field* Jl, Field* Jr, Field* Jt, Particles &
 //Wrapper for projection
 //-----------------------------------//
 void ProjectorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec)
-{  std::cout<<"projecting"<<std::endl;
+{  //std::cout<<"projecting"<<std::endl;
    if (is_spectral)
         ERROR("Not implemented");
 
