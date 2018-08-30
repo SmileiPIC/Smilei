@@ -190,7 +190,7 @@ public:
             else  {
                 ERROR( "Unknown EM y-boundary condition `" << params.EM_BCs[1][1] << "`");
             }
-			MESSAGE( params.EM_BCs[1][1]);
+			//MESSAGE( params.EM_BCs[1][1]);
             
         }//3drz       
 
