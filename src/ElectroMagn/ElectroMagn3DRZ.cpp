@@ -595,10 +595,6 @@ void ElectroMagn3DRZ::computeTotalRhoJ()
 	   // MESSAGE(ifield);
 	    if( Jl_s[ifield] ) {
                 cField2D* Jl2D_s  = static_cast<cField2D*>(Jl_s[ifield]);
-                MESSAGE(Jl2D_s->dims_[0]);
-	        MESSAGE(Jl2D_s->dims_[1]);
-		MESSAGE(JlRZ->dims_[0]);
-		MESSAGE(JlRZ->dims_[1]);
                 for (unsigned int i=0 ; i<=nl_p ; i++){
 		    //MESSAGE("here");
 		    //MESSAGE(nr_p);
