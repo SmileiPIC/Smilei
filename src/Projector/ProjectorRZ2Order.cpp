@@ -190,12 +190,12 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             for (unsigned int j=0 ; j<5 ; j++) {
                 jloc = j+jpo;
                 linindex = iloc*(b_dim[1]+1)+jloc;
-                if (jloc+ j_domain_begin == 0){
-                    Jr [linindex] =0.;
-                }
-                else {
+                //if (jloc+ j_domain_begin == 0){
+                //    Jr [linindex] =0.;
+                //}
+                //else {
                 Jr [linindex] += Jy_p[i][j] /abs((jloc+ j_domain_begin-0.5)*dr); //
-                }
+                //}
              }
         }//i
 
@@ -207,8 +207,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
                 jloc = j+jpo;
                 linindex = iloc*b_dim[1]+jloc;
                 if (jloc+ j_domain_begin == 0){
-                    Jt [linindex] += Jz_p[i][j]*6./dr; // iloc = (i+ipo)*b_dim[1];
-                    //Jt [linindex] = 0.; // iloc = (i+ipo)*b_dim[1];
+                    Jt [linindex] = 0.; // iloc = (i+ipo)*b_dim[1];
                 }
                 else {
                     Jt [linindex] += Jz_p[i][j] /abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
@@ -379,27 +378,13 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             linindex = iloc*b_dim[1]+jloc;
             if (jloc+ j_domain_begin == 0){
                 Jl [linindex] +=  C_m * Jx_p[i][j]*6./dr; // iloc = (i+ipo)*b_dim[1];
-                //Jl [linindex+1] += Jl [linindex-1];
-                //Jl [linindex+2] += Jl [linindex-2];
-                //Jl [linindex] =0.;
                 }
             else {
                 Jl [linindex] += C_m * Jx_p[i][j] /abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
-                //Jl[linindex] =0.;
                 }
            
         }
     }//i
-    
-
-        //if (jloc+j_domain_begin == 0){
-            //Jr [linindex+1] += Jr [linindex];
-            //Jr [linindex+2] += Jr [linindex-1];
-            //Jr [linindex+3] += Jr [linindex-2];
-        //    Jr [linindex+1] += Jr [linindex];
-        //    Jr [linindex+2] += Jr [linindex-1];
-        //    Jr [linindex+3] += Jr [linindex-2];
-        //}
     
     // Jt^(p,p)
     for (unsigned int i=0 ; i<5 ; i++) {
@@ -407,7 +392,11 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
             linindex = iloc*b_dim[1]+jloc;
-            Jt [linindex] += Jz_p[i][j];
+            if (jloc+ j_domain_begin == 0){
+                Jt [linindex] += Jz_p[i][j]*6./dr;
+            }else{
+                Jt [linindex] += Jz_p[i][j] /abs((jloc+ j_domain_begin)*dr) ;
+            }
             //if (jloc+j_domain_begin==0){
             //    Jt[linindex] = - 1./3.* (4.* Icpx * Jr[linindex+1] + Jt[linindex+1]);
             //}
@@ -424,14 +413,6 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             //    Jr[linindex]+= 2.*Icpx* Jt[linindex] - Jr[linindex+1];
             //}
         }
-     //   if (jloc+j_domain_begin == 0){
-            //Jt [linindex+1] += Jt [linindex-1];
-            //Jt [linindex+2] += Jt [linindex-2];
-        //}
-        //if (jloc+j_domain_begin == 0){
-        //    Jt [linindex+1] += Jt [linindex-1];
-        //    Jt [linindex+2] += Jt [linindex-2];
-        //}
     }//i
 
 } // END Project local current densities (Jl, Jr, Jt, sort)
@@ -586,14 +567,14 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
             linindex = iloc*(b_dim[1]+1)+jloc;
-            //Jr [linindex] += Jy_p[i][j] /abs((jloc+ j_domain_begin-0.5)*dr); //
-            if (jloc+ j_domain_begin == 0){
-                    Jr [linindex] =0.;
-                }
-                else {
             Jr [linindex] += Jy_p[i][j] /abs((jloc+ j_domain_begin-0.5)*dr); //
+            //if (jloc+ j_domain_begin == 0){
+            //        Jr [linindex] =0.;
             //    }
-            }
+            //    else {
+            //Jr [linindex] += Jy_p[i][j] /abs((jloc+ j_domain_begin-0.5)*dr); //
+            //    }
+            //}
          }
     }//i
     
@@ -604,8 +585,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             jloc = j+jpo;
             linindex = iloc*b_dim[1]+jloc;
             if (jloc+ j_domain_begin == 0){
-                //Jt [linindex] += Jz_p[i][j]*6./dr; // iloc = (i+ipo)*b_dim[1];
-                Jt [linindex] =0.;
+                Jt [linindex] = 0.; // iloc = (i+ipo)*b_dim[1];
                 }
             else {
                 Jt [linindex] += Jz_p[i][j] /abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
@@ -787,12 +767,8 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             linindex = iloc*b_dim[1]+jloc;
             if (jloc+ j_domain_begin == 0){
                 Jl [linindex] +=  C_m * Jx_p[i][j]*6. /dr ; // iloc = (i+ipo)*b_dim[1];
-                //Jl [linindex+1] += Jl [linindex-1];
-                //Jl [linindex+2] += Jl [linindex-2];
-                //Jl [linindex] =0.;
                 }
             else {
-                //Jl [linindex] =0.;
                 Jl [linindex] += C_m * Jx_p[i][j] /abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
                 }
             }
@@ -806,7 +782,11 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
             linindex = iloc*b_dim[1]+jloc;
-            Jt [linindex] += Jz_p[i][j]; // iloc = (i+ipo)*b_dim[1];
+            if (jloc+ j_domain_begin == 0){
+                Jt [linindex] += Jz_p[i][j]*6./dr ; 
+            }else {
+                Jt [linindex] += Jz_p[i][j] / abs((jloc+ j_domain_begin)*dr)  ; 
+            }
             //if (jloc+j_domain_begin==0){
             //    Jt[linindex] += - 1./3.* (4.* Icpx * Jr[linindex+1] + Jt[linindex+1]);
             //}
