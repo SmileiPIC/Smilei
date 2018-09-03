@@ -280,7 +280,8 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
 
     double yp = particles.position(1,ipart);
     double zp = particles.position(2,ipart);
-    e_theta = (yp-Icpx*zp)/sqrt(yp*yp+zp*zp);
+    double rp = sqrt (particles.position(1, ipart)*particles.position(1, ipart)+particles.position(2, ipart)*particles.position(2, ipart));
+    e_theta = (yp-Icpx*zp)/rp;
     e_theta_old =exp_m_theta_old[0];
     e_delta = 1;
     e_bar = 1;
@@ -295,7 +296,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     Sx1[ip_m_ipo+2] = 0.75-delta2;
     Sx1[ip_m_ipo+3] = 0.5 * (delta2+delta+0.25);
     
-    ypn = sqrt (particles.position(1, ipart)*particles.position(1, ipart)+particles.position(2, ipart)*particles.position(2, ipart))*dr_inv_ ;
+    ypn = rp *dr_inv_ ;
     int jp = round(ypn);
     int jpo = iold[1*nparts];
     int jp_m_jpo = jp-jpo-j_domain_begin;
@@ -311,7 +312,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     }
      e_delta_inv =1./e_delta;
     //defining crt_p 
-     complex<double> crt_p = - charge_weight*Icpx/(2*M_PI*e_bar*dt*imode);   
+     complex<double> crt_p = - charge_weight*Icpx/(2*M_PI*e_bar*dt*imode)*(particles.momentum(2,ipart)*particles.position(1,ipart)-particles.momentum(1,ipart)*particles.position(2,ipart))/(rp)*invgf;   
     for (unsigned int i=0; i < 5; i++) {
         DSx[i] = Sx1[i] - Sx0[i];
         DSy[i] = Sy1[i] - Sy0[i];
@@ -633,7 +634,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents with diag for m>0
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, complex<double>* rho, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold,complex<double>* exp_m_theta_old,  int imode)
+void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, complex<double>* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold,complex<double>* exp_m_theta_old,  int imode)
 {   //std::cout<<"particle momentum in x in proj"<<particles.momentum(0,ipart)<<std::endl;
     //std::cout<<"particle momentum in y in proj"<<particles.momentum(1,ipart)<<std::endl;
     //std::cout<<"particle momentum in z in proj"<<particles.momentum(2,ipart)<<std::endl;
@@ -685,7 +686,8 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
 
     double yp = particles.position(1,ipart);
     double zp = particles.position(2,ipart);
-    e_theta = (yp-Icpx*zp)/sqrt(yp*yp+zp*zp);
+    double rp = sqrt(yp*yp+zp*zp);
+    e_theta = (yp-Icpx*zp)/rp;
     e_theta_old = exp_m_theta_old[0];
     e_delta = 1.;
     e_bar =  1.;
@@ -701,7 +703,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     Sx1[ip_m_ipo+2] = 0.75-delta2;
     Sx1[ip_m_ipo+3] = 0.5 * (delta2+delta+0.25);
     
-    ypn = sqrt (particles.position(1, ipart)*particles.position(1, ipart)+particles.position(2, ipart)*particles.position(2, ipart))*dr_inv_ ;
+    ypn = rp *dr_inv_ ;
     int jp = round(ypn);
     int jpo = iold[1*nparts];
     int jp_m_jpo = jp-jpo-j_domain_begin;
@@ -718,7 +720,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     }
      e_delta_inv =1./e_delta;
     //defining crt_p 
-    complex<double> crt_p = -charge_weight*Icpx/(2*M_PI*e_bar*dt*imode);
+    complex<double> crt_p = -charge_weight*Icpx/(2*M_PI*e_bar*dt*imode)*(particles.momentum(2,ipart)*particles.position(1,ipart)-particles.momentum(1,ipart)*particles.position(2,ipart))/(rp)*invgf;
     for (unsigned int i=0; i < 5; i++) {
         DSx[i] = Sx1[i] - Sx0[i];
         DSy[i] = Sy1[i] - Sy0[i];
@@ -1072,7 +1074,7 @@ void ProjectorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles,
                 complex<double>* b_Jt  = emRZ->Jt_s [ifield] ? &(* static_cast<cField2D*>(emRZ->Jt_s [ifield]) )(ibin*clrw*dim1) : &(*emRZ->Jt_[imode])(ibin*clrw*dim1) ;
                 complex<double>* b_rho = emRZ->rho_RZ_s[ifield] ? &(* static_cast<cField2D*>(emRZ->rho_RZ_s[ifield]) )(ibin*clrw* dim1 ) : &(*emRZ->rho_RZ_[imode])(ibin*clrw* dim1 ) ;
                 for ( int ipart=istart ; ipart<iend; ipart++ )
-                    (*this)(b_Jl , b_Jr , b_Jt ,b_rho, particles,  ipart, ibin*clrw, b_dim, &(*iold)[ipart], &(*delta)[ipart], &(*exp_m_theta_old)[ipart], imode);
+                    (*this)(b_Jl , b_Jr , b_Jt ,b_rho, particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[ipart], &(*delta)[ipart], &(*exp_m_theta_old)[ipart], imode);
                  }
 
        }

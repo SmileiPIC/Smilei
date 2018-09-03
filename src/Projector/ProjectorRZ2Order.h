@@ -18,7 +18,7 @@ public:
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_/rho), diagFields timestep
     inline void operator() (std::complex<double>* Jl, std::complex<double>* Jr, std::complex<double>* Jt, std::complex<double>* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold);
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_/rho), diagFields timestep
-    inline void operator() (std::complex<double>* Jl, std::complex<double>* Jr, std::complex<double>* Jt, std::complex<double>* rho, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold, std::complex<double>* exp_m_theta_old,  int imode);
+    inline void operator() (std::complex<double>* Jl, std::complex<double>* Jr, std::complex<double>* Jt, std::complex<double>* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold, std::complex<double>* exp_m_theta_old,  int imode);
 
     //! Project global current charge (EMfields->rho_), frozen & diagFields timestep
     void operator() (double* rho, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim) override final;
