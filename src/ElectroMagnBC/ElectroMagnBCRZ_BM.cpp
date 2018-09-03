@@ -73,7 +73,7 @@ ElectroMagnBCRZ_BM::ElectroMagnBCRZ_BM( Params &params, Patch* patch, unsigned i
     std::cout<< "grid length " <<params.grid_length[1]<< "   oversize*dr  "<< params.oversize[1]*dr<< std::endl;
     Kx =  params.EM_BCs_k[3][0];
     Kr = -params.EM_BCs_k[3][1]; // We're only dealing with the Rmax boundary here. The minus sign is the specular reflexion of the given k on the rmax boundary since users are supposed to provide the injection k.
-    double phi =0.45*M_PI;
+    double phi = 0.; //0.45*M_PI;
     cosphi=cos(phi);
     //cosphi = Kr / sqrt( Kx*Kx + Kr*Kr ) ; 
     std::cout<<"cosphi  "<<cosphi<<std::endl;

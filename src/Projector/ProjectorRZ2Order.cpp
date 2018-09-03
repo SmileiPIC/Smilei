@@ -190,12 +190,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             for (unsigned int j=0 ; j<5 ; j++) {
                 jloc = j+jpo;
                 linindex = iloc*(b_dim[1]+1)+jloc;
-                if (jloc+ j_domain_begin == 0){
-                    Jr [linindex] =0.;
-                }
-                else {
                 Jr [linindex] += Jy_p[i][j] /abs((jloc+ j_domain_begin-0.5)*dr); //
-                }
              }
         }//i
 
@@ -369,7 +364,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     for (unsigned int i=0; i<imode; i++){
     C_m *= e_theta;
     }
-    C_m = 1./2*M_PI*C_m; 
+    C_m = 1./C_m; 
     // Jl^(d,p)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
@@ -585,14 +580,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
             linindex = iloc*(b_dim[1]+1)+jloc;
-            //Jr [linindex] += Jy_p[i][j] /abs((jloc+ j_domain_begin-0.5)*dr); //
-            if (jloc+ j_domain_begin == 0){
-                    Jr [linindex] =0.;
-                }
-                else {
             Jr [linindex] += Jy_p[i][j] /abs((jloc+ j_domain_begin-0.5)*dr); //
-            //    }
-            }
          }
     }//i
     
@@ -603,8 +591,8 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             jloc = j+jpo;
             linindex = iloc*b_dim[1]+jloc;
             if (jloc+ j_domain_begin == 0){
-                //Jt [linindex] += Jz_p[i][j]*6./dr; // iloc = (i+ipo)*b_dim[1];
-                Jt [linindex] =0.;
+                Jt [linindex] += Jz_p[i][j]*6./dr; // iloc = (i+ipo)*b_dim[1];
+                //Jt [linindex] =0.;
                 }
             else {
                 Jt [linindex] += Jz_p[i][j] /abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
@@ -776,7 +764,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     for (unsigned int i=0; i<imode; i++){
     C_m *= e_theta;
     }
-    C_m= 1./2*M_PI*C_m; 
+    C_m= 1./C_m; 
     // Jl^(d,p)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;

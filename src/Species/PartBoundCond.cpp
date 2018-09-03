@@ -217,21 +217,21 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch ) :
         //        §§ none !!!
         #endif
         // Ymin
-        if ( species->boundary_conditions[1][0] == "reflective" ) {
-            if (patch->isYmin()) bc_ymin = &refl_particle_rz;
-        }
-        else if ( species->boundary_conditions[1][0] == "remove" ) {
-            if (patch->isYmin()) bc_ymin = &remove_particle;
-        }
-        else if ( species->boundary_conditions[1][0] == "stop" ) {
-            if (patch->isYmin()) bc_ymin = &stop_particle_rz;
-        }
-        else if ( species->boundary_conditions[1][0] == "none" ) {
-            if (patch->isMaster()) MESSAGE(2,"Ymin boundary condition for species " << species->name << " is 'none', which means the same as fields");
-        }
-        else {
-            ERROR( "Ymin boundary condition undefined : " << species->boundary_conditions[1][0]  );
-        }
+        //if ( species->boundary_conditions[1][0] == "reflective" ) {
+        //    if (patch->isYmin()) bc_ymin = &refl_particle_rz;
+        //}
+        //else if ( species->boundary_conditions[1][0] == "remove" ) {
+        //    if (patch->isYmin()) bc_ymin = &remove_particle;
+        //}
+        //else if ( species->boundary_conditions[1][0] == "stop" ) {
+        //    if (patch->isYmin()) bc_ymin = &stop_particle_rz;
+        //}
+        //else if ( species->boundary_conditions[1][0] == "none" ) {
+        //    if (patch->isMaster()) MESSAGE(2,"Ymin boundary condition for species " << species->name << " is 'none', which means the same as fields");
+        //}
+        //else {
+        //    ERROR( "Ymin boundary condition undefined : " << species->boundary_conditions[1][0]  );
+        //}
 
         // Ymax
          if ( species->boundary_conditions[1][1] == "remove" ) {

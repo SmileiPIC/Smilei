@@ -47,12 +47,7 @@ void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particl
     double xpn = particles.position(0, ipart) * dl_inv_;
     double r = sqrt (particles.position(1, ipart)*particles.position(1, ipart)+particles.position(2, ipart)*particles.position(2, ipart)) ;
     double rpn = r * dr_inv_;
-    if (r> 0.){
-        exp_m_theta = ( particles.position(1, ipart) - Icpx * particles.position(2, ipart) ) / r ;   //exp(-i theta)
-    }
-    else {
-        exp_m_theta= 1.;
-    }
+    exp_m_theta = ( particles.position(1, ipart) - Icpx * particles.position(2, ipart) ) / r ;   //exp(-i theta)
     complex<double> exp_mm_theta = 1. ;                                                                          //exp(-i m theta)
 
     // Indexes of the central nodes
