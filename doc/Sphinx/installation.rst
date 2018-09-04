@@ -123,7 +123,7 @@ Debian (Ubuntu, Mint etc...)
 
   .. code-block:: bash
   
-    sudo apt-get install python-h5py ipython python-pint python-sphinx python-matplotlib python2-dev  pyhton-numpy
+    sudo apt-get install python-h5py ipython python-pint python-sphinx python-matplotlib python-dev  python-numpy
 
 2. Since the system ``openmpi`` is not compiled with
    ``--enable-mpi-thread-multiple``, a manual installation is required.
