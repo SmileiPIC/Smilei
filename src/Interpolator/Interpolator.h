@@ -31,7 +31,7 @@ public:
         ERROR( "Envelope not implemented with this geometry and this order" );
     };
 
-    virtual void interpolate_envelope_and_susceptibility(ElectroMagn* EMfields, Particles &particles, int ipart, double* Env_A_abs_Loc, double* Env_Ar_Loc, double* Env_Ai_Loc, double* Env_Chi_Loc) {
+    virtual void interpolate_envelope_and_susceptibility(ElectroMagn* EMfields, Particles &particles, int ipart, double* Env_A_abs_Loc, double* Env_Chi_Loc, double* Env_E_abs_Loc) {
         ERROR( "Envelope not implemented with this geometry and this order" );
     };
 

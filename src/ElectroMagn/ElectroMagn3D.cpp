@@ -164,10 +164,9 @@ void ElectroMagn3D::initElectroMagn3DQuantities(Params &params, Patch* patch)
     By_m = new Field3D(dimPrim, 1, true,  "By_m");
     Bz_m = new Field3D(dimPrim, 2, true,  "Bz_m");
     if (params.Laser_Envelope_model){
-        Env_Ar_=new Field3D(dimPrim, "Env_Ar");
-        Env_Ai_=new Field3D(dimPrim, "Env_Ai");
-        Env_A_abs_=new Field3D(dimPrim, "Env_A_abs");
-        Env_Chi_=new Field3D(dimPrim, "Env_Chi");
+        Env_A_abs_ = new Field3D(dimPrim, "Env_A_abs");
+        Env_Chi_   = new Field3D(dimPrim, "Env_Chi");
+        Env_E_abs_ = new Field3D(dimPrim, "Env_E_abs");
                                     }
     
     // Total charge currents and densities
@@ -1110,10 +1109,9 @@ Field * ElectroMagn3D::createField(string fieldname)
     else if(fieldname.substr(0,2)=="Jy" ) return new Field3D(dimPrim, 1, false, fieldname);
     else if(fieldname.substr(0,2)=="Jz" ) return new Field3D(dimPrim, 2, false, fieldname);
     else if(fieldname.substr(0,3)=="Rho") return new Field3D(dimPrim, fieldname );
-    else if(fieldname.substr(0,6)=="Env_Ar" ) return new Field3D(dimPrim, 0, false, fieldname);
-    else if(fieldname.substr(0,6)=="Env_Ai" ) return new Field3D(dimPrim, 0, false, fieldname);
     else if(fieldname.substr(0,9)=="Env_A_abs" ) return new Field3D(dimPrim, 0, false, fieldname);
     else if(fieldname.substr(0,7)=="Env_Chi" ) return new Field3D(dimPrim, 0, false, fieldname);
+    else if(fieldname.substr(0,9)=="Env_E_abs" ) return new Field3D(dimPrim, 0, false, fieldname);
     
     ERROR("Cannot create field "<<fieldname);
     return NULL;

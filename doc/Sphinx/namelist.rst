@@ -699,7 +699,7 @@ Each species has to be defined in a ``Species`` block::
   Flag for particles interacting with an envelope model for the laser, if present.
   If ``True``, this species will project its susceptibility and be influenced by the laser envelope field.
   See :doc:`laser_envelope` for details on the dynamics of particles in presence of a laser envelope field.
-.. note:: Ionization, Radiation and Multiphoton Breit-Wheeler pair creation are not yet implemented for species interacting with an envelope model for the laser.
+.. note:: Ionization, Radiation and Multiphoton Breit-Wheeler pair creation are not yet implemented for species interacting with an envelope model for the laser. 
 
 
 .. py:data:: c_part_max
@@ -1068,7 +1068,7 @@ Following is the laser envelope creator::
         envelope_solver = 'explicit',
     )
 
-The arguments appearing ``LaserEnvelopeGaussian3D`` have the same meaning they would have in a normal LaserGaussian3D, with some differences
+The arguments appearing ``LaserEnvelopeGaussian3D`` have the same meaning they would have in a normal LaserGaussian3D, with some differences:
 
 .. py:data:: time_envelope
 
@@ -1079,6 +1079,10 @@ The arguments appearing ``LaserEnvelopeGaussian3D`` have the same meaning they w
   :default: ``explicit``
 
   For the moment the only available solver for the laser envelope equation is an explicit solver with centered finite differences in space and time.
+
+It is important to remember that the profile defined through the block ``LaserEnvelopeGaussian3D`` corresponds to the complex envelope of the laser vector potential component :math:`\tilde{A}` in the polarization direction. 
+The calculation of the correspondent complex envelope for the laser electric field component in that direction is described in :doc:`laser_envelope`. 
+
 
 
 
@@ -1924,11 +1928,15 @@ This is done by including a block ``DiagFields``::
   .. rst-class:: nowrap
 
   +----------------+-------------------------------------------------------+
-  | | Env_A_abs    | |                                                     |
-  | | Env_Ai       | | Module, real and imaginary part of envelope field   |
-  | | Env_Ar       | |                                                     |
+  | |              | | Module of laser vector potential's complex envelope |                                               
+  | | Env_A_abs    | | :math:`\tilde{A}` (component along the polarization |
+  | |              | | direction)                                          |                                           
   +----------------+-------------------------------------------------------+
-  | | Env_Chi      | | Total  susceptibility                               |
+  | | Env_Chi      | | Total  susceptibility :math:`\chi`                  |
+  +----------------+-------------------------------------------------------+
+  | |              | | Module of laser electric field's complex envelope   |
+  | | Env_E_abs    | | :math:`\tilde{E}` (component along the polarization |
+  | |              | | direction)                                          |
   +----------------+-------------------------------------------------------+
 
 .. py:data:: subgrid
@@ -2035,8 +2043,8 @@ To add one probe diagnostic, include the block ``DiagProbe``::
   fields will be saved.
   Note that it does NOT speed up calculation much, but it saves disk space.
 
-  In the case of an envelope model for the laser (see :doc:`laser_envelope`), the following fields are also available: ``"Env_A_abs"``, ``"Env_Ar"``, ``"Env_Ai"``,
-  ``"Env_Chi"``.
+  In the case of an envelope model for the laser (see :doc:`laser_envelope`), the following fields are also available: ``"Env_A_abs"``,
+  ``"Env_Chi"``, ``"Env_E_abs"``.
 
 
 **Examples of probe diagnostics**

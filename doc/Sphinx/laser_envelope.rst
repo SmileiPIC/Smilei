@@ -8,10 +8,10 @@ In these cases, if the laser pulse is much longer than :math:`\lambda_0`, the co
 .. figure:: _static/Envelope_Figure.png
   :width: 10cm
 
-  Blue: one of the laser vector potential components :math:`\hat{A}`. Red: its envelope :math:`\tilde{A}`. Both the lines display a suitable number of points for a proper sampling. In this case, the envelope is sampled by a number of points smaller by a factor ten. 
+  Blue: laser vector potential component :math:`\hat{A}` along the polarization direction. Red: the module of its complex envelope :math:`|\tilde{A}|`. Both the lines display a suitable number of points for a proper sampling. In this case, the envelope is sampled by a number of points smaller by a factor ten. 
    
 
-The description of the physical system in terms of the envelope of the laser, neglecting its fast oscillations, is the essence of the envelope approximation. We remark that all the equations involved in the envelope model do not take into account the laser polarization. This is a main limit of the envelope approximation, as well as the impossibility to model phenomena at the scale of :math:`\lambda_0`, like the chirping of a laser pulse.
+The description of the physical system in terms of the complex envelope of the laser vector potential, neglecting its fast oscillations, is the essence of the envelope approximation. We remark that all the equations involved in the envelope model do not take into account the laser polarization. This is a main limit of the envelope approximation, as well as the impossibility to model phenomena at the scale of :math:`\lambda_0`.
 
 In the following, the equations of the envelope model are presented, following mainly [Cowan2011]_, [ALaDynZenodo]_. Their numerical solution is briefly described as well.
 
@@ -39,6 +39,28 @@ where :math:`k_0=2\pi/\lambda_0`. In the language of signal processing, :math:`\
   A=\bar{A} + \hat{A}
 
 In the envelope model context, "slowly varying" means that the spatial and temporal variations of :math:`\bar{A}` and :math:`\tilde{A}` are small enough to be treated perturbatively with respect to the ratio :math:`\epsilon=\lambda_0/\lambda_p`, as described in detail in [Mora1997]_, [Quesnel1998]_, [Cowan2011]_. The laser envelope transverse size :math:`R` and longitudinal size :math:`L` are thus assumed to scale as :math:`R \approx L \approx \lambda_0 / \epsilon` [Mora1997]_, [Quesnel1998]_.
+As described thoroughly in the same references, the coupling between the laser envelope and the plasma particles can be modeled through the addiction of a ponderomotive force term in the particles equations of motion. This term, not representing a real force, is a term rising from an averaging process in the perturbative treatment of the particles motion over the laser optical cycles. 
+
+Modeling the laser through a complex envelope and its coupling with the plasma through the ponderomotive force will yield physically meaningful results only if the variation scales in space and time are greater than :math:`\lambda_0`, :math:`1/\omega_0`. Examples violating these hypotheses include, but are not limited to, tightly focused lasers, few optical cycles lasers, sharp gradients in the plasma density. 
+
+From Eq. :eq:`envelope`, the laser electric field's complex envelope :math:`\tilde{E}` can be derived. In the context of the perturbative treatment, the laser scalar potential can be neglected [Cowan2011]_, yielding:
+
+.. math::
+
+  \hat{E} = -\partial_t \hat{A} = -\partial_t \Big\{\textrm{Re}\left[\tilde{A}(\mathbf{x},t)e^{ik_0(x-ct)}\right]\Big\} = \textrm{Re}\left[-\left(\partial_t-ik_0c\right)\tilde{A}(\mathbf{x},t)e^{ik_0(x-ct)}\right],
+
+which can be expressed, following the definition in Eq. :eq:`envelope`, also as  
+
+.. math::
+
+  \hat{E} = \textrm{Re}\left[\tilde{E}(\mathbf{x},t)e^{ik_0(x-ct)}\right].
+ 
+
+The laser electric field's complex envelope along the polarization direction :math:`\tilde{E}` can thus be defined:
+
+.. math::
+
+  \tilde{E} = -\left(\partial_t-ik_0c\right)\tilde{A}(\mathbf{x},t)
 
 
 ----
@@ -198,9 +220,6 @@ Maxwell solvers
 """""""""""""""
 Now that the averaged currents are known at time-step :math:`n+\tfrac{1}{2}`, the averaged electromagnetic
 fields can be advanced solving Maxwell's equations :eq:`Maxwell_envelope`. Their solution is identical to the one described in :doc:`algorithms` for the corresponding non-averaged quantities.
-
-
-
 
 
 
