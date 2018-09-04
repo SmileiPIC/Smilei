@@ -25,8 +25,6 @@ public:
     Particles new_electrons;
 
 protected:
-    std::vector<double> Potential;
-    std::vector<double> Azimuthal_quantum_number;
     
     double eV_to_au;
     double au_to_mec2;
@@ -38,7 +36,6 @@ protected:
     double invdt;
     unsigned int nDim_field;
     unsigned int nDim_particle;
-    unsigned int atomic_number_;
     double ionized_species_invmass;
 
 private:

@@ -439,6 +439,7 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     ostringstream name_t;
     
     unsigned int nPatches( vecPatches.size() );
+    double x_moved = simWindow ? simWindow->getXmoved() : 0.;
     
     // Leave if this timestep has already been written
     #pragma omp master
@@ -454,7 +455,6 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     {
         // If the patches have been moved (moving window or load balancing) we must re-compute the probes positions
         if( !positions_written || last_iteration_points_calculated <= vecPatches.lastIterationPatchesMoved ) {
-            double x_moved = simWindow ? simWindow->getXmoved() : 0.;
             createPoints(smpi, vecPatches, false, x_moved);
             last_iteration_points_calculated = timestep;
             
@@ -491,7 +491,7 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
                 } else {
                     H5Sselect_none(filespace);
                 }
-                // Define collective transfer 
+                // Define collective transfer
                 hid_t transfer = H5Pcreate(H5P_DATASET_XFER);
                 H5Pset_dxpl_mpio(transfer, H5FD_MPIO_COLLECTIVE);
                 // Create dataset
@@ -532,7 +532,7 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         LocalFields Eloc_fields, Bloc_fields, Jloc_fields;
         double Rloc_fields;
         
-        for (unsigned int ipart=0; ipart<npart; ipart++) {             
+        for (unsigned int ipart=0; ipart<npart; ipart++) {
             (*(vecPatches(ipatch)->Interp)) (
                 vecPatches(ipatch)->EMfields,
                 vecPatches(ipatch)->probes[probe_n]->particles,
@@ -549,7 +549,7 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
             (*probesArray)(fieldlocation[5],iPart_MPI)=Bloc_fields.z;
             (*probesArray)(fieldlocation[6],iPart_MPI)=Jloc_fields.x;
             (*probesArray)(fieldlocation[7],iPart_MPI)=Jloc_fields.y;
-            (*probesArray)(fieldlocation[8],iPart_MPI)=Jloc_fields.z;          
+            (*probesArray)(fieldlocation[8],iPart_MPI)=Jloc_fields.z;
             (*probesArray)(fieldlocation[9],iPart_MPI)=Rloc_fields;
             iPart_MPI++;
         }
@@ -588,6 +588,10 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         H5Pset_dxpl_mpio(transfer, H5FD_MPIO_INDEPENDENT);
         // Write
         H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, probesArray->data_ );
+        
+        // Write x_moved
+        H5::attr(dset_id, "x_moved", x_moved);
+        
         H5Dclose(dset_id);
         H5Pclose( transfer );
         H5Sclose(filespace);

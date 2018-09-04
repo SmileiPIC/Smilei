@@ -1,4 +1,5 @@
 #include "IonizationTunnel.h"
+#include "IonizationTables.h"
 
 #include <cmath>
 
@@ -11,6 +12,20 @@ using namespace std;
 
 IonizationTunnel::IonizationTunnel(Params& params, Species * species) : Ionization(params, species) {
     DEBUG("Creating the Tunnel Ionizaton class");
+    
+    atomic_number_          = species->atomic_number;
+
+    // Ionization potential & quantum numbers (all in atomic units 1 au = 27.2116 eV)
+    Potential.resize(atomic_number_);
+    Azimuthal_quantum_number.resize(atomic_number_);
+    for( int Zstar=0; Zstar<(int)atomic_number_; Zstar++) {
+        Potential               [Zstar] = IonizationTables::ionization_energy      (atomic_number_, Zstar) * eV_to_au;
+        Azimuthal_quantum_number[Zstar] = IonizationTables::azimuthal_atomic_number(atomic_number_, Zstar);
+    }
+    
+    for (unsigned int i=0; i<atomic_number_; i++) {
+        DEBUG("ioniz: i " << i << " potential: " << Potential[i] << " Az.q.num: " << Azimuthal_quantum_number[i]);
+    }
     
     one_third = 1.0/3.0;
     

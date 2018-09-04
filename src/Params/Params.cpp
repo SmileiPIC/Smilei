@@ -437,10 +437,13 @@ namelist("")
     }
 
 
+    int total_number_of_hilbert_patches = 1;
     if (patch_decomposition == "hilbert") {
-        for ( unsigned int iDim=0 ; iDim<nDim_field ; iDim++ )
+        for ( unsigned int iDim=0 ; iDim<nDim_field ; iDim++ ){
+            total_number_of_hilbert_patches *= number_of_patches[iDim];
             if( (number_of_patches[iDim] & (number_of_patches[iDim]-1)) != 0)
                 ERROR("Number of patches in each direction must be a power of 2");
+        }
     }
     else
         PyTools::extract("patch_orientation", patch_orientation, "Main");
@@ -460,8 +463,9 @@ namelist("")
 
     has_load_balancing = (smpi->getSize()>1)  && (! load_balancing_time_selection->isEmpty());
 
+    if (has_load_balancing && patch_decomposition != "hilbert") ERROR("Dynamic load balancing is only available for Hilbert decomposition");
+    if (has_load_balancing && total_number_of_hilbert_patches < 2*smpi->getSize()) ERROR("Dynamic load balancing requires to use at least 2 patches per MPI process.");
 
-    //mi.resize(nDim_field, 0);
     mi.resize(3, 0);
     while ((number_of_patches[0] >> mi[0]) >1) mi[0]++ ;
     if (number_of_patches.size()>1) {

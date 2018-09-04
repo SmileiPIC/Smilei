@@ -13,7 +13,7 @@ reserved for the :doc:`partners`. It is regularly synchronized with
 the GitHub page.
 
 .. warning::
-  
+
   In v3.3, :doc:`significant changes<syntax_changes>` have been made to the input syntax.
 
 ----
@@ -23,20 +23,41 @@ Upcoming changes
 
 * Vectorization
 * Interface with the PICSAR library
+
+----
+
+.. _latestVersion:
+
+Current release 3.4.1
+^^^^^^^^^^^^^^^^^^^^^
+
+**Download**: `Smilei v3.4.1 <_downloads/smilei-v3.4.1.tar.gz>`_
+
+* Ionization considering a user-defined rate
+
+----
+
+Release 3.4
+^^^^^^^^^^^
+
+**Download**: `Smilei v3.4 <_downloads/smilei-v3.4.tar.gz>`_
+
 * Compatibility with Python 3
 * New 'Performances' diagnostic
 * Tracked particles may output the fields at their location
 * 'subgrid' option in Fields diagnostics
 * Printout of the expected disk usage
 * Laser propagation pre-processing
-* Bugfixes: circular polarization
+* More flexible domain decomposition
+* Relativistic initialization
+* Particles injection using Numpy arrays
+* Possibility to use user-defined ionization rates
+* Bugfixes: circular polarization, collisional ionization
 
 ----
 
-.. _latestVersion:
-
-Current release 3.3
-^^^^^^^^^^^^^^^^^^^
+Release 3.3
+^^^^^^^^^^^
 
 **Download**: `Smilei v3.3 <_downloads/smilei-v3.3.tar.gz>`_
 
@@ -130,4 +151,3 @@ Release 1.0
 * Hybrid MPI-OpenMP parallelization
 * Field ionization
 * Some python diagnostics
-

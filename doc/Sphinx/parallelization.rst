@@ -156,8 +156,6 @@ operation every now and then, we ensure that all regions manage an equitable com
   
   The shape of the Hilbert curve which determines the patch order.
 
-
-
 ----
 
 Recommendations
@@ -182,3 +180,39 @@ Recommendations
   Warning: it is commonly advised to use larger patches if more than half of your simulation domain is empty of particles.
 
 * **Take these recommendations with a pinch of salt**. Do your own tests and send us feedback !
+
+----
+
+Cartesian decomposition
+^^^^^^^^^^^^^^^^^^^^^^^
+
+The dynamic load balancing process described above may not be efficient
+in all cases. Depending on the plasma shape, it may be necessary to use another
+domain decomposition approach.
+In Smilei, it is possible to use a classical cartesian decomposition.
+
+In the namelist::
+
+    Main(
+        ...
+        patch_decomposition = "cartesian"
+        ...
+    )
+
+.. rubric:: Rules
+
+* No more restrictions on the number of patches per direction.
+* This option disables the load balancing.
+* To use fields diagnostics, the number of patches per process must allow to build a rectangular tessellation of the simulation box. For instance:
+    * 8 x 8 patches on 4 MPI process : **ok**, each process own 2 x 8 patches slice.
+    * 6 x 8 patches on 4 MPI process : **not ok**, each process own 12 patches which overlap 2 pavements.
+
+By default, the cartesian decomposition is oriented to contiguously store patches along the most internal direction (**Z**, then **Y**, then **X**).
+The orientation can be modified throught the following option::
+
+    Main(
+        ...
+        patch_orientation = "YX",  # 2D
+        patch_orientation = "ZYX", # 3D
+        ...
+    )

@@ -355,7 +355,9 @@ class Species(SmileiComponent):
     boundary_conditions = [["periodic"]]
     ionization_model = "none"
     ionization_electrons = None
+    ionization_rate = None
     atomic_number = None
+    maximum_charge_state = None
     is_test = False
     relativistic_field_initialization = False
     ponderomotive_dynamics = False

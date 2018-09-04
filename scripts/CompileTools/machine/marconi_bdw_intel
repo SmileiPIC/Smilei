@@ -1,5 +1,5 @@
 #
-# Machine script for Marconi KNL
+# Machine script for Marconi Broadwell
 # -------------------------------------------------
 #
 # Intel 2017:
@@ -29,4 +29,4 @@
 # - -fno-alias
 
 HDF5_ROOT_DIR=${HDF5_HOME}
-CXXFLAGS += -cxx=icpc -xMIC-AVX512 -ip -ipo -inline-factor=1000
+CXXFLAGS += -cxx=icpc -xCORE-AVX2 -ip -ipo -inline-factor=1000

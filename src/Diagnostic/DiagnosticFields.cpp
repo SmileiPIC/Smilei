@@ -121,13 +121,15 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
     MESSAGE(2, ss.str() );
     
     // Create new fields in each patch, for time-average storage
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-        vecPatches(ipatch)->EMfields->allFields_avg.resize( diag_n+1 );
-        if( time_average > 1 ) {
-            for( unsigned int ifield=0; ifield<fields_names.size(); ifield++)
-                vecPatches(ipatch)->EMfields->allFields_avg[diag_n].push_back(
-                    vecPatches(ipatch)->EMfields->createField(fields_names[ifield])
-                );
+    if( ! smpi->test_mode ) {
+        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+            vecPatches(ipatch)->EMfields->allFields_avg.resize( diag_n+1 );
+            if( time_average > 1 ) {
+                for( unsigned int ifield=0; ifield<fields_names.size(); ifield++)
+                    vecPatches(ipatch)->EMfields->allFields_avg[diag_n].push_back(
+                        vecPatches(ipatch)->EMfields->createField(fields_names[ifield])
+                    );
+            }
         }
     }
     
@@ -328,6 +330,10 @@ void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime,
     
     #pragma omp master
     {
+        // write x_moved
+        double x_moved = simWindow ? simWindow->getXmoved() : 0.;
+        H5::attr(iteration_group_id, "x_moved", x_moved);
+        
         H5Gclose(iteration_group_id);
         if( tmp_dset_id>0 ) H5Dclose( tmp_dset_id );
         tmp_dset_id=0;
