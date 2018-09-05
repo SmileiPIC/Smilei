@@ -154,7 +154,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
 .. py:data:: patch_decomposition
 
-  :default: 'hilbert'
+  :default: ``"hilbert"``
 
   The patches distribution. ``"cartesian"`` is available too.
   See :doc:`parallelization`.
@@ -162,8 +162,11 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
 .. py:data:: patch_orientation
 
-  Only for a ``"cartesian"`` patches distribution.
-  ``"YX"`` and ``"ZYX"`` respectively available for 2D and 3D simulations.
+  :default: ``""``
+
+  Only for a ``"cartesian"`` patches decomposition.
+  ``"YX"`` and ``"ZYX"`` respectively available for 2D and 3D simulations, while the default ``""``
+  corresponds to the decomposition oriented as ``XY`` or ``XYZ``.
   See :doc:`parallelization`.
 
 
@@ -344,6 +347,12 @@ occur every 150 iterations.
 
 Moving window
 ^^^^^^^^^^^^^
+
+The simulated box can move relative to the initial plasma position. This "moving window"
+basically consists in removing periodically some plasma from the ``x_min`` border and
+adding new plasma after the ``x_max`` border, thus changing the physical domain that the
+simulation represents but keeping the same box size. This is particularly useful to
+*follow* plasma moving at high speed.
 
 The block ``MovingWindow`` is optional. The window does not move it you do not define it.
 

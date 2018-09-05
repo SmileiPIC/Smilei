@@ -189,7 +189,7 @@ class ParticleBinning(Diagnostic):
 				
 				try:
 					axis["sumInfo"], self._selection[iaxis], self._finalShape[iaxis] \
-						= self._selectRange(sum[axistype], centers, axistype, axis_units, "sum")
+						= self._selectRange(sum[axistype], centers, axistype, axis_units, "sum", axis["edges_included"])
 				except:
 					return
 				

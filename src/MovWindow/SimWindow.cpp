@@ -266,6 +266,11 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                     for( unsigned int idiag=0; idiag<vecPatches.localDiags.size(); idiag++ )
                         if( DiagnosticTrack* track = dynamic_cast<DiagnosticTrack*>(vecPatches.localDiags[idiag]) )
                             track->setIDs( mypatch );
+                    
+                    mypatch->EMfields->applyExternalFields( mypatch );
+                    if (params.save_magnectic_fields_for_SM) 
+                       mypatch->EMfields->saveExternalFields( mypatch );
+                    
                 }
             }
         }

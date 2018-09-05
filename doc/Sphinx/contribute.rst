@@ -32,8 +32,7 @@ can see examples from the source files, which are located in the
 To transform it into an *html* website, it is
 processed using the `sphinx <www.sphinx-doc.org>`_ python package that you may have to
 install.
-
- If you have sphinx installed, you may simply go to the
+If you have sphinx installed, you may simply go to the
 main :program:`Smilei` folder from a command line terminal, then run the command
 
 .. code-block:: bash
