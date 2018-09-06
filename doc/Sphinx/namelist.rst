@@ -1744,7 +1744,7 @@ The full list of scalars that are saved by this diagnostic:
 | | Uelm_out_mvw | | EM energy lost during the timestep due to the moving window             |
 | | Uelm_inj_mvw | | EM energy injected during the timestep due to the moving window         |
 +----------------+---------------------------------------------------------------------------+
-| **Species information**                                                                    |
+| **Particle information**                                                                   |
 +----------------+---------------------------------------------------------------------------+
 | | Dens_abc     | | Average density of species "abc"                                        |
 | | Zavg_abc     | |  ... its average charge                                                 |
@@ -1759,9 +1759,13 @@ The full list of scalars that are saved by this diagnostic:
 | | ExMax        | | Maximum of :math:`E_x`                                                  |
 | | ExMaxCell    | |  ... and its location (cell index)                                      |
 | |              | | ... same for fields Ey Ez Bx_m By_m Bz_m Jx Jy Jz Rho                   |
-| | PoyXmin      | | Accumulated Poynting flux through xmin boundary                         |
+| |              | |                                                                         |
+| | PoyXmin      | | Time-accumulated Poynting flux through xmin boundary                    |
 | | PoyXminInst  | | Current Poynting flux through xmin boundary                             |
 | |              | |  ... same for other boundaries                                          |
+| |              | | These Poynting scalars are integrated accross the boundary.             |
+| |              | | Consequently, they are energies per unit surface in 1D,                 |
+| |              | | energies per unit length in 2D, and energies in 3D.                     |
 +----------------+---------------------------------------------------------------------------+
 
 Checkout the :doc:`post-processing <post-processing>` documentation as well.
