@@ -626,50 +626,40 @@ Each species has to be defined in a ``Species`` block::
 
   :default: ``"none"``
 
-  The model for ionization. Currently, only ``"tunnel"`` (corresponding to :doc:`field ionization <field_ionization>`)
-  and ``"from_rate"`` (relying on a :doc:`user-defined ionization rate <field_ionization>`) are available.
-  In the latter case, the additional parameter ``ionization_rate`` has to be defined.
-  Note also that field ionization (``"tunnel"``) requires the definition of the species ``atomic_number`` while
-  ionization using a user-defined rate (``"from_rate"``) requires the definition of the species ``maximum_charge_state``.
-
-  See :ref:`this <CollisionalIonization>` for collisional ionization instead.
-
+  The model for ionization:
+  
+  * ``"tunnel"`` for :ref:`field ionization <field_ionization>` (requires species with an :py:data:`atomic_number`)
+  * ``"from_rate"``, relying on a :ref:`user-defined ionization rate <rate_ionization>` (requires species with a :py:data:`maximum_charge_state`).
+  
 .. py:data:: ionization_rate
 
-  A python function giving the user-defined ionisation rate.
+  A python function giving the user-defined ionisation rate as a function of various particle attributes.
   To use this option, the `numpy package <http://www.numpy.org/>`_ must be available in your python installation.
   The function must have one argument, that you may call, for instance, ``particles``.
   This object has several attributes ``x``, ``y``, ``z``, ``px``, ``py``, ``pz``, ``charge``, ``weight`` and ``id``.
   Each of these attributes are provided as **numpy** arrays where each cell corresponds to one particle.
 
-  The following example defines, for a species with maximum charge state of 2, a constant ionization rate that depends
-  only on the initial particle charge (``r0`` the ionisation rate from charge state 0 to 1 and
-  ``r1``  the ionisation rate from charge state 1 to 2):
+  The following example defines, for a species with maximum charge state of 2,
+  an ionization rate that depends on the initial particle charge
+  and linear in the x coordinate:
 
   .. code-block:: python
-
+    
+    from numpy import exp, zeros_like
+    
     def my_rate(particles):
-        rate = numpy.empty_like(particles.x)
-        rate[particles.charge==0] = r0
-        rate[particles.charge==1] = r1
+        rate = zeros_like(particles.x)
+        charge_0 = (particles.charge==0)
+        charge_1 = (particles.charge==1)
+        rate[charge_0] = r0 * particles.x[charge_0]
+        rate[charge_1] = r1 * particles.x[charge_1]
         return rate
-
-  The following example defines an ionization rate [:math:`r(x) = r0*f(x)`] that depends on the x-coordinate
-  of the particle only:
-
-  .. code-block:: python
-
-    def f(x):
-        return numpy.exp(-x**2/2.)
-
-    def my_rate(particles):
-        x = particles.x
-        rate = numpy.full_like(particles.x, r0) * f(x)
-        return rate
-
+    
+    Species( ..., ionization_rate = my_rate )
+    
 .. py:data:: ionization_electrons
 
-  The name of the electron species that field ionization uses when creating new electrons.
+  The name of the electron species that :py:data:`ionization_model` uses when creating new electrons.
 
 
 .. py:data:: is_test
