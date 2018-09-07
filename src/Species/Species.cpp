@@ -287,14 +287,15 @@ void Species::initPosition(unsigned int nPart, unsigned int iPart, double *index
                 }
             }
         } else {
-            // Trick to initalize particles regularly in the theta = 0 plane
+            // Trick to initalize particles more or less regularly
             for (unsigned int  p=iPart; p<iPart+nPart; p++) {
                 int i = (int)(p-iPart);
                 for(unsigned int idim=0; idim<2; idim++) {
                     particles->position(idim,p) = indexes[idim] + cell_length[idim] * coeff * (0.5 + i%coeff_);
                     i /= coeff_; // integer division
                 }
-                particles->position(2,p) = 0;
+                particles->position(2,p) = particles->position(1,p) ;
+                particles->position(1,p) = 0. ;
             }
 
         }

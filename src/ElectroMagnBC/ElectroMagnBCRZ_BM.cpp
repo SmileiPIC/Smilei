@@ -74,7 +74,7 @@ ElectroMagnBCRZ_BM::ElectroMagnBCRZ_BM( Params &params, Patch* patch, unsigned i
     Kx =  params.EM_BCs_k[3][0];
     Kr = -params.EM_BCs_k[3][1]; // We're only dealing with the Rmax boundary here. The minus sign is the specular reflexion of the given k on the rmax boundary since users are supposed to provide the injection k.
     cosphi = Kr / sqrt( Kx*Kx + Kr*Kr ) ; 
-    //std::cout<<"cosphi  "<<cosphi<<std::endl;
+    std::cout<<"cosphi  "<<cosphi<<std::endl;
     CB_BM  = cosphi/(1. + cosphi); // Theta is always taken equal to zero. 
     CE_BM  = 1.0 - CB_BM;
 
