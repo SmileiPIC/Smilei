@@ -81,7 +81,7 @@ interaction to astrophysics.
    algorithms
    parallelization
    collisions
-   field_ionization
+   ionization
    radiation_loss
    multiphoton_Breit_Wheeler
    relativistic_fields_initialization

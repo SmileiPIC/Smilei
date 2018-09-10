@@ -25,7 +25,7 @@ a charge-conservation scheme.
 
 A multi-purpose code, Smilei is applied to a wide range of physics-related studies:
 from relativistic laser-plasma interaction to astrophysics. Smilei thus benefits from
-various additional physics modules among which :doc:`field ionization <field_ionization>`,
+various additional physics modules among which :ref:`field ionization <field_ionization>`,
 :doc:`binary collisions and impact ionization <collisions>`. QED processes such as
 high-energy photon emission and its :doc:`back-reaction <radiation_loss>`
 on the electron dynamics, as well as
