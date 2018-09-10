@@ -533,6 +533,11 @@ void SimWindow::operate(Domain& domain,  VectorPatch& vecPatches, SmileiMPI* smp
     domain.patch_->exchangeField_movewin( domain.patch_->EMfields->By_m, params.n_space[0] );
     domain.patch_->exchangeField_movewin( domain.patch_->EMfields->Bz_m, params.n_space[0] );
 
+    if (params.is_spectral) {
+        domain.patch_->exchangeField_movewin( domain.patch_->EMfields->rho_, params.n_space[0] );
+        domain.patch_->exchangeField_movewin( domain.patch_->EMfields->rhoold_, params.n_space[0] );
+    }
+
     //SyncCartesianPatch::patchedToCartesian_MW( vecPatches, domain, params, smpi );
 
     domain.patch_->EMfields->laserDisabled();
