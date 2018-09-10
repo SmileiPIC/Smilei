@@ -22,6 +22,7 @@
 #include <fstream>
 #include <limits>
 #include "ElectroMagnBC_Factory.h"
+#include "SyncCartesianPatch.h"
 
 using namespace std;
 
@@ -523,15 +524,16 @@ void SimWindow::operate(Domain& domain,  VectorPatch& vecPatches, SmileiMPI* smp
     domain.patch_->exchangeField_movewin( domain.patch_->EMfields->Ex_, params.n_space[0] );
     domain.patch_->exchangeField_movewin( domain.patch_->EMfields->Ey_, params.n_space[0] );
     domain.patch_->exchangeField_movewin( domain.patch_->EMfields->Ez_, params.n_space[0] );
-
+    
     domain.patch_->exchangeField_movewin( domain.patch_->EMfields->Bx_, params.n_space[0] );
     domain.patch_->exchangeField_movewin( domain.patch_->EMfields->By_, params.n_space[0] );
     domain.patch_->exchangeField_movewin( domain.patch_->EMfields->Bz_, params.n_space[0] );
-
+    
     domain.patch_->exchangeField_movewin( domain.patch_->EMfields->Bx_m, params.n_space[0] );
     domain.patch_->exchangeField_movewin( domain.patch_->EMfields->By_m, params.n_space[0] );
     domain.patch_->exchangeField_movewin( domain.patch_->EMfields->Bz_m, params.n_space[0] );
 
+    //SyncCartesianPatch::patchedToCartesian_MW( vecPatches, domain, params, smpi );
 
     domain.patch_->EMfields->laserDisabled();
     // External fields

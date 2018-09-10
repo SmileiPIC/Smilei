@@ -673,7 +673,10 @@ void Patch3D::createType2( Params& params ) {
 
                 // Still used ???
                 ntype_[3][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
-                MPI_Type_contiguous(nz*ny*params.n_space[0], MPI_DOUBLE, &(ntype_[3][ix_isPrim][iy_isPrim][iz_isPrim]));   //clrw lines
+                if (!params.is_pxr)
+                    MPI_Type_contiguous(nz*ny*params.n_space[0], MPI_DOUBLE, &(ntype_[3][ix_isPrim][iy_isPrim][iz_isPrim]));   //clrw lines
+                else
+                    MPI_Type_contiguous(nz*ny*(params.n_space[0]+params.oversize[0]+1), MPI_DOUBLE, &(ntype_[3][ix_isPrim][iy_isPrim][iz_isPrim]));   //clrw lines
                 MPI_Type_commit( &(ntype_[3][ix_isPrim][iy_isPrim][iz_isPrim]) ); 
 
                 nx_sum = 1 + 2*params.oversize[0] + ix_isPrim;
@@ -839,7 +842,14 @@ void Patch3D::exchangeField_movewin( Field* field, int clrw )
     int istart, ix, iy, iz, iDim, iNeighbor,bufsize;
     void* b;
 
-    bufsize = clrw*n_elem[1]*n_elem[2]*sizeof(double)+ 2 * MPI_BSEND_OVERHEAD; //Max number of doubles in the buffer. Careful, there might be MPI overhead to take into account.
+    bool pxr(false);
+    if ( (!isDual[0])&&(!isDual[1])&&(!isDual[2]) )
+        pxr = true;
+
+    if (!pxr)
+        bufsize = clrw*n_elem[1]*n_elem[2]*sizeof(double)+ 2 * MPI_BSEND_OVERHEAD; //Max number of doubles in the buffer. Careful, there might be MPI overhead to take into account.
+    else
+        bufsize = (clrw+oversize[0]+1)*n_elem[1]*n_elem[2]*sizeof(double)+ 2 * MPI_BSEND_OVERHEAD; //Max number of doubles in the buffer. Careful, there might be MPI overhead to take into account.
     b=(void *)malloc(bufsize);
     MPI_Buffer_attach( b, bufsize);
     iDim = 0; // We exchange only in the X direction for movewin.
@@ -856,7 +866,10 @@ void Patch3D::exchangeField_movewin( Field* field, int clrw )
     idx[iDim] = 1;
 
     if (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
-        istart =  2*oversize[iDim] + 1 + isDual[iDim] ;
+        if (!pxr)
+            istart =  2*oversize[iDim] + 1 + isDual[iDim] ;
+        else
+            istart =  oversize[iDim];
         ix = idx[0]*istart;
         iy = idx[1]*istart;
         iz = idx[2]*istart;
@@ -868,7 +881,10 @@ void Patch3D::exchangeField_movewin( Field* field, int clrw )
     // and then receive the complementary field from the East.
 
     if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
-        istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - clrw ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
+         if (!pxr)
+             istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - clrw ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
+         else
+             istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - clrw - oversize[iDim] - 1 ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
         ix = idx[0]*istart;
         iy = idx[1]*istart;
         iz = idx[2]*istart;
