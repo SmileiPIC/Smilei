@@ -244,7 +244,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // arrays used for the Esirkepov projection method
     double  Sx0[5], Sx1[5], Sy0[5], Sy1[5], DSx[5], DSy[5];
     complex<double>  Wx[5][5], Wy[5][5], Wz[5][5], Jx_p[5][5], Jy_p[5][5], Jz_p[5][5];
-    complex<double> e_delta, e_delta_inv, e_theta,e_theta_old, e_bar, C_m;
+    complex<double> e_delta, e_delta_m1, e_delta_inv, e_theta,e_theta_old, e_bar, e_bar_m1, C_m;
  
      for (unsigned int i=0; i<5; i++) {
         Sx1[i] = 0.;
@@ -276,9 +276,10 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     double zp = particles.position(2,ipart);
     double rp = sqrt (particles.position(1, ipart)*particles.position(1, ipart)+particles.position(2, ipart)*particles.position(2, ipart));
     e_theta = (yp-Icpx*zp)/rp;
+    cout << std::setprecision(9) << "y= " << yp << endl;
     e_theta_old =exp_m_theta_old[0];
-    e_delta = 1;
-    e_bar = 1;
+    e_delta = 1.;
+    e_bar = 1.;
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
     xpn = particles.position(0, ipart) * dl_inv_;
     int ip = round(xpn);
@@ -299,14 +300,26 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     Sy1[jp_m_jpo+1] = 0.5 * (delta2-delta+0.25);
     Sy1[jp_m_jpo+2] = 0.75-delta2;
     Sy1[jp_m_jpo+3] = 0.5 * (delta2+delta+0.25);
-    for (unsigned int i=0 ; i<imode; i++) {
-        e_delta *= sqrt(e_theta/e_theta_old);
-        e_bar *= sqrt(e_theta*e_theta_old);
 
+    e_delta_m1 = sqrt(e_theta/e_theta_old);
+    e_bar_m1 = sqrt(e_theta*e_theta_old);   
+    if (std::real(e_theta)+ std::real(e_theta_old) < 0.){
+        if (std::imag(e_theta)*std::imag(e_theta_old) > 0.){
+            e_bar_m1 *= -1.;
+        } else {
+            e_delta_m1 *= -1.;
+        }
     }
+
+    for (unsigned int i=0; i<imode; i++){
+        e_delta *= e_delta_m1;
+        e_bar *= e_bar_m1;   
+        cout << std::setprecision(9) <<  " e_theta = " << e_theta << " e_theta_old = " << e_theta_old << " e_delta = " << e_delta << " e_bar= " << e_bar << endl;
+    }
+
      e_delta_inv =1./e_delta;
     //defining crt_p 
-     complex<double> crt_p = - charge_weight*Icpx/(2*M_PI*e_bar*dt*imode)*(particles.momentum(2,ipart)*particles.position(1,ipart)-particles.momentum(1,ipart)*particles.position(2,ipart))/(rp)*invgf;   
+     complex<double> crt_p = - charge_weight*Icpx/(2*M_PI*e_bar*dt*imode);
     for (unsigned int i=0; i < 5; i++) {
         DSx[i] = Sx1[i] - Sx0[i];
         DSy[i] = Sy1[i] - Sy0[i];
@@ -323,6 +336,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             Wx[i][j] = DSx[i] * (Sy0[j] + 0.5*DSy[j]);
             Wy[i][j] = DSy[j] * (Sx0[i] + 0.5*DSx[i]);
             Wz[i][j] = Sy1[j]*Sx1[i]*(e_delta_inv-1.)-Sy0[j]*Sx0[i]*(e_delta-1.);
+            
         }
     }
     
@@ -347,6 +361,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
                 // ?? not sure about this ?
                 Jz_p[i][j] = crt_p  * Wz[i][j];
+                cout << std::setprecision(9) << " crt_p = " << crt_p << " Wz = " << Wz[i][j] << endl; 
             }
         }
 
@@ -625,7 +640,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // arrays used for the Esirkepov projection method
     double  Sx0[5], Sx1[5], Sy0[5], Sy1[5], DSx[5], DSy[5];
     complex<double>  Wx[5][5], Wy[5][5], Wz[5][5], Jx_p[5][5], Jy_p[5][5], Jz_p[5][5];
-    complex<double> e_delta, e_delta_inv, e_theta,e_theta_old,e_bar, C_m;
+    complex<double> e_delta,e_delta_m1, e_delta_inv, e_theta,e_theta_old,e_bar,e_bar_m1, C_m;
  
      for (unsigned int i=0; i<5; i++) {
         Sx1[i] = 0.;
@@ -682,10 +697,19 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     Sy1[jp_m_jpo+2] = 0.75-delta2;
     Sy1[jp_m_jpo+3] = 0.5 * (delta2+delta+0.25);
     
-    for (unsigned int i=0; i<imode; i++){
-        e_delta *= sqrt(e_theta/e_theta_old);
-        e_bar *= sqrt(e_theta*e_theta_old);   
+    e_delta_m1 = sqrt(e_theta/e_theta_old);
+    e_bar_m1 = sqrt(e_theta*e_theta_old);   
+    if (std::real(e_theta)+ std::real(e_theta_old) < 0.){
+        if (std::imag(e_theta)*std::imag(e_theta_old) > 0.){
+            e_bar_m1 *= -1.;
+        } else {
+            e_delta_m1 *= -1.;
+        }
+    }
 
+    for (unsigned int i=0; i<imode; i++){
+        e_delta *= e_delta_m1;
+        e_bar *= e_bar_m1;   
     }
      e_delta_inv =1./e_delta;
     //defining crt_p 
