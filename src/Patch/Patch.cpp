@@ -441,10 +441,7 @@ void Patch::initCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iD
         if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
             if (is_a_MPI_neighbor(iDim, (iNeighbor+1)%2)) {
                 //If other neighbour is MPI ==> I receive the number of particles I'll receive later.
-                int local_hindex = 0;
-                for ( int irk=0 ; irk<MPI_neighbor_[iDim][(iNeighbor+1)%2] ; irk++)
-                    local_hindex += smpi->patch_count[irk];
-                local_hindex = neighbor_[iDim][(iNeighbor+1)%2] - local_hindex;
+                int local_hindex = neighbor_[iDim][(iNeighbor+1)%2] - smpi->patch_refHindexes[ MPI_neighbor_[iDim][(iNeighbor+1)%2] ];
                 int tag = buildtag( local_hindex, iDim+1, iNeighbor+3 );
                 MPI_Irecv( &(vecSpecies[ispec]->MPIbuff.part_index_recv_sz[iDim][(iNeighbor+1)%2]), 1, MPI_INT, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(vecSpecies[ispec]->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]) );
             }
@@ -532,10 +529,7 @@ void Patch::CommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, 
             if (is_a_MPI_neighbor(iDim, (iNeighbor+1)%2)) {
                 // If MPI comm, receive particles in the recv buffer previously initialized.
                 vecSpecies[ispec]->typePartRecv[(iDim*2)+iNeighbor] = smpi->createMPIparticles( &(vecSpecies[ispec]->MPIbuff.partRecv[iDim][(iNeighbor+1)%2]) );
-                int local_hindex = 0;
-                for ( int irk=0 ; irk<MPI_neighbor_[iDim][(iNeighbor+1)%2] ; irk++)
-                    local_hindex += smpi->patch_count[irk];
-                local_hindex = neighbor_[iDim][(iNeighbor+1)%2] - local_hindex;
+                int local_hindex = neighbor_[iDim][(iNeighbor+1)%2] - smpi->patch_refHindexes[ MPI_neighbor_[iDim][(iNeighbor+1)%2] ];
                 int tag = buildtag( local_hindex, iDim+1, iNeighbor+3 );
                 MPI_Irecv( &((vecSpecies[ispec]->MPIbuff.partRecv[iDim][(iNeighbor+1)%2]).position(0,0)), 1, vecSpecies[ispec]->typePartRecv[(iDim*2)+iNeighbor], MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(vecSpecies[ispec]->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]) );
             }
