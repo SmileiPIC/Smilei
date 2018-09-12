@@ -270,8 +270,6 @@ protected:
 
     //! Hilbert index of neighbors patch
     std::vector< std::vector<int> > neighbor_, tmp_neighbor_;
-    //! send and receive tags
-    std::vector< std::vector<int> > send_tags_, recv_tags_;
 
 
     //! MPI rank of neighbors patch
@@ -288,7 +286,6 @@ protected:
     std::vector<int> cell_starting_global_index;
 
     std::vector<unsigned int> oversize;
-
 
 };
 
