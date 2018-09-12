@@ -378,7 +378,7 @@ def multiPlot(*Diags, **kwargs):
 	skipAnimation : if True, plots only the last frame.
 	"""
 
-	from _Diagnostics import TrackParticles
+	from ._Diagnostics import TrackParticles
 
 	# Verify Diags are valid
 	nDiags = len(Diags)

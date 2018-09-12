@@ -78,6 +78,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
         for( Py_ssize_t is=0; is<ns; is++ )
             subgrids.push_back( PySequence_Fast_GET_ITEM(subgrid, is) );
     }
+    Py_DECREF(subgrid);
     // Verify the number of subgrids
     unsigned int nsubgrid = subgrids.size();
     if( nsubgrid != params.nDim_field ) {

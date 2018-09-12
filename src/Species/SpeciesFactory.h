@@ -317,6 +317,7 @@ public:
         else {
             ERROR("For species '" << species_name << "' non valid position_initialization. It must be either a string or a numpy array.");
         }
+        Py_DECREF(py_pos_init);
 
         PyObject *py_mom_init = PyTools::extract_py("momentum_initialization", "Species",ispec);
         if ( PyTools::convert(py_mom_init, thisSpecies->momentum_initialization) ){
@@ -375,6 +376,7 @@ public:
         else {
             ERROR("For species '" << species_name << "' non valid momentum_initialization. It must be either a string or a numpy array.");
         }
+        Py_DECREF(py_mom_init);
 
         PyTools::extract("c_part_max",thisSpecies->c_part_max,"Species",ispec);
 
