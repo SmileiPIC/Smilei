@@ -121,7 +121,7 @@ void Patch2D::reallyinitSumField( Field* field, int iDim )
 // Initialize current patch sum Fields communications through MPI in direction iDim
 // Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
 // ---------------------------------------------------------------------------------------------------------------------
-void Patch2D::initSumField( Field* field, int iDim )
+void Patch2D::initSumField( Field* field, int iDim, SmileiMPI* smpi )
 {
     if (field->MPIbuff.buf[0][0].size()==0) {
         field->MPIbuff.allocate(2, field, oversize);
@@ -132,7 +132,7 @@ void Patch2D::initSumField( Field* field, int iDim )
         if (field->name == "Jz") tagp = 3;
         if (field->name == "Rho") tagp = 4;
 
-        field->MPIbuff.defineTags( this, tagp );
+        field->MPIbuff.defineTags( this, smpi, tagp );
     }
 
 //    int patch_ndims_(2);
@@ -279,7 +279,7 @@ void Patch2D::finalizeExchange( Field* field )
 // Initialize current patch exhange Fields communications through MPI for direction iDim
 // Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
 // ---------------------------------------------------------------------------------------------------------------------
-void Patch2D::initExchange( Field* field, int iDim )
+void Patch2D::initExchange( Field* field, int iDim, SmileiMPI* smpi )
 {
     if (field->MPIbuff.srequest.size()==0) {
         field->MPIbuff.allocate(2);
@@ -293,7 +293,7 @@ void Patch2D::initExchange( Field* field, int iDim )
         if (field->name == "Ey") tagp = 7;
         if (field->name == "Ez") tagp = 8;
 
-        field->MPIbuff.defineTags( this, tagp );
+        field->MPIbuff.defineTags( this, smpi, tagp );
     }
 
     int patch_nbNeighbors_(2);

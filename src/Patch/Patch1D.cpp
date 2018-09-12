@@ -92,7 +92,7 @@ void Patch1D::reallyinitSumField( Field* field, int iDim )
 // Initialize current patch sum Fields communications through MPI for direction iDim
 // Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
 // ---------------------------------------------------------------------------------------------------------------------
-void Patch1D::initSumField( Field* field, int iDim )
+void Patch1D::initSumField( Field* field, int iDim, SmileiMPI* smpi )
 {
     if (field->MPIbuff.buf[0][0].size()==0){
         field->MPIbuff.allocate(1, field, oversize);
@@ -103,7 +103,7 @@ void Patch1D::initSumField( Field* field, int iDim )
         if (field->name == "Jz") tagp = 3;
         if (field->name == "Rho") tagp = 4;
 
-        field->MPIbuff.defineTags( this, tagp );
+        field->MPIbuff.defineTags( this, smpi, tagp );
     }
     
     std::vector<unsigned int> n_elem = field->dims_;
@@ -218,7 +218,7 @@ void Patch1D::finalizeExchange( Field* field )
 // Initialize current patch exhange Fields communications through MPI for direction iDim
 // Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
 // ---------------------------------------------------------------------------------------------------------------------
-void Patch1D::initExchange( Field* field, int iDim )
+void Patch1D::initExchange( Field* field, int iDim, SmileiMPI* smpi )
 {
     if (field->MPIbuff.srequest.size()==0) {
         field->MPIbuff.allocate(1);
@@ -228,7 +228,7 @@ void Patch1D::initExchange( Field* field, int iDim )
         if (field->name == "By") tagp = 7;
         if (field->name == "Bz") tagp = 8;
 
-        field->MPIbuff.defineTags( this, tagp );
+        field->MPIbuff.defineTags( this, smpi, tagp );
     }
 
     std::vector<unsigned int> n_elem   = field->dims_;

@@ -280,7 +280,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     #pragma omp single nowait
     {
         x_moved += cell_length_x_*params.n_space[0];
-        vecPatches.update_field_list() ;
+        vecPatches.update_field_list(smpi) ;
         //update list fields for species diag too ??
 
         // Tell that the patches moved this iteration (needed for probes)

@@ -104,7 +104,7 @@ public:
     void cleanup_sent_particles(int ispec, std::vector<int>* indexes_of_particles_to_exchange);
 
     //! init comm / sum densities
-    virtual void initSumField( Field* field, int iDim ) = 0;
+    virtual void initSumField( Field* field, int iDim, SmileiMPI* smpi ) = 0;
     virtual void reallyinitSumField( Field* field, int iDim ) = 0;
     //! finalize comm / sum densities
     virtual void finalizeSumField( Field* field, int iDim ) = 0;
@@ -115,7 +115,7 @@ public:
     //! finalize comm / exchange fields
     virtual void finalizeExchange( Field* field ) = 0;
     //! init comm / exchange fields in direction iDim only
-    virtual void initExchange( Field* field, int iDim ) = 0;
+    virtual void initExchange( Field* field, int iDim, SmileiMPI* smpi ) = 0;
     //! finalize comm / exchange fields in direction iDim only
     virtual void finalizeExchange( Field* field, int iDim ) = 0;
 

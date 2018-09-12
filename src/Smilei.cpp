@@ -177,7 +177,7 @@ int main (int argc, char* argv[])
         if (params.solve_relativistic_poisson == true) {
             // Compute rho only for species needing relativistic field Initialization
             vecPatches.computeChargeRelativisticSpecies(time_prim);
-            SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, timers, 0 );
+            SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, &smpi, timers, 0 );
             
             // Initialize the fields for these species
             if (!vecPatches.isRhoNull(&smpi)){
@@ -189,7 +189,7 @@ int main (int argc, char* argv[])
         }
         
         vecPatches.computeCharge();
-        vecPatches.sumDensities(params, time_dual, timers, 0, simWindow);
+        vecPatches.sumDensities(params, time_dual, timers, 0, simWindow, &smpi);
 
         // ---------------------------------------------------------------------
         // Init and compute tables for radiation effects
@@ -219,7 +219,7 @@ int main (int argc, char* argv[])
 
         vecPatches.projection_for_diags(params, &smpi, simWindow, time_dual, timers, 0);
 
-        vecPatches.sumDensities(params, time_dual, timers, 0, simWindow );
+        vecPatches.sumDensities(params, time_dual, timers, 0, simWindow, &smpi );
 
         TITLE("Initializing diagnostics");
         vecPatches.initAllDiags( params, &smpi );
@@ -296,7 +296,7 @@ int main (int argc, char* argv[])
             if (params.solve_relativistic_poisson == true) {
                 // Compute rho only for species needing relativistic field Initialization
                 vecPatches.computeChargeRelativisticSpecies(time_prim);
-                SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, timers, 0 );
+                SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, &smpi, timers, 0 );
                 #pragma omp master
                 {
 
@@ -319,7 +319,7 @@ int main (int argc, char* argv[])
                                 time_dual, timers, itime);
             
             // Sum densities
-            vecPatches.sumDensities(params, time_dual, timers, itime, simWindow );
+            vecPatches.sumDensities(params, time_dual, timers, itime, simWindow ,&smpi );
             
             // apply currents from antennas
             vecPatches.applyAntennas(time_dual);
@@ -331,7 +331,7 @@ int main (int argc, char* argv[])
             //if ( global_factor==1 )
             {
                 if( time_dual > params.time_fields_frozen ) {
-                    vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers );
+                    vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers, &smpi );
                 }
             }
             #else
@@ -341,7 +341,7 @@ int main (int argc, char* argv[])
             {
                 if( time_dual > params.time_fields_frozen ) {
                     SyncCartesianPatch::patchedToCartesian( vecPatches, domain, params, &smpi, timers, itime );
-                    domain.solveMaxwell( params, simWindow, itime, time_dual, timers );
+                    domain.solveMaxwell( params, simWindow, itime, time_dual, timers, &smpi );
                     SyncCartesianPatch::cartesianToPatches( domain, vecPatches, params, &smpi, timers, itime );
                 }
             }

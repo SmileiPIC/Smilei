@@ -84,12 +84,23 @@ void AsyncMPIbuffers::allocate(unsigned int ndims, Field* f, std::vector<unsigne
 }
 
 
-void AsyncMPIbuffers::defineTags(Patch* patch, int tag ) 
+void AsyncMPIbuffers::defineTags(Patch* patch, SmileiMPI* smpi, int tag ) 
 {
     for (unsigned int iDim=0 ; iDim< send_tags_.size() ; iDim++)
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-            send_tags_[iDim][iNeighbor] = buildtag( patch->hindex, iDim, iNeighbor, tag );
-            recv_tags_[iDim][iNeighbor] = buildtag( patch->neighbor_[iDim][(iNeighbor+1)%2], iDim, iNeighbor, tag );
+
+            int local_hindex = 0;
+            for ( int irk=0 ; irk<patch->MPI_me_ ; irk++)
+                local_hindex += smpi->patch_count[irk];
+            local_hindex = patch->hindex - local_hindex;
+            send_tags_[iDim][iNeighbor] = buildtag( local_hindex, iDim, iNeighbor, tag );
+
+            local_hindex = 0;
+            for ( int irk=0 ; irk<patch->MPI_neighbor_[iDim][(iNeighbor+1)%2] ; irk++)
+                local_hindex += smpi->patch_count[irk];
+            local_hindex = patch->neighbor_[iDim][(iNeighbor+1)%2] - local_hindex;
+            recv_tags_[iDim][iNeighbor] = buildtag( local_hindex, iDim, iNeighbor, tag );
+
         }
 
 }

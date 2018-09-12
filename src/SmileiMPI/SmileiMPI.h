@@ -33,6 +33,7 @@ class SmileiMPI {
     friend class PatchesFactory;
     friend class Patch;
     friend class VectorPatch;
+    friend class AsyncMPIbuffers;
 
 public:
     SmileiMPI() {};
