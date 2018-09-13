@@ -34,7 +34,7 @@ Release 3.5
 **Download**: `Smilei v3.5 <_downloads/smilei-v3.5.tar.gz>`_
 
 * :doc:`Laser defined in tilted plane<laser_offset>`
-* Bugfixes: Field diagnostic subgrid, Scalar diagnostic PoyInst
+* Bugfixes: Field diagnostic subgrid, Scalar diagnostic PoyInst, MPI tags for large number of patches
 
 ----
 
