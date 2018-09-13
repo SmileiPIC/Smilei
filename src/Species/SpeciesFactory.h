@@ -369,7 +369,7 @@ public:
 
 
         PyTools::extract("ponderomotive_dynamics",thisSpecies->ponderomotive_dynamics ,"Species",ispec);
-        if ( thisSpecies->ponderomotive_dynamics && ( params.geometry != "3Dcartesian" ) )
+        if ( thisSpecies->ponderomotive_dynamics && ( params.geometry != "3Dcartesian" ) && ( params.geometry != "2Dcartesian" ))
             ERROR( "Ponderomotive/Envelope model only available in 3D3V" );
         int n_envlaser = PyTools::nComponents("LaserEnvelope");
         if ( thisSpecies->ponderomotive_dynamics && ( n_envlaser < 1 ) ){
