@@ -844,7 +844,7 @@ void Projector3D2Order::project_susceptibility(ElectroMagn* EMfields, Particles 
             Sz1[3] = 0.5 * (delta2+delta+0.25);
 
             // ---------------------------
-            // Calculate the total charge
+            // Calculate the total susceptibility
             // ---------------------------
             ip -= i_domain_begin + 2;
             jp -= j_domain_begin + 2;
