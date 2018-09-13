@@ -361,7 +361,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
                 // ?? not sure about this ?
                 Jz_p[i][j] = crt_p  * Wz[i][j];
-                cout << std::setprecision(9) << " crt_p = " << crt_p << " Wz = " << Wz[i][j] << endl; 
+                cout << std::setprecision(9) << " crt_p = " << crt_p << " Wz = " << Wz[i][j] << " Jz = " << Jz_p[i][j] << endl; 
             }
         }
 
@@ -405,7 +405,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             if (jloc+ j_domain_begin == 0){
                 Jt [linindex] += Jz_p[i][j]*6./dr;
             }else{
-                Jt [linindex] += Jz_p[i][j] /abs((jloc+ j_domain_begin)*dr) ;
+                Jt [linindex] += Jz_p[i][j] /abs((jloc+ j_domain_begin)*dr);
             }
             //if (jloc+j_domain_begin==0){
             //    Jt[linindex] = - 1./3.* (4.* Icpx * Jr[linindex+1] + Jt[linindex+1]);
@@ -713,7 +713,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     }
      e_delta_inv =1./e_delta;
     //defining crt_p 
-    complex<double> crt_p = -charge_weight*Icpx/(2*M_PI*e_bar*dt*imode)*(particles.momentum(2,ipart)*particles.position(1,ipart)-particles.momentum(1,ipart)*particles.position(2,ipart))/(rp)*invgf;
+    complex<double> crt_p = -charge_weight*Icpx/(2*M_PI*e_bar*dt*imode)*rp;
     for (unsigned int i=0; i < 5; i++) {
         DSx[i] = Sx1[i] - Sx0[i];
         DSy[i] = Sy1[i] - Sy0[i];
