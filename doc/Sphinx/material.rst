@@ -7,7 +7,15 @@ Publications
 
 .. rst-class:: bigcitation
 
-.. [Derouillat]
+.. [Perez]
+  
+  F. Pérez, M. Grech,
+  `Oblique-incidence, arbitrary-profile wave injection for electromagnetic simulations`,
+  `arXiv:1809.04435 <https://arxiv.org/abs/1809.04435>`_
+
+.. rst-class:: bigcitation
+
+.. [Derouillat2018]
    
    J. Derouillat, A. Beck, F. Pérez, T. Vinci, M. Chiaramello, A. Grassi, M. Flé, G. Bouchard, I. Plotnikov, N. Aunai, J. Dargent, C. Riconda, M. Grech,
    `SMILEI: a collaborative, open-source, multi-purpose particle-in-cell code for plasma simulation`,

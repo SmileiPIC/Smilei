@@ -28,7 +28,17 @@ Upcoming changes
 
 .. _latestVersion:
 
-Current release 3.4.1
+Release 3.5
+^^^^^^^^^^^^^^^^^^^^^
+
+**Download**: `Smilei v3.5 <_downloads/smilei-v3.5.tar.gz>`_
+
+* :doc:`Laser defined in tilted plane<laser_offset>`
+* Bugfixes: Field diagnostic subgrid, Scalar diagnostic PoyInst
+
+----
+
+Release 3.4.1
 ^^^^^^^^^^^^^^^^^^^^^
 
 **Download**: `Smilei v3.4.1 <_downloads/smilei-v3.4.1.tar.gz>`_
