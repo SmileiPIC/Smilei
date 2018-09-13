@@ -321,6 +321,11 @@ void SmileiMPI::init_patch_count( Params& params, DomainDecomposition* domain_de
     // Lastly, the patch count is broadcast to all ranks
     MPI_Bcast( &patch_count[0], smilei_sz, MPI_INT, 0, SMILEI_COMM_WORLD);
 
+    patch_refHindexes.resize(patch_count.size(), 0);
+    patch_refHindexes[0] = 0;
+    for ( int rk=1 ; rk<smilei_sz ; rk++)    
+        patch_refHindexes[rk] = patch_refHindexes[rk-1] + patch_count[rk-1];
+
 } // END init_patch_count
 
 
@@ -467,6 +472,10 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
 
     //Ncur now has to be gathered to all as target_patch_count[smilei_rk]
     MPI_Allgather(&Ncur,1,MPI_INT,&patch_count[0], 1, MPI_INT,MPI_COMM_WORLD);
+
+    patch_refHindexes[0] = 0;
+    for ( int rk=1 ; rk<smilei_sz ; rk++)    
+        patch_refHindexes[rk] = patch_refHindexes[rk-1] + patch_count[rk-1];
 
     //Write patch_load.txt
     if (smilei_rk==0) {

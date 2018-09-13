@@ -153,7 +153,7 @@ $(BUILD_DIR)/%.d: %.cpp
 
 $(BUILD_DIR)/src/Diagnostic/DiagnosticScalar.o : src/Diagnostic/DiagnosticScalar.cpp
 	@echo "SPECIAL COMPILATION FOR $<"
-	$(Q) $(SMILEICXX) $(CXXFLAGS) -O2 -c $< -o $@
+	$(Q) $(SMILEICXX) $(CXXFLAGS) -O1 -c $< -o $@
 
 # Compile cpps
 $(BUILD_DIR)/%.o : %.cpp

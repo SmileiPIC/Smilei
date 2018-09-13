@@ -113,7 +113,7 @@ public:
 
         vecPatches.set_refHindex();
 
-        vecPatches.update_field_list();
+        vecPatches.update_field_list(smpi);
 
         TITLE("Creating Diagnostics, antennas, and external fields")
         vecPatches.createDiags( params, smpi, openPMD );

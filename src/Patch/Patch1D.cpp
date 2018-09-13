@@ -92,7 +92,7 @@ void Patch1D::reallyinitSumField( Field* field, int iDim )
 // Initialize current patch sum Fields communications through MPI for direction iDim
 // Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
 // ---------------------------------------------------------------------------------------------------------------------
-void Patch1D::initSumField( Field* field, int iDim )
+void Patch1D::initSumField( Field* field, int iDim, SmileiMPI* smpi )
 {
     if (field->MPIbuff.buf[0][0].size()==0){
         field->MPIbuff.allocate(1, field, oversize);
@@ -103,7 +103,7 @@ void Patch1D::initSumField( Field* field, int iDim )
         if (field->name == "Jz") tagp = 3;
         if (field->name == "Rho") tagp = 4;
 
-        field->MPIbuff.defineTags( this, tagp );
+        field->MPIbuff.defineTags( this, smpi, tagp );
     }
     
     std::vector<unsigned int> n_elem = field->dims_;
@@ -200,45 +200,7 @@ void Patch1D::reallyfinalizeSumField( Field* field, int iDim )
 // ---------------------------------------------------------------------------------------------------------------------
 void Patch1D::initExchange( Field* field )
 {
-    cout << "On ne passe jamais ici !!!!" << endl;
-
-    if (field->MPIbuff.srequest.size()==0)
-        field->MPIbuff.allocate(1);
-
-    std::vector<unsigned int> n_elem   = field->dims_;
-    std::vector<unsigned int> isDual = field->isDual_;
-    Field1D* f1D =  static_cast<Field1D*>(field);
-
-    int istart, ix;
-
-    // Loop over dimField
-    for (int iDim=0 ; iDim<nDim_fields_ ; iDim++) {
-
-        MPI_Datatype ntype = ntype_[iDim][isDual[0]];
-        for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-
-            if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
-
-                istart = iNeighbor * ( n_elem[iDim]- (2*oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( oversize[iDim] + 1 + isDual[iDim] );
-                ix = (1-iDim)*istart;
-                int tag = send_tags_[iDim][iNeighbor];
-                MPI_Isend( &(f1D->data_[ix]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(f1D->MPIbuff.srequest[iDim][iNeighbor]) );
-
-            } // END of Send
-
-            if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
-
-                istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - 1 - (oversize[iDim]-1) ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
-                ix = (1-iDim)*istart;
-                int tag = recv_tags_[iDim][iNeighbor];
-                MPI_Irecv( &(f1D->data_[ix]), 1, ntype, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(f1D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]));
-
-            } // END of Recv
-
-        } // END for iNeighbor
-
-    } // END for iDim
-
+    ERROR( "On ne passe jamais ici !!!!" );
 } // END initExchange( Field* field )
 
 
@@ -248,25 +210,7 @@ void Patch1D::initExchange( Field* field )
 // ---------------------------------------------------------------------------------------------------------------------
 void Patch1D::finalizeExchange( Field* field )
 {
-    Field1D* f1D =  static_cast<Field1D*>(field);
-
-    MPI_Status sstat    [nDim_fields_][2];
-    MPI_Status rstat    [nDim_fields_][2];
-
-    // Loop over dimField
-    for (int iDim=0 ; iDim<nDim_fields_ ; iDim++) {
-
-        for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
-            if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
-                MPI_Wait( &(f1D->MPIbuff.srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
-            }
-             if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
-               MPI_Wait( &(f1D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
-            }
-        }
-
-    } // END for iDim
-
+    ERROR( "On ne passe jamais ici !!!!" );
 } // END finalizeExchange( Field* field )
 
 
@@ -274,7 +218,7 @@ void Patch1D::finalizeExchange( Field* field )
 // Initialize current patch exhange Fields communications through MPI for direction iDim
 // Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
 // ---------------------------------------------------------------------------------------------------------------------
-void Patch1D::initExchange( Field* field, int iDim )
+void Patch1D::initExchange( Field* field, int iDim, SmileiMPI* smpi )
 {
     if (field->MPIbuff.srequest.size()==0) {
         field->MPIbuff.allocate(1);
@@ -284,7 +228,7 @@ void Patch1D::initExchange( Field* field, int iDim )
         if (field->name == "By") tagp = 7;
         if (field->name == "Bz") tagp = 8;
 
-        field->MPIbuff.defineTags( this, tagp );
+        field->MPIbuff.defineTags( this, smpi, tagp );
     }
 
     std::vector<unsigned int> n_elem   = field->dims_;

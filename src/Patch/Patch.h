@@ -104,19 +104,18 @@ public:
     void cleanup_sent_particles(int ispec, std::vector<int>* indexes_of_particles_to_exchange);
 
     //! init comm / sum densities
-    virtual void initSumField( Field* field, int iDim ) = 0;
+    virtual void initSumField( Field* field, int iDim, SmileiMPI* smpi ) = 0;
     virtual void reallyinitSumField( Field* field, int iDim ) = 0;
     //! finalize comm / sum densities
     virtual void finalizeSumField( Field* field, int iDim ) = 0;
     virtual void reallyfinalizeSumField( Field* field, int iDim ) = 0;
-    void testSumField( Field* field, int iDim );
 
     //! init comm / exchange fields
     virtual void initExchange( Field* field ) = 0;
     //! finalize comm / exchange fields
     virtual void finalizeExchange( Field* field ) = 0;
     //! init comm / exchange fields in direction iDim only
-    virtual void initExchange( Field* field, int iDim ) = 0;
+    virtual void initExchange( Field* field, int iDim, SmileiMPI* smpi ) = 0;
     //! finalize comm / exchange fields in direction iDim only
     virtual void finalizeExchange( Field* field, int iDim ) = 0;
 
@@ -270,8 +269,6 @@ protected:
 
     //! Hilbert index of neighbors patch
     std::vector< std::vector<int> > neighbor_, tmp_neighbor_;
-    //! send and receive tags
-    std::vector< std::vector<int> > send_tags_, recv_tags_;
 
 
     //! MPI rank of neighbors patch
@@ -288,7 +285,6 @@ protected:
     std::vector<int> cell_starting_global_index;
 
     std::vector<unsigned int> oversize;
-
 
 };
 
