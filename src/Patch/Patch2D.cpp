@@ -468,7 +468,8 @@ void Patch2D::createType( Params& params )
     // MPI_Datatype ntype_[nDim][primDual][primDual]
     int nx, ny;
     int nline, ncol;
-    
+    int nx_sum, ny_sum;    
+
     for (int ix_isPrim=0 ; ix_isPrim<2 ; ix_isPrim++) {
         nx = nx0 + ix_isPrim;
         for (int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++) {
@@ -514,22 +515,36 @@ void Patch2D::createType( Params& params )
             MPI_Type_vector(nx, 2*params.oversize[1], 2*ny, MPI_DOUBLE, &(ntype_complex_[1][ix_isPrim][iy_isPrim])); // column
             MPI_Type_commit( &(ntype_complex_[1][ix_isPrim][iy_isPrim]) );
             
-            nline = 1 + 2*params.oversize[0] + ix_isPrim;
-            
-            tmpType = MPI_DATATYPE_NULL;
-            MPI_Type_contiguous(2*ny, MPI_DOUBLE, &(tmpType));    //line
-            MPI_Type_commit( &(tmpType) );
-            
-            MPI_Type_contiguous(nline, tmpType, &(ntypeSum_complex_[0][ix_isPrim][iy_isPrim]));    //line
+            // nline = 1 + 2*params.oversize[0] + ix_isPrim;
+            // 
+            // tmpType = MPI_DATATYPE_NULL;
+            // MPI_Type_contiguous(2*ny, MPI_DOUBLE, &(tmpType));    //line
+            // MPI_Type_commit( &(tmpType) );
+            // 
+            // MPI_Type_contiguous(nline, tmpType, &(ntypeSum_complex_[0][ix_isPrim][iy_isPrim]));    //line
+            // MPI_Type_commit( &(ntypeSum_complex_[0][ix_isPrim][iy_isPrim]) );
+            // 
+            // MPI_Type_free( &tmpType );
+            // 
+            // ntypeSum_complex_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+            // ncol  = 1 + 2*params.oversize[1] + iy_isPrim;
+            // MPI_Type_vector(nx, 2*ncol, 2*ny, MPI_DOUBLE, &(ntypeSum_complex_[1][ix_isPrim][iy_isPrim])); // column
+            // MPI_Type_commit( &(ntypeSum_complex_[1][ix_isPrim][iy_isPrim]) );
+
+
+            nx_sum = 1 + 2*params.oversize[0] + ix_isPrim;
+            ny_sum = 1 + 2*params.oversize[1] + iy_isPrim;
+
+            ntypeSum_complex_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+            MPI_Type_contiguous(2*nx_sum*ny, 
+                                MPI_DOUBLE, &(ntypeSum_complex_[0][ix_isPrim][iy_isPrim]));
             MPI_Type_commit( &(ntypeSum_complex_[0][ix_isPrim][iy_isPrim]) );
             
-            MPI_Type_free( &tmpType );
-            
             ntypeSum_complex_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            ncol  = 1 + 2*params.oversize[1] + iy_isPrim;
-            MPI_Type_vector(nx, 2*ncol, 2*ny, MPI_DOUBLE, &(ntypeSum_complex_[1][ix_isPrim][iy_isPrim])); // column
+            MPI_Type_vector(nx, 2*ny_sum, 2*ny, 
+                            MPI_DOUBLE, &(ntypeSum_complex_[1][ix_isPrim][iy_isPrim]));
             MPI_Type_commit( &(ntypeSum_complex_[1][ix_isPrim][iy_isPrim]) );
-
+           
 
         }
     }
@@ -604,7 +619,11 @@ void Patch2D::cleanType()
             MPI_Type_free( &(ntype_[1][ix_isPrim][iy_isPrim]) );
             MPI_Type_free( &(ntype_[2][ix_isPrim][iy_isPrim]) );
             MPI_Type_free( &(ntypeSum_[0][ix_isPrim][iy_isPrim]) );
-            MPI_Type_free( &(ntypeSum_[1][ix_isPrim][iy_isPrim]) );            
+            MPI_Type_free( &(ntypeSum_[1][ix_isPrim][iy_isPrim]) );   
+
+            MPI_Type_free( &(ntype_complex_[0][ix_isPrim][iy_isPrim]) );
+            MPI_Type_free( &(ntype_complex_[1][ix_isPrim][iy_isPrim]) );
+            MPI_Type_free( &(ntype_complex_[2][ix_isPrim][iy_isPrim]) );         
         }
     }
 }
