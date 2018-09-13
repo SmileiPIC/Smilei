@@ -149,6 +149,11 @@ void ElectroMagn2D::initElectroMagn2DQuantities(Params &params, Patch* patch)
     Bx_m = new Field2D(dimPrim, 0, true,  "Bx_m");
     By_m = new Field2D(dimPrim, 1, true,  "By_m");
     Bz_m = new Field2D(dimPrim, 2, true,  "Bz_m");
+
+    if (params.Laser_Envelope_model){
+        Env_A_abs_ = new Field2D(dimPrim, "Env_A_abs");
+        Env_Chi_   = new Field2D(dimPrim, "Env_Chi");
+        Env_E_abs_ = new Field2D(dimPrim, "Env_E_abs");
     
     // Allocation of filtered fields when Friedman filtering is required
     if (params.Friedman_filter){
