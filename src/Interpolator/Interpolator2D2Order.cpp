@@ -321,7 +321,7 @@ void Interpolator2D2Order::interpolate_em_fields_and_envelope( ElectroMagn* EMfi
         (*GradPHIpart)[ipart+1*nparts] = compute( &coeffxp_[1], &coeffyp_[1], GradPhiy2D, ip_, jp_);
     
         // -------------------------
-        // Interpolation of GradPhiz^(p,p,p)
+        // Interpolation of GradPhiz^(p,p)
         // -------------------------
         (*GradPHIpart)[ipart+2*nparts] = compute( &coeffxp_[1], &coeffyp_[1], GradPhiz2D, ip_, jp_);
 
@@ -338,22 +338,18 @@ void Interpolator2D2Order::interpolate_em_fields_and_envelope( ElectroMagn* EMfi
 } // END Interpolator2D2Order
 
 
-void Interpolator2D2Order::interpolate_envelope_and_old_envelope( ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator2D2Order::interpolate_time_centered_envelope( ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref )
 {
     // Static cast of the electromagnetic fields
-    Field2D* Phi2D = static_cast<Field2D*>(EMfields->envelope->Phi_);
-    Field2D* Phiold2D = static_cast<Field2D*>(EMfields->envelope->Phiold_);
-    Field2D* GradPhix2D = static_cast<Field2D*>(EMfields->envelope->GradPhix_);
-    Field2D* GradPhiy2D = static_cast<Field2D*>(EMfields->envelope->GradPhiy_);
-    Field2D* GradPhiz2D = static_cast<Field2D*>(EMfields->envelope->GradPhiz_);
-    Field2D* GradPhixold2D = static_cast<Field2D*>(EMfields->envelope->GradPhixold_);
-    Field2D* GradPhiyold2D = static_cast<Field2D*>(EMfields->envelope->GradPhiyold_);
-    Field2D* GradPhizold2D = static_cast<Field2D*>(EMfields->envelope->GradPhizold_);
+  
+    Field2D* Phi_m2D = static_cast<Field2D*>(EMfields->envelope->Phi_m);
     
-    std::vector<double> *PHIpart        = &(smpi->dynamics_PHIpart[ithread]);
-    std::vector<double> *GradPHIpart    = &(smpi->dynamics_GradPHIpart[ithread]);
-    std::vector<double> *PHIoldpart     = &(smpi->dynamics_PHIoldpart[ithread]);
-    std::vector<double> *GradPHIoldpart = &(smpi->dynamics_GradPHIoldpart[ithread]);
+    Field2D* GradPhix_m2D = static_cast<Field2D*>(EMfields->envelope->GradPhix_m);
+    Field2D* GradPhiy_m2D = static_cast<Field2D*>(EMfields->envelope->GradPhiy_m);
+    Field2D* GradPhiz_m2D = static_cast<Field2D*>(EMfields->envelope->GradPhiz_m);
+    
+    std::vector<double> *PHI_mpart     = &(smpi->dynamics_PHI_mpart[ithread]);
+    std::vector<double> *GradPHI_mpart = &(smpi->dynamics_GradPHI_mpart[ithread]);
     
     std::vector<int>    *iold  = &(smpi->dynamics_iold[ithread]);
     std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
@@ -369,19 +365,11 @@ void Interpolator2D2Order::interpolate_envelope_and_old_envelope( ElectroMagn* E
     
         // Indexes of the central nodes
         ip_ = round(xpn);
-        id_ = round(xpn+0.5);
         jp_ = round(ypn);
-        jd_ = round(ypn+0.5);
         
-    
         // Declaration and calculation of the coefficient for interpolation
         double delta2;
     
-        deltax   = xpn - (double)id_ + 0.5;
-        delta2  = deltax*deltax;
-        coeffxd_[0] = 0.5 * (delta2-deltax+0.25);
-        coeffxd_[1] = 0.75 - delta2;
-        coeffxd_[2] = 0.5 * (delta2+deltax+0.25);
     
         deltax   = xpn - (double)ip_;
         delta2  = deltax*deltax;
@@ -389,11 +377,6 @@ void Interpolator2D2Order::interpolate_envelope_and_old_envelope( ElectroMagn* E
         coeffxp_[1] = 0.75 - delta2;
         coeffxp_[2] = 0.5 * (delta2+deltax+0.25);
     
-        deltay   = ypn - (double)jd_ + 0.5;
-        delta2  = deltay*deltay;
-        coeffyd_[0] = 0.5 * (delta2-deltay+0.25);
-        coeffyd_[1] = 0.75 - delta2;
-        coeffyd_[2] = 0.5 * (delta2+deltay+0.25);
     
         deltay   = ypn - (double)jp_;
         delta2  = deltay*deltay;
@@ -406,50 +389,30 @@ void Interpolator2D2Order::interpolate_envelope_and_old_envelope( ElectroMagn* E
         //!\todo CHECK if this is correct for both primal & dual grids !!!
         // First index for summation
         ip_ = ip_ - i_domain_begin;
-        id_ = id_ - i_domain_begin;
         jp_ = jp_ - j_domain_begin;
-        jd_ = jd_ - j_domain_begin;
+        
+    
         
     
         // -------------------------
-        // Interpolation of Phi^(p,p,p)
+        // Interpolation of Phiold^(p,p)
         // -------------------------
-        (*PHIpart)[ipart] = compute( &coeffxp_[1], &coeffyp_[1], Phi2D, ip_, jp_);
+        (*PHI_mpart)[ipart] = compute( &coeffxp_[1], &coeffyp_[1], Phi_m2D, ip_, jp_);
     
         // -------------------------
-        // Interpolation of Phiold^(p,p,p)
+        // Interpolation of GradPhixold^(p,p)
         // -------------------------
-        (*PHIoldpart)[ipart] = compute( &coeffxp_[1], &coeffyp_[1], Phiold2D, ip_, jp_);
+        (*GradPHI_mpart)[ipart+0*nparts] = compute( &coeffxp_[1], &coeffyp_[1], GradPhix_m2D, ip_, jp_);
     
         // -------------------------
-        // Interpolation of GradPhix^(p,p,p)
+        // Interpolation of GradPhiyold^(p,p)
         // -------------------------
-        (*GradPHIpart)[ipart+0*nparts] = compute( &coeffxp_[1], &coeffyp_[1], GradPhix2D, ip_, jp_);
+        (*GradPHI_mpart)[ipart+1*nparts] = compute( &coeffxp_[1], &coeffyp_[1], GradPhiy_m2D, ip_, jp_);
     
         // -------------------------
-        // Interpolation of GradPhixold^(p,p,p)
+        // Interpolation of GradPhizold^(p,p)
         // -------------------------
-        (*GradPHIoldpart)[ipart+0*nparts] = compute( &coeffxp_[1], &coeffyp_[1], GradPhixold2D, ip_, jp_);
-    
-        // -------------------------
-        // Interpolation of GradPhiy^(p,p,p)
-        // -------------------------
-        (*GradPHIpart)[ipart+1*nparts] = compute( &coeffxp_[1], &coeffyp_[1], GradPhiy2D, ip_, jp_);
-    
-        // -------------------------
-        // Interpolation of GradPhiyold^(p,p,p)
-        // -------------------------
-        (*GradPHIoldpart)[ipart+1*nparts] = compute( &coeffxp_[1], &coeffyp_[1], GradPhiyold2D, ip_, jp_);
-    
-        // -------------------------
-        // Interpolation of GradPhiz^(p,p,p)
-        // -------------------------
-        (*GradPHIpart)[ipart+2*nparts] = compute( &coeffxp_[1], &coeffyp_[1], GradPhiz2D, ip_, jp_);
-    
-        // -------------------------
-        // Interpolation of GradPhizold^(p,p,p)
-        // -------------------------
-        (*GradPHIoldpart)[ipart+2*nparts] = compute( &coeffxp_[1], &coeffyp_[1], GradPhizold2D, ip_, jp_);
+        (*GradPHI_mpart)[ipart+2*nparts] = compute( &coeffxp_[1], &coeffyp_[1], GradPhiz_m2D, ip_, jp_);
     
         //Buffering of iold and delta
         (*iold)[ipart+0*nparts]  = ip_;
@@ -465,66 +428,61 @@ void Interpolator2D2Order::interpolate_envelope_and_old_envelope( ElectroMagn* E
 
 void Interpolator2D2Order::interpolate_envelope_and_susceptibility(ElectroMagn* EMfields, Particles &particles, int ipart, double* Env_A_abs_Loc, double* Env_Chi_Loc, double* Env_E_abs_Loc)
 {
-    // // Static cast of the electromagnetic fields
-    // Field3D* Env_A_abs_3D = static_cast<Field3D*>(EMfields->Env_A_abs_);
-    // Field3D* Env_Chi_3D = static_cast<Field3D*>(EMfields->Env_Chi_);
-    // Field3D* Env_E_abs_3D = static_cast<Field3D*>(EMfields->Env_E_abs_);
-    // 
-    // // Normalized particle position
-    // double xpn = particles.position(0, ipart)*dx_inv_;
-    // double ypn = particles.position(1, ipart)*dy_inv_;
-    // double zpn = particles.position(2, ipart)*dz_inv_;
-    // 
-    // 
-    // // Indexes of the central nodes
-    // ip_ = round(xpn);
-    // jp_ = round(ypn);
-    // kp_ = round(zpn);
-    // 
-    // 
-    // // Declaration and calculation of the coefficient for interpolation
-    // double delta2;
-    // 
-    // 
-    // deltax   = xpn - (double)ip_;
-    // delta2  = deltax*deltax;
-    // coeffxp_[0] = 0.5 * (delta2-deltax+0.25);
-    // coeffxp_[1] = 0.75 - delta2;
-    // coeffxp_[2] = 0.5 * (delta2+deltax+0.25);
-    // 
-    // deltay   = ypn - (double)jp_;
-    // delta2  = deltay*deltay;
-    // coeffyp_[0] = 0.5 * (delta2-deltay+0.25);
-    // coeffyp_[1] = 0.75 - delta2;
-    // coeffyp_[2] = 0.5 * (delta2+deltay+0.25);
-    // 
-    // deltaz   = zpn - (double)kp_;
-    // delta2  = deltaz*deltaz;
-    // coeffzp_[0] = 0.5 * (delta2-deltaz+0.25);
-    // coeffzp_[1] = 0.75 - delta2;
-    // coeffzp_[2] = 0.5 * (delta2+deltaz+0.25);
-    // 
-    // 
-    // //!\todo CHECK if this is correct for both primal & dual grids !!!
-    // // First index for summation
-    // ip_ = ip_ - i_domain_begin;
-    // jp_ = jp_ - j_domain_begin;
-    // kp_ = kp_ - k_domain_begin;
-    // 
-    // // -------------------------
-    // // Interpolation of Env_A_abs_^(p,p,p)
-    // // -------------------------
-    // *(Env_A_abs_Loc) = compute( &coeffxp_[1], &coeffyp_[1], &coeffzp_[1], Env_A_abs_3D, ip_, jp_, kp_);
-    // 
-    // // -------------------------
-    // // Interpolation of Env_Chi_^(p,p,p)
-    // // -------------------------
-    // *(Env_Chi_Loc) = compute( &coeffxp_[1], &coeffyp_[1], &coeffzp_[1], Env_Chi_3D, ip_, jp_, kp_);
-    // 
-    // // -------------------------
-    // // Interpolation of Env_E_abs_^(p,p,p)
-    // // -------------------------
-    // *(Env_E_abs_Loc) = compute( &coeffxp_[1], &coeffyp_[1], &coeffzp_[1], Env_E_abs_3D, ip_, jp_, kp_);
+    // Static cast of the electromagnetic fields
+    Field2D* Env_A_abs_2D = static_cast<Field2D*>(EMfields->Env_A_abs_);
+    Field2D* Env_Chi_2D = static_cast<Field2D*>(EMfields->Env_Chi_);
+    Field2D* Env_E_abs_2D = static_cast<Field2D*>(EMfields->Env_E_abs_);
+    
+    // Normalized particle position
+    double xpn = particles.position(0, ipart)*dx_inv_;
+    double ypn = particles.position(1, ipart)*dy_inv_;
+    
+    
+    
+    // Indexes of the central nodes
+    ip_ = round(xpn);
+    jp_ = round(ypn);
+    
+    
+    
+    // Declaration and calculation of the coefficient for interpolation
+    double delta2;
+    
+    
+    deltax   = xpn - (double)ip_;
+    delta2  = deltax*deltax;
+    coeffxp_[0] = 0.5 * (delta2-deltax+0.25);
+    coeffxp_[1] = 0.75 - delta2;
+    coeffxp_[2] = 0.5 * (delta2+deltax+0.25);
+    
+    deltay   = ypn - (double)jp_;
+    delta2  = deltay*deltay;
+    coeffyp_[0] = 0.5 * (delta2-deltay+0.25);
+    coeffyp_[1] = 0.75 - delta2;
+    coeffyp_[2] = 0.5 * (delta2+deltay+0.25);
+    
+    
+    
+    //!\todo CHECK if this is correct for both primal & dual grids !!!
+    // First index for summation
+    ip_ = ip_ - i_domain_begin;
+    jp_ = jp_ - j_domain_begin;
+    
+    
+    // -------------------------
+    // Interpolation of Env_A_abs_^(p,p)
+    // -------------------------
+    *(Env_A_abs_Loc) = compute( &coeffxp_[1], &coeffyp_[1], Env_A_abs_2D, ip_, jp_);
+    
+    // -------------------------
+    // Interpolation of Env_Chi_^(p,p)
+    // -------------------------
+    *(Env_Chi_Loc) = compute( &coeffxp_[1], &coeffyp_[1], Env_Chi_2D, ip_, jp_);
+    
+    // -------------------------
+    // Interpolation of Env_E_abs_^(p,p)
+    // -------------------------
+    *(Env_E_abs_Loc) = compute( &coeffxp_[1], &coeffyp_[1], Env_E_abs_2D, ip_, jp_);
 
 } // END Interpolator2D2Order
 
