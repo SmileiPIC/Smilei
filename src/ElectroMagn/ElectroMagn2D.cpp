@@ -35,6 +35,11 @@ isYmax(patch->isYmax())
         Jy_s[ispec]  = new Field2D(Tools::merge("Jy_" ,vecSpecies[ispec]->name).c_str(), dimPrim);
         Jz_s[ispec]  = new Field2D(Tools::merge("Jz_" ,vecSpecies[ispec]->name).c_str(), dimPrim);
         rho_s[ispec] = new Field2D(Tools::merge("Rho_",vecSpecies[ispec]->name).c_str(), dimPrim);
+
+        if (params.Laser_Envelope_model){
+            Env_Chi_s[ispec] = new Field2D(Tools::merge("Env_Chi_",vecSpecies[ispec]->name).c_str(), dimPrim);
+                                        } 
+
     }
     
 
@@ -76,6 +81,17 @@ isYmax(patch->isYmax())
             else
                 rho_s[ispec]  = new Field2D(emFields->rho_s[ispec]->name, dimPrim);
         }
+
+        if (params.Laser_Envelope_model){
+            if ( emFields->Env_Chi_s[ispec] != NULL ){
+                if ( emFields->Env_Chi_s[ispec]->data_ != NULL )
+                    Env_Chi_s[ispec] = new Field2D(dimPrim, emFields->Env_Chi_s[ispec]->name );
+                else
+                    Env_Chi_s[ispec]  = new Field2D(emFields->Env_Chi_s[ispec]->name, dimPrim);
+            }
+        }
+
+
     }
     
 }
@@ -1109,7 +1125,27 @@ void ElectroMagn2D::computeTotalRhoJ()
 // Compute the total susceptibility from species susceptibility
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn2D::computeTotalEnvChi()
-{} //END computeTotalEnvChi
+{
+
+    // static cast of the total susceptibility
+    Field2D* Env_Chi2D   = static_cast<Field2D*>(Env_Chi_);
+    
+    // -----------------------------------
+    // Species susceptibility
+    // -----------------------------------
+    for (unsigned int ispec=0; ispec<n_species; ispec++) {
+        if( Env_Chi_s[ispec] ) {
+            Field2D* Env_Chi2D_s  = static_cast<Field2D*>(Env_Chi_s[ispec]);
+            for (unsigned int i=0 ; i<nx_p ; i++){
+                for (unsigned int j=0 ; j<ny_p ; j++){
+                        (*Env_Chi2D)(i,j) += (*Env_Chi2D_s)(i,j);
+                                                     }
+                                                 }
+                               }
+    }//END loop on species ispec
+
+
+} //END computeTotalEnvChi
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Compute electromagnetic energy flows vectors on the border of the simulation box
