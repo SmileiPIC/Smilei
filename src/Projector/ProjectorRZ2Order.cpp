@@ -276,7 +276,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     double zp = particles.position(2,ipart);
     double rp = sqrt (particles.position(1, ipart)*particles.position(1, ipart)+particles.position(2, ipart)*particles.position(2, ipart));
     e_theta = (yp-Icpx*zp)/rp;
-    cout << std::setprecision(9) << "y= " << yp << endl;
+    //cout << std::setprecision(9) << "y= " << yp << endl;
     e_theta_old =exp_m_theta_old[0];
     e_delta = 1.;
     e_bar = 1.;
@@ -314,7 +314,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     for (unsigned int i=0; i<imode; i++){
         e_delta *= e_delta_m1;
         e_bar *= e_bar_m1;   
-        cout << std::setprecision(9) <<  " e_theta = " << e_theta << " e_theta_old = " << e_theta_old << " e_delta = " << e_delta << " e_bar= " << e_bar << endl;
+        //cout << std::setprecision(9) <<  " e_theta = " << e_theta << " e_theta_old = " << e_theta_old << " e_delta = " << e_delta << " e_bar= " << e_bar << endl;
     }
 
      e_delta_inv =1./e_delta;
@@ -361,7 +361,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
                 // ?? not sure about this ?
                 Jz_p[i][j] = crt_p  * Wz[i][j];
-                cout << std::setprecision(9) << " crt_p = " << crt_p << " Wz = " << Wz[i][j] << " Jz = " << Jz_p[i][j] << endl; 
+                //cout << std::setprecision(9) << " crt_p = " << crt_p << " Wz = " << Wz[i][j] << " Jz = " << Jz_p[i][j] << endl; 
             }
         }
 

@@ -296,6 +296,7 @@ void Species::initPosition(unsigned int nPart, unsigned int iPart, double *index
                 }
                 particles->position(2,p) = particles->position(1,p) ;
                 particles->position(1,p) = 0. ;
+                //particles->position(2,p) = 0. ;
             }
 
         }
