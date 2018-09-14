@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+//#include "PyTools.h"
 
 #include "Particles.h"
 #include "Params.h"
@@ -66,7 +67,13 @@ public:
 
     //! atomic number
     unsigned int atomic_number;
-
+    
+    //! maximum charge state
+    unsigned int maximum_charge_state;
+    
+    //! user defined ionization rate profile
+    PyObject* ionization_rate;
+    
     //! thermalizing temperature for thermalizing BCs [\f$m_e c^2\f$]
     std::vector<double> thermal_boundary_temperature;
     //! mean velocity used when thermalizing BCs are used [\f$c\f$]

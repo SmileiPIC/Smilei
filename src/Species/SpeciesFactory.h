@@ -29,6 +29,8 @@
 #include "Params.h"
 #include "Patch.h"
 
+#include "ParticleData.h"
+
 #include "Tools.h"
 #ifdef SMILEI_USE_NUMPY
 #include <numpy/arrayobject.h>
@@ -355,7 +357,7 @@ public:
             if (!params.restart) thisSpecies->n_numpy_particles =  PyArray_SHAPE(np_ret)[1];//  ok
             thisSpecies->position_initialization_array = new double[ndim_local*thisSpecies->n_numpy_particles] ;
             for (unsigned int idim = 0; idim < ndim_local ; idim++){
-                for (unsigned int ipart = 0; ipart < thisSpecies->n_numpy_particles; ipart++){
+                for (unsigned int ipart = 0; ipart < (unsigned int)thisSpecies->n_numpy_particles; ipart++){
                     thisSpecies->position_initialization_array[idim*thisSpecies->n_numpy_particles+ipart] = *((double*)PyArray_GETPTR2( np_ret , idim, ipart));
                 }
             }
@@ -364,6 +366,7 @@ public:
         else {
             ERROR("For species '" << species_name << "' non valid position_initialization. It must be either a string or a numpy array.");
         }
+        Py_DECREF(py_pos_init);
 
 
         PyTools::extract("ponderomotive_dynamics",thisSpecies->ponderomotive_dynamics ,"Species",ispec);
@@ -424,7 +427,7 @@ public:
 
             thisSpecies->momentum_initialization_array = new double[ndim_local*thisSpecies->n_numpy_particles] ;
             for (unsigned int idim = 0; idim < ndim_local ; idim++){
-                for (unsigned int ipart = 0; ipart < thisSpecies->n_numpy_particles; ipart++){
+                for (unsigned int ipart = 0; ipart < (unsigned int)thisSpecies->n_numpy_particles; ipart++){
                     thisSpecies->momentum_initialization_array[idim*thisSpecies->n_numpy_particles+ipart] = *((double*)PyArray_GETPTR2( np_ret_mom , idim, ipart));
                 }
             }
@@ -433,6 +436,7 @@ public:
         else {
             ERROR("For species '" << species_name << "' non valid momentum_initialization. It must be either a string or a numpy array.");
         }
+        Py_DECREF(py_mom_init);
 
         PyTools::extract("c_part_max",thisSpecies->c_part_max,"Species",ispec);
 
@@ -509,6 +513,9 @@ public:
         {
             thisSpecies->atomic_number = 0;
             PyTools::extract("atomic_number", thisSpecies->atomic_number, "Species",ispec);
+            
+            thisSpecies->maximum_charge_state = 0;
+            PyTools::extract("maximum_charge_state", thisSpecies->maximum_charge_state, "Species",ispec);
 
             std::string model;
             if( PyTools::extract("ionization_model", model, "Species",ispec) && model!="none" ) {
@@ -516,13 +523,39 @@ public:
                 thisSpecies->ionization_model = model;
 
                 if( ! PyTools::extract("ionization_electrons", thisSpecies->ionization_electrons, "Species",ispec) ) {
-                    ERROR("For species '" << species_name << "' undefined ionization_electrons (required for ionization)");
+                    ERROR("For species '" << species_name << " undefined ionization_electrons (required for ionization)");
                 }
 
-                if( thisSpecies->atomic_number==0 ) {
-                    ERROR("For species '" << species_name << "' undefined atomic_number (required for ionization)");
+                if( (thisSpecies->atomic_number==0)&&(thisSpecies->maximum_charge_state==0) ) {
+                    ERROR("For species '" << species_name << " undefined atomic_number & maximum_charge_state (required for ionization)");
+                }
+                
+                if ( (thisSpecies->ionization_model == "from_rate") && (thisSpecies->maximum_charge_state == 0) ) {
+                    thisSpecies->maximum_charge_state = thisSpecies->atomic_number;
+                    WARNING("For species '" << species_name << " ionization 'from_rate' is used with maximum_charge_state = "<<thisSpecies->maximum_charge_state << " taken from atomic_number");
+                }
+                
+                if (thisSpecies->ionization_model == "from_rate") {
+                    thisSpecies->ionization_rate = PyTools::extract_py("ionization_rate", "Species", ispec);
+                    if( thisSpecies->ionization_rate==Py_None ) {
+                        ERROR("For species '" << species_name << " ionization 'from_rate' requires 'ionization_rate' ");
+                    }
+                    else {
+#ifdef SMILEI_USE_NUMPY
+                        PyTools::setIteration( 0 );
+                        // Test the ionization_rate function with temporary, "fake" particles
+                        std::ostringstream name("");
+                        name << " ionization_rate:";
+                        double * dummy = NULL;
+                        ParticleData test( params.nDim_particle, thisSpecies->ionization_rate, name.str(), dummy );
+#else
+                        ERROR("For species '" << species_name << " ionization 'from_rate' requires Numpy package ");
+#endif
+                    }
                 }
             }
+            
+            
         }
 
         // Extract if the species is relativistic and needs ad hoc fields initialization
@@ -692,6 +725,9 @@ public:
         newSpecies->thermalVelocity                          = species->thermalVelocity;
         newSpecies->thermalMomentum                          = species->thermalMomentum;
         newSpecies->atomic_number                            = species->atomic_number;
+        newSpecies->maximum_charge_state                     = species->maximum_charge_state;
+        newSpecies->ionization_rate                          = species->ionization_rate;
+        if (newSpecies->ionization_rate!=Py_None) Py_INCREF(newSpecies->ionization_rate);
         newSpecies->ionization_model                         = species->ionization_model;
         newSpecies->densityProfileType                       = species->densityProfileType;
         newSpecies->vectorized_operators                     = species->vectorized_operators;
@@ -810,8 +846,14 @@ public:
                     retSpecies[ispec1]->Ionize->new_electrons.tracked = retSpecies[ispec1]->electron_species->particles->tracked;
                     retSpecies[ispec1]->Ionize->new_electrons.initialize(0, params.nDim_particle );
                     if ( ( !retSpecies[ispec1]->getNbrOfParticles() ) && ( !retSpecies[ispec2]->getNbrOfParticles() ) ) {
-                        int max_eon_number = retSpecies[ispec1]->getNbrOfParticles() * retSpecies[ispec1]->atomic_number;
-                        retSpecies[ispec2]->particles->reserve( max_eon_number, retSpecies[ispec2]->particles->dimension() );
+                        if (retSpecies[ispec1]->atomic_number!=0) {
+                            int max_eon_number = retSpecies[ispec1]->getNbrOfParticles() * retSpecies[ispec1]->atomic_number;
+                            retSpecies[ispec2]->particles->reserve( max_eon_number, retSpecies[ispec2]->particles->dimension() );
+                        }
+                        else if (retSpecies[ispec1]->maximum_charge_state!=0) {
+                            int max_eon_number = retSpecies[ispec1]->getNbrOfParticles() * retSpecies[ispec1]->maximum_charge_state;
+                            retSpecies[ispec2]->particles->reserve( max_eon_number, retSpecies[ispec2]->particles->dimension() );
+                        }
                     }
                     break;
                 }
@@ -955,8 +997,7 @@ public:
                     retSpecies[i]->Radiate->new_photons.isMonteCarlo = retSpecies[i]->photon_species->particles->isMonteCarlo;
                     //retSpecies[i]->Radiate->new_photons.initialize(retSpecies[i]->getNbrOfParticles(),
                     //                                               params.nDim_particle );
-                    retSpecies[i]->Radiate->new_photons.initialize(0,
-                                                                  params.nDim_particle );
+                    retSpecies[i]->Radiate->new_photons.initialize(0,params.nDim_particle );
                 }
                 else
                 {

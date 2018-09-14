@@ -338,6 +338,11 @@ void SmileiMPI::init_patch_count( Params& params, DomainDecomposition* domain_de
     // Lastly, the patch count is broadcast to all ranks
     MPI_Bcast( &patch_count[0], smilei_sz, MPI_INT, 0, SMILEI_COMM_WORLD);
 
+    patch_refHindexes.resize(patch_count.size(), 0);
+    patch_refHindexes[0] = 0;
+    for ( int rk=1 ; rk<smilei_sz ; rk++)    
+        patch_refHindexes[rk] = patch_refHindexes[rk-1] + patch_count[rk-1];
+
 } // END init_patch_count
 
 
@@ -349,7 +354,8 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
 
     unsigned int ncells_perpatch, j;
     int Ncur;
-    double Tload,Tload_loc,Tcur, cells_load, target, Tscan;
+    double Tload,Tload_loc,Tcur, cells_load, target, Tscan, largest_patch_loc, largest_patch;
+    bool recompute_tload = true;
     //Load of a cell = cell_load*load of a particle.
     //Load of a frozen particle = frozen_particle_load*load of a particle.
     std::vector<double> Lp, Lp_left, Lp_right;
@@ -369,25 +375,47 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     unsigned int tot_species_number = vecpatches(0)->vecSpecies.size();
     cells_load = ncells_perpatch*params.cell_load ;
 
-    Lp.resize(patch_count[smilei_rk], cells_load);
+    Lp.resize(patch_count[smilei_rk]);
     if (smilei_rk > 0) Lp_left.resize(patch_count[smilei_rk-1]);
     if (smilei_rk < smilei_sz-1) Lp_right.resize(patch_count[smilei_rk+1]);
 
-    Tload_loc = 0.;
-    Ncur = 0; // Number of patches assigned to current rank r.
 
-    //Compute Local Loads of each Patch (Lp)
-    for(unsigned int ipatch=0; ipatch < (unsigned int)patch_count[smilei_rk]; ipatch++){
-        for (unsigned int ispecies = 0; ispecies < tot_species_number; ispecies++) {
-            Lp[ipatch] += vecpatches(ipatch)->vecSpecies[ispecies]->getNbrOfParticles()*(1+(params.frozen_particle_load-1)*(time_dual < vecpatches(ipatch)->vecSpecies[ispecies]->time_frozen)) ;
+
+    while (recompute_tload){
+
+        Tload_loc = 0.;
+        Ncur = 0; // Variation of the number of patches assigned to current rank r.
+        for(unsigned int ipatch=0; ipatch < (unsigned int)patch_count[smilei_rk]; ipatch++)  Lp[ipatch] =  cells_load ;
+
+        //Compute particle contribution to Local Loads of each Patch (Lp)
+        for(unsigned int ipatch=0; ipatch < (unsigned int)patch_count[smilei_rk]; ipatch++){
+            for (unsigned int ispecies = 0; ispecies < tot_species_number; ispecies++) {
+                Lp[ipatch] += vecpatches(ipatch)->vecSpecies[ispecies]->getNbrOfParticles()*(1+(params.frozen_particle_load-1)*(time_dual < vecpatches(ipatch)->vecSpecies[ispecies]->time_frozen)) ;
+            }
+            Tload_loc += Lp[ipatch];
         }
-        Tload_loc += Lp[ipatch];
-    }
 
-    //Tscan = total load carried by previous ranks and me
-    MPI_Scan(&Tload_loc, &Tscan, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    //Tload = total load carried by all ranks
-    MPI_Allreduce(&Tload_loc, &Tload, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        largest_patch_loc = *max_element(Lp.begin(), Lp.end());
+
+        //Tscan = total load carried by previous ranks and me
+        MPI_Scan(&Tload_loc, &Tscan, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        //Tload = total load carried by all ranks
+        MPI_Allreduce(&Tload_loc, &Tload, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+        //Evaluate largest patch of the simulation
+        MPI_Allreduce(&largest_patch_loc, &largest_patch, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+
+        Tload /= Tcapabilities; //Target load for each mpi process.
+       
+        //This algorithm does not support single patches having a load larger than the target load per MPI rank.
+        //If this happens, the code multiplies the cell load coefficient in order to be able to continue.  
+        if (largest_patch >= Tload){
+            params.cell_load *= 2.;    
+            cells_load = ncells_perpatch*params.cell_load ;
+            WARNING("Dynamic Load balancing had to increase cell load coefficient because of an overloaded patch with respect to the target load per MPI rank. Try using smaller patches or less MPI ranks.");
+        }else{
+            recompute_tload = false;
+        }
+    }
 
     //Communicate the detail of the load of each patch to neighbouring MPI ranks
     if (smilei_rk < smilei_sz-1) {
@@ -401,9 +429,6 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
         MPI_Recv( &(Lp_right[0]), patch_count[smilei_rk+1], MPI_DOUBLE, smilei_rk+1, 1, MPI_COMM_WORLD, &status1);
     }
 
-    Tload /= Tcapabilities; //Target load for each mpi process.
-
-    //Tcur = Tload * capabilities[smilei_rk];  //Init.
 
     if (smilei_rk > 0)
         MPI_Wait(&request1, &status);
@@ -425,7 +450,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
         } else {
         //  Check if some of my patches should be given to my left neighbour.
             j = 0;
-            while ( (abs(Tcur-target) > abs(Tcur+Lp[j]-target)) && (j < (unsigned int)patch_count[smilei_rk]-1) ){ //Keep at least 1 patch
+            while ( (abs(Tcur-target) > abs(Tcur+Lp[j]-target)) && (j < (unsigned int)patch_count[smilei_rk]-1) ){ //Keep at least 1 patch from my original set of patches
                 Tcur += Lp[j];
                 j++;
                 Ncur --;
@@ -441,7 +466,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
         //Check if my rank should start with additional patches from right neighbour ...
         if (Tcur < target){
             unsigned int j = 0;
-            while ( (abs(Tcur-target) > abs(Tcur+Lp_right[j] - target)) && (j<(unsigned int)patch_count[smilei_rk+1] - 1) ){ //Keep at least 1 patch
+            while ( (abs(Tcur-target) > abs(Tcur+Lp_right[j] - target)) && (j<(unsigned int)patch_count[smilei_rk+1] - 1) ){ //Leave at least 1 patch to my neighbour
                 Tcur += Lp_right[j];
                 j++;
                 Ncur++;
@@ -450,7 +475,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
         } else {
         //  Check if some of my patches should be given to my right neighbour.
             j = patch_count[smilei_rk]-1;
-            while (abs(Tcur-target) > abs(Tcur-Lp[j]-target) && j > 0){ //Keep at least 1 patch
+            while (abs(Tcur-target) > abs(Tcur-Lp[j]-target) && j > 0){ //Keep at least 1 patch from my original set of patches
                 Tcur -= Lp[j];
                 j--;
                 Ncur --;
@@ -464,6 +489,10 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
 
     //Ncur now has to be gathered to all as target_patch_count[smilei_rk]
     MPI_Allgather(&Ncur,1,MPI_INT,&patch_count[0], 1, MPI_INT,MPI_COMM_WORLD);
+
+    patch_refHindexes[0] = 0;
+    for ( int rk=1 ; rk<smilei_sz ; rk++)    
+        patch_refHindexes[rk] = patch_refHindexes[rk-1] + patch_count[rk-1];
 
     //Write patch_load.txt
     if (smilei_rk==0) {

@@ -471,7 +471,8 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     ostringstream name_t;
 
     unsigned int nPatches( vecPatches.size() );
-
+    double x_moved = simWindow ? simWindow->getXmoved() : 0.;
+    
     // Leave if this timestep has already been written
     #pragma omp master
     {
@@ -486,7 +487,6 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     {
         // If the patches have been moved (moving window or load balancing) we must re-compute the probes positions
         if( !positions_written || last_iteration_points_calculated <= vecPatches.lastIterationPatchesMoved ) {
-            double x_moved = simWindow ? simWindow->getXmoved() : 0.;
             createPoints(smpi, vecPatches, false, x_moved);
             last_iteration_points_calculated = timestep;
 
@@ -654,6 +654,10 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         H5Pset_dxpl_mpio(transfer, H5FD_MPIO_INDEPENDENT);
         // Write
         H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, probesArray->data_ );
+        
+        // Write x_moved
+        H5::attr(dset_id, "x_moved", x_moved);
+        
         H5Dclose(dset_id);
         H5Pclose( transfer );
         H5Sclose(filespace);
