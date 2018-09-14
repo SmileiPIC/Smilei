@@ -838,6 +838,7 @@ void Species::projection_for_diags(double time_dual, unsigned int ispec,
 
             for (int iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
                 for (unsigned int quantity=0; quantity < 4; quantity++) {
+                     cout << "proj for diag quantity " << quantity << endl;
                     (*Proj)(buf[quantity], (*particles), iPart, quantity, b_dim);
                 }
             } //End loop on particles

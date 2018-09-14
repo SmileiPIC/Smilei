@@ -28,10 +28,6 @@ Projector2D2Order::Projector2D2Order (Params& params, Patch* patch) : Projector2
     j_domain_begin = patch->getCellStartingGlobalIndex(1);
 
     nprimy = params.n_space[1] + 2*params.oversize[1] + 1;
-    Jx_  =  &(*patch->EMfields->Jx_ )(0);
-    Jy_  =  &(*patch->EMfields->Jy_ )(0);
-    Jz_  =  &(*patch->EMfields->Jz_ )(0);
-    rho_ =  &(*patch->EMfields->rho_)(0);
 
     DEBUG("cell_length "<< params.cell_length[0]);
 
@@ -480,8 +476,10 @@ void Projector2D2Order::operator() (ElectroMagn* EMfields, Particles &particles,
     std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
     std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
     std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
-    
-    int dim1 = EMfields->dimPrim[1];
+    Jx_  =  &(*EMfields->Jx_ )(0);
+    Jy_  =  &(*EMfields->Jy_ )(0);
+    Jz_  =  &(*EMfields->Jz_ )(0);
+    rho_ =  &(*EMfields->rho_)(0);
     
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
     if (!diag_flag){ 

@@ -34,10 +34,6 @@ Projector1D4Order::Projector1D4Order (Params& params, Patch* patch) : Projector1
     dble_5_ov_8 = 5.0/8.0;
 
     index_domain_begin = patch->getCellStartingGlobalIndex(0);
-    Jx_  =  &(*patch->EMfields->Jx_ )(0);
-    Jy_  =  &(*patch->EMfields->Jy_ )(0);
-    Jz_  =  &(*patch->EMfields->Jz_ )(0);
-    rho_ =  &(*patch->EMfields->rho_)(0);
 
     DEBUG("cell_length "<< params.cell_length[0]);
 
@@ -291,6 +287,11 @@ void Projector1D4Order::operator() (ElectroMagn* EMfields, Particles &particles,
     std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
     std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
     std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
+
+    Jx_  =  &(*EMfields->Jx_ )(0);
+    Jy_  =  &(*EMfields->Jy_ )(0);
+    Jz_  =  &(*EMfields->Jz_ )(0);
+    rho_ =  &(*EMfields->rho_)(0);
     
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
     if (!diag_flag){ 
