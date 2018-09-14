@@ -587,6 +587,7 @@ void Particles::create_particle()
 
     for ( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ )
         (*uint64_prop[iprop]).push_back(0);
+//MESSAGE("create1");
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -603,6 +604,8 @@ void Particles::create_particles(int nAdditionalParticles )
 
     for ( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ )
         (*uint64_prop[iprop]).resize(nParticles+nAdditionalParticles,0);
+
+//MESSAGE("create2");
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -14,7 +14,7 @@ nx = 800
 nr = 100
 Lsim = [dx*nx,nr*dr] # length of the simulation
 dt = 0.18
-
+npatch_x=1
 Main(
     geometry = "3drz",
     nmodes = 2,
@@ -22,10 +22,10 @@ Main(
     solve_poisson = False,
     cell_length = [dx, dr],
     grid_length  = Lsim,
-    number_of_patches = [ 32, 4 ],
+    number_of_patches = [npatch_x, 1 ],
     timestep = dt,
-    simulation_time = 2.*nx*dt,
-     
+    simulation_time = 2*nx*dt,
+    clrw = nx/npatch_x, 
     EM_boundary_conditions = [
         ["silver-muller","silver-muller"],
         ["buneman","buneman"],
@@ -56,9 +56,32 @@ LaserGaussian2D(
 #    time_envelope   = tgaussian(center=2**0.5*laser_fwhm, fwhm=laser_fwhm)
 #)
 
+Species( 
+    name = "electron",
+    position_initialization = "random",
+    momentum_initialization = "cold",
+    particles_per_cell = 16,
+    c_part_max = 1.0,
+    mass = 1.0,
+    charge = -1.0,
+    number_density = 0.000494,
+    mean_velocity = [0.0, 0.0, 0.0],
+    temperature = [0.000001],
+    pusher = "boris",    
+    time_frozen = 0.0,
+    boundary_conditions = [
+        ["remove", "remove"],
+        ["remove", "remove"],
+    ],
+)
+
 globalEvery = int(1)
 
-
+#Checkpoints(
+#    dump_step = 0,
+#    dump_minutes = 0.0,
+#    exit_after_dump = False,
+#)
 #DiagScalar(every=globalEvery)
 
 DiagFields(
@@ -66,24 +89,18 @@ DiagFields(
     fields = ["Br_m_mode_0", "Br_m_mode_1","Bx_m_mode_0","Bx_m_mode_1","Bt_m_mode_0","Bt_m_mode_1","Bt_mode_0","Bt_mode_1","Bx_mode_0","Bx_mode_1","Br_mode_0","Br_mode_1","Er_mode_0","Er_mode_1","Et_mode_0","Et_mode_1","Ex_mode_0","Ex_mode_1" ]
 )
 
-DiagProbe(
-    every = 10,
-    origin = [1., 10., 0.],
-    fields = []
-)
-DiagProbe(
-    every = 10,
-    origin = [0., 10., 0.],
-    corners = [[Lsim[0], 10., 0.]],
-    number=[100],
-    fields = []
-)
-DiagProbe(
-    every = 10,
-    origin = [0., -10., 0.],
-    corners = [[Lsim[0], -10., 0.]],
-    number=[100],
-    fields = []
-)
-
+#DiagProbe(
+#    every = 100,
+#    number = [100, 100],
+#    pos = [0., 10.*l0],
+#    pos_first = [20.*l0, 0.*l0],
+#    pos_second = [3.*l0 , 40.*l0],
+#    fields = []
+#)
+#
+#DiagProbe(
+#    every = 10,
+#    pos = [0.1*Lsim[0], 0.5*Lsim[1]],
+#    fields = []
+#)
 

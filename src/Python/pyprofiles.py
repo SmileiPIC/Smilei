@@ -6,7 +6,7 @@ def constant(value, xvacuum=-float("inf"), yvacuum=-float("inf"), zvacuum=-float
         raise Exception("constant profile has been defined before `Main()`")
     if Main.geometry == "1Dcartesian":
         f = lambda x  : value if x>=xvacuum else 0.
-    if Main.geometry == "2Dcartesian":
+    if (Main.geometry == "2Dcartesian" or Main.geometry == "3drz"):
         f = lambda x,y: value if (x>=xvacuum and y>=yvacuum) else 0.
         f.yvacuum = yvacuum
     if Main.geometry == "3Dcartesian":
@@ -44,7 +44,7 @@ def trapezoidal(max,
             else: return 0.0
         return f
     if   Main.geometry == "1Dcartesian": dim = 1
-    elif Main.geometry == "2Dcartesian": dim = 2
+    elif (Main.geometry == "2Dcartesian" or Main.geometry == "3drz"): dim = 2
     elif Main.geometry == "3Dcartesian": dim = 3
     fx = trapeze(max, xvacuum, xplateau, xslope1, xslope2)
     f = fx
@@ -103,7 +103,7 @@ def gaussian(max,
             else: return 0.0
         return f
     if Main.geometry == "1Dcartesian": dim = 1
-    if Main.geometry == "2Dcartesian": dim = 2
+    if (Main.geometry == "2Dcartesian" or Main.geometry == "3drz"): dim = 2
     if Main.geometry == "3Dcartesian": dim = 3
     xsigma = (0.5*xfwhm)**xorder/math.log(2.0)
     fx = gauss(max, xvacuum, xlength, xsigma, xcenter, xorder)
@@ -189,7 +189,7 @@ def cosine(base,
             else: return 0.
         return f
     if Main.geometry == "1Dcartesian": dim = 1
-    if Main.geometry == "2Dcartesian": dim = 2
+    if (Main.geometry == "2Dcartesian" or Main.geometry == "3drz"): dim = 2
     if Main.geometry == "3Dcartesian": dim = 3
     fx = cos(base, xamplitude, xvacuum, xlength, xphi, xnumber)
     f = fx
@@ -242,7 +242,7 @@ def polynomial(**kwargs):
             if Main.geometry=="1Dcartesian":
                 if len(a)!=1:
                     raise Exception("1D polynomial profile must have one coefficient at order "+str(order))
-            elif Main.geometry=="2Dcartesian":
+            elif (Main.geometry=="2Dcartesian" or Main.geometry == "3drz"):
                 if len(a)!=order+1:
                     raise Exception("2D polynomial profile must have "+str(order+1)+" coefficients at order "+str(order))
             elif Main.geometry=="3Dcartesian":
@@ -260,7 +260,7 @@ def polynomial(**kwargs):
                     xx *= xx0
                 r += c[0] * xx
             return r
-    elif Main.geometry=="2Dcartesian":
+    elif (Main.geometry=="2Dcartesian" or Main.geometry == "3drz"):
         def f(x,y):
             r = 0.
             xx0 = x-x0

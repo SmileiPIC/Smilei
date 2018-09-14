@@ -166,7 +166,7 @@ public:
 
                 // X DIRECTION
                 // silver-muller (injecting/absorbing bcs)
-				MESSAGE(params.EM_BCs[0][ii]);
+				//MESSAGE(params.EM_BCs[0][ii]);
                 if ( params.EM_BCs[0][ii] == "silver-muller" ) {
                     emBoundCond[ii] = new ElectroMagnBCRZ_SM(params, patch, ii);
 					
@@ -180,16 +180,17 @@ public:
             // R DIRECTION
             emBoundCond[2] = new ElectroMagnBCRZ_Axis(params, patch, 2);
             // silver-muller bcs (injecting/absorbin)
-			MESSAGE("bc AXIS");
+			//MESSAGE("bc AXIS");
             if ( params.EM_BCs[1][1] == "buneman" ) {
                 emBoundCond[3] = new ElectroMagnBCRZ_BM(params, patch, 3);
+                //MESSAGE("create BM BC");
             }
 			
             // else: error
             else  {
                 ERROR( "Unknown EM y-boundary condition `" << params.EM_BCs[1][1] << "`");
             }
-			MESSAGE( params.EM_BCs[1][1]);
+			//MESSAGE( params.EM_BCs[1][1]);
             
         }//3drz       
 

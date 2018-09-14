@@ -19,10 +19,12 @@ public :
 
     //! Densities synchronization
     static void sumRhoJ  ( Params& params, VectorPatch& vecPatches, SmileiMPI* smpi, Timers &timers, int itime );
-    //! Densities synchronization per species
-    static void sumRhoJs ( Params& params, VectorPatch& vecPatches, int ispec, SmileiMPI* smpi, Timers &timers, int itime );
     //! Densities synchronization per mode
     static void sumRhoJ  ( Params& params, VectorPatch& vecPatches, int imode, SmileiMPI* smpi, Timers &timers, int itime );
+    //! Densities synchronization per species
+    static void sumRhoJs ( Params& params, VectorPatch& vecPatches, int ispec, SmileiMPI* smpi, Timers &timers, int itime );
+    //! Densities synchronization per species per mode
+    static void sumRhoJs ( Params& params, VectorPatch& vecPatches,int imode, int ispec, SmileiMPI* smpi, Timers &timers, int itime );
     //! Densities synchronization, including envelope
     static void sumEnvChi  ( Params& params, VectorPatch& vecPatches, SmileiMPI* smp, Timers &timers, int itime );
     static void sumEnvChis ( Params& params, VectorPatch& vecPatches, int ispec, SmileiMPI* smp, Timers &timers, int itime );

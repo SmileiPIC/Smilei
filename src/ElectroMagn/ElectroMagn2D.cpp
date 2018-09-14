@@ -31,6 +31,7 @@ isYmax(patch->isYmax())
     // Charge currents currents and density for each species
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
         Jx_s[ispec]  = new Field2D(Tools::merge("Jx_" ,vecSpecies[ispec]->name).c_str(), dimPrim);
+        
         Jy_s[ispec]  = new Field2D(Tools::merge("Jy_" ,vecSpecies[ispec]->name).c_str(), dimPrim);
         Jz_s[ispec]  = new Field2D(Tools::merge("Jz_" ,vecSpecies[ispec]->name).c_str(), dimPrim);
         rho_s[ispec] = new Field2D(Tools::merge("Rho_",vecSpecies[ispec]->name).c_str(), dimPrim);
@@ -1069,7 +1070,9 @@ void ElectroMagn2D::computeTotalRhoJ()
     Field2D* Jy2D    = static_cast<Field2D*>(Jy_);
     Field2D* Jz2D    = static_cast<Field2D*>(Jz_);
     Field2D* rho2D   = static_cast<Field2D*>(rho_);
+   
     
+ 
     // -----------------------------------
     // Species currents and charge density
     // -----------------------------------

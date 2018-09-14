@@ -127,6 +127,7 @@ void SmileiMPI::init( Params& params, DomainDecomposition* domain_decomposition 
     dynamics_invgf.resize(omp_get_max_threads());
     dynamics_iold.resize(omp_get_max_threads());
     dynamics_deltaold.resize(omp_get_max_threads());
+    if (params.geometry == "3drz") dynamics_thetaold.resize(omp_get_max_threads()); 
 
     if ( n_envlaser > 0 ) {
         dynamics_GradPHIpart.resize(omp_get_max_threads());
@@ -140,6 +141,7 @@ void SmileiMPI::init( Params& params, DomainDecomposition* domain_decomposition 
     dynamics_invgf.resize(1);
     dynamics_iold.resize(1);
     dynamics_deltaold.resize(1);
+    if (params.geometry == "3drz") dynamics_thetaold.resize(1); 
 
     if ( n_envlaser > 0 ) {
         dynamics_GradPHIpart.resize(1);

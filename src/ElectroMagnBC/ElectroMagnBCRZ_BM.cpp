@@ -69,12 +69,11 @@ ElectroMagnBCRZ_BM::ElectroMagnBCRZ_BM( Params &params, Patch* patch, unsigned i
     double cosphi ; 
     double Kx, Kr ;
     double one_ov_rlocal = 1./(params.grid_length[1]+params.oversize[1]*dr); // BM conditions on rmax are written at the last primal r position.
-
+    //std::cout<< "rlocal " <<params.grid_length[1]+params.oversize[1]*dr<< "one_ov"<< one_ov_rlocal*10<< std::endl;
+    //std::cout<< "grid length " <<params.grid_length[1]<< "   oversize*dr  "<< params.oversize[1]*dr<< std::endl;
     Kx =  params.EM_BCs_k[3][0];
     Kr = -params.EM_BCs_k[3][1]; // We're only dealing with the Rmax boundary here. The minus sign is the specular reflexion of the given k on the rmax boundary since users are supposed to provide the injection k.
-
     cosphi = Kr / sqrt( Kx*Kx + Kr*Kr ) ; 
-
     CB_BM  = cosphi/(1. + cosphi); // Theta is always taken equal to zero. 
     CE_BM  = 1.0 - CB_BM;
 
@@ -202,10 +201,15 @@ void ElectroMagnBCRZ_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 	cField2D* BtRZ_old = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bt_m[imode]; 
 	cField2D* BlRZ_old = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bl_m[imode];
 	cField2D* BrRZ_old = (static_cast<ElectroMagn3DRZ*>(EMfields))->Br_m[imode];
-
+        
 	if (min_max == 3 && patch->isYmax() ) {
 	    
 	    unsigned int j= nr_d-2;
+
+
+         //   MESSAGE("JGLOB "<< patch->getCellStartingGlobalIndex(1)+j);
+         //std::cout<<"come heree "<<patch->getCellStartingGlobalIndex(1)<<"  "<<j<<" \n " ;
+         //std::cout<<"come here "<<nr_p <<" nr*dr "<<nr_p*dr<<" \n " ;
 	    // for Bl^(p,d)
 	    for (unsigned int i=0 ; i<nl_p-1; i++) {
 	         (*BlRZ)(i,j+1) =                         (*BlRZ_old)(i,j) 
@@ -213,27 +217,28 @@ void ElectroMagnBCRZ_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 	                          +      Gamma_Bl_Rmax * ((*BrRZ)(i+1,j) + (*BrRZ_old)(i+1,j) - (*BrRZ)(i,j) - (*BrRZ_old)(i,j))
 	                          -      Beta_Bl_Rmax * Icpx * (double)imode * ((*ErRZ)(i,j+1) + (*ErRZ)(i,j))
 	                          - 2. * Beta_Bl_Rmax * (*EtRZ)(i,j);
-            if (std::abs((*BlRZ)(i,j+1))>1.){
-                MESSAGE("BlRZBM");
-                MESSAGE(i);
-                MESSAGE(j+1);
-                MESSAGE((*BlRZ)(i,j+1));
-                }
-		}//i  ---end Bl
+                //if (std::abs((*BlRZ)(i,j+1))>1.){
+                    //MESSAGE("BlRZBM");
+                    //MESSAGE(i);
+                    //MESSAGE(j+1);
+                    //MESSAGE((*BlRZ)(i,j+1));
+                //}
+	    }//i  ---end Bl
 	    
 	    // for Bt^(d,d)
+            j = nr_d-2;
 	    for (unsigned int i=1 ; i<nl_p ; i++) { //Undefined in i=0 and i=nl_p
 	        (*BtRZ)(i,j+1) =     Alpha_Bt_Rmax * (*BtRZ)(i,j) 
                                    + Beta_Bt_Rmax  * (*BtRZ_old)(i,j+1)
 			           + Gamma_Bt_Rmax * (*BtRZ_old)(i,j)
 	                           - Icpx * (double)imode * CB_BM * Epsilon_Bt_Rmax  * ((*BrRZ)(i,j) - (*BrRZ_old)(i,j) )
 	                           - CE_BM * Delta_Bt_Rmax * ((*ErRZ)(i,j+1)+(*ErRZ)(i,j)-(*ErRZ)(i-1,j+1) -(*ErRZ)(i-1,j) ) ;
-              if (std::abs((*BtRZ)(i,j+1))>1.){
-                MESSAGE("BtRZMF");
-                MESSAGE(i);
-                MESSAGE(j+1);
-                MESSAGE((*BtRZ)(i,j+1));
-                }
+                //if (std::abs((*BtRZ)(i,j+1))>1.){
+                //    MESSAGE("BtRZMF");
+                //    MESSAGE(i);
+                //    MESSAGE(j+1);
+                //    MESSAGE((*BtRZ)(i,j+1));
+                //}
 	    }//i  ---end Bt
         }
     }	

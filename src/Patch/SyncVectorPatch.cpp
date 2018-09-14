@@ -22,26 +22,11 @@ void SyncVectorPatch::exchangeParticles(VectorPatch& vecPatches, int ispec, Para
         vecPatches(ipatch)->initExchParticles(smpi, ispec, params);
     }
 
-    // Per direction
-    for (unsigned int iDim=0 ; iDim<1 ; iDim++) {
-        #pragma omp for schedule(runtime)
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-            vecPatches(ipatch)->initCommParticles(smpi, ispec, params, iDim, &vecPatches);
-        }
-
-        //#pragma omp for schedule(runtime)
-        //for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-        //    vecPatches(ipatch)->CommParticles(smpi, ispec, params, iDim, &vecPatches);
-        //}
-        //#pragma omp for schedule(runtime)
-        //for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-        //    vecPatches(ipatch)->finalizeCommParticles(smpi, ispec, params, iDim, &vecPatches);
-        //}
+    // Init comm in direction 0
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+        vecPatches(ipatch)->initCommParticles(smpi, ispec, params, 0, &vecPatches);
     }
-
-    //#pragma omp for schedule(runtime)
-    //for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-    //    vecPatches(ipatch)->vecSpecies[ispec]->sort_part();
 }
 
 
@@ -57,20 +42,24 @@ void SyncVectorPatch::finalize_and_sort_parts(VectorPatch& vecPatches, int ispec
     }
 
     // Per direction
-    for (unsigned int iDim=1 ; iDim<params.nDim_particle ; iDim++) {
+    for (unsigned int iDim=1 ; iDim<params.nDim_field ; iDim++) {
         #pragma omp for schedule(runtime)
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
             vecPatches(ipatch)->initCommParticles(smpi, ispec, params, iDim, &vecPatches);
         }
-
+//MESSAGE("after");
         #pragma omp for schedule(runtime)
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
             vecPatches(ipatch)->CommParticles(smpi, ispec, params, iDim, &vecPatches);
         }
+
+//MESSAGE("before");
         #pragma omp for schedule(runtime)
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
             vecPatches(ipatch)->finalizeCommParticles(smpi, ispec, params, iDim, &vecPatches);
         }
+
+//MESSAGE("before 1");
     }
 
     //#pragma omp for schedule(runtime)
@@ -154,7 +143,15 @@ void SyncVectorPatch::sumEnvChis(Params& params, VectorPatch& vecPatches, int is
     if(vecPatches.listEnv_Chis_ .size()>0) SyncVectorPatch::sum( vecPatches.listEnv_Chis_ , vecPatches, smpi, timers, itime  );
     
 }
-
+void SyncVectorPatch::sumRhoJs(Params& params, VectorPatch& vecPatches,int imode, int ispec, SmileiMPI* smpi, Timers &timers, int itime)
+{
+    // Sum Jx_s(ispec), Jy_s(ispec) and Jz_s(ispec)
+    if(vecPatches.listJls_[imode].size()>0) SyncVectorPatch::sumComplex( vecPatches.listJls_[imode] , vecPatches, smpi, timers, itime  );
+    if(vecPatches.listJrs_[imode].size()>0) SyncVectorPatch::sumComplex( vecPatches.listJrs_[imode] , vecPatches, smpi, timers, itime  );
+    if(vecPatches.listJts_[imode] .size()>0) SyncVectorPatch::sumComplex( vecPatches.listJts_[imode], vecPatches, smpi, timers, itime  );
+    // Sum rho_s(ispec)
+    if(vecPatches.listrhos_RZ_[imode].size()>0) SyncVectorPatch::sumComplex( vecPatches.listrhos_RZ_[imode], vecPatches, smpi, timers, itime  );
+}
 
 // fields : contains a single field component for all patches of vecPatches
 // timers and itime were here introduced for debugging
@@ -382,7 +379,7 @@ void SyncVectorPatch::sumComplex( std::vector<Field*> fields, VectorPatch& vecPa
                 //Sum 2 ==> 1
                 for (unsigned int i = 0; i < gsp[0]* ny_*nz_ ; i++) pt1[i] += pt2[i];
                 //Copy back the results to 2
-                memcpy( pt2, pt1, gsp[0]*ny_*nz_*sizeof(double));
+                memcpy( pt2, pt1, gsp[0]*ny_*nz_*sizeof(complex<double>));
             }
         }
     }
@@ -431,7 +428,7 @@ void SyncVectorPatch::sumComplex( std::vector<Field*> fields, VectorPatch& vecPa
                     pt2 = &(*cfield2)(0);
                     for (unsigned int j = 0; j < nx_ ; j++){
                         for (unsigned int i = 0; i < gsp[1]*nz_ ; i++) pt1[i] += pt2[i];
-                        memcpy( pt2, pt1, gsp[1]*nz_*sizeof(double));
+                        memcpy( pt2, pt1, gsp[1]*nz_*sizeof(complex<double>));
                         pt1 += ny_*nz_;
                         pt2 += ny_*nz_;
                     }

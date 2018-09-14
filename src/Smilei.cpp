@@ -129,12 +129,11 @@ int main (int argc, char* argv[])
 
     // reading from dumped file the restart values
     if (params.restart) {
-
         // smpi.patch_count recomputed in readPatchDistribution
         checkpoint.readPatchDistribution( &smpi, simWindow );
-        // allocate patches according to smpi.patch_count
+	// allocate patches according to smpi.patch_count
         vecPatches = PatchesFactory::createVector(params, &smpi, openPMD, checkpoint.this_run_start_step+1, simWindow->getNmoved());
-        // vecPatches data read in restartAll according to smpi.patch_count
+	// vecPatches data read in restartAll according to smpi.patch_count
         checkpoint.restartAll( vecPatches, &smpi, simWindow, params, openPMD);
 
         // Patch reconfiguration for the dynamic vectorization
@@ -168,7 +167,7 @@ int main (int argc, char* argv[])
     } else {
 
         vecPatches = PatchesFactory::createVector(params, &smpi, openPMD, 0);
-
+	//MESSAGE ("create vector");
         // Initialize the electromagnetic fields
         // -------------------------------------
 
@@ -195,7 +194,6 @@ int main (int argc, char* argv[])
 
         vecPatches.computeCharge();
         vecPatches.sumDensities(params, time_dual, timers, 0, simWindow, &smpi);
-
         // ---------------------------------------------------------------------
         // Init and compute tables for radiation effects
         // (nonlinear inverse Compton scattering)
@@ -215,19 +213,17 @@ int main (int argc, char* argv[])
         // --------------
         vecPatches.applyAntennas(0.5 * params.timestep);
         // Init electric field (Ex/1D, + Ey/2D)
-        if (!vecPatches.isRhoNull(&smpi) && params.solve_poisson == true) {
+        if ( params.solve_poisson == true && !vecPatches.isRhoNull(&smpi)) {
             TITLE("Solving Poisson at time t = 0");
             vecPatches.solvePoisson( params, &smpi );
         }
-
 
         // Patch reconfiguration
         if( params.has_dynamic_vectorization ) {
             vecPatches.configuration(params,timers, 0);
         }
 
-
-        // If Laser Envelope is used, initialize envelope
+        // if Laser Envelope is used, execute particles and envelope sections of ponderomotive loop
         if (params.Laser_Envelope_model){
             // initialize new envelope from scratch, following the input namelist
             vecPatches.init_new_envelope(params);
@@ -399,14 +395,12 @@ int main (int argc, char* argv[])
                                                time_dual, timers, itime);
 
             vecPatches.finalize_sync_and_bc_fields(params, &smpi, simWindow, time_dual, timers, itime);
-
             // call the various diagnostics
             vecPatches.runAllDiags(params, &smpi, itime, timers, simWindow);
 
             timers.movWindow.restart();
             simWindow->operate(vecPatches, &smpi, params, itime, time_dual);
             timers.movWindow.update();
-
             // ----------------------------------------------------------------------
             // Validate restart  : to do
             // Restart patched moving window : to do

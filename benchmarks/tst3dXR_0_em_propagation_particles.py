@@ -56,6 +56,25 @@ LaserGaussian2D(
 #    time_envelope   = tgaussian(center=2**0.5*laser_fwhm, fwhm=laser_fwhm)
 #)
 
+Species( 
+    name = "electron",
+    position_initialization = "random",
+    momentum_initialization = "cold",
+    particles_per_cell = 16,
+    c_part_max = 1.0,
+    mass = 1.0,
+    charge = -1.0,
+    charge_density = 0.000494,
+    mean_velocity = [0.0, 0.0, 0.0],
+    temperature = [0.000001],
+    pusher = "boris",    
+    time_frozen = 0.0,
+    boundary_conditions = [
+        ["remove", "remove"],
+        ["remove", "remove"],
+    ],
+)
+
 globalEvery = int(1)
 
 
@@ -66,24 +85,24 @@ DiagFields(
     fields = ["Br_m_mode_0", "Br_m_mode_1","Bx_m_mode_0","Bx_m_mode_1","Bt_m_mode_0","Bt_m_mode_1","Bt_mode_0","Bt_mode_1","Bx_mode_0","Bx_mode_1","Br_mode_0","Br_mode_1","Er_mode_0","Er_mode_1","Et_mode_0","Et_mode_1","Ex_mode_0","Ex_mode_1" ]
 )
 
-DiagProbe(
-    every = 10,
-    origin = [1., 10., 0.],
-    fields = []
-)
-DiagProbe(
-    every = 10,
-    origin = [0., 10., 0.],
-    corners = [[Lsim[0], 10., 0.]],
-    number=[100],
-    fields = []
-)
-DiagProbe(
-    every = 10,
-    origin = [0., -10., 0.],
-    corners = [[Lsim[0], -10., 0.]],
-    number=[100],
-    fields = []
-)
+#DiagProbe(
+#    every = 10,
+#    origin = [1., 10., 0.],
+#    fields = []
+#)
+#DiagProbe(
+#    every = 10,
+#    origin = [0., 10., 0.],
+#    corners = [[Lsim[0], 10., 0.]],
+#    number=[100],
+#    fields = []
+#)
+#DiagProbe(
+#    every = 10,
+#    origin = [0., -10., 0.],
+#    corners = [[Lsim[0], -10., 0.]],
+#    number=[100],
+#    fields = []
+#)
 
 

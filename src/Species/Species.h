@@ -344,8 +344,8 @@ public:
     virtual void computeCharge(unsigned int ispec, ElectroMagn* EMfields);
 
     //! Method used to initialize the Particle position in a given cell
-    void initPosition(unsigned int, unsigned int, double *);
-
+    void initPosition(unsigned int, unsigned int, double *, Params& );
+    
     //! Method used to initialize the Particle 3d momentum in a given cell
     void initMomentum(unsigned int, unsigned int, double *, double *);
 
