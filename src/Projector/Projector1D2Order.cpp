@@ -21,6 +21,12 @@ Projector1D2Order::Projector1D2Order (Params& params, Patch* patch) : Projector1
     dx_ov_dt = params.cell_length[0] / params.timestep;
 
     index_domain_begin = patch->getCellStartingGlobalIndex(0);
+    
+    Jx_  =  &(*patch->EMfields->Jx_ )(0);
+    Jy_  =  &(*patch->EMfields->Jy_ )(0);
+    Jz_  =  &(*patch->EMfields->Jz_ )(0);
+    rho_ =  &(*patch->EMfields->rho_)(0);
+
 
 }
 
@@ -314,28 +320,21 @@ void Projector1D2Order::operator() (ElectroMagn* EMfields, Particles &particles,
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
     if (!diag_flag){ 
         if (!is_spectral) {
-            double* b_Jx =  &(*EMfields->Jx_ )(0);
-            double* b_Jy =  &(*EMfields->Jy_ )(0);
-            double* b_Jz =  &(*EMfields->Jz_ )(0);
             for (int ipart=istart ; ipart<iend; ipart++ )
-                (*this)(b_Jx , b_Jy , b_Jz , particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
+                (*this)(Jx_ , Jy_ , Jz_ , particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
         }
         else {
-            double* b_Jx =  &(*EMfields->Jx_ )(0);
-            double* b_Jy =  &(*EMfields->Jy_ )(0);
-            double* b_Jz =  &(*EMfields->Jz_ )(0);
-            double* b_rho=  &(*EMfields->rho_)(0);
             for ( int ipart=istart ; ipart<iend; ipart++ )
-                (*this)(b_Jx , b_Jy , b_Jz , b_rho , particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
+                (*this)(Jx_ , Jy_ , Jz_ , rho_ , particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
         } 
     // Otherwise, the projection may apply to the species-specific arrays
     } else {
-        double* b_Jx  = EMfields->Jx_s [ispec] ? &(*EMfields->Jx_s [ispec])(0) : &(*EMfields->Jx_ )(0) ;
-        double* b_Jy  = EMfields->Jy_s [ispec] ? &(*EMfields->Jy_s [ispec])(0) : &(*EMfields->Jy_ )(0) ;
-        double* b_Jz  = EMfields->Jz_s [ispec] ? &(*EMfields->Jz_s [ispec])(0) : &(*EMfields->Jz_ )(0) ;
-        double* b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
+        double* b_Jxs  = EMfields->Jx_s [ispec] ? &(*EMfields->Jx_s [ispec])(0) : &(*EMfields->Jx_ )(0) ;
+        double* b_Jys  = EMfields->Jy_s [ispec] ? &(*EMfields->Jy_s [ispec])(0) : &(*EMfields->Jy_ )(0) ;
+        double* b_Jzs  = EMfields->Jz_s [ispec] ? &(*EMfields->Jz_s [ispec])(0) : &(*EMfields->Jz_ )(0) ;
+        double* b_rhos = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
         for (int ipart=istart ; ipart<iend; ipart++ )
-            (*this)(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
+            (*this)(b_Jxs , b_Jys , b_Jzs ,b_rhos, particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
     }
 }
 
