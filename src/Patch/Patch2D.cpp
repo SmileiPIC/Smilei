@@ -623,7 +623,7 @@ void Patch2D::cleanType()
 
             MPI_Type_free( &(ntype_complex_[0][ix_isPrim][iy_isPrim]) );
             MPI_Type_free( &(ntype_complex_[1][ix_isPrim][iy_isPrim]) );
-            MPI_Type_free( &(ntype_complex_[2][ix_isPrim][iy_isPrim]) );         
+            //MPI_Type_free( &(ntype_complex_[2][ix_isPrim][iy_isPrim]) );         
         }
     }
 }
