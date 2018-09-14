@@ -517,8 +517,6 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
     Py_DECREF(ifft );
     Py_DECREF(fft2 );
     
-#else
-    return 0;
 #endif
 }
 
