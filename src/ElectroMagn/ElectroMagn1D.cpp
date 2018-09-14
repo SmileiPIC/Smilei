@@ -632,7 +632,23 @@ void ElectroMagn1D::computeTotalRhoJ()
 // Compute the total susceptibility from species susceptibility
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn1D::computeTotalEnvChi()
-{} // END computeTotalEnvChi
+{
+    // static cast of the total susceptibility
+    Field1D* Env_Chi1D   = static_cast<Field1D*>(Env_Chi_);
+    
+    // -----------------------------------
+    // Species susceptibility
+    // -----------------------------------
+    for (unsigned int ispec=0; ispec<n_species; ispec++) {
+        if( Env_Chi_s[ispec] ) {
+            Field1D* Env_Chi1D_s  = static_cast<Field1D*>(Env_Chi_s[ispec]);
+            for (unsigned int i=0 ; i<nx_p ; i++){
+                        (*Env_Chi1D)(i) += (*Env_Chi1D_s)(i);
+                                                 }
+                               }
+    }//END loop on species ispec
+
+} // END computeTotalEnvChi
 // --------------------------------------------------------------------------
 // Compute Poynting (return the electromagnetic energy injected at the border
 // --------------------------------------------------------------------------

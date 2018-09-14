@@ -3,6 +3,7 @@
 
 #include "Patch.h"
 #include "Field1D.h"
+#include "cField1D.h"
 
 class SimWindow;
 
@@ -59,6 +60,12 @@ public:
     //! MPI_Datatype to exchange [ndims_+1][iDim=0 prim/dial]
     //!   - +1 : an additional type to exchange clrw lines
     MPI_Datatype ntype_[2][2];
+
+    //! MPI_Datatype to exchange [ndims_][iDim=0 prim/dial]
+    MPI_Datatype ntypeSum_complex_[2][2];
+    //! MPI_Datatype to exchange [ndims_+1][iDim=0 prim/dial]
+    //!   - +1 : an additional type to exchange clrw lines
+    MPI_Datatype ntype_complex_[3][2];
 
 
 };

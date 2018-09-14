@@ -31,6 +31,12 @@ Patch1D::Patch1D(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_de
             ntype_[0][ix_isPrim] = MPI_DATATYPE_NULL;
             ntype_[1][ix_isPrim] = MPI_DATATYPE_NULL;
             ntypeSum_[0][ix_isPrim] = MPI_DATATYPE_NULL;
+
+            ntype_complex_[0][ix_isPrim] = MPI_DATATYPE_NULL;
+            ntype_complex_[1][ix_isPrim] = MPI_DATATYPE_NULL;
+            
+            ntypeSum_complex_[0][ix_isPrim] = MPI_DATATYPE_NULL;
+          
         }
 
     }
@@ -274,7 +280,45 @@ void Patch1D::initExchange( Field* field, int iDim, SmileiMPI* smpi )
 
 void Patch1D::initExchangeComplex( Field* field, int iDim, SmileiMPI* smpi )
 {
-  ERROR("1D initExchangeComplex not implemented");
+  if (field->MPIbuff.srequest.size()==0) {
+      field->MPIbuff.allocate(1);
+
+      int tagp(0);
+      if (field->name == "Bx") tagp = 6;
+      if (field->name == "By") tagp = 7;
+      if (field->name == "Bz") tagp = 8;
+
+      field->MPIbuff.defineTags( this, tagp );
+  }
+
+  std::vector<unsigned int> n_elem   = field->dims_;
+  std::vector<unsigned int> isDual = field->isDual_;
+  cField1D* f1D =  static_cast<cField1D*>(field);
+
+  int istart, ix;
+
+  MPI_Datatype ntype = ntype_complex_[iDim][isDual[0]];
+  for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+
+      if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
+
+          istart = iNeighbor * ( n_elem[iDim]- (2*oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( oversize[iDim] + 1 + isDual[iDim] );
+          ix = (1-iDim)*istart;
+          int tag = f1D->MPIbuff.send_tags_[iDim][iNeighbor];
+          MPI_Isend( &(f1D->data_[ix]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(f1D->MPIbuff.srequest[iDim][iNeighbor]) );
+
+      } // END of Send
+
+      if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
+
+          istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - 1 - (oversize[iDim]-1) ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
+          ix = (1-iDim)*istart;
+          int tag = f1D->MPIbuff.recv_tags_[iDim][iNeighbor];
+          MPI_Irecv( &(f1D->data_[ix]), 1, ntype, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(f1D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]));
+
+      } // END of Recv
+
+  } // END for iNeighbor
 } // END initExchangeComplex( Field* field, int iDim )
 
 
@@ -302,7 +346,20 @@ void Patch1D::finalizeExchange( Field* field, int iDim )
 
 void Patch1D::finalizeExchangeComplex( Field* field, int iDim )
 {
-    ERROR("1D finalizeExchangeComplex not implemented");
+    cField1D* f1D =  static_cast<cField1D*>(field);
+
+    MPI_Status sstat    [nDim_fields_][2];
+    MPI_Status rstat    [nDim_fields_][2];
+
+    for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+        if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
+            MPI_Wait( &(f1D->MPIbuff.srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
+        }
+        if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
+            MPI_Wait( &(f1D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
+        }
+    }
+
 } // END finalizeExchangeComplex( Field* field, int iDim )
 
 
@@ -380,6 +437,33 @@ void Patch1D::createType( Params& params )
         MPI_Type_commit( &(ntypeSum_[0][ix_isPrim]) );
 
         MPI_Type_free( &tmpType );
+
+      
+        // Complex type 
+        ntype_complex_[0][ix_isPrim] = MPI_DATATYPE_NULL;
+        MPI_Type_contiguous(2*ny, MPI_DOUBLE, &(ntype_complex_[0][ix_isPrim]));    //line
+        MPI_Type_commit( &(ntype_[0][ix_isPrim]) );
+
+        ntype_complex_[1][ix_isPrim] = MPI_DATATYPE_NULL;
+        MPI_Type_contiguous(2*clrw, MPI_DOUBLE, &(ntype_complex_[1][ix_isPrim]));   //clrw lines
+        MPI_Type_commit( &(ntype_[1][ix_isPrim]) );
+
+        ntypeSum_complex_[0][ix_isPrim] = MPI_DATATYPE_NULL;
+
+        MPI_Datatype tmpTypeComplex = MPI_DATATYPE_NULL;
+        MPI_Type_contiguous(2, MPI_DOUBLE, &(tmpTypeComplex));    //line
+        MPI_Type_commit( &(tmpTypeComplex) );
+
+
+        nline = 1 + 2*params.oversize[0] + ix_isPrim;
+        MPI_Type_contiguous(nline, tmpType, &(ntypeSum_[0][ix_isPrim]));    //line
+        MPI_Type_commit( &(ntypeSum_[0][ix_isPrim]) );
+
+        MPI_Type_free( &tmpTypeComplex );        
+
+
+
+
             
     }
     
@@ -394,5 +478,9 @@ void Patch1D::cleanType()
         MPI_Type_free( &(ntype_[0][ix_isPrim]) );
         MPI_Type_free( &(ntype_[1][ix_isPrim]) );
         MPI_Type_free( &(ntypeSum_[0][ix_isPrim]) );
+
+        MPI_Type_free( &(ntype_complex_[0][ix_isPrim]) );
+        MPI_Type_free( &(ntype_complex_[1][ix_isPrim]) );
+        MPI_Type_free( &(ntypeSum_complex_[0][ix_isPrim]) );
     }
 }
