@@ -48,6 +48,7 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 Species::Species(Params& params, Patch* patch) :
 c_part_max(1),
+ionization_rate(Py_None),
 pusher("boris"),
 radiation_model("none"),
 time_frozen(0),
@@ -258,6 +259,7 @@ Species::~Species()
         delete velocityProfile[i];
     for (unsigned int i=0; i<temperatureProfile.size(); i++)
         delete temperatureProfile[i];
+    if (ionization_rate!=Py_None) Py_DECREF(ionization_rate);
 
     DEBUG("Species deleted");
 }

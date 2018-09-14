@@ -476,7 +476,7 @@ class Diagnostic(object):
 		return info, selection, finalShape
 
 	# Method to select portion of a mesh based on a range
-	def _selectRange(self, portion, meshpoints, axisname, axisunits, operation):
+	def _selectRange(self, portion, meshpoints, axisname, axisunits, operation, edgeInclusive=False):
 		# if portion is "all", then select all the axis
 		if portion == "all":
 			info = operation+" for all "+axisname
@@ -504,7 +504,12 @@ class Diagnostic(object):
 				selection = slice(indices[0],indices[0]+1)
 				finalShape = 1
 			else:
-				info = operation+" for "+axisname+" from "+str(meshpoints[indices[0]])+" to "+str(meshpoints[indices[-1]])+" "+axisunits
+				if edgeInclusive:
+					axismin = "-infinity" if indices[ 0]==0                 else str(meshpoints[indices[ 0]])+" "+axisunits
+					axismax =  "infinity" if indices[-1]==len(meshpoints)-1 else str(meshpoints[indices[-1]])+" "+axisunits
+					info = operation+" for "+axisname+" from "+axismin+" to "+axismax
+				else:
+					info = operation+" for "+axisname+" from "+str(meshpoints[indices[0]])+" to "+str(meshpoints[indices[-1]])+" "+axisunits
 				selection = slice(indices[0],indices[-1])
 				finalShape = indices[-1] - indices[0]
 		return info, selection, finalShape
@@ -524,6 +529,7 @@ class Diagnostic(object):
 		self._yfactor = (self.options.yfactor or 1.) * self.units.ycoeff
 		self._vfactor = self.units.vcoeff
 		self._tfactor = (self.options.xfactor or 1.) * self.units.tcoeff * self.timestep
+		self._xoffset = 0.
 	def _prepare2(self):
 		# prepare the animating function
 		if not self._animateOnAxes:
@@ -605,7 +611,7 @@ class Diagnostic(object):
 		return im
 	def _animateOnAxes_1D(self, ax, t, cax_id=0):
 		A = self._getDataAtTime(t)
-		im, = ax.plot(self._xfactor*self._centers[0], self._vfactor*A, **self.options.plot)
+		im, = ax.plot(self._xoffset+self._xfactor*self._centers[0], self._vfactor*A, **self.options.plot)
 		if self._log[0]: ax.set_xscale("log")
 		ax.set_xlabel(self._xlabel)
 		ax.set_ylabel(self._ylabel)
@@ -620,11 +626,12 @@ class Diagnostic(object):
 		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.ymin, ymax=self.options.ymax)
 		try: ax.cax
 		except: ax.cax = {}
-		try: # if colorbar exists
-			ax.cax[cax_id].cla()
-			ax.figure.colorbar(mappable=im, cax=ax.cax[cax_id])
-		except:
-			ax.cax[cax_id] = ax.figure.colorbar(mappable=im, ax=ax, **self.options.colorbar).ax
+		if "aspect" not in self.options.colorbar.keys() or self.options.colorbar["aspect"]>0:
+			try: # if colorbar exists
+				ax.cax[cax_id].cla()
+				ax.figure.colorbar(mappable=im, cax=ax.cax[cax_id])
+			except:
+				ax.cax[cax_id] = ax.figure.colorbar(mappable=im, ax=ax, use_gridspec=False, **self.options.colorbar).ax
 		self._setSomeOptions(ax, t)
 		return im
 
@@ -642,7 +649,11 @@ class Diagnostic(object):
 		if self._vlabel: title += [self._vlabel]
 		if t is not None: title += ["t = "+str(t*self.timestep)]
 		ax.set_title("  ".join(title))
-		ax.set(**self.options.axes)
+		for option, value in self.options.axes.items():
+			if type(value) is dict:
+				getattr(ax, "set_"+option)( **value )
+			else:
+				getattr(ax, "set_"+option)( value )
 		try:
 			if len(self.options.xtick)>0: ax.ticklabel_format(axis="x",**self.options.xtick)
 		except:

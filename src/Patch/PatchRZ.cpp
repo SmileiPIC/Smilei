@@ -117,7 +117,7 @@ void PatchRZ::reallyinitSumField( Field* field, int iDim )
 // Initialize current patch sum Fields communications through MPI in direction iDim
 // Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
 // ---------------------------------------------------------------------------------------------------------------------
-void PatchRZ::initSumField( Field* field, int iDim )
+void PatchRZ::initSumField( Field* field, int iDim, SmileiMPI* smpi )
 {
     if (field->MPIbuff.ibuf[0][0].size()==0) {
         field->MPIbuff.iallocate(2, field, oversize);
@@ -128,7 +128,7 @@ void PatchRZ::initSumField( Field* field, int iDim )
         if (field->name == "Jz") tagp = 3;
         if (field->name == "Rho") tagp = 4;
 
-        field->MPIbuff.defineTags( this, tagp );
+        field->MPIbuff.defineTags( this, smpi, tagp );
     }
 
     int patch_ndims_(2);
@@ -358,13 +358,13 @@ void PatchRZ::finalizeExchangeComplex( Field* field )
 // Initialize current patch exhange Fields communications through MPI for direction iDim
 // Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
 // ---------------------------------------------------------------------------------------------------------------------
-void PatchRZ::initExchange( Field* field, int iDim )
+void PatchRZ::initExchange( Field* field, int iDim, SmileiMPI* smpi )
 {
     ERROR("Circ geometry initExchange not implemented");
 
 } // END initExchange( Field* field, int iDim )
 
-void PatchRZ::initExchangeComplex( Field* field, int iDim )
+void PatchRZ::initExchangeComplex( Field* field, int iDim, SmileiMPI* smpi )
 {
     if (field->MPIbuff.srequest.size()==0){
         field->MPIbuff.allocate(2);
@@ -374,7 +374,7 @@ void PatchRZ::initExchangeComplex( Field* field, int iDim )
         if (field->name == "By") tagp = 7;
         if (field->name == "Bz") tagp = 8;
 
-        field->MPIbuff.defineTags( this, tagp );
+        field->MPIbuff.defineTags( this, smpi, tagp );
     }
 
     int patch_ndims_(2);

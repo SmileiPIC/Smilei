@@ -6,8 +6,8 @@ Contributions to the development of :program:`Smilei` are welcome.
 To report bugs, please create an issue on the
 `GitHub website <https://github.com/SmileiPIC/Smilei/issues/new>`_.
 
-To develop new features in :program:`Smilei`, you may freely *fork*
-the source code from the `GitHub website <https://github.com/SmileiPIC/Smilei>`_. When
+To develop new features, you may freely *fork*
+the source code from the same website. When
 your modifications to the code are ready, you can make a `pull request
 <https://github.com/SmileiPIC/Smilei/pulls>`_ for review and
 merge with the main repository.
@@ -32,8 +32,7 @@ can see examples from the source files, which are located in the
 To transform it into an *html* website, it is
 processed using the `sphinx <www.sphinx-doc.org>`_ python package that you may have to
 install.
-
- If you have sphinx installed, you may simply go to the
+If you have sphinx installed, you may simply go to the
 main :program:`Smilei` folder from a command line terminal, then run the command
 
 .. code-block:: bash

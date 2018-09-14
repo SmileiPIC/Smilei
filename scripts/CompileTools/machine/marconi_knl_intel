@@ -1,4 +1,32 @@
-HDF5_ROOT_DIR=${HDF5_HOME}
-CXXFLAGS += -cxx=icpc -xMIC-AVX512
-#-qopt-report=5 
+#
+# Machine script for Marconi KNL
+# -------------------------------------------------
+#
+# Intel 2017:
+# module load intel
+# module load intelmpi
+# module load mkl
+# module load szip # For hdf5
+# module load zlib/1.2.8--gnu--6.1.0 # For hdf5
+# module load hdf5
+#
+# Intel 2018:
+# module load intel/pe-xe-2018--binary
+# module load intelmpi/2018--binary
+# module load mkl/2018--binary
+# module load szip # For hdf5
+# module load zlib/1.2.8--gnu--6.1.0 # For hdf5
+# module load hdf5
+#
+# Python:
+# Install `Anaconda 2` for Python because the default version does not work properly for Smilei.
+# ``` bash
+# export PATH=<path to anaconda2>/bin:$PATH
+# export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<path to anaconda2>/lib
+# export LIBRARY_PATH=$LIBRARY_PATH:<path to anaconda2>/lib
+# ```
+# Additional compilation flags:
+# - -fno-alias
 
+HDF5_ROOT_DIR=${HDF5_HOME}
+CXXFLAGS += -cxx=icpc -xMIC-AVX512 -ip -ipo -inline-factor=1000
