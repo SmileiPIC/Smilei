@@ -606,8 +606,8 @@ void VectorPatch::sumSusceptibility(Params &params, double time_dual, Timers &ti
     timers.susceptibility.update();
 
     timers.susceptibility.restart();
-    if ( params.geometry == "3Dcartesian" ) {
-        SyncVectorPatch::sumEnvChi( params, (*this), smpi, timers, itime ); // MPI
+    if ( (params.geometry == "1Dcartesian") or (params.geometry == "2Dcartesian") or (params.geometry == "3Dcartesian") ) {
+        SyncVectorPatch::sumEnvChi( params, (*this), timers, itime ); // MPI
     }
     else { ERROR("Envelope model not yet implemented in this geometry");
         // for (unsigned int imode = 0 ; imode < static_cast<ElectroMagnAM*>(patches_[0]->EMfields)->Jl_.size() ; imode++  ) {
