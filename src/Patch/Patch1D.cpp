@@ -446,11 +446,11 @@ void Patch1D::createType( Params& params )
         // Complex type 
         ntype_complex_[0][ix_isPrim] = MPI_DATATYPE_NULL;
         MPI_Type_contiguous(2*ny, MPI_DOUBLE, &(ntype_complex_[0][ix_isPrim]));    //line
-        MPI_Type_commit( &(ntype_[0][ix_isPrim]) );
+        MPI_Type_commit( &(ntype_complex_[0][ix_isPrim]) );
 
         ntype_complex_[1][ix_isPrim] = MPI_DATATYPE_NULL;
         MPI_Type_contiguous(2*clrw, MPI_DOUBLE, &(ntype_complex_[1][ix_isPrim]));   //clrw lines
-        MPI_Type_commit( &(ntype_[1][ix_isPrim]) );
+        MPI_Type_commit( &(ntype_complex_[1][ix_isPrim]) );
 
         ntypeSum_complex_[0][ix_isPrim] = MPI_DATATYPE_NULL;
 
