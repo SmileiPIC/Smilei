@@ -460,8 +460,8 @@ void Patch1D::createType( Params& params )
 
 
         nline = 1 + 2*params.oversize[0] + ix_isPrim;
-        MPI_Type_contiguous(nline, tmpType, &(ntypeSum_[0][ix_isPrim]));    //line
-        MPI_Type_commit( &(ntypeSum_[0][ix_isPrim]) );
+        MPI_Type_contiguous(nline, tmpTypeComplex, &(ntypeSum_complex_[0][ix_isPrim]));    //line
+        MPI_Type_commit( &(ntypeSum_complex_[0][ix_isPrim]) );
 
         MPI_Type_free( &tmpTypeComplex );        
 

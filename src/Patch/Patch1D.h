@@ -65,7 +65,7 @@ public:
     MPI_Datatype ntypeSum_complex_[2][2];
     //! MPI_Datatype to exchange [ndims_+1][iDim=0 prim/dial]
     //!   - +1 : an additional type to exchange clrw lines
-    MPI_Datatype ntype_complex_[3][2];
+    MPI_Datatype ntype_complex_[2][2];
 
 
 };
