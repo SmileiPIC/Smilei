@@ -68,7 +68,6 @@ void ElectroMagnBCRZ_Axis::disableExternalFields()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBCRZ_Axis::apply(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {	return;
-	MESSAGE("IN OR OUT")
     // Loop on imode 
     for (unsigned int imode=0 ; imode< Nmode ; imode++){
 
@@ -107,34 +106,34 @@ void ElectroMagnBCRZ_Axis::apply(ElectroMagn* EMfields, double time_dual, Patch*
 			//MF
 			for (unsigned int i=isXmin ; i<nl_p  ; i++) {
 				(*BlRZ)(i,j)= -(*BlRZ)(i,j+1);
-                if (std::abs((*BlRZ)(i,j))>1.){
-                MESSAGE("BlRZA");                
-                MESSAGE(i);
-                MESSAGE(j);    
-                MESSAGE((*BlRZ)(i,j));
-                }
+                //if (std::abs((*BlRZ)(i,j))>1.){
+                //MESSAGE("BlRZA");                
+                //MESSAGE(i);
+                //MESSAGE(j);    
+                //MESSAGE((*BlRZ)(i,j));
+                //}
 			}
 
 			for (unsigned int i=isXmin ; i<nl_d-1 ; i++) {
 				(*BrRZ)(i,j)+=  Icpx*dt_ov_dr*(*ElRZ)(i,j+1)
 				+			dt_ov_dl*((*EtRZ)(i,j)-(*EtRZ)(i-1,j));
-                if (std::abs((*BrRZ)(i,j))>1.){
-                MESSAGE("BrRZA");                
-                MESSAGE(i);
-                MESSAGE(j);    
-                MESSAGE((*BrRZ)(i,j));
-                }
+                //if (std::abs((*BrRZ)(i,j))>1.){
+                //MESSAGE("BrRZA");                
+                //MESSAGE(i);
+                //MESSAGE(j);    
+                //MESSAGE((*BrRZ)(i,j));
+                //}
 			}
 			for (unsigned int i=isXmin ; i<nl_d ; i++) {
 				//(*BtRZ)(i,0)+= -dt_ov_dl*((*ErRZ)(i+1,0)-(*ErRZ)(i,0)+(*ErRZ)(i+1,1)-(*ErRZ)(i,1))
 				//+				2*dt_ov_dr*(*ElRZ)(i+1,1) - (*BtRZ_old)(i,1)+ (*BtRZ)(i,1);
 				(*BtRZ)(i,j)= -2.*Icpx*(*BrRZ)(i,j)-(*BtRZ)(i,j+1);
-                if (std::abs((*BtRZ)(i,j))>1.){
-                MESSAGE("BtRZA");                
-                MESSAGE(i);
-                MESSAGE(j);    
-                MESSAGE((*BtRZ)(i,j));
-                }
+                //if (std::abs((*BtRZ)(i,j))>1.){
+                //MESSAGE("BtRZA");                
+                //MESSAGE(i);
+                //MESSAGE(j);    
+                //MESSAGE((*BtRZ)(i,j));
+                //}
 			}	
 
 		}

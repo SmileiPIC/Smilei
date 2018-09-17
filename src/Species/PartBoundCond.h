@@ -55,6 +55,7 @@ public:
         int keep_part = 1;
         // iDim = 0
         if ( particles.position(0, ipart) <  x_min ) {
+            //std::cout<<"xmin  "<<x_min<<std::endl ; 
             if (bc_xmin==NULL) keep_part = 0;
             else {
                 keep_part = (*bc_xmin)( particles, ipart, 0, 2.*x_min, species,nrj_iPart );
@@ -103,40 +104,18 @@ public:
         }
         // iDim = 1 & 2
         else {
-            if ( particles.distance2_to_axis(ipart) <  y_min ) {
-                if (bc_ymin==NULL) keep_part = 0;
-                else {
-                    keep_part *= (*bc_ymin)( particles, ipart, -1, 2.*y_min, species,nrj_iPart );
-                }
-            }
-            else if ( particles.distance2_to_axis(ipart) >= y_max ) {
+             if ( particles.distance2_to_axis(ipart) >= y_max2 ) {
                 if (bc_ymax==NULL) keep_part = 0;
                 else {
                     keep_part *= (*bc_ymax)( particles, ipart, -1, 2.*y_max, species,nrj_iPart );
                 }
-            }
-//<<<<<<< HEAD
+             }
+             if ( particles.distance2_to_axis(ipart) < y_min2 ) {
+                keep_part = 0; //bc_ymin is always NULL because there are no y_min BC in RZ geometry for particles.
+                //std::cout<<"removed particle position"<<particles.position(0,iPart)<<" , "<< particles.position(1,iPart)<<" , "<<particles.position(2,iPart)<<std::endl; 
+             }
+
         }
-//=======
-//
-//            if (nDim_particle == 3) {
-//
-//                if ( particles.position(2, ipart) <  z_min ) {
-//                    if (bc_zmin==NULL) keep_part = 0;
-//                    else {
-//                        keep_part *= (*bc_zmin)( particles, ipart, 2, 2.*z_min, species,nrj_iPart );
-//                    }
-//                }
-//                else if ( particles.position(2, ipart) >= z_max ) {
-//                    if (bc_zmax==NULL) keep_part = 0;
-//                    else {
-//                        keep_part *= (*bc_zmax)( particles, ipart, 2, 2.*z_max, species,nrj_iPart );
-//                    }
-//                }
-//            } // end if (nDim_particle == 3)
-//        } // end if (nDim_particle >= 2)
-//
-//>>>>>>> develop
 
         return keep_part;
     };
@@ -153,8 +132,10 @@ private:
     double x_max;
     //! Min value of the y coordinate of particles on the current processor
     double y_min;
+    double y_min2;
     //! Max value of the y coordinate of particles on the current processor
     double y_max;
+    double y_max2;
     //! Min value of the z coordinate of particles on the current processor
     double z_min;
     //! Max value of the z coordinate of particles on the current processor
@@ -162,6 +143,8 @@ private:
 
     //! Space dimension of a particle
     int nDim_particle;
+   //! Space dimension of field
+    int nDim_field;
 //<<<<<<< HEAD
     bool isRZ;
     

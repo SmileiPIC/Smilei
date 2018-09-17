@@ -58,7 +58,7 @@ Projector2D4Order::~Projector2D4Order()
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project current densities : main projector
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
+void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double invgf, int* iold, double* deltaold)
 {
     int nparts = particles.size();
 
@@ -164,11 +164,11 @@ void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     // ---------------------------
     // Calculate the total current
     // ---------------------------
-    ipo -= bin+3; //This minus 3 come from the order 4 scheme, based on a 7 points stencil from -3 to +3.
+    ipo -= 3; //This minus 3 come from the order 4 scheme, based on a 7 points stencil from -3 to +3.
     jpo -= 3;
     // i =0
     {
-        iloc = ipo*b_dim[1]+jpo;
+        iloc = ipo*nprimy+jpo;
         tmp2 = 0.5*Sx1[0];
         tmp3 =     Sx1[0];
         Jz[iloc]  += crz_p * one_third * ( Sy1[0]*tmp3 );
@@ -176,13 +176,13 @@ void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, Particle
         tmpY = Sx0[0] + 0.5*DSx[0];
         for (unsigned int j=1 ; j<7 ; j++) {
             tmp -= cry_p * DSy[j-1] * tmpY;
-            Jy[iloc+j+ipo]  += tmp; //Because size of Jy in Y is b_dim[1]+1.
+            Jy[iloc+j+ipo]  += tmp; //Because size of Jy in Y is nprimy+1.
             Jz[iloc+j]  += crz_p * one_third * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
         }
     }//i
     
     for (unsigned int i=1 ; i<7 ; i++) {
-        iloc = (i+ipo)*b_dim[1]+jpo;
+        iloc = (i+ipo)*nprimy+jpo;
         tmpJx[0] -= crx_p *  DSx[i-1] * (0.5*DSy[0]);
         Jx[iloc]  += tmpJx[0];
         tmp2 = 0.5*Sx1[i] + Sx0[i];
@@ -194,7 +194,7 @@ void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, Particle
             tmpJx[j] -= crx_p * DSx[i-1] * (Sy0[j] + 0.5*DSy[j]);
             Jx[iloc+j]  += tmpJx[j];
             tmp -= cry_p * DSy[j-1] * tmpY;
-            Jy[iloc+j+i+ipo]  += tmp; //Because size of Jy in Y is b_dim[1]+1.
+            Jy[iloc+j+i+ipo]  += tmp; //Because size of Jy in Y is nprimy+1.
             Jz[iloc+j]  += crz_p * one_third * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
         }
     }//i
@@ -205,7 +205,7 @@ void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, Particle
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project current densities & charge : diagFields timstep
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
+void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double invgf, int* iold, double* deltaold)
 {
     int nparts = particles.size();
 
@@ -311,11 +311,11 @@ void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     // ---------------------------
     // Calculate the total current
     // ---------------------------
-    ipo -= bin+3; //This minus 3 come from the order 4 scheme, based on a 7 points stencil from -3 to +3.
+    ipo -= 3; //This minus 3 come from the order 4 scheme, based on a 7 points stencil from -3 to +3.
     jpo -= 3;
     // i =0
     {
-        iloc = ipo*b_dim[1]+jpo;
+        iloc = ipo*nprimy+jpo;
         tmp2 = 0.5*Sx1[0];
         tmp3 =     Sx1[0];
         Jz[iloc]  += crz_p * one_third * ( Sy1[0]*tmp3 );
@@ -324,14 +324,14 @@ void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, double* 
         tmpY = Sx0[0] + 0.5*DSx[0];
         for (unsigned int j=1 ; j<7 ; j++) {
             tmp -= cry_p * DSy[j-1] * tmpY;
-            Jy[iloc+j+ipo]  += tmp; //Because size of Jy in Y is b_dim[1]+1.
+            Jy[iloc+j+ipo]  += tmp; //Because size of Jy in Y is nprimy+1.
             Jz[iloc+j]  += crz_p * one_third * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
             rho[iloc+j] += charge_weight * Sx1[0]*Sy1[j];
         }
     }//i
     
     for (unsigned int i=1 ; i<7 ; i++) {
-        iloc = (i+ipo)*b_dim[1]+jpo;
+        iloc = (i+ipo)*nprimy+jpo;
         tmpJx[0] -= crx_p *  DSx[i-1] * (0.5*DSy[0]);
         Jx[iloc]  += tmpJx[0];
         tmp2 = 0.5*Sx1[i] + Sx0[i];
@@ -344,7 +344,7 @@ void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, double* 
             tmpJx[j] -= crx_p * DSx[i-1] * (Sy0[j] + 0.5*DSy[j]);
             Jx[iloc+j]  += tmpJx[j];
             tmp -= cry_p * DSy[j-1] * tmpY;
-            Jy[iloc+j+i+ipo]  += tmp; //Because size of Jy in Y is b_dim[1]+1.
+            Jy[iloc+j+i+ipo]  += tmp; //Because size of Jy in Y is nprimy+1.
             Jz[iloc+j]  += crz_p * one_third * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
             rho[iloc+j] += charge_weight * Sx1[i]*Sy1[j];
         }
@@ -448,7 +448,7 @@ void Projector2D4Order::operator() (double* rhoj, Particles &particles, unsigned
 // ---------------------------------------------------------------------------------------------------------------------
 void  Projector2D4Order::operator() (Field* Jx, Field* Jy, Field* Jz, Particles &particles, int ipart, LocalFields Jion)
 {
-    ERROR("Projection of ionization current not yet defined for 2D 4nd order");
+    ERROR("Projection of ionization current not yet defined for 2D 4th order");
 }
 
 
@@ -460,33 +460,28 @@ void Projector2D4Order::operator() (ElectroMagn* EMfields, Particles &particles,
     std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
     std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
     std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
-    
-    int dim1 = EMfields->dimPrim[1];
+    Jx_  =  &(*EMfields->Jx_ )(0);
+    Jy_  =  &(*EMfields->Jy_ )(0);
+    Jz_  =  &(*EMfields->Jz_ )(0);
+    rho_ =  &(*EMfields->rho_)(0);
     
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
     if (!diag_flag){ 
         if (!is_spectral) {
-            double* b_Jx =  &(*EMfields->Jx_ )(ibin*clrw*dim1);
-            double* b_Jy =  &(*EMfields->Jy_ )(ibin*clrw*(dim1+1));
-            double* b_Jz =  &(*EMfields->Jz_ )(ibin*clrw*dim1);
             for (int ipart=istart ; ipart<iend; ipart++ )
-                (*this)(b_Jx , b_Jy , b_Jz , particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[ipart], &(*delta)[ipart]);            
+                (*this)(Jx_ , Jy_ , Jz_ , particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);            
         }
         else {
-            double* b_Jx =  &(*EMfields->Jx_ )(ibin*clrw* dim1   );
-            double* b_Jy =  &(*EMfields->Jy_ )(ibin*clrw*(dim1+1));
-            double* b_Jz =  &(*EMfields->Jz_ )(ibin*clrw* dim1   );
-            double* b_rho=  &(*EMfields->rho_)(ibin*clrw* dim1   );
             for ( int ipart=istart ; ipart<iend; ipart++ )
-                (*this)(b_Jx , b_Jy , b_Jz , b_rho , particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[ipart], &(*delta)[ipart]);
+                (*this)(Jx_ , Jy_ , Jz_ , rho_ , particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
         }
     // Otherwise, the projection may apply to the species-specific arrays
     } else {
-        double* b_Jx  = EMfields->Jx_s [ispec] ? &(*EMfields->Jx_s [ispec])(ibin*clrw* dim1   ) : &(*EMfields->Jx_ )(ibin*clrw* dim1   ) ;
-        double* b_Jy  = EMfields->Jy_s [ispec] ? &(*EMfields->Jy_s [ispec])(ibin*clrw*(dim1+1)) : &(*EMfields->Jy_ )(ibin*clrw*(dim1+1)) ;
-        double* b_Jz  = EMfields->Jz_s [ispec] ? &(*EMfields->Jz_s [ispec])(ibin*clrw* dim1   ) : &(*EMfields->Jz_ )(ibin*clrw* dim1   ) ;
-        double* b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw* dim1   ) : &(*EMfields->rho_)(ibin*clrw* dim1   ) ;
+        double* b_Jx  = EMfields->Jx_s [ispec] ? &(*EMfields->Jx_s [ispec])(0) : &(*EMfields->Jx_ )(0) ;
+        double* b_Jy  = EMfields->Jy_s [ispec] ? &(*EMfields->Jy_s [ispec])(0) : &(*EMfields->Jy_ )(0) ;
+        double* b_Jz  = EMfields->Jz_s [ispec] ? &(*EMfields->Jz_s [ispec])(0) : &(*EMfields->Jz_ )(0) ;
+        double* b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
         for (int ipart=istart ; ipart<iend; ipart++ )
-            (*this)(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[ipart], &(*delta)[ipart]);
+            (*this)(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
     }
 }

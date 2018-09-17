@@ -23,6 +23,10 @@ protected:
     //! Inverse of the spatial step 1/dx
     double dx_inv_;
     int index_domain_begin;
+    double *Jx_, *Jy_, *Jz_, *rho_;
+
+private:
+
 };
 
 #endif

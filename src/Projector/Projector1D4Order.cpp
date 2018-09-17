@@ -46,7 +46,7 @@ Projector1D4Order::~Projector1D4Order()
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project current densities : main projector
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* delta)
+void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double invgf, int* iold, double* delta)
 {
     // Declare local variables
     int ipo, ip;
@@ -68,9 +68,6 @@ void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, Particle
 
 
     // Locate particle old position on the primal grid
-    //xjn        = particles.position_old(0, ipart) * dx_inv_;
-    //ipo        = round(xjn);                          // index of the central node
-    //xj_m_xipo  = xjn - (double)ipo;                   // normalized distance to the nearest grid point
     xj_m_xipo  = *delta;                   // normalized distance to the nearest grid point
     xj_m_xipo2 = xj_m_xipo  * xj_m_xipo;                 // square of the normalized distance to the nearest grid point
     xj_m_xipo3 = xj_m_xipo2 * xj_m_xipo;              // cube of the normalized distance to the nearest grid point
@@ -115,14 +112,11 @@ void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, Particle
         Jx_p[i] = Jx_p[i-1] + crx_p * Wl[i-1];
     }
 
-    ipo -= bin + 3 ;
-    //cout << "\tcoords = " << particles.position(0, ipart) << "\tglobal index = " << ip;
-    //cout << "\tlocal index = " << ip << endl;
+    ipo -= 3 ;
 
     // 4th order projection for the total currents & charge density
     // At the 4th order, oversize = 3.
     for (unsigned int i=0; i<7; i++) {
-        //iloc = i  + ipo - 3;
         Jx[i  + ipo]  += Jx_p[i];
         Jy[i  + ipo]  += cry_p * Wt[i];
         Jz[i  + ipo]  += crz_p * Wt[i];
@@ -134,7 +128,7 @@ void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, Particle
 // ---------------------------------------------------------------------------------------------------------------------
 //!  Project current densities & charge : diagFields timstep
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* delta)
+void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double invgf, int* iold, double* delta)
 {
     // Declare local variables
     int ipo, ip;
@@ -156,9 +150,6 @@ void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, double* 
 
 
     // Locate particle old position on the primal grid
-    //xjn        = particles.position_old(0, ipart) * dx_inv_;
-    //ipo        = round(xjn);                          // index of the central node
-    //xj_m_xipo  = xjn - (double)ipo;                   // normalized distance to the nearest grid point
     xj_m_xipo  = *delta;                   // normalized distance to the nearest grid point
     xj_m_xipo2 = xj_m_xipo  * xj_m_xipo;                 // square of the normalized distance to the nearest grid point
     xj_m_xipo3 = xj_m_xipo2 * xj_m_xipo;              // cube of the normalized distance to the nearest grid point
@@ -203,14 +194,11 @@ void Projector1D4Order::operator() (double* Jx, double* Jy, double* Jz, double* 
         Jx_p[i] = Jx_p[i-1] + crx_p * Wl[i-1];
     }
 
-    ipo -= bin + 3;
-    //cout << "\tcoords = " << particles.position(0, ipart) << "\tglobal index = " << ip;
-    //cout << "\tlocal index = " << ip << endl;
+    ipo -= 3;
 
     // 4th order projection for the total currents & charge density
     // At the 4th order, oversize = 3.
     for (unsigned int i=0; i<7; i++) {
-        //iloc = i  + ipo - 3;
         Jx[i  + ipo ]  += Jx_p[i];
         Jy[i  + ipo ]  += cry_p * Wt[i];
         Jz[i  + ipo ]  += crz_p * Wt[i];
@@ -299,32 +287,30 @@ void Projector1D4Order::operator() (ElectroMagn* EMfields, Particles &particles,
     std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
     std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
     std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
+
+    Jx_  =  &(*EMfields->Jx_ )(0);
+    Jy_  =  &(*EMfields->Jy_ )(0);
+    Jz_  =  &(*EMfields->Jz_ )(0);
+    rho_ =  &(*EMfields->rho_)(0);
     
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
     if (!diag_flag){ 
         if (!is_spectral) {
-            double* b_Jx =  &(*EMfields->Jx_ )(ibin*clrw);
-            double* b_Jy =  &(*EMfields->Jy_ )(ibin*clrw);
-            double* b_Jz =  &(*EMfields->Jz_ )(ibin*clrw);
             for (int ipart=istart ; ipart<iend; ipart++ )
-                (*this)(b_Jx , b_Jy , b_Jz , particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[ipart], &(*delta)[ipart]);
+                (*this)(Jx_ , Jy_ , Jz_ , particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
                  }
         else {
-            double* b_Jx =  &(*EMfields->Jx_ )(ibin*clrw);
-            double* b_Jy =  &(*EMfields->Jy_ )(ibin*clrw);
-            double* b_Jz =  &(*EMfields->Jz_ )(ibin*clrw);
-            double* b_rho=  &(*EMfields->rho_)(ibin*clrw);
             for ( int ipart=istart ; ipart<iend; ipart++ )
-                (*this)(b_Jx , b_Jy , b_Jz , b_rho , particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[ipart], &(*delta)[ipart]);
+                (*this)(Jx_ , Jy_ , Jz_ , rho_ , particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
         }   
     // Otherwise, the projection may apply to the species-specific arrays
     } else {
-        double* b_Jx  = EMfields->Jx_s [ispec] ? &(*EMfields->Jx_s [ispec])(ibin*clrw) : &(*EMfields->Jx_ )(ibin*clrw) ;
-        double* b_Jy  = EMfields->Jy_s [ispec] ? &(*EMfields->Jy_s [ispec])(ibin*clrw) : &(*EMfields->Jy_ )(ibin*clrw) ;
-        double* b_Jz  = EMfields->Jz_s [ispec] ? &(*EMfields->Jz_s [ispec])(ibin*clrw) : &(*EMfields->Jz_ )(ibin*clrw) ;
-        double* b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw) : &(*EMfields->rho_)(ibin*clrw) ;
+        double* b_Jx  = EMfields->Jx_s [ispec] ? &(*EMfields->Jx_s [ispec])(0) : &(*EMfields->Jx_ )(0) ;
+        double* b_Jy  = EMfields->Jy_s [ispec] ? &(*EMfields->Jy_s [ispec])(0) : &(*EMfields->Jy_ )(0) ;
+        double* b_Jz  = EMfields->Jz_s [ispec] ? &(*EMfields->Jz_s [ispec])(0) : &(*EMfields->Jz_ )(0) ;
+        double* b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
         for (int ipart=istart ; ipart<iend; ipart++ )
-            (*this)(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[ipart], &(*delta)[ipart]);
+            (*this)(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
     }
 
 }

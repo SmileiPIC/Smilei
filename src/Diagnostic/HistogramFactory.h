@@ -76,6 +76,7 @@ public:
                 ERROR(deposited_quantityPrefix << " not understood");
             }
             histogram->deposited_quantity = deposited_quantity;
+            Py_DECREF(deposited_quantity_object);
             
         // If numpy supported, also accept deposited_quantity = any function
         } else {

@@ -193,8 +193,13 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name, boo
         }
         Py_XDECREF(tuple);
         Py_XDECREF(inspect);
+        int nargs = PyTools::function_nargs(py_profile);
+        if( nargs < 0 )
+            ERROR("Profile `" << name << "` does not seem to be callable");
+        if( nargs != (int) nvariables )
+            WARNING("Profile `" << name << "` takes "<< nargs <<" arguments but requires " << nvariables);
         if( nvariables<1 || nvariables>4 )
-            ERROR("Profile `"<<name<<"`: defined with unsupported number of variables");
+            ERROR("Profile `"<<name<<"`: defined with unsupported number of variables (" << nvariables << ")");
         
         
         // Verify that the profile transforms a float in a float

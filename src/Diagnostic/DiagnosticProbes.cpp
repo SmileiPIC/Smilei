@@ -354,8 +354,8 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
             for( k=1; k<3; k++ ) {
                 mins[k] = numeric_limits<double>::max();
                 maxs[k] = -mins[k];
-                patchMin[k] = -( vecPatches(ipatch)->Pcoordinates[1]+1 )*patch_size[1];
-                patchMax[k] =  ( vecPatches(ipatch)->Pcoordinates[1]+1 )*patch_size[1];
+                patchMax[k] = ( (double)vecPatches(ipatch)->Pcoordinates[1]+1. )*(double)patch_size[1];
+                patchMin[k] = -1. *  patchMax[k] ; //patchMin = -rmax for the first filter
             }
         } else {
             for( k=0; k<nDim_particle; k++ ) {
@@ -417,11 +417,16 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
                 point[i] = 0.;
             // Compute this point's coordinates in terms of x, y, ...
             point = matrixTimesVector( axes, point );
+            //Redefine patchmin as rmin and not -rmax any more
+            if (geometry == "3drz")
+                patchMin[1] = patchMax[1] - (double)patch_size[1]  ;
             // Check if point is in patch
             is_in_domain = true;
             for( i=0; i<nDim_field; i++ ) {
                 if (i == 1 && geometry == "3drz"){
-                    point[1] += sqrt(origin[1]*origin[1] + origin[2]*origin[2]);
+                    point[1] += origin[1];
+                    point[2] += origin[2];
+                    point[1] = sqrt(point[1]*point[1] + point[2]*point[2]);
                 }else{
                     point[i] += origin[i];
                 }
@@ -471,7 +476,8 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     ostringstream name_t;
 
     unsigned int nPatches( vecPatches.size() );
-
+    double x_moved = simWindow ? simWindow->getXmoved() : 0.;
+    
     // Leave if this timestep has already been written
     #pragma omp master
     {
@@ -486,7 +492,6 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     {
         // If the patches have been moved (moving window or load balancing) we must re-compute the probes positions
         if( !positions_written || last_iteration_points_calculated <= vecPatches.lastIterationPatchesMoved ) {
-            double x_moved = simWindow ? simWindow->getXmoved() : 0.;
             createPoints(smpi, vecPatches, false, x_moved);
             last_iteration_points_calculated = timestep;
 
@@ -568,7 +573,7 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
 #ifdef _OPENMP
         ithread = omp_get_thread_num();
 #endif
-        smpi->dynamics_resize(ithread, nDim_particle, npart);
+        smpi->dynamics_resize(ithread, nDim_particle, npart, false );
 
         for (unsigned int ipart=0; ipart<npart; ipart++) {
             int iparticle(ipart); // Compatibility
@@ -654,6 +659,10 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         H5Pset_dxpl_mpio(transfer, H5FD_MPIO_INDEPENDENT);
         // Write
         H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, probesArray->data_ );
+        
+        // Write x_moved
+        H5::attr(dset_id, "x_moved", x_moved);
+        
         H5Dclose(dset_id);
         H5Pclose( transfer );
         H5Sclose(filespace);

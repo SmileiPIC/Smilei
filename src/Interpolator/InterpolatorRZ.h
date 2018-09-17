@@ -24,6 +24,7 @@ protected:
     double dr_inv_;
     int i_domain_begin;
     int j_domain_begin;
+    double dr;
 };
 
 #endif

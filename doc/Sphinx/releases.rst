@@ -13,7 +13,7 @@ reserved for the :doc:`partners`. It is regularly synchronized with
 the GitHub page.
 
 .. warning::
-  
+
   In v3.3, :doc:`significant changes<syntax_changes>` have been made to the input syntax.
 
 ----
@@ -28,10 +28,29 @@ Upcoming changes
 
 .. _latestVersion:
 
-Current release 3.4
-^^^^^^^^^^^^^^^^^^^
+Release 3.5
+^^^^^^^^^^^^^^^^^^^^^
 
-**Download**: `Smilei v3.4 <_downloads/smilei-v3.3.tar.gz>`_
+**Download**: `Smilei v3.5 <_downloads/smilei-v3.5.tar.gz>`_
+
+* :doc:`Laser defined in tilted plane<laser_offset>`
+* Bugfixes: Field diagnostic subgrid, Scalar diagnostic PoyInst, MPI tags for large number of patches
+
+----
+
+Release 3.4.1
+^^^^^^^^^^^^^^^^^^^^^
+
+**Download**: `Smilei v3.4.1 <_downloads/smilei-v3.4.1.tar.gz>`_
+
+* Ionization considering a user-defined rate
+
+----
+
+Release 3.4
+^^^^^^^^^^^
+
+**Download**: `Smilei v3.4 <_downloads/smilei-v3.4.tar.gz>`_
 
 * Compatibility with Python 3
 * New 'Performances' diagnostic
@@ -42,7 +61,8 @@ Current release 3.4
 * More flexible domain decomposition
 * Relativistic initialization
 * Particles injection using Numpy arrays
-* Bugfixes: circular polarization, collisional ionization 
+* Possibility to use user-defined ionization rates
+* Bugfixes: circular polarization, collisional ionization
 
 ----
 
@@ -141,4 +161,3 @@ Release 1.0
 * Hybrid MPI-OpenMP parallelization
 * Field ionization
 * Some python diagnostics
-

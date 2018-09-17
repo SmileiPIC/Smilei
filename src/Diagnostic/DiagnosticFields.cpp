@@ -9,6 +9,7 @@ using namespace std;
 DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, int ndiag, OpenPMDparams& oPMD ):
     Diagnostic(oPMD)
 {
+    //MESSAGE("Starting diag field creation " );
     fileId_ = 0;
     data_group_id = 0;
     tmp_dset_id = 0;
@@ -40,30 +41,46 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
     fields_indexes.resize(0);
     fields_names  .resize(0);
     hasRhoJs = false;
+    //MESSAGE("HNA");
     // Loop fields
     for( unsigned int i=0; i<vecPatches(0)->EMfields->allFields.size(); i++ ) {
         string field_name = vecPatches(0)->EMfields->allFields[i]->name;
         bool RhoJ = field_name.at(0)=='J' || field_name.at(0)=='R';
-        bool species_field = (field_name.at(0)=='J' && field_name.length()>2) || (field_name.at(0)=='R' && field_name.length()>3);
+        bool species_field = (field_name.at(0)=='J' && field_name.length()>3 && field_name.at(3)!='m' ) || (field_name.at(0)=='R' && field_name.length()>4 && field_name.at(4)!='m');
+         //MESSAGE("HNA1");
         // If field in list of fields to dump, then add it
         if( hasField(field_name, fieldsToDump) ) {
             ss << field_name << " ";
             fields_indexes.push_back( i );
             fields_names  .push_back( field_name );
             if( RhoJ ) hasRhoJs = true;
+            //MESSAGE("HNA2");
             // If field specific to a species, then allocate it
             if( species_field ) {
+                //MESSAGE("HNA3");         
                 for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-                    Field * field = vecPatches(ipatch)->EMfields->allFields[i];
-                    if( field->data_ != NULL ) continue;
-                    if     ( field_name.substr(0,2)=="Jx" ) field->allocateDims(0,false);
-                    else if( field_name.substr(0,2)=="Jy" ) field->allocateDims(1,false);
-                    else if( field_name.substr(0,2)=="Jz" ) field->allocateDims(2,false);
-                    else if( field_name.substr(0,2)=="Rh" ) field->allocateDims();
+                    if ( params.geometry != "3drz"){
+                        Field * field = vecPatches(ipatch)->EMfields->allFields[i];
+                        if( field->data_ != NULL ) continue;
+                        if     ( field_name.substr(0,2)=="Jx" ) field->allocateDims(0,false);
+                        else if( field_name.substr(0,2)=="Jy" ) field->allocateDims(1,false);
+                        else if( field_name.substr(0,2)=="Jz" ) field->allocateDims(2,false);
+                        else if( field_name.substr(0,2)=="Rh" ) field->allocateDims();
+                        //MESSAGE("HNA4");
+                    } else {
+                        cField2D * field = static_cast<cField2D*>(vecPatches(ipatch)->EMfields->allFields[i]);
+                        if( field->cdata_ != NULL ) continue;
+                        if     ( field_name.substr(0,2)=="Jx" ) field->allocateDims(0,false);
+                        else if( field_name.substr(0,2)=="Jr" ) field->allocateDims(1,false);
+                        else if( field_name.substr(0,2)=="Jt" ) field->allocateDims(2,false);
+                        else if( field_name.substr(0,2)=="Rh" ) field->allocateDims();
+
+                    }
                 }
             }
         }
     }
+    //MESSAGE("possible bug");
     
     // Extract subgrid info
     PyObject* subgrid = PyTools::extract_py("subgrid", "DiagFields", ndiag);
@@ -78,6 +95,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
         for( Py_ssize_t is=0; is<ns; is++ )
             subgrids.push_back( PySequence_Fast_GET_ITEM(subgrid, is) );
     }
+    Py_DECREF(subgrid);
     // Verify the number of subgrids
     unsigned int nsubgrid = subgrids.size();
     if( nsubgrid != params.nDim_field ) {
@@ -330,6 +348,10 @@ void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime,
     
     #pragma omp master
     {
+        // write x_moved
+        double x_moved = simWindow ? simWindow->getXmoved() : 0.;
+        H5::attr(iteration_group_id, "x_moved", x_moved);
+        
         H5Gclose(iteration_group_id);
         if( tmp_dset_id>0 ) H5Dclose( tmp_dset_id );
         tmp_dset_id=0;

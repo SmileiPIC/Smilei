@@ -416,6 +416,11 @@ void Checkpoint::readPatchDistribution( SmileiMPI* smpi, SimWindow* simWin )
     vector<int> patch_count(smpi->getSize());
     H5::getVect( fid, "patch_count", patch_count );
     smpi->patch_count = patch_count;
+    
+    smpi->patch_refHindexes.resize(smpi->patch_count.size(), 0);
+    smpi->patch_refHindexes[0] = 0;
+    for ( int rk=1 ; rk<smpi->smilei_sz ; rk++)    
+        smpi->patch_refHindexes[rk] = smpi->patch_refHindexes[rk-1] + smpi->patch_count[rk-1];
 
     // load window status : required to know the patch movement
     restartMovingWindow(fid, simWin);

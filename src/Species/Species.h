@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+//#include "PyTools.h"
 
 #include "Particles.h"
 #include "Params.h"
@@ -66,7 +67,13 @@ public:
 
     //! atomic number
     unsigned int atomic_number;
-
+    
+    //! maximum charge state
+    unsigned int maximum_charge_state;
+    
+    //! user defined ionization rate profile
+    PyObject* ionization_rate;
+    
     //! thermalizing temperature for thermalizing BCs [\f$m_e c^2\f$]
     std::vector<double> thermal_boundary_temperature;
     //! mean velocity used when thermalizing BCs are used [\f$c\f$]
@@ -337,8 +344,8 @@ public:
     virtual void computeCharge(unsigned int ispec, ElectroMagn* EMfields);
 
     //! Method used to initialize the Particle position in a given cell
-    void initPosition(unsigned int, unsigned int, double *);
-
+    void initPosition(unsigned int, unsigned int, double *, Params& );
+    
     //! Method used to initialize the Particle 3d momentum in a given cell
     void initMomentum(unsigned int, unsigned int, double *, double *);
 

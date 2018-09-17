@@ -153,7 +153,7 @@ int ithread;
     // -------------------------------
     if (time_dual>time_frozen) { // moving particle
 
-        //smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
+        smpi->dynamics_resize(ithread, nDim_field, bmax.back(), params.geometry=="3drz");
 
         //Point to local thread dedicated buffers
         //Still needed for ionization
