@@ -62,7 +62,7 @@ Projector3D4Order::~Projector3D4Order()
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents (sort)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D4Order::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
+void Projector3D4Order::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double invgf, int* iold, double* deltaold)
 {
     int nparts = particles.size();
 
@@ -193,7 +193,7 @@ void Projector3D4Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     // Calculate the total current
     // ---------------------------
     
-    ipo -= bin+3;   //This minus 3 come from the order 4 scheme, based on a 7 points stencil from -3 to +3.
+    ipo -= 3;   //This minus 3 come from the order 4 scheme, based on a 7 points stencil from -3 to +3.
     // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
     jpo -= 3;
     kpo -= 3;
@@ -208,8 +208,8 @@ void Projector3D4Order::operator() (double* Jx, double* Jy, double* Jz, Particle
             for (unsigned int k=0 ; k<7 ; k++) {
                 tmpJx[j][k] -= crx_p * DSx[i-1] * (Sy0[j]*Sz0[k] + 0.5*DSy[j]*Sz0[k] + 0.5*DSz[k]*Sy0[j] + one_third*DSy[j]*DSz[k]);
                 kloc = k+kpo;
-                linindex = iloc*b_dim[2]*b_dim[1]+jloc*b_dim[2]+kloc;
-                Jx [linindex] += tmpJx[j][k]; // iloc = (i+ipo)*b_dim[1];
+                linindex = iloc*nprimz*nprimy+jloc*nprimz+kloc;
+                Jx [linindex] += tmpJx[j][k]; // iloc = (i+ipo)*nprimy;
             }
         }
     }//i
@@ -222,7 +222,7 @@ void Projector3D4Order::operator() (double* Jx, double* Jy, double* Jz, Particle
             for (unsigned int k=0 ; k<7 ; k++) {
                 tmpJy[i][k] -= cry_p * DSy[j-1] * (Sz0[k]*Sx0[i] + 0.5*DSz[k]*Sx0[i] + 0.5*DSx[i]*Sz0[k] + one_third*DSz[k]*DSx[i]);
                 kloc = k+kpo;
-                linindex = iloc*b_dim[2]*(b_dim[1]+1)+jloc*b_dim[2]+kloc;
+                linindex = iloc*nprimz*(nprimy+1)+jloc*nprimz+kloc;
                 Jy [linindex] += tmpJy[i][k]; //
             }
         }
@@ -236,7 +236,7 @@ void Projector3D4Order::operator() (double* Jx, double* Jy, double* Jz, Particle
             for (unsigned int k=1 ; k<7 ; k++) {
                 tmpJz[i][j] -= crz_p * DSz[k-1] * (Sx0[i]*Sy0[j] + 0.5*DSx[i]*Sy0[j] + 0.5*DSy[j]*Sx0[i] + one_third*DSx[i]*DSy[j]);
                 kloc = k+kpo;
-                linindex = iloc*(b_dim[2]+1)*b_dim[1]+jloc*(b_dim[2]+1)+kloc;
+                linindex = iloc*(nprimz+1)*nprimy+jloc*(nprimz+1)+kloc;
                 Jz [linindex] += tmpJz[i][j]; //
             }
         }
@@ -249,7 +249,7 @@ void Projector3D4Order::operator() (double* Jx, double* Jy, double* Jz, Particle
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local current densities (sort)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D4Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
+void Projector3D4Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double invgf, int* iold, double* deltaold)
 {
     int nparts = particles.size();
 
@@ -380,7 +380,7 @@ void Projector3D4Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     // Calculate the total current
     // ---------------------------
 
-    ipo -= bin+3;   //This minus 3 come from the order 3 scheme, based on a 7 points stencil from -3 to +3.
+    ipo -= 3;   //This minus 3 come from the order 3 scheme, based on a 7 points stencil from -3 to +3.
                     // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
     jpo -= 3;
     kpo -= 3;
@@ -395,8 +395,8 @@ void Projector3D4Order::operator() (double* Jx, double* Jy, double* Jz, double* 
             for (unsigned int k=0 ; k<7 ; k++) {
                 tmpJx[j][k] -= crx_p * DSx[i-1] * (Sy0[j]*Sz0[k] + 0.5*DSy[j]*Sz0[k] + 0.5*DSz[k]*Sy0[j] + one_third*DSy[j]*DSz[k]);
                 kloc = k+kpo;
-                linindex = iloc*b_dim[2]*b_dim[1]+jloc*b_dim[2]+kloc;
-                Jx [linindex] += tmpJx[j][k]; // iloc = (i+ipo)*b_dim[1];
+                linindex = iloc*nprimz*nprimy+jloc*nprimz+kloc;
+                Jx [linindex] += tmpJx[j][k]; // iloc = (i+ipo)*nprimy;
             }
         }
     }//i
@@ -409,7 +409,7 @@ void Projector3D4Order::operator() (double* Jx, double* Jy, double* Jz, double* 
             for (unsigned int k=0 ; k<7 ; k++) {
                 tmpJy[i][k] -= cry_p * DSy[j-1] * (Sz0[k]*Sx0[i] + 0.5*DSz[k]*Sx0[i] + 0.5*DSx[i]*Sz0[k] + one_third*DSz[k]*DSx[i]);
                 kloc = k+kpo;
-                linindex = iloc*b_dim[2]*(b_dim[1]+1)+jloc*b_dim[2]+kloc;
+                linindex = iloc*nprimz*(nprimy+1)+jloc*nprimz+kloc;
                 Jy [linindex] += tmpJy[i][k]; //
             }
         }
@@ -423,7 +423,7 @@ void Projector3D4Order::operator() (double* Jx, double* Jy, double* Jz, double* 
             for (unsigned int k=1 ; k<7 ; k++) {
                 tmpJz[i][j] -= crz_p * DSz[k-1] * (Sx0[i]*Sy0[j] + 0.5*DSx[i]*Sy0[j] + 0.5*DSy[j]*Sx0[i] + one_third*DSx[i]*DSy[j]);
                 kloc = k+kpo;
-                linindex = iloc*(b_dim[2]+1)*b_dim[1]+jloc*(b_dim[2]+1)+kloc;
+                linindex = iloc*(nprimz+1)*nprimy+jloc*(nprimz+1)+kloc;
                 Jz [linindex] += tmpJz[i][j]; //
             }
         }
@@ -436,7 +436,7 @@ void Projector3D4Order::operator() (double* Jx, double* Jy, double* Jz, double* 
             jloc = j+jpo;
             for (unsigned int k=0 ; k<7 ; k++) {
                 kloc = k+kpo;
-                linindex = iloc*b_dim[2]*b_dim[1]+jloc*b_dim[2]+kloc;
+                linindex = iloc*nprimz*nprimy+jloc*nprimz+kloc;
                 rho[linindex] += charge_weight * Sx1[i]*Sy1[j]*Sz1[k];
             }
         }
@@ -572,34 +572,29 @@ void Projector3D4Order::operator() (ElectroMagn* EMfields, Particles &particles,
     std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
     std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
     
-    int dim1 = EMfields->dimPrim[1];
-    int dim2 = EMfields->dimPrim[2];
+    Jx_  =  &(*EMfields->Jx_ )(0);
+    Jy_  =  &(*EMfields->Jy_ )(0);
+    Jz_  =  &(*EMfields->Jz_ )(0);
+    rho_ =  &(*EMfields->rho_)(0);
 
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
     if (!diag_flag){ 
         if (!is_spectral) {
-            double* b_Jx =  &(*EMfields->Jx_ )(ibin*clrw* dim1   * dim2   );
-            double* b_Jy =  &(*EMfields->Jy_ )(ibin*clrw*(dim1+1)* dim2   );
-            double* b_Jz =  &(*EMfields->Jz_ )(ibin*clrw* dim1   *(dim2+1));
             for ( int ipart=istart ; ipart<iend; ipart++ )
-                (*this)(b_Jx , b_Jy , b_Jz , particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[ipart], &(*delta)[ipart]);
+                (*this)(Jx_ , Jy_ , Jz_ , particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
         }
         else {
-            double* b_Jx =  &(*EMfields->Jx_ )(ibin*clrw* dim1   * dim2   );
-            double* b_Jy =  &(*EMfields->Jy_ )(ibin*clrw*(dim1+1)* dim2   );
-            double* b_Jz =  &(*EMfields->Jz_ )(ibin*clrw* dim1   *(dim2+1));
-            double* b_rho=  &(*EMfields->rho_)(ibin*clrw* dim1   * dim2   );
             for ( int ipart=istart ; ipart<iend; ipart++ )
-                (*this)(b_Jx , b_Jy , b_Jz , b_rho , particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[ipart], &(*delta)[ipart]);
+                (*this)(Jx_ , Jy_ , Jz_ , rho_ , particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
         }           
         // Otherwise, the projection may apply to the species-specific arrays
     } else {
-        double* b_Jx  = EMfields->Jx_s [ispec] ? &(*EMfields->Jx_s [ispec])(ibin*clrw* dim1   *dim2) : &(*EMfields->Jx_ )(ibin*clrw* dim1   *dim2) ;
-        double* b_Jy  = EMfields->Jy_s [ispec] ? &(*EMfields->Jy_s [ispec])(ibin*clrw*(dim1+1)*dim2) : &(*EMfields->Jy_ )(ibin*clrw*(dim1+1)*dim2) ;
-        double* b_Jz  = EMfields->Jz_s [ispec] ? &(*EMfields->Jz_s [ispec])(ibin*clrw*dim1*(dim2+1)) : &(*EMfields->Jz_ )(ibin*clrw*dim1*(dim2+1)) ;
-        double* b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw* dim1   *dim2) : &(*EMfields->rho_)(ibin*clrw* dim1   *dim2) ;
+        double* b_Jx  = EMfields->Jx_s [ispec] ? &(*EMfields->Jx_s [ispec])(0) : &(*EMfields->Jx_ )(0) ;
+        double* b_Jy  = EMfields->Jy_s [ispec] ? &(*EMfields->Jy_s [ispec])(0) : &(*EMfields->Jy_ )(0) ;
+        double* b_Jz  = EMfields->Jz_s [ispec] ? &(*EMfields->Jz_s [ispec])(0) : &(*EMfields->Jz_ )(0) ;
+        double* b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
         for ( int ipart=istart ; ipart<iend; ipart++ )
-            (*this)(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[ipart], &(*delta)[ipart]);
+            (*this)(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
     }
 
 }
