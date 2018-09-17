@@ -397,6 +397,6 @@ void Interpolator3D4Order::interpolate_time_centered_envelope( ElectroMagn* EMfi
 
 void Interpolator3D4Order::interpolate_envelope_and_susceptibility(ElectroMagn* EMfields, Particles &particles, int ipart, double* Env_A_abs_Loc, double* Env_Chi_Loc, double* Env_E_abs_Loc)
 {
-    ERROR("Projection and interpolation for the envelope model are implemented only for interpolation_order = 2");  
+    ERROR("Projection and interpolation for envelope model are implemented only for interpolation_order = 2");    
 } // END Interpolator3D4Order
 
