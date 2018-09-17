@@ -453,21 +453,6 @@ void Patch1D::createType( Params& params )
         MPI_Type_commit( &(ntype_complex_[1][ix_isPrim]) );
 
         ntypeSum_complex_[0][ix_isPrim] = MPI_DATATYPE_NULL;
-
-        MPI_Datatype tmpTypeComplex = MPI_DATATYPE_NULL;
-        MPI_Type_contiguous(2, MPI_DOUBLE, &(tmpTypeComplex));    //line
-        MPI_Type_commit( &(tmpTypeComplex) );
-
-
-        nline = 1 + 2*params.oversize[0] + ix_isPrim;
-        MPI_Type_contiguous(nline, tmpTypeComplex, &(ntypeSum_complex_[0][ix_isPrim]));    //line
-        MPI_Type_commit( &(ntypeSum_complex_[0][ix_isPrim]) );
-
-        MPI_Type_free( &tmpTypeComplex );        
-
-
-
-
             
     }
     
