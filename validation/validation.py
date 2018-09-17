@@ -117,7 +117,7 @@ HOSTNAME = socket.gethostname()
 WORKDIR = ""
 
 # DEFAULT VALUES FOR OPTIONS
-OMP = 4
+OMP = 12
 MPI = 4
 EXECUTION = False
 VERBOSE = False
