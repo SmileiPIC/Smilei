@@ -35,6 +35,7 @@ protected:
     int nprimz;
     int oversize[3];
     double dq_inv[3];
+    double *Jx_, *Jy_, *Jz_, *rho_;
 };
 
 #endif
