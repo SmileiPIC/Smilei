@@ -608,6 +608,6 @@ void Projector3D4Order::operator() (ElectroMagn* EMfields, Particles &particles,
 // Projector for susceptibility used as source term in envelope equation
 void Projector3D4Order::project_susceptibility(ElectroMagn* EMfields, Particles &particles, double species_mass, SmileiMPI* smpi, int istart, int iend,  int ithread, int ibin, std::vector<unsigned int> &b_dim, int ipart_ref)                                        
 {
-    ERROR("Projection and interpolation for envelope are implemented only for interpolation_order = 2");
+    ERROR("Projection and interpolation for the envelope model are implemented only for interpolation_order = 2");
 }
 

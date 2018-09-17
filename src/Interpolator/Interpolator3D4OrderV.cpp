@@ -432,3 +432,24 @@ void Interpolator3D4OrderV::operator() (ElectroMagn* EMfields, Particles &partic
     (*RhoLoc) = interp_res;
 
 }
+
+
+
+void Interpolator3D4OrderV::interpolate_em_fields_and_envelope(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
+{
+   ERROR("Projection and interpolation for the envelope model are implemented only for interpolation_order = 2");
+}
+
+
+void Interpolator3D4OrderV::interpolate_envelope_and_old_envelope(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
+{
+   ERROR("Projection and interpolation for the envelope model are implemented only for interpolation_order = 2");
+}
+
+// probes like diagnostic !
+void Interpolator3D4OrderV::interpolate_envelope_and_susceptibility(ElectroMagn* EMfields, Particles &particles, int ipart, double* Env_A_abs_Loc, double* Env_Chi_Loc, double* Env_E_abs_Loc)
+{
+    ERROR("Projection and interpolation for the envelope model are implemented only for interpolation_order = 2");
+}
+
+
