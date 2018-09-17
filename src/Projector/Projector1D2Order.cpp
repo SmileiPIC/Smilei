@@ -427,7 +427,7 @@ void Projector1D2Order::project_susceptibility(ElectroMagn* EMfields, Particles 
             ip -= index_domain_begin + ibin +2;
             
             for (unsigned int i=0 ; i<5 ; i++) {
-                iloc = (i+ip)*b_dim[1];
+                iloc = (i+ip);
                 Chi_envelope[iloc] += charge_weight * Sx1[i];
             }//i
 
