@@ -309,7 +309,7 @@ void Patch1D::initExchangeComplex( Field* field, int iDim, SmileiMPI* smpi )
           istart = iNeighbor * ( n_elem[iDim]- (2*oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( oversize[iDim] + 1 + isDual[iDim] );
           ix = (1-iDim)*istart;
           int tag = f1D->MPIbuff.send_tags_[iDim][iNeighbor];
-          MPI_Isend( &(f1D->data_[ix]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(f1D->MPIbuff.srequest[iDim][iNeighbor]) );
+          MPI_Isend( &((*f1D)(ix)), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(f1D->MPIbuff.srequest[iDim][iNeighbor]) );
 
       } // END of Send
 
@@ -318,7 +318,7 @@ void Patch1D::initExchangeComplex( Field* field, int iDim, SmileiMPI* smpi )
           istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - 1 - (oversize[iDim]-1) ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
           ix = (1-iDim)*istart;
           int tag = f1D->MPIbuff.recv_tags_[iDim][iNeighbor];
-          MPI_Irecv( &(f1D->data_[ix]), 1, ntype, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(f1D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]));
+          MPI_Irecv( &((*f1D)(ix)), 1, ntype, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, MPI_COMM_WORLD, &(f1D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]));
 
       } // END of Recv
 
@@ -470,6 +470,6 @@ void Patch1D::cleanType()
 
         MPI_Type_free( &(ntype_complex_[0][ix_isPrim]) );
         MPI_Type_free( &(ntype_complex_[1][ix_isPrim]) );
-        MPI_Type_free( &(ntypeSum_complex_[0][ix_isPrim]) );
+        //MPI_Type_free( &(ntypeSum_complex_[0][ix_isPrim]) );
     }
 }
