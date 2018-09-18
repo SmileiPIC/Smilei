@@ -49,9 +49,8 @@ void MF_SolverRZ_Yee::operator() ( ElectroMagn* fields )
     // Magnetic field Bx^(p,d)
     for (unsigned int i=0 ; i<nl_p;  i++) {
         #pragma omp simd
-        for (unsigned int j=isYmin*3 ; j<nr_d-1 ; j++) {
-            (*BlRZ)(i,j) += - dt/((j_glob+j)*dr) * ( (double)(j+j_glob+0.5)*(*EtRZ)(i,j) - (double)(j+j_glob-0.5)*(*EtRZ)(i,j-1) )
-             -Icpx*dt*(double)imode/((j_glob+j)*dr)*(*ErRZ)(i,j);
+        for (unsigned int j=1+isYmin*2 ; j<nr_d-1 ; j++) {
+            (*BlRZ)(i,j) += - dt/((j_glob+j-0.5)*dr) * ( (double)(j+j_glob)*(*EtRZ)(i,j) - (double)(j+j_glob-1.)*(*EtRZ)(i,j-1) + Icpx*(double)imode*(*ErRZ)(i,j));
 		//	 if (std::abs((*BlRZ)(i,j))>1.){
                 //MESSAGE("BlRZMF");                
                 //MESSAGE(i);
@@ -80,7 +79,7 @@ void MF_SolverRZ_Yee::operator() ( ElectroMagn* fields )
         // Magnetic field Bt^(d,d)
     for (unsigned int i=1 ; i<nl_d-1 ; i++) {
         #pragma omp simd
-        for (unsigned int j=isYmin*3 ; j<nr_d-1 ; j++) {
+        for (unsigned int j=1 + isYmin*2 ; j<nr_d-1 ; j++) {
             (*BtRZ)(i,j) += dt_ov_dr * ( (*ElRZ)(i,j) - (*ElRZ)(i,j-1) )
             -dt_ov_dl * ( (*ErRZ)(i,j) - (*ErRZ)(i-1,j) );
 		//    if (std::abs((*BtRZ)(i,j))>1.){
