@@ -46,7 +46,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
     for( unsigned int i=0; i<vecPatches(0)->EMfields->allFields.size(); i++ ) {
         string field_name = vecPatches(0)->EMfields->allFields[i]->name;
         bool RhoJ = field_name.at(0)=='J' || field_name.at(0)=='R';
-        bool species_field = (field_name.at(0)=='J' && field_name.length()>3 && field_name.at(3)!='m' ) || (field_name.at(0)=='R' && field_name.length()>4 && field_name.at(4)!='m');
+        bool species_field = ( (field_name.at(0)=='J') && (field_name.length()>3) && (field_name.substr(3,4)!="mode") ) || ( (field_name.at(0)=='R') && (field_name.length()>4) && (field_name.substr(4,4)!="mode") );
          //MESSAGE("HNA1");
         // If field in list of fields to dump, then add it
         if( hasField(field_name, fieldsToDump) ) {
