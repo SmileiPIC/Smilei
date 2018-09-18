@@ -1,3 +1,4 @@
+
 #include "Species.h"
 
 #include <cmath>
@@ -877,27 +878,26 @@ void Species::projection_for_diags(double time_dual, unsigned int ispec,
             }//End loop on bins
         }
         else {
-            WARNING ("Not implemented");
-            //complex<double> *buf[4];
-            //ElectroMagn3DRZ* emRZ = static_cast<ElectroMagn3DRZ*>( EMfields );
-            //int n_species = patch->vecSpecies.size();
-            //for ( unsigned int imode = 0; imode<params.nmodes;imode++){
-            //    int ifield = imode*n_species+ispec;
-            //
-            //    for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
-            //
-            //        buf[0] = emRZ->rho_RZ_s[ifield] ? &(*emRZ->rho_RZ_s[ifield])(0) : &(*emRZ->rho_RZ_[imode])(0) ;
-            //        buf[1] = emRZ->Jl_s [ifield] ? &(*emRZ->Jl_s [ifield])(0) : &(*emRZ->Jl_[imode])(0) ;
-            //        buf[2] = emRZ->Jr_s [ifield] ? &(*emRZ->Jr_s [ifield])(0) : &(*emRZ->Jr_[imode])(0) ;
-            //        buf[3] = emRZ->Jt_s [ifield] ? &(*emRZ->Jt_s [ifield])(0) : &(*emRZ->Jt_[imode])(0) ;
-            //
-            //        for (int iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
-            //            for (unsigned int quantity=0; quantity < 4; quantity++) {
-            //                (*Proj)(buf[quantity], (*particles), iPart, quantity, b_dim);
-            //            }
-            //        } //End loop on particles
-            //    }//End loop on bins
-            //} //End loop on modes
+            complex<double>* buf[4];
+            ElectroMagn3DRZ* emRZ = static_cast<ElectroMagn3DRZ*>( EMfields );
+            int n_species = patch->vecSpecies.size();
+            for ( unsigned int imode = 0; imode<params.nmodes;imode++){
+                int ifield = imode*n_species+ispec;
+                
+                for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
+            
+                    buf[0] = emRZ->rho_RZ_s[ifield] ? &(*emRZ->rho_RZ_s[ifield])(0) : &(*emRZ->rho_RZ_[imode])(0) ;
+                    buf[1] = emRZ->Jl_s [ifield] ? &(*emRZ->Jl_s [ifield])(0) : &(*emRZ->Jl_[imode])(0) ;
+                    buf[2] = emRZ->Jr_s [ifield] ? &(*emRZ->Jr_s [ifield])(0) : &(*emRZ->Jr_[imode])(0) ;
+                    buf[3] = emRZ->Jt_s [ifield] ? &(*emRZ->Jt_s [ifield])(0) : &(*emRZ->Jt_[imode])(0) ;
+            
+                    for (int iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
+                        for (unsigned int quantity=0; quantity < 4; quantity++) {
+                            (*Proj)(buf[quantity], (*particles), iPart, quantity, b_dim, imode);
+                        }
+                    } //End loop on particles
+                }//End loop on bins
+            } //End loop on modes
 
         } // End Theta mode
 

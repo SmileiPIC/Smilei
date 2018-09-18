@@ -1,6 +1,8 @@
 #ifndef PROJECTOR_H
 #define PROJECTOR_H
 
+#include <complex>
+
 #include "Params.h"
 #include "Field.h"
 
@@ -26,6 +28,8 @@ public:
 
     //! Project global current charge (EMfields->rho_ , J), for initialization and diags
     virtual void operator() (double* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim) = 0;
+
+    virtual void operator() (std::complex<double>* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim, int imode) {};
 
     //! Project global current densities if Ionization in Species::dynamics,
     virtual void operator() (Field* Jx, Field* Jy, Field* Jz, Particles &particles, int ipart, LocalFields Jion) = 0;

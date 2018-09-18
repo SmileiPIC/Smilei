@@ -29,6 +29,9 @@ ProjectorRZ2Order::ProjectorRZ2Order (Params& params, Patch* patch) : ProjectorR
     i_domain_begin = patch->getCellStartingGlobalIndex(0);
     j_domain_begin = patch->getCellStartingGlobalIndex(1);
     n_species = patch->vecSpecies.size();
+
+    nprimr = params.n_space[1] + 2*params.oversize[1] + 1;
+
     //n_r_max = params.n_space_global[1];
     DEBUG("cell_length "<< params.cell_length[0]);
 
@@ -855,19 +858,43 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! Project local densities only (Frozen species) NOT DONE YET
+//! Project local densities only (Frozen species) - mode 0 : NOT DONE YET
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorRZ2Order::operator() (double* rho, Particles &particles, unsigned int ipart, unsigned int bin, std::vector<unsigned int> &b_dim)
-{ 
+void ProjectorRZ2Order::operator() (double* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim)
+{
+
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! Project local densities only (Frozen species) - mode > 0 NOT DONE YET
+// ---------------------------------------------------------------------------------------------------------------------
+void ProjectorRZ2Order::operator() (complex<double>* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim, int imode)
+{
     //Warning : this function is used for frozen species only. It is assumed that position = position_old !!!
 
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------
 
-    int iloc;
+    int iloc, nr(nprimr);
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+
+    if (type > 0) {
+        charge_weight *= 1./sqrt(1.0 + particles.momentum(0,ipart)*particles.momentum(0,ipart)
+                                     + particles.momentum(1,ipart)*particles.momentum(1,ipart)
+                                     + particles.momentum(2,ipart)*particles.momentum(2,ipart));
+        if (type == 1){
+            charge_weight *= particles.momentum(0,ipart);
+        }
+        else if (type == 2){
+            charge_weight *= particles.momentum(1,ipart);
+            nr++;
+        }
+        else {
+            charge_weight *= particles.momentum(2,ipart); 
+        }
+    }
 
     // variable declaration
     double xpn, ypn;
@@ -886,14 +913,14 @@ void ProjectorRZ2Order::operator() (double* rho, Particles &particles, unsigned 
 
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
     xpn = particles.position(0, ipart) * dl_inv_;
-    int ip = round(xpn);
+    int ip = round(xpn + 0.5 * (type==1));
     delta  = xpn - (double)ip;
     delta2 = delta*delta;
     Sx1[1] = 0.5 * (delta2-delta+0.25);
     Sx1[2] = 0.75-delta2;
     Sx1[3] = 0.5 * (delta2+delta+0.25);
     ypn = sqrt (particles.position(1, ipart)*particles.position(1, ipart)+particles.position(2, ipart)*particles.position(2, ipart))*dr_inv_ ;
-    int jp = round(ypn);
+    int jp = round(ypn + 0.5*(type==2));
     delta  = ypn - (double)jp;
     delta2 = delta*delta;
     Sy1[1] = 0.5 * (delta2-delta+0.25);
@@ -903,19 +930,19 @@ void ProjectorRZ2Order::operator() (double* rho, Particles &particles, unsigned 
     // ---------------------------
     // Calculate the total charge
     // ---------------------------
-    ip -= i_domain_begin + bin +2;
+    ip -= i_domain_begin + 2;
     jp -= j_domain_begin + 2;
 
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = (i+ip)*b_dim[1]+jp;
         for (unsigned int j=0 ; j<5 ; j++) {
             if (j+jp+2* j_domain_begin == 0){
-                rho [iloc+j] += charge_weight*6.* Sx1[i]*Sy1[j] /dr; // iloc = (i+ipo)*b_dim[1];
+                rhoj [iloc+j] += charge_weight*6.* Sx1[i]*Sy1[j] /dr; // iloc = (i+ipo)*b_dim[1];
                 //rho [iloc+j+1] += rho [iloc+j-1];
                 //rho [iloc+j+2] += rho [iloc+j-2];
          }
             else {
-                rho [iloc+j] += charge_weight* Sx1[i]*Sy1[j]/abs((j+jp+2* j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
+                rhoj [iloc+j] += charge_weight* Sx1[i]*Sy1[j]/abs((j+jp+2* j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
                 }
             }
     }//i
