@@ -32,7 +32,6 @@ ProjectorRZ2Order::ProjectorRZ2Order (Params& params, Patch* patch) : ProjectorR
 
     nprimr = params.n_space[1] + 2*params.oversize[1] + 1;
 
-    //n_r_max = params.n_space_global[1];
     DEBUG("cell_length "<< params.cell_length[0]);
 
 }
@@ -856,50 +855,52 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     
 } // END Project local current densities (Jl, Jr, Jt, sort)
 
-
-// ---------------------------------------------------------------------------------------------------------------------
-//! Project local densities only (Frozen species) - mode 0 : NOT DONE YET
-// ---------------------------------------------------------------------------------------------------------------------
 void ProjectorRZ2Order::operator() (double* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim)
 {
-
+// Useless function
 }
 
+
+
 // ---------------------------------------------------------------------------------------------------------------------
-//! Project local densities only (Frozen species) - mode > 0 NOT DONE YET
+//! Project for diags and frozen species - mode >= 0 
 // ---------------------------------------------------------------------------------------------------------------------
 void ProjectorRZ2Order::operator() (complex<double>* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim, int imode)
 {
-    //Warning : this function is used for frozen species only. It is assumed that position = position_old !!!
+    //Warning : this function is not charge conserving.
 
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------
 
     int iloc, nr(nprimr);
-    // (x,y,z) components of the current density for the macro-particle
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double r = sqrt (particles.position(1, ipart)*particles.position(1, ipart)+particles.position(2, ipart)*particles.position(2, ipart));
 
-    if (type > 0) {
+    if (type > 0) { //if current density
         charge_weight *= 1./sqrt(1.0 + particles.momentum(0,ipart)*particles.momentum(0,ipart)
                                      + particles.momentum(1,ipart)*particles.momentum(1,ipart)
                                      + particles.momentum(2,ipart)*particles.momentum(2,ipart));
-        if (type == 1){
+        if (type == 1){ //if Jl
             charge_weight *= particles.momentum(0,ipart);
         }
-        else if (type == 2){
-            charge_weight *= particles.momentum(1,ipart);
+        else if (type == 2){ //if Jr
+            charge_weight *= (particles.momentum(1,ipart)*particles.position(1,ipart) + particles.momentum(2,ipart)*particles.position(2,ipart))/r ;
             nr++;
         }
-        else {
-            charge_weight *= particles.momentum(2,ipart); 
+        else { //if Jt
+            charge_weight *= (-particles.momentum(1,ipart)*particles.position(2,ipart) + particles.momentum(2,ipart)*particles.position(1,ipart))/r ;
         }
     }
 
-    // variable declaration
+    complex<double> e_theta = ( particles.position(1,ipart) + Icpx*particles.position(2,ipart))/r;
+    complex<double> C_m = 1.;
+    for (unsigned int i=0; i<imode; i++)
+        C_m *= e_theta;
+
     double xpn, ypn;
     double delta, delta2;
-    double Sx1[5], Sy1[5]; // arrays used for the Esirkepov projection method
+    double Sx1[5], Sy1[5]; 
 
 // Initialize all current-related arrays to zero
     for (unsigned int i=0; i<5; i++) {
@@ -919,7 +920,7 @@ void ProjectorRZ2Order::operator() (complex<double>* rhoj, Particles &particles,
     Sx1[1] = 0.5 * (delta2-delta+0.25);
     Sx1[2] = 0.75-delta2;
     Sx1[3] = 0.5 * (delta2+delta+0.25);
-    ypn = sqrt (particles.position(1, ipart)*particles.position(1, ipart)+particles.position(2, ipart)*particles.position(2, ipart))*dr_inv_ ;
+    ypn = r * dr_inv_ ;
     int jp = round(ypn + 0.5*(type==2));
     delta  = ypn - (double)jp;
     delta2 = delta*delta;
@@ -934,19 +935,17 @@ void ProjectorRZ2Order::operator() (complex<double>* rhoj, Particles &particles,
     jp -= j_domain_begin + 2;
 
     for (unsigned int i=0 ; i<5 ; i++) {
-        iloc = (i+ip)*b_dim[1]+jp;
+        iloc = (i+ip)*nr+jp;
         for (unsigned int j=0 ; j<5 ; j++) {
-            if (j+jp+2* j_domain_begin == 0){
-                rhoj [iloc+j] += charge_weight*6.* Sx1[i]*Sy1[j] /dr; // iloc = (i+ipo)*b_dim[1];
-                //rho [iloc+j+1] += rho [iloc+j-1];
-                //rho [iloc+j+2] += rho [iloc+j-2];
-         }
+            if ((type != 2) && (j+jp+j_domain_begin == 0)){
+                rhoj [iloc+j] += C_m*charge_weight*6.* Sx1[i]*Sy1[j] /dr; 
+            }
             else {
-                rhoj [iloc+j] += charge_weight* Sx1[i]*Sy1[j]/abs((j+jp+2* j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
+                rhoj [iloc+j] += C_m*charge_weight* Sx1[i]*Sy1[j]/abs((j+jp+ j_domain_begin-0.5*(type==2))*dr); 
                 }
             }
     }//i
-} // END Project local current densities (Frozen species)
+} // END Project for diags local current densities
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project global current densities : ionization NOT DONE YET
