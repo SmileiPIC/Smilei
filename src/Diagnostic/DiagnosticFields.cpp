@@ -46,7 +46,16 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
     for( unsigned int i=0; i<vecPatches(0)->EMfields->allFields.size(); i++ ) {
         string field_name = vecPatches(0)->EMfields->allFields[i]->name;
         bool RhoJ = field_name.at(0)=='J' || field_name.at(0)=='R';
-        bool species_field = ( (field_name.at(0)=='J') && (field_name.length()>3) && (field_name.substr(3,4)!="mode") ) || ( (field_name.at(0)=='R') && (field_name.length()>4) && (field_name.substr(4,4)!="mode") );
+
+        bool species_field = ( (params.geometry!="3drz") && ( (field_name.at(0)=='J' && field_name.length()>2) || (field_name.at(0)=='R' && field_name.length()>3) ) )
+            || ( (params.geometry=="3drz") && (
+                                               (field_name.at(0)=='J' && field_name.length()>8 && field_name.substr(2,6)!="_mode_")
+                                               || (field_name.at(0)=='J' && field_name.length()>8 && field_name.find("mode_") != field_name.rfind("mode_") )
+                                               || (field_name.at(0)=='R' && field_name.length()>9 && field_name.substr(3,6)!="_mode_")
+                                               || (field_name.at(0)=='R' && field_name.length()>9 && field_name.find("mode_") != field_name.rfind("mode_") )
+                                               )
+                 ); // end 3drz cases
+
          //MESSAGE("HNA1");
         // If field in list of fields to dump, then add it
         if( hasField(field_name, fieldsToDump) ) {
