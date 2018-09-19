@@ -46,7 +46,7 @@ void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
             for (unsigned int j=isYmin*3 ; j<nr_d ; j++) {
                 (*ErRZ)(i,j) += -dt*(*JrRZ)(i,j)
                     -                  dt_ov_dl * ( (*BtRZ)(i+1,j) - (*BtRZ)(i,j) )
-                    -                  Icpx*dt*(double)imode/((j_glob+j)*dr)* (*BlRZ)(i,j);
+                    -                  Icpx*dt*(double)imode/((j_glob+j-0.5)*dr)* (*BlRZ)(i,j);
 
             }
         }
@@ -57,10 +57,9 @@ void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
                     -                  dt_ov_dr * ( (*BlRZ)(i,j+1) - (*BlRZ)(i,j) );        
             }
         }
-        if (isYmin){
+        if (isYmin){ // Conditions on axis
             unsigned int j=2;
             if (imode==0){
-            	//MA_SolverRZ_norm
             	for (unsigned int i=0 ; i<nl_p  ; i++) {
             		(*EtRZ)(i,j)=0;
             	}
@@ -76,11 +75,9 @@ void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
             		(*ElRZ)(i,j)= 0;
             	}
             	for (unsigned int i=0 ; i<nl_p  ; i++) {
-            		//(*EtRZ)(i,j)= (*EtRZ)(i,j+1);
-            		(*EtRZ)(i,j)= -1./3*(4.*Icpx*(*ErRZ)(i,j+1)+(*EtRZ)(i,j+1));
+            		(*EtRZ)(i,j)= -1./3.*(4.*Icpx*(*ErRZ)(i,j+1)+(*EtRZ)(i,j+1));
             	}
             	for (unsigned int i=0 ; i<nl_p ; i++) {
-            		//(*ErRZ)(i,j)= -(*ErRZ)(i,j+1);
             		(*ErRZ)(i,j)=2.*Icpx*(*EtRZ)(i,j)-(*ErRZ)(i,j+1);
             	}
             }
