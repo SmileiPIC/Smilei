@@ -46,7 +46,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
     for( unsigned int i=0; i<vecPatches(0)->EMfields->allFields.size(); i++ ) {
         string field_name = vecPatches(0)->EMfields->allFields[i]->name;
         bool RhoJ = field_name.at(0)=='J' || field_name.at(0)=='R';
-
+        /*
         bool species_field = ( (params.geometry!="3drz") && ( (field_name.at(0)=='J' && field_name.length()>2) || (field_name.at(0)=='R' && field_name.length()>3) ) )
             || ( (params.geometry=="3drz") && (
                                                (field_name.at(0)=='J' && field_name.length()>8 && field_name.substr(2,6)!="_mode_")
@@ -55,6 +55,8 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
                                                || (field_name.at(0)=='R' && field_name.length()>9 && field_name.find("mode_") != field_name.rfind("mode_") )
                                                )
                  ); // end 3drz cases
+        */
+        bool species_field = (field_name.at(0)=='J' && field_name.length()>3 && field_name.at(3)!='m' ) || (field_name.at(0)=='R' && field_name.length()>4 && field_name.at(4)!='m');
 
          //MESSAGE("HNA1");
         // If field in list of fields to dump, then add it
@@ -327,6 +329,7 @@ void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime,
     
     // For each field, combine all patches and write out
     for( unsigned int ifield=0; ifield < fields_indexes.size(); ifield++ ) {
+        if ( smpi->isMaster() ) cout << fields_names[ifield] << endl;
         
         // Copy the patch field to the buffer
         #pragma omp barrier
