@@ -105,7 +105,14 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
 .. py:data:: geometry
 
-  The geometry of the simulation: ``"1Dcartesian"``, ``"2Dcartesian"``, or ``"3Dcartesian"``.
+  The geometry of the simulation: ``"1Dcartesian"``, ``"2Dcartesian"``,  ``"3Dcartesian"`` or  ``"3Drz"``.
+  ``"3Drz"`` geometry is a quasi-3D simulation in cylindrical geometry with Fourier decomposition in theta modes as first described in this `paper <https://www.sciencedirect.com/science/article/pii/S0021999108005950?via%3Dihub>`_.
+  This geometry is currently proposed in alpha version. 
+  It has not been thoroughly tested and only Field diagnostics are available.
+  In this geometry grid quanties in the namelist are 2-dimensional. 
+  The first dimension is the longitudinal x coordinate.
+  The second dimension is the radial r coordinate.
+  Particles are described as in a Cartesian 3-dimensionnal simulation.
 
 
 .. py:data:: interpolation_order
@@ -300,6 +307,12 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   The value of the random seed. To create a per-processor random seed, you may use
   the variable  :py:data:`smilei_mpi_rank`.
+
+.. py:data:: nmodes
+
+  :default: 2
+
+  The number of modes used for the Fourier decomposition in ``"3Drz"`` geometry.
 
 ----
 
