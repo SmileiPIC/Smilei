@@ -152,9 +152,9 @@ public:
     }
 
     //! Fold EM fields modes correctly around axis
-    void fold_fields(bool diag_flag);
+    void fold_J(bool diag_flag);
 
-    void on_axis_fields(bool diag_flag);    
+    void on_axis_J(bool diag_flag);    
     //! from smpi is ymax
     const bool isYmin;
     
