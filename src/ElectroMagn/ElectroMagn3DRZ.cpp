@@ -833,7 +833,7 @@ void ElectroMagn3DRZ::initAntennas(Patch* patch)
 }
 
 //! Fold EM fields modes correctly around axis
-void ElectroMagn3DRZ::fold_fields(bool diag_flag)
+void ElectroMagn3DRZ::fold_J(bool diag_flag)
 {  
 
     // Are static casts really necesary here ?
@@ -863,9 +863,6 @@ void ElectroMagn3DRZ::fold_fields(bool diag_flag)
                       for (unsigned int j=0; j<oversize[1]; j++)
                          (*JrRZ)(i,2*oversize[1]+1-j)+= (*JrRZ)(i,j) ;
                       (*JrRZ)(i,oversize[1]+1)= -(*JrRZ)(i,oversize[1]) ;
-                      //if (abs((*JrRZ)(i,oversize[1]+1)+ (*JrRZ)(i,oversize[1]))*100!=0.){
-                      //    MESSAGE("careful! "<<abs((*JrRZ)(i,oversize[1]+1)+ (*JrRZ)(i,oversize[1]))*100000 )
-                      //}
                  }
              }
              else{
@@ -952,7 +949,6 @@ void ElectroMagn3DRZ::fold_fields(bool diag_flag)
                      for (unsigned int i=0; i<nl_p; i++){
                          for (unsigned int j=0; j<oversize[1]; j++)
                              (*JrRZ)(i,2*oversize[1]+1-j)-= (*JrRZ)(i,j) ;
-                         //(*JrRZ)(i,oversize[1]+1)= -(*JrRZ)(i,oversize[1]) ;
 
                      }
                  }
@@ -960,12 +956,11 @@ void ElectroMagn3DRZ::fold_fields(bool diag_flag)
          }
 
     } 
-    //MESSAGE("folding fields");
     return;
 }
 
 //! Evaluating EM fields modes correctly on axis
-void ElectroMagn3DRZ::on_axis_fields(bool diag_flag)
+void ElectroMagn3DRZ::on_axis_J(bool diag_flag)
 {  
 
     // Are static casts really necesary here ?
@@ -1048,7 +1043,6 @@ void ElectroMagn3DRZ::on_axis_fields(bool diag_flag)
              }
          }
     } 
-    //MESSAGE("folding fields");
     return;
 }
 
