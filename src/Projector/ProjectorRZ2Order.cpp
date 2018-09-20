@@ -1001,6 +1001,10 @@ void ProjectorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles,
      else {
          //Loop on modes 
         for ( unsigned int imode = 0; imode<Nmode;imode++){
+
+            // Fix for n_species which is not know in constructors : now the projector is inside each species
+            n_species = emRZ->Jl_.size() / Nmode;
+
 	    int ifield = imode*n_species+ispec;
             if (imode==0){
                 complex<double>* b_Jl  = emRZ->Jl_s [ifield] ? &(* static_cast<cField2D*>(emRZ->Jl_s [ifield]) )(ibin*clrw* dim1) : &(*emRZ->Jl_[imode] )(ibin*clrw* dim1 ) ;
