@@ -90,7 +90,6 @@ The block ``Main`` is **mandatory** and has the following syntax::
       timestep    = 0.005,
       number_of_patches = [64],
       clrw = 5,
-      vecto = "disable",
       maxwell_solver = 'Yee',
       EM_boundary_conditions = [
           ["silver-muller", "silver-muller"],
@@ -105,15 +104,21 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
 .. py:data:: geometry
 
-  The geometry of the simulation: ``"1Dcartesian"``, ``"2Dcartesian"``,  ``"3Dcartesian"`` or  ``"3Drz"``.
-  ``"3Drz"`` geometry is a quasi-3D simulation in cylindrical geometry with Fourier decomposition in theta modes as first described in this `paper <https://www.sciencedirect.com/science/article/pii/S0021999108005950?via%3Dihub>`_.
-  This geometry is currently proposed in alpha version. 
-  It has not been thoroughly tested and only Field diagnostics are available.
-  In this geometry grid quanties in the namelist are 2-dimensional. 
-  The first dimension is the longitudinal x coordinate.
-  The second dimension is the radial r coordinate.
-  Particles are described as in a Cartesian 3-dimensionnal simulation.
-
+  The geometry of the simulation:
+  
+  * ``"1Dcartesian"``
+  * ``"2Dcartesian"``
+  * ``"3Dcartesian"``
+  * ``"3Drz"``: a quasi-3D cylindrical :math:`(x,r,\theta)` geometry with Fourier decomposition
+    in :math:`\theta` (see `this article <https://www.sciencedirect.com/science/article/pii/S0021999108005950?via%3Dihub>`_).
+    Grid quantities are 3-dimensional with a size :math:`(N_x,N_r,N_\theta)` where :math:`N_\theta`
+    is the number of Fourier modes.
+    Particles are described as in a Cartesian 3-dimensionnal simulation.
+    
+  .. warning::
+  
+    The ``"3Drz"`` geometry is currently proposed in alpha version.
+    It has not been thoroughly tested and only Field diagnostics are available.
 
 .. py:data:: interpolation_order
 
@@ -192,8 +197,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   :default: 'Yee'
 
-  The solver for Maxwell's equations. Only ``"Yee"`` is available for all geometries at the moment. ``"Cowan"``, ``"Grassi"`` and ``"Lehe"``
-  are available for 2DCartesian and ``"Lehe"`` is available for 3DCartesian. Lehe solver is described in this `paper <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.021301>`_
+  The solver for Maxwell's equations. Only ``"Yee"`` is available for all geometries at the moment. ``"Cowan"``, ``"Grassi"`` and ``"Lehe"`` are available for ``2DCartesian`` and ``"Lehe"`` is available for ``3DCartesian``. The Lehe solver is described in `this paper <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.021301>`_
 
 .. py:data:: solve_poisson
 
@@ -369,54 +373,46 @@ occur every 150 iterations.
 Vectorization
 ^^^^^^^^^^^^^^^^^^^^^
 
-The block ``Vectorization`` is optional. The dynamic vectorization mode is done at every timestep by default.
+The block ``Vectorization`` is optional. It controls the SIMD operations that can enhance the performance of some computations.
 
 .. code-block:: python
 
   Vectorization(
-      mode = "normal",
-      every = [5],
+      mode = "dynamic",
+      every = 5,
       default = "scalar"
   )
 
 .. py:data:: mode
 
-  :default: ``disable``
+  :default: ``"disable"``
 
-  Enable the use of the vectorized operators
-
-  Advanced users. Sevevecto ral vectorization modes are available:
-    * ``disable``: non-vectorized operators are used.
-      This mode is recommended when the number of particles per cell keeps low
-      (below 8 particles per cell) all along the simulation.
-    * ``normal``: only vectorized operators are used
-    * ``dynamic``: in this mode, the best set of operators (scalar or vectorized)
-      is determined dynamically per patch.
-      In ``vectorized`` state, the cell sorting method is used whereas
-      in ``scalar`` state, the original sorting method is applied.
-      This means that a small overhead can be induced due to the patch reconfiguration.
-    * ``dynamic2``: this is the second dynamic mode.
-    Here, the cell sorting method is used in both ``scalar``
-    and ``vectorized`` state.
-
-  In ``dynamic`` mode, the reconfiguration period can be tuned
-  with the ``Vectorization`` panel.
-  By default, the reconfiguration is done at every timesteps.
-
-  In ``dynamic`` and ``dynamic2`` mode, ``clrw`` is set to the maximum by default.
+  * ``"disable"``: non-vectorized operators are used.
+    Recommended when the number of particles per cell stays below
+    10.
+  * ``"normal"``: vectorized operators are used.
+  * ``"dynamic"``: the best operators (scalar or vectorized)
+    are determined dynamically and locally (per patch and per species).
+    Vectorized operators use a new cell-based sorting method,
+    while scalar operators use an older version with slightly less overhead.
+  * ``"dynamic2"``: same as ``"dynamic"`` but the new cell-based sorting
+    method is used always.
+  
+  In the ``"dynamic"`` and ``"dynamic2"`` modes, :py:data:`clrw` is set to the maximum by default.
 
 .. py:data:: every
 
   :default: 1
+  
+  The number of timesteps between each dynamic reconfiguration of the vectorized operators, when using the ``"dynamic"`` (or ``"dynamic2"``) vectorization modes. It may be set to a :ref:`time selection <TimeSelections>` as well.
 
-  The time selection for the patch reconfiguration when the ``dynamic`` vectorization is activated.
 
 .. py:data:: default
 
   :default: ``vectorized``
 
-  Default species state when one of the dynamic computational mode is activated
-  and no particle are present in the patch.
+  Default state when one of the dynamic computational mode is activated
+  and no particle is present in the patch.
 
 
 ----
