@@ -976,7 +976,7 @@ void ElectroMagn3DRZ::on_axis_fields(bool diag_flag)
          cField2D* JrRZ ;
          cField2D* JtRZ ;
 
-         for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
+         for ( unsigned int imode=1 ; imode<nmodes ; imode++ ) {
 
              //static cast of the total currents and densities
              JlRZ    = static_cast<cField2D*>(Jl_[imode]);
@@ -986,45 +986,29 @@ void ElectroMagn3DRZ::on_axis_fields(bool diag_flag)
              //JrRZ    = Jr_[imode];
              //JtRZ    = Jt_[imode];
              
-             if (imode ==0){
-               //  for (unsigned int i=0; i<nl_p; i++)
-               //      (*JtRZ)(i,oversize[1]) = 0.;
-
-               //  for (unsigned int i=0; i<nl_p; i++)
-               //       (*JrRZ)(i,oversize[1]+1)= -(*JrRZ)(i,oversize[1]) ;
-
-             }
-             else if (imode==1){
+             if (imode == 1){
                  for (unsigned int i=0; i<nl_p; i++)
                      (*JtRZ)(i,oversize[1]) = - 1./3.* (4.* Icpx * (*JrRZ)(i,oversize[1]+1) + (*JtRZ)(i,oversize[1]+1));
 
                  for (unsigned int i=0; i<nl_p; i++)
                       (*JrRZ)(i,oversize[1])= 2.*Icpx* (*JtRZ)(i,oversize[1])-(*JrRZ)(i,oversize[1]+1) ;
              }
+             else {  // imode > 1
+                 for (unsigned int i=0; i<nl_p; i++)
+                     (*JtRZ)(i,oversize[1]) = 0. ;
+
+                 for (unsigned int i=0; i<nl_p; i++)
+                      (*JrRZ)(i,oversize[1])= 0. ;
+             }
+
          } 
          if(diag_flag){
-             for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
+             for ( unsigned int imode=1 ; imode<nmodes ; imode++ ) {
                  cField2D* rhoRZ   = static_cast<cField2D*>(rho_RZ_[imode]); 
-                 if (imode ==0){
-                 //    for (unsigned int ism=0; ism <  n_species; ism++){
-                 //        JtRZ    = Jt_s[ism];
-                 //        if ( JtRZ != NULL ) { 
-                 //            for (unsigned int i=0; i<nl_p; i++){
-                 //                (*JtRZ)(i,oversize[1]) = 0.;
-                 //            }
-                 //        }
-                 //        JrRZ    = Jr_s[ism];
-                 //        if ( JrRZ != NULL ) { 
-                 //            for (unsigned int i=0; i<nl_p; i++){ 
-                 //                (*JrRZ)(i,oversize[1]+1)= -(*JrRZ)(i,oversize[1]) ;
-                 //            }
-                 //        }
-                 //     }
+                 for (unsigned int i=0; i<nl_p; i++){
+                     (*rhoRZ)(i,oversize[1])= 0.;
                  }
-                 else if (imode == 1){
-                     for (unsigned int i=0; i<nl_p; i++){
-                         (*rhoRZ)(i,oversize[1])= 0.;
-                      }
+                 if (imode == 1){
                      //Loop on all modes and species for J_s
                      for (unsigned int ism=n_species; ism <  2*n_species; ism++){
                          JtRZ    = Jt_s[ism];
@@ -1040,11 +1024,30 @@ void ElectroMagn3DRZ::on_axis_fields(bool diag_flag)
                                  (*JrRZ)(i,oversize[1])= 2.*Icpx* (*JtRZ)(i,oversize[1])-(*JrRZ)(i,oversize[1]+1) ;
                              } 
                          }
-                      }
-                   }
-              }
-            }
-        } 
+                     }
+                 }
+                 else {  // imode > 1
+                     //Loop on all modes and species for J_s
+                     for (unsigned int ism=n_species; ism <  2*n_species; ism++){
+                         JtRZ    = Jt_s[ism];
+                         if ( JtRZ != NULL ) {
+                             for (unsigned int i=0; i<nl_p; i++){
+                                 (*JtRZ)(i,oversize[1]) = 0.;
+
+                             }
+                         }
+                         JrRZ    = Jr_s[ism];
+                         if ( JrRZ != NULL ) {
+                             for (unsigned int i=0; i<nl_p; i++){
+                                 (*JrRZ)(i,oversize[1])= 0. ;
+                             } 
+                         }
+                     }
+                 }
+
+             }
+         }
+    } 
     //MESSAGE("folding fields");
     return;
 }
