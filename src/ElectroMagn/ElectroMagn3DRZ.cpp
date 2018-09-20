@@ -1012,14 +1012,14 @@ void ElectroMagn3DRZ::on_axis_fields(bool diag_flag)
                      //Loop on all modes and species for J_s
                      for (unsigned int ism=n_species; ism <  2*n_species; ism++){
                          JtRZ    = Jt_s[ism];
-                         if ( JtRZ != NULL ) {
+                         if ( ( JtRZ != NULL ) && (JrRZ != NULL ) ) {
                              for (unsigned int i=0; i<nl_p; i++){
                                  (*JtRZ)(i,oversize[1]) = - 1./3.* (4.* Icpx * (*JrRZ)(i,oversize[1]+1) + (*JtRZ)(i,oversize[1]+1));
 
                              }
                          }
                          JrRZ    = Jr_s[ism];
-                         if ( JrRZ != NULL ) {
+                         if ( ( JrRZ != NULL ) && ( JtRZ != NULL ) ) {
                              for (unsigned int i=0; i<nl_p; i++){
                                  (*JrRZ)(i,oversize[1])= 2.*Icpx* (*JtRZ)(i,oversize[1])-(*JrRZ)(i,oversize[1]+1) ;
                              } 
