@@ -123,9 +123,9 @@ void PatchRZ::initSumField( Field* field, int iDim, SmileiMPI* smpi )
         field->MPIbuff.iallocate(2, field, oversize);
 
         int tagp(0);
-        if (field->name == "Jx") tagp = 1;
-        if (field->name == "Jy") tagp = 2;
-        if (field->name == "Jz") tagp = 3;
+        if (field->name == "Jl") tagp = 1;
+        if (field->name == "Jr") tagp = 2;
+        if (field->name == "Jt") tagp = 3;
         if (field->name == "Rho") tagp = 4;
 
         field->MPIbuff.defineTags( this, smpi, tagp );
@@ -370,9 +370,9 @@ void PatchRZ::initExchangeComplex( Field* field, int iDim, SmileiMPI* smpi )
         field->MPIbuff.allocate(2);
 
         int tagp(0);
-        if (field->name == "Bx") tagp = 6;
-        if (field->name == "By") tagp = 7;
-        if (field->name == "Bz") tagp = 8;
+        if (field->name == "Bl") tagp = 6;
+        if (field->name == "Br") tagp = 7;
+        if (field->name == "Bt") tagp = 8;
 
         field->MPIbuff.defineTags( this, smpi, tagp );
     }
