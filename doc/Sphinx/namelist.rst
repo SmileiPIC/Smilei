@@ -109,16 +109,18 @@ The block ``Main`` is **mandatory** and has the following syntax::
   * ``"1Dcartesian"``
   * ``"2Dcartesian"``
   * ``"3Dcartesian"``
-  * ``"3Drz"``: a quasi-3D cylindrical :math:`(x,r,\theta)` geometry with Fourier decomposition
-    in :math:`\theta` (see `this article <https://www.sciencedirect.com/science/article/pii/S0021999108005950?via%3Dihub>`_).
-    Grid quantities are 3-dimensional with a size :math:`(N_x,N_r,N_\theta)` where :math:`N_\theta`
-    is the number of Fourier modes.
-    Particles are described as in a Cartesian 3-dimensionnal simulation.
+  * ``"AMcylindrical"``: Cylindrical geometry with azimuthal modes decomposition. See :doc:`algorithms`.
+
+  In the following documentation, all references to simulation dimension depends on the geometry.
+  Cartesian 1D, 2D,3D respectively stand for 1 dimensional, two dimensional and three dimensional and are ordered as :math:`(x,y,z)`.
+  In the case of the ``"AMcylindrical"``, all grid quantities are two dimensional and ordered as :math:`(x,r)`. 
+  Particle quantities (i.e. the Species block) are expressed in three dimensional Cartesian frame :math:`(x,y,z)`.
     
   .. warning::
   
-    The ``"3Drz"`` geometry is currently proposed in alpha version.
+    The ``"AMcylindrical"`` geometry is currently proposed in alpha version.
     It has not been thoroughly tested and only Field diagnostics are available.
+    Boundary conditions must be set to ``"remove"`` for particles, ``"silver-muller"`` for longitudinal EM boundaries and ``"buneman"`` for transverse EM boundaries.
 
 .. py:data:: interpolation_order
 
