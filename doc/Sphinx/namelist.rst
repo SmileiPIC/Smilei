@@ -1124,44 +1124,6 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
         angle = 10./180.*3.14159
     )
 
-
-Laser envelope model
-^^^^^^^^^^^^^^^^^^^^^^
-
-In geometry (``"3Dcartesian"``) it is possible to model a laser pulse propagating in the ``x`` direction through an envelope model (see :doc:`laser_envelope` for the advantages and limits of this approximation).
-The fast oscillations of the laser are neglected and all the physical quantities of the simulation, including the electromagnetic fields and their source terms, as well as the particles positions and momenta, are meant to be an average over one or more optical cycles.
-Effects involving characteristic lengths comparable to the laser central wavelength, or effects dependent on the polarization of the laser, cannot be modeled with this option.
-
-For the moment the only way to specify a laser pulse through this model in :program:`Smilei` is through a cylindrically symmetric 3D gaussian beam.
-Contrarily to a standard Laser, the laser envelope will be entirely initialized inside the simulation box at the start of the simulation.
-
-Following is the laser envelope creator::
-
-    LaserEnvelopeGaussian3D(
-        a0              = 1.,
-        focus           = [150., 40., 40.],
-        waist           = 30.,
-        time_envelope   = tgaussian(center=150., fwhm=40.),
-        envelope_solver = 'explicit',
-    )
-
-The arguments appearing ``LaserEnvelopeGaussian3D`` have the same meaning they would have in a normal LaserGaussian3D, with some differences:
-
-.. py:data:: time_envelope
-
-   Since the envelope will be entirely initialized in the simulation box already at the start of the simulation, the time envelope will be applied in the ``x`` direction instead of time. It is recommended to initialize the laser envelope in vacuum, separated from the plasma, to avoid unphysical results.
-
-.. py:data:: envelope_solver
-
-  :default: ``explicit``
-
-  For the moment the only available solver for the laser envelope equation is an explicit solver with centered finite differences in space and time.
-
-It is important to remember that the profile defined through the block ``LaserEnvelopeGaussian3D`` corresponds to the complex envelope of the laser vector potential component :math:`\tilde{A}` in the polarization direction. 
-The calculation of the correspondent complex envelope for the laser electric field component in that direction is described in :doc:`laser_envelope`. 
-
-
-
   .. py:data:: space_time_profile
 
     :type: A list of two *python* functions
@@ -1200,6 +1162,42 @@ The calculation of the correspondent complex envelope for the laser electric fie
     
     Angle between the boundary and the profile's plane, the rotation being around :math:`z`.
     See :doc:`this page <laser_offset>` for more details.
+
+
+Laser envelope model
+^^^^^^^^^^^^^^^^^^^^^^
+
+In geometry (``"3Dcartesian"``) it is possible to model a laser pulse propagating in the ``x`` direction through an envelope model (see :doc:`laser_envelope` for the advantages and limits of this approximation).
+The fast oscillations of the laser are neglected and all the physical quantities of the simulation, including the electromagnetic fields and their source terms, as well as the particles positions and momenta, are meant to be an average over one or more optical cycles.
+Effects involving characteristic lengths comparable to the laser central wavelength, or effects dependent on the polarization of the laser, cannot be modeled with this option.
+
+For the moment the only way to specify a laser pulse through this model in :program:`Smilei` is through a cylindrically symmetric 3D gaussian beam.
+Contrarily to a standard Laser, the laser envelope will be entirely initialized inside the simulation box at the start of the simulation.
+
+Following is the laser envelope creator::
+
+    LaserEnvelopeGaussian3D(
+        a0              = 1.,
+        focus           = [150., 40., 40.],
+        waist           = 30.,
+        time_envelope   = tgaussian(center=150., fwhm=40.),
+        envelope_solver = 'explicit',
+    )
+
+The arguments appearing ``LaserEnvelopeGaussian3D`` have the same meaning they would have in a normal LaserGaussian3D, with some differences:
+
+.. py:data:: time_envelope
+
+   Since the envelope will be entirely initialized in the simulation box already at the start of the simulation, the time envelope will be applied in the ``x`` direction instead of time. It is recommended to initialize the laser envelope in vacuum, separated from the plasma, to avoid unphysical results.
+
+.. py:data:: envelope_solver
+
+  :default: ``explicit``
+
+  For the moment the only available solver for the laser envelope equation is an explicit solver with centered finite differences in space and time.
+
+It is important to remember that the profile defined through the block ``LaserEnvelopeGaussian3D`` corresponds to the complex envelope of the laser vector potential component :math:`\tilde{A}` in the polarization direction. 
+The calculation of the correspondent complex envelope for the laser electric field component in that direction is described in :doc:`laser_envelope`. 
 
   
 ----
