@@ -8,7 +8,7 @@ class Field(Diagnostic):
 		
 		self.moving = moving
 		
-		self.cylindrical = self.namelist.Main.geometry == "3drz"
+		self.cylindrical = self.namelist.Main.geometry == "AMcylindrical"
 		
 		# Search available diags
 		diags = self.getDiags()
@@ -56,7 +56,7 @@ class Field(Diagnostic):
 		if self.cylindrical:
 			all_fields = list(self._fields)
 			self._fields = {}
-			for f in ["Ex","Er","Et","Bx","Br","Bt","Jx","Jr","Jt","Rho"]:
+			for f in ["El","Er","Et","Bl","Br","Bt","Jl","Jr","Jt","Rho"]:
 				imode = 0
 				while f+"_mode_"+str(imode) in all_fields:
 					imode += 1
