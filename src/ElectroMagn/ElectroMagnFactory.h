@@ -6,7 +6,7 @@
 #include "ElectroMagn1D.h"
 #include "ElectroMagn2D.h"
 #include "ElectroMagn3D.h"
-#include "ElectroMagn3DRZ.h"
+#include "ElectroMagnAM.h"
 #include "ElectroMagnBC.h"
 #include "EnvelopeFactory.h"
 
@@ -29,8 +29,8 @@ public:
         else if ( params.geometry == "3Dcartesian" ) {
             EMfields = new ElectroMagn3D(params, domain_decomposition, vecSpecies, patch);
         }
-        else if ( params.geometry == "3drz" ) {
-            EMfields = new ElectroMagn3DRZ(params, domain_decomposition, vecSpecies, patch);
+        else if ( params.geometry == "AMcylindrical" ) {
+            EMfields = new ElectroMagnAM(params, domain_decomposition, vecSpecies, patch);
         }
         else {
             ERROR( "Unknown geometry : " << params.geometry << "!" );
@@ -163,8 +163,8 @@ public:
             newEMfields = new ElectroMagn2D(static_cast<ElectroMagn2D*>(EMfields), params, patch);
         } else if ( params.geometry == "3Dcartesian" ) {
             newEMfields = new ElectroMagn3D(static_cast<ElectroMagn3D*>(EMfields), params, patch);
-        } else if ( params.geometry == "3drz" ) {
-            newEMfields = new ElectroMagn3DRZ(static_cast<ElectroMagn3DRZ*>(EMfields), params, patch);
+        } else if ( params.geometry == "AMcylindrical" ) {
+            newEMfields = new ElectroMagnAM(static_cast<ElectroMagnAM*>(EMfields), params, patch);
         }
         
         newEMfields->finishInitialization(vecSpecies.size(), patch);

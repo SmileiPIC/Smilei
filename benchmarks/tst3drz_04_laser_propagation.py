@@ -16,7 +16,7 @@ Nit = 700
 
 
 Main(
-    geometry = "3drz",
+    geometry = "AMcylindrical",
     nmodes=2,
     interpolation_order = 2,
     timestep = dt,

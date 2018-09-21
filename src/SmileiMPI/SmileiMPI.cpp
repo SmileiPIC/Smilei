@@ -127,7 +127,7 @@ void SmileiMPI::init( Params& params, DomainDecomposition* domain_decomposition 
     dynamics_invgf.resize(omp_get_max_threads());
     dynamics_iold.resize(omp_get_max_threads());
     dynamics_deltaold.resize(omp_get_max_threads());
-    if (params.geometry == "3drz") dynamics_thetaold.resize(omp_get_max_threads()); 
+    if (params.geometry == "AMcylindrical") dynamics_thetaold.resize(omp_get_max_threads()); 
 
     if ( n_envlaser > 0 ) {
         dynamics_GradPHIpart.resize(omp_get_max_threads());
@@ -141,7 +141,7 @@ void SmileiMPI::init( Params& params, DomainDecomposition* domain_decomposition 
     dynamics_invgf.resize(1);
     dynamics_iold.resize(1);
     dynamics_deltaold.resize(1);
-    if (params.geometry == "3drz") dynamics_thetaold.resize(1); 
+    if (params.geometry == "AMcylindrical") dynamics_thetaold.resize(1); 
 
     if ( n_envlaser > 0 ) {
         dynamics_GradPHIpart.resize(1);
@@ -644,10 +644,10 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
     }
 
     // Send fields
-    if ( params.geometry != "3drz" ) {
+    if ( params.geometry != "AMcylindrical" ) {
         isend( patch->EMfields, to, maxtag, patch->requests_,tag);
     } else {
-        isend( patch->EMfields, to, maxtag, patch->requests_,tag, static_cast<ElectroMagn3DRZ*>(patch->EMfields)->El_.size());
+        isend( patch->EMfields, to, maxtag, patch->requests_,tag, static_cast<ElectroMagnAM*>(patch->EMfields)->El_.size());
     }
 
 } // END isend( Patch )
@@ -763,10 +763,10 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
 
     // Receive EM fields
     patch->EMfields->initAntennas(patch);
-    if ( params.geometry != "3drz" ) {
+    if ( params.geometry != "AMcylindrical" ) {
         recv( patch->EMfields, from, maxtag );
     } else {
-        recv( patch->EMfields, from, maxtag, static_cast<ElectroMagn3DRZ*>(patch->EMfields)->El_.size() );
+        recv( patch->EMfields, from, maxtag, static_cast<ElectroMagnAM*>(patch->EMfields)->El_.size() );
     }
 
 } // END recv ( Patch )
@@ -906,17 +906,17 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& req
 void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& requests, int mpi_tag, unsigned int nmodes)
 {
 
-    ElectroMagn3DRZ* EMRZ = static_cast<ElectroMagn3DRZ*>(EM);
+    ElectroMagnAM* EMAM = static_cast<ElectroMagnAM*>(EM);
     for (unsigned int imode =0; imode < nmodes; imode++){
-        isendComplex( EMRZ->El_[imode] , to, mpi_tag+tag, requests[tag]); tag++;
-        isendComplex( EMRZ->Er_[imode] , to, mpi_tag+tag, requests[tag]); tag++;
-        isendComplex( EMRZ->Et_[imode] , to, mpi_tag+tag, requests[tag]); tag++;
-        isendComplex( EMRZ->Bl_[imode] , to, mpi_tag+tag, requests[tag]); tag++;
-        isendComplex( EMRZ->Br_[imode] , to, mpi_tag+tag, requests[tag]); tag++;
-        isendComplex( EMRZ->Bt_[imode] , to, mpi_tag+tag, requests[tag]); tag++;
-        isendComplex( EMRZ->Bl_m[imode], to, mpi_tag+tag, requests[tag]); tag++;
-        isendComplex( EMRZ->Br_m[imode], to, mpi_tag+tag, requests[tag]); tag++;
-        isendComplex( EMRZ->Bt_m[imode], to, mpi_tag+tag, requests[tag]); tag++;
+        isendComplex( EMAM->El_[imode] , to, mpi_tag+tag, requests[tag]); tag++;
+        isendComplex( EMAM->Er_[imode] , to, mpi_tag+tag, requests[tag]); tag++;
+        isendComplex( EMAM->Et_[imode] , to, mpi_tag+tag, requests[tag]); tag++;
+        isendComplex( EMAM->Bl_[imode] , to, mpi_tag+tag, requests[tag]); tag++;
+        isendComplex( EMAM->Br_[imode] , to, mpi_tag+tag, requests[tag]); tag++;
+        isendComplex( EMAM->Bt_[imode] , to, mpi_tag+tag, requests[tag]); tag++;
+        isendComplex( EMAM->Bl_m[imode], to, mpi_tag+tag, requests[tag]); tag++;
+        isendComplex( EMAM->Br_m[imode], to, mpi_tag+tag, requests[tag]); tag++;
+        isendComplex( EMAM->Bt_m[imode], to, mpi_tag+tag, requests[tag]); tag++;
     }
 
     for( unsigned int idiag=0; idiag<EM->allFields_avg.size(); idiag++) {
@@ -1064,17 +1064,17 @@ void SmileiMPI::recv(ElectroMagn* EM, int from, int tag)
 
 void SmileiMPI::recv(ElectroMagn* EM, int from, int tag, unsigned int nmodes)
 {
-    ElectroMagn3DRZ* EMRZ = static_cast<ElectroMagn3DRZ*>(EM);
+    ElectroMagnAM* EMAM = static_cast<ElectroMagnAM*>(EM);
     for (unsigned int imode =0; imode < nmodes; imode++){
-        recvComplex( EMRZ->El_[imode] , from, tag ); tag++;
-        recvComplex( EMRZ->Er_[imode] , from, tag ); tag++;
-        recvComplex( EMRZ->Et_[imode] , from, tag ); tag++;
-        recvComplex( EMRZ->Bl_[imode] , from, tag ); tag++;
-        recvComplex( EMRZ->Br_[imode] , from, tag ); tag++;
-        recvComplex( EMRZ->Bt_[imode] , from, tag ); tag++;
-        recvComplex( EMRZ->Bl_m[imode], from, tag ); tag++;
-        recvComplex( EMRZ->Br_m[imode], from, tag ); tag++;
-        recvComplex( EMRZ->Bt_m[imode], from, tag ); tag++;
+        recvComplex( EMAM->El_[imode] , from, tag ); tag++;
+        recvComplex( EMAM->Er_[imode] , from, tag ); tag++;
+        recvComplex( EMAM->Et_[imode] , from, tag ); tag++;
+        recvComplex( EMAM->Bl_[imode] , from, tag ); tag++;
+        recvComplex( EMAM->Br_[imode] , from, tag ); tag++;
+        recvComplex( EMAM->Bt_[imode] , from, tag ); tag++;
+        recvComplex( EMAM->Bl_m[imode], from, tag ); tag++;
+        recvComplex( EMAM->Br_m[imode], from, tag ); tag++;
+        recvComplex( EMAM->Bt_m[imode], from, tag ); tag++;
     }
 
     for( unsigned int idiag=0; idiag<EM->allFields_avg.size(); idiag++) {

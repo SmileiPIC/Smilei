@@ -124,7 +124,7 @@ void SyncVectorPatch::sumRhoJ(Params& params, VectorPatch& vecPatches, int imode
     SyncVectorPatch::sumComplex( vecPatches.listJl_[imode], vecPatches, smpi, timers, itime  );
     SyncVectorPatch::sumComplex( vecPatches.listJr_[imode], vecPatches, smpi, timers, itime  );
     SyncVectorPatch::sumComplex( vecPatches.listJt_[imode], vecPatches, smpi, timers, itime  );
-    if( (vecPatches.diag_flag) || (params.is_spectral) ) SyncVectorPatch::sumComplex( vecPatches.listrho_RZ_[imode], vecPatches, smpi, timers, itime );
+    if( (vecPatches.diag_flag) || (params.is_spectral) ) SyncVectorPatch::sumComplex( vecPatches.listrho_AM_[imode], vecPatches, smpi, timers, itime );
 }
 
 void SyncVectorPatch::sumRhoJs(Params& params, VectorPatch& vecPatches, int ispec, SmileiMPI* smpi, Timers &timers, int itime)
@@ -150,7 +150,7 @@ void SyncVectorPatch::sumRhoJs(Params& params, VectorPatch& vecPatches,int imode
     if(vecPatches.listJrs_[imode].size()>0) SyncVectorPatch::sumComplex( vecPatches.listJrs_[imode] , vecPatches, smpi, timers, itime  );
     if(vecPatches.listJts_[imode] .size()>0) SyncVectorPatch::sumComplex( vecPatches.listJts_[imode], vecPatches, smpi, timers, itime  );
     // Sum rho_s(ispec)
-    if(vecPatches.listrhos_RZ_[imode].size()>0) SyncVectorPatch::sumComplex( vecPatches.listrhos_RZ_[imode], vecPatches, smpi, timers, itime  );
+    if(vecPatches.listrhos_AM_[imode].size()>0) SyncVectorPatch::sumComplex( vecPatches.listrhos_AM_[imode], vecPatches, smpi, timers, itime  );
 }
 
 // fields : contains a single field component for all patches of vecPatches

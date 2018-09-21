@@ -10,9 +10,9 @@
 #include "ElectroMagnBC3D_SM.h"
 #include "ElectroMagnBC3D_refl.h"
 #include "ElectroMagnBC3D_BM.h"
-#include "ElectroMagnBCRZ_SM.h"
-#include "ElectroMagnBCRZ_Axis.h"
-#include "ElectroMagnBCRZ_BM.h"
+#include "ElectroMagnBCAM_SM.h"
+#include "ElectroMagnBCAM_Axis.h"
+#include "ElectroMagnBCAM_BM.h"
 
 #include "Params.h"
 
@@ -160,7 +160,7 @@ public:
         // -----------------
         // For theta mode Geometry
         // -----------------
-        else if ( params.geometry == "3drz" ) {
+        else if ( params.geometry == "AMcylindrical" ) {
 			
             for (unsigned int ii=0;ii<2;ii++) {
 
@@ -168,7 +168,7 @@ public:
                 // silver-muller (injecting/absorbing bcs)
 				//MESSAGE(params.EM_BCs[0][ii]);
                 if ( params.EM_BCs[0][ii] == "silver-muller" ) {
-                    emBoundCond[ii] = new ElectroMagnBCRZ_SM(params, patch, ii);
+                    emBoundCond[ii] = new ElectroMagnBCAM_SM(params, patch, ii);
 					
                 }
 				
@@ -178,11 +178,11 @@ public:
             }
                 
             // R DIRECTION
-            emBoundCond[2] = new ElectroMagnBCRZ_Axis(params, patch, 2);
+            emBoundCond[2] = new ElectroMagnBCAM_Axis(params, patch, 2);
             // silver-muller bcs (injecting/absorbin)
 			//MESSAGE("bc AXIS");
             if ( params.EM_BCs[1][1] == "buneman" ) {
-                emBoundCond[3] = new ElectroMagnBCRZ_BM(params, patch, 3);
+                emBoundCond[3] = new ElectroMagnBCAM_BM(params, patch, 3);
                 //MESSAGE("create BM BC");
             }
 			
@@ -192,7 +192,7 @@ public:
             }
 			//MESSAGE( params.EM_BCs[1][1]);
             
-        }//3drz       
+        }//AM       
 
         // OTHER GEOMETRIES ARE NOT DEFINED ---
         else {

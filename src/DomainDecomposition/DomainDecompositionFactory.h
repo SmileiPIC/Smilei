@@ -14,7 +14,7 @@ public:
         if (params.patch_decomposition=="hilbert") {
             if ( ( params.geometry == "1Dcartesian" ) )
                 domain_decomposition = new HilbertDomainDecomposition1D( params );
-            else if ( ( params.geometry == "2Dcartesian" ) || ( params.geometry == "3drz" ) ) 
+            else if ( ( params.geometry == "2Dcartesian" ) || ( params.geometry == "AMcylindrical" ) ) 
                 domain_decomposition = new HilbertDomainDecomposition2D( params );
             else if ( ( params.geometry == "3Dcartesian" ) ) 
                 domain_decomposition = new HilbertDomainDecomposition3D( params );
@@ -24,7 +24,7 @@ public:
         else if(params.patch_decomposition=="cartesian") {
             if ( ( params.geometry == "1Dcartesian" ) )
                 domain_decomposition = new CartesianDomainDecomposition1D( params );
-            else if ( ( params.geometry == "2Dcartesian" )  || ( params.geometry == "3drz" )  ) {
+            else if ( ( params.geometry == "2Dcartesian" )  || ( params.geometry == "AMcylindrical" )  ) {
                 if (params.patch_orientation!="YX")
                     domain_decomposition = new CartesianDomainDecomposition2D( params );
                 else 
@@ -50,7 +50,7 @@ public:
 
         if ( ( params.geometry == "1Dcartesian" ) )
             domain_decomposition = new GlobalDomainDecomposition1D( params );
-        else if ( ( params.geometry == "2Dcartesian" ) || ( params.geometry == "3drz" ) ) 
+        else if ( ( params.geometry == "2Dcartesian" ) || ( params.geometry == "AMcylindrical" ) ) 
             domain_decomposition = new GlobalDomainDecomposition2D( params );
         else if ( ( params.geometry == "3Dcartesian" ) ) 
             domain_decomposition = new GlobalDomainDecomposition3D( params );

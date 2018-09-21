@@ -1,5 +1,5 @@
-#ifndef ELECTROMAGN3DRZ_H
-#define ELECTROMAGN3DRZ_H
+#ifndef ELECTROMAGNAM_H
+#define ELECTROMAGNAM_H
 
 #include "ElectroMagn.h"
 #include "Field.h"
@@ -9,15 +9,15 @@
 class Params;
 
 //! class ElectroMagn3D containing all information on the electromagnetic fields & currents for 3d3v simulations
-class ElectroMagn3DRZ : public ElectroMagn
+class ElectroMagnAM : public ElectroMagn
 {
 public:
-    //! Constructor for ElectroMagn3DRZ
-    ElectroMagn3DRZ(Params &params, DomainDecomposition* domain_decomposition, std::vector<Species*>& vecSpecies, Patch* patch);
-    ElectroMagn3DRZ( ElectroMagn3DRZ* emFields, Params &params, Patch* patch );
+    //! Constructor for ElectroMagnAM
+    ElectroMagnAM(Params &params, DomainDecomposition* domain_decomposition, std::vector<Species*>& vecSpecies, Patch* patch);
+    ElectroMagnAM( ElectroMagnAM* emFields, Params &params, Patch* patch );
 
-    //! Destructor for ElectroMagn3DRZ
-    ~ElectroMagn3DRZ();
+    //! Destructor for ElectroMagnAM
+    ~ElectroMagnAM();
 
     std::vector<cField2D*> El_;
     std::vector<cField2D*> Er_;
@@ -31,12 +31,12 @@ public:
     std::vector<cField2D*> Jl_;
     std::vector<cField2D*> Jr_;
     std::vector<cField2D*> Jt_;
-    std::vector<cField2D*> rho_RZ_;
+    std::vector<cField2D*> rho_AM_;
     //define a vector of vectors
     std::vector<cField2D*> Jl_s;
     std::vector<cField2D*> Jr_s;
     std::vector<cField2D*> Jt_s;
-    std::vector<cField2D*> rho_RZ_s;
+    std::vector<cField2D*> rho_AM_s;
     void restartRhoJ() override;
     void restartRhoJs() override;
 
@@ -147,7 +147,7 @@ public:
     double computeRhoNorm2() override {
         double norm2(0);
         for (unsigned int imode = 0 ; imode<nmodes ; imode++ ) 
-            rho_RZ_[imode]->norm2(istart, bufsize);
+            rho_AM_[imode]->norm2(istart, bufsize);
         return norm2;
     }
 
@@ -161,8 +161,8 @@ public:
     //! from smpi is ymin
     const bool isYmax;
     
-    //! Initialize quantities needed in the creators of ElectroMagn3DRZ
-    void initElectroMagn3DRZQuantities(Params &params, Patch* patch);
+    //! Initialize quantities needed in the creators of ElectroMagnAM
+    void initElectroMagnAMQuantities(Params &params, Patch* patch);
 
     void finishInitialization(int nspecies, Patch* patch) override final;
 

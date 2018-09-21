@@ -1,15 +1,15 @@
-#ifndef PROJECTORRZ2ORDER_H
-#define PROJECTORRZ2ORDER_H
+#ifndef PROJECTORAM2ORDER_H
+#define PROJECTORAM2ORDER_H
 
 #include <complex>
 
-#include "ProjectorRZ.h"
+#include "ProjectorAM.h"
 
 
-class ProjectorRZ2Order : public ProjectorRZ {
+class ProjectorAM2Order : public ProjectorAM {
 public:
-    ProjectorRZ2Order(Params&, Patch* patch);
-    ~ProjectorRZ2Order();
+    ProjectorAM2Order(Params&, Patch* patch);
+    ~ProjectorAM2Order();
 
     //! Project global current densities for m=0 (EMfields->Jx_/Jy_/Jz_)
     inline void operator() (std::complex<double>* Jl, std::complex<double>* Jr, std::complex<double>* Jt, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold);

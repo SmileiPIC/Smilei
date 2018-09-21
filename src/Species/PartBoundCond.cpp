@@ -15,7 +15,7 @@
 using namespace std;
 
 PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch ) :
-    isRZ( params.geometry == "3drz" )
+    isAM( params.geometry == "AMcylindrical" )
 {   
     // number of dimensions for the particle
     //!\todo (MG to JD) isn't it always 3?
@@ -66,7 +66,7 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch ) :
             //std::cout<<"ymax2 "<<y_max2<<std::endl;
 	}
         
-        if ( ( nDim_particle > 2 ) && (!isRZ) ) {
+        if ( ( nDim_particle > 2 ) && (!isAM) ) {
             if (params.EM_BCs[2][0]=="periodic") {
                 z_min = patch->getDomainLocalMin(2);
                 z_max = patch->getDomainLocalMax(2);
@@ -137,7 +137,7 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch ) :
     }
 
     
-    if ( ( nDim_particle > 1 ) && (!isRZ) ) {
+    if ( ( nDim_particle > 1 ) && (!isAM) ) {
         // Ymin
         if ( species->boundary_conditions[1][0] == "reflective" ) {
             if (patch->isYmin()) bc_ymin = &reflect_particle;
@@ -211,20 +211,20 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch ) :
         }//nDim_particle>2
         
     }//nDim_particle>1
-    else if (isRZ) {
-        #ifdef _TODO_RZ
+    else if (isAM) {
+        #ifdef _TODO_AM
         // rmin !!!
         //        §§ none !!!
         #endif
         // Ymin
         //if ( species->boundary_conditions[1][0] == "reflective" ) {
-        //    if (patch->isYmin()) bc_ymin = &refl_particle_rz;
+        //    if (patch->isYmin()) bc_ymin = &refl_particle_AM;
         //}
         //else if ( species->boundary_conditions[1][0] == "remove" ) {
         //    if (patch->isYmin()) bc_ymin = &remove_particle;
         //}
         //else if ( species->boundary_conditions[1][0] == "stop" ) {
-        //    if (patch->isYmin()) bc_ymin = &stop_particle_rz;
+        //    if (patch->isYmin()) bc_ymin = &stop_particle_AM;
         //}
         //else if ( species->boundary_conditions[1][0] == "none" ) {
         //    if (patch->isMaster()) MESSAGE(2,"Ymin boundary condition for species " << species->name << " is 'none', which means the same as fields");
@@ -238,17 +238,17 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch ) :
             if (patch->isYmax()) bc_ymax = &remove_particle;
         }
         else if ( species->boundary_conditions[1][1] == "reflective" ) {
-            if (patch->isYmax()) bc_ymax = &refl_particle_rz;
+            if (patch->isYmax()) bc_ymax = &refl_particle_AM;
         }
         //else if ( species->boundary_conditions[1][1] == "stop" ) {
-        //    if (patch->isYmax()) bc_ymax = &stop_particle_rz;
+        //    if (patch->isYmax()) bc_ymax = &stop_particle_AM;
         //}
         //else if ( species->boundary_conditions[1][1] == "none" ) {
         //    if (patch->isMaster()) MESSAGE(2,"Ymax boundary condition for species " << species->name << " is 'none', which means the same as fields");
         //}
         else {
             //ERROR( "Ymax boundary condition undefined : " << species->boundary_conditions[1][1]  );
-            ERROR("Only Remove and reflective boundary conditions can be applied to particles in Rz geometry ");
+            ERROR("Only Remove and reflective boundary conditions can be applied to particles in AM geometry ");
 	}
     }
     
