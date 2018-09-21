@@ -5,11 +5,11 @@
 #include "MA_Solver2D_norm.h"
 #include "MA_Solver2D_Friedman.h"
 #include "MA_Solver3D_norm.h"
-#include "MA_SolverRZ_norm.h"
+#include "MA_SolverAM_norm.h"
 #include "MF_Solver1D_Yee.h"
 #include "MF_Solver2D_Yee.h"
 #include "MF_Solver3D_Yee.h"
-#include "MF_SolverRZ_Yee.h"
+#include "MF_SolverAM_Yee.h"
 #include "MF_Solver2D_Grassi.h"
 #include "MF_Solver2D_GrassiSpL.h"
 #include "MF_Solver2D_Cowan.h"
@@ -59,7 +59,7 @@ public:
             else if ( ( params.is_pxr == true ) && ( params.is_spectral == true ) )
                 solver = new PXR_Solver3D_GPSTD(params);                
         } else if ( params.geometry == "3drz" ) {
-            solver = new MA_SolverRZ_norm(params);
+            solver = new MA_SolverAM_norm(params);
         }
 
         if (!solver)
@@ -111,7 +111,7 @@ public:
                 solver = new NullSolver(params);
         }else if ( params.geometry == "3drz" ) {
             if (params.maxwell_sol == "Yee") {
-                solver = new MF_SolverRZ_Yee(params);
+                solver = new MF_SolverAM_Yee(params);
             }
         }
         

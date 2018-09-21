@@ -1,5 +1,5 @@
 
-#include "PatchRZ.h"
+#include "PatchAM.h"
 
 #include <cstdlib>
 #include <iostream>

@@ -1,4 +1,4 @@
-#include "ElectroMagnBCRZ_SM.h"
+#include "ElectroMagnBCAM_SM.h"
 
 #include <cstdlib>
 
@@ -17,7 +17,7 @@
 
 using namespace std;
 
-ElectroMagnBCRZ_SM::ElectroMagnBCRZ_SM( Params &params, Patch* patch, unsigned int _min_max )
+ElectroMagnBCAM_SM::ElectroMagnBCAM_SM( Params &params, Patch* patch, unsigned int _min_max )
 : ElectroMagnBC( params, patch, _min_max )
 {
     // conversion factor from degree to radian
@@ -99,7 +99,7 @@ ElectroMagnBCRZ_SM::ElectroMagnBCRZ_SM( Params &params, Patch* patch, unsigned i
 }
 
 
-void ElectroMagnBCRZ_SM::save_fields(Field* my_field, Patch* patch) {
+void ElectroMagnBCAM_SM::save_fields(Field* my_field, Patch* patch) {
     cField2D* field2D=static_cast<cField2D*>(my_field);
     
     if (min_max == 0 && patch->isXmin() ) {
@@ -180,7 +180,7 @@ void ElectroMagnBCRZ_SM::save_fields(Field* my_field, Patch* patch) {
     }
 }
 
-void ElectroMagnBCRZ_SM::disableExternalFields()
+void ElectroMagnBCAM_SM::disableExternalFields()
 {
     Bl_val.resize(0);
     Br_val.resize(0);
@@ -192,7 +192,7 @@ void ElectroMagnBCRZ_SM::disableExternalFields()
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* patch)
+void ElectroMagnBCAM_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
     // Loop on imode 
     for (unsigned int imode=0 ; imode<Nmode ; imode++) {

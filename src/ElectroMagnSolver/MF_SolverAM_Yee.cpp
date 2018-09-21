@@ -1,24 +1,24 @@
 
-#include "MF_SolverRZ_Yee.h"
+#include "MF_SolverAM_Yee.h"
 
-#include "ElectroMagn3DRZ.h"
+#include "ElectroMagnAM.h"
 #include "cField2D.h"
 #include <complex>
 #include "dcomplex.h"
 
-MF_SolverRZ_Yee::MF_SolverRZ_Yee(Params &params)
-: SolverRZ(params)
+MF_SolverAM_Yee::MF_SolverAM_Yee(Params &params)
+: SolverAM(params)
 {
     isEFilterApplied = false;
     if (params.Friedman_filter)
         ERROR("Filters are not available yet");;
 }
 
-MF_SolverRZ_Yee::~MF_SolverRZ_Yee()
+MF_SolverAM_Yee::~MF_SolverAM_Yee()
 {
 }
 
-void MF_SolverRZ_Yee::operator() ( ElectroMagn* fields )
+void MF_SolverAM_Yee::operator() ( ElectroMagn* fields )
 {
 
     for (unsigned int imode=0 ; imode<Nmode ; imode++) {

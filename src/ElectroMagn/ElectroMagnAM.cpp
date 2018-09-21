@@ -1,4 +1,4 @@
-#include "ElectroMagn3DRZ.h"
+#include "ElectroMagnAM.h"
 
 #include <cmath>
 

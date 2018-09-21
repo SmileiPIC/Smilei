@@ -13,7 +13,7 @@
 #include "DiagnosticFields1D.h"
 #include "DiagnosticFields2D.h"
 #include "DiagnosticFields3D.h"
-#include "DiagnosticFieldsRZ.h"
+#include "DiagnosticFieldsAM.h"
 
 //  --------------------------------------------------------------------------------------------------------------------
 //! Create appropriate IO environment for the geometry 

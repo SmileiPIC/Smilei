@@ -1,5 +1,5 @@
 
-#include "DiagnosticFieldsRZ.h"
+#include "DiagnosticFieldsAM.h"
 
 #include <sstream>
 #include <cmath> 

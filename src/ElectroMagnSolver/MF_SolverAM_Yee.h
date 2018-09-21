@@ -1,23 +1,26 @@
-#ifndef MA_SOLVERRZ_NORM_H
-#define MA_SOLVERRZ_NORM_H
+#ifndef MF_SOLVERRZ_YEE_H
+#define MF_SOLVERRZ_YEE_H
 
-#include "SolverRZ.h"
+#include "SolverAM.h" 
 class ElectroMagn;
 
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class Pusher
 //  --------------------------------------------------------------------------------------------------------------------
-class MA_SolverRZ_norm : public SolverRZ
+class MF_SolverAM_Yee : public SolverAM
 {
 
 public:
-    MA_SolverRZ_norm(Params &params);
-    virtual ~MA_SolverRZ_norm();
+    //! Creator for MF_SolverAM_Yee
+    MF_SolverAM_Yee(Params &params);
+    virtual ~MF_SolverAM_Yee();
 
     //! Overloading of () operator
     virtual void operator()( ElectroMagn* fields);
 
 protected:
+    // Check if time filter is applied or not
+    bool isEFilterApplied;
 
 };//END class
 

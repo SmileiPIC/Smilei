@@ -5,7 +5,7 @@
 #include "Patch1D.h"
 #include "Patch2D.h"
 #include "Patch3D.h"
-#include "PatchRZ.h"
+#include "PatchAM.h"
 #include "DomainDecomposition.h"
 
 #include "Tools.h"

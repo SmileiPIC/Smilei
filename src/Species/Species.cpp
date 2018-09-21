@@ -25,7 +25,7 @@
 #include "InterpolatorFactory.h"
 #include "ProjectorFactory.h"
 #include "Profile.h"
-#include "ElectroMagn3DRZ.h"
+#include "ElectroMagnAM.h"
 #include "Projector.h"
 #include "ProjectorFactory.h"
 

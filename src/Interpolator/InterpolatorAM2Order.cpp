@@ -1,10 +1,10 @@
-#include "InterpolatorRZ2Order.h"
+#include "InterpolatorAM2Order.h"
 
 #include <cmath>
 #include <iostream>
 #include <math.h>
 #include "ElectroMagn.h"
-#include "ElectroMagn3DRZ.h"
+#include "ElectroMagnAM.h"
 #include "cField2D.h"
 #include "Particles.h"
 #include <complex>
@@ -14,9 +14,9 @@ using namespace std;
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Creator for InterpolatorRZ2Order
+// Creator for InterpolatorAM2Order
 // ---------------------------------------------------------------------------------------------------------------------
-InterpolatorRZ2Order::InterpolatorRZ2Order(Params &params, Patch *patch) : InterpolatorRZ(params, patch)
+InterpolatorAM2Order::InterpolatorAM2Order(Params &params, Patch *patch) : InterpolatorAM(params, patch)
 {
 
     dl_inv_ = 1.0/params.cell_length[0];
@@ -29,7 +29,7 @@ InterpolatorRZ2Order::InterpolatorRZ2Order(Params &params, Patch *patch) : Inter
 // ---------------------------------------------------------------------------------------------------------------------
 // 2nd Order Interpolation of the fields at a the particle position (3 nodes are used)
 // ---------------------------------------------------------------------------------------------------------------------
-void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, int nparts, double* ELoc, double* BLoc)
+void InterpolatorAM2Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, int nparts, double* ELoc, double* BLoc)
 {
 
     //Treat mode 0 first
@@ -184,9 +184,9 @@ void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particl
     //std::cout<<"By "<<*(BLoc+1*nparts)<<std::endl;
     //std::cout<<"Bz "<<*(BLoc+2*nparts)<<std::endl;
 
-} // END InterpolatorRZ2Order
+} // END InterpolatorAM2Order
 
-void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc)
+void InterpolatorAM2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc)
 {
     int ipart = *istart;
 
@@ -348,7 +348,7 @@ void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particl
     
 }
 
-void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
+void InterpolatorAM2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
 {
     std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
     std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);
@@ -373,7 +373,7 @@ void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particl
 
 
 // Interpolator specific to tracked particles. A selection of particles may be provided
-void InterpolatorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, vector<unsigned int> * selection)
+void InterpolatorAM2Order::operator() (ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, vector<unsigned int> * selection)
 {
     ERROR("To Do");
 }

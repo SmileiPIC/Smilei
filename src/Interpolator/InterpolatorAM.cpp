@@ -1,4 +1,4 @@
-#include "InterpolatorRZ.h"
+#include "InterpolatorAM.h"
 
 #include <cmath>
 #include <iostream>
@@ -7,7 +7,7 @@
 
 using namespace std;
 
-InterpolatorRZ::InterpolatorRZ(Params &params, Patch* patch)
+InterpolatorAM::InterpolatorAM(Params &params, Patch* patch)
   : Interpolator(params, patch) {
 
     i_domain_begin = patch->getCellStartingGlobalIndex(0);

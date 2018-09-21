@@ -1,10 +1,10 @@
-#include "ProjectorRZ2Order.h"
+#include "ProjectorAM2Order.h"
 
 #include <cmath>
 #include <iostream>
 #include <complex>
 #include "dcomplex.h"    
-#include "ElectroMagn3DRZ.h"
+#include "ElectroMagnAM.h"
 #include "cField2D.h"
 #include "Particles.h"
 #include "Tools.h"
@@ -14,9 +14,9 @@ using namespace std;
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Constructor for ProjectorRZ2Order
+// Constructor for ProjectorAM2Order
 // ---------------------------------------------------------------------------------------------------------------------
-ProjectorRZ2Order::ProjectorRZ2Order (Params& params, Patch* patch) : ProjectorRZ(params, patch)
+ProjectorAM2Order::ProjectorAM2Order (Params& params, Patch* patch) : ProjectorAM(params, patch)
 {
     dl_inv_   = 1.0/params.cell_length[0];
     dl_ov_dt  = params.cell_length[0] / params.timestep;
@@ -38,9 +38,9 @@ ProjectorRZ2Order::ProjectorRZ2Order (Params& params, Patch* patch) : ProjectorR
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Destructor for ProjectorRZ2Order
+// Destructor for ProjectorAM2Order
 // ---------------------------------------------------------------------------------------------------------------------
-ProjectorRZ2Order::~ProjectorRZ2Order()
+ProjectorAM2Order::~ProjectorAM2Order()
 {
 }
 
@@ -48,7 +48,7 @@ ProjectorRZ2Order::~ProjectorRZ2Order()
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents for mode=0
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
+void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
 {   int nparts= particles.size();
     // -------------------------------------
     // Variable declaration & initialization
@@ -210,7 +210,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents for m>0
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, Particles &particles, unsigned int ipart,double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold, complex<double>* exp_m_theta_old, int imode)
+void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, Particles &particles, unsigned int ipart,double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold, complex<double>* exp_m_theta_old, int imode)
 {   
     // -------------------------------------
     // Variable declaration & initialization
@@ -300,7 +300,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
 
      e_delta_inv =1./e_delta;
     //defining crt_p 
-     complex<double> crt_p = - charge_weight*Icpx/(e_bar*dt*imode)*rp;
+     complex<double> crt_p = - charge_weight*Icpx/(e_bar*dt*(double)imode)*rp;
     for (unsigned int i=0; i < 5; i++) {
         DSx[i] = Sx1[i] - Sx0[i];
         DSy[i] = Sy1[i] - Sy0[i];
@@ -402,7 +402,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
 //! Project local currents with diag for mode=0 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, complex<double>* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
+void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, complex<double>* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
 {   // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------
@@ -574,7 +574,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents with diag for m>0
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, complex<double>* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold,complex<double>* exp_m_theta_old,  int imode)
+void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, complex<double>* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold,complex<double>* exp_m_theta_old,  int imode)
 {   
     // -------------------------------------
     // Variable declaration & initialization
@@ -664,7 +664,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     }
     e_delta_inv =1./e_delta;
     //defining crt_p 
-    complex<double> crt_p = -charge_weight*Icpx/(e_bar*dt*imode)*rp;
+    complex<double> crt_p = -charge_weight*Icpx/(e_bar*dt*(double)imode)*rp;
     for (unsigned int i=0; i < 5; i++) {
         DSx[i] = Sx1[i] - Sx0[i];
         DSy[i] = Sy1[i] - Sy0[i];
@@ -779,7 +779,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     
 } // END Project local current densities (Jl, Jr, Jt, sort)
 
-void ProjectorRZ2Order::operator() (double* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim)
+void ProjectorAM2Order::operator() (double* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim)
 {
 // Useless function
 }
@@ -789,7 +789,7 @@ void ProjectorRZ2Order::operator() (double* rhoj, Particles &particles, unsigned
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project for diags and frozen species - mode >= 0 
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorRZ2Order::operator() (complex<double>* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim, int imode)
+void ProjectorAM2Order::operator() (complex<double>* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim, int imode)
 {
     //Warning : this function is not charge conserving.
 
@@ -874,7 +874,7 @@ void ProjectorRZ2Order::operator() (complex<double>* rhoj, Particles &particles,
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project global current densities : ionization NOT DONE YET
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorRZ2Order::operator() (Field* Jl, Field* Jr, Field* Jt, Particles &particles, int ipart, LocalFields Jion)
+void ProjectorAM2Order::operator() (Field* Jl, Field* Jr, Field* Jt, Particles &particles, int ipart, LocalFields Jion)
 {  
     cField2D* Jl3D  = static_cast<cField2D*>(Jl);
     cField2D* Jr3D  = static_cast<cField2D*>(Jr);
@@ -961,7 +961,7 @@ void ProjectorRZ2Order::operator() (Field* Jl, Field* Jr, Field* Jt, Particles &
 
 //------------------------------------//
 //Wrapper for projection
-void ProjectorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec, int ipart_ref)
+void ProjectorAM2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec, int ipart_ref)
 {  //std::cout<<"projecting"<<std::endl;
    if (is_spectral)
         ERROR("Not implemented");

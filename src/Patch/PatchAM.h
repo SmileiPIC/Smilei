@@ -1,5 +1,5 @@
-#ifndef PATCHRZ_H
-#define PATCHRZ_H
+#ifndef PATCHAM_H
+#define PATCHAM_H
 
 #include "Patch.h"
 #include "cField2D.h"

@@ -1,6 +1,6 @@
 
-#ifndef DIAGNOSTICFIELDSRZ_H
-#define DIAGNOSTICFIELDSRZ_H
+#ifndef DIAGNOSTICFIELDSAM_H
+#define DIAGNOSTICFIELDSAM_H
 
 #include <string>
 #include <vector>

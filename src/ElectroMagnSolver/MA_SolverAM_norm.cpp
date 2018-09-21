@@ -1,24 +1,24 @@
 
-#include "MA_SolverRZ_norm.h"
-#include "ElectroMagn3DRZ.h"
+#include "MA_SolverAM_norm.h"
+#include "ElectroMagnAM.h"
 #include "cField2D.h"
 #include <complex>
 #include "dcomplex.h"
 #include "Patch.h"
-MA_SolverRZ_norm::MA_SolverRZ_norm(Params &params)
-: SolverRZ(params)
+MA_SolverAM_norm::MA_SolverAM_norm(Params &params)
+: SolverAM(params)
 {
 }
 
-MA_SolverRZ_norm::~MA_SolverRZ_norm()
+MA_SolverAM_norm::~MA_SolverAM_norm()
 {
 }
 
-void MA_SolverRZ_norm::operator() ( ElectroMagn* fields )
+void MA_SolverAM_norm::operator() ( ElectroMagn* fields )
 {
     for (unsigned int imode=0 ; imode<Nmode ; imode++) {
      
-        // Static-cast of the fields_SolverRZ_norm.cpp
+        // Static-cast of the fields_SolverAM_norm.cpp
         cField2D* ElRZ = (static_cast<ElectroMagn3DRZ*>(fields))->El_[imode];
         cField2D* ErRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Er_[imode];
         cField2D* EtRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Et_[imode];

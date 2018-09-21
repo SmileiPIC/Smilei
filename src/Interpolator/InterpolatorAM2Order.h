@@ -2,19 +2,19 @@
 #define INTERPOLATORRZ2ORDER_H
 
 
-#include "InterpolatorRZ.h"
+#include "InterpolatorAM.h"
 #include "cField2D.h"
 
 
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class for 2nd order interpolator for 1d3v simulations
 //  --------------------------------------------------------------------------------------------------------------------
-class InterpolatorRZ2Order : public InterpolatorRZ
+class InterpolatorAM2Order : public InterpolatorAM
 {
 
 public:
-    InterpolatorRZ2Order(Params&, Patch*);
-    ~InterpolatorRZ2Order() override final {};
+    InterpolatorAM2Order(Params&, Patch*);
+    ~InterpolatorAM2Order() override final {};
 
     inline void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, int nparts, double* ELoc, double* BLoc);
     void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref = 0) override final ;

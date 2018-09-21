@@ -6,7 +6,7 @@
 #include "ElectroMagn1D.h"
 #include "ElectroMagn2D.h"
 #include "ElectroMagn3D.h"
-#include "ElectroMagn3DRZ.h"
+#include "ElectroMagnAM.h"
 #include "ElectroMagnBC.h"
 #include "EnvelopeFactory.h"
 

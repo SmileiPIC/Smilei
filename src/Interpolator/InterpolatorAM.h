@@ -1,5 +1,5 @@
-#ifndef INTERPOLATORRZ_H
-#define INTERPOLATORRZ_H
+#ifndef INTERPOLATORAM_H
+#define INTERPOLATORAM_H
 
 
 #include "Interpolator.h"
@@ -7,12 +7,12 @@
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class Interpolator RZ
 //  --------------------------------------------------------------------------------------------------------------------
-class InterpolatorRZ : public Interpolator
+class InterpolatorAM : public Interpolator
 {
 public:
-    InterpolatorRZ(Params& params, Patch *patch);
+    InterpolatorAM(Params& params, Patch *patch);
 
-    virtual ~InterpolatorRZ() override {} ;
+    virtual ~InterpolatorAM() override {} ;
 
     virtual void operator()  (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref = 0) override = 0  ;
     virtual void operator()  (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc) override = 0 ;

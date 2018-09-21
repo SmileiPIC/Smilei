@@ -1,12 +1,13 @@
 
-#ifndef ELECTROMAGNBCRZ_AXIS_H
-#define ELECTROMAGNBCRZ_AXIS_H
+#ifndef ELECTROMAGNBCRZ_BM_H
+#define ELECTROMAGNBCRZ_BM_H
 
 
 #include <vector>
+#include <complex>
 #include "Tools.h"
 #include "ElectroMagnBC.h"
-#include "ElectroMagn3DRZ.h"
+#include "ElectroMagnAM.h"
 #include "cField2D.h"
 
 
@@ -14,22 +15,21 @@ class Params;
 class ElectroMagn;
 class Field;
 
-class ElectroMagnBCRZ_Axis : public ElectroMagnBC {
+class ElectroMagnBCAM_BM : public ElectroMagnBC {
 public:
     
-    ElectroMagnBCRZ_Axis( Params &params, Patch* patch, unsigned int _min_max );
-    ~ElectroMagnBCRZ_Axis() {};
+    ElectroMagnBCAM_BM( Params &params, Patch* patch, unsigned int _min_max );
+    ~ElectroMagnBCAM_BM() {};
     
     virtual void apply(ElectroMagn* EMfields, double time_dual, Patch* patch) override;
     
     void save_fields(Field*, Patch* patch) override;
     void disableExternalFields() override;
 
+    //! Save external fields for Buneman EM Boundary condition
+    std::vector< std::complex<double> > Bl_val,  Br_val,  Bt_val;
+    
 private:
-    
-    
-    //! Conversion factor from degree to radian
-    double conv_deg2rad;
     
     //! Number of nodes on the primal grid in the x-direction
     unsigned int nl_p;
@@ -60,14 +60,23 @@ private:
     
     //! Ratio of the spatial-step by the time-step dy/dt for 2D3V cartesian simulations
     double dl_ov_dt;
-
-    //! Number of modes 
-    unsigned int Nmode;
+   
     
-    //! Oversize along the radial direction
-    unsigned int oversize_R;
+    //! Constant used for the Buneman boundary conditions (+R)
+    double Alpha_Bl_Rmax, Beta_Bl_Rmax, Gamma_Bl_Rmax ;
+    
+    //! Constant used for the Buneman boundary conditions (+R)
+    double  Alpha_Bt_Rmax, Beta_Bt_Rmax, Gamma_Bt_Rmax, Delta_Bt_Rmax, Epsilon_Bt_Rmax ;
+
+    //! Constant used for the Buneman boundary conditions (+R)
+    double CB_BM;
+    //! Constant used for the Buneman boundary conditions (+R)
+    double CE_BM;
+    //! Number of modes
+    unsigned int Nmode;
     
 };
 
 #endif
+
 

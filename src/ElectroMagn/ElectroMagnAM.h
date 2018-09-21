@@ -1,5 +1,5 @@
-#ifndef ELECTROMAGN3DRZ_H
-#define ELECTROMAGN3DRZ_H
+#ifndef ELECTROMAGNAM_H
+#define ELECTROMAGNAM_H
 
 #include "ElectroMagn.h"
 #include "Field.h"

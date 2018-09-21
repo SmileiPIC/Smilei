@@ -1,4 +1,4 @@
-#include "ElectroMagnBCRZ_BM.h"
+#include "ElectroMagnBCAM_BM.h"
 
 #include <cstdlib>
 
@@ -15,7 +15,7 @@
 #include "dcomplex.h"
 using namespace std;
 
-ElectroMagnBCRZ_BM::ElectroMagnBCRZ_BM( Params &params, Patch* patch, unsigned int _min_max )
+ElectroMagnBCAM_BM::ElectroMagnBCAM_BM( Params &params, Patch* patch, unsigned int _min_max )
 : ElectroMagnBC( params, patch, _min_max )
 {
     // number of nodes of the primal and dual grid in the x-direction
@@ -93,7 +93,7 @@ ElectroMagnBCRZ_BM::ElectroMagnBCRZ_BM( Params &params, Patch* patch, unsigned i
 
 }
 
-void ElectroMagnBCRZ_BM::save_fields(Field* my_field, Patch* patch) {
+void ElectroMagnBCAM_BM::save_fields(Field* my_field, Patch* patch) {
     cField2D* field2D=static_cast<cField2D*>(my_field);
     
     if (min_max == 0 && patch->isXmin() ) {
@@ -174,7 +174,7 @@ void ElectroMagnBCRZ_BM::save_fields(Field* my_field, Patch* patch) {
     }
 }
 
-void ElectroMagnBCRZ_BM::disableExternalFields()
+void ElectroMagnBCAM_BM::disableExternalFields()
 {
     Bl_val.resize(0);
     Br_val.resize(0);
@@ -184,7 +184,7 @@ void ElectroMagnBCRZ_BM::disableExternalFields()
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagnBCRZ_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* patch)
+void ElectroMagnBCAM_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
 
     //This condition can only be applied to Rmax

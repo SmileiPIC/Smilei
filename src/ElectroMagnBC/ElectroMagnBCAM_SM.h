@@ -7,7 +7,7 @@
 #include <complex>
 #include "Tools.h"
 #include "ElectroMagnBC.h"
-#include "ElectroMagn3DRZ.h"
+#include "ElectroMagnAM.h"
 #include "cField2D.h"
 #include "dcomplex.h"
 
@@ -15,11 +15,11 @@ class Params;
 class ElectroMagn;
 class Field;
 
-class ElectroMagnBCRZ_SM : public ElectroMagnBC {
+class ElectroMagnBCAM_SM : public ElectroMagnBC {
 public:
     
-    ElectroMagnBCRZ_SM( Params &params, Patch* patch, unsigned int _min_max );
-    ~ElectroMagnBCRZ_SM() {};
+    ElectroMagnBCAM_SM( Params &params, Patch* patch, unsigned int _min_max );
+    ~ElectroMagnBCAM_SM() {};
     
     virtual void apply(ElectroMagn* EMfields, double time_dual, Patch* patch) override;
     

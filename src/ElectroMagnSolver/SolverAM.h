@@ -1,17 +1,17 @@
-#ifndef SOLVERRZ_H
-#define SOLVERRZ_H
+#ifndef SOLVERAM_H
+#define SOLVERAM_H
 
 #include "Solver.h"
 
 //  --------------------------------------------------------------------------------------------------------------------
-//! Class SolverRZ
+//! Class SolverAM
 //  --------------------------------------------------------------------------------------------------------------------
-class SolverRZ : public Solver
+class SolverAM : public Solver
 {
 
 public:
     //! Creator for Solver
-    SolverRZ(Params &params) : Solver(params) {
+    SolverAM(Params &params) : Solver(params) {
 	nl_p = params.n_space[0]+1+2*params.oversize[0];
 	nl_d = params.n_space[0]+2+2*params.oversize[0];
 	nr_p = params.n_space[1]+1+2*params.oversize[1];
@@ -23,7 +23,7 @@ public:
 	dt_ov_dr = params.timestep / params.cell_length[1];
 
     };
-    virtual ~SolverRZ() {};
+    virtual ~SolverAM() {};
 
     //! Overloading of () operator
     virtual void operator()( ElectroMagn* fields) = 0;

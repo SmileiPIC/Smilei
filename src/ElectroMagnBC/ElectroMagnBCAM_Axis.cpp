@@ -1,4 +1,4 @@
-#include "ElectroMagnBCRZ_Axis.h"
+#include "ElectroMagnBCAM_Axis.h"
 
 #include <cstdlib>
 
@@ -15,7 +15,7 @@
 
 using namespace std;
 
-ElectroMagnBCRZ_Axis::ElectroMagnBCRZ_Axis( Params &params, Patch* patch, unsigned int _min_max )
+ElectroMagnBCAM_Axis::ElectroMagnBCAM_Axis( Params &params, Patch* patch, unsigned int _min_max )
 : ElectroMagnBC( params, patch, _min_max )
 {
     // conversion factor from degree to radian
@@ -52,12 +52,12 @@ ElectroMagnBCRZ_Axis::ElectroMagnBCRZ_Axis( Params &params, Patch* patch, unsign
 }
 
 
-void ElectroMagnBCRZ_Axis::save_fields(Field* my_field, Patch* patch)
+void ElectroMagnBCAM_Axis::save_fields(Field* my_field, Patch* patch)
 {
     ERROR( "Impossible" );
 }
 
-void ElectroMagnBCRZ_Axis::disableExternalFields()
+void ElectroMagnBCAM_Axis::disableExternalFields()
 {
     ERROR( "Impossible" );
 }
@@ -66,7 +66,7 @@ void ElectroMagnBCRZ_Axis::disableExternalFields()
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagnBCRZ_Axis::apply(ElectroMagn* EMfields, double time_dual, Patch* patch)
+void ElectroMagnBCAM_Axis::apply(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {	return;
     // Loop on imode 
     for (unsigned int imode=0 ; imode< Nmode ; imode++){
