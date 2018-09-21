@@ -121,7 +121,7 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
     ElectroMagn* EMfields = vecPatches(0)->EMfields;
     vector<string> fields;
     unsigned int  nmodes(0);
-    if (params.geometry != "3drz") {
+    if (params.geometry != "AMcylindrical") {
         fields.push_back(EMfields->Ex_ ->name);
         fields.push_back(EMfields->Ey_ ->name);
         fields.push_back(EMfields->Ez_ ->name);
@@ -267,7 +267,7 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
 
     // Scalars related to field's electromagnetic energy
     //nfield = 6;
-    nfield = (params.geometry == "3drz") ? nmodes * 6 : 6;
+    nfield = (params.geometry == "AMcylindrical") ? nmodes * 6 : 6;
     fieldUelm.resize(nfield, NULL);
     for( unsigned int ifield=0; ifield<nfield; ifield++ )
         fieldUelm[ifield] = newScalar_SUM( Tools::merge("Uelm_", fields[ifield]) );

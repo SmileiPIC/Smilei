@@ -58,7 +58,7 @@ public:
                 solver = new PXR_Solver3D_FDTD(params);
             else if ( ( params.is_pxr == true ) && ( params.is_spectral == true ) )
                 solver = new PXR_Solver3D_GPSTD(params);                
-        } else if ( params.geometry == "3drz" ) {
+        } else if ( params.geometry == "AMcylindrical" ) {
             solver = new MA_SolverAM_norm(params);
         }
 
@@ -109,7 +109,7 @@ public:
             }
             else
                 solver = new NullSolver(params);
-        }else if ( params.geometry == "3drz" ) {
+        }else if ( params.geometry == "AMcylindrical" ) {
             if (params.maxwell_sol == "Yee") {
                 solver = new MF_SolverAM_Yee(params);
             }

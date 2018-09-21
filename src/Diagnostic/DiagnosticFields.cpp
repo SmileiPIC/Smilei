@@ -47,8 +47,8 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
         string field_name = vecPatches(0)->EMfields->allFields[i]->name;
         bool RhoJ = field_name.at(0)=='J' || field_name.at(0)=='R';
 
-        bool species_field = ( (params.geometry!="3drz") && ( (field_name.at(0)=='J' && field_name.length()>2) || (field_name.at(0)=='R' && field_name.length()>3) ) )
-            || ( (params.geometry=="3drz") && (
+        bool species_field = ( (params.geometry!="AMcylindrical") && ( (field_name.at(0)=='J' && field_name.length()>2) || (field_name.at(0)=='R' && field_name.length()>3) ) )
+            || ( (params.geometry=="AMcylindrical") && (
                                                (field_name.at(0)=='J' && field_name.length()>8 && field_name.substr(2,6)!="_mode_")
                                                || (field_name.at(0)=='J' && field_name.length()>8 && field_name.find("mode_") != field_name.rfind("mode_") )
                                                || (field_name.at(0)=='R' && field_name.length()>9 && field_name.substr(3,6)!="_mode_")
@@ -68,7 +68,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
             if( species_field ) {
                 //MESSAGE("HNA3");         
                 for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-                    if ( params.geometry != "3drz"){
+                    if ( params.geometry != "AMcylindrical"){
                         Field * field = vecPatches(ipatch)->EMfields->allFields[i];
                         if( field->data_ != NULL ) continue;
                         if     ( field_name.substr(0,2)=="Jx" ) field->allocateDims(0,false);

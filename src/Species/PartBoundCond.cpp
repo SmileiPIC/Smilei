@@ -15,7 +15,7 @@
 using namespace std;
 
 PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch ) :
-    isRZ( params.geometry == "3drz" )
+    isRZ( params.geometry == "AMcylindrical" )
 {   
     // number of dimensions for the particle
     //!\todo (MG to JD) isn't it always 3?

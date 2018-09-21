@@ -84,7 +84,7 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi, OpenPMDparams& op
 
     // Delete all unused fields
     for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++) {
-	if (params.geometry!="3drz"){
+	if (params.geometry!="AMcylindrical"){
             for (unsigned int ifield=0 ; ifield<(*this)(ipatch)->EMfields->Jx_s.size(); ifield++) {
                 if( (*this)(ipatch)->EMfields->Jx_s[ifield]->data_ == NULL ){
                     delete (*this)(ipatch)->EMfields->Jx_s[ifield];
@@ -517,7 +517,7 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
     timers.densities.update();
 
     timers.syncDens.restart();
-    if ( params.geometry != "3drz" ) {
+    if ( params.geometry != "AMcylindrical" ) {
         SyncVectorPatch::sumRhoJ( params, (*this), smpi, timers, itime ); // MPI
     }
     else {
@@ -530,7 +530,7 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
         for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
             if( ! (*this)(0)->vecSpecies[ispec]->particles->is_test ) {
                 update_field_list(ispec, smpi);
-                if ( params.geometry != "3drz" ) {
+                if ( params.geometry != "AMcylindrical" ) {
                     SyncVectorPatch::sumRhoJs( params, (*this), ispec, smpi, timers, itime ); // MPI
                  } 
                 else{
@@ -541,7 +541,7 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
             }
            }  
     } 
-    if (params.geometry == "3drz") {
+    if (params.geometry == "AMcylindrical") {
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
             ElectroMagn3DRZ* emRZ = static_cast<ElectroMagn3DRZ*>( (*this)(ipatch)->EMfields );
@@ -641,7 +641,7 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
 
 
     timers.syncField.restart();
-    if ( params.geometry != "3drz" ) {
+    if ( params.geometry != "AMcylindrical" ) {
         if (params.is_spectral)
             SyncVectorPatch::exchangeE( params, (*this), smpi );
         SyncVectorPatch::exchangeB( params, (*this), smpi );
@@ -732,7 +732,7 @@ void VectorPatch::finalize_sync_and_bc_fields(Params& params, SmileiMPI* smpi, S
 {
     #ifndef _PICSAR
     if ( (!params.is_spectral) && (itime!=0) && ( time_dual > params.time_fields_frozen ) ) {
-        if ( params.geometry != "3drz" ) {
+        if ( params.geometry != "AMcylindrical" ) {
             timers.syncField.restart();
             SyncVectorPatch::finalizeexchangeB( params, (*this) );
             timers.syncField.update(  params.printNow( itime ) );

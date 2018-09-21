@@ -127,7 +127,7 @@ void SmileiMPI::init( Params& params, DomainDecomposition* domain_decomposition 
     dynamics_invgf.resize(omp_get_max_threads());
     dynamics_iold.resize(omp_get_max_threads());
     dynamics_deltaold.resize(omp_get_max_threads());
-    if (params.geometry == "3drz") dynamics_thetaold.resize(omp_get_max_threads()); 
+    if (params.geometry == "AMcylindrical") dynamics_thetaold.resize(omp_get_max_threads()); 
 
     if ( n_envlaser > 0 ) {
         dynamics_GradPHIpart.resize(omp_get_max_threads());
@@ -141,7 +141,7 @@ void SmileiMPI::init( Params& params, DomainDecomposition* domain_decomposition 
     dynamics_invgf.resize(1);
     dynamics_iold.resize(1);
     dynamics_deltaold.resize(1);
-    if (params.geometry == "3drz") dynamics_thetaold.resize(1); 
+    if (params.geometry == "AMcylindrical") dynamics_thetaold.resize(1); 
 
     if ( n_envlaser > 0 ) {
         dynamics_GradPHIpart.resize(1);
@@ -644,7 +644,7 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
     }
 
     // Send fields
-    if ( params.geometry != "3drz" ) {
+    if ( params.geometry != "AMcylindrical" ) {
         isend( patch->EMfields, to, maxtag, patch->requests_,tag);
     } else {
         isend( patch->EMfields, to, maxtag, patch->requests_,tag, static_cast<ElectroMagn3DRZ*>(patch->EMfields)->El_.size());
@@ -763,7 +763,7 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
 
     // Receive EM fields
     patch->EMfields->initAntennas(patch);
-    if ( params.geometry != "3drz" ) {
+    if ( params.geometry != "AMcylindrical" ) {
         recv( patch->EMfields, from, maxtag );
     } else {
         recv( patch->EMfields, from, maxtag, static_cast<ElectroMagn3DRZ*>(patch->EMfields)->El_.size() );

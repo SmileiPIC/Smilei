@@ -331,7 +331,7 @@ void Species::initPosition(unsigned int nPart, unsigned int iPart, double *index
         int coeff_ = coeff;
         coeff = 1./coeff;
 
-        if (params.geometry != "3drz"){
+        if (params.geometry != "AMcylindrical"){
             for (unsigned int  p=iPart; p<iPart+nPart; p++) {
                 int i = (int)(p-iPart);
                 for(unsigned int idim=0; idim<nDim_particle; idim++) {
@@ -355,7 +355,7 @@ void Species::initPosition(unsigned int nPart, unsigned int iPart, double *index
         }
 
     } else if (position_initialization == "random") {
-        if (params.geometry=="3drz"){
+        if (params.geometry=="AMcylindrical"){
         for (unsigned int p= iPart; p<iPart+nPart; p++){
             particles->position(0,p)=indexes[0]+Rand::uniform()*cell_length[0];
             particles_r=sqrt(indexes[1]*indexes[1]+ 2.*Rand::uniform()*(indexes[1]+cell_length[1]*0.5)*cell_length[1]);
@@ -598,7 +598,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
     // -------------------------------
     if (time_dual>time_frozen) { // moving particle
 
-        smpi->dynamics_resize(ithread, nDim_field, bmax.back(), params.geometry=="3drz");
+        smpi->dynamics_resize(ithread, nDim_field, bmax.back(), params.geometry=="AMcylindrical");
         //Point to local thread dedicated buffers
         //Still needed for ionization
         vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
@@ -860,7 +860,7 @@ void Species::projection_for_diags(double time_dual, unsigned int ispec,
 {
     if ( diag_flag &&(!particles->is_test)){
 
-        if ( params.geometry != "3drz" ) {
+        if ( params.geometry != "AMcylindrical" ) {
             double *buf[4];
 
             for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
@@ -1470,7 +1470,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                             initPosition(nPart, iPart, indexes, params);
                         }
                         initMomentum(nPart,iPart, temp, vel);
-                        if (params.geometry=="3drz"){
+                        if (params.geometry=="AMcylindrical"){
                             //if (j+cell_index[1]<0){
                            //    initWeight(nPart, iPart, density(i,j,k));
                            // } 
@@ -1775,7 +1775,7 @@ void Species::ponderomotive_update_susceptibility_and_momentum(double time_dual,
     // -------------------------------
     if (time_dual>time_frozen) { // moving particle
 
-        smpi->dynamics_resize(ithread, nDim_field, bmax.back(), params.geometry=="3drz");
+        smpi->dynamics_resize(ithread, nDim_field, bmax.back(), params.geometry=="AMcylindrical");
 
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) { // loop on ibin
 
@@ -1908,7 +1908,7 @@ void Species::ponderomotive_update_position_and_currents(double time_dual, unsig
     // -------------------------------
     if (time_dual>time_frozen) { // moving particle
     
-        smpi->dynamics_resize(ithread, nDim_field, bmax.back(), params.geometry=="3drz");
+        smpi->dynamics_resize(ithread, nDim_field, bmax.back(), params.geometry=="AMcylindrical");
     
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
 

@@ -160,7 +160,7 @@ public:
         // -----------------
         // For theta mode Geometry
         // -----------------
-        else if ( params.geometry == "3drz" ) {
+        else if ( params.geometry == "AMcylindrical" ) {
 			
             for (unsigned int ii=0;ii<2;ii++) {
 

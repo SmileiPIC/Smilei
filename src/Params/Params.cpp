@@ -222,7 +222,7 @@ namelist("")
     geometry = "";
     if( !PyTools::extract("geometry", geometry, "Main") )
         ERROR("Parameter Main.geometry is required");
-    if (geometry!="1Dcartesian" && geometry!="2Dcartesian" && geometry!="3Dcartesian" && geometry!="3drz") {
+    if (geometry!="1Dcartesian" && geometry!="2Dcartesian" && geometry!="3Dcartesian" && geometry!="AMcylindrical") {
         ERROR("Main.geometry `" << geometry << "` invalid");
     }
     setDimensions();
@@ -413,7 +413,7 @@ namelist("")
     for (unsigned int i=0; i<nDim_field; i++) {
         res_space2 += res_space[i]*res_space[i];
     }
-    if (geometry == "3drz") {
+    if (geometry == "AMcylindrical") {
         res_space2 += ((nmodes-1)*(nmodes-1)-1)*res_space[1]*res_space[1];
     }
     dtCFL=1.0/sqrt(res_space2);
@@ -834,7 +834,7 @@ void Params::setDimensions()
     } else if (geometry=="3Dcartesian") {
         nDim_particle=3;
         nDim_field=3;
-    } else if (geometry=="3drz") {
+    } else if (geometry=="AMcylindrical") {
         nDim_particle=3;
         nDim_field=2;
     } else {

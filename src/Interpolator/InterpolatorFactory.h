@@ -71,7 +71,7 @@ public:
         // ---------------
         // 3dRZ simulation
         // ---------------
-        else if ( params.geometry == "3drz" ) {
+        else if ( params.geometry == "AMcylindrical" ) {
             Interp = new InterpolatorAM2Order(params, patch);
         }
 

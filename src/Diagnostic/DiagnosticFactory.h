@@ -33,7 +33,7 @@ public:
         else if ( params.geometry == "3Dcartesian" ) {
             diag = new DiagnosticFields3D(params, smpi, vecPatches, idiag, openPMD);
         }
-        else if ( params.geometry == "3drz" ) {
+        else if ( params.geometry == "AMcylindrical" ) {
             diag = new DiagnosticFieldsRZ(params, smpi, vecPatches, idiag, openPMD);
         }
         else {
