@@ -647,7 +647,7 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
     if ( params.geometry != "AMcylindrical" ) {
         isend( patch->EMfields, to, maxtag, patch->requests_,tag);
     } else {
-        isend( patch->EMfields, to, maxtag, patch->requests_,tag, static_cast<ElectroMagn3DAM*>(patch->EMfields)->El_.size());
+        isend( patch->EMfields, to, maxtag, patch->requests_,tag, static_cast<ElectroMagnAM*>(patch->EMfields)->El_.size());
     }
 
 } // END isend( Patch )
@@ -766,7 +766,7 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
     if ( params.geometry != "AMcylindrical" ) {
         recv( patch->EMfields, from, maxtag );
     } else {
-        recv( patch->EMfields, from, maxtag, static_cast<ElectroMagn3DAM*>(patch->EMfields)->El_.size() );
+        recv( patch->EMfields, from, maxtag, static_cast<ElectroMagnAM*>(patch->EMfields)->El_.size() );
     }
 
 } // END recv ( Patch )
@@ -906,7 +906,7 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& req
 void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& requests, int mpi_tag, unsigned int nmodes)
 {
 
-    ElectroMagn3DAM* EMAM = static_cast<ElectroMagn3DAM*>(EM);
+    ElectroMagnAM* EMAM = static_cast<ElectroMagnAM*>(EM);
     for (unsigned int imode =0; imode < nmodes; imode++){
         isendComplex( EMAM->El_[imode] , to, mpi_tag+tag, requests[tag]); tag++;
         isendComplex( EMAM->Er_[imode] , to, mpi_tag+tag, requests[tag]); tag++;
@@ -1064,7 +1064,7 @@ void SmileiMPI::recv(ElectroMagn* EM, int from, int tag)
 
 void SmileiMPI::recv(ElectroMagn* EM, int from, int tag, unsigned int nmodes)
 {
-    ElectroMagn3DAM* EMAM = static_cast<ElectroMagn3DAM*>(EM);
+    ElectroMagnAM* EMAM = static_cast<ElectroMagnAM*>(EM);
     for (unsigned int imode =0; imode < nmodes; imode++){
         recvComplex( EMAM->El_[imode] , from, tag ); tag++;
         recvComplex( EMAM->Er_[imode] , from, tag ); tag++;

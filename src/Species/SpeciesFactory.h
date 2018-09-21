@@ -469,7 +469,7 @@ public:
             	ERROR("For AM geometry boundary_conditions must not be the same size as the number of dimensions it is applied only for Rmax Xmin and Xmax");
             }	
             if ( (thisSpecies->boundary_conditions[1][1] != "remove") &&  (thisSpecies->boundary_conditions[1][1] != "stop"))
-                ERROR(" In 3dAM geometry particle boundary conditions supported in Rmax are 'remove' and 'stop' ");
+                ERROR(" In AM geometry particle boundary conditions supported in Rmax are 'remove' and 'stop' ");
 	}
         bool has_thermalize = false;
 	if (params.geometry != "AMcylindrical"){

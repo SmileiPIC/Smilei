@@ -879,7 +879,7 @@ void Species::projection_for_diags(double time_dual, unsigned int ispec,
         }
         else {
             complex<double>* buf[4];
-            ElectroMagn3DAM* emAM = static_cast<ElectroMagn3DAM*>( EMfields );
+            ElectroMagnAM* emAM = static_cast<ElectroMagnAM*>( EMfields );
             int n_species = patch->vecSpecies.size();
             for ( unsigned int imode = 0; imode<params.nmodes;imode++){
                 int ifield = imode*n_species+ispec;
@@ -968,7 +968,7 @@ void Species::computeCharge(unsigned int ispec, ElectroMagn* EMfields)
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
             // Not for now, else rho is incremented twice. Here and dynamics. Must add restartRhoJs and manage independantly diags output
             //b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(bin_start) : &(*EMfields->rho_)(bin_start);
-            if (!dynamic_cast<ElectroMagn3DAM*>(EMfields)) {
+            if (!dynamic_cast<ElectroMagnAM*>(EMfields)) {
                 b_rho = &(*EMfields->rho_)(0);
 
                 for (unsigned int iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
@@ -977,7 +977,7 @@ void Species::computeCharge(unsigned int ispec, ElectroMagn* EMfields)
             }
             else {
 #ifdef _TODO_AM_ 
-                ElectroMagn3DAM* emAM = static_cast<ElectroMagn3DAM*>( EMfields );
+                ElectroMagnAM* emAM = static_cast<ElectroMagnAM*>( EMfields );
                 int Nmode = emAM->rho_AM_.size();
                 for (unsigned int imode=0; imode<Nmode;imode++){
                     b_rho = (double*)((*emAM->rho_AM_[imode])(bin_start));

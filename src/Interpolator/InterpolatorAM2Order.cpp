@@ -35,12 +35,12 @@ void InterpolatorAM2Order::operator() (ElectroMagn* EMfields, Particles &particl
     //Treat mode 0 first
 
     // Static cast of the electromagnetic fields
-    cField2D* ElAM = (static_cast<ElectroMagn3DAM*>(EMfields))->El_[0];
-    cField2D* ErAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Er_[0];
-    cField2D* EtAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Et_[0];
-    cField2D* BlAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Bl_m[0];
-    cField2D* BrAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Br_m[0];
-    cField2D* BtAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Bt_m[0];
+    cField2D* ElAM = (static_cast<ElectroMagnAM*>(EMfields))->El_[0];
+    cField2D* ErAM = (static_cast<ElectroMagnAM*>(EMfields))->Er_[0];
+    cField2D* EtAM = (static_cast<ElectroMagnAM*>(EMfields))->Et_[0];
+    cField2D* BlAM = (static_cast<ElectroMagnAM*>(EMfields))->Bl_m[0];
+    cField2D* BrAM = (static_cast<ElectroMagnAM*>(EMfields))->Br_m[0];
+    cField2D* BtAM = (static_cast<ElectroMagnAM*>(EMfields))->Bt_m[0];
 
 
     // Normalized particle position
@@ -125,12 +125,12 @@ void InterpolatorAM2Order::operator() (ElectroMagn* EMfields, Particles &particl
  
     for (unsigned int imode = 1; imode < nmodes ; imode++){
 
-        cField2D* ElAM = (static_cast<ElectroMagn3DAM*>(EMfields))->El_[imode];
-        cField2D* ErAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Er_[imode];
-        cField2D* EtAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Et_[imode];
-        cField2D* BlAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Bl_m[imode];
-        cField2D* BrAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Br_m[imode];
-        cField2D* BtAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Bt_m[imode];
+        cField2D* ElAM = (static_cast<ElectroMagnAM*>(EMfields))->El_[imode];
+        cField2D* ErAM = (static_cast<ElectroMagnAM*>(EMfields))->Er_[imode];
+        cField2D* EtAM = (static_cast<ElectroMagnAM*>(EMfields))->Et_[imode];
+        cField2D* BlAM = (static_cast<ElectroMagnAM*>(EMfields))->Bl_m[imode];
+        cField2D* BrAM = (static_cast<ElectroMagnAM*>(EMfields))->Br_m[imode];
+        cField2D* BtAM = (static_cast<ElectroMagnAM*>(EMfields))->Bt_m[imode];
 
         exp_mm_theta *= exp_m_theta ;
         
@@ -194,16 +194,16 @@ void InterpolatorAM2Order::operator() (ElectroMagn* EMfields, Particles &particl
     double *BLoc = &(smpi->dynamics_Bpart[ithread][ipart]);
 
     // Interpolate E, B
-    cField2D* ElAM = (static_cast<ElectroMagn3DAM*>(EMfields))->El_[0];
-    cField2D* ErAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Er_[0];
-    cField2D* EtAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Et_[0];
-    cField2D* BlAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Bl_m[0];
-    cField2D* BrAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Br_m[0];
-    cField2D* BtAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Bt_m[0];
-    cField2D* JlAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Jl_[0]; 
-    cField2D* JrAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Jr_[0]; 
-    cField2D* JtAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Jt_[0]; 
-    cField2D* RhoAM= (static_cast<ElectroMagn3DAM*>(EMfields))->rho_AM_[0];
+    cField2D* ElAM = (static_cast<ElectroMagnAM*>(EMfields))->El_[0];
+    cField2D* ErAM = (static_cast<ElectroMagnAM*>(EMfields))->Er_[0];
+    cField2D* EtAM = (static_cast<ElectroMagnAM*>(EMfields))->Et_[0];
+    cField2D* BlAM = (static_cast<ElectroMagnAM*>(EMfields))->Bl_m[0];
+    cField2D* BrAM = (static_cast<ElectroMagnAM*>(EMfields))->Br_m[0];
+    cField2D* BtAM = (static_cast<ElectroMagnAM*>(EMfields))->Bt_m[0];
+    cField2D* JlAM = (static_cast<ElectroMagnAM*>(EMfields))->Jl_[0]; 
+    cField2D* JrAM = (static_cast<ElectroMagnAM*>(EMfields))->Jr_[0]; 
+    cField2D* JtAM = (static_cast<ElectroMagnAM*>(EMfields))->Jt_[0]; 
+    cField2D* RhoAM= (static_cast<ElectroMagnAM*>(EMfields))->rho_AM_[0];
     
     
     // Normalized particle position
@@ -310,16 +310,16 @@ void InterpolatorAM2Order::operator() (ElectroMagn* EMfields, Particles &particl
 
     for (unsigned int imode = 1; imode < nmodes ; imode++){
 
-        cField2D* ElAM = (static_cast<ElectroMagn3DAM*>(EMfields))->El_[imode];
-        cField2D* ErAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Er_[imode];
-        cField2D* EtAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Et_[imode];
-        cField2D* BlAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Bl_m[imode];
-        cField2D* BrAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Br_m[imode];
-        cField2D* BtAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Bt_m[imode];
-        cField2D* JlAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Jl_[imode]; 
-        cField2D* JrAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Jr_[imode]; 
-        cField2D* JtAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Jt_[imode]; 
-        cField2D* RhoAM= (static_cast<ElectroMagn3DAM*>(EMfields))->rho_AM_[imode];
+        cField2D* ElAM = (static_cast<ElectroMagnAM*>(EMfields))->El_[imode];
+        cField2D* ErAM = (static_cast<ElectroMagnAM*>(EMfields))->Er_[imode];
+        cField2D* EtAM = (static_cast<ElectroMagnAM*>(EMfields))->Et_[imode];
+        cField2D* BlAM = (static_cast<ElectroMagnAM*>(EMfields))->Bl_m[imode];
+        cField2D* BrAM = (static_cast<ElectroMagnAM*>(EMfields))->Br_m[imode];
+        cField2D* BtAM = (static_cast<ElectroMagnAM*>(EMfields))->Bt_m[imode];
+        cField2D* JlAM = (static_cast<ElectroMagnAM*>(EMfields))->Jl_[imode]; 
+        cField2D* JrAM = (static_cast<ElectroMagnAM*>(EMfields))->Jr_[imode]; 
+        cField2D* JtAM = (static_cast<ElectroMagnAM*>(EMfields))->Jt_[imode]; 
+        cField2D* RhoAM= (static_cast<ElectroMagnAM*>(EMfields))->rho_AM_[imode];
 
         exp_mm_theta *= exp_m_theta ;
         

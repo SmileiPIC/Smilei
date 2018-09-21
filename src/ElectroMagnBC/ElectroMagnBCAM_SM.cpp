@@ -197,15 +197,15 @@ void ElectroMagnBCAM_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
     // Loop on imode 
     for (unsigned int imode=0 ; imode<Nmode ; imode++) {
 		// Static cast of the fields
-		//cField2D* ElAM = (static_cast<ElectroMagn3DAM*>(EMfields))->El_[imode];
-		cField2D* ErAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Er_[imode];
-		cField2D* EtAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Et_[imode];
-		cField2D* BlAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Bl_[imode];
-		cField2D* BrAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Br_[imode];
-		cField2D* BtAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Bt_[imode];
-		bool isYmin = (static_cast<ElectroMagn3DAM*>(EMfields))->isYmin;
-		bool isYmax = (static_cast<ElectroMagn3DAM*>(EMfields))->isYmax;
-		int     j_glob = (static_cast<ElectroMagn3DAM*>(EMfields))->j_glob_;	
+		//cField2D* ElAM = (static_cast<ElectroMagnAM*>(EMfields))->El_[imode];
+		cField2D* ErAM = (static_cast<ElectroMagnAM*>(EMfields))->Er_[imode];
+		cField2D* EtAM = (static_cast<ElectroMagnAM*>(EMfields))->Et_[imode];
+		cField2D* BlAM = (static_cast<ElectroMagnAM*>(EMfields))->Bl_[imode];
+		cField2D* BrAM = (static_cast<ElectroMagnAM*>(EMfields))->Br_[imode];
+		cField2D* BtAM = (static_cast<ElectroMagnAM*>(EMfields))->Bt_[imode];
+		bool isYmin = (static_cast<ElectroMagnAM*>(EMfields))->isYmin;
+		bool isYmax = (static_cast<ElectroMagnAM*>(EMfields))->isYmax;
+		int     j_glob = (static_cast<ElectroMagnAM*>(EMfields))->j_glob_;	
  
 		if (min_max == 0 && patch->isXmin() ) {
 			//MESSAGE("Xmin");		    

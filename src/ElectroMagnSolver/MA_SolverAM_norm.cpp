@@ -19,20 +19,20 @@ void MA_SolverAM_norm::operator() ( ElectroMagn* fields )
     for (unsigned int imode=0 ; imode<Nmode ; imode++) {
      
         // Static-cast of the fields_SolverAM_norm.cpp
-        cField2D* ElAM = (static_cast<ElectroMagn3DAM*>(fields))->El_[imode];
-        cField2D* ErAM = (static_cast<ElectroMagn3DAM*>(fields))->Er_[imode];
-        cField2D* EtAM = (static_cast<ElectroMagn3DAM*>(fields))->Et_[imode];
-        cField2D* BlAM = (static_cast<ElectroMagn3DAM*>(fields))->Bl_[imode];
-        cField2D* BrAM = (static_cast<ElectroMagn3DAM*>(fields))->Br_[imode];
-        cField2D* BtAM = (static_cast<ElectroMagn3DAM*>(fields))->Bt_[imode];
-        cField2D* JlAM = (static_cast<ElectroMagn3DAM*>(fields))->Jl_[imode];
-        cField2D* JrAM = (static_cast<ElectroMagn3DAM*>(fields))->Jr_[imode];
-        cField2D* JtAM = (static_cast<ElectroMagn3DAM*>(fields))->Jt_[imode];
-        int j_glob    = (static_cast<ElectroMagn3DAM*>(fields))->j_glob_;
-        bool isYmin = (static_cast<ElectroMagn3DAM*>(fields))->isYmin;
-        bool isXmin = (static_cast<ElectroMagn3DAM*>(fields))->isXmin;
-        bool isXmax = (static_cast<ElectroMagn3DAM*>(fields))->isXmax;
-        bool isYmax = (static_cast<ElectroMagn3DAM*>(fields))->isYmax;
+        cField2D* ElAM = (static_cast<ElectroMagnAM*>(fields))->El_[imode];
+        cField2D* ErAM = (static_cast<ElectroMagnAM*>(fields))->Er_[imode];
+        cField2D* EtAM = (static_cast<ElectroMagnAM*>(fields))->Et_[imode];
+        cField2D* BlAM = (static_cast<ElectroMagnAM*>(fields))->Bl_[imode];
+        cField2D* BrAM = (static_cast<ElectroMagnAM*>(fields))->Br_[imode];
+        cField2D* BtAM = (static_cast<ElectroMagnAM*>(fields))->Bt_[imode];
+        cField2D* JlAM = (static_cast<ElectroMagnAM*>(fields))->Jl_[imode];
+        cField2D* JrAM = (static_cast<ElectroMagnAM*>(fields))->Jr_[imode];
+        cField2D* JtAM = (static_cast<ElectroMagnAM*>(fields))->Jt_[imode];
+        int j_glob    = (static_cast<ElectroMagnAM*>(fields))->j_glob_;
+        bool isYmin = (static_cast<ElectroMagnAM*>(fields))->isYmin;
+        bool isXmin = (static_cast<ElectroMagnAM*>(fields))->isXmin;
+        bool isXmax = (static_cast<ElectroMagnAM*>(fields))->isXmax;
+        bool isYmax = (static_cast<ElectroMagnAM*>(fields))->isYmax;
 
         // Electric field Elr^(d,p)
         for (unsigned int i=0 ; i<nl_d ; i++) {

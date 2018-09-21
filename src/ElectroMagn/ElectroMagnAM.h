@@ -9,15 +9,15 @@
 class Params;
 
 //! class ElectroMagn3D containing all information on the electromagnetic fields & currents for 3d3v simulations
-class ElectroMagn3DAM : public ElectroMagn
+class ElectroMagnAM : public ElectroMagn
 {
 public:
-    //! Constructor for ElectroMagn3DAM
-    ElectroMagn3DAM(Params &params, DomainDecomposition* domain_decomposition, std::vector<Species*>& vecSpecies, Patch* patch);
-    ElectroMagn3DAM( ElectroMagn3DAM* emFields, Params &params, Patch* patch );
+    //! Constructor for ElectroMagnAM
+    ElectroMagnAM(Params &params, DomainDecomposition* domain_decomposition, std::vector<Species*>& vecSpecies, Patch* patch);
+    ElectroMagnAM( ElectroMagnAM* emFields, Params &params, Patch* patch );
 
-    //! Destructor for ElectroMagn3DAM
-    ~ElectroMagn3DAM();
+    //! Destructor for ElectroMagnAM
+    ~ElectroMagnAM();
 
     std::vector<cField2D*> El_;
     std::vector<cField2D*> Er_;
@@ -161,8 +161,8 @@ public:
     //! from smpi is ymin
     const bool isYmax;
     
-    //! Initialize quantities needed in the creators of ElectroMagn3DAM
-    void initElectroMagn3DAMQuantities(Params &params, Patch* patch);
+    //! Initialize quantities needed in the creators of ElectroMagnAM
+    void initElectroMagnAMQuantities(Params &params, Patch* patch);
 
     void finishInitialization(int nspecies, Patch* patch) override final;
 

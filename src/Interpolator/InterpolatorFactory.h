@@ -69,7 +69,7 @@ public:
 #endif
         }
         // ---------------
-        // 3dAM simulation
+        // AM simulation
         // ---------------
         else if ( params.geometry == "AMcylindrical" ) {
             Interp = new InterpolatorAM2Order(params, patch);

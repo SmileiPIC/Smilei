@@ -25,17 +25,17 @@ void MF_SolverAM_Yee::operator() ( ElectroMagn* fields )
 
         // Static-cast of the fields
 
-        cField2D* ElAM = (static_cast<ElectroMagn3DAM*>(fields))->El_[imode];
-        cField2D* ErAM = (static_cast<ElectroMagn3DAM*>(fields))->Er_[imode];
-        cField2D* EtAM = (static_cast<ElectroMagn3DAM*>(fields))->Et_[imode];
-        cField2D* BlAM = (static_cast<ElectroMagn3DAM*>(fields))->Bl_[imode];
-        cField2D* BrAM = (static_cast<ElectroMagn3DAM*>(fields))->Br_[imode];
-        cField2D* BtAM = (static_cast<ElectroMagn3DAM*>(fields))->Bt_[imode];
-        int  j_glob = (static_cast<ElectroMagn3DAM*>(fields))->j_glob_;
-        bool isYmin = (static_cast<ElectroMagn3DAM*>(fields))->isYmin;
-        bool isXmin = (static_cast<ElectroMagn3DAM*>(fields))->isXmin;
-        bool isYmax = (static_cast<ElectroMagn3DAM*>(fields))->isYmax;
-        bool isXmax = (static_cast<ElectroMagn3DAM*>(fields))->isXmax;
+        cField2D* ElAM = (static_cast<ElectroMagnAM*>(fields))->El_[imode];
+        cField2D* ErAM = (static_cast<ElectroMagnAM*>(fields))->Er_[imode];
+        cField2D* EtAM = (static_cast<ElectroMagnAM*>(fields))->Et_[imode];
+        cField2D* BlAM = (static_cast<ElectroMagnAM*>(fields))->Bl_[imode];
+        cField2D* BrAM = (static_cast<ElectroMagnAM*>(fields))->Br_[imode];
+        cField2D* BtAM = (static_cast<ElectroMagnAM*>(fields))->Bt_[imode];
+        int  j_glob = (static_cast<ElectroMagnAM*>(fields))->j_glob_;
+        bool isYmin = (static_cast<ElectroMagnAM*>(fields))->isYmin;
+        bool isXmin = (static_cast<ElectroMagnAM*>(fields))->isXmin;
+        bool isYmax = (static_cast<ElectroMagnAM*>(fields))->isYmax;
+        bool isXmax = (static_cast<ElectroMagnAM*>(fields))->isXmax;
 
         // Magnetic field Bx^(p,d)
         for (unsigned int i=0 ; i<nl_p;  i++) {

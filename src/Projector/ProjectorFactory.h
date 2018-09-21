@@ -69,7 +69,7 @@ public:
 
         }
         // ---------------
-        // 3dAM simulation
+        // AM simulation
         // ---------------
         else if ( params.geometry == "AMcylindrical" ) {
             Proj = new ProjectorAM2Order(params, patch);

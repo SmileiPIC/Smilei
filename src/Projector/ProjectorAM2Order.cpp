@@ -973,7 +973,7 @@ void ProjectorAM2Order::operator() (ElectroMagn* EMfields, Particles &particles,
     int dim1 = EMfields->dimPrim[1];
     //int dim2 = EMfields->dimPrim[2];
 
-    ElectroMagn3DAM* emAM = static_cast<ElectroMagn3DAM*>( EMfields );
+    ElectroMagnAM* emAM = static_cast<ElectroMagnAM*>( EMfields );
 
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
     if (!diag_flag){ 
