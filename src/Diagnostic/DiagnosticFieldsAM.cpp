@@ -13,7 +13,7 @@
 
 using namespace std;
 
-DiagnosticFieldsRZ::DiagnosticFieldsRZ( Params &params, SmileiMPI* smpi, VectorPatch &vecPatches, int ndiag, OpenPMDparams& openPMD )
+DiagnosticFieldsAM::DiagnosticFieldsAM( Params &params, SmileiMPI* smpi, VectorPatch &vecPatches, int ndiag, OpenPMDparams& openPMD )
     : DiagnosticFields( params, smpi, vecPatches, ndiag, openPMD )
 {
     
@@ -108,12 +108,12 @@ DiagnosticFieldsRZ::DiagnosticFieldsRZ( Params &params, SmileiMPI* smpi, VectorP
     tmp_dset_id=0;
 }
 
-DiagnosticFieldsRZ::~DiagnosticFieldsRZ()
+DiagnosticFieldsAM::~DiagnosticFieldsAM()
 {
 }
 
 
-void DiagnosticFieldsRZ::setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatches )
+void DiagnosticFieldsAM::setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatches )
 {
     // Calculate the total size of the array in this proc
     unsigned int total_vecPatches_size = one_patch_buffer_size * vecPatches.size();
@@ -149,7 +149,7 @@ void DiagnosticFieldsRZ::setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatc
 
 
 // Copy patch field to current "data" buffer
-void DiagnosticFieldsRZ::getField( Patch* patch, unsigned int ifield )
+void DiagnosticFieldsAM::getField( Patch* patch, unsigned int ifield )
 {
     // Get current field
     cField2D* field;
@@ -187,7 +187,7 @@ void DiagnosticFieldsRZ::getField( Patch* patch, unsigned int ifield )
 
 
 // Write current buffer to file
-void DiagnosticFieldsRZ::writeField( hid_t dset_id, int itime ) {
+void DiagnosticFieldsAM::writeField( hid_t dset_id, int itime ) {
 
     // Write the buffer in a temporary location
     H5Dwrite( tmp_dset_id, H5T_NATIVE_DOUBLE, memspace_firstwrite, filespace_firstwrite, write_plist, &(idata[0]) );

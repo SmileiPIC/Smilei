@@ -1,6 +1,6 @@
 
-#ifndef ELECTROMAGNBCRZ_AXIS_H
-#define ELECTROMAGNBCRZ_AXIS_H
+#ifndef ELECTROMAGNBCAM_AXIS_H
+#define ELECTROMAGNBCAM_AXIS_H
 
 
 #include <vector>

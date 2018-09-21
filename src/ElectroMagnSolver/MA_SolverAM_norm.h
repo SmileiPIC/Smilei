@@ -1,5 +1,5 @@
-#ifndef MA_SOLVERRZ_NORM_H
-#define MA_SOLVERRZ_NORM_H
+#ifndef MA_SOLVERAM_NORM_H
+#define MA_SOLVERAM_NORM_H
 
 #include "SolverAM.h"
 class ElectroMagn;

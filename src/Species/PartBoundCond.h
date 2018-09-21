@@ -68,7 +68,7 @@ public:
             }
         }
 
-        if (!isRZ) {
+        if (!isAM) {
             // iDim = 1
             if (nDim_particle >= 2) {
             
@@ -111,7 +111,7 @@ public:
                 }
              }
              if ( particles.distance2_to_axis(ipart) < y_min2 ) {
-                keep_part = 0; //bc_ymin is always NULL because there are no y_min BC in RZ geometry for particles.
+                keep_part = 0; //bc_ymin is always NULL because there are no y_min BC in AM geometry for particles.
                 //std::cout<<"removed particle position"<<particles.position(0,iPart)<<" , "<< particles.position(1,iPart)<<" , "<<particles.position(2,iPart)<<std::endl; 
              }
 
@@ -146,7 +146,7 @@ private:
    //! Space dimension of field
     int nDim_field;
 //<<<<<<< HEAD
-    bool isRZ;
+    bool isAM;
     
 //=======
 

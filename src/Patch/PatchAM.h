@@ -8,18 +8,18 @@ class SimWindow;
 
 //! Class Patch : sub MPI domain 
 //!     Collection of patch = MPI domain
-class PatchRZ : public Patch
+class PatchAM : public Patch
 {
 public:
     //! Constructor for Patch
-    PatchRZ(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved);
+    PatchAM(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved);
     //! Cloning Constructor for Patch
-    PatchRZ(PatchRZ* patch, Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved, bool with_particles);
+    PatchAM(PatchAM* patch, Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved, bool with_particles);
 
     void initStep2(Params& params, DomainDecomposition* domain_decomposition) override final;
     
     //! Destructor for Patch
-    ~PatchRZ() override  final;
+    ~PatchAM() override  final;
 
 
     // MPI exchange/sum methods for particles/fields

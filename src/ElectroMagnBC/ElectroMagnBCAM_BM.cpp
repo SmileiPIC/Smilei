@@ -193,14 +193,14 @@ void ElectroMagnBCAM_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
     for (unsigned int imode=0 ; imode<Nmode ; imode++) {
 
 	// Static cast of the fields
-	cField2D* ErRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Er_[imode];
-	cField2D* EtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Et_[imode];
-	cField2D* BlRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bl_[imode];
-	cField2D* BrRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Br_[imode];
-	cField2D* BtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bt_[imode];
-	cField2D* BtRZ_old = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bt_m[imode]; 
-	cField2D* BlRZ_old = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bl_m[imode];
-	cField2D* BrRZ_old = (static_cast<ElectroMagn3DRZ*>(EMfields))->Br_m[imode];
+	cField2D* ErAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Er_[imode];
+	cField2D* EtAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Et_[imode];
+	cField2D* BlAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Bl_[imode];
+	cField2D* BrAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Br_[imode];
+	cField2D* BtAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Bt_[imode];
+	cField2D* BtAM_old = (static_cast<ElectroMagn3DAM*>(EMfields))->Bt_m[imode]; 
+	cField2D* BlAM_old = (static_cast<ElectroMagn3DAM*>(EMfields))->Bl_m[imode];
+	cField2D* BrAM_old = (static_cast<ElectroMagn3DAM*>(EMfields))->Br_m[imode];
         
 	if (min_max == 3 && patch->isYmax() ) {
 	    
@@ -212,32 +212,32 @@ void ElectroMagnBCAM_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
          //std::cout<<"come here "<<nr_p <<" nr*dr "<<nr_p*dr<<" \n " ;
 	    // for Bl^(p,d)
 	    for (unsigned int i=0 ; i<nl_p-1; i++) {
-	         (*BlRZ)(i,j+1) =                         (*BlRZ_old)(i,j) 
-                                  -      Alpha_Bl_Rmax * ((*BlRZ)(i,j) - (*BlRZ_old)(i,j+1))
-	                          +      Gamma_Bl_Rmax * ((*BrRZ)(i+1,j) + (*BrRZ_old)(i+1,j) - (*BrRZ)(i,j) - (*BrRZ_old)(i,j))
-	                          -      Beta_Bl_Rmax * Icpx * (double)imode * ((*ErRZ)(i,j+1) + (*ErRZ)(i,j))
-	                          - 2. * Beta_Bl_Rmax * (*EtRZ)(i,j);
-                //if (std::abs((*BlRZ)(i,j+1))>1.){
-                    //MESSAGE("BlRZBM");
+	         (*BlAM)(i,j+1) =                         (*BlAM_old)(i,j) 
+                                  -      Alpha_Bl_Rmax * ((*BlAM)(i,j) - (*BlAM_old)(i,j+1))
+	                          +      Gamma_Bl_Rmax * ((*BrAM)(i+1,j) + (*BrAM_old)(i+1,j) - (*BrAM)(i,j) - (*BrAM_old)(i,j))
+	                          -      Beta_Bl_Rmax * Icpx * (double)imode * ((*ErAM)(i,j+1) + (*ErAM)(i,j))
+	                          - 2. * Beta_Bl_Rmax * (*EtAM)(i,j);
+                //if (std::abs((*BlAM)(i,j+1))>1.){
+                    //MESSAGE("BlAMBM");
                     //MESSAGE(i);
                     //MESSAGE(j+1);
-                    //MESSAGE((*BlRZ)(i,j+1));
+                    //MESSAGE((*BlAM)(i,j+1));
                 //}
 	    }//i  ---end Bl
 	    
 	    // for Bt^(d,d)
             j = nr_d-2;
 	    for (unsigned int i=1 ; i<nl_p ; i++) { //Undefined in i=0 and i=nl_p
-	        (*BtRZ)(i,j+1) =     Alpha_Bt_Rmax * (*BtRZ)(i,j) 
-                                   + Beta_Bt_Rmax  * (*BtRZ_old)(i,j+1)
-			           + Gamma_Bt_Rmax * (*BtRZ_old)(i,j)
-	                           - Icpx * (double)imode * CB_BM * Epsilon_Bt_Rmax  * ((*BrRZ)(i,j) - (*BrRZ_old)(i,j) )
-	                           - CE_BM * Delta_Bt_Rmax * ((*ErRZ)(i,j+1)+(*ErRZ)(i,j)-(*ErRZ)(i-1,j+1) -(*ErRZ)(i-1,j) ) ;
-                //if (std::abs((*BtRZ)(i,j+1))>1.){
-                //    MESSAGE("BtRZMF");
+	        (*BtAM)(i,j+1) =     Alpha_Bt_Rmax * (*BtAM)(i,j) 
+                                   + Beta_Bt_Rmax  * (*BtAM_old)(i,j+1)
+			           + Gamma_Bt_Rmax * (*BtAM_old)(i,j)
+	                           - Icpx * (double)imode * CB_BM * Epsilon_Bt_Rmax  * ((*BrAM)(i,j) - (*BrAM_old)(i,j) )
+	                           - CE_BM * Delta_Bt_Rmax * ((*ErAM)(i,j+1)+(*ErAM)(i,j)-(*ErAM)(i-1,j+1) -(*ErAM)(i-1,j) ) ;
+                //if (std::abs((*BtAM)(i,j+1))>1.){
+                //    MESSAGE("BtAMMF");
                 //    MESSAGE(i);
                 //    MESSAGE(j+1);
-                //    MESSAGE((*BtRZ)(i,j+1));
+                //    MESSAGE((*BtAM)(i,j+1));
                 //}
 	    }//i  ---end Bt
         }

@@ -1,5 +1,5 @@
-#ifndef PROJECTORRZ2ORDER_H
-#define PROJECTORRZ2ORDER_H
+#ifndef PROJECTORAM2ORDER_H
+#define PROJECTORAM2ORDER_H
 
 #include <complex>
 

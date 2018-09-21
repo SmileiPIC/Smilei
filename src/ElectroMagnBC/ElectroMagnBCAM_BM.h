@@ -1,6 +1,6 @@
 
-#ifndef ELECTROMAGNBCRZ_BM_H
-#define ELECTROMAGNBCRZ_BM_H
+#ifndef ELECTROMAGNBCAM_BM_H
+#define ELECTROMAGNBCAM_BM_H
 
 
 #include <vector>

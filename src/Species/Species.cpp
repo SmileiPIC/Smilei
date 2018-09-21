@@ -879,17 +879,17 @@ void Species::projection_for_diags(double time_dual, unsigned int ispec,
         }
         else {
             complex<double>* buf[4];
-            ElectroMagn3DRZ* emRZ = static_cast<ElectroMagn3DRZ*>( EMfields );
+            ElectroMagn3DAM* emAM = static_cast<ElectroMagn3DAM*>( EMfields );
             int n_species = patch->vecSpecies.size();
             for ( unsigned int imode = 0; imode<params.nmodes;imode++){
                 int ifield = imode*n_species+ispec;
                 
                 for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
             
-                    buf[0] = emRZ->rho_RZ_s[ifield] ? &(*emRZ->rho_RZ_s[ifield])(0) : &(*emRZ->rho_RZ_[imode])(0) ;
-                    buf[1] = emRZ->Jl_s [ifield] ? &(*emRZ->Jl_s [ifield])(0) : &(*emRZ->Jl_[imode])(0) ;
-                    buf[2] = emRZ->Jr_s [ifield] ? &(*emRZ->Jr_s [ifield])(0) : &(*emRZ->Jr_[imode])(0) ;
-                    buf[3] = emRZ->Jt_s [ifield] ? &(*emRZ->Jt_s [ifield])(0) : &(*emRZ->Jt_[imode])(0) ;
+                    buf[0] = emAM->rho_AM_s[ifield] ? &(*emAM->rho_AM_s[ifield])(0) : &(*emAM->rho_AM_[imode])(0) ;
+                    buf[1] = emAM->Jl_s [ifield] ? &(*emAM->Jl_s [ifield])(0) : &(*emAM->Jl_[imode])(0) ;
+                    buf[2] = emAM->Jr_s [ifield] ? &(*emAM->Jr_s [ifield])(0) : &(*emAM->Jr_[imode])(0) ;
+                    buf[3] = emAM->Jt_s [ifield] ? &(*emAM->Jt_s [ifield])(0) : &(*emAM->Jt_[imode])(0) ;
             
                     for (int iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
                         for (unsigned int quantity=0; quantity < 4; quantity++) {
@@ -968,7 +968,7 @@ void Species::computeCharge(unsigned int ispec, ElectroMagn* EMfields)
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
             // Not for now, else rho is incremented twice. Here and dynamics. Must add restartRhoJs and manage independantly diags output
             //b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(bin_start) : &(*EMfields->rho_)(bin_start);
-            if (!dynamic_cast<ElectroMagn3DRZ*>(EMfields)) {
+            if (!dynamic_cast<ElectroMagn3DAM*>(EMfields)) {
                 b_rho = &(*EMfields->rho_)(0);
 
                 for (unsigned int iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
@@ -976,11 +976,11 @@ void Species::computeCharge(unsigned int ispec, ElectroMagn* EMfields)
                 }
             }
             else {
-#ifdef _TODO_RZ_ 
-                ElectroMagn3DRZ* emRZ = static_cast<ElectroMagn3DRZ*>( EMfields );
-                int Nmode = emRZ->rho_RZ_.size();
+#ifdef _TODO_AM_ 
+                ElectroMagn3DAM* emAM = static_cast<ElectroMagn3DAM*>( EMfields );
+                int Nmode = emAM->rho_AM_.size();
                 for (unsigned int imode=0; imode<Nmode;imode++){
-                    b_rho = (double*)((*emRZ->rho_RZ_[imode])(bin_start));
+                    b_rho = (double*)((*emAM->rho_AM_[imode])(bin_start));
                     for (unsigned int iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
                         (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_dim);
                     }

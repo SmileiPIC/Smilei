@@ -28,7 +28,7 @@ public:
         else if (params.geometry == "3Dcartesian")
             return new Patch3D(params, smpi, domain_decomposition, ipatch, n_moved);
         else if (params.geometry == "AMcylindrical")
-            return new PatchRZ(params, smpi, domain_decomposition, ipatch, n_moved);
+            return new PatchAM(params, smpi, domain_decomposition, ipatch, n_moved);
         return nullptr;
     }
 
@@ -41,7 +41,7 @@ public:
         else if (params.geometry == "3Dcartesian")
             return new Patch3D(static_cast<Patch3D*>(patch), params, smpi, domain_decomposition, ipatch, n_moved, with_particles);
         else if (params.geometry == "AMcylindrical")
-            return new PatchRZ(static_cast<PatchRZ*>(patch), params, smpi, domain_decomposition, ipatch, n_moved, with_particles);
+            return new PatchAM(static_cast<PatchAM*>(patch), params, smpi, domain_decomposition, ipatch, n_moved, with_particles);
         return nullptr;
     }
 

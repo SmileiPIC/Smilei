@@ -30,7 +30,7 @@ public:
             EMfields = new ElectroMagn3D(params, domain_decomposition, vecSpecies, patch);
         }
         else if ( params.geometry == "AMcylindrical" ) {
-            EMfields = new ElectroMagn3DRZ(params, domain_decomposition, vecSpecies, patch);
+            EMfields = new ElectroMagn3DAM(params, domain_decomposition, vecSpecies, patch);
         }
         else {
             ERROR( "Unknown geometry : " << params.geometry << "!" );
@@ -164,7 +164,7 @@ public:
         } else if ( params.geometry == "3Dcartesian" ) {
             newEMfields = new ElectroMagn3D(static_cast<ElectroMagn3D*>(EMfields), params, patch);
         } else if ( params.geometry == "AMcylindrical" ) {
-            newEMfields = new ElectroMagn3DRZ(static_cast<ElectroMagn3DRZ*>(EMfields), params, patch);
+            newEMfields = new ElectroMagn3DAM(static_cast<ElectroMagn3DAM*>(EMfields), params, patch);
         }
         
         newEMfields->finishInitialization(vecSpecies.size(), patch);

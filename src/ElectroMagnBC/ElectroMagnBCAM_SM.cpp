@@ -75,7 +75,7 @@ ElectroMagnBCAM_SM::ElectroMagnBCAM_SM( Params &params, Patch* patch, unsigned i
     // Parameters for the Silver-Mueller boundary conditions
     // -----------------------------------------------------
 
-    #ifdef _TODO_RZ
+    #ifdef _TODO_AM
 	#endif
     // Xmin boundary
     double theta  = 0.0*conv_deg2rad; //0.0;
@@ -197,15 +197,15 @@ void ElectroMagnBCAM_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
     // Loop on imode 
     for (unsigned int imode=0 ; imode<Nmode ; imode++) {
 		// Static cast of the fields
-		//cField2D* ElRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->El_[imode];
-		cField2D* ErRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Er_[imode];
-		cField2D* EtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Et_[imode];
-		cField2D* BlRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bl_[imode];
-		cField2D* BrRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Br_[imode];
-		cField2D* BtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bt_[imode];
-		bool isYmin = (static_cast<ElectroMagn3DRZ*>(EMfields))->isYmin;
-		bool isYmax = (static_cast<ElectroMagn3DRZ*>(EMfields))->isYmax;
-		int     j_glob = (static_cast<ElectroMagn3DRZ*>(EMfields))->j_glob_;	
+		//cField2D* ElAM = (static_cast<ElectroMagn3DAM*>(EMfields))->El_[imode];
+		cField2D* ErAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Er_[imode];
+		cField2D* EtAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Et_[imode];
+		cField2D* BlAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Bl_[imode];
+		cField2D* BrAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Br_[imode];
+		cField2D* BtAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Bt_[imode];
+		bool isYmin = (static_cast<ElectroMagn3DAM*>(EMfields))->isYmin;
+		bool isYmax = (static_cast<ElectroMagn3DAM*>(EMfields))->isYmax;
+		int     j_glob = (static_cast<ElectroMagn3DAM*>(EMfields))->j_glob_;	
  
 		if (min_max == 0 && patch->isXmin() ) {
 			//MESSAGE("Xmin");		    
@@ -232,15 +232,15 @@ void ElectroMagnBCAM_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 
 		        //x= Xmin
 			unsigned int i=0;
-		        (*BrRZ)(i,j) = Alpha_SM_Xmin   * (*EtRZ)(i,j)
-		        +              Beta_SM_Xmin    * (*BrRZ)(i+1,j)
+		        (*BrAM)(i,j) = Alpha_SM_Xmin   * (*EtAM)(i,j)
+		        +              Beta_SM_Xmin    * (*BrAM)(i+1,j)
 		        +              Gamma_SM_Xmin   * byW;
-		        +              Delta_SM_Xmin   *( (*BlRZ)(i,j+1)- (*BlRZ)(i,j));
-		//        if (std::abs((*BrRZ)(i,j))>1.){
-                //            MESSAGE("BrRZSM");                
+		        +              Delta_SM_Xmin   *( (*BlAM)(i,j+1)- (*BlAM)(i,j));
+		//        if (std::abs((*BrAM)(i,j))>1.){
+                //            MESSAGE("BrAMSM");                
                 //            MESSAGE(i);
                 //            MESSAGE(j);    
-                //            MESSAGE((*BrRZ)(i,j));
+                //            MESSAGE((*BrAM)(i,j));
                 //        }
 		    }//j  ---end compute Br
 		    
@@ -264,15 +264,15 @@ void ElectroMagnBCAM_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 			}
 		        //x=Xmin
 			unsigned int i=0;
-		        (*BtRZ)(i,j) = -Alpha_SM_Xmin * (*ErRZ)(i,j)
-		        +               Beta_SM_Xmin  *( (*BtRZ)(i+1,j))
+		        (*BtAM)(i,j) = -Alpha_SM_Xmin * (*ErAM)(i,j)
+		        +               Beta_SM_Xmin  *( (*BtAM)(i+1,j))
 		        +               Gamma_SM_Xmin * bzW
-				+               Epsilon_SM_Xmin *(double)imode/((j_glob+j+0.5)*dr)*(*BlRZ)(i,j) ;
-                //if (std::abs((*BtRZ)(i,j))>1.){
-                //MESSAGE("BtRZSM");                
+				+               Epsilon_SM_Xmin *(double)imode/((j_glob+j+0.5)*dr)*(*BlAM)(i,j) ;
+                //if (std::abs((*BtAM)(i,j))>1.){
+                //MESSAGE("BtAMSM");                
                 //MESSAGE(i);
                 //MESSAGE(j);    
-                //MESSAGE((*BtRZ)(i,j));
+                //MESSAGE((*BtAM)(i,j));
                 //}
 				
 				//MESSAGE("EPS")
@@ -302,15 +302,15 @@ void ElectroMagnBCAM_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		            }
 			}
 			unsigned int i= nl_d-1;
-		        (*BrRZ)(i,j) = - Alpha_SM_Xmax   * (*EtRZ)(i-1,j)
-		         +                   Beta_SM_Xmax    * (*BrRZ)(i-1,j)
+		        (*BrAM)(i,j) = - Alpha_SM_Xmax   * (*EtAM)(i-1,j)
+		         +                   Beta_SM_Xmax    * (*BrAM)(i-1,j)
 		         +                   Gamma_SM_Xmax   * byE
-		         +                   Delta_SM_Xmax   * ((*BlRZ)(i-1,j+1)- (*BlRZ)(i-1,j)); // Check x-index
-                //if (std::abs((*BrRZ)(i,j))>1.){
-                //MESSAGE("BrRZSMM");                
+		         +                   Delta_SM_Xmax   * ((*BlAM)(i-1,j+1)- (*BlAM)(i-1,j)); // Check x-index
+                //if (std::abs((*BrAM)(i,j))>1.){
+                //MESSAGE("BrAMSMM");                
                 //MESSAGE(i);
                 //MESSAGE(j);    
-                //MESSAGE((*BrRZ)(i,j));
+                //MESSAGE((*BrAM)(i,j));
                 //}				    
 		        
 		    }//j  ---end compute Br
@@ -335,15 +335,15 @@ void ElectroMagnBCAM_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 				}
 			}
 		        unsigned int i= nl_d-1;
-		        (*BtRZ)(i,j) = Alpha_SM_Xmax * (*ErRZ)(i-1,j)
-		         +                    Beta_SM_Xmax  * (*BtRZ)(i-1,j)
+		        (*BtAM)(i,j) = Alpha_SM_Xmax * (*ErAM)(i-1,j)
+		         +                    Beta_SM_Xmax  * (*BtAM)(i-1,j)
 		         +                    Gamma_SM_Xmax * bzE
-				 +					  Epsilon_SM_Xmax * (double)imode /((j_glob+j+0.5)*dr)* (*BlRZ)(i-1,j)	;
-                //if (std::abs((*BtRZ)(i,j))>1.){
-                //MESSAGE("BtRZSMM");                
+				 +					  Epsilon_SM_Xmax * (double)imode /((j_glob+j+0.5)*dr)* (*BlAM)(i-1,j)	;
+                //if (std::abs((*BtAM)(i,j))>1.){
+                //MESSAGE("BtAMSMM");                
                 //MESSAGE(i);
                 //MESSAGE(j);    
-                //MESSAGE((*BtRZ)(i,j));
+                //MESSAGE((*BtAM)(i,j));
                 //}
 		        
 		    }//j  ---end compute Bt

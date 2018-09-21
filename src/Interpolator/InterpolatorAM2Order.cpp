@@ -35,12 +35,12 @@ void InterpolatorAM2Order::operator() (ElectroMagn* EMfields, Particles &particl
     //Treat mode 0 first
 
     // Static cast of the electromagnetic fields
-    cField2D* ElRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->El_[0];
-    cField2D* ErRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Er_[0];
-    cField2D* EtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Et_[0];
-    cField2D* BlRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bl_m[0];
-    cField2D* BrRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Br_m[0];
-    cField2D* BtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bt_m[0];
+    cField2D* ElAM = (static_cast<ElectroMagn3DAM*>(EMfields))->El_[0];
+    cField2D* ErAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Er_[0];
+    cField2D* EtAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Et_[0];
+    cField2D* BlAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Bl_m[0];
+    cField2D* BrAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Br_m[0];
+    cField2D* BtAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Bt_m[0];
 
 
     // Normalized particle position
@@ -96,50 +96,50 @@ void InterpolatorAM2Order::operator() (ElectroMagn* EMfields, Particles &particl
     // -------------------------
     // Interpolation of Ex^(d,p)
     // -------------------------
-    *(ELoc+0*nparts) = std::real (compute( &coeffxd_[1], &coeffyp_[1], ElRZ, id_, jp_));
+    *(ELoc+0*nparts) = std::real (compute( &coeffxd_[1], &coeffyp_[1], ElAM, id_, jp_));
 
     // -------------------------
     // Interpolation of Er^(p,d)
     // -------------------------
-    *(ELoc+1*nparts) = std::real (compute( &coeffxp_[1], &coeffyd_[1], ErRZ, ip_, jd_));
+    *(ELoc+1*nparts) = std::real (compute( &coeffxp_[1], &coeffyd_[1], ErAM, ip_, jd_));
 
     // -------------------------
     // Interpolation of Et^(p,p)
     // -------------------------
-    *(ELoc+2*nparts) = std::real (compute( &coeffxp_[1], &coeffyp_[1], EtRZ, ip_, jp_));
+    *(ELoc+2*nparts) = std::real (compute( &coeffxp_[1], &coeffyp_[1], EtAM, ip_, jp_));
 
     // -------------------------
     // Interpolation of Bx^(p,d)
     // -------------------------
-    *(BLoc+0*nparts) = std::real (compute( &coeffxp_[1], &coeffyd_[1], BlRZ, ip_, jd_));
+    *(BLoc+0*nparts) = std::real (compute( &coeffxp_[1], &coeffyd_[1], BlAM, ip_, jd_));
 
     // -------------------------
     // Interpolation of Br^(d,p)
     // -------------------------
-    *(BLoc+1*nparts) = std::real (compute( &coeffxd_[1], &coeffyp_[1], BrRZ, id_, jp_));
+    *(BLoc+1*nparts) = std::real (compute( &coeffxd_[1], &coeffyp_[1], BrAM, id_, jp_));
 
     // -------------------------
     // Interpolation of Bt^(d,d)
     // -------------------------
-    *(BLoc+2*nparts) = std::real (compute( &coeffxd_[1], &coeffyd_[1], BtRZ, id_, jd_));
+    *(BLoc+2*nparts) = std::real (compute( &coeffxd_[1], &coeffyd_[1], BtAM, id_, jd_));
  
     for (unsigned int imode = 1; imode < nmodes ; imode++){
 
-        cField2D* ElRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->El_[imode];
-        cField2D* ErRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Er_[imode];
-        cField2D* EtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Et_[imode];
-        cField2D* BlRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bl_m[imode];
-        cField2D* BrRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Br_m[imode];
-        cField2D* BtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bt_m[imode];
+        cField2D* ElAM = (static_cast<ElectroMagn3DAM*>(EMfields))->El_[imode];
+        cField2D* ErAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Er_[imode];
+        cField2D* EtAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Et_[imode];
+        cField2D* BlAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Bl_m[imode];
+        cField2D* BrAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Br_m[imode];
+        cField2D* BtAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Bt_m[imode];
 
         exp_mm_theta *= exp_m_theta ;
         
-        *(ELoc+0*nparts) += std::real ( compute( &coeffxd_[1], &coeffyp_[1], ElRZ, id_, jp_)* exp_mm_theta ) ;
-        *(ELoc+1*nparts) += std::real ( compute( &coeffxp_[1], &coeffyd_[1], ErRZ, ip_, jd_)* exp_mm_theta ) ;
-        *(ELoc+2*nparts) += std::real ( compute( &coeffxp_[1], &coeffyp_[1], EtRZ, ip_, jp_)* exp_mm_theta ) ;
-        *(BLoc+0*nparts) += std::real ( compute( &coeffxp_[1], &coeffyd_[1], BlRZ, ip_, jd_)* exp_mm_theta ) ;
-        *(BLoc+1*nparts) += std::real ( compute( &coeffxd_[1], &coeffyp_[1], BrRZ, id_, jp_)* exp_mm_theta ) ;
-        *(BLoc+2*nparts) += std::real ( compute( &coeffxd_[1], &coeffyd_[1], BtRZ, id_, jd_)* exp_mm_theta ) ;
+        *(ELoc+0*nparts) += std::real ( compute( &coeffxd_[1], &coeffyp_[1], ElAM, id_, jp_)* exp_mm_theta ) ;
+        *(ELoc+1*nparts) += std::real ( compute( &coeffxp_[1], &coeffyd_[1], ErAM, ip_, jd_)* exp_mm_theta ) ;
+        *(ELoc+2*nparts) += std::real ( compute( &coeffxp_[1], &coeffyp_[1], EtAM, ip_, jp_)* exp_mm_theta ) ;
+        *(BLoc+0*nparts) += std::real ( compute( &coeffxp_[1], &coeffyd_[1], BlAM, ip_, jd_)* exp_mm_theta ) ;
+        *(BLoc+1*nparts) += std::real ( compute( &coeffxd_[1], &coeffyp_[1], BrAM, id_, jp_)* exp_mm_theta ) ;
+        *(BLoc+2*nparts) += std::real ( compute( &coeffxd_[1], &coeffyd_[1], BtAM, id_, jd_)* exp_mm_theta ) ;
         
     }
     //division by r_g in S_r
@@ -194,16 +194,16 @@ void InterpolatorAM2Order::operator() (ElectroMagn* EMfields, Particles &particl
     double *BLoc = &(smpi->dynamics_Bpart[ithread][ipart]);
 
     // Interpolate E, B
-    cField2D* ElRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->El_[0];
-    cField2D* ErRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Er_[0];
-    cField2D* EtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Et_[0];
-    cField2D* BlRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bl_m[0];
-    cField2D* BrRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Br_m[0];
-    cField2D* BtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bt_m[0];
-    cField2D* JlRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jl_[0]; 
-    cField2D* JrRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jr_[0]; 
-    cField2D* JtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jt_[0]; 
-    cField2D* RhoRZ= (static_cast<ElectroMagn3DRZ*>(EMfields))->rho_RZ_[0];
+    cField2D* ElAM = (static_cast<ElectroMagn3DAM*>(EMfields))->El_[0];
+    cField2D* ErAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Er_[0];
+    cField2D* EtAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Et_[0];
+    cField2D* BlAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Bl_m[0];
+    cField2D* BrAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Br_m[0];
+    cField2D* BtAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Bt_m[0];
+    cField2D* JlAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Jl_[0]; 
+    cField2D* JrAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Jr_[0]; 
+    cField2D* JtAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Jt_[0]; 
+    cField2D* RhoAM= (static_cast<ElectroMagn3DAM*>(EMfields))->rho_AM_[0];
     
     
     // Normalized particle position
@@ -262,77 +262,77 @@ void InterpolatorAM2Order::operator() (ElectroMagn* EMfields, Particles &particl
     // -------------------------
     // Interpolation of Ex^(d,p)
     // -------------------------
-    *(ELoc+0*nparts) = std::real(compute_p( &coeffxd_[1], &coeffyp_[1], ElRZ, id_, jp_));
+    *(ELoc+0*nparts) = std::real(compute_p( &coeffxd_[1], &coeffyp_[1], ElAM, id_, jp_));
     
     // -------------------------
     // Interpolation of Ey^(p,d)
     // -------------------------
-    *(ELoc+1*nparts) = std::real(compute_d( &coeffxp_[1], &coeffyd_[1], ErRZ, ip_, jd_));
+    *(ELoc+1*nparts) = std::real(compute_d( &coeffxp_[1], &coeffyd_[1], ErAM, ip_, jd_));
     
     // -------------------------
     // Interpolation of Ez^(p,p)
     // -------------------------
-    *(ELoc+2*nparts) = std::real(compute_p( &coeffxp_[1], &coeffyp_[1], EtRZ, ip_, jp_));
+    *(ELoc+2*nparts) = std::real(compute_p( &coeffxp_[1], &coeffyp_[1], EtAM, ip_, jp_));
     
     // -------------------------
     // Interpolation of Bx^(p,d)
     // -------------------------
-    *(BLoc+0*nparts) = std::real(compute_d( &coeffxp_[1], &coeffyd_[1], BlRZ, ip_, jd_));
+    *(BLoc+0*nparts) = std::real(compute_d( &coeffxp_[1], &coeffyd_[1], BlAM, ip_, jd_));
     
     // -------------------------
     // Interpolation of By^(d,p)
     // -------------------------
-    *(BLoc+1*nparts) = std::real(compute_p( &coeffxd_[1], &coeffyp_[1], BrRZ, id_, jp_));
+    *(BLoc+1*nparts) = std::real(compute_p( &coeffxd_[1], &coeffyp_[1], BrAM, id_, jp_));
     
     // -------------------------
     // Interpolation of Bz^(d,d)
     // -------------------------
-    *(BLoc+2*nparts) = std::real(compute_d( &coeffxd_[1], &coeffyd_[1], BtRZ, id_, jd_));
+    *(BLoc+2*nparts) = std::real(compute_d( &coeffxd_[1], &coeffyd_[1], BtAM, id_, jd_));
     // -------------------------
     // Interpolation of Jx^(d,p,p)
     // -------------------------
-    (*JLoc).x = std::real(compute_p( &coeffxd_[1], &coeffyp_[1], JlRZ, id_, jp_));
+    (*JLoc).x = std::real(compute_p( &coeffxd_[1], &coeffyp_[1], JlAM, id_, jp_));
     
     // -------------------------
     // Interpolation of Jy^(p,d,p)
     // -------------------------
-    (*JLoc).y = std::real(compute_d( &coeffxp_[1], &coeffyd_[1], JrRZ, ip_, jd_));
+    (*JLoc).y = std::real(compute_d( &coeffxp_[1], &coeffyd_[1], JrAM, ip_, jd_));
     
     // -------------------------
     // Interpolation of Jz^(p,p,d)
     // -------------------------
-    (*JLoc).z = std::real(compute_p( &coeffxp_[1], &coeffyp_[1], JtRZ, ip_, jp_));
+    (*JLoc).z = std::real(compute_p( &coeffxp_[1], &coeffyp_[1], JtAM, ip_, jp_));
     
     // -------------------------
     // Interpolation of Rho^(p,p,p)
     // -------------------------
-    (*RhoLoc) = std::real(compute_p( &coeffxp_[1], &coeffyp_[1], RhoRZ, ip_, jp_));
+    (*RhoLoc) = std::real(compute_p( &coeffxp_[1], &coeffyp_[1], RhoAM, ip_, jp_));
 
     for (unsigned int imode = 1; imode < nmodes ; imode++){
 
-        cField2D* ElRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->El_[imode];
-        cField2D* ErRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Er_[imode];
-        cField2D* EtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Et_[imode];
-        cField2D* BlRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bl_m[imode];
-        cField2D* BrRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Br_m[imode];
-        cField2D* BtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bt_m[imode];
-        cField2D* JlRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jl_[imode]; 
-        cField2D* JrRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jr_[imode]; 
-        cField2D* JtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Jt_[imode]; 
-        cField2D* RhoRZ= (static_cast<ElectroMagn3DRZ*>(EMfields))->rho_RZ_[imode];
+        cField2D* ElAM = (static_cast<ElectroMagn3DAM*>(EMfields))->El_[imode];
+        cField2D* ErAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Er_[imode];
+        cField2D* EtAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Et_[imode];
+        cField2D* BlAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Bl_m[imode];
+        cField2D* BrAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Br_m[imode];
+        cField2D* BtAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Bt_m[imode];
+        cField2D* JlAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Jl_[imode]; 
+        cField2D* JrAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Jr_[imode]; 
+        cField2D* JtAM = (static_cast<ElectroMagn3DAM*>(EMfields))->Jt_[imode]; 
+        cField2D* RhoAM= (static_cast<ElectroMagn3DAM*>(EMfields))->rho_AM_[imode];
 
         exp_mm_theta *= exp_m_theta ;
         
-        *(ELoc+0*nparts) += std::real ( compute_p( &coeffxd_[1], &coeffyp_[1], ElRZ, id_, jp_) * exp_mm_theta ) ;
-        *(ELoc+1*nparts) += std::real ( compute_d( &coeffxp_[1], &coeffyd_[1], ErRZ, ip_, jd_) * exp_mm_theta ) ;
-        *(ELoc+2*nparts) += std::real ( compute_p( &coeffxp_[1], &coeffyp_[1], EtRZ, ip_, jp_) * exp_mm_theta ) ;
-        *(BLoc+0*nparts) += std::real ( compute_d( &coeffxp_[1], &coeffyd_[1], BlRZ, ip_, jd_) * exp_mm_theta ) ;
-        *(BLoc+1*nparts) += std::real ( compute_p( &coeffxd_[1], &coeffyp_[1], BrRZ, id_, jp_) * exp_mm_theta ) ;
-        *(BLoc+2*nparts) += std::real ( compute_d( &coeffxd_[1], &coeffyd_[1], BtRZ, id_, jd_) * exp_mm_theta ) ;
-        (*JLoc).x += std::real ( compute_p( &coeffxd_[1], &coeffyp_[1], JlRZ, id_, jp_) * exp_mm_theta ) ;
-        (*JLoc).y += std::real ( compute_d( &coeffxp_[1], &coeffyd_[1], JrRZ, ip_, jd_) * exp_mm_theta ) ;
-        (*JLoc).z += std::real ( compute_p( &coeffxp_[1], &coeffyp_[1], JtRZ, ip_, jp_) * exp_mm_theta ) ;
-        (*RhoLoc) += std::real ( compute_p( &coeffxp_[1], &coeffyp_[1], RhoRZ, ip_, jp_)* exp_mm_theta ) ;
+        *(ELoc+0*nparts) += std::real ( compute_p( &coeffxd_[1], &coeffyp_[1], ElAM, id_, jp_) * exp_mm_theta ) ;
+        *(ELoc+1*nparts) += std::real ( compute_d( &coeffxp_[1], &coeffyd_[1], ErAM, ip_, jd_) * exp_mm_theta ) ;
+        *(ELoc+2*nparts) += std::real ( compute_p( &coeffxp_[1], &coeffyp_[1], EtAM, ip_, jp_) * exp_mm_theta ) ;
+        *(BLoc+0*nparts) += std::real ( compute_d( &coeffxp_[1], &coeffyd_[1], BlAM, ip_, jd_) * exp_mm_theta ) ;
+        *(BLoc+1*nparts) += std::real ( compute_p( &coeffxd_[1], &coeffyp_[1], BrAM, id_, jp_) * exp_mm_theta ) ;
+        *(BLoc+2*nparts) += std::real ( compute_d( &coeffxd_[1], &coeffyd_[1], BtAM, id_, jd_) * exp_mm_theta ) ;
+        (*JLoc).x += std::real ( compute_p( &coeffxd_[1], &coeffyp_[1], JlAM, id_, jp_) * exp_mm_theta ) ;
+        (*JLoc).y += std::real ( compute_d( &coeffxp_[1], &coeffyd_[1], JrAM, ip_, jd_) * exp_mm_theta ) ;
+        (*JLoc).z += std::real ( compute_p( &coeffxp_[1], &coeffyp_[1], JtAM, ip_, jp_) * exp_mm_theta ) ;
+        (*RhoLoc) += std::real ( compute_p( &coeffxp_[1], &coeffyp_[1], RhoAM, ip_, jp_)* exp_mm_theta ) ;
     }
     delta2 = std::real(exp_m_theta) * *(ELoc+1*nparts) + std::imag(exp_m_theta) * *(ELoc+2*nparts);
     *(ELoc+2*nparts) = -std::imag(exp_m_theta) * *(ELoc+1*nparts) + std::real(exp_m_theta) * *(ELoc+2*nparts);

@@ -19,77 +19,77 @@ void MA_SolverAM_norm::operator() ( ElectroMagn* fields )
     for (unsigned int imode=0 ; imode<Nmode ; imode++) {
      
         // Static-cast of the fields_SolverAM_norm.cpp
-        cField2D* ElRZ = (static_cast<ElectroMagn3DRZ*>(fields))->El_[imode];
-        cField2D* ErRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Er_[imode];
-        cField2D* EtRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Et_[imode];
-        cField2D* BlRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Bl_[imode];
-        cField2D* BrRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Br_[imode];
-        cField2D* BtRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Bt_[imode];
-        cField2D* JlRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Jl_[imode];
-        cField2D* JrRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Jr_[imode];
-        cField2D* JtRZ = (static_cast<ElectroMagn3DRZ*>(fields))->Jt_[imode];
-        int j_glob    = (static_cast<ElectroMagn3DRZ*>(fields))->j_glob_;
-        bool isYmin = (static_cast<ElectroMagn3DRZ*>(fields))->isYmin;
-        bool isXmin = (static_cast<ElectroMagn3DRZ*>(fields))->isXmin;
-        bool isXmax = (static_cast<ElectroMagn3DRZ*>(fields))->isXmax;
-        bool isYmax = (static_cast<ElectroMagn3DRZ*>(fields))->isYmax;
+        cField2D* ElAM = (static_cast<ElectroMagn3DAM*>(fields))->El_[imode];
+        cField2D* ErAM = (static_cast<ElectroMagn3DAM*>(fields))->Er_[imode];
+        cField2D* EtAM = (static_cast<ElectroMagn3DAM*>(fields))->Et_[imode];
+        cField2D* BlAM = (static_cast<ElectroMagn3DAM*>(fields))->Bl_[imode];
+        cField2D* BrAM = (static_cast<ElectroMagn3DAM*>(fields))->Br_[imode];
+        cField2D* BtAM = (static_cast<ElectroMagn3DAM*>(fields))->Bt_[imode];
+        cField2D* JlAM = (static_cast<ElectroMagn3DAM*>(fields))->Jl_[imode];
+        cField2D* JrAM = (static_cast<ElectroMagn3DAM*>(fields))->Jr_[imode];
+        cField2D* JtAM = (static_cast<ElectroMagn3DAM*>(fields))->Jt_[imode];
+        int j_glob    = (static_cast<ElectroMagn3DAM*>(fields))->j_glob_;
+        bool isYmin = (static_cast<ElectroMagn3DAM*>(fields))->isYmin;
+        bool isXmin = (static_cast<ElectroMagn3DAM*>(fields))->isXmin;
+        bool isXmax = (static_cast<ElectroMagn3DAM*>(fields))->isXmax;
+        bool isYmax = (static_cast<ElectroMagn3DAM*>(fields))->isYmax;
 
         // Electric field Elr^(d,p)
         for (unsigned int i=0 ; i<nl_d ; i++) {
             for (unsigned int j=isYmin*3 ; j<nr_p ; j++) {  
-                (*ElRZ)(i,j) += -dt*(*JlRZ)(i,j) 
-                    +                 dt/((j_glob+j)*dr)*((j+j_glob+0.5)*(*BtRZ)(i,j+1) - (j+j_glob-0.5)*(*BtRZ)(i,j) )
-                    +                 Icpx*dt*(double)imode/((j_glob+j)*dr)*(*BrRZ)(i,j);
+                (*ElAM)(i,j) += -dt*(*JlAM)(i,j) 
+                    +                 dt/((j_glob+j)*dr)*((j+j_glob+0.5)*(*BtAM)(i,j+1) - (j+j_glob-0.5)*(*BtAM)(i,j) )
+                    +                 Icpx*dt*(double)imode/((j_glob+j)*dr)*(*BrAM)(i,j);
             }
         }
         for (unsigned int i=0 ; i<nl_p ; i++) {
             for (unsigned int j=isYmin*3 ; j<nr_d ; j++) {
-                (*ErRZ)(i,j) += -dt*(*JrRZ)(i,j)
-                    -                  dt_ov_dl * ( (*BtRZ)(i+1,j) - (*BtRZ)(i,j) )
-                    -                  Icpx*dt*(double)imode/((j_glob+j-0.5)*dr)* (*BlRZ)(i,j);
+                (*ErAM)(i,j) += -dt*(*JrAM)(i,j)
+                    -                  dt_ov_dl * ( (*BtAM)(i+1,j) - (*BtAM)(i,j) )
+                    -                  Icpx*dt*(double)imode/((j_glob+j-0.5)*dr)* (*BlAM)(i,j);
 
             }
         }
         for (unsigned int i=0 ;  i<nl_p ; i++) {
             for (unsigned int j=isYmin*3 ; j<nr_p ; j++) {
-                (*EtRZ)(i,j) += -dt*(*JtRZ)(i,j)
-                    +                  dt_ov_dl * ( (*BrRZ)(i+1,j) - (*BrRZ)(i,j) )
-                    -                  dt_ov_dr * ( (*BlRZ)(i,j+1) - (*BlRZ)(i,j) );        
+                (*EtAM)(i,j) += -dt*(*JtAM)(i,j)
+                    +                  dt_ov_dl * ( (*BrAM)(i+1,j) - (*BrAM)(i,j) )
+                    -                  dt_ov_dr * ( (*BlAM)(i,j+1) - (*BlAM)(i,j) );        
             }
         }
         if (isYmin){ // Conditions on axis
             unsigned int j=2;
             if (imode==0){
             	for (unsigned int i=0 ; i<nl_p  ; i++) {
-            		(*EtRZ)(i,j)=0;
+            		(*EtAM)(i,j)=0;
             	}
             	for (unsigned int i=0 ; i<nl_p  ; i++) {
-            		(*ErRZ)(i,j)= -(*ErRZ)(i,j+1);
+            		(*ErAM)(i,j)= -(*ErAM)(i,j+1);
             	}
             	for (unsigned int i=0 ; i<nl_d ; i++) {
-            		(*ElRZ)(i,j)+= 4.*dt_ov_dr*(*BtRZ)(i,j+1)-dt*(*JlRZ)(i,j);
+            		(*ElAM)(i,j)+= 4.*dt_ov_dr*(*BtAM)(i,j+1)-dt*(*JlAM)(i,j);
             	}
             }
             else if (imode==1){
             	for (unsigned int i=0 ; i<nl_d  ; i++) {
-            		(*ElRZ)(i,j)= 0;
+            		(*ElAM)(i,j)= 0;
             	}
             	for (unsigned int i=0 ; i<nl_p  ; i++) {
-            		(*EtRZ)(i,j)= -1./3.*(4.*Icpx*(*ErRZ)(i,j+1)+(*EtRZ)(i,j+1));
+            		(*EtAM)(i,j)= -1./3.*(4.*Icpx*(*ErAM)(i,j+1)+(*EtAM)(i,j+1));
             	}
             	for (unsigned int i=0 ; i<nl_p ; i++) {
-            		(*ErRZ)(i,j)=2.*Icpx*(*EtRZ)(i,j)-(*ErRZ)(i,j+1);
+            		(*ErAM)(i,j)=2.*Icpx*(*EtAM)(i,j)-(*ErAM)(i,j+1);
             	}
             }
             else {	
             	for (unsigned int  i=0 ; i<nl_d; i++) {
-            		(*ElRZ)(i,j)= 0;
+            		(*ElAM)(i,j)= 0;
             	}
             	for (unsigned int  i=0 ; i<nl_p; i++) {
-            		(*ErRZ)(i,j)= -(*ErRZ)(i,j+1);
+            		(*ErAM)(i,j)= -(*ErAM)(i,j+1);
             	}
             	for (unsigned int i=0 ; i<nl_p; i++) {
-            		(*EtRZ)(i,j)= 0;
+            		(*EtAM)(i,j)= 0;
             	}
             }
         } 

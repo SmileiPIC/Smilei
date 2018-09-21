@@ -1,5 +1,5 @@
-#ifndef MF_SOLVERRZ_YEE_H
-#define MF_SOLVERRZ_YEE_H
+#ifndef MF_SOLVERAM_YEE_H
+#define MF_SOLVERAM_YEE_H
 
 #include "SolverAM.h" 
 class ElectroMagn;

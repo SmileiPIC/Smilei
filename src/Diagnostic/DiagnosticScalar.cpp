@@ -140,7 +140,7 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
                                         }
     }
     else {
-        ElectroMagn3DRZ* emfields = static_cast<ElectroMagn3DRZ*>(EMfields);
+        ElectroMagn3DAM* emfields = static_cast<ElectroMagn3DAM*>(EMfields);
         nmodes = emfields->El_.size();
         for (unsigned int imode=0 ; imode < nmodes ; imode++) {
             fields.push_back( "Uelm_"+emfields->El_[imode] ->name );
@@ -152,7 +152,7 @@ void DiagnosticScalar::init(Params& params, SmileiMPI* smpi, VectorPatch& vecPat
             fields.push_back(emfields->Jl_[imode]->name);
             fields.push_back(emfields->Jr_[imode]->name);
             fields.push_back(emfields->Jt_[imode]->name);
-            fields.push_back(emfields->rho_RZ_[imode]->name);
+            fields.push_back(emfields->rho_AM_[imode]->name);
         }
         
     }
@@ -508,7 +508,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
 
     vector<Field*> fields;
 
-    if ((!dynamic_cast<ElectroMagn3DRZ*>(patch->EMfields))) {
+    if ((!dynamic_cast<ElectroMagn3DAM*>(patch->EMfields))) {
         fields.push_back(EMfields->Ex_);
         fields.push_back(EMfields->Ey_);
         fields.push_back(EMfields->Ez_);
@@ -517,7 +517,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
         fields.push_back(EMfields->Bz_m);
     }
     else {
-        ElectroMagn3DRZ* emfields = static_cast<ElectroMagn3DRZ*>(patch->EMfields);
+        ElectroMagn3DAM* emfields = static_cast<ElectroMagn3DAM*>(patch->EMfields);
         unsigned int nmodes = emfields->El_.size(); 
         for (unsigned int imode=0 ; imode < nmodes ; imode++) {
             fields.push_back(emfields->El_[imode]);
@@ -743,7 +743,7 @@ uint64_t DiagnosticScalar::getDiskFootPrint(int istart, int istop, Patch* patch)
         }
     }
     // 3 - Field scalars
-    if (!dynamic_cast<ElectroMagn3DRZ*>(patch->EMfields)) {
+    if (!dynamic_cast<ElectroMagn3DAM*>(patch->EMfields)) {
         scalars.push_back( Tools::merge("Uelm_", patch->EMfields->Ex_ ->name ) );
         scalars.push_back( Tools::merge("Uelm_", patch->EMfields->Ey_ ->name ) );
         scalars.push_back( Tools::merge("Uelm_", patch->EMfields->Ez_ ->name ) );
@@ -752,7 +752,7 @@ uint64_t DiagnosticScalar::getDiskFootPrint(int istart, int istop, Patch* patch)
         scalars.push_back( Tools::merge("Uelm_", patch->EMfields->Bz_m->name ) );
     }
     else {
-        ElectroMagn3DRZ* emfields = static_cast<ElectroMagn3DRZ*>(patch->EMfields);
+        ElectroMagn3DAM* emfields = static_cast<ElectroMagn3DAM*>(patch->EMfields);
         unsigned int nmodes = emfields->El_.size();
         for (unsigned int imode=0 ; imode < nmodes ; imode++) {
             scalars.push_back( Tools::merge("Uelm_", emfields->El_[imode] ->name ) );
@@ -764,7 +764,7 @@ uint64_t DiagnosticScalar::getDiskFootPrint(int istart, int istop, Patch* patch)
         }
     }
     // 4 - Scalars related to fields min and max
-    #ifdef _RZ__TODO
+    #ifdef _AM__TODO
     for( unsigned int i=0; i<2; i++ ) {
         string minmax = (i==0) ? "Min" : "Max";
         for( unsigned int j=0; j<2; j++ ) {

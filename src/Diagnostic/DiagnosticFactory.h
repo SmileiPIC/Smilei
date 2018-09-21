@@ -34,7 +34,7 @@ public:
             diag = new DiagnosticFields3D(params, smpi, vecPatches, idiag, openPMD);
         }
         else if ( params.geometry == "AMcylindrical" ) {
-            diag = new DiagnosticFieldsRZ(params, smpi, vecPatches, idiag, openPMD);
+            diag = new DiagnosticFieldsAM(params, smpi, vecPatches, idiag, openPMD);
         }
         else {
             ERROR( "Geometry " << params.geometry << " not implemented" );

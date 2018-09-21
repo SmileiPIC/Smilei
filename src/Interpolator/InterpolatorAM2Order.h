@@ -1,5 +1,5 @@
-#ifndef INTERPOLATORRZ2ORDER_H
-#define INTERPOLATORRZ2ORDER_H
+#ifndef INTERPOLATORAM2ORDER_H
+#define INTERPOLATORAM2ORDER_H
 
 
 #include "InterpolatorAM.h"
@@ -41,7 +41,7 @@ public:
         //unroll ?
 	for (int iloc=-1 ; iloc<2 ; iloc++) {
 	    for (int jloc=-1 ; jloc<2 ; jloc++) {
-                #ifdef _TODO_RZ
+                #ifdef _TODO_AM
                 #endif
                 //std::cout<< "idy+jloc "<< idy+jloc << std::endl;
                 //interp_res += *(coeffx+iloc) * *(coeffy+jloc) * ( real( (*f)(idx+iloc,idy+jloc) ) + imag( (*f)(idx+iloc,idy+jloc) ) );

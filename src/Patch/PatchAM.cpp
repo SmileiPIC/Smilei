@@ -15,9 +15,9 @@ using namespace std;
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// PatchRZ constructor 
+// PatchAM constructor 
 // ---------------------------------------------------------------------------------------------------------------------
-PatchRZ::PatchRZ(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved)
+PatchAM::PatchAM(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved)
   : Patch( params, smpi, domain_decomposition, ipatch, n_moved)
 {
     if (dynamic_cast<HilbertDomainDecomposition*>( domain_decomposition )) {
@@ -40,26 +40,26 @@ PatchRZ::PatchRZ(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_de
 
     }
 
-} // End PatchRZ::PatchRZ
+} // End PatchAM::PatchAM
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// PatchRZ cloning constructor 
+// PatchAM cloning constructor 
 // ---------------------------------------------------------------------------------------------------------------------
-PatchRZ::PatchRZ(PatchRZ* patch, Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved, bool with_particles = true)
+PatchAM::PatchAM(PatchAM* patch, Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved, bool with_particles = true)
   : Patch( patch, params, smpi, domain_decomposition, ipatch, n_moved, with_particles)
 {
     initStep2(params, domain_decomposition);
     initStep3(params, smpi, n_moved);
     finishCloning(patch, params, smpi, n_moved, with_particles);
-} // End PatchRZ::PatchRZ
+} // End PatchAM::PatchAM
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// PatchRZ second initializer :
+// PatchAM second initializer :
 //   - Pcoordinates, neighbor_ resized in Patch constructor 
 // ---------------------------------------------------------------------------------------------------------------------
-void PatchRZ::initStep2(Params& params, DomainDecomposition* domain_decomposition)
+void PatchAM::initStep2(Params& params, DomainDecomposition* domain_decomposition)
 {
     Pcoordinates.resize(2);
     Pcoordinates = domain_decomposition->getDomainCoordinates( hindex );
@@ -103,13 +103,13 @@ void PatchRZ::initStep2(Params& params, DomainDecomposition* domain_decompositio
 }
 
 
-PatchRZ::~PatchRZ()
+PatchAM::~PatchAM()
 {
     cleanType();
 }
 
 
-void PatchRZ::reallyinitSumField( Field* field, int iDim )
+void PatchAM::reallyinitSumField( Field* field, int iDim )
 {
 }
 
@@ -117,7 +117,7 @@ void PatchRZ::reallyinitSumField( Field* field, int iDim )
 // Initialize current patch sum Fields communications through MPI in direction iDim
 // Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
 // ---------------------------------------------------------------------------------------------------------------------
-void PatchRZ::initSumField( Field* field, int iDim, SmileiMPI* smpi )
+void PatchAM::initSumField( Field* field, int iDim, SmileiMPI* smpi )
 {
     if (field->MPIbuff.ibuf[0][0].size()==0) {
         field->MPIbuff.iallocate(2, field, oversize);
@@ -189,7 +189,7 @@ void PatchRZ::initSumField( Field* field, int iDim, SmileiMPI* smpi )
 // Proceed to the local reduction
 // Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
 // ---------------------------------------------------------------------------------------------------------------------
-void PatchRZ::finalizeSumField( Field* field, int iDim )
+void PatchAM::finalizeSumField( Field* field, int iDim )
 {
     int patch_ndims_(2);
 //    int patch_nbNeighbors_(2);
@@ -253,7 +253,7 @@ void PatchRZ::finalizeSumField( Field* field, int iDim )
 } // END finalizeSumField
 
 
-void PatchRZ::reallyfinalizeSumField( Field* field, int iDim )
+void PatchAM::reallyfinalizeSumField( Field* field, int iDim )
 {
 } // END finalizeSumField
 
@@ -262,12 +262,12 @@ void PatchRZ::reallyfinalizeSumField( Field* field, int iDim )
 // Initialize current patch exhange Fields communications through MPI (includes loop / nDim_fields_)
 // Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
 // ---------------------------------------------------------------------------------------------------------------------
-void PatchRZ::initExchange( Field* field )
+void PatchAM::initExchange( Field* field )
 {
     ERROR("Circ geometry initExchange not implemented");
 } // END initExchange( Field* field )
 
-void PatchRZ::initExchangeComplex( Field* field )
+void PatchAM::initExchangeComplex( Field* field )
 {
     cout << "On ne passe jamais ici !!!!" << endl;
 
@@ -324,12 +324,12 @@ void PatchRZ::initExchangeComplex( Field* field )
 // Initialize current patch exhange Fields communications through MPI  (includes loop / nDim_fields_)
 // Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
 // ---------------------------------------------------------------------------------------------------------------------
-void PatchRZ::finalizeExchange( Field* field )
+void PatchAM::finalizeExchange( Field* field )
 {
     ERROR("Circ geometry finalizeExchange not implemented");
 } // END finalizeExchange( Field* field )
 
-void PatchRZ::finalizeExchangeComplex( Field* field )
+void PatchAM::finalizeExchangeComplex( Field* field )
 {
     cField2D* f3D =  static_cast<cField2D*>(field);
 
@@ -358,13 +358,13 @@ void PatchRZ::finalizeExchangeComplex( Field* field )
 // Initialize current patch exhange Fields communications through MPI for direction iDim
 // Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
 // ---------------------------------------------------------------------------------------------------------------------
-void PatchRZ::initExchange( Field* field, int iDim, SmileiMPI* smpi )
+void PatchAM::initExchange( Field* field, int iDim, SmileiMPI* smpi )
 {
     ERROR("Circ geometry initExchange not implemented");
 
 } // END initExchange( Field* field, int iDim )
 
-void PatchRZ::initExchangeComplex( Field* field, int iDim, SmileiMPI* smpi )
+void PatchAM::initExchangeComplex( Field* field, int iDim, SmileiMPI* smpi )
 {
     if (field->MPIbuff.srequest.size()==0){
         field->MPIbuff.allocate(2);
@@ -422,12 +422,12 @@ void PatchRZ::initExchangeComplex( Field* field, int iDim, SmileiMPI* smpi )
 // Initialize current patch exhange Fields communications through MPI for direction iDim
 // Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
 // ---------------------------------------------------------------------------------------------------------------------
-void PatchRZ::finalizeExchange( Field* field, int iDim )
+void PatchAM::finalizeExchange( Field* field, int iDim )
 {
     ERROR("Circ geometry finalizeExchange not implemented");
 } // END finalizeExchange( Field* field, int iDim )
 
-void PatchRZ::finalizeExchangeComplex( Field* field, int iDim )
+void PatchAM::finalizeExchangeComplex( Field* field, int iDim )
 {
     int patch_ndims_(2);
 
@@ -450,7 +450,7 @@ void PatchRZ::finalizeExchangeComplex( Field* field, int iDim )
 // ---------------------------------------------------------------------------------------------------------------------
 // Create MPI_Datatypes used in initSumField and initExchange
 // ---------------------------------------------------------------------------------------------------------------------
-void PatchRZ::createType( Params& params )
+void PatchAM::createType( Params& params )
 {
     if (ntype_[0][0][0] != MPI_DATATYPE_NULL)
         return;
@@ -500,7 +500,7 @@ void PatchRZ::createType( Params& params )
 // ---------------------------------------------------------------------------------------------------------------------
 // Create MPI_Datatypes used in initSumField and initExchange
 // ---------------------------------------------------------------------------------------------------------------------
-void PatchRZ::createType2( Params& params )
+void PatchAM::createType2( Params& params )
 {
     if (ntype_[0][0][0] != MPI_DATATYPE_NULL)
         return;
@@ -547,7 +547,7 @@ void PatchRZ::createType2( Params& params )
     
 } //END createType
 
-void PatchRZ::cleanType()
+void PatchAM::cleanType()
 {
     if (ntype_[0][0][0] == MPI_DATATYPE_NULL)
         return;
