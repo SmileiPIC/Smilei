@@ -314,11 +314,11 @@ The block ``Main`` is **mandatory** and has the following syntax::
   The value of the random seed. To create a per-processor random seed, you may use
   the variable  :py:data:`smilei_mpi_rank`.
 
-.. py:data:: nmodes
+.. py:data:: number_of_AM
 
   :default: 2
 
-  The number of modes used for the Fourier decomposition in ``"3Drz"`` geometry.
+  The number of azimuthal modes used for the Fourier decomposition in ``"AMcylindrical"`` geometry.
 
 ----
 
