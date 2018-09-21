@@ -701,7 +701,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
                             idim++;
                         }
                     }
-                } else { //In 3drz geometry
+                } else { //In AM geometry
                 //In this case, iDim = 0 and idim = iDim + 1 = 1. We only have to check potential comms along R.
                     double r_min2, r_max2;
                     r_min2 = min_local[1]*min_local[1];

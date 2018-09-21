@@ -192,7 +192,7 @@ public:
             }
 			//MESSAGE( params.EM_BCs[1][1]);
             
-        }//3drz       
+        }//AM       
 
         // OTHER GEOMETRIES ARE NOT DEFINED ---
         else {

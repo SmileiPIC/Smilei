@@ -54,7 +54,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
                                                || (field_name.at(0)=='R' && field_name.length()>9 && field_name.substr(3,6)!="_mode_")
                                                || (field_name.at(0)=='R' && field_name.length()>9 && field_name.find("mode_") != field_name.rfind("mode_") )
                                                )
-                 ); // end 3drz cases
+                 ); // end AM cases
 
          //MESSAGE("HNA1");
         // If field in list of fields to dump, then add it

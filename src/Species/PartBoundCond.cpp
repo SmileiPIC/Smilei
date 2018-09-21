@@ -218,13 +218,13 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch ) :
         #endif
         // Ymin
         //if ( species->boundary_conditions[1][0] == "reflective" ) {
-        //    if (patch->isYmin()) bc_ymin = &refl_particle_rz;
+        //    if (patch->isYmin()) bc_ymin = &refl_particle_AM;
         //}
         //else if ( species->boundary_conditions[1][0] == "remove" ) {
         //    if (patch->isYmin()) bc_ymin = &remove_particle;
         //}
         //else if ( species->boundary_conditions[1][0] == "stop" ) {
-        //    if (patch->isYmin()) bc_ymin = &stop_particle_rz;
+        //    if (patch->isYmin()) bc_ymin = &stop_particle_AM;
         //}
         //else if ( species->boundary_conditions[1][0] == "none" ) {
         //    if (patch->isMaster()) MESSAGE(2,"Ymin boundary condition for species " << species->name << " is 'none', which means the same as fields");
@@ -238,17 +238,17 @@ PartBoundCond::PartBoundCond( Params& params, Species *species, Patch* patch ) :
             if (patch->isYmax()) bc_ymax = &remove_particle;
         }
         else if ( species->boundary_conditions[1][1] == "reflective" ) {
-            if (patch->isYmax()) bc_ymax = &refl_particle_rz;
+            if (patch->isYmax()) bc_ymax = &refl_particle_AM;
         }
         //else if ( species->boundary_conditions[1][1] == "stop" ) {
-        //    if (patch->isYmax()) bc_ymax = &stop_particle_rz;
+        //    if (patch->isYmax()) bc_ymax = &stop_particle_AM;
         //}
         //else if ( species->boundary_conditions[1][1] == "none" ) {
         //    if (patch->isMaster()) MESSAGE(2,"Ymax boundary condition for species " << species->name << " is 'none', which means the same as fields");
         //}
         else {
             //ERROR( "Ymax boundary condition undefined : " << species->boundary_conditions[1][1]  );
-            ERROR("Only Remove and reflective boundary conditions can be applied to particles in Rz geometry ");
+            ERROR("Only Remove and reflective boundary conditions can be applied to particles in AM geometry ");
 	}
     }
     
