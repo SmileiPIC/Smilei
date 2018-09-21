@@ -35,7 +35,7 @@ isYmax(patch->isYmax())
         for (unsigned int ispec=0; ispec<n_species; ispec++) {
             ostringstream species_mode_name("");
             species_mode_name << vecSpecies[ispec]->name << "_mode_" << imode;
-            Jl_s[imode*n_species+ispec]  = new cField2D(("Jx_" + species_mode_name.str()).c_str(), dimPrim);
+            Jl_s[imode*n_species+ispec]  = new cField2D(("Jl_" + species_mode_name.str()).c_str(), dimPrim);
             Jr_s[imode*n_species+ispec]  = new cField2D(("Jr_" + species_mode_name.str()).c_str(), dimPrim);
             Jt_s[imode*n_species+ispec]  = new cField2D(("Jt_" + species_mode_name.str()).c_str(), dimPrim);
             rho_AM_s[imode*n_species+ispec] = new cField2D(("Rho_"+ species_mode_name.str()).c_str(), dimPrim);
@@ -169,18 +169,18 @@ void ElectroMagnAM::initElectroMagnAMQuantities(Params &params, Patch* patch)
         ostringstream mode_id("");
         mode_id << "_mode_" << imode;
 
-        El_[imode]  = new cField2D(dimPrim, 0, false, ("Ex"+mode_id.str()).c_str() );
+        El_[imode]  = new cField2D(dimPrim, 0, false, ("El"+mode_id.str()).c_str() );
         Er_[imode]  = new cField2D(dimPrim, 1, false, ("Er"+mode_id.str()).c_str() );
         Et_[imode]  = new cField2D(dimPrim, 2, false, ("Et"+mode_id.str()).c_str() );
-        Bl_[imode]  = new cField2D(dimPrim, 0, true,  ("Bx"+mode_id.str()).c_str() );
+        Bl_[imode]  = new cField2D(dimPrim, 0, true,  ("Bl"+mode_id.str()).c_str() );
         Br_[imode]  = new cField2D(dimPrim, 1, true,  ("Br"+mode_id.str()).c_str() );
         Bt_[imode]  = new cField2D(dimPrim, 2, true,  ("Bt"+mode_id.str()).c_str() );
-        Bl_m[imode] = new cField2D(dimPrim, 0, true,  ("Bx_m"+mode_id.str()).c_str() );
+        Bl_m[imode] = new cField2D(dimPrim, 0, true,  ("Bl_m"+mode_id.str()).c_str() );
         Br_m[imode] = new cField2D(dimPrim, 1, true,  ("Br_m"+mode_id.str()).c_str() );
         Bt_m[imode] = new cField2D(dimPrim, 2, true,  ("Bt_m"+mode_id.str()).c_str() );
     
         // Total charge currents and densities
-        Jl_[imode]   = new cField2D(dimPrim, 0, false, ("Jx"+mode_id.str()).c_str() );
+        Jl_[imode]   = new cField2D(dimPrim, 0, false, ("Jl"+mode_id.str()).c_str() );
         Jr_[imode]   = new cField2D(dimPrim, 1, false, ("Jr"+mode_id.str()).c_str() );
         Jt_[imode]   = new cField2D(dimPrim, 2, false, ("Jt"+mode_id.str()).c_str() );
         rho_AM_[imode]  = new cField2D(dimPrim, ("Rho"+mode_id.str()).c_str() );
@@ -503,13 +503,13 @@ void ElectroMagnAM::saveMagneticFields(bool is_spectral)
 // Create a new field
 Field * ElectroMagnAM::createField(string fieldname)
 {
-    if     (fieldname.substr(0,2)=="Ex" ) return new cField2D(dimPrim, 0, false, fieldname);
+    if     (fieldname.substr(0,2)=="El" ) return new cField2D(dimPrim, 0, false, fieldname);
     else if(fieldname.substr(0,2)=="Er" ) return new cField2D(dimPrim, 1, false, fieldname);
     else if(fieldname.substr(0,2)=="Et" ) return new cField2D(dimPrim, 2, false, fieldname);
-    else if(fieldname.substr(0,2)=="Bx" ) return new cField2D(dimPrim, 0, true,  fieldname);
+    else if(fieldname.substr(0,2)=="Bl" ) return new cField2D(dimPrim, 0, true,  fieldname);
     else if(fieldname.substr(0,2)=="Br" ) return new cField2D(dimPrim, 1, true,  fieldname);
     else if(fieldname.substr(0,2)=="Bt" ) return new cField2D(dimPrim, 2, true,  fieldname);
-    else if(fieldname.substr(0,2)=="Jx" ) return new cField2D(dimPrim, 0, false, fieldname);
+    else if(fieldname.substr(0,2)=="Jl" ) return new cField2D(dimPrim, 0, false, fieldname);
     else if(fieldname.substr(0,2)=="Jr" ) return new cField2D(dimPrim, 1, false, fieldname);
     else if(fieldname.substr(0,2)=="Jt" ) return new cField2D(dimPrim, 2, false, fieldname);
     else if(fieldname.substr(0,3)=="Rho") return new cField2D(dimPrim, fieldname );
@@ -816,12 +816,12 @@ void ElectroMagnAM::initAntennas(Patch* patch)
     
     // Filling the space profiles of antennas
     for (unsigned int i=0; i<antennas.size(); i++) {
-        if      (antennas[i].fieldName == "Jx")
-            antennas[i].field = new cField2D(dimPrim, 0, false, "Jx");
-        else if (antennas[i].fieldName == "Jy")
-            antennas[i].field = new cField2D(dimPrim, 1, false, "Jy");
-        else if (antennas[i].fieldName == "Jz")
-            antennas[i].field = new cField2D(dimPrim, 2, false, "Jz");
+        if      (antennas[i].fieldName == "Jl")
+            antennas[i].field = new cField2D(dimPrim, 0, false, "Jl");
+        else if (antennas[i].fieldName == "Jr")
+            antennas[i].field = new cField2D(dimPrim, 1, false, "Jr");
+        else if (antennas[i].fieldName == "Jt")
+            antennas[i].field = new cField2D(dimPrim, 2, false, "Jt");
         else {
             ERROR("Antenna cannot be applied to field "<<antennas[i].fieldName);
         }

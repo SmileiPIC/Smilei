@@ -644,7 +644,7 @@ class SmileiSimulation(object):
 		try:
 			# get number of dimensions
 			error = "Error extracting 'dim' from the input file"
-			if namelist.Main.geometry == "3drz":
+			if namelist.Main.geometry == "AMcylindrical":
 				ndim = 2
 			else:
 				ndim = int(namelist.Main.geometry[0])
