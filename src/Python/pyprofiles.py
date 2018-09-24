@@ -588,7 +588,7 @@ def LaserGaussian3D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
     )
 
 def LaserEnvelopeGaussian3D( a0=1., omega=1., focus=None, waist=3., time_envelope=tconstant(),
-        envelope_solver = "explicit"):
+        envelope_solver = "explicit",Envelope_boundary_conditions = [["reflective"]]):
     import math
     import cmath
     c_vacuum = 1. #299792458
@@ -617,6 +617,7 @@ def LaserEnvelopeGaussian3D( a0=1., omega=1., focus=None, waist=3., time_envelop
         omega               = omega,
         envelope_profile    = space_time_envelope,
         envelope_solver     = "explicit",
+        Envelope_boundary_conditions = Envelope_boundary_conditions,
     )
 # Define the tools for the propagation of a laser profile
 try:

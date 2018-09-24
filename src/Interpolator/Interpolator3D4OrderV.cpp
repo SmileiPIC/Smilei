@@ -52,7 +52,6 @@ void Interpolator3D4OrderV::operator() (ElectroMagn* EMfields, Particles &partic
     int nparts( (smpi->dynamics_invgf[ithread]).size() );
 
     double *Epart[3], *Bpart[3];
-    double E,E2;
 
     double *deltaO[3];
     deltaO[0] = &(smpi->dynamics_deltaold[ithread][0]);
@@ -72,15 +71,6 @@ void Interpolator3D4OrderV::operator() (ElectroMagn* EMfields, Particles &partic
     idxO[1] = idx[1] - j_domain_begin  ;
     idx[2]  = round( particles.position(2,*istart) * D_inv[2] );
     idxO[2] = idx[2] - k_domain_begin  ;
-
-    double ***Egrid[3], ***Bgrid[3];
-
-    Egrid[0] = (static_cast<Field3D*>(EMfields->Ex_))->data_3D;
-    Egrid[1] = (static_cast<Field3D*>(EMfields->Ey_))->data_3D;
-    Egrid[2] = (static_cast<Field3D*>(EMfields->Ez_))->data_3D;
-    Bgrid[0] = (static_cast<Field3D*>(EMfields->Bx_m))->data_3D;
-    Bgrid[1] = (static_cast<Field3D*>(EMfields->By_m))->data_3D;
-    Bgrid[2] = (static_cast<Field3D*>(EMfields->Bz_m))->data_3D;
 
     Field3D* Ex3D = static_cast<Field3D*>(EMfields->Ex_);
     Field3D* Ey3D = static_cast<Field3D*>(EMfields->Ey_);
@@ -269,10 +259,8 @@ void Interpolator3D4OrderV::operator() (ElectroMagn* EMfields, Particles &partic
     Field3D* Jz3D = static_cast<Field3D*>(EMfields->Jz_);
     Field3D* rho3D = static_cast<Field3D*>(EMfields->rho_);
 
-    double coeff[3][2][3]; 
+    double coeff[3][2][5]; 
     int dual[3]; // Size ndim. Boolean indicating if the part has a dual indice equal to the primal one (dual=0) or if it is +1 (dual=1).
-
-    int vecSize = 32;
 
     double delta0, delta;
     double delta2, delta3, delta4;            

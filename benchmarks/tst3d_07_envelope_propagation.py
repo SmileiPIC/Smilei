@@ -27,9 +27,6 @@ Main(
     clrw = nx/npatch_x,
 
     EM_boundary_conditions = [ ["silver-muller"] ],
-    Envelope_boundary_conditions = [ ["reflective", "reflective"],
-        ["reflective", "reflective"],
-        ["reflective", "reflective"], ],
 
     solve_poisson = False,
     print_every = 100,
@@ -55,6 +52,9 @@ LaserEnvelopeGaussian3D(
     waist           = 30.,
     time_envelope   = tgaussian(center=center_laser, fwhm=laser_fwhm),
     envelope_solver = 'explicit',
+    Envelope_boundary_conditions = [ ["reflective", "reflective"],
+        ["reflective", "reflective"],
+        ["reflective", "reflective"], ],
 )
 
 Checkpoints(
@@ -63,7 +63,7 @@ Checkpoints(
     exit_after_dump = False,
 )
 
-list_fields = ['Ex','Ey','Rho','Jx','Env_A_abs']
+list_fields = ['Ex','Ey','Rho','Jx','Env_A_abs','Env_E_abs']
 
 DiagFields(
     every = 100,
@@ -77,31 +77,11 @@ DiagProbe(
             [Main.grid_length[0], Main.grid_length[1]/2., Main.grid_length[2]/2.]
         ],
         number = [nx],
-        fields = ['Ex','Ey','Rho','Jx','Env_A_abs','Env_Chi']
+        fields = ['Ex','Ey','Rho','Jx','Env_A_abs','Env_Chi','Env_E_abs']
 )
 
-#DiagProbe(
-#        every = 10,
-#        origin = [0., Main.grid_length[1]/4., Main.grid_length[2]/2.],
-#        corners = [
-#            [Main.grid_length[0], Main.grid_length[1]/4., Main.grid_length[2]/2.],
-#            [0., 3*Main.grid_length[1]/4., Main.grid_length[2]/2.],
-#        ],
-#        number = [nx, ntrans],
-#        fields = ['Ex','Ey','Rho','Jx']
-#)
+DiagScalar(every = 10, vars=['Env_A_absMax','Env_E_absMax'])
 
-#DiagScalar(every = 10, vars=['Uelm','Ukin_electron','ExMax','ExMaxCell','EyMax','EyMaxCell', 'RhoMin', 'RhoMinCell'])
-DiagScalar(every = 10, vars=['Env_A_absMax'])
 
-#DiagParticleBinning(
-#       deposited_quantity = "weight_charge",
-#       every = 50,
-#       species = ["electron"],
-#       axes = [
-#               ["moving_x", 0, Main.grid_length[0], nx],
-#               ["px", -1, 2., 100]
-#       ]
-#)
                                                                                                                                                                  
 

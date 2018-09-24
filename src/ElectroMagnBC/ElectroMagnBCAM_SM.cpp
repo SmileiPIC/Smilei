@@ -78,7 +78,7 @@ ElectroMagnBCAM_SM::ElectroMagnBCAM_SM( Params &params, Patch* patch, unsigned i
     #ifdef _TODO_AM
 	#endif
     // Xmin boundary
-    double theta  = 0.0*conv_deg2rad; //0.0;
+    //double theta  = 0.0*conv_deg2rad; //0.0;
     double factor = 1.0/(1.0 + dt_ov_dl);
     Alpha_SM_Xmin    = 2.0*factor;
     Beta_SM_Xmin     = - (1-dt_ov_dl)*factor;
@@ -86,7 +86,7 @@ ElectroMagnBCAM_SM::ElectroMagnBCAM_SM( Params &params, Patch* patch, unsigned i
     Delta_SM_Xmin    = - dt_ov_dr*factor;
     Epsilon_SM_Xmin  = Icpx*factor*dt ;
     // Xmax boundary
-    theta         = M_PI;
+    //theta         = M_PI;
     factor        = 1.0/(1.0 + dt_ov_dl);
     Alpha_SM_Xmax    = 2.0*factor;
     Beta_SM_Xmax     = - (1.0 -dt_ov_dl)*factor;
@@ -197,14 +197,14 @@ void ElectroMagnBCAM_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
     // Loop on imode 
     for (unsigned int imode=0 ; imode<Nmode ; imode++) {
 		// Static cast of the fields
-		//cField2D* ElAM = (static_cast<ElectroMagnAM*>(EMfields))->El_[imode];
-		cField2D* ErAM = (static_cast<ElectroMagnAM*>(EMfields))->Er_[imode];
-		cField2D* EtAM = (static_cast<ElectroMagnAM*>(EMfields))->Et_[imode];
-		cField2D* BlAM = (static_cast<ElectroMagnAM*>(EMfields))->Bl_[imode];
-		cField2D* BrAM = (static_cast<ElectroMagnAM*>(EMfields))->Br_[imode];
-		cField2D* BtAM = (static_cast<ElectroMagnAM*>(EMfields))->Bt_[imode];
+		//cField2D* El = (static_cast<ElectroMagnAM*>(EMfields))->El_[imode];
+		cField2D* Er = (static_cast<ElectroMagnAM*>(EMfields))->Er_[imode];
+		cField2D* Et = (static_cast<ElectroMagnAM*>(EMfields))->Et_[imode];
+		cField2D* Bl = (static_cast<ElectroMagnAM*>(EMfields))->Bl_[imode];
+		cField2D* Br = (static_cast<ElectroMagnAM*>(EMfields))->Br_[imode];
+		cField2D* Bt = (static_cast<ElectroMagnAM*>(EMfields))->Bt_[imode];
 		bool isYmin = (static_cast<ElectroMagnAM*>(EMfields))->isYmin;
-		bool isYmax = (static_cast<ElectroMagnAM*>(EMfields))->isYmax;
+		//bool isYmax = (static_cast<ElectroMagnAM*>(EMfields))->isYmax;
 		int     j_glob = (static_cast<ElectroMagnAM*>(EMfields))->j_glob_;	
  
 		if (min_max == 0 && patch->isXmin() ) {
@@ -232,15 +232,15 @@ void ElectroMagnBCAM_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 
 		        //x= Xmin
 			unsigned int i=0;
-		        (*BrAM)(i,j) = Alpha_SM_Xmin   * (*EtAM)(i,j)
-		        +              Beta_SM_Xmin    * (*BrAM)(i+1,j)
+		        (*Br)(i,j) = Alpha_SM_Xmin   * (*Et)(i,j)
+		        +              Beta_SM_Xmin    * (*Br)(i+1,j)
 		        +              Gamma_SM_Xmin   * byW;
-		        +              Delta_SM_Xmin   *( (*BlAM)(i,j+1)- (*BlAM)(i,j));
-		//        if (std::abs((*BrAM)(i,j))>1.){
+		        +              Delta_SM_Xmin   *( (*Bl)(i,j+1)- (*Bl)(i,j));
+		//        if (std::abs((*Br)(i,j))>1.){
                 //            MESSAGE("BrAMSM");                
                 //            MESSAGE(i);
                 //            MESSAGE(j);    
-                //            MESSAGE((*BrAM)(i,j));
+                //            MESSAGE((*Br)(i,j));
                 //        }
 		    }//j  ---end compute Br
 		    
@@ -264,15 +264,15 @@ void ElectroMagnBCAM_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 			}
 		        //x=Xmin
 			unsigned int i=0;
-		        (*BtAM)(i,j) = -Alpha_SM_Xmin * (*ErAM)(i,j)
-		        +               Beta_SM_Xmin  *( (*BtAM)(i+1,j))
+		        (*Bt)(i,j) = -Alpha_SM_Xmin * (*Er)(i,j)
+		        +               Beta_SM_Xmin  *( (*Bt)(i+1,j))
 		        +               Gamma_SM_Xmin * bzW
-				+               Epsilon_SM_Xmin *(double)imode/((j_glob+j+0.5)*dr)*(*BlAM)(i,j) ;
-                //if (std::abs((*BtAM)(i,j))>1.){
-                //MESSAGE("BtAMSM");                
+				+               Epsilon_SM_Xmin *(double)imode/((j_glob+j+0.5)*dr)*(*Bl)(i,j) ;
+                //if (std::abs((*Bt)(i,j))>1.){
+                //MESSAGE("BtSM");                
                 //MESSAGE(i);
                 //MESSAGE(j);    
-                //MESSAGE((*BtAM)(i,j));
+                //MESSAGE((*Bt)(i,j));
                 //}
 				
 				//MESSAGE("EPS")
@@ -302,15 +302,15 @@ void ElectroMagnBCAM_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		            }
 			}
 			unsigned int i= nl_d-1;
-		        (*BrAM)(i,j) = - Alpha_SM_Xmax   * (*EtAM)(i-1,j)
-		         +                   Beta_SM_Xmax    * (*BrAM)(i-1,j)
+		        (*Br)(i,j) = - Alpha_SM_Xmax   * (*Et)(i-1,j)
+		         +                   Beta_SM_Xmax    * (*Br)(i-1,j)
 		         +                   Gamma_SM_Xmax   * byE
-		         +                   Delta_SM_Xmax   * ((*BlAM)(i-1,j+1)- (*BlAM)(i-1,j)); // Check x-index
-                //if (std::abs((*BrAM)(i,j))>1.){
-                //MESSAGE("BrAMSMM");                
+		         +                   Delta_SM_Xmax   * ((*Bl)(i-1,j+1)- (*Bl)(i-1,j)); // Check x-index
+                //if (std::abs((*Br)(i,j))>1.){
+                //MESSAGE("BrSMM");                
                 //MESSAGE(i);
                 //MESSAGE(j);    
-                //MESSAGE((*BrAM)(i,j));
+                //MESSAGE((*Br)(i,j));
                 //}				    
 		        
 		    }//j  ---end compute Br
@@ -335,15 +335,15 @@ void ElectroMagnBCAM_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 				}
 			}
 		        unsigned int i= nl_d-1;
-		        (*BtAM)(i,j) = Alpha_SM_Xmax * (*ErAM)(i-1,j)
-		         +                    Beta_SM_Xmax  * (*BtAM)(i-1,j)
+		        (*Bt)(i,j) = Alpha_SM_Xmax * (*Er)(i-1,j)
+		         +                    Beta_SM_Xmax  * (*Bt)(i-1,j)
 		         +                    Gamma_SM_Xmax * bzE
-				 +					  Epsilon_SM_Xmax * (double)imode /((j_glob+j+0.5)*dr)* (*BlAM)(i-1,j)	;
-                //if (std::abs((*BtAM)(i,j))>1.){
-                //MESSAGE("BtAMSMM");                
+				 +					  Epsilon_SM_Xmax * (double)imode /((j_glob+j+0.5)*dr)* (*Bl)(i-1,j)	;
+                //if (std::abs((*Bt)(i,j))>1.){
+                //MESSAGE("BtSMM");                
                 //MESSAGE(i);
                 //MESSAGE(j);    
-                //MESSAGE((*BtAM)(i,j));
+                //MESSAGE((*Bt)(i,j));
                 //}
 		        
 		    }//j  ---end compute Bt

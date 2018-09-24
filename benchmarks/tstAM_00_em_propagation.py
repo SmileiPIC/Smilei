@@ -13,7 +13,7 @@ dt = 0.18
 
 Main(
     geometry = "AMcylindrical",
-    nmodes = 2,
+    number_of_AM = 2,
     interpolation_order = 2 ,
     solve_poisson = False,
     cell_length = [dx, dr],

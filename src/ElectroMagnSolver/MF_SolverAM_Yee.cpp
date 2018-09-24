@@ -25,23 +25,23 @@ void MF_SolverAM_Yee::operator() ( ElectroMagn* fields )
 
         // Static-cast of the fields
 
-        cField2D* ElAM = (static_cast<ElectroMagnAM*>(fields))->El_[imode];
-        cField2D* ErAM = (static_cast<ElectroMagnAM*>(fields))->Er_[imode];
-        cField2D* EtAM = (static_cast<ElectroMagnAM*>(fields))->Et_[imode];
-        cField2D* BlAM = (static_cast<ElectroMagnAM*>(fields))->Bl_[imode];
-        cField2D* BrAM = (static_cast<ElectroMagnAM*>(fields))->Br_[imode];
-        cField2D* BtAM = (static_cast<ElectroMagnAM*>(fields))->Bt_[imode];
+        cField2D* El = (static_cast<ElectroMagnAM*>(fields))->El_[imode];
+        cField2D* Er = (static_cast<ElectroMagnAM*>(fields))->Er_[imode];
+        cField2D* Et = (static_cast<ElectroMagnAM*>(fields))->Et_[imode];
+        cField2D* Bl = (static_cast<ElectroMagnAM*>(fields))->Bl_[imode];
+        cField2D* Br = (static_cast<ElectroMagnAM*>(fields))->Br_[imode];
+        cField2D* Bt = (static_cast<ElectroMagnAM*>(fields))->Bt_[imode];
         int  j_glob = (static_cast<ElectroMagnAM*>(fields))->j_glob_;
         bool isYmin = (static_cast<ElectroMagnAM*>(fields))->isYmin;
-        bool isXmin = (static_cast<ElectroMagnAM*>(fields))->isXmin;
-        bool isYmax = (static_cast<ElectroMagnAM*>(fields))->isYmax;
-        bool isXmax = (static_cast<ElectroMagnAM*>(fields))->isXmax;
+        //bool isXmin = (static_cast<ElectroMagnAM*>(fields))->isXmin;
+        //bool isYmax = (static_cast<ElectroMagnAM*>(fields))->isYmax;
+        //bool isXmax = (static_cast<ElectroMagnAM*>(fields))->isXmax;
 
-        // Magnetic field Bx^(p,d)
+        // Magnetic field Bl^(p,d)
         for (unsigned int i=0 ; i<nl_p;  i++) {
             #pragma omp simd
             for (unsigned int j=1+isYmin*2 ; j<nr_d-1 ; j++) {
-                (*BlAM)(i,j) += - dt/((j_glob+j-0.5)*dr) * ( (double)(j+j_glob)*(*EtAM)(i,j) - (double)(j+j_glob-1.)*(*EtAM)(i,j-1) + Icpx*(double)imode*(*ErAM)(i,j));
+                (*Bl)(i,j) += - dt/((j_glob+j-0.5)*dr) * ( (double)(j+j_glob)*(*Et)(i,j) - (double)(j+j_glob-1.)*(*Et)(i,j-1) + Icpx*(double)imode*(*Er)(i,j));
             }
         }
             
@@ -49,16 +49,16 @@ void MF_SolverAM_Yee::operator() ( ElectroMagn* fields )
         for (unsigned int i=1 ; i<nl_d-1 ; i++) {
             #pragma omp simd
             for (unsigned int j=isYmin*3 ; j<nr_p ; j++) {  //Specific condition on axis
-                (*BrAM)(i,j) += dt_ov_dl * ( (*EtAM)(i,j) - (*EtAM)(i-1,j) )
-                 +Icpx*dt*(double)imode/((double)(j_glob+j)*dr)*(*ElAM)(i,j) ;
+                (*Br)(i,j) += dt_ov_dl * ( (*Et)(i,j) - (*Et)(i-1,j) )
+                 +Icpx*dt*(double)imode/((double)(j_glob+j)*dr)*(*El)(i,j) ;
             }
         }
             // Magnetic field Bt^(d,d)
         for (unsigned int i=1 ; i<nl_d-1 ; i++) {
             #pragma omp simd
             for (unsigned int j=1 + isYmin*2 ; j<nr_d-1 ; j++) {
-                (*BtAM)(i,j) += dt_ov_dr * ( (*ElAM)(i,j) - (*ElAM)(i,j-1) )
-                -dt_ov_dl * ( (*ErAM)(i,j) - (*ErAM)(i-1,j) );
+                (*Bt)(i,j) += dt_ov_dr * ( (*El)(i,j) - (*El)(i,j-1) )
+                -dt_ov_dl * ( (*Er)(i,j) - (*Er)(i-1,j) );
             }
         }
 
@@ -67,39 +67,39 @@ void MF_SolverAM_Yee::operator() ( ElectroMagn* fields )
             unsigned int j=2;
             if (imode==0){
             	for (unsigned int i=1 ; i<nl_d-1 ; i++) {
-            		(*BrAM)(i,j)=0;
+            		(*Br)(i,j)=0;
             	}
             	for (unsigned int i=1 ; i<nl_d-1 ; i++) {
-            		(*BtAM)(i,j)= -(*BtAM)(i,j+1);
+            		(*Bt)(i,j)= -(*Bt)(i,j+1);
             	}
             	for (unsigned int i=0 ; i<nl_p ; i++) {
-            		(*BlAM)(i,j)= (*BlAM)(i,j+1);
+            		(*Bl)(i,j)= (*Bl)(i,j+1);
             	}
             }
             
             else if (imode==1){
             	for (unsigned int i=0 ; i<nl_p  ; i++) {
-            		(*BlAM)(i,j)= -(*BlAM)(i,j+1);
+            		(*Bl)(i,j)= -(*Bl)(i,j+1);
             	}
             
             	for (unsigned int i=1 ; i<nl_d-1 ; i++) {
-            		(*BrAM)(i,j)+=  Icpx*dt_ov_dr*(*ElAM)(i,j+1)
-            		+			dt_ov_dl*((*EtAM)(i,j)-(*EtAM)(i-1,j));
+            		(*Br)(i,j)+=  Icpx*dt_ov_dr*(*El)(i,j+1)
+            		+			dt_ov_dl*((*Et)(i,j)-(*Et)(i-1,j));
             	}
             	for (unsigned int i=1; i<nl_d-1 ; i++) {
-            		(*BtAM)(i,j)= -2.*Icpx*(*BrAM)(i,j)-(*BtAM)(i,j+1);
+            		(*Bt)(i,j)= -2.*Icpx*(*Br)(i,j)-(*Bt)(i,j+1);
             	}	
             
             }
             else {  // modes > 1
             	for (unsigned int  i=0 ; i<nl_p; i++) {
-            		(*BlAM)(i,j)= -(*BlAM)(i,j+1);
+            		(*Bl)(i,j)= -(*Bl)(i,j+1);
             	}
             	for (unsigned int i=1 ; i<nl_d-1; i++) {
-            		(*BrAM)(i,j)= 0;
+            		(*Br)(i,j)= 0;
             	}
             	for (unsigned int  i=1 ; i<nl_d-1 ; i++) {
-            		(*BtAM)(i,j)= - (*BtAM)(i,j+1);
+            		(*Bt)(i,j)= - (*Bt)(i,j+1);
             	}	
             }
         }

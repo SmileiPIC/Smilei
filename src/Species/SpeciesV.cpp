@@ -163,7 +163,7 @@ int ithread;
         for (unsigned int i=0; i<species_loc_bmax.size(); i++)
             species_loc_bmax[i] = 0;
 
-        for ( int ipack = 0 ; ipack < npack_ ; ipack++ ) {
+        for ( unsigned int ipack = 0 ; ipack < npack_ ; ipack++ ) {
 
             int nparts_in_pack = bmax[ (ipack+1) * packsize_-1 ];
             smpi->dynamics_resize(ithread, nDim_particle, nparts_in_pack );
@@ -311,7 +311,7 @@ int ithread;
                             }
                             else {
                                 //Compute cell_keys of remaining particles
-                                for ( int i = 0 ; i<nDim_particle; i++ ){
+                                for ( unsigned int i = 0 ; i<nDim_particle; i++ ){
                                     (*particles).cell_keys[iPart] *= this->length[i];
                                     (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]) * dx_inv_[i] );
                                 }
@@ -342,7 +342,7 @@ int ithread;
                         }
                         else {
                             //Compute cell_keys of remaining particles
-                            for ( int i = 0 ; i<nDim_particle; i++ ){
+                            for ( unsigned int i = 0 ; i<nDim_particle; i++ ){
                                 (*particles).cell_keys[iPart] *= length[i];
                                 (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]) * dx_inv_[i] );
                             }
@@ -484,10 +484,10 @@ void SpeciesV::sort_part(Params &params)
     if (MPIbuff.partRecv[0][0].size() == 0) MPIbuff.partRecv[0][0].initialize(0, *particles); //Is this correct ?
 
     // Resize the particle vector
-    if (bmax.back() > npart){
+    if ( (unsigned int)bmax.back() > npart){
         (*particles).resize(bmax.back(), nDim_particle);
         (*particles).cell_keys.resize(bmax.back(),-1); // Merge this in particles.resize(..) ?
-        for (unsigned int ipart = npart; ipart < bmax.back(); ipart ++) addPartInExchList(ipart);
+        for (unsigned int ipart = npart; ipart < (unsigned int)bmax.back(); ipart ++) addPartInExchList(ipart);
     }
 
     //Copy all particles from MPI buffers back to the writable particles via cycle sort pass.
@@ -518,7 +518,7 @@ void SpeciesV::sort_part(Params &params)
     }
 
     //Copy valid particles siting over bmax.back() back into the real particles array (happens when more particles are lost than received)
-    for (unsigned int ip=bmax.back(); ip < npart; ip++){
+    for (unsigned int ip=(unsigned int)bmax.back(); ip < npart; ip++){
         cell_target = (*particles).cell_keys[ip];
         if(cell_target == -1) continue;
         cycle.resize(0);
@@ -536,15 +536,15 @@ void SpeciesV::sort_part(Params &params)
     }
 
     // Resize the particle vector
-    if (bmax.back() < npart){
+    if ((unsigned int)bmax.back() < npart){
         (*particles).resize(bmax.back(), nDim_particle);
         (*particles).cell_keys.resize(bmax.back()); // Merge this in particles.resize(..) ?
     }
 
 
     //Loop over all cells
-    for (unsigned int icell = 0 ; icell < ncell; icell++){
-        for (unsigned int ip=bmin[icell]; ip < bmax[icell] ; ip++){
+    for (int icell = 0 ; icell < (int)ncell; icell++){
+        for (unsigned int ip=(unsigned int)bmin[icell]; ip < (unsigned int)bmax[icell] ; ip++){
             //update value of current cell 'icell' if necessary
             //if particle changes cell, build a cycle of exchange as long as possible. Treats all particles
             if ((*particles).cell_keys[ip] != icell ){
@@ -578,10 +578,9 @@ void SpeciesV::compute_part_cell_keys(Params &params)
 {
     //Compute part_cell_keys at patch creation. This operation is normally done in the pusher to avoid additional particles pass.
 
-    unsigned int ip, npart, ixy;
+    unsigned int ip, npart;
     int IX;
     double X;
-    unsigned int length[3];
 
     npart = (*particles).size(); //Number of particles
 
@@ -626,7 +625,6 @@ void SpeciesV::importParticles( Params& params, Patch* patch, Particles& source_
 {
 
     unsigned int npart = source_particles.size(), ibin, ii, nbin=bmin.size();
-    double inv_cell_length = 1./ params.cell_length[0];
 
     // If this species is tracked, set the particle IDs
     if( particles->tracked )
@@ -703,8 +701,6 @@ void SpeciesV::ponderomotive_update_susceptibility_and_momentum(double time_dual
     double timer;
 #endif
 
-    unsigned int iPart;
-
     if (npack_==0) {
         npack_    = 1;
         packsize_ = (f_dim1-2*oversize[1]);
@@ -724,7 +720,7 @@ void SpeciesV::ponderomotive_update_susceptibility_and_momentum(double time_dual
     // -------------------------------
     if (time_dual>time_frozen) { // advance particle momentum
 
-        for ( int ipack = 0 ; ipack < npack_ ; ipack++ ) {
+        for ( unsigned int ipack = 0 ; ipack < npack_ ; ipack++ ) {
 
             // ipack start @ bmin [ ipack * packsize_ ]
             // ipack end   @ bmax [ ipack * packsize_ + packsize_ - 1 ]
@@ -794,8 +790,6 @@ void SpeciesV::ponderomotive_project_susceptibility(double time_dual, unsigned i
     double timer;
 #endif
 
-    unsigned int iPart;
-
     if (npack_==0) {
         npack_    = 1;
         packsize_ = (f_dim1-2*oversize[1]);
@@ -815,7 +809,7 @@ void SpeciesV::ponderomotive_project_susceptibility(double time_dual, unsigned i
     // -------------------------------
     if (time_dual>time_frozen) { // advance particle momentum
 
-        for ( int ipack = 0 ; ipack < npack_ ; ipack++ ) {
+        for ( unsigned int ipack = 0 ; ipack < npack_ ; ipack++ ) {
 
             // ipack start @ bmin [ ipack * packsize_ ]
             // ipack end   @ bmax [ ipack * packsize_ + packsize_ - 1 ]
@@ -897,7 +891,7 @@ void SpeciesV::ponderomotive_update_position_and_currents(double time_dual, unsi
         for (unsigned int i=0; i<species_loc_bmax.size(); i++)
             species_loc_bmax[i] = 0;
 
-        for ( int ipack = 0 ; ipack < npack_ ; ipack++ ) {
+        for ( unsigned int ipack = 0 ; ipack < npack_ ; ipack++ ) {
 
             //int nparts_in_pack = bmax[ (ipack+1) * packsize_-1 ] - bmin [ ipack * packsize_ ];
             int nparts_in_pack = bmax[ (ipack+1) * packsize_-1 ];
@@ -952,7 +946,7 @@ void SpeciesV::ponderomotive_update_position_and_currents(double time_dual, unsi
                             }
                             else {
                                 //First reduction of the count sort algorithm. Lost particles are not included.
-                                for ( int i = 0 ; i<nDim_particle; i++ ){
+                                for ( int i = 0 ; i<(int)nDim_particle; i++ ){
                                     (*particles).cell_keys[iPart] *= length[i];
                                     (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]) * dx_inv_[i] );
                                 }

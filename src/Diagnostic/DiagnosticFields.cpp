@@ -79,7 +79,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
                     } else {
                         cField2D * field = static_cast<cField2D*>(vecPatches(ipatch)->EMfields->allFields[i]);
                         if( field->cdata_ != NULL ) continue;
-                        if     ( field_name.substr(0,2)=="Jx" ) field->allocateDims(0,false);
+                        if     ( field_name.substr(0,2)=="Jl" ) field->allocateDims(0,false);
                         else if( field_name.substr(0,2)=="Jr" ) field->allocateDims(1,false);
                         else if( field_name.substr(0,2)=="Jt" ) field->allocateDims(2,false);
                         else if( field_name.substr(0,2)=="Rh" ) field->allocateDims();

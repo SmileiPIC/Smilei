@@ -46,15 +46,6 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
     idx[2]  = round( particles.position(2,*istart) * D_inv[2] );
     idxO[2] = (int)idx[2] - k_domain_begin ;
 
-    double ***Egrid[3], ***Bgrid[3];
-
-    Egrid[0] = (static_cast<Field3D*>(EMfields->Ex_))->data_3D;
-    Egrid[1] = (static_cast<Field3D*>(EMfields->Ey_))->data_3D;
-    Egrid[2] = (static_cast<Field3D*>(EMfields->Ez_))->data_3D;
-    Bgrid[0] = (static_cast<Field3D*>(EMfields->Bx_m))->data_3D;
-    Bgrid[1] = (static_cast<Field3D*>(EMfields->By_m))->data_3D;
-    Bgrid[2] = (static_cast<Field3D*>(EMfields->Bz_m))->data_3D;
-
     Field3D* Ex3D = static_cast<Field3D*>(EMfields->Ex_);
     Field3D* Ey3D = static_cast<Field3D*>(EMfields->Ey_);
     Field3D* Ez3D = static_cast<Field3D*>(EMfields->Ez_);
@@ -255,8 +246,6 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
     double coeff[3][2][3]; 
     int dual[3]; // Size ndim. Boolean indicating if the part has a dual indice equal to the primal one (dual=0, delta_primal < 0) or if it is +1 (dual=1, delta_primal>=0).
 
-    int vecSize = 32;
-
     double delta2, delta;
 
     for (int i=0;i<3;i++) { // for X/Y
@@ -424,7 +413,6 @@ void Interpolator3D2OrderV::interpolate_em_fields_and_envelope(ElectroMagn* EMfi
     int nparts( (smpi->dynamics_invgf[ithread]).size() );
 
     double *Epart[3], *Bpart[3],*Phipart[1], *GradPhipart[3];
-    double E,E2;
 
     double *deltaO[3];
     deltaO[0] = &(smpi->dynamics_deltaold[ithread][0]);
@@ -750,11 +738,11 @@ void Interpolator3D2OrderV::interpolate_envelope_and_old_envelope(ElectroMagn* E
         for (int ipart=0 ; ipart<np_computed; ipart++ ){
 
             double* coeffyp = &(coeff[1][0][1][ipart]);
-            double* coeffyd = &(coeff[1][1][1][ipart]);
-            double* coeffxd = &(coeff[0][1][1][ipart]);
+            //double* coeffyd = &(coeff[1][1][1][ipart]);
+            //double* coeffxd = &(coeff[0][1][1][ipart]);
             double* coeffxp = &(coeff[0][0][1][ipart]);
             double* coeffzp = &(coeff[2][0][1][ipart]);
-            double* coeffzd = &(coeff[2][1][1][ipart]);
+            //double* coeffzd = &(coeff[2][1][1][ipart]);
 
             // Interpolation of Phi^(p,p,p)
             double interp_res = 0.;
@@ -875,10 +863,6 @@ void Interpolator3D2OrderV::interpolate_envelope_and_susceptibility(ElectroMagn*
     double coeff[3][2][3]; 
     int dual[3]; // Size ndim. Boolean indicating if the part has a dual indice equal to the primal one (dual=0) or if it is +1 (dual=1).
 
-    int vecSize = 32;
-
-    int np_computed(1);
-
     double delta0, delta;
     double delta2;
             
@@ -900,11 +884,11 @@ void Interpolator3D2OrderV::interpolate_envelope_and_susceptibility(ElectroMagn*
 
 
     double* coeffyp = &(coeff[1][0][1]);
-    double* coeffyd = &(coeff[1][1][1]);
-    double* coeffxd = &(coeff[0][1][1]);
+    //double* coeffyd = &(coeff[1][1][1]);
+    //double* coeffxd = &(coeff[0][1][1]);
     double* coeffxp = &(coeff[0][0][1]);
     double* coeffzp = &(coeff[2][0][1]);
-    double* coeffzd = &(coeff[2][1][1]);
+    //double* coeffzd = &(coeff[2][1][1]);
 
     // Interpolation of Env_A_abs^(p,p,p) (absolute value of envelope A)
     double interp_res = 0.;

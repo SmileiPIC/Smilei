@@ -254,8 +254,8 @@ namelist("")
     for (unsigned int i=0;i<nDim_field;i++){
         res_space[i] = 1.0/cell_length[i];
     }
-    // Number of modes in LRT geometry
-    PyTools::extract("nmodes", nmodes, "Main");
+    // Number of modes in AMcylindrical geometry
+    PyTools::extract("number_of_AM", nmodes, "Main");
 
     // simulation duration & length
     PyTools::extract("simulation_time", simulation_time, "Main");
@@ -289,7 +289,7 @@ namelist("")
     if ( n_envlaser >=1 ){
         Laser_Envelope_model = true;
         //! Boundary conditions for Envelope Field
-        if( !PyTools::extract("Envelope_boundary_conditions", Env_BCs, "Main")  )
+        if( !PyTools::extract("Envelope_boundary_conditions", Env_BCs, "LaserEnvelope")  )
             ERROR("Envelope_boundary_conditions not defined" );
 
         if( Env_BCs.size() == 0 ) {

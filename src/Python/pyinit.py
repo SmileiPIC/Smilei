@@ -180,7 +180,7 @@ class Main(SmileiSingleton):
     clrw = -1
     every_clean_particles_overhead = 100
     timestep = None
-    nmodes = 2
+    number_of_AM = 2
     timestep_over_CFL = None
 
     # PXR tuning
@@ -204,7 +204,6 @@ class Main(SmileiSingleton):
     EM_boundary_conditions = [["periodic"]]
     EM_boundary_conditions_k = []
     save_magnectic_fields_for_SM = True
-    Envelope_boundary_conditions = [["reflective"]]
     time_fields_frozen = 0.
     Laser_Envelope_model = False
 
@@ -388,6 +387,7 @@ class LaserEnvelope(SmileiSingleton):
     #space_envelope = [1., 0.]
     envelope_solver = "explicit"
     envelope_profile = 0.
+    Envelope_boundary_conditions = [["reflective"]]
 
 
 class Collisions(SmileiComponent):
