@@ -666,6 +666,7 @@ void ElectroMagn1D::computePoynting() {
 
 void ElectroMagn1D::applyExternalField(Field* my_field,  Profile *profile, Patch* patch) {
     Field1D* field1D=static_cast<Field1D*>(my_field);
+    if(patch->hindex==0) MESSAGE(my_field->name);
     
     vector<double> pos(1);
     pos[0] = dx * ((double)(patch->getCellStartingGlobalIndex(0))+(field1D->isDual(0)?-0.5:0.));

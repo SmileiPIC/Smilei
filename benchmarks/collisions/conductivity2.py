@@ -13,34 +13,36 @@ Main(
 
     interpolation_order = 2,
 
-    timestep = 0.001 * L0,
-    simulation_time = 0.3 * L0,
+    timestep = 0.0004 * L0,
+    simulation_time = 0.4 * L0,
 
 
     time_fields_frozen = 100000000000.,
 
-    cell_length = [0.1*L0],
-    grid_length = [40*L0],
+    cell_length = [0.002*L0],
+    grid_length = [10*L0],
 
     EM_boundary_conditions = [ ["periodic"] ],
 
 
     random_seed = 0,
 
-	reference_angular_frequency_SI = L0 * 3e8 /1.e-6,
+    reference_angular_frequency_SI = L0 * 3e8 /1.e-6,
     print_every = 10,
+
+    solve_poisson = False
 )
 
 
 # EXTERNAL FIELDS
 ExternalField(
 	field = "Ex",
-	profile = 0.001
+	profile = 0.01
 )
 
 
-ion_nppc = 100
-eon_nppc = 100
+ion_nppc = 10
+eon_nppc = 10
 
 charge_density = [415., 554., 757]
 charge = [5.6, 7.4, 10.]
@@ -82,7 +84,8 @@ for i in range(3):
 	Collisions(
 		species1 = ["copper"+str(i+1)],
 		species2 = ["electron"+str(i+1)],
-		coulomb_log = 2.
+		coulomb_log = 2,
+		debug_every = 10
 	)
 
 	DiagParticleBinning(
@@ -106,7 +109,7 @@ for i in range(3):
 
 
 DiagFields(
-	every = 5
+	every = 50
 )
 
 

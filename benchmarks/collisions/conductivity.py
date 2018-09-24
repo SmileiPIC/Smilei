@@ -9,13 +9,13 @@ import matplotlib.pyplot as plt
 from scipy.special import erf as erf
 plt.ion()
 
-v0  = { "conductivity1":[-0.00033 ,-0.000185,-0.00011 ],
-        "conductivity2":[-0.000088,-0.000108,-0.000135],
-        "conductivity3":[-0.00023  ,-0.0007            ]}
+v0  = { "conductivity1":[-0.00033 ,-0.000195,-0.00012 ],
+        "conductivity2":[-0.00088,-0.00108,-0.00145],
+        "conductivity3":[-0.0023  ,-0.005            ]}
 
-dv0 = { "conductivity1":[0.000018,0.       , 0        ],
-        "conductivity2":[-0.00001,-0.000015,-0.00002  ],
-        "conductivity3":[-0.00003,-0.00001           ]}
+dv0 = { "conductivity1":[0.000017,0.0000000, 0        ],
+        "conductivity2":[-0.0001,-0.00015,-0.0002  ],
+        "conductivity3":[-0.0005,-0.0016           ]}
 
 style = { "conductivity1": 'b', "conductivity2":'g', "conductivity3":'r' }
 
@@ -79,10 +79,11 @@ for path in ["conductivity1","conductivity2","conductivity3"]:
 velocity    = np.double(velocity)
 temperature = np.double(temperature)
 density     = np.double(density)
+Ex          = np.array([0.001, 0.001, 0.001, 0.01, 0.01, 0.01, 0.01, 0.01])
 
 # Simulation results
 coeff = 1.66782e4 # e0*(2*pi*c/(1um)) in S/m
-conductivity = (-density*velocity/0.001) * coeff
+conductivity = (-density*velocity/Ex) * coeff
 
 # Lee-More theory
 t = np.logspace(-3,0,1000)

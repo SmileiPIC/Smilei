@@ -13,8 +13,8 @@ Main(
 
     interpolation_order = 2,
 
-    timestep = 0.002 * L0,
-    simulation_time = 0.4 * L0,
+    timestep = 0.005 * L0,
+    simulation_time = 0.5 * L0,
 
 
     time_fields_frozen = 100000000000.,
@@ -26,8 +26,10 @@ Main(
 
     random_seed = 0,
 
-	reference_angular_frequency_SI = L0 * 3e8 /1.e-6,
+    reference_angular_frequency_SI = L0 * 3e8 /1.e-6,
     print_every = 10,
+
+    solve_poisson = False
 )
 
 
@@ -37,7 +39,7 @@ ExternalField(
 	profile = 0.001
 )
 
-ion_nppc = 100
+ion_nppc = 20
 eon_nppc = 100
 
 charge_density = [330., 333., 368]
@@ -79,7 +81,8 @@ for i in range(3):
 	Collisions(
 		species1 = ["copper"+str(i+1)],
 		species2 = ["electron"+str(i+1)],
-		coulomb_log = 2.
+		coulomb_log = 2.,
+		debug_every = 10
 	)
 
 

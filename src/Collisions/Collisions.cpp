@@ -17,7 +17,7 @@ using namespace std;
 
 // Constructor
 Collisions::Collisions(
-    Patch* patch,
+    Params& params,
     unsigned int n_collisions,
     vector<unsigned int> species_group1, 
     vector<unsigned int> species_group2, 
@@ -28,7 +28,6 @@ Collisions::Collisions(
     bool ionizing,
     bool tracked_electrons,
     int nDim,
-    double reference_angular_frequency_SI,
     string filename
 ) :
 n_collisions    (n_collisions    ),
@@ -42,11 +41,14 @@ filename(filename)
 {
     // Create the ionization object
     if( ionizing ) {
-        Ionization = new CollisionalIonization(Z, nDim, reference_angular_frequency_SI, tracked_electrons);
+        Ionization = new CollisionalIonization(Z, nDim, params.reference_angular_frequency_SI, tracked_electrons);
     } else {
         Ionization = new CollisionalNoIonization();
     }
-    
+    twoPi = 2. * M_PI;
+    coeff1 = 4.046650232e-21*params.reference_angular_frequency_SI; // h*omega/(2*me*c^2)
+    coeff2 = 2.817940327e-15*params.reference_angular_frequency_SI/299792458.; // re omega / c
+    n_patch_per_cell = 1./((double)params.n_cell_per_patch);
 }
 
 
@@ -62,6 +64,10 @@ Collisions::Collisions( Collisions* coll, int nDim )
     debug_every      = coll->debug_every     ;
     atomic_number    = coll->atomic_number   ;
     filename         = coll->filename        ;
+    twoPi            = coll->twoPi           ;
+    coeff1           = coll->coeff1          ;
+    coeff2           = coll->coeff2          ;
+    n_patch_per_cell = coll->n_patch_per_cell;
     
     if( atomic_number>0 ) {
         Ionization = new CollisionalIonization(coll->Ionization);
@@ -78,7 +84,6 @@ Collisions::~Collisions()
 
 // Declare other static variables here
 bool   Collisions::debye_length_required;
-
 
 
 // Calculates the debye length squared in each patch
@@ -160,11 +165,11 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
     Particles *p1, *p2;
     double m1, m2, m12, W1, W2, qqm, qqm2, gamma1, gamma2, gamma12, gamma12_inv,
            COM_vx, COM_vy, COM_vz, COM_vsquare, COM_gamma,
-           term1, term2, term3, term4, term5, term6, coeff1, coeff2, coeff3, coeff4, twoPi,
+           term1, term2, term3, term4, term5, term6,  coeff3, coeff4,
            vcv1, vcv2, px_COM, py_COM, pz_COM, p2_COM, p_COM, gamma1_COM, gamma2_COM,
            logL, bmin, s, vrel, smax,
            cosX, sinX, phi, sinXcosPhi, sinXsinPhi, p_perp, inv_p_perp, 
-           newpx_COM, newpy_COM, newpz_COM, U, vcp, n_patch_per_cell, ncol;
+           newpx_COM, newpy_COM, newpz_COM, U, vcp, ncol;
     bool not_duplicated_particle;
     
     sg1 = &species_group1;
@@ -179,12 +184,6 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
         logLmean    = 0.;
         //temperature = 0.;
     }
-    
-    // Initialize some stuff
-    twoPi = 2. * M_PI;
-    coeff1 = 4.046650232e-21*params.reference_angular_frequency_SI; // h*omega/(2*me*c^2)
-    coeff2 = 2.817940327e-15*params.reference_angular_frequency_SI/299792458.; // re omega / c
-    n_patch_per_cell = 1./((double)params.n_cell_per_patch);
     
     // Loop bins of particles (typically, cells, but may also be clusters)
     unsigned int nbin = patch->vecSpecies[0]->bmin.size();

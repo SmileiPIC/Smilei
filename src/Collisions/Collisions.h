@@ -17,19 +17,14 @@ class Collisions
 
 public:
     //! Constructor for Collisions between two species
-    Collisions( Patch* patch, unsigned int n_collisions, std::vector<unsigned int>,
+    Collisions( Params& params, unsigned int n_collisions, std::vector<unsigned int>,
         std::vector<unsigned int>, double coulomb_log, bool intra_collisions,
         int debug_every, int Z, bool ionizing, bool tracked_electrons, int nDim,
-        double,std::string);
+        std::string);
     //! Cloning Constructor
     Collisions(Collisions*, int);
     //! destructor
-    ~Collisions();
-    
-    //! Method that creates a vector of Collisions objects: one for each group in the input file.
-    static std::vector<Collisions*> create(Params&, Patch*, std::vector<Species*>&);
-    //! Method that clones a vector of Collisions objects
-    static std::vector<Collisions*> clone(std::vector<Collisions*>, Params&);
+    virtual ~Collisions();
     
     //! Method to calculate the Debye length in each cluster
     static void calculate_debye_length(Params&, Patch*);
@@ -38,7 +33,7 @@ public:
     static bool debye_length_required;
     
     //! Method called in the main smilei loop to apply collisions at each timestep
-    void collide(Params&, Patch* ,int, std::vector<Diagnostic*>&);
+    virtual void collide(Params&, Patch* ,int, std::vector<Diagnostic*>&);
     
     //! Outputs the debug info if requested
     static void debug(Params& params, int itime, unsigned int icoll, VectorPatch& vecPatches);
@@ -73,7 +68,7 @@ public:
     //! CollisionalIonization object, created if ionization required
     CollisionalIonization * Ionization;
     
-private:
+protected:
     
     //! Identification number of the Collisions object
     int n_collisions;
@@ -98,6 +93,8 @@ private:
     
     //! Temporary variables for the debugging file
     double smean, logLmean, ncol;//, temperature
+    
+    double twoPi, coeff1, coeff2, n_patch_per_cell;
 };
 
 
