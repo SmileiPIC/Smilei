@@ -17,10 +17,12 @@
 using namespace std;
 
 LaserEnvelope::LaserEnvelope( Params& params, Patch* patch, ElectroMagn* EMfields ) :
-cell_length    ( params.cell_length) ,timestep( params.timestep)
+    profile_   ( NULL               ),
+    cell_length( params.cell_length ),
+    timestep   ( params.timestep    )
 {
     
-    PyObject * profile;
+    PyObject * profile = NULL;
     if (!PyTools::extract_pyProfile("envelope_profile",profile,"LaserEnvelope"))
         MESSAGE("No envelope profile set !");
     profile_ = new Profile(profile, params.nDim_field+1, "envelope");
@@ -33,7 +35,7 @@ cell_length    ( params.cell_length) ,timestep( params.timestep)
     
     // Read laser envelope parameters
     std:: string envelope_solver  = "explicit"; // default value
-    bool envelope_solver_read          = PyTools::extract("envelope_solver",envelope_solver,"LaserEnvelope");
+    PyTools::extract("envelope_solver",envelope_solver,"LaserEnvelope");
     
     // double omega_value(0);
     // PyTools::extract("omega",omega_value,"LaserEnvelope");

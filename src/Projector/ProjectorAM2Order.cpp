@@ -293,7 +293,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         }
     }
 
-    for (unsigned int i=0; i<imode; i++){
+    for (unsigned int i=0; i<(unsigned int)imode; i++){
         e_delta *= e_delta_m1;
         e_bar *= e_bar_m1;   
     }
@@ -355,7 +355,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     int iloc, jloc, linindex;
 
     C_m = 1.;
-    for (unsigned int i=0; i<imode; i++){
+    for (unsigned int i=0; i<(unsigned int)imode; i++){
     C_m *= e_theta;
     }
     C_m = 1./C_m; 
@@ -658,7 +658,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         }
     }
 
-    for (unsigned int i=0; i<imode; i++){
+    for (unsigned int i=0; i<(unsigned int)imode; i++){
         e_delta *= e_delta_m1;
         e_bar *= e_bar_m1;   
     }
@@ -718,7 +718,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     int iloc, jloc, linindex;
 
     C_m = 1.;
-    for (unsigned int i=0; i<imode; i++){
+    for (unsigned int i=0; i<(unsigned int)imode; i++){
     C_m *= e_theta;
     }
     C_m= 1./C_m; 
@@ -819,7 +819,7 @@ void ProjectorAM2Order::operator() (complex<double>* rhoj, Particles &particles,
 
     complex<double> e_theta = ( particles.position(1,ipart) + Icpx*particles.position(2,ipart))/r;
     complex<double> C_m = 1.;
-    for (unsigned int i=0; i<imode; i++)
+    for (unsigned int i=0; i<(unsigned int)imode; i++)
         C_m *= e_theta;
 
     double xpn, ypn;
@@ -937,11 +937,11 @@ void ProjectorAM2Order::operator() (Field* Jl, Field* Jr, Field* Jt, Particles &
     jd  -= j_domain_begin;
     
     for (unsigned int i=0 ; i<3 ; i++) {
-        int iploc=ip+i-1;
+        //int iploc=ip+i-1;
         int idloc=id+i-1;
         for (unsigned int j=0 ; j<3 ; j++) {
             int jploc=jp+j-1;
-            int jdloc=jd+j-1;
+            //int jdloc=jd+j-1;
             if (jploc+ j_domain_begin ==0){
             // Jx^(d,p)
             (*Jl3D)(idloc,jploc) += Jx_ion*8. /dr * Sxd[i]*Syp[j];

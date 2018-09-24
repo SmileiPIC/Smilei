@@ -73,18 +73,18 @@ void ElectroMagnBCAM_Axis::apply(ElectroMagn* EMfields, double time_dual, Patch*
 
     // Static cast of the fields
     cField2D* ElAM = (static_cast<ElectroMagnAM*>(EMfields))->El_[imode];
-    cField2D* ErAM = (static_cast<ElectroMagnAM*>(EMfields))->Er_[imode];
+    //cField2D* ErAM = (static_cast<ElectroMagnAM*>(EMfields))->Er_[imode];
     cField2D* EtAM = (static_cast<ElectroMagnAM*>(EMfields))->Et_[imode];
     cField2D* BlAM = (static_cast<ElectroMagnAM*>(EMfields))->Bl_[imode];
     cField2D* BrAM = (static_cast<ElectroMagnAM*>(EMfields))->Br_[imode];
     cField2D* BtAM = (static_cast<ElectroMagnAM*>(EMfields))->Bt_[imode];
-	cField2D* BlAM_old = (static_cast<ElectroMagnAM*>(EMfields))->Bl_m[imode];
-    cField2D* BtAM_old = (static_cast<ElectroMagnAM*>(EMfields))->Bt_m[imode]; 
-	cField2D* JlAM = (static_cast<ElectroMagnAM*>(EMfields))->Jl_[imode];
-    cField2D* JrAM = (static_cast<ElectroMagnAM*>(EMfields))->Jr_[imode];
-    cField2D* JtAM = (static_cast<ElectroMagnAM*>(EMfields))->Jt_[imode];
-	bool isXmin = (static_cast<ElectroMagnAM*>(EMfields))->isXmin;
-	bool isXmax = (static_cast<ElectroMagnAM*>(EMfields))->isXmax;
+    //cField2D* BlAM_old = (static_cast<ElectroMagnAM*>(EMfields))->Bl_m[imode];
+    //cField2D* BtAM_old = (static_cast<ElectroMagnAM*>(EMfields))->Bt_m[imode]; 
+    //cField2D* JlAM = (static_cast<ElectroMagnAM*>(EMfields))->Jl_[imode];
+    //cField2D* JrAM = (static_cast<ElectroMagnAM*>(EMfields))->Jr_[imode];
+    //cField2D* JtAM = (static_cast<ElectroMagnAM*>(EMfields))->Jt_[imode];
+    bool isXmin = (static_cast<ElectroMagnAM*>(EMfields))->isXmin;
+    //bool isXmax = (static_cast<ElectroMagnAM*>(EMfields))->isXmax;
 
 	if (min_max == 2 && patch->isYmin()){
 		unsigned int j=2;

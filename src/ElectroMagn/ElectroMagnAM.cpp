@@ -967,17 +967,14 @@ void ElectroMagnAM::on_axis_J(bool diag_flag)
 
     if (isYmin){
 
-         cField2D* JlAM ;
          cField2D* JrAM ;
          cField2D* JtAM ;
 
          for ( unsigned int imode=1 ; imode<nmodes ; imode++ ) {
 
              //static cast of the total currents and densities
-             JlAM    = static_cast<cField2D*>(Jl_[imode]);
              JrAM    = static_cast<cField2D*>(Jr_[imode]);
              JtAM    = static_cast<cField2D*>(Jt_[imode]);
-             //JlAM    = Jl_[imode];
              //JrAM    = Jr_[imode];
              //JtAM    = Jt_[imode];
              

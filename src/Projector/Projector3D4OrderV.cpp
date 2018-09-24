@@ -84,7 +84,7 @@ void Projector3D4OrderV::operator() (double* Jx, double* Jy, double* Jz, double 
     int kpom2 = kpo-3;
 
     int vecSize = 8;
-    int bsize = 7*7*7*vecSize;
+    unsigned int bsize = 7*7*7*vecSize;
 
     double bJx[bsize] __attribute__((aligned(64)));
 
@@ -830,7 +830,7 @@ void Projector3D4OrderV::operator() (double* rhoj, Particles &particles, unsigne
     // -------------------------------------
 
     int iloc,jloc;
-    int ny(nprimy), nz(nprimz), nyz;
+    int ny(nprimy), nz(nprimz);//, nyz;
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
 
@@ -851,7 +851,7 @@ void Projector3D4OrderV::operator() (double* rhoj, Particles &particles, unsigne
             nz ++;
         }
     }
-    nyz = ny*nz;
+    //nyz = ny*nz;
 
     // variable declaration
     double xpn, ypn, zpn;
@@ -952,7 +952,7 @@ void Projector3D4OrderV::operator() (double* Jx, double* Jy, double* Jz, Particl
     int kpom2 = kpo-3;
 
     int vecSize = 8;
-    int bsize = 7*7*7*vecSize;
+    unsigned int bsize = 7*7*7*vecSize;
 
     double bJx[bsize] __attribute__((aligned(64)));
 

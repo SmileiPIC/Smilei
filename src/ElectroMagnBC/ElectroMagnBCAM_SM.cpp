@@ -78,7 +78,7 @@ ElectroMagnBCAM_SM::ElectroMagnBCAM_SM( Params &params, Patch* patch, unsigned i
     #ifdef _TODO_AM
 	#endif
     // Xmin boundary
-    double theta  = 0.0*conv_deg2rad; //0.0;
+    //double theta  = 0.0*conv_deg2rad; //0.0;
     double factor = 1.0/(1.0 + dt_ov_dl);
     Alpha_SM_Xmin    = 2.0*factor;
     Beta_SM_Xmin     = - (1-dt_ov_dl)*factor;
@@ -86,7 +86,7 @@ ElectroMagnBCAM_SM::ElectroMagnBCAM_SM( Params &params, Patch* patch, unsigned i
     Delta_SM_Xmin    = - dt_ov_dr*factor;
     Epsilon_SM_Xmin  = Icpx*factor*dt ;
     // Xmax boundary
-    theta         = M_PI;
+    //theta         = M_PI;
     factor        = 1.0/(1.0 + dt_ov_dl);
     Alpha_SM_Xmax    = 2.0*factor;
     Beta_SM_Xmax     = - (1.0 -dt_ov_dl)*factor;
@@ -204,7 +204,7 @@ void ElectroMagnBCAM_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		cField2D* BrAM = (static_cast<ElectroMagnAM*>(EMfields))->Br_[imode];
 		cField2D* BtAM = (static_cast<ElectroMagnAM*>(EMfields))->Bt_[imode];
 		bool isYmin = (static_cast<ElectroMagnAM*>(EMfields))->isYmin;
-		bool isYmax = (static_cast<ElectroMagnAM*>(EMfields))->isYmax;
+		//bool isYmax = (static_cast<ElectroMagnAM*>(EMfields))->isYmax;
 		int     j_glob = (static_cast<ElectroMagnAM*>(EMfields))->j_glob_;	
  
 		if (min_max == 0 && patch->isXmin() ) {
