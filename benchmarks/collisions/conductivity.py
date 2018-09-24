@@ -1,6 +1,9 @@
 
 import happi
-execfile("resparis.py")
+try:
+	execfile("resparis.py")
+except:
+	exec(open("resparis.py").read(), globals(), locals())
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.special import erf as erf
@@ -22,17 +25,19 @@ density = []
 
 for path in ["conductivity1","conductivity2","conductivity3"]:
 
-	sim = happi.Open(path)
+	S = happi.Open(path)
 
 	ncases = 0
-	while sim.namelist.DiagParticleBinning[ncases].deposited_quantity == "weight_charge_vx":
-		ncases += 1
+	for d in S.namelist.DiagParticleBinning:
+		if d.deposited_quantity == "weight_charge_vx":
+			ncases += 1
 	if ncases == 0: continue
-
-	coulomb_log          = np.double(sim.namelist.Collisions[0].coulomb_log)
-	dt                   = np.double(sim.namelist.Main.timestep)/(2*np.pi)
 	
-	times = np.double(sim.ParticleBinning(diagNumber=0).getAvailableTimesteps())
+	print("simulation "+path+" has %d cases"%ncases)
+	coulomb_log          = np.double(S.namelist.Collisions[0].coulomb_log)
+	dt                   = np.double(S.namelist.Main.timestep)/(2*np.pi)
+	
+	times = np.double(S.ParticleBinning(0).getAvailableTimesteps())
 	
 	vx_mean = np.zeros((ncases,len(times)))
 	
@@ -41,12 +46,12 @@ for path in ["conductivity1","conductivity2","conductivity3"]:
 	if fig: fig.clf()
 	if fig: ax = fig.add_subplot(1,1,1)
 	for k in range(ncases):
-		evx_density = -np.array(sim.ParticleBinning(k).getData())
-		edensity = np.array(sim.ParticleBinning(k+ncases).getData())
+		evx_density = -np.array(S.ParticleBinning(k*2).getData())
+		edensity = np.array(S.ParticleBinning(k*2+1).getData())
 		vx_mean[k,:] = evx_density/edensity
 	
 	
-	times *= 3.33*dt # fs
+	times = times * 3.33*dt # fs
 	
 	fig = plt.figure(2)
 	#fig.clf()
@@ -60,8 +65,8 @@ for path in ["conductivity1","conductivity2","conductivity3"]:
 		ax.plot(times, v0[path][k]+times*dv0[path][k], "--"+style[path])
 		
 		velocity.append(v0[path][k])
-		temperature.append( np.double(sim.namelist.Species["electron"+str(k+1)].temperature))
-		density    .append( np.double(sim.namelist.Species["electron"+str(k+1)].charge_density(20*(2*np.pi))))
+		temperature.append( np.double(S.namelist.Species["electron"+str(k+1)].temperature))
+		density    .append( np.double(S.namelist.Species["electron"+str(k+1)].charge_density(20*(2*np.pi))))
 	
 	ax.set_xlabel('time in fs')
 	ax.set_ylabel('$v_x / c$')

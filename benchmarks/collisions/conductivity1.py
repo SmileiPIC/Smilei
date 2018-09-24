@@ -19,7 +19,7 @@ Main(
 
     time_fields_frozen = 100000000000.,
 
-    cell_length = [1*L0],
+    cell_length = [0.01*L0],
     grid_length = [40*L0],
 
     EM_boundary_conditions = [ ["periodic"] ],
@@ -37,119 +37,71 @@ ExternalField(
 	profile = 0.001
 )
 
-nppc = 1000
+ion_nppc = 100
+eon_nppc = 100
 
-Species(
-	name = "copper1",
-	position_initialization = "regular",
-	momentum_initialization = "maxwell-juettner",
-	particles_per_cell = nppc,
-	mass = 115845.,      # =  mass of Cu atom
-	charge = 4.4,
-	charge_density = constant(330.),
-	mean_velocity = [0., 0., 0.],
-	temperature = [0.000002], # 1eV
-	time_frozen = 0.0,
-	boundary_conditions = [
-		["periodic", "periodic"],
-	],
-)
-Species(
-	name = "electron1",
-	position_initialization = "regular",
-	momentum_initialization = "maxwell-juettner",
-	particles_per_cell= nppc * 10,
-	mass = 1.0,
-	charge = -1.0,
-	charge_density = constant(330.),
-	mean_velocity = [0., 0., 0.],
-	temperature = [0.000002], # 1 eV
-	time_frozen = 0.0,
-	boundary_conditions = [
-		["periodic", "periodic"],
-	],
-)
+charge_density = [330., 333., 368]
+charge = [4.4, 4.4, 5.]
+temperature = [2e-6, 6e-6, 2e-5] # 1eV, 3eV, 10eV
 
-Species(
-	name = "copper2",
-	position_initialization = "regular",
-	momentum_initialization = "maxwell-juettner",
-	particles_per_cell = nppc,
-	mass = 115845.,      # =  mass of Cu atom
-	charge = 4.4,
-	charge_density = constant(333.),
-	mean_velocity = [0., 0., 0.],
-	temperature = [0.000006], # 3eV
-	time_frozen = 0.0,
-	boundary_conditions = [
-		["periodic", "periodic"],
-	],
-)
-Species(
-	name = "electron2",
-	position_initialization = "regular",
-	momentum_initialization = "maxwell-juettner",
-	particles_per_cell= nppc * 10,
-	mass = 1.0,
-	charge = -1.0,
-	charge_density = constant(333.),
-	mean_velocity = [0., 0., 0.],
-	temperature = [0.000006], # 3 eV
-	time_frozen = 0.0,
-	boundary_conditions = [
-		["periodic", "periodic"],
-	],
-)
+for i in range(3):
+	Species(
+		name = "copper"+str(i+1),
+		position_initialization = "regular",
+		momentum_initialization = "maxwell-juettner",
+		particles_per_cell = ion_nppc,
+		mass = 115845.,      # =  mass of Cu atom
+		charge = charge[i],
+		charge_density = constant(charge_density[i]),
+		mean_velocity = [0., 0., 0.],
+		temperature = [temperature[i]],
+		time_frozen = 0.0,
+		boundary_conditions = [
+			["periodic", "periodic"],
+		],
+	)
+	Species(
+		name = "electron"+str(i+1),
+		position_initialization = "regular",
+		momentum_initialization = "maxwell-juettner",
+		particles_per_cell= eon_nppc,
+		mass = 1.0,
+		charge = -1.0,
+		charge_density = constant(charge_density[i]),
+		mean_velocity = [0., 0., 0.],
+		temperature = [temperature[i]],
+		time_frozen = 0.0,
+		boundary_conditions = [
+			["periodic", "periodic"],
+		],
+	)
 
-Species(
-	name = "copper3",
-	position_initialization = "regular",
-	momentum_initialization = "maxwell-juettner",
-	particles_per_cell = nppc,
-	mass = 115845,      # =  mass of Cu atom
-	charge = 5.,
-	charge_density = constant(368.),
-	mean_velocity = [0., 0., 0.],
-	temperature = [0.00002], # 10eV
-	time_frozen = 0.0,
-	boundary_conditions = [
-		["periodic", "periodic"],
-	],
-)
-Species(
-	name = "electron3",
-	position_initialization = "regular",
-	momentum_initialization = "maxwell-juettner",
-	particles_per_cell= nppc * 10,
-	mass = 1.0,
-	charge = -1.0,
-	charge_density = constant(368.),
-	mean_velocity = [0., 0., 0.],
-	temperature = [0.00002], # 10 eV
-	time_frozen = 0.0,
-	boundary_conditions = [
-		["periodic", "periodic"],
-	],
-)
+	Collisions(
+		species1 = ["copper"+str(i+1)],
+		species2 = ["electron"+str(i+1)],
+		coulomb_log = 2.
+	)
 
 
-Collisions(
-	species1 = ["copper1"],
-	species2 = ["electron1"],
-	coulomb_log = 2.
-)
-Collisions(
-	species1 = ["copper2"],
-	species2 = ["electron2"],
-	coulomb_log = 2.
-)
-Collisions(
-	species1 = ["copper3"],
-	species2 = ["electron3"],
-	coulomb_log = 2.
-)
+	DiagParticleBinning(
+		deposited_quantity = "weight_charge_vx",
+		every = 5,
+		time_average = 1,
+		species = ["electron"+str(i+1)],
+		axes = [
+			 ["x",  0, Main.grid_length[0], 1]
+		]
+	)
 
-
+	DiagParticleBinning(
+		deposited_quantity = "weight",
+		every = 5,
+		time_average = 1,
+		species = ["electron"+str(i+1)],
+		axes = [
+			 ["x",  0, Main.grid_length[0], 1]
+		]
+	)
 
 
 DiagFields(
@@ -161,60 +113,3 @@ DiagScalar(
 	every = 1
 )
 
-
-
-DiagParticleBinning(
-	deposited_quantity = "weight_charge_vx",
-	every = 5,
-	time_average = 1,
-	species = ["electron1"],
-	axes = [
-		 ["x",  0, Main.grid_length[0], 1]
-	]
-)
-DiagParticleBinning(
-	deposited_quantity = "weight_charge_vx",
-	every = 5,
-	time_average = 1,
-	species = ["electron2"],
-	axes = [
-		 ["x",  0, Main.grid_length[0], 1]
-	]
-)
-DiagParticleBinning(
-	deposited_quantity = "weight_charge_vx",
-	every = 5,
-	time_average = 1,
-	species = ["electron3"],
-	axes = [
-		 ["x",  0, Main.grid_length[0], 1]
-	]
-)
-
-DiagParticleBinning(
-	deposited_quantity = "weight",
-	every = 5,
-	time_average = 1,
-	species = ["electron1"],
-	axes = [
-		 ["x",  0, Main.grid_length[0], 1]
-	]
-)
-DiagParticleBinning(
-	deposited_quantity = "weight",
-	every = 5,
-	time_average = 1,
-	species = ["electron2"],
-	axes = [
-		 ["x",  0, Main.grid_length[0], 1]
-	]
-)
-DiagParticleBinning(
-	deposited_quantity = "weight",
-	every = 5,
-	time_average = 1,
-	species = ["electron3"],
-	axes = [
-		 ["x",  0, Main.grid_length[0], 1]
-	]
-)

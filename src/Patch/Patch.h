@@ -261,7 +261,7 @@ public:
     int MPI_me_;
 
     //! The debye length, computed for collisions
-    double debye_length_squared;
+    std::vector<double> debye_length_squared;
 
     //! The patch geometrical center
     std::vector<double> center;

@@ -43,9 +43,33 @@ public:
     //! Outputs the debug info if requested
     static void debug(Params& params, int itime, unsigned int icoll, VectorPatch& vecPatches);
     
-    //! Deflection angle calculation
-    static double cos_chi(double);
-    
+    // Technique given by Nanbu in http://dx.doi.org/10.1103/PhysRevE.55.4642
+    //   to pick randomly the deflection angle cosine, in the center-of-mass frame.
+    // It involves the "s" parameter (~ collision frequency * deflection expectation)
+    //   and a random number "U".
+    // Technique slightly modified in http://dx.doi.org/10.1063/1.4742167
+    inline double cos_chi(double s)
+    {
+        double A, invA;
+        //!\todo make a faster rand by preallocating ??
+        double U = Rand::uniform();
+        
+        if( s < 0.1 ) {
+            if ( U<0.0001 ) U=0.0001; // ensures cos_chi > 0
+            return 1. + s*log(U);
+        }
+        if( s < 3.  ) {
+            // the polynomial has been modified from the article in order to have a better form
+            invA = 0.00569578 +(0.95602 + (-0.508139 + (0.479139 + ( -0.12789 + 0.0238957*s )*s )*s )*s )*s;
+            A = 1./invA;
+            return  invA  * log( exp(-A) + 2.*U*sinh(A) );
+        }
+        if( s < 6.  ) {
+            A = 3.*exp(-s);
+            return (1./A) * log( exp(-A) + 2.*U*sinh(A) );
+        }
+        return 2.*U - 1.;
+    }
     //! CollisionalIonization object, created if ionization required
     CollisionalIonization * Ionization;
     
