@@ -296,7 +296,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     //}
 
     double dtheta = std::remainder(theta-theta_old, 2*M_PI)/2.; // Otherwise dtheta is overestimated when going from -pi to +pi
-    double theta_bar = std::remainder(theta_old+dtheta, 2*M_PI);
+    double theta_bar = theta_old+dtheta;
     e_delta_m1 = std::polar(1.0,dtheta);
     e_bar_m1 = std::polar(1.0,theta_bar);
 
@@ -668,7 +668,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     //}
 
     double dtheta = std::remainder(theta-theta_old, 2*M_PI)/2.; // Otherwise dtheta is overestimated when going from -pi to +pi
-    double theta_bar = std::remainder(theta_old+dtheta, 2*M_PI);
+    double theta_bar = theta_old+dtheta ;
     e_delta_m1 = std::polar(1.0,dtheta);
     e_bar_m1 = std::polar(1.0,theta_bar);
 
