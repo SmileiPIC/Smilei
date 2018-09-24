@@ -193,14 +193,14 @@ void ElectroMagnBCAM_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
     for (unsigned int imode=0 ; imode<Nmode ; imode++) {
 
 	// Static cast of the fields
-	cField2D* ErAM = (static_cast<ElectroMagnAM*>(EMfields))->Er_[imode];
-	cField2D* EtAM = (static_cast<ElectroMagnAM*>(EMfields))->Et_[imode];
-	cField2D* BlAM = (static_cast<ElectroMagnAM*>(EMfields))->Bl_[imode];
-	cField2D* BrAM = (static_cast<ElectroMagnAM*>(EMfields))->Br_[imode];
-	cField2D* BtAM = (static_cast<ElectroMagnAM*>(EMfields))->Bt_[imode];
-	cField2D* BtAM_old = (static_cast<ElectroMagnAM*>(EMfields))->Bt_m[imode]; 
-	cField2D* BlAM_old = (static_cast<ElectroMagnAM*>(EMfields))->Bl_m[imode];
-	cField2D* BrAM_old = (static_cast<ElectroMagnAM*>(EMfields))->Br_m[imode];
+	cField2D* Er = (static_cast<ElectroMagnAM*>(EMfields))->Er_[imode];
+	cField2D* Et = (static_cast<ElectroMagnAM*>(EMfields))->Et_[imode];
+	cField2D* Bl = (static_cast<ElectroMagnAM*>(EMfields))->Bl_[imode];
+	cField2D* Br = (static_cast<ElectroMagnAM*>(EMfields))->Br_[imode];
+	cField2D* Bt = (static_cast<ElectroMagnAM*>(EMfields))->Bt_[imode];
+	cField2D* Bt_old = (static_cast<ElectroMagnAM*>(EMfields))->Bt_m[imode]; 
+	cField2D* Bl_old = (static_cast<ElectroMagnAM*>(EMfields))->Bl_m[imode];
+	cField2D* Br_old = (static_cast<ElectroMagnAM*>(EMfields))->Br_m[imode];
         
 	if (min_max == 3 && patch->isYmax() ) {
 	    
@@ -212,32 +212,32 @@ void ElectroMagnBCAM_BM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
          //std::cout<<"come here "<<nr_p <<" nr*dr "<<nr_p*dr<<" \n " ;
 	    // for Bl^(p,d)
 	    for (unsigned int i=0 ; i<nl_p-1; i++) {
-	         (*BlAM)(i,j+1) =                         (*BlAM_old)(i,j) 
-                                  -      Alpha_Bl_Rmax * ((*BlAM)(i,j) - (*BlAM_old)(i,j+1))
-	                          +      Gamma_Bl_Rmax * ((*BrAM)(i+1,j) + (*BrAM_old)(i+1,j) - (*BrAM)(i,j) - (*BrAM_old)(i,j))
-	                          -      Beta_Bl_Rmax * Icpx * (double)imode * ((*ErAM)(i,j+1) + (*ErAM)(i,j))
-	                          - 2. * Beta_Bl_Rmax * (*EtAM)(i,j);
-                //if (std::abs((*BlAM)(i,j+1))>1.){
-                    //MESSAGE("BlAMBM");
+	         (*Bl)(i,j+1) =                         (*Bl_old)(i,j) 
+                                  -      Alpha_Bl_Rmax * ((*Bl)(i,j) - (*Bl_old)(i,j+1))
+	                          +      Gamma_Bl_Rmax * ((*Br)(i+1,j) + (*Br_old)(i+1,j) - (*Br)(i,j) - (*Br_old)(i,j))
+	                          -      Beta_Bl_Rmax * Icpx * (double)imode * ((*Er)(i,j+1) + (*Er)(i,j))
+	                          - 2. * Beta_Bl_Rmax * (*Et)(i,j);
+                //if (std::abs((*Bl)(i,j+1))>1.){
+                    //MESSAGE("BlBM");
                     //MESSAGE(i);
                     //MESSAGE(j+1);
-                    //MESSAGE((*BlAM)(i,j+1));
+                    //MESSAGE((*Bl)(i,j+1));
                 //}
 	    }//i  ---end Bl
 	    
 	    // for Bt^(d,d)
             j = nr_d-2;
 	    for (unsigned int i=1 ; i<nl_p ; i++) { //Undefined in i=0 and i=nl_p
-	        (*BtAM)(i,j+1) =     Alpha_Bt_Rmax * (*BtAM)(i,j) 
-                                   + Beta_Bt_Rmax  * (*BtAM_old)(i,j+1)
-			           + Gamma_Bt_Rmax * (*BtAM_old)(i,j)
-	                           - Icpx * (double)imode * CB_BM * Epsilon_Bt_Rmax  * ((*BrAM)(i,j) - (*BrAM_old)(i,j) )
-	                           - CE_BM * Delta_Bt_Rmax * ((*ErAM)(i,j+1)+(*ErAM)(i,j)-(*ErAM)(i-1,j+1) -(*ErAM)(i-1,j) ) ;
-                //if (std::abs((*BtAM)(i,j+1))>1.){
-                //    MESSAGE("BtAMMF");
+	        (*Bt)(i,j+1) =     Alpha_Bt_Rmax * (*Bt)(i,j) 
+                                   + Beta_Bt_Rmax  * (*Bt_old)(i,j+1)
+			           + Gamma_Bt_Rmax * (*Bt_old)(i,j)
+	                           - Icpx * (double)imode * CB_BM * Epsilon_Bt_Rmax  * ((*Br)(i,j) - (*Br_old)(i,j) )
+	                           - CE_BM * Delta_Bt_Rmax * ((*Er)(i,j+1)+(*Er)(i,j)-(*Er)(i-1,j+1) -(*Er)(i-1,j) ) ;
+                //if (std::abs((*Bt)(i,j+1))>1.){
+                //    MESSAGE("BtMF");
                 //    MESSAGE(i);
                 //    MESSAGE(j+1);
-                //    MESSAGE((*BtAM)(i,j+1));
+                //    MESSAGE((*Bt)(i,j+1));
                 //}
 	    }//i  ---end Bt
         }

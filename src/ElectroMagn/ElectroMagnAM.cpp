@@ -316,8 +316,8 @@ void ElectroMagnAM::restartRhoJs()
     
     for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
         Jl_[imode] ->put_to(0.);
-        Jr_ [imode]->put_to(0.);
-        Jt_ [imode]->put_to(0.);
+        Jr_[imode]->put_to(0.);
+        Jt_[imode]->put_to(0.);
         rho_AM_[imode]->put_to(0.);
     }
 }
@@ -340,7 +340,7 @@ void ElectroMagnAM::restartRhoJs()
 void ElectroMagnAM::initPoisson(Patch *patch)
 {
     #ifdef _TODO_AM
-    cField2D* rho2D = static_cast<cField2D*>(rho_);
+    cField2D* rho = rho_AM_[0];
 
     // Min and max indices for calculation of the scalar product (for primal & dual grid)
     //     scalar products are computed accounting only on real nodes
@@ -371,7 +371,7 @@ void ElectroMagnAM::initPoisson(Patch *patch)
     for (unsigned int i=0; i<nl_p; i++) {
         for (unsigned int j=0; j<nr_p; j++) {
             (*phi_)(i,j)   = 0.0;
-            (*r_)(i,j)     = -(*rho2D)(i,j);
+            (*r_)(i,j)     = -(*rho)(i,j);
             (*p_)(i,j)     = (*r_)(i,j);
         }//j
     }//i
@@ -441,24 +441,24 @@ void ElectroMagnAM::initE(Patch *patch)
 
 void ElectroMagnAM::centeringE( std::vector<double> E_Add )
 {
-    cField2D* Ex2D  = static_cast<cField2D*>(Ex_);
-    cField2D* Ey2D  = static_cast<cField2D*>(Ey_);
-    cField2D* Ez2D  = static_cast<cField2D*>(Ez_);
+    cField2D* El  = El_[0];
+    cField2D* Er  = Er_[0];
+    cField2D* Et  = Et_[0];
 
     // Centering electrostatic fields
     for (unsigned int i=0; i<nl_d; i++) {
         for (unsigned int j=0; j<nr_p; j++) {
-            (*Ex2D)(i,j) += E_Add[0];
+            (*El)(i,j) += E_Add[0];
         }
     }
     for (unsigned int i=0; i<nl_p; i++) {
         for (unsigned int j=0; j<nr_d; j++) {
-            (*Ey2D)(i,j) += E_Add[1];
+            (*Er)(i,j) += E_Add[1];
         }
     }
     for (unsigned int i=0; i<nl_p; i++) {
         for (unsigned int j=0; j<nr_p; j++) {
-            (*Ez2D)(i,j) += E_Add[2];
+            (*Et)(i,j) += E_Add[2];
         }
     }
     #ifdef _TODO_AM
@@ -480,21 +480,21 @@ void ElectroMagnAM::saveMagneticFields(bool is_spectral)
         ERROR("Not implemented");
     for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
         // Static cast of the fields
-        cField2D* BlAM    = static_cast<cField2D*>(Bl_[imode]);
-        cField2D* BrAM    = static_cast<cField2D*>(Br_[imode]);
-        cField2D* BtAM    = static_cast<cField2D*>(Bt_[imode]);
-        cField2D* Bl3D_AM_m = static_cast<cField2D*>(Bl_m[imode]);
-        cField2D* Br3D_AM_m = static_cast<cField2D*>(Br_m[imode]);
-        cField2D* Bt3D_AM_m = static_cast<cField2D*>(Bt_m[imode]);
+        cField2D* Bl   = Bl_[imode];
+        cField2D* Br   = Br_[imode];
+        cField2D* Bt   = Bt_[imode];
+        cField2D* Bl_old = Bl_m[imode];
+        cField2D* Br_old = Br_m[imode];
+        cField2D* Bt_old = Bt_m[imode];
     
-        // Magnetic field Bx^(p,d)
-        memcpy(&((*Bl3D_AM_m)(0,0)), &((*BlAM)(0,0)),nl_p*nr_d*sizeof(complex<double>) );
+        // Magnetic field Bl^(p,d)
+        memcpy(&((*Bl_old)(0,0)), &((*Bl)(0,0)),nl_p*nr_d*sizeof(complex<double>) );
     
         // Magnetic field Br^(d,p)
-        memcpy(&((*Br3D_AM_m)(0,0)), &((*BrAM)(0,0)),nl_d*nr_p*sizeof(complex<double>) );
+        memcpy(&((*Br_old)(0,0)), &((*Br)(0,0)),nl_d*nr_p*sizeof(complex<double>) );
     
         // Magnetic field Bt^(d,d)
-        memcpy(&((*Bt3D_AM_m)(0,0)), &((*BtAM)(0,0)),nl_d*nr_d*sizeof(complex<double>) );
+        memcpy(&((*Bt_old)(0,0)), &((*Bt)(0,0)),nl_d*nr_d*sizeof(complex<double>) );
     }
 
 }//END saveMagneticFields
@@ -527,31 +527,31 @@ void ElectroMagnAM::centerMagneticFields()
     for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
 
         // Static cast of the fields
-        cField2D* BlAM    = static_cast<cField2D*>(Bl_[imode]);
-        cField2D* BrAM    = static_cast<cField2D*>(Br_[imode]);
-        cField2D* BtAM    = static_cast<cField2D*>(Bt_[imode]);
-        cField2D* Bl3D_AM_m = static_cast<cField2D*>(Bl_m[imode]);
-        cField2D* Br3D_AM_m = static_cast<cField2D*>(Br_m[imode]);
-        cField2D* Bt3D_AM_m = static_cast<cField2D*>(Bt_m[imode]);
+        cField2D* Bl     = Bl_ [imode];
+        cField2D* Br     = Br_ [imode];
+        cField2D* Bt     = Bt_ [imode];
+        cField2D* Bl_old = Bl_m[imode];
+        cField2D* Br_old = Br_m[imode];
+        cField2D* Bt_old = Bt_m[imode];
     
-        // Magnetic field Bx^(p,d,d)
+        // Magnetic field Bl^(p,d,d)
         for (unsigned int i=0 ; i<nl_p ; i++) {
             for (unsigned int j=0 ; j<nr_d ; j++) {
-                (*Bl3D_AM_m)(i,j) = ( (*BlAM)(i,j) + (*Bl3D_AM_m)(i,j) )*0.5;
+                (*Bl_old)(i,j) = ( (*Bl)(i,j) + (*Bl_old)(i,j) )*0.5;
             }
         }
     
         // Magnetic field Br^(d,p,d)
         for (unsigned int i=0 ; i<nl_d ; i++) {
             for (unsigned int j=0 ; j<nr_p ; j++) {
-                (*Br3D_AM_m)(i,j) = ( (*BrAM)(i,j) + (*Br3D_AM_m)(i,j) )*0.5;
+                (*Br_old)(i,j) = ( (*Br)(i,j) + (*Br_old)(i,j) )*0.5;
             }
         }
     
         // Magnetic field Bt^(d,d,p)
         for (unsigned int i=0 ; i<nl_d ; i++) {
             for (unsigned int j=0 ; j<nr_d ; j++) {
-                (*Bt3D_AM_m)(i,j) = ( (*BtAM)(i,j) + (*Bt3D_AM_m)(i,j) )*0.5;
+                (*Bt_old)(i,j) = ( (*Bt)(i,j) + (*Bt_old)(i,j) )*0.5;
             } // end for j
         } // end for i
 
@@ -578,10 +578,10 @@ void ElectroMagnAM::computeTotalRhoJ()
     for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
 
         // static cast of the total currents and densities
-        cField2D* JlAM    = static_cast<cField2D*>(Jl_[imode]);
-        cField2D* JrAM    = static_cast<cField2D*>(Jr_[imode]);
-        cField2D* JtAM    = static_cast<cField2D*>(Jt_[imode]);
-        cField2D* rhoAM   = static_cast<cField2D*>(rho_AM_[imode]);    
+        cField2D* Jl     = Jl_[imode];
+        cField2D* Jr     = Jr_[imode];
+        cField2D* Jt     = Jt_[imode];
+        cField2D* rho    = rho_AM_[imode];
         //MESSAGE("c");
         // -----------------------------------
         // Species currents and charge density
@@ -594,33 +594,33 @@ void ElectroMagnAM::computeTotalRhoJ()
 	   // MESSAGE(Jl_.size());
 	   // MESSAGE(ifield);
 	    if( Jl_s[ifield] ) {
-                cField2D* Jl2D_s  = static_cast<cField2D*>(Jl_s[ifield]);
+                cField2D* Jl2D_s  = Jl_s[ifield];
                 for (unsigned int i=0 ; i<=nl_p ; i++){
 		    //MESSAGE("here");
 		    //MESSAGE(nr_p);
 		    //MESSAGE(nl_p);
                     for (unsigned int j=0 ; j<nr_p ; j++){
 			//MESSAGE("here i=" <<i << "  j="<<j);
-                        (*JlAM)(i,j) += (*Jl2D_s)(i,j);}}
+                        (*Jl)(i,j) += (*Jl2D_s)(i,j);}}
             }
 	    //MESSAGE("or here");
             if( Jr_s[ifield] ) {
-                cField2D* Jr2D_s  = static_cast<cField2D*>(Jr_s[ifield]);
+                cField2D* Jr2D_s  = Jr_s[ifield];
                 for (unsigned int i=0 ; i<nl_p ; i++)
                     for (unsigned int j=0 ; j<=nr_p ; j++)
-                        (*JrAM)(i,j) += (*Jr2D_s)(i,j);
+                        (*Jr)(i,j) += (*Jr2D_s)(i,j);
             }
             if( Jt_s[ifield] ) {
-                cField2D* Jt2D_s  = static_cast<cField2D*>(Jt_s[ifield]);
+                cField2D* Jt2D_s  = Jt_s[ifield];
                 for (unsigned int i=0 ; i<nl_p ; i++)
                     for (unsigned int j=0 ; j<nr_p ; j++)
-                        (*JtAM)(i,j) += (*Jt2D_s)(i,j);
+                        (*Jt)(i,j) += (*Jt2D_s)(i,j);
             }
             if( rho_AM_s[ifield] ) {
-                cField2D* rho2D_s  = static_cast<cField2D*>(rho_AM_s[ifield]);
+                cField2D* rho2D_s  = rho_AM_s[ifield];
                 for (unsigned int i=0 ; i<nl_p ; i++)
                     for (unsigned int j=0 ; j<nr_p ; j++)
-                        (*rhoAM)(i,j) += (*rho2D_s)(i,j);
+                        (*rho)(i,j) += (*rho2D_s)(i,j);
             }
         
         }//END loop on species ispec
@@ -640,122 +640,6 @@ void ElectroMagnAM::computeTotalEnvChi()
 // Compute electromagnetic energy flows vectors on the border of the simulation box
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnAM::computePoynting() {
-
-    //cField2D* Ex2D     = static_cast<cField2D*>(Ex_);
-    //cField2D* Ey2D     = static_cast<cField2D*>(Ey_);
-    //cField2D* Ez2D     = static_cast<cField2D*>(Ez_);
-    //cField2D* Bx2D_m   = static_cast<cField2D*>(Bx_m);
-    //cField2D* By2D_m   = static_cast<cField2D*>(By_m);
-    //cField2D* Bz2D_m   = static_cast<cField2D*>(Bz_m);
-
-    //if (isXmin) {
-    //    unsigned int iEy=istart[0][Ey2D->isDual(0)];
-    //    unsigned int iBz=istart[0][Bz2D_m->isDual(0)];
-    //    unsigned int iEz=istart[0][Ez2D->isDual(0)];
-    //    unsigned int iBy=istart[0][By2D_m->isDual(0)];
-    //    
-    //    unsigned int jEy=istart[1][Ey2D->isDual(1)];
-    //    unsigned int jBz=istart[1][Bz2D_m->isDual(1)];
-    //    unsigned int jEz=istart[1][Ez2D->isDual(1)];
-    //    unsigned int jBy=istart[1][By2D_m->isDual(1)];
-    //    
-
-    //    for (unsigned int j=0; j<=bufsize[1][Ez2D->isDual(1)]; j++) {
-    //        #ifdef _TODO_AM            
-    //        double Ey__ = 0.5*((*Ey2D)(iEr,jEy+j) + (*Ey2D)(iEy, jEy+j+1));
-    //        double Bz__ = 0.25*((*Bz2D_m)(iBz,jBz+j)+(*Bz2D_m)(iBz+1,jBz+j)+(*Bz2D_m)(iBz,jBz+j+1)+(*Bz2D_m)(iBz+1,jBz+j+1));
-    //        double Ez__ = (*Ez2D)(iEz,jEz+j);
-    //        double By__ = 0.5*((*By2D_m)(iBy,jBy+j) + (*By2D_m)(iBy+1, jBy+j));
-
-    //        poynting_inst[0][0] = dr*timestep*(Ey__*Bz__ - Ez__*By__);
-    //        #endif
-    //        poynting[0][0]+= poynting_inst[0][0];
-
-    //    }
-    //    
-    //}//if Xmin
-    //
-    //
-    //if (isXmax) {
-    //    
-    //    unsigned int iEy=istart[0][Ey2D->isDual(0)]  + bufsize[0][Ey2D->isDual(0)] -1;
-    //    unsigned int iBz=istart[0][Bz2D_m->isDual(0)] + bufsize[0][Bz2D_m->isDual(0)]-1;
-    //    unsigned int iEz=istart[0][Ez2D->isDual(0)]  + bufsize[0][Ez2D->isDual(0)] -1;
-    //    unsigned int iBy=istart[0][By2D_m->isDual(0)] + bufsize[0][By2D_m->isDual(0)]-1;
-    //    
-    //    unsigned int jEy=istart[1][Ey2D->isDual(1)];
-    //    unsigned int jBz=istart[1][Bz2D_m->isDual(1)];
-    //    unsigned int jEz=istart[1][Ez2D->isDual(1)];
-    //    unsigned int jBy=istart[1][By2D_m->isDual(1)];
-    //    
-    //    for (unsigned int j=0; j<=bufsize[1][Ez2D->isDual(1)]; j++) {
-    //        #ifdef _TODO_AM            
-    //      
-    //        double Ey__ = 0.5*((*Ey2D)(iEy,jEy+j) + (*Ey2D)(iEr, jEy+j+1));
-    //        double Bz__ = 0.25*((*Bz2D_m)(iBz,jBz+j)+(*Bz2D_m)(iBz+1,jBz+j)+(*Bz2D_m)(iBz,jBz+j+1)+(*Bz2D_m)(iBz+1,jBz+j+1));
-    //        double Ez__ = (*Ez2D)(iEz,jEz+j);
-    //        double By__ = 0.5*((*By2D_m)(iBy,jBy+j) + (*By2D_m)(iBy+1, jBy+j));
-    //        
-    //        poynting_inst[1][0] = dr*timestep*(Ey__*Bz__ - Ez__*By__);
-    //        #endif
-    //        poynting[1][0]+= poynting_inst[1][0];
-
-    //    }
-    //    
-    //}//if Xmax
-    //
-    //if (isYmin) {
-    //    
-    //    unsigned int iEz=istart[0][Ez_->isDual(0)];
-    //    unsigned int iBx=istart[0][Bx_m->isDual(0)]; 
-    //    unsigned int iEx=istart[0][Ex_->isDual(0)];
-    //    unsigned int iBz=istart[0][Bz_m->isDual(0)]; 
-    //    
-    //    unsigned int jEz=istart[1][Ez_->isDual(1)];
-    //    unsigned int jBx=istart[1][Bx_m->isDual(1)];
-    //    unsigned int jEx=istart[1][Ex_->isDual(1)];
-    //    unsigned int jBz=istart[1][Bz_m->isDual(1)];
-
-    //    for (unsigned int i=0; i<=bufsize[0][Ez2D->isDual(0)]; i++) {
-    //        #ifdef _TODO_AM            
-    //        double Ez__ = (*Ez2D)(iEz+i,jEz);
-    //        double Bx__ = 0.5*((*Bx2D_m)(iBx+i,jBx) + (*Bx2D_m)(iBx+i, jBx+1));
-    //        double Ex__ = 0.5*((*Ex2D)(iEx+i,jEx) + (*Ex2D)(iEx+i+1, jEx));
-    //        double Bz__ = 0.25*((*Bz2D_m)(iBz+i,jBz)+(*Bz2D_m)(iBz+i+1,jBz)+(*Bz2D_m)(iBz+i,jBz+1)+(*Bz2D_m)(iBz+i+1,jBz+1));
-    //        
-    //        poynting_inst[0][1] = dl*timestep*(Ez__*Bx__ - Ex__*Bz__);
-    //        #endif
-    //        poynting[0][1] += poynting_inst[0][1];
-    //    }
-
-    //}// if Ymin
-    //
-    //if (isYmax) {
-
-    //    unsigned int iEz=istart[0][Ez2D->isDual(0)];
-    //    unsigned int iBx=istart[0][Bx2D_m->isDual(0)];
-    //    unsigned int iEx=istart[0][Ex2D->isDual(0)];
-    //    unsigned int iBz=istart[0][Bz2D_m->isDual(0)];
-    //    
-    //    unsigned int jEz=istart[1][Ez2D->isDual(1)]  + bufsize[1][Ez2D->isDual(1)] -1;
-    //    unsigned int jBx=istart[1][Bx2D_m->isDual(1)] + bufsize[1][Bx2D_m->isDual(1)]-1;
-    //    unsigned int jEx=istart[1][Ex2D->isDual(1)]  + bufsize[1][Ex2D->isDual(1)] -1;
-    //    unsigned int jBz=istart[1][Bz2D_m->isDual(1)] + bufsize[1][Bz2D_m->isDual(1)]-1;
-    //    
-    //    for (unsigned int i=0; i<=bufsize[0][Ez2D->isDual(0)]; i++) {
-    //        #ifdef _TODO_AM            
-    //        double Ez__ = (*Ez2D)(iEz+i,jEz);
-    //        double Bx__ = 0.5*((*Bx2D_m)(iBx+i,jBx) + (*Bx2D_m)(iBx+i, jBx+1));
-    //        double Ex__ = 0.5*((*Ex2D)(iEx+i,jEx) + (*Ex2D)(iEx+i+1, jEx));
-    //        double Bz__ = 0.25*((*Bz2D_m)(iBz+i,jBz)+(*Bz2D_m)(iBz+i+1,jBz)+(*Bz2D_m)(iBz+i,jBz+1)+(*Bz2D_m)(iBz+i+1,jBz+1));
-    //        
-    //        poynting_inst[1][1] = dl*timestep*(Ez__*Bx__ - Ex__*Bz__);
-    //        #endif
-    //        poynting[1][1] += poynting_inst[1][1];
-    //    }
-
-    //}//if Ymax
-
 }
 
 void ElectroMagnAM::applyExternalFields(Patch* patch) {
@@ -836,47 +720,45 @@ void ElectroMagnAM::initAntennas(Patch* patch)
 void ElectroMagnAM::fold_J(bool diag_flag)
 {  
 
-    // Are static casts really necesary here ?
-
     if (isYmin){
 
-         cField2D* JlAM ;
-         cField2D* JrAM ;
-         cField2D* JtAM ;
+         cField2D* Jl;
+         cField2D* Jr;
+         cField2D* Jt;
 
          for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
 
              //static cast of the total currents and densities
-             JlAM    = Jl_[imode];
-             JrAM    = Jr_[imode];
-             JtAM    = Jt_[imode];
+             Jl    = Jl_[imode];
+             Jr    = Jr_[imode];
+             Jt    = Jt_[imode];
              if (imode==0){
                  for (unsigned int i=0; i<nl_d; i++){
                      for (unsigned int j=0; j<oversize[1]; j++)
-                         (*JlAM)(i,2*oversize[1]-j)+= (*JlAM)(i,j) ;
+                         (*Jl)(i,2*oversize[1]-j)+= (*Jl)(i,j) ;
                  }
                  for (unsigned int i=0; i<nl_p; i++){
                      for (unsigned int j=0; j<oversize[1]; j++)
-                         (*JtAM)(i,2*oversize[1]-j)+= (*JtAM)(i,j) ;
+                         (*Jt)(i,2*oversize[1]-j)+= (*Jt)(i,j) ;
                  }
                  for (unsigned int i=0; i<nl_p; i++){
                       for (unsigned int j=0; j<oversize[1]; j++)
-                         (*JrAM)(i,2*oversize[1]+1-j)+= (*JrAM)(i,j) ;
-                      (*JrAM)(i,oversize[1]+1)= -(*JrAM)(i,oversize[1]) ;
+                         (*Jr)(i,2*oversize[1]+1-j)+= (*Jr)(i,j) ;
+                      (*Jr)(i,oversize[1]+1)= -(*Jr)(i,oversize[1]) ;
                  }
              }
              else{
                  for (unsigned int i=0; i<nl_d; i++){
                      for (unsigned int j=0; j<oversize[1]; j++)
-                         (*JlAM)(i,2*oversize[1]-j)-= (*JlAM)(i,j) ;
+                         (*Jl)(i,2*oversize[1]-j)-= (*Jl)(i,j) ;
                  }
                  for (unsigned int i=0; i<nl_p; i++){
                      for (unsigned int j=0; j<oversize[1]; j++)
-                         (*JtAM)(i,2*oversize[1]-j)-= (*JtAM)(i,j) ;
+                         (*Jt)(i,2*oversize[1]-j)-= (*Jt)(i,j) ;
                  }
                  for (unsigned int i=0; i<nl_p; i++){
                       for (unsigned int j=0; j<oversize[1]+1; j++)
-                         (*JrAM)(i,2*oversize[1]+1-j)-= (*JrAM)(i,j) ;
+                         (*Jr)(i,2*oversize[1]+1-j)-= (*Jr)(i,j) ;
                  }
              }
          }
@@ -885,70 +767,70 @@ void ElectroMagnAM::fold_J(bool diag_flag)
            
              //Loop on modes for rho
              for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
-                 cField2D* rhoAM   = static_cast<cField2D*>(rho_AM_[imode]);
+                 cField2D* rho   = rho_AM_[imode];
                  if (imode == 0){
                      for (unsigned int i=0; i<nl_p; i++){
                          for (unsigned int j=0; j<oversize[1]; j++)
-                             (*rhoAM)(i,2*oversize[1]-j)+= (*rhoAM)(i,j) ;
+                             (*rho)(i,2*oversize[1]-j)+= (*rho)(i,j) ;
                      } 
                  }
                  else {
                      for (unsigned int i=0; i<nl_p; i++){
                          for (unsigned int j=0; j<oversize[1]; j++)
-                             (*rhoAM)(i,2*oversize[1]-j)-= (*rhoAM)(i,j) ;
+                             (*rho)(i,2*oversize[1]-j)-= (*rho)(i,j) ;
                      }
 
                  }
              }
              //Loop on all modes and species for J_s
              for (unsigned int ism=0; ism < n_species; ism++){
-                 JlAM    = Jl_s[ism];
-                 if ( JlAM != NULL ) {
+                 Jl    = Jl_s[ism];
+                 if ( Jl != NULL ) {
                      for (unsigned int i=0; i<nl_d; i++){
                          for (unsigned int j=0; j<oversize[1]; j++){
-                             (*JlAM)(i,2*oversize[1]-j)+= (*JlAM)(i,j) ;
+                             (*Jl)(i,2*oversize[1]-j)+= (*Jl)(i,j) ;
                          }
                      }
                  }
-                 JtAM    = Jt_s[ism];
-                 if ( JtAM != NULL ) {
+                 Jt    = Jt_s[ism];
+                 if ( Jt != NULL ) {
                      for (unsigned int i=0; i<nl_p; i++){
                          for (unsigned int j=0; j<oversize[1]; j++)
-                             (*JtAM)(i,2*oversize[1]-j)+= (*JtAM)(i,j) ;
+                             (*Jt)(i,2*oversize[1]-j)+= (*Jt)(i,j) ;
                      }
                  }
-                 JrAM    = Jr_s[ism];
-                 if ( JrAM != NULL ) {
+                 Jr    = Jr_s[ism];
+                 if ( Jr != NULL ) {
                      for (unsigned int i=0; i<nl_p; i++){
                          for (unsigned int j=0; j<oversize[1]; j++)
-                             (*JrAM)(i,2*oversize[1]+1-j)+= (*JrAM)(i,j) ;
-                         (*JrAM)(i,oversize[1]+1)= -(*JrAM)(i,oversize[1]) ;
+                             (*Jr)(i,2*oversize[1]+1-j)+= (*Jr)(i,j) ;
+                         (*Jr)(i,oversize[1]+1)= -(*Jr)(i,oversize[1]) ;
                          
                      }
                  }
              }
 
              for (unsigned int ism=n_species; ism <  n_species*nmodes; ism++){
-                 JlAM    = Jl_s[ism];
-                 if ( JlAM != NULL ) {
+                 Jl    = Jl_s[ism];
+                 if ( Jl != NULL ) {
                      for (unsigned int i=0; i<nl_d; i++){
                          for (unsigned int j=0; j<oversize[1]; j++){
-                             (*JlAM)(i,2*oversize[1]-j)-= (*JlAM)(i,j) ;
+                             (*Jl)(i,2*oversize[1]-j)-= (*Jl)(i,j) ;
                          }
                      }
                  }
-                 JtAM    = Jt_s[ism];
-                 if ( JtAM != NULL ) {
+                 Jt    = Jt_s[ism];
+                 if ( Jt != NULL ) {
                      for (unsigned int i=0; i<nl_p; i++){
                          for (unsigned int j=0; j<oversize[1]; j++)
-                             (*JtAM)(i,2*oversize[1]-j)-= (*JtAM)(i,j) ;
+                             (*Jt)(i,2*oversize[1]-j)-= (*Jt)(i,j) ;
                      }
                  }
-                 JrAM    = Jr_s[ism];
-                 if ( JrAM != NULL ) {
+                 Jr    = Jr_s[ism];
+                 if ( Jr != NULL ) {
                      for (unsigned int i=0; i<nl_p; i++){
                          for (unsigned int j=0; j<oversize[1]; j++)
-                             (*JrAM)(i,2*oversize[1]+1-j)-= (*JrAM)(i,j) ;
+                             (*Jr)(i,2*oversize[1]+1-j)-= (*Jr)(i,j) ;
 
                      }
                  }
@@ -963,57 +845,55 @@ void ElectroMagnAM::fold_J(bool diag_flag)
 void ElectroMagnAM::on_axis_J(bool diag_flag)
 {  
 
-    // Are static casts really necesary here ?
-
     if (isYmin){
 
-         cField2D* JrAM ;
-         cField2D* JtAM ;
+         cField2D* Jr ;
+         cField2D* Jt ;
 
          for ( unsigned int imode=1 ; imode<nmodes ; imode++ ) {
 
              //static cast of the total currents and densities
-             JrAM    = static_cast<cField2D*>(Jr_[imode]);
-             JtAM    = static_cast<cField2D*>(Jt_[imode]);
-             //JrAM    = Jr_[imode];
-             //JtAM    = Jt_[imode];
+             Jr    = Jr_[imode];
+             Jt    = Jt_[imode];
+             //Jr    = Jr_[imode];
+             //Jt    = Jt_[imode];
              
              if (imode == 1){
                  for (unsigned int i=0; i<nl_p; i++)
-                     (*JtAM)(i,oversize[1]) = - 1./3.* (4.* Icpx * (*JrAM)(i,oversize[1]+1) + (*JtAM)(i,oversize[1]+1));
+                     (*Jt)(i,oversize[1]) = - 1./3.* (4.* Icpx * (*Jr)(i,oversize[1]+1) + (*Jt)(i,oversize[1]+1));
 
                  for (unsigned int i=0; i<nl_p; i++)
-                      (*JrAM)(i,oversize[1])= 2.*Icpx* (*JtAM)(i,oversize[1])-(*JrAM)(i,oversize[1]+1) ;
+                      (*Jr)(i,oversize[1])= 2.*Icpx* (*Jt)(i,oversize[1])-(*Jr)(i,oversize[1]+1) ;
              }
              else {  // imode > 1
                  for (unsigned int i=0; i<nl_p; i++)
-                     (*JtAM)(i,oversize[1]) = 0. ;
+                     (*Jt)(i,oversize[1]) = 0. ;
 
                  for (unsigned int i=0; i<nl_p; i++)
-                      (*JrAM)(i,oversize[1])= 0. ;
+                      (*Jr)(i,oversize[1])= 0. ;
              }
 
          } 
          if(diag_flag){
              for ( unsigned int imode=1 ; imode<nmodes ; imode++ ) {
-                 cField2D* rhoAM   = static_cast<cField2D*>(rho_AM_[imode]); 
+                 cField2D* rho   = rho_AM_[imode]; 
                  for (unsigned int i=0; i<nl_p; i++){
-                     (*rhoAM)(i,oversize[1])= 0.;
+                     (*rho)(i,oversize[1])= 0.;
                  }
                  if (imode == 1){
                      //Loop on all modes and species for J_s
                      for (unsigned int ism=n_species; ism <  2*n_species; ism++){
-                         JtAM    = Jt_s[ism];
-                         if ( ( JtAM != NULL ) && (JrAM != NULL ) ) {
+                         Jt    = Jt_s[ism];
+                         if ( ( Jt != NULL ) && (Jr != NULL ) ) {
                              for (unsigned int i=0; i<nl_p; i++){
-                                 (*JtAM)(i,oversize[1]) = - 1./3.* (4.* Icpx * (*JrAM)(i,oversize[1]+1) + (*JtAM)(i,oversize[1]+1));
+                                 (*Jt)(i,oversize[1]) = - 1./3.* (4.* Icpx * (*Jr)(i,oversize[1]+1) + (*Jt)(i,oversize[1]+1));
 
                              }
                          }
-                         JrAM    = Jr_s[ism];
-                         if ( ( JrAM != NULL ) && ( JtAM != NULL ) ) {
+                         Jr    = Jr_s[ism];
+                         if ( ( Jr != NULL ) && ( Jt != NULL ) ) {
                              for (unsigned int i=0; i<nl_p; i++){
-                                 (*JrAM)(i,oversize[1])= 2.*Icpx* (*JtAM)(i,oversize[1])-(*JrAM)(i,oversize[1]+1) ;
+                                 (*Jr)(i,oversize[1])= 2.*Icpx* (*Jt)(i,oversize[1])-(*Jr)(i,oversize[1]+1) ;
                              } 
                          }
                      }
@@ -1021,17 +901,17 @@ void ElectroMagnAM::on_axis_J(bool diag_flag)
                  else {  // imode > 1
                      //Loop on all modes and species for J_s
                      for (unsigned int ism=n_species; ism <  2*n_species; ism++){
-                         JtAM    = Jt_s[ism];
-                         if ( JtAM != NULL ) {
+                         Jt    = Jt_s[ism];
+                         if ( Jt != NULL ) {
                              for (unsigned int i=0; i<nl_p; i++){
-                                 (*JtAM)(i,oversize[1]) = 0.;
+                                 (*Jt)(i,oversize[1]) = 0.;
 
                              }
                          }
-                         JrAM    = Jr_s[ism];
-                         if ( JrAM != NULL ) {
+                         Jr    = Jr_s[ism];
+                         if ( Jr != NULL ) {
                              for (unsigned int i=0; i<nl_p; i++){
-                                 (*JrAM)(i,oversize[1])= 0. ;
+                                 (*Jr)(i,oversize[1])= 0. ;
                              } 
                          }
                      }

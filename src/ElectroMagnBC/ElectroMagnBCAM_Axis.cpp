@@ -72,17 +72,17 @@ void ElectroMagnBCAM_Axis::apply(ElectroMagn* EMfields, double time_dual, Patch*
     for (unsigned int imode=0 ; imode< Nmode ; imode++){
 
     // Static cast of the fields
-    cField2D* ElAM = (static_cast<ElectroMagnAM*>(EMfields))->El_[imode];
-    //cField2D* ErAM = (static_cast<ElectroMagnAM*>(EMfields))->Er_[imode];
-    cField2D* EtAM = (static_cast<ElectroMagnAM*>(EMfields))->Et_[imode];
-    cField2D* BlAM = (static_cast<ElectroMagnAM*>(EMfields))->Bl_[imode];
-    cField2D* BrAM = (static_cast<ElectroMagnAM*>(EMfields))->Br_[imode];
-    cField2D* BtAM = (static_cast<ElectroMagnAM*>(EMfields))->Bt_[imode];
-    //cField2D* BlAM_old = (static_cast<ElectroMagnAM*>(EMfields))->Bl_m[imode];
-    //cField2D* BtAM_old = (static_cast<ElectroMagnAM*>(EMfields))->Bt_m[imode]; 
-    //cField2D* JlAM = (static_cast<ElectroMagnAM*>(EMfields))->Jl_[imode];
-    //cField2D* JrAM = (static_cast<ElectroMagnAM*>(EMfields))->Jr_[imode];
-    //cField2D* JtAM = (static_cast<ElectroMagnAM*>(EMfields))->Jt_[imode];
+    cField2D* El = (static_cast<ElectroMagnAM*>(EMfields))->El_[imode];
+    //cField2D* Er = (static_cast<ElectroMagnAM*>(EMfields))->Er_[imode];
+    cField2D* Et = (static_cast<ElectroMagnAM*>(EMfields))->Et_[imode];
+    cField2D* Bl = (static_cast<ElectroMagnAM*>(EMfields))->Bl_[imode];
+    cField2D* Br = (static_cast<ElectroMagnAM*>(EMfields))->Br_[imode];
+    cField2D* Bt = (static_cast<ElectroMagnAM*>(EMfields))->Bt_[imode];
+    //cField2D* Bl_old = (static_cast<ElectroMagnAM*>(EMfields))->Bl_m[imode];
+    //cField2D* Bt_old = (static_cast<ElectroMagnAM*>(EMfields))->Bt_m[imode]; 
+    //cField2D* Jl = (static_cast<ElectroMagnAM*>(EMfields))->Jl_[imode];
+    //cField2D* Jr = (static_cast<ElectroMagnAM*>(EMfields))->Jr_[imode];
+    //cField2D* Jt = (static_cast<ElectroMagnAM*>(EMfields))->Jt_[imode];
     bool isXmin = (static_cast<ElectroMagnAM*>(EMfields))->isXmin;
     //bool isXmax = (static_cast<ElectroMagnAM*>(EMfields))->isXmax;
 
@@ -91,61 +91,61 @@ void ElectroMagnBCAM_Axis::apply(ElectroMagn* EMfields, double time_dual, Patch*
 		if (imode==0){
 			//MF_Solver_Yee
 			for (unsigned int i=isXmin ; i<nl_d ; i++) {
-				(*BrAM)(i,j)=0;
+				(*Br)(i,j)=0;
 			}
 			for (unsigned int i=isXmin ; i<nl_d ; i++) {
-				(*BtAM)(i,j)= -(*BtAM)(i,j+1);
+				(*Bt)(i,j)= -(*Bt)(i,j+1);
 			}
 			for (unsigned int i=isXmin ; i<nl_p ; i++) {
-				(*BlAM)(i,j)= (*BlAM)(i,j+1);
-				//(*BlAM)(i,0)+= -(*BlAM)(i,1)+(*BlAM_old)(i,1)-4*dt_ov_dr*(*EtAM)(i,1);
+				(*Bl)(i,j)= (*Bl)(i,j+1);
+				//(*Bl)(i,0)+= -(*Bl)(i,1)+(*Bl_old)(i,1)-4*dt_ov_dr*(*Et)(i,1);
 			}
 		}
 
 		else if (imode==1){
 			//MF
 			for (unsigned int i=isXmin ; i<nl_p  ; i++) {
-				(*BlAM)(i,j)= -(*BlAM)(i,j+1);
-                //if (std::abs((*BlAM)(i,j))>1.){
-                //MESSAGE("BlAMA");                
+				(*Bl)(i,j)= -(*Bl)(i,j+1);
+                //if (std::abs((*Bl)(i,j))>1.){
+                //MESSAGE("BlA");                
                 //MESSAGE(i);
                 //MESSAGE(j);    
-                //MESSAGE((*BlAM)(i,j));
+                //MESSAGE((*Bl)(i,j));
                 //}
 			}
 
 			for (unsigned int i=isXmin ; i<nl_d-1 ; i++) {
-				(*BrAM)(i,j)+=  Icpx*dt_ov_dr*(*ElAM)(i,j+1)
-				+			dt_ov_dl*((*EtAM)(i,j)-(*EtAM)(i-1,j));
-                //if (std::abs((*BrAM)(i,j))>1.){
-                //MESSAGE("BrAMA");                
+				(*Br)(i,j)+=  Icpx*dt_ov_dr*(*El)(i,j+1)
+				+			dt_ov_dl*((*Et)(i,j)-(*Et)(i-1,j));
+                //if (std::abs((*Br)(i,j))>1.){
+                //MESSAGE("BrA");                
                 //MESSAGE(i);
                 //MESSAGE(j);    
-                //MESSAGE((*BrAM)(i,j));
+                //MESSAGE((*Br)(i,j));
                 //}
 			}
 			for (unsigned int i=isXmin ; i<nl_d ; i++) {
-				//(*BtAM)(i,0)+= -dt_ov_dl*((*ErAM)(i+1,0)-(*ErAM)(i,0)+(*ErAM)(i+1,1)-(*ErAM)(i,1))
-				//+				2*dt_ov_dr*(*ElAM)(i+1,1) - (*BtAM_old)(i,1)+ (*BtAM)(i,1);
-				(*BtAM)(i,j)= -2.*Icpx*(*BrAM)(i,j)-(*BtAM)(i,j+1);
-                //if (std::abs((*BtAM)(i,j))>1.){
-                //MESSAGE("BtAMA");                
+				//(*Bt)(i,0)+= -dt_ov_dl*((*Er)(i+1,0)-(*Er)(i,0)+(*Er)(i+1,1)-(*Er)(i,1))
+				//+				2*dt_ov_dr*(*El)(i+1,1) - (*Bt_old)(i,1)+ (*Bt)(i,1);
+				(*Bt)(i,j)= -2.*Icpx*(*Br)(i,j)-(*Bt)(i,j+1);
+                //if (std::abs((*Bt)(i,j))>1.){
+                //MESSAGE("BtA");                
                 //MESSAGE(i);
                 //MESSAGE(j);    
-                //MESSAGE((*BtAM)(i,j));
+                //MESSAGE((*Bt)(i,j));
                 //}
 			}	
 
 		}
 		else {
 			for (unsigned int  i=isXmin ; i<nl_d; i++) {
-				(*BlAM)(i,j)= -(*BlAM)(i,j+1);
+				(*Bl)(i,j)= -(*Bl)(i,j+1);
 			}
 			for (unsigned int i=isXmin ; i<nl_p; i++) {
-				(*BrAM)(i,j)= 0;
+				(*Br)(i,j)= 0;
 			}
 			for (unsigned int  i=isXmin ; i<nl_d ; i++) {
-				(*BtAM)(i,j)= - (*BtAM)(i,j+1);
+				(*Bt)(i,j)= - (*Bt)(i,j+1);
 			}	
 
 		}
