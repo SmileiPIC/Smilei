@@ -260,6 +260,8 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     double rp = sqrt (particles.position(1, ipart)*particles.position(1, ipart)+particles.position(2, ipart)*particles.position(2, ipart));
     e_theta = (yp-Icpx*zp)/rp;
     e_theta_old =exp_m_theta_old[0];
+    double theta = atan2(zp,yp);
+    double theta_old =atan2(-std::imag(e_theta_old), std::real(e_theta_old));
     e_delta = 1.;
     e_bar = 1.;
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
@@ -283,15 +285,20 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     Sy1[jp_m_jpo+2] = 0.75-delta2;
     Sy1[jp_m_jpo+3] = 0.5 * (delta2+delta+0.25);
 
-    e_delta_m1 = sqrt(e_theta/e_theta_old);
-    e_bar_m1 = sqrt(e_theta*e_theta_old);   
-    if (std::real(e_theta)+ std::real(e_theta_old) < 0.){
-        if (std::imag(e_theta)*std::imag(e_theta_old) > 0.){
-            e_bar_m1 *= -1.;
-        } else {
-            e_delta_m1 *= -1.;
-        }
-    }
+    //e_delta_m1 = sqrt(e_theta/e_theta_old);
+    //e_bar_m1 = sqrt(e_theta*e_theta_old);   
+    //if (std::real(e_theta)+ std::real(e_theta_old) < 0.){
+    //    if (std::imag(e_theta)*std::imag(e_theta_old) > 0.){
+    //        e_bar_m1 *= -1.;
+    //    } else {
+    //        e_delta_m1 *= -1.;
+    //    }
+    //}
+
+    double dtheta = std::remainder(theta-theta_old, 2*M_PI)/2.; // Otherwise dtheta is overestimated when going from -pi to +pi
+    double theta_bar = std::remainder(theta_old+dtheta, 2*M_PI);
+    e_delta_m1 = std::polar(1.0,dtheta);
+    e_bar_m1 = std::polar(1.0,theta_bar);
 
     for (unsigned int i=0; i<(unsigned int)imode; i++){
         e_delta *= e_delta_m1;
@@ -626,6 +633,8 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     e_theta_old = exp_m_theta_old[0];
     e_delta = 1.;
     e_bar =  1.;
+    double theta = atan2(zp,yp);
+    double theta_old =atan2(-std::imag(e_theta_old), std::real(e_theta_old));
      
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
     xpn = particles.position(0, ipart) * dl_inv_;
@@ -648,15 +657,20 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     Sy1[jp_m_jpo+2] = 0.75-delta2;
     Sy1[jp_m_jpo+3] = 0.5 * (delta2+delta+0.25);
     
-    e_delta_m1 = sqrt(e_theta/e_theta_old);
-    e_bar_m1 = sqrt(e_theta*e_theta_old);   
-    if (std::real(e_theta)+ std::real(e_theta_old) < 0.){
-        if (std::imag(e_theta)*std::imag(e_theta_old) > 0.){
-            e_bar_m1 *= -1.;
-        } else {
-            e_delta_m1 *= -1.;
-        }
-    }
+    //e_delta_m1 = sqrt(e_theta/e_theta_old);
+    //e_bar_m1 = sqrt(e_theta*e_theta_old);   
+    //if (std::real(e_theta)+ std::real(e_theta_old) < 0.){
+    //    if (std::imag(e_theta)*std::imag(e_theta_old) > 0.){
+    //        e_bar_m1 *= -1.;
+    //    } else {
+    //        e_delta_m1 *= -1.;
+    //    }
+    //}
+
+    double dtheta = std::remainder(theta-theta_old, 2*M_PI)/2.; // Otherwise dtheta is overestimated when going from -pi to +pi
+    double theta_bar = std::remainder(theta_old+dtheta, 2*M_PI);
+    e_delta_m1 = std::polar(1.0,dtheta);
+    e_bar_m1 = std::polar(1.0,theta_bar);
 
     for (unsigned int i=0; i<(unsigned int)imode; i++){
         e_delta *= e_delta_m1;
@@ -733,8 +747,6 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             }
         }
     }//i
-    
-
     
     // Jt^(p,p)
     for (unsigned int i=0 ; i<5 ; i++) {
