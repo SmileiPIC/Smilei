@@ -1205,6 +1205,7 @@ The arguments appearing ``LaserEnvelopeGaussian3D`` have the same meaning they w
 
 It is important to remember that the profile defined through the block ``LaserEnvelopeGaussian3D`` corresponds to the complex envelope of the laser vector potential component :math:`\tilde{A}` in the polarization direction. 
 The calculation of the correspondent complex envelope for the laser electric field component in that direction is described in :doc:`laser_envelope`. 
+Note that only order 2 interpolation is supported in presence of the envelope model for the laser.
 
   
 ----
