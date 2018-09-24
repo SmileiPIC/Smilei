@@ -267,12 +267,6 @@ The block ``Main`` is **mandatory** and has the following syntax::
   | **Syntax 1:** ``[[1,0,0]]``, identical for all boundaries.
   | **Syntax 2:** ``[[1,0,0],[-1,0,0], ...]``,  different on each boundary.
 
-.. py:data:: Envelope_boundary_conditions
-
-  :type: list of lists of strings
-  :default: ``[["reflective"]]``
-
-  For the moment, only reflective boundary conditions are implemented in case the laser is modeled through an envelope model.
 
 .. py:data:: time_fields_frozen
 
@@ -1182,6 +1176,7 @@ Following is the laser envelope creator::
         waist           = 30.,
         time_envelope   = tgaussian(center=150., fwhm=40.),
         envelope_solver = 'explicit',
+        Envelope_boundary_conditions = [ ["reflective"] ],
     )
 
 The arguments appearing ``LaserEnvelopeGaussian3D`` have the same meaning they would have in a normal LaserGaussian3D, with some differences:
@@ -1195,6 +1190,14 @@ The arguments appearing ``LaserEnvelopeGaussian3D`` have the same meaning they w
   :default: ``explicit``
 
   For the moment the only available solver for the laser envelope equation is an explicit solver with centered finite differences in space and time.
+
+.. py:data:: Envelope_boundary_conditions
+
+  :type: list of lists of strings
+  :default: ``[["reflective"]]``
+
+  For the moment, only reflective boundary conditions are implemented in the resolution of the envelope equation.
+
 
 It is important to remember that the profile defined through the block ``LaserEnvelopeGaussian3D`` corresponds to the complex envelope of the laser vector potential component :math:`\tilde{A}` in the polarization direction. 
 The calculation of the correspondent complex envelope for the laser electric field component in that direction is described in :doc:`laser_envelope`. 
