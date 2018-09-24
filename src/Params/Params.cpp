@@ -289,7 +289,7 @@ namelist("")
     if ( n_envlaser >=1 ){
         Laser_Envelope_model = true;
         //! Boundary conditions for Envelope Field
-        if( !PyTools::extract("Envelope_boundary_conditions", Env_BCs, "Main")  )
+        if( !PyTools::extract("Envelope_boundary_conditions", Env_BCs, "LaserEnvelope")  )
             ERROR("Envelope_boundary_conditions not defined" );
 
         if( Env_BCs.size() == 0 ) {
