@@ -121,12 +121,16 @@ The block ``Main`` is **mandatory** and has the following syntax::
     The ``"AMcylindrical"`` geometry is currently proposed in alpha version.
     It has not been thoroughly tested and only Field diagnostics are available.
     Boundary conditions must be set to ``"remove"`` for particles, ``"silver-muller"`` for longitudinal EM boundaries and ``"buneman"`` for transverse EM boundaries.
+    Vectorization and order 4 interpolation are not supported.
 
 .. py:data:: interpolation_order
 
-  :default: 2
+  :default: ``2``
 
-  Interpolation order. To this day, only ``2`` is available.
+  Interpolation order, defines particle shape function:
+ 
+  * ``2``  : 3 points stencil, supported in all configurations.
+  * ``4``  : 5 points stencil, not supported in vectorized 2D geometry.
 
 
 .. py:data:: grid_length
