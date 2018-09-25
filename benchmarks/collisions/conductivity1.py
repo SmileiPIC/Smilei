@@ -19,7 +19,7 @@ Main(
 
     time_fields_frozen = 100000000000.,
 
-    cell_length = [0.01*L0],
+    cell_length = [0.1*L0],
     grid_length = [40*L0],
 
     EM_boundary_conditions = [ ["periodic"] ],
@@ -39,7 +39,7 @@ ExternalField(
 	profile = 0.001
 )
 
-ion_nppc = 20
+ion_nppc = 100
 eon_nppc = 100
 
 charge_density = [330., 333., 368]
