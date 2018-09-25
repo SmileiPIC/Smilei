@@ -71,6 +71,11 @@ Several ``make`` options are available:
   sed -i 's/PICSAR=FALSE/PICSAR=TRUE/g' makefile; make -j4 #To enable calls for PSATD solver from picsar
 
 
+----
+
+Machine-specific compilation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 Each machine may require a specific configuration (environment variables, modules, etc.).
 Such instructions may be included, from a file of your choice, via the ``machine`` argument:
 
@@ -86,13 +91,12 @@ with developpers so that it can be included in the next release of :program:`Smi
 
 ----
 
-Advanced compilation options for profiling/tracing tools
+Compilation options for profiling/tracing tools
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Several ``make`` options are available in order to compile Smilei ready for
-specific performance analysis and debugging tools.
+specific performance analysis and debugging tools:
 
-Smilei performance can be analyzed with :
 - Scalasca
 - Intel Advisor
 - Intel Vtune
@@ -100,45 +104,33 @@ Smilei performance can be analyzed with :
 
 .. code-block:: bash
 
-  make config="scalasca"             : compilation for scalasca (required the Scalasca profiler)
-  make config="advisor"              : compilation for Intel Advisor (required the Intel suite)
-  make config="vtune"                : compilation for Intel Vtune (required the Intel suite)
-  make config="inspector"            : compilation for Intel Inspector (required the Intel suite)
+  make config="scalasca"   # compilation for scalasca (required the Scalasca profiler)
+  make config="advisor"    # compilation for Intel Advisor (required the Intel suite)
+  make config="vtune"      # compilation for Intel Vtune (required the Intel suite)
+  make config="inspector"  # compilation for Intel Inspector (required the Intel suite)
+
 ----
 
-Advanced compilation options for detailed timers
+Compilation options for detailed timers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The code contains more timers than in the default configuration that can
-be activated using a specific option called ``detailed_timers``.
-This flag will add the following line to the compilation flags ``-D__DETAILED_TIMERS``
-and therefore activate in the code their computation.
-These timers are not available in the default compilation
-because they are more intrusive and may impact the overall performance in production.
-
-Some of the timers are called inside patches for specific operators
-such as the particle pusher. The code first computes the average over the patches
-for all MPI domain before computing the final min, max and mean values between
-MPI processes.
-
-The final information is therefore an average that does not reflect the
-load imbalance between patches of a MPI domain.
-
-the following ``make`` command will activate the additional timers:
+The code contains optional timers for a more detailed timing
+characterization. They are more intrusive
+and may impact the overall performance.
 
 .. code-block:: bash
 
-  make config="detailed_timers"      : compilation that activates the detailed timers inside the patch
+  make config="detailed_timers" # compilation with detailed timers
 
 Additional timers will be shown at the end of the simulation and are also
 in ``profile.txt``
 
 ----
 
-Compile the documentation
+Create the documentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If you have installed the python module ``sphinx``, you can compile the documentation
+If you have installed the python module ``sphinx``, you can create the documentation
 (which you are currently reading) with:
 
 .. code-block:: bash
