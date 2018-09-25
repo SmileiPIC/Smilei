@@ -15,7 +15,10 @@
 using namespace std;
 
 
-// Calculates the collisions for a given Collisions object
+// Calculates the collisions
+// The difference with Collisions::collide is that this version
+// does not handle more than 1 species on each side,
+// but is potentially faster
 void CollisionsSingle::collide(Params& params, Patch* patch, int itime, vector<Diagnostic*>& localDiags)
 {
 
