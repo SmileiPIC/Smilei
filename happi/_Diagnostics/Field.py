@@ -410,8 +410,6 @@ class Field(Diagnostic):
 			f = field + "_mode_"
 			for imode in self._modes:
 				if imode >= nmode: continue
-				factor = 1.
-				if imode == 0: factor = 1.
 				B_real = self._np.empty(self._finalShape)
 				B_imag = self._np.empty(self._finalShape)
 				try:
@@ -426,9 +424,9 @@ class Field(Diagnostic):
 						B_imag = self._np.squeeze(B_imag)
 						h5item[f+str(imode)].read_direct(B_imag, source_sel=self._complex_selection_imag)
 						B_imag = self._np.reshape(B_imag, self._finalShape)
-				F += (factor*self._np.cos(imode*self._theta)) * B_real
+				F += (self._np.cos(imode*self._theta)) * B_real
 				if imode > 0:
-					F += (factor*self._np.sin(imode*self._theta)) * B_imag
+					F += (self._np.sin(imode*self._theta)) * B_imag
 				
 			C.update({ field:F })
 		
