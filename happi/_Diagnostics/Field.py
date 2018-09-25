@@ -463,8 +463,6 @@ class Field(Diagnostic):
 			f = field + "_mode_"
 			for imode in self._modes:
 				if imode >= nmode: continue
-				factor = 1.
-				if imode == 0: factor = 1.
 				B = self._np.empty(self._raw_shape)
 				try:
 					h5item[f+str(imode)].read_direct(B)
@@ -473,10 +471,10 @@ class Field(Diagnostic):
 					h5item[f+str(imode)].read_direct(B)
 					B = self._np.reshape(B, self._raw_shape)
 				B_real = RegularGridInterpolator(self._raw_positions, B[:,0::2], bounds_error=False, fill_value=0.)(self._xr)
-				F += factor * self._np.cos(imode*self._theta) * B_real[self._selection]
+				F += self._np.cos(imode*self._theta) * B_real[self._selection]
 				if imode > 0.:
 					B_imag = RegularGridInterpolator(self._raw_positions, B[:,1::2], bounds_error=False, fill_value=0.)(self._xr)
-					F += factor * self._np.sin(imode*self._theta) * B_imag[self._selection]
+					F += self._np.sin(imode*self._theta) * B_imag[self._selection]
 				
 			C.update({ field:F })
 		
