@@ -399,7 +399,7 @@ It has three different syntaxes:
 * To obtain units in a non-normalized system (e.g. SI), the simulation must have the
   parameter :py:data:`reference_angular_frequency_SI` set to a finite value.
   Otherwise, this parameter can be set during post-processing as an argument to the
-  :py:meth:`Open` function.
+  :py:meth:`happi.Open` function.
 
 
 ----

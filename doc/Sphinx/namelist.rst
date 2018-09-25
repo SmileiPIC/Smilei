@@ -2032,7 +2032,7 @@ This is done by including a block ``DiagFields``::
   | | Rho_abc      | |  Density of species "abc"                           |
   +----------------+-------------------------------------------------------+
 
-  In the case of spectral cylindrical geometry (``3drz``), the ``x``, ``y`` and ``z``
+  In ``AMcylindrical`` geometry, the ``x``, ``y`` and ``z``
   indices are replaced by ``x``, ``r`` and ``t`` (theta). In addition,
   the angular Fourier modes are denoted by the suffix ``_mode_i`` where ``i``
   is the mode number. In summary, the list of fields reads as follows.
@@ -2051,14 +2051,15 @@ This is done by including a block ``DiagFields``::
   |  The same notation works for Jx, Jr, Jt, and Rho                       |
   +------------------------------+-----------------------------------------+
 
-  In the case of an envelope model for the laser (see :doc:`laser_envelope`), the following fields are also available:
+  In the case of an envelope model for the laser (see :doc:`laser_envelope`),
+  the following fields are also available:
 
   .. rst-class:: nowrap
 
   +----------------+-------------------------------------------------------+
-  | |              | | Module of laser vector potential's complex envelope |                                               
+  | |              | | Module of laser vector potential's complex envelope |
   | | Env_A_abs    | | :math:`\tilde{A}` (component along the polarization |
-  | |              | | direction)                                          |                                           
+  | |              | | direction)                                          |
   +----------------+-------------------------------------------------------+
   | | Env_Chi      | | Total  susceptibility :math:`\chi`                  |
   +----------------+-------------------------------------------------------+
