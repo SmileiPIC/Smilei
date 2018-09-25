@@ -163,13 +163,7 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
     unsigned int i1, i2, ispec1, ispec2, N2max;
     Species   *s1, *s2;
     Particles *p1, *p2;
-    double m1, m2, m12, W1, W2, qqm, qqm2, gamma1, gamma2, gamma12, gamma12_inv,
-           COM_vx, COM_vy, COM_vz, COM_vsquare, COM_gamma,
-           term1, term2, term3, term4, term5, term6,  coeff3, coeff4,
-           vcv1, vcv2, px_COM, py_COM, pz_COM, p2_COM, p_COM, gamma1_COM, gamma2_COM,
-           logL, bmin, s, vrel, smax,
-           cosX, sinX, phi, sinXcosPhi, sinXsinPhi, p_perp, inv_p_perp, 
-           newpx_COM, newpy_COM, newpz_COM, U, vcp, ncol;
+    double m12, coeff3, coeff4, logL, s, ncol, debye2=0.;
     bool not_duplicated_particle;
     
     sg1 = &species_group1;
@@ -216,6 +210,10 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
         
         // skip to next bin if no particles
         if (npart1==0 || npart2==0) continue;
+        
+        // Set the debye length
+        if( Collisions::debye_length_required )
+            debye2 = patch->debye_length_squared[ibin];
         
         // Shuffle particles to have random pairs
         //    (It does not really exchange them, it is just a temporary re-indexing)
@@ -292,123 +290,17 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
             s1 = patch->vecSpecies[(*sg1)[ispec1]]; s2 = patch->vecSpecies[(*sg2)[ispec2]];
             i1 += s1->bmin[ibin];                   i2 += s2->bmin[ibin];
             p1 = s1->particles;                     p2 = s2->particles;
-            m1 = s1->mass;                          m2 = s2->mass;
-            W1 = p1->weight(i1);                    W2 = p2->weight(i2);
             
-            // Calculate stuff
-            m12  = m1 / m2; // mass ratio
-            qqm  = p1->charge(i1) * p2->charge(i2) / m1;
-            qqm2 = qqm * qqm;
+            m12  = s1->mass / s2->mass; // mass ratio
             
-            // Get momenta and calculate gammas
-            gamma1 = sqrt(1. + pow(p1->momentum(0,i1),2) + pow(p1->momentum(1,i1),2) + pow(p1->momentum(2,i1),2));
-            gamma2 = sqrt(1. + pow(p2->momentum(0,i2),2) + pow(p2->momentum(1,i2),2) + pow(p2->momentum(2,i2),2));
-            gamma12 = m12 * gamma1 + gamma2;
-            gamma12_inv = 1./gamma12;
-            
-            // Calculate the center-of-mass (COM) frame
-            // Quantities starting with "COM" are those of the COM itself, expressed in the lab frame.
-            // They are NOT quantities relative to the COM.
-            COM_vx = ( m12 * (p1->momentum(0,i1)) + p2->momentum(0,i2) ) * gamma12_inv;
-            COM_vy = ( m12 * (p1->momentum(1,i1)) + p2->momentum(1,i2) ) * gamma12_inv;
-            COM_vz = ( m12 * (p1->momentum(2,i1)) + p2->momentum(2,i2) ) * gamma12_inv;
-            COM_vsquare = COM_vx*COM_vx + COM_vy*COM_vy + COM_vz*COM_vz;
-            
-            // Change the momentum to the COM frame (we work only on particle 1)
-            // Quantities ending with "COM" are quantities of the particle expressed in the COM frame.
-            if( COM_vsquare != 0.) {
-                COM_gamma = pow( 1.-COM_vsquare , -0.5);
-                term1 = (COM_gamma - 1.) / COM_vsquare;
-                vcv1  = (COM_vx*(p1->momentum(0,i1)) + COM_vy*(p1->momentum(1,i1)) + COM_vz*(p1->momentum(2,i1)))/gamma1;
-                vcv2  = (COM_vx*(p2->momentum(0,i2)) + COM_vy*(p2->momentum(1,i2)) + COM_vz*(p2->momentum(2,i2)))/gamma2;
-                term2 = (term1*vcv1 - COM_gamma) * gamma1;
-                px_COM = (p1->momentum(0,i1)) + term2*COM_vx;
-                py_COM = (p1->momentum(1,i1)) + term2*COM_vy;
-                pz_COM = (p1->momentum(2,i1)) + term2*COM_vz;
-                gamma1_COM = (1.-vcv1)*COM_gamma*gamma1;
-                gamma2_COM = (1.-vcv2)*COM_gamma*gamma2;
-            } else {
-                COM_gamma = 1.;
-                term1 = 0.5;
-                term2 = gamma1;
-                px_COM = (p1->momentum(0,i1));
-                py_COM = (p1->momentum(1,i1));
-                pz_COM = (p1->momentum(2,i1));
-                gamma1_COM = gamma1;
-                gamma2_COM = gamma2;
-            }
-            p2_COM = px_COM*px_COM + py_COM*py_COM + pz_COM*pz_COM;
-            p_COM  = sqrt(p2_COM);
-            
-            // Calculate some intermediate quantities
-            term3 = COM_gamma * gamma12_inv;
-            term4 = gamma1_COM * gamma2_COM;
-            term5 = term4/p2_COM + m12;
-            
-            // Calculate coulomb log if necessary
             logL = coulomb_log;
-            if( logL <= 0. ) { // if auto-calculation requested
-                bmin = max( coeff1/m1/p_COM , abs(coeff2*qqm*term3*term5) ); // min impact parameter
-                logL = 0.5*log(1.+patch->debye_length_squared[ibin]/pow(bmin,2));
-                if (logL < 2.) logL = 2.;
-            }
-            
-            // Calculate the collision parameter s12 (similar to number of real collisions)
-            s = coeff3 * logL * qqm2 * term3 * p_COM * term5*term5 / (gamma1*gamma2);
-            
-            // Low-temperature correction
-            vrel = p_COM/term3/term4; // relative velocity
-            smax = coeff4 * (m12+1.) * vrel / max(m12*n123,n223);
-            if (s>smax) s = smax;
-            
-            // Pick the deflection angles according to Nanbu's theory
-            cosX = cos_chi(s);
-            sinX = sqrt( 1. - cosX*cosX );
-            //!\todo make a faster rand by preallocating ??
-            phi = twoPi * Rand::uniform();
-            
-            // Calculate combination of angles
-            sinXcosPhi = sinX*cos(phi);
-            sinXsinPhi = sinX*sin(phi);
-            
-            // Apply the deflection
-            p_perp = sqrt( px_COM*px_COM + py_COM*py_COM );
-            if( p_perp > 1.e-10*p_COM ) { // make sure p_perp is not too small
-                inv_p_perp = 1./p_perp;
-                newpx_COM = (px_COM * pz_COM * sinXcosPhi - py_COM * p_COM * sinXsinPhi) * inv_p_perp + px_COM * cosX;
-                newpy_COM = (py_COM * pz_COM * sinXcosPhi + px_COM * p_COM * sinXsinPhi) * inv_p_perp + py_COM * cosX;
-                newpz_COM = -p_perp * sinXcosPhi  +  pz_COM * cosX;
-            } else { // if p_perp is too small, we use the limit px->0, py=0
-                newpx_COM = p_COM * sinXcosPhi;
-                newpy_COM = p_COM * sinXsinPhi;
-                newpz_COM = p_COM * cosX;
-            }
-            
-            // Random number to choose whether deflection actually applies.
-            // This is to conserve energy in average when weights are not equal.
-            //!\todo make a faster rand by preallocating ??
-            U = Rand::uniform();
-            
-            // Go back to the lab frame and store the results in the particle array
-            vcp = COM_vx * newpx_COM + COM_vy * newpy_COM + COM_vz * newpz_COM;
-            if( U < W2/W1 ) { // deflect particle 1 only with some probability
-                term6 = term1*vcp + gamma1_COM * COM_gamma;
-                p1->momentum(0,i1) = newpx_COM + COM_vx * term6;
-                p1->momentum(1,i1) = newpy_COM + COM_vy * term6;
-                p1->momentum(2,i1) = newpz_COM + COM_vz * term6;
-            }
-            if( U < W1/W2 ) { // deflect particle 2 only with some probability
-                term6 = -m12 * term1*vcp + gamma2_COM * COM_gamma;
-                p2->momentum(0,i2) = -m12 * newpx_COM + COM_vx * term6;
-                p2->momentum(1,i2) = -m12 * newpy_COM + COM_vy * term6;
-                p2->momentum(2,i2) = -m12 * newpz_COM + COM_vz * term6;
-            }
+            s = one_collision(p1, i1, s1->mass, p2, i2, m12, coeff1, coeff2, coeff3, coeff4, n123, n223, debye2, logL);
             
             // Handle ionization
             Ionization->apply(p1, i1, p2, i2);
             
             if( debug ) {
-                ncol     += npairs;
+                ncol     += 1;
                 smean    += s;
                 logLmean += logL;
                 //temperature += m1 * (sqrt(1.+pow(p1->momentum(0,i1),2)+pow(p1->momentum(1,i1),2)+pow(p1->momentum(2,i1),2))-1.);
@@ -416,8 +308,9 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
             
         } // end loop on pairs of particles
         
-        Ionization->finish(patch->vecSpecies[(*sg1)[0]], patch->vecSpecies[(*sg2)[0]], params, patch, localDiags);
-    }
+    } // end loop on bins
+    
+    Ionization->finish(patch->vecSpecies[(*sg1)[0]], patch->vecSpecies[(*sg2)[0]], params, patch, localDiags);
     
     if(debug && ncol>0. ) {
         smean    /= ncol;
