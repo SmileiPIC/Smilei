@@ -74,7 +74,7 @@ public:
     double getEyrel_XmaxYmin() { return 0.; }
 
     //! Total number of modes in Fourier poloidal decomposition.
-    const unsigned int nmodes = 2;
+    unsigned int nmodes;
 
     //! Method used to save the Magnetic fields (used to center them)
     void saveMagneticFields(bool);
