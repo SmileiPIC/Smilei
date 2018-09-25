@@ -121,7 +121,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
     The ``"AMcylindrical"`` geometry is currently proposed in alpha version.
     It has not been thoroughly tested and only Field diagnostics are available.
     Boundary conditions must be set to ``"remove"`` for particles, ``"silver-muller"`` for longitudinal EM boundaries and ``"buneman"`` for transverse EM boundaries.
-    Vectorization and order 4 interpolation are not supported.
+    Vectorization, checkpoints, load balancing, ionization, collisions and order 4 interpolation are not supported yet in this geometry.
 
 .. py:data:: interpolation_order
 

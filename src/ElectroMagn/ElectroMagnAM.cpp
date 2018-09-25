@@ -96,6 +96,8 @@ isYmax(patch->isYmax())
 void ElectroMagnAM::initElectroMagnAMQuantities(Params &params, Patch* patch)
 {
 
+    nmodes = params.nmodes;
+
     // Species charge currents and density
     Jl_s.resize(n_species*nmodes);
     Jr_s.resize(n_species*nmodes);
