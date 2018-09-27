@@ -147,7 +147,7 @@ protected:
         
         // Calculate coulomb log if necessary
         if( logL <= 0. ) { // if auto-calculation requested
-            bmin = std::max( coeff1/m1/p_COM , abs(coeff2*qqm*term3*term5) ); // min impact parameter
+            bmin = std::max( coeff1/m1/p_COM , std::abs(coeff2*qqm*term3*term5) ); // min impact parameter
             logL = 0.5*log(1.+debye2/pow(bmin,2));
             if (logL < 2.) logL = 2.;
         }
