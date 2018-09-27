@@ -365,7 +365,8 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     for (unsigned int i=0; i<(unsigned int)imode; i++){
     C_m *= e_theta;
     }
-    C_m = 1./C_m; 
+    //C_m = 1./C_m; 
+    C_m = 2./C_m; 
     // Jl^(d,p)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
@@ -385,9 +386,11 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             jloc = j+jpo;
             linindex = iloc*nprimr+jloc;
             if (jloc+ j_domain_begin == 0){
-                Jt [linindex] += Jt_p[i][j]*6./dr;
+                //Jt [linindex] += Jt_p[i][j]*6./dr;
+                Jt [linindex] += Jt_p[i][j]*12./dr;
             }else{
-                Jt [linindex] += Jt_p[i][j] /abs((jloc+ j_domain_begin)*dr);
+                //Jt [linindex] += Jt_p[i][j] /abs((jloc+ j_domain_begin)*dr);
+                Jt [linindex] += Jt_p[i][j]*2. /abs((jloc+ j_domain_begin)*dr);
             }
         }
      }
@@ -735,7 +738,8 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     for (unsigned int i=0; i<(unsigned int)imode; i++){
     C_m *= e_theta;
     }
-    C_m= 1./C_m; 
+    //C_m= 1./C_m; 
+    C_m= 2./C_m; 
     // Jl^(d,p)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
@@ -755,9 +759,11 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             jloc = j+jpo;
             linindex = iloc*nprimr+jloc;
             if (jloc+ j_domain_begin == 0){
-                Jt [linindex] += Jt_p[i][j]*6./dr ; 
+                //Jt [linindex] += Jt_p[i][j]*6./dr ; 
+                Jt [linindex] += Jt_p[i][j]*12./dr ; 
             }else {
-                Jt [linindex] += Jt_p[i][j] / abs((jloc+ j_domain_begin)*dr)  ; 
+                //Jt [linindex] += Jt_p[i][j] / abs((jloc+ j_domain_begin)*dr)  ; 
+                Jt [linindex] += Jt_p[i][j]*2./ abs((jloc+ j_domain_begin)*dr)  ; 
             }
         }
     }//i
@@ -831,6 +837,7 @@ void ProjectorAM2Order::operator() (complex<double>* rhoj, Particles &particles,
 
     complex<double> e_theta = ( particles.position(1,ipart) + Icpx*particles.position(2,ipart))/r;
     complex<double> C_m = 1.;
+    if (imode > 0) C_m = 2.;
     for (unsigned int i=0; i<(unsigned int)imode; i++)
         C_m *= e_theta;
 
