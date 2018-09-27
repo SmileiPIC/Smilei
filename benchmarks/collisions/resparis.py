@@ -59,7 +59,7 @@ def resparis(te,ti,znuc,atwt,rho,p1,p2,p3,pot,g0,g1,alpha,visu,sty,numfig):
 
 	n = len(te)
 	if len(ti) !=n:
-		print 'Erreur : len(te) != len(ti) !'
+		print('Erreur : len(te) != len(ti) !')
 		return
 
 	ze = np.zeros(n)

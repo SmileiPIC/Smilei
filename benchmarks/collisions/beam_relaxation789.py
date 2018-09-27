@@ -59,7 +59,7 @@ for path in ["beam_relaxation7","beam_relaxation8","beam_relaxation9"]:
 			fig.canvas.draw()
 	
 	
-	times *= 3.33*dt # fs
+	times = times * 3.33*dt # fs
 	
 	# NRL relaxation	
 	v = velocity_electron

@@ -439,7 +439,10 @@ def multiPlot(*Diags, **kwargs):
 	option_xmax = []
 	option_ymin = []
 	option_ymax = []
-	c = plt.matplotlib.rcParams['axes.color_cycle']
+	try:
+		c = plt.matplotlib.rcParams['axes.color_cycle']
+	except:
+		c = plt.matplotlib.rcParams["axes.prop_cycle"].by_key()["color"]
 	for i in range(nplots):
 		ax.append( fig.add_subplot(shape[0], shape[1], i+1) )
 	rightside = [d.options.side=="right" for d in Diags]

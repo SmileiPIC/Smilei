@@ -815,8 +815,6 @@ References
 
 .. [Lobet2015] `M. Lobet, Effets radiatifs et d'électrodynamique quantique dans l'interaction laser-matière ultra-relativiste (2015) <http://www.theses.fr/2015BORD0361#>`_
 
-.. [Niel2017] `Niel et al., Arxiv, ArXiv Preprint 1707.02618  (2017) <https://arxiv.org/abs/1707.02618>`_
-
 .. [Ritus1985] `Ritus V. (1985), Journal of Soviet Laser Research, 6, 497, ISSN 0270-2010 <https://doi.org/10.1007/BF01120220>`_
 
 .. [Timokhin2010] `Timokhin A. N. (2010), Monthly Notices of the Royal Astronomical Society, 408 (4), 2092, ISSN 1365-2966 <https://doi.org/10.1111/j.1365-2966.2010.17286.x>`_

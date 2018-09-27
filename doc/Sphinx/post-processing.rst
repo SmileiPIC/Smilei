@@ -347,19 +347,19 @@ In the latter case, ``patch_information = True`` has to be put in the namelist.
 **Available quantities at the patch level**:
   * ``mpi_rank``                   : the MPI rank that contains the current patch
   * ``vecto``                      : the mode of the specified species in the current patch
-  (vectorized of scalar) when the dynamic mode is activated. Here the ``species`` argument has to be specified.
+    (vectorized of scalar) when the dynamic mode is activated. Here the ``species`` argument has to be specified.
 
   **WARNING**: The timers ``loadBal`` and ``diags`` span parts of the code where *global*
   communications take place. This means they will include time spent doing no calculations,
   waiting for  other processes. The timers ``syncPart``, ``syncField`` and ``syncDens``
   contain *proc-to-proc* communications, which also represents some waiting time.
 
-**Example**:: performance diagnostic at the MPI level
+**Example**: performance diagnostic at the MPI level::
 
   S = happi.Open("path/to/my/results")
   Diag = S.Performances(map="total_load")
 
-**Example**:: performance diagnostic at the patch level
+**Example**: performance diagnostic at the patch level::
 
   S = happi.Open("path/to/my/results")
   Diag = S.Performances(raw="vecto", species="electron")
@@ -399,7 +399,7 @@ It has three different syntaxes:
 * To obtain units in a non-normalized system (e.g. SI), the simulation must have the
   parameter :py:data:`reference_angular_frequency_SI` set to a finite value.
   Otherwise, this parameter can be set during post-processing as an argument to the
-  :py:meth:`Open` function.
+  :py:meth:`happi.Open` function.
 
 
 ----

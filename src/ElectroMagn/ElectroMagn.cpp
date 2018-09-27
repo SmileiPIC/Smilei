@@ -386,7 +386,7 @@ double ElectroMagn::computeNRJ() {
     return nrj;
 }
 
-void ElectroMagn::applyExternalFields(Patch* patch) {    
+void ElectroMagn::applyExternalFields(Patch* patch) {
     for (vector<ExtField>::iterator extfield=extFields.begin(); extfield!=extFields.end(); extfield++ ) {
         if( extfield->index < allFields.size() ) {
             applyExternalField( allFields[extfield->index], extfield->profile, patch );
@@ -397,7 +397,7 @@ void ElectroMagn::applyExternalFields(Patch* patch) {
     Bz_m->copyFrom(Bz_);
 }
 
-void ElectroMagn::saveExternalFields(Patch* patch) {    
+void ElectroMagn::saveExternalFields(Patch* patch) {
     for (vector<ExtField>::iterator extfield=extFields.begin(); extfield!=extFields.end(); extfield++ ) {
         if( extfield->index < allFields.size() ) {
             for (auto& embc: emBoundCond) {
