@@ -712,6 +712,9 @@ namelist("")
             n_laser_offset ++;
         }
     }
+
+
+    check_consistency();
 }
 
 Params::~Params() {
@@ -816,6 +819,27 @@ void Params::compute()
     // Verify that clrw divides n_space[0]
     if( n_space[0]%clrw != 0 )
         ERROR("The parameter clrw must divide the number of cells in one patch (in dimension x)");
+
+}
+
+
+void Params::check_consistency()
+{
+    if ( vectorization_mode != "disable" ) {
+
+        if ( (geometry=="1Dcartesian") || (geometry=="AMcylindrical") )
+            ERROR( "Vectorized algorithms not implemented for this geometry" );
+
+        if ( (geometry=="2Dcartesian") && (interpolation_order==4) )
+            ERROR( "4th order vectorized algorithms not implemented in 2D" );
+        
+            
+        if  ( hasMultiphotonBreitWheeler ) {
+            WARNING( "Performances of advanced physical processes which generates nezw particles could be degraded for the moment !" );
+            WARNING( "\t The improvment of their integration in vectorized algorithm is in progress." );
+        }
+
+    }
 
 }
 
