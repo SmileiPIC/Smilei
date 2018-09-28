@@ -18,19 +18,32 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 ProjectorAM2Order::ProjectorAM2Order (Params& params, Patch* patch) : ProjectorAM(params, patch)
 {
+    dt = params.timestep;
+    dr = params.cell_length[1];
     dl_inv_   = 1.0/params.cell_length[0];
     dl_ov_dt  = params.cell_length[0] / params.timestep;
     dr_inv_   = 1.0/params.cell_length[1];
-    dt = params.timestep;
     dr_ov_dt  = params.cell_length[1] / params.timestep;
     Nmode=params.nmodes; 
     one_third = 1.0/3.0;
-    dr = params.cell_length[1];
     i_domain_begin = patch->getCellStartingGlobalIndex(0);
     j_domain_begin = patch->getCellStartingGlobalIndex(1);
     n_species = patch->vecSpecies.size();
 
     nprimr = params.n_space[1] + 2*params.oversize[1] + 1;
+
+    invV.resize(nprimr);
+    invVd.resize(nprimr+1);
+
+    for (int j = 0; j< nprimr; j++){
+        if (j_domain_begin+j == 0){
+            invV[j] = 6./dr; // Correction de Verboncoeur ordre 1.
+        } else {
+            invV[j] = 1./abs((j_domain_begin+j)*dr);
+        }
+    }
+    for (int j = 0; j< nprimr+1; j++)
+        invVd[j] = 1./abs((j_domain_begin+j-0.5)*dr);
 
     DEBUG("cell_length "<< params.cell_length[0]);
 
@@ -170,12 +183,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             for (unsigned int j=0 ; j<5 ; j++) {
                 jloc = j+jpo;
                 linindex = iloc*nprimr+jloc;
-                if (jloc+ j_domain_begin == 0){
-                    Jl [linindex] += Jl_p[i][j]*6./dr; 
-                }
-                else {
-                    Jl [linindex] += Jl_p[i][j] /abs((jloc+ j_domain_begin)*dr); 
-                }
+                Jl [linindex] += Jl_p[i][j]*invV[jloc]; 
              }
          }//i
     
@@ -185,10 +193,9 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             for (unsigned int j=0 ; j<5 ; j++) {
                 jloc = j+jpo;
                 linindex = iloc*(nprimr+1)+jloc;
-                Jr [linindex] += Jr_p[i][j] /abs((jloc+ j_domain_begin-0.5)*dr); 
+                Jr [linindex] += Jr_p[i][j]*invVd[jloc]; 
              }
         }//i
-
     
         // Jt^(p,p)
         for (unsigned int i=0 ; i<5 ; i++) {
@@ -196,14 +203,9 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             for (unsigned int j=0 ; j<5 ; j++) {
                 jloc = j+jpo;
                 linindex = iloc*nprimr+jloc;
-                if (jloc+ j_domain_begin != 0){ //Jt_mode_0 = 0 on axis
-                    Jt [linindex] += Jt_p[i][j] /abs((jloc+ j_domain_begin)*dr);
-                }
+                Jt [linindex] += Jt_p[i][j] *invV[jloc];
             }
         }//i
-
-
-
 
 } // END Project local current densities (Jl, Jr, Jt, sort)
 
@@ -307,7 +309,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
 
      e_delta_inv =1./e_delta;
     //defining crt_p 
-     complex<double> crt_p = - charge_weight*Icpx/(e_bar*dt*(double)imode)*rp;
+    complex<double> crt_p = - charge_weight*Icpx/(e_bar*dt*(double)imode)*rp*2.;
     for (unsigned int i=0; i < 5; i++) {
         DSl[i] = Sl1[i] - Sl0[i];
         DSr[i] = Sr1[i] - Sr0[i];
@@ -373,9 +375,8 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
             linindex = iloc*nprimr+jloc;
-            if (jloc+ j_domain_begin != 0){ // Jl_mode_1 = 0 on axis
-                Jl [linindex] += C_m * Jl_p[i][j] /abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*nprimr;
-            }
+            // Jl_mode_1 = 0 on axis to add to BC.
+            Jl [linindex] += C_m * Jl_p[i][j] * invV[jloc];
         }
     }//i
     
@@ -385,13 +386,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
             linindex = iloc*nprimr+jloc;
-            if (jloc+ j_domain_begin == 0){
-                //Jt [linindex] += Jt_p[i][j]*6./dr;
-                Jt [linindex] += Jt_p[i][j]*12./dr;
-            }else{
-                //Jt [linindex] += Jt_p[i][j] /abs((jloc+ j_domain_begin)*dr);
-                Jt [linindex] += Jt_p[i][j]*2. /abs((jloc+ j_domain_begin)*dr);
-            }
+            Jt [linindex] += Jt_p[i][j] * invV[jloc];
         }
      }
     // Jr^(p,d)
@@ -400,7 +395,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
             linindex = iloc*(nprimr+1)+jloc;
-            Jr [linindex] += C_m * Jr_p[i][j] /abs((jloc+ j_domain_begin-0.5)*dr);
+            Jr [linindex] += C_m * Jr_p[i][j] * invVd[jloc] ;
         }
     }//i
 
@@ -534,12 +529,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
             linindex = iloc*nprimr+jloc;
-            if (jloc+ j_domain_begin == 0){
-                Jl [linindex] += Jl_p[i][j]*6./dr;
-            }
-            else {
-                Jl [linindex] += Jl_p[i][j] /abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*nprimr;
-            }
+            Jl [linindex] += Jl_p[i][j] * invV[jloc];
         }
     }//i
     
@@ -549,7 +539,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
             linindex = iloc*(nprimr+1)+jloc;
-            Jr [linindex] += Jr_p[i][j] /abs((jloc+ j_domain_begin-0.5)*dr);
+            Jr [linindex] += Jr_p[i][j] * invVd[jloc] ;
          }
     }//i
     
@@ -559,9 +549,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
             linindex = iloc*nprimr+jloc;
-            if (jloc+ j_domain_begin != 0){ // Jt_mode_0 on axis = 0
-                Jt [linindex] += Jt_p[i][j] /abs((jloc+ j_domain_begin)*dr);
-            }
+            Jt [linindex] += Jt_p[i][j] * invV[jloc];
         }
     }//i
 
@@ -571,12 +559,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;    
             linindex = iloc*nprimr+jloc;
-             if (jloc+ j_domain_begin == 0){
-                rho [linindex] += charge_weight * Sl1[i]*Sr1[j] * 6./dr;
-            }
-            else {
-                rho [linindex] += charge_weight * Sl1[i]*Sr1[j] /abs((jloc+ j_domain_begin)*dr);
-            }
+            rho [linindex] += charge_weight * Sl1[i]*Sr1[j] * invV[jloc];
         }
     }//i
 } // END Project local densities (Jl, Jr, Jt, rho, sort)
@@ -681,7 +664,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     }
     e_delta_inv =1./e_delta;
     //defining crt_p 
-    complex<double> crt_p = -charge_weight*Icpx/(e_bar*dt*(double)imode)*rp;
+    complex<double> crt_p = -charge_weight*Icpx/(e_bar*dt*(double)imode)*rp*2.;
     for (unsigned int i=0; i < 5; i++) {
         DSl[i] = Sl1[i] - Sl0[i];
         DSr[i] = Sr1[i] - Sr0[i];
@@ -746,9 +729,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
             linindex = iloc*nprimr+jloc;
-            if (jloc+ j_domain_begin != 0){ //Jl_mode_1 is 0 on axis
-                Jl [linindex] += C_m * Jl_p[i][j] /abs((jloc+ j_domain_begin)*dr);
-            }
+            Jl [linindex] += C_m * Jl_p[i][j] * invV[jloc] ;
         }
     }//i
     
@@ -758,13 +739,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
             linindex = iloc*nprimr+jloc;
-            if (jloc+ j_domain_begin == 0){
-                //Jt [linindex] += Jt_p[i][j]*6./dr ; 
-                Jt [linindex] += Jt_p[i][j]*12./dr ; 
-            }else {
-                //Jt [linindex] += Jt_p[i][j] / abs((jloc+ j_domain_begin)*dr)  ; 
-                Jt [linindex] += Jt_p[i][j]*2./ abs((jloc+ j_domain_begin)*dr)  ; 
-            }
+            Jt [linindex] += Jt_p[i][j] * invV[jloc] ; 
         }
     }//i
 
@@ -774,7 +749,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
             linindex = iloc*(nprimr+1)+jloc;
-            Jr [linindex] += C_m * Jr_p[i][j] /abs((jloc+ j_domain_begin-0.5)*dr); //
+            Jr [linindex] += C_m * Jr_p[i][j] * invVd[jloc] ; 
         }
     }//i
 
@@ -784,12 +759,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
             linindex = iloc*nprimr+jloc;
-            if (jloc+ j_domain_begin != 0){
-                rho [linindex] += C_m*charge_weight* Sl1[i]*Sr1[j]/abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*nprimr;
-            }
-            else {
-                rho [linindex] +=  C_m*charge_weight* Sl1[i]*Sr1[j]*6./dr; // iloc = (i+ipo)*nprimr;
-            }
+            rho [linindex] += C_m*charge_weight* Sl1[i]*Sr1[j] * invV[jloc]; 
         }
     }//i
 
@@ -877,17 +847,19 @@ void ProjectorAM2Order::operator() (complex<double>* rhoj, Particles &particles,
     ip -= i_domain_begin + 2;
     jp -= j_domain_begin + 2;
 
-    for (unsigned int i=0 ; i<5 ; i++) {
-        iloc = (i+ip)*nr+jp;
-        for (unsigned int j=0 ; j<5 ; j++) {
-            if ((type != 2) && (j+jp+j_domain_begin == 0)){
-                rhoj [iloc+j] += C_m*charge_weight*6.* Sl1[i]*Sr1[j] /dr; 
-            }
-            else {
-                rhoj [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j]/abs((j+jp+ j_domain_begin-0.5*(type==2))*dr); 
-                }
-            }
-    }//i
+    if (type != 2){
+        for (unsigned int i=0 ; i<5 ; i++) {
+            iloc = (i+ip)*nr+jp;
+            for (unsigned int j=0 ; j<5 ; j++)
+                rhoj [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invV[j+jp]; 
+        }//i
+    } else {
+        for (unsigned int i=0 ; i<5 ; i++) {
+            iloc = (i+ip)*nr+jp;
+            for (unsigned int j=0 ; j<5 ; j++)
+                rhoj [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invVd[j+jp]; 
+        }//i
+    }
 } // END Project for diags local current densities
 
 // ---------------------------------------------------------------------------------------------------------------------

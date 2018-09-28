@@ -21,6 +21,9 @@ public:
     virtual void setMvWinLimits(unsigned int shift) {i_domain_begin = shift;}
 
 protected:
+    double one_third;
+    double dr;
+    double dt;
     //! Inverse of the spatial step 1/dx
     double dl_inv_;
     double dr_inv_;
@@ -31,6 +34,8 @@ protected:
     unsigned int Nmode;
     unsigned int n_species;
     int nprimr;
+    //! Inverse volume of cells normalized by 2pi
+    std::vector<double> invV, invVd;
 
 };
 

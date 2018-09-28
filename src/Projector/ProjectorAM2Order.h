@@ -31,12 +31,6 @@ public:
     void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec, int ipart_ref = 0) override final;
 
 private:
-    double one_third;
-    // Number of theta modes
-    int nmodes;
-    double dr;
-    double dt;
-    //int n_r_max;
 };
 
 #endif

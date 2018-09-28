@@ -849,76 +849,89 @@ void ElectroMagnAM::on_axis_J(bool diag_flag)
 
     if (isYmin){
 
+         cField2D* Jl ;
          cField2D* Jr ;
          cField2D* Jt ;
 
-         for ( unsigned int imode=1 ; imode<nmodes ; imode++ ) {
+         for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
 
              //static cast of the total currents and densities
+             Jl    = Jl_[imode];
              Jr    = Jr_[imode];
              Jt    = Jt_[imode];
-             //Jr    = Jr_[imode];
-             //Jt    = Jt_[imode];
-             
-             if (imode == 1){
+             if (imode == 0){
+                 for (unsigned int i=0; i<nl_p; i++)
+                     (*Jt)(i,oversize[1]) = 0. ;
+             }
+             else if (imode == 1){
                  for (unsigned int i=0; i<nl_p; i++)
                      (*Jt)(i,oversize[1]) = - 1./3.* (4.* Icpx * (*Jr)(i,oversize[1]+1) + (*Jt)(i,oversize[1]+1));
 
                  for (unsigned int i=0; i<nl_p; i++)
-                      (*Jr)(i,oversize[1])= 2.*Icpx* (*Jt)(i,oversize[1])-(*Jr)(i,oversize[1]+1) ;
+                     (*Jr)(i,oversize[1])= 2.*Icpx* (*Jt)(i,oversize[1])-(*Jr)(i,oversize[1]+1) ;
+                 for (unsigned int i=0; i<nl_d; i++)
+                     (*Jl)(i,oversize[1]) = 0. ;
              }
              else {  // imode > 1
                  for (unsigned int i=0; i<nl_p; i++)
                      (*Jt)(i,oversize[1]) = 0. ;
-
                  for (unsigned int i=0; i<nl_p; i++)
-                      (*Jr)(i,oversize[1])= 0. ;
+                     (*Jr)(i,oversize[1])= 0. ;
+                 for (unsigned int i=0; i<nl_d; i++)
+                     (*Jl)(i,oversize[1]) = 0. ;
              }
 
          } 
          if(diag_flag){
-             for ( unsigned int imode=1 ; imode<nmodes ; imode++ ) {
+             for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
                  cField2D* rho   = rho_AM_[imode]; 
-                 for (unsigned int i=0; i<nl_p; i++){
-                     (*rho)(i,oversize[1])= 0.;
-                 }
-                 if (imode == 1){
-                     //Loop on all modes and species for J_s
+                 if (imode == 0){
                      for (unsigned int ism=n_species; ism <  2*n_species; ism++){
                          Jt    = Jt_s[ism];
-                         if ( ( Jt != NULL ) && (Jr != NULL ) ) {
-                             for (unsigned int i=0; i<nl_p; i++){
-                                 (*Jt)(i,oversize[1]) = - 1./3.* (4.* Icpx * (*Jr)(i,oversize[1]+1) + (*Jt)(i,oversize[1]+1));
+                         if ( ( Jt != NULL )  )
+                             for (unsigned int i=0; i<nl_p; i++)
+                                 (*Jt)(i,oversize[1]) = 0. ;
 
-                             }
-                         }
+                     }
+                 }
+                 else if (imode == 1){
+                     for (unsigned int i=0; i<nl_p; i++)
+                         (*rho)(i,oversize[1])= 0.;
+                     //Loop on all modes and species for J_s
+                     for (unsigned int ism=n_species; ism <  2*n_species; ism++){ //Indices of that loop looks suspicious
+                         Jl    = Jl_s[ism];
+                         Jt    = Jt_s[ism];
                          Jr    = Jr_s[ism];
-                         if ( ( Jr != NULL ) && ( Jt != NULL ) ) {
-                             for (unsigned int i=0; i<nl_p; i++){
+                         if ( ( Jt != NULL ) && (Jr != NULL ) ) {
+                             for (unsigned int i=0; i<nl_p; i++)
+                                 (*Jt)(i,oversize[1]) = - 1./3.* (4.* Icpx * (*Jr)(i,oversize[1]+1) + (*Jt)(i,oversize[1]+1));
+                             for (unsigned int i=0; i<nl_p; i++)
                                  (*Jr)(i,oversize[1])= 2.*Icpx* (*Jt)(i,oversize[1])-(*Jr)(i,oversize[1]+1) ;
-                             } 
                          }
+                         if ( Jl != NULL )
+                             for (unsigned int i=0; i<nl_d; i++)
+                                 (*Jl)(i,oversize[1])= 0. ;
                      }
                  }
                  else {  // imode > 1
                      //Loop on all modes and species for J_s
-                     for (unsigned int ism=n_species; ism <  2*n_species; ism++){
+                     for (unsigned int ism=n_species; ism <  2*n_species; ism++){ //Indices of that loop looks suspicious
                          Jt    = Jt_s[ism];
-                         if ( Jt != NULL ) {
-                             for (unsigned int i=0; i<nl_p; i++){
+                         if ( Jt != NULL )
+                             for (unsigned int i=0; i<nl_p; i++)
                                  (*Jt)(i,oversize[1]) = 0.;
 
-                             }
-                         }
                          Jr    = Jr_s[ism];
-                         if ( Jr != NULL ) {
-                             for (unsigned int i=0; i<nl_p; i++){
+                         if ( Jr != NULL )
+                             for (unsigned int i=0; i<nl_p; i++)
                                  (*Jr)(i,oversize[1])= 0. ;
-                             } 
-                         }
+
+                         Jl    = Jl_s[ism];
+                         if ( Jl != NULL )
+                             for (unsigned int i=0; i<nl_d; i++)
+                                 (*Jl)(i,oversize[1])= 0. ;
                      }
                  }
-
              }
          }
     } 
