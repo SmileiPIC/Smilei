@@ -379,8 +379,8 @@ The block ``Vectorization`` is optional. It controls the SIMD operations that ca
 
   Vectorization(
       mode = "dynamic",
-      every = 5,
-      default = "scalar"
+      reconfigure_every = 5,
+..      default = "scalar"
   )
 
 .. py:data:: mode
@@ -400,19 +400,19 @@ The block ``Vectorization`` is optional. It controls the SIMD operations that ca
   
   In the ``"dynamic"`` and ``"dynamic2"`` modes, :py:data:`clrw` is set to the maximum by default.
 
-.. py:data:: every
+.. py:data:: reconfigure_every
 
   :default: 1
   
   The number of timesteps between each dynamic reconfiguration of the vectorized operators, when using the ``"dynamic"`` (or ``"dynamic2"``) vectorization modes. It may be set to a :ref:`time selection <TimeSelections>` as well.
 
 
-.. py:data:: default
-
-  :default: ``vectorized``
-
-  Default state when one of the dynamic computational mode is activated
-  and no particle is present in the patch.
+.. .. py:data:: default
+..
+..  :default: ``vectorized``
+..
+..  Default state when one of the dynamic computational mode is activated
+..  and no particle is present in the patch.
 
 
 ----

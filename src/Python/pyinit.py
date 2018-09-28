@@ -297,7 +297,7 @@ class Vectorization(SmileiComponent):
     Vectorization parameters
     """
     mode    = "disable"
-    every   = 1
+    reconfigure_every   = 1
     default = "vectorized"
 
 

@@ -529,7 +529,7 @@ namelist("")
 
         // get parameter "every" which describes a timestep selection
         dynamic_vecto_time_selection = new TimeSelection(
-            PyTools::extract_py("every", "Vectorization"), "Dynamic vectorization"
+            PyTools::extract_py("reconfigure_every", "Vectorization"), "Dynamic vectorization"
         );
 
         // Default mode for the dynamic mode
