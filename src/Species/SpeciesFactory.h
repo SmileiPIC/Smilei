@@ -308,7 +308,7 @@ public:
             if (!params.restart) thisSpecies->n_numpy_particles =  PyArray_SHAPE(np_ret)[1];//  ok
             thisSpecies->position_initialization_array = new double[ndim_local*thisSpecies->n_numpy_particles] ;
             for (unsigned int idim = 0; idim < ndim_local ; idim++){
-                for (unsigned int ipart = 0; ipart < thisSpecies->n_numpy_particles; ipart++){
+                for (unsigned int ipart = 0; ipart < (unsigned int)thisSpecies->n_numpy_particles; ipart++){
                     thisSpecies->position_initialization_array[idim*thisSpecies->n_numpy_particles+ipart] = *((double*)PyArray_GETPTR2( np_ret , idim, ipart));
                 }
             }     
@@ -317,6 +317,7 @@ public:
         else {
             ERROR("For species '" << species_name << "' non valid position_initialization. It must be either a string or a numpy array.");
         }
+        Py_DECREF(py_pos_init);
 
         PyObject *py_mom_init = PyTools::extract_py("momentum_initialization", "Species",ispec);
         if ( PyTools::convert(py_mom_init, thisSpecies->momentum_initialization) ){
@@ -366,7 +367,7 @@ public:
 
             thisSpecies->momentum_initialization_array = new double[ndim_local*thisSpecies->n_numpy_particles] ;
             for (unsigned int idim = 0; idim < ndim_local ; idim++){
-                for (unsigned int ipart = 0; ipart < thisSpecies->n_numpy_particles; ipart++){
+                for (unsigned int ipart = 0; ipart < (unsigned int)thisSpecies->n_numpy_particles; ipart++){
                     thisSpecies->momentum_initialization_array[idim*thisSpecies->n_numpy_particles+ipart] = *((double*)PyArray_GETPTR2( np_ret_mom , idim, ipart));
                 }
             }     
@@ -375,6 +376,7 @@ public:
         else {
             ERROR("For species '" << species_name << "' non valid momentum_initialization. It must be either a string or a numpy array.");
         }
+        Py_DECREF(py_mom_init);
 
         PyTools::extract("c_part_max",thisSpecies->c_part_max,"Species",ispec);
 

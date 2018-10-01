@@ -113,7 +113,7 @@ public:
 
         vecPatches.set_refHindex();
 
-        vecPatches.update_field_list();
+        vecPatches.update_field_list(smpi);
 
         TITLE("Creating Diagnostics, antennas, and external fields")
         vecPatches.createDiags( params, smpi, openPMD );
@@ -125,7 +125,10 @@ public:
 
         // Figure out if there are antennas
         vecPatches.nAntennas = vecPatches(0)->EMfields->antennas.size();
-        vecPatches.initExternals( params );
+        
+        // Initialize lasers and antennas
+        if( ! smpi->test_mode )
+            vecPatches.initExternals( params );
 
         MESSAGE(1,"Done initializing diagnostics, antennas, and external fields");
         return vecPatches;

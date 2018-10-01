@@ -154,7 +154,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
 .. py:data:: patch_decomposition
 
-  :default: 'hilbert'
+  :default: ``"hilbert"``
 
   The patches distribution. ``"cartesian"`` is available too.
   See :doc:`parallelization`.
@@ -162,8 +162,11 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
 .. py:data:: patch_orientation
 
-  Only for a ``"cartesian"`` patches distribution.
-  ``"YX"`` and ``"ZYX"`` respectively available for 2D and 3D simulations.
+  :default: ``""``
+
+  Only for a ``"cartesian"`` patches decomposition.
+  ``"YX"`` and ``"ZYX"`` respectively available for 2D and 3D simulations, while the default ``""``
+  corresponds to the decomposition oriented as ``XY`` or ``XYZ``.
   See :doc:`parallelization`.
 
 
@@ -344,6 +347,12 @@ occur every 150 iterations.
 
 Moving window
 ^^^^^^^^^^^^^
+
+The simulated box can move relative to the initial plasma position. This "moving window"
+basically consists in removing periodically some plasma from the ``x_min`` border and
+adding new plasma after the ``x_max`` border, thus changing the physical domain that the
+simulation represents but keeping the same box size. This is particularly useful to
+*follow* plasma moving at high speed.
 
 The block ``MovingWindow`` is optional. The window does not move it you do not define it.
 
@@ -617,50 +626,40 @@ Each species has to be defined in a ``Species`` block::
 
   :default: ``"none"``
 
-  The model for ionization. Currently, only ``"tunnel"`` (corresponding to :doc:`field ionization <field_ionization>`)
-  and ``"from_rate"`` (relying on a :doc:`user-defined ionization rate <field_ionization>`) are available.
-  In the latter case, the additional parameter ``ionization_rate`` has to be defined.
-  Note also that field ionization (``"tunnel"``) requires the definition of the species ``atomic_number`` while
-  ionization using a user-defined rate (``"from_rate"``) requires the definition of the species ``maximum_charge_state``.
-
-  See :ref:`this <CollisionalIonization>` for collisional ionization instead.
-
+  The model for ionization:
+  
+  * ``"tunnel"`` for :ref:`field ionization <field_ionization>` (requires species with an :py:data:`atomic_number`)
+  * ``"from_rate"``, relying on a :ref:`user-defined ionization rate <rate_ionization>` (requires species with a :py:data:`maximum_charge_state`).
+  
 .. py:data:: ionization_rate
 
-  A python function giving the user-defined ionisation rate.
+  A python function giving the user-defined ionisation rate as a function of various particle attributes.
   To use this option, the `numpy package <http://www.numpy.org/>`_ must be available in your python installation.
   The function must have one argument, that you may call, for instance, ``particles``.
   This object has several attributes ``x``, ``y``, ``z``, ``px``, ``py``, ``pz``, ``charge``, ``weight`` and ``id``.
   Each of these attributes are provided as **numpy** arrays where each cell corresponds to one particle.
 
-  The following example defines, for a species with maximum charge state of 2, a constant ionization rate that depends
-  only on the initial particle charge (``r0`` the ionisation rate from charge state 0 to 1 and
-  ``r1``  the ionisation rate from charge state 1 to 2):
+  The following example defines, for a species with maximum charge state of 2,
+  an ionization rate that depends on the initial particle charge
+  and linear in the x coordinate:
 
   .. code-block:: python
-
+    
+    from numpy import exp, zeros_like
+    
     def my_rate(particles):
-        rate = numpy.empty_like(particles.x)
-        rate[particles.charge==0] = r0
-        rate[particles.charge==1] = r1
+        rate = zeros_like(particles.x)
+        charge_0 = (particles.charge==0)
+        charge_1 = (particles.charge==1)
+        rate[charge_0] = r0 * particles.x[charge_0]
+        rate[charge_1] = r1 * particles.x[charge_1]
         return rate
-
-  The following example defines an ionization rate [:math:`r(x) = r0*f(x)`] that depends on the x-coordinate
-  of the particle only:
-
-  .. code-block:: python
-
-    def f(x):
-        return numpy.exp(-x**2/2.)
-
-    def my_rate(particles):
-        x = particles.x
-        rate = numpy.full_like(particles.x, r0) * f(x)
-        return rate
-
+    
+    Species( ..., ionization_rate = my_rate )
+    
 .. py:data:: ionization_electrons
 
-  The name of the electron species that field ionization uses when creating new electrons.
+  The name of the electron species that :py:data:`ionization_model` uses when creating new electrons.
 
 
 .. py:data:: is_test
@@ -773,6 +772,8 @@ Each species has to be defined in a ``Species`` block::
 
 ----
 
+.. _Lasers:
+
 Lasers
 ^^^^^^
 
@@ -816,7 +817,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   .. code-block:: python
 
     Laser(
-        box_side        = "xmin",
+        box_side       = "xmin",
         omega          = 1.,
         chirp_profile  = tconstant(),
         time_envelope  = tgaussian(),
@@ -925,11 +926,11 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
     LaserPlanar1D(
         box_side         = "xmin",
-        a0              = 1.,
-        omega           = 1.,
+        a0               = 1.,
+        omega            = 1.,
         polarization_phi = 0.,
-        ellipticity     = 0.,
-        time_envelope   = tconstant()
+        ellipticity      = 0.,
+        time_envelope    = tconstant()
     )
 
   .. py:data:: a0
@@ -960,14 +961,14 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
     LaserGaussian2D(
         box_side         = "xmin",
-        a0              = 1.,
-        omega           = 1.,
-        focus           = [50., 40.],
-        waist           = 3.,
-        incidence_angle = 0.,
+        a0               = 1.,
+        omega            = 1.,
+        focus            = [50., 40.],
+        waist            = 3.,
+        incidence_angle  = 0.,
         polarization_phi = 0.,
-        ellipticity     = 0.,
-        time_envelope   = tconstant()
+        ellipticity      = 0.,
+        time_envelope    = tconstant()
     )
 
   .. py:data:: focus
@@ -999,22 +1000,80 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
     LaserGaussian3D(
         box_side         = "xmin",
-        a0              = 1.,
-        omega           = 1.,
-        focus           = [50., 40., 40.],
-        waist           = 3.,
-        incidence_angle = [0., 0.1],
+        a0               = 1.,
+        omega            = 1.,
+        focus            = [50., 40., 40.],
+        waist            = 3.,
+        incidence_angle  = [0., 0.1],
         polarization_phi = 0.,
-        ellipticity     = 0.,
-        time_envelope   = tconstant()
+        ellipticity      = 0.,
+        time_envelope    = tconstant()
     )
 
   This is almost the same as ``LaserGaussian2D``, with the ``focus`` parameter having
   now 3 elements (focus position in 3D), and the ``incidence_angle`` being a list of
   two angles, corresponding to rotations around `y` and `z`, respectively.
 
+.. rubric:: 5. Defining a generic wave at some distance from the boundary
 
+..
 
+  In some cases, the laser field is not known at the box boundary, but rather at some
+  plane inside the box. Smilei can pre-calculate the corresponding wave at the boundary
+  using the *angular spectrum method*. This technique is only available in 2D and 3D
+  cartesian geometries and requires the python packages *numpy*.
+  A :doc:`detailed explanation <laser_offset>` of the method is available.
+  The laser is introduced using::
+
+    LaserOffset(
+        box_side               = "xmin",
+        space_time_profile     = [ By_profile, Bz_profile ],
+        offset                 = 10.,
+        extra_envelope          = tconstant(),
+        keep_n_strongest_modes = 100,
+        angle = 10./180.*3.14159
+    )
+
+  .. py:data:: space_time_profile
+
+    :type: A list of two *python* functions
+    
+    The magnetic field profiles at some arbitrary plane, as a function of space and time.
+    The arguments of these profiles are ``(y,t)`` in 2D and ``(y,z,t)`` in 3D.
+    
+  .. py:data:: offset
+     
+     The distance from the box boundary to the plane where :py:data:`space_time_profile`
+     is defined.
+  
+  .. py:data:: extra_envelope
+    
+    :type: a *python* function or a :ref:`python profile <profiles>`
+    :default:  ``lambda *z: 1.``, which means a profile of value 1 everywhere
+    
+    An extra envelope applied at the boundary, on top of the :py:data:`space_time_profile`.
+    This envelope takes two arguments (`y`, `t`) in 2D, and three arguments (`y`, `z`, `t`)
+    in 3D.
+    As the wave propagation technique stores a limited Fourier transform (in the time
+    domain) of the wave, some periodicity can be obtained in the actual laser.
+    One may thus observe that the laser pulse is repeated several times.
+    The envelope can be used to remove these spurious repetitions.
+
+  .. py:data:: keep_n_strongest_modes
+    
+    :default: 100
+    
+    The number of temporal Fourier modes that are kept during the pre-processing.
+    See :doc:`this page <laser_offset>` for more details.
+
+  .. py:data:: angle
+    
+    :default: 0.
+    
+    Angle between the boundary and the profile's plane, the rotation being around :math:`z`.
+    See :doc:`this page <laser_offset>` for more details.
+
+  
 ----
 
 .. _ExternalField:
@@ -1735,7 +1794,7 @@ The full list of scalars that are saved by this diagnostic:
 | | Uelm_out_mvw | | EM energy lost during the timestep due to the moving window             |
 | | Uelm_inj_mvw | | EM energy injected during the timestep due to the moving window         |
 +----------------+---------------------------------------------------------------------------+
-| **Species information**                                                                    |
+| **Particle information**                                                                   |
 +----------------+---------------------------------------------------------------------------+
 | | Dens_abc     | | Average density of species "abc"                                        |
 | | Zavg_abc     | |  ... its average charge                                                 |
@@ -1750,9 +1809,13 @@ The full list of scalars that are saved by this diagnostic:
 | | ExMax        | | Maximum of :math:`E_x`                                                  |
 | | ExMaxCell    | |  ... and its location (cell index)                                      |
 | |              | | ... same for fields Ey Ez Bx_m By_m Bz_m Jx Jy Jz Rho                   |
-| | PoyXmin      | | Accumulated Poynting flux through xmin boundary                         |
+| |              | |                                                                         |
+| | PoyXmin      | | Time-accumulated Poynting flux through xmin boundary                    |
 | | PoyXminInst  | | Current Poynting flux through xmin boundary                             |
 | |              | |  ... same for other boundaries                                          |
+| |              | | These Poynting scalars are integrated accross the boundary.             |
+| |              | | Consequently, they are energies per unit surface in 1D,                 |
+| |              | | energies per unit length in 2D, and energies in 3D.                     |
 +----------------+---------------------------------------------------------------------------+
 
 Checkout the :doc:`post-processing <post-processing>` documentation as well.

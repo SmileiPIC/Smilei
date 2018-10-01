@@ -1,5 +1,23 @@
-Field (or user defined) ionization
+Ionization
 ----------------------------------
+
+Three types of ionization have been introduced in Smilei.
+
+----
+
+Collisional ionization
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Ionization may occur during collisions.
+A detailed description is given on the :ref:`corresponding page<CollIonization>`.
+
+
+----
+
+.. _field_ionization:
+
+Field ionization
+^^^^^^^^^^^^^^^^^
 
 Field ionization is a process of particular importance for laser-plasma interaction
 in the ultra-high intensity regime.
@@ -11,19 +29,8 @@ and an *ad hoc* description needs to be implemented.
 A Monte-Carlo module for field ionization has thus been developed in :program:`Smilei`,
 closely following the method proposed in [Nuter2011]_.
 
-Alternatively, :program:`Smilei` now allows for the treatment of ionization considering a user-defined rate.
-The ionization rates are defined, for a given ``Species``, as described :ref:`here <Species>`.
-The Monte-Carlo procedure behind the treatment of ionization in this case closely follows
-that developed for field ionization.
-
-.. warning::
-  Note that, in the case of a user-defined ionization rate, only single ionization event per timestep are possible.
-
-
-----
-
 Physical model for field ionization
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""
 
 This scheme relies on the quasi-static rate for tunnel ionization derived in
 [Perelomov1966]_, [Perelomov1967]_ and [Ammosov1986]_.
@@ -91,7 +98,7 @@ greatly exceeds that of an electron with :math:`\vert m \vert = 1`.
 
 
 Monte-Carlo scheme
-^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""
 
 In :program:`Smilei`, tunnel ionization is treated for each species
 (defined by the user as subject to field ionization) right after field interpolation
@@ -131,10 +138,9 @@ Finally, to ensure energy conservation, an ionization current
 
 
 Benchmarks
-^^^^^^^^^^
+""""""""""""""""""""""""""""""""""""""
 
-In what follows, we present two benchmarks of the field ionization model,
-and two additional benchmarks for the user-defined ionization rate.
+In what follows, we present two benchmarks of the field ionization model.
 Both benchmarks consist in irradiating a thin (one cell long) neutral material (hydrogen or carbon)
 with a short (few optical-cycle long) laser with wavelength :math:`\lambda_0 = 0.8~{\mu m}`.
 
@@ -186,7 +192,23 @@ during a single timestep does occur and is found to be correctly accounted for
 in our simulations.
 
 
-Let us now introduce two benchmarks for which the rate of ionization is defined by the user.
+----
+ 
+.. _rate_ionization:
+
+User-defined ionization rate
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:program:`Smilei` can treat ionization considering a fixed rate prescribed by the user.
+The ionization rates are defined, for a given ``Species``, as described :ref:`here <Species>`.
+The Monte-Carlo procedure behind the treatment of ionization in this case closely follows
+that developed for field ionization.
+
+.. warning::
+  Note that, in the case of a user-defined ionization rate, only single ionization event per timestep are possible.
+
+
+Let us introduce two benchmarks for which the rate of ionization is defined by the user.
 The first benchmark considers an initially neutral species that can be potentially ionized twice.
 To run this case, a constant and uniform ionization rate is considered that depends only on the particle current charge
 state. For this particular case, we have considered a rate :math:`r_0 = 0.1` (in code units) for ionization from

@@ -78,6 +78,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
         for( Py_ssize_t is=0; is<ns; is++ )
             subgrids.push_back( PySequence_Fast_GET_ITEM(subgrid, is) );
     }
+    Py_DECREF(subgrid);
     // Verify the number of subgrids
     unsigned int nsubgrid = subgrids.size();
     if( nsubgrid != params.nDim_field ) {
@@ -330,6 +331,10 @@ void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime,
     
     #pragma omp master
     {
+        // write x_moved
+        double x_moved = simWindow ? simWindow->getXmoved() : 0.;
+        H5::attr(iteration_group_id, "x_moved", x_moved);
+        
         H5Gclose(iteration_group_id);
         if( tmp_dset_id>0 ) H5Dclose( tmp_dset_id );
         tmp_dset_id=0;

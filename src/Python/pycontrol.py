@@ -113,6 +113,8 @@ def _keep_python_running():
         profiles += [las.chirp_profile]
         if type(las.space_time_profile) is list:
             profiles += las.space_time_profile
+        if hasattr(las, "_extra_envelope"):
+            profiles += [las._extra_envelope]
     profiles += [ant.time_profile for ant in Antenna]
     if len(MovingWindow)>0 or len(LoadBalancing)>0:
         for s in Species:

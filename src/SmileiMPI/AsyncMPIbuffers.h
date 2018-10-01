@@ -8,6 +8,7 @@
 
 class Field;
 class Patch;
+class SmileiMPI; 
 
 class AsyncMPIbuffers {
 public:
@@ -17,7 +18,7 @@ public:
     virtual void allocate(unsigned int nDim_field);
 
     virtual void allocate(unsigned int nDim_field, Field* f, std::vector<unsigned int>& oversize);
-    void defineTags(Patch* patch, int tag ) ;
+    void defineTags(Patch* patch, SmileiMPI* smpi, int tag ) ;
     
     //! ndim vectors of 2 sent requests (1 per direction) 
     std::vector< std::vector<MPI_Request> > srequest;

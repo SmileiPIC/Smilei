@@ -6,8 +6,7 @@ compile:
   stage: compile
   only:
     - develop
-    - dev_issue226
-    - projection_for_diags 
+    - mpi_tags
 
   script:
     # Force workdir cleaning in case of retried
@@ -17,6 +16,7 @@ compile:
     - cp -r $CI_PROJECT_DIR /sps2/gitlab-runner/$CI_PIPELINE_ID
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
     # Set the environment
+    - make uninstall_happi
     - make happi
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     - module purge
@@ -32,8 +32,7 @@ makerun1D:
   stage: makerun
   only:
     - develop
-    - dev_issue226
-    - projection_for_diags
+    - mpi_tags
 
   script:
     # Move in test dir
@@ -45,8 +44,7 @@ makerun2D:
   stage: makerun
   only:
     - develop
-    - dev_issue226
-    - projection_for_diags
+    - mpi_tags
 
   script:
     # Move in test dir
@@ -58,8 +56,7 @@ makerun3D:
   stage: makerun
   only:
     - develop
-    - dev_issue226
-    - projection_for_diags
+    - mpi_tags
 
   script:
     # Move in test dir
@@ -71,8 +68,7 @@ makerunCollisions:
   stage: makerun
   only:
     - develop
-    - dev_issue226
-    - projection_for_diags
+    - mpi_tags
     
   script:
     # Move in test dir
