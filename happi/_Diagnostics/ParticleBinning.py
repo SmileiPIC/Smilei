@@ -4,7 +4,7 @@ from .._Utils import *
 class ParticleBinning(Diagnostic):
 	"""Class for loading a particle binning diagnostic"""
 	
-	def _init(self, diagNumber=None, timesteps=None, subset=None, sum=None, data_log=False, **kwargs):
+	def _init(self, diagNumber=None, timesteps=None, subset=None, sum=None, data_log=False, include={}, **kwargs):
 		
 		if diagNumber is None:
 			self._error += "Printing available particle binning diagnostics:\n"
@@ -41,8 +41,10 @@ class ParticleBinning(Diagnostic):
 			except:
 				self._error = "Particle binning diagnostic #"+str(d)+" invalid"
 				return
+		# Test the operation
+		self._include = include
 		try:
-			exec(self._re.sub('#\d+','1.',self.operation))
+			exec(self._re.sub('#\d+','1.',self.operation), self._include, {"t":0})
 		except ZeroDivisionError: pass
 		except:
 			self._error = "Cannot understand operation '"+self.operation+"'"
@@ -189,7 +191,7 @@ class ParticleBinning(Diagnostic):
 				
 				try:
 					axis["sumInfo"], self._selection[iaxis], self._finalShape[iaxis] \
-						= self._selectRange(sum[axistype], centers, axistype, axis_units, "sum")
+						= self._selectRange(sum[axistype], centers, axistype, axis_units, "sum", axis["edges_included"])
 				except:
 					return
 				
@@ -436,21 +438,21 @@ class ParticleBinning(Diagnostic):
 				self._h5items[d][index].read_direct(B, source_sel=self._selection) # get array
 				B = self._np.reshape(B, self._finalShape)
 			B[self._np.isnan(B)] = 0.
-			# Apply the summing
-			for iaxis in range(self._naxes):
-				if self._sums[iaxis]:
-					B = self._np.sum(B, axis=iaxis, keepdims=True)
-			# remove summed axes
-			B = self._np.squeeze(B)
-			# Divide by the bins size
-			B *= self._bsize
 			# Append this diag's array for the operation
 			A.update({ d:B })
 		# Calculate operation
 		data_operation = self.operation
 		for d in reversed(self._diags):
 			data_operation = data_operation.replace("#"+str(d),"A["+str(d)+"]")
-		A = eval(data_operation)
+		A = eval(data_operation, self._include, locals())
+		# Apply the summing
+		for iaxis in range(self._naxes):
+			if self._sums[iaxis]:
+				A = self._np.sum(A, axis=iaxis, keepdims=True)
+		# remove summed axes
+		A = self._np.squeeze(A)
+		# Divide by the bins size
+		A *= self._bsize
 		# log scale if requested
 		if self._data_log: A = self._np.log10(A)
 		return A
