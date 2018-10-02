@@ -8,7 +8,7 @@ class Field(Diagnostic):
 		
 		self.moving = moving
 		
-		self.cylindrical = self.namelist.Main.geometry == "3drz"
+		self.cylindrical = self.namelist.Main.geometry == "AMcylindrical"
 		
 		# Search available diags
 		diags = self.getDiags()
@@ -56,7 +56,7 @@ class Field(Diagnostic):
 		if self.cylindrical:
 			all_fields = list(self._fields)
 			self._fields = {}
-			for f in ["Ex","Er","Et","Bx","Br","Bt","Jx","Jr","Jt","Rho"]:
+			for f in ["El","Er","Et","Bl","Br","Bt","Jl","Jr","Jt","Rho"]:
 				imode = 0
 				while f+"_mode_"+str(imode) in all_fields:
 					imode += 1
@@ -410,8 +410,6 @@ class Field(Diagnostic):
 			f = field + "_mode_"
 			for imode in self._modes:
 				if imode >= nmode: continue
-				factor = 1.
-				if imode == 0: factor = 1.
 				B_real = self._np.empty(self._finalShape)
 				B_imag = self._np.empty(self._finalShape)
 				try:
@@ -426,9 +424,9 @@ class Field(Diagnostic):
 						B_imag = self._np.squeeze(B_imag)
 						h5item[f+str(imode)].read_direct(B_imag, source_sel=self._complex_selection_imag)
 						B_imag = self._np.reshape(B_imag, self._finalShape)
-				F += (factor*self._np.cos(imode*self._theta)) * B_real
+				F += (self._np.cos(imode*self._theta)) * B_real
 				if imode > 0:
-					F += (factor*self._np.sin(imode*self._theta)) * B_imag
+					F += (self._np.sin(imode*self._theta)) * B_imag
 				
 			C.update({ field:F })
 		
@@ -465,8 +463,6 @@ class Field(Diagnostic):
 			f = field + "_mode_"
 			for imode in self._modes:
 				if imode >= nmode: continue
-				factor = 1.
-				if imode == 0: factor = 1.
 				B = self._np.empty(self._raw_shape)
 				try:
 					h5item[f+str(imode)].read_direct(B)
@@ -475,10 +471,10 @@ class Field(Diagnostic):
 					h5item[f+str(imode)].read_direct(B)
 					B = self._np.reshape(B, self._raw_shape)
 				B_real = RegularGridInterpolator(self._raw_positions, B[:,0::2], bounds_error=False, fill_value=0.)(self._xr)
-				F += factor * self._np.cos(imode*self._theta) * B_real[self._selection]
+				F += self._np.cos(imode*self._theta) * B_real[self._selection]
 				if imode > 0.:
 					B_imag = RegularGridInterpolator(self._raw_positions, B[:,1::2], bounds_error=False, fill_value=0.)(self._xr)
-					F += factor * self._np.sin(imode*self._theta) * B_imag[self._selection]
+					F += self._np.sin(imode*self._theta) * B_imag[self._selection]
 				
 			C.update({ field:F })
 		

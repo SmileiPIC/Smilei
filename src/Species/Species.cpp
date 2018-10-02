@@ -25,7 +25,7 @@
 #include "InterpolatorFactory.h"
 #include "ProjectorFactory.h"
 #include "Profile.h"
-#include "ElectroMagn3DRZ.h"
+#include "ElectroMagnAM.h"
 #include "Projector.h"
 #include "ProjectorFactory.h"
 
@@ -331,7 +331,7 @@ void Species::initPosition(unsigned int nPart, unsigned int iPart, double *index
         int coeff_ = coeff;
         coeff = 1./coeff;
 
-        if (params.geometry != "3drz"){
+        if (params.geometry != "AMcylindrical"){
             for (unsigned int  p=iPart; p<iPart+nPart; p++) {
                 int i = (int)(p-iPart);
                 for(unsigned int idim=0; idim<nDim_particle; idim++) {
@@ -355,7 +355,7 @@ void Species::initPosition(unsigned int nPart, unsigned int iPart, double *index
         }
 
     } else if (position_initialization == "random") {
-        if (params.geometry=="3drz"){
+        if (params.geometry=="AMcylindrical"){
         for (unsigned int p= iPart; p<iPart+nPart; p++){
             particles->position(0,p)=indexes[0]+Rand::uniform()*cell_length[0];
             particles_r=sqrt(indexes[1]*indexes[1]+ 2.*Rand::uniform()*(indexes[1]+cell_length[1]*0.5)*cell_length[1]);
@@ -598,7 +598,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
     // -------------------------------
     if (time_dual>time_frozen) { // moving particle
 
-        smpi->dynamics_resize(ithread, nDim_field, bmax.back(), params.geometry=="3drz");
+        smpi->dynamics_resize(ithread, nDim_field, bmax.back(), params.geometry=="AMcylindrical");
         //Point to local thread dedicated buffers
         //Still needed for ionization
         vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
@@ -860,7 +860,7 @@ void Species::projection_for_diags(double time_dual, unsigned int ispec,
 {
     if ( diag_flag &&(!particles->is_test)){
 
-        if ( params.geometry != "3drz" ) {
+        if ( params.geometry != "AMcylindrical" ) {
             double *buf[4];
 
             for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
@@ -879,17 +879,17 @@ void Species::projection_for_diags(double time_dual, unsigned int ispec,
         }
         else {
             complex<double>* buf[4];
-            ElectroMagn3DRZ* emRZ = static_cast<ElectroMagn3DRZ*>( EMfields );
+            ElectroMagnAM* emAM = static_cast<ElectroMagnAM*>( EMfields );
             int n_species = patch->vecSpecies.size();
             for ( unsigned int imode = 0; imode<params.nmodes;imode++){
                 int ifield = imode*n_species+ispec;
                 
                 for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
             
-                    buf[0] = emRZ->rho_RZ_s[ifield] ? &(*emRZ->rho_RZ_s[ifield])(0) : &(*emRZ->rho_RZ_[imode])(0) ;
-                    buf[1] = emRZ->Jl_s [ifield] ? &(*emRZ->Jl_s [ifield])(0) : &(*emRZ->Jl_[imode])(0) ;
-                    buf[2] = emRZ->Jr_s [ifield] ? &(*emRZ->Jr_s [ifield])(0) : &(*emRZ->Jr_[imode])(0) ;
-                    buf[3] = emRZ->Jt_s [ifield] ? &(*emRZ->Jt_s [ifield])(0) : &(*emRZ->Jt_[imode])(0) ;
+                    buf[0] = emAM->rho_AM_s[ifield] ? &(*emAM->rho_AM_s[ifield])(0) : &(*emAM->rho_AM_[imode])(0) ;
+                    buf[1] = emAM->Jl_s [ifield] ? &(*emAM->Jl_s [ifield])(0) : &(*emAM->Jl_[imode])(0) ;
+                    buf[2] = emAM->Jr_s [ifield] ? &(*emAM->Jr_s [ifield])(0) : &(*emAM->Jr_[imode])(0) ;
+                    buf[3] = emAM->Jt_s [ifield] ? &(*emAM->Jt_s [ifield])(0) : &(*emAM->Jt_[imode])(0) ;
             
                     for (int iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
                         for (unsigned int quantity=0; quantity < 4; quantity++) {
@@ -968,7 +968,7 @@ void Species::computeCharge(unsigned int ispec, ElectroMagn* EMfields)
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
             // Not for now, else rho is incremented twice. Here and dynamics. Must add restartRhoJs and manage independantly diags output
             //b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(bin_start) : &(*EMfields->rho_)(bin_start);
-            if (!dynamic_cast<ElectroMagn3DRZ*>(EMfields)) {
+            if (!dynamic_cast<ElectroMagnAM*>(EMfields)) {
                 b_rho = &(*EMfields->rho_)(0);
 
                 for (unsigned int iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
@@ -976,11 +976,11 @@ void Species::computeCharge(unsigned int ispec, ElectroMagn* EMfields)
                 }
             }
             else {
-#ifdef _TODO_RZ_ 
-                ElectroMagn3DRZ* emRZ = static_cast<ElectroMagn3DRZ*>( EMfields );
-                int Nmode = emRZ->rho_RZ_.size();
+#ifdef _TODO_AM_ 
+                ElectroMagnAM* emAM = static_cast<ElectroMagnAM*>( EMfields );
+                int Nmode = emAM->rho_AM_.size();
                 for (unsigned int imode=0; imode<Nmode;imode++){
-                    b_rho = (double*)((*emRZ->rho_RZ_[imode])(bin_start));
+                    b_rho = (double*)((*emAM->rho_AM_[imode])(bin_start));
                     for (unsigned int iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
                         (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_dim);
                     }
@@ -1470,7 +1470,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                             initPosition(nPart, iPart, indexes, params);
                         }
                         initMomentum(nPart,iPart, temp, vel);
-                        if (params.geometry=="3drz"){
+                        if (params.geometry=="AMcylindrical"){
                             //if (j+cell_index[1]<0){
                            //    initWeight(nPart, iPart, density(i,j,k));
                            // } 
@@ -1775,7 +1775,7 @@ void Species::ponderomotive_update_susceptibility_and_momentum(double time_dual,
     // -------------------------------
     if (time_dual>time_frozen) { // moving particle
 
-        smpi->dynamics_resize(ithread, nDim_field, bmax.back(), params.geometry=="3drz");
+        smpi->dynamics_resize(ithread, nDim_field, bmax.back(), params.geometry=="AMcylindrical");
 
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) { // loop on ibin
 
@@ -1908,7 +1908,7 @@ void Species::ponderomotive_update_position_and_currents(double time_dual, unsig
     // -------------------------------
     if (time_dual>time_frozen) { // moving particle
     
-        smpi->dynamics_resize(ithread, nDim_field, bmax.back(), params.geometry=="3drz");
+        smpi->dynamics_resize(ithread, nDim_field, bmax.back(), params.geometry=="AMcylindrical");
     
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
 

@@ -90,7 +90,6 @@ The block ``Main`` is **mandatory** and has the following syntax::
       timestep    = 0.005,
       number_of_patches = [64],
       clrw = 5,
-      vecto = "disable",
       maxwell_solver = 'Yee',
       EM_boundary_conditions = [
           ["silver-muller", "silver-muller"],
@@ -105,14 +104,33 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
 .. py:data:: geometry
 
-  The geometry of the simulation: ``"1Dcartesian"``, ``"2Dcartesian"``, or ``"3Dcartesian"``.
+  The geometry of the simulation:
+  
+  * ``"1Dcartesian"``
+  * ``"2Dcartesian"``
+  * ``"3Dcartesian"``
+  * ``"AMcylindrical"``: Cylindrical geometry with azimuthal modes decomposition. See :doc:`algorithms`.
 
+  In the following documentation, all references to simulation dimension depends on the geometry.
+  Cartesian 1D, 2D,3D respectively stand for 1 dimensional, two dimensional and three dimensional and are ordered as :math:`(x,y,z)`.
+  In the case of the ``"AMcylindrical"``, all grid quantities are two dimensional and ordered as :math:`(x,r)`. 
+  Particle quantities (i.e. the Species block) are expressed in three dimensional Cartesian frame :math:`(x,y,z)`.
+    
+  .. warning::
+  
+    The ``"AMcylindrical"`` geometry is currently proposed in alpha version.
+    It has not been thoroughly tested and only Field diagnostics are available.
+    Boundary conditions must be set to ``"remove"`` for particles, ``"silver-muller"`` for longitudinal EM boundaries and ``"buneman"`` for transverse EM boundaries.
+    Vectorization, checkpoints, load balancing, ionization, collisions and order 4 interpolation are not supported yet in this geometry.
 
 .. py:data:: interpolation_order
 
-  :default: 2
+  :default: ``2``
 
-  Interpolation order. To this day, only ``2`` is available.
+  Interpolation order, defines particle shape function:
+ 
+  * ``2``  : 3 points stencil, supported in all configurations.
+  * ``4``  : 5 points stencil, not supported in vectorized 2D geometry.
 
 
 .. py:data:: grid_length
@@ -185,8 +203,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   :default: 'Yee'
 
-  The solver for Maxwell's equations. Only ``"Yee"`` is available for all geometries at the moment. ``"Cowan"``, ``"Grassi"`` and ``"Lehe"``
-  are available for 2DCartesian and ``"Lehe"`` is available for 3DCartesian. Lehe solver is described in this `paper <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.021301>`_
+  The solver for Maxwell's equations. Only ``"Yee"`` is available for all geometries at the moment. ``"Cowan"``, ``"Grassi"`` and ``"Lehe"`` are available for ``2DCartesian`` and ``"Lehe"`` is available for ``3DCartesian``. The Lehe solver is described in `this paper <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.021301>`_
 
 .. py:data:: solve_poisson
 
@@ -254,12 +271,6 @@ The block ``Main`` is **mandatory** and has the following syntax::
   | **Syntax 1:** ``[[1,0,0]]``, identical for all boundaries.
   | **Syntax 2:** ``[[1,0,0],[-1,0,0], ...]``,  different on each boundary.
 
-.. py:data:: Envelope_boundary_conditions
-
-  :type: list of lists of strings
-  :default: ``[["reflective"]]``
-
-  For the moment, only reflective boundary conditions are implemented in case the laser is modeled through an envelope model.
 
 .. py:data:: time_fields_frozen
 
@@ -300,6 +311,12 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   The value of the random seed. To create a per-processor random seed, you may use
   the variable  :py:data:`smilei_mpi_rank`.
+
+.. py:data:: number_of_AM
+
+  :default: 2
+
+  The number of azimuthal modes used for the Fourier decomposition in ``"AMcylindrical"`` geometry.
 
 ----
 
@@ -356,54 +373,46 @@ occur every 150 iterations.
 Vectorization
 ^^^^^^^^^^^^^^^^^^^^^
 
-The block ``Vectorization`` is optional. The dynamic vectorization mode is done at every timestep by default.
+The block ``Vectorization`` is optional. It controls the SIMD operations that can enhance the performance of some computations.
 
 .. code-block:: python
 
   Vectorization(
-      mode = "normal",
-      every = [5],
-      default = "scalar"
+      mode = "dynamic",
+      reconfigure_every = 5,
+..      default = "scalar"
   )
 
 .. py:data:: mode
 
-  :default: ``disable``
+  :default: ``"disable"``
 
-  Enable the use of the vectorized operators
+  * ``"disable"``: non-vectorized operators are used.
+    Recommended when the number of particles per cell stays below
+    10.
+  * ``"normal"``: vectorized operators are used.
+  * ``"dynamic"``: the best operators (scalar or vectorized)
+    are determined dynamically and locally (per patch and per species).
+    Vectorized operators use a new cell-based sorting method,
+    while scalar operators use an older version with slightly less overhead.
+  * ``"dynamic2"``: same as ``"dynamic"`` but the new cell-based sorting
+    method is used always.
+  
+  In the ``"dynamic"`` and ``"dynamic2"`` modes, :py:data:`clrw` is set to the maximum by default.
 
-  Advanced users. Sevevecto ral vectorization modes are available:
-    * ``disable``: non-vectorized operators are used.
-      This mode is recommended when the number of particles per cell keeps low
-      (below 8 particles per cell) all along the simulation.
-    * ``normal``: only vectorized operators are used
-    * ``dynamic``: in this mode, the best set of operators (scalar or vectorized)
-      is determined dynamically per patch.
-      In ``vectorized`` state, the cell sorting method is used whereas
-      in ``scalar`` state, the original sorting method is applied.
-      This means that a small overhead can be induced due to the patch reconfiguration.
-    * ``dynamic2``: this is the second dynamic mode.
-    Here, the cell sorting method is used in both ``scalar``
-    and ``vectorized`` state.
-
-  In ``dynamic`` mode, the reconfiguration period can be tuned
-  with the ``Vectorization`` panel.
-  By default, the reconfiguration is done at every timesteps.
-
-  In ``dynamic`` and ``dynamic2`` mode, ``clrw`` is set to the maximum by default.
-
-.. py:data:: every
+.. py:data:: reconfigure_every
 
   :default: 1
+  
+  The number of timesteps between each dynamic reconfiguration of the vectorized operators, when using the ``"dynamic"`` (or ``"dynamic2"``) vectorization modes. It may be set to a :ref:`time selection <TimeSelections>` as well.
 
-  The time selection for the patch reconfiguration when the ``dynamic`` vectorization is activated.
 
-.. py:data:: default
-
-  :default: ``vectorized``
-
-  Default species state when one of the dynamic computational mode is activated
-  and no particle are present in the patch.
+.. .. py:data:: default
+..
+..  :default: ``vectorized``
+..
+..  Default state when one of the dynamic computational mode is activated
+..  and no particle is present in the patch.
 
 
 ----
@@ -1113,44 +1122,6 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
         angle = 10./180.*3.14159
     )
 
-
-Laser envelope model
-^^^^^^^^^^^^^^^^^^^^^^
-
-In geometry (``"3Dcartesian"``) it is possible to model a laser pulse propagating in the ``x`` direction through an envelope model (see :doc:`laser_envelope` for the advantages and limits of this approximation).
-The fast oscillations of the laser are neglected and all the physical quantities of the simulation, including the electromagnetic fields and their source terms, as well as the particles positions and momenta, are meant to be an average over one or more optical cycles.
-Effects involving characteristic lengths comparable to the laser central wavelength, or effects dependent on the polarization of the laser, cannot be modeled with this option.
-
-For the moment the only way to specify a laser pulse through this model in :program:`Smilei` is through a cylindrically symmetric 3D gaussian beam.
-Contrarily to a standard Laser, the laser envelope will be entirely initialized inside the simulation box at the start of the simulation.
-
-Following is the laser envelope creator::
-
-    LaserEnvelopeGaussian3D(
-        a0              = 1.,
-        focus           = [150., 40., 40.],
-        waist           = 30.,
-        time_envelope   = tgaussian(center=150., fwhm=40.),
-        envelope_solver = 'explicit',
-    )
-
-The arguments appearing ``LaserEnvelopeGaussian3D`` have the same meaning they would have in a normal LaserGaussian3D, with some differences:
-
-.. py:data:: time_envelope
-
-   Since the envelope will be entirely initialized in the simulation box already at the start of the simulation, the time envelope will be applied in the ``x`` direction instead of time. It is recommended to initialize the laser envelope in vacuum, separated from the plasma, to avoid unphysical results.
-
-.. py:data:: envelope_solver
-
-  :default: ``explicit``
-
-  For the moment the only available solver for the laser envelope equation is an explicit solver with centered finite differences in space and time.
-
-It is important to remember that the profile defined through the block ``LaserEnvelopeGaussian3D`` corresponds to the complex envelope of the laser vector potential component :math:`\tilde{A}` in the polarization direction. 
-The calculation of the correspondent complex envelope for the laser electric field component in that direction is described in :doc:`laser_envelope`. 
-
-
-
   .. py:data:: space_time_profile
 
     :type: A list of two *python* functions
@@ -1189,6 +1160,52 @@ The calculation of the correspondent complex envelope for the laser electric fie
     
     Angle between the boundary and the profile's plane, the rotation being around :math:`z`.
     See :doc:`this page <laser_offset>` for more details.
+
+
+Laser envelope model
+^^^^^^^^^^^^^^^^^^^^^^
+
+In geometry (``"3Dcartesian"``) it is possible to model a laser pulse propagating in the ``x`` direction through an envelope model (see :doc:`laser_envelope` for the advantages and limits of this approximation).
+The fast oscillations of the laser are neglected and all the physical quantities of the simulation, including the electromagnetic fields and their source terms, as well as the particles positions and momenta, are meant to be an average over one or more optical cycles.
+Effects involving characteristic lengths comparable to the laser central wavelength, or effects dependent on the polarization of the laser, cannot be modeled with this option.
+
+For the moment the only way to specify a laser pulse through this model in :program:`Smilei` is through a cylindrically symmetric 3D gaussian beam.
+Contrarily to a standard Laser, the laser envelope will be entirely initialized inside the simulation box at the start of the simulation.
+
+Following is the laser envelope creator::
+
+    LaserEnvelopeGaussian3D(
+        a0              = 1.,
+        focus           = [150., 40., 40.],
+        waist           = 30.,
+        time_envelope   = tgaussian(center=150., fwhm=40.),
+        envelope_solver = 'explicit',
+        Envelope_boundary_conditions = [ ["reflective"] ],
+    )
+
+The arguments appearing ``LaserEnvelopeGaussian3D`` have the same meaning they would have in a normal LaserGaussian3D, with some differences:
+
+.. py:data:: time_envelope
+
+   Since the envelope will be entirely initialized in the simulation box already at the start of the simulation, the time envelope will be applied in the ``x`` direction instead of time. It is recommended to initialize the laser envelope in vacuum, separated from the plasma, to avoid unphysical results.
+
+.. py:data:: envelope_solver
+
+  :default: ``explicit``
+
+  For the moment the only available solver for the laser envelope equation is an explicit solver with centered finite differences in space and time.
+
+.. py:data:: Envelope_boundary_conditions
+
+  :type: list of lists of strings
+  :default: ``[["reflective"]]``
+
+  For the moment, only reflective boundary conditions are implemented in the resolution of the envelope equation.
+
+
+It is important to remember that the profile defined through the block ``LaserEnvelopeGaussian3D`` corresponds to the complex envelope of the laser vector potential component :math:`\tilde{A}` in the polarization direction. 
+The calculation of the correspondent complex envelope for the laser electric field component in that direction is described in :doc:`laser_envelope`. 
+Note that only order 2 interpolation is supported in presence of the envelope model for the laser.
 
   
 ----
@@ -1500,7 +1517,7 @@ reflect, stop, thermalize or kill particles which reach it::
 Collisions
 ^^^^^^^^^^
 
-To have binary collisions in :program:`Smilei`, add one or several ``Collisions`` blocks::
+:doc:`collisions` are specified by one or several ``Collisions`` blocks::
 
   Collisions(
       species1 = ["electrons1",  "electrons2"],
@@ -1531,6 +1548,12 @@ To have binary collisions in :program:`Smilei`, add one or several ``Collisions`
   then they cannot have any common species.
   If the two groups are exactly equal, we call this situation **intra-collisions**.
 
+  .. note::
+
+    If both lists ``species1`` and ``species2`` contain only one species,
+    the algorithm is potentially faster than the situation with several
+    species in one or the other list. This is especially true if the
+    machine accepts SIMD vectorization.
 
 .. py:data:: coulomb_log
 
@@ -1546,8 +1569,8 @@ To have binary collisions in :program:`Smilei`, add one or several ``Collisions`
 
   :default: 0
 
-  | Number of timesteps between each output of information about collisions.
-  | If 0, there will be no outputs.
+  Number of timesteps between each output of information about collisions.
+  If 0, there will be no outputs.
 
 
 .. _CollisionalIonization:
@@ -1561,14 +1584,12 @@ To have binary collisions in :program:`Smilei`, add one or several ``Collisions`
   same :py:data:`atomic_number`.
 
 
-For more details about the collision scheme in :program:`Smilei`, see :doc:`collisions`
-
 
 --------------------------------------------------------------------------------
 
 .. _RadiationReaction:
 
-Radiations reaction
+Radiation reaction
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The block ``RadiationReaction()`` enables to tune the radiation loss properties
@@ -1577,7 +1598,7 @@ Many parameters are used for the generation of the cross-section tables
 for the Monte-Carlo emission process.
 If the tables already exist in the simulation directory, then they will be read
 and no new table will be generated by :program:`Smilei`.
-Else, :program:`Smilei` has all the components to compute and output these
+Otherwise, :program:`Smilei` can compute and output these
 tables.
 
 ::
@@ -2011,7 +2032,7 @@ This is done by including a block ``DiagFields``::
   | | Rho_abc      | |  Density of species "abc"                           |
   +----------------+-------------------------------------------------------+
 
-  In the case of spectral cylindrical geometry (``3drz``), the ``x``, ``y`` and ``z``
+  In ``AMcylindrical`` geometry, the ``x``, ``y`` and ``z``
   indices are replaced by ``x``, ``r`` and ``t`` (theta). In addition,
   the angular Fourier modes are denoted by the suffix ``_mode_i`` where ``i``
   is the mode number. In summary, the list of fields reads as follows.
@@ -2030,14 +2051,15 @@ This is done by including a block ``DiagFields``::
   |  The same notation works for Jx, Jr, Jt, and Rho                       |
   +------------------------------+-----------------------------------------+
 
-  In the case of an envelope model for the laser (see :doc:`laser_envelope`), the following fields are also available:
+  In the case of an envelope model for the laser (see :doc:`laser_envelope`),
+  the following fields are also available:
 
   .. rst-class:: nowrap
 
   +----------------+-------------------------------------------------------+
-  | |              | | Module of laser vector potential's complex envelope |                                               
+  | |              | | Module of laser vector potential's complex envelope |
   | | Env_A_abs    | | :math:`\tilde{A}` (component along the polarization |
-  | |              | | direction)                                          |                                           
+  | |              | | direction)                                          |
   +----------------+-------------------------------------------------------+
   | | Env_Chi      | | Total  susceptibility :math:`\chi`                  |
   +----------------+-------------------------------------------------------+

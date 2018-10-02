@@ -17,10 +17,13 @@
 using namespace std;
 
 LaserEnvelope::LaserEnvelope( Params& params, Patch* patch, ElectroMagn* EMfields ) :
-cell_length    ( params.cell_length) ,timestep( params.timestep)
+    profile_   ( NULL               ),
+    cell_length( params.cell_length ),
+    timestep   ( params.timestep    )
+    
 {
     
-    PyObject * profile;
+    PyObject * profile = NULL;
     if (!PyTools::extract_pyProfile("envelope_profile",profile,"LaserEnvelope"))
         MESSAGE("No envelope profile set !");
     profile_ = new Profile(profile, params.nDim_field+1, "envelope");
@@ -33,7 +36,10 @@ cell_length    ( params.cell_length) ,timestep( params.timestep)
     
     // Read laser envelope parameters
     std:: string envelope_solver  = "explicit"; // default value
-    bool envelope_solver_read          = PyTools::extract("envelope_solver",envelope_solver,"LaserEnvelope");
+    
+    PyTools::extract("envelope_solver",envelope_solver,"LaserEnvelope");
+    
+
     
     // double omega_value(0);
     // PyTools::extract("omega",omega_value,"LaserEnvelope");
@@ -47,7 +53,9 @@ cell_length    ( params.cell_length) ,timestep( params.timestep)
     
     info << "\t Laser Envelope parameters: "<< endl;
     // envelope solver
-    info << "\t\t\tenvelope solver    : " << envelope_solver << endl;
+    info << "\t\tEnvelope solver    : " << envelope_solver << endl;
+
+    
     // a0
     //info << "\t\t\ta0                 : " << a0_laser << endl;
     // waist
@@ -59,6 +67,13 @@ cell_length    ( params.cell_length) ,timestep( params.timestep)
     }
     
     EnvBoundCond = EnvelopeBC_Factory::create(params, patch);
+
+    if( patch->isMaster() ) {
+    for ( unsigned int i=0 ; i<params.grid_length.size() ; i++ ){
+        MESSAGE(1,"\tdimension " << i);
+        MESSAGE(1,"\t- Envelope boundary conditions: " << "(" << params.Env_BCs[i][0] << ", " << params.Env_BCs[i][1] << ")");
+        }
+    }
 }
 
 // Cloning constructor

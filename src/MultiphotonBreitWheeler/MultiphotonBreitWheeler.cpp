@@ -157,9 +157,12 @@ void MultiphotonBreitWheeler::operator() (Particles &particles,
         momentum[i] =  &( particles.momentum(i,0) );
 
     // Position shortcut
-    double* position[3];
-    for ( int i = 0 ; i<nDim_ ; i++ )
-        position[i] =  &( particles.position(i,0) );
+    // Commented particles displasment while particles injection not managed  in a better way
+    //    for now particles could be created outside of the local domain
+    //    without been subject do boundary conditions (including domain exchange)
+    //double* position[3];
+    //for ( int i = 0 ; i<nDim_ ; i++ )
+    //    position[i] =  &( particles.position(i,0) );
 
     // Weight shortcut
     // double* weight = &( particles.weight(0) );
@@ -298,7 +301,10 @@ void MultiphotonBreitWheeler::pair_emission(int ipart,
     double * chi = new double[2];  // temporary quantum parameters
     double   inv_chiph_gammaph;    // (gamma_ph - 2) / chi
     double   p;
-    double   inv_gamma;
+    // Commented particles displasment while particles injection not managed  in a better way
+    //    for now particles could be created outside of the local domain
+    //    without been subject do boundary conditions (including domain exchange)
+    //double   inv_gamma;
 
     inv_chiph_gammaph = (gammaph-2.)/particles.chi(ipart);
 
@@ -334,7 +340,7 @@ void MultiphotonBreitWheeler::pair_emission(int ipart,
             }
 
             // gamma
-            inv_gamma = 1./sqrt(1.+p*p);
+            //inv_gamma = 1./sqrt(1.+p*p);
 
             // Positions
             for (i=0; i<nDim_; i++) {

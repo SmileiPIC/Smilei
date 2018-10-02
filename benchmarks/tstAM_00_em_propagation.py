@@ -12,8 +12,8 @@ Lsim = [dx*nx,nr*dr] # length of the simulation
 dt = 0.18
 
 Main(
-    geometry = "3drz",
-    nmodes = 2,
+    geometry = "AMcylindrical",
+    number_of_AM = 2,
     interpolation_order = 2 ,
     solve_poisson = False,
     cell_length = [dx, dr],

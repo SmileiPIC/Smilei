@@ -1,6 +1,6 @@
 
-#ifndef DIAGNOSTICFIELDSRZ_H
-#define DIAGNOSTICFIELDSRZ_H
+#ifndef DIAGNOSTICFIELDSAM_H
+#define DIAGNOSTICFIELDSAM_H
 
 #include <string>
 #include <vector>
@@ -8,10 +8,10 @@
 #include "DiagnosticFields.h"
 #include "Tools.h"
 
-class DiagnosticFieldsRZ : public DiagnosticFields {
+class DiagnosticFieldsAM : public DiagnosticFields {
 public:
-    DiagnosticFieldsRZ( Params &params, SmileiMPI* smpi, VectorPatch &vecPatches, int, OpenPMDparams& );
-    ~DiagnosticFieldsRZ();
+    DiagnosticFieldsAM( Params &params, SmileiMPI* smpi, VectorPatch &vecPatches, int, OpenPMDparams& );
+    ~DiagnosticFieldsAM();
     
     void setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatches ) override;
     

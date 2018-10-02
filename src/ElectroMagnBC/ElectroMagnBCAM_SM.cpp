@@ -1,4 +1,4 @@
-#include "ElectroMagnBCRZ_SM.h"
+#include "ElectroMagnBCAM_SM.h"
 
 #include <cstdlib>
 
@@ -17,7 +17,7 @@
 
 using namespace std;
 
-ElectroMagnBCRZ_SM::ElectroMagnBCRZ_SM( Params &params, Patch* patch, unsigned int _min_max )
+ElectroMagnBCAM_SM::ElectroMagnBCAM_SM( Params &params, Patch* patch, unsigned int _min_max )
 : ElectroMagnBC( params, patch, _min_max )
 {
     // conversion factor from degree to radian
@@ -75,10 +75,10 @@ ElectroMagnBCRZ_SM::ElectroMagnBCRZ_SM( Params &params, Patch* patch, unsigned i
     // Parameters for the Silver-Mueller boundary conditions
     // -----------------------------------------------------
 
-    #ifdef _TODO_RZ
+    #ifdef _TODO_AM
 	#endif
     // Xmin boundary
-    double theta  = 0.0*conv_deg2rad; //0.0;
+    //double theta  = 0.0*conv_deg2rad; //0.0;
     double factor = 1.0/(1.0 + dt_ov_dl);
     Alpha_SM_Xmin    = 2.0*factor;
     Beta_SM_Xmin     = - (1-dt_ov_dl)*factor;
@@ -86,7 +86,7 @@ ElectroMagnBCRZ_SM::ElectroMagnBCRZ_SM( Params &params, Patch* patch, unsigned i
     Delta_SM_Xmin    = - dt_ov_dr*factor;
     Epsilon_SM_Xmin  = Icpx*factor*dt ;
     // Xmax boundary
-    theta         = M_PI;
+    //theta         = M_PI;
     factor        = 1.0/(1.0 + dt_ov_dl);
     Alpha_SM_Xmax    = 2.0*factor;
     Beta_SM_Xmax     = - (1.0 -dt_ov_dl)*factor;
@@ -99,7 +99,7 @@ ElectroMagnBCRZ_SM::ElectroMagnBCRZ_SM( Params &params, Patch* patch, unsigned i
 }
 
 
-void ElectroMagnBCRZ_SM::save_fields(Field* my_field, Patch* patch) {
+void ElectroMagnBCAM_SM::save_fields(Field* my_field, Patch* patch) {
     cField2D* field2D=static_cast<cField2D*>(my_field);
     
     if (min_max == 0 && patch->isXmin() ) {
@@ -180,7 +180,7 @@ void ElectroMagnBCRZ_SM::save_fields(Field* my_field, Patch* patch) {
     }
 }
 
-void ElectroMagnBCRZ_SM::disableExternalFields()
+void ElectroMagnBCAM_SM::disableExternalFields()
 {
     Bl_val.resize(0);
     Br_val.resize(0);
@@ -192,20 +192,20 @@ void ElectroMagnBCRZ_SM::disableExternalFields()
 // ---------------------------------------------------------------------------------------------------------------------
 // Apply Boundary Conditions
 // ---------------------------------------------------------------------------------------------------------------------
-void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* patch)
+void ElectroMagnBCAM_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* patch)
 {
     // Loop on imode 
     for (unsigned int imode=0 ; imode<Nmode ; imode++) {
 		// Static cast of the fields
-		//cField2D* ElRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->El_[imode];
-		cField2D* ErRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Er_[imode];
-		cField2D* EtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Et_[imode];
-		cField2D* BlRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bl_[imode];
-		cField2D* BrRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Br_[imode];
-		cField2D* BtRZ = (static_cast<ElectroMagn3DRZ*>(EMfields))->Bt_[imode];
-		bool isYmin = (static_cast<ElectroMagn3DRZ*>(EMfields))->isYmin;
-		bool isYmax = (static_cast<ElectroMagn3DRZ*>(EMfields))->isYmax;
-		int     j_glob = (static_cast<ElectroMagn3DRZ*>(EMfields))->j_glob_;	
+		//cField2D* El = (static_cast<ElectroMagnAM*>(EMfields))->El_[imode];
+		cField2D* Er = (static_cast<ElectroMagnAM*>(EMfields))->Er_[imode];
+		cField2D* Et = (static_cast<ElectroMagnAM*>(EMfields))->Et_[imode];
+		cField2D* Bl = (static_cast<ElectroMagnAM*>(EMfields))->Bl_[imode];
+		cField2D* Br = (static_cast<ElectroMagnAM*>(EMfields))->Br_[imode];
+		cField2D* Bt = (static_cast<ElectroMagnAM*>(EMfields))->Bt_[imode];
+		bool isYmin = (static_cast<ElectroMagnAM*>(EMfields))->isYmin;
+		//bool isYmax = (static_cast<ElectroMagnAM*>(EMfields))->isYmax;
+		int     j_glob = (static_cast<ElectroMagnAM*>(EMfields))->j_glob_;	
  
 		if (min_max == 0 && patch->isXmin() ) {
 			//MESSAGE("Xmin");		    
@@ -232,15 +232,15 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 
 		        //x= Xmin
 			unsigned int i=0;
-		        (*BrRZ)(i,j) = Alpha_SM_Xmin   * (*EtRZ)(i,j)
-		        +              Beta_SM_Xmin    * (*BrRZ)(i+1,j)
+		        (*Br)(i,j) = Alpha_SM_Xmin   * (*Et)(i,j)
+		        +              Beta_SM_Xmin    * (*Br)(i+1,j)
 		        +              Gamma_SM_Xmin   * byW;
-		        +              Delta_SM_Xmin   *( (*BlRZ)(i,j+1)- (*BlRZ)(i,j));
-		//        if (std::abs((*BrRZ)(i,j))>1.){
-                //            MESSAGE("BrRZSM");                
+		        +              Delta_SM_Xmin   *( (*Bl)(i,j+1)- (*Bl)(i,j));
+		//        if (std::abs((*Br)(i,j))>1.){
+                //            MESSAGE("BrAMSM");                
                 //            MESSAGE(i);
                 //            MESSAGE(j);    
-                //            MESSAGE((*BrRZ)(i,j));
+                //            MESSAGE((*Br)(i,j));
                 //        }
 		    }//j  ---end compute Br
 		    
@@ -264,15 +264,15 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 			}
 		        //x=Xmin
 			unsigned int i=0;
-		        (*BtRZ)(i,j) = -Alpha_SM_Xmin * (*ErRZ)(i,j)
-		        +               Beta_SM_Xmin  *( (*BtRZ)(i+1,j))
+		        (*Bt)(i,j) = -Alpha_SM_Xmin * (*Er)(i,j)
+		        +               Beta_SM_Xmin  *( (*Bt)(i+1,j))
 		        +               Gamma_SM_Xmin * bzW
-				+               Epsilon_SM_Xmin *(double)imode/((j_glob+j+0.5)*dr)*(*BlRZ)(i,j) ;
-                //if (std::abs((*BtRZ)(i,j))>1.){
-                //MESSAGE("BtRZSM");                
+				+               Epsilon_SM_Xmin *(double)imode/((j_glob+j+0.5)*dr)*(*Bl)(i,j) ;
+                //if (std::abs((*Bt)(i,j))>1.){
+                //MESSAGE("BtSM");                
                 //MESSAGE(i);
                 //MESSAGE(j);    
-                //MESSAGE((*BtRZ)(i,j));
+                //MESSAGE((*Bt)(i,j));
                 //}
 				
 				//MESSAGE("EPS")
@@ -302,15 +302,15 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 		            }
 			}
 			unsigned int i= nl_d-1;
-		        (*BrRZ)(i,j) = - Alpha_SM_Xmax   * (*EtRZ)(i-1,j)
-		         +                   Beta_SM_Xmax    * (*BrRZ)(i-1,j)
+		        (*Br)(i,j) = - Alpha_SM_Xmax   * (*Et)(i-1,j)
+		         +                   Beta_SM_Xmax    * (*Br)(i-1,j)
 		         +                   Gamma_SM_Xmax   * byE
-		         +                   Delta_SM_Xmax   * ((*BlRZ)(i-1,j+1)- (*BlRZ)(i-1,j)); // Check x-index
-                //if (std::abs((*BrRZ)(i,j))>1.){
-                //MESSAGE("BrRZSMM");                
+		         +                   Delta_SM_Xmax   * ((*Bl)(i-1,j+1)- (*Bl)(i-1,j)); // Check x-index
+                //if (std::abs((*Br)(i,j))>1.){
+                //MESSAGE("BrSMM");                
                 //MESSAGE(i);
                 //MESSAGE(j);    
-                //MESSAGE((*BrRZ)(i,j));
+                //MESSAGE((*Br)(i,j));
                 //}				    
 		        
 		    }//j  ---end compute Br
@@ -335,15 +335,15 @@ void ElectroMagnBCRZ_SM::apply(ElectroMagn* EMfields, double time_dual, Patch* p
 				}
 			}
 		        unsigned int i= nl_d-1;
-		        (*BtRZ)(i,j) = Alpha_SM_Xmax * (*ErRZ)(i-1,j)
-		         +                    Beta_SM_Xmax  * (*BtRZ)(i-1,j)
+		        (*Bt)(i,j) = Alpha_SM_Xmax * (*Er)(i-1,j)
+		         +                    Beta_SM_Xmax  * (*Bt)(i-1,j)
 		         +                    Gamma_SM_Xmax * bzE
-				 +					  Epsilon_SM_Xmax * (double)imode /((j_glob+j+0.5)*dr)* (*BlRZ)(i-1,j)	;
-                //if (std::abs((*BtRZ)(i,j))>1.){
-                //MESSAGE("BtRZSMM");                
+				 +					  Epsilon_SM_Xmax * (double)imode /((j_glob+j+0.5)*dr)* (*Bl)(i-1,j)	;
+                //if (std::abs((*Bt)(i,j))>1.){
+                //MESSAGE("BtSMM");                
                 //MESSAGE(i);
                 //MESSAGE(j);    
-                //MESSAGE((*BtRZ)(i,j));
+                //MESSAGE((*Bt)(i,j));
                 //}
 		        
 		    }//j  ---end compute Bt

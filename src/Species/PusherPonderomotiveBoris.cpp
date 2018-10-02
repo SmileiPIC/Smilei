@@ -36,7 +36,7 @@ void PusherPonderomotiveBoris::operator() (Particles &particles, SmileiMPI* smpi
     double alpha, inv_det_T, Tx, Ty, Tz, Tx2, Ty2, Tz2;
     double TxTy, TyTz, TzTx;
     double pxsm, pysm, pzsm;
-    double local_invgf;
+    //double local_invgf;
     double gamma0,gamma0_sq,gamma_ponderomotive;
     double charge_sq_over_mass_sq;
 

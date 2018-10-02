@@ -50,7 +50,7 @@ colors = ["b","k","r","g"]
 fig = plt.figure(3, figsize=(6,3.5))
 
 for element in ["H", "Al", "Zn", "Au"]:
-	print "Analyzing "+element
+	print("Analyzing "+element)
 	
 	S=happi.Open("ionization_equilibrium"+element)
 	

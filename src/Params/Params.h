@@ -65,6 +65,9 @@ public:
     //! compute grid-related parameters & apply normalization
     void compute();
 
+    //! check if input parameters & apply normalizationare coherent
+    void check_consistency();
+
     //! print a summary of the values in txt
     void print_init();
     //! Printing out some data at a given timestep

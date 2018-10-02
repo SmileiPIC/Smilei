@@ -34,7 +34,7 @@ void PusherPonderomotivePositionBorisV::operator() (Particles &particles, Smilei
     double gamma0,gamma0_sq,gamma_ponderomotive;
     double pxsm, pysm, pzsm;
     
-    int* cell_keys;
+    //int* cell_keys;
 
     double* momentum[3];
     for ( int i = 0 ; i<3 ; i++ )
@@ -61,8 +61,8 @@ void PusherPonderomotivePositionBorisV::operator() (Particles &particles, Smilei
     double* GradPhioldy = &( (*GradPhioldpart)[1*nparts] );
     double* GradPhioldz = &( (*GradPhioldpart)[2*nparts] );
     
-    particles.cell_keys.resize(nparts);
-    cell_keys = &( particles.cell_keys[0]);
+    //particles.cell_keys.resize(nparts);
+    //cell_keys = &( particles.cell_keys[0]);
 
     #pragma omp simd
     for (int ipart=istart ; ipart<iend; ipart++ ) { // begin loop on particles
@@ -94,15 +94,15 @@ void PusherPonderomotivePositionBorisV::operator() (Particles &particles, Smilei
 
     } // end loop on particles
 
-//    #pragma omp simd
-//    for (int ipart=0 ; ipart<nparts; ipart++ ) {
-//    
-//        for ( int i = 0 ; i<nDim_ ; i++ ){ 
-//            cell_keys[ipart] *= nspace[i];
-//            cell_keys[ipart] += round( (position[i][ipart]-min_loc_vec[i]) * dx_inv_[i] );
-//        }
-//        
-//    } // end loop on particles
+    //#pragma omp simd
+    //for (int ipart=0 ; ipart<nparts; ipart++ ) {
+    //
+    //    for ( int i = 0 ; i<nDim_ ; i++ ){ 
+    //        cell_keys[ipart] *= nspace[i];
+    //        cell_keys[ipart] += round( (position[i][ipart]-min_loc_vec[i]) * dx_inv_[i] );
+    //    }
+    //    
+    //} // end loop on particles
 
 
 }

@@ -86,8 +86,6 @@ public:
     //! cell length (from Params)
     const std::vector<double> cell_length;
     
-    //! \todo Generalise this to none-cartersian geometry (e.g rz, MG & JD)
-    
     //! x-component of the electric field
     Field* Ex_;
     

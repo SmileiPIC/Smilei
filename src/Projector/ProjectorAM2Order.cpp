@@ -1,10 +1,10 @@
-#include "ProjectorRZ2Order.h"
+#include "ProjectorAM2Order.h"
 
 #include <cmath>
 #include <iostream>
 #include <complex>
 #include "dcomplex.h"    
-#include "ElectroMagn3DRZ.h"
+#include "ElectroMagnAM.h"
 #include "cField2D.h"
 #include "Particles.h"
 #include "Tools.h"
@@ -14,23 +14,36 @@ using namespace std;
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Constructor for ProjectorRZ2Order
+// Constructor for ProjectorAM2Order
 // ---------------------------------------------------------------------------------------------------------------------
-ProjectorRZ2Order::ProjectorRZ2Order (Params& params, Patch* patch) : ProjectorRZ(params, patch)
+ProjectorAM2Order::ProjectorAM2Order (Params& params, Patch* patch) : ProjectorAM(params, patch)
 {
+    dt = params.timestep;
+    dr = params.cell_length[1];
     dl_inv_   = 1.0/params.cell_length[0];
     dl_ov_dt  = params.cell_length[0] / params.timestep;
     dr_inv_   = 1.0/params.cell_length[1];
-    dt = params.timestep;
     dr_ov_dt  = params.cell_length[1] / params.timestep;
     Nmode=params.nmodes; 
     one_third = 1.0/3.0;
-    dr = params.cell_length[1];
     i_domain_begin = patch->getCellStartingGlobalIndex(0);
     j_domain_begin = patch->getCellStartingGlobalIndex(1);
     n_species = patch->vecSpecies.size();
 
     nprimr = params.n_space[1] + 2*params.oversize[1] + 1;
+
+    invV.resize(nprimr);
+    invVd.resize(nprimr+1);
+
+    for (int j = 0; j< nprimr; j++){
+        if (j_domain_begin+j == 0){
+            invV[j] = 6./dr; // Correction de Verboncoeur ordre 1.
+        } else {
+            invV[j] = 1./abs((j_domain_begin+j)*dr);
+        }
+    }
+    for (int j = 0; j< nprimr+1; j++)
+        invVd[j] = 1./abs((j_domain_begin+j-0.5)*dr);
 
     DEBUG("cell_length "<< params.cell_length[0]);
 
@@ -38,9 +51,9 @@ ProjectorRZ2Order::ProjectorRZ2Order (Params& params, Patch* patch) : ProjectorR
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Destructor for ProjectorRZ2Order
+// Destructor for ProjectorAM2Order
 // ---------------------------------------------------------------------------------------------------------------------
-ProjectorRZ2Order::~ProjectorRZ2Order()
+ProjectorAM2Order::~ProjectorAM2Order()
 {
 }
 
@@ -48,13 +61,8 @@ ProjectorRZ2Order::~ProjectorRZ2Order()
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents for mode=0
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
+void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, Particles &particles, unsigned int ipart, double invgf, int* iold, double* deltaold)
 {   int nparts= particles.size();
-    //std::cout<<"particle momentum in x in proj"<<particles.momentum(0,ipart)<<std::endl;
-    //std::cout<<"particle momentum in y in proj"<<particles.momentum(1,ipart)<<std::endl;
-    //std::cout<<"particle momentum in z in proj"<<particles.momentum(2,ipart)<<std::endl; 
-    //std::cout<<"particle position in x in proj"<<particles.position(0,ipart)<<std::endl;
-    //std::cout<<"particle position in r in proj"<<particles.position(1,ipart)<<std::endl;
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------   int iloc,
@@ -67,16 +75,16 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     double xpn, ypn, rp;
     double delta, delta2;
     // arrays used for the Esirkepov projection method
-    double  Sx0[5], Sx1[5], Sy0[5], Sy1[5], DSx[5], DSy[5];
-    double  Wx[5][5], Wy[5][5], Wz[5][5], Jx_p[5][5], Jy_p[5][5], Jz_p[5][5];
+    double  Sl0[5], Sl1[5], Sr0[5], Sr1[5], DSl[5], DSr[5];
+    double  Wl[5][5], Wr[5][5], Wt[5][5], Jl_p[5][5], Jr_p[5][5], Jt_p[5][5];
     for (unsigned int i=0; i<5; i++) {
-        Sx1[i] = 0.;
-        Sy1[i] = 0.;
+        Sl1[i] = 0.;
+        Sr1[i] = 0.;
     }
-    Sx0[0] = 0.;
-    Sx0[4] = 0.;
-    Sy0[0] = 0.;
-    Sy0[4] = 0.;
+    Sl0[0] = 0.;
+    Sl0[4] = 0.;
+    Sr0[0] = 0.;
+    Sr0[4] = 0.;
 
 
     // --------------------------------------------------------
@@ -86,15 +94,15 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // locate the particle on the primal grid at former time-step & calculate coeff. S0
     delta = deltaold[0*nparts];
     delta2 = delta*delta;
-    Sx0[1] = 0.5 * (delta2-delta+0.25);
-    Sx0[2] = 0.75-delta2;
-    Sx0[3] = 0.5 * (delta2+delta+0.25);
+    Sl0[1] = 0.5 * (delta2-delta+0.25);
+    Sl0[2] = 0.75-delta2;
+    Sl0[3] = 0.5 * (delta2+delta+0.25);
     
     delta = deltaold[1*nparts];
     delta2 = delta*delta;
-    Sy0[1] = 0.5 * (delta2-delta+0.25);
-    Sy0[2] = 0.75-delta2;
-    Sy0[3] = 0.5 * (delta2+delta+0.25);
+    Sr0[1] = 0.5 * (delta2-delta+0.25);
+    Sr0[2] = 0.75-delta2;
+    Sr0[3] = 0.5 * (delta2+delta+0.25);
     
     
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
@@ -104,9 +112,9 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     int ip_m_ipo = ip-ipo-i_domain_begin;
     delta  = xpn - (double)ip;
     delta2 = delta*delta;
-    Sx1[ip_m_ipo+1] = 0.5 * (delta2-delta+0.25);
-    Sx1[ip_m_ipo+2] = 0.75-delta2;
-    Sx1[ip_m_ipo+3] = 0.5 * (delta2+delta+0.25);
+    Sl1[ip_m_ipo+1] = 0.5 * (delta2-delta+0.25);
+    Sl1[ip_m_ipo+2] = 0.75-delta2;
+    Sl1[ip_m_ipo+3] = 0.5 * (delta2+delta+0.25);
     rp = sqrt (particles.position(1, ipart)*particles.position(1, ipart)+particles.position(2, ipart)*particles.position(2, ipart));
     ypn =  rp * dr_inv_ ;
     double crt_p= charge_weight*(particles.momentum(2,ipart)*particles.position(1,ipart)-particles.momentum(1,ipart)*particles.position(2,ipart))/(rp)*invgf;
@@ -115,13 +123,13 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     int jp_m_jpo = jp-jpo-j_domain_begin;
     delta  = ypn - (double)jp;
     delta2 = delta*delta;
-    Sy1[jp_m_jpo+1] = 0.5 * (delta2-delta+0.25);
-    Sy1[jp_m_jpo+2] = 0.75-delta2;
-    Sy1[jp_m_jpo+3] = 0.5 * (delta2+delta+0.25);
+    Sr1[jp_m_jpo+1] = 0.5 * (delta2-delta+0.25);
+    Sr1[jp_m_jpo+2] = 0.75-delta2;
+    Sr1[jp_m_jpo+3] = 0.5 * (delta2+delta+0.25);
     
     for (unsigned int i=0; i < 5; i++) {
-        DSx[i] = Sx1[i] - Sx0[i];
-        DSy[i] = Sy1[i] - Sy0[i];
+        DSl[i] = Sl1[i] - Sl0[i];
+        DSr[i] = Sr1[i] - Sr0[i];
     }
     
     // ------------------------------------------------
@@ -132,9 +140,9 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
 
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
-                Wx[i][j] = DSx[i] * (Sy0[j] + 0.5*DSy[j]);
-                Wy[i][j] = DSy[j] * (Sx0[i] + 0.5*DSx[i]);
-		Wz[i][j] = Sx0[i]*Sy0[j] + 0.5*DSx[i]*Sy0[j]+0.5*Sx0[i]*DSy[j]+one_third*DSx[i]*DSy[j];
+                Wl[i][j] = DSl[i] * (Sr0[j] + 0.5*DSr[j]);
+                Wr[i][j] = DSr[j] * (Sl0[i] + 0.5*DSl[i]);
+		Wt[i][j] = Sl0[i]*Sr0[j] + 0.5*DSl[i]*Sr0[j]+0.5*Sl0[i]*DSr[j]+one_third*DSl[i]*DSr[j];
         }
     }
     
@@ -142,29 +150,29 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // Local current created by the particle
     // calculate using the charge conservation equation
     // ------------------------------------------------
-    for (unsigned int j=0 ; j<5 ; j++) Jx_p[0][j]= 0.;
-    for (unsigned int i=0 ; i<5 ; i++) Jy_p[i][0]= 0.;
+    for (unsigned int j=0 ; j<5 ; j++) Jl_p[0][j]= 0.;
+    for (unsigned int i=0 ; i<5 ; i++) Jr_p[i][0]= 0.;
 
     for (unsigned int i=1 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
-            Jx_p[i][j]= Jx_p[i-1][j] - crl_p * Wx[i-1][j];
+            Jl_p[i][j]= Jl_p[i-1][j] - crl_p * Wl[i-1][j];
         }
     }
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=1 ; j<5 ; j++) {
-            Jy_p[i][j] = Jy_p[i][j-1] - crr_p * Wy[i][j-1];
+            Jr_p[i][j] = Jr_p[i][j-1] - crr_p * Wr[i][j-1];
         }
     }
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
-            Jz_p[i][j] =   crt_p  * Wz[i][j];
+            Jt_p[i][j] =   crt_p  * Wt[i][j];
         }
     }
     // ---------------------------
     // Calculate the total current
     // ---------------------------
     
-    ipo -= bin+2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
+    ipo -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
     // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
     jpo -= 2;
     
@@ -174,15 +182,8 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             iloc = i+ipo;
             for (unsigned int j=0 ; j<5 ; j++) {
                 jloc = j+jpo;
-                linindex = iloc*b_dim[1]+jloc;
-                if (jloc+ j_domain_begin == 0){
-                    Jl [linindex] += Jx_p[i][j]*6./dr; // iloc = (i+ipo)*b_dim[1];
-                    //Jl [linindex] =0.;
-                }
-                else {
-                    Jl [linindex] += Jx_p[i][j] /abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
-                    //Jl [linindex] =0;
-                    }
+                linindex = iloc*nprimr+jloc;
+                Jl [linindex] += Jl_p[i][j]*invV[jloc]; 
              }
          }//i
     
@@ -191,71 +192,53 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             iloc = i+ipo;
             for (unsigned int j=0 ; j<5 ; j++) {
                 jloc = j+jpo;
-                linindex = iloc*(b_dim[1]+1)+jloc;
-                Jr [linindex] += Jy_p[i][j] /abs((jloc+ j_domain_begin-0.5)*dr); //
+                linindex = iloc*(nprimr+1)+jloc;
+                Jr [linindex] += Jr_p[i][j]*invVd[jloc]; 
              }
         }//i
-
     
         // Jt^(p,p)
         for (unsigned int i=0 ; i<5 ; i++) {
             iloc = i+ipo;
             for (unsigned int j=0 ; j<5 ; j++) {
                 jloc = j+jpo;
-                linindex = iloc*b_dim[1]+jloc;
-                if (jloc+ j_domain_begin == 0){
-                    Jt [linindex] = 0.; // iloc = (i+ipo)*b_dim[1];
-                }
-                else {
-                    Jt [linindex] += Jz_p[i][j] /abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
-                    }
+                linindex = iloc*nprimr+jloc;
+                Jt [linindex] += Jt_p[i][j] *invV[jloc];
             }
         }//i
-
-
-
 
 } // END Project local current densities (Jl, Jr, Jt, sort)
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents for m>0
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, Particles &particles, unsigned int ipart,double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold, complex<double>* exp_m_theta_old, int imode)
-{   //std::cout<<"particle momentum in x in proj"<<particles.momentum(0,ipart)<<std::endl;
-    //std::cout<<"particle momentum in y in proj"<<particles.momentum(1,ipart)<<std::endl;
-    //std::cout<<"particle momentum in z in proj"<<particles.momentum(2,ipart)<<std::endl; 
-    //if (particles.position(1,ipart)<0.){
-    //    std::cout<<"particle position in r in proj"<<particles.position(1,ipart)<<std::endl;
-    //    }
-
-    //std::cout<<"particle position in x in proj"<<particles.position(0,ipart)<<std::endl;
-    //std::cout<<"particle position in r in proj"<<particles.position(1,ipart)<<std::endl;
-    int nparts= particles.size();
+void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, Particles &particles, unsigned int ipart,double invgf, int* iold, double* deltaold, complex<double>* exp_m_theta_old, int imode)
+{   
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------   int iloc,
+    int nparts= particles.size();
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double crl_p = charge_weight*dl_ov_dt;
     double crr_p = charge_weight*dr_ov_dt;
-   // double crt_p= charge_weight*Icpx*;
 
     // variable declaration
     double xpn, ypn;
     double delta, delta2;
     // arrays used for the Esirkepov projection method
-    double  Sx0[5], Sx1[5], Sy0[5], Sy1[5], DSx[5], DSy[5];
-    complex<double>  Wx[5][5], Wy[5][5], Wz[5][5], Jx_p[5][5], Jy_p[5][5], Jz_p[5][5];
+    double  Sl0[5], Sl1[5], Sr0[5], Sr1[5], DSl[5], DSr[5];
+    complex<double>  Wl[5][5], Wr[5][5], Wt[5][5], Jl_p[5][5], Jr_p[5][5], Jt_p[5][5];
     complex<double> e_delta, e_delta_m1, e_delta_inv, e_theta,e_theta_old, e_bar, e_bar_m1, C_m;
  
      for (unsigned int i=0; i<5; i++) {
-        Sx1[i] = 0.;
-        Sy1[i] = 0.;
+        Sl1[i] = 0.;
+        Sr1[i] = 0.;
     }
-    Sx0[0] = 0.;
-    Sx0[4] = 0.;
-    Sy0[0] = 0.;
-    Sy0[4] = 0.;
+    Sl0[0] = 0.;
+    Sl0[4] = 0.;
+    Sr0[0] = 0.;
+    Sr0[4] = 0.;
     // --------------------------------------------------------
     // Locate particles & Calculate Esirkepov coef. S, DS and W
     // --------------------------------------------------------
@@ -263,23 +246,24 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // locate the particle on the primal grid at former time-step & calculate coeff. S0
     delta = deltaold[0*nparts];
     delta2 = delta*delta;
-    Sx0[1] = 0.5 * (delta2-delta+0.25);
-    Sx0[2] = 0.75-delta2;
-    Sx0[3] = 0.5 * (delta2+delta+0.25);
+    Sl0[1] = 0.5 * (delta2-delta+0.25);
+    Sl0[2] = 0.75-delta2;
+    Sl0[3] = 0.5 * (delta2+delta+0.25);
     
     delta = deltaold[1*nparts];
     delta2 = delta*delta;
-    Sy0[1] = 0.5 * (delta2-delta+0.25);
-    Sy0[2] = 0.75-delta2;
-    Sy0[3] = 0.5 * (delta2+delta+0.25);
+    Sr0[1] = 0.5 * (delta2-delta+0.25);
+    Sr0[2] = 0.75-delta2;
+    Sr0[3] = 0.5 * (delta2+delta+0.25);
     //calculate exponential coefficients
 
     double yp = particles.position(1,ipart);
     double zp = particles.position(2,ipart);
     double rp = sqrt (particles.position(1, ipart)*particles.position(1, ipart)+particles.position(2, ipart)*particles.position(2, ipart));
     e_theta = (yp-Icpx*zp)/rp;
-    //cout << std::setprecision(9) << "y= " << yp << endl;
     e_theta_old =exp_m_theta_old[0];
+    double theta = atan2(zp,yp);
+    double theta_old =atan2(-std::imag(e_theta_old), std::real(e_theta_old));
     e_delta = 1.;
     e_bar = 1.;
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
@@ -289,9 +273,9 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     int ip_m_ipo = ip-ipo-i_domain_begin;
     delta  = xpn - (double)ip;
     delta2 = delta*delta;
-    Sx1[ip_m_ipo+1] = 0.5 * (delta2-delta+0.25);
-    Sx1[ip_m_ipo+2] = 0.75-delta2;
-    Sx1[ip_m_ipo+3] = 0.5 * (delta2+delta+0.25);
+    Sl1[ip_m_ipo+1] = 0.5 * (delta2-delta+0.25);
+    Sl1[ip_m_ipo+2] = 0.75-delta2;
+    Sl1[ip_m_ipo+3] = 0.5 * (delta2+delta+0.25);
     
     ypn = rp *dr_inv_ ;
     int jp = round(ypn);
@@ -299,32 +283,36 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     int jp_m_jpo = jp-jpo-j_domain_begin;
     delta  = ypn - (double)jp;
     delta2 = delta*delta;
-    Sy1[jp_m_jpo+1] = 0.5 * (delta2-delta+0.25);
-    Sy1[jp_m_jpo+2] = 0.75-delta2;
-    Sy1[jp_m_jpo+3] = 0.5 * (delta2+delta+0.25);
+    Sr1[jp_m_jpo+1] = 0.5 * (delta2-delta+0.25);
+    Sr1[jp_m_jpo+2] = 0.75-delta2;
+    Sr1[jp_m_jpo+3] = 0.5 * (delta2+delta+0.25);
 
-    e_delta_m1 = sqrt(e_theta/e_theta_old);
-    e_bar_m1 = sqrt(e_theta*e_theta_old);   
-    if (std::real(e_theta)+ std::real(e_theta_old) < 0.){
-        if (std::imag(e_theta)*std::imag(e_theta_old) > 0.){
-            e_bar_m1 *= -1.;
-        } else {
-            e_delta_m1 *= -1.;
-        }
-    }
+    //e_delta_m1 = sqrt(e_theta/e_theta_old);
+    //e_bar_m1 = sqrt(e_theta*e_theta_old);   
+    //if (std::real(e_theta)+ std::real(e_theta_old) < 0.){
+    //    if (std::imag(e_theta)*std::imag(e_theta_old) > 0.){
+    //        e_bar_m1 *= -1.;
+    //    } else {
+    //        e_delta_m1 *= -1.;
+    //    }
+    //}
 
-    for (unsigned int i=0; i<imode; i++){
+    double dtheta = std::remainder(theta-theta_old, 2*M_PI)/2.; // Otherwise dtheta is overestimated when going from -pi to +pi
+    double theta_bar = theta_old+dtheta;
+    e_delta_m1 = std::polar(1.0,dtheta);
+    e_bar_m1 = std::polar(1.0,theta_bar);
+
+    for (unsigned int i=0; i<(unsigned int)imode; i++){
         e_delta *= e_delta_m1;
         e_bar *= e_bar_m1;   
-        //cout << std::setprecision(9) <<  " e_theta = " << e_theta << " e_theta_old = " << e_theta_old << " e_delta = " << e_delta << " e_bar= " << e_bar << endl;
     }
 
      e_delta_inv =1./e_delta;
     //defining crt_p 
-     complex<double> crt_p = - charge_weight*Icpx/(e_bar*dt*imode)*rp;
+    complex<double> crt_p = - charge_weight*Icpx/(e_bar*dt*(double)imode)*rp*2.;
     for (unsigned int i=0; i < 5; i++) {
-        DSx[i] = Sx1[i] - Sx0[i];
-        DSy[i] = Sy1[i] - Sy0[i];
+        DSl[i] = Sl1[i] - Sl0[i];
+        DSr[i] = Sr1[i] - Sr0[i];
     }
     
     // ------------------------------------------------
@@ -335,9 +323,9 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
 
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
-            Wx[i][j] = DSx[i] * (Sy0[j] + 0.5*DSy[j]);
-            Wy[i][j] = DSy[j] * (Sx0[i] + 0.5*DSx[i]);
-            Wz[i][j] = Sy1[j]*Sx1[i]*(e_delta_inv-1.)-Sy0[j]*Sx0[i]*(e_delta-1.);
+            Wl[i][j] = DSl[i] * (Sr0[j] + 0.5*DSr[j]);
+            Wr[i][j] = DSr[j] * (Sl0[i] + 0.5*DSl[i]);
+            Wt[i][j] = Sr1[j]*Sl1[i]*(e_delta_inv-1.)-Sr0[j]*Sl0[i]*(e_delta-1.);
             
         }
     }
@@ -346,55 +334,49 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // Local current created by the particle
     // calculate using the charge conservation equation
     // ------------------------------------------------
-    for (unsigned int j=0 ; j<5 ; j++) Jx_p[0][j]= 0.;
-    for (unsigned int i=0 ; i<5 ; i++) Jy_p[i][0]= 0.;
+    for (unsigned int j=0 ; j<5 ; j++) Jl_p[0][j]= 0.;
+    for (unsigned int i=0 ; i<5 ; i++) Jr_p[i][0]= 0.;
 
     for (unsigned int i=1 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
-                Jx_p[i][j]= Jx_p[i-1][j] - crl_p * Wx[i-1][j];
+                Jl_p[i][j]= Jl_p[i-1][j] - crl_p * Wl[i-1][j];
             }
         }
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=1 ; j<5 ; j++) {
-                Jy_p[i][j] = Jy_p[i][j-1] - crr_p  * Wy[i][j-1];
+                Jr_p[i][j] = Jr_p[i][j-1] - crr_p  * Wr[i][j-1];
             }
         }
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
-                // ?? not sure about this ?
-                Jz_p[i][j] = crt_p  * Wz[i][j];
-                //cout << std::setprecision(9) << " crt_p = " << crt_p << " Wz = " << Wz[i][j] << " Jz = " << Jz_p[i][j] << endl; 
-            }
+                Jt_p[i][j] = crt_p  * Wt[i][j];
         }
+    }
 
     // ---------------------------
     // Calculate the total current
     // ---------------------------
     
-    ipo -= bin+2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
+    ipo -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
     // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
     jpo -= 2;
     
     int iloc, jloc, linindex;
 
     C_m = 1.;
-    for (unsigned int i=0; i<imode; i++){
+    for (unsigned int i=0; i<(unsigned int)imode; i++){
     C_m *= e_theta;
     }
-    C_m = 1./C_m; 
+    //C_m = 1./C_m; 
+    C_m = 2./C_m; 
     // Jl^(d,p)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            linindex = iloc*b_dim[1]+jloc;
-            if (jloc+ j_domain_begin == 0){
-                Jl [linindex] +=  C_m * Jx_p[i][j]*6./dr; // iloc = (i+ipo)*b_dim[1];
-                }
-            else {
-                Jl [linindex] += C_m * Jx_p[i][j] /abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
-                }
-           
+            linindex = iloc*nprimr+jloc;
+            // Jl_mode_1 = 0 on axis to add to BC.
+            Jl [linindex] += C_m * Jl_p[i][j] * invV[jloc];
         }
     }//i
     
@@ -403,15 +385,8 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            linindex = iloc*b_dim[1]+jloc;
-            if (jloc+ j_domain_begin == 0){
-                Jt [linindex] += Jz_p[i][j]*6./dr;
-            }else{
-                Jt [linindex] += Jz_p[i][j] /abs((jloc+ j_domain_begin)*dr);
-            }
-            //if (jloc+j_domain_begin==0){
-            //    Jt[linindex] = - 1./3.* (4.* Icpx * Jr[linindex+1] + Jt[linindex+1]);
-            //}
+            linindex = iloc*nprimr+jloc;
+            Jt [linindex] += Jt_p[i][j] * invV[jloc];
         }
      }
     // Jr^(p,d)
@@ -419,11 +394,8 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            linindex = iloc*(b_dim[1]+1)+jloc;
-            Jr [linindex] += C_m * Jy_p[i][j] /abs((jloc+ j_domain_begin-0.5)*dr);
-            //if (jloc+j_domain_begin ==0){
-            //    Jr[linindex]+= 2.*Icpx* Jt[linindex] - Jr[linindex+1];
-            //}
+            linindex = iloc*(nprimr+1)+jloc;
+            Jr [linindex] += C_m * Jr_p[i][j] * invVd[jloc] ;
         }
     }//i
 
@@ -435,16 +407,11 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
 //! Project local currents with diag for mode=0 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, complex<double>* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
-{   //std::cout<<"particle momentum in x in proj"<<particles.momentum(0,ipart)<<std::endl;
-    //std::cout<<"particle momentum in y in proj"<<particles.momentum(1,ipart)<<std::endl;
-    //std::cout<<"particle momentum in z in proj"<<particles.momentum(2,ipart)<<std::endl; 
-    //std::cout<<"particle position in x in proj"<<particles.position(0,ipart)<<std::endl;
-    //std::cout<<"particle position in r in proj"<<particles.position(1,ipart)<<std::endl;
-    int nparts= particles.size();
-    // -------------------------------------
+void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, complex<double>* rho, Particles &particles, unsigned int ipart, double invgf, int* iold, double* deltaold)
+{   // -------------------------------------
     // Variable declaration & initialization
-    // -------------------------------------   int iloc,
+    // -------------------------------------
+    int nparts= particles.size();
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double crl_p = charge_weight*dl_ov_dt;
@@ -453,16 +420,16 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     double xpn, ypn, rp;
     double delta, delta2;
     // arrays used for the Esirkepov projection method
-    double  Sx0[5], Sx1[5], Sy0[5], Sy1[5], DSx[5], DSy[5];
-    double  Wx[5][5], Wy[5][5], Wz[5][5], Jx_p[5][5], Jy_p[5][5], Jz_p[5][5];
+    double  Sl0[5], Sl1[5], Sr0[5], Sr1[5], DSl[5], DSr[5];
+    double  Wl[5][5], Wr[5][5], Wt[5][5], Jl_p[5][5], Jr_p[5][5], Jt_p[5][5];
     for (unsigned int i=0; i<5; i++) {
-        Sx1[i] = 0.;
-        Sy1[i] = 0.;
+        Sl1[i] = 0.;
+        Sr1[i] = 0.;
     }
-    Sx0[0] = 0.;
-    Sx0[4] = 0.;
-    Sy0[0] = 0.;
-    Sy0[4] = 0.;
+    Sl0[0] = 0.;
+    Sl0[4] = 0.;
+    Sr0[0] = 0.;
+    Sr0[4] = 0.;
     // --------------------------------------------------------
     // Locate particles & Calculate Esirkepov coef. S, DS and W
     // --------------------------------------------------------
@@ -470,15 +437,15 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // locate the particle on the primal grid at former time-step & calculate coeff. S0
     delta = deltaold[0*nparts];
     delta2 = delta*delta;
-    Sx0[1] = 0.5 * (delta2-delta+0.25);
-    Sx0[2] = 0.75-delta2;
-    Sx0[3] = 0.5 * (delta2+delta+0.25);
+    Sl0[1] = 0.5 * (delta2-delta+0.25);
+    Sl0[2] = 0.75-delta2;
+    Sl0[3] = 0.5 * (delta2+delta+0.25);
     
     delta = deltaold[1*nparts];
     delta2 = delta*delta;
-    Sy0[1] = 0.5 * (delta2-delta+0.25);
-    Sy0[2] = 0.75-delta2;
-    Sy0[3] = 0.5 * (delta2+delta+0.25);
+    Sr0[1] = 0.5 * (delta2-delta+0.25);
+    Sr0[2] = 0.75-delta2;
+    Sr0[3] = 0.5 * (delta2+delta+0.25);
     
     
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
@@ -488,9 +455,9 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     int ip_m_ipo = ip-ipo-i_domain_begin;
     delta  = xpn - (double)ip;
     delta2 = delta*delta;
-    Sx1[ip_m_ipo+1] = 0.5 * (delta2-delta+0.25);
-    Sx1[ip_m_ipo+2] = 0.75-delta2;
-    Sx1[ip_m_ipo+3] = 0.5 * (delta2+delta+0.25);
+    Sl1[ip_m_ipo+1] = 0.5 * (delta2-delta+0.25);
+    Sl1[ip_m_ipo+2] = 0.75-delta2;
+    Sl1[ip_m_ipo+3] = 0.5 * (delta2+delta+0.25);
     rp = sqrt (particles.position(1, ipart)*particles.position(1, ipart)+particles.position(2, ipart)*particles.position(2, ipart));
     ypn = rp * dr_inv_ ;
     double crt_p= charge_weight*(particles.momentum(2,ipart)*particles.position(1,ipart)-particles.momentum(1,ipart)*particles.position(2,ipart))/(rp)*invgf;
@@ -500,13 +467,13 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     int jp_m_jpo = jp-jpo-j_domain_begin;
     delta  = ypn - (double)jp;
     delta2 = delta*delta;
-    Sy1[jp_m_jpo+1] = 0.5 * (delta2-delta+0.25);
-    Sy1[jp_m_jpo+2] = 0.75-delta2;
-    Sy1[jp_m_jpo+3] = 0.5 * (delta2+delta+0.25);
+    Sr1[jp_m_jpo+1] = 0.5 * (delta2-delta+0.25);
+    Sr1[jp_m_jpo+2] = 0.75-delta2;
+    Sr1[jp_m_jpo+3] = 0.5 * (delta2+delta+0.25);
     
     for (unsigned int i=0; i < 5; i++) {
-        DSx[i] = Sx1[i] - Sx0[i];
-        DSy[i] = Sy1[i] - Sy0[i];
+        DSl[i] = Sl1[i] - Sl0[i];
+        DSr[i] = Sr1[i] - Sr0[i];
     }
     
     // ------------------------------------------------
@@ -517,9 +484,9 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
 
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
-                Wx[i][j] = DSx[i] * (Sy0[j] + 0.5*DSy[j]);
-                Wy[i][j] = DSy[j] * (Sx0[i] + 0.5*DSx[i]);
-		Wz[i][j] = Sx0[i]*Sy0[j] + 0.5*DSx[i]*Sy0[j]+0.5*Sx0[i]*DSy[j]+one_third*DSx[i]*DSy[j];
+                Wl[i][j] = DSl[i] * (Sr0[j] + 0.5*DSr[j]);
+                Wr[i][j] = DSr[j] * (Sl0[i] + 0.5*DSl[i]);
+		Wt[i][j] = Sl0[i]*Sr0[j] + 0.5*DSl[i]*Sr0[j]+0.5*Sl0[i]*DSr[j]+one_third*DSl[i]*DSr[j];
             }
         }
     
@@ -527,30 +494,30 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // Local current created by the particle
     // calculate using the charge conservation equation
     // ------------------------------------------------
-    for (unsigned int j=0 ; j<5 ; j++) Jx_p[0][j]= 0.;
-    for (unsigned int i=0 ; i<5 ; i++) Jy_p[i][0]= 0.;
+    for (unsigned int j=0 ; j<5 ; j++) Jl_p[0][j]= 0.;
+    for (unsigned int i=0 ; i<5 ; i++) Jr_p[i][0]= 0.;
         
 
     for (unsigned int i=1 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
-                Jx_p[i][j]= Jx_p[i-1][j] - crl_p * Wx[i-1][j];
+                Jl_p[i][j]= Jl_p[i-1][j] - crl_p * Wl[i-1][j];
             }
         }
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=1 ; j<5 ; j++) {
-                Jy_p[i][j] = Jy_p[i][j-1] - crr_p * Wy[i][j-1];
+                Jr_p[i][j] = Jr_p[i][j-1] - crr_p * Wr[i][j-1];
             }
         }
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
-                Jz_p[i][j] =   crt_p  * Wz[i][j];
+                Jt_p[i][j] =   crt_p  * Wt[i][j];
             }
         }
 
     // ---------------------------
     // Calculate the total current
     // ---------------------------
-    ipo -= bin+2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
+    ipo -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
     // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
     jpo -= 2;
     
@@ -561,16 +528,9 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            linindex = iloc*b_dim[1]+jloc;
-            if (jloc+ j_domain_begin == 0){
-                Jl [linindex] += Jx_p[i][j]*6./dr;
-                //Jl [linindex] =0.;
-            }
-            else {
-                //Jl [linindex]=0.;
-                Jl [linindex] += Jx_p[i][j] /abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
-                }
-            }
+            linindex = iloc*nprimr+jloc;
+            Jl [linindex] += Jl_p[i][j] * invV[jloc];
+        }
     }//i
     
     // Jr^(p,d)
@@ -578,8 +538,8 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            linindex = iloc*(b_dim[1]+1)+jloc;
-            Jr [linindex] += Jy_p[i][j] /abs((jloc+ j_domain_begin-0.5)*dr); //
+            linindex = iloc*(nprimr+1)+jloc;
+            Jr [linindex] += Jr_p[i][j] * invVd[jloc] ;
          }
     }//i
     
@@ -588,15 +548,9 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            linindex = iloc*b_dim[1]+jloc;
-            if (jloc+ j_domain_begin == 0){
-                Jt [linindex] += Jz_p[i][j]*6./dr; // iloc = (i+ipo)*b_dim[1];
-                //Jt [linindex] =0.;
-                }
-            else {
-                Jt [linindex] += Jz_p[i][j] /abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
-                }
-            }
+            linindex = iloc*nprimr+jloc;
+            Jt [linindex] += Jt_p[i][j] * invV[jloc];
+        }
     }//i
 
     // Rho^(p,p)
@@ -604,15 +558,8 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;    
-            linindex = iloc*b_dim[1]+jloc;
-         if (jloc+ j_domain_begin == 0){
-                rho [linindex] += charge_weight * Sx1[i]*Sy1[j] * 6./dr;
-                }
-            else {
-                rho [linindex] += charge_weight * Sx1[i]*Sy1[j] /abs((jloc+ j_domain_begin)*dr);
-                //rho [linindex+1] += rho [linindex-1];
-                //rho [linindex+2] += rho [linindex-2];
-                 }
+            linindex = iloc*nprimr+jloc;
+            rho [linindex] += charge_weight * Sl1[i]*Sr1[j] * invV[jloc];
         }
     }//i
 } // END Project local densities (Jl, Jr, Jt, rho, sort)
@@ -620,38 +567,33 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents with diag for m>0
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, complex<double>* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold,complex<double>* exp_m_theta_old,  int imode)
-{   //std::cout<<"particle momentum in x in proj"<<particles.momentum(0,ipart)<<std::endl;
-    //std::cout<<"particle momentum in y in proj"<<particles.momentum(1,ipart)<<std::endl;
-    //std::cout<<"particle momentum in z in proj"<<particles.momentum(2,ipart)<<std::endl;
-    //std::cout<<"particle position in x in proj"<<particles.position(0,ipart)<<std::endl;
-    //std::cout<<"particle position in r in proj"<<particles.position(1,ipart)<<std::endl;
-    int nparts= particles.size();
+void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, complex<double>* rho, Particles &particles, unsigned int ipart, double invgf, int* iold, double* deltaold,complex<double>* exp_m_theta_old,  int imode)
+{   
     // -------------------------------------
     // Variable declaration & initialization
-    // -------------------------------------   int iloc,
+    // -------------------------------------   
+    int nparts= particles.size();
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double crl_p = charge_weight*dl_ov_dt;
     double crr_p = charge_weight*dr_ov_dt;
-   // double crt_p= charge_weight*Icpx*;
 
     // variable declaration
     double xpn, ypn;
     double delta, delta2;
     // arrays used for the Esirkepov projection method
-    double  Sx0[5], Sx1[5], Sy0[5], Sy1[5], DSx[5], DSy[5];
-    complex<double>  Wx[5][5], Wy[5][5], Wz[5][5], Jx_p[5][5], Jy_p[5][5], Jz_p[5][5];
+    double  Sl0[5], Sl1[5], Sr0[5], Sr1[5], DSl[5], DSr[5];
+    complex<double>  Wl[5][5], Wr[5][5], Wt[5][5], Jl_p[5][5], Jr_p[5][5], Jt_p[5][5];
     complex<double> e_delta,e_delta_m1, e_delta_inv, e_theta,e_theta_old,e_bar,e_bar_m1, C_m;
  
      for (unsigned int i=0; i<5; i++) {
-        Sx1[i] = 0.;
-        Sy1[i] = 0.;
+        Sl1[i] = 0.;
+        Sr1[i] = 0.;
     }
-    Sx0[0] = 0.;
-    Sx0[4] = 0.;
-    Sy0[0] = 0.;
-    Sy0[4] = 0.;
+    Sl0[0] = 0.;
+    Sl0[4] = 0.;
+    Sr0[0] = 0.;
+    Sr0[4] = 0.;
     // --------------------------------------------------------
     // Locate particles & Calculate Esirkepov coef. S, DS and W
     // --------------------------------------------------------
@@ -659,15 +601,15 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // locate the particle on the primal grid at former time-step & calculate coeff. S0
     delta = deltaold[0*nparts];
     delta2 = delta*delta;
-    Sx0[1] = 0.5 * (delta2-delta+0.25);
-    Sx0[2] = 0.75-delta2;
-    Sx0[3] = 0.5 * (delta2+delta+0.25);
+    Sl0[1] = 0.5 * (delta2-delta+0.25);
+    Sl0[2] = 0.75-delta2;
+    Sl0[3] = 0.5 * (delta2+delta+0.25);
     
     delta = deltaold[1*nparts];
     delta2 = delta*delta;
-    Sy0[1] = 0.5 * (delta2-delta+0.25);
-    Sy0[2] = 0.75-delta2;
-    Sy0[3] = 0.5 * (delta2+delta+0.25);
+    Sr0[1] = 0.5 * (delta2-delta+0.25);
+    Sr0[2] = 0.75-delta2;
+    Sr0[3] = 0.5 * (delta2+delta+0.25);
     //calculate exponential coefficients
 
     double yp = particles.position(1,ipart);
@@ -677,6 +619,8 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     e_theta_old = exp_m_theta_old[0];
     e_delta = 1.;
     e_bar =  1.;
+    double theta = atan2(zp,yp);
+    double theta_old =atan2(-std::imag(e_theta_old), std::real(e_theta_old));
      
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
     xpn = particles.position(0, ipart) * dl_inv_;
@@ -685,9 +629,9 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     int ip_m_ipo = ip-ipo-i_domain_begin;
     delta  = xpn - (double)ip;
     delta2 = delta*delta;
-    Sx1[ip_m_ipo+1] = 0.5 * (delta2-delta+0.25);
-    Sx1[ip_m_ipo+2] = 0.75-delta2;
-    Sx1[ip_m_ipo+3] = 0.5 * (delta2+delta+0.25);
+    Sl1[ip_m_ipo+1] = 0.5 * (delta2-delta+0.25);
+    Sl1[ip_m_ipo+2] = 0.75-delta2;
+    Sl1[ip_m_ipo+3] = 0.5 * (delta2+delta+0.25);
     
     ypn = rp *dr_inv_ ;
     int jp = round(ypn);
@@ -695,30 +639,35 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     int jp_m_jpo = jp-jpo-j_domain_begin;
     delta  = ypn - (double)jp;
     delta2 = delta*delta;
-    Sy1[jp_m_jpo+1] = 0.5 * (delta2-delta+0.25);
-    Sy1[jp_m_jpo+2] = 0.75-delta2;
-    Sy1[jp_m_jpo+3] = 0.5 * (delta2+delta+0.25);
+    Sr1[jp_m_jpo+1] = 0.5 * (delta2-delta+0.25);
+    Sr1[jp_m_jpo+2] = 0.75-delta2;
+    Sr1[jp_m_jpo+3] = 0.5 * (delta2+delta+0.25);
     
-    e_delta_m1 = sqrt(e_theta/e_theta_old);
-    e_bar_m1 = sqrt(e_theta*e_theta_old);   
-    if (std::real(e_theta)+ std::real(e_theta_old) < 0.){
-        if (std::imag(e_theta)*std::imag(e_theta_old) > 0.){
-            e_bar_m1 *= -1.;
-        } else {
-            e_delta_m1 *= -1.;
-        }
-    }
+    //e_delta_m1 = sqrt(e_theta/e_theta_old);
+    //e_bar_m1 = sqrt(e_theta*e_theta_old);   
+    //if (std::real(e_theta)+ std::real(e_theta_old) < 0.){
+    //    if (std::imag(e_theta)*std::imag(e_theta_old) > 0.){
+    //        e_bar_m1 *= -1.;
+    //    } else {
+    //        e_delta_m1 *= -1.;
+    //    }
+    //}
 
-    for (unsigned int i=0; i<imode; i++){
+    double dtheta = std::remainder(theta-theta_old, 2*M_PI)/2.; // Otherwise dtheta is overestimated when going from -pi to +pi
+    double theta_bar = theta_old+dtheta ;
+    e_delta_m1 = std::polar(1.0,dtheta);
+    e_bar_m1 = std::polar(1.0,theta_bar);
+
+    for (unsigned int i=0; i<(unsigned int)imode; i++){
         e_delta *= e_delta_m1;
         e_bar *= e_bar_m1;   
     }
-     e_delta_inv =1./e_delta;
+    e_delta_inv =1./e_delta;
     //defining crt_p 
-    complex<double> crt_p = -charge_weight*Icpx/(e_bar*dt*imode)*rp;
+    complex<double> crt_p = -charge_weight*Icpx/(e_bar*dt*(double)imode)*rp*2.;
     for (unsigned int i=0; i < 5; i++) {
-        DSx[i] = Sx1[i] - Sx0[i];
-        DSy[i] = Sy1[i] - Sy0[i];
+        DSl[i] = Sl1[i] - Sl0[i];
+        DSr[i] = Sr1[i] - Sr0[i];
     }
     
     // ------------------------------------------------
@@ -729,91 +678,69 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
 
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
-                Wx[i][j] = DSx[i] * (Sy0[j] + 0.5*DSy[j]);
-                Wy[i][j] = DSy[j] * (Sx0[i] + 0.5*DSx[i]);
-		Wz[i][j] = Sy1[j]*Sx1[i]*(e_delta_inv-1.)-Sy0[j]*Sx0[i]*(e_delta-1.);
-            }
+                Wl[i][j] = DSl[i] * (Sr0[j] + 0.5*DSr[j]);
+                Wr[i][j] = DSr[j] * (Sl0[i] + 0.5*DSl[i]);
+		Wt[i][j] = Sr1[j]*Sl1[i]*(e_delta_inv-1.)-Sr0[j]*Sl0[i]*(e_delta-1.);
         }
+    }
     
     // ------------------------------------------------
     // Local current created by the particle
     // calculate using the charge conservation equation
     // ------------------------------------------------
-    for (unsigned int j=0 ; j<5 ; j++) Jx_p[0][j]= 0.;
-    for (unsigned int i=0 ; i<5 ; i++) Jy_p[i][0]= 0.;
+    for (unsigned int j=0 ; j<5 ; j++) Jl_p[0][j]= 0.;
+    for (unsigned int i=0 ; i<5 ; i++) Jr_p[i][0]= 0.;
 
     for (unsigned int i=1 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
-                Jx_p[i][j]= Jx_p[i-1][j] - crl_p * Wx[i-1][j];
+                Jl_p[i][j]= Jl_p[i-1][j] - crl_p * Wl[i-1][j];
             }
         }
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=1 ; j<5 ; j++) {
-                Jy_p[i][j] = Jy_p[i][j-1] - crr_p * Wy[i][j-1];
+                Jr_p[i][j] = Jr_p[i][j-1] - crr_p * Wr[i][j-1];
             }
         }
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
-               // ?? same not sure
-                Jz_p[i][j] = crt_p * Wz[i][j];
-            }
+                Jt_p[i][j] = crt_p * Wt[i][j];
         }
+    }
 
     // ---------------------------
     // Calculate the total current
     // ---------------------------
     
-    ipo -= bin+2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
+    ipo -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
     // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
     jpo -= 2;
     
     int iloc, jloc, linindex;
 
     C_m = 1.;
-    for (unsigned int i=0; i<imode; i++){
+    for (unsigned int i=0; i<(unsigned int)imode; i++){
     C_m *= e_theta;
     }
-    C_m= 1./C_m; 
+    //C_m= 1./C_m; 
+    C_m= 2./C_m; 
     // Jl^(d,p)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            linindex = iloc*b_dim[1]+jloc;
-            if (jloc+ j_domain_begin == 0){
-                Jl [linindex] +=  C_m * Jx_p[i][j]*6. /dr ; // iloc = (i+ipo)*b_dim[1];
-                }
-            else {
-                Jl [linindex] += C_m * Jx_p[i][j] /abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
-                }
-            }
+            linindex = iloc*nprimr+jloc;
+            Jl [linindex] += C_m * Jl_p[i][j] * invV[jloc] ;
+        }
     }//i
-    
-
     
     // Jt^(p,p)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            linindex = iloc*b_dim[1]+jloc;
-            if (jloc+ j_domain_begin == 0){
-                Jt [linindex] += Jz_p[i][j]*6./dr ; 
-            }else {
-                Jt [linindex] += Jz_p[i][j] / abs((jloc+ j_domain_begin)*dr)  ; 
-            }
-            //if (jloc+j_domain_begin==0){
-            //    Jt[linindex] += - 1./3.* (4.* Icpx * Jr[linindex+1] + Jt[linindex+1]);
-            //}
-       // if (jloc+j_domain_begin == 0){
-       //     Jt [linindex+1] += Jt [linindex-1];
-       //     Jt [linindex+2] += Jt [linindex-2];
-       // }
-        //if (jloc+j_domain_begin == 0){
-        //    Jt [linindex+1] += Jt [linindex-1];
-        //    Jt [linindex+2] += Jt [linindex-2];
-        //}
-            }
+            linindex = iloc*nprimr+jloc;
+            Jt [linindex] += Jt_p[i][j] * invV[jloc] ; 
+        }
     }//i
 
     // Jr^(p,d)
@@ -821,17 +748,9 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            linindex = iloc*(b_dim[1]+1)+jloc;
-            Jr [linindex] += C_m * Jy_p[i][j] /abs((jloc+ j_domain_begin-0.5)*dr); //
-            //if (jloc+j_domain_begin ==0){
-            //    Jr[linindex]+= 2.*Icpx* Jt[linindex] - Jr[linindex+1];
-            //}
-        //if (jloc+j_domain_begin == 0){
-        //    Jr [linindex+1] += Jr [linindex];
-        //    Jr [linindex+2] += Jr [linindex-1];
-        //    Jr [linindex+3] += Jr [linindex-2];
-        //}
-            }
+            linindex = iloc*(nprimr+1)+jloc;
+            Jr [linindex] += C_m * Jr_p[i][j] * invVd[jloc] ; 
+        }
     }//i
 
      // Rho^(p,p)
@@ -839,15 +758,8 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            linindex = iloc*b_dim[1]+jloc;
-            if (jloc+ j_domain_begin != 0){
-                rho [linindex] += C_m*charge_weight* Sx1[i]*Sy1[j]/abs((jloc+ j_domain_begin)*dr); // iloc = (i+ipo)*b_dim[1];
-                }
-            else {
-                rho [linindex] +=  C_m*charge_weight* Sx1[i]*Sy1[j]*6./dr; // iloc = (i+ipo)*b_dim[1];
-                //rho [linindex+1] += rho [linindex-1];
-                //rho [linindex+2] += rho [linindex-2];
-                }
+            linindex = iloc*nprimr+jloc;
+            rho [linindex] += C_m*charge_weight* Sl1[i]*Sr1[j] * invV[jloc]; 
         }
     }//i
 
@@ -855,7 +767,7 @@ void ProjectorRZ2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     
 } // END Project local current densities (Jl, Jr, Jt, sort)
 
-void ProjectorRZ2Order::operator() (double* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim)
+void ProjectorAM2Order::operator() (double* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim)
 {
 // Useless function
 }
@@ -865,7 +777,7 @@ void ProjectorRZ2Order::operator() (double* rhoj, Particles &particles, unsigned
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project for diags and frozen species - mode >= 0 
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorRZ2Order::operator() (complex<double>* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim, int imode)
+void ProjectorAM2Order::operator() (complex<double>* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim, int imode)
 {
     //Warning : this function is not charge conserving.
 
@@ -895,17 +807,18 @@ void ProjectorRZ2Order::operator() (complex<double>* rhoj, Particles &particles,
 
     complex<double> e_theta = ( particles.position(1,ipart) + Icpx*particles.position(2,ipart))/r;
     complex<double> C_m = 1.;
-    for (unsigned int i=0; i<imode; i++)
+    if (imode > 0) C_m = 2.;
+    for (unsigned int i=0; i<(unsigned int)imode; i++)
         C_m *= e_theta;
 
     double xpn, ypn;
     double delta, delta2;
-    double Sx1[5], Sy1[5]; 
+    double Sl1[5], Sr1[5]; 
 
 // Initialize all current-related arrays to zero
     for (unsigned int i=0; i<5; i++) {
-        Sx1[i] = 0.;
-        Sy1[i] = 0.;
+        Sl1[i] = 0.;
+        Sr1[i] = 0.;
     }
 
     // --------------------------------------------------------
@@ -917,16 +830,16 @@ void ProjectorRZ2Order::operator() (complex<double>* rhoj, Particles &particles,
     int ip = round(xpn + 0.5 * (type==1));
     delta  = xpn - (double)ip;
     delta2 = delta*delta;
-    Sx1[1] = 0.5 * (delta2-delta+0.25);
-    Sx1[2] = 0.75-delta2;
-    Sx1[3] = 0.5 * (delta2+delta+0.25);
+    Sl1[1] = 0.5 * (delta2-delta+0.25);
+    Sl1[2] = 0.75-delta2;
+    Sl1[3] = 0.5 * (delta2+delta+0.25);
     ypn = r * dr_inv_ ;
     int jp = round(ypn + 0.5*(type==2));
     delta  = ypn - (double)jp;
     delta2 = delta*delta;
-    Sy1[1] = 0.5 * (delta2-delta+0.25);
-    Sy1[2] = 0.75-delta2;
-    Sy1[3] = 0.5 * (delta2+delta+0.25);
+    Sr1[1] = 0.5 * (delta2-delta+0.25);
+    Sr1[2] = 0.75-delta2;
+    Sr1[3] = 0.5 * (delta2+delta+0.25);
 
     // ---------------------------
     // Calculate the total charge
@@ -934,39 +847,41 @@ void ProjectorRZ2Order::operator() (complex<double>* rhoj, Particles &particles,
     ip -= i_domain_begin + 2;
     jp -= j_domain_begin + 2;
 
-    for (unsigned int i=0 ; i<5 ; i++) {
-        iloc = (i+ip)*nr+jp;
-        for (unsigned int j=0 ; j<5 ; j++) {
-            if ((type != 2) && (j+jp+j_domain_begin == 0)){
-                rhoj [iloc+j] += C_m*charge_weight*6.* Sx1[i]*Sy1[j] /dr; 
-            }
-            else {
-                rhoj [iloc+j] += C_m*charge_weight* Sx1[i]*Sy1[j]/abs((j+jp+ j_domain_begin-0.5*(type==2))*dr); 
-                }
-            }
-    }//i
+    if (type != 2){
+        for (unsigned int i=0 ; i<5 ; i++) {
+            iloc = (i+ip)*nr+jp;
+            for (unsigned int j=0 ; j<5 ; j++)
+                rhoj [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invV[j+jp]; 
+        }//i
+    } else {
+        for (unsigned int i=0 ; i<5 ; i++) {
+            iloc = (i+ip)*nr+jp;
+            for (unsigned int j=0 ; j<5 ; j++)
+                rhoj [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invVd[j+jp]; 
+        }//i
+    }
 } // END Project for diags local current densities
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project global current densities : ionization NOT DONE YET
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorRZ2Order::operator() (Field* Jl, Field* Jr, Field* Jt, Particles &particles, int ipart, LocalFields Jion)
+void ProjectorAM2Order::operator() (Field* Jl, Field* Jr, Field* Jt, Particles &particles, int ipart, LocalFields Jion)
 {  
-    cField2D* Jl3D  = static_cast<cField2D*>(Jl);
-    cField2D* Jr3D  = static_cast<cField2D*>(Jr);
-    cField2D* Jt3D  = static_cast<cField2D*>(Jt);
+    cField2D* JlAM  = static_cast<cField2D*>(Jl);
+    cField2D* JrAM  = static_cast<cField2D*>(Jr);
+    cField2D* JtAM  = static_cast<cField2D*>(Jt);
     
     
     //Declaration of local variables
     int ip, id, jp, jd;
     double xpn, xpmxip, xpmxip2, xpmxid, xpmxid2;
     double ypn, ypmyjp, ypmyjp2, ypmyjd, ypmyjd2;
-    double Sxp[3], Sxd[3], Syp[3], Syd[3];
+    double Slp[3], Sld[3], Srp[3], Srd[3];
     
     // weighted currents
-    double Jx_ion = Jion.x * particles.weight(ipart);
-    double Jy_ion = Jion.y * particles.weight(ipart);
-    double Jz_ion = Jion.z * particles.weight(ipart);
+    double Jl_ion = Jion.x * particles.weight(ipart);
+    double Jr_ion = Jion.y * particles.weight(ipart);
+    double Jt_ion = Jion.z * particles.weight(ipart);
     
     //Locate particle on the grid
     xpn    = particles.position(0, ipart) * dl_inv_;  // normalized distance to the first node 
@@ -991,21 +906,21 @@ void ProjectorRZ2Order::operator() (Field* Jl, Field* Jr, Field* Jt, Particles &
     ypmyjd  = ypn - (double)jd + 0.5;        // normalized distance to the nearest grid point
     ypmyjd2 = ypmyjd*ypmyjd;                 // square of the normalized distance to the nearest grid point
     
-    Sxp[0] = 0.5 * (xpmxip2-xpmxip+0.25);
-    Sxp[1] = (0.75-xpmxip2);
-    Sxp[2] = 0.5 * (xpmxip2+xpmxip+0.25);
+    Slp[0] = 0.5 * (xpmxip2-xpmxip+0.25);
+    Slp[1] = (0.75-xpmxip2);
+    Slp[2] = 0.5 * (xpmxip2+xpmxip+0.25);
     
-    Sxd[0] = 0.5 * (xpmxid2-xpmxid+0.25);
-    Sxd[1] = (0.75-xpmxid2);
-    Sxd[2] = 0.5 * (xpmxid2+xpmxid+0.25);
+    Sld[0] = 0.5 * (xpmxid2-xpmxid+0.25);
+    Sld[1] = (0.75-xpmxid2);
+    Sld[2] = 0.5 * (xpmxid2+xpmxid+0.25);
     
-    Syp[0] = 0.5 * (ypmyjp2-ypmyjp+0.25);
-    Syp[1] = (0.75-ypmyjp2);
-    Syp[2] = 0.5 * (ypmyjp2+ypmyjp+0.25);
+    Srp[0] = 0.5 * (ypmyjp2-ypmyjp+0.25);
+    Srp[1] = (0.75-ypmyjp2);
+    Srp[2] = 0.5 * (ypmyjp2+ypmyjp+0.25);
     
-    Syd[0] = 0.5 * (ypmyjd2-ypmyjd+0.25);
-    Syd[1] = (0.75-ypmyjd2);
-    Syd[2] = 0.5 * (ypmyjd2+ypmyjd+0.25);
+    Srd[0] = 0.5 * (ypmyjd2-ypmyjd+0.25);
+    Srd[1] = (0.75-ypmyjd2);
+    Srd[2] = 0.5 * (ypmyjd2+ypmyjd+0.25);
     
     ip  -= i_domain_begin;
     id  -= i_domain_begin;
@@ -1013,20 +928,20 @@ void ProjectorRZ2Order::operator() (Field* Jl, Field* Jr, Field* Jt, Particles &
     jd  -= j_domain_begin;
     
     for (unsigned int i=0 ; i<3 ; i++) {
-        int iploc=ip+i-1;
+        //int iploc=ip+i-1;
         int idloc=id+i-1;
         for (unsigned int j=0 ; j<3 ; j++) {
             int jploc=jp+j-1;
-            int jdloc=jd+j-1;
+            //int jdloc=jd+j-1;
             if (jploc+ j_domain_begin ==0){
-            // Jx^(d,p)
-            (*Jl3D)(idloc,jploc) += Jx_ion*8. /dr * Sxd[i]*Syp[j];
-            (*Jr3D)(idloc,jploc) += Jy_ion*8. /dr * Sxp[i]*Syd[j];
-            (*Jt3D)(idloc,jploc) += Jz_ion*8. /dr * Sxp[i]*Syp[j];  //A corriger dualite et repliement
+            // Jl^(d,p)
+            (*JlAM)(idloc,jploc) += Jl_ion*8. /dr * Sld[i]*Srp[j];
+            (*JrAM)(idloc,jploc) += Jr_ion*8. /dr * Slp[i]*Srd[j];
+            (*JtAM)(idloc,jploc) += Jt_ion*8. /dr * Slp[i]*Srp[j];  //A corriger dualite et repliement
             } else {
-            (*Jl3D)(idloc,jploc) += Jx_ion /((jploc+ j_domain_begin)*dr) * Sxd[i]*Syp[j];
-            (*Jr3D)(idloc,jploc) += Jy_ion /((jploc+ j_domain_begin)*dr) * Sxp[i]*Syd[j];
-            (*Jt3D)(idloc,jploc) += Jz_ion /((jploc+ j_domain_begin)*dr) * Sxp[i]*Syp[j];
+            (*JlAM)(idloc,jploc) += Jl_ion /((jploc+ j_domain_begin)*dr) * Sld[i]*Srp[j];
+            (*JrAM)(idloc,jploc) += Jr_ion /((jploc+ j_domain_begin)*dr) * Slp[i]*Srd[j];
+            (*JtAM)(idloc,jploc) += Jt_ion /((jploc+ j_domain_begin)*dr) * Slp[i]*Srp[j];
             }
 
         }
@@ -1037,7 +952,7 @@ void ProjectorRZ2Order::operator() (Field* Jl, Field* Jr, Field* Jt, Particles &
 
 //------------------------------------//
 //Wrapper for projection
-void ProjectorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec, int ipart_ref)
+void ProjectorAM2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec, int ipart_ref)
 {  //std::cout<<"projecting"<<std::endl;
    if (is_spectral)
         ERROR("Not implemented");
@@ -1046,53 +961,47 @@ void ProjectorRZ2Order::operator() (ElectroMagn* EMfields, Particles &particles,
     std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
     std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);   
     std::vector<std::complex<double>> *exp_m_theta_old = &(smpi->dynamics_thetaold[ithread]);
-    int dim1 = EMfields->dimPrim[1];
-    //int dim2 = EMfields->dimPrim[2];
 
-    ElectroMagn3DRZ* emRZ = static_cast<ElectroMagn3DRZ*>( EMfields );
+    ElectroMagnAM* emAM = static_cast<ElectroMagnAM*>( EMfields );
 
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
     if (!diag_flag){ 
 
-        
-        // Loop on modes ?
         for ( unsigned int imode = 0; imode<Nmode;imode++){
 
-            if (imode==0){
-                complex< double>* b_Jl =  &(*emRZ->Jl_[imode] )(ibin*clrw* dim1 );
-                complex<double>* b_Jr =  &(*emRZ->Jr_[imode] )(ibin*clrw*(dim1+1) );
-                complex<double>* b_Jt =  &(*emRZ->Jt_[imode] )(ibin*clrw* dim1 );
-                for ( int ipart=istart ; ipart<iend; ipart++ )
-                    (*this)(b_Jl , b_Jr , b_Jt , particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[ipart], &(*delta)[ipart]);
-	    }
-            else{	
-                complex<double>* b_Jl =  &(*emRZ->Jl_[imode] )(ibin*clrw* dim1 );
-                complex<double>* b_Jr =  &(*emRZ->Jr_[imode] )(ibin*clrw*(dim1+1) );
-                complex<double>* b_Jt =  &(*emRZ->Jt_[imode] )(ibin*clrw* dim1 );
-                for ( int ipart=istart ; ipart<iend; ipart++ )
-                    (*this)(b_Jl , b_Jr , b_Jt , particles,  ipart,(*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[ipart], &(*delta)[ipart],&(*exp_m_theta_old)[ipart], imode);
-           } 
-         }       // Otherwise, the projection may apply to the species-specific arrays
-     } 
-     else {
+        complex<double>* b_Jl =  &(*emAM->Jl_[imode] )(0);
+        complex<double>* b_Jr =  &(*emAM->Jr_[imode] )(0);
+        complex<double>* b_Jt =  &(*emAM->Jt_[imode] )(0);
+
+        if (imode==0){
+            for ( int ipart=istart ; ipart<iend; ipart++ )
+                (*this)(b_Jl , b_Jr , b_Jt , particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
+        }
+        else{	
+            for ( int ipart=istart ; ipart<iend; ipart++ )
+                (*this)(b_Jl , b_Jr , b_Jt , particles,  ipart,(*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart],&(*exp_m_theta_old)[ipart], imode);
+            } 
+        }       // Otherwise, the projection may apply to the species-specific arrays
+    } 
+    else {
          //Loop on modes 
         for ( unsigned int imode = 0; imode<Nmode;imode++){
+
+            // Fix for n_species which is not know in constructors : now the projector is inside each species
+            n_species = emAM->Jl_.size() / Nmode;
+
 	    int ifield = imode*n_species+ispec;
+                complex<double>* b_Jl  = emAM->Jl_s    [ifield] ? &(* (emAM->Jl_s    [ifield]) )(0) : &(*emAM->Jl_    [imode] )(0) ;
+                complex<double>* b_Jr  = emAM->Jr_s    [ifield] ? &(* (emAM->Jr_s    [ifield]) )(0) : &(*emAM->Jr_    [imode] )(0) ;
+                complex<double>* b_Jt  = emAM->Jt_s    [ifield] ? &(* (emAM->Jt_s    [ifield]) )(0) : &(*emAM->Jt_    [imode] )(0) ;
+                complex<double>* b_rho = emAM->rho_AM_s[ifield] ? &(* (emAM->rho_AM_s[ifield]) )(0) : &(*emAM->rho_AM_[imode] )(0) ;
             if (imode==0){
-                complex<double>* b_Jl  = emRZ->Jl_s [ifield] ? &(* static_cast<cField2D*>(emRZ->Jl_s [ifield]) )(ibin*clrw* dim1) : &(*emRZ->Jl_[imode] )(ibin*clrw* dim1 ) ;
-                complex<double>* b_Jr  = emRZ->Jr_s [ifield] ? &(* static_cast<cField2D*>(emRZ->Jr_s [ifield]) )(ibin*clrw*(dim1+1)) : &(*emRZ->Jr_[imode] )(ibin*clrw*(dim1+1)) ;
-                complex<double>* b_Jt  = emRZ->Jt_s [ifield] ? &(* static_cast<cField2D*>(emRZ->Jt_s [ifield]) )(ibin*clrw*dim1) : &(*emRZ->Jt_[imode] )(ibin*clrw*dim1) ;
-                complex<double>* b_rho = emRZ->rho_RZ_s[ifield] ? &(* static_cast<cField2D*>(emRZ->rho_RZ_s[ifield]) )(ibin*clrw* dim1) : &(*emRZ->rho_RZ_[imode])(ibin*clrw* dim1 ) ;
                 for ( int ipart=istart ; ipart<iend; ipart++ )
-                   (*this)(b_Jl , b_Jr , b_Jt ,b_rho, particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[ipart], &(*delta)[ipart]);
-}
+                   (*this)(b_Jl , b_Jr , b_Jt ,b_rho, particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
+             }
              else{    
-                complex<double>* b_Jl  = emRZ->Jl_s [ifield] ? &(* static_cast<cField2D*>(emRZ->Jl_s [ifield]) )(ibin*clrw* dim1) : &(*emRZ->Jl_[imode] )(ibin*clrw* dim1) ;
-                complex<double>* b_Jr  = emRZ->Jr_s [ifield] ? &(* static_cast<cField2D*>(emRZ->Jr_s [ifield]) )(ibin*clrw*(dim1+1)) : &(*emRZ->Jr_[imode] )(ibin*clrw*(dim1+1)) ;
-                complex<double>* b_Jt  = emRZ->Jt_s [ifield] ? &(* static_cast<cField2D*>(emRZ->Jt_s [ifield]) )(ibin*clrw*dim1) : &(*emRZ->Jt_[imode])(ibin*clrw*dim1) ;
-                complex<double>* b_rho = emRZ->rho_RZ_s[ifield] ? &(* static_cast<cField2D*>(emRZ->rho_RZ_s[ifield]) )(ibin*clrw* dim1 ) : &(*emRZ->rho_RZ_[imode])(ibin*clrw* dim1 ) ;
                 for ( int ipart=istart ; ipart<iend; ipart++ )
-                    (*this)(b_Jl , b_Jr , b_Jt ,b_rho, particles,  ipart, (*invgf)[ipart], ibin*clrw, b_dim, &(*iold)[ipart], &(*delta)[ipart], &(*exp_m_theta_old)[ipart], imode);
+                    (*this)(b_Jl , b_Jr , b_Jt ,b_rho, particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart], &(*exp_m_theta_old)[ipart], imode);
                  }
 
        }

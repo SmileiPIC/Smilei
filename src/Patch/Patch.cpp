@@ -181,7 +181,7 @@ void Patch::finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, unsign
 void Patch::finalizeMPIenvironment(Params& params) {
     int nb_comms(9); // E, B, B_m : min number of comms
 
-    if (params.geometry == "3drz")
+    if (params.geometry == "AMcylindrical")
         nb_comms += 9*(params.nmodes - 1);
     // if envelope is present,
     // add to comms A, A0, Phi, Phi_old, GradPhi (x,y,z components), GradPhi_old (x,y,z components)
@@ -618,7 +618,7 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, Params& params)
 
     // Define where particles are going
     //Put particles in the send buffer it belongs to. Priority to lower dimensions.
-    if ( params.geometry != "3drz") {
+    if ( params.geometry != "AMcylindrical") {
         for (int i=0 ; i<n_part_send ; i++) {
             iPart = (*indexes_of_particles_to_exchange)[i];
             check = 0;
@@ -642,7 +642,7 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, Params& params)
             }
         }
     }
-    else { //if (geometry == "3drz")
+    else { //if (geometry == "AMcylindrical")
         double r_min2, r_max2;
         r_max2 = max_local[1] * max_local[1] ;
         r_min2 = min_local[1] * min_local[1] ;
@@ -858,7 +858,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
 
             // Treat diagonalParticles
             if (iDim < ndim-1){ // No need to treat diag particles at last dimension. 
-                if (params.geometry != "3drz"){
+                if (params.geometry != "AMcylindrical"){
                     for (int iPart=n_part_recv-1 ; iPart>=0; iPart-- ) {
                         check = 0;
                         idim = iDim+1;//We check next dimension
@@ -896,7 +896,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
                             idim++;
                         }
                     }
-                } else { //In 3drz geometry
+                } else { //In AM geometry
                 //In this case, iDim = 0 and idim = iDim + 1 = 1. We only have to check potential comms along R.
                     double r_min2, r_max2;
                     r_min2 = min_local[1]*min_local[1];

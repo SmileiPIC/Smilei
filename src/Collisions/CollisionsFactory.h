@@ -3,6 +3,7 @@
 #define COLLISIONSFACTORY_H
 
 #include "Collisions.h"
+#include "CollisionsSingle.h"
 #include "Params.h"
 #include "PyTools.h"
 
@@ -150,20 +151,35 @@ public:
         }
         
         // new Collisions object
-        return new Collisions(
-                patch,
-                n_collisions,
-                sgroup[0],
-                sgroup[1],
-                clog, intra,
-                debug_every,
-                Z,
-                ionizing,
-                tracked_electrons,
-                params.nDim_particle,
-                params.reference_angular_frequency_SI,
-                filename
-        );
+        if( sgroup[0].size()>1 || sgroup[1].size()>1 ) {
+            return new Collisions(
+                    params,
+                    n_collisions,
+                    sgroup[0],
+                    sgroup[1],
+                    clog, intra,
+                    debug_every,
+                    Z,
+                    ionizing,
+                    tracked_electrons,
+                    params.nDim_particle,
+                    filename
+            );
+        } else {
+            return new CollisionsSingle(
+                    params,
+                    n_collisions,
+                    sgroup[0],
+                    sgroup[1],
+                    clog, intra,
+                    debug_every,
+                    Z,
+                    ionizing,
+                    tracked_electrons,
+                    params.nDim_particle,
+                    filename
+            );
+        }
     }
     
     
@@ -184,9 +200,9 @@ public:
             vecCollisions.push_back( create(params, patch, vecSpecies, n_collisions, debye_length_required) );
         }
         for (unsigned int n_collisions = 0; n_collisions < numcollisions; n_collisions++) {
-            if ( vecCollisions[ n_collisions ]->Ionization ) 
+            if ( vecCollisions[ n_collisions ]->Ionization )
                 vecCollisions[ n_collisions ]->Ionization->assignDatabase(  vecCollisions[ n_collisions ]->Ionization->dataBaseIndex );
-        }        
+        }
         
         // pass the variable "debye_length_required" into the Collision class
         Collisions::debye_length_required = debye_length_required;

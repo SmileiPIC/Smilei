@@ -37,7 +37,6 @@ void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
     int nparts( (smpi->dynamics_invgf[ithread]).size() );
 
     double *Epart[3], *Bpart[3];
-    double E,E2;
 
     double *deltaO[2];
     deltaO[0] = &(smpi->dynamics_deltaold[ithread][0]);
@@ -54,15 +53,6 @@ void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
     idxO[0] = idx[0] - i_domain_begin -1 ;
     idx[1]  = round( particles.position(1,*istart) * D_inv[1] );
     idxO[1] = idx[1] - j_domain_begin -1 ;
-
-    double **Egrid[3], **Bgrid[3];
-
-    Egrid[0] = (static_cast<Field2D*>(EMfields->Ex_))->data_2D;
-    Egrid[1] = (static_cast<Field2D*>(EMfields->Ey_))->data_2D;
-    Egrid[2] = (static_cast<Field2D*>(EMfields->Ez_))->data_2D;
-    Bgrid[0] = (static_cast<Field2D*>(EMfields->Bx_m))->data_2D;
-    Bgrid[1] = (static_cast<Field2D*>(EMfields->By_m))->data_2D;
-    Bgrid[2] = (static_cast<Field2D*>(EMfields->Bz_m))->data_2D;
 
     Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
     Field2D* Ey2D = static_cast<Field2D*>(EMfields->Ey_);
@@ -202,11 +192,6 @@ void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
     int nparts( particles.size() );
 
     double *Epart[3], *Bpart[3];
-    double E,E2;
-
-    double *deltaO[2];
-    deltaO[0] = &(smpi->dynamics_deltaold[ithread][0]);
-    deltaO[1] = &(smpi->dynamics_deltaold[ithread][nparts]);
 
     for (unsigned int k=0; k<3;k++) {   
         Epart[k]= &(smpi->dynamics_Epart[ithread][k*nparts]);
@@ -220,15 +205,6 @@ void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
     idx[1]  = round( particles.position(1,*istart) * D_inv[1] );
     idxO[1] = idx[1] - j_domain_begin -1 ;
 
-    double **Egrid[3], **Bgrid[3];
-
-    Egrid[0] = (static_cast<Field2D*>(EMfields->Ex_))->data_2D;
-    Egrid[1] = (static_cast<Field2D*>(EMfields->Ey_))->data_2D;
-    Egrid[2] = (static_cast<Field2D*>(EMfields->Ez_))->data_2D;
-    Bgrid[0] = (static_cast<Field2D*>(EMfields->Bx_m))->data_2D;
-    Bgrid[1] = (static_cast<Field2D*>(EMfields->By_m))->data_2D;
-    Bgrid[2] = (static_cast<Field2D*>(EMfields->Bz_m))->data_2D;
-
     Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
     Field2D* Ey2D = static_cast<Field2D*>(EMfields->Ey_);
     Field2D* Ez2D = static_cast<Field2D*>(EMfields->Ez_);
@@ -238,11 +214,6 @@ void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
 
     double coeff[2][2][3]; 
     int dual[2]; // Size ndim. Boolean indicating if the part has a dual indice equal to the primal one (dual=0) or if it is +1 (dual=1).
-
-    int vecSize = 32;
-
-    int np_computed = 1;
-
 
     double delta0, delta;
     double delta2;

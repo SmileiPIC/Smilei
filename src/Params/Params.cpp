@@ -222,7 +222,7 @@ namelist("")
     geometry = "";
     if( !PyTools::extract("geometry", geometry, "Main") )
         ERROR("Parameter Main.geometry is required");
-    if (geometry!="1Dcartesian" && geometry!="2Dcartesian" && geometry!="3Dcartesian" && geometry!="3drz") {
+    if (geometry!="1Dcartesian" && geometry!="2Dcartesian" && geometry!="3Dcartesian" && geometry!="AMcylindrical") {
         ERROR("Main.geometry `" << geometry << "` invalid");
     }
     setDimensions();
@@ -254,8 +254,8 @@ namelist("")
     for (unsigned int i=0;i<nDim_field;i++){
         res_space[i] = 1.0/cell_length[i];
     }
-    // Number of modes in LRT geometry
-    PyTools::extract("nmodes", nmodes, "Main");
+    // Number of modes in AMcylindrical geometry
+    PyTools::extract("number_of_AM", nmodes, "Main");
 
     // simulation duration & length
     PyTools::extract("simulation_time", simulation_time, "Main");
@@ -289,7 +289,7 @@ namelist("")
     if ( n_envlaser >=1 ){
         Laser_Envelope_model = true;
         //! Boundary conditions for Envelope Field
-        if( !PyTools::extract("Envelope_boundary_conditions", Env_BCs, "Main")  )
+        if( !PyTools::extract("Envelope_boundary_conditions", Env_BCs, "LaserEnvelope")  )
             ERROR("Envelope_boundary_conditions not defined" );
 
         if( Env_BCs.size() == 0 ) {
@@ -413,7 +413,7 @@ namelist("")
     for (unsigned int i=0; i<nDim_field; i++) {
         res_space2 += res_space[i]*res_space[i];
     }
-    if (geometry == "3drz") {
+    if (geometry == "AMcylindrical") {
         res_space2 += ((nmodes-1)*(nmodes-1)-1)*res_space[1]*res_space[1];
     }
     dtCFL=1.0/sqrt(res_space2);
@@ -529,7 +529,7 @@ namelist("")
 
         // get parameter "every" which describes a timestep selection
         dynamic_vecto_time_selection = new TimeSelection(
-            PyTools::extract_py("every", "Vectorization"), "Dynamic vectorization"
+            PyTools::extract_py("reconfigure_every", "Vectorization"), "Dynamic vectorization"
         );
 
         // Default mode for the dynamic mode
@@ -712,6 +712,9 @@ namelist("")
             n_laser_offset ++;
         }
     }
+
+
+    check_consistency();
 }
 
 Params::~Params() {
@@ -825,6 +828,27 @@ void Params::compute()
 }
 
 
+void Params::check_consistency()
+{
+    if ( vectorization_mode != "disable" ) {
+
+        if ( (geometry=="1Dcartesian") || (geometry=="AMcylindrical") )
+            ERROR( "Vectorized algorithms not implemented for this geometry" );
+
+        if ( (geometry=="2Dcartesian") && (interpolation_order==4) )
+            ERROR( "4th order vectorized algorithms not implemented in 2D" );
+        
+            
+        if  ( hasMultiphotonBreitWheeler ) {
+            WARNING( "Performances of advanced physical processes which generates nezw particles could be degraded for the moment !" );
+            WARNING( "\t The improvment of their integration in vectorized algorithm is in progress." );
+        }
+
+    }
+
+}
+
+
 // ---------------------------------------------------------------------------------------------------------------------
 // Set dimensions according to geometry
 // ---------------------------------------------------------------------------------------------------------------------
@@ -839,7 +863,7 @@ void Params::setDimensions()
     } else if (geometry=="3Dcartesian") {
         nDim_particle=3;
         nDim_field=3;
-    } else if (geometry=="3drz") {
+    } else if (geometry=="AMcylindrical") {
         nDim_particle=3;
         nDim_field=2;
     } else {

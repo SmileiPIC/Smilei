@@ -346,7 +346,7 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
 
         // The first step is to reduce the area of the probe to search in this patch
-        if (geometry == "3drz"){
+        if (geometry == "AMcylindrical"){
                 mins[0] = numeric_limits<double>::max();
                 maxs[0] = numeric_limits<double>::lowest();
                 patchMin[0] = ( vecPatches(ipatch)->Pcoordinates[0]   )*patch_size[0];
@@ -418,12 +418,12 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
             // Compute this point's coordinates in terms of x, y, ...
             point = matrixTimesVector( axes, point );
             //Redefine patchmin as rmin and not -rmax any more
-            if (geometry == "3drz")
+            if (geometry == "AMcylindrical")
                 patchMin[1] = patchMax[1] - (double)patch_size[1]  ;
             // Check if point is in patch
             is_in_domain = true;
             for( i=0; i<nDim_field; i++ ) {
-                if (i == 1 && geometry == "3drz"){
+                if (i == 1 && geometry == "AMcylindrical"){
                     point[1] += origin[1];
                     point[2] += origin[2];
                     point[1] = sqrt(point[1]*point[1] + point[2]*point[2]);

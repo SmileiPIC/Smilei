@@ -75,13 +75,10 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, double 
     int kpom2 = kpo-2;
 
     int vecSize = 8;
-    int bsize = 5*5*5*vecSize;
+    unsigned int bsize = 5*5*5*vecSize;
 
     double bJx[bsize] __attribute__((aligned(64)));
 
-    double Sx0_buff_vect[32] __attribute__((aligned(64)));
-    double Sy0_buff_vect[32] __attribute__((aligned(64)));
-    double Sz0_buff_vect[32] __attribute__((aligned(64)));
     double DSx[40] __attribute__((aligned(64)));
     double DSy[40] __attribute__((aligned(64)));
     double DSz[40] __attribute__((aligned(64)));
@@ -168,7 +165,7 @@ void Projector3D2OrderV::operator() (double* rhoj, Particles &particles, unsigne
     // -------------------------------------
 
     int iloc,jloc;
-    int ny(nprimy), nz(nprimz), nyz;
+    int ny(nprimy), nz(nprimz);//, nyz;
     // (x,y,z) components of the current density for the macro-particle
 
     // variable declaration
@@ -194,7 +191,7 @@ void Projector3D2OrderV::operator() (double* rhoj, Particles &particles, unsigne
             nz ++;
         }
     }
-    nyz = ny*nz;
+    //nyz = ny*nz;
 
     // Initialize all current-related arrays to zero
     for (unsigned int i=0; i<5; i++) {
@@ -380,7 +377,7 @@ void Projector3D2OrderV::operator() (double* Jx, double* Jy, double* Jz, Particl
     int kpom2 = kpo-2;
 
     int vecSize = 8;
-    int bsize = 5*5*5*vecSize;
+    unsigned int bsize = 5*5*5*vecSize;
 
     double bJx[bsize] __attribute__((aligned(64)));
 
@@ -608,7 +605,7 @@ void Projector3D2OrderV::project_susceptibility(ElectroMagn* EMfields, Particles
     double* GradPhiz = &( (*GradPhipart)[2*nparts] );
 
     int vecSize = 8;
-    int bsize = 3*3*3*vecSize; // primal grid, particles did not yet move (3x3x3 enough)
+    unsigned int bsize = 3*3*3*vecSize; // primal grid, particles did not yet move (3x3x3 enough)
     double bChi[bsize] __attribute__((aligned(64)));
 
     double Sx1[24] __attribute__((aligned(64)));
@@ -635,7 +632,7 @@ void Projector3D2OrderV::project_susceptibility(ElectroMagn* EMfields, Particles
         #pragma omp simd
         for (int ipart=0 ; ipart<np_computed; ipart++ ) {
 
-            int iloc,jloc;
+            //int iloc,jloc;
 
             double momentum[3];
 

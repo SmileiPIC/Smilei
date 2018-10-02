@@ -168,13 +168,13 @@ public:
 
 
     // Resize buffers for a given number of particles
-    inline void dynamics_resize(int ithread, int ndim_field, int npart, bool isRZ = false ){
+    inline void dynamics_resize(int ithread, int ndim_field, int npart, bool isAM = false ){
         dynamics_Epart[ithread].resize(3*npart);
         dynamics_Bpart[ithread].resize(3*npart);
         dynamics_invgf[ithread].resize(npart);
         dynamics_iold[ithread].resize(ndim_field*npart);
         dynamics_deltaold[ithread].resize(ndim_field*npart);
-	if (isRZ) dynamics_thetaold[ithread].resize(npart); 
+	if (isAM) dynamics_thetaold[ithread].resize(npart); 
 
         if ( dynamics_GradPHIpart.size() > 0 ) {
             dynamics_GradPHIpart[ithread].resize(3*npart);

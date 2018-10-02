@@ -9,7 +9,7 @@
 #include "Interpolator2D4Order.h"
 #include "Interpolator3D2Order.h"
 #include "Interpolator3D4Order.h"
-#include "InterpolatorRZ2Order.h"
+#include "InterpolatorAM2Order.h"
 
 #ifdef _VECTO
 #include "Interpolator2D2OrderV.h"
@@ -69,10 +69,10 @@ public:
 #endif
         }
         // ---------------
-        // 3dRZ simulation
+        // AM simulation
         // ---------------
-        else if ( params.geometry == "3drz" ) {
-            Interp = new InterpolatorRZ2Order(params, patch);
+        else if ( params.geometry == "AMcylindrical" ) {
+            Interp = new InterpolatorAM2Order(params, patch);
         }
 
         else {

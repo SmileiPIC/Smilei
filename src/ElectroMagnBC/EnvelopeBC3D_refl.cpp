@@ -43,7 +43,7 @@ void EnvelopeBC3D_refl::apply(LaserEnvelope* envelope, double time_dual, Patch* 
   
     // Static cast of the field    
     cField3D* A3D        = static_cast<cField3D*>(envelope->A_);     // the envelope at timestep n
-    cField3D* A03D       = static_cast<cField3D*>(envelope->A0_);    // the envelope at timestep n-1
+    //cField3D* A03D       = static_cast<cField3D*>(envelope->A0_);    // the envelope at timestep n-1
     Field3D*  Phi3D      = static_cast<Field3D*>(envelope->Phi_);    // the ponderomotive potential Phi=|A|^2/2 at timestep n
     Field3D*  Phiold3D   = static_cast<Field3D*>(envelope->Phiold_); // the ponderomotive potential Phi=|A|^2/2 at timestep n-1
   

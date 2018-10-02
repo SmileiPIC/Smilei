@@ -68,7 +68,7 @@ makerun3D:
     # Run validation script
     - python validation.py -b "tst3d_??_*.py" -m 4 -o 4 -v -r 1
 
-makerunTheta:
+makerunAM:
   stage: makerun
   only:
     - develop
@@ -79,7 +79,7 @@ makerunTheta:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -b "tst3drz_??_*.py" -m 4 -o 4 -v
+    - python validation.py -b "tstAM_??_*.py" -m 4 -o 4 -v
 
 makerunV:
   stage: makerun

@@ -31,7 +31,7 @@ inline int reflect_particle( Particles &particles, int ipart, int direction, dou
 }
 
 // direction not used below, direction is "r"
-inline int refl_particle_rz( Particles &particles, int ipart, int direction, double limit_pos, Species *species,
+inline int refl_particle_AM( Particles &particles, int ipart, int direction, double limit_pos, Species *species,
                              double &nrj_iPart) {
     nrj_iPart = 0.;     // no energy loss during reflection
 
@@ -89,7 +89,7 @@ inline int stop_particle( Particles &particles, int ipart, int direction, double
     return 1;
 }
 
-inline int stop_particle_rz( Particles &particles, int ipart, int direction, double limit_pos, Species *species,
+inline int stop_particle_AM( Particles &particles, int ipart, int direction, double limit_pos, Species *species,
                              double &nrj_iPart) {
     nrj_iPart = particles.weight(ipart)*(particles.lor_fac(ipart)-1.0); // energy lost
     double distance_to_axis = sqrt( particles.distance2_to_axis(ipart) );
