@@ -23,6 +23,18 @@ public:
     virtual void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc) = 0;
     virtual void operator() (ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, std::vector<unsigned int> * selection) = 0;
 
+    virtual void interpolate_em_fields_and_envelope( ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) {
+        ERROR( "Envelope not implemented with this geometry and this order" );
+    };
+
+    virtual void interpolate_envelope_and_old_envelope( ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) {
+        ERROR( "Envelope not implemented with this geometry and this order" );
+    };
+
+    virtual void interpolate_envelope_and_susceptibility(ElectroMagn* EMfields, Particles &particles, int ipart, double* Env_A_abs_Loc, double* Env_Chi_Loc, double* Env_E_abs_Loc) {
+        ERROR( "Envelope not implemented with this geometry and this order" );
+    };
+
 private:
 
 };//END class

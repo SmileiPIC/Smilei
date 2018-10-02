@@ -115,11 +115,11 @@ public:
             //Need to sort because particles are not well sorted at creation
             for (unsigned int ipatch=0 ; ipatch < npatches ; ipatch++){
                 for (unsigned int ispec=0 ; ispec<vecPatches(ipatch)->vecSpecies.size(); ispec++) {
-                    if ( dynamic_cast<SpeciesDynamicV2*>(vecPatches.patches_[ipatch]->vecSpecies[ispec]) )
+                    if (dynamic_cast<SpeciesDynamicV2*>(vecPatches.patches_[ipatch]->vecSpecies[ispec]) )
                     {
                         dynamic_cast<SpeciesDynamicV2*>(vecPatches.patches_[ipatch]->vecSpecies[ispec])->compute_part_cell_keys(params);
                     }
-                    dynamic_cast<SpeciesDynamicV2*>(vecPatches.patches_[ipatch]->vecSpecies[ispec])->sort_part(params);
+                    vecPatches.patches_[ipatch]->vecSpecies[ispec]->sort_part(params);
                 }
             }
         }
@@ -151,7 +151,7 @@ public:
 
         vecPatches.set_refHindex();
 
-        vecPatches.update_field_list();
+        vecPatches.update_field_list(smpi);
 
         TITLE("Creating Diagnostics, antennas, and external fields")
         vecPatches.createDiags( params, smpi, openPMD );
@@ -163,7 +163,10 @@ public:
 
         // Figure out if there are antennas
         vecPatches.nAntennas = vecPatches(0)->EMfields->antennas.size();
-        vecPatches.initExternals( params );
+        
+        // Initialize lasers and antennas
+        if( ! smpi->test_mode )
+            vecPatches.initExternals( params );
 
         MESSAGE(1,"Done initializing diagnostics, antennas, and external fields");
         return vecPatches;

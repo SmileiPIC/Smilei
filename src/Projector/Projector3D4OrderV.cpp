@@ -914,9 +914,9 @@ void Projector3D4OrderV::operator() (double* rhoj, Particles &particles, unsigne
     kp -= k_domain_begin + 3;
 
     for (unsigned int i=0 ; i<7 ; i++) {
-        iloc = (i+ip)*nyz;
+        iloc = (i+ip)*b_dim[2]*b_dim[1];
         for (unsigned int j=0 ; j<7 ; j++) {
-            jloc = (jp+j)*nz;
+            jloc = (jp+j)*b_dim[2];;
             for (unsigned int k=0 ; k<7 ; k++) {
                 rhoj[iloc+jloc+kp+k] += charge_weight * Sx1[i]*Sy1[j]*Sz1[k];
             }
@@ -1614,3 +1614,11 @@ void Projector3D4OrderV::operator() (ElectroMagn* EMfields, Particles &particles
         (*this)(b_Jx , b_Jy , b_Jz , b_rho, particles,  istart, iend, invgf, b_dim, iold, &(*delta)[0], ipart_ref);
     }
 }
+
+
+//void Projector3D4OrderV::project_susceptibility(double* Chi_envelope, Particles &particles, int istart, int iend, unsigned int scell, std::vector<unsigned int> &b_dim, SmileiMPI* smpi, int ithread, double species_mass, int* iold2, int ipart_ref)
+void Projector3D4OrderV::project_susceptibility(ElectroMagn* EMfields, Particles &particles, double species_mass, SmileiMPI* smpi, int istart, int iend,  int ithread, int scell, std::vector<unsigned int> &b_dim, int ipart_ref)
+{
+    ERROR("Projection and interpolation for the envelope model are implemented only for interpolation_order = 2");
+}
+

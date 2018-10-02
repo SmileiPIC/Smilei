@@ -35,7 +35,7 @@ DiagnosticFields2D::DiagnosticFields2D( Params &params, SmileiMPI* smpi, VectorP
     for( unsigned int i=0; i<2; i++) {
         findSubgridIntersection(
             subgrid_start[i], subgrid_stop[i], subgrid_step[i],
-            0, patch_size[i]+1,
+            subgrid_start[i], subgrid_start[i]+patch_size[i]+1,
             istart_in_patch[i], istart_in_file[i], nsteps[i]
         );
     }
@@ -43,6 +43,8 @@ DiagnosticFields2D::DiagnosticFields2D( Params &params, SmileiMPI* smpi, VectorP
     hsize_t file_size = one_patch_buffer_size * tot_number_of_patches;
     filespace_firstwrite = H5Screate_simple(1, &file_size, NULL);
     memspace_firstwrite  = H5Screate_simple(1, &file_size, NULL);
+    
+    if( smpi->test_mode ) return;
     
     // Define a second portion of the grid, which is unrelated to the current 
     // composition of vecPatches. It is used for a second writing of the file

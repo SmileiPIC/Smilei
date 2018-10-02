@@ -86,8 +86,6 @@ Main(
     grid_length  = [Lx,Ly],
 
     number_of_patches = [4,4],
-    vecto = "normal",
-
     time_fields_frozen = Tsim,
 
     timestep = dt,
@@ -99,6 +97,10 @@ Main(
 
     reference_angular_frequency_SI = wr
 
+)
+
+Vectorization(
+    mode = "normal",
 )
 
 # ----------------------------------------------------------------------------------------

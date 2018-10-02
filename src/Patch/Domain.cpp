@@ -40,9 +40,9 @@ void Domain::build( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, Op
     vecPatch_.patches_.push_back( patch_ );
 
     //vecPatch_.refHindex_ = vecPatches.refHindex_ / vecPatches.size();
-    vecPatch_.update_field_list();
+    vecPatch_.update_field_list(smpi);
 
-    //vecPatch_.update_field_list(0);
+    //vecPatch_.update_field_list(0, smpi);
     vecPatch_.patches_[0]->finalizeMPIenvironment(params);
     vecPatch_.nrequests = vecPatches(0)->requests_.size();
     vecPatch_.nAntennas = vecPatch_(0)->EMfields->antennas.size();
@@ -110,14 +110,10 @@ void Domain::clean()
 
 }
 
-void Domain::solveMaxwell( Params& params, SimWindow* simWindow, int itime, double time_dual, Timers& timers )
+void Domain::solveMaxwell( Params& params, SimWindow* simWindow, int itime, double time_dual, Timers& timers, SmileiMPI* smpi )
 {
-    MPI_Barrier( MPI_COMM_WORLD );
-    //MESSAGE( "in domain solvemaxwell" );
-    vecPatch_.solveMaxwell( params, simWindow, itime, time_dual, timers );
-
+    vecPatch_.solveMaxwell( params, simWindow, itime, time_dual, timers, smpi );
 }
-
 
 void Domain::identify_additional_patches(SmileiMPI* smpi, VectorPatch& vecPatches, Params& params, SimWindow* simWindow)
 {
@@ -282,9 +278,9 @@ void Domain::identify_missing_patches(SmileiMPI* smpi, VectorPatch& vecPatches, 
      
 }
 
-void Domain::solveEnvelope( Params& params, SimWindow* simWindow, int itime, double time_dual, Timers& timers )
+void Domain::solveEnvelope( Params& params, SimWindow* simWindow, int itime, double time_dual, Timers& timers, SmileiMPI* smpi )
 {
-    vecPatch_.solveEnvelope( params, simWindow, itime, time_dual, timers );
+    vecPatch_.solveEnvelope( params, simWindow, itime, time_dual, timers, smpi );
 
 }
 

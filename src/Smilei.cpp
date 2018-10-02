@@ -129,16 +129,15 @@ int main (int argc, char* argv[])
 
     // reading from dumped file the restart values
     if (params.restart) {
-
         // smpi.patch_count recomputed in readPatchDistribution
         checkpoint.readPatchDistribution( &smpi, simWindow );
-        // allocate patches according to smpi.patch_count
+	// allocate patches according to smpi.patch_count
         vecPatches = PatchesFactory::createVector(params, &smpi, openPMD, checkpoint.this_run_start_step+1, simWindow->getNmoved());
-        // vecPatches data read in restartAll according to smpi.patch_count
+	// vecPatches data read in restartAll according to smpi.patch_count
         checkpoint.restartAll( vecPatches, &smpi, simWindow, params, openPMD);
 
         // Patch reconfiguration for the dynamic vectorization
-        if( params.has_dynamic_vectorization ) {
+        if( params.has_dynamic_vectorization) {
             vecPatches.configuration(params,timers, 0);
         }
 
@@ -168,7 +167,7 @@ int main (int argc, char* argv[])
     } else {
 
         vecPatches = PatchesFactory::createVector(params, &smpi, openPMD, 0);
-
+	//MESSAGE ("create vector");
         // Initialize the electromagnetic fields
         // -------------------------------------
 
@@ -182,8 +181,8 @@ int main (int argc, char* argv[])
         if (params.solve_relativistic_poisson == true) {
             // Compute rho only for species needing relativistic field Initialization
             vecPatches.computeChargeRelativisticSpecies(time_prim);
-            SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, timers, 0 );
-
+            SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, &smpi, timers, 0 );
+            
             // Initialize the fields for these species
             if (!vecPatches.isRhoNull(&smpi)){
                 TITLE("Initializing relativistic species fields at time t = 0");
@@ -194,8 +193,7 @@ int main (int argc, char* argv[])
         }
 
         vecPatches.computeCharge();
-        vecPatches.sumDensities(params, time_dual, timers, 0, simWindow);
-
+        vecPatches.sumDensities(params, time_dual, timers, 0, simWindow, &smpi);
         // ---------------------------------------------------------------------
         // Init and compute tables for radiation effects
         // (nonlinear inverse Compton scattering)
@@ -215,19 +213,17 @@ int main (int argc, char* argv[])
         // --------------
         vecPatches.applyAntennas(0.5 * params.timestep);
         // Init electric field (Ex/1D, + Ey/2D)
-        if (!vecPatches.isRhoNull(&smpi) && params.solve_poisson == true) {
+        if ( params.solve_poisson == true && !vecPatches.isRhoNull(&smpi)) {
             TITLE("Solving Poisson at time t = 0");
             vecPatches.solvePoisson( params, &smpi );
         }
 
-
         // Patch reconfiguration
         if( params.has_dynamic_vectorization ) {
-            vecPatches.reconfiguration(params,timers, 0);
+            vecPatches.configuration(params,timers, 0);
         }
 
- 
-        // If Laser Envelope is used, initialize envelope
+        // if Laser Envelope is used, execute particles and envelope sections of ponderomotive loop
         if (params.Laser_Envelope_model){
             // initialize new envelope from scratch, following the input namelist
             vecPatches.init_new_envelope(params);
@@ -236,13 +232,14 @@ int main (int argc, char* argv[])
         // Project charge and current densities (and susceptibility if envelope is used) only for diags at t=0
         vecPatches.projection_for_diags(params, &smpi, simWindow, time_dual, timers, 0);
 
-        // If Laser Envelope is used, comm and synch susceptibility
+        // If Laser Envelope is used, comm and synch susceptibility at t=0
         if (params.Laser_Envelope_model){    
             // comm and synch susceptibility
-            vecPatches.sumSusceptibility(params, time_dual, timers, 0, simWindow );
-                                         } // end condition if Laser Envelope Model is used
+            vecPatches.sumSusceptibility(params, time_dual, timers, 0, simWindow, &smpi );
+        } // end condition if Laser Envelope Model is used
 
-        vecPatches.sumDensities(params, time_dual, timers, 0, simWindow );
+        // Comm and synch charge and current densities
+        vecPatches.sumDensities(params, time_dual, timers, 0, simWindow, &smpi );
 
         TITLE("Initializing diagnostics");
         vecPatches.initAllDiags( params, &smpi );
@@ -327,7 +324,7 @@ int main (int argc, char* argv[])
             if (params.solve_relativistic_poisson == true) {
                 // Compute rho only for species needing relativistic field Initialization
                 vecPatches.computeChargeRelativisticSpecies(time_prim);
-                SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, timers, 0 );
+                SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, &smpi, timers, 0 );
                 #pragma omp master
                 {
 
@@ -352,21 +349,21 @@ int main (int argc, char* argv[])
             // if Laser Envelope is used, execute particles and envelope sections of ponderomotive loop
             if (params.Laser_Envelope_model){
                 // interpolate envelope for susceptibility deposition, project susceptibility for envelope equation, momentum advance
-                vecPatches.ponderomotive_update_susceptibility_and_momentum(params, &smpi, simWindow, time_dual, timers, itime);    
+                vecPatches.ponderomotive_update_susceptibility_and_momentum(params, &smpi, simWindow, time_dual, timers, itime);
 
                 // comm and sum susceptibility
-                vecPatches.sumSusceptibility(params, time_dual, timers, itime, simWindow );
+                vecPatches.sumSusceptibility(params, time_dual, timers, itime, simWindow, &smpi );
 
                 // solve envelope equation and comm envelope
-                vecPatches.solveEnvelope( params, simWindow, itime, time_dual, timers );
+                vecPatches.solveEnvelope( params, simWindow, itime, time_dual, timers, &smpi );
 
                 // interp updated envelope for position advance, update positions and currents for Maxwell's equations
                 vecPatches.ponderomotive_update_position_and_currents(params, &smpi, simWindow, time_dual, timers, itime);
                                              } // end condition if Laser Envelope Model is used
 
             // Sum densities
-            vecPatches.sumDensities(params, time_dual, timers, itime, simWindow );
-
+            vecPatches.sumDensities(params, time_dual, timers, itime, simWindow ,&smpi );
+            
             // apply currents from antennas
             vecPatches.applyAntennas(time_dual);
 
@@ -374,14 +371,14 @@ int main (int argc, char* argv[])
             //#ifndef _PICSAR
             if (!params.uncoupled_grids) {
                 if( time_dual > params.time_fields_frozen ) {
-                    vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers );
+                    vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers, &smpi );
                 }
             }
             //#else
             else { //if ( params.uncoupled_grids ) {
                 if( time_dual > params.time_fields_frozen ) {
                     SyncCartesianPatch::patchedToCartesian( vecPatches, domain, params, &smpi, timers, itime );
-                    domain.solveMaxwell( params, simWindow, itime, time_dual, timers);
+                    domain.solveMaxwell( params, simWindow, itime, time_dual, timers, &smpi );
                     SyncCartesianPatch::cartesianToPatches( domain, vecPatches, params, &smpi, timers, itime );
                 }
             }
@@ -392,14 +389,12 @@ int main (int argc, char* argv[])
                                                time_dual, timers, itime);
 
             vecPatches.finalize_sync_and_bc_fields(params, &smpi, simWindow, time_dual, timers, itime);
-
             // call the various diagnostics
             vecPatches.runAllDiags(params, &smpi, itime, timers, simWindow);
 
             timers.movWindow.restart();
             simWindow->operate(vecPatches, &smpi, params, itime, time_dual, domain);
             timers.movWindow.update();
-
             // ----------------------------------------------------------------------
             // Validate restart  : to do
             // Restart patched moving window : to do

@@ -51,6 +51,11 @@ DiagFields(
     fields = ['Ex','Ey','Ez'],
     subgrid = s_[4:100:3, 5:400:10, 6:300:80]
 )
+DiagFields(
+    every = 2*globalEvery,
+    fields = ['Ex','Ey','Ez'],
+    time_average = globalEvery
+)
 
 DiagProbe(
     every = 10,

@@ -8,7 +8,7 @@ laser_fwhm = 19.80
 
 Main(
     geometry = "2Dcartesian",
-    
+
     interpolation_order = 2,
 
     timestep = dt,
@@ -18,19 +18,22 @@ Main(
     grid_length = [ Lx,  120.],
 
     number_of_patches = [npatch_x, 4],
-    vecto = "normal",
 
     clrw = nx/npatch_x,
-    
+
     EM_boundary_conditions = [
         ["silver-muller","silver-muller"],
         ["silver-muller","silver-muller"],
     ],
-    
+
     solve_poisson = False,
     print_every = 100,
 
     random_seed = smilei_mpi_rank
+)
+
+Vectorization(
+    mode = "normal",
 )
 
 MovingWindow(
@@ -45,7 +48,7 @@ LoadBalancing(
     frozen_particle_load = 0.1
 )
 
-Species( 
+Species(
     name = "electron",
     position_initialization = "regular",
     momentum_initialization = "maxwell-juettner",
@@ -56,7 +59,7 @@ Species(
     charge_density = 0.000494,
     mean_velocity = [0.0, 0.0, 0.0],
     temperature = [0.000001],
-    pusher = "boris",    
+    pusher = "boris",
     time_frozen = 0.0,
     boundary_conditions = [
         ["remove", "remove"],

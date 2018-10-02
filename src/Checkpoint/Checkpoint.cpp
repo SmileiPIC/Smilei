@@ -240,7 +240,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
         string patchName=Tools::merge("patch-", patch_name.str());
         hid_t patch_gid = H5::group(fid, patchName.c_str());
 
-        dumpPatch( vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, patch_gid );
+        dumpPatch( vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, params, patch_gid );
 
         // Close a group
         H5Gclose(patch_gid);
@@ -264,7 +264,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
 
 }
 
-void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpecies, hid_t patch_gid )
+void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpecies, Params& params, hid_t patch_gid )
 {
 
     dumpFieldsPerProc(patch_gid, EMfields->Ex_);
@@ -310,7 +310,7 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
         H5Gclose(diag_gid);
     }
 
-    if ( EMfields->extFields.size()>0 ) {
+    if ( ( EMfields->extFields.size()>0 ) && ( params.save_magnectic_fields_for_SM ) ) {
         for (unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
             if(! EMfields->emBoundCond[bcId]) continue;
             if (dynamic_cast<ElectroMagnBC1D_SM*>(EMfields->emBoundCond[bcId]) ) {
@@ -416,6 +416,11 @@ void Checkpoint::readPatchDistribution( SmileiMPI* smpi, SimWindow* simWin )
     vector<int> patch_count(smpi->getSize());
     H5::getVect( fid, "patch_count", patch_count );
     smpi->patch_count = patch_count;
+    
+    smpi->patch_refHindexes.resize(smpi->patch_count.size(), 0);
+    smpi->patch_refHindexes[0] = 0;
+    for ( int rk=1 ; rk<smpi->smilei_sz ; rk++)    
+        smpi->patch_refHindexes[rk] = smpi->patch_refHindexes[rk-1] + smpi->patch_count[rk-1];
 
     // load window status : required to know the patch movement
     restartMovingWindow(fid, simWin);
@@ -554,7 +559,7 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
         }
     }
 
-    if ( EMfields->extFields.size()>0 ) {
+    if ( ( EMfields->extFields.size()>0 ) && ( params.save_magnectic_fields_for_SM ) ) {
         for (unsigned int bcId=0 ; bcId<EMfields->emBoundCond.size() ; bcId++ ) {
             if(! EMfields->emBoundCond[bcId]) continue;
             if (dynamic_cast<ElectroMagnBC1D_SM*>(EMfields->emBoundCond[bcId]) ) {

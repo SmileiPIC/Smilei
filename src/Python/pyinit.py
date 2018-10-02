@@ -215,9 +215,6 @@ class Main(SmileiSingleton):
     random_seed = None
     print_expected_disk_usage = True
 
-    # Vectorization flag
-    vecto = "disable"
-
     def __init__(self, **kwargs):
         # Load all arguments to Main()
         super(Main, self).__init__(**kwargs)
@@ -291,17 +288,19 @@ class Main(SmileiSingleton):
 class LoadBalancing(SmileiSingleton):
     """Load balancing parameters"""
 
-    every = 150
-    initial_balance = True
-    cell_load = 1.0
+    every                = 150
+    initial_balance      = True
+    cell_load            = 1.0
     frozen_particle_load = 0.1
 
 # Radiation reaction configuration (continuous and MC algorithms)
-class DynamicVectorization(SmileiComponent):
+class Vectorization(SmileiComponent):
     """
-    Dynamic vectorization parameters
+    Vectorization parameters
     """
-    every = 1
+    mode    = "disable"
+    every   = 1
+    default = "vectorized"
 
 
 class MovingWindow(SmileiSingleton):
@@ -363,7 +362,9 @@ class Species(SmileiComponent):
     boundary_conditions = [["periodic"]]
     ionization_model = "none"
     ionization_electrons = None
+    ionization_rate = None
     atomic_number = None
+    maximum_charge_state = None
     is_test = False
     relativistic_field_initialization = False
     ponderomotive_dynamics = False
@@ -378,6 +379,8 @@ class Laser(SmileiComponent):
     phase = [0., 0.]
     delay_phase = [0., 0.]
     space_time_profile = None
+    file = None
+    _offset = None
 
 class LaserEnvelope(SmileiSingleton):
     """Laser Envelope parameters"""
@@ -548,3 +551,6 @@ class DumpRestart(object):
 class ExtField(object):
     def __init__(self, *args, **kwargs):
         raise Exception("Deprecated `ExtField()` must be replaced by `ExternalField()`")
+
+# Variable to set to False for the actual run (useful for the test mode)
+_test_mode = True

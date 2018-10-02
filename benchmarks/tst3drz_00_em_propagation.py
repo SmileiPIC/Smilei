@@ -4,10 +4,6 @@
 
 import math
 
-l0 = 2.0*math.pi        # laser wavelength
-t0 = l0                 # optical cycle
-Tsim = t0           # duration of the simulation
-laser_fwhm = 19.80
 dx = 0.2
 dr = 1.5
 nx = 800
@@ -24,7 +20,7 @@ Main(
     grid_length  = Lsim,
     number_of_patches = [ 32, 4 ],
     timestep = dt,
-    simulation_time = 2*nx*dt,
+    simulation_time = 2.5*nx*dt,
      
     EM_boundary_conditions = [
         ["silver-muller","silver-muller"],
@@ -32,7 +28,7 @@ Main(
     ],
     
     random_seed = smilei_mpi_rank,
-    print_every = 1,
+    print_every = 100,
 )
 
 MovingWindow(
@@ -40,26 +36,14 @@ MovingWindow(
     velocity_x = 0.9997
 )
 
+laser_fwhm = 19.80
 LaserGaussian2D(
-    a0              = 1.,
-    omega           = 1.,
-    #focus           = [Lsim[0]/2., 0.],
-    focus           = [0. , 0.],
-    waist           = 8.,
+    box_side         = "xmin",
+    a0              = 2.,
+    focus           = [0., 0.],
+    waist           = 25.,
     time_envelope   = tgaussian(center=2**0.5*laser_fwhm, fwhm=laser_fwhm)
 )
-#LaserGaussian2D(
-#    box_side         = "xmin",
-#    a0              = 2.,
-#    focus           = [0., 0.],
-#    waist           = 26.16,
-#    time_envelope   = tgaussian(center=2**0.5*laser_fwhm, fwhm=laser_fwhm)
-#)
-
-globalEvery = int(1)
-
-
-#DiagScalar(every=globalEvery)
 
 DiagFields(
     every = 100,
@@ -67,17 +51,23 @@ DiagFields(
 )
 
 #DiagProbe(
-#    every = 100,
-#    number = [100, 100],
-#    pos = [0., 10.*l0],
-#    pos_first = [20.*l0, 0.*l0],
-#    pos_second = [3.*l0 , 40.*l0],
+#    every = 10,
+#    origin = [1., 10., 0.],
 #    fields = []
 #)
-#
 #DiagProbe(
 #    every = 10,
-#    pos = [0.1*Lsim[0], 0.5*Lsim[1]],
+#    origin = [0., 10., 0.],
+#    corners = [[Lsim[0], 10., 0.]],
+#    number=[100],
 #    fields = []
 #)
+#DiagProbe(
+#    every = 10,
+#    origin = [0., -10., 0.],
+#    corners = [[Lsim[0], -10., 0.]],
+#    number=[100],
+#    fields = []
+#)
+
 

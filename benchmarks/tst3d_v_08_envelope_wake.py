@@ -1,13 +1,13 @@
 ################### 3D Laser Wakefield with envelope
-dx = 1. 
+dx = 1.
 dtrans = 3.
 dt = 0.8*dx
 nx = 192
-ntrans = 64 
+ntrans = 64
 Lx = nx * dx
 Ltrans = ntrans*dtrans
 npatch_x = 32
-laser_fwhm = 20. 
+laser_fwhm = 20.
 center_laser = Lx-2.*laser_fwhm # the temporal center here is the same as waist position, but in principle they can differ
 time_start_moving_window =  0.
 
@@ -24,7 +24,7 @@ Main(
     grid_length = [ Lx,  Ltrans, Ltrans],
 
     number_of_patches =[npatch_x, 8, 8],
-    
+
     clrw = nx/npatch_x,
 
     EM_boundary_conditions = [ ["silver-muller"] ],
@@ -34,14 +34,17 @@ Main(
 
     solve_poisson = False,
     print_every = 100,
-    vecto = "normal", 
 
     random_seed = smilei_mpi_rank
 )
 
+Vectorization(
+    mode = "normal",
+)
+
 MovingWindow(
     time_start = time_start_moving_window,
-    velocity_x = 1. 
+    velocity_x = 1.
 )
 
 LoadBalancing(
@@ -74,7 +77,7 @@ Species(
 )
 
 LaserEnvelopeGaussian3D( # linear regime of LWFA
-    a0              = 0.1,     
+    a0              = 0.1,
     focus           = [center_laser, Main.grid_length[1]/2.,Main.grid_length[2]/2.],
     waist           = 30.,
     time_envelope   = tgaussian(center=center_laser, fwhm=laser_fwhm),
@@ -128,5 +131,3 @@ DiagScalar(every = 10, vars=['Env_A_absMax'])
 #               ["px", -1, 2., 100]
 #       ]
 #)
-                                                                                                                                                                 
-

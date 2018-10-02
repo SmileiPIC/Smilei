@@ -4,7 +4,8 @@
 
 #include <iostream>
 #include <sstream>
-
+#include <complex>
+#include "dcomplex.h"
 #include "Params.h"
 #include "Field2D.h"
 #include "cField2D.h"
@@ -37,7 +38,7 @@ isYmax(patch->isYmax())
             Jl_s[imode*n_species+ispec]  = new cField2D(("Jx_" + species_mode_name.str()).c_str(), dimPrim);
             Jr_s[imode*n_species+ispec]  = new cField2D(("Jr_" + species_mode_name.str()).c_str(), dimPrim);
             Jt_s[imode*n_species+ispec]  = new cField2D(("Jt_" + species_mode_name.str()).c_str(), dimPrim);
-            rho_s[imode*n_species+ispec] = new cField2D(("Rho_"+ species_mode_name.str()).c_str(), dimPrim);
+            rho_RZ_s[imode*n_species+ispec] = new cField2D(("Rho_"+ species_mode_name.str()).c_str(), dimPrim);
         }
     }
     
@@ -59,28 +60,28 @@ isYmax(patch->isYmax())
             int ifield = imode*n_species+ispec;
 
             if ( emFields->Jl_s[ifield] != NULL ) {
-                if ( emFields->Jl_s[ifield]->data_ != NULL )
+                if ( emFields->Jl_s[ifield]->cdata_ != NULL )
                     Jl_s[ifield]  = new cField2D(dimPrim, 0, false, emFields->Jl_s[ifield]->name);
                 else
                     Jl_s[ifield]  = new cField2D(emFields->Jl_s[ifield]->name, dimPrim);
             }
             if ( emFields->Jr_s[ifield] != NULL ) {
-                if ( emFields->Jr_s[ifield]->data_ != NULL )
+                if ( emFields->Jr_s[ifield]->cdata_ != NULL )
                     Jr_s[ifield]  = new cField2D(dimPrim, 1, false, emFields->Jr_s[ifield]->name);
                 else
                     Jr_s[ifield]  = new cField2D(emFields->Jr_s[ifield]->name, dimPrim);
             }
             if ( emFields->Jt_s[ifield] != NULL ) {
-                if ( emFields->Jt_s[ifield]->data_ != NULL )
+                if ( emFields->Jt_s[ifield]->cdata_ != NULL )
                     Jt_s[ifield]  = new cField2D(dimPrim, 2, false, emFields->Jt_s[ifield]->name);
                 else
                     Jt_s[ifield]  = new cField2D(emFields->Jt_s[ifield]->name, dimPrim);
             }
-            if ( emFields->rho_s[ifield] != NULL ) {
-                if ( emFields->rho_s[ifield]->data_ != NULL )
-                    rho_s[ifield] = new cField2D(dimPrim, emFields->rho_s[ifield]->name );
+            if ( emFields->rho_RZ_s[ifield] != NULL ) {
+                if ( emFields->rho_RZ_s[ifield]->cdata_ != NULL )
+                    rho_RZ_s[ifield] = new cField2D(dimPrim, emFields->rho_RZ_s[ifield]->name );
                 else
-                    rho_s[ifield]  = new cField2D(emFields->rho_s[ifield]->name, dimPrim);
+                    rho_RZ_s[ifield]  = new cField2D(emFields->rho_RZ_s[ifield]->name, dimPrim);
             }
         }
 
@@ -99,12 +100,12 @@ void ElectroMagn3DRZ::initElectroMagn3DRZQuantities(Params &params, Patch* patch
     Jl_s.resize(n_species*nmodes);
     Jr_s.resize(n_species*nmodes);
     Jt_s.resize(n_species*nmodes);
-    rho_s.resize(n_species*nmodes);
+    rho_RZ_s.resize(n_species*nmodes);
     for (unsigned int ispec=0; ispec<n_species*nmodes; ispec++) {
         Jl_s[ispec]  = NULL;
         Jr_s[ispec]  = NULL;
         Jt_s[ispec]  = NULL;
-        rho_s[ispec] = NULL;
+        rho_RZ_s[ispec] = NULL;
     }
 
     // --------------------------------------------------
@@ -263,7 +264,7 @@ void ElectroMagn3DRZ::finishInitialization(int nspecies, Patch* patch)
         allFields.push_back(Jl_s[ispec] );
         allFields.push_back(Jr_s[ispec] );
         allFields.push_back(Jt_s[ispec] );
-        allFields.push_back(rho_s[ispec]);
+        allFields.push_back(rho_RZ_s[ispec]);
     }
 
 }
@@ -306,11 +307,11 @@ void ElectroMagn3DRZ::restartRhoJ()
 
 void ElectroMagn3DRZ::restartRhoJs()
 {
-    for (unsigned int ispec=0 ; ispec < n_species ; ispec++) {
+    for (unsigned int ispec=0 ; ispec < n_species*nmodes ; ispec++) {
         if( Jl_s [ispec] ) Jl_s [ispec]->put_to(0.);
         if( Jr_s [ispec] ) Jr_s [ispec]->put_to(0.);
         if( Jt_s [ispec] ) Jt_s [ispec]->put_to(0.);
-        if( rho_s[ispec] ) rho_s[ispec]->put_to(0.);
+        if( rho_RZ_s[ispec] ) rho_RZ_s[ispec]->put_to(0.);
     }
     
     for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
@@ -577,47 +578,55 @@ void ElectroMagn3DRZ::computeTotalRhoJ()
     for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
 
         // static cast of the total currents and densities
-        cField2D* Jl3DRZ    = static_cast<cField2D*>(Jl_[imode]);
-        cField2D* Jr3DRZ    = static_cast<cField2D*>(Jr_[imode]);
-        cField2D* Jt3DRZ    = static_cast<cField2D*>(Jt_[imode]);
-        cField2D* rho3DRZ   = static_cast<cField2D*>(rho_RZ_[imode]);    
-    
+        cField2D* JlRZ    = static_cast<cField2D*>(Jl_[imode]);
+        cField2D* JrRZ    = static_cast<cField2D*>(Jr_[imode]);
+        cField2D* JtRZ    = static_cast<cField2D*>(Jt_[imode]);
+        cField2D* rhoRZ   = static_cast<cField2D*>(rho_RZ_[imode]);    
+        //MESSAGE("c");
         // -----------------------------------
         // Species currents and charge density
         // -----------------------------------
         for (unsigned int ispec=0; ispec<n_species; ispec++) {
 
             int ifield = imode*n_species+ispec;
-
-            if( Jl_s[ifield] ) {
+           // MESSAGE("cc");
+	   // MESSAGE(Jl_s.size());
+	   // MESSAGE(Jl_.size());
+	   // MESSAGE(ifield);
+	    if( Jl_s[ifield] ) {
                 cField2D* Jl2D_s  = static_cast<cField2D*>(Jl_s[ifield]);
-                for (unsigned int i=0 ; i<=nl_p ; i++)
-                    for (unsigned int j=0 ; j<nr_p ; j++)
-                        (*Jl3DRZ)(i,j) += (*Jl2D_s)(i,j);
+                for (unsigned int i=0 ; i<=nl_p ; i++){
+		    //MESSAGE("here");
+		    //MESSAGE(nr_p);
+		    //MESSAGE(nl_p);
+                    for (unsigned int j=0 ; j<nr_p ; j++){
+			//MESSAGE("here i=" <<i << "  j="<<j);
+                        (*JlRZ)(i,j) += (*Jl2D_s)(i,j);}}
             }
+	    //MESSAGE("or here");
             if( Jr_s[ifield] ) {
                 cField2D* Jr2D_s  = static_cast<cField2D*>(Jr_s[ifield]);
                 for (unsigned int i=0 ; i<nl_p ; i++)
                     for (unsigned int j=0 ; j<=nr_p ; j++)
-                        (*Jr3DRZ)(i,j) += (*Jr2D_s)(i,j);
+                        (*JrRZ)(i,j) += (*Jr2D_s)(i,j);
             }
             if( Jt_s[ifield] ) {
                 cField2D* Jt2D_s  = static_cast<cField2D*>(Jt_s[ifield]);
                 for (unsigned int i=0 ; i<nl_p ; i++)
                     for (unsigned int j=0 ; j<nr_p ; j++)
-                        (*Jt3DRZ)(i,j) += (*Jt2D_s)(i,j);
+                        (*JtRZ)(i,j) += (*Jt2D_s)(i,j);
             }
-            if( rho_s[ifield] ) {
-                cField2D* rho2D_s  = static_cast<cField2D*>(rho_s[ifield]);
+            if( rho_RZ_s[ifield] ) {
+                cField2D* rho2D_s  = static_cast<cField2D*>(rho_RZ_s[ifield]);
                 for (unsigned int i=0 ; i<nl_p ; i++)
                     for (unsigned int j=0 ; j<nr_p ; j++)
-                        (*rho3DRZ)(i,j) += (*rho2D_s)(i,j);
+                        (*rhoRZ)(i,j) += (*rho2D_s)(i,j);
             }
         
         }//END loop on species ispec
         
     }//END loop on mmodes
-    
+    //MESSAGE("totalRj");
 } //END computeTotalRhoJ
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -749,6 +758,30 @@ void ElectroMagn3DRZ::computePoynting() {
 
 }
 
+void ElectroMagn3DRZ::applyExternalFields(Patch* patch) {
+    #ifdef _TODO_RZ            
+    #endif
+    int imode = 0;
+
+    Field * field;
+    for (vector<ExtField>::iterator extfield=extFields.begin(); extfield!=extFields.end(); extfield++ ) {
+        string name = LowerCase(extfield->field);
+        if      ( El_[imode] && name==LowerCase(El_[imode]->name) ) field = El_[imode];
+        else if ( Er_[imode] && name==LowerCase(Er_[imode]->name) ) field = Er_[imode];
+        else if ( Et_[imode] && name==LowerCase(Et_[imode]->name) ) field = Et_[imode];
+        else if ( Bl_[imode] && name==LowerCase(Bl_[imode]->name) ) field = Bl_[imode];
+        else if ( Br_[imode] && name==LowerCase(Br_[imode]->name) ) field = Br_[imode];
+        else if ( Bt_[imode] && name==LowerCase(Bt_[imode]->name) ) field = Bt_[imode];
+        else field = NULL;
+
+        if( field ) {
+            applyExternalField( field, extfield->profile, patch );
+        }
+    }
+    Bl_m[imode]->copyFrom(Bl_[imode]);
+    Br_m[imode]->copyFrom(Br_[imode]);
+    Bt_m[imode]->copyFrom(Bt_[imode]);
+}
 
 void ElectroMagn3DRZ::applyExternalField(Field* my_field,  Profile *profile, Patch* patch) {
     
@@ -768,6 +801,10 @@ void ElectroMagn3DRZ::applyExternalField(Field* my_field,  Profile *profile, Pat
             pos[1] += dr;
         }
         pos[0] += dl;
+    }
+
+    for (auto& embc: emBoundCond) {
+        if (embc) embc->save_fields(my_field, patch);
     }
     
 }
@@ -792,5 +829,222 @@ void ElectroMagn3DRZ::initAntennas(Patch* patch, Params& params)
             applyExternalField(antennas[i].field, antennas[i].space_profile, patch);
     }
 
+}
+
+//! Fold EM fields modes correctly around axis
+void ElectroMagn3DRZ::fold_fields(bool diag_flag)
+{  
+
+    // Are static casts really necesary here ?
+
+    if (isYmin){
+
+         cField2D* JlRZ ;
+         cField2D* JrRZ ;
+         cField2D* JtRZ ;
+
+         for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
+
+             //static cast of the total currents and densities
+             JlRZ    = Jl_[imode];
+             JrRZ    = Jr_[imode];
+             JtRZ    = Jt_[imode];
+             if (imode==0){
+                 for (unsigned int i=0; i<nl_d; i++){
+                     for (unsigned int j=0; j<oversize[1]; j++)
+                         (*JlRZ)(i,2*oversize[1]-j)+= (*JlRZ)(i,j) ;
+                 }
+                 for (unsigned int i=0; i<nl_p; i++){
+                     for (unsigned int j=0; j<oversize[1]; j++)
+                         (*JtRZ)(i,2*oversize[1]-j)+= (*JtRZ)(i,j) ;
+                 }
+                 for (unsigned int i=0; i<nl_p; i++){
+                      for (unsigned int j=0; j<oversize[1]; j++)
+                         (*JrRZ)(i,2*oversize[1]+1-j)+= (*JrRZ)(i,j) ;
+                      (*JrRZ)(i,oversize[1]+1)= -(*JrRZ)(i,oversize[1]) ;
+                      //if (abs((*JrRZ)(i,oversize[1]+1)+ (*JrRZ)(i,oversize[1]))*100!=0.){
+                      //    MESSAGE("careful! "<<abs((*JrRZ)(i,oversize[1]+1)+ (*JrRZ)(i,oversize[1]))*100000 )
+                      //}
+                 }
+             }
+             else{
+                 for (unsigned int i=0; i<nl_d; i++){
+                     for (unsigned int j=0; j<oversize[1]; j++)
+                         (*JlRZ)(i,2*oversize[1]-j)-= (*JlRZ)(i,j) ;
+                 }
+                 for (unsigned int i=0; i<nl_p; i++){
+                     for (unsigned int j=0; j<oversize[1]; j++)
+                         (*JtRZ)(i,2*oversize[1]-j)-= (*JtRZ)(i,j) ;
+                 }
+                 for (unsigned int i=0; i<nl_p; i++){
+                      for (unsigned int j=0; j<oversize[1]+1; j++)
+                         (*JrRZ)(i,2*oversize[1]+1-j)-= (*JrRZ)(i,j) ;
+                 }
+             }
+         }
+     
+         if(diag_flag){
+           
+             //Loop on modes for rho
+             for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
+                 cField2D* rhoRZ   = static_cast<cField2D*>(rho_RZ_[imode]);
+                 if (imode == 0){
+                     for (unsigned int i=0; i<nl_p; i++){
+                         for (unsigned int j=0; j<oversize[1]; j++)
+                             (*rhoRZ)(i,2*oversize[1]-j)+= (*rhoRZ)(i,j) ;
+                     } 
+                 }
+                 else {
+                     for (unsigned int i=0; i<nl_p; i++){
+                         for (unsigned int j=0; j<oversize[1]; j++)
+                             (*rhoRZ)(i,2*oversize[1]-j)-= (*rhoRZ)(i,j) ;
+                     }
+
+                 }
+             }
+             //Loop on all modes and species for J_s
+             for (unsigned int ism=0; ism < n_species; ism++){
+                 JlRZ    = Jl_s[ism];
+                 if ( JlRZ != NULL ) {
+                     for (unsigned int i=0; i<nl_d; i++){
+                         for (unsigned int j=0; j<oversize[1]; j++){
+                             (*JlRZ)(i,2*oversize[1]-j)+= (*JlRZ)(i,j) ;
+                         }
+                     }
+                 }
+                 JtRZ    = Jt_s[ism];
+                 if ( JtRZ != NULL ) {
+                     for (unsigned int i=0; i<nl_p; i++){
+                         for (unsigned int j=0; j<oversize[1]; j++)
+                             (*JtRZ)(i,2*oversize[1]-j)+= (*JtRZ)(i,j) ;
+                     }
+                 }
+                 JrRZ    = Jr_s[ism];
+                 if ( JrRZ != NULL ) {
+                     for (unsigned int i=0; i<nl_p; i++){
+                         for (unsigned int j=0; j<oversize[1]; j++)
+                             (*JrRZ)(i,2*oversize[1]+1-j)+= (*JrRZ)(i,j) ;
+                         (*JrRZ)(i,oversize[1]+1)= -(*JrRZ)(i,oversize[1]) ;
+                         
+                     }
+                 }
+             }
+
+             for (unsigned int ism=n_species; ism <  n_species*nmodes; ism++){
+                 JlRZ    = Jl_s[ism];
+                 if ( JlRZ != NULL ) {
+                     for (unsigned int i=0; i<nl_d; i++){
+                         for (unsigned int j=0; j<oversize[1]; j++){
+                             (*JlRZ)(i,2*oversize[1]-j)-= (*JlRZ)(i,j) ;
+                         }
+                     }
+                 }
+                 JtRZ    = Jt_s[ism];
+                 if ( JtRZ != NULL ) {
+                     for (unsigned int i=0; i<nl_p; i++){
+                         for (unsigned int j=0; j<oversize[1]; j++)
+                             (*JtRZ)(i,2*oversize[1]-j)-= (*JtRZ)(i,j) ;
+                     }
+                 }
+                 JrRZ    = Jr_s[ism];
+                 if ( JrRZ != NULL ) {
+                     for (unsigned int i=0; i<nl_p; i++){
+                         for (unsigned int j=0; j<oversize[1]; j++)
+                             (*JrRZ)(i,2*oversize[1]+1-j)-= (*JrRZ)(i,j) ;
+                         //(*JrRZ)(i,oversize[1]+1)= -(*JrRZ)(i,oversize[1]) ;
+
+                     }
+                 }
+             }
+         }
+
+    } 
+    //MESSAGE("folding fields");
+    return;
+}
+
+//! Evaluating EM fields modes correctly on axis
+void ElectroMagn3DRZ::on_axis_fields(bool diag_flag)
+{  
+
+    // Are static casts really necesary here ?
+
+    if (isYmin){
+
+         cField2D* JlRZ ;
+         cField2D* JrRZ ;
+         cField2D* JtRZ ;
+
+         for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
+
+             //static cast of the total currents and densities
+             JlRZ    = static_cast<cField2D*>(Jl_[imode]);
+             JrRZ    = static_cast<cField2D*>(Jr_[imode]);
+             JtRZ    = static_cast<cField2D*>(Jt_[imode]);
+             //JlRZ    = Jl_[imode];
+             //JrRZ    = Jr_[imode];
+             //JtRZ    = Jt_[imode];
+             
+             if (imode ==0){
+               //  for (unsigned int i=0; i<nl_p; i++)
+               //      (*JtRZ)(i,oversize[1]) = 0.;
+
+               //  for (unsigned int i=0; i<nl_p; i++)
+               //       (*JrRZ)(i,oversize[1]+1)= -(*JrRZ)(i,oversize[1]) ;
+
+             }
+             else if (imode==1){
+                 for (unsigned int i=0; i<nl_p; i++)
+                     (*JtRZ)(i,oversize[1]) = - 1./3.* (4.* Icpx * (*JrRZ)(i,oversize[1]+1) + (*JtRZ)(i,oversize[1]+1));
+
+                 for (unsigned int i=0; i<nl_p; i++)
+                      (*JrRZ)(i,oversize[1])= 2.*Icpx* (*JtRZ)(i,oversize[1])-(*JrRZ)(i,oversize[1]+1) ;
+             }
+         } 
+         if(diag_flag){
+             for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
+                 cField2D* rhoRZ   = static_cast<cField2D*>(rho_RZ_[imode]); 
+                 if (imode ==0){
+                 //    for (unsigned int ism=0; ism <  n_species; ism++){
+                 //        JtRZ    = Jt_s[ism];
+                 //        if ( JtRZ != NULL ) { 
+                 //            for (unsigned int i=0; i<nl_p; i++){
+                 //                (*JtRZ)(i,oversize[1]) = 0.;
+                 //            }
+                 //        }
+                 //        JrRZ    = Jr_s[ism];
+                 //        if ( JrRZ != NULL ) { 
+                 //            for (unsigned int i=0; i<nl_p; i++){ 
+                 //                (*JrRZ)(i,oversize[1]+1)= -(*JrRZ)(i,oversize[1]) ;
+                 //            }
+                 //        }
+                 //     }
+                 }
+                 else if (imode == 1){
+                     for (unsigned int i=0; i<nl_p; i++){
+                         (*rhoRZ)(i,oversize[1])= 0.;
+                      }
+                     //Loop on all modes and species for J_s
+                     for (unsigned int ism=n_species; ism <  2*n_species; ism++){
+                         JtRZ    = Jt_s[ism];
+                         if ( JtRZ != NULL ) {
+                             for (unsigned int i=0; i<nl_p; i++){
+                                 (*JtRZ)(i,oversize[1]) = - 1./3.* (4.* Icpx * (*JrRZ)(i,oversize[1]+1) + (*JtRZ)(i,oversize[1]+1));
+
+                             }
+                         }
+                         JrRZ    = Jr_s[ism];
+                         if ( JrRZ != NULL ) {
+                             for (unsigned int i=0; i<nl_p; i++){
+                                 (*JrRZ)(i,oversize[1])= 2.*Icpx* (*JtRZ)(i,oversize[1])-(*JrRZ)(i,oversize[1]+1) ;
+                             } 
+                         }
+                      }
+                   }
+              }
+            }
+        } 
+    //MESSAGE("folding fields");
+    return;
 }
 

@@ -153,6 +153,24 @@ The block ``Main`` is **mandatory** and has the following syntax::
   See :doc:`parallelization`.
 
 
+.. py:data:: patch_decomposition
+
+  :default: ``"hilbert"``
+
+  The patches distribution. ``"cartesian"`` is available too.
+  See :doc:`parallelization`.
+
+
+.. py:data:: patch_orientation
+
+  :default: ``""``
+
+  Only for a ``"cartesian"`` patches decomposition.
+  ``"YX"`` and ``"ZYX"`` respectively available for 2D and 3D simulations, while the default ``""``
+  corresponds to the decomposition oriented as ``XY`` or ``XYZ``.
+  See :doc:`parallelization`.
+
+
 .. py:data:: clrw
 
   :default: set to minimize the memory footprint of the particles pusher, especially interpolation and projection processes
@@ -162,32 +180,6 @@ The block ``Main`` is **mandatory** and has the following syntax::
   clrw must divide the number of cells in one patch (in dimension X).
   The finest sorting is achieved with clrw=1 and no sorting with clrw equal to the full size of a patch along dimension X.
   The cluster size in dimension Y and Z is always the full extent of the patch.
-
-.. py:data:: vecto
-
-  :default: ``disable``
-
-  Enable the use of the vectorized operators
-
-  Advanced users. Sevevecto ral vectorization modes are available:
-    * ``disable``: non-vectorized operators are used.
-      This mode is recommended when the number of particles per cell keeps low
-      (below 8 particles per cell) all along the simulation.
-    * ``normal``: only vectorized operators are used
-    * ``dynamic``: in this mode, the best set of operators (scalar or vectorized)
-      is determined dynamically per patch.
-      In ``vectorized`` state, the cell sorting method is used whereas
-      in ``scalar`` state, the original sorting method is applied.
-      This means that a small overhead can be induced due to the patch reconfiguration.
-    * ``dynamic2``: this is the second dynamic mode.
-    Here, the cell sorting method is used in both ``scalar``
-    and ``vectorized`` state.
-
-  In ``dynamic`` mode, the reconfiguration period can be tuned
-  with the ``DynamicVectorization`` panel.
-  By default, the reconfiguration is done at every timesteps.
-
-  In ``dynamic`` and ``dynamic2`` mode, ``clrw`` is set to the maximum by default.
 
 .. py:data:: maxwell_solver
 
@@ -247,7 +239,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   ``"silver-muller"`` is an open boundary condition. The incident wave vector :math:`k_{inc}` on each face is defined by ``"EM_boundary_conditions_k"``.
   When using ``"silver-muller"`` as an injecting boundary, make sure :math:`k_{inc}` is aligned with the wave you are injecting.
-  When using ``"silver-muller"`` as an absorbing boundary, the optimal wave absorption on a given face will be along :math:`k_{abs}` the specular reflection of :math:`k_{inc}` on the considered face. 
+  When using ``"silver-muller"`` as an absorbing boundary, the optimal wave absorption on a given face will be along :math:`k_{abs}` the specular reflection of :math:`k_{inc}` on the considered face.
 
 .. py:data:: EM_boundary_conditions_k
 
@@ -256,7 +248,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   :default: ``[[1.,0.,0.],[-1.,0.,0.],[0.,1.,0.],[0.,-1.,0.],[0.,0.,1.],[0.,0.,-1.]]`` in 3D
 
   The incident unit wave vector `k` for each face (sequentially Xmin, Xmax, Ymin, Ymax, Zmin, Zmax) is
-  defined by its coordinates in the `xyz` frame.  
+  defined by its coordinates in the `xyz` frame.
   The number of coordinates is equal to the dimension of the simulation. The number of given vectors must be equal to 1 or to the number of faces which is twice the dimension of the simulation. In cylindrical geometry, `k` coordinates are given in the `xr` frame and only the Rmax face is affected.
 
   | **Syntax 1:** ``[[1,0,0]]``, identical for all boundaries.
@@ -361,16 +353,44 @@ occur every 150 iterations.
 
 .. _dynamicVectorization:
 
-Dynamic vectorization
+Vectorization
 ^^^^^^^^^^^^^^^^^^^^^
 
-The block ``DynamicVectorization`` is optional. The dynamic vectorization mode is done at every timestep by default.
+The block ``Vectorization`` is optional. The dynamic vectorization mode is done at every timestep by default.
 
 .. code-block:: python
 
-  DynamicVectorization(
-      every = [5]
+  Vectorization(
+      mode = "normal",
+      every = [5],
+      default = "scalar"
   )
+
+.. py:data:: mode
+
+  :default: ``disable``
+
+  Enable the use of the vectorized operators
+
+  Advanced users. Sevevecto ral vectorization modes are available:
+    * ``disable``: non-vectorized operators are used.
+      This mode is recommended when the number of particles per cell keeps low
+      (below 8 particles per cell) all along the simulation.
+    * ``normal``: only vectorized operators are used
+    * ``dynamic``: in this mode, the best set of operators (scalar or vectorized)
+      is determined dynamically per patch.
+      In ``vectorized`` state, the cell sorting method is used whereas
+      in ``scalar`` state, the original sorting method is applied.
+      This means that a small overhead can be induced due to the patch reconfiguration.
+    * ``dynamic2``: this is the second dynamic mode.
+    Here, the cell sorting method is used in both ``scalar``
+    and ``vectorized`` state.
+
+  In ``dynamic`` mode, the reconfiguration period can be tuned
+  with the ``Vectorization`` panel.
+  By default, the reconfiguration is done at every timesteps.
+
+  In ``dynamic`` and ``dynamic2`` mode, ``clrw`` is set to the maximum by default.
 
 .. py:data:: every
 
@@ -378,12 +398,26 @@ The block ``DynamicVectorization`` is optional. The dynamic vectorization mode i
 
   The time selection for the patch reconfiguration when the ``dynamic`` vectorization is activated.
 
+.. py:data:: default
+
+  :default: ``vectorized``
+
+  Default species state when one of the dynamic computational mode is activated
+  and no particle are present in the patch.
+
+
 ----
 
 .. _movingWindow:
 
 Moving window
 ^^^^^^^^^^^^^
+
+The simulated box can move relative to the initial plasma position. This "moving window"
+basically consists in removing periodically some plasma from the ``x_min`` border and
+adding new plasma after the ``x_max`` border, thus changing the physical domain that the
+simulation represents but keeping the same box size. This is particularly useful to
+*follow* plasma moving at high speed.
 
 The block ``MovingWindow`` is optional. The window does not move it you do not define it.
 
@@ -486,6 +520,7 @@ Each species has to be defined in a ``Species`` block::
       particles_per_cell = 100,
       mass = 1.,
       atomic_number = None,
+      #maximum_charge_state = None,
       number_density = 10.,
       # charge_density = None,
       charge = -1.,
@@ -501,6 +536,7 @@ Each species has to be defined in a ``Species`` block::
       time_frozen = 0.0,
       # ionization_model = "none",
       # ionization_electrons = None,
+      # ionization_rate = None,
       is_test = False,
       # ponderomotive_dynamics = False,
       c_part_max = 1.0,
@@ -579,6 +615,11 @@ Each species has to be defined in a ``Species`` block::
   The atomic number of the particles, required only for ionization.
   It must be lower than 101.
 
+.. py:data:: maximum_charge_state
+
+  :default: 0
+
+  The maximum charge state of a species for which the ionization model is ``"from_rate"``.
 
 .. py:data:: number_density
              charge_density
@@ -651,13 +692,40 @@ Each species has to be defined in a ``Species`` block::
 
   :default: ``"none"``
 
-  The model for field ionization. Currently, only ``"tunnel"`` is available.
-  See :ref:`this <CollisionalIonization>` for collisional ionization instead.
+  The model for ionization:
+  
+  * ``"tunnel"`` for :ref:`field ionization <field_ionization>` (requires species with an :py:data:`atomic_number`)
+  * ``"from_rate"``, relying on a :ref:`user-defined ionization rate <rate_ionization>` (requires species with a :py:data:`maximum_charge_state`).
+  
+.. py:data:: ionization_rate
 
+  A python function giving the user-defined ionisation rate as a function of various particle attributes.
+  To use this option, the `numpy package <http://www.numpy.org/>`_ must be available in your python installation.
+  The function must have one argument, that you may call, for instance, ``particles``.
+  This object has several attributes ``x``, ``y``, ``z``, ``px``, ``py``, ``pz``, ``charge``, ``weight`` and ``id``.
+  Each of these attributes are provided as **numpy** arrays where each cell corresponds to one particle.
 
+  The following example defines, for a species with maximum charge state of 2,
+  an ionization rate that depends on the initial particle charge
+  and linear in the x coordinate:
+
+  .. code-block:: python
+    
+    from numpy import exp, zeros_like
+    
+    def my_rate(particles):
+        rate = zeros_like(particles.x)
+        charge_0 = (particles.charge==0)
+        charge_1 = (particles.charge==1)
+        rate[charge_0] = r0 * particles.x[charge_0]
+        rate[charge_1] = r1 * particles.x[charge_1]
+        return rate
+    
+    Species( ..., ionization_rate = my_rate )
+    
 .. py:data:: ionization_electrons
 
-  The name of the electron species that field ionization uses when creating new electrons.
+  The name of the electron species that :py:data:`ionization_model` uses when creating new electrons.
 
 
 .. py:data:: is_test
@@ -674,6 +742,7 @@ Each species has to be defined in a ``Species`` block::
   Flag for particles interacting with an envelope model for the laser, if present.
   If ``True``, this species will project its susceptibility and be influenced by the laser envelope field.
   See :doc:`laser_envelope` for details on the dynamics of particles in presence of a laser envelope field.
+.. note:: Ionization, Radiation and Multiphoton Breit-Wheeler pair creation are not yet implemented for species interacting with an envelope model for the laser. 
 
 
 .. py:data:: c_part_max
@@ -779,6 +848,8 @@ Each species has to be defined in a ``Species`` block::
 
 ----
 
+.. _Lasers:
+
 Lasers
 ^^^^^^
 
@@ -822,7 +893,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   .. code-block:: python
 
     Laser(
-        box_side        = "xmin",
+        box_side       = "xmin",
         omega          = 1.,
         chirp_profile  = tconstant(),
         time_envelope  = tgaussian(),
@@ -931,11 +1002,11 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
     LaserPlanar1D(
         box_side         = "xmin",
-        a0              = 1.,
-        omega           = 1.,
+        a0               = 1.,
+        omega            = 1.,
         polarization_phi = 0.,
-        ellipticity     = 0.,
-        time_envelope   = tconstant()
+        ellipticity      = 0.,
+        time_envelope    = tconstant()
     )
 
   .. py:data:: a0
@@ -966,14 +1037,14 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
     LaserGaussian2D(
         box_side         = "xmin",
-        a0              = 1.,
-        omega           = 1.,
-        focus           = [50., 40.],
-        waist           = 3.,
-        incidence_angle = 0.,
+        a0               = 1.,
+        omega            = 1.,
+        focus            = [50., 40.],
+        waist            = 3.,
+        incidence_angle  = 0.,
         polarization_phi = 0.,
-        ellipticity     = 0.,
-        time_envelope   = tconstant()
+        ellipticity      = 0.,
+        time_envelope    = tconstant()
     )
 
   .. py:data:: focus
@@ -1005,22 +1076,43 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
     LaserGaussian3D(
         box_side         = "xmin",
-        a0              = 1.,
-        omega           = 1.,
-        focus           = [50., 40., 40.],
-        waist           = 3.,
-        incidence_angle = [0., 0.1],
+        a0               = 1.,
+        omega            = 1.,
+        focus            = [50., 40., 40.],
+        waist            = 3.,
+        incidence_angle  = [0., 0.1],
         polarization_phi = 0.,
-        ellipticity     = 0.,
-        time_envelope   = tconstant()
+        ellipticity      = 0.,
+        time_envelope    = tconstant()
     )
 
   This is almost the same as ``LaserGaussian2D``, with the ``focus`` parameter having
   now 3 elements (focus position in 3D), and the ``incidence_angle`` being a list of
   two angles, corresponding to rotations around `y` and `z`, respectively.
 
+.. rubric:: 5. Defining a generic wave at some distance from the boundary
 
-----
+
+
+
+..
+
+  In some cases, the laser field is not known at the box boundary, but rather at some
+  plane inside the box. Smilei can pre-calculate the corresponding wave at the boundary
+  using the *angular spectrum method*. This technique is only available in 2D and 3D
+  cartesian geometries and requires the python packages *numpy*.
+  A :doc:`detailed explanation <laser_offset>` of the method is available.
+  The laser is introduced using::
+
+    LaserOffset(
+        box_side               = "xmin",
+        space_time_profile     = [ By_profile, Bz_profile ],
+        offset                 = 10.,
+        extra_envelope          = tconstant(),
+        keep_n_strongest_modes = 100,
+        angle = 10./180.*3.14159
+    )
+
 
 Laser envelope model
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -1042,7 +1134,7 @@ Following is the laser envelope creator::
         envelope_solver = 'explicit',
     )
 
-The arguments appearing ``LaserEnvelopeGaussian3D`` have the same meaning they would have in a normal LaserGaussian3D, with some differences
+The arguments appearing ``LaserEnvelopeGaussian3D`` have the same meaning they would have in a normal LaserGaussian3D, with some differences:
 
 .. py:data:: time_envelope
 
@@ -1054,9 +1146,51 @@ The arguments appearing ``LaserEnvelopeGaussian3D`` have the same meaning they w
 
   For the moment the only available solver for the laser envelope equation is an explicit solver with centered finite differences in space and time.
 
+It is important to remember that the profile defined through the block ``LaserEnvelopeGaussian3D`` corresponds to the complex envelope of the laser vector potential component :math:`\tilde{A}` in the polarization direction. 
+The calculation of the correspondent complex envelope for the laser electric field component in that direction is described in :doc:`laser_envelope`. 
 
 
 
+  .. py:data:: space_time_profile
+
+    :type: A list of two *python* functions
+    
+    The magnetic field profiles at some arbitrary plane, as a function of space and time.
+    The arguments of these profiles are ``(y,t)`` in 2D and ``(y,z,t)`` in 3D.
+    
+  .. py:data:: offset
+     
+     The distance from the box boundary to the plane where :py:data:`space_time_profile`
+     is defined.
+  
+  .. py:data:: extra_envelope
+    
+    :type: a *python* function or a :ref:`python profile <profiles>`
+    :default:  ``lambda *z: 1.``, which means a profile of value 1 everywhere
+    
+    An extra envelope applied at the boundary, on top of the :py:data:`space_time_profile`.
+    This envelope takes two arguments (`y`, `t`) in 2D, and three arguments (`y`, `z`, `t`)
+    in 3D.
+    As the wave propagation technique stores a limited Fourier transform (in the time
+    domain) of the wave, some periodicity can be obtained in the actual laser.
+    One may thus observe that the laser pulse is repeated several times.
+    The envelope can be used to remove these spurious repetitions.
+
+  .. py:data:: keep_n_strongest_modes
+    
+    :default: 100
+    
+    The number of temporal Fourier modes that are kept during the pre-processing.
+    See :doc:`this page <laser_offset>` for more details.
+
+  .. py:data:: angle
+    
+    :default: 0.
+    
+    Angle between the boundary and the profile's plane, the rotation being around :math:`z`.
+    See :doc:`this page <laser_offset>` for more details.
+
+  
 ----
 
 .. _ExternalField:
@@ -1777,7 +1911,7 @@ The full list of scalars that are saved by this diagnostic:
 | | Uelm_out_mvw | | EM energy lost during the timestep due to the moving window             |
 | | Uelm_inj_mvw | | EM energy injected during the timestep due to the moving window         |
 +----------------+---------------------------------------------------------------------------+
-| **Species information**                                                                    |
+| **Particle information**                                                                   |
 +----------------+---------------------------------------------------------------------------+
 | | Dens_abc     | | Average density of species "abc"                                        |
 | | Zavg_abc     | |  ... its average charge                                                 |
@@ -1792,9 +1926,13 @@ The full list of scalars that are saved by this diagnostic:
 | | ExMax        | | Maximum of :math:`E_x`                                                  |
 | | ExMaxCell    | |  ... and its location (cell index)                                      |
 | |              | | ... same for fields Ey Ez Bx_m By_m Bz_m Jx Jy Jz Rho                   |
-| | PoyXmin      | | Accumulated Poynting flux through xmin boundary                         |
+| |              | |                                                                         |
+| | PoyXmin      | | Time-accumulated Poynting flux through xmin boundary                    |
 | | PoyXminInst  | | Current Poynting flux through xmin boundary                             |
 | |              | |  ... same for other boundaries                                          |
+| |              | | These Poynting scalars are integrated accross the boundary.             |
+| |              | | Consequently, they are energies per unit surface in 1D,                 |
+| |              | | energies per unit length in 2D, and energies in 3D.                     |
 +----------------+---------------------------------------------------------------------------+
 
 Checkout the :doc:`post-processing <post-processing>` documentation as well.
@@ -1844,8 +1982,7 @@ This is done by including a block ``DiagFields``::
   :default: ``[]`` *(all fields are written)*
 
   List of the field names that are saved. By default, they all are.
-
-  Available fields:
+  The full list of fields that are saved by this diagnostic:
 
   .. rst-class:: nowrap
 
@@ -1898,11 +2035,15 @@ This is done by including a block ``DiagFields``::
   .. rst-class:: nowrap
 
   +----------------+-------------------------------------------------------+
-  | | Env_A_abs    | |                                                     |
-  | | Env_Ai       | | Module, real and imaginary part of envelope field   |
-  | | Env_Ar       | |                                                     |
+  | |              | | Module of laser vector potential's complex envelope |                                               
+  | | Env_A_abs    | | :math:`\tilde{A}` (component along the polarization |
+  | |              | | direction)                                          |                                           
   +----------------+-------------------------------------------------------+
-  | | Env_Chi      | | Total  susceptibility                               |
+  | | Env_Chi      | | Total  susceptibility :math:`\chi`                  |
+  +----------------+-------------------------------------------------------+
+  | |              | | Module of laser electric field's complex envelope   |
+  | | Env_E_abs    | | :math:`\tilde{E}` (component along the polarization |
+  | |              | | direction)                                          |
   +----------------+-------------------------------------------------------+
 
 .. py:data:: subgrid
@@ -2009,8 +2150,8 @@ To add one probe diagnostic, include the block ``DiagProbe``::
   fields will be saved.
   Note that it does NOT speed up calculation much, but it saves disk space.
 
-  In the case of an envelope model for the laser (see :doc:`laser_envelope`), the following fields are also available: ``"Env_A_abs"``, ``"Env_Ar"``, ``"Env_Ai"``,
-  ``"Env_Chi"``.
+  In the case of an envelope model for the laser (see :doc:`laser_envelope`), the following fields are also available: ``"Env_A_abs"``,
+  ``"Env_Chi"``, ``"Env_E_abs"``.
 
 
 **Examples of probe diagnostics**
@@ -2435,7 +2576,7 @@ for instance::
   A list of strings indicating the particle attributes to be written in the output.
   The attributes may be the particles' spatial coordinates (``"x"``, ``"y"``, ``"z"``),
   their momenta (``"px"``, ``"py"``, ``"pz"``), their electrical charge (``"q"``),
-  their statistical weight (``"w"``), their quantum parameter
+  their statistical weight (``"weight"``), their quantum parameter
   (``"chi"``, only for species with radiation losses) or the fields interpolated
   at their  positions (``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"``, ``"Bz"``).
 
@@ -2447,7 +2588,7 @@ for instance::
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The *performances* diagnostic records information on the computational load and timers
-for each MPI process in the simulation.
+for each MPI process  or for each patch in the simulation.
 
 Only one block ``DiagPerformances()`` may be added in the namelist, for instance::
 

@@ -33,6 +33,7 @@ class SmileiMPI {
     friend class PatchesFactory;
     friend class Patch;
     friend class VectorPatch;
+    friend class AsyncMPIbuffers;
 
 public:
     SmileiMPI() {};
@@ -155,6 +156,8 @@ public:
     std::vector<std::vector<int>> dynamics_iold;
     //! delta_old_pos
     std::vector<std::vector<double>> dynamics_deltaold;
+    //! exp i theta old
+    std::vector<std::vector<std::complex<double>>> dynamics_thetaold;
 
     //! value of the grad(AA*) at itime and itime-1
     std::vector<std::vector<double>> dynamics_GradPHIpart;
@@ -165,12 +168,13 @@ public:
 
 
     // Resize buffers for a given number of particles
-    inline void dynamics_resize(int ithread, int ndim_part, int npart ){
+    inline void dynamics_resize(int ithread, int ndim_field, int npart, bool isRZ = false ){
         dynamics_Epart[ithread].resize(3*npart);
         dynamics_Bpart[ithread].resize(3*npart);
         dynamics_invgf[ithread].resize(npart);
-        dynamics_iold[ithread].resize(ndim_part*npart);
-        dynamics_deltaold[ithread].resize(ndim_part*npart);
+        dynamics_iold[ithread].resize(ndim_field*npart);
+        dynamics_deltaold[ithread].resize(ndim_field*npart);
+	if (isRZ) dynamics_thetaold[ithread].resize(npart); 
 
         if ( dynamics_GradPHIpart.size() > 0 ) {
             dynamics_GradPHIpart[ithread].resize(3*npart);
@@ -194,8 +198,8 @@ public:
     
     //! For patch decomposition
     //Number of patches owned by each mpi process.
-    std::vector<int>  patch_count, capabilities;
-    int Tcapabilities; //Default = smilei_sz (1 per MPI rank)
+    //std::vector<int>  patch_count, capabilities;
+    //int Tcapabilities; //Default = smilei_sz (1 per MPI rank)
 
 protected:
     //! Global MPI Communicator
@@ -212,6 +216,10 @@ protected:
     // Should move in Params : last parameters of this type in this class
     int* periods_;
 
+    //! For patch decomposition
+    //Number of patches owned by each mpi process.
+    std::vector<int>  patch_count, capabilities, patch_refHindexes;
+    int Tcapabilities; //Default = smilei_sz (1 per MPI rank)
 };
 
 

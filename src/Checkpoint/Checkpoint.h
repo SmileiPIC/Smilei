@@ -57,7 +57,7 @@ public:
     
     //! dump everything to file per processor
     void dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMPI* smpi, SimWindow* simWin, Params &params );
-    void dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpecies, hid_t patch_gid );
+    void dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpecies, Params& params, hid_t patch_gid );
     
     //! incremental number of times we've done a dump
     unsigned int dump_number;

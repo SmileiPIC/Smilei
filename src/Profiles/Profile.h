@@ -64,7 +64,7 @@ public:
         { 
             std::vector<double> x(ndim);
             for( unsigned int i=0; i<size; i++ ) {
-               //MESSAGE("  - "<<i);
+              // MESSAGE("  - "<<size);
                for( unsigned int idim=0; idim<ndim; idim++ )
                    x[idim]=(*coordinates[idim])(i);
                ret(i) = function->valueAt(x);

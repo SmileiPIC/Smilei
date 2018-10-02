@@ -66,8 +66,8 @@ public :
         refHindex_ = patches_[0]->Hindex();
     }
     //! Resize vector of field*
-    void update_field_list();
-    void update_field_list(int ispec);
+    void update_field_list(SmileiMPI* smpi);
+    void update_field_list(int ispec, SmileiMPI* smpi);
 
     void createDiags(Params& params, SmileiMPI* smpi, OpenPMDparams&);
 
@@ -138,18 +138,18 @@ public :
     void resetRhoJ();
 
     //! For all patch, sum densities on ghost cells (sum per species if needed, sync per patch and MPI sync)
-    void sumDensities(Params &params, double time_dual, Timers &timers, int itime, SimWindow* simWindow );
+    void sumDensities(Params &params, double time_dual, Timers &timers, int itime, SimWindow* simWindow, SmileiMPI* smpi );
 
     //! For all patch, sum susceptibility on ghost cells (sum per species if needed, sync per patch and MPI sync)
-    void sumSusceptibility(Params &params, double time_dual, Timers &timers, int itime, SimWindow* simWindow );
+    void sumSusceptibility(Params &params, double time_dual, Timers &timers, int itime, SimWindow* simWindow, SmileiMPI* smpi );
 
     //! For all patch, update E and B (Ampere, Faraday, boundary conditions, exchange B and center B)
     void solveMaxwell(Params& params, SimWindow* simWindow, int itime, double time_dual,
-                      Timers & timers);
+                      Timers & timers, SmileiMPI* smpi);
 
     //! For all patch, update envelope field A (envelope equation, boundary contitions, exchange A)
-    void solveEnvelope(Params& params, SimWindow* simWindow, int itime, double time_dual, Timers & timers);
-
+    void solveEnvelope(Params& params, SimWindow* simWindow, int itime, double time_dual, Timers & timers, SmileiMPI* smpi );
+    
     //! For all patch, Compute and Write all diags (Scalars, Probes, Phases, TrackParticles, Fields, Average fields)
     void runAllDiags(Params& params, SmileiMPI* smpi, unsigned int itime, Timers & timers, SimWindow* simWindow);
     void initAllDiags(Params& params, SmileiMPI* smpi);
@@ -258,6 +258,10 @@ public :
     std::vector<std::vector< Field *>> listJr_;
     std::vector<std::vector< Field *>> listJt_;
     std::vector<std::vector< Field *>> listrho_RZ_;
+    std::vector<std::vector< Field *>> listJls_;
+    std::vector<std::vector< Field *>> listJrs_;
+    std::vector<std::vector< Field *>> listJts_;
+    std::vector<std::vector< Field *>> listrhos_RZ_;
     std::vector<std::vector< Field *>> listEl_;
     std::vector<std::vector< Field *>> listEr_;
     std::vector<std::vector< Field *>> listEt_;
@@ -318,16 +322,8 @@ public :
         return (*this)(ipatch)->EMfields;
     }
 
-    inline Interpolator* interp_envelope(int ipatch){
-        return (*this)(ipatch)->Interp_envelope;
-    }
-
     inline Projector* proj(int ipatch, int ispec){
         return (*this)(ipatch)->vecSpecies[ispec]->Proj;
-    }
-
-    inline Projector* proj_susceptibility(int ipatch, int ispec){
-        return (*this)(ipatch)->vecSpecies[ispec]->Proj_susceptibility;
     }
 
     inline PartWalls* partwalls(int ipatch){

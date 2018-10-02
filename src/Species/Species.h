@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+//#include "PyTools.h"
 
 #include "Particles.h"
 #include "Params.h"
@@ -66,7 +67,13 @@ public:
 
     //! atomic number
     unsigned int atomic_number;
-
+    
+    //! maximum charge state
+    unsigned int maximum_charge_state;
+    
+    //! user defined ionization rate profile
+    PyObject* ionization_rate;
+    
     //! thermalizing temperature for thermalizing BCs [\f$m_e c^2\f$]
     std::vector<double> thermal_boundary_temperature;
     //! mean velocity used when thermalizing BCs are used [\f$c\f$]
@@ -155,7 +162,7 @@ public:
     std::string ionization_electrons;
 
     //! Pointer to the species where radiated photon go
-    Species *photon_species;
+    Species * photon_species;
     //! Index of the species where radiated photons go
     int photon_species_index;
     //! radiation photon species for the Monte-Carlo model.
@@ -253,7 +260,6 @@ public:
 
     //! Projector
     Projector* Proj;
-    Projector* Proj_susceptibility;
 
     // -----------------------------------------------------------------------------
     //  5. Methods
@@ -294,13 +300,13 @@ public:
 
     //! Method projecting susceptibility and calculating the particles updated momentum (interpolation, momentum pusher), only particles interacting with envelope
     virtual void ponderomotive_update_susceptibility_and_momentum(double time_dual, unsigned int ispec,
-                           ElectroMagn* EMfields, Interpolator* Interp_envelope,
+                           ElectroMagn* EMfields,
                            Params &params, bool diag_flag,
                            Patch* patch, SmileiMPI* smpi,
                            std::vector<Diagnostic*>& localDiags);
     //! Method projecting susceptibility, only particles interacting with envelope
     virtual void ponderomotive_project_susceptibility(double time_dual, unsigned int ispec,
-                           ElectroMagn* EMfields, Interpolator* Interp_envelope,
+                           ElectroMagn* EMfields,
                            Params &params, bool diag_flag,
                            Patch* patch, SmileiMPI* smpi,
                            std::vector<Diagnostic*>& localDiags);
@@ -308,7 +314,7 @@ public:
     //! Method calculating the Particle updated position (interpolation, position pusher, only particles interacting with envelope)
     // and projecting charge density and thus current density (through Esirkepov method) for Maxwell's Equations
     virtual void ponderomotive_update_position_and_currents(double time_dual, unsigned int ispec,
-                           ElectroMagn* EMfields, Interpolator* Interp_envelope, Projector* Proj,
+                           ElectroMagn* EMfields,
                            Params &params, bool diag_flag, PartWalls* partWalls,
                            Patch* patch, SmileiMPI* smpi,
                            std::vector<Diagnostic*>& localDiags);
@@ -325,7 +331,7 @@ public:
                           ElectroMagn* EMfields,
                           Params &params, bool diag_flag,
                           Patch* patch, SmileiMPI* smpi);
-    
+
     //! Method performing the importation of new particles
     virtual void dynamics_import_particles(double time, unsigned int ispec,
                         Params &params,
@@ -338,8 +344,8 @@ public:
     virtual void computeCharge(unsigned int ispec, ElectroMagn* EMfields);
 
     //! Method used to initialize the Particle position in a given cell
-    void initPosition(unsigned int, unsigned int, double *);
-
+    void initPosition(unsigned int, unsigned int, double *, Params& );
+    
     //! Method used to initialize the Particle 3d momentum in a given cell
     void initMomentum(unsigned int, unsigned int, double *, double *);
 

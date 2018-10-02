@@ -36,6 +36,7 @@ public:
     std::vector<cField2D*> Jl_s;
     std::vector<cField2D*> Jr_s;
     std::vector<cField2D*> Jt_s;
+    std::vector<cField2D*> rho_RZ_s;
     void restartRhoJ() override;
     void restartRhoJs() override;
 
@@ -135,7 +136,8 @@ public:
 
     //! compute Poynting on borders
     void computePoynting();
-
+    //! Method used to impose external fields
+    void applyExternalFields(Patch* patch) override;
     //! Method used to impose external fields
     void applyExternalField(Field*, Profile*, Patch*);
     
@@ -149,7 +151,10 @@ public:
         return norm2;
     }
 
-    
+    //! Fold EM fields modes correctly around axis
+    void fold_fields(bool diag_flag);
+
+    void on_axis_fields(bool diag_flag);    
     //! from smpi is ymax
     const bool isYmin;
     

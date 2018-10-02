@@ -38,7 +38,7 @@ def _smilei_check():
             "DiagTrackParticles","DiagPerformances","ExternalField",
             "SmileiSingleton","Main","Checkpoints","LoadBalancing","MovingWindow",
             "RadiationReaction", "ParticleData", "MultiphotonBreitWheeler",
-            "DynamicVectorization"]:
+            "Vectorization"]:
         CheckClass = globals()[CheckClassName]
         try:
             if not CheckClass._verify: raise Exception("")
@@ -115,6 +115,8 @@ def _keep_python_running():
         profiles += [las.chirp_profile]
         if type(las.space_time_profile) is list:
             profiles += las.space_time_profile
+        if hasattr(las, "_extra_envelope"):
+            profiles += [las._extra_envelope]
     profiles += [ant.time_profile for ant in Antenna]
     if len(MovingWindow)>0 or len(LoadBalancing)>0:
         for s in Species:
@@ -133,6 +135,11 @@ def _keep_python_running():
         for ax in d.axes:
             if type(ax[0]) is not str:
                 return True
+    # Verify if ionization from rate is used
+    for s in Species:
+        if s.ionization_rate is not None:
+            return True
+    # else False 
     return False
 
 # Prevent creating new components (by mistake)

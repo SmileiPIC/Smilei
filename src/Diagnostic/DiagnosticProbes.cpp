@@ -177,11 +177,11 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
     vector<string> fs;
     if(!PyTools::extract("fields",fs,"DiagProbe",n_probe)) {
         if (params.Laser_Envelope_model) {
-            fs.resize(14);
+            fs.resize(13);
             fs[0]="Ex"; fs[1]="Ey"; fs[2]="Ez";
             fs[3]="Bx"; fs[4]="By"; fs[5]="Bz";
             fs[6]="Jx"; fs[7]="Jy"; fs[8]="Jz"; fs[9]="Rho";
-            fs[10]="Env_Ar"; fs[11]="Env_Ai"; fs[12]="Env_A_abs"; fs[13]="Env_Chi";
+            fs[10]="Env_A_abs"; fs[11]="Env_Chi",fs[12]="Env_E_abs";
         }
         else {
             fs.resize(10);
@@ -191,8 +191,8 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
         }
     }
     vector<unsigned int> locations;
-    locations.resize(14);
-    for( unsigned int i=0; i<14; i++) locations[i] = fs.size();
+    locations.resize(13);
+    for( unsigned int i=0; i<13; i++) locations[i] = fs.size();
     for( unsigned int i=0; i<fs.size(); i++) {
         for( unsigned int j=0; j<i; j++) {
             if( fs[i]==fs[j] ) {
@@ -209,10 +209,9 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
         else if( fs[i]=="Jy" ) locations[7] = i;
         else if( fs[i]=="Jz" ) locations[8] = i;
         else if( fs[i]=="Rho") locations[9] = i;
-        else if( fs[i]=="Env_Ar") locations[10] = i;
-        else if( fs[i]=="Env_Ai") locations[11] = i;
-        else if( fs[i]=="Env_A_abs") locations[12] = i;
-        else if( fs[i]=="Env_Chi") locations[13] = i;
+        else if( fs[i]=="Env_A_abs") locations[10] = i;
+        else if( fs[i]=="Env_Chi")   locations[11] = i;
+        else if( fs[i]=="Env_E_abs") locations[12] = i;
         else {
             ERROR("Probe #"<<n_probe<<": unknown field "<<fs[i]);
         }
@@ -355,8 +354,8 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
             for( k=1; k<3; k++ ) {
                 mins[k] = numeric_limits<double>::max();
                 maxs[k] = -mins[k];
-                patchMin[k] = -( vecPatches(ipatch)->Pcoordinates[1]+1 )*patch_size[1];
-                patchMax[k] =  ( vecPatches(ipatch)->Pcoordinates[1]+1 )*patch_size[1];
+                patchMax[k] = ( (double)vecPatches(ipatch)->Pcoordinates[1]+1. )*(double)patch_size[1];
+                patchMin[k] = -1. *  patchMax[k] ; //patchMin = -rmax for the first filter
             }
         } else {
             for( k=0; k<nDim_particle; k++ ) {
@@ -418,11 +417,16 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
                 point[i] = 0.;
             // Compute this point's coordinates in terms of x, y, ...
             point = matrixTimesVector( axes, point );
+            //Redefine patchmin as rmin and not -rmax any more
+            if (geometry == "3drz")
+                patchMin[1] = patchMax[1] - (double)patch_size[1]  ;
             // Check if point is in patch
             is_in_domain = true;
             for( i=0; i<nDim_field; i++ ) {
                 if (i == 1 && geometry == "3drz"){
-                    point[1] += sqrt(origin[1]*origin[1] + origin[2]*origin[2]);
+                    point[1] += origin[1];
+                    point[2] += origin[2];
+                    point[1] = sqrt(point[1]*point[1] + point[2]*point[2]);
                 }else{
                     point[i] += origin[i];
                 }
@@ -472,7 +476,8 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     ostringstream name_t;
 
     unsigned int nPatches( vecPatches.size() );
-
+    double x_moved = simWindow ? simWindow->getXmoved() : 0.;
+    
     // Leave if this timestep has already been written
     #pragma omp master
     {
@@ -487,7 +492,6 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
     {
         // If the patches have been moved (moving window or load balancing) we must re-compute the probes positions
         if( !positions_written || last_iteration_points_calculated <= vecPatches.lastIterationPatchesMoved ) {
-            double x_moved = simWindow ? simWindow->getXmoved() : 0.;
             createPoints(smpi, vecPatches, false, x_moved);
             last_iteration_points_calculated = timestep;
 
@@ -569,7 +573,7 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
 #ifdef _OPENMP
         ithread = omp_get_thread_num();
 #endif
-        smpi->dynamics_resize(ithread, nDim_particle, npart);
+        smpi->dynamics_resize(ithread, nDim_particle, npart, false );
 
         for (unsigned int ipart=0; ipart<npart; ipart++) {
             int iparticle(ipart); // Compatibility
@@ -600,56 +604,27 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
        // Probes for envelope
        if (vecPatches(ipatch)->EMfields->envelope != NULL) { 
            unsigned int iPart_MPI = offset_in_MPI[ipatch];
+           double Env_AabsLoc_fields,Env_ChiLoc_fields,Env_EabsLoc_fields;
 
-           
-           if ( dynamic_cast<Interpolator3D2Order_envV*>((vecPatches(ipatch)->Interp_envelope)) ) {
-               Interpolator3D2Order_envV* Interpolator_envelope = (static_cast<Interpolator3D2Order_envV*>((vecPatches(ipatch)->Interp_envelope)) );
-               double Env_ArLoc_fields,Env_AiLoc_fields,Env_AabsLoc_fields,Env_ChiLoc_fields;
+           for (unsigned int ipart=0; ipart<npart; ipart++) {          
+               int iparticle(ipart); // Compatibility
+               vecPatches(ipatch)->probesInterp->interpolate_envelope_and_susceptibility(
+                                                                                         vecPatches(ipatch)->EMfields,
+                                                                                         vecPatches(ipatch)->probes[probe_n]->particles,
+                                                                                         iparticle,
+                                                                                         &Env_AabsLoc_fields, &Env_ChiLoc_fields, &Env_EabsLoc_fields
+                                                                                         );
+               //! here we fill the probe data!!!         
+               (*probesArray)(fieldlocation[10],iPart_MPI)=Env_AabsLoc_fields;
+               (*probesArray)(fieldlocation[11],iPart_MPI)=Env_ChiLoc_fields;
+               (*probesArray)(fieldlocation[12],iPart_MPI)=Env_EabsLoc_fields;
+               iPart_MPI++;
 
-               for (unsigned int ipart=0; ipart<npart; ipart++) {          
-                   int iparticle(ipart); // Compatibility
-                   int false_idx(0);     // Use in classical interp for now, not for probes
-                   Interpolator_envelope->interpolate_envelope_and_susceptibility(
-                                                                                  vecPatches(ipatch)->EMfields,
-                                                                                  vecPatches(ipatch)->probes[probe_n]->particles, smpi, &iparticle,  &false_idx, ithread,
-                                                                                  &Env_AabsLoc_fields, &Env_ArLoc_fields, &Env_AiLoc_fields, &Env_ChiLoc_fields
-                                                                                  );
-                   //! here we fill the probe data!!!         
-                   (*probesArray)(fieldlocation[10],iPart_MPI)=Env_ArLoc_fields;
-                   (*probesArray)(fieldlocation[11],iPart_MPI)=Env_AiLoc_fields;
-                   (*probesArray)(fieldlocation[12],iPart_MPI)=Env_AabsLoc_fields;
-                   (*probesArray)(fieldlocation[13],iPart_MPI)=Env_ChiLoc_fields;
-                   iPart_MPI++;
-               }
-           }
-           else if ( dynamic_cast<Interpolator3D2Order_env*>((vecPatches(ipatch)->Interp_envelope)) ) {
-               Interpolator3D2Order_env* Interpolator_envelope = (static_cast<Interpolator3D2Order_env*>((vecPatches(ipatch)->Interp_envelope)) );
-               double Env_ArLoc_fields,Env_AiLoc_fields,Env_AabsLoc_fields,Env_ChiLoc_fields;
+           } // END for ipart
+          
+        } // END if envelope
 
-               for (unsigned int ipart=0; ipart<npart; ipart++) {          
-                   int iparticle(ipart); // Compatibility
-                   int false_idx(0);     // Use in classical interp for now, not for probes
-
-                   Interpolator_envelope->interpolate_envelope_and_susceptibility(
-                                                                                  vecPatches(ipatch)->EMfields,
-                                                                                  vecPatches(ipatch)->probes[probe_n]->particles,
-                                                                                  ipart,
-                                                                                  &Env_AabsLoc_fields, &Env_ArLoc_fields, &Env_AiLoc_fields, &Env_ChiLoc_fields
-                                                                                  );
-                   //! here we fill the probe data!!!         
-                   (*probesArray)(fieldlocation[10],iPart_MPI)=Env_ArLoc_fields;
-                   (*probesArray)(fieldlocation[11],iPart_MPI)=Env_AiLoc_fields;
-                   (*probesArray)(fieldlocation[12],iPart_MPI)=Env_AabsLoc_fields;
-                   (*probesArray)(fieldlocation[13],iPart_MPI)=Env_ChiLoc_fields;
-                   iPart_MPI++;
-               }
-           }
-           else
-               ERROR("GOTO Hell");
-       }
-
-        
-    }
+    } // END for ipatch
 
     #pragma omp master
     {
@@ -684,6 +659,10 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         H5Pset_dxpl_mpio(transfer, H5FD_MPIO_INDEPENDENT);
         // Write
         H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, probesArray->data_ );
+        
+        // Write x_moved
+        H5::attr(dset_id, "x_moved", x_moved);
+        
         H5Dclose(dset_id);
         H5Pclose( transfer );
         H5Sclose(filespace);

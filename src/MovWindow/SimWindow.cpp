@@ -331,6 +331,11 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                         }
 #endif*/
                     }
+                    
+                    mypatch->EMfields->applyExternalFields( mypatch );
+                    if (params.save_magnectic_fields_for_SM) 
+                       mypatch->EMfields->saveExternalFields( mypatch );
+
                 } // end test patch_particle_created[ithread][j]
             } // end j loop
         } // End ithread loop
@@ -400,6 +405,8 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                             dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
                             dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->reconfigure_operators(params, mypatch);
                         }
+                        // sorting will be necessary when clrw compatible
+                        //mypatch->vecSpecies[ispec]->sort_part(params);
                     }
                 } // end test patch_particle_created[ithread][j]
             } // end j loop
@@ -472,7 +479,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     #pragma omp single nowait
     {
         x_moved += cell_length_x_*params.n_space[0];
-        vecPatches.update_field_list() ;
+        vecPatches.update_field_list(smpi) ;
         //update list fields for species diag too ??
 
         // Tell that the patches moved this iteration (needed for probes)

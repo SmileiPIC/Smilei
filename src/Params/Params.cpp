@@ -11,6 +11,7 @@
 #include "Tools.h"
 #include "SmileiMPI.h"
 #include "H5.h"
+#include "LaserPropagator.h"
 
 #include "pyinit.pyh"
 #include "pyprofiles.pyh"
@@ -107,7 +108,11 @@ namelist("")
     runScript(string(reinterpret_cast<const char*>(pyinit_py), pyinit_py_len), "pyinit.py", globals);
 
     runScript(Tools::merge("smilei_version='",string(__VERSION),"'\n"), string(__VERSION), globals);
-
+    
+    // Set the _test_mode to False
+    PyObject_SetAttrString(Py_main, "_test_mode", Py_False);
+    PyTools::checkPyError();
+    
     // Running pyprofiles.py
     runScript(string(reinterpret_cast<const char*>(pyprofiles_py), pyprofiles_py_len), "pyprofiles.py", globals);
 
@@ -466,10 +471,13 @@ namelist("")
     }
 
 
+    int total_number_of_hilbert_patches = 1;
     if (patch_decomposition == "hilbert") {
-        for ( unsigned int iDim=0 ; iDim<nDim_field ; iDim++ )
+        for ( unsigned int iDim=0 ; iDim<nDim_field ; iDim++ ){
+            total_number_of_hilbert_patches *= number_of_patches[iDim];
             if( (number_of_patches[iDim] & (number_of_patches[iDim]-1)) != 0)
                 ERROR("Number of patches in each direction must be a power of 2");
+        }
     }
     else
         PyTools::extract("patch_orientation", patch_orientation, "Main");
@@ -488,8 +496,9 @@ namelist("")
 
     has_load_balancing = (smpi->getSize()>1)  && (! load_balancing_time_selection->isEmpty());
 
+    if (has_load_balancing && patch_decomposition != "hilbert") ERROR("Dynamic load balancing is only available for Hilbert decomposition");
+    if (has_load_balancing && total_number_of_hilbert_patches < 2*smpi->getSize()) ERROR("Dynamic load balancing requires to use at least 2 patches per MPI process.");
 
-    //mi.resize(nDim_field, 0);
     mi.resize(3, 0);
     while ((number_of_patches[0] >> mi[0]) >1) mi[0]++ ;
     if (number_of_patches.size()>1) {
@@ -501,21 +510,36 @@ namelist("")
     // Activation of the vectorized subroutines
     vectorization_mode = "disable";
     has_dynamic_vectorization = false;
-    PyTools::extract("vecto", vectorization_mode, "Main");
-    if (!(vectorization_mode == "disable" || vectorization_mode == "normal" || vectorization_mode == "dynamic" || vectorization_mode == "dynamic2"))
-    {
-        ERROR("The parameter `vecto` must be `disable`, `normal`, `dynamic`, `dynamic2`");
-    }
-    else if (vectorization_mode == "dynamic" || vectorization_mode == "dynamic2")
-    {
-        has_dynamic_vectorization = true;
-    }
 
-    if( PyTools::nComponents("DynamicVectorization")>0 ) {
+    if( PyTools::nComponents("Vectorization")>0 ) {
+
+        // Extraction of the vectorization mode
+        PyTools::extract("mode", vectorization_mode, "Vectorization");
+        if (!(vectorization_mode == "disable" ||
+              vectorization_mode == "normal" ||
+              vectorization_mode == "dynamic" ||
+              vectorization_mode == "dynamic2"))
+        {
+            ERROR("The parameter `vecto` must be `disable`, `normal`, `dynamic`, `dynamic2`");
+        }
+        else if (vectorization_mode == "dynamic" || vectorization_mode == "dynamic2")
+        {
+            has_dynamic_vectorization = true;
+        }
+
         // get parameter "every" which describes a timestep selection
         dynamic_vecto_time_selection = new TimeSelection(
-            PyTools::extract_py("every", "DynamicVectorization"), "Dynamic vectorization"
+            PyTools::extract_py("every", "Vectorization"), "Dynamic vectorization"
         );
+
+        // Default mode for the dynamic mode
+        PyTools::extract("default", dynamic_default_mode, "Vectorization");
+        if (!(dynamic_default_mode == "scalar" ||
+              dynamic_default_mode == "vectorized"))
+        {
+            ERROR("The parameter `dynamic_default_mode` must be `scalar` or `vectorized`");
+        }
+
     } else {
         dynamic_vecto_time_selection  = new TimeSelection(1);
     }
@@ -608,10 +632,86 @@ namelist("")
     // -------------------------------------------------------
     compute();
 
+    // -------------------------------------------------------
     // Print
+    // -------------------------------------------------------
     smpi->barrier();
     if ( smpi->isMaster() ) print_init();
     smpi->barrier();
+    
+    // -------------------------------------------------------
+    // Handle the pre-processing of LaserOffset
+    // -------------------------------------------------------
+    unsigned int n_laser = PyTools::nComponents("Laser");
+    unsigned int n_laser_offset = 0;
+    LaserPropagator propagateX;
+    
+    for( unsigned int i_laser=0; i_laser<n_laser; i_laser++ ) {
+        double offset = 0.;
+        
+        // If this laser has the hidden _offset attribute
+        if( PyTools::extract("_offset", offset, "Laser", i_laser) ) {
+            
+            if( n_laser_offset == 0 ) {
+                TITLE("Pre-processing LaserOffset");
+                propagateX.init(this, smpi, 0);
+            }
+            
+            MESSAGE(1, "LaserOffset #"<< n_laser_offset);
+            
+            // Extract the file name
+            string file("");
+            PyTools::extract("file", file, "Laser", i_laser);
+            
+            // Extract the list of profiles and verify their content
+            PyObject * p = PyTools::extract_py("_profiles", "Laser", i_laser);
+            vector<PyObject*> profiles;
+            vector<int> profiles_n = {1, 2};
+            if( ! PyTools::convert(p, profiles) )
+                ERROR("For LaserOffset #" << n_laser_offset << ": space_time_profile must be a list of 2 profiles");
+            Py_DECREF(p);
+            if( profiles.size()!=2 )
+                ERROR("For LaserOffset #" << n_laser_offset << ": space_time_profile needs 2 profiles.");
+            if( profiles[1] == Py_None ) {
+                profiles  .pop_back();
+                profiles_n.pop_back();
+            }
+            if( profiles[0] == Py_None ) {
+                profiles  .erase(profiles  .begin());
+                profiles_n.erase(profiles_n.begin());
+            }
+            if( profiles.size() == 0 )
+                ERROR("For LaserOffset #" << n_laser_offset << ": space_time_profile cannot be [None, None]");
+            for( int i=0; i<2; i++) {
+                int nargs = PyTools::function_nargs(profiles[i]);
+                if( nargs<0 )
+                    ERROR("For LaserOffset #" << n_laser_offset << ": space_time_profile["<<i<<"] not callable");
+                if( nargs != (int) nDim_field )
+                    ERROR("For LaserOffset #" << n_laser_offset << ": space_time_profile["<<i<<"] requires " << nDim_field << " arguments but has " << nargs);
+            }
+            
+            // Extract the box side 
+            string box_side;
+            if( !PyTools::extract("box_side", box_side, "Laser", i_laser) || (box_side!="xmin" && box_side!="xmax"))
+                ERROR("For LaserOffset #" << n_laser_offset << ": box_side must be a 'xmin' or 'xmax'");
+            //unsigned int side = string("xyz").find(box_side[0]);
+            
+            // Extract _keep_n_strongest_modes
+            int keep_n_strongest_modes=0;
+            if( !PyTools::extract("_keep_n_strongest_modes", keep_n_strongest_modes, "Laser", i_laser) || keep_n_strongest_modes<1)
+                ERROR("For LaserOffset #" << n_laser_offset << ": keep_n_strongest_modes must be a positive integer");
+            
+            // Extract the angle
+            double angle_z = 0.;
+            PyTools::extract("_angle", angle_z, "Laser", i_laser);
+            
+            // Make the propagation happen and write out the file
+            if( ! smpi->test_mode )
+                propagateX(profiles, profiles_n, offset, file, keep_n_strongest_modes, angle_z);
+            
+            n_laser_offset ++;
+        }
+    }
 }
 
 Params::~Params() {
@@ -794,23 +894,12 @@ void Params::print_init()
         MESSAGE(1,"Frozen particle load coefficient = " << frozen_particle_load );
     }
 
-    if (vectorization_mode == "normal")
+    TITLE("Vectorization: ");
+    MESSAGE(1,"Mode: " << vectorization_mode);
+    if (vectorization_mode == "dynamic" || vectorization_mode == "dynamic2")
     {
-        MESSAGE(1,"Apply the constant vectorization mode" );
-    }
-    else if (vectorization_mode == "dynamic")
-    {
-        MESSAGE(1,"Apply the dynamic vectorization mode 1" );
-        MESSAGE(1,"Happens: " << dynamic_vecto_time_selection->info());
-    }
-    else if (vectorization_mode == "dynamic2")
-    {
-        MESSAGE(1,"Apply the dynamic vectorization mode 2" );
-        MESSAGE(1,"Happens: " << dynamic_vecto_time_selection->info());
-    }
-    else if (vectorization_mode == "disable")
-    {
-        MESSAGE(1,"Vectorization disable" );
+        MESSAGE(1,"Default mode: " << dynamic_default_mode);
+        MESSAGE(1,"Time selection: " << dynamic_vecto_time_selection->info());
     }
 
 }
@@ -862,10 +951,6 @@ void Params::print_parallelism_params(SmileiMPI* smpi)
             MESSAGE(2, "dimension " << iDim << " - n_space : " << n_space[iDim] << " cells.");
 
         MESSAGE(1, "Dynamic load balancing: " << load_balancing_time_selection->info() );
-        if (this->has_dynamic_vectorization)
-        {
-            MESSAGE(1, "Dynamic vectorization: " << dynamic_vecto_time_selection->info() );
-        }
     }
 
     if (smpi->isMaster()) {

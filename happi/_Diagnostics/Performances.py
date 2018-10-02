@@ -245,7 +245,11 @@ class Performances(Diagnostic):
 			self._title  = "number of processes"
 
 		# Set the directory in case of exporting
-		self._exportPrefix = "Performances_"+"".join(used_quantities)
+		self._exportPrefix = "Performances"
+		if len(used_quantities):
+			self._exportPrefix += "_".join(used_quantities)
+		if species is not None:
+			self._exportPrefix += "_{}".format(species)
 		self._exportDir = self._setExportDir(self._exportPrefix)
 
 		# Finish constructor
@@ -377,10 +381,15 @@ class Performances(Diagnostic):
 			return histogram
 
 	# Convert data to VTK format
-	def toVTK(self,numberOfPieces=1):
+	def toVTK(self,numberOfPieces=1,axis_quantity="patch"):
 		"""
-		Export the data to Vtk
+		Export the performance data to Vtk
 		"""
+
+		# Checking of the arguments
+		if axis_quantity not in ["patch","grid"]:
+			print("axis_quantity must be `patch` or `grid`")
+			return []
 
 		# Creation of the directory and base name
 		self._mkdir(self._exportDir)
@@ -399,7 +408,7 @@ class Performances(Diagnostic):
 			# Loop over the requested time steps
 			for istep,step in enumerate(self._timesteps):
 
-				if self._verbose: print("Step: {}, file {}_{}.pvti".format(istep, fileprefix, istep))
+				if self._verbose: print("Step: {}, file {}_{}.pvti".format(istep, fileprefix, int(step)))
 
 				raw = self._getDataAtTime(self._timesteps[istep])
 				shape = list(raw.shape)
@@ -407,11 +416,18 @@ class Performances(Diagnostic):
 				extent = []
 				for i in range(self._ndim):
 					extent += [0,shape[i]-1]
-				spacings = [1,1,1]
+				# The axis of the gird are used
+				if (axis_quantity == "grid"):
+					spacings = [0,0,0]
+					for i in range(self._ndim):
+						spacings[i] = self.simulation.namelist.Main.grid_length[i] / shape[i]
+				# Axis are the patch x, y, z indexes
+				else:
+					spacings = [1,1,1]
 
 				data = self._np.ascontiguousarray(raw.flatten(order='F'), dtype='float32')
 				arr = vtk.Array(data, self._title)
-				vtk.WriteImage(arr, origin, extent, spacings, fileprefix+"_"+str(istep)+".pvti", numberOfPieces)
+				vtk.WriteImage(arr, origin, extent, spacings, fileprefix+"_{:08d}.pvti".format(int(step)), numberOfPieces)
 
 			if self._verbose: print("Successfully exported to VTK, folder='"+self._exportDir)
 

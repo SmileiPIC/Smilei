@@ -26,20 +26,23 @@ Timers::Timers( SmileiMPI * smpi ) :
     susceptibility("Sync Susceptibility"),
     grids("Grids")
 #ifdef __DETAILED_TIMERS
+    // Details of Dynamic
     ,interpolator("Interpolator"),
     pusher("Pusher"             ),
     projector("Projector"       ),
-    particles_boundaries("Particles boundaries"),
+    cell_keys("Cell keys"),
     ionization("Ionization"       ),
     radiation("Radiation"       ),
     multiphoton_Breit_Wheeler_timer("Multiphoton Breit-Wheeler"       ),
+    // Details of Envelop
     interp_fields_env   ( "Interp Fields_Env" ),
     proj_susceptibility ( "Proj Susceptibility"),
     push_mom            ( "Push Momentum"     ),
     interp_env_old      ( "Interp Env_Old"    ),
     proj_currents       ( "Proj Currents"     ),
-    push_pos            ( "Push Pos"          )
-
+    push_pos            ( "Push Pos"          ),
+    // Details of Sync Particles
+    sorting            ( "Sorting"          )
 #endif
 {
     timers.resize(0);
@@ -59,15 +62,15 @@ Timers::Timers( SmileiMPI * smpi ) :
     timers.push_back( &envelope   );
     timers.push_back( &susceptibility   );
     timers.push_back( &grids   );
-#ifdef __DETAILED_TIMERS
     patch_timer_id_start = timers.size()-1;
+#ifdef __DETAILED_TIMERS
     timers.push_back( &interpolator   );
     timers.back()->patch_timer_id = 0;
     timers.push_back( &pusher   );
     timers.back()->patch_timer_id = 1;
     timers.push_back( &projector   );
     timers.back()->patch_timer_id = 2;
-    timers.push_back( &particles_boundaries   );
+    timers.push_back( &cell_keys   );
     timers.back()->patch_timer_id = 3;
     timers.push_back( &ionization   );
     timers.back()->patch_timer_id = 4;
@@ -90,13 +93,16 @@ Timers::Timers( SmileiMPI * smpi ) :
     timers.push_back( &proj_currents ) ;
     timers.back()->patch_timer_id = 12;
 
+    // Details of Sync Particles
+    timers.push_back( &sorting ) ;
+    timers.back()->patch_timer_id = 13;
 
 #endif
 
     for( unsigned int i=0; i<timers.size(); i++)
         timers[i]->init(smpi);
 
-    if (smpi->getRank()==0) {
+    if (smpi->getRank()==0 && ! smpi->test_mode ) {
         remove ("profil.txt");
         ofstream fout;
         fout.open ("profil.txt");
@@ -122,7 +128,9 @@ void Timers::profile(SmileiMPI * smpi)
 
     if ( smpi->isMaster() ) {
         double coverage(0.);
-        for (unsigned int i=1 ; i<timers.size() ; i++)
+        // Computation of the coverage: it only takes into account
+        // the main timers (14)
+        for (unsigned int i=1 ; i<patch_timer_id_start+1 ; i++)
             coverage += timers[i]->getTime();
 
         MESSAGE("Time in time loop :\t" << global.getTime() << "\t"<<coverage/global.getTime()*100.<< "% coverage" );
@@ -161,8 +169,10 @@ std::vector<Timer*> Timers::consolidate(SmileiMPI * smpi)
     int sz = smpi->getSize(), rk = smpi->getRank();
 
     ofstream fout;
-    if (rk==0) fout.open ("profil.txt", ofstream::out | ofstream::app );
-    fout << endl << endl << "--- Timestep = " << (timers[1]->register_timers.size()-1) << " x Main.print_every = " <<  " ---" << endl;
+    if (rk==0 && ! smpi->test_mode) {
+        fout.open ("profil.txt", ofstream::out | ofstream::app );
+        fout << endl << endl << "--- Timestep = " << (timers[1]->register_timers.size()-1) << " x Main.print_every = " <<  " ---" << endl;
+    }
 
     // timers[0] is the global PIC loop timer, naturally synchronized
     for ( unsigned int itimer = 1 ; itimer < timers.size() ; itimer++ ) {
@@ -199,7 +209,7 @@ std::vector<Timer*> Timers::consolidate(SmileiMPI * smpi)
 
         delete [] tmp;
 
-        if ((max>0.) && (rk==0)) {
+        if ((max>0.) && (rk==0) && ! smpi->test_mode ) {
             fout.setf( ios::fixed,  ios::floatfield );
             fout << setw(14) << scientific << setprecision(3)
                  << timers[itimer]->name_ << "\t : " << "Min time =  " << min
@@ -216,7 +226,7 @@ std::vector<Timer*> Timers::consolidate(SmileiMPI * smpi)
         }
 
     }
-    if (rk==0) fout.close();
+    if (rk==0 && ! smpi->test_mode) fout.close();
 
     return avg_timers;
 

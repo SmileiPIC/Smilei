@@ -28,6 +28,10 @@ protected:
     double dr_ov_dt;
     int i_domain_begin;
     int j_domain_begin;
+    unsigned int Nmode;
+    unsigned int n_species;
+    int nprimr;
+
 };
 
 #endif

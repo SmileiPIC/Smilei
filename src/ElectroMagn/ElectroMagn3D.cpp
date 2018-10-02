@@ -164,10 +164,9 @@ void ElectroMagn3D::initElectroMagn3DQuantities(Params &params, Patch* patch)
     By_m = FieldFactory::create(dimPrim, 1, true,  "By_m", params);
     Bz_m = FieldFactory::create(dimPrim, 2, true,  "Bz_m", params);
     if (params.Laser_Envelope_model){
-        Env_Ar_=new Field3D(dimPrim, "Env_Ar");
-        Env_Ai_=new Field3D(dimPrim, "Env_Ai");
-        Env_A_abs_=new Field3D(dimPrim, "Env_A_abs");
-        Env_Chi_=new Field3D(dimPrim, "Env_Chi");
+        Env_A_abs_ = new Field3D(dimPrim, "Env_A_abs");
+        Env_Chi_   = new Field3D(dimPrim, "Env_Chi");
+        Env_E_abs_ = new Field3D(dimPrim, "Env_E_abs");
                                     }
     
     // Total charge currents and densities
@@ -1098,10 +1097,9 @@ Field * ElectroMagn3D::createField(string fieldname, Params& params)
     else if(fieldname.substr(0,2)=="Jy" ) return FieldFactory::create(dimPrim, 1, false, fieldname, params);
     else if(fieldname.substr(0,2)=="Jz" ) return FieldFactory::create(dimPrim, 2, false, fieldname, params);
     else if(fieldname.substr(0,3)=="Rho") return new Field3D(dimPrim, fieldname );
-    else if(fieldname.substr(0,6)=="Env_Ar" ) return new Field3D(dimPrim, 0, false, fieldname);
-    else if(fieldname.substr(0,6)=="Env_Ai" ) return new Field3D(dimPrim, 0, false, fieldname);
     else if(fieldname.substr(0,9)=="Env_A_abs" ) return new Field3D(dimPrim, 0, false, fieldname);
     else if(fieldname.substr(0,7)=="Env_Chi" ) return new Field3D(dimPrim, 0, false, fieldname);
+    else if(fieldname.substr(0,9)=="Env_E_abs" ) return new Field3D(dimPrim, 0, false, fieldname);
     
     ERROR("Cannot create field "<<fieldname);
     return NULL;
@@ -1450,7 +1448,8 @@ void ElectroMagn3D::computePoynting() {
         unsigned int kBz=istart[2][Bz3D_m->isDual(2)];
         unsigned int kEz=istart[2][Ez3D->isDual(2)];
 //         unsigned int kBy=istart[2][By3D_m->isDual(2)];
-
+        
+        poynting_inst[0][0] = 0.;
         for (unsigned int j=0; j<=bufsize[1][Ez3D->isDual(1)]; j++) {
             for (unsigned int k=0; k<=bufsize[2][Ey3D->isDual(2)]; k++) {
             
@@ -1461,12 +1460,11 @@ void ElectroMagn3D::computePoynting() {
                 double By__ = 0.25*( (*By3D_m) (iBy, jBy+j,   kEz+k)   + (*By3D_m)(iBy+1, jBy+j,   kEz+k)
                                      +(*By3D_m)(iBy, jBy+j,   kEz+k+1) + (*By3D_m)(iBy+1, jBy+j,   kEz+k+1) );
             
-                poynting_inst[0][0] = dy*dz*timestep*(Ey__*Bz__ - Ez__*By__);
-                poynting[0][0]+= poynting_inst[0][0];
-
+                poynting_inst[0][0] += Ey__*Bz__ - Ez__*By__;
             }
         }
-        
+        poynting_inst[0][0] *= dy*dz*timestep;
+        poynting[0][0]+= poynting_inst[0][0];
     }//if Xmin
     
     
@@ -1487,6 +1485,7 @@ void ElectroMagn3D::computePoynting() {
         unsigned int kEz=istart[2][Ez3D->isDual(2)];
 //         unsigned int kBy=istart[2][By3D_m->isDual(2)];
         
+        poynting_inst[1][0] = 0.;
         for (unsigned int j=0; j<=bufsize[1][Ez3D->isDual(1)]; j++) {
             for (unsigned int k=0; k<=bufsize[2][Ey3D->isDual(2)]; k++) {
             
@@ -1496,13 +1495,12 @@ void ElectroMagn3D::computePoynting() {
                 double Ez__ = 0.5 *( (*Ez3D)   (iEz, jEz+j,   kEz+k)   + (*Ez3D)  (iEz,   jEz+j,   kEz+k+1));
                 double By__ = 0.25*( (*By3D_m) (iBy, jBy+j,   kEz+k)   + (*By3D_m)(iBy+1, jBy+j,   kEz+k)
                                      +(*By3D_m)(iBy, jBy+j,   kEz+k+1) + (*By3D_m)(iBy+1, jBy+j,   kEz+k+1) );
-            
-                poynting_inst[1][0] = dy*dz*timestep*(Ey__*Bz__ - Ez__*By__);
-                poynting[1][0]+= poynting_inst[1][0];
-
+                
+                poynting_inst[1][0] += Ey__*Bz__ - Ez__*By__;
             }
         }
-        
+        poynting_inst[1][0] *= dy*dz*timestep;
+        poynting[1][0] -= poynting_inst[1][0];
     }//if Xmax
     
     if (isYmin) {
@@ -1522,6 +1520,7 @@ void ElectroMagn3D::computePoynting() {
         unsigned int kEx=istart[2][Ex_->isDual(2)];
 //         unsigned int kBz=istart[2][Bz_m->isDual(2)];
         
+        poynting_inst[0][1] = 0.;
         for (unsigned int i=0; i<=bufsize[0][Ez3D->isDual(0)]; i++) {
             for (unsigned int k=0; k<=bufsize[2][Ex3D->isDual(2)]; k++) {
                 double Ez__ = 0.5 *( (*Ez3D)   (iEz+i, jEz,   kEz+k)   + (*Ez3D)  (iEz+i,   jEz,   kEz+k+1) );
@@ -1531,11 +1530,11 @@ void ElectroMagn3D::computePoynting() {
                 double Bz__ = 0.25*( (*Bz3D_m) (iBz+i, jBz,   kEx+k)   + (*Bz3D_m)(iBz+i+1, jBz,   kEx+k)
                                      +(*Bz3D_m)(iBz+i, jBz+1, kEx+k)   + (*Bz3D_m)(iBz+i+1, jBz+1, kEx+k) );
             
-                poynting_inst[0][1] = dx*dz*timestep*(Ez__*Bx__ - Ex__*Bz__);
-                poynting[0][1] += poynting_inst[0][1];
+                poynting_inst[0][1] += Ez__*Bx__ - Ex__*Bz__;
             }
         }
-
+        poynting_inst[0][1] *= dx*dz*timestep;
+        poynting[0][1] += poynting_inst[0][1];
     }// if Ymin
     
     if (isYmax) {
@@ -1555,6 +1554,7 @@ void ElectroMagn3D::computePoynting() {
         unsigned int kEx=istart[2][Ex_->isDual(2)];
 //         unsigned int kBz=istart[2][Bz_m->isDual(2)];
         
+        poynting_inst[1][1] = 0.;
         for (unsigned int i=0; i<=bufsize[0][Ez3D->isDual(0)]; i++) {
             for (unsigned int k=0; k<=bufsize[2][Ex3D->isDual(2)]; k++) {
                 double Ez__ = 0.5 *( (*Ez3D)   (iEz+i, jEz,   kEz+k)   + (*Ez3D)  (iEz+i,   jEz,   kEz+k+1) );
@@ -1564,11 +1564,11 @@ void ElectroMagn3D::computePoynting() {
                 double Bz__ = 0.25*( (*Bz3D_m) (iBz+i, jBz,   kEx+k)   + (*Bz3D_m)(iBz+i+1, jBz,   kEx+k)
                                      +(*Bz3D_m)(iBz+i, jBz+1, kEx+k)   + (*Bz3D_m)(iBz+i+1, jBz+1, kEx+k) );
             
-                poynting_inst[1][1] = dx*dz*timestep*(Ez__*Bx__ - Ex__*Bz__);
-                poynting[1][1] += poynting_inst[1][1];
+                poynting_inst[1][1] += Ez__*Bx__ - Ex__*Bz__;
             }
         }
-
+        poynting_inst[1][1] *= dx*dz*timestep;
+        poynting[1][1] -= poynting_inst[1][1];
     }//if Ymax
 
     if (isZmin) {
@@ -1587,7 +1587,8 @@ void ElectroMagn3D::computePoynting() {
         unsigned int kBy=istart[2][By_m->isDual(2)];
         unsigned int kEy=istart[2][Ey_->isDual(2)];
 //         unsigned int kBx=istart[2][Bx_m->isDual(2)];
-
+        
+        poynting_inst[0][2] = 0.;
         for (unsigned int i=0; i<=bufsize[0][Ez3D->isDual(0)]; i++) {
             for (unsigned int j=0; j<=bufsize[1][Ex3D->isDual(1)]; j++) {
 
@@ -1598,11 +1599,11 @@ void ElectroMagn3D::computePoynting() {
                 double Bx__ = 0.25*( (*Bx3D_m) (iBx+i, jBx+j, kEx)   + (*Bx3D_m)(iBx+i,   jBx+j+1, kEx)
                                      +(*Bx3D_m)(iBx+i, jBx+j, kEx+1) + (*Bx3D_m)(iBx+i,   jBx+j+1, kEx+1) );
             
-                poynting_inst[0][2] = dx*dy*timestep*(Ex__*By__ - Ey__*Bx__);
-                poynting[0][2] += poynting_inst[0][2];
+                poynting_inst[0][2] += Ex__*By__ - Ey__*Bx__;
             }
         }
-
+        poynting_inst[0][2] *= dx*dy*timestep;
+        poynting[0][2] += poynting_inst[0][2];
     }
 
     if (isZmax) {
@@ -1621,7 +1622,8 @@ void ElectroMagn3D::computePoynting() {
         unsigned int kBy=istart[2][By_m->isDual(2)] + bufsize[2][By_m->isDual(2)] - 1;
         unsigned int kEy=istart[2][Ey_->isDual(2)] + bufsize[2][Ey_->isDual(2)] - 1;
 //         unsigned int kBx=istart[2][Bx_m->isDual(2)] + bufsize[2][Bx_m->isDual(2)] - 1;
-
+        
+        poynting_inst[1][2] = 0.;
         for (unsigned int i=0; i<=bufsize[0][Ez3D->isDual(0)]; i++) {
             for (unsigned int j=0; j<=bufsize[1][Ex3D->isDual(1)]; j++) {
 
@@ -1632,11 +1634,11 @@ void ElectroMagn3D::computePoynting() {
                 double Bx__ = 0.25*( (*Bx3D_m) (iBx+i, jBx+j, kEx)   + (*Bx3D_m)(iBx+i,   jBx+j+1, kEx)
                                      +(*Bx3D_m)(iBx+i, jBx+j, kEx+1) + (*Bx3D_m)(iBx+i,   jBx+j+1, kEx+1) );
             
-                poynting_inst[1][2] = dx*dy*timestep*(Ex__*By__ - Ey__*Bx__);
-                poynting[1][2] += poynting_inst[1][2];
+                poynting_inst[1][2] += Ex__*By__ - Ey__*Bx__;
             }
         }
-
+        poynting_inst[1][2] *= dx*dy*timestep;
+        poynting[1][2] -= poynting_inst[1][2];
     }
 
 }

@@ -38,7 +38,7 @@ public:
     Timer interpolator  ;
     Timer pusher  ;
     Timer projector  ;
-    Timer particles_boundaries  ;
+    Timer cell_keys  ;
     Timer ionization  ;
     Timer radiation  ;
     Timer multiphoton_Breit_Wheeler_timer  ;
@@ -50,9 +50,12 @@ public:
     Timer proj_currents  ;
     Timer push_pos ;
 
+    Timer sorting ;
+
+#endif
+
     // Where the patch timers start in the timer vector
     unsigned int patch_timer_id_start ;
-#endif
 
     //! Output the timer profile
     void profile(SmileiMPI * smpi);

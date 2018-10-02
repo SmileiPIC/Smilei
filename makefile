@@ -53,7 +53,7 @@ ifneq ($(strip $(PYTHONHOME)),)
 endif
 
 
-PICSAR=TRUE
+PICSAR=FALSE
 ifeq ($(PICSAR),TRUE)
         # New environment variable
 	FFTW3_LIB ?= $(FFTW_LIB_DIR)
@@ -114,8 +114,8 @@ ifeq (,$(findstring noopenmp,$(config)))
     OPENMP_FLAG += -D_OMP
     LDFLAGS += $(OPENMP_FLAG)
     CXXFLAGS += $(OPENMP_FLAG)
-else
-    LDFLAGS += -mt_mpi # intelmpi only
+#else
+#    LDFLAGS += -mt_mpi # intelmpi only
 endif
 
 
@@ -228,10 +228,11 @@ tar:
 # Python module rules
 
 # Install the python module in the user python path
+
 happi:
 	@echo "Installing $(SITEDIR)/smilei.pth"
 	$(Q) mkdir -p "$(SITEDIR)"
-	$(Q) echo "$(PWD)" > "$(SITEDIR)/smilei.pth"
+	$(Q) echo "$(CURDIR)" > "$(SITEDIR)/smilei.pth"
 
 uninstall_happi:
 	@echo "Uninstalling $(SITEDIR)/smilei.pth"

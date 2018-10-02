@@ -59,16 +59,20 @@ public:
             vecDiagnostics.push_back( new DiagnosticScreen(params, smpi, vecPatches(0), n_diag_screen) );
         }
         
+//MESSAGE ("Glob diag");   
         return vecDiagnostics;
-    } // END createGlobalDiagnostics
+
+ } // END createGlobalDiagnostics
     
     
     
-    static std::vector<Diagnostic*> createLocalDiagnostics(Params& params, SmileiMPI* smpi, VectorPatch &vecPatches, OpenPMDparams& openPMD) {
+    static std::vector<Diagnostic*> createLocalDiagnostics(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, OpenPMDparams& openPMD) {
         std::vector<Diagnostic*> vecDiagnostics;
+        //MESSAGE("in create local diags:  global dims after declaring vecdiag " << vecPatches(0)->EMfields->Jx_s[1]->globalDims_);
         
         for (unsigned int n_diag_fields = 0; n_diag_fields < PyTools::nComponents("DiagFields"); n_diag_fields++) {
             vecDiagnostics.push_back( DiagnosticFieldsFactory::create(params, smpi, vecPatches, n_diag_fields, openPMD) );
+          //  MESSAGE("in create local diags:  global dims after creating and pushing back field diag " << vecPatches(0)->EMfields->Jx_s[1]->globalDims_);
         }
         
         for (unsigned int n_diag_probe = 0; n_diag_probe < PyTools::nComponents("DiagProbe"); n_diag_probe++) {
@@ -83,7 +87,9 @@ public:
             vecDiagnostics.push_back( new DiagnosticPerformances(params, smpi) );
         }
         
+//MESSAGE("local diag");
         return vecDiagnostics;
+
     } // END createLocalDiagnostics
     
     
