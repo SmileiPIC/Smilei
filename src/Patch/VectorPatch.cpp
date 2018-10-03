@@ -90,20 +90,20 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi, OpenPMDparams& op
                     delete (*this)(ipatch)->EMfields->Jx_s[ifield];
                     (*this)(ipatch)->EMfields->Jx_s[ifield]=NULL;
                 }
-	        
-             } 
+
+             }
             for (unsigned int ifield=0 ; ifield<(*this)(ipatch)->EMfields->Jy_s.size(); ifield++) {
                 if( (*this)(ipatch)->EMfields->Jy_s[ifield]->data_ == NULL ){
                     delete (*this)(ipatch)->EMfields->Jy_s[ifield];
                     (*this)(ipatch)->EMfields->Jy_s[ifield]=NULL;
                 }
-            } 
+            }
             for (unsigned int ifield=0 ; ifield<(*this)(ipatch)->EMfields->Jz_s.size(); ifield++) {
                 if( (*this)(ipatch)->EMfields->Jz_s[ifield]->data_ == NULL ){
                     delete (*this)(ipatch)->EMfields->Jz_s[ifield];
                     (*this)(ipatch)->EMfields->Jz_s[ifield]=NULL;
                 }
-            }  
+            }
             for (unsigned int ifield=0 ; ifield<(*this)(ipatch)->EMfields->rho_s.size(); ifield++) {
                 if( (*this)(ipatch)->EMfields->rho_s[ifield]->data_ == NULL ){
                     delete (*this)(ipatch)->EMfields->rho_s[ifield];
@@ -119,27 +119,27 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi, OpenPMDparams& op
                     delete EMfields->Jl_s[ifield];
                     EMfields->Jl_s[ifield]=NULL;
                 }
-             } 
+             }
             for (unsigned int ifield=0 ; ifield<EMfields->Jr_s.size(); ifield++) {
                 if( EMfields->Jr_s[ifield]->cdata_ == NULL ){
                     delete EMfields->Jr_s[ifield];
                     EMfields->Jr_s[ifield]=NULL;
                 }
-            } 
+            }
             for (unsigned int ifield=0 ; ifield<EMfields->Jt_s.size(); ifield++) {
                 if(EMfields->Jt_s[ifield]->cdata_ == NULL ){
                     delete EMfields->Jt_s[ifield];
                     EMfields->Jt_s[ifield]=NULL;
                 }
-            } 
-	
+            }
+
             for (unsigned int ifield=0 ; ifield<EMfields->rho_AM_s.size(); ifield++) {
                 if( EMfields->rho_AM_s[ifield]->cdata_ == NULL ){
                     delete EMfields->rho_AM_s[ifield];
                     EMfields->rho_AM_s[ifield]=NULL;
                }
             }
-	
+
 	    }
 
 
@@ -404,7 +404,7 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
 
     // Particle importation
     // ----------------------------------------
-    
+
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         // Particle importation for all species
@@ -532,15 +532,15 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
                 update_field_list(ispec, smpi);
                 if ( params.geometry != "AMcylindrical" ) {
                     SyncVectorPatch::sumRhoJs( params, (*this), ispec, smpi, timers, itime ); // MPI
-                 } 
+                 }
                 else{
                     for (unsigned int imode = 0 ; imode < static_cast<ElectroMagnAM*>(patches_[0]->EMfields)->Jl_.size() ; imode++  ) {
                         SyncVectorPatch::sumRhoJs( params, (*this), imode, ispec, smpi, timers, itime );
-                    } 
+                    }
                 }
             }
-           }  
-    } 
+           }
+    }
     if (params.geometry == "AMcylindrical") {
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
@@ -548,7 +548,7 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
             emAM->fold_J(diag_flag);
             emAM->on_axis_J(diag_flag);
         }
-    }  
+    }
     timers.syncDens.update( params.printNow( itime ) );
 } // End sumDensities
 
@@ -1370,13 +1370,13 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
         { // begin loop on patches
         (*this)(ipatch)->EMfields->initE_relativistic_Poisson( (*this)(ipatch), gamma_mean );
         } // end loop on patches
-      
+
     SyncVectorPatch::exchange_along_all_directions_noomp          ( Ex_rel_, *this, smpi );
     SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Ex_rel_, *this );
     SyncVectorPatch::exchange_along_all_directions_noomp          ( Ey_rel_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Ey_rel_, *this );  
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Ey_rel_, *this );
     SyncVectorPatch::exchange_along_all_directions_noomp          ( Ez_rel_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Ez_rel_, *this );    
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Ez_rel_, *this );
     //SyncVectorPatch::exchangeE( params, *this, smpi );
     //SyncVectorPatch::finalizeexchangeE( params, *this );
 
@@ -1505,9 +1505,9 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
     SyncVectorPatch::exchange_along_all_directions_noomp          ( Bx_rel_, *this, smpi );
     SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bx_rel_, *this );
     SyncVectorPatch::exchange_along_all_directions_noomp          ( By_rel_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( By_rel_, *this );  
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( By_rel_, *this );
     SyncVectorPatch::exchange_along_all_directions_noomp          ( Bz_rel_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_rel_, *this );  
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_rel_, *this );
 
 
     // Proper spatial centering of the B fields in the Yee Cell through interpolation
@@ -1521,19 +1521,19 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
     SyncVectorPatch::exchange_along_all_directions_noomp          ( Bx_rel_t_plus_halfdt_, *this, smpi );
     SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bx_rel_t_plus_halfdt_, *this );
     SyncVectorPatch::exchange_along_all_directions_noomp          ( By_rel_t_plus_halfdt_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( By_rel_t_plus_halfdt_, *this );  
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( By_rel_t_plus_halfdt_, *this );
     SyncVectorPatch::exchange_along_all_directions_noomp          ( Bz_rel_t_plus_halfdt_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_rel_t_plus_halfdt_, *this );  
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_rel_t_plus_halfdt_, *this );
 
     SyncVectorPatch::exchange_along_all_directions_noomp          ( Bx_rel_t_minus_halfdt_, *this, smpi );
     SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bx_rel_t_minus_halfdt_, *this );
     SyncVectorPatch::exchange_along_all_directions_noomp          ( By_rel_t_minus_halfdt_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( By_rel_t_minus_halfdt_, *this );  
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( By_rel_t_minus_halfdt_, *this );
     SyncVectorPatch::exchange_along_all_directions_noomp          ( Bz_rel_t_minus_halfdt_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_rel_t_minus_halfdt_, *this );  
-        
-    
-   
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_rel_t_minus_halfdt_, *this );
+
+
+
    MESSAGE(0,"Summing fields of relativistic species to the grid fields");
    // sum the fields found  by relativistic Poisson solver to the existing em fields
    // E  = E  + E_rel
@@ -2229,8 +2229,8 @@ void VectorPatch::update_field_list(int ispec, SmileiMPI* smpi)
             }
         }
 
-    } 
-        
+    }
+
 
 
 }
@@ -2267,13 +2267,13 @@ void VectorPatch::applyCollisions(Params& params, int itime, Timers & timers)
     timers.collisions.restart();
 
     if (Collisions::debye_length_required)
-        #pragma omp for schedule(static)
+        #pragma omp for schedule(runtime)
         for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
             Collisions::calculate_debye_length(params,patches_[ipatch]);
 
     unsigned int ncoll = patches_[0]->vecCollisions.size();
 
-    #pragma omp for schedule(static)
+    #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
         for (unsigned int icoll=0 ; icoll<ncoll; icoll++)
             patches_[ipatch]->vecCollisions[icoll]->collide(params,patches_[ipatch],itime, localDiags);

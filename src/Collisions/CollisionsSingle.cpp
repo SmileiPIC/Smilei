@@ -30,23 +30,23 @@ void CollisionsSingle::collide(Params& params, Patch* patch, int itime, vector<D
     Species   *s1, *s2, *stmp;
     Particles *p1, *p2;
     double m12, coeff3, coeff4, logL, s, ncol, debye2=0.;
-    
+
     s1 = patch->vecSpecies[species_group1[0]];
     s2 = patch->vecSpecies[species_group2[0]];
-    
+
     bool debug = (debug_every > 0 && itime % debug_every == 0); // debug only every N timesteps
-    
+
     if( debug ) {
         ncol = 0.;
         smean       = 0.;
         logLmean    = 0.;
         //temperature = 0.;
     }
-    
+
     // Loop bins of particles (typically, cells, but may also be clusters)
     unsigned int nbin = patch->vecSpecies[0]->bmin.size();
     for (unsigned int ibin = 0 ; ibin < nbin ; ibin++) {
-        
+
         // get number of particles for all necessary species
         np1 = s1->bmax[ibin] - s1->bmin[ibin];
         np2 = s2->bmax[ibin] - s2->bmin[ibin];
@@ -61,11 +61,11 @@ void CollisionsSingle::collide(Params& params, Patch* patch, int itime, vector<D
         bmin2 = s2->bmin[ibin];
         p1 = s1->particles;
         p2 = s2->particles;
-        
+
         // Set the debye length
         if( Collisions::debye_length_required )
             debye2 = patch->debye_length_squared[ibin];
-        
+
         // Shuffle particles of species 1 to have random pairs
         // In the case of collisions within one species
         if (intra_collisions) {
@@ -83,10 +83,10 @@ void CollisionsSingle::collide(Params& params, Patch* patch, int itime, vector<D
             index1[i] = bmin1 + i;
         random_shuffle(index1.begin(), index1.end());
         p1->swap_parts(index1); // exchange particles along the cycle defined by the shuffle
-        
+
         // Prepare the ionization
         Ionization->prepare1(s1->atomic_number);
-        
+
         // Calculate the densities
         n1  = 0.; // density of species 1
         n2  = 0.; // density of species 2
@@ -105,7 +105,7 @@ void CollisionsSingle::collide(Params& params, Patch* patch, int itime, vector<D
         n1  *= n_patch_per_cell;
         n2  *= n_patch_per_cell;
         n12 *= n_patch_per_cell;
-        
+
         // Pre-calculate some numbers before the big loop
         n123 = pow(n1,2./3.);
         n223 = pow(n2,2./3.);
@@ -113,42 +113,38 @@ void CollisionsSingle::collide(Params& params, Patch* patch, int itime, vector<D
         coeff4 = pow( 3.*coeff2 , -1./3. ) * coeff3;
         coeff3 *= coeff2;
         m12  = s1->mass / s2->mass; // mass ratio
-        
+
         // Prepare the ionization
         Ionization->prepare3(params.timestep, n_patch_per_cell);
-        
+
         // Now start the real loop on pairs of particles
         // ----------------------------------------------------
         for (unsigned int i=0; i<npairs; i++) {
             i1 = bmin1 + i;
             i2 = bmin2 + i%N2max;
-            
+
             logL = coulomb_log;
             s = one_collision(p1, i1, s1->mass, p2, i2, m12, coeff1, coeff2, coeff3, coeff4, n123, n223, debye2, logL);
-            
+
             // Handle ionization
             Ionization->apply(p1, i1, p2, i2);
-            
+
             if( debug ) {
                 ncol     += 1;
                 smean    += s;
                 logLmean += logL;
                 //temperature += m1 * (sqrt(1.+pow(p1->momentum(0,i1),2)+pow(p1->momentum(1,i1),2)+pow(p1->momentum(2,i1),2))-1.);
             }
-            
+
         } // end loop on pairs of particles
-        
+
     } // end loop on bins
-    
+
     Ionization->finish(s1, s2, params, patch, localDiags);
-    
+
     if(debug && ncol>0. ) {
         smean    /= ncol;
         logLmean /= ncol;
         //temperature /= ncol;
     }
 }
-
-
-
-

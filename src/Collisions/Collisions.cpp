@@ -19,9 +19,9 @@ using namespace std;
 Collisions::Collisions(
     Params& params,
     unsigned int n_collisions,
-    vector<unsigned int> species_group1, 
-    vector<unsigned int> species_group2, 
-    double coulomb_log, 
+    vector<unsigned int> species_group1,
+    vector<unsigned int> species_group2,
+    double coulomb_log,
     bool intra_collisions,
     int debug_every,
     int Z,
@@ -68,7 +68,7 @@ Collisions::Collisions( Collisions* coll, int nDim )
     coeff1           = coll->coeff1          ;
     coeff2           = coll->coeff2          ;
     n_patch_per_cell = coll->n_patch_per_cell;
-    
+
     if( atomic_number>0 ) {
         Ionization = new CollisionalIonization(coll->Ionization);
     } else {
@@ -94,11 +94,11 @@ void Collisions::calculate_debye_length(Params& params, Patch * patch)
     Species   * s;
     Particles * p;
     double coeff = 299792458./(3.*params.reference_angular_frequency_SI*2.8179403267e-15); // c / (3 omega re)
-    
+
     unsigned int nspec = patch->vecSpecies.size(); // number of species
     if(nspec==0) return;
     unsigned int nbin = patch->vecSpecies[0]->bmin.size();
-    
+
     density_max = 0.;
     patch->debye_length_squared.resize(nbin, 0.);
     double mean_debye_length = 0.;
@@ -130,7 +130,7 @@ void Collisions::calculate_debye_length(Params& params, Patch * patch)
             if (density>density_max)
                 density_max = density;
         }
-        
+
         // if there were particles,
         if (patch->debye_length_squared[ibin] > 0.) {
             // compute debye length squared in code units
@@ -140,10 +140,10 @@ void Collisions::calculate_debye_length(Params& params, Patch * patch)
             if (patch->debye_length_squared[ibin] < rmin2)
                 patch->debye_length_squared[ibin] = rmin2;
         }
-        
+
         mean_debye_length += sqrt(patch->debye_length_squared[ibin]);
     }
-    
+
     mean_debye_length /= nbin;
     DEBUG("Mean Debye length in code length units = " << scientific << setprecision(3) << mean_debye_length);
     mean_debye_length *= 299792458./params.reference_angular_frequency_SI; // switch to SI
@@ -165,24 +165,24 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
     Particles *p1, *p2;
     double m12, coeff3, coeff4, logL, s, ncol, debye2=0.;
     bool not_duplicated_particle;
-    
+
     sg1 = &species_group1;
     sg2 = &species_group2;
-    
-    
+
+
     bool debug = (debug_every > 0 && itime % debug_every == 0); // debug only every N timesteps
-    
+
     if( debug ) {
         ncol = 0.;
         smean       = 0.;
         logLmean    = 0.;
         //temperature = 0.;
     }
-    
+
     // Loop bins of particles (typically, cells, but may also be clusters)
     unsigned int nbin = patch->vecSpecies[0]->bmin.size();
     for (unsigned int ibin = 0 ; ibin < nbin ; ibin++) {
-        
+
         // get number of particles for all necessary species
         for (unsigned int i=0; i<2; i++) { // try twice to ensure group 1 has more macro-particles
             nspec1 = sg1->size();
@@ -207,14 +207,14 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
             }
         }
         // now group1 has more macro-particles than group2
-        
+
         // skip to next bin if no particles
         if (npart1==0 || npart2==0) continue;
-        
+
         // Set the debye length
         if( Collisions::debye_length_required )
             debye2 = patch->debye_length_squared[ibin];
-        
+
         // Shuffle particles to have random pairs
         //    (It does not really exchange them, it is just a temporary re-indexing)
         index1.resize(npart1);
@@ -232,10 +232,10 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
             for (unsigned int i=0; i<npart1; i++) index2[i] = i % npart2;
             N2max = npart2; // number of not-repeated particles (in group 2 only)
         }
-        
+
         // Prepare the ionization
         Ionization->prepare1(patch->vecSpecies[(*sg1)[0]]->atomic_number);
-        
+
         // Calculate the densities
         n1  = 0.; // density of group 1
         n2  = 0.; // density of group 2
@@ -247,11 +247,11 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
             // find species and index i2 of particle "2"
             i2 = index2[i];
             for (ispec2=0 ; i2>=np2[ispec2]; ispec2++) i2 -= np2[ispec2];
-            
+
             s1 = patch->vecSpecies[(*sg1)[ispec1]]; s2 = patch->vecSpecies[(*sg2)[ispec2]];
             i1 += s1->bmin[ibin];                   i2 += s2->bmin[ibin];
             p1 = s1->particles;                     p2 = s2->particles;
-            
+
             // sum weights
             n1 += p1->weight(i1);
             not_duplicated_particle = (i<N2max);
@@ -264,54 +264,54 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
         n1  *= n_patch_per_cell;
         n2  *= n_patch_per_cell;
         n12 *= n_patch_per_cell;
-        
+
         // Pre-calculate some numbers before the big loop
         n123 = pow(n1,2./3.);
         n223 = pow(n2,2./3.);
         coeff3 = params.timestep * n1*n2/n12;
         coeff4 = pow( 3.*coeff2 , -1./3. ) * coeff3;
         coeff3 *= coeff2;
-        
+
         // Prepare the ionization
         Ionization->prepare3(params.timestep, n_patch_per_cell);
-        
+
         // Now start the real loop on pairs of particles
         // See equations in http://dx.doi.org/10.1063/1.4742167
         // ----------------------------------------------------
         for (unsigned int i=0; i<npairs; i++) {
-        
+
             // find species and index i1 of particle "1"
             i1 = index1[i];
             for (ispec1=0 ; i1>=np1[ispec1]; ispec1++) i1 -= np1[ispec1];
             // find species and index i2 of particle "2"
             i2 = index2[i];
             for (ispec2=0 ; i2>=np2[ispec2]; ispec2++) i2 -= np2[ispec2];
-            
+
             s1 = patch->vecSpecies[(*sg1)[ispec1]]; s2 = patch->vecSpecies[(*sg2)[ispec2]];
             i1 += s1->bmin[ibin];                   i2 += s2->bmin[ibin];
             p1 = s1->particles;                     p2 = s2->particles;
-            
+
             m12  = s1->mass / s2->mass; // mass ratio
-            
+
             logL = coulomb_log;
             s = one_collision(p1, i1, s1->mass, p2, i2, m12, coeff1, coeff2, coeff3, coeff4, n123, n223, debye2, logL);
-            
+
             // Handle ionization
             Ionization->apply(p1, i1, p2, i2);
-            
+
             if( debug ) {
                 ncol     += 1;
                 smean    += s;
                 logLmean += logL;
                 //temperature += m1 * (sqrt(1.+pow(p1->momentum(0,i1),2)+pow(p1->momentum(1,i1),2)+pow(p1->momentum(2,i1),2))-1.);
             }
-            
+
         } // end loop on pairs of particles
-        
+
     } // end loop on bins
-    
+
     Ionization->finish(patch->vecSpecies[(*sg1)[0]], patch->vecSpecies[(*sg2)[0]], params, patch, localDiags);
-    
+
     if(debug && ncol>0. ) {
         smean    /= ncol;
         logLmean /= ncol;
@@ -322,18 +322,18 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
 
 void Collisions::debug(Params& params, int itime, unsigned int icoll, VectorPatch& vecPatches)
 {
-    
+
     int debug_every = vecPatches(0)->vecCollisions[icoll]->debug_every;
     if( debug_every > 0 && itime % debug_every == 0 ) {
-        
+
         unsigned int npatch = vecPatches.size();
-        
+
         //vector<double> ncol(npatch, 0.);
         vector<double> smean(npatch, 0.);
         vector<double> logLmean(npatch, 0.);
         //vector<double>  temperature=(npatch, 0.);
         vector<double> debye_length_squared(npatch, 0.);
-        
+
         // Collect info for all patches
         for( unsigned int ipatch=0; ipatch<npatch; ipatch++ ) {
             //ncol       [ipatch] = vecPatches(ipatch)->vecCollisions[icoll]->ncol       ;
@@ -345,7 +345,7 @@ void Collisions::debug(Params& params, int itime, unsigned int icoll, VectorPatc
             for( unsigned int ibin=0; ibin<nbin; ibin++ )
                 debye_length_squared[ipatch] += vecPatches(ipatch)->debye_length_squared[ibin];
         }
-        
+
         // Open the HDF5 file
         hid_t file_access = H5Pcreate(H5P_FILE_ACCESS);
         H5Pset_fapl_mpio(file_access, MPI_COMM_WORLD, MPI_INFO_NULL);
@@ -393,8 +393,3 @@ void Collisions::debug(Params& params, int itime, unsigned int icoll, VectorPatc
     }
 
 }
-
-
-
-
-
