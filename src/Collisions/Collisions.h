@@ -117,7 +117,7 @@ protected:
         // Change the momentum to the COM frame (we work only on particle 1)
         // Quantities ending with "COM" are quantities of the particle expressed in the COM frame.
         if( COM_vsquare != 0.) {
-            COM_gamma = pow( 1.-COM_vsquare , -0.5);
+            COM_gamma = 1./sqrt( 1.-COM_vsquare );
             term1 = (COM_gamma - 1.) / COM_vsquare;
             vcv1  = (COM_vx*(p1->momentum(0,i1)) + COM_vy*(p1->momentum(1,i1)) + COM_vz*(p1->momentum(2,i1)))/gamma1;
             vcv2  = (COM_vx*(p2->momentum(0,i2)) + COM_vy*(p2->momentum(1,i2)) + COM_vz*(p2->momentum(2,i2)))/gamma2;
