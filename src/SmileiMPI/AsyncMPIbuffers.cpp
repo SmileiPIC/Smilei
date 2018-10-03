@@ -140,10 +140,14 @@ void AsyncMPIbuffers::defineTags(Patch* patch, SmileiMPI* smpi, int tag )
     for (unsigned int iDim=0 ; iDim< send_tags_.size() ; iDim++)
         for (int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
 
-            int local_hindex = patch->hindex - smpi->patch_refHindexes[ patch->MPI_me_ ];
+            int local_hindex = patch->hindex;
+            if (patch->is_small)
+                local_hindex -= smpi->patch_refHindexes[ patch->MPI_me_ ];
             send_tags_[iDim][iNeighbor] = buildtag( local_hindex, iDim, iNeighbor, tag );
 
-            local_hindex = patch->neighbor_[iDim][(iNeighbor+1)%2] - smpi->patch_refHindexes[ patch->MPI_neighbor_[iDim][(iNeighbor+1)%2] ];
+            local_hindex = patch->neighbor_[iDim][(iNeighbor+1)%2];
+            if (patch->is_small)
+                local_hindex -= smpi->patch_refHindexes[ patch->MPI_neighbor_[iDim][(iNeighbor+1)%2] ];
             recv_tags_[iDim][iNeighbor] = buildtag( local_hindex, iDim, iNeighbor, tag );
 
         }
