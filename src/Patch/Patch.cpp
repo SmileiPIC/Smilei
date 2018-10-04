@@ -103,13 +103,12 @@ void Patch::initStep1(Params& params)
         oversize[iDim] = params.oversize[iDim];
 
     // Initialize the state of the random number generator
-    if( params.random_seed==0 ) { // zero is not acceptable for xorshift
-        xorshift32_state = 1073741824;
-    } else {
-        xorshift32_state = params.random_seed;
-    }
+    xorshift32_state = params.random_seed;
     // Ensure that the random seed is different for each patch
     xorshift32_state += rand();
+    // zero is not acceptable for xorshift
+    if( xorshift32_state==0 )
+        xorshift32_state = 1073741824;
 }
 
 

@@ -113,7 +113,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   In the following documentation, all references to simulation dimension depends on the geometry.
   Cartesian 1D, 2D,3D respectively stand for 1 dimensional, two dimensional and three dimensional and are ordered as :math:`(x,y,z)`.
-  In the case of the ``"AMcylindrical"``, all grid quantities are two dimensional and ordered as :math:`(x,r)`. 
+  In the case of the ``"AMcylindrical"``, all grid quantities are two dimensional and ordered as :math:`(x,r)`.
   Particle quantities (i.e. the Species block) are expressed in three dimensional Cartesian frame :math:`(x,y,z)`.
     
   .. warning::
@@ -380,7 +380,6 @@ The block ``Vectorization`` is optional. It controls the SIMD operations that ca
   Vectorization(
       mode = "dynamic",
       reconfigure_every = 5,
-..      default = "scalar"
   )
 
 .. py:data:: mode
@@ -404,7 +403,10 @@ The block ``Vectorization`` is optional. It controls the SIMD operations that ca
 
   :default: 1
   
-  The number of timesteps between each dynamic reconfiguration of the vectorized operators, when using the ``"dynamic"`` (or ``"dynamic2"``) vectorization modes. It may be set to a :ref:`time selection <TimeSelections>` as well.
+  The number of timesteps between each dynamic reconfiguration of
+  the vectorized operators, when using the ``"dynamic"`` or
+  ``"dynamic2"`` vectorization modes.
+  It may be set to a :ref:`time selection <TimeSelections>` as well.
 
 
 .. .. py:data:: default
@@ -751,7 +753,7 @@ Each species has to be defined in a ``Species`` block::
   Flag for particles interacting with an envelope model for the laser, if present.
   If ``True``, this species will project its susceptibility and be influenced by the laser envelope field.
   See :doc:`laser_envelope` for details on the dynamics of particles in presence of a laser envelope field.
-.. note:: Ionization, Radiation and Multiphoton Breit-Wheeler pair creation are not yet implemented for species interacting with an envelope model for the laser. 
+.. note:: Ionization, Radiation and Multiphoton Breit-Wheeler pair creation are not yet implemented for species interacting with an envelope model for the laser.
 
 
 .. py:data:: c_part_max
@@ -1203,8 +1205,8 @@ The arguments appearing ``LaserEnvelopeGaussian3D`` have the same meaning they w
   For the moment, only reflective boundary conditions are implemented in the resolution of the envelope equation.
 
 
-It is important to remember that the profile defined through the block ``LaserEnvelopeGaussian3D`` corresponds to the complex envelope of the laser vector potential component :math:`\tilde{A}` in the polarization direction. 
-The calculation of the correspondent complex envelope for the laser electric field component in that direction is described in :doc:`laser_envelope`. 
+It is important to remember that the profile defined through the block ``LaserEnvelopeGaussian3D`` corresponds to the complex envelope of the laser vector potential component :math:`\tilde{A}` in the polarization direction.
+The calculation of the correspondent complex envelope for the laser electric field component in that direction is described in :doc:`laser_envelope`.
 Note that only order 2 interpolation is supported in presence of the envelope model for the laser.
 
   

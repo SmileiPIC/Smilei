@@ -292,7 +292,7 @@ class LoadBalancing(SmileiSingleton):
     frozen_particle_load = 0.1
 
 # Radiation reaction configuration (continuous and MC algorithms)
-class Vectorization(SmileiComponent):
+class Vectorization(SmileiSingleton):
     """
     Vectorization parameters
     """

@@ -519,7 +519,7 @@ namelist("")
               vectorization_mode == "dynamic" ||
               vectorization_mode == "dynamic2"))
         {
-            ERROR("The parameter `vecto` must be `disable`, `normal`, `dynamic`, `dynamic2`");
+            ERROR("In block `Vectorization`, parameter `mode` must be `disable`, `normal`, `dynamic` or `dynamic2`");
         }
         else if (vectorization_mode == "dynamic" || vectorization_mode == "dynamic2")
         {
@@ -536,7 +536,7 @@ namelist("")
         if (!(dynamic_default_mode == "scalar" ||
               dynamic_default_mode == "vectorized"))
         {
-            ERROR("The parameter `dynamic_default_mode` must be `scalar` or `vectorized`");
+            ERROR("In block `Vectorization`, parameter `default` must be `scalar` or `vectorized`");
         }
 
     } else {
@@ -689,7 +689,7 @@ namelist("")
                     ERROR("For LaserOffset #" << n_laser_offset << ": space_time_profile["<<i<<"] requires " << nDim_field << " arguments but has " << nargs);
             }
             
-            // Extract the box side 
+            // Extract the box side
             string box_side;
             if( !PyTools::extract("box_side", box_side, "Laser", i_laser) || (box_side!="xmin" && box_side!="xmax"))
                 ERROR("For LaserOffset #" << n_laser_offset << ": box_side must be a 'xmin' or 'xmax'");
