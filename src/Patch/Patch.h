@@ -100,6 +100,8 @@ public:
         xorshift32_state ^= xorshift32_state << 5;
         return xorshift32_state;
     }
+    //! State of the random number generator
+    uint32_t xorshift32_state;
     //! Inverse of the maximum value of the random number generator
     const double xorshift32_invmax = 1./4294967296.;
     
@@ -313,9 +315,6 @@ protected:
 
     std::vector<unsigned int> oversize;
     
-    //! State of the random number generator
-    uint32_t xorshift32_state;
-
 };
 
 
