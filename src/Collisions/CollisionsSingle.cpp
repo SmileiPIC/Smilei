@@ -24,25 +24,25 @@ void CollisionsSingle::collide(Params& params, Patch* patch, int itime, vector<D
 
     vector<unsigned int> index1;
     unsigned int npairs; // number of pairs of macro-particles
-    unsigned int np1, np2, nptmp; // numbers of macro-particles in each species
+    unsigned int np1, np2; // numbers of macro-particles in each species
     double n1, n2, n12, n123, n223; // densities of particles
     unsigned int i1, i2, N2max, bmin1, bmin2;
-    Species   *s1, *s2, *stmp;
+    Species   *s1, *s2;
     Particles *p1, *p2;
     double m12, coeff3, coeff4, logL, s, ncol, debye2=0.;
-
+    
     s1 = patch->vecSpecies[species_group1[0]];
     s2 = patch->vecSpecies[species_group2[0]];
-
+    
     bool debug = (debug_every > 0 && itime % debug_every == 0); // debug only every N timesteps
-
+    
     if( debug ) {
         ncol = 0.;
         smean       = 0.;
         logLmean    = 0.;
         //temperature = 0.;
     }
-
+    
     // Loop bins of particles (typically, cells, but may also be clusters)
     unsigned int nbin = patch->vecSpecies[0]->bmin.size();
     for (unsigned int ibin = 0 ; ibin < nbin ; ibin++) {
@@ -54,8 +54,8 @@ void CollisionsSingle::collide(Params& params, Patch* patch, int itime, vector<D
         if (np1==0 || np2==0) continue;
         // Ensure species 1 has more macro-particles
         if (np2 > np1) {
-            stmp  = s1 ; s1  = s2 ; s2  = stmp ;
-            nptmp = np1; np1 = np2; np2 = nptmp;
+            swap(s1 , s2 );
+            swap(np1, np2);
         }
         bmin1 = s1->bmin[ibin];
         bmin2 = s2->bmin[ibin];
@@ -81,9 +81,12 @@ void CollisionsSingle::collide(Params& params, Patch* patch, int itime, vector<D
         index1.resize(npairs);
         for (unsigned int i=0; i<npairs; i++)
             index1[i] = bmin1 + i;
-        random_shuffle(index1.begin(), index1.end());
+        for (unsigned int i=npairs; i>1; i--) {
+            unsigned int p = patch->xorshift32();
+            swap(index1[i-1], index1[p]);
+        }
         p1->swap_parts(index1); // exchange particles along the cycle defined by the shuffle
-
+        
         // Prepare the ionization
         Ionization->prepare1(s1->atomic_number);
 
@@ -124,7 +127,10 @@ void CollisionsSingle::collide(Params& params, Patch* patch, int itime, vector<D
             i2 = bmin2 + i%N2max;
 
             logL = coulomb_log;
-            s = one_collision(p1, i1, s1->mass, p2, i2, m12, coeff1, coeff2, coeff3, coeff4, n123, n223, debye2, logL);
+            double U1  = patch->xorshift32() * patch->xorshift32_invmax;
+            double U2  = patch->xorshift32() * patch->xorshift32_invmax;
+            double phi = patch->xorshift32() * patch->xorshift32_invmax * twoPi;
+            s = one_collision(p1, i1, s1->mass, p2, i2, m12, coeff1, coeff2, coeff3, coeff4, n123, n223, debye2, logL, U1, U2, phi);
 
             // Handle ionization
             Ionization->apply(p1, i1, p2, i2);

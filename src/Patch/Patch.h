@@ -90,7 +90,19 @@ public:
     //! Timers for the patch
     std::vector<double> patch_timers;
 #endif
-
+    
+	//! Random number generator
+    inline uint32_t xorshift32()
+    {
+        /* Algorithm "xor" from p. 4 of Marsaglia, "Xorshift RNGs" */
+        xorshift32_state ^= xorshift32_state << 13;
+        xorshift32_state ^= xorshift32_state >> 17;
+        xorshift32_state ^= xorshift32_state << 5;
+        return xorshift32_state;
+    }
+    //! Inverse of the maximum value of the random number generator
+    const double xorshift32_invmax = 1./4294967296.;
+    
     // MPI exchange/sum methods for particles/fields
     //   - fields communication specified per geometry (pure virtual)
     // --------------------------------------------------------------
@@ -300,6 +312,9 @@ protected:
     std::vector<int> cell_starting_global_index;
 
     std::vector<unsigned int> oversize;
+    
+    //! State of the random number generator
+    uint32_t xorshift32_state;
 
 };
 

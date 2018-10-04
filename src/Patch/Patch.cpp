@@ -101,6 +101,9 @@ void Patch::initStep1(Params& params)
     oversize.resize( nDim_fields_ );
     for ( int iDim = 0 ; iDim < nDim_fields_; iDim++ )
         oversize[iDim] = params.oversize[iDim];
+
+    // Initialize the state of the random number generator
+    xorshift32_state = params.random_seed;
 }
 
 

@@ -290,6 +290,9 @@ public:
 
     //! Boolean for printing the expected disk usage or not
     bool print_expected_disk_usage;
+    
+    //! Random seed
+    unsigned int random_seed;
 
     // ---------------------------------------------
     // Constants

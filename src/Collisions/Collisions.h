@@ -68,7 +68,8 @@ protected:
     //! Temporary variables for the debugging file
     double smean, logLmean, ncol;//, temperature
     
-    double twoPi, coeff1, coeff2, n_patch_per_cell;
+    const double twoPi = 2. * M_PI;
+    double coeff1, coeff2, n_patch_per_cell;
     
     // Collide one particle with another
     // See equations in http://dx.doi.org/10.1063/1.4742167
@@ -86,23 +87,26 @@ protected:
         double n123,
         double n223,
         double debye2,
-        double &logL
+        double &logL,
+        double U1,
+        double U2,
+        double phi
     ) {
         double qqm, qqm2, gamma1, gamma2, gamma12, gamma12_inv,
             COM_vx, COM_vy, COM_vz, COM_vsquare, COM_gamma,
             term1, term2, term3, term4, term5, term6,
             vcv1, vcv2, px_COM, py_COM, pz_COM, p2_COM, p_COM, gamma1_COM, gamma2_COM,
             bmin, s, vrel, smax,
-            cosX, sinX, phi, sinXcosPhi, sinXsinPhi, p_perp, inv_p_perp,
-            newpx_COM, newpy_COM, newpz_COM, U, vcp;
+            cosX, sinX, sinXcosPhi, sinXsinPhi, p_perp, inv_p_perp,
+            newpx_COM, newpy_COM, newpz_COM, vcp;
         
         // Calculate stuff
         qqm  = p1->charge(i1) * p2->charge(i2) / m1;
         qqm2 = qqm * qqm;
         
         // Get momenta and calculate gammas
-        gamma1 = sqrt(1. + pow(p1->momentum(0,i1),2) + pow(p1->momentum(1,i1),2) + pow(p1->momentum(2,i1),2));
-        gamma2 = sqrt(1. + pow(p2->momentum(0,i2),2) + pow(p2->momentum(1,i2),2) + pow(p2->momentum(2,i2),2));
+        gamma1 = sqrt(1. + p1->momentum(0,i1)*p1->momentum(0,i1) + p1->momentum(1,i1)*p1->momentum(1,i1) + p1->momentum(2,i1)*p1->momentum(2,i1));
+        gamma2 = sqrt(1. + p2->momentum(0,i2)*p2->momentum(0,i2) + p2->momentum(1,i2)*p2->momentum(1,i2) + p2->momentum(2,i2)*p2->momentum(2,i2));
         gamma12 = m12 * gamma1 + gamma2;
         gamma12_inv = 1./gamma12;
         
@@ -148,7 +152,7 @@ protected:
         // Calculate coulomb log if necessary
         if( logL <= 0. ) { // if auto-calculation requested
             bmin = std::max( coeff1/m1/p_COM , std::abs(coeff2*qqm*term3*term5) ); // min impact parameter
-            logL = 0.5*log(1.+debye2/pow(bmin,2));
+            logL = 0.5*log(1.+debye2/(bmin*bmin));
             if (logL < 2.) logL = 2.;
         }
         
@@ -160,11 +164,25 @@ protected:
         smax = coeff4 * (m12+1.) * vrel / std::max(m12*n123,n223);
         if (s>smax) s = smax;
         
-        // Pick the deflection angles according to Nanbu's theory
-        cosX = cos_chi(s);
+        // Pick the deflection angles
+        // Technique given by Nanbu in http://dx.doi.org/10.1103/PhysRevE.55.4642
+        //   to pick randomly the deflection angle cosine, in the center-of-mass frame.
+        // Technique slightly modified in http://dx.doi.org/10.1063/1.4742167
+        if( s < 0.1 ) {
+            if ( U1<0.0001 ) U1=0.0001; // ensures cos_chi > 0
+            cosX = 1. + s*log(U1);
+        } else if ( s < 3. ) {
+            // the polynomial has been modified from the article in order to have a better form
+            double invA = 0.00569578 +(0.95602 + (-0.508139 + (0.479139 + ( -0.12789 + 0.0238957*s )*s )*s )*s )*s;
+            double A = 1./invA;
+            cosX = invA  * log( exp(-A) + 2.*U1*sinh(A) );
+        } else if ( s < 6. ) {
+            double A = 3.*exp(-s);
+            cosX = (1./A) * log( exp(-A) + 2.*U1*sinh(A) );
+        } else {
+            cosX = 2.*U1 - 1.;
+        }
         sinX = sqrt( 1. - cosX*cosX );
-        //!\todo make a faster rand by preallocating ??
-        phi = twoPi * Rand::uniform();
         
         // Calculate combination of angles
         sinXcosPhi = sinX*cos(phi);
@@ -183,20 +201,15 @@ protected:
             newpz_COM = p_COM * cosX;
         }
         
-        // Random number to choose whether deflection actually applies.
-        // This is to conserve energy in average when weights are not equal.
-        //!\todo make a faster rand by preallocating ??
-        U = Rand::uniform();
-        
         // Go back to the lab frame and store the results in the particle array
         vcp = COM_vx * newpx_COM + COM_vy * newpy_COM + COM_vz * newpz_COM;
-        if( U < p2->weight(i2)/p1->weight(i1) ) { // deflect particle 1 only with some probability
+        if( U2 < p2->weight(i2)/p1->weight(i1) ) { // deflect particle 1 only with some probability
             term6 = term1*vcp + gamma1_COM * COM_gamma;
             p1->momentum(0,i1) = newpx_COM + COM_vx * term6;
             p1->momentum(1,i1) = newpy_COM + COM_vy * term6;
             p1->momentum(2,i1) = newpz_COM + COM_vz * term6;
         }
-        if( U < p1->weight(i1)/p2->weight(i2) ) { // deflect particle 2 only with some probability
+        if( U2 < p1->weight(i1)/p2->weight(i2) ) { // deflect particle 2 only with some probability
             term6 = -m12 * term1*vcp + gamma2_COM * COM_gamma;
             p2->momentum(0,i2) = -m12 * newpx_COM + COM_vx * term6;
             p2->momentum(1,i2) = -m12 * newpy_COM + COM_vy * term6;
@@ -205,35 +218,6 @@ protected:
         
         return s;
     }
-    
-    // Technique given by Nanbu in http://dx.doi.org/10.1103/PhysRevE.55.4642
-    //   to pick randomly the deflection angle cosine, in the center-of-mass frame.
-    // It involves the "s" parameter (~ collision frequency * deflection expectation)
-    //   and a random number "U".
-    // Technique slightly modified in http://dx.doi.org/10.1063/1.4742167
-    inline double cos_chi(double s)
-    {
-        double A, invA;
-        //!\todo make a faster rand by preallocating ??
-        double U = Rand::uniform();
-        
-        if( s < 0.1 ) {
-            if ( U<0.0001 ) U=0.0001; // ensures cos_chi > 0
-            return 1. + s*log(U);
-        }
-        if( s < 3.  ) {
-            // the polynomial has been modified from the article in order to have a better form
-            invA = 0.00569578 +(0.95602 + (-0.508139 + (0.479139 + ( -0.12789 + 0.0238957*s )*s )*s )*s )*s;
-            A = 1./invA;
-            return  invA  * log( exp(-A) + 2.*U*sinh(A) );
-        }
-        if( s < 6.  ) {
-            A = 3.*exp(-s);
-            return (1./A) * log( exp(-A) + 2.*U*sinh(A) );
-        }
-        return 2.*U - 1.;
-    }
-
 };
 
 

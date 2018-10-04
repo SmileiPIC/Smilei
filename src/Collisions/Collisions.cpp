@@ -45,7 +45,6 @@ filename(filename)
     } else {
         Ionization = new CollisionalNoIonization();
     }
-    twoPi = 2. * M_PI;
     coeff1 = 4.046650232e-21*params.reference_angular_frequency_SI; // h*omega/(2*me*c^2)
     coeff2 = 2.817940327e-15*params.reference_angular_frequency_SI/299792458.; // re omega / c
     n_patch_per_cell = 1./((double)params.n_cell_per_patch);
@@ -64,7 +63,6 @@ Collisions::Collisions( Collisions* coll, int nDim )
     debug_every      = coll->debug_every     ;
     atomic_number    = coll->atomic_number   ;
     filename         = coll->filename        ;
-    twoPi            = coll->twoPi           ;
     coeff1           = coll->coeff1          ;
     coeff2           = coll->coeff2          ;
     n_patch_per_cell = coll->n_patch_per_cell;
@@ -114,7 +112,9 @@ void Collisions::calculate_debye_length(Params& params, Patch * patch)
             temperature = 0.;
             // loop particles to calculate average quantities
             for (unsigned int iPart=s->bmin[ibin]; iPart<(unsigned int)s->bmax[ibin] ; iPart++ ) {
-                p2 = pow(p->momentum(0,iPart),2)+pow(p->momentum(1,iPart),2)+pow(p->momentum(2,iPart),2);
+                p2 = p->momentum(0,iPart) * p->momentum(0,iPart)
+                    +p->momentum(1,iPart) * p->momentum(1,iPart)
+                    +p->momentum(2,iPart) * p->momentum(2,iPart);
                 density     += p->weight(iPart);
                 charge      += p->weight(iPart) * p->charge(iPart);
                 temperature += p->weight(iPart) * p2/sqrt(1.+p2);
@@ -154,7 +154,7 @@ void Collisions::calculate_debye_length(Params& params, Patch * patch)
 void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnostic*>& localDiags)
 {
 
-    vector<unsigned int> *sg1, *sg2, *sgtmp, index1, index2;
+    vector<unsigned int> *sg1, *sg2, index1, index2;
     unsigned int nspec1, nspec2; // numbers of species in each group
     unsigned int npart1, npart2; // numbers of macro-particles in each group
     unsigned int npairs; // number of pairs of macro-particles
@@ -203,7 +203,7 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
             }
             if (npart2 <= npart1) break; // ok if group1 has more macro-particles
             else { // otherwise, we exchange groups and try again
-                sgtmp = sg1; sg1 = sg2; sg2 = sgtmp;
+                swap(sg1, sg2);
             }
         }
         // now group1 has more macro-particles than group2
@@ -219,7 +219,11 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
         //    (It does not really exchange them, it is just a temporary re-indexing)
         index1.resize(npart1);
         for (unsigned int i=0; i<npart1; i++) index1[i] = i; // first, we make an ordered array
-        random_shuffle(index1.begin(), index1.end()); // shuffle the index array
+        // shuffle the index array
+        for (unsigned int i=npart1; i>1; i--) {
+            unsigned int p = patch->xorshift32();
+            swap(index1[i-1], index1[p]);
+        }
         if (intra_collisions) { // In the case of collisions within one species
             npairs = (int) ceil(((double)npart1)/2.); // half as many pairs as macro-particles
             index2.resize(npairs);
@@ -294,7 +298,10 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
             m12  = s1->mass / s2->mass; // mass ratio
 
             logL = coulomb_log;
-            s = one_collision(p1, i1, s1->mass, p2, i2, m12, coeff1, coeff2, coeff3, coeff4, n123, n223, debye2, logL);
+            double U1  = patch->xorshift32() * patch->xorshift32_invmax;
+            double U2  = patch->xorshift32() * patch->xorshift32_invmax;
+            double phi = patch->xorshift32() * patch->xorshift32_invmax * twoPi;
+            s = one_collision(p1, i1, s1->mass, p2, i2, m12, coeff1, coeff2, coeff3, coeff4, n123, n223, debye2, logL, U1, U2, phi);
 
             // Handle ionization
             Ionization->apply(p1, i1, p2, i2);

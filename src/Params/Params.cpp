@@ -183,7 +183,6 @@ namelist("")
     }
 
     // random seed
-    unsigned int random_seed=0;
     if (PyTools::extract("random_seed", random_seed, "Main")) {
         // Init of the seed for the vectorized C++ random generator recommended by Intel
         // See https://software.intel.com/en-us/articles/random-number-function-vectorization
