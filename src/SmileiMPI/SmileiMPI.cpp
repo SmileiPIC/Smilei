@@ -44,9 +44,11 @@ SmileiMPI::SmileiMPI( int* argc, char*** argv )
 
 #ifdef _OPENMP
     MPI_Init_thread( argc, argv, MPI_THREAD_MULTIPLE, &mpi_provided );
+#ifndef _NO_MPI_TM
     if (mpi_provided != MPI_THREAD_MULTIPLE){
         ERROR("MPI_THREAD_MULTIPLE not supported. Compile your MPI library with THREAD_MULTIPLE support.");
     }
+#endif
     smilei_omp_max_threads = omp_get_max_threads();
 #else
     MPI_Init( argc, argv );
