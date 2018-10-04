@@ -82,7 +82,7 @@ void CollisionsSingle::collide(Params& params, Patch* patch, int itime, vector<D
         for (unsigned int i=0; i<npairs; i++)
             index1[i] = bmin1 + i;
         for (unsigned int i=npairs; i>1; i--) {
-            unsigned int p = patch->xorshift32();
+            unsigned int p = patch->xorshift32() % i;
             swap(index1[i-1], index1[p]);
         }
         p1->swap_parts(index1); // exchange particles along the cycle defined by the shuffle
@@ -130,6 +130,7 @@ void CollisionsSingle::collide(Params& params, Patch* patch, int itime, vector<D
             double U1  = patch->xorshift32() * patch->xorshift32_invmax;
             double U2  = patch->xorshift32() * patch->xorshift32_invmax;
             double phi = patch->xorshift32() * patch->xorshift32_invmax * twoPi;
+            
             s = one_collision(p1, i1, s1->mass, p2, i2, m12, coeff1, coeff2, coeff3, coeff4, n123, n223, debye2, logL, U1, U2, phi);
 
             // Handle ionization

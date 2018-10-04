@@ -103,7 +103,13 @@ void Patch::initStep1(Params& params)
         oversize[iDim] = params.oversize[iDim];
 
     // Initialize the state of the random number generator
-    xorshift32_state = params.random_seed;
+    if( params.random_seed==0 ) { // zero is not acceptable for xorshift
+        xorshift32_state = 1073741824;
+    } else {
+        xorshift32_state = params.random_seed;
+    }
+    // Ensure that the random seed is different for each patch
+    xorshift32_state += rand();
 }
 
 
@@ -665,7 +671,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
             }
 
             // Treat diagonalParticles
-            if (iDim < ndim-1){ // No need to treat diag particles at last dimension. 
+            if (iDim < ndim-1){ // No need to treat diag particles at last dimension.
                 if (params.geometry != "AMcylindrical"){
                     for (int iPart=n_part_recv-1 ; iPart>=0; iPart-- ) {
                         check = 0;
@@ -738,7 +744,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
                                 }
                                 (vecSpecies[ispec]->MPIbuff.partRecv[0][(iNeighbor+1)%2]).erase_particle(iPart);
                                 vecSpecies[ispec]->MPIbuff.part_index_recv_sz[0][(iNeighbor+1)%2]--;
-                             }    
+                             }
                        }
                  }
             }//If not last dim for diagonal particles.
