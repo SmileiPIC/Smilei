@@ -741,41 +741,39 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
             }//If not last dim for diagonal particles.
         } //If received something
     } //loop i Neighbor
+}
 
-    //La recopie finale doit se faire au traitement de la dernière dimension seulement !!
-    if (iDim == ndim-1){
-
+void Patch::sortParticles(SmileiMPI* smpi, int ispec, Params& params, VectorPatch * vecPatch)
+{
+    
 #ifdef  __DETAILED_TIMERS
-            timer = MPI_Wtime();
+    timer = MPI_Wtime();
 #endif
 
-        //vecSpecies[ispec]->sort_part(params);
+    //vecSpecies[ispec]->sort_part(params);
 
-        // For DynamicV
-        if (params.vectorization_mode == "normal" ||
-            params.vectorization_mode == "disable" ||
-            params.vectorization_mode == "dynamic2") {
-            vecSpecies[ispec]->sort_part(params);
-        }
-        else if (params.vectorization_mode == "dynamic") {
-            if (vecSpecies[ispec]->vectorized_operators)
+    // For DynamicV
+    if (params.vectorization_mode == "normal" ||
+        params.vectorization_mode == "disable" ||
+        params.vectorization_mode == "dynamic2") {
+        vecSpecies[ispec]->sort_part(params);
+    }
+    else if (params.vectorization_mode == "dynamic") {
+        if (vecSpecies[ispec]->vectorized_operators)
             {
                 vecSpecies[ispec]->sort_part(params);
             }
-            else
+        else
             {
                 vecSpecies[ispec]->Species::sort_part(params);
             }
-        }
+    }
 
 #ifdef  __DETAILED_TIMERS
-            this->patch_timers[13] += MPI_Wtime() - timer;
+    this->patch_timers[13] += MPI_Wtime() - timer;
 #endif
 
-    }//End Recv_buffers ==> particles
-
-
-} // finalizeCommParticles(... iDim)
+} // sortParticles(...)
 
 
 void Patch::cleanParticlesOverhead(Params& params)
