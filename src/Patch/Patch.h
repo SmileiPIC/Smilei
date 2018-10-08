@@ -102,9 +102,12 @@ public:
     //!init comm  nbr of particles/
     void initCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
     //! finalize comm / nbr of particles, init exch / particles
+    void endCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
+    void prepareParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
     void CommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
     //! finalize exch / particles, manage particles suppr/introduce
     void finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
+    void checkCornersCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
     void sortParticles(SmileiMPI* smpi, int ispec, Params& params, VectorPatch* vecPatch);
     //! clean memory resizing particles structure
     void cleanParticlesOverhead(Params& params);

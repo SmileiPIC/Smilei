@@ -17,11 +17,7 @@ using namespace std;
 
 void SyncVectorPatch::exchangeParticles(VectorPatch& vecPatches, int ispec, Params &params, SmileiMPI* smpi, Timers &timers, int itime)
 {
-#ifndef _NO_MPI_TM
     #pragma omp for schedule(runtime)
-#else
-    #pragma omp single
-#endif
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
         vecPatches(ipatch)->initExchParticles(smpi, ispec, params);
     }
@@ -46,6 +42,20 @@ void SyncVectorPatch::finalize_and_sort_parts(VectorPatch& vecPatches, int ispec
     #pragma omp single
 #endif
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+        vecPatches(ipatch)->endCommParticles(smpi, ispec, params, 0, &vecPatches);
+    }
+    
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+        vecPatches(ipatch)->prepareParticles(smpi, ispec, params, 0, &vecPatches);
+    }
+    
+#ifndef _NO_MPI_TM
+    #pragma omp for schedule(runtime)
+#else
+    #pragma omp single
+#endif
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
         vecPatches(ipatch)->CommParticles(smpi, ispec, params, 0, &vecPatches);
     }
 
@@ -56,6 +66,11 @@ void SyncVectorPatch::finalize_and_sort_parts(VectorPatch& vecPatches, int ispec
 #endif
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
         vecPatches(ipatch)->finalizeCommParticles(smpi, ispec, params, 0, &vecPatches);
+    }
+    
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+        vecPatches(ipatch)->checkCornersCommParticles(smpi, ispec, params, 0, &vecPatches);
     }
 
     // Per direction
@@ -75,6 +90,21 @@ void SyncVectorPatch::finalize_and_sort_parts(VectorPatch& vecPatches, int ispec
         #pragma omp single
 #endif
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+            vecPatches(ipatch)->endCommParticles(smpi, ispec, params, iDim, &vecPatches);
+        }
+
+        #pragma omp for schedule(runtime)
+        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+            vecPatches(ipatch)->prepareParticles(smpi, ispec, params, iDim, &vecPatches);
+        }
+
+
+#ifndef _NO_MPI_TM
+        #pragma omp for schedule(runtime)
+#else
+        #pragma omp single
+#endif
+        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
             vecPatches(ipatch)->CommParticles(smpi, ispec, params, iDim, &vecPatches);
         }
 
@@ -87,6 +117,12 @@ void SyncVectorPatch::finalize_and_sort_parts(VectorPatch& vecPatches, int ispec
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
             vecPatches(ipatch)->finalizeCommParticles(smpi, ispec, params, iDim, &vecPatches);
         }
+
+        #pragma omp for schedule(runtime)
+        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+            vecPatches(ipatch)->checkCornersCommParticles(smpi, ispec, params, iDim, &vecPatches);
+        }
+
 
 //MESSAGE("before 1");
     }
