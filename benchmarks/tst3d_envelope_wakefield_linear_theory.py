@@ -28,9 +28,6 @@ Main(
     clrw = nx/npatch_x,
 
     EM_boundary_conditions = [ ["silver-muller"] ],
-    Envelope_boundary_conditions = [ ["reflective", "reflective"],
-        ["reflective", "reflective"],
-        ["reflective", "reflective"], ],
 
     solve_poisson = False,
     print_every = 100,
@@ -78,6 +75,10 @@ LaserEnvelopeGaussian3D( # linear regime of LWFA
     waist           = 94.26,
     time_envelope   = tgaussian(center=center_laser, fwhm=laser_fwhm),
     envelope_solver = 'explicit',
+
+    Envelope_boundary_conditions = [ ["reflective", "reflective"],
+        ["reflective", "reflective"],
+        ["reflective", "reflective"], ],
 )
 
 
