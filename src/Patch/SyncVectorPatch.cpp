@@ -29,50 +29,15 @@ void SyncVectorPatch::exchangeParticles(VectorPatch& vecPatches, int ispec, Para
     #pragma omp single
 #endif
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-        vecPatches(ipatch)->initCommParticles(smpi, ispec, params, 0, &vecPatches);
+        vecPatches(ipatch)->exchNbrOfParticles(smpi, ispec, params, 0, &vecPatches);
     }
 }
 
 
 void SyncVectorPatch::finalize_and_sort_parts(VectorPatch& vecPatches, int ispec, Params &params, SmileiMPI* smpi, Timers &timers, int itime)
 {
-#ifndef _NO_MPI_TM
-    #pragma omp for schedule(runtime)
-#else
-    #pragma omp single
-#endif
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-        vecPatches(ipatch)->endCommParticles(smpi, ispec, params, 0, &vecPatches);
-    }
+    SyncVectorPatch::finalizeExchangeParticles( vecPatches, ispec, 0, params, smpi, timers, itime);
     
-    #pragma omp for schedule(runtime)
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-        vecPatches(ipatch)->prepareParticles(smpi, ispec, params, 0, &vecPatches);
-    }
-    
-#ifndef _NO_MPI_TM
-    #pragma omp for schedule(runtime)
-#else
-    #pragma omp single
-#endif
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-        vecPatches(ipatch)->CommParticles(smpi, ispec, params, 0, &vecPatches);
-    }
-
-#ifndef _NO_MPI_TM
-    #pragma omp for schedule(runtime)
-#else
-    #pragma omp single
-#endif
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-        vecPatches(ipatch)->finalizeCommParticles(smpi, ispec, params, 0, &vecPatches);
-    }
-    
-    #pragma omp for schedule(runtime)
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-        vecPatches(ipatch)->checkCornersCommParticles(smpi, ispec, params, 0, &vecPatches);
-    }
-
     // Per direction
     for (unsigned int iDim=1 ; iDim<params.nDim_field ; iDim++) {
 #ifndef _NO_MPI_TM
@@ -81,61 +46,16 @@ void SyncVectorPatch::finalize_and_sort_parts(VectorPatch& vecPatches, int ispec
     #pragma omp single
 #endif
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-            vecPatches(ipatch)->initCommParticles(smpi, ispec, params, iDim, &vecPatches);
-        }
-//MESSAGE("after");
-#ifndef _NO_MPI_TM
-        #pragma omp for schedule(runtime)
-#else
-        #pragma omp single
-#endif
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-            vecPatches(ipatch)->endCommParticles(smpi, ispec, params, iDim, &vecPatches);
+            vecPatches(ipatch)->exchNbrOfParticles(smpi, ispec, params, iDim, &vecPatches);
         }
 
-        #pragma omp for schedule(runtime)
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-            vecPatches(ipatch)->prepareParticles(smpi, ispec, params, iDim, &vecPatches);
-        }
-
-
-#ifndef _NO_MPI_TM
-        #pragma omp for schedule(runtime)
-#else
-        #pragma omp single
-#endif
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-            vecPatches(ipatch)->CommParticles(smpi, ispec, params, iDim, &vecPatches);
-        }
-
-//MESSAGE("before");
-#ifndef _NO_MPI_TM
-        #pragma omp for schedule(runtime)
-#else
-        #pragma omp single
-#endif
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-            vecPatches(ipatch)->finalizeCommParticles(smpi, ispec, params, iDim, &vecPatches);
-        }
-
-        #pragma omp for schedule(runtime)
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-            vecPatches(ipatch)->checkCornersCommParticles(smpi, ispec, params, iDim, &vecPatches);
-        }
-
-
-//MESSAGE("before 1");
+        SyncVectorPatch::finalizeExchangeParticles( vecPatches, ispec, iDim, params, smpi, timers, itime);
     }
 
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-        vecPatches(ipatch)->sortParticles(smpi, ispec, params, &vecPatches);
+        vecPatches(ipatch)->injectParticles(smpi, ispec, params, &vecPatches);
     }
-
-
-    //#pragma omp for schedule(runtime)
-    //for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-    //    vecPatches(ipatch)->injectParticles(smpi, ispec, params, params.nDim_particle-1, &vecPatches); // wait
 
 
     /*
@@ -169,6 +89,48 @@ void SyncVectorPatch::finalize_and_sort_parts(VectorPatch& vecPatches, int ispec
     }*/
 
 }
+
+
+void SyncVectorPatch::finalizeExchangeParticles(VectorPatch& vecPatches, int ispec, int iDim, Params &params, SmileiMPI* smpi, Timers &timers, int itime)
+{
+#ifndef _NO_MPI_TM
+    #pragma omp for schedule(runtime)
+#else
+    #pragma omp single
+#endif
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+        vecPatches(ipatch)->endNbrOfParticles(smpi, ispec, params, iDim, &vecPatches);
+    }
+    
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+        vecPatches(ipatch)->prepareParticles(smpi, ispec, params, iDim, &vecPatches);
+    }
+    
+#ifndef _NO_MPI_TM
+    #pragma omp for schedule(runtime)
+#else
+    #pragma omp single
+#endif
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+        vecPatches(ipatch)->exchParticles(smpi, ispec, params, iDim, &vecPatches);
+    }
+
+#ifndef _NO_MPI_TM
+    #pragma omp for schedule(runtime)
+#else
+    #pragma omp single
+#endif
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+        vecPatches(ipatch)->finalizeExchParticles(smpi, ispec, params, iDim, &vecPatches);
+    }
+    
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+        vecPatches(ipatch)->cornersParticles(smpi, ispec, params, iDim, &vecPatches);
+    }
+}
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // ---------------------------------------------------------------------------------------------------------------------

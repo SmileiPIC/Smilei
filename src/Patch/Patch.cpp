@@ -491,7 +491,7 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, Params& params)
 //   - vecPatch : used for intra-MPI process comm (direct copy using Particels::cp_particles)
 //   - smpi     : inhereted from previous SmileiMPI::exchangeParticles()
 // ---------------------------------------------------------------------------------------------------------------------
-void Patch::initCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch * vecPatch)
+void Patch::exchNbrOfParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch * vecPatch)
 {
     int h0 = (*vecPatch)(0)->hindex;
     /********************************************************************************/
@@ -523,10 +523,10 @@ void Patch::initCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iD
         }
     }//end loop on nb_neighbors.
 
-} // initCommParticles(... iDim)
+} // exchNbrOfParticles(... iDim)
 
 
-void Patch::endCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch * vecPatch)
+void Patch::endNbrOfParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch * vecPatch)
 {
     Particles &cuParticles = (*vecSpecies[ispec]->particles);
 
@@ -551,7 +551,7 @@ void Patch::endCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDi
         }
     }
 
-} // END endCommParticles(... iDim)
+} // END endNbrOfParticles(... iDim)
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -563,7 +563,7 @@ void Patch::prepareParticles(SmileiMPI* smpi, int ispec, Params& params, int iDi
 {
     Particles &cuParticles = (*vecSpecies[ispec]->particles);
 
-    int n_part_send, n_part_recv;
+    int n_part_send;
     int h0 = (*vecPatch)(0)->hindex;
     double x_max = params.cell_length[iDim]*( params.n_space_global[iDim] );
 
@@ -601,14 +601,9 @@ void Patch::prepareParticles(SmileiMPI* smpi, int ispec, Params& params, int iDi
 } // END prepareParticles(... iDim)
 
 
-void Patch::CommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch * vecPatch)
+void Patch::exchParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch * vecPatch)
 {
-    Particles &cuParticles = (*vecSpecies[ispec]->particles);
-
     int n_part_send, n_part_recv;
-    int h0 = (*vecPatch)(0)->hindex;
-    double x_max = params.cell_length[iDim]*( params.n_space_global[iDim] );
-
 
     for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
 
@@ -639,7 +634,7 @@ void Patch::CommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, 
 
     } // END for iNeighbor
 
-} // END CommParticles(... iDim)
+} // END exchParticles(... iDim)
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -649,17 +644,12 @@ void Patch::CommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, 
 //   - vecPatch : used for intra-MPI process comm (direct copy using Particels::cp_particles)
 //   - smpi     : used smpi->periods_
 // ---------------------------------------------------------------------------------------------------------------------
-void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch * vecPatch)
+void Patch::finalizeExchParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch * vecPatch)
 {
-
-    int ndim = params.nDim_field;
-    int idim, check;
 
 #ifdef  __DETAILED_TIMERS
     double timer;
 #endif
-
-    Particles &cuParticles = (*vecSpecies[ispec]->particles);
 
     int n_part_send, n_part_recv;
 
@@ -672,8 +662,6 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
 
         n_part_send = vecSpecies[ispec]->MPIbuff.part_index_send[iDim][iNeighbor].size();
         n_part_recv = vecSpecies[ispec]->MPIbuff.part_index_recv_sz[iDim][(iNeighbor+1)%2];
-
-
 
         if ( (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) && (n_part_send!=0) ) {
             if (is_a_MPI_neighbor(iDim, iNeighbor)) {
@@ -690,7 +678,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
     }
 }
 
-void Patch::checkCornersCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch * vecPatch)
+void Patch::cornersParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch * vecPatch)
 {
 
     int ndim = params.nDim_field;
@@ -702,7 +690,7 @@ void Patch::checkCornersCommParticles(SmileiMPI* smpi, int ispec, Params& params
 
     Particles &cuParticles = (*vecSpecies[ispec]->particles);
 
-    int n_part_send, n_part_recv;
+    int n_part_recv;
 
     /********************************************************************************/
     // Wait for end of communications over Particles
@@ -795,7 +783,7 @@ void Patch::checkCornersCommParticles(SmileiMPI* smpi, int ispec, Params& params
     } //loop i Neighbor
 }
 
-void Patch::sortParticles(SmileiMPI* smpi, int ispec, Params& params, VectorPatch * vecPatch)
+void Patch::injectParticles(SmileiMPI* smpi, int ispec, Params& params, VectorPatch * vecPatch)
 {
     
 #ifdef  __DETAILED_TIMERS
