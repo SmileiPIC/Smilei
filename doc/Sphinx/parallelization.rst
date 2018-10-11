@@ -80,15 +80,15 @@ Traditionally, PIC codes would
 split the spatial grid into :math:`N` domains, where :math:`N` is the number
 of cores. Each core would manage its own domain on a separate memory space,
 and information is communicated between cores using the MPI protocol.
-:program:`Smilei` proposes an more efficient approach:
+:program:`Smilei` proposes a different approach:
 it also decomposes the spatial grid in several domains,
-but one core is not directly associated to one domain.
+but one core is not exclusively associated to one domain.
 
 Let us explain this difference in details.
 :numref:`PatchDecomposition` gives an example of a grid containing 960 cells.
 It is decomposed in :math:`4\times8 = 32` domains, called **patches**.
 Each patch has :math:`5\times6` cells.
-These patch size is actually reasonable for :program:`Smilei`, whereas
+These patches size is actually reasonable for :program:`Smilei`, whereas
 traditional PIC codes would have much larger domains.
 
 The issue is now to decide where these patches will be stored in the memory,
@@ -115,7 +115,7 @@ until all patches are done.
 The great advantage of this scheme is that, inside one MPI region, the threads do not
 need to wait for their friends to go to the next patch; they can continue working on
 the available patches, thus avoiding long waiting times.
-This is a form of **local load balancing**.
+This is a form of **local dynamic load balancing**.
 
 .. rubric:: Rules
 
@@ -174,8 +174,13 @@ Recommendations
   This affects only the particles treatment, which will dynamically assign threads.
   Note that fields are always statically assigned to threads.
 
-* **Have small patches**. Be aware that the minimum size of patch depends on the order of the numerical methods you use.
-  For typical order 2, the minimum size is 5 cells per dimension.
+* **Have small patches, not tiny patches**.
+  Small patches are beneficial to effective load balancing but increase synchronization costs.
+  Use small patches if your case is strongly imbalanced and strongly benefit from dynamic load balancing.
+  Use larger patches otherwise.
+  The balance between the two is yours to figure out.
+  Be aware that the minimum size of patch depends on the order of the numerical methods you use.
+  For typical order 2, the minimum size is 6 cells per dimension.
   This allows good cache use, and good load distribution between threads.
   Warning: it is commonly advised to use larger patches if more than half of your simulation domain is empty of particles.
 

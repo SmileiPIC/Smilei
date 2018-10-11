@@ -167,7 +167,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   A list of integers: the number of patches in each direction.
   Each integer must be a power of 2, and the total number of patches must be
   greater or equal than the number of MPI processes.
-  It is also advised to have more patches than the total number of openMP threads even if this is not a strict requirement.
+  It is also strongly advised to have more patches than the total number of openMP threads.
   See :doc:`parallelization`.
 
 
