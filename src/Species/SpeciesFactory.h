@@ -418,8 +418,8 @@ public:
 
             //Check number of coordinates provided
             ndim_local =  PyArray_SHAPE(np_ret_mom)[0];// ok
-            if (ndim_local != params.nDim_particle )
-                ERROR("For species '" << species_name << "' momentum_initializtion must provide a 2-dimensional array with " <<  params.nDim_particle << " columns." )
+            if (ndim_local != 3 )
+                ERROR("For species '" << species_name << "' momentum_initializtion must provide a 2-dimensional array with " <<  3 << " columns." )
 
             //Get number of particles
             if ( !params.restart && thisSpecies->n_numpy_particles != PyArray_SHAPE(np_ret_mom)[1] )

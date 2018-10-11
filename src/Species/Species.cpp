@@ -1325,7 +1325,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     Field3D velocity[3];
 
     if ( momentum_initialization_array != NULL ){
-        for (unsigned int idim = 0; idim < nDim_particle; idim++)
+        for (unsigned int idim = 0; idim < 3; idim++)
             momentum[idim] = &(momentum_initialization_array[idim*n_numpy_particles]);
     } else {
         //Initialize velocity and temperature profiles
@@ -1471,19 +1471,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                         }
                         initMomentum(nPart,iPart, temp, vel);
                         if (params.geometry=="AMcylindrical"){
-                            //if (j+cell_index[1]<0){
-                           //    initWeight(nPart, iPart, density(i,j,k));
-                           // } 
-			   // else
-                           //  if (j+cell_index[1]==0){
-                           //     initWeight(nPart, iPart, density(i,j,k)*cell_length[1]/8.);
-                           // }else {
-                           //     initWeight(nPart, iPart, density(i,j,k)*abs(j+cell_index[1])*cell_length[1]);
-                           // }
-                           //if (j==0) { initWeight(nPart, iPart, density(i,j,k)*(*xyz[1])(i,j,k)*2.);}
                            initWeight(nPart, iPart, density(i,j,k)*(*xyz[1])(i,j,k));
-                           //if (j==0){
-                           //    }
                         }else{
                             initWeight(nPart, iPart, density(i,j,k));
 				
@@ -1545,7 +1533,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                 temp[2] = temperature[2](i,j,k);
                 initMomentum(1,ip, temp, vel);
             } else {
-            for(unsigned int idim=0; idim<nDim_particle; idim++)
+            for(unsigned int idim=0; idim < 3; idim++)
                 particles->momentum(idim,ip) = momentum[idim][ippy] ;
             }
 
