@@ -281,7 +281,7 @@ void SpeciesDynamicV::configuration(Params &params, Patch * patch)
     // Default mode where there is no particles
     else
     {
-        this->vectorized_operators = (params.dynamic_default_mode == "vectorized");
+        this->vectorized_operators = (params.dynamic_default_mode == "on");
     }
 
     // --------------------------------------------------------------------

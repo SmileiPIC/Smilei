@@ -99,21 +99,21 @@ public:
                  // Species with nonrelativistic Boris pusher == 'borisnr'
                  // Species with J.L. Vay pusher if == "vay"
                  // Species with Higuary Cary pusher if == "higueracary"
-                if ( params.vectorization_mode == "disable")
+                if ( params.vectorization_mode == "off")
                 {
                     thisSpecies = new SpeciesNorm(params, patch);
                 }
 
 #ifdef _VECTO
-                else if ( params.vectorization_mode == "normal")
+                else if ( params.vectorization_mode == "on")
                 {
                     thisSpecies = new SpeciesNormV(params, patch);
                 }
-                else if (params.vectorization_mode == "dynamic")
+                else if (params.vectorization_mode == "adaptive_mixed_sort")
                 {
                     thisSpecies = new SpeciesDynamicV(params, patch);
                 }
-                else if (params.vectorization_mode == "dynamic2")
+                else if (params.vectorization_mode == "adaptive")
                 {
                     thisSpecies = new SpeciesDynamicV2(params, patch);
                 }
@@ -190,20 +190,20 @@ public:
         // Photon species
         else if (mass == 0)
         {
-            if ( params.vectorization_mode == "disable" )
+            if ( params.vectorization_mode == "off" )
             {
                 thisSpecies = new SpeciesNorm(params, patch);
             }
 #ifdef _VECTO
-            else if ( params.vectorization_mode == "normal" )
+            else if ( params.vectorization_mode == "on" )
             {
                 thisSpecies = new SpeciesNormV(params, patch);
             }
-            else if ( params.vectorization_mode == "dynamic" )
+            else if ( params.vectorization_mode == "adaptive_mixed_sort" )
             {
                 thisSpecies = new SpeciesDynamicV(params, patch);
             }
-            else if ( params.vectorization_mode == "dynamic2" )
+            else if ( params.vectorization_mode == "adaptive" )
             {
                 thisSpecies = new SpeciesDynamicV2(params, patch);
             }
@@ -222,11 +222,11 @@ public:
         thisSpecies->speciesNumber = ispec;
 
         // Vectorized operators
-        if (params.vectorization_mode == "disable")
+        if (params.vectorization_mode == "off")
         {
             thisSpecies->vectorized_operators = false;
         }
-        else if (params.vectorization_mode == "normal" || params.vectorization_mode == "dynamic" || params.vectorization_mode == "dynamic2")
+        else if (params.vectorization_mode == "on" || params.vectorization_mode == "adaptive_mixed_sort" || params.vectorization_mode == "adaptive")
         {
             thisSpecies->vectorized_operators = true;
         }
@@ -699,14 +699,14 @@ public:
         Species * newSpecies = NULL;
 
         // Boris, Vay or Higuera-Cary
-        if ( params.vectorization_mode == "disable")
+        if ( params.vectorization_mode == "off")
             newSpecies = new SpeciesNorm(params, patch);
 #ifdef _VECTO
-        else if (params.vectorization_mode == "normal")
+        else if (params.vectorization_mode == "on")
             newSpecies = new SpeciesNormV(params, patch);
-        else if (params.vectorization_mode == "dynamic")
+        else if (params.vectorization_mode == "adaptive_mixed_sort")
             newSpecies = new SpeciesDynamicV(params, patch);
-        else if (params.vectorization_mode == "dynamic2")
+        else if (params.vectorization_mode == "adaptive")
             newSpecies = new SpeciesDynamicV2(params, patch);
 #endif
 

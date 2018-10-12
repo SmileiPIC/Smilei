@@ -507,21 +507,21 @@ namelist("")
     }
 
     // Activation of the vectorized subroutines
-    vectorization_mode = "disable";
+    vectorization_mode = "off";
     has_dynamic_vectorization = false;
 
     if( PyTools::nComponents("Vectorization")>0 ) {
 
         // Extraction of the vectorization mode
         PyTools::extract("mode", vectorization_mode, "Vectorization");
-        if (!(vectorization_mode == "disable" ||
-              vectorization_mode == "normal" ||
-              vectorization_mode == "dynamic" ||
-              vectorization_mode == "dynamic2"))
+        if (!(vectorization_mode == "off" ||
+              vectorization_mode == "on" ||
+              vectorization_mode == "adaptive_mixed_sort" ||
+              vectorization_mode == "adaptive"))
         {
-            ERROR("In block `Vectorization`, parameter `mode` must be `disable`, `normal`, `dynamic` or `dynamic2`");
+            ERROR("In block `Vectorization`, parameter `mode` must be `off`, `on`, `adaptive`");
         }
-        else if (vectorization_mode == "dynamic" || vectorization_mode == "dynamic2")
+        else if (vectorization_mode == "adaptive_mixed_sort" || vectorization_mode == "adaptive")
         {
             has_dynamic_vectorization = true;
         }
@@ -532,11 +532,11 @@ namelist("")
         );
 
         // Default mode for the dynamic mode
-        PyTools::extract("default", dynamic_default_mode, "Vectorization");
-        if (!(dynamic_default_mode == "scalar" ||
-              dynamic_default_mode == "vectorized"))
+        PyTools::extract("initial_mode", dynamic_default_mode, "Vectorization");
+        if (!(dynamic_default_mode == "off" ||
+              dynamic_default_mode == "on"))
         {
-            ERROR("In block `Vectorization`, parameter `default` must be `scalar` or `vectorized`");
+            ERROR("In block `Vectorization`, parameter `default` must be `off` or `on`");
         }
 
     } else {
@@ -806,12 +806,12 @@ void Params::compute()
 
     // clrw != n_space[0] is not compatible
     // with the dynamic vecto for the moment
-    if (vectorization_mode == "dynamic" || vectorization_mode == "dynamic2")
+    if (vectorization_mode == "adaptive_mixed_sort" || vectorization_mode == "adaptive")
     {
         if (clrw != (int)(n_space[0]))
         {
             clrw = (int)(n_space[0]);
-            WARNING( "Particles cluster width set to: " << clrw << " for the dynamic vectorization mode");
+            WARNING( "Particles cluster width set to: " << clrw << " for the adaptive vectorization mode");
         }
     }
 
@@ -824,7 +824,7 @@ void Params::compute()
 
 void Params::check_consistency()
 {
-    if ( vectorization_mode != "disable" ) {
+    if ( vectorization_mode != "off" ) {
 
         if ( (geometry=="1Dcartesian") || (geometry=="AMcylindrical") )
             ERROR( "Vectorized algorithms not implemented for this geometry" );
@@ -914,7 +914,7 @@ void Params::print_init()
 
     TITLE("Vectorization: ");
     MESSAGE(1,"Mode: " << vectorization_mode);
-    if (vectorization_mode == "dynamic" || vectorization_mode == "dynamic2")
+    if (vectorization_mode == "adaptive_mixed_sort" || vectorization_mode == "adaptive")
     {
         MESSAGE(1,"Default mode: " << dynamic_default_mode);
         MESSAGE(1,"Time selection: " << dynamic_vecto_time_selection->info());

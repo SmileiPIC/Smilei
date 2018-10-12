@@ -760,12 +760,12 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
         //vecSpecies[ispec]->sort_part(params);
 
         // For DynamicV
-        if (params.vectorization_mode == "normal" ||
-            params.vectorization_mode == "disable" ||
-            params.vectorization_mode == "dynamic2") {
+        if (params.vectorization_mode == "on" ||
+            params.vectorization_mode == "off" ||
+            params.vectorization_mode == "adaptive") {
             vecSpecies[ispec]->sort_part(params);
         }
-        else if (params.vectorization_mode == "dynamic") {
+        else if (params.vectorization_mode == "adaptive_mixed_sort") {
             if (vecSpecies[ispec]->vectorized_operators)
             {
                 vecSpecies[ispec]->sort_part(params);

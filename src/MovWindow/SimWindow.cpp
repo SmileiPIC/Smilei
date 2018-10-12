@@ -274,14 +274,14 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                         mypatch->vecSpecies[ispec]->createParticles(params.n_space, params, mypatch, 0 );
 /*#ifdef _VECTO
                         // Classical vectorized mode
-                        if (params.vectorization_mode == "normal")
+                        if (params.vectorization_mode == "on")
                         {
                             if ( dynamic_cast<SpeciesV*>(mypatch->vecSpecies[ispec]) )
                                 dynamic_cast<SpeciesV*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
                             mypatch->vecSpecies[ispec]->sort_part(params);
                         }
                         // First dynamic vectorization mode
-                        else if (params.vectorization_mode == "dynamic")
+                        else if (params.vectorization_mode == "adaptive_mixed_sort")
                         {
                             if ( dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec]) )
                             {
@@ -289,7 +289,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                             }
                         }
                         // Second dynamic vectorization mode
-                        else if (params.vectorization_mode == "dynamic2")
+                        else if (params.vectorization_mode == "adaptive")
                         {
                             if ( dynamic_cast<SpeciesDynamicV2*>(mypatch->vecSpecies[ispec]) )
                                 dynamic_cast<SpeciesDynamicV2*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
@@ -312,7 +312,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                         // For the dynamic vectorization, we partially reconfigure the patch
                         // We do not have to sort, but operators may have to be reconfigured
                         // First dynamic vectorization mode:
-                        if (params.vectorization_mode == "dynamic") {
+                        if (params.vectorization_mode == "adaptive_mixed_sort") {
                             if ( dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec]) )
                             {
                                 dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
@@ -320,7 +320,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                             }
                         }
                         // Second dynamic vectorization mode:
-                        else if (params.vectorization_mode == "dynamic2")
+                        else if (params.vectorization_mode == "adaptive")
                         {
                             if ( dynamic_cast<SpeciesDynamicV2*>(mypatch->vecSpecies[ispec]) )
                             {
@@ -342,7 +342,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
 
     //Fill necessary patches with particles
 #ifdef _VECTO
-    if (params.vectorization_mode == "normal")
+    if (params.vectorization_mode == "on")
     {
         //#pragma omp master
         //{
@@ -369,7 +369,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     }
 
     // First dynamic vectorization mode
-    else if (params.vectorization_mode == "dynamic")
+    else if (params.vectorization_mode == "adaptive_mixed_sort")
     {
         #pragma omp for schedule(static) private(mypatch)
         for (int ithread=0; ithread < max_threads ; ithread++){
@@ -411,7 +411,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         } // End ithread loop
     }
     // Second dynamic vectorization mode
-    else if (params.vectorization_mode == "dynamic2")
+    else if (params.vectorization_mode == "adaptive")
     {
         //#pragma omp master
         //{

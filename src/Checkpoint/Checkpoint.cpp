@@ -649,7 +649,7 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
                 H5::getVect(gid,"Id",vecSpecies[ispec]->particles->Id, H5T_NATIVE_UINT64);
             }
 
-            if (params.vectorization_mode == "disable" || params.vectorization_mode == "normal")
+            if (params.vectorization_mode == "off" || params.vectorization_mode == "on")
             {
                 H5::getVect(gid,"bmin",vecSpecies[ispec]->bmin,true);
                 H5::getVect(gid,"bmax",vecSpecies[ispec]->bmax,true);

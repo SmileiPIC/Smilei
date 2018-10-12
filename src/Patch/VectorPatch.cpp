@@ -290,7 +290,7 @@ void VectorPatch::dynamics(Params& params,
                 // Dynamics with scalar operators
                 else
                 {
-                    if (params.vectorization_mode == "dynamic2")
+                    if (params.vectorization_mode == "adaptive")
                     {
                         species(ipatch, ispec)->scalar_dynamics(time_dual, ispec,
                                                       emfields(ipatch),
@@ -1735,7 +1735,7 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
     }
 
 #ifdef _VECTO
-    if (params.vectorization_mode == "dynamic")
+    if (params.vectorization_mode == "adaptive_mixed_sort")
     {
         // Dynamic vecto
         // Recompute the cell keys before the next step and configure operators
@@ -1750,7 +1750,7 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
             }
         }
     }
-    else if (params.vectorization_mode == "dynamic2")
+    else if (params.vectorization_mode == "adaptive")
     {
         // Dynamic vecto mode 2
         // Recompute the cell keys before the next step and configure operators

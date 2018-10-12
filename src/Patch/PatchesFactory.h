@@ -82,7 +82,7 @@ public:
         }
 
 #ifdef _VECTO
-        if (params.vectorization_mode == "normal") {
+        if (params.vectorization_mode == "on") {
             //Need to sort because particles are not well sorted at creation
             for (unsigned int ipatch=0 ; ipatch < npatches ; ipatch++){
                 for (unsigned int ispec=0 ; ispec<vecPatches(ipatch)->vecSpecies.size(); ispec++) {
@@ -92,7 +92,7 @@ public:
                 }
             }
         }
-        else if (params.vectorization_mode == "dynamic") {
+        else if (params.vectorization_mode == "adaptive_mixed_sort") {
             //Need to sort because particles are not well sorted at creation
             for (unsigned int ipatch=0 ; ipatch < npatches ; ipatch++){
                 for (unsigned int ispec=0 ; ispec<vecPatches(ipatch)->vecSpecies.size(); ispec++) {
@@ -111,7 +111,7 @@ public:
                 }
             }
         }
-        else if (params.vectorization_mode == "dynamic2") {
+        else if (params.vectorization_mode == "adaptive") {
             //Need to sort because particles are not well sorted at creation
             for (unsigned int ipatch=0 ; ipatch < npatches ; ipatch++){
                 for (unsigned int ispec=0 ; ispec<vecPatches(ipatch)->vecSpecies.size(); ispec++) {

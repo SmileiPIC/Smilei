@@ -150,7 +150,7 @@ public:
             }
         }
         
-        if( params.vectorization_mode != "dynamic2" )
+        if( params.vectorization_mode != "adaptive" )
             WARNING("For collisions to be correctly computed, it is strongly advised to use the Vectorization(mode='dynamic2')");
         
         // new Collisions object
