@@ -378,43 +378,41 @@ The block ``Vectorization`` is optional. It controls the SIMD operations that ca
 .. code-block:: python
 
   Vectorization(
-      mode = "dynamic",
+      mode = "adaptive",
       reconfigure_every = 5,
+      initial_mode = "on"
   )
 
 .. py:data:: mode
 
-  :default: ``"disable"``
+  :default: ``"off"``
 
-  * ``"disable"``: non-vectorized operators are used.
+  * ``"off"``: non-vectorized operators are used.
     Recommended when the number of particles per cell stays below
     10.
-  * ``"normal"``: vectorized operators are used.
-  * ``"dynamic"``: the best operators (scalar or vectorized)
+  * ``"on"``: vectorized operators are used.
+  * ``"adaptive"``: the best operators (scalar or vectorized)
     are determined dynamically and locally (per patch and per species).
-    Vectorized operators use a new cell-based sorting method,
-    while scalar operators use an older version with slightly less overhead.
-  * ``"dynamic2"``: same as ``"dynamic"`` but the new cell-based sorting
-    method is used always.
+    Operators use a new cell-based sorting method,
   
-  In the ``"dynamic"`` and ``"dynamic2"`` modes, :py:data:`clrw` is set to the maximum by default.
+  In the ``"adaptive"`` modes, :py:data:`clrw` is set to the maximum by default.
 
 .. py:data:: reconfigure_every
 
-  :default: 1
+  :default: 20
   
   The number of timesteps between each dynamic reconfiguration of
-  the vectorized operators, when using the ``"dynamic"`` or
-  ``"dynamic2"`` vectorization modes.
+  the vectorized operators, when using the 
+  ``"adaptive"`` vectorization modes.
   It may be set to a :ref:`time selection <TimeSelections>` as well.
 
 
-.. .. py:data:: default
-..
-..  :default: ``vectorized``
-..
-..  Default state when one of the dynamic computational mode is activated
-..  and no particle is present in the patch.
+.. py:data:: initial_mode
+
+  :default: ``off``
+
+  Default state when the adaptive computational mode is activated
+  and no particle is present in the patch.
 
 
 ----
