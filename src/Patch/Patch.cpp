@@ -817,7 +817,7 @@ void Patch::cleanup_sent_particles(int ispec, std::vector<int>* indexes_of_parti
     // Delete Particles included in the index of particles to exchange. Assumes indexes are sorted.
     /********************************************************************************/
     int ii, iPart;
-    std::vector<int>* cubmin = &vecSpecies[ispec]->bmin;
+    std::vector<int>* cufirst_index = &vecSpecies[ispec]->first_index;
     std::vector<int>* cubmax = &vecSpecies[ispec]->bmax;
     Particles &cuParticles = (*vecSpecies[ispec]->particles);
 
@@ -831,18 +831,18 @@ void Patch::cleanup_sent_particles(int ispec, std::vector<int>* indexes_of_parti
                 ii--;
                 iPart = (*indexes_of_particles_to_exchange)[ii];
             }
-            while (iPart == (*cubmax)[ibin]-1 && iPart >= (*cubmin)[ibin] && ii > 0) {
+            while (iPart == (*cubmax)[ibin]-1 && iPart >= (*cufirst_index)[ibin] && ii > 0) {
                 (*cubmax)[ibin]--;
                 ii--;
                 iPart = (*indexes_of_particles_to_exchange)[ii];
             }
-            while (iPart >= (*cubmin)[ibin] && ii > 0) {
+            while (iPart >= (*cufirst_index)[ibin] && ii > 0) {
                 cuParticles.overwrite_part((*cubmax)[ibin]-1, iPart );
                 (*cubmax)[ibin]--;
                 ii--;
                 iPart = (*indexes_of_particles_to_exchange)[ii];
             }
-            if (iPart >= (*cubmin)[ibin] && iPart < (*cubmax)[ibin]) { //On traite la dernière particule (qui peut aussi etre la premiere)
+            if (iPart >= (*cufirst_index)[ibin] && iPart < (*cubmax)[ibin]) { //On traite la dernière particule (qui peut aussi etre la premiere)
                 cuParticles.overwrite_part((*cubmax)[ibin]-1, iPart );
                 (*cubmax)[ibin]--;
             }
@@ -853,11 +853,11 @@ void Patch::cleanup_sent_particles(int ispec, std::vector<int>* indexes_of_parti
     //Shift the bins in memory
     //Warning: this loop must be executed sequentially. Do not use openMP here.
     for (int unsigned ibin = 1 ; ibin < (*cubmax).size() ; ibin++ ) { //First bin don't need to be shifted
-        ii = (*cubmin)[ibin]-(*cubmax)[ibin-1]; // Shift the bin in memory by ii slots.
-        iPart = min(ii,(*cubmax)[ibin]-(*cubmin)[ibin]); // Number of particles we have to shift = min (Nshift, Nparticle in the bin)
+        ii = (*cufirst_index)[ibin]-(*cubmax)[ibin-1]; // Shift the bin in memory by ii slots.
+        iPart = min(ii,(*cubmax)[ibin]-(*cufirst_index)[ibin]); // Number of particles we have to shift = min (Nshift, Nparticle in the bin)
         if(iPart > 0) cuParticles.overwrite_part((*cubmax)[ibin]-iPart,(*cubmax)[ibin-1],iPart);
         (*cubmax)[ibin] -= ii;
-        (*cubmin)[ibin] = (*cubmax)[ibin-1];
+        (*cufirst_index)[ibin] = (*cubmax)[ibin-1];
     }
 
 } // END cleanup_sent_particles

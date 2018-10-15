@@ -693,12 +693,12 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
         // All sizes are received in a single buffer
         std::vector<int> bin_number_list (patch->vecSpecies.size());
         recv( &bin_number_list, from, maxtag);
-        // We resize the bmin bmax arrays in consequence
+        // We resize the first_index bmax arrays in consequence
         for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
         {
             //std::cerr << "Size received: " << bin_number_list[ispec] << '\n';
             patch->vecSpecies[ispec]->bmax.resize(bin_number_list[ispec]);
-            patch->vecSpecies[ispec]->bmin.resize(bin_number_list[ispec]);
+            patch->vecSpecies[ispec]->first_index.resize(bin_number_list[ispec]);
         }
         maxtag ++;
 
@@ -717,9 +717,9 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
     for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++){
         //Receive bmax
         recv( &patch->vecSpecies[ispec]->bmax, from, maxtag+2*ispec+1 );
-        //Reconstruct bmin from bmax
-        memcpy(&(patch->vecSpecies[ispec]->bmin[1]), &(patch->vecSpecies[ispec]->bmax[0]), (patch->vecSpecies[ispec]->bmax.size()-1)*sizeof(int) );
-        patch->vecSpecies[ispec]->bmin[0]=0;
+        //Reconstruct first_index from bmax
+        memcpy(&(patch->vecSpecies[ispec]->first_index[1]), &(patch->vecSpecies[ispec]->bmax[0]), (patch->vecSpecies[ispec]->bmax.size()-1)*sizeof(int) );
+        patch->vecSpecies[ispec]->first_index[0]=0;
         //Prepare patch for receiving particles
         nbrOfPartsRecv = patch->vecSpecies[ispec]->bmax.back();
         patch->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv, params.nDim_particle );

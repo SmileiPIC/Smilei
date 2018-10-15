@@ -111,16 +111,16 @@ void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
 #endif
 
         // Interpolate the fields at the particle position
-        (*Interp)(EMfields, *particles, smpi, &(bmin[0]), &(bmax[bmax.size()-1]), ithread, bmin[0]);
+        (*Interp)(EMfields, *particles, smpi, &(first_index[0]), &(bmax[bmax.size()-1]), ithread, first_index[0]);
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[0] += MPI_Wtime() - timer;
 #endif
 
         // Interpolate the fields at the particle position
-        //for (unsigned int scell = 0 ; scell < bmin.size() ; scell++)
-        //    (*Interp)(EMfields, *particles, smpi, &(bmin[scell]), &(bmax[scell]), ithread );
-        for (unsigned int scell = 0 ; scell < bmin.size() ; scell++)
+        //for (unsigned int scell = 0 ; scell < first_index.size() ; scell++)
+        //    (*Interp)(EMfields, *particles, smpi, &(first_index[scell]), &(bmax[scell]), ithread );
+        for (unsigned int scell = 0 ; scell < first_index.size() ; scell++)
         {
 
             // Ionization
@@ -129,7 +129,7 @@ void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
                 timer = MPI_Wtime();
 #endif
-                (*Ionize)(particles, bmin[scell], bmax[scell], Epart, EMfields, Proj);
+                (*Ionize)(particles, first_index[scell], bmax[scell], Epart, EMfields, Proj);
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[4] += MPI_Wtime() - timer;
 #endif
@@ -145,7 +145,7 @@ void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
                 // Radiation process
                 (*Radiate)(*particles, this->photon_species, smpi,
                            RadiationTables,
-                           bmin[scell], bmax[scell], ithread );
+                           first_index[scell], bmax[scell], ithread );
 
                 // Update scalar variable for diagnostics
                 nrj_radiation += (*Radiate).getRadiatedEnergy();
@@ -153,7 +153,7 @@ void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
                 // Update the quantum parameter chi
                 (*Radiate).compute_thread_chipa(*particles,
                                                 smpi,
-                                                bmin[scell],
+                                                first_index[scell],
                                                 bmax[scell],
                                                 ithread );
 #ifdef  __DETAILED_TIMERS
@@ -171,7 +171,7 @@ void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
                 (*Multiphoton_Breit_Wheeler_process)(*particles,
                                                      smpi,
                                                      MultiphotonBreitWheelerTables,
-                                                     bmin[scell], bmax[scell], ithread );
+                                                     first_index[scell], bmax[scell], ithread );
 
                 // Update scalar variable for diagnostics
                 // We reuse nrj_radiation for the pairs
@@ -180,13 +180,13 @@ void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
                 // Update the photon quantum parameter chi of all photons
                 (*Multiphoton_Breit_Wheeler_process).compute_thread_chiph(*particles,
                                                                           smpi,
-                                                                          bmin[scell],
+                                                                          first_index[scell],
                                                                           bmax[scell],
                                                                           ithread );
 
                 // Suppression of the decayed photons into pairs
                 (*Multiphoton_Breit_Wheeler_process).decayed_photon_cleaning(
-                                                                             *particles,scell, bmin.size(), &bmin[0], &bmax[0]);
+                                                                             *particles,scell, first_index.size(), &first_index[0], &bmax[0]);
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[6] += MPI_Wtime() - timer;
 #endif
@@ -206,13 +206,13 @@ void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
         // Computation of the particle cell keys for all particles
         // this->compute_bin_cell_keys(params,0, bmax.back());
 
-        for (unsigned int scell = 0 ; scell < bmin.size() ; scell++)
+        for (unsigned int scell = 0 ; scell < first_index.size() ; scell++)
         {
             // Apply wall and boundary conditions
             if (mass>0)
             {
                 for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
-                    for (iPart=bmin[scell] ; (int)iPart<bmax[scell]; iPart++ ) {
+                    for (iPart=first_index[scell] ; (int)iPart<bmax[scell]; iPart++ ) {
                         double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
                         if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
                             nrj_lost_per_thd[tid] += mass * ener_iPart;
@@ -220,7 +220,7 @@ void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
                     }
                 }
 
-                for (iPart=bmin[scell] ; (int)iPart<bmax[scell]; iPart++ ) {
+                for (iPart=first_index[scell] ; (int)iPart<bmax[scell]; iPart++ ) {
                     if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
                         addPartInExchList( iPart );
                         nrj_lost_per_thd[tid] += mass * ener_iPart;
@@ -239,7 +239,7 @@ void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
 
             } else if (mass==0) {
                 for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
-                    for (iPart=bmin[scell] ; (int)iPart<bmax[scell]; iPart++ ) {
+                    for (iPart=first_index[scell] ; (int)iPart<bmax[scell]; iPart++ ) {
                         double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
                         if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
                             nrj_lost_per_thd[tid] += ener_iPart;
@@ -250,7 +250,7 @@ void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
                 // Boundary Condition may be physical or due to domain decomposition
                 // apply returns 0 if iPart is not in the local domain anymore
                 //        if omp, create a list per thread
-                for (iPart=bmin[scell] ; (int)iPart<bmax[scell]; iPart++ ) {
+                for (iPart=first_index[scell] ; (int)iPart<bmax[scell]; iPart++ ) {
                     if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
                         addPartInExchList( iPart );
                         nrj_lost_per_thd[tid] += ener_iPart;
@@ -281,7 +281,7 @@ void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
         timer = MPI_Wtime();
 #endif
-            (*Proj)(EMfields, *particles, smpi, bmin[0],
+            (*Proj)(EMfields, *particles, smpi, first_index[0],
                                                 bmax.back(),
                                                 ithread, 0,
                                                 0, diag_flag,
@@ -301,11 +301,11 @@ void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
         if ( diag_flag &&(!particles->is_test)){
             double* b_rho=nullptr;
 
-            for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
+            for (unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++) { //Loop for projection on buffer_proj
 
                 b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
 
-                for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                for (iPart=first_index[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
                     (*Proj)(b_rho, (*particles), iPart, 0, b_dim);
                 } //End loop on particles
             }//End loop on bins
@@ -420,7 +420,7 @@ void SpeciesAdaptiveV2::reconfiguration(Params &params, Patch * patch)
 
     }
 
-    /*std::cout << " bin number: " << bmin.size()
+    /*std::cout << " bin number: " << first_index.size()
               << " nb particles: " << bmax[bmax.size()-1]
               << '\n';*/
 

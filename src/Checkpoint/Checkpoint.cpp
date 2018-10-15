@@ -388,7 +388,7 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
             }
 
 
-            H5::vect(gid,"bmin", vecSpecies[ispec]->bmin);
+            H5::vect(gid,"first_index", vecSpecies[ispec]->first_index);
             H5::vect(gid,"bmax", vecSpecies[ispec]->bmax);
 
         } // End if partSize
@@ -651,7 +651,7 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
 
             if (params.vectorization_mode == "off" || params.vectorization_mode == "on")
             {
-                H5::getVect(gid,"bmin",vecSpecies[ispec]->bmin,true);
+                H5::getVect(gid,"first_index",vecSpecies[ispec]->first_index,true);
                 H5::getVect(gid,"bmax",vecSpecies[ispec]->bmax,true);
             }
             // In the adaptive vectorization case, the bins will be recomputed

@@ -95,7 +95,7 @@ void Collisions::calculate_debye_length(Params& params, Patch * patch)
 
     unsigned int nspec = patch->vecSpecies.size(); // number of species
     if(nspec==0) return;
-    unsigned int nbin = patch->vecSpecies[0]->bmin.size();
+    unsigned int nbin = patch->vecSpecies[0]->first_index.size();
 
     density_max = 0.;
     patch->debye_length_squared.resize(nbin, 0.);
@@ -111,7 +111,7 @@ void Collisions::calculate_debye_length(Params& params, Patch * patch)
             charge      = 0.;
             temperature = 0.;
             // loop particles to calculate average quantities
-            for (unsigned int iPart=s->bmin[ibin]; iPart<(unsigned int)s->bmax[ibin] ; iPart++ ) {
+            for (unsigned int iPart=s->first_index[ibin]; iPart<(unsigned int)s->bmax[ibin] ; iPart++ ) {
                 p2 = p->momentum(0,iPart) * p->momentum(0,iPart)
                     +p->momentum(1,iPart) * p->momentum(1,iPart)
                     +p->momentum(2,iPart) * p->momentum(2,iPart);
@@ -180,7 +180,7 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
     }
 
     // Loop bins of particles (typically, cells, but may also be clusters)
-    unsigned int nbin = patch->vecSpecies[0]->bmin.size();
+    unsigned int nbin = patch->vecSpecies[0]->first_index.size();
     for (unsigned int ibin = 0 ; ibin < nbin ; ibin++) {
 
         // get number of particles for all necessary species
@@ -193,12 +193,12 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
             npart2 = 0;
             for (ispec1=0 ; ispec1<nspec1 ; ispec1++) {
                 s1 = patch->vecSpecies[(*sg1)[ispec1]];
-                np1[ispec1] = s1->bmax[ibin] - s1->bmin[ibin];
+                np1[ispec1] = s1->bmax[ibin] - s1->first_index[ibin];
                 npart1 += np1[ispec1];
             }
             for (ispec2=0 ; ispec2<nspec2 ; ispec2++) {
                 s2 = patch->vecSpecies[(*sg2)[ispec2]];
-                np2[ispec2] = s2->bmax[ibin] - s2->bmin[ibin];
+                np2[ispec2] = s2->bmax[ibin] - s2->first_index[ibin];
                 npart2 += np2[ispec2];
             }
             if (npart2 <= npart1) break; // ok if group1 has more macro-particles
@@ -253,7 +253,7 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
             for (ispec2=0 ; i2>=np2[ispec2]; ispec2++) i2 -= np2[ispec2];
 
             s1 = patch->vecSpecies[(*sg1)[ispec1]]; s2 = patch->vecSpecies[(*sg2)[ispec2]];
-            i1 += s1->bmin[ibin];                   i2 += s2->bmin[ibin];
+            i1 += s1->first_index[ibin];                   i2 += s2->first_index[ibin];
             p1 = s1->particles;                     p2 = s2->particles;
 
             // sum weights
@@ -292,7 +292,7 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
             for (ispec2=0 ; i2>=np2[ispec2]; ispec2++) i2 -= np2[ispec2];
 
             s1 = patch->vecSpecies[(*sg1)[ispec1]]; s2 = patch->vecSpecies[(*sg2)[ispec2]];
-            i1 += s1->bmin[ibin];                   i2 += s2->bmin[ibin];
+            i1 += s1->first_index[ibin];                   i2 += s2->first_index[ibin];
             p1 = s1->particles;                     p2 = s2->particles;
 
             m12  = s1->mass / s2->mass; // mass ratio

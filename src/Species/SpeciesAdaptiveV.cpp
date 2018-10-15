@@ -74,14 +74,14 @@ void SpeciesAdaptiveV::resizeCluster(Params& params)
     // int size = params.n_space[0]/clrw;
 
     bmax.resize(ncells,0);
-    bmin.resize(ncells,0);
+    first_index.resize(ncells,0);
     //count.resize(ncells,0);
 
-    bmin[0] = 0;
+    first_index[0] = 0;
     for (unsigned int ic=1; ic < ncells; ic++)
     {
-        bmin[ic] = bmin[ic-1] + count[ic-1];
-        bmax[ic-1]= bmin[ic];
+        first_index[ic] = first_index[ic-1] + count[ic-1];
+        bmax[ic-1]= first_index[ic];
     }
     //New total number of particles is stored as last element of bmax
     bmax[ncells-1] = bmax[ncells-2] + count.back() ;

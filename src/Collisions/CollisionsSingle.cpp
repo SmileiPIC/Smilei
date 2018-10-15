@@ -26,7 +26,7 @@ void CollisionsSingle::collide(Params& params, Patch* patch, int itime, vector<D
     unsigned int npairs; // number of pairs of macro-particles
     unsigned int np1, np2; // numbers of macro-particles in each species
     double n1, n2, n12, n123, n223; // densities of particles
-    unsigned int i1, i2, N2max, bmin1, bmin2;
+    unsigned int i1, i2, N2max, first_index1, first_index2;
     Species   *s1, *s2;
     Particles *p1, *p2;
     double m12, coeff3, coeff4, logL, s, ncol, debye2=0.;
@@ -44,12 +44,12 @@ void CollisionsSingle::collide(Params& params, Patch* patch, int itime, vector<D
     }
     
     // Loop bins of particles (typically, cells, but may also be clusters)
-    unsigned int nbin = patch->vecSpecies[0]->bmin.size();
+    unsigned int nbin = patch->vecSpecies[0]->first_index.size();
     for (unsigned int ibin = 0 ; ibin < nbin ; ibin++) {
 
         // get number of particles for all necessary species
-        np1 = s1->bmax[ibin] - s1->bmin[ibin];
-        np2 = s2->bmax[ibin] - s2->bmin[ibin];
+        np1 = s1->bmax[ibin] - s1->first_index[ibin];
+        np2 = s2->bmax[ibin] - s2->first_index[ibin];
         // skip to next bin if no particles
         if (np1==0 || np2==0) continue;
         // Ensure species 1 has more macro-particles
@@ -57,8 +57,8 @@ void CollisionsSingle::collide(Params& params, Patch* patch, int itime, vector<D
             swap(s1 , s2 );
             swap(np1, np2);
         }
-        bmin1 = s1->bmin[ibin];
-        bmin2 = s2->bmin[ibin];
+        first_index1 = s1->first_index[ibin];
+        first_index2 = s2->first_index[ibin];
         p1 = s1->particles;
         p2 = s2->particles;
 
@@ -71,7 +71,7 @@ void CollisionsSingle::collide(Params& params, Patch* patch, int itime, vector<D
         if (intra_collisions) {
             npairs = (int) ceil(((double)np1)/2.); // half as many pairs as macro-particles
             N2max = np1 - npairs; // number of not-repeated particles (in second half only)
-            bmin2 += npairs;
+            first_index2 += npairs;
         // In the case of collisions between two species
         } else {
             npairs = np1; // as many pairs as macro-particles in species 1 (most numerous)
@@ -80,7 +80,7 @@ void CollisionsSingle::collide(Params& params, Patch* patch, int itime, vector<D
         // Shuffle one particle in each pair
         index1.resize(npairs);
         for (unsigned int i=0; i<npairs; i++)
-            index1[i] = bmin1 + i;
+            index1[i] = first_index1 + i;
         for (unsigned int i=npairs; i>1; i--) {
             unsigned int p = patch->xorshift32() % i;
             swap(index1[i-1], index1[p]);
@@ -94,13 +94,13 @@ void CollisionsSingle::collide(Params& params, Patch* patch, int itime, vector<D
         n1  = 0.; // density of species 1
         n2  = 0.; // density of species 2
         n12 = 0.; // "hybrid" density
-        for (unsigned int i=bmin1; i<bmin1+npairs; i++)
+        for (unsigned int i=first_index1; i<first_index1+npairs; i++)
             n1 += p1->weight(i);
-        for (unsigned int i=bmin2; i<bmin2+N2max; i++)
+        for (unsigned int i=first_index2; i<first_index2+N2max; i++)
             n2 += p2->weight(i);
         for (unsigned int i=0; i<npairs; i++) {
-            i1 = bmin1 + i;
-            i2 = bmin2 + i%N2max;
+            i1 = first_index1 + i;
+            i2 = first_index2 + i%N2max;
             n12 += min( p1->weight(i1),  p2->weight(i2) );
             Ionization->prepare2(p1, i1, p2, i2, i<N2max);
         }
@@ -123,8 +123,8 @@ void CollisionsSingle::collide(Params& params, Patch* patch, int itime, vector<D
         // Now start the real loop on pairs of particles
         // ----------------------------------------------------
         for (unsigned int i=0; i<npairs; i++) {
-            i1 = bmin1 + i;
-            i2 = bmin2 + i%N2max;
+            i1 = first_index1 + i;
+            i2 = first_index2 + i%N2max;
 
             logL = coulomb_log;
             double U1  = patch->xorshift32() * patch->xorshift32_invmax;
