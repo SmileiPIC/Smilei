@@ -296,9 +296,9 @@ class Vectorization(SmileiSingleton):
     """
     Vectorization parameters
     """
-    mode    = "off"
+    mode                = "off"
     reconfigure_every   = 20
-    initial_mode = "off"
+    initial_mode        = "off"
 
 
 class MovingWindow(SmileiSingleton):

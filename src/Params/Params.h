@@ -227,7 +227,7 @@ public:
     //! Time selection for dynamic vecto
     TimeSelection * dynamic_vecto_time_selection;
     //! Flag for the dynamic vecto
-    bool has_dynamic_vectorization;
+    bool has_adaptive_vectorization;
 
     //! Time selection for load balancing
     TimeSelection * load_balancing_time_selection;

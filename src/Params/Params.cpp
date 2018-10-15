@@ -108,11 +108,11 @@ namelist("")
     runScript(string(reinterpret_cast<const char*>(pyinit_py), pyinit_py_len), "pyinit.py", globals);
 
     runScript(Tools::merge("smilei_version='",string(__VERSION),"'\n"), string(__VERSION), globals);
-    
+
     // Set the _test_mode to False
     PyObject_SetAttrString(Py_main, "_test_mode", Py_False);
     PyTools::checkPyError();
-    
+
     // Running pyprofiles.py
     runScript(string(reinterpret_cast<const char*>(pyprofiles_py), pyprofiles_py_len), "pyprofiles.py", globals);
 
@@ -508,7 +508,7 @@ namelist("")
 
     // Activation of the vectorized subroutines
     vectorization_mode = "off";
-    has_dynamic_vectorization = false;
+    has_adaptive_vectorization = false;
 
     if( PyTools::nComponents("Vectorization")>0 ) {
 
@@ -523,12 +523,12 @@ namelist("")
         }
         else if (vectorization_mode == "adaptive_mixed_sort" || vectorization_mode == "adaptive")
         {
-            has_dynamic_vectorization = true;
+            has_adaptive_vectorization = true;
         }
 
         // get parameter "every" which describes a timestep selection
         dynamic_vecto_time_selection = new TimeSelection(
-            PyTools::extract_py("reconfigure_every", "Vectorization"), "Dynamic vectorization"
+            PyTools::extract_py("reconfigure_every", "Vectorization"), "Adaptive vectorization"
         );
 
         // Default mode for the dynamic mode
@@ -637,31 +637,31 @@ namelist("")
     smpi->barrier();
     if ( smpi->isMaster() ) print_init();
     smpi->barrier();
-    
+
     // -------------------------------------------------------
     // Handle the pre-processing of LaserOffset
     // -------------------------------------------------------
     unsigned int n_laser = PyTools::nComponents("Laser");
     unsigned int n_laser_offset = 0;
     LaserPropagator propagateX;
-    
+
     for( unsigned int i_laser=0; i_laser<n_laser; i_laser++ ) {
         double offset = 0.;
-        
+
         // If this laser has the hidden _offset attribute
         if( PyTools::extract("_offset", offset, "Laser", i_laser) ) {
-            
+
             if( n_laser_offset == 0 ) {
                 TITLE("Pre-processing LaserOffset");
                 propagateX.init(this, smpi, 0);
             }
-            
+
             MESSAGE(1, "LaserOffset #"<< n_laser_offset);
-            
+
             // Extract the file name
             string file("");
             PyTools::extract("file", file, "Laser", i_laser);
-            
+
             // Extract the list of profiles and verify their content
             PyObject * p = PyTools::extract_py("_profiles", "Laser", i_laser);
             vector<PyObject*> profiles;
@@ -688,26 +688,26 @@ namelist("")
                 if( nargs != (int) nDim_field )
                     ERROR("For LaserOffset #" << n_laser_offset << ": space_time_profile["<<i<<"] requires " << nDim_field << " arguments but has " << nargs);
             }
-            
+
             // Extract the box side
             string box_side;
             if( !PyTools::extract("box_side", box_side, "Laser", i_laser) || (box_side!="xmin" && box_side!="xmax"))
                 ERROR("For LaserOffset #" << n_laser_offset << ": box_side must be a 'xmin' or 'xmax'");
             //unsigned int side = string("xyz").find(box_side[0]);
-            
+
             // Extract _keep_n_strongest_modes
             int keep_n_strongest_modes=0;
             if( !PyTools::extract("_keep_n_strongest_modes", keep_n_strongest_modes, "Laser", i_laser) || keep_n_strongest_modes<1)
                 ERROR("For LaserOffset #" << n_laser_offset << ": keep_n_strongest_modes must be a positive integer");
-            
+
             // Extract the angle
             double angle_z = 0.;
             PyTools::extract("_angle", angle_z, "Laser", i_laser);
-            
+
             // Make the propagation happen and write out the file
             if( ! smpi->test_mode )
                 propagateX(profiles, profiles_n, offset, file, keep_n_strongest_modes, angle_z);
-            
+
             n_laser_offset ++;
         }
     }
@@ -831,8 +831,8 @@ void Params::check_consistency()
 
         if ( (geometry=="2Dcartesian") && (interpolation_order==4) )
             ERROR( "4th order vectorized algorithms not implemented in 2D" );
-        
-            
+
+
         if  ( hasMultiphotonBreitWheeler ) {
             WARNING( "Performances of advanced physical processes which generates nezw particles could be degraded for the moment !" );
             WARNING( "\t The improvment of their integration in vectorized algorithm is in progress." );

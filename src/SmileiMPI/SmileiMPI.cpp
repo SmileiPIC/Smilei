@@ -127,7 +127,7 @@ void SmileiMPI::init( Params& params, DomainDecomposition* domain_decomposition 
     dynamics_invgf.resize(omp_get_max_threads());
     dynamics_iold.resize(omp_get_max_threads());
     dynamics_deltaold.resize(omp_get_max_threads());
-    if (params.geometry == "AMcylindrical") dynamics_thetaold.resize(omp_get_max_threads()); 
+    if (params.geometry == "AMcylindrical") dynamics_thetaold.resize(omp_get_max_threads());
 
     if ( n_envlaser > 0 ) {
         dynamics_GradPHIpart.resize(omp_get_max_threads());
@@ -141,7 +141,7 @@ void SmileiMPI::init( Params& params, DomainDecomposition* domain_decomposition 
     dynamics_invgf.resize(1);
     dynamics_iold.resize(1);
     dynamics_deltaold.resize(1);
-    if (params.geometry == "AMcylindrical") dynamics_thetaold.resize(1); 
+    if (params.geometry == "AMcylindrical") dynamics_thetaold.resize(1);
 
     if ( n_envlaser > 0 ) {
         dynamics_GradPHIpart.resize(1);
@@ -342,7 +342,7 @@ void SmileiMPI::init_patch_count( Params& params, DomainDecomposition* domain_de
 
     patch_refHindexes.resize(patch_count.size(), 0);
     patch_refHindexes[0] = 0;
-    for ( int rk=1 ; rk<smilei_sz ; rk++)    
+    for ( int rk=1 ; rk<smilei_sz ; rk++)
         patch_refHindexes[rk] = patch_refHindexes[rk-1] + patch_count[rk-1];
 
 } // END init_patch_count
@@ -407,11 +407,11 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
         MPI_Allreduce(&largest_patch_loc, &largest_patch, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
 
         Tload /= Tcapabilities; //Target load for each mpi process.
-       
+
         //This algorithm does not support single patches having a load larger than the target load per MPI rank.
-        //If this happens, the code multiplies the cell load coefficient in order to be able to continue.  
+        //If this happens, the code multiplies the cell load coefficient in order to be able to continue.
         if (largest_patch >= Tload){
-            params.cell_load *= 2.;    
+            params.cell_load *= 2.;
             cells_load = ncells_perpatch*params.cell_load ;
             WARNING("Dynamic Load balancing had to increase cell load coefficient because of an overloaded patch with respect to the target load per MPI rank. Try using smaller patches or less MPI ranks.");
         }else{
@@ -493,7 +493,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
     MPI_Allgather(&Ncur,1,MPI_INT,&patch_count[0], 1, MPI_INT,MPI_COMM_WORLD);
 
     patch_refHindexes[0] = 0;
-    for ( int rk=1 ; rk<smilei_sz ; rk++)    
+    for ( int rk=1 ; rk<smilei_sz ; rk++)
         patch_refHindexes[rk] = patch_refHindexes[rk-1] + patch_count[rk-1];
 
     //Write patch_load.txt
@@ -583,11 +583,11 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
     // Count number max of comms :
     int maxtag = 0;
 
-    // Dynamic vectorization:
-    // In the case of the dynamic Vectorization,
+    // Adaptive vectorization:
+    // In the case of the adaptive Vectorization,
     // we have to communicate the bin number (bmax.size())
     // and operator state (vectorized_operators variable)
-    if (params.has_dynamic_vectorization)
+    if (params.has_adaptive_vectorization)
     {
 
         // Number of bins
@@ -684,10 +684,10 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
     // Count number max of comms :int tag
     int maxtag = tag;
 
-    // In the case of the dynamic Vectorization,
+    // In the case of the adaptive Vectorization,
     // we have to communicate the bin number (bmax.size())
     // and operator state (vectorized_operators variable)
-    if (params.has_dynamic_vectorization)
+    if (params.has_adaptive_vectorization)
     {
         // Number of bins
         // All sizes are received in a single buffer

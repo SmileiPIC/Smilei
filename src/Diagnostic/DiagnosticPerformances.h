@@ -67,8 +67,8 @@ private :
     //! Dimension of the patches
     unsigned int ndim;
 
-    //! Whether the dynamic vectorization is active
-    bool has_dynamic_vectorization;
+    //! Whether the adaptive vectorization is active
+    bool has_adaptive_vectorization;
 
     //! Whether to output patch information
     bool patch_information;

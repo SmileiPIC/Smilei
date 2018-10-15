@@ -17,8 +17,8 @@
 #ifdef _VECTO
 #include "SpeciesNormV.h"
 #include "SpeciesV.h"
-#include "SpeciesDynamicV.h"
-#include "SpeciesDynamicV2.h"
+#include "SpeciesAdaptiveV.h"
+#include "SpeciesAdaptiveV2.h"
 #include "SpeciesNormV.h"
 #endif
 
@@ -111,11 +111,11 @@ public:
                 }
                 else if (params.vectorization_mode == "adaptive_mixed_sort")
                 {
-                    thisSpecies = new SpeciesDynamicV(params, patch);
+                    thisSpecies = new SpeciesAdaptiveV(params, patch);
                 }
                 else if (params.vectorization_mode == "adaptive")
                 {
-                    thisSpecies = new SpeciesDynamicV2(params, patch);
+                    thisSpecies = new SpeciesAdaptiveV2(params, patch);
                 }
 #endif
             } else {
@@ -201,11 +201,11 @@ public:
             }
             else if ( params.vectorization_mode == "adaptive_mixed_sort" )
             {
-                thisSpecies = new SpeciesDynamicV(params, patch);
+                thisSpecies = new SpeciesAdaptiveV(params, patch);
             }
             else if ( params.vectorization_mode == "adaptive" )
             {
-                thisSpecies = new SpeciesDynamicV2(params, patch);
+                thisSpecies = new SpeciesAdaptiveV2(params, patch);
             }
 #endif
             // Photon can not radiate
@@ -458,7 +458,7 @@ public:
                 	    thisSpecies->boundary_conditions.push_back( thisSpecies->boundary_conditions[0] );
         	    } else if( thisSpecies->boundary_conditions.size() != params.nDim_particle ) {
             	    ERROR("For species '" << species_name << "', boundary_conditions must be the same size as the number of dimensions");
-        	    }	
+        	    }
 	} else if (params.geometry == "AMcylindrical"){
             if( thisSpecies->boundary_conditions.size() == 0 ) {
                 ERROR("For species '" << species_name << "', boundary_conditions cannot be empty");
@@ -467,7 +467,7 @@ public:
                     thisSpecies->boundary_conditions.push_back( thisSpecies->boundary_conditions[0] );
             } else if( thisSpecies->boundary_conditions.size() != 2 ) {
             	ERROR("For AM geometry boundary_conditions must not be the same size as the number of dimensions it is applied only for Rmax Xmin and Xmax");
-            }	
+            }
             if ( (thisSpecies->boundary_conditions[1][1] != "remove") &&  (thisSpecies->boundary_conditions[1][1] != "stop"))
                 ERROR(" In AM geometry particle boundary conditions supported in Rmax are 'remove' and 'stop' ");
 	}
@@ -488,7 +488,7 @@ public:
                 || thisSpecies->boundary_conditions[iDim][1] == "stop" ) {
                     if (thisSpecies->mass == 0)
                         ERROR("For photon species '" << species_name << "' stop BCs are not physical.");
-                } 
+                }
             }
 	}
         // for thermalizing BCs on particles check if thermal_boundary_temperature is correctly defined
@@ -525,7 +525,7 @@ public:
         {
             thisSpecies->atomic_number = 0;
             PyTools::extract("atomic_number", thisSpecies->atomic_number, "Species",ispec);
-            
+
             thisSpecies->maximum_charge_state = 0;
             PyTools::extract("maximum_charge_state", thisSpecies->maximum_charge_state, "Species",ispec);
 
@@ -541,12 +541,12 @@ public:
                 if( (thisSpecies->atomic_number==0)&&(thisSpecies->maximum_charge_state==0) ) {
                     ERROR("For species '" << species_name << " undefined atomic_number & maximum_charge_state (required for ionization)");
                 }
-                
+
                 if ( (thisSpecies->ionization_model == "from_rate") && (thisSpecies->maximum_charge_state == 0) ) {
                     thisSpecies->maximum_charge_state = thisSpecies->atomic_number;
                     WARNING("For species '" << species_name << " ionization 'from_rate' is used with maximum_charge_state = "<<thisSpecies->maximum_charge_state << " taken from atomic_number");
                 }
-                
+
                 if (thisSpecies->ionization_model == "from_rate") {
                     thisSpecies->ionization_rate = PyTools::extract_py("ionization_rate", "Species", ispec);
                     if( thisSpecies->ionization_rate==Py_None ) {
@@ -566,8 +566,8 @@ public:
                     }
                 }
             }
-            
-            
+
+
         }
 
         // Extract if the species is relativistic and needs ad hoc fields initialization
@@ -705,9 +705,9 @@ public:
         else if (params.vectorization_mode == "on")
             newSpecies = new SpeciesNormV(params, patch);
         else if (params.vectorization_mode == "adaptive_mixed_sort")
-            newSpecies = new SpeciesDynamicV(params, patch);
+            newSpecies = new SpeciesAdaptiveV(params, patch);
         else if (params.vectorization_mode == "adaptive")
-            newSpecies = new SpeciesDynamicV2(params, patch);
+            newSpecies = new SpeciesAdaptiveV2(params, patch);
 #endif
 
         // Copy members

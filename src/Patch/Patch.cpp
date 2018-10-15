@@ -200,8 +200,8 @@ void Patch::finalizeMPIenvironment(Params& params) {
     // add comms for species
     nb_comms += 2*vecSpecies.size();
 
-    // Dynamic vectorization:
-    if (params.has_dynamic_vectorization)
+    // Adaptive vectorization:
+    if (params.has_adaptive_vectorization)
     {
         nb_comms += 2;
     }

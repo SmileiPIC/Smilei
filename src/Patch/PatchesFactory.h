@@ -12,8 +12,8 @@
 
 #ifdef _VECTO
 #include "SpeciesV.h"
-#include "SpeciesDynamicV.h"
-#include "SpeciesDynamicV2.h"
+#include "SpeciesAdaptiveV.h"
+#include "SpeciesAdaptiveV2.h"
 #endif
 
 class PatchesFactory {
@@ -96,11 +96,11 @@ public:
             //Need to sort because particles are not well sorted at creation
             for (unsigned int ipatch=0 ; ipatch < npatches ; ipatch++){
                 for (unsigned int ispec=0 ; ispec<vecPatches(ipatch)->vecSpecies.size(); ispec++) {
-                    if ( dynamic_cast<SpeciesDynamicV*>(vecPatches.patches_[ipatch]->vecSpecies[ispec]) )
+                    if ( dynamic_cast<SpeciesAdaptiveV*>(vecPatches.patches_[ipatch]->vecSpecies[ispec]) )
                     {
-                        dynamic_cast<SpeciesDynamicV*>(vecPatches.patches_[ipatch]->vecSpecies[ispec])->compute_part_cell_keys(params);
+                        dynamic_cast<SpeciesAdaptiveV*>(vecPatches.patches_[ipatch]->vecSpecies[ispec])->compute_part_cell_keys(params);
                     }
-                    if (dynamic_cast<SpeciesDynamicV*>(vecPatches.patches_[ipatch]->vecSpecies[ispec])->vectorized_operators)
+                    if (dynamic_cast<SpeciesAdaptiveV*>(vecPatches.patches_[ipatch]->vecSpecies[ispec])->vectorized_operators)
                     {
                         vecPatches.patches_[ipatch]->vecSpecies[ispec]->sort_part(params);
                     }
@@ -115,9 +115,9 @@ public:
             //Need to sort because particles are not well sorted at creation
             for (unsigned int ipatch=0 ; ipatch < npatches ; ipatch++){
                 for (unsigned int ispec=0 ; ispec<vecPatches(ipatch)->vecSpecies.size(); ispec++) {
-                    if (dynamic_cast<SpeciesDynamicV2*>(vecPatches.patches_[ipatch]->vecSpecies[ispec]) )
+                    if (dynamic_cast<SpeciesAdaptiveV2*>(vecPatches.patches_[ipatch]->vecSpecies[ispec]) )
                     {
-                        dynamic_cast<SpeciesDynamicV2*>(vecPatches.patches_[ipatch]->vecSpecies[ispec])->compute_part_cell_keys(params);
+                        dynamic_cast<SpeciesAdaptiveV2*>(vecPatches.patches_[ipatch]->vecSpecies[ispec])->compute_part_cell_keys(params);
                     }
                     vecPatches.patches_[ipatch]->vecSpecies[ispec]->sort_part(params);
                 }
@@ -163,7 +163,7 @@ public:
 
         // Figure out if there are antennas
         vecPatches.nAntennas = vecPatches(0)->EMfields->antennas.size();
-        
+
         // Initialize lasers and antennas
         if( ! smpi->test_mode )
             vecPatches.initExternals( params );

@@ -3,8 +3,8 @@
 #include "Params.h"
 #include "Species.h"
 #ifdef _VECTO
-#include "SpeciesDynamicV.h"
-#include "SpeciesDynamicV2.h"
+#include "SpeciesAdaptiveV.h"
+#include "SpeciesAdaptiveV2.h"
 #include "SpeciesV.h"
 #endif
 #include "ElectroMagn.h"
@@ -280,19 +280,19 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                                 dynamic_cast<SpeciesV*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
                             mypatch->vecSpecies[ispec]->sort_part(params);
                         }
-                        // First dynamic vectorization mode
+                        // First adaptive vectorization mode
                         else if (params.vectorization_mode == "adaptive_mixed_sort")
                         {
-                            if ( dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec]) )
+                            if ( dynamic_cast<SpeciesAdaptiveV*>(mypatch->vecSpecies[ispec]) )
                             {
-                                dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->configuration(params, mypatch);
+                                dynamic_cast<SpeciesAdaptiveV*>(mypatch->vecSpecies[ispec])->configuration(params, mypatch);
                             }
                         }
-                        // Second dynamic vectorization mode
+                        // Second adaptive vectorization mode
                         else if (params.vectorization_mode == "adaptive")
                         {
-                            if ( dynamic_cast<SpeciesDynamicV2*>(mypatch->vecSpecies[ispec]) )
-                                dynamic_cast<SpeciesDynamicV2*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
+                            if ( dynamic_cast<SpeciesAdaptiveV2*>(mypatch->vecSpecies[ispec]) )
+                                dynamic_cast<SpeciesAdaptiveV2*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
                             mypatch->vecSpecies[ispec]->sort_part(params);
                         }
                     }
@@ -309,29 +309,29 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                 {
                     for (unsigned int ispec=0 ; ispec<nSpecies ; ispec++)
                     {
-                        // For the dynamic vectorization, we partially reconfigure the patch
+                        // For the adaptive vectorization, we partially reconfigure the patch
                         // We do not have to sort, but operators may have to be reconfigured
-                        // First dynamic vectorization mode:
+                        // First adaptive vectorization mode:
                         if (params.vectorization_mode == "adaptive_mixed_sort") {
-                            if ( dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec]) )
+                            if ( dynamic_cast<SpeciesAdaptiveV*>(mypatch->vecSpecies[ispec]) )
                             {
-                                dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
-                                dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->reconfigure_operators(params, mypatch);
+                                dynamic_cast<SpeciesAdaptiveV*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
+                                dynamic_cast<SpeciesAdaptiveV*>(mypatch->vecSpecies[ispec])->reconfigure_operators(params, mypatch);
                             }
                         }
-                        // Second dynamic vectorization mode:
+                        // Second adaptive vectorization mode:
                         else if (params.vectorization_mode == "adaptive")
                         {
-                            if ( dynamic_cast<SpeciesDynamicV2*>(mypatch->vecSpecies[ispec]) )
+                            if ( dynamic_cast<SpeciesAdaptiveV2*>(mypatch->vecSpecies[ispec]) )
                             {
-                                dynamic_cast<SpeciesDynamicV2*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
+                                dynamic_cast<SpeciesAdaptiveV2*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
                             }
                         }
 #endif*/
                     }
-                    
+
                     mypatch->EMfields->applyExternalFields( mypatch );
-                    if (params.save_magnectic_fields_for_SM) 
+                    if (params.save_magnectic_fields_for_SM)
                        mypatch->EMfields->saveExternalFields( mypatch );
 
                 } // end test patch_particle_created[ithread][j]
@@ -368,7 +368,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         //}
     }
 
-    // First dynamic vectorization mode
+    // First adaptive vectorization mode
     else if (params.vectorization_mode == "adaptive_mixed_sort")
     {
         #pragma omp for schedule(static) private(mypatch)
@@ -383,10 +383,10 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                 {
                     for (unsigned int ispec=0 ; ispec<nSpecies ; ispec++)
                     {
-                        //dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->check(mypatch,"mov win 0");
-                        if ( dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec]) )
+                        //dynamic_cast<SpeciesAdaptiveV*>(mypatch->vecSpecies[ispec])->check(mypatch,"mov win 0");
+                        if ( dynamic_cast<SpeciesAdaptiveV*>(mypatch->vecSpecies[ispec]) )
                         {
-                            dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->configuration(params, mypatch);
+                            dynamic_cast<SpeciesAdaptiveV*>(mypatch->vecSpecies[ispec])->configuration(params, mypatch);
                         }
                     }
                 }
@@ -396,12 +396,12 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                 {
                     for (unsigned int ispec=0 ; ispec<nSpecies ; ispec++)
                     {
-                        // For the dynamic vectorization, we partially reconfigure the patch
+                        // For the adaptive vectorization, we partially reconfigure the patch
                         // We do not have to sort, but operators may have to be reconfigured
-                        if ( dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec]) )
+                        if ( dynamic_cast<SpeciesAdaptiveV*>(mypatch->vecSpecies[ispec]) )
                         {
-                            dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
-                            dynamic_cast<SpeciesDynamicV*>(mypatch->vecSpecies[ispec])->reconfigure_operators(params, mypatch);
+                            dynamic_cast<SpeciesAdaptiveV*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
+                            dynamic_cast<SpeciesAdaptiveV*>(mypatch->vecSpecies[ispec])->reconfigure_operators(params, mypatch);
                         }
                         // sorting will be necessary when clrw compatible
                         //mypatch->vecSpecies[ispec]->sort_part(params);
@@ -410,7 +410,7 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             } // end j loop
         } // End ithread loop
     }
-    // Second dynamic vectorization mode
+    // Second adaptive vectorization mode
     else if (params.vectorization_mode == "adaptive")
     {
         //#pragma omp master
@@ -427,10 +427,10 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                 {
                     for (unsigned int ispec=0 ; ispec<nSpecies ; ispec++)
                     {
-                            if ( dynamic_cast<SpeciesDynamicV2*>(mypatch->vecSpecies[ispec]) )
+                            if ( dynamic_cast<SpeciesAdaptiveV2*>(mypatch->vecSpecies[ispec]) )
                             {
-                                dynamic_cast<SpeciesDynamicV2*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
-                                dynamic_cast<SpeciesDynamicV2*>(mypatch->vecSpecies[ispec])->configuration(params, mypatch);
+                                dynamic_cast<SpeciesAdaptiveV2*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
+                                dynamic_cast<SpeciesAdaptiveV2*>(mypatch->vecSpecies[ispec])->configuration(params, mypatch);
                             }
                             mypatch->vecSpecies[ispec]->sort_part(params);
 
@@ -442,12 +442,12 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
                 {
                     for (unsigned int ispec=0 ; ispec<nSpecies ; ispec++)
                     {
-                        // For the dynamic vectorization, we partially reconfigure the patch
+                        // For the adaptive vectorization, we partially reconfigure the patch
                         // We do not have to sort, but operators may have to be reconfigured
-                        if ( dynamic_cast<SpeciesDynamicV2*>(mypatch->vecSpecies[ispec]) )
+                        if ( dynamic_cast<SpeciesAdaptiveV2*>(mypatch->vecSpecies[ispec]) )
                         {
-                            dynamic_cast<SpeciesDynamicV2*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
-                            dynamic_cast<SpeciesDynamicV2*>(mypatch->vecSpecies[ispec])->reconfigure_operators(params, mypatch);
+                            dynamic_cast<SpeciesAdaptiveV2*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
+                            dynamic_cast<SpeciesAdaptiveV2*>(mypatch->vecSpecies[ispec])->reconfigure_operators(params, mypatch);
                         }
                     }
                 } // end test patch_particle_created[ithread][j]

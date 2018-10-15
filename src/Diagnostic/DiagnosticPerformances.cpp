@@ -45,7 +45,7 @@ DiagnosticPerformances::DiagnosticPerformances( Params & params, SmileiMPI* smpi
     this->mpi_size = smpi->getSize();
     this->mpi_rank = smpi->getRank();
     this->ndim     = params.nDim_field;
-    this->has_dynamic_vectorization = params.has_dynamic_vectorization;
+    this->has_adaptive_vectorization = params.has_adaptive_vectorization;
 
     // Define the HDF5 file and memory spaces
     setHDF5spaces(filespace_double, memspace_double, n_quantities_double, mpi_size, this->mpi_rank);
@@ -319,7 +319,7 @@ void DiagnosticPerformances::run( SmileiMPI* smpi, VectorPatch& vecPatches, int 
                 species_group = H5::group(patch_group, vecPatches(0)->vecSpecies[ispecies]->name);
 
                 // Vectorization properties
-                if (has_dynamic_vectorization)
+                if (has_adaptive_vectorization)
                 {
                     // Gather patch vectorization status in a buffer
                     for(unsigned int ipatch=0; ipatch < number_of_patches; ipatch++){
