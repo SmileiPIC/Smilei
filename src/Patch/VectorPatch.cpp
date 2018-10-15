@@ -198,15 +198,13 @@ void VectorPatch::configuration(Params& params, Timers &timers, int itime)
     }
     #pragma omp barrier
 
-    // Species reconfiguration for best performance
-    // Change the status to use vectorized or not-vectorized operators
-    // as a function of the metrics
+    // Species configuration according to the default mode
 
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<npatches ; ipatch++) {
         // Particle importation for all species
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
-            species(ipatch, ispec)->configuration(params, (*this)(ipatch));
+            species(ipatch, ispec)->initial_configuration(params, (*this)(ipatch));
         }
     }
 
@@ -1737,7 +1735,7 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
 #ifdef _VECTO
     if (params.vectorization_mode == "adaptive_mixed_sort")
     {
-        // Dynamic vecto
+        // adaptive vectorization
         // Recompute the cell keys before the next step and configure operators
         for (unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++) {
             for (unsigned int ispec=0 ; ispec< recv_patches_[ipatch]->vecSpecies.size() ; ispec++)
@@ -1752,7 +1750,7 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
     }
     else if (params.vectorization_mode == "adaptive")
     {
-        // Dynamic vecto mode 2
+        // adaptive vectorization mode 2
         // Recompute the cell keys before the next step and configure operators
         for (unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++) {
             for (unsigned int ispec=0 ; ispec< recv_patches_[ipatch]->vecSpecies.size() ; ispec++)

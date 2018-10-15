@@ -221,7 +221,7 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
         for (unsigned int i=0; i<npart1; i++) index1[i] = i; // first, we make an ordered array
         // shuffle the index array
         for (unsigned int i=npart1; i>1; i--) {
-            unsigned int p = patch->xorshift32();
+            unsigned int p = patch->xorshift32() % i;
             swap(index1[i-1], index1[p]);
         }
         if (intra_collisions) { // In the case of collisions within one species
@@ -304,7 +304,7 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
             s = one_collision(p1, i1, s1->mass, p2, i2, m12, coeff1, coeff2, coeff3, coeff4, n123, n223, debye2, logL, U1, U2, phi);
 
             // Handle ionization
-            Ionization->apply(p1, i1, p2, i2);
+            Ionization->apply(patch, p1, i1, p2, i2);
 
             if( debug ) {
                 ncol     += 1;

@@ -88,7 +88,7 @@ npoints = S.namelist.npoints
 energy = []
 Qsmilei = []
 for i in range(npoints):
-	print "electron"+str(i)
+	print("electron"+str(i))
 	# get electron velocity
 	ve = np.double(S.namelist.Species["electron"+str(i)].mean_velocity[0])
 	Ee = (1./np.sqrt(1.-ve**2)-1.)*511. # energy in keV
@@ -98,7 +98,8 @@ for i in range(npoints):
 	D = S.ParticleBinning("#"+str(2*i)+"/#"+str(2*i+1)+"",sum={"x":"all"})
 	P = np.array(D.getData()) # momentum
 	# stopping power in MeV/cm
-	diffP = -(P[-1]-P[0])/(D.times[-1]-D.times[0]) * (0.511*1e-2*reference_angular_frequency_SI/3e8/timestep)
+	times = D.getTimesteps()
+	diffP = -(P[-1]-P[0])/(times[-1]-times[0]) * (0.511*1e-2*reference_angular_frequency_SI/3e8/timestep)
 	# stopping power in MeV*cm2/g
 	Qsmilei.append( diffP/rho )
 	
@@ -117,4 +118,3 @@ ax.yaxis.labelpad = 0
 ax.set_xlabel("Incident electron energy (keV)")
 ax.set_ylabel("Stopping power (Mev cm$^2$/g)")
 ax.set_xticks([1e-2, 1e0, 1e2, 1e4, 1e6, 1e8, 1e10])
-
