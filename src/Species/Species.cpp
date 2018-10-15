@@ -624,7 +624,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
             timer = MPI_Wtime();
 #endif
 
-                (*Ionize)(particles, bmin[ibin], bmax[ibin], Epart, EMfields, Proj);
+                (*Ionize)(particles, bmin[ibin], bmax[ibin], Epart, patch, Proj);
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[4] += MPI_Wtime() - timer;
@@ -976,7 +976,7 @@ void Species::computeCharge(unsigned int ispec, ElectroMagn* EMfields)
                 }
             }
             else {
-#ifdef _TODO_AM_ 
+#ifdef _TODO_AM_
                 ElectroMagnAM* emAM = static_cast<ElectroMagnAM*>( EMfields );
                 int Nmode = emAM->rho_AM_.size();
                 for (unsigned int imode=0; imode<Nmode;imode++){
@@ -1276,7 +1276,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
 {
     // n_space_to_create_generalized = n_space_to_create, + copy of 2nd direction data among 3rd direction
     // same for local Species::cell_length[2]
-    vector<unsigned int> n_space_to_create_generalized( n_space_to_create );    
+    vector<unsigned int> n_space_to_create_generalized( n_space_to_create );
     unsigned int nPart, i,j,k, idim;
     unsigned int npart_effective = 0 ;
     double *momentum[nDim_particle], *position[nDim_particle], *weight_arr;

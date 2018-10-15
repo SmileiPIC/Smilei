@@ -191,7 +191,7 @@ int ithread;
             timer = MPI_Wtime();
 #endif
                 for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
-                    (*Ionize)(particles, bmin[ibin], bmax[ibin], Epart, EMfields, Proj);
+                    (*Ionize)(particles, bmin[ibin], bmax[ibin], Epart, patch, Proj);
                 }
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[4] += MPI_Wtime() - timer;

@@ -134,7 +134,7 @@ void CollisionsSingle::collide(Params& params, Patch* patch, int itime, vector<D
             s = one_collision(p1, i1, s1->mass, p2, i2, m12, coeff1, coeff2, coeff3, coeff4, n123, n223, debye2, logL, U1, U2, phi);
 
             // Handle ionization
-            Ionization->apply(p1, i1, p2, i2);
+            Ionization->apply(patch, p1, i1, p2, i2);
 
             if( debug ) {
                 ncol     += 1;

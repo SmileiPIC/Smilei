@@ -129,7 +129,7 @@ void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
                 timer = MPI_Wtime();
 #endif
-                (*Ionize)(particles, bmin[scell], bmax[scell], Epart, EMfields, Proj);
+                (*Ionize)(particles, bmin[scell], bmax[scell], Epart, patch, Proj);
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[4] += MPI_Wtime() - timer;
 #endif
