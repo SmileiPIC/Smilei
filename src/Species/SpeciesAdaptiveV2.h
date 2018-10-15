@@ -36,6 +36,10 @@ class SpeciesAdaptiveV2 : public SpeciesV
                         MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
                         std::vector<Diagnostic*>& localDiags);
 
+    //! This function configures the type of species according to the default mode
+    //! regardless the number of particles per cell
+    void initial_configuration( Params& params, Patch * patch) override;
+
     //! This function configures the species according to the vectorization mode
     void configuration( Params& params, Patch * patch) override;
 

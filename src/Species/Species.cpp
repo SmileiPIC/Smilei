@@ -366,7 +366,7 @@ void Species::initPosition(unsigned int nPart, unsigned int iPart, double *index
 		//- sqrt(particles_r*particles_r - particles->position(2,p)* particles->position(2,p));
             //else
               //  particles->position(1,p)=sqrt(particles_r*particles_r - particles->position(2,p)* particles->position(2,p));
-                
+
             }
         } else{
             for (unsigned int p= iPart; p<iPart+nPart; p++) {
@@ -602,7 +602,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
         //Point to local thread dedicated buffers
         //Still needed for ionization
         vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
-        
+
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
 
 #ifdef  __DETAILED_TIMERS
@@ -883,14 +883,14 @@ void Species::projection_for_diags(double time_dual, unsigned int ispec,
             int n_species = patch->vecSpecies.size();
             for ( unsigned int imode = 0; imode<params.nmodes;imode++){
                 int ifield = imode*n_species+ispec;
-                
+
                 for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
-            
+
                     buf[0] = emAM->rho_AM_s[ifield] ? &(*emAM->rho_AM_s[ifield])(0) : &(*emAM->rho_AM_[imode])(0) ;
                     buf[1] = emAM->Jl_s [ifield] ? &(*emAM->Jl_s [ifield])(0) : &(*emAM->Jl_[imode])(0) ;
                     buf[2] = emAM->Jr_s [ifield] ? &(*emAM->Jr_s [ifield])(0) : &(*emAM->Jr_[imode])(0) ;
                     buf[3] = emAM->Jt_s [ifield] ? &(*emAM->Jt_s [ifield])(0) : &(*emAM->Jt_[imode])(0) ;
-            
+
                     for (int iPart=bmin[ibin] ; iPart<bmax[ibin]; iPart++ ) {
                         for (unsigned int quantity=0; quantity < 4; quantity++) {
                             (*Proj)(buf[quantity], (*particles), iPart, quantity, b_dim, imode);
@@ -976,7 +976,7 @@ void Species::computeCharge(unsigned int ispec, ElectroMagn* EMfields)
                 }
             }
             else {
-#ifdef _TODO_AM_ 
+#ifdef _TODO_AM_
                 ElectroMagnAM* emAM = static_cast<ElectroMagnAM*>( EMfields );
                 int Nmode = emAM->rho_AM_.size();
                 for (unsigned int imode=0; imode<Nmode;imode++){
@@ -1193,6 +1193,10 @@ void Species::sort_part(Params& params)
     }
 }
 
+void Species::initial_configuration(Params& param, Patch * patch)
+{
+}
+
 void Species::configuration(Params& param, Patch * patch)
 {
 }
@@ -1276,7 +1280,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
 {
     // n_space_to_create_generalized = n_space_to_create, + copy of 2nd direction data among 3rd direction
     // same for local Species::cell_length[2]
-    vector<unsigned int> n_space_to_create_generalized( n_space_to_create );    
+    vector<unsigned int> n_space_to_create_generalized( n_space_to_create );
     unsigned int nPart, i,j,k, idim;
     unsigned int npart_effective = 0 ;
     double *momentum[nDim_particle], *position[nDim_particle], *weight_arr;
@@ -1375,7 +1379,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
         for (i=0; i<n_space_to_create_generalized[0]; i++) {
             for (j=0; j<n_space_to_create_generalized[1]; j++) {
                 for (k=0; k<n_space_to_create_generalized[2]; k++) {
-                      
+
                     // Obtain the number of particles per cell
                     nppc = n_part_in_cell(i,j,k);
                     n_part_in_cell(i,j,k) = floor(nppc);
@@ -1474,7 +1478,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                            initWeight(nPart, iPart, density(i,j,k)*(*xyz[1])(i,j,k));
                         }else{
                             initWeight(nPart, iPart, density(i,j,k));
-				
+
                         }
                         initCharge(nPart, iPart, charge(i,j,k));
 
@@ -1576,7 +1580,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     if (particles->tracked)
         particles->resetIds();
     return npart_effective;
-  
+
 } // End createParticles
 
 
@@ -1895,9 +1899,9 @@ void Species::ponderomotive_update_position_and_currents(double time_dual, unsig
     // calculate the particle updated position
     // -------------------------------
     if (time_dual>time_frozen) { // moving particle
-    
+
         smpi->dynamics_resize(ithread, nDim_field, bmax.back(), params.geometry=="AMcylindrical");
-    
+
         for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
 
             // Interpolate the ponderomotive potential and its gradient at the particle position, present and previous timestep
