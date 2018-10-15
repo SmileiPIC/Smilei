@@ -105,7 +105,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
 .. py:data:: geometry
 
   The geometry of the simulation:
-  
+
   * ``"1Dcartesian"``
   * ``"2Dcartesian"``
   * ``"3Dcartesian"``
@@ -115,9 +115,9 @@ The block ``Main`` is **mandatory** and has the following syntax::
   Cartesian 1D, 2D,3D respectively stand for 1 dimensional, two dimensional and three dimensional and are ordered as :math:`(x,y,z)`.
   In the case of the ``"AMcylindrical"``, all grid quantities are two dimensional and ordered as :math:`(x,r)`.
   Particle quantities (i.e. the Species block) are expressed in three dimensional Cartesian frame :math:`(x,y,z)`.
-    
+
   .. warning::
-  
+
     The ``"AMcylindrical"`` geometry is currently proposed in alpha version.
     It has not been thoroughly tested and only Field diagnostics are available.
     Boundary conditions must be set to ``"remove"`` for particles, ``"silver-muller"`` for longitudinal EM boundaries and ``"buneman"`` for transverse EM boundaries.
@@ -128,7 +128,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   :default: ``2``
 
   Interpolation order, defines particle shape function:
- 
+
   * ``2``  : 3 points stencil, supported in all configurations.
   * ``4``  : 5 points stencil, not supported in vectorized 2D geometry.
 
@@ -368,7 +368,7 @@ occur every 150 iterations.
 
 ----
 
-.. _dynamicVectorization:
+.. _Vectorization:
 
 Vectorization
 ^^^^^^^^^^^^^^^^^^^^^
@@ -394,15 +394,15 @@ The block ``Vectorization`` is optional. It controls the SIMD operations that ca
   * ``"adaptive"``: the best operators (scalar or vectorized)
     are determined dynamically and locally (per patch and per species).
     Operators use a new cell-based sorting method,
-  
+
   In the ``"adaptive"`` modes, :py:data:`clrw` is set to the maximum by default.
 
 .. py:data:: reconfigure_every
 
   :default: 20
-  
+
   The number of timesteps between each dynamic reconfiguration of
-  the vectorized operators, when using the 
+  the vectorized operators, when using the
   ``"adaptive"`` vectorization modes.
   It may be set to a :ref:`time selection <TimeSelections>` as well.
 
@@ -702,10 +702,10 @@ Each species has to be defined in a ``Species`` block::
   :default: ``"none"``
 
   The model for ionization:
-  
+
   * ``"tunnel"`` for :ref:`field ionization <field_ionization>` (requires species with an :py:data:`atomic_number`)
   * ``"from_rate"``, relying on a :ref:`user-defined ionization rate <rate_ionization>` (requires species with a :py:data:`maximum_charge_state`).
-  
+
 .. py:data:: ionization_rate
 
   A python function giving the user-defined ionisation rate as a function of various particle attributes.
@@ -719,9 +719,9 @@ Each species has to be defined in a ``Species`` block::
   and linear in the x coordinate:
 
   .. code-block:: python
-    
+
     from numpy import exp, zeros_like
-    
+
     def my_rate(particles):
         rate = zeros_like(particles.x)
         charge_0 = (particles.charge==0)
@@ -729,9 +729,9 @@ Each species has to be defined in a ``Species`` block::
         rate[charge_0] = r0 * particles.x[charge_0]
         rate[charge_1] = r1 * particles.x[charge_1]
         return rate
-    
+
     Species( ..., ionization_rate = my_rate )
-    
+
 .. py:data:: ionization_electrons
 
   The name of the electron species that :py:data:`ionization_model` uses when creating new electrons.
@@ -1125,20 +1125,20 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   .. py:data:: space_time_profile
 
     :type: A list of two *python* functions
-    
+
     The magnetic field profiles at some arbitrary plane, as a function of space and time.
     The arguments of these profiles are ``(y,t)`` in 2D and ``(y,z,t)`` in 3D.
-    
+
   .. py:data:: offset
-     
+
      The distance from the box boundary to the plane where :py:data:`space_time_profile`
      is defined.
-  
+
   .. py:data:: extra_envelope
-    
+
     :type: a *python* function or a :ref:`python profile <profiles>`
     :default:  ``lambda *z: 1.``, which means a profile of value 1 everywhere
-    
+
     An extra envelope applied at the boundary, on top of the :py:data:`space_time_profile`.
     This envelope takes two arguments (`y`, `t`) in 2D, and three arguments (`y`, `z`, `t`)
     in 3D.
@@ -1148,16 +1148,16 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     The envelope can be used to remove these spurious repetitions.
 
   .. py:data:: keep_n_strongest_modes
-    
+
     :default: 100
-    
+
     The number of temporal Fourier modes that are kept during the pre-processing.
     See :doc:`this page <laser_offset>` for more details.
 
   .. py:data:: angle
-    
+
     :default: 0.
-    
+
     Angle between the boundary and the profile's plane, the rotation being around :math:`z`.
     See :doc:`this page <laser_offset>` for more details.
 
@@ -1207,7 +1207,7 @@ It is important to remember that the profile defined through the block ``LaserEn
 The calculation of the correspondent complex envelope for the laser electric field component in that direction is described in :doc:`laser_envelope`.
 Note that only order 2 interpolation is supported in presence of the envelope model for the laser.
 
-  
+
 ----
 
 .. _ExternalField:
