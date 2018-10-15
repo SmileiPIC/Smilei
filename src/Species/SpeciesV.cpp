@@ -63,13 +63,12 @@ SpeciesV::~SpeciesV()
 
 void SpeciesV::initCluster(Params& params)
 {
-    //Temporary BECK
     int ncells = 1;
     for (unsigned int iDim=0 ; iDim<nDim_particle ; iDim++)
         ncells *= (params.n_space[iDim]+1);
     bmax.resize(ncells,0);
     bmin.resize(ncells,0);
-    species_loc_bmax.resize(ncells,0);
+    count.resize(ncells,0);
 
     //Size in each dimension of the buffers on which each bin are projected
     //In 1D the particles of a given bin can be projected on 6 different nodes at the second order (oversize = 2)
@@ -160,8 +159,8 @@ int ithread;
         vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
 
         //Prepare for sorting
-        for (unsigned int i=0; i<species_loc_bmax.size(); i++)
-            species_loc_bmax[i] = 0;
+        for (unsigned int i=0; i<count.size(); i++)
+            count[i] = 0;
 
         for ( unsigned int ipack = 0 ; ipack < npack_ ; ipack++ ) {
 
@@ -316,7 +315,7 @@ int ithread;
                                     (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]) * dx_inv_[i] );
                                 }
                                 //First reduction of the count sort algorithm. Lost particles are not included.
-                                species_loc_bmax[(*particles).cell_keys[iPart]] ++;
+                                count[(*particles).cell_keys[iPart]] ++;
                             }
                         }
 
@@ -347,8 +346,7 @@ int ithread;
                                 (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]) * dx_inv_[i] );
                             }
                             //First reduction of the count sort algorithm. Lost particles are not included.
-                            species_loc_bmax[(*particles).cell_keys[iPart]] ++;
-
+                            count[(*particles).cell_keys[iPart]] ++;
                         }
                     }
 
@@ -449,7 +447,7 @@ void SpeciesV::sort_part(Params &params)
     length[1]=params.n_space[1]+1;
     length[2]=params.n_space[2]+1;
 
-    //species_loc_bmax stores the # of particles in a given cell quadrant.
+    //count temporarily stores the # of particles in a given cell quadrant.
 
     //Loop over just arrived particles
     for (unsigned int idim=0; idim < nDim_particle ; idim++){
@@ -465,7 +463,7 @@ void SpeciesV::sort_part(Params &params)
             }
             //Can we vectorize this reduction ?
             for (unsigned int ip=0; ip < MPIbuff.part_index_recv_sz[idim][ineighbor]; ip++){
-                species_loc_bmax[buf_cell_keys[idim][ineighbor][ip]] ++;
+                count[buf_cell_keys[idim][ineighbor][ip]] ++;
             }
         }
     }
@@ -474,10 +472,10 @@ void SpeciesV::sort_part(Params &params)
     bmin[0]=0;
     for (unsigned int ic=1; ic < ncell; ic++)
         {
-            bmin[ic] = bmin[ic-1] + species_loc_bmax[ic-1];
+            bmin[ic] = bmin[ic-1] + count[ic-1];
             bmax[ic-1]= bmin[ic];
         }
-    bmax[ncell-1] = bmax[ncell-2] + species_loc_bmax.back() ; //New total number of particles is stored as last element of bmax
+    bmax[ncell-1] = bmax[ncell-2] + count.back() ; //New total number of particles is stored as last element of bmax
 
     //Now proceed to the cycle sort
 
@@ -594,7 +592,7 @@ void SpeciesV::compute_part_cell_keys(Params &params)
         }
     }
     for (ip=0; ip < npart ; ip++)
-        species_loc_bmax[(*particles).cell_keys[ip]] ++ ;
+        count[(*particles).cell_keys[ip]] ++ ;
 
 }
 
@@ -668,8 +666,8 @@ void SpeciesV::importParticles( Params& params, Patch* patch, Particles& source_
             bmax[ii]++;
         }
 
-        particles->cell_keys.insert( particles->cell_keys.begin() + bmin[ibin] + species_loc_bmax[ibin], ibin);
-        species_loc_bmax[ibin] ++ ;
+        particles->cell_keys.insert( particles->cell_keys.begin() + bmin[ibin] + count[ibin], ibin);
+        count[ibin] ++ ;
 
     }
 
@@ -888,8 +886,8 @@ void SpeciesV::ponderomotive_update_position_and_currents(double time_dual, unsi
    if (time_dual>time_frozen) { // moving particle
 
         //Prepare for sorting
-        for (unsigned int i=0; i<species_loc_bmax.size(); i++)
-            species_loc_bmax[i] = 0;
+        for (unsigned int i=0; i<count.size(); i++)
+            count[i] = 0;
 
         for ( unsigned int ipack = 0 ; ipack < npack_ ; ipack++ ) {
 
@@ -950,7 +948,7 @@ void SpeciesV::ponderomotive_update_position_and_currents(double time_dual, unsi
                                     (*particles).cell_keys[iPart] *= length[i];
                                     (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]) * dx_inv_[i] );
                                 }
-                                species_loc_bmax[(*particles).cell_keys[iPart]] ++; //First reduction of the count sort algorithm. Lost particles are not included.
+                                count[(*particles).cell_keys[iPart]] ++; //First reduction of the count sort algorithm. Lost particles are not included.
                             }
                         }
 

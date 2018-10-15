@@ -75,16 +75,16 @@ void SpeciesAdaptiveV::resizeCluster(Params& params)
 
     bmax.resize(ncells,0);
     bmin.resize(ncells,0);
-    //species_loc_bmax.resize(ncells,0);
+    //count.resize(ncells,0);
 
     bmin[0] = 0;
     for (unsigned int ic=1; ic < ncells; ic++)
     {
-        bmin[ic] = bmin[ic-1] + species_loc_bmax[ic-1];
+        bmin[ic] = bmin[ic-1] + count[ic-1];
         bmax[ic-1]= bmin[ic];
     }
     //New total number of particles is stored as last element of bmax
-    bmax[ncells-1] = bmax[ncells-2] + species_loc_bmax.back() ;
+    bmax[ncells-1] = bmax[ncells-2] + count.back() ;
 
 }// end resizeCluster
 
@@ -107,9 +107,9 @@ void SpeciesAdaptiveV::compute_part_cell_keys(Params &params)
     // Cell_keys is resized at the current number of particles
     (*particles).cell_keys.resize(nparts);
 
-    // Reinitialize species_loc_bmax to 0
-    for (unsigned int ic=0; ic < species_loc_bmax.size() ; ic++)
-        species_loc_bmax[ic] = 0 ;
+    // Reinitialize count to 0
+    for (unsigned int ic=0; ic < count.size() ; ic++)
+        count[ic] = 0 ;
 
     #pragma omp simd
     for (ip=0; ip < nparts ; ip++){
@@ -121,9 +121,9 @@ void SpeciesAdaptiveV::compute_part_cell_keys(Params &params)
         }
     }
 
-    // Reduction of the number of particles per cell in species_loc_bmax
+    // Reduction of the number of particles per cell in count
     for (ip=0; ip < nparts ; ip++)
-        species_loc_bmax[(*particles).cell_keys[ip]] ++ ;
+        count[(*particles).cell_keys[ip]] ++ ;
 
 }
 
@@ -169,7 +169,7 @@ void SpeciesAdaptiveV::reconfiguration(Params &params, Patch * patch)
     // --------------------------------------------------------------------
     // Metrics 1 - based on the ratio of vectorized cells
     // Compute the number of cells that contain more than 8 particles
-    //ratio_number_of_vecto_cells = SpeciesMetrics::get_ratio_number_of_vecto_cells(species_loc_bmax,8);
+    //ratio_number_of_vecto_cells = SpeciesMetrics::get_ratio_number_of_vecto_cells(count,8);
 
     // Test metrics, if necessary we reasign operators
     //if ( (ratio_number_of_vecto_cells > 0.5 && this->vectorized_operators == false)
@@ -181,7 +181,7 @@ void SpeciesAdaptiveV::reconfiguration(Params &params, Patch * patch)
 
     // --------------------------------------------------------------------
     // Metrics 2 - based on the evaluation of the computational time
-    SpeciesMetrics::get_computation_time(species_loc_bmax,
+    SpeciesMetrics::get_computation_time(count,
                                         vecto_time,
                                         scalar_time);
 
@@ -261,12 +261,12 @@ void SpeciesAdaptiveV::configuration(Params &params, Patch * patch)
     // --------------------------------------------------------------------
     // Metrics 1 - based on the ratio of vectorized cells
     // Compute the number of cells that contain more than 8 particles
-    //ratio_number_of_vecto_cells = SpeciesMetrics::get_ratio_number_of_vecto_cells(species_loc_bmax,8);
+    //ratio_number_of_vecto_cells = SpeciesMetrics::get_ratio_number_of_vecto_cells(count,8);
     // --------------------------------------------------------------------
 
     // --------------------------------------------------------------------
     // Metrics 2 - based on the evaluation of the computational time
-    SpeciesMetrics::get_computation_time(this->species_loc_bmax,
+    SpeciesMetrics::get_computation_time(this->count,
                                         vecto_time,
                                         scalar_time);
 

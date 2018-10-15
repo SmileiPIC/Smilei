@@ -186,10 +186,10 @@ public:
 
     //! Cluster width in number of cells
     unsigned int clrw; //Should divide the number of cells in X of a single MPI domain.
-    //! first and last index of each particle bin
+    //! first and last index of each particle bin/cell
     std::vector<int> bmin, bmax;
-    //!
-    std::vector<int> species_loc_bmax;
+    //! Array counting the occurence of each cell key
+    std::vector<int> count;
     //! sub dimensions of buffers for dim > 1
     std::vector<unsigned int> b_dim;
 

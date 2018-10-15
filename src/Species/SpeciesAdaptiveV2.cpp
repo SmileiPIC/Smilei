@@ -103,8 +103,8 @@ void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
         vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
 
         //Prepare for sorting
-        for (unsigned int i=0; i<species_loc_bmax.size(); i++)
-            species_loc_bmax[i] = 0;
+        for (unsigned int i=0; i<count.size(); i++)
+            count[i] = 0;
 
 #ifdef  __DETAILED_TIMERS
         timer = MPI_Wtime();
@@ -233,7 +233,7 @@ void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
                             (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]) * dx_inv_[i] );
                         }
                         //First reduction of the count sort algorithm. Lost particles are not included.
-                        species_loc_bmax[(*particles).cell_keys[iPart]] ++;
+                        count[(*particles).cell_keys[iPart]] ++;
                     }
                 }
 
@@ -263,7 +263,7 @@ void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
                             (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]) * dx_inv_[i] );
                         }
                         //First reduction of the count sort algorithm. Lost particles are not included.
-                        species_loc_bmax[(*particles).cell_keys[iPart]] ++;
+                        count[(*particles).cell_keys[iPart]] ++;
                     }
                 }
             } // end if mass > 0
@@ -348,9 +348,9 @@ void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
         }
     }
 
-    // Reduction of the number of particles per cell in species_loc_bmax
+    // Reduction of the number of particles per cell in count
     for (ip=0; ip < nparts ; ip++)
-        species_loc_bmax[(*particles).cell_keys[ip]] ++ ;
+        count[(*particles).cell_keys[ip]] ++ ;
 }*/
 
 
@@ -374,7 +374,7 @@ void SpeciesAdaptiveV2::reconfiguration(Params &params, Patch * patch)
     // --------------------------------------------------------------------
     // Metrics 1 - based on the ratio of vectorized cells
     // Compute the number of cells that contain more than 8 particles
-    //ratio_number_of_vecto_cells = SpeciesMetrics::get_ratio_number_of_vecto_cells(species_loc_bmax,8);
+    //ratio_number_of_vecto_cells = SpeciesMetrics::get_ratio_number_of_vecto_cells(count,8);
 
     // Test metrics, if necessary we reasign operators
     //if ( (ratio_number_of_vecto_cells > 0.5 && this->vectorized_operators == false)
@@ -386,7 +386,7 @@ void SpeciesAdaptiveV2::reconfiguration(Params &params, Patch * patch)
 
     // --------------------------------------------------------------------
     // Metrics 2 - based on the evaluation of the computational time
-    SpeciesMetrics::get_computation_time(species_loc_bmax,
+    SpeciesMetrics::get_computation_time(count,
                                         vecto_time,
                                         scalar_time);
 
@@ -443,12 +443,12 @@ void SpeciesAdaptiveV2::configuration(Params &params, Patch * patch)
     // --------------------------------------------------------------------
     // Metrics 1 - based on the ratio of vectorized cells
     // Compute the number of cells that contain more than 8 particles
-    //ratio_number_of_vecto_cells = SpeciesMetrics::get_ratio_number_of_vecto_cells(species_loc_bmax,8);
+    //ratio_number_of_vecto_cells = SpeciesMetrics::get_ratio_number_of_vecto_cells(count,8);
     // --------------------------------------------------------------------
 
     // --------------------------------------------------------------------
     // Metrics 2 - based on the evaluation of the computational time
-    SpeciesMetrics::get_computation_time(species_loc_bmax,
+    SpeciesMetrics::get_computation_time(count,
                                         vecto_time,
                                         scalar_time);
 

@@ -16,16 +16,16 @@ class SpeciesMetrics
     public:
 
         //! Return the number of cells that contain more than `particle_threshold` particles
-        static float get_ratio_number_of_vecto_cells(const std::vector<int> & species_loc_bmax,
+        static float get_ratio_number_of_vecto_cells(const std::vector<int> & count,
                                                      const int particle_threshold);
 
         //! Evaluate the time to compute all particles in the current patch with vectorized operators
-        static void get_computation_time(const std::vector<int> & species_loc_bmax,
+        static void get_computation_time(const std::vector<int> & count,
                                          double & vecto_time,
                                          double & scalar_time);
 
         //! Evaluate the time to compute all particles in the current patch with vectorized operators
-        static void get_computation_time(const std::vector<int> & species_loc_bmax,
+        static void get_computation_time(const std::vector<int> & count,
                                          float & vecto_time,
                                          float & scalar_time);
 
