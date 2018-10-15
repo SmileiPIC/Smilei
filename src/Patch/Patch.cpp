@@ -681,7 +681,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
                                 if (neighbor_[idim][0]!=MPI_PROC_NULL){ //if neighbour exists
                                     //... copy it at the back of the local particle vector ...
                                     (vecSpecies[ispec]->MPIbuff.partRecv[iDim][(iNeighbor+1)%2]).cp_particle(iPart, cuParticles);
-                                    //...adjust bmax or cell_keys ...
+                                    //...adjust last_index or cell_keys ...
                                     vecSpecies[ispec]->add_space_for_a_particle();
                                     //... and add its index to the particles to be sent later...
                                     vecSpecies[ispec]->MPIbuff.part_index_send[idim][0].push_back( cuParticles.size()-1 );
@@ -697,7 +697,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
                             else if ( (vecSpecies[ispec]->MPIbuff.partRecv[iDim][(iNeighbor+1)%2]).position(idim,iPart) >= max_local[idim]) {
                                 if (neighbor_[idim][1]!=MPI_PROC_NULL){ //if neighbour exists
                                     (vecSpecies[ispec]->MPIbuff.partRecv[iDim][(iNeighbor+1)%2]).cp_particle(iPart, cuParticles);
-                                    //...adjust bmax or cell_keys ...
+                                    //...adjust last_index or cell_keys ...
                                     vecSpecies[ispec]->add_space_for_a_particle();
                                     vecSpecies[ispec]->MPIbuff.part_index_send[idim][1].push_back( cuParticles.size()-1 );
                                     vecSpecies[ispec]->addPartInExchList(cuParticles.size()-1);
@@ -720,7 +720,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
                                 if (neighbor_[1][0]!=MPI_PROC_NULL){ //if neighbour exists
                                     //... copy it at the back of the local particle vector ...
                                     (vecSpecies[ispec]->MPIbuff.partRecv[0][(iNeighbor+1)%2]).cp_particle(iPart, cuParticles);
-                                    //...adjust bmax or cell_keys ...
+                                    //...adjust last_index or cell_keys ...
                                     vecSpecies[ispec]->add_space_for_a_particle();
                                     //... and add its index to the particles to be sent later...
                                     vecSpecies[ispec]->MPIbuff.part_index_send[1][0].push_back( cuParticles.size()-1 );
@@ -736,7 +736,7 @@ void Patch::finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, in
                                 if (neighbor_[1][1]!=MPI_PROC_NULL){ //if neighbour exists
                                     //MESSAGE("particle diag +R");
                                     (vecSpecies[ispec]->MPIbuff.partRecv[0][(iNeighbor+1)%2]).cp_particle(iPart, cuParticles);
-                                    //...adjust bmax or cell_keys ...
+                                    //...adjust last_index or cell_keys ...
                                     vecSpecies[ispec]->add_space_for_a_particle();
                                     vecSpecies[ispec]->MPIbuff.part_index_send[1][1].push_back( cuParticles.size()-1 );
                                     vecSpecies[ispec]->addPartInExchList(cuParticles.size()-1);
@@ -818,33 +818,33 @@ void Patch::cleanup_sent_particles(int ispec, std::vector<int>* indexes_of_parti
     /********************************************************************************/
     int ii, iPart;
     std::vector<int>* cufirst_index = &vecSpecies[ispec]->first_index;
-    std::vector<int>* cubmax = &vecSpecies[ispec]->bmax;
+    std::vector<int>* culast_index = &vecSpecies[ispec]->last_index;
     Particles &cuParticles = (*vecSpecies[ispec]->particles);
 
 
     // Push lost particles at the end of bins
-    for (unsigned int ibin = 0 ; ibin < (*cubmax).size() ; ibin++ ) {
+    for (unsigned int ibin = 0 ; ibin < (*culast_index).size() ; ibin++ ) {
         ii = (*indexes_of_particles_to_exchange).size()-1;
         if (ii >= 0) { // Push lost particles to the end of the bin
             iPart = (*indexes_of_particles_to_exchange)[ii];
-            while (iPart >= (*cubmax)[ibin] && ii > 0) {
+            while (iPart >= (*culast_index)[ibin] && ii > 0) {
                 ii--;
                 iPart = (*indexes_of_particles_to_exchange)[ii];
             }
-            while (iPart == (*cubmax)[ibin]-1 && iPart >= (*cufirst_index)[ibin] && ii > 0) {
-                (*cubmax)[ibin]--;
+            while (iPart == (*culast_index)[ibin]-1 && iPart >= (*cufirst_index)[ibin] && ii > 0) {
+                (*culast_index)[ibin]--;
                 ii--;
                 iPart = (*indexes_of_particles_to_exchange)[ii];
             }
             while (iPart >= (*cufirst_index)[ibin] && ii > 0) {
-                cuParticles.overwrite_part((*cubmax)[ibin]-1, iPart );
-                (*cubmax)[ibin]--;
+                cuParticles.overwrite_part((*culast_index)[ibin]-1, iPart );
+                (*culast_index)[ibin]--;
                 ii--;
                 iPart = (*indexes_of_particles_to_exchange)[ii];
             }
-            if (iPart >= (*cufirst_index)[ibin] && iPart < (*cubmax)[ibin]) { //On traite la dernière particule (qui peut aussi etre la premiere)
-                cuParticles.overwrite_part((*cubmax)[ibin]-1, iPart );
-                (*cubmax)[ibin]--;
+            if (iPart >= (*cufirst_index)[ibin] && iPart < (*culast_index)[ibin]) { //On traite la dernière particule (qui peut aussi etre la premiere)
+                cuParticles.overwrite_part((*culast_index)[ibin]-1, iPart );
+                (*culast_index)[ibin]--;
             }
         }
     }
@@ -852,12 +852,12 @@ void Patch::cleanup_sent_particles(int ispec, std::vector<int>* indexes_of_parti
 
     //Shift the bins in memory
     //Warning: this loop must be executed sequentially. Do not use openMP here.
-    for (int unsigned ibin = 1 ; ibin < (*cubmax).size() ; ibin++ ) { //First bin don't need to be shifted
-        ii = (*cufirst_index)[ibin]-(*cubmax)[ibin-1]; // Shift the bin in memory by ii slots.
-        iPart = min(ii,(*cubmax)[ibin]-(*cufirst_index)[ibin]); // Number of particles we have to shift = min (Nshift, Nparticle in the bin)
-        if(iPart > 0) cuParticles.overwrite_part((*cubmax)[ibin]-iPart,(*cubmax)[ibin-1],iPart);
-        (*cubmax)[ibin] -= ii;
-        (*cufirst_index)[ibin] = (*cubmax)[ibin-1];
+    for (int unsigned ibin = 1 ; ibin < (*culast_index).size() ; ibin++ ) { //First bin don't need to be shifted
+        ii = (*cufirst_index)[ibin]-(*culast_index)[ibin-1]; // Shift the bin in memory by ii slots.
+        iPart = min(ii,(*culast_index)[ibin]-(*cufirst_index)[ibin]); // Number of particles we have to shift = min (Nshift, Nparticle in the bin)
+        if(iPart > 0) cuParticles.overwrite_part((*culast_index)[ibin]-iPart,(*culast_index)[ibin-1],iPart);
+        (*culast_index)[ibin] -= ii;
+        (*cufirst_index)[ibin] = (*culast_index)[ibin-1];
     }
 
 } // END cleanup_sent_particles

@@ -2460,8 +2460,8 @@ void VectorPatch::check_expected_disk_usage( SmileiMPI* smpi, Params& params, Ch
             //     * Calculate an approximate number of particles
                 PeekAtSpecies peek(params, ispec);
                 uint64_t number_of_particles = peek.totalNumberofParticles();
-            //     * Calculate the size of the first_index and bmax arrays
-                uint64_t b_size = (s->first_index.size() + s->bmax.size()) * params.tot_number_of_patches * sizeof(int);
+            //     * Calculate the size of the first_index and last_index arrays
+                uint64_t b_size = (s->first_index.size() + s->last_index.size()) * params.tot_number_of_patches * sizeof(int);
             //     * Conclude the disk footprint of this species
                 checkpoint_particles_footprint += one_particle_size*number_of_particles + b_size;
             }

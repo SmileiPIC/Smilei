@@ -585,7 +585,7 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
 
     // Adaptive vectorization:
     // In the case of the adaptive Vectorization,
-    // we have to communicate the bin number (bmax.size())
+    // we have to communicate the bin number (last_index.size())
     // and operator state (vectorized_operators variable)
     if (params.has_adaptive_vectorization)
     {
@@ -595,7 +595,7 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
         std::vector<int> bin_number_list (patch->vecSpecies.size());
         for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
         {
-            bin_number_list[ispec] = patch->vecSpecies[ispec]->bmax.size();
+            bin_number_list[ispec] = patch->vecSpecies[ispec]->last_index.size();
         }
         isend( &bin_number_list, to, tag+maxtag, patch->requests_[maxtag] );
         maxtag ++;
@@ -612,7 +612,7 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
 
     // For the particles
     for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++){
-        isend( &(patch->vecSpecies[ispec]->bmax), to, tag+maxtag+2*ispec+1, patch->requests_[maxtag+2*ispec] );
+        isend( &(patch->vecSpecies[ispec]->last_index), to, tag+maxtag+2*ispec+1, patch->requests_[maxtag+2*ispec] );
         if ( patch->vecSpecies[ispec]->getNbrOfParticles() > 0 ){
             patch->vecSpecies[ispec]->exchangePatch = createMPIparticles( patch->vecSpecies[ispec]->particles );
             isend( patch->vecSpecies[ispec]->particles, to, tag+maxtag+2*ispec, patch->vecSpecies[ispec]->exchangePatch, patch->requests_[maxtag+2*ispec+1] );
@@ -685,7 +685,7 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
     int maxtag = tag;
 
     // In the case of the adaptive Vectorization,
-    // we have to communicate the bin number (bmax.size())
+    // we have to communicate the bin number (last_index.size())
     // and operator state (vectorized_operators variable)
     if (params.has_adaptive_vectorization)
     {
@@ -693,11 +693,11 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
         // All sizes are received in a single buffer
         std::vector<int> bin_number_list (patch->vecSpecies.size());
         recv( &bin_number_list, from, maxtag);
-        // We resize the first_index bmax arrays in consequence
+        // We resize the first_index last_index arrays in consequence
         for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
         {
             //std::cerr << "Size received: " << bin_number_list[ispec] << '\n';
-            patch->vecSpecies[ispec]->bmax.resize(bin_number_list[ispec]);
+            patch->vecSpecies[ispec]->last_index.resize(bin_number_list[ispec]);
             patch->vecSpecies[ispec]->first_index.resize(bin_number_list[ispec]);
         }
         maxtag ++;
@@ -715,13 +715,13 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
     }
 
     for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++){
-        //Receive bmax
-        recv( &patch->vecSpecies[ispec]->bmax, from, maxtag+2*ispec+1 );
-        //Reconstruct first_index from bmax
-        memcpy(&(patch->vecSpecies[ispec]->first_index[1]), &(patch->vecSpecies[ispec]->bmax[0]), (patch->vecSpecies[ispec]->bmax.size()-1)*sizeof(int) );
+        //Receive last_index
+        recv( &patch->vecSpecies[ispec]->last_index, from, maxtag+2*ispec+1 );
+        //Reconstruct first_index from last_index
+        memcpy(&(patch->vecSpecies[ispec]->first_index[1]), &(patch->vecSpecies[ispec]->last_index[0]), (patch->vecSpecies[ispec]->last_index.size()-1)*sizeof(int) );
         patch->vecSpecies[ispec]->first_index[0]=0;
         //Prepare patch for receiving particles
-        nbrOfPartsRecv = patch->vecSpecies[ispec]->bmax.back();
+        nbrOfPartsRecv = patch->vecSpecies[ispec]->last_index.back();
         patch->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv, params.nDim_particle );
         //Receive particles
         if ( nbrOfPartsRecv > 0 ) {
@@ -730,7 +730,7 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
             MPI_Type_free( &(recvParts) );
         }
         /*std::cerr << "Species: " << ispec
-                  << " bmax: " <<  patch->vecSpecies[ispec]->bmax[0]
+                  << " last_index: " <<  patch->vecSpecies[ispec]->last_index[0]
                   << " Number of particles: " << patch->vecSpecies[ispec]->particles->size() <<'\n';*/
     }
 

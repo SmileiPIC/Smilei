@@ -48,8 +48,8 @@ void CollisionsSingle::collide(Params& params, Patch* patch, int itime, vector<D
     for (unsigned int ibin = 0 ; ibin < nbin ; ibin++) {
 
         // get number of particles for all necessary species
-        np1 = s1->bmax[ibin] - s1->first_index[ibin];
-        np2 = s2->bmax[ibin] - s2->first_index[ibin];
+        np1 = s1->last_index[ibin] - s1->first_index[ibin];
+        np2 = s2->last_index[ibin] - s2->first_index[ibin];
         // skip to next bin if no particles
         if (np1==0 || np2==0) continue;
         // Ensure species 1 has more macro-particles

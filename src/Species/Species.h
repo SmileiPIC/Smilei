@@ -187,7 +187,7 @@ public:
     //! Cluster width in number of cells
     unsigned int clrw; //Should divide the number of cells in X of a single MPI domain.
     //! Indices of first and last particles in each bin/cell
-    std::vector<int> first_index, bmax;
+    std::vector<int> first_index, last_index;
     //! Array counting the occurence of each cell key
     std::vector<int> count;
     //! sub dimensions of buffers for dim > 1
@@ -367,7 +367,7 @@ public:
 
     //!
     virtual void add_space_for_a_particle() {
-        bmax[bmax.size()-1]++;
+        last_index[last_index.size()-1]++;
     }
 
     //inline void clearExchList(int tid) {

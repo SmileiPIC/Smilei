@@ -111,7 +111,7 @@ void Collisions::calculate_debye_length(Params& params, Patch * patch)
             charge      = 0.;
             temperature = 0.;
             // loop particles to calculate average quantities
-            for (unsigned int iPart=s->first_index[ibin]; iPart<(unsigned int)s->bmax[ibin] ; iPart++ ) {
+            for (unsigned int iPart=s->first_index[ibin]; iPart<(unsigned int)s->last_index[ibin] ; iPart++ ) {
                 p2 = p->momentum(0,iPart) * p->momentum(0,iPart)
                     +p->momentum(1,iPart) * p->momentum(1,iPart)
                     +p->momentum(2,iPart) * p->momentum(2,iPart);
@@ -193,12 +193,12 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
             npart2 = 0;
             for (ispec1=0 ; ispec1<nspec1 ; ispec1++) {
                 s1 = patch->vecSpecies[(*sg1)[ispec1]];
-                np1[ispec1] = s1->bmax[ibin] - s1->first_index[ibin];
+                np1[ispec1] = s1->last_index[ibin] - s1->first_index[ibin];
                 npart1 += np1[ispec1];
             }
             for (ispec2=0 ; ispec2<nspec2 ; ispec2++) {
                 s2 = patch->vecSpecies[(*sg2)[ispec2]];
-                np2[ispec2] = s2->bmax[ibin] - s2->first_index[ibin];
+                np2[ispec2] = s2->last_index[ibin] - s2->first_index[ibin];
                 npart2 += np2[ispec2];
             }
             if (npart2 <= npart1) break; // ok if group1 has more macro-particles
