@@ -427,7 +427,22 @@ void SpeciesAdaptiveV2::reconfiguration(Params &params, Patch * patch)
 }
 
 // -----------------------------------------------------------------------------
-//! This function reconfigures the type of species according
+//! This function configures the type of species according to the default mode
+//! regardless the number of particles per cell
+// -----------------------------------------------------------------------------
+void SpeciesAdaptiveV2::initial_configuration(Params &params, Patch * patch)
+{
+
+    // Setup the species state regardless the number of particles per cell
+    this->vectorized_operators = (params.adaptive_default_mode == "on");
+
+    // Configure the species regardless the number of particles per cell
+    this->reconfigure_operators(params, patch);
+
+}
+
+// -----------------------------------------------------------------------------
+//! This function configures the type of species according
 //! to the vectorization mode
 // -----------------------------------------------------------------------------
 void SpeciesAdaptiveV2::configuration(Params &params, Patch * patch)
@@ -436,49 +451,40 @@ void SpeciesAdaptiveV2::configuration(Params &params, Patch * patch)
     float vecto_time = 0.;
     float scalar_time = 0.;
 
-    //split cell into smaller sub_cells for refined sorting
-    // cell = (params.n_space[0]+1);
-    //for ( unsigned int i=1; i < params.nDim_field; i++) ncell *= (params.n_space[i]+1);
-
-    // --------------------------------------------------------------------
-    // Metrics 1 - based on the ratio of vectorized cells
-    // Compute the number of cells that contain more than 8 particles
-    //ratio_number_of_vecto_cells = SpeciesMetrics::get_ratio_number_of_vecto_cells(species_loc_bmax,8);
-    // --------------------------------------------------------------------
-
-    // --------------------------------------------------------------------
-    // Metrics 2 - based on the evaluation of the computational time
-    SpeciesMetrics::get_computation_time(species_loc_bmax,
-                                        vecto_time,
-                                        scalar_time);
-
-    if (vecto_time < scalar_time )
+    // Species with particles
+    if ((*particles).size() > 0)
     {
-        this->vectorized_operators = true;
+
+        // --------------------------------------------------------------------
+        // Metrics 2 - based on the evaluation of the computational time
+        SpeciesMetrics::get_computation_time(this->species_loc_bmax,
+                                            vecto_time,
+                                            scalar_time);
+
+        if (vecto_time <= scalar_time)
+        {
+            this->vectorized_operators = true;
+        }
+        else if (vecto_time > scalar_time)
+        {
+            this->vectorized_operators = false;
+        }
     }
-    else if (vecto_time > scalar_time)
-    {
-        this->vectorized_operators = false;
-    }
+
     // Default mode where there is no particles
     else
     {
-        this->vectorized_operators = (params.dynamic_default_mode == "on");
+        this->vectorized_operators = (params.adaptive_default_mode == "on");
     }
+
     // --------------------------------------------------------------------
 
-    /*std::cout << "Vectorized_operators: " << this->vectorized_operators
-              << " ratio_number_of_vecto_cells: " << this->ratio_number_of_vecto_cells
-              << " number_of_vecto_cells: " << number_of_vecto_cells
-              << " number_of_non_zero_cells: " << number_of_non_zero_cells
-              << " ncells: " << ncell << "\n";*/
-
     this->reconfigure_operators(params, patch);
-
 }
 
 // -----------------------------------------------------------------------------
-//! This function reconfigures the operators
+//! This function reconfigures the species operators after evaluating
+//! the best mode from the particle distribution
 // -----------------------------------------------------------------------------
 void SpeciesAdaptiveV2::reconfigure_operators(Params &params, Patch * patch)
 {

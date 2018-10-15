@@ -224,9 +224,9 @@ public:
     //! Domain orientation
     std::string patch_orientation;
 
-    //! Time selection for dynamic vecto
+    //! Time selection for adaptive vectorization
     TimeSelection * dynamic_vecto_time_selection;
-    //! Flag for the dynamic vecto
+    //! Flag for the adaptive vectorization
     bool has_adaptive_vectorization;
 
     //! Time selection for load balancing
@@ -244,8 +244,8 @@ public:
 
     //! String containing the vectorization mode: disable, normal, dynamic, dynamic2
     std::string vectorization_mode;
-    //! Initial state of the patches in dynamic mode
-    std::string dynamic_default_mode;
+    //! Initial state of the patches in adaptive mode
+    std::string adaptive_default_mode;
 
     //! Tells whether there is a moving window
     bool hasWindow;
@@ -290,7 +290,7 @@ public:
 
     //! Boolean for printing the expected disk usage or not
     bool print_expected_disk_usage;
-    
+
     //! Random seed
     unsigned int random_seed;
 

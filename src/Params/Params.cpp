@@ -531,10 +531,10 @@ namelist("")
             PyTools::extract_py("reconfigure_every", "Vectorization"), "Adaptive vectorization"
         );
 
-        // Default mode for the dynamic mode
-        PyTools::extract("initial_mode", dynamic_default_mode, "Vectorization");
-        if (!(dynamic_default_mode == "off" ||
-              dynamic_default_mode == "on"))
+        // Default mode for the adaptive mode
+        PyTools::extract("initial_mode", adaptive_default_mode, "Vectorization");
+        if (!(adaptive_default_mode == "off" ||
+              adaptive_default_mode == "on"))
         {
             ERROR("In block `Vectorization`, parameter `default` must be `off` or `on`");
         }
@@ -805,7 +805,7 @@ void Params::compute()
     }
 
     // clrw != n_space[0] is not compatible
-    // with the dynamic vecto for the moment
+    // with the adaptive vectorization for the moment
     if (vectorization_mode == "adaptive_mixed_sort" || vectorization_mode == "adaptive")
     {
         if (clrw != (int)(n_space[0]))
@@ -916,7 +916,7 @@ void Params::print_init()
     MESSAGE(1,"Mode: " << vectorization_mode);
     if (vectorization_mode == "adaptive_mixed_sort" || vectorization_mode == "adaptive")
     {
-        MESSAGE(1,"Default mode: " << dynamic_default_mode);
+        MESSAGE(1,"Default mode: " << adaptive_default_mode);
         MESSAGE(1,"Time selection: " << dynamic_vecto_time_selection->info());
     }
 

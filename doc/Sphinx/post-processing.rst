@@ -347,7 +347,7 @@ In the latter case, ``patch_information = True`` has to be put in the namelist.
 **Available quantities at the patch level**:
   * ``mpi_rank``                   : the MPI rank that contains the current patch
   * ``vecto``                      : the mode of the specified species in the current patch
-    (vectorized of scalar) when the dynamic mode is activated. Here the ``species`` argument has to be specified.
+    (vectorized of scalar) when the adaptive mode is activated. Here the ``species`` argument has to be specified.
 
   **WARNING**: The timers ``loadBal`` and ``diags`` span parts of the code where *global*
   communications take place. This means they will include time spent doing no calculations,
