@@ -647,6 +647,86 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
             }
         }
     }
+
+    // Send fields
+    if ( params.geometry != "AMcylindrical" ) {
+        isend( patch->EMfields, to, maxtag, patch->requests_,tag);
+    } else {
+        isend( patch->EMfields, to, maxtag, patch->requests_,tag, static_cast<ElectroMagnAM*>(patch->EMfields)->El_.size());
+    }
+
+} // END isend( Patch )
+
+
+void SmileiMPI::isend_species(Patch* patch, int to, int tag, Params& params)
+{
+    //MPI_Request request;
+
+    // Count number max of comms :
+    int maxtag = 0;
+
+    // Dynamic vectorization:
+    // In the case of the dynamic Vectorization,
+    // we have to communicate the bin number (bmax.size())
+    // and operator state (vectorized_operators variable)
+    if (params.has_dynamic_vectorization)
+    {
+
+        // Number of bins
+        // We put all bin number in a list before exchanging
+        //std::vector<int> bin_number_list (patch->vecSpecies.size());
+        //for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
+        //{
+        //    bin_number_list[ispec] = patch->vecSpecies[ispec]->bmax.size();
+        //}
+        //isend( &bin_number_list, to, tag+maxtag, patch->requests_[maxtag] );
+        //maxtag ++;
+
+        // Parameter vectorized_operators
+        std::vector<int> vectorized_operators_list (patch->vecSpecies.size());
+        for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
+        {
+            if (patch->vecSpecies[ispec]->vectorized_operators)
+                vectorized_operators_list[ispec] = 1;
+            else
+                vectorized_operators_list[ispec] = 0;
+        }
+        isend( &vectorized_operators_list, to, tag+maxtag, patch->requests_[maxtag] );
+        maxtag ++;
+    }
+
+    // For the particles
+    for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++){
+        isend( &(patch->vecSpecies[ispec]->bmax), to, tag+maxtag+2*ispec+1, patch->requests_[maxtag+2*ispec] );
+        if ( patch->vecSpecies[ispec]->getNbrOfParticles() > 0 ){
+            patch->vecSpecies[ispec]->exchangePatch = createMPIparticles( patch->vecSpecies[ispec]->particles );
+            isend( patch->vecSpecies[ispec]->particles, to, tag+maxtag+2*ispec, patch->vecSpecies[ispec]->exchangePatch, patch->requests_[maxtag+2*ispec+1] );
+        }
+    }
+
+    maxtag += 2*patch->vecSpecies.size();
+
+    // Send the cumulated radiated energy
+    if (params.hasMCRadiation ||
+        params.hasLLRadiation ||
+        params.hasNielRadiation)
+    {
+
+        double temp;
+        for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++){
+            if ( patch->vecSpecies[ispec]->getNbrOfParticles() > 0
+                  && patch->vecSpecies[ispec]->Radiate){
+
+                //temp = patch->vecSpecies[ispec]->Radiate->getRadiatedEnergy();
+                temp = patch->vecSpecies[ispec]->getNrjRadiation();
+
+                MPI_Isend(&temp,
+                1, MPI_DOUBLE, to, tag + maxtag, SMILEI_COMM_WORLD,
+                &patch->requests_[maxtag]);
+                maxtag ++;
+            }
+        }
+    }
 }
 
 void SmileiMPI::isend_fields(Patch* patch, int to, int tag, Params& params)
@@ -716,8 +796,115 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
         recv( &vectorized_operators_list, from, maxtag);
         for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
         {
-            patch->vecSpecies[ispec]->bmax.resize( 1 );
-            patch->vecSpecies[ispec]->bmin.resize( 1 );
+            patch->vecSpecies[ispec]->bmax.resize( params.n_space[0]/params.clrw );
+            patch->vecSpecies[ispec]->bmin.resize( params.n_space[0]/params.clrw );
+            //std::cerr << "Vecto received: " << vectorized_operators_list[ispec] << '\n';
+            if ( vectorized_operators_list[ispec]==1 ) {
+                patch->vecSpecies[ispec]->vectorized_operators = true;
+                int ncells = 1;
+                for (unsigned int iDim=0 ; iDim<params.nDim_particle ; iDim++)
+                    ncells *= (params.n_space[iDim]+1);
+                patch->vecSpecies[ispec]->bmax.resize( ncells );
+                patch->vecSpecies[ispec]->bmin.resize( ncells );
+            }
+            else
+                patch->vecSpecies[ispec]->vectorized_operators = false;
+        }
+        maxtag ++;
+    }
+
+    for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++){
+        //Receive bmax
+        recv( &patch->vecSpecies[ispec]->bmax, from, maxtag+2*ispec+1 );
+        //Reconstruct bmin from bmax
+        memcpy(&(patch->vecSpecies[ispec]->bmin[1]), &(patch->vecSpecies[ispec]->bmax[0]), (patch->vecSpecies[ispec]->bmax.size()-1)*sizeof(int) );
+        patch->vecSpecies[ispec]->bmin[0]=0;
+        //Prepare patch for receiving particles
+        nbrOfPartsRecv = patch->vecSpecies[ispec]->bmax.back();
+        patch->vecSpecies[ispec]->particles->initialize( nbrOfPartsRecv, params.nDim_particle );
+        //Receive particles
+        if ( nbrOfPartsRecv > 0 ) {
+            recvParts = createMPIparticles( patch->vecSpecies[ispec]->particles );
+            recv( patch->vecSpecies[ispec]->particles, from, maxtag+2*ispec, recvParts );
+            MPI_Type_free( &(recvParts) );
+        }
+        /*std::cerr << "Species: " << ispec
+                  << " bmax: " <<  patch->vecSpecies[ispec]->bmax[0]
+                  << " Number of particles: " << patch->vecSpecies[ispec]->particles->size() <<'\n';*/
+    }
+
+    maxtag += 2*patch->vecSpecies.size();
+
+    // Receive the cumulated radiated energy
+    if (params.hasMCRadiation ||
+        params.hasLLRadiation ||
+        params.hasNielRadiation)
+    {
+
+        MPI_Status status;
+        double temp;
+        for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
+        {
+            if ( patch->vecSpecies[ispec]->getNbrOfParticles() > 0
+                  && patch->vecSpecies[ispec]->Radiate){
+
+                MPI_Recv(&temp,1,MPI_DOUBLE,from,
+                    maxtag,
+                    SMILEI_COMM_WORLD,&status);
+
+                maxtag++;
+
+                //patch->vecSpecies[ispec]->Radiate->setRadiatedEnergy(temp);
+                patch->vecSpecies[ispec]->setNrjRadiation(temp);
+            }
+        }
+    }
+
+    // Receive EM fields
+    patch->EMfields->initAntennas(patch);
+    if ( params.geometry != "AMcylindrical" ) {
+        recv( patch->EMfields, from, maxtag );
+    } else {
+        recv( patch->EMfields, from, maxtag, static_cast<ElectroMagnAM*>(patch->EMfields)->El_.size() );
+    }
+
+} // END recv ( Patch )
+
+
+void SmileiMPI::recv_species(Patch* patch, int from, int tag, Params& params)
+{
+    MPI_Datatype recvParts;
+    int nbrOfPartsRecv;
+
+    // Count number max of comms :int tag
+    int maxtag = tag;
+
+    // In the case of the dynamic Vectorization,
+    // we have to communicate the bin number (bmax.size())
+    // and operator state (vectorized_operators variable)
+    if (params.has_dynamic_vectorization)
+    {
+        // Number of bins
+        // All sizes are received in a single buffer
+        //std::vector<int> bin_number_list (patch->vecSpecies.size());
+        //recv( &bin_number_list, from, maxtag);
+        //// We resize the bmin bmax arrays in consequence
+        //for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
+        //{
+        //    //std::cerr << "Size received: " << bin_number_list[ispec] << '\n';
+        //    patch->vecSpecies[ispec]->bmax.resize(bin_number_list[ispec]);
+        //    patch->vecSpecies[ispec]->bmin.resize(bin_number_list[ispec]);
+        //}
+        //maxtag ++;
+
+        // Parameter vectorized_operators
+        // All parameters are received in a single buffer
+        std::vector<int> vectorized_operators_list (patch->vecSpecies.size());
+        recv( &vectorized_operators_list, from, maxtag);
+        for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
+        {
+            patch->vecSpecies[ispec]->bmax.resize( params.n_space[0]/params.clrw );
+            patch->vecSpecies[ispec]->bmin.resize( params.n_space[0]/params.clrw );
             //std::cerr << "Vecto received: " << vectorized_operators_list[ispec] << '\n';
             if ( vectorized_operators_list[ispec]==1 ) {
                 patch->vecSpecies[ispec]->vectorized_operators = true;
