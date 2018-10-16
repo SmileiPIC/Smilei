@@ -56,8 +56,8 @@ DiagFields(
 )
 
 DiagProbe(
-    every = 5, 
-    origin = [Main.grid_length[0]*0.2]   
+    every = 5,
+    origin = [Main.grid_length[0]*0.2]
 )
 
 DiagProbe(

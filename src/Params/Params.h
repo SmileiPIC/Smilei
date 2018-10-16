@@ -84,6 +84,9 @@ public:
 
     //! sets nDim_particle and nDim_field based on the geometry
     void setDimensions();
+    
+    //! Find out whether a field name corresponds to a species field
+    bool isSpeciesField(std::string field_name);
 
     //! defines the geometry of the simulation
     std::string geometry;

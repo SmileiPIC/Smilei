@@ -27,3 +27,4 @@ doc/html
 */*/*.swo
 */*/*/*.swo
 exec_script.sh.*
+.tags*

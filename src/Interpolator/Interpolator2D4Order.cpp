@@ -49,101 +49,25 @@ void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particl
     Field2D* Bx2D = static_cast<Field2D*>(EMfields->Bx_m);
     Field2D* By2D = static_cast<Field2D*>(EMfields->By_m);
     Field2D* Bz2D = static_cast<Field2D*>(EMfields->Bz_m);
-
-
+    
     // Normalized particle position
     double xpn = particles.position(0, ipart)*dx_inv_;
     double ypn = particles.position(1, ipart)*dy_inv_;
-
-
-    // Indexes of the central nodes
-    ip_ = round(xpn);
-    id_ = round(xpn+0.5);
-    jp_ = round(ypn);
-    jd_ = round(ypn+0.5);
-
-
-    // Declaration and calculation of the coefficient for interpolation
-    double delta2, delta3, delta4;
-
-    deltax   = xpn - (double)id_ + 0.5;
-    delta2  = deltax*deltax;
-    delta3  = delta2*deltax;
-    delta4  = delta3*deltax;
-    coeffxd_[0] = dble_1_ov_384   - dble_1_ov_48  * deltax  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
-    coeffxd_[1] = dble_19_ov_96   - dble_11_ov_24 * deltax  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    coeffxd_[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
-    coeffxd_[3] = dble_19_ov_96   + dble_11_ov_24 * deltax  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    coeffxd_[4] = dble_1_ov_384   + dble_1_ov_48  * deltax  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
-
-    deltax   = xpn - (double)ip_;
-    delta2  = deltax*deltax;
-    delta3  = delta2*deltax;
-    delta4  = delta3*deltax;
-    coeffxp_[0] = dble_1_ov_384   - dble_1_ov_48  * deltax  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
-    coeffxp_[1] = dble_19_ov_96   - dble_11_ov_24 * deltax  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    coeffxp_[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
-    coeffxp_[3] = dble_19_ov_96   + dble_11_ov_24 * deltax  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    coeffxp_[4] = dble_1_ov_384   + dble_1_ov_48  * deltax  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
-
-    deltay   = ypn - (double)jd_ + 0.5;
-    delta2  = deltay*deltay;
-    delta3  = delta2*deltay;
-    delta4  = delta3*deltay;
-    coeffyd_[0] = dble_1_ov_384   - dble_1_ov_48  * deltay  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
-    coeffyd_[1] = dble_19_ov_96   - dble_11_ov_24 * deltay  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    coeffyd_[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
-    coeffyd_[3] = dble_19_ov_96   + dble_11_ov_24 * deltay  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    coeffyd_[4] = dble_1_ov_384   + dble_1_ov_48  * deltay  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
-
-    deltay   = ypn - (double)jp_;
-    delta2  = deltay*deltay;
-    delta3  = delta2*deltay;
-    delta4  = delta3*deltay;
-    coeffyp_[0] = dble_1_ov_384   - dble_1_ov_48  * deltay  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
-    coeffyp_[1] = dble_19_ov_96   - dble_11_ov_24 * deltay  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    coeffyp_[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
-    coeffyp_[3] = dble_19_ov_96   + dble_11_ov_24 * deltay  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    coeffyp_[4] = dble_1_ov_384   + dble_1_ov_48  * deltay  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_24 * delta4;
+    // Calculate coeffs
+    coeffs(xpn, ypn);
     
-    //!\todo CHECK if this is correct for both primal & dual grids !!!
-    // First index for summation
-    ip_ = ip_ - i_domain_begin;
-    id_ = id_ - i_domain_begin;
-    jp_ = jp_ - j_domain_begin;
-    jd_ = jd_ - j_domain_begin;
-
-
-    // -------------------------
     // Interpolation of Ex^(d,p)
-    // -------------------------
-    *(ELoc+0*nparts) =  compute( &coeffxd_[2], &coeffyp_[2], Ex2D, id_, jp_);
-
-    // -------------------------
+    *(ELoc+0*nparts) = compute( &coeffxd_[2], &coeffyp_[2], Ex2D, id_, jp_);
     // Interpolation of Ey^(p,d)
-    // -------------------------
     *(ELoc+1*nparts) = compute( &coeffxp_[2], &coeffyd_[2], Ey2D, ip_, jd_);
-
-    // -------------------------
     // Interpolation of Ez^(p,p)
-    // -------------------------
     *(ELoc+2*nparts) = compute( &coeffxp_[2], &coeffyp_[2], Ez2D, ip_, jp_);
-
-    // -------------------------
     // Interpolation of Bx^(p,d)
-    // -------------------------
     *(BLoc+0*nparts) = compute( &coeffxp_[2], &coeffyd_[2], Bx2D, ip_, jd_);
-
-    // -------------------------
     // Interpolation of By^(d,p)
-    // -------------------------
     *(BLoc+1*nparts) = compute( &coeffxd_[2], &coeffyp_[2], By2D, id_, jp_);
-
-    // -------------------------
     // Interpolation of Bz^(d,d)
-    // -------------------------
     *(BLoc+2*nparts) = compute( &coeffxd_[2], &coeffyd_[2], Bz2D, id_, jd_);
-
 } // END Interpolator2D4Order
 
 void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc)
@@ -154,7 +78,6 @@ void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particl
     double *ELoc = &(smpi->dynamics_Epart[ithread][ipart]);
     double *BLoc = &(smpi->dynamics_Bpart[ithread][ipart]);
 
-
     // Interpolate E, B
     // Compute coefficient for ipart position
     // Static cast of the electromagnetic fields
@@ -164,131 +87,58 @@ void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particl
     Field2D* Bx2D = static_cast<Field2D*>(EMfields->Bx_m);
     Field2D* By2D = static_cast<Field2D*>(EMfields->By_m);
     Field2D* Bz2D = static_cast<Field2D*>(EMfields->Bz_m);
-
-
-    // Normalized particle position
-    double xpn = particles.position(0, ipart)*dx_inv_;
-    double ypn = particles.position(1, ipart)*dy_inv_;
-
-
-    // Indexes of the central nodes
-    ip_ = round(xpn);
-    id_ = round(xpn+0.5);
-    jp_ = round(ypn);
-    jd_ = round(ypn+0.5);
-
-
-    // Declaration and calculation of the coefficient for interpolation
-    double delta2, delta3, delta4;
-
-    deltax   = xpn - (double)id_ + 0.5;
-    delta2  = deltax*deltax;
-    delta3  = delta2*deltax;
-    delta4  = delta3*deltax;
-    coeffxd_[0] = dble_1_ov_384   - dble_1_ov_48  * deltax  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
-    coeffxd_[1] = dble_19_ov_96   - dble_11_ov_24 * deltax  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    coeffxd_[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
-    coeffxd_[3] = dble_19_ov_96   + dble_11_ov_24 * deltax  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    coeffxd_[4] = dble_1_ov_384   + dble_1_ov_48  * deltax  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
-
-    deltax   = xpn - (double)ip_;
-    delta2  = deltax*deltax;
-    delta3  = delta2*deltax;
-    delta4  = delta3*deltax;
-    coeffxp_[0] = dble_1_ov_384   - dble_1_ov_48  * deltax  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
-    coeffxp_[1] = dble_19_ov_96   - dble_11_ov_24 * deltax  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    coeffxp_[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
-    coeffxp_[3] = dble_19_ov_96   + dble_11_ov_24 * deltax  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    coeffxp_[4] = dble_1_ov_384   + dble_1_ov_48  * deltax  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
-
-    deltay   = ypn - (double)jd_ + 0.5;
-    delta2  = deltay*deltay;
-    delta3  = delta2*deltay;
-    delta4  = delta3*deltay;
-    coeffyd_[0] = dble_1_ov_384   - dble_1_ov_48  * deltay  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
-    coeffyd_[1] = dble_19_ov_96   - dble_11_ov_24 * deltay  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    coeffyd_[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
-    coeffyd_[3] = dble_19_ov_96   + dble_11_ov_24 * deltay  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    coeffyd_[4] = dble_1_ov_384   + dble_1_ov_48  * deltay  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
-
-    deltay   = ypn - (double)jp_;
-    delta2  = deltay*deltay;
-    delta3  = delta2*deltay;
-    delta4  = delta3*deltay;
-    coeffyp_[0] = dble_1_ov_384   - dble_1_ov_48  * deltay  + dble_1_ov_16 * delta2 - dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
-    coeffyp_[1] = dble_19_ov_96   - dble_11_ov_24 * deltay  + dble_1_ov_4 * delta2  + dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    coeffyp_[2] = dble_115_ov_192 - dble_5_ov_8   * delta2 + dble_1_ov_4 * delta4;
-    coeffyp_[3] = dble_19_ov_96   + dble_11_ov_24 * deltay  + dble_1_ov_4 * delta2  - dble_1_ov_6  * delta3 - dble_1_ov_6  * delta4;
-    coeffyp_[4] = dble_1_ov_384   + dble_1_ov_48  * deltay  + dble_1_ov_16 * delta2 + dble_1_ov_12 * delta3 + dble_1_ov_12 * delta4;
-
-    //!\todo CHECK if this is correct for both primal & dual grids !!!
-    // First index for summation
-    ip_ = ip_ - i_domain_begin;
-    id_ = id_ - i_domain_begin;
-    jp_ = jp_ - j_domain_begin;
-    jd_ = jd_ - j_domain_begin;
-
-    int nparts( particles.size() );    
-
-    // -------------------------
-    // Interpolation of Ex^(d,p)
-    // -------------------------
-    *(ELoc+0*nparts) =  compute( &coeffxd_[2], &coeffyp_[2], Ex2D, id_, jp_);
-
-    // -------------------------
-    // Interpolation of Ey^(p,d)
-    // -------------------------
-    *(ELoc+1*nparts) = compute( &coeffxp_[2], &coeffyd_[2], Ey2D, ip_, jd_);
-
-    // -------------------------
-    // Interpolation of Ez^(p,p)
-    // -------------------------
-    *(ELoc+2*nparts) = compute( &coeffxp_[2], &coeffyp_[2], Ez2D, ip_, jp_);
-
-    // -------------------------
-    // Interpolation of Bx^(p,d)
-    // -------------------------
-    *(BLoc+0*nparts) = compute( &coeffxp_[2], &coeffyd_[2], Bx2D, ip_, jd_);
-
-    // -------------------------
-    // Interpolation of By^(d,p)
-    // -------------------------
-    *(BLoc+1*nparts) = compute( &coeffxd_[2], &coeffyp_[2], By2D, id_, jp_);
-
-    // -------------------------
-    // Interpolation of Bz^(d,d)
-    // -------------------------
-    *(BLoc+2*nparts) = compute( &coeffxd_[2], &coeffyd_[2], Bz2D, id_, jd_);
-
-    // Static cast of the electromagnetic fields
     Field2D* Jx2D = static_cast<Field2D*>(EMfields->Jx_);
     Field2D* Jy2D = static_cast<Field2D*>(EMfields->Jy_);
     Field2D* Jz2D = static_cast<Field2D*>(EMfields->Jz_);
-
     Field2D* Rho2D= static_cast<Field2D*>(EMfields->rho_);
-
-
-    // -------------------------
-    // Interpolation of Jx^(d,p)
-    // -------------------------
-    (*JLoc).x = compute( &coeffxd_[2], &coeffyp_[2], Jx2D, id_, jp_);
-
-    // -------------------------
+    
+    // Normalized particle position
+    double xpn = particles.position(0, ipart)*dx_inv_;
+    double ypn = particles.position(1, ipart)*dy_inv_;
+    // Calculate coeffs
+    coeffs(xpn, ypn);
+    
+    int nparts( particles.size() );
+    
+    // Interpolation of Ex^(d,p)
+    *(ELoc+0*nparts) =  compute( &coeffxd_[2], &coeffyp_[2], Ex2D, id_, jp_);
     // Interpolation of Ey^(p,d)
-    // -------------------------
-    (*JLoc).y = compute( &coeffxp_[2], &coeffyd_[2], Jy2D, ip_, jd_);
-
-    // -------------------------
+    *(ELoc+1*nparts) = compute( &coeffxp_[2], &coeffyd_[2], Ey2D, ip_, jd_);
     // Interpolation of Ez^(p,p)
-    // -------------------------
+    *(ELoc+2*nparts) = compute( &coeffxp_[2], &coeffyp_[2], Ez2D, ip_, jp_);
+    // Interpolation of Bx^(p,d)
+    *(BLoc+0*nparts) = compute( &coeffxp_[2], &coeffyd_[2], Bx2D, ip_, jd_);
+    // Interpolation of By^(d,p)
+    *(BLoc+1*nparts) = compute( &coeffxd_[2], &coeffyp_[2], By2D, id_, jp_);
+    // Interpolation of Bz^(d,d)
+    *(BLoc+2*nparts) = compute( &coeffxd_[2], &coeffyd_[2], Bz2D, id_, jd_);
+    // Interpolation of Jx^(d,p)
+    (*JLoc).x = compute( &coeffxd_[2], &coeffyp_[2], Jx2D, id_, jp_);
+    // Interpolation of Ey^(p,d)
+    (*JLoc).y = compute( &coeffxp_[2], &coeffyd_[2], Jy2D, ip_, jd_);
+    // Interpolation of Ez^(p,p)
     (*JLoc).z = compute( &coeffxp_[2], &coeffyp_[2], Jz2D, ip_, jp_);
-
-    // -------------------------
     // Interpolation of Rho^(p,p)
-    // -------------------------
     (*RhoLoc) = compute( &coeffxp_[2], &coeffyp_[2], Rho2D, ip_, jp_);
-
 }
+
+// Interpolator on another field than the basic ones
+void Interpolator2D4Order::operator() (Field* field, Particles &particles, int *istart, int *iend, double* FieldLoc)
+{
+    Field2D* F = static_cast<Field2D*>(field);
+    double * coeffx = field->isDual(0) ? &coeffxd_[2] : &coeffxp_[2];
+    double * coeffy = field->isDual(1) ? &coeffyd_[2] : &coeffyp_[2];
+    int * i = field->isDual(0) ? &id_ : &ip_;
+    int * j = field->isDual(1) ? &jd_ : &jp_;
+    
+    for (int ipart=*istart ; ipart<*iend; ipart++ ) {
+        double xpn = particles.position(0, ipart)*dx_inv_;
+        double ypn = particles.position(1, ipart)*dy_inv_;
+        coeffs(xpn, ypn);
+        (*FieldLoc) = compute(coeffx, coeffy, F, *i, *j);
+    }
+}
+
 void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
 {
     std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
@@ -329,4 +179,3 @@ void Interpolator2D4Order::operator() (ElectroMagn* EMfields, Particles &particl
         
     }
 }
-

@@ -67,7 +67,7 @@ vector<double> matrixTimesVector(vector<double> A, vector<double> v) {
 
 
 
-DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe )
+DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, VectorPatch &vecPatches, int n_probe )
 : offset_in_MPI(0)
 {
     probe_n = n_probe;
@@ -176,22 +176,18 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
     // Extract the list of requested fields
     vector<string> fs;
     if(!PyTools::extract("fields",fs,"DiagProbe",n_probe)) {
+        fs.resize(10);
+        fs[0]="Ex"; fs[1]="Ey"; fs[2]="Ez";
+        fs[3]="Bx"; fs[4]="By"; fs[5]="Bz";
+        fs[6]="Jx"; fs[7]="Jy"; fs[8]="Jz"; fs[9]="Rho";
         if (params.Laser_Envelope_model) {
             fs.resize(13);
-            fs[0]="Ex"; fs[1]="Ey"; fs[2]="Ez";
-            fs[3]="Bx"; fs[4]="By"; fs[5]="Bz";
-            fs[6]="Jx"; fs[7]="Jy"; fs[8]="Jz"; fs[9]="Rho";
             fs[10]="Env_A_abs"; fs[11]="Env_Chi",fs[12]="Env_E_abs";
-        }
-        else {
-            fs.resize(10);
-            fs[0]="Ex"; fs[1]="Ey"; fs[2]="Ez";
-            fs[3]="Bx"; fs[4]="By"; fs[5]="Bz";
-            fs[6]="Jx"; fs[7]="Jy"; fs[8]="Jz"; fs[9]="Rho";
         }
     }
     vector<unsigned int> locations;
     locations.resize(13);
+    fieldindex.resize(0);
     for( unsigned int i=0; i<13; i++) locations[i] = fs.size();
     for( unsigned int i=0; i<fs.size(); i++) {
         for( unsigned int j=0; j<i; j++) {
@@ -213,7 +209,22 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe
         else if( fs[i]=="Env_Chi")   locations[11] = i;
         else if( fs[i]=="Env_E_abs") locations[12] = i;
         else {
-            ERROR("Probe #"<<n_probe<<": unknown field "<<fs[i]);
+            // Test whether species-related field
+            bool ok = false;
+            for( unsigned int ifield=0; ifield<vecPatches(0)->EMfields->allFields.size(); ifield++ ) {
+                string field_name = vecPatches(0)->EMfields->allFields[i]->name;
+                if( fs[i]==field_name && params.isSpeciesField(field_name) ) {
+                    vecPatches.allocateField(ifield, params);
+                    locations.push_back(i);
+                    fieldindex.push_back(ifield);
+                    hasRhoJs = true;
+                    ok = true;
+                    break;
+                }
+            }
+            // If no field found
+            if( ! ok )
+                ERROR("Probe #"<<n_probe<<": unknown field "<<fs[i]);
         }
         if( ! hasRhoJs )
             if( fs[i].at(0)=='J' || fs[i].at(0)=='R' )
@@ -368,7 +379,7 @@ void DiagnosticProbes::createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bo
         // loop patch corners
         for( i=0; i<numCorners; i++ ) {
             // Get coordinates of the current corner in terms of x,y,...
-            for( k=0; k<nDim_particle; k++ )                          
+            for( k=0; k<nDim_particle; k++ )
                 point[k] = ( (((i>>k)&1)==0) ? patchMin[k] : patchMax[k] ) - origin[k];
             // Get position of the current corner in the probe's coordinate system
             point = matrixTimesVector( axesInverse, point );
@@ -558,34 +569,33 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         probesArray = new Field2D(probesArraySize);
     }
     #pragma omp barrier
-
+    
     // Loop patches to fill the array
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
         // Loop probe ("fake") particles of current patch
         unsigned int iPart_MPI = offset_in_MPI[ipatch];
         unsigned int npart = vecPatches(ipatch)->probes[probe_n]->particles.size();
-
+        
         LocalFields Jloc_fields;
         double Rloc_fields;
-
+        
         int ithread = 0;
 #ifdef _OPENMP
         ithread = omp_get_thread_num();
 #endif
+        
+        // Interpolate all usual fields
         smpi->dynamics_resize(ithread, nDim_particle, npart, false );
-
         for (unsigned int ipart=0; ipart<npart; ipart++) {
             int iparticle(ipart); // Compatibility
             int false_idx(0);     // Use in classical interp for now, not for probes
-            //     virtual void operator()  (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc) override = 0;
             (*(vecPatches(ipatch)->probesInterp)) (
                 vecPatches(ipatch)->EMfields,
                 vecPatches(ipatch)->probes[probe_n]->particles, smpi,
                 &iparticle, &false_idx, ithread,
                 &Jloc_fields, &Rloc_fields
             );
-
             //! here we fill the probe data!!!
             (*probesArray)(fieldlocation[0],iPart_MPI)=smpi->dynamics_Epart[ithread][ipart+0*npart];
             (*probesArray)(fieldlocation[1],iPart_MPI)=smpi->dynamics_Epart[ithread][ipart+1*npart];
@@ -599,33 +609,40 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
             (*probesArray)(fieldlocation[9],iPart_MPI)=Rloc_fields;
             iPart_MPI++;
         }
-
-
-       // Probes for envelope
-       if (vecPatches(ipatch)->EMfields->envelope != NULL) { 
-           unsigned int iPart_MPI = offset_in_MPI[ipatch];
-           double Env_AabsLoc_fields,Env_ChiLoc_fields,Env_EabsLoc_fields;
-
-           for (unsigned int ipart=0; ipart<npart; ipart++) {          
-               int iparticle(ipart); // Compatibility
-               vecPatches(ipatch)->probesInterp->interpolate_envelope_and_susceptibility(
-                                                                                         vecPatches(ipatch)->EMfields,
-                                                                                         vecPatches(ipatch)->probes[probe_n]->particles,
-                                                                                         iparticle,
-                                                                                         &Env_AabsLoc_fields, &Env_ChiLoc_fields, &Env_EabsLoc_fields
-                                                                                         );
-               //! here we fill the probe data!!!         
-               (*probesArray)(fieldlocation[10],iPart_MPI)=Env_AabsLoc_fields;
-               (*probesArray)(fieldlocation[11],iPart_MPI)=Env_ChiLoc_fields;
-               (*probesArray)(fieldlocation[12],iPart_MPI)=Env_EabsLoc_fields;
-               iPart_MPI++;
-
-           } // END for ipart
-          
+        
+        // Interpolate the species-related fields
+        for( unsigned int ifield=0; ifield<fieldindex.size(); ifield++ ) {
+            int istart(0), iend(npart);
+            double * FieldLoc = &((*probesArray)(fieldlocation[13+ifield],offset_in_MPI[ipatch]));
+            (*(vecPatches(ipatch)->probesInterp)) (
+                vecPatches(ipatch)->EMfields->allFields[fieldindex[ifield]],
+                vecPatches(ipatch)->probes[probe_n]->particles,
+                &istart, &iend,
+                FieldLoc
+            );
+        }
+        
+        // Probes for envelope
+        if (vecPatches(ipatch)->EMfields->envelope != NULL) {
+            unsigned int iPart_MPI = offset_in_MPI[ipatch];
+            double Env_AabsLoc_fields,Env_ChiLoc_fields,Env_EabsLoc_fields;
+            for (unsigned int ipart=0; ipart<npart; ipart++) {
+                int iparticle(ipart); // Compatibility
+                vecPatches(ipatch)->probesInterp->interpolate_envelope_and_susceptibility(
+                    vecPatches(ipatch)->EMfields,
+                    vecPatches(ipatch)->probes[probe_n]->particles,
+                    iparticle,
+                    &Env_AabsLoc_fields, &Env_ChiLoc_fields, &Env_EabsLoc_fields
+                );
+                //! here we fill the probe data!!!
+                (*probesArray)(fieldlocation[10],iPart_MPI)=Env_AabsLoc_fields;
+                (*probesArray)(fieldlocation[11],iPart_MPI)=Env_ChiLoc_fields;
+                (*probesArray)(fieldlocation[12],iPart_MPI)=Env_EabsLoc_fields;
+                iPart_MPI++;
+            } // END for ipart
         } // END if envelope
-
     } // END for ipatch
-
+    
     #pragma omp master
     {
         // Define size in memory

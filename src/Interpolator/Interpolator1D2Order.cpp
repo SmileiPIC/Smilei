@@ -18,10 +18,6 @@ Interpolator1D2Order::Interpolator1D2Order(Params &params, Patch* patch) : Inter
 // ---------------------------------------------------------------------------------------------------------------------
 void Interpolator1D2Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, int nparts, double* ELoc, double* BLoc)
 {
-    
-    // Variable declaration
-    double xjn, xjmxi2;
-    
     // Static cast of the electromagnetic fields
     Field1D* Ex1D     = static_cast<Field1D*>(EMfields->Ex_);
     Field1D* Ey1D     = static_cast<Field1D*>(EMfields->Ey_);
@@ -30,45 +26,20 @@ void Interpolator1D2Order::operator() (ElectroMagn* EMfields, Particles &particl
     Field1D* By1D_m   = static_cast<Field1D*>(EMfields->By_m);
     Field1D* Bz1D_m   = static_cast<Field1D*>(EMfields->Bz_m);
     
-    
     // Particle position (in units of the spatial-step)
-    xjn    = particles.position(0, ipart)*dx_inv_;
+    double xjn = particles.position(0, ipart)*dx_inv_;
+    // Calculate coeffs
+    coeffs(xjn);
     
-    // --------------------------------------------------------
     // Interpolate the fields from the Dual grid : Ex, By, Bz
-    // --------------------------------------------------------
-    id_      = round(xjn+0.5);        // index of the central point
-    xjmxi  = xjn - (double)id_ +0.5;  // normalized distance to the central node
-    xjmxi2 = xjmxi*xjmxi;            // square of the normalized distance to the central node
+    *(ELoc+0*nparts) = compute(coeffd_, Ex1D,   id_);
+    *(BLoc+1*nparts) = compute(coeffd_, By1D_m, id_);
+    *(BLoc+2*nparts) = compute(coeffd_, Bz1D_m, id_);
     
-    // 2nd order interpolation on 3 nodes
-    coeffd_[0] = 0.5 * (xjmxi2-xjmxi+0.25);
-    coeffd_[1] = (0.75-xjmxi2);
-    coeffd_[2] = 0.5 * (xjmxi2+xjmxi+0.25);
-    
-    id_ -= index_domain_begin;
-    
-    *(ELoc+0*nparts) = compute(coeffd_, Ex1D,   id_);  
-    *(BLoc+1*nparts) = compute(coeffd_, By1D_m, id_);  
-    *(BLoc+2*nparts) = compute(coeffd_, Bz1D_m, id_);  
-    
-    // --------------------------------------------------------
     // Interpolate the fields from the Primal grid : Ey, Ez, Bx
-    // --------------------------------------------------------
-    ip_      = round(xjn);      // index of the central point
-    xjmxi  = xjn -(double)ip_;  // normalized distance to the central node
-    xjmxi2 = pow(xjmxi,2);      // square of the normalized distance to the central node
-    
-    // 2nd order interpolation on 3 nodes
-    coeffp_[0] = 0.5 * (xjmxi2-xjmxi+0.25);
-    coeffp_[1] = (0.75-xjmxi2);
-    coeffp_[2] = 0.5 * (xjmxi2+xjmxi+0.25);
-    
-    ip_ -= index_domain_begin;
-    
-    *(ELoc+1*nparts) = compute(coeffp_, Ey1D,   ip_);  
-    *(ELoc+2*nparts) = compute(coeffp_, Ez1D,   ip_);  
-    *(BLoc+0*nparts) = compute(coeffp_, Bx1D_m, ip_);  
+    *(ELoc+1*nparts) = compute(coeffp_, Ey1D,   ip_);
+    *(ELoc+2*nparts) = compute(coeffp_, Ez1D,   ip_);
+    *(BLoc+0*nparts) = compute(coeffp_, Bx1D_m, ip_);
     
 }//END Interpolator1D2Order
 
@@ -78,11 +49,6 @@ void Interpolator1D2Order::operator() (ElectroMagn* EMfields, Particles &particl
 
     double *ELoc = &(smpi->dynamics_Epart[ithread][ipart]);
     double *BLoc = &(smpi->dynamics_Bpart[ithread][ipart]);
-
-    // Interpolate E, B
-    // Compute coefficient for ipart position
-    // Variable declaration
-    double xjn, xjmxi2;
     
     // Static cast of the electromagnetic fields
     Field1D* Ex1D     = static_cast<Field1D*>(EMfields->Ex_);
@@ -91,67 +57,50 @@ void Interpolator1D2Order::operator() (ElectroMagn* EMfields, Particles &particl
     Field1D* Bx1D_m   = static_cast<Field1D*>(EMfields->Bx_m);
     Field1D* By1D_m   = static_cast<Field1D*>(EMfields->By_m);
     Field1D* Bz1D_m   = static_cast<Field1D*>(EMfields->Bz_m);
-    
-    
-    // Particle position (in units of the spatial-step)
-    xjn    = particles.position(0, ipart)*dx_inv_;
-    
-    // --------------------------------------------------------
-    // Interpolate the fields from the Dual grid : Ex, By, Bz
-    // --------------------------------------------------------
-    id_      = round(xjn+0.5);        // index of the central point
-    xjmxi  = xjn - (double)id_ +0.5;  // normalized distance to the central node
-    xjmxi2 = xjmxi*xjmxi;            // square of the normalized distance to the central node
-    
-    // 2nd order interpolation on 3 nodes
-    coeffd_[0] = 0.5 * (xjmxi2-xjmxi+0.25);
-    coeffd_[1] = (0.75-xjmxi2);
-    coeffd_[2] = 0.5 * (xjmxi2+xjmxi+0.25);
-    
-    id_ -= index_domain_begin;
-    
-    int nparts( particles.size() );
-    
-    *(ELoc+0*nparts) = compute(coeffd_, Ex1D,   id_);  
-    *(BLoc+1*nparts) = compute(coeffd_, By1D_m, id_);  
-    *(BLoc+2*nparts) = compute(coeffd_, Bz1D_m, id_);  
-    
-    // --------------------------------------------------------
-    // Interpolate the fields from the Primal grid : Ey, Ez, Bx
-    // --------------------------------------------------------
-    ip_      = round(xjn);      // index of the central point
-    xjmxi  = xjn -(double)ip_;  // normalized distance to the central node
-    xjmxi2 = pow(xjmxi,2);      // square of the normalized distance to the central node
-    
-    // 2nd order interpolation on 3 nodes
-    coeffp_[0] = 0.5 * (xjmxi2-xjmxi+0.25);
-    coeffp_[1] = (0.75-xjmxi2);
-    coeffp_[2] = 0.5 * (xjmxi2+xjmxi+0.25);
-    
-    ip_ -= index_domain_begin;
-    
-    *(ELoc+1*nparts) = compute(coeffp_, Ey1D,   ip_);  
-    *(ELoc+2*nparts) = compute(coeffp_, Ez1D,   ip_);  
-    *(BLoc+0*nparts) = compute(coeffp_, Bx1D_m, ip_);  
-    
-    // Static cast of the electromagnetic fields
     Field1D* Jx1D     = static_cast<Field1D*>(EMfields->Jx_);
     Field1D* Jy1D     = static_cast<Field1D*>(EMfields->Jy_);
     Field1D* Jz1D     = static_cast<Field1D*>(EMfields->Jz_);
     Field1D* Rho1D    = static_cast<Field1D*>(EMfields->rho_);
     
-    // --------------------------------------------------------
+    // Particle position (in units of the spatial-step)
+    double xjn = particles.position(0, ipart)*dx_inv_;
+    // Calculate coeffs
+    coeffs(xjn);
+    
+    int nparts( particles.size() );
+    
+    // Interpolate the fields from the Dual grid : Ex, By, Bz
+    *(ELoc+0*nparts) = compute(coeffd_, Ex1D,   id_);
+    *(BLoc+1*nparts) = compute(coeffd_, By1D_m, id_);
+    *(BLoc+2*nparts) = compute(coeffd_, Bz1D_m, id_);
+    
+    // Interpolate the fields from the Primal grid : Ey, Ez, Bx
+    *(ELoc+1*nparts) = compute(coeffp_, Ey1D,   ip_);
+    *(ELoc+2*nparts) = compute(coeffp_, Ez1D,   ip_);
+    *(BLoc+0*nparts) = compute(coeffp_, Bx1D_m, ip_);
+    
     // Interpolate the fields from the Primal grid : Jy, Jz, Rho
-    // --------------------------------------------------------
-    (*JLoc).y = compute(coeffp_, Jy1D,  ip_);  
-    (*JLoc).z = compute(coeffp_, Jz1D,  ip_);  
-    (*RhoLoc) = compute(coeffp_, Rho1D, ip_);    
+    (*JLoc).y = compute(coeffp_, Jy1D,  ip_);
+    (*JLoc).z = compute(coeffp_, Jz1D,  ip_);
+    (*RhoLoc) = compute(coeffp_, Rho1D, ip_);
     
-    // --------------------------------------------------------
     // Interpolate the fields from the Dual grid : Jx
-    // --------------------------------------------------------
-    (*JLoc).x = compute(coeffd_, Jx1D,  id_);  
+    (*JLoc).x = compute(coeffd_, Jx1D,  id_);
     
+}
+
+// Interpolator on another field than the basic ones
+void Interpolator1D2Order::operator() (Field* field, Particles &particles, int *istart, int *iend, double* FieldLoc)
+{
+    Field1D* F = static_cast<Field1D*>(field);
+    double * coeff = field->isDual(0) ? coeffd_ : coeffp_;
+    int * i = field->isDual(0) ? &id_ : &ip_;
+    
+    for (int ipart=*istart ; ipart<*iend; ipart++ ) {
+        double xjn = particles.position(0, ipart)*dx_inv_;
+        coeffs(xjn);
+        (*FieldLoc) = compute(coeff, F, *i);
+    }
 }
 
 void Interpolator1D2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
@@ -192,4 +141,3 @@ void Interpolator1D2Order::operator() (ElectroMagn* EMfields, Particles &particl
         
     }
 }
-
