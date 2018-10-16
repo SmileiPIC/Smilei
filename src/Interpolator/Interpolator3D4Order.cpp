@@ -139,7 +139,7 @@ void Interpolator3D4Order::operator() (Field* field, Particles &particles, int *
         double ypn = particles.position(1, ipart)*dy_inv_;
         double zpn = particles.position(2, ipart)*dz_inv_;
         coeffs(xpn, ypn, zpn);
-        (*FieldLoc) = compute(coeffx, coeffy, coeffz, F, *i, *j, *k);
+        FieldLoc[ipart] = compute(coeffx, coeffy, coeffz, F, *i, *j, *k);
     }
 }
 

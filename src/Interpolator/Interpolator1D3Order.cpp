@@ -109,7 +109,7 @@ void Interpolator1D3Order::operator() (Field* field, Particles &particles, int *
     for (int ipart=*istart ; ipart<*iend; ipart++ ) {
         double xjn = particles.position(0, ipart)*dx_inv_;
         coeffs(xjn);
-        (*FieldLoc) = compute(coeff, F, *i);
+        FieldLoc[ipart] = compute(coeff, F, *i);
     }
 }
 

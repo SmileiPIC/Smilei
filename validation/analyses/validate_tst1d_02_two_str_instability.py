@@ -20,6 +20,9 @@ Validate("Initial electron momentum distribution", px, 0.1 )
 px = S.ParticleBinning.Diag0(sum={"x":"all"}, timesteps=2000).getData()[0]
 Validate("Final electron momentum distribution", px, 0.1)
 
+Validate("List of fields in Probe", S.Probe(0).getFields() )
+
+Validate("Species probe", S.Probe(0, 'Rho_eon1', timesteps=2000).getData()[0] )
 
 # CONSISTENCY OF DIAGPERFORMANCES
 #   check available quantities

@@ -212,7 +212,7 @@ DiagnosticProbes::DiagnosticProbes( Params &params, SmileiMPI* smpi, VectorPatch
             // Test whether species-related field
             bool ok = false;
             for( unsigned int ifield=0; ifield<vecPatches(0)->EMfields->allFields.size(); ifield++ ) {
-                string field_name = vecPatches(0)->EMfields->allFields[i]->name;
+                string field_name = vecPatches(0)->EMfields->allFields[ifield]->name;
                 if( fs[i]==field_name && params.isSpeciesField(field_name) ) {
                     vecPatches.allocateField(ifield, params);
                     locations.push_back(i);
@@ -613,7 +613,8 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         // Interpolate the species-related fields
         for( unsigned int ifield=0; ifield<fieldindex.size(); ifield++ ) {
             int istart(0), iend(npart);
-            double * FieldLoc = &((*probesArray)(fieldlocation[13+ifield],offset_in_MPI[ipatch]));
+            double * FieldLoc = &((*probesArray)(fieldlocation[13+ifield], offset_in_MPI[ipatch]));
+            //double * FieldLoc = probesArray->data_ + (fieldlocation[13+ifield]*probesArray->dims_[1] + offset_in_MPI[ipatch]);
             (*(vecPatches(ipatch)->probesInterp)) (
                 vecPatches(ipatch)->EMfields->allFields[fieldindex[ifield]],
                 vecPatches(ipatch)->probes[probe_n]->particles,
