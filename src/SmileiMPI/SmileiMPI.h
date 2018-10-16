@@ -71,6 +71,10 @@ public:
     void waitall(Patch* patch);
     void recv (Patch* patch, int from, int hindex, Params& params);
 
+    void isend_fields(Patch* patch, int to  , int hindex, Params& params);
+    void recv_fields (Patch* patch, int from, int hindex, Params& params);
+
+
     void isend(Particles* particles, int to   , int hindex, MPI_Datatype datatype, MPI_Request& request);
     void recv (Particles* partictles, int from, int hindex, MPI_Datatype datatype);
     void isend(std::vector<int>* vec, int to  , int hindex, MPI_Request& request);

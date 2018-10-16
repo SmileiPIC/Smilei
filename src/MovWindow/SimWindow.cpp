@@ -227,6 +227,68 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         }
     }
 
+
+
+    // Fix for load balancing (OpenMPI)  which requires to cut exchanges patches in particles data and fields data
+    // Below fields data are exchanged
+
+#ifndef _NO_MPI_TM
+    #pragma omp for schedule(static)
+#endif
+    for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
+         mypatch = vecPatches_old[ipatch];
+        // Do not sent Xmax conditions
+        if ( mypatch->isXmax() && mypatch->EMfields->emBoundCond[1] )
+            mypatch->EMfields->emBoundCond[1]->disableExternalFields();
+        //If my left neighbor does not belong to me ...
+        if (mypatch->MPI_neighbor_[0][0] != mypatch->MPI_me_) {
+            if (mypatch->MPI_neighbor_[0][0] != MPI_PROC_NULL){
+                smpi->isend_fields( vecPatches_old[ipatch], vecPatches_old[ipatch]->MPI_neighbor_[0][0] , (vecPatches_old[ipatch]->neighbor_[0][0]) * nmessage, params );
+            }
+        }
+    }//End loop on Patches.
+
+    //Creation of new Patches
+    for (unsigned int j = 0; j < patch_to_be_created[my_thread].size();  j++){
+        //create patch without particle.
+#ifndef _NO_MPI_TM
+        #pragma omp critical
+#endif
+        mypatch = vecPatches.patches_[patch_to_be_created[my_thread][j]];
+        // Do not receive Xmin condition
+        if ( mypatch->isXmin() && mypatch->EMfields->emBoundCond[0] )
+            mypatch->EMfields->emBoundCond[0]->disableExternalFields();
+        //Receive Patch if necessary
+        if (mypatch->MPI_neighbor_[0][1] != MPI_PROC_NULL){
+            smpi->recv_fields( mypatch, mypatch->MPI_neighbor_[0][1], (mypatch->hindex)*nmessage, params );
+        }
+        // Create Xmin condition which could not be received
+        if ( mypatch->isXmin() ){
+            for (auto& embc:mypatch->EMfields->emBoundCond) {
+                if (embc) delete embc;
+            }
+            mypatch->EMfields->emBoundCond = ElectroMagnBC_Factory::create(params, mypatch);
+            mypatch->EMfields->laserDisabled();
+        }
+        mypatch->EMfields->laserDisabled();
+        mypatch->EMfields->updateGridSize(params, mypatch);
+    }
+    //Wait for sends to be completed
+#ifndef _NO_MPI_TM
+    #pragma omp for schedule(static)
+#endif
+    for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++){
+        if (vecPatches_old[ipatch]->MPI_neighbor_[0][0] !=  vecPatches_old[ipatch]->MPI_me_ && vecPatches_old[ipatch]->MPI_neighbor_[0][0] != MPI_PROC_NULL){
+            smpi->waitall( vecPatches_old[ipatch] );
+        }
+    }
+
+
+    // End of Fix for load balancing (OpenMPI)  which requires to cut exchanges patches in particles data and fields data
+    // Below fields data are exchanged
+
+
+
     //Update the correct neighbor values
     for (unsigned int j=0; j < update_patches_.size(); j++){
         mypatch = update_patches_[j];
