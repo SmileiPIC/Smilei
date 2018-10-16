@@ -100,10 +100,18 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
 #else
     int my_thread = 0;
 #endif
+
+#ifdef _NO_MPI_TM
+    #pragma omp master
+    {
+#endif
+
     (patch_to_be_created[my_thread]).clear();
     (patch_particle_created[my_thread]).clear();
 
+    #ifndef _NO_MPI_TM
     #pragma omp single
+    #endif
     {
         if (n_moved == 0) MESSAGE(">>> Window starts moving");
 
@@ -111,14 +119,18 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
         n_moved += params.n_space[0];
     }
     //Cut off laser before exchanging any patches to avoid deadlock and store pointers in vecpatches_old.
+#ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
+#endif
     for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++){
         vecPatches_old[ipatch] = vecPatches(ipatch);
         vecPatches(ipatch)->EMfields->laserDisabled();
     }
 
 
+#ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
+#endif
     for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
          mypatch = vecPatches_old[ipatch];
         //If my right neighbor does not belong to me store it as a patch to
@@ -173,7 +185,9 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     //Creation of new Patches
     for (unsigned int j = 0; j < patch_to_be_created[my_thread].size();  j++){
         //create patch without particle.
+#ifndef _NO_MPI_TM
         #pragma omp critical
+#endif
         mypatch = PatchesFactory::clone(vecPatches(0),params, smpi, vecPatches.domain_decomposition_, h0 + patch_to_be_created[my_thread][j], n_moved, false );
 
         // Do not receive Xmin condition
@@ -204,12 +218,76 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
 
     //Wait for sends to be completed
 
+#ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
+#endif
     for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++){
         if (vecPatches_old[ipatch]->MPI_neighbor_[0][0] !=  vecPatches_old[ipatch]->MPI_me_ && vecPatches_old[ipatch]->MPI_neighbor_[0][0] != MPI_PROC_NULL){
             smpi->waitall( vecPatches_old[ipatch] );
         }
     }
+
+
+
+    // Fix for load balancing (OpenMPI)  which requires to cut exchanges patches in particles data and fields data
+    // Below fields data are exchanged
+
+#ifndef _NO_MPI_TM
+    #pragma omp for schedule(static)
+#endif
+    for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++) {
+         mypatch = vecPatches_old[ipatch];
+        // Do not sent Xmax conditions
+        if ( mypatch->isXmax() && mypatch->EMfields->emBoundCond[1] )
+            mypatch->EMfields->emBoundCond[1]->disableExternalFields();
+        //If my left neighbor does not belong to me ...
+        if (mypatch->MPI_neighbor_[0][0] != mypatch->MPI_me_) {
+            if (mypatch->MPI_neighbor_[0][0] != MPI_PROC_NULL){
+                smpi->isend_fields( vecPatches_old[ipatch], vecPatches_old[ipatch]->MPI_neighbor_[0][0] , (vecPatches_old[ipatch]->neighbor_[0][0]) * nmessage, params );
+            }
+        }
+    }//End loop on Patches.
+
+    //Creation of new Patches
+    for (unsigned int j = 0; j < patch_to_be_created[my_thread].size();  j++){
+        //create patch without particle.
+#ifndef _NO_MPI_TM
+        #pragma omp critical
+#endif
+        mypatch = vecPatches.patches_[patch_to_be_created[my_thread][j]];
+        // Do not receive Xmin condition
+        if ( mypatch->isXmin() && mypatch->EMfields->emBoundCond[0] )
+            mypatch->EMfields->emBoundCond[0]->disableExternalFields();
+        //Receive Patch if necessary
+        if (mypatch->MPI_neighbor_[0][1] != MPI_PROC_NULL){
+            smpi->recv_fields( mypatch, mypatch->MPI_neighbor_[0][1], (mypatch->hindex)*nmessage, params );
+        }
+        // Create Xmin condition which could not be received
+        if ( mypatch->isXmin() ){
+            for (auto& embc:mypatch->EMfields->emBoundCond) {
+                if (embc) delete embc;
+            }
+            mypatch->EMfields->emBoundCond = ElectroMagnBC_Factory::create(params, mypatch);
+            mypatch->EMfields->laserDisabled();
+        }
+        mypatch->EMfields->laserDisabled();
+        mypatch->EMfields->updateGridSize(params, mypatch);
+    }
+    //Wait for sends to be completed
+#ifndef _NO_MPI_TM
+    #pragma omp for schedule(static)
+#endif
+    for (unsigned int ipatch = 0 ; ipatch < nPatches ; ipatch++){
+        if (vecPatches_old[ipatch]->MPI_neighbor_[0][0] !=  vecPatches_old[ipatch]->MPI_me_ && vecPatches_old[ipatch]->MPI_neighbor_[0][0] != MPI_PROC_NULL){
+            smpi->waitall( vecPatches_old[ipatch] );
+        }
+    }
+
+
+    // End of Fix for load balancing (OpenMPI)  which requires to cut exchanges patches in particles data and fields data
+    // Below fields data are exchanged
+
+
 
     //Update the correct neighbor values
     for (unsigned int j=0; j < update_patches_.size(); j++){
@@ -257,10 +335,14 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             smpi->waitall( send_patches_[j] );
     }
 
+#ifndef _NO_MPI_TM
     #pragma omp barrier
+#endif
 
     //Fill necessary patches with particles
+#ifndef _NO_MPI_TM
     #pragma omp master
+#endif
     {
         for (int ithread=0; ithread < max_threads ; ithread++){
             for (unsigned int j=0; j< (patch_to_be_created[ithread]).size(); j++){
@@ -338,7 +420,9 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             } // end j loop
         } // End ithread loop
     } // End omp master region
+#ifndef _NO_MPI_TM
     #pragma omp barrier
+#endif
 
     //Fill necessary patches with particles
 #ifdef _VECTO
@@ -346,7 +430,9 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     {
         //#pragma omp master
         //{
+#ifndef _NO_MPI_TM
         #pragma omp for schedule(static) private(mypatch)
+#endif
         for (int ithread=0; ithread < max_threads ; ithread++){
             for (unsigned int j=0; j< (patch_to_be_created[ithread]).size(); j++){
 
@@ -371,7 +457,9 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     // First adaptive vectorization mode
     else if (params.vectorization_mode == "adaptive_mixed_sort")
     {
+#ifndef _NO_MPI_TM
         #pragma omp for schedule(static) private(mypatch)
+#endif
         for (int ithread=0; ithread < max_threads ; ithread++){
             for (unsigned int j=0; j< (patch_to_be_created[ithread]).size(); j++){
 
@@ -415,7 +503,9 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     {
         //#pragma omp master
         //{
+#ifndef _NO_MPI_TM
         #pragma omp for schedule(static) private(mypatch)
+#endif
         for (int ithread=0; ithread < max_threads ; ithread++){
             for (unsigned int j=0; j< (patch_to_be_created[ithread]).size(); j++){
 
@@ -457,7 +547,9 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
 #endif
 
     // Diagnostic Track Particles
+#ifndef _NO_MPI_TM
     #pragma omp for schedule(static) private(mypatch)
+#endif
     for (int ithread=0; ithread < max_threads ; ithread++){
         for (unsigned int j=0; j< (patch_to_be_created[ithread]).size(); j++){
 
@@ -474,7 +566,9 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
             } // end test patch_particle_created[ithread][j]
         } // end j loop
     } // End ithread loop
+#ifndef _NO_MPI_TM
     #pragma omp single nowait
+#endif
     {
         x_moved += cell_length_x_*params.n_space[0];
         vecPatches.update_field_list(smpi) ;
@@ -508,7 +602,9 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     }
 
     // SUM energy_field_lost, energy_part_lost and poynting / All threads
+#ifndef _NO_MPI_TM
     #pragma omp critical
+#endif
     {
         vecPatches(0)->EMfields->storeNRJlost( energy_field_lost );
         for ( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ )
@@ -520,5 +616,8 @@ void SimWindow::operate(VectorPatch& vecPatches, SmileiMPI* smpi, Params& params
     }
 
 
+#ifdef _NO_MPI_TM
+    } // end omp master
+#endif
 
 }

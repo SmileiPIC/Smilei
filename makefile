@@ -66,7 +66,11 @@ ifeq ($(PICSAR),TRUE)
 	LDFLAGS += -L$(FFTW3_LIB) -lfftw3
 	LDFLAGS += -lgfortran
 endif
+
 CXXFLAGS += -D_VECTO
+
+# Manage MPI communications by a single thread (master in MW)
+CXXFLAGS += -D_NO_MPI_TM
 
 # Manage options in the "config" parameter
 ifneq (,$(findstring debug,$(config)))

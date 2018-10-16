@@ -44,9 +44,11 @@ SmileiMPI::SmileiMPI( int* argc, char*** argv )
 
 #ifdef _OPENMP
     MPI_Init_thread( argc, argv, MPI_THREAD_MULTIPLE, &mpi_provided );
+#ifndef _NO_MPI_TM
     if (mpi_provided != MPI_THREAD_MULTIPLE){
         ERROR("MPI_THREAD_MULTIPLE not supported. Compile your MPI library with THREAD_MULTIPLE support.");
     }
+#endif
     smilei_omp_max_threads = omp_get_max_threads();
 #else
     MPI_Init( argc, argv );
@@ -592,19 +594,22 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
 
         // Number of bins
         // We put all bin number in a list before exchanging
-        std::vector<int> bin_number_list (patch->vecSpecies.size());
-        for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
-        {
-            bin_number_list[ispec] = patch->vecSpecies[ispec]->last_index.size();
-        }
-        isend( &bin_number_list, to, tag+maxtag, patch->requests_[maxtag] );
-        maxtag ++;
+        //std::vector<int> bin_number_list (patch->vecSpecies.size());
+        //for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
+        //{
+        //    bin_number_list[ispec] = patch->vecSpecies[ispec]->last_index.size();
+        //}
+        //isend( &bin_number_list, to, tag+maxtag, patch->requests_[maxtag] );
+        //maxtag ++;
 
         // Parameter vectorized_operators
         std::vector<int> vectorized_operators_list (patch->vecSpecies.size());
         for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
         {
-            vectorized_operators_list[ispec] = (int) (patch->vecSpecies[ispec]->vectorized_operators);
+            if (patch->vecSpecies[ispec]->vectorized_operators)
+                vectorized_operators_list[ispec] = 1;
+            else
+                vectorized_operators_list[ispec] = 0;
         }
         isend( &vectorized_operators_list, to, tag+maxtag, patch->requests_[maxtag] );
         maxtag ++;
@@ -642,12 +647,15 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
             }
         }
     }
+}
 
+void SmileiMPI::isend_fields(Patch* patch, int to, int tag, Params& params)
+{
     // Send fields
     if ( params.geometry != "AMcylindrical" ) {
-        isend( patch->EMfields, to, maxtag, patch->requests_,tag);
+        isend( patch->EMfields, to, 0, patch->requests_,tag);
     } else {
-        isend( patch->EMfields, to, maxtag, patch->requests_,tag, static_cast<ElectroMagnAM*>(patch->EMfields)->El_.size());
+        isend( patch->EMfields, to, 0, patch->requests_,tag, static_cast<ElectroMagnAM*>(patch->EMfields)->El_.size());
     }
 
 } // END isend( Patch )
@@ -691,16 +699,16 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
     {
         // Number of bins
         // All sizes are received in a single buffer
-        std::vector<int> bin_number_list (patch->vecSpecies.size());
-        recv( &bin_number_list, from, maxtag);
-        // We resize the first_index last_index arrays in consequence
-        for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
-        {
-            //std::cerr << "Size received: " << bin_number_list[ispec] << '\n';
-            patch->vecSpecies[ispec]->last_index.resize(bin_number_list[ispec]);
-            patch->vecSpecies[ispec]->first_index.resize(bin_number_list[ispec]);
-        }
-        maxtag ++;
+        //std::vector<int> bin_number_list (patch->vecSpecies.size());
+        //recv( &bin_number_list, from, maxtag);
+        //// We resize the first_index last_index arrays in consequence
+        //for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
+        //{
+        //    //std::cerr << "Size received: " << bin_number_list[ispec] << '\n';
+        //    patch->vecSpecies[ispec]->last_index.resize(bin_number_list[ispec]);
+        //    patch->vecSpecies[ispec]->first_index.resize(bin_number_list[ispec]);
+        //}
+        //maxtag ++;
 
         // Parameter vectorized_operators
         // All parameters are received in a single buffer
@@ -708,8 +716,19 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
         recv( &vectorized_operators_list, from, maxtag);
         for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
         {
+            patch->vecSpecies[ispec]->last_index.resize( 1 );
+            patch->vecSpecies[ispec]->first_index.resize( 1 );
             //std::cerr << "Vecto received: " << vectorized_operators_list[ispec] << '\n';
-            patch->vecSpecies[ispec]->vectorized_operators = (bool)(vectorized_operators_list[ispec]);
+            if ( vectorized_operators_list[ispec]==1 ) {
+                patch->vecSpecies[ispec]->vectorized_operators = true;
+                int ncells = 1;
+                for (unsigned int iDim=0 ; iDim<params.nDim_particle ; iDim++)
+                    ncells *= (params.n_space[iDim]+1);
+                patch->vecSpecies[ispec]->last_index.resize( ncells );
+                patch->vecSpecies[ispec]->first_index.resize( ncells );
+            }
+            else
+                patch->vecSpecies[ispec]->vectorized_operators = false;
         }
         maxtag ++;
     }
@@ -760,13 +779,16 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
             }
         }
     }
+}
 
+void SmileiMPI::recv_fields(Patch* patch, int from, int tag, Params& params)
+{
     // Receive EM fields
     patch->EMfields->initAntennas(patch);
     if ( params.geometry != "AMcylindrical" ) {
-        recv( patch->EMfields, from, maxtag );
+        recv( patch->EMfields, from, tag );
     } else {
-        recv( patch->EMfields, from, maxtag, static_cast<ElectroMagnAM*>(patch->EMfields)->El_.size() );
+        recv( patch->EMfields, from, tag, static_cast<ElectroMagnAM*>(patch->EMfields)->El_.size() );
     }
 
 } // END recv ( Patch )
