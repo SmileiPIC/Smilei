@@ -1707,14 +1707,14 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
         // if hindex of patch to be sent      >  future hindex of the first patch owned by this process
         if (send_patch_id_[ipatch]+refHindex_ > istart ) newMPIrank = smpi->getRank() + 1;
 
-        smpi->isend( (*this)(send_patch_id_[ipatch]), newMPIrank, (refHindex_+send_patch_id_[ipatch])*nmessage, params );
+        smpi->isend_species( (*this)(send_patch_id_[ipatch]), newMPIrank, (refHindex_+send_patch_id_[ipatch])*nmessage, params );
     }
 
     for (unsigned int ipatch=0 ; ipatch < recv_patch_id_.size() ; ipatch++) {
         //if  hindex of patch to be received > first hindex actually owned, that means it comes from the next MPI process and not from the previous anymore.
         if(recv_patch_id_[ipatch] > refHindex_ ) oldMPIrank = smpi->getRank() + 1;
 
-        smpi->recv( recv_patches_[ipatch], oldMPIrank, recv_patch_id_[ipatch]*nmessage, params );
+        smpi->recv_species( recv_patches_[ipatch], oldMPIrank, recv_patch_id_[ipatch]*nmessage, params );
     }
 
 
@@ -1725,6 +1725,8 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
 
 
     // Split the exchangePatches process to avoid deadlock with OpenMPI (observed with OpenMPI on Irene and Poicnare, not with IntelMPI)
+    newMPIrank = smpi->getRank() -1;
+    oldMPIrank = smpi->getRank() -1;
 
 
     // Send fields
@@ -1750,8 +1752,6 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
         smpi->waitall( (*this)(send_patch_id_[ipatch]) );
 
     smpi->barrier();
-
-
 
 
     //Delete sent patches
