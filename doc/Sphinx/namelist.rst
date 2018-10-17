@@ -1170,7 +1170,7 @@ The fast oscillations of the laser are neglected and all the physical quantities
 Effects involving characteristic lengths comparable to the laser central wavelength, or effects dependent on the polarization of the laser, cannot be modeled with this option.
 
 For the moment the only way to specify a laser pulse through this model in :program:`Smilei` is through a cylindrically symmetric 3D gaussian beam. For the moment, only one laser pulse can be specified through the envelope model in a simulation, thus multi-pulse set-ups cannot be defined.
-Contrarily to a standard Laser, the laser envelope will be entirely initialized inside the simulation box at the start of the simulation. 
+Contrarily to a standard Laser, the laser envelope will be entirely initialized inside the simulation box at the start of the simulation.
 
 Following is the laser envelope creator::
 
@@ -2165,15 +2165,20 @@ To add one probe diagnostic, include the block ``DiagProbe``::
 
 .. py:data:: fields
 
-  :default: ``[]`` (all fields)
-
+  :default: ``[]``, which means ``["Ex", "Ey", "Ez", "Bx", "By", "Bz", "Jx", "Jy", "Jz", "Rho"]``
+  
   A list of fields among ``"Ex"``, ``"Ey"``, ``"Ez"``,
-  ``"Bx"``, ``"By"``, ``"Bz"``, ``"Jx"``, ``"Jy"``, ``"Jz"`` and ``"Rho"``. Only these
-  fields will be saved.
-  Note that it does NOT speed up calculation much, but it saves disk space.
+  ``"Bx"``, ``"By"``, ``"Bz"``, ``"Jx"``, ``"Jy"``, ``"Jz"`` and ``"Rho"``.
+  Only listed fields will be saved although they are all calculated.
+  
+  The contributions of each species to the currents and the density are also available,
+  although they are not included by default. They may be added to the list as
+  ``"Jx_abc"``, ``"Jy_abc"``, ``"Jz_abc"`` or ``"Rho_abc"``, where ``abc`` is the
+  species name.
+  
+  In the case of an envelope model for the laser (see :doc:`laser_envelope`),
+  the following fields are also available: ``"Env_A_abs"``, ``"Env_Chi"``, ``"Env_E_abs"``.
 
-  In the case of an envelope model for the laser (see :doc:`laser_envelope`), the following fields are also available: ``"Env_A_abs"``,
-  ``"Env_Chi"``, ``"Env_E_abs"``.
 
 
 **Examples of probe diagnostics**

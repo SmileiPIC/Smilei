@@ -24,6 +24,7 @@ Upcoming changes
 * Vectorization
 * Interface with the PICSAR library
 * Faster collisions
+* Probes can output species' current and density
 
 ----
 
