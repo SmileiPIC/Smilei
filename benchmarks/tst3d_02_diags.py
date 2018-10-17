@@ -53,7 +53,7 @@ Antenna(
 
 iportion = 3
 poly3 = polygonal( xpoints=[(iportion+i/3.)*portion_width for i in range(4)], xvalues=[0., 2., -1, 0.] )
-Species( 
+Species(
 	name = "test0",
 	position_initialization = "random",
 	momentum_initialization = "cold",
@@ -73,7 +73,7 @@ Species(
 )
 iportion = 4
 poly4 = polygonal( xpoints=[(iportion+i/3.)*portion_width for i in range(4)], xvalues=[0., 2., -1, 0.] )
-Species( 
+Species(
 	name = "test1",
 	position_initialization = "random",
 	momentum_initialization = "cold",
@@ -93,10 +93,10 @@ Species(
 )
 
 DiagScalar(
-    every = 10, 
+    every = 10,
 )
 DiagFields(
-    every = 45, 
+    every = 45,
 )
 
 DiagProbe(
@@ -164,4 +164,3 @@ for quantity in quantities:
 		species = ["test0"],
 		axes = [["x" , 0., Main.grid_length[0], 10]]
 	)
-
