@@ -669,7 +669,7 @@ void SmileiMPI::isend_species(Patch* patch, int to, int tag, Params& params)
     // In the case of the dynamic Vectorization,
     // we have to communicate the bin number (last_index.size())
     // and operator state (vectorized_operators variable)
-    if (params.has_dynamic_vectorization)
+    if (params.has_adaptive_vectorization)
     {
 
         // Number of bins
@@ -882,7 +882,7 @@ void SmileiMPI::recv_species(Patch* patch, int from, int tag, Params& params)
     // In the case of the dynamic Vectorization,
     // we have to communicate the bin number (last_index.size())
     // and operator state (vectorized_operators variable)
-    if (params.has_dynamic_vectorization)
+    if (params.has_adaptive_vectorization)
     {
         // Number of bins
         // All sizes are received in a single buffer
