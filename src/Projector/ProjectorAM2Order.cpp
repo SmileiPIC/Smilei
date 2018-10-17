@@ -375,7 +375,6 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
             linindex = iloc*nprimr+jloc;
-            // Jl_mode_1 = 0 on axis to add to BC.
             Jl [linindex] += C_m * Jl_p[i][j] * invV[jloc];
         }
     }//i
