@@ -66,6 +66,7 @@ ifeq ($(PICSAR),TRUE)
 	LDFLAGS += -L$(FFTW3_LIB) -lfftw3
 	LDFLAGS += -lgfortran
 endif
+
 CXXFLAGS += -D_VECTO
 
 # Manage options in the "config" parameter
@@ -115,6 +116,11 @@ ifeq (,$(findstring noopenmp,$(config)))
     CXXFLAGS += $(OPENMP_FLAG)
 else
     LDFLAGS += -mt_mpi # intelmpi only
+endif
+
+# Manage MPI communications by a single thread (master in MW)
+ifeq (,$(findstring no_mpi_tm,$(config)))
+    CXXFLAGS += -D_NO_MPI_TM
 endif
 
 
@@ -262,6 +268,7 @@ help:
 	@echo '    verbose              : to print compile command lines'
 	@echo '    debug                : to compile in debug mode (code runs really slow)'
 	@echo '    noopenmp             : to compile without openmp'
+	@echo '    no_mpi_tm            : to compile with a MPI library without MPI_THREAD_MULTIPLE support'
 	@echo '    opt-report           : to generate a report about optimization, vectorization and inlining (Intel compiler)'
 	@echo '    scalasca             : to compile using scalasca'
 	@echo '    advisor              : to compile for Intel Advisor analysis'

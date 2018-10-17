@@ -23,48 +23,39 @@ void SyncVectorPatch::exchangeParticles(VectorPatch& vecPatches, int ispec, Para
     }
 
     // Init comm in direction 0
+#ifndef _NO_MPI_TM
     #pragma omp for schedule(runtime)
+#else
+    #pragma omp single
+#endif
     for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-        vecPatches(ipatch)->initCommParticles(smpi, ispec, params, 0, &vecPatches);
+        vecPatches(ipatch)->exchNbrOfParticles(smpi, ispec, params, 0, &vecPatches);
     }
 }
 
 
 void SyncVectorPatch::finalize_and_sort_parts(VectorPatch& vecPatches, int ispec, Params &params, SmileiMPI* smpi, Timers &timers, int itime)
 {
-    #pragma omp for schedule(runtime)
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-        vecPatches(ipatch)->CommParticles(smpi, ispec, params, 0, &vecPatches);
-    }
-    #pragma omp for schedule(runtime)
-    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-        vecPatches(ipatch)->finalizeCommParticles(smpi, ispec, params, 0, &vecPatches);
-    }
-
+    SyncVectorPatch::finalizeExchangeParticles( vecPatches, ispec, 0, params, smpi, timers, itime);
+    
     // Per direction
     for (unsigned int iDim=1 ; iDim<params.nDim_field ; iDim++) {
+#ifndef _NO_MPI_TM
         #pragma omp for schedule(runtime)
+#else
+    #pragma omp single
+#endif
         for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-            vecPatches(ipatch)->initCommParticles(smpi, ispec, params, iDim, &vecPatches);
-        }
-//MESSAGE("after");
-        #pragma omp for schedule(runtime)
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-            vecPatches(ipatch)->CommParticles(smpi, ispec, params, iDim, &vecPatches);
-        }
-
-//MESSAGE("before");
-        #pragma omp for schedule(runtime)
-        for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-            vecPatches(ipatch)->finalizeCommParticles(smpi, ispec, params, iDim, &vecPatches);
+            vecPatches(ipatch)->exchNbrOfParticles(smpi, ispec, params, iDim, &vecPatches);
         }
 
-//MESSAGE("before 1");
+        SyncVectorPatch::finalizeExchangeParticles( vecPatches, ispec, iDim, params, smpi, timers, itime);
     }
 
-    //#pragma omp for schedule(runtime)
-    //for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++)
-    //    vecPatches(ipatch)->injectParticles(smpi, ispec, params, params.nDim_particle-1, &vecPatches); // wait
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+        vecPatches(ipatch)->injectParticles(smpi, ispec, params, &vecPatches);
+    }
 
 
     /*
@@ -98,6 +89,48 @@ void SyncVectorPatch::finalize_and_sort_parts(VectorPatch& vecPatches, int ispec
     }*/
 
 }
+
+
+void SyncVectorPatch::finalizeExchangeParticles(VectorPatch& vecPatches, int ispec, int iDim, Params &params, SmileiMPI* smpi, Timers &timers, int itime)
+{
+#ifndef _NO_MPI_TM
+    #pragma omp for schedule(runtime)
+#else
+    #pragma omp single
+#endif
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+        vecPatches(ipatch)->endNbrOfParticles(smpi, ispec, params, iDim, &vecPatches);
+    }
+    
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+        vecPatches(ipatch)->prepareParticles(smpi, ispec, params, iDim, &vecPatches);
+    }
+    
+#ifndef _NO_MPI_TM
+    #pragma omp for schedule(runtime)
+#else
+    #pragma omp single
+#endif
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+        vecPatches(ipatch)->exchParticles(smpi, ispec, params, iDim, &vecPatches);
+    }
+
+#ifndef _NO_MPI_TM
+    #pragma omp for schedule(runtime)
+#else
+    #pragma omp single
+#endif
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+        vecPatches(ipatch)->finalizeExchParticles(smpi, ispec, params, iDim, &vecPatches);
+    }
+    
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
+        vecPatches(ipatch)->cornersParticles(smpi, ispec, params, iDim, &vecPatches);
+    }
+}
+
 
 // ---------------------------------------------------------------------------------------------------------------------
 // ---------------------------------------------------------------------------------------------------------------------
@@ -177,7 +210,11 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches, 
     // Sum per direction :
 
     // iDim = 0, initialize comms : Isend/Irecv
+#ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
+#else
+    #pragma omp single
+#endif
     for (unsigned int ifield=0 ; ifield<fields.size() ; ifield++) {
         unsigned int ipatch = ifield%nPatches;
         vecPatches(ipatch)->initSumField( fields[ifield], 0, smpi );
@@ -210,7 +247,11 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches, 
     }
 
     // iDim = 0, finalize (waitall)
+#ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
+#else
+    #pragma omp single
+#endif
     for (unsigned int ifield=0 ; ifield<fields.size() ; ifield++){
         unsigned int ipatch = ifield%nPatches;
         vecPatches(ipatch)->finalizeSumField( fields[ifield], 0 );
@@ -223,7 +264,11 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches, 
         // Sum per direction :
 
         // iDim = 1, initialize comms : Isend/Irecv
+#ifndef _NO_MPI_TM
         #pragma omp for schedule(static)
+#else
+        #pragma omp single
+#endif
         for (unsigned int ifield=0 ; ifield<fields.size() ; ifield++) {
             unsigned int ipatch = ifield%nPatches;
             vecPatches(ipatch)->initSumField( fields[ifield], 1, smpi );
@@ -260,7 +305,11 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches, 
         }
 
         // iDim = 1, finalize (waitall)
+#ifndef _NO_MPI_TM
         #pragma omp for schedule(static)
+#else
+        #pragma omp single
+#endif
         for (unsigned int ifield=0 ; ifield<fields.size() ; ifield++){
             unsigned int ipatch = ifield%nPatches;
             vecPatches(ipatch)->finalizeSumField( fields[ifield], 1 );
@@ -273,7 +322,11 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches, 
             // Sum per direction :
 
             // iDim = 2, initialize comms : Isend/Irecv
+#ifndef _NO_MPI_TM
             #pragma omp for schedule(static)
+#else
+            #pragma omp single
+#endif
             for (unsigned int ifield=0 ; ifield<fields.size() ; ifield++) {
                 unsigned int ipatch = ifield%nPatches;
                 vecPatches(ipatch)->initSumField( fields[ifield], 2, smpi );
@@ -312,7 +365,11 @@ void SyncVectorPatch::sum( std::vector<Field*> fields, VectorPatch& vecPatches, 
             }
 
             // iDim = 2, complete non local sync through MPIfinalize (waitall)
+#ifndef _NO_MPI_TM
             #pragma omp for schedule(static)
+#else
+            #pragma omp single
+#endif
             for (unsigned int ifield=0 ; ifield<fields.size() ; ifield++){
                 unsigned int ipatch = ifield%nPatches;
                 vecPatches(ipatch)->finalizeSumField( fields[ifield], 2 );
@@ -350,7 +407,11 @@ void SyncVectorPatch::sumComplex( std::vector<Field*> fields, VectorPatch& vecPa
     // Sum per direction :
 
     // iDim = 0, initialize comms : Isend/Irecv
+#ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
+#else
+    #pragma omp single
+#endif
     for (unsigned int ifield=0 ; ifield<fields.size() ; ifield++) {
         unsigned int ipatch = ifield%nPatches;
         vecPatches(ipatch)->initSumField( fields[ifield], 0, smpi );
@@ -385,7 +446,11 @@ void SyncVectorPatch::sumComplex( std::vector<Field*> fields, VectorPatch& vecPa
     }
 
     // iDim = 0, finalize (waitall)
+#ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
+#else
+    #pragma omp single
+#endif
     for (unsigned int ifield=0 ; ifield<fields.size() ; ifield++){
         unsigned int ipatch = ifield%nPatches;
         vecPatches(ipatch)->finalizeSumField( fields[ifield], 0 );
@@ -398,7 +463,11 @@ void SyncVectorPatch::sumComplex( std::vector<Field*> fields, VectorPatch& vecPa
         // Sum per direction :
 
         // iDim = 1, initialize comms : Isend/Irecv
+#ifndef _NO_MPI_TM
         #pragma omp for schedule(static)
+#else
+        #pragma omp single
+#endif
         for (unsigned int ifield=0 ; ifield<fields.size() ; ifield++) {
             unsigned int ipatch = ifield%nPatches;
             vecPatches(ipatch)->initSumField( fields[ifield], 1, smpi );
@@ -437,7 +506,11 @@ void SyncVectorPatch::sumComplex( std::vector<Field*> fields, VectorPatch& vecPa
         }
 
         // iDim = 1, finalize (waitall)
+#ifndef _NO_MPI_TM
         #pragma omp for schedule(static)
+#else
+        #pragma omp single
+#endif
         for (unsigned int ifield=0 ; ifield<fields.size() ; ifield++){
             unsigned int ipatch = ifield%nPatches;
             vecPatches(ipatch)->finalizeSumField( fields[ifield], 1 );
@@ -450,7 +523,11 @@ void SyncVectorPatch::sumComplex( std::vector<Field*> fields, VectorPatch& vecPa
             // Sum per direction :
 
             // iDim = 2, initialize comms : Isend/Irecv
+#ifndef _NO_MPI_TM
             #pragma omp for schedule(static)
+#else
+            #pragma omp single
+#endif
             for (unsigned int ifield=0 ; ifield<fields.size() ; ifield++) {
                 unsigned int ipatch = ifield%nPatches;
                 vecPatches(ipatch)->initSumField( fields[ifield], 2, smpi );
@@ -491,7 +568,11 @@ void SyncVectorPatch::sumComplex( std::vector<Field*> fields, VectorPatch& vecPa
             }
 
             // iDim = 2, complete non local sync through MPIfinalize (waitall)
+#ifndef _NO_MPI_TM
             #pragma omp for schedule(static)
+#else
+            #pragma omp single
+#endif
             for (unsigned int ifield=0 ; ifield<fields.size() ; ifield++){
                 unsigned int ipatch = ifield%nPatches;
                 vecPatches(ipatch)->finalizeSumField( fields[ifield], 2 );
@@ -538,7 +619,11 @@ void SyncVectorPatch::sum_all_components( std::vector<Field*>& fields, VectorPat
 
     // iDim = 0, initialize comms : Isend/Irecv
     unsigned int nPatchMPIx = vecPatches.MPIxIdx.size();
+#ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
+#else
+    #pragma omp single
+#endif
     for (unsigned int ifield=0 ; ifield<nPatchMPIx ; ifield++) {
         unsigned int ipatch = vecPatches.MPIxIdx[ifield];
         vecPatches(ipatch)->initSumField( vecPatches.densitiesMPIx[ifield             ], 0, smpi ); // Jx
@@ -578,7 +663,11 @@ void SyncVectorPatch::sum_all_components( std::vector<Field*>& fields, VectorPat
     }
 
     // iDim = 0, finalize (waitall)
+#ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
+#else
+    #pragma omp single
+#endif
     for (unsigned int ifield=0 ; ifield<nPatchMPIx ; ifield++) {
         unsigned int ipatch = vecPatches.MPIxIdx[ifield];
         vecPatches(ipatch)->finalizeSumField( vecPatches.densitiesMPIx[ifield             ], 0 ); // Jx
@@ -594,7 +683,11 @@ void SyncVectorPatch::sum_all_components( std::vector<Field*>& fields, VectorPat
 
         // iDim = 1, initialize comms : Isend/Irecv
         unsigned int nPatchMPIy = vecPatches.MPIyIdx.size();
+#ifndef _NO_MPI_TM
         #pragma omp for schedule(static)
+#else
+        #pragma omp single
+#endif
         for (unsigned int ifield=0 ; ifield<nPatchMPIy ; ifield++) {
             unsigned int ipatch = vecPatches.MPIyIdx[ifield];
             vecPatches(ipatch)->initSumField( vecPatches.densitiesMPIy[ifield             ], 1, smpi ); // Jx
@@ -639,7 +732,11 @@ void SyncVectorPatch::sum_all_components( std::vector<Field*>& fields, VectorPat
         }
 
         // iDim = 1, finalize (waitall)
+#ifndef _NO_MPI_TM
         #pragma omp for schedule(static)
+#else
+        #pragma omp single
+#endif
         for (unsigned int ifield=0 ; ifield<nPatchMPIy ; ifield=ifield+1) {
             unsigned int ipatch = vecPatches.MPIyIdx[ifield];
             vecPatches(ipatch)->finalizeSumField( vecPatches.densitiesMPIy[ifield             ], 1 ); // Jx
@@ -655,7 +752,11 @@ void SyncVectorPatch::sum_all_components( std::vector<Field*>& fields, VectorPat
 
             // iDim = 2, initialize comms : Isend/Irecv
             unsigned int nPatchMPIz = vecPatches.MPIzIdx.size();
+#ifndef _NO_MPI_TM
             #pragma omp for schedule(static)
+#else
+            #pragma omp single
+#endif
             for (unsigned int ifield=0 ; ifield<nPatchMPIz ; ifield++) {
                 unsigned int ipatch = vecPatches.MPIzIdx[ifield];
                 vecPatches(ipatch)->initSumField( vecPatches.densitiesMPIz[ifield             ], 2, smpi ); // Jx
@@ -703,7 +804,11 @@ void SyncVectorPatch::sum_all_components( std::vector<Field*>& fields, VectorPat
             }
 
             // iDim = 2, complete non local sync through MPIfinalize (waitall)
+#ifndef _NO_MPI_TM
             #pragma omp for schedule(static)
+#else
+            #pragma omp single
+#endif
             for (unsigned int ifield=0 ; ifield<nPatchMPIz ; ifield=ifield+1) {
                 unsigned int ipatch = vecPatches.MPIzIdx[ifield];
                 vecPatches(ipatch)->finalizeSumField( vecPatches.densitiesMPIz[ifield             ], 2 ); // Jx
@@ -946,7 +1051,11 @@ void SyncVectorPatch::exchangeEnvChi( Params& params, VectorPatch& vecPatches, S
 void SyncVectorPatch::exchange_along_all_directions( std::vector<Field*> fields, VectorPatch& vecPatches, SmileiMPI* smpi )
 {
     for ( unsigned int iDim=0 ; iDim<fields[0]->dims_.size() ; iDim++ ) {
+#ifndef _NO_MPI_TM
         #pragma omp for schedule(static)
+#else
+        #pragma omp single
+#endif
         for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
             vecPatches(ipatch)->initExchange( fields[ipatch], iDim, smpi );
     } // End for iDim
@@ -1022,7 +1131,11 @@ void SyncVectorPatch::exchange_along_all_directions( std::vector<Field*> fields,
 void SyncVectorPatch::finalize_exchange_along_all_directions( std::vector<Field*> fields, VectorPatch& vecPatches )
 {
     for ( unsigned int iDim=0 ; iDim<fields[0]->dims_.size() ; iDim++ ) {
+#ifndef _NO_MPI_TM
         #pragma omp for schedule(static)
+#else
+        #pragma omp single
+#endif
         for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
             vecPatches(ipatch)->finalizeExchange( fields[ipatch], iDim );
     } // End for iDim
@@ -1032,7 +1145,11 @@ void SyncVectorPatch::finalize_exchange_along_all_directions( std::vector<Field*
 void SyncVectorPatch::exchangeComplex( std::vector<Field*> fields, VectorPatch& vecPatches, SmileiMPI* smpi )
 {
     for ( unsigned int iDim=0 ; iDim<fields[0]->dims_.size() ; iDim++ ) {
+#ifndef _NO_MPI_TM
         #pragma omp for schedule(static)
+#else
+        #pragma omp single
+#endif
         for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
             vecPatches(ipatch)->initExchangeComplex( fields[ipatch], iDim, smpi );
     } // End for iDim
@@ -1190,7 +1307,11 @@ void SyncVectorPatch::exchange_along_all_directions_noomp( std::vector<Field*> f
 void SyncVectorPatch::finalizeexchangeComplex( std::vector<Field*> fields, VectorPatch& vecPatches )
 {
     for ( unsigned int iDim=0 ; iDim<fields[0]->dims_.size() ; iDim++ ) {
+#ifndef _NO_MPI_TM
         #pragma omp for schedule(static)
+#else
+        #pragma omp single
+#endif
         for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
             vecPatches(ipatch)->finalizeExchangeComplex( fields[ipatch], iDim );
     } // End for iDim
@@ -1234,11 +1355,19 @@ void SyncVectorPatch::exchange_synchronized_per_direction( std::vector<Field*> f
     if (fields[0]->dims_.size()>2) {
 
         // Dimension 2
+#ifndef _NO_MPI_TM
         #pragma omp for schedule(static)
+#else
+        #pragma omp single
+#endif
         for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
             vecPatches(ipatch)->initExchange( fields[ipatch], 2, smpi );
 
+#ifndef _NO_MPI_TM
         #pragma omp for schedule(static)
+#else
+        #pragma omp single
+#endif
         for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
             vecPatches(ipatch)->finalizeExchange( fields[ipatch], 2 );
 
@@ -1267,11 +1396,19 @@ void SyncVectorPatch::exchange_synchronized_per_direction( std::vector<Field*> f
     }
 
     // Dimension 1
+#ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
+#else
+    #pragma omp single
+#endif
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
         vecPatches(ipatch)->initExchange( fields[ipatch], 1, smpi );
 
+#ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
+#else
+    #pragma omp single
+#endif
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
         vecPatches(ipatch)->finalizeExchange( fields[ipatch], 1 );
 
@@ -1296,11 +1433,19 @@ void SyncVectorPatch::exchange_synchronized_per_direction( std::vector<Field*> f
     } // End for( ipatch )
 
     // Dimension 0
+#ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
+#else
+    #pragma omp single
+#endif
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
         vecPatches(ipatch)->initExchange( fields[ipatch], 0, smpi );
 
+#ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
+#else
+    #pragma omp single
+#endif
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
         vecPatches(ipatch)->finalizeExchange( fields[ipatch], 0 );
 
@@ -1333,7 +1478,11 @@ void SyncVectorPatch::exchange_synchronized_per_direction( std::vector<Field*> f
 void SyncVectorPatch::exchange_all_components_along_X( std::vector<Field*>& fields, VectorPatch& vecPatches, SmileiMPI* smpi )
 {
     unsigned int nMPIx = vecPatches.MPIxIdx.size();
+#ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
+#else
+    #pragma omp single
+#endif
     for (unsigned int ifield=0 ; ifield<nMPIx ; ifield++) {
         unsigned int ipatch = vecPatches.MPIxIdx[ifield];
         vecPatches(ipatch)->initExchange( vecPatches.B_MPIx[ifield      ], 0, smpi ); // By
@@ -1387,7 +1536,11 @@ void SyncVectorPatch::exchange_all_components_along_X( std::vector<Field*>& fiel
 void SyncVectorPatch::finalize_exchange_all_components_along_X( std::vector<Field*>& fields, VectorPatch& vecPatches )
 {
     unsigned int nMPIx = vecPatches.MPIxIdx.size();
+#ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
+#else
+    #pragma omp single
+#endif
     for (unsigned int ifield=0 ; ifield<nMPIx ; ifield++) {
         unsigned int ipatch = vecPatches.MPIxIdx[ifield];
         vecPatches(ipatch)->finalizeExchange( vecPatches.B_MPIx[ifield      ], 0 ); // By
@@ -1406,7 +1559,11 @@ void SyncVectorPatch::finalize_exchange_all_components_along_X( std::vector<Fiel
 void SyncVectorPatch::exchange_all_components_along_Y( std::vector<Field*>& fields, VectorPatch& vecPatches, SmileiMPI* smpi )
 {
     unsigned int nMPIy = vecPatches.MPIyIdx.size();
+#ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
+#else
+    #pragma omp single
+#endif
     for (unsigned int ifield=0 ; ifield<nMPIy ; ifield++) {
         unsigned int ipatch = vecPatches.MPIyIdx[ifield];
         vecPatches(ipatch)->initExchange( vecPatches.B1_MPIy[ifield      ], 1, smpi );   // Bx
@@ -1462,7 +1619,11 @@ void SyncVectorPatch::exchange_all_components_along_Y( std::vector<Field*>& fiel
 void SyncVectorPatch::finalize_exchange_all_components_along_Y( std::vector<Field*>& fields, VectorPatch& vecPatches )
 {
     unsigned int nMPIy = vecPatches.MPIyIdx.size();
+#ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
+#else
+    #pragma omp single
+#endif
     for (unsigned int ifield=0 ; ifield<nMPIy ; ifield++) {
         unsigned int ipatch = vecPatches.MPIyIdx[ifield];
         vecPatches(ipatch)->finalizeExchange( vecPatches.B1_MPIy[ifield      ], 1 ); // By
@@ -1483,7 +1644,11 @@ void SyncVectorPatch::finalize_exchange_all_components_along_Y( std::vector<Fiel
 void SyncVectorPatch::exchange_all_components_along_Z( std::vector<Field*> fields, VectorPatch& vecPatches, SmileiMPI* smpi )
 {
     unsigned int nMPIz = vecPatches.MPIzIdx.size();
+#ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
+#else
+    #pragma omp single
+#endif
     for (unsigned int ifield=0 ; ifield<nMPIz ; ifield++) {
         unsigned int ipatch = vecPatches.MPIzIdx[ifield];
         vecPatches(ipatch)->initExchange( vecPatches.B2_MPIz[ifield],       2, smpi ); // Bx
@@ -1537,7 +1702,11 @@ void SyncVectorPatch::exchange_all_components_along_Z( std::vector<Field*> field
 void SyncVectorPatch::finalize_exchange_all_components_along_Z( std::vector<Field*> fields, VectorPatch& vecPatches )
 {
     unsigned int nMPIz = vecPatches.MPIzIdx.size();
+#ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
+#else
+    #pragma omp single
+#endif
     for (unsigned int ifield=0 ; ifield<nMPIz ; ifield++) {
         unsigned int ipatch = vecPatches.MPIzIdx[ifield];
         vecPatches(ipatch)->finalizeExchange( vecPatches.B2_MPIz[ifield      ], 2 ); // Bx
@@ -1555,7 +1724,11 @@ void SyncVectorPatch::finalize_exchange_all_components_along_Z( std::vector<Fiel
 
 void SyncVectorPatch::exchange_along_X( std::vector<Field*> fields, VectorPatch& vecPatches, SmileiMPI* smpi )
 {
+#ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
+#else
+    #pragma omp single
+#endif
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
         vecPatches(ipatch)->initExchange( fields[ipatch], 0, smpi );
 
@@ -1597,7 +1770,11 @@ void SyncVectorPatch::exchange_along_X( std::vector<Field*> fields, VectorPatch&
 
 void SyncVectorPatch::finalize_exchange_along_X( std::vector<Field*> fields, VectorPatch& vecPatches )
 {
+#ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
+#else
+    #pragma omp single
+#endif
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
         vecPatches(ipatch)->finalizeExchange( fields[ipatch], 0 );
 
@@ -1605,7 +1782,11 @@ void SyncVectorPatch::finalize_exchange_along_X( std::vector<Field*> fields, Vec
 
 void SyncVectorPatch::exchange_along_Y( std::vector<Field*> fields, VectorPatch& vecPatches, SmileiMPI* smpi )
 {
+#ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
+#else
+    #pragma omp single
+#endif
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
         vecPatches(ipatch)->initExchange( fields[ipatch], 1, smpi );
 
@@ -1646,7 +1827,11 @@ void SyncVectorPatch::exchange_along_Y( std::vector<Field*> fields, VectorPatch&
 
 void SyncVectorPatch::finalize_exchange_along_Y( std::vector<Field*> fields, VectorPatch& vecPatches )
 {
+#ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
+#else
+    #pragma omp single
+#endif
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
         vecPatches(ipatch)->finalizeExchange( fields[ipatch], 1 );
 
@@ -1654,7 +1839,11 @@ void SyncVectorPatch::finalize_exchange_along_Y( std::vector<Field*> fields, Vec
 
 void SyncVectorPatch::exchange_along_Z( std::vector<Field*> fields, VectorPatch& vecPatches, SmileiMPI* smpi )
 {
+#ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
+#else
+    #pragma omp single
+#endif
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
         vecPatches(ipatch)->initExchange( fields[ipatch], 2, smpi );
 
@@ -1694,7 +1883,11 @@ void SyncVectorPatch::exchange_along_Z( std::vector<Field*> fields, VectorPatch&
 
 void SyncVectorPatch::finalize_exchange_along_Z( std::vector<Field*> fields, VectorPatch& vecPatches )
 {
+#ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
+#else
+    #pragma omp single
+#endif
     for (unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++)
         vecPatches(ipatch)->finalizeExchange( fields[ipatch], 2 );
 

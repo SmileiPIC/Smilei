@@ -113,12 +113,20 @@ public:
     void cleanMPIBuffers(int ispec, Params& params);
     //! manage Idx of particles per direction,
     void initExchParticles(SmileiMPI* smpi, int ispec, Params& params);
-    //!init comm  nbr of particles/
-    void initCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
+    //! init comm  nbr of particles
+    void exchNbrOfParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
     //! finalize comm / nbr of particles, init exch / particles
-    void CommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
-    //! finalize exch / particles, manage particles suppr/introduce
-    void finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
+    void endNbrOfParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
+    //! extract particles from main data structure to buffers, init exch / particles
+    void prepareParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
+    //! effective exchange of particles   
+    void exchParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
+    //! finalize exch / particles
+    void finalizeExchParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
+    //! Treat diagonalParticles
+    void cornersParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
+    //! inject particles received in main data structure and particles sorting
+    void injectParticles(SmileiMPI* smpi, int ispec, Params& params, VectorPatch* vecPatch);
     //! clean memory resizing particles structure
     void cleanParticlesOverhead(Params& params);
     //! delete Particles included in the index of particles to exchange. Assumes indexes are sorted.
