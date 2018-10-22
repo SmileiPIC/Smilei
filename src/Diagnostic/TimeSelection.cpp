@@ -111,7 +111,7 @@ TimeSelection::TimeSelection()
     PreviousTime = std::numeric_limits<int>::max();
 }
 
-// Empty time selection
+// Basic time selection
 TimeSelection::TimeSelection(int period)
 {
     start         = 0;

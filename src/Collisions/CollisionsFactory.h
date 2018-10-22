@@ -118,7 +118,7 @@ public:
         if( debug_every>0 ) MESSAGE(2,"Debug every " << debug_every << " timesteps");
         mystream.str(""); // clear
         if( ionizing>0 ) MESSAGE(2,"Collisional ionization with atomic number "<<Z);
-
+        
         // If debugging log requested
         if( debug_every>0 ) {
             // Build the file name
@@ -149,9 +149,6 @@ public:
                 H5Fclose(fileId);
             }
         }
-        
-        if( params.vectorization_mode != "adaptive" )
-            WARNING("For collisions to be correctly computed, it is strongly advised to use the Vectorization(mode='dynamic2')");
         
         // new Collisions object
         if( sgroup[0].size()>1 || sgroup[1].size()>1 ) {

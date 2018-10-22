@@ -509,9 +509,9 @@ namelist("")
     // Activation of the vectorized subroutines
     vectorization_mode = "off";
     has_adaptive_vectorization = false;
-
+    dynamic_vecto_time_selection = nullptr;
+    
     if( PyTools::nComponents("Vectorization")>0 ) {
-
         // Extraction of the vectorization mode
         PyTools::extract("mode", vectorization_mode, "Vectorization");
         if (!(vectorization_mode == "off" ||
@@ -525,12 +525,7 @@ namelist("")
         {
             has_adaptive_vectorization = true;
         }
-
-        // get parameter "every" which describes a timestep selection
-        dynamic_vecto_time_selection = new TimeSelection(
-            PyTools::extract_py("reconfigure_every", "Vectorization"), "Adaptive vectorization"
-        );
-
+        
         // Default mode for the adaptive mode
         PyTools::extract("initial_mode", adaptive_default_mode, "Vectorization");
         if (!(adaptive_default_mode == "off" ||
@@ -538,21 +533,37 @@ namelist("")
         {
             ERROR("In block `Vectorization`, parameter `default` must be `off` or `on`");
         }
-
-    } else {
-        dynamic_vecto_time_selection  = new TimeSelection(1);
+        
+        // In case of collisions, ensure particle sort per cell
+        if( PyTools::nComponents("Collisions") > 0 ) {
+            if( vectorization_mode == "adaptive_mixed_sort" ) // collisions need sorting per cell
+                ERROR("Collisions are incompatible with the vectorization mode 'adaptive_mixed_sort'.")
+            if( vectorization_mode == "off" ) {
+                WARNING("For collisions, particles have been forced to be sorted per cell");
+                vectorization_mode = "adaptive";
+                has_adaptive_vectorization = true;
+                adaptive_default_mode = "off";
+                dynamic_vecto_time_selection = new TimeSelection();
+            }
+        }
+        
+        // get parameter "every" which describes a timestep selection
+        if( ! dynamic_vecto_time_selection )
+            dynamic_vecto_time_selection = new TimeSelection(
+                PyTools::extract_py("reconfigure_every", "Vectorization"), "Adaptive vectorization"
+            );
     }
-
+    
     // Read the "print_every" parameter
     print_every = (int)(simulation_time/timestep)/10;
     PyTools::extract("print_every", print_every, "Main");
     if (!print_every) print_every = 1;
-
+    
     // Read the "print_expected_disk_usage" parameter
     if( ! PyTools::extract("print_expected_disk_usage", print_expected_disk_usage, "Main") ) {
         ERROR("The parameter `Main.print_expected_disk_usage` must be True or False");
     }
-
+    
     // -------------------------------------------------------
     // Checking species order
     // -------------------------------------------------------

@@ -242,7 +242,7 @@ public:
     //! Compute an initially balanced patch distribution right from the start
     bool initial_balance;
 
-    //! String containing the vectorization mode: disable, normal, dynamic, dynamic2
+    //! String containing the vectorization mode: off, on, adaptive, adaptive_mixed_sort
     std::string vectorization_mode;
     //! Initial state of the patches in adaptive mode
     std::string adaptive_default_mode;
