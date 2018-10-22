@@ -225,7 +225,7 @@ public:
     std::string patch_orientation;
 
     //! Time selection for adaptive vectorization
-    TimeSelection * dynamic_vecto_time_selection;
+    TimeSelection * adaptive_vecto_time_selection;
     //! Flag for the adaptive vectorization
     bool has_adaptive_vectorization;
 

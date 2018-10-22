@@ -308,7 +308,7 @@ int main (int argc, char* argv[])
             }
 
             // Patch reconfiguration
-            if( params.has_adaptive_vectorization && params.dynamic_vecto_time_selection->theTimeIsNow(itime) ) {
+            if( params.has_adaptive_vectorization && params.adaptive_vecto_time_selection->theTimeIsNow(itime) ) {
                 vecPatches.reconfiguration(params, timers, itime);
             }
 

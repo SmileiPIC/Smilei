@@ -509,7 +509,7 @@ namelist("")
     // Activation of the vectorized subroutines
     vectorization_mode = "off";
     has_adaptive_vectorization = false;
-    dynamic_vecto_time_selection = nullptr;
+    adaptive_vecto_time_selection = nullptr;
     
     if( PyTools::nComponents("Vectorization")>0 ) {
         // Extraction of the vectorization mode
@@ -543,13 +543,13 @@ namelist("")
                 vectorization_mode = "adaptive";
                 has_adaptive_vectorization = true;
                 adaptive_default_mode = "off";
-                dynamic_vecto_time_selection = new TimeSelection();
+                adaptive_vecto_time_selection = new TimeSelection();
             }
         }
         
         // get parameter "every" which describes a timestep selection
-        if( ! dynamic_vecto_time_selection )
-            dynamic_vecto_time_selection = new TimeSelection(
+        if( ! adaptive_vecto_time_selection )
+            adaptive_vecto_time_selection = new TimeSelection(
                 PyTools::extract_py("reconfigure_every", "Vectorization"), "Adaptive vectorization"
             );
     }
@@ -729,7 +729,7 @@ namelist("")
 
 Params::~Params() {
     if( load_balancing_time_selection ) delete load_balancing_time_selection;
-    if( dynamic_vecto_time_selection ) delete dynamic_vecto_time_selection;
+    if( adaptive_vecto_time_selection ) delete adaptive_vecto_time_selection;
     PyTools::closePython();
 }
 
@@ -928,7 +928,7 @@ void Params::print_init()
     if (vectorization_mode == "adaptive_mixed_sort" || vectorization_mode == "adaptive")
     {
         MESSAGE(1,"Default mode: " << adaptive_default_mode);
-        MESSAGE(1,"Time selection: " << dynamic_vecto_time_selection->info());
+        MESSAGE(1,"Time selection: " << adaptive_vecto_time_selection->info());
     }
 
 }
