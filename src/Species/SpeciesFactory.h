@@ -55,8 +55,7 @@ public:
 
         // Extract type of species dynamics from namelist
         std::string pusher = "boris"; // default value
-        if (!PyTools::extract("pusher", pusher ,"Species",ispec) )
-            if ( patch->isMaster() ) WARNING("For species '" << species_name << "', pusher not defined: assumed = 'boris'.");
+        PyTools::extract("pusher", pusher ,"Species",ispec);
 
         // Extract type of species radiation from namelist
         std::string radiation_model = "none"; // default value
