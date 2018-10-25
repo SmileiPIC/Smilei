@@ -308,10 +308,8 @@ int main (int argc, char* argv[])
             }
 
             // Patch reconfiguration
-            if( params.has_adaptive_vectorization ) {
-                if ( params.dynamic_vecto_time_selection->theTimeIsNow(itime) ) {
-                    vecPatches.reconfiguration(params, timers, itime);
-                }
+            if( params.has_adaptive_vectorization && params.adaptive_vecto_time_selection->theTimeIsNow(itime) ) {
+                vecPatches.reconfiguration(params, timers, itime);
             }
 
             // apply collisions if requested

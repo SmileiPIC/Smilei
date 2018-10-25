@@ -379,7 +379,7 @@ The block ``Vectorization`` is optional. It controls the SIMD operations that ca
 
   Vectorization(
       mode = "adaptive",
-      reconfigure_every = 5,
+      reconfigure_every = 20,
       initial_mode = "on"
   )
 
@@ -388,22 +388,23 @@ The block ``Vectorization`` is optional. It controls the SIMD operations that ca
   :default: ``"off"``
 
   * ``"off"``: non-vectorized operators are used.
-    Recommended when the number of particles per cell stays below
-    10.
+    Recommended when the number of particles per cell stays below 10.
   * ``"on"``: vectorized operators are used.
+    Recommended when the number of particles per cell stays above 10.
+    Particles are sorted per cell.
   * ``"adaptive"``: the best operators (scalar or vectorized)
-    are determined dynamically and locally (per patch and per species).
-    Operators use a new cell-based sorting method,
+    are determined and configured dynamically and locally
+    (per patch and per species).
+    Particles are sorted per cell.
 
-  In the ``"adaptive"`` modes, :py:data:`clrw` is set to the maximum by default.
+  In the ``"adaptive"`` mode, :py:data:`clrw` is set to the maximum.
 
 .. py:data:: reconfigure_every
 
   :default: 20
 
   The number of timesteps between each dynamic reconfiguration of
-  the vectorized operators, when using the
-  ``"adaptive"`` vectorization modes.
+  the vectorized operators, when using the  ``"adaptive"`` vectorization mode.
   It may be set to a :ref:`time selection <TimeSelections>` as well.
 
 
@@ -411,7 +412,7 @@ The block ``Vectorization`` is optional. It controls the SIMD operations that ca
 
   :default: ``off``
 
-  Default state when the adaptive computational mode is activated
+  Default state when the ``"adaptive"`` mode is activated
   and no particle is present in the patch.
 
 

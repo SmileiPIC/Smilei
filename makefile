@@ -119,7 +119,7 @@ else
 endif
 
 # Manage MPI communications by a single thread (master in MW)
-ifeq (,$(findstring no_mpi_tm,$(config)))
+ifneq (,$(findstring no_mpi_tm,$(config)))
     CXXFLAGS += -D_NO_MPI_TM
 endif
 
