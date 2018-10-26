@@ -90,7 +90,21 @@ public:
     //! Timers for the patch
     std::vector<double> patch_timers;
 #endif
-
+    
+	//! Random number generator
+    inline uint32_t xorshift32()
+    {
+        /* Algorithm "xor" from p. 4 of Marsaglia, "Xorshift RNGs" */
+        xorshift32_state ^= xorshift32_state << 13;
+        xorshift32_state ^= xorshift32_state >> 17;
+        xorshift32_state ^= xorshift32_state << 5;
+        return xorshift32_state;
+    }
+    //! State of the random number generator
+    uint32_t xorshift32_state;
+    //! Inverse of the maximum value of the random number generator
+    const double xorshift32_invmax = 1./4294967296.;
+    
     // MPI exchange/sum methods for particles/fields
     //   - fields communication specified per geometry (pure virtual)
     // --------------------------------------------------------------
@@ -99,12 +113,20 @@ public:
     void cleanMPIBuffers(int ispec, Params& params);
     //! manage Idx of particles per direction,
     void initExchParticles(SmileiMPI* smpi, int ispec, Params& params);
-    //!init comm  nbr of particles/
-    void initCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
+    //! init comm  nbr of particles
+    void exchNbrOfParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
     //! finalize comm / nbr of particles, init exch / particles
-    void CommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
-    //! finalize exch / particles, manage particles suppr/introduce
-    void finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
+    void endNbrOfParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
+    //! extract particles from main data structure to buffers, init exch / particles
+    void prepareParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
+    //! effective exchange of particles   
+    void exchParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
+    //! finalize exch / particles
+    void finalizeExchParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
+    //! Treat diagonalParticles
+    void cornersParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
+    //! inject particles received in main data structure and particles sorting
+    void injectParticles(SmileiMPI* smpi, int ispec, Params& params, VectorPatch* vecPatch);
     //! clean memory resizing particles structure
     void cleanParticlesOverhead(Params& params);
     //! delete Particles included in the index of particles to exchange. Assumes indexes are sorted.
@@ -305,7 +327,7 @@ protected:
     std::vector<int> cell_starting_global_index;
 
     std::vector<unsigned int> oversize;
-
+    
 };
 
 

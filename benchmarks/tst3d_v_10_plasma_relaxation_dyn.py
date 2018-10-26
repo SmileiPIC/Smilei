@@ -81,7 +81,7 @@ Main(
 )
 
 Vectorization(
-    mode = "dynamic",
+    mode = "adaptive",
 )
 
 Species(

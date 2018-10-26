@@ -23,6 +23,7 @@ Upcoming changes
 
 * Vectorization
 * Interface with the PICSAR library
+* Faster collisions
 
 ----
 

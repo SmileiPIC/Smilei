@@ -1,4 +1,4 @@
-#include "SpeciesDynamicV2.h"
+#include "SpeciesAdaptiveV2.h"
 
 #include <cmath>
 #include <ctime>
@@ -45,24 +45,24 @@ using namespace std;
 // Constructor for Species
 // input: simulation parameters & Species index
 // ---------------------------------------------------------------------------------------------------------------------
-SpeciesDynamicV2::SpeciesDynamicV2(Params& params, Patch* patch) :
+SpeciesAdaptiveV2::SpeciesAdaptiveV2(Params& params, Patch* patch) :
     SpeciesV(params, patch)
 {
     initCluster( params );
     npack_ = 0 ;
     packsize_ = 0;
-}//END SpeciesDynamicV2 creator
+}//END SpeciesAdaptiveV2 creator
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Destructor for Species
 // ---------------------------------------------------------------------------------------------------------------------
-SpeciesDynamicV2::~SpeciesDynamicV2()
+SpeciesAdaptiveV2::~SpeciesAdaptiveV2()
 {
 }
 
 //! Method calculating the Particle dynamics (interpolation, pusher, projection)
 //! without vectorized operators but with the cell sorting algorithm
-void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
+void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
                        ElectroMagn* EMfields, Params &params, bool diag_flag,
                        PartWalls* partWalls,
                        Patch* patch, SmileiMPI* smpi,
@@ -96,31 +96,31 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
     if (time_dual>time_frozen)
     { // moving particle
 
-        smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
+        smpi->dynamics_resize(ithread, nDim_particle, last_index.back());
 
         //Point to local thread dedicated buffers
         //Still needed for ionization
         vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
 
         //Prepare for sorting
-        for (unsigned int i=0; i<species_loc_bmax.size(); i++)
-            species_loc_bmax[i] = 0;
+        for (unsigned int i=0; i<count.size(); i++)
+            count[i] = 0;
 
 #ifdef  __DETAILED_TIMERS
         timer = MPI_Wtime();
 #endif
 
         // Interpolate the fields at the particle position
-        (*Interp)(EMfields, *particles, smpi, &(bmin[0]), &(bmax[bmax.size()-1]), ithread, bmin[0]);
+        (*Interp)(EMfields, *particles, smpi, &(first_index[0]), &(last_index[last_index.size()-1]), ithread, first_index[0]);
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[0] += MPI_Wtime() - timer;
 #endif
 
         // Interpolate the fields at the particle position
-        //for (unsigned int scell = 0 ; scell < bmin.size() ; scell++)
-        //    (*Interp)(EMfields, *particles, smpi, &(bmin[scell]), &(bmax[scell]), ithread );
-        for (unsigned int scell = 0 ; scell < bmin.size() ; scell++)
+        //for (unsigned int scell = 0 ; scell < first_index.size() ; scell++)
+        //    (*Interp)(EMfields, *particles, smpi, &(first_index[scell]), &(last_index[scell]), ithread );
+        for (unsigned int scell = 0 ; scell < first_index.size() ; scell++)
         {
 
             // Ionization
@@ -129,7 +129,7 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
                 timer = MPI_Wtime();
 #endif
-                (*Ionize)(particles, bmin[scell], bmax[scell], Epart, EMfields, Proj);
+                (*Ionize)(particles, first_index[scell], last_index[scell], Epart, patch, Proj);
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[4] += MPI_Wtime() - timer;
 #endif
@@ -145,7 +145,7 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
                 // Radiation process
                 (*Radiate)(*particles, this->photon_species, smpi,
                            RadiationTables,
-                           bmin[scell], bmax[scell], ithread );
+                           first_index[scell], last_index[scell], ithread );
 
                 // Update scalar variable for diagnostics
                 nrj_radiation += (*Radiate).getRadiatedEnergy();
@@ -153,8 +153,8 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
                 // Update the quantum parameter chi
                 (*Radiate).compute_thread_chipa(*particles,
                                                 smpi,
-                                                bmin[scell],
-                                                bmax[scell],
+                                                first_index[scell],
+                                                last_index[scell],
                                                 ithread );
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[5] += MPI_Wtime() - timer;
@@ -171,7 +171,7 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
                 (*Multiphoton_Breit_Wheeler_process)(*particles,
                                                      smpi,
                                                      MultiphotonBreitWheelerTables,
-                                                     bmin[scell], bmax[scell], ithread );
+                                                     first_index[scell], last_index[scell], ithread );
 
                 // Update scalar variable for diagnostics
                 // We reuse nrj_radiation for the pairs
@@ -180,13 +180,13 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
                 // Update the photon quantum parameter chi of all photons
                 (*Multiphoton_Breit_Wheeler_process).compute_thread_chiph(*particles,
                                                                           smpi,
-                                                                          bmin[scell],
-                                                                          bmax[scell],
+                                                                          first_index[scell],
+                                                                          last_index[scell],
                                                                           ithread );
 
                 // Suppression of the decayed photons into pairs
                 (*Multiphoton_Breit_Wheeler_process).decayed_photon_cleaning(
-                                                                             *particles,scell, bmin.size(), &bmin[0], &bmax[0]);
+                                                                             *particles,scell, first_index.size(), &first_index[0], &last_index[0]);
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[6] += MPI_Wtime() - timer;
 #endif
@@ -197,22 +197,22 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
         timer = MPI_Wtime();
 #endif
         // Push the particles and the photons
-        (*Push)(*particles, smpi, 0, bmax.back(), ithread, 0.);
+        (*Push)(*particles, smpi, 0, last_index.back(), ithread, 0.);
 #ifdef  __DETAILED_TIMERS
         patch->patch_timers[1] += MPI_Wtime() - timer;
         timer = MPI_Wtime();
 #endif
 
         // Computation of the particle cell keys for all particles
-        // this->compute_bin_cell_keys(params,0, bmax.back());
+        // this->compute_bin_cell_keys(params,0, last_index.back());
 
-        for (unsigned int scell = 0 ; scell < bmin.size() ; scell++)
+        for (unsigned int scell = 0 ; scell < first_index.size() ; scell++)
         {
             // Apply wall and boundary conditions
             if (mass>0)
             {
                 for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
-                    for (iPart=bmin[scell] ; (int)iPart<bmax[scell]; iPart++ ) {
+                    for (iPart=first_index[scell] ; (int)iPart<last_index[scell]; iPart++ ) {
                         double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
                         if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
                             nrj_lost_per_thd[tid] += mass * ener_iPart;
@@ -220,7 +220,7 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
                     }
                 }
 
-                for (iPart=bmin[scell] ; (int)iPart<bmax[scell]; iPart++ ) {
+                for (iPart=first_index[scell] ; (int)iPart<last_index[scell]; iPart++ ) {
                     if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
                         addPartInExchList( iPart );
                         nrj_lost_per_thd[tid] += mass * ener_iPart;
@@ -233,13 +233,13 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
                             (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]) * dx_inv_[i] );
                         }
                         //First reduction of the count sort algorithm. Lost particles are not included.
-                        species_loc_bmax[(*particles).cell_keys[iPart]] ++;
+                        count[(*particles).cell_keys[iPart]] ++;
                     }
                 }
 
             } else if (mass==0) {
                 for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
-                    for (iPart=bmin[scell] ; (int)iPart<bmax[scell]; iPart++ ) {
+                    for (iPart=first_index[scell] ; (int)iPart<last_index[scell]; iPart++ ) {
                         double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
                         if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
                             nrj_lost_per_thd[tid] += ener_iPart;
@@ -250,7 +250,7 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
                 // Boundary Condition may be physical or due to domain decomposition
                 // apply returns 0 if iPart is not in the local domain anymore
                 //        if omp, create a list per thread
-                for (iPart=bmin[scell] ; (int)iPart<bmax[scell]; iPart++ ) {
+                for (iPart=first_index[scell] ; (int)iPart<last_index[scell]; iPart++ ) {
                     if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
                         addPartInExchList( iPart );
                         nrj_lost_per_thd[tid] += ener_iPart;
@@ -263,7 +263,7 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
                             (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]) * dx_inv_[i] );
                         }
                         //First reduction of the count sort algorithm. Lost particles are not included.
-                        species_loc_bmax[(*particles).cell_keys[iPart]] ++;
+                        count[(*particles).cell_keys[iPart]] ++;
                     }
                 }
             } // end if mass > 0
@@ -281,8 +281,8 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
         timer = MPI_Wtime();
 #endif
-            (*Proj)(EMfields, *particles, smpi, bmin[0],
-                                                bmax.back(),
+            (*Proj)(EMfields, *particles, smpi, first_index[0],
+                                                last_index.back(),
                                                 ithread, 0,
                                                 0, diag_flag,
                                                 params.is_spectral,
@@ -301,11 +301,11 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
         if ( diag_flag &&(!particles->is_test)){
             double* b_rho=nullptr;
 
-            for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
+            for (unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++) { //Loop for projection on buffer_proj
 
                 b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
 
-                for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+                for (iPart=first_index[ibin] ; (int)iPart<last_index[ibin]; iPart++ ) {
                     (*Proj)(b_rho, (*particles), iPart, 0, b_dim);
                 } //End loop on particles
             }//End loop on bins
@@ -320,7 +320,7 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
 //! Compute part_cell_keys at patch creation.
 //! This operation is normally done in the pusher to avoid additional particles pass.
 // -----------------------------------------------------------------------------
-/*void SpeciesDynamicV2::compute_part_cell_keys(Params &params)
+/*void SpeciesAdaptiveV2::compute_part_cell_keys(Params &params)
 {
 
     unsigned int ip, nparts;
@@ -340,7 +340,7 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
 
     #pragma omp simd
     for (ip=0; ip < nparts ; ip++){
-    // Counts the # of particles in each cell (or sub_cell) and store it in sbmax.
+    // Counts the # of particles in each cell (or sub_cell) and store it in slast_index.
         for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
             X = (*particles).position(ipos,ip)-min_loc_vec[ipos];
             IX = round(X * dx_inv_[ipos] );
@@ -348,9 +348,9 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
         }
     }
 
-    // Reduction of the number of particles per cell in species_loc_bmax
+    // Reduction of the number of particles per cell in count
     for (ip=0; ip < nparts ; ip++)
-        species_loc_bmax[(*particles).cell_keys[ip]] ++ ;
+        count[(*particles).cell_keys[ip]] ++ ;
 }*/
 
 
@@ -358,7 +358,7 @@ void SpeciesDynamicV2::scalar_dynamics(double time_dual, unsigned int ispec,
 //! This function reconfigures the type of species according
 //! to the vectorization mode
 // -----------------------------------------------------------------------------
-void SpeciesDynamicV2::reconfiguration(Params &params, Patch * patch)
+void SpeciesAdaptiveV2::reconfiguration(Params &params, Patch * patch)
 {
 
     //unsigned int ncell;
@@ -374,7 +374,7 @@ void SpeciesDynamicV2::reconfiguration(Params &params, Patch * patch)
     // --------------------------------------------------------------------
     // Metrics 1 - based on the ratio of vectorized cells
     // Compute the number of cells that contain more than 8 particles
-    //ratio_number_of_vecto_cells = SpeciesMetrics::get_ratio_number_of_vecto_cells(species_loc_bmax,8);
+    //ratio_number_of_vecto_cells = SpeciesMetrics::get_ratio_number_of_vecto_cells(count,8);
 
     // Test metrics, if necessary we reasign operators
     //if ( (ratio_number_of_vecto_cells > 0.5 && this->vectorized_operators == false)
@@ -386,7 +386,7 @@ void SpeciesDynamicV2::reconfiguration(Params &params, Patch * patch)
 
     // --------------------------------------------------------------------
     // Metrics 2 - based on the evaluation of the computational time
-    SpeciesMetrics::get_computation_time(species_loc_bmax,
+    SpeciesMetrics::get_computation_time(count,
                                         vecto_time,
                                         scalar_time);
 
@@ -420,67 +420,73 @@ void SpeciesDynamicV2::reconfiguration(Params &params, Patch * patch)
 
     }
 
-    /*std::cout << " bin number: " << bmin.size()
-              << " nb particles: " << bmax[bmax.size()-1]
+    /*std::cout << " bin number: " << first_index.size()
+              << " nb particles: " << last_index[last_index.size()-1]
               << '\n';*/
 
 }
 
 // -----------------------------------------------------------------------------
-//! This function reconfigures the type of species according
-//! to the vectorization mode
+//! This function configures the type of species according to the default mode
+//! regardless the number of particles per cell
 // -----------------------------------------------------------------------------
-void SpeciesDynamicV2::configuration(Params &params, Patch * patch)
+void SpeciesAdaptiveV2::initial_configuration(Params &params, Patch * patch)
 {
-    //float ratio_number_of_vecto_cells;
-    float vecto_time = 0.;
-    float scalar_time = 0.;
 
-    //split cell into smaller sub_cells for refined sorting
-    // cell = (params.n_space[0]+1);
-    //for ( unsigned int i=1; i < params.nDim_field; i++) ncell *= (params.n_space[i]+1);
+    // Setup the species state regardless the number of particles per cell
+    this->vectorized_operators = (params.adaptive_default_mode == "on");
 
-    // --------------------------------------------------------------------
-    // Metrics 1 - based on the ratio of vectorized cells
-    // Compute the number of cells that contain more than 8 particles
-    //ratio_number_of_vecto_cells = SpeciesMetrics::get_ratio_number_of_vecto_cells(species_loc_bmax,8);
-    // --------------------------------------------------------------------
-
-    // --------------------------------------------------------------------
-    // Metrics 2 - based on the evaluation of the computational time
-    SpeciesMetrics::get_computation_time(species_loc_bmax,
-                                        vecto_time,
-                                        scalar_time);
-
-    if (vecto_time < scalar_time )
-    {
-        this->vectorized_operators = true;
-    }
-    else if (vecto_time > scalar_time)
-    {
-        this->vectorized_operators = false;
-    }
-    // Default mode where there is no particles
-    else
-    {
-        this->vectorized_operators = (params.dynamic_default_mode == "vectorized");
-    }
-    // --------------------------------------------------------------------
-
-    /*std::cout << "Vectorized_operators: " << this->vectorized_operators
-              << " ratio_number_of_vecto_cells: " << this->ratio_number_of_vecto_cells
-              << " number_of_vecto_cells: " << number_of_vecto_cells
-              << " number_of_non_zero_cells: " << number_of_non_zero_cells
-              << " ncells: " << ncell << "\n";*/
-
+    // Configure the species regardless the number of particles per cell
     this->reconfigure_operators(params, patch);
 
 }
 
 // -----------------------------------------------------------------------------
-//! This function reconfigures the operators
+//! This function configures the type of species according
+//! to the vectorization mode
 // -----------------------------------------------------------------------------
-void SpeciesDynamicV2::reconfigure_operators(Params &params, Patch * patch)
+void SpeciesAdaptiveV2::configuration(Params &params, Patch * patch)
+{
+    //float ratio_number_of_vecto_cells;
+    float vecto_time = 0.;
+    float scalar_time = 0.;
+
+    // Species with particles
+    if ((*particles).size() > 0)
+    {
+
+        // --------------------------------------------------------------------
+        // Metrics 2 - based on the evaluation of the computational time
+        SpeciesMetrics::get_computation_time(this->count,
+                                            vecto_time,
+                                            scalar_time);
+
+        if (vecto_time <= scalar_time)
+        {
+            this->vectorized_operators = true;
+        }
+        else if (vecto_time > scalar_time)
+        {
+            this->vectorized_operators = false;
+        }
+    }
+
+    // Default mode where there is no particles
+    else
+    {
+        this->vectorized_operators = (params.adaptive_default_mode == "on");
+    }
+
+    // --------------------------------------------------------------------
+
+    this->reconfigure_operators(params, patch);
+}
+
+// -----------------------------------------------------------------------------
+//! This function reconfigures the species operators after evaluating
+//! the best mode from the particle distribution
+// -----------------------------------------------------------------------------
+void SpeciesAdaptiveV2::reconfigure_operators(Params &params, Patch * patch)
 {
     // Destroy current operators
     delete Interp;

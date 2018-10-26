@@ -23,7 +23,7 @@ IonizationFromRate::IonizationFromRate(Params& params, Species * species) : Ioni
 
 
 
-void IonizationFromRate::operator() (Particles* particles, unsigned int ipart_min, unsigned int ipart_max, vector<double> *Epart, ElectroMagn* EMfields, Projector* Proj, int ipart_ref) {
+void IonizationFromRate::operator() (Particles* particles, unsigned int ipart_min, unsigned int ipart_max, vector<double> *Epart, Patch* patch, Projector* Proj, int ipart_ref) {
     
     //unsigned int Z, Zp1, newZ, k_times;
     unsigned int Z, k_times;
@@ -67,7 +67,7 @@ void IonizationFromRate::operator() (Particles* particles, unsigned int ipart_mi
         // Start of the Monte-Carlo routine  (At the moment, only 1 ionization per timestep is possible)
         // k_times will give the nb of ionization events
         k_times = 0;
-        double ran_p = Rand::uniform();
+        double ran_p = patch->xorshift32() * patch->xorshift32_invmax;
         if ( ran_p < 1.0 - exp(-rate[ipart-ipart_min]*dt) ) {
             k_times        = 1;
         }

@@ -67,13 +67,13 @@ public:
 
     //! atomic number
     unsigned int atomic_number;
-    
+
     //! maximum charge state
     unsigned int maximum_charge_state;
-    
+
     //! user defined ionization rate profile
     PyObject* ionization_rate;
-    
+
     //! thermalizing temperature for thermalizing BCs [\f$m_e c^2\f$]
     std::vector<double> thermal_boundary_temperature;
     //! mean velocity used when thermalizing BCs are used [\f$c\f$]
@@ -186,10 +186,10 @@ public:
 
     //! Cluster width in number of cells
     unsigned int clrw; //Should divide the number of cells in X of a single MPI domain.
-    //! first and last index of each particle bin
-    std::vector<int> bmin, bmax;
-    //!
-    std::vector<int> species_loc_bmax;
+    //! Indices of first and last particles in each bin/cell
+    std::vector<int> first_index, last_index;
+    //! Array counting the occurence of each cell key
+    std::vector<int> count;
     //! sub dimensions of buffers for dim > 1
     std::vector<unsigned int> b_dim;
 
@@ -345,7 +345,7 @@ public:
 
     //! Method used to initialize the Particle position in a given cell
     void initPosition(unsigned int, unsigned int, double *, Params& );
-    
+
     //! Method used to initialize the Particle 3d momentum in a given cell
     void initMomentum(unsigned int, unsigned int, double *, double *);
 
@@ -358,16 +358,22 @@ public:
     //! Method used to sort particles
     virtual void sort_part(Params& param);
 
+    //! This function configures the type of species according to the default mode
+    //! regardless the number of particles per cell
+    virtual void initial_configuration( Params& params, Patch * patch) ;
+
     //! This function configures the species according to the vectorization mode
     virtual void configuration( Params& params, Patch * patch) ;
 
+    //! This function reconfigures the species operators after evaluating
+    //! the best mode from the particle distribution
     virtual void reconfiguration(Params& param, Patch  * patch);
 
     void count_sort_part(Params& param);
 
     //!
     virtual void add_space_for_a_particle() {
-        bmax[bmax.size()-1]++;
+        last_index[last_index.size()-1]++;
     }
 
     //inline void clearExchList(int tid) {

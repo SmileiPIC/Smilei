@@ -1,5 +1,5 @@
-#ifndef SPECIESDYNAMICV_H
-#define SPECIESDYNAMICV_H
+#ifndef SPECIESADAPTIVEV_H
+#define SPECIESADAPTIVEV_H
 
 #include <vector>
 #include <string>
@@ -18,15 +18,19 @@ class SimWindow;
 
 
 //! class Species
-class SpeciesDynamicV : public SpeciesV
+class SpeciesAdaptiveV : public SpeciesV
 {
  public:
     //! Species creator
-    SpeciesDynamicV(Params&, Patch*);
+    SpeciesAdaptiveV(Params&, Patch*);
     //! Species destructor
-    virtual ~SpeciesDynamicV();
+    virtual ~SpeciesAdaptiveV();
 
     void resizeCluster(Params& params) override;
+
+    //! This function configures the type of species according to the default mode
+    //! regardless the number of particles per cell
+    void initial_configuration( Params& params, Patch * patch) override;
 
     //! This function configures the species according to the vectorization mode
     void configuration( Params& params, Patch * patch) override;
@@ -48,7 +52,7 @@ class SpeciesDynamicV : public SpeciesV
 
 private:
 
-    // Metrics for the dynamic vectorization
+    // Metrics for the adaptive vectorization
     int max_number_of_particles_per_cells;
     int min_number_of_particles_per_cells;
     double ratio_number_of_vecto_cells;

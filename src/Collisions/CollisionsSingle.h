@@ -44,13 +44,13 @@ public:
                     fname
     ) {} ;
     //! Cloning Constructor
-    CollisionsSingle(CollisionsSingle* coll, int ndim) : Collisions(coll, ndim) {};
+    CollisionsSingle(Collisions* coll, int ndim) : Collisions(coll, ndim) {};
     //! destructor
     ~CollisionsSingle() {};
-    
+
     //! Method called in the main smilei loop to apply collisions at each timestep
     void collide(Params&, Patch* ,int, std::vector<Diagnostic*>&) override;
-    
+
 };
 
 

@@ -136,8 +136,8 @@ int main (int argc, char* argv[])
 	// vecPatches data read in restartAll according to smpi.patch_count
         checkpoint.restartAll( vecPatches, &smpi, simWindow, params, openPMD);
 
-        // Patch reconfiguration for the dynamic vectorization
-        if( params.has_dynamic_vectorization) {
+        // Patch reconfiguration for the adaptive vectorization
+        if( params.has_adaptive_vectorization) {
             vecPatches.configuration(params,timers, 0);
         }
 
@@ -182,7 +182,7 @@ int main (int argc, char* argv[])
             // Compute rho only for species needing relativistic field Initialization
             vecPatches.computeChargeRelativisticSpecies(time_prim);
             SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, &smpi, timers, 0 );
-            
+
             // Initialize the fields for these species
             if (!vecPatches.isRhoNull(&smpi)){
                 TITLE("Initializing relativistic species fields at time t = 0");
@@ -219,7 +219,7 @@ int main (int argc, char* argv[])
         }
 
         // Patch reconfiguration
-        if( params.has_dynamic_vectorization ) {
+        if( params.has_adaptive_vectorization ) {
             vecPatches.configuration(params,timers, 0);
         }
 
@@ -233,7 +233,7 @@ int main (int argc, char* argv[])
         vecPatches.projection_for_diags(params, &smpi, simWindow, time_dual, timers, 0);
 
         // If Laser Envelope is used, comm and synch susceptibility at t=0
-        if (params.Laser_Envelope_model){    
+        if (params.Laser_Envelope_model){
             // comm and synch susceptibility
             vecPatches.sumSusceptibility(params, time_dual, timers, 0, simWindow, &smpi );
         } // end condition if Laser Envelope Model is used
@@ -308,10 +308,8 @@ int main (int argc, char* argv[])
             }
 
             // Patch reconfiguration
-            if( params.has_dynamic_vectorization ) {
-                if ( params.dynamic_vecto_time_selection->theTimeIsNow(itime) ) {
-                    vecPatches.reconfiguration(params, timers, itime);
-                }
+            if( params.has_adaptive_vectorization && params.adaptive_vecto_time_selection->theTimeIsNow(itime) ) {
+                vecPatches.reconfiguration(params, timers, itime);
             }
 
             // apply collisions if requested
@@ -363,7 +361,7 @@ int main (int argc, char* argv[])
 
             // Sum densities
             vecPatches.sumDensities(params, time_dual, timers, itime, simWindow ,&smpi );
-            
+
             // apply currents from antennas
             vecPatches.applyAntennas(time_dual);
 

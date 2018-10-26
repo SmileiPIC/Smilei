@@ -90,20 +90,20 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi, OpenPMDparams& op
                     delete (*this)(ipatch)->EMfields->Jx_s[ifield];
                     (*this)(ipatch)->EMfields->Jx_s[ifield]=NULL;
                 }
-	        
-             } 
+
+             }
             for (unsigned int ifield=0 ; ifield<(*this)(ipatch)->EMfields->Jy_s.size(); ifield++) {
                 if( (*this)(ipatch)->EMfields->Jy_s[ifield]->data_ == NULL ){
                     delete (*this)(ipatch)->EMfields->Jy_s[ifield];
                     (*this)(ipatch)->EMfields->Jy_s[ifield]=NULL;
                 }
-            } 
+            }
             for (unsigned int ifield=0 ; ifield<(*this)(ipatch)->EMfields->Jz_s.size(); ifield++) {
                 if( (*this)(ipatch)->EMfields->Jz_s[ifield]->data_ == NULL ){
                     delete (*this)(ipatch)->EMfields->Jz_s[ifield];
                     (*this)(ipatch)->EMfields->Jz_s[ifield]=NULL;
                 }
-            }  
+            }
             for (unsigned int ifield=0 ; ifield<(*this)(ipatch)->EMfields->rho_s.size(); ifield++) {
                 if( (*this)(ipatch)->EMfields->rho_s[ifield]->data_ == NULL ){
                     delete (*this)(ipatch)->EMfields->rho_s[ifield];
@@ -119,27 +119,27 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi, OpenPMDparams& op
                     delete EMfields->Jl_s[ifield];
                     EMfields->Jl_s[ifield]=NULL;
                 }
-             } 
+             }
             for (unsigned int ifield=0 ; ifield<EMfields->Jr_s.size(); ifield++) {
                 if( EMfields->Jr_s[ifield]->cdata_ == NULL ){
                     delete EMfields->Jr_s[ifield];
                     EMfields->Jr_s[ifield]=NULL;
                 }
-            } 
+            }
             for (unsigned int ifield=0 ; ifield<EMfields->Jt_s.size(); ifield++) {
                 if(EMfields->Jt_s[ifield]->cdata_ == NULL ){
                     delete EMfields->Jt_s[ifield];
                     EMfields->Jt_s[ifield]=NULL;
                 }
-            } 
-	
+            }
+
             for (unsigned int ifield=0 ; ifield<EMfields->rho_AM_s.size(); ifield++) {
                 if( EMfields->rho_AM_s[ifield]->cdata_ == NULL ){
                     delete EMfields->rho_AM_s[ifield];
                     EMfields->rho_AM_s[ifield]=NULL;
                }
             }
-	
+
 	    }
 
 
@@ -179,7 +179,7 @@ void VectorPatch::createDiags(Params& params, SmileiMPI* smpi, OpenPMDparams& op
 void VectorPatch::configuration(Params& params, Timers &timers, int itime)
 {
 
-    //if (params.has_dynamic_vectorization)
+    //if (params.has_adaptive_vectorization)
     //{
 
     timers.reconfiguration.restart();
@@ -198,15 +198,13 @@ void VectorPatch::configuration(Params& params, Timers &timers, int itime)
     }
     #pragma omp barrier
 
-    // Species reconfiguration for best performance
-    // Change the status to use vectorized or not-vectorized operators
-    // as a function of the metrics
+    // Species configuration according to the default mode
 
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<npatches ; ipatch++) {
         // Particle importation for all species
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
-            species(ipatch, ispec)->configuration(params, (*this)(ipatch));
+            species(ipatch, ispec)->initial_configuration(params, (*this)(ipatch));
         }
     }
 
@@ -220,7 +218,7 @@ void VectorPatch::configuration(Params& params, Timers &timers, int itime)
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::reconfiguration(Params& params, Timers &timers, int itime)
 {
-    //if (params.has_dynamic_vectorization)
+    //if (params.has_adaptive_vectorization)
     //{
 
         timers.reconfiguration.restart();
@@ -290,7 +288,7 @@ void VectorPatch::dynamics(Params& params,
                 // Dynamics with scalar operators
                 else
                 {
-                    if (params.vectorization_mode == "dynamic2")
+                    if (params.vectorization_mode == "adaptive")
                     {
                         species(ipatch, ispec)->scalar_dynamics(time_dual, ispec,
                                                       emfields(ipatch),
@@ -404,7 +402,7 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
 
     // Particle importation
     // ----------------------------------------
-    
+
     #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
         // Particle importation for all species
@@ -532,15 +530,15 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
                 update_field_list(ispec, smpi);
                 if ( params.geometry != "AMcylindrical" ) {
                     SyncVectorPatch::sumRhoJs( params, (*this), ispec, smpi, timers, itime ); // MPI
-                 } 
+                 }
                 else{
                     for (unsigned int imode = 0 ; imode < static_cast<ElectroMagnAM*>(patches_[0]->EMfields)->Jl_.size() ; imode++  ) {
                         SyncVectorPatch::sumRhoJs( params, (*this), imode, ispec, smpi, timers, itime );
-                    } 
+                    }
                 }
             }
-           }  
-    } 
+           }
+    }
     if (params.geometry == "AMcylindrical") {
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
@@ -548,7 +546,7 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
             emAM->fold_J(diag_flag);
             emAM->on_axis_J(diag_flag);
         }
-    }  
+    }
     timers.syncDens.update( params.printNow( itime ) );
 } // End sumDensities
 
@@ -1369,13 +1367,13 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
         { // begin loop on patches
         (*this)(ipatch)->EMfields->initE_relativistic_Poisson( (*this)(ipatch), gamma_mean );
         } // end loop on patches
-      
+
     SyncVectorPatch::exchange_along_all_directions_noomp          ( Ex_rel_, *this, smpi );
     SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Ex_rel_, *this );
     SyncVectorPatch::exchange_along_all_directions_noomp          ( Ey_rel_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Ey_rel_, *this );  
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Ey_rel_, *this );
     SyncVectorPatch::exchange_along_all_directions_noomp          ( Ez_rel_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Ez_rel_, *this );    
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Ez_rel_, *this );
     //SyncVectorPatch::exchangeE( params, *this, smpi );
     //SyncVectorPatch::finalizeexchangeE( params, *this );
 
@@ -1504,9 +1502,9 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
     SyncVectorPatch::exchange_along_all_directions_noomp          ( Bx_rel_, *this, smpi );
     SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bx_rel_, *this );
     SyncVectorPatch::exchange_along_all_directions_noomp          ( By_rel_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( By_rel_, *this );  
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( By_rel_, *this );
     SyncVectorPatch::exchange_along_all_directions_noomp          ( Bz_rel_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_rel_, *this );  
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_rel_, *this );
 
 
     // Proper spatial centering of the B fields in the Yee Cell through interpolation
@@ -1520,19 +1518,19 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
     SyncVectorPatch::exchange_along_all_directions_noomp          ( Bx_rel_t_plus_halfdt_, *this, smpi );
     SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bx_rel_t_plus_halfdt_, *this );
     SyncVectorPatch::exchange_along_all_directions_noomp          ( By_rel_t_plus_halfdt_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( By_rel_t_plus_halfdt_, *this );  
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( By_rel_t_plus_halfdt_, *this );
     SyncVectorPatch::exchange_along_all_directions_noomp          ( Bz_rel_t_plus_halfdt_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_rel_t_plus_halfdt_, *this );  
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_rel_t_plus_halfdt_, *this );
 
     SyncVectorPatch::exchange_along_all_directions_noomp          ( Bx_rel_t_minus_halfdt_, *this, smpi );
     SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bx_rel_t_minus_halfdt_, *this );
     SyncVectorPatch::exchange_along_all_directions_noomp          ( By_rel_t_minus_halfdt_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( By_rel_t_minus_halfdt_, *this );  
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( By_rel_t_minus_halfdt_, *this );
     SyncVectorPatch::exchange_along_all_directions_noomp          ( Bz_rel_t_minus_halfdt_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_rel_t_minus_halfdt_, *this );  
-        
-    
-   
+    SyncVectorPatch::finalize_exchange_along_all_directions_noomp ( Bz_rel_t_minus_halfdt_, *this );
+
+
+
    MESSAGE(0,"Summing fields of relativistic species to the grid fields");
    // sum the fields found  by relativistic Poisson solver to the existing em fields
    // E  = E  + E_rel
@@ -1708,14 +1706,14 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
         // if hindex of patch to be sent      >  future hindex of the first patch owned by this process
         if (send_patch_id_[ipatch]+refHindex_ > istart ) newMPIrank = smpi->getRank() + 1;
 
-        smpi->isend( (*this)(send_patch_id_[ipatch]), newMPIrank, (refHindex_+send_patch_id_[ipatch])*nmessage, params );
+        smpi->isend_species( (*this)(send_patch_id_[ipatch]), newMPIrank, (refHindex_+send_patch_id_[ipatch])*nmessage, params );
     }
 
     for (unsigned int ipatch=0 ; ipatch < recv_patch_id_.size() ; ipatch++) {
         //if  hindex of patch to be received > first hindex actually owned, that means it comes from the next MPI process and not from the previous anymore.
         if(recv_patch_id_[ipatch] > refHindex_ ) oldMPIrank = smpi->getRank() + 1;
 
-        smpi->recv( recv_patches_[ipatch], oldMPIrank, recv_patch_id_[ipatch]*nmessage, params );
+        smpi->recv_species( recv_patches_[ipatch], oldMPIrank, recv_patch_id_[ipatch]*nmessage, params );
     }
 
 
@@ -1723,6 +1721,38 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
         smpi->waitall( (*this)(send_patch_id_[ipatch]) );
 
     smpi->barrier();
+
+
+    // Split the exchangePatches process to avoid deadlock with OpenMPI (observed with OpenMPI on Irene and Poicnare, not with IntelMPI)
+    newMPIrank = smpi->getRank() -1;
+    oldMPIrank = smpi->getRank() -1;
+
+
+    // Send fields
+    for (unsigned int ipatch=0 ; ipatch < send_patch_id_.size() ; ipatch++) {
+        // locate rank which will own send_patch_id_[ipatch]
+        // We assume patches are only exchanged with neighbours.
+        // Once all patches supposed to be sent to the left are done, we send the rest to the right.
+        // if hindex of patch to be sent      >  future hindex of the first patch owned by this process
+        if (send_patch_id_[ipatch]+refHindex_ > istart ) newMPIrank = smpi->getRank() + 1;
+
+        smpi->isend_fields( (*this)(send_patch_id_[ipatch]), newMPIrank, (refHindex_+send_patch_id_[ipatch])*nmessage, params );
+    }
+
+    for (unsigned int ipatch=0 ; ipatch < recv_patch_id_.size() ; ipatch++) {
+        //if  hindex of patch to be received > first hindex actually owned, that means it comes from the next MPI process and not from the previous anymore.
+        if(recv_patch_id_[ipatch] > refHindex_ ) oldMPIrank = smpi->getRank() + 1;
+
+        smpi->recv_fields( recv_patches_[ipatch], oldMPIrank, recv_patch_id_[ipatch]*nmessage, params );
+    }
+
+
+    for (unsigned int ipatch=0 ; ipatch < send_patch_id_.size() ; ipatch++)
+        smpi->waitall( (*this)(send_patch_id_[ipatch]) );
+
+    smpi->barrier();
+
+
     //Delete sent patches
     int nPatchSend(send_patch_id_.size());
     for (int ipatch=nPatchSend-1 ; ipatch>=0 ; ipatch--) {
@@ -1734,32 +1764,32 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
     }
 
 #ifdef _VECTO
-    if (params.vectorization_mode == "dynamic")
+    if (params.vectorization_mode == "adaptive_mixed_sort")
     {
-        // Dynamic vecto
+        // adaptive vectorization
         // Recompute the cell keys before the next step and configure operators
         for (unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++) {
             for (unsigned int ispec=0 ; ispec< recv_patches_[ipatch]->vecSpecies.size() ; ispec++)
             {
-                if ( dynamic_cast<SpeciesDynamicV*>(recv_patches_[ipatch]->vecSpecies[ispec]) )
+                if ( dynamic_cast<SpeciesAdaptiveV*>(recv_patches_[ipatch]->vecSpecies[ispec]) )
                 {
-                    dynamic_cast<SpeciesDynamicV*>(recv_patches_[ipatch]->vecSpecies[ispec])->compute_part_cell_keys(params);
-                    dynamic_cast<SpeciesDynamicV*>(recv_patches_[ipatch]->vecSpecies[ispec])->reconfigure_operators(params, recv_patches_[ipatch]);
+                    dynamic_cast<SpeciesAdaptiveV*>(recv_patches_[ipatch]->vecSpecies[ispec])->compute_part_cell_keys(params);
+                    dynamic_cast<SpeciesAdaptiveV*>(recv_patches_[ipatch]->vecSpecies[ispec])->reconfigure_operators(params, recv_patches_[ipatch]);
                 }
             }
         }
     }
-    else if (params.vectorization_mode == "dynamic2")
+    else if (params.vectorization_mode == "adaptive")
     {
-        // Dynamic vecto mode 2
+        // adaptive vectorization mode 2
         // Recompute the cell keys before the next step and configure operators
         for (unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++) {
             for (unsigned int ispec=0 ; ispec< recv_patches_[ipatch]->vecSpecies.size() ; ispec++)
             {
-                if ( dynamic_cast<SpeciesDynamicV2*>(recv_patches_[ipatch]->vecSpecies[ispec]) )
+                if ( dynamic_cast<SpeciesAdaptiveV2*>(recv_patches_[ipatch]->vecSpecies[ispec]) )
                 {
-                    dynamic_cast<SpeciesDynamicV2*>(recv_patches_[ipatch]->vecSpecies[ispec])->compute_part_cell_keys(params);
-                    dynamic_cast<SpeciesDynamicV2*>(recv_patches_[ipatch]->vecSpecies[ispec])->reconfigure_operators(params, recv_patches_[ipatch]);
+                    dynamic_cast<SpeciesAdaptiveV2*>(recv_patches_[ipatch]->vecSpecies[ispec])->compute_part_cell_keys(params);
+                    dynamic_cast<SpeciesAdaptiveV2*>(recv_patches_[ipatch]->vecSpecies[ispec])->reconfigure_operators(params, recv_patches_[ipatch]);
                 }
             }
         }
@@ -2228,8 +2258,8 @@ void VectorPatch::update_field_list(int ispec, SmileiMPI* smpi)
             }
         }
 
-    } 
-        
+    }
+
 
 
 }
@@ -2266,13 +2296,13 @@ void VectorPatch::applyCollisions(Params& params, int itime, Timers & timers)
     timers.collisions.restart();
 
     if (Collisions::debye_length_required)
-        #pragma omp for schedule(static)
+        #pragma omp for schedule(runtime)
         for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
             Collisions::calculate_debye_length(params,patches_[ipatch]);
 
     unsigned int ncoll = patches_[0]->vecCollisions.size();
 
-    #pragma omp for schedule(static)
+    #pragma omp for schedule(runtime)
     for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++)
         for (unsigned int icoll=0 ; icoll<ncoll; icoll++)
             patches_[ipatch]->vecCollisions[icoll]->collide(params,patches_[ipatch],itime, localDiags);
@@ -2459,8 +2489,8 @@ void VectorPatch::check_expected_disk_usage( SmileiMPI* smpi, Params& params, Ch
             //     * Calculate an approximate number of particles
                 PeekAtSpecies peek(params, ispec);
                 uint64_t number_of_particles = peek.totalNumberofParticles();
-            //     * Calculate the size of the bmin and bmax arrays
-                uint64_t b_size = (s->bmin.size() + s->bmax.size()) * params.tot_number_of_patches * sizeof(int);
+            //     * Calculate the size of the first_index and last_index arrays
+                uint64_t b_size = (s->first_index.size() + s->last_index.size()) * params.tot_number_of_patches * sizeof(int);
             //     * Conclude the disk footprint of this species
                 checkpoint_particles_footprint += one_particle_size*number_of_particles + b_size;
             }

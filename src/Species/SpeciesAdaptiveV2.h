@@ -1,5 +1,5 @@
-#ifndef SPECIESDYNAMICV2_H
-#define SPECIESDYNAMICV2_H
+#ifndef SPECIESADAPTIVEV2_H
+#define SPECIESADAPTIVEV2_H
 
 #include <vector>
 #include <string>
@@ -18,13 +18,13 @@ class SimWindow;
 
 
 //! class Species
-class SpeciesDynamicV2 : public SpeciesV
+class SpeciesAdaptiveV2 : public SpeciesV
 {
  public:
     //! Species creator
-    SpeciesDynamicV2(Params&, Patch*);
+    SpeciesAdaptiveV2(Params&, Patch*);
     //! Species destructor
-    virtual ~SpeciesDynamicV2();
+    virtual ~SpeciesAdaptiveV2();
 
     //! Method calculating the Particle dynamics (interpolation, pusher, projection)
     //! without vectorized operators but with the cell sorting algorithm
@@ -35,6 +35,10 @@ class SpeciesDynamicV2 : public SpeciesV
                         RadiationTables &RadiationTables,
                         MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
                         std::vector<Diagnostic*>& localDiags);
+
+    //! This function configures the type of species according to the default mode
+    //! regardless the number of particles per cell
+    void initial_configuration( Params& params, Patch * patch) override;
 
     //! This function configures the species according to the vectorization mode
     void configuration( Params& params, Patch * patch) override;
@@ -50,7 +54,7 @@ class SpeciesDynamicV2 : public SpeciesV
 
 private:
 
-    // Metrics for the dynamic vectorization
+    // Metrics for the adaptive vectorization
     int max_number_of_particles_per_cells;
     int min_number_of_particles_per_cells;
     double ratio_number_of_vecto_cells;

@@ -18,8 +18,8 @@ public:
     //! Constructor for IonizationFromRate: with no input argument
     IonizationFromRate(Params& params, Species * species);
     
-    //! apply the FromRate Ionization model to the species 
-    void operator() (Particles*, unsigned int, unsigned int, std::vector<double>*, ElectroMagn*, Projector*, int ipart_ref = 0) override;
+    //! apply the FromRate Ionization model to the species
+    void operator() (Particles*, unsigned int, unsigned int, std::vector<double>*, Patch*, Projector*, int ipart_ref = 0) override;
 
 private:
     

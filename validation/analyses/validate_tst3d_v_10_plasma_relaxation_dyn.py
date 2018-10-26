@@ -1,6 +1,6 @@
 # ____________________________________________________________________________
 #
-# This script validates the dynamic vectorization in mode 1
+# This script validates the adaptive vectorization in mode 1
 #
 # _____________________________________________________________________________
 

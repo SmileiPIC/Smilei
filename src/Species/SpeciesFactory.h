@@ -17,8 +17,8 @@
 #ifdef _VECTO
 #include "SpeciesNormV.h"
 #include "SpeciesV.h"
-#include "SpeciesDynamicV.h"
-#include "SpeciesDynamicV2.h"
+#include "SpeciesAdaptiveV.h"
+#include "SpeciesAdaptiveV2.h"
 #include "SpeciesNormV.h"
 #endif
 
@@ -55,8 +55,7 @@ public:
 
         // Extract type of species dynamics from namelist
         std::string pusher = "boris"; // default value
-        if (!PyTools::extract("pusher", pusher ,"Species",ispec) )
-            if ( patch->isMaster() ) WARNING("For species '" << species_name << "', pusher not defined: assumed = 'boris'.");
+        PyTools::extract("pusher", pusher ,"Species",ispec);
 
         // Extract type of species radiation from namelist
         std::string radiation_model = "none"; // default value
@@ -99,23 +98,23 @@ public:
                  // Species with nonrelativistic Boris pusher == 'borisnr'
                  // Species with J.L. Vay pusher if == "vay"
                  // Species with Higuary Cary pusher if == "higueracary"
-                if ( params.vectorization_mode == "disable")
+                if ( params.vectorization_mode == "off")
                 {
                     thisSpecies = new SpeciesNorm(params, patch);
                 }
 
 #ifdef _VECTO
-                else if ( params.vectorization_mode == "normal")
+                else if ( params.vectorization_mode == "on")
                 {
                     thisSpecies = new SpeciesNormV(params, patch);
                 }
-                else if (params.vectorization_mode == "dynamic")
+                else if (params.vectorization_mode == "adaptive_mixed_sort")
                 {
-                    thisSpecies = new SpeciesDynamicV(params, patch);
+                    thisSpecies = new SpeciesAdaptiveV(params, patch);
                 }
-                else if (params.vectorization_mode == "dynamic2")
+                else if (params.vectorization_mode == "adaptive")
                 {
-                    thisSpecies = new SpeciesDynamicV2(params, patch);
+                    thisSpecies = new SpeciesAdaptiveV2(params, patch);
                 }
 #endif
             } else {
@@ -190,22 +189,22 @@ public:
         // Photon species
         else if (mass == 0)
         {
-            if ( params.vectorization_mode == "disable" )
+            if ( params.vectorization_mode == "off" )
             {
                 thisSpecies = new SpeciesNorm(params, patch);
             }
 #ifdef _VECTO
-            else if ( params.vectorization_mode == "normal" )
+            else if ( params.vectorization_mode == "on" )
             {
                 thisSpecies = new SpeciesNormV(params, patch);
             }
-            else if ( params.vectorization_mode == "dynamic" )
+            else if ( params.vectorization_mode == "adaptive_mixed_sort" )
             {
-                thisSpecies = new SpeciesDynamicV(params, patch);
+                thisSpecies = new SpeciesAdaptiveV(params, patch);
             }
-            else if ( params.vectorization_mode == "dynamic2" )
+            else if ( params.vectorization_mode == "adaptive" )
             {
-                thisSpecies = new SpeciesDynamicV2(params, patch);
+                thisSpecies = new SpeciesAdaptiveV2(params, patch);
             }
 #endif
             // Photon can not radiate
@@ -222,11 +221,11 @@ public:
         thisSpecies->speciesNumber = ispec;
 
         // Vectorized operators
-        if (params.vectorization_mode == "disable")
+        if (params.vectorization_mode == "off")
         {
             thisSpecies->vectorized_operators = false;
         }
-        else if (params.vectorization_mode == "normal" || params.vectorization_mode == "dynamic" || params.vectorization_mode == "dynamic2")
+        else if (params.vectorization_mode == "on" || params.vectorization_mode == "adaptive_mixed_sort" || params.vectorization_mode == "adaptive")
         {
             thisSpecies->vectorized_operators = true;
         }
@@ -418,8 +417,8 @@ public:
 
             //Check number of coordinates provided
             ndim_local =  PyArray_SHAPE(np_ret_mom)[0];// ok
-            if (ndim_local != params.nDim_particle )
-                ERROR("For species '" << species_name << "' momentum_initializtion must provide a 2-dimensional array with " <<  params.nDim_particle << " columns." )
+            if (ndim_local != 3 )
+                ERROR("For species '" << species_name << "' momentum_initializtion must provide a 2-dimensional array with " <<  3 << " columns." )
 
             //Get number of particles
             if ( !params.restart && thisSpecies->n_numpy_particles != PyArray_SHAPE(np_ret_mom)[1] )
@@ -458,7 +457,7 @@ public:
                 	    thisSpecies->boundary_conditions.push_back( thisSpecies->boundary_conditions[0] );
         	    } else if( thisSpecies->boundary_conditions.size() != params.nDim_particle ) {
             	    ERROR("For species '" << species_name << "', boundary_conditions must be the same size as the number of dimensions");
-        	    }	
+        	    }
 	} else if (params.geometry == "AMcylindrical"){
             if( thisSpecies->boundary_conditions.size() == 0 ) {
                 ERROR("For species '" << species_name << "', boundary_conditions cannot be empty");
@@ -467,7 +466,7 @@ public:
                     thisSpecies->boundary_conditions.push_back( thisSpecies->boundary_conditions[0] );
             } else if( thisSpecies->boundary_conditions.size() != 2 ) {
             	ERROR("For AM geometry boundary_conditions must not be the same size as the number of dimensions it is applied only for Rmax Xmin and Xmax");
-            }	
+            }
             if ( (thisSpecies->boundary_conditions[1][1] != "remove") &&  (thisSpecies->boundary_conditions[1][1] != "stop"))
                 ERROR(" In AM geometry particle boundary conditions supported in Rmax are 'remove' and 'stop' ");
 	}
@@ -488,7 +487,7 @@ public:
                 || thisSpecies->boundary_conditions[iDim][1] == "stop" ) {
                     if (thisSpecies->mass == 0)
                         ERROR("For photon species '" << species_name << "' stop BCs are not physical.");
-                } 
+                }
             }
 	}
         // for thermalizing BCs on particles check if thermal_boundary_temperature is correctly defined
@@ -525,7 +524,7 @@ public:
         {
             thisSpecies->atomic_number = 0;
             PyTools::extract("atomic_number", thisSpecies->atomic_number, "Species",ispec);
-            
+
             thisSpecies->maximum_charge_state = 0;
             PyTools::extract("maximum_charge_state", thisSpecies->maximum_charge_state, "Species",ispec);
 
@@ -541,12 +540,12 @@ public:
                 if( (thisSpecies->atomic_number==0)&&(thisSpecies->maximum_charge_state==0) ) {
                     ERROR("For species '" << species_name << " undefined atomic_number & maximum_charge_state (required for ionization)");
                 }
-                
+
                 if ( (thisSpecies->ionization_model == "from_rate") && (thisSpecies->maximum_charge_state == 0) ) {
                     thisSpecies->maximum_charge_state = thisSpecies->atomic_number;
                     WARNING("For species '" << species_name << " ionization 'from_rate' is used with maximum_charge_state = "<<thisSpecies->maximum_charge_state << " taken from atomic_number");
                 }
-                
+
                 if (thisSpecies->ionization_model == "from_rate") {
                     thisSpecies->ionization_rate = PyTools::extract_py("ionization_rate", "Species", ispec);
                     if( thisSpecies->ionization_rate==Py_None ) {
@@ -566,8 +565,8 @@ public:
                     }
                 }
             }
-            
-            
+
+
         }
 
         // Extract if the species is relativistic and needs ad hoc fields initialization
@@ -699,15 +698,15 @@ public:
         Species * newSpecies = NULL;
 
         // Boris, Vay or Higuera-Cary
-        if ( params.vectorization_mode == "disable")
+        if ( params.vectorization_mode == "off")
             newSpecies = new SpeciesNorm(params, patch);
 #ifdef _VECTO
-        else if (params.vectorization_mode == "normal")
+        else if (params.vectorization_mode == "on")
             newSpecies = new SpeciesNormV(params, patch);
-        else if (params.vectorization_mode == "dynamic")
-            newSpecies = new SpeciesDynamicV(params, patch);
-        else if (params.vectorization_mode == "dynamic2")
-            newSpecies = new SpeciesDynamicV2(params, patch);
+        else if (params.vectorization_mode == "adaptive_mixed_sort")
+            newSpecies = new SpeciesAdaptiveV(params, patch);
+        else if (params.vectorization_mode == "adaptive")
+            newSpecies = new SpeciesAdaptiveV2(params, patch);
 #endif
 
         // Copy members

@@ -242,6 +242,9 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
 
         dumpPatch( vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, params, patch_gid );
 
+        // Random number generator state
+        H5::attr(patch_gid, "xorshift32_state", vecPatches(ipatch)->xorshift32_state);
+
         // Close a group
         H5Gclose(patch_gid);
 
@@ -385,8 +388,8 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
             }
 
 
-            H5::vect(gid,"bmin", vecSpecies[ispec]->bmin);
-            H5::vect(gid,"bmax", vecSpecies[ispec]->bmax);
+            H5::vect(gid,"first_index", vecSpecies[ispec]->first_index);
+            H5::vect(gid,"last_index", vecSpecies[ispec]->last_index);
 
         } // End if partSize
 
@@ -416,10 +419,10 @@ void Checkpoint::readPatchDistribution( SmileiMPI* smpi, SimWindow* simWin )
     vector<int> patch_count(smpi->getSize());
     H5::getVect( fid, "patch_count", patch_count );
     smpi->patch_count = patch_count;
-    
+
     smpi->patch_refHindexes.resize(smpi->patch_count.size(), 0);
     smpi->patch_refHindexes[0] = 0;
-    for ( int rk=1 ; rk<smpi->smilei_sz ; rk++)    
+    for ( int rk=1 ; rk<smpi->smilei_sz ; rk++)
         smpi->patch_refHindexes[rk] = smpi->patch_refHindexes[rk-1] + smpi->patch_count[rk-1];
 
     // load window status : required to know the patch movement
@@ -483,6 +486,9 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
 
         restartPatch( vecPatches(ipatch)->EMfields, vecPatches(ipatch)->vecSpecies, params, patch_gid );
 
+        // Random number generator state
+        H5::getAttr(patch_gid, "xorshift32_state", vecPatches(ipatch)->xorshift32_state);
+
         H5Gclose(patch_gid);
 
     }
@@ -517,11 +523,11 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
     restartFieldsPerProc(patch_gid, EMfields->By_m);
     restartFieldsPerProc(patch_gid, EMfields->Bz_m);
 
-    if (EMfields->envelope!=NULL) {MESSAGE("restarting envelope");
+    if (EMfields->envelope!=NULL) {DEBUG("restarting envelope");
         restart_cFieldsPerProc(patch_gid, EMfields->envelope->A_);
         restart_cFieldsPerProc(patch_gid, EMfields->envelope->A0_);
         restartFieldsPerProc(patch_gid, EMfields->Env_Chi_);
-    }else{MESSAGE("envelope is null");}
+    }else{DEBUG("envelope is null");}
 
 
     // filtered Electric fields
@@ -643,12 +649,12 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
                 H5::getVect(gid,"Id",vecSpecies[ispec]->particles->Id, H5T_NATIVE_UINT64);
             }
 
-            if (params.vectorization_mode == "disable" || params.vectorization_mode == "normal")
+            if (params.vectorization_mode == "off" || params.vectorization_mode == "on")
             {
-                H5::getVect(gid,"bmin",vecSpecies[ispec]->bmin,true);
-                H5::getVect(gid,"bmax",vecSpecies[ispec]->bmax,true);
+                H5::getVect(gid,"first_index",vecSpecies[ispec]->first_index,true);
+                H5::getVect(gid,"last_index",vecSpecies[ispec]->last_index,true);
             }
-            // In the dynamic vectorization case, the bins will be recomputed
+            // In the adaptive vectorization case, the bins will be recomputed
             // latter in the patch reconfiguration
 
         }

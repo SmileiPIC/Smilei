@@ -108,11 +108,11 @@ namelist("")
     runScript(string(reinterpret_cast<const char*>(pyinit_py), pyinit_py_len), "pyinit.py", globals);
 
     runScript(Tools::merge("smilei_version='",string(__VERSION),"'\n"), string(__VERSION), globals);
-    
+
     // Set the _test_mode to False
     PyObject_SetAttrString(Py_main, "_test_mode", Py_False);
     PyTools::checkPyError();
-    
+
     // Running pyprofiles.py
     runScript(string(reinterpret_cast<const char*>(pyprofiles_py), pyprofiles_py_len), "pyprofiles.py", globals);
 
@@ -183,7 +183,6 @@ namelist("")
     }
 
     // random seed
-    unsigned int random_seed=0;
     if (PyTools::extract("random_seed", random_seed, "Main")) {
         // Init of the seed for the vectorized C++ random generator recommended by Intel
         // See https://software.intel.com/en-us/articles/random-number-function-vectorization
@@ -508,52 +507,63 @@ namelist("")
     }
 
     // Activation of the vectorized subroutines
-    vectorization_mode = "disable";
-    has_dynamic_vectorization = false;
-
+    vectorization_mode = "off";
+    has_adaptive_vectorization = false;
+    adaptive_vecto_time_selection = nullptr;
+    
     if( PyTools::nComponents("Vectorization")>0 ) {
-
         // Extraction of the vectorization mode
         PyTools::extract("mode", vectorization_mode, "Vectorization");
-        if (!(vectorization_mode == "disable" ||
-              vectorization_mode == "normal" ||
-              vectorization_mode == "dynamic" ||
-              vectorization_mode == "dynamic2"))
+        if (!(vectorization_mode == "off" ||
+              vectorization_mode == "on" ||
+              vectorization_mode == "adaptive_mixed_sort" ||
+              vectorization_mode == "adaptive"))
         {
-            ERROR("The parameter `vecto` must be `disable`, `normal`, `dynamic`, `dynamic2`");
+            ERROR("In block `Vectorization`, parameter `mode` must be `off`, `on`, `adaptive`");
         }
-        else if (vectorization_mode == "dynamic" || vectorization_mode == "dynamic2")
+        else if (vectorization_mode == "adaptive_mixed_sort" || vectorization_mode == "adaptive")
         {
-            has_dynamic_vectorization = true;
+            has_adaptive_vectorization = true;
         }
-
+        
+        // Default mode for the adaptive mode
+        PyTools::extract("initial_mode", adaptive_default_mode, "Vectorization");
+        if (!(adaptive_default_mode == "off" ||
+              adaptive_default_mode == "on"))
+        {
+            ERROR("In block `Vectorization`, parameter `default` must be `off` or `on`");
+        }
+        
+        // In case of collisions, ensure particle sort per cell
+        if( PyTools::nComponents("Collisions") > 0 ) {
+            if( vectorization_mode == "adaptive_mixed_sort" ) // collisions need sorting per cell
+                ERROR("Collisions are incompatible with the vectorization mode 'adaptive_mixed_sort'.")
+            if( vectorization_mode == "off" ) {
+                WARNING("For collisions, particles have been forced to be sorted per cell");
+                vectorization_mode = "adaptive";
+                has_adaptive_vectorization = true;
+                adaptive_default_mode = "off";
+                adaptive_vecto_time_selection = new TimeSelection();
+            }
+        }
+        
         // get parameter "every" which describes a timestep selection
-        dynamic_vecto_time_selection = new TimeSelection(
-            PyTools::extract_py("reconfigure_every", "Vectorization"), "Dynamic vectorization"
-        );
-
-        // Default mode for the dynamic mode
-        PyTools::extract("default", dynamic_default_mode, "Vectorization");
-        if (!(dynamic_default_mode == "scalar" ||
-              dynamic_default_mode == "vectorized"))
-        {
-            ERROR("The parameter `dynamic_default_mode` must be `scalar` or `vectorized`");
-        }
-
-    } else {
-        dynamic_vecto_time_selection  = new TimeSelection(1);
+        if( ! adaptive_vecto_time_selection )
+            adaptive_vecto_time_selection = new TimeSelection(
+                PyTools::extract_py("reconfigure_every", "Vectorization"), "Adaptive vectorization"
+            );
     }
-
+    
     // Read the "print_every" parameter
     print_every = (int)(simulation_time/timestep)/10;
     PyTools::extract("print_every", print_every, "Main");
     if (!print_every) print_every = 1;
-
+    
     // Read the "print_expected_disk_usage" parameter
     if( ! PyTools::extract("print_expected_disk_usage", print_expected_disk_usage, "Main") ) {
         ERROR("The parameter `Main.print_expected_disk_usage` must be True or False");
     }
-
+    
     // -------------------------------------------------------
     // Checking species order
     // -------------------------------------------------------
@@ -638,31 +648,31 @@ namelist("")
     smpi->barrier();
     if ( smpi->isMaster() ) print_init();
     smpi->barrier();
-    
+
     // -------------------------------------------------------
     // Handle the pre-processing of LaserOffset
     // -------------------------------------------------------
     unsigned int n_laser = PyTools::nComponents("Laser");
     unsigned int n_laser_offset = 0;
     LaserPropagator propagateX;
-    
+
     for( unsigned int i_laser=0; i_laser<n_laser; i_laser++ ) {
         double offset = 0.;
-        
+
         // If this laser has the hidden _offset attribute
         if( PyTools::extract("_offset", offset, "Laser", i_laser) ) {
-            
+
             if( n_laser_offset == 0 ) {
                 TITLE("Pre-processing LaserOffset");
                 propagateX.init(this, smpi, 0);
             }
-            
+
             MESSAGE(1, "LaserOffset #"<< n_laser_offset);
-            
+
             // Extract the file name
             string file("");
             PyTools::extract("file", file, "Laser", i_laser);
-            
+
             // Extract the list of profiles and verify their content
             PyObject * p = PyTools::extract_py("_profiles", "Laser", i_laser);
             vector<PyObject*> profiles;
@@ -689,26 +699,26 @@ namelist("")
                 if( nargs != (int) nDim_field )
                     ERROR("For LaserOffset #" << n_laser_offset << ": space_time_profile["<<i<<"] requires " << nDim_field << " arguments but has " << nargs);
             }
-            
-            // Extract the box side 
+
+            // Extract the box side
             string box_side;
             if( !PyTools::extract("box_side", box_side, "Laser", i_laser) || (box_side!="xmin" && box_side!="xmax"))
                 ERROR("For LaserOffset #" << n_laser_offset << ": box_side must be a 'xmin' or 'xmax'");
             //unsigned int side = string("xyz").find(box_side[0]);
-            
+
             // Extract _keep_n_strongest_modes
             int keep_n_strongest_modes=0;
             if( !PyTools::extract("_keep_n_strongest_modes", keep_n_strongest_modes, "Laser", i_laser) || keep_n_strongest_modes<1)
                 ERROR("For LaserOffset #" << n_laser_offset << ": keep_n_strongest_modes must be a positive integer");
-            
+
             // Extract the angle
             double angle_z = 0.;
             PyTools::extract("_angle", angle_z, "Laser", i_laser);
-            
+
             // Make the propagation happen and write out the file
             if( ! smpi->test_mode )
                 propagateX(profiles, profiles_n, offset, file, keep_n_strongest_modes, angle_z);
-            
+
             n_laser_offset ++;
         }
     }
@@ -719,7 +729,7 @@ namelist("")
 
 Params::~Params() {
     if( load_balancing_time_selection ) delete load_balancing_time_selection;
-    if( dynamic_vecto_time_selection ) delete dynamic_vecto_time_selection;
+    if( adaptive_vecto_time_selection ) delete adaptive_vecto_time_selection;
     PyTools::closePython();
 }
 
@@ -806,13 +816,13 @@ void Params::compute()
     }
 
     // clrw != n_space[0] is not compatible
-    // with the dynamic vecto for the moment
-    if (vectorization_mode == "dynamic" || vectorization_mode == "dynamic2")
+    // with the adaptive vectorization for the moment
+    if (vectorization_mode == "adaptive_mixed_sort" || vectorization_mode == "adaptive")
     {
         if (clrw != (int)(n_space[0]))
         {
             clrw = (int)(n_space[0]);
-            WARNING( "Particles cluster width set to: " << clrw << " for the dynamic vectorization mode");
+            WARNING( "Particles cluster width set to: " << clrw << " for the adaptive vectorization mode");
         }
     }
 
@@ -830,15 +840,15 @@ void Params::compute()
 
 void Params::check_consistency()
 {
-    if ( vectorization_mode != "disable" ) {
+    if ( vectorization_mode != "off" ) {
 
         if ( (geometry=="1Dcartesian") || (geometry=="AMcylindrical") )
             ERROR( "Vectorized algorithms not implemented for this geometry" );
 
         if ( (geometry=="2Dcartesian") && (interpolation_order==4) )
             ERROR( "4th order vectorized algorithms not implemented in 2D" );
-        
-            
+
+
         if  ( hasMultiphotonBreitWheeler ) {
             WARNING( "Performances of advanced physical processes which generates nezw particles could be degraded for the moment !" );
             WARNING( "\t The improvment of their integration in vectorized algorithm is in progress." );
@@ -920,10 +930,10 @@ void Params::print_init()
 
     TITLE("Vectorization: ");
     MESSAGE(1,"Mode: " << vectorization_mode);
-    if (vectorization_mode == "dynamic" || vectorization_mode == "dynamic2")
+    if (vectorization_mode == "adaptive_mixed_sort" || vectorization_mode == "adaptive")
     {
-        MESSAGE(1,"Default mode: " << dynamic_default_mode);
-        MESSAGE(1,"Time selection: " << dynamic_vecto_time_selection->info());
+        MESSAGE(1,"Default mode: " << adaptive_default_mode);
+        MESSAGE(1,"Time selection: " << adaptive_vecto_time_selection->info());
     }
 
 }

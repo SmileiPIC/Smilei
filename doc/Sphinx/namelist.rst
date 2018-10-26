@@ -105,7 +105,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
 .. py:data:: geometry
 
   The geometry of the simulation:
-  
+
   * ``"1Dcartesian"``
   * ``"2Dcartesian"``
   * ``"3Dcartesian"``
@@ -113,11 +113,11 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   In the following documentation, all references to simulation dimension depends on the geometry.
   Cartesian 1D, 2D,3D respectively stand for 1 dimensional, two dimensional and three dimensional and are ordered as :math:`(x,y,z)`.
-  In the case of the ``"AMcylindrical"``, all grid quantities are two dimensional and ordered as :math:`(x,r)`. 
+  In the case of the ``"AMcylindrical"``, all grid quantities are two dimensional and ordered as :math:`(x,r)`.
   Particle quantities (i.e. the Species block) are expressed in three dimensional Cartesian frame :math:`(x,y,z)`.
-    
+
   .. warning::
-  
+
     The ``"AMcylindrical"`` geometry is currently proposed in alpha version.
     It has not been thoroughly tested and only Field diagnostics are available.
     Boundary conditions must be set to ``"remove"`` for particles, ``"silver-muller"`` for longitudinal EM boundaries and ``"buneman"`` for transverse EM boundaries.
@@ -128,7 +128,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   :default: ``2``
 
   Interpolation order, defines particle shape function:
- 
+
   * ``2``  : 3 points stencil, supported in all configurations.
   * ``4``  : 5 points stencil, not supported in vectorized 2D geometry.
 
@@ -167,7 +167,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   A list of integers: the number of patches in each direction.
   Each integer must be a power of 2, and the total number of patches must be
   greater or equal than the number of MPI processes.
-  It is also advised to have more patches than the total number of openMP threads even if this is not a strict requirement.
+  It is also strongly advised to have more patches than the total number of openMP threads.
   See :doc:`parallelization`.
 
 
@@ -368,7 +368,7 @@ occur every 150 iterations.
 
 ----
 
-.. _dynamicVectorization:
+.. _Vectorization:
 
 Vectorization
 ^^^^^^^^^^^^^^^^^^^^^
@@ -378,41 +378,42 @@ The block ``Vectorization`` is optional. It controls the SIMD operations that ca
 .. code-block:: python
 
   Vectorization(
-      mode = "dynamic",
-      reconfigure_every = 5,
-..      default = "scalar"
+      mode = "adaptive",
+      reconfigure_every = 20,
+      initial_mode = "on"
   )
 
 .. py:data:: mode
 
-  :default: ``"disable"``
+  :default: ``"off"``
 
-  * ``"disable"``: non-vectorized operators are used.
-    Recommended when the number of particles per cell stays below
-    10.
-  * ``"normal"``: vectorized operators are used.
-  * ``"dynamic"``: the best operators (scalar or vectorized)
-    are determined dynamically and locally (per patch and per species).
-    Vectorized operators use a new cell-based sorting method,
-    while scalar operators use an older version with slightly less overhead.
-  * ``"dynamic2"``: same as ``"dynamic"`` but the new cell-based sorting
-    method is used always.
-  
-  In the ``"dynamic"`` and ``"dynamic2"`` modes, :py:data:`clrw` is set to the maximum by default.
+  * ``"off"``: non-vectorized operators are used.
+    Recommended when the number of particles per cell stays below 10.
+  * ``"on"``: vectorized operators are used.
+    Recommended when the number of particles per cell stays above 10.
+    Particles are sorted per cell.
+  * ``"adaptive"``: the best operators (scalar or vectorized)
+    are determined and configured dynamically and locally
+    (per patch and per species).
+    Particles are sorted per cell.
+
+  In the ``"adaptive"`` mode, :py:data:`clrw` is set to the maximum.
 
 .. py:data:: reconfigure_every
 
-  :default: 1
-  
-  The number of timesteps between each dynamic reconfiguration of the vectorized operators, when using the ``"dynamic"`` (or ``"dynamic2"``) vectorization modes. It may be set to a :ref:`time selection <TimeSelections>` as well.
+  :default: 20
+
+  The number of timesteps between each dynamic reconfiguration of
+  the vectorized operators, when using the  ``"adaptive"`` vectorization mode.
+  It may be set to a :ref:`time selection <TimeSelections>` as well.
 
 
-.. .. py:data:: default
-..
-..  :default: ``vectorized``
-..
-..  Default state when one of the dynamic computational mode is activated
-..  and no particle is present in the patch.
+.. py:data:: initial_mode
+
+  :default: ``off``
+
+  Default state when the ``"adaptive"`` mode is activated
+  and no particle is present in the patch.
 
 
 ----
@@ -702,10 +703,10 @@ Each species has to be defined in a ``Species`` block::
   :default: ``"none"``
 
   The model for ionization:
-  
+
   * ``"tunnel"`` for :ref:`field ionization <field_ionization>` (requires species with an :py:data:`atomic_number`)
   * ``"from_rate"``, relying on a :ref:`user-defined ionization rate <rate_ionization>` (requires species with a :py:data:`maximum_charge_state`).
-  
+
 .. py:data:: ionization_rate
 
   A python function giving the user-defined ionisation rate as a function of various particle attributes.
@@ -719,9 +720,9 @@ Each species has to be defined in a ``Species`` block::
   and linear in the x coordinate:
 
   .. code-block:: python
-    
+
     from numpy import exp, zeros_like
-    
+
     def my_rate(particles):
         rate = zeros_like(particles.x)
         charge_0 = (particles.charge==0)
@@ -729,9 +730,9 @@ Each species has to be defined in a ``Species`` block::
         rate[charge_0] = r0 * particles.x[charge_0]
         rate[charge_1] = r1 * particles.x[charge_1]
         return rate
-    
+
     Species( ..., ionization_rate = my_rate )
-    
+
 .. py:data:: ionization_electrons
 
   The name of the electron species that :py:data:`ionization_model` uses when creating new electrons.
@@ -751,7 +752,7 @@ Each species has to be defined in a ``Species`` block::
   Flag for particles interacting with an envelope model for the laser, if present.
   If ``True``, this species will project its susceptibility and be influenced by the laser envelope field.
   See :doc:`laser_envelope` for details on the dynamics of particles in presence of a laser envelope field.
-.. note:: Ionization, Radiation and Multiphoton Breit-Wheeler pair creation are not yet implemented for species interacting with an envelope model for the laser. 
+.. note:: Ionization, Radiation and Multiphoton Breit-Wheeler pair creation are not yet implemented for species interacting with an envelope model for the laser.
 
 
 .. py:data:: c_part_max
@@ -1125,20 +1126,20 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   .. py:data:: space_time_profile
 
     :type: A list of two *python* functions
-    
+
     The magnetic field profiles at some arbitrary plane, as a function of space and time.
     The arguments of these profiles are ``(y,t)`` in 2D and ``(y,z,t)`` in 3D.
-    
+
   .. py:data:: offset
-     
+
      The distance from the box boundary to the plane where :py:data:`space_time_profile`
      is defined.
-  
+
   .. py:data:: extra_envelope
-    
+
     :type: a *python* function or a :ref:`python profile <profiles>`
     :default:  ``lambda *z: 1.``, which means a profile of value 1 everywhere
-    
+
     An extra envelope applied at the boundary, on top of the :py:data:`space_time_profile`.
     This envelope takes two arguments (`y`, `t`) in 2D, and three arguments (`y`, `z`, `t`)
     in 3D.
@@ -1148,16 +1149,16 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     The envelope can be used to remove these spurious repetitions.
 
   .. py:data:: keep_n_strongest_modes
-    
+
     :default: 100
-    
+
     The number of temporal Fourier modes that are kept during the pre-processing.
     See :doc:`this page <laser_offset>` for more details.
 
   .. py:data:: angle
-    
+
     :default: 0.
-    
+
     Angle between the boundary and the profile's plane, the rotation being around :math:`z`.
     See :doc:`this page <laser_offset>` for more details.
 
@@ -1169,7 +1170,7 @@ In geometry (``"3Dcartesian"``) it is possible to model a laser pulse propagatin
 The fast oscillations of the laser are neglected and all the physical quantities of the simulation, including the electromagnetic fields and their source terms, as well as the particles positions and momenta, are meant to be an average over one or more optical cycles.
 Effects involving characteristic lengths comparable to the laser central wavelength, or effects dependent on the polarization of the laser, cannot be modeled with this option.
 
-For the moment the only way to specify a laser pulse through this model in :program:`Smilei` is through a cylindrically symmetric 3D gaussian beam.
+For the moment the only way to specify a laser pulse through this model in :program:`Smilei` is through a cylindrically symmetric 3D gaussian beam. For the moment, only one laser pulse can be specified through the envelope model in a simulation, thus multi-pulse set-ups cannot be defined.
 Contrarily to a standard Laser, the laser envelope will be entirely initialized inside the simulation box at the start of the simulation.
 
 Following is the laser envelope creator::
@@ -1203,11 +1204,11 @@ The arguments appearing ``LaserEnvelopeGaussian3D`` have the same meaning they w
   For the moment, only reflective boundary conditions are implemented in the resolution of the envelope equation.
 
 
-It is important to remember that the profile defined through the block ``LaserEnvelopeGaussian3D`` corresponds to the complex envelope of the laser vector potential component :math:`\tilde{A}` in the polarization direction. 
-The calculation of the correspondent complex envelope for the laser electric field component in that direction is described in :doc:`laser_envelope`. 
+It is important to remember that the profile defined through the block ``LaserEnvelopeGaussian3D`` corresponds to the complex envelope of the laser vector potential component :math:`\tilde{A}` in the polarization direction.
+The calculation of the correspondent complex envelope for the laser electric field component in that direction is described in :doc:`laser_envelope`.
 Note that only order 2 interpolation is supported in presence of the envelope model for the laser.
 
-  
+
 ----
 
 .. _ExternalField:

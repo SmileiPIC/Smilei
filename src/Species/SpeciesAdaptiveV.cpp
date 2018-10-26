@@ -1,4 +1,4 @@
-#include "SpeciesDynamicV.h"
+#include "SpeciesAdaptiveV.h"
 
 #include <cmath>
 #include <ctime>
@@ -45,24 +45,24 @@ using namespace std;
 // Constructor for Species
 // input: simulation parameters & Species index
 // ---------------------------------------------------------------------------------------------------------------------
-SpeciesDynamicV::SpeciesDynamicV(Params& params, Patch* patch) :
+SpeciesAdaptiveV::SpeciesAdaptiveV(Params& params, Patch* patch) :
     SpeciesV(params, patch)
 {
     initCluster( params );
     npack_ = 0 ;
     packsize_ = 0;
 
-}//END SpeciesDynamicV creator
+}//END SpeciesAdaptiveV creator
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Destructor for Species
 // ---------------------------------------------------------------------------------------------------------------------
-SpeciesDynamicV::~SpeciesDynamicV()
+SpeciesAdaptiveV::~SpeciesAdaptiveV()
 {
 }
 
 
-void SpeciesDynamicV::resizeCluster(Params& params)
+void SpeciesAdaptiveV::resizeCluster(Params& params)
 {
 
     // We recompute the number of cells
@@ -70,21 +70,21 @@ void SpeciesDynamicV::resizeCluster(Params& params)
     for ( unsigned int i=1; i < params.nDim_field; i++) ncells *= (params.n_space[i]+1);
 
     // We keep the current number of particles
-    // int npart = bmax[bmax.size()-1];
+    // int npart = last_index[last_index.size()-1];
     // int size = params.n_space[0]/clrw;
 
-    bmax.resize(ncells,0);
-    bmin.resize(ncells,0);
-    //species_loc_bmax.resize(ncells,0);
+    last_index.resize(ncells,0);
+    first_index.resize(ncells,0);
+    //count.resize(ncells,0);
 
-    bmin[0] = 0;
+    first_index[0] = 0;
     for (unsigned int ic=1; ic < ncells; ic++)
     {
-        bmin[ic] = bmin[ic-1] + species_loc_bmax[ic-1];
-        bmax[ic-1]= bmin[ic];
+        first_index[ic] = first_index[ic-1] + count[ic-1];
+        last_index[ic-1]= first_index[ic];
     }
-    //New total number of particles is stored as last element of bmax
-    bmax[ncells-1] = bmax[ncells-2] + species_loc_bmax.back() ;
+    //New total number of particles is stored as last element of last_index
+    last_index[ncells-1] = last_index[ncells-2] + count.back() ;
 
 }// end resizeCluster
 
@@ -94,7 +94,7 @@ void SpeciesDynamicV::resizeCluster(Params& params)
 //! Compute part_cell_keys at patch creation.
 //! This operation is normally done in the pusher to avoid additional particles pass.
 // -----------------------------------------------------------------------------
-void SpeciesDynamicV::compute_part_cell_keys(Params &params)
+void SpeciesAdaptiveV::compute_part_cell_keys(Params &params)
 {
 
     unsigned int ip, nparts;
@@ -107,13 +107,13 @@ void SpeciesDynamicV::compute_part_cell_keys(Params &params)
     // Cell_keys is resized at the current number of particles
     (*particles).cell_keys.resize(nparts);
 
-    // Reinitialize species_loc_bmax to 0
-    for (unsigned int ic=0; ic < species_loc_bmax.size() ; ic++)
-        species_loc_bmax[ic] = 0 ;
+    // Reinitialize count to 0
+    for (unsigned int ic=0; ic < count.size() ; ic++)
+        count[ic] = 0 ;
 
     #pragma omp simd
     for (ip=0; ip < nparts ; ip++){
-    // Counts the # of particles in each cell (or sub_cell) and store it in sbmax.
+    // Counts the # of particles in each cell (or sub_cell) and store it in slast_index.
         for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
             X = (*particles).position(ipos,ip)-min_loc_vec[ipos];
             IX = round(X * dx_inv_[ipos] );
@@ -121,13 +121,13 @@ void SpeciesDynamicV::compute_part_cell_keys(Params &params)
         }
     }
 
-    // Reduction of the number of particles per cell in species_loc_bmax
+    // Reduction of the number of particles per cell in count
     for (ip=0; ip < nparts ; ip++)
-        species_loc_bmax[(*particles).cell_keys[ip]] ++ ;
+        count[(*particles).cell_keys[ip]] ++ ;
 
 }
 
-void SpeciesDynamicV::importParticles( Params& params, Patch* patch, Particles& source_particles, vector<Diagnostic*>& localDiags )
+void SpeciesAdaptiveV::importParticles( Params& params, Patch* patch, Particles& source_particles, vector<Diagnostic*>& localDiags )
 {
 
     if (this->vectorized_operators)
@@ -141,12 +141,135 @@ void SpeciesDynamicV::importParticles( Params& params, Patch* patch, Particles& 
 }
 
 // -----------------------------------------------------------------------------
+//! This function configures the type of species according
+//! to the default mode regardless the particle distribution
+//! params object containing global Parameters
+//! patch object containing the current patch data and properties
+// -----------------------------------------------------------------------------
+void SpeciesAdaptiveV::initial_configuration(Params &params, Patch * patch)
+{
+    // Setup the vectorization state
+    this->vectorized_operators = (params.adaptive_default_mode == "on");
+
+
+    // Destroy and reconfigure operators
+    this->reconfigure_operators(params, patch);
+
+    // If we switch from non-vectorized to vectozied,
+    // we have to reactivate the cell-sorting algorithm
+    if (this->vectorized_operators)
+    {
+        // We resize the bins
+        this->resizeCluster(params);
+
+        // We perform the sorting
+        this->sort_part(params);
+    }
+    // If we switch from vectorized to non-vectozied,
+    else
+    {
+        // We resize the bins
+        this->Species::resizeCluster(params);
+
+        // We perform the sorting
+        this->Species::sort_part(params);
+
+    }
+
+    // Reconfigure species to be imported
+    this->reconfigure_particle_importation();
+
+}
+
+// -----------------------------------------------------------------------------
+//! This function configures the type of species according
+//! to the vectorization mode
+//! params object containing global Parameters
+//! patch object containing the current patch data and properties
+// -----------------------------------------------------------------------------
+void SpeciesAdaptiveV::configuration(Params &params, Patch * patch)
+{
+    //float ratio_number_of_vecto_cells;
+    float vecto_time = 0.;
+    float scalar_time = 0.;
+
+    // We first compute cell_keys: the number of particles per cell
+    this->compute_part_cell_keys(params);
+
+    // Species with particles
+    if ((*particles).size() > 0)
+    {
+
+        // --------------------------------------------------------------------
+        // Metrics 2 - based on the evaluation of the computational time
+        SpeciesMetrics::get_computation_time(this->count,
+                                            vecto_time,
+                                            scalar_time);
+
+        if (vecto_time <= scalar_time)
+        {
+            this->vectorized_operators = true;
+        }
+        else if (vecto_time > scalar_time)
+        {
+            this->vectorized_operators = false;
+        }
+    }
+    // Default mode where there is no particles
+    else
+    {
+        this->vectorized_operators = (params.adaptive_default_mode == "on");
+    }
+
+    // --------------------------------------------------------------------
+
+#ifdef  __DEBUG
+            std::cerr << "  > Species " << this->name << " configuration (" << this->vectorized_operators
+                      << ") default: " << params.adaptive_default_mode
+                      << " in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ")"
+                      << " of MPI process " << patch->MPI_me_
+                      << " (vecto time: " << vecto_time
+                      << ", scalar time: " << scalar_time
+                      << ", particle number: " << (*particles).size()
+                      << ")" << '\n';
+#endif
+
+    // Destroy and reconfigure operators
+    this->reconfigure_operators(params, patch);
+
+    // If we switch from non-vectorized to vectozied,
+    // we have to reactivate the cell-sorting algorithm
+    if (this->vectorized_operators)
+    {
+        // We resize the bins
+        this->resizeCluster(params);
+
+        // We perform the sorting
+        this->sort_part(params);
+    }
+    // If we switch from vectorized to non-vectozied,
+    else
+    {
+        // We resize the bins
+        this->Species::resizeCluster(params);
+
+        // We perform the sorting
+        this->Species::sort_part(params);
+
+    }
+
+    // Reconfigure species to be imported
+    this->reconfigure_particle_importation();
+
+}
+
+// -----------------------------------------------------------------------------
 //! This function reconfigures the type of species according
 //! to the vectorization mode
 //! params object containing global Parameters
 //! patch object containing the current patch data and properties
 // -----------------------------------------------------------------------------
-void SpeciesDynamicV::reconfiguration(Params &params, Patch * patch)
+void SpeciesAdaptiveV::reconfiguration(Params &params, Patch * patch)
 {
 
     //unsigned int ncell;
@@ -169,7 +292,7 @@ void SpeciesDynamicV::reconfiguration(Params &params, Patch * patch)
     // --------------------------------------------------------------------
     // Metrics 1 - based on the ratio of vectorized cells
     // Compute the number of cells that contain more than 8 particles
-    //ratio_number_of_vecto_cells = SpeciesMetrics::get_ratio_number_of_vecto_cells(species_loc_bmax,8);
+    //ratio_number_of_vecto_cells = SpeciesMetrics::get_ratio_number_of_vecto_cells(count,8);
 
     // Test metrics, if necessary we reasign operators
     //if ( (ratio_number_of_vecto_cells > 0.5 && this->vectorized_operators == false)
@@ -181,7 +304,7 @@ void SpeciesDynamicV::reconfiguration(Params &params, Patch * patch)
 
     // --------------------------------------------------------------------
     // Metrics 2 - based on the evaluation of the computational time
-    SpeciesMetrics::get_computation_time(species_loc_bmax,
+    SpeciesMetrics::get_computation_time(count,
                                         vecto_time,
                                         scalar_time);
 
@@ -240,96 +363,9 @@ void SpeciesDynamicV::reconfiguration(Params &params, Patch * patch)
 }
 
 // -----------------------------------------------------------------------------
-//! This function reconfigures the type of species according
-//! to the vectorization mode
-//! params object containing global Parameters
-//! patch object containing the current patch data and properties
-// -----------------------------------------------------------------------------
-void SpeciesDynamicV::configuration(Params &params, Patch * patch)
-{
-    //float ratio_number_of_vecto_cells;
-    float vecto_time = 0.;
-    float scalar_time = 0.;
-
-    // We first compute cell_keys: the number of particles per cell
-    this->compute_part_cell_keys(params);
-
-    //split cell into smaller sub_cells for refined sorting
-    //ncell = (params.n_space[0]+1);
-    //for ( unsigned int i=1; i < params.nDim_field; i++) ncell *= (params.n_space[i]+1);
-
-    // --------------------------------------------------------------------
-    // Metrics 1 - based on the ratio of vectorized cells
-    // Compute the number of cells that contain more than 8 particles
-    //ratio_number_of_vecto_cells = SpeciesMetrics::get_ratio_number_of_vecto_cells(species_loc_bmax,8);
-    // --------------------------------------------------------------------
-
-    // --------------------------------------------------------------------
-    // Metrics 2 - based on the evaluation of the computational time
-    SpeciesMetrics::get_computation_time(this->species_loc_bmax,
-                                        vecto_time,
-                                        scalar_time);
-
-    if (vecto_time < scalar_time)
-    {
-        this->vectorized_operators = true;
-    }
-    else if (vecto_time > scalar_time)
-    {
-        this->vectorized_operators = false;
-    }
-    // Default mode where there is no particles
-    else
-    {
-        this->vectorized_operators = (params.dynamic_default_mode == "vectorized");
-    }
-
-    // --------------------------------------------------------------------
-
-#ifdef  __DEBUG
-            std::cerr << "  > Species " << this->name << " configuration (" << this->vectorized_operators
-                      << ") default: " << params.dynamic_default_mode
-                      << " in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ")"
-                      << " of MPI process " << patch->MPI_me_
-                      << " (vecto time: " << vecto_time
-                      << ", scalar time: " << scalar_time
-                      << ", particle number: " << (*particles).size()
-                      << ")" << '\n';
-#endif
-
-    // Destroy and reconfigure operators
-    this->reconfigure_operators(params, patch);
-
-    // If we switch from non-vectorized to vectozied,
-    // we have to reactivate the cell-sorting algorithm
-    if (this->vectorized_operators)
-    {
-        // We resize the bins
-        this->resizeCluster(params);
-
-        // We perform the sorting
-        this->sort_part(params);
-    }
-    // If we switch from vectorized to non-vectozied,
-    else
-    {
-        // We resize the bins
-        this->Species::resizeCluster(params);
-
-        // We perform the sorting
-        this->Species::sort_part(params);
-
-    }
-
-    // Reconfigure species to be imported
-    this->reconfigure_particle_importation();
-
-}
-
-// -----------------------------------------------------------------------------
 //! This function reconfigures the operators
 // -----------------------------------------------------------------------------
-void SpeciesDynamicV::reconfigure_operators(Params &params, Patch * patch)
+void SpeciesAdaptiveV::reconfigure_operators(Params &params, Patch * patch)
 {
     // Destroy current operators
     delete Interp;
@@ -352,7 +388,7 @@ void SpeciesDynamicV::reconfigure_operators(Params &params, Patch * patch)
 // -----------------------------------------------------------------------------
 //! This function reconfigures the operators
 // -----------------------------------------------------------------------------
-void SpeciesDynamicV::reconfigure_particle_importation()
+void SpeciesAdaptiveV::reconfigure_particle_importation()
 {
     // Local species for importation
     if (this->Ionize)

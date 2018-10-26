@@ -15,7 +15,7 @@
 //! Return the number of cells that contain more than
 //! `particle_threshold` particles
 // -----------------------------------------------------------------------------
-float SpeciesMetrics::get_ratio_number_of_vecto_cells(const std::vector<int> & species_loc_bmax,
+float SpeciesMetrics::get_ratio_number_of_vecto_cells(const std::vector<int> & count,
                                               const int particle_threshold)
 {
     // - max_number_of_particles_per_cells: the maximum number of particles
@@ -26,18 +26,18 @@ float SpeciesMetrics::get_ratio_number_of_vecto_cells(const std::vector<int> & s
     int number_of_vecto_cells = 0;
     int number_of_non_zero_cells = 0;
     float ratio_number_of_vecto_cells = 0;
-    //min_number_of_particles_per_cells = species_loc_bmax[0];
+    //min_number_of_particles_per_cells = count[0];
     //max_number_of_particles_per_cells = 0;
     #pragma omp simd reduction(+:number_of_vecto_cells,number_of_non_zero_cells)
-    for (unsigned int ic=0; ic < species_loc_bmax.size(); ic++)
+    for (unsigned int ic=0; ic < count.size(); ic++)
     {
-        //max_number_of_particles_per_cells = max(species_loc_bmax[ic-1],max_number_of_particles_per_cells);
-        //min_number_of_particles_per_cells = min(species_loc_bmax[ic-1],min_number_of_particles_per_cells);
-        if (species_loc_bmax[ic-1] >= particle_threshold)
+        //max_number_of_particles_per_cells = max(count[ic-1],max_number_of_particles_per_cells);
+        //min_number_of_particles_per_cells = min(count[ic-1],min_number_of_particles_per_cells);
+        if (count[ic-1] >= particle_threshold)
         {
             number_of_vecto_cells ++;
         }
-        if (species_loc_bmax[ic-1] > 0)
+        if (count[ic-1] > 0)
         {
             number_of_non_zero_cells++;
         }
@@ -51,7 +51,7 @@ float SpeciesMetrics::get_ratio_number_of_vecto_cells(const std::vector<int> & s
 //! Evaluate the time to compute all particles
 //! in the current patch with vectorized operators
 // -----------------------------------------------------------------------------
-void SpeciesMetrics::get_computation_time(const std::vector<int> & species_loc_bmax,
+void SpeciesMetrics::get_computation_time(const std::vector<int> & count,
                                           double & vecto_time,
                                           double & scalar_time)
 {
@@ -65,16 +65,16 @@ void SpeciesMetrics::get_computation_time(const std::vector<int> & species_loc_b
 
     // Loop over the cells
     #pragma omp simd reduction(+:vecto_time_loc,scalar_time_loc) private(particle_number,log_particle_number)
-    for (unsigned int ic=0; ic < species_loc_bmax.size(); ic++)
+    for (unsigned int ic=0; ic < count.size(); ic++)
     {
-        if (species_loc_bmax[ic] > 0)
+        if (count[ic] > 0)
         {
             // Max of the fit
-            particle_number = fmin(double(species_loc_bmax[ic]),256.0);
+            particle_number = fmin(double(count[ic]),256.0);
             // Convesion in log
             log_particle_number = log(particle_number);
-            vecto_time_loc += SpeciesMetrics::get_particle_computation_time_vectorization(log_particle_number)*species_loc_bmax[ic];
-            scalar_time_loc += SpeciesMetrics::get_particle_computation_time_scalar(log_particle_number)*species_loc_bmax[ic];
+            vecto_time_loc += SpeciesMetrics::get_particle_computation_time_vectorization(log_particle_number)*count[ic];
+            scalar_time_loc += SpeciesMetrics::get_particle_computation_time_scalar(log_particle_number)*count[ic];
         }
     }
     scalar_time = scalar_time_loc;
@@ -85,7 +85,7 @@ void SpeciesMetrics::get_computation_time(const std::vector<int> & species_loc_b
 //! Evaluate the time to compute all particles
 //! in the current patch with vectorized operators
 // -----------------------------------------------------------------------------
-void SpeciesMetrics::get_computation_time(const std::vector<int> & species_loc_bmax,
+void SpeciesMetrics::get_computation_time(const std::vector<int> & count,
                                           float & vecto_time,
                                           float & scalar_time)
 {
@@ -99,16 +99,16 @@ void SpeciesMetrics::get_computation_time(const std::vector<int> & species_loc_b
 
     // Loop over the cells
     #pragma omp simd reduction(+:vecto_time_loc,scalar_time_loc) private(particle_number,log_particle_number)
-    for (unsigned int ic=0; ic < species_loc_bmax.size(); ic++)
+    for (unsigned int ic=0; ic < count.size(); ic++)
     {
-        if (species_loc_bmax[ic] > 0)
+        if (count[ic] > 0)
         {
             // Max of the fit
-            particle_number = fmin(float(species_loc_bmax[ic]),256.0);
+            particle_number = fmin(float(count[ic]),256.0);
             // Convesion in log
             log_particle_number = log(particle_number);
-            vecto_time_loc += get_particle_computation_time_vectorization(log_particle_number)*species_loc_bmax[ic];
-            scalar_time_loc += get_particle_computation_time_scalar(log_particle_number)*species_loc_bmax[ic];
+            vecto_time_loc += get_particle_computation_time_vectorization(log_particle_number)*count[ic];
+            scalar_time_loc += get_particle_computation_time_scalar(log_particle_number)*count[ic];
         }
     }
     vecto_time = vecto_time_loc;

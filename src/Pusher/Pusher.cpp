@@ -4,7 +4,7 @@
 
 Pusher::Pusher(Params& params, Species *species) :
     min_loc_vec(species->min_loc_vec),
-    vecto( params.vectorization_mode=="normal" || params.vectorization_mode=="dynamic" || params.vectorization_mode=="dynamic2" )
+    vecto( params.vectorization_mode=="on" || params.vectorization_mode=="adaptive_mixed_sort" || params.vectorization_mode=="adaptive" )
 {
     for (unsigned int ipos=0; ipos < params.nDim_particle ; ipos++)
         dx_inv_[ipos] = species->dx_inv_[ipos];
