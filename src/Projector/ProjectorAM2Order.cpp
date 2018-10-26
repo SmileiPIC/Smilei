@@ -32,14 +32,16 @@ ProjectorAM2Order::ProjectorAM2Order (Params& params, Patch* patch) : ProjectorA
 
     nprimr = params.n_space[1] + 2*params.oversize[1] + 1;
 
+    rprim.resize(nprimr);
     invV.resize(nprimr);
     invVd.resize(nprimr+1);
 
     for (int j = 0; j< nprimr; j++){
+        rprim[j] = abs((j_domain_begin+j)*dr);
         if (j_domain_begin+j == 0){
             invV[j] = 6./dr; // Correction de Verboncoeur ordre 1.
         } else {
-            invV[j] = 1./abs((j_domain_begin+j)*dr);
+            invV[j] = 1./rprim[j];
         }
     }
     for (int j = 0; j< nprimr+1; j++)
@@ -203,7 +205,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             for (unsigned int j=0 ; j<5 ; j++) {
                 jloc = j+jpo;
                 linindex = iloc*nprimr+jloc;
-                Jt [linindex] += Jt_p[i][j] *invV[jloc];
+                Jt [linindex] += Jt_p[i][j] *invV[jloc]*rprim[jloc];
             }
         }//i
 
@@ -309,7 +311,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
 
      e_delta_inv =1./e_delta;
     //defining crt_p 
-    complex<double> crt_p = - charge_weight*Icpx/(e_bar*dt*(double)imode)*rp*2.;
+    complex<double> crt_p = - charge_weight*Icpx/(e_bar*dt*(double)imode)*2.;
     for (unsigned int i=0; i < 5; i++) {
         DSl[i] = Sl1[i] - Sl0[i];
         DSr[i] = Sr1[i] - Sr0[i];
