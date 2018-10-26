@@ -37,8 +37,7 @@ ProjectorAM2Order::ProjectorAM2Order (Params& params, Patch* patch) : ProjectorA
 
     for (int j = 0; j< nprimr; j++){
         if (j_domain_begin+j == 0){
-            invV[j] = 8./dr; //   Normal correction on axis.
-            //invV[j] = 6./dr; // Verboncoeur correction ordre 1.
+            invV[j] = 6./dr; // Correction de Verboncoeur ordre 1.
         } else {
             invV[j] = 1./abs((j_domain_begin+j)*dr);
         }
@@ -310,8 +309,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
 
      e_delta_inv =1./e_delta;
     //defining crt_p 
-    //complex<double> crt_p = - charge_weight*Icpx/(e_bar*dt*(double)imode)*rp*2.;
-    complex<double> crt_p = - charge_weight*Icpx/(e_bar*dt*(double)imode)*rp;
+    complex<double> crt_p = - charge_weight*Icpx/(e_bar*dt*(double)imode)*rp*2.;
     for (unsigned int i=0; i < 5; i++) {
         DSl[i] = Sl1[i] - Sl0[i];
         DSr[i] = Sr1[i] - Sr0[i];
@@ -369,8 +367,8 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     for (unsigned int i=0; i<(unsigned int)imode; i++){
     C_m *= e_theta;
     }
-    C_m = 1./C_m; 
-    //C_m = 2./C_m; 
+    //C_m = 1./C_m; 
+    C_m = 2./C_m; 
     // Jl^(d,p)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
@@ -665,8 +663,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     }
     e_delta_inv =1./e_delta;
     //defining crt_p 
-    //complex<double> crt_p = -charge_weight*Icpx/(e_bar*dt*(double)imode)*rp*2.;
-    complex<double> crt_p = -charge_weight*Icpx/(e_bar*dt*(double)imode)*rp;
+    complex<double> crt_p = -charge_weight*Icpx/(e_bar*dt*(double)imode)*rp*2.;
     for (unsigned int i=0; i < 5; i++) {
         DSl[i] = Sl1[i] - Sl0[i];
         DSr[i] = Sr1[i] - Sr0[i];
@@ -723,8 +720,8 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     for (unsigned int i=0; i<(unsigned int)imode; i++){
     C_m *= e_theta;
     }
-    C_m= 1./C_m; 
-    //C_m= 2./C_m; 
+    //C_m= 1./C_m; 
+    C_m= 2./C_m; 
     // Jl^(d,p)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
@@ -809,7 +806,7 @@ void ProjectorAM2Order::operator() (complex<double>* rhoj, Particles &particles,
 
     complex<double> e_theta = ( particles.position(1,ipart) + Icpx*particles.position(2,ipart))/r;
     complex<double> C_m = 1.;
-    //if (imode > 0) C_m = 2.;
+    if (imode > 0) C_m = 2.;
     for (unsigned int i=0; i<(unsigned int)imode; i++)
         C_m *= e_theta;
 
