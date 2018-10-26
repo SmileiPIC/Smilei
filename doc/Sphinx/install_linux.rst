@@ -50,7 +50,7 @@ Debian (Ubuntu, Mint etc...)
 
 5. Restart your terminal
 
-6. Download `HDF5 <https://support.hdfgroup.org/HDF5>`_ and install
+6. Download `HDF5 <https://portal.hdfgroup.org/display/support/Downloads>`_ and install
 
   .. code-block:: bash
 
