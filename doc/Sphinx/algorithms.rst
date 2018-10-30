@@ -434,7 +434,7 @@ Azimuthal modes decomposition
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :program:`Smilei` can run simulations in cyclindrical geometry with azimuthal modes decomposition as described in `this article <https://www.sciencedirect.com/science/article/pii/S0021999108005950?via%3Dihub>`_.
-In this geometry, fields are expressed in cylindrical frame :math:`(e_x,e_r,e_\theta)` and can be written as a Fourier serie:
+In this geometry, fields are expressed in cylindrical frame :math:`(e_x,e_r,e_\theta)` and can be written as a Fourier series:
 
 .. math::
 

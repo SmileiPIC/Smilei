@@ -7,7 +7,7 @@ compile:
   only:
     - develop
     - release-4.0.0
-    - vecto_collisions
+    - mpi_omp_master
 
   script:
     # Force workdir cleaning in case of retried
@@ -34,7 +34,7 @@ makerun1D:
   only:
     - develop
     - release-4.0.0
-    - vecto_collisions
+    - mpi_omp_master
 
   script:
     # Move in test dir
@@ -47,7 +47,7 @@ makerun2D:
   only:
     - develop
     - release-4.0.0
-    - vecto_collisions
+    - mpi_omp_master
 
   script:
     # Move in test dir
@@ -60,7 +60,7 @@ makerun3D:
   only:
     - develop
     - release-4.0.0
-    - vecto_collisions
+    - mpi_omp_master
 
   script:
     # Move in test dir
@@ -73,6 +73,7 @@ makerunAM:
   only:
     - develop
     - release-4.0.0
+    - mpi_omp_master
 
   script:
     # Move in test dir
@@ -85,7 +86,7 @@ makerunV:
   only:
     - develop
     - release-4.0.0
-    - vecto_collisions
+    - mpi_omp_master
 
   script:
     # Move in test dir
@@ -98,7 +99,7 @@ makerunCollisions:
   only:
     - develop
     - release-4.0.0
-    - vecto_collisions
+    - mpi_omp_master
     
   script:
     # Move in test dir

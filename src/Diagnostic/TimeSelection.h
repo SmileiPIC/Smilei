@@ -24,7 +24,7 @@ public:
     //! Empty selection constructor
     TimeSelection();
 
-    //! Single double selection constructor
+    //! Basic selection constructor
     TimeSelection(int period);
 
     //! Cloning Constructor
