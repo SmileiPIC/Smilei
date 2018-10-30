@@ -199,6 +199,8 @@ class ParticleBinning(Diagnostic):
 					first_edge = edges[self._selection[iaxis].start or 0]
 					last_edge  = edges[(self._selection[iaxis].stop or len(centers))]
 					coeff /= last_edge - first_edge
+				
+				plot_diff.append( self._np.ones((self._finalShape[iaxis],)) )
 			
 			# if not summed
 			else:
@@ -227,7 +229,8 @@ class ParticleBinning(Diagnostic):
 					self._finalShape[iaxis] = len(self._centers[-1])
 					if axis["log"]:
 						uniform = False
-		
+				else:
+					plot_diff.append( self._np.ones((self._finalShape[iaxis],)) )
 		
 		self._selection = tuple(self._selection)
 		
@@ -291,7 +294,6 @@ class ParticleBinning(Diagnostic):
 				self._bsize = self._bsize.transpose([1,0]+list(range(2,len(plot_diff))))
 		self._bsize = cell_volume / self._bsize
 		self._bsize *= coeff
-		self._bsize = self._np.squeeze(self._bsize)
 		
 		# Set the directory in case of exporting
 		self._exportPrefix = "ParticleDiag_"+"-".join([str(d) for d in self._diags])
@@ -395,7 +397,7 @@ class ParticleBinning(Diagnostic):
 				allDiags = [d for d in diags if d in allDiags]
 			else:
 				allDiags = diags
-		return allDiags
+		return sorted(allDiags)
 	
 	# get all available timesteps for a given diagnostic
 	def getAvailableTimesteps(self, diagNumber=None):
@@ -438,6 +440,8 @@ class ParticleBinning(Diagnostic):
 				self._h5items[d][index].read_direct(B, source_sel=self._selection) # get array
 				B = self._np.reshape(B, self._finalShape)
 			B[self._np.isnan(B)] = 0.
+			# Divide by the bins size
+			B *= self._bsize
 			# Append this diag's array for the operation
 			A.update({ d:B })
 		# Calculate operation
@@ -451,8 +455,6 @@ class ParticleBinning(Diagnostic):
 				A = self._np.sum(A, axis=iaxis, keepdims=True)
 		# remove summed axes
 		A = self._np.squeeze(A)
-		# Divide by the bins size
-		A *= self._bsize
 		# log scale if requested
 		if self._data_log: A = self._np.log10(A)
 		return A
