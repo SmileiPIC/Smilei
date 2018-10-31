@@ -373,7 +373,9 @@ occur every 150 iterations.
 Vectorization
 ^^^^^^^^^^^^^^^^^^^^^
 
-The block ``Vectorization`` is optional. It controls the SIMD operations that can enhance the performance of some computations.
+The block ``Vectorization`` is optional.
+It controls the SIMD operations that can enhance the performance of some computations.
+The technique is detailed in Ref. [Beck]_.
 
 .. code-block:: python
 
