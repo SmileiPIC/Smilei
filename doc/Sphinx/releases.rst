@@ -12,22 +12,28 @@ a `different repository <https://llrgit.in2p3.fr/smilei/smilei>`_
 reserved for the :doc:`partners`. It is regularly synchronized with
 the GitHub page.
 
-.. warning::
-
-  In v3.3, :doc:`significant changes<syntax_changes>` have been made to the input syntax.
-
 ----
 
 Upcoming changes
 ^^^^^^^^^^^^^^^^
 
-* Vectorization
-* Interface with the PICSAR library
-* Faster collisions
+* Interface with the PICSAR library (currently experimental)
+* Cylindrical geometry with Fourier decomposition in azimuthal direction
+* Probe diagnostics of currents and density per species
 
 ----
 
 .. _latestVersion:
+
+Release 4.0
+^^^^^^^^^^^^^^^^^^^^^
+
+* :ref:`vectorization`
+* MPI option `MPI_THREAD_MULTIPLE` is now optional (but recommended)
+* Faster collisions
+* Bugfixes: handling `sum` for happi's `ParticleBinning`
+
+----
 
 Release 3.5
 ^^^^^^^^^^^^^^^^^^^^^
