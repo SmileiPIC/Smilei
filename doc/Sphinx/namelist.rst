@@ -1164,11 +1164,14 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     Angle between the boundary and the profile's plane, the rotation being around :math:`z`.
     See :doc:`this page <laser_offset>` for more details.
 
+----
+
+.. _laser_envelope:
 
 Laser envelope model
 ^^^^^^^^^^^^^^^^^^^^^^
 
-In geometry (``"3Dcartesian"``) it is possible to model a laser pulse propagating in the ``x`` direction through an envelope model (see :doc:`laser_envelope` for the advantages and limits of this approximation).
+In the geometry (``"3Dcartesian"``) it is possible to model a laser pulse propagating in the ``x`` direction through an envelope model (see :doc:`laser_envelope` for the advantages and limits of this approximation).
 The fast oscillations of the laser are neglected and all the physical quantities of the simulation, including the electromagnetic fields and their source terms, as well as the particles positions and momenta, are meant to be an average over one or more optical cycles.
 Effects involving characteristic lengths comparable to the laser central wavelength, or effects dependent on the polarization of the laser, cannot be modeled with this option.
 
