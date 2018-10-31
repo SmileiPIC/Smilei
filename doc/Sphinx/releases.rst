@@ -32,6 +32,7 @@ Release 4.0
 * MPI option `MPI_THREAD_MULTIPLE` is now optional (but recommended)
 * Faster collisions
 * Bugfixes: handling `sum` for happi's `ParticleBinning`
+* Complex envelope model for the laser
 
 ----
 
