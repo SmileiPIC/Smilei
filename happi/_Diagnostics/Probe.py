@@ -13,12 +13,12 @@ class Probe(Diagnostic):
 		if probeNumber is None:
 			self._probes = self.getProbes()
 			if len(self._probes)>0:
-				self._error += "Printing available probes:\n"
-				self._error += "--------------------------\n"
+				self._error += ["Printing available probes:"]
+				self._error += ["--------------------------"]
 				for p in self._probes:
-					self._error += self._info(self._getInfo(p))
+					self._error += [self._info(self._getInfo(p))]
 			else:
-				self._error += "No probes found"
+				self._error += ["No probes found"]
 			return
 
 		# Try to get the probe from the hdf5 file
@@ -29,13 +29,13 @@ class Probe(Diagnostic):
 			try:
 				self._h5probe.append( self._h5py.File(file, 'r') )
 			except:
-				self._error = "Error opening probe #"+str(probeNumber)+" in path '"+path+"'"
+				self._error += ["Error opening probe #"+str(probeNumber)+" in path '"+path+"'"]
 				return
 			# Verify that this file is compatible with the previous ones
 			try:
 				for key, val in verifications.items():
 					if self._h5probe[-1][key].value != val:
-						self._error = "Probe #"+str(probeNumber)+" in path '"+path+"' is incompatible with the other ones"
+						self._error += ["Probe #"+str(probeNumber)+" in path '"+path+"' is incompatible with the other ones"]
 						return
 			except:
 				verifications = {"number":self._h5probe[-1]["number"].value}
@@ -53,19 +53,19 @@ class Probe(Diagnostic):
 				except: break
 		self._alltimesteps = self._np.double(sorted(self._dataForTime.keys()))
 		if self._alltimesteps.size == 0:
-			self._error = "No timesteps found"
+			self._error += ["No timesteps found"]
 			return
 
 		# Extract available fields
 		fields = self.getFields()
 		if len(fields) == 0:
-			self._error = "No fields found for probe #"+probeNumber
+			self._error += ["No fields found for probe #"+probeNumber]
 			return
 		# If no field, print available fields
 		if field is None:
-			self._error += "Printing available fields for probe #"+str(probeNumber)+":\n"
-			self._error += "----------------------------------------\n"
-			self._error += str(", ".join(fields))+"\n"
+			self._error += ["Printing available fields for probe #"+str(probeNumber)+":"]
+			self._error += ["----------------------------------------"]
+			self._error += [str(", ".join(fields))]
 			return
 
 		# 1 - verifications, initialization
@@ -78,7 +78,7 @@ class Probe(Diagnostic):
 			self.operation = self.operation.replace(f,"#"+str(i))
 		requested_fields = self._re.findall("#\d+",self.operation)
 		if len(requested_fields) == 0:
-			self._error += "Could not find any existing field in `"+field+"`"
+			self._error += ["Could not find any existing field in `"+field+"`"]
 			return
 		self._fieldn = [ int(f[1:]) for f in requested_fields ] # indexes of the requested fields
 		self._fieldn = list(set(self._fieldn))
@@ -87,13 +87,13 @@ class Probe(Diagnostic):
 		# Check subset
 		if subset is None: subset = {}
 		elif type(subset) is not dict:
-			self._error = "Argument `subset` must be a dictionary"
+			self._error += ["Argument `subset` must be a dictionary"]
 			return
 
 		# Check average
 		if average is None: average = {}
 		elif type(average) is not dict:
-			self._error = "Argument `average` must be a dictionary"
+			self._error += ["Argument `average` must be a dictionary"]
 			return
 
 		# Put data_log as object's variable
@@ -113,12 +113,12 @@ class Probe(Diagnostic):
 			try:
 				self._timesteps = self._selectTimesteps(timesteps, self._timesteps)
 			except:
-				self._error = "Argument `timesteps` must be one or two non-negative integers"
+				self._error += ["Argument `timesteps` must be one or two non-negative integers"]
 				return
 
 		# Need at least one timestep
 		if self._timesteps.size < 1:
-			self._error = "Timesteps not found"
+			self._error += ["Timesteps not found"]
 			return
 
 		# 3 - Manage axes
@@ -146,7 +146,7 @@ class Probe(Diagnostic):
 			# If averaging over this axis
 			if label in average:
 				if label in subset:
-					self._error = "`subset` not possible on the same axes as `average`"
+					self._error += ["`subset` not possible on the same axes as `average`"]
 					return
 
 				self._averages[iaxis] = True
