@@ -5,6 +5,15 @@ Publications
 
   Tip: :ref:`How should I cite Smilei in my publication? <HowToCite>`
 
+
+.. rst-class:: bigcitation
+
+.. [Beck]
+  
+  A. Beck, J. Dérouillat, M. Lobet, A. Farjallah, F. Massimo, I. Zemzemi, F. Perez, T. Vinci, M. Grech,
+  `Adaptive SIMD optimizations in particle-in-cell codes with fine-grain particle sorting`,
+  `arXiv:1810.03949 <https://arxiv.org/abs/1810.03949>`_,
+
 .. rst-class:: bigcitation
 
 .. [Perez]
@@ -19,14 +28,14 @@ Publications
    
    J. Derouillat, A. Beck, F. Pérez, T. Vinci, M. Chiaramello, A. Grassi, M. Flé, G. Bouchard, I. Plotnikov, N. Aunai, J. Dargent, C. Riconda, M. Grech,
    `SMILEI: a collaborative, open-source, multi-purpose particle-in-cell code for plasma simulation`,
-   `Comput. Phys. Commun. 222, 351-373 (2018) <https://doi.org/10.1016/j.cpc.2017.09.024>`_, 
+   `Comput. Phys. Commun. 222, 351-373 (2018) <https://doi.org/10.1016/j.cpc.2017.09.024>`_,
    `arXiv:1702.05128 <https://arxiv.org/abs/1702.05128>`_
 
 .. rst-class:: bigcitation
 
 .. [Plotnikov2017]
 
-    I. Plotnikov, A. Grassi and M. Grech, 
+    I. Plotnikov, A. Grassi and M. Grech,
     `Perpendicular relativistic shocks in magnetized pair plasma`,
     `arXiv:1712.02883 <https://arxiv.org/abs/1712.02883>`_
 
@@ -113,4 +122,3 @@ Publications
    L. Lancia, A. Giribono, L. Vassura, M. Chiaramello, C. Riconda, S. Weber, A. Castan, A. Chatelain, A. Frank, T. 	Gangolf, M. N. Quinn, J. Fuchs and J.-R. Marquès,
    `Signatures of the self-similar regime of strongly coupled stimulated brillouin scattering for efficient short laser pulse amplification`,
    `Phys. Rev. Lett. 116, 075001 (2016) <http://journals.aps.org/prl/abstract/10.1103/PhysRevLett.116.075001>`_
-

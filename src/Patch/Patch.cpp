@@ -692,10 +692,6 @@ void Patch::cornersParticles(SmileiMPI* smpi, int ispec, Params& params, int iDi
     int ndim = params.nDim_field;
     int idim, check;
 
-#ifdef  __DETAILED_TIMERS
-    double timer;
-#endif
-
     Particles &cuParticles = (*vecSpecies[ispec]->particles);
 
     int n_part_recv;
@@ -795,6 +791,7 @@ void Patch::injectParticles(SmileiMPI* smpi, int ispec, Params& params, VectorPa
 {
     
 #ifdef  __DETAILED_TIMERS
+    double timer;
     timer = MPI_Wtime();
 #endif
 
