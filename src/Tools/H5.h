@@ -66,9 +66,9 @@ class H5 {
         attr(locationId, attribute_name, attribute_value, H5T_NATIVE_UINT);
     }
     
-    //! write size_t as an attribute
-    static void attr(hid_t locationId, std::string attribute_name, size_t attribute_value) {
-        attr(locationId, attribute_name, (unsigned int) attribute_value);
+    //! write unsigned long int as an attribute
+    static void attr(hid_t locationId, std::string attribute_name, unsigned long int attribute_value) {
+        attr(locationId, attribute_name, attribute_value, H5T_NATIVE_ULONG);
     }
     
     //! write an int as an attribute
