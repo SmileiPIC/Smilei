@@ -180,7 +180,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     
     int iloc, jloc, linindex;
         // Jl^(d,p)
-        for (unsigned int i=0 ; i<5 ; i++) {
+        for (unsigned int i=1 ; i<5 ; i++) {
             iloc = i+ipo;
             for (unsigned int j=0 ; j<5 ; j++) {
                 jloc = j+jpo;
@@ -192,7 +192,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
          // Jr^(p,d)
         for (unsigned int i=0 ; i<5 ; i++) {
             iloc = i+ipo;
-            for (unsigned int j=0 ; j<5 ; j++) {
+            for (unsigned int j=1 ; j<5 ; j++) {
                 jloc = j+jpo;
                 linindex = iloc*(nprimr+1)+jloc;
                 Jr [linindex] += Jr_p[i][j]*invVd[jloc]; 
@@ -372,7 +372,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     //C_m = 1./C_m; 
     C_m = 2./C_m; 
     // Jl^(d,p)
-    for (unsigned int i=0 ; i<5 ; i++) {
+    for (unsigned int i=1 ; i<5 ; i++) {
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
@@ -393,7 +393,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // Jr^(p,d)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
-        for (unsigned int j=0 ; j<5 ; j++) {
+        for (unsigned int j=1 ; j<5 ; j++) {
             jloc = j+jpo;
             linindex = iloc*(nprimr+1)+jloc;
             Jr [linindex] += C_m * Jr_p[i][j] * invVd[jloc] ;
@@ -525,7 +525,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     int iloc, jloc, linindex;
     
     // Jl^(d,p)
-    for (unsigned int i=0 ; i<5 ; i++) {
+    for (unsigned int i=1 ; i<5 ; i++) {
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
@@ -537,7 +537,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // Jr^(p,d)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
-        for (unsigned int j=0 ; j<5 ; j++) {
+        for (unsigned int j=1 ; j<5 ; j++) {
             jloc = j+jpo;
             linindex = iloc*(nprimr+1)+jloc;
             Jr [linindex] += Jr_p[i][j] * invVd[jloc] ;
