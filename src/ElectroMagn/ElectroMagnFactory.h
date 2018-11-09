@@ -214,10 +214,7 @@ public:
         for (unsigned int n_extfield = 0; n_extfield < EMfields->extFields.size(); n_extfield++) {
             ExtField extField;
             extField.field   = EMfields->extFields[n_extfield].field;
-            if (n_moved==0)
                 extField.profile = EMfields->extFields[n_extfield].profile;
-            else 
-                extField.profile = NULL;
             extField.index   = EMfields->extFields[n_extfield].index;
             newEMfields->extFields.push_back(extField);
         }
