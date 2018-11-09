@@ -36,20 +36,11 @@ class TrackParticles(Diagnostic):
 		if sort:
 			# If the first path does not contain the ordered file (or it is incomplete), we must create it
 			orderedfile = self._results_path[0]+self._os.sep+"TrackParticles_"+species+".h5"
-			needsOrdering = False
-			if not self._os.path.isfile(orderedfile):
-				needsOrdering = True
-			else:
-				try:
-					f = self._h5py.File(orderedfile)
-					if "finished_ordering" not in f.attrs.keys():
-						needsOrdering = True
-				except:
-					self._os.remove(orderedfile)
-					needsOrdering = True
-			if needsOrdering:
+			if self._needsOrdering(orderedfile):
 				disorderedfiles = self._findDisorderedFiles()
 				self._orderFiles(disorderedfiles, orderedfile, chunksize)
+				if self._needsOrdering(orderedfile):
+					return
 			# Create arrays to store h5 items
 			f = self._h5py.File(orderedfile)
 			for prop in ["Id", "x", "y", "z", "px", "py", "pz", "q", "w", "chi",
@@ -315,6 +306,21 @@ class TrackParticles(Diagnostic):
 		self.valid = True
 		return kwargs
 
+	def _needsOrdering(self, orderedfile):
+		if not self._os.path.isfile(orderedfile):
+			return True
+		else:
+			try:
+				f = self._h5py.File(orderedfile)
+				if "finished_ordering" not in f.attrs.keys():
+					return True
+			except:
+				self._os.remove(orderedfile)
+				return True
+			finally:
+				f.close()
+		return False
+
 	# Method to get info
 	def _info(self):
 		info = "Track particles: species '"+self.species+"'"
@@ -361,12 +367,19 @@ class TrackParticles(Diagnostic):
 			# Obtain the list of all times in all disordered files
 			time_locations = {}
 			for fileIndex, fileD in enumerate(filesDisordered):
-				f = self._h5py.File(fileD, "r")
+				try:
+					f = self._h5py.File(fileD, "r")
+				except:
+					self._error += ["\tWarning: file cannot be opened: "+fileD]
+					continue
 				for t in f["data"].keys():
 					try   : time_locations[int(t)] = (fileIndex, t)
 					except: pass
 				f.close()
 			times = sorted(time_locations.keys())
+			if len(times) == 0:
+				self._error += ["Error: no times found"]
+				return
 			# Open the last file and get the number of particles from each MPI
 			last_file_index, tname = time_locations[times[-1]]
 			f = self._h5py.File(filesDisordered[last_file_index], "r")

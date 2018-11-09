@@ -290,29 +290,35 @@ class Probe(Diagnostic):
 	# Method to print info previously obtained with getInfo
 	def _info(self, info=None):
 		if info is None: info = self._getMyInfo()
-		printedInfo = "Probe #"+str(info["probeNumber"])+": "+str(info["dimension"])+"-dimensional,"+" with fields "+bytes.decode(info["fields"])+"\n"
-		i = 0
-		while "p"+str(i) in info:
-			printedInfo += "p"+str(i)+" = "+" ".join(info["p"+str(i)].astype(str).tolist())+"\n"
-			i += 1
-		if info["shape"].size>0:
-			printedInfo += "number = "+" ".join(info["shape"].astype(str).tolist())+"\n"
+		printedInfo = "Probe #%s: "%info["probeNumber"]
+		if "dimension" in info:
+			printedInfo += str(info["dimension"])+"-dimensional,"+" with fields "+bytes.decode(info["fields"])+"\n"
+			i = 0
+			while "p"+str(i) in info:
+				printedInfo += "p"+str(i)+" = "+" ".join(info["p"+str(i)].astype(str).tolist())+"\n"
+				i += 1
+				if info["shape"].size>0:
+					printedInfo += "number = "+" ".join(info["shape"].astype(str).tolist())+"\n"
+		else:
+			printedInfo += "File not found or not readable"
 		return printedInfo
 
 	# Method to get info on a given probe
 	def _getInfo(self, probeNumber):
+		out = {}
+		out["probeNumber"] = probeNumber
 		try:
 			file = self._results_path[0]+"/Probes"+str(probeNumber)+".h5"
 			probe = self._h5py.File(file, 'r')
 		except:
-			print("Cannot open file "+file)
-			return {}
-		out = {}
-		out.update({"probeNumber":probeNumber, "dimension":probe.attrs["dimension"],
-			"shape":self._np.array(probe["number"]),"fields":probe.attrs["fields"] })
+			self._error += ["\tWarning: Cannot open file "+file]
+			return out
+		out["dimension"] = probe.attrs["dimension"]
+		out["shape"] = self._np.array(probe["number"])
+		out["fields"] = probe.attrs["fields"]
 		i = 0
 		while "p"+str(i) in probe.keys():
-			out.update({ "p"+str(i):self._np.array(probe["p"+str(i)]) })
+			out["p"+str(i)] = self._np.array(probe["p"+str(i)])
 			i += 1
 		probe.close()
 		return out
@@ -336,7 +342,8 @@ class Probe(Diagnostic):
 			fields_here = bytes.decode(file.attrs["fields"]).split(",")
 			try   : fields = [f for f in fields_here if f in fields]
 			except: fields = fields_here
-		return fields
+		try   : return fields
+		except: return []
 
 	# get all available timesteps
 	def getAvailableTimesteps(self):
