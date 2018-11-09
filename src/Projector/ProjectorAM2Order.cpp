@@ -262,8 +262,8 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     double yp = particles.position(1,ipart);
     double zp = particles.position(2,ipart);
     double rp = sqrt (particles.position(1, ipart)*particles.position(1, ipart)+particles.position(2, ipart)*particles.position(2, ipart));
-    e_theta = (yp-Icpx*zp)/rp;
-    e_theta_old =exp_m_theta_old[0];
+    e_theta = (yp + Icpx*zp)/rp;     //exp(i theta)
+    e_theta_old =exp_m_theta_old[0]; //exp(-i theta_old)
     double theta = atan2(zp,yp);
     double theta_old =atan2(-std::imag(e_theta_old), std::real(e_theta_old));
     e_delta = 1.;
@@ -369,8 +369,8 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     for (unsigned int i=0; i<(unsigned int)imode; i++){
     C_m *= e_theta;
     }
-    //C_m = 1./C_m; 
-    C_m = 2./C_m; 
+    C_m = 2. * C_m; //multiply modes > 0 by 2
+ 
     // Jl^(d,p)
     for (unsigned int i=1 ; i<5 ; i++) {
         iloc = i+ipo;
@@ -616,8 +616,8 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     double yp = particles.position(1,ipart);
     double zp = particles.position(2,ipart);
     double rp = sqrt(yp*yp+zp*zp);
-    e_theta = (yp-Icpx*zp)/rp;
-    e_theta_old = exp_m_theta_old[0];
+    e_theta = (yp + Icpx*zp)/rp;      //exp(i theta)
+    e_theta_old = exp_m_theta_old[0]; //exp(-i theta_old)
     e_delta = 1.;
     e_bar =  1.;
     double theta = atan2(zp,yp);
@@ -643,16 +643,6 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     Sr1[jp_m_jpo+1] = 0.5 * (delta2-delta+0.25);
     Sr1[jp_m_jpo+2] = 0.75-delta2;
     Sr1[jp_m_jpo+3] = 0.5 * (delta2+delta+0.25);
-    
-    //e_delta_m1 = sqrt(e_theta/e_theta_old);
-    //e_bar_m1 = sqrt(e_theta*e_theta_old);   
-    //if (std::real(e_theta)+ std::real(e_theta_old) < 0.){
-    //    if (std::imag(e_theta)*std::imag(e_theta_old) > 0.){
-    //        e_bar_m1 *= -1.;
-    //    } else {
-    //        e_delta_m1 *= -1.;
-    //    }
-    //}
 
     double dtheta = std::remainder(theta-theta_old, 2*M_PI)/2.; // Otherwise dtheta is overestimated when going from -pi to +pi
     double theta_bar = theta_old+dtheta ;
@@ -722,8 +712,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     for (unsigned int i=0; i<(unsigned int)imode; i++){
     C_m *= e_theta;
     }
-    //C_m= 1./C_m; 
-    C_m= 2./C_m; 
+    C_m= 2. * C_m; // Multiply modes > 0 by 2
     // Jl^(d,p)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
