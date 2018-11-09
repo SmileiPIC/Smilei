@@ -231,7 +231,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // arrays used for the Esirkepov projection method
     double  Sl0[5], Sl1[5], Sr0[5], Sr1[5], DSl[5], DSr[5];
     complex<double>  Wl[5][5], Wr[5][5], Wt[5][5], Jl_p[5][5], Jr_p[5][5], Jt_p[5][5];
-    complex<double> e_delta, e_delta_m1, e_delta_inv, e_theta,e_theta_old, e_bar, e_bar_m1, C_m;
+    complex<double> e_delta, e_delta_m1, e_delta_inv, e_theta,e_theta_old, e_bar, e_bar_m1, C_m, C_m_old;
  
      for (unsigned int i=0; i<5; i++) {
         Sl1[i] = 0.;
@@ -366,10 +366,12 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     int iloc, jloc, linindex;
 
     C_m = 1.;
+    C_m_old = 1.;
     for (unsigned int i=0; i<(unsigned int)imode; i++){
     C_m *= e_theta;
+    C_m_old *= e_theta_old;
     }
-    C_m = 2. * C_m; //multiply modes > 0 by 2
+    C_m = 2. * (C_m + 1./C_m_old)/2. ; //multiply modes > 0 by 2 AND exp(i theta_medium) = ( exp(i theta) + exp(i theta_old) ) /2.
  
     // Jl^(d,p)
     for (unsigned int i=1 ; i<5 ; i++) {
@@ -585,7 +587,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // arrays used for the Esirkepov projection method
     double  Sl0[5], Sl1[5], Sr0[5], Sr1[5], DSl[5], DSr[5];
     complex<double>  Wl[5][5], Wr[5][5], Wt[5][5], Jl_p[5][5], Jr_p[5][5], Jt_p[5][5];
-    complex<double> e_delta,e_delta_m1, e_delta_inv, e_theta,e_theta_old,e_bar,e_bar_m1, C_m;
+    complex<double> e_delta,e_delta_m1, e_delta_inv, e_theta,e_theta_old,e_bar,e_bar_m1, C_m, C_m_old;
  
      for (unsigned int i=0; i<5; i++) {
         Sl1[i] = 0.;
@@ -709,10 +711,12 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     int iloc, jloc, linindex;
 
     C_m = 1.;
+    C_m_old = 1.;
     for (unsigned int i=0; i<(unsigned int)imode; i++){
     C_m *= e_theta;
+    C_m_old *= e_theta_old;
     }
-    C_m= 2. * C_m; // Multiply modes > 0 by 2
+    C_m = 2. * (C_m + 1./C_m_old)/2. ; //multiply modes > 0 by 2 AND exp(i theta_medium) = ( exp(i theta) + exp(i theta_old) ) /2.
     // Jl^(d,p)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
