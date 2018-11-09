@@ -144,7 +144,8 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
                 Wl[i][j] = DSl[i] * (Sr0[j] + 0.5*DSr[j]);
                 Wr[i][j] = DSr[j] * (Sl0[i] + 0.5*DSl[i]);
-		Wt[i][j] = Sl0[i]*Sr0[j] + 0.5*DSl[i]*Sr0[j]+0.5*Sl0[i]*DSr[j]+one_third*DSl[i]*DSr[j];
+		//Wt[i][j] = Sl0[i]*Sr0[j] + 0.5*DSl[i]*Sr0[j]+0.5*Sl0[i]*DSr[j]+one_third*DSl[i]*DSr[j];
+		Wt[i][j] = 0.5 * (Sl0[i]*Sr0[j] + Sl1[i]*Sr1[j]) ;
         }
     }
     
@@ -498,7 +499,8 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
                 Wl[i][j] = DSl[i] * (Sr0[j] + 0.5*DSr[j]);
                 Wr[i][j] = DSr[j] * (Sl0[i] + 0.5*DSl[i]);
-		Wt[i][j] = Sl0[i]*Sr0[j] + 0.5*DSl[i]*Sr0[j]+0.5*Sl0[i]*DSr[j]+one_third*DSl[i]*DSr[j];
+		//Wt[i][j] = Sl0[i]*Sr0[j] + 0.5*DSl[i]*Sr0[j]+0.5*Sl0[i]*DSr[j]+one_third*DSl[i]*DSr[j];
+		Wt[i][j] = 0.5 * (Sl0[i]*Sr0[j] + Sl1[i]*Sr1[j]) ;
             }
         }
     
