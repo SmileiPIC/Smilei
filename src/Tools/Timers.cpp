@@ -15,32 +15,32 @@ Timers::Timers( SmileiMPI * smpi ) :
     diags     ("Diagnostics"   ), // Diags.runAllDiags + MPI & Patch sync
     densities ("Densities"     ), // Local sum of rho, Jxyz
     collisions("Collisions"    ), // Call to Collisions methods
-    movWindow ("Mov window"    ), // Moving Window
-    loadBal   ("Load balancing" ), // Load balancing
-    syncPart  ("Sync Particles"), // Call exchangeParticles (MPI & Patch sync)
-    syncField ("Sync Fields"   ), // Call sumRhoJ(s), exchangeB (MPI & Patch sync)
-    syncDens  ("Sync Densities"),  // If necessary the following timers can be reintroduced
+    movWindow ("Mov_window"    ), // Moving Window
+    loadBal   ("Load_balancing" ), // Load balancing
+    syncPart  ("Sync_Particles"), // Call exchangeParticles (MPI & Patch sync)
+    syncField ("Sync_Fields"   ), // Call sumRhoJ(s), exchangeB (MPI & Patch sync)
+    syncDens  ("Sync_Densities"),  // If necessary the following timers can be reintroduced
     diagsNEW  ("DiagnosticsNEW" ), // Diags.runAllDiags + MPI & Patch sync
     reconfiguration("Reconfiguration"),
     envelope      ("Envelope"           ),
-    susceptibility("Sync Susceptibility"),
+    susceptibility("Sync_Susceptibility"),
     grids("Grids")
 #ifdef __DETAILED_TIMERS
     // Details of Dynamic
     ,interpolator("Interpolator"),
     pusher("Pusher"             ),
     projector("Projector"       ),
-    cell_keys("Cell keys"),
+    cell_keys("Cell_keys"),
     ionization("Ionization"       ),
     radiation("Radiation"       ),
-    multiphoton_Breit_Wheeler_timer("Multiphoton Breit-Wheeler"       ),
+    multiphoton_Breit_Wheeler_timer("Multiphoton_Breit-Wheeler"       ),
     // Details of Envelop
-    interp_fields_env   ( "Interp Fields_Env" ),
-    proj_susceptibility ( "Proj Susceptibility"),
-    push_mom            ( "Push Momentum"     ),
-    interp_env_old      ( "Interp Env_Old"    ),
-    proj_currents       ( "Proj Currents"     ),
-    push_pos            ( "Push Pos"          ),
+    interp_fields_env   ( "Interp_Fields_Env" ),
+    proj_susceptibility ( "Proj_Susceptibility"),
+    push_mom            ( "Push_Momentum"     ),
+    interp_env_old      ( "Interp_Env_Old"    ),
+    proj_currents       ( "Proj_Currents"     ),
+    push_pos            ( "Push_Pos"          ),
     // Details of Sync Particles
     sorting            ( "Sorting"          )
 #endif
@@ -133,7 +133,7 @@ void Timers::profile(SmileiMPI * smpi)
         for (unsigned int i=1 ; i<patch_timer_id_start+1 ; i++)
             coverage += timers[i]->getTime();
 
-        MESSAGE("Time in time loop :\t" << global.getTime() << "\t"<<coverage/global.getTime()*100.<< "% coverage" );
+        MESSAGE("Time_in_time_loop\t" << global.getTime() << "\t"<<coverage/global.getTime()*100.<< "% coverage" );
 
 #ifdef __DETAILED_TIMERS
 
@@ -172,6 +172,12 @@ std::vector<Timer*> Timers::consolidate(SmileiMPI * smpi)
     if (rk==0 && ! smpi->test_mode) {
         fout.open ("profil.txt", ofstream::out | ofstream::app );
         fout << endl << endl << "--- Timestep = " << (timers[1]->register_timers.size()-1) << " x Main.print_every = " <<  " ---" << endl;
+            fout << setw(14) << scientific << setprecision(3)
+                 << "Time \t " << "Min   "
+                 << "\t\t " << "Avg  "
+                 << "\t\t " << "Max   "
+                 << "\t\t " << "SD "
+                 << endl;
     }
 
     // timers[0] is the global PIC loop timer, naturally synchronized
@@ -211,12 +217,15 @@ std::vector<Timer*> Timers::consolidate(SmileiMPI * smpi)
 
         if ((max>0.) && (rk==0) && ! smpi->test_mode ) {
             fout.setf( ios::fixed,  ios::floatfield );
-            fout << setw(14) << scientific << setprecision(3)
-                 << timers[itimer]->name_ << "\t : " << "Min time =  " << min
-                 << "\t - \t" <<  "Avg time =  " << avg
-                 << "\t - \t" <<  "Max time =  " << max
-                 << "\t - \t" <<  "SD time =  " << sqrt( sig-sum*sum/(double)(sz)/(double)(sz) )
-                 << endl;
+            if (avg/timers[0]->time_acc_>0.001) {
+                fout << setw(14) << scientific << setprecision(3)
+                     << timers[itimer]->name_ 
+                     << "\t " << min
+                     << "\t " << avg
+                     << "\t " << max
+                     << "\t " << sqrt( sig-sum*sum/(double)(sz)/(double)(sz) )
+                     << endl;
+            }
         }
         if (rk==0) {
             Timer * newTimer = new Timer("");
