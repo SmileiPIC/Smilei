@@ -594,13 +594,13 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
 
         // Number of bins
         // We put all bin number in a list before exchanging
-        //std::vector<int> bin_number_list (patch->vecSpecies.size());
-        //for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
-        //{
-        //    bin_number_list[ispec] = patch->vecSpecies[ispec]->last_index.size();
-        //}
-        //isend( &bin_number_list, to, tag+maxtag, patch->requests_[maxtag] );
-        //maxtag ++;
+        std::vector<int> bin_number_list (patch->vecSpecies.size());
+        for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
+            {
+                bin_number_list[ispec] = patch->vecSpecies[ispec]->last_index.size();
+            }
+        isend( &bin_number_list, to, tag+maxtag, patch->requests_[maxtag] );
+        maxtag ++;
 
         // Parameter vectorized_operators
         std::vector<int> vectorized_operators_list (patch->vecSpecies.size());
@@ -674,13 +674,13 @@ void SmileiMPI::isend_species(Patch* patch, int to, int tag, Params& params)
 
         // Number of bins
         // We put all bin number in a list before exchanging
-        //std::vector<int> bin_number_list (patch->vecSpecies.size());
-        //for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
-        //{
-        //    bin_number_list[ispec] = patch->vecSpecies[ispec]->last_index.size();
-        //}
-        //isend( &bin_number_list, to, tag+maxtag, patch->requests_[maxtag] );
-        //maxtag ++;
+        std::vector<int> bin_number_list (patch->vecSpecies.size());
+        for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
+            {
+                bin_number_list[ispec] = patch->vecSpecies[ispec]->last_index.size();
+            }
+        isend( &bin_number_list, to, tag+maxtag, patch->requests_[maxtag] );
+        maxtag ++;
 
         // Parameter vectorized_operators
         std::vector<int> vectorized_operators_list (patch->vecSpecies.size());
@@ -779,16 +779,16 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
     {
         // Number of bins
         // All sizes are received in a single buffer
-        //std::vector<int> bin_number_list (patch->vecSpecies.size());
-        //recv( &bin_number_list, from, maxtag);
-        //// We resize the first_index last_index arrays in consequence
-        //for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
-        //{
-        //    //std::cerr << "Size received: " << bin_number_list[ispec] << '\n';
-        //    patch->vecSpecies[ispec]->last_index.resize(bin_number_list[ispec]);
-        //    patch->vecSpecies[ispec]->first_index.resize(bin_number_list[ispec]);
-        //}
-        //maxtag ++;
+        std::vector<int> bin_number_list (patch->vecSpecies.size());
+        recv( &bin_number_list, from, maxtag);
+        // We resize the first_index last_index arrays in consequence
+        for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
+            {
+                //std::cerr << "Size received: " << bin_number_list[ispec] << '\n';
+                patch->vecSpecies[ispec]->last_index.resize(bin_number_list[ispec]);
+                patch->vecSpecies[ispec]->first_index.resize(bin_number_list[ispec]);
+            }
+        maxtag ++;
 
         // Parameter vectorized_operators
         // All parameters are received in a single buffer
@@ -796,16 +796,9 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
         recv( &vectorized_operators_list, from, maxtag);
         for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
         {
-            patch->vecSpecies[ispec]->last_index.resize( params.n_space[0]/params.clrw );
-            patch->vecSpecies[ispec]->first_index.resize( params.n_space[0]/params.clrw );
             //std::cerr << "Vecto received: " << vectorized_operators_list[ispec] << '\n';
             if ( vectorized_operators_list[ispec]==1 ) {
                 patch->vecSpecies[ispec]->vectorized_operators = true;
-                int ncells = 1;
-                for (unsigned int iDim=0 ; iDim<params.nDim_particle ; iDim++)
-                    ncells *= (params.n_space[iDim]+1);
-                patch->vecSpecies[ispec]->last_index.resize( ncells );
-                patch->vecSpecies[ispec]->first_index.resize( ncells );
             }
             else
                 patch->vecSpecies[ispec]->vectorized_operators = false;
@@ -886,16 +879,16 @@ void SmileiMPI::recv_species(Patch* patch, int from, int tag, Params& params)
     {
         // Number of bins
         // All sizes are received in a single buffer
-        //std::vector<int> bin_number_list (patch->vecSpecies.size());
-        //recv( &bin_number_list, from, maxtag);
-        //// We resize the first_index last_index arrays in consequence
-        //for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
-        //{
-        //    //std::cerr << "Size received: " << bin_number_list[ispec] << '\n';
-        //    patch->vecSpecies[ispec]->last_index.resize(bin_number_list[ispec]);
-        //    patch->vecSpecies[ispec]->first_index.resize(bin_number_list[ispec]);
-        //}
-        //maxtag ++;
+        std::vector<int> bin_number_list (patch->vecSpecies.size());
+        recv( &bin_number_list, from, maxtag);
+        // We resize the first_index last_index arrays in consequence
+        for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
+            {
+                //std::cerr << "Size received: " << bin_number_list[ispec] << '\n';
+                patch->vecSpecies[ispec]->last_index.resize(bin_number_list[ispec]);
+                patch->vecSpecies[ispec]->first_index.resize(bin_number_list[ispec]);
+            }
+        maxtag ++;
 
         // Parameter vectorized_operators
         // All parameters are received in a single buffer
@@ -903,16 +896,9 @@ void SmileiMPI::recv_species(Patch* patch, int from, int tag, Params& params)
         recv( &vectorized_operators_list, from, maxtag);
         for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
         {
-            patch->vecSpecies[ispec]->last_index.resize( params.n_space[0]/params.clrw );
-            patch->vecSpecies[ispec]->first_index.resize( params.n_space[0]/params.clrw );
             //std::cerr << "Vecto received: " << vectorized_operators_list[ispec] << '\n';
             if ( vectorized_operators_list[ispec]==1 ) {
                 patch->vecSpecies[ispec]->vectorized_operators = true;
-                int ncells = 1;
-                for (unsigned int iDim=0 ; iDim<params.nDim_particle ; iDim++)
-                    ncells *= (params.n_space[iDim]+1);
-                patch->vecSpecies[ispec]->last_index.resize( ncells );
-                patch->vecSpecies[ispec]->first_index.resize( ncells );
             }
             else
                 patch->vecSpecies[ispec]->vectorized_operators = false;

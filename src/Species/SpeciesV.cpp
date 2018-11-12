@@ -129,10 +129,10 @@ int ithread;
         npack_    = 1;
         packsize_ = (f_dim1-2*oversize[1]);
 
-        if ( ( (long int)last_index.back() < (long int)60000 ) || (Radiate) || (Ionize) || (Multiphoton_Breit_Wheeler_process) )
-            packsize_ *= (f_dim0-2*oversize[0]);
-        else
-            npack_ *= (f_dim0-2*oversize[0]);
+        //if ( ( (long int)last_index.back() < (long int)60000 ) || (Radiate) || (Ionize) || (Multiphoton_Breit_Wheeler_process) )
+        packsize_ *= (f_dim0-2*oversize[0]);
+        //else
+        //    npack_ *= (f_dim0-2*oversize[0]);
 
         if (nDim_particle == 3)
             packsize_ *= (f_dim2-2*oversize[2]);
@@ -703,10 +703,10 @@ void SpeciesV::ponderomotive_update_susceptibility_and_momentum(double time_dual
         npack_    = 1;
         packsize_ = (f_dim1-2*oversize[1]);
 
-        if ( (long int)last_index.back() < (long int)60000 || (Radiate) || (Ionize) || (Multiphoton_Breit_Wheeler_process) )
-            packsize_ *= (f_dim0-2*oversize[0]);
-        else
-            npack_ *= (f_dim0-2*oversize[0]);
+        //if ( (long int)last_index.back() < (long int)60000 || (Radiate) || (Ionize) || (Multiphoton_Breit_Wheeler_process) )
+        packsize_ *= (f_dim0-2*oversize[0]);
+        //else
+        //    npack_ *= (f_dim0-2*oversize[0]);
 
         if (nDim_particle == 3)
             packsize_ *= (f_dim2-2*oversize[2]);
@@ -792,10 +792,10 @@ void SpeciesV::ponderomotive_project_susceptibility(double time_dual, unsigned i
         npack_    = 1;
         packsize_ = (f_dim1-2*oversize[1]);
 
-        if ( (long int)last_index.back() < (long int)60000 || (Radiate) || (Ionize) || (Multiphoton_Breit_Wheeler_process) )
-            packsize_ *= (f_dim0-2*oversize[0]);
-        else
-            npack_ *= (f_dim0-2*oversize[0]);
+        //if ( (long int)last_index.back() < (long int)60000 || (Radiate) || (Ionize) || (Multiphoton_Breit_Wheeler_process) )
+        packsize_ *= (f_dim0-2*oversize[0]);
+        //else
+        //    npack_ *= (f_dim0-2*oversize[0]);
 
         if (nDim_particle == 3)
             packsize_ *= (f_dim2-2*oversize[2]);

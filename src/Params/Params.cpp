@@ -970,6 +970,11 @@ void Params::print_timestep_headers()
 void Params::print_parallelism_params(SmileiMPI* smpi)
 {
     if (smpi->isMaster()) {
+#ifndef _NO_MPI_TM
+        MESSAGE(1, "MPI_THREAD_MULTIPLE enabled");
+#else
+        MESSAGE(1, "MPI_THREAD_MULTIPLE not enabled");
+#endif
         MESSAGE(1,"Number of MPI process : " << smpi->getSize() );
         MESSAGE(1,"Number of patches : " );
         for (unsigned int iDim=0 ; iDim<nDim_field ; iDim++)

@@ -1520,29 +1520,27 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
             double x = position[0][ippy]-min_loc ;
             unsigned int ibin = int(x * one_ov_dbin) ;
             int ip = indices[ibin] ; //Indice of the position of the particle in the particles array.
-
-
-            for(unsigned int idim=0; idim<nDim_particle; idim++)
-                particles->position(idim,ip) = position[idim][ippy] ;
-            //If momentum is not initialized by a numpy array
-            unsigned int i =  (unsigned int)( (particles->position(0,ip) - min_loc_vec[0])/cell_length[0] );
-            unsigned int j =  (unsigned int)( (particles->position(1,ip) - min_loc_vec[1])/cell_length[1] );
-            unsigned int k =  (unsigned int)( (particles->position(2,ip) - min_loc_vec[2])/cell_length[2] );
-            if (!momentum_initialization_array) {
-                vel[0]  = velocity[0](i,j,k);
-                vel[1]  = velocity[1](i,j,k);
-                vel[2]  = velocity[2](i,j,k);
-                temp[0] = temperature[0](i,j,k);
-                temp[1] = temperature[1](i,j,k);
-                temp[2] = temperature[2](i,j,k);
-                initMomentum(1,ip, temp, vel);
-            } else {
-            for(unsigned int idim=0; idim < 3; idim++)
-                particles->momentum(idim,ip) = momentum[idim][ippy] ;
+            
+            unsigned int ijk[3] = {0,0,0};
+            for(unsigned int idim=0; idim<nDim_particle; idim++) {
+                particles->position(idim,ip) = position[idim][ippy];
+                ijk[idim] = (unsigned int)( (particles->position(idim,ip) - min_loc_vec[idim])/cell_length[idim] );
             }
-
+            if (!momentum_initialization_array) {
+                vel [0] = velocity   [0] (ijk[0], ijk[1], ijk[2]);
+                vel [1] = velocity   [1] (ijk[0], ijk[1], ijk[2]);
+                vel [2] = velocity   [2] (ijk[0], ijk[1], ijk[2]);
+                temp[0] = temperature[0] (ijk[0], ijk[1], ijk[2]);
+                temp[1] = temperature[1] (ijk[0], ijk[1], ijk[2]);
+                temp[2] = temperature[2] (ijk[0], ijk[1], ijk[2]);
+                initMomentum(1, ip, temp, vel);
+            } else {
+                for(unsigned int idim=0; idim < 3; idim++)
+                    particles->momentum(idim,ip) = momentum[idim][ippy] ;
+            }
+            
             particles->weight(ip) = weight_arr[ippy] ;
-            initCharge(1, ip, charge(i,j,k));
+            initCharge(1, ip, charge(ijk[0], ijk[1], ijk[2]));
             indices[ibin]++;
         }
     }

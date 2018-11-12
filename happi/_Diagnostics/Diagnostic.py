@@ -22,7 +22,7 @@ class Diagnostic(object):
 		self._units = []
 		self._log = []
 		self._data_log = False
-		self._error = ""
+		self._error = []
 
 		# The 'simulation' is a SmileiSimulation object. It is passed as an instance attribute
 		self.simulation = simulation
@@ -35,13 +35,13 @@ class Diagnostic(object):
 		self._re      = self.simulation._re
 		self._plt     = self.simulation._plt
 		self._verbose = self.simulation._verbose
-
+		
 		# Reload the simulation, in case it has been updated
 		self.simulation.reload()
 		if not self.simulation.valid:
-			self._error = "Invalid Smilei simulation"
+			self._error += ["Invalid Smilei simulation"]
 			return
-
+		
 		# Copy some parameters from the simulation
 		self._results_path = self.simulation._results_path
 		self.namelist      = self.simulation.namelist
@@ -49,34 +49,34 @@ class Diagnostic(object):
 		self._cell_length  = self.simulation._cell_length
 		self._ncels        = self.simulation._ncels
 		self.timestep      = self.simulation._timestep
-
+		
 		# Make the Options object
 		self.options = Options()
 		kwargs = self.options.set(**kwargs)
-
+		
 		# Make or retrieve the Units object
 		self.units = kwargs.pop("units", [""])
 		if type(self.units) in [list, tuple]: self.units = Units(*self.units , verbose = self._verbose)
 		if type(self.units) is dict         : self.units = Units(verbose = self._verbose, **self.units)
 		if type(self.units) is not Units:
-			self._error = "Could not understand the 'units' argument"
+			self._error += ["Could not understand the 'units' argument"]
 			return
-
+		
 		# DEPRECATION ERRORS
 		if "slice" in kwargs:
-			self._error = "Argument `slice` is deprecated: use `subset` instead."
+			self._error += ["Argument `slice` is deprecated: use `subset` instead."]
 			return
 		if "stride" in kwargs:
-			self._error = "Argument `stride` is deprecated: use `average` or `sum` instead."
+			self._error += ["Argument `stride` is deprecated: use `average` or `sum` instead."]
 			return
-
+		
 		# Call the '_init' function of the child class
 		remaining_kwargs = self._init(*args, **kwargs)
 		if remaining_kwargs is not None and len(remaining_kwargs) > 0:
 			self.valid = False
-			self._error = "The following keyword-arguments are unknown: "+", ".join(remaining_kwargs.keys())
+			self._error += ["The following keyword-arguments are unknown: "+", ".join(remaining_kwargs.keys())]
 			return
-
+		
 		# Prepare units
 		self.dim = len(self._shape)
 		if self.valid:
@@ -85,7 +85,7 @@ class Diagnostic(object):
 			if self.dim > 0: xunits = self._units[0]
 			if self.dim > 1: yunits = self._units[1]
 			self.units.prepare(self.simulation._reference_angular_frequency_SI, xunits, yunits, self._vunits)
-
+	
 	# When no action is performed on the object, this is what appears
 	def __repr__(self):
 		self.info()
@@ -100,6 +100,7 @@ class Diagnostic(object):
 			return False
 		if not self.simulation.valid or not self.valid:
 			print("Diagnostic is invalid")
+			print("\n".join(self._error))
 			return False
 		return True
 
@@ -134,9 +135,7 @@ class Diagnostic(object):
 
 	# Method to print info on this diag
 	def info(self):
-		if not self._validate():
-			print(self._error)
-		elif self._verbose:
+		if self._validate() and self._verbose:
 			print(self._info())
 
 	# Method to get only the arrays of data
@@ -168,6 +167,7 @@ class Diagnostic(object):
 
 	def getTimesteps(self):
 		"""Obtains the list of timesteps selected in this diagnostic"""
+		if not self._validate(): return []
 		return self._timesteps
 
 	def getTimes(self):
@@ -176,6 +176,7 @@ class Diagnostic(object):
 		By default, times are in the code's units, but are converted to the diagnostic's
 		units defined by the `units` argument, if provided.
 		"""
+		if not self._validate(): return []
 		return self.units.tcoeff * self.timestep * self._np.array(self._timesteps)
 
 	def getAxis(self, axis):
@@ -444,7 +445,7 @@ class Diagnostic(object):
 			s = self._np.double(portion)
 			if s.size>3 or s.size<1: raise
 		except:
-			self._error = "`"+operation+"` along axis "+axisname+" should be a list of 1 to 3 floats"
+			self._error += ["`"+operation+"` along axis "+axisname+" should be a list of 1 to 3 floats"]
 			raise
 		step = 1
 		if s.size==1:
@@ -458,11 +459,11 @@ class Diagnostic(object):
 					step = int(s[2])
 					if step - s[2] != 0: raise
 				except:
-					self._error = "`"+operation+"` along axis "+axisname+": third number must be an integer"
+					self._error += ["`"+operation+"` along axis "+axisname+": third number must be an integer"]
 					raise
 				indices = indices[::step]
 		if indices.size == 0:
-			self._error = "`"+operation+"` along "+axisname+" is out of range"
+			self._error += ["`"+operation+"` along "+axisname+" is out of range"]
 			raise
 		elif indices.size == 1:
 			info = operation+" at "+axisname+" = "+str(meshpoints[indices])+" "+axisunits
@@ -488,7 +489,7 @@ class Diagnostic(object):
 				s = self._np.double(portion)
 				if s.size>2 or s.size<1: raise
 			except:
-				self._error = "`"+operation+"` along axis "+axisname+" should be one or two floats"
+				self._error += ["`"+operation+"` along axis "+axisname+" should be one or two floats"]
 				raise
 			if s.size==1:
 				indices = self._np.array([(self._np.abs(meshpoints-s)).argmin()])
@@ -497,7 +498,7 @@ class Diagnostic(object):
 				if indices.size == 0:
 					indices = self._np.array([(self._np.abs(meshpoints-s.mean())).argmin()])
 			if indices.size == 0:
-				self._error = "`"+operation+"` along "+axisname+" is out of range"
+				self._error += ["`"+operation+"` along "+axisname+" is out of range"]
 				raise
 			elif indices.size == 1:
 				info = operation+" at "+axisname+" = "+str(meshpoints[indices])+" "+axisunits
