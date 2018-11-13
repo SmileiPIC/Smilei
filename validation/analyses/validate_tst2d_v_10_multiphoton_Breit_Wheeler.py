@@ -76,6 +76,6 @@ if False:
     integral = sum(density)*(gamma[1] - gamma[0])
 
     print( ' Positron energy from spectrum: ' + str(integral))
-    print( ' Max from spectrum: ' + str(max(density/integral))
+    print( ' Max from spectrum: ' + str(max(density/integral)))
 
     Validate("Positron energy spectrum: ", density/integral, 1e-5 )
