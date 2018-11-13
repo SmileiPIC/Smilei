@@ -171,21 +171,14 @@ The block ``Main`` is **mandatory** and has the following syntax::
   See :doc:`parallelization`.
 
 
-.. py:data:: patch_decomposition
+.. py:data:: patch_arrangement
 
-  :default: ``"hilbert"``
+  :default: ``"hilbertian"``
 
-  The patches distribution. ``"cartesian"`` is available too.
-  See :doc:`parallelization`.
-
-
-.. py:data:: patch_orientation
-
-  :default: ``""``
-
-  Only for a ``"cartesian"`` patches decomposition.
-  ``"YX"`` and ``"ZYX"`` respectively available for 2D and 3D simulations, while the default ``""``
-  corresponds to the decomposition oriented as ``XY`` or ``XYZ``.
+  Linearized patch distributions are available.
+    * In 2D, options are : ``linearized_XY"`` and ``linearized_YX"``.
+    * In 3D, options are : ``linearized_XYZ"`` and ``linearized_ZYX"``.
+  Non ``C`` natural ordering (``linearized_YX"`` and ``linearized_ZYX"`` inhibits the usage if ``DiagnosticFields``.
   See :doc:`parallelization`.
 
 

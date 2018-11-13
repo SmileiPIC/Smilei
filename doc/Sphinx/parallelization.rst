@@ -217,18 +217,19 @@ In the namelist::
 
     Main(
         ...
-        patch_decomposition = "cartesian"
+        patch_arrangement = "linearized_XY",  # 2D
+        patch_arrangement = "linearized_XYZ", # 3D
         ...
     )
 
-By default, the cartesian decomposition is oriented to contiguously store patches
+Those linearized decompositions are oriented to contiguously store patches
 along the most internal direction (**Z**, then **Y**, then **X**).
-The orientation can be modified through the following option::
+The storage order can be modified through following options ::
 
     Main(
         ...
-        patch_orientation = "YX",  # 2D
-        patch_orientation = "ZYX", # 3D
+        patch_arrangement = "linearized_YX",  # 2D
+        patch_arrangement = "linearized_ZYX", # 3D
         ...
     )
 

@@ -11,7 +11,7 @@ public:
     static DomainDecomposition* create(Params& params) {
         DomainDecomposition* domain_decomposition = NULL;
 
-        if (params.patch_decomposition=="hilbert") {
+        if (params.patch_arrangement=="hilbertian") {
             if ( ( params.geometry == "1Dcartesian" ) )
                 domain_decomposition = new HilbertDomainDecomposition1D( params );
             else if ( ( params.geometry == "2Dcartesian" ) || ( params.geometry == "AMcylindrical" ) ) 
@@ -21,26 +21,24 @@ public:
             else
                 ERROR( "Unknown geometry" );
         }
-        else if(params.patch_decomposition=="cartesian") {
+        else {
             if ( ( params.geometry == "1Dcartesian" ) )
                 domain_decomposition = new CartesianDomainDecomposition1D( params );
             else if ( ( params.geometry == "2Dcartesian" )  || ( params.geometry == "AMcylindrical" )  ) {
-                if (params.patch_orientation!="YX")
+                if (params.patch_arrangement=="linearized_XY")
                     domain_decomposition = new CartesianDomainDecomposition2D( params );
-                else 
+                else if (params.patch_arrangement=="linearized_YX")
                     domain_decomposition = new CartesianDomainDecomposition2D_YX( params );
             }
             else if ( ( params.geometry == "3Dcartesian" ) ) {
-                if (params.patch_orientation!="ZYX")
+                if (params.patch_arrangement=="linearized_XYZ")
                     domain_decomposition = new CartesianDomainDecomposition3D( params );
-                else
+                else if (params.patch_arrangement=="linearized_ZYX")
                     domain_decomposition = new CartesianDomainDecomposition3D_ZYX( params );
             }
             else
                 ERROR( "Unknown geometry" );
         }
-        else
-            ERROR( "Unknown geometry" );
 
         return domain_decomposition;
     }
