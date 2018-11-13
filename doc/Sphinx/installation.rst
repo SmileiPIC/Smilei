@@ -50,6 +50,16 @@ Download and compile
      cd ~/smilei
      make
 
+The SIMD vectorization of :program:`Smilei` uses ``#pragma omp simd``, to be enabled you need appropriates compiler and options.
+
+For instantance, :program:`Smilei` has been developed and tested on Intel processors (Skylake 8168) with an Intel environment with the following flags :
+
+   .. code-block:: bash
+      
+     -fopenmp -xCOMMON-AVX512 -ip -ipo -inline-factor=1000 -D__INTEL_SKYLAKE_8168
+
+The ``-fopenmp`` is set by default in all mode except ``config=noopenmp``.
+
 #. The next step is to :doc:`write a namelist <namelist>`.
 
 ----
