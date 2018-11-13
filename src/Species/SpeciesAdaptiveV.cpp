@@ -140,6 +140,14 @@ void SpeciesAdaptiveV::importParticles( Params& params, Patch* patch, Particles&
     }
 }
 
+void SpeciesAdaptiveV::sort_part(Params &params)
+{
+    if (vectorized_operators)
+        sort_part(params);
+    else
+        Species::sort_part(params);
+}
+
 // -----------------------------------------------------------------------------
 //! This function configures the type of species according
 //! to the default mode regardless the particle distribution
@@ -161,21 +169,17 @@ void SpeciesAdaptiveV::initial_configuration(Params &params, Patch * patch)
     {
         // We resize the bins
         this->resizeCluster(params);
-
-        // We perform the sorting
-        this->sort_part(params);
     }
     // If we switch from vectorized to non-vectozied,
     else
     {
         // We resize the bins
         this->Species::resizeCluster(params);
-
-        // We perform the sorting
-        this->Species::sort_part(params);
-
     }
 
+    // We perform the sorting
+    this->sort_part(params);
+    
     // Reconfigure species to be imported
     this->reconfigure_particle_importation();
 
@@ -341,22 +345,17 @@ void SpeciesAdaptiveV::reconfiguration(Params &params, Patch * patch)
         {
             // We resize the bins
             this->resizeCluster(params);
-
-            // We perform the sorting
-            this->sort_part(params);
         }
         // If we switch from vectorized to non-vectozied,
         else
         {
-
             // We resize the bins
             this->Species::resizeCluster(params);
-
-            // We perform the sorting
-            this->Species::sort_part(params);
-
         }
 
+        // We perform the sorting
+        this->Species::sort_part(params);
+        
         // Reconfigure species to be imported
         this->reconfigure_particle_importation();
     }

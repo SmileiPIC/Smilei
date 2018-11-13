@@ -358,6 +358,8 @@ public:
     //! Method used to sort particles
     virtual void sort_part(Params& param);
 
+    virtual void compute_part_cell_keys(Params &params) {};
+
     //! This function configures the type of species according to the default mode
     //! regardless the number of particles per cell
     virtual void initial_configuration( Params& params, Patch * patch) ;

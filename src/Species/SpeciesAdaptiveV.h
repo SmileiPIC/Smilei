@@ -31,7 +31,9 @@ class SpeciesAdaptiveV : public SpeciesV
     //! This function configures the type of species according to the default mode
     //! regardless the number of particles per cell
     void initial_configuration( Params& params, Patch * patch) override;
-
+    
+    void sort_part(Params &params) override;
+    
     //! This function configures the species according to the vectorization mode
     void configuration( Params& params, Patch * patch) override;
 
