@@ -72,8 +72,8 @@ makerunAM:
   stage: makerun
   only:
     - develop
-    - release-4.0.0
-    - mpi_omp_master
+    #- release-4.0.0
+    #- mpi_omp_master
 
   script:
     # Move in test dir
