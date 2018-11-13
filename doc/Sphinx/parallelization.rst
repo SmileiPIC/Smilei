@@ -223,7 +223,7 @@ In the namelist::
     )
 
 Those linearized decompositions are oriented to contiguously store patches
-along the most internal direction (**Z**, then **Y**, then **X**).
+along the innermost direction (**Z**, then **Y**, then **X**).
 The storage order can be modified through following options ::
 
     Main(
@@ -233,7 +233,7 @@ The storage order can be modified through following options ::
         ...
     )
 
-This options has several consequences:
+These options has several consequences:
 
 * No more restrictions on the number of patches per direction.
 * Load balancing is not available.

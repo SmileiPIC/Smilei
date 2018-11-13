@@ -109,19 +109,25 @@ The block ``Main`` is **mandatory** and has the following syntax::
   * ``"1Dcartesian"``
   * ``"2Dcartesian"``
   * ``"3Dcartesian"``
-  * ``"AMcylindrical"``: Cylindrical geometry with azimuthal modes decomposition. See :doc:`algorithms`.
+  * ``"AMcylindrical"``: cylindrical geometry with azimuthal Fourier decomposition. See :doc:`algorithms`.
 
-  In the following documentation, all references to simulation dimension depends on the geometry.
-  Cartesian 1D, 2D,3D respectively stand for 1 dimensional, two dimensional and three dimensional and are ordered as :math:`(x,y,z)`.
-  In the case of the ``"AMcylindrical"``, all grid quantities are two dimensional and ordered as :math:`(x,r)`.
-  Particle quantities (i.e. the Species block) are expressed in three dimensional Cartesian frame :math:`(x,y,z)`.
+  In the following documentation, all references to dimensions or coordinates
+  depend on the ``geometry``.
+  1D, 2D and 3D stand for 1-dimensional, 2-dimensional and 3-dimensional cartesian
+  geometries, respectively. All coordinates are ordered as :math:`(x)`, :math:`(x,y)` or :math:`(x,y,z)`.
+  In the ``"AMcylindrical"`` case, all grid coordinates are 2-dimensional
+  :math:`(x,r)`, while particle coordinates (in :ref:`Species`)
+  are expressed in the 3-dimensional Cartesian frame :math:`(x,y,z)`.
 
   .. warning::
 
     The ``"AMcylindrical"`` geometry is currently proposed in alpha version.
-    It has not been thoroughly tested and only Field diagnostics are available.
-    Boundary conditions must be set to ``"remove"`` for particles, ``"silver-muller"`` for longitudinal EM boundaries and ``"buneman"`` for transverse EM boundaries.
-    Vectorization, checkpoints, load balancing, ionization, collisions and order 4 interpolation are not supported yet in this geometry.
+    It has not been thoroughly tested and only Fields diagnostics are available.
+    Boundary conditions must be set to ``"remove"`` for particles,
+    ``"silver-muller"`` for longitudinal EM boundaries and
+    ``"buneman"`` for transverse EM boundaries.
+    Vectorization, checkpoints, load balancing, ionization, collisions and
+    order-4 interpolation are not supported yet.
 
 .. py:data:: interpolation_order
 
@@ -174,22 +180,25 @@ The block ``Main`` is **mandatory** and has the following syntax::
 .. py:data:: patch_arrangement
 
   :default: ``"hilbertian"``
-
-  Linearized patch distributions are available.
-    * In 2D, options are : ``linearized_XY"`` and ``linearized_YX"``.
-    * In 3D, options are : ``linearized_XYZ"`` and ``linearized_ZYX"``.
-  Non ``C`` natural ordering (``linearized_YX"`` and ``linearized_ZYX"`` inhibits the usage if ``DiagnosticFields``.
-  See :doc:`parallelization`.
-
+  
+  Determines the ordering of patches and the way they are separated into the
+  various MPI processes. Options are:
+  
+  * ``"hilbertian"``: following the Hilbert curve (see :ref:`this explanation<LoadBalancingExplanation>`).
+  * ``"linearized_XY"`` in 2D or ``"linearized_XYZ"`` in 3D: following the
+    row-major (C-style) ordering.
+  * ``"linearized_YX"`` in 2D or ``"linearized_ZYX"`` in 3D: following the
+    column-major (fortran-style) ordering. This prevents the usage of
+    :ref:`Fields diagnostics<DiagFields>` (see :doc:`parallelization`).
 
 .. py:data:: clrw
 
   :default: set to minimize the memory footprint of the particles pusher, especially interpolation and projection processes
 
-  Advanced users. Integer specifying the cluster width along X direction in number of cells.
+  For advanced users. Integer specifying the cluster width along X direction in number of cells.
   The "cluster" is a sub-patch structure in which particles are sorted for cache improvement.
-  clrw must divide the number of cells in one patch (in dimension X).
-  The finest sorting is achieved with clrw=1 and no sorting with clrw equal to the full size of a patch along dimension X.
+  ``clrw`` must divide the number of cells in one patch (in dimension X).
+  The finest sorting is achieved with ``clrw=1`` and no sorting with ``clrw`` equal to the full size of a patch along dimension X.
   The cluster size in dimension Y and Z is always the full extent of the patch.
 
 .. py:data:: maxwell_solver
@@ -369,6 +378,7 @@ Vectorization
 The block ``Vectorization`` is optional.
 It controls the SIMD operations that can enhance the performance of some computations.
 The technique is detailed in Ref. [Beck]_.
+It requires :ref:`additional compilation options<vectorization_flags>` to be actived.
 
 .. code-block:: python
 

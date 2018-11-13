@@ -50,16 +50,6 @@ Download and compile
      cd ~/smilei
      make
 
-The SIMD vectorization of :program:`Smilei` uses ``#pragma omp simd``, to be enabled you need appropriates compiler and options.
-
-For instantance, :program:`Smilei` has been developed and tested on Intel processors (Skylake 8168) with an Intel environment with the following flags :
-
-   .. code-block:: bash
-      
-     -fopenmp -xCOMMON-AVX512 -ip -ipo -inline-factor=1000 -D__INTEL_SKYLAKE_8168
-
-The ``-fopenmp`` is set by default in all mode except ``config=noopenmp``.
-
 #. The next step is to :doc:`write a namelist <namelist>`.
 
 ----
@@ -80,6 +70,27 @@ Several ``make`` options are available:
   make help                    # Gets some help on compilation
   sed -i 's/PICSAR=FALSE/PICSAR=TRUE/g' makefile; make -j4 #To enable calls for PSATD solver from picsar
 
+
+----
+
+.. _vectorization_flags:
+
+Options for SIMD vectorization
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The :ref:`SIMD vectorization<Vectorization>` of :program:`Smilei` uses ``#pragma omp simd``.
+To be enabled, you must provide appropriate options to your compiler through
+the environment variable ``CXXFLAGS``.
+
+For instance, :program:`Smilei` has been tested on
+Intel processors (Skylake 8168) with an Intel environment.
+The following flags provide a good performance:
+
+.. code-block:: bash
+  
+  -xCOMMON-AVX512 -ip -ipo -inline-factor=1000 -D__INTEL_SKYLAKE_8168
+
+The vectorization must also be actived :ref:`in the namelist<Vectorization>`.
 
 ----
 
