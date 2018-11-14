@@ -1,41 +1,19 @@
 Highlights
 ----------
 
-Improved computational performance using efficient vectorization
+Improved performance using vectorization
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:program:`Smilei` computational performance has been recently enhance thanks
-to new vectorized implementations of the particle operators.
+:program:`Smilei` computational performance has been recently enhanced with
+`vectorized operations <https://en.wikipedia.org/wiki/Vector_processor>`_,
+in particular the projection of currents and the interpolation of fields.
+Typically, the new algorithms are more efficient than the old ones above
+10 particles per cell, up to 3 times faster. An *adaptive* switching technique
+ensures that the best version is used, dynamically and locally.
 
-A more efficient sorting method, referred to as cycle sort, has been first implemented
-to make the particle operator vectorization easier.
-The most difficult to vectorize are the current projection
-(deposition) and the field interpolation (gathering) steps because of
-interpolation between the grids and the macro-particles.
-These are also the most expensive ones.
-
-Vectorization is more efficient than using scalar
-operators when the number of
-particles per cell is sufficiently high.
-The threshold is evaluated around 10 particles on recent Intel
-architectures.
-Vectorization efficiency basically increases with the number of particles per cell.
-Around 256 particles per cell, a speed-up of x2 has been obtained on Intel Skylake
-and a speed-up of x3 on Intel KNL.
-For few particles per cell, scalar implementations are still more efficient
-and the difference is as significant as the number of particles is low.
-
-Adaptive vectorization consists on locally switch between the scalar and
-vectorized operators during the simulation, choosing the most efficient one
-in the region of interest.
-The concept has been successfully implemented at the lower granularity of
-the code so that every given number of time steps, for each
-patch, and for each species, the most efficient operator is determined
-from the number of particles per cell.
-
-Adaptive vectorization has been validated on large-scale simulations.
-One of the case was the simulation of Mildly-relativistic collisionless.
-The simulation is illustrated by :numref:`weibel_3d_ne_vecto_it510_fig1`.
+This has been validated on large-scale simulations.
+An example of a mildly-relativistic collisionless shock simulation is provided
+in :numref:`weibel_3d_ne_vecto_it510_fig1` (watch the `video <https://youtu.be/-ENUekyE_A4>`_).
 
 .. _weibel_3d_ne_vecto_it510_fig1:
 
@@ -43,23 +21,20 @@ The simulation is illustrated by :numref:`weibel_3d_ne_vecto_it510_fig1`.
     :width: 90%
     :align: center
     :name: weibel_3d_ne_vecto_it510
-    :target: https://youtu.be/-ENUekyE_A4
 
-    Mildly-relativistic collisionless shock: On the top, volume rendering of the normalized
-    electron density :math:`n_e /n_c` (:math:`n_c` the critical density) at
-    time :math:`t = 34 \omega^{-1}` (:math:`\omega` the laser frequency) after the beginning of the collision.
-    On the bottom, patches in vectorized
-    mode for the electron species at the same time.
-    An animated version of these can be viewed by clicking on this image.
+    Mildly-relativistic collisionless shock simulation, with two drifting
+    plasmas colliding in the middle of the box.
+    Top panel: electron density.
+    Bottom panel: regions switched to vectorized operators are highlighted.
 
-Adaptive vectorization puts the high-density regions rich in
-particles in vectorized mode.
-Incoming plasma flows, with 8 particles per cell in average, are in scalar mode.
-On examined cases, this method allows for speed-ups from x1.3 to x2 regarding only
-the macro-particle operators.
+High-density regions are switched to vectorized operators while low-density
+regions remain scalar (they have only 8 particles per cell).
+In this particular case, the treatment of particles can be sped-up by 2.
 
-This work has been recently submitted for publication
-and is avaliable on `ArXiV <https://arxiv.org/abs/1810.03949>`_.
+For more details, checkout the :doc:`doc<vectorization>` and this
+`ArXiV paper <https://arxiv.org/abs/1810.03949>`_.
+
+----
 
 Scalability in a wakefield acceleration simulation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

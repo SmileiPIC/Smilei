@@ -78,7 +78,7 @@ Several ``make`` options are available:
 Options for SIMD vectorization
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The :ref:`SIMD vectorization<Vectorization>` of :program:`Smilei` uses ``#pragma omp simd``.
+The :doc:`SIMD vectorization <vectorization>` of :program:`Smilei` uses ``#pragma omp simd``.
 To be enabled, you must provide appropriate options to your compiler through
 the environment variable ``CXXFLAGS``.
 
@@ -90,7 +90,7 @@ The following flags provide a good performance:
   
   -xCOMMON-AVX512 -ip -ipo -inline-factor=1000 -D__INTEL_SKYLAKE_8168
 
-The vectorization must also be actived :ref:`in the namelist<Vectorization>`.
+The vectorization must also be activated :ref:`in the namelist <Vectorization>`.
 
 ----
 

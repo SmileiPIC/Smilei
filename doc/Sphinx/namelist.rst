@@ -377,7 +377,7 @@ Vectorization
 
 The block ``Vectorization`` is optional.
 It controls the SIMD operations that can enhance the performance of some computations.
-The technique is detailed in Ref. [Beck]_.
+The technique is detailed in Ref. [Beck]_ and summarized in :doc:`this doc <vectorization>`.
 It requires :ref:`additional compilation options<vectorization_flags>` to be actived.
 
 .. code-block:: python
