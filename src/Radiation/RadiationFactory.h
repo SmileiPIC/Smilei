@@ -62,7 +62,7 @@ public:
                                   << species->radiation_model << "`");
         }
 
-        int n_envlaser = PyTools::nComponents("LaserEnvelope");
+        int n_envlaser = params.Laser_Envelope_model;
         if ( (n_envlaser >=1) & (species->ponderomotive_dynamics) & (species->radiation_model != "none")  ){
             ERROR( "Radiation model is not yet implemented for species interacting with Laser Envelope model.");
                                                                    }
