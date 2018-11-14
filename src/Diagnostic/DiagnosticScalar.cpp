@@ -431,39 +431,33 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
                     *          (vecSpecies[ispec]->particles->momentum_norm(iPart));
                 }
             }
-
+            
             *sNtot[ispec] += (double)nPart;
             *sDens[ispec] += cell_volume * density;
             *sZavg[ispec] += cell_volume * charge;
             *sUkin[ispec] += cell_volume * ener_tot;
-
+            
+            // incremement the total kinetic energy
+            Ukin_ += cell_volume * ener_tot;
+            
             // If radiation activated
             if (vecSpecies[ispec]->Radiate)
             {
-                *sUrad[ispec]  += cell_volume*
+                *sUrad[ispec] += cell_volume*
                                  vecSpecies[ispec]->getNrjRadiation();
-            }
-
-            // incremement the total kinetic energy
-            Ukin_ += cell_volume * ener_tot;
-            // increment the total radiated energy
-            if (vecSpecies[ispec]->Radiate)
-            {
                 Urad_ += cell_volume*
                          vecSpecies[ispec]->getNrjRadiation();
             }
-
+            
             // If multiphoton Breit-Wheeler activated for photons
             // increment the total pair energy from this process
             if (vecSpecies[ispec]->Multiphoton_Breit_Wheeler_process)
             {
                 UmBWpairs_ += cell_volume*
-                                 vecSpecies[ispec]
-                                 ->getNrjRadiation();
+                              vecSpecies[ispec]->getNrjRadiation();
             }
-
         }
-
+        
         if( necessary_Ukin_BC ) {
             // particle energy lost due to boundary conditions
             double ener_lost_bcs=0.0;
@@ -518,7 +512,7 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     }
     else {
         ElectroMagnAM* emfields = static_cast<ElectroMagnAM*>(patch->EMfields);
-        unsigned int nmodes = emfields->El_.size(); 
+        unsigned int nmodes = emfields->El_.size();
         for (unsigned int imode=0 ; imode < nmodes ; imode++) {
             fields.push_back(emfields->El_[imode]);
             fields.push_back(emfields->Er_[imode]);
