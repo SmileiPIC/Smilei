@@ -282,7 +282,7 @@ int main (int argc, char* argv[])
     // check here if we can close the python interpreter
     // ------------------------------------------------------------------------
     TITLE("Cleaning up python runtime environement");
-    //params.cleanup(&smpi);
+    params.cleanup(&smpi);
 
 /*tommaso
     // save latestTimeStep (used to test if we are at the latest timestep when running diagnostics at run's end)

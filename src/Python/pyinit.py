@@ -385,7 +385,7 @@ class LaserEnvelope(SmileiSingleton):
     #time_envelope = 1.
     #space_envelope = [1., 0.]
     envelope_solver = "explicit"
-    envelope_profile = 0.
+    envelope_profile = None
     Envelope_boundary_conditions = [["reflective"]]
 
 
