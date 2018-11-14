@@ -80,6 +80,7 @@ interaction to astrophysics.
    units
    algorithms
    parallelization
+   vectorization
    collisions
    ionization
    radiation_loss
