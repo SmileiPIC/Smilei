@@ -60,7 +60,7 @@ public:
             else if ( species->pusher == "ponderomotive_boris" )
             {
 
-                int n_envlaser = PyTools::nComponents("LaserEnvelope");
+                int n_envlaser = params.Laser_Envelope_model;
                 if ( n_envlaser <1 ){
                     ERROR( "No Laser Envelope present. The pusher ponderomotive_boris can be used only in presence of a Laser Envelope.");
                                     }
