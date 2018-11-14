@@ -1,6 +1,59 @@
 Highlights
 ----------
 
+SIMD Vectorization of the particle operators
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Single Instruction Multiple Data (SIMD) vectorization consists on performing on
+a contiguous set of data, usually called vector, the same operation(s)
+in a single instruction.
+On modern Computational Processing Units (CPU), vector registers have a length 512 kb
+that corresponds to 8 double precision floats (on Intel Skylake processors for
+instance and future ARM architecture).
+Each processing unit can perform a Fused Multiply Add instruction (FMA) that
+combines an addition and a multiplication.
+If-conditions can be handled using mask registers.
+Modern SIMD vectoriaztion is described in the following figure.
+
+.. image:: _static/SIMD.png
+    :width: 600px
+
+On SIMD CPUs, an application has to use SIMD vectorization to reach the maximum
+of the core computational peak performance. A scalar code without FMA
+uses less than 7% of the core computational power.
+This affirmation can nonetheless be mitigated on Intel Skylake processors that
+adapt their frequency on the used vectorization instruction set.
+
+.. rubric :: 1. SIMD vectorization of the code
+
+Optimization efforts have been recently done to vectorize efficiently the
+particle operators of :program:`Smilei`.
+
+A new sorting method has been first implemented in order to then make
+the particle operator vectorization easier.
+This method, referred to as cycle sort, minimizes the number of data movements
+by performing successive permutation.
+
+The most expensive operators and most difficult to vectorize are the current projection
+(deposition) and the field inerpolation (gathering) steps where
+there is an interpolation between the grids and the macro-particles.
+These two steps have been vectorized taking advantage of the cycle sort.
+
+It has been observed that the vectorization is more efficient than scalar when the number of
+particles per cell is sufficienctly high, above 10 particles on recent Intel
+archiectures (Skylake, Knights Landing (KNL), Broadwell).
+Vectorization efficiency increases with the number of particles per cell.
+Around 256 particles per cell, a speedup of 2 has been observed on Intel Skylake
+and a speedup of 3 on Intel KNL using the AVX512 insrtuction set.
+
+.. rubric :: 2. Adaptive vectorization
+
+.. raw:: html
+
+    <iframe width="560" height="315" src="https://www.youtube.com/embed/-ENUekyE_A4" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+This work has been recently submitted for publication
+and is avaliable on `ArXiV <https://arxiv.org/abs/1810.03949>`_.
 
 Scalability in a wakefield acceleration simulation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -19,7 +72,7 @@ In a local area around this hotspot, OpenMP is able to manage the computing
 resources to make the overall simulation faster. The following figure shows
 the evolution of the time to calculate 100 iterations, as a function of time.
 Each line corresponds to a different partition of the box in terms of
-MPI processes and OpenMP threads: :math:`N\times M`, where :math:`N` is 
+MPI processes and OpenMP threads: :math:`N\times M`, where :math:`N` is
 the total number of MPI processes, and :math:`M` is the number of threads
 in each MPI process.
 
@@ -27,14 +80,14 @@ in each MPI process.
     :width: 500px
 
 Using more OpenMP threads per MPI process (while keeping the total number
-of threads constant) clearly reduces the simulation time, because the 
+of threads constant) clearly reduces the simulation time, because the
 computing power is balanced within each MPI region.
 
 
 .. rubric :: 2. Dynamic load balancing between MPI processes
 
 At the global simulation scale, OpenMP cannot be used to smoothen the balance.
-Instead, a dynamic load balancing (DLB) algorithm periodically exchanges pieces of 
+Instead, a dynamic load balancing (DLB) algorithm periodically exchanges pieces of
 the simulation box (*patches*) between MPI processes, so that each MPI
 process owns a fair amount of the simulation load. The following figure
 shows how this balancing reduces the time of the simulation.
@@ -87,7 +140,7 @@ the electron bunches being pulled out from the plasma surface.
    :width: 13cm
 
 Fourier analysis of the reflected laser field, in space and time, provides the
-angular distribution of the frequency spectrum of the reflected light, shown in the 
+angular distribution of the frequency spectrum of the reflected light, shown in the
 following figure (top panel). High harmonics appear up to order 16.
 
 .. image:: _static/hhg2.jpg
@@ -101,7 +154,7 @@ laser direction.
 This simulation was run on the CINES/Occigen (Bullx) machine using 256 MPI x 14 OpenMP
 threads for about 10700 CPU-hours. The characteristic computing time per particle
 (average PIC iteration divided by the number of particles) is of the order of
-0.7 µs, including 25% for diagnostics. 
+0.7 µs, including 25% for diagnostics.
 
 
 
@@ -122,7 +175,7 @@ the `stimulated Brillouin scattering <http://aip.scitation.org/doi/abs/10.1063/1
 
 A pump with intensity :math:`10^{15}` W/cm² (wavelength 1 µm)
 correspond to the "strong-coupling" regime, particularly robust with respect to
-plasma inhomogeneities and seed frequency [Chiaramello2016]_. 
+plasma inhomogeneities and seed frequency [Chiaramello2016]_.
 
 A 2-dimensional simulation, in conditions close to actual experiments, ran
 on a box size of 1024 µm x 512 µm for  10 ps
@@ -177,10 +230,10 @@ in the magnetosphere to :math:`B_0=m_e\omega_{pe}/e` in the solar wind and is to
 simulation plane. The temperature is initially isotropic and its profile is calculated
 to balance the total pressure.
 
-The domain size is 1280 :math:`c/\omega_{pi} \times` 256 :math:`c/\omega_{pi}`. 
-The total simulation time is :math:`800\times` the ion gyration time. 
+The domain size is 1280 :math:`c/\omega_{pi} \times` 256 :math:`c/\omega_{pi}`.
+The total simulation time is :math:`800\times` the ion gyration time.
 We used a reduced ion to electron mass ratio :math:`m_i/m_e = 25`, and a ratio
-50 of the speed of light by the Alfvén velocity. 
+50 of the speed of light by the Alfvén velocity.
 There are initially 8.6 billion quasi-protons for the three populations, and 13 billion electrons.
 
 .. image:: _static/reconnection.jpg
@@ -208,7 +261,7 @@ where the exhaust is filled with plume and solar wind plasma.
 This large-scale simulation has run for a total of 14 million CPU-hours on 16384 cores
 of the CINES/Occigen (Bullx) supercomputer within a GENCI-CINES special call.
 Overall, the characteristic (full) push-time for a single particle was of the order
-of 1.6 µs (including 31% for diagnostics). 
+of 1.6 µs (including 31% for diagnostics).
 No dynamic load balancing was used for this simulation.
 
 ----
@@ -221,7 +274,7 @@ Relativistic collisionless shocks play a fundamental role in various astrophysic
 where they cause high-energy radiation and particle acceleration related to the
 cosmic-ray spectrum. In the absence of particle collisions, the shock is mediated
 by collective plasma processes, produced by electromagnetic plasma instabilities
-at the shock front. 
+at the shock front.
 
 Specifically, the Weibel (or current filamentation) instability
 is observed in most of the astrophysical relativistic outflows interacting with
@@ -233,13 +286,13 @@ hence stopping it and leading to compression of the downstream (shocked plasma) 
 We present a 2-dimensional PIC simulation of such shock,
 driven in an initially unmagnetized electron-positron plasma.
 The simulation relies on the "piston" method that consists in initializing the
-simulation with a single cold electron-positron plasma drifting 
-at a relativistic velocity :math:`v_0 \simeq 0.995\,c`. 
+simulation with a single cold electron-positron plasma drifting
+at a relativistic velocity :math:`v_0 \simeq 0.995\,c`.
 Reflecting boundary conditions at the right border creates a counter-penetrating flow.
 
-The simulation box size is 2048 :math:`\delta_e \times` 128 :math:`\delta_e` 
-(:math:`\delta_e = c/\omega_p` being the electron skin-depth of the initial flow), 
-with a total of 2.15 billion quasi-particles. 
+The simulation box size is 2048 :math:`\delta_e \times` 128 :math:`\delta_e`
+(:math:`\delta_e = c/\omega_p` being the electron skin-depth of the initial flow),
+with a total of 2.15 billion quasi-particles.
 The following figure show an unstable overlapping region of incoming and
 reflected flows, resulting in the creation, before the shock
 of filamentary structures in both the magnetic field (panel a) and
@@ -261,8 +314,6 @@ and appears to follow a :math:`\gamma^{-2.5}` power law.
 .. image:: _static/shock3.jpg
    :width: 11cm
 
-This simulation run on the TGCC/Curie machine using 128 MPI x 8 OpenMP threads 
+This simulation run on the TGCC/Curie machine using 128 MPI x 8 OpenMP threads
 for a total of 18800 CPU-hours for 49780 timesteps.
-The average push time for one quasi-particle was of 0.63 µs (including 20% for diagnostics). 
-
-
+The average push time for one quasi-particle was of 0.63 µs (including 20% for diagnostics).
