@@ -252,6 +252,25 @@ void VectorPatch::reconfiguration(Params& params, Timers &timers, int itime)
     //}
 }
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Reconfigure all patches for the new time step
+// ---------------------------------------------------------------------------------------------------------------------
+void VectorPatch::sort_all_particles(Params& params)
+{
+#ifdef _VECTO
+    if (params.vectorization_mode != "off") {
+        //Need to sort because particles are not well sorted at creation
+        for (unsigned int ipatch=0 ; ipatch < size() ; ipatch++){
+            for (unsigned int ispec=0 ; ispec<patches_[ipatch]->vecSpecies.size(); ispec++) {
+                patches_[ipatch]->vecSpecies[ispec]->compute_part_cell_keys(params);
+                patches_[ipatch]->vecSpecies[ispec]->sort_part(params);
+            }
+        }
+    }
+#endif
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 // For all patches, move particles (restartRhoJ(s), dynamics and exchangeParticles)
 // ---------------------------------------------------------------------------------------------------------------------

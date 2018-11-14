@@ -223,9 +223,7 @@ public:
     //! Number of patches per direction
     std::vector<unsigned int> number_of_patches;
     //! Domain decomposition
-    std::string patch_decomposition;
-    //! Domain orientation
-    std::string patch_orientation;
+    std::string patch_arrangement;
 
     //! Time selection for adaptive vectorization
     TimeSelection * adaptive_vecto_time_selection;

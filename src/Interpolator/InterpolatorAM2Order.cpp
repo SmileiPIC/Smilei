@@ -23,7 +23,6 @@ InterpolatorAM2Order::InterpolatorAM2Order(Params &params, Patch *patch) : Inter
     dr_inv_ = 1.0/params.cell_length[1];
     nmodes = params.nmodes;
     dr =  params.cell_length[1];
-    //j_domain_begin = patch->getCellStartingGlobalIndex(1);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

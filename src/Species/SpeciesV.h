@@ -73,7 +73,7 @@ class SpeciesV : public Species
     //void count_sort_part(Params& param);
 
     //! Compute cell_keys for all particles of the current species
-    void compute_part_cell_keys(Params &params);
+    void compute_part_cell_keys(Params &params) override;
 
     //! Compute cell_keys for the specified bin boundaries.
     void compute_bin_cell_keys(Params &params, int istart, int iend);

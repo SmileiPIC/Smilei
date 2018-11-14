@@ -65,27 +65,34 @@ SpeciesAdaptiveV::~SpeciesAdaptiveV()
 void SpeciesAdaptiveV::resizeCluster(Params& params)
 {
 
-    // We recompute the number of cells
-    unsigned int ncells = (params.n_space[0]+1);
-    for ( unsigned int i=1; i < params.nDim_field; i++) ncells *= (params.n_space[i]+1);
-
-    // We keep the current number of particles
-    // int npart = last_index[last_index.size()-1];
-    // int size = params.n_space[0]/clrw;
-
-    last_index.resize(ncells,0);
-    first_index.resize(ncells,0);
-    //count.resize(ncells,0);
-
-    first_index[0] = 0;
-    for (unsigned int ic=1; ic < ncells; ic++)
-    {
-        first_index[ic] = first_index[ic-1] + count[ic-1];
-        last_index[ic-1]= first_index[ic];
+    if( vectorized_operators ) {
+        
+        // We recompute the number of cells
+        unsigned int ncells = (params.n_space[0]+1);
+        for ( unsigned int i=1; i < params.nDim_field; i++) ncells *= (params.n_space[i]+1);
+        
+        // We keep the current number of particles
+        // int npart = last_index[last_index.size()-1];
+        // int size = params.n_space[0]/clrw;
+        
+        last_index.resize(ncells,0);
+        first_index.resize(ncells,0);
+        //count.resize(ncells,0);
+        
+        first_index[0] = 0;
+        for (unsigned int ic=1; ic < ncells; ic++)
+        {
+            first_index[ic] = first_index[ic-1] + count[ic-1];
+            last_index[ic-1]= first_index[ic];
+        }
+        //New total number of particles is stored as last element of last_index
+        last_index[ncells-1] = last_index[ncells-2] + count.back() ;
+        
+    } else {
+        
+        Species::resizeCluster(params);
+        
     }
-    //New total number of particles is stored as last element of last_index
-    last_index[ncells-1] = last_index[ncells-2] + count.back() ;
-
 }// end resizeCluster
 
 
@@ -130,14 +137,18 @@ void SpeciesAdaptiveV::compute_part_cell_keys(Params &params)
 void SpeciesAdaptiveV::importParticles( Params& params, Patch* patch, Particles& source_particles, vector<Diagnostic*>& localDiags )
 {
 
-    if (this->vectorized_operators)
-    {
-        this->SpeciesV::importParticles(params, patch, source_particles, localDiags );
-    }
+    if (vectorized_operators)
+        importParticles(params, patch, source_particles, localDiags );
     else
-    {
-        this->Species::importParticles(params, patch, source_particles, localDiags );
-    }
+        Species::importParticles(params, patch, source_particles, localDiags );
+}
+
+void SpeciesAdaptiveV::sort_part(Params &params)
+{
+    if (vectorized_operators)
+        sort_part(params);
+    else
+        Species::sort_part(params);
 }
 
 // -----------------------------------------------------------------------------
@@ -157,25 +168,13 @@ void SpeciesAdaptiveV::initial_configuration(Params &params, Patch * patch)
 
     // If we switch from non-vectorized to vectozied,
     // we have to reactivate the cell-sorting algorithm
-    if (this->vectorized_operators)
-    {
-        // We resize the bins
-        this->resizeCluster(params);
-
-        // We perform the sorting
-        this->sort_part(params);
-    }
-    // If we switch from vectorized to non-vectozied,
-    else
-    {
-        // We resize the bins
-        this->Species::resizeCluster(params);
-
-        // We perform the sorting
-        this->Species::sort_part(params);
-
-    }
-
+    
+    // We resize the bins
+    resizeCluster(params);
+    
+    // We perform the sorting
+    this->sort_part(params);
+    
     // Reconfigure species to be imported
     this->reconfigure_particle_importation();
 
@@ -239,25 +238,13 @@ void SpeciesAdaptiveV::configuration(Params &params, Patch * patch)
 
     // If we switch from non-vectorized to vectozied,
     // we have to reactivate the cell-sorting algorithm
-    if (this->vectorized_operators)
-    {
-        // We resize the bins
-        this->resizeCluster(params);
-
-        // We perform the sorting
-        this->sort_part(params);
-    }
-    // If we switch from vectorized to non-vectozied,
-    else
-    {
-        // We resize the bins
-        this->Species::resizeCluster(params);
-
-        // We perform the sorting
-        this->Species::sort_part(params);
-
-    }
-
+    
+    // We resize the bins
+    resizeCluster(params);
+    
+    // We perform the sorting
+    this->sort_part(params);
+    
     // Reconfigure species to be imported
     this->reconfigure_particle_importation();
 
@@ -337,26 +324,13 @@ void SpeciesAdaptiveV::reconfiguration(Params &params, Patch * patch)
 
         // If we switch from non-vectorized to vectozied,
         // we have to reactivate the cell-sorting algorithm
-        if (this->vectorized_operators)
-        {
-            // We resize the bins
-            this->resizeCluster(params);
-
-            // We perform the sorting
-            this->sort_part(params);
-        }
-        // If we switch from vectorized to non-vectozied,
-        else
-        {
-
-            // We resize the bins
-            this->Species::resizeCluster(params);
-
-            // We perform the sorting
-            this->Species::sort_part(params);
-
-        }
-
+        
+        // We resize the bins
+        resizeCluster(params);
+        
+        // We perform the sorting
+        this->sort_part(params);
+        
         // Reconfigure species to be imported
         this->reconfigure_particle_importation();
     }

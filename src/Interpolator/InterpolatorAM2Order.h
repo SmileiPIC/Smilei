@@ -121,8 +121,6 @@ private:
         id_ = round(xpn+0.5);
         jp_ = round(rpn);
         jd_ = round(rpn+0.5);
-        //std::cout<<"ip avant "<<ip_ <<std::endl;
-        //std::cout<<"jd avant "<<jd_<<std::endl;
         
         // Declaration and calculation of the coefficient for interpolation
         double delta2;
@@ -151,7 +149,6 @@ private:
         coeffyp_[1] = 0.75 - delta2;
         coeffyp_[2] = 0.5 * (delta2+deltar+0.25);
         
-        //!\todo CHECK if this is correct for both primal & dual grids !!!
         // First index for summation
         ip_ = ip_ - i_domain_begin;
         id_ = id_ - i_domain_begin;

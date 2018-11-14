@@ -1659,7 +1659,7 @@ bool RadiationTables::read_h_table(SmileiMPI *smpi)
 
         // Bcast table_exists
         int TE = table_exists;
-        MPI_Bcast(&TE, 1, MPI_INTEGER, 0,smpi->getGlobalComm());
+        MPI_Bcast(&TE, 1, MPI_INT, 0,smpi->getGlobalComm());
         table_exists = TE;
 
     }
@@ -1786,7 +1786,7 @@ bool RadiationTables::read_integfochi_table(SmileiMPI *smpi)
 
         // Bcast table_exists
         int TE = table_exists;
-        MPI_Bcast(&TE, 1, MPI_INTEGER, 0,smpi->getGlobalComm());
+        MPI_Bcast(&TE, 1, MPI_INT, 0,smpi->getGlobalComm());
         table_exists = TE;
 
     }
@@ -1913,7 +1913,7 @@ bool RadiationTables::read_xip_table(SmileiMPI *smpi)
         }
 
         // Bcast table_exists
-        MPI_Bcast(&table_exists, 1, MPI_INTEGER, 0,smpi->getGlobalComm());
+        MPI_Bcast(&table_exists, 1, MPI_INT, 0,smpi->getGlobalComm());
 
     }
 
@@ -1958,7 +1958,7 @@ void RadiationTables::bcast_h_table(SmileiMPI *smpi)
     // buffer size
     if (smpi->getRank() == 0)
     {
-        MPI_Pack_size(1, MPI_INTEGER, smpi->getGlobalComm(), &position);
+        MPI_Pack_size(1, MPI_INT, smpi->getGlobalComm(), &position);
         buf_size = position;
         MPI_Pack_size(2, MPI_DOUBLE, smpi->getGlobalComm(), &position);
         buf_size += position;
@@ -1970,7 +1970,7 @@ void RadiationTables::bcast_h_table(SmileiMPI *smpi)
     MESSAGE("            Buffer size: " << buf_size);
 
     // Exchange buf_size with all ranks
-    MPI_Bcast(&buf_size, 1, MPI_INTEGER, 0,smpi->getGlobalComm());
+    MPI_Bcast(&buf_size, 1, MPI_INT, 0,smpi->getGlobalComm());
 
     // Packet that will contain all parameters
     char * buffer = new char[buf_size];
@@ -1980,7 +1980,7 @@ void RadiationTables::bcast_h_table(SmileiMPI *smpi)
     {
         position = 0;
         MPI_Pack(&h_dim,
-             1,MPI_INTEGER,buffer,buf_size,&position,smpi->getGlobalComm());
+             1,MPI_INT,buffer,buf_size,&position,smpi->getGlobalComm());
         MPI_Pack(&h_chipa_min,
              1,MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
         MPI_Pack(&h_chipa_max,
@@ -1999,7 +1999,7 @@ void RadiationTables::bcast_h_table(SmileiMPI *smpi)
     {
         position = 0;
         MPI_Unpack(buffer, buf_size, &position,
-                   &h_dim, 1, MPI_INTEGER,smpi->getGlobalComm());
+                   &h_dim, 1, MPI_INT,smpi->getGlobalComm());
         MPI_Unpack(buffer, buf_size, &position,
                    &h_chipa_min, 1, MPI_DOUBLE,smpi->getGlobalComm());
         MPI_Unpack(buffer, buf_size, &position,
@@ -2043,7 +2043,7 @@ void RadiationTables::bcast_integfochi_table(SmileiMPI *smpi)
     // buffer size
     if (smpi->getRank() == 0)
     {
-        MPI_Pack_size(1, MPI_INTEGER, smpi->getGlobalComm(), &position);
+        MPI_Pack_size(1, MPI_INT, smpi->getGlobalComm(), &position);
         buf_size = position;
         MPI_Pack_size(2, MPI_DOUBLE, smpi->getGlobalComm(), &position);
         buf_size += position;
@@ -2055,7 +2055,7 @@ void RadiationTables::bcast_integfochi_table(SmileiMPI *smpi)
     MESSAGE("            Buffer size: " << buf_size);
 
     // Exchange buf_size with all ranks
-    MPI_Bcast(&buf_size, 1, MPI_INTEGER, 0,smpi->getGlobalComm());
+    MPI_Bcast(&buf_size, 1, MPI_INT, 0,smpi->getGlobalComm());
 
     // Packet that will contain all parameters
     char * buffer = new char[buf_size];
@@ -2065,7 +2065,7 @@ void RadiationTables::bcast_integfochi_table(SmileiMPI *smpi)
     {
         position = 0;
         MPI_Pack(&integfochi_dim,
-             1,MPI_INTEGER,buffer,buf_size,&position,smpi->getGlobalComm());
+             1,MPI_INT,buffer,buf_size,&position,smpi->getGlobalComm());
         MPI_Pack(&integfochi_chipa_min,
              1,MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
         MPI_Pack(&integfochi_chipa_max,
@@ -2084,7 +2084,7 @@ void RadiationTables::bcast_integfochi_table(SmileiMPI *smpi)
     {
         position = 0;
         MPI_Unpack(buffer, buf_size, &position,
-                   &integfochi_dim, 1, MPI_INTEGER,smpi->getGlobalComm());
+                   &integfochi_dim, 1, MPI_INT,smpi->getGlobalComm());
         MPI_Unpack(buffer, buf_size, &position,
                    &integfochi_chipa_min, 1, MPI_DOUBLE,smpi->getGlobalComm());
         MPI_Unpack(buffer, buf_size, &position,
@@ -2128,7 +2128,7 @@ void RadiationTables::bcast_xip_table(SmileiMPI *smpi)
     // Compute the buffer size
     if (smpi->getRank() == 0)
     {
-        MPI_Pack_size(2, MPI_INTEGER, smpi->getGlobalComm(), &position);
+        MPI_Pack_size(2, MPI_INT, smpi->getGlobalComm(), &position);
         buf_size = position;
         MPI_Pack_size(2, MPI_DOUBLE, smpi->getGlobalComm(), &position);
         buf_size += position;
@@ -2143,7 +2143,7 @@ void RadiationTables::bcast_xip_table(SmileiMPI *smpi)
     MESSAGE("            Buffer size for MPI exchange: " << buf_size);
 
     // Exchange buf_size with all ranks
-    MPI_Bcast(&buf_size, 1, MPI_INTEGER, 0,smpi->getGlobalComm());
+    MPI_Bcast(&buf_size, 1, MPI_INT, 0,smpi->getGlobalComm());
 
     // Packet that will contain all parameters
     char * buffer = new char[buf_size];
@@ -2153,9 +2153,9 @@ void RadiationTables::bcast_xip_table(SmileiMPI *smpi)
     {
         position = 0;
         MPI_Pack(&xip_chipa_dim,
-             1,MPI_INTEGER,buffer,buf_size,&position,smpi->getGlobalComm());
+             1,MPI_INT,buffer,buf_size,&position,smpi->getGlobalComm());
         MPI_Pack(&xip_chiph_dim,
-             1,MPI_INTEGER,buffer,buf_size,&position,smpi->getGlobalComm());
+             1,MPI_INT,buffer,buf_size,&position,smpi->getGlobalComm());
         MPI_Pack(&xip_chipa_min,
              1,MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
         MPI_Pack(&xip_chipa_max,
@@ -2176,9 +2176,9 @@ void RadiationTables::bcast_xip_table(SmileiMPI *smpi)
     {
         position = 0;
         MPI_Unpack(buffer, buf_size, &position,
-                   &xip_chipa_dim, 1, MPI_INTEGER,smpi->getGlobalComm());
+                   &xip_chipa_dim, 1, MPI_INT,smpi->getGlobalComm());
         MPI_Unpack(buffer, buf_size, &position,
-                   &xip_chiph_dim, 1, MPI_INTEGER,smpi->getGlobalComm());
+                   &xip_chiph_dim, 1, MPI_INT,smpi->getGlobalComm());
         MPI_Unpack(buffer, buf_size, &position,
                    &xip_chipa_min, 1, MPI_DOUBLE,smpi->getGlobalComm());
         MPI_Unpack(buffer, buf_size, &position,

@@ -81,50 +81,6 @@ public:
             vecPatches.patches_[ipatch] = clone(vecPatches(0), params, smpi, vecPatches.domain_decomposition_, firstpatch + ipatch, n_moved);
         }
 
-#ifdef _VECTO
-        if (params.vectorization_mode == "on") {
-            //Need to sort because particles are not well sorted at creation
-            for (unsigned int ipatch=0 ; ipatch < npatches ; ipatch++){
-                for (unsigned int ispec=0 ; ispec<vecPatches(ipatch)->vecSpecies.size(); ispec++) {
-                    if ( dynamic_cast<SpeciesV*>(vecPatches.patches_[ipatch]->vecSpecies[ispec]) )
-                        dynamic_cast<SpeciesV*>(vecPatches.patches_[ipatch]->vecSpecies[ispec])->compute_part_cell_keys(params);
-                    vecPatches.patches_[ipatch]->vecSpecies[ispec]->sort_part(params);
-                }
-            }
-        }
-        else if (params.vectorization_mode == "adaptive_mixed_sort") {
-            //Need to sort because particles are not well sorted at creation
-            for (unsigned int ipatch=0 ; ipatch < npatches ; ipatch++){
-                for (unsigned int ispec=0 ; ispec<vecPatches(ipatch)->vecSpecies.size(); ispec++) {
-                    if ( dynamic_cast<SpeciesAdaptiveV*>(vecPatches.patches_[ipatch]->vecSpecies[ispec]) )
-                    {
-                        dynamic_cast<SpeciesAdaptiveV*>(vecPatches.patches_[ipatch]->vecSpecies[ispec])->compute_part_cell_keys(params);
-                    }
-                    if (dynamic_cast<SpeciesAdaptiveV*>(vecPatches.patches_[ipatch]->vecSpecies[ispec])->vectorized_operators)
-                    {
-                        vecPatches.patches_[ipatch]->vecSpecies[ispec]->sort_part(params);
-                    }
-                    else
-                    {
-                        vecPatches.patches_[ipatch]->vecSpecies[ispec]->Species::sort_part(params);
-                    }
-                }
-            }
-        }
-        else if (params.vectorization_mode == "adaptive") {
-            //Need to sort because particles are not well sorted at creation
-            for (unsigned int ipatch=0 ; ipatch < npatches ; ipatch++){
-                for (unsigned int ispec=0 ; ispec<vecPatches(ipatch)->vecSpecies.size(); ispec++) {
-                    if (dynamic_cast<SpeciesAdaptiveV2*>(vecPatches.patches_[ipatch]->vecSpecies[ispec]) )
-                    {
-                        dynamic_cast<SpeciesAdaptiveV2*>(vecPatches.patches_[ipatch]->vecSpecies[ispec])->compute_part_cell_keys(params);
-                    }
-                    vecPatches.patches_[ipatch]->vecSpecies[ispec]->sort_part(params);
-                }
-            }
-        }
-#endif
-
         //Cleaning arrays and pointer
         for (unsigned int ispec=0 ; ispec<vecPatches(0)->vecSpecies.size(); ispec++) {
             //If a species was initialized via a numpy array

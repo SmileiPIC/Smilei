@@ -203,10 +203,12 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
 
     // Write diags scalar data
     DiagnosticScalar* scalars = static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0]);
-    H5::attr(fid, "Energy_time_zero",  scalars->Energy_time_zero );
-    H5::attr(fid, "EnergyUsedForNorm", scalars->EnergyUsedForNorm);
     H5::attr(fid, "latest_timestep",   scalars->latest_timestep  );
+    // Scalars only by master
     if( smpi->isMaster() ) {
+        H5::attr(fid, "Energy_time_zero",  scalars->Energy_time_zero );
+        H5::attr(fid, "EnergyUsedForNorm", scalars->EnergyUsedForNorm);
+        // Poynting scalars
         unsigned int k=0;
         for (unsigned int j=0; j<2; j++) { //directions (xmin/xmax, ymin/ymax, zmin/zmax)
             for (unsigned int i=0; i<params.nDim_field; i++) { //axis 0=x, 1=y, 2=z
@@ -365,7 +367,9 @@ void Checkpoint::dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpec
 
         H5::attr(gid, "partCapacity", vecSpecies[ispec]->particles->capacity());
         H5::attr(gid, "partSize", vecSpecies[ispec]->particles->size());
-
+        H5::attr(gid, "nrj_radiation", vecSpecies[ispec]->getNrjRadiation());
+        
+        
         if (vecSpecies[ispec]->particles->size()>0) {
 
             for (unsigned int i=0; i<vecSpecies[ispec]->particles->Position.size(); i++) {
@@ -441,10 +445,12 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindo
 
     // Write diags scalar data
     DiagnosticScalar* scalars = static_cast<DiagnosticScalar*>(vecPatches.globalDiags[0]);
-    H5::getAttr(fid, "Energy_time_zero",  scalars->Energy_time_zero );
-    H5::getAttr(fid, "EnergyUsedForNorm", scalars->EnergyUsedForNorm);
-    H5::getAttr(fid, "latest_timestep",   scalars->latest_timestep  );
+    H5::getAttr(fid, "latest_timestep", scalars->latest_timestep);
+    // Scalars only by master
     if( smpi->isMaster() ) {
+        H5::getAttr(fid, "Energy_time_zero",  scalars->Energy_time_zero );
+        H5::getAttr(fid, "EnergyUsedForNorm", scalars->EnergyUsedForNorm);
+        // Poynting scalars
         unsigned int k=0;
         for (unsigned int j=0; j<2; j++) { //directions (xmin/xmax, ymin/ymax, zmin/zmax)
             for (unsigned int i=0; i<params.nDim_field; i++) { //axis 0=x, 1=y, 2=z
@@ -622,12 +628,17 @@ void Checkpoint::restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecS
         unsigned int partCapacity=0;
         H5::getAttr(gid, "partCapacity", partCapacity );
         vecSpecies[ispec]->particles->reserve(partCapacity,nDim_particle);
-
+        
         unsigned int partSize=0;
         H5::getAttr(gid, "partSize", partSize );
         vecSpecies[ispec]->particles->initialize(partSize,nDim_particle);
-
-
+        
+        double nrj_radiation;
+        if( H5::hasAttr(gid, "nrj_radiation") ) {
+            H5::getAttr(gid, "nrj_radiation", nrj_radiation);
+            vecSpecies[ispec]->setNrjRadiation(nrj_radiation);
+        }
+        
         if (partSize>0) {
             for (unsigned int i=0; i<vecSpecies[ispec]->particles->Position.size(); i++) {
                 ostringstream namePos("");

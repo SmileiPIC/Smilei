@@ -72,8 +72,8 @@ makerunAM:
   stage: makerun
   only:
     - develop
-    - release-4.0.0
-    - mpi_omp_master
+    #- release-4.0.0
+    #- mpi_omp_master
 
   script:
     # Move in test dir
@@ -92,7 +92,7 @@ makerunV:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -b "tst?d_v_??_*.py" -m 4 -o 4 -v
+    - python validation.py -b "tst?d_v_??_*.py" -m 4 -o 4 -v -r 1
 
 makerunCollisions:
   stage: makerun

@@ -135,7 +135,8 @@ int main (int argc, char* argv[])
         vecPatches = PatchesFactory::createVector(params, &smpi, openPMD, checkpoint.this_run_start_step+1, simWindow->getNmoved());
 	// vecPatches data read in restartAll according to smpi.patch_count
         checkpoint.restartAll( vecPatches, &smpi, simWindow, params, openPMD);
-
+        vecPatches.sort_all_particles(params);
+        
         // Patch reconfiguration for the adaptive vectorization
         if( params.has_adaptive_vectorization) {
             vecPatches.configuration(params,timers, 0);
@@ -167,6 +168,7 @@ int main (int argc, char* argv[])
     } else {
 
         vecPatches = PatchesFactory::createVector(params, &smpi, openPMD, 0);
+        vecPatches.sort_all_particles(params);
 	//MESSAGE ("create vector");
         // Initialize the electromagnetic fields
         // -------------------------------------
@@ -280,7 +282,7 @@ int main (int argc, char* argv[])
     // check here if we can close the python interpreter
     // ------------------------------------------------------------------------
     TITLE("Cleaning up python runtime environement");
-    //params.cleanup(&smpi);
+    params.cleanup(&smpi);
 
 /*tommaso
     // save latestTimeStep (used to test if we are at the latest timestep when running diagnostics at run's end)

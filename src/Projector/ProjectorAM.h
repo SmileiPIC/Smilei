@@ -35,7 +35,7 @@ protected:
     unsigned int n_species;
     int nprimr;
     //! Inverse volume of cells normalized by 2pi
-    std::vector<double> invV, invVd;
+    std::vector<double> rprim, invV, invVd;
 
 };
 
