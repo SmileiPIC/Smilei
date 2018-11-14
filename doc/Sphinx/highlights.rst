@@ -5,7 +5,7 @@ Improved performance using vectorization
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :program:`Smilei` computational performance has been recently enhanced with
-`vectorized operations <https://en.wikipedia.org/wiki/Vector_processor>`_,
+:doc:`vectorized operations<vectorization>`,
 in particular the projection of currents and the interpolation of fields.
 Typically, the new algorithms are more efficient than the old ones above
 10 particles per cell, up to 3 times faster. An *adaptive* switching technique
