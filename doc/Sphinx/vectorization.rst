@@ -96,7 +96,7 @@ The simulation is illustrated by :numref:`weibel_3d_ne_vecto_it510_fig2`.
 
 The electron density and the patch computational state for the electron species
 are shown.
-Adaptive vectorization selects the high-density regions rich in
+Adaptive vectorization puts the high-density regions rich in
 particles in vectorized mode.
 Incoming plasma flows, with 8 particles per cell in average, are in scalar mode.
 On examined cases, this method allows for speed-ups from x1.3 to x2 regarding only
