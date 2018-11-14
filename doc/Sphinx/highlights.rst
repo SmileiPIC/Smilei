@@ -84,6 +84,7 @@ in each MPI process.
 
 .. image:: _static/openMP_balancing.png
     :width: 500px
+    :align: center
 
 Using more OpenMP threads per MPI process (while keeping the total number
 of threads constant) clearly reduces the simulation time, because the
@@ -100,6 +101,7 @@ shows how this balancing reduces the time of the simulation.
 
 .. image:: _static/DLB_balancing.png
     :width: 500px
+    :align: center
 
 The red curve is the best situation obtained in the previous section, while
 the black curve corresponds to the DLB algorithm enabled.
@@ -143,14 +145,16 @@ A close-up view of the interaction region is given in the bottom panel, illustra
 the electron bunches being pulled out from the plasma surface.
 
 .. image:: _static/hhg1.jpg
-   :width: 13cm
+    :width: 13cm
+    :align: center
 
 Fourier analysis of the reflected laser field, in space and time, provides the
 angular distribution of the frequency spectrum of the reflected light, shown in the
 following figure (top panel). High harmonics appear up to order 16.
 
 .. image:: _static/hhg2.jpg
-   :width: 13cm
+    :width: 13cm
+    :align: center
 
 The bottom panel shows trajectories of accelerated electrons ejected from the target.
 The angular histogram shows that the momenta of the escaping energetic electrons
@@ -191,6 +195,7 @@ The blue-yellow maps correspond to the plasma density while the white-red maps
 correspond to the lasers intensity.
 
 .. image:: _static/pump_seed.jpg
+    :align: center
 
 The final seed intensity is nearly 5 times its initial intensity
 while the spot size and phase front are well conserved,
@@ -243,7 +248,8 @@ We used a reduced ion to electron mass ratio :math:`m_i/m_e = 25`, and a ratio
 There are initially 8.6 billion quasi-protons for the three populations, and 13 billion electrons.
 
 .. image:: _static/reconnection.jpg
-   :width: 15cm
+    :width: 15cm
+    :align: center
 
 This figure presents some of the simulation results:
 the electron density at three different times.
@@ -305,7 +311,8 @@ of filamentary structures in both the magnetic field (panel a) and
 the total plasma density (panel b).
 
 .. image:: _static/shock1.jpg
-   :width: 15cm
+    :width: 15cm
+    :align: center
 
 The magnetic field at the shock front becomes turbulent and it is strong
 enough to stop the incoming particles leading to a pile-up of the plasma
@@ -318,7 +325,8 @@ It is characteristic of first-order Fermi acceleration at the shock front,
 and appears to follow a :math:`\gamma^{-2.5}` power law.
 
 .. image:: _static/shock3.jpg
-   :width: 11cm
+    :width: 11cm
+    :align: center
 
 This simulation run on the TGCC/Curie machine using 128 MPI x 8 OpenMP threads
 for a total of 18800 CPU-hours for 49780 timesteps.
