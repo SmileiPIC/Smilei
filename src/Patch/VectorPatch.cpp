@@ -307,7 +307,7 @@ void VectorPatch::dynamics(Params& params,
                 // Dynamics with scalar operators
                 else
                 {
-                    if (params.vectorization_mode == "adaptive")
+                    if ( (params.vectorization_mode == "adaptive") && (!(*this)(ipatch)->vecSpecies[ispec]->ponderomotive_dynamics) )
                     {
                         species(ipatch, ispec)->scalar_dynamics(time_dual, ispec,
                                                       emfields(ipatch),
