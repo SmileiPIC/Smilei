@@ -28,6 +28,8 @@ Upcoming changes
 Release 4.0
 ^^^^^^^^^^^^^^^^^^^^^
 
+**Download**: `Smilei v4.0 <_downloads/smilei-v4.0.tar.gz>`_
+
 * :ref:`vectorization`
 * MPI option `MPI_THREAD_MULTIPLE` is now optional (but recommended)
 * Faster collisions
