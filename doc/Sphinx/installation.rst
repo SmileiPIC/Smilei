@@ -4,7 +4,7 @@ Install
 Before installing :program:`Smilei`, you need to install a few dependencies:
 
 * A C++11 compiler, optionally implementing openMP
-* an MPI library (it is strongly recommended to have a version supporting ``MPI_THREAD_MULTIPLE``)
+* an MPI library (by default a version supporting ``MPI_THREAD_MULTIPLE`` is required)
 * an HDF5 library compatible with your versions of C++ and MPI
 * Python 2.7 or Python 3 (with header files)
 
@@ -65,6 +65,7 @@ Several ``make`` options are available:
   make config=debug            # With debugging output (slow execution)
   make config=noopenmp         # Without OpenMP support
   make config="debug noopenmp" # With debugging output, without OpenMP
+  make config=no_mpi_tm        # Without a MPI library which supports MPI_THREAD_MULTIPLE
   make print-XXX               # Prints the value of makefile variable XXX
   make env                     # Prints the values of all makefile variables
   make help                    # Gets some help on compilation
