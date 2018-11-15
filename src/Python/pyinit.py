@@ -175,8 +175,7 @@ class Main(SmileiSingleton):
     number_of_timesteps = None
     interpolation_order = 2
     number_of_patches = None
-    patch_decomposition = "hilbert"
-    patch_orientation = ""
+    patch_arrangement = "hilbertian"
     clrw = -1
     every_clean_particles_overhead = 100
     timestep = None
@@ -387,7 +386,7 @@ class LaserEnvelope(SmileiSingleton):
     #time_envelope = 1.
     #space_envelope = [1., 0.]
     envelope_solver = "explicit"
-    envelope_profile = 0.
+    envelope_profile = None
     Envelope_boundary_conditions = [["reflective"]]
 
 

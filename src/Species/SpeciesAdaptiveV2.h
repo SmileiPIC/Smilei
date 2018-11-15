@@ -52,6 +52,19 @@ class SpeciesAdaptiveV2 : public SpeciesV
     //void count_sort_part(Params& param);
     //void compute_part_cell_keys(Params &params);
 
+    void scalar_ponderomotive_update_susceptibility_and_momentum(double time_dual, unsigned int ispec,
+                           ElectroMagn* EMfields,
+                           Params &params, bool diag_flag,
+                           Patch* patch, SmileiMPI* smpi,
+                           std::vector<Diagnostic*>& localDiags);
+
+    void scalar_ponderomotive_update_position_and_currents(double time_dual, unsigned int ispec,
+                           ElectroMagn* EMfields,
+                           Params &params, bool diag_flag, PartWalls* partWalls,
+                           Patch* patch, SmileiMPI* smpi,
+                           std::vector<Diagnostic*>& localDiags);
+
+
 private:
 
     // Metrics for the adaptive vectorization

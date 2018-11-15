@@ -32,21 +32,20 @@ ProjectorAM2Order::ProjectorAM2Order (Params& params, Patch* patch) : ProjectorA
 
     nprimr = params.n_space[1] + 2*params.oversize[1] + 1;
 
+    rprim.resize(nprimr);
     invV.resize(nprimr);
     invVd.resize(nprimr+1);
 
     for (int j = 0; j< nprimr; j++){
+        rprim[j] = abs((j_domain_begin+j)*dr);
         if (j_domain_begin+j == 0){
             invV[j] = 6./dr; // Correction de Verboncoeur ordre 1.
         } else {
-            invV[j] = 1./abs((j_domain_begin+j)*dr);
+            invV[j] = 1./rprim[j];
         }
     }
     for (int j = 0; j< nprimr+1; j++)
         invVd[j] = 1./abs((j_domain_begin+j-0.5)*dr);
-
-    DEBUG("cell_length "<< params.cell_length[0]);
-
 }
 
 
@@ -142,10 +141,16 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
                 Wl[i][j] = DSl[i] * (Sr0[j] + 0.5*DSr[j]);
                 Wr[i][j] = DSr[j] * (Sl0[i] + 0.5*DSl[i]);
-		Wt[i][j] = Sl0[i]*Sr0[j] + 0.5*DSl[i]*Sr0[j]+0.5*Sl0[i]*DSr[j]+one_third*DSl[i]*DSr[j];
+		//Wt[i][j] = Sl0[i]*Sr0[j] + 0.5*DSl[i]*Sr0[j]+0.5*Sl0[i]*DSr[j]+one_third*DSl[i]*DSr[j];
+		Wt[i][j] = 0.5 * (Sl0[i]*Sr0[j] + Sl1[i]*Sr1[j]) ;
         }
     }
     
+    ipo -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
+    // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
+    jpo -= 2;
+    int iloc, jloc, linindex;
+
     // ------------------------------------------------
     // Local current created by the particle
     // calculate using the charge conservation equation
@@ -158,9 +163,12 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             Jl_p[i][j]= Jl_p[i-1][j] - crl_p * Wl[i-1][j];
         }
     }
-    for (unsigned int i=0 ; i<5 ; i++) {
-        for (unsigned int j=1 ; j<5 ; j++) {
-            Jr_p[i][j] = Jr_p[i][j-1] - crr_p * Wr[i][j-1];
+    for (unsigned int j=1 ; j<5 ; j++) {
+        jloc = j+jpo;
+        double Vdjm1_ov_j = abs( (jloc + j_domain_begin - 0.5)/(jloc + j_domain_begin + 0.5));
+        double crr_p2 = crr_p * invVd[jloc]; 
+        for (unsigned int i=0 ; i<5 ; i++) {
+            Jr_p[i][j] = Jr_p[i][j-1]*Vdjm1_ov_j - crr_p2 * Wr[i][j-1];
         }
     }
     for (unsigned int i=0 ; i<5 ; i++) {
@@ -172,13 +180,9 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // Calculate the total current
     // ---------------------------
     
-    ipo -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
-    // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
-    jpo -= 2;
     
-    int iloc, jloc, linindex;
         // Jl^(d,p)
-        for (unsigned int i=0 ; i<5 ; i++) {
+        for (unsigned int i=1 ; i<5 ; i++) {
             iloc = i+ipo;
             for (unsigned int j=0 ; j<5 ; j++) {
                 jloc = j+jpo;
@@ -190,10 +194,10 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
          // Jr^(p,d)
         for (unsigned int i=0 ; i<5 ; i++) {
             iloc = i+ipo;
-            for (unsigned int j=0 ; j<5 ; j++) {
+            for (unsigned int j=1 ; j<5 ; j++) {
                 jloc = j+jpo;
                 linindex = iloc*(nprimr+1)+jloc;
-                Jr [linindex] += Jr_p[i][j]*invVd[jloc]; 
+                Jr [linindex] += Jr_p[i][j]; 
              }
         }//i
     
@@ -203,7 +207,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             for (unsigned int j=0 ; j<5 ; j++) {
                 jloc = j+jpo;
                 linindex = iloc*nprimr+jloc;
-                Jt [linindex] += Jt_p[i][j] *invV[jloc];
+                Jt [linindex] += Jt_p[i][j] *invV[jloc]*rprim[jloc];
             }
         }//i
 
@@ -229,7 +233,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // arrays used for the Esirkepov projection method
     double  Sl0[5], Sl1[5], Sr0[5], Sr1[5], DSl[5], DSr[5];
     complex<double>  Wl[5][5], Wr[5][5], Wt[5][5], Jl_p[5][5], Jr_p[5][5], Jt_p[5][5];
-    complex<double> e_delta, e_delta_m1, e_delta_inv, e_theta,e_theta_old, e_bar, e_bar_m1, C_m;
+    complex<double> e_delta, e_delta_m1, e_delta_inv, e_theta,e_theta_old, e_bar, e_bar_m1, C_m, C_m_old;
  
      for (unsigned int i=0; i<5; i++) {
         Sl1[i] = 0.;
@@ -260,8 +264,8 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     double yp = particles.position(1,ipart);
     double zp = particles.position(2,ipart);
     double rp = sqrt (particles.position(1, ipart)*particles.position(1, ipart)+particles.position(2, ipart)*particles.position(2, ipart));
-    e_theta = (yp-Icpx*zp)/rp;
-    e_theta_old =exp_m_theta_old[0];
+    e_theta = (yp + Icpx*zp)/rp;     //exp(i theta)
+    e_theta_old =exp_m_theta_old[0]; //exp(-i theta_old)
     double theta = atan2(zp,yp);
     double theta_old =atan2(-std::imag(e_theta_old), std::real(e_theta_old));
     e_delta = 1.;
@@ -309,7 +313,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
 
      e_delta_inv =1./e_delta;
     //defining crt_p 
-    complex<double> crt_p = - charge_weight*Icpx/(e_bar*dt*(double)imode)*rp*2.;
+    complex<double> crt_p = - charge_weight*Icpx/(e_bar*dt*(double)imode)*2.;
     for (unsigned int i=0; i < 5; i++) {
         DSl[i] = Sl1[i] - Sl0[i];
         DSr[i] = Sr1[i] - Sr0[i];
@@ -337,16 +341,26 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     for (unsigned int j=0 ; j<5 ; j++) Jl_p[0][j]= 0.;
     for (unsigned int i=0 ; i<5 ; i++) Jr_p[i][0]= 0.;
 
+    ipo -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
+    // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
+    jpo -= 2;
+    
+    int iloc, jloc, linindex;
+
     for (unsigned int i=1 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
                 Jl_p[i][j]= Jl_p[i-1][j] - crl_p * Wl[i-1][j];
             }
         }
-    for (unsigned int i=0 ; i<5 ; i++) {
-        for (unsigned int j=1 ; j<5 ; j++) {
-                Jr_p[i][j] = Jr_p[i][j-1] - crr_p  * Wr[i][j-1];
-            }
+    for (unsigned int j=1 ; j<5 ; j++) {
+        jloc = j+jpo;
+        double Vdjm1_ov_j = abs( (jloc + j_domain_begin - 0.5)/(jloc + j_domain_begin + 0.5) );
+        double crr_p2 = crr_p * invVd[jloc]; 
+        for (unsigned int i=0 ; i<5 ; i++) {
+            Jr_p[i][j] = Jr_p[i][j-1]*Vdjm1_ov_j - crr_p2 * Wr[i][j-1];
         }
+    }
+
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
                 Jt_p[i][j] = crt_p  * Wt[i][j];
@@ -357,25 +371,21 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // Calculate the total current
     // ---------------------------
     
-    ipo -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
-    // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
-    jpo -= 2;
-    
-    int iloc, jloc, linindex;
 
     C_m = 1.;
+    C_m_old = 1.;
     for (unsigned int i=0; i<(unsigned int)imode; i++){
     C_m *= e_theta;
+    C_m_old *= e_theta_old;
     }
-    //C_m = 1./C_m; 
-    C_m = 2./C_m; 
+    C_m = 2. * (C_m + 1./C_m_old)/2. ; //multiply modes > 0 by 2 AND exp(i theta_medium) = ( exp(i theta) + exp(i theta_old) ) /2.
+ 
     // Jl^(d,p)
-    for (unsigned int i=0 ; i<5 ; i++) {
+    for (unsigned int i=1 ; i<5 ; i++) {
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
             linindex = iloc*nprimr+jloc;
-            // Jl_mode_1 = 0 on axis to add to BC.
             Jl [linindex] += C_m * Jl_p[i][j] * invV[jloc];
         }
     }//i
@@ -392,10 +402,10 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // Jr^(p,d)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
-        for (unsigned int j=0 ; j<5 ; j++) {
+        for (unsigned int j=1 ; j<5 ; j++) {
             jloc = j+jpo;
             linindex = iloc*(nprimr+1)+jloc;
-            Jr [linindex] += C_m * Jr_p[i][j] * invVd[jloc] ;
+            Jr [linindex] += C_m * Jr_p[i][j] ;
         }
     }//i
 
@@ -486,7 +496,8 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
                 Wl[i][j] = DSl[i] * (Sr0[j] + 0.5*DSr[j]);
                 Wr[i][j] = DSr[j] * (Sl0[i] + 0.5*DSl[i]);
-		Wt[i][j] = Sl0[i]*Sr0[j] + 0.5*DSl[i]*Sr0[j]+0.5*Sl0[i]*DSr[j]+one_third*DSl[i]*DSr[j];
+		//Wt[i][j] = Sl0[i]*Sr0[j] + 0.5*DSl[i]*Sr0[j]+0.5*Sl0[i]*DSr[j]+one_third*DSl[i]*DSr[j];
+		Wt[i][j] = 0.5 * (Sl0[i]*Sr0[j] + Sl1[i]*Sr1[j]) ;
             }
         }
     
@@ -496,6 +507,12 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // ------------------------------------------------
     for (unsigned int j=0 ; j<5 ; j++) Jl_p[0][j]= 0.;
     for (unsigned int i=0 ; i<5 ; i++) Jr_p[i][0]= 0.;
+
+    ipo -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
+    // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
+    jpo -= 2;
+    
+    int iloc, jloc, linindex;
         
 
     for (unsigned int i=1 ; i<5 ; i++) {
@@ -503,11 +520,14 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
                 Jl_p[i][j]= Jl_p[i-1][j] - crl_p * Wl[i-1][j];
             }
         }
-    for (unsigned int i=0 ; i<5 ; i++) {
-        for (unsigned int j=1 ; j<5 ; j++) {
-                Jr_p[i][j] = Jr_p[i][j-1] - crr_p * Wr[i][j-1];
-            }
+    for (unsigned int j=1 ; j<5 ; j++) {
+        jloc = j+jpo;
+        double Vdjm1_ov_j = abs( (jloc + j_domain_begin - 0.5)/(jloc + j_domain_begin + 0.5));
+        double crr_p2 = crr_p * invVd[jloc]; 
+        for (unsigned int i=0 ; i<5 ; i++) {
+            Jr_p[i][j] = Jr_p[i][j-1]*Vdjm1_ov_j - crr_p2 * Wr[i][j-1];
         }
+    }
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
                 Jt_p[i][j] =   crt_p  * Wt[i][j];
@@ -517,14 +537,9 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // ---------------------------
     // Calculate the total current
     // ---------------------------
-    ipo -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
-    // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
-    jpo -= 2;
-    
-    int iloc, jloc, linindex;
     
     // Jl^(d,p)
-    for (unsigned int i=0 ; i<5 ; i++) {
+    for (unsigned int i=1 ; i<5 ; i++) {
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
@@ -536,10 +551,10 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // Jr^(p,d)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
-        for (unsigned int j=0 ; j<5 ; j++) {
+        for (unsigned int j=1 ; j<5 ; j++) {
             jloc = j+jpo;
             linindex = iloc*(nprimr+1)+jloc;
-            Jr [linindex] += Jr_p[i][j] * invVd[jloc] ;
+            Jr [linindex] += Jr_p[i][j] ;
          }
     }//i
     
@@ -584,7 +599,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // arrays used for the Esirkepov projection method
     double  Sl0[5], Sl1[5], Sr0[5], Sr1[5], DSl[5], DSr[5];
     complex<double>  Wl[5][5], Wr[5][5], Wt[5][5], Jl_p[5][5], Jr_p[5][5], Jt_p[5][5];
-    complex<double> e_delta,e_delta_m1, e_delta_inv, e_theta,e_theta_old,e_bar,e_bar_m1, C_m;
+    complex<double> e_delta,e_delta_m1, e_delta_inv, e_theta,e_theta_old,e_bar,e_bar_m1, C_m, C_m_old;
  
      for (unsigned int i=0; i<5; i++) {
         Sl1[i] = 0.;
@@ -615,8 +630,8 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     double yp = particles.position(1,ipart);
     double zp = particles.position(2,ipart);
     double rp = sqrt(yp*yp+zp*zp);
-    e_theta = (yp-Icpx*zp)/rp;
-    e_theta_old = exp_m_theta_old[0];
+    e_theta = (yp + Icpx*zp)/rp;      //exp(i theta)
+    e_theta_old = exp_m_theta_old[0]; //exp(-i theta_old)
     e_delta = 1.;
     e_bar =  1.;
     double theta = atan2(zp,yp);
@@ -642,16 +657,6 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     Sr1[jp_m_jpo+1] = 0.5 * (delta2-delta+0.25);
     Sr1[jp_m_jpo+2] = 0.75-delta2;
     Sr1[jp_m_jpo+3] = 0.5 * (delta2+delta+0.25);
-    
-    //e_delta_m1 = sqrt(e_theta/e_theta_old);
-    //e_bar_m1 = sqrt(e_theta*e_theta_old);   
-    //if (std::real(e_theta)+ std::real(e_theta_old) < 0.){
-    //    if (std::imag(e_theta)*std::imag(e_theta_old) > 0.){
-    //        e_bar_m1 *= -1.;
-    //    } else {
-    //        e_delta_m1 *= -1.;
-    //    }
-    //}
 
     double dtheta = std::remainder(theta-theta_old, 2*M_PI)/2.; // Otherwise dtheta is overestimated when going from -pi to +pi
     double theta_bar = theta_old+dtheta ;
@@ -691,16 +696,25 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     for (unsigned int j=0 ; j<5 ; j++) Jl_p[0][j]= 0.;
     for (unsigned int i=0 ; i<5 ; i++) Jr_p[i][0]= 0.;
 
+    ipo -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
+    // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
+    jpo -= 2;
+    
+    int iloc, jloc, linindex;
+
     for (unsigned int i=1 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
                 Jl_p[i][j]= Jl_p[i-1][j] - crl_p * Wl[i-1][j];
             }
         }
-    for (unsigned int i=0 ; i<5 ; i++) {
-        for (unsigned int j=1 ; j<5 ; j++) {
-                Jr_p[i][j] = Jr_p[i][j-1] - crr_p * Wr[i][j-1];
-            }
+     for (unsigned int j=1 ; j<5 ; j++) {
+        jloc = j+jpo;
+        double Vdjm1_ov_j = abs( (jloc + j_domain_begin - 0.5)/(jloc + j_domain_begin + 0.5) );
+        double crr_p2 = crr_p * invVd[jloc]; 
+        for (unsigned int i=0 ; i<5 ; i++) {
+            Jr_p[i][j] = Jr_p[i][j-1]*Vdjm1_ov_j - crr_p2 * Wr[i][j-1];
         }
+    }
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
                 Jt_p[i][j] = crt_p * Wt[i][j];
@@ -711,18 +725,14 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // Calculate the total current
     // ---------------------------
     
-    ipo -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
-    // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
-    jpo -= 2;
-    
-    int iloc, jloc, linindex;
 
     C_m = 1.;
+    C_m_old = 1.;
     for (unsigned int i=0; i<(unsigned int)imode; i++){
     C_m *= e_theta;
+    C_m_old *= e_theta_old;
     }
-    //C_m= 1./C_m; 
-    C_m= 2./C_m; 
+    C_m = 2. * (C_m + 1./C_m_old)/2. ; //multiply modes > 0 by 2 AND exp(i theta_medium) = ( exp(i theta) + exp(i theta_old) ) /2.
     // Jl^(d,p)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
@@ -749,7 +759,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
             linindex = iloc*(nprimr+1)+jloc;
-            Jr [linindex] += C_m * Jr_p[i][j] * invVd[jloc] ; 
+            Jr [linindex] += C_m * Jr_p[i][j]; 
         }
     }//i
 

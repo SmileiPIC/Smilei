@@ -327,6 +327,19 @@ public:
                         MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
                         std::vector<Diagnostic*>& localDiags);
 
+    virtual void scalar_ponderomotive_update_susceptibility_and_momentum(double time_dual, unsigned int ispec,
+                           ElectroMagn* EMfields,
+                           Params &params, bool diag_flag,
+                           Patch* patch, SmileiMPI* smpi,
+                           std::vector<Diagnostic*>& localDiags) {};
+
+    virtual void scalar_ponderomotive_update_position_and_currents(double time_dual, unsigned int ispec,
+                           ElectroMagn* EMfields,
+                           Params &params, bool diag_flag, PartWalls* partWalls,
+                           Patch* patch, SmileiMPI* smpi,
+                                                          std::vector<Diagnostic*>& localDiags) {};
+
+
     virtual void projection_for_diags(double time, unsigned int ispec,
                           ElectroMagn* EMfields,
                           Params &params, bool diag_flag,
@@ -357,6 +370,8 @@ public:
 
     //! Method used to sort particles
     virtual void sort_part(Params& param);
+
+    virtual void compute_part_cell_keys(Params &params) {};
 
     //! This function configures the type of species according to the default mode
     //! regardless the number of particles per cell

@@ -75,7 +75,7 @@ Main(
 
     every_clean_particles_overhead = 1,
 
-    patch_decomposition = "cartesian",
+    patch_arrangement = "linearized_XYZ",
 
     random_seed = smilei_mpi_rank
 )

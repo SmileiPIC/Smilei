@@ -461,25 +461,23 @@ namelist("")
     //norderz=norder[2];
 
 
-    if (PyTools::extract("patch_decomposition", patch_decomposition, "Main")) {
-        WARNING( "Change patches distribution to " << patch_decomposition );
+    if (PyTools::extract("patch_arrangement", patch_arrangement, "Main")) {
+        WARNING( "Change patches distribution to " << patch_arrangement );
     }
     else {
-        patch_decomposition = "hilbert";
-        WARNING( "Use default distribution : " << patch_decomposition );
+        patch_arrangement = "hilbertian";
+        WARNING( "Use default distribution : " << patch_arrangement );
     }
 
 
     int total_number_of_hilbert_patches = 1;
-    if (patch_decomposition == "hilbert") {
+    if (patch_arrangement == "hilbertian") {
         for ( unsigned int iDim=0 ; iDim<nDim_field ; iDim++ ){
             total_number_of_hilbert_patches *= number_of_patches[iDim];
             if( (number_of_patches[iDim] & (number_of_patches[iDim]-1)) != 0)
                 ERROR("Number of patches in each direction must be a power of 2");
         }
     }
-    else
-        PyTools::extract("patch_orientation", patch_orientation, "Main");
 
     if( PyTools::nComponents("LoadBalancing")>0 ) {
         // get parameter "every" which describes a timestep selection
@@ -495,7 +493,7 @@ namelist("")
 
     has_load_balancing = (smpi->getSize()>1)  && (! load_balancing_time_selection->isEmpty());
 
-    if (has_load_balancing && patch_decomposition != "hilbert") ERROR("Dynamic load balancing is only available for Hilbert decomposition");
+    if (has_load_balancing && patch_arrangement != "hilbertian") ERROR("Dynamic load balancing is only available for Hilbert decomposition");
     if (has_load_balancing && total_number_of_hilbert_patches < 2*smpi->getSize()) ERROR("Dynamic load balancing requires to use at least 2 patches per MPI process.");
 
     mi.resize(3, 0);

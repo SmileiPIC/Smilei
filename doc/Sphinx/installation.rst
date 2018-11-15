@@ -4,7 +4,7 @@ Install
 Before installing :program:`Smilei`, you need to install a few dependencies:
 
 * A C++11 compiler, optionally implementing openMP
-* an MPI library supporting ``MPI_THREAD_MULTIPLE``
+* an MPI library (by default a version supporting ``MPI_THREAD_MULTIPLE`` is required)
 * an HDF5 library compatible with your versions of C++ and MPI
 * Python 2.7 or Python 3 (with header files)
 
@@ -65,11 +65,33 @@ Several ``make`` options are available:
   make config=debug            # With debugging output (slow execution)
   make config=noopenmp         # Without OpenMP support
   make config="debug noopenmp" # With debugging output, without OpenMP
+  make config=no_mpi_tm        # Without a MPI library which supports MPI_THREAD_MULTIPLE
   make print-XXX               # Prints the value of makefile variable XXX
   make env                     # Prints the values of all makefile variables
   make help                    # Gets some help on compilation
   sed -i 's/PICSAR=FALSE/PICSAR=TRUE/g' makefile; make -j4 #To enable calls for PSATD solver from picsar
 
+
+----
+
+.. _vectorization_flags:
+
+Options for SIMD vectorization
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The :doc:`SIMD vectorization <vectorization>` of :program:`Smilei` uses ``#pragma omp simd``.
+To be enabled, you must provide appropriate options to your compiler through
+the environment variable ``CXXFLAGS``.
+
+For instance, :program:`Smilei` has been tested on
+Intel processors (Skylake 8168) with an Intel environment.
+The following flags provide a good performance:
+
+.. code-block:: bash
+  
+  -xCOMMON-AVX512 -ip -ipo -inline-factor=1000 -D__INTEL_SKYLAKE_8168
+
+The vectorization must also be activated :ref:`in the namelist <Vectorization>`.
 
 ----
 

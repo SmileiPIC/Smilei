@@ -7,13 +7,13 @@ class ParticleBinning(Diagnostic):
 	def _init(self, diagNumber=None, timesteps=None, subset=None, sum=None, data_log=False, include={}, **kwargs):
 		
 		if diagNumber is None:
-			self._error += "Printing available particle binning diagnostics:\n"
-			self._error += "------------------------------------------------\n"
+			self._error += ["Printing available particle binning diagnostics:"]
+			self._error += ["------------------------------------------------"]
 			diags = self.getDiags()
 			for diagNumber in diags:
-				self._error += self._printInfo(self._getInfo(diagNumber))
+				self._error += [self._printInfo(self._getInfo(diagNumber))]
 			if len(diags)==0:
-				self._error += "      No particle binning diagnostics found"
+				self._error += ["      No particle binning diagnostics found"]
 			return
 		
 		# 1 - verifications, initialization
@@ -21,13 +21,13 @@ class ParticleBinning(Diagnostic):
 		# Check the requested diags are ok
 		if type(diagNumber) is int:
 			if diagNumber<0:
-				self._error = "Argument 'diagNumber' cannot be a negative integer."
+				self._error += ["Argument 'diagNumber' cannot be a negative integer."]
 				return
 			self.operation = '#' + str(diagNumber)
 		elif type(diagNumber) is str:
 			self.operation = diagNumber
 		else:
-			self._error = "Argument 'diagNumber' must be and integer or a string."
+			self._error += ["Argument 'diagNumber' must be and integer or a string."]
 			return
 		
 		# Get list of requested diags
@@ -39,7 +39,7 @@ class ParticleBinning(Diagnostic):
 				if info is False: raise
 				self._myinfo.update({ d:info })
 			except:
-				self._error = "Particle binning diagnostic #"+str(d)+" invalid"
+				self._error += ["Particle binning diagnostic #"+str(d)+" invalid or non-existent"]
 				return
 		# Test the operation
 		self._include = include
@@ -47,7 +47,7 @@ class ParticleBinning(Diagnostic):
 			exec(self._re.sub('#\d+','1.',self.operation), self._include, {"t":0})
 		except ZeroDivisionError: pass
 		except:
-			self._error = "Cannot understand operation '"+self.operation+"'"
+			self._error += ["Cannot understand operation '"+self.operation+"'"]
 			return
 		# Verify that all requested diags all have the same shape
 		self._axes = {}
@@ -56,14 +56,14 @@ class ParticleBinning(Diagnostic):
 			self._axes .update ({ d:self._myinfo[d]["axes"] })
 			self._naxes.update ({ d:len(self._axes[d]) })
 			if self._naxes[d] != self._naxes[self._diags[0]]:
-				self._error = "All diagnostics in operation '"+self.operation+"' must have as many axes." \
-					+ " Diagnotic #"+str(d)+" has "+str(self._naxes[d])+" axes and #"+ \
-					str(self._diags[0])+" has "+str(self._naxes[self._diags[0]])+" axes"
+				self._error += ["All diagnostics in operation '"+self.operation+"' must have as many axes."
+					+ " Diagnotic #"+str(d)+" has "+str(self._naxes[d])+" axes and #"
+					+ str(self._diags[0])+" has "+str(self._naxes[self._diags[0]])+" axes"]
 				return
 			for a in self._axes[d]:
 				if self._axes[d] != self._axes[self._diags[0]]:
-					self._error = "In operation '"+self.operation+"', diagnostics #"+str(d)+" and #"\
-						+str(self._diags[0])+" must have the same shape."
+					self._error += ["In operation '"+self.operation+"', diagnostics #"+str(d)+" and #"
+						+str(self._diags[0])+" must have the same shape."]
 					return
 		
 		self._axes  = self._axes [self._diags[0]]
@@ -72,13 +72,13 @@ class ParticleBinning(Diagnostic):
 		# Check subset
 		if subset is None: subset = {}
 		elif type(subset) is not dict:
-			self._error = "Argument `subset` must be a dictionary"
+			self._error += ["Argument `subset` must be a dictionary"]
 			return
 		
 		# Check sum
 		if sum is None: sum = {}
 		elif type(sum) is not dict:
-			self._error = "Argument 'sum' must be a dictionary"
+			self._error += ["Argument 'sum' must be a dictionary"]
 			return
 		
 		# Put data_log as object's variable
@@ -110,13 +110,13 @@ class ParticleBinning(Diagnostic):
 				try:
 					self._timesteps[d] = self._selectTimesteps(timesteps, self._timesteps[d])
 				except:
-					self._error = "Argument 'timesteps' must be one or two non-negative integers"
+					self._error += ["Argument 'timesteps' must be one or two non-negative integers"]
 					return
 			# Verify that timesteps are the same for all diagnostics
 			if (self._timesteps[d] != self._timesteps[self._diags[0]]).any() :
-				self._error = "All diagnostics in operation '"+self.operation+"' must have the same timesteps."\
-					+" Diagnotic #"+str(d)+" has "+str(len(self._timesteps[d]))+ " timesteps and #"\
-					+str(self._diags[0])+" has "+str(len(self._timesteps[self._diags[0]]))+ " timesteps"
+				self._error += ["All diagnostics in operation '"+self.operation+"' must have the same timesteps."
+					+" Diagnotic #"+str(d)+" has "+str(len(self._timesteps[d]))+ " timesteps and #"
+					+str(self._diags[0])+" has "+str(len(self._timesteps[self._diags[0]]))+ " timesteps"]
 				return
 		# Now we need to keep only one array of timesteps because they should be all the same
 		self._timesteps  = self._timesteps [self._diags[0]]
@@ -124,7 +124,7 @@ class ParticleBinning(Diagnostic):
 		
 		# Need at least one timestep
 		if self._timesteps.size < 1:
-			self._error = "Timesteps not found"
+			self._error += ["Timesteps not found"]
 			return
 		
 		# 3 - Manage axes
@@ -184,7 +184,7 @@ class ParticleBinning(Diagnostic):
 			# if this axis has to be summed, then select the bounds
 			if axistype in sum:
 				if axistype in subset:
-					self._error = "`subset` not possible on the same axes as `sum`"
+					self._error += ["`subset` not possible on the same axes as `sum`"]
 					return
 				
 				self._sums[iaxis] = True
@@ -199,6 +199,8 @@ class ParticleBinning(Diagnostic):
 					first_edge = edges[self._selection[iaxis].start or 0]
 					last_edge  = edges[(self._selection[iaxis].stop or len(centers))]
 					coeff /= last_edge - first_edge
+				
+				plot_diff.append( self._np.ones((self._finalShape[iaxis],)) )
 			
 			# if not summed
 			else:
@@ -227,7 +229,8 @@ class ParticleBinning(Diagnostic):
 					self._finalShape[iaxis] = len(self._centers[-1])
 					if axis["log"]:
 						uniform = False
-		
+				else:
+					plot_diff.append( self._np.ones((self._finalShape[iaxis],)) )
 		
 		self._selection = tuple(self._selection)
 		
@@ -291,7 +294,6 @@ class ParticleBinning(Diagnostic):
 				self._bsize = self._bsize.transpose([1,0]+list(range(2,len(plot_diff))))
 		self._bsize = cell_volume / self._bsize
 		self._bsize *= coeff
-		self._bsize = self._np.squeeze(self._bsize)
 		
 		# Set the directory in case of exporting
 		self._exportPrefix = "ParticleDiag_"+"-".join([str(d) for d in self._diags])
@@ -395,7 +397,7 @@ class ParticleBinning(Diagnostic):
 				allDiags = [d for d in diags if d in allDiags]
 			else:
 				allDiags = diags
-		return allDiags
+		return sorted(allDiags)
 	
 	# get all available timesteps for a given diagnostic
 	def getAvailableTimesteps(self, diagNumber=None):
@@ -438,6 +440,8 @@ class ParticleBinning(Diagnostic):
 				self._h5items[d][index].read_direct(B, source_sel=self._selection) # get array
 				B = self._np.reshape(B, self._finalShape)
 			B[self._np.isnan(B)] = 0.
+			# Divide by the bins size
+			B *= self._bsize
 			# Append this diag's array for the operation
 			A.update({ d:B })
 		# Calculate operation
@@ -451,8 +455,6 @@ class ParticleBinning(Diagnostic):
 				A = self._np.sum(A, axis=iaxis, keepdims=True)
 		# remove summed axes
 		A = self._np.squeeze(A)
-		# Divide by the bins size
-		A *= self._bsize
 		# log scale if requested
 		if self._data_log: A = self._np.log10(A)
 		return A

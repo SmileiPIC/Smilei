@@ -15,16 +15,16 @@ class Field(Diagnostic):
 		
 		# Return directly if no diag number provided
 		if diagNumber is None:
-			self._error += "Diagnostic not loaded: diagNumber is not defined\n"
+			self._error += ["Diagnostic not loaded: diagNumber is not defined"]
 			if len(diags)>0:
-				self._error += "Please choose among: "+", ".join([str(d) for d in diags])
+				self._error += ["Please choose among: "+", ".join([str(d) for d in diags])]
 			else:
-				self._error += "(No Field diagnostics existing anyways)"
+				self._error += ["(No Field diagnostics existing anyways)"]
 			return
 		else:
 			self.diagNumber = diagNumber
 			if diagNumber not in diags:
-				self._error = "Diagnostic not loaded: no field diagnostic #"+str(diagNumber)+" found"
+				self._error += ["Diagnostic not loaded: no field diagnostic #"+str(diagNumber)+" found"]
 				return
 		
 		# Open the file(s) and load the data
@@ -35,7 +35,7 @@ class Field(Diagnostic):
 			try:
 				f = self._h5py.File(file, 'r')
 			except:
-				self._error = "Diagnostic not loaded: Could not open '"+file+"'"
+				self._error += ["Diagnostic not loaded: Could not open '"+file+"'"]
 				return
 			self._h5items.update( dict(f["data"]) )
 			# Select only the fields that are common to all simulations
@@ -65,22 +65,23 @@ class Field(Diagnostic):
 		# If no field selected, print available fields and leave
 		if field is None:
 			if len(self._fields)>0:
-				self._error += "Printing available fields:\n"
-				self._error += "--------------------------\n"
+				self._error += ["Error: no field chosen"]
+				self._error += ["Printing available fields:"]
+				self._error += ["--------------------------"]
 				l = int(len(self._fields)/3) * 3
 				maxlength = str(self._np.max([len(f) for f in self._fields])+4)
 				fields = [('%'+maxlength+'s')%f for f in self._fields]
 				if l>0:
-					self._error += '\n'.join([''.join(list(i)) for i in self._np.reshape(fields[:l],(-1,3))])
-				self._error += '\n'+''.join(list(fields[l:]))
+					self._error += ['\n'.join([''.join(list(i)) for i in self._np.reshape(fields[:l],(-1,3))])]
+				self._error += ['\n'+''.join(list(fields[l:]))]
 			else:
-				self._error += "No fields found"
+				self._error += ["No fields found"]
 			return
 		
 		# Get available times
 		self._timesteps = self.getAvailableTimesteps()
 		if self._timesteps.size == 0:
-			self._error = "Diagnostic not loaded: No fields found"
+			self._error += ["Diagnostic not loaded: No fields found"]
 			return
 		
 		# Get available fields
@@ -100,13 +101,13 @@ class Field(Diagnostic):
 		# Check subset
 		if subset is None: subset = {}
 		elif type(subset) is not dict:
-			self._error = "Argument `subset` must be a dictionary"
+			self._error += ["Argument `subset` must be a dictionary"]
 			return
 		
 		# Check average
 		if average is None: average = {}
 		elif type(average) is not dict:
-			self._error = "Argument `average` must be a dictionary"
+			self._error += ["Argument `average` must be a dictionary"]
 			return
 		
 		# Put data_log as object's variable
@@ -119,13 +120,13 @@ class Field(Diagnostic):
 			build3d = kwargs.pop("build3d", None)
 			modes   = kwargs.pop("modes"  , None)
 			if (theta is None) == (build3d is None):
-				self._error = "In cylindrical geometry, one (and only one) option `theta` or `build3d` is required"
+				self._error += ["In cylindrical geometry, one (and only one) option `theta` or `build3d` is required"]
 				return
 			if theta is not None:
 				try:
 					self._theta = float(theta)
 				except:
-					self._error = "Option `theta` must be a number"
+					self._error += ["Option `theta` must be a number"]
 					return
 				self._getDataAtTime = self._theta_getDataAtTime
 			else:
@@ -133,7 +134,7 @@ class Field(Diagnostic):
 					build3d = self._np.array(build3d)
 					if build3d.shape != (3,3): raise
 				except:
-					self._error = "Option `build3d` must be a list of three lists"
+					self._error += ["Option `build3d` must be a list of three lists"]
 					return
 				self._getDataAtTime = self._build3d_getDataAtTime
 			# Test whether "modes" is an int or an iterable on ints
@@ -147,7 +148,7 @@ class Field(Diagnostic):
 					try:
 						self._modes = [int(imode) for imode in modes]
 					except:
-						self._error = "Option `modes` must be a number or an iterable on numbers"
+						self._error += ["Option `modes` must be a number or an iterable on numbers"]
 						return
 		
 		# Get the shape of fields
@@ -182,12 +183,12 @@ class Field(Diagnostic):
 			try:
 				self._timesteps = self._selectTimesteps(timesteps, self._timesteps)
 			except:
-				self._error = "Argument `timesteps` must be one or two non-negative integers"
+				self._error += ["Argument `timesteps` must be one or two non-negative integers"]
 				return
 		
 		# Need at least one timestep
 		if self._timesteps.size < 1:
-			self._error = "Timesteps not found"
+			self._error += ["Timesteps not found"]
 			return
 		
 		# 3 - Manage axes
@@ -208,7 +209,7 @@ class Field(Diagnostic):
 			# If averaging over this axis
 			if label in average:
 				if label in subset:
-					self._error = "`subset` not possible on the same axes as `average`"
+					self._error += ["`subset` not possible on the same axes as `average`"]
 					return
 				
 				self._averages[iaxis] = True
@@ -271,7 +272,7 @@ class Field(Diagnostic):
 				y = self._np.arange(*build3d[1])
 				z = self._np.arange(*build3d[2])
 				if len(x)==0 or len(y)==0 or len(z)==0:
-					self._error = "Error: The array shape to be constructed seems to be empty"
+					self._error += ["Error: The array shape to be constructed seems to be empty"]
 					return
 				y2, z2 = self._np.meshgrid(y,z)
 				r2 = self._np.sqrt(y2**2 + z2**2)
@@ -319,7 +320,7 @@ class Field(Diagnostic):
 		for path in self._results_path:
 			files = self._glob(path+self._os.sep+'Fields*.h5')
 			if len(files)==0:
-				self._error = "No fields found in '"+path+"'"
+				self._error += ["No fields found in '"+path+"'"]
 				return []
 			diagNumbers = [ int(self._re.findall("Fields([0-9]+).h5$",file)[0]) for file in files ]
 			if diags == []: diags = diagNumbers

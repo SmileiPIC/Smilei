@@ -991,24 +991,7 @@ void Patch::injectParticles(SmileiMPI* smpi, int ispec, Params& params, VectorPa
     timer = MPI_Wtime();
 #endif
 
-    //vecSpecies[ispec]->sort_part(params);
-
-    // For DynamicV
-    if (params.vectorization_mode == "on" ||
-        params.vectorization_mode == "off" ||
-        params.vectorization_mode == "adaptive") {
-        vecSpecies[ispec]->sort_part(params);
-    }
-    else if (params.vectorization_mode == "adaptive_mixed_sort") {
-        if (vecSpecies[ispec]->vectorized_operators)
-            {
-                vecSpecies[ispec]->sort_part(params);
-            }
-        else
-            {
-                vecSpecies[ispec]->Species::sort_part(params);
-            }
-    }
+    vecSpecies[ispec]->sort_part(params);
 
 #ifdef  __DETAILED_TIMERS
     this->patch_timers[13] += MPI_Wtime() - timer;

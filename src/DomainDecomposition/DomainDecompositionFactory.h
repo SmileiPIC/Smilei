@@ -11,7 +11,10 @@ public:
     static DomainDecomposition* create(Params& params) {
         DomainDecomposition* domain_decomposition = NULL;
 
-        if (params.patch_decomposition=="hilbert") {
+        TITLE("Patch arrangement : ");
+
+
+        if (params.patch_arrangement=="hilbertian") {
             if ( ( params.geometry == "1Dcartesian" ) )
                 domain_decomposition = new HilbertDomainDecomposition1D( params );
             else if ( ( params.geometry == "2Dcartesian" ) || ( params.geometry == "AMcylindrical" ) ) 
@@ -21,26 +24,61 @@ public:
             else
                 ERROR( "Unknown geometry" );
         }
-        else if(params.patch_decomposition=="cartesian") {
+        else {
+            
+            bool enable_diagField(true);
+
+            int nmpi = 1;
+            MPI_Comm_size( MPI_COMM_WORLD, &nmpi );
+
+            int npatches(1);
+            for ( unsigned int iDim=0 ; iDim<params.nDim_field ; iDim++ )
+                npatches *= params.number_of_patches[iDim];
+            int npatches_per_rank = npatches / nmpi;
+
+            if ( ( npatches%nmpi!=0 )||(params.patch_arrangement == "linearized_YX")||(params.patch_arrangement == "linearized_ZYX") ) {
+                enable_diagField = false;
+            }
+            else {
+                if (params.patch_arrangement == "linearized_XY") {
+
+                    if ( (params.number_of_patches[1]%npatches_per_rank!=0)
+                         && (npatches_per_rank%params.number_of_patches[1]!=0) )
+                        enable_diagField = false;
+
+                }
+                else if (params.patch_arrangement == "linearized_XYZ") {
+
+                    if ( (params.number_of_patches[2]%npatches_per_rank!=0)
+                         && (npatches_per_rank%params.number_of_patches[2]!=0)
+                         && (npatches_per_rank%(params.number_of_patches[1]*params.number_of_patches[2]!=0) ) ) {
+                        enable_diagField = false;
+                    }
+                }
+                else
+                    ERROR( params.patch_arrangement << " not supported" );
+            }
+
+            if (!enable_diagField )
+                WARNING( "DiagFields not reliable because of the patch arrangement !!!" );
+
             if ( ( params.geometry == "1Dcartesian" ) )
                 domain_decomposition = new CartesianDomainDecomposition1D( params );
             else if ( ( params.geometry == "2Dcartesian" )  || ( params.geometry == "AMcylindrical" )  ) {
-                if (params.patch_orientation!="YX")
+                if (params.patch_arrangement=="linearized_XY")
                     domain_decomposition = new CartesianDomainDecomposition2D( params );
-                else 
+                else if (params.patch_arrangement=="linearized_YX")
                     domain_decomposition = new CartesianDomainDecomposition2D_YX( params );
             }
             else if ( ( params.geometry == "3Dcartesian" ) ) {
-                if (params.patch_orientation!="ZYX")
+                if (params.patch_arrangement=="linearized_XYZ")
                     domain_decomposition = new CartesianDomainDecomposition3D( params );
-                else
+                else if (params.patch_arrangement=="linearized_ZYX")
                     domain_decomposition = new CartesianDomainDecomposition3D_ZYX( params );
             }
             else
                 ERROR( "Unknown geometry" );
         }
-        else
-            ERROR( "Unknown geometry" );
 
         return domain_decomposition;
     }

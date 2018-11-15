@@ -66,7 +66,7 @@ class Performances(Diagnostic):
 			try:
 				f = self._h5py.File(file, 'r')
 			except:
-				self._error = "Diagnostic not loaded: Could not open '"+file+"'"
+				self._error += ["Diagnostic not loaded: Could not open '"+file+"'"]
 				return
 			self._h5items.update( dict(f) )
 			# Verify all simulations have all quantities
@@ -78,7 +78,7 @@ class Performances(Diagnostic):
 				self._availableQuantities_uint   = quantities_uint
 				self._availableQuantities_double = quantities_double
 			except:
-				self._error = "Diagnostic not loaded: file '"+file+"' does not seem to contain correct data"
+				self._error += ["Diagnostic not loaded: file '"+file+"' does not seem to contain correct data"]
 				return
 		# Converted to ordered list
 		self._h5items = sorted(self._h5items.values(), key=lambda x:int(x.name[1:]))
@@ -86,25 +86,25 @@ class Performances(Diagnostic):
 		nargs = (raw is not None) + (map is not None) + (histogram is not None)
 
 		if nargs>1:
-			self._error += "Diagnostic not loaded: choose only one of `raw`, `map` or `histogram`"
+			self._error += ["Diagnostic not loaded: choose only one of `raw`, `map` or `histogram`"]
 			return
 
 		if nargs == 0:
-			self._error += "Diagnostic not loaded: must define raw='quantity', map='quantity' or histogram=['quantity',min,max,nsteps]\n"
-			self._error += "Available quantities: "+", ".join([str(q) for q in self.getAvailableQuantities()])
+			self._error += ["Diagnostic not loaded: must define raw='quantity', map='quantity' or histogram=['quantity',min,max,nsteps]"]
+			self._error += ["Available quantities: "+", ".join([str(q) for q in self.getAvailableQuantities()])]
 			return
 
 		# Get available times
 		self._timesteps = self.getAvailableTimesteps()
 		if self._timesteps.size == 0:
-			self._error = "Diagnostic not loaded: No fields found"
+			self._error += ["Diagnostic not loaded: No fields found"]
 			return
 
 		# Get the number of procs of the data
 		self._nprocs = self._h5items[0]["quantities_uint"].shape[1]
 		for item in self._h5items:
 			if item["quantities_uint"].shape[1] != self._nprocs:
-				self._error = "Diagnostic not loaded: incompatible simulations"
+				self._error += ["Diagnostic not loaded: incompatible simulations"]
 				return
 
 		# Get the shape of patches
@@ -116,17 +116,17 @@ class Performances(Diagnostic):
 		# Parse the `map` or `histogram` arguments
 		if raw is not None:
 			if type(raw) is not str:
-				self._error += "Diagnostic not loaded: argument `raw` must be a string"
+				self._error += ["Diagnostic not loaded: argument `raw` must be a string"]
 				return
 			self.operation = raw
 			self._mode = 0
 
 		elif map is not None:
 			if type(map) is not str:
-				self._error += "Diagnostic not loaded: argument `map` must be a string"
+				self._error += ["Diagnostic not loaded: argument `map` must be a string"]
 				return
 			if self._ndim > 2:
-				self._error += "Diagnostic not loaded: argument `map` not available in "+str(self._ndim)+"D"
+				self._error += ["Diagnostic not loaded: argument `map` not available in "+str(self._ndim)+"D"]
 				return
 			self.operation = map
 			self._mode = 1
@@ -134,10 +134,10 @@ class Performances(Diagnostic):
 
 		elif histogram is not None:
 			if type(histogram) is not list or len(histogram) != 4:
-				self._error += "Diagnostic not loaded: argument `histogram` must be a list with 4 elements"
+				self._error += ["Diagnostic not loaded: argument `histogram` must be a list with 4 elements"]
 				return
 			if type(histogram[0]) is not str:
-				self._error += "Diagnostic not loaded: argument `histogram` must be a list with first element being a string"
+				self._error += ["Diagnostic not loaded: argument `histogram` must be a list with first element being a string"]
 				return
 			self.operation = histogram[0]
 			try:
@@ -145,7 +145,7 @@ class Performances(Diagnostic):
 				histogram_max    = float(histogram[2])
 				histogram_nsteps = int  (histogram[3])
 			except:
-				self._error += "Diagnostic not loaded: argument `histogram` must be a list like ['quantity',min,max,nsteps]"
+				self._error += ["Diagnostic not loaded: argument `histogram` must be a list like ['quantity',min,max,nsteps]"]
 				return
 			self._mode = 2
 
@@ -188,7 +188,7 @@ class Performances(Diagnostic):
 			try:
 				self._timesteps = self._selectTimesteps(timesteps, self._timesteps)
 			except:
-				self._error = "Argument `timesteps` must be one or two non-negative integers"
+				self._error += ["Argument `timesteps` must be one or two non-negative integers"]
 				return
 
 		if species is not None:
@@ -200,7 +200,7 @@ class Performances(Diagnostic):
 
 		# Need at least one timestep
 		if self._timesteps.size < 1:
-			self._error = "Timesteps not found"
+			self._error += ["Timesteps not found"]
 			return
 
 

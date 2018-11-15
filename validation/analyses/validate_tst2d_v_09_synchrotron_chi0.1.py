@@ -56,9 +56,9 @@ for radiation in radiation_list:
 urad_rel_err = abs(urad_dict["Niel"] - urad_dict["CLL"]) / urad_dict["CLL"].max()
 ukin_rel_err = abs(ukin_dict["Niel"] - ukin_dict["CLL"]) / ukin_dict["CLL"][0]
 
-print ' Comparison Laudau-Lifshitz/Niel methods'
-print ' Maximum relative error kinetic energy',ukin_rel_err.max()
-print ' Maximum relative error radiative energy',urad_rel_err.max()
+print(' Comparison Laudau-Lifshitz/Niel methods')
+print(' Maximum relative error kinetic energy' + str(ukin_rel_err.max()))
+print(' Maximum relative error radiative energy' + str(urad_rel_err.max()))
 
 # Validation difference between continuous and discontinuous methods
 Validate("Relative error on the kinetic energy / ukin at t=0: " , ukin_rel_err.max(), 0.01 )
@@ -70,10 +70,10 @@ Validate("Relative error on the radiative energy / urad max " , urad_rel_err.max
 urad_mc_rel_err = abs(urad_dict["MC"] - urad_dict["CLL"]) / urad_dict["CLL"].max()
 ukin_mc_rel_err = abs(ukin_dict["MC"] - ukin_dict["CLL"]) / ukin_dict["CLL"][0]
 
-print ''
-print ' Comparison Laudau-Lifshitz/Monte Carlo methods'
-print ' Maximum relative error kinetic energy',ukin_mc_rel_err.max()
-print ' Maximum relative error radiative energy',urad_mc_rel_err.max()
+print()
+print(' Comparison Laudau-Lifshitz/Monte Carlo methods')
+print(' Maximum relative error kinetic energy',ukin_mc_rel_err.max())
+print(' Maximum relative error radiative energy',urad_mc_rel_err.max())
 
 # Validation difference between continuous and discontinuous methods
 Validate("Relative error on the kinetic energy / ukin at t=0: " , ukin_mc_rel_err.max(), 0.02 )
@@ -87,7 +87,7 @@ print(" Checking of the particle binning diagnostics")
 
 maximal_iteration = 5500
 period = 500
-number_of_files = maximal_iteration/period
+number_of_files = int(maximal_iteration/period)
 
 chi_max = np.zeros([number_of_files,len(radiation_list)])
 chi_ave = np.zeros([number_of_files,len(radiation_list)])
