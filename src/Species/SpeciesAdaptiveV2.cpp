@@ -500,3 +500,193 @@ void SpeciesAdaptiveV2::reconfigure_operators(Params &params, Patch * patch)
     // Reassign the correct Projector
     this->Proj = ProjectorFactory::create(params, patch, this->vectorized_operators);
 }
+
+
+void SpeciesAdaptiveV2::scalar_ponderomotive_update_susceptibility_and_momentum(double time_dual, unsigned int ispec,
+                       ElectroMagn* EMfields,
+                       Params &params, bool diag_flag,
+                       Patch* patch, SmileiMPI* smpi,
+                       vector<Diagnostic*>& localDiags){
+
+    int ithread;
+    #ifdef _OPENMP
+        ithread = omp_get_thread_num();
+    #else
+        ithread = 0;
+    #endif
+
+#ifdef  __DETAILED_TIMERS
+    double timer;
+#endif
+
+    // -------------------------------
+    // calculate the particle updated momentum
+    // -------------------------------
+    if (time_dual>time_frozen) { // moving particle
+
+        smpi->dynamics_resize(ithread, nDim_field, last_index.back(), params.geometry=="AMcylindrical");
+
+#ifdef  __DETAILED_TIMERS
+        timer = MPI_Wtime();
+#endif
+        Interp->interpolate_em_fields_and_envelope(EMfields, *particles, smpi, &(first_index[0]), &(last_index[last_index.size()-1]), ithread );
+#ifdef  __DETAILED_TIMERS
+        patch->patch_timers[7] += MPI_Wtime() - timer;
+#endif
+
+
+            // Project susceptibility, the source term of envelope equation
+#ifdef  __DETAILED_TIMERS
+        timer = MPI_Wtime();
+#endif
+        Proj->project_susceptibility(EMfields, *particles, mass, smpi, first_index[0], last_index.back(), ithread, 0, b_dim );
+#ifdef  __DETAILED_TIMERS
+        patch->patch_timers[8] += MPI_Wtime() - timer;
+#endif
+
+
+#ifdef  __DETAILED_TIMERS
+        timer = MPI_Wtime();
+#endif
+        // Push only the particle momenta
+        (*Push)(*particles, smpi, 0, last_index.back(), ithread );
+#ifdef  __DETAILED_TIMERS
+        patch->patch_timers[9] += MPI_Wtime() - timer;
+#endif
+
+                                 }
+    else { // immobile particle
+         } //END if time vs. time_frozen
+} // ponderomotive_update_susceptibility_and_momentum
+
+
+void SpeciesAdaptiveV2::scalar_ponderomotive_update_position_and_currents(double time_dual, unsigned int ispec,
+                       ElectroMagn* EMfields,
+                       Params &params, bool diag_flag, PartWalls* partWalls,
+                       Patch* patch, SmileiMPI* smpi,
+                       vector<Diagnostic*>& localDiags){
+
+    int ithread;
+    #ifdef _OPENMP
+        ithread = omp_get_thread_num();
+    #else
+        ithread = 0;
+    #endif
+
+#ifdef  __DETAILED_TIMERS
+    double timer;
+#endif
+
+    unsigned int iPart;
+
+    // Reset list of particles to exchange - WARNING Should it be reset?
+    clearExchList();
+
+    int tid(0);
+    double ener_iPart(0.);
+    std::vector<double> nrj_lost_per_thd(1, 0.);
+
+    // -------------------------------
+    // calculate the particle updated position
+    // -------------------------------
+    if (time_dual>time_frozen) { // moving particle
+    
+        smpi->dynamics_resize(ithread, nDim_field, last_index.back(), params.geometry=="AMcylindrical");
+
+        //Prepare for sorting
+        for (unsigned int i=0; i<count.size(); i++)
+            count[i] = 0;
+
+    
+
+        // Interpolate the ponderomotive potential and its gradient at the particle position, present and previous timestep
+#ifdef  __DETAILED_TIMERS
+        timer = MPI_Wtime();
+#endif
+        Interp->interpolate_envelope_and_old_envelope(EMfields, *particles, smpi, &(first_index[0]), &(last_index[last_index.size()-1]), ithread );
+#ifdef  __DETAILED_TIMERS
+        patch->patch_timers[10] += MPI_Wtime() - timer;
+#endif
+
+#ifdef  __DETAILED_TIMERS
+        timer = MPI_Wtime();
+#endif
+        // Push only the particle position
+        (*Push_ponderomotive_position)(*particles, smpi, first_index[0], last_index.back(), ithread );
+#ifdef  __DETAILED_TIMERS
+        patch->patch_timers[11] += MPI_Wtime() - timer;
+#endif
+
+        for (unsigned int scell = 0 ; scell < first_index.size() ; scell++)
+        {
+            // Apply wall and boundary conditions
+            if (mass>0)
+            {
+                for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
+                    for (iPart=first_index[scell] ; (int)iPart<last_index[scell]; iPart++ ) {
+                        double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
+                        if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
+                            nrj_lost_per_thd[tid] += mass * ener_iPart;
+                        }
+                    }
+                }
+
+                // Boundary Condition may be physical or due to domain decomposition
+                // apply returns 0 if iPart is not in the local domain anymore
+                //        if omp, create a list per thread
+                for (iPart=first_index[scell] ; (int)iPart<last_index[scell]; iPart++ ) {
+                    if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
+                        addPartInExchList( iPart );
+                        nrj_lost_per_thd[tid] += mass * ener_iPart;
+                        (*particles).cell_keys[iPart] = -1;
+                    }
+                    else {
+                        //Compute cell_keys of remaining particles
+                        for ( unsigned int i = 0 ; i<nDim_particle; i++ ){
+                            (*particles).cell_keys[iPart] *= this->length[i];
+                            (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]) * dx_inv_[i] );
+                        }
+                        //First reduction of the count sort algorithm. Lost particles are not included.
+                        count[(*particles).cell_keys[iPart]] ++;
+                    }
+
+                 }
+
+            } else if (mass==0) {
+                  ERROR("Particles with zero mass cannot interact with envelope");
+            } // end mass = 0? condition
+        }
+
+#ifdef  __DETAILED_TIMERS
+        timer = MPI_Wtime();
+#endif
+        if ((!particles->is_test) && (mass > 0))
+            (*Proj)(EMfields, *particles, smpi, first_index[0], last_index.back(), ithread, 0, clrw, diag_flag, params.is_spectral, b_dim, ispec );
+#ifdef  __DETAILED_TIMERS
+        patch->patch_timers[12] += MPI_Wtime() - timer;
+#endif
+
+         for (unsigned int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
+             nrj_bc_lost += nrj_lost_per_thd[tid];
+
+         } // end case of moving particle
+    else { // immobile particle
+
+            if ( diag_flag &&(!particles->is_test)){
+                double* b_rho=nullptr;
+                for (unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++) { //Loop for projection on buffer_proj
+                    // only 3D is implemented actually
+                    if (nDim_field==2)
+                        b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1) : &(*EMfields->rho_)(ibin*clrw*f_dim1) ;
+                    if (nDim_field==3)
+                        b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1*f_dim2) : &(*EMfields->rho_)(ibin*clrw*f_dim1*f_dim2) ;
+                    else if (nDim_field==1)
+                        b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw) : &(*EMfields->rho_)(ibin*clrw) ;
+                    for (iPart=first_index[ibin] ; (int)iPart<last_index[ibin]; iPart++ ) {
+                        (*Proj)(b_rho, (*particles), iPart, 0, b_dim);
+                    } //End loop on particles
+                }//End loop on bins
+            } // end condition on diag and not particle test
+
+         }//END if time vs. time_frozen
+} // End ponderomotive_position_update
