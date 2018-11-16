@@ -365,8 +365,8 @@ class Field(Diagnostic):
 		if self.moving and "x_moved" in h5item.attrs and 'x' in self._type:
 			self._xoffset = h5item.attrs["x_moved"]
 			if self.dim>1 and hasattr(self,"_extent"):
-				self._extent[0] += self._xoffset * self._xfactor
-				self._extent[1] += self._xoffset * self._xfactor
+				self._extent[0] = self._xfactor*(self._xoffset + self._centers[0][ 0])
+				self._extent[1] = self._xfactor*(self._xoffset + self._centers[0][-1])
 		
 		 # for each field in operation, obtain the data
 		for field in self._fieldname:
