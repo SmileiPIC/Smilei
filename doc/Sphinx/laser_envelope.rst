@@ -13,7 +13,7 @@ In these cases, if the laser pulse is much longer than :math:`\lambda_0`, the co
 
 The description of the physical system in terms of the complex envelope of the laser vector potential, neglecting its fast oscillations, is the essence of the envelope approximation. We remark that all the equations involved in the envelope model do not take into account the laser polarization. This is a main limit of the envelope approximation, as well as the impossibility to model phenomena at the scale of :math:`\lambda_0`.
 
-In the following, the equations of the envelope model are presented, following mainly [Cowan2011]_, [ALaDynZenodo]_. Their numerical solution is briefly described as well.
+In the following, the equations of the envelope model are presented, following mainly [Cowan2011]_, [Terzani]_. Their numerical solution is briefly described as well.
 
 ----
 
@@ -23,7 +23,7 @@ The envelope approximation
 The use of envelope models to describe a laser pulse is well known in PIC codes [Mora1997]_, [Quesnel1998]_, [Gordon2000]_, [Huang2006]_, [Cowan2011]_, [Benedetti2012]_. The basic blocks of a PIC code using an envelope description for the laser are an envelope equation, to describe the evolution of the laser, and equations of motion for the macroparticles, to take into account their interactions with the laser. 
 The effect of the plasma on laser propagation is taken into account in the envelope equation through the plasma susceptibility, as described in the following section.
 The various PIC codes using an envelope model for the laser solve different versions of the envelope equation, depending mostly on which terms are retained and which ones are neglected, or the set of coordinates used to derive the envelope equation. Also the numerical schemes used to solve the envelope equation and the equations of motion of the particles vary accordingly.
-In :program:`Smilei`, the version of the envelope model written in laboratory frame coordinates, first demonstrated in the PIC code :program:`ALaDyn` [Benedetti2008]_, [ALaDynZenodo]_, is implemented, including the same numerical schemes.
+In :program:`Smilei`, the version of the envelope model written in laboratory frame coordinates, first demonstrated in the PIC code :program:`ALaDyn` [Benedetti2008]_, [ALaDynZenodo]_, [Terzani]_ is implemented, including the same numerical scheme to solve the lab frame coordinates envelope equation.
 
 The basic assumption of the model is the description of the laser pulse vector potential in the complex polarization direction :math:`\hat{A}(\mathbf{x},t)` as a slowly varying envelope :math:`\tilde{A}(\mathbf{x},t)` modulated by fast oscillations at wavelength :math:`\lambda_0`, moving at the speed of light :math:`c`:
 
@@ -195,7 +195,7 @@ The plasma electric, magnetic and ponderomotive potential fields at the particle
 Envelope equation solution
 """"""""""""""""""""""""""""
 Now that the averaged susceptibility is known at time-step :math:`n`, the envelope can be advanced solving the envelope equation :eq:`envelope_equation`. 
-Central spatial and temporal finite differences are used to discretize the derivatives in the envelope equation and obtain an explicit solver scheme. The envelope :math:`A` at time-step :math:`n+1` can thus be computed from its value at timesteps :math:`n`, :math:`n-1` and the suceptibility :math:`\chi` at time-step :math:`n`. The value of the envelope at timestep :math:`n` is conserved for the next iteration of the time loop. 
+Central spatial and temporal finite differences are used to discretize the derivatives in the envelope equation and obtain an explicit solver scheme [ALaDynZenodo]_, [Terzani]_. The envelope :math:`A` at time-step :math:`n+1` can thus be computed from its value at timesteps :math:`n`, :math:`n-1` and the suceptibility :math:`\chi` at time-step :math:`n`. The value of the envelope at timestep :math:`n` is conserved for the next iteration of the time loop. 
 A main advantage of this numerical scheme is its straightforward parallelization in 3D, due to the locality of the operations involved.
 
 Ponderomotive position push
@@ -244,6 +244,8 @@ References
 .. [Benedetti2008] `C. Benedetti et al., IEEE Transactions on Plasma Science 36, 1790 (2008) <http://dx.doi.org/10.1109/TPS.2008.927143>`_
 
 .. [ALaDynZenodo] `S. Sinigardi et al., ALaDyn v2017.1 zenodo (2017) <https://doi.org/10.5281/zenodo.1065413>`_
+
+.. [Terzani] D. Terzani and P. Londrillo, Yet a faster numerical implementation of envelope model for laser-plasma dynamics (submitted)
 
 
 

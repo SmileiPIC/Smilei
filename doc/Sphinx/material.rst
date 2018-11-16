@@ -20,6 +20,14 @@ Publications
 
 .. rst-class:: bigcitation
 
+.. [Massimo]
+
+  F. Massimo, A. Beck, J. Dérouillat, M. Grech., F. Perez, I. Zemzemi and A. Specka,
+  `Efficient modeling of Laser Wakefield Acceleration through the PIC code SMILEI in CILEX project`,
+  `Proceedings of the International Computational Accelerator Physics Conference (ICAP 2018), JACoW pre-release <http://icap2018.vrws.de/papers/mopag02.pdf>`_,
+
+.. rst-class:: bigcitation
+
 .. [Beck]
 
   A. Beck, J. Dérouillat, M. Lobet, A. Farjallah, F. Massimo, I. Zemzemi, F. Perez, T. Vinci, M. Grech,
