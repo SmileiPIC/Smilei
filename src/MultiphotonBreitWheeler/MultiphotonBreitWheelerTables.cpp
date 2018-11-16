@@ -1198,7 +1198,7 @@ bool MultiphotonBreitWheelerTables::read_T_table(SmileiMPI *smpi)
         }
 
         // Bcast table_exists
-        MPI_Bcast(&table_exists, 1, MPI_INTEGER, 0,smpi->getGlobalComm());
+        MPI_Bcast(&table_exists, 1, MPI_INT, 0,smpi->getGlobalComm());
 
     }
 
@@ -1327,7 +1327,7 @@ bool MultiphotonBreitWheelerTables::read_xip_table(SmileiMPI *smpi)
         }
 
         // Bcast table_exists
-        MPI_Bcast(&table_exists, 1, MPI_INTEGER, 0,smpi->getGlobalComm());
+        MPI_Bcast(&table_exists, 1, MPI_INT, 0,smpi->getGlobalComm());
 
     }
 
@@ -1372,7 +1372,7 @@ void MultiphotonBreitWheelerTables::bcast_T_table(SmileiMPI *smpi)
     // buffer size
     if (smpi->getRank() == 0)
     {
-        MPI_Pack_size(1, MPI_INTEGER, smpi->getGlobalComm(), &position);
+        MPI_Pack_size(1, MPI_INT, smpi->getGlobalComm(), &position);
         buf_size = position;
         MPI_Pack_size(2, MPI_DOUBLE, smpi->getGlobalComm(), &position);
         buf_size += position;
@@ -1384,7 +1384,7 @@ void MultiphotonBreitWheelerTables::bcast_T_table(SmileiMPI *smpi)
     MESSAGE("            Buffer size: " << buf_size);
 
     // Exchange buf_size with all ranks
-    MPI_Bcast(&buf_size, 1, MPI_INTEGER, 0,smpi->getGlobalComm());
+    MPI_Bcast(&buf_size, 1, MPI_INT, 0,smpi->getGlobalComm());
 
     // Packet that will contain all parameters
     char * buffer = new char[buf_size];
@@ -1394,7 +1394,7 @@ void MultiphotonBreitWheelerTables::bcast_T_table(SmileiMPI *smpi)
     {
         position = 0;
         MPI_Pack(&T_dim,
-             1,MPI_INTEGER,buffer,buf_size,&position,smpi->getGlobalComm());
+             1,MPI_INT,buffer,buf_size,&position,smpi->getGlobalComm());
         MPI_Pack(&T_chiph_min,
              1,MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
         MPI_Pack(&T_chiph_max,
@@ -1413,7 +1413,7 @@ void MultiphotonBreitWheelerTables::bcast_T_table(SmileiMPI *smpi)
     {
         position = 0;
         MPI_Unpack(buffer, buf_size, &position,
-                   &T_dim, 1, MPI_INTEGER,smpi->getGlobalComm());
+                   &T_dim, 1, MPI_INT,smpi->getGlobalComm());
         MPI_Unpack(buffer, buf_size, &position,
                    &T_chiph_min, 1, MPI_DOUBLE,smpi->getGlobalComm());
         MPI_Unpack(buffer, buf_size, &position,
@@ -1457,7 +1457,7 @@ void MultiphotonBreitWheelerTables::bcast_xip_table(SmileiMPI *smpi)
     // Compute the buffer size
     if (smpi->getRank() == 0)
     {
-        MPI_Pack_size(2, MPI_INTEGER, smpi->getGlobalComm(), &position);
+        MPI_Pack_size(2, MPI_INT, smpi->getGlobalComm(), &position);
         buf_size = position;
         MPI_Pack_size(2, MPI_DOUBLE, smpi->getGlobalComm(), &position);
         buf_size += position;
@@ -1472,7 +1472,7 @@ void MultiphotonBreitWheelerTables::bcast_xip_table(SmileiMPI *smpi)
     MESSAGE("            Buffer size for MPI exchange: " << buf_size);
 
     // Exchange buf_size with all ranks
-    MPI_Bcast(&buf_size, 1, MPI_INTEGER, 0,smpi->getGlobalComm());
+    MPI_Bcast(&buf_size, 1, MPI_INT, 0,smpi->getGlobalComm());
 
     // Packet that will contain all parameters
     char * buffer = new char[buf_size];
@@ -1482,9 +1482,9 @@ void MultiphotonBreitWheelerTables::bcast_xip_table(SmileiMPI *smpi)
     {
         position = 0;
         MPI_Pack(&xip_chiph_dim,
-             1,MPI_INTEGER,buffer,buf_size,&position,smpi->getGlobalComm());
+             1,MPI_INT,buffer,buf_size,&position,smpi->getGlobalComm());
         MPI_Pack(&xip_chipa_dim,
-             1,MPI_INTEGER,buffer,buf_size,&position,smpi->getGlobalComm());
+             1,MPI_INT,buffer,buf_size,&position,smpi->getGlobalComm());
         MPI_Pack(&xip_chiph_min,
              1,MPI_DOUBLE,buffer,buf_size,&position,smpi->getGlobalComm());
         MPI_Pack(&xip_chiph_max,
@@ -1505,9 +1505,9 @@ void MultiphotonBreitWheelerTables::bcast_xip_table(SmileiMPI *smpi)
     {
         position = 0;
         MPI_Unpack(buffer, buf_size, &position,
-                   &xip_chiph_dim, 1, MPI_INTEGER,smpi->getGlobalComm());
+                   &xip_chiph_dim, 1, MPI_INT,smpi->getGlobalComm());
         MPI_Unpack(buffer, buf_size, &position,
-                   &xip_chipa_dim, 1, MPI_INTEGER,smpi->getGlobalComm());
+                   &xip_chipa_dim, 1, MPI_INT,smpi->getGlobalComm());
         MPI_Unpack(buffer, buf_size, &position,
                    &xip_chiph_min, 1, MPI_DOUBLE,smpi->getGlobalComm());
         MPI_Unpack(buffer, buf_size, &position,
