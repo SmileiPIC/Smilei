@@ -76,7 +76,7 @@ void PXR_Solver3D_GPSTD::operator() ( ElectroMagn* fields )
     duplicate_field_into_pxr( fields );
 
 #ifdef _PICSAR
-    picsar::push_psatd_ebfield_3d_();
+    picsar::push_psatd_ebfield_();
 #else
     ERROR( "Smilei not linked with picsar" );
 #endif

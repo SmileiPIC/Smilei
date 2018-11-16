@@ -320,6 +320,7 @@ void Patch::set( Params& params, DomainDecomposition* domain_decomposition, Vect
     if (has_an_MPI_neighbor())
         createType2(params);
 
+    is_small= false;
 
 }
 
