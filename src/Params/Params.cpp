@@ -1244,7 +1244,6 @@ void Params::uncoupled_decomposition_2D()
         }
     }
 
-
     int new_rk(0);
     // Build the map of MPI ranks in 2D
     for ( int xDom = 0 ; xDom < number_of_domain[0] ; xDom++ )
@@ -1254,6 +1253,10 @@ void Params::uncoupled_decomposition_2D()
                 new_rk++;
             }
         }
+    //map_rank[0][0][0] = 0;
+    //map_rank[0][1][0] = 1;
+    //map_rank[1][0][0] = 3;
+    //map_rank[1][1][0] = 2;
 
     coordinates.resize( nDim_field );
     // Compute coordinates of current patch in 2D

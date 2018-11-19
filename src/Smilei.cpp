@@ -339,6 +339,7 @@ int main (int argc, char* argv[])
                 vecPatches.resetRhoJ();
             }
 
+
             // (1) interpolate the fields at the particle position
             // (2) move the particle
             // (3) calculate the currents (charge conserving method)
@@ -361,6 +362,10 @@ int main (int argc, char* argv[])
                 vecPatches.ponderomotive_update_position_and_currents(params, &smpi, simWindow, time_dual, timers, itime);
                                              } // end condition if Laser Envelope Model is used
 
+            vecPatches.finalize_and_sort_parts(params, &smpi, simWindow, RadiationTables,
+                                               MultiphotonBreitWheelerTables,
+                                               time_dual, timers, itime);
+
             // Sum densities
             vecPatches.sumDensities(params, time_dual, timers, itime, simWindow ,&smpi );
 
@@ -378,15 +383,15 @@ int main (int argc, char* argv[])
             else { //if ( params.uncoupled_grids ) {
                 if( time_dual > params.time_fields_frozen ) {
                     SyncCartesianPatch::patchedToCartesian( vecPatches, domain, params, &smpi, timers, itime );
+                    timers.syncDens.restart();
+                    domain.vecPatch_.diag_flag = false;
+                    SyncVectorPatch::sumRhoJ( params, domain.vecPatch_, &smpi, timers, itime ); // MPI
+                    timers.syncDens.update( params.printNow( itime ) );
                     domain.solveMaxwell( params, simWindow, itime, time_dual, timers, &smpi );
                     SyncCartesianPatch::cartesianToPatches( domain, vecPatches, params, &smpi, timers, itime );
                 }
             }
             //#endif
-
-            vecPatches.finalize_and_sort_parts(params, &smpi, simWindow, RadiationTables,
-                                               MultiphotonBreitWheelerTables,
-                                               time_dual, timers, itime);
 
             vecPatches.finalize_sync_and_bc_fields(params, &smpi, simWindow, time_dual, timers, itime);
             // call the various diagnostics

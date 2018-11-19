@@ -191,7 +191,7 @@ void Field2D::put( Field* outField, Params &params, SmileiMPI* smpi, Patch* this
     //    for ( unsigned int j = params.oversize[1] ; j < this->dims_[1]-params.oversize[1] ; j++ ) {
     for ( unsigned int i = 0 ; i < this->dims_[0] ; i++ ) {
         for ( unsigned int j = 0 ; j < this->dims_[1] ; j++ ) {
-            ( *out2D )( iout+i, jout+j ) = ( *this )( i, j );
+            ( *out2D )( iout+i, jout+j ) += ( *this )( i, j );
             //( *out2D )( iout+i, jout+j ) += (thisPatch->hindex+1);
         }
     }    

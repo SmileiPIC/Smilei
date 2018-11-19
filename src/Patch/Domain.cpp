@@ -113,6 +113,10 @@ void Domain::clean()
 void Domain::solveMaxwell( Params& params, SimWindow* simWindow, int itime, double time_dual, Timers& timers, SmileiMPI* smpi )
 {
     vecPatch_.solveMaxwell( params, simWindow, itime, time_dual, timers, smpi );
+
+    // current no more used for now, reinitialized for next timestep
+    vecPatch_.resetRhoJ();
+
 }
 
 void Domain::identify_additional_patches(SmileiMPI* smpi, VectorPatch& vecPatches, Params& params, SimWindow* simWindow)
