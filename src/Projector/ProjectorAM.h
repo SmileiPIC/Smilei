@@ -28,7 +28,7 @@ protected:
     double dl_inv_;
     double dr_inv_;
     double dl_ov_dt;
-    double dr_ov_dt;
+    double one_ov_dt;
     int i_domain_begin;
     int j_domain_begin;
     unsigned int Nmode;
