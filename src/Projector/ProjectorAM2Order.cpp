@@ -163,20 +163,21 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             Jl_p[i][j]= Jl_p[i-1][j] - crl_p * Wl[i-1][j];
         }
     }
-    for (unsigned int j=1 ; j<5 ; j++) {
-        jloc = j+jpo;
-        double Vd = abs(jloc + j_domain_begin - 1.5) ;
-        for (unsigned int i=0 ; i<5 ; i++) {
-            Jr_p[i][j] = (Jr_p[i][j-1] * Vd - crr_p * Wr[i][j-1]) * invVd[jloc] ;
-        }
-    }
-
-    //for (int j=3 ; j>=0 ; j--) {
+    //for (unsigned int j=1 ; j<5 ; j++) {
     //    jloc = j+jpo;
+    //    double Vd = abs(jloc + j_domain_begin - 1.5) ;
     //    for (unsigned int i=0 ; i<5 ; i++) {
-    //        Jr_p[i][j] = (Jr_p[i][j+1]*(jloc + j_domain_begin + 0.5) + crr_p * Wr[i][j+1]) * invVd[jloc];
+    //        Jr_p[i][j] = (Jr_p[i][j-1] * Vd - crr_p * Wr[i][j-1]) * invVd[jloc] ;
     //    }
     //}
+
+    for (int j=3 ; j>=0 ; j--) {
+        jloc = j+jpo;
+        double Vd = abs(jloc + j_domain_begin + 0.5) ;
+        for (unsigned int i=0 ; i<5 ; i++) {
+            Jr_p[i][j] = (Jr_p[i][j+1] * Vd + crr_p * Wr[i][j+1]) * invVd[jloc];
+        }
+    }
 
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
@@ -201,8 +202,8 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
          // Jr^(p,d)
         for (unsigned int i=0 ; i<5 ; i++) {
             iloc = i+ipo;
-            for (unsigned int j=1 ; j<5 ; j++) {
-                jloc = j+jpo;
+            for (unsigned int j=0 ; j<4 ; j++) {
+                jloc = j+jpo+1;
                 linindex = iloc*(nprimr+1)+jloc;
                 Jr [linindex] += Jr_p[i][j]; 
              }
@@ -359,20 +360,21 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
                 Jl_p[i][j]= Jl_p[i-1][j] - crl_p * Wl[i-1][j];
             }
         }
-    for (unsigned int j=1 ; j<5 ; j++) {
-        jloc = j+jpo;
-        double Vd = abs(jloc + j_domain_begin - 1.5) ;
-        for (unsigned int i=0 ; i<5 ; i++) {
-            Jr_p[i][j] = (Jr_p[i][j-1] * Vd - crr_p * Wr[i][j-1]) * invVd[jloc] ;
-        }
-    }
-
-    //for (int j=3 ; j>=0 ; j--) {
+    //for (unsigned int j=1 ; j<5 ; j++) {
     //    jloc = j+jpo;
+    //    double Vd = abs(jloc + j_domain_begin - 1.5) ;
     //    for (unsigned int i=0 ; i<5 ; i++) {
-    //        Jr_p[i][j] = (Jr_p[i][j+1]*(jloc + j_domain_begin + 0.5) + crr_p * Wr[i][j+1]) * invVd[jloc];
+    //        Jr_p[i][j] = (Jr_p[i][j-1] * Vd - crr_p * Wr[i][j-1]) * invVd[jloc] ;
     //    }
     //}
+
+    for (int j=3 ; j>=0 ; j--) {
+        jloc = j+jpo;
+        double Vd = abs(jloc + j_domain_begin + 0.5) ;
+        for (unsigned int i=0 ; i<5 ; i++) {
+            Jr_p[i][j] = (Jr_p[i][j+1] * Vd + crr_p * Wr[i][j+1]) * invVd[jloc];
+        }
+    }
 
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
@@ -415,8 +417,8 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // Jr^(p,d)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
-        for (unsigned int j=1 ; j<5 ; j++) {
-            jloc = j+jpo;
+        for (unsigned int j=0 ; j<4 ; j++) {
+            jloc = j+jpo+1;
             linindex = iloc*(nprimr+1)+jloc;
             Jr [linindex] += C_m * Jr_p[i][j] ;
         }
@@ -533,20 +535,21 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
                 Jl_p[i][j]= Jl_p[i-1][j] - crl_p * Wl[i-1][j];
             }
         }
-    for (unsigned int j=1 ; j<5 ; j++) {
-        jloc = j+jpo;
-        double Vd = abs(jloc + j_domain_begin - 1.5) ;
-        for (unsigned int i=0 ; i<5 ; i++) {
-            Jr_p[i][j] = (Jr_p[i][j-1] * Vd - crr_p * Wr[i][j-1]) * invVd[jloc] ;
-        }
-    }
-
-    //for (int j=3 ; j>=0 ; j--) {
+    //for (unsigned int j=1 ; j<5 ; j++) {
     //    jloc = j+jpo;
+    //    double Vd = abs(jloc + j_domain_begin - 1.5) ;
     //    for (unsigned int i=0 ; i<5 ; i++) {
-    //        Jr_p[i][j] = (Jr_p[i][j+1]*(jloc + j_domain_begin + 0.5) + crr_p * Wr[i][j+1]) * invVd[jloc];
+    //        Jr_p[i][j] = (Jr_p[i][j-1] * Vd - crr_p * Wr[i][j-1]) * invVd[jloc] ;
     //    }
     //}
+
+    for (int j=3 ; j>=0 ; j--) {
+        jloc = j+jpo;
+        double Vd = abs(jloc + j_domain_begin + 0.5) ;
+        for (unsigned int i=0 ; i<5 ; i++) {
+            Jr_p[i][j] = (Jr_p[i][j+1] * Vd + crr_p * Wr[i][j+1]) * invVd[jloc];
+        }
+    }
 
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
@@ -571,8 +574,8 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // Jr^(p,d)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
-        for (unsigned int j=1 ; j<5 ; j++) {
-            jloc = j+jpo;
+        for (unsigned int j=0 ; j<4 ; j++) {
+            jloc = j+jpo+1;
             linindex = iloc*(nprimr+1)+jloc;
             Jr [linindex] += Jr_p[i][j] ;
          }
@@ -727,20 +730,21 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
                 Jl_p[i][j]= Jl_p[i-1][j] - crl_p * Wl[i-1][j];
         }
     }
-    for (unsigned int j=1 ; j<5 ; j++) {
-        jloc = j+jpo;
-        double Vd = abs(jloc + j_domain_begin - 1.5) ;
-        for (unsigned int i=0 ; i<5 ; i++) {
-            Jr_p[i][j] = (Jr_p[i][j-1] * Vd - crr_p * Wr[i][j-1]) * invVd[jloc] ;
-        }
-    }
-
-    //for (int j=3 ; j>=0 ; j--) {
+    //for (unsigned int j=1 ; j<5 ; j++) {
     //    jloc = j+jpo;
+    //    double Vd = abs(jloc + j_domain_begin - 1.5) ;
     //    for (unsigned int i=0 ; i<5 ; i++) {
-    //        Jr_p[i][j] = (Jr_p[i][j+1]*(jloc + j_domain_begin + 0.5) + crr_p * Wr[i][j+1]) * invVd[jloc];
+    //        Jr_p[i][j] = (Jr_p[i][j-1] * Vd - crr_p * Wr[i][j-1]) * invVd[jloc] ;
     //    }
     //}
+
+    for (int j=3 ; j>=0 ; j--) {
+        jloc = j+jpo;
+        double Vd = abs(jloc + j_domain_begin + 0.5) ;
+        for (unsigned int i=0 ; i<5 ; i++) {
+            Jr_p[i][j] = (Jr_p[i][j+1] * Vd + crr_p * Wr[i][j+1]) * invVd[jloc];
+        }
+    }
 
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
@@ -783,8 +787,8 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // Jr^(p,d)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
-        for (unsigned int j=1 ; j<5 ; j++) {
-            jloc = j+jpo;
+        for (unsigned int j=0 ; j<4 ; j++) {
+            jloc = j+jpo+1;
             linindex = iloc*(nprimr+1)+jloc;
             Jr [linindex] += C_m * Jr_p[i][j]; 
         }
