@@ -22,8 +22,8 @@ ProjectorAM2Order::ProjectorAM2Order (Params& params, Patch* patch) : ProjectorA
     dr = params.cell_length[1];
     dl_inv_   = 1.0/params.cell_length[0];
     dl_ov_dt  = params.cell_length[0] / params.timestep;
-    dr_inv_   = 1.0/params.cell_length[1];
-    dr_ov_dt  = params.cell_length[1] / params.timestep;
+    dr_inv_   = 1.0 / dr;
+    one_ov_dt  = 1.0 / params.timestep;
     Nmode=params.nmodes; 
     one_third = 1.0/3.0;
     i_domain_begin = patch->getCellStartingGlobalIndex(0);
@@ -45,7 +45,7 @@ ProjectorAM2Order::ProjectorAM2Order (Params& params, Patch* patch) : ProjectorA
         }
     }
     for (int j = 0; j< nprimr+1; j++)
-        invVd[j] = 1./abs((j_domain_begin+j-0.5)*dr);
+        invVd[j] = 1./abs(j_domain_begin+j-0.5);
 }
 
 
@@ -68,7 +68,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double crl_p = charge_weight*dl_ov_dt;
-    double crr_p = charge_weight*dr_ov_dt;
+    double crr_p = charge_weight*one_ov_dt;
 
     // variable declaration
     double xpn, ypn, rp;
@@ -163,14 +163,22 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
             Jl_p[i][j]= Jl_p[i-1][j] - crl_p * Wl[i-1][j];
         }
     }
-    for (unsigned int j=1 ; j<5 ; j++) {
+    //for (unsigned int j=1 ; j<5 ; j++) {
+    //    jloc = j+jpo;
+    //    double Vd = abs(jloc + j_domain_begin - 1.5) ;
+    //    for (unsigned int i=0 ; i<5 ; i++) {
+    //        Jr_p[i][j] = (Jr_p[i][j-1] * Vd - crr_p * Wr[i][j-1]) * invVd[jloc] ;
+    //    }
+    //}
+
+    for (int j=3 ; j>=0 ; j--) {
         jloc = j+jpo;
-        double Vdjm1_ov_j = abs( (jloc + j_domain_begin - 0.5)/(jloc + j_domain_begin + 0.5));
-        double crr_p2 = crr_p * invVd[jloc]; 
+        double Vd = abs(jloc + j_domain_begin + 0.5) ;
         for (unsigned int i=0 ; i<5 ; i++) {
-            Jr_p[i][j] = Jr_p[i][j-1]*Vdjm1_ov_j - crr_p2 * Wr[i][j-1];
+            Jr_p[i][j] = (Jr_p[i][j+1] * Vd + crr_p * Wr[i][j+1]) * invVd[jloc];
         }
     }
+
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
             Jt_p[i][j] =   crt_p  * Wt[i][j];
@@ -194,8 +202,8 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
          // Jr^(p,d)
         for (unsigned int i=0 ; i<5 ; i++) {
             iloc = i+ipo;
-            for (unsigned int j=1 ; j<5 ; j++) {
-                jloc = j+jpo;
+            for (unsigned int j=0 ; j<4 ; j++) {
+                jloc = j+jpo+1;
                 linindex = iloc*(nprimr+1)+jloc;
                 Jr [linindex] += Jr_p[i][j]; 
              }
@@ -225,7 +233,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double crl_p = charge_weight*dl_ov_dt;
-    double crr_p = charge_weight*dr_ov_dt;
+    double crr_p = charge_weight*one_ov_dt;
 
     // variable declaration
     double xpn, ypn;
@@ -352,12 +360,19 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
                 Jl_p[i][j]= Jl_p[i-1][j] - crl_p * Wl[i-1][j];
             }
         }
-    for (unsigned int j=1 ; j<5 ; j++) {
+    //for (unsigned int j=1 ; j<5 ; j++) {
+    //    jloc = j+jpo;
+    //    double Vd = abs(jloc + j_domain_begin - 1.5) ;
+    //    for (unsigned int i=0 ; i<5 ; i++) {
+    //        Jr_p[i][j] = (Jr_p[i][j-1] * Vd - crr_p * Wr[i][j-1]) * invVd[jloc] ;
+    //    }
+    //}
+
+    for (int j=3 ; j>=0 ; j--) {
         jloc = j+jpo;
-        double Vdjm1_ov_j = abs( (jloc + j_domain_begin - 0.5)/(jloc + j_domain_begin + 0.5) );
-        double crr_p2 = crr_p * invVd[jloc]; 
+        double Vd = abs(jloc + j_domain_begin + 0.5) ;
         for (unsigned int i=0 ; i<5 ; i++) {
-            Jr_p[i][j] = Jr_p[i][j-1]*Vdjm1_ov_j - crr_p2 * Wr[i][j-1];
+            Jr_p[i][j] = (Jr_p[i][j+1] * Vd + crr_p * Wr[i][j+1]) * invVd[jloc];
         }
     }
 
@@ -402,8 +417,8 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // Jr^(p,d)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
-        for (unsigned int j=1 ; j<5 ; j++) {
-            jloc = j+jpo;
+        for (unsigned int j=0 ; j<4 ; j++) {
+            jloc = j+jpo+1;
             linindex = iloc*(nprimr+1)+jloc;
             Jr [linindex] += C_m * Jr_p[i][j] ;
         }
@@ -425,7 +440,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double crl_p = charge_weight*dl_ov_dt;
-    double crr_p = charge_weight*dr_ov_dt;
+    double crr_p = charge_weight*one_ov_dt;
     // variable declaration
     double xpn, ypn, rp;
     double delta, delta2;
@@ -520,14 +535,22 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
                 Jl_p[i][j]= Jl_p[i-1][j] - crl_p * Wl[i-1][j];
             }
         }
-    for (unsigned int j=1 ; j<5 ; j++) {
+    //for (unsigned int j=1 ; j<5 ; j++) {
+    //    jloc = j+jpo;
+    //    double Vd = abs(jloc + j_domain_begin - 1.5) ;
+    //    for (unsigned int i=0 ; i<5 ; i++) {
+    //        Jr_p[i][j] = (Jr_p[i][j-1] * Vd - crr_p * Wr[i][j-1]) * invVd[jloc] ;
+    //    }
+    //}
+
+    for (int j=3 ; j>=0 ; j--) {
         jloc = j+jpo;
-        double Vdjm1_ov_j = abs( (jloc + j_domain_begin - 0.5)/(jloc + j_domain_begin + 0.5));
-        double crr_p2 = crr_p * invVd[jloc]; 
+        double Vd = abs(jloc + j_domain_begin + 0.5) ;
         for (unsigned int i=0 ; i<5 ; i++) {
-            Jr_p[i][j] = Jr_p[i][j-1]*Vdjm1_ov_j - crr_p2 * Wr[i][j-1];
+            Jr_p[i][j] = (Jr_p[i][j+1] * Vd + crr_p * Wr[i][j+1]) * invVd[jloc];
         }
     }
+
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
                 Jt_p[i][j] =   crt_p  * Wt[i][j];
@@ -551,8 +574,8 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // Jr^(p,d)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
-        for (unsigned int j=1 ; j<5 ; j++) {
-            jloc = j+jpo;
+        for (unsigned int j=0 ; j<4 ; j++) {
+            jloc = j+jpo+1;
             linindex = iloc*(nprimr+1)+jloc;
             Jr [linindex] += Jr_p[i][j] ;
          }
@@ -591,7 +614,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
     double crl_p = charge_weight*dl_ov_dt;
-    double crr_p = charge_weight*dr_ov_dt;
+    double crr_p = charge_weight*one_ov_dt;
 
     // variable declaration
     double xpn, ypn;
@@ -705,16 +728,24 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     for (unsigned int i=1 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
                 Jl_p[i][j]= Jl_p[i-1][j] - crl_p * Wl[i-1][j];
-            }
-        }
-     for (unsigned int j=1 ; j<5 ; j++) {
-        jloc = j+jpo;
-        double Vdjm1_ov_j = abs( (jloc + j_domain_begin - 0.5)/(jloc + j_domain_begin + 0.5) );
-        double crr_p2 = crr_p * invVd[jloc]; 
-        for (unsigned int i=0 ; i<5 ; i++) {
-            Jr_p[i][j] = Jr_p[i][j-1]*Vdjm1_ov_j - crr_p2 * Wr[i][j-1];
         }
     }
+    //for (unsigned int j=1 ; j<5 ; j++) {
+    //    jloc = j+jpo;
+    //    double Vd = abs(jloc + j_domain_begin - 1.5) ;
+    //    for (unsigned int i=0 ; i<5 ; i++) {
+    //        Jr_p[i][j] = (Jr_p[i][j-1] * Vd - crr_p * Wr[i][j-1]) * invVd[jloc] ;
+    //    }
+    //}
+
+    for (int j=3 ; j>=0 ; j--) {
+        jloc = j+jpo;
+        double Vd = abs(jloc + j_domain_begin + 0.5) ;
+        for (unsigned int i=0 ; i<5 ; i++) {
+            Jr_p[i][j] = (Jr_p[i][j+1] * Vd + crr_p * Wr[i][j+1]) * invVd[jloc];
+        }
+    }
+
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
                 Jt_p[i][j] = crt_p * Wt[i][j];
@@ -756,8 +787,8 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // Jr^(p,d)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
-        for (unsigned int j=0 ; j<5 ; j++) {
-            jloc = j+jpo;
+        for (unsigned int j=0 ; j<4 ; j++) {
+            jloc = j+jpo+1;
             linindex = iloc*(nprimr+1)+jloc;
             Jr [linindex] += C_m * Jr_p[i][j]; 
         }
@@ -984,8 +1015,9 @@ void ProjectorAM2Order::operator() (ElectroMagn* EMfields, Particles &particles,
         complex<double>* b_Jt =  &(*emAM->Jt_[imode] )(0);
 
         if (imode==0){
-            for ( int ipart=istart ; ipart<iend; ipart++ )
+            for ( int ipart=istart ; ipart<iend; ipart++ ){
                 (*this)(b_Jl , b_Jr , b_Jt , particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
+            }
         }
         else{	
             for ( int ipart=istart ; ipart<iend; ipart++ )

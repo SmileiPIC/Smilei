@@ -292,6 +292,8 @@ public:
 
     std::vector<MPI_Request> requests_;
 
+    bool is_small = true;
+
 
 
 protected:

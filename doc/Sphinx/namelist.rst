@@ -377,7 +377,7 @@ Vectorization
 
 The block ``Vectorization`` is optional.
 It controls the SIMD operations that can enhance the performance of some computations.
-The technique is detailed in Ref. [Beck]_.
+The technique is detailed in Ref. [Beck]_ and summarized in :doc:`this doc <vectorization>`.
 It requires :ref:`additional compilation options<vectorization_flags>` to be actived.
 
 .. code-block:: python
@@ -1914,32 +1914,41 @@ This is done by including the block ``DiagScalar``::
 
 
 
-The full list of scalars that are saved by this diagnostic:
+The full list of available scalars is given in the table below.
 
+.. warning::
+
+  As some of these quantities are integrated in space and/or time, their
+  units are unusual, and depend on the simulation dimension.
+  All details :ref:`here<integrated_quantities>`.
 
 .. rst-class:: nowrap
 
 +----------------+---------------------------------------------------------------------------+
-| **Global energies**                                                                        |
+| **Space-integrated energy densities**                                                      |
 +----------------+---------------------------------------------------------------------------+
-| | Utot         | | Total energy                                                            |
-| | Ukin         | | Total kinetic energy (in the particles)                                 |
-| | Uelm         | | Total EM energy (in the fields)                                         |
-| | Uexp         | | Expected value (Initial energy :math:`-` lost :math:`+` gained)         |
-| | Ubal         | | Energy balance (Utot :math:`-` Uexp)                                    |
-| | Ubal_norm    | | Normalized energy balance (Ubal :math:`/` Utot)                         |
-| | Uelm_Ex      | | Energy in Ex field (:math:`\int E_x^2 dV /2`)                           |
-| |              | |  ... and idem for fields Ey, Ez, Bx_m, By_m and Bz_m                    |
-| | Urad         | | Total radiated energy                                                   |
+| | Utot         | | Total                                                                   |
+| | Ukin         | | Total kinetic (in the particles)                                        |
+| | Uelm         | | Total electromagnetic (in the fields)                                   |
+| | Uexp         | | Expected (Initial :math:`-` lost :math:`+` gained)                      |
+| | Ubal         | | Balance (Utot :math:`-` Uexp)                                           |
+| | Ubal_norm    | | Normalized balance (Ubal :math:`/` Utot)                                |
+| | Uelm_Ex      | | Ex field contribution (:math:`\int E_x^2 dV /2`)                        |
+| |              | |  ... same for fields Ey, Ez, Bx_m, By_m and Bz_m                        |
+| | Urad         | | Total radiated                                                          |
 +----------------+---------------------------------------------------------------------------+
-| **Energies lost/gained at boundaries**                                                     |
+| **Space- & time-integrated Energies lost/gained at boundaries**                            |
 +----------------+---------------------------------------------------------------------------+
-| | Ukin_bnd     | | Kinetic energy exchanged at the boundaries during the timestep          |
-| | Uelm_bnd     | | EM energy exchanged at boundaries during the timestep                   |
-| | Ukin_out_mvw | | Kinetic energy lost during the timestep due to the moving window        |
-| | Ukin_inj_mvw | | Kinetic energy injected during the timestep due to the moving window    |
-| | Uelm_out_mvw | | EM energy lost during the timestep due to the moving window             |
-| | Uelm_inj_mvw | | EM energy injected during the timestep due to the moving window         |
+| | Ukin_bnd     | | Kinetic contribution exchanged at the boundaries during the timestep    |
+| | Uelm_bnd     | | EM contribution exchanged at boundaries during the timestep             |
+| | Ukin_out_mvw | | Kinetic contribution lost during the timestep due to the moving window  |
+| | Ukin_inj_mvw | | Kinetic contribution gained during the timestep due to the moving window|
+| | Uelm_out_mvw | | EM contribution lost during the timestep due to the moving window       |
+| | Uelm_inj_mvw | | EM contribution gained during the timestep due to the moving window     |
+| |              | |                                                                         |
+| | PoyXmin      | | Time-accumulated Poynting flux through xmin boundary                    |
+| | PoyXminInst  | | Current Poynting flux through xmin boundary                             |
+| |              | |  ... same for other boundaries                                          |
 +----------------+---------------------------------------------------------------------------+
 | **Particle information**                                                                   |
 +----------------+---------------------------------------------------------------------------+
@@ -1956,13 +1965,6 @@ The full list of scalars that are saved by this diagnostic:
 | | ExMax        | | Maximum of :math:`E_x`                                                  |
 | | ExMaxCell    | |  ... and its location (cell index)                                      |
 | |              | | ... same for fields Ey Ez Bx_m By_m Bz_m Jx Jy Jz Rho                   |
-| |              | |                                                                         |
-| | PoyXmin      | | Time-accumulated Poynting flux through xmin boundary                    |
-| | PoyXminInst  | | Current Poynting flux through xmin boundary                             |
-| |              | |  ... same for other boundaries                                          |
-| |              | | These Poynting scalars are integrated accross the boundary.             |
-| |              | | Consequently, they are energies per unit surface in 1D,                 |
-| |              | | energies per unit length in 2D, and energies in 3D.                     |
 +----------------+---------------------------------------------------------------------------+
 
 Checkout the :doc:`post-processing <post-processing>` documentation as well.

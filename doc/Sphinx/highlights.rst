@@ -1,41 +1,19 @@
 Highlights
 ----------
 
-Improved computational performance using efficient vectorization
+Improved performance using vectorization
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:program:`Smilei` computational performance has been recently enhance thanks
-to new vectorized implementations of the particle operators.
+:program:`Smilei` computational performance has been recently enhanced with
+:doc:`vectorized operations<vectorization>`,
+in particular the projection of currents and the interpolation of fields.
+Typically, the new algorithms are more efficient than the old ones above
+10 particles per cell, up to 3 times faster. An *adaptive* switching technique
+ensures that the best version is used, dynamically and locally.
 
-A more efficient sorting method, referred to as cycle sort, has been first implemented
-to make the particle operator vectorization easier.
-The most difficult to vectorize are the current projection
-(deposition) and the field interpolation (gathering) steps because of
-interpolation between the grids and the macro-particles.
-These are also the most expensive ones.
-
-Vectorization is more efficient than using scalar
-operators when the number of
-particles per cell is sufficiently high.
-The threshold is evaluated around 10 particles on recent Intel
-architectures.
-Vectorization efficiency basically increases with the number of particles per cell.
-Around 256 particles per cell, a speed-up of x2 has been obtained on Intel Skylake
-and a speed-up of x3 on Intel KNL.
-For few particles per cell, scalar implementations are still more efficient
-and the difference is as significant as the number of particles is low.
-
-Adaptive vectorization consists on locally switch between the scalar and
-vectorized operators during the simulation, choosing the most efficient one
-in the region of interest.
-The concept has been successfully implemented at the lower granularity of
-the code so that every given number of time steps, for each
-patch, and for each species, the most efficient operator is determined
-from the number of particles per cell.
-
-Adaptive vectorization has been validated on large-scale simulations.
-One of the case was the simulation of Mildly-relativistic collisionless.
-The simulation is illustrated by :numref:`weibel_3d_ne_vecto_it510_fig1`.
+This has been validated on large-scale simulations.
+An example of a mildly-relativistic collisionless shock simulation is provided
+in :numref:`weibel_3d_ne_vecto_it510_fig1` (watch the `video <https://youtu.be/-ENUekyE_A4>`_).
 
 .. _weibel_3d_ne_vecto_it510_fig1:
 
@@ -43,23 +21,20 @@ The simulation is illustrated by :numref:`weibel_3d_ne_vecto_it510_fig1`.
     :width: 90%
     :align: center
     :name: weibel_3d_ne_vecto_it510
-    :target: https://youtu.be/-ENUekyE_A4
 
-    Mildly-relativistic collisionless shock: On the top, volume rendering of the normalized
-    electron density :math:`n_e /n_c` (:math:`n_c` the critical density) at
-    time :math:`t = 34 \omega^{-1}` (:math:`\omega` the laser frequency) after the beginning of the collision.
-    On the bottom, patches in vectorized
-    mode for the electron species at the same time.
-    An animated version of these can be viewed by clicking on this image.
+    Mildly-relativistic collisionless shock simulation, with two drifting
+    plasmas colliding in the middle of the box.
+    Top panel: electron density.
+    Bottom panel: regions switched to vectorized operators are highlighted.
 
-Adaptive vectorization puts the high-density regions rich in
-particles in vectorized mode.
-Incoming plasma flows, with 8 particles per cell in average, are in scalar mode.
-On examined cases, this method allows for speed-ups from x1.3 to x2 regarding only
-the macro-particle operators.
+High-density regions are switched to vectorized operators while low-density
+regions remain scalar (they have only 8 particles per cell).
+In this particular case, the treatment of particles can be sped-up by 2.
 
-This work has been recently submitted for publication
-and is avaliable on `ArXiV <https://arxiv.org/abs/1810.03949>`_.
+For more details, checkout the :doc:`doc<vectorization>` and this
+`ArXiV paper <https://arxiv.org/abs/1810.03949>`_.
+
+----
 
 Scalability in a wakefield acceleration simulation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -84,6 +59,7 @@ in each MPI process.
 
 .. image:: _static/openMP_balancing.png
     :width: 500px
+    :align: center
 
 Using more OpenMP threads per MPI process (while keeping the total number
 of threads constant) clearly reduces the simulation time, because the
@@ -100,6 +76,7 @@ shows how this balancing reduces the time of the simulation.
 
 .. image:: _static/DLB_balancing.png
     :width: 500px
+    :align: center
 
 The red curve is the best situation obtained in the previous section, while
 the black curve corresponds to the DLB algorithm enabled.
@@ -143,14 +120,16 @@ A close-up view of the interaction region is given in the bottom panel, illustra
 the electron bunches being pulled out from the plasma surface.
 
 .. image:: _static/hhg1.jpg
-   :width: 13cm
+    :width: 13cm
+    :align: center
 
 Fourier analysis of the reflected laser field, in space and time, provides the
 angular distribution of the frequency spectrum of the reflected light, shown in the
 following figure (top panel). High harmonics appear up to order 16.
 
 .. image:: _static/hhg2.jpg
-   :width: 13cm
+    :width: 13cm
+    :align: center
 
 The bottom panel shows trajectories of accelerated electrons ejected from the target.
 The angular histogram shows that the momenta of the escaping energetic electrons
@@ -191,6 +170,7 @@ The blue-yellow maps correspond to the plasma density while the white-red maps
 correspond to the lasers intensity.
 
 .. image:: _static/pump_seed.jpg
+    :align: center
 
 The final seed intensity is nearly 5 times its initial intensity
 while the spot size and phase front are well conserved,
@@ -243,7 +223,8 @@ We used a reduced ion to electron mass ratio :math:`m_i/m_e = 25`, and a ratio
 There are initially 8.6 billion quasi-protons for the three populations, and 13 billion electrons.
 
 .. image:: _static/reconnection.jpg
-   :width: 15cm
+    :width: 15cm
+    :align: center
 
 This figure presents some of the simulation results:
 the electron density at three different times.
@@ -305,7 +286,8 @@ of filamentary structures in both the magnetic field (panel a) and
 the total plasma density (panel b).
 
 .. image:: _static/shock1.jpg
-   :width: 15cm
+    :width: 15cm
+    :align: center
 
 The magnetic field at the shock front becomes turbulent and it is strong
 enough to stop the incoming particles leading to a pile-up of the plasma
@@ -318,7 +300,8 @@ It is characteristic of first-order Fermi acceleration at the shock front,
 and appears to follow a :math:`\gamma^{-2.5}` power law.
 
 .. image:: _static/shock3.jpg
-   :width: 11cm
+    :width: 11cm
+    :align: center
 
 This simulation run on the TGCC/Curie machine using 128 MPI x 8 OpenMP threads
 for a total of 18800 CPU-hours for 49780 timesteps.

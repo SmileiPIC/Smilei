@@ -146,7 +146,7 @@ void SpeciesAdaptiveV::importParticles( Params& params, Patch* patch, Particles&
 void SpeciesAdaptiveV::sort_part(Params &params)
 {
     if (vectorized_operators)
-        sort_part(params);
+        SpeciesV::sort_part(params);
     else
         Species::sort_part(params);
 }

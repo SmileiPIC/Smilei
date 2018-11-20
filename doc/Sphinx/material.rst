@@ -5,11 +5,31 @@ Publications
 
   Tip: :ref:`How should I cite Smilei in my publication? <HowToCite>`
 
+----
+
+.. rst-class:: bigcitation
+
+  .. [Derouillat2018]
+
+     J. Derouillat, A. Beck, F. Pérez, T. Vinci, M. Chiaramello, A. Grassi, M. Flé, G. Bouchard, I. Plotnikov, N. Aunai, J. Dargent, C. Riconda, M. Grech,
+     `SMILEI: a collaborative, open-source, multi-purpose particle-in-cell code for plasma simulation`,
+     `Comput. Phys. Commun. 222, 351-373 (2018) <https://doi.org/10.1016/j.cpc.2017.09.024>`_,
+     `arXiv:1702.05128 <https://arxiv.org/abs/1702.05128>`_
+
+----
+
+.. rst-class:: bigcitation
+
+.. [Massimo]
+
+  F. Massimo, A. Beck, J. Dérouillat, M. Grech., F. Perez, I. Zemzemi and A. Specka,
+  `Efficient modeling of Laser Wakefield Acceleration through the PIC code SMILEI in CILEX project`,
+  `Proceedings of the International Computational Accelerator Physics Conference (ICAP 2018), JACoW pre-release <http://icap2018.vrws.de/papers/mopag02.pdf>`_,
 
 .. rst-class:: bigcitation
 
 .. [Beck]
-  
+
   A. Beck, J. Dérouillat, M. Lobet, A. Farjallah, F. Massimo, I. Zemzemi, F. Perez, T. Vinci, M. Grech,
   `Adaptive SIMD optimizations in particle-in-cell codes with fine-grain particle sorting`,
   `arXiv:1810.03949 <https://arxiv.org/abs/1810.03949>`_,
@@ -17,19 +37,19 @@ Publications
 .. rst-class:: bigcitation
 
 .. [Perez]
-  
+
   F. Pérez, M. Grech,
   `Oblique-incidence, arbitrary-profile wave injection for electromagnetic simulations`,
   `arXiv:1809.04435 <https://arxiv.org/abs/1809.04435>`_
 
-.. rst-class:: bigcitation
+  .. rst-class:: bigcitation
 
-.. [Derouillat2018]
-   
-   J. Derouillat, A. Beck, F. Pérez, T. Vinci, M. Chiaramello, A. Grassi, M. Flé, G. Bouchard, I. Plotnikov, N. Aunai, J. Dargent, C. Riconda, M. Grech,
-   `SMILEI: a collaborative, open-source, multi-purpose particle-in-cell code for plasma simulation`,
-   `Comput. Phys. Commun. 222, 351-373 (2018) <https://doi.org/10.1016/j.cpc.2017.09.024>`_,
-   `arXiv:1702.05128 <https://arxiv.org/abs/1702.05128>`_
+.. [Niel2018b]
+
+   F. Niel, C. Riconda, F. Amiranoff, M. Lobet, J. Derouillat, F. Pérez, T. Vinci and M. Grech
+   `From quantum to classical modelling of radiation reaction: a focus on the radiation spectrum`,
+   `Plasma Phys. Control. Fusion 60, 094002 (2018) <http://iopscience.iop.org/article/10.1088/1361-6587/aace22>`_,
+   `arXiv:1802.02927 <https://arxiv.org/abs/1802.02927>`_
 
 .. rst-class:: bigcitation
 
@@ -37,7 +57,17 @@ Publications
 
     I. Plotnikov, A. Grassi and M. Grech,
     `Perpendicular relativistic shocks in magnetized pair plasma`,
+    `Monthly Notices of the Royal Astronomical Society 477, 5238 (2018) <https://academic.oup.com/mnras/article/477/4/5238/4978470>`_,
     `arXiv:1712.02883 <https://arxiv.org/abs/1712.02883>`_
+
+.. rst-class:: bigcitation
+
+.. [Niel2018]
+
+   F. Niel, C. Riconda, F. Amiranoff, R. Duclous and M. Grech,
+   `From quantum to classical modelling of radiation reaction: a focus on stochasticity effects`,
+   `Phys. Rev. E 97, 043209 (2018) <https://journals.aps.org/pre/abstract/10.1103/PhysRevE.97.043209>`_,
+   `arXiv:1707.02618 <https://arxiv.org/abs/1707.02618>`_
 
 .. rst-class:: bigcitation
 
@@ -50,20 +80,12 @@ Publications
 
 .. rst-class:: bigcitation
 
-.. [Niel2017]
-
-   F. Niel, C. Riconda, F. Amiranoff, R. Duclous and M. Grech,
-   `From quantum to classical modelling of radiation reaction: a focus on stochasticity effects`,
-   `arXiv:1707.02618 <https://arxiv.org/abs/1707.02618>`_
-
-.. rst-class:: bigcitation
-
 .. [Fedeli2017]
 
    L. Fedeli, A. Formenti, L. Cialfi, A. Sgattoni, G. Cantono and M. Passoni,
    `Structured targets for advanced laser-driven sources`,
-   `accepted for publication in Plasma Phys. Control. Fusion <https://doi.org/10.1088/1361-6587/aa8a54>`_
-   
+   `Plasma Phys. Control. Fusion 60, 014013 (2017) <http://iopscience.iop.org/article/10.1088/1361-6587/aa8a54/meta>`_
+
 .. rst-class:: bigcitation
 
 .. [Golovanov2017]
