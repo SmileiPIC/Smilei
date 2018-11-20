@@ -71,7 +71,7 @@ makerun3D:
 makerunAM:
   stage: makerun
   only:
-    - develop
+    #- develop
     #- release-4.0.0
     #- mpi_omp_master
 
