@@ -68,12 +68,12 @@ makerun3D:
     # Run validation script
     - python validation.py -b "tst3d_??_*.py" -m 4 -o 4 -v -r 1
 
-makerunAM:
-  stage: makerun
-  only:
-    #- develop
-    #- release-4.0.0
-    #- mpi_omp_master
+#makerunAM:
+#  stage: makerun
+#  only:
+#    - develop
+#    #- release-4.0.0
+#    #- mpi_omp_master
 
   script:
     # Move in test dir
