@@ -31,10 +31,10 @@ Release 4.0
 **Download**: `Smilei v4.0 <_downloads/smilei-v4.0.tar.gz>`_
 
 * :ref:`vectorization`
+* :ref:`laser_envelope`
 * MPI option `MPI_THREAD_MULTIPLE` is now optional (but recommended)
 * Faster collisions
 * Bugfixes: handling `sum` for happi's `ParticleBinning`
-* :ref:`laser_envelope`
 
 ----
 

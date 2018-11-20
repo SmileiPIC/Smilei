@@ -113,6 +113,50 @@ but not in the main PIC algorithms.
   The outputs of the code are not converted to SI.
   They are all kept in the reference units listed above.
 
+----
+
+.. _integrated_quantities:
+
+Quantities integrated over the grid
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Special care must be taken when considering local quantities that are spatially
+integrated.
+
+.. rubric:: 1. The spatially-integrated kinetic energy density
+
+The particle kinetic energy multiplied by its weight gives an
+energy density, thus in units of :math:`K_r N_r`. To obtain the spatially-integrated 
+kinetic energy, we sum over particles and multiply by the space occupied by one cell.
+In 1D, this space a length, with units :math:`L_r`; in 2D, it is a surface, with units
+:math:`L_r^2`; and in 3D, it is a volume, with units :math:`L_r^3`.
+Overall, the integrated energy has the units :math:`K_r N_r L_r^D`
+where :math:`D` is the simulation dimension. Note that we could expect
+to obtain, in 3D, an energy with units :math:`K_r`, but counter-intuitively
+it has the units :math:`K_r N_r L_r^3`.
+
+These kinetic energies appear, for instance, in the :ref:`DiagScalar` as
+``Ukin`` (and associated quantities).
+
+.. rubric:: 2. The spatially-integrated electromagnetic energy density
+
+The electromagnetic energy density has the units :math:`E_r^2/\varepsilon_0 = K_r N_r`.
+Consequently, the spatially-integrated electromagnetic energy density has
+the units :math:`K_r N_r L_r^D`; the same as the integrated kinetic energy density above.
+
+These electromagnetic energies appear, for instance, in the :ref:`DiagScalar` as
+``Uelm`` (and associated quantities).
+
+.. rubric:: 3. The space- & time-integrated Poyning flux
+
+The Poynting flux has the units :math:`E_r B_r / \mu_0 = V_r K_r N_r`.
+Consequently, the flux integrated over a boundary, and over time, has the units
+:math:`V_r K_r N_r L_r^{D-1} T_r = K_r N_r L_r^D`, which is the same as the
+integrated energy densities above.
+
+This integrated Poynting flux appears, for instance, in the :ref:`DiagScalar` as
+``Uelm_bnd``, ``PoyXmin``, ``PoyXminInst`` (and associated quantities).
+
 
 ----
 
