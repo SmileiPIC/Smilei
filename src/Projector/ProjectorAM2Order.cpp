@@ -22,7 +22,7 @@ ProjectorAM2Order::ProjectorAM2Order (Params& params, Patch* patch) : ProjectorA
     dr = params.cell_length[1];
     dl_inv_   = 1.0/params.cell_length[0];
     dl_ov_dt  = params.cell_length[0] / params.timestep;
-    dr_inv_   = 1.0/params.cell_length[1];
+    dr_inv_   = 1.0 / dr;
     one_ov_dt  = 1.0 / params.timestep;
     Nmode=params.nmodes; 
     one_third = 1.0/3.0;
@@ -45,7 +45,7 @@ ProjectorAM2Order::ProjectorAM2Order (Params& params, Patch* patch) : ProjectorA
         }
     }
     for (int j = 0; j< nprimr+1; j++)
-        invVd[j] = 1./abs((j_domain_begin+j-0.5)*dr);
+        invVd[j] = 1./abs(j_domain_begin+j-0.5);
 }
 
 
@@ -165,17 +165,11 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     }
     for (unsigned int j=1 ; j<5 ; j++) {
         jloc = j+jpo;
-        double Vdjm1_ov_j = abs( (jloc-1 + j_domain_begin - 0.5)/(jloc-1 + j_domain_begin + 0.5));
+        double Vd = abs(jloc + j_domain_begin - 1.5) ;
         for (unsigned int i=0 ; i<5 ; i++) {
-            Jr_p[i][j] = Jr_p[i][j-1]*Vdjm1_ov_j - crr_p * Wr[i][j-1]/(jloc-1 + j_domain_begin + 0.5);
+            Jr_p[i][j] = (Jr_p[i][j-1] * Vd - crr_p * Wr[i][j-1]) * invVd[jloc] ;
         }
     }
-    //for (unsigned int j=1 ; j<5 ; j++) {
-    //    jloc = j+jpo;
-    //    for (unsigned int i=0 ; i<5 ; i++) {
-    //        Jr_p[i][j] = (Jr_p[i][j-1]* abs(jloc + j_domain_begin - 1.5) - crr_p * Wr[i][j-1]) * invVd[jloc];
-    //    }
-    //}
 
     //for (int j=3 ; j>=0 ; j--) {
     //    jloc = j+jpo;
@@ -365,17 +359,11 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
                 Jl_p[i][j]= Jl_p[i-1][j] - crl_p * Wl[i-1][j];
             }
         }
-    //for (unsigned int j=1 ; j<5 ; j++) {
-    //    jloc = j+jpo;
-    //    for (unsigned int i=0 ; i<5 ; i++) {
-    //        Jr_p[i][j] = (Jr_p[i][j-1]* abs(jloc + j_domain_begin - 1.5) - crr_p * Wr[i][j-1]) * invVd[jloc];
-    //    }
-    //}
     for (unsigned int j=1 ; j<5 ; j++) {
         jloc = j+jpo;
-        double Vdjm1_ov_j = abs( (jloc-1 + j_domain_begin - 0.5)/(jloc-1 + j_domain_begin + 0.5));
+        double Vd = abs(jloc + j_domain_begin - 1.5) ;
         for (unsigned int i=0 ; i<5 ; i++) {
-            Jr_p[i][j] = Jr_p[i][j-1]*Vdjm1_ov_j - crr_p * Wr[i][j-1]/(jloc-1 + j_domain_begin + 0.5);
+            Jr_p[i][j] = (Jr_p[i][j-1] * Vd - crr_p * Wr[i][j-1]) * invVd[jloc] ;
         }
     }
 
@@ -545,17 +533,11 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
                 Jl_p[i][j]= Jl_p[i-1][j] - crl_p * Wl[i-1][j];
             }
         }
-    //for (unsigned int j=1 ; j<5 ; j++) {
-    //    jloc = j+jpo;
-    //    for (unsigned int i=0 ; i<5 ; i++) {
-    //        Jr_p[i][j] = (Jr_p[i][j-1]* abs(jloc + j_domain_begin - 1.5) - crr_p * Wr[i][j-1]) * invVd[jloc];
-    //    }
-    //}
     for (unsigned int j=1 ; j<5 ; j++) {
         jloc = j+jpo;
-        double Vdjm1_ov_j = abs( (jloc-1 + j_domain_begin - 0.5)/(jloc-1 + j_domain_begin + 0.5));
+        double Vd = abs(jloc + j_domain_begin - 1.5) ;
         for (unsigned int i=0 ; i<5 ; i++) {
-            Jr_p[i][j] = Jr_p[i][j-1]*Vdjm1_ov_j - crr_p * Wr[i][j-1]/(jloc-1 + j_domain_begin + 0.5);
+            Jr_p[i][j] = (Jr_p[i][j-1] * Vd - crr_p * Wr[i][j-1]) * invVd[jloc] ;
         }
     }
 
@@ -743,19 +725,13 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     for (unsigned int i=1 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
                 Jl_p[i][j]= Jl_p[i-1][j] - crl_p * Wl[i-1][j];
-            }
         }
-    //for (unsigned int j=1 ; j<5 ; j++) {
-    //    jloc = j+jpo;
-    //    for (unsigned int i=0 ; i<5 ; i++) {
-    //        Jr_p[i][j] = (Jr_p[i][j-1]* abs(jloc + j_domain_begin - 1.5) - crr_p * Wr[i][j-1]) * invVd[jloc];
-    //    }
-    //}
+    }
     for (unsigned int j=1 ; j<5 ; j++) {
         jloc = j+jpo;
-        double Vdjm1_ov_j = abs( (jloc-1 + j_domain_begin - 0.5)/(jloc-1 + j_domain_begin + 0.5));
+        double Vd = abs(jloc + j_domain_begin - 1.5) ;
         for (unsigned int i=0 ; i<5 ; i++) {
-            Jr_p[i][j] = Jr_p[i][j-1]*Vdjm1_ov_j - crr_p * Wr[i][j-1]/(jloc-1 + j_domain_begin + 0.5);
+            Jr_p[i][j] = (Jr_p[i][j-1] * Vd - crr_p * Wr[i][j-1]) * invVd[jloc] ;
         }
     }
 
