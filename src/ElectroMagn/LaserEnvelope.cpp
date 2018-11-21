@@ -135,13 +135,13 @@ LaserEnvelope3D::LaserEnvelope3D( Params& params, Patch* patch, ElectroMagn* EMf
     Phi_m        = new Field3D( dimPrim, "Phi_m" );
 
     GradPhix_    = new Field3D( dimPrim, "GradPhix" );
-    GradPhixold_ = new Field3D( dimPrim, "GradPhixold" );
+    GradPhix_m   = new Field3D( dimPrim, "GradPhix_m" );
 
     GradPhiy_    = new Field3D( dimPrim, "GradPhiy" );
-    GradPhiyold_ = new Field3D( dimPrim, "GradPhiyold" );
+    GradPhiy_m   = new Field3D( dimPrim, "GradPhiy_m" );
 
     GradPhiz_    = new Field3D( dimPrim, "GradPhiz" );
-    GradPhizold_ = new Field3D( dimPrim, "GradPhizold" );
+    GradPhiz_m   = new Field3D( dimPrim, "GradPhiz_m" );
 
 }
 
@@ -442,7 +442,7 @@ void LaserEnvelope3D::savePhi_and_GradPhi()
     Field3D* Phi_m3D       = static_cast<Field3D*>(Phi_m); 
     
     Field3D* GradPhix3D    = static_cast<Field3D*>(GradPhix_);
-    Field3D* GradPhixold3D = static_cast<Field3D*>(GradPhix_m); 
+    Field3D* GradPhix_m3D = static_cast<Field3D*>(GradPhix_m); 
 
     Field3D* GradPhiy3D    = static_cast<Field3D*>(GradPhiy_);
     Field3D* GradPhiy_m3D  = static_cast<Field3D*>(GradPhiy_m); 
@@ -478,7 +478,7 @@ void LaserEnvelope3D::centerPhi_and_GradPhi()
     Field3D* Phi_m3D       = static_cast<Field3D*>(Phi_m); 
     
     Field3D* GradPhix3D    = static_cast<Field3D*>(GradPhix_);
-    Field3D* GradPhixold3D = static_cast<Field3D*>(GradPhix_m); 
+    Field3D* GradPhix_m3D  = static_cast<Field3D*>(GradPhix_m); 
 
     Field3D* GradPhiy3D    = static_cast<Field3D*>(GradPhiy_);
     Field3D* GradPhiy_m3D  = static_cast<Field3D*>(GradPhiy_m); 
