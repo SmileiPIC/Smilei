@@ -442,7 +442,7 @@ void LaserEnvelope3D::compute_gradient_Phi(ElectroMagn* EMfields){
 } // end LaserEnvelope3D::compute_gradient_Phi
 
 
-void LaserEnvelope3D::savePhi_and_GradPhi(ElectroMagn* EMfields)
+void LaserEnvelope3D::savePhi_and_GradPhi()
 {
     // Static cast of the fields
     Field3D* Phi3D         = static_cast<Field3D*>(Phi_);
@@ -476,5 +476,45 @@ void LaserEnvelope3D::savePhi_and_GradPhi(ElectroMagn* EMfields)
 
     
 }//END savePhi_and_GradPhi
+
+
+void LaserEnvelope3D::centerPhi_and_GradPhi()
+{
+    // Static cast of the fields
+    Field3D* Phi3D         = static_cast<Field3D*>(Phi_);
+    Field3D* Phi_m3D       = static_cast<Field3D*>(Phi_m); 
+    
+    Field3D* GradPhix3D    = static_cast<Field3D*>(GradPhix_);
+    Field3D* GradPhixold3D = static_cast<Field3D*>(GradPhix_m); 
+
+    Field3D* GradPhiy3D    = static_cast<Field3D*>(GradPhiy_);
+    Field3D* GradPhiy_m3D  = static_cast<Field3D*>(GradPhiy_m); 
+
+    Field3D* GradPhiz3D    = static_cast<Field3D*>(GradPhiz_);
+    Field3D* GradPhiz_m3D  = static_cast<Field3D*>(GradPhiz_m);
+	    
+	  // Phi_m and GradPhi_m quantities now contain values at timestep n 
+
+	  for (unsigned int i=0 ; i <A_->dims_[0]-1; i++){ // x loop
+        for (unsigned int j=0 ; j < A_->dims_[1]-1 ; j++){ // y loop
+            for (unsigned int k=0 ; k < A_->dims_[2]-1; k++){ // z loop
+ 
+             // ponderomotive potential Phi=|A|^2/2 
+             (*Phi_m3D)(i,j,k)       = 0.5*((*Phi_m3D)(i,j,k)+(*Phi3D)(i,j,k));
+             
+             // gradient of ponderomotive potential
+             (*GradPhix_m3D)(i,j,k)  = 0.5*((*GradPhix_m3D)(i,j,k)+(*GradPhix3D)(i,j,k));
+             (*GradPhiy_m3D)(i,j,k)  = 0.5*((*GradPhiy_m3D)(i,j,k)+(*GradPhiy3D)(i,j,k));
+             (*GradPhiz_m3D)(i,j,k)  = 0.5*((*GradPhiz_m3D)(i,j,k)+(*GradPhiz3D)(i,j,k));
+
+            } // end z loop
+        } // end y loop
+    } // end x loop
+
+    // Phi_m and GradPhi_m quantities now contain values interpolated at timestep n+1/2
+    // these are used for the ponderomotive position advance 
+
+    
+}//END centerPhi_and_GradPhi
 
 
