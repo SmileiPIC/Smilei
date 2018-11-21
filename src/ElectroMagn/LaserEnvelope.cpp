@@ -373,22 +373,19 @@ void LaserEnvelope::boundaryConditions(int itime, double time_dual, Patch* patch
 
 void LaserEnvelope3D::compute_Phi(ElectroMagn* EMfields){
 
-    // computes Phi=|A|^2/2 (the ponderomotive potential) old and present values
+    // computes Phi=|A|^2/2 (the ponderomotive potential), new values immediately after the envelope update
 
     cField3D* A3D          = static_cast<cField3D*>(A_);          // the envelope at timestep n
-    cField3D* A03D         = static_cast<cField3D*>(A0_);         // the envelope at timestep n-1
 
     Field3D* Phi3D         = static_cast<Field3D*>(Phi_);         //Phi=|A|^2/2 is the ponderomotive potential
-    Field3D* Phi_m3D       = static_cast<Field3D*>(Phi_m); 
+    
 
 
-    // Compute ponderomotive potential Phi=|A|^2/2, at timesteps n and n-1, including ghost cells and 
-    // and old value of Phi
+    // Compute ponderomotive potential Phi=|A|^2/2, at timesteps n+1, including ghost cells 
     for (unsigned int i=1 ; i <A_->dims_[0]-1; i++){ // x loop
         for (unsigned int j=1 ; j < A_->dims_[1]-1; j++){ // y loop
             for (unsigned int k=1 ; k < A_->dims_[2]-1; k++){ // z loop
                 (*Phi3D)   (i,j,k)       = std::abs((*A3D) (i,j,k)) * std::abs((*A3D) (i,j,k)) * 0.5;
-                (*Phi_m3D)(i,j,k)        = std::abs((*A03D)(i,j,k)) * std::abs((*A03D)(i,j,k)) * 0.5;
             } // end z loop
         } // end y loop
     } // end x loop
@@ -398,17 +395,10 @@ void LaserEnvelope3D::compute_Phi(ElectroMagn* EMfields){
 
 void LaserEnvelope3D::compute_gradient_Phi(ElectroMagn* EMfields){
 
-    // computes gradient of Phi=|A|^2/2 (the ponderomotive potential), old and present values
-
+    // computes gradient of Phi=|A|^2/2 (the ponderomotive potential), new values immediately after the envelope update
     Field3D* GradPhix3D    = static_cast<Field3D*>(GradPhix_);
-    Field3D* GradPhixold3D = static_cast<Field3D*>(GradPhix_m); 
-
     Field3D* GradPhiy3D    = static_cast<Field3D*>(GradPhiy_);
-    Field3D* GradPhiy_m3D  = static_cast<Field3D*>(GradPhiy_m); 
-
     Field3D* GradPhiz3D    = static_cast<Field3D*>(GradPhiz_);
-    Field3D* GradPhiz_m3D  = static_cast<Field3D*>(GradPhiz_m); 
-
     Field3D* Phi3D         = static_cast<Field3D*>(Phi_);         //Phi=|A|^2/2 is the ponderomotive potential
 
 
@@ -423,11 +413,6 @@ void LaserEnvelope3D::compute_gradient_Phi(ElectroMagn* EMfields){
     for (unsigned int i=1 ; i <A_->dims_[0]-1; i++){ // x loop
         for (unsigned int j=1 ; j < A_->dims_[1]-1 ; j++){ // y loop
             for (unsigned int k=1 ; k < A_->dims_[2]-1; k++){ // z loop
-
-             // old gradient values
-             (*GradPhix_m3D)(i,j,k)  = (*GradPhix3D)(i,j,k);
-             (*GradPhiy_m3D)(i,j,k)  = (*GradPhiy3D)(i,j,k);
-             (*GradPhiz_m3D)(i,j,k)  = (*GradPhiy3D)(i,j,k);
 
              // gradient in x direction
              (*GradPhix3D)   (i,j,k) = ( (*Phi3D)   (i+1,j  ,k  )-(*Phi3D)   (i-1,j  ,k  ) ) * one_ov_2dx;
