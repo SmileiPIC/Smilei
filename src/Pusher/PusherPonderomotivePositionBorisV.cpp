@@ -49,7 +49,7 @@ void PusherPonderomotivePositionBorisV::operator() (Particles &particles, Smilei
     
     short* charge = &( particles.charge(0) );
     
-    int nparts = GradPhipart->size()/3;
+    int nparts = GradPhi_mpart->size()/3;
    
   
     double* Phi_m       = &( (*Phi_mpart)[0*nparts] );
@@ -69,7 +69,7 @@ void PusherPonderomotivePositionBorisV::operator() (Particles &particles, Smilei
         charge_over_mass_sq      = (double)(charge[ipart])*one_over_mass_*(charge[ipart])*one_over_mass_;
 
         // compute initial ponderomotive gamma 
-        gamma0_sq = 1. + momentum[0][ipart]*momentum[0][ipart] + momentum[1][ipart]*momentum[1][ipart] + momentum[2][ipart]*momentum[2][ipart] + (*(Phi_m+ipart-ipart_ref))*charge_over_mass_sq* ;
+        gamma0_sq = 1. + momentum[0][ipart]*momentum[0][ipart] + momentum[1][ipart]*momentum[1][ipart] + momentum[2][ipart]*momentum[2][ipart] + (*(Phi_m+ipart-ipart_ref))*charge_over_mass_sq;
         gamma0    = sqrt(gamma0_sq) ;      
   
         // ponderomotive force for ponderomotive gamma advance (Grad Phi is interpolated in time, hence the division by 2)

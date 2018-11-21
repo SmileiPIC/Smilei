@@ -231,7 +231,7 @@ void LaserEnvelope3D::initEnvelope( Patch* patch,ElectroMagn* EMfields )
                 (*Phi_m3D)(i,j,k)   = std::abs((*A03D)(i,j,k)) * std::abs((*A03D)(i,j,k)) * 0.5;
 
                 // interpolate in time
-                (*Phi_m3D)(i,j,k)   = 0.5*((*Phi_m3D)(i,j,k)+(*Phi3D)(i,j,k))
+                (*Phi_m3D)(i,j,k)   = 0.5*((*Phi_m3D)(i,j,k)+(*Phi3D)(i,j,k));
 
                 position[2] += cell_length[2];
             }  // end z loop

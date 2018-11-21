@@ -658,11 +658,9 @@ void Interpolator3D2OrderV::interpolate_time_centered_envelope(ElectroMagn* EMfi
     for (unsigned int k=0; k<3;k++) {
 
        if (k==0){     // scalar field, only one component
-           Phipart[k]     = &(smpi->dynamics_PHIpart[ithread][k*nparts]);
            Phi_mpart[k]     = &(smpi->dynamics_PHI_mpart[ithread][k*nparts]);
        }
 
-       GradPhipart[k] = &(smpi->dynamics_GradPHIpart[ithread][k*nparts]);
        GradPhi_mpart[k] = &(smpi->dynamics_GradPHI_mpart[ithread][k*nparts]);
     }
 
@@ -742,7 +740,8 @@ void Interpolator3D2OrderV::interpolate_time_centered_envelope(ElectroMagn* EMfi
             // ----  PHI_m  and Grad Phi_m   ----
             // ----------------------------------
             // Interpolation of Phi_m^(p,p,p)
-            interp_res = 0.;
+
+            double interp_res = 0.;
             for (int iloc=-1 ; iloc<2 ; iloc++) {
                 for (int jloc=-1 ; jloc<2 ; jloc++) {
                     for (int kloc=-1 ; kloc<2 ; kloc++) {
