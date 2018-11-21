@@ -31,13 +31,15 @@ public:
     const std::vector<double> cell_length;
     const double timestep;
     
-    Field* A_;
-    Field* A0_;
+    Field* A_;         // envelope value at timestep n
+    Field* A0_;        // envelope value at timestep n-1
 
-    Field* Phi_;
-    Field* GradPhix_;
-    Field* GradPhiy_;
-    Field* GradPhiz_;
+    Field* Phi_;       // ponderomotive potential Phi=|A|^2/2 value at timestep n
+    Field* GradPhix_;  // x component of the gradient of Phi at timestep n
+    Field* GradPhiy_;  // y component of the gradient of Phi at timestep n
+    Field* GradPhiz_;  // z component of the gradient of Phi at timestep n
+
+    // Correspondent time-centered quantities
     Field* Phi_m;
     Field* GradPhix_m;
     Field* GradPhiy_m;
