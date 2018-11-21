@@ -27,7 +27,7 @@ public:
         ERROR( "Envelope not implemented with this geometry and this order" );
     };
 
-    virtual void interpolate_envelope_and_old_envelope( ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) {
+    virtual void interpolate_time_centered_envelope( ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) {
         ERROR( "Envelope not implemented with this geometry and this order" );
     };
 

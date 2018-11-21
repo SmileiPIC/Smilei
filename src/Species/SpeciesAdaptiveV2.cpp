@@ -603,7 +603,7 @@ void SpeciesAdaptiveV2::scalar_ponderomotive_update_position_and_currents(double
 #ifdef  __DETAILED_TIMERS
         timer = MPI_Wtime();
 #endif
-        Interp->interpolate_envelope_and_old_envelope(EMfields, *particles, smpi, &(first_index[0]), &(last_index[last_index.size()-1]), ithread );
+        Interp->interpolate_time_centered_envelope(EMfields, *particles, smpi, &(first_index[0]), &(last_index[last_index.size()-1]), ithread );
 #ifdef  __DETAILED_TIMERS
         patch->patch_timers[10] += MPI_Wtime() - timer;
 #endif

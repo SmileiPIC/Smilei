@@ -900,7 +900,7 @@ void SpeciesV::ponderomotive_update_position_and_currents(double time_dual, unsi
 #endif
             // Interpolate the fields at the particle position
             for (unsigned int scell = 0 ; scell < packsize_ ; scell++)
-                Interp->interpolate_envelope_and_old_envelope(EMfields, *particles, smpi, &(first_index[ipack*packsize_+scell]), &(last_index[ipack*packsize_+scell]), ithread, first_index[ipack*packsize_] );
+                Interp->interpolate_time_centered_envelope(EMfields, *particles, smpi, &(first_index[ipack*packsize_+scell]), &(last_index[ipack*packsize_+scell]), ithread, first_index[ipack*packsize_] );
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[10] += MPI_Wtime() - timer;
 #endif

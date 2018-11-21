@@ -380,7 +380,7 @@ void Interpolator3D2Order::interpolate_em_fields_and_envelope( ElectroMagn* EMfi
 } // END Interpolator3D2Order
 
 
-void Interpolator3D2Order::interpolate_envelope_and_old_envelope( ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator3D2Order::interpolate_time_centered_envelope( ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref )
 {
     // Static cast of the electromagnetic fields
     Field3D* Phi_m3D = static_cast<Field3D*>(EMfields->envelope->Phi_m);

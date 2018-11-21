@@ -642,7 +642,7 @@ void Interpolator3D2OrderV::interpolate_em_fields_and_envelope(ElectroMagn* EMfi
 }
 
 
-void Interpolator3D2OrderV::interpolate_envelope_and_old_envelope(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
+void Interpolator3D2OrderV::interpolate_time_centered_envelope(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
 {
     if ( istart[0] == iend[0] ) return; //Don't treat empty cells.
 
