@@ -24,7 +24,8 @@ public:
     virtual void compute_Phi(ElectroMagn* EMfields) = 0;
     virtual void compute_gradient_Phi(ElectroMagn* EMfields) = 0;
     void boundaryConditions(int itime, double time_dual, Patch* patch, Params &params, SimWindow* simWindow);
-    
+    void savePhi_and_GradPhi(ElectroMagn* EMfields) = 0;    
+
     Profile *profile_;
     const std::vector<double> cell_length;
     const double timestep;
@@ -57,6 +58,7 @@ public:
      void compute(ElectroMagn* EMfields) override final;
      void compute_Phi(ElectroMagn* EMfields) override final;
      void compute_gradient_Phi(ElectroMagn* EMfields) override final;
+     void savePhi_and_GradPhi(ElectroMagn* EMfields) override final;
 };
 
 #endif

@@ -711,6 +711,12 @@ void VectorPatch::solveEnvelope(Params& params, SimWindow* simWindow, int itime,
 
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+
+            // Saving Phi and GradPhi fields 
+            // (to compute centered quantities used in the particle position ponderomotive pusher)
+            // Stores Phi at time n in Phi_m, GradPhi at time n in GradPhi_m
+            (*this)(ipatch)->EMfields->envelope->savePhi_and_GradPhi((*this)(ipatch)->EMfields);
+
             // Computes A in all points
             (*this)(ipatch)->EMfields->envelope->compute(  (*this)(ipatch)->EMfields );
             (*this)(ipatch)->EMfields->envelope->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
