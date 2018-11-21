@@ -36,10 +36,10 @@ public:
     Field* GradPhix_;
     Field* GradPhiy_;
     Field* GradPhiz_;
-    Field* Phiold_;
-    Field* GradPhixold_;
-    Field* GradPhiyold_;
-    Field* GradPhizold_;
+    Field* Phi_m;
+    Field* GradPhix_m;
+    Field* GradPhiy_m;
+    Field* GradPhiz_m;
 
     //! Vector of boundary-condition per side for the envelope field
     std::vector<EnvelopeBC*> EnvBoundCond;

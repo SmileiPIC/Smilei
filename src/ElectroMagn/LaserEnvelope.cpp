@@ -94,20 +94,20 @@ LaserEnvelope::~LaserEnvelope()
     //    profile_ = NULL;
     //}
 
-    if( A0_ )         delete A0_;
-    if( A_  )         delete A_;
+    if( A0_ )          delete A0_;
+    if( A_  )          delete A_;
 
-    if( Phi_)         delete Phi_;
-    if( Phiold_)      delete Phiold_;
+    if( Phi_ )         delete Phi_;
+    if( Phi_m)         delete Phi_m;
   
-    if( GradPhix_)    delete GradPhix_;
-    if( GradPhixold_) delete GradPhixold_;
+    if( GradPhix_ )    delete GradPhix_;
+    if( GradPhix_m)    delete GradPhix_m;
 
-    if( GradPhiy_)    delete GradPhiy_;
-    if( GradPhiyold_) delete GradPhiyold_;
+    if( GradPhiy_ )    delete GradPhiy_;
+    if( GradPhiy_m)    delete GradPhiy_m;
 
-    if( GradPhiz_)    delete GradPhiz_;
-    if( GradPhizold_) delete GradPhizold_;
+    if( GradPhiz_ )    delete GradPhiz_;
+    if( GradPhiz_m)    delete GradPhiz_m;
     
     int nBC = EnvBoundCond.size();
     for ( int i=0 ; i<nBC ;i++ )
@@ -132,7 +132,7 @@ LaserEnvelope3D::LaserEnvelope3D( Params& params, Patch* patch, ElectroMagn* EMf
     A0_ = new cField3D( dimPrim, "Aold" );
 
     Phi_         = new Field3D( dimPrim, "Phi" );
-    Phiold_      = new Field3D( dimPrim, "Phiold" );
+    Phi_m        = new Field3D( dimPrim, "Phi_m" );
 
     GradPhix_    = new Field3D( dimPrim, "GradPhix" );
     GradPhixold_ = new Field3D( dimPrim, "GradPhixold" );
@@ -153,16 +153,16 @@ LaserEnvelope3D::LaserEnvelope3D( LaserEnvelope *envelope, Patch* patch,ElectroM
     A0_          = new cField3D( envelope->A0_->dims_, "Aold" );
 
     Phi_         = new Field3D( envelope->Phi_->dims_ );
-    Phiold_      = new Field3D( envelope->Phiold_->dims_ );
+    Phi_m        = new Field3D( envelope->Phi_m->dims_ );
 
     GradPhix_    = new Field3D( envelope->GradPhix_->dims_ );
-    GradPhixold_ = new Field3D( envelope->GradPhixold_->dims_ );
+    GradPhix_m   = new Field3D( envelope->GradPhix_m->dims_ );
 
     GradPhiy_    = new Field3D( envelope->GradPhiy_->dims_ );
-    GradPhiyold_ = new Field3D( envelope->GradPhiyold_->dims_ );
+    GradPhiy_m   = new Field3D( envelope->GradPhiy_m->dims_ );
 
     GradPhiz_    = new Field3D( envelope->GradPhiz_->dims_ );
-    GradPhizold_ = new Field3D( envelope->GradPhizold_->dims_ );
+    GradPhiz_m   = new Field3D( envelope->GradPhiz_m->dims_ );
 
 }
 
@@ -171,20 +171,20 @@ void LaserEnvelope3D::initEnvelope( Patch* patch,ElectroMagn* EMfields )
 {
     cField3D* A3D          = static_cast<cField3D*>(A_);
     cField3D* A03D         = static_cast<cField3D*>(A0_);
-    Field3D* Env_Aabs3D      = static_cast<Field3D*>(EMfields->Env_A_abs_);
-    Field3D* Env_Eabs3D      = static_cast<Field3D*>(EMfields->Env_E_abs_);
+    Field3D* Env_Aabs3D    = static_cast<Field3D*>(EMfields->Env_A_abs_);
+    Field3D* Env_Eabs3D    = static_cast<Field3D*>(EMfields->Env_E_abs_);
 
     Field3D* Phi3D         = static_cast<Field3D*>(Phi_);
-    Field3D* Phiold3D      = static_cast<Field3D*>(Phiold_); 
+    Field3D* Phi_m3D       = static_cast<Field3D*>(Phi_m); 
 
     Field3D* GradPhix3D    = static_cast<Field3D*>(GradPhix_);
-    Field3D* GradPhixold3D = static_cast<Field3D*>(GradPhixold_); 
+    Field3D* GradPhix_m3D  = static_cast<Field3D*>(GradPhix_m); 
 
     Field3D* GradPhiy3D    = static_cast<Field3D*>(GradPhiy_);
-    Field3D* GradPhiyold3D = static_cast<Field3D*>(GradPhiyold_); 
+    Field3D* GradPhiy_m3D  = static_cast<Field3D*>(GradPhiy_m); 
   
     Field3D* GradPhiz3D    = static_cast<Field3D*>(GradPhiz_);
-    Field3D* GradPhizold3D = static_cast<Field3D*>(GradPhizold_); 
+    Field3D* GradPhiz_m3D  = static_cast<Field3D*>(GradPhiz_m); 
 
     vector<double> position(3,0);
     double t;
@@ -223,7 +223,7 @@ void LaserEnvelope3D::initEnvelope( Patch* patch,ElectroMagn* EMfields )
                 (*Env_Eabs3D)(i,j,k)= std::abs ( ((*A3D)(i,j,k)-(*A03D)(i,j,k))/timestep - i1*(*A3D)(i,j,k)    );
 
                 (*Phi3D)(i,j,k)     = std::abs((*A3D) (i,j,k)) * std::abs((*A3D) (i,j,k)) * 0.5;
-                (*Phiold3D)(i,j,k)  = std::abs((*A03D)(i,j,k)) * std::abs((*A03D)(i,j,k)) * 0.5;
+                (*Phi_m3D)(i,j,k)   = std::abs((*A03D)(i,j,k)) * std::abs((*A03D)(i,j,k)) * 0.5;
 
                 position[2] += cell_length[2];
             }  // end z loop
@@ -240,13 +240,13 @@ void LaserEnvelope3D::initEnvelope( Patch* patch,ElectroMagn* EMfields )
             for (unsigned int k=1 ; k<A_->dims_[2]-1 ; k++) { // z loop
                 // gradient in x direction
                 (*GradPhix3D)   (i,j,k) = ( (*Phi3D)   (i+1,j  ,k  )-(*Phi3D)   (i-1,j  ,k  ) ) * one_ov_2dx;
-                (*GradPhixold3D)(i,j,k) = ( (*Phiold3D)(i+1,j  ,k  )-(*Phiold3D)(i-1,j  ,k  ) ) * one_ov_2dx;
+                (*GradPhix_m3D) (i,j,k) = ( (*Phi_m3D) (i+1,j  ,k  )-(*Phi_m3D) (i-1,j  ,k  ) ) * one_ov_2dx;
                 // gradient in y direction
                 (*GradPhiy3D)   (i,j,k) = ( (*Phi3D)   (i  ,j+1,k  )-(*Phi3D)   (i  ,j-1,k  ) ) * one_ov_2dy;
-                (*GradPhiyold3D)(i,j,k) = ( (*Phiold3D)(i  ,j+1,k  )-(*Phiold3D)(i  ,j-1,k  ) ) * one_ov_2dy;
+                (*GradPhiy_m3D) (i,j,k) = ( (*Phi_m3D) (i  ,j+1,k  )-(*Phi_m3D) (i  ,j-1,k  ) ) * one_ov_2dy;
                 // gradient in z direction
                 (*GradPhiz3D)   (i,j,k) = ( (*Phi3D)   (i  ,j  ,k+1)-(*Phi3D)   (i  ,j  ,k-1) ) * one_ov_2dz;
-                (*GradPhizold3D)(i,j,k) = ( (*Phiold3D)(i  ,j  ,k+1)-(*Phiold3D)(i  ,j  ,k-1) ) * one_ov_2dz; 
+                (*GradPhiz_m3D)(i,j,k) = ( (*Phi_m3D)  (i  ,j  ,k+1)-(*Phi_m3D) (i  ,j  ,k-1) ) * one_ov_2dz; 
             }  // end z loop
         } // end y loop
     } // end x loop
@@ -379,7 +379,7 @@ void LaserEnvelope3D::compute_Phi(ElectroMagn* EMfields){
     cField3D* A03D         = static_cast<cField3D*>(A0_);         // the envelope at timestep n-1
 
     Field3D* Phi3D         = static_cast<Field3D*>(Phi_);         //Phi=|A|^2/2 is the ponderomotive potential
-    Field3D* Phiold3D      = static_cast<Field3D*>(Phiold_); 
+    Field3D* Phi_m3D       = static_cast<Field3D*>(Phi_m); 
 
 
     // Compute ponderomotive potential Phi=|A|^2/2, at timesteps n and n-1, including ghost cells and 
@@ -388,7 +388,7 @@ void LaserEnvelope3D::compute_Phi(ElectroMagn* EMfields){
         for (unsigned int j=1 ; j < A_->dims_[1]-1; j++){ // y loop
             for (unsigned int k=1 ; k < A_->dims_[2]-1; k++){ // z loop
                 (*Phi3D)   (i,j,k)       = std::abs((*A3D) (i,j,k)) * std::abs((*A3D) (i,j,k)) * 0.5;
-                (*Phiold3D)(i,j,k)       = std::abs((*A03D)(i,j,k)) * std::abs((*A03D)(i,j,k)) * 0.5;
+                (*Phi_m3D)(i,j,k)        = std::abs((*A03D)(i,j,k)) * std::abs((*A03D)(i,j,k)) * 0.5;
             } // end z loop
         } // end y loop
     } // end x loop
@@ -404,10 +404,10 @@ void LaserEnvelope3D::compute_gradient_Phi(ElectroMagn* EMfields){
     Field3D* GradPhixold3D = static_cast<Field3D*>(GradPhixold_); 
 
     Field3D* GradPhiy3D    = static_cast<Field3D*>(GradPhiy_);
-    Field3D* GradPhiyold3D = static_cast<Field3D*>(GradPhiyold_); 
+    Field3D* GradPhiy_m3D  = static_cast<Field3D*>(GradPhiy_m); 
 
     Field3D* GradPhiz3D    = static_cast<Field3D*>(GradPhiz_);
-    Field3D* GradPhizold3D = static_cast<Field3D*>(GradPhizold_); 
+    Field3D* GradPhiz_m3D  = static_cast<Field3D*>(GradPhiz_m); 
 
     Field3D* Phi3D         = static_cast<Field3D*>(Phi_);         //Phi=|A|^2/2 is the ponderomotive potential
 
@@ -425,9 +425,9 @@ void LaserEnvelope3D::compute_gradient_Phi(ElectroMagn* EMfields){
             for (unsigned int k=1 ; k < A_->dims_[2]-1; k++){ // z loop
 
              // old gradient values
-             (*GradPhixold3D)(i,j,k)  = (*GradPhix3D)(i,j,k);
-             (*GradPhiyold3D)(i,j,k)  = (*GradPhiy3D)(i,j,k);
-             (*GradPhizold3D)(i,j,k)  = (*GradPhiy3D)(i,j,k);
+             (*GradPhix_m3D)(i,j,k)  = (*GradPhix3D)(i,j,k);
+             (*GradPhiy_m3D)(i,j,k)  = (*GradPhiy3D)(i,j,k);
+             (*GradPhiz_m3D)(i,j,k)  = (*GradPhiy3D)(i,j,k);
 
              // gradient in x direction
              (*GradPhix3D)   (i,j,k) = ( (*Phi3D)   (i+1,j  ,k  )-(*Phi3D)   (i-1,j  ,k  ) ) * one_ov_2dx;

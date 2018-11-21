@@ -1938,13 +1938,13 @@ void VectorPatch::update_field_list( SmileiMPI* smpi )
                 listA_[ipatch]         = patches_[ipatch]->EMfields->envelope->A_ ;
                 listA0_[ipatch]        = patches_[ipatch]->EMfields->envelope->A0_ ;
                 listPhi_[ipatch]       = patches_[ipatch]->EMfields->envelope->Phi_ ;
-                listPhi0_[ipatch]      = patches_[ipatch]->EMfields->envelope->Phiold_ ;
+                listPhi0_[ipatch]      = patches_[ipatch]->EMfields->envelope->Phi_m ;
                 listGradPhix_[ipatch]  = patches_[ipatch]->EMfields->envelope->GradPhix_ ;
                 listGradPhiy_[ipatch]  = patches_[ipatch]->EMfields->envelope->GradPhiy_ ;
                 listGradPhiz_[ipatch]  = patches_[ipatch]->EMfields->envelope->GradPhiz_ ;
-                listGradPhix0_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhixold_ ;
-                listGradPhiy0_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhiyold_ ;
-                listGradPhiz0_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhizold_ ;
+                listGradPhix0_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhix_m ;
+                listGradPhiy0_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhiy_m ;
+                listGradPhiz0_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhiz_m ;
                 listEnv_Chi_[ipatch]   = patches_[ipatch]->EMfields->Env_Chi_ ;
            }
         }
