@@ -22,7 +22,7 @@ Validate("Final electron momentum distribution", px, 0.1)
 
 Validate("List of fields in Probe", S.Probe(0).getFields() )
 
-Validate("Species probe", S.Probe(0, 'Rho_eon1', timesteps=2000).getData()[0] )
+Validate("Species probe", S.Probe(0, 'Rho_eon1', timesteps=2000).getData()[0], 1e-4 )
 
 # CONSISTENCY OF DIAGPERFORMANCES
 #   check available quantities
