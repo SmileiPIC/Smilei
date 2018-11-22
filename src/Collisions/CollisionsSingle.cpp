@@ -105,9 +105,6 @@ void CollisionsSingle::collide(Params& params, Patch* patch, int itime, vector<D
             Ionization->prepare2(p1, i1, p2, i2, i<N2max);
         }
         if( intra_collisions ) { n1 += n2; n2 = n1; }
-        n1  *= n_patch_per_cell;
-        n2  *= n_patch_per_cell;
-        n12 *= n_patch_per_cell;
 
         // Pre-calculate some numbers before the big loop
         n123 = pow(n1,2./3.);
@@ -118,7 +115,7 @@ void CollisionsSingle::collide(Params& params, Patch* patch, int itime, vector<D
         m12  = s1->mass / s2->mass; // mass ratio
 
         // Prepare the ionization
-        Ionization->prepare3(params.timestep, n_patch_per_cell);
+        Ionization->prepare3(params.timestep);
 
         // Now start the real loop on pairs of particles
         // ----------------------------------------------------

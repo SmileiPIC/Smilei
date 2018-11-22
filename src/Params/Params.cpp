@@ -531,12 +531,30 @@ namelist("")
         {
             ERROR("In block `Vectorization`, parameter `default` must be `off` or `on`");
         }
+
+        // get parameter "every" which describes a timestep selection
+        if( ! adaptive_vecto_time_selection )
+            adaptive_vecto_time_selection = new TimeSelection(
+                PyTools::extract_py("reconfigure_every", "Vectorization"), "Adaptive vectorization"
+            );
+    }
+    
+    // In case of collisions, ensure particle sort per cell
+    if( PyTools::nComponents("Collisions") > 0 ) {
         
-        // In case of collisions, ensure particle sort per cell
-        if( PyTools::nComponents("Collisions") > 0 ) {
-            if( vectorization_mode == "adaptive_mixed_sort" ) // collisions need sorting per cell
-                ERROR("Collisions are incompatible with the vectorization mode 'adaptive_mixed_sort'.")
-            if( vectorization_mode == "off" ) {
+        if( geometry!="1Dcartesian" 
+         && geometry!="2Dcartesian" 
+         && geometry!="3Dcartesian" )
+            ERROR("Collisions only valid for cartesian geometries for the moment")
+
+        if( vectorization_mode == "adaptive_mixed_sort" ) // collisions need sorting per cell
+            ERROR("Collisions are incompatible with the vectorization mode 'adaptive_mixed_sort'.")
+
+        if( vectorization_mode == "off" ) {
+            if( geometry == "1Dcartesian" ) {
+                WARNING("For collisions, clrw is forced to 1");
+                clrw = 1;
+            } else {
                 WARNING("For collisions, particles have been forced to be sorted per cell");
                 vectorization_mode = "adaptive";
                 has_adaptive_vectorization = true;
@@ -544,12 +562,6 @@ namelist("")
                 adaptive_vecto_time_selection = new TimeSelection();
             }
         }
-        
-        // get parameter "every" which describes a timestep selection
-        if( ! adaptive_vecto_time_selection )
-            adaptive_vecto_time_selection = new TimeSelection(
-                PyTools::extract_py("reconfigure_every", "Vectorization"), "Adaptive vectorization"
-            );
     }
     
     // Read the "print_every" parameter
