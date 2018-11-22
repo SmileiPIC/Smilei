@@ -441,7 +441,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
         if( has_filter ) {
             #pragma omp for schedule(static)
             for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
-                vecPatches.species(ipatch,speciesId_)->Interp->fields_selection (
+                vecPatches.species(ipatch,speciesId_)->Interp->fieldsSelection (
                     vecPatches.emfields(ipatch),
                     *(vecPatches.species(ipatch,speciesId_)->particles),
                     &data_double[patch_start[ipatch]],
@@ -452,7 +452,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
         } else {
             #pragma omp for schedule(static)
             for (unsigned int ipatch=0 ; ipatch<nPatches ; ipatch++) {
-                vecPatches.species(ipatch,speciesId_)->Interp->fields_selection (
+                vecPatches.species(ipatch,speciesId_)->Interp->fieldsSelection (
                     vecPatches.emfields(ipatch),
                     *(vecPatches.species(ipatch,speciesId_)->particles),
                     &data_double[patch_start[ipatch]],

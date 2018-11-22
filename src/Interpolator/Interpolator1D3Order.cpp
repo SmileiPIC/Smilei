@@ -89,12 +89,12 @@ void Interpolator1D3Order::fieldsAndCurrents(ElectroMagn* EMfields, Particles &p
     *(BLoc+0*nparts) = compute(coeffp_, Bx1D_m, ip_);
     
     // Primal Grid : Jy, Jz, Rho
-    (*JLoc).y = compute(coeffp_, Jy1D,  ip_);
-    (*JLoc).z = compute(coeffp_, Jz1D,  ip_);
+    JLoc->y = compute(coeffp_, Jy1D,  ip_);
+    JLoc->z = compute(coeffp_, Jz1D,  ip_);
     (*RhoLoc) = compute(coeffp_, Rho1D, ip_);
     
     // Dual Grid : Jx
-    (*JLoc).x = compute(coeffd_, Jx1D,  id_);
+    JLoc->x = compute(coeffd_, Jx1D,  id_);
     
 }
 
@@ -113,7 +113,7 @@ void Interpolator1D3Order::oneField(Field* field, Particles &particles, int *ist
     }
 }
 
-void Interpolator1D3Order::fields_batch(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
+void Interpolator1D3Order::fieldsWrapper(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
 {
     std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
     std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);
@@ -133,7 +133,7 @@ void Interpolator1D3Order::fields_batch(ElectroMagn* EMfields, Particles &partic
 }
 
 // Interpolator specific to tracked particles. A selection of particles may be provided
-void Interpolator1D3Order::fields_selection(ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, vector<unsigned int> * selection)
+void Interpolator1D3Order::fieldsSelection(ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, vector<unsigned int> * selection)
 {
     if( selection ) {
         

@@ -170,11 +170,11 @@ void InterpolatorAM2Order::fieldsAndCurrents(ElectroMagn* EMfields, Particles &p
     // Interpolation of Bt^(d,d)
     *(BLoc+2*nparts) = std::real(compute_d( &coeffxd_[1], &coeffyd_[1], Bt, id_, jd_));
     // Interpolation of Jl^(d,p,p)
-    (*JLoc).x = std::real(compute_p( &coeffxd_[1], &coeffyp_[1], Jl, id_, jp_));
+    JLoc->x = std::real(compute_p( &coeffxd_[1], &coeffyp_[1], Jl, id_, jp_));
     // Interpolation of Jr^(p,d,p)
-    (*JLoc).y = std::real(compute_d( &coeffxp_[1], &coeffyd_[1], Jr, ip_, jd_));
+    JLoc->y = std::real(compute_d( &coeffxp_[1], &coeffyd_[1], Jr, ip_, jd_));
     // Interpolation of Jt^(p,p,d)
-    (*JLoc).z = std::real(compute_p( &coeffxp_[1], &coeffyp_[1], Jt, ip_, jp_));
+    JLoc->z = std::real(compute_p( &coeffxp_[1], &coeffyp_[1], Jt, ip_, jp_));
     // Interpolation of Rho^(p,p,p)
     (*RhoLoc) = std::real(compute_p( &coeffxp_[1], &coeffyp_[1], Rho, ip_, jp_));
     
@@ -198,9 +198,9 @@ void InterpolatorAM2Order::fieldsAndCurrents(ElectroMagn* EMfields, Particles &p
         *(BLoc+0*nparts) += std::real ( compute_d( &coeffxp_[1], &coeffyd_[1], Bl, ip_, jd_) * exp_mm_theta ) ;
         *(BLoc+1*nparts) += std::real ( compute_p( &coeffxd_[1], &coeffyp_[1], Br, id_, jp_) * exp_mm_theta ) ;
         *(BLoc+2*nparts) += std::real ( compute_d( &coeffxd_[1], &coeffyd_[1], Bt, id_, jd_) * exp_mm_theta ) ;
-        (*JLoc).x += std::real ( compute_p( &coeffxd_[1], &coeffyp_[1], Jl, id_, jp_) * exp_mm_theta ) ;
-        (*JLoc).y += std::real ( compute_d( &coeffxp_[1], &coeffyd_[1], Jr, ip_, jd_) * exp_mm_theta ) ;
-        (*JLoc).z += std::real ( compute_p( &coeffxp_[1], &coeffyp_[1], Jt, ip_, jp_) * exp_mm_theta ) ;
+        JLoc->x += std::real ( compute_p( &coeffxd_[1], &coeffyp_[1], Jl, id_, jp_) * exp_mm_theta ) ;
+        JLoc->y += std::real ( compute_d( &coeffxp_[1], &coeffyd_[1], Jr, ip_, jd_) * exp_mm_theta ) ;
+        JLoc->z += std::real ( compute_p( &coeffxp_[1], &coeffyp_[1], Jt, ip_, jp_) * exp_mm_theta ) ;
         (*RhoLoc) += std::real ( compute_p( &coeffxp_[1], &coeffyp_[1], Rho, ip_, jp_)* exp_mm_theta ) ;
     }
     double delta2 = std::real(exp_m_theta) * *(ELoc+1*nparts) + std::imag(exp_m_theta) * *(ELoc+2*nparts);
@@ -209,9 +209,9 @@ void InterpolatorAM2Order::fieldsAndCurrents(ElectroMagn* EMfields, Particles &p
     delta2 = std::real(exp_m_theta) * *(BLoc+1*nparts) + std::imag(exp_m_theta) *  *(BLoc+2*nparts);
     *(BLoc+2*nparts) = -std::imag(exp_m_theta) * *(BLoc+1*nparts) + std::real(exp_m_theta) * *(BLoc+2*nparts);
     *(BLoc+1*nparts) = delta2 ;
-    delta2 = std::real(exp_m_theta) * (*JLoc).y + std::imag(exp_m_theta) * (*JLoc).z;
-    (*JLoc).z = -std::imag(exp_m_theta) * (*JLoc).y + std::real(exp_m_theta) * (*JLoc).z;
-    (*JLoc).y = delta2 ;
+    delta2 = std::real(exp_m_theta) * JLoc->y + std::imag(exp_m_theta) * JLoc->z;
+    JLoc->z = -std::imag(exp_m_theta) * JLoc->y + std::real(exp_m_theta) * JLoc->z;
+    JLoc->y = delta2 ;
     
 }
 
@@ -221,7 +221,7 @@ void InterpolatorAM2Order::oneField(Field* field, Particles &particles, int *ist
     ERROR("Single field AM2O interpolator not available");
 }
 
-void InterpolatorAM2Order::fields_batch(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
+void InterpolatorAM2Order::fieldsWrapper(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
 {
     std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
     std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);
@@ -245,7 +245,7 @@ void InterpolatorAM2Order::fields_batch(ElectroMagn* EMfields, Particles &partic
 
 
 // Interpolator specific to tracked particles. A selection of particles may be provided
-void InterpolatorAM2Order::fields_selection(ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, vector<unsigned int> * selection)
+void InterpolatorAM2Order::fieldsSelection(ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, vector<unsigned int> * selection)
 {
     ERROR("To Do");
 }

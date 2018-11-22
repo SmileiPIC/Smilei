@@ -114,11 +114,11 @@ void Interpolator3D4Order::fieldsAndCurrents(ElectroMagn* EMfields, Particles &p
     // Interpolation of Bz^(d,d,p)
     *(BLoc+2*nparts) = compute( &coeffxd_[2], &coeffyd_[2], &coeffzp_[2], Bz3D, id_, jd_, kp_);
     // Interpolation of Jx^(d,p,p)
-    (*JLoc).x = compute( &coeffxd_[2], &coeffyp_[2], &coeffzp_[2], Jx3D, id_, jp_, kp_);
+    JLoc->x = compute( &coeffxd_[2], &coeffyp_[2], &coeffzp_[2], Jx3D, id_, jp_, kp_);
     // Interpolation of Jy^(p,d,p)
-    (*JLoc).y = compute( &coeffxp_[2], &coeffyd_[2], &coeffzp_[2], Jy3D, ip_, jd_, kp_);
+    JLoc->y = compute( &coeffxp_[2], &coeffyd_[2], &coeffzp_[2], Jy3D, ip_, jd_, kp_);
     // Interpolation of Jz^(p,p,d)
-    (*JLoc).z = compute( &coeffxp_[2], &coeffyp_[2], &coeffzd_[2], Jz3D, ip_, jp_, kd_);
+    JLoc->z = compute( &coeffxp_[2], &coeffyp_[2], &coeffzd_[2], Jz3D, ip_, jp_, kd_);
     // Interpolation of Rho^(p,p,p)
     (*RhoLoc) = compute( &coeffxp_[2], &coeffyp_[2], &coeffzp_[2], Rho3D, ip_, jp_, kp_);
 }
@@ -143,7 +143,7 @@ void Interpolator3D4Order::oneField(Field* field, Particles &particles, int *ist
     }
 }
 
-void Interpolator3D4Order::fields_batch(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
+void Interpolator3D4Order::fieldsWrapper(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
 {
     std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
     std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);
@@ -168,7 +168,7 @@ void Interpolator3D4Order::fields_batch(ElectroMagn* EMfields, Particles &partic
 
 
 // Interpolator specific to tracked particles. A selection of particles may be provided
-void Interpolator3D4Order::fields_selection(ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, vector<unsigned int> * selection)
+void Interpolator3D4Order::fieldsSelection(ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, vector<unsigned int> * selection)
 {
     if( selection ) {
         

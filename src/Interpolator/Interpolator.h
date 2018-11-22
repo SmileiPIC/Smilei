@@ -20,8 +20,8 @@ public:
     virtual ~Interpolator() {};
     
     virtual void fieldsAndCurrents(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc) = 0;
-    virtual void fields_batch     (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref = 0) = 0;
-    virtual void fields_selection (ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, std::vector<unsigned int> * selection) = 0;
+    virtual void fieldsWrapper    (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref = 0) = 0;
+    virtual void fieldsSelection  (ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, std::vector<unsigned int> * selection) = 0;
     virtual void oneField         (Field* field, Particles &particles, int *istart, int *iend, double* FieldLoc) =0;
 
     virtual void fieldsAndEnvelope( ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) {

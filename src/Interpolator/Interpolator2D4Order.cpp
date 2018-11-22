@@ -113,11 +113,11 @@ void Interpolator2D4Order::fieldsAndCurrents(ElectroMagn* EMfields, Particles &p
     // Interpolation of Bz^(d,d)
     *(BLoc+2*nparts) = compute( &coeffxd_[2], &coeffyd_[2], Bz2D, id_, jd_);
     // Interpolation of Jx^(d,p)
-    (*JLoc).x = compute( &coeffxd_[2], &coeffyp_[2], Jx2D, id_, jp_);
+    JLoc->x = compute( &coeffxd_[2], &coeffyp_[2], Jx2D, id_, jp_);
     // Interpolation of Ey^(p,d)
-    (*JLoc).y = compute( &coeffxp_[2], &coeffyd_[2], Jy2D, ip_, jd_);
+    JLoc->y = compute( &coeffxp_[2], &coeffyd_[2], Jy2D, ip_, jd_);
     // Interpolation of Ez^(p,p)
-    (*JLoc).z = compute( &coeffxp_[2], &coeffyp_[2], Jz2D, ip_, jp_);
+    JLoc->z = compute( &coeffxp_[2], &coeffyp_[2], Jz2D, ip_, jp_);
     // Interpolation of Rho^(p,p)
     (*RhoLoc) = compute( &coeffxp_[2], &coeffyp_[2], Rho2D, ip_, jp_);
 }
@@ -138,7 +138,7 @@ void Interpolator2D4Order::oneField(Field* field, Particles &particles, int *ist
         FieldLoc[ipart] = compute(coeffx, coeffy, F, *i, *j);
     }
 }
-void Interpolator2D4Order::fields_batch(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
+void Interpolator2D4Order::fieldsWrapper(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
 {
     std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
     std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);
@@ -160,7 +160,7 @@ void Interpolator2D4Order::fields_batch(ElectroMagn* EMfields, Particles &partic
 }
 
 // Interpolator specific to tracked particles. A selection of particles may be provided
-void Interpolator2D4Order::fields_selection(ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, vector<unsigned int> * selection)
+void Interpolator2D4Order::fieldsSelection(ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, vector<unsigned int> * selection)
 {
     if( selection ) {
         

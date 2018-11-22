@@ -32,7 +32,7 @@ void Interpolator3D2OrderV::fields(ElectroMagn* EMfields, Particles &particles, 
 {
 }
 
-void Interpolator3D2OrderV::fields_batch(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
+void Interpolator3D2OrderV::fieldsWrapper(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
 {
     if ( istart[0] == iend[0] ) return; //Don't treat empty cells.
 
@@ -362,7 +362,7 @@ void Interpolator3D2OrderV::fieldsAndCurrents(ElectroMagn* EMfields, Particles &
             }
         }
     }
-    (*JLoc).x = interp_res;
+    JLoc->x = interp_res;
 
 
     //Jy(primal, dual, primal)
@@ -375,7 +375,7 @@ void Interpolator3D2OrderV::fieldsAndCurrents(ElectroMagn* EMfields, Particles &
             }
         }
     }
-    (*JLoc).y = interp_res;
+    JLoc->y = interp_res;
 
 
     //Jz(primal, primal, dual)
@@ -388,7 +388,7 @@ void Interpolator3D2OrderV::fieldsAndCurrents(ElectroMagn* EMfields, Particles &
             }
         }
     }
-    (*JLoc).z = interp_res;
+    JLoc->z = interp_res;
 
     //Rho(primal, primal, primal)
     interp_res = 0.;
