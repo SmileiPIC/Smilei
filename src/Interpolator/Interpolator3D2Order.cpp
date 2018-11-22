@@ -406,21 +406,21 @@ void Interpolator3D2Order::interpolate_time_centered_envelope( ElectroMagn* EMfi
 
         // Indexes of the central nodes
         ip_ = round(xpn);
-        id_ = round(xpn+0.5);
+        // id_ = round(xpn+0.5);
         jp_ = round(ypn);
-        jd_ = round(ypn+0.5);
+        // jd_ = round(ypn+0.5);
         kp_ = round(zpn);
-        kd_ = round(zpn+0.5);
+        // kd_ = round(zpn+0.5);
 
 
         // Declaration and calculation of the coefficient for interpolation
         double delta2;
 
-        deltax   = xpn - (double)id_ + 0.5;
-        delta2  = deltax*deltax;
-        coeffxd_[0] = 0.5 * (delta2-deltax+0.25);
-        coeffxd_[1] = 0.75 - delta2;
-        coeffxd_[2] = 0.5 * (delta2+deltax+0.25);
+        // deltax   = xpn - (double)id_ + 0.5;
+        // delta2  = deltax*deltax;
+        // coeffxd_[0] = 0.5 * (delta2-deltax+0.25);
+        // coeffxd_[1] = 0.75 - delta2;
+        // coeffxd_[2] = 0.5 * (delta2+deltax+0.25);
 
         deltax   = xpn - (double)ip_;
         delta2  = deltax*deltax;
@@ -428,11 +428,11 @@ void Interpolator3D2Order::interpolate_time_centered_envelope( ElectroMagn* EMfi
         coeffxp_[1] = 0.75 - delta2;
         coeffxp_[2] = 0.5 * (delta2+deltax+0.25);
 
-        deltay   = ypn - (double)jd_ + 0.5;
-        delta2  = deltay*deltay;
-        coeffyd_[0] = 0.5 * (delta2-deltay+0.25);
-        coeffyd_[1] = 0.75 - delta2;
-        coeffyd_[2] = 0.5 * (delta2+deltay+0.25);
+        // deltay   = ypn - (double)jd_ + 0.5;
+        // delta2  = deltay*deltay;
+        // coeffyd_[0] = 0.5 * (delta2-deltay+0.25);
+        // coeffyd_[1] = 0.75 - delta2;
+        // coeffyd_[2] = 0.5 * (delta2+deltay+0.25);
 
         deltay   = ypn - (double)jp_;
         delta2  = deltay*deltay;
@@ -440,11 +440,11 @@ void Interpolator3D2Order::interpolate_time_centered_envelope( ElectroMagn* EMfi
         coeffyp_[1] = 0.75 - delta2;
         coeffyp_[2] = 0.5 * (delta2+deltay+0.25);
 
-        deltaz   = zpn - (double)kd_ + 0.5;
-        delta2  = deltaz*deltaz;
-        coeffzd_[0] = 0.5 * (delta2-deltaz+0.25);
-        coeffzd_[1] = 0.75 - delta2;
-        coeffzd_[2] = 0.5 * (delta2+deltaz+0.25);
+        // deltaz   = zpn - (double)kd_ + 0.5;
+        // delta2  = deltaz*deltaz;
+        // coeffzd_[0] = 0.5 * (delta2-deltaz+0.25);
+        // coeffzd_[1] = 0.75 - delta2;
+        // coeffzd_[2] = 0.5 * (delta2+deltaz+0.25);
 
         deltaz   = zpn - (double)kp_;
         delta2  = deltaz*deltaz;
@@ -456,11 +456,11 @@ void Interpolator3D2Order::interpolate_time_centered_envelope( ElectroMagn* EMfi
         //!\todo CHECK if this is correct for both primal & dual grids !!!
         // First index for summation
         ip_ = ip_ - i_domain_begin;
-        id_ = id_ - i_domain_begin;
+        // id_ = id_ - i_domain_begin;
         jp_ = jp_ - j_domain_begin;
-        jd_ = jd_ - j_domain_begin;
+        // jd_ = jd_ - j_domain_begin;
         kp_ = kp_ - k_domain_begin;
-        kd_ = kd_ - k_domain_begin;
+        // kd_ = kd_ - k_domain_begin;
 
         
 
