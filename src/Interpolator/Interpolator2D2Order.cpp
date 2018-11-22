@@ -24,7 +24,7 @@ Interpolator2D2Order::Interpolator2D2Order(Params &params, Patch *patch) : Inter
 // ---------------------------------------------------------------------------------------------------------------------
 // 2nd Order Interpolation of the fields at a the particle position (3 nodes are used)
 // ---------------------------------------------------------------------------------------------------------------------
-void Interpolator2D2Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, int nparts, double* ELoc, double* BLoc)
+void Interpolator2D2Order::fields(ElectroMagn* EMfields, Particles &particles, int ipart, int nparts, double* ELoc, double* BLoc)
 {
     // Static cast of the electromagnetic fields
     Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
@@ -55,7 +55,7 @@ void Interpolator2D2Order::operator() (ElectroMagn* EMfields, Particles &particl
     *(BLoc+2*nparts) = compute( &coeffxd_[1], &coeffyd_[1], Bz2D, id_, jd_);
 } // END Interpolator2D2Order
 
-void Interpolator2D2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc)
+void Interpolator2D2Order::fieldsAndCurrents(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc)
 {
     int ipart = *istart;
 
@@ -107,7 +107,7 @@ void Interpolator2D2Order::operator() (ElectroMagn* EMfields, Particles &particl
 }
 
 // Interpolator on another field than the basic ones
-void Interpolator2D2Order::operator() (Field* field, Particles &particles, int *istart, int *iend, double* FieldLoc)
+void Interpolator2D2Order::oneField(Field* field, Particles &particles, int *istart, int *iend, double* FieldLoc)
 {
     Field2D* F = static_cast<Field2D*>(field);
     double * coeffx = field->isDual(0) ? &coeffxd_[1] : &coeffxp_[1];
@@ -123,7 +123,7 @@ void Interpolator2D2Order::operator() (Field* field, Particles &particles, int *
     }
 }
 
-void Interpolator2D2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
+void Interpolator2D2Order::fields_batch(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
 {
     std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
     std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);
@@ -134,7 +134,7 @@ void Interpolator2D2Order::operator() (ElectroMagn* EMfields, Particles &particl
     int nparts( particles.size() );
     for (int ipart=*istart ; ipart<*iend; ipart++ ) {
         //Interpolation on current particle
-        (*this)(EMfields, particles, ipart, nparts, &(*Epart)[ipart], &(*Bpart)[ipart]);
+        fields(EMfields, particles, ipart, nparts, &(*Epart)[ipart], &(*Bpart)[ipart]);
         //Buffering of iol and delta
         (*iold)[ipart+0*nparts]  = ip_;
         (*iold)[ipart+1*nparts]  = jp_;
@@ -145,20 +145,20 @@ void Interpolator2D2Order::operator() (ElectroMagn* EMfields, Particles &particl
 }
 
 // Interpolator specific to tracked particles. A selection of particles may be provided
-void Interpolator2D2Order::operator() (ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, vector<unsigned int> * selection)
+void Interpolator2D2Order::fields_selection(ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, vector<unsigned int> * selection)
 {
     if( selection ) {
         
         int nsel_tot = selection->size();
         for (int isel=0 ; isel<nsel_tot; isel++ ) {
-            (*this)(EMfields, particles, (*selection)[isel], offset, buffer+isel, buffer+isel+3*offset);
+            fields(EMfields, particles, (*selection)[isel], offset, buffer+isel, buffer+isel+3*offset);
         }
         
     } else {
         
         int npart_tot = particles.size();
         for (int ipart=0 ; ipart<npart_tot; ipart++ ) {
-            (*this)(EMfields, particles, ipart, offset, buffer+ipart, buffer+ipart+3*offset);
+            fields(EMfields, particles, ipart, offset, buffer+ipart, buffer+ipart+3*offset);
         }
         
     }

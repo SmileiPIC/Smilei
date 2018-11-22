@@ -111,7 +111,7 @@ void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
 #endif
 
         // Interpolate the fields at the particle position
-        (*Interp)(EMfields, *particles, smpi, &(first_index[0]), &(last_index[last_index.size()-1]), ithread, first_index[0]);
+        Interp->fields_batch(EMfields, *particles, smpi, &(first_index[0]), &(last_index[last_index.size()-1]), ithread, first_index[0]);
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[0] += MPI_Wtime() - timer;
@@ -494,11 +494,11 @@ void SpeciesAdaptiveV2::reconfigure_operators(Params &params, Patch * patch)
     delete Proj;
 
     // Reassign the correct Interpolator
-    this->Interp = InterpolatorFactory::create(params, patch, this->vectorized_operators);
+    Interp = InterpolatorFactory::create(params, patch, this->vectorized_operators);
     // Reassign the correct Pusher to Push
     //Push = PusherFactory::create(params, this);
     // Reassign the correct Projector
-    this->Proj = ProjectorFactory::create(params, patch, this->vectorized_operators);
+    Proj = ProjectorFactory::create(params, patch, this->vectorized_operators);
 }
 
 
@@ -529,7 +529,7 @@ void SpeciesAdaptiveV2::scalar_ponderomotive_update_susceptibility_and_momentum(
 #ifdef  __DETAILED_TIMERS
         timer = MPI_Wtime();
 #endif
-        Interp->interpolate_em_fields_and_envelope(EMfields, *particles, smpi, &(first_index[0]), &(last_index[last_index.size()-1]), ithread );
+        Interp->fieldsAndEnvelope(EMfields, *particles, smpi, &(first_index[0]), &(last_index[last_index.size()-1]), ithread );
 #ifdef  __DETAILED_TIMERS
         patch->patch_timers[7] += MPI_Wtime() - timer;
 #endif
@@ -603,7 +603,7 @@ void SpeciesAdaptiveV2::scalar_ponderomotive_update_position_and_currents(double
 #ifdef  __DETAILED_TIMERS
         timer = MPI_Wtime();
 #endif
-        Interp->interpolate_envelope_and_old_envelope(EMfields, *particles, smpi, &(first_index[0]), &(last_index[last_index.size()-1]), ithread );
+        Interp->envelopeAndOldEnvelope(EMfields, *particles, smpi, &(first_index[0]), &(last_index[last_index.size()-1]), ithread );
 #ifdef  __DETAILED_TIMERS
         patch->patch_timers[10] += MPI_Wtime() - timer;
 #endif

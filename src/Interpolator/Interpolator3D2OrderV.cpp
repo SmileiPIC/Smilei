@@ -28,11 +28,11 @@ Interpolator3D2OrderV::Interpolator3D2OrderV(Params &params, Patch *patch) : Int
 // ---------------------------------------------------------------------------------------------------------------------
 // 2nd OrderV Interpolation of the fields at a the particle position (3 nodes are used)
 // ---------------------------------------------------------------------------------------------------------------------
-void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, double* ELoc, double* BLoc)
+void Interpolator3D2OrderV::fields(ElectroMagn* EMfields, Particles &particles, int ipart, double* ELoc, double* BLoc)
 {
 }
 
-void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
+void Interpolator3D2OrderV::fields_batch(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
 {
     if ( istart[0] == iend[0] ) return; //Don't treat empty cells.
 
@@ -207,7 +207,7 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
 } // END Interpolator3D2OrderV
 
 
-void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc)
+void Interpolator3D2OrderV::fieldsAndCurrents(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc)
 {
     // iend not used for now
     // probes are interpolated one by one for now
@@ -406,7 +406,7 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
 
 
 
-void Interpolator3D2OrderV::interpolate_em_fields_and_envelope(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
+void Interpolator3D2OrderV::fieldsAndEnvelope(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
 {
     if ( istart[0] == iend[0] ) return; //Don't treat empty cells.
 
@@ -642,7 +642,7 @@ void Interpolator3D2OrderV::interpolate_em_fields_and_envelope(ElectroMagn* EMfi
 }
 
 
-void Interpolator3D2OrderV::interpolate_envelope_and_old_envelope(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
+void Interpolator3D2OrderV::envelopeAndOldEnvelope(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
 {
     if ( istart[0] == iend[0] ) return; //Don't treat empty cells.
 
@@ -843,7 +843,7 @@ void Interpolator3D2OrderV::interpolate_envelope_and_old_envelope(ElectroMagn* E
 }
 
 // probes like diagnostic !
-void Interpolator3D2OrderV::interpolate_envelope_and_susceptibility(ElectroMagn* EMfields, Particles &particles, int ipart, double* Env_A_abs_Loc, double* Env_Chi_Loc, double* Env_E_abs_Loc)
+void Interpolator3D2OrderV::envelopeAndSusceptibility(ElectroMagn* EMfields, Particles &particles, int ipart, double* Env_A_abs_Loc, double* Env_Chi_Loc, double* Env_E_abs_Loc)
 {
     // probes are interpolated one by one for now
 
@@ -927,7 +927,7 @@ void Interpolator3D2OrderV::interpolate_envelope_and_susceptibility(ElectroMagn*
 
 
 // Interpolator on another field than the basic ones
-void Interpolator3D2OrderV::operator() (Field* field, Particles &particles, int *istart, int *iend, double* FieldLoc)
+void Interpolator3D2OrderV::oneField(Field* field, Particles &particles, int *istart, int *iend, double* FieldLoc)
 {
     ERROR("Single field 3D2O interpolator not available in vectorized mode");
 }

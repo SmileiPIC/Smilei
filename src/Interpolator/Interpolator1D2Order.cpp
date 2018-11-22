@@ -16,7 +16,7 @@ Interpolator1D2Order::Interpolator1D2Order(Params &params, Patch* patch) : Inter
 // ---------------------------------------------------------------------------------------------------------------------
 // 2nd Order Interpolation of the fields at a the particle position (3 nodes are used)
 // ---------------------------------------------------------------------------------------------------------------------
-void Interpolator1D2Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, int nparts, double* ELoc, double* BLoc)
+void Interpolator1D2Order::fields(ElectroMagn* EMfields, Particles &particles, int ipart, int nparts, double* ELoc, double* BLoc)
 {
     // Static cast of the electromagnetic fields
     Field1D* Ex1D     = static_cast<Field1D*>(EMfields->Ex_);
@@ -43,7 +43,7 @@ void Interpolator1D2Order::operator() (ElectroMagn* EMfields, Particles &particl
     
 }//END Interpolator1D2Order
 
-void Interpolator1D2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc)
+void Interpolator1D2Order::fieldsAndCurrents(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc)
 {
     int ipart = *istart;
 
@@ -90,7 +90,7 @@ void Interpolator1D2Order::operator() (ElectroMagn* EMfields, Particles &particl
 }
 
 // Interpolator on another field than the basic ones
-void Interpolator1D2Order::operator() (Field* field, Particles &particles, int *istart, int *iend, double* FieldLoc)
+void Interpolator1D2Order::oneField(Field* field, Particles &particles, int *istart, int *iend, double* FieldLoc)
 {
     Field1D* F = static_cast<Field1D*>(field);
     double * coeff = field->isDual(0) ? coeffd_ : coeffp_;
@@ -103,7 +103,7 @@ void Interpolator1D2Order::operator() (Field* field, Particles &particles, int *
     }
 }
 
-void Interpolator1D2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
+void Interpolator1D2Order::fields_batch(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
 {
     std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
     std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);
@@ -114,7 +114,7 @@ void Interpolator1D2Order::operator() (ElectroMagn* EMfields, Particles &particl
     int npart_tot = particles.size();
     for (int ipart=*istart ; ipart<*iend; ipart++ ) {
         //Interpolation on current particle
-        (*this)(EMfields, particles, ipart, npart_tot, &(*Epart)[ipart], &(*Bpart)[ipart]);
+        fields(EMfields, particles, ipart, npart_tot, &(*Epart)[ipart], &(*Bpart)[ipart]);
         //Buffering of iol and delta
         (*iold)[ipart] = ip_;
         (*delta)[ipart] = xjmxi;
@@ -123,20 +123,20 @@ void Interpolator1D2Order::operator() (ElectroMagn* EMfields, Particles &particl
 }
 
 // Interpolator specific to tracked particles. A selection of particles may be provided
-void Interpolator1D2Order::operator() (ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, vector<unsigned int> * selection)
+void Interpolator1D2Order::fields_selection(ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, vector<unsigned int> * selection)
 {
     if( selection ) {
         
         int nsel_tot = selection->size();
         for (int isel=0 ; isel<nsel_tot; isel++ ) {
-            (*this)(EMfields, particles, (*selection)[isel], offset, buffer+isel, buffer+isel+3*offset);
+            fields(EMfields, particles, (*selection)[isel], offset, buffer+isel, buffer+isel+3*offset);
         }
         
     } else {
         
         int npart_tot = particles.size();
         for (int ipart=0 ; ipart<npart_tot; ipart++ ) {
-            (*this)(EMfields, particles, ipart, offset, buffer+ipart, buffer+ipart+3*offset);
+            fields(EMfields, particles, ipart, offset, buffer+ipart, buffer+ipart+3*offset);
         }
         
     }

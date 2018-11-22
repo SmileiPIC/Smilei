@@ -26,11 +26,11 @@ Interpolator2D2OrderV::Interpolator2D2OrderV(Params &params, Patch *patch) : Int
 // ---------------------------------------------------------------------------------------------------------------------
 // 2nd OrderV Interpolation of the fields at a the particle position (3 nodes are used)
 // ---------------------------------------------------------------------------------------------------------------------
-void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, double* ELoc, double* BLoc)
+void Interpolator2D2OrderV::fields(ElectroMagn* EMfields, Particles &particles, int ipart, double* ELoc, double* BLoc)
 {
 }
 
-void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
+void Interpolator2D2OrderV::fields_batch(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
 {
     if ( istart[0] == iend[0] ) return; //Don't treat empty cells.
 
@@ -183,7 +183,7 @@ void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
 
 } // END Interpolator2D2OrderV
 
-void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc)
+void Interpolator2D2OrderV::fieldsAndCurrents(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc)
 {
     // iend not used for now
     // probes are interpolated one by one for now
@@ -349,7 +349,7 @@ void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
 
 
 // Interpolator on another field than the basic ones
-void Interpolator2D2OrderV::operator() (Field* field, Particles &particles, int *istart, int *iend, double* FieldLoc)
+void Interpolator2D2OrderV::oneField(Field* field, Particles &particles, int *istart, int *iend, double* FieldLoc)
 {
     ERROR("Single field 2D2O interpolator not available in vectorized mode");
 }

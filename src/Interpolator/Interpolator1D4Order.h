@@ -16,11 +16,11 @@ public:
     Interpolator1D4Order(Params&, Patch*);
     ~Interpolator1D4Order() override final{};
     
-    inline void operator() (ElectroMagn* EMfields, Particles &particles, int ipart, int nparts, double* ELoc, double* BLoc);
-    void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref = 0) override final;
-    void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc) override final;
-    void operator() (ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, std::vector<unsigned int> * selection) override final;
-    void operator() (Field* field, Particles &particles, int *istart, int *iend, double* FieldLoc) override final;
+    inline void fields    (ElectroMagn* EMfields, Particles &particles, int ipart, int nparts, double* ELoc, double* BLoc);
+    void fieldsAndCurrents(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc) override final;
+    void fields_batch     (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref = 0) override final;
+    void fields_selection (ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, std::vector<unsigned int> * selection) override final;
+    void oneField         (Field* field, Particles &particles, int *istart, int *iend, double* FieldLoc) override final;
     
     inline double compute( double* coeff, Field1D* f, int idx) {
         double interp_res =  coeff[0] * (*f)(idx-2)   + coeff[1] * (*f)(idx-1)   + coeff[2] * (*f)(idx) + coeff[3] * (*f)(idx+1) + coeff[4] * (*f)(idx+2);

@@ -610,7 +610,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 #endif
 
             // Interpolate the fields at the particle position
-            (*Interp)(EMfields, *particles, smpi, &(first_index[ibin]), &(last_index[ibin]), ithread );
+            Interp->fields_batch(EMfields, *particles, smpi, &(first_index[ibin]), &(last_index[ibin]), ithread );
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[0] += MPI_Wtime() - timer;
@@ -1772,7 +1772,7 @@ void Species::ponderomotive_update_susceptibility_and_momentum(double time_dual,
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
-            Interp->interpolate_em_fields_and_envelope(EMfields, *particles, smpi, &(first_index[ibin]), &(last_index[ibin]), ithread );
+            Interp->fieldsAndEnvelope(EMfields, *particles, smpi, &(first_index[ibin]), &(last_index[ibin]), ithread );
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[7] += MPI_Wtime() - timer;
 #endif
@@ -1837,7 +1837,7 @@ void Species::ponderomotive_project_susceptibility(double time_dual, unsigned in
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
-            Interp->interpolate_em_fields_and_envelope(EMfields, *particles, smpi, &(first_index[ibin]), &(last_index[ibin]), ithread );
+            Interp->fieldsAndEnvelope(EMfields, *particles, smpi, &(first_index[ibin]), &(last_index[ibin]), ithread );
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[7] += MPI_Wtime() - timer;
 #endif
@@ -1906,7 +1906,7 @@ void Species::ponderomotive_update_position_and_currents(double time_dual, unsig
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
-            Interp->interpolate_envelope_and_old_envelope(EMfields, *particles, smpi, &(first_index[ibin]), &(last_index[ibin]), ithread );
+            Interp->envelopeAndOldEnvelope(EMfields, *particles, smpi, &(first_index[ibin]), &(last_index[ibin]), ithread );
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[10] += MPI_Wtime() - timer;
 #endif
