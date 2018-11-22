@@ -355,7 +355,7 @@ class Performances(Diagnostic):
 				ranks = self._np.empty((self._number_of_patches[0],), dtype=self._np.uint32)
 				previous_h = 0
 				rank = 0
-				for h in hindices:
+				for h in hindices[1:]:
 					ranks[previous_h:h] = rank
 					rank += 1
 					previous_h = h

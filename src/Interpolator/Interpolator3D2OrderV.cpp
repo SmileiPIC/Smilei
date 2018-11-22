@@ -57,7 +57,7 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
 
     double *Epart[3], *Bpart[3];
 
-    double coeff[3][2][3][32]; 
+    double coeff[3][2][3][32];
     int dual[3][32]; // Size ndim. Boolean indicating if the part has a dual indice equal to the primal one (dual=0, delta_primal < 0) or if it is +1 (dual=1, delta_primal>=0).
 
     int vecSize = 32;
@@ -75,7 +75,7 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
         if (cell_nparts > vecSize ) {
             np_computed = vecSize;
             cell_nparts -= vecSize;
-        }       
+        }
         else
             np_computed = cell_nparts;
 
@@ -84,7 +84,7 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
         deltaO[1] = &(smpi->dynamics_deltaold[ithread][nparts   + ivect + istart[0] - ipart_ref]);
         deltaO[2] = &(smpi->dynamics_deltaold[ithread][2*nparts + ivect + istart[0] - ipart_ref]);
 
-        for (unsigned int k=0; k<3;k++) {   
+        for (unsigned int k=0; k<3;k++) {
             Epart[k]= &(smpi->dynamics_Epart[ithread][k*nparts-ipart_ref+ivect+istart[0]]);
             Bpart[k]= &(smpi->dynamics_Bpart[ithread][k*nparts-ipart_ref+ivect+istart[0]]);
         }
@@ -169,7 +169,7 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
             for (int iloc=-1 ; iloc<2 ; iloc++) {
                 for (int jloc=-1 ; jloc<2 ; jloc++) {
                     for (int kloc=-1 ; kloc<2 ; kloc++) {
-                        interp_res += *(coeffxp+iloc*32) * *(coeffyd+jloc*32) * *(coeffzd+kloc*32) * 
+                        interp_res += *(coeffxp+iloc*32) * *(coeffyd+jloc*32) * *(coeffzd+kloc*32) *
                             ( (1-dual[2][ipart]) * ( (1-dual[1][ipart])*(*Bx3D)(idxO[0]+iloc,idxO[1]+jloc,idxO[2]+kloc) + dual[1][ipart]*(*Bx3D)(idxO[0]+iloc,idxO[1]+1+jloc,idxO[2]+kloc ) )
                             +    dual[2][ipart]  * ( (1-dual[1][ipart])*(*Bx3D)(idxO[0]+iloc,idxO[1]+jloc,idxO[2]+1+kloc) + dual[1][ipart]*(*Bx3D)(idxO[0]+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc ) ) );
                     }
@@ -182,7 +182,7 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
             for (int iloc=-1 ; iloc<2 ; iloc++) {
                 for (int jloc=-1 ; jloc<2 ; jloc++) {
                     for (int kloc=-1 ; kloc<2 ; kloc++) {
-                        interp_res += *(coeffxd+iloc*32) * *(coeffyp+jloc*32) * *(coeffzd+kloc*32) * 
+                        interp_res += *(coeffxd+iloc*32) * *(coeffyp+jloc*32) * *(coeffzd+kloc*32) *
                             ( (1-dual[2][ipart]) * ( (1-dual[0][ipart])*(*By3D)(idxO[0]+iloc,idxO[1]+jloc,idxO[2]+kloc) + dual[0][ipart]*(*By3D)(idxO[0]+1+iloc,idxO[1]+jloc,idxO[2]+kloc ) )
                             +    dual[2][ipart]  * ( (1-dual[0][ipart])*(*By3D)(idxO[0]+iloc,idxO[1]+jloc,idxO[2]+1+kloc) + dual[0][ipart]*(*By3D)(idxO[0]+1+iloc,idxO[1]+jloc,idxO[2]+1+kloc ) ) );
                     }
@@ -195,7 +195,7 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
             for (int iloc=-1 ; iloc<2 ; iloc++) {
                 for (int jloc=-1 ; jloc<2 ; jloc++) {
                     for (int kloc=-1 ; kloc<2 ; kloc++) {
-                        interp_res += *(coeffxd+iloc*32) * *(coeffyd+jloc*32) * *(coeffzp+kloc*32) * 
+                        interp_res += *(coeffxd+iloc*32) * *(coeffyd+jloc*32) * *(coeffzp+kloc*32) *
                             ( (1-dual[1][ipart]) * ( (1-dual[0][ipart])*(*Bz3D)(idxO[0]+iloc,idxO[1]+jloc,idxO[2]+kloc) + dual[0][ipart]*(*Bz3D)(idxO[0]+1+iloc,idxO[1]+jloc,idxO[2]+kloc ) )
                             +    dual[1][ipart]  * ( (1-dual[0][ipart])*(*Bz3D)(idxO[0]+iloc,idxO[1]+1+jloc,idxO[2]+kloc) + dual[0][ipart]*(*Bz3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+kloc ) ) );
                     }
@@ -217,7 +217,7 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
 
 
     double *Epart[3], *Bpart[3];
-    for (unsigned int k=0; k<3;k++) {   
+    for (unsigned int k=0; k<3;k++) {
         Epart[k]= &(smpi->dynamics_Epart[ithread][k*nparts]);
         Bpart[k]= &(smpi->dynamics_Bpart[ithread][k*nparts]);
     }
@@ -243,7 +243,7 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
     Field3D* Jz3D = static_cast<Field3D*>(EMfields->Jz_);
     Field3D* rho3D = static_cast<Field3D*>(EMfields->rho_);
 
-    double coeff[3][2][3]; 
+    double coeff[3][2][3];
     int dual[3]; // Size ndim. Boolean indicating if the part has a dual indice equal to the primal one (dual=0, delta_primal < 0) or if it is +1 (dual=1, delta_primal>=0).
 
     double delta2, delta;
@@ -317,7 +317,7 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
     for (int iloc=-1 ; iloc<2 ; iloc++) {
         for (int jloc=-1 ; jloc<2 ; jloc++) {
             for (int kloc=-1 ; kloc<2 ; kloc++) {
-                interp_res += *(coeffxp+iloc*1) * *(coeffyd+jloc*1) * *(coeffzd+kloc*1) * 
+                interp_res += *(coeffxp+iloc*1) * *(coeffyd+jloc*1) * *(coeffzd+kloc*1) *
                     ( (1-dual[2]) * ( (1-dual[1])*(*Bx3D)(idxO[0]+iloc,idxO[1]+jloc,idxO[2]+kloc) + dual[1]*(*Bx3D)(idxO[0]+iloc,idxO[1]+1+jloc,idxO[2]+kloc ) )
                       +    dual[2]  * ( (1-dual[1])*(*Bx3D)(idxO[0]+iloc,idxO[1]+jloc,idxO[2]+1+kloc) + dual[1]*(*Bx3D)(idxO[0]+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc ) ) );
             }
@@ -330,7 +330,7 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
     for (int iloc=-1 ; iloc<2 ; iloc++) {
         for (int jloc=-1 ; jloc<2 ; jloc++) {
             for (int kloc=-1 ; kloc<2 ; kloc++) {
-                interp_res += *(coeffxd+iloc*1) * *(coeffyp+jloc*1) * *(coeffzd+kloc*1) * 
+                interp_res += *(coeffxd+iloc*1) * *(coeffyp+jloc*1) * *(coeffzd+kloc*1) *
                     ( (1-dual[2]) * ( (1-dual[0])*(*By3D)(idxO[0]+iloc,idxO[1]+jloc,idxO[2]+kloc) + dual[0]*(*By3D)(idxO[0]+1+iloc,idxO[1]+jloc,idxO[2]+kloc ) )
                       +    dual[2]  * ( (1-dual[0])*(*By3D)(idxO[0]+iloc,idxO[1]+jloc,idxO[2]+1+kloc) + dual[0]*(*By3D)(idxO[0]+1+iloc,idxO[1]+jloc,idxO[2]+1+kloc ) ) );
             }
@@ -343,7 +343,7 @@ void Interpolator3D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
     for (int iloc=-1 ; iloc<2 ; iloc++) {
         for (int jloc=-1 ; jloc<2 ; jloc++) {
             for (int kloc=-1 ; kloc<2 ; kloc++) {
-                interp_res += *(coeffxd+iloc*1) * *(coeffyd+jloc*1) * *(coeffzp+kloc*1) * 
+                interp_res += *(coeffxd+iloc*1) * *(coeffyd+jloc*1) * *(coeffzp+kloc*1) *
                     ( (1-dual[1]) * ( (1-dual[0])*(*Bz3D)(idxO[0]+iloc,idxO[1]+jloc,idxO[2]+kloc) + dual[0]*(*Bz3D)(idxO[0]+1+iloc,idxO[1]+jloc,idxO[2]+kloc ) )
                       +    dual[1]  * ( (1-dual[0])*(*Bz3D)(idxO[0]+iloc,idxO[1]+1+jloc,idxO[2]+kloc) + dual[0]*(*Bz3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+kloc ) ) );
             }
@@ -451,7 +451,7 @@ void Interpolator3D2OrderV::interpolate_em_fields_and_envelope(ElectroMagn* EMfi
 
 
 
-    double coeff[3][2][3][32]; 
+    double coeff[3][2][3][32];
     int dual[3][32]; // Size ndim. Boolean indicating if the part has a dual indice equal to the primal one (dual=0) or if it is +1 (dual=1).
 
     int vecSize = 32;
@@ -469,7 +469,7 @@ void Interpolator3D2OrderV::interpolate_em_fields_and_envelope(ElectroMagn* EMfi
         if (cell_nparts > vecSize ) {
             np_computed = vecSize;
             cell_nparts -= vecSize;
-        }       
+        }
         else
             np_computed = cell_nparts;
 
@@ -553,8 +553,8 @@ void Interpolator3D2OrderV::interpolate_em_fields_and_envelope(ElectroMagn* EMfi
             for (int iloc=-1 ; iloc<2 ; iloc++) {
                 for (int jloc=-1 ; jloc<2 ; jloc++) {
                     for (int kloc=-1 ; kloc<2 ; kloc++) {
-                        //interp_res += *(coeffxp+iloc*32) * *(coeffyd+jloc*32) * *(coeffzp+kloc*32) * 
-                        interp_res += *(coeffxp+iloc*32) * *(coeffyd+jloc*32) * *(coeffzd+kloc*32) * 
+                        //interp_res += *(coeffxp+iloc*32) * *(coeffyd+jloc*32) * *(coeffzp+kloc*32) *
+                        interp_res += *(coeffxp+iloc*32) * *(coeffyd+jloc*32) * *(coeffzd+kloc*32) *
                             ( (1-dual[2][ipart]) * ( (1-dual[1][ipart])*(*Bx3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc) + dual[1][ipart]*(*Bx3D)(idxO[0]+1+iloc,idxO[1]+2+jloc,idxO[2]+1+kloc ) )
                             +    dual[2][ipart]  * ( (1-dual[1][ipart])*(*Bx3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+2+kloc) + dual[1][ipart]*(*Bx3D)(idxO[0]+1+iloc,idxO[1]+2+jloc,idxO[2]+2+kloc ) ) );
                     }
@@ -567,8 +567,8 @@ void Interpolator3D2OrderV::interpolate_em_fields_and_envelope(ElectroMagn* EMfi
             for (int iloc=-1 ; iloc<2 ; iloc++) {
                 for (int jloc=-1 ; jloc<2 ; jloc++) {
                     for (int kloc=-1 ; kloc<2 ; kloc++) {
-                        //interp_res += *(coeffxp+iloc*32) * *(coeffyd+jloc*32) * *(coeffzp+kloc*32) * 
-                        interp_res += *(coeffxd+iloc*32) * *(coeffyp+jloc*32) * *(coeffzd+kloc*32) * 
+                        //interp_res += *(coeffxp+iloc*32) * *(coeffyd+jloc*32) * *(coeffzp+kloc*32) *
+                        interp_res += *(coeffxd+iloc*32) * *(coeffyp+jloc*32) * *(coeffzd+kloc*32) *
                             ( (1-dual[2][ipart]) * ( (1-dual[0][ipart])*(*By3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc) + dual[0][ipart]*(*By3D)(idxO[0]+2+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc ) )
                             +    dual[2][ipart]  * ( (1-dual[0][ipart])*(*By3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+2+kloc) + dual[0][ipart]*(*By3D)(idxO[0]+2+iloc,idxO[1]+1+jloc,idxO[2]+2+kloc ) ) );
                     }
@@ -581,8 +581,8 @@ void Interpolator3D2OrderV::interpolate_em_fields_and_envelope(ElectroMagn* EMfi
             for (int iloc=-1 ; iloc<2 ; iloc++) {
                 for (int jloc=-1 ; jloc<2 ; jloc++) {
                     for (int kloc=-1 ; kloc<2 ; kloc++) {
-                        //interp_res += *(coeffxp+iloc*32) * *(coeffyd+jloc*32) * *(coeffzp+kloc*32) * 
-                        interp_res += *(coeffxd+iloc*32) * *(coeffyd+jloc*32) * *(coeffzp+kloc*32) * 
+                        //interp_res += *(coeffxp+iloc*32) * *(coeffyd+jloc*32) * *(coeffzp+kloc*32) *
+                        interp_res += *(coeffxd+iloc*32) * *(coeffyd+jloc*32) * *(coeffzp+kloc*32) *
                             ( (1-dual[1][ipart]) * ( (1-dual[0][ipart])*(*Bz3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc) + dual[0][ipart]*(*Bz3D)(idxO[0]+2+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc ) )
                             +    dual[1][ipart]  * ( (1-dual[0][ipart])*(*Bz3D)(idxO[0]+1+iloc,idxO[1]+2+jloc,idxO[2]+1+kloc) + dual[0][ipart]*(*Bz3D)(idxO[0]+2+iloc,idxO[1]+2+jloc,idxO[2]+1+kloc ) ) );
                     }
@@ -687,7 +687,7 @@ void Interpolator3D2OrderV::interpolate_envelope_and_old_envelope(ElectroMagn* E
     Field3D* GradPhiOldz3D = static_cast<Field3D*>(EMfields->envelope->GradPhizold_);
 
 
-    double coeff[3][2][3][32]; 
+    double coeff[3][2][3][32];
     int dual[3][32]; // Size ndim. Boolean indicating if the part has a dual indice equal to the primal one (dual=0) or if it is +1 (dual=1).
 
     int vecSize = 32;
@@ -705,7 +705,7 @@ void Interpolator3D2OrderV::interpolate_envelope_and_old_envelope(ElectroMagn* E
         if (cell_nparts > vecSize ) {
             np_computed = vecSize;
             cell_nparts -= vecSize;
-        }       
+        }
         else
             np_computed = cell_nparts;
 
@@ -860,7 +860,7 @@ void Interpolator3D2OrderV::interpolate_envelope_and_susceptibility(ElectroMagn*
     Field3D* Env_Chi_3D   = static_cast<Field3D*>(EMfields->Env_Chi_);
     Field3D* Env_E_abs_3D = static_cast<Field3D*>(EMfields->Env_E_abs_);
 
-    double coeff[3][2][3]; 
+    double coeff[3][2][3];
     int dual[3]; // Size ndim. Boolean indicating if the part has a dual indice equal to the primal one (dual=0) or if it is +1 (dual=1).
 
     double delta0, delta;
@@ -925,3 +925,9 @@ void Interpolator3D2OrderV::interpolate_envelope_and_susceptibility(ElectroMagn*
 
 }
 
+
+// Interpolator on another field than the basic ones
+void Interpolator3D2OrderV::operator() (Field* field, Particles &particles, int *istart, int *iend, double* FieldLoc)
+{
+    ERROR("Single field 3D2O interpolator not available in vectorized mode");
+}

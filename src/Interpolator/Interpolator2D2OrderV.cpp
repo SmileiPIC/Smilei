@@ -42,7 +42,7 @@ void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
     deltaO[0] = &(smpi->dynamics_deltaold[ithread][0]);
     deltaO[1] = &(smpi->dynamics_deltaold[ithread][nparts]);
 
-    for (unsigned int k=0; k<3;k++) {   
+    for (unsigned int k=0; k<3;k++) {
         Epart[k]= &(smpi->dynamics_Epart[ithread][k*nparts]);
         Bpart[k]= &(smpi->dynamics_Bpart[ithread][k*nparts]);
     }
@@ -61,7 +61,7 @@ void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
     Field2D* By2D = static_cast<Field2D*>(EMfields->By_m);
     Field2D* Bz2D = static_cast<Field2D*>(EMfields->Bz_m);
 
-    double coeff[2][2][3][32]; 
+    double coeff[2][2][3][32];
     int dual[2][32]; // Size ndim. Boolean indicating if the part has a dual indice equal to the primal one (dual=0) or if it is +1 (dual=1).
 
     int vecSize = 32;
@@ -79,7 +79,7 @@ void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
         if (cell_nparts > vecSize ) {
             np_computed = vecSize;
             cell_nparts -= vecSize;
-        }       
+        }
         else
             np_computed = cell_nparts;
 
@@ -121,7 +121,7 @@ void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
             double interp_res = 0.;
             for (int iloc=-1 ; iloc<2 ; iloc++) {
                 for (int jloc=-1 ; jloc<2 ; jloc++) {
-                    interp_res += *(coeffxd+iloc*32) * *(coeffyp+jloc*32) * 
+                    interp_res += *(coeffxd+iloc*32) * *(coeffyp+jloc*32) *
                         ( (1-dual[0][ipart])*(*Ex2D)(idxO[0]+1+iloc,idxO[1]+1+jloc) + dual[0][ipart]*(*Ex2D)(idxO[0]+2+iloc,idxO[1]+1+jloc ) );
                 }
             }
@@ -193,7 +193,7 @@ void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
 
     double *Epart[3], *Bpart[3];
 
-    for (unsigned int k=0; k<3;k++) {   
+    for (unsigned int k=0; k<3;k++) {
         Epart[k]= &(smpi->dynamics_Epart[ithread][k*nparts]);
         Bpart[k]= &(smpi->dynamics_Bpart[ithread][k*nparts]);
     }
@@ -212,7 +212,7 @@ void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
     Field2D* By2D = static_cast<Field2D*>(EMfields->By_m);
     Field2D* Bz2D = static_cast<Field2D*>(EMfields->Bz_m);
 
-    double coeff[2][2][3]; 
+    double coeff[2][2][3];
     int dual[2]; // Size ndim. Boolean indicating if the part has a dual indice equal to the primal one (dual=0) or if it is +1 (dual=1).
 
     double delta0, delta;
@@ -244,7 +244,7 @@ void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
     double interp_res = 0.;
     for (int iloc=-1 ; iloc<2 ; iloc++) {
         for (int jloc=-1 ; jloc<2 ; jloc++) {
-            interp_res += *(coeffxd+iloc*1) * *(coeffyp+jloc*1) * 
+            interp_res += *(coeffxd+iloc*1) * *(coeffyp+jloc*1) *
                 ( (1-dual[0])*(*Ex2D)(idxO[0]+1+iloc,idxO[1]+1+jloc) + dual[0]*(*Ex2D)(idxO[0]+2+iloc,idxO[1]+1+jloc ) );
         }
     }
@@ -310,7 +310,7 @@ void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
     interp_res = 0.;
     for (int iloc=-1 ; iloc<2 ; iloc++) {
         for (int jloc=-1 ; jloc<2 ; jloc++) {
-            interp_res += *(coeffxd+iloc*1) * *(coeffyp+jloc*1) * 
+            interp_res += *(coeffxd+iloc*1) * *(coeffyp+jloc*1) *
                 ( (1-dual[0])*(*Jx2D)(idxO[0]+1+iloc,idxO[1]+1+jloc) + dual[0]*(*Jx2D)(idxO[0]+2+iloc,idxO[1]+1+jloc ) );
         }
     }
@@ -345,4 +345,11 @@ void Interpolator2D2OrderV::operator() (ElectroMagn* EMfields, Particles &partic
     }
     (*RhoLoc) = interp_res;
 
+}
+
+
+// Interpolator on another field than the basic ones
+void Interpolator2D2OrderV::operator() (Field* field, Particles &particles, int *istart, int *iend, double* FieldLoc)
+{
+    ERROR("Single field 2D2O interpolator not available in vectorized mode");
 }

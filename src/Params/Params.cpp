@@ -1081,3 +1081,18 @@ void Params::cleanup(SmileiMPI* smpi) {
     }
     smpi->barrier();
 }
+
+bool Params::isSpeciesField(string field_name) {
+    if( geometry!="AMcylindrical" ) {
+        if( (field_name.at(0)=='J' && field_name.length()>2)
+         || (field_name.at(0)=='R' && field_name.length()>3) )
+            return true;
+    } else {
+        if( field_name.at(0)=='J' && field_name.length()>8
+                && (field_name.substr(2,6)!="_mode_" || field_name.find("mode_") != field_name.rfind("mode_"))
+         || field_name.at(0)=='R' && field_name.length()>9
+                && (field_name.substr(3,6)!="_mode_" || field_name.find("mode_") != field_name.rfind("mode_")) )
+            return true;
+    }
+    return false;
+}

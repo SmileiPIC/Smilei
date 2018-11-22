@@ -2335,6 +2335,28 @@ void VectorPatch::applyCollisions(Params& params, int itime, Timers & timers)
     timers.collisions.update();
 }
 
+// For all patches, allocate a field if not allocated
+void VectorPatch::allocateField(unsigned int ifield, Params &params) {
+    for (unsigned int ipatch=0 ; ipatch<size() ; ipatch++) {
+        if ( params.geometry != "AMcylindrical"){
+            Field * field = emfields(ipatch)->allFields[ifield];
+            if( field->data_ != NULL ) continue;
+            if     ( field->name.substr(0,2)=="Jx" ) field->allocateDims(0,false);
+            else if( field->name.substr(0,2)=="Jy" ) field->allocateDims(1,false);
+            else if( field->name.substr(0,2)=="Jz" ) field->allocateDims(2,false);
+            else if( field->name.substr(0,2)=="Rh" ) field->allocateDims();
+            //MESSAGE("HNA4");
+        } else {
+            cField2D * field = static_cast<cField2D*>(emfields(ipatch)->allFields[ifield]);
+            if( field->cdata_ != NULL ) continue;
+            if     ( field->name.substr(0,2)=="Jl" ) field->allocateDims(0,false);
+            else if( field->name.substr(0,2)=="Jr" ) field->allocateDims(1,false);
+            else if( field->name.substr(0,2)=="Jt" ) field->allocateDims(2,false);
+            else if( field->name.substr(0,2)=="Rh" ) field->allocateDims();
+        }
+    }
+}
+
 
 // For each patch, apply external fields
 void VectorPatch::applyExternalFields()

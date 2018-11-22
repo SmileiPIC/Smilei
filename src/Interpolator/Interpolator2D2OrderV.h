@@ -24,6 +24,8 @@ public:
 
     void operator() (ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, std::vector<unsigned int> * selection) override final{};
 
+    void operator() (Field* field, Particles &particles, int *istart, int *iend, double* FieldLoc) override final;
+
     inline double compute( double* coeffx, double* coeffy, Field2D* f, int idx, int idy) {
         double interp_res(0.);
         //unroll ?
@@ -33,7 +35,7 @@ public:
             }
         }
         return interp_res;
-    };  
+    };
 
 private:
 

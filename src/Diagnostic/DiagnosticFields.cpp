@@ -43,50 +43,19 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
     hasRhoJs = false;
     //MESSAGE("HNA");
     // Loop fields
-    for( unsigned int i=0; i<vecPatches(0)->EMfields->allFields.size(); i++ ) {
-        string field_name = vecPatches(0)->EMfields->allFields[i]->name;
-        bool RhoJ = field_name.at(0)=='J' || field_name.at(0)=='R';
-
-        bool species_field = ( (params.geometry!="AMcylindrical") && ( (field_name.at(0)=='J' && field_name.length()>2) || (field_name.at(0)=='R' && field_name.length()>3) ) )
-            || ( (params.geometry=="AMcylindrical") && (
-                                               (field_name.at(0)=='J' && field_name.length()>8 && field_name.substr(2,6)!="_mode_")
-                                               || (field_name.at(0)=='J' && field_name.length()>8 && field_name.find("mode_") != field_name.rfind("mode_") )
-                                               || (field_name.at(0)=='R' && field_name.length()>9 && field_name.substr(3,6)!="_mode_")
-                                               || (field_name.at(0)=='R' && field_name.length()>9 && field_name.find("mode_") != field_name.rfind("mode_") )
-                                               )
-                 ); // end AM cases
-
-         //MESSAGE("HNA1");
+    for( unsigned int i=0; i<vecPatches.emfields(0)->allFields.size(); i++ ) {
+        string field_name = vecPatches.emfields(0)->allFields[i]->name;
+        
         // If field in list of fields to dump, then add it
         if( hasField(field_name, fieldsToDump) ) {
             ss << field_name << " ";
             fields_indexes.push_back( i );
             fields_names  .push_back( field_name );
-            if( RhoJ ) hasRhoJs = true;
-            //MESSAGE("HNA2");
+            if( field_name.at(0)=='J' || field_name.at(0)=='R' )
+                hasRhoJs = true;
             // If field specific to a species, then allocate it
-            if( species_field ) {
-                //MESSAGE("HNA3");         
-                for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-                    if ( params.geometry != "AMcylindrical"){
-                        Field * field = vecPatches(ipatch)->EMfields->allFields[i];
-                        if( field->data_ != NULL ) continue;
-                        if     ( field_name.substr(0,2)=="Jx" ) field->allocateDims(0,false);
-                        else if( field_name.substr(0,2)=="Jy" ) field->allocateDims(1,false);
-                        else if( field_name.substr(0,2)=="Jz" ) field->allocateDims(2,false);
-                        else if( field_name.substr(0,2)=="Rh" ) field->allocateDims();
-                        //MESSAGE("HNA4");
-                    } else {
-                        cField2D * field = static_cast<cField2D*>(vecPatches(ipatch)->EMfields->allFields[i]);
-                        if( field->cdata_ != NULL ) continue;
-                        if     ( field_name.substr(0,2)=="Jl" ) field->allocateDims(0,false);
-                        else if( field_name.substr(0,2)=="Jr" ) field->allocateDims(1,false);
-                        else if( field_name.substr(0,2)=="Jt" ) field->allocateDims(2,false);
-                        else if( field_name.substr(0,2)=="Rh" ) field->allocateDims();
-
-                    }
-                }
-            }
+            if( params.isSpeciesField(field_name) )
+                vecPatches.allocateField(i, params);
         }
     }
     //MESSAGE("possible bug");
@@ -439,4 +408,3 @@ void DiagnosticFields::findSubgridIntersection(
         }
     }
 }
-
