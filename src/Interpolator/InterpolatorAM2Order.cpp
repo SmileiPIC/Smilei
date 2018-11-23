@@ -28,7 +28,7 @@ InterpolatorAM2Order::InterpolatorAM2Order(Params &params, Patch *patch) : Inter
 // ---------------------------------------------------------------------------------------------------------------------
 // 2nd Order Interpolation of the fields at a the particle position (3 nodes are used)
 // ---------------------------------------------------------------------------------------------------------------------
-void InterpolatorAM2Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, int nparts, double* ELoc, double* BLoc)
+void InterpolatorAM2Order::fields(ElectroMagn* EMfields, Particles &particles, int ipart, int nparts, double* ELoc, double* BLoc)
 {
 
     //Treat mode 0 first
@@ -126,7 +126,7 @@ void InterpolatorAM2Order::operator() (ElectroMagn* EMfields, Particles &particl
 
 } // END InterpolatorAM2Order
 
-void InterpolatorAM2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc)
+void InterpolatorAM2Order::fieldsAndCurrents(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc)
 {
     int ipart = *istart;
     
@@ -170,11 +170,11 @@ void InterpolatorAM2Order::operator() (ElectroMagn* EMfields, Particles &particl
     // Interpolation of Bt^(d,d)
     *(BLoc+2*nparts) = std::real(compute_d( &coeffxd_[1], &coeffyd_[1], Bt, id_, jd_));
     // Interpolation of Jl^(d,p,p)
-    (*JLoc).x = std::real(compute_p( &coeffxd_[1], &coeffyp_[1], Jl, id_, jp_));
+    JLoc->x = std::real(compute_p( &coeffxd_[1], &coeffyp_[1], Jl, id_, jp_));
     // Interpolation of Jr^(p,d,p)
-    (*JLoc).y = std::real(compute_d( &coeffxp_[1], &coeffyd_[1], Jr, ip_, jd_));
+    JLoc->y = std::real(compute_d( &coeffxp_[1], &coeffyd_[1], Jr, ip_, jd_));
     // Interpolation of Jt^(p,p,d)
-    (*JLoc).z = std::real(compute_p( &coeffxp_[1], &coeffyp_[1], Jt, ip_, jp_));
+    JLoc->z = std::real(compute_p( &coeffxp_[1], &coeffyp_[1], Jt, ip_, jp_));
     // Interpolation of Rho^(p,p,p)
     (*RhoLoc) = std::real(compute_p( &coeffxp_[1], &coeffyp_[1], Rho, ip_, jp_));
     
@@ -198,9 +198,9 @@ void InterpolatorAM2Order::operator() (ElectroMagn* EMfields, Particles &particl
         *(BLoc+0*nparts) += std::real ( compute_d( &coeffxp_[1], &coeffyd_[1], Bl, ip_, jd_) * exp_mm_theta ) ;
         *(BLoc+1*nparts) += std::real ( compute_p( &coeffxd_[1], &coeffyp_[1], Br, id_, jp_) * exp_mm_theta ) ;
         *(BLoc+2*nparts) += std::real ( compute_d( &coeffxd_[1], &coeffyd_[1], Bt, id_, jd_) * exp_mm_theta ) ;
-        (*JLoc).x += std::real ( compute_p( &coeffxd_[1], &coeffyp_[1], Jl, id_, jp_) * exp_mm_theta ) ;
-        (*JLoc).y += std::real ( compute_d( &coeffxp_[1], &coeffyd_[1], Jr, ip_, jd_) * exp_mm_theta ) ;
-        (*JLoc).z += std::real ( compute_p( &coeffxp_[1], &coeffyp_[1], Jt, ip_, jp_) * exp_mm_theta ) ;
+        JLoc->x += std::real ( compute_p( &coeffxd_[1], &coeffyp_[1], Jl, id_, jp_) * exp_mm_theta ) ;
+        JLoc->y += std::real ( compute_d( &coeffxp_[1], &coeffyd_[1], Jr, ip_, jd_) * exp_mm_theta ) ;
+        JLoc->z += std::real ( compute_p( &coeffxp_[1], &coeffyp_[1], Jt, ip_, jp_) * exp_mm_theta ) ;
         (*RhoLoc) += std::real ( compute_p( &coeffxp_[1], &coeffyp_[1], Rho, ip_, jp_)* exp_mm_theta ) ;
     }
     double delta2 = std::real(exp_m_theta) * *(ELoc+1*nparts) + std::imag(exp_m_theta) * *(ELoc+2*nparts);
@@ -209,19 +209,19 @@ void InterpolatorAM2Order::operator() (ElectroMagn* EMfields, Particles &particl
     delta2 = std::real(exp_m_theta) * *(BLoc+1*nparts) + std::imag(exp_m_theta) *  *(BLoc+2*nparts);
     *(BLoc+2*nparts) = -std::imag(exp_m_theta) * *(BLoc+1*nparts) + std::real(exp_m_theta) * *(BLoc+2*nparts);
     *(BLoc+1*nparts) = delta2 ;
-    delta2 = std::real(exp_m_theta) * (*JLoc).y + std::imag(exp_m_theta) * (*JLoc).z;
-    (*JLoc).z = -std::imag(exp_m_theta) * (*JLoc).y + std::real(exp_m_theta) * (*JLoc).z;
-    (*JLoc).y = delta2 ;
+    delta2 = std::real(exp_m_theta) * JLoc->y + std::imag(exp_m_theta) * JLoc->z;
+    JLoc->z = -std::imag(exp_m_theta) * JLoc->y + std::real(exp_m_theta) * JLoc->z;
+    JLoc->y = delta2 ;
     
 }
 
 // Interpolator on another field than the basic ones
-void InterpolatorAM2Order::operator() (Field* field, Particles &particles, int *istart, int *iend, double* FieldLoc)
+void InterpolatorAM2Order::oneField(Field* field, Particles &particles, int *istart, int *iend, double* FieldLoc)
 {
     ERROR("Single field AM2O interpolator not available");
 }
 
-void InterpolatorAM2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
+void InterpolatorAM2Order::fieldsWrapper(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
 {
     std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
     std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);
@@ -233,7 +233,7 @@ void InterpolatorAM2Order::operator() (ElectroMagn* EMfields, Particles &particl
     int nparts( particles.size() );
     for (int ipart=*istart ; ipart<*iend; ipart++ ) {
         //Interpolation on current particle
-        (*this)(EMfields, particles, ipart, nparts, &(*Epart)[ipart], &(*Bpart)[ipart]);
+        fields(EMfields, particles, ipart, nparts, &(*Epart)[ipart], &(*Bpart)[ipart]);
         //Buffering of iol and delta
         (*iold)[ipart+0*nparts]  = ip_;
         (*iold)[ipart+1*nparts]  = jp_;
@@ -245,7 +245,7 @@ void InterpolatorAM2Order::operator() (ElectroMagn* EMfields, Particles &particl
 
 
 // Interpolator specific to tracked particles. A selection of particles may be provided
-void InterpolatorAM2Order::operator() (ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, vector<unsigned int> * selection)
+void InterpolatorAM2Order::fieldsSelection(ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, vector<unsigned int> * selection)
 {
     ERROR("To Do");
 }

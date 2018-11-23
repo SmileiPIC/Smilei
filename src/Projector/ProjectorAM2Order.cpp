@@ -60,7 +60,7 @@ ProjectorAM2Order::~ProjectorAM2Order()
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents for mode=0
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, Particles &particles, unsigned int ipart, double invgf, int* iold, double* deltaold)
+void ProjectorAM2Order::currents_mode0(complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, Particles &particles, unsigned int ipart, double invgf, int* iold, double* deltaold)
 {   int nparts= particles.size();
     // -------------------------------------
     // Variable declaration & initialization
@@ -224,7 +224,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents for m>0
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, Particles &particles, unsigned int ipart,double invgf, int* iold, double* deltaold, complex<double>* exp_m_theta_old, int imode)
+void ProjectorAM2Order::currents(complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, Particles &particles, unsigned int ipart,double invgf, int* iold, double* deltaold, complex<double>* exp_m_theta_old, int imode)
 {   
     // -------------------------------------
     // Variable declaration & initialization
@@ -432,7 +432,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
 //! Project local currents with diag for mode=0 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, complex<double>* rho, Particles &particles, unsigned int ipart, double invgf, int* iold, double* deltaold)
+void ProjectorAM2Order::currentsAndDensity_mode0(complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, complex<double>* rho, Particles &particles, unsigned int ipart, double invgf, int* iold, double* deltaold)
 {   // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------
@@ -605,7 +605,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents with diag for m>0
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, complex<double>* rho, Particles &particles, unsigned int ipart, double invgf, int* iold, double* deltaold,complex<double>* exp_m_theta_old,  int imode)
+void ProjectorAM2Order::currentsAndDensity(complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, complex<double>* rho, Particles &particles, unsigned int ipart, double invgf, int* iold, double* deltaold,complex<double>* exp_m_theta_old,  int imode)
 {   
     // -------------------------------------
     // Variable declaration & initialization
@@ -808,7 +808,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     
 } // END Project local current densities (Jl, Jr, Jt, sort)
 
-void ProjectorAM2Order::operator() (double* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim)
+void ProjectorAM2Order::densityFrozen(double* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim)
 {
 // Useless function
 }
@@ -818,7 +818,7 @@ void ProjectorAM2Order::operator() (double* rhoj, Particles &particles, unsigned
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project for diags and frozen species - mode >= 0 
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2Order::operator() (complex<double>* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim, int imode)
+void ProjectorAM2Order::densityFrozenComplex(complex<double>* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim, int imode)
 {
     //Warning : this function is not charge conserving.
 
@@ -906,7 +906,7 @@ void ProjectorAM2Order::operator() (complex<double>* rhoj, Particles &particles,
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project global current densities : ionization NOT DONE YET
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2Order::operator() (Field* Jl, Field* Jr, Field* Jt, Particles &particles, int ipart, LocalFields Jion)
+void ProjectorAM2Order::ionizationCurrents(Field* Jl, Field* Jr, Field* Jt, Particles &particles, int ipart, LocalFields Jion)
 {  
     cField2D* JlAM  = static_cast<cField2D*>(Jl);
     cField2D* JrAM  = static_cast<cField2D*>(Jr);
@@ -993,7 +993,7 @@ void ProjectorAM2Order::operator() (Field* Jl, Field* Jr, Field* Jt, Particles &
 
 //------------------------------------//
 //Wrapper for projection
-void ProjectorAM2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec, int ipart_ref)
+void ProjectorAM2Order::currentsAndDensityWrapper(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec, int ipart_ref)
 {  //std::cout<<"projecting"<<std::endl;
    if (is_spectral)
         ERROR("Not implemented");
@@ -1016,12 +1016,12 @@ void ProjectorAM2Order::operator() (ElectroMagn* EMfields, Particles &particles,
 
         if (imode==0){
             for ( int ipart=istart ; ipart<iend; ipart++ ){
-                (*this)(b_Jl , b_Jr , b_Jt , particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
+                currents_mode0(b_Jl , b_Jr , b_Jt , particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
             }
         }
         else{	
             for ( int ipart=istart ; ipart<iend; ipart++ )
-                (*this)(b_Jl , b_Jr , b_Jt , particles,  ipart,(*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart],&(*exp_m_theta_old)[ipart], imode);
+                currents(b_Jl , b_Jr , b_Jt , particles,  ipart,(*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart],&(*exp_m_theta_old)[ipart], imode);
             } 
         }       // Otherwise, the projection may apply to the species-specific arrays
     } 
@@ -1039,11 +1039,11 @@ void ProjectorAM2Order::operator() (ElectroMagn* EMfields, Particles &particles,
                 complex<double>* b_rho = emAM->rho_AM_s[ifield] ? &(* (emAM->rho_AM_s[ifield]) )(0) : &(*emAM->rho_AM_[imode] )(0) ;
             if (imode==0){
                 for ( int ipart=istart ; ipart<iend; ipart++ )
-                   (*this)(b_Jl , b_Jr , b_Jt ,b_rho, particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
+                   currentsAndDensity_mode0(b_Jl , b_Jr , b_Jt ,b_rho, particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
              }
              else{    
                 for ( int ipart=istart ; ipart<iend; ipart++ )
-                    (*this)(b_Jl , b_Jr , b_Jt ,b_rho, particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart], &(*exp_m_theta_old)[ipart], imode);
+                    currentsAndDensity(b_Jl , b_Jr , b_Jt ,b_rho, particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart], &(*exp_m_theta_old)[ipart], imode);
                  }
 
        }

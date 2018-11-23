@@ -144,7 +144,7 @@ void IonizationTunnel::operator() (Particles* particles, unsigned int ipart_min,
         Jion.y = factorJion * *(Ey+ipart);
         Jion.z = factorJion * *(Ez+ipart);
         
-        (*Proj)(patch->EMfields->Jx_, patch->EMfields->Jy_, patch->EMfields->Jz_, *particles, ipart, Jion);
+        Proj->ionizationCurrents(patch->EMfields->Jx_, patch->EMfields->Jy_, patch->EMfields->Jz_, *particles, ipart, Jion);
         
         // Creation of the new electrons
         // (variable weights are used)

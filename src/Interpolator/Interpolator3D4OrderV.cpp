@@ -41,11 +41,11 @@ Interpolator3D4OrderV::Interpolator3D4OrderV(Params &params, Patch *patch) : Int
 // ---------------------------------------------------------------------------------------------------------------------
 // 2nd OrderV Interpolation of the fields at a the particle position (3 nodes are used)
 // ---------------------------------------------------------------------------------------------------------------------
-void Interpolator3D4OrderV::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, double* ELoc, double* BLoc)
+void Interpolator3D4OrderV::fields(ElectroMagn* EMfields, Particles &particles, int ipart, double* ELoc, double* BLoc)
 {
 }
 
-void Interpolator3D4OrderV::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
+void Interpolator3D4OrderV::fieldsWrapper(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
 {
     if ( istart[0] == iend[0] ) return; //Don't treat empty cells.
 
@@ -224,7 +224,7 @@ void Interpolator3D4OrderV::operator() (ElectroMagn* EMfields, Particles &partic
 } // END Interpolator3D4OrderV
 
 
-void Interpolator3D4OrderV::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc)
+void Interpolator3D4OrderV::fieldsAndCurrents(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc)
 {
     // iend not used for now
     // probes are interpolated one by one for now
@@ -380,7 +380,7 @@ void Interpolator3D4OrderV::operator() (ElectroMagn* EMfields, Particles &partic
             }
         }
     }
-    (*JLoc).x = interp_res;
+    JLoc->x = interp_res;
 
 
     //Jy(primal, dual, primal)
@@ -393,7 +393,7 @@ void Interpolator3D4OrderV::operator() (ElectroMagn* EMfields, Particles &partic
             }
         }
     }
-    (*JLoc).y = interp_res;
+    JLoc->y = interp_res;
 
 
     //Jz(primal, primal, dual)
@@ -406,7 +406,7 @@ void Interpolator3D4OrderV::operator() (ElectroMagn* EMfields, Particles &partic
             }
         }
     }
-    (*JLoc).z = interp_res;
+    JLoc->z = interp_res;
 
     //Rho(primal, primal, primal)
     interp_res = 0.;
@@ -423,19 +423,19 @@ void Interpolator3D4OrderV::operator() (ElectroMagn* EMfields, Particles &partic
 
 
 
-void Interpolator3D4OrderV::interpolate_em_fields_and_envelope(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
+void Interpolator3D4OrderV::fieldsAndEnvelope(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
 {
    ERROR("Projection and interpolation for the envelope model are implemented only for interpolation_order = 2");
 }
 
 
-void Interpolator3D4OrderV::interpolate_envelope_and_old_envelope(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
+void Interpolator3D4OrderV::envelopeAndOldEnvelope(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
 {
    ERROR("Projection and interpolation for the envelope model are implemented only for interpolation_order = 2");
 }
 
 // probes like diagnostic !
-void Interpolator3D4OrderV::interpolate_envelope_and_susceptibility(ElectroMagn* EMfields, Particles &particles, int ipart, double* Env_A_abs_Loc, double* Env_Chi_Loc, double* Env_E_abs_Loc)
+void Interpolator3D4OrderV::envelopeAndSusceptibility(ElectroMagn* EMfields, Particles &particles, int ipart, double* Env_A_abs_Loc, double* Env_Chi_Loc, double* Env_E_abs_Loc)
 {
     ERROR("Projection and interpolation for the envelope model are implemented only for interpolation_order = 2");
 }
@@ -443,7 +443,7 @@ void Interpolator3D4OrderV::interpolate_envelope_and_susceptibility(ElectroMagn*
 
 
 // Interpolator on another field than the basic ones
-void Interpolator3D4OrderV::operator() (Field* field, Particles &particles, int *istart, int *iend, double* FieldLoc)
+void Interpolator3D4OrderV::oneField(Field* field, Particles &particles, int *istart, int *iend, double* FieldLoc)
 {
     ERROR("Single field 3D4O interpolator not available in vectorized mode");
 }

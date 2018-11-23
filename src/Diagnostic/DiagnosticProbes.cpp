@@ -590,7 +590,7 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         for (unsigned int ipart=0; ipart<npart; ipart++) {
             int iparticle(ipart); // Compatibility
             int false_idx(0);     // Use in classical interp for now, not for probes
-            (*(vecPatches(ipatch)->probesInterp)) (
+            vecPatches(ipatch)->probesInterp->fieldsAndCurrents(
                 vecPatches(ipatch)->EMfields,
                 vecPatches(ipatch)->probes[probe_n]->particles, smpi,
                 &iparticle, &false_idx, ithread,
@@ -614,8 +614,7 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         for( unsigned int ifield=0; ifield<fieldindex.size(); ifield++ ) {
             int istart(0), iend(npart);
             double * FieldLoc = &((*probesArray)(fieldlocation[13+ifield], offset_in_MPI[ipatch]));
-            //double * FieldLoc = probesArray->data_ + (fieldlocation[13+ifield]*probesArray->dims_[1] + offset_in_MPI[ipatch]);
-            (*(vecPatches(ipatch)->probesInterp)) (
+            vecPatches(ipatch)->probesInterp->oneField(
                 vecPatches(ipatch)->EMfields->allFields[fieldindex[ifield]],
                 vecPatches(ipatch)->probes[probe_n]->particles,
                 &istart, &iend,
@@ -629,7 +628,7 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
             double Env_AabsLoc_fields,Env_ChiLoc_fields,Env_EabsLoc_fields;
             for (unsigned int ipart=0; ipart<npart; ipart++) {
                 int iparticle(ipart); // Compatibility
-                vecPatches(ipatch)->probesInterp->interpolate_envelope_and_susceptibility(
+                vecPatches(ipatch)->probesInterp->envelopeAndSusceptibility(
                     vecPatches(ipatch)->EMfields,
                     vecPatches(ipatch)->probes[probe_n]->particles,
                     iparticle,

@@ -184,7 +184,7 @@ void VectorPatch::configuration(Params& params, Timers &timers, int itime)
 
     timers.reconfiguration.restart();
 
-    unsigned int npatches = (*this).size();
+    unsigned int npatches = this->size();
 
     // Clean buffers
     #pragma omp master
@@ -223,7 +223,7 @@ void VectorPatch::reconfiguration(Params& params, Timers &timers, int itime)
 
         timers.reconfiguration.restart();
 
-        unsigned int npatches = (*this).size();
+        unsigned int npatches = this->size();
 
         // Clean buffers
         #pragma omp master
@@ -288,7 +288,7 @@ void VectorPatch::dynamics(Params& params,
     timers.particles.restart();
     ostringstream t;
     #pragma omp for schedule(runtime)
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
         (*this)(ipatch)->EMfields->restartRhoJ();
         //MESSAGE("restart rhoj");
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
@@ -373,7 +373,7 @@ void VectorPatch::projection_for_diags(Params& params,
     diag_flag = needsRhoJsNow(itime);
 
     #pragma omp for schedule(runtime)
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
         (*this)(ipatch)->EMfields->restartRhoJ();
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
             if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
@@ -389,7 +389,7 @@ void VectorPatch::projection_for_diags(Params& params,
     // if Envelope is used, project the susceptibility of the particles interacting with the envelope
     if (params.Laser_Envelope_model){
         #pragma omp for schedule(runtime)
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
             (*this)(ipatch)->EMfields->restartEnvChi();
             for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
                 if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
@@ -423,7 +423,7 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
     // ----------------------------------------
 
     #pragma omp for schedule(runtime)
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
         // Particle importation for all species
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
             if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
@@ -441,7 +441,7 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
     // Change the status to use vectorized or not-vectorized operators
     // as a function of the metrics
     /*#pragma omp for schedule(runtime)
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
         // Particle importation for all species
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
             species(ipatch, ispec)->reconfiguration(params, (*this)(ipatch));
@@ -450,7 +450,7 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
 
     if (itime%params.every_clean_particles_overhead==0) {
         #pragma omp master
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++)
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++)
             (*this)(ipatch)->cleanParticlesOverhead(params);
         #pragma omp barrier
     }
@@ -463,7 +463,7 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
 void VectorPatch::computeCharge()
 {
     #pragma omp for schedule(runtime)
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
         (*this)(ipatch)->EMfields->restartRhoJ();
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
             if ((*this)(ipatch)->vecSpecies[ispec]->vectorized_operators)
@@ -482,7 +482,7 @@ void VectorPatch::computeCharge()
 void VectorPatch::computeChargeRelativisticSpecies(double time_primal)
 {
     #pragma omp for schedule(runtime)
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
         (*this)(ipatch)->EMfields->restartRhoJ();
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
             // project only if species needs relativistic initialization and it is the right time to initialize its fields
@@ -504,7 +504,7 @@ void VectorPatch::computeChargeRelativisticSpecies(double time_primal)
 void VectorPatch::resetRhoJ()
 {
     #pragma omp for schedule(runtime)
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
         (*this)(ipatch)->EMfields->restartRhoJ();
     }
 }
@@ -526,7 +526,7 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
     timers.densities.restart();
     if  (diag_flag){
         #pragma omp for schedule(static)
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
              // Per species in global, Attention if output -> Sync / per species fields
             (*this)(ipatch)->EMfields->computeTotalRhoJ();
         }
@@ -560,7 +560,7 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
     }
     if (params.geometry == "AMcylindrical") {
         #pragma omp for schedule(static)
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
             ElectroMagnAM* emAM = static_cast<ElectroMagnAM*>( (*this)(ipatch)->EMfields );
             emAM->fold_J(diag_flag);
             emAM->on_axis_J(diag_flag);
@@ -586,7 +586,7 @@ void VectorPatch::sumSusceptibility(Params &params, double time_dual, Timers &ti
     timers.susceptibility.restart();
     if  (diag_flag){
        #pragma omp for schedule(static)
-       for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+       for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
             // Per species in global, Attention if output -> Sync / per species fields
            (*this)(ipatch)->EMfields->computeTotalEnvChi();
        }
@@ -630,7 +630,7 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
 
     for (unsigned int ipassfilter=0 ; ipassfilter<params.currentFilter_passes ; ipassfilter++){
         #pragma omp for schedule(static)
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++){
             // Current spatial filtering
             (*this)(ipatch)->EMfields->binomialCurrentFilter();
         }
@@ -638,7 +638,7 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
         SyncVectorPatch::finalizeexchangeJ( params, (*this) );
     }
     #pragma omp for schedule(static)
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++){
         if (!params.is_spectral) {
             // Saving magnetic fields (to compute centered fields used in the particle pusher)
             // Stores B at time n in B_m.
@@ -649,7 +649,7 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
         (*(*this)(ipatch)->EMfields->MaxwellAmpereSolver_)((*this)(ipatch)->EMfields);
         //MESSAGE("SOLVE MAXWELL AMPERE");
         // Computes Bx_, By_, Bz_ at time n+1 on interior points.
-        //for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+        //for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
         (*(*this)(ipatch)->EMfields->MaxwellFaradaySolver_)((*this)(ipatch)->EMfields);
         //MESSAGE("SOLVE MAXWELL FARADAY");
     }
@@ -683,7 +683,7 @@ void VectorPatch::solveMaxwell(Params& params, SimWindow* simWindow, int itime, 
         timers.syncField.update(  params.printNow( itime ) );
 
         #pragma omp for schedule(static)
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++){
             // Applies boundary conditions on B
             (*this)(ipatch)->EMfields->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
             // Computes B at time n using B and B_m.
@@ -710,7 +710,7 @@ void VectorPatch::solveEnvelope(Params& params, SimWindow* simWindow, int itime,
         SyncVectorPatch::exchangeEnvChi( params, (*this), smpi );
 
         #pragma omp for schedule(static)
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++){
             // Computes A in all points
             (*this)(ipatch)->EMfields->envelope->compute(  (*this)(ipatch)->EMfields );
             (*this)(ipatch)->EMfields->envelope->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
@@ -722,7 +722,7 @@ void VectorPatch::solveEnvelope(Params& params, SimWindow* simWindow, int itime,
 
 
         // Compute ponderomotive potential Phi=|A|^2/2
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++){
             (*this)(ipatch)->EMfields->envelope->compute_Phi(  (*this)(ipatch)->EMfields );
         }
 
@@ -732,7 +732,7 @@ void VectorPatch::solveEnvelope(Params& params, SimWindow* simWindow, int itime,
 
 
         // Compute gradients of Phi
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++){
             (*this)(ipatch)->EMfields->envelope->compute_gradient_Phi(  (*this)(ipatch)->EMfields );
         }
 
@@ -756,7 +756,7 @@ void VectorPatch::finalize_sync_and_bc_fields(Params& params, SmileiMPI* smpi, S
         }
 
         #pragma omp for schedule(static)
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++){
             // Applies boundary conditions on B
             (*this)(ipatch)->EMfields->boundaryConditions(itime, time_dual, (*this)(ipatch), params, simWindow);
             // Computes B at time n using B and B_m.
@@ -1073,14 +1073,14 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
         //cout << patch_YmaxXmin << " " << rank_XminYmax << " " << patch_YminXmax << " " << rank_XmaxYmin << endl;
 
         if ( smpi->getRank() == rank_XminYmax ) {
-            Ex_XminYmax = (*this)(patch_YmaxXmin-((*this).refHindex_))->EMfields->getEx_XminYmax();
-            Ey_XminYmax = (*this)(patch_YmaxXmin-((*this).refHindex_))->EMfields->getEy_XminYmax();
+            Ex_XminYmax = (*this)(patch_YmaxXmin-(this->refHindex_))->EMfields->getEx_XminYmax();
+            Ey_XminYmax = (*this)(patch_YmaxXmin-(this->refHindex_))->EMfields->getEy_XminYmax();
         }
 
         // Xmax-Ymin corner
         if ( smpi->getRank() == rank_XmaxYmin ) {
-            Ex_XmaxYmin = (*this)(patch_YminXmax-((*this).refHindex_))->EMfields->getEx_XmaxYmin();
-            Ey_XmaxYmin = (*this)(patch_YminXmax-((*this).refHindex_))->EMfields->getEy_XmaxYmin();
+            Ex_XmaxYmin = (*this)(patch_YminXmax-(this->refHindex_))->EMfields->getEx_XmaxYmin();
+            Ey_XmaxYmin = (*this)(patch_YminXmax-(this->refHindex_))->EMfields->getEy_XmaxYmin();
         }
 
         MPI_Bcast(&Ex_XminYmax, 1, MPI_DOUBLE, rank_XminYmax, MPI_COMM_WORLD);
@@ -1115,14 +1115,14 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI* smpi )
         unsigned int rankXmin = 0;
         if ( smpi->getRank() == 0 ) {
             //Ex_Xmin = (*Ex1D)(index_bc_min[0]);
-            Ex_Xmin = (*this)( (0)-((*this).refHindex_))->EMfields->getEx_Xmin();
+            Ex_Xmin = (*this)( (0)-(this->refHindex_))->EMfields->getEx_Xmin();
         }
         MPI_Bcast(&Ex_Xmin, 1, MPI_DOUBLE, rankXmin, MPI_COMM_WORLD);
 
         unsigned int rankXmax = smpi->getSize()-1;
         if ( smpi->getRank() == smpi->getSize()-1 ) {
             //Ex_Xmax = (*Ex1D)(index_bc_max[0]);
-            Ex_Xmax = (*this)( (params.number_of_patches[0]-1)-((*this).refHindex_))->EMfields->getEx_Xmax();
+            Ex_Xmax = (*this)( (params.number_of_patches[0]-1)-(this->refHindex_))->EMfields->getEx_Xmax();
         }
         MPI_Bcast(&Ex_Xmax, 1, MPI_DOUBLE, rankXmax, MPI_COMM_WORLD);
         E_Add[0] = -0.5*(Ex_Xmin+Ex_Xmax);
@@ -1195,7 +1195,7 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
     uint64_t nparticles(0);
     for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size() ; ispec++) {
         if (species(0, ispec)->relativistic_field_initialization){
-            for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+            for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
                 if (time_primal==species(ipatch, ispec)->time_relativistic_initialization){
                     s_gamma += species(ipatch, ispec)->sum_gamma();
                     nparticles += species(ipatch, ispec)->getNbrOfParticles();
@@ -1441,14 +1441,14 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
     //cout << patch_YmaxXmin << " " << rank_XminYmax << " " << patch_YminXmax << " " << rank_XmaxYmin << endl;
 
     if ( smpi->getRank() == rank_XminYmax ) {
-            Ex_XminYmax = (*this)(patch_YmaxXmin-((*this).refHindex_))->EMfields->getExrel_XminYmax();
-            Ey_XminYmax = (*this)(patch_YmaxXmin-((*this).refHindex_))->EMfields->getEyrel_XminYmax();
+            Ex_XminYmax = (*this)(patch_YmaxXmin-(this->refHindex_))->EMfields->getExrel_XminYmax();
+            Ey_XminYmax = (*this)(patch_YmaxXmin-(this->refHindex_))->EMfields->getEyrel_XminYmax();
         }
 
     // Xmax-Ymin corner
     if ( smpi->getRank() == rank_XmaxYmin ) {
-            Ex_XmaxYmin = (*this)(patch_YminXmax-((*this).refHindex_))->EMfields->getExrel_XmaxYmin();
-            Ey_XmaxYmin = (*this)(patch_YminXmax-((*this).refHindex_))->EMfields->getEyrel_XmaxYmin();
+            Ex_XmaxYmin = (*this)(patch_YminXmax-(this->refHindex_))->EMfields->getExrel_XmaxYmin();
+            Ey_XmaxYmin = (*this)(patch_YminXmax-(this->refHindex_))->EMfields->getEyrel_XmaxYmin();
         }
 
     MPI_Bcast(&Ex_XminYmax, 1, MPI_DOUBLE, rank_XminYmax, MPI_COMM_WORLD);
@@ -1484,14 +1484,14 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI* smpi, dou
         unsigned int rankXmin = 0;
         if ( smpi->getRank() == 0 ) {
             //Ex_Xmin = (*Ex1D)(index_bc_min[0]);
-            Ex_Xmin = (*this)( (0)-((*this).refHindex_))->EMfields->getExrel_Xmin();
+            Ex_Xmin = (*this)( (0)-(this->refHindex_))->EMfields->getExrel_Xmin();
         }
         MPI_Bcast(&Ex_Xmin, 1, MPI_DOUBLE, rankXmin, MPI_COMM_WORLD);
 
         unsigned int rankXmax = smpi->getSize()-1;
         if ( smpi->getRank() == smpi->getSize()-1 ) {
             //Ex_Xmax = (*Ex1D)(index_bc_max[0]);
-            Ex_Xmax = (*this)( (params.number_of_patches[0]-1)-((*this).refHindex_))->EMfields->getExrel_Xmax();
+            Ex_Xmax = (*this)( (params.number_of_patches[0]-1)-(this->refHindex_))->EMfields->getExrel_Xmax();
         }
         MPI_Bcast(&Ex_Xmax, 1, MPI_DOUBLE, rankXmax, MPI_COMM_WORLD);
         E_Add[0] = -0.5*(Ex_Xmin+Ex_Xmax);
@@ -1833,7 +1833,7 @@ void VectorPatch::exchangePatches(SmileiMPI* smpi, Params& params)
          else
             (*this)(ipatch)->cleanType();
     }
-    (*this).set_refHindex() ;
+    this->set_refHindex() ;
     update_field_list(smpi) ;
 
 } // END exchangePatches
@@ -2449,7 +2449,7 @@ void VectorPatch::save_old_rho(Params &params)
 {
         int n=0;
         #pragma omp for schedule(static)
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++){
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++){
         n =  (*this)(ipatch)->EMfields->rhoold_->dims_[0]*(*this)(ipatch)->EMfields->rhoold_->dims_[1];//*(*this)(ipatch)->EMfields->rhoold_->dims_[2];
         if(params.nDim_field ==3) n*=(*this)(ipatch)->EMfields->rhoold_->dims_[2];
                 std::memcpy((*this)(ipatch)->EMfields->rhoold_->data_,(*this)(ipatch)->EMfields->rho_->data_,sizeof(double)*n);
@@ -2573,7 +2573,7 @@ void VectorPatch::ponderomotive_update_susceptibility_and_momentum(Params& param
     timers.particles.restart();
 
     #pragma omp for schedule(runtime)
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
         (*this)(ipatch)->EMfields->restartEnvChi();
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
             if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
@@ -2627,7 +2627,7 @@ void VectorPatch::ponderomotive_update_position_and_currents(Params& params,
     timers.particles.restart();
 
     #pragma omp for schedule(runtime)
-    for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
         for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
             if ( (*this)(ipatch)->vecSpecies[ispec]->isProj(time_dual, simWindow) || diag_flag  ) {
                 if (species(ipatch, ispec)->ponderomotive_dynamics){
@@ -2687,7 +2687,7 @@ void VectorPatch::init_new_envelope(Params& params)
 {
     if ((*this)(0)->EMfields->envelope!=NULL) {
         // for all patches, init new envelope from input namelist parameters
-        for (unsigned int ipatch=0 ; ipatch<(*this).size() ; ipatch++) {
+        for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
             (*this)(ipatch)->EMfields->envelope->initEnvelope( (*this)(ipatch), (*this)(ipatch)->EMfields );
         } // end loop on patches
     }

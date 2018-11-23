@@ -38,7 +38,7 @@ Interpolator3D4Order::Interpolator3D4Order(Params &params, Patch *patch) : Inter
 // ---------------------------------------------------------------------------------------------------------------------
 // 2nd Order Interpolation of the fields at a the particle position (3 nodes are used)
 // ---------------------------------------------------------------------------------------------------------------------
-void Interpolator3D4Order::operator() (ElectroMagn* EMfields, Particles &particles, int ipart, int nparts, double* ELoc, double* BLoc)
+void Interpolator3D4Order::fields(ElectroMagn* EMfields, Particles &particles, int ipart, int nparts, double* ELoc, double* BLoc)
 {
     // Static cast of the electromagnetic fields
     Field3D* Ex3D = static_cast<Field3D*>(EMfields->Ex_);
@@ -71,7 +71,7 @@ void Interpolator3D4Order::operator() (ElectroMagn* EMfields, Particles &particl
 } // END Interpolator3D4Order
 
 
-void Interpolator3D4Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc)
+void Interpolator3D4Order::fieldsAndCurrents(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc)
 {
     int ipart = *istart;
     
@@ -114,17 +114,17 @@ void Interpolator3D4Order::operator() (ElectroMagn* EMfields, Particles &particl
     // Interpolation of Bz^(d,d,p)
     *(BLoc+2*nparts) = compute( &coeffxd_[2], &coeffyd_[2], &coeffzp_[2], Bz3D, id_, jd_, kp_);
     // Interpolation of Jx^(d,p,p)
-    (*JLoc).x = compute( &coeffxd_[2], &coeffyp_[2], &coeffzp_[2], Jx3D, id_, jp_, kp_);
+    JLoc->x = compute( &coeffxd_[2], &coeffyp_[2], &coeffzp_[2], Jx3D, id_, jp_, kp_);
     // Interpolation of Jy^(p,d,p)
-    (*JLoc).y = compute( &coeffxp_[2], &coeffyd_[2], &coeffzp_[2], Jy3D, ip_, jd_, kp_);
+    JLoc->y = compute( &coeffxp_[2], &coeffyd_[2], &coeffzp_[2], Jy3D, ip_, jd_, kp_);
     // Interpolation of Jz^(p,p,d)
-    (*JLoc).z = compute( &coeffxp_[2], &coeffyp_[2], &coeffzd_[2], Jz3D, ip_, jp_, kd_);
+    JLoc->z = compute( &coeffxp_[2], &coeffyp_[2], &coeffzd_[2], Jz3D, ip_, jp_, kd_);
     // Interpolation of Rho^(p,p,p)
     (*RhoLoc) = compute( &coeffxp_[2], &coeffyp_[2], &coeffzp_[2], Rho3D, ip_, jp_, kp_);
 }
 
 // Interpolator on another field than the basic ones
-void Interpolator3D4Order::operator() (Field* field, Particles &particles, int *istart, int *iend, double* FieldLoc)
+void Interpolator3D4Order::oneField(Field* field, Particles &particles, int *istart, int *iend, double* FieldLoc)
 {
     Field3D* F = static_cast<Field3D*>(field);
     double * coeffx = field->isDual(0) ? &coeffxd_[1] : &coeffxp_[1];
@@ -143,7 +143,7 @@ void Interpolator3D4Order::operator() (Field* field, Particles &particles, int *
     }
 }
 
-void Interpolator3D4Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
+void Interpolator3D4Order::fieldsWrapper(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
 {
     std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
     std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);
@@ -154,7 +154,7 @@ void Interpolator3D4Order::operator() (ElectroMagn* EMfields, Particles &particl
     int nparts( particles.size() );
     for (int ipart=*istart ; ipart<*iend; ipart++ ) {
         //Interpolation on current particle
-        (*this)(EMfields, particles, ipart, nparts, &(*Epart)[ipart], &(*Bpart)[ipart]);
+        fields(EMfields, particles, ipart, nparts, &(*Epart)[ipart], &(*Bpart)[ipart]);
         //Buffering of iol and delta
         (*iold)[ipart+0*nparts]  = ip_;
         (*iold)[ipart+1*nparts]  = jp_;
@@ -168,38 +168,38 @@ void Interpolator3D4Order::operator() (ElectroMagn* EMfields, Particles &particl
 
 
 // Interpolator specific to tracked particles. A selection of particles may be provided
-void Interpolator3D4Order::operator() (ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, vector<unsigned int> * selection)
+void Interpolator3D4Order::fieldsSelection(ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, vector<unsigned int> * selection)
 {
     if( selection ) {
         
         int nsel_tot = selection->size();
         for (int isel=0 ; isel<nsel_tot; isel++ ) {
-            (*this)(EMfields, particles, (*selection)[isel], offset, buffer+isel, buffer+isel+3*offset);
+            fields(EMfields, particles, (*selection)[isel], offset, buffer+isel, buffer+isel+3*offset);
         }
         
     } else {
         
         int npart_tot = particles.size();
         for (int ipart=0 ; ipart<npart_tot; ipart++ ) {
-            (*this)(EMfields, particles, ipart, offset, buffer+ipart, buffer+ipart+3*offset);
+            fields(EMfields, particles, ipart, offset, buffer+ipart, buffer+ipart+3*offset);
         }
         
     }
 }
 
-void Interpolator3D4Order::interpolate_em_fields_and_envelope( ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator3D4Order::fieldsAndEnvelope( ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref )
 {
     ERROR("Projection and interpolation for the envelope model are implemented only for interpolation_order = 2");
 } // END Interpolator3D4Order
 
 
-void Interpolator3D4Order::interpolate_envelope_and_old_envelope( ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator3D4Order::envelopeAndOldEnvelope( ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref )
 {
     ERROR("Projection and interpolation for the envelope model are implemented only for interpolation_order = 2");
 } // END Interpolator3D4Order
 
 
-void Interpolator3D4Order::interpolate_envelope_and_susceptibility(ElectroMagn* EMfields, Particles &particles, int ipart, double* Env_A_abs_Loc, double* Env_Chi_Loc, double* Env_E_abs_Loc)
+void Interpolator3D4Order::envelopeAndSusceptibility(ElectroMagn* EMfields, Particles &particles, int ipart, double* Env_A_abs_Loc, double* Env_Chi_Loc, double* Env_E_abs_Loc)
 {
     ERROR("Projection and interpolation for the envelope model are implemented only for interpolation_order = 2");
 } // END Interpolator3D4Order

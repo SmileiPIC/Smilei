@@ -426,7 +426,7 @@ void Patch::initExchParticles(SmileiMPI* smpi, int ispec, Params& params)
         }
     }
 
-    int n_part_send = (*indexes_of_particles_to_exchange).size();
+    int n_part_send = indexes_of_particles_to_exchange->size();
 
     int iPart;
 
@@ -842,8 +842,8 @@ void Patch::cleanup_sent_particles(int ispec, std::vector<int>* indexes_of_parti
 
 
     // Push lost particles at the end of bins
-    for (unsigned int ibin = 0 ; ibin < (*culast_index).size() ; ibin++ ) {
-        ii = (*indexes_of_particles_to_exchange).size()-1;
+    for (unsigned int ibin = 0 ; ibin < culast_index->size() ; ibin++ ) {
+        ii = indexes_of_particles_to_exchange->size()-1;
         if (ii >= 0) { // Push lost particles to the end of the bin
             iPart = (*indexes_of_particles_to_exchange)[ii];
             while (iPart >= (*culast_index)[ibin] && ii > 0) {
@@ -871,7 +871,7 @@ void Patch::cleanup_sent_particles(int ispec, std::vector<int>* indexes_of_parti
 
     //Shift the bins in memory
     //Warning: this loop must be executed sequentially. Do not use openMP here.
-    for (int unsigned ibin = 1 ; ibin < (*culast_index).size() ; ibin++ ) { //First bin don't need to be shifted
+    for (int unsigned ibin = 1 ; ibin < culast_index->size() ; ibin++ ) { //First bin don't need to be shifted
         ii = (*cufirst_index)[ibin]-(*culast_index)[ibin-1]; // Shift the bin in memory by ii slots.
         iPart = min(ii,(*culast_index)[ibin]-(*cufirst_index)[ibin]); // Number of particles we have to shift = min (Nshift, Nparticle in the bin)
         if(iPart > 0) cuParticles.overwrite_part((*culast_index)[ibin]-iPart,(*culast_index)[ibin-1],iPart);
