@@ -47,7 +47,6 @@ filename(filename)
     }
     coeff1 = 4.046650232e-21*params.reference_angular_frequency_SI; // h*omega/(2*me*c^2)
     coeff2 = 2.817940327e-15*params.reference_angular_frequency_SI/299792458.; // re omega / c
-    n_patch_per_cell = 1./((double)params.n_cell_per_patch);
 }
 
 
@@ -65,7 +64,6 @@ Collisions::Collisions( Collisions* coll, int nDim )
     filename         = coll->filename        ;
     coeff1           = coll->coeff1          ;
     coeff2           = coll->coeff2          ;
-    n_patch_per_cell = coll->n_patch_per_cell;
 
     if( atomic_number>0 ) {
         Ionization = new CollisionalIonization(coll->Ionization);
@@ -122,7 +120,7 @@ void Collisions::calculate_debye_length(Params& params, Patch * patch)
             if (density <= 0.) continue;
             charge /= density; // average charge
             temperature *= s->mass / (3.*density); // Te in units of me*c^2
-            density /= (double)params.n_cell_per_patch; // density in units of critical density
+            // density in units of critical density
             // compute inverse debye length squared
             if (temperature>0.)
                 patch->debye_length_squared[ibin] += density*charge*charge/temperature;
@@ -265,9 +263,6 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
             Ionization->prepare2(p1, i1, p2, i2, not_duplicated_particle);
         }
         if( intra_collisions ) { n1 += n2; n2 = n1; }
-        n1  *= n_patch_per_cell;
-        n2  *= n_patch_per_cell;
-        n12 *= n_patch_per_cell;
 
         // Pre-calculate some numbers before the big loop
         n123 = pow(n1,2./3.);
@@ -277,7 +272,7 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
         coeff3 *= coeff2;
 
         // Prepare the ionization
-        Ionization->prepare3(params.timestep, n_patch_per_cell);
+        Ionization->prepare3(params.timestep);
 
         // Now start the real loop on pairs of particles
         // See equations in http://dx.doi.org/10.1063/1.4742167

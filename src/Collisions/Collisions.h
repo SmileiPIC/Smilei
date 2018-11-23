@@ -69,7 +69,7 @@ protected:
     double smean, logLmean, ncol;//, temperature
     
     const double twoPi = 2. * 3.14159265358979323846;
-    double coeff1, coeff2, n_patch_per_cell;
+    double coeff1, coeff2;
     
     // Collide one particle with another
     // See equations in http://dx.doi.org/10.1063/1.4742167

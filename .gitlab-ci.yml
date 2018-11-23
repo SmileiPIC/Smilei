@@ -6,8 +6,7 @@ compile:
   stage: compile
   only:
     - develop
-    - release-4.0.0
-    - mpi_omp_master
+    - stupid_collisions_bug
 
   script:
     # Force workdir cleaning in case of retried
@@ -33,8 +32,7 @@ makerun1D:
   stage: makerun
   only:
     - develop
-    - release-4.0.0
-    - mpi_omp_master
+    - stupid_collisions_bug
 
   script:
     # Move in test dir
@@ -46,8 +44,7 @@ makerun2D:
   stage: makerun
   only:
     - develop
-    - release-4.0.0
-    - mpi_omp_master
+    - stupid_collisions_bug
 
   script:
     # Move in test dir
@@ -59,8 +56,7 @@ makerun3D:
   stage: makerun
   only:
     - develop
-    - release-4.0.0
-    - mpi_omp_master
+    - stupid_collisions_bug
 
   script:
     # Move in test dir
@@ -72,8 +68,6 @@ makerunAM:
   stage: makerun
   only:
     - develop
-    #- release-4.0.0
-    #- mpi_omp_master
 
   script:
     # Move in test dir
@@ -85,8 +79,7 @@ makerunV:
   stage: makerun
   only:
     - develop
-    - release-4.0.0
-    - mpi_omp_master
+    - stupid_collisions_bug
 
   script:
     # Move in test dir
@@ -98,8 +91,7 @@ makerunCollisions:
   stage: makerun
   only:
     - develop
-    - release-4.0.0
-    - mpi_omp_master
+    - stupid_collisions_bug
     
   script:
     # Move in test dir
