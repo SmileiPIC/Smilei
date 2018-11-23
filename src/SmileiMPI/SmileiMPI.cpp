@@ -985,7 +985,7 @@ void SmileiMPI::recv(Particles* particles, int to, int tag, MPI_Datatype typePar
 // Assuming vec.size() is known (number of species). Asynchronous.
 void SmileiMPI::isend(std::vector<int>* vec, int to, int tag, MPI_Request& request)
 {
-    MPI_Isend( &((*vec)[0]), (*vec).size(), MPI_INT, to, tag, MPI_COMM_WORLD, &request );
+    MPI_Isend( &((*vec)[0]), vec->size(), MPI_INT, to, tag, MPI_COMM_WORLD, &request );
 
 } // End isend
 
@@ -999,7 +999,7 @@ void SmileiMPI::recv(std::vector<int> *vec, int from, int tag)
 // Assuming vec.size() is known (number of species). Asynchronous.
 void SmileiMPI::isend(std::vector<double>* vec, int to, int tag, MPI_Request& request)
 {
-    MPI_Isend( &((*vec)[0]), (*vec).size(), MPI_DOUBLE, to, tag, MPI_COMM_WORLD, &request );
+    MPI_Isend( &((*vec)[0]), vec->size(), MPI_DOUBLE, to, tag, MPI_COMM_WORLD, &request );
 
 } // End isend
 
@@ -1340,7 +1340,7 @@ void SmileiMPI::isend(Field* field, int to, int hindex, MPI_Request& request)
 void SmileiMPI::isendComplex(Field* field, int to, int hindex, MPI_Request& request)
 {
     cField* cf = static_cast<cField*>(field);
-    MPI_Isend( &((*cf)(0)),field->globalDims_, MPI_DOUBLE_COMPLEX, to, hindex, MPI_COMM_WORLD, &request );
+    MPI_Isend( &((*cf)(0)),2*field->globalDims_, MPI_DOUBLE, to, hindex, MPI_COMM_WORLD, &request );
 
 } // End isendComplex ( Field )
 
@@ -1356,7 +1356,7 @@ void SmileiMPI::recvComplex(Field* field, int from, int hindex)
 {
     MPI_Status status;
     cField* cf = static_cast<cField*>(field);
-    MPI_Recv( &((*cf)(0)),field->globalDims_, MPI_DOUBLE_COMPLEX, from, hindex, MPI_COMM_WORLD, &status );
+    MPI_Recv( &((*cf)(0)),2*field->globalDims_, MPI_DOUBLE, from, hindex, MPI_COMM_WORLD, &status );
 
 } // End recv ( Field )
 

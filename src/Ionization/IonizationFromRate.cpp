@@ -72,16 +72,6 @@ void IonizationFromRate::operator() (Particles* particles, unsigned int ipart_mi
             k_times        = 1;
         }
         
-        /* NO IONIZATION CURRENT HERE!
-        // Compute ionization current
-        factorJion *= TotalIonizPot;
-        Jion.x = factorJion * *(Ex+ipart);
-        Jion.y = factorJion * *(Ey+ipart);
-        Jion.z = factorJion * *(Ez+ipart);
-        
-        (*Proj)(EMfields->Jx_, EMfields->Jy_, EMfields->Jz_, *particles, ipart, Jion);
-         */
-        
         // Creation of the new electrons
         // (variable weights are used)
         // -----------------------------

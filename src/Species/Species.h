@@ -281,12 +281,12 @@ public:
 
     //! Method returning the effective number of Particles for the considered Species
     inline unsigned int getNbrOfParticles() const {
-        return (*particles).size();
+        return particles->size();
     }
     // capacity() = vect ever oversize
     //! \todo define particles.capacity = min.capacity
     inline unsigned int getParticlesCapacity() const {
-        return (*particles).capacity();
+        return particles->capacity();
     }
 
     //! Method calculating the Particle dynamics (interpolation, pusher, projection)
@@ -443,12 +443,12 @@ public:
         if (this->mass > 0)
         {
             for ( unsigned int iPart=0 ; iPart<getNbrOfParticles() ; iPart++ )
-                nrj += (*particles).weight(iPart)*((*particles).lor_fac(iPart)-1.0);
+                nrj += particles->weight(iPart)*(particles->lor_fac(iPart)-1.0);
         }
         else if (this->mass == 0)
         {
             for ( unsigned int iPart=0 ; iPart<getNbrOfParticles() ; iPart++ )
-                nrj += (*particles).weight(iPart)*((*particles).momentum_norm(iPart));
+                nrj += particles->weight(iPart)*(particles->momentum_norm(iPart));
         }
         return nrj;
     }

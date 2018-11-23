@@ -45,7 +45,7 @@ LoadBalancing(
     frozen_particle_load = 0.1
 )
 
-Species( 
+Species(
     name = "electron",
     position_initialization = "regular",
     momentum_initialization = "cold",
@@ -56,7 +56,7 @@ Species(
     charge_density = 0.000494,
     mean_velocity = [0.0, 0.0, 0.0],
     temperature = [0.0],
-    pusher = "boris",    
+    pusher = "boris",
     time_frozen = 0.0,
     boundary_conditions = [
     	["remove", "remove"],
@@ -119,7 +119,7 @@ DiagProbe(
 	    [Main.grid_length[0], Main.grid_length[1]/2., Main.grid_length[2]/2.]
 	],
 	number = [nx],
-	fields = list_fields
+	fields = list_fields+["Jx_electron"]
 )
 
 DiagProbe(

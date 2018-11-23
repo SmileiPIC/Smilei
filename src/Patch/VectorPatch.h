@@ -125,7 +125,7 @@ public :
                   Timers &timers, int itime);
  
     // compute rho only given by relativistic species which require initialization of the relativistic fields
-    void computeChargeRelativisticSpecies(double time_primal); 
+    void computeChargeRelativisticSpecies(double time_primal);
 
     //! For all patches, deposit susceptibility, then advance momentum of particles interacting with envelope
     void ponderomotive_update_susceptibility_and_momentum(Params& params,
@@ -176,6 +176,9 @@ public :
     //! For all patches, apply collisions
     void applyCollisions(Params &params, int itime, Timers & timer);
 
+    //! For all patches, allocate a field if not allocated
+    void allocateField(unsigned int ifield, Params &params);
+    
     //! For each patch, apply external fields
     void applyExternalFields();
 
@@ -323,7 +326,7 @@ public :
     inline ElectroMagn* emfields(int ipatch) {
         return (*this)(ipatch)->EMfields;
     }
-
+    
     inline Projector* proj(int ipatch, int ispec){
         return (*this)(ipatch)->vecSpecies[ispec]->Proj;
     }

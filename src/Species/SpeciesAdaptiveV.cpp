@@ -109,10 +109,10 @@ void SpeciesAdaptiveV::compute_part_cell_keys(Params &params)
     double X;
 
     //Number of particles before exchange
-    nparts = (*particles).size();
+    nparts = particles->size();
 
     // Cell_keys is resized at the current number of particles
-    (*particles).cell_keys.resize(nparts);
+    particles->cell_keys.resize(nparts);
 
     // Reinitialize count to 0
     for (unsigned int ic=0; ic < count.size() ; ic++)
@@ -122,15 +122,15 @@ void SpeciesAdaptiveV::compute_part_cell_keys(Params &params)
     for (ip=0; ip < nparts ; ip++){
     // Counts the # of particles in each cell (or sub_cell) and store it in slast_index.
         for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
-            X = (*particles).position(ipos,ip)-min_loc_vec[ipos];
+            X = particles->position(ipos,ip)-min_loc_vec[ipos];
             IX = round(X * dx_inv_[ipos] );
-            (*particles).cell_keys[ip] = (*particles).cell_keys[ip] * this->length[ipos] + IX;
+            particles->cell_keys[ip] = particles->cell_keys[ip] * this->length[ipos] + IX;
         }
     }
 
     // Reduction of the number of particles per cell in count
     for (ip=0; ip < nparts ; ip++)
-        count[(*particles).cell_keys[ip]] ++ ;
+        count[particles->cell_keys[ip]] ++ ;
 
 }
 
@@ -196,7 +196,7 @@ void SpeciesAdaptiveV::configuration(Params &params, Patch * patch)
     this->compute_part_cell_keys(params);
 
     // Species with particles
-    if ((*particles).size() > 0)
+    if (particles->size() > 0)
     {
 
         // --------------------------------------------------------------------
@@ -229,7 +229,7 @@ void SpeciesAdaptiveV::configuration(Params &params, Patch * patch)
                       << " of MPI process " << patch->MPI_me_
                       << " (vecto time: " << vecto_time
                       << ", scalar time: " << scalar_time
-                      << ", particle number: " << (*particles).size()
+                      << ", particle number: " << particles->size()
                       << ")" << '\n';
 #endif
 
@@ -315,7 +315,7 @@ void SpeciesAdaptiveV::reconfiguration(Params &params, Patch * patch)
                   << " of MPI process " << patch->MPI_me_
                   << " (vecto time: " << vecto_time
                   << ", scalar time: " << scalar_time
-                  << ", particle number: " << (*particles).size()
+                  << ", particle number: " << particles->size()
                   << ")" << '\n';
 #endif
 

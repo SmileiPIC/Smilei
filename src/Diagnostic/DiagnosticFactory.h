@@ -16,7 +16,7 @@
 #include "DiagnosticFieldsAM.h"
 
 //  --------------------------------------------------------------------------------------------------------------------
-//! Create appropriate IO environment for the geometry 
+//! Create appropriate IO environment for the geometry
 //! \param params : Parameters
 //! \param smpi : MPI environment
 //  --------------------------------------------------------------------------------------------------------------------
@@ -59,7 +59,7 @@ public:
             vecDiagnostics.push_back( new DiagnosticScreen(params, smpi, vecPatches(0), n_diag_screen) );
         }
         
-//MESSAGE ("Glob diag");   
+//MESSAGE ("Glob diag");
         return vecDiagnostics;
 
  } // END createGlobalDiagnostics
@@ -76,7 +76,7 @@ public:
         }
         
         for (unsigned int n_diag_probe = 0; n_diag_probe < PyTools::nComponents("DiagProbe"); n_diag_probe++) {
-            vecDiagnostics.push_back( new DiagnosticProbes(params, smpi, n_diag_probe) );
+            vecDiagnostics.push_back( new DiagnosticProbes(params, smpi, vecPatches, n_diag_probe) );
         }
         
         for (unsigned int n_diag_track = 0; n_diag_track < PyTools::nComponents("DiagTrackParticles"); n_diag_track++) {
@@ -119,4 +119,3 @@ public:
 };
 
 #endif
-

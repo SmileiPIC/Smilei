@@ -49,7 +49,7 @@ Projector2D2OrderV::~Projector2D2OrderV()
 // ---------------------------------------------------------------------------------------------------------------------
 //!  Project current densities & charge : diagFields timstep (not vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2OrderV::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold, int nparts)
+void Projector2D2OrderV::currentsAndDensity(double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold, int nparts)
 {
     
     // -------------------------------------
@@ -184,7 +184,7 @@ void Projector2D2OrderV::operator() (double* Jx, double* Jy, double* Jz, double*
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project charge : frozen & diagFields timstep (not vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2OrderV::operator() (double* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim)
+void Projector2D2OrderV::densityFrozen(double* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim)
 {
     //Warning : this function is used for frozen species only. It is assumed that position = position_old !!!
     
@@ -263,7 +263,7 @@ void Projector2D2OrderV::operator() (double* rhoj, Particles &particles, unsigne
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project global current densities : ionization
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2OrderV::operator() (Field* Jx, Field* Jy, Field* Jz, Particles &particles, int ipart, LocalFields Jion)
+void Projector2D2OrderV::ionizationCurrents(Field* Jx, Field* Jy, Field* Jz, Particles &particles, int ipart, LocalFields Jion)
 {
     Field2D* Jx2D  = static_cast<Field2D*>(Jx);
     Field2D* Jy2D  = static_cast<Field2D*>(Jy);
@@ -348,7 +348,7 @@ void Projector2D2OrderV::operator() (Field* Jx, Field* Jy, Field* Jz, Particles 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project current densities : main projector vectorized
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2OrderV::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, std::vector<unsigned int> &b_dim, int* iold, double *deltaold, int ipart_ref)
+void Projector2D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, std::vector<unsigned int> &b_dim, int* iold, double *deltaold, int ipart_ref)
 {
     // -------------------------------------
     // Variable declaration & initialization
@@ -737,7 +737,7 @@ void Projector2D2OrderV::operator() (double* Jx, double* Jy, double* Jz, Particl
 // ---------------------------------------------------------------------------------------------------------------------
 //! Wrapper for projection
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2OrderV::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int scell, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec, int ipart_ref)
+void Projector2D2OrderV::currentsAndDensityWrapper(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int scell, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec, int ipart_ref)
 {
     if ( istart == iend ) return; //Don't treat empty cells.
 
@@ -757,7 +757,7 @@ void Projector2D2OrderV::operator() (ElectroMagn* EMfields, Particles &particles
             double* b_Jx =  &(*EMfields->Jx_ )(0);
             double* b_Jy =  &(*EMfields->Jy_ )(0);
             double* b_Jz =  &(*EMfields->Jz_ )(0);
-            (*this)(b_Jx , b_Jy , b_Jz , particles,  istart, iend, invgf, b_dim, iold, &(*delta)[0], ipart_ref);
+            currents(b_Jx , b_Jy , b_Jz , particles,  istart, iend, invgf, b_dim, iold, &(*delta)[0], ipart_ref);
         }
         else 
             ERROR("TO DO with rho");
@@ -774,7 +774,7 @@ void Projector2D2OrderV::operator() (ElectroMagn* EMfields, Particles &particles
             //Do not use cells sorting for now : f(ipart) for now, f(istart) laterfor now,
             //(*iold)[ipart       ] = round( particles.position(0, ipart)* dx_inv_ - dt*particles.momentum(0, ipart)*(*invgf)[ipart] * dx_inv_ ) - i_domain_begin ;
             //(*iold)[ipart+nparts] = round( particles.position(1, ipart)* dy_inv_ - dt*particles.momentum(1, ipart)*(*invgf)[ipart] * dy_inv_ ) - j_domain_begin ;
-            (*this)(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*invgf)[ipart-ipart_ref], ibin*clrw, b_dim, iold, &(*delta)[ipart-ipart_ref], invgf->size());
+            currentsAndDensity(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*invgf)[ipart-ipart_ref], ibin*clrw, b_dim, iold, &(*delta)[ipart-ipart_ref], invgf->size());
         }
     }
 }

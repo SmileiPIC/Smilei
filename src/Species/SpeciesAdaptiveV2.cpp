@@ -111,7 +111,7 @@ void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
 #endif
 
         // Interpolate the fields at the particle position
-        (*Interp)(EMfields, *particles, smpi, &(first_index[0]), &(last_index[last_index.size()-1]), ithread, first_index[0]);
+        Interp->fieldsWrapper(EMfields, *particles, smpi, &(first_index[0]), &(last_index[last_index.size()-1]), ithread, first_index[0]);
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[0] += MPI_Wtime() - timer;
@@ -148,10 +148,10 @@ void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
                            first_index[scell], last_index[scell], ithread );
 
                 // Update scalar variable for diagnostics
-                nrj_radiation += (*Radiate).getRadiatedEnergy();
+                nrj_radiation += Radiate->getRadiatedEnergy();
 
                 // Update the quantum parameter chi
-                (*Radiate).compute_thread_chipa(*particles,
+                Radiate->compute_thread_chipa(*particles,
                                                 smpi,
                                                 first_index[scell],
                                                 last_index[scell],
@@ -175,17 +175,17 @@ void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
 
                 // Update scalar variable for diagnostics
                 // We reuse nrj_radiation for the pairs
-                nrj_radiation += (*Multiphoton_Breit_Wheeler_process).getPairEnergy();
+                nrj_radiation += Multiphoton_Breit_Wheeler_process->getPairEnergy();
 
                 // Update the photon quantum parameter chi of all photons
-                (*Multiphoton_Breit_Wheeler_process).compute_thread_chiph(*particles,
+                Multiphoton_Breit_Wheeler_process->compute_thread_chiph(*particles,
                                                                           smpi,
                                                                           first_index[scell],
                                                                           last_index[scell],
                                                                           ithread );
 
                 // Suppression of the decayed photons into pairs
-                (*Multiphoton_Breit_Wheeler_process).decayed_photon_cleaning(
+                Multiphoton_Breit_Wheeler_process->decayed_photon_cleaning(
                                                                              *particles,scell, first_index.size(), &first_index[0], &last_index[0]);
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[6] += MPI_Wtime() - timer;
@@ -224,16 +224,16 @@ void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
                     if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
                         addPartInExchList( iPart );
                         nrj_lost_per_thd[tid] += mass * ener_iPart;
-                        (*particles).cell_keys[iPart] = -1;
+                        particles->cell_keys[iPart] = -1;
                     }
                     else {
                         //Compute cell_keys of remaining particles
                         for ( unsigned int i = 0 ; i<nDim_particle; i++ ){
-                            (*particles).cell_keys[iPart] *= this->length[i];
-                            (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]) * dx_inv_[i] );
+                            particles->cell_keys[iPart] *= this->length[i];
+                            particles->cell_keys[iPart] += round( (particles->position(i,iPart)-min_loc_vec[i]) * dx_inv_[i] );
                         }
                         //First reduction of the count sort algorithm. Lost particles are not included.
-                        count[(*particles).cell_keys[iPart]] ++;
+                        count[particles->cell_keys[iPart]] ++;
                     }
                 }
 
@@ -254,16 +254,16 @@ void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
                     if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
                         addPartInExchList( iPart );
                         nrj_lost_per_thd[tid] += ener_iPart;
-                        (*particles).cell_keys[iPart] = -1;
+                        particles->cell_keys[iPart] = -1;
                     }
                     else {
                         //Compute cell_keys of remaining particles
                         for ( unsigned int i = 0 ; i<nDim_particle; i++ ){
-                            (*particles).cell_keys[iPart] *= this->length[i];
-                            (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]) * dx_inv_[i] );
+                            particles->cell_keys[iPart] *= this->length[i];
+                            particles->cell_keys[iPart] += round( (particles->position(i,iPart)-min_loc_vec[i]) * dx_inv_[i] );
                         }
                         //First reduction of the count sort algorithm. Lost particles are not included.
-                        count[(*particles).cell_keys[iPart]] ++;
+                        count[particles->cell_keys[iPart]] ++;
                     }
                 }
             } // end if mass > 0
@@ -281,12 +281,14 @@ void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
 #ifdef  __DETAILED_TIMERS
         timer = MPI_Wtime();
 #endif
-            (*Proj)(EMfields, *particles, smpi, first_index[0],
-                                                last_index.back(),
-                                                ithread, 0,
-                                                0, diag_flag,
-                                                params.is_spectral,
-                                                b_dim, ispec);
+            Proj->currentsAndDensityWrapper(
+                EMfields, *particles, smpi, first_index[0],
+                last_index.back(),
+                ithread, 0,
+                0, diag_flag,
+                params.is_spectral,
+                b_dim, ispec
+            );
 #ifdef  __DETAILED_TIMERS
         patch->patch_timers[2] += MPI_Wtime() - timer;
 #endif
@@ -306,7 +308,7 @@ void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
                 b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
 
                 for (iPart=first_index[ibin] ; (int)iPart<last_index[ibin]; iPart++ ) {
-                    (*Proj)(b_rho, (*particles), iPart, 0, b_dim);
+                    Proj->densityFrozen(b_rho, (*particles), iPart, 0, b_dim);
                 } //End loop on particles
             }//End loop on bins
 
@@ -329,10 +331,10 @@ void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
     unsigned int length[3];
 
     //Number of particles before exchange
-    nparts = (*particles).size();
+    nparts = particles->size();
 
     // Cell_keys is resized at the current number of particles
-    (*particles).cell_keys.resize(nparts);
+    particles->cell_keys.resize(nparts);
 
     length[0]=0;
     length[1]=params.n_space[1]+1;
@@ -342,15 +344,15 @@ void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
     for (ip=0; ip < nparts ; ip++){
     // Counts the # of particles in each cell (or sub_cell) and store it in slast_index.
         for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
-            X = (*particles).position(ipos,ip)-min_loc_vec[ipos];
+            X = particles->position(ipos,ip)-min_loc_vec[ipos];
             IX = round(X * dx_inv_[ipos] );
-            (*particles).cell_keys[ip] = (*particles).cell_keys[ip] * length[ipos] + IX;
+            particles->cell_keys[ip] = particles->cell_keys[ip] * length[ipos] + IX;
         }
     }
 
     // Reduction of the number of particles per cell in count
     for (ip=0; ip < nparts ; ip++)
-        count[(*particles).cell_keys[ip]] ++ ;
+        count[particles->cell_keys[ip]] ++ ;
 }*/
 
 
@@ -452,7 +454,7 @@ void SpeciesAdaptiveV2::configuration(Params &params, Patch * patch)
     float scalar_time = 0.;
 
     // Species with particles
-    if ((*particles).size() > 0)
+    if (particles->size() > 0)
     {
 
         // --------------------------------------------------------------------
@@ -494,11 +496,11 @@ void SpeciesAdaptiveV2::reconfigure_operators(Params &params, Patch * patch)
     delete Proj;
 
     // Reassign the correct Interpolator
-    this->Interp = InterpolatorFactory::create(params, patch, this->vectorized_operators);
+    Interp = InterpolatorFactory::create(params, patch, this->vectorized_operators);
     // Reassign the correct Pusher to Push
     //Push = PusherFactory::create(params, this);
     // Reassign the correct Projector
-    this->Proj = ProjectorFactory::create(params, patch, this->vectorized_operators);
+    Proj = ProjectorFactory::create(params, patch, this->vectorized_operators);
 }
 
 
@@ -529,7 +531,7 @@ void SpeciesAdaptiveV2::scalar_ponderomotive_update_susceptibility_and_momentum(
 #ifdef  __DETAILED_TIMERS
         timer = MPI_Wtime();
 #endif
-        Interp->interpolate_em_fields_and_envelope(EMfields, *particles, smpi, &(first_index[0]), &(last_index[last_index.size()-1]), ithread );
+        Interp->fieldsAndEnvelope(EMfields, *particles, smpi, &(first_index[0]), &(last_index[last_index.size()-1]), ithread );
 #ifdef  __DETAILED_TIMERS
         patch->patch_timers[7] += MPI_Wtime() - timer;
 #endif
@@ -539,7 +541,7 @@ void SpeciesAdaptiveV2::scalar_ponderomotive_update_susceptibility_and_momentum(
 #ifdef  __DETAILED_TIMERS
         timer = MPI_Wtime();
 #endif
-        Proj->project_susceptibility(EMfields, *particles, mass, smpi, first_index[0], last_index.back(), ithread, 0, b_dim );
+        Proj->susceptibility(EMfields, *particles, mass, smpi, first_index[0], last_index.back(), ithread, 0, b_dim );
 #ifdef  __DETAILED_TIMERS
         patch->patch_timers[8] += MPI_Wtime() - timer;
 #endif
@@ -603,7 +605,7 @@ void SpeciesAdaptiveV2::scalar_ponderomotive_update_position_and_currents(double
 #ifdef  __DETAILED_TIMERS
         timer = MPI_Wtime();
 #endif
-        Interp->interpolate_envelope_and_old_envelope(EMfields, *particles, smpi, &(first_index[0]), &(last_index[last_index.size()-1]), ithread );
+        Interp->envelopeAndOldEnvelope(EMfields, *particles, smpi, &(first_index[0]), &(last_index[last_index.size()-1]), ithread );
 #ifdef  __DETAILED_TIMERS
         patch->patch_timers[10] += MPI_Wtime() - timer;
 #endif
@@ -638,16 +640,16 @@ void SpeciesAdaptiveV2::scalar_ponderomotive_update_position_and_currents(double
                     if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
                         addPartInExchList( iPart );
                         nrj_lost_per_thd[tid] += mass * ener_iPart;
-                        (*particles).cell_keys[iPart] = -1;
+                        particles->cell_keys[iPart] = -1;
                     }
                     else {
                         //Compute cell_keys of remaining particles
                         for ( unsigned int i = 0 ; i<nDim_particle; i++ ){
-                            (*particles).cell_keys[iPart] *= this->length[i];
-                            (*particles).cell_keys[iPart] += round( ((*particles).position(i,iPart)-min_loc_vec[i]) * dx_inv_[i] );
+                            particles->cell_keys[iPart] *= this->length[i];
+                            particles->cell_keys[iPart] += round( (particles->position(i,iPart)-min_loc_vec[i]) * dx_inv_[i] );
                         }
                         //First reduction of the count sort algorithm. Lost particles are not included.
-                        count[(*particles).cell_keys[iPart]] ++;
+                        count[particles->cell_keys[iPart]] ++;
                     }
 
                  }
@@ -661,7 +663,7 @@ void SpeciesAdaptiveV2::scalar_ponderomotive_update_position_and_currents(double
         timer = MPI_Wtime();
 #endif
         if ((!particles->is_test) && (mass > 0))
-            (*Proj)(EMfields, *particles, smpi, first_index[0], last_index.back(), ithread, 0, clrw, diag_flag, params.is_spectral, b_dim, ispec );
+            Proj->currentsAndDensityWrapper(EMfields, *particles, smpi, first_index[0], last_index.back(), ithread, 0, clrw, diag_flag, params.is_spectral, b_dim, ispec );
 #ifdef  __DETAILED_TIMERS
         patch->patch_timers[12] += MPI_Wtime() - timer;
 #endif
@@ -683,7 +685,7 @@ void SpeciesAdaptiveV2::scalar_ponderomotive_update_position_and_currents(double
                     else if (nDim_field==1)
                         b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
                     for (iPart=first_index[ibin] ; (int)iPart<last_index[ibin]; iPart++ ) {
-                        (*Proj)(b_rho, (*particles), iPart, 0, b_dim);
+                        Proj->densityFrozen(b_rho, (*particles), iPart, 0, b_dim);
                     } //End loop on particles
                 }//End loop on bins
             } // end condition on diag and not particle test

@@ -42,14 +42,14 @@ DiagnosticPerformances::DiagnosticPerformances( Params & params, SmileiMPI* smpi
     }
     filename = "Performances.h5";
 
-    this->mpi_size = smpi->getSize();
-    this->mpi_rank = smpi->getRank();
-    this->ndim     = params.nDim_field;
-    this->has_adaptive_vectorization = params.has_adaptive_vectorization;
+    mpi_size = smpi->getSize();
+    mpi_rank = smpi->getRank();
+    ndim     = params.nDim_field;
+    has_adaptive_vectorization = params.has_adaptive_vectorization;
 
     // Define the HDF5 file and memory spaces
-    setHDF5spaces(filespace_double, memspace_double, n_quantities_double, mpi_size, this->mpi_rank);
-    setHDF5spaces(filespace_uint  , memspace_uint  , n_quantities_uint  , mpi_size, this->mpi_rank);
+    setHDF5spaces(filespace_double, memspace_double, n_quantities_double, mpi_size, mpi_rank);
+    setHDF5spaces(filespace_uint  , memspace_uint  , n_quantities_uint  , mpi_size, mpi_rank);
 
     // Define HDF5 file access
     write_plist = H5Pcreate(H5P_DATASET_XFER);
@@ -264,7 +264,7 @@ void DiagnosticPerformances::run( SmileiMPI* smpi, VectorPatch& vecPatches, int 
             }*/
 
             // Prepapre the hyperslab
-            set_HDF5_patch_spaces(filespace_patches, memspace_patches, patches_per_mpi, this->mpi_rank);
+            set_HDF5_patch_spaces(filespace_patches, memspace_patches, patches_per_mpi, mpi_rank);
 
             // Gather x patch position in a buffer
             vector <unsigned int> buffer(number_of_patches);
@@ -338,7 +338,7 @@ void DiagnosticPerformances::run( SmileiMPI* smpi, VectorPatch& vecPatches, int 
             // Write MPI process the owns the patch
             // Gather patch hindex in a buffer
             for(unsigned int ipatch=0; ipatch < number_of_patches; ipatch++){
-                buffer[ipatch] = this->mpi_rank;
+                buffer[ipatch] = mpi_rank;
             }
             // Write patch index to file
             dset_patches  = H5Dcreate( patch_group, "mpi_rank", H5T_NATIVE_UINT, filespace_patches, H5P_DEFAULT, create_plist, H5P_DEFAULT);
