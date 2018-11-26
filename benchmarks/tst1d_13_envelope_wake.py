@@ -26,8 +26,7 @@ Main(
     clrw = nx/npatch_x,
 
     EM_boundary_conditions = [ ["silver-muller"] ],
-    Envelope_boundary_conditions = [ ["reflective", "reflective"],
-     ],
+   
 
     solve_poisson = False,
     print_every = 100,
@@ -71,6 +70,8 @@ LaserEnvelopePlanar1D( # linear regime of LWFA
     a0              = 0.1,     
     time_envelope   = tgaussian(center=center_laser, fwhm=laser_fwhm),
     envelope_solver = 'explicit',
+     Envelope_boundary_conditions = [ ["reflective", "reflective"],
+     ],
 )
 
 
@@ -80,7 +81,7 @@ Checkpoints(
     exit_after_dump = False,
 )
 
-list_fields = ['Ex','Rho','Jx','Env_A_abs','Env_Chi']
+list_fields = ['Ex','Rho','Env_A_abs','Env_Chi','Env_E_abs']
 
 DiagFields(
    every = 50,
@@ -88,10 +89,7 @@ DiagFields(
 )
 
 
-
-
-#DiagScalar(every = 10, vars=['Uelm','Ukin_electron','ExMax','ExMaxCell','EyMax','EyMaxCell', 'RhoMin', 'RhoMinCell'])
-DiagScalar(every = 10, vars=['Env_A_absMax'])
+DiagScalar(every = 10, vars=['Env_A_absMax','Env_E_absMax'])
 
                                                                                                                                                                
 
