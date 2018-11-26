@@ -164,9 +164,9 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
     unsigned int npairs; // number of pairs of macro-particles
     vector<unsigned int> np1, np2; // numbers of macro-particles in each species, in each group
     double n1, n2, n12, n123, n223; // densities of particles
-    unsigned int i1, i2, ispec1, ispec2, N2max;
+    unsigned int i1=0, i2, ispec1, ispec2, N2max;
     Species   *s1, *s2;
-    Particles *p1, *p2;
+    Particles *p1=NULL, *p2;
     double m12, coeff3, coeff4, logL, s, ncol, debye2=0.;
     bool not_duplicated_particle;
 

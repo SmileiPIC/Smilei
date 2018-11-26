@@ -33,7 +33,7 @@ public:
     //! Project global current densities if Ionization in Species::dynamics,
     virtual void ionizationCurrents(Field* Jx, Field* Jy, Field* Jz, Particles &particles, int ipart, LocalFields Jion) = 0;
 
-   //!Wrapper
+    //!Wrapper
     virtual void currentsAndDensityWrapper(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec, int ipart_ref = 0) = 0;
 
 
@@ -41,8 +41,8 @@ public:
         ERROR( "Envelope not implemented with this geometry and this order" );
     };
 
-private:
-
+protected:
+    double inv_cell_volume;
 };
 
 #endif

@@ -26,7 +26,6 @@ public:
     void susceptibility(ElectroMagn* EMfields, Particles &particles, double species_mass, SmileiMPI* smpi, int istart, int iend,  int ithread, int ibin, std::vector<unsigned int> &b_dim, int ipart_ref = 0) override final;
 
 private:
-    double one_third;
     double dt, dts2, dts4;
 };
 

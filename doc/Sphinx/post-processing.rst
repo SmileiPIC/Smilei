@@ -220,6 +220,13 @@ Open a ParticleBinning diagnostic
   S = happi.Open("path/to/my/results")
   Diag = S.ParticleBinning(1)
 
+**Note**:
+
+The :ref:`macro-particle weights<Weights>` are not in units of density,
+but of density multiplied by hypervolume.
+In the ``ParticleBinning`` post-processing, this is accounted for: the
+results are divided by the hypervolume corresponding to the diagnostic's
+definition.
 
 
 ----
@@ -400,56 +407,6 @@ It has three different syntaxes:
   parameter :py:data:`reference_angular_frequency_SI` set to a finite value.
   Otherwise, this parameter can be set during post-processing as an argument to the
   :py:meth:`happi.Open` function.
-
-
-----
-
-Units of ParticleBinning and Screen
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Most of the data output from the ``ParticleBinning`` and ``Screen`` diagnostics is
-proportional to the macro-particle statistical weights, as stated by their
-:py:data:`deposited_quantity` argument. These weights :ref:`are defined as <Weights>`
-the species density divided by the number of macro-particles of this species in the
-cell where the particle is born. Consequently, weights are in units of the number
-density :math:`N_r` (see :doc:`units`), and the sum of all macro-particle weights in
-one cell corresponds to the local species density.
-
-However, the ``DiagParticleBinning`` and ``DiagScreen`` diagnostics do not necessarily
-sum the weights in one cell: they calculate a sum over a *bin* that can be of any size,
-and in any space (phase-space, etc). The data written in the outputs
-``ParticleBinning*.h5`` and ``Screen*.h5`` is thus in units of :math:`N_r`, but does not
-always represent the actual plasma density.
-
-In ``happi``, the post-processing takes into account these features in order for outputs
-to represent the actual plasma density. For instance, if your ``DiagParticleBinning``
-has two axes ``x`` and ``y``, the output will represent the real plasma density. Another
-example: if your ``DiagParticleBinning`` has two axes ``x`` and ``px``, the output
-will be in units of :math:`N_r/P_r` and represents the real plasma density per unit of
-:math:`p_x`.
-
-Let us briefly explain how ``happi`` applies the correction. The idea is that the output
-has to be divided by the number of cells *relevant* to each bin.
-
-* The output is divided by the total number of cells in the simulation
-
-* For each axis of the diagnostic :py:data:`axes`:
-
-  * If the axis is one of ``"x"``, ``"y"`` or ``"z"``:
-
-    * Multiply the outputs by the simulation length along that axis.
-    * If the axis is included in a ``subset`` or a ``sum``: divide by the corresponding *length*.
-    * Otherwise, divide by the length of each bin.
-
-  * Otherwise:
-
-    * If the axis is included in a ``subset`` or a ``sum``: do nothing.
-    * Otherwise, divide by the length of each bin.
-
-As a final note, remember that the :py:data:`axes` of a diagnostic may be a *python function*.
-In this case, if the function represents some spatial axis, then happi cannot know how to
-apply the correction. The user has to figure it out.
-
 
 ----
 

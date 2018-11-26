@@ -1941,22 +1941,18 @@ The full list of available scalars is given in the table below.
 +----------------+---------------------------------------------------------------------------+
 | | Ukin_bnd     | | Kinetic contribution exchanged at the boundaries during the timestep    |
 | | Uelm_bnd     | | EM contribution exchanged at boundaries during the timestep             |
-| | Ukin_out_mvw | | Kinetic contribution lost during the timestep due to the moving window  |
-| | Ukin_inj_mvw | | Kinetic contribution gained during the timestep due to the moving window|
-| | Uelm_out_mvw | | EM contribution lost during the timestep due to the moving window       |
-| | Uelm_inj_mvw | | EM contribution gained during the timestep due to the moving window     |
 | |              | |                                                                         |
-| | PoyXmin      | | Time-accumulated Poynting flux through xmin boundary                    |
-| | PoyXminInst  | | Current Poynting flux through xmin boundary                             |
+| | PoyXminInst  | | Poynting contribution through xmin boundary during the timestep         |
+| | PoyXmin      | | Time-accumulated Poynting contribution through xmin boundary            |
 | |              | |  ... same for other boundaries                                          |
 +----------------+---------------------------------------------------------------------------+
 | **Particle information**                                                                   |
 +----------------+---------------------------------------------------------------------------+
-| | Dens_abc     | | Average density of species "abc"                                        |
-| | Zavg_abc     | |  ... its average charge                                                 |
-| | Ukin_abc     | |  ... its total kinetic energy                                           |
-| | Urad_abc     | |  ... its total radiated energy                                          |
-| | Ntot_abc     | |  ... and number of particles                                            |
+| | Zavg_abc     | | Average charge of species "abc"                                         |
+| | Dens_abc     | |  ... its integrated density                                             |
+| | Ukin_abc     | |  ... its integrated kinetic energy density                              |
+| | Urad_abc     | |  ... its integrated radiated energy density                             |
+| | Ntot_abc     | |  ... and number of macro-particles                                      |
 +----------------+---------------------------------------------------------------------------+
 | **Fields information**                                                                     |
 +----------------+---------------------------------------------------------------------------+

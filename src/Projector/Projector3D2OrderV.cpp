@@ -24,8 +24,6 @@ Projector3D2OrderV::Projector3D2OrderV (Params& params, Patch* patch) : Projecto
     dz_inv_   = 1.0/params.cell_length[2];
     dz_ov_dt  = params.cell_length[2] / params.timestep;
 
-    one_third = 1.0/3.0;
-
     i_domain_begin = patch->getCellStartingGlobalIndex(0);
     j_domain_begin = patch->getCellStartingGlobalIndex(1);
     k_domain_begin = patch->getCellStartingGlobalIndex(2);
@@ -109,7 +107,7 @@ void Projector3D2OrderV::currentsAndDensity(double* Jx, double* Jy, double* Jz, 
         #pragma omp simd
         for (int ipart=0 ; ipart<np_computed; ipart++ ){
             compute_distances( particles, npart_total, ipart, istart0, ipart_ref, deltaold, iold, DSx, DSy, DSz );
-            charge_weight[ipart] = (double)(particles.charge(ivect+istart+ipart))*particles.weight(ivect+istart+ipart);
+            charge_weight[ipart] = inv_cell_volume * (double)(particles.charge(ivect+istart+ipart))*particles.weight(ivect+istart+ipart);
         }
 
         #pragma omp simd
@@ -173,7 +171,7 @@ void Projector3D2OrderV::densityFrozen(double* rhoj, Particles &particles, unsig
     double delta, delta2;
     double Sx1[5], Sy1[5], Sz1[5]; // arrays used for the Esirkepov projection method
 
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
     if (type > 0) {
         charge_weight *= 1./sqrt(1.0 + particles.momentum(0,ipart)*particles.momentum(0,ipart)
                                      + particles.momentum(1,ipart)*particles.momentum(1,ipart)
@@ -267,9 +265,10 @@ void Projector3D2OrderV::ionizationCurrents(Field* Jx, Field* Jy, Field* Jz, Par
     double Sxp[3], Sxd[3], Syp[3], Syd[3], Szp[3], Szd[3];
 
     // weighted currents
-    double Jx_ion = Jion.x * particles.weight(ipart);
-    double Jy_ion = Jion.y * particles.weight(ipart);
-    double Jz_ion = Jion.z * particles.weight(ipart);
+    double weight = inv_cell_volume * particles.weight(ipart);
+    double Jx_ion = Jion.x * weight;
+    double Jy_ion = Jion.y * weight;
+    double Jz_ion = Jion.z * weight;
 
     //Locate particle on the grid
     xpn    = particles.position(0, ipart) * dx_inv_;  // normalized distance to the first node
@@ -408,7 +407,7 @@ void Projector3D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
         #pragma omp simd
         for (int ipart=0 ; ipart<np_computed; ipart++ ){
             compute_distances( particles, npart_total, ipart, istart0, ipart_ref, deltaold, iold, Sx0_buff_vect, Sy0_buff_vect, Sz0_buff_vect, DSx, DSy, DSz );
-            charge_weight[ipart] = (double)(particles.charge(ivect+istart+ipart))*particles.weight(ivect+istart+ipart);
+            charge_weight[ipart] = inv_cell_volume * (double)(particles.charge(ivect+istart+ipart))*particles.weight(ivect+istart+ipart);
         }
 
         #pragma omp simd
@@ -453,7 +452,7 @@ void Projector3D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
         #pragma omp simd
         for (int ipart=0 ; ipart<np_computed; ipart++ ){
             compute_distances( particles, npart_total, ipart, istart0, ipart_ref, deltaold, iold, Sx0_buff_vect, Sy0_buff_vect, Sz0_buff_vect, DSx, DSy, DSz );
-            charge_weight[ipart] = (double)(particles.charge(ivect+istart+ipart))*particles.weight(ivect+istart+ipart);
+            charge_weight[ipart] = inv_cell_volume * (double)(particles.charge(ivect+istart+ipart))*particles.weight(ivect+istart+ipart);
         }
 
         #pragma omp simd
@@ -494,7 +493,7 @@ void Projector3D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
         #pragma omp simd
         for (int ipart=0 ; ipart<np_computed; ipart++ ){
             compute_distances( particles, npart_total, ipart, istart0, ipart_ref, deltaold, iold, Sx0_buff_vect, Sy0_buff_vect, Sz0_buff_vect, DSx, DSy, DSz );
-            charge_weight[ipart] = (double)(particles.charge(ivect+istart+ipart))*particles.weight(ivect+istart+ipart);
+            charge_weight[ipart] = inv_cell_volume * (double)(particles.charge(ivect+istart+ipart))*particles.weight(ivect+istart+ipart);
         }
 
         #pragma omp simd
@@ -665,7 +664,7 @@ void Projector3D2OrderV::susceptibility(ElectroMagn* EMfields, Particles &partic
             gamma_ponderomotive = gamma0 + (pxsm+pysm+pzsm)*0.5 ;
 
             // susceptibility for the macro-particle
-            charge_weight[ipart] = c*c*particles.weight(istart+ipart)*one_over_mass/gamma_ponderomotive ;
+            charge_weight[ipart] = c*c*inv_cell_volume * particles.weight(istart+ipart)*one_over_mass/gamma_ponderomotive ;
 
             // variable declaration
             double xpn, ypn, zpn;
