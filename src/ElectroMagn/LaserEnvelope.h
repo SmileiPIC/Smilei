@@ -50,7 +50,6 @@ public:
     //EnvBoundCond = EnvelopeBC_Factory::create(params, patch);
 };
 
-
 // Class for envelope
 class LaserEnvelope3D : public LaserEnvelope {
 public:
