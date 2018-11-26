@@ -64,4 +64,18 @@ public:
      void centerPhi_and_GradPhi() override final;
 };
 
+// Class for envelope
+class LaserEnvelope2D : public LaserEnvelope {
+public:
+    LaserEnvelope2D( Params& params, Patch* patch, ElectroMagn* EMfields );
+    LaserEnvelope2D( LaserEnvelope *envelope, Patch* patch, ElectroMagn* EMfields, Params& params, unsigned int n_moved );
+    void initEnvelope( Patch* patch,ElectroMagn* EMfields ) override final;
+    ~LaserEnvelope2D();
+     void compute(ElectroMagn* EMfields) override final;
+     void compute_Phi(ElectroMagn* EMfields) override final;
+     void compute_gradient_Phi(ElectroMagn* EMfields) override final;
+     void savePhi_and_GradPhi() override final;
+     void centerPhi_and_GradPhi() override final;
+};
+
 #endif
