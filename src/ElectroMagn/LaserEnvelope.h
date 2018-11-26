@@ -51,12 +51,12 @@ public:
 };
 
 // Class for envelope
-class LaserEnvelope3D : public LaserEnvelope {
+class LaserEnvelope1D : public LaserEnvelope {
 public:
-    LaserEnvelope3D( Params& params, Patch* patch, ElectroMagn* EMfields );
-    LaserEnvelope3D( LaserEnvelope *envelope, Patch* patch, ElectroMagn* EMfields, Params& params, unsigned int n_moved );
+    LaserEnvelope1D( Params& params, Patch* patch, ElectroMagn* EMfields );
+    LaserEnvelope1D( LaserEnvelope *envelope, Patch* patch, ElectroMagn* EMfields, Params& params, unsigned int n_moved );
     void initEnvelope( Patch* patch,ElectroMagn* EMfields ) override final;
-    ~LaserEnvelope3D();
+    ~LaserEnvelope1D();
      void compute(ElectroMagn* EMfields) override final;
      void compute_Phi(ElectroMagn* EMfields) override final;
      void compute_gradient_Phi(ElectroMagn* EMfields) override final;
@@ -77,5 +77,21 @@ public:
      void savePhi_and_GradPhi() override final;
      void centerPhi_and_GradPhi() override final;
 };
+
+// Class for envelope
+class LaserEnvelope3D : public LaserEnvelope {
+public:
+    LaserEnvelope3D( Params& params, Patch* patch, ElectroMagn* EMfields );
+    LaserEnvelope3D( LaserEnvelope *envelope, Patch* patch, ElectroMagn* EMfields, Params& params, unsigned int n_moved );
+    void initEnvelope( Patch* patch,ElectroMagn* EMfields ) override final;
+    ~LaserEnvelope3D();
+     void compute(ElectroMagn* EMfields) override final;
+     void compute_Phi(ElectroMagn* EMfields) override final;
+     void compute_gradient_Phi(ElectroMagn* EMfields) override final;
+     void savePhi_and_GradPhi() override final;
+     void centerPhi_and_GradPhi() override final;
+};
+
+
 
 #endif

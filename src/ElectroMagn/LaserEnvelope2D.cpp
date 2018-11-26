@@ -51,10 +51,10 @@ LaserEnvelope2D::LaserEnvelope2D( LaserEnvelope *envelope, Patch* patch,ElectroM
     : LaserEnvelope(envelope,patch,EMfields,params, n_moved)
 {
     A_           = new cField2D( envelope->A_->dims_ , "A"    );
-    A0_          = new cField3D( envelope->A0_->dims_, "Aold" );
+    A0_          = new cField2D( envelope->A0_->dims_, "Aold" );
 
     Phi_         = new Field2D( envelope->Phi_->dims_ );
-    Phi_m        = new Field3D( envelope->Phi_m->dims_ );
+    Phi_m        = new Field2D( envelope->Phi_m->dims_ );
 
     GradPhix_    = new Field2D( envelope->GradPhix_->dims_ );
     GradPhix_m   = new Field2D( envelope->GradPhix_m->dims_ );
@@ -236,7 +236,7 @@ void LaserEnvelope2D::compute(ElectroMagn* EMfields)
     } // end x loop
 
     delete A2Dnew;
-} // end LaserEnvelope3D::compute
+} // end LaserEnvelope2D::compute
 
 
 void LaserEnvelope2D::compute_Phi(ElectroMagn* EMfields){
@@ -256,7 +256,7 @@ void LaserEnvelope2D::compute_Phi(ElectroMagn* EMfields){
         } // end y loop
     } // end x loop
 
-} // end LaserEnvelope3D::compute_Phi
+} // end LaserEnvelope2D::compute_Phi
 
 
 void LaserEnvelope2D::compute_gradient_Phi(ElectroMagn* EMfields){
@@ -285,7 +285,7 @@ void LaserEnvelope2D::compute_gradient_Phi(ElectroMagn* EMfields){
         } // end y loop
     } // end x loop
 
-} // end LaserEnvelope3D::compute_gradient_Phi
+} // end LaserEnvelope2D::compute_gradient_Phi
 
 
 void LaserEnvelope2D::savePhi_and_GradPhi()

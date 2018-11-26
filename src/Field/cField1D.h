@@ -1,5 +1,5 @@
-#ifndef FIELD1D_H
-#define FIELD1D_H
+#ifndef CFIELD1D_H
+#define CFIELD1D_H
 
 #include <cmath>
 #include <complex>
