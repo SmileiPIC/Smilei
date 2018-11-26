@@ -40,9 +40,9 @@ void EnvelopeBC2D_refl::apply(LaserEnvelope* envelope, double time_dual, Patch* 
   
     // Static cast of the field    
     cField2D* A2D        = static_cast<cField2D*>(envelope->A_);     // the envelope at timestep n
-    cField2D* A02D       = static_cast<cField2D*>(envelope->A0_);    // the envelope at timestep n-1
+
     Field2D*  Phi2D      = static_cast<Field2D*>(envelope->Phi_);    // the ponderomotive potential Phi=|A|^2/2 at timestep n
-    Field2D*  Phiold2D   = static_cast<Field2D*>(envelope->Phiold_); // the ponderomotive potential Phi=|A|^2/2 at timestep n-1
+
   
     // APPLICATION OF BCs OVER THE FULL GHOST CELL REGION
   
@@ -54,7 +54,6 @@ void EnvelopeBC2D_refl::apply(LaserEnvelope* envelope, double time_dual, Patch* 
             for (unsigned int j=0 ; j<ny_p ; j++) {
                   (*A2D)     (i-1,j) = 0. ; // (*A2D)(i,j,k);
                   (*Phi2D)   (i-1,j) = 0. ; // std::abs((*A2D)  (i,j)) * std::abs((*A2D)  (i,j)) * 0.5;
-                  (*Phiold2D)(i-1,j) = 0. ; // std::abs((*A02D) (i,j)) * std::abs((*A02D) (i,j)) * 0.5;
             }//j
         }//i
           
@@ -67,7 +66,6 @@ void EnvelopeBC2D_refl::apply(LaserEnvelope* envelope, double time_dual, Patch* 
             for (unsigned int j=0 ; j<ny_p ; j++) {
                   (*A2D)     (i,j) = 0. ; //(*A2D)(i-1,j);
                   (*Phi2D)   (i,j) = 0. ; //std::abs((*A2D)  (i-1,j)) * std::abs((*A2D)  (i-1,j)) * 0.5;
-                  (*Phiold2D)(i,j) = 0. ; //std::abs((*A02D) (i-1,j)) * std::abs((*A02D) (i-1,j)) * 0.5;
             }//j
         }//i
                     
@@ -80,7 +78,6 @@ void EnvelopeBC2D_refl::apply(LaserEnvelope* envelope, double time_dual, Patch* 
             for (unsigned int j=oversize_ ; j>0 ; j--) {
                     (*A2D)     (i,j-1) = 0. ; // (*A2D)(i,j,k);
                     (*Phi2D)   (i,j-1) = 0. ; // std::abs((*A2D)  (i,j)) * std::abs((*A2D)  (i,j)) * 0.5;
-                    (*Phiold2D)(i,j-1) = 0. ; // std::abs((*A02D) (i,j)) * std::abs((*A02D) (i,j)) * 0.5;
             }//j
         }//i
             
@@ -93,7 +90,6 @@ void EnvelopeBC2D_refl::apply(LaserEnvelope* envelope, double time_dual, Patch* 
             for (unsigned int j=ny_p-oversize_; j<ny_p ; j++) {
                   (*A2D)     (i,j) = 0. ; // (*A2D)(i,j-1);
                   (*Phi2D)   (i,j) = 0. ; // std::abs((*A2D)  (i,j-1)) * std::abs((*A2D)  (i,j-1)) * 0.5;
-                  (*Phiold2D)(i,j) = 0. ; // std::abs((*A02D) (i,j-1)) * std::abs((*A02D) (i,j-1)) * 0.5;
             }//j
         }//i
                   

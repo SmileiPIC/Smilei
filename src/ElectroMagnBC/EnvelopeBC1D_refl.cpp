@@ -36,9 +36,7 @@ void EnvelopeBC1D_refl::apply(LaserEnvelope* envelope, double time_dual, Patch* 
   
     // Static cast of the field    
     cField1D* A1D        = static_cast<cField1D*>(envelope->A_);     // the envelope at timestep n
-    cField1D* A01D       = static_cast<cField1D*>(envelope->A0_);    // the envelope at timestep n-1
     Field1D*  Phi1D      = static_cast<Field1D*>(envelope->Phi_);    // the ponderomotive potential Phi=|A|^2/2 at timestep n
-    Field1D*  Phiold1D   = static_cast<Field1D*>(envelope->Phiold_); // the ponderomotive potential Phi=|A|^2/2 at timestep n-1
   
     // APPLICATION OF BCs OVER THE FULL GHOST CELL REGION
   
@@ -49,7 +47,6 @@ void EnvelopeBC1D_refl::apply(LaserEnvelope* envelope, double time_dual, Patch* 
         for (unsigned int i=oversize_; i>0; i--) {
                   (*A1D)     (i-1) = 0. ; // (*A1D)(i,j,k);
                   (*Phi1D)   (i-1) = 0. ; // std::abs((*A1D)  (i)) * std::abs((*A1D)  (i)) * 0.5;
-                  (*Phiold1D)(i-1) = 0. ; // std::abs((*A01D) (i)) * std::abs((*A01D) (i)) * 0.5;
         }//i
           
     }
@@ -60,7 +57,6 @@ void EnvelopeBC1D_refl::apply(LaserEnvelope* envelope, double time_dual, Patch* 
         for (unsigned int i=nx_p-oversize_; i<nx_p; i++) {
                   (*A1D)     (i) = 0. ; //(*A1D)(i-1,j);
                   (*Phi1D)   (i) = 0. ; //std::abs((*A1D)  (i-1)) * std::abs((*A1D)  (i-1)) * 0.5;
-                  (*Phiold1D)(i) = 0. ; //std::abs((*A01D) (i-1)) * std::abs((*A01D) (i-1)) * 0.5;
         }//i
                     
     }
