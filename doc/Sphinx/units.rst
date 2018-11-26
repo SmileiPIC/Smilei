@@ -146,7 +146,7 @@ the units :math:`K_r N_r L_r^D`; the same as the integrated kinetic energy densi
 These electromagnetic energies appear, for instance, in the :ref:`DiagScalar` as
 ``Uelm`` (and associated quantities).
 
-.. rubric:: 3. The space- & time-integrated Poyning flux
+.. rubric:: 3. The space- & time-integrated Poynting flux
 
 The Poynting flux has the units :math:`E_r B_r / \mu_0 = V_r K_r N_r`.
 Consequently, the flux integrated over a boundary, and over time, has the units
