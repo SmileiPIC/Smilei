@@ -492,7 +492,7 @@ def LaserPlanar1D( box_side="xmin", a0=1., omega=1.,
     )
 
 def LaserEnvelopePlanar1D( a0=1., omega=1., focus=None, time_envelope=tconstant(),
-        envelope_solver = "explicit"):
+        envelope_solver = "explicit",Envelope_boundary_conditions = [["reflective"]]):
     import math
     import cmath
     c_vacuum = 1. #299792458
@@ -505,6 +505,7 @@ def LaserEnvelopePlanar1D( a0=1., omega=1., focus=None, time_envelope=tconstant(
         omega               = omega,
         envelope_profile    = space_time_envelope,
         envelope_solver     = "explicit",
+        Envelope_boundary_conditions = Envelope_boundary_conditions,
     )
 
 def LaserGaussian2D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., incidence_angle=0.,
@@ -553,7 +554,7 @@ def LaserGaussian2D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
     )
 
 def LaserEnvelopeGaussian2D( a0=1., omega=1., focus=None, waist=3., time_envelope=tconstant(),
-        envelope_solver = "explicit"):
+        envelope_solver = "explicit",Envelope_boundary_conditions = [["reflective"]]):
     import math
     import cmath
     c_vacuum = 1. #299792458
@@ -581,6 +582,7 @@ def LaserEnvelopeGaussian2D( a0=1., omega=1., focus=None, waist=3., time_envelop
         omega               = omega,
         envelope_profile    = space_time_envelope,
         envelope_solver     = "explicit",
+        Envelope_boundary_conditions = Envelope_boundary_conditions,
     )
 
 def LaserGaussian3D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., incidence_angle=[0.,0.],
