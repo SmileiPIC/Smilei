@@ -71,6 +71,7 @@ public:
     Function_Python2D(Function_Python2D *f) : py_profile(f->py_profile) {};
     double valueAt(std::vector<double>, double); // space + time
     double valueAt(std::vector<double>); // space
+    std::complex<double> complexValueAt(std::vector<double>, double); // space + time
 #ifdef SMILEI_USE_NUMPY
     PyArrayObject* valueAt(std::vector<PyArrayObject*>); // numpy
 #endif
@@ -78,6 +79,15 @@ private:
     PyObject *py_profile;
 };
 
+class Function_Python2D_Complex : public Function
+{
+public:
+    Function_Python2D_Complex(PyObject *pp) : py_profile(pp) {};
+    Function_Python2D_Complex(Function_Python2D_Complex *f) : py_profile(f->py_profile) {};
+    std::complex<double> valueAtComplex(std::vector<double>, double); // space + time
+private:
+    PyObject *py_profile;
+};
 
 class Function_Python3D : public Function
 {
@@ -86,6 +96,7 @@ public:
     Function_Python3D(Function_Python3D *f) : py_profile(f->py_profile) {};
     double valueAt(std::vector<double>, double); // space + time
     double valueAt(std::vector<double>); // space
+    std::complex<double> complexValueAt(std::vector<double>, double); // space + time
 #ifdef SMILEI_USE_NUMPY
     PyArrayObject* valueAt(std::vector<PyArrayObject*>); // numpy
 #endif
@@ -93,6 +104,15 @@ private:
     PyObject *py_profile;
 };
 
+class Function_Python3D_Complex : public Function
+{
+public:
+    Function_Python3D_Complex(PyObject *pp) : py_profile(pp) {};
+    Function_Python3D_Complex(Function_Python3D_Complex *f) : py_profile(f->py_profile) {};
+    std::complex<double> valueAtComplex(std::vector<double>, double); // space + time
+private:
+    PyObject *py_profile;
+};
 
 class Function_Python4D : public Function
 {
