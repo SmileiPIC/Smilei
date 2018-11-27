@@ -606,15 +606,7 @@ void VectorPatch::sumSusceptibility(Params &params, double time_dual, Timers &ti
     timers.susceptibility.update();
 
     timers.susceptibility.restart();
-<<<<<<< HEAD
-<<<<<<< HEAD
     if ( (params.geometry == "1Dcartesian") or (params.geometry == "2Dcartesian") or (params.geometry == "3Dcartesian") ) {
-=======
-    if ( (params.geometry == "2Dcartesian") or (params.geometry == "3Dcartesian") ) {
->>>>>>> e452243c... allowed sum Env_Chi in 2D
-=======
-    if ( (params.geometry == "1Dcartesian") or (params.geometry == "2Dcartesian") or (params.geometry == "3Dcartesian") ) {
->>>>>>> c6144fd7... allow 1D geometry for sumEnvChi
         SyncVectorPatch::sumEnvChi( params, (*this), timers, itime ); // MPI
     }
     else { ERROR("Envelope model not yet implemented in this geometry");
