@@ -366,7 +366,7 @@ void Patch2D::initExchangeComplex( Field* field, int iDim, SmileiMPI* smpi )
         if (field->name == "Ey") tagp = 7;
         if (field->name == "Ez") tagp = 8;
 
-        field->MPIbuff.defineTags( this, tagp );
+        field->MPIbuff.defineTags( this, smpi, tagp );
     }
 
     int patch_nbNeighbors_(2);
