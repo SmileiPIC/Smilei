@@ -28,4 +28,4 @@ doc/html
 */*/*/*.swo
 exec_script.sh.*
 .tags*
-settings.json
+.vscode*
