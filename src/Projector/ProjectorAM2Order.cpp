@@ -172,7 +172,7 @@ void ProjectorAM2Order::currents_mode0(complex<double>* Jl, complex<double>* Jr,
     //}
 
     for (int j=3 ; j>=0 ; j--) {
-        jloc = j+jpo;
+        jloc = j+jpo+1;
         double Vd = abs(jloc + j_domain_begin + 0.5) ;
         for (unsigned int i=0 ; i<5 ; i++) {
             Jr_p[i][j] = (Jr_p[i][j+1] * Vd + crr_p * Wr[i][j+1]) * invVd[jloc];
@@ -369,7 +369,7 @@ void ProjectorAM2Order::currents(complex<double>* Jl, complex<double>* Jr, compl
     //}
 
     for (int j=3 ; j>=0 ; j--) {
-        jloc = j+jpo;
+        jloc = j+jpo+1;
         double Vd = abs(jloc + j_domain_begin + 0.5) ;
         for (unsigned int i=0 ; i<5 ; i++) {
             Jr_p[i][j] = (Jr_p[i][j+1] * Vd + crr_p * Wr[i][j+1]) * invVd[jloc];
@@ -544,7 +544,7 @@ void ProjectorAM2Order::currentsAndDensity_mode0(complex<double>* Jl, complex<do
     //}
 
     for (int j=3 ; j>=0 ; j--) {
-        jloc = j+jpo;
+        jloc = j+jpo+1;
         double Vd = abs(jloc + j_domain_begin + 0.5) ;
         for (unsigned int i=0 ; i<5 ; i++) {
             Jr_p[i][j] = (Jr_p[i][j+1] * Vd + crr_p * Wr[i][j+1]) * invVd[jloc];
@@ -739,7 +739,7 @@ void ProjectorAM2Order::currentsAndDensity(complex<double>* Jl, complex<double>*
     //}
 
     for (int j=3 ; j>=0 ; j--) {
-        jloc = j+jpo;
+        jloc = j+jpo+1;
         double Vd = abs(jloc + j_domain_begin + 0.5) ;
         for (unsigned int i=0 ; i<5 ; i++) {
             Jr_p[i][j] = (Jr_p[i][j+1] * Vd + crr_p * Wr[i][j+1]) * invVd[jloc];
@@ -838,7 +838,7 @@ void ProjectorAM2Order::densityFrozenComplex(complex<double>* rhoj, Particles &p
             charge_weight *= particles.momentum(0,ipart);
         }
         else if (type == 2){ //if Jr
-            charge_weight *= (particles.momentum(1,ipart)*particles.position(1,ipart) + particles.momentum(2,ipart)*particles.position(2,ipart))/r ;
+            charge_weight *= (particles.momentum(1,ipart)*particles.position(1,ipart) + particles.momentum(2,ipart)*particles.position(2,ipart)) * dr_inv_ / r ;
             nr++;
         }
         else { //if Jt
