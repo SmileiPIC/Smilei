@@ -288,7 +288,7 @@ void Patch1D::initExchangeComplex( Field* field, int iDim, SmileiMPI* smpi )
       if (field->name == "By") tagp = 7;
       if (field->name == "Bz") tagp = 8;
 
-      field->MPIbuff.defineTags( this, tagp );
+      field->MPIbuff.defineTags( this, smpi, tagp );
   }
 
   std::vector<unsigned int> n_elem   = field->dims_;
