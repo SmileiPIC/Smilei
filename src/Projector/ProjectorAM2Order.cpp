@@ -389,13 +389,14 @@ void ProjectorAM2Order::currents(complex<double>* Jl, complex<double>* Jr, compl
     // ---------------------------
     
 
-    C_m = 1.;
-    C_m_old = 1.;
-    for (unsigned int i=0; i<(unsigned int)imode; i++){
-    C_m *= e_theta;
-    C_m_old *= e_theta_old;
-    }
-    C_m = 2. * (C_m + 1./C_m_old)/2. ; //multiply modes > 0 by 2 AND exp(i theta_medium) = ( exp(i theta) + exp(i theta_old) ) /2.
+    //C_m = 1.;
+    //C_m_old = 1.;
+    //for (unsigned int i=0; i<(unsigned int)imode; i++){
+    //C_m *= e_theta;
+    //C_m_old *= e_theta_old;
+    //}
+    //C_m = 2. * (C_m + 1./C_m_old)/2. ; //multiply modes > 0 by 2 AND exp(i theta_medium) = ( exp(i theta) + exp(i theta_old) ) /2.
+    C_m = 2. * e_bar ; //multiply modes > 0 by 2 
  
     // Jl^(d,p)
     for (unsigned int i=1 ; i<5 ; i++) {
@@ -760,13 +761,16 @@ void ProjectorAM2Order::currentsAndDensity(complex<double>* Jl, complex<double>*
     // ---------------------------
     
 
-    C_m = 1.;
-    C_m_old = 1.;
-    for (unsigned int i=0; i<(unsigned int)imode; i++){
-    C_m *= e_theta;
-    C_m_old *= e_theta_old;
-    }
-    C_m = 2. * (C_m + 1./C_m_old)/2. ; //multiply modes > 0 by 2 AND exp(i theta_medium) = ( exp(i theta) + exp(i theta_old) ) /2.
+    //C_m = 1.;
+    //C_m_old = 1.;
+    //for (unsigned int i=0; i<(unsigned int)imode; i++){
+    //C_m *= e_theta;
+    //C_m_old *= e_theta_old;
+    //}
+    //C_m = 2. * (C_m + 1./C_m_old)/2. ; //multiply modes > 0 by 2 AND exp(i theta_medium) = ( exp(i theta) + exp(i theta_old) ) /2.
+    C_m = 2. * e_bar ; //multiply modes > 0 by 2 AND exp(i theta_medium) = ( exp(i theta) + exp(i theta_old) ) /2.
+
+
     // Jl^(d,p)
     for (unsigned int i=0 ; i<5 ; i++) {
         iloc = i+ipo;
