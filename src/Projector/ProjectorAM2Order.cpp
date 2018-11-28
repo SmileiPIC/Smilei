@@ -39,7 +39,8 @@ ProjectorAM2Order::ProjectorAM2Order (Params& params, Patch* patch) : ProjectorA
     for (int j = 0; j< nprimr; j++){
         rprim[j] = abs((j_domain_begin+j)*dr);
         if (j_domain_begin+j == 0){
-            invV[j] = 6./dr; // Correction de Verboncoeur ordre 1.
+            //invV[j] = 6./dr; // Correction de Verboncoeur ordre 1.
+            invV[j] = 8./dr;   // No correction.
         } else {
             invV[j] = 1./rprim[j];
         }
