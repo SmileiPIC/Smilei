@@ -562,8 +562,8 @@ void VectorPatch::sumDensities(Params &params, double time_dual, Timers &timers,
         #pragma omp for schedule(static)
         for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
             ElectroMagnAM* emAM = static_cast<ElectroMagnAM*>( (*this)(ipatch)->EMfields );
-            //emAM->fold_J(diag_flag);
-            emAM->on_axis_J(diag_flag);
+            emAM->fold_J(diag_flag);
+            //emAM->on_axis_J(diag_flag);
         }
     }
     timers.syncDens.update( params.printNow( itime ) );
