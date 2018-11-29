@@ -42,7 +42,7 @@ DiagnosticFields3D::DiagnosticFields3D( Params &params, SmileiMPI* smpi, VectorP
         );
     }
     one_patch_buffer_size = nsteps[0] * nsteps[1] * nsteps[2];
-    hsize_t file_size = one_patch_buffer_size * tot_number_of_patches;
+    hsize_t file_size = (hsize_t)one_patch_buffer_size * (hsize_t)tot_number_of_patches;
     filespace_firstwrite = H5Screate_simple(1, &file_size, NULL);
     memspace_firstwrite  = H5Screate_simple(1, &file_size, NULL);
     
@@ -67,8 +67,8 @@ DiagnosticFields3D::DiagnosticFields3D( Params &params, SmileiMPI* smpi, VectorP
     }
     // Define space in file for re-reading
     filespace_reread = H5Screate_simple(1, &file_size, NULL);
-    hsize_t offset = one_patch_buffer_size * first_patch_of_this_proc;
-    hsize_t block  = one_patch_buffer_size * npatch_local;
+    hsize_t offset = (hsize_t)one_patch_buffer_size * (hsize_t)first_patch_of_this_proc;
+    hsize_t block  = (hsize_t)one_patch_buffer_size * (hsize_t)npatch_local;
     hsize_t count  = 1;
     H5Sselect_hyperslab(filespace_reread, H5S_SELECT_SET, &offset, NULL, &count, &block);
     // Define space in memory for re-reading
@@ -163,7 +163,7 @@ DiagnosticFields3D::DiagnosticFields3D( Params &params, SmileiMPI* smpi, VectorP
             chunk_size[0]++;
         }
         H5Pset_layout(dcreate, H5D_CHUNKED);
-        H5Pset_chunk (dcreate, 3, &chunk_size[0]);
+        H5Pset_chunk (dcreate, 3, chunk_size);
     }
 
     tmp_dset_id=0;
