@@ -781,6 +781,9 @@ void Params::compute()
             WARNING("grid_length[" << i << "] has been redefined from " << entered_grid_length << " to " << grid_length[i] << " to match n x cell_length (" << scientific << setprecision(4) << grid_length[i]-entered_grid_length <<")");
         cell_volume *= cell_length[i];
     }
+    if (geometry == "AMcylindrical"){
+        cell_volume *= 2 * M_PI;
+    } 
     // create a 3d equivalent of n_space & cell_length
     for (unsigned int i=nDim_field; i<3; i++) {
         cell_length[i]=0.0;
