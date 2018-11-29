@@ -113,6 +113,11 @@ void ElectroMagn1D::initElectroMagn1DQuantities(Params &params, Patch* patch)
     By_m = new Field1D(dimPrim, 1, true,  "By_m");
     Bz_m = new Field1D(dimPrim, 2, true,  "Bz_m");
     
+    if (params.Laser_Envelope_model){
+        Env_A_abs_ = new Field1D(dimPrim, "Env_A_abs");
+        Env_Chi_   = new Field1D(dimPrim, "Env_Chi");
+        Env_E_abs_ = new Field1D(dimPrim, "Env_E_abs");
+    }
     // Total charge currents and densities
     Jx_   = new Field1D(dimPrim, 0, false, "Jx");
     Jy_   = new Field1D(dimPrim, 1, false, "Jy");
