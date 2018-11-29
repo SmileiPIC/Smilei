@@ -136,8 +136,8 @@ DiagnosticFields3D::DiagnosticFields3D( Params &params, SmileiMPI* smpi, VectorP
     memspace = H5Screate_simple(3, block2, NULL);
     data_rewrite.resize( rewrite_size[0]*rewrite_size[1]*rewrite_size[2] );
     
-    // Define the chunk size (necessary above 2^32 points)
-    const hsize_t max_size = 1000000000;
+    // Define the chunk size (necessary above 2^28 points)
+    const hsize_t max_size = 4294967295/2/sizeof(double);
     // For the first write
     dcreate_firstwrite = H5Pcreate(H5P_DATASET_CREATE);
     if( file_size > max_size ) {
