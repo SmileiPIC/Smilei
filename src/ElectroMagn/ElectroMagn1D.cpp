@@ -33,6 +33,10 @@ ElectroMagn1D::ElectroMagn1D(Params &params, DomainDecomposition* domain_decompo
         Jy_s[ispec]  = new Field1D(Tools::merge("Jy_" ,vecSpecies[ispec]->name).c_str(), dimPrim);
         Jz_s[ispec]  = new Field1D(Tools::merge("Jz_" ,vecSpecies[ispec]->name).c_str(), dimPrim);
         rho_s[ispec] = new Field1D(Tools::merge("Rho_",vecSpecies[ispec]->name).c_str(), dimPrim);
+
+        if (params.Laser_Envelope_model){
+            Env_Chi_s[ispec] = new Field1D(Tools::merge("Env_Chi_",vecSpecies[ispec]->name).c_str(), dimPrim);
+                                        }
     }
     
 }//END constructor Electromagn1D
@@ -69,6 +73,16 @@ ElectroMagn1D::ElectroMagn1D( ElectroMagn1D* emFields, Params &params, Patch* pa
             else
                 rho_s[ispec]  = new Field1D(emFields->rho_s[ispec]->name, dimPrim);
         }
+
+        if (params.Laser_Envelope_model){
+            if ( emFields->Env_Chi_s[ispec] != NULL ){
+                if ( emFields->Env_Chi_s[ispec]->data_ != NULL )
+                    Env_Chi_s[ispec] = new Field1D(dimPrim, emFields->Env_Chi_s[ispec]->name );
+                else
+                    Env_Chi_s[ispec]  = new Field1D(emFields->Env_Chi_s[ispec]->name, dimPrim);
+            }
+        }
+
     }
 }
 
