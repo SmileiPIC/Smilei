@@ -26,9 +26,9 @@ void CollisionsSingle::collide(Params& params, Patch* patch, int itime, vector<D
     unsigned int npairs; // number of pairs of macro-particles
     unsigned int np1, np2; // numbers of macro-particles in each species
     double n1, n2, n12, n123, n223; // densities of particles
-    unsigned int i1, i2, N2max, first_index1, first_index2;
+    unsigned int i1=0, i2, N2max, first_index1, first_index2;
     Species   *s1, *s2;
-    Particles *p1, *p2;
+    Particles *p1=NULL, *p2;
     double m12, coeff3, coeff4, logL, s, ncol, debye2=0.;
     
     s1 = patch->vecSpecies[species_group1[0]];
@@ -107,6 +107,10 @@ void CollisionsSingle::collide(Params& params, Patch* patch, int itime, vector<D
         if( intra_collisions ) { n1 += n2; n2 = n1; }
 
         // Pre-calculate some numbers before the big loop
+        double inv_cell_volume = 1./patch->getCellVolume(p1, i1);
+        n1  *= inv_cell_volume;
+        n2  *= inv_cell_volume;
+        n12 *= inv_cell_volume;
         n123 = pow(n1,2./3.);
         n223 = pow(n2,2./3.);
         coeff3 = params.timestep * n1*n2/n12;
@@ -115,7 +119,7 @@ void CollisionsSingle::collide(Params& params, Patch* patch, int itime, vector<D
         m12  = s1->mass / s2->mass; // mass ratio
 
         // Prepare the ionization
-        Ionization->prepare3(params.timestep);
+        Ionization->prepare3(params.timestep, inv_cell_volume);
 
         // Now start the real loop on pairs of particles
         // ----------------------------------------------------

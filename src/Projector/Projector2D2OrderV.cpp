@@ -22,8 +22,6 @@ Projector2D2OrderV::Projector2D2OrderV (Params& params, Patch* patch) : Projecto
     dy_inv_   = 1.0/params.cell_length[1];
     dy_ov_dt  = params.cell_length[1] / params.timestep;
     
-    one_third = 1.0/3.0;
-
     i_domain_begin = patch->getCellStartingGlobalIndex(0);
     j_domain_begin = patch->getCellStartingGlobalIndex(1);
 
@@ -58,10 +56,10 @@ void Projector2D2OrderV::currentsAndDensity(double* Jx, double* Jy, double* Jz, 
     
     int iloc;
     // (x,y,z) components of the current density for the macro-particle
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
     double crx_p = charge_weight*dx_ov_dt;
     double cry_p = charge_weight*dy_ov_dt;
-    double crz_p = charge_weight*particles.momentum(2, ipart)*invgf;
+    double crz_p = charge_weight*one_third*particles.momentum(2, ipart)*invgf;
     
     
     // variable declaration
@@ -144,14 +142,14 @@ void Projector2D2OrderV::currentsAndDensity(double* Jx, double* Jy, double* Jz, 
         iloc = ipo*b_dim[1]+jpo;
         tmp2 = 0.5*Sx1[0];
         tmp3 =     Sx1[0];
-        Jz[iloc]  += crz_p * one_third * ( Sy1[0]*tmp3 );
+        Jz[iloc]  += crz_p * ( Sy1[0]*tmp3 );
         rho[iloc] += charge_weight * Sx1[0]*Sy1[0];
         tmp = 0;
         tmpY = Sx0[0] + 0.5*DSx[0];
         for (unsigned int j=1 ; j<5 ; j++) {
             tmp -= cry_p * DSy[j-1] * tmpY;
             Jy[iloc+j+ipo]  += tmp; //Because size of Jy in Y is b_dim[1]+1.
-            Jz[iloc+j]  += crz_p * one_third * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
+            Jz[iloc+j]  += crz_p * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
             rho[iloc+j] += charge_weight * Sx1[0]*Sy1[j];
         }
         
@@ -164,7 +162,7 @@ void Projector2D2OrderV::currentsAndDensity(double* Jx, double* Jy, double* Jz, 
         Jx[iloc]  += tmpJx[0];
         tmp2 = 0.5*Sx1[i] + Sx0[i];
         tmp3 = 0.5*Sx0[i] + Sx1[i];
-        Jz[iloc]  += crz_p * one_third * ( Sy1[0]*tmp3 );
+        Jz[iloc]  += crz_p * ( Sy1[0]*tmp3 );
         rho[iloc] += charge_weight * Sx1[i]*Sy1[0];
         tmp = 0;
         tmpY = Sx0[i] + 0.5*DSx[i];
@@ -173,7 +171,7 @@ void Projector2D2OrderV::currentsAndDensity(double* Jx, double* Jy, double* Jz, 
             Jx[iloc+j]  += tmpJx[j];
             tmp -= cry_p * DSy[j-1] * tmpY;
             Jy[iloc+j+i+ipo]  += tmp; //Because size of Jy in Y is b_dim[1]+1.
-            Jz[iloc+j]  += crz_p * one_third * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
+            Jz[iloc+j]  += crz_p * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
             rho[iloc+j] += charge_weight * Sx1[i]*Sy1[j];
         }
     
@@ -194,7 +192,7 @@ void Projector2D2OrderV::densityFrozen(double* rhoj, Particles &particles, unsig
     
     int iloc, ny(nprimy);
     // (x,y,z) components of the current density for the macro-particle
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
 
     if (type > 0) {
         charge_weight *= 1./sqrt(1.0 + particles.momentum(0,ipart)*particles.momentum(0,ipart)
@@ -277,9 +275,10 @@ void Projector2D2OrderV::ionizationCurrents(Field* Jx, Field* Jy, Field* Jz, Par
     double Sxp[3], Sxd[3], Syp[3], Syd[3];
     
     // weighted currents
-    double Jx_ion = Jion.x * particles.weight(ipart);
-    double Jy_ion = Jion.y * particles.weight(ipart);
-    double Jz_ion = Jion.z * particles.weight(ipart);
+    double weight = inv_cell_volume * particles.weight(ipart);
+    double Jx_ion = Jion.x * weight;
+    double Jy_ion = Jion.y * weight;
+    double Jz_ion = Jion.z * weight;
     
     //Locate particle on the grid
     xpn    = particles.position(0, ipart) * dx_inv_;  // normalized distance to the first node
@@ -451,7 +450,7 @@ void Projector2D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
             for (unsigned int i = 0; i < 5 ; i++){
                 DSy[i*vecSize+ipart] = Sy1_buff_vect[ i*vecSize+ipart] - Sy0_buff_vect[ i*vecSize+ipart];
             }
-            charge_weight[ipart] = (double)(particles.charge(ivect+istart+ipart))*particles.weight(ivect+istart+ipart);
+            charge_weight[ipart] = inv_cell_volume * (double)(particles.charge(ivect+istart+ipart))*particles.weight(ivect+istart+ipart);
         }
 
         #pragma omp simd
@@ -499,7 +498,6 @@ void Projector2D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
     for (unsigned int j=0; j<200; j++)
         bJx[j] = 0.;
 
-    cell_nparts = (int)iend-(int)istart;
     for (int ivect=0 ; ivect < cell_nparts; ivect += vecSize ){
     
         int np_computed = min(cell_nparts-ivect,vecSize);
@@ -570,7 +568,7 @@ void Projector2D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
             for (unsigned int i = 0; i < 5 ; i++){
                 DSy[i*vecSize+ipart] = Sy1_buff_vect[ i*vecSize+ipart] - Sy0_buff_vect[ i*vecSize+ipart];
             }
-            charge_weight[ipart] = (double)(particles.charge(ivect+istart+ipart))*particles.weight(ivect+istart+ipart);
+            charge_weight[ipart] = inv_cell_volume * (double)(particles.charge(ivect+istart+ipart))*particles.weight(ivect+istart+ipart);
         }
         
         #pragma omp simd
@@ -617,7 +615,6 @@ void Projector2D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
     for (unsigned int j=0; j<200; j++)
         bJx[j] = 0.;
 
-    cell_nparts = (int)iend-(int)istart;
     for (int ivect=0 ; ivect < cell_nparts; ivect += vecSize ){
 
         int np_computed(min(cell_nparts-ivect,vecSize));
@@ -688,26 +685,26 @@ void Projector2D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
             for (unsigned int i = 0; i < 5 ; i++){
                 DSy[i*vecSize+ipart] = Sy1_buff_vect[ i*vecSize+ipart] - Sy0_buff_vect[ i*vecSize+ipart];
             }
-            charge_weight[ipart] = (double)(particles.charge(ivect+istart+ipart))*particles.weight(ivect+istart+ipart);
-            crz_p[ipart] = charge_weight[ipart]*particles.momentum(2, ivect+istart+ipart)*(*invgf)[ivect+istart+ipart];
+            charge_weight[ipart] = inv_cell_volume * (double)(particles.charge(ivect+istart+ipart))*particles.weight(ivect+istart+ipart);
+            crz_p[ipart] = charge_weight[ipart]*one_third*particles.momentum(2, ivect+istart+ipart)*(*invgf)[ivect+istart+ipart];
         }
 
         #pragma omp simd
         for (int ipart=0 ; ipart<np_computed; ipart++ ){
-            bJx [ipart] += crz_p[ipart] * one_third * Sx1_buff_vect[ipart] * Sy1_buff_vect[ipart];
-            double tmp( crz_p[ipart] * one_third * Sy1_buff_vect[ipart] );
+            bJx [ipart] += crz_p[ipart] * Sx1_buff_vect[ipart] * Sy1_buff_vect[ipart];
+            double tmp( crz_p[ipart] * Sy1_buff_vect[ipart] );
             for (unsigned int i=1 ; i<5 ; i++) {
                 bJx [((i)*5)*vecSize+ipart] += tmp * (0.5*Sx0_buff_vect[i*vecSize+ipart] + Sx1_buff_vect[i*vecSize+ipart]);
             }
 
-            tmp = crz_p[ipart] * one_third * Sx1_buff_vect[ipart];
+            tmp = crz_p[ipart] * Sx1_buff_vect[ipart];
             for (unsigned int j=1; j<5 ; j++) {
                 bJx [j*vecSize+ipart] +=  tmp * ( 0.5*Sy0_buff_vect[j*vecSize+ipart]* + Sy1_buff_vect[j*vecSize+ipart] );
             }
 
             for (unsigned int i=1 ; i<5 ; i++) {
-                double tmp0( crz_p[ipart] * one_third * (0.5*Sx0_buff_vect[i*vecSize+ipart] + Sx1_buff_vect[i*vecSize+ipart]) );
-                double tmp1( crz_p[ipart] * one_third * (0.5*Sx1_buff_vect[i*vecSize+ipart] + Sx0_buff_vect[i*vecSize+ipart]) );
+                double tmp0( crz_p[ipart] * (0.5*Sx0_buff_vect[i*vecSize+ipart] + Sx1_buff_vect[i*vecSize+ipart]) );
+                double tmp1( crz_p[ipart] * (0.5*Sx1_buff_vect[i*vecSize+ipart] + Sx0_buff_vect[i*vecSize+ipart]) );
                 for (unsigned int j=1; j<5 ; j++) {
                     bJx [((i)*5+j)*vecSize+ipart] += ( Sy0_buff_vect[j*vecSize+ipart]* tmp1 + Sy1_buff_vect[j*vecSize+ipart]* tmp0 );
                 }

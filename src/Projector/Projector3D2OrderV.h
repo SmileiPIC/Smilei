@@ -26,7 +26,6 @@ public:
     void susceptibility(ElectroMagn* EMfields, Particles &particles, double species_mass, SmileiMPI* smpi, int istart, int iend,  int ithread, int ibin, std::vector<unsigned int> &b_dim, int ipart_ref = 0);
 
 private:
-    double one_third;
     double dt, dts2, dts4;
 
     inline void compute_distances( Particles& particles, int npart_total, int ipart, int istart, int ipart_ref, double* delta0, int* iold, double* Sx0, double* Sy0, double* Sz0, double* DSx, double* DSy, double* DSz  ) {

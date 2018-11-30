@@ -23,21 +23,6 @@ Projector3D4Order::Projector3D4Order (Params& params, Patch* patch) : Projector3
     dy_ov_dt  = params.cell_length[1] / params.timestep;
     dz_inv_   = 1.0/params.cell_length[2];
     dz_ov_dt  = params.cell_length[2] / params.timestep;
-    
-    one_third = 1.0/3.0;
-
-    //double defined for use in coefficients
-    dble_1_ov_384 = 1.0/384.0;
-    dble_1_ov_48 = 1.0/48.0;
-    dble_1_ov_16 = 1.0/16.0;
-    dble_1_ov_12 = 1.0/12.0;
-    dble_1_ov_24 = 1.0/24.0;
-    dble_19_ov_96 = 19.0/96.0;
-    dble_11_ov_24 = 11.0/24.0;
-    dble_1_ov_4 = 1.0/4.0;
-    dble_1_ov_6 = 1.0/6.0;
-    dble_115_ov_192 = 115.0/192.0;
-    dble_5_ov_8 = 5.0/8.0;
 
     i_domain_begin = patch->getCellStartingGlobalIndex(0);
     j_domain_begin = patch->getCellStartingGlobalIndex(1);
@@ -71,7 +56,7 @@ void Projector3D4Order::currents(double* Jx, double* Jy, double* Jz, Particles &
     // -------------------------------------
     
     // (x,y,z) components of the current density for the macro-particle
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
     double crx_p = charge_weight*dx_ov_dt;
     double cry_p = charge_weight*dy_ov_dt;
     double crz_p = charge_weight*dz_ov_dt;
@@ -258,7 +243,7 @@ void Projector3D4Order::currentsAndDensity(double* Jx, double* Jy, double* Jz, d
     // -------------------------------------
     
     // (x,y,z) components of the current density for the macro-particle
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
     double crx_p = charge_weight*dx_ov_dt;
     double cry_p = charge_weight*dy_ov_dt;
     double crz_p = charge_weight*dz_ov_dt;
@@ -463,7 +448,7 @@ void Projector3D4Order::densityFrozen(double* rhoj, Particles &particles, unsign
     int iloc,jloc;
     int ny(nprimy), nz(nprimz), nyz;
     // (x,y,z) components of the current density for the macro-particle
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
 
     if (type > 0) {
         charge_weight *= 1./sqrt(1.0 + particles.momentum(0,ipart)*particles.momentum(0,ipart)

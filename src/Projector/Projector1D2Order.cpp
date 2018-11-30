@@ -21,9 +21,6 @@ Projector1D2Order::Projector1D2Order (Params& params, Patch* patch) : Projector1
     dx_ov_dt = params.cell_length[0] / params.timestep;
 
     index_domain_begin = patch->getCellStartingGlobalIndex(0);
-    
-
-
 }
 
 
@@ -40,7 +37,7 @@ void Projector1D2Order::currents(double* Jx, double* Jy, double* Jz, Particles &
     // Declare local variables
     int ipo, ip;
     int ip_m_ipo;
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
     double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xip, xj_m_xip2;
     double crx_p = charge_weight*dx_ov_dt;                // current density for particle moving in the x-direction
     double cry_p = charge_weight*particles.momentum(1, ipart)*invgf;    // current density in the y-direction of the macroparticle
@@ -112,7 +109,7 @@ void Projector1D2Order::currentsAndDensity(double* Jx, double* Jy, double* Jz, d
     // Declare local variables
     int ipo, ip;
     int ip_m_ipo;
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
     double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xip, xj_m_xip2;
     double crx_p = charge_weight*dx_ov_dt;                // current density for particle moving in the x-direction
     double cry_p = charge_weight*particles.momentum(1, ipart)*invgf;    // current density in the y-direction of the macroparticle
@@ -197,7 +194,7 @@ void Projector1D2Order::densityFrozen(double* rhoj, Particles &particles, unsign
     double xjn, xj_m_xip, xj_m_xip2;
     double S1[5];            // arrays used for the Esirkepov projection method
 
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
     if (type > 0) {
         charge_weight *= 1./sqrt(1.0 + particles.momentum(0,ipart)*particles.momentum(0,ipart)
                                      + particles.momentum(1,ipart)*particles.momentum(1,ipart)
@@ -251,9 +248,10 @@ void Projector1D2Order::ionizationCurrents(Field* Jx, Field* Jy, Field* Jz, Part
     double cim1,ci,cip1;
 
     // weighted currents
-    double Jx_ion = Jion.x * particles.weight(ipart);
-    double Jy_ion = Jion.y * particles.weight(ipart);
-    double Jz_ion = Jion.z * particles.weight(ipart);
+    double weight = inv_cell_volume * particles.weight(ipart);
+    double Jx_ion = Jion.x * weight;
+    double Jy_ion = Jion.y * weight;
+    double Jz_ion = Jion.z * weight;
 
     //Locate particle on the grid
     xjn    = particles.position(0, ipart) * dx_inv_;  // normalized distance to the first node

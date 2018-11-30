@@ -22,8 +22,6 @@ Projector2D2Order::Projector2D2Order (Params& params, Patch* patch) : Projector2
     dy_inv_   = 1.0/params.cell_length[1];
     dy_ov_dt  = params.cell_length[1] / params.timestep;
     
-    one_third = 1.0/3.0;
-
     i_domain_begin = patch->getCellStartingGlobalIndex(0);
     j_domain_begin = patch->getCellStartingGlobalIndex(1);
 
@@ -55,10 +53,10 @@ void Projector2D2Order::currents(double* Jx, double* Jy, double* Jz, Particles &
     
     int iloc;
     // (x,y,z) components of the current density for the macro-particle
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
     double crx_p = charge_weight*dx_ov_dt;
     double cry_p = charge_weight*dy_ov_dt;
-    double crz_p = charge_weight*particles.momentum(2, ipart)*invgf;
+    double crz_p = charge_weight*one_third*particles.momentum(2, ipart)*invgf;
     
     
     // variable declaration
@@ -139,13 +137,13 @@ void Projector2D2Order::currents(double* Jx, double* Jy, double* Jz, Particles &
         iloc = ipo*nprimy+jpo;
         tmp2 = 0.5*Sx1[0];
         tmp3 =     Sx1[0];
-        Jz[iloc]  += crz_p * one_third * ( Sy1[0]*tmp3 );
+        Jz[iloc]  += crz_p * ( Sy1[0]*tmp3 );
         tmp = 0;
         tmpY = Sx0[0] + 0.5*DSx[0];
         for (unsigned int j=1 ; j<5 ; j++) {
             tmp -= cry_p * DSy[j-1] * tmpY;
             Jy[iloc+j+ipo]  += tmp; //Because size of Jy in Y is nprimy+1.
-            Jz[iloc+j]  += crz_p * one_third * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
+            Jz[iloc+j]  += crz_p * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
         }
     }//i
     
@@ -155,7 +153,7 @@ void Projector2D2Order::currents(double* Jx, double* Jy, double* Jz, Particles &
         Jx[iloc]  += tmpJx[0];
         tmp2 = 0.5*Sx1[i] + Sx0[i];
         tmp3 = 0.5*Sx0[i] + Sx1[i];
-        Jz[iloc]  += crz_p * one_third * ( Sy1[0]*tmp3 );
+        Jz[iloc]  += crz_p * ( Sy1[0]*tmp3 );
         tmp = 0;
         tmpY = Sx0[i] + 0.5*DSx[i];
         for (unsigned int j=1 ; j<5 ; j++) {
@@ -163,7 +161,7 @@ void Projector2D2Order::currents(double* Jx, double* Jy, double* Jz, Particles &
             Jx[iloc+j]  += tmpJx[j];
             tmp -= cry_p * DSy[j-1] * tmpY;
             Jy[iloc+j+i+ipo]  += tmp; //Because size of Jy in Y is nprimy+1.
-            Jz[iloc+j]  += crz_p * one_third * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
+            Jz[iloc+j]  += crz_p * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
         }
     }//i
 } // END Project local current densities (sort)
@@ -182,10 +180,10 @@ void Projector2D2Order::currentsAndDensity(double* Jx, double* Jy, double* Jz, d
     
     int iloc;
     // (x,y,z) components of the current density for the macro-particle
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
     double crx_p = charge_weight*dx_ov_dt;
     double cry_p = charge_weight*dy_ov_dt;
-    double crz_p = charge_weight*particles.momentum(2, ipart)*invgf;
+    double crz_p = charge_weight*one_third*particles.momentum(2, ipart)*invgf;
     
     
     // variable declaration
@@ -267,14 +265,14 @@ void Projector2D2Order::currentsAndDensity(double* Jx, double* Jy, double* Jz, d
         iloc = ipo*nprimy+jpo;
         tmp2 = 0.5*Sx1[0];
         tmp3 =     Sx1[0];
-        Jz[iloc]  += crz_p * one_third * ( Sy1[0]*tmp3 );
+        Jz[iloc]  += crz_p * ( Sy1[0]*tmp3 );
         rho[iloc] += charge_weight * Sx1[0]*Sy1[0];
         tmp = 0;
         tmpY = Sx0[0] + 0.5*DSx[0];
         for (unsigned int j=1 ; j<5 ; j++) {
             tmp -= cry_p * DSy[j-1] * tmpY;
             Jy[iloc+j+ipo]  += tmp; //Because size of Jy in Y is nprimy+1.
-            Jz[iloc+j]  += crz_p * one_third * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
+            Jz[iloc+j]  += crz_p * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
             rho[iloc+j] += charge_weight * Sx1[0]*Sy1[j];
         }
         
@@ -287,7 +285,7 @@ void Projector2D2Order::currentsAndDensity(double* Jx, double* Jy, double* Jz, d
         Jx[iloc]  += tmpJx[0];
         tmp2 = 0.5*Sx1[i] + Sx0[i];
         tmp3 = 0.5*Sx0[i] + Sx1[i];
-        Jz[iloc]  += crz_p * one_third * ( Sy1[0]*tmp3 );
+        Jz[iloc]  += crz_p * ( Sy1[0]*tmp3 );
         rho[iloc] += charge_weight * Sx1[i]*Sy1[0];
         tmp = 0;
         tmpY = Sx0[i] + 0.5*DSx[i];
@@ -296,7 +294,7 @@ void Projector2D2Order::currentsAndDensity(double* Jx, double* Jy, double* Jz, d
             Jx[iloc+j]  += tmpJx[j];
             tmp -= cry_p * DSy[j-1] * tmpY;
             Jy[iloc+j+i+ipo]  += tmp; //Because size of Jy in Y is nprimy+1.
-            Jz[iloc+j]  += crz_p * one_third * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
+            Jz[iloc+j]  += crz_p * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
             rho[iloc+j] += charge_weight * Sx1[i]*Sy1[j];
         }
     
@@ -317,7 +315,7 @@ void Projector2D2Order::densityFrozen(double* rhoj, Particles &particles, unsign
     
     int iloc, ny(nprimy);
     // (x,y,z) components of the current density for the macro-particle
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
 
     if (type > 0) {
         charge_weight *= 1./sqrt(1.0 + particles.momentum(0,ipart)*particles.momentum(0,ipart)
@@ -400,9 +398,10 @@ void Projector2D2Order::ionizationCurrents(Field* Jx, Field* Jy, Field* Jz, Part
     double Sxp[3], Sxd[3], Syp[3], Syd[3];
     
     // weighted currents
-    double Jx_ion = Jion.x * particles.weight(ipart);
-    double Jy_ion = Jion.y * particles.weight(ipart);
-    double Jz_ion = Jion.z * particles.weight(ipart);
+    double weight = inv_cell_volume * particles.weight(ipart);
+    double Jx_ion = Jion.x * weight;
+    double Jy_ion = Jion.y * weight;
+    double Jz_ion = Jion.z * weight;
     
     //Locate particle on the grid
     xpn    = particles.position(0, ipart) * dx_inv_;  // normalized distance to the first node

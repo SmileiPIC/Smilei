@@ -24,8 +24,7 @@ ProjectorAM2Order::ProjectorAM2Order (Params& params, Patch* patch) : ProjectorA
     dl_ov_dt  = params.cell_length[0] / params.timestep;
     dr_inv_   = 1.0 / dr;
     one_ov_dt  = 1.0 / params.timestep;
-    Nmode=params.nmodes; 
-    one_third = 1.0/3.0;
+    Nmode=params.nmodes;
     i_domain_begin = patch->getCellStartingGlobalIndex(0);
     j_domain_begin = patch->getCellStartingGlobalIndex(1);
     n_species = patch->vecSpecies.size();
@@ -67,7 +66,7 @@ void ProjectorAM2Order::currents_mode0(complex<double>* Jl, complex<double>* Jr,
     // Variable declaration & initialization
     // -------------------------------------   int iloc,
     // (x,y,z) components of the current density for the macro-particle
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
     double crl_p = charge_weight*dl_ov_dt;
     double crr_p = charge_weight*one_ov_dt;
 
@@ -225,7 +224,7 @@ void ProjectorAM2Order::currents(complex<double>* Jl, complex<double>* Jr, compl
     // -------------------------------------   int iloc,
     int nparts= particles.size();
     // (x,y,z) components of the current density for the macro-particle
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
     double crl_p = charge_weight*dl_ov_dt;
     double crr_p = charge_weight*one_ov_dt;
 
@@ -408,7 +407,7 @@ void ProjectorAM2Order::currentsAndDensity_mode0(complex<double>* Jl, complex<do
     // -------------------------------------
     int nparts= particles.size();
     // (x,y,z) components of the current density for the macro-particle
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
     double crl_p = charge_weight*dl_ov_dt;
     double crr_p = charge_weight*one_ov_dt;
     // variable declaration
@@ -574,7 +573,7 @@ void ProjectorAM2Order::currentsAndDensity(complex<double>* Jl, complex<double>*
     // -------------------------------------   
     int nparts= particles.size();
     // (x,y,z) components of the current density for the macro-particle
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
     double crl_p = charge_weight*dl_ov_dt;
     double crr_p = charge_weight*one_ov_dt;
 
@@ -777,7 +776,7 @@ void ProjectorAM2Order::densityFrozenComplex(complex<double>* rhoj, Particles &p
     // -------------------------------------
 
     int iloc, nr(nprimr);
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
     double r = sqrt (particles.position(1, ipart)*particles.position(1, ipart)+particles.position(2, ipart)*particles.position(2, ipart));
 
     if (type > 0) { //if current density
@@ -870,9 +869,10 @@ void ProjectorAM2Order::ionizationCurrents(Field* Jl, Field* Jr, Field* Jt, Part
     double Slp[3], Sld[3], Srp[3], Srd[3];
     
     // weighted currents
-    double Jl_ion = Jion.x * particles.weight(ipart);
-    double Jr_ion = Jion.y * particles.weight(ipart);
-    double Jt_ion = Jion.z * particles.weight(ipart);
+    double weight = inv_cell_volume * particles.weight(ipart);
+    double Jl_ion = Jion.x * weight;
+    double Jr_ion = Jion.y * weight;
+    double Jt_ion = Jion.z * weight;
     
     //Locate particle on the grid
     xpn    = particles.position(0, ipart) * dl_inv_;  // normalized distance to the first node 

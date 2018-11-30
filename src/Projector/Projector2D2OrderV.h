@@ -24,7 +24,6 @@ void currents(double* Jx, double* Jy, double* Jz, Particles &particles, unsigned
     void currentsAndDensityWrapper(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int icell, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec, int ipart_ref = 0) override final;
 
 private:
-    double one_third;
 };
 
 #endif
