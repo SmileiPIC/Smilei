@@ -305,8 +305,8 @@ void Patch1D::initExchangeComplex( Field* field, int iDim, SmileiMPI* smpi )
           istart = iNeighbor * ( n_elem[iDim]- (2*oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( oversize[iDim] + 1 + isDual[iDim] );
           ix = (1-iDim)*istart;
           int tag = f1D->MPIbuff.send_tags_[iDim][iNeighbor];
-          MPI_Isend( &(f1D->data_[ix]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(f1D->MPIbuff.srequest[iDim][iNeighbor]) );
-
+          //MPI_Isend( &(f1D->data_[ix]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(f1D->MPIbuff.srequest[iDim][iNeighbor]) );
+          MPI_Isend( &((*f1D)(ix)), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, MPI_COMM_WORLD, &(f1D->MPIbuff.srequest[iDim][iNeighbor]) );
       } // END of Send
 
       if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
@@ -442,24 +442,24 @@ void Patch1D::createType( Params& params )
         // Complex type 
         ntype_complex_[0][ix_isPrim] = MPI_DATATYPE_NULL;
         MPI_Type_contiguous(2*ny, MPI_DOUBLE, &(ntype_complex_[0][ix_isPrim]));    //line
-        MPI_Type_commit( &(ntype_[0][ix_isPrim]) );
+        MPI_Type_commit( &(ntype_complex_[0][ix_isPrim]) );
 
         ntype_complex_[1][ix_isPrim] = MPI_DATATYPE_NULL;
         MPI_Type_contiguous(2*clrw, MPI_DOUBLE, &(ntype_complex_[1][ix_isPrim]));   //clrw lines
-        MPI_Type_commit( &(ntype_[1][ix_isPrim]) );
+        MPI_Type_commit( &(ntype_complex_[1][ix_isPrim]) );
 
         ntypeSum_complex_[0][ix_isPrim] = MPI_DATATYPE_NULL;
 
-        MPI_Datatype tmpTypeComplex = MPI_DATATYPE_NULL;
-        MPI_Type_contiguous(2, MPI_DOUBLE, &(tmpTypeComplex));    //line
-        MPI_Type_commit( &(tmpTypeComplex) );
-
-
-        nline = 1 + 2*params.oversize[0] + ix_isPrim;
-        MPI_Type_contiguous(nline, tmpType, &(ntypeSum_[0][ix_isPrim]));    //line
-        MPI_Type_commit( &(ntypeSum_[0][ix_isPrim]) );
-
-        MPI_Type_free( &tmpTypeComplex );        
+        // MPI_Datatype tmpTypeComplex = MPI_DATATYPE_NULL;
+        // MPI_Type_contiguous(2, MPI_DOUBLE, &(tmpTypeComplex));    //line
+        // MPI_Type_commit( &(tmpTypeComplex) );
+        // 
+        // 
+        // nline = 1 + 2*params.oversize[0] + ix_isPrim;
+        // MPI_Type_contiguous(nline, tmpType, &(ntypeSum_[0][ix_isPrim]));    //line
+        // MPI_Type_commit( &(ntypeSum_[0][ix_isPrim]) );
+        // 
+        // MPI_Type_free( &tmpTypeComplex );        
 
 
 
@@ -481,6 +481,6 @@ void Patch1D::cleanType()
 
         MPI_Type_free( &(ntype_complex_[0][ix_isPrim]) );
         MPI_Type_free( &(ntype_complex_[1][ix_isPrim]) );
-        MPI_Type_free( &(ntypeSum_complex_[0][ix_isPrim]) );
+        //MPI_Type_free( &(ntypeSum_complex_[0][ix_isPrim]) );
     }
 }
