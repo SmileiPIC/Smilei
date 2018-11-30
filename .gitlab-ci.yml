@@ -19,12 +19,6 @@ compile:
     - make uninstall_happi
     - make happi
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-    - module purge
-    - module load compilers/icc/17.3.191
-    - module load hdf5/1.8.12-icc
-    - module load mpi/openmpi/1.6.5-ib-icc
-    - module load python/2.7.10
-    - module list 2> module.log
     # Run validation script
     - python validation.py -c  -v
 
@@ -68,8 +62,6 @@ makerun3D:
 #  stage: makerun
 #  only:
 #    - develop
-#    #- release-4.0.0
-#    #- mpi_omp_master
 #
 #  script:
 #    # Move in test dir
