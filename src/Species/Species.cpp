@@ -268,9 +268,9 @@ Species::~Species()
 // ---------------------------------------------------------------------------------------------------------------------
 // For all (np) particles in a mesh initialize its numerical weight (equivalent to a number density)
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::initWeight(unsigned int nPart, unsigned int iPart, double density)
+void Species::initWeight(unsigned int nPart, unsigned int iPart, double n_real_particles)
 {
-    double w = density / nPart;
+    double w = n_real_particles / nPart;
     for (unsigned  p= iPart; p<iPart+nPart; p++) {
         particles->weight(p) = w ;
     }
@@ -1411,6 +1411,11 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                         density(i,j,k) /= charge(i,j,k);
                     }
                     density(i,j,k) = abs(density(i,j,k));
+                    // multiply by the cell volume
+                    density(i,j,k) *= params.cell_volume;
+                    if (params.geometry=="AMcylindrical") {
+                        density(i,j,k) *= (*xyz[1])(i,j,k);
+                    }
                     // increment the effective number of particle by n_part_in_cell(i,j,k)
                     // for each cell with as non-zero density
                     npart_effective += (unsigned int) n_part_in_cell(i,j,k);
@@ -1474,12 +1479,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                             initPosition(nPart, iPart, indexes, params);
                         }
                         initMomentum(nPart,iPart, temp, vel);
-                        if (params.geometry=="AMcylindrical"){
-                           initWeight(nPart, iPart, density(i,j,k)*(*xyz[1])(i,j,k));
-                        }else{
-                            initWeight(nPart, iPart, density(i,j,k));
-
-                        }
+                        initWeight(nPart, iPart, density(i,j,k));
                         initCharge(nPart, iPart, charge(i,j,k));
 
                         iPart+=nPart;

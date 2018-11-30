@@ -64,7 +64,8 @@ Patch::Patch(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomp
 
 
 // Cloning patch constructor
-Patch::Patch(Patch* patch, Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved, bool with_particles = true) {
+Patch::Patch(Patch* patch, Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved, bool with_particles = true)
+{
 
     hindex = ipatch;
     nDim_fields_ = patch->nDim_fields_;
@@ -109,6 +110,9 @@ void Patch::initStep1(Params& params)
     // zero is not acceptable for xorshift
     if( xorshift32_state==0 )
         xorshift32_state = 1073741824;
+
+    // Obtain the cell_volume
+    cell_volume = params.cell_volume;
 }
 
 

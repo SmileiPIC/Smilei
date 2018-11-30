@@ -26,8 +26,6 @@ Projector3D2Order::Projector3D2Order (Params& params, Patch* patch) : Projector3
    
     nprimz = params.n_space[2] + 2*params.oversize[2] + 1;
     nprimy = params.n_space[1] + 2*params.oversize[1] + 1;
- 
-    one_third = 1.0/3.0;
 
     i_domain_begin = patch->getCellStartingGlobalIndex(0);
     j_domain_begin = patch->getCellStartingGlobalIndex(1);
@@ -62,7 +60,7 @@ void Projector3D2Order::currents(double* Jx, double* Jy, double* Jz, Particles &
     // -------------------------------------
 
     // (x,y,z) components of the current density for the macro-particle
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
     double crx_p = charge_weight*dx_ov_dt;
     double cry_p = charge_weight*dy_ov_dt;
     double crz_p = charge_weight*dz_ov_dt;
@@ -341,7 +339,7 @@ void Projector3D2Order::currentsAndDensity(double* Jx, double* Jy, double* Jz, d
     // -------------------------------------
 
     // (x,y,z) components of the current density for the macro-particle
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
     double crx_p = charge_weight*dx_ov_dt;
     double cry_p = charge_weight*dy_ov_dt;
     double crz_p = charge_weight*dz_ov_dt;
@@ -528,7 +526,7 @@ void Projector3D2Order::densityFrozen(double* rhoj, Particles &particles, unsign
     double delta, delta2;
     double Sx1[5], Sy1[5], Sz1[5]; // arrays used for the Esirkepov projection method
 
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
     if (type > 0) {
         charge_weight *= 1./sqrt(1.0 + particles.momentum(0,ipart)*particles.momentum(0,ipart)
                                      + particles.momentum(1,ipart)*particles.momentum(1,ipart)
@@ -621,9 +619,10 @@ void Projector3D2Order::ionizationCurrents(Field* Jx, Field* Jy, Field* Jz, Part
     double Sxp[3], Sxd[3], Syp[3], Syd[3], Szp[3], Szd[3];
 
     // weighted currents
-    double Jx_ion = Jion.x * particles.weight(ipart);
-    double Jy_ion = Jion.y * particles.weight(ipart);
-    double Jz_ion = Jion.z * particles.weight(ipart);
+    double weight = inv_cell_volume * particles.weight(ipart);
+    double Jx_ion = Jion.x * weight;
+    double Jy_ion = Jion.y * weight;
+    double Jz_ion = Jion.z * weight;
 
     //Locate particle on the grid
     xpn    = particles.position(0, ipart) * dx_inv_;  // normalized distance to the first node
@@ -800,7 +799,7 @@ void Projector3D2Order::susceptibility(ElectroMagn* EMfields, Particles &particl
             gamma_ponderomotive = gamma0 + (pxsm+pysm+pzsm)*0.5 ;
 
             // susceptibility for the macro-particle
-            double charge_weight = (double)(particles.charge(ipart))*(double)(particles.charge(ipart))*particles.weight(ipart)*one_over_mass/gamma_ponderomotive; 
+            double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*(double)(particles.charge(ipart))*particles.weight(ipart)*one_over_mass/gamma_ponderomotive; 
 
             // variable declaration
             double xpn, ypn, zpn;

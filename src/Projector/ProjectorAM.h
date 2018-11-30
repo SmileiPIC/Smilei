@@ -21,7 +21,6 @@ public:
     virtual void setMvWinLimits(unsigned int shift) {i_domain_begin = shift;}
 
 protected:
-    double one_third;
     double dr;
     double dt;
     //! Inverse of the spatial step 1/dx

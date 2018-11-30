@@ -39,7 +39,7 @@ public:
         ne = 0.; ni = 0.; nei = 0.;
         };
     virtual void prepare2(Particles *p1, int i1, Particles *p2, int i2, bool);
-    virtual void prepare3(double);
+    virtual void prepare3(double, double);
     //! Method to apply the ionization
     virtual void apply(Patch * patch, Particles *p1, int i1, Particles *p2, int i2);
     //! Method to finish the ionization and put new electrons in place
@@ -108,7 +108,7 @@ public:
     void assignDatabase(unsigned int) override {};
     
     void prepare2(Particles*, int, Particles*, int, bool) override {};
-    void prepare3(double) override {};
+    void prepare3(double, double) override {};
     void apply(Patch*, Particles*, int, Particles*, int) override {};
     //void finish(Species*, Species*, Params&, Patch*) override {};
     void finish(Species*, Species*, Params&, Patch*, std::vector<Diagnostic*>&) override {};
