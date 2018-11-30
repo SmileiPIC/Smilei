@@ -611,6 +611,9 @@ Field * ElectroMagn1D::createField(string fieldname)
     else if(fieldname.substr(0,2)=="Jy" ) return new Field1D(dimPrim, 1, false, fieldname);
     else if(fieldname.substr(0,2)=="Jz" ) return new Field1D(dimPrim, 2, false, fieldname);
     else if(fieldname.substr(0,3)=="Rho") return new Field1D(dimPrim, fieldname );
+    else if(fieldname.substr(0,9)=="Env_A_abs" ) return new Field1D(dimPrim, 0, false, fieldname);
+    else if(fieldname.substr(0,7)=="Env_Chi" ) return new Field1D(dimPrim, 0, false, fieldname);
+    else if(fieldname.substr(0,9)=="Env_E_abs" ) return new Field1D(dimPrim, 0, false, fieldname);
     
     ERROR("Cannot create field "<<fieldname);
     return NULL;
