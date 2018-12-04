@@ -433,48 +433,35 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
             }
             
             *sNtot[ispec] += (double)nPart;
-            *sDens[ispec] += cell_volume * density;
-            *sZavg[ispec] += cell_volume * charge;
-            *sUkin[ispec] += cell_volume * ener_tot;
+            *sDens[ispec] += density;
+            *sZavg[ispec] += charge;
+            *sUkin[ispec] += ener_tot;
             
             // incremement the total kinetic energy
-            Ukin_ += cell_volume * ener_tot;
+            Ukin_ += ener_tot;
             
             // If radiation activated
             if (vecSpecies[ispec]->Radiate)
             {
-                *sUrad[ispec] += cell_volume*
-                                 vecSpecies[ispec]->getNrjRadiation();
-                Urad_ += cell_volume*
-                         vecSpecies[ispec]->getNrjRadiation();
+                *sUrad[ispec] += vecSpecies[ispec]->getNrjRadiation();
+                Urad_         += vecSpecies[ispec]->getNrjRadiation();
             }
             
             // If multiphoton Breit-Wheeler activated for photons
             // increment the total pair energy from this process
             if (vecSpecies[ispec]->Multiphoton_Breit_Wheeler_process)
             {
-                UmBWpairs_ += cell_volume*
-                              vecSpecies[ispec]->getNrjRadiation();
+                UmBWpairs_ += vecSpecies[ispec]->getNrjRadiation();
             }
         }
         
         if( necessary_Ukin_BC ) {
             // particle energy lost due to boundary conditions
-            double ener_lost_bcs=0.0;
-            ener_lost_bcs = vecSpecies[ispec]->getLostNrjBC();
-
+            Ukin_bnd_     += vecSpecies[ispec]->getLostNrjBC();
             // particle energy lost due to moving window
-            double ener_lost_mvw=0.0;
-            ener_lost_mvw = vecSpecies[ispec]->getLostNrjMW();
-
+            Ukin_out_mvw_ += vecSpecies[ispec]->getLostNrjMW();
             // particle energy added due to moving window
-            double ener_added_mvw=0.0;
-            ener_added_mvw = vecSpecies[ispec]->getNewParticlesNRJ();
-
-            // increment all energy loss & energy input
-            Ukin_bnd_        += cell_volume * ener_lost_bcs;
-            Ukin_out_mvw_    += cell_volume * ener_lost_mvw;
-            Ukin_inj_mvw_    += cell_volume * ener_added_mvw;
+            Ukin_inj_mvw_ += vecSpecies[ispec]->getNewParticlesNRJ();
         }
 
         vecSpecies[ispec]->reinitDiags();
@@ -530,7 +517,6 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
     for( unsigned int ifield=0; ifield<nfield; ifield++ ) {
 
         if( necessary_fieldUelm[ifield] ) {
-            double Utot_crtField=0.0; // total energy in current field
             Field * field = fields[ifield];
             // compute the starting/ending points of each fields (w/out ghost cells) as well as the field global size
             vector<unsigned int> iFieldStart(3,0), iFieldEnd(3,1), iFieldGlobalSize(3,1);
@@ -550,8 +536,9 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
             //        }
             //    }
             //}
-            Utot_crtField += field->norm2( EMfields->istart, EMfields->bufsize );
-                
+
+             // total energy in current field
+            double Utot_crtField = field->norm2( EMfields->istart, EMfields->bufsize );
             // Utot = Dx^N/2 * Field^2
             Utot_crtField *= 0.5*cell_volume;
 

@@ -90,11 +90,20 @@ class Scalar(Diagnostic):
 		self._vunits = "??"
 		if   self._scalarname == "time":
 			self._vunits = "T_r"
-		elif self._scalarname == "Ubal_norm" or self._scalarname[0] in ["N","Z"]:
+		elif self._scalarname == "Ubal_norm":
 			self._vunits = ""
 		else:
-			self._vunits = {"U":"K_r", "E":"E_r", "B":"B_r", "J":"J_r",
-									"R":"N_r", "P":"S_r", "D":"N_r"}[self._scalarname[0]]
+			self._vunits = {
+				"U":"K_r * N_r * L_r^%i" % self._ndim,
+				"P":"K_r * N_r * L_r^%i" % self._ndim,
+				"D":"N_r * L_r^%i" % self._ndim,
+				"E":"E_r",
+				"B":"B_r",
+				"J":"J_r",
+				"R":"N_r",
+				"Z":"Q_r",
+				"N":"",
+				}[self._scalarname[0]]
 		self._title =self._scalarname
 		
 		# Finish constructor

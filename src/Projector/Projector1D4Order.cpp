@@ -15,23 +15,13 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for Projector1D4Order
 // ---------------------------------------------------------------------------------------------------------------------
-Projector1D4Order::Projector1D4Order (Params& params, Patch* patch) : Projector1D(params, patch)
+Projector1D4Order::Projector1D4Order (Params& params, Patch* patch)
+    : Projector1D(params, patch)
 {
     dx_inv_  = 1.0/params.cell_length[0];
     dx_ov_dt = params.cell_length[0] / params.timestep;
 
     //double defined for use in coefficients
-    dble_1_ov_384 = 1.0/384.0;
-    dble_1_ov_48 = 1.0/48.0;
-    dble_1_ov_16 = 1.0/16.0;
-    dble_1_ov_12 = 1.0/12.0;
-    dble_1_ov_24 = 1.0/24.0;
-    dble_19_ov_96 = 19.0/96.0;
-    dble_11_ov_24 = 11.0/24.0;
-    dble_1_ov_4 = 1.0/4.0;
-    dble_1_ov_6 = 1.0/6.0;
-    dble_115_ov_192 = 115.0/192.0;
-    dble_5_ov_8 = 5.0/8.0;
 
     index_domain_begin = patch->getCellStartingGlobalIndex(0);
 
@@ -51,7 +41,7 @@ void Projector1D4Order::currents(double* Jx, double* Jy, double* Jz, Particles &
     // Declare local variables
     int ipo, ip;
     int ip_m_ipo;
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
     double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xipo3, xj_m_xipo4, xj_m_xip, xj_m_xip2, xj_m_xip3, xj_m_xip4;
     double crx_p = charge_weight*dx_ov_dt;                // current density for particle moving in the x-direction
     double cry_p = charge_weight*particles.momentum(1, ipart)*invgf;    // current density in the y-direction of the macroparticle
@@ -133,7 +123,7 @@ void Projector1D4Order::currentsAndDensity(double* Jx, double* Jy, double* Jz, d
     // Declare local variables
     int ipo, ip;
     int ip_m_ipo;
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
     double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xipo3, xj_m_xipo4, xj_m_xip, xj_m_xip2, xj_m_xip3, xj_m_xip4;
     double crx_p = charge_weight*dx_ov_dt;                // current density for particle moving in the x-direction
     double cry_p = charge_weight*particles.momentum(1, ipart)*invgf;    // current density in the y-direction of the macroparticle
@@ -225,7 +215,7 @@ void Projector1D4Order::densityFrozen(double* rhoj, Particles &particles, unsign
     //int ipo, ip, iloc;
     int ip;
     //int ip_m_ipo;
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
     double xjn, xj_m_xip, xj_m_xip2, xj_m_xip3, xj_m_xip4;
     double S1[7];            // arrays used for the Esirkepov projection method
     // Initialize variables

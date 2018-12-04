@@ -269,6 +269,10 @@ public:
         return min_local;
     }
 
+    //! Return the volume (or surface or length depending on simulation dimension)
+    //! of one cell at the position of a given particle
+    virtual double getCellVolume(Particles *p, unsigned int ipart) = 0;
+
     //! Set geometry data in case of moving window restart
     //! \param x_moved difference on coordinates regarding t0 geometry
     //! \param idx_moved number of displacement of the window
@@ -324,6 +328,8 @@ protected:
     std::vector<int> cell_starting_global_index;
 
     std::vector<unsigned int> oversize;
+
+    double cell_volume;
     
 };
 
