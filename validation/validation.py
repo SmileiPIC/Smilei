@@ -302,9 +302,9 @@ def RUN_JOLLYJUMPER(command, dir):
 	- dir: working directory
 	"""
 	EXIT_STATUS="100"
-	exit_status_fd = open(dir+s+"exit_status_file", "w+")
+	exit_status_fd = open(dir+s+"exit_status_file", "w")
 	exit_status_fd.write(str(EXIT_STATUS))
-	exit_status_fd.seek(0)
+	exit_status_fd.close()
 	# Create script
 	with open(EXEC_SCRIPT, 'w') as exec_script_desc:
 		NODES=((int(MPI)*int(OMP)-1)/24)+1
@@ -347,9 +347,10 @@ def RUN_JOLLYJUMPER(command, dir):
 	if VERBOSE:
 		print( "Submitted job with command `"+command+"`")
 	while ( EXIT_STATUS == "100" ) :
+		exit_status_fd = open(dir+s+"exit_status_file", "r+")
 		time.sleep(5)
 		EXIT_STATUS = exit_status_fd.readline()
-		exit_status_fd.seek(0)
+		exit_status_fd.close()
 	if ( int(EXIT_STATUS) != 0 )  :
 		if VERBOSE :
 			print(  "Execution failed for command `"+command+"`")
@@ -359,7 +360,6 @@ def RUN_JOLLYJUMPER(command, dir):
 			except CalledProcessError:
 				print(  "cat command failed")
 				sys.exit(2)
-		exit_status_fd.close()
 		sys.exit(2)
 
 def RUN_OTHER(command, dir):
