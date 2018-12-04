@@ -347,8 +347,8 @@ def RUN_JOLLYJUMPER(command, dir):
 	if VERBOSE:
 		print( "Submitted job with command `"+command+"`")
 	while ( EXIT_STATUS == "100" ) :
-		exit_status_fd = open(dir+s+"exit_status_file", "r+")
 		time.sleep(5)
+		exit_status_fd = open(dir+s+"exit_status_file", "r+")
 		EXIT_STATUS = exit_status_fd.readline()
 		exit_status_fd.close()
 	if ( int(EXIT_STATUS) != 0 )  :
