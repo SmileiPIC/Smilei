@@ -715,7 +715,7 @@ void ProjectorAM2Order::currentsAndDensity(complex<double>* Jl, complex<double>*
 
 
     // Jl^(d,p)
-    for (unsigned int i=0 ; i<5 ; i++) {
+    for (unsigned int i=1 ; i<5 ; i++) {
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
