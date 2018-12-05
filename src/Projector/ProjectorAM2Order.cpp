@@ -109,6 +109,7 @@ void ProjectorAM2Order::currents_mode0(complex<double>* Jl, complex<double>* Jr,
     int ip = round(xpn);
     int ipo = iold[0*nparts];
     int ip_m_ipo = ip-ipo-i_domain_begin;
+
     delta  = xpn - (double)ip;
     delta2 = delta*delta;
     Sl1[ip_m_ipo+1] = 0.5 * (delta2-delta+0.25);
@@ -156,7 +157,7 @@ void ProjectorAM2Order::currents_mode0(complex<double>* Jl, complex<double>* Jr,
     // calculate using the charge conservation equation
     // ------------------------------------------------
     for (unsigned int j=0 ; j<5 ; j++) Jl_p[0][j]= 0.;
-    for (unsigned int i=0 ; i<5 ; i++) Jr_p[i][0]= 0.;
+    for (unsigned int i=0 ; i<5 ; i++) Jr_p[i][4]= 0.;
 
     for (unsigned int i=1 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
@@ -330,7 +331,7 @@ void ProjectorAM2Order::currents(complex<double>* Jl, complex<double>* Jr, compl
     // calculate using the charge conservation equation
     // ------------------------------------------------
     for (unsigned int j=0 ; j<5 ; j++) Jl_p[0][j]= 0.;
-    for (unsigned int i=0 ; i<5 ; i++) Jr_p[i][0]= 0.;
+    for (unsigned int i=0 ; i<5 ; i++) Jr_p[i][4]= 0.;
 
     ipo -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
     // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
@@ -489,7 +490,7 @@ void ProjectorAM2Order::currentsAndDensity_mode0(complex<double>* Jl, complex<do
     // calculate using the charge conservation equation
     // ------------------------------------------------
     for (unsigned int j=0 ; j<5 ; j++) Jl_p[0][j]= 0.;
-    for (unsigned int i=0 ; i<5 ; i++) Jr_p[i][0]= 0.;
+    for (unsigned int i=0 ; i<5 ; i++) Jr_p[i][4]= 0.;
 
     ipo -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
     // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
@@ -678,7 +679,7 @@ void ProjectorAM2Order::currentsAndDensity(complex<double>* Jl, complex<double>*
     // calculate using the charge conservation equation
     // ------------------------------------------------
     for (unsigned int j=0 ; j<5 ; j++) Jl_p[0][j]= 0.;
-    for (unsigned int i=0 ; i<5 ; i++) Jr_p[i][0]= 0.;
+    for (unsigned int i=0 ; i<5 ; i++) Jr_p[i][4]= 0.;
 
     ipo -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
     // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
