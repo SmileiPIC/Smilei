@@ -179,7 +179,7 @@ void Projector1D2Order::currentsAndDensity(double* Jx, double* Jy, double* Jz, d
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project charge : frozen & diagFields timstep
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector1D2Order::densityFrozen(double* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim)
+void Projector1D2Order::densityFrozen(double* rhoj, Particles &particles, unsigned int ipart, unsigned int type)
 {
 
     //Warning : this function is used for frozen species or initialization only and doesn't use the standard scheme.

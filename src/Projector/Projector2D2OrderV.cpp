@@ -182,9 +182,8 @@ void Projector2D2OrderV::currentsAndDensity(double* Jx, double* Jy, double* Jz, 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project charge : frozen & diagFields timstep (not vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2OrderV::densityFrozen(double* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim)
+void Projector2D2OrderV::densityFrozen(double* rhoj, Particles &particles, unsigned int ipart, unsigned int type)
 {
-    //Warning : this function is used for frozen species only. It is assumed that position = position_old !!!
     
     // -------------------------------------
     // Variable declaration & initialization
@@ -250,7 +249,7 @@ void Projector2D2OrderV::densityFrozen(double* rhoj, Particles &particles, unsig
     jp -= j_domain_begin + 2;
     
     for (unsigned int i=0 ; i<5 ; i++) {
-        iloc = (i+ip)*b_dim[1]+jp;
+        iloc = (i+ip)*ny+jp;
         for (unsigned int j=0 ; j<5 ; j++) {
             rhoj[iloc+j] += charge_weight * Sx1[i]*Sy1[j];
         }

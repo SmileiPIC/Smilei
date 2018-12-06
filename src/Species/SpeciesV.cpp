@@ -393,7 +393,7 @@ int ithread;
                 b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
 
                 for (iPart=first_index[ibin] ; (int)iPart<last_index[ibin]; iPart++ ) {
-                    Proj->densityFrozen(b_rho, (*particles), iPart, 0, b_dim);
+                    Proj->densityFrozen(b_rho, (*particles), iPart, 0);
                 } //End loop on particles
             }//End loop on bins
 
@@ -417,7 +417,7 @@ void SpeciesV::computeCharge(unsigned int ispec, ElectroMagn* EMfields)
         double* b_rho=&(*EMfields->rho_)(0);
 
         for (unsigned int iPart=first_index[0] ; (int)iPart<last_index[last_index.size()-1]; iPart++ )
-            Proj->densityFrozen(b_rho, (*particles), iPart, 0, b_dim);
+            Proj->densityFrozen(b_rho, (*particles), iPart, 0);
 
     }
 
@@ -987,13 +987,13 @@ void SpeciesV::ponderomotive_update_position_and_currents(double time_dual, unsi
            for (unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++) { //Loop for projection on buffer_proj
 
                if (nDim_field==2)
-                   b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1) : &(*EMfields->rho_)(ibin*clrw*f_dim1) ;
+                   b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
                if (nDim_field==3)
-                   b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1*f_dim2) : &(*EMfields->rho_)(ibin*clrw*f_dim1*f_dim2) ;
+                   b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
                else if (nDim_field==1)
-                   b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw) : &(*EMfields->rho_)(ibin*clrw) ;
+                   b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
                for (iPart=first_index[ibin] ; (int)iPart<last_index[ibin]; iPart++ ) {
-                   Proj->densityFrozen(b_rho, (*particles), iPart, ibin*clrw, b_dim);
+                   Proj->densityFrozen(b_rho, (*particles), iPart, 0);
                } //End loop on particles
            }//End loop on bins
 

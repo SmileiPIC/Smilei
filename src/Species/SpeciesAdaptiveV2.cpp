@@ -308,7 +308,7 @@ void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
                 b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
 
                 for (iPart=first_index[ibin] ; (int)iPart<last_index[ibin]; iPart++ ) {
-                    Proj->densityFrozen(b_rho, (*particles), iPart, 0, b_dim);
+                    Proj->densityFrozen(b_rho, (*particles), iPart, 0);
                 } //End loop on particles
             }//End loop on bins
 
@@ -685,7 +685,7 @@ void SpeciesAdaptiveV2::scalar_ponderomotive_update_position_and_currents(double
                     else if (nDim_field==1)
                         b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
                     for (iPart=first_index[ibin] ; (int)iPart<last_index[ibin]; iPart++ ) {
-                        Proj->densityFrozen(b_rho, (*particles), iPart, 0, b_dim);
+                        Proj->densityFrozen(b_rho, (*particles), iPart, 0);
                     } //End loop on particles
                 }//End loop on bins
             } // end condition on diag and not particle test

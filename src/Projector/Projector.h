@@ -27,7 +27,7 @@ public:
     virtual void setMvWinLimits(unsigned int shift) = 0;
 
     //! Project global current charge (EMfields->rho_ , J), for initialization and diags
-    virtual void densityFrozen       (double               *rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim) {};
+    virtual void densityFrozen       (double               *rhoj, Particles &particles, unsigned int ipart, unsigned int type) {};
     virtual void densityFrozenComplex(std::complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode) {};
 
     //! Project global current densities if Ionization in Species::dynamics,
