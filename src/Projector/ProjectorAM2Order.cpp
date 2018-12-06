@@ -142,7 +142,6 @@ void ProjectorAM2Order::currents_mode0(complex<double>* Jl, complex<double>* Jr,
         for (unsigned int j=0 ; j<5 ; j++) {
                 Wl[i][j] = DSl[i] * (Sr0[j] + 0.5*DSr[j]);
                 Wr[i][j] = DSr[j] * (Sl0[i] + 0.5*DSl[i]);
-		//Wt[i][j] = Sl0[i]*Sr0[j] + 0.5*DSl[i]*Sr0[j]+0.5*Sl0[i]*DSr[j]+one_third*DSl[i]*DSr[j];
 		Wt[i][j] = 0.5 * (Sl0[i]*Sr0[j] + Sl1[i]*Sr1[j]) ;
         }
     }
@@ -185,30 +184,30 @@ void ProjectorAM2Order::currents_mode0(complex<double>* Jl, complex<double>* Jr,
     
         // Jl^(d,p)
         for (unsigned int i=1 ; i<5 ; i++) {
-            iloc = i+ipo;
+            iloc = (i+ipo)*nprimr;
             for (unsigned int j=0 ; j<5 ; j++) {
                 jloc = j+jpo;
-                linindex = iloc*nprimr+jloc;
+                linindex = iloc+jloc;
                 Jl [linindex] += Jl_p[i][j]*invV[jloc]; 
              }
          }//i
     
          // Jr^(p,d)
         for (unsigned int i=0 ; i<5 ; i++) {
-            iloc = i+ipo;
+            iloc = (i+ipo)*(nprimr+1);
             for (unsigned int j=0 ; j<4 ; j++) {
                 jloc = j+jpo+1;
-                linindex = iloc*(nprimr+1)+jloc;
+                linindex = iloc+jloc;
                 Jr [linindex] += Jr_p[i][j]; 
              }
         }//i
     
         // Jt^(p,p)
         for (unsigned int i=0 ; i<5 ; i++) {
-            iloc = i+ipo;
+            iloc = (i+ipo)*nprimr;
             for (unsigned int j=0 ; j<5 ; j++) {
                 jloc = j+jpo;
-                linindex = iloc*nprimr+jloc;
+                linindex = iloc+jloc;
                 Jt [linindex] += Jt_p[i][j] *invV[jloc];
             }
         }//i
@@ -367,29 +366,29 @@ void ProjectorAM2Order::currents(complex<double>* Jl, complex<double>* Jr, compl
  
     // Jl^(d,p)
     for (unsigned int i=1 ; i<5 ; i++) {
-        iloc = i+ipo;
+        iloc = (i+ipo)*nprimr;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            linindex = iloc*nprimr+jloc;
+            linindex = iloc+jloc;
             Jl [linindex] += C_m * Jl_p[i][j] * invV[jloc];
         }
     }//i
     
     // Jt^(p,p)
     for (unsigned int i=0 ; i<5 ; i++) {
-        iloc = i+ipo;
+        iloc = (i+ipo)*nprimr;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            linindex = iloc*nprimr+jloc;
+            linindex = iloc+jloc;
             Jt [linindex] += Jt_p[i][j] * invV[jloc] * rprim[jloc] ;
         }
      }
     // Jr^(p,d)
     for (unsigned int i=0 ; i<5 ; i++) {
-        iloc = i+ipo;
+        iloc = (i+ipo)*(nprimr+1);
         for (unsigned int j=0 ; j<4 ; j++) {
             jloc = j+jpo+1;
-            linindex = iloc*(nprimr+1)+jloc;
+            linindex = iloc+jloc;
             Jr [linindex] += C_m * Jr_p[i][j] ;
         }
     }//i
@@ -527,38 +526,38 @@ void ProjectorAM2Order::currentsAndDensity_mode0(complex<double>* Jl, complex<do
     for (unsigned int i=1 ; i<5 ; i++) {
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
-            jloc = j+jpo;
-            linindex = iloc*nprimr+jloc;
+            jloc = (j+jpo)*nprimr;
+            linindex = iloc+jloc;
             Jl [linindex] += Jl_p[i][j] * invV[jloc];
         }
     }//i
     
     // Jr^(p,d)
     for (unsigned int i=0 ; i<5 ; i++) {
-        iloc = i+ipo;
+        iloc = (i+ipo)*(nprimr+1);
         for (unsigned int j=0 ; j<4 ; j++) {
             jloc = j+jpo+1;
-            linindex = iloc*(nprimr+1)+jloc;
+            linindex = iloc+jloc;
             Jr [linindex] += Jr_p[i][j] ;
          }
     }//i
     
     // Jt^(p,p)
     for (unsigned int i=0 ; i<5 ; i++) {
-        iloc = i+ipo;
+        iloc = (i+ipo)*nprimr;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            linindex = iloc*nprimr+jloc;
+            linindex = iloc+jloc;
             Jt [linindex] += Jt_p[i][j] * invV[jloc];
         }
     }//i
 
     // Rho^(p,p)
     for (unsigned int i=0 ; i<5 ; i++) {
-        iloc = i+ipo;
+        iloc = (i+ipo)*nprimr;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;    
-            linindex = iloc*nprimr+jloc;
+            linindex = iloc+jloc;
             rho [linindex] += charge_weight * Sl1[i]*Sr1[j] * invV[jloc];
         }
     }//i
@@ -716,40 +715,40 @@ void ProjectorAM2Order::currentsAndDensity(complex<double>* Jl, complex<double>*
 
     // Jl^(d,p)
     for (unsigned int i=1 ; i<5 ; i++) {
-        iloc = i+ipo;
+        iloc = (i+ipo)*nprimr;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            linindex = iloc*nprimr+jloc;
+            linindex = iloc+jloc;
             Jl [linindex] += C_m * Jl_p[i][j] * invV[jloc] ;
         }
     }//i
     
     // Jt^(p,p)
     for (unsigned int i=0 ; i<5 ; i++) {
-        iloc = i+ipo;
+        iloc = (i+ipo)*nprimr;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            linindex = iloc*nprimr+jloc;
+            linindex = iloc+jloc;
             Jt [linindex] += Jt_p[i][j] * invV[jloc] * rprim[jloc] ; 
         }
     }//i
 
     // Jr^(p,d)
     for (unsigned int i=0 ; i<5 ; i++) {
-        iloc = i+ipo;
+        iloc = (i+ipo)*(nprimr+1);
         for (unsigned int j=0 ; j<4 ; j++) {
             jloc = j+jpo+1;
-            linindex = iloc*(nprimr+1)+jloc;
+            linindex = iloc+jloc;
             Jr [linindex] += C_m * Jr_p[i][j]; 
         }
     }//i
 
      // Rho^(p,p)
     for (unsigned int i=0 ; i<5 ; i++) {
-        iloc = i+ipo;
+        iloc = (i+ipo)*nprimr;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            linindex = iloc*nprimr+jloc;
+            linindex = iloc+jloc;
             rho [linindex] += C_m*charge_weight* Sl1[i]*Sr1[j] * invV[jloc]; 
         }
     }//i
@@ -781,11 +780,11 @@ void ProjectorAM2Order::densityFrozenComplex(complex<double>* rhoj, Particles &p
             charge_weight *= particles.momentum(0,ipart);
         }
         else if (type == 2){ //if Jr
-            charge_weight *= (particles.momentum(1,ipart)*particles.position(1,ipart) + particles.momentum(2,ipart)*particles.position(2,ipart)) * dr_inv_ / r ;
+            charge_weight *= ( particles.momentum(1,ipart)*particles.position(1,ipart) + particles.momentum(2,ipart)*particles.position(2,ipart))*dr_inv_ / r ;
             nr++;
         }
         else { //if Jt
-            charge_weight *= (-particles.momentum(1,ipart)*particles.position(2,ipart) + particles.momentum(2,ipart)*particles.position(1,ipart))/r ;
+            charge_weight *= (-particles.momentum(1,ipart)*particles.position(2,ipart) + particles.momentum(2,ipart)*particles.position(1,ipart)) / r ;
         }
     }
 
@@ -798,12 +797,6 @@ void ProjectorAM2Order::densityFrozenComplex(complex<double>* rhoj, Particles &p
     double xpn, ypn;
     double delta, delta2;
     double Sl1[5], Sr1[5]; 
-
-// Initialize all current-related arrays to zero
-    for (unsigned int i=0; i<5; i++) {
-        Sl1[i] = 0.;
-        Sr1[i] = 0.;
-    }
 
     // --------------------------------------------------------
     // Locate particles & Calculate Esirkepov coef. S, DS and W
@@ -832,15 +825,15 @@ void ProjectorAM2Order::densityFrozenComplex(complex<double>* rhoj, Particles &p
     jp -= j_domain_begin + 2;
 
     if (type != 2){
-        for (unsigned int i=0 ; i<5 ; i++) {
+        for (unsigned int i=1 ; i<4 ; i++) {
             iloc = (i+ip)*nr+jp;
-            for (unsigned int j=0 ; j<5 ; j++)
+            for (unsigned int j=1 ; j<4 ; j++)
                 rhoj [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invV[j+jp]; 
         }//i
     } else {
-        for (unsigned int i=0 ; i<5 ; i++) {
+        for (unsigned int i=1 ; i<4 ; i++) {
             iloc = (i+ip)*nr+jp;
-            for (unsigned int j=0 ; j<5 ; j++)
+            for (unsigned int j=1 ; j<4 ; j++)
                 rhoj [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invVd[j+jp]; 
         }//i
     }
