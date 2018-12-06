@@ -758,17 +758,10 @@ void ProjectorAM2Order::currentsAndDensity(complex<double>* Jl, complex<double>*
     
 } // END Project local current densities (Jl, Jr, Jt, sort)
 
-void ProjectorAM2Order::densityFrozen(double* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim)
-{
-// Useless function
-}
-
-
-
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project for diags and frozen species - mode >= 0 
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2Order::densityFrozenComplex(complex<double>* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim, int imode)
+void ProjectorAM2Order::densityFrozenComplex(complex<double>* rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode)
 {
     //Warning : this function is not charge conserving.
 
