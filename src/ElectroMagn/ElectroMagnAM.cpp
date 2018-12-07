@@ -734,7 +734,7 @@ void ElectroMagnAM::fold_J(bool diag_flag)
              Jl    = Jl_[imode];
              Jr    = Jr_[imode];
              Jt    = Jt_[imode];
-             //if (imode==0){
+             if (imode==0){
                  for (unsigned int i=0; i<nl_d; i++){
                      for (unsigned int j=0; j<oversize[1]; j++)
                          (*Jl)(i,2*oversize[1]-j)+= (*Jl)(i,j) ;
@@ -747,21 +747,21 @@ void ElectroMagnAM::fold_J(bool diag_flag)
                       for (unsigned int j=0; j<oversize[1]+1; j++)
                          (*Jr)(i,2*oversize[1]+1-j)+= (*Jr)(i,j) ;
                  }
-             //}
-             //else{
-             //    for (unsigned int i=0; i<nl_d; i++){
-             //        for (unsigned int j=0; j<oversize[1]; j++)
-             //            (*Jl)(i,2*oversize[1]-j)-= (*Jl)(i,j) ;
-             //    }
-             //    for (unsigned int i=0; i<nl_p; i++){
-             //        for (unsigned int j=0; j<oversize[1]; j++)
-             //            (*Jt)(i,2*oversize[1]-j)-= (*Jt)(i,j) ;
-             //    }
-             //    for (unsigned int i=0; i<nl_p; i++){
-             //         for (unsigned int j=0; j<oversize[1]+1; j++)
-             //            (*Jr)(i,2*oversize[1]+1-j)-= (*Jr)(i,j) ;
-             //    }
-             //}
+             }
+             else{
+                 for (unsigned int i=0; i<nl_d; i++){
+                     for (unsigned int j=0; j<oversize[1]; j++)
+                         (*Jl)(i,2*oversize[1]-j)-= (*Jl)(i,j) ;
+                 }
+                 for (unsigned int i=0; i<nl_p; i++){
+                     for (unsigned int j=0; j<oversize[1]; j++)
+                         (*Jt)(i,2*oversize[1]-j)-= (*Jt)(i,j) ;
+                 }
+                 for (unsigned int i=0; i<nl_p; i++){
+                      for (unsigned int j=0; j<oversize[1]+1; j++)
+                         (*Jr)(i,2*oversize[1]+1-j)-= (*Jr)(i,j) ;
+                 }
+             }
          }
      
          if(diag_flag){
@@ -769,19 +769,18 @@ void ElectroMagnAM::fold_J(bool diag_flag)
              //Loop on modes for rho
              for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
                  cField2D* rho   = rho_AM_[imode];
-                 //if (imode == 0){
+                 if (imode == 0){
                      for (unsigned int i=0; i<nl_p; i++){
                          for (unsigned int j=0; j<oversize[1]; j++)
                              (*rho)(i,2*oversize[1]-j)+= (*rho)(i,j) ;
                      } 
-                 //}
-                 //else {
-                 //    for (unsigned int i=0; i<nl_p; i++){
-                 //        for (unsigned int j=0; j<oversize[1]; j++)
-                 //            (*rho)(i,2*oversize[1]-j)-= (*rho)(i,j) ;
-                 //    }
-
-                 //}
+                 }
+                 else {
+                     for (unsigned int i=0; i<nl_p; i++){
+                         for (unsigned int j=0; j<oversize[1]; j++)
+                             (*rho)(i,2*oversize[1]-j)-= (*rho)(i,j) ;
+                     }
+                 }
              }
              //Loop on all modes and species for J_s
              //for (unsigned int ism=0; ism < n_species; ism++){
@@ -861,17 +860,14 @@ void ElectroMagnAM::on_axis_J(bool diag_flag)
                  for (unsigned int i=0; i<nl_p; i++){
                      (*Jt)(i,oversize[1]) = 0. ;
                      (*Jr)(i,oversize[1]) = -(*Jr)(i,oversize[1]+1) ;
-                     (*Jr)(i,oversize[1]-1) = 0. ;
-                     (*Jr)(i,oversize[1]-2) = 0. ;
                  }
              }
              else if (imode == 1){
                  // What for Jr and Jt ??
-                 //for (unsigned int i=0; i<nl_p; i++)
-                 //    (*Jt)(i,oversize[1]) = - 1./3.* (4.* Icpx * (*Jr)(i,oversize[1]+1) + (*Jt)(i,oversize[1]+1));
-
-                 //for (unsigned int i=0; i<nl_p; i++)
-                 //    (*Jr)(i,oversize[1])= 2.*Icpx* (*Jt)(i,oversize[1])-(*Jr)(i,oversize[1]+1) ;
+                 for (unsigned int i=0; i<nl_p; i++)
+                     (*Jt)(i,oversize[1]) = - 1./3.* (4.* Icpx * (*Jr)(i,oversize[1]+1) + (*Jt)(i,oversize[1]+1));
+                 for (unsigned int i=0; i<nl_p; i++)
+                     (*Jr)(i,oversize[1])= 2.*Icpx* (*Jt)(i,oversize[1])-(*Jr)(i,oversize[1]+1) ;
                  for (unsigned int i=0; i<nl_d; i++)
                      (*Jl)(i,oversize[1]) = 0. ;
              }
@@ -881,8 +877,6 @@ void ElectroMagnAM::on_axis_J(bool diag_flag)
                  for (unsigned int i=0; i<nl_p; i++){
                      (*Jt)(i,oversize[1]) = 0. ;
                      (*Jr)(i,oversize[1])=  -(*Jr)(i,oversize[1]+1) ;
-                     (*Jr)(i,oversize[1]-1) = 0. ;
-                     (*Jr)(i,oversize[1]-2) = 0. ;
                  }
              }
 

@@ -36,7 +36,7 @@ Main(
 )
 
 Vectorization(
-    mode = "adaptive",
+    mode = "on", #"adaptive",
 )
 
 MovingWindow(

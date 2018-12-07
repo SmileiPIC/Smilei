@@ -131,7 +131,6 @@ class ParticleBinning(Diagnostic):
 		# -------------------------------------------------------------------
 		# Fabricate all axes values for all diags
 		plot_diff = []
-		cell_volume = self._cell_length.prod()
 		coeff = 1.
 		unitsa = [0,0,0,0]
 		spatialaxes = {"x":False, "y":False, "z":False}
@@ -292,8 +291,7 @@ class ParticleBinning(Diagnostic):
 			else:
 				self._bsize = self._np.prod( self._np.array( self._np.meshgrid( *plot_diff ) ), axis=0)
 				self._bsize = self._bsize.transpose([1,0]+list(range(2,len(plot_diff))))
-		self._bsize = cell_volume / self._bsize
-		self._bsize *= coeff
+		self._bsize = coeff / self._bsize
 		
 		# Set the directory in case of exporting
 		self._exportPrefix = "ParticleDiag_"+"-".join([str(d) for d in self._diags])

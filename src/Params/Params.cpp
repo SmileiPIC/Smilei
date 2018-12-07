@@ -531,12 +531,30 @@ namelist("")
         {
             ERROR("In block `Vectorization`, parameter `default` must be `off` or `on`");
         }
+
+        // get parameter "every" which describes a timestep selection
+        if( ! adaptive_vecto_time_selection )
+            adaptive_vecto_time_selection = new TimeSelection(
+                PyTools::extract_py("reconfigure_every", "Vectorization"), "Adaptive vectorization"
+            );
+    }
+    
+    // In case of collisions, ensure particle sort per cell
+    if( PyTools::nComponents("Collisions") > 0 ) {
         
-        // In case of collisions, ensure particle sort per cell
-        if( PyTools::nComponents("Collisions") > 0 ) {
-            if( vectorization_mode == "adaptive_mixed_sort" ) // collisions need sorting per cell
-                ERROR("Collisions are incompatible with the vectorization mode 'adaptive_mixed_sort'.")
-            if( vectorization_mode == "off" ) {
+        if( geometry!="1Dcartesian" 
+         && geometry!="2Dcartesian" 
+         && geometry!="3Dcartesian" )
+            ERROR("Collisions only valid for cartesian geometries for the moment")
+
+        if( vectorization_mode == "adaptive_mixed_sort" ) // collisions need sorting per cell
+            ERROR("Collisions are incompatible with the vectorization mode 'adaptive_mixed_sort'.")
+
+        if( vectorization_mode == "off" ) {
+            if( geometry == "1Dcartesian" ) {
+                WARNING("For collisions, clrw is forced to 1");
+                clrw = 1;
+            } else {
                 WARNING("For collisions, particles have been forced to be sorted per cell");
                 vectorization_mode = "adaptive";
                 has_adaptive_vectorization = true;
@@ -544,12 +562,6 @@ namelist("")
                 adaptive_vecto_time_selection = new TimeSelection();
             }
         }
-        
-        // get parameter "every" which describes a timestep selection
-        if( ! adaptive_vecto_time_selection )
-            adaptive_vecto_time_selection = new TimeSelection(
-                PyTools::extract_py("reconfigure_every", "Vectorization"), "Adaptive vectorization"
-            );
     }
     
     // Read the "print_every" parameter
@@ -769,6 +781,9 @@ void Params::compute()
             WARNING("grid_length[" << i << "] has been redefined from " << entered_grid_length << " to " << grid_length[i] << " to match n x cell_length (" << scientific << setprecision(4) << grid_length[i]-entered_grid_length <<")");
         cell_volume *= cell_length[i];
     }
+    if (geometry == "AMcylindrical"){
+        cell_volume *= 2 * M_PI;
+    } 
     // create a 3d equivalent of n_space & cell_length
     for (unsigned int i=nDim_field; i<3; i++) {
         cell_length[i]=0.0;
@@ -1080,4 +1095,19 @@ void Params::cleanup(SmileiMPI* smpi) {
         Py_Finalize();
     }
     smpi->barrier();
+}
+
+bool Params::isSpeciesField(string field_name) {
+    if( geometry!="AMcylindrical" ) {
+        if( (field_name.at(0)=='J' && field_name.length()>2)
+         || (field_name.at(0)=='R' && field_name.length()>3) )
+            return true;
+    } else {
+        if( field_name.at(0)=='J' && field_name.length()>8
+                && (field_name.substr(2,6)!="_mode_" || field_name.find("mode_") != field_name.rfind("mode_"))
+         || field_name.at(0)=='R' && field_name.length()>9
+                && (field_name.substr(3,6)!="_mode_" || field_name.find("mode_") != field_name.rfind("mode_")) )
+            return true;
+    }
+    return false;
 }

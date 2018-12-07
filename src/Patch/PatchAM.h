@@ -21,6 +21,12 @@ public:
     //! Destructor for Patch
     ~PatchAM() override  final;
 
+    //! Return the volume (or surface or length depending on simulation dimension)
+    //! of one cell at the position of a given particle
+    double getCellVolume(Particles *p, unsigned int ipart) override final
+    {
+        ERROR("getCellVolume not implemented in geometry AM");
+    };
 
     // MPI exchange/sum methods for particles/fields
     //   - fields communication specified per geometry (pure virtual)

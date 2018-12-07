@@ -72,11 +72,19 @@ every = 100
 
 DiagScalar(
     every = every,
-)	
+)
 
 DiagFields(
     every = every,
     fields = ['Ex','Ey','Ez','By_m','Bz_m','Rho']
+)
+
+DiagProbe(
+    every = every,
+    origin = [0],
+    corners = [[L]],
+    number = [100],
+    fields = ['Ex', 'Rho_eon1', 'Rho_eon2']
 )
 
 DiagParticleBinning(
@@ -90,9 +98,9 @@ DiagParticleBinning(
 )
 
 DiagTrackParticles(
-	species = "ion", 
+	species = "ion",
 	every = 1000,
-	filter = lambda particles: (particles.x<0.02), 
+	filter = lambda particles: (particles.x<0.02),
 	attributes = ["x", "px", "Ex"]
 )
 
