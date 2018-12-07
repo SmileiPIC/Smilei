@@ -337,7 +337,7 @@ void LaserEnvelope3D::savePhi_and_GradPhi()
              // gradient of ponderomotive potential
              (*GradPhix_m3D)(i,j,k)  = (*GradPhix3D)(i,j,k);
              (*GradPhiy_m3D)(i,j,k)  = (*GradPhiy3D)(i,j,k);
-             (*GradPhiz_m3D)(i,j,k)  = (*GradPhiy3D)(i,j,k);
+             (*GradPhiz_m3D)(i,j,k)  = (*GradPhiz3D)(i,j,k);
 
             } // end z loop
         } // end y loop
