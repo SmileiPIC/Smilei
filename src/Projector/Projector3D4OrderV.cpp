@@ -802,7 +802,7 @@ void Projector3D4OrderV::currentsAndDensity(double* Jx, double* Jy, double* Jz, 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project charge : frozen & diagFields timstep (not vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D4OrderV::densityFrozen(double* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim)
+void Projector3D4OrderV::densityFrozen(double* rhoj, Particles &particles, unsigned int ipart, unsigned int type)
 {
     //Warning : this function is used for frozen species or initialization only and doesn't use the standard scheme.
     //rho type = 0
@@ -815,7 +815,7 @@ void Projector3D4OrderV::densityFrozen(double* rhoj, Particles &particles, unsig
     // -------------------------------------
 
     int iloc,jloc;
-    int ny(nprimy), nz(nprimz);//, nyz;
+    int ny(nprimy), nz(nprimz), nyz;
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
 
@@ -836,7 +836,7 @@ void Projector3D4OrderV::densityFrozen(double* rhoj, Particles &particles, unsig
             nz ++;
         }
     }
-    //nyz = ny*nz;
+    nyz = ny*nz;
 
     // variable declaration
     double xpn, ypn, zpn;
@@ -899,9 +899,9 @@ void Projector3D4OrderV::densityFrozen(double* rhoj, Particles &particles, unsig
     kp -= k_domain_begin + 3;
 
     for (unsigned int i=0 ; i<7 ; i++) {
-        iloc = (i+ip)*b_dim[2]*b_dim[1];
+        iloc = (i+ip)*nyz;
         for (unsigned int j=0 ; j<7 ; j++) {
-            jloc = (jp+j)*b_dim[2];;
+            jloc = (jp+j)*nz;
             for (unsigned int k=0 ; k<7 ; k++) {
                 rhoj[iloc+jloc+kp+k] += charge_weight * Sx1[i]*Sy1[j]*Sz1[k];
             }

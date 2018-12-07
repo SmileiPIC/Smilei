@@ -231,7 +231,7 @@ public:
     double nrj_new_particles;
 
     //! whether to choose vectorized operators with respective sorting methods
-    bool vectorized_operators;
+    int vectorized_operators;
 
     // -----------------------------------------------------------------------------
     //  4. Operators
