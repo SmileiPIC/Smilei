@@ -165,6 +165,9 @@ public:
     //! value of the AA* at itime and itime-1
     std::vector<std::vector<double>> dynamics_PHIpart;
     std::vector<std::vector<double>> dynamics_PHI_mpart;
+    //! inverse of the ponderomotive gamma, used in susceptibility and ponderomotive momentum Pusher
+    std::vector<std::vector<double>> dynamics_inv_gamma_ponderomotive; 
+    
 
 
     // Resize buffers for a given number of particles
@@ -181,6 +184,7 @@ public:
             dynamics_GradPHI_mpart[ithread].resize(3*npart);
             dynamics_PHIpart[ithread].resize(npart);
             dynamics_PHI_mpart[ithread].resize(npart);
+            dynamics_GradPHIpart.resize(npart);
         }
     }
 
