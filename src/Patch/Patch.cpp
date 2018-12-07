@@ -207,7 +207,7 @@ void Patch::finalizeMPIenvironment(Params& params) {
     // Adaptive vectorization:
     if (params.has_adaptive_vectorization)
     {
-        nb_comms += 2;
+        nb_comms += vecSpecies.size();
     }
 
     // Radiated energy
