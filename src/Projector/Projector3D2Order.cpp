@@ -756,13 +756,15 @@ void Projector3D2Order::project_susceptibility(ElectroMagn* EMfields, Particles 
         std::vector<double> *Epart       = &(smpi->dynamics_Epart[ithread]);
         std::vector<double> *Phipart     = &(smpi->dynamics_PHIpart[ithread]);
         std::vector<double> *GradPhipart = &(smpi->dynamics_GradPHIpart[ithread]);
+        std::vector<double> *inv_gamma_ponderomotive = &(smpi->dynamics_inv_gamma_ponderomotive[ithread]);
+        
 
         int iloc,jloc;
      
         double momentum[3];
         
         double gamma_ponderomotive,gamma0,gamma0_sq;
-        double charge_over_mass_dts2,charge_sq_over_mass_dts4,charge_sq_over_mass_sq;
+        double charge_over_mass_dts2,charge_sq_over_mass_sq_dts4,charge_sq_over_mass_sq;
         double pxsm, pysm, pzsm;
         double one_over_mass=1./species_mass;
 
@@ -780,7 +782,7 @@ void Projector3D2Order::project_susceptibility(ElectroMagn* EMfields, Particles 
     
             charge_over_mass_dts2    = (double)(particles.charge(ipart))*dts2*one_over_mass;
             // ! ponderomotive force is proportional to charge squared and the field is divided by 4 instead of 2
-            charge_sq_over_mass_dts4 = (double)(particles.charge(ipart))*(double)(particles.charge(ipart))*dts4*one_over_mass;      
+            charge_sq_over_mass_sq_dts4 = (double)(particles.charge(ipart))*(double)(particles.charge(ipart))*dts4*one_over_mass*one_over_mass;      
             // (charge over mass)^2
             charge_sq_over_mass_sq   = (double)(particles.charge(ipart))*(double)(particles.charge(ipart))*one_over_mass*one_over_mass;
 
@@ -792,12 +794,14 @@ void Projector3D2Order::project_susceptibility(ElectroMagn* EMfields, Particles 
             gamma0    = sqrt(gamma0_sq) ;
 
             // ( electric field + ponderomotive force for ponderomotive gamma advance ) scalar multiplied by momentum
-            pxsm = (gamma0 * charge_over_mass_dts2*(*(Ex+ipart)) - charge_sq_over_mass_dts4*(*(GradPhix+ipart)) ) * momentum[0] / gamma0_sq;
-            pysm = (gamma0 * charge_over_mass_dts2*(*(Ey+ipart)) - charge_sq_over_mass_dts4*(*(GradPhiy+ipart)) ) * momentum[1] / gamma0_sq;
-            pzsm = (gamma0 * charge_over_mass_dts2*(*(Ez+ipart)) - charge_sq_over_mass_dts4*(*(GradPhiz+ipart)) ) * momentum[2] / gamma0_sq;
+            pxsm = (gamma0 * charge_over_mass_dts2*(*(Ex+ipart)) - charge_sq_over_mass_sq_dts4*(*(GradPhix+ipart)) ) * momentum[0] / gamma0_sq;
+            pysm = (gamma0 * charge_over_mass_dts2*(*(Ey+ipart)) - charge_sq_over_mass_sq_dts4*(*(GradPhiy+ipart)) ) * momentum[1] / gamma0_sq;
+            pzsm = (gamma0 * charge_over_mass_dts2*(*(Ez+ipart)) - charge_sq_over_mass_sq_dts4*(*(GradPhiz+ipart)) ) * momentum[2] / gamma0_sq;
         
             // update of gamma ponderomotive 
             gamma_ponderomotive = gamma0 + (pxsm+pysm+pzsm)*0.5 ;
+            // buffer inverse of ponderomotive gamma to use it in ponderomotive momentum pusher
+            (*inv_gamma_ponderomotive)[ipart] = 1./gamma_ponderomotive;
 
             // susceptibility for the macro-particle
             double charge_weight = (double)(particles.charge(ipart))*(double)(particles.charge(ipart))*particles.weight(ipart)*one_over_mass/gamma_ponderomotive; 
