@@ -24,21 +24,6 @@ Projector3D4OrderV::Projector3D4OrderV (Params& params, Patch* patch) : Projecto
     dz_inv_   = 1.0/params.cell_length[2];
     dz_ov_dt  = params.cell_length[2] / params.timestep;
 
-    one_third = 1.0/3.0;
-
-    //double defined for use in coefficients
-    dble_1_ov_384 = 1.0/384.0;
-    dble_1_ov_48 = 1.0/48.0;
-    dble_1_ov_16 = 1.0/16.0;
-    dble_1_ov_12 = 1.0/12.0;
-    dble_1_ov_24 = 1.0/24.0;
-    dble_19_ov_96 = 19.0/96.0;
-    dble_11_ov_24 = 11.0/24.0;
-    dble_1_ov_4 = 1.0/4.0;
-    dble_1_ov_6 = 1.0/6.0;
-    dble_115_ov_192 = 115.0/192.0;
-    dble_5_ov_8 = 5.0/8.0;
-
     i_domain_begin = patch->getCellStartingGlobalIndex(0);
     j_domain_begin = patch->getCellStartingGlobalIndex(1);
     k_domain_begin = patch->getCellStartingGlobalIndex(2);
@@ -68,8 +53,8 @@ Projector3D4OrderV::~Projector3D4OrderV()
 // ---------------------------------------------------------------------------------------------------------------------
 //!  Project current densities & charge : diagFields timstep (not vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-//void Projector3D4OrderV::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
-void Projector3D4OrderV::operator() (double* Jx, double* Jy, double* Jz, double *rho, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, std::vector<unsigned int> &b_dim, int* iold, double *deltaold, int ipart_ref)
+//void Projector3D4OrderV::currentsAndDensity(double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
+void Projector3D4OrderV::currentsAndDensity(double* Jx, double* Jy, double* Jz, double *rho, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, std::vector<unsigned int> &b_dim, int* iold, double *deltaold, int ipart_ref)
 {
     // -------------------------------------
     // Variable declaration & initialization
@@ -817,7 +802,7 @@ void Projector3D4OrderV::operator() (double* Jx, double* Jy, double* Jz, double 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project charge : frozen & diagFields timstep (not vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D4OrderV::operator() (double* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim)
+void Projector3D4OrderV::densityFrozen(double* rhoj, Particles &particles, unsigned int ipart, unsigned int type)
 {
     //Warning : this function is used for frozen species or initialization only and doesn't use the standard scheme.
     //rho type = 0
@@ -830,7 +815,7 @@ void Projector3D4OrderV::operator() (double* rhoj, Particles &particles, unsigne
     // -------------------------------------
 
     int iloc,jloc;
-    int ny(nprimy), nz(nprimz);//, nyz;
+    int ny(nprimy), nz(nprimz), nyz;
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
 
@@ -851,7 +836,7 @@ void Projector3D4OrderV::operator() (double* rhoj, Particles &particles, unsigne
             nz ++;
         }
     }
-    //nyz = ny*nz;
+    nyz = ny*nz;
 
     // variable declaration
     double xpn, ypn, zpn;
@@ -914,9 +899,9 @@ void Projector3D4OrderV::operator() (double* rhoj, Particles &particles, unsigne
     kp -= k_domain_begin + 3;
 
     for (unsigned int i=0 ; i<7 ; i++) {
-        iloc = (i+ip)*b_dim[2]*b_dim[1];
+        iloc = (i+ip)*nyz;
         for (unsigned int j=0 ; j<7 ; j++) {
-            jloc = (jp+j)*b_dim[2];;
+            jloc = (jp+j)*nz;
             for (unsigned int k=0 ; k<7 ; k++) {
                 rhoj[iloc+jloc+kp+k] += charge_weight * Sx1[i]*Sy1[j]*Sz1[k];
             }
@@ -929,7 +914,7 @@ void Projector3D4OrderV::operator() (double* rhoj, Particles &particles, unsigne
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project global current densities : ionization
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D4OrderV::operator() (Field* Jx, Field* Jy, Field* Jz, Particles &particles, int ipart, LocalFields Jion)
+void Projector3D4OrderV::ionizationCurrents(Field* Jx, Field* Jy, Field* Jz, Particles &particles, int ipart, LocalFields Jion)
 {    
 } // END Project global current densities (ionize)
 
@@ -937,7 +922,7 @@ void Projector3D4OrderV::operator() (Field* Jx, Field* Jy, Field* Jz, Particles 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project current densities : main projector vectorized
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D4OrderV::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, std::vector<unsigned int> &b_dim, int* iold, double *deltaold, int ipart_ref)
+void Projector3D4OrderV::currents(double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, std::vector<unsigned int> &b_dim, int* iold, double *deltaold, int ipart_ref)
 {
     // -------------------------------------
     // Variable declaration & initialization
@@ -1576,7 +1561,7 @@ void Projector3D4OrderV::operator() (double* Jx, double* Jy, double* Jz, Particl
 // ---------------------------------------------------------------------------------------------------------------------
 //! Wrapper for projection
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D4OrderV::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int scell, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec, int ipart_ref)
+void Projector3D4OrderV::currentsAndDensityWrapper(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int scell, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec, int ipart_ref)
 {
     if ( istart == iend ) return; //Don't treat empty cells.
 
@@ -1600,7 +1585,7 @@ void Projector3D4OrderV::operator() (ElectroMagn* EMfields, Particles &particles
             double* b_Jx =  &(*EMfields->Jx_ )(0);
             double* b_Jy =  &(*EMfields->Jy_ )(0);
             double* b_Jz =  &(*EMfields->Jz_ )(0);
-            (*this)(b_Jx , b_Jy , b_Jz , particles,  istart, iend, invgf, b_dim, iold, &(*delta)[0], ipart_ref);
+            currents(b_Jx , b_Jy , b_Jz , particles,  istart, iend, invgf, b_dim, iold, &(*delta)[0], ipart_ref);
         }
         else 
             ERROR("TO DO with rho");
@@ -1611,13 +1596,13 @@ void Projector3D4OrderV::operator() (ElectroMagn* EMfields, Particles &particles
         double* b_Jy  = EMfields->Jy_s [ispec] ? &(*EMfields->Jy_s [ispec])(0) : &(*EMfields->Jy_ )(0) ;
         double* b_Jz  = EMfields->Jz_s [ispec] ? &(*EMfields->Jz_s [ispec])(0) : &(*EMfields->Jz_ )(0) ;
         double* b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
-        (*this)(b_Jx , b_Jy , b_Jz , b_rho, particles,  istart, iend, invgf, b_dim, iold, &(*delta)[0], ipart_ref);
+        currentsAndDensity(b_Jx , b_Jy , b_Jz , b_rho, particles,  istart, iend, invgf, b_dim, iold, &(*delta)[0], ipart_ref);
     }
 }
 
 
-//void Projector3D4OrderV::project_susceptibility(double* Chi_envelope, Particles &particles, int istart, int iend, unsigned int scell, std::vector<unsigned int> &b_dim, SmileiMPI* smpi, int ithread, double species_mass, int* iold2, int ipart_ref)
-void Projector3D4OrderV::project_susceptibility(ElectroMagn* EMfields, Particles &particles, double species_mass, SmileiMPI* smpi, int istart, int iend,  int ithread, int scell, std::vector<unsigned int> &b_dim, int ipart_ref)
+//void Projector3D4OrderV::susceptibility(double* Chi_envelope, Particles &particles, int istart, int iend, unsigned int scell, std::vector<unsigned int> &b_dim, SmileiMPI* smpi, int ithread, double species_mass, int* iold2, int ipart_ref)
+void Projector3D4OrderV::susceptibility(ElectroMagn* EMfields, Particles &particles, double species_mass, SmileiMPI* smpi, int istart, int iend,  int ithread, int scell, std::vector<unsigned int> &b_dim, int ipart_ref)
 {
     ERROR("Projection and interpolation for the envelope model are implemented only for interpolation_order = 2");
 }

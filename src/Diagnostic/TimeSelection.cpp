@@ -112,11 +112,11 @@ TimeSelection::TimeSelection()
 }
 
 // Basic time selection
-TimeSelection::TimeSelection(int period)
+TimeSelection::TimeSelection(int copy_period)
 {
     start         = 0;
     end           = std::numeric_limits<double>::max();
-    this->period  = period;
+    period        = copy_period;
     repeat        = 1;
     spacing       = 1.;
     groupWidth    = 0.;
@@ -236,11 +236,11 @@ int TimeSelection::howManyTimesBefore(int timestep)
 }
 
 //! Set the parameters of the time selection
-void TimeSelection::set(double start, double end, double period)
+void TimeSelection::set(double new_start, double new_end, double new_period)
 {
-    this->start = start;
-    this->end = end;
-    this->period = period;
+    start  = new_start;
+    end    = new_end;
+    period = new_period;
 }
 
 //! Obtain some information about the time selection

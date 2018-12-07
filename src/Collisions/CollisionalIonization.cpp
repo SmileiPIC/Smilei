@@ -77,7 +77,7 @@ unsigned int CollisionalIonization::createDatabase(double reference_angular_freq
     le.resize(atomic_number);
     double e, ep, bp, up, ep2, betae2, betab2, betau2, s0, A1, A2, A3, sk, wk, ek;
     int N; // occupation number
-    double coeff = 2.81794e-15 * reference_angular_frequency_SI / (2.*299792458.); // r_e omega / 2c
+    double normalization = 2.81794e-15 * reference_angular_frequency_SI / (2.*299792458.); // r_e omega / 2c
     for( int Zstar=0; Zstar<atomic_number; Zstar++ ) { // For each ionization state
         cs[Zstar].resize(npoints, 0.);
         te[Zstar].resize(npoints, 0.);
@@ -101,7 +101,7 @@ unsigned int CollisionalIonization::createDatabase(double reference_angular_freq
                     betae2 = 1. - 1./((1.+ep)*(1.+ep));
                     betab2 = 1. - 1./((1.+bp)*(1.+bp));
                     betau2 = 1. - 1./((1.+up)*(1.+up));
-                    s0 = coeff * N /( bp * (betae2 + betab2 + betau2) );
+                    s0 = normalization * N /( bp * (betae2 + betab2 + betau2) );
                     ep2 = 1./(1.+ep*0.5); ep2 *= ep2;
                     A1 = (1.+2.*ep)/(1.+e)*ep2;
                     A2 = (e-1.)*bp*bp*0.5*ep2;
@@ -191,13 +191,13 @@ void CollisionalIonization::prepare2(Particles *p1, int i1, Particles *p2, int i
 }
 
 // Method to prepare the ionization
-void CollisionalIonization::prepare3(double timestep, double n_patch_per_cell)
+void CollisionalIonization::prepare3(double timestep, double inv_cell_volume)
 {
     // Calculate the coeff used later for ionization probability
     if( nei<=0. ) {
         coeff = 0.;
     } else {
-        coeff = ne*ni/nei * timestep * n_patch_per_cell;
+        coeff = ne*ni/nei * timestep * inv_cell_volume;
     }
 }
 

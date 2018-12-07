@@ -355,7 +355,7 @@ class Performances(Diagnostic):
 				ranks = self._np.empty((self._number_of_patches[0],), dtype=self._np.uint32)
 				previous_h = 0
 				rank = 0
-				for h in hindices:
+				for h in hindices[1:]:
 					ranks[previous_h:h] = rank
 					rank += 1
 					previous_h = h
@@ -453,7 +453,7 @@ class Performances(Diagnostic):
 		vindices = self._np.flatnonzero(self._np.any(vdiff, axis=0)) # i-indices where vertical lines occur
 		for i in vindices:
 			j = self._np.flatnonzero(self._np.diff(vdiff[:,i])) # starts and ends of vertical lines
-			vlines_i += [ self._np.full((len(j)/2), i, dtype=self._np.uint32) ]
+			vlines_i += [ self._np.full((len(j)//2), i, dtype=self._np.uint32) ]
 			vlines_jmin += [ j[ 0::2 ] ]
 			vlines_jmax += [ j[ 1::2 ] ]
 		vlines_i    = self._np.concatenate( vlines_i    )*self._xfactor*self._patch_length[0]
@@ -469,7 +469,7 @@ class Performances(Diagnostic):
 		hindices = self._np.flatnonzero(self._np.any(hdiff, axis=1)) # j-indices where horizontal lines occur
 		for j in hindices:
 			i = self._np.flatnonzero(self._np.diff(hdiff[j,:])) # starts and ends of horizontal lines
-			hlines_j += [ self._np.full((len(i)/2), j, dtype=self._np.uint32) ]
+			hlines_j += [ self._np.full((len(i)//2), j, dtype=self._np.uint32) ]
 			hlines_imin += [ i[ 0::2 ] ]
 			hlines_imax += [ i[ 1::2 ] ]
 		hlines_j    = self._np.concatenate( hlines_j    )*self._yfactor*self._patch_length[1]

@@ -47,7 +47,6 @@ filename(filename)
     }
     coeff1 = 4.046650232e-21*params.reference_angular_frequency_SI; // h*omega/(2*me*c^2)
     coeff2 = 2.817940327e-15*params.reference_angular_frequency_SI/299792458.; // re omega / c
-    n_patch_per_cell = 1./((double)params.n_cell_per_patch);
 }
 
 
@@ -65,7 +64,6 @@ Collisions::Collisions( Collisions* coll, int nDim )
     filename         = coll->filename        ;
     coeff1           = coll->coeff1          ;
     coeff2           = coll->coeff2          ;
-    n_patch_per_cell = coll->n_patch_per_cell;
 
     if( atomic_number>0 ) {
         Ionization = new CollisionalIonization(coll->Ionization);
@@ -97,10 +95,16 @@ void Collisions::calculate_debye_length(Params& params, Patch * patch)
     if(nspec==0) return;
     unsigned int nbin = patch->vecSpecies[0]->first_index.size();
 
-    density_max = 0.;
     patch->debye_length_squared.resize(nbin, 0.);
     double mean_debye_length = 0.;
     for (unsigned int ibin = 0 ; ibin < nbin ; ibin++) {
+        density_max = 0.;
+        double inv_cell_volume = 1. /
+            patch->getCellVolume(
+                patch->vecSpecies[0]->particles,
+                patch->vecSpecies[0]->first_index[ibin]
+            );
+        
         for (unsigned int ispec=0 ; ispec<nspec ; ispec++) { // loop all species
             s  = patch->vecSpecies[ispec];
             p  = s->particles;
@@ -122,7 +126,7 @@ void Collisions::calculate_debye_length(Params& params, Patch * patch)
             if (density <= 0.) continue;
             charge /= density; // average charge
             temperature *= s->mass / (3.*density); // Te in units of me*c^2
-            density /= (double)params.n_cell_per_patch; // density in units of critical density
+            density *= inv_cell_volume; // density in units of critical density
             // compute inverse debye length squared
             if (temperature>0.)
                 patch->debye_length_squared[ibin] += density*charge*charge/temperature;
@@ -160,9 +164,9 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
     unsigned int npairs; // number of pairs of macro-particles
     vector<unsigned int> np1, np2; // numbers of macro-particles in each species, in each group
     double n1, n2, n12, n123, n223; // densities of particles
-    unsigned int i1, i2, ispec1, ispec2, N2max;
+    unsigned int i1=0, i2, ispec1, ispec2, N2max;
     Species   *s1, *s2;
-    Particles *p1, *p2;
+    Particles *p1=NULL, *p2;
     double m12, coeff3, coeff4, logL, s, ncol, debye2=0.;
     bool not_duplicated_particle;
 
@@ -252,9 +256,12 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
             i2 = index2[i];
             for (ispec2=0 ; i2>=np2[ispec2]; ispec2++) i2 -= np2[ispec2];
 
-            s1 = patch->vecSpecies[(*sg1)[ispec1]]; s2 = patch->vecSpecies[(*sg2)[ispec2]];
-            i1 += s1->first_index[ibin];                   i2 += s2->first_index[ibin];
-            p1 = s1->particles;                     p2 = s2->particles;
+            s1 = patch->vecSpecies[(*sg1)[ispec1]];
+            s2 = patch->vecSpecies[(*sg2)[ispec2]];
+            i1 += s1->first_index[ibin];
+            i2 += s2->first_index[ibin];
+            p1 = s1->particles;
+            p2 = s2->particles;
 
             // sum weights
             n1 += p1->weight(i1);
@@ -265,11 +272,12 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
             Ionization->prepare2(p1, i1, p2, i2, not_duplicated_particle);
         }
         if( intra_collisions ) { n1 += n2; n2 = n1; }
-        n1  *= n_patch_per_cell;
-        n2  *= n_patch_per_cell;
-        n12 *= n_patch_per_cell;
 
         // Pre-calculate some numbers before the big loop
+        double inv_cell_volume = 1./patch->getCellVolume(p1, i1);
+        n1  *= inv_cell_volume;
+        n2  *= inv_cell_volume;
+        n12 *= inv_cell_volume;
         n123 = pow(n1,2./3.);
         n223 = pow(n2,2./3.);
         coeff3 = params.timestep * n1*n2/n12;
@@ -277,7 +285,7 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
         coeff3 *= coeff2;
 
         // Prepare the ionization
-        Ionization->prepare3(params.timestep, n_patch_per_cell);
+        Ionization->prepare3(params.timestep, inv_cell_volume);
 
         // Now start the real loop on pairs of particles
         // See equations in http://dx.doi.org/10.1063/1.4742167

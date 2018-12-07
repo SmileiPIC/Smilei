@@ -22,10 +22,9 @@ ProjectorAM2Order::ProjectorAM2Order (Params& params, Patch* patch) : ProjectorA
     dr = params.cell_length[1];
     dl_inv_   = 1.0/params.cell_length[0];
     dl_ov_dt  = params.cell_length[0] / params.timestep;
-    dr_inv_   = 1.0/params.cell_length[1];
-    dr_ov_dt  = params.cell_length[1] / params.timestep;
-    Nmode=params.nmodes; 
-    one_third = 1.0/3.0;
+    dr_inv_   = 1.0 / dr;
+    one_ov_dt  = 1.0 / params.timestep;
+    Nmode=params.nmodes;
     i_domain_begin = patch->getCellStartingGlobalIndex(0);
     j_domain_begin = patch->getCellStartingGlobalIndex(1);
     n_species = patch->vecSpecies.size();
@@ -39,13 +38,14 @@ ProjectorAM2Order::ProjectorAM2Order (Params& params, Patch* patch) : ProjectorA
     for (int j = 0; j< nprimr; j++){
         rprim[j] = abs((j_domain_begin+j)*dr);
         if (j_domain_begin+j == 0){
-            invV[j] = 6./dr; // Correction de Verboncoeur ordre 1.
+            //invV[j] = 6./dr; // Correction de Verboncoeur ordre 1.
+            invV[j] = 8./dr;   // No correction.
         } else {
             invV[j] = 1./rprim[j];
         }
     }
     for (int j = 0; j< nprimr+1; j++)
-        invVd[j] = 1./abs((j_domain_begin+j-0.5)*dr);
+        invVd[j] = 1./abs(j_domain_begin+j-0.5);
 }
 
 
@@ -60,15 +60,15 @@ ProjectorAM2Order::~ProjectorAM2Order()
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents for mode=0
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, Particles &particles, unsigned int ipart, double invgf, int* iold, double* deltaold)
+void ProjectorAM2Order::currents_mode0(complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, Particles &particles, unsigned int ipart, double invgf, int* iold, double* deltaold)
 {   int nparts= particles.size();
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------   int iloc,
     // (x,y,z) components of the current density for the macro-particle
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
     double crl_p = charge_weight*dl_ov_dt;
-    double crr_p = charge_weight*dr_ov_dt;
+    double crr_p = charge_weight*one_ov_dt;
 
     // variable declaration
     double xpn, ypn, rp;
@@ -109,6 +109,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     int ip = round(xpn);
     int ipo = iold[0*nparts];
     int ip_m_ipo = ip-ipo-i_domain_begin;
+
     delta  = xpn - (double)ip;
     delta2 = delta*delta;
     Sl1[ip_m_ipo+1] = 0.5 * (delta2-delta+0.25);
@@ -141,7 +142,6 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
                 Wl[i][j] = DSl[i] * (Sr0[j] + 0.5*DSr[j]);
                 Wr[i][j] = DSr[j] * (Sl0[i] + 0.5*DSl[i]);
-		//Wt[i][j] = Sl0[i]*Sr0[j] + 0.5*DSl[i]*Sr0[j]+0.5*Sl0[i]*DSr[j]+one_third*DSl[i]*DSr[j];
 		Wt[i][j] = 0.5 * (Sl0[i]*Sr0[j] + Sl1[i]*Sr1[j]) ;
         }
     }
@@ -156,21 +156,22 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // calculate using the charge conservation equation
     // ------------------------------------------------
     for (unsigned int j=0 ; j<5 ; j++) Jl_p[0][j]= 0.;
-    for (unsigned int i=0 ; i<5 ; i++) Jr_p[i][0]= 0.;
+    for (unsigned int i=0 ; i<5 ; i++) Jr_p[i][4]= 0.;
 
     for (unsigned int i=1 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
             Jl_p[i][j]= Jl_p[i-1][j] - crl_p * Wl[i-1][j];
         }
     }
-    for (unsigned int j=1 ; j<5 ; j++) {
-        jloc = j+jpo;
-        double Vdjm1_ov_j = abs( (jloc + j_domain_begin - 0.5)/(jloc + j_domain_begin + 0.5));
-        double crr_p2 = crr_p * invVd[jloc]; 
+
+    for (int j=3 ; j>=0 ; j--) {
+        jloc = j+jpo+1;
+        double Vd = abs(jloc + j_domain_begin + 0.5) ;
         for (unsigned int i=0 ; i<5 ; i++) {
-            Jr_p[i][j] = Jr_p[i][j-1]*Vdjm1_ov_j - crr_p2 * Wr[i][j-1];
+            Jr_p[i][j] = (Jr_p[i][j+1] * Vd + crr_p * Wr[i][j+1]) * invVd[jloc];
         }
     }
+
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
             Jt_p[i][j] =   crt_p  * Wt[i][j];
@@ -183,31 +184,31 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     
         // Jl^(d,p)
         for (unsigned int i=1 ; i<5 ; i++) {
-            iloc = i+ipo;
+            iloc = (i+ipo)*nprimr;
             for (unsigned int j=0 ; j<5 ; j++) {
                 jloc = j+jpo;
-                linindex = iloc*nprimr+jloc;
+                linindex = iloc+jloc;
                 Jl [linindex] += Jl_p[i][j]*invV[jloc]; 
              }
          }//i
     
          // Jr^(p,d)
         for (unsigned int i=0 ; i<5 ; i++) {
-            iloc = i+ipo;
-            for (unsigned int j=1 ; j<5 ; j++) {
-                jloc = j+jpo;
-                linindex = iloc*(nprimr+1)+jloc;
+            iloc = (i+ipo)*(nprimr+1);
+            for (unsigned int j=0 ; j<4 ; j++) {
+                jloc = j+jpo+1;
+                linindex = iloc+jloc;
                 Jr [linindex] += Jr_p[i][j]; 
              }
         }//i
     
         // Jt^(p,p)
         for (unsigned int i=0 ; i<5 ; i++) {
-            iloc = i+ipo;
+            iloc = (i+ipo)*nprimr;
             for (unsigned int j=0 ; j<5 ; j++) {
                 jloc = j+jpo;
-                linindex = iloc*nprimr+jloc;
-                Jt [linindex] += Jt_p[i][j] *invV[jloc]*rprim[jloc];
+                linindex = iloc+jloc;
+                Jt [linindex] += Jt_p[i][j] *invV[jloc];
             }
         }//i
 
@@ -216,16 +217,16 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents for m>0
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, Particles &particles, unsigned int ipart,double invgf, int* iold, double* deltaold, complex<double>* exp_m_theta_old, int imode)
+void ProjectorAM2Order::currents(complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, Particles &particles, unsigned int ipart,double invgf, int* iold, double* deltaold, complex<double>* exp_m_theta_old, int imode)
 {   
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------   int iloc,
     int nparts= particles.size();
     // (x,y,z) components of the current density for the macro-particle
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
     double crl_p = charge_weight*dl_ov_dt;
-    double crr_p = charge_weight*dr_ov_dt;
+    double crr_p = charge_weight*one_ov_dt;
 
     // variable declaration
     double xpn, ypn;
@@ -291,16 +292,6 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     Sr1[jp_m_jpo+2] = 0.75-delta2;
     Sr1[jp_m_jpo+3] = 0.5 * (delta2+delta+0.25);
 
-    //e_delta_m1 = sqrt(e_theta/e_theta_old);
-    //e_bar_m1 = sqrt(e_theta*e_theta_old);   
-    //if (std::real(e_theta)+ std::real(e_theta_old) < 0.){
-    //    if (std::imag(e_theta)*std::imag(e_theta_old) > 0.){
-    //        e_bar_m1 *= -1.;
-    //    } else {
-    //        e_delta_m1 *= -1.;
-    //    }
-    //}
-
     double dtheta = std::remainder(theta-theta_old, 2*M_PI)/2.; // Otherwise dtheta is overestimated when going from -pi to +pi
     double theta_bar = theta_old+dtheta;
     e_delta_m1 = std::polar(1.0,dtheta);
@@ -313,7 +304,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
 
      e_delta_inv =1./e_delta;
     //defining crt_p 
-    complex<double> crt_p = - charge_weight*Icpx/(e_bar*dt*(double)imode)*2.;
+    complex<double> crt_p = charge_weight*Icpx*e_bar / (dt*(double)imode)*2.;
     for (unsigned int i=0; i < 5; i++) {
         DSl[i] = Sl1[i] - Sl0[i];
         DSr[i] = Sr1[i] - Sr0[i];
@@ -339,7 +330,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // calculate using the charge conservation equation
     // ------------------------------------------------
     for (unsigned int j=0 ; j<5 ; j++) Jl_p[0][j]= 0.;
-    for (unsigned int i=0 ; i<5 ; i++) Jr_p[i][0]= 0.;
+    for (unsigned int i=0 ; i<5 ; i++) Jr_p[i][4]= 0.;
 
     ipo -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
     // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
@@ -352,12 +343,12 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
                 Jl_p[i][j]= Jl_p[i-1][j] - crl_p * Wl[i-1][j];
             }
         }
-    for (unsigned int j=1 ; j<5 ; j++) {
-        jloc = j+jpo;
-        double Vdjm1_ov_j = abs( (jloc + j_domain_begin - 0.5)/(jloc + j_domain_begin + 0.5) );
-        double crr_p2 = crr_p * invVd[jloc]; 
+
+    for (int j=3 ; j>=0 ; j--) {
+        jloc = j+jpo+1;
+        double Vd = abs(jloc + j_domain_begin + 0.5) ;
         for (unsigned int i=0 ; i<5 ; i++) {
-            Jr_p[i][j] = Jr_p[i][j-1]*Vdjm1_ov_j - crr_p2 * Wr[i][j-1];
+            Jr_p[i][j] = (Jr_p[i][j+1] * Vd + crr_p * Wr[i][j+1]) * invVd[jloc];
         }
     }
 
@@ -371,40 +362,33 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // Calculate the total current
     // ---------------------------
     
-
-    C_m = 1.;
-    C_m_old = 1.;
-    for (unsigned int i=0; i<(unsigned int)imode; i++){
-    C_m *= e_theta;
-    C_m_old *= e_theta_old;
-    }
-    C_m = 2. * (C_m + 1./C_m_old)/2. ; //multiply modes > 0 by 2 AND exp(i theta_medium) = ( exp(i theta) + exp(i theta_old) ) /2.
+    C_m = 2. * e_bar ; //multiply modes > 0 by 2 
  
     // Jl^(d,p)
     for (unsigned int i=1 ; i<5 ; i++) {
-        iloc = i+ipo;
+        iloc = (i+ipo)*nprimr;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            linindex = iloc*nprimr+jloc;
+            linindex = iloc+jloc;
             Jl [linindex] += C_m * Jl_p[i][j] * invV[jloc];
         }
     }//i
     
     // Jt^(p,p)
     for (unsigned int i=0 ; i<5 ; i++) {
-        iloc = i+ipo;
+        iloc = (i+ipo)*nprimr;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            linindex = iloc*nprimr+jloc;
-            Jt [linindex] += Jt_p[i][j] * invV[jloc];
+            linindex = iloc+jloc;
+            Jt [linindex] += Jt_p[i][j] * invV[jloc] * rprim[jloc] ;
         }
      }
     // Jr^(p,d)
     for (unsigned int i=0 ; i<5 ; i++) {
-        iloc = i+ipo;
-        for (unsigned int j=1 ; j<5 ; j++) {
-            jloc = j+jpo;
-            linindex = iloc*(nprimr+1)+jloc;
+        iloc = (i+ipo)*(nprimr+1);
+        for (unsigned int j=0 ; j<4 ; j++) {
+            jloc = j+jpo+1;
+            linindex = iloc+jloc;
             Jr [linindex] += C_m * Jr_p[i][j] ;
         }
     }//i
@@ -417,15 +401,15 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
 //! Project local currents with diag for mode=0 
 // ---------------------------------------------------------------------------------------------------------------------
 
-void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, complex<double>* rho, Particles &particles, unsigned int ipart, double invgf, int* iold, double* deltaold)
+void ProjectorAM2Order::currentsAndDensity_mode0(complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, complex<double>* rho, Particles &particles, unsigned int ipart, double invgf, int* iold, double* deltaold)
 {   // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------
     int nparts= particles.size();
     // (x,y,z) components of the current density for the macro-particle
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
     double crl_p = charge_weight*dl_ov_dt;
-    double crr_p = charge_weight*dr_ov_dt;
+    double crr_p = charge_weight*one_ov_dt;
     // variable declaration
     double xpn, ypn, rp;
     double delta, delta2;
@@ -496,7 +480,6 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
         for (unsigned int j=0 ; j<5 ; j++) {
                 Wl[i][j] = DSl[i] * (Sr0[j] + 0.5*DSr[j]);
                 Wr[i][j] = DSr[j] * (Sl0[i] + 0.5*DSl[i]);
-		//Wt[i][j] = Sl0[i]*Sr0[j] + 0.5*DSl[i]*Sr0[j]+0.5*Sl0[i]*DSr[j]+one_third*DSl[i]*DSr[j];
 		Wt[i][j] = 0.5 * (Sl0[i]*Sr0[j] + Sl1[i]*Sr1[j]) ;
             }
         }
@@ -506,7 +489,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // calculate using the charge conservation equation
     // ------------------------------------------------
     for (unsigned int j=0 ; j<5 ; j++) Jl_p[0][j]= 0.;
-    for (unsigned int i=0 ; i<5 ; i++) Jr_p[i][0]= 0.;
+    for (unsigned int i=0 ; i<5 ; i++) Jr_p[i][4]= 0.;
 
     ipo -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
     // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
@@ -520,14 +503,15 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
                 Jl_p[i][j]= Jl_p[i-1][j] - crl_p * Wl[i-1][j];
             }
         }
-    for (unsigned int j=1 ; j<5 ; j++) {
-        jloc = j+jpo;
-        double Vdjm1_ov_j = abs( (jloc + j_domain_begin - 0.5)/(jloc + j_domain_begin + 0.5));
-        double crr_p2 = crr_p * invVd[jloc]; 
+
+    for (int j=3 ; j>=0 ; j--) {
+        jloc = j+jpo+1;
+        double Vd = abs(jloc + j_domain_begin + 0.5) ;
         for (unsigned int i=0 ; i<5 ; i++) {
-            Jr_p[i][j] = Jr_p[i][j-1]*Vdjm1_ov_j - crr_p2 * Wr[i][j-1];
+            Jr_p[i][j] = (Jr_p[i][j+1] * Vd + crr_p * Wr[i][j+1]) * invVd[jloc];
         }
     }
+
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
                 Jt_p[i][j] =   crt_p  * Wt[i][j];
@@ -542,38 +526,38 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     for (unsigned int i=1 ; i<5 ; i++) {
         iloc = i+ipo;
         for (unsigned int j=0 ; j<5 ; j++) {
-            jloc = j+jpo;
-            linindex = iloc*nprimr+jloc;
+            jloc = (j+jpo)*nprimr;
+            linindex = iloc+jloc;
             Jl [linindex] += Jl_p[i][j] * invV[jloc];
         }
     }//i
     
     // Jr^(p,d)
     for (unsigned int i=0 ; i<5 ; i++) {
-        iloc = i+ipo;
-        for (unsigned int j=1 ; j<5 ; j++) {
-            jloc = j+jpo;
-            linindex = iloc*(nprimr+1)+jloc;
+        iloc = (i+ipo)*(nprimr+1);
+        for (unsigned int j=0 ; j<4 ; j++) {
+            jloc = j+jpo+1;
+            linindex = iloc+jloc;
             Jr [linindex] += Jr_p[i][j] ;
          }
     }//i
     
     // Jt^(p,p)
     for (unsigned int i=0 ; i<5 ; i++) {
-        iloc = i+ipo;
+        iloc = (i+ipo)*nprimr;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            linindex = iloc*nprimr+jloc;
+            linindex = iloc+jloc;
             Jt [linindex] += Jt_p[i][j] * invV[jloc];
         }
     }//i
 
     // Rho^(p,p)
     for (unsigned int i=0 ; i<5 ; i++) {
-        iloc = i+ipo;
+        iloc = (i+ipo)*nprimr;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;    
-            linindex = iloc*nprimr+jloc;
+            linindex = iloc+jloc;
             rho [linindex] += charge_weight * Sl1[i]*Sr1[j] * invV[jloc];
         }
     }//i
@@ -582,16 +566,16 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents with diag for m>0
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, complex<double>* rho, Particles &particles, unsigned int ipart, double invgf, int* iold, double* deltaold,complex<double>* exp_m_theta_old,  int imode)
+void ProjectorAM2Order::currentsAndDensity(complex<double>* Jl, complex<double>* Jr, complex<double>* Jt, complex<double>* rho, Particles &particles, unsigned int ipart, double invgf, int* iold, double* deltaold,complex<double>* exp_m_theta_old,  int imode)
 {   
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------   
     int nparts= particles.size();
     // (x,y,z) components of the current density for the macro-particle
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
     double crl_p = charge_weight*dl_ov_dt;
-    double crr_p = charge_weight*dr_ov_dt;
+    double crr_p = charge_weight*one_ov_dt;
 
     // variable declaration
     double xpn, ypn;
@@ -669,7 +653,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     }
     e_delta_inv =1./e_delta;
     //defining crt_p 
-    complex<double> crt_p = -charge_weight*Icpx/(e_bar*dt*(double)imode)*rp*2.;
+    complex<double> crt_p = charge_weight*Icpx*e_bar / (dt*(double)imode)*2.;
     for (unsigned int i=0; i < 5; i++) {
         DSl[i] = Sl1[i] - Sl0[i];
         DSr[i] = Sr1[i] - Sr0[i];
@@ -694,7 +678,7 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // calculate using the charge conservation equation
     // ------------------------------------------------
     for (unsigned int j=0 ; j<5 ; j++) Jl_p[0][j]= 0.;
-    for (unsigned int i=0 ; i<5 ; i++) Jr_p[i][0]= 0.;
+    for (unsigned int i=0 ; i<5 ; i++) Jr_p[i][4]= 0.;
 
     ipo -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
     // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
@@ -705,16 +689,17 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     for (unsigned int i=1 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
                 Jl_p[i][j]= Jl_p[i-1][j] - crl_p * Wl[i-1][j];
-            }
-        }
-     for (unsigned int j=1 ; j<5 ; j++) {
-        jloc = j+jpo;
-        double Vdjm1_ov_j = abs( (jloc + j_domain_begin - 0.5)/(jloc + j_domain_begin + 0.5) );
-        double crr_p2 = crr_p * invVd[jloc]; 
-        for (unsigned int i=0 ; i<5 ; i++) {
-            Jr_p[i][j] = Jr_p[i][j-1]*Vdjm1_ov_j - crr_p2 * Wr[i][j-1];
         }
     }
+
+    for (int j=3 ; j>=0 ; j--) {
+        jloc = j+jpo+1;
+        double Vd = abs(jloc + j_domain_begin + 0.5) ;
+        for (unsigned int i=0 ; i<5 ; i++) {
+            Jr_p[i][j] = (Jr_p[i][j+1] * Vd + crr_p * Wr[i][j+1]) * invVd[jloc];
+        }
+    }
+
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
                 Jt_p[i][j] = crt_p * Wt[i][j];
@@ -724,51 +709,46 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     // ---------------------------
     // Calculate the total current
     // ---------------------------
-    
 
-    C_m = 1.;
-    C_m_old = 1.;
-    for (unsigned int i=0; i<(unsigned int)imode; i++){
-    C_m *= e_theta;
-    C_m_old *= e_theta_old;
-    }
-    C_m = 2. * (C_m + 1./C_m_old)/2. ; //multiply modes > 0 by 2 AND exp(i theta_medium) = ( exp(i theta) + exp(i theta_old) ) /2.
+    C_m = 2. * e_bar ; //multiply modes > 0 by 2 AND exp(i theta_medium) = ( exp(i theta) + exp(i theta_old) ) /2.
+
+
     // Jl^(d,p)
-    for (unsigned int i=0 ; i<5 ; i++) {
-        iloc = i+ipo;
+    for (unsigned int i=1 ; i<5 ; i++) {
+        iloc = (i+ipo)*nprimr;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            linindex = iloc*nprimr+jloc;
+            linindex = iloc+jloc;
             Jl [linindex] += C_m * Jl_p[i][j] * invV[jloc] ;
         }
     }//i
     
     // Jt^(p,p)
     for (unsigned int i=0 ; i<5 ; i++) {
-        iloc = i+ipo;
+        iloc = (i+ipo)*nprimr;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            linindex = iloc*nprimr+jloc;
-            Jt [linindex] += Jt_p[i][j] * invV[jloc] ; 
+            linindex = iloc+jloc;
+            Jt [linindex] += Jt_p[i][j] * invV[jloc] * rprim[jloc] ; 
         }
     }//i
 
     // Jr^(p,d)
     for (unsigned int i=0 ; i<5 ; i++) {
-        iloc = i+ipo;
-        for (unsigned int j=0 ; j<5 ; j++) {
-            jloc = j+jpo;
-            linindex = iloc*(nprimr+1)+jloc;
+        iloc = (i+ipo)*(nprimr+1);
+        for (unsigned int j=0 ; j<4 ; j++) {
+            jloc = j+jpo+1;
+            linindex = iloc+jloc;
             Jr [linindex] += C_m * Jr_p[i][j]; 
         }
     }//i
 
      // Rho^(p,p)
     for (unsigned int i=0 ; i<5 ; i++) {
-        iloc = i+ipo;
+        iloc = (i+ipo)*nprimr;
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
-            linindex = iloc*nprimr+jloc;
+            linindex = iloc+jloc;
             rho [linindex] += C_m*charge_weight* Sl1[i]*Sr1[j] * invV[jloc]; 
         }
     }//i
@@ -777,17 +757,10 @@ void ProjectorAM2Order::operator() (complex<double>* Jl, complex<double>* Jr, co
     
 } // END Project local current densities (Jl, Jr, Jt, sort)
 
-void ProjectorAM2Order::operator() (double* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim)
-{
-// Useless function
-}
-
-
-
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project for diags and frozen species - mode >= 0 
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2Order::operator() (complex<double>* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim, int imode)
+void ProjectorAM2Order::densityFrozenComplex(complex<double>* rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode)
 {
     //Warning : this function is not charge conserving.
 
@@ -796,7 +769,7 @@ void ProjectorAM2Order::operator() (complex<double>* rhoj, Particles &particles,
     // -------------------------------------
 
     int iloc, nr(nprimr);
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
     double r = sqrt (particles.position(1, ipart)*particles.position(1, ipart)+particles.position(2, ipart)*particles.position(2, ipart));
 
     if (type > 0) { //if current density
@@ -807,11 +780,11 @@ void ProjectorAM2Order::operator() (complex<double>* rhoj, Particles &particles,
             charge_weight *= particles.momentum(0,ipart);
         }
         else if (type == 2){ //if Jr
-            charge_weight *= (particles.momentum(1,ipart)*particles.position(1,ipart) + particles.momentum(2,ipart)*particles.position(2,ipart))/r ;
+            charge_weight *= ( particles.momentum(1,ipart)*particles.position(1,ipart) + particles.momentum(2,ipart)*particles.position(2,ipart))*dr_inv_ / r ;
             nr++;
         }
         else { //if Jt
-            charge_weight *= (-particles.momentum(1,ipart)*particles.position(2,ipart) + particles.momentum(2,ipart)*particles.position(1,ipart))/r ;
+            charge_weight *= (-particles.momentum(1,ipart)*particles.position(2,ipart) + particles.momentum(2,ipart)*particles.position(1,ipart)) / r ;
         }
     }
 
@@ -824,12 +797,6 @@ void ProjectorAM2Order::operator() (complex<double>* rhoj, Particles &particles,
     double xpn, ypn;
     double delta, delta2;
     double Sl1[5], Sr1[5]; 
-
-// Initialize all current-related arrays to zero
-    for (unsigned int i=0; i<5; i++) {
-        Sl1[i] = 0.;
-        Sr1[i] = 0.;
-    }
 
     // --------------------------------------------------------
     // Locate particles & Calculate Esirkepov coef. S, DS and W
@@ -858,15 +825,15 @@ void ProjectorAM2Order::operator() (complex<double>* rhoj, Particles &particles,
     jp -= j_domain_begin + 2;
 
     if (type != 2){
-        for (unsigned int i=0 ; i<5 ; i++) {
+        for (unsigned int i=1 ; i<4 ; i++) {
             iloc = (i+ip)*nr+jp;
-            for (unsigned int j=0 ; j<5 ; j++)
+            for (unsigned int j=1 ; j<4 ; j++)
                 rhoj [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invV[j+jp]; 
         }//i
     } else {
-        for (unsigned int i=0 ; i<5 ; i++) {
+        for (unsigned int i=1 ; i<4 ; i++) {
             iloc = (i+ip)*nr+jp;
-            for (unsigned int j=0 ; j<5 ; j++)
+            for (unsigned int j=1 ; j<4 ; j++)
                 rhoj [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invVd[j+jp]; 
         }//i
     }
@@ -875,7 +842,7 @@ void ProjectorAM2Order::operator() (complex<double>* rhoj, Particles &particles,
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project global current densities : ionization NOT DONE YET
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2Order::operator() (Field* Jl, Field* Jr, Field* Jt, Particles &particles, int ipart, LocalFields Jion)
+void ProjectorAM2Order::ionizationCurrents(Field* Jl, Field* Jr, Field* Jt, Particles &particles, int ipart, LocalFields Jion)
 {  
     cField2D* JlAM  = static_cast<cField2D*>(Jl);
     cField2D* JrAM  = static_cast<cField2D*>(Jr);
@@ -889,9 +856,10 @@ void ProjectorAM2Order::operator() (Field* Jl, Field* Jr, Field* Jt, Particles &
     double Slp[3], Sld[3], Srp[3], Srd[3];
     
     // weighted currents
-    double Jl_ion = Jion.x * particles.weight(ipart);
-    double Jr_ion = Jion.y * particles.weight(ipart);
-    double Jt_ion = Jion.z * particles.weight(ipart);
+    double weight = inv_cell_volume * particles.weight(ipart);
+    double Jl_ion = Jion.x * weight;
+    double Jr_ion = Jion.y * weight;
+    double Jt_ion = Jion.z * weight;
     
     //Locate particle on the grid
     xpn    = particles.position(0, ipart) * dl_inv_;  // normalized distance to the first node 
@@ -962,7 +930,7 @@ void ProjectorAM2Order::operator() (Field* Jl, Field* Jr, Field* Jt, Particles &
 
 //------------------------------------//
 //Wrapper for projection
-void ProjectorAM2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec, int ipart_ref)
+void ProjectorAM2Order::currentsAndDensityWrapper(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec, int ipart_ref)
 {  //std::cout<<"projecting"<<std::endl;
    if (is_spectral)
         ERROR("Not implemented");
@@ -984,12 +952,13 @@ void ProjectorAM2Order::operator() (ElectroMagn* EMfields, Particles &particles,
         complex<double>* b_Jt =  &(*emAM->Jt_[imode] )(0);
 
         if (imode==0){
-            for ( int ipart=istart ; ipart<iend; ipart++ )
-                (*this)(b_Jl , b_Jr , b_Jt , particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
+            for ( int ipart=istart ; ipart<iend; ipart++ ){
+                currents_mode0(b_Jl , b_Jr , b_Jt , particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
+            }
         }
         else{	
             for ( int ipart=istart ; ipart<iend; ipart++ )
-                (*this)(b_Jl , b_Jr , b_Jt , particles,  ipart,(*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart],&(*exp_m_theta_old)[ipart], imode);
+                currents(b_Jl , b_Jr , b_Jt , particles,  ipart,(*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart],&(*exp_m_theta_old)[ipart], imode);
             } 
         }       // Otherwise, the projection may apply to the species-specific arrays
     } 
@@ -1007,11 +976,11 @@ void ProjectorAM2Order::operator() (ElectroMagn* EMfields, Particles &particles,
                 complex<double>* b_rho = emAM->rho_AM_s[ifield] ? &(* (emAM->rho_AM_s[ifield]) )(0) : &(*emAM->rho_AM_[imode] )(0) ;
             if (imode==0){
                 for ( int ipart=istart ; ipart<iend; ipart++ )
-                   (*this)(b_Jl , b_Jr , b_Jt ,b_rho, particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
+                   currentsAndDensity_mode0(b_Jl , b_Jr , b_Jt ,b_rho, particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
              }
              else{    
                 for ( int ipart=istart ; ipart<iend; ipart++ )
-                    (*this)(b_Jl , b_Jr , b_Jt ,b_rho, particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart], &(*exp_m_theta_old)[ipart], imode);
+                    currentsAndDensity(b_Jl , b_Jr , b_Jt ,b_rho, particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart], &(*exp_m_theta_old)[ipart], imode);
                  }
 
        }

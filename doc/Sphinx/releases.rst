@@ -18,8 +18,18 @@ Upcoming changes
 ^^^^^^^^^^^^^^^^
 
 * Interface with the PICSAR library (currently experimental)
+
 * Cylindrical geometry with Fourier decomposition in azimuthal direction
+
 * Probe diagnostics of currents and density per species
+* Bugfixes: collisions (badly affected by vectorization)
+
+.. warning::
+
+  Since version 4.1, the :ref:`definition of macro-particle weights<Weights>`
+  has changed to ensure they do not depend on the cell volume. This impacts
+  only the users working directly with values of weights. Other simulation
+  results should be unchanged.
 
 ----
 

@@ -586,33 +586,20 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
     int maxtag = 0;
 
     // Adaptive vectorization:
-    // In the case of the adaptive Vectorization,
-    // we have to communicate the bin number (last_index.size())
-    // and operator state (vectorized_operators variable)
-    if (params.has_adaptive_vectorization)
+    // In the case of the adaptive mixed sort Vectorization,
+    // we communicate the operator state (vectorized_operators variable)
+    // to deduce the bin number (last_index.size())
+    // In both adaptive cases :
+    //   - a reconfiguration of opertors is done after patch exchange (DLB and MW)
+    //   - default values of the bin number is defined by the vectorized conf 
+    if (params.vectorization_mode == "adaptive_mixed_sort")
     {
-
-        // Number of bins
-        // We put all bin number in a list before exchanging
-        std::vector<int> bin_number_list (patch->vecSpecies.size());
-        for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
-            {
-                bin_number_list[ispec] = patch->vecSpecies[ispec]->last_index.size();
-            }
-        isend( &bin_number_list, to, tag+maxtag, patch->requests_[maxtag] );
-        maxtag ++;
-
         // Parameter vectorized_operators
-        std::vector<int> vectorized_operators_list (patch->vecSpecies.size());
-        for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
-        {
-            if (patch->vecSpecies[ispec]->vectorized_operators)
-                vectorized_operators_list[ispec] = 1;
-            else
-                vectorized_operators_list[ispec] = 0;
+        for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++) {
+            MPI_Isend( &(patch->vecSpecies[ispec]->vectorized_operators), 1, MPI_INT, to, tag, MPI_COMM_WORLD, &patch->requests_[maxtag] );
+            maxtag ++;
         }
-        isend( &vectorized_operators_list, to, tag+maxtag, patch->requests_[maxtag] );
-        maxtag ++;
+
     }
 
     // For the particles
@@ -665,34 +652,22 @@ void SmileiMPI::isend_species(Patch* patch, int to, int tag, Params& params)
     // Count number max of comms :
     int maxtag = 0;
 
-    // Dynamic vectorization:
-    // In the case of the dynamic Vectorization,
-    // we have to communicate the bin number (last_index.size())
-    // and operator state (vectorized_operators variable)
-    if (params.has_adaptive_vectorization)
+    // Adaptive vectorization:
+    // In the case of the adaptive mixed sort Vectorization,
+    // we communicate the operator state (vectorized_operators variable)
+    // to deduce the bin number (last_index.size())
+    // In both adaptive cases :
+    //   - a reconfiguration of opertors is done after patch exchange (DLB and MW)
+    //   - default values of the bin number is defined by the vectorized conf 
+    if (params.vectorization_mode == "adaptive_mixed_sort")
     {
 
-        // Number of bins
-        // We put all bin number in a list before exchanging
-        std::vector<int> bin_number_list (patch->vecSpecies.size());
-        for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
-            {
-                bin_number_list[ispec] = patch->vecSpecies[ispec]->last_index.size();
-            }
-        isend( &bin_number_list, to, tag+maxtag, patch->requests_[maxtag] );
-        maxtag ++;
-
         // Parameter vectorized_operators
-        std::vector<int> vectorized_operators_list (patch->vecSpecies.size());
-        for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
-        {
-            if (patch->vecSpecies[ispec]->vectorized_operators)
-                vectorized_operators_list[ispec] = 1;
-            else
-                vectorized_operators_list[ispec] = 0;
+        for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++) {
+            MPI_Isend( &(patch->vecSpecies[ispec]->vectorized_operators), 1, MPI_INT, to, tag, MPI_COMM_WORLD, &patch->requests_[maxtag] );
+            maxtag ++;
         }
-        isend( &vectorized_operators_list, to, tag+maxtag, patch->requests_[maxtag] );
-        maxtag ++;
+
     }
 
     // For the particles
@@ -772,38 +747,27 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
     // Count number max of comms :int tag
     int maxtag = tag;
 
-    // In the case of the adaptive Vectorization,
-    // we have to communicate the bin number (last_index.size())
-    // and operator state (vectorized_operators variable)
-    if (params.has_adaptive_vectorization)
+    // Adaptive vectorization:
+    // In the case of the adaptive mixed sort Vectorization,
+    // we communicate the operator state (vectorized_operators variable)
+    // to deduce the bin number (last_index.size())
+    // In both adaptive cases :
+    //   - a reconfiguration of opertors is done after patch exchange (DLB and MW)
+    //   - default values of the bin number is defined by the vectorized conf 
+    if (params.vectorization_mode == "adaptive_mixed_sort")
     {
-        // Number of bins
-        // All sizes are received in a single buffer
-        std::vector<int> bin_number_list (patch->vecSpecies.size());
-        recv( &bin_number_list, from, maxtag);
-        // We resize the first_index last_index arrays in consequence
-        for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
-            {
-                //std::cerr << "Size received: " << bin_number_list[ispec] << '\n';
-                patch->vecSpecies[ispec]->last_index.resize(bin_number_list[ispec]);
-                patch->vecSpecies[ispec]->first_index.resize(bin_number_list[ispec]);
-            }
-        maxtag ++;
-
         // Parameter vectorized_operators
-        // All parameters are received in a single buffer
-        std::vector<int> vectorized_operators_list (patch->vecSpecies.size());
-        recv( &vectorized_operators_list, from, maxtag);
-        for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
-        {
-            //std::cerr << "Vecto received: " << vectorized_operators_list[ispec] << '\n';
-            if ( vectorized_operators_list[ispec]==1 ) {
-                patch->vecSpecies[ispec]->vectorized_operators = true;
+        MPI_Status status;
+
+        for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++) {
+            MPI_Recv( &(patch->vecSpecies[ispec]->vectorized_operators), 1, MPI_INT, from, tag, MPI_COMM_WORLD, &status);
+            if (!patch->vecSpecies[ispec]->vectorized_operators) {
+                patch->vecSpecies[ispec]->last_index.resize(1);
+                patch->vecSpecies[ispec]->first_index.resize(1);
             }
-            else
-                patch->vecSpecies[ispec]->vectorized_operators = false;
+            maxtag ++;
         }
-        maxtag ++;
+
     }
 
     for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++){
@@ -872,38 +836,27 @@ void SmileiMPI::recv_species(Patch* patch, int from, int tag, Params& params)
     // Count number max of comms :int tag
     int maxtag = tag;
 
-    // In the case of the dynamic Vectorization,
-    // we have to communicate the bin number (last_index.size())
-    // and operator state (vectorized_operators variable)
-    if (params.has_adaptive_vectorization)
+    // Adaptive vectorization:
+    // In the case of the adaptive mixed sort Vectorization,
+    // we communicate the operator state (vectorized_operators variable)
+    // to deduce the bin number (last_index.size())
+    // In both adaptive cases :
+    //   - a reconfiguration of opertors is done after patch exchange (DLB and MW)
+    //   - default values of the bin number is defined by the vectorized conf 
+    if (params.vectorization_mode == "adaptive_mixed_sort")
     {
-        // Number of bins
-        // All sizes are received in a single buffer
-        std::vector<int> bin_number_list (patch->vecSpecies.size());
-        recv( &bin_number_list, from, maxtag);
-        // We resize the first_index last_index arrays in consequence
-        for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
-            {
-                //std::cerr << "Size received: " << bin_number_list[ispec] << '\n';
-                patch->vecSpecies[ispec]->last_index.resize(bin_number_list[ispec]);
-                patch->vecSpecies[ispec]->first_index.resize(bin_number_list[ispec]);
-            }
-        maxtag ++;
-
         // Parameter vectorized_operators
-        // All parameters are received in a single buffer
-        std::vector<int> vectorized_operators_list (patch->vecSpecies.size());
-        recv( &vectorized_operators_list, from, maxtag);
-        for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++)
-        {
-            //std::cerr << "Vecto received: " << vectorized_operators_list[ispec] << '\n';
-            if ( vectorized_operators_list[ispec]==1 ) {
-                patch->vecSpecies[ispec]->vectorized_operators = true;
+        MPI_Status status;
+
+        for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++) {
+            MPI_Recv( &(patch->vecSpecies[ispec]->vectorized_operators), 1, MPI_INT, from, tag, MPI_COMM_WORLD, &status);
+            if (!patch->vecSpecies[ispec]->vectorized_operators) {
+                patch->vecSpecies[ispec]->last_index.resize(1);
+                patch->vecSpecies[ispec]->first_index.resize(1);
             }
-            else
-                patch->vecSpecies[ispec]->vectorized_operators = false;
+            maxtag ++;
         }
-        maxtag ++;
+
     }
 
     for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++){
@@ -985,7 +938,7 @@ void SmileiMPI::recv(Particles* particles, int to, int tag, MPI_Datatype typePar
 // Assuming vec.size() is known (number of species). Asynchronous.
 void SmileiMPI::isend(std::vector<int>* vec, int to, int tag, MPI_Request& request)
 {
-    MPI_Isend( &((*vec)[0]), (*vec).size(), MPI_INT, to, tag, MPI_COMM_WORLD, &request );
+    MPI_Isend( &((*vec)[0]), vec->size(), MPI_INT, to, tag, MPI_COMM_WORLD, &request );
 
 } // End isend
 
@@ -999,7 +952,7 @@ void SmileiMPI::recv(std::vector<int> *vec, int from, int tag)
 // Assuming vec.size() is known (number of species). Asynchronous.
 void SmileiMPI::isend(std::vector<double>* vec, int to, int tag, MPI_Request& request)
 {
-    MPI_Isend( &((*vec)[0]), (*vec).size(), MPI_DOUBLE, to, tag, MPI_COMM_WORLD, &request );
+    MPI_Isend( &((*vec)[0]), vec->size(), MPI_DOUBLE, to, tag, MPI_COMM_WORLD, &request );
 
 } // End isend
 

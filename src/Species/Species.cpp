@@ -155,7 +155,7 @@ void Species::resizeCluster(Params& params)
 {
 
     // We keep the current number of particles
-    int npart = (*particles).size();
+    int npart = particles->size();
     int size = params.n_space[0]/clrw;
 
     // Arrays of the min and max indices of the particle bins
@@ -268,9 +268,9 @@ Species::~Species()
 // ---------------------------------------------------------------------------------------------------------------------
 // For all (np) particles in a mesh initialize its numerical weight (equivalent to a number density)
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::initWeight(unsigned int nPart, unsigned int iPart, double density)
+void Species::initWeight(unsigned int nPart, unsigned int iPart, double n_real_particles)
 {
-    double w = density / nPart;
+    double w = n_real_particles / nPart;
     for (unsigned  p= iPart; p<iPart+nPart; p++) {
         particles->weight(p) = w ;
     }
@@ -610,7 +610,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 #endif
 
             // Interpolate the fields at the particle position
-            (*Interp)(EMfields, *particles, smpi, &(first_index[ibin]), &(last_index[ibin]), ithread );
+            Interp->fieldsWrapper(EMfields, *particles, smpi, &(first_index[ibin]), &(last_index[ibin]), ithread );
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[0] += MPI_Wtime() - timer;
@@ -645,10 +645,10 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                          first_index[ibin], last_index[ibin], ithread );
 
                 // Update scalar variable for diagnostics
-                nrj_radiation += (*Radiate).getRadiatedEnergy();
+                nrj_radiation += Radiate->getRadiatedEnergy();
 
                 // Update the quantum parameter chi
-                (*Radiate).compute_thread_chipa(*particles,
+                Radiate->compute_thread_chipa(*particles,
                                                 smpi,
                                                 first_index[ibin],
                                                 last_index[ibin],
@@ -676,17 +676,17 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 
                  // Update scalar variable for diagnostics
                  // We reuse nrj_radiation for the pairs
-                 nrj_radiation += (*Multiphoton_Breit_Wheeler_process).getPairEnergy();
+                 nrj_radiation += Multiphoton_Breit_Wheeler_process->getPairEnergy();
 
                  // Update the photon quantum parameter chi of all photons
-                 (*Multiphoton_Breit_Wheeler_process).compute_thread_chiph(*particles,
+                 Multiphoton_Breit_Wheeler_process->compute_thread_chiph(*particles,
                                                  smpi,
                                                  first_index[ibin],
                                                  last_index[ibin],
                                                  ithread );
 
                  // Suppression of the decayed photons into pairs
-                 (*Multiphoton_Breit_Wheeler_process).decayed_photon_cleaning(
+                 Multiphoton_Breit_Wheeler_process->decayed_photon_cleaning(
                                  *particles,ibin, first_index.size(), &first_index[0], &last_index[0]);
 
 #ifdef  __DETAILED_TIMERS
@@ -767,7 +767,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
              // Project currents if not a Test species and charges as well if a diag is needed.
              // Do not project if a photon
              if ((!particles->is_test) && (mass > 0)){
-                 (*Proj)(EMfields, *particles, smpi, first_index[ibin], last_index[ibin], ithread, ibin, clrw, diag_flag, params.is_spectral, b_dim, ispec );
+                 Proj->currentsAndDensityWrapper(EMfields, *particles, smpi, first_index[ibin], last_index[ibin], ithread, ibin, clrw, diag_flag, params.is_spectral, b_dim, ispec );
              }
 
 #ifdef  __DETAILED_TIMERS
@@ -821,7 +821,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                 b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
 
                 for (iPart=first_index[ibin] ; (int)iPart<last_index[ibin]; iPart++ ) {
-                    (*Proj)(b_rho, (*particles), iPart, 0, b_dim);
+                    Proj->densityFrozen(b_rho, (*particles), iPart, 0);
                 } //End loop on particles
             }//End loop on bins
 
@@ -872,12 +872,12 @@ void Species::projection_for_diags(double time_dual, unsigned int ispec,
 
                 for (int iPart=first_index[ibin] ; iPart<last_index[ibin]; iPart++ ) {
                     for (unsigned int quantity=0; quantity < 4; quantity++) {
-                        (*Proj)(buf[quantity], (*particles), iPart, quantity, b_dim);
+                        Proj->densityFrozen(buf[quantity], (*particles), iPart, quantity);
                     }
                 } //End loop on particles
             }//End loop on bins
         }
-        else {
+        else { // AM case
             complex<double>* buf[4];
             ElectroMagnAM* emAM = static_cast<ElectroMagnAM*>( EMfields );
             int n_species = patch->vecSpecies.size();
@@ -893,12 +893,12 @@ void Species::projection_for_diags(double time_dual, unsigned int ispec,
             
                     for (int iPart=first_index[ibin] ; iPart<last_index[ibin]; iPart++ ) {
                         for (unsigned int quantity=0; quantity < 4; quantity++) {
-                            (*Proj)(buf[quantity], (*particles), iPart, quantity, b_dim, imode);
+                            Proj->densityFrozenComplex(buf[quantity], (*particles), iPart, quantity, imode);
                         }
                     } //End loop on particles
                 }//End loop on bins
             } //End loop on modes
-
+        emAM->fold_J(diag_flag);
         } // End Theta mode
 
     }
@@ -964,29 +964,25 @@ void Species::computeCharge(unsigned int ispec, ElectroMagn* EMfields)
     // calculate the particle charge
     // -------------------------------
     if ( (!particles->is_test) ) {
-        double* b_rho=nullptr;
         for (unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++) { //Loop for projection on buffer_proj
             // Not for now, else rho is incremented twice. Here and dynamics. Must add restartRhoJs and manage independantly diags output
             //b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(bin_start) : &(*EMfields->rho_)(bin_start);
             if (!dynamic_cast<ElectroMagnAM*>(EMfields)) {
-                b_rho = &(*EMfields->rho_)(0);
+                double* b_rho = &(*EMfields->rho_)(0);
 
                 for (unsigned int iPart=first_index[ibin] ; (int)iPart<last_index[ibin]; iPart++ ) {
-                    (*Proj)(b_rho, (*particles), iPart, 0, b_dim);
+                    Proj->densityFrozen(b_rho, (*particles), iPart, 0);
                 }
             }
             else {
-#ifdef _TODO_AM_
                 ElectroMagnAM* emAM = static_cast<ElectroMagnAM*>( EMfields );
                 int Nmode = emAM->rho_AM_.size();
                 for (unsigned int imode=0; imode<Nmode;imode++){
-                    b_rho = (double*)((*emAM->rho_AM_[imode])(bin_start));
+                    complex<double>* b_rho = &(*emAM->rho_AM_[imode] )(0);
                     for (unsigned int iPart=first_index[ibin] ; (int)iPart<last_index[ibin]; iPart++ ) {
-                        (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_dim);
+                        Proj->densityFrozenComplex(b_rho, (*particles), iPart, 0, imode);
                     }
                 }
-#endif
-
             }
         }
 
@@ -1411,6 +1407,11 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                         density(i,j,k) /= charge(i,j,k);
                     }
                     density(i,j,k) = abs(density(i,j,k));
+                    // multiply by the cell volume
+                    density(i,j,k) *= params.cell_volume;
+                    if (params.geometry=="AMcylindrical") {
+                        density(i,j,k) *= (*xyz[1])(i,j,k);
+                    }
                     // increment the effective number of particle by n_part_in_cell(i,j,k)
                     // for each cell with as non-zero density
                     npart_effective += (unsigned int) n_part_in_cell(i,j,k);
@@ -1474,12 +1475,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                             initPosition(nPart, iPart, indexes, params);
                         }
                         initMomentum(nPart,iPart, temp, vel);
-                        if (params.geometry=="AMcylindrical"){
-                           initWeight(nPart, iPart, density(i,j,k)*(*xyz[1])(i,j,k));
-                        }else{
-                            initWeight(nPart, iPart, density(i,j,k));
-
-                        }
+                        initWeight(nPart, iPart, density(i,j,k));
                         initCharge(nPart, iPart, charge(i,j,k));
 
                         iPart+=nPart;
@@ -1772,7 +1768,7 @@ void Species::ponderomotive_update_susceptibility_and_momentum(double time_dual,
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
-            Interp->interpolate_em_fields_and_envelope(EMfields, *particles, smpi, &(first_index[ibin]), &(last_index[ibin]), ithread );
+            Interp->fieldsAndEnvelope(EMfields, *particles, smpi, &(first_index[ibin]), &(last_index[ibin]), ithread );
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[7] += MPI_Wtime() - timer;
 #endif
@@ -1782,7 +1778,7 @@ void Species::ponderomotive_update_susceptibility_and_momentum(double time_dual,
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
-            Proj->project_susceptibility(EMfields, *particles, mass, smpi, first_index[ibin], last_index[ibin], ithread, 0, b_dim );
+            Proj->susceptibility(EMfields, *particles, mass, smpi, first_index[ibin], last_index[ibin], ithread, 0, b_dim );
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[8] += MPI_Wtime() - timer;
 #endif
@@ -1837,7 +1833,7 @@ void Species::ponderomotive_project_susceptibility(double time_dual, unsigned in
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
-            Interp->interpolate_em_fields_and_envelope(EMfields, *particles, smpi, &(first_index[ibin]), &(last_index[ibin]), ithread );
+            Interp->fieldsAndEnvelope(EMfields, *particles, smpi, &(first_index[ibin]), &(last_index[ibin]), ithread );
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[7] += MPI_Wtime() - timer;
 #endif
@@ -1847,7 +1843,7 @@ void Species::ponderomotive_project_susceptibility(double time_dual, unsigned in
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
-            Proj->project_susceptibility(EMfields, *particles, mass, smpi, first_index[ibin], last_index[ibin], ithread, 0, b_dim );
+            Proj->susceptibility(EMfields, *particles, mass, smpi, first_index[ibin], last_index[ibin], ithread, 0, b_dim );
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[8] += MPI_Wtime() - timer;
 #endif
@@ -1906,7 +1902,7 @@ void Species::ponderomotive_update_position_and_currents(double time_dual, unsig
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
-            Interp->interpolate_time_centered_envelope(EMfields, *particles, smpi, &(first_index[ibin]), &(last_index[ibin]), ithread );
+            Interp->timeCenteredEnvelope(EMfields, *particles, smpi, &(first_index[ibin]), &(last_index[ibin]), ithread );
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[10] += MPI_Wtime() - timer;
 #endif
@@ -1972,8 +1968,8 @@ void Species::ponderomotive_update_position_and_currents(double time_dual, unsig
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
-             if ((!particles->is_test) && (mass > 0))
-                 (*Proj)(EMfields, *particles, smpi, first_index[ibin], last_index[ibin], ithread, ibin, clrw, diag_flag, params.is_spectral, b_dim, ispec );
+            if ((!particles->is_test) && (mass > 0))
+                Proj->currentsAndDensityWrapper(EMfields, *particles, smpi, first_index[ibin], last_index[ibin], ithread, ibin, clrw, diag_flag, params.is_spectral, b_dim, ispec );
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[12] += MPI_Wtime() - timer;
 #endif
@@ -1991,13 +1987,13 @@ void Species::ponderomotive_update_position_and_currents(double time_dual, unsig
                 for (unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++) { //Loop for projection on buffer_proj
                     // only 3D is implemented actually
                     if (nDim_field==2)
-                        b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1) : &(*EMfields->rho_)(ibin*clrw*f_dim1) ;
+                        b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
                     if (nDim_field==3)
-                        b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1*f_dim2) : &(*EMfields->rho_)(ibin*clrw*f_dim1*f_dim2) ;
+                        b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
                     else if (nDim_field==1)
-                        b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw) : &(*EMfields->rho_)(ibin*clrw) ;
+                        b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
                     for (iPart=first_index[ibin] ; (int)iPart<last_index[ibin]; iPart++ ) {
-                        (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_dim);
+                        Proj->densityFrozen(b_rho, (*particles), iPart, 0);
                     } //End loop on particles
                 }//End loop on bins
             } // end condition on diag and not particle test
@@ -2015,15 +2011,15 @@ void Species::check(Patch * patch, std::string title)
     double sum_pz = 0;
     double sum_w = 0;
     unsigned int sum_ck = 0;
-    for (unsigned int ip=0; ip < (*particles).size() ; ip++){
-        sum_x += (*particles).position(0,ip);
-        sum_y += (*particles).position(1,ip);
-        sum_z += (*particles).position(2,ip);
-        sum_px += (*particles).momentum(0,ip);
-        sum_py += (*particles).momentum(1,ip);
-        sum_pz += (*particles).momentum(1,ip);
-        sum_w += (*particles).weight(ip);
-        sum_ck += (*particles).cell_keys[ip];
+    for (unsigned int ip=0; ip < particles->size() ; ip++){
+        sum_x += particles->position(0,ip);
+        sum_y += particles->position(1,ip);
+        sum_z += particles->position(2,ip);
+        sum_px += particles->momentum(0,ip);
+        sum_py += particles->momentum(1,ip);
+        sum_pz += particles->momentum(1,ip);
+        sum_w += particles->weight(ip);
+        sum_ck += particles->cell_keys[ip];
     }
     std::cerr << "Check sum at " << title
               << " for "<< this->name
@@ -2031,7 +2027,7 @@ void Species::check(Patch * patch, std::string title)
               << " mpi process " << patch->MPI_me_
               << " - mode: " << this->vectorized_operators
               << " - nb bin: " << first_index.size()
-              << " - nbp: " << (*particles).size()
+              << " - nbp: " << particles->size()
               << " - w: " << sum_w
               << " - x: " << sum_x
               << " - y: " << sum_y

@@ -22,6 +22,13 @@ public:
     //! Destructor for Patch
     ~Patch1D() override final;
 
+    //! Return the volume (or surface or length depending on simulation dimension)
+    //! of one cell at the position of a given particle
+    double getCellVolume(Particles *p, unsigned int ipart) override final
+    {
+        return cell_volume;
+    };
+
     // MPI exchange/sum methods for particles/fields
     //   - fields communication specified per geometry (pure virtual)
     // --------------------------------------------------------------

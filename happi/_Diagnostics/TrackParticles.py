@@ -271,7 +271,7 @@ class TrackParticles(Diagnostic):
 					axisunits = "P_r"
 					self._centers.append( [-1., 1.] )
 				elif axis == "w":
-					axisunits = "N_r"
+					axisunits = "N_r * L_r^%i" % self._ndim
 					self._centers.append( [0., 1.] )
 				elif axis == "q":
 					axisunits = "Q_r"

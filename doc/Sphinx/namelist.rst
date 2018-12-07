@@ -1971,22 +1971,18 @@ The full list of available scalars is given in the table below.
 +----------------+---------------------------------------------------------------------------+
 | | Ukin_bnd     | | Kinetic contribution exchanged at the boundaries during the timestep    |
 | | Uelm_bnd     | | EM contribution exchanged at boundaries during the timestep             |
-| | Ukin_out_mvw | | Kinetic contribution lost during the timestep due to the moving window  |
-| | Ukin_inj_mvw | | Kinetic contribution gained during the timestep due to the moving window|
-| | Uelm_out_mvw | | EM contribution lost during the timestep due to the moving window       |
-| | Uelm_inj_mvw | | EM contribution gained during the timestep due to the moving window     |
 | |              | |                                                                         |
-| | PoyXmin      | | Time-accumulated Poynting flux through xmin boundary                    |
-| | PoyXminInst  | | Current Poynting flux through xmin boundary                             |
+| | PoyXminInst  | | Poynting contribution through xmin boundary during the timestep         |
+| | PoyXmin      | | Time-accumulated Poynting contribution through xmin boundary            |
 | |              | |  ... same for other boundaries                                          |
 +----------------+---------------------------------------------------------------------------+
 | **Particle information**                                                                   |
 +----------------+---------------------------------------------------------------------------+
-| | Dens_abc     | | Average density of species "abc"                                        |
-| | Zavg_abc     | |  ... its average charge                                                 |
-| | Ukin_abc     | |  ... its total kinetic energy                                           |
-| | Urad_abc     | |  ... its total radiated energy                                          |
-| | Ntot_abc     | |  ... and number of particles                                            |
+| | Zavg_abc     | | Average charge of species "abc"                                         |
+| | Dens_abc     | |  ... its integrated density                                             |
+| | Ukin_abc     | |  ... its integrated kinetic energy density                              |
+| | Urad_abc     | |  ... its integrated radiated energy density                             |
+| | Ntot_abc     | |  ... and number of macro-particles                                      |
 +----------------+---------------------------------------------------------------------------+
 | **Fields information**                                                                     |
 +----------------+---------------------------------------------------------------------------+
@@ -2206,15 +2202,20 @@ To add one probe diagnostic, include the block ``DiagProbe``::
 
 .. py:data:: fields
 
-  :default: ``[]`` (all fields)
-
+  :default: ``[]``, which means ``["Ex", "Ey", "Ez", "Bx", "By", "Bz", "Jx", "Jy", "Jz", "Rho"]``
+  
   A list of fields among ``"Ex"``, ``"Ey"``, ``"Ez"``,
-  ``"Bx"``, ``"By"``, ``"Bz"``, ``"Jx"``, ``"Jy"``, ``"Jz"`` and ``"Rho"``. Only these
-  fields will be saved.
-  Note that it does NOT speed up calculation much, but it saves disk space.
+  ``"Bx"``, ``"By"``, ``"Bz"``, ``"Jx"``, ``"Jy"``, ``"Jz"`` and ``"Rho"``.
+  Only listed fields will be saved although they are all calculated.
+  
+  The contributions of each species to the currents and the density are also available,
+  although they are not included by default. They may be added to the list as
+  ``"Jx_abc"``, ``"Jy_abc"``, ``"Jz_abc"`` or ``"Rho_abc"``, where ``abc`` is the
+  species name.
+  
+  In the case of an envelope model for the laser (see :doc:`laser_envelope`),
+  the following fields are also available: ``"Env_A_abs"``, ``"Env_Chi"``, ``"Env_E_abs"``.
 
-  In the case of an envelope model for the laser (see :doc:`laser_envelope`), the following fields are also available: ``"Env_A_abs"``,
-  ``"Env_Chi"``, ``"Env_E_abs"``.
 
 
 **Examples of probe diagnostics**

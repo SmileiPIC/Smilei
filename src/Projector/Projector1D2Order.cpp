@@ -21,8 +21,6 @@ Projector1D2Order::Projector1D2Order (Params& params, Patch* patch) : Projector1
     dx_ov_dt = params.cell_length[0] / params.timestep;
 
     index_domain_begin = patch->getCellStartingGlobalIndex(0);
-    
-
 
     dt             = params.timestep;
     dts2           = params.timestep/2.;
@@ -39,12 +37,12 @@ Projector1D2Order::~Projector1D2Order()
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project current densities : main projector
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double invgf, int* iold, double* delta)
+void Projector1D2Order::currents(double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double invgf, int* iold, double* delta)
 {
     // Declare local variables
     int ipo, ip;
     int ip_m_ipo;
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
     double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xip, xj_m_xip2;
     double crx_p = charge_weight*dx_ov_dt;                // current density for particle moving in the x-direction
     double cry_p = charge_weight*particles.momentum(1, ipart)*invgf;    // current density in the y-direction of the macroparticle
@@ -111,12 +109,12 @@ void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, Particle
 // ---------------------------------------------------------------------------------------------------------------------
 //!  Project current densities & charge : diagFields timstep
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double invgf, int* iold, double* delta)
+void Projector1D2Order::currentsAndDensity(double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double invgf, int* iold, double* delta)
 {
     // Declare local variables
     int ipo, ip;
     int ip_m_ipo;
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
     double xjn, xj_m_xipo, xj_m_xipo2, xj_m_xip, xj_m_xip2;
     double crx_p = charge_weight*dx_ov_dt;                // current density for particle moving in the x-direction
     double cry_p = charge_weight*particles.momentum(1, ipart)*invgf;    // current density in the y-direction of the macroparticle
@@ -186,7 +184,7 @@ void Projector1D2Order::operator() (double* Jx, double* Jy, double* Jz, double* 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project charge : frozen & diagFields timstep
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector1D2Order::operator() (double* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim)
+void Projector1D2Order::densityFrozen(double* rhoj, Particles &particles, unsigned int ipart, unsigned int type)
 {
 
     //Warning : this function is used for frozen species or initialization only and doesn't use the standard scheme.
@@ -201,7 +199,7 @@ void Projector1D2Order::operator() (double* rhoj, Particles &particles, unsigned
     double xjn, xj_m_xip, xj_m_xip2;
     double S1[5];            // arrays used for the Esirkepov projection method
 
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
     if (type > 0) {
         charge_weight *= 1./sqrt(1.0 + particles.momentum(0,ipart)*particles.momentum(0,ipart)
                                      + particles.momentum(1,ipart)*particles.momentum(1,ipart)
@@ -242,7 +240,7 @@ void Projector1D2Order::operator() (double* rhoj, Particles &particles, unsigned
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project global current densities : ionization
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector1D2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Particles &particles, int ipart, LocalFields Jion)
+void Projector1D2Order::ionizationCurrents(Field* Jx, Field* Jy, Field* Jz, Particles &particles, int ipart, LocalFields Jion)
 {
     Field1D* Jx1D  = static_cast<Field1D*>(Jx);
     Field1D* Jy1D  = static_cast<Field1D*>(Jy);
@@ -255,9 +253,10 @@ void Projector1D2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Particles &
     double cim1,ci,cip1;
 
     // weighted currents
-    double Jx_ion = Jion.x * particles.weight(ipart);
-    double Jy_ion = Jion.y * particles.weight(ipart);
-    double Jz_ion = Jion.z * particles.weight(ipart);
+    double weight = inv_cell_volume * particles.weight(ipart);
+    double Jx_ion = Jion.x * weight;
+    double Jy_ion = Jion.y * weight;
+    double Jz_ion = Jion.z * weight;
 
     //Locate particle on the grid
     xjn    = particles.position(0, ipart) * dx_inv_;  // normalized distance to the first node
@@ -311,7 +310,7 @@ void Projector1D2Order::operator() (Field* Jx, Field* Jy, Field* Jz, Particles &
 
 } // END Project global current densities (ionize)
 
-void Projector1D2Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec, int ipart_ref)
+void Projector1D2Order::currentsAndDensityWrapper(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec, int ipart_ref)
 {
     std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
     std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
@@ -326,11 +325,11 @@ void Projector1D2Order::operator() (ElectroMagn* EMfields, Particles &particles,
     if (!diag_flag){ 
         if (!is_spectral) {
             for (int ipart=istart ; ipart<iend; ipart++ )
-                (*this)(Jx_ , Jy_ , Jz_ , particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
+                currents(Jx_ , Jy_ , Jz_ , particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
         }
         else {
             for ( int ipart=istart ; ipart<iend; ipart++ )
-                (*this)(Jx_ , Jy_ , Jz_ , rho_ , particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
+                currentsAndDensity(Jx_ , Jy_ , Jz_ , rho_ , particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
         } 
     // Otherwise, the projection may apply to the species-specific arrays
     } else {
@@ -339,12 +338,12 @@ void Projector1D2Order::operator() (ElectroMagn* EMfields, Particles &particles,
         double* b_Jzs  = EMfields->Jz_s [ispec] ? &(*EMfields->Jz_s [ispec])(0) : &(*EMfields->Jz_ )(0) ;
         double* b_rhos = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
         for (int ipart=istart ; ipart<iend; ipart++ )
-            (*this)(b_Jxs , b_Jys , b_Jzs ,b_rhos, particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
+            currentsAndDensity(b_Jxs , b_Jys , b_Jzs ,b_rhos, particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
     }
 }
 
 // Projector for susceptibility used as source term in envelope equation
-void Projector1D2Order::project_susceptibility(ElectroMagn* EMfields, Particles &particles, double species_mass, SmileiMPI* smpi, int istart, int iend,  int ithread, int ibin, std::vector<unsigned int> &b_dim, int ipart_ref)
+void Projector1D2Order::susceptibility(ElectroMagn* EMfields, Particles &particles, double species_mass, SmileiMPI* smpi, int istart, int iend,  int ithread, int ibin, std::vector<unsigned int> &b_dim, int ipart_ref)
                                         
 {
     double* Chi_envelope = &(*EMfields->Env_Chi_)(0);

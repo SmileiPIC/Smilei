@@ -22,21 +22,6 @@ Projector2D4Order::Projector2D4Order (Params& params, Patch* patch) : Projector2
     dy_inv_   = 1.0/params.cell_length[1];
     dy_ov_dt  = params.cell_length[1] / params.timestep;
 
-    one_third = 1.0/3.0;
-
-    //double defined for use in coefficients
-    dble_1_ov_384 = 1.0/384.0;
-    dble_1_ov_48 = 1.0/48.0;
-    dble_1_ov_16 = 1.0/16.0;
-    dble_1_ov_12 = 1.0/12.0;
-    dble_1_ov_24 = 1.0/24.0;
-    dble_19_ov_96 = 19.0/96.0;
-    dble_11_ov_24 = 11.0/24.0;
-    dble_1_ov_4 = 1.0/4.0;
-    dble_1_ov_6 = 1.0/6.0;
-    dble_115_ov_192 = 115.0/192.0;
-    dble_5_ov_8 = 5.0/8.0;
-
     i_domain_begin = patch->getCellStartingGlobalIndex(0);
     j_domain_begin = patch->getCellStartingGlobalIndex(1);
 
@@ -58,7 +43,7 @@ Projector2D4Order::~Projector2D4Order()
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project current densities : main projector
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double invgf, int* iold, double* deltaold)
+void Projector2D4Order::currents(double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int ipart, double invgf, int* iold, double* deltaold)
 {
     int nparts = particles.size();
 
@@ -68,10 +53,10 @@ void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, Particle
     
     int iloc;
     // (x,y,z) components of the current density for the macro-particle
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
     double crx_p = charge_weight*dx_ov_dt;
     double cry_p = charge_weight*dy_ov_dt;
-    double crz_p = charge_weight*particles.momentum(2, ipart)*invgf;
+    double crz_p = charge_weight*one_third*particles.momentum(2, ipart)*invgf;
 
     // variable declaration
     double xpn, ypn;
@@ -171,13 +156,13 @@ void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, Particle
         iloc = ipo*nprimy+jpo;
         tmp2 = 0.5*Sx1[0];
         tmp3 =     Sx1[0];
-        Jz[iloc]  += crz_p * one_third * ( Sy1[0]*tmp3 );
+        Jz[iloc]  += crz_p * ( Sy1[0]*tmp3 );
         tmp = 0;
         tmpY = Sx0[0] + 0.5*DSx[0];
         for (unsigned int j=1 ; j<7 ; j++) {
             tmp -= cry_p * DSy[j-1] * tmpY;
             Jy[iloc+j+ipo]  += tmp; //Because size of Jy in Y is nprimy+1.
-            Jz[iloc+j]  += crz_p * one_third * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
+            Jz[iloc+j]  += crz_p * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
         }
     }//i
     
@@ -187,7 +172,7 @@ void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, Particle
         Jx[iloc]  += tmpJx[0];
         tmp2 = 0.5*Sx1[i] + Sx0[i];
         tmp3 = 0.5*Sx0[i] + Sx1[i];
-        Jz[iloc]  += crz_p * one_third * ( Sy1[0]*tmp3 );
+        Jz[iloc]  += crz_p * ( Sy1[0]*tmp3 );
         tmp = 0;
         tmpY = Sx0[i] + 0.5*DSx[i];
         for (unsigned int j=1 ; j<7 ; j++) {
@@ -195,7 +180,7 @@ void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, Particle
             Jx[iloc+j]  += tmpJx[j];
             tmp -= cry_p * DSy[j-1] * tmpY;
             Jy[iloc+j+i+ipo]  += tmp; //Because size of Jy in Y is nprimy+1.
-            Jz[iloc+j]  += crz_p * one_third * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
+            Jz[iloc+j]  += crz_p * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
         }
     }//i
 
@@ -205,7 +190,7 @@ void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, Particle
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project current densities & charge : diagFields timstep
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double invgf, int* iold, double* deltaold)
+void Projector2D4Order::currentsAndDensity(double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double invgf, int* iold, double* deltaold)
 {
     int nparts = particles.size();
 
@@ -215,10 +200,10 @@ void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, double* 
     
     int iloc;
     // (x,y,z) components of the current density for the macro-particle
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
     double crx_p = charge_weight*dx_ov_dt;
     double cry_p = charge_weight*dy_ov_dt;
-    double crz_p = charge_weight*particles.momentum(2, ipart)*invgf;
+    double crz_p = charge_weight*one_third*particles.momentum(2, ipart)*invgf;
 
     // variable declaration
     double xpn, ypn;
@@ -318,14 +303,14 @@ void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, double* 
         iloc = ipo*nprimy+jpo;
         tmp2 = 0.5*Sx1[0];
         tmp3 =     Sx1[0];
-        Jz[iloc]  += crz_p * one_third * ( Sy1[0]*tmp3 );
+        Jz[iloc]  += crz_p * ( Sy1[0]*tmp3 );
         rho[iloc] += charge_weight * Sx1[0]*Sy1[0];
         tmp = 0;
         tmpY = Sx0[0] + 0.5*DSx[0];
         for (unsigned int j=1 ; j<7 ; j++) {
             tmp -= cry_p * DSy[j-1] * tmpY;
             Jy[iloc+j+ipo]  += tmp; //Because size of Jy in Y is nprimy+1.
-            Jz[iloc+j]  += crz_p * one_third * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
+            Jz[iloc+j]  += crz_p * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
             rho[iloc+j] += charge_weight * Sx1[0]*Sy1[j];
         }
     }//i
@@ -336,7 +321,7 @@ void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, double* 
         Jx[iloc]  += tmpJx[0];
         tmp2 = 0.5*Sx1[i] + Sx0[i];
         tmp3 = 0.5*Sx0[i] + Sx1[i];
-        Jz[iloc]  += crz_p * one_third * ( Sy1[0]*tmp3 );
+        Jz[iloc]  += crz_p * ( Sy1[0]*tmp3 );
         rho[iloc] += charge_weight * Sx1[i]*Sy1[0];
         tmp = 0;
         tmpY = Sx0[i] + 0.5*DSx[i];
@@ -345,7 +330,7 @@ void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, double* 
             Jx[iloc+j]  += tmpJx[j];
             tmp -= cry_p * DSy[j-1] * tmpY;
             Jy[iloc+j+i+ipo]  += tmp; //Because size of Jy in Y is nprimy+1.
-            Jz[iloc+j]  += crz_p * one_third * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
+            Jz[iloc+j]  += crz_p * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
             rho[iloc+j] += charge_weight * Sx1[i]*Sy1[j];
         }
     }//i
@@ -357,7 +342,7 @@ void Projector2D4Order::operator() (double* Jx, double* Jy, double* Jz, double* 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project charge : frozen & diagFields timstep
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D4Order::operator() (double* rhoj, Particles &particles, unsigned int ipart, unsigned int type, std::vector<unsigned int> &b_dim)
+void Projector2D4Order::densityFrozen(double* rhoj, Particles &particles, unsigned int ipart, unsigned int type)
 {
     //Warning : this function is used for frozen species or initialization only and doesn't use the standard scheme.
     //rho type = 0
@@ -368,7 +353,7 @@ void Projector2D4Order::operator() (double* rhoj, Particles &particles, unsigned
     int iloc;
     int ny(nprimy);
     // (x,y,z) components of the current density for the macro-particle
-    double charge_weight = (double)(particles.charge(ipart))*particles.weight(ipart);
+    double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
 
     if (type > 0) {
         charge_weight *= 1./sqrt(1.0 + particles.momentum(0,ipart)*particles.momentum(0,ipart)
@@ -446,7 +431,7 @@ void Projector2D4Order::operator() (double* rhoj, Particles &particles, unsigned
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project global current densities : ionization
 // ---------------------------------------------------------------------------------------------------------------------
-void  Projector2D4Order::operator() (Field* Jx, Field* Jy, Field* Jz, Particles &particles, int ipart, LocalFields Jion)
+void  Projector2D4Order::ionizationCurrents(Field* Jx, Field* Jy, Field* Jz, Particles &particles, int ipart, LocalFields Jion)
 {
     ERROR("Projection of ionization current not yet defined for 2D 4th order");
 }
@@ -455,7 +440,7 @@ void  Projector2D4Order::operator() (Field* Jx, Field* Jy, Field* Jz, Particles 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Wrapper for projection
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D4Order::operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec, int ipart_ref)
+void Projector2D4Order::currentsAndDensityWrapper(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec, int ipart_ref)
 {
     std::vector<int> *iold = &(smpi->dynamics_iold[ithread]);
     std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
@@ -469,11 +454,11 @@ void Projector2D4Order::operator() (ElectroMagn* EMfields, Particles &particles,
     if (!diag_flag){ 
         if (!is_spectral) {
             for (int ipart=istart ; ipart<iend; ipart++ )
-                (*this)(Jx_ , Jy_ , Jz_ , particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);            
+                currents(Jx_ , Jy_ , Jz_ , particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);            
         }
         else {
             for ( int ipart=istart ; ipart<iend; ipart++ )
-                (*this)(Jx_ , Jy_ , Jz_ , rho_ , particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
+                currentsAndDensity(Jx_ , Jy_ , Jz_ , rho_ , particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
         }
     // Otherwise, the projection may apply to the species-specific arrays
     } else {
@@ -482,12 +467,12 @@ void Projector2D4Order::operator() (ElectroMagn* EMfields, Particles &particles,
         double* b_Jz  = EMfields->Jz_s [ispec] ? &(*EMfields->Jz_s [ispec])(0) : &(*EMfields->Jz_ )(0) ;
         double* b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
         for (int ipart=istart ; ipart<iend; ipart++ )
-            (*this)(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
+            currentsAndDensity(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
     }
 }
 
 // Projector for susceptibility used as source term in envelope equation
-void Projector2D4Order::project_susceptibility(ElectroMagn* EMfields, Particles &particles, double species_mass, SmileiMPI* smpi, int istart, int iend,  int ithread, int ibin, std::vector<unsigned int> &b_dim, int ipart_ref)                                        
+void Projector2D4Order::susceptibility(ElectroMagn* EMfields, Particles &particles, double species_mass, SmileiMPI* smpi, int istart, int iend,  int ithread, int ibin, std::vector<unsigned int> &b_dim, int ipart_ref)
 {
     ERROR("Projection and interpolation for the envelope model are implemented only for interpolation_order = 2");
 }
