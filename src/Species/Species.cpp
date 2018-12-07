@@ -898,7 +898,7 @@ void Species::projection_for_diags(double time_dual, unsigned int ispec,
                     } //End loop on particles
                 }//End loop on bins
             } //End loop on modes
-        emAM->fold_J(diag_flag);
+        //emAM->fold_J(diag_flag);
         } // End Theta mode
 
     }

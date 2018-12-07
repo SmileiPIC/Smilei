@@ -118,6 +118,7 @@ void ProjectorAM2Order::currents_mode0(complex<double>* Jl, complex<double>* Jr,
     rp = sqrt (particles.position(1, ipart)*particles.position(1, ipart)+particles.position(2, ipart)*particles.position(2, ipart));
     ypn =  rp * dr_inv_ ;
     double crt_p= charge_weight*(particles.momentum(2,ipart)*particles.position(1,ipart)-particles.momentum(1,ipart)*particles.position(2,ipart))/(rp)*invgf;
+
     int jp = round(ypn);
     int jpo = iold[1*nparts];
     int jp_m_jpo = jp-jpo-j_domain_begin;
@@ -145,10 +146,26 @@ void ProjectorAM2Order::currents_mode0(complex<double>* Jl, complex<double>* Jr,
 		Wt[i][j] = 0.5 * (Sl0[i]*Sr0[j] + Sl1[i]*Sr1[j]) ;
         }
     }
-    
+ 
     ipo -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
     // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
     jpo -= 2;
+
+    //Fold W if the particles project anything below axis
+    int nfold = jpo + j_domain_begin; // Number of cells touched below axis
+    if (nfold <= 0){
+        // Cancel contribution on axis for mode > 0
+        // Add contributions for mode 0
+        for (unsigned int i=0 ; i<5 ; i++) {
+            for (unsigned int j = 1 ; j <= abs(nfold) ; j++){
+                Wl[i][j-nfold] += Wl[i][-j-nfold]; 
+                Wr[i][j-nfold] += Wr[i][-j-nfold]; 
+                Wt[i][j-nfold] += Wt[i][-j-nfold]; 
+            }
+        }
+        // Substract contribution for modes > 0
+    }
+
     int iloc, jloc, linindex;
 
     // ------------------------------------------------
@@ -324,7 +341,32 @@ void ProjectorAM2Order::currents(complex<double>* Jl, complex<double>* Jr, compl
             
         }
     }
-    
+
+    ipo -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
+    // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
+    jpo -= 2;
+
+   //Fold W if the particles project anything below axis
+    int nfold = jpo + j_domain_begin; // Number of cells touched below axis
+    if (nfold <= 0){
+        // Cancel contribution on axis for mode > 0
+        for (unsigned int i=0 ; i<5 ; i++) {
+                Wl[i][-nfold] = 0.; 
+                Wr[i][-nfold] = 0.; 
+                Wt[i][-nfold] = 0.; 
+        }
+        // Add contributions for mode 0
+        // Substract contribution for modes > 0
+        for (unsigned int i=0 ; i<5 ; i++) {
+            for (unsigned int j = 1 ; j <= abs(nfold) ; j++){
+                Wl[i][j-nfold] -= Wl[i][-j-nfold]; 
+                Wr[i][j-nfold] -= Wr[i][-j-nfold]; 
+                Wt[i][j-nfold] -= Wt[i][-j-nfold]; 
+            }
+        }
+
+    }
+ 
     // ------------------------------------------------
     // Local current created by the particle
     // calculate using the charge conservation equation
@@ -332,9 +374,6 @@ void ProjectorAM2Order::currents(complex<double>* Jl, complex<double>* Jr, compl
     for (unsigned int j=0 ; j<5 ; j++) Jl_p[0][j]= 0.;
     for (unsigned int i=0 ; i<5 ; i++) Jr_p[i][4]= 0.;
 
-    ipo -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
-    // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
-    jpo -= 2;
     
     int iloc, jloc, linindex;
 
@@ -410,6 +449,7 @@ void ProjectorAM2Order::currentsAndDensity_mode0(complex<double>* Jl, complex<do
     double charge_weight = inv_cell_volume * (double)(particles.charge(ipart))*particles.weight(ipart);
     double crl_p = charge_weight*dl_ov_dt;
     double crr_p = charge_weight*one_ov_dt;
+
     // variable declaration
     double xpn, ypn, rp;
     double delta, delta2;
@@ -424,6 +464,8 @@ void ProjectorAM2Order::currentsAndDensity_mode0(complex<double>* Jl, complex<do
     Sl0[4] = 0.;
     Sr0[0] = 0.;
     Sr0[4] = 0.;
+
+
     // --------------------------------------------------------
     // Locate particles & Calculate Esirkepov coef. S, DS and W
     // --------------------------------------------------------
@@ -483,6 +525,29 @@ void ProjectorAM2Order::currentsAndDensity_mode0(complex<double>* Jl, complex<do
 		Wt[i][j] = 0.5 * (Sl0[i]*Sr0[j] + Sl1[i]*Sr1[j]) ;
             }
         }
+
+    ipo -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
+    // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
+    jpo -= 2;
+
+   //Fold W if the particles project anything below axis
+    int nfold = jpo + j_domain_begin; // Number of cells touched below axis
+    if (nfold <= 0){
+        // Cancel contribution on axis for mode > 0
+        //        Wl[i][-nfold] = 0.; 
+        //        Wr[i][-nfold] = 0.; 
+        //        Wt[i][-nfold] = 0.; 
+        // Add contributions for mode 0
+        for (unsigned int i=0 ; i<5 ; i++) {
+            for (unsigned int j = 1 ; j <= abs(nfold) ; j++){
+                Wl[i][j-nfold] += Wl[i][-j-nfold]; 
+                Wr[i][j-nfold] += Wr[i][-j-nfold]; 
+                Wt[i][j-nfold] += Wt[i][-j-nfold]; 
+
+            }
+        }
+        // Substract contribution for modes > 0
+    }
     
     // ------------------------------------------------
     // Local current created by the particle
@@ -491,9 +556,6 @@ void ProjectorAM2Order::currentsAndDensity_mode0(complex<double>* Jl, complex<do
     for (unsigned int j=0 ; j<5 ; j++) Jl_p[0][j]= 0.;
     for (unsigned int i=0 ; i<5 ; i++) Jr_p[i][4]= 0.;
 
-    ipo -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
-    // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
-    jpo -= 2;
     
     int iloc, jloc, linindex;
         
@@ -524,9 +586,9 @@ void ProjectorAM2Order::currentsAndDensity_mode0(complex<double>* Jl, complex<do
     
     // Jl^(d,p)
     for (unsigned int i=1 ; i<5 ; i++) {
-        iloc = i+ipo;
+        iloc = (i+ipo)*nprimr;
         for (unsigned int j=0 ; j<5 ; j++) {
-            jloc = (j+jpo)*nprimr;
+            jloc = j+jpo;
             linindex = iloc+jloc;
             Jl [linindex] += Jl_p[i][j] * invV[jloc];
         }
@@ -672,6 +734,31 @@ void ProjectorAM2Order::currentsAndDensity(complex<double>* Jl, complex<double>*
 		Wt[i][j] = Sr1[j]*Sl1[i]*(e_delta_inv-1.)-Sr0[j]*Sl0[i]*(e_delta-1.);
         }
     }
+
+    ipo -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
+    // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
+    jpo -= 2;
+
+   //Fold W if the particles project anything below axis
+    int nfold = jpo + j_domain_begin; // Number of cells touched below axis
+    if (nfold <= 0){
+        // Cancel contribution on axis for mode > 0
+        for (unsigned int i=0 ; i<5 ; i++) {
+                Wl[i][-nfold] = 0.; 
+                Wr[i][-nfold] = 0.; 
+                Wt[i][-nfold] = 0.; 
+        }
+        // Add contributions for mode 0
+        // Substract contribution for modes > 0
+        for (unsigned int i=0 ; i<5 ; i++) {
+            for (unsigned int j = 1 ; j <= abs(nfold) ; j++){
+                Wl[i][j-nfold] -= Wl[i][-j-nfold]; 
+                Wr[i][j-nfold] -= Wr[i][-j-nfold]; 
+                Wt[i][j-nfold] -= Wt[i][-j-nfold]; 
+            }
+        }
+
+    }
     
     // ------------------------------------------------
     // Local current created by the particle
@@ -679,10 +766,6 @@ void ProjectorAM2Order::currentsAndDensity(complex<double>* Jl, complex<double>*
     // ------------------------------------------------
     for (unsigned int j=0 ; j<5 ; j++) Jl_p[0][j]= 0.;
     for (unsigned int i=0 ; i<5 ; i++) Jr_p[i][4]= 0.;
-
-    ipo -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
-    // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
-    jpo -= 2;
     
     int iloc, jloc, linindex;
 
