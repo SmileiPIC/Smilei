@@ -145,6 +145,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
     // Prepare the property list for HDF5 output
     write_plist = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_COLLECTIVE);
+    dcreate = H5Pcreate(H5P_DATASET_CREATE);
     
     // Prepare some openPMD parameters
     field_type.resize( fields_names.size() );
@@ -164,6 +165,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
 DiagnosticFields::~DiagnosticFields()
 {
     H5Pclose( write_plist );
+    H5Pclose( dcreate );
     
     delete timeSelection;
     delete flush_timeSelection;
@@ -306,9 +308,7 @@ void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime,
         #pragma omp master
         {
             // Create field dataset in HDF5
-            hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
-            hid_t dset_id  = H5Dcreate( iteration_group_id, fields_names[ifield].c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
-            H5Pclose(plist_id);
+            hid_t dset_id  = H5Dcreate( iteration_group_id, fields_names[ifield].c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, dcreate, H5P_DEFAULT);
             
             // Write
             writeField(dset_id, itime);
