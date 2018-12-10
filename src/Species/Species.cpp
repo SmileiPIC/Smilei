@@ -247,6 +247,7 @@ Species::~Species()
 {
     delete Push;
     delete Interp;
+    delete Proj;
     if (Ionize) delete Ionize;
     if (Radiate) delete Radiate;
     if (Multiphoton_Breit_Wheeler_process) delete Multiphoton_Breit_Wheeler_process;
