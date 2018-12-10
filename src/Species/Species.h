@@ -223,12 +223,14 @@ public:
     //! sub primal dimensions of fields
     unsigned int f_dim0, f_dim1, f_dim2;
 
-    //! Accumulate nrj lost with bc
+    //! Accumulate energy lost with bc
     double nrj_bc_lost;
-    //! Accumulate nrj lost with moving window
+    //! Accumulate energy lost with moving window
     double nrj_mw_lost;
-    //! Accumulate nrj added with new particles
+    //! Accumulate energy added with new particles
     double nrj_new_particles;
+    //! Accumulate energy lost by the particle with the radiation
+    double nrj_radiation;
 
     //! whether to choose vectorized operators with respective sorting methods
     int vectorized_operators;
@@ -494,9 +496,6 @@ public:
 
 
 protected:
-
-    //! Accumulate nrj lost by the particle with the radiation
-    double nrj_radiation;
 
     //! Patch length
     unsigned int length[3];
