@@ -174,7 +174,7 @@ public:
         dynamics_invgf[ithread].resize(npart);
         dynamics_iold[ithread].resize(ndim_field*npart);
         dynamics_deltaold[ithread].resize(ndim_field*npart);
-	if (isAM) dynamics_thetaold[ithread].resize(npart); 
+	if (isAM) dynamics_thetaold[ithread].resize(npart);
 
         if ( dynamics_GradPHIpart.size() > 0 ) {
             dynamics_GradPHIpart[ithread].resize(3*npart);
