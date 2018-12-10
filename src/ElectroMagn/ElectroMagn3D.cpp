@@ -1696,6 +1696,11 @@ void ElectroMagn3D::applyExternalField(Field* my_field,  Profile *profile, Patch
 
     profile->valuesAt(xyz,*my_field);
 
+    for (unsigned int idim=0 ; idim<3 ; idim++) {
+        delete xyz[idim];
+    }
+
+
 }
 
 
