@@ -60,7 +60,7 @@ public:
     void profile(SmileiMPI * smpi);
 
     //! Perform the required processing on the timers for output
-    std::vector<Timer*> consolidate(SmileiMPI * smpi);
+    std::vector<Timer*> consolidate(SmileiMPI * smpi, bool final_profile = false);
 
     void reboot();
 
