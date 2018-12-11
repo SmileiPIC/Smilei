@@ -776,7 +776,7 @@ void Projector2D2OrderV::currentsAndDensityWrapper(ElectroMagn* EMfields, Partic
 }
 
 // Project susceptibility
-void void Projector2D2OrderV::susceptibility(ElectroMagn* EMfields, Particles &particles, double species_mass, SmileiMPI* smpi, int istart, int iend,  int ithread, int ibin, std::vector<unsigned int> &b_dim, int ipart_ref = 0)
+void Projector2D2OrderV::susceptibility(ElectroMagn* EMfields, Particles &particles, double species_mass, SmileiMPI* smpi, int istart, int iend,  int ithread, int ibin, std::vector<unsigned int> &b_dim, int ipart_ref)
 {
     ERROR("Vectorized projection of the susceptibility for the envelope model is not implemented for 2D geometry");
 }
