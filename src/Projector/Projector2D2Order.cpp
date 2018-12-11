@@ -535,11 +535,10 @@ void Projector2D2Order::susceptibility(ElectroMagn* EMfields, Particles &particl
         double* GradPhiz = &( (*GradPhipart)[2*nparts] );
 
         for (int ipart=istart ; ipart<iend; ipart++ ) {//Loop on bin particles
-
     
             charge_over_mass_dts2       = (double)(particles.charge(ipart))*dts2*one_over_mass;
             // ! ponderomotive force is proportional to charge squared and the field is divided by 4 instead of 2
-            charge_sq_over_mass_sq_dts4 = (double)(particles.charge(ipart))*(double)(particles.charge(ipart))*dts4*one_over_mass;      
+            charge_sq_over_mass_sq_dts4 = (double)(particles.charge(ipart))*(double)(particles.charge(ipart))*dts4*one_over_mass*one_over_mass;      
             // (charge over mass)^2
             charge_sq_over_mass_sq      = (double)(particles.charge(ipart))*(double)(particles.charge(ipart))*one_over_mass*one_over_mass;
 
