@@ -121,7 +121,7 @@ void RadiationMonteCarlo::operator() (
     // double* chi = &( particles.chi(0));
 
     // Reinitialize the cumulative radiated energy for the current thread
-    this->radiated_energy = 0.;
+    radiated_energy_ = 0.;
 
     // _______________________________________________________________
     // Computation
@@ -135,7 +135,7 @@ void RadiationMonteCarlo::operator() (
         mc_it_nb = 0;
 
         // Monte-Carlo Manager inside the time step
-        while ((local_it_time < dt)
+        while ((local_it_time < dt_)
              &&(mc_it_nb < max_monte_carlo_iterations_))
         {
 
@@ -145,7 +145,7 @@ void RadiationMonteCarlo::operator() (
                              + momentum[2][ipart]*momentum[2][ipart]);
 
             // Computation of the Lorentz invariant quantum parameter
-            particle_chi = Radiation::compute_chipa(charge_over_mass2,
+            particle_chi = Radiation::computeParticleChi(charge_over_mass2,
                      momentum[0][ipart],momentum[1][ipart],momentum[2][ipart],
                      gamma,
                      (*(Ex+ipart-ipart_ref)),(*(Ey+ipart-ipart_ref)),(*(Ez+ipart-ipart_ref)),
@@ -178,7 +178,7 @@ void RadiationMonteCarlo::operator() (
                 // Time to discontinuous emission
                 // If this time is > the remaining iteration time,
                 // we have a synchronization
-                emission_time = std::min(tau[ipart]/temp, dt - local_it_time);
+                emission_time = std::min(tau[ipart]/temp, dt_ - local_it_time);
 
                 // Update of the optical depth
                 tau[ipart] -= temp*emission_time;
@@ -221,7 +221,7 @@ void RadiationMonteCarlo::operator() (
             {
 
                 // Remaining time of the iteration
-                emission_time = dt - local_it_time;
+                emission_time = dt_ - local_it_time;
 
                 // Radiated energy during emission_time
                 cont_rad_energy =
@@ -236,18 +236,18 @@ void RadiationMonteCarlo::operator() (
                 }
 
                 // Incrementation of the radiated energy cumulative parameter
-                radiated_energy += weight[ipart]*(gamma - sqrt(1.0
+                radiated_energy_ += weight[ipart]*(gamma - sqrt(1.0
                                     + momentum[0][ipart]*momentum[0][ipart]
                                     + momentum[1][ipart]*momentum[1][ipart]
                                     + momentum[2][ipart]*momentum[2][ipart]));
 
                 // End for this particle
-                local_it_time = dt;
+                local_it_time = dt_;
             }
             // No emission since particle_chi is too low
             else // if (particle_chi < RadiationTables.get_chipa_radiation_threshold())
             {
-                local_it_time = dt;
+                local_it_time = dt_;
             }
 
         }
@@ -389,6 +389,6 @@ void RadiationMonteCarlo::photon_emission(int ipart,
         gammaph = gammapa - sqrt(1.0 + momentum[0][ipart]*momentum[0][ipart]
                                      + momentum[1][ipart]*momentum[1][ipart]
                                      + momentum[2][ipart]*momentum[2][ipart]);
-        radiated_energy += weight[ipart]*gammaph;
+        radiated_energy_ += weight[ipart]*gammaph;
     }
 }

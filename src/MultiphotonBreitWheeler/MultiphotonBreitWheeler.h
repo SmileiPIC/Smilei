@@ -64,7 +64,7 @@ class MultiphotonBreitWheeler
                                     double & Bx, double & By, double & Bz)
         {
 
-            return inv_norm_E_Schwinger
+            return inv_norm_E_Schwinger_
                   * sqrt( fabs( pow(Ex*kx + Ey*ky + Ez*kz,2)
                   - pow(gamma*Ex - By*kz + Bz*ky,2)
                   - pow(gamma*Ey - Bz*kx + Bx*kz,2)
@@ -146,10 +146,10 @@ class MultiphotonBreitWheeler
         // Factors
 
         //! Normalized Schwinger Electric field
-        double norm_E_Schwinger;
+        double norm_E_Schwinger_;
 
         //! Inverse Normalized Schwinger Electric field
-        double inv_norm_E_Schwinger;
+        double inv_norm_E_Schwinger_;
 
         //! Espilon to check when tau is near 0
         const double epsilon_tau_ = 1e-100;

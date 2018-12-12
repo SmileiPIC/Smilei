@@ -102,7 +102,7 @@ void RadiationCorrLandauLifshitz::operator() (
     std::vector <double> rad_norm_energy (iend-istart,0);
 
     // Reinitialize the cumulative radiated energy for the current thread
-    this->radiated_energy = 0.;
+    radiated_energy_ = 0.;
 
     // _______________________________________________________________
     // Computation
@@ -117,7 +117,7 @@ void RadiationCorrLandauLifshitz::operator() (
                              + momentum[2][ipart]*momentum[2][ipart]);
 
         // Computation of the Lorentz invariant quantum parameter
-        particle_chi = Radiation::compute_chipa(charge_over_mass2,
+        particle_chi = Radiation::computeParticleChi(charge_over_mass2,
                      momentum[0][ipart],momentum[1][ipart],momentum[2][ipart],
                      gamma,
                      (*(Ex+ipart-ipart_ref)),(*(Ey+ipart-ipart_ref)),(*(Ez+ipart-ipart_ref)),
@@ -130,7 +130,7 @@ void RadiationCorrLandauLifshitz::operator() (
 
             // Radiated energy during the time step
             temp =
-            RadiationTables.get_corrected_cont_rad_energy_Ridgers(particle_chi,dt);
+            RadiationTables.get_corrected_cont_rad_energy_Ridgers(particle_chi,dt_);
 
             // Temporary factor
             temp *= gamma/(gamma*gamma - 1);
@@ -159,5 +159,5 @@ void RadiationCorrLandauLifshitz::operator() (
     {
         radiated_energy_loc += weight[ipart]*rad_norm_energy[ipart] ;
     }
-    radiated_energy += radiated_energy_loc;
+    radiated_energy_ += radiated_energy_loc;
 }

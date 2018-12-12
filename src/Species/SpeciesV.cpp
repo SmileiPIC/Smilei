@@ -213,7 +213,7 @@ int ithread;
                     nrj_radiation += Radiate->getRadiatedEnergy();
 
                     // Update the quantum parameter chi
-                    Radiate->compute_thread_chipa(*particles,
+                    Radiate->computeParticlesChi(*particles,
                                                     smpi,
                                                     first_index[ibin],
                                                     last_index[ibin],

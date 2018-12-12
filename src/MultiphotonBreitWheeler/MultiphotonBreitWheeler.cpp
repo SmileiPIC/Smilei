@@ -25,11 +25,11 @@ MultiphotonBreitWheeler::MultiphotonBreitWheeler(Params& params, Species * speci
     dt    = params.timestep;
 
     // Normalized Schwinger Electric Field
-    norm_E_Schwinger = params.electron_mass*params.c_vacuum*params.c_vacuum
+    norm_E_Schwinger_ = params.electron_mass*params.c_vacuum*params.c_vacuum
                      / (params.red_planck_cst*params.reference_angular_frequency_SI);
 
-    // Inverse of norm_E_Schwinger
-    inv_norm_E_Schwinger = 1./norm_E_Schwinger;
+    // Inverse of norm_E_Schwinger_
+    inv_norm_E_Schwinger_ = 1./norm_E_Schwinger_;
 
     // Number of positrons and electrons generated per event
     this->mBW_pair_creation_sampling[0] = species->mBW_pair_creation_sampling[0];

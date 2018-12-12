@@ -151,7 +151,7 @@ void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
                 nrj_radiation += Radiate->getRadiatedEnergy();
 
                 // Update the quantum parameter chi
-                Radiate->compute_thread_chipa(*particles,
+                Radiate->computeParticlesChi(*particles,
                                                 smpi,
                                                 first_index[scell],
                                                 last_index[scell],

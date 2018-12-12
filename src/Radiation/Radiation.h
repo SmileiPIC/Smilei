@@ -62,14 +62,14 @@ class Radiation
         //! \param By y component of the particle magnetic field
         //! \param Bz z component of the particle magnetic field
         //#pragma omp declare simd
-        double inline compute_chipa(double & charge_over_mass2,
+        double inline computeParticleChi(double & charge_over_mass2,
                                      double & px, double & py, double & pz,
                                      double & gamma,
                                      double & Ex, double & Ey, double & Ez,
                                      double & Bx, double & By, double & Bz)
         {
 
-            return fabs(charge_over_mass2)*inv_norm_E_Schwinger
+            return fabs(charge_over_mass2)*inv_norm_E_Schwinger_
                   * sqrt( fabs( pow(Ex*px + Ey*py + Ez*pz,2)
                   - pow(gamma*Ex - By*pz + Bz*py,2)
                   - pow(gamma*Ey - Bz*px + Bx*pz,2)
@@ -79,14 +79,14 @@ class Radiation
         //! Return the total normalized radiated energy
         double inline getRadiatedEnergy()
         {
-            return radiated_energy;
+            return radiated_energy_;
         };
 
         //! Set the total normalized radiated energy of the path
         //! \param value value of the radiated energy to be assigned
         void setRadiatedEnergy(double value)
         {
-            radiated_energy = value;
+            radiated_energy_ = value;
         };
 
         //! Computation of the quantum parameter for the given
@@ -96,7 +96,7 @@ class Radiation
         //! \param istart      Index of the first particle
         //! \param iend        Index of the last particle
         //! \param ithread     Thread index
-        void compute_thread_chipa(Particles &particles,
+        void computeParticlesChi(Particles &particles,
                 SmileiMPI* smpi,
                 int istart,
                 int iend,
@@ -117,19 +117,19 @@ class Radiation
         double one_over_mass_;
 
         //! Time step
-        double dt;
+        double dt_;
 
         //! Radiated energy of the total thread
-        double radiated_energy;
+        double radiated_energy_;
 
         // _________________________________________
         // Factors
 
         //! Normalized Schwinger Electric field
-        double norm_E_Schwinger;
+        double norm_E_Schwinger_;
 
         //! Inverse Normalized Schwinger Electric field
-        double inv_norm_E_Schwinger;
+        double inv_norm_E_Schwinger_;
 
     private:
 
