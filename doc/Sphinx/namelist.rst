@@ -180,10 +180,10 @@ The block ``Main`` is **mandatory** and has the following syntax::
 .. py:data:: patch_arrangement
 
   :default: ``"hilbertian"``
-  
+
   Determines the ordering of patches and the way they are separated into the
   various MPI processes. Options are:
-  
+
   * ``"hilbertian"``: following the Hilbert curve (see :ref:`this explanation<LoadBalancingExplanation>`).
   * ``"linearized_XY"`` in 2D or ``"linearized_XYZ"`` in 3D: following the
     row-major (C-style) ordering.
@@ -560,8 +560,8 @@ Each species has to be defined in a ``Species`` block::
       # Radiation reaction, for particles only:
       radiation_model = "none",
       radiation_photon_species = "photon",
-      radiation_photon_sampling_ = 1,
-      radiation_photon_gamma_threshold_ = 2,
+      radiation_photon_sampling = 1,
+      radiation_photon_gamma_threshold = 2,
 
       # Relativistic field initialization:
       relativistic_field_initialization = "False",
@@ -804,7 +804,7 @@ Each species has to be defined in a ``Species`` block::
 
   This parameter cannot be assigned to photons (mass = 0).
 
-.. py:data:: radiation_photon_sampling_
+.. py:data:: radiation_photon_sampling
 
   :default: ``1``
 
@@ -816,7 +816,7 @@ Each species has to be defined in a ``Species`` block::
 
   This parameter cannot be assigned to photons (mass = 0).
 
-.. py:data:: radiation_photon_gamma_threshold_
+.. py:data:: radiation_photon_gamma_threshold
 
   :default: ``2``
 
@@ -2173,16 +2173,16 @@ To add one probe diagnostic, include the block ``DiagProbe``::
 .. py:data:: fields
 
   :default: ``[]``, which means ``["Ex", "Ey", "Ez", "Bx", "By", "Bz", "Jx", "Jy", "Jz", "Rho"]``
-  
+
   A list of fields among ``"Ex"``, ``"Ey"``, ``"Ez"``,
   ``"Bx"``, ``"By"``, ``"Bz"``, ``"Jx"``, ``"Jy"``, ``"Jz"`` and ``"Rho"``.
   Only listed fields will be saved although they are all calculated.
-  
+
   The contributions of each species to the currents and the density are also available,
   although they are not included by default. They may be added to the list as
   ``"Jx_abc"``, ``"Jy_abc"``, ``"Jz_abc"`` or ``"Rho_abc"``, where ``abc`` is the
   species name.
-  
+
   In the case of an envelope model for the laser (see :doc:`laser_envelope`),
   the following fields are also available: ``"Env_A_abs"``, ``"Env_Chi"``, ``"Env_E_abs"``.
 

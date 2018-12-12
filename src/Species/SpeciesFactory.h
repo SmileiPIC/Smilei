@@ -253,13 +253,13 @@ public:
                     }
 
                     // Number of photons emitted per Monte-Carlo event
-                    if (PyTools::extract("radiation_photon_sampling_",
+                    if (PyTools::extract("radiation_photon_sampling",
                                      thisSpecies->radiation_photon_sampling_, "Species",ispec))
                     {
                         if (thisSpecies->radiation_photon_sampling_ < 1)
                         {
                             ERROR("For species '" << species_name
-                            << "' radiation_photon_sampling_ should be > 1");
+                            << "' radiation_photon_sampling should be > 1");
                         }
                     }
                     else
@@ -270,7 +270,7 @@ public:
                             << thisSpecies->radiation_photon_sampling_);
 
                     // Photon energy threshold
-                    if (!PyTools::extract("radiation_photon_gamma_threshold_",
+                    if (!PyTools::extract("radiation_photon_gamma_threshold",
                                      thisSpecies->radiation_photon_gamma_threshold_, "Species",ispec))
                     {
                         thisSpecies->radiation_photon_gamma_threshold_ = 2.;

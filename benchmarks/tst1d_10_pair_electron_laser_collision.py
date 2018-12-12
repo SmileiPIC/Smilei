@@ -129,8 +129,8 @@ Species(
     pusher = pusher,
     radiation_model = radiation,
     radiation_photon_species = "photon",
-    radiation_photon_sampling_ = 1,
-    radiation_photon_gamma_threshold_ = 2,
+    radiation_photon_sampling = 1,
+    radiation_photon_gamma_threshold = 2,
     time_frozen = 29*t0,
     boundary_conditions = [part_cond],
 )
@@ -149,8 +149,8 @@ Species(
     pusher = pusher,
     radiation_model = radiation,
     radiation_photon_species = "photon",
-    radiation_photon_sampling_ = 1,
-    radiation_photon_gamma_threshold_ = 2,
+    radiation_photon_sampling = 1,
+    radiation_photon_gamma_threshold = 2,
     time_frozen = 29*t0,
     boundary_conditions = [part_cond],
 )
