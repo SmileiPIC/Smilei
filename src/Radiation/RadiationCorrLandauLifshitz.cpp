@@ -76,7 +76,7 @@ void RadiationCorrLandauLifshitz::operator() (
     const double one_over_mass_2 = pow(one_over_mass_,2.);
 
     // Temporary quantum parameter
-    double chipa;
+    double particle_chi;
 
     // Temporary Lorentz factor
     double gamma;
@@ -117,7 +117,7 @@ void RadiationCorrLandauLifshitz::operator() (
                              + momentum[2][ipart]*momentum[2][ipart]);
 
         // Computation of the Lorentz invariant quantum parameter
-        chipa = Radiation::compute_chipa(charge_over_mass2,
+        particle_chi = Radiation::compute_chipa(charge_over_mass2,
                      momentum[0][ipart],momentum[1][ipart],momentum[2][ipart],
                      gamma,
                      (*(Ex+ipart-ipart_ref)),(*(Ey+ipart-ipart_ref)),(*(Ez+ipart-ipart_ref)),
@@ -125,12 +125,12 @@ void RadiationCorrLandauLifshitz::operator() (
 
         // Effect on the momentum
         // (Should be vectorized with masked instructions)
-        if (chipa >= RadiationTables.get_chipa_radiation_threshold())
+        if (particle_chi >= RadiationTables.get_chipa_radiation_threshold())
         {
 
             // Radiated energy during the time step
             temp =
-            RadiationTables.get_corrected_cont_rad_energy_Ridgers(chipa,dt);
+            RadiationTables.get_corrected_cont_rad_energy_Ridgers(particle_chi,dt);
 
             // Temporary factor
             temp *= gamma/(gamma*gamma - 1);

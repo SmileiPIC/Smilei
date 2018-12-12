@@ -171,7 +171,7 @@ void MultiphotonBreitWheeler::operator() (Particles &particles,
     double* tau = &( particles.tau(0));
 
     // Quantum parameter
-    double * chiph = &( particles.chi(0));
+    double * photon_chi = &( particles.chi(0));
 
     // Photon id
     // uint64_t * id = &( particles.id(0));
@@ -193,7 +193,7 @@ void MultiphotonBreitWheeler::operator() (Particles &particles,
                     + momentum[2][ipart]*momentum[2][ipart]);
 
         // Computation of the Lorentz invariant quantum parameter
-        chiph[ipart] = MultiphotonBreitWheeler::compute_chiph(
+        photon_chi[ipart] = MultiphotonBreitWheeler::compute_chiph(
                  momentum[0][ipart],momentum[1][ipart],momentum[2][ipart],
                  (*gamma)[ipart],
                  (*(Ex+ipart-ipart_ref)),(*(Ey+ipart-ipart_ref)),(*(Ez+ipart-ipart_ref)),
@@ -206,9 +206,9 @@ void MultiphotonBreitWheeler::operator() (Particles &particles,
     {
 
         // If the photon has enough energy
-        // We also check that chiph > chiph_threshold,
-        // else chiph is too low to induce a decay
-        if (((*gamma)[ipart] > 2.) && (chiph[ipart] > chiph_threashold))
+        // We also check that photon_chi > chiph_threshold,
+        // else photon_chi is too low to induce a decay
+        if (((*gamma)[ipart] > 2.) && (photon_chi[ipart] > chiph_threashold))
         {
             // Init local variables
             event_time = 0;
@@ -228,7 +228,7 @@ void MultiphotonBreitWheeler::operator() (Particles &particles,
             else if (tau[ipart] > epsilon_tau_)
             {
                 // from the cross section
-                temp = MultiphotonBreitWheelerTables.compute_dNBWdt(chiph[ipart],(*gamma)[ipart]);
+                temp = MultiphotonBreitWheelerTables.compute_dNBWdt(photon_chi[ipart],(*gamma)[ipart]);
 
                 // Time to decay
                 // If this time is above the remaining iteration time,

@@ -1731,13 +1731,13 @@ tables.
 
   :default: 128
 
-  Discretization of the *chimin* and *xip* tables in the *chipa* direction.
+  Discretization of the *chimin* and *xip* tables in the *particle_chi* direction.
 
 .. py:data:: xip_chiph_dim
 
   :default: 128
 
-  Discretization of the *xip* tables in the *chiph* direction.
+  Discretization of the *xip* tables in the *photon_chi* direction.
 
 .. py:data:: output_format
 
@@ -1749,7 +1749,7 @@ tables.
 
   :default: 1e-3
 
-  Threshold on the particle quantum parameter *chipa*. When a particle has a
+  Threshold on the particle quantum parameter *particle_chi*. When a particle has a
   quantum parameter below this threshold, radiation reaction is not taken
   into account.
 
@@ -1757,7 +1757,7 @@ tables.
 
   :default: 1e-2
 
-  Threshold on the particle quantum parameter *chipa* between the continuous
+  Threshold on the particle quantum parameter *particle_chi* between the continuous
   and the discontinuous radiation model.
 
 .. py:data:: table_path
@@ -1871,13 +1871,13 @@ There are two tables used for the multiphoton Breit-Wheeler refers to as the
 
   :default: 128
 
-  Discretization of the *chimin* and *xip* tables in the *chiph* direction.
+  Discretization of the *chimin* and *xip* tables in the *photon_chi* direction.
 
 .. py:data:: xip_chipa_dim
 
   :default: 128
 
-  Discretization of the *xip* tables in the *chipa* direction.
+  Discretization of the *xip* tables in the *particle_chi* direction.
 
 --------------------------------------------------------------------------------
 

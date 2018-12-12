@@ -56,7 +56,7 @@ class RadiationMonteCarlo : public Radiation {
         //! Perform the phoon emission (creation of a super-photon
         //! and slow down of the emitting particle)
         //! \param ipart              particle index
-        //! \param chipa          particle quantum parameter
+        //! \param particle_chi          particle quantum parameter
         //! \param gammapa          particle gamma factor
         //! \param position           particle position
         //! \param momentum           particle momentum
@@ -64,7 +64,7 @@ class RadiationMonteCarlo : public Radiation {
         //                        for nonlinear inverse Compton scattering
         // ---------------------------------------------------------------------
         void photon_emission(int ipart,
-                             double & chipa,
+                             double & particle_chi,
                              double & gammapa,
                              double * position[3],
                              double * momentum[3],
