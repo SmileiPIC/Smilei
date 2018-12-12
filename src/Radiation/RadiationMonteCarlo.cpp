@@ -216,7 +216,8 @@ void RadiationMonteCarlo::operator() (
             // tau[ipart] <= epsilon_tau
             else if ((chipa <= RadiationTables.get_chipa_disc_min_threshold())
             &&  (tau[ipart] <= epsilon_tau)
-            &&  (chipa > RadiationTables.get_chipa_radiation_threshold()))
+            &&  (chipa > RadiationTables.get_chipa_radiation_threshold())
+            &&  (gamma > 1.))
             {
 
                 // Remaining time of the iteration
@@ -230,7 +231,9 @@ void RadiationMonteCarlo::operator() (
                 // Effect on the momentum
                 temp = cont_rad_energy*gamma/(gamma*gamma-1.);
                 for ( int i = 0 ; i<3 ; i++ )
+                {
                     momentum[i][ipart] -= temp*momentum[i][ipart];
+                }
 
                 // Incrementation of the radiated energy cumulative parameter
                 radiated_energy += weight[ipart]*(gamma - sqrt(1.0
@@ -242,7 +245,7 @@ void RadiationMonteCarlo::operator() (
                 local_it_time = dt;
             }
             // No emission since chipa is too low
-            else if (chipa < RadiationTables.get_chipa_radiation_threshold())
+            else // if (chipa < RadiationTables.get_chipa_radiation_threshold())
             {
                 local_it_time = dt;
             }
