@@ -560,8 +560,8 @@ Each species has to be defined in a ``Species`` block::
       # Radiation reaction, for particles only:
       radiation_model = "none",
       radiation_photon_species = "photon",
-      radiation_photon_sampling = 1,
-      radiation_photon_gamma_threshold = 2,
+      radiation_photon_sampling_ = 1,
+      radiation_photon_gamma_threshold_ = 2,
 
       # Relativistic field initialization:
       relativistic_field_initialization = "False",
@@ -804,7 +804,7 @@ Each species has to be defined in a ``Species`` block::
 
   This parameter cannot be assigned to photons (mass = 0).
 
-.. py:data:: radiation_photon_sampling
+.. py:data:: radiation_photon_sampling_
 
   :default: ``1``
 
@@ -816,7 +816,7 @@ Each species has to be defined in a ``Species`` block::
 
   This parameter cannot be assigned to photons (mass = 0).
 
-.. py:data:: radiation_photon_gamma_threshold
+.. py:data:: radiation_photon_gamma_threshold_
 
   :default: ``2``
 

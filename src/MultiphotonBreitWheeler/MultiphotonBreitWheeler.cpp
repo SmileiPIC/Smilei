@@ -215,17 +215,17 @@ void MultiphotonBreitWheeler::operator() (Particles &particles,
 
             // New even
             // If tau[ipart] <= 0, this is a new process
-            if (tau[ipart] <= epsilon_tau)
+            if (tau[ipart] <= epsilon_tau_)
             {
              // New final optical depth to reach for emision
-             while (tau[ipart] <= epsilon_tau)
+             while (tau[ipart] <= epsilon_tau_)
                 tau[ipart] = -log(1.-Rand::uniform());
 
             }
 
             // Photon decay: emission under progress
-            // If epsilon_tau > 0
-            else if (tau[ipart] > epsilon_tau)
+            // If epsilon_tau_ > 0
+            else if (tau[ipart] > epsilon_tau_)
             {
                 // from the cross section
                 temp = MultiphotonBreitWheelerTables.compute_dNBWdt(chiph[ipart],(*gamma)[ipart]);
@@ -241,7 +241,7 @@ void MultiphotonBreitWheeler::operator() (Particles &particles,
 
                 // If the final optical depth is reached
                 // The photon decays into pairs
-                if (tau[ipart] <= epsilon_tau)
+                if (tau[ipart] <= epsilon_tau_)
                 {
 
                     // Update of the position

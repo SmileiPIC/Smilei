@@ -253,30 +253,30 @@ public:
                     }
 
                     // Number of photons emitted per Monte-Carlo event
-                    if (PyTools::extract("radiation_photon_sampling",
-                                     thisSpecies->radiation_photon_sampling, "Species",ispec))
+                    if (PyTools::extract("radiation_photon_sampling_",
+                                     thisSpecies->radiation_photon_sampling_, "Species",ispec))
                     {
-                        if (thisSpecies->radiation_photon_sampling < 1)
+                        if (thisSpecies->radiation_photon_sampling_ < 1)
                         {
                             ERROR("For species '" << species_name
-                            << "' radiation_photon_sampling should be > 1");
+                            << "' radiation_photon_sampling_ should be > 1");
                         }
                     }
                     else
                     {
-                        thisSpecies->radiation_photon_sampling = 1;
+                        thisSpecies->radiation_photon_sampling_ = 1;
                     }
                     MESSAGE(2,"> Number of macro-photons emitted per MC event: "
-                            << thisSpecies->radiation_photon_sampling);
+                            << thisSpecies->radiation_photon_sampling_);
 
                     // Photon energy threshold
-                    if (!PyTools::extract("radiation_photon_gamma_threshold",
-                                     thisSpecies->radiation_photon_gamma_threshold, "Species",ispec))
+                    if (!PyTools::extract("radiation_photon_gamma_threshold_",
+                                     thisSpecies->radiation_photon_gamma_threshold_, "Species",ispec))
                     {
-                        thisSpecies->radiation_photon_gamma_threshold = 2.;
+                        thisSpecies->radiation_photon_gamma_threshold_ = 2.;
                     }
                     MESSAGE(2,"> Photon energy threshold for macro-photon emission: "
-                            << thisSpecies->radiation_photon_gamma_threshold);
+                            << thisSpecies->radiation_photon_gamma_threshold_);
                 }
                 else
                 {
@@ -714,8 +714,8 @@ public:
         newSpecies->pusher                                   = species->pusher;
         newSpecies->radiation_model                          = species->radiation_model;
         newSpecies->radiation_photon_species                 = species->radiation_photon_species;
-        newSpecies->radiation_photon_sampling                = species->radiation_photon_sampling;
-        newSpecies->radiation_photon_gamma_threshold         = species->radiation_photon_gamma_threshold;
+        newSpecies->radiation_photon_sampling_                = species->radiation_photon_sampling_;
+        newSpecies->radiation_photon_gamma_threshold_         = species->radiation_photon_gamma_threshold_;
         newSpecies->photon_species                           = species->photon_species;
         newSpecies->speciesNumber                            = species->speciesNumber;
         newSpecies->position_initialization_on_species       = species->position_initialization_on_species;

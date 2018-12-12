@@ -23,9 +23,9 @@
 RadiationMonteCarlo::RadiationMonteCarlo(Params& params, Species * species)
       : Radiation(params, species)
 {
-    this->radiation_photon_sampling = species->radiation_photon_sampling;
-    this->radiation_photon_gamma_threshold = species->radiation_photon_gamma_threshold;
-    this->inv_radiation_photon_sampling = 1. / this->radiation_photon_sampling;
+    this->radiation_photon_sampling_ = species->radiation_photon_sampling_;
+    this->radiation_photon_gamma_threshold_ = species->radiation_photon_gamma_threshold_;
+    this->inv_radiation_photon_sampling_ = 1. / this->radiation_photon_sampling_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -136,7 +136,7 @@ void RadiationMonteCarlo::operator() (
 
         // Monte-Carlo Manager inside the time step
         while ((local_it_time < dt)
-             &&(mc_it_nb < mc_it_nb_max))
+             &&(mc_it_nb < max_monte_carlo_iterations_))
         {
 
             // Gamma
@@ -159,17 +159,17 @@ void RadiationMonteCarlo::operator() (
             // We also check that chipa > chipa_threshold,
             // else chipa is too low to induce a discontinuous emission
             if ((chipa > RadiationTables.get_chipa_disc_min_threshold())
-            && (tau[ipart] <= epsilon_tau) )
+            && (tau[ipart] <= epsilon_tau_) )
             {
                 // New final optical depth to reach for emision
-                while (tau[ipart] <= epsilon_tau)
+                while (tau[ipart] <= epsilon_tau_)
                    tau[ipart] = -log(1.-Rand::uniform());
 
             }
 
             // Discontinuous emission: emission under progress
-            // If epsilon_tau > 0
-            if (tau[ipart] > epsilon_tau)
+            // If epsilon_tau_ > 0
+            if (tau[ipart] > epsilon_tau_)
             {
 
                 // from the cross section
@@ -184,7 +184,7 @@ void RadiationMonteCarlo::operator() (
                 tau[ipart] -= temp*emission_time;
 
                 // If the final optical depth is reached
-                if (tau[ipart] <= epsilon_tau)
+                if (tau[ipart] <= epsilon_tau_)
                 {
 
                     // Emission of a photon
@@ -213,9 +213,9 @@ void RadiationMonteCarlo::operator() (
             // chipa needs to be below the discontinuous threshold
             // chipa needs to be above the continuous threshold
             // No discontunous emission is in progress:
-            // tau[ipart] <= epsilon_tau
+            // tau[ipart] <= epsilon_tau_
             else if ((chipa <= RadiationTables.get_chipa_disc_min_threshold())
-            &&  (tau[ipart] <= epsilon_tau)
+            &&  (tau[ipart] <= epsilon_tau_)
             &&  (chipa > RadiationTables.get_chipa_radiation_threshold())
             &&  (gamma > 1.))
             {
@@ -312,7 +312,7 @@ void RadiationMonteCarlo::photon_emission(int ipart,
     // Creation of macro-photons if requested
     // Check that the photon_species is defined and the threshold on the energy
     if (photon_species
-        && (gammaph >= radiation_photon_gamma_threshold))
+        && (gammaph >= radiation_photon_gamma_threshold_))
     {
         /* ---------------------------------------------------------------------
         // First method: emission of a single photon
@@ -340,10 +340,10 @@ void RadiationMonteCarlo::photon_emission(int ipart,
         --------------------------------------------------------------------- */
 
         // Second method: emission of several photons for statistics following
-        // the parameter radiation_photon_sampling
+        // the parameter radiation_photon_sampling_
 
         // Creation of new photons in the temporary array new_photons
-        new_photons.create_particles(radiation_photon_sampling);
+        new_photons.create_particles(radiation_photon_sampling_);
 
         // Final size
         int npart = new_photons.size();
@@ -354,7 +354,7 @@ void RadiationMonteCarlo::photon_emission(int ipart,
                                 + momentum[2][ipart]*momentum[2][ipart]);
 
         // For all new photons...
-        for (int idNew=npart-radiation_photon_sampling; idNew<npart; idNew++)
+        for (int idNew=npart-radiation_photon_sampling_; idNew<npart; idNew++)
         {
             for (int i=0; i<nDim_; i++) {
                 new_photons.position(i,idNew)=position[i][ipart];
@@ -365,7 +365,7 @@ void RadiationMonteCarlo::photon_emission(int ipart,
                 gammaph*momentum[i][ipart]*inv_old_norm_p;
             }
 
-            new_photons.weight(idNew)=weight[ipart]*inv_radiation_photon_sampling;
+            new_photons.weight(idNew)=weight[ipart]*inv_radiation_photon_sampling_;
             new_photons.charge(idNew)=0;
 
             if (new_photons.isQuantumParameter)

@@ -152,7 +152,7 @@ class MultiphotonBreitWheeler
         double inv_norm_E_Schwinger;
 
         //! Espilon to check when tau is near 0
-        const double epsilon_tau = 1e-100;
+        const double epsilon_tau_ = 1e-100;
 
 };
 
