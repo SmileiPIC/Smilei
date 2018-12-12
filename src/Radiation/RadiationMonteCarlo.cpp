@@ -105,7 +105,7 @@ void RadiationMonteCarlo::operator() (
 
     // Position shortcut
     double* position[3];
-    for ( int i = 0 ; i<nDim_ ; i++ )
+    for ( int i = 0 ; i<n_dimensions_ ; i++ )
         position[i] =  &( particles.position(i,0) );
 
     // Charge shortcut
@@ -322,7 +322,7 @@ void RadiationMonteCarlo::photon_emission(int ipart,
 
         int idNew = new_photons.size() - 1;
 
-        for (int i=0; i<nDim_; i++) {
+        for (int i=0; i<n_dimensions_; i++) {
             new_photons.position(i,idNew)=position[i][ipart];
         }
 
@@ -356,7 +356,7 @@ void RadiationMonteCarlo::photon_emission(int ipart,
         // For all new photons...
         for (int idNew=npart-radiation_photon_sampling_; idNew<npart; idNew++)
         {
-            for (int i=0; i<nDim_; i++) {
+            for (int i=0; i<n_dimensions_; i++) {
                 new_photons.position(i,idNew)=position[i][ipart];
             }
 

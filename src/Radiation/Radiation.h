@@ -111,9 +111,9 @@ class Radiation
         // General parameters
 
         //! Dimension of position
-        int nDim_;
+        int n_dimensions_;
 
-        //! Inverse species mass
+        //! Inversed species mass
         double one_over_mass_;
 
         //! Time step
@@ -128,7 +128,7 @@ class Radiation
         //! Normalized Schwinger Electric field
         double norm_E_Schwinger_;
 
-        //! Inverse Normalized Schwinger Electric field
+        //! Inversed Normalized Schwinger Electric field
         double inv_norm_E_Schwinger_;
 
     private:

@@ -19,7 +19,7 @@
 MultiphotonBreitWheeler::MultiphotonBreitWheeler(Params& params, Species * species)
 {
     // Dimension position
-    nDim_ = params.nDim_particle;
+    n_dimensions_ = params.nDim_particle;
 
     // Time step
     dt    = params.timestep;
@@ -161,7 +161,7 @@ void MultiphotonBreitWheeler::operator() (Particles &particles,
     //    for now particles could be created outside of the local domain
     //    without been subject do boundary conditions (including domain exchange)
     //double* position[3];
-    //for ( int i = 0 ; i<nDim_ ; i++ )
+    //for ( int i = 0 ; i<n_dimensions_ ; i++ )
     //    position[i] =  &( particles.position(i,0) );
 
     // Weight shortcut
@@ -248,10 +248,10 @@ void MultiphotonBreitWheeler::operator() (Particles &particles,
                     // Move the photons
 
 //#ifdef  __DEBUG
-//                    for ( int i = 0 ; i<nDim_ ; i++ )
+//                    for ( int i = 0 ; i<n_dimensions_ ; i++ )
 //                        particles.position_old(i,ipart) = position[i][ipart];
 //#endif
-//                    for ( int i = 0 ; i<nDim_ ; i++ )
+//                    for ( int i = 0 ; i<n_dimensions_ ; i++ )
 //                        position[i][ipart]     += event_time*momentum[i][ipart]/(*gamma)[ipart];
 
 
@@ -343,14 +343,14 @@ void MultiphotonBreitWheeler::pair_emission(int ipart,
             //inv_gamma = 1./sqrt(1.+p*p);
 
             // Positions
-            for (i=0; i<nDim_; i++) {
+            for (i=0; i<n_dimensions_; i++) {
                 new_pair[k].position(i,idNew)=particles.position(i,ipart);
 //               + new_pair[k].momentum(i,idNew)*remaining_dt*inv_gamma;
             }
 
             // Old positions
 #ifdef  __DEBUG
-            for (i=0; i<nDim_; i++) {
+            for (i=0; i<n_dimensions_; i++) {
                 new_pair[k].position_old(i,idNew)=particles.position(i,ipart) ;
             }
 #endif

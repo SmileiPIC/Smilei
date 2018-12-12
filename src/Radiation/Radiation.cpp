@@ -16,8 +16,8 @@
 // -----------------------------------------------------------------------------
 Radiation::Radiation(Params& params, Species * species)
 {
-    // Dimension position
-    nDim_ = params.nDim_particle;
+    // Number of dimensions for the positions and momentums
+    n_dimensions_ = params.nDim_particle;
 
     // Time step
     dt_   = params.timestep;

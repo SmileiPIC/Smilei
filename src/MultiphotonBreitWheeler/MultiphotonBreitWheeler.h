@@ -125,7 +125,7 @@ class MultiphotonBreitWheeler
         // General parameters
 
         //! Dimension of position
-        int nDim_;
+        int n_dimensions_;
 
         //! Time step
         double dt;
