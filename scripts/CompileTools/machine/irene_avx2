@@ -14,4 +14,4 @@
 # export HDF5_ROOT_DIR=${HDF5_ROOT}
 #
 
-CXXFLAGS += -xCORE-AVX2 -ip -ipo -inline-factor=1000 -D__INTEL_SKYLAKE_8168 -fno-alias
+CXXFLAGS += -xCORE-AVX2 -ip -inline-factor=1000 -D__INTEL_SKYLAKE_8168 -fno-alias #-ipo

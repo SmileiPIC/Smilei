@@ -29,4 +29,4 @@
 # - -fno-alias
 
 HDF5_ROOT_DIR=${HDF5_HOME}
-CXXFLAGS += -cxx=icpc -xMIC-AVX512 -ip -ipo -inline-factor=1000
+CXXFLAGS += -cxx=icpc -xMIC-AVX512 -ip -inline-factor=1000 #-ipo
