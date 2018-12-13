@@ -76,7 +76,7 @@ void RadiationCorrLandauLifshitz::operator() (
     const double one_over_mass_2 = pow(one_over_mass_,2.);
 
     // Temporary quantum parameter
-    double chipa;
+    double particle_chi;
 
     // Temporary Lorentz factor
     double gamma;
@@ -102,7 +102,7 @@ void RadiationCorrLandauLifshitz::operator() (
     std::vector <double> rad_norm_energy (iend-istart,0);
 
     // Reinitialize the cumulative radiated energy for the current thread
-    this->radiated_energy = 0.;
+    radiated_energy_ = 0.;
 
     // _______________________________________________________________
     // Computation
@@ -117,7 +117,7 @@ void RadiationCorrLandauLifshitz::operator() (
                              + momentum[2][ipart]*momentum[2][ipart]);
 
         // Computation of the Lorentz invariant quantum parameter
-        chipa = Radiation::compute_chipa(charge_over_mass2,
+        particle_chi = Radiation::computeParticleChi(charge_over_mass2,
                      momentum[0][ipart],momentum[1][ipart],momentum[2][ipart],
                      gamma,
                      (*(Ex+ipart-ipart_ref)),(*(Ey+ipart-ipart_ref)),(*(Ez+ipart-ipart_ref)),
@@ -125,12 +125,12 @@ void RadiationCorrLandauLifshitz::operator() (
 
         // Effect on the momentum
         // (Should be vectorized with masked instructions)
-        if (chipa >= RadiationTables.get_chipa_radiation_threshold())
+        if (particle_chi >= RadiationTables.get_chipa_radiation_threshold())
         {
 
             // Radiated energy during the time step
             temp =
-            RadiationTables.get_corrected_cont_rad_energy_Ridgers(chipa,dt);
+            RadiationTables.get_corrected_cont_rad_energy_Ridgers(particle_chi,dt_);
 
             // Temporary factor
             temp *= gamma/(gamma*gamma - 1);
@@ -159,5 +159,5 @@ void RadiationCorrLandauLifshitz::operator() (
     {
         radiated_energy_loc += weight[ipart]*rad_norm_energy[ipart] ;
     }
-    radiated_energy += radiated_energy_loc;
+    radiated_energy_ += radiated_energy_loc;
 }

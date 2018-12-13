@@ -19,17 +19,17 @@
 MultiphotonBreitWheeler::MultiphotonBreitWheeler(Params& params, Species * species)
 {
     // Dimension position
-    nDim_ = params.nDim_particle;
+    n_dimensions_ = params.nDim_particle;
 
     // Time step
     dt    = params.timestep;
 
     // Normalized Schwinger Electric Field
-    norm_E_Schwinger = params.electron_mass*params.c_vacuum*params.c_vacuum
+    norm_E_Schwinger_ = params.electron_mass*params.c_vacuum*params.c_vacuum
                      / (params.red_planck_cst*params.reference_angular_frequency_SI);
 
-    // Inverse of norm_E_Schwinger
-    inv_norm_E_Schwinger = 1./norm_E_Schwinger;
+    // Inverse of norm_E_Schwinger_
+    inv_norm_E_Schwinger_ = 1./norm_E_Schwinger_;
 
     // Number of positrons and electrons generated per event
     this->mBW_pair_creation_sampling[0] = species->mBW_pair_creation_sampling[0];
@@ -161,7 +161,7 @@ void MultiphotonBreitWheeler::operator() (Particles &particles,
     //    for now particles could be created outside of the local domain
     //    without been subject do boundary conditions (including domain exchange)
     //double* position[3];
-    //for ( int i = 0 ; i<nDim_ ; i++ )
+    //for ( int i = 0 ; i<n_dimensions_ ; i++ )
     //    position[i] =  &( particles.position(i,0) );
 
     // Weight shortcut
@@ -171,7 +171,7 @@ void MultiphotonBreitWheeler::operator() (Particles &particles,
     double* tau = &( particles.tau(0));
 
     // Quantum parameter
-    double * chiph = &( particles.chi(0));
+    double * photon_chi = &( particles.chi(0));
 
     // Photon id
     // uint64_t * id = &( particles.id(0));
@@ -193,7 +193,7 @@ void MultiphotonBreitWheeler::operator() (Particles &particles,
                     + momentum[2][ipart]*momentum[2][ipart]);
 
         // Computation of the Lorentz invariant quantum parameter
-        chiph[ipart] = MultiphotonBreitWheeler::compute_chiph(
+        photon_chi[ipart] = MultiphotonBreitWheeler::compute_chiph(
                  momentum[0][ipart],momentum[1][ipart],momentum[2][ipart],
                  (*gamma)[ipart],
                  (*(Ex+ipart-ipart_ref)),(*(Ey+ipart-ipart_ref)),(*(Ez+ipart-ipart_ref)),
@@ -206,29 +206,29 @@ void MultiphotonBreitWheeler::operator() (Particles &particles,
     {
 
         // If the photon has enough energy
-        // We also check that chiph > chiph_threshold,
-        // else chiph is too low to induce a decay
-        if (((*gamma)[ipart] > 2.) && (chiph[ipart] > chiph_threashold))
+        // We also check that photon_chi > chiph_threshold,
+        // else photon_chi is too low to induce a decay
+        if (((*gamma)[ipart] > 2.) && (photon_chi[ipart] > chiph_threashold))
         {
             // Init local variables
             event_time = 0;
 
             // New even
             // If tau[ipart] <= 0, this is a new process
-            if (tau[ipart] <= epsilon_tau)
+            if (tau[ipart] <= epsilon_tau_)
             {
              // New final optical depth to reach for emision
-             while (tau[ipart] <= epsilon_tau)
+             while (tau[ipart] <= epsilon_tau_)
                 tau[ipart] = -log(1.-Rand::uniform());
 
             }
 
             // Photon decay: emission under progress
-            // If epsilon_tau > 0
-            else if (tau[ipart] > epsilon_tau)
+            // If epsilon_tau_ > 0
+            else if (tau[ipart] > epsilon_tau_)
             {
                 // from the cross section
-                temp = MultiphotonBreitWheelerTables.compute_dNBWdt(chiph[ipart],(*gamma)[ipart]);
+                temp = MultiphotonBreitWheelerTables.compute_dNBWdt(photon_chi[ipart],(*gamma)[ipart]);
 
                 // Time to decay
                 // If this time is above the remaining iteration time,
@@ -241,17 +241,17 @@ void MultiphotonBreitWheeler::operator() (Particles &particles,
 
                 // If the final optical depth is reached
                 // The photon decays into pairs
-                if (tau[ipart] <= epsilon_tau)
+                if (tau[ipart] <= epsilon_tau_)
                 {
 
                     // Update of the position
                     // Move the photons
 
 //#ifdef  __DEBUG
-//                    for ( int i = 0 ; i<nDim_ ; i++ )
+//                    for ( int i = 0 ; i<n_dimensions_ ; i++ )
 //                        particles.position_old(i,ipart) = position[i][ipart];
 //#endif
-//                    for ( int i = 0 ; i<nDim_ ; i++ )
+//                    for ( int i = 0 ; i<n_dimensions_ ; i++ )
 //                        position[i][ipart]     += event_time*momentum[i][ipart]/(*gamma)[ipart];
 
 
@@ -343,14 +343,14 @@ void MultiphotonBreitWheeler::pair_emission(int ipart,
             //inv_gamma = 1./sqrt(1.+p*p);
 
             // Positions
-            for (i=0; i<nDim_; i++) {
+            for (i=0; i<n_dimensions_; i++) {
                 new_pair[k].position(i,idNew)=particles.position(i,ipart);
 //               + new_pair[k].momentum(i,idNew)*remaining_dt*inv_gamma;
             }
 
             // Old positions
 #ifdef  __DEBUG
-            for (i=0; i<nDim_; i++) {
+            for (i=0; i<n_dimensions_; i++) {
                 new_pair[k].position_old(i,idNew)=particles.position(i,ipart) ;
             }
 #endif

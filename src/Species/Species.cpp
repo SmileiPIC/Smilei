@@ -603,7 +603,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
         //Point to local thread dedicated buffers
         //Still needed for ionization
         vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
-        
+
         for (unsigned int ibin = 0 ; ibin < first_index.size() ; ibin++) {
 
 #ifdef  __DETAILED_TIMERS
@@ -649,7 +649,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                 nrj_radiation += Radiate->getRadiatedEnergy();
 
                 // Update the quantum parameter chi
-                Radiate->compute_thread_chipa(*particles,
+                Radiate->computeParticlesChi(*particles,
                                                 smpi,
                                                 first_index[ibin],
                                                 last_index[ibin],
@@ -884,14 +884,14 @@ void Species::projection_for_diags(double time_dual, unsigned int ispec,
             int n_species = patch->vecSpecies.size();
             for ( unsigned int imode = 0; imode<params.nmodes;imode++){
                 int ifield = imode*n_species+ispec;
-                
+
                 for (unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++) { //Loop for projection on buffer_proj
-            
+
                     buf[0] = emAM->rho_AM_s[ifield] ? &(*emAM->rho_AM_s[ifield])(0) : &(*emAM->rho_AM_[imode])(0) ;
                     buf[1] = emAM->Jl_s [ifield] ? &(*emAM->Jl_s [ifield])(0) : &(*emAM->Jl_[imode])(0) ;
                     buf[2] = emAM->Jr_s [ifield] ? &(*emAM->Jr_s [ifield])(0) : &(*emAM->Jr_[imode])(0) ;
                     buf[3] = emAM->Jt_s [ifield] ? &(*emAM->Jt_s [ifield])(0) : &(*emAM->Jt_[imode])(0) ;
-            
+
                     for (int iPart=first_index[ibin] ; iPart<last_index[ibin]; iPart++ ) {
                         for (unsigned int quantity=0; quantity < 4; quantity++) {
                             Proj->densityFrozenComplex(buf[quantity], (*particles), iPart, quantity, imode);
@@ -1517,7 +1517,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
             double x = position[0][ippy]-min_loc ;
             unsigned int ibin = int(x * one_ov_dbin) ;
             int ip = indices[ibin] ; //Indice of the position of the particle in the particles array.
-            
+
             unsigned int ijk[3] = {0,0,0};
             for(unsigned int idim=0; idim<nDim_particle; idim++) {
                 particles->position(idim,ip) = position[idim][ippy];
@@ -1535,7 +1535,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
                 for(unsigned int idim=0; idim < 3; idim++)
                     particles->momentum(idim,ip) = momentum[idim][ippy] ;
             }
-            
+
             particles->weight(ip) = weight_arr[ippy] ;
             initCharge(1, ip, charge(ijk[0], ijk[1], ijk[2]));
             indices[ibin]++;
@@ -1894,9 +1894,9 @@ void Species::ponderomotive_update_position_and_currents(double time_dual, unsig
     // calculate the particle updated position
     // -------------------------------
     if (time_dual>time_frozen) { // moving particle
-    
+
         smpi->dynamics_resize(ithread, nDim_field, last_index.back(), params.geometry=="AMcylindrical");
-    
+
         for (unsigned int ibin = 0 ; ibin < first_index.size() ; ibin++) {
 
             // Interpolate the ponderomotive potential and its gradient at the particle position, present and previous timestep

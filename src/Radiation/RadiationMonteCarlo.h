@@ -56,7 +56,7 @@ class RadiationMonteCarlo : public Radiation {
         //! Perform the phoon emission (creation of a super-photon
         //! and slow down of the emitting particle)
         //! \param ipart              particle index
-        //! \param chipa          particle quantum parameter
+        //! \param particle_chi          particle quantum parameter
         //! \param gammapa          particle gamma factor
         //! \param position           particle position
         //! \param momentum           particle momentum
@@ -64,7 +64,7 @@ class RadiationMonteCarlo : public Radiation {
         //                        for nonlinear inverse Compton scattering
         // ---------------------------------------------------------------------
         void photon_emission(int ipart,
-                             double & chipa,
+                             double & particle_chi,
                              double & gammapa,
                              double * position[3],
                              double * momentum[3],
@@ -78,21 +78,21 @@ class RadiationMonteCarlo : public Radiation {
         // General parameters
 
         //! Number of photons emitted per event for statisctics purposes
-        int radiation_photon_sampling;
+        int radiation_photon_sampling_;
 
         //! Threshold on the photon Lorentz factor under which the macro-photon
         //! is not generated but directly added to the energy scalar diags
         //! This enable to limit emission of useless low-energy photons
-        double radiation_photon_gamma_threshold;
+        double radiation_photon_gamma_threshold_;
 
         //! Inverse number of photons emitted per event for statisctics purposes
-        double inv_radiation_photon_sampling;
+        double inv_radiation_photon_sampling_;
 
         //! Max number of Monte-Carlo iteration
-        const int mc_it_nb_max = 100;
+        const int max_monte_carlo_iterations_ = 100;
 
         //! Espilon to check when tau is near 0
-        const double epsilon_tau = 1e-100;
+        const double epsilon_tau_ = 1e-100;
 
     private:
 
