@@ -302,9 +302,14 @@ where :math:`S` is the so-called synchrotron emissivity function so that
 
     \frac{d^2 N}{dt d\chi} = \frac{2}{3} \frac{\alpha^2}{\tau_e} \frac{S (\chi_\pm, \chi)}{\chi}
 
-The inversion of  :math:`\xi = P(\chi_\pm,\chi_\gamma)'` is done after drawing
+The inversion of  :math:`\xi = P(\chi_\pm,\chi_\gamma)` is done after drawing
 a second random number
-:math:`\xi' \in \left[ 0,1\right]` to find :math:`\chi_\gamma`.
+:math:`\phi \in \left[ 0,1\right]` to find :math:`\chi_\gamma` by solving :
+
+.. math::
+  :label: inverse_xi
+
+  \xi^{-1} = P^{-1}(\chi_\pm, \chi_gamma) = \phi
 
 4. The energy of the emitted photon is then computed:
 :math:`\varepsilon_\gamma = mc^2 \gamma_\gamma =
