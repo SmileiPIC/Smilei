@@ -37,7 +37,7 @@ RadiationTables::RadiationTables()
     integfochi_computed = false;
     xip_computed = false;
 
-    chipa_radiation_threshold = 1e-3;
+    particle_chi_radiation_threshold = 1e-3;
     chipa_disc_min_threshold = 1e-2;
 }
 
@@ -135,8 +135,8 @@ void RadiationTables::initParams(Params& params)
             PyTools::extract("table_path", table_path, "RadiationReaction");
 
             // Radiation threshold on the quantum parameter particle_chi
-            PyTools::extract("chipa_radiation_threshold",
-                          chipa_radiation_threshold,"RadiationReaction");
+            PyTools::extract("particle_chi_radiation_threshold",
+                          particle_chi_radiation_threshold,"RadiationReaction");
 
         }
     }
@@ -167,7 +167,7 @@ void RadiationTables::initParams(Params& params)
         params.hasLLRadiation ||
         params.hasNielRadiation)
     {
-        MESSAGE( "        Threshold on the quantum parameter for radiation: " << std::setprecision(5) << chipa_radiation_threshold);
+        MESSAGE( "        Threshold on the quantum parameter for radiation: " << std::setprecision(5) << particle_chi_radiation_threshold);
     }
     if (params.hasMCRadiation)
     {
@@ -268,9 +268,9 @@ void RadiationTables::compute_h_table(SmileiMPI *smpi)
         //int err;  // error MPI
 
         // checks
-        if (chipa_radiation_threshold < h_chipa_min)
+        if (particle_chi_radiation_threshold < h_chipa_min)
         {
-            ERROR("Parameter `chipa_radiation_threshold` is below `h_chipa_min`,"
+            ERROR("Parameter `particle_chi_radiation_threshold` is below `h_chipa_min`,"
             << "the lower bound of the h table should be equal or below"
             << "the radiation threshold on chi.")
         }
@@ -1669,9 +1669,9 @@ bool RadiationTables::read_h_table(SmileiMPI *smpi)
     {
 
         // checks
-        if (chipa_radiation_threshold < h_chipa_min)
+        if (particle_chi_radiation_threshold < h_chipa_min)
         {
-            ERROR("Parameter `chipa_radiation_threshold` is below `h_chipa_min`,"
+            ERROR("Parameter `particle_chi_radiation_threshold` is below `h_chipa_min`,"
             << "the lower bound of the h table should be equal or below"
             << "the radiation threshold on chi.")
         }

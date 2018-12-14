@@ -112,6 +112,7 @@ class SmileiComponent(object):
                 "sim_length"       :"grid_length",
                 "sim_time"         :"simulation_time",
                 "output"           :"deposited_quantity",
+                "chipa_radiation_threshold":"particle_chi_radiation_threshold",
             }
             for key, value in kwargs.items():
                 if key in deprecated:
@@ -509,7 +510,7 @@ class RadiationReaction(SmileiComponent):
     # the discontinuous approaches
     chipa_disc_min_threshold = 1e-2
     # Threshold on particle_chi: if particle_chi < 1E-3 no radiation reaction
-    chipa_radiation_threshold = 1e-3
+    particle_chi_radiation_threshold = 1e-3
     # Path the tables/databases
     table_path = "./"
 

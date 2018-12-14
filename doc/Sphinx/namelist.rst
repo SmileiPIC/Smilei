@@ -1634,7 +1634,7 @@ tables.
      chiph_xip_dim = 128,
 
      # Radiation parameters
-     chipa_radiation_threshold = 1e-3,
+     particle_chi_radiation_threshold = 1e-3,
      chipa_disc_min_threshold = 1e-2,
      table_path = "../databases/"
   )
@@ -1745,7 +1745,7 @@ tables.
 
   Output format of the tables: ``"hdf5"``, ``"binary"`` or ``"ascii"``.
 
-.. py:data:: chipa_radiation_threshold
+.. py:data:: particle_chi_radiation_threshold
 
   :default: 1e-3
 

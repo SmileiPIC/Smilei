@@ -115,7 +115,7 @@ void RadiationNiel::operator() (
     // Reinitialize the cumulative radiated energy for the current thread
     radiated_energy_ = 0.;
 
-    const double chipa_radiation_threshold = RadiationTables.get_chipa_radiation_threshold();
+    const double particle_chi_radiation_threshold = RadiationTables.get_chipa_radiation_threshold();
     const double factor_cla_rad_power      = RadiationTables.get_factor_cla_rad_power();
     const std::string h_computation_method = RadiationTables.get_h_computation_method();
 
@@ -150,8 +150,8 @@ void RadiationNiel::operator() (
     /*for (ipart=0 ; ipart < nbparticles; ipart++ )
     {
 
-        // Below particle_chi = chipa_radiation_threshold, radiation losses are negligible
-        if (particle_chi[ipart] > chipa_radiation_threshold)
+        // Below particle_chi = particle_chi_radiation_threshold, radiation losses are negligible
+        if (particle_chi[ipart] > particle_chi_radiation_threshold)
         {
 
           // Pick a random number in the normal distribution of standard
@@ -165,8 +165,8 @@ void RadiationNiel::operator() (
     for (ipart=0 ; ipart < nbparticles; ipart++ )
     {
 
-        // Below particle_chi = chipa_radiation_threshold, radiation losses are negligible
-        if (particle_chi[ipart] > chipa_radiation_threshold)
+        // Below particle_chi = particle_chi_radiation_threshold, radiation losses are negligible
+        if (particle_chi[ipart] > particle_chi_radiation_threshold)
         {
 
           // Pick a random number in the normal distribution of standard
@@ -181,8 +181,8 @@ void RadiationNiel::operator() (
     #pragma omp simd private(p,temp)
     for (ipart=0 ; ipart < nbparticles; ipart++ )
     {
-        // Below particle_chi = chipa_radiation_threshold, radiation losses are negligible
-        if (particle_chi[ipart] > chipa_radiation_threshold)
+        // Below particle_chi = particle_chi_radiation_threshold, radiation losses are negligible
+        if (particle_chi[ipart] > particle_chi_radiation_threshold)
         {
             temp = -log((1.0-random_numbers[ipart])*(1.0+random_numbers[ipart]));
 
@@ -226,8 +226,8 @@ void RadiationNiel::operator() (
         for (ipart=0 ; ipart < nbparticles; ipart++ )
         {
 
-            // Below particle_chi = chipa_radiation_threshold, radiation losses are negligible
-            if (particle_chi[ipart] > chipa_radiation_threshold)
+            // Below particle_chi = particle_chi_radiation_threshold, radiation losses are negligible
+            if (particle_chi[ipart] > particle_chi_radiation_threshold)
             {
 
               //h = RadiationTables.get_h_Niel_from_fit_order10(particle_chi[ipart]);
@@ -245,8 +245,8 @@ void RadiationNiel::operator() (
         for (ipart=0 ; ipart < nbparticles; ipart++ )
         {
 
-            // Below particle_chi = chipa_radiation_threshold, radiation losses are negligible
-            if (particle_chi[ipart] > chipa_radiation_threshold)
+            // Below particle_chi = particle_chi_radiation_threshold, radiation losses are negligible
+            if (particle_chi[ipart] > particle_chi_radiation_threshold)
             {
 
               temp = RadiationTables.get_h_Niel_from_fit_order5(particle_chi[ipart]);
@@ -262,8 +262,8 @@ void RadiationNiel::operator() (
         for (ipart=0 ; ipart < nbparticles; ipart++ )
         {
 
-            // Below particle_chi = chipa_radiation_threshold, radiation losses are negligible
-            if (particle_chi[ipart] > chipa_radiation_threshold)
+            // Below particle_chi = particle_chi_radiation_threshold, radiation losses are negligible
+            if (particle_chi[ipart] > particle_chi_radiation_threshold)
             {
 
               temp = RadiationTables.get_h_Niel_from_fit_order10(particle_chi[ipart]);
@@ -280,8 +280,8 @@ void RadiationNiel::operator() (
         for (ipart=0 ; ipart < nbparticles; ipart++ )
         {
 
-            // Below particle_chi = chipa_radiation_threshold, radiation losses are negligible
-            if (particle_chi[ipart] > chipa_radiation_threshold)
+            // Below particle_chi = particle_chi_radiation_threshold, radiation losses are negligible
+            if (particle_chi[ipart] > particle_chi_radiation_threshold)
             {
 
                 temp = RadiationTables.get_h_Niel_from_fit_Ridgers(particle_chi[ipart]);
@@ -296,8 +296,8 @@ void RadiationNiel::operator() (
     #pragma omp simd private(temp,rad_energy)
     for (ipart=0 ; ipart<nbparticles; ipart++ )
     {
-        // Below particle_chi = chipa_radiation_threshold, radiation losses are negligible
-        if (particle_chi[ipart] > chipa_radiation_threshold)
+        // Below particle_chi = particle_chi_radiation_threshold, radiation losses are negligible
+        if (particle_chi[ipart] > particle_chi_radiation_threshold)
         {
 
             // Radiated energy during the time step
