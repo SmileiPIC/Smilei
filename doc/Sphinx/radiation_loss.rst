@@ -171,6 +171,24 @@ can be written as:
   \frac{d^2N}{dt d\chi_\gamma} = \frac{1}{\pi \sqrt{3}} \frac{\alpha^2}{\tau_e \chi_\pm}
   \left[ \int_\nu^{+\infty}{K_{5/3(y)}dy} + \frac{2 \chi_\gamma \nu}{2} K_{2/3}(\nu) \right]
 
+
+This equation can be also decomposed into:
+
+.. math::
+  :label: PhotonProdRate2
+
+  \frac{d^2N}{dt d\chi} = \frac{2}{3} \frac{\alpha^2}{\tau_e \chi} S(\chi_\pm , \chi)
+
+where :math:`S(\chi_\pm , \chi)` is so called the synchrotron emissity function.
+
+We therefore have:
+
+.. math::
+  :label: synchrotron_emissivity_function
+
+  S(\chi_\pm , \chi) = \frac{\sqrt{3}}{2\pi} \frac{\chi_\gamma}{\chi}
+  \left[ \int_\nu^{+\infty}{K_{5/3(y)}dy} + \frac{2 \chi_\gamma \nu}{2} K_{2/3}(\nu) \right]
+
 Condition (i) is fulfilled when :math:`a_0 = e \| A^{\mu} \| / mc^2 \gg 1`, :math:`A^{\mu}`
 being the four-potential laser amplitude.
 
@@ -274,17 +292,17 @@ inverting the cumulative distribution function:
 .. math::
   :label: CumulativeDistr
 
-    P(\chi_\pm,\chi_\gamma) = \frac{\displaystyle{\int_0^{\chi_\gamma}{F(\chi_\pm, \chi)
-    d\chi}}}{\displaystyle{\int_0^{\chi_\pm}{F(\chi_\pm, \chi) d\chi}}}
+    \xi = P(\chi_\pm,\chi_\gamma) = \frac{\displaystyle{\int_0^{\chi_\gamma}{S(\chi_\pm, \chi) / \chi
+    d\chi}}}{\displaystyle{\int_0^{\chi_\pm}{S(\chi_\pm, \chi) / \chi d\chi}}}
 
-where :math:`F` is the so-called synchrotron emissivity function so that
+where :math:`S` is the so-called synchrotron emissivity function so that
 
 .. math::
   :label: MCF
 
-    \frac{d^2 N}{dt d\chi_{\pm}} = \frac{2}{3} \frac{\alpha^2}{\tau_e} F (\chi_\pm, \chi_\gamma)
+    \frac{d^2 N}{dt d\chi} = \frac{2}{3} \frac{\alpha^2}{\tau_e} \frac{S (\chi_\pm, \chi)}{\chi}
 
-The inversion of  :math:`P(\chi_\pm,\chi_\gamma)=\xi'` is done after drawing
+The inversion of  :math:`\xi = P(\chi_\pm,\chi_\gamma)'` is done after drawing
 a second random number
 :math:`\xi' \in \left[ 0,1\right]` to find :math:`\chi_\gamma`.
 

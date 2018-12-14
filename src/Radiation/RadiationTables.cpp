@@ -148,16 +148,16 @@ void RadiationTables::initParams(Params& params)
     {
 
         // Computation of the normalized Compton wavelength
-        norm_lambda_compton = params.red_planck_cst*params.reference_angular_frequency_SI
+        normalized_Compton_wavelength_ = params.red_planck_cst*params.reference_angular_frequency_SI
                             / (params.electron_mass*params.c_vacuum*params.c_vacuum);
 
         // Computation of the factor factor_dNphdt
-        factor_dNphdt = sqrt(3.)*params.fine_struct_cst/(2.*M_PI*norm_lambda_compton);
+        factor_dNphdt = sqrt(3.)*params.fine_struct_cst/(2.*M_PI*normalized_Compton_wavelength_);
 
         // Computation of the factor for the classical radiated power
-        factor_cla_rad_power = 2.*params.fine_struct_cst/(3.*norm_lambda_compton);
+        factor_classical_radiated_power_ = 2.*params.fine_struct_cst/(3.*normalized_Compton_wavelength_);
 
-        MESSAGE( "        Factor classical radiated power: " << factor_cla_rad_power)
+        MESSAGE( "        Factor classical radiated power: " << factor_classical_radiated_power_)
 
     }
 
@@ -1557,7 +1557,7 @@ double RadiationTables::get_Niel_stochastic_term(double gamma,
     std::normal_distribution<double> normal_distribution(0., sqrt(dt));
     r = normal_distribution(gen);*/
 
-    return sqrt(factor_cla_rad_power*gamma*h)*r;
+    return sqrt(factor_classical_radiated_power_*gamma*h)*r;
 }
 
 // -----------------------------------------------------------------------------

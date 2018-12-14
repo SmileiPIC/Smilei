@@ -248,7 +248,7 @@ class MultiphotonBreitWheelerTables
         double factor_dNBWdt;
 
         //! Normalized reduced Compton wavelength
-        double norm_lambda_compton;
+        double normalized_Compton_wavelength_;
 
 };
 

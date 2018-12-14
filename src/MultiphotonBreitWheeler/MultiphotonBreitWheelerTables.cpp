@@ -94,11 +94,11 @@ void MultiphotonBreitWheelerTables::initialization(Params& params)
     if (params.hasMultiphotonBreitWheeler)
     {
         // Computation of the normalized Compton wavelength
-        norm_lambda_compton = params.red_planck_cst*params.reference_angular_frequency_SI
+        normalized_Compton_wavelength_ = params.red_planck_cst*params.reference_angular_frequency_SI
                             / (params.electron_mass*params.c_vacuum*params.c_vacuum);
 
         // Computation of the factor factor_dNBWdt
-        factor_dNBWdt = params.fine_struct_cst/(norm_lambda_compton);
+        factor_dNBWdt = params.fine_struct_cst/(normalized_Compton_wavelength_);
     }
 
     // Messages and checks

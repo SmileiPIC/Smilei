@@ -116,7 +116,7 @@ void RadiationNiel::operator() (
     radiated_energy_ = 0.;
 
     const double particle_chi_radiation_threshold = RadiationTables.get_chipa_radiation_threshold();
-    const double factor_cla_rad_power      = RadiationTables.get_factor_cla_rad_power();
+    const double factor_classical_radiated_power_      = RadiationTables.get_factor_cla_rad_power();
     const std::string h_computation_method = RadiationTables.get_h_computation_method();
 
     // _______________________________________________________________
@@ -234,7 +234,7 @@ void RadiationNiel::operator() (
               //h = RadiationTables.get_h_Niel_from_fit_order5(particle_chi[ipart]);
               temp = RadiationTables.get_h_Niel_from_table(particle_chi[ipart]);
 
-              diffusion[ipart] = sqrt(factor_cla_rad_power*gamma[ipart]*temp)*random_numbers[ipart];
+              diffusion[ipart] = sqrt(factor_classical_radiated_power_*gamma[ipart]*temp)*random_numbers[ipart];
             }
         }
     }
@@ -251,7 +251,7 @@ void RadiationNiel::operator() (
 
               temp = RadiationTables.get_h_Niel_from_fit_order5(particle_chi[ipart]);
 
-              diffusion[ipart] = sqrt(factor_cla_rad_power*gamma[ipart]*temp)*random_numbers[ipart];
+              diffusion[ipart] = sqrt(factor_classical_radiated_power_*gamma[ipart]*temp)*random_numbers[ipart];
             }
         }
     }
@@ -268,7 +268,7 @@ void RadiationNiel::operator() (
 
               temp = RadiationTables.get_h_Niel_from_fit_order10(particle_chi[ipart]);
 
-              diffusion[ipart] = sqrt(factor_cla_rad_power*gamma[ipart]*temp)*random_numbers[ipart];
+              diffusion[ipart] = sqrt(factor_classical_radiated_power_*gamma[ipart]*temp)*random_numbers[ipart];
             }
         }
     }
@@ -286,7 +286,7 @@ void RadiationNiel::operator() (
 
                 temp = RadiationTables.get_h_Niel_from_fit_Ridgers(particle_chi[ipart]);
 
-                diffusion[ipart] = sqrt(factor_cla_rad_power*gamma[ipart]*temp)*random_numbers[ipart];
+                diffusion[ipart] = sqrt(factor_classical_radiated_power_*gamma[ipart]*temp)*random_numbers[ipart];
             }
         }
     }

@@ -102,7 +102,7 @@ class RadiationTables
         double inline get_corrected_cont_rad_energy_Ridgers(double particle_chi,
                                                             double dt)
         {
-            return compute_g_Ridgers(particle_chi)*dt*particle_chi*particle_chi*factor_cla_rad_power;
+            return compute_g_Ridgers(particle_chi)*dt*particle_chi*particle_chi*factor_classical_radiated_power_;
         };
 
         //! Get of the classical continuous radiated energy during dt
@@ -110,7 +110,7 @@ class RadiationTables
         //! \param dt time step
         double inline get_classical_cont_rad_energy(double particle_chi, double dt)
         {
-            return dt*particle_chi*particle_chi*factor_cla_rad_power;
+            return dt*particle_chi*particle_chi*factor_classical_radiated_power_;
         };
 
         //! Return the chipa_disc_min_threshold value
@@ -194,11 +194,11 @@ class RadiationTables
         }
 
         // -----------------------------------------------------------------------------
-        //! Return the classical power factor factor_cla_rad_power.
+        //! Return the classical power factor factor_classical_radiated_power_.
         // -----------------------------------------------------------------------------
         double inline get_factor_cla_rad_power()
         {
-          return factor_cla_rad_power;
+          return factor_classical_radiated_power_;
         }
 
 
@@ -417,11 +417,12 @@ class RadiationTables
         //! Factor for the computation of dNphdt
         double factor_dNphdt;
 
-        //! Factor Classical radiated power
-        double factor_cla_rad_power;
+        //! Factor for the Classical radiated power
+        //! 2.*params.fine_struct_cst/(3.*normalized_Compton_wavelength_);
+        double factor_classical_radiated_power_;
 
         //! Normalized reduced Compton wavelength
-        double norm_lambda_compton;
+        double normalized_Compton_wavelength_;
 
 };
 
