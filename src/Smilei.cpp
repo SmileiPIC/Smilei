@@ -151,7 +151,7 @@ int main (int argc, char* argv[])
         // Init and compute tables for radiation effects
         // (nonlinear inverse Compton scattering)
         // ---------------------------------------------------------------------
-        RadiationTables.initParams(params);
+        RadiationTables.initializeParameters(params);
         RadiationTables.compute_tables(params,&smpi);
         RadiationTables.output_tables(&smpi);
 
@@ -200,7 +200,7 @@ int main (int argc, char* argv[])
         // Init and compute tables for radiation effects
         // (nonlinear inverse Compton scattering)
         // ---------------------------------------------------------------------
-        RadiationTables.initParams(params);
+        RadiationTables.initializeParameters(params);
         RadiationTables.compute_tables(params,&smpi);
         RadiationTables.output_tables(&smpi);
 

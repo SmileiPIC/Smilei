@@ -39,7 +39,7 @@ class RadiationTables
 
         //! Initialization of the parmeters for the nonlinear
         //! inverse Compton scattering
-        void initParams(Params& params);
+        void initializeParameters(Params& params);
 
         // ---------------------------------------------------------------------
         // PHYSICAL COMPUTATION
@@ -102,7 +102,7 @@ class RadiationTables
         double inline get_corrected_cont_rad_energy_Ridgers(double particle_chi,
                                                             double dt)
         {
-            return compute_g_Ridgers(particle_chi)*dt*particle_chi*particle_chi*factor_classical_radiated_power_;
+            return computeRidgersFit(particle_chi)*dt*particle_chi*particle_chi*factor_classical_radiated_power_;
         };
 
         //! Get of the classical continuous radiated energy during dt
@@ -113,31 +113,31 @@ class RadiationTables
             return dt*particle_chi*particle_chi*factor_classical_radiated_power_;
         };
 
-        //! Return the chipa_disc_min_threshold value
+        //! Return the minimum_chi_discontinuous_ value
         //! Under this value, no discontinuous radiation reaction
-        double inline get_chipa_disc_min_threshold()
+        double inline getMinimumChiDiscontinuous()
         {
-            return chipa_disc_min_threshold;
+            return minimum_chi_discontinuous_;
         }
 
-        //! Return the particle_chi_radiation_threshold value
-        //! Under this value, no radiation reaction
-        double inline get_chipa_radiation_threshold()
+        //! Return the minimum_chi_continuous_ value
+        //! Under this value, no continuous radiation reaction
+        double inline getMinimumChiContinuous()
         {
-            return particle_chi_radiation_threshold;
+            return minimum_chi_continuous_;
         }
 
         //! Computation of the function g of Erber using the Ridgers
         //! approximation formulae
         //! \param particle_chi particle quantum parameter
         //#pragma omp declare simd
-        double inline compute_g_Ridgers(double particle_chi)
+        double inline computeRidgersFit(double particle_chi)
         {
             return pow(1. + 4.8*(1.+particle_chi)*log(1. + 1.7*particle_chi)
                           + 2.44*particle_chi*particle_chi,-2./3.);
         };
 
-        std::string inline get_h_computation_method()
+        std::string inline getNielHComputationMethod()
         {
             return this->h_computation_method;
         }
@@ -288,10 +288,10 @@ class RadiationTables
 
         //! Minimum threshold above which the Monte-Carlo algorithm is working
         //! This avoids using the Monte-Carlo algorithm when particle_chi is too low
-        double chipa_disc_min_threshold;
+        double minimum_chi_discontinuous_;
 
         //! Under this value, no radiation loss
-        double particle_chi_radiation_threshold;
+        double minimum_chi_continuous_;
 
         // ---------------------------------------------
         // Table h for the

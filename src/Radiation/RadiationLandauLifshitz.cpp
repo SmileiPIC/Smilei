@@ -121,7 +121,7 @@ void RadiationLandauLifshitz::operator() (
                      (*(Bx+ipart-ipart_ref)),(*(By+ipart-ipart_ref)),(*(Bz+ipart-ipart_ref)) );
 
         // Effect on the momentum
-        if (particle_chi >= RadiationTables.get_chipa_radiation_threshold())
+        if (particle_chi >= RadiationTables.getMinimumChiContinuous())
         {
 
             // Radiated energy during the time step

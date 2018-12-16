@@ -103,7 +103,7 @@ class Radiation
                 int ithread, int ipart_ref = 0);
 
         // Local array of new photons
-        Particles new_photons;
+        Particles new_photons_;
 
     protected:
 

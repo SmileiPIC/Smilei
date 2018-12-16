@@ -37,8 +37,8 @@ RadiationTables::RadiationTables()
     integfochi_computed = false;
     xip_computed = false;
 
-    particle_chi_radiation_threshold = 1e-3;
-    chipa_disc_min_threshold = 1e-2;
+    minimum_chi_continuous_ = 1e-3;
+    minimum_chi_discontinuous_ = 1e-2;
 }
 
 // -----------------------------------------------------------------------------
@@ -55,7 +55,7 @@ RadiationTables::~RadiationTables()
 //
 //! \param params Object Params for the parameters from the input script
 // -----------------------------------------------------------------------------
-void RadiationTables::initParams(Params& params)
+void RadiationTables::initializeParameters(Params& params)
 {
 
     if (params.hasMCRadiation ||
@@ -116,8 +116,8 @@ void RadiationTables::initParams(Params& params)
             PyTools::extract("xip_chiph_dim", xip_chiph_dim, "RadiationReaction");
 
             // Discontinuous minimum threshold
-            PyTools::extract("chipa_disc_min_threshold",
-                             chipa_disc_min_threshold,"RadiationReaction");
+            PyTools::extract("minimum_chi_discontinuous",
+                             minimum_chi_discontinuous_,"RadiationReaction");
 
             // Additional regularly used parameters
             xip_log10_chipa_min = log10(xip_chipa_min);
@@ -135,8 +135,8 @@ void RadiationTables::initParams(Params& params)
             PyTools::extract("table_path", table_path, "RadiationReaction");
 
             // Radiation threshold on the quantum parameter particle_chi
-            PyTools::extract("particle_chi_radiation_threshold",
-                          particle_chi_radiation_threshold,"RadiationReaction");
+            PyTools::extract("minimum_chi_continuous",
+                          minimum_chi_continuous_,"RadiationReaction");
 
         }
     }
@@ -167,11 +167,11 @@ void RadiationTables::initParams(Params& params)
         params.hasLLRadiation ||
         params.hasNielRadiation)
     {
-        MESSAGE( "        Threshold on the quantum parameter for radiation: " << std::setprecision(5) << particle_chi_radiation_threshold);
+        MESSAGE( "        Minimum quantum parameter for continuous radiation: " << std::setprecision(5) << minimum_chi_continuous_);
     }
     if (params.hasMCRadiation)
     {
-        MESSAGE( "        Threshold on the quantum parameter for discontinuous radiation: " << std::setprecision(5) << chipa_disc_min_threshold);
+        MESSAGE( "        Minimum quantum parameter for discontinuous radiation: " << std::setprecision(5) << minimum_chi_discontinuous_);
     }
     if (params.hasMCRadiation ||
         params.hasNielRadiation)
@@ -268,9 +268,9 @@ void RadiationTables::compute_h_table(SmileiMPI *smpi)
         //int err;  // error MPI
 
         // checks
-        if (particle_chi_radiation_threshold < h_chipa_min)
+        if (minimum_chi_continuous_ < h_chipa_min)
         {
-            ERROR("Parameter `particle_chi_radiation_threshold` is below `h_chipa_min`,"
+            ERROR("Parameter `minimum_chi_continuous_` is below `h_chipa_min`,"
             << "the lower bound of the h table should be equal or below"
             << "the radiation threshold on chi.")
         }
@@ -1669,9 +1669,9 @@ bool RadiationTables::read_h_table(SmileiMPI *smpi)
     {
 
         // checks
-        if (particle_chi_radiation_threshold < h_chipa_min)
+        if (minimum_chi_continuous_ < h_chipa_min)
         {
-            ERROR("Parameter `particle_chi_radiation_threshold` is below `h_chipa_min`,"
+            ERROR("Parameter `minimum_chi_continuous_` is below `h_chipa_min`,"
             << "the lower bound of the h table should be equal or below"
             << "the radiation threshold on chi.")
         }

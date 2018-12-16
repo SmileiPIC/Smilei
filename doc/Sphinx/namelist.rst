@@ -1634,8 +1634,8 @@ tables.
      chiph_xip_dim = 128,
 
      # Radiation parameters
-     particle_chi_radiation_threshold = 1e-3,
-     chipa_disc_min_threshold = 1e-2,
+     minimum_chi_continuous = 1e-3,
+     minimum_chi_discontinuous = 1e-2,
      table_path = "../databases/"
   )
 
@@ -1745,7 +1745,7 @@ tables.
 
   Output format of the tables: ``"hdf5"``, ``"binary"`` or ``"ascii"``.
 
-.. py:data:: particle_chi_radiation_threshold
+.. py:data:: minimum_chi_continuous
 
   :default: 1e-3
 
@@ -1753,7 +1753,7 @@ tables.
   quantum parameter below this threshold, radiation reaction is not taken
   into account.
 
-.. py:data:: chipa_disc_min_threshold
+.. py:data:: minimum_chi_discontinuous
 
   :default: 1e-2
 

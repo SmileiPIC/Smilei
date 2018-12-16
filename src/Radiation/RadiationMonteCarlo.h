@@ -57,15 +57,15 @@ class RadiationMonteCarlo : public Radiation {
         //! and slow down of the emitting particle)
         //! \param ipart              particle index
         //! \param particle_chi          particle quantum parameter
-        //! \param gammapa          particle gamma factor
+        //! \param particle_gamma          particle gamma factor
         //! \param position           particle position
         //! \param momentum           particle momentum
         //! \param RadiationTables    Cross-section data tables and useful functions
         //                        for nonlinear inverse Compton scattering
         // ---------------------------------------------------------------------
-        void photon_emission(int ipart,
+        void photonEmission(int ipart,
                              double & particle_chi,
-                             double & gammapa,
+                             double & particle_gamma,
                              double * position[3],
                              double * momentum[3],
                              double * weight,

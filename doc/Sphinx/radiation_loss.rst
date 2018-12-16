@@ -444,7 +444,7 @@ particles.
 Instead, the integral of the function :math:`S(\chi_\pm, \chi) / \chi`
 called :math:`K(\chi_\pm)` is tabulated.
 The tabulation boundaries depend on the user.
-They can be specified in the \Smilei input file.
+They can be specified in the :program:`\Smilei` input file.
 
 This table is referred to as ``integfochi_table`` and related parameters
 start by ``integfochi`` in the code.
