@@ -48,48 +48,55 @@ class RadiationTables
         //! Synchrotron emissivity from Ritus
         //! \param particle_chi particle quantum parameter
         //! \param photon_chi photon quantum parameter
-        //! \param nbit number of iterations for the Gauss-Legendre integration
+        //! \param nb_iterations number of iterations for the Gauss-Legendre integration
         //! \param eps epsilon for the modified bessel function
-        static double compute_sync_emissivity_ritus(double chie,
+        static double computeRitusSynchrotronEmissivity(double particle_chi,
                 double photon_chi,
-                int nbit,
+                int nb_iterations,
                 double eps);
 
-        //! Computation of the cross-section dNph/dt
-        double compute_dNphdt(double particle_chi,double gfpa);
+        //! Computation of the photon production yield dNph/dt which is
+        //! also the cross-section for the Monte-Carlo
+        double computePhotonProductionYield(double particle_chi,double particle_gamma);
 
-        //! Compute integration of F/chi between
-        //! using Gauss-Legendre for a given chie value
-        static double compute_integfochi(double chie,
-                double chipmin,
-                double chipmax,
-                int nbit,
+        //! Compute the integration of the synchrotron emissivity S/chi
+        //! refered to as K in the documentation
+        //! between min_photon_chi and max_photon_chi
+        //! using Gauss-Legendre for a given particle_chi value
+        //! \param nb_iterations number of iteration for the Gauss-Legendre
+        //! \param eps relative error on the integration
+        static double integrateSynchrotronEmissivity(double particle_chi,
+                double min_photon_chi,
+                double max_photon_chi,
+                int nb_iterations,
                 double eps);
 
-        //! Computation of the photon quantum parameter photon_chi for emission
-        //! ramdomly and using the tables xip and chiphmin
+        //! Determine randomly a photon quantum parameter photon_chi
+        //! for an emission process
+        //! from a particle chi value (particle_chi) and
+        //! using the tables xip and chiphmin
         //! \param particle_chi particle quantum parameter
-        double compute_chiph_emission(double particle_chi);
+        double computeRandomPhotonChi(double particle_chi);
 
         //! Return the value of the function h(particle_chi) of Niel et al.
         //! Use an integration of Gauss-Legendre
         //
         //! \param particle_chi particle quantum parameter
-        //! \param nbit number of iterations for the Gauss-Legendre integration
+        //! \param nb_iterations number of iterations for the Gauss-Legendre integration
         //! \param eps epsilon for the modified bessel function
-        double compute_h_Niel(double particle_chi,int nbit, double eps);
+        double computeHNiel(double particle_chi,int nb_iterations, double eps);
 
         //! Return the value of the function h(particle_chi) of Niel et al.
         //! from the computed table h_table
         //! \param particle_chi particle quantum parameter
-        double get_h_Niel_from_table(double particle_chi);
+        double getHNielFromTable(double particle_chi);
 
         //! Return the stochastic diffusive component of the pusher
         //! of Niel et al.
         //! \param gamma particle Lorentz factor
         //! \param particle_chi particle quantum parameter
         //! \param dt time step
-        double get_Niel_stochastic_term(double gamma,
+        double getNielStochasticTerm(double gamma,
                                         double particle_chi,
                                         double dt);
 
@@ -99,7 +106,7 @@ class RadiationTables
         //! \param particle_chi particle quantum parameter
         //! \param dt time step
         //#pragma omp declare simd
-        double inline get_corrected_cont_rad_energy_Ridgers(double particle_chi,
+        double inline getRidgersCorrectedRadiatedEnergy(double particle_chi,
                                                             double dt)
         {
             return computeRidgersFit(particle_chi)*dt*particle_chi*particle_chi*factor_classical_radiated_power_;

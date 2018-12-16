@@ -232,7 +232,7 @@ void RadiationNiel::operator() (
 
               //h = RadiationTables.get_h_Niel_from_fit_order10(particle_chi[ipart]);
               //h = RadiationTables.get_h_Niel_from_fit_order5(particle_chi[ipart]);
-              temp = RadiationTables.get_h_Niel_from_table(particle_chi[ipart]);
+              temp = RadiationTables.getHNielFromTable(particle_chi[ipart]);
 
               diffusion[ipart] = sqrt(factor_classical_radiated_power_*gamma[ipart]*temp)*random_numbers[ipart];
             }
@@ -302,7 +302,7 @@ void RadiationNiel::operator() (
 
             // Radiated energy during the time step
             rad_energy =
-            RadiationTables.get_corrected_cont_rad_energy_Ridgers(particle_chi[ipart],dt_);
+            RadiationTables.getRidgersCorrectedRadiatedEnergy(particle_chi[ipart],dt_);
 
             // Effect on the momentum
             // Temporary factor

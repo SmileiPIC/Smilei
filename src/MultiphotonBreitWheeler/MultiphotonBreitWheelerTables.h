@@ -55,27 +55,27 @@ class MultiphotonBreitWheelerTables
         //! Computation of the value T(photon_chi) using the approximated
         //! formula of Erber
         //! \param photon_chi photon quantum parameter
-        //! \param nbit number of iteration for the Bessel evaluation
+        //! \param nb_iterations number of iteration for the Bessel evaluation
         //! \param eps epsilon for the Bessel evaluation
-        double compute_Erber_T(double photon_chi,int nbit,
+        double compute_Erber_T(double photon_chi,int nb_iterations,
                            double eps);
 
         //! Computation of the value T(photon_chi) using the formula of Ritus
         //! \param photon_chi photon quantum parameter
         //! \param particle_chi particle quantum parameter for integration (=0.5*photon_chi for full integration)
-        //! \param nbit number of iteration for the Gauss-Legendre integration
+        //! \param nb_iterations number of iteration for the Gauss-Legendre integration
         //! \param eps epsilon for the Bessel evaluation
         double compute_integration_Ritus_dTdchi(double photon_chi,
                                double particle_chi,
-                               int nbit,
+                               int nb_iterations,
                                double eps);
 
        //! Computation of the value T(photon_chi) using the formula of Ritus
        //! \param photon_chi photon quantum parameter
-       //! \param nbit number of iteration for the Gauss-Legendre integration
+       //! \param nb_iterations number of iteration for the Gauss-Legendre integration
        //! \param eps epsilon for the Bessel evaluation
        double compute_Ritus_dTdchi(double photon_chi,
-                             double particle_chi,int nbit,double eps);
+                             double particle_chi,int nb_iterations,double eps);
 
         //! Computation of the electron and positron quantum parameters for
         //! the multiphoton Breit-Wheeler pair creation

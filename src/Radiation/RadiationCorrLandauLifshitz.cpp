@@ -130,7 +130,7 @@ void RadiationCorrLandauLifshitz::operator() (
 
             // Radiated energy during the time step
             temp =
-            RadiationTables.get_corrected_cont_rad_energy_Ridgers(particle_chi,dt_);
+            RadiationTables.getRidgersCorrectedRadiatedEnergy(particle_chi,dt_);
 
             // Temporary factor
             temp *= gamma/(gamma*gamma - 1);

@@ -173,7 +173,7 @@ void RadiationMonteCarlo::operator() (
             {
 
                 // from the cross section
-                temp = RadiationTables.compute_dNphdt(particle_chi,gamma);
+                temp = RadiationTables.computePhotonProductionYield(particle_chi,gamma);
 
                 // Time to discontinuous emission
                 // If this time is > the remaining iteration time,
@@ -225,7 +225,7 @@ void RadiationMonteCarlo::operator() (
 
                 // Radiated energy during emission_time
                 cont_rad_energy =
-                RadiationTables.get_corrected_cont_rad_energy_Ridgers(particle_chi,
+                RadiationTables.getRidgersCorrectedRadiatedEnergy(particle_chi,
                                                              emission_time);
 
                 // Effect on the momentum
@@ -284,7 +284,7 @@ void RadiationMonteCarlo::photonEmission(int ipart,
     //double new_norm_p;
 
     // Get the photon quantum parameter from the table xip
-    photon_chi = RadiationTables.compute_chiph_emission(particle_chi);
+    photon_chi = RadiationTables.computeRandomPhotonChi(particle_chi);
 
     // compute the photon gamma factor
     gammaph = photon_chi/particle_chi*(particle_gamma-1.0);
