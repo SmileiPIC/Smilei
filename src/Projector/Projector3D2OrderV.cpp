@@ -39,7 +39,6 @@ Projector3D2OrderV::Projector3D2OrderV (Params& params, Patch* patch) : Projecto
 
     dt             = params.timestep;
     dts2           = params.timestep/2.;
-    dts4           = params.timestep/4.;
 
     DEBUG("cell_length "<< params.cell_length[0]);
 
@@ -56,7 +55,6 @@ Projector3D2OrderV::~Projector3D2OrderV()
 // ---------------------------------------------------------------------------------------------------------------------
 //!  Project current densities & charge : diagFields timstep (not vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-//void Projector3D2OrderV::currentsAndDensity(double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
 void Projector3D2OrderV::currentsAndDensity(double* Jx, double* Jy, double* Jz, double *rho, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, std::vector<unsigned int> &b_dim, int* iold, double *deltaold, int ipart_ref)
 {
 
@@ -613,6 +611,7 @@ void Projector3D2OrderV::susceptibility(ElectroMagn* EMfields, Particles &partic
     int nbVec = ( iend-istart+(cell_nparts-1)-((iend-istart-1)&(cell_nparts-1)) ) / vecSize;
     if (nbVec*vecSize != cell_nparts)
         nbVec++;
+    double one_over_mass=1./species_mass;
 
     #pragma omp simd
     for (unsigned int j=0; j<bsize; j++)
@@ -634,15 +633,16 @@ void Projector3D2OrderV::susceptibility(ElectroMagn* EMfields, Particles &partic
             double gamma_ponderomotive,gamma0,gamma0_sq;
             double charge_over_mass_dts2,charge_sq_over_mass_dts4,charge_sq_over_mass_sq;
             double pxsm, pysm, pzsm;
-            double one_over_mass=1./species_mass;
 
 	    double c = particles.charge(istart0+ipart);
 
-            charge_over_mass_dts2    = c *dts2*one_over_mass;
+            // (charge over mass)
+            charge_sq_over_mass_sq   = c*one_over_mass;
+            charge_over_mass_dts2    = charge_sq_over_mass_sq * dts2;
             // ! ponderomotive force is proportional to charge squared and the field is divided by 4 instead of 2
-            charge_sq_over_mass_dts4 = c*c*dts4*one_over_mass;
+            charge_sq_over_mass_dts4 = charge_over_mass_dts2 * c * 0.5;
             // (charge over mass)^2
-            charge_sq_over_mass_sq   = c*c*one_over_mass*one_over_mass;
+            charge_sq_over_mass_sq   *= charge_sq_over_mass_sq;
 
             for ( int i = 0 ; i<3 ; i++ )
                 momentum[i] = particles.momentum(i,istart0+ipart);
