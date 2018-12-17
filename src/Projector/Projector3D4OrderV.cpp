@@ -28,11 +28,13 @@ Projector3D4OrderV::Projector3D4OrderV (Params& params, Patch* patch) : Projecto
     j_domain_begin = patch->getCellStartingGlobalIndex(1);
     k_domain_begin = patch->getCellStartingGlobalIndex(2);
 
-    nprimy = params.n_space[1] + 1;
-    nprimz = params.n_space[2] + 1;
+    nscelly = params.n_space[1] + 1;
+    nscellz = params.n_space[2] + 1;
     oversize[0] = params.oversize[0];
     oversize[1] = params.oversize[1];
     oversize[2] = params.oversize[2];
+    nprimy = nscelly + oversize[1];
+    nprimz = nscellz + oversize[2];
     dq_inv[0] = dx_inv_;
     dq_inv[1] = dy_inv_;
     dq_inv[2] = dz_inv_;
@@ -1573,10 +1575,10 @@ void Projector3D4OrderV::currentsAndDensityWrapper(ElectroMagn* EMfields, Partic
     int iold[3];
 
 
-    iold[0] = scell/(nprimy*nprimz)+oversize[0];
+    iold[0] = scell/(nscelly*nscellz)+oversize[0];
 
-    iold[1] = ( (scell%(nprimy*nprimz)) / nprimz )+oversize[1];
-    iold[2] = ( (scell%(nprimy*nprimz)) % nprimz )+oversize[2];
+    iold[1] = ( (scell%(nscelly*nscellz)) / nscellz )+oversize[1];
+    iold[2] = ( (scell%(nscelly*nscellz)) % nscellz )+oversize[2];
    
     
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
