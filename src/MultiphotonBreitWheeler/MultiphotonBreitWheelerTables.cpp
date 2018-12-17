@@ -94,11 +94,11 @@ void MultiphotonBreitWheelerTables::initialization(Params& params)
     if (params.hasMultiphotonBreitWheeler)
     {
         // Computation of the normalized Compton wavelength
-        norm_lambda_compton = params.red_planck_cst*params.reference_angular_frequency_SI
+        normalized_Compton_wavelength_ = params.red_planck_cst*params.reference_angular_frequency_SI
                             / (params.electron_mass*params.c_vacuum*params.c_vacuum);
 
         // Computation of the factor factor_dNBWdt
-        factor_dNBWdt = params.fine_struct_cst/(norm_lambda_compton);
+        factor_dNBWdt = params.fine_struct_cst/(normalized_Compton_wavelength_);
     }
 
     // Messages and checks
@@ -196,18 +196,18 @@ double MultiphotonBreitWheelerTables::compute_dNBWdt(double photon_chi, double g
 //! Computation of the value T(photon_chi) using the approximated
 //! formula of Erber
 //! \param photon_chi photon quantum parameter
-//! \param nbit number of iteration for the Bessel evaluation
+//! \param nb_iterations number of iteration for the Bessel evaluation
 //! \param eps epsilon for the Bessel evaluation
 // -----------------------------------------------------------------------------
-double MultiphotonBreitWheelerTables::compute_Erber_T(double photon_chi,int nbit,
+double MultiphotonBreitWheelerTables::compute_Erber_T(double photon_chi,int nb_iterations,
                                                     double eps)
 {
     // Values for Bessel results
     //double I,dI;
     double K;
 
-    //userFunctions::modified_bessel_IK(1./3.,4./(3.*photon_chi),I,dI,K,dK,nbit,eps);
-    K = userFunctions::modified_bessel_K(1./3.,4./(3.*photon_chi),nbit,eps, false);
+    //userFunctions::modified_bessel_IK(1./3.,4./(3.*photon_chi),I,dI,K,dK,nb_iterations,eps);
+    K = userFunctions::modified_bessel_K(1./3.,4./(3.*photon_chi),nb_iterations,eps, false);
 
     return 0.16*K*K/photon_chi;
 }
@@ -217,32 +217,32 @@ double MultiphotonBreitWheelerTables::compute_Erber_T(double photon_chi,int nbit
 //! using the formula of Ritus.
 //! \param photon_chi photon quantum parameter
 //! \param particle_chi particle quantum parameter for integration (=0.5*photon_chi for full integration)
-//! \param nbit number of iteration for the Gauss-Legendre integration
+//! \param nb_iterations number of iteration for the Gauss-Legendre integration
 //! \param eps epsilon for the Bessel evaluation
 // -----------------------------------------------------------------------------
 double MultiphotonBreitWheelerTables::compute_integration_Ritus_dTdchi(double photon_chi,
                       double particle_chi,
-                      int nbit,
+                      int nb_iterations,
                       double eps)
 {
 
     // Parameters:
     // Arrays for Gauss-Legendre integration
-    double * gauleg_x = new double[nbit];
-    double * gauleg_w = new double[nbit];
+    double * gauleg_x = new double[nb_iterations];
+    double * gauleg_w = new double[nb_iterations];
     int i;
     double u;
     double T;
 
     // gauss Legendre coefficients
     userFunctions::gauss_legendre_coef(log10(particle_chi)-50.,log10(particle_chi),
-            gauleg_x, gauleg_w, nbit, eps);
+            gauleg_x, gauleg_w, nb_iterations, eps);
 
     T = 0;
-    for(i=0 ; i< nbit ; i++)
+    for(i=0 ; i< nb_iterations ; i++)
     {
         u = pow(10.,gauleg_x[i]);
-        T += gauleg_w[i]*compute_Ritus_dTdchi(photon_chi,u,nbit,eps)*u*log(10.);
+        T += gauleg_w[i]*compute_Ritus_dTdchi(photon_chi,u,nb_iterations,eps)*u*log(10.);
     }
     return T;
 
@@ -364,17 +364,17 @@ double * MultiphotonBreitWheelerTables::compute_pair_chi(double photon_chi)
 //! Computation of the value dT/dchipa(photon_chi) using the formula of Ritus
 //! \param photon_chi photon quantum parameter
 //! \param particle_chi particle quantum parameter
-//! \param nbit number of iteration for the Gauss-Legendre integration
+//! \param nb_iterations number of iteration for the Gauss-Legendre integration
 //! \param eps epsilon for the Bessel evaluation
 // -----------------------------------------------------------------------------
 double MultiphotonBreitWheelerTables::compute_Ritus_dTdchi(double photon_chi,
-                      double particle_chi,int nbit,double eps)
+                      double particle_chi,int nb_iterations,double eps)
 {
 
     // Parameters:
     // Arrays for Gauss-Legendre integration
-    double * gauleg_x = new double[nbit];
-    double * gauleg_w = new double[nbit];
+    double * gauleg_x = new double[nb_iterations];
+    double * gauleg_w = new double[nb_iterations];
     double y,u;
     double p1,p2;
     int i;
@@ -390,12 +390,12 @@ double MultiphotonBreitWheelerTables::compute_Ritus_dTdchi(double photon_chi,
 
     // gauss Legendre coefficients
     userFunctions::gauss_legendre_coef(log10(2*y),log10(2*y)+50.,
-            gauleg_x, gauleg_w, nbit, eps);
+            gauleg_x, gauleg_w, nb_iterations, eps);
 
     // Integration loop
     p2 = 0;
     //#pragma omp parallel for reduction(+:p2) private(u) shared(gauleg_w,gauleg_x)
-    for(i=0 ; i< nbit ; i++)
+    for(i=0 ; i< nb_iterations ; i++)
     {
         u = pow(10.,gauleg_x[i]);
         p2 += gauleg_w[i]*userFunctions::modified_bessel_K(1./3.,u,500,1e-16,false)*u*log(10.);

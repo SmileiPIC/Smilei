@@ -902,12 +902,12 @@ public:
                         }
                         retSpecies[ispec1]->photon_species_index = ispec2;
                         retSpecies[ispec1]->photon_species = retSpecies[ispec2];
-                        retSpecies[ispec1]->Radiate->new_photons.tracked = retSpecies[ispec1]->photon_species->particles->tracked;
-                        retSpecies[ispec1]->Radiate->new_photons.isQuantumParameter = retSpecies[ispec1]->photon_species->particles->isQuantumParameter;
-                        retSpecies[ispec1]->Radiate->new_photons.isMonteCarlo = retSpecies[ispec1]->photon_species->particles->isMonteCarlo;
-                        retSpecies[ispec1]->Radiate->new_photons.initialize(0,
+                        retSpecies[ispec1]->Radiate->new_photons_.tracked = retSpecies[ispec1]->photon_species->particles->tracked;
+                        retSpecies[ispec1]->Radiate->new_photons_.isQuantumParameter = retSpecies[ispec1]->photon_species->particles->isQuantumParameter;
+                        retSpecies[ispec1]->Radiate->new_photons_.isMonteCarlo = retSpecies[ispec1]->photon_species->particles->isMonteCarlo;
+                        retSpecies[ispec1]->Radiate->new_photons_.initialize(0,
                                                                             params.nDim_particle );
-                        //retSpecies[ispec1]->Radiate->new_photons.initialize(retSpecies[ispec1]->getNbrOfParticles(),
+                        //retSpecies[ispec1]->Radiate->new_photons_.initialize(retSpecies[ispec1]->getNbrOfParticles(),
                         //                                                    params.nDim_particle );
                         retSpecies[ispec2]->particles->reserve(retSpecies[ispec1]->getNbrOfParticles(),
                                                                retSpecies[ispec2]->particles->dimension() );
@@ -1004,12 +1004,12 @@ public:
                 if (vecSpecies[i]->photon_species)
                 {
                     retSpecies[i]->photon_species = retSpecies[retSpecies[i]->photon_species_index];
-                    retSpecies[i]->Radiate->new_photons.tracked = retSpecies[i]->photon_species->particles->tracked;
-                    retSpecies[i]->Radiate->new_photons.isQuantumParameter = retSpecies[i]->photon_species->particles->isQuantumParameter;
-                    retSpecies[i]->Radiate->new_photons.isMonteCarlo = retSpecies[i]->photon_species->particles->isMonteCarlo;
-                    //retSpecies[i]->Radiate->new_photons.initialize(retSpecies[i]->getNbrOfParticles(),
+                    retSpecies[i]->Radiate->new_photons_.tracked = retSpecies[i]->photon_species->particles->tracked;
+                    retSpecies[i]->Radiate->new_photons_.isQuantumParameter = retSpecies[i]->photon_species->particles->isQuantumParameter;
+                    retSpecies[i]->Radiate->new_photons_.isMonteCarlo = retSpecies[i]->photon_species->particles->isMonteCarlo;
+                    //retSpecies[i]->Radiate->new_photons_.initialize(retSpecies[i]->getNbrOfParticles(),
                     //                                               params.nDim_particle );
-                    retSpecies[i]->Radiate->new_photons.initialize(0,params.nDim_particle );
+                    retSpecies[i]->Radiate->new_photons_.initialize(0,params.nDim_particle );
                 }
                 else
                 {

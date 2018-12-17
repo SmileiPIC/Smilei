@@ -125,12 +125,12 @@ void RadiationCorrLandauLifshitz::operator() (
 
         // Effect on the momentum
         // (Should be vectorized with masked instructions)
-        if (particle_chi >= RadiationTables.get_chipa_radiation_threshold())
+        if (particle_chi >= RadiationTables.getMinimumChiContinuous())
         {
 
             // Radiated energy during the time step
             temp =
-            RadiationTables.get_corrected_cont_rad_energy_Ridgers(particle_chi,dt_);
+            RadiationTables.getRidgersCorrectedRadiatedEnergy(particle_chi,dt_);
 
             // Temporary factor
             temp *= gamma/(gamma*gamma - 1);

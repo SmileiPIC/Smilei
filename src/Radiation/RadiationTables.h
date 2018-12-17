@@ -39,7 +39,7 @@ class RadiationTables
 
         //! Initialization of the parmeters for the nonlinear
         //! inverse Compton scattering
-        void initParams(Params& params);
+        void initializeParameters(Params& params);
 
         // ---------------------------------------------------------------------
         // PHYSICAL COMPUTATION
@@ -48,48 +48,55 @@ class RadiationTables
         //! Synchrotron emissivity from Ritus
         //! \param particle_chi particle quantum parameter
         //! \param photon_chi photon quantum parameter
-        //! \param nbit number of iterations for the Gauss-Legendre integration
+        //! \param nb_iterations number of iterations for the Gauss-Legendre integration
         //! \param eps epsilon for the modified bessel function
-        static double compute_sync_emissivity_ritus(double chie,
+        static double computeRitusSynchrotronEmissivity(double particle_chi,
                 double photon_chi,
-                int nbit,
+                int nb_iterations,
                 double eps);
 
-        //! Computation of the cross-section dNph/dt
-        double compute_dNphdt(double particle_chi,double gfpa);
+        //! Computation of the photon production yield dNph/dt which is
+        //! also the cross-section for the Monte-Carlo
+        double computePhotonProductionYield(double particle_chi,double particle_gamma);
 
-        //! Compute integration of F/chi between
-        //! using Gauss-Legendre for a given chie value
-        static double compute_integfochi(double chie,
-                double chipmin,
-                double chipmax,
-                int nbit,
+        //! Compute the integration of the synchrotron emissivity S/chi
+        //! refered to as K in the documentation
+        //! between min_photon_chi and max_photon_chi
+        //! using Gauss-Legendre for a given particle_chi value
+        //! \param nb_iterations number of iteration for the Gauss-Legendre
+        //! \param eps relative error on the integration
+        static double integrateSynchrotronEmissivity(double particle_chi,
+                double min_photon_chi,
+                double max_photon_chi,
+                int nb_iterations,
                 double eps);
 
-        //! Computation of the photon quantum parameter photon_chi for emission
-        //! ramdomly and using the tables xip and chiphmin
+        //! Determine randomly a photon quantum parameter photon_chi
+        //! for an emission process
+        //! from a particle chi value (particle_chi) and
+        //! using the tables xip and chiphmin
         //! \param particle_chi particle quantum parameter
-        double compute_chiph_emission(double particle_chi);
+        double computeRandomPhotonChi(double particle_chi);
 
         //! Return the value of the function h(particle_chi) of Niel et al.
         //! Use an integration of Gauss-Legendre
         //
         //! \param particle_chi particle quantum parameter
-        //! \param nbit number of iterations for the Gauss-Legendre integration
+        //! \param nb_iterations number of iterations for the Gauss-Legendre integration
         //! \param eps epsilon for the modified bessel function
-        double compute_h_Niel(double particle_chi,int nbit, double eps);
+        double computeHNiel(double particle_chi,int nb_iterations, double eps);
 
         //! Return the value of the function h(particle_chi) of Niel et al.
         //! from the computed table h_table
         //! \param particle_chi particle quantum parameter
-        double get_h_Niel_from_table(double particle_chi);
+        double getHNielFromTable(double particle_chi);
 
         //! Return the stochastic diffusive component of the pusher
         //! of Niel et al.
         //! \param gamma particle Lorentz factor
         //! \param particle_chi particle quantum parameter
         //! \param dt time step
-        double get_Niel_stochastic_term(double gamma,
+        double getNielStochasticTerm(double gamma,
                                         double particle_chi,
                                         double dt);
 
@@ -99,10 +106,10 @@ class RadiationTables
         //! \param particle_chi particle quantum parameter
         //! \param dt time step
         //#pragma omp declare simd
-        double inline get_corrected_cont_rad_energy_Ridgers(double particle_chi,
+        double inline getRidgersCorrectedRadiatedEnergy(double particle_chi,
                                                             double dt)
         {
-            return compute_g_Ridgers(particle_chi)*dt*particle_chi*particle_chi*factor_cla_rad_power;
+            return computeRidgersFit(particle_chi)*dt*particle_chi*particle_chi*factor_classical_radiated_power_;
         };
 
         //! Get of the classical continuous radiated energy during dt
@@ -110,34 +117,34 @@ class RadiationTables
         //! \param dt time step
         double inline get_classical_cont_rad_energy(double particle_chi, double dt)
         {
-            return dt*particle_chi*particle_chi*factor_cla_rad_power;
+            return dt*particle_chi*particle_chi*factor_classical_radiated_power_;
         };
 
-        //! Return the chipa_disc_min_threshold value
+        //! Return the minimum_chi_discontinuous_ value
         //! Under this value, no discontinuous radiation reaction
-        double inline get_chipa_disc_min_threshold()
+        double inline getMinimumChiDiscontinuous()
         {
-            return chipa_disc_min_threshold;
+            return minimum_chi_discontinuous_;
         }
 
-        //! Return the chipa_radiation_threshold value
-        //! Under this value, no radiation reaction
-        double inline get_chipa_radiation_threshold()
+        //! Return the minimum_chi_continuous_ value
+        //! Under this value, no continuous radiation reaction
+        double inline getMinimumChiContinuous()
         {
-            return chipa_radiation_threshold;
+            return minimum_chi_continuous_;
         }
 
         //! Computation of the function g of Erber using the Ridgers
         //! approximation formulae
         //! \param particle_chi particle quantum parameter
         //#pragma omp declare simd
-        double inline compute_g_Ridgers(double particle_chi)
+        double inline computeRidgersFit(double particle_chi)
         {
             return pow(1. + 4.8*(1.+particle_chi)*log(1. + 1.7*particle_chi)
                           + 2.44*particle_chi*particle_chi,-2./3.);
         };
 
-        std::string inline get_h_computation_method()
+        std::string inline getNielHComputationMethod()
         {
             return this->h_computation_method;
         }
@@ -194,11 +201,11 @@ class RadiationTables
         }
 
         // -----------------------------------------------------------------------------
-        //! Return the classical power factor factor_cla_rad_power.
+        //! Return the classical power factor factor_classical_radiated_power_.
         // -----------------------------------------------------------------------------
         double inline get_factor_cla_rad_power()
         {
-          return factor_cla_rad_power;
+          return factor_classical_radiated_power_;
         }
 
 
@@ -288,10 +295,10 @@ class RadiationTables
 
         //! Minimum threshold above which the Monte-Carlo algorithm is working
         //! This avoids using the Monte-Carlo algorithm when particle_chi is too low
-        double chipa_disc_min_threshold;
+        double minimum_chi_discontinuous_;
 
         //! Under this value, no radiation loss
-        double chipa_radiation_threshold;
+        double minimum_chi_continuous_;
 
         // ---------------------------------------------
         // Table h for the
@@ -417,11 +424,12 @@ class RadiationTables
         //! Factor for the computation of dNphdt
         double factor_dNphdt;
 
-        //! Factor Classical radiated power
-        double factor_cla_rad_power;
+        //! Factor for the Classical radiated power
+        //! 2.*params.fine_struct_cst/(3.*normalized_Compton_wavelength_);
+        double factor_classical_radiated_power_;
 
         //! Normalized reduced Compton wavelength
-        double norm_lambda_compton;
+        double normalized_Compton_wavelength_;
 
 };
 

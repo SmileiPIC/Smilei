@@ -793,7 +793,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 //            {
 //                photon_species->importParticles(params,
 //                                                patch,
-//                                                Radiate->new_photons,
+//                                                Radiate->new_photons_,
 //                                                localDiags);
 //            }
 //        }
@@ -934,7 +934,7 @@ void Species::dynamics_import_particles(double time_dual, unsigned int ispec,
             {
                 photon_species->importParticles(params,
                                                 patch,
-                                                Radiate->new_photons,
+                                                Radiate->new_photons_,
                                                 localDiags);
             }
         }
