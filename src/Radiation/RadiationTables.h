@@ -115,7 +115,7 @@ class RadiationTables
         //! Get of the classical continuous radiated energy during dt
         //! \param particle_chi particle quantum parameter
         //! \param dt time step
-        double inline get_classical_cont_rad_energy(double particle_chi, double dt)
+        double inline getClassicalRadiatedEnergy(double particle_chi, double dt)
         {
             return dt*particle_chi*particle_chi*factor_classical_radiated_power_;
         };
@@ -155,7 +155,7 @@ class RadiationTables
         //! Valid between particle_chi in 1E-3 and 1E1
         //! \param particle_chi particle quantum parameter
         // -----------------------------------------------------------------------------
-        double inline get_h_Niel_from_fit_order10(double particle_chi)
+        double inline getHNielFitOrder10(double particle_chi)
         {
             // Max relative error ~2E-4
             return exp(-3.231764974833856e-08 * pow(log(particle_chi),10)
@@ -177,7 +177,7 @@ class RadiationTables
         //! Valid between particle_chi in 1E-3 and 1E1
         //! \param particle_chi particle quantum parameter
         // -----------------------------------------------------------------------------
-        double inline get_h_Niel_from_fit_order5(double particle_chi)
+        double inline getHNielFitOrder5(double particle_chi)
         {
             // Max relative error ~0.02
             return exp(1.399937206900322e-04 * pow(log(particle_chi),5)
@@ -194,7 +194,7 @@ class RadiationTables
         //! Ridgers et al., ArXiv 1708.04511 (2017)
         //! \param particle_chi particle quantum parameter
         // -----------------------------------------------------------------------------
-        double inline get_h_Niel_from_fit_Ridgers(double particle_chi)
+        double inline getHNielFitRidgers(double particle_chi)
         {
             return pow(particle_chi,3)*1.9846415503393384*pow(1. +
                 (1. + 4.528*particle_chi)*log(1.+12.29*particle_chi) + 4.632*pow(particle_chi,2),-7./6.);
@@ -203,7 +203,7 @@ class RadiationTables
         // -----------------------------------------------------------------------------
         //! Return the classical power factor factor_classical_radiated_power_.
         // -----------------------------------------------------------------------------
-        double inline get_factor_cla_rad_power()
+        double inline getFactorClassicalRadiatedPower()
         {
           return factor_classical_radiated_power_;
         }
