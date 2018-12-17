@@ -116,7 +116,7 @@ void RadiationNiel::operator() (
     radiated_energy_ = 0.;
 
     const double minimum_chi_continuous_ = RadiationTables.getMinimumChiContinuous();
-    const double factor_classical_radiated_power_      = RadiationTables.get_factor_cla_rad_power();
+    const double factor_classical_radiated_power_      = RadiationTables.getFactorClassicalRadiatedPower();
     const std::string h_computation_method = RadiationTables.getNielHComputationMethod();
 
     // _______________________________________________________________
@@ -230,8 +230,8 @@ void RadiationNiel::operator() (
             if (particle_chi[ipart] > minimum_chi_continuous_)
             {
 
-              //h = RadiationTables.get_h_Niel_from_fit_order10(particle_chi[ipart]);
-              //h = RadiationTables.get_h_Niel_from_fit_order5(particle_chi[ipart]);
+              //h = RadiationTables.getHNielFitOrder10(particle_chi[ipart]);
+              //h = RadiationTables.getHNielFitOrder5(particle_chi[ipart]);
               temp = RadiationTables.getHNielFromTable(particle_chi[ipart]);
 
               diffusion[ipart] = sqrt(factor_classical_radiated_power_*gamma[ipart]*temp)*random_numbers[ipart];
@@ -249,7 +249,7 @@ void RadiationNiel::operator() (
             if (particle_chi[ipart] > minimum_chi_continuous_)
             {
 
-              temp = RadiationTables.get_h_Niel_from_fit_order5(particle_chi[ipart]);
+              temp = RadiationTables.getHNielFitOrder5(particle_chi[ipart]);
 
               diffusion[ipart] = sqrt(factor_classical_radiated_power_*gamma[ipart]*temp)*random_numbers[ipart];
             }
@@ -266,7 +266,7 @@ void RadiationNiel::operator() (
             if (particle_chi[ipart] > minimum_chi_continuous_)
             {
 
-              temp = RadiationTables.get_h_Niel_from_fit_order10(particle_chi[ipart]);
+              temp = RadiationTables.getHNielFitOrder10(particle_chi[ipart]);
 
               diffusion[ipart] = sqrt(factor_classical_radiated_power_*gamma[ipart]*temp)*random_numbers[ipart];
             }
@@ -284,7 +284,7 @@ void RadiationNiel::operator() (
             if (particle_chi[ipart] > minimum_chi_continuous_)
             {
 
-                temp = RadiationTables.get_h_Niel_from_fit_Ridgers(particle_chi[ipart]);
+                temp = RadiationTables.getHNielFitRidgers(particle_chi[ipart]);
 
                 diffusion[ipart] = sqrt(factor_classical_radiated_power_*gamma[ipart]*temp)*random_numbers[ipart];
             }

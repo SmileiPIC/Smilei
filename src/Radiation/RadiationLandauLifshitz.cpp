@@ -126,7 +126,7 @@ void RadiationLandauLifshitz::operator() (
 
             // Radiated energy during the time step
             temp =
-            RadiationTables.get_classical_cont_rad_energy(particle_chi,dt_);
+            RadiationTables.getClassicalRadiatedEnergy(particle_chi,dt_);
 
             // Effect on the momentum
             // Temporary factor
