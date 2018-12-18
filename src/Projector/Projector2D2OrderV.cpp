@@ -745,7 +745,7 @@ void Projector2D2OrderV::currentsAndDensityWrapper(ElectroMagn* EMfields, Partic
     //}
     int iold[2];
     iold[0] = scell/nscelly+oversize[0];
-    iold[1] = (scell%scellmy)+oversize[1];
+    iold[1] = (scell%nscelly)+oversize[1];
    
     
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
