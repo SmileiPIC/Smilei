@@ -25,9 +25,10 @@ Projector2D2OrderV::Projector2D2OrderV (Params& params, Patch* patch) : Projecto
     i_domain_begin = patch->getCellStartingGlobalIndex(0);
     j_domain_begin = patch->getCellStartingGlobalIndex(1);
 
-    nprimy = params.n_space[1] + 1;
+    nscelly = params.n_space[1] + 1;
     oversize[0] = params.oversize[0];
     oversize[1] = params.oversize[1];
+    nprimy = nscelly + 2*oversize[1];
     dq_inv[0] = dx_inv_;
     dq_inv[1] = dy_inv_;
 
@@ -743,8 +744,8 @@ void Projector2D2OrderV::currentsAndDensityWrapper(ElectroMagn* EMfields, Partic
     std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
     //}
     int iold[2];
-    iold[0] = scell/nprimy+oversize[0];
-    iold[1] = (scell%nprimy)+oversize[1];
+    iold[0] = scell/nscelly+oversize[0];
+    iold[1] = (scell%scellmy)+oversize[1];
    
     
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
