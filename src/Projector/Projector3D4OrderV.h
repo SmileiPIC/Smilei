@@ -10,7 +10,7 @@ public:
     ~Projector3D4OrderV();
 
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_)
-    inline void currents(double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, std::vector<unsigned int> &b_dim, int* iold, double *deltaold, int ipart_ref = 0);
+    inline void currents(double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int* iold, double *deltaold, int ipart_ref = 0);
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_/rho), diagFields timestep
     inline void currentsAndDensity(double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double>* invgf, std::vector<unsigned int> &b_dim, int* iold, double* deltaold, int ipart_ref = 0);
 
