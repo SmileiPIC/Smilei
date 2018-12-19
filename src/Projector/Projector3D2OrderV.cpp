@@ -90,7 +90,7 @@ void Projector3D2OrderV::currentsAndDensity(double* Jx, double* Jy, double* Jz, 
 
 
     // Jx, Jy, Jz
-    currents(Jx, Jy, Jz, particles, istart, iend, invgf, b_dim, iold, deltaold, ipart_ref);
+    currents(Jx, Jy, Jz, particles, istart, iend, invgf, iold, deltaold, ipart_ref);
 
 
     // rho^(p,p,d)
@@ -361,7 +361,7 @@ void Projector3D2OrderV::ionizationCurrents(Field* Jx, Field* Jy, Field* Jz, Par
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project current densities : main projector vectorized
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, std::vector<unsigned int> &b_dim, int* iold, double *deltaold, int ipart_ref)
+void Projector3D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int* iold, double *deltaold, int ipart_ref)
 {
     // -------------------------------------
     // Variable declaration & initialization
@@ -374,6 +374,7 @@ void Projector3D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
     int ipom2 = ipo-2;
     int jpom2 = jpo-2;
     int kpom2 = kpo-2;
+    int nyz = nprimy*nprimz;
 
     int vecSize = 8;
     unsigned int bsize = 5*5*5*vecSize;
@@ -417,11 +418,11 @@ void Projector3D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
 
     } // END ivect
 
-    int iloc0 = ipom2*b_dim[1]*b_dim[2]+jpom2*b_dim[2]+kpom2;
+    int iglobal0 = ipom2*nyz+jpom2*nprimz+kpom2;
 
-    int iloc  = iloc0;
+    int iglobal  = iglobal0;
     for (unsigned int i=1 ; i<5 ; i++) {
-        iloc += b_dim[1]*b_dim[2];
+        iglobal += nyz;
         for (unsigned int j=0 ; j<5 ; j++) {
             #pragma omp simd
             for (unsigned int k=0 ; k<5 ; k++) {
@@ -431,7 +432,7 @@ void Projector3D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
                 for (int ipart=0 ; ipart<8; ipart++ ){
                     tmpJx += bJx [ilocal+ipart];
                 }
-                Jx[iloc+j*b_dim[2]+k]         += tmpJx;
+                Jx[iglobal+j*nprimz+k]         += tmpJx;
             }
         }
     }
@@ -461,7 +462,7 @@ void Projector3D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
         } // END ipart (compute coeffs)
     }
 
-    iloc = iloc0+ipom2*b_dim[2];
+    iglobal = iglobal0+ipom2*nprimz;
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=1 ; j<5 ; j++) {
             #pragma omp simd
@@ -472,10 +473,10 @@ void Projector3D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
                 for (int ipart=0 ; ipart<8; ipart++ ){
                     tmpJy += bJx [ilocal+ipart];
                 }
-                Jy[iloc+j*b_dim[2]+k] += tmpJy;
+                Jy[iglobal+j*nprimz+k] += tmpJy;
             }
         }
-        iloc += (b_dim[1]+1)*b_dim[2];
+        iglobal += (nprimy+1)*nprimz;
     }
 
 
@@ -503,7 +504,7 @@ void Projector3D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
 
     }
 
-    iloc = iloc0  + jpom2 +ipom2*b_dim[1];
+    iglobal = iglobal0  + jpom2 +ipom2*nprimy;
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
             #pragma omp simd
@@ -514,10 +515,10 @@ void Projector3D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
                 for (int ipart=0 ; ipart<8; ipart++ ){
                     tmpJz +=  bJx[ilocal+ipart];
                 }
-                Jz [iloc + (j)*(b_dim[2]+1) + k] +=  tmpJz;
+                Jz [iglobal + (j)*(nprimz+1) + k] +=  tmpJz;
             }
         }
-        iloc += b_dim[1]*(b_dim[2]+1);
+        iglobal += nprimy*(nprimz+1);
     }
 
 
@@ -558,7 +559,7 @@ void Projector3D2OrderV::currentsAndDensityWrapper(ElectroMagn* EMfields,
             double* b_Jx =  &(*EMfields->Jx_ )(0);
             double* b_Jy =  &(*EMfields->Jy_ )(0);
             double* b_Jz =  &(*EMfields->Jz_ )(0);
-            currents(b_Jx , b_Jy , b_Jz , particles,  istart, iend, invgf, b_dim, iold, &(*delta)[0], ipart_ref);
+            currents(b_Jx , b_Jy , b_Jz , particles,  istart, iend, invgf, iold, &(*delta)[0], ipart_ref);
         }
         else
             ERROR("TO DO with rho");
@@ -574,7 +575,7 @@ void Projector3D2OrderV::currentsAndDensityWrapper(ElectroMagn* EMfields,
 }
 
 
-void Projector3D2OrderV::susceptibility(ElectroMagn* EMfields, Particles &particles, double species_mass, SmileiMPI* smpi, int istart, int iend,  int ithread, int scell, std::vector<unsigned int> &b_dim, int ipart_ref)
+void Projector3D2OrderV::susceptibility(ElectroMagn* EMfields, Particles &particles, double species_mass, SmileiMPI* smpi, int istart, int iend,  int ithread, int scell, int ipart_ref)
 {
 
     double *Chi_envelope = &(*EMfields->Env_Chi_)(0) ;
@@ -727,9 +728,9 @@ void Projector3D2OrderV::susceptibility(ElectroMagn* EMfields, Particles &partic
     int ipo = iold[0];
     int jpo = iold[1];
     int kpo = iold[2];
-    int nxy = nprimy*nprimz;
+    int nyz = nprimy*nprimz;
 
-    int iglobal = (ipo-1)*nxy+(jpo-1)*nprimz+kpo-1;
+    int iglobal = (ipo-1)*nyz+(jpo-1)*nprimz+kpo-1;
 
     for (unsigned int i=0 ; i<3 ; i++) {
         for (unsigned int j=0 ; j<3 ; j++) {
@@ -744,7 +745,7 @@ void Projector3D2OrderV::susceptibility(ElectroMagn* EMfields, Particles &partic
                  Chi_envelope [iglobal + j*nprimz + k] +=  tmpChi;
             }
         }
-        iglobal += nxy;
+        iglobal += nyz;
     }
 
 
