@@ -727,26 +727,24 @@ void Projector3D2OrderV::susceptibility(ElectroMagn* EMfields, Particles &partic
     int ipo = iold[0];
     int jpo = iold[1];
     int kpo = iold[2];
-    int ipom2 = ipo-1;
-    int jpom2 = jpo-1;
-    int kpom2 = kpo-1;
+    int nxy = nprimy*nprimz;
 
-    int iloc0 = ipom2*b_dim[1]*b_dim[2]+jpom2*b_dim[2]+kpom2;
-    int iloc = iloc0;
+    int iglobal = (ipo-1)*nxy+(jpo-1)*nprimz+kpo-1;
+
     for (unsigned int i=0 ; i<3 ; i++) {
         for (unsigned int j=0 ; j<3 ; j++) {
             #pragma omp simd
             for (unsigned int k=0 ; k<3 ; k++) {
                 double tmpChi = 0.;
-                int ilocal = ((i)*9+j*3+k)*vecSize;
+                int ilocal = (i*9+j*3+k)*vecSize;
                 #pragma unroll(8)
                 for (int ipart=0 ; ipart<8; ipart++ ){
                     tmpChi +=  bChi[ilocal+ipart];
                 }
-                 Chi_envelope [iloc + (j)*(b_dim[2]) + k] +=  tmpChi;
+                 Chi_envelope [iglobal + j*nprimz + k] +=  tmpChi;
             }
         }
-        iloc += b_dim[1]*(b_dim[2]);
+        iglobal += nxy;
     }
 
 
