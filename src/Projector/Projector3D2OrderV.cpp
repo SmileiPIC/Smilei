@@ -727,9 +727,9 @@ void Projector3D2OrderV::susceptibility(ElectroMagn* EMfields, Particles &partic
     int ipo = iold[0];
     int jpo = iold[1];
     int kpo = iold[2];
-    int ipom2 = ipo-2;
-    int jpom2 = jpo-2;
-    int kpom2 = kpo-2;
+    int ipom2 = ipo-1;
+    int jpom2 = jpo-1;
+    int kpom2 = kpo-1;
 
     int iloc0 = ipom2*b_dim[1]*b_dim[2]+jpom2*b_dim[2]+kpom2;
     int iloc = iloc0;
