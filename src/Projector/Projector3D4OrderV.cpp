@@ -1604,7 +1604,7 @@ void Projector3D4OrderV::currentsAndDensityWrapper(ElectroMagn* EMfields, Partic
 
 
 //void Projector3D4OrderV::susceptibility(double* Chi_envelope, Particles &particles, int istart, int iend, unsigned int scell, std::vector<unsigned int> &b_dim, SmileiMPI* smpi, int ithread, double species_mass, int* iold2, int ipart_ref)
-void Projector3D4OrderV::susceptibility(ElectroMagn* EMfields, Particles &particles, double species_mass, SmileiMPI* smpi, int istart, int iend,  int ithread, int scell, std::vector<unsigned int> &b_dim, int ipart_ref)
+void Projector3D4OrderV::susceptibility(ElectroMagn* EMfields, Particles &particles, double species_mass, SmileiMPI* smpi, int istart, int iend,  int ithread, int scell, int ipart_ref)
 {
     ERROR("Projection and interpolation for the envelope model are implemented only for interpolation_order = 2");
 }

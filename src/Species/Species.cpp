@@ -1779,7 +1779,7 @@ void Species::ponderomotive_update_susceptibility_and_momentum(double time_dual,
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
-            Proj->susceptibility(EMfields, *particles, mass, smpi, first_index[ibin], last_index[ibin], ithread, 0, b_dim );
+            Proj->susceptibility(EMfields, *particles, mass, smpi, first_index[ibin], last_index[ibin], ithread, 0);
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[8] += MPI_Wtime() - timer;
 #endif
@@ -1844,7 +1844,7 @@ void Species::ponderomotive_project_susceptibility(double time_dual, unsigned in
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
-            Proj->susceptibility(EMfields, *particles, mass, smpi, first_index[ibin], last_index[ibin], ithread, 0, b_dim );
+            Proj->susceptibility(EMfields, *particles, mass, smpi, first_index[ibin], last_index[ibin], ithread, 0);
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[8] += MPI_Wtime() - timer;
 #endif

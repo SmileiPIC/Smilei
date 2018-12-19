@@ -740,7 +740,7 @@ void SpeciesV::ponderomotive_update_susceptibility_and_momentum(double time_dual
             timer = MPI_Wtime();
 #endif
             for (unsigned int scell = 0 ; scell < packsize_ ; scell++)
-                Proj->susceptibility( EMfields, *particles, mass, smpi, first_index[ipack*packsize_+scell], last_index[ipack*packsize_+scell], ithread, ipack*packsize_+scell, b_dim, first_index[ipack*packsize_] );
+                Proj->susceptibility( EMfields, *particles, mass, smpi, first_index[ipack*packsize_+scell], last_index[ipack*packsize_+scell], ithread, ipack*packsize_+scell, first_index[ipack*packsize_] );
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[8] += MPI_Wtime() - timer;
@@ -829,7 +829,7 @@ void SpeciesV::ponderomotive_project_susceptibility(double time_dual, unsigned i
             timer = MPI_Wtime();
 #endif
             for (unsigned int scell = 0 ; scell < packsize_ ; scell++)
-                Proj->susceptibility( EMfields, *particles, mass, smpi, first_index[ipack*packsize_+scell], last_index[ipack*packsize_+scell], ithread, ipack*packsize_+scell, b_dim, first_index[ipack*packsize_] );
+                Proj->susceptibility( EMfields, *particles, mass, smpi, first_index[ipack*packsize_+scell], last_index[ipack*packsize_+scell], ithread, ipack*packsize_+scell, first_index[ipack*packsize_] );
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[8] += MPI_Wtime() - timer;
