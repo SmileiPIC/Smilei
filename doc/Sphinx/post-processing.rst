@@ -350,6 +350,7 @@ In the latter case, ``patch_information = True`` has to be put in the namelist.
   * ``timer_syncDens``             : time spent synchronzing densities by each proc
   * ``timer_diags``                : time spent by each proc calculating and writing diagnostics
   * ``timer_total``                : the sum of all timers above (except timer_global)
+  * ``memory_total``               : the total memory used by the process
 
 **Available quantities at the patch level**:
   * ``mpi_rank``                   : the MPI rank that contains the current patch
