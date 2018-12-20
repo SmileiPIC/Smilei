@@ -37,13 +37,14 @@ def _smilei_check():
             "DiagProbe","DiagParticleBinning", "DiagScalar","DiagFields",
             "DiagTrackParticles","DiagPerformances","ExternalField",
             "SmileiSingleton","Main","Checkpoints","LoadBalancing","MovingWindow",
-            "RadiationReaction", "ParticleData", "MultiphotonBreitWheeler"]:
+            "RadiationReaction", "ParticleData", "MultiphotonBreitWheeler",
+            "Vectorization"]:
         CheckClass = globals()[CheckClassName]
         try:
             if not CheckClass._verify: raise Exception("")
         except:
             raise Exception("ERROR in the namelist: it seems that the name `"+CheckClassName+"` has been overriden")
-    
+
     # Checkpoint: Verify the restart_dir and find possible restart file for each rank
     if len(Checkpoints)==1:
         if len(Checkpoints.restart_files) == 0 :
@@ -55,24 +56,24 @@ def _smilei_check():
                 my_pattern += "dump-*-*.h5";
                 # pick those file that match the mpi rank
                 my_files = filter(lambda a: smilei_mpi_rank==int(re.search(r'dump-[0-9]*-([0-9]*).h5$',a).groups()[-1]),glob.glob(my_pattern))
-                
+
                 if Checkpoints.restart_number:
                     # pick those file that match the restart_number
                     my_files = filter(lambda a: Checkpoints.restart_number==int(re.search(r'dump-([0-9]*)-[0-9]*.h5$',a).groups()[-1]),my_files)
-                
+
                 Checkpoints.restart_files = list(my_files)
-                
+
                 if not len(Checkpoints.restart_files):
                     raise Exception(
-                    "ERROR in the namelist: cannot find valid restart files for processor "+str(smilei_mpi_rank) + 
-                    "\n\t\trestart_dir = '" + Checkpoints.restart_dir + 
-                    "'\n\t\trestart_number = " + str(Checkpoints.restart_number) + 
+                    "ERROR in the namelist: cannot find valid restart files for processor "+str(smilei_mpi_rank) +
+                    "\n\t\trestart_dir = '" + Checkpoints.restart_dir +
+                    "'\n\t\trestart_number = " + str(Checkpoints.restart_number) +
                     "\n\t\tmatching pattern: '" + my_pattern + "'" )
-        
+
         else :
             if Checkpoints.restart_dir:
                 raise Exception("restart_dir and restart_files are both not empty")
-    
+
     # Verify that constant() and tconstant() were not redefined
     if not hasattr(constant, "_reserved") or not hasattr(tconstant, "_reserved"):
         raise Exception("Names `constant` and `tconstant` cannot be overriden")
@@ -102,7 +103,7 @@ def _smilei_check():
         l.time_envelope   = toTimeProfile( l.time_envelope )
         l.space_envelope  = [ toSpaceProfile(p) for p in l.space_envelope ]
         l.phase           = [ toSpaceProfile(p) for p in l.phase          ]
-
+    
 # this function will be called after initialising the simulation, just before entering the time loop
 # if it returns false, the code will call a Py_Finalize();
 def _keep_python_running():
@@ -113,6 +114,8 @@ def _keep_python_running():
         profiles += [las.chirp_profile]
         if type(las.space_time_profile) is list:
             profiles += las.space_time_profile
+        if hasattr(las, "_extra_envelope"):
+            profiles += [las._extra_envelope]
     profiles += [ant.time_profile for ant in Antenna]
     if len(MovingWindow)>0 or len(LoadBalancing)>0:
         for s in Species:

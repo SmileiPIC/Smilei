@@ -59,7 +59,7 @@ for path in ["beam_relaxation1","beam_relaxation2","beam_relaxation3"]:
 			ax.set_ylim(ymax=1e24)
 			fig.canvas.draw()
 	
-	times *= 3.33*dt # fs
+	times = times * 3.33*dt # fs
 	
 	# NRL relaxation	
 	v = velocity_electron

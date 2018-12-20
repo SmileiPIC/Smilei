@@ -6,8 +6,8 @@ Contributions to the development of :program:`Smilei` are welcome.
 To report bugs, please create an issue on the
 `GitHub website <https://github.com/SmileiPIC/Smilei/issues/new>`_.
 
-To develop new features in :program:`Smilei`, you may freely *fork*
-the source code from the `GitHub website <https://github.com/SmileiPIC/Smilei>`_. When
+To develop new features, you may freely *fork*
+the source code from the same website. When
 your modifications to the code are ready, you can make a `pull request
 <https://github.com/SmileiPIC/Smilei/pulls>`_ for review and
 merge with the main repository.
@@ -106,7 +106,7 @@ Usage:
   * Option ``-g``: Generation of references only (no validation)
   * Option ``-s``: Plot differences with references only (no validation)
   * Option ``-c``: Compilation only (no run, no validation)
-  * Option ``-r <nRestarts>``: Force the simulation to be broken in several restarts.
+  * Option ``-r <nRrestarts>``: Force the simulation to be broken in several restarts.
   * Option ``-v``: Verbose
   * Option ``-h``: Help
 

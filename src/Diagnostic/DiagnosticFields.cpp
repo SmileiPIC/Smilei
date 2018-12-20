@@ -9,6 +9,7 @@ using namespace std;
 DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, int ndiag, OpenPMDparams& oPMD ):
     Diagnostic(oPMD)
 {
+    //MESSAGE("Starting diag field creation " );
     fileId_ = 0;
     data_group_id = 0;
     tmp_dset_id = 0;
@@ -40,30 +41,24 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
     fields_indexes.resize(0);
     fields_names  .resize(0);
     hasRhoJs = false;
+    //MESSAGE("HNA");
     // Loop fields
-    for( unsigned int i=0; i<vecPatches(0)->EMfields->allFields.size(); i++ ) {
-        string field_name = vecPatches(0)->EMfields->allFields[i]->name;
-        bool RhoJ = field_name.at(0)=='J' || field_name.at(0)=='R';
-        bool species_field = (field_name.at(0)=='J' && field_name.length()>2) || (field_name.at(0)=='R' && field_name.length()>3);
+    for( unsigned int i=0; i<vecPatches.emfields(0)->allFields.size(); i++ ) {
+        string field_name = vecPatches.emfields(0)->allFields[i]->name;
+        
         // If field in list of fields to dump, then add it
         if( hasField(field_name, fieldsToDump) ) {
             ss << field_name << " ";
             fields_indexes.push_back( i );
             fields_names  .push_back( field_name );
-            if( RhoJ ) hasRhoJs = true;
+            if( field_name.at(0)=='J' || field_name.at(0)=='R' )
+                hasRhoJs = true;
             // If field specific to a species, then allocate it
-            if( species_field ) {
-                for (unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++) {
-                    Field * field = vecPatches(ipatch)->EMfields->allFields[i];
-                    if( field->data_ != NULL ) continue;
-                    if     ( field_name.substr(0,2)=="Jx" ) field->allocateDims(0,false);
-                    else if( field_name.substr(0,2)=="Jy" ) field->allocateDims(1,false);
-                    else if( field_name.substr(0,2)=="Jz" ) field->allocateDims(2,false);
-                    else if( field_name.substr(0,2)=="Rh" ) field->allocateDims();
-                }
-            }
+            if( params.isSpeciesField(field_name) )
+                vecPatches.allocateField(i, params);
         }
     }
+    //MESSAGE("possible bug");
     
     // Extract subgrid info
     PyObject* subgrid = PyTools::extract_py("subgrid", "DiagFields", ndiag);
@@ -78,6 +73,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
         for( Py_ssize_t is=0; is<ns; is++ )
             subgrids.push_back( PySequence_Fast_GET_ITEM(subgrid, is) );
     }
+    Py_DECREF(subgrid);
     // Verify the number of subgrids
     unsigned int nsubgrid = subgrids.size();
     if( nsubgrid != params.nDim_field ) {
@@ -149,6 +145,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
     // Prepare the property list for HDF5 output
     write_plist = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(write_plist, H5FD_MPIO_COLLECTIVE);
+    dcreate = H5Pcreate(H5P_DATASET_CREATE);
     
     // Prepare some openPMD parameters
     field_type.resize( fields_names.size() );
@@ -168,6 +165,7 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
 DiagnosticFields::~DiagnosticFields()
 {
     H5Pclose( write_plist );
+    H5Pclose( dcreate );
     
     delete timeSelection;
     delete flush_timeSelection;
@@ -310,9 +308,7 @@ void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime,
         #pragma omp master
         {
             // Create field dataset in HDF5
-            hid_t plist_id = H5Pcreate(H5P_DATASET_CREATE);
-            hid_t dset_id  = H5Dcreate( iteration_group_id, fields_names[ifield].c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT);
-            H5Pclose(plist_id);
+            hid_t dset_id  = H5Dcreate( iteration_group_id, fields_names[ifield].c_str(), H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, dcreate, H5P_DEFAULT);
             
             // Write
             writeField(dset_id, itime);
@@ -412,4 +408,3 @@ void DiagnosticFields::findSubgridIntersection(
         }
     }
 }
-

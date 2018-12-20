@@ -1,18 +1,21 @@
 
 import happi
-execfile("resparis.py")
+try:
+	execfile("resparis.py")
+except:
+	exec(open("resparis.py").read(), globals(), locals())
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.special import erf as erf
 plt.ion()
 
-v0  = { "conductivity1":[-0.00033 ,-0.000185,-0.00011 ],
-        "conductivity2":[-0.000088,-0.000108,-0.000135],
-        "conductivity3":[-0.00023  ,-0.0007            ]}
+v0  = { "conductivity1":[-0.00033 ,-0.000195,-0.00012 ],
+        "conductivity2":[-0.00088,-0.00108,-0.00145],
+        "conductivity3":[-0.0023  ,-0.005            ]}
 
-dv0 = { "conductivity1":[0.000018,0.       , 0        ],
-        "conductivity2":[-0.00001,-0.000015,-0.00002  ],
-        "conductivity3":[-0.00003,-0.00001           ]}
+dv0 = { "conductivity1":[0.000017,0.0000000, 0        ],
+        "conductivity2":[-0.0001,-0.00015,-0.0002  ],
+        "conductivity3":[-0.0005,-0.0016           ]}
 
 style = { "conductivity1": 'b', "conductivity2":'g', "conductivity3":'r' }
 
@@ -22,17 +25,19 @@ density = []
 
 for path in ["conductivity1","conductivity2","conductivity3"]:
 
-	sim = happi.Open(path)
+	S = happi.Open(path)
 
 	ncases = 0
-	while sim.namelist.DiagParticleBinning[ncases].deposited_quantity == "weight_charge_vx":
-		ncases += 1
+	for d in S.namelist.DiagParticleBinning:
+		if d.deposited_quantity == "weight_charge_vx":
+			ncases += 1
 	if ncases == 0: continue
-
-	coulomb_log          = np.double(sim.namelist.Collisions[0].coulomb_log)
-	dt                   = np.double(sim.namelist.Main.timestep)/(2*np.pi)
 	
-	times = np.double(sim.ParticleBinning(diagNumber=0).getAvailableTimesteps())
+	print("simulation "+path+" has %d cases"%ncases)
+	coulomb_log          = np.double(S.namelist.Collisions[0].coulomb_log)
+	dt                   = np.double(S.namelist.Main.timestep)/(2*np.pi)
+	
+	times = np.double(S.ParticleBinning(0).getAvailableTimesteps())
 	
 	vx_mean = np.zeros((ncases,len(times)))
 	
@@ -41,12 +46,12 @@ for path in ["conductivity1","conductivity2","conductivity3"]:
 	if fig: fig.clf()
 	if fig: ax = fig.add_subplot(1,1,1)
 	for k in range(ncases):
-		evx_density = -np.array(sim.ParticleBinning(k).getData())
-		edensity = np.array(sim.ParticleBinning(k+ncases).getData())
+		evx_density = -np.array(S.ParticleBinning(k*2).getData())
+		edensity = np.array(S.ParticleBinning(k*2+1).getData())
 		vx_mean[k,:] = evx_density/edensity
 	
 	
-	times *= 3.33*dt # fs
+	times = times * 3.33*dt # fs
 	
 	fig = plt.figure(2)
 	#fig.clf()
@@ -60,8 +65,8 @@ for path in ["conductivity1","conductivity2","conductivity3"]:
 		ax.plot(times, v0[path][k]+times*dv0[path][k], "--"+style[path])
 		
 		velocity.append(v0[path][k])
-		temperature.append( np.double(sim.namelist.Species["electron"+str(k+1)].temperature))
-		density    .append( np.double(sim.namelist.Species["electron"+str(k+1)].charge_density(20*(2*np.pi))))
+		temperature.append( np.double(S.namelist.Species["electron"+str(k+1)].temperature))
+		density    .append( np.double(S.namelist.Species["electron"+str(k+1)].charge_density(20*(2*np.pi))))
 	
 	ax.set_xlabel('time in fs')
 	ax.set_ylabel('$v_x / c$')
@@ -74,10 +79,11 @@ for path in ["conductivity1","conductivity2","conductivity3"]:
 velocity    = np.double(velocity)
 temperature = np.double(temperature)
 density     = np.double(density)
+Ex          = np.array([0.001, 0.001, 0.001, 0.01, 0.01, 0.01, 0.01, 0.01])
 
 # Simulation results
 coeff = 1.66782e4 # e0*(2*pi*c/(1um)) in S/m
-conductivity = (-density*velocity/0.001) * coeff
+conductivity = (-density*velocity/Ex) * coeff
 
 # Lee-More theory
 t = np.logspace(-3,0,1000)

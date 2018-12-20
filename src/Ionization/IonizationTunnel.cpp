@@ -47,7 +47,7 @@ IonizationTunnel::IonizationTunnel(Params& params, Species * species) : Ionizati
 
 
 
-void IonizationTunnel::operator() (Particles* particles, unsigned int ipart_min, unsigned int ipart_max, vector<double> *Epart, ElectroMagn* EMfields, Projector* Proj) {
+void IonizationTunnel::operator() (Particles* particles, unsigned int ipart_min, unsigned int ipart_max, vector<double> *Epart, Patch* patch, Projector* Proj, int ipart_ref) {
     
     unsigned int Z, Zp1, newZ, k_times;
     double TotalIonizPot, E, invE, factorJion, delta, ran_p, Mult, D_sum, P_sum, Pint_tunnel;
@@ -55,7 +55,7 @@ void IonizationTunnel::operator() (Particles* particles, unsigned int ipart_min,
     LocalFields Jion;
     double factorJion_0 = au_to_mec2 * EC_to_au*EC_to_au * invdt;
     
-    int nparts = particles->size();
+    int nparts = Epart->size()/3;
     double* Ex = &( (*Epart)[0*nparts] );
     double* Ey = &( (*Epart)[1*nparts] );
     double* Ez = &( (*Epart)[2*nparts] );
@@ -69,9 +69,9 @@ void IonizationTunnel::operator() (Particles* particles, unsigned int ipart_min,
         if (Z==atomic_number_) continue;
         
         // Absolute value of the electric field normalized in atomic units
-        E = EC_to_au * sqrt( pow(*(Ex+ipart),2)
-                            +pow(*(Ey+ipart),2) 
-                            +pow(*(Ez+ipart),2) );
+        E = EC_to_au * sqrt( pow(*(Ex+ipart-ipart_ref),2)
+                            +pow(*(Ey+ipart-ipart_ref),2)
+                            +pow(*(Ez+ipart-ipart_ref),2) );
         if (E<1e-10) continue;
         
         // --------------------------------
@@ -81,7 +81,7 @@ void IonizationTunnel::operator() (Particles* particles, unsigned int ipart_min,
         invE = 1./E;
         factorJion = factorJion_0 * invE*invE;
         delta      = gamma_tunnel[Z]*invE;
-        ran_p = Rand::uniform();
+        ran_p = patch->xorshift32() * patch->xorshift32_invmax;
         IonizRate_tunnel[Z] = beta_tunnel[Z] * exp( -delta*one_third + alpha_tunnel[Z]*log(delta));
         
         // Total ionization potential (used to compute the ionization current)
@@ -144,7 +144,7 @@ void IonizationTunnel::operator() (Particles* particles, unsigned int ipart_min,
         Jion.y = factorJion * *(Ey+ipart);
         Jion.z = factorJion * *(Ez+ipart);
         
-        (*Proj)(EMfields->Jx_, EMfields->Jy_, EMfields->Jz_, *particles, ipart, Jion);
+        Proj->ionizationCurrents(patch->EMfields->Jx_, patch->EMfields->Jy_, patch->EMfields->Jz_, *particles, ipart, Jion);
         
         // Creation of the new electrons
         // (variable weights are used)

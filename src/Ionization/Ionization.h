@@ -5,6 +5,7 @@
 
 #include "Tools.h"
 #include "Params.h"
+#include "Patch.h"
 #include "Field.h"
 #include "Particles.h"
 #include "Projector.h"
@@ -20,7 +21,7 @@ public:
     virtual ~Ionization();
     
     //! Overloading of () operator
-    virtual void operator() (Particles*, unsigned int, unsigned int, std::vector<double>*, ElectroMagn*, Projector*) {};
+    virtual void operator() (Particles*, unsigned int, unsigned int, std::vector<double>*, Patch*, Projector*, int ipart_ref = 0) {};
     
     Particles new_electrons;
 

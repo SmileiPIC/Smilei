@@ -20,6 +20,7 @@ class Patch;
 class SimWindow;
 class ElectroMagn;
 class Field;
+class cField;
 class Species;
 class VectorPatch;
 
@@ -44,6 +45,7 @@ public:
     
     //! restart field per proc
     void restartFieldsPerProc(hid_t fid, Field* field);
+    void restart_cFieldsPerProc(hid_t fid, Field* field);
     
     //! load moving window parameters
     void restartMovingWindow(hid_t fid, SimWindow* simWindow);
@@ -55,7 +57,7 @@ public:
     
     //! dump everything to file per processor
     void dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMPI* smpi, SimWindow* simWin, Params &params );
-    void dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpecies, hid_t patch_gid );
+    void dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpecies, Params& params, hid_t patch_gid );
     
     //! incremental number of times we've done a dump
     unsigned int dump_number;
@@ -98,6 +100,7 @@ private:
     
     //! dump field per proc
     void dumpFieldsPerProc(hid_t fid, Field* field);
+    void dump_cFieldsPerProc(hid_t fid, Field* field);
     
     //! dump moving window parameters
     void dumpMovingWindow(hid_t fid, SimWindow* simWindow);

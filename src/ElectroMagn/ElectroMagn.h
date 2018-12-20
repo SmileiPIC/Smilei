@@ -19,7 +19,14 @@ class SimWindow;
 class Patch;
 class Solver;
 class DomainDecomposition;
+class LaserEnvelope;
 
+
+inline std::string LowerCase(std::string in){
+    std::string out=in;
+    std::transform(out.begin(), out.end(), out.begin(), ::tolower);
+    return out;
+}
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! This structure contains the properties of each ExtField
@@ -58,7 +65,7 @@ public:
     ElectroMagn( ElectroMagn* emFields, Params &params, Patch* patch );
     void initElectroMagnQuantities();
     //! Extra initialization. Used in ElectroMagnFactory
-    void finishInitialization(int nspecies, Patch* patch);
+    virtual void finishInitialization(int nspecies, Patch* patch);
     
     //! Destructor for Electromagn
     virtual ~ElectroMagn();
@@ -78,8 +85,6 @@ public:
     
     //! cell length (from Params)
     const std::vector<double> cell_length;
-    
-    //! \todo Generalise this to none-cartersian geometry (e.g rz, MG & JD)
     
     //! x-component of the electric field
     Field* Ex_;
@@ -148,6 +153,17 @@ public:
     Field* rho_pxr;
     Field* rhoold_pxr;
 
+    //! Laser envelope
+    LaserEnvelope* envelope;
+
+    //! Envelope of the laser vector potential component along the polarization direction, absolute value
+    Field* Env_A_abs_;
+
+    //! Chi field (i.e. susceptibility) for envelope equation 
+    Field* Env_Chi_;
+
+    //! Envelope of laser electric field along the polarization direction, absolute value
+    Field* Env_E_abs_;
     
     //! Vector of electric fields used when a filter is applied
     std::vector<Field*> Exfilter;
@@ -172,6 +188,9 @@ public:
     std::vector<Field*> Jy_s;
     std::vector<Field*> Jz_s;
     std::vector<Field*> rho_s;
+
+    // vector of susceptibility for each species
+    std::vector<Field*> Env_Chi_s;
     
     //! Creates a new field with the right characteristics, depending on the name
     virtual Field * createField(std::string fieldname) = 0;
@@ -200,16 +219,22 @@ public:
     //! Constructor for Electromagn
     ElectroMagn( Params &params, Patch* patch );
     
-    //! Method used to dump data contained in ElectroMagn
-    void dump();
-    
     //! Method used to initialize the total charge currents and densities
-    void restartRhoJ();
+    virtual void restartRhoJ();
     //! Method used to initialize the total charge currents and densities of species
-    void restartRhoJs();
+    virtual void restartRhoJs();
+
+    //! Method used to initialize the total susceptibility
+    virtual void restartEnvChi();
+    //! Method used to initialize the total susceptibility of species
+    virtual void restartEnvChis();
+
     
     //! Method used to sum all species densities and currents to compute the total charge density and currents
     virtual void computeTotalRhoJ() = 0;
+
+    //! Method used to sum all species susceptibility to compute the total susceptibility
+    virtual void computeTotalEnvChi() = 0;
     
     virtual void initPoisson(Patch *patch) = 0;
     virtual double compute_r() = 0;
@@ -281,7 +306,7 @@ public:
     std::vector<double> poynting_inst[2];
     
     //! Compute local square norm of charge denisty is not null
-    inline double computeRhoNorm2() {
+    virtual double computeRhoNorm2() {
         return rho_->norm2(istart, bufsize);
     }
 
@@ -315,7 +340,7 @@ public:
     std::vector<ExtField> extFields;
     
     //! Method used to impose external fields (apply to all Fields)
-    void applyExternalFields(Patch*);
+    virtual void applyExternalFields(Patch*);
     void saveExternalFields(Patch*);
     
     //! Method used to impose external fields (apply to a given Field)
@@ -345,11 +370,15 @@ public:
     inline int getMemFootPrint() {
     
         int emSize = 9+4; // 3 x (E, B, Bm) + 3 x J, rho
+
+        if(Env_Chi_) emSize += 3; //Env_Chi, Env_A_abs, Env_E_abs;
+
         for (unsigned int ispec=0 ; ispec<Jx_s.size() ; ispec++) {
             if (Jx_s [ispec]) emSize++;
             if (Jy_s [ispec]) emSize++;
             if (Jz_s [ispec]) emSize++;
             if (rho_s [ispec]) emSize++;
+            if (Env_Chi_s [ispec]) emSize++;
         }
 
         for ( unsigned int idiag = 0 ; idiag < allFields_avg.size() ; idiag++)
@@ -378,7 +407,6 @@ public:
 
 protected :
     bool is_pxr;
-    
     
 private:
     

@@ -10,18 +10,18 @@ class TrackParticles(Diagnostic):
 		if species is None:
 			species = self.getTrackSpecies()
 			if len(species)>0:
-				self._error += "Printing available tracked species:\n"
-				self._error += "-----------------------------------\n"
-				self._error += "\n".join(species)
+				self._error += ["Printing available tracked species:"]
+				self._error += ["-----------------------------------"]
+				self._error += ["\n".join(species)]
 			else:
-				self._error = "No tracked particles files found"
+				self._error += ["No tracked particles files found"]
 			return
 
 		if sort not in [True, False]:
-			self._error += "Argument `sort` must be `True` or `False`\n"
+			self._error += ["Argument `sort` must be `True` or `False`"]
 			return
 		if not sort and select!="":
-			self._error += "Cannot select particles if not sorted\n"
+			self._error += ["Cannot select particles if not sorted"]
 			return
 		self._sort = sort
 
@@ -36,20 +36,11 @@ class TrackParticles(Diagnostic):
 		if sort:
 			# If the first path does not contain the ordered file (or it is incomplete), we must create it
 			orderedfile = self._results_path[0]+self._os.sep+"TrackParticles_"+species+".h5"
-			needsOrdering = False
-			if not self._os.path.isfile(orderedfile):
-				needsOrdering = True
-			else:
-				try:
-					f = self._h5py.File(orderedfile)
-					if "finished_ordering" not in f.attrs.keys():
-						needsOrdering = True
-				except:
-					self._os.remove(orderedfile)
-					needsOrdering = True
-			if needsOrdering:
+			if self._needsOrdering(orderedfile):
 				disorderedfiles = self._findDisorderedFiles()
 				self._orderFiles(disorderedfiles, orderedfile, chunksize)
+				if self._needsOrdering(orderedfile):
+					return
 			# Create arrays to store h5 items
 			f = self._h5py.File(orderedfile)
 			for prop in ["Id", "x", "y", "z", "px", "py", "pz", "q", "w", "chi",
@@ -85,7 +76,7 @@ class TrackParticles(Diagnostic):
 
 		# Get available times in the hdf5 file
 		if self._timesteps.size == 0:
-			self._error = "No tracked particles found"
+			self._error += ["No tracked particles found"]
 			return
 		# If specific timesteps requested, narrow the selection
 		if timesteps is not None:
@@ -100,11 +91,11 @@ class TrackParticles(Diagnostic):
 				else:
 					raise
 			except:
-				self._error = "Argument `timesteps` must be one or two non-negative integers"
+				self._error += ["Argument `timesteps` must be one or two non-negative integers"]
 				return
 		# Need at least one timestep
 		if self._timesteps.size < 1:
-			self._error = "Timesteps not found"
+			self._error += ["Timesteps not found"]
 			return
 
 		# Select particles
@@ -228,7 +219,7 @@ class TrackParticles(Diagnostic):
 					IDs = f["unique_Ids"] # get all available IDs
 					self.selectedParticles = self._np.flatnonzero(self._np.in1d(IDs, select)) # find the requested IDs
 				except:
-					self._error = "Error: argument 'select' must be a string or a list of particle IDs"
+					self._error += ["Error: argument 'select' must be a string or a list of particle IDs"]
 					return
 
 			# Remove particles that are not actually tracked during the requested timesteps
@@ -245,22 +236,22 @@ class TrackParticles(Diagnostic):
 			else:
 				self.nselectedParticles = len(self.selectedParticles)
 			if self.nselectedParticles == 0:
-				self._error = "No particles found"
+				self._error += ["No particles found"]
 				return
 			if self._verbose: print("Kept "+str(self.nselectedParticles)+" particles")
 
 		# Manage axes
 		# -------------------------------------------------------------------
 		if type(axes) is not list:
-			self._error = "Error: Argument 'axes' must be a list"
+			self._error += ["Error: Argument 'axes' must be a list"]
 			return
 		# if axes provided, verify them
 		if len(axes)>0:
 			self.axes = axes
 			for axis in axes:
 				if axis not in self.available_properties:
-					self._error += "Error: Argument 'axes' has item '"+str(axis)+"' unknown.\n"
-					self._error += "       Available axes are: "+(", ".join(sorted(self.available_properties)))
+					self._error += ["Error: Argument 'axes' has item '"+str(axis)+"' unknown."]
+					self._error += ["       Available axes are: "+(", ".join(sorted(self.available_properties)))]
 					return
 		# otherwise use default
 		else:
@@ -280,7 +271,7 @@ class TrackParticles(Diagnostic):
 					axisunits = "P_r"
 					self._centers.append( [-1., 1.] )
 				elif axis == "w":
-					axisunits = "N_r"
+					axisunits = "N_r * L_r^%i" % self._ndim
 					self._centers.append( [0., 1.] )
 				elif axis == "q":
 					axisunits = "Q_r"
@@ -315,6 +306,21 @@ class TrackParticles(Diagnostic):
 		self.valid = True
 		return kwargs
 
+	def _needsOrdering(self, orderedfile):
+		if not self._os.path.isfile(orderedfile):
+			return True
+		else:
+			try:
+				f = self._h5py.File(orderedfile)
+				if "finished_ordering" not in f.attrs.keys():
+					return True
+			except:
+				self._os.remove(orderedfile)
+				return True
+			finally:
+				f.close()
+		return False
+
 	# Method to get info
 	def _info(self):
 		info = "Track particles: species '"+self.species+"'"
@@ -343,7 +349,7 @@ class TrackParticles(Diagnostic):
 		for path in self._results_path:
 			file = path+self._os.sep+"TrackParticlesDisordered_"+self.species+".h5"
 			if not self._os.path.isfile(file):
-				self._error = "Missing TrackParticles file in directory "+path
+				self._error += ["Missing TrackParticles file in directory "+path]
 				return
 			disorderedfiles += [file]
 		return disorderedfiles
@@ -361,12 +367,19 @@ class TrackParticles(Diagnostic):
 			# Obtain the list of all times in all disordered files
 			time_locations = {}
 			for fileIndex, fileD in enumerate(filesDisordered):
-				f = self._h5py.File(fileD, "r")
+				try:
+					f = self._h5py.File(fileD, "r")
+				except:
+					self._error += ["\tWarning: file cannot be opened: "+fileD]
+					continue
 				for t in f["data"].keys():
 					try   : time_locations[int(t)] = (fileIndex, t)
 					except: pass
 				f.close()
 			times = sorted(time_locations.keys())
+			if len(times) == 0:
+				self._error += ["Error: no times found"]
+				return
 			# Open the last file and get the number of particles from each MPI
 			last_file_index, tname = time_locations[times[-1]]
 			f = self._h5py.File(filesDisordered[last_file_index], "r")

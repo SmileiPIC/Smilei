@@ -31,10 +31,14 @@ protected:
     int i_domain_begin;
     int j_domain_begin;
     int k_domain_begin;
+    int nscelly;
+    int nscellz;
     int nprimy;
     int nprimz;
     int oversize[3];
     double dq_inv[3];
+    double *Jx_, *Jy_, *Jz_, *rho_;
+    static constexpr double one_third = 1./3.;
 };
 
 #endif

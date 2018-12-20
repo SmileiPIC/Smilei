@@ -442,11 +442,11 @@ double userFunctions::chebychev_eval(const double * c, const int m,
 //! \param xmax maximum integration boundary
 //! \param x array of abscissa
 //! \param w array of weight for integration
-//! \param nbit number of iteration for integration (array size)
+//! \param nb_iterations number of iteration for integration (array size)
 //! \param eps accuracy threshold for coef computation
 // ----------------------------------------------------------------------------
 void userFunctions::gauss_legendre_coef(double xmin,double xmax, double * x,
-        double * w, int nbit, double eps)
+        double * w, int nb_iterations, double eps)
 {
 
     //std::cout << "userFunctions::gauss_legendre_coef" << std::endl;
@@ -455,7 +455,7 @@ void userFunctions::gauss_legendre_coef(double xmin,double xmax, double * x,
     double z1,z,xm,xl,pp,p3,p2,p1;
 
     // Checks
-    if (nbit <= 0)
+    if (nb_iterations <= 0)
     {
         ERROR("Number of iteration <= 0 in gauss_legendre_coef");
     }
@@ -468,17 +468,17 @@ void userFunctions::gauss_legendre_coef(double xmin,double xmax, double * x,
         ERROR("accuracy threshold epsilon <= 0 in gauss_legendre_coef");
     }
     // The roots are symmetric, so we only find half of them.
-    m=(nbit+1)/2;
+    m=(nb_iterations+1)/2;
     xm=0.5*(xmin+xmax);
     xl=0.5*(xmax-xmin);
     for (i=0;i<=m-1;i++) { /* Loop over the desired roots. */
-        z=cos(M_PI*(i+1.0-0.25)/(nbit+0.5));
+        z=cos(M_PI*(i+1.0-0.25)/(nb_iterations+0.5));
         /* Starting with the above approximation to the ith root, we enter */
         /* the main loop of refinement by Newton's method.                 */
         do {
             p1=1.0;
             p2=0.0;
-            for (j=1;j<=nbit;j++) { /* Recurrence to get Legendre polynomial. */
+            for (j=1;j<=nb_iterations;j++) { /* Recurrence to get Legendre polynomial. */
                 p3=p2;
                 p2=p1;
                 p1=((2.0*j-1.0)*z*p2-(j-1.0)*p3)/j;
@@ -486,15 +486,15 @@ void userFunctions::gauss_legendre_coef(double xmin,double xmax, double * x,
             // p1 is now the desired Legendre polynomial. We next compute
             // pp, its derivative, by a standard relation involving also
             // p2, the polynomial of one lower order.
-            pp=nbit*(z*p1-p2)/(z*z-1.0);
+            pp=nb_iterations*(z*p1-p2)/(z*z-1.0);
             z1=z;
             z=z1-p1/pp; /* Newton's method. */
         } while (fabs(z-z1) > eps);
         x[i]=xm-xl*z;      /* Scale the root to the desired interval, */
-        x[nbit-1-i]=xm+xl*z;  /* and put in its symmetric counterpart.   */
+        x[nb_iterations-1-i]=xm+xl*z;  /* and put in its symmetric counterpart.   */
         w[i]=2.0*xl/((1.0-z*z)*pp*pp); /* Compute the weight             */
-        w[nbit-1-i]=w[i];                 /* and its symmetric counterpart. */
-        //std::cout << x[i] << " " << w[i] << " " << x[nbit-1-i]<< std::endl;
+        w[nb_iterations-1-i]=w[i];                 /* and its symmetric counterpart. */
+        //std::cout << x[i] << " " << w[i] << " " << x[nb_iterations-1-i]<< std::endl;
     }
     //std::cout << "leaving userFunctions::gauss_legendre_coef" << std::endl;
 }

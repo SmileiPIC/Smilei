@@ -50,7 +50,7 @@ class RadiationCorrLandauLifshitz : public Radiation {
                 RadiationTables &RadiationTables,
                 int istart,
                 int iend,
-                int ithread);
+                int ithread, int ipart_ref = 0);
 
     protected:
 
@@ -58,7 +58,7 @@ class RadiationCorrLandauLifshitz : public Radiation {
         // General parameters
 
         //! Under this value, no radiation loss
-        const double chipa_radiation_threshold = 1e-5;
+        const double minimum_chi_continuous_ = 1e-5;
 
     private:
 

@@ -37,25 +37,25 @@ public:
             if ( deposited_quantity == "user_function" ) {
                 ERROR(deposited_quantityPrefix << " = " << deposited_quantity <<" not understood");
             } else if (deposited_quantity == "weight"        ) {
-                histogram = new Histogram_density        ();
+                histogram = new Histogram_number ();
             } else if (deposited_quantity == "weight_charge" ) {
-                histogram = new Histogram_charge_density ();
+                histogram = new Histogram_charge ();
             } else if (deposited_quantity == "weight_charge_vx" ) {
-                histogram = new Histogram_jx_density     ();
+                histogram = new Histogram_jx     ();
             } else if (deposited_quantity == "weight_charge_vy" ) {
-                histogram = new Histogram_jy_density     ();
+                histogram = new Histogram_jy     ();
             } else if (deposited_quantity == "weight_charge_vz" ) {
-                histogram = new Histogram_jz_density     ();
+                histogram = new Histogram_jz     ();
             } else if (deposited_quantity == "weight_ekin"   ) {
-                histogram = new Histogram_ekin_density   ();
+                histogram = new Histogram_ekin   ();
             } else if (deposited_quantity == "weight_p"      ) {
-                histogram = new Histogram_p_density      ();
+                histogram = new Histogram_p      ();
             } else if (deposited_quantity == "weight_px"     ) {
-                histogram = new Histogram_px_density     ();
+                histogram = new Histogram_px     ();
             } else if (deposited_quantity == "weight_py"     ) {
-                histogram = new Histogram_py_density     ();
+                histogram = new Histogram_py     ();
             } else if (deposited_quantity == "weight_pz"     ) {
-                histogram = new Histogram_pz_density     ();
+                histogram = new Histogram_pz     ();
             } else if (deposited_quantity == "weight_vx_px"    ) {
                 histogram = new Histogram_pressure_xx    ();
             } else if (deposited_quantity == "weight_vy_py"    ) {
@@ -69,13 +69,14 @@ public:
             } else if (deposited_quantity == "weight_vy_pz"    ) {
                 histogram = new Histogram_pressure_yz    ();
             } else if (deposited_quantity == "weight_ekin_vx") {
-                histogram = new Histogram_ekin_vx_density();
+                histogram = new Histogram_ekin_vx();
             } else if (deposited_quantity == "weight_chi" ) {
-                histogram = new Histogram_chi_density    (patch, species, errorPrefix);
+                histogram = new Histogram_chi    (patch, species, errorPrefix);
             } else {
                 ERROR(deposited_quantityPrefix << " not understood");
             }
             histogram->deposited_quantity = deposited_quantity;
+            Py_DECREF(deposited_quantity_object);
             
         // If numpy supported, also accept deposited_quantity = any function
         } else {

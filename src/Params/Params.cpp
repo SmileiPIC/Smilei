@@ -11,6 +11,7 @@
 #include "Tools.h"
 #include "SmileiMPI.h"
 #include "H5.h"
+#include "LaserPropagator.h"
 
 #include "pyinit.pyh"
 #include "pyprofiles.pyh"
@@ -67,12 +68,12 @@ namelist("")
 {
 
     MESSAGE("HDF5 version "<<H5_VERS_MAJOR << "." << H5_VERS_MINOR << "." << H5_VERS_RELEASE);
-    
+
     if(  (H5_VERS_MAJOR< 1) ||
        ( (H5_VERS_MAJOR==1) && (H5_VERS_MINOR< 8) ) ||
        ( (H5_VERS_MAJOR==1) && (H5_VERS_MINOR==8) && (H5_VERS_RELEASE<16) ) )
         WARNING("Smilei suggests using HDF5 version 1.8.16 or newer");
-    
+
     if (namelistsFiles.size()==0) ERROR("No namelists given!");
 
     //string commandLineStr("");
@@ -107,6 +108,10 @@ namelist("")
     runScript(string(reinterpret_cast<const char*>(pyinit_py), pyinit_py_len), "pyinit.py", globals);
 
     runScript(Tools::merge("smilei_version='",string(__VERSION),"'\n"), string(__VERSION), globals);
+
+    // Set the _test_mode to False
+    PyObject_SetAttrString(Py_main, "_test_mode", Py_False);
+    PyTools::checkPyError();
 
     // Running pyprofiles.py
     runScript(string(reinterpret_cast<const char*>(pyprofiles_py), pyprofiles_py_len), "pyprofiles.py", globals);
@@ -178,7 +183,6 @@ namelist("")
     }
 
     // random seed
-    unsigned int random_seed=0;
     if (PyTools::extract("random_seed", random_seed, "Main")) {
         // Init of the seed for the vectorized C++ random generator recommended by Intel
         // See https://software.intel.com/en-us/articles/random-number-function-vectorization
@@ -217,7 +221,7 @@ namelist("")
     geometry = "";
     if( !PyTools::extract("geometry", geometry, "Main") )
         ERROR("Parameter Main.geometry is required");
-    if (geometry!="1Dcartesian" && geometry!="2Dcartesian" && geometry!="3Dcartesian" && geometry!="3drz") {
+    if (geometry!="1Dcartesian" && geometry!="2Dcartesian" && geometry!="3Dcartesian" && geometry!="AMcylindrical") {
         ERROR("Main.geometry `" << geometry << "` invalid");
     }
     setDimensions();
@@ -249,7 +253,9 @@ namelist("")
     for (unsigned int i=0;i<nDim_field;i++){
         res_space[i] = 1.0/cell_length[i];
     }
-    
+    // Number of modes in AMcylindrical geometry
+    PyTools::extract("number_of_AM", nmodes, "Main");
+
     // simulation duration & length
     PyTools::extract("simulation_time", simulation_time, "Main");
 
@@ -278,6 +284,29 @@ namelist("")
             ERROR("EM_boundary_conditions along dimension "<<"012"[iDim]<<" cannot be periodic only on one side");
     }
 
+    int n_envlaser = PyTools::nComponents("LaserEnvelope");
+    if ( n_envlaser >=1 ){
+        Laser_Envelope_model = true;
+        //! Boundary conditions for Envelope Field
+        if( !PyTools::extract("Envelope_boundary_conditions", Env_BCs, "LaserEnvelope")  )
+            ERROR("Envelope_boundary_conditions not defined" );
+
+        if( Env_BCs.size() == 0 ) {
+            ERROR("Envelope_boundary_conditions cannot be empty");
+        } else if( Env_BCs.size() == 1 ) {
+            while( Env_BCs.size() < nDim_field ) Env_BCs.push_back( Env_BCs[0] );
+        } else if( Env_BCs.size() != nDim_field ) {
+            ERROR("Envelope_boundary_conditions must be the same size as the number of dimensions");
+         }
+
+        for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
+            if( Env_BCs[iDim].size() == 1 ) // if just one type is specified, then take the same bc type in a given dimension
+                 Env_BCs[iDim].push_back( Env_BCs[iDim][0] );
+        //    else if ( (Env_BCs[iDim][0] != Env_BCs[iDim][1]) &&  (Env_BCs[iDim][0] == "periodic" || Env_BCs[iDim][1] == "periodic") )
+        //        ERROR("Envelope_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side");
+        }
+    }
+
     for (unsigned int iDim = 0 ; iDim < nDim_field; iDim++){
         if (EM_BCs[iDim][0] == "buneman" || EM_BCs[iDim][1] == "buneman"){
             full_B_exchange = true;
@@ -292,8 +321,8 @@ namelist("")
     if( EM_BCs_k.size() == 0 ) {
         //Gives default value
         for( unsigned int iDim=0; iDim<nDim_field; iDim++ ) {
-            std::vector<double> temp_k; 
-            
+            std::vector<double> temp_k;
+
             for( unsigned int iiDim=0; iiDim<iDim; iiDim++ ) temp_k.push_back(0.);
             temp_k.push_back(1.);
             for( unsigned int iiDim=iDim+1; iiDim<nDim_field; iiDim++ ) temp_k.push_back(0.);
@@ -314,7 +343,7 @@ namelist("")
             ERROR("EM_boundary_conditions_k must have exactly " << nDim_field << " elements along dimension "<<"-+"[iDim%2]<<"012"[iDim/2] );
         if ( EM_BCs_k[iDim][iDim/2] == 0. )
             ERROR("EM_boundary_conditions_k must have a non zero normal component along dimension "<<"-+"[iDim%2]<<"012"[iDim/2] );
-        
+
     }
     save_magnectic_fields_for_SM = true;
     PyTools::extract("save_magnectic_fields_for_SM", save_magnectic_fields_for_SM, "Main");
@@ -383,6 +412,9 @@ namelist("")
     for (unsigned int i=0; i<nDim_field; i++) {
         res_space2 += res_space[i]*res_space[i];
     }
+    if (geometry == "AMcylindrical") {
+        res_space2 += ((nmodes-1)*(nmodes-1)-1)*res_space[1]*res_space[1];
+    }
     dtCFL=1.0/sqrt(res_space2);
     if ( timestep>dtCFL ) {
         WARNING("CFL problem: timestep=" << timestep << " should be smaller than " << dtCFL);
@@ -428,25 +460,23 @@ namelist("")
     //norderz=norder[2];
 
 
-    if (PyTools::extract("patch_decomposition", patch_decomposition, "Main")) {
-        WARNING( "Change patches distribution to " << patch_decomposition );
+    if (PyTools::extract("patch_arrangement", patch_arrangement, "Main")) {
+        WARNING( "Change patches distribution to " << patch_arrangement );
     }
     else {
-        patch_decomposition = "hilbert";
-        WARNING( "Use default distribution : " << patch_decomposition );
+        patch_arrangement = "hilbertian";
+        WARNING( "Use default distribution : " << patch_arrangement );
     }
 
 
     int total_number_of_hilbert_patches = 1;
-    if (patch_decomposition == "hilbert") {
+    if (patch_arrangement == "hilbertian") {
         for ( unsigned int iDim=0 ; iDim<nDim_field ; iDim++ ){
             total_number_of_hilbert_patches *= number_of_patches[iDim];
             if( (number_of_patches[iDim] & (number_of_patches[iDim]-1)) != 0)
                 ERROR("Number of patches in each direction must be a power of 2");
         }
     }
-    else
-        PyTools::extract("patch_orientation", patch_orientation, "Main");
 
 
     if( PyTools::nComponents("LoadBalancing")>0 ) {
@@ -463,7 +493,7 @@ namelist("")
 
     has_load_balancing = (smpi->getSize()>1)  && (! load_balancing_time_selection->isEmpty());
 
-    if (has_load_balancing && patch_decomposition != "hilbert") ERROR("Dynamic load balancing is only available for Hilbert decomposition");
+    if (has_load_balancing && patch_arrangement != "hilbertian") ERROR("Dynamic load balancing is only available for Hilbert decomposition");
     if (has_load_balancing && total_number_of_hilbert_patches < 2*smpi->getSize()) ERROR("Dynamic load balancing requires to use at least 2 patches per MPI process.");
 
     mi.resize(3, 0);
@@ -475,21 +505,75 @@ namelist("")
     }
 
     // Activation of the vectorized subroutines
-    vecto = false;
-    PyTools::extract("vecto", vecto, "Main");
-    if (vecto)
-        MESSAGE( "Apply vectorization" );
+    vectorization_mode = "off";
+    has_adaptive_vectorization = false;
+    adaptive_vecto_time_selection = nullptr;
+    
+    if( PyTools::nComponents("Vectorization")>0 ) {
+        // Extraction of the vectorization mode
+        PyTools::extract("mode", vectorization_mode, "Vectorization");
+        if (!(vectorization_mode == "off" ||
+              vectorization_mode == "on" ||
+              vectorization_mode == "adaptive_mixed_sort" ||
+              vectorization_mode == "adaptive"))
+        {
+            ERROR("In block `Vectorization`, parameter `mode` must be `off`, `on`, `adaptive`");
+        }
+        else if (vectorization_mode == "adaptive_mixed_sort" || vectorization_mode == "adaptive")
+        {
+            has_adaptive_vectorization = true;
+        }
+        
+        // Default mode for the adaptive mode
+        PyTools::extract("initial_mode", adaptive_default_mode, "Vectorization");
+        if (!(adaptive_default_mode == "off" ||
+              adaptive_default_mode == "on"))
+        {
+            ERROR("In block `Vectorization`, parameter `default` must be `off` or `on`");
+        }
+
+        // get parameter "every" which describes a timestep selection
+        if( ! adaptive_vecto_time_selection )
+            adaptive_vecto_time_selection = new TimeSelection(
+                PyTools::extract_py("reconfigure_every", "Vectorization"), "Adaptive vectorization"
+            );
+    }
+    
+    // In case of collisions, ensure particle sort per cell
+    if( PyTools::nComponents("Collisions") > 0 ) {
+        
+        if( geometry!="1Dcartesian" 
+         && geometry!="2Dcartesian" 
+         && geometry!="3Dcartesian" )
+            ERROR("Collisions only valid for cartesian geometries for the moment")
+
+        if( vectorization_mode == "adaptive_mixed_sort" ) // collisions need sorting per cell
+            ERROR("Collisions are incompatible with the vectorization mode 'adaptive_mixed_sort'.")
+
+        if( vectorization_mode == "off" ) {
+            if( geometry == "1Dcartesian" ) {
+                WARNING("For collisions, clrw is forced to 1");
+                clrw = 1;
+            } else {
+                WARNING("For collisions, particles have been forced to be sorted per cell");
+                vectorization_mode = "adaptive";
+                has_adaptive_vectorization = true;
+                adaptive_default_mode = "off";
+                adaptive_vecto_time_selection = new TimeSelection();
+            }
+        }
+    }
     
     // Read the "print_every" parameter
     print_every = (int)(simulation_time/timestep)/10;
     PyTools::extract("print_every", print_every, "Main");
     if (!print_every) print_every = 1;
-
+    
     // Read the "print_expected_disk_usage" parameter
     if( ! PyTools::extract("print_expected_disk_usage", print_expected_disk_usage, "Main") ) {
         ERROR("The parameter `Main.print_expected_disk_usage` must be True or False");
     }
-
+    
     // -------------------------------------------------------
     // Checking species order
     // -------------------------------------------------------
@@ -568,14 +652,94 @@ namelist("")
     // -------------------------------------------------------
     compute();
 
+    // -------------------------------------------------------
     // Print
+    // -------------------------------------------------------
     smpi->barrier();
     if ( smpi->isMaster() ) print_init();
     smpi->barrier();
+
+    // -------------------------------------------------------
+    // Handle the pre-processing of LaserOffset
+    // -------------------------------------------------------
+    unsigned int n_laser = PyTools::nComponents("Laser");
+    unsigned int n_laser_offset = 0;
+    LaserPropagator propagateX;
+
+    for( unsigned int i_laser=0; i_laser<n_laser; i_laser++ ) {
+        double offset = 0.;
+
+        // If this laser has the hidden _offset attribute
+        if( PyTools::extract("_offset", offset, "Laser", i_laser) ) {
+
+            if( n_laser_offset == 0 ) {
+                TITLE("Pre-processing LaserOffset");
+                propagateX.init(this, smpi, 0);
+            }
+
+            MESSAGE(1, "LaserOffset #"<< n_laser_offset);
+
+            // Extract the file name
+            string file("");
+            PyTools::extract("file", file, "Laser", i_laser);
+
+            // Extract the list of profiles and verify their content
+            PyObject * p = PyTools::extract_py("_profiles", "Laser", i_laser);
+            vector<PyObject*> profiles;
+            vector<int> profiles_n = {1, 2};
+            if( ! PyTools::convert(p, profiles) )
+                ERROR("For LaserOffset #" << n_laser_offset << ": space_time_profile must be a list of 2 profiles");
+            Py_DECREF(p);
+            if( profiles.size()!=2 )
+                ERROR("For LaserOffset #" << n_laser_offset << ": space_time_profile needs 2 profiles.");
+            if( profiles[1] == Py_None ) {
+                profiles  .pop_back();
+                profiles_n.pop_back();
+            }
+            if( profiles[0] == Py_None ) {
+                profiles  .erase(profiles  .begin());
+                profiles_n.erase(profiles_n.begin());
+            }
+            if( profiles.size() == 0 )
+                ERROR("For LaserOffset #" << n_laser_offset << ": space_time_profile cannot be [None, None]");
+            for( int i=0; i<2; i++) {
+                int nargs = PyTools::function_nargs(profiles[i]);
+                if( nargs<0 )
+                    ERROR("For LaserOffset #" << n_laser_offset << ": space_time_profile["<<i<<"] not callable");
+                if( nargs != (int) nDim_field )
+                    ERROR("For LaserOffset #" << n_laser_offset << ": space_time_profile["<<i<<"] requires " << nDim_field << " arguments but has " << nargs);
+            }
+
+            // Extract the box side
+            string box_side;
+            if( !PyTools::extract("box_side", box_side, "Laser", i_laser) || (box_side!="xmin" && box_side!="xmax"))
+                ERROR("For LaserOffset #" << n_laser_offset << ": box_side must be a 'xmin' or 'xmax'");
+            //unsigned int side = string("xyz").find(box_side[0]);
+
+            // Extract _keep_n_strongest_modes
+            int keep_n_strongest_modes=0;
+            if( !PyTools::extract("_keep_n_strongest_modes", keep_n_strongest_modes, "Laser", i_laser) || keep_n_strongest_modes<1)
+                ERROR("For LaserOffset #" << n_laser_offset << ": keep_n_strongest_modes must be a positive integer");
+
+            // Extract the angle
+            double angle_z = 0.;
+            PyTools::extract("_angle", angle_z, "Laser", i_laser);
+
+            // Make the propagation happen and write out the file
+            if( ! smpi->test_mode )
+                propagateX(profiles, profiles_n, offset, file, keep_n_strongest_modes, angle_z);
+
+            n_laser_offset ++;
+        }
+    }
+
+
+    check_consistency();
 }
 
 Params::~Params() {
     if( load_balancing_time_selection ) delete load_balancing_time_selection;
+    if( adaptive_vecto_time_selection ) delete adaptive_vecto_time_selection;
     PyTools::closePython();
 }
 
@@ -607,7 +771,7 @@ void Params::compute()
     patch_dimensions.resize(3, 0.);
     cell_volume=1.0;
     n_cell_per_patch = 1;
-    
+
     // compute number of cells & normalized lengths
     for (unsigned int i=0; i<nDim_field; i++) {
         n_space[i] = round(grid_length[i]/cell_length[i]);
@@ -617,11 +781,14 @@ void Params::compute()
             WARNING("grid_length[" << i << "] has been redefined from " << entered_grid_length << " to " << grid_length[i] << " to match n x cell_length (" << scientific << setprecision(4) << grid_length[i]-entered_grid_length <<")");
         cell_volume *= cell_length[i];
     }
+    if (geometry == "AMcylindrical"){
+        cell_volume *= 2 * M_PI;
+    } 
     // create a 3d equivalent of n_space & cell_length
     for (unsigned int i=nDim_field; i<3; i++) {
         cell_length[i]=0.0;
     }
-    
+
     for (unsigned int i=0; i<nDim_field; i++){
         oversize[i]  = max(interpolation_order,(unsigned int)(norder[i]/2+1)) + (exchange_particles_each-1);;
         n_space_global[i] = n_space[i];
@@ -631,7 +798,7 @@ void Params::compute()
         patch_dimensions[i] = n_space[i] * cell_length[i];
         n_cell_per_patch *= n_space[i];
     }
-    
+
     // Set clrw if not set by the user
     if ( clrw == -1 ) {
 
@@ -645,7 +812,7 @@ void Params::compute()
         for ( unsigned int idim = 1 ; idim < nDim_field ; idim++ )
             bin_size *= ( n_space[idim]+1+2*oversize[idim] );
 
-        // IF Ionize r pair generation : clrw = n_space_x_pp ?
+        // IF Ionize or pair generation : clrw = n_space_x_pp ?
         if ( ( clrw+1+2*oversize[0]) * bin_size > (unsigned int) cache_threshold ) {
             int clrw_max = cache_threshold / bin_size - 1 - 2*oversize[0];
             if ( clrw_max > 0 ) {
@@ -658,11 +825,44 @@ void Params::compute()
                 clrw = 1;
             WARNING( "Particles cluster width set to : " << clrw );
         }
+
+    }
+
+    // clrw != n_space[0] is not compatible
+    // with the adaptive vectorization for the moment
+    if (vectorization_mode == "adaptive_mixed_sort" || vectorization_mode == "adaptive")
+    {
+        if (clrw != (int)(n_space[0]))
+        {
+            clrw = (int)(n_space[0]);
+            WARNING( "Particles cluster width set to: " << clrw << " for the adaptive vectorization mode");
+        }
     }
 
     // Verify that clrw divides n_space[0]
     if( n_space[0]%clrw != 0 )
         ERROR("The parameter clrw must divide the number of cells in one patch (in dimension x)");
+
+}
+
+
+void Params::check_consistency()
+{
+    if ( vectorization_mode != "off" ) {
+
+        if ( (geometry=="1Dcartesian") || (geometry=="AMcylindrical") )
+            ERROR( "Vectorized algorithms not implemented for this geometry" );
+
+        if ( (geometry=="2Dcartesian") && (interpolation_order==4) )
+            ERROR( "4th order vectorized algorithms not implemented in 2D" );
+
+
+        if  ( hasMultiphotonBreitWheeler ) {
+            WARNING( "Performances of advanced physical processes which generates nezw particles could be degraded for the moment !" );
+            WARNING( "\t The improvment of their integration in vectorized algorithm is in progress." );
+        }
+
+    }
 
 }
 
@@ -681,7 +881,7 @@ void Params::setDimensions()
     } else if (geometry=="3Dcartesian") {
         nDim_particle=3;
         nDim_field=3;
-    } else if (geometry=="3drz") {
+    } else if (geometry=="AMcylindrical") {
         nDim_particle=3;
         nDim_field=2;
     } else {
@@ -735,6 +935,15 @@ void Params::print_init()
         MESSAGE(1,"Cell load coefficient = " << cell_load );
         MESSAGE(1,"Frozen particle load coefficient = " << frozen_particle_load );
     }
+
+    TITLE("Vectorization: ");
+    MESSAGE(1,"Mode: " << vectorization_mode);
+    if (vectorization_mode == "adaptive_mixed_sort" || vectorization_mode == "adaptive")
+    {
+        MESSAGE(1,"Default mode: " << adaptive_default_mode);
+        MESSAGE(1,"Time selection: " << adaptive_vecto_time_selection->info());
+    }
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -774,6 +983,11 @@ void Params::print_timestep_headers()
 void Params::print_parallelism_params(SmileiMPI* smpi)
 {
     if (smpi->isMaster()) {
+#ifndef _NO_MPI_TM
+        MESSAGE(1, "MPI_THREAD_MULTIPLE enabled");
+#else
+        MESSAGE(1, "MPI_THREAD_MULTIPLE not enabled");
+#endif
         MESSAGE(1,"Number of MPI process : " << smpi->getSize() );
         MESSAGE(1,"Number of patches : " );
         for (unsigned int iDim=0 ; iDim<nDim_field ; iDim++)
@@ -881,4 +1095,19 @@ void Params::cleanup(SmileiMPI* smpi) {
         Py_Finalize();
     }
     smpi->barrier();
+}
+
+bool Params::isSpeciesField(string field_name) {
+    if( geometry!="AMcylindrical" ) {
+        if( (field_name.at(0)=='J' && field_name.length()>2)
+         || (field_name.at(0)=='R' && field_name.length()>3) )
+            return true;
+    } else {
+        if( field_name.at(0)=='J' && field_name.length()>8
+                && (field_name.substr(2,6)!="_mode_" || field_name.find("mode_") != field_name.rfind("mode_"))
+         || field_name.at(0)=='R' && field_name.length()>9
+                && (field_name.substr(3,6)!="_mode_" || field_name.find("mode_") != field_name.rfind("mode_")) )
+            return true;
+    }
+    return false;
 }

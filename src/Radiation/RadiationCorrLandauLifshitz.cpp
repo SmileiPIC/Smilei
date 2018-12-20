@@ -52,7 +52,7 @@ void RadiationCorrLandauLifshitz::operator() (
         RadiationTables &RadiationTables,
         int istart,
         int iend,
-        int ithread)
+        int ithread, int ipart_ref)
 {
 
     // _______________________________________________________________
@@ -61,7 +61,7 @@ void RadiationCorrLandauLifshitz::operator() (
     std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);
     //std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
 
-    int nparts = particles.size();
+    int nparts = Epart->size()/3;
     double* Ex = &( (*Epart)[0*nparts] );
     double* Ey = &( (*Epart)[1*nparts] );
     double* Ez = &( (*Epart)[2*nparts] );
@@ -76,7 +76,7 @@ void RadiationCorrLandauLifshitz::operator() (
     const double one_over_mass_2 = pow(one_over_mass_,2.);
 
     // Temporary quantum parameter
-    double chipa;
+    double particle_chi;
 
     // Temporary Lorentz factor
     double gamma;
@@ -102,7 +102,7 @@ void RadiationCorrLandauLifshitz::operator() (
     std::vector <double> rad_norm_energy (iend-istart,0);
 
     // Reinitialize the cumulative radiated energy for the current thread
-    this->radiated_energy = 0.;
+    radiated_energy_ = 0.;
 
     // _______________________________________________________________
     // Computation
@@ -117,20 +117,20 @@ void RadiationCorrLandauLifshitz::operator() (
                              + momentum[2][ipart]*momentum[2][ipart]);
 
         // Computation of the Lorentz invariant quantum parameter
-        chipa = Radiation::compute_chipa(charge_over_mass2,
+        particle_chi = Radiation::computeParticleChi(charge_over_mass2,
                      momentum[0][ipart],momentum[1][ipart],momentum[2][ipart],
                      gamma,
-                     (*(Ex+ipart)),(*(Ey+ipart)),(*(Ez+ipart)),
-                     (*(Bx+ipart)),(*(By+ipart)),(*(Bz+ipart)) );
+                     (*(Ex+ipart-ipart_ref)),(*(Ey+ipart-ipart_ref)),(*(Ez+ipart-ipart_ref)),
+                     (*(Bx+ipart-ipart_ref)),(*(By+ipart-ipart_ref)),(*(Bz+ipart-ipart_ref)) );
 
         // Effect on the momentum
         // (Should be vectorized with masked instructions)
-        if (chipa >= RadiationTables.get_chipa_radiation_threshold())
+        if (particle_chi >= RadiationTables.getMinimumChiContinuous())
         {
 
             // Radiated energy during the time step
             temp =
-            RadiationTables.get_corrected_cont_rad_energy_Ridgers(chipa,dt);
+            RadiationTables.getRidgersCorrectedRadiatedEnergy(particle_chi,dt_);
 
             // Temporary factor
             temp *= gamma/(gamma*gamma - 1);
@@ -159,5 +159,5 @@ void RadiationCorrLandauLifshitz::operator() (
     {
         radiated_energy_loc += weight[ipart]*rad_norm_energy[ipart] ;
     }
-    radiated_energy += radiated_energy_loc;
+    radiated_energy_ += radiated_energy_loc;
 }

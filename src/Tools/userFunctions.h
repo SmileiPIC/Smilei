@@ -22,7 +22,7 @@ class userFunctions {
 
         //! Computation of the Gauss-Legendre abscissa and weight
         static void gauss_legendre_coef(double xmin,double xmax, double * x,
-                double * w, int nbit, double eps);
+                double * w, int nb_iterations, double eps);
 
         //! Load repartition in 1d between MPI processes
         static void distribute_load_1d(int rank,

@@ -449,7 +449,7 @@ private:
 #endif
 
 //! Children classes, for various manners to fill the histogram
-class Histogram_density : public Histogram {
+class Histogram_number : public Histogram {
     void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
         unsigned int npart = array.size();
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
@@ -458,7 +458,7 @@ class Histogram_density : public Histogram {
         }
     };
 };
-class Histogram_charge_density : public Histogram {
+class Histogram_charge : public Histogram {
     void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
         unsigned int npart = array.size();
         for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
@@ -467,7 +467,7 @@ class Histogram_charge_density : public Histogram {
         }
     };
 };
-class Histogram_jx_density : public Histogram {
+class Histogram_jx : public Histogram {
     void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
         unsigned int npart = array.size();
         // Matter Particles
@@ -496,7 +496,7 @@ class Histogram_jx_density : public Histogram {
         }
     };
 };
-class Histogram_jy_density : public Histogram {
+class Histogram_jy : public Histogram {
     void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
         unsigned int npart = array.size();
         // Matter Particles
@@ -525,7 +525,7 @@ class Histogram_jy_density : public Histogram {
         }
     };
 };
-class Histogram_jz_density : public Histogram {
+class Histogram_jz : public Histogram {
     void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
         unsigned int npart = array.size();
         // Matter Particles
@@ -554,7 +554,7 @@ class Histogram_jz_density : public Histogram {
         }
     };
 };
-class Histogram_ekin_density : public Histogram {
+class Histogram_ekin : public Histogram {
     void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
         unsigned int npart = array.size();
         // Matter Particles
@@ -583,15 +583,15 @@ class Histogram_ekin_density : public Histogram {
 };
 //! Children class of Histogram: for the quantum parameter
 //! of the radiating particles
-class Histogram_chi_density : public Histogram {
+class Histogram_chi : public Histogram {
 public:
-    Histogram_chi_density(Patch* patch, std::vector<unsigned int> &species, std::string errorPrefix)
+    Histogram_chi(Patch* patch, std::vector<unsigned int> &species, std::string errorPrefix)
       : Histogram()
     {
         // The requested species must be radiating
         for (unsigned int ispec=0 ; ispec < species.size() ; ispec++)
             if( ! patch->vecSpecies[species[ispec]]->particles->isQuantumParameter)
-                ERROR(errorPrefix << ": 'chi_density' requires all species to be radiating");
+                ERROR(errorPrefix << ": 'weight_chi' requires all species to be radiating");
     };
 private:
     void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
@@ -603,7 +603,7 @@ private:
         }
     };
 };
-class Histogram_p_density : public Histogram {
+class Histogram_p : public Histogram {
     void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
         unsigned int npart = array.size();
         // Matter Particles
@@ -630,7 +630,7 @@ class Histogram_p_density : public Histogram {
         }
     };
 };
-class Histogram_px_density : public Histogram {
+class Histogram_px : public Histogram {
     void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
         unsigned int npart = array.size();
         // Matter Particles
@@ -651,7 +651,7 @@ class Histogram_px_density : public Histogram {
         }
     };
 };
-class Histogram_py_density : public Histogram {
+class Histogram_py : public Histogram {
     void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
         unsigned int npart = array.size();
         // Matter Particles
@@ -672,7 +672,7 @@ class Histogram_py_density : public Histogram {
         }
     };
 };
-class Histogram_pz_density : public Histogram {
+class Histogram_pz : public Histogram {
     void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
         unsigned int npart = array.size();
         // Matter Particles
@@ -873,7 +873,7 @@ class Histogram_pressure_yz : public Histogram {
         }
     };
 };
-class Histogram_ekin_vx_density : public Histogram {
+class Histogram_ekin_vx : public Histogram {
     void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
         unsigned int npart = array.size();
         // Matter Particles

@@ -28,9 +28,11 @@ protected:
     double dy_ov_dt;
     int i_domain_begin;
     int j_domain_begin;
-    int nprimy;
+    int nprimy,nscelly;
     int oversize[2];
     double dq_inv[2];
+    double *Jx_, *Jy_, *Jz_, *rho_;
+    static constexpr double one_third = 1./3.;
 };
 
 #endif

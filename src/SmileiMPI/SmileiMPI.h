@@ -33,6 +33,7 @@ class SmileiMPI {
     friend class PatchesFactory;
     friend class Patch;
     friend class VectorPatch;
+    friend class AsyncMPIbuffers;
 
 public:
     SmileiMPI() {};
@@ -40,7 +41,7 @@ public:
     SmileiMPI( int* argc, char*** argv );
     //! Destructor for SmileiMPI
     virtual ~SmileiMPI();
-    
+
     // Broadcast a string in current communicator
     void bcast( std::string& val );
     // Broadcast an int in current communicator
@@ -49,10 +50,10 @@ public:
     //! Initialize  MPI (per process) environment
     //! \param params Parameters
     virtual void init( Params& params, DomainDecomposition* domain_decomposition );
-    
+
     // Initialize the patch_count vector. Patches are distributed in order to balance the load between MPI processes.
     virtual void init_patch_count( Params& params, DomainDecomposition* domain_decomposition );
-    
+
     // Recompute the patch_count vector. Browse patches and redistribute them in order to balance the load between MPI processes.
     void recompute_patch_count( Params& params, VectorPatch& vecpatches, double time_dual );
      // Returns the rank of the MPI process currently owning patch h.
@@ -70,21 +71,33 @@ public:
     void waitall(Patch* patch);
     void recv (Patch* patch, int from, int hindex, Params& params);
 
+    void isend_fields(Patch* patch, int to  , int hindex, Params& params);
+    void recv_fields (Patch* patch, int from, int hindex, Params& params);
+    void isend_species(Patch* patch, int to  , int hindex, Params& params);
+    void recv_species (Patch* patch, int from, int hindex, Params& params);
+
     void isend(Particles* particles, int to   , int hindex, MPI_Datatype datatype, MPI_Request& request);
     void recv (Particles* partictles, int from, int hindex, MPI_Datatype datatype);
     void isend(std::vector<int>* vec, int to  , int hindex, MPI_Request& request);
     void recv (std::vector<int> *vec, int from, int hindex);
-    
+
     void isend(std::vector<double>* vec, int to  , int hindex, MPI_Request& request);
     void recv (std::vector<double> *vec, int from, int hindex);
-    
+
     void isend(ElectroMagn* fields, int to  , int maxtag, std::vector<MPI_Request>& requests, int mpi_tag);
+    void isend(ElectroMagn* fields, int to  , int maxtag, std::vector<MPI_Request>& requests, int mpi_tag, unsigned int nmodes);
     void recv (ElectroMagn* fields, int from, int hindex);
+    void recv (ElectroMagn* fields, int from, int hindex, unsigned int nmodes);
     void isend(Field* field, int to  , int hindex, MPI_Request& request);
-    
+    void isendComplex(Field* field, int to  , int hindex, MPI_Request& request);
     void recv (Field* field, int from, int hindex);
+    void recvComplex (Field* field, int from, int hindex);
+
     void isend( ProbeParticles* probe, int to  , int hindex, unsigned int );
     void recv ( ProbeParticles* probe, int from, int hindex, unsigned int );
+
+    void isend( int * integer, int to  , int hindex, unsigned int, MPI_Request& request );
+    void recv ( int * integer, int from, int hindex, unsigned int );
 
     // DIAGS MPI SYNC
     // --------------
@@ -97,7 +110,7 @@ public:
     void computeGlobalDiags(DiagnosticParticleBinning* diag, int timestep);
     // MPI synchronization of screen diags
     void computeGlobalDiags(DiagnosticScreen*          diag, int timestep);
-    
+
     // MPI basic methods
     // -----------------
 
@@ -128,12 +141,12 @@ public:
     inline int getOMPMaxThreads() {
         return smilei_omp_max_threads;
     }
-    
-    
+
+
     // Global buffers for vectorization of Species::dynamics
     // -----------------------------------------------------
 
-    //! value of the Efield 
+    //! value of the Efield
     std::vector<std::vector<double>> dynamics_Epart;
     //! value of the Bfield
     std::vector<std::vector<double>> dynamics_Bpart;
@@ -143,14 +156,32 @@ public:
     std::vector<std::vector<int>> dynamics_iold;
     //! delta_old_pos
     std::vector<std::vector<double>> dynamics_deltaold;
+    //! exp i theta old
+    std::vector<std::vector<std::complex<double>>> dynamics_thetaold;
+
+    //! value of the grad(AA*) at itime and itime-1
+    std::vector<std::vector<double>> dynamics_GradPHIpart;
+    std::vector<std::vector<double>> dynamics_GradPHIoldpart;
+    //! value of the AA* at itime and itime-1
+    std::vector<std::vector<double>> dynamics_PHIpart;
+    std::vector<std::vector<double>> dynamics_PHIoldpart;
+
 
     // Resize buffers for a given number of particles
-    inline void dynamics_resize(int ithread, int ndim_part, int npart ){
+    inline void dynamics_resize(int ithread, int ndim_field, int npart, bool isAM = false ){
         dynamics_Epart[ithread].resize(3*npart);
         dynamics_Bpart[ithread].resize(3*npart);
         dynamics_invgf[ithread].resize(npart);
-        dynamics_iold[ithread].resize(ndim_part*npart);
-        dynamics_deltaold[ithread].resize(ndim_part*npart);
+        dynamics_iold[ithread].resize(ndim_field*npart);
+        dynamics_deltaold[ithread].resize(ndim_field*npart);
+	if (isAM) dynamics_thetaold[ithread].resize(npart);
+
+        if ( dynamics_GradPHIpart.size() > 0 ) {
+            dynamics_GradPHIpart[ithread].resize(3*npart);
+            dynamics_GradPHIoldpart[ithread].resize(3*npart);
+            dynamics_PHIpart[ithread].resize(npart);
+            dynamics_PHIoldpart[ithread].resize(npart);
+        }
     }
 
 
@@ -162,9 +193,9 @@ public:
         MPI_Reduce( &locNbrParticles, &nParticles, 1, MPI_INT, MPI_SUM, 0, SMILEI_COMM_WORLD );
         return nParticles;
     }
-    
+
     bool test_mode;
-    
+
 protected:
     //! Global MPI Communicator
     MPI_Comm SMILEI_COMM_WORLD;
@@ -175,14 +206,14 @@ protected:
     int smilei_rk;
     //! OMP max number of threads in one MPI
     int smilei_omp_max_threads;
-    
+
     // Store periodicity (0/1) per direction
     // Should move in Params : last parameters of this type in this class
     int* periods_;
 
     //! For patch decomposition
     //Number of patches owned by each mpi process.
-    std::vector<int>  patch_count, capabilities;
+    std::vector<int>  patch_count, capabilities, patch_refHindexes;
     int Tcapabilities; //Default = smilei_sz (1 per MPI rank)
 };
 

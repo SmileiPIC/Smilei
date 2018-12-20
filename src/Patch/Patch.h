@@ -34,7 +34,7 @@ public:
     Patch(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved);
     //! Cloning Constructor for Patch
     Patch(Patch* patch, Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition, unsigned int ipatch, unsigned int n_moved, bool with_particles);
-    
+
     //! First initialization step for patches
     void initStep1(Params& params);
     //! Second initialization step for patches
@@ -44,7 +44,7 @@ public:
     //! Last creation step
     void finishCreation( Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomposition );
     //! Last cloning step
-    void finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, bool with_particles );
+    void finishCloning( Patch* patch, Params& params, SmileiMPI* smpi, unsigned int n_moved, bool with_particles );
 
     //! Finalize MPI environment : especially requests array for non blocking communications
     void finalizeMPIenvironment(Params& params);
@@ -67,13 +67,11 @@ public:
     //! Optional binary collisions operators
     std::vector<Collisions*> vecCollisions;
 
-    //! Interpolator (used to push particles and for probes)
-    Interpolator* Interp;
-    //! Projector
-    Projector* Proj;
-
     //! "fake" particles for the probe diagnostics
     std::vector<ProbeParticles*> probes;
+
+    //! Classical interpolator for the probe diagnostic only
+    Interpolator* probesInterp;
 
 
     // Geometrical description
@@ -85,40 +83,78 @@ public:
     //!Cartesian coordinates of the patch. X,Y,Z of the Patch according to its Hilbert index.
     std::vector<unsigned int> Pcoordinates;
 
+    // Detailed timers
+    // -----------------------
 
+#ifdef  __DETAILED_TIMERS
+    //! Timers for the patch
+    std::vector<double> patch_timers;
+#endif
+    
+	//! Random number generator
+    inline uint32_t xorshift32()
+    {
+        /* Algorithm "xor" from p. 4 of Marsaglia, "Xorshift RNGs" */
+        xorshift32_state ^= xorshift32_state << 13;
+        xorshift32_state ^= xorshift32_state >> 17;
+        xorshift32_state ^= xorshift32_state << 5;
+        return xorshift32_state;
+    }
+    //! State of the random number generator
+    uint32_t xorshift32_state;
+    //! Inverse of the maximum value of the random number generator
+    const double xorshift32_invmax = 1./4294967296.;
+    
     // MPI exchange/sum methods for particles/fields
     //   - fields communication specified per geometry (pure virtual)
     // --------------------------------------------------------------
 
+    //! Clean the MPI buffers for communications
+    void cleanMPIBuffers(int ispec, Params& params);
     //! manage Idx of particles per direction,
     void initExchParticles(SmileiMPI* smpi, int ispec, Params& params);
-    //!init comm  nbr of particles/
-    void initCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
+    //! init comm  nbr of particles
+    void exchNbrOfParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
     //! finalize comm / nbr of particles, init exch / particles
-    void CommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
-    //! finalize exch / particles, manage particles suppr/introduce
-    void finalizeCommParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
+    void endNbrOfParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
+    //! extract particles from main data structure to buffers, init exch / particles
+    void prepareParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
+    //! effective exchange of particles   
+    void exchParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
+    //! finalize exch / particles
+    void finalizeExchParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
+    //! Treat diagonalParticles
+    void cornersParticles(SmileiMPI* smpi, int ispec, Params& params, int iDim, VectorPatch* vecPatch);
+    //! inject particles received in main data structure and particles sorting
+    void injectParticles(SmileiMPI* smpi, int ispec, Params& params, VectorPatch* vecPatch);
     //! clean memory resizing particles structure
     void cleanParticlesOverhead(Params& params);
     //! delete Particles included in the index of particles to exchange. Assumes indexes are sorted.
     void cleanup_sent_particles(int ispec, std::vector<int>* indexes_of_particles_to_exchange);
 
     //! init comm / sum densities
-    virtual void initSumField( Field* field, int iDim ) = 0;
+    virtual void initSumField( Field* field, int iDim, SmileiMPI* smpi ) = 0;
     virtual void reallyinitSumField( Field* field, int iDim ) = 0;
     //! finalize comm / sum densities
     virtual void finalizeSumField( Field* field, int iDim ) = 0;
     virtual void reallyfinalizeSumField( Field* field, int iDim ) = 0;
-    void testSumField( Field* field, int iDim );
 
     //! init comm / exchange fields
     virtual void initExchange( Field* field ) = 0;
+    //! init comm / exchange complex fields
+    virtual void initExchangeComplex( Field* field ) = 0;
     //! finalize comm / exchange fields
     virtual void finalizeExchange( Field* field ) = 0;
+    //! finalize comm / exchange complex fields
+    virtual void finalizeExchangeComplex( Field* field ) = 0;
     //! init comm / exchange fields in direction iDim only
-    virtual void initExchange( Field* field, int iDim ) = 0;
-    //! finalize comm / exchange fields in direction iDim only
+    virtual void initExchange( Field* field, int iDim, SmileiMPI* smpi ) = 0;
+    //! init comm / exchange complex fields in direction iDim only
+    virtual void initExchangeComplex( Field* field, int iDim, SmileiMPI* smpi ) = 0;
+    //! finalize comm / exchange fields
     virtual void finalizeExchange( Field* field, int iDim ) = 0;
+    //! finalize comm / exchange complex fields in direction iDim only
+    virtual void finalizeExchangeComplex( Field* field, int iDim ) = 0;
 
     // Create MPI_Datatype to exchange fields
     virtual void createType( Params& params ) = 0;
@@ -233,6 +269,10 @@ public:
         return min_local;
     }
 
+    //! Return the volume (or surface or length depending on simulation dimension)
+    //! of one cell at the position of a given particle
+    virtual double getCellVolume(Particles *p, unsigned int ipart) = 0;
+
     //! Set geometry data in case of moving window restart
     //! \param x_moved difference on coordinates regarding t0 geometry
     //! \param idx_moved number of displacement of the window
@@ -247,7 +287,7 @@ public:
     int MPI_me_;
 
     //! The debye length, computed for collisions
-    double debye_length_squared;
+    std::vector<double> debye_length_squared;
 
     //! The patch geometrical center
     std::vector<double> center;
@@ -255,6 +295,8 @@ public:
     double radius;
 
     std::vector<MPI_Request> requests_;
+
+    bool is_small = true;
 
 
 
@@ -270,8 +312,6 @@ protected:
 
     //! Hilbert index of neighbors patch
     std::vector< std::vector<int> > neighbor_, tmp_neighbor_;
-    //! send and receive tags
-    std::vector< std::vector<int> > send_tags_, recv_tags_;
 
 
     //! MPI rank of neighbors patch
@@ -289,7 +329,8 @@ protected:
 
     std::vector<unsigned int> oversize;
 
-
+    double cell_volume;
+    
 };
 
 

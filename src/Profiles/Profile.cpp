@@ -164,6 +164,16 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name, boo
         Py_XDECREF(repr);
 #endif
         
+        // Compatibility with python 2.7
+        // Some class functions (for SmileiSingleton) may not be static.
+        // In that case, we look for the __func__ attribute.
+        if( PyObject_HasAttrString(py_profile, "__func__") ) {
+               PyObject * func = PyObject_GetAttrString(py_profile, "__func__");
+               Py_DECREF(py_profile);
+               py_profile = func;
+        }
+        
+        
         // Verify that the profile has the right number of arguments
         PyObject* inspect=PyImport_ImportModule("inspect");
         PyTools::checkPyError();
@@ -183,8 +193,13 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name, boo
         }
         Py_XDECREF(tuple);
         Py_XDECREF(inspect);
-        if( nvariables<1 || nvariables>3 )
-            ERROR("Profile `"<<name<<"`: defined with unsupported number of variables");
+        int nargs = PyTools::function_nargs(py_profile);
+        if( nargs < 0 )
+            ERROR("Profile `" << name << "` does not seem to be callable");
+        if( nargs != (int) nvariables )
+            WARNING("Profile `" << name << "` takes "<< nargs <<" arguments but requires " << nvariables);
+        if( nvariables<1 || nvariables>4 )
+            ERROR("Profile `"<<name<<"`: defined with unsupported number of variables (" << nvariables << ")");
         
         
         // Verify that the profile transforms a float in a float
@@ -198,6 +213,7 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name, boo
             if      ( nvariables == 1 ) ret = PyObject_CallFunctionObjArgs(py_profile, a, NULL);
             else if ( nvariables == 2 ) ret = PyObject_CallFunctionObjArgs(py_profile, a,a, NULL);
             else if ( nvariables == 3 ) ret = PyObject_CallFunctionObjArgs(py_profile, a,a,a, NULL);
+            else if ( nvariables == 4 ) ret = PyObject_CallFunctionObjArgs(py_profile, a,a,a,a, NULL);
             PyTools::checkPyError(false, false);
             Py_DECREF(a);
             if( ret
@@ -219,6 +235,8 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name, boo
             if      ( nvariables == 1 ) ret = PyObject_CallFunctionObjArgs(py_profile, z, NULL);
             else if ( nvariables == 2 ) ret = PyObject_CallFunctionObjArgs(py_profile, z,z, NULL);
             else if ( nvariables == 3 ) ret = PyObject_CallFunctionObjArgs(py_profile, z,z,z, NULL);
+            else if ( nvariables == 4 ) ret = PyObject_CallFunctionObjArgs(py_profile, z,z,z,z, NULL);
+            PyTools::checkPyError();
             Py_DECREF(z);
             if( !ret || !PyNumber_Check(ret) )
                 ERROR("Profile `"<<name<<"`: does not seem to return a correct value");
@@ -229,6 +247,7 @@ Profile::Profile(PyObject* py_profile, unsigned int nvariables, string name, boo
         if      ( nvariables == 1 ) function = new Function_Python1D(py_profile);
         else if ( nvariables == 2 ) function = new Function_Python2D(py_profile);
         else if ( nvariables == 3 ) function = new Function_Python3D(py_profile);
+        else if ( nvariables == 4 ) function = new Function_Python4D(py_profile);
         
         info_ << " user-defined function";
     }
@@ -305,6 +324,7 @@ Profile::Profile(Profile *p){
     if      ( nvariables == 1 ) function = new Function_Python1D(static_cast<Function_Python1D*>(p->function));
     else if ( nvariables == 2 ) function = new Function_Python2D(static_cast<Function_Python2D*>(p->function));
     else if ( nvariables == 3 ) function = new Function_Python3D(static_cast<Function_Python3D*>(p->function));
+    else if ( nvariables == 4 ) function = new Function_Python4D(static_cast<Function_Python4D*>(p->function));
   }
 }
 

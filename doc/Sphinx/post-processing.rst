@@ -140,6 +140,21 @@ Open a Field diagnostic
     :ref:`moving window<movingWindow>`
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
+  In the case of a spectral cylindrical geometry (``3drz``), additional argument are
+  available. You must choose one of ``theta`` or ``build3d``, defined below, in order
+  to construct fields from their complex angular Fourier modes. In addition, the ``modes``
+  argument is optional.
+
+  * ``theta``: An angle (in radians)
+     | Calculates the field in a plane passing through the :math:`r=0` axis
+     | and making an angle ``theta`` with the :math:`xz` plane.
+  * ``build3d``: A list of three *ranges*
+     | Calculates the field interpolated in a 3D :math:`xyz` grid.
+     | Each *range* is a list ``[start, stop, step]`` indicating the beginning,
+     | the end and the step of this grid.
+  * ``modes``: An integer or a list of integers
+     | Only these modes numbers will be used in the calculation
+
 **Example**::
 
   S = happi.Open("path/to/my/results")
@@ -205,6 +220,13 @@ Open a ParticleBinning diagnostic
   S = happi.Open("path/to/my/results")
   Diag = S.ParticleBinning(1)
 
+**Note**:
+
+The :ref:`macro-particle weights<Weights>` are not in units of density,
+but of density multiplied by hypervolume.
+In the ``ParticleBinning`` post-processing, this is accounted for: the
+results are divided by the hypervolume corresponding to the diagnostic's
+definition.
 
 
 ----
@@ -289,7 +311,7 @@ The post-processing of the *performances* diagnostic may be achieved in three di
 modes: ``raw``, ``map``, or ``histogram``, described further below. You must choose one
 and only one mode between those three.
 
-.. py:method:: Performances(raw=None, map=None, histogram=None, timesteps=None, units=[""], data_log=False, **kwargs)
+.. py:method:: Performances(raw=None, map=None, histogram=None, timesteps=None, units=[""], data_log=False, species=None, **kwargs)
 
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``raw`` : The name of a quantity, or an operation between them (see quantities below).
@@ -301,7 +323,15 @@ and only one mode between those three.
     The ``"quantity"`` may be an operation between the quantities listed further below.
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
-**Available quantities**:
+There are two kinds of quantities. Some are computed at the MPI process level
+and are therefore averaged other the patches.
+Some are provided at the patch level.
+In the latter case, ``patch_information = True`` has to be put in the namelist.
+
+  **WARNING**: The patch quantities are only compatible with the ``raw`` mode in 3D.
+  The result is the patch matrix with the quantity on each patch
+
+**Available quantities at the MPI level**:
 
   * ``hindex``                     : the starting index of each proc in the hilbert curve
   * ``number_of_cells``            : the number of cells in each proc
@@ -321,17 +351,25 @@ and only one mode between those three.
   * ``timer_diags``                : time spent by each proc calculating and writing diagnostics
   * ``timer_total``                : the sum of all timers above (except timer_global)
 
+**Available quantities at the patch level**:
+  * ``mpi_rank``                   : the MPI rank that contains the current patch
+  * ``vecto``                      : the mode of the specified species in the current patch
+    (vectorized of scalar) when the adaptive mode is activated. Here the ``species`` argument has to be specified.
+
   **WARNING**: The timers ``loadBal`` and ``diags`` span parts of the code where *global*
   communications take place. This means they will include time spent doing no calculations,
   waiting for  other processes. The timers ``syncPart``, ``syncField`` and ``syncDens``
   contain *proc-to-proc* communications, which also represents some waiting time.
 
-**Example**::
+**Example**: performance diagnostic at the MPI level::
 
   S = happi.Open("path/to/my/results")
   Diag = S.Performances(map="total_load")
 
+**Example**: performance diagnostic at the patch level::
 
+  S = happi.Open("path/to/my/results")
+  Diag = S.Performances(raw="vecto", species="electron")
 
 ----
 
@@ -368,57 +406,7 @@ It has three different syntaxes:
 * To obtain units in a non-normalized system (e.g. SI), the simulation must have the
   parameter :py:data:`reference_angular_frequency_SI` set to a finite value.
   Otherwise, this parameter can be set during post-processing as an argument to the
-  :py:meth:`Open` function.
-
-
-----
-
-Units of ParticleBinning and Screen
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Most of the data output from the ``ParticleBinning`` and ``Screen`` diagnostics is
-proportional to the macro-particle statistical weights, as stated by their
-:py:data:`deposited_quantity` argument. These weights :ref:`are defined as <Weights>`
-the species density divided by the number of macro-particles of this species in the
-cell where the particle is born. Consequently, weights are in units of the number
-density :math:`N_r` (see :doc:`units`), and the sum of all macro-particle weights in
-one cell corresponds to the local species density.
-
-However, the ``DiagParticleBinning`` and ``DiagScreen`` diagnostics do not necessarily
-sum the weights in one cell: they calculate a sum over a *bin* that can be of any size,
-and in any space (phase-space, etc). The data written in the outputs
-``ParticleBinning*.h5`` and ``Screen*.h5`` is thus in units of :math:`N_r`, but does not
-always represent the actual plasma density.
-
-In ``happi``, the post-processing takes into account these features in order for outputs
-to represent the actual plasma density. For instance, if your ``DiagParticleBinning``
-has two axes ``x`` and ``y``, the output will represent the real plasma density. Another
-example: if your ``DiagParticleBinning`` has two axes ``x`` and ``px``, the output
-will be in units of :math:`N_r/P_r` and represents the real plasma density per unit of
-:math:`p_x`.
-
-Let us briefly explain how ``happi`` applies the correction. The idea is that the output
-has to be divided by the number of cells *relevant* to each bin.
-
-* The output is divided by the total number of cells in the simulation
-
-* For each axis of the diagnostic :py:data:`axes`:
-
-  * If the axis is one of ``"x"``, ``"y"`` or ``"z"``:
-
-    * Multiply the outputs by the simulation length along that axis.
-    * If the axis is included in a ``subset`` or a ``sum``: divide by the corresponding *length*.
-    * Otherwise, divide by the length of each bin.
-
-  * Otherwise:
-
-    * If the axis is included in a ``subset`` or a ``sum``: do nothing.
-    * Otherwise, divide by the length of each bin.
-
-As a final note, remember that the :py:data:`axes` of a diagnostic may be a *python function*.
-In this case, if the function represents some spatial axis, then happi cannot know how to
-apply the correction. The user has to figure it out.
-
+  :py:meth:`happi.Open` function.
 
 ----
 
@@ -523,9 +511,9 @@ Export 2D or 3D data to VTK
                TrackParticles.toVTK( rendering="trajectory", data_format="xml" )
 
   Converts the data from a diagnostic object to the vtk format.
-  
+
   * ``numberOfPieces``: the number of files into which the data will be split.
-  
+
   * ``rendering``: the type of output in the case of :py:meth:`TrackParticles`:
 
     * ``"trajectory"``: show particle trajectories. One file is generated for all trajectories.

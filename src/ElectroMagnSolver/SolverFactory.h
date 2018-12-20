@@ -5,9 +5,11 @@
 #include "MA_Solver2D_norm.h"
 #include "MA_Solver2D_Friedman.h"
 #include "MA_Solver3D_norm.h"
+#include "MA_SolverAM_norm.h"
 #include "MF_Solver1D_Yee.h"
 #include "MF_Solver2D_Yee.h"
 #include "MF_Solver3D_Yee.h"
+#include "MF_SolverAM_Yee.h"
 #include "MF_Solver2D_Grassi.h"
 #include "MF_Solver2D_GrassiSpL.h"
 #include "MF_Solver2D_Cowan.h"
@@ -56,8 +58,10 @@ public:
                 solver = new PXR_Solver3D_FDTD(params);
             else if ( ( params.is_pxr == true ) && ( params.is_spectral == true ) )
                 solver = new PXR_Solver3D_GPSTD(params);                
-        } 
-        
+        } else if ( params.geometry == "AMcylindrical" ) {
+            solver = new MA_SolverAM_norm(params);
+        }
+
         if (!solver)
             ERROR( "Unknwon Maxwell-Ampere solver ");
         
@@ -105,7 +109,10 @@ public:
             }
             else
                 solver = new NullSolver(params);
-
+        }else if ( params.geometry == "AMcylindrical" ) {
+            if (params.maxwell_sol == "Yee") {
+                solver = new MF_SolverAM_Yee(params);
+            }
         }
         
         if (!solver)

@@ -13,9 +13,10 @@
 #include "DiagnosticFields1D.h"
 #include "DiagnosticFields2D.h"
 #include "DiagnosticFields3D.h"
+#include "DiagnosticFieldsAM.h"
 
 //  --------------------------------------------------------------------------------------------------------------------
-//! Create appropriate IO environment for the geometry 
+//! Create appropriate IO environment for the geometry
 //! \param params : Parameters
 //! \param smpi : MPI environment
 //  --------------------------------------------------------------------------------------------------------------------
@@ -31,6 +32,9 @@ public:
         }
         else if ( params.geometry == "3Dcartesian" ) {
             diag = new DiagnosticFields3D(params, smpi, vecPatches, idiag, openPMD);
+        }
+        else if ( params.geometry == "AMcylindrical" ) {
+            diag = new DiagnosticFieldsAM(params, smpi, vecPatches, idiag, openPMD);
         }
         else {
             ERROR( "Geometry " << params.geometry << " not implemented" );
@@ -55,20 +59,24 @@ public:
             vecDiagnostics.push_back( new DiagnosticScreen(params, smpi, vecPatches(0), n_diag_screen) );
         }
         
+//MESSAGE ("Glob diag");
         return vecDiagnostics;
-    } // END createGlobalDiagnostics
+
+ } // END createGlobalDiagnostics
     
     
     
-    static std::vector<Diagnostic*> createLocalDiagnostics(Params& params, SmileiMPI* smpi, VectorPatch &vecPatches, OpenPMDparams& openPMD) {
+    static std::vector<Diagnostic*> createLocalDiagnostics(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, OpenPMDparams& openPMD) {
         std::vector<Diagnostic*> vecDiagnostics;
+        //MESSAGE("in create local diags:  global dims after declaring vecdiag " << vecPatches(0)->EMfields->Jx_s[1]->globalDims_);
         
         for (unsigned int n_diag_fields = 0; n_diag_fields < PyTools::nComponents("DiagFields"); n_diag_fields++) {
             vecDiagnostics.push_back( DiagnosticFieldsFactory::create(params, smpi, vecPatches, n_diag_fields, openPMD) );
+          //  MESSAGE("in create local diags:  global dims after creating and pushing back field diag " << vecPatches(0)->EMfields->Jx_s[1]->globalDims_);
         }
         
         for (unsigned int n_diag_probe = 0; n_diag_probe < PyTools::nComponents("DiagProbe"); n_diag_probe++) {
-            vecDiagnostics.push_back( new DiagnosticProbes(params, smpi, n_diag_probe) );
+            vecDiagnostics.push_back( new DiagnosticProbes(params, smpi, vecPatches, n_diag_probe) );
         }
         
         for (unsigned int n_diag_track = 0; n_diag_track < PyTools::nComponents("DiagTrackParticles"); n_diag_track++) {
@@ -79,7 +87,9 @@ public:
             vecDiagnostics.push_back( new DiagnosticPerformances(params, smpi) );
         }
         
+//MESSAGE("local diag");
         return vecDiagnostics;
+
     } // END createLocalDiagnostics
     
     
@@ -109,4 +119,3 @@ public:
 };
 
 #endif
-

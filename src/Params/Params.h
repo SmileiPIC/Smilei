@@ -65,6 +65,9 @@ public:
     //! compute grid-related parameters & apply normalization
     void compute();
 
+    //! check if input parameters & apply normalizationare coherent
+    void check_consistency();
+
     //! print a summary of the values in txt
     void print_init();
     //! Printing out some data at a given timestep
@@ -81,6 +84,9 @@ public:
 
     //! sets nDim_particle and nDim_field based on the geometry
     void setDimensions();
+    
+    //! Find out whether a field name corresponds to a species field
+    bool isSpeciesField(std::string field_name);
 
     //! defines the geometry of the simulation
     std::string geometry;
@@ -120,7 +126,16 @@ public:
     //! Are open boundaries used ?
     bool open_boundaries;
     bool save_magnectic_fields_for_SM;
-    
+
+    //! Boundary conditions for Envelope Field
+    std::vector< std::vector<std::string> > Env_BCs;
+
+    //! Define if the ponderomotive force is computed (default = false)
+    //bool ponderomotive_force;
+
+    //! Define if laser envelope model is used (default = false)
+    bool Laser_Envelope_model=false;
+
     //Poisson solver
     //! Do we solve poisson
     bool solve_poisson;
@@ -142,10 +157,10 @@ public:
 
     //! Maxwell Solver (default='Yee')
     std::string maxwell_sol;
-    
+
     //! Current spatial filter: number of binomial passes
     unsigned int currentFilter_passes;
-    
+
     //! is Friedman filter applied [Greenwood et al., J. Comp. Phys. 201, 665 (2004)]
     bool Friedman_filter;
 
@@ -167,6 +182,9 @@ public:
     //! dt for the simulation
     double timestep;
 
+    //! Number of modes
+    unsigned int nmodes;
+
     //! max value for dt (due to usual FDTD CFL condition: should be moved to ElectroMagn solver (MG))
     double dtCFL;
 
@@ -175,19 +193,19 @@ public:
 
     //! number of cells in every direction of the global domain
     std::vector<unsigned int> n_space_global;
-    
+
     //! spatial step (cell dimension in every direction)
     std::vector<double> cell_length;
-    
+
     //! Size of a patch in each direction
     std::vector<double> patch_dimensions;
-    
+
     //! volume of cell (this will be removed by untructured mesh!)
     double cell_volume;
 
     //! wavelength (in SI units)
     double reference_angular_frequency_SI;
-    
+
     //! Oversize domain to exchange less particles
     std::vector<unsigned int> oversize;
 
@@ -196,7 +214,7 @@ public:
 
     //! frequency of exchange particles (default = 1, disabled for now, incompatible with sort)
     int exchange_particles_each;
-    
+
     //! frequency to apply shrink_to_fit on particles structure
     int every_clean_particles_overhead;
 
@@ -205,9 +223,12 @@ public:
     //! Number of patches per direction
     std::vector<unsigned int> number_of_patches;
     //! Domain decomposition
-    std::string patch_decomposition;
-    //! Domain orientation
-    std::string patch_orientation;
+    std::string patch_arrangement;
+
+    //! Time selection for adaptive vectorization
+    TimeSelection * adaptive_vecto_time_selection;
+    //! Flag for the adaptive vectorization
+    bool has_adaptive_vectorization;
 
     //! Time selection for load balancing
     TimeSelection * load_balancing_time_selection;
@@ -222,7 +243,10 @@ public:
     //! Compute an initially balanced patch distribution right from the start
     bool initial_balance;
 
-    bool vecto;
+    //! String containing the vectorization mode: off, on, adaptive, adaptive_mixed_sort
+    std::string vectorization_mode;
+    //! Initial state of the patches in adaptive mode
+    std::string adaptive_default_mode;
 
     //! Tells whether there is a moving window
     bool hasWindow;
@@ -249,7 +273,7 @@ public:
     //! check if python can be closed (e.g. there is no laser python profile)
     //! by calling the _keep_python_running python function (part of pycontrol.pyh)
     void cleanup(SmileiMPI*);
-    
+
     //! Method to find the numbers of requested species, sorted, and duplicates removed
     static std::vector<unsigned int> FindSpecies(std::vector<Species*>&, std::vector<std::string>);
 
@@ -260,14 +284,17 @@ public:
     std::vector<unsigned int> global_factor;
     bool  is_spectral=false ;
     bool  is_pxr=false ;
-    int   norderx = 2; 
-    int   nordery = 2; 
+    int   norderx = 2;
+    int   nordery = 2;
     int   norderz = 2;
     std::vector<int> norder;
-    
+
     //! Boolean for printing the expected disk usage or not
     bool print_expected_disk_usage;
-    
+
+    //! Random seed
+    unsigned int random_seed;
+
     // ---------------------------------------------
     // Constants
     // ---------------------------------------------

@@ -26,3 +26,6 @@ doc/html
 */*.swo
 */*/*.swo
 */*/*/*.swo
+exec_script.sh.*
+.tags*
+.vscode*

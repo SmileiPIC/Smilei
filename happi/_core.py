@@ -644,7 +644,10 @@ class SmileiSimulation(object):
 		try:
 			# get number of dimensions
 			error = "Error extracting 'dim' from the input file"
-			ndim = int(namelist.Main.geometry[0])
+			if namelist.Main.geometry == "AMcylindrical":
+				ndim = 2
+			else:
+				ndim = int(namelist.Main.geometry[0])
 			if ndim not in [1,2,3]: raise
 			# get box size
 			error = "Error extracting 'grid_length' from the input file"

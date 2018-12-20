@@ -171,6 +171,24 @@ can be written as:
   \frac{d^2N}{dt d\chi_\gamma} = \frac{1}{\pi \sqrt{3}} \frac{\alpha^2}{\tau_e \chi_\pm}
   \left[ \int_\nu^{+\infty}{K_{5/3(y)}dy} + \frac{2 \chi_\gamma \nu}{2} K_{2/3}(\nu) \right]
 
+
+This equation can be also decomposed into:
+
+.. math::
+  :label: PhotonProdRate2
+
+  \frac{d^2N}{dt d\chi} = \frac{2}{3} \frac{\alpha^2}{\tau_e} \frac{S(\chi_\pm , \chi)}{\chi}
+
+where :math:`S(\chi_\pm , \chi)` is so called the synchrotron emissity function.
+
+We therefore have:
+
+.. math::
+  :label: synchrotron_emissivity_function
+
+  S(\chi_\pm , \chi) = \frac{\sqrt{3}}{2\pi} \frac{\chi_\gamma}{\chi}
+  \left[ \int_\nu^{+\infty}{K_{5/3(y)}dy} + \frac{2 \chi_\gamma \nu}{2} K_{2/3}(\nu) \right]
+
 Condition (i) is fulfilled when :math:`a_0 = e \| A^{\mu} \| / mc^2 \gg 1`, :math:`A^{\mu}`
 being the four-potential laser amplitude.
 
@@ -262,31 +280,38 @@ energy variations following this integral:
   :label: MCDtauDt
 
     \frac{d\tau}{dt} = \int_0^{\chi_{\pm}}{ \frac{d^2N}{d\chi dt}  d\chi }
+    = \frac{2}{3} \frac{\alpha^2}{\tau_e} \int_0^{\chi_{\pm}}{ \frac{S(\chi_\pm, \chi)}{\chi}  d\chi }
+    = \frac{2}{3} \frac{\alpha^2}{\tau_e} K (\chi_\pm)
 
 that simply is the production rate of photons
 (integration of Eq. :eq:`PhotonProdRate`).
 Here, :math:`\chi_{\pm}` is the emitting electron (or positron) quantum parameter and
 :math:`\chi` the integration variable.
 
-3. The emitted photon's quantum parameter :math:`\chi_\gamma` is computed by
+3. The emitted photon's quantum parameter :math:`\chi_{\gamma}` is computed by
 inverting the cumulative distribution function:
 
 .. math::
   :label: CumulativeDistr
 
-    P(\chi_\pm,\chi_\gamma) = \frac{\displaystyle{\int_0^{\chi_\gamma}{F(\chi_\pm, \chi)
-    d\chi}}}{\displaystyle{\int_0^{\chi_\pm}{F(\chi_\pm, \chi) d\chi}}}
+    \xi = P(\chi_\pm,\chi_{\gamma}) = \frac{\displaystyle{\int_0^{\chi_\gamma}{S(\chi_\pm, \chi) / \chi
+    d\chi}}}{\displaystyle{\int_0^{\chi_\pm}{S(\chi_\pm, \chi) / \chi d\chi}}}
 
-where :math:`F` is the so-called synchrotron emissivity function so that
+where :math:`S` is the so-called synchrotron emissivity function so that
 
 .. math::
   :label: MCF
 
-    \frac{d^2 N}{dt d\chi_{\pm}} = \frac{2}{3} \frac{\alpha^2}{\tau_e} F (\chi_\pm, \chi_\gamma)
+    \frac{d^2 N}{dt d\chi} = \frac{2}{3} \frac{\alpha^2}{\tau_e} \frac{S (\chi_\pm, \chi)}{\chi}
 
-The inversion of  :math:`P(\chi_\pm,\chi_\gamma)=\xi'` is done after drawing
+The inversion of  :math:`\xi = P(\chi_\pm,\chi_{\gamma})` is done after drawing
 a second random number
-:math:`\xi' \in \left[ 0,1\right]` to find :math:`\chi_\gamma`.
+:math:`\phi \in \left[ 0,1\right]` to find :math:`\chi_{\gamma}` by solving :
+
+.. math::
+  :label: inverse_xi
+
+  \xi^{-1} = P^{-1}(\chi_\pm, \chi_{\gamma}) = \phi
 
 4. The energy of the emitted photon is then computed:
 :math:`\varepsilon_\gamma = mc^2 \gamma_\gamma =
@@ -415,7 +440,12 @@ Monte-Carlo quantum model
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 The computation of Eq. :eq:`MCDtauDt` would be too expensive for every single
-particles. Instead, the integral of the function :math:`F` is tabulated.
+particles.
+Instead, the integral of the function :math:`S(\chi_\pm, \chi) / \chi`
+called :math:`K(\chi_\pm)` is tabulated.
+The tabulation boundaries depend on the user.
+They can be specified in the :program:`\Smilei` input file.
+
 This table is referred to as ``integfochi_table`` and related parameters
 start by ``integfochi`` in the code.
 
@@ -426,8 +456,8 @@ The only difference is that a minimum photon quantum parameter
 .. math::
   :label: chiMin
 
-    \frac{\displaystyle{\int_{0}^{\chi_{\gamma,\min}}{F(\chi_\pm, \chi)
-    d\chi}}}{\displaystyle{\int_0^{\chi_\pm}{F(\chi_\pm, \chi) d\chi}}} < \epsilon
+    \frac{\displaystyle{\int_{0}^{\chi_{\gamma,\min}}{S(\chi_\pm, \chi) / \chi
+    d\chi}}}{\displaystyle{\int_0^{\chi_\pm}{S(\chi_\pm, \chi) / \chi d\chi}}} < \epsilon
 
 This enables to find a lower bound to the :math:`\chi_\gamma` range
 (discretization in the log domain) so that the
@@ -814,8 +844,6 @@ References
 .. [Lobet2013] `Lobet et al., J. Phys.: Conf. Ser. 688, 012058 (2016) <http://iopscience.iop.org/article/10.1088/1742-6596/688/1/012058>`_
 
 .. [Lobet2015] `M. Lobet, Effets radiatifs et d'électrodynamique quantique dans l'interaction laser-matière ultra-relativiste (2015) <http://www.theses.fr/2015BORD0361#>`_
-
-.. [Niel2017] `Niel et al., Arxiv, ArXiv Preprint 1707.02618  (2017) <https://arxiv.org/abs/1707.02618>`_
 
 .. [Ritus1985] `Ritus V. (1985), Journal of Soviet Laser Research, 6, 497, ISSN 0270-2010 <https://doi.org/10.1007/BF01120220>`_
 

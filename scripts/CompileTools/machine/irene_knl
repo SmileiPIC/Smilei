@@ -1,0 +1,17 @@
+#
+# Machine file for Irene Joliot-Curie using AVX512
+# __________________________________________________________
+#
+# Load the correct modules:
+#
+# module load intel/18.0.3.222
+# module load mpi/intelmpi/2018.0.3.222
+#
+# You have to install your own hdf5:
+# export HDF5_ROOT=<path to your installation folder>
+# export HDF5_ROOT=/ccc/work/cont003/smilei/derouilj/hdf5-1.8.16-intelmpi2018.18
+# export PATH=${HDF5_ROOT}/bin:${PATH}
+# export LD_LIBRARY_PATH=${HDF5_ROOT}/lib:${LD_LIBRARY_PATH}
+# export HDF5_ROOT_DIR=${HDF5_ROOT}
+
+CXXFLAGS += -xMIC-AVX512 -ip -inline-factor=1000 -D__INTEL_KNL_7250 -qopt-zmm-usage=high -fno-alias #-ipo

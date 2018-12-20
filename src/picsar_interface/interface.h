@@ -19,8 +19,7 @@ extern  "C"
 	void init_params_picsar(int*,int*,int*,double*,double*,double*,double*,
 		int*,int*,int*,int*,int*,int*,bool*,double*,double*,double*,double*,
 		double*,double*,double*,double*,double*,double*,double*,int*);
-	void push_psatd_ebfield_3d_();
-        void push_psatd_ebfield_2d_();
+	void push_psatd_ebfield_();
         void solve_maxwell_fdtd_pxr();
 };
 

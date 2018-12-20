@@ -12,7 +12,7 @@ class DiagnosticProbes : public Diagnostic {
 public :
     
     //! Default constructor
-    DiagnosticProbes( Params &params, SmileiMPI* smpi, int n_probe );
+    DiagnosticProbes( Params &params, SmileiMPI* smpi, VectorPatch &vecPatches, int n_probe );
     //! Default destructor
     ~DiagnosticProbes() override;
     
@@ -24,7 +24,7 @@ public :
     
     void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep, SimWindow* simWindow, Timers & timers ) override;
     
-    void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) override;    
+    void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) override;
     
     virtual bool needsRhoJs(int timestep) override;
     
@@ -54,9 +54,14 @@ private :
     
     //! Dimension of particle coordinates
     unsigned int nDim_particle;
+    //! Dimension of field coordinates
+    unsigned int nDim_field;
+
+    //! Geometry
+    std::string geometry;
     
     //! Number of points in each dimension
-    std::vector<unsigned int> vecNumber; 
+    std::vector<unsigned int> vecNumber;
     
     //! Coordinates of the probe grid origin
     std::vector<double> origin;
@@ -87,6 +92,9 @@ private :
     
     //! Indices in the output array where each field goes
     std::vector<unsigned int> fieldlocation;
+    
+    //! Special case of species-related fields: indices of fields in ElectroMagn
+    std::vector<unsigned int> fieldindex;
     
     //! Variable to store the status of a dataset (whether it exists or not)
     htri_t status;
@@ -130,4 +138,3 @@ public :
 
 
 #endif
-

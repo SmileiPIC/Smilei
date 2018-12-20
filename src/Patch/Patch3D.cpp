@@ -35,7 +35,14 @@ Patch3D::Patch3D(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_de
                     ntype_[2][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
                     ntypeSum_[0][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
                     ntypeSum_[1][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;    
-                    ntypeSum_[2][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;    
+                    ntypeSum_[2][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;  
+          
+                    ntype_complex_[0][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                    ntype_complex_[1][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                    ntype_complex_[2][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                    ntypeSum_complex_[0][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                    ntypeSum_complex_[1][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;    
+                    ntypeSum_complex_[2][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;  
                 }        
             }
         }
@@ -53,7 +60,7 @@ Patch3D::Patch3D(Patch3D* patch, Params& params, SmileiMPI* smpi, DomainDecompos
 {
     initStep2(params, domain_decomposition);
     initStep3(params, smpi, n_moved);
-    finishCloning(patch, params, smpi, with_particles);
+    finishCloning(patch, params, smpi, n_moved, with_particles);
 } // End Patch3D::Patch3D
 
 
@@ -143,7 +150,7 @@ void Patch3D::reallyinitSumField( Field* field, int iDim )
 // Initialize current patch sum Fields communications through MPI in direction iDim
 // Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
 // ---------------------------------------------------------------------------------------------------------------------
-void Patch3D::initSumField( Field* field, int iDim )
+void Patch3D::initSumField( Field* field, int iDim, SmileiMPI* smpi )
 {
     if (field->MPIbuff.buf[0][0].size()==0) {
         field->MPIbuff.allocate(3, field, oversize);
@@ -154,7 +161,7 @@ void Patch3D::initSumField( Field* field, int iDim )
         if (field->name == "Jz") tagp = 3;
         if (field->name == "Rho") tagp = 4;
 
-        field->MPIbuff.defineTags( this, tagp );
+        field->MPIbuff.defineTags( this, smpi, tagp );
     }
 
     int patch_ndims_(3);
@@ -300,6 +307,11 @@ void Patch3D::reallyfinalizeSumField( Field* field, int iDim )
 // ---------------------------------------------------------------------------------------------------------------------
 void Patch3D::initExchange( Field* field )
 {
+    ERROR( "On ne passe jamais ici !!!!" );
+} // END initExchange( Field* field )
+
+void Patch3D::initExchangeComplex( Field* field )
+{
     cout << "On ne passe jamais ici !!!!" << endl;
 
     if (field->MPIbuff.srequest.size()==0)
@@ -310,7 +322,7 @@ void Patch3D::initExchange( Field* field )
 
     std::vector<unsigned int> n_elem   = field->dims_;
     std::vector<unsigned int> isDual = field->isDual_;
-    Field3D* f3D =  static_cast<Field3D*>(field);
+    cField3D* f3D =  static_cast<cField3D*>(field);
 
     int istart, ix, iy, iz;
 
@@ -320,7 +332,7 @@ void Patch3D::initExchange( Field* field )
 	vector<int> idx( patch_ndims_,0 );
 	idx[iDim] = 1;
 
-        MPI_Datatype ntype = ntype_[iDim][isDual[0]][isDual[1]][isDual[2]];
+        MPI_Datatype ntype = ntype_complex_[iDim][isDual[0]][isDual[1]][isDual[2]];
         for (int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++) {
 
             if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
@@ -350,7 +362,7 @@ void Patch3D::initExchange( Field* field )
         } // END for iNeighbor
 
     } // END for iDim
-} // END initExchange( Field* field )
+} // END initExchangeComplex( Field* field )
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -359,7 +371,12 @@ void Patch3D::initExchange( Field* field )
 // ---------------------------------------------------------------------------------------------------------------------
 void Patch3D::finalizeExchange( Field* field )
 {
-    Field3D* f3D =  static_cast<Field3D*>(field);
+    ERROR( "On ne passe jamais ici !!!!" );
+} // END finalizeExchange( Field* field )
+
+void Patch3D::finalizeExchangeComplex( Field* field )
+{
+    cField3D* f3D =  static_cast<cField3D*>(field);
 
     int patch_ndims_(3);
     MPI_Status sstat    [patch_ndims_][2];
@@ -379,14 +396,14 @@ void Patch3D::finalizeExchange( Field* field )
 
     } // END for iDim
 
-} // END finalizeExchange( Field* field )
+} // END finalizeExchangeComplex( Field* field )
 
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Initialize current patch exhange Fields communications through MPI for direction iDim
 // Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
 // ---------------------------------------------------------------------------------------------------------------------
-void Patch3D::initExchange( Field* field, int iDim )
+void Patch3D::initExchange( Field* field, int iDim, SmileiMPI* smpi )
 {
     if (field->MPIbuff.srequest.size()==0){
         field->MPIbuff.allocate(3);
@@ -396,7 +413,7 @@ void Patch3D::initExchange( Field* field, int iDim )
         if (field->name == "By") tagp = 7;
         if (field->name == "Bz") tagp = 8;
 
-        field->MPIbuff.defineTags( this, tagp );
+        field->MPIbuff.defineTags( this, smpi, tagp );
     }
 
     int patch_ndims_(3);
@@ -443,6 +460,62 @@ void Patch3D::initExchange( Field* field, int iDim )
 
 } // END initExchange( Field* field, int iDim )
 
+void Patch3D::initExchangeComplex( Field* field, int iDim, SmileiMPI* smpi )
+{
+    if (field->MPIbuff.srequest.size()==0){
+        field->MPIbuff.allocate(3);
+
+        int tagp(0);
+        if (field->name == "Bx") tagp = 6;
+        if (field->name == "By") tagp = 7;
+        if (field->name == "Bz") tagp = 8;
+
+        field->MPIbuff.defineTags( this, smpi, tagp );
+    }
+
+    int patch_ndims_(3);
+    int patch_nbNeighbors_(2);
+
+    vector<int> idx( patch_ndims_,0 );
+    idx[iDim] = 1;
+
+    std::vector<unsigned int> n_elem   = field->dims_;
+    std::vector<unsigned int> isDual = field->isDual_;
+    cField3D* f3D =  static_cast<cField3D*>(field);
+
+    int istart, ix, iy, iz;
+
+    MPI_Datatype ntype = ntype_complex_[iDim][isDual[0]][isDual[1]][isDual[2]];
+    for (int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++) {
+
+        if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
+
+            istart = iNeighbor * ( n_elem[iDim]- (2*oversize[iDim]+1+isDual[iDim]) ) + (1-iNeighbor) * ( oversize[iDim] + 1 + isDual[iDim] );
+            ix = idx[0]*istart;
+            iy = idx[1]*istart;
+            iz = idx[2]*istart;
+            int tag = f3D->MPIbuff.send_tags_[iDim][iNeighbor];
+            MPI_Isend( &((*f3D)(ix,iy,iz)), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag, 
+                       MPI_COMM_WORLD, &(f3D->MPIbuff.srequest[iDim][iNeighbor]) );
+
+        } // END of Send
+
+        if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
+
+            istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - 1- (oversize[iDim]-1) ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
+            ix = idx[0]*istart;
+            iy = idx[1]*istart;
+            iz = idx[2]*istart;
+            int tag = f3D->MPIbuff.recv_tags_[iDim][iNeighbor];
+            MPI_Irecv( &((*f3D)(ix,iy,iz)), 1, ntype, MPI_neighbor_[iDim][(iNeighbor+1)%2], tag, 
+                       MPI_COMM_WORLD, &(f3D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]));
+
+        } // END of Recv
+
+    } // END for iNeighbor
+
+
+} // END initExchangeComplex( Field* field, int iDim )
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Initialize current patch exhange Fields communications through MPI for direction iDim
@@ -467,6 +540,26 @@ void Patch3D::finalizeExchange( Field* field, int iDim )
     }
 
 } // END finalizeExchange( Field* field, int iDim )
+
+void Patch3D::finalizeExchangeComplex( Field* field, int iDim )
+{
+    int patch_ndims_(3);
+
+    cField3D* f3D =  static_cast<cField3D*>(field);
+
+    MPI_Status sstat    [patch_ndims_][2];
+    MPI_Status rstat    [patch_ndims_][2];
+
+    for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+        if ( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
+            MPI_Wait( &(f3D->MPIbuff.srequest[iDim][iNeighbor]), &(sstat[iDim][iNeighbor]) );
+        }
+        if ( is_a_MPI_neighbor( iDim, (iNeighbor+1)%2 ) ) {
+            MPI_Wait( &(f3D->MPIbuff.rrequest[iDim][(iNeighbor+1)%2]), &(rstat[iDim][(iNeighbor+1)%2]) );
+        }
+    }
+
+} // END finalizeExchangeComplex( Field* field, int iDim )
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -569,11 +662,43 @@ void Patch3D::createType( Params& params )
                                 MPI_DOUBLE, &(ntype_[2][ix_isPrim][iy_isPrim][iz_isPrim]));
                 MPI_Type_commit( &(ntype_[2][ix_isPrim][iy_isPrim][iz_isPrim]) );
             
+                //// Complex Type V0
+                //ntype_complex_[0][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                //MPI_Type_contiguous(params.oversize[0]*ny*nz, 
+                //                    MPI_CXX_DOUBLE_COMPLEX, &(ntype_complex_[0][ix_isPrim][iy_isPrim][iz_isPrim]));
+                //MPI_Type_commit( &(ntype_complex_[0][ix_isPrim][iy_isPrim][iz_isPrim]) );
+                //
+                //ntype_complex_[1][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                //MPI_Type_vector(nx, params.oversize[1]*nz, ny*nz, 
+                //                MPI_CXX_DOUBLE_COMPLEX, &(ntype_complex_[1][ix_isPrim][iy_isPrim][iz_isPrim]));
+                //MPI_Type_commit( &(ntype_complex_[1][ix_isPrim][iy_isPrim][iz_isPrim]) );
+                //
+                //ntype_complex_[2][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                //MPI_Type_vector(nx*ny, params.oversize[2], nz, 
+                //                MPI_CXX_DOUBLE_COMPLEX, &(ntype_complex_[2][ix_isPrim][iy_isPrim][iz_isPrim]));
+                //MPI_Type_commit( &(ntype_complex_[2][ix_isPrim][iy_isPrim][iz_isPrim]) );
+
+                // Complex Type
+                ntype_complex_[0][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                MPI_Type_contiguous(2*params.oversize[0]*ny*nz, 
+                                    MPI_DOUBLE, &(ntype_complex_[0][ix_isPrim][iy_isPrim][iz_isPrim]));
+                MPI_Type_commit( &(ntype_complex_[0][ix_isPrim][iy_isPrim][iz_isPrim]) );
+
+                ntype_complex_[1][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                MPI_Type_vector(nx, params.oversize[1]*2*nz, ny*2*nz, 
+                                MPI_DOUBLE, &(ntype_complex_[1][ix_isPrim][iy_isPrim][iz_isPrim]));
+                MPI_Type_commit( &(ntype_complex_[1][ix_isPrim][iy_isPrim][iz_isPrim]) );
+
+                ntype_complex_[2][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                MPI_Type_vector(nx*ny, 2*params.oversize[2], 2*nz, 
+                                MPI_DOUBLE, &(ntype_complex_[2][ix_isPrim][iy_isPrim][iz_isPrim]));
+                MPI_Type_commit( &(ntype_complex_[2][ix_isPrim][iy_isPrim][iz_isPrim]) );
 
                 nx_sum = 1 + 2*params.oversize[0] + ix_isPrim;
                 ny_sum = 1 + 2*params.oversize[1] + iy_isPrim;
                 nz_sum = 1 + 2*params.oversize[2] + iz_isPrim;
 
+                // Standard sum
                 ntypeSum_[0][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
                 MPI_Type_contiguous(nx_sum*ny*nz, 
                                     MPI_DOUBLE, &(ntypeSum_[0][ix_isPrim][iy_isPrim][iz_isPrim]));
@@ -588,6 +713,11 @@ void Patch3D::createType( Params& params )
                 MPI_Type_vector(nx*ny, nz_sum, nz, 
                                 MPI_DOUBLE, &(ntypeSum_[2][ix_isPrim][iy_isPrim][iz_isPrim]));
                 MPI_Type_commit( &(ntypeSum_[2][ix_isPrim][iy_isPrim][iz_isPrim]) );
+
+                // Complex sum
+                ntypeSum_complex_[0][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                ntypeSum_complex_[1][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
+                ntypeSum_complex_[2][ix_isPrim][iy_isPrim][iz_isPrim] = MPI_DATATYPE_NULL;
             
             }
         }
@@ -608,7 +738,14 @@ void Patch3D::cleanType()
                 MPI_Type_free( &(ntype_[2][ix_isPrim][iy_isPrim][iz_isPrim]) );
                 MPI_Type_free( &(ntypeSum_[0][ix_isPrim][iy_isPrim][iz_isPrim]) );
                 MPI_Type_free( &(ntypeSum_[1][ix_isPrim][iy_isPrim][iz_isPrim]) );    
-                MPI_Type_free( &(ntypeSum_[2][ix_isPrim][iy_isPrim][iz_isPrim]) );    
+                MPI_Type_free( &(ntypeSum_[2][ix_isPrim][iy_isPrim][iz_isPrim]) ); 
+
+                MPI_Type_free( &(ntype_complex_[0][ix_isPrim][iy_isPrim][iz_isPrim]) );
+                MPI_Type_free( &(ntype_complex_[1][ix_isPrim][iy_isPrim][iz_isPrim]) );
+                MPI_Type_free( &(ntype_complex_[2][ix_isPrim][iy_isPrim][iz_isPrim]) );
+                //MPI_Type_free( &(ntypeSum_complex_[0][ix_isPrim][iy_isPrim][iz_isPrim]) );
+                //MPI_Type_free( &(ntypeSum_complex_[1][ix_isPrim][iy_isPrim][iz_isPrim]) );    
+                //MPI_Type_free( &(ntypeSum_complex_[2][ix_isPrim][iy_isPrim][iz_isPrim]) );     
             }        
         }
     }

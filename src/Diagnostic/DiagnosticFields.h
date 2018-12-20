@@ -96,6 +96,9 @@ protected :
     hid_t filespace_reread, filespace_firstwrite, memspace_reread, memspace_firstwrite;
     std::vector<double> data_reread, data_rewrite;
     
+    //! Dataset creation property list
+    hid_t dcreate, dcreate_firstwrite;
+    
     //! True if this diagnostic requires the pre-calculation of the particle J & Rho
     bool hasRhoJs;
     

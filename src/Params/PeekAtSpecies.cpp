@@ -25,6 +25,7 @@ PeekAtSpecies::PeekAtSpecies(Params& p, unsigned int species_id) :
         PyTools::extract_pyProfile("particles_per_cell", profile1, "Species", species_id);
         ppcProfile = new Profile(profile1, params->nDim_field, Tools::merge("particles_per_cell ",species_name));
     }
+    Py_DECREF(py_pos_init);
 }
 
 
