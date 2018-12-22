@@ -915,8 +915,6 @@ void Species::projection_for_diags(double time_dual, unsigned int ispec,
 void Species::dynamics_import_particles(double time_dual, unsigned int ispec,
                        Params &params,
                        Patch* patch, SmileiMPI* smpi,
-                       RadiationTables & RadiationTables,
-                       MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
                        vector<Diagnostic*>& localDiags)
 {
     // if moving particle

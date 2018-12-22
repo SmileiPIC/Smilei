@@ -408,8 +408,6 @@ void VectorPatch::projection_for_diags(Params& params,
 } // END projection for diags
 
 void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWindow* simWindow,
-                           RadiationTables & RadiationTables,
-                           MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
                            double time_dual, Timers &timers, int itime)
 {
     timers.syncPart.restart();
@@ -430,8 +428,6 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
                 species(ipatch, ispec)->dynamics_import_particles(time_dual, ispec,
                                                                   params,
                                                                   (*this)(ipatch), smpi,
-                                                                  RadiationTables,
-                                                                  MultiphotonBreitWheelerTables,
                                                                   localDiags);
             }
         }

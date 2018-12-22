@@ -351,8 +351,6 @@ public:
     virtual void dynamics_import_particles(double time, unsigned int ispec,
                         Params &params,
                         Patch* patch, SmileiMPI* smpi,
-                        RadiationTables &RadiationTables,
-                        MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
                         std::vector<Diagnostic*>& localDiags);
 
     //! Method calculating the Particle charge on the grid (projection)
