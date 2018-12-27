@@ -30,6 +30,7 @@ class Field3D;
 class Patch;
 class SimWindow;
 class Radiation;
+class Merging;
 
 
 //! class Species
@@ -238,7 +239,7 @@ public:
 
     // Merging parameters :
     //! Merging method
-    string merging_method_;
+    std::string merging_method_;
 
     // -----------------------------------------------------------------------------
     //  4. Operators

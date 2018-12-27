@@ -4,6 +4,8 @@
 //! \brief Header for the class MergingFactory that
 //! manages the different particle merging algorithms.
 //
+//! Creation - 01/2019 - Mathieu Lobet
+//
 // ----------------------------------------------------------------------------
 
 #ifndef MERGINGFACTORY_H

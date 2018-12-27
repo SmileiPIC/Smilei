@@ -4,13 +4,16 @@
 //! \brief Header for the generic class Merging
 //! dedicated to the particle merging.
 //
-//! Mathieu Lobet
-//! 01/2019
+//! Creation - 01/2019 - Mathieu Lobet
 //
 // ----------------------------------------------------------------------------
 
 #ifndef MERGING_H
 #define MERGING_H
+
+#include "Params.h"
+#include "Particles.h"
+#include "Species.h"
 
 //  ----------------------------------------------------------------------------
 //! Class Merging
@@ -21,6 +24,7 @@ public:
 
     //! Creator for Merging
     Merging(Params& params, Species *species);
+
     virtual ~Merging();
 
     //! Overloading of () operator
@@ -30,12 +34,14 @@ public:
     //! \param istart      Index of the first particle
     //! \param iend        Index of the last particle
     //! \param ithread     Thread index
+    //! \param ipart_ref
     virtual void operator() (
             Particles &particles,
             SmileiMPI* smpi,
             int istart,
             int iend,
-            int ithread) = 0;
+            int ithread,
+            int ipart_ref = 0) = 0;
 
 
 protected:

@@ -4,8 +4,7 @@
 //! \brief Class implementation for the generic class
 //!  Merging dedicated to the particle merging.
 //
-//! Mathieu Lobet
-//! 01/2019
+//! Creation - 01/2019 - Mathieu Lobet
 //
 // ----------------------------------------------------------------------------
 
