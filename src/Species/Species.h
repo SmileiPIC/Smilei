@@ -18,6 +18,7 @@
 #include "RadiationTables.h"
 #include "MultiphotonBreitWheeler.h"
 #include "MultiphotonBreitWheelerTables.h"
+#include "Merging.h"
 
 class ElectroMagn;
 class Pusher;
@@ -235,6 +236,10 @@ public:
     //! whether to choose vectorized operators with respective sorting methods
     int vectorized_operators;
 
+    // Merging parameters :
+    //! Merging method
+    string merging_method_;
+
     // -----------------------------------------------------------------------------
     //  4. Operators
 
@@ -256,12 +261,14 @@ public:
     //! Particles position pusher (change change position)
     Pusher* Push_ponderomotive_position = NULL;
 
-
     //! Interpolator (used to push particles and for probes)
     Interpolator* Interp;
 
     //! Projector
     Projector* Proj;
+
+    //! Merging
+    Merging* Merge;
 
     // -----------------------------------------------------------------------------
     //  5. Methods
