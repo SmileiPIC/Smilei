@@ -15,7 +15,10 @@
 #ifndef MERGINGVRANIC_H
 #define MERGINGVRANIC_H
 
+#include <cmath>
+
 #include "Merging.h"
+
 
 //------------------------------------------------------------------------------
 //! MergingVranic class: holds parameters and functions to apply the
@@ -47,6 +50,12 @@ public:
             int iend,
             int ithread,
             int ipart_ref = 0);
+
+    // Parameters __________________________________________________
+
+    // Minimum and maximum number of particles per packet to be merged
+    unsigned int min_packet_size_;
+    unsigned int max_packet_size_;
 
 protected:
 

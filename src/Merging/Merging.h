@@ -43,6 +43,10 @@ public:
             int ithread,
             int ipart_ref = 0) = 0;
 
+    // parameters _______________________________________________
+
+    // discretization dans chaque direction
+    unsigned int dimensions_[3];
 
 protected:
 private:
