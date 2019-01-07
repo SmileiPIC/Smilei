@@ -163,19 +163,18 @@ void ElectroMagn3D::initElectroMagn3DQuantities(Params &params, Patch* patch)
     Bx_m = new Field3D(dimPrim, 0, true,  "Bx_m");
     By_m = new Field3D(dimPrim, 1, true,  "By_m");
     Bz_m = new Field3D(dimPrim, 2, true,  "Bz_m");
-    if (params.Laser_Envelope_model){
+    if (params.Laser_Envelope_model) {
         Env_A_abs_ = new Field3D(dimPrim, "Env_A_abs");
         Env_Chi_   = new Field3D(dimPrim, "Env_Chi");
         Env_E_abs_ = new Field3D(dimPrim, "Env_E_abs");
-                                    }
+    }
     
     // Total charge currents and densities
     Jx_   = new Field3D(dimPrim, 0, false, "Jx");
     Jy_   = new Field3D(dimPrim, 1, false, "Jy");
     Jz_   = new Field3D(dimPrim, 2, false, "Jz");
     rho_  = new Field3D(dimPrim, "Rho" );
-
-  
+    
     //Edge coeffs are organized as follow and do not account for corner points
     //xmin/ymin - xmin/ymax - xmin/zmin - xmin/zmax - xmax/ymin - xmax/ymax - xmax/zmin - xmax/zmax 
     //ymin/xmin - ymin/xmax - ymin/zmin - ymin/zmax - ymax/xmin - ymax/xmax - ymax/zmin - ymax/zmax 
@@ -196,7 +195,6 @@ void ElectroMagn3D::initElectroMagn3DQuantities(Params &params, Patch* patch)
         Jz_pxr  = new Field3D(dimDual);
         rho_pxr = new Field3D(dimDual);
         rhoold_pxr  = new Field3D(dimDual);
-
     } 
     
     // ----------------------------------------------------------------
@@ -1481,21 +1479,22 @@ void ElectroMagn3D::computePoynting() {
     
     
     if (isXmax) {
+        unsigned int offset = bufsize[0][Ey3D  ->isDual(0)];
+
+        unsigned int iEy=istart[0][Ey3D  ->isDual(0)] + offset;
+        unsigned int iBz=istart[0][Bz3D_m->isDual(0)] + offset;
+        unsigned int iEz=istart[0][Ez3D  ->isDual(0)] + offset;
+        unsigned int iBy=istart[0][By3D_m->isDual(0)] + offset;
         
-        unsigned int iEy=istart[0][Ey3D->isDual(0)]  + bufsize[0][Ey3D->isDual(0)] -1;
-        unsigned int iBz=istart[0][Bz3D_m->isDual(0)] + bufsize[0][Bz3D_m->isDual(0)]-1;
-        unsigned int iEz=istart[0][Ez3D->isDual(0)]  + bufsize[0][Ez3D->isDual(0)] -1;
-        unsigned int iBy=istart[0][By3D_m->isDual(0)] + bufsize[0][By3D_m->isDual(0)]-1;
-        
-        unsigned int jEy=istart[1][Ey3D->isDual(1)];
+        unsigned int jEy=istart[1][Ey3D  ->isDual(1)];
         unsigned int jBz=istart[1][Bz3D_m->isDual(1)];
-        unsigned int jEz=istart[1][Ez3D->isDual(1)];
+        unsigned int jEz=istart[1][Ez3D  ->isDual(1)];
         unsigned int jBy=istart[1][By3D_m->isDual(1)];
         
-        unsigned int kEy=istart[2][Ey3D->isDual(2)];
+        unsigned int kEy=istart[2][Ey3D  ->isDual(2)];
         unsigned int kBz=istart[2][Bz3D_m->isDual(2)];
-        unsigned int kEz=istart[2][Ez3D->isDual(2)];
-//         unsigned int kBy=istart[2][By3D_m->isDual(2)];
+        unsigned int kEz=istart[2][Ez3D  ->isDual(2)];
+        //unsigned int kBy=istart[2][By3D_m->isDual(2)];
         
         poynting_inst[1][0] = 0.;
         for (unsigned int j=0; j<=bufsize[1][Ez3D->isDual(1)]; j++) {
@@ -1551,20 +1550,22 @@ void ElectroMagn3D::computePoynting() {
     
     if (isYmax) {
 
-        unsigned int iEz=istart[0][Ez3D->isDual(0)];
+        unsigned int iEz=istart[0][Ez3D  ->isDual(0)];
         unsigned int iBx=istart[0][Bx3D_m->isDual(0)];
-        unsigned int iEx=istart[0][Ex3D->isDual(0)];
+        unsigned int iEx=istart[0][Ex3D  ->isDual(0)];
         unsigned int iBz=istart[0][Bz3D_m->isDual(0)];
         
-        unsigned int jEz=istart[1][Ez3D->isDual(1)]  + bufsize[1][Ez3D->isDual(1)] -1;
-        unsigned int jBx=istart[1][Bx3D_m->isDual(1)] + bufsize[1][Bx3D_m->isDual(1)]-1;
-        unsigned int jEx=istart[1][Ex3D->isDual(1)]  + bufsize[1][Ex3D->isDual(1)] -1;
-        unsigned int jBz=istart[1][Bz3D_m->isDual(1)] + bufsize[1][Bz3D_m->isDual(1)]-1;
+        unsigned int offset = bufsize[1][Ez3D->isDual(1)];
+
+        unsigned int jEz=istart[1][Ez3D  ->isDual(1)] + offset;
+        unsigned int jBx=istart[1][Bx3D_m->isDual(1)] + offset;
+        unsigned int jEx=istart[1][Ex3D  ->isDual(1)] + offset;
+        unsigned int jBz=istart[1][Bz3D_m->isDual(1)] + offset;
         
-        unsigned int kEz=istart[2][Ez_->isDual(2)];
+        unsigned int kEz=istart[2][Ez_  ->isDual(2)];
         unsigned int kBx=istart[2][Bx_m->isDual(2)];
-        unsigned int kEx=istart[2][Ex_->isDual(2)];
-//         unsigned int kBz=istart[2][Bz_m->isDual(2)];
+        unsigned int kEx=istart[2][Ex_  ->isDual(2)];
+        //unsigned int kBz=istart[2][Bz_m->isDual(2)];
         
         poynting_inst[1][1] = 0.;
         for (unsigned int i=0; i<=bufsize[0][Ez3D->isDual(0)]; i++) {
@@ -1620,20 +1621,22 @@ void ElectroMagn3D::computePoynting() {
 
     if (isZmax) {
         
-        unsigned int iEx=istart[0][Ex_->isDual(0)];
+        unsigned int iEx=istart[0][Ex_ ->isDual(0)];
         unsigned int iBy=istart[0][By_m->isDual(0)]; 
-        unsigned int iEy=istart[0][Ey_->isDual(0)];
+        unsigned int iEy=istart[0][Ey_ ->isDual(0)];
         unsigned int iBx=istart[0][Bx_m->isDual(0)]; 
         
-        unsigned int jEx=istart[1][Ex_->isDual(1)];
+        unsigned int jEx=istart[1][Ex_ ->isDual(1)];
         unsigned int jBy=istart[1][By_m->isDual(1)];
-        unsigned int jEy=istart[1][Ey_->isDual(1)];
+        unsigned int jEy=istart[1][Ey_ ->isDual(1)];
         unsigned int jBx=istart[1][Bx_m->isDual(1)];
 
-        unsigned int kEx=istart[2][Ex_->isDual(2)] + bufsize[2][Ex_->isDual(2)] - 1;
-        unsigned int kBy=istart[2][By_m->isDual(2)] + bufsize[2][By_m->isDual(2)] - 1;
-        unsigned int kEy=istart[2][Ey_->isDual(2)] + bufsize[2][Ey_->isDual(2)] - 1;
-//         unsigned int kBx=istart[2][Bx_m->isDual(2)] + bufsize[2][Bx_m->isDual(2)] - 1;
+        unsigned int offset = bufsize[2][Ex_->isDual(2)];
+
+        unsigned int kEx=istart[2][Ex_ ->isDual(2)] + offset;
+        unsigned int kBy=istart[2][By_m->isDual(2)] + offset;
+        unsigned int kEy=istart[2][Ey_ ->isDual(2)] + offset;
+//        unsigned int kBx=istart[2][Bx_m->isDual(2)] + offset;
         
         poynting_inst[1][2] = 0.;
         for (unsigned int i=0; i<=bufsize[0][Ez3D->isDual(0)]; i++) {
