@@ -715,7 +715,7 @@ void ProjectorAM2Order::currentsAndDensity(complex<double>* Jl, complex<double>*
     }
     e_delta_inv =1./e_delta;
     //defining crt_p 
-    complex<double> crt_p = charge_weight*Icpx*e_bar / (dt*(double)imode)*2.;
+    complex<double> crt_p = charge_weight*Icpx*e_bar / (dt*(double)imode)*2.*rp ;
     for (unsigned int i=0; i < 5; i++) {
         DSl[i] = Sl1[i] - Sl0[i];
         DSr[i] = Sr1[i] - Sr0[i];
@@ -812,7 +812,7 @@ void ProjectorAM2Order::currentsAndDensity(complex<double>* Jl, complex<double>*
         for (unsigned int j=0 ; j<5 ; j++) {
             jloc = j+jpo;
             linindex = iloc+jloc;
-            Jt [linindex] += Jt_p[i][j] * invV[jloc] * rprim[jloc] ; 
+            Jt [linindex] += Jt_p[i][j] * invV[jloc] ; 
         }
     }//i
 
