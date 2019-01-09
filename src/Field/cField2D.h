@@ -33,24 +33,24 @@ public:
     ~cField2D();
     
     //! Method used to allocate a cField2D
-    void allocateDims();
-    void deallocateDims();
+    void allocateDims() override;
+    void deallocateDims() override;
     //! a cField2D can also be initialized win two unsigned int 
     void allocateDims(unsigned int dims1,unsigned int dims2);
     //! allocate dimensions for field2D isPrimal define if mainDim is Primal or Dual
-    void allocateDims(unsigned int mainDim, bool isPrimal );
+    void allocateDims(unsigned int mainDim, bool isPrimal ) override;
     
-    inline void allocateDims(std::vector<unsigned int> dims) {
+    inline void allocateDims(std::vector<unsigned int> dims) override {
         dims_ = dims;
         allocateDims();
     };
     
-    inline void allocateDims(std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal) {
+    inline void allocateDims(std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal) override {
         dims_ = dims;
         allocateDims(mainDim, isPrimal);
     };
     
-    virtual void shift_x(unsigned int delta);
+    virtual void shift_x(unsigned int delta) override;
     
     //! Overloading of the () operator allowing to set a new value for the (i,j) element of a cField2D
     inline std::complex<double>& operator () (unsigned int i,unsigned int j) {
@@ -70,7 +70,7 @@ public:
     };
 
     
-    virtual double norm2(unsigned int istart[3][2], unsigned int bufsize[3][2]);
+    virtual double norm2(unsigned int istart[3][2], unsigned int bufsize[3][2]) override;
 
     inline std::complex<double>& operator () (unsigned int i)
     {

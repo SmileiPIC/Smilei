@@ -37,24 +37,24 @@ public:
     ~Field3D();
     
     //! Method used to allocate a Field3D
-    void allocateDims();
-    void deallocateDims();
+    void allocateDims() override;
+    void deallocateDims() override;
     //! a Field3D can also be initialized win three unsigned int 
     void allocateDims(unsigned int dims1,unsigned int dims2,unsigned int dims3);
     //! allocate dimensions for field3D isPrimal define if mainDim is Primal or Dual
-    void allocateDims(unsigned int mainDim, bool isPrimal );
+    void allocateDims(unsigned int mainDim, bool isPrimal ) override;
     
-    inline void allocateDims(std::vector<unsigned int> dims) {
+    inline void allocateDims(std::vector<unsigned int> dims) override {
         dims_ = dims;
         allocateDims();
     };
     
-    inline void allocateDims(std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal) {
+    inline void allocateDims(std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal) override {
         dims_ = dims;
         allocateDims(mainDim, isPrimal);
     };
 
-    virtual void shift_x(unsigned int delta);
+    virtual void shift_x(unsigned int delta) override;
     
     //! Overloading of the () operator allowing to set a new value for the (i,j,k) element of a Field3D
     inline double& operator () (unsigned int i,unsigned int j,unsigned int k)
@@ -87,7 +87,7 @@ public:
     void extract_slice_xy(unsigned int iz, Field2D *field);
 
 
-    virtual double norm2(unsigned int istart[3][2], unsigned int bufsize[3][2]);
+    virtual double norm2(unsigned int istart[3][2], unsigned int bufsize[3][2]) override;
     void put( Field* outField, Params &params, SmileiMPI* smpi, Patch* thisPatch, Patch* outPatch  ) override;
     void get( Field*  inField, Params &params, SmileiMPI* smpi, Patch*   inPatch, Patch* thisPatch ) override;
 

@@ -47,7 +47,7 @@ class SpeciesAdaptiveV : public SpeciesV
     void reconfigure_particle_importation();
 
     //! Compute cell_keys for all particles of the current species
-    void compute_part_cell_keys(Params &params);
+    void compute_part_cell_keys(Params &params) override;
 
     //! Method to import particles in this species while conserving the sorting among bins
     void importParticles( Params&, Patch*, Particles&, std::vector<Diagnostic*>& )override;
@@ -55,9 +55,9 @@ class SpeciesAdaptiveV : public SpeciesV
 private:
 
     // Metrics for the adaptive vectorization
-    int max_number_of_particles_per_cells;
-    int min_number_of_particles_per_cells;
-    double ratio_number_of_vecto_cells;
+    //int max_number_of_particles_per_cells;
+    //int min_number_of_particles_per_cells;
+    //double ratio_number_of_vecto_cells;
 
     //! Number of packs of particles that divides the total number of particles
     unsigned int npack_;
