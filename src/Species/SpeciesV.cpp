@@ -436,19 +436,18 @@ void SpeciesV::sort_part(Params &params)
     std::vector<unsigned int> cycle;
     unsigned int ip_src;
 
-    //split cell into smaller sub_cells for refined sorting
-    ncell = (params.n_space[0]+1);
-    for ( unsigned int i=1; i < params.nDim_field; i++) ncell *= (params.n_space[i]+1);
-
-    npart = particles->size(); //Number of particles before exchange
-
     length[0]=0;
     length[1]=params.n_space[1]+1;
     length[2]=params.n_space[2]+1;
 
-    //count temporarily stores the # of particles in a given cell quadrant.
+    //Number of dual cells
+    ncell = (params.n_space[0]+1);
+    for ( unsigned int i=1; i < params.nDim_field; i++) ncell *= length[i];
 
-    //Loop over just arrived particles
+    //Number of particles before exchange
+    npart = particles->size(); 
+
+    //Loop over just arrived particles to compute their cell keys and contribution to count
     for (unsigned int idim=0; idim < nDim_particle ; idim++){
         for (unsigned int ineighbor=0 ; ineighbor < 2 ; ineighbor++){
             buf_cell_keys[idim][ineighbor].resize( MPIbuff.part_index_recv_sz[idim][ineighbor]);
@@ -474,7 +473,9 @@ void SpeciesV::sort_part(Params &params)
             first_index[ic] = first_index[ic-1] + count[ic-1];
             last_index[ic-1]= first_index[ic];
         }
-    last_index[ncell-1] = last_index[ncell-2] + count.back() ; //New total number of particles is stored as last element of last_index
+
+    //New total number of particles is stored as last element of last_index
+    last_index[ncell-1] = last_index[ncell-2] + count.back() ; 
 
     //Now proceed to the cycle sort
 
