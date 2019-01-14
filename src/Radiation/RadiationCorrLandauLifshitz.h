@@ -58,7 +58,7 @@ class RadiationCorrLandauLifshitz : public Radiation {
         // General parameters
 
         //! Under this value, no radiation loss
-        const double chipa_radiation_threshold = 1e-5;
+        const double minimum_chi_continuous_ = 1e-5;
 
     private:
 

@@ -581,7 +581,6 @@ void Interpolator3D2OrderV::fieldsAndEnvelope(ElectroMagn* EMfields, Particles &
             for (int iloc=-1 ; iloc<2 ; iloc++) {
                 for (int jloc=-1 ; jloc<2 ; jloc++) {
                     for (int kloc=-1 ; kloc<2 ; kloc++) {
-                        //interp_res += *(coeffxp+iloc*32) * *(coeffyd+jloc*32) * *(coeffzp+kloc*32) *
                         interp_res += *(coeffxd+iloc*32) * *(coeffyd+jloc*32) * *(coeffzp+kloc*32) *
                             ( (1-dual[1][ipart]) * ( (1-dual[0][ipart])*(*Bz3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc) + dual[0][ipart]*(*Bz3D)(idxO[0]+2+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc ) )
                             +    dual[1][ipart]  * ( (1-dual[0][ipart])*(*Bz3D)(idxO[0]+1+iloc,idxO[1]+2+jloc,idxO[2]+1+kloc) + dual[0][ipart]*(*Bz3D)(idxO[0]+2+iloc,idxO[1]+2+jloc,idxO[2]+1+kloc ) ) );
@@ -688,8 +687,6 @@ void Interpolator3D2OrderV::envelopeAndOldEnvelope(ElectroMagn* EMfields, Partic
 
 
     double coeff[3][2][3][32];
-    int dual[3][32]; // Size ndim. Boolean indicating if the part has a dual indice equal to the primal one (dual=0) or if it is +1 (dual=1).
-
     int vecSize = 32;
 
     int cell_nparts( (int)iend[0]-(int)istart[0] );
@@ -718,19 +715,14 @@ void Interpolator3D2OrderV::envelopeAndOldEnvelope(ElectroMagn* EMfields, Partic
 
             for (int i=0;i<3;i++) { // for X/Y
                 delta0 = particles.position(i,ipart+ivect+istart[0])*D_inv[i];
-                dual [i][ipart] = ( delta0 - (double)idx[i] >=0. );
+                delta   = delta0 - (double)idx[i] ;
+                delta2  = delta*delta;
 
-                for (int j=0;j<2;j++) { // for dual
-
-                    delta   = delta0 - (double)idx[i] + (double)j*(0.5-dual[i][ipart]);
-                    delta2  = delta*delta;
-
-                    coeff[i][j][0][ipart]    =  0.5 * (delta2-delta+0.25);
-                    coeff[i][j][1][ipart]    =  (0.75 - delta2);
-                    coeff[i][j][2][ipart]    =  0.5 * (delta2+delta+0.25);
+                coeff[i][0][0][ipart]    =  0.5 * (delta2-delta+0.25);
+                coeff[i][0][1][ipart]    =  (0.75 - delta2);
+                coeff[i][0][2][ipart]    =  0.5 * (delta2+delta+0.25);
     
-                    if (j==0) deltaO[i][ipart-ipart_ref+ivect+istart[0]] = delta;
-                }
+                deltaO[i][ipart-ipart_ref+ivect+istart[0]] = delta;
             }
         }
 
@@ -738,11 +730,8 @@ void Interpolator3D2OrderV::envelopeAndOldEnvelope(ElectroMagn* EMfields, Partic
         for (int ipart=0 ; ipart<np_computed; ipart++ ){
 
             double* coeffyp = &(coeff[1][0][1][ipart]);
-            //double* coeffyd = &(coeff[1][1][1][ipart]);
-            //double* coeffxd = &(coeff[0][1][1][ipart]);
             double* coeffxp = &(coeff[0][0][1][ipart]);
             double* coeffzp = &(coeff[2][0][1][ipart]);
-            //double* coeffzd = &(coeff[2][1][1][ipart]);
 
             // Interpolation of Phi^(p,p,p)
             double interp_res = 0.;
@@ -861,7 +850,6 @@ void Interpolator3D2OrderV::envelopeAndSusceptibility(ElectroMagn* EMfields, Par
     Field3D* Env_E_abs_3D = static_cast<Field3D*>(EMfields->Env_E_abs_);
 
     double coeff[3][2][3];
-    int dual[3]; // Size ndim. Boolean indicating if the part has a dual indice equal to the primal one (dual=0) or if it is +1 (dual=1).
 
     double delta0, delta;
     double delta2;
@@ -869,26 +857,19 @@ void Interpolator3D2OrderV::envelopeAndSusceptibility(ElectroMagn* EMfields, Par
 
     for (int i=0;i<3;i++) { // for X/Y
         delta0 = particles.position(i,ipart)*D_inv[i];
-        dual [i] = ( delta0 - (double)idx[i] >=0. );
 
-        for (int j=0;j<2;j++) { // for dual
+        delta   = delta0 - (double)idx[i] ;
+        delta2  = delta*delta;
 
-            delta   = delta0 - (double)idx[i] + (double)j*(0.5-dual[i]);
-            delta2  = delta*delta;
-
-            coeff[i][j][0]    =  0.5 * (delta2-delta+0.25);
-            coeff[i][j][1]    =  (0.75 - delta2);
-            coeff[i][j][2]    =  0.5 * (delta2+delta+0.25);
-        }
+        coeff[i][0][0]    =  0.5 * (delta2-delta+0.25);
+        coeff[i][0][1]    =  (0.75 - delta2);
+        coeff[i][0][2]    =  0.5 * (delta2+delta+0.25);
     }
 
 
     double* coeffyp = &(coeff[1][0][1]);
-    //double* coeffyd = &(coeff[1][1][1]);
-    //double* coeffxd = &(coeff[0][1][1]);
     double* coeffxp = &(coeff[0][0][1]);
     double* coeffzp = &(coeff[2][0][1]);
-    //double* coeffzd = &(coeff[2][1][1]);
 
     // Interpolation of Env_A_abs^(p,p,p) (absolute value of envelope A)
     double interp_res = 0.;

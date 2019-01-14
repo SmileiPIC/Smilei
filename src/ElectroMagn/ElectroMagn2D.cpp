@@ -1149,14 +1149,16 @@ void ElectroMagn2D::computePoynting() {
     
     
     if (isXmax) {
-        unsigned int iEy=istart[0][Ey2D->isDual(0)]  + bufsize[0][Ey2D->isDual(0)] -1;
-        unsigned int iBz=istart[0][Bz2D_m->isDual(0)] + bufsize[0][Bz2D_m->isDual(0)]-1;
-        unsigned int iEz=istart[0][Ez2D->isDual(0)]  + bufsize[0][Ez2D->isDual(0)] -1;
-        unsigned int iBy=istart[0][By2D_m->isDual(0)] + bufsize[0][By2D_m->isDual(0)]-1;
+        unsigned int offset = bufsize[0][Ey2D->isDual(0)];
+
+        unsigned int iEy=istart[0][Ey2D  ->isDual(0)] + offset;
+        unsigned int iBz=istart[0][Bz2D_m->isDual(0)] + offset;
+        unsigned int iEz=istart[0][Ez2D  ->isDual(0)] + offset;
+        unsigned int iBy=istart[0][By2D_m->isDual(0)] + offset;
         
-        unsigned int jEy=istart[1][Ey2D->isDual(1)];
+        unsigned int jEy=istart[1][Ey2D  ->isDual(1)];
         unsigned int jBz=istart[1][Bz2D_m->isDual(1)];
-        unsigned int jEz=istart[1][Ez2D->isDual(1)];
+        unsigned int jEz=istart[1][Ez2D  ->isDual(1)];
         unsigned int jBy=istart[1][By2D_m->isDual(1)];
         
         poynting_inst[1][0] = 0.;
@@ -1199,15 +1201,17 @@ void ElectroMagn2D::computePoynting() {
     }// if Ymin
     
     if (isYmax) {
-        unsigned int iEz=istart[0][Ez2D->isDual(0)];
+        unsigned int iEz=istart[0][Ez2D  ->isDual(0)];
         unsigned int iBx=istart[0][Bx2D_m->isDual(0)];
-        unsigned int iEx=istart[0][Ex2D->isDual(0)];
+        unsigned int iEx=istart[0][Ex2D  ->isDual(0)];
         unsigned int iBz=istart[0][Bz2D_m->isDual(0)];
         
-        unsigned int jEz=istart[1][Ez2D->isDual(1)]  + bufsize[1][Ez2D->isDual(1)] -1;
-        unsigned int jBx=istart[1][Bx2D_m->isDual(1)] + bufsize[1][Bx2D_m->isDual(1)]-1;
-        unsigned int jEx=istart[1][Ex2D->isDual(1)]  + bufsize[1][Ex2D->isDual(1)] -1;
-        unsigned int jBz=istart[1][Bz2D_m->isDual(1)] + bufsize[1][Bz2D_m->isDual(1)]-1;
+        unsigned int offset = bufsize[1][Ez2D->isDual(1)];
+
+        unsigned int jEz=istart[1][Ez2D  ->isDual(1)] + offset;
+        unsigned int jBx=istart[1][Bx2D_m->isDual(1)] + offset;
+        unsigned int jEx=istart[1][Ex2D  ->isDual(1)] + offset;
+        unsigned int jBz=istart[1][Bz2D_m->isDual(1)] + offset;
         
         poynting_inst[1][1] = 0.;
         for (unsigned int i=0; i<=bufsize[0][Ez_->isDual(0)]; i++) {

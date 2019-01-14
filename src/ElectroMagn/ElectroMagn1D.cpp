@@ -652,16 +652,18 @@ void ElectroMagn1D::computePoynting() {
     
     // Xmax border (Energy injected = -Poynting)
     if (isXmax) {
-        unsigned int iEy=istart[0][Ey_->isDual(0)]  + bufsize[0][Ey_->isDual(0)]-1;
-        unsigned int iBz=istart[0][Bz_m->isDual(0)] + bufsize[0][Bz_m->isDual(0)]-1;
-        unsigned int iEz=istart[0][Ez_->isDual(0)]  + bufsize[0][Ez_->isDual(0)]-1;
-        unsigned int iBy=istart[0][By_m->isDual(0)] + bufsize[0][By_m->isDual(0)]-1;
+        unsigned int offset = bufsize[0][Ey_->isDual(0)];
+
+        unsigned int iEy=istart[0][Ey_ ->isDual(0)] + offset;
+        unsigned int iBz=istart[0][Bz_m->isDual(0)] + offset;
+        unsigned int iEz=istart[0][Ez_ ->isDual(0)] + offset;
+        unsigned int iBy=istart[0][By_m->isDual(0)] + offset;
         
-        poynting_inst[1][0]=0.5*timestep*((*Ey_)(iEy) * ((*Bz_m)(iBz-1) + (*Bz_m)(iBz)) - 
-                                          (*Ez_)(iEz) * ((*By_m)(iBy-1) + (*By_m)(iBy)));
+        poynting_inst[1][0]=0.5*timestep*((*Ey_)(iEy) * ((*Bz_m)(iBz) + (*Bz_m)(iBz+1)) - 
+                                          (*Ez_)(iEz) * ((*By_m)(iBy) + (*By_m)(iBy+1)));
         poynting[1][0] -= poynting_inst[1][0];
         
-    }    
+    }
 }
 
 void ElectroMagn1D::applyExternalField(Field* my_field,  Profile *profile, Patch* patch) {

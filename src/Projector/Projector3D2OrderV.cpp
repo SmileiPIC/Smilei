@@ -28,18 +28,19 @@ Projector3D2OrderV::Projector3D2OrderV (Params& params, Patch* patch) : Projecto
     j_domain_begin = patch->getCellStartingGlobalIndex(1);
     k_domain_begin = patch->getCellStartingGlobalIndex(2);
 
-    nprimy = params.n_space[1] + 1;
-    nprimz = params.n_space[2] + 1;
+    nscelly = params.n_space[1] + 1;
+    nscellz = params.n_space[2] + 1;
     oversize[0] = params.oversize[0];
     oversize[1] = params.oversize[1];
     oversize[2] = params.oversize[2];
+    nprimy = nscelly + 2*oversize[1];
+    nprimz = nscellz + 2*oversize[2];
     dq_inv[0] = dx_inv_;
     dq_inv[1] = dy_inv_;
     dq_inv[2] = dz_inv_;
 
     dt             = params.timestep;
     dts2           = params.timestep/2.;
-    dts4           = params.timestep/4.;
 
     DEBUG("cell_length "<< params.cell_length[0]);
 
@@ -56,7 +57,6 @@ Projector3D2OrderV::~Projector3D2OrderV()
 // ---------------------------------------------------------------------------------------------------------------------
 //!  Project current densities & charge : diagFields timstep (not vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-//void Projector3D2OrderV::currentsAndDensity(double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
 void Projector3D2OrderV::currentsAndDensity(double* Jx, double* Jy, double* Jz, double *rho, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, std::vector<unsigned int> &b_dim, int* iold, double *deltaold, int ipart_ref)
 {
 
@@ -90,7 +90,7 @@ void Projector3D2OrderV::currentsAndDensity(double* Jx, double* Jy, double* Jz, 
 
 
     // Jx, Jy, Jz
-    currents(Jx, Jy, Jz, particles, istart, iend, invgf, b_dim, iold, deltaold, ipart_ref);
+    currents(Jx, Jy, Jz, particles, istart, iend, invgf, iold, deltaold, ipart_ref);
 
 
     // rho^(p,p,d)
@@ -107,7 +107,7 @@ void Projector3D2OrderV::currentsAndDensity(double* Jx, double* Jy, double* Jz, 
         #pragma omp simd
         for (int ipart=0 ; ipart<np_computed; ipart++ ){
             compute_distances( particles, npart_total, ipart, istart0, ipart_ref, deltaold, iold, DSx, DSy, DSz );
-            charge_weight[ipart] = inv_cell_volume * (double)(particles.charge(ivect+istart+ipart))*particles.weight(ivect+istart+ipart);
+            charge_weight[ipart] = inv_cell_volume * (double)(particles.charge(istart0+ipart))*particles.weight(istart0+ipart);
         }
 
         #pragma omp simd
@@ -361,7 +361,7 @@ void Projector3D2OrderV::ionizationCurrents(Field* Jx, Field* Jy, Field* Jz, Par
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project current densities : main projector vectorized
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, std::vector<unsigned int> &b_dim, int* iold, double *deltaold, int ipart_ref)
+void Projector3D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int* iold, double *deltaold, int ipart_ref)
 {
     // -------------------------------------
     // Variable declaration & initialization
@@ -374,6 +374,7 @@ void Projector3D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
     int ipom2 = ipo-2;
     int jpom2 = jpo-2;
     int kpom2 = kpo-2;
+    int nyz = nprimy*nprimz;
 
     int vecSize = 8;
     unsigned int bsize = 5*5*5*vecSize;
@@ -407,7 +408,7 @@ void Projector3D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
         #pragma omp simd
         for (int ipart=0 ; ipart<np_computed; ipart++ ){
             compute_distances( particles, npart_total, ipart, istart0, ipart_ref, deltaold, iold, Sx0_buff_vect, Sy0_buff_vect, Sz0_buff_vect, DSx, DSy, DSz );
-            charge_weight[ipart] = inv_cell_volume * (double)(particles.charge(ivect+istart+ipart))*particles.weight(ivect+istart+ipart);
+            charge_weight[ipart] = inv_cell_volume * (double)(particles.charge(istart0+ipart))*particles.weight(istart0+ipart);
         }
 
         #pragma omp simd
@@ -417,11 +418,11 @@ void Projector3D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
 
     } // END ivect
 
-    int iloc0 = ipom2*b_dim[1]*b_dim[2]+jpom2*b_dim[2]+kpom2;
+    int iglobal0 = ipom2*nyz+jpom2*nprimz+kpom2;
 
-    int iloc  = iloc0;
+    int iglobal  = iglobal0;
     for (unsigned int i=1 ; i<5 ; i++) {
-        iloc += b_dim[1]*b_dim[2];
+        iglobal += nyz;
         for (unsigned int j=0 ; j<5 ; j++) {
             #pragma omp simd
             for (unsigned int k=0 ; k<5 ; k++) {
@@ -431,7 +432,7 @@ void Projector3D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
                 for (int ipart=0 ; ipart<8; ipart++ ){
                     tmpJx += bJx [ilocal+ipart];
                 }
-                Jx[iloc+j*b_dim[2]+k]         += tmpJx;
+                Jx[iglobal+j*nprimz+k]         += tmpJx;
             }
         }
     }
@@ -452,7 +453,7 @@ void Projector3D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
         #pragma omp simd
         for (int ipart=0 ; ipart<np_computed; ipart++ ){
             compute_distances( particles, npart_total, ipart, istart0, ipart_ref, deltaold, iold, Sx0_buff_vect, Sy0_buff_vect, Sz0_buff_vect, DSx, DSy, DSz );
-            charge_weight[ipart] = inv_cell_volume * (double)(particles.charge(ivect+istart+ipart))*particles.weight(ivect+istart+ipart);
+            charge_weight[ipart] = inv_cell_volume * (double)(particles.charge(istart0+ipart))*particles.weight(istart0+ipart);
         }
 
         #pragma omp simd
@@ -461,7 +462,7 @@ void Projector3D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
         } // END ipart (compute coeffs)
     }
 
-    iloc = iloc0+ipom2*b_dim[2];
+    iglobal = iglobal0+ipom2*nprimz;
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=1 ; j<5 ; j++) {
             #pragma omp simd
@@ -472,10 +473,10 @@ void Projector3D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
                 for (int ipart=0 ; ipart<8; ipart++ ){
                     tmpJy += bJx [ilocal+ipart];
                 }
-                Jy[iloc+j*b_dim[2]+k] += tmpJy;
+                Jy[iglobal+j*nprimz+k] += tmpJy;
             }
         }
-        iloc += (b_dim[1]+1)*b_dim[2];
+        iglobal += (nprimy+1)*nprimz;
     }
 
 
@@ -493,7 +494,7 @@ void Projector3D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
         #pragma omp simd
         for (int ipart=0 ; ipart<np_computed; ipart++ ){
             compute_distances( particles, npart_total, ipart, istart0, ipart_ref, deltaold, iold, Sx0_buff_vect, Sy0_buff_vect, Sz0_buff_vect, DSx, DSy, DSz );
-            charge_weight[ipart] = inv_cell_volume * (double)(particles.charge(ivect+istart+ipart))*particles.weight(ivect+istart+ipart);
+            charge_weight[ipart] = inv_cell_volume * (double)(particles.charge(istart0+ipart))*particles.weight(istart0+ipart);
         }
 
         #pragma omp simd
@@ -503,7 +504,7 @@ void Projector3D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
 
     }
 
-    iloc = iloc0  + jpom2 +ipom2*b_dim[1];
+    iglobal = iglobal0  + jpom2 +ipom2*nprimy;
     for (unsigned int i=0 ; i<5 ; i++) {
         for (unsigned int j=0 ; j<5 ; j++) {
             #pragma omp simd
@@ -514,10 +515,10 @@ void Projector3D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
                 for (int ipart=0 ; ipart<8; ipart++ ){
                     tmpJz +=  bJx[ilocal+ipart];
                 }
-                Jz [iloc + (j)*(b_dim[2]+1) + k] +=  tmpJz;
+                Jz [iglobal + (j)*(nprimz+1) + k] +=  tmpJz;
             }
         }
-        iloc += b_dim[1]*(b_dim[2]+1);
+        iglobal += nprimy*(nprimz+1);
     }
 
 
@@ -546,10 +547,10 @@ void Projector3D2OrderV::currentsAndDensityWrapper(ElectroMagn* EMfields,
     //}
     int iold[3];
 
-    iold[0] = scell/(nprimy*nprimz)+oversize[0];
+    iold[0] = scell/(nscelly*nscellz)+oversize[0];
 
-    iold[1] = ( (scell%(nprimy*nprimz)) / nprimz )+oversize[1];
-    iold[2] = ( (scell%(nprimy*nprimz)) % nprimz )+oversize[2];
+    iold[1] = ( (scell%(nscelly*nscellz)) / nscellz )+oversize[1];
+    iold[2] = ( (scell%(nscelly*nscellz)) % nscellz )+oversize[2];
 
 
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
@@ -558,36 +559,32 @@ void Projector3D2OrderV::currentsAndDensityWrapper(ElectroMagn* EMfields,
             double* b_Jx =  &(*EMfields->Jx_ )(0);
             double* b_Jy =  &(*EMfields->Jy_ )(0);
             double* b_Jz =  &(*EMfields->Jz_ )(0);
-            currents(b_Jx , b_Jy , b_Jz , particles,  istart, iend, invgf, b_dim, iold, &(*delta)[0], ipart_ref);
+            currents(b_Jx , b_Jy , b_Jz , particles,  istart, iend, invgf, iold, &(*delta)[0], ipart_ref);
         }
         else
             ERROR("TO DO with rho");
 
     // Otherwise, the projection may apply to the species-specific arrays
     } else {
-        int ibin = 0; // Trick to make it compatible for the moment.
-        int dim1 = EMfields->dimPrim[1];
-        int dim2 = EMfields->dimPrim[2];
-        double* b_Jx  = EMfields->Jx_s [ispec] ? &(*EMfields->Jx_s [ispec])(ibin*clrw* dim1   *dim2) : &(*EMfields->Jx_ )(ibin*clrw* dim1   *dim2) ;
-        double* b_Jy  = EMfields->Jy_s [ispec] ? &(*EMfields->Jy_s [ispec])(ibin*clrw*(dim1+1)*dim2) : &(*EMfields->Jy_ )(ibin*clrw*(dim1+1)*dim2) ;
-        double* b_Jz  = EMfields->Jz_s [ispec] ? &(*EMfields->Jz_s [ispec])(ibin*clrw*dim1*(dim2+1)) : &(*EMfields->Jz_ )(ibin*clrw*dim1*(dim2+1)) ;
-        double* b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw* dim1   *dim2) : &(*EMfields->rho_)(ibin*clrw* dim1   *dim2) ;
+        double* b_Jx  = EMfields->Jx_s [ispec] ? &(*EMfields->Jx_s [ispec])(0) : &(*EMfields->Jx_ )(0) ;
+        double* b_Jy  = EMfields->Jy_s [ispec] ? &(*EMfields->Jy_s [ispec])(0) : &(*EMfields->Jy_ )(0) ;
+        double* b_Jz  = EMfields->Jz_s [ispec] ? &(*EMfields->Jz_s [ispec])(0) : &(*EMfields->Jz_ )(0) ;
+        double* b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
         currentsAndDensity(b_Jx , b_Jy , b_Jz , b_rho, particles,  istart, iend, invgf, b_dim, iold, &(*delta)[0], ipart_ref);
     }
 }
 
 
-//void Projector3D2OrderV::susceptibility(double* Chi_envelope, Particles &particles, int istart, int iend, unsigned int scell, std::vector<unsigned int> &b_dim, SmileiMPI* smpi, int ithread, double species_mass, int* iold2, int ipart_ref)
-void Projector3D2OrderV::susceptibility(ElectroMagn* EMfields, Particles &particles, double species_mass, SmileiMPI* smpi, int istart, int iend,  int ithread, int scell, std::vector<unsigned int> &b_dim, int ipart_ref)
+void Projector3D2OrderV::susceptibility(ElectroMagn* EMfields, Particles &particles, double species_mass, SmileiMPI* smpi, int istart, int iend,  int ithread, int scell, int ipart_ref)
 {
 
     double *Chi_envelope = &(*EMfields->Env_Chi_)(0) ;
 
     int iold[3];
 
-    iold[0] = scell/(nprimy*nprimz)+oversize[0];
-    iold[1] = ( (scell%(nprimy*nprimz)) / nprimz )+oversize[1];
-    iold[2] = ( (scell%(nprimy*nprimz)) % nprimz )+oversize[2];
+    iold[0] = scell/(nscelly*nscellz)+oversize[0];
+    iold[1] = ( (scell%(nscelly*nscellz)) / nscellz )+oversize[1];
+    iold[2] = ( (scell%(nscelly*nscellz)) % nscellz )+oversize[2];
 
 
     std::vector<double> *Epart       = &(smpi->dynamics_Epart[ithread]);
@@ -617,6 +614,7 @@ void Projector3D2OrderV::susceptibility(ElectroMagn* EMfields, Particles &partic
     int nbVec = ( iend-istart+(cell_nparts-1)-((iend-istart-1)&(cell_nparts-1)) ) / vecSize;
     if (nbVec*vecSize != cell_nparts)
         nbVec++;
+    double one_over_mass=1./species_mass;
 
     #pragma omp simd
     for (unsigned int j=0; j<bsize; j++)
@@ -638,33 +636,34 @@ void Projector3D2OrderV::susceptibility(ElectroMagn* EMfields, Particles &partic
             double gamma_ponderomotive,gamma0,gamma0_sq;
             double charge_over_mass_dts2,charge_sq_over_mass_dts4,charge_sq_over_mass_sq;
             double pxsm, pysm, pzsm;
-            double one_over_mass=1./species_mass;
 
 	    double c = particles.charge(istart0+ipart);
 
-            charge_over_mass_dts2    = c *dts2*one_over_mass;
+            // (charge over mass)
+            charge_sq_over_mass_sq   = c*one_over_mass;
+            charge_over_mass_dts2    = charge_sq_over_mass_sq * dts2;
             // ! ponderomotive force is proportional to charge squared and the field is divided by 4 instead of 2
-            charge_sq_over_mass_dts4 = c*c*dts4*one_over_mass;
+            charge_sq_over_mass_dts4 = charge_over_mass_dts2 * c * 0.5;
             // (charge over mass)^2
-            charge_sq_over_mass_sq   = c*c*one_over_mass*one_over_mass;
+            charge_sq_over_mass_sq   *= charge_sq_over_mass_sq;
 
             for ( int i = 0 ; i<3 ; i++ )
                 momentum[i] = particles.momentum(i,istart0+ipart);
 
             // compute initial ponderomotive gamma
-            gamma0_sq = 1. + momentum[0]*momentum[0]+ momentum[1]*momentum[1] + momentum[2]*momentum[2] + *(Phi+istart-ipart_ref+ipart)*charge_sq_over_mass_sq ;
+            gamma0_sq = 1. + momentum[0]*momentum[0]+ momentum[1]*momentum[1] + momentum[2]*momentum[2] + *(Phi+istart0-ipart_ref+ipart)*charge_sq_over_mass_sq ;
             gamma0    = sqrt(gamma0_sq) ;
 
             // ( electric field + ponderomotive force for ponderomotive gamma advance ) scalar multiplied by momentum
-            pxsm = (gamma0 * charge_over_mass_dts2*(*(Ex+istart-ipart_ref+ipart)) - charge_sq_over_mass_dts4*(*(GradPhix+istart-ipart_ref+ipart)) ) * momentum[0] / gamma0_sq;
-            pysm = (gamma0 * charge_over_mass_dts2*(*(Ey+istart-ipart_ref+ipart)) - charge_sq_over_mass_dts4*(*(GradPhiy+istart-ipart_ref+ipart)) ) * momentum[1] / gamma0_sq;
-            pzsm = (gamma0 * charge_over_mass_dts2*(*(Ez+istart-ipart_ref+ipart)) - charge_sq_over_mass_dts4*(*(GradPhiz+istart-ipart_ref+ipart)) ) * momentum[2] / gamma0_sq;
+            pxsm = (gamma0 * charge_over_mass_dts2*(*(Ex+istart0-ipart_ref+ipart)) - charge_sq_over_mass_dts4*(*(GradPhix+istart0-ipart_ref+ipart)) ) * momentum[0] / gamma0_sq;
+            pysm = (gamma0 * charge_over_mass_dts2*(*(Ey+istart0-ipart_ref+ipart)) - charge_sq_over_mass_dts4*(*(GradPhiy+istart0-ipart_ref+ipart)) ) * momentum[1] / gamma0_sq;
+            pzsm = (gamma0 * charge_over_mass_dts2*(*(Ez+istart0-ipart_ref+ipart)) - charge_sq_over_mass_dts4*(*(GradPhiz+istart0-ipart_ref+ipart)) ) * momentum[2] / gamma0_sq;
 
             // update of gamma ponderomotive
             gamma_ponderomotive = gamma0 + (pxsm+pysm+pzsm)*0.5 ;
 
             // susceptibility for the macro-particle
-            charge_weight[ipart] = c*c*inv_cell_volume * particles.weight(istart+ipart)*one_over_mass/gamma_ponderomotive ;
+            charge_weight[ipart] = c*c*inv_cell_volume * particles.weight(istart0+ipart)*one_over_mass/gamma_ponderomotive ;
 
             // variable declaration
             double xpn, ypn, zpn;
@@ -729,26 +728,24 @@ void Projector3D2OrderV::susceptibility(ElectroMagn* EMfields, Particles &partic
     int ipo = iold[0];
     int jpo = iold[1];
     int kpo = iold[2];
-    int ipom2 = ipo-2;
-    int jpom2 = jpo-2;
-    int kpom2 = kpo-2;
+    int nyz = nprimy*nprimz;
 
-    int iloc0 = ipom2*b_dim[1]*b_dim[2]+jpom2*b_dim[2]+kpom2;
-    int iloc = iloc0;
+    int iglobal = (ipo-1)*nyz+(jpo-1)*nprimz+kpo-1;
+
     for (unsigned int i=0 ; i<3 ; i++) {
         for (unsigned int j=0 ; j<3 ; j++) {
             #pragma omp simd
             for (unsigned int k=0 ; k<3 ; k++) {
                 double tmpChi = 0.;
-                int ilocal = ((i)*9+j*3+k)*vecSize;
+                int ilocal = (i*9+j*3+k)*vecSize;
                 #pragma unroll(8)
                 for (int ipart=0 ; ipart<8; ipart++ ){
                     tmpChi +=  bChi[ilocal+ipart];
                 }
-                 Chi_envelope [iloc + (j)*(b_dim[2]) + k] +=  tmpChi;
+                 Chi_envelope [iglobal + j*nprimz + k] +=  tmpChi;
             }
         }
-        iloc += b_dim[1]*(b_dim[2]);
+        iglobal += nyz;
     }
 
 

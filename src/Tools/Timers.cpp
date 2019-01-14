@@ -122,7 +122,7 @@ void Timers::reboot()
 //! Output the timer profile
 void Timers::profile(SmileiMPI * smpi)
 {
-    std::vector<Timer*> avg_timers = consolidate(smpi);
+    std::vector<Timer*> avg_timers = consolidate(smpi, true);
 
     if ( smpi->isMaster() ) {
         double coverage(0.);
@@ -161,7 +161,7 @@ void Timers::profile(SmileiMPI * smpi)
 }
 
 //! Perform the required processing on the timers for output
-std::vector<Timer*> Timers::consolidate(SmileiMPI * smpi)
+std::vector<Timer*> Timers::consolidate(SmileiMPI * smpi, bool final_profile)
 {
     std::vector<Timer*> avg_timers;
     int sz = smpi->getSize(), rk = smpi->getRank();
@@ -216,7 +216,7 @@ std::vector<Timer*> Timers::consolidate(SmileiMPI * smpi)
                  << "\t - \t" <<  "SD time =  " << sqrt( sig-sum*sum/(double)(sz)/(double)(sz) )
                  << endl;
         }
-        if (rk==0) {
+        if ( (rk==0) && (final_profile) ) {
             Timer * newTimer = new Timer("");
             newTimer->time_acc_ = avg;
             newTimer->name_ = timers[itimer]->name_;

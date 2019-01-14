@@ -11,4 +11,4 @@
 # export PYTHONPATH=$SMILEI/scripts/PythonModule/:$PYTHONPATH
 
 
-CXXFLAGS += -xMIC-AVX512 -D__INTEL_KNL_7250 -fno-alias  -ip -ipo -inline-factor=1000 
+CXXFLAGS += -xMIC-AVX512 -D__INTEL_KNL_7250 -fno-alias  -ip -inline-factor=1000 #-ipo

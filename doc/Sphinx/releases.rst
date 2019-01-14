@@ -21,8 +21,24 @@ Upcoming changes
 
 * Cylindrical geometry with Fourier decomposition in azimuthal direction
 
+----
+
+.. _latestVersion:
+
+Release 4.1
+^^^^^^^^^^^^^^^^^^^^^
+
+**Download**: `Smilei v4.1 <_downloads/smilei-v4.1.tar.gz>`_
+
 * Probe diagnostics of currents and density per species
-* Bugfixes: collisions (badly affected by vectorization)
+* Field diagnostics with more than 2^32 points
+* Bugfixes:
+ * collisions (badly affected by vectorization)
+ * adaptive vectorization with dynamic load balancing
+ * memory leak in the laser envelope model
+* Disable usage of `-ipo` to compile on supercomputers despite of saving time simulation
+ * it needs too many resources (time and memory) to link
+ * it is recommended to do some tests on a new supercomputer without and then to re-establish it
 
 .. warning::
 
@@ -31,9 +47,8 @@ Upcoming changes
   only the users working directly with values of weights. Other simulation
   results should be unchanged.
 
-----
 
-.. _latestVersion:
+----
 
 Release 4.0
 ^^^^^^^^^^^^^^^^^^^^^
