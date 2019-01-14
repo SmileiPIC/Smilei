@@ -136,6 +136,7 @@ void SmileiMPI::init( Params& params, DomainDecomposition* domain_decomposition 
         dynamics_GradPHI_mpart.resize(omp_get_max_threads());
         dynamics_PHIpart.resize(omp_get_max_threads());
         dynamics_PHI_mpart.resize(omp_get_max_threads());
+        dynamics_inv_gamma_ponderomotive.resize(omp_get_max_threads());
     }
 #else
     dynamics_Epart.resize(1);
@@ -150,6 +151,7 @@ void SmileiMPI::init( Params& params, DomainDecomposition* domain_decomposition 
         dynamics_GradPHI_mpart.resize(1);
         dynamics_PHIpart.resize(1);
         dynamics_PHI_mpart.resize(1);
+        dynamics_inv_gamma_ponderomotive.resize(1);
     }
 #endif
 

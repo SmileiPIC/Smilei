@@ -184,7 +184,7 @@ public:
             dynamics_GradPHI_mpart[ithread].resize(3*npart);
             dynamics_PHIpart[ithread].resize(npart);
             dynamics_PHI_mpart[ithread].resize(npart);
-            dynamics_GradPHIpart.resize(npart);
+            dynamics_inv_gamma_ponderomotive[ithread].resize(npart); 
         }
     }
 
