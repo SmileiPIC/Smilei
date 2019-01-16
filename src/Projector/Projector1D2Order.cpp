@@ -98,7 +98,6 @@ void Projector1D2Order::currents(double* Jx, double* Jy, double* Jz, Particles &
     // 2nd order projection for the total currents & charge density
     ipo -= 2; // At the 2nd order, oversize = 2.
     for (unsigned int i=0; i<5; i++) {
-        DEBUGEXEC(int myloc=(i + ipo ); if (myloc < 0) { ERROR("i=" << i << " ipo=" << ipo << " iloc=" << myloc << " index_domain_begin=" << index_domain_begin )});
         Jx[i + ipo ]  += Jx_p[i];
         Jy[i + ipo ]  += cry_p * Wt[i];
         Jz[i + ipo ]  += crz_p * Wt[i];
@@ -170,7 +169,6 @@ void Projector1D2Order::currentsAndDensity(double* Jx, double* Jy, double* Jz, d
     // 2nd order projection for the total currents & charge density
     ipo -= 2;// At the 2nd order, oversize = 2.
     for (unsigned int i=0; i<5; i++) {
-        DEBUGEXEC( ERROR("i=" << i << " ipo=" << ipo << " index_domain_begin=" << index_domain_begin ););
         Jx[i + ipo]  += Jx_p[i];
         Jy[i + ipo]  += cry_p * Wt[i];
         Jz[i + ipo]  += crz_p * Wt[i];
