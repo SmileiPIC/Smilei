@@ -423,7 +423,7 @@ Obtain the data
 
   Returns a list of the data arrays (one element for each timestep requested).
   In the case of ``TrackParticles``, this method returns a dictionary containing one
-  entry for each axis, and if ``sort==True``, these entries are included inside an entry
+  entry for each axis, and if ``sort==False``, these entries are included inside an entry
   for each timestep.
 
   * ``timestep``, if specified, is the only timestep number that is read and returned.

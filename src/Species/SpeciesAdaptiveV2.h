@@ -34,7 +34,7 @@ class SpeciesAdaptiveV2 : public SpeciesV
                         PartWalls* partWalls, Patch* patch, SmileiMPI* smpi,
                         RadiationTables &RadiationTables,
                         MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
-                        std::vector<Diagnostic*>& localDiags);
+                        std::vector<Diagnostic*>& localDiags) override;
 
     //! This function configures the type of species according to the default mode
     //! regardless the number of particles per cell
@@ -56,21 +56,21 @@ class SpeciesAdaptiveV2 : public SpeciesV
                            ElectroMagn* EMfields,
                            Params &params, bool diag_flag,
                            Patch* patch, SmileiMPI* smpi,
-                           std::vector<Diagnostic*>& localDiags);
+                           std::vector<Diagnostic*>& localDiags) override;
 
     void scalar_ponderomotive_update_position_and_currents(double time_dual, unsigned int ispec,
                            ElectroMagn* EMfields,
                            Params &params, bool diag_flag, PartWalls* partWalls,
                            Patch* patch, SmileiMPI* smpi,
-                           std::vector<Diagnostic*>& localDiags);
+                           std::vector<Diagnostic*>& localDiags) override;
 
 
 private:
 
     // Metrics for the adaptive vectorization
-    int max_number_of_particles_per_cells;
-    int min_number_of_particles_per_cells;
-    double ratio_number_of_vecto_cells;
+    //int max_number_of_particles_per_cells;
+    //int min_number_of_particles_per_cells;
+    //double ratio_number_of_vecto_cells;
 
     //! Number of packs of particles that divides the total number of particles
     unsigned int npack_;

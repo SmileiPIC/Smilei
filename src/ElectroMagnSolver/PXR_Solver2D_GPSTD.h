@@ -16,7 +16,7 @@ public:
 
     void coupling( Params &params, ElectroMagn* EMfields ) override;
     //! Overloading of () operator
-    virtual void operator()( ElectroMagn* fields);
+    virtual void operator()( ElectroMagn* fields) override;
 
 protected:
 

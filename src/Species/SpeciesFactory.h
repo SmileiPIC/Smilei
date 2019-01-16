@@ -585,7 +585,7 @@ public:
 
         // Density
         bool ok1, ok2;
-        PyObject *profile1, *profile2, *profile3;
+        PyObject *profile1(nullptr), *profile2(nullptr), *profile3(nullptr);
 
 
         if (thisSpecies->position_initialization_array == NULL){

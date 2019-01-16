@@ -65,7 +65,7 @@ private:
     unsigned int Nmode;
     
     //! Oversize along the radial direction
-    unsigned int oversize_R;
+    //unsigned int oversize_R;
     
 };
 

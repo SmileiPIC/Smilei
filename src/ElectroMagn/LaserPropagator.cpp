@@ -113,7 +113,7 @@ void LaserPropagator::init(Params* params, SmileiMPI* smpi, unsigned int side)
 void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profiles_n, double offset, string file, int keep_n_strongest_modes, double angle_z)
 {
 #ifdef SMILEI_USE_NUMPY
-    const complex<double> i_ (0., 1.); // the imaginary number
+    //const complex<double> i_ (0., 1.); // the imaginary number
     
     unsigned int nprofiles = profiles.size();
     
@@ -151,7 +151,9 @@ void LaserPropagator::operator() (vector<PyObject*> profiles, vector<int> profil
     vector<PyObject*> arrays( nprofiles );
     for( unsigned int i=0; i<nprofiles; i++ ) {
         // Vectorize the profile
-        PyObject* profile = PyObject_CallMethod(numpy, "vectorize", "O", profiles[i]);
+        string mode("vectorize");
+        string bigO("O");
+        PyObject* profile = PyObject_CallMethod(numpy, &mode[0], &bigO[0], profiles[i]);
         // Apply to the mesh
         arrays[i] = PyObject_CallObject(profile, mesh);
         Py_DECREF(profile);

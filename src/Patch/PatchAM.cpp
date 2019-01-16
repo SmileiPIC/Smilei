@@ -32,7 +32,6 @@ PatchAM::PatchAM(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_de
             for (int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++) {
                 ntype_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
                 ntype_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-                ntype_[2][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
                 ntypeSum_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
                 ntypeSum_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
             }

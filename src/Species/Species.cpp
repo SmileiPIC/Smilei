@@ -974,7 +974,7 @@ void Species::computeCharge(unsigned int ispec, ElectroMagn* EMfields)
             }
             else {
                 ElectroMagnAM* emAM = static_cast<ElectroMagnAM*>( EMfields );
-                int Nmode = emAM->rho_AM_.size();
+                unsigned int Nmode = emAM->rho_AM_.size();
                 for (unsigned int imode=0; imode<Nmode;imode++){
                     complex<double>* b_rho = &(*emAM->rho_AM_[imode] )(0);
                     for (unsigned int iPart=first_index[ibin] ; (int)iPart<last_index[ibin]; iPart++ ) {
