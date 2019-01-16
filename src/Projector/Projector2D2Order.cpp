@@ -27,8 +27,6 @@ Projector2D2Order::Projector2D2Order (Params& params, Patch* patch) : Projector2
 
     nprimy = params.n_space[1] + 2*params.oversize[1] + 1;
 
-    DEBUG("cell_length "<< params.cell_length[0]);
-
     dt             = params.timestep;
     dts2           = params.timestep/2.;
     dts4           = params.timestep/4.;

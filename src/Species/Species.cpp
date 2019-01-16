@@ -87,7 +87,6 @@ partBoundCond(NULL),
 min_loc(patch->getDomainLocalMin(0))
 
 {
-    DEBUG(name);
 
     PI2 = 2.0 * M_PI;
     PI_ov_2 = 0.5*M_PI;
@@ -208,21 +207,12 @@ void Species::initOperators(Params& params, Patch* patch)
     //  Needs to be placed after createParticles() because requires the knowledge of max_charge
     // \todo pay attention to restart
     Ionize = IonizationFactory::create(params, this);
-    if (Ionize) {
-        DEBUG("Species " << name << " can be ionized!");
-    }
 
     // Create the radiation model
     Radiate = RadiationFactory::create(params, this);
-    if (Radiate) {
-        DEBUG("Species " << name << " will undergo radiation loss!");
-    }
 
     // Create the multiphoton Breit-Wheeler model
     Multiphoton_Breit_Wheeler_process = MultiphotonBreitWheelerFactory::create(params, this);
-    if (Multiphoton_Breit_Wheeler_process) {
-        DEBUG("Species " << name << " will undergo multiphoton Breit-Wheeler!");
-    }
     // define limits for BC and functions applied and for domain decomposition
     partBoundCond = new PartBoundCond(params, this, patch);
     for (unsigned int iDim=0 ; iDim < nDim_particle ; iDim++){
@@ -260,7 +250,6 @@ Species::~Species()
         delete temperatureProfile[i];
     if (ionization_rate!=Py_None) Py_DECREF(ionization_rate);
 
-    DEBUG("Species deleted");
 }
 
 

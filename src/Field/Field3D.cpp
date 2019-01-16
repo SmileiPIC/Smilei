@@ -95,7 +95,6 @@ void Field3D::allocateDims() {
         }
     }//i
 
-    DEBUG("Fields 3D created: " << dims_[0] << "x" << dims_[1] << "x" << dims_[2]);
     globalDims_ = dims_[0]*dims_[1]*dims_[2];
 
 }
@@ -153,7 +152,6 @@ void Field3D::allocateDims(unsigned int mainDim, bool isPrimal ) {
         }
     }//i
 
-    //DEBUG(10,"Fields 3D created: " << dims_[0] << "x" << dims_[1] << "x" << dims_[2]);
     globalDims_ = dims_[0]*dims_[1]*dims_[2];
 
     //isDual_ = isPrimal;

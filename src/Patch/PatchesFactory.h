@@ -59,7 +59,6 @@ public:
         for (unsigned int impi = 0 ; impi < (unsigned int)smpi->getRank() ; impi++) {
             firstpatch += smpi->patch_count[impi];
         }
-        DEBUG( smpi->getRank() << ", nPatch = " << npatches << " - starting at " << firstpatch );
 
         // If test mode, only 1 patch created
         if( smpi->test_mode ) npatches = 1;
