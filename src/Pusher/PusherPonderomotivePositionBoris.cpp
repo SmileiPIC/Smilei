@@ -27,6 +27,8 @@ void PusherPonderomotivePositionBoris::operator() (Particles &particles, SmileiM
 
     std::vector<double> *Phi_mpart     = &(smpi->dynamics_PHI_mpart[ithread]);
     std::vector<double> *GradPhi_mpart = &(smpi->dynamics_GradPHI_mpart[ithread]);
+    std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
+
     
     double charge_sq_over_mass_dts4,charge_sq_over_mass_sq;
     double gamma0,gamma0_sq,gamma_ponderomotive;
@@ -71,6 +73,7 @@ void PusherPonderomotivePositionBoris::operator() (Particles &particles, SmileiM
     
         // update of gamma ponderomotive 
         gamma_ponderomotive = gamma0 + (pxsm*momentum[0][ipart]+pysm*momentum[1][ipart]+pzsm*momentum[2][ipart]) ;
+        (*invgf)[ipart] = 1. / gamma_ponderomotive;
   
         // Move the particle
 #ifdef  __DEBUG
