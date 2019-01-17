@@ -44,9 +44,11 @@ SmileiMPI_test::SmileiMPI_test( int* argc, char*** argv )
     int mpi_provided;
 #ifdef _OPENMP
     MPI_Init_thread( argc, argv, MPI_THREAD_MULTIPLE, &mpi_provided );
+#ifndef _NO_MPI_TM
     if (mpi_provided != MPI_THREAD_MULTIPLE){
         ERROR("MPI_THREAD_MULTIPLE not supported. Compile your MPI library with THREAD_MULTIPLE support.");
     }
+#endif
     omp_set_num_threads( 1 );
 #else
     MPI_Init( argc, argv );
