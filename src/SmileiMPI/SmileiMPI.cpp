@@ -469,7 +469,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
 
         //Check if my rank should start with additional patches from right neighbour ...
         if (Tcur < target){
-            unsigned int j = 0;
+            j = 0;
             while ( (abs(Tcur-target) > abs(Tcur+Lp_right[j] - target)) && (j<(unsigned int)patch_count[smilei_rk+1] - 1) ){ //Leave at least 1 patch to my neighbour
                 Tcur += Lp_right[j];
                 j++;
