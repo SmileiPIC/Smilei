@@ -62,7 +62,7 @@ protected :
     double time_average_inv;
     
     //! Subgrid requested
-    std::vector<unsigned int> subgrid_start, subgrid_stop, subgrid_step;
+    std::vector<unsigned int> subgrid_start_, subgrid_stop_, subgrid_step_;
     
     //! Property list for collective dataset write, set for // IO.
     hid_t write_plist;
@@ -87,10 +87,7 @@ protected :
     
     //! Temporary dataset that is used for folding the 2D hilbert curve
     hid_t tmp_dset_id;
-    
-    //! Variable to store the status of a dataset (whether it exists or not)
-    htri_t status;
-    
+        
     //! Tools for re-reading and re-writing the file in a folded pattern
     unsigned int one_patch_buffer_size;
     hid_t filespace_reread, filespace_firstwrite, memspace_reread, memspace_firstwrite;

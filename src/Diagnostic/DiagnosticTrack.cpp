@@ -146,7 +146,7 @@ void DiagnosticTrack::openFile( Params& params, SmileiMPI* smpi, bool newfile )
         H5Pclose(pid);
 
         // Attributes for openPMD
-        openPMD->writeRootAttributes( fileId_, "no_meshes", "particles/" );
+        openPMD_->writeRootAttributes( fileId_, "no_meshes", "particles/" );
 
         // Create "data" group for openPMD compatibility
         data_group_id = H5::group(fileId_, "data");
@@ -276,11 +276,11 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
         species_group = H5::group( particles_group, vecPatches(0)->vecSpecies[speciesId_]->name.c_str() );
 
         // Add openPMD attributes ( "basePath" )
-        openPMD->writeBasePathAttributes( iteration_group, itime );
+        openPMD_->writeBasePathAttributes( iteration_group, itime );
         // Add openPMD attributes ( "particles" )
-        openPMD->writeParticlesAttributes( particles_group );
+        openPMD_->writeParticlesAttributes( particles_group );
         // Add openPMD attributes ( path of a given species )
-        openPMD->writeSpeciesAttributes( species_group );
+        openPMD_->writeSpeciesAttributes( species_group );
 
         // Set the dataset parameters
         plist = H5Pcreate(H5P_DATASET_CREATE);
@@ -377,7 +377,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
         #pragma omp master
         {
             momentum_group = H5::group(species_group, "momentum");
-            openPMD->writeRecordAttributes( momentum_group, SMILEI_UNIT_MOMENTUM );
+            openPMD_->writeRecordAttributes( momentum_group, SMILEI_UNIT_MOMENTUM );
         }
         for( unsigned int idim=0; idim<3; idim++ ) {
             if( write_momentum[idim] ) {
@@ -396,7 +396,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
         #pragma omp master
         {
             position_group = H5::group(species_group, "position");
-            openPMD->writeRecordAttributes( position_group, SMILEI_UNIT_POSITION );
+            openPMD_->writeRecordAttributes( position_group, SMILEI_UNIT_POSITION );
         }
         for( unsigned int idim=0; idim<nDim_particle; idim++ ) {
             if( write_position[idim] ) {
@@ -468,7 +468,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
         {
             if( write_any_E ) {
                 hid_t Efield_group = H5::group(species_group, "E");
-                openPMD->writeRecordAttributes( Efield_group, SMILEI_UNIT_EFIELD );
+                openPMD_->writeRecordAttributes( Efield_group, SMILEI_UNIT_EFIELD );
                 for( unsigned int idim=0; idim<3; idim++ ) {
                     if( write_E[idim] ) {
                         write_component( Efield_group, xyz.substr(idim,1).c_str(), data_double[idim*nParticles_local], H5T_NATIVE_DOUBLE, file_space, mem_space, plist, SMILEI_UNIT_EFIELD, nParticles_global );
@@ -479,7 +479,7 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
 
             if( write_any_B ) {
                 hid_t Bfield_group = H5::group(species_group, "B");
-                openPMD->writeRecordAttributes( Bfield_group, SMILEI_UNIT_BFIELD );
+                openPMD_->writeRecordAttributes( Bfield_group, SMILEI_UNIT_BFIELD );
                 for( unsigned int idim=0; idim<3; idim++ ) {
                     if( write_B[idim] ) {
                         write_component( Bfield_group, xyz.substr(idim,1).c_str(), data_double[(3+idim)*nParticles_local], H5T_NATIVE_DOUBLE, file_space, mem_space, plist, SMILEI_UNIT_BFIELD, nParticles_global );
@@ -496,11 +496,11 @@ void DiagnosticTrack::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, 
 
         // PositionOffset (for OpenPMD)
         hid_t positionoffset_group = H5::group(species_group, "positionOffset");
-        openPMD->writeRecordAttributes( positionoffset_group, SMILEI_UNIT_POSITION );
+        openPMD_->writeRecordAttributes( positionoffset_group, SMILEI_UNIT_POSITION );
         vector<uint64_t> np = {nParticles_global};
         for( unsigned int idim=0; idim<nDim_particle; idim++ ) {
             hid_t xyz_group = H5::group(positionoffset_group, xyz.substr(idim,1));
-            openPMD->writeComponentAttributes( xyz_group, SMILEI_UNIT_POSITION );
+            openPMD_->writeComponentAttributes( xyz_group, SMILEI_UNIT_POSITION );
             H5::attr( xyz_group, "value", 0. );
             H5::attr( xyz_group, "shape", np, H5T_NATIVE_UINT64 );
             H5Gclose( xyz_group );
@@ -587,8 +587,8 @@ void DiagnosticTrack::write_scalar( hid_t location, string name, T& buffer, hid_
 {
     hid_t did = H5Dcreate(location, name.c_str(), dtype, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
     if( npart_global>0 ) H5Dwrite( did, dtype, mem_space , file_space , transfer, &buffer );
-    openPMD->writeRecordAttributes( did, unit_type );
-    openPMD->writeComponentAttributes( did, unit_type );
+    openPMD_->writeRecordAttributes( did, unit_type );
+    openPMD_->writeComponentAttributes( did, unit_type );
     H5Dclose(did);
 }
 
@@ -597,7 +597,7 @@ void DiagnosticTrack::write_component( hid_t location, string name, T& buffer, h
 {
     hid_t did = H5Dcreate(location, name.c_str(), dtype, file_space, H5P_DEFAULT, plist, H5P_DEFAULT);
     if( npart_global>0 ) H5Dwrite( did, dtype, mem_space , file_space , transfer, &buffer );
-    openPMD->writeComponentAttributes( did, unit_type );
+    openPMD_->writeComponentAttributes( did, unit_type );
     H5Dclose(did);
 }
 

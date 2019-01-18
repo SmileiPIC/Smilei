@@ -62,7 +62,7 @@ private :
     hsize_t mpi_size;
 
     //! MPI rank
-    unsigned int mpi_rank;
+    unsigned int mpi_rank_;
 
     //! Dimension of the patches
     unsigned int ndim;

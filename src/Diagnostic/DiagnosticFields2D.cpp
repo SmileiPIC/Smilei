@@ -34,8 +34,8 @@ DiagnosticFields2D::DiagnosticFields2D( Params &params, SmileiMPI* smpi, VectorP
     unsigned int istart_in_patch[2], istart_in_file[2], nsteps[2];
     for( unsigned int i=0; i<2; i++) {
         findSubgridIntersection(
-            subgrid_start[i], subgrid_stop[i], subgrid_step[i],
-            subgrid_start[i], subgrid_start[i]+patch_size[i]+1,
+            subgrid_start_[i], subgrid_stop_[i], subgrid_step_[i],
+            subgrid_start_[i], subgrid_start_[i]+patch_size[i]+1,
             istart_in_patch[i], istart_in_file[i], nsteps[i]
         );
     }
@@ -102,13 +102,13 @@ DiagnosticFields2D::DiagnosticFields2D( Params &params, SmileiMPI* smpi, VectorP
     unsigned int istart[2];
     for( unsigned int i=0; i<2; i++) {
         findSubgridIntersection(
-            subgrid_start[i], subgrid_stop[i], subgrid_step[i],
+            subgrid_start_[i], subgrid_stop_[i], subgrid_step_[i],
             0, final_array_size[i],
             istart[i], rewrite_start_in_file[i], rewrite_size[i]
         );
         final_array_size[i] = rewrite_size[i];
         findSubgridIntersection(
-            subgrid_start[i], subgrid_stop[i], subgrid_step[i],
+            subgrid_start_[i], subgrid_stop_[i], subgrid_step_[i],
             offset2[i], offset2[i] + block2[i],
             istart[i], rewrite_start_in_file[i], rewrite_size[i]
         );
@@ -209,7 +209,7 @@ void DiagnosticFields2D::getField( Patch* patch, unsigned int ifield )
         patch_end  [i] = patch_begin[i] + patch_size[i] + 1;
         if( patch->Pcoordinates[i] != 0 ) patch_begin[i]++;
         findSubgridIntersection(
-            subgrid_start[i], subgrid_stop[i], subgrid_step[i],
+            subgrid_start_[i], subgrid_stop_[i], subgrid_step_[i],
             patch_begin[i], patch_end[i],
             istart_in_patch[i], istart_in_file[i], nsteps[i]
         );
@@ -218,11 +218,11 @@ void DiagnosticFields2D::getField( Patch* patch, unsigned int ifield )
     }
     
     // Copy field to the "data" buffer
-    unsigned int ix_max = istart_in_patch[0] + subgrid_step[0]*nsteps[0];
-    unsigned int iy_max = istart_in_patch[1] + subgrid_step[1]*nsteps[1];
+    unsigned int ix_max = istart_in_patch[0] + subgrid_step_[0]*nsteps[0];
+    unsigned int iy_max = istart_in_patch[1] + subgrid_step_[1]*nsteps[1];
     unsigned int iout = one_patch_buffer_size * (patch->Hindex()-refHindex);
-    for( unsigned int ix = istart_in_patch[0]; ix < ix_max; ix += subgrid_step[0] ) {
-        for( unsigned int iy = istart_in_patch[1]; iy < iy_max; iy += subgrid_step[1] ) {
+    for( unsigned int ix = istart_in_patch[0]; ix < ix_max; ix += subgrid_step_[0] ) {
+        for( unsigned int iy = istart_in_patch[1]; iy < iy_max; iy += subgrid_step_[1] ) {
             data[iout] = (*field)(ix, iy) * time_average_inv;
             iout++;
         }
@@ -252,7 +252,7 @@ void DiagnosticFields2D::writeField( hid_t dset_id, int itime ) {
             patch_end  [i] = patch_begin[i] + patch_size[i] + 1;
             if( patch_begin[i] != 0 ) patch_begin[i]++;
             findSubgridIntersection(
-                subgrid_start[i], subgrid_stop[i], subgrid_step[i],
+                subgrid_start_[i], subgrid_stop_[i], subgrid_step_[i],
                 patch_begin[i], patch_end[i],
                 istart_in_patch[i], istart_in_file[i], nsteps[i]
             );

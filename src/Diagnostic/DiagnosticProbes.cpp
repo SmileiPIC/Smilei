@@ -624,7 +624,7 @@ void DiagnosticProbes::run( SmileiMPI* smpi, VectorPatch& vecPatches, int timest
         
         // Probes for envelope
         if (vecPatches(ipatch)->EMfields->envelope != NULL) {
-            unsigned int iPart_MPI = offset_in_MPI[ipatch];
+            iPart_MPI = offset_in_MPI[ipatch];
             double Env_AabsLoc_fields,Env_ChiLoc_fields,Env_EabsLoc_fields;
             for (unsigned int ipart=0; ipart<npart; ipart++) {
                 int iparticle(ipart); // Compatibility

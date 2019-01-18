@@ -605,8 +605,8 @@ void DiagnosticScalar::compute( Patch* patch, int timestep )
                 iFieldGlobalSize [i] = field->dims_[i];
             }
 
-            unsigned int ii= iFieldStart[2] + iFieldStart[1]*iFieldGlobalSize[2] +iFieldStart[0]*iFieldGlobalSize[1]*iFieldGlobalSize[2];
-            minloc.val = maxloc.val = (*field)(ii);
+            unsigned int iifield= iFieldStart[2] + iFieldStart[1]*iFieldGlobalSize[2] +iFieldStart[0]*iFieldGlobalSize[1]*iFieldGlobalSize[2];
+            minloc.val = maxloc.val = (*field)(iifield);
             i_min = iFieldStart[0]; j_min = iFieldStart[1]; k_min = iFieldStart[2];
             i_max = iFieldStart[0]; j_max = iFieldStart[1]; k_max = iFieldStart[2];
 
@@ -785,7 +785,7 @@ uint64_t DiagnosticScalar::getDiskFootPrint(int istart, int istop, Patch* patch)
     }
     // Finally, count allowed scalars
     int nscalars = 1;
-    for( unsigned int k=0; k<scalars.size(); k++){
+    for( k=0; k<scalars.size(); k++){
         if( allowedKey( scalars[k] ) )
             nscalars ++;
     }

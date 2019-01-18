@@ -15,8 +15,8 @@ class Diagnostic {
 
 public :
 
-    Diagnostic( ) : openPMD(NULL) {};
-    Diagnostic( OpenPMDparams& o ) : openPMD(&o) {};
+    Diagnostic( ) : openPMD_(NULL) {};
+    Diagnostic( OpenPMDparams& o ) : openPMD_(&o) {};
     virtual ~Diagnostic() {};
     
     //! Opens the file. Only by MPI master for global diags. Only by patch master for local diags.
@@ -65,7 +65,7 @@ protected :
     hid_t fileId_;
     
     //! Pointer to all parameters needed for openPMD compatibility
-    OpenPMDparams * openPMD;
+    OpenPMDparams * openPMD_;
 };
 
 #endif

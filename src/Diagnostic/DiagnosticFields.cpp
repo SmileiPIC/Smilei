@@ -83,13 +83,13 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
     for( unsigned int isubgrid=0; isubgrid<nsubgrid; isubgrid++ ) {
         unsigned int n;
         if( subgrids[isubgrid] == Py_None ) {
-            subgrid_start.push_back( 0 );
-            subgrid_stop .push_back( params.n_space_global[isubgrid]+2 );
-            subgrid_step .push_back( 1  );
+            subgrid_start_.push_back( 0 );
+            subgrid_stop_ .push_back( params.n_space_global[isubgrid]+2 );
+            subgrid_step_ .push_back( 1  );
         } else if( PyTools::convert(subgrids[isubgrid], n) ) {
-            subgrid_start.push_back( n );
-            subgrid_stop .push_back( n + 1 );
-            subgrid_step .push_back( 1 );
+            subgrid_start_.push_back( n );
+            subgrid_stop_ .push_back( n + 1 );
+            subgrid_step_ .push_back( 1 );
         } else if( PySlice_Check(subgrids[isubgrid]) ) {
             Py_ssize_t start, stop, step, slicelength;
 #if PY_MAJOR_VERSION == 2
@@ -100,9 +100,9 @@ DiagnosticFields::DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch
                 PyTools::checkPyError();
                 ERROR("Diagnostic Fields #"<<ndiag<<" `subgrid` axis #"<<isubgrid<<" not understood");
             }
-            subgrid_start.push_back( start );
-            subgrid_stop .push_back( stop  );
-            subgrid_step .push_back( step  );
+            subgrid_start_.push_back( start );
+            subgrid_stop_ .push_back( stop  );
+            subgrid_step_ .push_back( step  );
             if( slicelength < 1 )
                 ERROR("Diagnostic Fields #"<<ndiag<<" `subgrid` axis #"<<isubgrid<<" is an empty selection");
         } else {
@@ -201,7 +201,7 @@ void DiagnosticFields::openFile( Params& params, SmileiMPI* smpi, bool newfile )
         H5Pclose(pid);
         
         // Attributes for openPMD
-        openPMD->writeRootAttributes( fileId_, "", "no_particles" );
+        openPMD_->writeRootAttributes( fileId_, "", "no_particles" );
         
         // Make main "data" group where everything will be stored (required by openPMD)
         data_group_id = H5::group( fileId_, "data" );
@@ -285,9 +285,9 @@ void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime,
         // Warning if file unreachable
         if( status < 0 ) WARNING("Fields diagnostics could not write");
         // Add openPMD attributes ( "basePath" )
-        openPMD->writeBasePathAttributes( iteration_group_id, itime );
+        openPMD_->writeBasePathAttributes( iteration_group_id, itime );
         // Add openPMD attributes ( "meshesPath" )
-        openPMD->writeMeshesAttributes( iteration_group_id );
+        openPMD_->writeMeshesAttributes( iteration_group_id );
     }
     #pragma omp barrier
     
@@ -314,10 +314,10 @@ void DiagnosticFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime,
             writeField(dset_id, itime);
             
             // Attributes for openPMD
-            openPMD->writeFieldAttributes( dset_id, subgrid_start, subgrid_step );
-            openPMD->writeRecordAttributes( dset_id, field_type[ifield] );
-            openPMD->writeFieldRecordAttributes( dset_id );
-            openPMD->writeComponentAttributes( dset_id, field_type[ifield] );
+            openPMD_->writeFieldAttributes( dset_id, subgrid_start_, subgrid_step_ );
+            openPMD_->writeRecordAttributes( dset_id, field_type[ifield] );
+            openPMD_->writeFieldRecordAttributes( dset_id );
+            openPMD_->writeComponentAttributes( dset_id, field_type[ifield] );
             
             // Close dataset
             H5Dclose( dset_id );
