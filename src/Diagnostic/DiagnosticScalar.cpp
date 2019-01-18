@@ -342,11 +342,11 @@ void DiagnosticScalar::write(int itime, SmileiMPI* smpi)
                 fout << "# " << 1 << " time" << endl;
                 j = 2;
                 for(k=0; k<s; k++) {
-                    if( allScalars[k]->allowed ) {
-                        fout << "# " << j << " " << allScalars[k]->name << endl;
+                    if( allScalars[k]->allowed_ ) {
+                        fout << "# " << j << " " << allScalars[k]->name_ << endl;
                         j++;
-                        if( ! allScalars[k]->secondname.empty() ) {
-                            fout << "# " << j << " " << allScalars[k]->secondname << endl;
+                        if( ! allScalars[k]->secondname_.empty() ) {
+                            fout << "# " << j << " " << allScalars[k]->secondname_ << endl;
                             j++;
                         }
                     }
@@ -354,10 +354,10 @@ void DiagnosticScalar::write(int itime, SmileiMPI* smpi)
                 // Second header: list of scalars, but all in one line
                 fout << "#\n#" << setw(precision+9) << "time";
                 for(k=0; k<s; k++) {
-                    if( allScalars[k]->allowed ) {
-                        fout << setw(allScalars[k]->width) << allScalars[k]->name;
-                        if( ! allScalars[k]->secondname.empty() )
-                            fout << setw(allScalars[k]->width) << allScalars[k]->secondname;
+                    if( allScalars[k]->allowed_ ) {
+                        fout << setw(allScalars[k]->width_) << allScalars[k]->name_;
+                        if( ! allScalars[k]->secondname_.empty() )
+                            fout << setw(allScalars[k]->width_) << allScalars[k]->secondname_;
                     }
                 }
                 fout << endl;
@@ -365,10 +365,10 @@ void DiagnosticScalar::write(int itime, SmileiMPI* smpi)
             // Each requested timestep, the following writes the values of the scalars
             fout << setw(precision+10) << itime/res_time;
             for(k=0; k<s; k++) {
-                if( allScalars[k]->allowed ) {
-                    fout << setw(allScalars[k]->width) << (double)*allScalars[k];
-                    if( ! allScalars[k]->secondname.empty() )
-                        fout << setw(allScalars[k]->width) << (int)*static_cast<Scalar_value_location*>(allScalars[k]);
+                if( allScalars[k]->allowed_ ) {
+                    fout << setw(allScalars[k]->width_) << (double)*allScalars[k];
+                    if( ! allScalars[k]->secondname_.empty() )
+                        fout << setw(allScalars[k]->width_) << (int)*static_cast<Scalar_value_location*>(allScalars[k]);
                 }
             }
             fout << endl;
@@ -675,8 +675,8 @@ double DiagnosticScalar::getScalar(std::string key)
 {
     unsigned int k, s=allScalars.size();
     for(k=0; k<s; k++) {
-        if (allScalars[k]->name      ==key) return (double)*allScalars[k];
-        if (allScalars[k]->secondname==key) return (int)   *allScalars[k];
+        if (allScalars[k]->name_      ==key) return (double)*allScalars[k];
+        if (allScalars[k]->secondname_==key) return (int)   *allScalars[k];
     }
     DEBUG("key not found " << key);
     return 0.0;

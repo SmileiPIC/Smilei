@@ -199,7 +199,7 @@ private:
         }
 
         for (unsigned int k=1 ; k<5 ; k++) {
-            double tmp( crx_p * ( 0.5*DSy[ipart]*Sz0[(k-1)*vecSize+ipart] + one_third*DSy[ipart]*DSz[k*vecSize+ipart] ) );
+             tmp = crx_p * ( 0.5*DSy[ipart]*Sz0[(k-1)*vecSize+ipart] + one_third*DSy[ipart]*DSz[k*vecSize+ipart] );
             int index( ( k*nz )*vecSize+ipart );
             for (unsigned int i=1 ; i<5 ; i++) {
                 bJx [ index+nx*(i)*vecSize ] += sum[i]*tmp;
@@ -207,7 +207,7 @@ private:
                 
         }
         for (unsigned int j=1 ; j<5 ; j++) {
-            double tmp( crx_p * ( 0.5*DSz[ipart]*Sy0[(j-1)*vecSize+ipart] + one_third*DSy[j*vecSize+ipart]*DSz[ipart] ) );
+            tmp = crx_p * ( 0.5*DSz[ipart]*Sy0[(j-1)*vecSize+ipart] + one_third*DSy[j*vecSize+ipart]*DSz[ipart] );
             int index( ( j*ny )*vecSize+ipart );
             for (unsigned int i=1 ; i<5 ; i++) {
                 bJx [ index+nx*(i)*vecSize ] += sum[i]*tmp;
@@ -215,10 +215,10 @@ private:
         }//i
         for ( int j=1 ; j<5 ; j++) {
             for ( int k=1 ; k<5 ; k++) {
-                double tmp( crx_p * ( Sy0[(j-1)*vecSize+ipart]*Sz0[(k-1)*vecSize+ipart] 
+                tmp = crx_p * ( Sy0[(j-1)*vecSize+ipart]*Sz0[(k-1)*vecSize+ipart] 
                                       + 0.5*DSy[j*vecSize+ipart]*Sz0[(k-1)*vecSize+ipart] 
                                       + 0.5*DSz[k*vecSize+ipart]*Sy0[(j-1)*vecSize+ipart] 
-                                      + one_third*DSy[j*vecSize+ipart]*DSz[k*vecSize+ipart] ) );
+                                      + one_third*DSy[j*vecSize+ipart]*DSz[k*vecSize+ipart] );
                 int index( ( j*ny + k*nz )*vecSize+ipart );
                 for ( int i=1 ; i<5 ; i++) {
                     bJx [ index+nx*(i)*vecSize ] += sum[i]*tmp;

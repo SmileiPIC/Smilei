@@ -389,7 +389,7 @@ double LaserProfileSeparable::getAmplitude(std::vector<double> pos, double t, in
 //Destructor
 LaserProfileNonSeparable::~LaserProfileNonSeparable()
 {
-    if(spaceAndTimeProfile) delete spaceAndTimeProfile;
+    if(spaceAndTimeProfile_) delete spaceAndTimeProfile_;
 }
 
 

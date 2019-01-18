@@ -45,31 +45,31 @@ public:
 protected:
     
     //! Identification number of the Collisions object
-    int n_collisions;
+    int n_collisions_;
     
     //! Group of the species numbers that are associated for Collisions.
-    std::vector<unsigned int> species_group1, species_group2;
+    std::vector<unsigned int> species_group1_, species_group2_;
     
     //! Coulomb logarithm (zero or negative means automatic)
-    double coulomb_log;
+    double coulomb_log_;
     
     //! True if collisions inside a group of species, False if collisions between different groups of species
-    bool intra_collisions;
+    bool intra_collisions_;
     
     //! Number of timesteps between each dump of collisions debugging
-    int debug_every;
+    int debug_every_;
     
     //! Species atomic number, in case of ionization
     int atomic_number;
     
     //! Hdf5 file name
-    std::string filename;
+    std::string filename_;
     
     //! Temporary variables for the debugging file
-    double smean, logLmean, ncol;//, temperature
+    double smean_, logLmean_;//, ncol;//, temperature
     
     const double twoPi = 2. * 3.14159265358979323846;
-    double coeff1, coeff2;
+    double coeff1_, coeff2_;
     
     // Collide one particle with another
     // See equations in http://dx.doi.org/10.1063/1.4742167

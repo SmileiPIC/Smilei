@@ -110,18 +110,18 @@ class LaserProfileNonSeparable : public LaserProfile {
 friend class SmileiMPI;
 public:
     LaserProfileNonSeparable(Profile * spaceAndTimeProfile)
-     : spaceAndTimeProfile(spaceAndTimeProfile) {};
+     : spaceAndTimeProfile_(spaceAndTimeProfile) {};
     LaserProfileNonSeparable(LaserProfileNonSeparable* lp)
-     : spaceAndTimeProfile( new Profile(lp->spaceAndTimeProfile) ) {};
+     : spaceAndTimeProfile_( new Profile(lp->spaceAndTimeProfile_) ) {};
     ~LaserProfileNonSeparable();
     inline double getAmplitude(std::vector<double> pos, double t, int j, int k) {
         double amp;
         #pragma omp critical
-        amp = spaceAndTimeProfile->valueAt(pos, t);
+        amp = spaceAndTimeProfile_->valueAt(pos, t);
         return amp;
     }
 private:
-    Profile * spaceAndTimeProfile;
+    Profile * spaceAndTimeProfile_;
 };
 
 // Laser profile from a file (see LaserOffset)
