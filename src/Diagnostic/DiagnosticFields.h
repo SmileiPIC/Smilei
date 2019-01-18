@@ -87,7 +87,10 @@ protected :
     
     //! Temporary dataset that is used for folding the 2D hilbert curve
     hid_t tmp_dset_id;
-        
+    
+    //! Variable to store the status of a dataset (whether it exists or not)
+    htri_t status;
+    
     //! Tools for re-reading and re-writing the file in a folded pattern
     unsigned int one_patch_buffer_size;
     hid_t filespace_reread, filespace_firstwrite, memspace_reread, memspace_firstwrite;

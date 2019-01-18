@@ -193,7 +193,7 @@ void DiagnosticFields3D::setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatc
     H5Sset_extent_simple(memspace_firstwrite, 1, &block, &block );
     
     // Create/Open temporary dataset
-    htri_t status = H5Lexists(fileId_, "tmp", H5P_DEFAULT);
+    status = H5Lexists(fileId_, "tmp", H5P_DEFAULT);
     if( status == 0 ) {
         tmp_dset_id  = H5Dcreate( fileId_, "tmp", H5T_NATIVE_DOUBLE, filespace_firstwrite, H5P_DEFAULT, dcreate_firstwrite, H5P_DEFAULT);
     } else {
