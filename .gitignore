@@ -29,3 +29,4 @@ doc/html
 exec_script.sh.*
 .tags*
 .vscode*
+html/*
