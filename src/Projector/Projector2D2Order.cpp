@@ -31,7 +31,6 @@ Projector2D2Order::Projector2D2Order (Params& params, Patch* patch) : Projector2
     dts2           = params.timestep/2.;
     dts4           = params.timestep/4.;
 
-    one_third = 1./3.;
 }
 
 
