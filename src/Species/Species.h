@@ -496,7 +496,7 @@ public:
 protected:
 
     //! Patch length
-    unsigned int length[3];
+    unsigned int length_[3];
 
 private:
     //! Number of steps for Maxwell-Juettner cumulative function integration

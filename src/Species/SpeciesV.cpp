@@ -311,7 +311,7 @@ int ithread;
                             else {
                                 //Compute cell_keys of remaining particles
                                 for ( unsigned int i = 0 ; i<nDim_particle; i++ ){
-                                    particles->cell_keys[iPart] *= this->length[i];
+                                    particles->cell_keys[iPart] *= this->length_[i];
                                     particles->cell_keys[iPart] += round( (particles->position(i,iPart)-min_loc_vec[i]) * dx_inv_[i] );
                                 }
                                 //First reduction of the count sort algorithm. Lost particles are not included.
@@ -588,7 +588,7 @@ void SpeciesV::compute_part_cell_keys(Params &params)
         for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
             X = particles->position(ipos,ip)-min_loc_vec[ipos];
             IX = round(X * dx_inv_[ipos] );
-            particles->cell_keys[ip] = particles->cell_keys[ip] * this->length[ipos] + IX;
+            particles->cell_keys[ip] = particles->cell_keys[ip] * this->length_[ipos] + IX;
         }
     }
     for (ip=0; ip < npart ; ip++)
@@ -613,7 +613,7 @@ void SpeciesV::compute_bin_cell_keys(Params &params, int istart, int iend)
     for (int ip=istart; ip < iend; ip++){
     // Counts the # of particles in each cell (or sub_cell) and store it in slast_index.
         for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
-            particles->cell_keys[ip] *= this->length[ipos];
+            particles->cell_keys[ip] *= this->length_[ipos];
             particles->cell_keys[ip] += round( (particles->position(ipos,ip)-min_loc_vec[ipos]) * dx_inv_[ipos] );
         }
     }
