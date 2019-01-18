@@ -8,7 +8,6 @@ MF_Solver2D_GrassiSpL::MF_Solver2D_GrassiSpL(Params &params)
 : Solver2D(params)
 {
     
-    double dt    = params.timestep;
     dt_ov_dx  = dt/params.cell_length[0];
     dt_ov_dy  = dt/params.cell_length[0];
     dx    = params.cell_length[0];
