@@ -187,8 +187,8 @@ int ithread;
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
-                for (unsigned int ibin = 0 ; ibin < first_index.size() ; ibin++) {
-                    (*Ionize)(particles, first_index[ibin], last_index[ibin], Epart, patch, Proj);
+                for (unsigned int scell = 0 ; scell < first_index.size() ; scell++) {
+                    (*Ionize)(particles, first_index[scell], last_index[scell], Epart, patch, Proj);
                 }
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[4] += MPI_Wtime() - timer;
@@ -201,11 +201,11 @@ int ithread;
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
-                for (unsigned int ibin = 0 ; ibin < first_index.size() ; ibin++) {
+                for (unsigned int scell = 0 ; scell < first_index.size() ; scell++) {
                     // Radiation process
                     (*Radiate)(*particles, this->photon_species, smpi,
                                RadiationTables,
-                               first_index[ibin], last_index[ibin], ithread );
+                               first_index[scell], last_index[scell], ithread );
 
                     // Update scalar variable for diagnostics
                     nrj_radiation += Radiate->getRadiatedEnergy();
@@ -213,8 +213,8 @@ int ithread;
                     // Update the quantum parameter chi
                     Radiate->computeParticlesChi(*particles,
                                                     smpi,
-                                                    first_index[ibin],
-                                                    last_index[ibin],
+                                                    first_index[scell],
+                                                    last_index[scell],
                                                     ithread );
                 }
 #ifdef  __DETAILED_TIMERS
@@ -228,13 +228,13 @@ int ithread;
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
-                for (unsigned int ibin = 0 ; ibin < first_index.size() ; ibin++) {
+                for (unsigned int scell = 0 ; scell < first_index.size() ; scell++) {
 
                     // Pair generation process
                     (*Multiphoton_Breit_Wheeler_process)(*particles,
                                                          smpi,
                                                          MultiphotonBreitWheelerTables,
-                                                         first_index[ibin], last_index[ibin], ithread );
+                                                         first_index[scell], last_index[scell], ithread );
 
                     // Update scalar variable for diagnostics
                     // We reuse nrj_radiation for the pairs
@@ -243,13 +243,13 @@ int ithread;
                     // Update the photon quantum parameter chi of all photons
                     Multiphoton_Breit_Wheeler_process->compute_thread_chiph(*particles,
                                                                               smpi,
-                                                                              first_index[ibin],
-                                                                              last_index[ibin],
+                                                                              first_index[scell],
+                                                                              last_index[scell],
                                                                               ithread );
 
                     // Suppression of the decayed photons into pairs
                     Multiphoton_Breit_Wheeler_process->decayed_photon_cleaning(
-                            *particles,ibin, first_index.size(), &first_index[0], &last_index[0]);
+                            *particles,scell, first_index.size(), &first_index[0], &last_index[0]);
 
                 }
 #ifdef  __DETAILED_TIMERS
@@ -276,12 +276,12 @@ int ithread;
             length[1]=params.n_space[1]+1;
             length[2]=params.n_space[2]+1;
 
-            for (unsigned int ibin = 0 ; ibin < packsize_ ; ibin++) {
+            for (unsigned int scell = 0 ; scell < packsize_ ; scell++) {
                 // Apply wall and boundary conditions
                 if (mass>0)
                     {
                         for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
-                            for (iPart=first_index[ibin] ; (int)iPart<last_index[ibin]; iPart++ ) {
+                            for (iPart=first_index[scell] ; (int)iPart<last_index[scell]; iPart++ ) {
                                 double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
                                 if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
                                     nrj_lost_per_thd[tid] += mass * ener_iPart;
@@ -292,7 +292,7 @@ int ithread;
                         // Boundary Condition may be physical or due to domain decomposition
                         // apply returns 0 if iPart is not in the local domain anymore
 
-                        for (iPart=first_index[ipack*packsize_+ibin] ; (int)iPart<last_index[ipack*packsize_+ibin]; iPart++ ) {
+                        for (iPart=first_index[ipack*packsize_+scell] ; (int)iPart<last_index[ipack*packsize_+scell]; iPart++ ) {
                             if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
                                 addPartInExchList( iPart );
                                 nrj_lost_per_thd[tid] += mass * ener_iPart;
@@ -312,7 +312,7 @@ int ithread;
 
                     } else if (mass==0) {
                     for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
-                        for (iPart=first_index[ibin] ; (int)iPart<last_index[ibin]; iPart++ ) {
+                        for (iPart=first_index[scell] ; (int)iPart<last_index[scell]; iPart++ ) {
                             double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
                             if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
                                 nrj_lost_per_thd[tid] += ener_iPart;
@@ -322,7 +322,7 @@ int ithread;
 
                     // Boundary Condition may be physical or due to domain decomposition
                     // apply returns 0 if iPart is not in the local domain anymore
-                    for (iPart=first_index[ibin] ; (int)iPart<last_index[ibin]; iPart++ ) {
+                    for (iPart=first_index[scell] ; (int)iPart<last_index[scell]; iPart++ ) {
                         if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
                             addPartInExchList( iPart );
                             nrj_lost_per_thd[tid] += ener_iPart;
@@ -377,11 +377,11 @@ int ithread;
         if ( diag_flag &&(!particles->is_test)){
             double* b_rho=nullptr;
 
-            for (unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++) { //Loop for projection on buffer_proj
+            for (unsigned int scell = 0 ; scell < first_index.size() ; scell ++) { //Loop for projection on buffer_proj
 
                 b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
 
-                for (iPart=first_index[ibin] ; (int)iPart<last_index[ibin]; iPart++ ) {
+                for (iPart=first_index[scell] ; (int)iPart<last_index[scell]; iPart++ ) {
                     Proj->densityFrozen(b_rho, (*particles), iPart, 0);
                 } //End loop on particles
             }//End loop on bins
@@ -611,7 +611,7 @@ void SpeciesV::compute_bin_cell_keys(Params &params, int istart, int iend)
 void SpeciesV::importParticles( Params& params, Patch* patch, Particles& source_particles, vector<Diagnostic*>& localDiags )
 {
 
-    unsigned int npart = source_particles.size(), ibin, ii, nbin=first_index.size();
+    unsigned int npart = source_particles.size(), scell, ii, nbin=first_index.size();
 
     // If this species is tracked, set the particle IDs
     if( particles->tracked )
@@ -638,25 +638,25 @@ void SpeciesV::importParticles( Params& params, Patch* patch, Particles& source_
     for( unsigned int i=0; i<npart; i++ ) {
 
         // Compute the receiving bin index
-        ibin = 0;
+        scell = 0;
         for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
             X = source_particles.position(ipos,i)-min_loc_vec[ipos];
             IX = round(X * dx_inv_[ipos] );
-            ibin = ibin * length[ipos] + IX;
+            scell = scell * length[ipos] + IX;
         }
 
         // Copy particle to the correct bin
-        source_particles.cp_particle(i, *particles, last_index[ibin] );
+        source_particles.cp_particle(i, *particles, last_index[scell] );
 
         // Update the bin counts
-        last_index[ibin]++;
-        for (ii=ibin+1; ii<nbin; ii++) {
+        last_index[scell]++;
+        for (ii=scell+1; ii<nbin; ii++) {
             first_index[ii]++;
             last_index[ii]++;
         }
 
-        particles->cell_keys.insert( particles->cell_keys.begin() + first_index[ibin] + count[ibin], ibin);
-        count[ibin] ++ ;
+        particles->cell_keys.insert( particles->cell_keys.begin() + first_index[scell] + count[scell], scell);
+        count[scell] ++ ;
 
     }
 
@@ -908,12 +908,12 @@ void SpeciesV::ponderomotive_update_position_and_currents(double time_dual, unsi
             length[1]=params.n_space[1]+1;
             length[2]=params.n_space[2]+1;
 
-            for (unsigned int ibin = 0 ; ibin < packsize_ ; ibin++) {
+            for (unsigned int scell = 0 ; scell < packsize_ ; scell++) {
                 // Apply wall and boundary conditions
                 if (mass>0)
                     { // condition mass>0
                         for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
-                            for (iPart=first_index[ibin] ; (int)iPart<last_index[ibin]; iPart++ ) {
+                            for (iPart=first_index[scell] ; (int)iPart<last_index[scell]; iPart++ ) {
                                 double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
                                 if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
                                     nrj_lost_per_thd[tid] += mass * ener_iPart;
@@ -924,8 +924,8 @@ void SpeciesV::ponderomotive_update_position_and_currents(double time_dual, unsi
                         // Boundary Condition may be physical or due to domain decomposition
                         // apply returns 0 if iPart is not in the local domain anymore
                         //        if omp, create a list per thread
-                        //for (iPart=first_index[ibin] ; (int)iPart<last_index[ibin]; iPart++ ) {
-                        for (iPart=first_index[ipack*packsize_+ibin] ; (int)iPart<last_index[ipack*packsize_+ibin]; iPart++ ) {
+                        //for (iPart=first_index[scell] ; (int)iPart<last_index[scell]; iPart++ ) {
+                        for (iPart=first_index[ipack*packsize_+scell] ; (int)iPart<last_index[ipack*packsize_+scell]; iPart++ ) {
                             if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
                                 addPartInExchList( iPart );
                                 nrj_lost_per_thd[tid] += mass * ener_iPart;
@@ -974,7 +974,7 @@ void SpeciesV::ponderomotive_update_position_and_currents(double time_dual, unsi
    else { // immobile particle (at the moment only project density)
        if ( diag_flag &&(!particles->is_test)){
            double* b_rho=nullptr;
-           for (unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++) { //Loop for projection on buffer_proj
+           for (unsigned int scell = 0 ; scell < first_index.size() ; scell ++) { //Loop for projection on buffer_proj
 
                if (nDim_field==2)
                    b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
@@ -982,7 +982,7 @@ void SpeciesV::ponderomotive_update_position_and_currents(double time_dual, unsi
                    b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
                else if (nDim_field==1)
                    b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
-               for (iPart=first_index[ibin] ; (int)iPart<last_index[ibin]; iPart++ ) {
+               for (iPart=first_index[scell] ; (int)iPart<last_index[scell]; iPart++ ) {
                    Proj->densityFrozen(b_rho, (*particles), iPart, 0);
                } //End loop on particles
            }//End loop on bins
