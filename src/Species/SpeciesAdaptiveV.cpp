@@ -124,7 +124,7 @@ void SpeciesAdaptiveV::compute_part_cell_keys(Params &params)
         for (unsigned int ipos=0; ipos < nDim_particle ; ipos++) {
             X = particles->position(ipos,ip)-min_loc_vec[ipos];
             IX = round(X * dx_inv_[ipos] );
-            particles->cell_keys[ip] = particles->cell_keys[ip] * this->length[ipos] + IX;
+            particles->cell_keys[ip] = particles->cell_keys[ip] * this->length_[ipos] + IX;
         }
     }
 
