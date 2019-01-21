@@ -278,39 +278,37 @@ int ithread;
 
             for (unsigned int scell = 0 ; scell < packsize_ ; scell++) {
                 // Apply wall and boundary conditions
-                if (mass>0)
-                    {
-                        for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
-                            for (iPart=first_index[scell] ; (int)iPart<last_index[scell]; iPart++ ) {
-                                double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
-                                if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
-                                    nrj_lost_per_thd[tid] += mass * ener_iPart;
-                                }
-                            }
-                        }
-
-                        // Boundary Condition may be physical or due to domain decomposition
-                        // apply returns 0 if iPart is not in the local domain anymore
-
-                        for (iPart=first_index[ipack*packsize_+scell] ; (int)iPart<last_index[ipack*packsize_+scell]; iPart++ ) {
-                            if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
-                                addPartInExchList( iPart );
+                if (mass>0) {
+                    for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
+                        for (iPart=first_index[scell] ; (int)iPart<last_index[scell]; iPart++ ) {
+                            double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
+                            if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
                                 nrj_lost_per_thd[tid] += mass * ener_iPart;
-                                particles->cell_keys[iPart] = -1;
-                            }
-                            else {
-                                //Compute cell_keys of remaining particles
-                                for ( unsigned int i = 0 ; i<nDim_particle; i++ ){
-                                    particles->cell_keys[iPart] *= this->length[i];
-                                    particles->cell_keys[iPart] += round( (particles->position(i,iPart)-min_loc_vec[i]) * dx_inv_[i] );
-                                }
-                                //First reduction of the count sort algorithm. Lost particles are not included.
-                                count[particles->cell_keys[iPart]] ++;
                             }
                         }
+                    }
 
+                    // Boundary Condition may be physical or due to domain decomposition
+                    // apply returns 0 if iPart is not in the local domain anymore
 
-                    } else if (mass==0) {
+                    for (iPart=first_index[ipack*packsize_+scell] ; (int)iPart<last_index[ipack*packsize_+scell]; iPart++ ) {
+                        if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
+                            addPartInExchList( iPart );
+                            nrj_lost_per_thd[tid] += mass * ener_iPart;
+                            particles->cell_keys[iPart] = -1;
+                        }
+                        else {
+                            //Compute cell_keys of remaining particles
+                            for ( unsigned int i = 0 ; i<nDim_particle; i++ ){
+                                particles->cell_keys[iPart] *= this->length[i];
+                                particles->cell_keys[iPart] += round( (particles->position(i,iPart)-min_loc_vec[i]) * dx_inv_[i] );
+                            }
+                            //First reduction of the count sort algorithm. Lost particles are not included.
+                            count[particles->cell_keys[iPart]] ++;
+                        }
+                    }
+
+                } else if (mass==0) {
                     for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
                         for (iPart=first_index[scell] ; (int)iPart<last_index[scell]; iPart++ ) {
                             double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
@@ -338,7 +336,6 @@ int ithread;
                             count[particles->cell_keys[iPart]] ++;
                         }
                     }
-
                 }
             }
             //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
@@ -593,8 +590,6 @@ void SpeciesV::compute_part_cell_keys(Params &params)
 // -----------------------------------------------------------------------------
 void SpeciesV::compute_bin_cell_keys(Params &params, int istart, int iend)
 {
-    //std::cout << istart << " " << iend << '\n';
-
     // Resize of cell_keys seems necessary here
     particles->cell_keys.resize(particles->size());
 
@@ -910,47 +905,41 @@ void SpeciesV::ponderomotive_update_position_and_currents(double time_dual, unsi
 
             for (unsigned int scell = 0 ; scell < packsize_ ; scell++) {
                 // Apply wall and boundary conditions
-                if (mass>0)
-                    { // condition mass>0
-                        for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
-                            for (iPart=first_index[scell] ; (int)iPart<last_index[scell]; iPart++ ) {
-                                double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
-                                if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
-                                    nrj_lost_per_thd[tid] += mass * ener_iPart;
-                                }
-                            }
-                        }
+                if (mass>0) { // condition mass>0
+                   for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
+                       for (iPart=first_index[scell] ; (int)iPart<last_index[scell]; iPart++ ) {
+                           double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
+                           if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
+                               nrj_lost_per_thd[tid] += mass * ener_iPart;
+                           }
+                       }
+                   }
 
-                        // Boundary Condition may be physical or due to domain decomposition
-                        // apply returns 0 if iPart is not in the local domain anymore
-                        //        if omp, create a list per thread
-                        //for (iPart=first_index[scell] ; (int)iPart<last_index[scell]; iPart++ ) {
-                        for (iPart=first_index[ipack*packsize_+scell] ; (int)iPart<last_index[ipack*packsize_+scell]; iPart++ ) {
-                            if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
-                                addPartInExchList( iPart );
-                                nrj_lost_per_thd[tid] += mass * ener_iPart;
-                                particles->cell_keys[iPart] = -1;
-                            }
-                            else {
-                                //First reduction of the count sort algorithm. Lost particles are not included.
-                                for ( int i = 0 ; i<(int)nDim_particle; i++ ){
-                                    particles->cell_keys[iPart] *= length[i];
-                                    particles->cell_keys[iPart] += round( (particles->position(i,iPart)-min_loc_vec[i]) * dx_inv_[i] );
-                                }
-                                count[particles->cell_keys[iPart]] ++; //First reduction of the count sort algorithm. Lost particles are not included.
-                            }
-                        }
-
-
-                    } else if (mass==0) { // condition mass=0
-                    ERROR("Particles with zero mass cannot interact with envelope");
+                   // Boundary Condition may be physical or due to domain decomposition
+                   // apply returns 0 if iPart is not in the local domain anymore
+                   for (iPart=first_index[ipack*packsize_+scell] ; (int)iPart<last_index[ipack*packsize_+scell]; iPart++ ) {
+                       if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
+                           addPartInExchList( iPart );
+                           nrj_lost_per_thd[tid] += mass * ener_iPart;
+                           particles->cell_keys[iPart] = -1;
+                       }
+                       else {
+                           //First reduction of the count sort algorithm. Lost particles are not included.
+                           for ( int i = 0 ; i<(int)nDim_particle; i++ ){
+                               particles->cell_keys[iPart] *= length[i];
+                               particles->cell_keys[iPart] += round( (particles->position(i,iPart)-min_loc_vec[i]) * dx_inv_[i] );
+                           }
+                           count[particles->cell_keys[iPart]] ++; //First reduction of the count sort algorithm. Lost particles are not included.
+                       }
+                   }
+                } else if (mass==0) { // condition mass=0
+                        ERROR("Particles with zero mass cannot interact with envelope");
                 }
             }
             //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[3] += MPI_Wtime() - timer;
 #endif
-
 
             // Project currents if not a Test species and charges as well if a diag is needed.
             // Do not project if a photon
@@ -966,7 +955,6 @@ void SpeciesV::ponderomotive_update_position_and_currents(double time_dual, unsi
 #endif
         }
 
-
        for (unsigned int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
            nrj_bc_lost += nrj_lost_per_thd[tid];
 
@@ -974,7 +962,7 @@ void SpeciesV::ponderomotive_update_position_and_currents(double time_dual, unsi
    else { // immobile particle (at the moment only project density)
        if ( diag_flag &&(!particles->is_test)){
            double* b_rho=nullptr;
-           for (unsigned int scell = 0 ; scell < first_index.size() ; scell ++) { //Loop for projection on buffer_proj
+           for (unsigned int scell = 0 ; scell < first_index.size() ; scell ++) { 
 
                if (nDim_field==2)
                    b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(0) : &(*EMfields->rho_)(0) ;
@@ -985,8 +973,7 @@ void SpeciesV::ponderomotive_update_position_and_currents(double time_dual, unsi
                for (iPart=first_index[scell] ; (int)iPart<last_index[scell]; iPart++ ) {
                    Proj->densityFrozen(b_rho, (*particles), iPart, 0);
                } //End loop on particles
-           }//End loop on bins
-
+           }
        }
    }//END if time vs. time_frozen
 
