@@ -353,3 +353,22 @@ void Interpolator2D2OrderV::oneField(Field* field, Particles &particles, int *is
 {
     ERROR("Single field 2D2O interpolator not available in vectorized mode");
 }
+
+void Interpolator2D2OrderV::fieldsAndEnvelope( ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref )
+{
+    ERROR("Vectorized interpolation for the envelope model is not implemented for 2D geometry");
+} // END Interpolator2D2Order
+
+
+void Interpolator2D2OrderV::timeCenteredEnvelope( ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref )
+{
+    ERROR("Vectorized interpolation for the envelope model is not implemented for 2D geometry");
+} // END Interpolator2D2Order
+
+
+void Interpolator2D2OrderV::envelopeAndSusceptibility(ElectroMagn* EMfields, Particles &particles, int ipart, double* Env_A_abs_Loc, double* Env_Chi_Loc, double* Env_E_abs_Loc)
+{
+    ERROR("Vectorized interpolation for the envelope model is not implemented for 2D geometry");    
+} // END Interpolator2D2Order
+
+
