@@ -172,8 +172,6 @@ int ithread;
 #endif
 
             // Interpolate the fields at the particle position
-            //for (unsigned int scell = 0 ; scell < first_index.size() ; scell++)
-            //    (*Interp)(EMfields, *particles, smpi, &(first_index[scell]), &(last_index[scell]), ithread );
             for (unsigned int scell = 0 ; scell < packsize_ ; scell++)
                 Interp->fieldsWrapper(EMfields, *particles, smpi, &(first_index[ipack*packsize_+scell]),
                                                                  &(last_index[ipack*packsize_+scell]),
@@ -264,26 +262,20 @@ int ithread;
 #endif
 
             // Push the particles and the photons
-            //(*Push)(*particles, smpi, 0, last_index[last_index.size()-1], ithread );
             (*Push)(*particles, smpi, first_index[ipack*packsize_],
                                       last_index[ipack*packsize_+packsize_-1],
                                       ithread, first_index[ipack*packsize_] );
-            //particles->test_move( first_index[ibin], last_index[ibin], params );
 
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[1] += MPI_Wtime() - timer;
             timer = MPI_Wtime();
 #endif
 
-            // Computation of the particle cell keys for all particles
-            // this->compute_bin_cell_keys(params, first_index[ipack*packsize_], last_index[ipack*packsize_+packsize_-1]);
-
             unsigned int length[3];
             length[0]=0;
             length[1]=params.n_space[1]+1;
             length[2]=params.n_space[2]+1;
 
-            //for (unsigned int ibin = 0 ; ibin < first_index.size() ; ibin++) {
             for (unsigned int ibin = 0 ; ibin < packsize_ ; ibin++) {
                 // Apply wall and boundary conditions
                 if (mass>0)
@@ -299,8 +291,6 @@ int ithread;
 
                         // Boundary Condition may be physical or due to domain decomposition
                         // apply returns 0 if iPart is not in the local domain anymore
-                        //        if omp, create a list per thread
-                        //for (iPart=first_index[ibin] ; (int)iPart<last_index[ibin]; iPart++ ) {
 
                         for (iPart=first_index[ipack*packsize_+ibin] ; (int)iPart<last_index[ipack*packsize_+ibin]; iPart++ ) {
                             if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
@@ -332,7 +322,6 @@ int ithread;
 
                     // Boundary Condition may be physical or due to domain decomposition
                     // apply returns 0 if iPart is not in the local domain anymore
-                    //        if omp, create a list per thread
                     for (iPart=first_index[ibin] ; (int)iPart<last_index[ibin]; iPart++ ) {
                         if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
                             addPartInExchList( iPart );
