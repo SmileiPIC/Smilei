@@ -276,10 +276,10 @@ void SpeciesAdaptiveV2::scalar_dynamics( double time_dual, unsigned int ispec,
             Proj->currentsAndDensityWrapper(
                 EMfields, *particles, smpi, first_index[0],
                 last_index.back(),
-                ithread, 0,
-                0, diag_flag,
+                ithread,
+                diag_flag,
                 params.is_spectral,
-                b_dim, ispec
+                ispec
             );
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[2] += MPI_Wtime() - timer;
@@ -647,7 +647,7 @@ void SpeciesAdaptiveV2::scalar_ponderomotive_update_position_and_currents( doubl
         timer = MPI_Wtime();
 #endif
         if( ( !particles->is_test ) && ( mass > 0 ) ) {
-            Proj->currentsAndDensityWrapper( EMfields, *particles, smpi, first_index[0], last_index.back(), ithread, 0, clrw, diag_flag, params.is_spectral, b_dim, ispec );
+            Proj->currentsAndDensityWrapper( EMfields, *particles, smpi, first_index[0], last_index.back(), ithread, diag_flag, params.is_spectral, ispec );
         }
 #ifdef  __DETAILED_TIMERS
         patch->patch_timers[12] += MPI_Wtime() - timer;

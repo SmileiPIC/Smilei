@@ -353,9 +353,9 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                 Proj->currentsAndDensityWrapper(
                     EMfields, *particles, smpi, first_index[ipack*packsize_+scell],
                     last_index[ipack*packsize_+scell],
-                    ithread, ipack*packsize_+scell,
-                    clrw, diag_flag, params.is_spectral,
-                    b_dim, ispec, first_index[ipack*packsize_]
+                    ithread,
+                    diag_flag, params.is_spectral,
+                    ispec, ipack*packsize_+scell, first_index[ipack*packsize_]
                 );
                 
 #ifdef  __DETAILED_TIMERS
@@ -970,7 +970,7 @@ void SpeciesV::ponderomotive_update_position_and_currents( double time_dual, uns
 #endif
             if( ( !particles->is_test ) && ( mass > 0 ) )
                 for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
-                    Proj->currentsAndDensityWrapper( EMfields, *particles, smpi, first_index[ipack*packsize_+scell], last_index[ipack*packsize_+scell], ithread, ipack*packsize_+scell, clrw, diag_flag, params.is_spectral, b_dim, ispec, first_index[ipack*packsize_] );
+                    Proj->currentsAndDensityWrapper( EMfields, *particles, smpi, first_index[ipack*packsize_+scell], last_index[ipack*packsize_+scell], ithread, diag_flag, params.is_spectral, ispec, ipack*packsize_+scell, first_index[ipack*packsize_] );
                 }
                 
 #ifdef  __DETAILED_TIMERS

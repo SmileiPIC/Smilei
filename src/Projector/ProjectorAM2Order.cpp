@@ -1035,7 +1035,7 @@ void ProjectorAM2Order::ionizationCurrents( Field *Jl, Field *Jr, Field *Jt, Par
 
 //------------------------------------//
 //Wrapper for projection
-void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec, int ipart_ref )
+void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell, int ipart_ref )
 {
     //std::cout<<"projecting"<<std::endl;
     if( is_spectral ) {

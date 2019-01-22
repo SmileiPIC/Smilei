@@ -58,7 +58,7 @@ Projector3D2OrderV::~Projector3D2OrderV()
 // ---------------------------------------------------------------------------------------------------------------------
 //!  Project current densities & charge : diagFields timstep (not vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, std::vector<unsigned int> &b_dim, int *iold, double *deltaold, int ipart_ref )
+void Projector3D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, int ipart_ref )
 {
 
     // -------------------------------------
@@ -129,7 +129,7 @@ void Projector3D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
         
     }
     
-    int iloc0 = ipom2*b_dim[1]*b_dim[2]+jpom2*b_dim[2]+kpom2;
+    int iloc0 = ipom2*nprimy*nprimz+jpom2*nprimz+kpom2;
     int iloc = iloc0;
     for( unsigned int i=0 ; i<5 ; i++ ) {
         for( unsigned int j=0 ; j<5 ; j++ ) {
@@ -141,10 +141,10 @@ void Projector3D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
                 for( int ipart=0 ; ipart<8; ipart++ ) {
                     tmpRho +=  bJx[ilocal+ipart];
                 }
-                rho [iloc + ( j )*( b_dim[2] ) + k] +=  tmpRho;
+                rho [iloc + ( j )*( nprimz ) + k] +=  tmpRho;
             }
         }
-        iloc += b_dim[1]*( b_dim[2] );
+        iloc += nprimy*( nprimz );
     }
     
 } // END Project local current densities at diagFields timestep.
@@ -537,11 +537,10 @@ void Projector3D2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields,
         Particles &particles,
         SmileiMPI *smpi,
         int istart, int iend,
-        int ithread, int scell,
-        int clrw, bool diag_flag,
+        int ithread,
+        bool diag_flag,
         bool is_spectral,
-        std::vector<unsigned int> &b_dim,
-        int ispec, int ipart_ref )
+        int ispec, int scell, int ipart_ref )
 {
     if( istart == iend ) {
         return;    //Don't treat empty cells.
@@ -577,7 +576,7 @@ void Projector3D2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields,
         double *b_Jy  = EMfields->Jy_s [ispec] ? &( *EMfields->Jy_s [ispec] )( 0 ) : &( *EMfields->Jy_ )( 0 ) ;
         double *b_Jz  = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )( 0 ) : &( *EMfields->Jz_ )( 0 ) ;
         double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
-        currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho, particles,  istart, iend, invgf, b_dim, iold, &( *delta )[0], ipart_ref );
+        currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho, particles,  istart, iend, invgf, iold, &( *delta )[0], ipart_ref );
     }
 }
 

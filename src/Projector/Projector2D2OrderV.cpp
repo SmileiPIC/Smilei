@@ -48,7 +48,7 @@ Projector2D2OrderV::~Projector2D2OrderV()
 // ---------------------------------------------------------------------------------------------------------------------
 //!  Project current densities & charge : diagFields timstep (not vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int *iold, double *deltaold, int nparts )
+void Projector2D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, int nparts )
 {
 
     // -------------------------------------
@@ -136,11 +136,11 @@ void Projector2D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
     // ---------------------------
     // Calculate the total current
     // ---------------------------
-    ipo -= bin+2; //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
+    ipo -= 2; //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
     jpo -= 2;
     // case i =0
     {
-        iloc = ipo*b_dim[1]+jpo;
+        iloc = ipo*nprimy+jpo;
         tmp2 = 0.5*Sx1[0];
         tmp3 =     Sx1[0];
         Jz[iloc]  += crz_p * ( Sy1[0]*tmp3 );
@@ -149,7 +149,7 @@ void Projector2D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
         tmpY = Sx0[0] + 0.5*DSx[0];
         for( unsigned int j=1 ; j<5 ; j++ ) {
             tmp -= cry_p * DSy[j-1] * tmpY;
-            Jy[iloc+j+ipo]  += tmp; //Because size of Jy in Y is b_dim[1]+1.
+            Jy[iloc+j+ipo]  += tmp; //Because size of Jy in Y is nprimy+1.
             Jz[iloc+j]  += crz_p * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
             rho[iloc+j] += charge_weight * Sx1[0]*Sy1[j];
         }
@@ -158,7 +158,7 @@ void Projector2D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
     
     // case i> 0
     for( unsigned int i=1 ; i<5 ; i++ ) {
-        iloc = ( i+ipo )*b_dim[1]+jpo;
+        iloc = ( i+ipo )*nprimy+jpo;
         tmpJx[0] -= crx_p *  DSx[i-1] * ( 0.5*DSy[0] );
         Jx[iloc]  += tmpJx[0];
         tmp2 = 0.5*Sx1[i] + Sx0[i];
@@ -171,7 +171,7 @@ void Projector2D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
             tmpJx[j] -= crx_p * DSx[i-1] * ( Sy0[j] + 0.5*DSy[j] );
             Jx[iloc+j]  += tmpJx[j];
             tmp -= cry_p * DSy[j-1] * tmpY;
-            Jy[iloc+j+i+ipo]  += tmp; //Because size of Jy in Y is b_dim[1]+1.
+            Jy[iloc+j+i+ipo]  += tmp; //Because size of Jy in Y is nprimy+1.
             Jz[iloc+j]  += crz_p * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
             rho[iloc+j] += charge_weight * Sx1[i]*Sy1[j];
         }
@@ -345,7 +345,7 @@ void Projector2D2OrderV::ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Pa
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project current densities : main projector vectorized
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, std::vector<unsigned int> &b_dim, int *iold, double *deltaold, int ipart_ref )
+void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, int ipart_ref )
 {
     // -------------------------------------
     // Variable declaration & initialization
@@ -477,10 +477,10 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
         
     }
     
-    int iloc0 = ipom2*b_dim[1]+jpom2;
+    int iloc0 = ipom2*nprimy+jpom2;
     int iloc = iloc0;
     for( unsigned int i=1 ; i<5 ; i++ ) {
-        iloc += b_dim[1];
+        iloc += nprimy;
         #pragma omp simd
         for( unsigned int j=0 ; j<5 ; j++ ) {
             double tmpJx( 0. );
@@ -608,7 +608,7 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             }
             Jy[iloc+j] += tmpJy;
         }
-        iloc += ( b_dim[1]+1 );
+        iloc += ( nprimy+1 );
     }
     
     #pragma omp simd
@@ -726,7 +726,7 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
             }
             Jz[iloc+j]  +=  tmpJz;
         }//i
-        iloc += b_dim[1];
+        iloc += nprimy;
     } // ipart
     
 } // END Project vectorized
@@ -735,7 +735,7 @@ void Projector2D2OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
 // ---------------------------------------------------------------------------------------------------------------------
 //! Wrapper for projection
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, int scell, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec, int ipart_ref )
+void Projector2D2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread,  bool diag_flag, bool is_spectral, int ispec, int scell, int ipart_ref )
 {
     if( istart == iend ) {
         return;    //Don't treat empty cells.
@@ -757,24 +757,22 @@ void Projector2D2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Parti
             double *b_Jx =  &( *EMfields->Jx_ )( 0 );
             double *b_Jy =  &( *EMfields->Jy_ )( 0 );
             double *b_Jz =  &( *EMfields->Jz_ )( 0 );
-            currents( b_Jx, b_Jy, b_Jz, particles,  istart, iend, invgf, b_dim, iold, &( *delta )[0], ipart_ref );
+            currents( b_Jx, b_Jy, b_Jz, particles,  istart, iend, invgf, iold, &( *delta )[0], ipart_ref );
         } else {
             ERROR( "TO DO with rho" );
         }
         
         // Otherwise, the projection may apply to the species-specific arrays
     } else {
-        int ibin = 0; // Trick to make it compatible for the moment.
-        int dim1 = EMfields->dimPrim[1];
-        double *b_Jx  = EMfields->Jx_s [ispec] ? &( *EMfields->Jx_s [ispec] )( ibin*clrw* dim1 ) : &( *EMfields->Jx_ )( ibin*clrw* dim1 ) ;
-        double *b_Jy  = EMfields->Jy_s [ispec] ? &( *EMfields->Jy_s [ispec] )( ibin*clrw*( dim1+1 ) ) : &( *EMfields->Jy_ )( ibin*clrw*( dim1+1 ) ) ;
-        double *b_Jz  = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )( ibin*clrw* dim1 ) : &( *EMfields->Jz_ )( ibin*clrw* dim1 ) ;
-        double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( ibin*clrw* dim1 ) : &( *EMfields->rho_ )( ibin*clrw* dim1 ) ;
+        double *b_Jx  = EMfields->Jx_s [ispec] ? &( *EMfields->Jx_s [ispec] )(0) : &( *EMfields->Jx_  )(0) ;
+        double *b_Jy  = EMfields->Jy_s [ispec] ? &( *EMfields->Jy_s [ispec] )(0) : &( *EMfields->Jy_  )(0) ;
+        double *b_Jz  = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )(0) : &( *EMfields->Jz_  )(0) ;
+        double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )(0) : &( *EMfields->rho_ )(0) ;
         for( int ipart=istart ; ipart<iend; ipart++ ) {
             //Do not use cells sorting for now : f(ipart) for now, f(istart) laterfor now,
             //(*iold)[ipart       ] = round( particles.position(0, ipart)* dx_inv_ - dt*particles.momentum(0, ipart)*(*invgf)[ipart] * dx_inv_ ) - i_domain_begin ;
             //(*iold)[ipart+nparts] = round( particles.position(1, ipart)* dy_inv_ - dt*particles.momentum(1, ipart)*(*invgf)[ipart] * dy_inv_ ) - j_domain_begin ;
-            currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho, particles,  ipart, ( *invgf )[ipart-ipart_ref], ibin*clrw, b_dim, iold, &( *delta )[ipart-ipart_ref], invgf->size() );
+            currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho, particles,  ipart, ( *invgf )[ipart-ipart_ref], iold, &( *delta )[ipart-ipart_ref], invgf->size() );
         }
     }
 }

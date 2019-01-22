@@ -55,8 +55,7 @@ Projector3D4OrderV::~Projector3D4OrderV()
 // ---------------------------------------------------------------------------------------------------------------------
 //!  Project current densities & charge : diagFields timstep (not vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-//void Projector3D4OrderV::currentsAndDensity(double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int ipart, double invgf, unsigned int bin, std::vector<unsigned int> &b_dim, int* iold, double* deltaold)
-void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, std::vector<unsigned int> &b_dim, int *iold, double *deltaold, int ipart_ref )
+void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, int ipart_ref )
 {
     // -------------------------------------
     // Variable declaration & initialization
@@ -269,12 +268,12 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
     } // END ivect
     
     
-    int iloc0 = ipom2*b_dim[1]*b_dim[2]+jpom2*b_dim[2]+kpom2;
+    int iloc0 = ipom2*nprimy*nprimz+jpom2*nprimz+kpom2;
     
     
     int iloc  = iloc0;
     for( unsigned int i=1 ; i<7 ; i++ ) {
-        iloc += b_dim[1]*b_dim[2];
+        iloc += nprimy*nprimz;
         for( unsigned int j=0 ; j<7 ; j++ ) {
             #pragma omp simd
             for( unsigned int k=0 ; k<7 ; k++ ) {
@@ -284,7 +283,7 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
                 for( int ipart=0 ; ipart<8; ipart++ ) {
                     tmpJx += bJx [ilocal+ipart];
                 }
-                Jx[iloc+j*b_dim[2]+k]         += tmpJx;
+                Jx[iloc+j*nprimz+k]         += tmpJx;
             }
         }
     }
@@ -468,7 +467,7 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
     }
     
     
-    iloc = iloc0+ipom2*b_dim[2];
+    iloc = iloc0+ipom2*nprimz;
     for( unsigned int i=0 ; i<7 ; i++ ) {
         for( unsigned int j=1 ; j<7 ; j++ ) {
             #pragma omp simd
@@ -479,10 +478,10 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
                 for( int ipart=0 ; ipart<8; ipart++ ) {
                     tmpJy += bJx [ilocal+ipart];
                 }
-                Jy[iloc+j*b_dim[2]+k] += tmpJy;
+                Jy[iloc+j*nprimz+k] += tmpJy;
             }
         }
-        iloc += ( b_dim[1]+1 )*b_dim[2];
+        iloc += ( nprimy+1 )*nprimz;
     }
     
     cell_nparts = ( int )iend-( int )istart;
@@ -662,7 +661,7 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
         
     }
     
-    iloc = iloc0  + jpom2 +ipom2*b_dim[1];
+    iloc = iloc0  + jpom2 +ipom2*nprimy;
     for( unsigned int i=0 ; i<7 ; i++ ) {
         for( unsigned int j=0 ; j<7 ; j++ ) {
             #pragma omp simd
@@ -673,10 +672,10 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
                 for( int ipart=0 ; ipart<8; ipart++ ) {
                     tmpJz +=  bJx[ilocal+ipart];
                 }
-                Jz [iloc + ( j )*( b_dim[2]+1 ) + k] +=  tmpJz;
+                Jz [iloc + ( j )*( nprimz+1 ) + k] +=  tmpJz;
             }
         }
-        iloc += b_dim[1]*( b_dim[2]+1 );
+        iloc += nprimy*( nprimz+1 );
     }
     
     
@@ -771,7 +770,7 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
             for( unsigned int i=0 ; i<7 ; i++ ) {
-                iloc += b_dim[1]*b_dim[2];
+                iloc += nprimy*nprimz;
                 for( unsigned int j=0 ; j<7 ; j++ ) {
                     int index( ( i*49 + j*7 )*vecSize+ipart );
                     for( unsigned int k=0 ; k<7 ; k++ ) {
@@ -784,7 +783,7 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
         } // END ipart (compute coeffs)
         
     }
-    //int iloc0 = ipom2*b_dim[1]*b_dim[2]+jpom2*b_dim[2]+kpom2;
+    //int iloc0 = ipom2*nprimy*nprimz+jpom2*nprimz+kpom2;
     
     iloc = iloc0;
     for( unsigned int i=0 ; i<7 ; i++ ) {
@@ -797,10 +796,10 @@ void Projector3D4OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
                 for( int ipart=0 ; ipart<8; ipart++ ) {
                     tmpRho +=  bJx[ilocal+ipart];
                 }
-                rho [iloc + ( j )*( b_dim[2] ) + k] +=  tmpRho;
+                rho [iloc + ( j )*( nprimz ) + k] +=  tmpRho;
             }
         }
-        iloc += b_dim[1]*( b_dim[2] );
+        iloc += nprimy*( nprimz );
     }
     
 } // END Project local current densities at dag timestep.
@@ -1560,7 +1559,7 @@ void Projector3D4OrderV::currents( double *Jx, double *Jy, double *Jz, Particles
 // ---------------------------------------------------------------------------------------------------------------------
 //! Wrapper for projection
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D4OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, int scell, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec, int ipart_ref )
+void Projector3D4OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int scell, int ipart_ref )
 {
     if( istart == iend ) {
         return;    //Don't treat empty cells.
@@ -1597,7 +1596,7 @@ void Projector3D4OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Parti
         double *b_Jy  = EMfields->Jy_s [ispec] ? &( *EMfields->Jy_s [ispec] )( 0 ) : &( *EMfields->Jy_ )( 0 ) ;
         double *b_Jz  = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )( 0 ) : &( *EMfields->Jz_ )( 0 ) ;
         double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
-        currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho, particles,  istart, iend, invgf, b_dim, iold, &( *delta )[0], ipart_ref );
+        currentsAndDensity( b_Jx, b_Jy, b_Jz, b_rho, particles,  istart, iend, invgf, iold, &( *delta )[0], ipart_ref );
     }
 }
 

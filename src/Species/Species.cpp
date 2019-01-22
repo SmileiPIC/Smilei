@@ -768,7 +768,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
             // Project currents if not a Test species and charges as well if a diag is needed.
             // Do not project if a photon
             if( ( !particles->is_test ) && ( mass > 0 ) ) {
-                Proj->currentsAndDensityWrapper( EMfields, *particles, smpi, first_index[ibin], last_index[ibin], ithread, ibin, clrw, diag_flag, params.is_spectral, b_dim, ispec );
+                Proj->currentsAndDensityWrapper( EMfields, *particles, smpi, first_index[ibin], last_index[ibin], ithread, diag_flag, params.is_spectral, ispec );
             }
             
 #ifdef  __DETAILED_TIMERS
@@ -1994,7 +1994,7 @@ void Species::ponderomotive_update_position_and_currents( double time_dual, unsi
             timer = MPI_Wtime();
 #endif
             if( ( !particles->is_test ) && ( mass > 0 ) ) {
-                Proj->currentsAndDensityWrapper( EMfields, *particles, smpi, first_index[ibin], last_index[ibin], ithread, ibin, clrw, diag_flag, params.is_spectral, b_dim, ispec );
+                Proj->currentsAndDensityWrapper( EMfields, *particles, smpi, first_index[ibin], last_index[ibin], ithread, diag_flag, params.is_spectral, ispec );
             }
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[12] += MPI_Wtime() - timer;
