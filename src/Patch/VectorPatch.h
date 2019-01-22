@@ -90,13 +90,13 @@ public :
 
     // Interfaces between main programs & main PIC operators
     // -----------------------------------------------------
-    
+
     //! Reconfigure all patches for the new time step
     void configuration(Params& params, Timers &timers, int itime);
-    
+
     //! Reconfigure all patches for the new time step
     void reconfiguration(Params& params, Timers &timers, int itime);
-    
+
     void sort_all_particles(Params& params);
 
     //! For all patch, move particles (restartRhoJ(s), dynamics and exchangeParticles)
@@ -109,8 +109,6 @@ public :
                   Timers &timers, int itime);
 
     void finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWindow* simWindow,
-                  RadiationTables & RadiationTables,
-                  MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
                   double time_dual,
                   Timers &timers, int itime);
     void finalize_sync_and_bc_fields(Params& params, SmileiMPI* smpi, SimWindow* simWindow,
@@ -123,7 +121,7 @@ public :
                   SimWindow* simWindow,
                   double time_dual,
                   Timers &timers, int itime);
- 
+
     // compute rho only given by relativistic species which require initialization of the relativistic fields
     void computeChargeRelativisticSpecies(double time_primal);
 
@@ -151,7 +149,7 @@ public :
 
     //! For all patch, update envelope field A (envelope equation, boundary contitions, exchange A)
     void solveEnvelope(Params& params, SimWindow* simWindow, int itime, double time_dual, Timers & timers, SmileiMPI* smpi );
-    
+
     //! For all patch, Compute and Write all diags (Scalars, Probes, Phases, TrackParticles, Fields, Average fields)
     void runAllDiags(Params& params, SmileiMPI* smpi, unsigned int itime, Timers & timers, SimWindow* simWindow);
     void initAllDiags(Params& params, SmileiMPI* smpi);
@@ -178,7 +176,7 @@ public :
 
     //! For all patches, allocate a field if not allocated
     void allocateField(unsigned int ifield, Params &params);
-    
+
     //! For each patch, apply external fields
     void applyExternalFields();
 
@@ -326,7 +324,7 @@ public :
     inline ElectroMagn* emfields(int ipatch) {
         return (*this)(ipatch)->EMfields;
     }
-    
+
     inline Projector* proj(int ipatch, int ispec){
         return (*this)(ipatch)->vecSpecies[ispec]->Proj;
     }

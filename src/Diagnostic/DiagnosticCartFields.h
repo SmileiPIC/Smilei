@@ -74,7 +74,7 @@ protected :
     
     //! Temporary dataset that is used for folding the 2D hilbert curve
     hid_t tmp_dset_id;
-    
+
     //! Variable to store the status of a dataset (whether it exists or not)
     htri_t status;
     

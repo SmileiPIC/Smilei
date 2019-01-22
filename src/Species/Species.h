@@ -169,11 +169,11 @@ public:
     //! Name of the species where radiated photons go
     std::string radiation_photon_species;
     //! Number of photons emitted per particle and per event
-    int radiation_photon_sampling;
+    int radiation_photon_sampling_;
     //! Threshold on the photon Lorentz factor under which the macro-photon
     //! is not generated but directly added to the energy scalar diags
     //! This enable to limit emission of useless low-energy photons
-    double radiation_photon_gamma_threshold;
+    double radiation_photon_gamma_threshold_;
 
     //! Pointer to the species where electron-positron pairs
     //! from the multiphoton Breit-Wheeler go
@@ -223,12 +223,14 @@ public:
     //! sub primal dimensions of fields
     unsigned int f_dim0, f_dim1, f_dim2;
 
-    //! Accumulate nrj lost with bc
+    //! Accumulate energy lost with bc
     double nrj_bc_lost;
-    //! Accumulate nrj lost with moving window
+    //! Accumulate energy lost with moving window
     double nrj_mw_lost;
-    //! Accumulate nrj added with new particles
+    //! Accumulate energy added with new particles
     double nrj_new_particles;
+    //! Accumulate energy lost by the particle with the radiation
+    double nrj_radiation;
 
     //! whether to choose vectorized operators with respective sorting methods
     int vectorized_operators;
@@ -349,8 +351,6 @@ public:
     virtual void dynamics_import_particles(double time, unsigned int ispec,
                         Params &params,
                         Patch* patch, SmileiMPI* smpi,
-                        RadiationTables &RadiationTables,
-                        MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
                         std::vector<Diagnostic*>& localDiags);
 
     //! Method calculating the Particle charge on the grid (projection)
@@ -495,11 +495,8 @@ public:
 
 protected:
 
-    //! Accumulate nrj lost by the particle with the radiation
-    double nrj_radiation;
-
     //! Patch length
-    unsigned int length[3];
+    unsigned int length_[3];
 
 private:
     //! Number of steps for Maxwell-Juettner cumulative function integration

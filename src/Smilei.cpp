@@ -132,11 +132,11 @@ int main (int argc, char* argv[])
         // smpi.patch_count recomputed in readPatchDistribution
         checkpoint.readPatchDistribution( &smpi, simWindow );
 	// allocate patches according to smpi.patch_count
-        vecPatches = PatchesFactory::createVector(params, &smpi, openPMD, checkpoint.this_run_start_step+1, simWindow->getNmoved());
+        PatchesFactory::createVector(vecPatches, params, &smpi, openPMD, checkpoint.this_run_start_step+1, simWindow->getNmoved());
 	// vecPatches data read in restartAll according to smpi.patch_count
         checkpoint.restartAll( vecPatches, &smpi, simWindow, params, openPMD);
         vecPatches.sort_all_particles(params);
-        
+
         // Patch reconfiguration for the adaptive vectorization
         if( params.has_adaptive_vectorization) {
             vecPatches.configuration(params,timers, 0);
@@ -151,7 +151,7 @@ int main (int argc, char* argv[])
         // Init and compute tables for radiation effects
         // (nonlinear inverse Compton scattering)
         // ---------------------------------------------------------------------
-        RadiationTables.initParams(params);
+        RadiationTables.initializeParameters(params);
         RadiationTables.compute_tables(params,&smpi);
         RadiationTables.output_tables(&smpi);
 
@@ -167,7 +167,7 @@ int main (int argc, char* argv[])
 
     } else {
 
-        vecPatches = PatchesFactory::createVector(params, &smpi, openPMD, 0);
+        PatchesFactory::createVector(vecPatches, params, &smpi, openPMD, 0);
         vecPatches.sort_all_particles(params);
 	//MESSAGE ("create vector");
         // Initialize the electromagnetic fields
@@ -200,7 +200,7 @@ int main (int argc, char* argv[])
         // Init and compute tables for radiation effects
         // (nonlinear inverse Compton scattering)
         // ---------------------------------------------------------------------
-        RadiationTables.initParams(params);
+        RadiationTables.initializeParameters(params);
         RadiationTables.compute_tables(params,&smpi);
         RadiationTables.output_tables(&smpi);
 
@@ -390,8 +390,7 @@ int main (int argc, char* argv[])
             }
             #endif
 
-            vecPatches.finalize_and_sort_parts(params, &smpi, simWindow, RadiationTables,
-                                               MultiphotonBreitWheelerTables,
+            vecPatches.finalize_and_sort_parts(params, &smpi, simWindow,
                                                time_dual, timers, itime);
 
             vecPatches.finalize_sync_and_bc_fields(params, &smpi, simWindow, time_dual, timers, itime);
@@ -489,7 +488,7 @@ int execute_test_mode( VectorPatch &vecPatches, SmileiMPI* smpi, SimWindow* simW
         moving_window_movement = simWindow->getNmoved();
     }
 
-    vecPatches = PatchesFactory::createVector(params, smpi, openPMD, itime, moving_window_movement );
+    PatchesFactory::createVector(vecPatches, params, smpi, openPMD, itime, moving_window_movement );
 
     if (params.restart)
         checkpoint.restartAll( vecPatches, smpi, simWindow, params, openPMD);

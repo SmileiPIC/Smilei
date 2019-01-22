@@ -25,9 +25,10 @@ Projector2D2OrderV::Projector2D2OrderV (Params& params, Patch* patch) : Projecto
     i_domain_begin = patch->getCellStartingGlobalIndex(0);
     j_domain_begin = patch->getCellStartingGlobalIndex(1);
 
-    nprimy = params.n_space[1] + 1;
+    nscelly = params.n_space[1] + 1;
     oversize[0] = params.oversize[0];
     oversize[1] = params.oversize[1];
+    nprimy = nscelly + 2*oversize[1];
     dq_inv[0] = dx_inv_;
     dq_inv[1] = dy_inv_;
 
@@ -468,7 +469,7 @@ void Projector2D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
             }
 
             for (unsigned int j=1; j<5 ; j++) {
-                double tmp( crx_p * (Sy0_buff_vect[j*vecSize+ipart] + 0.5*DSy[j*vecSize+ipart]) );
+                tmp =  crx_p * (Sy0_buff_vect[j*vecSize+ipart] + 0.5*DSy[j*vecSize+ipart]);
                 for (unsigned int i=1 ; i<5 ; i++) {
                     bJx [(i*5+j)*vecSize+ipart] += sum[i] * tmp;
                 }
@@ -586,7 +587,7 @@ void Projector2D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
             }
 
             for (unsigned int i=1; i<5 ; i++) {
-                double tmp( cry_p * (Sx0_buff_vect[i*vecSize+ipart] + 0.5*DSx[i*vecSize+ipart]) );
+                tmp = cry_p * (Sx0_buff_vect[i*vecSize+ipart] + 0.5*DSx[i*vecSize+ipart]);
                 for (unsigned int j=1 ; j<5 ; j++) {
                     bJx [(i*5+j)*vecSize+ipart] += sum[j] * tmp;
                 }
@@ -743,8 +744,8 @@ void Projector2D2OrderV::currentsAndDensityWrapper(ElectroMagn* EMfields, Partic
     std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
     //}
     int iold[2];
-    iold[0] = scell/nprimy+oversize[0];
-    iold[1] = (scell%nprimy)+oversize[1];
+    iold[0] = scell/nscelly+oversize[0];
+    iold[1] = (scell%nscelly)+oversize[1];
    
     
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
@@ -776,7 +777,7 @@ void Projector2D2OrderV::currentsAndDensityWrapper(ElectroMagn* EMfields, Partic
 }
 
 // Project susceptibility
-void Projector2D2OrderV::susceptibility(ElectroMagn* EMfields, Particles &particles, double species_mass, SmileiMPI* smpi, int istart, int iend,  int ithread, int ibin, std::vector<unsigned int> &b_dim, int ipart_ref)
+void Projector2D2OrderV::susceptibility(ElectroMagn* EMfields, Particles &particles, double species_mass, SmileiMPI* smpi, int istart, int iend,  int ithread, int ibin, int ipart_ref)
 {
     ERROR("Vectorized projection of the susceptibility for the envelope model is not implemented for 2D geometry");
 }

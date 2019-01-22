@@ -254,9 +254,9 @@ public:
 
                     // Number of photons emitted per Monte-Carlo event
                     if (PyTools::extract("radiation_photon_sampling",
-                                     thisSpecies->radiation_photon_sampling, "Species",ispec))
+                                     thisSpecies->radiation_photon_sampling_, "Species",ispec))
                     {
-                        if (thisSpecies->radiation_photon_sampling < 1)
+                        if (thisSpecies->radiation_photon_sampling_ < 1)
                         {
                             ERROR("For species '" << species_name
                             << "' radiation_photon_sampling should be > 1");
@@ -264,19 +264,19 @@ public:
                     }
                     else
                     {
-                        thisSpecies->radiation_photon_sampling = 1;
+                        thisSpecies->radiation_photon_sampling_ = 1;
                     }
                     MESSAGE(2,"> Number of macro-photons emitted per MC event: "
-                            << thisSpecies->radiation_photon_sampling);
+                            << thisSpecies->radiation_photon_sampling_);
 
                     // Photon energy threshold
                     if (!PyTools::extract("radiation_photon_gamma_threshold",
-                                     thisSpecies->radiation_photon_gamma_threshold, "Species",ispec))
+                                     thisSpecies->radiation_photon_gamma_threshold_, "Species",ispec))
                     {
-                        thisSpecies->radiation_photon_gamma_threshold = 2.;
+                        thisSpecies->radiation_photon_gamma_threshold_ = 2.;
                     }
                     MESSAGE(2,"> Photon energy threshold for macro-photon emission: "
-                            << thisSpecies->radiation_photon_gamma_threshold);
+                            << thisSpecies->radiation_photon_gamma_threshold_);
                 }
                 else
                 {
@@ -585,7 +585,7 @@ public:
 
         // Density
         bool ok1, ok2;
-        PyObject *profile1, *profile2, *profile3;
+        PyObject *profile1(nullptr), *profile2(nullptr), *profile3(nullptr);
 
 
         if (thisSpecies->position_initialization_array == NULL){
@@ -714,8 +714,8 @@ public:
         newSpecies->pusher                                   = species->pusher;
         newSpecies->radiation_model                          = species->radiation_model;
         newSpecies->radiation_photon_species                 = species->radiation_photon_species;
-        newSpecies->radiation_photon_sampling                = species->radiation_photon_sampling;
-        newSpecies->radiation_photon_gamma_threshold         = species->radiation_photon_gamma_threshold;
+        newSpecies->radiation_photon_sampling_                = species->radiation_photon_sampling_;
+        newSpecies->radiation_photon_gamma_threshold_         = species->radiation_photon_gamma_threshold_;
         newSpecies->photon_species                           = species->photon_species;
         newSpecies->speciesNumber                            = species->speciesNumber;
         newSpecies->position_initialization_on_species       = species->position_initialization_on_species;
@@ -902,12 +902,12 @@ public:
                         }
                         retSpecies[ispec1]->photon_species_index = ispec2;
                         retSpecies[ispec1]->photon_species = retSpecies[ispec2];
-                        retSpecies[ispec1]->Radiate->new_photons.tracked = retSpecies[ispec1]->photon_species->particles->tracked;
-                        retSpecies[ispec1]->Radiate->new_photons.isQuantumParameter = retSpecies[ispec1]->photon_species->particles->isQuantumParameter;
-                        retSpecies[ispec1]->Radiate->new_photons.isMonteCarlo = retSpecies[ispec1]->photon_species->particles->isMonteCarlo;
-                        retSpecies[ispec1]->Radiate->new_photons.initialize(0,
+                        retSpecies[ispec1]->Radiate->new_photons_.tracked = retSpecies[ispec1]->photon_species->particles->tracked;
+                        retSpecies[ispec1]->Radiate->new_photons_.isQuantumParameter = retSpecies[ispec1]->photon_species->particles->isQuantumParameter;
+                        retSpecies[ispec1]->Radiate->new_photons_.isMonteCarlo = retSpecies[ispec1]->photon_species->particles->isMonteCarlo;
+                        retSpecies[ispec1]->Radiate->new_photons_.initialize(0,
                                                                             params.nDim_particle );
-                        //retSpecies[ispec1]->Radiate->new_photons.initialize(retSpecies[ispec1]->getNbrOfParticles(),
+                        //retSpecies[ispec1]->Radiate->new_photons_.initialize(retSpecies[ispec1]->getNbrOfParticles(),
                         //                                                    params.nDim_particle );
                         retSpecies[ispec2]->particles->reserve(retSpecies[ispec1]->getNbrOfParticles(),
                                                                retSpecies[ispec2]->particles->dimension() );
@@ -1004,12 +1004,12 @@ public:
                 if (vecSpecies[i]->photon_species)
                 {
                     retSpecies[i]->photon_species = retSpecies[retSpecies[i]->photon_species_index];
-                    retSpecies[i]->Radiate->new_photons.tracked = retSpecies[i]->photon_species->particles->tracked;
-                    retSpecies[i]->Radiate->new_photons.isQuantumParameter = retSpecies[i]->photon_species->particles->isQuantumParameter;
-                    retSpecies[i]->Radiate->new_photons.isMonteCarlo = retSpecies[i]->photon_species->particles->isMonteCarlo;
-                    //retSpecies[i]->Radiate->new_photons.initialize(retSpecies[i]->getNbrOfParticles(),
+                    retSpecies[i]->Radiate->new_photons_.tracked = retSpecies[i]->photon_species->particles->tracked;
+                    retSpecies[i]->Radiate->new_photons_.isQuantumParameter = retSpecies[i]->photon_species->particles->isQuantumParameter;
+                    retSpecies[i]->Radiate->new_photons_.isMonteCarlo = retSpecies[i]->photon_species->particles->isMonteCarlo;
+                    //retSpecies[i]->Radiate->new_photons_.initialize(retSpecies[i]->getNbrOfParticles(),
                     //                                               params.nDim_particle );
-                    retSpecies[i]->Radiate->new_photons.initialize(0,params.nDim_particle );
+                    retSpecies[i]->Radiate->new_photons_.initialize(0,params.nDim_particle );
                 }
                 else
                 {

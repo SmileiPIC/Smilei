@@ -62,7 +62,7 @@ protected :
     double time_average_inv;
     
     //! Subgrid requested
-    std::vector<unsigned int> subgrid_start, subgrid_stop, subgrid_step;
+    std::vector<unsigned int> subgrid_start_, subgrid_stop_, subgrid_step_;
     
     //! Property list for collective dataset write, set for // IO.
     hid_t write_plist;
@@ -95,6 +95,9 @@ protected :
     unsigned int one_patch_buffer_size;
     hid_t filespace_reread, filespace_firstwrite, memspace_reread, memspace_firstwrite;
     std::vector<double> data_reread, data_rewrite;
+    
+    //! Dataset creation property list
+    hid_t dcreate, dcreate_firstwrite;
     
     //! True if this diagnostic requires the pre-calculation of the particle J & Rho
     bool hasRhoJs;

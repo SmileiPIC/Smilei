@@ -237,7 +237,7 @@ double Function_Polynomial3D::valueAt(vector<double> x_cell) {
             do { j--; xx[j] = xx[j] * xx0;      } while( j>0 );
             current_n_coeffs += currentOrder+1;
         }
-        for( unsigned int j=0; j<current_n_coeffs; j++ ) r += coeffs[i][j] * xx[j];
+        for( j=0; j<current_n_coeffs; j++ ) r += coeffs[i][j] * xx[j];
     }
     return r;
 }

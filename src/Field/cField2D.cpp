@@ -30,7 +30,7 @@ cField2D::cField2D(vector<unsigned int> dims) : cField(dims)
 }
 
 // with the dimensions and output (dump) file name as input argument
-cField2D::cField2D(vector<unsigned int> dims, string name) : cField(dims, name)
+cField2D::cField2D(vector<unsigned int> dims, string name_in) : cField(dims, name_in)
 {
     cdata_=NULL;
     allocateDims(dims);
@@ -44,14 +44,14 @@ cField2D::cField2D(vector<unsigned int> dims, unsigned int mainDim, bool isPrima
 }
 
 // with the dimensions and output (dump) file name as input argument
-cField2D::cField2D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, string name) : cField(dims, mainDim, isPrimal, name)
+cField2D::cField2D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, string name_in) : cField(dims, mainDim, isPrimal, name_in)
 {
     cdata_=NULL;
     allocateDims(dims, mainDim, isPrimal);
 }
 
 // without allocating
-cField2D::cField2D(string name, vector<unsigned int> dims) : cField(dims, name)
+cField2D::cField2D(string name_in, vector<unsigned int> dims) : cField(dims, name_in)
 {
     cdata_=NULL;
     dims_=dims;

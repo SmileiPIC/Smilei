@@ -37,8 +37,8 @@ RadiationTables::RadiationTables()
     integfochi_computed = false;
     xip_computed = false;
 
-    chipa_radiation_threshold = 1e-3;
-    chipa_disc_min_threshold = 1e-2;
+    minimum_chi_continuous_ = 1e-3;
+    minimum_chi_discontinuous_ = 1e-2;
 }
 
 // -----------------------------------------------------------------------------
@@ -55,7 +55,7 @@ RadiationTables::~RadiationTables()
 //
 //! \param params Object Params for the parameters from the input script
 // -----------------------------------------------------------------------------
-void RadiationTables::initParams(Params& params)
+void RadiationTables::initializeParameters(Params& params)
 {
 
     if (params.hasMCRadiation ||
@@ -116,8 +116,8 @@ void RadiationTables::initParams(Params& params)
             PyTools::extract("xip_chiph_dim", xip_chiph_dim, "RadiationReaction");
 
             // Discontinuous minimum threshold
-            PyTools::extract("chipa_disc_min_threshold",
-                             chipa_disc_min_threshold,"RadiationReaction");
+            PyTools::extract("minimum_chi_discontinuous",
+                             minimum_chi_discontinuous_,"RadiationReaction");
 
             // Additional regularly used parameters
             xip_log10_chipa_min = log10(xip_chipa_min);
@@ -134,9 +134,9 @@ void RadiationTables::initParams(Params& params)
             // Path to the databases
             PyTools::extract("table_path", table_path, "RadiationReaction");
 
-            // Radiation threshold on the quantum parameter chipa
-            PyTools::extract("chipa_radiation_threshold",
-                          chipa_radiation_threshold,"RadiationReaction");
+            // Radiation threshold on the quantum parameter particle_chi
+            PyTools::extract("minimum_chi_continuous",
+                          minimum_chi_continuous_,"RadiationReaction");
 
         }
     }
@@ -148,16 +148,16 @@ void RadiationTables::initParams(Params& params)
     {
 
         // Computation of the normalized Compton wavelength
-        norm_lambda_compton = params.red_planck_cst*params.reference_angular_frequency_SI
+        normalized_Compton_wavelength_ = params.red_planck_cst*params.reference_angular_frequency_SI
                             / (params.electron_mass*params.c_vacuum*params.c_vacuum);
 
         // Computation of the factor factor_dNphdt
-        factor_dNphdt = sqrt(3.)*params.fine_struct_cst/(2.*M_PI*norm_lambda_compton);
+        factor_dNphdt = sqrt(3.)*params.fine_struct_cst/(2.*M_PI*normalized_Compton_wavelength_);
 
         // Computation of the factor for the classical radiated power
-        factor_cla_rad_power = 2.*params.fine_struct_cst/(3.*norm_lambda_compton);
+        factor_classical_radiated_power_ = 2.*params.fine_struct_cst/(3.*normalized_Compton_wavelength_);
 
-        MESSAGE( "        Factor classical radiated power: " << factor_cla_rad_power)
+        MESSAGE( "        Factor classical radiated power: " << factor_classical_radiated_power_)
 
     }
 
@@ -167,11 +167,13 @@ void RadiationTables::initParams(Params& params)
         params.hasLLRadiation ||
         params.hasNielRadiation)
     {
-        MESSAGE( "        Threshold on the quantum parameter for radiation: " << std::setprecision(5) << chipa_radiation_threshold);
+        MESSAGE( "        Minimum quantum parameter for continuous radiation: "
+                << std::setprecision(5) << minimum_chi_continuous_);
     }
     if (params.hasMCRadiation)
     {
-        MESSAGE( "        Threshold on the quantum parameter for discontinuous radiation: " << std::setprecision(5) << chipa_disc_min_threshold);
+        MESSAGE( "        Minimum quantum parameter for discontinuous radiation: "
+                << std::setprecision(5) << minimum_chi_discontinuous_);
     }
     if (params.hasMCRadiation ||
         params.hasNielRadiation)
@@ -255,7 +257,7 @@ void RadiationTables::compute_h_table(SmileiMPI *smpi)
     {
 
         // Temporary particle chi value
-        double chipa;
+        double particle_chi;
         // For percentages
         double pct = 0.;
         double dpct = 10.;
@@ -268,9 +270,9 @@ void RadiationTables::compute_h_table(SmileiMPI *smpi)
         //int err;  // error MPI
 
         // checks
-        if (chipa_radiation_threshold < h_chipa_min)
+        if (minimum_chi_continuous_ < h_chipa_min)
         {
-            ERROR("Parameter `chipa_radiation_threshold` is below `h_chipa_min`,"
+            ERROR("Parameter `minimum_chi_continuous_` is below `h_chipa_min`,"
             << "the lower bound of the h table should be equal or below"
             << "the radiation threshold on chi.")
         }
@@ -324,12 +326,12 @@ void RadiationTables::compute_h_table(SmileiMPI *smpi)
         // Loop over the table values
         for(int i = 0 ; i < length_table[rank] ; i++)
         {
-            chipa = pow(10.,(imin_table[rank] + i)*h_chipa_delta
+            particle_chi = pow(10.,(imin_table[rank] + i)*h_chipa_delta
                   + h_log10_chipa_min);
 
             // 100 iterations is in theory sufficient to get the convergence
             // at 1e-15
-            buffer[i] = RadiationTables::compute_h_Niel(chipa,400,1e-15);
+            buffer[i] = RadiationTables::computeHNiel(particle_chi,400,1e-15);
 
             if (100.*i >= length_table[rank]*pct)
             {
@@ -378,7 +380,7 @@ void RadiationTables::compute_integfochi_table(SmileiMPI *smpi)
     // Get the MPI rank
     rank = smpi->getRank();
 
-    MESSAGE("        --- Integration F/chipa table:");
+    MESSAGE("        --- Integration F/particle_chi table:");
 
     // Initial timer
     t0 = MPI_Wtime();
@@ -391,7 +393,7 @@ void RadiationTables::compute_integfochi_table(SmileiMPI *smpi)
     {
 
         // Temporary particle chi value
-        double chipa;
+        double particle_chi;
         // For percentages
         double pct = 0.;
         double dpct = 10.;
@@ -447,11 +449,11 @@ void RadiationTables::compute_integfochi_table(SmileiMPI *smpi)
         // Loop over the table values
         for(int i = 0 ; i < length_table[rank] ; i++)
         {
-            chipa = pow(10.,(imin_table[rank] + i)*integfochi_chipa_delta
+            particle_chi = pow(10.,(imin_table[rank] + i)*integfochi_chipa_delta
                   + integfochi_log10_chipa_min);
 
-            buffer[i] = RadiationTables::compute_integfochi(chipa,
-                    0.98e-40*chipa,0.98*chipa,400,1e-15);
+            buffer[i] = RadiationTables::integrateSynchrotronEmissivity(particle_chi,
+                    0.98e-40*particle_chi,0.98*particle_chi,400,1e-15);
 
             //std::cout << rank << " " << buffer[i] << std::endl;
 
@@ -486,7 +488,7 @@ void RadiationTables::compute_integfochi_table(SmileiMPI *smpi)
 //! Computation of the minimum photon quantum parameter chiphmin
 //! for the xip array and computation of the xip array.
 //
-//! \details Under the minimum chiph value, photon energy is
+//! \details Under the minimum photon_chi value, photon energy is
 //! considered negligible.
 //
 //! \param smpi Object of class SmileiMPI containing MPI properties
@@ -515,9 +517,9 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
     if (!table_exists)
     {
         // Parameters:
-        double chipa; // Temporary particle chi value
-        double chiph; // Temporary photon chi value
-        double chiph_delta; // Temporary delta for chiph
+        double particle_chi; // Temporary particle chi value
+        double photon_chi; // Temporary photon chi value
+        double chiph_delta; // Temporary delta for photon_chi
         double logchiphmin; // Temporary log10 of photon chi value
         double xip;   // Temporary xip
         double numerator;
@@ -587,19 +589,19 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
             xip = 1;
             logchiphmin = (imin_table[rank] + ichipa)*xip_chipa_delta
                   + xip_log10_chipa_min;
-            chipa = pow(10.,logchiphmin);
+            particle_chi = pow(10.,logchiphmin);
 
             // Denominator of xip
-            denominator = RadiationTables::compute_integfochi(chipa,
-                    0.99e-40*chipa,0.99*chipa,200,1e-13);
+            denominator = RadiationTables::integrateSynchrotronEmissivity(particle_chi,
+                    0.99e-40*particle_chi,0.99*particle_chi,200,1e-13);
 
             k = 0;
             while(k < xip_power)
             {
                 logchiphmin -= pow(0.1,k);
-                chiph = pow(10.,logchiphmin);
-                numerator = RadiationTables::compute_integfochi(chipa,
-                    0.99e-40*chiph,0.99*chiph,200,1e-13);
+                photon_chi = pow(10.,logchiphmin);
+                numerator = RadiationTables::integrateSynchrotronEmissivity(particle_chi,
+                    0.99e-40*photon_chi,0.99*photon_chi,200,1e-13);
 
                 if (numerator == 0)
                 {
@@ -638,34 +640,34 @@ void RadiationTables::compute_xip_table(SmileiMPI *smpi)
         // Allocation of the local buffer
         buffer = new double [length_table[rank]*xip_chiph_dim];
 
-        // Loop for xip in the chipa dimension
+        // Loop for xip in the particle_chi dimension
         pct = 0;
         dpct = std::max(10.,100./(length_table[rank]*xip_chiph_dim));
         for(int ichipa = 0 ; ichipa < length_table[rank] ; ichipa++)
         {
 
-            chipa = (imin_table[rank] + ichipa)*xip_chipa_delta
+            particle_chi = (imin_table[rank] + ichipa)*xip_chipa_delta
                                       + xip_log10_chipa_min;
 
-            chiph_delta = (chipa - xip_chiphmin_table[imin_table[rank] + ichipa])
+            chiph_delta = (particle_chi - xip_chiphmin_table[imin_table[rank] + ichipa])
                         / (xip_chiph_dim - 1);
 
-            chipa = pow(10.,chipa);
+            particle_chi = pow(10.,particle_chi);
 
             // Denominator of xip
-            denominator = RadiationTables::compute_integfochi(chipa,
-                    1e-40*chipa,chipa,300,1e-15);
+            denominator = RadiationTables::integrateSynchrotronEmissivity(particle_chi,
+                    1e-40*particle_chi,particle_chi,300,1e-15);
 
-            // Loop in the chiph dimension
+            // Loop in the photon_chi dimension
             for (int ichiph = 0 ; ichiph < xip_chiph_dim ; ichiph ++)
             {
-                // Local chiph value
-               chiph = pow(10.,ichiph*chiph_delta +
+                // Local photon_chi value
+               photon_chi = pow(10.,ichiph*chiph_delta +
                    xip_chiphmin_table[imin_table[rank] + ichipa]);
 
                // Numerator of xip
-               numerator = RadiationTables::compute_integfochi(chipa,
-                       0.99e-40*chiph,0.99*chiph,300,1e-15);
+               numerator = RadiationTables::integrateSynchrotronEmissivity(particle_chi,
+                       0.99e-40*photon_chi,0.99*photon_chi,300,1e-15);
 
                // Update local buffer value
                buffer[ichipa*xip_chiph_dim + ichiph] = std::min(1.,numerator / denominator);
@@ -774,7 +776,7 @@ void RadiationTables::output_h_table()
 
             file << "Stochastic synchrotron-like radiation model of Niel \n";
 
-            file << "Dimension chipa - chipa min - chipa max \n";
+            file << "Dimension particle_chi - particle_chi min - particle_chi max \n";
 
             file << h_dim;
             file << " "
@@ -893,7 +895,7 @@ void RadiationTables::output_integfochi_table()
 
             file << "Table Integration F(CHI)/CHI for Nonlinear Compton Scattering \n";
 
-            file << "Dimension chipa - chipa min - chipa max \n";
+            file << "Dimension particle_chi - particle_chi min - particle_chi max \n";
 
             file << integfochi_dim ;
             file << " "
@@ -1017,7 +1019,7 @@ void RadiationTables::output_xip_table()
 
             file << "Table xip_chiphmin and xip for Nonlinear Compton Scattering \n";
 
-            file << "Dimension chipa - Dimension chiph - chipa min - chipa max \n";
+            file << "Dimension particle_chi - Dimension photon_chi - particle_chi min - particle_chi max \n";
 
             file << xip_chipa_dim << " "
                  << xip_chiph_dim << " "
@@ -1181,16 +1183,16 @@ void RadiationTables::output_tables(SmileiMPI *smpi)
 // -----------------------------------------------------------------------------
 
 // -----------------------------------------------------------------------------
-//! Computation of the photon quantum parameter chiph for emission
+//! Computation of the photon quantum parameter photon_chi for emission
 //! ramdomly and using the tables xip and chiphmin
 //
-//! \param chipa particle quantum parameter
+//! \param particle_chi particle quantum parameter
 // -----------------------------------------------------------------------------
-double RadiationTables::compute_chiph_emission(double chipa)
+double RadiationTables::computeRandomPhotonChi(double particle_chi)
 {
-    // Log10 of chipa
+    // Log10 of particle_chi
     double logchipa;
-    double chiph;
+    double photon_chi;
     double chiph_xip_delta;
     // Random xip
     double xip;
@@ -1202,12 +1204,12 @@ double RadiationTables::compute_chiph_emission(double chipa)
     double d;
     int ixip;
 
-    logchipa = log10(chipa);
+    logchipa = log10(particle_chi);
 
     // ---------------------------------------
-    // index of chipa in xip_table
+    // index of particle_chi in xip_table
     // ---------------------------------------
-    // Use floor so that chipa corresponding to ichipa is <= given chipa
+    // Use floor so that particle_chi corresponding to ichipa is <= given particle_chi
     ichipa = int(floor((logchipa-xip_log10_chipa_min)*(xip_chipa_inv_delta)));
 
     // Checking that ichipa is in the range of the tables
@@ -1222,21 +1224,21 @@ double RadiationTables::compute_chiph_emission(double chipa)
     }
 
     // ---------------------------------------
-    // Search of the index ichiph for chiph
+    // Search of the index ichiph for photon_chi
     // ---------------------------------------
 
     // First, we compute a random xip in [0,1[
     xip = Rand::uniform();
 
     // If the randomly computed xip if below the first one of the row,
-    // we take the first one which corresponds to the minimal photon chiph
+    // we take the first one which corresponds to the minimal photon photon_chi
     if (xip <= xip_table[ichipa*xip_chiph_dim])
     {
         ichiph = 0;
         xip = xip_table[ichipa*xip_chiph_dim];
     }
     // Above the last xip of the row, the last one corresponds
-    // to the maximal photon chiph
+    // to the maximal photon photon_chi
     else if (xip > xip_table[(ichipa+1)*xip_chiph_dim-2])
     {
         ichiph = xip_chiph_dim-2;
@@ -1250,21 +1252,21 @@ double RadiationTables::compute_chiph_emission(double chipa)
             &xip_table[ichipa*xip_chiph_dim],xip,xip_chiph_dim);
     }
 
-    // Corresponding chipa for ichipa
+    // Corresponding particle_chi for ichipa
     logchipa = ichipa*xip_chipa_delta+xip_log10_chipa_min;
 
-    // Delta for the corresponding chipa
+    // Delta for the corresponding particle_chi
     chiph_xip_delta = (logchipa - xip_chiphmin_table[ichipa])
                     *xip_inv_chiph_dim_minus_one;
 
     // --------------------------------------------------------------------
-    // Compute chiph
+    // Compute photon_chi
     // This method is slow but more accurate than taking the nearest point
     // --------------------------------------------------------------------
 
     ixip = ichipa*xip_chiph_dim + ichiph;
 
-    // Computation of the final chiph by interpolation
+    // Computation of the final photon_chi by interpolation
     if (xip_table[ixip+1] - xip_table[ixip] > 1e-15)
     {
         log10_chiphm = ichiph*chiph_xip_delta
@@ -1274,39 +1276,39 @@ double RadiationTables::compute_chiph_emission(double chipa)
         d = (xip - xip_table[ixip]) / (xip_table[ixip+1] - xip_table[ixip]);
 
         // Chiph after linear interpolation in the logarithmic scale
-        chiph = pow(10.,log10_chiphm*(1.0-d) + log10_chiphp*(d));
+        photon_chi = pow(10.,log10_chiphm*(1.0-d) + log10_chiphp*(d));
     }
     else
     // For integration reasons, we can have xip_table[ixip+1] = xip_table[ixip]
     // In this case, no interpolation
     {
-        chiph = pow(10.,ichiph*chiph_xip_delta
+        photon_chi = pow(10.,ichiph*chiph_xip_delta
                + xip_chiphmin_table[ichipa]);
     }
 
     // ------------------------------------------------------------
-    // Compute chiph
+    // Compute photon_chi
     // Fastest method using the nearest point but less accurate
     // ------------------------------------------------------------
 
-    /*chiph = pow(10.,ichiph*chiph_xip_delta
+    /*photon_chi = pow(10.,ichiph*chiph_xip_delta
            + xip_chiphmin_table[ichipa]);*/
 
 
-    return chiph;
+    return photon_chi;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Computation of the Cross Section dNph/dt which is also
 //! the number of photons generated per time unit.
 //
-//! \param chipa particle quantum parameter
-//! \param gfpa particle gamma factor
+//! \param particle_chi particle quantum parameter
+//! \param particle_gamma particle gamma factor
 // ---------------------------------------------------------------------------------------------------------------------
-double RadiationTables::compute_dNphdt(double chipa,double gfpa)
+double RadiationTables::computePhotonProductionYield(double particle_chi,double particle_gamma)
 {
 
-    // Log of the particle quantum parameter chipa
+    // Log of the particle quantum parameter particle_chi
     double logchipa;
     double logchipam;
     double logchipap;
@@ -1315,7 +1317,7 @@ double RadiationTables::compute_dNphdt(double chipa,double gfpa)
     // final value
     double dNphdt;
 
-    logchipa = log10(chipa);
+    logchipa = log10(particle_chi);
 
     // Lower index for interpolation in the table integfochi
     ichipa = int(floor((logchipa-integfochi_log10_chipa_min)
@@ -1343,36 +1345,36 @@ double RadiationTables::compute_dNphdt(double chipa,double gfpa)
                 integfochi_table[ichipa]*fabs(logchipap - logchipa))*integfochi_chipa_inv_delta;
     }
 
-    return factor_dNphdt*dNphdt*chipa/gfpa;
+    return factor_dNphdt*dNphdt*particle_chi/particle_gamma;
 
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! \brief
 //! Compute integration of F/chi between
-//! using Gauss-Legendre for a given chipa value
+//! using Gauss-Legendre for a given particle_chi value
 //
 //
-//! \param chipa particle (electron for instance) quantum parameter
-//! \param chipmin Minimal integration value (photon quantum parameter)
-//! \param chipmax Maximal integration value (photon quantum parameter)
-//! \param nbit number of points for integration
+//! \param particle_chi particle (electron for instance) quantum parameter
+//! \param min_photon_chi Minimal integration value (photon quantum parameter)
+//! \param max_photon_chi Maximal integration value (photon quantum parameter)
+//! \param nb_iterations number of points for integration
 //! \param eps integration accuracy
 // ---------------------------------------------------------------------------------------------------------------------
-double RadiationTables::compute_integfochi(double chipa,
-        double chipmin,
-        double chipmax,
-        int nbit,
+double RadiationTables::integrateSynchrotronEmissivity(double particle_chi,
+        double min_photon_chi,
+        double max_photon_chi,
+        int nb_iterations,
         double eps)
 {
 
-    //std::cout << "RadiationTables::compute_integfochi" << std::endl;
+    //std::cout << "RadiationTables::integrateSynchrotronEmissivity" << std::endl;
 
     // Arrays for Gauss-Legendre integration
-    double * gauleg_x = new double[nbit];
-    double * gauleg_w = new double[nbit];
+    double * gauleg_x = new double[nb_iterations];
+    double * gauleg_w = new double[nb_iterations];
     // Photon quantum parameter
-    double chiph;
+    double photon_chi;
     // Integration result
     double integ;
     // Synchrotron emissivity
@@ -1381,16 +1383,16 @@ double RadiationTables::compute_integfochi(double chipa,
     int i;
 
     // gauss Legendre coefficients
-    userFunctions::gauss_legendre_coef(log10(chipmin),log10(chipmax),
-            gauleg_x, gauleg_w, nbit, eps);
+    userFunctions::gauss_legendre_coef(log10(min_photon_chi),log10(max_photon_chi),
+            gauleg_x, gauleg_w, nb_iterations, eps);
 
     // Integration loop
     integ = 0;
-    #pragma omp parallel for reduction(+:integ) private(chiph,sync_emi) shared(chipa,gauleg_w,gauleg_x)
-    for(i=0 ; i< nbit ; i++)
+    #pragma omp parallel for reduction(+:integ) private(photon_chi,sync_emi) shared(particle_chi,gauleg_w,gauleg_x)
+    for(i=0 ; i< nb_iterations ; i++)
     {
-        chiph = pow(10.,gauleg_x[i]);
-        sync_emi = RadiationTables::compute_sync_emissivity_ritus(chipa,chiph,200,1e-15);
+        photon_chi = pow(10.,gauleg_x[i]);
+        sync_emi = RadiationTables::computeRitusSynchrotronEmissivity(particle_chi,photon_chi,200,1e-15);
         integ += gauleg_w[i]*sync_emi*log(10);
     }
 
@@ -1401,23 +1403,23 @@ double RadiationTables::compute_integfochi(double chipa,
 // ---------------------------------------------------------------------------------------------------------------------
 //! Computation of the synchrotron emissivity following the formulae of Ritus
 //
-//! \param chipa particle quantum parameter
-//! \param chiph photon quantum parameter
-//! \param nbit number of iterations for the Gauss-Legendre integration
+//! \param particle_chi particle quantum parameter
+//! \param photon_chi photon quantum parameter
+//! \param nb_iterations number of iterations for the Gauss-Legendre integration
 //! \param eps epsilon for the modified bessel function
 // ---------------------------------------------------------------------------------------------------------------------
-double RadiationTables::compute_sync_emissivity_ritus(double chipa,
-        double chiph, int nbit, double eps)
+double RadiationTables::computeRitusSynchrotronEmissivity(double particle_chi,
+        double photon_chi, int nb_iterations, double eps)
 {
 
-    //std::cout << "RadiationTables::compute_sync_emissivity_ritus" << std::endl;
+    //std::cout << "RadiationTables::computeRitusSynchrotronEmissivity" << std::endl;
 
     // The photon quantum parameter should be below the electron one
-    if (chipa > chiph)
+    if (particle_chi > photon_chi)
     {
         // Arrays for Gauss-Legendre integration
-        double * gauleg_x = new double[nbit];
-        double * gauleg_w = new double[nbit];
+        double * gauleg_x = new double[nb_iterations];
+        double * gauleg_w = new double[nb_iterations];
         // Values for Bessel results
         double I,dI;
         double K,dK;
@@ -1426,22 +1428,22 @@ double RadiationTables::compute_sync_emissivity_ritus(double chipa,
         // Iterator
         int i;
 
-        double y = chiph/(3.*chipa*(chipa-chiph));
+        double y = photon_chi/(3.*particle_chi*(particle_chi-photon_chi));
 
         // Computation of Part. 1
         // Call the modified Bessel function to get K
         userFunctions::modified_bessel_IK(2./3.,2*y,I,dI,K,dK,50000,eps,false);
 
-        part1 = (2. + 3.*chiph*y)*(K);
+        part1 = (2. + 3.*photon_chi*y)*(K);
 
         // Computation of Part. 2
         // Using Gauss Legendre integration
 
         userFunctions::gauss_legendre_coef(log10(2*y),log10(y)+50., gauleg_x,
-                gauleg_w, nbit, eps);
+                gauleg_w, nb_iterations, eps);
 
         part2 = 0;
-        for(i=0 ; i< nbit ; i++)
+        for(i=0 ; i< nb_iterations ; i++)
         {
             y = pow(10.,gauleg_x[i]);
             userFunctions::modified_bessel_IK(1./3.,y,I,dI,K,dK,50000,eps,false);
@@ -1449,39 +1451,39 @@ double RadiationTables::compute_sync_emissivity_ritus(double chipa,
         }
 
         // Factor for final result
-        y = 2*chiph/(3*pow(chipa,2.));
+        y = 2*photon_chi/(3*pow(particle_chi,2.));
 
         return (part1 - part2)*y;
 
 
     }
-    else if (chipa == chiph)
+    else if (particle_chi == photon_chi)
     {
         return 0;
     }
     else
     {
-        ERROR("In compute_sync_emissivity_ritus: chipa " << chipa
-                                                         << " < chiph "
-                                                         << chiph);
+        ERROR("In computeRitusSynchrotronEmissivity: particle_chi " << particle_chi
+                                                         << " < photon_chi "
+                                                         << photon_chi);
         return -1.;
     }
 }
 
 // -----------------------------------------------------------------------------
-//! Return the value of the function h(chipa) of Niel et al.
+//! Return the value of the function h(particle_chi) of Niel et al.
 //! Use an integration of Gauss-Legendre
 //
-//! \param chipa particle quantum parameter
-//! \param nbit number of iterations for the Gauss-Legendre integration
+//! \param particle_chi particle quantum parameter
+//! \param nb_iterations number of iterations for the Gauss-Legendre integration
 //! \param eps epsilon for the modified bessel function
 // -----------------------------------------------------------------------------
-double RadiationTables::compute_h_Niel(double chipa,
-        int nbit, double eps)
+double RadiationTables::computeHNiel(double particle_chi,
+        int nb_iterations, double eps)
 {
     // Arrays for Gauss-Legendre integration
-    double * gauleg_x = new double[nbit];
-    double * gauleg_w = new double[nbit];
+    double * gauleg_x = new double[nb_iterations];
+    double * gauleg_w = new double[nb_iterations];
     double nu;
     double I, dI;
     double K23, K53, dK;
@@ -1491,9 +1493,9 @@ double RadiationTables::compute_h_Niel(double chipa,
     // Gauss-Legendre coefs between log10(1E-20)
     // and log10(50.) = 1.6989700043360187
     userFunctions::gauss_legendre_coef(-20.,log10(50.), gauleg_x,
-            gauleg_w, nbit, eps);
+            gauleg_w, nb_iterations, eps);
 
-    for(i=0 ; i< nbit ; i++)
+    for(i=0 ; i< nb_iterations ; i++)
     {
 
         nu = pow(10.,gauleg_x[i]);
@@ -1503,8 +1505,8 @@ double RadiationTables::compute_h_Niel(double chipa,
         userFunctions::modified_bessel_IK(2./3.,nu,I,dI,K23,dK,50000,eps,false);
 
         h += gauleg_w[i]*log(10.)*nu
-          *  (( 2.*pow(chipa*nu,3) / pow(2. + 3.*nu*chipa,3)*K53 )
-          +  ( 54.*pow(chipa,5)*pow(nu,4) / pow(2. + 3.*nu*chipa,5)*K23 ));
+          *  (( 2.*pow(particle_chi*nu,3) / pow(2. + 3.*nu*particle_chi,3)*K53 )
+          +  ( 54.*pow(particle_chi,5)*pow(nu,4) / pow(2. + 3.*nu*particle_chi,5)*K23 ));
 
     }
 
@@ -1513,17 +1515,17 @@ double RadiationTables::compute_h_Niel(double chipa,
 }
 
 // -----------------------------------------------------------------------------
-//! Return the value of the function h(chipa) of Niel et al.
+//! Return the value of the function h(particle_chi) of Niel et al.
 //! from the computed table h_table
-//! \param chipa particle quantum parameter
+//! \param particle_chi particle quantum parameter
 // -----------------------------------------------------------------------------
-double RadiationTables::get_h_Niel_from_table(double chipa)
+double RadiationTables::getHNielFromTable(double particle_chi)
 {
     int ichipa;
     double d;
 
     // Position in the h_table
-    d = (log10(chipa)-h_log10_chipa_min)*h_chipa_inv_delta;
+    d = (log10(particle_chi)-h_log10_chipa_min)*h_chipa_inv_delta;
     ichipa = int(floor(d));
 
     // distance for interpolation
@@ -1537,16 +1539,16 @@ double RadiationTables::get_h_Niel_from_table(double chipa)
 //! Return the stochastic diffusive component of the pusher
 //! of Niel et al.
 //! \param gamma particle Lorentz factor
-//! \param chipa particle quantum parameter
+//! \param particle_chi particle quantum parameter
 // -----------------------------------------------------------------------------
-double RadiationTables::get_Niel_stochastic_term(double gamma,
-                                                 double chipa,
+double RadiationTables::getNielStochasticTerm(double gamma,
+                                                 double particle_chi,
                                                  double sqrtdt)
 {
-    // Get the value of h for the corresponding chipa
+    // Get the value of h for the corresponding particle_chi
     double h,r;
 
-    h = RadiationTables::get_h_Niel_from_table(chipa);
+    h = RadiationTables::getHNielFromTable(particle_chi);
 
     // Pick a random number in the normal distribution of standard
     // deviation sqrt(dt) (variance dt)
@@ -1557,7 +1559,7 @@ double RadiationTables::get_Niel_stochastic_term(double gamma,
     std::normal_distribution<double> normal_distribution(0., sqrt(dt));
     r = normal_distribution(gen);*/
 
-    return sqrt(factor_cla_rad_power*gamma*h)*r;
+    return sqrt(factor_classical_radiated_power_*gamma*h)*r;
 }
 
 // -----------------------------------------------------------------------------
@@ -1669,9 +1671,9 @@ bool RadiationTables::read_h_table(SmileiMPI *smpi)
     {
 
         // checks
-        if (chipa_radiation_threshold < h_chipa_min)
+        if (minimum_chi_continuous_ < h_chipa_min)
         {
-            ERROR("Parameter `chipa_radiation_threshold` is below `h_chipa_min`,"
+            ERROR("Parameter `minimum_chi_continuous_` is below `h_chipa_min`,"
             << "the lower bound of the h table should be equal or below"
             << "the radiation threshold on chi.")
         }
@@ -2205,7 +2207,7 @@ void RadiationTables::bcast_xip_table(SmileiMPI *smpi)
     // Inverse of delta
     xip_chipa_inv_delta = 1./xip_chipa_delta;
 
-    // Inverse chiph discetization (regularly used)
+    // Inverse photon_chi discetization (regularly used)
     xip_inv_chiph_dim_minus_one = 1./(xip_chiph_dim - 1.);
 
 }

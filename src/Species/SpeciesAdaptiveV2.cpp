@@ -151,7 +151,7 @@ void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
                 nrj_radiation += Radiate->getRadiatedEnergy();
 
                 // Update the quantum parameter chi
-                Radiate->compute_thread_chipa(*particles,
+                Radiate->computeParticlesChi(*particles,
                                                 smpi,
                                                 first_index[scell],
                                                 last_index[scell],
@@ -229,7 +229,7 @@ void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
                     else {
                         //Compute cell_keys of remaining particles
                         for ( unsigned int i = 0 ; i<nDim_particle; i++ ){
-                            particles->cell_keys[iPart] *= this->length[i];
+                            particles->cell_keys[iPart] *= this->length_[i];
                             particles->cell_keys[iPart] += round( (particles->position(i,iPart)-min_loc_vec[i]) * dx_inv_[i] );
                         }
                         //First reduction of the count sort algorithm. Lost particles are not included.
@@ -259,7 +259,7 @@ void SpeciesAdaptiveV2::scalar_dynamics(double time_dual, unsigned int ispec,
                     else {
                         //Compute cell_keys of remaining particles
                         for ( unsigned int i = 0 ; i<nDim_particle; i++ ){
-                            particles->cell_keys[iPart] *= this->length[i];
+                            particles->cell_keys[iPart] *= this->length_[i];
                             particles->cell_keys[iPart] += round( (particles->position(i,iPart)-min_loc_vec[i]) * dx_inv_[i] );
                         }
                         //First reduction of the count sort algorithm. Lost particles are not included.
@@ -541,7 +541,7 @@ void SpeciesAdaptiveV2::scalar_ponderomotive_update_susceptibility_and_momentum(
 #ifdef  __DETAILED_TIMERS
         timer = MPI_Wtime();
 #endif
-        Proj->susceptibility(EMfields, *particles, mass, smpi, first_index[0], last_index.back(), ithread, 0, b_dim );
+        Proj->susceptibility(EMfields, *particles, mass, smpi, first_index[0], last_index.back(), ithread, 0);
 #ifdef  __DETAILED_TIMERS
         patch->patch_timers[8] += MPI_Wtime() - timer;
 #endif
@@ -645,7 +645,7 @@ void SpeciesAdaptiveV2::scalar_ponderomotive_update_position_and_currents(double
                     else {
                         //Compute cell_keys of remaining particles
                         for ( unsigned int i = 0 ; i<nDim_particle; i++ ){
-                            particles->cell_keys[iPart] *= this->length[i];
+                            particles->cell_keys[iPart] *= this->length_[i];
                             particles->cell_keys[iPart] += round( (particles->position(i,iPart)-min_loc_vec[i]) * dx_inv_[i] );
                         }
                         //First reduction of the count sort algorithm. Lost particles are not included.

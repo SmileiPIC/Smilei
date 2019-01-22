@@ -46,8 +46,7 @@ public:
     }
 
     // Create a vector of patches
-    static VectorPatch createVector(Params& params, SmileiMPI* smpi, OpenPMDparams& openPMD, unsigned int itime, unsigned int n_moved=0) {
-        VectorPatch vecPatches( params );
+    static void createVector(VectorPatch& vecPatches, Params& params, SmileiMPI* smpi, OpenPMDparams& openPMD, unsigned int itime, unsigned int n_moved=0) {
 
         vecPatches.diag_flag = (params.restart? false : true);
         vecPatches.lastIterationPatchesMoved = itime;
@@ -124,7 +123,6 @@ public:
             vecPatches.initExternals( params );
 
         MESSAGE(1,"Done initializing diagnostics, antennas, and external fields");
-        return vecPatches;
     }
 
 };

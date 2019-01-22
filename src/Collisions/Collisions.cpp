@@ -30,14 +30,14 @@ Collisions::Collisions(
     int nDim,
     string filename
 ) :
-n_collisions    (n_collisions    ),
-species_group1  (species_group1  ),
-species_group2  (species_group2  ),
-coulomb_log     (coulomb_log     ),
-intra_collisions(intra_collisions),
-debug_every     (debug_every     ),
+n_collisions_    (n_collisions    ),
+species_group1_  (species_group1  ),
+species_group2_  (species_group2  ),
+coulomb_log_     (coulomb_log     ),
+intra_collisions_(intra_collisions),
+debug_every_     (debug_every     ),
 atomic_number   (Z               ),
-filename(filename)
+filename_(filename)
 {
     // Create the ionization object
     if( ionizing ) {
@@ -45,8 +45,8 @@ filename(filename)
     } else {
         Ionization = new CollisionalNoIonization();
     }
-    coeff1 = 4.046650232e-21*params.reference_angular_frequency_SI; // h*omega/(2*me*c^2)
-    coeff2 = 2.817940327e-15*params.reference_angular_frequency_SI/299792458.; // re omega / c
+    coeff1_ = 4.046650232e-21*params.reference_angular_frequency_SI; // h*omega/(2*me*c^2)
+    coeff2_ = 2.817940327e-15*params.reference_angular_frequency_SI/299792458.; // re omega / c
 }
 
 
@@ -54,16 +54,16 @@ filename(filename)
 Collisions::Collisions( Collisions* coll, int nDim )
 {
 
-    n_collisions     = coll->n_collisions    ;
-    species_group1   = coll->species_group1  ;
-    species_group2   = coll->species_group2  ;
-    coulomb_log      = coll->coulomb_log     ;
-    intra_collisions = coll->intra_collisions;
-    debug_every      = coll->debug_every     ;
+    n_collisions_     = coll->n_collisions_    ;
+    species_group1_   = coll->species_group1_  ;
+    species_group2_   = coll->species_group2_  ;
+    coulomb_log_      = coll->coulomb_log_     ;
+    intra_collisions_ = coll->intra_collisions_;
+    debug_every_      = coll->debug_every_     ;
     atomic_number    = coll->atomic_number   ;
-    filename         = coll->filename        ;
-    coeff1           = coll->coeff1          ;
-    coeff2           = coll->coeff2          ;
+    filename_         = coll->filename_        ;
+    coeff1_           = coll->coeff1_        ;
+    coeff2_           = coll->coeff2_        ;
 
     if( atomic_number>0 ) {
         Ionization = new CollisionalIonization(coll->Ionization);
@@ -170,16 +170,16 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
     double m12, coeff3, coeff4, logL, s, ncol, debye2=0.;
     bool not_duplicated_particle;
 
-    sg1 = &species_group1;
-    sg2 = &species_group2;
+    sg1 = &species_group1_;
+    sg2 = &species_group2_;
 
 
-    bool debug = (debug_every > 0 && itime % debug_every == 0); // debug only every N timesteps
+    bool debug = (debug_every_ > 0 && itime % debug_every_ == 0); // debug only every N timesteps
 
     if( debug ) {
         ncol = 0.;
-        smean       = 0.;
-        logLmean    = 0.;
+        smean_       = 0.;
+        logLmean_    = 0.;
         //temperature = 0.;
     }
 
@@ -228,7 +228,7 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
             unsigned int p = patch->xorshift32() % i;
             swap(index1[i-1], index1[p]);
         }
-        if (intra_collisions) { // In the case of collisions within one species
+        if (intra_collisions_) { // In the case of collisions within one species
             npairs = (int) ceil(((double)npart1)/2.); // half as many pairs as macro-particles
             index2.resize(npairs);
             for (unsigned int i=0; i<npairs; i++) index2[i] = index1[(i+npairs)%npart1]; // index2 is second half
@@ -271,7 +271,7 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
             // Same for ionization
             Ionization->prepare2(p1, i1, p2, i2, not_duplicated_particle);
         }
-        if( intra_collisions ) { n1 += n2; n2 = n1; }
+        if( intra_collisions_ ) { n1 += n2; n2 = n1; }
 
         // Pre-calculate some numbers before the big loop
         double inv_cell_volume = 1./patch->getCellVolume(p1, i1);
@@ -281,8 +281,8 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
         n123 = pow(n1,2./3.);
         n223 = pow(n2,2./3.);
         coeff3 = params.timestep * n1*n2/n12;
-        coeff4 = pow( 3.*coeff2 , -1./3. ) * coeff3;
-        coeff3 *= coeff2;
+        coeff4 = pow( 3.*coeff2_ , -1./3. ) * coeff3;
+        coeff3 *= coeff2_;
 
         // Prepare the ionization
         Ionization->prepare3(params.timestep, inv_cell_volume);
@@ -305,19 +305,19 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
 
             m12  = s1->mass / s2->mass; // mass ratio
 
-            logL = coulomb_log;
+            logL = coulomb_log_;
             double U1  = patch->xorshift32() * patch->xorshift32_invmax;
             double U2  = patch->xorshift32() * patch->xorshift32_invmax;
             double phi = patch->xorshift32() * patch->xorshift32_invmax * twoPi;
-            s = one_collision(p1, i1, s1->mass, p2, i2, m12, coeff1, coeff2, coeff3, coeff4, n123, n223, debye2, logL, U1, U2, phi);
+            s = one_collision(p1, i1, s1->mass, p2, i2, m12, coeff1_, coeff2_, coeff3, coeff4, n123, n223, debye2, logL, U1, U2, phi);
 
             // Handle ionization
             Ionization->apply(patch, p1, i1, p2, i2);
 
             if( debug ) {
                 ncol     += 1;
-                smean    += s;
-                logLmean += logL;
+                smean_    += s;
+                logLmean_ += logL;
                 //temperature += m1 * (sqrt(1.+pow(p1->momentum(0,i1),2)+pow(p1->momentum(1,i1),2)+pow(p1->momentum(2,i1),2))-1.);
             }
 
@@ -328,8 +328,8 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
     Ionization->finish(patch->vecSpecies[(*sg1)[0]], patch->vecSpecies[(*sg2)[0]], params, patch, localDiags);
 
     if(debug && ncol>0. ) {
-        smean    /= ncol;
-        logLmean /= ncol;
+        smean_    /= ncol;
+        logLmean_ /= ncol;
         //temperature /= ncol;
     }
 }
@@ -338,7 +338,7 @@ void Collisions::collide(Params& params, Patch* patch, int itime, vector<Diagnos
 void Collisions::debug(Params& params, int itime, unsigned int icoll, VectorPatch& vecPatches)
 {
 
-    int debug_every = vecPatches(0)->vecCollisions[icoll]->debug_every;
+    int debug_every = vecPatches(0)->vecCollisions[icoll]->debug_every_;
     if( debug_every > 0 && itime % debug_every == 0 ) {
 
         unsigned int npatch = vecPatches.size();
@@ -352,8 +352,8 @@ void Collisions::debug(Params& params, int itime, unsigned int icoll, VectorPatc
         // Collect info for all patches
         for( unsigned int ipatch=0; ipatch<npatch; ipatch++ ) {
             //ncol       [ipatch] = vecPatches(ipatch)->vecCollisions[icoll]->ncol       ;
-            smean      [ipatch] = vecPatches(ipatch)->vecCollisions[icoll]->smean      ;
-            logLmean   [ipatch] = vecPatches(ipatch)->vecCollisions[icoll]->logLmean   ;
+            smean      [ipatch] = vecPatches(ipatch)->vecCollisions[icoll]->smean_      ;
+            logLmean   [ipatch] = vecPatches(ipatch)->vecCollisions[icoll]->logLmean_   ;
             //temperature[ipatch] = vecPatches(ipatch)->vecCollisions[icoll]->temperature;
             debye_length_squared[ipatch] = 0.;
             unsigned int nbin = vecPatches(ipatch)->debye_length_squared.size();
@@ -364,7 +364,7 @@ void Collisions::debug(Params& params, int itime, unsigned int icoll, VectorPatc
         // Open the HDF5 file
         hid_t file_access = H5Pcreate(H5P_FILE_ACCESS);
         H5Pset_fapl_mpio(file_access, MPI_COMM_WORLD, MPI_INFO_NULL);
-        hid_t fileId = H5Fopen(vecPatches(0)->vecCollisions[icoll]->filename.c_str(), H5F_ACC_RDWR, file_access);
+        hid_t fileId = H5Fopen(vecPatches(0)->vecCollisions[icoll]->filename_.c_str(), H5F_ACC_RDWR, file_access);
         H5Pclose(file_access);
         // Create H5 group for the current timestep
         ostringstream name("");

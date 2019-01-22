@@ -180,10 +180,10 @@ The block ``Main`` is **mandatory** and has the following syntax::
 .. py:data:: patch_arrangement
 
   :default: ``"hilbertian"``
-  
+
   Determines the ordering of patches and the way they are separated into the
   various MPI processes. Options are:
-  
+
   * ``"hilbertian"``: following the Hilbert curve (see :ref:`this explanation<LoadBalancingExplanation>`).
   * ``"linearized_XY"`` in 2D or ``"linearized_XYZ"`` in 3D: following the
     row-major (C-style) ordering.
@@ -1660,8 +1660,8 @@ tables.
      chiph_xip_dim = 128,
 
      # Radiation parameters
-     chipa_radiation_threshold = 1e-3,
-     chipa_disc_min_threshold = 1e-2,
+     minimum_chi_continuous = 1e-3,
+     minimum_chi_discontinuous = 1e-2,
      table_path = "../databases/"
   )
 
@@ -1757,13 +1757,13 @@ tables.
 
   :default: 128
 
-  Discretization of the *chimin* and *xip* tables in the *chipa* direction.
+  Discretization of the *chimin* and *xip* tables in the *particle_chi* direction.
 
 .. py:data:: xip_chiph_dim
 
   :default: 128
 
-  Discretization of the *xip* tables in the *chiph* direction.
+  Discretization of the *xip* tables in the *photon_chi* direction.
 
 .. py:data:: output_format
 
@@ -1771,19 +1771,19 @@ tables.
 
   Output format of the tables: ``"hdf5"``, ``"binary"`` or ``"ascii"``.
 
-.. py:data:: chipa_radiation_threshold
+.. py:data:: minimum_chi_continuous
 
   :default: 1e-3
 
-  Threshold on the particle quantum parameter *chipa*. When a particle has a
+  Threshold on the particle quantum parameter *particle_chi*. When a particle has a
   quantum parameter below this threshold, radiation reaction is not taken
   into account.
 
-.. py:data:: chipa_disc_min_threshold
+.. py:data:: minimum_chi_discontinuous
 
   :default: 1e-2
 
-  Threshold on the particle quantum parameter *chipa* between the continuous
+  Threshold on the particle quantum parameter *particle_chi* between the continuous
   and the discontinuous radiation model.
 
 .. py:data:: table_path
@@ -1897,13 +1897,13 @@ There are two tables used for the multiphoton Breit-Wheeler refers to as the
 
   :default: 128
 
-  Discretization of the *chimin* and *xip* tables in the *chiph* direction.
+  Discretization of the *chimin* and *xip* tables in the *photon_chi* direction.
 
 .. py:data:: xip_chipa_dim
 
   :default: 128
 
-  Discretization of the *xip* tables in the *chipa* direction.
+  Discretization of the *xip* tables in the *particle_chi* direction.
 
 --------------------------------------------------------------------------------
 
@@ -2199,16 +2199,16 @@ To add one probe diagnostic, include the block ``DiagProbe``::
 .. py:data:: fields
 
   :default: ``[]``, which means ``["Ex", "Ey", "Ez", "Bx", "By", "Bz", "Jx", "Jy", "Jz", "Rho"]``
-  
+
   A list of fields among ``"Ex"``, ``"Ey"``, ``"Ez"``,
   ``"Bx"``, ``"By"``, ``"Bz"``, ``"Jx"``, ``"Jy"``, ``"Jz"`` and ``"Rho"``.
   Only listed fields will be saved although they are all calculated.
-  
+
   The contributions of each species to the currents and the density are also available,
   although they are not included by default. They may be added to the list as
   ``"Jx_abc"``, ``"Jy_abc"``, ``"Jz_abc"`` or ``"Rho_abc"``, where ``abc`` is the
   species name.
-  
+
   In the case of an envelope model for the laser (see :doc:`laser_envelope`),
   the following fields are also available: ``"Env_A_abs"``, ``"Env_Chi"``, ``"Env_E_abs"``.
 

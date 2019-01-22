@@ -48,39 +48,39 @@ class MultiphotonBreitWheelerTables
         // ---------------------------------------------------------------------
 
         //! Computation of the production rate of pairs per photon
-        //! \param chiph photon quantum parameter
+        //! \param photon_chi photon quantum parameter
         //! \param gamma photon normalized energy
-        double compute_dNBWdt(double chiph, double gamma);
+        double compute_dNBWdt(double photon_chi, double gamma);
 
-        //! Computation of the value T(chiph) using the approximated
+        //! Computation of the value T(photon_chi) using the approximated
         //! formula of Erber
-        //! \param chiph photon quantum parameter
-        //! \param nbit number of iteration for the Bessel evaluation
+        //! \param photon_chi photon quantum parameter
+        //! \param nb_iterations number of iteration for the Bessel evaluation
         //! \param eps epsilon for the Bessel evaluation
-        double compute_Erber_T(double chiph,int nbit,
+        double compute_Erber_T(double photon_chi,int nb_iterations,
                            double eps);
 
-        //! Computation of the value T(chiph) using the formula of Ritus
-        //! \param chiph photon quantum parameter
-        //! \param chipa particle quantum parameter for integration (=0.5*chiph for full integration)
-        //! \param nbit number of iteration for the Gauss-Legendre integration
+        //! Computation of the value T(photon_chi) using the formula of Ritus
+        //! \param photon_chi photon quantum parameter
+        //! \param particle_chi particle quantum parameter for integration (=0.5*photon_chi for full integration)
+        //! \param nb_iterations number of iteration for the Gauss-Legendre integration
         //! \param eps epsilon for the Bessel evaluation
-        double compute_integration_Ritus_dTdchi(double chiph,
-                               double chipa,
-                               int nbit,
+        double compute_integration_Ritus_dTdchi(double photon_chi,
+                               double particle_chi,
+                               int nb_iterations,
                                double eps);
 
-       //! Computation of the value T(chiph) using the formula of Ritus
-       //! \param chiph photon quantum parameter
-       //! \param nbit number of iteration for the Gauss-Legendre integration
+       //! Computation of the value T(photon_chi) using the formula of Ritus
+       //! \param photon_chi photon quantum parameter
+       //! \param nb_iterations number of iteration for the Gauss-Legendre integration
        //! \param eps epsilon for the Bessel evaluation
-       double compute_Ritus_dTdchi(double chiph,
-                             double chipa,int nbit,double eps);
+       double compute_Ritus_dTdchi(double photon_chi,
+                             double particle_chi,int nb_iterations,double eps);
 
         //! Computation of the electron and positron quantum parameters for
         //! the multiphoton Breit-Wheeler pair creation
-        //! \param chiph photon quantum parameter
-        double * compute_pair_chi(double chiph);
+        //! \param photon_chi photon quantum parameter
+        double * compute_pair_chi(double photon_chi);
 
         // ---------------------------------------------------------------------
         // TABLE COMPUTATION
@@ -94,7 +94,7 @@ class MultiphotonBreitWheelerTables
 
         //! Computation of the minimum particle quantum parameter chipamin
         //! for the photon xip array and computation of the photon xip array.
-        //! \details Under the minimum chipa value, the particle kinetic energy is
+        //! \details Under the minimum particle_chi value, the particle kinetic energy is
         //! considered negligible. All energy goes to the other.
         //! \param smpi Object of class SmileiMPI containing MPI properties
         void compute_xip_table(SmileiMPI *smpi);
@@ -187,10 +187,10 @@ class MultiphotonBreitWheelerTables
         bool T_computed;
 
         // ---------------------------------------------
-        // Table chipa min for xip table
+        // Table particle_chi min for xip table
         // ---------------------------------------------
 
-        //! Table containing the chipa min values
+        //! Table containing the particle_chi min values
         //! Under this value, electron kinetic energy of the pair is
         //! considered negligible
         std::vector<double > xip_chipamin_table;
@@ -205,27 +205,27 @@ class MultiphotonBreitWheelerTables
         //! This enables to compute the energy repartition between the electron and the positron
         std::vector<double> xip_table;
 
-        //! Minimum boundary for chiph in the table xip and xip_chipamin
+        //! Minimum boundary for photon_chi in the table xip and xip_chipamin
         double xip_chiph_min;
 
-        //! Logarithm of the minimum boundary for chiph in the table xip
+        //! Logarithm of the minimum boundary for photon_chi in the table xip
         //! and xip_chipamin
         double xip_log10_chiph_min;
 
-        //! Maximum boundary for chiph in the table xip and xip_chipamin
+        //! Maximum boundary for photon_chi in the table xip and xip_chipamin
         double xip_chiph_max;
 
-        //! Delta for the chiph discretization in the table xip and xip_chipamin
+        //! Delta for the photon_chi discretization in the table xip and xip_chipamin
         double xip_chiph_delta;
 
-        //! Inverse of the delta for the chiph discretization
+        //! Inverse of the delta for the photon_chi discretization
         //! in the table xip and xip_chipamin
         double xip_chiph_inv_delta;
 
-        //! Dimension of the discretized parameter chiph
+        //! Dimension of the discretized parameter photon_chi
         int xip_chiph_dim;
 
-        //! Dimension of the discretized parameter chipa
+        //! Dimension of the discretized parameter particle_chi
         int xip_chipa_dim;
 
         //! 1/(xip_chipa_dim - 1)
@@ -248,7 +248,7 @@ class MultiphotonBreitWheelerTables
         double factor_dNBWdt;
 
         //! Normalized reduced Compton wavelength
-        double norm_lambda_compton;
+        double normalized_Compton_wavelength_;
 
 };
 

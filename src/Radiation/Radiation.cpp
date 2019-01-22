@@ -16,24 +16,24 @@
 // -----------------------------------------------------------------------------
 Radiation::Radiation(Params& params, Species * species)
 {
-    // Dimension position
-    nDim_ = params.nDim_particle;
+    // Number of dimensions for the positions and momentums
+    n_dimensions_ = params.nDim_particle;
 
     // Time step
-    dt    = params.timestep;
+    dt_   = params.timestep;
 
     // Inverse of the species mass
     one_over_mass_ = 1./species->mass;
 
     // Normalized Schwinger Electric Field
-    norm_E_Schwinger = params.electron_mass*params.c_vacuum*params.c_vacuum
+    norm_E_Schwinger_ = params.electron_mass*params.c_vacuum*params.c_vacuum
                      / (params.red_planck_cst* params.reference_angular_frequency_SI);
 
-    // Inverse of norm_E_Schwinger
-    inv_norm_E_Schwinger = 1./norm_E_Schwinger;
+    // Inverse of norm_E_Schwinger_
+    inv_norm_E_Schwinger_ = 1./norm_E_Schwinger_;
 
     // The thread radiated energy is initially null
-    radiated_energy = 0;
+    radiated_energy_ = 0;
 }
 
 // -----------------------------------------------------------------------------
@@ -52,7 +52,7 @@ Radiation::~Radiation()
 //! \param iend        Index of the last particle
 //! \param ithread     Thread index
 // -----------------------------------------------------------------------------
-void Radiation::compute_thread_chipa(Particles &particles,
+void Radiation::computeParticlesChi(Particles &particles,
         SmileiMPI* smpi,
         int istart,
         int iend,
@@ -105,7 +105,7 @@ void Radiation::compute_thread_chipa(Particles &particles,
                          + momentum[2][ipart]*momentum[2][ipart]);
 
         // Computation of the Lorentz invariant quantum parameter
-        chi[ipart] = Radiation::compute_chipa(charge_over_mass2,
+        chi[ipart] = Radiation::computeParticleChi(charge_over_mass2,
                  momentum[0][ipart],momentum[1][ipart],momentum[2][ipart],
                  gamma,
                  (*(Ex+ipart-ipart_ref)),(*(Ey+ipart-ipart_ref)),(*(Ez+ipart-ipart_ref)),

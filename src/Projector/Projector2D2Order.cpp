@@ -504,7 +504,7 @@ void Projector2D2Order::currentsAndDensityWrapper(ElectroMagn* EMfields, Particl
 }
 
 // Projector for susceptibility used as source term in envelope equation
-void Projector2D2Order::susceptibility(ElectroMagn* EMfields, Particles &particles, double species_mass, SmileiMPI* smpi, int istart, int iend,  int ithread, int ibin, std::vector<unsigned int> &b_dim, int ipart_ref)
+void Projector2D2Order::susceptibility(ElectroMagn* EMfields, Particles &particles, double species_mass, SmileiMPI* smpi, int istart, int iend,  int ithread, int ibin, int ipart_ref)
                                         
 {
     double* Chi_envelope = &(*EMfields->Env_Chi_)(0);
@@ -600,7 +600,7 @@ void Projector2D2Order::susceptibility(ElectroMagn* EMfields, Particles &particl
             jp -= j_domain_begin + 2;
             
             for (unsigned int i=0 ; i<5 ; i++) {
-                iloc = (i+ip)*b_dim[1]+jp;
+                iloc = (i+ip)*nprimy+jp;
                 for (unsigned int j=0 ; j<5 ; j++) {
                     Chi_envelope[iloc+j] += charge_weight * Sx1[i]*Sy1[j];
                 }

@@ -471,7 +471,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
 
         //Check if my rank should start with additional patches from right neighbour ...
         if (Tcur < target){
-            unsigned int j = 0;
+            j = 0;
             while ( (abs(Tcur-target) > abs(Tcur+Lp_right[j] - target)) && (j<(unsigned int)patch_count[smilei_rk+1] - 1) ){ //Leave at least 1 patch to my neighbour
                 Tcur += Lp_right[j];
                 j++;
@@ -593,7 +593,7 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
     // to deduce the bin number (last_index.size())
     // In both adaptive cases :
     //   - a reconfiguration of opertors is done after patch exchange (DLB and MW)
-    //   - default values of the bin number is defined by the vectorized conf 
+    //   - default values of the bin number is defined by the vectorized conf
     if (params.vectorization_mode == "adaptive_mixed_sort")
     {
         // Parameter vectorized_operators
@@ -621,15 +621,11 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
         params.hasNielRadiation)
     {
 
-        double temp;
         for (int ispec=0 ; ispec<(int)patch->vecSpecies.size() ; ispec++){
             if ( patch->vecSpecies[ispec]->getNbrOfParticles() > 0
                   && patch->vecSpecies[ispec]->Radiate){
 
-                //temp = patch->vecSpecies[ispec]->Radiate->getRadiatedEnergy();
-                temp = patch->vecSpecies[ispec]->getNrjRadiation();
-
-                MPI_Isend(&temp,
+                MPI_Isend(&(patch->vecSpecies[ispec]->nrj_radiation),
                 1, MPI_DOUBLE, to, tag + maxtag, SMILEI_COMM_WORLD,
                 &patch->requests_[maxtag]);
                 maxtag ++;
@@ -660,7 +656,7 @@ void SmileiMPI::isend_species(Patch* patch, int to, int tag, Params& params)
     // to deduce the bin number (last_index.size())
     // In both adaptive cases :
     //   - a reconfiguration of opertors is done after patch exchange (DLB and MW)
-    //   - default values of the bin number is defined by the vectorized conf 
+    //   - default values of the bin number is defined by the vectorized conf
     if (params.vectorization_mode == "adaptive_mixed_sort")
     {
 
@@ -755,7 +751,7 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
     // to deduce the bin number (last_index.size())
     // In both adaptive cases :
     //   - a reconfiguration of opertors is done after patch exchange (DLB and MW)
-    //   - default values of the bin number is defined by the vectorized conf 
+    //   - default values of the bin number is defined by the vectorized conf
     if (params.vectorization_mode == "adaptive_mixed_sort")
     {
         // Parameter vectorized_operators
@@ -844,7 +840,7 @@ void SmileiMPI::recv_species(Patch* patch, int from, int tag, Params& params)
     // to deduce the bin number (last_index.size())
     // In both adaptive cases :
     //   - a reconfiguration of opertors is done after patch exchange (DLB and MW)
-    //   - default values of the bin number is defined by the vectorized conf 
+    //   - default values of the bin number is defined by the vectorized conf
     if (params.vectorization_mode == "adaptive_mixed_sort")
     {
         // Parameter vectorized_operators

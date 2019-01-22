@@ -66,12 +66,12 @@ void InterpolatorAM2Order::fields(ElectroMagn* EMfields, Particles &particles, i
     *(BLoc+2*nparts) = std::real (compute( &coeffxd_[1], &coeffyd_[1], Bt, id_, jd_));
     
      for (unsigned int imode = 1; imode < nmodes ; imode++){
-        cField2D* El = (static_cast<ElectroMagnAM*>(EMfields))->El_[imode];
-        cField2D* Er = (static_cast<ElectroMagnAM*>(EMfields))->Er_[imode];
-        cField2D* Et = (static_cast<ElectroMagnAM*>(EMfields))->Et_[imode];
-        cField2D* Bl = (static_cast<ElectroMagnAM*>(EMfields))->Bl_m[imode];
-        cField2D* Br = (static_cast<ElectroMagnAM*>(EMfields))->Br_m[imode];
-        cField2D* Bt = (static_cast<ElectroMagnAM*>(EMfields))->Bt_m[imode];
+         El = (static_cast<ElectroMagnAM*>(EMfields))->El_[imode];
+         Er = (static_cast<ElectroMagnAM*>(EMfields))->Er_[imode];
+         Et = (static_cast<ElectroMagnAM*>(EMfields))->Et_[imode];
+         Bl = (static_cast<ElectroMagnAM*>(EMfields))->Bl_m[imode];
+         Br = (static_cast<ElectroMagnAM*>(EMfields))->Br_m[imode];
+         Bt = (static_cast<ElectroMagnAM*>(EMfields))->Bt_m[imode];
         
         exp_mm_theta *= exp_m_theta ;
         
@@ -179,16 +179,16 @@ void InterpolatorAM2Order::fieldsAndCurrents(ElectroMagn* EMfields, Particles &p
     (*RhoLoc) = std::real(compute_p( &coeffxp_[1], &coeffyp_[1], Rho, ip_, jp_));
     
     for (unsigned int imode = 1; imode < nmodes ; imode++){
-        cField2D* El = (static_cast<ElectroMagnAM*>(EMfields))->El_[imode];
-        cField2D* Er = (static_cast<ElectroMagnAM*>(EMfields))->Er_[imode];
-        cField2D* Et = (static_cast<ElectroMagnAM*>(EMfields))->Et_[imode];
-        cField2D* Bl = (static_cast<ElectroMagnAM*>(EMfields))->Bl_m[imode];
-        cField2D* Br = (static_cast<ElectroMagnAM*>(EMfields))->Br_m[imode];
-        cField2D* Bt = (static_cast<ElectroMagnAM*>(EMfields))->Bt_m[imode];
-        cField2D* Jl = (static_cast<ElectroMagnAM*>(EMfields))->Jl_[imode];
-        cField2D* Jr = (static_cast<ElectroMagnAM*>(EMfields))->Jr_[imode];
-        cField2D* Jt = (static_cast<ElectroMagnAM*>(EMfields))->Jt_[imode];
-        cField2D* Rho= (static_cast<ElectroMagnAM*>(EMfields))->rho_AM_[imode];
+        El = (static_cast<ElectroMagnAM*>(EMfields))->El_[imode];
+        Er = (static_cast<ElectroMagnAM*>(EMfields))->Er_[imode];
+        Et = (static_cast<ElectroMagnAM*>(EMfields))->Et_[imode];
+        Bl = (static_cast<ElectroMagnAM*>(EMfields))->Bl_m[imode];
+        Br = (static_cast<ElectroMagnAM*>(EMfields))->Br_m[imode];
+        Bt = (static_cast<ElectroMagnAM*>(EMfields))->Bt_m[imode];
+        Jl = (static_cast<ElectroMagnAM*>(EMfields))->Jl_[imode];
+        Jr = (static_cast<ElectroMagnAM*>(EMfields))->Jr_[imode];
+        Jt = (static_cast<ElectroMagnAM*>(EMfields))->Jt_[imode];
+        Rho= (static_cast<ElectroMagnAM*>(EMfields))->rho_AM_[imode];
         
         exp_mm_theta *= exp_m_theta ;
         

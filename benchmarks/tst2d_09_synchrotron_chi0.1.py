@@ -134,7 +134,7 @@ for i,radiation in enumerate(radiation_list):
 # ----------------------------------------------------------------------------------------
 # Global parameters for the radiation reaction models
 RadiationReaction(
-    chipa_disc_min_threshold = 1e-3,
+    minimum_chi_discontinuous = 1e-3,
     table_path = "./"
 )
 

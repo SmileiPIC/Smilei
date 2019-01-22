@@ -99,10 +99,10 @@ public:
 protected:
     Field *space_envelope, *phase;
 private:
-    bool primal;
-    double omega;
-    Profile *timeProfile, *chirpProfile, *spaceProfile, *phaseProfile;
-    double delay_phase;
+    bool primal_;
+    double omega_;
+    Profile *timeProfile_, *chirpProfile_, *spaceProfile_, *phaseProfile_;
+    double delay_phase_;
 };
 
 // Laser profile for non-separable space and time
@@ -110,18 +110,18 @@ class LaserProfileNonSeparable : public LaserProfile {
 friend class SmileiMPI;
 public:
     LaserProfileNonSeparable(Profile * spaceAndTimeProfile)
-     : spaceAndTimeProfile(spaceAndTimeProfile) {};
+     : spaceAndTimeProfile_(spaceAndTimeProfile) {};
     LaserProfileNonSeparable(LaserProfileNonSeparable* lp)
-     : spaceAndTimeProfile( new Profile(lp->spaceAndTimeProfile) ) {};
+     : spaceAndTimeProfile_( new Profile(lp->spaceAndTimeProfile_) ) {};
     ~LaserProfileNonSeparable();
     inline double getAmplitude(std::vector<double> pos, double t, int j, int k) {
         double amp;
         #pragma omp critical
-        amp = spaceAndTimeProfile->valueAt(pos, t);
+        amp = spaceAndTimeProfile_->valueAt(pos, t);
         return amp;
     }
 private:
-    Profile * spaceAndTimeProfile;
+    Profile * spaceAndTimeProfile_;
 };
 
 // Laser profile from a file (see LaserOffset)
@@ -129,9 +129,9 @@ class LaserProfileFile : public LaserProfile {
 friend class SmileiMPI;
 public:
     LaserProfileFile( std::string file_, Profile * ep_, bool pr_ )
-      : magnitude(NULL), phase(NULL), file(file_), extraProfile(ep_), primal(pr_) {};
+      : magnitude(NULL), phase(NULL), file(file_), extraProfile(ep_), primal_(pr_) {};
     LaserProfileFile( LaserProfileFile* lp )
-      : magnitude(NULL), phase(NULL), file(lp->file), extraProfile(new Profile(lp->extraProfile)), primal(lp->primal) {};
+      : magnitude(NULL), phase(NULL), file(lp->file), extraProfile(new Profile(lp->extraProfile)), primal_(lp->primal_) {};
     ~LaserProfileFile();
     void createFields(Params& params, Patch* patch);
     void initFields  (Params& params, Patch* patch);
@@ -141,7 +141,7 @@ protected:
 private:
     std::string file;
     Profile *extraProfile;
-    bool primal;
+    bool primal_;
     std::vector<double> omega;
 };
 

@@ -94,11 +94,11 @@ void MultiphotonBreitWheelerTables::initialization(Params& params)
     if (params.hasMultiphotonBreitWheeler)
     {
         // Computation of the normalized Compton wavelength
-        norm_lambda_compton = params.red_planck_cst*params.reference_angular_frequency_SI
+        normalized_Compton_wavelength_ = params.red_planck_cst*params.reference_angular_frequency_SI
                             / (params.electron_mass*params.c_vacuum*params.c_vacuum);
 
         // Computation of the factor factor_dNBWdt
-        factor_dNBWdt = params.fine_struct_cst/(norm_lambda_compton);
+        factor_dNBWdt = params.fine_struct_cst/(normalized_Compton_wavelength_);
     }
 
     // Messages and checks
@@ -139,15 +139,15 @@ void MultiphotonBreitWheelerTables::initialization(Params& params)
 
 // -----------------------------------------------------------------------------
 //! Computation of the production rate of pairs per photon
-//! \param chiph photon quantum parameter
+//! \param photon_chi photon quantum parameter
 //! \param gamma photon normalized energy
 // -----------------------------------------------------------------------------
-double MultiphotonBreitWheelerTables::compute_dNBWdt(double chiph, double gamma)
+double MultiphotonBreitWheelerTables::compute_dNBWdt(double photon_chi, double gamma)
 {
     // ________________________________________
     // Parameters
 
-    // Log of the photon quantum parameter chipa
+    // Log of the photon quantum parameter particle_chi
     double logchiph;
     double logchiphm;
     double logchiphp;
@@ -159,25 +159,25 @@ double MultiphotonBreitWheelerTables::compute_dNBWdt(double chiph, double gamma)
     // ________________________________________
     // Computation
 
-    logchiph = log10(chiph);
+    logchiph = log10(photon_chi);
 
     // Lower index for interpolation in the table integfochi
     ichiph = int(floor((logchiph-T_log10_chiph_min)
                  *T_chiph_inv_delta));
 
-     // If chiph is below the lower bound of the table
+     // If photon_chi is below the lower bound of the table
      // An asymptotic approximation is used
      if (ichiph < 0)
      {
          ichiph = 0;
-         dNBWdt = 0.46*exp(-8./(3.*chiph));
+         dNBWdt = 0.46*exp(-8./(3.*photon_chi));
      }
-     // If chiph is above the upper bound of the table
+     // If photon_chi is above the upper bound of the table
      // An asymptotic approximation is used
      else if (ichiph >= T_dim-1)
      {
         ichiph = T_dim-2;
-        dNBWdt = 0.38*pow(chiph,-1./3.);
+        dNBWdt = 0.38*pow(photon_chi,-1./3.);
      }
      else
      {
@@ -189,60 +189,60 @@ double MultiphotonBreitWheelerTables::compute_dNBWdt(double chiph, double gamma)
          dNBWdt = (T_table[ichiph+1]*fabs(logchiph-logchiphm) +
                  T_table[ichiph]*fabs(logchiphp - logchiph))*T_chiph_inv_delta;
      }
-     return factor_dNBWdt*dNBWdt*chiph/gamma;
+     return factor_dNBWdt*dNBWdt*photon_chi/gamma;
 }
 
 // -----------------------------------------------------------------------------
-//! Computation of the value T(chiph) using the approximated
+//! Computation of the value T(photon_chi) using the approximated
 //! formula of Erber
-//! \param chiph photon quantum parameter
-//! \param nbit number of iteration for the Bessel evaluation
+//! \param photon_chi photon quantum parameter
+//! \param nb_iterations number of iteration for the Bessel evaluation
 //! \param eps epsilon for the Bessel evaluation
 // -----------------------------------------------------------------------------
-double MultiphotonBreitWheelerTables::compute_Erber_T(double chiph,int nbit,
+double MultiphotonBreitWheelerTables::compute_Erber_T(double photon_chi,int nb_iterations,
                                                     double eps)
 {
     // Values for Bessel results
     //double I,dI;
     double K;
 
-    //userFunctions::modified_bessel_IK(1./3.,4./(3.*chiph),I,dI,K,dK,nbit,eps);
-    K = userFunctions::modified_bessel_K(1./3.,4./(3.*chiph),nbit,eps, false);
+    //userFunctions::modified_bessel_IK(1./3.,4./(3.*photon_chi),I,dI,K,dK,nb_iterations,eps);
+    K = userFunctions::modified_bessel_K(1./3.,4./(3.*photon_chi),nb_iterations,eps, false);
 
-    return 0.16*K*K/chiph;
+    return 0.16*K*K/photon_chi;
 }
 
 // -----------------------------------------------------------------------------
-//! Computation of the value of the integration of  dT(chiph)/dhicpa
+//! Computation of the value of the integration of  dT(photon_chi)/dhicpa
 //! using the formula of Ritus.
-//! \param chiph photon quantum parameter
-//! \param chipa particle quantum parameter for integration (=0.5*chiph for full integration)
-//! \param nbit number of iteration for the Gauss-Legendre integration
+//! \param photon_chi photon quantum parameter
+//! \param particle_chi particle quantum parameter for integration (=0.5*photon_chi for full integration)
+//! \param nb_iterations number of iteration for the Gauss-Legendre integration
 //! \param eps epsilon for the Bessel evaluation
 // -----------------------------------------------------------------------------
-double MultiphotonBreitWheelerTables::compute_integration_Ritus_dTdchi(double chiph,
-                      double chipa,
-                      int nbit,
+double MultiphotonBreitWheelerTables::compute_integration_Ritus_dTdchi(double photon_chi,
+                      double particle_chi,
+                      int nb_iterations,
                       double eps)
 {
 
     // Parameters:
     // Arrays for Gauss-Legendre integration
-    double * gauleg_x = new double[nbit];
-    double * gauleg_w = new double[nbit];
+    double * gauleg_x = new double[nb_iterations];
+    double * gauleg_w = new double[nb_iterations];
     int i;
     double u;
     double T;
 
     // gauss Legendre coefficients
-    userFunctions::gauss_legendre_coef(log10(chipa)-50.,log10(chipa),
-            gauleg_x, gauleg_w, nbit, eps);
+    userFunctions::gauss_legendre_coef(log10(particle_chi)-50.,log10(particle_chi),
+            gauleg_x, gauleg_w, nb_iterations, eps);
 
     T = 0;
-    for(i=0 ; i< nbit ; i++)
+    for(i=0 ; i< nb_iterations ; i++)
     {
         u = pow(10.,gauleg_x[i]);
-        T += gauleg_w[i]*compute_Ritus_dTdchi(chiph,u,nbit,eps)*u*log(10.);
+        T += gauleg_w[i]*compute_Ritus_dTdchi(photon_chi,u,nb_iterations,eps)*u*log(10.);
     }
     return T;
 
@@ -252,9 +252,9 @@ double MultiphotonBreitWheelerTables::compute_integration_Ritus_dTdchi(double ch
 //! Computation of the electron and positron quantum parameters for
 //! the multiphoton Breit-Wheeler pair creation
 //
-//! \param chiph photon quantum parameter
+//! \param photon_chi photon quantum parameter
 // -----------------------------------------------------------------------------
-double * MultiphotonBreitWheelerTables::compute_pair_chi(double chiph)
+double * MultiphotonBreitWheelerTables::compute_pair_chi(double photon_chi)
 {
     // Parameters
     double * chi = new double[2];
@@ -268,30 +268,30 @@ double * MultiphotonBreitWheelerTables::compute_pair_chi(double chiph)
     int ixip;
 
     // -----------------------------------------------------------
-    // Computation of the index associated to the given chiph
+    // Computation of the index associated to the given photon_chi
     // -----------------------------------------------------------
 
-    logchiph = log10(chiph);
+    logchiph = log10(photon_chi);
 
     // Lower boundary of the table
-    if (chiph < xip_chiph_min)
+    if (photon_chi < xip_chiph_min)
     {
         ichiph = 0;
     }
     // Upper boundary of the table
-    else if (chiph >= xip_chiph_max)
+    else if (photon_chi >= xip_chiph_max)
     {
         ichiph = xip_chiph_dim-1;
     }
     // Inside the table
     else
     {
-        // Use floor so that chiph corresponding to ichiph is <= given chiph
+        // Use floor so that photon_chi corresponding to ichiph is <= given photon_chi
         ichiph = int(floor((logchiph-xip_log10_chiph_min)*(xip_chiph_inv_delta)));
     }
 
     // ---------------------------------------
-    // Search of the index ichiph for chiph
+    // Search of the index ichiph for photon_chi
     // ---------------------------------------
 
     // First, we compute a random xip in [0,1[
@@ -326,8 +326,8 @@ double * MultiphotonBreitWheelerTables::compute_pair_chi(double chiph)
             &xip_table[ichiph*xip_chipa_dim],xipp,xip_chipa_dim);
     }
 
-    // Delta for the chipa dimension
-    delta_chipa = (log10(0.5*chiph)-xip_chipamin_table[ichiph])
+    // Delta for the particle_chi dimension
+    delta_chipa = (log10(0.5*photon_chi)-xip_chipamin_table[ichiph])
                 * xip_inv_chipa_dim_minus_one;
 
     ixip = ichiph*xip_chipa_dim + ichipa;
@@ -345,7 +345,7 @@ double * MultiphotonBreitWheelerTables::compute_pair_chi(double chiph)
         chi[1] = pow(10,log10_chipam*(1.0-d) + log10_chipap*(d));
 
         // Electron quantum parameter
-        chi[0] = chiph - chi[1];
+        chi[0] = photon_chi - chi[1];
     }
     // If xip <= 0.5, the positron will bring more energy than the electron
     else
@@ -354,48 +354,48 @@ double * MultiphotonBreitWheelerTables::compute_pair_chi(double chiph)
         chi[0] = pow(10,log10_chipam*(1.0-d) + log10_chipap*(d));
 
         // Positron quantum parameter
-        chi[1] = chiph - chi[0];
+        chi[1] = photon_chi - chi[0];
     }
 
     return chi;
 }
 
 // -----------------------------------------------------------------------------
-//! Computation of the value dT/dchipa(chiph) using the formula of Ritus
-//! \param chiph photon quantum parameter
-//! \param chipa particle quantum parameter
-//! \param nbit number of iteration for the Gauss-Legendre integration
+//! Computation of the value dT/dchipa(photon_chi) using the formula of Ritus
+//! \param photon_chi photon quantum parameter
+//! \param particle_chi particle quantum parameter
+//! \param nb_iterations number of iteration for the Gauss-Legendre integration
 //! \param eps epsilon for the Bessel evaluation
 // -----------------------------------------------------------------------------
-double MultiphotonBreitWheelerTables::compute_Ritus_dTdchi(double chiph,
-                      double chipa,int nbit,double eps)
+double MultiphotonBreitWheelerTables::compute_Ritus_dTdchi(double photon_chi,
+                      double particle_chi,int nb_iterations,double eps)
 {
 
     // Parameters:
     // Arrays for Gauss-Legendre integration
-    double * gauleg_x = new double[nbit];
-    double * gauleg_w = new double[nbit];
+    double * gauleg_x = new double[nb_iterations];
+    double * gauleg_w = new double[nb_iterations];
     double y,u;
     double p1,p2;
     int i;
     //double I,dI;
     //double K,dK;
 
-    y = (chiph/(3.*chipa*(chiph-chipa)));
+    y = (photon_chi/(3.*particle_chi*(photon_chi-particle_chi)));
 
     //userFunctions::modified_bessel_IK(2./3.,2.*y,I,dI,K,dK,500,1e-16);
-    //p1 = (2. - 3.*chiph*y)*K;
+    //p1 = (2. - 3.*photon_chi*y)*K;
 
-    p1 = (2. - 3.*chiph*y)*userFunctions::modified_bessel_K(2./3.,2*y,500,1e-16,false);
+    p1 = (2. - 3.*photon_chi*y)*userFunctions::modified_bessel_K(2./3.,2*y,500,1e-16,false);
 
     // gauss Legendre coefficients
     userFunctions::gauss_legendre_coef(log10(2*y),log10(2*y)+50.,
-            gauleg_x, gauleg_w, nbit, eps);
+            gauleg_x, gauleg_w, nb_iterations, eps);
 
     // Integration loop
     p2 = 0;
     //#pragma omp parallel for reduction(+:p2) private(u) shared(gauleg_w,gauleg_x)
-    for(i=0 ; i< nbit ; i++)
+    for(i=0 ; i< nb_iterations ; i++)
     {
         u = pow(10.,gauleg_x[i]);
         p2 += gauleg_w[i]*userFunctions::modified_bessel_K(1./3.,u,500,1e-16,false)*u*log(10.);
@@ -403,7 +403,7 @@ double MultiphotonBreitWheelerTables::compute_Ritus_dTdchi(double chiph,
         //p2 += gauleg_w[i]*K*u*log(10.);
     }
 
-    return (p2 - p1)/(M_PI*sqrt(3.)*pow(chiph,2));
+    return (p2 - p1)/(M_PI*sqrt(3.)*pow(photon_chi,2));
 }
 
 // -----------------------------------------------------------------------------
@@ -438,7 +438,7 @@ void MultiphotonBreitWheelerTables::compute_T_table(SmileiMPI *smpi)
     {
 
         // Temporary photon chi value
-        double chiph;
+        double photon_chi;
         // For percentages
         double pct = 0.;
         double dpct = 10.;
@@ -494,11 +494,11 @@ void MultiphotonBreitWheelerTables::compute_T_table(SmileiMPI *smpi)
         // Loop over the table values
         for(int i = 0 ; i < length_table[rank] ; i++)
         {
-            chiph = pow(10.,(imin_table[rank] + i)*T_chiph_delta
+            photon_chi = pow(10.,(imin_table[rank] + i)*T_chiph_delta
                   + T_log10_chiph_min);
 
-            buffer[i] = 2.*MultiphotonBreitWheelerTables::compute_integration_Ritus_dTdchi(chiph,0.5*chiph,200,1e-15);
-            //buffer[i] = MultiphotonBreitWheelerTables::compute_Erber_T(chiph,500000,1e-10);
+            buffer[i] = 2.*MultiphotonBreitWheelerTables::compute_integration_Ritus_dTdchi(photon_chi,0.5*photon_chi,200,1e-15);
+            //buffer[i] = MultiphotonBreitWheelerTables::compute_Erber_T(photon_chi,500000,1e-10);
 
             if (100.*i >= length_table[rank]*pct)
             {
@@ -533,7 +533,7 @@ void MultiphotonBreitWheelerTables::compute_T_table(SmileiMPI *smpi)
 //! Computation of the minimum particle quantum parameter chipamin
 //! for the photon xip array and computation of the photon xip array.
 //
-//! \details Under the minimum chipa value, the particle kinetic energy is
+//! \details Under the minimum particle_chi value, the particle kinetic energy is
 //! considered negligible. All energy goes to the other.
 //
 //! \param smpi Object of class SmileiMPI containing MPI properties
@@ -562,9 +562,9 @@ void MultiphotonBreitWheelerTables::compute_xip_table(SmileiMPI *smpi)
     if (!table_exists)
     {
         // Parameters:
-        double chipa; // Temporary particle chi value
-        double chiph; // Temporary photon chi value
-        double chipa_delta; // Temporary delta for chiph
+        double particle_chi; // Temporary particle chi value
+        double photon_chi; // Temporary photon chi value
+        double chipa_delta; // Temporary delta for photon_chi
         double logchipamin; // Temporary log10 of photon chi value
         double xip;   // Temporary xip
         double numerator;
@@ -637,21 +637,21 @@ void MultiphotonBreitWheelerTables::compute_xip_table(SmileiMPI *smpi)
             logchipamin = (imin_table[rank] + ichiph)*xip_chiph_delta
                   + xip_log10_chiph_min;
 
-            chiph = pow(10.,logchipamin);
+            photon_chi = pow(10.,logchipamin);
 
-            logchipamin = log10(0.5*chiph);
+            logchipamin = log10(0.5*photon_chi);
 
             // Denominator of xip
-            denominator = MultiphotonBreitWheelerTables::compute_integration_Ritus_dTdchi(chiph,
-                    0.5*chiph,200,1e-15);
+            denominator = MultiphotonBreitWheelerTables::compute_integration_Ritus_dTdchi(photon_chi,
+                    0.5*photon_chi,200,1e-15);
 
             k = 0;
             while(k < xip_power)
             {
                 logchipamin -= pow(0.1,k);
-                chipa = pow(10.,logchipamin);
-                numerator = MultiphotonBreitWheelerTables::compute_integration_Ritus_dTdchi(chiph,
-                    chipa,200,1e-15);
+                particle_chi = pow(10.,logchipamin);
+                numerator = MultiphotonBreitWheelerTables::compute_integration_Ritus_dTdchi(photon_chi,
+                    particle_chi,200,1e-15);
 
                 if (numerator == 0 || denominator == 0)
                 {
@@ -691,37 +691,37 @@ void MultiphotonBreitWheelerTables::compute_xip_table(SmileiMPI *smpi)
         // Allocation of the local buffer
         buffer = new double [length_table[rank]*xip_chipa_dim];
 
-        // Loop for xip in the chiph dimension
+        // Loop for xip in the photon_chi dimension
         dpct = std::max(10.,100./(length_table[rank]*xip_chipa_dim));
         pct = dpct;
         for(int ichiph = 0 ; ichiph < length_table[rank] ; ichiph++)
         {
 
-            // log10(chiph) for the current ichiph
-            chiph = (imin_table[rank] + ichiph)*xip_chiph_delta
+            // log10(photon_chi) for the current ichiph
+            photon_chi = (imin_table[rank] + ichiph)*xip_chiph_delta
                                       + xip_log10_chiph_min;
 
-            // chiph for the current ichiph
-            chiph = pow(10.,chiph);
+            // photon_chi for the current ichiph
+            photon_chi = pow(10.,photon_chi);
 
-            // Delta on chipa
-            chipa_delta = (log10(0.5*chiph) - xip_chipamin_table[imin_table[rank] + ichiph])
+            // Delta on particle_chi
+            chipa_delta = (log10(0.5*photon_chi) - xip_chipamin_table[imin_table[rank] + ichiph])
                         / (xip_chipa_dim - 1);
 
             // Denominator of xip
-            denominator = MultiphotonBreitWheelerTables::compute_integration_Ritus_dTdchi(chiph,
-                    0.5*chiph,200,1e-15);
+            denominator = MultiphotonBreitWheelerTables::compute_integration_Ritus_dTdchi(photon_chi,
+                    0.5*photon_chi,200,1e-15);
 
-            // Loop in the chipa dimension
+            // Loop in the particle_chi dimension
             for (int ichipa = 0 ; ichipa < xip_chipa_dim ; ichipa ++)
             {
-                // Local chipa value
-               chipa = pow(10.,ichipa*chipa_delta +
+                // Local particle_chi value
+               particle_chi = pow(10.,ichipa*chipa_delta +
                    xip_chipamin_table[imin_table[rank] + ichiph]);
 
                // Numerator of xip
-               numerator = MultiphotonBreitWheelerTables::compute_integration_Ritus_dTdchi(chiph,
-                       chipa,200,1e-15);
+               numerator = MultiphotonBreitWheelerTables::compute_integration_Ritus_dTdchi(photon_chi,
+                       particle_chi,200,1e-15);
 
                // Update local buffer value
                // buffer[ichiph*xip_chipa_dim + ichipa] = std::min(1.,numerator / 2*denominator);
@@ -826,7 +826,7 @@ void MultiphotonBreitWheelerTables::output_T_table()
 
             file << "Multiphoton Breit-Wheeler T table\n";
 
-            file << "Dimension chiph - chiph min - chiph max \n";
+            file << "Dimension photon_chi - photon_chi min - photon_chi max \n";
 
             file << T_dim;
             file << " "
@@ -945,7 +945,7 @@ void MultiphotonBreitWheelerTables::output_xip_table()
 
             file << "Table xip_chipamin and xip for multiphoton Breit-Wheeler \n";
 
-            file << "Dimension chiph - Dimension chipa - chiph min - chiph max \n";
+            file << "Dimension photon_chi - Dimension particle_chi - photon_chi min - photon_chi max \n";
 
             file << xip_chiph_dim << " "
                  << xip_chipa_dim << " "
@@ -1534,7 +1534,7 @@ void MultiphotonBreitWheelerTables::bcast_xip_table(SmileiMPI *smpi)
     // Inverse of delta
     xip_chiph_inv_delta = 1./xip_chiph_delta;
 
-    // Inverse chipa discetization (regularly used)
+    // Inverse particle_chi discetization (regularly used)
     xip_inv_chipa_dim_minus_one = 1./(xip_chipa_dim - 1.);
 
 }

@@ -88,7 +88,9 @@ namelist("")
     // https://github.com/numpy/numpy/issues/5856
     // We basically call the command numpy.seterr(all="ignore")
     PyObject* numpy = PyImport_ImportModule("numpy");
-    Py_DECREF(PyObject_CallMethod(numpy, "seterr", "s", "ignore"));
+    string seterr("seterr");
+    string sChar("s");
+    Py_DECREF(PyObject_CallMethod(numpy,&seterr[0], &sChar[0], "ignore"));
     Py_DECREF(numpy);
 #endif
 
@@ -138,7 +140,7 @@ namelist("")
                 strNamelist+=buffer.str();
             // If command
             } else {
-                string command = *it;
+                command = *it;
                 // Remove quotes
                 unsigned int s = command.size();
                 if( s>1 && command.substr(0,1)=="\"" && command.substr(s-1,1)=="\"" )
@@ -1103,10 +1105,10 @@ bool Params::isSpeciesField(string field_name) {
          || (field_name.at(0)=='R' && field_name.length()>3) )
             return true;
     } else {
-        if( field_name.at(0)=='J' && field_name.length()>8
-                && (field_name.substr(2,6)!="_mode_" || field_name.find("mode_") != field_name.rfind("mode_"))
-         || field_name.at(0)=='R' && field_name.length()>9
-                && (field_name.substr(3,6)!="_mode_" || field_name.find("mode_") != field_name.rfind("mode_")) )
+        if( ( ( field_name.at(0)=='J' && field_name.length()>8 )
+              && (field_name.substr(2,6)!="_mode_" || field_name.find("mode_") != field_name.rfind("mode_")) )
+            || ( ( field_name.at(0)=='R' && field_name.length()>9 )
+                 && (field_name.substr(3,6)!="_mode_" || field_name.find("mode_") != field_name.rfind("mode_")) ) )
             return true;
     }
     return false;
