@@ -21,31 +21,31 @@ Field1D::Field1D() : Field()
 }
 
 // with the dimensions as input argument
-Field1D::Field1D(vector<unsigned int> dims) : Field(dims)
+Field1D::Field1D( vector<unsigned int> dims ) : Field( dims )
 {
-    allocateDims(dims);
+    allocateDims( dims );
 }
 
 // with the dimensions and output (dump) file name as input argument
-Field1D::Field1D(vector<unsigned int> dims, string name_in) : Field(dims, name_in)
+Field1D::Field1D( vector<unsigned int> dims, string name_in ) : Field( dims, name_in )
 {
-    allocateDims(dims);
+    allocateDims( dims );
 }
 
 // with the dimensions as input argument
-Field1D::Field1D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal) : Field(dims, mainDim, isPrimal)
+Field1D::Field1D( vector<unsigned int> dims, unsigned int mainDim, bool isPrimal ) : Field( dims, mainDim, isPrimal )
 {
-    allocateDims(dims, mainDim, isPrimal);
+    allocateDims( dims, mainDim, isPrimal );
 }
 
 // with the dimensions and output (dump) file name as input argument
-Field1D::Field1D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, string name_in) : Field(dims, mainDim, isPrimal, name_in)
+Field1D::Field1D( vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, string name_in ) : Field( dims, mainDim, isPrimal, name_in )
 {
-    allocateDims(dims, mainDim, isPrimal);
+    allocateDims( dims, mainDim, isPrimal );
 }
 
 // without allocating
-Field1D::Field1D(string name_in, vector<unsigned int> dims) : Field(dims, name_in)
+Field1D::Field1D( string name_in, vector<unsigned int> dims ) : Field( dims, name_in )
 {
     data_=NULL;
     dims_ = dims;
@@ -57,7 +57,7 @@ Field1D::Field1D(string name_in, vector<unsigned int> dims) : Field(dims, name_i
 // ---------------------------------------------------------------------------------------------------------------------
 Field1D::~Field1D()
 {
-    if (data_!=NULL) {
+    if( data_!=NULL ) {
         delete [] data_;
     }
 }
@@ -69,16 +69,20 @@ Field1D::~Field1D()
 void Field1D::allocateDims()
 {
     // for Field1D only
-    if (dims_.size()!=1) ERROR("Alloc error must be 1 : " << dims_.size());
+    if( dims_.size()!=1 ) {
+        ERROR( "Alloc error must be 1 : " << dims_.size() );
+    }
     
     isDual_.resize( dims_.size(), 0 );
     
     data_ = new double[ dims_[0] ];
     //! \todo{change to memset (JD)}
-    for (unsigned int i=0; i<dims_[0]; i++) data_[i]=0.0;
+    for( unsigned int i=0; i<dims_[0]; i++ ) {
+        data_[i]=0.0;
+    }
     
     globalDims_ = dims_[0];
-
+    
 }
 
 void Field1D::deallocateDims()
@@ -88,11 +92,11 @@ void Field1D::deallocateDims()
 }
 
 
-void Field1D::allocateDims(unsigned int dims1)
+void Field1D::allocateDims( unsigned int dims1 )
 {
-    vector<unsigned int> dims(1);
+    vector<unsigned int> dims( 1 );
     dims[0]=dims1;
-    allocateDims(dims);
+    allocateDims( dims );
 }
 
 
@@ -100,54 +104,63 @@ void Field1D::allocateDims(unsigned int dims1)
 // ---------------------------------------------------------------------------------------------------------------------
 // Method used for allocating the dimension of a Field1D
 // ---------------------------------------------------------------------------------------------------------------------
-void Field1D::allocateDims(unsigned int mainDim, bool isPrimal)
+void Field1D::allocateDims( unsigned int mainDim, bool isPrimal )
 {
     // for Field1D only
-    if (dims_.size()!=1) ERROR("Alloc error must be 1 : " << dims_.size());
+    if( dims_.size()!=1 ) {
+        ERROR( "Alloc error must be 1 : " << dims_.size() );
+    }
     
     // isPrimal define if mainDim is Primal or Dual
     isDual_.resize( dims_.size(), 0 );
-    for ( unsigned int j=0 ; j<dims_.size() ; j++ ) {
-        if ( (j==mainDim) && (!isPrimal) )
+    for( unsigned int j=0 ; j<dims_.size() ; j++ ) {
+        if( ( j==mainDim ) && ( !isPrimal ) ) {
             isDual_[j] = 1;
-        else if ( (j!=mainDim) && (isPrimal) )
+        } else if( ( j!=mainDim ) && ( isPrimal ) ) {
             isDual_[j] = 1;
+        }
     }
     
-    for ( unsigned int j=0 ; j<dims_.size() ; j++ )
+    for( unsigned int j=0 ; j<dims_.size() ; j++ ) {
         dims_[j] += isDual_[j];
+    }
     
     data_ = new double[ dims_[0] ];
     //! \todo{change to memset (JD)}
-    for (unsigned int i=0; i<dims_[0]; i++) data_[i]=0.0;
+    for( unsigned int i=0; i<dims_[0]; i++ ) {
+        data_[i]=0.0;
+    }
     
     globalDims_ = dims_[0];
-
+    
 }
 
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Method to shift field in space
 // ---------------------------------------------------------------------------------------------------------------------
-void Field1D::shift_x(unsigned int delta)
+void Field1D::shift_x( unsigned int delta )
 {
-    memmove( &(data_[0]), &(data_[delta]), (dims_[0]-delta)*sizeof(double) );
+    memmove( &( data_[0] ), &( data_[delta] ), ( dims_[0]-delta )*sizeof( double ) );
     //memset ( &(data_[dims_[0]-delta]), 0, delta*sizeof(double));
-    for (int i=dims_[0]-delta;i<(int)dims_[0];i++) data_[i] = 0.;
-
+    for( int i=dims_[0]-delta; i<( int )dims_[0]; i++ ) {
+        data_[i] = 0.;
+    }
+    
 }
 
-double Field1D::norm2(unsigned int istart[3][2], unsigned int bufsize[3][2]) {
-    
-    double nrj(0.);
+double Field1D::norm2( unsigned int istart[3][2], unsigned int bufsize[3][2] )
+{
+
+    double nrj( 0. );
     
     int idxlocalstart[1];
     int idxlocalend[1];
-    for ( int i=0 ; i<1 ; i++ ) {
+    for( int i=0 ; i<1 ; i++ ) {
         idxlocalstart[i] = istart[i][isDual_[i]];
         idxlocalend[i]   = istart[i][isDual_[i]]+bufsize[i][isDual_[i]];
     }
-    for ( int i=idxlocalstart[0] ; i<idxlocalend[0] ; i++ ) {
+    for( int i=idxlocalstart[0] ; i<idxlocalend[0] ; i++ ) {
         nrj += data_[i]*data_[i];
     }
     
@@ -155,31 +168,31 @@ double Field1D::norm2(unsigned int istart[3][2], unsigned int bufsize[3][2]) {
 }
 
 
-void Field1D::put( Field* outField, Params &params, SmileiMPI* smpi, Patch* thisPatch, Patch* outPatch )
+void Field1D::put( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch )
 {
-    Field1D* out1D = static_cast<Field1D*>( outField );
-
+    Field1D *out1D = static_cast<Field1D *>( outField );
+    
     std::vector<unsigned int> dual =  this->isDual_;
-
+    
     int iout = thisPatch->Pcoordinates[0]*params.n_space[0] - outPatch->Pcoordinates[0]*params.n_space[0]*params.global_factor[0] ;
- 
-    for ( unsigned int i = 0 ; i < this->dims_[0] ; i++ ) {
+    
+    for( unsigned int i = 0 ; i < this->dims_[0] ; i++ ) {
         ( *out1D )( iout+i ) = ( *this )( i );
     }
-   
+    
 }
 
 
-void Field1D::get( Field* inField, Params &params, SmileiMPI* smpi, Patch* inPatch, Patch* thisPatch )
+void Field1D::get( Field *inField, Params &params, SmileiMPI *smpi, Patch *inPatch, Patch *thisPatch )
 {
-    Field1D* in1D  = static_cast<Field1D*>( inField  );
-
+    Field1D *in1D  = static_cast<Field1D *>( inField );
+    
     std::vector<unsigned int> dual =  in1D->isDual_;
-
+    
     int iin = thisPatch->Pcoordinates[0]*params.n_space[0] - inPatch->Pcoordinates[0]*params.n_space[0]*params.global_factor[0] ;
- 
-    for ( unsigned int i = 0 ; i < this->dims_[0] ; i++ ) {
+    
+    for( unsigned int i = 0 ; i < this->dims_[0] ; i++ ) {
         ( *this )( i ) = ( *in1D )( iin+i );
-    }    
-   
+    }
+    
 }

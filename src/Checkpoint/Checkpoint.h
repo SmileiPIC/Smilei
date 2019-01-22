@@ -29,35 +29,36 @@ class VectorPatch;
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class Checkpoint
 //  --------------------------------------------------------------------------------------------------------------------
-class Checkpoint {
+class Checkpoint
+{
 public:
-    Checkpoint( Params& params, SmileiMPI* smpi );
+    Checkpoint( Params &params, SmileiMPI *smpi );
     //! Destructor for Checkpoint
-    virtual ~Checkpoint(){};
+    virtual ~Checkpoint() {};
     
     //! Space dimension of a particle
     unsigned int nDim_particle;
     
     //! restart everything to file per processor
-    void readPatchDistribution( SmileiMPI* smpi, SimWindow* simWin );
-    void restartAll( VectorPatch &vecPatches,  SmileiMPI* smpi, SimWindow* simWin, Params &params, OpenPMDparams& openPMD);
-    void restartPatch( ElectroMagn* EMfields,std::vector<Species*> &vecSpecies, Params& params, hid_t patch_gid );
+    void readPatchDistribution( SmileiMPI *smpi, SimWindow *simWin );
+    void restartAll( VectorPatch &vecPatches,  SmileiMPI *smpi, SimWindow *simWin, Params &params, OpenPMDparams &openPMD );
+    void restartPatch( ElectroMagn *EMfields, std::vector<Species *> &vecSpecies, Params &params, hid_t patch_gid );
     
     //! restart field per proc
-    void restartFieldsPerProc(hid_t fid, Field* field);
-    void restart_cFieldsPerProc(hid_t fid, Field* field);
+    void restartFieldsPerProc( hid_t fid, Field *field );
+    void restart_cFieldsPerProc( hid_t fid, Field *field );
     
     //! load moving window parameters
-    void restartMovingWindow(hid_t fid, SimWindow* simWindow);
+    void restartMovingWindow( hid_t fid, SimWindow *simWindow );
     
     //! test before writing everything to file per processor
     //bool dump(unsigned int itime, double time, Params &params);
-    void dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI* smpi, SimWindow* simWindow, Params &params );
+    void dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI *smpi, SimWindow *simWindow, Params &params );
     // OK
     
     //! dump everything to file per processor
-    void dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMPI* smpi, SimWindow* simWin, Params &params );
-    void dumpPatch( ElectroMagn* EMfields, std::vector<Species*> vecSpecies, Params& params, hid_t patch_gid );
+    void dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMPI *smpi, SimWindow *simWin, Params &params );
+    void dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpecies, Params &params, hid_t patch_gid );
     
     //! incremental number of times we've done a dump
     unsigned int dump_number;
@@ -70,12 +71,14 @@ public:
     static int signal_received;
     
     //! this function catches the SIGUSR1 signal and sets the signal_received to true
-    static void signal_callback_handler(int signum) {
-        MESSAGE("----------------------------------------------");
-        MESSAGE("Caught signal " << signum << " : dump + exit");
-        MESSAGE("----------------------------------------------");
-        if (signum!=SIGUSR2)
+    static void signal_callback_handler( int signum )
+    {
+        MESSAGE( "----------------------------------------------" );
+        MESSAGE( "Caught signal " << signum << " : dump + exit" );
+        MESSAGE( "----------------------------------------------" );
+        if( signum!=SIGUSR2 ) {
             signal_received = signum;
+        }
     }
     
     //! start step of this run: zero if a first run, otherwise the number of the restart step
@@ -94,16 +97,16 @@ public:
     bool exit_after_dump;
     
 private:
-    
-    //! initialize the time zero of the simulation 
+
+    //! initialize the time zero of the simulation
     void initDumpCases();
     
     //! dump field per proc
-    void dumpFieldsPerProc(hid_t fid, Field* field);
-    void dump_cFieldsPerProc(hid_t fid, Field* field);
+    void dumpFieldsPerProc( hid_t fid, Field *field );
+    void dump_cFieldsPerProc( hid_t fid, Field *field );
     
     //! dump moving window parameters
-    void dumpMovingWindow(hid_t fid, SimWindow* simWindow);
+    void dumpMovingWindow( hid_t fid, SimWindow *simWindow );
     
     //! function that returns elapsed time from creator (uses private var time_reference)
     //double time_seconds();
@@ -119,7 +122,7 @@ private:
     unsigned int time_dump_step;
     
     //! keep the last keep_n_dumps dump files
-    unsigned int keep_n_dumps;    
+    unsigned int keep_n_dumps;
     const unsigned int keep_n_dumps_max;
     
     //! write dump drectory
@@ -137,7 +140,7 @@ private:
     
     //! restart file
     std::string restart_file;
-
+    
 };
 
 #endif /* CHECKPOINT_H_ */

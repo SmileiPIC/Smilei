@@ -13,14 +13,15 @@
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class PusherBoris
 //  --------------------------------------------------------------------------------------------------------------------
-class PusherBoris : public Pusher {
+class PusherBoris : public Pusher
+{
 public:
     //! Creator for Pusher
-    PusherBoris(Params& params, Species *species);
+    PusherBoris( Params &params, Species *species );
     ~PusherBoris();
     //! Overloading of () operator
-    virtual void operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ipart_ref = 0);
-
+    virtual void operator()( Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, int ipart_ref = 0 );
+    
 };
 
 #endif

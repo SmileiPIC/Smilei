@@ -11,12 +11,12 @@ class MA_Solver3D_norm : public Solver3D
 {
 
 public:
-    MA_Solver3D_norm(Params &params);
+    MA_Solver3D_norm( Params &params );
     virtual ~MA_Solver3D_norm();
-
+    
     //! Overloading of () operator
-    virtual void operator()( ElectroMagn* fields);
-
+    virtual void operator()( ElectroMagn *fields );
+    
 protected:
 
 };//END class

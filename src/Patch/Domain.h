@@ -1,7 +1,7 @@
 #ifndef DOMAIN_H
 #define DOMAIN_H
 #include "interface.h"
-#include "VectorPatch.h" 
+#include "VectorPatch.h"
 
 class DomainDecomposition;
 class Patch;
@@ -14,18 +14,18 @@ class Timers;
 class Domain
 {
 public:
-    Domain( Params& params );
+    Domain( Params &params );
     ~Domain();
-
-    void build( Params& params, SmileiMPI* smpi, VectorPatch& vecPatches, OpenPMDparams& openPMD );
-    void solveMaxwell( Params& params, SimWindow* simWindow, int itime, double time_dual, Timers& timers, SmileiMPI* smpi );
-    void solveEnvelope( Params& params, SimWindow* simWindow, int itime, double time_dual, Timers& timers, SmileiMPI* smpi );
+    
+    void build( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, OpenPMDparams &openPMD );
+    void solveMaxwell( Params &params, SimWindow *simWindow, int itime, double time_dual, Timers &timers, SmileiMPI *smpi );
+    void solveEnvelope( Params &params, SimWindow *simWindow, int itime, double time_dual, Timers &timers, SmileiMPI *smpi );
     void clean();
     VectorPatch vecPatch_;
-    DomainDecomposition* decomposition_;
-    Patch* patch_;
-    Diagnostic* diag_; 
-   
+    DomainDecomposition *decomposition_;
+    Patch *patch_;
+    Diagnostic *diag_;
+    
 };
 
 #endif

@@ -3,8 +3,8 @@
 #include "Params.h"
 #include "Patch.h"
 
-Projector2D::Projector2D(Params &params, Patch* patch)
-  : Projector(params, patch)
+Projector2D::Projector2D( Params &params, Patch *patch )
+    : Projector( params, patch )
 {
 }
 

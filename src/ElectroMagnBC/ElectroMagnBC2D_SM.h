@@ -14,23 +14,24 @@ class Params;
 class ElectroMagn;
 class Field;
 
-class ElectroMagnBC2D_SM : public ElectroMagnBC2D {
+class ElectroMagnBC2D_SM : public ElectroMagnBC2D
+{
 public:
-    
-    ElectroMagnBC2D_SM( Params &params, Patch* patch, unsigned int _min_max );
+
+    ElectroMagnBC2D_SM( Params &params, Patch *patch, unsigned int _min_max );
     ~ElectroMagnBC2D_SM() {};
     
-    virtual void apply(ElectroMagn* EMfields, double time_dual, Patch* patch) override;
+    virtual void apply( ElectroMagn *EMfields, double time_dual, Patch *patch ) override;
     
-    void save_fields(Field*, Patch* patch) override;
+    void save_fields( Field *, Patch *patch ) override;
     void disableExternalFields() override;
-
+    
     //! Save external fields for silver muller EM Boundary condition
     std::vector<double> Bx_val,  By_val,  Bz_val;
     
 private:
-    
-    
+
+
     //! Constant used for the Silver-Mueller boundary conditions (Xmin)
     double Alpha_SM_W;
     

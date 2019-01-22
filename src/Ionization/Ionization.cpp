@@ -1,7 +1,8 @@
 #include "Ionization.h"
 #include "Species.h"
 
-Ionization::Ionization(Params& params, Species * species) {
+Ionization::Ionization( Params &params, Species *species )
+{
 
     reference_angular_frequency_SI = params.reference_angular_frequency_SI;
     
@@ -17,9 +18,10 @@ Ionization::Ionization(Params& params, Species * species) {
     EC_to_au   = 3.314742578e-15 * reference_angular_frequency_SI; // hbar omega / (me c^2 alpha^3)
     au_to_w0   = 4.134137172e+16 / reference_angular_frequency_SI; // alpha^2 me c^2 / (hbar omega)
     
-
+    
 }
 
 
-Ionization::~Ionization() {
+Ionization::~Ionization()
+{
 }

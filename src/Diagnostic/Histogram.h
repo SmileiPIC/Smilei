@@ -9,414 +9,506 @@
 #include <algorithm>
 
 // Class for each axis of the particle diags
-class HistogramAxis {
+class HistogramAxis
+{
 public:
     HistogramAxis() {};
     ~HistogramAxis() {};
-
-    void init(std::string, double, double, int, bool, bool, std::vector<double>);
-
+    
+    void init( std::string, double, double, int, bool, bool, std::vector<double> );
+    
     //! Function that goes through the particles and find where they should go in the axis
-    virtual void digitize(Species *, std::vector<double>&, std::vector<int>&, unsigned int, SimWindow*) {};
-
+    virtual void digitize( Species *, std::vector<double> &, std::vector<int> &, unsigned int, SimWindow * ) {};
+    
     //! quantity of the axis (e.g. 'x', 'px', ...)
     std::string type;
-
+    
     //! starting/ending point for the axis binning
     double min, max;
     //! starting/ending point for the axis binning, accounting for logscale
     double actual_min, actual_max;
     //! number of bins for the axis binning
     int nbins;
-
+    
     //! determines whether linear scale or log scale
     bool logscale;
-
+    
     //! determines whether particles beyond min and max are counted in the first and last bin
     bool edge_inclusive;
-
+    
     double coeff;
-
+    
     //! List of coefficients for some axes types
     std::vector<double> coefficients;
 };
 
 
 // Class for making a histogram of particle data
-class Histogram {
+class Histogram
+{
 public:
     Histogram() {};
     ~Histogram() {};
     
     //! Compute the index of each particle in the final histogram
-    void digitize(Species *, std::vector<double>&, std::vector<int>&, SimWindow*);
+    void digitize( Species *, std::vector<double> &, std::vector<int> &, SimWindow * );
     //! Calculate the quantity of each particle to be summed in the histogram
-    virtual void valuate(Species*, std::vector<double>&, std::vector<int>&) {};
+    virtual void valuate( Species *, std::vector<double> &, std::vector<int> & ) {};
     //! Add the contribution of each particle in the histogram
-    void distribute(std::vector<double>&, std::vector<int>&, std::vector<double>&);
+    void distribute( std::vector<double> &, std::vector<int> &, std::vector<double> & );
     
     std::string deposited_quantity;
     
-    std::vector<HistogramAxis*> axes;
+    std::vector<HistogramAxis *> axes;
 };
 
 
 
-class HistogramAxis_x : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
-        for ( unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-            if( index[ipart]<0 ) continue;
+class HistogramAxis_x : public HistogramAxis
+{
+    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    {
+        for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+            if( index[ipart]<0 ) {
+                continue;
+            }
             array[ipart] = s->particles->Position[0][ipart];
         }
     };
 };
-class HistogramAxis_moving_x : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
+class HistogramAxis_moving_x : public HistogramAxis
+{
+    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    {
         double x_moved = simWindow->getXmoved();
-        for ( unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-            if( index[ipart]<0 ) continue;
+        for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+            if( index[ipart]<0 ) {
+                continue;
+            }
             array[ipart] = s->particles->Position[0][ipart]-x_moved;
         }
     };
 };
-class HistogramAxis_y : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
-        for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-            if( index[ipart]<0 ) continue;
+class HistogramAxis_y : public HistogramAxis
+{
+    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    {
+        for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+            if( index[ipart]<0 ) {
+                continue;
+            }
             array[ipart] = s->particles->Position[1][ipart];
         }
     };
 };
-class HistogramAxis_z : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
-        for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-            if( index[ipart]<0 ) continue;
+class HistogramAxis_z : public HistogramAxis
+{
+    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    {
+        for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+            if( index[ipart]<0 ) {
+                continue;
+            }
             array[ipart] = s->particles->Position[2][ipart];
         }
     };
 };
-class HistogramAxis_vector : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
+class HistogramAxis_vector : public HistogramAxis
+{
+    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    {
         unsigned int idim, ndim = coefficients.size()/2;
-        for ( unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-            if( index[ipart]<0 ) continue;
+        for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+            if( index[ipart]<0 ) {
+                continue;
+            }
             array[ipart] = 0.;
-            for( idim=0; idim<ndim; idim++ )
-                array[ipart] += (s->particles->Position[idim][ipart] - coefficients[idim]) * coefficients[idim+ndim];
+            for( idim=0; idim<ndim; idim++ ) {
+                array[ipart] += ( s->particles->Position[idim][ipart] - coefficients[idim] ) * coefficients[idim+ndim];
+            }
         }
     };
 };
-class HistogramAxis_theta2D : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
-        double X,Y;
-        for ( unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-            if( index[ipart]<0 ) continue;
+class HistogramAxis_theta2D : public HistogramAxis
+{
+    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    {
+        double X, Y;
+        for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+            if( index[ipart]<0 ) {
+                continue;
+            }
             X = s->particles->Position[0][ipart] - coefficients[0];
             Y = s->particles->Position[1][ipart] - coefficients[1];
-            array[ipart] = atan2(coefficients[2]*Y - coefficients[3]*X, coefficients[2]*X + coefficients[3]*Y);
+            array[ipart] = atan2( coefficients[2]*Y - coefficients[3]*X, coefficients[2]*X + coefficients[3]*Y );
         }
     };
 };
-class HistogramAxis_theta3D : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
-        for ( unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-            if( index[ipart]<0 ) continue;
-            array[ipart] = (s->particles->Position[0][ipart] - coefficients[0]) * coefficients[3]
-                         + (s->particles->Position[1][ipart] - coefficients[1]) * coefficients[4]
-                         + (s->particles->Position[2][ipart] - coefficients[2]) * coefficients[5];
-            if      ( array[ipart]> 1. ) array[ipart] = 0.;
-            else if ( array[ipart]<-1. ) array[ipart] = M_PI;
-            else array[ipart] = acos(array[ipart]);
+class HistogramAxis_theta3D : public HistogramAxis
+{
+    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    {
+        for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+            if( index[ipart]<0 ) {
+                continue;
+            }
+            array[ipart] = ( s->particles->Position[0][ipart] - coefficients[0] ) * coefficients[3]
+                           + ( s->particles->Position[1][ipart] - coefficients[1] ) * coefficients[4]
+                           + ( s->particles->Position[2][ipart] - coefficients[2] ) * coefficients[5];
+            if( array[ipart]> 1. ) {
+                array[ipart] = 0.;
+            } else if( array[ipart]<-1. ) {
+                array[ipart] = M_PI;
+            } else {
+                array[ipart] = acos( array[ipart] );
+            }
         }
     };
 };
-class HistogramAxis_phi : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
+class HistogramAxis_phi : public HistogramAxis
+{
+    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    {
         unsigned int idim;
         double a, b;
-        for ( unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-            if( index[ipart]<0 ) continue;
+        for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+            if( index[ipart]<0 ) {
+                continue;
+            }
             a = 0.;
             b = 0.;
             for( idim=0; idim<3; idim++ ) {
-                a += (s->particles->Position[idim][ipart] - coefficients[idim]) * coefficients[idim+3];
-                b += (s->particles->Position[idim][ipart] - coefficients[idim]) * coefficients[idim+6];
+                a += ( s->particles->Position[idim][ipart] - coefficients[idim] ) * coefficients[idim+3];
+                b += ( s->particles->Position[idim][ipart] - coefficients[idim] ) * coefficients[idim+6];
             }
-            array[ipart] = atan2(b,a);
+            array[ipart] = atan2( b, a );
         }
     };
 };
-class HistogramAxis_px : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
+class HistogramAxis_px : public HistogramAxis
+{
+    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    {
         // Matter Particles
-        if (s->mass > 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        if( s->mass > 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->mass * s->particles->Momentum[0][ipart];
             }
         }
         // Photons
-        else if (s->mass == 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        else if( s->mass == 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->particles->Momentum[0][ipart];
             }
         }
     };
 };
-class HistogramAxis_py : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
+class HistogramAxis_py : public HistogramAxis
+{
+    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    {
         // Matter Particles
-        if (s->mass > 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        if( s->mass > 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->mass * s->particles->Momentum[1][ipart];
             }
         }
         // Photons
-        else if (s->mass == 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        else if( s->mass == 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->particles->Momentum[1][ipart];
             }
         }
     };
 };
-class HistogramAxis_pz : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
+class HistogramAxis_pz : public HistogramAxis
+{
+    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    {
         // Matter Particles
-        if (s->mass > 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        if( s->mass > 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->mass * s->particles->Momentum[2][ipart];
             }
         }
         // Photons
-        else if (s->mass == 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        else if( s->mass == 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->particles->Momentum[2][ipart];
             }
         }
     };
 };
-class HistogramAxis_p : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
+class HistogramAxis_p : public HistogramAxis
+{
+    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    {
         // Matter Particles
-        if (s->mass > 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
-                array[ipart] = s->mass * sqrt(pow(s->particles->Momentum[0][ipart],2)
-                                            + pow(s->particles->Momentum[1][ipart],2)
-                                            + pow(s->particles->Momentum[2][ipart],2));
+        if( s->mass > 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
+                array[ipart] = s->mass * sqrt( pow( s->particles->Momentum[0][ipart], 2 )
+                                               + pow( s->particles->Momentum[1][ipart], 2 )
+                                               + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
         // Photons
-        else if (s->mass == 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
-                array[ipart] = sqrt(pow(s->particles->Momentum[0][ipart],2)
-                                    + pow(s->particles->Momentum[1][ipart],2)
-                                    + pow(s->particles->Momentum[2][ipart],2));
+        else if( s->mass == 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
+                array[ipart] = sqrt( pow( s->particles->Momentum[0][ipart], 2 )
+                                     + pow( s->particles->Momentum[1][ipart], 2 )
+                                     + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
     };
 };
-class HistogramAxis_gamma : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
+class HistogramAxis_gamma : public HistogramAxis
+{
+    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    {
         // Matter Particles
-        if (s->mass > 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
-                array[ipart] = sqrt( 1. + pow(s->particles->Momentum[0][ipart],2)
-                                        + pow(s->particles->Momentum[1][ipart],2)
-                                        + pow(s->particles->Momentum[2][ipart],2) );
+        if( s->mass > 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
+                array[ipart] = sqrt( 1. + pow( s->particles->Momentum[0][ipart], 2 )
+                                     + pow( s->particles->Momentum[1][ipart], 2 )
+                                     + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
         // Photons
-        else if (s->mass == 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
-                array[ipart] = sqrt( pow(s->particles->Momentum[0][ipart],2)
-                                    + pow(s->particles->Momentum[1][ipart],2)
-                                    + pow(s->particles->Momentum[2][ipart],2) );
+        else if( s->mass == 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
+                array[ipart] = sqrt( pow( s->particles->Momentum[0][ipart], 2 )
+                                     + pow( s->particles->Momentum[1][ipart], 2 )
+                                     + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
     };
 };
-class HistogramAxis_ekin : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
+class HistogramAxis_ekin : public HistogramAxis
+{
+    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    {
         // Matter Particles
-        if (s->mass > 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
-                array[ipart] = s->mass * (sqrt( 1. + pow(s->particles->Momentum[0][ipart],2)
-                                                   + pow(s->particles->Momentum[1][ipart],2)
-                                                   + pow(s->particles->Momentum[2][ipart],2) ) - 1.);
+        if( s->mass > 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
+                array[ipart] = s->mass * ( sqrt( 1. + pow( s->particles->Momentum[0][ipart], 2 )
+                                                 + pow( s->particles->Momentum[1][ipart], 2 )
+                                                 + pow( s->particles->Momentum[2][ipart], 2 ) ) - 1. );
             }
         }
         // Photons
-        else if (s->mass == 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
-                array[ipart] = sqrt( pow(s->particles->Momentum[0][ipart],2)
-                                    + pow(s->particles->Momentum[1][ipart],2)
-                                    + pow(s->particles->Momentum[2][ipart],2) );
+        else if( s->mass == 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
+                array[ipart] = sqrt( pow( s->particles->Momentum[0][ipart], 2 )
+                                     + pow( s->particles->Momentum[1][ipart], 2 )
+                                     + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
     };
 };
-class HistogramAxis_vx : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
+class HistogramAxis_vx : public HistogramAxis
+{
+    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    {
         // Matter Particles
-        if (s->mass > 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        if( s->mass > 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->particles->Momentum[0][ipart]
-                               / sqrt( 1. + pow(s->particles->Momentum[0][ipart],2)
-                                          + pow(s->particles->Momentum[1][ipart],2)
-                                          + pow(s->particles->Momentum[2][ipart],2) );
+                               / sqrt( 1. + pow( s->particles->Momentum[0][ipart], 2 )
+                                       + pow( s->particles->Momentum[1][ipart], 2 )
+                                       + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
         // Photons
-        else if (s->mass == 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        else if( s->mass == 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->particles->Momentum[0][ipart]
-                               / sqrt( pow(s->particles->Momentum[0][ipart],2)
-                                    + pow(s->particles->Momentum[1][ipart],2)
-                                    + pow(s->particles->Momentum[2][ipart],2) );
+                               / sqrt( pow( s->particles->Momentum[0][ipart], 2 )
+                                       + pow( s->particles->Momentum[1][ipart], 2 )
+                                       + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
     };
 };
-class HistogramAxis_vy : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
+class HistogramAxis_vy : public HistogramAxis
+{
+    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    {
         // Matter Particles
-        if (s->mass > 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        if( s->mass > 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->particles->Momentum[1][ipart]
-                               / sqrt( 1. + pow(s->particles->Momentum[0][ipart],2)
-                                          + pow(s->particles->Momentum[1][ipart],2)
-                                          + pow(s->particles->Momentum[2][ipart],2) );
+                               / sqrt( 1. + pow( s->particles->Momentum[0][ipart], 2 )
+                                       + pow( s->particles->Momentum[1][ipart], 2 )
+                                       + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
         // Photons
-        else if (s->mass == 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        else if( s->mass == 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->particles->Momentum[1][ipart]
-                               / sqrt( pow(s->particles->Momentum[0][ipart],2)
-                                    + pow(s->particles->Momentum[1][ipart],2)
-                                    + pow(s->particles->Momentum[2][ipart],2) );
+                               / sqrt( pow( s->particles->Momentum[0][ipart], 2 )
+                                       + pow( s->particles->Momentum[1][ipart], 2 )
+                                       + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
     };
 };
-class HistogramAxis_vz : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
+class HistogramAxis_vz : public HistogramAxis
+{
+    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    {
         // Matter Particles
-        if (s->mass > 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        if( s->mass > 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->particles->Momentum[2][ipart]
-                               / sqrt( 1. + pow(s->particles->Momentum[0][ipart],2)
-                                          + pow(s->particles->Momentum[1][ipart],2)
-                                          + pow(s->particles->Momentum[2][ipart],2) );
+                               / sqrt( 1. + pow( s->particles->Momentum[0][ipart], 2 )
+                                       + pow( s->particles->Momentum[1][ipart], 2 )
+                                       + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
         // Photons
-        else if (s->mass == 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        else if( s->mass == 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->particles->Momentum[2][ipart]
-                               / sqrt( pow(s->particles->Momentum[0][ipart],2)
-                                    + pow(s->particles->Momentum[1][ipart],2)
-                                    + pow(s->particles->Momentum[2][ipart],2) );
+                               / sqrt( pow( s->particles->Momentum[0][ipart], 2 )
+                                       + pow( s->particles->Momentum[1][ipart], 2 )
+                                       + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
     };
 };
-class HistogramAxis_v : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
-        for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-            if( index[ipart]<0 ) continue;
-            array[ipart] = pow( 1. + 1./(pow(s->particles->Momentum[0][ipart],2)
-                                       + pow(s->particles->Momentum[1][ipart],2)
-                                       + pow(s->particles->Momentum[2][ipart],2)) , -0.5);
+class HistogramAxis_v : public HistogramAxis
+{
+    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    {
+        for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+            if( index[ipart]<0 ) {
+                continue;
+            }
+            array[ipart] = pow( 1. + 1./( pow( s->particles->Momentum[0][ipart], 2 )
+                                          + pow( s->particles->Momentum[1][ipart], 2 )
+                                          + pow( s->particles->Momentum[2][ipart], 2 ) ), -0.5 );
         }
     };
 };
-class HistogramAxis_vperp2 : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
+class HistogramAxis_vperp2 : public HistogramAxis
+{
+    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    {
         // Matter Particles
-        if (s->mass > 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
-                array[ipart] = (  pow(s->particles->Momentum[1][ipart],2)
-                                + pow(s->particles->Momentum[2][ipart],2)
-                               ) / (1. + pow(s->particles->Momentum[0][ipart],2)
-                                       + pow(s->particles->Momentum[1][ipart],2)
-                                       + pow(s->particles->Momentum[2][ipart],2) );
+        if( s->mass > 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
+                array[ipart] = ( pow( s->particles->Momentum[1][ipart], 2 )
+                                 + pow( s->particles->Momentum[2][ipart], 2 )
+                               ) / ( 1. + pow( s->particles->Momentum[0][ipart], 2 )
+                                     + pow( s->particles->Momentum[1][ipart], 2 )
+                                     + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
         // Photons
-        else if (s->mass == 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
-                array[ipart] = (  pow(s->particles->Momentum[1][ipart],2)
-                                + pow(s->particles->Momentum[2][ipart],2)
-                               ) / (pow(s->particles->Momentum[0][ipart],2)
-                                    + pow(s->particles->Momentum[1][ipart],2)
-                                    + pow(s->particles->Momentum[2][ipart],2) );
+        else if( s->mass == 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
+                array[ipart] = ( pow( s->particles->Momentum[1][ipart], 2 )
+                                 + pow( s->particles->Momentum[2][ipart], 2 )
+                               ) / ( pow( s->particles->Momentum[0][ipart], 2 )
+                                     + pow( s->particles->Momentum[1][ipart], 2 )
+                                     + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
     };
 };
-class HistogramAxis_charge : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
-        for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-            if( index[ipart]<0 ) continue;
-            array[ipart] = (double) s->particles->Charge[ipart];
+class HistogramAxis_charge : public HistogramAxis
+{
+    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    {
+        for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+            if( index[ipart]<0 ) {
+                continue;
+            }
+            array[ipart] = ( double ) s->particles->Charge[ipart];
         }
     };
 };
-class HistogramAxis_chi : public HistogramAxis {
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
-        for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-            if( index[ipart]<0 ) continue;
+class HistogramAxis_chi : public HistogramAxis
+{
+    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    {
+        for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+            if( index[ipart]<0 ) {
+                continue;
+            }
             array[ipart] = s->particles->Chi[ipart];
         }
     };
 };
 #ifdef SMILEI_USE_NUMPY
-class HistogramAxis_user_function : public HistogramAxis {
+class HistogramAxis_user_function : public HistogramAxis
+{
 public:
-    HistogramAxis_user_function( PyObject * type_object ) :
+    HistogramAxis_user_function( PyObject *type_object ) :
         HistogramAxis(),
         function( type_object ),
-        particleData(0)
+        particleData( 0 )
     {
     };
     ~HistogramAxis_user_function()
@@ -424,499 +516,578 @@ public:
         Py_DECREF( function );
     };
 private:
-    void digitize(Species * s, std::vector<double>&array, std::vector<int>&index, unsigned int npart, SimWindow* simWindow) {
+    void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
+    {
         #pragma omp critical
         {
             // Expose particle data as numpy arrays
             particleData.resize( npart );
             particleData.set( s->particles );
             // run the function
-            PyArrayObject* ret = (PyArrayObject*)PyObject_CallFunctionObjArgs(function, particleData.get(), NULL);
+            PyArrayObject *ret = ( PyArrayObject * )PyObject_CallFunctionObjArgs( function, particleData.get(), NULL );
             particleData.clear();
             // Copy the result to "array"
-            double* arr = (double*) PyArray_GETPTR1( ret, 0 );
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+            double *arr = ( double * ) PyArray_GETPTR1( ret, 0 );
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ )
+            {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = arr[ipart];
             }
-            Py_DECREF(ret);
+            Py_DECREF( ret );
         }
     };
     
-    PyObject* function;
+    PyObject *function;
     ParticleData particleData;
 };
 #endif
 
 //! Children classes, for various manners to fill the histogram
-class Histogram_number : public Histogram {
-    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+class Histogram_number : public Histogram
+{
+    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    {
         unsigned int npart = array.size();
-        for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-            if( index[ipart]<0 ) continue;
+        for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+            if( index[ipart]<0 ) {
+                continue;
+            }
             array[ipart] = s->particles->Weight[ipart];
         }
     };
 };
-class Histogram_charge : public Histogram {
-    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+class Histogram_charge : public Histogram
+{
+    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    {
         unsigned int npart = array.size();
-        for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-            if( index[ipart]<0 ) continue;
-            array[ipart] = s->particles->Weight[ipart] * (double)(s->particles->Charge[ipart]);
+        for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+            if( index[ipart]<0 ) {
+                continue;
+            }
+            array[ipart] = s->particles->Weight[ipart] * ( double )( s->particles->Charge[ipart] );
         }
     };
 };
-class Histogram_jx : public Histogram {
-    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+class Histogram_jx : public Histogram
+{
+    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    {
         unsigned int npart = array.size();
         // Matter Particles
-        if (s->mass > 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
-                array[ipart] = s->particles->Weight[ipart] * (double)(s->particles->Charge[ipart])
-                             * s->particles->Momentum[0][ipart]
-                             / sqrt( 1. + pow(s->particles->Momentum[0][ipart],2)
-                                        + pow(s->particles->Momentum[1][ipart],2)
-                                        + pow(s->particles->Momentum[2][ipart],2) );
+        if( s->mass > 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
+                array[ipart] = s->particles->Weight[ipart] * ( double )( s->particles->Charge[ipart] )
+                               * s->particles->Momentum[0][ipart]
+                               / sqrt( 1. + pow( s->particles->Momentum[0][ipart], 2 )
+                                       + pow( s->particles->Momentum[1][ipart], 2 )
+                                       + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
         // Photons
-        else if (s->mass == 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        else if( s->mass == 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->particles->Weight[ipart]
-                             * s->particles->Momentum[0][ipart]
-                             / sqrt( pow(s->particles->Momentum[0][ipart],2)
-                                   + pow(s->particles->Momentum[1][ipart],2)
-                                   + pow(s->particles->Momentum[2][ipart],2) );
+                               * s->particles->Momentum[0][ipart]
+                               / sqrt( pow( s->particles->Momentum[0][ipart], 2 )
+                                       + pow( s->particles->Momentum[1][ipart], 2 )
+                                       + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
     };
 };
-class Histogram_jy : public Histogram {
-    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+class Histogram_jy : public Histogram
+{
+    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    {
         unsigned int npart = array.size();
         // Matter Particles
-        if (s->mass > 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
-                array[ipart] = s->particles->Weight[ipart] * (double)(s->particles->Charge[ipart])
-                             * s->particles->Momentum[1][ipart]
-                             / sqrt( 1. + pow(s->particles->Momentum[0][ipart],2)
-                                        + pow(s->particles->Momentum[1][ipart],2)
-                                        + pow(s->particles->Momentum[2][ipart],2) );
+        if( s->mass > 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
+                array[ipart] = s->particles->Weight[ipart] * ( double )( s->particles->Charge[ipart] )
+                               * s->particles->Momentum[1][ipart]
+                               / sqrt( 1. + pow( s->particles->Momentum[0][ipart], 2 )
+                                       + pow( s->particles->Momentum[1][ipart], 2 )
+                                       + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
         // Photons
-        else if (s->mass == 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        else if( s->mass == 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->particles->Weight[ipart]
-                             * s->particles->Momentum[1][ipart]
-                             / sqrt( pow(s->particles->Momentum[0][ipart],2)
-                                   + pow(s->particles->Momentum[1][ipart],2)
-                                   + pow(s->particles->Momentum[2][ipart],2) );
+                               * s->particles->Momentum[1][ipart]
+                               / sqrt( pow( s->particles->Momentum[0][ipart], 2 )
+                                       + pow( s->particles->Momentum[1][ipart], 2 )
+                                       + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
     };
 };
-class Histogram_jz : public Histogram {
-    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+class Histogram_jz : public Histogram
+{
+    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    {
         unsigned int npart = array.size();
         // Matter Particles
-        if (s->mass > 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
-                array[ipart] = s->particles->Weight[ipart] * (double)(s->particles->Charge[ipart])
-                             * s->particles->Momentum[2][ipart]
-                             / sqrt( 1. + pow(s->particles->Momentum[0][ipart],2)
-                                        + pow(s->particles->Momentum[1][ipart],2)
-                                        + pow(s->particles->Momentum[2][ipart],2) );
+        if( s->mass > 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
+                array[ipart] = s->particles->Weight[ipart] * ( double )( s->particles->Charge[ipart] )
+                               * s->particles->Momentum[2][ipart]
+                               / sqrt( 1. + pow( s->particles->Momentum[0][ipart], 2 )
+                                       + pow( s->particles->Momentum[1][ipart], 2 )
+                                       + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
         // Photons
-        else if (s->mass == 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        else if( s->mass == 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->particles->Weight[ipart]
-                             * s->particles->Momentum[2][ipart]
-                             / sqrt( pow(s->particles->Momentum[0][ipart],2)
-                                   + pow(s->particles->Momentum[1][ipart],2)
-                                   + pow(s->particles->Momentum[2][ipart],2) );
+                               * s->particles->Momentum[2][ipart]
+                               / sqrt( pow( s->particles->Momentum[0][ipart], 2 )
+                                       + pow( s->particles->Momentum[1][ipart], 2 )
+                                       + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
     };
 };
-class Histogram_ekin : public Histogram {
-    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+class Histogram_ekin : public Histogram
+{
+    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    {
         unsigned int npart = array.size();
         // Matter Particles
-        if (s->mass > 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        if( s->mass > 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->mass * s->particles->Weight[ipart]
-                             * ( sqrt(1. + pow(s->particles->Momentum[0][ipart],2)
-                                         + pow(s->particles->Momentum[1][ipart],2)
-                                         + pow(s->particles->Momentum[2][ipart],2)) - 1.);
+                               * ( sqrt( 1. + pow( s->particles->Momentum[0][ipart], 2 )
+                                         + pow( s->particles->Momentum[1][ipart], 2 )
+                                         + pow( s->particles->Momentum[2][ipart], 2 ) ) - 1. );
             }
         }
         // Photons
-        else if (s->mass == 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        else if( s->mass == 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->particles->Weight[ipart]
-                             * ( sqrt(pow(s->particles->Momentum[0][ipart],2)
-                                    + pow(s->particles->Momentum[1][ipart],2)
-                                    + pow(s->particles->Momentum[2][ipart],2)));
+                               * ( sqrt( pow( s->particles->Momentum[0][ipart], 2 )
+                                         + pow( s->particles->Momentum[1][ipart], 2 )
+                                         + pow( s->particles->Momentum[2][ipart], 2 ) ) );
             }
         }
     };
 };
 //! Children class of Histogram: for the quantum parameter
 //! of the radiating particles
-class Histogram_chi : public Histogram {
+class Histogram_chi : public Histogram
+{
 public:
-    Histogram_chi(Patch* patch, std::vector<unsigned int> &species, std::string errorPrefix)
-      : Histogram()
+    Histogram_chi( Patch *patch, std::vector<unsigned int> &species, std::string errorPrefix )
+        : Histogram()
     {
         // The requested species must be radiating
-        for (unsigned int ispec=0 ; ispec < species.size() ; ispec++)
-            if( ! patch->vecSpecies[species[ispec]]->particles->isQuantumParameter)
-                ERROR(errorPrefix << ": 'weight_chi' requires all species to be radiating");
+        for( unsigned int ispec=0 ; ispec < species.size() ; ispec++ )
+            if( ! patch->vecSpecies[species[ispec]]->particles->isQuantumParameter ) {
+                ERROR( errorPrefix << ": 'weight_chi' requires all species to be radiating" );
+            }
     };
 private:
-    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    {
         unsigned int npart = array.size();
-        for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-            if( index[ipart]<0 ) continue;
+        for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+            if( index[ipart]<0 ) {
+                continue;
+            }
             array[ipart] = s->particles->Weight[ipart]
-                        * s->particles->Chi[ipart];
+                           * s->particles->Chi[ipart];
         }
     };
 };
-class Histogram_p : public Histogram {
-    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+class Histogram_p : public Histogram
+{
+    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    {
         unsigned int npart = array.size();
         // Matter Particles
-        if (s->mass > 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        if( s->mass > 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->mass * s->particles->Weight[ipart]
-                             * sqrt(pow(s->particles->Momentum[0][ipart],2)
-                                  + pow(s->particles->Momentum[1][ipart],2)
-                                  + pow(s->particles->Momentum[2][ipart],2));
+                               * sqrt( pow( s->particles->Momentum[0][ipart], 2 )
+                                       + pow( s->particles->Momentum[1][ipart], 2 )
+                                       + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
         // Photons
-        else if (s->mass == 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        else if( s->mass == 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->particles->Weight[ipart]
-                             * sqrt(pow(s->particles->Momentum[0][ipart],2)
-                                  + pow(s->particles->Momentum[1][ipart],2)
-                                  + pow(s->particles->Momentum[2][ipart],2));
+                               * sqrt( pow( s->particles->Momentum[0][ipart], 2 )
+                                       + pow( s->particles->Momentum[1][ipart], 2 )
+                                       + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
     };
 };
-class Histogram_px : public Histogram {
-    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+class Histogram_px : public Histogram
+{
+    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    {
         unsigned int npart = array.size();
         // Matter Particles
-        if (s->mass > 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        if( s->mass > 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->mass * s->particles->Weight[ipart] * s->particles->Momentum[0][ipart];
             }
         }
         // Photons
-        else if (s->mass == 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        else if( s->mass == 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->particles->Weight[ipart] * s->particles->Momentum[0][ipart];
             }
         }
     };
 };
-class Histogram_py : public Histogram {
-    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+class Histogram_py : public Histogram
+{
+    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    {
         unsigned int npart = array.size();
         // Matter Particles
-        if (s->mass > 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        if( s->mass > 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->mass * s->particles->Weight[ipart] * s->particles->Momentum[1][ipart];
             }
         }
         // Photons
-        else if (s->mass == 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        else if( s->mass == 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->particles->Weight[ipart] * s->particles->Momentum[1][ipart];
             }
         }
     };
 };
-class Histogram_pz : public Histogram {
-    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+class Histogram_pz : public Histogram
+{
+    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    {
         unsigned int npart = array.size();
         // Matter Particles
-        if (s->mass > 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        if( s->mass > 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->mass * s->particles->Weight[ipart] * s->particles->Momentum[2][ipart];
             }
         }
         // Photons
-        else if (s->mass == 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        else if( s->mass == 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->particles->Weight[ipart] * s->particles->Momentum[2][ipart];
             }
         }
     };
 };
-class Histogram_pressure_xx : public Histogram {
-    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+class Histogram_pressure_xx : public Histogram
+{
+    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    {
         unsigned int npart = array.size();
         // Matter Particles
-        if (s->mass > 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        if( s->mass > 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->mass * s->particles->Weight[ipart]
-                             * pow(s->particles->Momentum[0][ipart],2)
-                             / sqrt( 1. + pow(s->particles->Momentum[0][ipart],2)
-                                        + pow(s->particles->Momentum[1][ipart],2)
-                                        + pow(s->particles->Momentum[2][ipart],2) );
+                               * pow( s->particles->Momentum[0][ipart], 2 )
+                               / sqrt( 1. + pow( s->particles->Momentum[0][ipart], 2 )
+                                       + pow( s->particles->Momentum[1][ipart], 2 )
+                                       + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
         // Photons
-        else if (s->mass == 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        else if( s->mass == 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->particles->Weight[ipart]
-                             * pow(s->particles->Momentum[0][ipart],2)
-                             / sqrt( pow(s->particles->Momentum[0][ipart],2)
-                                    + pow(s->particles->Momentum[1][ipart],2)
-                                    + pow(s->particles->Momentum[2][ipart],2) );
+                               * pow( s->particles->Momentum[0][ipart], 2 )
+                               / sqrt( pow( s->particles->Momentum[0][ipart], 2 )
+                                       + pow( s->particles->Momentum[1][ipart], 2 )
+                                       + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
     };
 };
-class Histogram_pressure_yy : public Histogram {
-    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+class Histogram_pressure_yy : public Histogram
+{
+    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    {
         unsigned int npart = array.size();
         // Matter Particles
-        if (s->mass > 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        if( s->mass > 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->mass * s->particles->Weight[ipart]
-                             * pow(s->particles->Momentum[1][ipart],2)
-                             / sqrt( 1. + pow(s->particles->Momentum[0][ipart],2)
-                                        + pow(s->particles->Momentum[1][ipart],2)
-                                        + pow(s->particles->Momentum[2][ipart],2) );
+                               * pow( s->particles->Momentum[1][ipart], 2 )
+                               / sqrt( 1. + pow( s->particles->Momentum[0][ipart], 2 )
+                                       + pow( s->particles->Momentum[1][ipart], 2 )
+                                       + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
         // Photons
-        else if (s->mass == 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        else if( s->mass == 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->particles->Weight[ipart]
-                             * pow(s->particles->Momentum[1][ipart],2)
-                             / sqrt( pow(s->particles->Momentum[0][ipart],2)
-                                    + pow(s->particles->Momentum[1][ipart],2)
-                                    + pow(s->particles->Momentum[2][ipart],2) );
+                               * pow( s->particles->Momentum[1][ipart], 2 )
+                               / sqrt( pow( s->particles->Momentum[0][ipart], 2 )
+                                       + pow( s->particles->Momentum[1][ipart], 2 )
+                                       + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
     };
 };
-class Histogram_pressure_zz : public Histogram {
-    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+class Histogram_pressure_zz : public Histogram
+{
+    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    {
         unsigned int npart = array.size();
         // Matter Particles
-        if (s->mass > 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        if( s->mass > 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->mass * s->particles->Weight[ipart]
-                             * pow(s->particles->Momentum[2][ipart],2)
-                             / sqrt( 1. + pow(s->particles->Momentum[0][ipart],2)
-                                        + pow(s->particles->Momentum[1][ipart],2)
-                                        + pow(s->particles->Momentum[2][ipart],2) );
+                               * pow( s->particles->Momentum[2][ipart], 2 )
+                               / sqrt( 1. + pow( s->particles->Momentum[0][ipart], 2 )
+                                       + pow( s->particles->Momentum[1][ipart], 2 )
+                                       + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
         // Photons
-        else if (s->mass == 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        else if( s->mass == 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->particles->Weight[ipart]
-                             * pow(s->particles->Momentum[2][ipart],2)
-                             / sqrt( pow(s->particles->Momentum[0][ipart],2)
-                                    + pow(s->particles->Momentum[1][ipart],2)
-                                    + pow(s->particles->Momentum[2][ipart],2) );
+                               * pow( s->particles->Momentum[2][ipart], 2 )
+                               / sqrt( pow( s->particles->Momentum[0][ipart], 2 )
+                                       + pow( s->particles->Momentum[1][ipart], 2 )
+                                       + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
     };
 };
-class Histogram_pressure_xy : public Histogram {
-    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+class Histogram_pressure_xy : public Histogram
+{
+    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    {
         unsigned int npart = array.size();
         // Matter Particles
-        if (s->mass > 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        if( s->mass > 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->mass * s->particles->Weight[ipart]
-                             * s->particles->Momentum[0][ipart]
-                             * s->particles->Momentum[1][ipart]
-                             / sqrt( 1. + pow(s->particles->Momentum[0][ipart],2)
-                                        + pow(s->particles->Momentum[1][ipart],2)
-                                        + pow(s->particles->Momentum[2][ipart],2) );
+                               * s->particles->Momentum[0][ipart]
+                               * s->particles->Momentum[1][ipart]
+                               / sqrt( 1. + pow( s->particles->Momentum[0][ipart], 2 )
+                                       + pow( s->particles->Momentum[1][ipart], 2 )
+                                       + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
         // Photons
-        else if (s->mass == 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        else if( s->mass == 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->particles->Weight[ipart]
-                             * s->particles->Momentum[0][ipart]
-                             * s->particles->Momentum[1][ipart]
-                             / sqrt( pow(s->particles->Momentum[0][ipart],2)
-                                        + pow(s->particles->Momentum[1][ipart],2)
-                                        + pow(s->particles->Momentum[2][ipart],2) );
+                               * s->particles->Momentum[0][ipart]
+                               * s->particles->Momentum[1][ipart]
+                               / sqrt( pow( s->particles->Momentum[0][ipart], 2 )
+                                       + pow( s->particles->Momentum[1][ipart], 2 )
+                                       + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
     };
 };
-class Histogram_pressure_xz : public Histogram {
-    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+class Histogram_pressure_xz : public Histogram
+{
+    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    {
         unsigned int npart = array.size();
         // Matter Particles
-        if (s->mass > 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        if( s->mass > 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->mass * s->particles->Weight[ipart]
-                             * s->particles->Momentum[0][ipart]
-                             * s->particles->Momentum[2][ipart]
-                             / sqrt( 1. + pow(s->particles->Momentum[0][ipart],2)
-                                        + pow(s->particles->Momentum[1][ipart],2)
-                                        + pow(s->particles->Momentum[2][ipart],2) );
+                               * s->particles->Momentum[0][ipart]
+                               * s->particles->Momentum[2][ipart]
+                               / sqrt( 1. + pow( s->particles->Momentum[0][ipart], 2 )
+                                       + pow( s->particles->Momentum[1][ipart], 2 )
+                                       + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
         // Photons
-        else if (s->mass == 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        else if( s->mass == 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->particles->Weight[ipart]
-                             * s->particles->Momentum[0][ipart]
-                             * s->particles->Momentum[2][ipart]
-                             / sqrt(pow(s->particles->Momentum[0][ipart],2)
-                                        + pow(s->particles->Momentum[1][ipart],2)
-                                        + pow(s->particles->Momentum[2][ipart],2) );
+                               * s->particles->Momentum[0][ipart]
+                               * s->particles->Momentum[2][ipart]
+                               / sqrt( pow( s->particles->Momentum[0][ipart], 2 )
+                                       + pow( s->particles->Momentum[1][ipart], 2 )
+                                       + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
     };
 };
-class Histogram_pressure_yz : public Histogram {
-    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+class Histogram_pressure_yz : public Histogram
+{
+    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    {
         unsigned int npart = array.size();
         // Matter Particles
-        if (s->mass > 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        if( s->mass > 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->mass * s->particles->Weight[ipart]
-                             * s->particles->Momentum[1][ipart]
-                             * s->particles->Momentum[2][ipart]
-                             / sqrt( 1. + pow(s->particles->Momentum[0][ipart],2)
-                                        + pow(s->particles->Momentum[1][ipart],2)
-                                        + pow(s->particles->Momentum[2][ipart],2) );
+                               * s->particles->Momentum[1][ipart]
+                               * s->particles->Momentum[2][ipart]
+                               / sqrt( 1. + pow( s->particles->Momentum[0][ipart], 2 )
+                                       + pow( s->particles->Momentum[1][ipart], 2 )
+                                       + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
         // Photons
-        else if (s->mass == 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        else if( s->mass == 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->particles->Weight[ipart]
-                             * s->particles->Momentum[1][ipart]
-                             * s->particles->Momentum[2][ipart]
-                             / sqrt(pow(s->particles->Momentum[0][ipart],2)
-                                        + pow(s->particles->Momentum[1][ipart],2)
-                                        + pow(s->particles->Momentum[2][ipart],2) );
+                               * s->particles->Momentum[1][ipart]
+                               * s->particles->Momentum[2][ipart]
+                               / sqrt( pow( s->particles->Momentum[0][ipart], 2 )
+                                       + pow( s->particles->Momentum[1][ipart], 2 )
+                                       + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
     };
 };
-class Histogram_ekin_vx : public Histogram {
-    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+class Histogram_ekin_vx : public Histogram
+{
+    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    {
         unsigned int npart = array.size();
         // Matter Particles
-        if (s->mass > 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        if( s->mass > 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->mass * s->particles->Weight[ipart]
-                             * s->particles->Momentum[0][ipart]
-                             * (1. - 1./sqrt(1. + pow(s->particles->Momentum[0][ipart],2)
-                                                + pow(s->particles->Momentum[1][ipart],2)
-                                                + pow(s->particles->Momentum[2][ipart],2)));
+                               * s->particles->Momentum[0][ipart]
+                               * ( 1. - 1./sqrt( 1. + pow( s->particles->Momentum[0][ipart], 2 )
+                                                 + pow( s->particles->Momentum[1][ipart], 2 )
+                                                 + pow( s->particles->Momentum[2][ipart], 2 ) ) );
             }
         }
         // Photons
-        else if (s->mass == 0)
-        {
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+        else if( s->mass == 0 ) {
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = s->particles->Weight[ipart]
-                             * s->particles->Momentum[0][ipart]
-                             / sqrt(pow(s->particles->Momentum[0][ipart],2)
-                                    + pow(s->particles->Momentum[1][ipart],2)
-                                    + pow(s->particles->Momentum[2][ipart],2));
+                               * s->particles->Momentum[0][ipart]
+                               / sqrt( pow( s->particles->Momentum[0][ipart], 2 )
+                                       + pow( s->particles->Momentum[1][ipart], 2 )
+                                       + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
     };
 };
 
 #ifdef SMILEI_USE_NUMPY
-class Histogram_user_function : public Histogram {
+class Histogram_user_function : public Histogram
+{
 public:
-    Histogram_user_function( PyObject* deposited_quantity_object ) :
+    Histogram_user_function( PyObject *deposited_quantity_object ) :
         Histogram(),
-        function(deposited_quantity_object),
-        particleData(0)
+        function( deposited_quantity_object ),
+        particleData( 0 )
     {};
     ~Histogram_user_function()
     {
         Py_DECREF( function );
     };
 private:
-    void valuate(Species * s, std::vector<double> &array, std::vector<int> &index) {
+    void valuate( Species *s, std::vector<double> &array, std::vector<int> &index )
+    {
         unsigned int npart = array.size();
         #pragma omp critical
         {
@@ -924,19 +1095,21 @@ private:
             particleData.resize( npart );
             particleData.set( s->particles );
             // run the function
-            PyArrayObject* ret = (PyArrayObject*)PyObject_CallFunctionObjArgs(function, particleData.get(), NULL);
+            PyArrayObject *ret = ( PyArrayObject * )PyObject_CallFunctionObjArgs( function, particleData.get(), NULL );
             particleData.clear();
             // Copy the result to "array"
-            double* arr = (double*) PyArray_GETPTR1( ret, 0 );
-            for (unsigned int ipart = 0 ; ipart < npart ; ipart++) {
-                if( index[ipart]<0 ) continue;
+            double *arr = ( double * ) PyArray_GETPTR1( ret, 0 );
+            for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
+                if( index[ipart]<0 ) {
+                    continue;
+                }
                 array[ipart] = arr[ipart];
             }
-            Py_DECREF(ret);
+            Py_DECREF( ret );
         }
     };
     
-    PyObject* function;
+    PyObject *function;
     ParticleData particleData;
 };
 #endif

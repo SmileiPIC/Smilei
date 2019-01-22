@@ -5,21 +5,22 @@
 #include "ElectroMagnBC.h"
 
 class Params;
-class Patch; 
+class Patch;
 class ElectroMagn;
 
-class ElectroMagnBC1D : public ElectroMagnBC {
+class ElectroMagnBC1D : public ElectroMagnBC
+{
 public:
 
-    ElectroMagnBC1D( Params &params, Patch* patch, unsigned int _min_max );
+    ElectroMagnBC1D( Params &params, Patch *patch, unsigned int _min_max );
     virtual ~ElectroMagnBC1D();
     
-    virtual void apply(ElectroMagn* EMfields, double time_dual, Patch* patch) = 0;
+    virtual void apply( ElectroMagn *EMfields, double time_dual, Patch *patch ) = 0;
     
-    void applyBConEdges( ElectroMagn* EMfields, Patch* patch );
-
+    void applyBConEdges( ElectroMagn *EMfields, Patch *patch );
+    
 protected:
-    
+
     //! Number of nodes on the primal grid in the x-direction
     unsigned int nx_p;
     
@@ -34,7 +35,7 @@ protected:
     
     //! Ratio of the spatial-step by the time-step dx/dt for 1D3V cartesian simulations
     double dx_ov_dt;
-
+    
 };
 
 #endif
