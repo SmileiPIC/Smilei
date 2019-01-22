@@ -42,10 +42,10 @@
 << __FUNCTION__ << ") " << __txt << std::endl
 #endif
 
-//#define MESSAGE1(__txt)  {int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); if (__rk==0) { std::cout << " ";  std::cout << __txt << std::endl;};}
-//#define MESSAGE2(__val,__txt) {int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); if (__rk==0) {for (int __i=0;__i<__val;__i++) std::cout << "\t";}; MESSAGE1(__txt);}
-#define MESSAGE1(__txt)  {;}
-#define MESSAGE2(__val,__txt) {MESSAGE1(__txt);}
+#define MESSAGE1(__txt)  {int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); if (__rk==0) { std::cout << " ";  std::cout << __txt << std::endl;};}
+#define MESSAGE2(__val,__txt) {int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); if (__rk==0) {for (int __i=0;__i<__val;__i++) std::cout << "\t";}; MESSAGE1(__txt);}
+//#define MESSAGE1(__txt)  {;}
+//#define MESSAGE2(__val,__txt) {MESSAGE1(__txt);}
 
 #define MESSAGE3(arg1,arg2,arg3,...) arg3
 #define MESSAGE4(...) MESSAGE3(__VA_ARGS__,MESSAGE2,MESSAGE1,)
