@@ -229,6 +229,13 @@ tar:
 	$(Q) tar -czf $(EXEC)-$(VERSION).tgz $(EXEC)-$(VERSION) && rm -R $(EXEC)-$(VERSION)
 
 
+
+#-----------------------------------------------------
+# astyle
+style:
+	@echo "Astyle is applied on all files"
+	$(Q) astyle --style=1tbs --fill-empty-lines --pad-comma --unpad-paren --pad-paren-in --align-pointer=name --align-reference=name -n -r src/*.cpp,*.h
+
 #-----------------------------------------------------
 # Python module rules
 
