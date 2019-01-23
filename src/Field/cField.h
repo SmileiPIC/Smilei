@@ -6,9 +6,10 @@
 #include <vector>
 
 #include "Field.h"
-#include "Patch.h"
 #include "Params.h"
 #include "SmileiMPI.h"
+
+class Patch;
 
 //! class cField used to defined an array of Complex
 class cField : public Field

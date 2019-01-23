@@ -11,7 +11,6 @@
 #undef _POSIX_C_SOURCE
 #undef _XOPEN_SOURCE
 
-#include "Profile.h"
 #include "Timer.h"
 #include "codeConstants.h"
 
@@ -30,6 +29,7 @@
 
 class SmileiMPI;
 class Species;
+class Profile;
 
 namespace Rand
 {
