@@ -91,8 +91,7 @@ void LaserEnvelope1D::initEnvelope( Patch *patch, ElectroMagn *EMfields )
     //! 1/(2Dx), where dx is the spatial step dx for 1D3V cartesian simulations
     double one_ov_2dx=1./2./cell_length[0];
     
-    // position_time[0]: x coordinate
-    
+    // position[0]: x coordinate
     // t: time coordinate --> x/c for the envelope initialization
     
     position[0]           = cell_length[0]*( ( double )( patch->getCellStartingGlobalIndex( 0 ) )+( A1D->isDual( 0 )?-0.5:0. ) );
