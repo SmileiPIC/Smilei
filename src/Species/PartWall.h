@@ -11,24 +11,25 @@ class Particles;
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class PartWall
 //  --------------------------------------------------------------------------------------------------------------------
-class PartWall {
+class PartWall
+{
 public:
     //! PartWall constructor
-    PartWall(double, unsigned short, std::string);
+    PartWall( double, unsigned short, std::string );
     //! PartWall destructor
-    ~PartWall(){};
+    ~PartWall() {};
     
     //! Method that creates a vector of PartWall objects: one for each group in the input file.
-    static std::vector<PartWall*> create(Params&, Patch*);
+    static std::vector<PartWall *> create( Params &, Patch * );
     //! Method that clones a vector of PartWall objects
-    static std::vector<PartWall*> clone(std::vector<PartWall*>);
+    static std::vector<PartWall *> clone( std::vector<PartWall *> );
     
     //! Wall boundary condition pointer (same prototypes for all conditions)
     //! @see BoundaryConditionType.h for functions that this pointer will target
-    int (*wall) ( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart);
+    int ( *wall )( Particles &particles, int ipart, int direction, double limit_pos, Species *species, double &nrj_iPart );
     
     //! Method which applies particles wall
-    int apply (Particles &particles, int ipart, Species *species, double dtgf, double &nrj_iPart);
+    int apply( Particles &particles, int ipart, Species *species, double dtgf, double &nrj_iPart );
     
 private:
     //! position of a wall in its direction
@@ -36,37 +37,53 @@ private:
     
     //! direction of the partWall (x=0, y=1, z=2)
     unsigned short direction;
-
+    
 };
 
 
-class PartWalls {
+class PartWalls
+{
 public:
     //! PartWalls constructor
-    PartWalls(Params&, Patch*);
+    PartWalls( Params &, Patch * );
     //! PartWalls cloning constructor
-    PartWalls(PartWalls*, Patch*);
+    PartWalls( PartWalls *, Patch * );
     //! PartWalls destructor
     ~PartWalls();
     
     //! Returns the number of walls
-    unsigned int size()  { return vecPartWall.size();  };
+    unsigned int size()
+    {
+        return vecPartWall.size();
+    };
     
     //! Clears the vector of walls
-    void clear() { vecPartWall.clear(); };
+    void clear()
+    {
+        vecPartWall.clear();
+    };
     
     //! Resizes the vector of walls
-    void resize(int i) { vecPartWall.resize(i); };
+    void resize( int i )
+    {
+        vecPartWall.resize( i );
+    };
     
     //! Pushes a pointer to a wall at the end of the vector
-    void push_back(PartWall* pw) { vecPartWall.push_back(pw); };
+    void push_back( PartWall *pw )
+    {
+        vecPartWall.push_back( pw );
+    };
     
     //! Accesses the wall of index i
-    PartWall* operator[](int i) const { return vecPartWall[i]; }
+    PartWall *operator[]( int i ) const
+    {
+        return vecPartWall[i];
+    }
     
 private:
     //! The vector of partWall objects
-    std::vector<PartWall*> vecPartWall;
+    std::vector<PartWall *> vecPartWall;
     
     // save all walls parameters even though the current patch doesn't contain them
     

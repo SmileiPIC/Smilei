@@ -7,11 +7,12 @@
 
 using namespace std;
 
-InterpolatorAM::InterpolatorAM(Params &params, Patch* patch)
-  : Interpolator(params, patch) {
+InterpolatorAM::InterpolatorAM( Params &params, Patch *patch )
+    : Interpolator( params, patch )
+{
 
-    i_domain_begin = patch->getCellStartingGlobalIndex(0);
-    j_domain_begin = patch->getCellStartingGlobalIndex(1);
-
+    i_domain_begin = patch->getCellStartingGlobalIndex( 0 );
+    j_domain_begin = patch->getCellStartingGlobalIndex( 1 );
+    
 }
 

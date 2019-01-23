@@ -6,99 +6,105 @@
 #include "GlobalDomainDecomposition.h"
 #include "CartesianDomainDecomposition.h"
 
-class DomainDecompositionFactory {
+class DomainDecompositionFactory
+{
 public:
-    static DomainDecomposition* create(Params& params) {
-        DomainDecomposition* domain_decomposition = NULL;
-
-        TITLE("Patch arrangement : ");
-
-
-        if (params.patch_arrangement=="hilbertian") {
-            if ( ( params.geometry == "1Dcartesian" ) )
+    static DomainDecomposition *create( Params &params )
+    {
+        DomainDecomposition *domain_decomposition = NULL;
+        
+        TITLE( "Patch arrangement : " );
+        
+        
+        if( params.patch_arrangement=="hilbertian" ) {
+            if( ( params.geometry == "1Dcartesian" ) ) {
                 domain_decomposition = new HilbertDomainDecomposition1D( params );
-            else if ( ( params.geometry == "2Dcartesian" ) || ( params.geometry == "AMcylindrical" ) ) 
+            } else if( ( params.geometry == "2Dcartesian" ) || ( params.geometry == "AMcylindrical" ) ) {
                 domain_decomposition = new HilbertDomainDecomposition2D( params );
-            else if ( ( params.geometry == "3Dcartesian" ) ) 
+            } else if( ( params.geometry == "3Dcartesian" ) ) {
                 domain_decomposition = new HilbertDomainDecomposition3D( params );
-            else
+            } else {
                 ERROR( "Unknown geometry" );
-        }
-        else {
+            }
+        } else {
+        
+            bool enable_diagField( true );
             
-            bool enable_diagField(true);
-
             int nmpi = 1;
             MPI_Comm_size( MPI_COMM_WORLD, &nmpi );
-
-            int npatches(1);
-            for ( unsigned int iDim=0 ; iDim<params.nDim_field ; iDim++ )
+            
+            int npatches( 1 );
+            for( unsigned int iDim=0 ; iDim<params.nDim_field ; iDim++ ) {
                 npatches *= params.number_of_patches[iDim];
-            int npatches_per_rank = npatches / nmpi;
-
-            if ( ( npatches%nmpi!=0 )||(params.patch_arrangement == "linearized_YX")||(params.patch_arrangement == "linearized_ZYX") ) {
-                enable_diagField = false;
             }
-            else {
-                if (params.patch_arrangement == "linearized_XY") {
-
-                    if ( (params.number_of_patches[1]%npatches_per_rank!=0)
-                         && (npatches_per_rank%params.number_of_patches[1]!=0) )
-                        enable_diagField = false;
-
-                }
-                else if (params.patch_arrangement == "linearized_XYZ") {
-
-                    if ( (params.number_of_patches[2]%npatches_per_rank!=0)
-                         && (npatches_per_rank%params.number_of_patches[2]!=0)
-                         && (npatches_per_rank%(params.number_of_patches[1]*params.number_of_patches[2]!=0) ) ) {
+            int npatches_per_rank = npatches / nmpi;
+            
+            if( ( npatches%nmpi!=0 )||( params.patch_arrangement == "linearized_YX" )||( params.patch_arrangement == "linearized_ZYX" ) ) {
+                enable_diagField = false;
+            } else {
+                if( params.patch_arrangement == "linearized_XY" ) {
+                
+                    if( ( params.number_of_patches[1]%npatches_per_rank!=0 )
+                            && ( npatches_per_rank%params.number_of_patches[1]!=0 ) ) {
                         enable_diagField = false;
                     }
-                }
-                else
+                    
+                } else if( params.patch_arrangement == "linearized_XYZ" ) {
+                
+                    if( ( params.number_of_patches[2]%npatches_per_rank!=0 )
+                            && ( npatches_per_rank%params.number_of_patches[2]!=0 )
+                            && ( npatches_per_rank%( params.number_of_patches[1]*params.number_of_patches[2]!=0 ) ) ) {
+                        enable_diagField = false;
+                    }
+                } else {
                     ERROR( params.patch_arrangement << " not supported" );
+                }
             }
-
-            if (!enable_diagField )
+            
+            if( !enable_diagField ) {
                 WARNING( "DiagFields not reliable because of the patch arrangement !!!" );
-
-            if ( ( params.geometry == "1Dcartesian" ) )
+            }
+            
+            if( ( params.geometry == "1Dcartesian" ) ) {
                 domain_decomposition = new CartesianDomainDecomposition1D( params );
-            else if ( ( params.geometry == "2Dcartesian" )  || ( params.geometry == "AMcylindrical" )  ) {
-                if (params.patch_arrangement=="linearized_XY")
+            } else if( ( params.geometry == "2Dcartesian" )  || ( params.geometry == "AMcylindrical" ) ) {
+                if( params.patch_arrangement=="linearized_XY" ) {
                     domain_decomposition = new CartesianDomainDecomposition2D( params );
-                else if (params.patch_arrangement=="linearized_YX")
+                } else if( params.patch_arrangement=="linearized_YX" ) {
                     domain_decomposition = new CartesianDomainDecomposition2D_YX( params );
-            }
-            else if ( ( params.geometry == "3Dcartesian" ) ) {
-                if (params.patch_arrangement=="linearized_XYZ")
+                }
+            } else if( ( params.geometry == "3Dcartesian" ) ) {
+                if( params.patch_arrangement=="linearized_XYZ" ) {
                     domain_decomposition = new CartesianDomainDecomposition3D( params );
-                else if (params.patch_arrangement=="linearized_ZYX")
+                } else if( params.patch_arrangement=="linearized_ZYX" ) {
                     domain_decomposition = new CartesianDomainDecomposition3D_ZYX( params );
-            }
-            else
+                }
+            } else {
                 ERROR( "Unknown geometry" );
+            }
         }
-
+        
         return domain_decomposition;
     }
-
-    static DomainDecomposition* createGlobal(Params& params) {
-        DomainDecomposition* domain_decomposition = NULL;
-
-        if ( ( params.geometry == "1Dcartesian" ) )
+    
+    static DomainDecomposition *createGlobal( Params &params )
+    {
+        DomainDecomposition *domain_decomposition = NULL;
+        
+        if( ( params.geometry == "1Dcartesian" ) ) {
             domain_decomposition = new GlobalDomainDecomposition1D( params );
-        else if ( ( params.geometry == "2Dcartesian" ) || ( params.geometry == "AMcylindrical" ) ) 
+        } else if( ( params.geometry == "2Dcartesian" ) || ( params.geometry == "AMcylindrical" ) ) {
             domain_decomposition = new GlobalDomainDecomposition2D( params );
-        else if ( ( params.geometry == "3Dcartesian" ) ) 
+        } else if( ( params.geometry == "3Dcartesian" ) ) {
             domain_decomposition = new GlobalDomainDecomposition3D( params );
-        else
+        } else {
             ERROR( "Unknown geometry" );
-
+        }
+        
         return domain_decomposition;
     }
-
-
+    
+    
 };
 
 #endif

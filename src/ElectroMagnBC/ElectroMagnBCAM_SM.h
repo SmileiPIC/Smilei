@@ -15,23 +15,24 @@ class Params;
 class ElectroMagn;
 class Field;
 
-class ElectroMagnBCAM_SM : public ElectroMagnBC {
+class ElectroMagnBCAM_SM : public ElectroMagnBC
+{
 public:
-    
-    ElectroMagnBCAM_SM( Params &params, Patch* patch, unsigned int _min_max );
+
+    ElectroMagnBCAM_SM( Params &params, Patch *patch, unsigned int _min_max );
     ~ElectroMagnBCAM_SM() {};
     
-    virtual void apply(ElectroMagn* EMfields, double time_dual, Patch* patch) override;
+    virtual void apply( ElectroMagn *EMfields, double time_dual, Patch *patch ) override;
     
-    void save_fields(Field*, Patch* patch) override;
+    void save_fields( Field *, Patch *patch ) override;
     void disableExternalFields() override;
-
+    
     //! Save external fields for silver muller EM Boundary condition
     std::vector< std::complex<double> > Bl_val,  Br_val,  Bt_val;
     
 private:
-    
-    
+
+
     //! Conversion factor from degree to radian
     double conv_deg2rad;
     
@@ -93,9 +94,9 @@ private:
     double Delta_SM_Xmax;
     
     //! Constant used for the Silver-Mueller boundary conditions (Xmax)
-    std::complex<double> Epsilon_SM_Xmax;	
-	//! Number of modes
-	unsigned int Nmode;
+    std::complex<double> Epsilon_SM_Xmax;
+    //! Number of modes
+    unsigned int Nmode;
     
 };
 

@@ -5,41 +5,43 @@
 
 #include "Histogram.h"
 
-class DiagnosticParticleBinning : public Diagnostic {
+class DiagnosticParticleBinning : public Diagnostic
+{
     friend class SmileiMPI;
-
-public :
     
+public :
+
     //! Default constructor
-    DiagnosticParticleBinning( Params &params, SmileiMPI* smpi, Patch* patch, int diagId );
+    DiagnosticParticleBinning( Params &params, SmileiMPI *smpi, Patch *patch, int diagId );
     //! Cloning constructor
-    DiagnosticParticleBinning( DiagnosticParticleBinning* );
+    DiagnosticParticleBinning( DiagnosticParticleBinning * );
     //! Default destructor
     ~DiagnosticParticleBinning() override;
     
-    void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
+    void openFile( Params &params, SmileiMPI *smpi, bool newfile ) override;
     
     void closeFile() override;
     
     bool prepare( int timestep ) override;
     
-    void run( Patch* patch, int timestep, SimWindow* simWindow ) override;
+    void run( Patch *patch, int timestep, SimWindow *simWindow ) override;
     
-    void write(int timestep, SmileiMPI* smpi) override;
+    void write( int timestep, SmileiMPI *smpi ) override;
     
     //! Clear the array
     void clear();
     
-     //! Get memory footprint of current diagnostic
-    int getMemFootPrint() override {
-        int size = output_size*sizeof(double);
+    //! Get memory footprint of current diagnostic
+    int getMemFootPrint() override
+    {
+        int size = output_size*sizeof( double );
         // + data_array + index_array +  axis_array
-        // + nparts_max * (sizeof(double)+sizeof(int)+sizeof(double)) 
+        // + nparts_max * (sizeof(double)+sizeof(int)+sizeof(double))
         return size;
     };
     
     //! Get disk footprint of current diagnostic
-    uint64_t getDiskFootPrint(int istart, int istop, Patch* patch) override;
+    uint64_t getDiskFootPrint( int istart, int istop, Patch *patch ) override;
     
 private :
 
@@ -53,7 +55,7 @@ private :
     std::vector<double> data_sum;
     
     //! Histogram object
-    Histogram * histogram;
+    Histogram *histogram;
     
     unsigned int output_size;
     

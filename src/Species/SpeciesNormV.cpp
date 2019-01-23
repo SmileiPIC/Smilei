@@ -12,10 +12,10 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Creator for SpeciesNorm
 // ---------------------------------------------------------------------------------------------------------------------
-SpeciesNormV::SpeciesNormV( Params& params, Patch* patch )
-  : SpeciesV( params, patch )
+SpeciesNormV::SpeciesNormV( Params &params, Patch *patch )
+    : SpeciesV( params, patch )
 {
-    DEBUG("Species is being created as norm");
+    DEBUG( "Species is being created as norm" );
 }
 
 
@@ -24,5 +24,5 @@ SpeciesNormV::SpeciesNormV( Params& params, Patch* patch )
 // ---------------------------------------------------------------------------------------------------------------------
 SpeciesNormV::~SpeciesNormV()
 {
-    DEBUG("Species norm deleted ");
+    DEBUG( "Species norm deleted " );
 }

@@ -7,8 +7,8 @@
 #include "Field2D.h"
 
 
-ElectroMagnBC2D::ElectroMagnBC2D( Params &params, Patch* patch, unsigned int _min_max )
-  : ElectroMagnBC( params, patch, _min_max )
+ElectroMagnBC2D::ElectroMagnBC2D( Params &params, Patch *patch, unsigned int _min_max )
+    : ElectroMagnBC( params, patch, _min_max )
 {
     // number of nodes of the primal and dual grid in the x-direction
     nx_p = params.n_space[0]*params.global_factor[0]+1+2*params.oversize[0];
@@ -34,7 +34,7 @@ ElectroMagnBC2D::~ElectroMagnBC2D()
 }
 
 
-void ElectroMagnBC2D::applyBConEdges( ElectroMagn* EMfields, Patch* patch )
+void ElectroMagnBC2D::applyBConEdges( ElectroMagn *EMfields, Patch *patch )
 {
 //    // Static cast of the fields
 //   Field2D* Ex2D = static_cast<Field2D*>(EMfields->Ex_);
@@ -49,13 +49,13 @@ void ElectroMagnBC2D::applyBConEdges( ElectroMagn* EMfields, Patch* patch )
 //   if (patch->isXmin()){
 //
 //       unsigned int i = 0;
-//       if (patch->isYmin()){ 
+//       if (patch->isYmin()){
 //           // Xmin/Ymin
 //           // edge 0 : By[0,0,k] + beta(-x)Bx[0,0,k] = S(-x)
 //           // edge 8 : Bx[0,0,k] + beta(-y)By[0,0,k] = S(-y)
 //       }//End Xmin Ymin edge
 //
-//       if (patch->isYmax()){ 
+//       if (patch->isYmax()){
 //           // Xmin/Ymax
 //           //edge 1 : By[0,ny_p-1,k] + beta(-x)Bx[0,ny_p,k] = S(-x)
 //           //edge 12 : Bx[0,ny_p,k] + beta(-y)By[0,ny_p-1,k] = S(-y)
@@ -66,13 +66,13 @@ void ElectroMagnBC2D::applyBConEdges( ElectroMagn* EMfields, Patch* patch )
 //   if (patch->isXmax()){
 //
 //       unsigned int i = nx_p - 1;
-//       if (patch->isYmin()){ 
+//       if (patch->isYmin()){
 //           // Xmax/Ymin
 //           // edge 4 : By[nx_p,0,k] + beta(+x)Bx[nx_p-1,0,k] = S(+x)
 //           // edge 9 : Bx[nx_p-1,0,k] + beta(-y)By[nx_p-1,0,k] = S(-y)
 //       }//End Xmax Ymin edge
 //
-//       if (patch->isYmax()){ 
+//       if (patch->isYmax()){
 //           // Xmax/Ymax
 //           //edge 5 :  By[nx_p,ny_p-1,k] + beta(+x)Bx[nx_p-1,ny_p,k] = S(+x)
 //           //edge 13 : Bx[nx_p-1,ny_p,k] + beta(-y)By[nx_p,ny_p-1,k] = S(-y)

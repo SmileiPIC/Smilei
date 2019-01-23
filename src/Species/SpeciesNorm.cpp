@@ -12,8 +12,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // Creator for SpeciesNorm
 // ---------------------------------------------------------------------------------------------------------------------
-SpeciesNorm::SpeciesNorm( Params& params, Patch* patch )
-  : Species( params, patch )
+SpeciesNorm::SpeciesNorm( Params &params, Patch *patch )
+    : Species( params, patch )
 {
 }
 

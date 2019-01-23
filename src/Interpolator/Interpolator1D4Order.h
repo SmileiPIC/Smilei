@@ -13,31 +13,33 @@ class Interpolator1D4Order : public Interpolator1D
 {
 
 public:
-    Interpolator1D4Order(Params&, Patch*);
-    ~Interpolator1D4Order() override final{};
+    Interpolator1D4Order( Params &, Patch * );
+    ~Interpolator1D4Order() override final {};
     
-    inline void fields    (ElectroMagn* EMfields, Particles &particles, int ipart, int nparts, double* ELoc, double* BLoc);
-    void fieldsAndCurrents(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc) override final;
-    void fieldsWrapper     (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref = 0) override final;
-    void fieldsSelection (ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, std::vector<unsigned int> * selection) override final;
-    void oneField         (Field* field, Particles &particles, int *istart, int *iend, double* FieldLoc) override final;
+    inline void fields( ElectroMagn *EMfields, Particles &particles, int ipart, int nparts, double *ELoc, double *BLoc );
+    void fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc ) override final;
+    void fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override final;
+    void fieldsSelection( ElectroMagn *EMfields, Particles &particles, double *buffer, int offset, std::vector<unsigned int> *selection ) override final;
+    void oneField( Field *field, Particles &particles, int *istart, int *iend, double *FieldLoc ) override final;
     
-    inline double compute( double* coeff, Field1D* f, int idx) {
-        double interp_res =  coeff[0] * (*f)(idx-2)   + coeff[1] * (*f)(idx-1)   + coeff[2] * (*f)(idx) + coeff[3] * (*f)(idx+1) + coeff[4] * (*f)(idx+2);
+    inline double compute( double *coeff, Field1D *f, int idx )
+    {
+        double interp_res =  coeff[0] * ( *f )( idx-2 )   + coeff[1] * ( *f )( idx-1 )   + coeff[2] * ( *f )( idx ) + coeff[3] * ( *f )( idx+1 ) + coeff[4] * ( *f )( idx+2 );
         return interp_res;
     };
-
-    void fieldsAndEnvelope( ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override final;
-    void timeCenteredEnvelope( ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override final;
-    void envelopeAndSusceptibility(ElectroMagn* EMfields, Particles &particles, int ipart, double* Env_A_abs_Loc, double* Env_Chi_Loc, double* Env_E_abs_Loc) override final;
+    
+    void fieldsAndEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override final;
+    void timeCenteredEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override final;
+    void envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc ) override final;
     
 private:
-    inline void coeffs( double xjn ) {
+    inline void coeffs( double xjn )
+    {
         double xjmxi2, xjmxi3, xjmxi4;
         
         // Dual
-        id_      = round(xjn+0.5);  // index of the central point
-        xjmxi  = xjn -(double)id_+0.5;  // normalized distance to the central node
+        id_      = round( xjn+0.5 ); // index of the central point
+        xjmxi  = xjn -( double )id_+0.5; // normalized distance to the central node
         xjmxi2 = xjmxi*xjmxi;     // square of the normalized distance to the central node
         xjmxi3 = xjmxi2*xjmxi;    // cube of the normalized distance to the central node
         xjmxi4 = xjmxi3*xjmxi;    // 4th power of the normalized distance to the central node
@@ -52,8 +54,8 @@ private:
         id_ -= index_domain_begin;
         
         // Primal
-        ip_      = round(xjn);      // index of the central point
-        xjmxi  = xjn -(double)ip_;  // normalized distance to the central node
+        ip_      = round( xjn );    // index of the central point
+        xjmxi  = xjn -( double )ip_; // normalized distance to the central node
         xjmxi2 = xjmxi*xjmxi;     // square of the normalized distance to the central node
         xjmxi3 = xjmxi2*xjmxi;    // cube of the normalized distance to the central node
         xjmxi4 = xjmxi3*xjmxi;    // 4th power of the normalized distance to the central node
@@ -90,8 +92,8 @@ private:
     double coeffp_[5];
     // Interpolation coefficient on Dual grid
     double coeffd_[5];
-
-
+    
+    
 };//END class
 
 #endif

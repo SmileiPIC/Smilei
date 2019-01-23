@@ -25,7 +25,8 @@
 
 #include "backward.hpp"
 
-namespace backward {
+namespace backward
+{
 
 backward::SignalHandling sh;
 

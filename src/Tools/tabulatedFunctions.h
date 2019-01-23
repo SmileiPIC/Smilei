@@ -15,7 +15,7 @@
 class erfinv
 {
 public:
-    static erfinv& instance()
+    static erfinv &instance()
     {
         static erfinv one_and_only_instance; // Guaranteed to be destroyed.
         // Instantiated on first use.
@@ -23,19 +23,19 @@ public:
     }
     
     //! returns inverse error function of a double x
-    double call(double x);
+    double call( double x );
     
     //! needs to be called one time before using erfinv
     void prepare();
     
-protected:    
+protected:
     // creator is private for singletons
-    erfinv(){};    
-    erfinv(erfinv const&); // avoid implementation of this
-    void operator=(erfinv const&); // avoid implementation of this
-
-private:    
+    erfinv() {};
+    erfinv( erfinv const & ); // avoid implementation of this
+    void operator=( erfinv const & ); // avoid implementation of this
     
+private:
+
     //! number of points used to sample the fct
     unsigned int erfinv_tabSize_;
     

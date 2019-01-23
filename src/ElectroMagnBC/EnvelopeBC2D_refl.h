@@ -5,8 +5,8 @@
 
 #include <vector>
 #include "Tools.h"
-#include "EnvelopeBC.h" 
-#include "LaserEnvelope.h" 
+#include "EnvelopeBC.h"
+#include "LaserEnvelope.h"
 #include "Field2D.h"
 #include "cField2D.h"
 
@@ -14,17 +14,18 @@ class Params;
 class LaserEnvelope;
 //class Field;
 
-class EnvelopeBC2D_refl : public EnvelopeBC {
+class EnvelopeBC2D_refl : public EnvelopeBC
+{
 public:
 
-    EnvelopeBC2D_refl( Params &params, Patch* patch, unsigned int _min_max );
-    ~EnvelopeBC2D_refl(){};
-
-    void apply(LaserEnvelope* envelope, double time_dual, Patch* patch) override;
+    EnvelopeBC2D_refl( Params &params, Patch *patch, unsigned int _min_max );
+    ~EnvelopeBC2D_refl() {};
+    
+    void apply( LaserEnvelope *envelope, double time_dual, Patch *patch ) override;
     
     
 private:
-    
+
     //! Oversize (nb of ghost cells)
     unsigned int oversize_;
     
@@ -39,8 +40,8 @@ private:
     
     //! Number of nodes on the dual grid in the y-direction
     unsigned int ny_d;
-  
-
+    
+    
 };
 
 #endif

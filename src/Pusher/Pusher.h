@@ -15,12 +15,12 @@ class Pusher
 
 public:
     //! Creator for Pusher
-    Pusher(Params& params, Species *species);
+    Pusher( Params &params, Species *species );
     virtual ~Pusher();
-
+    
     //! Overloading of () operator
-    virtual void operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ipart_ref = 0) = 0;
-
+    virtual void operator()( Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, int ipart_ref = 0 ) = 0;
+    
 protected:
     double dt, dts2, dts4;
     //! \todo Move mass_ in Particles_

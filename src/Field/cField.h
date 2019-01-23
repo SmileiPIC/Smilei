@@ -17,50 +17,56 @@ class cField : public Field
 
 public:
     //! Constructor for cField: no input argument
-    cField() : Field() {
+    cField() : Field()
+    {
     };
     //! Constructor for cField: with the vector dimension as input argument
-    cField( std::vector<unsigned int> dims ) : Field(dims) {
+    cField( std::vector<unsigned int> dims ) : Field( dims )
+    {
     };
     //! Constructor, isPrimal define if mainDim is Primal or Dual
-    cField( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal ) : Field(dims, mainDim, isPrimal) {
+    cField( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal ) : Field( dims, mainDim, isPrimal )
+    {
     };
     //! Constructor for cField: with the vector dimension and filename for the dump as input argument
-    cField( std::vector<unsigned int> dims, std::string name_in ) : Field(dims, name_in) {
+    cField( std::vector<unsigned int> dims, std::string name_in ) : Field( dims, name_in )
+    {
     };
     //! Constructor, isPrimal define if mainDim is Primal or Dual and a name
-    cField( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, std::string name_in ) : Field(dims, mainDim, isPrimal, name_in) {
+    cField( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, std::string name_in ) : Field( dims, mainDim, isPrimal, name_in )
+    {
     };
-        
+    
     //! Destructor for cField
-    virtual ~cField() {
+    virtual ~cField()
+    {
     };
     
     //! Method used to allocate a cField
     virtual void allocateDims() = 0;
     virtual void deallocateDims() = 0;
-    //! a cField can also be initialized win two unsigned int 
+    //! a cField can also be initialized win two unsigned int
 //    void allocateDims(unsigned int dims1,unsigned int dims2,unsigned int dims3);
 //    //! allocate dimensions for field3D isPrimal define if mainDim is Primal or Dual
 //    void allocateDims(unsigned int mainDim, bool isPrimal );
-    
-    virtual void allocateDims(std::vector<unsigned int> dims) = 0;    
-    virtual void allocateDims(std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal) = 0;
-    
-    virtual void shift_x(unsigned int delta) = 0;
-    
-    virtual double norm2(unsigned int istart[3][2], unsigned int bufsize[3][2]) = 0;
 
-    inline std::complex<double>& operator () (unsigned int i)
+    virtual void allocateDims( std::vector<unsigned int> dims ) = 0;
+    virtual void allocateDims( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal ) = 0;
+    
+    virtual void shift_x( unsigned int delta ) = 0;
+    
+    virtual double norm2( unsigned int istart[3][2], unsigned int bufsize[3][2] ) = 0;
+    
+    inline std::complex<double> &operator()( unsigned int i )
     {
-        DEBUGEXEC(if (i>=globalDims_) ERROR(name << " Out of limits "<< i << " < " <<dims_[0] ));
-        DEBUGEXEC(if (!std::isfinite(real(cdata_[i])+imag(cdata_[i]))) ERROR(name << " Not finite "<< i << " = " << cdata_[i]));
+        DEBUGEXEC( if( i>=globalDims_ ) ERROR( name << " Out of limits "<< i << " < " <<dims_[0] ) );
+        DEBUGEXEC( if( !std::isfinite( real( cdata_[i] )+imag( cdata_[i] ) ) ) ERROR( name << " Not finite "<< i << " = " << cdata_[i] ) );
         return cdata_[i];
     };
     
-    void put( Field* outField, Params &params, SmileiMPI* smpi, Patch* thisPatch, Patch* outPatch  ) = 0;
-    void get( Field*  inField, Params &params, SmileiMPI* smpi, Patch*   inPatch, Patch* thisPatch ) = 0;
-
+    void put( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch ) = 0;
+    void get( Field  *inField, Params &params, SmileiMPI *smpi, Patch   *inPatch, Patch *thisPatch ) = 0;
+    
     std::complex<double> *cdata_;
 protected:
 };

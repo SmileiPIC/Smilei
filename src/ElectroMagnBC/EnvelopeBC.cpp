@@ -12,14 +12,15 @@
 using namespace std;
 
 // Constructor for EnvelopeBC
-EnvelopeBC::EnvelopeBC( Params &params, Patch* patch, unsigned int _min_max ) :
-min_max(_min_max)
+EnvelopeBC::EnvelopeBC( Params &params, Patch *patch, unsigned int _min_max ) :
+    min_max( _min_max )
 {
-    
+
     // time step
     dt = params.timestep;
 }
 
 // Destructor for EnvelopeBC
-EnvelopeBC::~EnvelopeBC(){
+EnvelopeBC::~EnvelopeBC()
+{
 }

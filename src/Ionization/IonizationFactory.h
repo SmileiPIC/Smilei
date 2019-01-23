@@ -12,46 +12,51 @@
 #include "Species.h"
 
 //! this class create and associate the right ionization model to species
-class IonizationFactory {
+class IonizationFactory
+{
 public:
-    static Ionization* create(Params& params, Species * species) {
-        Ionization* Ionize = NULL;
+    static Ionization *create( Params &params, Species *species )
+    {
+        Ionization *Ionize = NULL;
         std::string model=species->ionization_model;
         
-        if ( model == "tunnel" ) {
-            if (species->max_charge > (int)species->atomic_number)
+        if( model == "tunnel" ) {
+            if( species->max_charge > ( int )species->atomic_number ) {
                 ERROR( "Charge > atomic_number for species " << species->name );
-            if( species->particles->is_test )
+            }
+            if( species->particles->is_test ) {
                 ERROR( "Cannot ionize test species " << species->name );
+            }
             
             Ionize = new IonizationTunnel( params, species );
-
-            int n_envlaser = PyTools::nComponents("LaserEnvelope");
-            if ( (n_envlaser >=1) & (species->ponderomotive_dynamics) ){
-                ERROR( "Ionization is not yet implemented for species interacting with Laser Envelope model.");
-                                                                       }
-                       
-        }
-        else if ( model == "from_rate" ) {
-            if (species->max_charge > (int)species->maximum_charge_state)
+            
+            int n_envlaser = PyTools::nComponents( "LaserEnvelope" );
+            if( ( n_envlaser >=1 ) & ( species->ponderomotive_dynamics ) ) {
+                ERROR( "Ionization is not yet implemented for species interacting with Laser Envelope model." );
+            }
+            
+        } else if( model == "from_rate" ) {
+            if( species->max_charge > ( int )species->maximum_charge_state ) {
                 ERROR( "Charge > atomic_number for species " << species->name );
-            if( species->particles->is_test )
+            }
+            if( species->particles->is_test ) {
                 ERROR( "Cannot ionize test species " << species->name );
-                
+            }
+            
             Ionize = new IonizationFromRate( params, species );
             
-        } else if ( model != "none" ) {
-            WARNING( "For species " << species->name << ": unknown ionization model `" << model << "` ... assuming no ionization");
+        } else if( model != "none" ) {
+            WARNING( "For species " << species->name << ": unknown ionization model `" << model << "` ... assuming no ionization" );
         }
-
-        if ( (Ionize!=NULL)  && ( params.vectorization_mode != "off" )  ) {
+        
+        if( ( Ionize!=NULL )  && ( params.vectorization_mode != "off" ) ) {
             WARNING( "Performances of advanced physical processes which generates nezw particles could be degraded for the moment !" );
             WARNING( "\t The improvment of their integration in vectorized algorithm is in progress." );
         }
-
+        
         return Ionize;
     }
-
+    
 };
 
 #endif
