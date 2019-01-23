@@ -16,6 +16,7 @@
 
 using namespace std;
 
+
 LaserEnvelope3D::LaserEnvelope3D( Params &params, Patch *patch, ElectroMagn *EMfields )
     : LaserEnvelope( params, patch, EMfields )
 {
@@ -86,40 +87,90 @@ void LaserEnvelope3D::initEnvelope( Patch *patch, ElectroMagn *EMfields )
     
     Field3D *GradPhiz3D    = static_cast<Field3D *>( GradPhiz_ );
     Field3D *GradPhiz_m3D  = static_cast<Field3D *>( GradPhiz_m );
-    
-    vector<double> position( 3, 0 );
-    double t;
-    double t_previous_timestep;
+  
     
     complex<double>     i1 = std::complex<double>( 0., 1 );
     
-    //! 1/(2dx), where dx is the spatial step dx for 3D3V cartesian simulations
-    double one_ov_2dx=1./2./cell_length[0];
-    //! 1/(2dy), where dy is the spatial step dy for 3D3V cartesian simulations
-    double one_ov_2dy=1./2./cell_length[1];
-    //! 1/(2dz), where dz is the spatial step dz for 3D3V cartesian simulations
-    double one_ov_2dz=1./2./cell_length[2];
+    // dx is the spatial step dx for 3D3V cartesian simulations
+    double dx=cell_length[0];
+    // dy is the spatial step dy for 3D3V cartesian simulations
+    double dy=cell_length[1];
+    // dz is the spatial step dz for 3D3V cartesian simulations
+    double dz=cell_length[2];
+
+    //! 1/(2dx)
+    double one_ov_2dx=1./2./dx;
+    //! 1/(2dy)
+    double one_ov_2dy=1./2./dy;
+    //! 1/(2dz)
+    double one_ov_2dz=1./2./dz;
     
-    // position_time[0]: x coordinate
-    // position_time[1]: y coordinate
-    // position_time[2]: z coordinate
+    // position[0]: x coordinate
+    // position[1]: y coordinate
+    // position[2]: z coordinate
     // t: time coordinate --> x/c for the envelope initialization
     
-    position[0]           = cell_length[0]*( ( double )( patch->getCellStartingGlobalIndex( 0 ) )+( A3D->isDual( 0 )?-0.5:0. ) );
-    t                     = position[0];          // x-ct     , t=0
-    t_previous_timestep   = position[0]+timestep; // x-c(t-dt), t=0
-    double pos1 = cell_length[1]*( ( double )( patch->getCellStartingGlobalIndex( 1 ) )+( A3D->isDual( 1 )?-0.5:0. ) );
-    double pos2 = cell_length[2]*( ( double )( patch->getCellStartingGlobalIndex( 2 ) )+( A3D->isDual( 2 )?-0.5:0. ) );
+    vector<double> position( 3 );
+    position[0]      = dx*( ( double )( patch->getCellStartingGlobalIndex( 0 ) )+( A3D->isDual( 0 )?-0.5:0. ) );
+    double pos1 = dy*( ( double )( patch->getCellStartingGlobalIndex( 1 ) )+( A3D->isDual( 1 )?-0.5:0. ) );
+    double pos2 = dz*( ( double )( patch->getCellStartingGlobalIndex( 2 ) )+( A3D->isDual( 2 )?-0.5:0. ) );
+    int N0 = ( int )A3D->dims()[0];
+    int N1 = ( int )A3D->dims()[1];
+    int N2 = ( int )A3D->dims()[2];
+    
+    // Create the x,y,z,t maps where profiles will be evaluated
+    vector<Field *> xyz( 3 );
+    Field *t;
+    Field *t_previous_timestep;
+    vector<unsigned int> n_space_to_create( 3 );
+    n_space_to_create[0] = N0;
+    n_space_to_create[1] = N1;
+    n_space_to_create[2] = N2;
+    
+    for( unsigned int idim=0 ; idim<3 ; idim++ ) {
+        xyz[idim] = new Field3D( n_space_to_create );
+    }
+    t                   = new Field3D( n_space_to_create );
+    t_previous_timestep = new Field3D( n_space_to_create );
+
+    for( int i=0 ; i<N0 ; i++ ) {
+        position[1] = pos1;
+        for( int j=0 ; j<N1 ; j++ ) {
+            position[2] = pos2;
+            for( int k=0 ; k<N2 ; k++ ) {
+                //(*field3D)(i,j,k) += profile->valueAt(pos);
+                for( unsigned int idim=0 ; idim<3 ; idim++ ) {
+                    ( *xyz[idim] )( i, j, k ) = position[idim];
+                }
+                (*t)(i,j,k)                   = position[0];
+                (*t_previous_timestep)(i,j,k) = (*t)(i,j,k)+timestep;
+                position[2] += dz;
+            }
+            position[1] += dy;
+        }
+        position[0] += dx;
+    }
+    
+    profile_->complexValuesAt( xyz, t                  , *A3D  );
+    profile_->complexValuesAt( xyz, t_previous_timestep, *A03D );
+    
+    for( unsigned int idim=0 ; idim<3 ; idim++ ) {
+        delete xyz[idim];
+    }
+   
+    delete t;
+    delete t_previous_timestep;
+
     // UNSIGNED INT LEADS TO PB IN PERIODIC BCs
     for( unsigned int i=0 ; i<A_->dims_[0] ; i++ ) { // x loop
-        position[1] = pos1;
+        //position[1] = pos1;
         for( unsigned int j=0 ; j<A_->dims_[1] ; j++ ) { // y loop
-            position[2] = pos2;
+            //position[2] = pos2;
             for( unsigned int k=0 ; k<A_->dims_[2] ; k++ ) { // z loop
             
                 // init envelope through Python function
-                ( *A3D )( i, j, k )      += profile_->complexValueAt( position, t );
-                ( *A03D )( i, j, k )     += profile_->complexValueAt( position, t_previous_timestep );
+                //( *A3D )( i, j, k )      += profile_->complexValueAt( position, t );
+                //( *A03D )( i, j, k )     += profile_->complexValueAt( position, t_previous_timestep );
                 ( *Env_Aabs3D )( i, j, k )= std::abs( ( *A3D )( i, j, k ) );
                 
                 // |E envelope| = |-(dA/dt-ik0cA)|
@@ -133,14 +184,8 @@ void LaserEnvelope3D::initEnvelope( Patch *patch, ElectroMagn *EMfields )
                 
                 // interpolate in time
                 ( *Phi_m3D )( i, j, k )   = 0.5*( ( *Phi_m3D )( i, j, k )+( *Phi3D )( i, j, k ) );
-                
-                position[2] += cell_length[2];
             }  // end z loop
-            position[1] += cell_length[1];
         } // end y loop
-        position[0]          += cell_length[0];
-        t                     = position[0];
-        t_previous_timestep   = position[0]+timestep;
     } // end x loop
     
     // Compute gradient of ponderomotive potential
