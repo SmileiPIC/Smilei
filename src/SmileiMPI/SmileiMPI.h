@@ -161,10 +161,13 @@ public:
 
     //! value of the grad(AA*) at itime and itime-1
     std::vector<std::vector<double>> dynamics_GradPHIpart;
-    std::vector<std::vector<double>> dynamics_GradPHIoldpart;
+    std::vector<std::vector<double>> dynamics_GradPHI_mpart;
     //! value of the AA* at itime and itime-1
     std::vector<std::vector<double>> dynamics_PHIpart;
-    std::vector<std::vector<double>> dynamics_PHIoldpart;
+    std::vector<std::vector<double>> dynamics_PHI_mpart;
+    //! inverse of the ponderomotive gamma, used in susceptibility and ponderomotive momentum Pusher
+    std::vector<std::vector<double>> dynamics_inv_gamma_ponderomotive; 
+    
 
 
     // Resize buffers for a given number of particles
@@ -178,9 +181,10 @@ public:
 
         if ( dynamics_GradPHIpart.size() > 0 ) {
             dynamics_GradPHIpart[ithread].resize(3*npart);
-            dynamics_GradPHIoldpart[ithread].resize(3*npart);
+            dynamics_GradPHI_mpart[ithread].resize(3*npart);
             dynamics_PHIpart[ithread].resize(npart);
-            dynamics_PHIoldpart[ithread].resize(npart);
+            dynamics_PHI_mpart[ithread].resize(npart);
+            dynamics_inv_gamma_ponderomotive[ithread].resize(npart); 
         }
     }
 

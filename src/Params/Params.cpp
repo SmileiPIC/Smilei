@@ -140,7 +140,7 @@ namelist("")
                 strNamelist+=buffer.str();
             // If command
             } else {
-                string command = *it;
+                command = *it;
                 // Remove quotes
                 unsigned int s = command.size();
                 if( s>1 && command.substr(0,1)=="\"" && command.substr(s-1,1)=="\"" )

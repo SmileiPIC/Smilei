@@ -277,11 +277,25 @@ public:
         return retval;
     }
 
+    static std::complex<double> runPyFunction_complex(PyObject *pyFunction, double x1, double x2) {
+        PyObject *pyresult = PyObject_CallFunction(pyFunction, const_cast<char *>("dd"), x1, x2);
+        std::complex<double> retval = get_py_result_complex(pyresult);
+        Py_XDECREF(pyresult);
+        return retval;
+    }
+
     //! run typed python function with three arguments
     template <typename T=double>
     static T runPyFunction(PyObject *pyFunction, double x1, double x2, double x3) {
         PyObject *pyresult = PyObject_CallFunction(pyFunction, const_cast<char *>("ddd"), x1, x2, x3);
         T retval = (T) get_py_result(pyresult);
+        Py_XDECREF(pyresult);
+        return retval;
+    }
+
+    static std::complex<double> runPyFunction_complex(PyObject *pyFunction, double x1, double x2, double x3) {
+        PyObject *pyresult = PyObject_CallFunction(pyFunction, const_cast<char *>("ddd"), x1, x2, x3);
+        std::complex<double> retval = get_py_result_complex(pyresult);
         Py_XDECREF(pyresult);
         return retval;
     }

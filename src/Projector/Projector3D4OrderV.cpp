@@ -234,7 +234,7 @@ void Projector3D4OrderV::currentsAndDensity(double* Jx, double* Jy, double* Jz, 
             }
 
             for (unsigned int k=1 ; k<7 ; k++) {
-                double tmp( crx_p * ( 0.5*DSy[ipart]*Sz0_buff_vect[(k-1)*vecSize+ipart] + one_third*DSy[ipart]*DSz[k*vecSize+ipart] ) );
+                tmp = crx_p * ( 0.5*DSy[ipart]*Sz0_buff_vect[(k-1)*vecSize+ipart] + one_third*DSy[ipart]*DSz[k*vecSize+ipart] );
                 int index( ( k )*vecSize+ipart );
                 for (unsigned int i=1 ; i<7 ; i++) {
                     bJx [ index+49*(i)*vecSize ] += sum[i]*tmp;
@@ -242,7 +242,7 @@ void Projector3D4OrderV::currentsAndDensity(double* Jx, double* Jy, double* Jz, 
                 
             }
             for (unsigned int j=1 ; j<7 ; j++) {
-                double tmp( crx_p * ( 0.5*DSz[ipart]*Sy0_buff_vect[(j-1)*vecSize+ipart] + one_third*DSy[j*vecSize+ipart]*DSz[ipart] ) );
+                tmp = crx_p * ( 0.5*DSz[ipart]*Sy0_buff_vect[(j-1)*vecSize+ipart] + one_third*DSy[j*vecSize+ipart]*DSz[ipart] );
                 int index( ( j*7 )*vecSize+ipart );
                 for (unsigned int i=1 ; i<7 ; i++) {
                     bJx [ index+49*(i)*vecSize ] += sum[i]*tmp;
@@ -250,10 +250,10 @@ void Projector3D4OrderV::currentsAndDensity(double* Jx, double* Jy, double* Jz, 
             }//i
             for ( int j=1 ; j<7 ; j++) {
                 for ( int k=1 ; k<7 ; k++) {
-                    double tmp( crx_p * ( Sy0_buff_vect[(j-1)*vecSize+ipart]*Sz0_buff_vect[(k-1)*vecSize+ipart] 
+                    tmp = crx_p * ( Sy0_buff_vect[(j-1)*vecSize+ipart]*Sz0_buff_vect[(k-1)*vecSize+ipart] 
                                           + 0.5*DSy[j*vecSize+ipart]*Sz0_buff_vect[(k-1)*vecSize+ipart] 
                                           + 0.5*DSz[k*vecSize+ipart]*Sy0_buff_vect[(j-1)*vecSize+ipart] 
-                                          + one_third*DSy[j*vecSize+ipart]*DSz[k*vecSize+ipart] ) );
+                                          + one_third*DSy[j*vecSize+ipart]*DSz[k*vecSize+ipart] );
                     int index( ( j*7 + k )*vecSize+ipart );
                     for ( int i=1 ; i<7 ; i++) {
                         bJx [ index+49*(i)*vecSize ] += sum[i]*tmp;
@@ -434,14 +434,14 @@ void Projector3D4OrderV::currentsAndDensity(double* Jx, double* Jy, double* Jz, 
                 bJx [((j)*7)*vecSize+ipart] += sum[j]*tmp;
             }
             for (unsigned int k=1 ; k<7 ; k++) {
-                double tmp( cry_p * (0.5*DSx[0]*Sz0_buff_vect[(k-1)*vecSize+ipart] + one_third*DSz[k*vecSize+ipart]*DSx[ipart]) );
+                tmp = cry_p * (0.5*DSx[0]*Sz0_buff_vect[(k-1)*vecSize+ipart] + one_third*DSz[k*vecSize+ipart]*DSx[ipart]);
                 int index( ( k )*vecSize+ipart );
                 for (unsigned int j=1 ; j<7 ; j++) {
                     bJx [ index+7*j*vecSize ] += sum[j]*tmp;
                 }
             }
             for (unsigned int i=1 ; i<7 ; i++) {
-                double tmp( cry_p * (0.5*DSz[ipart]*Sx0_buff_vect[(i-1)*vecSize+ipart] + one_third*DSz[0]*DSx[i*vecSize+ipart]) );
+                tmp = cry_p * (0.5*DSz[ipart]*Sx0_buff_vect[(i-1)*vecSize+ipart] + one_third*DSz[0]*DSx[i*vecSize+ipart]);
                 int index( ( i*49 )*vecSize+ipart );
                 for (unsigned int j=1 ; j<7 ; j++) {
                     bJx [ index+7*j*vecSize ] += sum[j]*tmp;
@@ -449,10 +449,10 @@ void Projector3D4OrderV::currentsAndDensity(double* Jx, double* Jy, double* Jz, 
             }//i
             for (unsigned int i=1 ; i<7 ; i++) {
                 for (unsigned int k=1 ; k<7 ; k++) {
-                    double tmp( cry_p * (Sz0_buff_vect[(k-1)*vecSize+ipart]*Sx0_buff_vect[(i-1)*vecSize+ipart]
+                    tmp = cry_p * (Sz0_buff_vect[(k-1)*vecSize+ipart]*Sx0_buff_vect[(i-1)*vecSize+ipart]
                                          + 0.5*DSz[k*vecSize+ipart]*Sx0_buff_vect[(i-1)*vecSize+ipart]
                                          + 0.5*DSx[i*vecSize+ipart]*Sz0_buff_vect[(k-1)*vecSize+ipart]
-                                         + one_third*DSz[k*vecSize+ipart]*DSx[i*vecSize+ipart]) );
+                                         + one_third*DSz[k*vecSize+ipart]*DSx[i*vecSize+ipart]);
                     int index( ( i*49 + k )*vecSize+ipart );
                     for (unsigned int j=1 ; j<7 ; j++) {
                         bJx [ index+7*j*vecSize ] += sum[j]*tmp;
@@ -627,14 +627,14 @@ void Projector3D4OrderV::currentsAndDensity(double* Jx, double* Jy, double* Jz, 
                 bJx[( k )*vecSize+ipart] += sum[k]*tmp;
             }
             for (unsigned int j=1 ; j<7 ; j++) {
-                double tmp( crz_p * (0.5*DSx[ipart]*Sy0_buff_vect[(j-1)*vecSize+ipart] + one_third*DSx[ipart]*DSy[j*vecSize+ipart]) );
+                tmp = crz_p * (0.5*DSx[ipart]*Sy0_buff_vect[(j-1)*vecSize+ipart] + one_third*DSx[ipart]*DSy[j*vecSize+ipart]);
                 int index( ( j*7 )*vecSize+ipart );
                 for (unsigned int k=1 ; k<7 ; k++) {
                     bJx [ index+k*vecSize ] += sum[k]*tmp;
                 }
             }
             for (unsigned int i=1 ; i<7 ; i++) {
-                double tmp( crz_p * (0.5*DSy[ipart]*Sx0_buff_vect[(i-1)*vecSize+ipart] + one_third*DSx[i*vecSize+ipart]*DSy[ipart]) );
+                tmp = crz_p * (0.5*DSy[ipart]*Sx0_buff_vect[(i-1)*vecSize+ipart] + one_third*DSx[i*vecSize+ipart]*DSy[ipart]);
                 int index( ( i*49 )*vecSize+ipart );
                 for (unsigned int k=1 ; k<7 ; k++) {
                     bJx [ index+k*vecSize ] += sum[k]*tmp;
@@ -642,10 +642,10 @@ void Projector3D4OrderV::currentsAndDensity(double* Jx, double* Jy, double* Jz, 
             }//i
             for (unsigned int i=1 ; i<7 ; i++) {
                 for (unsigned int j=1 ; j<7 ; j++) {
-                    double tmp( crz_p * (Sx0_buff_vect[(i-1)*vecSize+ipart]*Sy0_buff_vect[(j-1)*vecSize+ipart]
+                    tmp = crz_p * (Sx0_buff_vect[(i-1)*vecSize+ipart]*Sy0_buff_vect[(j-1)*vecSize+ipart]
                                          + 0.5*DSx[i*vecSize+ipart]*Sy0_buff_vect[(j-1)*vecSize+ipart]
                                          + 0.5*DSy[j*vecSize+ipart]*Sx0_buff_vect[(i-1)*vecSize+ipart]
-                                         + one_third*DSx[i*vecSize+ipart]*DSy[j*vecSize+ipart]) );
+                                         + one_third*DSx[i*vecSize+ipart]*DSy[j*vecSize+ipart]);
                     int index( ( i*49 + j*7 )*vecSize+ipart );
                     for (unsigned int k=1 ; k<7 ; k++) {
                         bJx [ index+k*vecSize ] += sum[k]*tmp;
@@ -1103,7 +1103,7 @@ void Projector3D4OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
             }
 
             for (unsigned int k=1 ; k<7 ; k++) {
-                double tmp( crx_p * ( 0.5*DSy[ipart]*Sz0_buff_vect[(k-1)*vecSize+ipart] + one_third*DSy[ipart]*DSz[k*vecSize+ipart] ) );
+                tmp = crx_p * ( 0.5*DSy[ipart]*Sz0_buff_vect[(k-1)*vecSize+ipart] + one_third*DSy[ipart]*DSz[k*vecSize+ipart] );
                 int index( ( k )*vecSize+ipart );
                 for (unsigned int i=1 ; i<7 ; i++) {
                     bJx [ index+49*(i)*vecSize ] += sum[i]*tmp;
@@ -1111,7 +1111,7 @@ void Projector3D4OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
                 
             }
             for (unsigned int j=1 ; j<7 ; j++) {
-                double tmp( crx_p * ( 0.5*DSz[ipart]*Sy0_buff_vect[(j-1)*vecSize+ipart] + one_third*DSy[j*vecSize+ipart]*DSz[ipart] ) );
+                tmp = crx_p * ( 0.5*DSz[ipart]*Sy0_buff_vect[(j-1)*vecSize+ipart] + one_third*DSy[j*vecSize+ipart]*DSz[ipart] );
                 int index( ( j*7 )*vecSize+ipart );
                 for (unsigned int i=1 ; i<7 ; i++) {
                     bJx [ index+49*(i)*vecSize ] += sum[i]*tmp;
@@ -1119,10 +1119,10 @@ void Projector3D4OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
             }//i
             for ( int j=1 ; j<7 ; j++) {
                 for ( int k=1 ; k<7 ; k++) {
-                    double tmp( crx_p * ( Sy0_buff_vect[(j-1)*vecSize+ipart]*Sz0_buff_vect[(k-1)*vecSize+ipart] 
+                    tmp = crx_p * ( Sy0_buff_vect[(j-1)*vecSize+ipart]*Sz0_buff_vect[(k-1)*vecSize+ipart] 
                                           + 0.5*DSy[j*vecSize+ipart]*Sz0_buff_vect[(k-1)*vecSize+ipart] 
                                           + 0.5*DSz[k*vecSize+ipart]*Sy0_buff_vect[(j-1)*vecSize+ipart] 
-                                          + one_third*DSy[j*vecSize+ipart]*DSz[k*vecSize+ipart] ) );
+                                          + one_third*DSy[j*vecSize+ipart]*DSz[k*vecSize+ipart] );
                     int index( ( j*7 + k )*vecSize+ipart );
                     for ( int i=1 ; i<7 ; i++) {
                         bJx [ index+49*(i)*vecSize ] += sum[i]*tmp;
@@ -1307,14 +1307,14 @@ void Projector3D4OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
                 bJx [((j)*7)*vecSize+ipart] += sum[j]*tmp;
             }
             for (unsigned int k=1 ; k<7 ; k++) {
-                double tmp( cry_p * (0.5*DSx[0]*Sz0_buff_vect[(k-1)*vecSize+ipart] + one_third*DSz[k*vecSize+ipart]*DSx[ipart]) );
+                tmp = cry_p * (0.5*DSx[0]*Sz0_buff_vect[(k-1)*vecSize+ipart] + one_third*DSz[k*vecSize+ipart]*DSx[ipart]);
                 int index( ( k )*vecSize+ipart );
                 for (unsigned int j=1 ; j<7 ; j++) {
                     bJx [ index+7*j*vecSize ] += sum[j]*tmp;
                 }
             }
             for (unsigned int i=1 ; i<7 ; i++) {
-                double tmp( cry_p * (0.5*DSz[ipart]*Sx0_buff_vect[(i-1)*vecSize+ipart] + one_third*DSz[0]*DSx[i*vecSize+ipart]) );
+                tmp = cry_p * (0.5*DSz[ipart]*Sx0_buff_vect[(i-1)*vecSize+ipart] + one_third*DSz[0]*DSx[i*vecSize+ipart]);
                 int index( ( i*49 )*vecSize+ipart );
                 for (unsigned int j=1 ; j<7 ; j++) {
                     bJx [ index+7*j*vecSize ] += sum[j]*tmp;
@@ -1322,10 +1322,10 @@ void Projector3D4OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
             }//i
             for (unsigned int i=1 ; i<7 ; i++) {
                 for (unsigned int k=1 ; k<7 ; k++) {
-                    double tmp( cry_p * (Sz0_buff_vect[(k-1)*vecSize+ipart]*Sx0_buff_vect[(i-1)*vecSize+ipart]
+                    tmp = cry_p * (Sz0_buff_vect[(k-1)*vecSize+ipart]*Sx0_buff_vect[(i-1)*vecSize+ipart]
                                          + 0.5*DSz[k*vecSize+ipart]*Sx0_buff_vect[(i-1)*vecSize+ipart]
                                          + 0.5*DSx[i*vecSize+ipart]*Sz0_buff_vect[(k-1)*vecSize+ipart]
-                                         + one_third*DSz[k*vecSize+ipart]*DSx[i*vecSize+ipart]) );
+                                         + one_third*DSz[k*vecSize+ipart]*DSx[i*vecSize+ipart]);
                     int index( ( i*49 + k )*vecSize+ipart );
                     for (unsigned int j=1 ; j<7 ; j++) {
                         bJx [ index+7*j*vecSize ] += sum[j]*tmp;
@@ -1498,14 +1498,14 @@ void Projector3D4OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
                 bJx[( k )*vecSize+ipart] += sum[k]*tmp;
             }
             for (unsigned int j=1 ; j<7 ; j++) {
-                double tmp( crz_p * (0.5*DSx[ipart]*Sy0_buff_vect[(j-1)*vecSize+ipart] + one_third*DSx[ipart]*DSy[j*vecSize+ipart]) );
+                tmp = crz_p * (0.5*DSx[ipart]*Sy0_buff_vect[(j-1)*vecSize+ipart] + one_third*DSx[ipart]*DSy[j*vecSize+ipart]);
                 int index( ( j*7 )*vecSize+ipart );
                 for (unsigned int k=1 ; k<7 ; k++) {
                     bJx [ index+k*vecSize ] += sum[k]*tmp;
                 }
             }
             for (unsigned int i=1 ; i<7 ; i++) {
-                double tmp( crz_p * (0.5*DSy[ipart]*Sx0_buff_vect[(i-1)*vecSize+ipart] + one_third*DSx[i*vecSize+ipart]*DSy[ipart]) );
+                tmp = crz_p * (0.5*DSy[ipart]*Sx0_buff_vect[(i-1)*vecSize+ipart] + one_third*DSx[i*vecSize+ipart]*DSy[ipart]);
                 int index( ( i*49 )*vecSize+ipart );
                 for (unsigned int k=1 ; k<7 ; k++) {
                     bJx [ index+k*vecSize ] += sum[k]*tmp;
@@ -1513,10 +1513,10 @@ void Projector3D4OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
             }//i
             for (unsigned int i=1 ; i<7 ; i++) {
                 for (unsigned int j=1 ; j<7 ; j++) {
-                    double tmp( crz_p * (Sx0_buff_vect[(i-1)*vecSize+ipart]*Sy0_buff_vect[(j-1)*vecSize+ipart]
+                    tmp = crz_p * (Sx0_buff_vect[(i-1)*vecSize+ipart]*Sy0_buff_vect[(j-1)*vecSize+ipart]
                                          + 0.5*DSx[i*vecSize+ipart]*Sy0_buff_vect[(j-1)*vecSize+ipart]
                                          + 0.5*DSy[j*vecSize+ipart]*Sx0_buff_vect[(i-1)*vecSize+ipart]
-                                         + one_third*DSx[i*vecSize+ipart]*DSy[j*vecSize+ipart]) );
+                                         + one_third*DSx[i*vecSize+ipart]*DSy[j*vecSize+ipart]);
                     int index( ( i*49 + j*7 )*vecSize+ipart );
                     for (unsigned int k=1 ; k<7 ; k++) {
                         bJx [ index+k*vecSize ] += sum[k]*tmp;

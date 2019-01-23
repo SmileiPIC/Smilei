@@ -15,6 +15,7 @@ double Function_Python1D::valueAt(vector<double> x_cell, double time) {
 double Function_Python1D::valueAt(vector<double> x_cell) {
     return PyTools::runPyFunction(py_profile, x_cell[0]);
 }
+
 // 2D
 double Function_Python2D::valueAt(vector<double> x_cell, double time) {
     return PyTools::runPyFunction(py_profile, x_cell[0], time);
@@ -22,6 +23,11 @@ double Function_Python2D::valueAt(vector<double> x_cell, double time) {
 double Function_Python2D::valueAt(vector<double> x_cell) {
     return PyTools::runPyFunction(py_profile, x_cell[0], x_cell[1]);
 }
+// 2D complex
+std::complex<double> Function_Python2D::complexValueAt(vector<double> x_cell, double time) {
+    return PyTools::runPyFunction_complex(py_profile, x_cell[0], time);
+}
+
 // 3D
 double Function_Python3D::valueAt(vector<double> x_cell, double time) {
     return PyTools::runPyFunction(py_profile, x_cell[0], x_cell[1], time);
@@ -29,6 +35,11 @@ double Function_Python3D::valueAt(vector<double> x_cell, double time) {
 double Function_Python3D::valueAt(vector<double> x_cell) {
     return PyTools::runPyFunction(py_profile, x_cell[0], x_cell[1], x_cell[2]);
 }
+// 3D complex
+std::complex<double> Function_Python3D::complexValueAt(vector<double> x_cell, double time) {
+    return PyTools::runPyFunction_complex(py_profile, x_cell[0], x_cell[1], time);
+}
+
 // 4D
 double Function_Python4D::valueAt(vector<double> x_cell, double time) {
     return PyTools::runPyFunction(py_profile, x_cell[0], x_cell[1], x_cell[2], time);
@@ -229,7 +240,7 @@ double Function_Polynomial3D::valueAt(vector<double> x_cell) {
             do { j--; xx[j] = xx[j] * xx0;      } while( j>0 );
             current_n_coeffs += currentOrder+1;
         }
-        for( unsigned int j=0; j<current_n_coeffs; j++ ) r += coeffs[i][j] * xx[j];
+        for( j=0; j<current_n_coeffs; j++ ) r += coeffs[i][j] * xx[j];
     }
     return r;
 }

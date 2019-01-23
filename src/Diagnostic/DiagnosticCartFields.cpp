@@ -150,7 +150,7 @@ void DiagnosticCartFields::openFile( Params& params, SmileiMPI* smpi, bool newfi
         H5Pclose(pid);
         
         // Attributes for openPMD
-        openPMD->writeRootAttributes( fileId_, "", "no_particles" );
+        openPMD_->writeRootAttributes( fileId_, "", "no_particles" );
         
         // Make main "data" group where everything will be stored (required by openPMD)
         data_group_id = H5::group( fileId_, "data" );
@@ -231,9 +231,9 @@ void DiagnosticCartFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int it
         // Warning if file unreachable
         if( status < 0 ) WARNING("Fields diagnostics could not write");
         // Add openPMD attributes ( "basePath" )
-        openPMD->writeBasePathAttributes( iteration_group_id, itime );
+        openPMD_->writeBasePathAttributes( iteration_group_id, itime );
         // Add openPMD attributes ( "meshesPath" )
-        openPMD->writeMeshesAttributes( iteration_group_id );
+        openPMD_->writeMeshesAttributes( iteration_group_id );
     }
     #pragma omp barrier
     
@@ -260,10 +260,10 @@ void DiagnosticCartFields::run( SmileiMPI* smpi, VectorPatch& vecPatches, int it
             writeField(dset_id, itime);
             
             // Attributes for openPMD
-            openPMD->writeFieldAttributes( dset_id );
-            openPMD->writeRecordAttributes( dset_id, field_type[ifield] );
-            openPMD->writeFieldRecordAttributes( dset_id );
-            openPMD->writeComponentAttributes( dset_id, field_type[ifield] );
+            openPMD_->writeFieldAttributes( dset_id );
+            openPMD_->writeRecordAttributes( dset_id, field_type[ifield] );
+            openPMD_->writeFieldRecordAttributes( dset_id );
+            openPMD_->writeComponentAttributes( dset_id, field_type[ifield] );
             
             // Close dataset
             H5Dclose( dset_id );

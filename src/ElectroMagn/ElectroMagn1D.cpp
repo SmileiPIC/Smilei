@@ -33,6 +33,10 @@ ElectroMagn1D::ElectroMagn1D(Params &params, DomainDecomposition* domain_decompo
         Jy_s[ispec]  = new Field1D(Tools::merge("Jy_" ,vecSpecies[ispec]->name).c_str(), dimPrim);
         Jz_s[ispec]  = new Field1D(Tools::merge("Jz_" ,vecSpecies[ispec]->name).c_str(), dimPrim);
         rho_s[ispec] = new Field1D(Tools::merge("Rho_",vecSpecies[ispec]->name).c_str(), dimPrim);
+
+        if (params.Laser_Envelope_model){
+            Env_Chi_s[ispec] = new Field1D(Tools::merge("Env_Chi_",vecSpecies[ispec]->name).c_str(), dimPrim);
+                                        }
     }
     
 }//END constructor Electromagn1D
@@ -69,6 +73,16 @@ ElectroMagn1D::ElectroMagn1D( ElectroMagn1D* emFields, Params &params, Patch* pa
             else
                 rho_s[ispec]  = new Field1D(emFields->rho_s[ispec]->name, dimPrim);
         }
+
+        if (params.Laser_Envelope_model){
+            if ( emFields->Env_Chi_s[ispec] != NULL ){
+                if ( emFields->Env_Chi_s[ispec]->data_ != NULL )
+                    Env_Chi_s[ispec] = new Field1D(dimPrim, emFields->Env_Chi_s[ispec]->name );
+                else
+                    Env_Chi_s[ispec]  = new Field1D(emFields->Env_Chi_s[ispec]->name, dimPrim);
+            }
+        }
+
     }
 }
 
@@ -113,6 +127,11 @@ void ElectroMagn1D::initElectroMagn1DQuantities(Params &params, Patch* patch)
     By_m = new Field1D(dimPrim, 1, true,  "By_m");
     Bz_m = new Field1D(dimPrim, 2, true,  "Bz_m");
     
+    if (params.Laser_Envelope_model){
+        Env_A_abs_ = new Field1D(dimPrim, "Env_A_abs");
+        Env_Chi_   = new Field1D(dimPrim, "Env_Chi");
+        Env_E_abs_ = new Field1D(dimPrim, "Env_E_abs");
+    }
     // Total charge currents and densities
     Jx_   = new Field1D(dimPrim, 0, false, "Jx");
     Jy_   = new Field1D(dimPrim, 1, false, "Jy");
@@ -592,6 +611,9 @@ Field * ElectroMagn1D::createField(string fieldname)
     else if(fieldname.substr(0,2)=="Jy" ) return new Field1D(dimPrim, 1, false, fieldname);
     else if(fieldname.substr(0,2)=="Jz" ) return new Field1D(dimPrim, 2, false, fieldname);
     else if(fieldname.substr(0,3)=="Rho") return new Field1D(dimPrim, fieldname );
+    else if(fieldname.substr(0,9)=="Env_A_abs" ) return new Field1D(dimPrim, 0, false, fieldname);
+    else if(fieldname.substr(0,7)=="Env_Chi" ) return new Field1D(dimPrim, 0, false, fieldname);
+    else if(fieldname.substr(0,9)=="Env_E_abs" ) return new Field1D(dimPrim, 0, false, fieldname);
     
     ERROR("Cannot create field "<<fieldname);
     return NULL;
@@ -632,7 +654,23 @@ void ElectroMagn1D::computeTotalRhoJ()
 // Compute the total susceptibility from species susceptibility
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn1D::computeTotalEnvChi()
-{} // END computeTotalEnvChi
+{
+    // static cast of the total susceptibility
+    Field1D* Env_Chi1D   = static_cast<Field1D*>(Env_Chi_);
+    
+    // -----------------------------------
+    // Species susceptibility
+    // -----------------------------------
+    for (unsigned int ispec=0; ispec<n_species; ispec++) {
+        if( Env_Chi_s[ispec] ) {
+            Field1D* Env_Chi1D_s  = static_cast<Field1D*>(Env_Chi_s[ispec]);
+            for (unsigned int i=0 ; i<nx_p ; i++){
+                        (*Env_Chi1D)(i) += (*Env_Chi1D_s)(i);
+                                                 }
+                               }
+    }//END loop on species ispec
+
+} // END computeTotalEnvChi
 // --------------------------------------------------------------------------
 // Compute Poynting (return the electromagnetic energy injected at the border
 // --------------------------------------------------------------------------

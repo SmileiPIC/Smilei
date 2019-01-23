@@ -491,6 +491,22 @@ def LaserPlanar1D( box_side="xmin", a0=1., omega=1.,
         delay_phase    = [ 0., dephasing ]
     )
 
+def LaserEnvelopePlanar1D( a0=1., omega=1., focus=None, time_envelope=tconstant(),
+        envelope_solver = "explicit",Envelope_boundary_conditions = [["reflective"]]):
+    import math
+    import cmath
+    c_vacuum = 1. #299792458
+
+    def space_time_envelope(x,t):
+        return a0*complex(time_envelope(t))
+
+    # Create Laser Envelope
+    LaserEnvelope(
+        omega               = omega,
+        envelope_profile    = space_time_envelope,
+        envelope_solver     = "explicit",
+        Envelope_boundary_conditions = Envelope_boundary_conditions,
+    )
 
 def LaserGaussian2D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., incidence_angle=0.,
         polarization_phi=0., ellipticity=0., time_envelope=tconstant(), phaseZero=0.):
@@ -535,6 +551,38 @@ def LaserGaussian2D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
         space_envelope = [ lambda y:amplitudeZ*spatial(y), lambda y:amplitudeY*spatial(y) ],
         phase          = [ lambda y:phase(y)-phaseZero+dephasing, lambda y:phase(y)-phaseZero ],
         delay_phase    = [ 0., dephasing ]
+    )
+
+def LaserEnvelopeGaussian2D( a0=1., omega=1., focus=None, waist=3., time_envelope=tconstant(),
+        envelope_solver = "explicit",Envelope_boundary_conditions = [["reflective"]]):
+    import math
+    import cmath
+    c_vacuum = 1. #299792458
+
+    Zr = omega * waist**2/2.
+    def w(x):
+        w  = math.sqrt(1./(1.+   ( (x-focus[0])/Zr  )**2 ) )
+        return w
+    def coeff(x):
+        coeff = omega * (x-focus[0]) * w(x)**2 / (2.*Zr**2)
+        return coeff
+    def spatial_amplitude(x,y):
+        invWaist2 = (w(x)/waist)**2
+        return w(x) * math.exp( -invWaist2*(  (y-focus[1])**2  ) )
+    def phase(x,y):
+        return coeff(x) * ( (y-focus[1])**2 )
+    def Gouy_phase(x):
+        return math.atan( (x-focus[0])/Zr )
+
+    def space_time_envelope(x,y,t):
+        return a0*spatial_amplitude(x,y)*time_envelope(t)*cmath.exp(1j*phase(x,y))*cmath.exp(-1j*Gouy_phase(x))
+
+    # Create Laser Envelope
+    LaserEnvelope(
+        omega               = omega,
+        envelope_profile    = space_time_envelope,
+        envelope_solver     = "explicit",
+        Envelope_boundary_conditions = Envelope_boundary_conditions,
     )
 
 def LaserGaussian3D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., incidence_angle=[0.,0.],

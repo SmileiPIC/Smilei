@@ -26,6 +26,10 @@ public:
         return interp_res;
     };
     
+    void fieldsAndEnvelope( ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override final;
+    void timeCenteredEnvelope( ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override final;
+    void envelopeAndSusceptibility(ElectroMagn* EMfields, Particles &particles, int ipart, double* Env_A_abs_Loc, double* Env_Chi_Loc, double* Env_E_abs_Loc) override final;
+
 private:
     inline void coeffs( double xjn ) {
         double xjmxi2;
@@ -60,7 +64,7 @@ private:
     // Last dual index computed
     int id_;
     // Last delta computed
-    double xjmxi;
+    double xjmxi,deltax;
     // Interpolation coefficient on Prim grid
     double coeffp_[3];
     // Interpolation coefficient on Dual grid

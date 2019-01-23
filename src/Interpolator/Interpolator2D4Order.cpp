@@ -178,3 +178,22 @@ void Interpolator2D4Order::fieldsSelection(ElectroMagn* EMfields, Particles &par
         
     }
 }
+
+
+void Interpolator2D4Order::fieldsAndEnvelope(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
+{
+   ERROR("Projection and interpolation for the envelope model are implemented only for interpolation_order = 2");
+}
+
+
+void Interpolator2D4Order::timeCenteredEnvelope(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
+{
+   ERROR("Projection and interpolation for the envelope model are implemented only for interpolation_order = 2");
+}
+
+// probes like diagnostic !
+void Interpolator2D4Order::envelopeAndSusceptibility(ElectroMagn* EMfields, Particles &particles, int ipart, double* Env_A_abs_Loc, double* Env_Chi_Loc, double* Env_E_abs_Loc)
+{
+    ERROR("Projection and interpolation for the envelope model are implemented only for interpolation_order = 2");
+}
+

@@ -78,8 +78,8 @@ public:
     void print_parallelism_params(SmileiMPI* smpi);
 
     //! Tells whether standard output is this timestep
-    bool printNow( int timestep ) {
-        return (timestep % print_every == 0);
+    bool printNow( int current_timestep ) {
+        return (current_timestep % print_every == 0);
     }
 
     //! sets nDim_particle and nDim_field based on the geometry

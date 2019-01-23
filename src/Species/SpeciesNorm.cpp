@@ -15,7 +15,6 @@ using namespace std;
 SpeciesNorm::SpeciesNorm( Params& params, Patch* patch )
   : Species( params, patch )
 {
-    DEBUG("Species is being created as norm");
 }
 
 
@@ -24,5 +23,4 @@ SpeciesNorm::SpeciesNorm( Params& params, Patch* patch )
 // ---------------------------------------------------------------------------------------------------------------------
 SpeciesNorm::~SpeciesNorm()
 {
-    DEBUG("Species norm deleted ");
 }

@@ -62,7 +62,7 @@ protected :
     double time_average_inv;
     
     //! Subgrid requested
-    std::vector<unsigned int> subgrid_start, subgrid_stop, subgrid_step;
+    std::vector<unsigned int> subgrid_start_, subgrid_stop_, subgrid_step_;
     
     //! Property list for collective dataset write, set for // IO.
     hid_t write_plist;

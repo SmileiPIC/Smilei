@@ -26,6 +26,7 @@ public:
     double getCellVolume(Particles *p, unsigned int ipart) override final
     {
         ERROR("getCellVolume not implemented in geometry AM");
+        return cell_volume;
     };
 
     // MPI exchange/sum methods for particles/fields

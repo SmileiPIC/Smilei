@@ -4,6 +4,8 @@
 
 #include "EnvelopeBC.h"
 #include "EnvelopeBC3D_refl.h"
+#include "EnvelopeBC2D_refl.h"
+#include "EnvelopeBC1D_refl.h"
 
 #include "Params.h"
 
@@ -22,9 +24,49 @@ public:
         EnvBoundCond.resize(2*params.nDim_field, NULL);
         
         // -----------------
-        // For 3Dcartesian Geometry only for the moment
+        // For 2D and 3Dcartesian Geometry only for the moment
         // -----------------
-        if ( params.geometry == "3Dcartesian" ) {
+        if ( params.geometry == "1Dcartesian" ) {
+            
+            for (unsigned int ii=0;ii<2;ii++) {
+                // X DIRECTION
+                // reflective bcs
+                if ( params.Env_BCs[0][ii] == "reflective" ) {
+                    EnvBoundCond[ii] = new EnvelopeBC1D_refl(params, patch, ii);
+                }
+                // else: error
+                else {
+                    ERROR( "Unknown Envelope x-boundary condition `" << params.Env_BCs[0][ii] << "`");
+                }
+
+            }
+
+        } else if ( params.geometry == "2Dcartesian" ) {
+            
+            for (unsigned int ii=0;ii<2;ii++) {
+                // X DIRECTION
+                // reflective bcs
+                if ( params.Env_BCs[0][ii] == "reflective" ) {
+                    EnvBoundCond[ii] = new EnvelopeBC2D_refl(params, patch, ii);
+                }
+                // else: error
+                else {
+                    ERROR( "Unknown Envelope x-boundary condition `" << params.Env_BCs[0][ii] << "`");
+                }
+                
+                // Y DIRECTION
+                // reflective bcs
+                if ( params.Env_BCs[1][ii] == "reflective" ) {
+                    EnvBoundCond[ii+2] = new EnvelopeBC2D_refl(params, patch, ii+2);
+                }
+                // else: error
+                else {
+                    ERROR( "Unknown Envelope y-boundary condition `" << params.Env_BCs[1][ii] << "`");
+                }
+
+            }
+            
+        }  else if ( params.geometry == "3Dcartesian" ) {
             
             for (unsigned int ii=0;ii<2;ii++) {
                 // X DIRECTION

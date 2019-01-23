@@ -133,9 +133,10 @@ void SmileiMPI::init( Params& params, DomainDecomposition* domain_decomposition 
 
     if ( n_envlaser > 0 ) {
         dynamics_GradPHIpart.resize(omp_get_max_threads());
-        dynamics_GradPHIoldpart.resize(omp_get_max_threads());
+        dynamics_GradPHI_mpart.resize(omp_get_max_threads());
         dynamics_PHIpart.resize(omp_get_max_threads());
-        dynamics_PHIoldpart.resize(omp_get_max_threads());
+        dynamics_PHI_mpart.resize(omp_get_max_threads());
+        dynamics_inv_gamma_ponderomotive.resize(omp_get_max_threads());
     }
 #else
     dynamics_Epart.resize(1);
@@ -147,9 +148,10 @@ void SmileiMPI::init( Params& params, DomainDecomposition* domain_decomposition 
 
     if ( n_envlaser > 0 ) {
         dynamics_GradPHIpart.resize(1);
-        dynamics_GradPHIoldpart.resize(1);
+        dynamics_GradPHI_mpart.resize(1);
         dynamics_PHIpart.resize(1);
-        dynamics_PHIoldpart.resize(1);
+        dynamics_PHI_mpart.resize(1);
+        dynamics_inv_gamma_ponderomotive.resize(1);
     }
 #endif
 
@@ -469,7 +471,7 @@ void SmileiMPI::recompute_patch_count( Params& params, VectorPatch& vecpatches, 
 
         //Check if my rank should start with additional patches from right neighbour ...
         if (Tcur < target){
-            unsigned int j = 0;
+            j = 0;
             while ( (abs(Tcur-target) > abs(Tcur+Lp_right[j] - target)) && (j<(unsigned int)patch_count[smilei_rk+1] - 1) ){ //Leave at least 1 patch to my neighbour
                 Tcur += Lp_right[j];
                 j++;
@@ -974,18 +976,18 @@ void SmileiMPI::isend(ElectroMagn* EM, int to, int tag, vector<MPI_Request>& req
     isend( EM->Bz_m, to, mpi_tag+tag, requests[tag]); tag++;
 
     // if laser envelope is present, send it
-    // send also Phi, Phi_old, GradPhi, GradPhiold
+    // send also Phi, Phi_m, GradPhi, GradPhi_m
     if (EM->envelope!=NULL){
         isendComplex( EM->envelope->A_, to, mpi_tag+tag, requests[tag]); tag++;
         isendComplex( EM->envelope->A0_, to, mpi_tag+tag, requests[tag]); tag++;
         isend( EM->envelope->Phi_, to, mpi_tag+tag, requests[tag]); tag++;
-        isend( EM->envelope->Phiold_, to, mpi_tag+tag, requests[tag]); tag++;
+        isend( EM->envelope->Phi_m, to, mpi_tag+tag, requests[tag]); tag++;
         isend( EM->envelope->GradPhix_, to, mpi_tag+tag, requests[tag]); tag++;
-        isend( EM->envelope->GradPhixold_, to, mpi_tag+tag, requests[tag]); tag++;
+        isend( EM->envelope->GradPhix_m, to, mpi_tag+tag, requests[tag]); tag++;
         isend( EM->envelope->GradPhiy_, to, mpi_tag+tag, requests[tag]); tag++;
-        isend( EM->envelope->GradPhiyold_, to, mpi_tag+tag, requests[tag]); tag++;
+        isend( EM->envelope->GradPhiy_m, to, mpi_tag+tag, requests[tag]); tag++;
         isend( EM->envelope->GradPhiz_, to, mpi_tag+tag, requests[tag]); tag++;
-        isend( EM->envelope->GradPhizold_, to, mpi_tag+tag, requests[tag]); tag++;
+        isend( EM->envelope->GradPhiz_m, to, mpi_tag+tag, requests[tag]); tag++;
 
                            }
 
@@ -1138,13 +1140,13 @@ void SmileiMPI::recv(ElectroMagn* EM, int from, int tag)
         recvComplex( EM->envelope->A_ , from, tag ); tag++;
         recvComplex( EM->envelope->A0_, from, tag ); tag++;
         recv( EM->envelope->Phi_ , from, tag ); tag++;
-        recv( EM->envelope->Phiold_ , from, tag ); tag++;
+        recv( EM->envelope->Phi_m , from, tag ); tag++;
         recv( EM->envelope->GradPhix_ , from, tag ); tag++;
-        recv( EM->envelope->GradPhixold_ , from, tag ); tag++;
+        recv( EM->envelope->GradPhix_m , from, tag ); tag++;
         recv( EM->envelope->GradPhiy_ , from, tag ); tag++;
-        recv( EM->envelope->GradPhiyold_ , from, tag ); tag++;
+        recv( EM->envelope->GradPhiy_m , from, tag ); tag++;
         recv( EM->envelope->GradPhiz_ , from, tag ); tag++;
-        recv( EM->envelope->GradPhizold_ , from, tag ); tag++;
+        recv( EM->envelope->GradPhiz_m , from, tag ); tag++;
                            }
 
     for( unsigned int idiag=0; idiag<EM->allFields_avg.size(); idiag++) {

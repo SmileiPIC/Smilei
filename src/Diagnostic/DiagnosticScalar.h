@@ -24,35 +24,35 @@ struct val_index
 class Scalar {
 public:
     Scalar(std::string name, std::string secondname, unsigned int width, bool allowed):
-        name(name), secondname(secondname), width(width), allowed(allowed)
+        name_(name), secondname_(secondname), width_(width), allowed_(allowed)
         {};
     virtual ~Scalar() {};
     virtual inline operator double() const { return 0.; }
     virtual inline void reset() { };
-    std::string name, secondname;
-    unsigned int width;
-    bool allowed;
+    std::string name_, secondname_;
+    unsigned int width_;
+    bool allowed_;
 };
 
 //! Child class of `Scalar` specific for scalars which only have one value
 class Scalar_value : public Scalar {
 public:
     Scalar_value(std::string name, unsigned int width, bool allowed, std::vector<double>* values):
-        Scalar(name, "", width, allowed), values(values), index(values->size())
+        Scalar(name, "", width, allowed), values_(values), index(values->size())
         {};
     ~Scalar_value() {};
     inline Scalar_value& operator= (double v) {
-        (*values)[index] = v;
+        (*values_)[index] = v;
         return *this;
     };
     inline Scalar_value& operator+= (double v) {
         #pragma omp atomic
-        (*values)[index]+=v;
+        (*values_)[index]+=v;
         return *this;
     };
-    inline operator double() const override { return (*values)[index]; } ;
-    inline void reset() override { (*values)[index]=0.; };
-    std::vector<double>* values;
+    inline operator double() const override { return (*values_)[index]; } ;
+    inline void reset() override { (*values_)[index]=0.; };
+    std::vector<double>* values_;
     unsigned int index;
 };
 
@@ -60,19 +60,19 @@ public:
 class Scalar_value_location : public Scalar {
 public:
     Scalar_value_location(std::string name, std::string secondname, unsigned int width, bool allowed, std::vector<val_index>* values, double reset_value):
-        Scalar(name, secondname, width, allowed), values(values), index(values->size()), reset_value(reset_value)
+        Scalar(name, secondname, width, allowed), values_(values), index(values->size()), reset_value_(reset_value)
         {};
     ~Scalar_value_location() {};
     inline Scalar_value_location& operator= (val_index v) {
-        (*values)[index] = v;
+        (*values_)[index] = v;
         return *this;
     };
-    inline operator double() const override { return (*values)[index].val; }
-    inline operator int() const { return (*values)[index].index; }
-    inline void reset() override { (*values)[index].val=reset_value; (*values)[index].index=-1; };
-    std::vector<val_index>* values;
+    inline operator double() const override { return (*values_)[index].val; }
+    inline operator int() const { return (*values_)[index].index; }
+    inline void reset() override { (*values_)[index].val=reset_value_; (*values_)[index].index=-1; };
+    std::vector<val_index>* values_;
     unsigned int index;
-    double reset_value;
+    double reset_value_;
 };
 
 //! Class for the diagnostic of scalars

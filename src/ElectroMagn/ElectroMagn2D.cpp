@@ -31,10 +31,14 @@ isYmax(patch->isYmax())
     // Charge currents currents and density for each species
     for (unsigned int ispec=0; ispec<n_species; ispec++) {
         Jx_s[ispec]  = new Field2D(Tools::merge("Jx_" ,vecSpecies[ispec]->name).c_str(), dimPrim);
-        
         Jy_s[ispec]  = new Field2D(Tools::merge("Jy_" ,vecSpecies[ispec]->name).c_str(), dimPrim);
         Jz_s[ispec]  = new Field2D(Tools::merge("Jz_" ,vecSpecies[ispec]->name).c_str(), dimPrim);
         rho_s[ispec] = new Field2D(Tools::merge("Rho_",vecSpecies[ispec]->name).c_str(), dimPrim);
+
+        if (params.Laser_Envelope_model){
+            Env_Chi_s[ispec] = new Field2D(Tools::merge("Env_Chi_",vecSpecies[ispec]->name).c_str(), dimPrim);
+                                        } 
+
     }
     
 
@@ -76,6 +80,17 @@ isYmax(patch->isYmax())
             else
                 rho_s[ispec]  = new Field2D(emFields->rho_s[ispec]->name, dimPrim);
         }
+
+        if (params.Laser_Envelope_model){
+            if ( emFields->Env_Chi_s[ispec] != NULL ){
+                if ( emFields->Env_Chi_s[ispec]->data_ != NULL )
+                    Env_Chi_s[ispec] = new Field2D(dimPrim, emFields->Env_Chi_s[ispec]->name );
+                else
+                    Env_Chi_s[ispec]  = new Field2D(emFields->Env_Chi_s[ispec]->name, dimPrim);
+            }
+        }
+
+
     }
     
 }
@@ -133,7 +148,12 @@ void ElectroMagn2D::initElectroMagn2DQuantities(Params &params, Patch* patch)
     Bx_m = new Field2D(dimPrim, 0, true,  "Bx_m");
     By_m = new Field2D(dimPrim, 1, true,  "By_m");
     Bz_m = new Field2D(dimPrim, 2, true,  "Bz_m");
-    
+
+    if (params.Laser_Envelope_model){
+        Env_A_abs_ = new Field2D(dimPrim, "Env_A_abs");
+        Env_Chi_   = new Field2D(dimPrim, "Env_Chi");
+        Env_E_abs_ = new Field2D(dimPrim, "Env_E_abs");
+    }
     // Allocation of filtered fields when Friedman filtering is required
     if (params.Friedman_filter){
         Exfilter.resize(3);
@@ -1055,6 +1075,9 @@ Field * ElectroMagn2D::createField(string fieldname)
     else if(fieldname.substr(0,2)=="Jy" ) return new Field2D(dimPrim, 1, false, fieldname);
     else if(fieldname.substr(0,2)=="Jz" ) return new Field2D(dimPrim, 2, false, fieldname);
     else if(fieldname.substr(0,3)=="Rho") return new Field2D(dimPrim, fieldname );
+    else if(fieldname.substr(0,9)=="Env_A_abs" ) return new Field2D(dimPrim, 0, false, fieldname);
+    else if(fieldname.substr(0,7)=="Env_Chi" ) return new Field2D(dimPrim, 0, false, fieldname);
+    else if(fieldname.substr(0,9)=="Env_E_abs" ) return new Field2D(dimPrim, 0, false, fieldname);
     
     ERROR("Cannot create field "<<fieldname);
     return NULL;
@@ -1109,7 +1132,27 @@ void ElectroMagn2D::computeTotalRhoJ()
 // Compute the total susceptibility from species susceptibility
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagn2D::computeTotalEnvChi()
-{} //END computeTotalEnvChi
+{
+
+    // static cast of the total susceptibility
+    Field2D* Env_Chi2D   = static_cast<Field2D*>(Env_Chi_);
+    
+    // -----------------------------------
+    // Species susceptibility
+    // -----------------------------------
+    for (unsigned int ispec=0; ispec<n_species; ispec++) {
+        if( Env_Chi_s[ispec] ) {
+            Field2D* Env_Chi2D_s  = static_cast<Field2D*>(Env_Chi_s[ispec]);
+            for (unsigned int i=0 ; i<nx_p ; i++){
+                for (unsigned int j=0 ; j<ny_p ; j++){
+                        (*Env_Chi2D)(i,j) += (*Env_Chi2D_s)(i,j);
+                                                     }
+                                                 }
+                               }
+    }//END loop on species ispec
+
+
+} //END computeTotalEnvChi
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Compute electromagnetic energy flows vectors on the border of the simulation box

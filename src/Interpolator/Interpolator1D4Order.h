@@ -26,6 +26,10 @@ public:
         double interp_res =  coeff[0] * (*f)(idx-2)   + coeff[1] * (*f)(idx-1)   + coeff[2] * (*f)(idx) + coeff[3] * (*f)(idx+1) + coeff[4] * (*f)(idx+2);
         return interp_res;
     };
+
+    void fieldsAndEnvelope( ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override final;
+    void timeCenteredEnvelope( ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override final;
+    void envelopeAndSusceptibility(ElectroMagn* EMfields, Particles &particles, int ipart, double* Env_A_abs_Loc, double* Env_Chi_Loc, double* Env_E_abs_Loc) override final;
     
 private:
     inline void coeffs( double xjn ) {

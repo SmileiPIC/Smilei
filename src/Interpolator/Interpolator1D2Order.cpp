@@ -6,6 +6,8 @@
 #include "ElectroMagn.h"
 #include "Field1D.h"
 #include "Particles.h"
+#include "LaserEnvelope.h"
+
 
 using namespace std;
 
@@ -141,3 +143,173 @@ void Interpolator1D2Order::fieldsSelection(ElectroMagn* EMfields, Particles &par
         
     }
 }
+
+void Interpolator1D2Order::fieldsAndEnvelope( ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref )
+{
+    // Static cast of the envelope fields
+    Field1D* Phi1D = static_cast<Field1D*>(EMfields->envelope->Phi_);
+    Field1D* GradPhix1D = static_cast<Field1D*>(EMfields->envelope->GradPhix_);
+    Field1D* GradPhiy1D = static_cast<Field1D*>(EMfields->envelope->GradPhiy_);
+    Field1D* GradPhiz1D = static_cast<Field1D*>(EMfields->envelope->GradPhiz_);
+
+    std::vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
+    std::vector<double> *Bpart = &(smpi->dynamics_Bpart[ithread]);
+    std::vector<double> *PHIpart        = &(smpi->dynamics_PHIpart[ithread]);
+    std::vector<double> *GradPHIpart    = &(smpi->dynamics_GradPHIpart[ithread]);
+
+    std::vector<int>    *iold  = &(smpi->dynamics_iold[ithread]);
+    std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
+
+    //Loop on bin particles
+    int nparts( particles.size() );
+    for (int ipart=*istart ; ipart<*iend; ipart++ ) {
+
+        fields(EMfields, particles, ipart, nparts, &(*Epart)[ipart], &(*Bpart)[ipart]);
+
+
+        // -------------------------
+        // Interpolation of Phi^(p,p)
+        // -------------------------
+        (*PHIpart)[ipart] = compute( &coeffp_[1], Phi1D, ip_);
+
+        // -------------------------
+        // Interpolation of GradPhix^(p,p)
+        // -------------------------
+        (*GradPHIpart)[ipart+0*nparts] = compute( &coeffp_[1], GradPhix1D, ip_);
+
+        // -------------------------
+        // Interpolation of GradPhiy^(p,p)
+        // -------------------------
+        (*GradPHIpart)[ipart+1*nparts] = compute( &coeffp_[1], GradPhiy1D, ip_);
+    
+        // -------------------------
+        // Interpolation of GradPhiz^(p,p)
+        // -------------------------
+        (*GradPHIpart)[ipart+2*nparts] = compute( &coeffp_[1], GradPhiz1D, ip_);
+
+
+        //Buffering of iold and delta
+        (*iold)[ipart+0*nparts]  = ip_;
+        (*delta)[ipart+0*nparts] = deltax;
+
+    }
+
+
+} // END Interpolator1D2Order
+
+
+void Interpolator1D2Order::timeCenteredEnvelope( ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref )
+{
+    // Static cast of the envelope fields
+    Field1D* Phi_m1D = static_cast<Field1D*>(EMfields->envelope->Phi_m);
+    Field1D* GradPhix_m1D = static_cast<Field1D*>(EMfields->envelope->GradPhix_m);
+    Field1D* GradPhiy_m1D = static_cast<Field1D*>(EMfields->envelope->GradPhiy_m);
+    Field1D* GradPhiz_m1D = static_cast<Field1D*>(EMfields->envelope->GradPhiz_m);
+    
+    std::vector<double> *PHI_mpart     = &(smpi->dynamics_PHI_mpart[ithread]);
+    std::vector<double> *GradPHI_mpart = &(smpi->dynamics_GradPHI_mpart[ithread]);
+    
+    std::vector<int>    *iold  = &(smpi->dynamics_iold[ithread]);
+    std::vector<double> *delta = &(smpi->dynamics_deltaold[ithread]);
+    
+    //Loop on bin particles
+    int nparts( particles.size() );
+    for (int ipart=*istart ; ipart<*iend; ipart++ ) {
+    
+        // Normalized particle position
+        double xpn = particles.position(0, ipart)*dx_inv_;
+    
+        // Indexes of the central nodes
+        ip_ = round(xpn);
+        
+        // Declaration and calculation of the coefficient for interpolation
+        double deltax,delta2;
+    
+    
+        deltax   = xpn - (double)ip_;
+        delta2  = deltax*deltax;
+        coeffp_[0] = 0.5 * (delta2-deltax+0.25);
+        coeffp_[1] = 0.75 - delta2;
+        coeffp_[2] = 0.5 * (delta2+deltax+0.25);
+    
+    
+    
+        //!\todo CHECK if this is correct for both primal & dual grids !!!
+        // First index for summation
+        ip_ = ip_ - index_domain_begin;
+    
+        // -------------------------
+        // Interpolation of Phiold^(p)
+        // -------------------------
+        (*PHI_mpart)[ipart] = compute( &coeffp_[1], Phi_m1D, ip_);
+    
+        // -------------------------
+        // Interpolation of GradPhix_m^(p)
+        // -------------------------
+        (*GradPHI_mpart)[ipart+0*nparts] = compute( &coeffp_[1], GradPhix_m1D, ip_);
+    
+        // -------------------------
+        // Interpolation of GradPhiyold^(p)
+        // -------------------------
+        (*GradPHI_mpart)[ipart+1*nparts] = compute( &coeffp_[1], GradPhiy_m1D, ip_);
+    
+        // -------------------------
+        // Interpolation of GradPhizold^(p)
+        // -------------------------
+        (*GradPHI_mpart)[ipart+2*nparts] = compute( &coeffp_[1], GradPhiz_m1D, ip_);
+    
+        //Buffering of iold and delta
+        (*iold)[ipart+0*nparts]  = ip_;
+        (*delta)[ipart+0*nparts] = deltax;
+        
+    
+    }
+
+} // END Interpolator1D2Order
+
+
+void Interpolator1D2Order::envelopeAndSusceptibility(ElectroMagn* EMfields, Particles &particles, int ipart, double* Env_A_abs_Loc, double* Env_Chi_Loc, double* Env_E_abs_Loc)
+{
+    // Static cast of the electromagnetic fields
+    Field1D* Env_A_abs_1D = static_cast<Field1D*>(EMfields->Env_A_abs_);
+    Field1D* Env_Chi_1D = static_cast<Field1D*>(EMfields->Env_Chi_);
+    Field1D* Env_E_abs_1D = static_cast<Field1D*>(EMfields->Env_E_abs_);
+    
+    // Normalized particle position
+    double xpn = particles.position(0, ipart)*dx_inv_;
+    
+    // Indexes of the central nodes
+    ip_ = round(xpn);
+
+    // Declaration and calculation of the coefficient for interpolation
+    double deltax,delta2;
+    
+    
+    deltax   = xpn - (double)ip_;
+    delta2  = deltax*deltax;
+    coeffp_[0] = 0.5 * (delta2-deltax+0.25);
+    coeffp_[1] = 0.75 - delta2;
+    coeffp_[2] = 0.5 * (delta2+deltax+0.25);
+    
+  
+    //!\todo CHECK if this is correct for both primal & dual grids !!!
+    // First index for summation
+    ip_ = ip_ - index_domain_begin;
+    
+    // -------------------------
+    // Interpolation of Env_A_abs_^(p)
+    // -------------------------
+    *(Env_A_abs_Loc) = compute( &coeffp_[1], Env_A_abs_1D, ip_);
+    
+    // -------------------------
+    // Interpolation of Env_Chi_^(p)
+    // -------------------------
+    *(Env_Chi_Loc) = compute( &coeffp_[1], Env_Chi_1D, ip_);
+    
+    // -------------------------
+    // Interpolation of Env_E_abs_^(p)
+    // -------------------------
+    *(Env_E_abs_Loc) = compute( &coeffp_[1], Env_E_abs_1D, ip_);
+
+} // END Interpolator1D2Order
+

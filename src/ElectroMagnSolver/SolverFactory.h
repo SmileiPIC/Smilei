@@ -31,7 +31,6 @@ public:
     // -----------------------------
     static Solver* createMA(Params& params) {
         Solver* solver = NULL;
-        DEBUG(params.maxwell_sol);
         
         if ( params.geometry == "1Dcartesian" ) {
             solver = new MA_Solver1D_norm(params);
@@ -72,7 +71,6 @@ public:
     // -----------------------------
     static Solver* createMF(Params& params) {
         Solver* solver = NULL;
-        DEBUG(params.maxwell_sol);
         
         // Create the required solver for Faraday's Equation
         // -------------------------------------------------

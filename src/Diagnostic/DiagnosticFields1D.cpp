@@ -24,7 +24,7 @@ DiagnosticFields1D::DiagnosticFields1D( Params &params, SmileiMPI* smpi, VectorP
     // Take subgrid into account
     unsigned int istart, istart_in_file, nsteps;
     findSubgridIntersection(
-        subgrid_start[0], subgrid_stop[0], subgrid_step[0],
+        subgrid_start_[0], subgrid_stop_[0], subgrid_step_[0],
         0, global_size,
         istart, istart_in_file, nsteps
     );
@@ -51,7 +51,7 @@ void DiagnosticFields1D::setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatc
     unsigned int MPI_end = MPI_begin + total_vecPatches_size;
     unsigned int istart_in_MPI, nsteps;
     findSubgridIntersection(
-        subgrid_start[0], subgrid_stop[0], subgrid_step[0],
+        subgrid_start_[0], subgrid_stop_[0], subgrid_step_[0],
         MPI_begin, MPI_end,
         istart_in_MPI, MPI_start_in_file, nsteps
     );
@@ -95,19 +95,19 @@ void DiagnosticFields1D::getField( Patch* patch, unsigned int ifield )
     unsigned int ix, iout, nsteps;
     if( patch->Hindex() != 0 ) patch_begin++;
     findSubgridIntersection(
-        subgrid_start[0], subgrid_stop[0], subgrid_step[0],
+        subgrid_start_[0], subgrid_stop_[0], subgrid_step_[0],
         patch_begin, patch_end,
         ix, iout, nsteps
     );
     ix += patch_offset_in_grid[0];
     if( patch->Hindex() == 0 ) ix--;
     iout -= MPI_start_in_file;
-    unsigned int ix_max = ix + nsteps * subgrid_step[0];
+    unsigned int ix_max = ix + nsteps * subgrid_step_[0];
     
     // Copy this patch field into buffer
     while( ix < ix_max ) {
         data[iout] = (*field)(ix) * time_average_inv;
-        ix += subgrid_step[0];
+        ix += subgrid_step_[0];
         iout++;
     }
     

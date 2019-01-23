@@ -641,14 +641,13 @@ void Interpolator3D2OrderV::fieldsAndEnvelope(ElectroMagn* EMfields, Particles &
 }
 
 
-void Interpolator3D2OrderV::envelopeAndOldEnvelope(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
+void Interpolator3D2OrderV::timeCenteredEnvelope(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref)
 {
     if ( istart[0] == iend[0] ) return; //Don't treat empty cells.
 
     int nparts( (smpi->dynamics_invgf[ithread]).size() );
 
-    double *Phipart[1], *GradPhipart[3];
-    double *Phioldpart[1], *GradPhioldpart[3];
+    double *Phi_mpart[1], *GradPhi_mpart[3];
 
     double *deltaO[3];
     deltaO[0] = &(smpi->dynamics_deltaold[ithread][0]);
@@ -658,12 +657,10 @@ void Interpolator3D2OrderV::envelopeAndOldEnvelope(ElectroMagn* EMfields, Partic
     for (unsigned int k=0; k<3;k++) {
 
        if (k==0){     // scalar field, only one component
-           Phipart[k]     = &(smpi->dynamics_PHIpart[ithread][k*nparts]);
-           Phioldpart[k]     = &(smpi->dynamics_PHIoldpart[ithread][k*nparts]);
+           Phi_mpart[k]     = &(smpi->dynamics_PHI_mpart[ithread][k*nparts]);
        }
 
-       GradPhipart[k] = &(smpi->dynamics_GradPHIpart[ithread][k*nparts]);
-       GradPhioldpart[k] = &(smpi->dynamics_GradPHIoldpart[ithread][k*nparts]);
+       GradPhi_mpart[k] = &(smpi->dynamics_GradPHI_mpart[ithread][k*nparts]);
     }
 
     int idx[3], idxO[3];
@@ -675,15 +672,10 @@ void Interpolator3D2OrderV::envelopeAndOldEnvelope(ElectroMagn* EMfields, Partic
     idx[2]  = round( particles.position(2,*istart) * D_inv[2] );
     idxO[2] = idx[2] - k_domain_begin -1 ;
 
-    Field3D* Phi3D      = static_cast<Field3D*>(EMfields->envelope->Phi_);
-    Field3D* GradPhix3D = static_cast<Field3D*>(EMfields->envelope->GradPhix_);
-    Field3D* GradPhiy3D = static_cast<Field3D*>(EMfields->envelope->GradPhiy_);
-    Field3D* GradPhiz3D = static_cast<Field3D*>(EMfields->envelope->GradPhiz_);
-
-    Field3D* PhiOld3D      = static_cast<Field3D*>(EMfields->envelope->Phiold_);
-    Field3D* GradPhiOldx3D = static_cast<Field3D*>(EMfields->envelope->GradPhixold_);
-    Field3D* GradPhiOldy3D = static_cast<Field3D*>(EMfields->envelope->GradPhiyold_);
-    Field3D* GradPhiOldz3D = static_cast<Field3D*>(EMfields->envelope->GradPhizold_);
+    Field3D* Phi_m3D      = static_cast<Field3D*>(EMfields->envelope->Phi_m);
+    Field3D* GradPhi_mx3D = static_cast<Field3D*>(EMfields->envelope->GradPhix_m);
+    Field3D* GradPhi_my3D = static_cast<Field3D*>(EMfields->envelope->GradPhiy_m);
+    Field3D* GradPhi_mz3D = static_cast<Field3D*>(EMfields->envelope->GradPhiz_m);
 
 
     double coeff[3][2][3][32];
@@ -733,96 +725,53 @@ void Interpolator3D2OrderV::envelopeAndOldEnvelope(ElectroMagn* EMfields, Partic
             double* coeffxp = &(coeff[0][0][1][ipart]);
             double* coeffzp = &(coeff[2][0][1][ipart]);
 
-            // Interpolation of Phi^(p,p,p)
+            // ----------------------------------
+            // ----  PHI_m  and Grad Phi_m   ----
+            // ----------------------------------
+            // Interpolation of Phi_m^(p,p,p)
+
             double interp_res = 0.;
             for (int iloc=-1 ; iloc<2 ; iloc++) {
                 for (int jloc=-1 ; jloc<2 ; jloc++) {
                     for (int kloc=-1 ; kloc<2 ; kloc++) {
-                        interp_res += *(coeffxp+iloc*32) * *(coeffyp+jloc*32) * *(coeffzp+kloc*32) * (*Phi3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
+                        interp_res += *(coeffxp+iloc*32) * *(coeffyp+jloc*32) * *(coeffzp+kloc*32) * (*Phi_m3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
                     }
                 }
             }
-            Phipart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
+            Phi_mpart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
 
-            // Interpolation of GradPhiX^(p,p,p)
+            // Interpolation of GradPhi_mX^(p,p,p)
             interp_res = 0.;
             for (int iloc=-1 ; iloc<2 ; iloc++) {
                 for (int jloc=-1 ; jloc<2 ; jloc++) {
                     for (int kloc=-1 ; kloc<2 ; kloc++) {
-                        interp_res += *(coeffxp+iloc*32) * *(coeffyp+jloc*32) * *(coeffzp+kloc*32) * (*GradPhix3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
+                        interp_res += *(coeffxp+iloc*32) * *(coeffyp+jloc*32) * *(coeffzp+kloc*32) * (*GradPhi_mx3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
                     }
                 }
             }
-            GradPhipart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
+            GradPhi_mpart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
 
-            // Interpolation of GradPhiY^(p,p,p)
+            // Interpolation of GradPhi_mY^(p,p,p)
             interp_res = 0.;
             for (int iloc=-1 ; iloc<2 ; iloc++) {
                 for (int jloc=-1 ; jloc<2 ; jloc++) {
                     for (int kloc=-1 ; kloc<2 ; kloc++) {
-                        interp_res += *(coeffxp+iloc*32) * *(coeffyp+jloc*32) * *(coeffzp+kloc*32) * (*GradPhiy3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
+                        interp_res += *(coeffxp+iloc*32) * *(coeffyp+jloc*32) * *(coeffzp+kloc*32) * (*GradPhi_my3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
                     }
                 }
             }
-            GradPhipart[1][ipart-ipart_ref+ivect+istart[0]] = interp_res;
+            GradPhi_mpart[1][ipart-ipart_ref+ivect+istart[0]] = interp_res;
 
-            // Interpolation of GradPhiZ^(p,p,p)
+            // Interpolation of GradPhi_mZ^(p,p,p)
             interp_res = 0.;
             for (int iloc=-1 ; iloc<2 ; iloc++) {
                 for (int jloc=-1 ; jloc<2 ; jloc++) {
                     for (int kloc=-1 ; kloc<2 ; kloc++) {
-                        interp_res += *(coeffxp+iloc*32) * *(coeffyp+jloc*32) * *(coeffzp+kloc*32) * (*GradPhiz3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
+                        interp_res += *(coeffxp+iloc*32) * *(coeffyp+jloc*32) * *(coeffzp+kloc*32) * (*GradPhi_mz3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
                     }
                 }
             }
-            GradPhipart[2][ipart-ipart_ref+ivect+istart[0]] = interp_res;
-
-            // ----------------------------------
-            // ---- PHI old and Grad Phi old ----
-            // ----------------------------------
-            // Interpolation of Phiold^(p,p,p)
-            interp_res = 0.;
-            for (int iloc=-1 ; iloc<2 ; iloc++) {
-                for (int jloc=-1 ; jloc<2 ; jloc++) {
-                    for (int kloc=-1 ; kloc<2 ; kloc++) {
-                        interp_res += *(coeffxp+iloc*32) * *(coeffyp+jloc*32) * *(coeffzp+kloc*32) * (*PhiOld3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
-                    }
-                }
-            }
-            Phioldpart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
-
-            // Interpolation of GradPhioldX^(p,p,p)
-            interp_res = 0.;
-            for (int iloc=-1 ; iloc<2 ; iloc++) {
-                for (int jloc=-1 ; jloc<2 ; jloc++) {
-                    for (int kloc=-1 ; kloc<2 ; kloc++) {
-                        interp_res += *(coeffxp+iloc*32) * *(coeffyp+jloc*32) * *(coeffzp+kloc*32) * (*GradPhiOldx3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
-                    }
-                }
-            }
-            GradPhioldpart[0][ipart-ipart_ref+ivect+istart[0]] = interp_res;
-
-            // Interpolation of GradPhioldY^(p,p,p)
-            interp_res = 0.;
-            for (int iloc=-1 ; iloc<2 ; iloc++) {
-                for (int jloc=-1 ; jloc<2 ; jloc++) {
-                    for (int kloc=-1 ; kloc<2 ; kloc++) {
-                        interp_res += *(coeffxp+iloc*32) * *(coeffyp+jloc*32) * *(coeffzp+kloc*32) * (*GradPhiOldy3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
-                    }
-                }
-            }
-            GradPhioldpart[1][ipart-ipart_ref+ivect+istart[0]] = interp_res;
-
-            // Interpolation of GradPhioldZ^(p,p,p)
-            interp_res = 0.;
-            for (int iloc=-1 ; iloc<2 ; iloc++) {
-                for (int jloc=-1 ; jloc<2 ; jloc++) {
-                    for (int kloc=-1 ; kloc<2 ; kloc++) {
-                        interp_res += *(coeffxp+iloc*32) * *(coeffyp+jloc*32) * *(coeffzp+kloc*32) * (*GradPhiOldz3D)(idxO[0]+1+iloc,idxO[1]+1+jloc,idxO[2]+1+kloc);
-                    }
-                }
-            }
-            GradPhioldpart[2][ipart-ipart_ref+ivect+istart[0]] = interp_res;
+            GradPhi_mpart[2][ipart-ipart_ref+ivect+istart[0]] = interp_res;
 
         }
     }

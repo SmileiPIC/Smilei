@@ -470,3 +470,9 @@ void Projector2D4Order::currentsAndDensityWrapper(ElectroMagn* EMfields, Particl
             currentsAndDensity(b_Jx , b_Jy , b_Jz ,b_rho, particles,  ipart, (*invgf)[ipart], &(*iold)[ipart], &(*delta)[ipart]);
     }
 }
+
+// Projector for susceptibility used as source term in envelope equation
+void Projector2D4Order::susceptibility(ElectroMagn* EMfields, Particles &particles, double species_mass, SmileiMPI* smpi, int istart, int iend,  int ithread, int ibin, int ipart_ref)
+{
+    ERROR("Projection and interpolation for the envelope model are implemented only for interpolation_order = 2");
+}

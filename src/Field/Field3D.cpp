@@ -31,7 +31,7 @@ Field3D::Field3D(vector<unsigned int> dims) : Field(dims)
 }
 
 // with the dimensions and output (dump) file name as input argument
-Field3D::Field3D(vector<unsigned int> dims, string name) : Field(dims, name)
+Field3D::Field3D(vector<unsigned int> dims, string name_in) : Field(dims, name_in)
 {
     data_=NULL;
     allocateDims(dims);
@@ -45,7 +45,7 @@ Field3D::Field3D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal)
 }
 
 // with the dimensions and output (dump) file name as input argument
-Field3D::Field3D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, string name) : Field(dims, mainDim, isPrimal, name)
+Field3D::Field3D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, string name_in) : Field(dims, mainDim, isPrimal, name_in)
 {
     data_=NULL;
     allocateDims(dims, mainDim, isPrimal);
@@ -53,7 +53,7 @@ Field3D::Field3D(vector<unsigned int> dims, unsigned int mainDim, bool isPrimal,
 
 
 // without allocating
-Field3D::Field3D(string name, vector<unsigned int> dims) : Field(dims, name)
+Field3D::Field3D(string name_in, vector<unsigned int> dims) : Field(dims, name_in)
 {
     data_=NULL;
     dims_=dims;
@@ -95,7 +95,6 @@ void Field3D::allocateDims() {
         }
     }//i
 
-    DEBUG("Fields 3D created: " << dims_[0] << "x" << dims_[1] << "x" << dims_[2]);
     globalDims_ = dims_[0]*dims_[1]*dims_[2];
 
 }
@@ -153,7 +152,6 @@ void Field3D::allocateDims(unsigned int mainDim, bool isPrimal ) {
         }
     }//i
 
-    //DEBUG(10,"Fields 3D created: " << dims_[0] << "x" << dims_[1] << "x" << dims_[2]);
     globalDims_ = dims_[0]*dims_[1]*dims_[2];
 
     //isDual_ = isPrimal;

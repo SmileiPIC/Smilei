@@ -44,9 +44,6 @@ nrj_new_fields (  0.               )
     }
     
     // take useful things from params
-    for (unsigned int i=0; i<3; i++) {
-        DEBUG("____________________ OVERSIZE: " <<i << " " << oversize[i]);
-    }
     initElectroMagnQuantities();    
     emBoundCond = ElectroMagnBC_Factory::create(params, patch);
     MaxwellAmpereSolver_  = SolverFactory::createMA(params);

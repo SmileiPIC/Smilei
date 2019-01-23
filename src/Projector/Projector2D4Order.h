@@ -23,6 +23,9 @@ public:
     //!Wrapper
     void currentsAndDensityWrapper(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ibin, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec, int ipart_ref = 0) override final;
 
+    // Project susceptibility
+    void susceptibility(ElectroMagn* EMfields, Particles &particles, double species_mass, SmileiMPI* smpi, int istart, int iend,  int ithread, int ibin, int ipart_ref = 0) override final;
+
  private:
     static constexpr double dble_1_ov_384   = 1.0/384.0;
     static constexpr double dble_1_ov_48    = 1.0/48.0;

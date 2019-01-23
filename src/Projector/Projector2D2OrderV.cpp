@@ -469,7 +469,7 @@ void Projector2D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
             }
 
             for (unsigned int j=1; j<5 ; j++) {
-                double tmp( crx_p * (Sy0_buff_vect[j*vecSize+ipart] + 0.5*DSy[j*vecSize+ipart]) );
+                tmp =  crx_p * (Sy0_buff_vect[j*vecSize+ipart] + 0.5*DSy[j*vecSize+ipart]);
                 for (unsigned int i=1 ; i<5 ; i++) {
                     bJx [(i*5+j)*vecSize+ipart] += sum[i] * tmp;
                 }
@@ -587,7 +587,7 @@ void Projector2D2OrderV::currents(double* Jx, double* Jy, double* Jz, Particles 
             }
 
             for (unsigned int i=1; i<5 ; i++) {
-                double tmp( cry_p * (Sx0_buff_vect[i*vecSize+ipart] + 0.5*DSx[i*vecSize+ipart]) );
+                tmp = cry_p * (Sx0_buff_vect[i*vecSize+ipart] + 0.5*DSx[i*vecSize+ipart]);
                 for (unsigned int j=1 ; j<5 ; j++) {
                     bJx [(i*5+j)*vecSize+ipart] += sum[j] * tmp;
                 }
@@ -775,3 +775,10 @@ void Projector2D2OrderV::currentsAndDensityWrapper(ElectroMagn* EMfields, Partic
         }
     }
 }
+
+// Project susceptibility
+void Projector2D2OrderV::susceptibility(ElectroMagn* EMfields, Particles &particles, double species_mass, SmileiMPI* smpi, int istart, int iend,  int ithread, int ibin, int ipart_ref)
+{
+    ERROR("Vectorized projection of the susceptibility for the envelope model is not implemented for 2D geometry");
+}
+

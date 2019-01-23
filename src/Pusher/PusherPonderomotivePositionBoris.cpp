@@ -24,10 +24,11 @@ PusherPonderomotivePositionBoris::~PusherPonderomotivePositionBoris()
 
 void PusherPonderomotivePositionBoris::operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ipart_ref)
 {
-    std::vector<double> *Phipart        = &(smpi->dynamics_PHIpart[ithread]);
-    std::vector<double> *GradPhipart    = &(smpi->dynamics_GradPHIpart[ithread]);
-    std::vector<double> *Phioldpart     = &(smpi->dynamics_PHIoldpart[ithread]);
-    std::vector<double> *GradPhioldpart = &(smpi->dynamics_GradPHIoldpart[ithread]);
+
+    std::vector<double> *Phi_mpart     = &(smpi->dynamics_PHI_mpart[ithread]);
+    std::vector<double> *GradPhi_mpart = &(smpi->dynamics_GradPHI_mpart[ithread]);
+    std::vector<double> *invgf = &(smpi->dynamics_invgf[ithread]);
+
     
     double charge_sq_over_mass_dts4,charge_sq_over_mass_sq;
     double gamma0,gamma0_sq,gamma_ponderomotive;
@@ -49,14 +50,10 @@ void PusherPonderomotivePositionBoris::operator() (Particles &particles, SmileiM
     
     int nparts = particles.size();
     
-    double* Phi         = &( (*Phipart)[0*nparts] );
-    double* Phiold      = &( (*Phioldpart)[0*nparts] );
-    double* GradPhix    = &( (*GradPhipart)[0*nparts] );
-    double* GradPhiy    = &( (*GradPhipart)[1*nparts] );
-    double* GradPhiz    = &( (*GradPhipart)[2*nparts] );
-    double* GradPhioldx = &( (*GradPhioldpart)[0*nparts] );
-    double* GradPhioldy = &( (*GradPhioldpart)[1*nparts] );
-    double* GradPhioldz = &( (*GradPhioldpart)[2*nparts] );
+    double* Phi_m      = &( (*Phi_mpart)[0*nparts] );
+    double* GradPhi_mx = &( (*GradPhi_mpart)[0*nparts] );
+    double* GradPhi_my = &( (*GradPhi_mpart)[1*nparts] );
+    double* GradPhi_mz = &( (*GradPhi_mpart)[2*nparts] );
     
     #pragma omp simd
     for (int ipart=istart ; ipart<iend; ipart++ ) { // begin loop on particles
@@ -67,15 +64,16 @@ void PusherPonderomotivePositionBoris::operator() (Particles &particles, SmileiM
         charge_sq_over_mass_sq      = (double)(charge[ipart])*one_over_mass_*(charge[ipart])*one_over_mass_;
 
         // compute initial ponderomotive gamma 
-        gamma0_sq = 1. + momentum[0][ipart]*momentum[0][ipart] + momentum[1][ipart]*momentum[1][ipart] + momentum[2][ipart]*momentum[2][ipart] + (*(Phi+ipart)+*(Phiold+ipart))*charge_sq_over_mass_sq*0.5 ;
+        gamma0_sq = 1. + momentum[0][ipart]*momentum[0][ipart] + momentum[1][ipart]*momentum[1][ipart] + momentum[2][ipart]*momentum[2][ipart] + (*(Phi_m+ipart))*charge_sq_over_mass_sq ;
         gamma0    = sqrt(gamma0_sq) ;
         // ponderomotive force for ponderomotive gamma advance (Grad Phi is interpolated in time, hence the division by 2)
-        pxsm = charge_sq_over_mass_dts4 * ( *(GradPhix+ipart) + *(GradPhioldx+ipart) ) * 0.5 / gamma0_sq ;
-        pysm = charge_sq_over_mass_dts4 * ( *(GradPhiy+ipart) + *(GradPhioldy+ipart) ) * 0.5 / gamma0_sq ;
-        pzsm = charge_sq_over_mass_dts4 * ( *(GradPhiz+ipart) + *(GradPhioldz+ipart) ) * 0.5 / gamma0_sq ;
+        pxsm = charge_sq_over_mass_dts4 * ( *(GradPhi_mx+ipart) ) / gamma0_sq ;
+        pysm = charge_sq_over_mass_dts4 * ( *(GradPhi_my+ipart) ) / gamma0_sq ;
+        pzsm = charge_sq_over_mass_dts4 * ( *(GradPhi_mz+ipart) ) / gamma0_sq ;
     
         // update of gamma ponderomotive 
         gamma_ponderomotive = gamma0 + (pxsm*momentum[0][ipart]+pysm*momentum[1][ipart]+pzsm*momentum[2][ipart]) ;
+        (*invgf)[ipart] = 1. / gamma_ponderomotive;
   
         // Move the particle
 #ifdef  __DEBUG

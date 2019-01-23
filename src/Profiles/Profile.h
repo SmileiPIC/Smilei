@@ -129,7 +129,7 @@ private:
     std::string info;
     
     //! Number of variables for the profile function
-    int nvariables;
+    int nvariables_;
     
     //! Whether the profile is using numpy
     bool uses_numpy;

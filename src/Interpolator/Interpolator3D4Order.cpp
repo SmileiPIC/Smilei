@@ -193,7 +193,7 @@ void Interpolator3D4Order::fieldsAndEnvelope( ElectroMagn* EMfields, Particles &
 } // END Interpolator3D4Order
 
 
-void Interpolator3D4Order::envelopeAndOldEnvelope( ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref )
+void Interpolator3D4Order::timeCenteredEnvelope( ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref )
 {
     ERROR("Projection and interpolation for the envelope model are implemented only for interpolation_order = 2");
 } // END Interpolator3D4Order

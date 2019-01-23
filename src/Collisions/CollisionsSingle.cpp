@@ -31,15 +31,15 @@ void CollisionsSingle::collide(Params& params, Patch* patch, int itime, vector<D
     Particles *p1=NULL, *p2;
     double m12, coeff3, coeff4, logL, s, ncol, debye2=0.;
     
-    s1 = patch->vecSpecies[species_group1[0]];
-    s2 = patch->vecSpecies[species_group2[0]];
+    s1 = patch->vecSpecies[species_group1_[0]];
+    s2 = patch->vecSpecies[species_group2_[0]];
     
-    bool debug = (debug_every > 0 && itime % debug_every == 0); // debug only every N timesteps
+    bool debug = (debug_every_ > 0 && itime % debug_every_ == 0); // debug only every N timesteps
     
     if( debug ) {
         ncol = 0.;
-        smean       = 0.;
-        logLmean    = 0.;
+        smean_       = 0.;
+        logLmean_    = 0.;
         //temperature = 0.;
     }
     
@@ -68,7 +68,7 @@ void CollisionsSingle::collide(Params& params, Patch* patch, int itime, vector<D
 
         // Shuffle particles of species 1 to have random pairs
         // In the case of collisions within one species
-        if (intra_collisions) {
+        if (intra_collisions_) {
             npairs = (int) ceil(((double)np1)/2.); // half as many pairs as macro-particles
             N2max = np1 - npairs; // number of not-repeated particles (in second half only)
             first_index2 += npairs;
@@ -104,7 +104,7 @@ void CollisionsSingle::collide(Params& params, Patch* patch, int itime, vector<D
             n12 += min( p1->weight(i1),  p2->weight(i2) );
             Ionization->prepare2(p1, i1, p2, i2, i<N2max);
         }
-        if( intra_collisions ) { n1 += n2; n2 = n1; }
+        if( intra_collisions_ ) { n1 += n2; n2 = n1; }
 
         // Pre-calculate some numbers before the big loop
         double inv_cell_volume = 1./patch->getCellVolume(p1, i1);
@@ -114,8 +114,8 @@ void CollisionsSingle::collide(Params& params, Patch* patch, int itime, vector<D
         n123 = pow(n1,2./3.);
         n223 = pow(n2,2./3.);
         coeff3 = params.timestep * n1*n2/n12;
-        coeff4 = pow( 3.*coeff2 , -1./3. ) * coeff3;
-        coeff3 *= coeff2;
+        coeff4 = pow( 3.*coeff2_ , -1./3. ) * coeff3;
+        coeff3 *= coeff2_;
         m12  = s1->mass / s2->mass; // mass ratio
 
         // Prepare the ionization
@@ -127,20 +127,20 @@ void CollisionsSingle::collide(Params& params, Patch* patch, int itime, vector<D
             i1 = first_index1 + i;
             i2 = first_index2 + i%N2max;
 
-            logL = coulomb_log;
+            logL = coulomb_log_;
             double U1  = patch->xorshift32() * patch->xorshift32_invmax;
             double U2  = patch->xorshift32() * patch->xorshift32_invmax;
             double phi = patch->xorshift32() * patch->xorshift32_invmax * twoPi;
             
-            s = one_collision(p1, i1, s1->mass, p2, i2, m12, coeff1, coeff2, coeff3, coeff4, n123, n223, debye2, logL, U1, U2, phi);
+            s = one_collision(p1, i1, s1->mass, p2, i2, m12, coeff1_, coeff2_, coeff3, coeff4, n123, n223, debye2, logL, U1, U2, phi);
 
             // Handle ionization
             Ionization->apply(patch, p1, i1, p2, i2);
 
             if( debug ) {
                 ncol     += 1;
-                smean    += s;
-                logLmean += logL;
+                smean_    += s;
+                logLmean_ += logL;
                 //temperature += m1 * (sqrt(1.+pow(p1->momentum(0,i1),2)+pow(p1->momentum(1,i1),2)+pow(p1->momentum(2,i1),2))-1.);
             }
 
@@ -151,8 +151,8 @@ void CollisionsSingle::collide(Params& params, Patch* patch, int itime, vector<D
     Ionization->finish(s1, s2, params, patch, localDiags);
 
     if(debug && ncol>0. ) {
-        smean    /= ncol;
-        logLmean /= ncol;
+        smean_    /= ncol;
+        logLmean_ /= ncol;
         //temperature /= ncol;
     }
 }
