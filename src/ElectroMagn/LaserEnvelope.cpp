@@ -27,8 +27,13 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
     if( !PyTools::extract_pyProfile( "envelope_profile", profile, "LaserEnvelope" ) ) {
         MESSAGE( "No envelope profile set !" );
     }
-    profile_ = new Profile( profile, params.nDim_field+1, "envelope" );
-    
+
+    bool try_numpy=false;
+    if( params.geometry == "3Dcartesian" ){
+        try_numpy = true; // use numpy for quicker initialisation in 3D
+    }
+
+    profile_ = new Profile( profile, params.nDim_field+1, "envelope",try_numpy );
     // params.Laser_Envelope_model = true;
     
     ostringstream name( "" );
