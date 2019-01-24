@@ -74,25 +74,6 @@ def time_gaussian(fwhm, center, order=2):
 time_envelope_t              = time_gaussian(center=laser_initial_position                  , fwhm=laser_FWHM_E)
 time_envelope_t_plus_half_dt = time_gaussian(center=(laser_initial_position+c_vacuum*0.5*dt), fwhm=laser_FWHM_E)
 
-# laser waist function
-def w(x):
-        import numpy as np
-        w  = np.sqrt(1./(1.+   ( (x-focus[0])/Zr  )**2 ) )
-        return w
-
-def coeff(x):
-        import numpy as np
-        coeff = omega * (x-focus[0]) * w(x)**2 / (2.*Zr**2)
-        return coeff
-
-def spatial_amplitude(x,y,z):
-        import numpy as np
-        invWaist2 = (w(x)/waist)**2
-        return w(x) * np.exp( -invWaist2*(  (y-focus[1])**2 + (z-focus[2])**2 )  )
-
-# laser phase   
-def phase(x,y,z):
-        import numpy as np
 
 # laser waist function
 def w(x):
