@@ -639,31 +639,43 @@ def LaserEnvelopeGaussian3D( a0=1., omega=1., focus=None, waist=3., time_envelop
         envelope_solver = "explicit",Envelope_boundary_conditions = [["reflective"]]):
     import math
     import cmath
+    import numpy as np
     c_vacuum = 1. #299792458
 
     Zr = omega * waist**2/2.
     def w(x):
-        w  = math.sqrt(1./(1.+   ( (x-focus[0])/Zr  )**2 ) )
+        import numpy as np
+        w  = np.sqrt(1./(1.+   ( (x-focus[0])/Zr  )**2 ) )
         return w
     def coeff(x):
+        import numpy as np
         coeff = omega * (x-focus[0]) * w(x)**2 / (2.*Zr**2)
         return coeff
     def spatial_amplitude(x,y,z):
+        import numpy as np
         invWaist2 = (w(x)/waist)**2
-        return w(x) * math.exp( -invWaist2*(  (y-focus[1])**2 + (z-focus[2])**2 )  )
+        return a0*w(x) * np.exp( -invWaist2*(  (y-focus[1])**2 + (z-focus[2])**2 )  )
     def phase(x,y,z):
+        import numpy as np
         return coeff(x) * ( (y-focus[1])**2 + (z-focus[2])**2 )
 
     def Gouy_phase(x):
-        return math.atan( (x-focus[0])/Zr )
-
+        import numpy as np
+        return np.arctan( (x-focus[0])/Zr )
+    def exponential_with_total_phase(x,y,z):
+        import numpy as np
+        return np.multiply(np.exp(1j*phase(x,y,z)),np.exp(-1j*Gouy_phase(x)))
     def space_time_envelope(x,y,z,t):
-        return a0*spatial_amplitude(x,y,z)*time_envelope(t)*cmath.exp(1j*phase(x,y,z))*cmath.exp(-1j*Gouy_phase(x))
+        import numpy as np
+        return np.multiply(spatial_amplitude(x,y,z),time_envelope(t))
+    def gaussian_beam_with_temporal_profile(x,y,z,t):
+        import numpy as np
+        return np.multiply(space_time_envelope(x,y,z,t),exponential_with_total_phase(x,y,z))
 
     # Create Laser Envelope
     LaserEnvelope(
         omega               = omega,
-        envelope_profile    = space_time_envelope,
+        envelope_profile    = gaussian_beam_with_temporal_profile,
         envelope_solver     = "explicit",
         Envelope_boundary_conditions = Envelope_boundary_conditions,
     )
