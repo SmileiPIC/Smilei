@@ -527,7 +527,7 @@ void SpeciesAdaptiveV2::scalar_ponderomotive_update_susceptibility_and_momentum(
 #ifdef  __DETAILED_TIMERS
         timer = MPI_Wtime();
 #endif
-        Proj->susceptibility( EMfields, *particles, mass, smpi, first_index[0], last_index.back(), ithread, 0 );
+        Proj->susceptibility( EMfields, *particles, mass, smpi, first_index[0], last_index.back(), ithread );
 #ifdef  __DETAILED_TIMERS
         patch->patch_timers[8] += MPI_Wtime() - timer;
 #endif
