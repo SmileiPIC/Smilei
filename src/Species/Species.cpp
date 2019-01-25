@@ -327,18 +327,18 @@ void Species::initCharge( unsigned int nPart, unsigned int iPart, double q )
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::initPosition( unsigned int nPart, unsigned int iPart, double *indexes, Params &params )
 {
-    double particles_r, particles_theta;
     if( position_initialization == "regular" ) {
     
         double coeff = pow( ( double )nPart, inv_nDim_field );
-        if( nPart != ( unsigned int ) pow( round( coeff ), ( double )nDim_field ) ) {
-            ERROR( "Impossible to put "<<nPart<<" particles regularly spaced in one cell. Use a square number, or `position_initialization = 'random'`" );
-        }
-        
-        int coeff_ = coeff;
-        coeff = 1./coeff;
-        
+
         if( params.geometry != "AMcylindrical" ) {
+            if( nPart != ( unsigned int ) pow( round( coeff ), ( double )nDim_field ) ) {
+                ERROR( "Impossible to put "<<nPart<<" particles regularly spaced in one cell. Use a square number, or `position_initialization = 'random'`" );
+            }
+        
+            int coeff_ = coeff;
+            coeff = 1./coeff;
+        
             for( unsigned int  p=iPart; p<iPart+nPart; p++ ) {
                 int i = ( int )( p-iPart );
                 for( unsigned int idim=0; idim<nDim_particle; idim++ ) {
@@ -347,33 +347,58 @@ void Species::initPosition( unsigned int nPart, unsigned int iPart, double *inde
                 }
             }
         } else {
-            // Trick to initalize particles more or less regularly
-            for( unsigned int  p=iPart; p<iPart+nPart; p++ ) {
-                int i = ( int )( p-iPart );
-                for( unsigned int idim=0; idim<2; idim++ ) {
-                    particles->position( idim, p ) = indexes[idim] + cell_length[idim] * coeff * ( 0.5 + i%coeff_ );
-                    i /= coeff_; // integer division
+
+            //Trick to derive number of particles per dimension from total number of particles per cell
+            int Np_array[nDim_particle];
+            int Np = nPart;
+            int counter = 0;
+            int prime = 2;
+            double dx, dr, dtheta ,theta_offset;
+            for( unsigned int idim=0; idim<nDim_particle; idim++ ) Np_array[idim] = 1;
+
+            while (prime <= 23 && Np > 1) {
+                if (Np%prime == 0){
+                    Np = Np/prime;
+                    Np_array[counter%nDim_particle] *= prime;
+                    counter++;
+                } else {
+                    prime++;
                 }
-                particles->position( 2, p ) = particles->position( 1, p ) ;
-                particles->position( 1, p ) = 0. ;
-                //particles->position(2,p) = 0. ;
+            } 
+            Np_array[counter%nDim_particle] *= Np; //At that point, if Np is not equal to 1, it means that nPart has a prime divisor greater than 23.
+            std::sort(Np_array, Np_array + nDim_particle); //sort so that the largest number of particles per dimension is used along theta.           
+
+            dx = cell_length[0]/Np_array[0];
+            dr = cell_length[1]/Np_array[1];
+            dtheta = 2.*M_PI   /Np_array[2];
+
+            for (unsigned int ix = 0 ; ix < Np_array[0]; ix++){
+                double qx = indexes[0] + dx*(ix+0.5);
+                int nx = ix*(Np_array[2]*Np_array[1]);
+                for (unsigned int ir = 0 ; ir < Np_array[1]; ir++){
+                    double qr = indexes[1] + dr*(ir+0.5);
+                    int nr = ir*(Np_array[2]);
+                    theta_offset = Rand::uniform()*2.*M_PI;
+                    for (unsigned int itheta = 0 ; itheta < Np_array[2]; itheta++){
+                        int p = nx+nr+itheta+iPart;
+                        double theta = theta_offset + itheta*dtheta;
+                        particles->position( 0, p ) = qx ;
+                        particles->position( 1, p ) = qr*cos( theta );
+                        particles->position( 2, p ) = qr*sin( theta );
+                    }
+                }
             }
-            
         }
         
     } else if( position_initialization == "random" ) {
         if( params.geometry=="AMcylindrical" ) {
+            double particles_r, particles_theta;
             for( unsigned int p= iPart; p<iPart+nPart; p++ ) {
                 particles->position( 0, p )=indexes[0]+Rand::uniform()*cell_length[0];
                 particles_r=sqrt( indexes[1]*indexes[1]+ 2.*Rand::uniform()*( indexes[1]+cell_length[1]*0.5 )*cell_length[1] );
                 particles_theta=Rand::uniform()*2.*M_PI;
                 particles->position( 2, p )=particles_r*sin( particles_theta );
-                //if (particles_theta >= M_PI/2. || particles_theta <= 3./2.*M_PI)
                 particles->position( 1, p )= particles_r*cos( particles_theta );
-                //- sqrt(particles_r*particles_r - particles->position(2,p)* particles->position(2,p));
-                //else
-                //  particles->position(1,p)=sqrt(particles_r*particles_r - particles->position(2,p)* particles->position(2,p));
-                
             }
         } else {
             for( unsigned int p= iPart; p<iPart+nPart; p++ ) {
