@@ -493,12 +493,11 @@ def LaserPlanar1D( box_side="xmin", a0=1., omega=1.,
 
 def LaserEnvelopePlanar1D( a0=1., omega=1., focus=None, time_envelope=tconstant(),
         envelope_solver = "explicit",Envelope_boundary_conditions = [["reflective"]]):
-    import math
     import cmath
-    c_vacuum = 1. #299792458
+    from numpy import vectorize
 
     def space_time_envelope(x,t):
-        return a0*complex(time_envelope(t))
+        return a0*complex( vectorize(time_envelope)(t) )
 
     # Create Laser Envelope
     LaserEnvelope(
@@ -555,27 +554,20 @@ def LaserGaussian2D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
 
 def LaserEnvelopeGaussian2D( a0=1., omega=1., focus=None, waist=3., time_envelope=tconstant(),
         envelope_solver = "explicit",Envelope_boundary_conditions = [["reflective"]]):
-    import math
     import cmath
-    c_vacuum = 1. #299792458
+    from numpy import exp, sqrt, arctan, vectorize
 
-    Zr = omega * waist**2/2.
-    def w(x):
-        w  = math.sqrt(1./(1.+   ( (x-focus[0])/Zr  )**2 ) )
-        return w
-    def coeff(x):
-        coeff = omega * (x-focus[0]) * w(x)**2 / (2.*Zr**2)
-        return coeff
-    def spatial_amplitude(x,y):
-        invWaist2 = (w(x)/waist)**2
-        return w(x) * math.exp( -invWaist2*(  (y-focus[1])**2  ) )
-    def phase(x,y):
-        return coeff(x) * ( (y-focus[1])**2 )
-    def Gouy_phase(x):
-        return math.atan( (x-focus[0])/Zr )
+    def gaussian_beam_with_temporal_profile(x,y,t):
+        Zr = omega * waist**2/2.
+        w  = sqrt(1./(1.+   ( (x-focus[0])/Zr  )**2 ) )
+        coeff = omega * (x-focus[0]) * w**2 / (2.*Zr**2)
+        phase = coeff * ( (y-focus[1])**2 )
+        exponential_with_total_phase = exp(1j*(phase-arctan( (x-focus[0])/Zr )))
+        invWaist2 = (w/waist)**2
+        spatial_amplitude = a0*w * exp( -invWaist2*(y-focus[1])**2)
+        space_time_envelope = spatial_amplitude * vectorize(time_envelope)(t)
+        return space_time_envelope * exponential_with_total_phase
 
-    def space_time_envelope(x,y,t):
-        return a0*spatial_amplitude(x,y)*time_envelope(t)*cmath.exp(1j*phase(x,y))*cmath.exp(-1j*Gouy_phase(x))
 
     # Create Laser Envelope
     LaserEnvelope(
@@ -637,40 +629,19 @@ def LaserGaussian3D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
 
 def LaserEnvelopeGaussian3D( a0=1., omega=1., focus=None, waist=3., time_envelope=tconstant(),
         envelope_solver = "explicit",Envelope_boundary_conditions = [["reflective"]]):
-    import math
     import cmath
-    import numpy as np
-    c_vacuum = 1. #299792458
+    from numpy import exp, sqrt, arctan, vectorize
 
-    Zr = omega * waist**2/2.
-    def w(x):
-        import numpy as np
-        w  = np.sqrt(1./(1.+   ( (x-focus[0])/Zr  )**2 ) )
-        return w
-    def coeff(x):
-        import numpy as np
-        coeff = omega * (x-focus[0]) * w(x)**2 / (2.*Zr**2)
-        return coeff
-    def spatial_amplitude(x,y,z):
-        import numpy as np
-        invWaist2 = (w(x)/waist)**2
-        return a0*w(x) * np.exp( -invWaist2*(  (y-focus[1])**2 + (z-focus[2])**2 )  )
-    def phase(x,y,z):
-        import numpy as np
-        return coeff(x) * ( (y-focus[1])**2 + (z-focus[2])**2 )
-
-    def Gouy_phase(x):
-        import numpy as np
-        return np.arctan( (x-focus[0])/Zr )
-    def exponential_with_total_phase(x,y,z):
-        import numpy as np
-        return np.multiply(np.exp(1j*phase(x,y,z)),np.exp(-1j*Gouy_phase(x)))
-    def space_time_envelope(x,y,z,t):
-        import numpy as np
-        return np.multiply(spatial_amplitude(x,y,z),time_envelope(t))
     def gaussian_beam_with_temporal_profile(x,y,z,t):
-        import numpy as np
-        return np.multiply(space_time_envelope(x,y,z,t),exponential_with_total_phase(x,y,z))
+        Zr = omega * waist**2/2.
+        w  = sqrt(1./(1.+   ( (x-focus[0])/Zr  )**2 ) )
+        coeff = omega * (x-focus[0]) * w**2 / (2.*Zr**2)
+        phase = coeff * ( (y-focus[1])**2 + (z-focus[2])**2 )
+        exponential_with_total_phase = exp(1j*(phase-arctan( (x-focus[0])/Zr )))
+        invWaist2 = (w/waist)**2
+        spatial_amplitude = a0*w * exp( -invWaist2*(  (y-focus[1])**2 + (z-focus[2])**2 )  )
+        space_time_envelope = spatial_amplitude * vectorize(time_envelope)(t)
+        return space_time_envelope * exponential_with_total_phase
 
     # Create Laser Envelope
     LaserEnvelope(

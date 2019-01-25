@@ -112,17 +112,15 @@ void LaserEnvelope2D::initEnvelope( Patch *patch, ElectroMagn *EMfields )
             // init envelope through Python function
             ( *A2D )( i, j )      += profile_->complexValueAt( position, t );
             ( *A02D )( i, j )     += profile_->complexValueAt( position, t_previous_timestep );
-            ( *Env_Aabs2D )( i, j )= std::abs( ( *A2D )( i, j ) );
             
+            // |A|
+            ( *Env_Aabs2D )( i, j )= std::abs( ( *A2D )( i, j ) );
             // |E envelope| = |-(dA/dt-ik0cA)|
             ( *Env_Eabs2D )( i, j )= std::abs( ( ( *A2D )( i, j )-( *A02D )( i, j ) )/timestep - i1*( *A2D )( i, j ) );
-            
             // compute ponderomotive potential at timestep n
             ( *Phi2D )( i, j )     = std::abs( ( *A2D )( i, j ) ) * std::abs( ( *A2D )( i, j ) ) * 0.5;
-            
             // compute ponderomotive potential at timestep n-1
             ( *Phi_m2D )( i, j )   = std::abs( ( *A02D )( i, j ) ) * std::abs( ( *A02D )( i, j ) ) * 0.5;
-            
             // interpolate in time
             ( *Phi_m2D )( i, j )   = 0.5*( ( *Phi_m2D )( i, j )+( *Phi2D )( i, j ) );
             

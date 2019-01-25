@@ -167,21 +167,14 @@ void LaserEnvelope3D::initEnvelope( Patch *patch, ElectroMagn *EMfields )
         for( unsigned int j=0 ; j<A_->dims_[1] ; j++ ) { // y loop
             //position[2] = pos2;
             for( unsigned int k=0 ; k<A_->dims_[2] ; k++ ) { // z loop
-            
-                // init envelope through Python function
-                //( *A3D )( i, j, k )      += profile_->complexValueAt( position, t );
-                //( *A03D )( i, j, k )     += profile_->complexValueAt( position, t_previous_timestep );
-                ( *Env_Aabs3D )( i, j, k )= std::abs( ( *A3D )( i, j, k ) );
-                
+                // |A|
+                ( *Env_Aabs3D )( i, j, k )= std::abs( ( *A3D )( i, j, k ) );  
                 // |E envelope| = |-(dA/dt-ik0cA)|
                 ( *Env_Eabs3D )( i, j, k )= std::abs( ( ( *A3D )( i, j, k )-( *A03D )( i, j, k ) )/timestep - i1*( *A3D )( i, j, k ) );
-                
                 // compute ponderomotive potential at timestep n
                 ( *Phi3D )( i, j, k )     = std::abs( ( *A3D )( i, j, k ) ) * std::abs( ( *A3D )( i, j, k ) ) * 0.5;
-                
                 // compute ponderomotive potential at timestep n-1
                 ( *Phi_m3D )( i, j, k )   = std::abs( ( *A03D )( i, j, k ) ) * std::abs( ( *A03D )( i, j, k ) ) * 0.5;
-                
                 // interpolate in time
                 ( *Phi_m3D )( i, j, k )   = 0.5*( ( *Phi_m3D )( i, j, k )+( *Phi3D )( i, j, k ) );
             }  // end z loop
