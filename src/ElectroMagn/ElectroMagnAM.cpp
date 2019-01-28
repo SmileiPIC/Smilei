@@ -689,31 +689,31 @@ void ElectroMagnAM::applyExternalFields( Patch *patch )
     Field *field;
 
     for (int imode=0;imode<Nmodes;imode++){
-    for( vector<ExtField>::iterator extfield=extFields.begin(); extfield!=extFields.end(); extfield++ ) {
-        string name = LowerCase( extfield->field );
-        if( El_[imode] && name==LowerCase( El_[imode]->name ) ) {
-            field = El_[imode];
-        } else if( Er_[imode] && name==LowerCase( Er_[imode]->name ) ) {
-            field = Er_[imode];
-        } else if( Et_[imode] && name==LowerCase( Et_[imode]->name ) ) {
-            field = Et_[imode];
-        } else if( Bl_[imode] && name==LowerCase( Bl_[imode]->name ) ) {
-            field = Bl_[imode];
-        } else if( Br_[imode] && name==LowerCase( Br_[imode]->name ) ) {
-            field = Br_[imode];
-        } else if( Bt_[imode] && name==LowerCase( Bt_[imode]->name ) ) {
-            field = Bt_[imode];
-        } else {
-            field = NULL;
-        }
+        for( vector<ExtField>::iterator extfield=extFields.begin(); extfield!=extFields.end(); extfield++ ) {
+            string name = LowerCase( extfield->field );
+            if( El_[imode] && name==LowerCase( El_[imode]->name ) ) {
+                field = El_[imode];
+            } else if( Er_[imode] && name==LowerCase( Er_[imode]->name ) ) {
+                field = Er_[imode];
+            } else if( Et_[imode] && name==LowerCase( Et_[imode]->name ) ) {
+                field = Et_[imode];
+            } else if( Bl_[imode] && name==LowerCase( Bl_[imode]->name ) ) {
+                field = Bl_[imode];
+            } else if( Br_[imode] && name==LowerCase( Br_[imode]->name ) ) {
+                field = Br_[imode];
+            } else if( Bt_[imode] && name==LowerCase( Bt_[imode]->name ) ) {
+                field = Bt_[imode];
+            } else {
+                field = NULL;
+            }
         
-        if( field ) {
-            applyExternalField( field, extfield->profile, patch );
+            if( field ) {
+                applyExternalField( field, extfield->profile, patch );
+            }
         }
-    }
-    Bl_m[imode]->copyFrom( Bl_[imode] );
-    Br_m[imode]->copyFrom( Br_[imode] );
-    Bt_m[imode]->copyFrom( Bt_[imode] );
+        Bl_m[imode]->copyFrom( Bl_[imode] );
+        Br_m[imode]->copyFrom( Br_[imode] );
+        Bt_m[imode]->copyFrom( Bt_[imode] );
     }
 
 }
