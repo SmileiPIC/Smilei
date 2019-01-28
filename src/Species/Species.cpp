@@ -349,10 +349,10 @@ void Species::initPosition( unsigned int nPart, unsigned int iPart, double *inde
         } else {
 
             //Trick to derive number of particles per dimension from total number of particles per cell
-            int Np_array[nDim_particle];
+            unsigned int Np_array[nDim_particle];
             int Np = nPart;
             int counter = 0;
-            int prime = 2;
+            unsigned int prime = 2;
             double dx, dr, dtheta ,theta_offset;
             for( unsigned int idim=0; idim<nDim_particle; idim++ ) Np_array[idim] = 1;
 
