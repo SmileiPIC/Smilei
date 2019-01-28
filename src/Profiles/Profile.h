@@ -75,24 +75,21 @@ public:
     };
 
     //! Get the value of the profile at several locations (spatial)
-    inline void complexValuesAt(std::vector<Field*> &coordinates, Field* time, cField &ret) {
+    inline void complexValuesAt(std::vector<Field*> &coordinates, cField &ret) {
         unsigned int ndim = coordinates.size();
         unsigned int size = coordinates[0]->globalDims_;
 #ifdef SMILEI_USE_NUMPY
         // If numpy profile, then expose coordinates as numpy before evaluating profile
         if( uses_numpy ) {
             std::vector<PyArrayObject*> x(ndim);
-            PyArrayObject* t;
             npy_intp dims[1] = {(npy_intp) size};
             // Expose arrays as numpy, and evaluate
             for( unsigned int idim=0; idim<ndim; idim++ )
                 x[idim] = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(coordinates[idim]->data()));
-            t = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(time->data()));
-            PyArrayObject* values = function->complexValueAt(x,t);
+            PyArrayObject* values = function->complexValueAt(x);
             for( unsigned int idim=0; idim<ndim; idim++ )
                 Py_DECREF(x[idim]);
-            Py_DECREF(t);
-            // Copy array to return Field3D
+            // Copy array to return cField2D
             std::complex<double>* arr = (std::complex<double>*) PyArray_GETPTR1(values, 0);
             for( unsigned int i=0; i<size; i++)
                 ret(i) = arr[i];
@@ -102,17 +99,56 @@ public:
         // Otherwise, calculate profile for each point
         { 
             std::vector<double> x(ndim);
-            double t;
-
             for( unsigned int i=0; i<size; i++ ) {
               // MESSAGE("  - "<<size);
                for( unsigned int idim=0; idim<ndim; idim++ )
                    x[idim]=(*coordinates[idim])(i);
-               t = (*time)(i);
-               ret(i) = function->complexValueAt(x,t);
+               ret(i) = function->complexValueAt(x);
             }
         }
-    };    
+    };   
+
+
+        //! Get the value of the profile at several locations (spatial)
+    inline void complexValuesAt(std::vector<Field*> &coordinates, Field* time, cField &ret) {
+        unsigned int ndim = coordinates.size();
+        unsigned int size = coordinates[0]->globalDims_;
+        #ifdef SMILEI_USE_NUMPY
+        // If numpy profile, then expose coordinates as numpy before evaluating profile
+        if( uses_numpy ) {
+            std::vector<PyArrayObject*> x(ndim);
+            PyArrayObject* t;
+            npy_intp dims[1] = {(npy_intp) size};
+            // Expose arrays as numpy, and evaluate
+            for( unsigned int idim=0; idim<ndim; idim++ )
+                x[idim] = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(coordinates[idim]->data()));
+                t = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(time->data()));
+                PyArrayObject* values = function->complexValueAt(x,t);
+                for( unsigned int idim=0; idim<ndim; idim++ )
+                    Py_DECREF(x[idim]);
+                Py_DECREF(t);
+                // Copy array to return Field3D
+                std::complex<double>* arr = (std::complex<double>*) PyArray_GETPTR1(values, 0);
+                for( unsigned int i=0; i<size; i++)
+                    ret(i) = arr[i];
+                Py_DECREF(values);
+            } else
+    #endif
+            // Otherwise, calculate profile for each point
+            { 
+                std::vector<double> x(ndim);
+                double t;
+
+                for( unsigned int i=0; i<size; i++ ) {
+                  // MESSAGE("  - "<<size);
+                   for( unsigned int idim=0; idim<ndim; idim++ )
+                       x[idim]=(*coordinates[idim])(i);
+                   t = (*time)(i);
+                   ret(i) = function->complexValueAt(x,t);
+                }
+            }
+    };   
+ 
 
     
     //! Get info on the loaded profile, to be printed later

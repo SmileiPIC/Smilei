@@ -33,6 +33,10 @@ std::complex<double> Function_Python2D::complexValueAt( vector<double> x_cell, d
 {
     return PyTools::runPyFunction_complex( py_profile, x_cell[0], time );
 }
+std::complex<double> Function_Python2D::complexValueAt( vector<double> x_cell)
+{
+    return PyTools::runPyFunction_complex( py_profile, x_cell[0], x_cell[1]);
+}
 
 // 3D
 double Function_Python3D::valueAt( vector<double> x_cell, double time )
@@ -76,6 +80,9 @@ PyArrayObject *Function_Python3D::valueAt( std::vector<PyArrayObject *> x )
 }
 PyArrayObject* Function_Python4D::complexValueAt(std::vector<PyArrayObject*> x, PyArrayObject* t) {
     return (PyArrayObject*)PyObject_CallFunctionObjArgs(py_profile, x[0], x[1], x[2], t, NULL);
+}
+PyArrayObject* Function_Python2D::complexValueAt(std::vector<PyArrayObject*> x) {
+    return (PyArrayObject*)PyObject_CallFunctionObjArgs(py_profile, x[0], x[1], NULL);
 }
 #endif
 

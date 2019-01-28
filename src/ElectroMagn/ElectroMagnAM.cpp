@@ -725,16 +725,32 @@ void ElectroMagnAM::applyExternalField( Field *my_field,  Profile *profile, Patc
     int N0 = ( int )field2D->dims()[0];
     int N1 = ( int )field2D->dims()[1];
     
-    // UNSIGNED INT LEADS TO PB IN PERIODIC BCs
+    vector<Field *> xr( 2 );
+    vector<unsigned int> n_space_to_create( 2 );
+    n_space_to_create[0] = N0;
+    n_space_to_create[1] = N1;
+
+    for( unsigned int idim=0 ; idim<2 ; idim++ ) {
+        xr[idim] = new Field2D( n_space_to_create );
+    }
+
     for( int i=0 ; i<N0 ; i++ ) {
         pos[1] = pos1;
         for( int j=0 ; j<N1 ; j++ ) {
-            ( *field2D )( i, j ) += profile->valueAt( pos );
+            for( unsigned int idim=0 ; idim<2 ; idim++ ) {
+                ( *xr[idim] )( i, j ) = pos[idim];
+            }
             pos[1] += dr;
         }
         pos[0] += dl;
     }
-    
+
+    //profile->complexValuesAt( xr, *my_field );
+
+    for( unsigned int idim=0 ; idim<2 ; idim++ ) {
+        delete xr[idim];
+    }
+
     for( auto &embc: emBoundCond ) {
         if( embc ) {
             embc->save_fields( my_field, patch );
