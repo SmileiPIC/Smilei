@@ -120,22 +120,23 @@ public:
             PyArrayObject* t;
             npy_intp dims[1] = {(npy_intp) size};
             // Expose arrays as numpy, and evaluate
-            for( unsigned int idim=0; idim<ndim; idim++ )
+            for( unsigned int idim=0; idim<ndim; idim++ ){
                 x[idim] = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(coordinates[idim]->data()));
-                t = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(time->data()));
-                PyArrayObject* values = function->complexValueAt(x,t);
-                for( unsigned int idim=0; idim<ndim; idim++ )
-                    Py_DECREF(x[idim]);
-                Py_DECREF(t);
-                // Copy array to return Field3D
-                std::complex<double>* arr = (std::complex<double>*) PyArray_GETPTR1(values, 0);
-                for( unsigned int i=0; i<size; i++)
-                    ret(i) = arr[i];
-                Py_DECREF(values);
-            } else
+            }    
+            t = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(time->data()));
+            PyArrayObject* values = function->complexValueAt(x,t);
+            for( unsigned int idim=0; idim<ndim; idim++ )
+                Py_DECREF(x[idim]);
+            Py_DECREF(t);
+            // Copy array to return Field3D
+            std::complex<double>* arr = (std::complex<double>*) PyArray_GETPTR1(values, 0);
+            for( unsigned int i=0; i<size; i++)
+                ret(i) = arr[i];
+            Py_DECREF(values);
+        } else
     #endif
             // Otherwise, calculate profile for each point
-            { 
+        { 
                 std::vector<double> x(ndim);
                 double t;
 
@@ -146,7 +147,7 @@ public:
                    t = (*time)(i);
                    ret(i) = function->complexValueAt(x,t);
                 }
-            }
+        }
     };   
  
 

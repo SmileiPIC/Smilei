@@ -684,9 +684,11 @@ void ElectroMagnAM::applyExternalFields( Patch *patch )
 {
 #ifdef _TODO_AM
 #endif
-    int imode = 0;
+    int Nmodes = El_.size();
     
     Field *field;
+
+    for (int imode=0;imode<Nmodes;imode++){
     for( vector<ExtField>::iterator extfield=extFields.begin(); extfield!=extFields.end(); extfield++ ) {
         string name = LowerCase( extfield->field );
         if( El_[imode] && name==LowerCase( El_[imode]->name ) ) {
@@ -712,6 +714,8 @@ void ElectroMagnAM::applyExternalFields( Patch *patch )
     Bl_m[imode]->copyFrom( Bl_[imode] );
     Br_m[imode]->copyFrom( Br_[imode] );
     Bt_m[imode]->copyFrom( Bt_[imode] );
+    }
+
 }
 
 void ElectroMagnAM::applyExternalField( Field *my_field,  Profile *profile, Patch *patch )
@@ -745,7 +749,7 @@ void ElectroMagnAM::applyExternalField( Field *my_field,  Profile *profile, Patc
         pos[0] += dl;
     }
 
-    //profile->complexValuesAt( xr, *my_field );
+    profile->complexValuesAt( xr, *field2D );
 
     for( unsigned int idim=0 ; idim<2 ; idim++ ) {
         delete xr[idim];
