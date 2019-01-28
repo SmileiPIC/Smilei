@@ -54,7 +54,7 @@ ElectroMagnBCAM_Axis::ElectroMagnBCAM_Axis( Params &params, Patch *patch, unsign
 
 void ElectroMagnBCAM_Axis::save_fields( Field *my_field, Patch *patch )
 {
-    ERROR( "Impossible" );
+//    ERROR( "Impossible" );
 }
 
 void ElectroMagnBCAM_Axis::disableExternalFields()
