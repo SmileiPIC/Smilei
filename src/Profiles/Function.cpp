@@ -79,10 +79,16 @@ PyArrayObject *Function_Python3D::valueAt( std::vector<PyArrayObject *> x )
     return ( PyArrayObject * )PyObject_CallFunctionObjArgs( py_profile, x[0], x[1], x[2], NULL );
 }
 PyArrayObject* Function_Python4D::complexValueAt(std::vector<PyArrayObject*> x, PyArrayObject* t) {
-    return (PyArrayObject*)PyObject_CallFunctionObjArgs(py_profile, x[0], x[1], x[2], t, NULL);
+    PyObject * values = PyObject_CallFunctionObjArgs(py_profile, x[0], x[1], x[2], t, NULL);
+    PyArrayObject * cvalues = (PyArrayObject*)PyObject_CallMethod(values, "astype", "s", "complex", NULL);
+    Py_DECREF(values);
+    return cvalues;
 }
 PyArrayObject* Function_Python2D::complexValueAt(std::vector<PyArrayObject*> x) {
-    return (PyArrayObject*)PyObject_CallFunctionObjArgs(py_profile, x[0], x[1], NULL);
+    PyObject * values = PyObject_CallFunctionObjArgs(py_profile, x[0], x[1], NULL);
+    PyArrayObject * cvalues = (PyArrayObject*)PyObject_CallMethod(values, "astype", "s", "complex", NULL);
+    Py_DECREF(values);
+    return cvalues;
 }
 #endif
 

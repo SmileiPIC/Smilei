@@ -706,10 +706,10 @@ void ElectroMagnAM::applyExternalFields( Patch *patch )
             } else {
                 field = NULL;
             }
-        
-            if( field ) {
+            
+            if( field ){ 
                 applyExternalField( field, extfield->profile, patch );
-            }
+            };
         }
         Bl_m[imode]->copyFrom( Bl_[imode] );
         Br_m[imode]->copyFrom( Br_[imode] );
@@ -755,11 +755,11 @@ void ElectroMagnAM::applyExternalField( Field *my_field,  Profile *profile, Patc
         delete xr[idim];
     }
 
-    for( auto &embc: emBoundCond ) {
-        if( embc ) {
-            embc->save_fields( my_field, patch );
-        }
-    }
+    //for( auto &embc: emBoundCond ) {
+    //    if( embc ) {
+    //        embc->save_fields( my_field, patch );
+    //    }
+    //}
     
 }
 

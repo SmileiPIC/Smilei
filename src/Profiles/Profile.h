@@ -84,8 +84,8 @@ public:
             std::vector<PyArrayObject*> x(ndim);
             npy_intp dims[1] = {(npy_intp) size};
             // Expose arrays as numpy, and evaluate
-            for( unsigned int idim=0; idim<ndim; idim++ )
-                x[idim] = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(coordinates[idim]->data()));
+            for( unsigned int idim=0; idim<ndim; idim++ ){
+                x[idim] = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(coordinates[idim]->data()));}
             PyArrayObject* values = function->complexValueAt(x);
             for( unsigned int idim=0; idim<ndim; idim++ )
                 Py_DECREF(x[idim]);
