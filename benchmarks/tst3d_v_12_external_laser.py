@@ -2,8 +2,9 @@
 # 					SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
 # ----------------------------------------------------------------------------------------
 from numpy import exp, sqrt, arctan, vectorize, real
-import math
+from math import log
 import cmath
+import math
 
 lambda0 = 0.8e-6               # m
 c = 299792458                  # m/s
@@ -97,6 +98,12 @@ Species(
 
 ################################# Laser field, from external fields
 
+# Electromagnetic fields of a gaussian beam (fundamental mode), linearly polarized in the y direction
+# formulas from B. Quesnel, P. Mora, PHYSICAL REVIEW E 58, no. 3, 1998 
+# (https://journals.aps.org/pre/abstract/10.1103/PhysRevE.58.3719)
+
+
+
 focus = [laser_focus_x, Main.grid_length[1]/2., Main.grid_length[2]/2.]
 
 c_vacuum = 1.
@@ -160,7 +167,6 @@ def By(x,y,z):
         return 0.
 
 def Bz(x,y,z):
-        import numpy as np
         complexBz = 1j * space_envelope(x,y,z) * complex_exponential_comoving(x,dt/2.)
         return real(complexBz)*time_envelope_t_plus_half_dt(x)
 
