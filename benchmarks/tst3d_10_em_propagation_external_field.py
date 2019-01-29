@@ -41,7 +41,7 @@ Main(
 
 ################ Laser gaussian pulse, defined through external fields ###################
 
-# Electromagnetic fields of a gaussian beam (fundamental mode), 
+# Electromagnetic fields of a gaussian beam (fundamental mode), linearly polarized in the y direction
 # formulas from B. Quesnel, P. Mora, PHYSICAL REVIEW E 58, no. 3, 1998 
 # (https://journals.aps.org/pre/abstract/10.1103/PhysRevE.58.3719)
 
@@ -113,7 +113,6 @@ def By(x,y,z):
         return 0.
 
 def Bz(x,y,z):
-        import numpy as np
         complexBz = 1j * space_envelope(x,y,z) * complex_exponential_comoving(x,dt/2.)
         return real(complexBz)*time_envelope_t_plus_half_dt(x)
 
