@@ -572,7 +572,7 @@ def LaserEnvelopeGaussian2D( a0=1., omega=1., focus=None, waist=3., time_envelop
     # Create Laser Envelope
     LaserEnvelope(
         omega               = omega,
-        envelope_profile    = space_time_envelope,
+        envelope_profile    = gaussian_beam_with_temporal_profile,
         envelope_solver     = "explicit",
         Envelope_boundary_conditions = Envelope_boundary_conditions,
     )
