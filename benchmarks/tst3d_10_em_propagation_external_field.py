@@ -1,6 +1,7 @@
 import math
 import cmath
-from numpy import exp, sqrt, arctan, vectorize, real
+from numpy import exp, sqrt, arctan, vectorize, real, sin, cos, arctan
+from scipy import integrate
 from math import log
 
 l0 = 2.0*math.pi              # laser wavelength
@@ -61,6 +62,7 @@ omega       = 1.
 Zr          = omega * waist**2/2.  # Rayleigh length
 
 
+
 # time gaussian function
 def time_gaussian(fwhm, center, order=2):
     import math
@@ -90,10 +92,34 @@ def complex_exponential_comoving(x,t):
 
 ### Electromagnetic field
 # Electric field        
+#def Ex(x,y,z):
+#        invWaist2 = (w(x)/waist)**2
+#        complexEx = 2.* (y-focus[1]) * invWaist2 * space_envelope(x,y,z) * complex_exponential_comoving(x,0.)
+#        return real(complexEx)*time_envelope_t(x)
+
+# Define Ex as solution of Poisson
 def Ex(x,y,z):
-        invWaist2 = (w(x)/waist)**2
-        complexEx = 2.* (y-focus[1]) * invWaist2 * space_envelope(x,y,z) * complex_exponential_comoving(x,0.)
-        return real(complexEx)*time_envelope_t(x)
+    integration_constant = 0.
+    r2 = (y-focus[1])**2 + (z-focus[2])**2 
+    def r2overRC(xp):
+        if xp != 0. :
+            return -0.5*r2/(xp + Zr**2/xp)
+        else:
+            return 0.
+    def yoverRC(xp):
+        if xp != 0. :
+            return (y-focus[1])/(xp + Zr**2/xp)
+        else:
+            return 0.
+    def invWaist2(xp):
+        return  (w(xp)/waist)**2
+    def spatial_amplitude(xp):
+        return   w(xp) * exp( -invWaist2(xp)*r2)
+    def modified_phase(xp):
+        return xp + r2overRC(xp) + arctan(xp/Zr) 
+    return(integrate.quad(lambda xp:a0*time_envelope_t(xp)*spatial_amplitude(xp)*( 2*(y-focus[1])*invWaist2(xp)*sin(modified_phase(xp))  + yoverRC(xp) * cos(modified_phase(xp) )) ,0,x)[0])
+
+
 
 def Ey(x,y,z):
         complexEy  = 1j * space_envelope(x,y,z) * complex_exponential_comoving(x,0)
