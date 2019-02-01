@@ -1,7 +1,7 @@
 import math
 import cmath
 from numpy import exp, sqrt, arctan, vectorize, real, sin, cos, arctan
-from scipy import integrate, zeros
+from scipy import integrate, zeros_like
 from math import log
 
 l0 = 2.0*math.pi              # laser wavelength
