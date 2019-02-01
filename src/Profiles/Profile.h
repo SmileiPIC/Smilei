@@ -42,19 +42,22 @@ public:
     
     //! Get the value of the profile at several locations (spatial)
     inline void valuesAt(std::vector<Field*> &coordinates, Field &ret) {
-        unsigned int ndim = coordinates.size();
+        unsigned int nvar = coordinates.size();
         unsigned int size = coordinates[0]->globalDims_;
 #ifdef SMILEI_USE_NUMPY
         // If numpy profile, then expose coordinates as numpy before evaluating profile
         if( uses_numpy ) {
-            std::vector<PyArrayObject*> x(ndim);
-            npy_intp dims[1] = {(npy_intp) size};
+            std::vector<PyArrayObject*> x(nvar);
+            int ndim = coordinates[0]->dims().size();
+            npy_intp dims[ndim];
+            for( int idim=0; idim<ndim; idim++ )
+                dims[idim] = (npy_intp) (coordinates[0]->dims()[idim]);
             // Expose arrays as numpy, and evaluate
-            for( unsigned int idim=0; idim<ndim; idim++ )
-                x[idim] = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(coordinates[idim]->data()));
+            for( unsigned int ivar=0; ivar<nvar; ivar++ )
+                x[ivar] = (PyArrayObject*)PyArray_SimpleNewFromData(ndim, dims, NPY_DOUBLE, (double*)(coordinates[ivar]->data()));
             PyArrayObject* values = function->valueAt(x);
-            for( unsigned int idim=0; idim<ndim; idim++ )
-                Py_DECREF(x[idim]);
+            for( unsigned int ivar=0; ivar<nvar; ivar++ )
+                Py_DECREF(x[ivar]);
             // Copy array to return Field3D
             double* arr = (double*) PyArray_GETPTR1(values, 0);
             for( unsigned int i=0; i<size; i++)
@@ -64,11 +67,10 @@ public:
 #endif
         // Otherwise, calculate profile for each point
         { 
-            std::vector<double> x(ndim);
+            std::vector<double> x(nvar);
             for( unsigned int i=0; i<size; i++ ) {
-              // MESSAGE("  - "<<size);
-               for( unsigned int idim=0; idim<ndim; idim++ )
-                   x[idim]=(*coordinates[idim])(i);
+               for( unsigned int ivar=0; ivar<nvar; ivar++ )
+                   x[ivar]=(*coordinates[ivar])(i);
                ret(i) = function->valueAt(x);
             }
         }
@@ -76,19 +78,22 @@ public:
 
     //! Get the value of the profile at several locations (spatial)
     inline void complexValuesAt(std::vector<Field*> &coordinates, cField &ret) {
-        unsigned int ndim = coordinates.size();
+        unsigned int nvar = coordinates.size();
         unsigned int size = coordinates[0]->globalDims_;
 #ifdef SMILEI_USE_NUMPY
         // If numpy profile, then expose coordinates as numpy before evaluating profile
         if( uses_numpy ) {
-            std::vector<PyArrayObject*> x(ndim);
-            npy_intp dims[1] = {(npy_intp) size};
+            std::vector<PyArrayObject*> x(nvar);
+            int ndim = coordinates[0]->dims().size();
+            npy_intp dims[ndim];
+            for( int idim=0; idim<ndim; idim++ )
+                dims[idim] = (npy_intp) coordinates[0]->dims()[idim];
             // Expose arrays as numpy, and evaluate
-            for( unsigned int idim=0; idim<ndim; idim++ ){
-                x[idim] = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(coordinates[idim]->data()));}
+            for( unsigned int ivar=0; ivar<nvar; ivar++ ){
+                x[ivar] = (PyArrayObject*)PyArray_SimpleNewFromData(ndim, dims, NPY_DOUBLE, (double*)(coordinates[ivar]->data()));}
             PyArrayObject* values = function->complexValueAt(x);
-            for( unsigned int idim=0; idim<ndim; idim++ )
-                Py_DECREF(x[idim]);
+            for( unsigned int ivar=0; ivar<nvar; ivar++ )
+                Py_DECREF(x[ivar]);
             // Copy array to return cField2D
             std::complex<double>* arr = (std::complex<double>*) PyArray_GETPTR1(values, 0);
             for( unsigned int i=0; i<size; i++)
@@ -98,11 +103,10 @@ public:
 #endif
         // Otherwise, calculate profile for each point
         { 
-            std::vector<double> x(ndim);
+            std::vector<double> x(nvar);
             for( unsigned int i=0; i<size; i++ ) {
-              // MESSAGE("  - "<<size);
-               for( unsigned int idim=0; idim<ndim; idim++ )
-                   x[idim]=(*coordinates[idim])(i);
+               for( unsigned int ivar=0; ivar<nvar; ivar++ )
+                   x[ivar]=(*coordinates[ivar])(i);
                ret(i) = function->complexValueAt(x);
             }
         }
@@ -111,22 +115,25 @@ public:
 
         //! Get the value of the profile at several locations (spatial)
     inline void complexValuesAt(std::vector<Field*> &coordinates, Field* time, cField &ret) {
-        unsigned int ndim = coordinates.size();
+        unsigned int nvar = coordinates.size();
         unsigned int size = coordinates[0]->globalDims_;
         #ifdef SMILEI_USE_NUMPY
         // If numpy profile, then expose coordinates as numpy before evaluating profile
         if( uses_numpy ) {
-            std::vector<PyArrayObject*> x(ndim);
+            std::vector<PyArrayObject*> x(nvar);
             PyArrayObject* t;
-            npy_intp dims[1] = {(npy_intp) size};
+            int ndim = coordinates[0]->dims().size();
+            npy_intp dims[ndim];
+            for( int idim=0; idim<ndim; idim++ )
+                dims[idim] = (npy_intp) coordinates[0]->dims()[idim];
             // Expose arrays as numpy, and evaluate
-            for( unsigned int idim=0; idim<ndim; idim++ ){
-                x[idim] = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(coordinates[idim]->data()));
+            for( unsigned int ivar=0; ivar<nvar; ivar++ ){
+                x[ivar] = (PyArrayObject*)PyArray_SimpleNewFromData(ndim, dims, NPY_DOUBLE, (double*)(coordinates[ivar]->data()));
             }    
-            t = (PyArrayObject*)PyArray_SimpleNewFromData(1, dims, NPY_DOUBLE, (double*)(time->data()));
+            t = (PyArrayObject*)PyArray_SimpleNewFromData(ndim, dims, NPY_DOUBLE, (double*)(time->data()));
             PyArrayObject* values = function->complexValueAt(x,t);
-            for( unsigned int idim=0; idim<ndim; idim++ )
-                Py_DECREF(x[idim]);
+            for( unsigned int ivar=0; ivar<nvar; ivar++ )
+                Py_DECREF(x[ivar]);
             Py_DECREF(t);
             // Copy array to return Field3D
             std::complex<double>* arr = (std::complex<double>*) PyArray_GETPTR1(values, 0);
@@ -137,13 +144,12 @@ public:
     #endif
             // Otherwise, calculate profile for each point
         { 
-                std::vector<double> x(ndim);
+                std::vector<double> x(nvar);
                 double t;
 
                 for( unsigned int i=0; i<size; i++ ) {
-                  // MESSAGE("  - "<<size);
-                   for( unsigned int idim=0; idim<ndim; idim++ )
-                       x[idim]=(*coordinates[idim])(i);
+                   for( unsigned int ivar=0; ivar<nvar; ivar++ )
+                       x[ivar]=(*coordinates[ivar])(i);
                    t = (*time)(i);
                    ret(i) = function->complexValueAt(x,t);
                 }

@@ -1,7 +1,7 @@
 import math
 import cmath
-from numpy import exp, sqrt, arctan, vectorize, real, sin, cos, arctan
-from scipy import integrate, zeros_like
+from numpy import exp, sqrt, arctan, vectorize, real, sin, cos, arctan, zeros_like, arange
+from scipy import integrate
 from math import log
 
 l0 = 2.0*math.pi              # laser wavelength
@@ -83,7 +83,7 @@ def space_envelope(x,y,z):
         coeff = omega * (x-focus[0]) * w(x)**2 / (2.*Zr**2)
         invWaist2 = (w(x)/waist)**2
         spatial_amplitude = w(x) * exp( -invWaist2*(  (y-focus[1])**2 + (z-focus[2])**2 )  )
-	phase = coeff * ( (y-focus[1])**2 + (z-focus[2])**2 )
+        phase = coeff * ( (y-focus[1])**2 + (z-focus[2])**2 )
         return a0 * spatial_amplitude * exp( 1j*( phase-arctan((x-focus[0])/ Zr)  )  )
 
 def complex_exponential_comoving(x,t):
@@ -100,20 +100,18 @@ def complex_exponential_comoving(x,t):
 # Define Ex as solution of Poisson
 def Ex(x,y,z):
     integration_constant = 0.
-    nx = x.shape[0]
-    ny = x.shape[1]
-    nz = x.shape[2]
+    nx, ny, nz = x.shape
     A = zeros_like(x)
     y2d = y[0,:,:]-focus[1]
     z2d = z[0,:,:]-focus[2]
     xpatch = x[:,0,0]
     rsquare2d = y2d**2+z2d**2
     dx = Main.cell_length[0]
-    xprior = scipy.arange(dx/2.,xpatch[0],dx/2.) #Ex is dual along x
-
+    xprior = arange(dx/2.,xpatch[0],dx/2.) #Ex is dual along x
+    
     def r2overRC(xp):
         if xp != 0. :
-            return -0.5*rsquared2d/(xp + Zr**2/xp)
+            return -0.5*rsquare2d/(xp + Zr**2/xp)
         else:
             return 0.
     def yoverRC(xp):
@@ -124,22 +122,20 @@ def Ex(x,y,z):
     def invWaist2(xp):
         return  (w(xp)/waist)**2
     def spatial_amplitude(xp):
-        return   w(xp) * exp( -invWaist2(xp)*rsquared2d)
+        return   w(xp) * exp( -invWaist2(xp)*rsquare2d)
     def modified_phase(xp):
         return xp + r2overRC(xp) + arctan(xp/Zr)
     def integrand_hyperslab(xp):
         return a0*time_envelope_t(xp)*spatial_amplitude(xp)*( 2*y2d*invWaist2(xp)*sin(modified_phase(xp)) + yoverRC(xp) * cos(modified_phase(xp) ))
-
     for xp in xprior:
         A[0,:,:] += integrand_hyperslab(xp)
-    A[0,:,:] = A[0,:,:]*dx  #This is the trapezoid method with homogeneous dx.  
-
+    A[0,:,:] *= dx  #This is the trapezoid method with homogeneous dx.
+    
     for ix in range(nx-1):
         slab = integrand_hyperslab(xpatch[ix])*dx/2.
         A[ix,:,:] += slab
         A[ix+1,:,:] = A[ix,:,:] + slab
     A[-1,:,:] += integrand_hyperslab(xpatch[nx-1])*dx/2.
-    
     return A
 
 

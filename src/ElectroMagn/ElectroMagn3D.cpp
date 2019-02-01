@@ -1692,7 +1692,7 @@ void ElectroMagn3D::computePoynting()
 void ElectroMagn3D::applyExternalField( Field *my_field,  Profile *profile, Patch *patch )
 {
 
-    Field3D *field3D=static_cast<Field3D *>( my_field );
+    Field3D *field3D = static_cast<Field3D *>( my_field );
     
     vector<double> pos( 3 );
     pos[0]      = dx*( ( double )( patch->getCellStartingGlobalIndex( 0 ) )+( field3D->isDual( 0 )?-0.5:0. ) );
@@ -1730,7 +1730,7 @@ void ElectroMagn3D::applyExternalField( Field *my_field,  Profile *profile, Patc
         pos[0] += dx;
     }
     
-    profile->valuesAt( xyz, *my_field );
+    profile->valuesAt( xyz, *field3D );
     
     for( unsigned int idim=0 ; idim<3 ; idim++ ) {
         delete xyz[idim];
