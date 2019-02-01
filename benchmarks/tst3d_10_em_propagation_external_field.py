@@ -1,7 +1,7 @@
 import math
 import cmath
 from numpy import exp, sqrt, arctan, vectorize, real, sin, cos, arctan
-from scipy import integrate
+from scipy import integrate, zeros
 from math import log
 
 l0 = 2.0*math.pi              # laser wavelength
@@ -100,25 +100,47 @@ def complex_exponential_comoving(x,t):
 # Define Ex as solution of Poisson
 def Ex(x,y,z):
     integration_constant = 0.
-    r2 = (y-focus[1])**2 + (z-focus[2])**2 
+    nx = x.shape[0]
+    ny = x.shape[1]
+    nz = x.shape[2]
+    A = zeros_like(x)
+    y2d = y[0,:,:]-focus[1]
+    z2d = z[0,:,:]-focus[2]
+    xpatch = x[:,0,0]
+    rsquare2d = y2d**2+z2d**2
+    dx = Main.cell_length[0]
+    xprior = scipy.arange(dx/2.,xpatch[0],dx/2.) #Ex is dual along x
+
     def r2overRC(xp):
         if xp != 0. :
-            return -0.5*r2/(xp + Zr**2/xp)
+            return -0.5*rsquared2d/(xp + Zr**2/xp)
         else:
             return 0.
     def yoverRC(xp):
         if xp != 0. :
-            return (y-focus[1])/(xp + Zr**2/xp)
+            return y2d/(xp + Zr**2/xp)
         else:
             return 0.
     def invWaist2(xp):
         return  (w(xp)/waist)**2
     def spatial_amplitude(xp):
-        return   w(xp) * exp( -invWaist2(xp)*r2)
+        return   w(xp) * exp( -invWaist2(xp)*rsquared2d)
     def modified_phase(xp):
-        return xp + r2overRC(xp) + arctan(xp/Zr) 
-    return(integrate.quad(lambda xp:a0*time_envelope_t(xp)*spatial_amplitude(xp)*( 2*(y-focus[1])*invWaist2(xp)*sin(modified_phase(xp))  + yoverRC(xp) * cos(modified_phase(xp) )) ,0,x)[0])
+        return xp + r2overRC(xp) + arctan(xp/Zr)
+    def integrand_hyperslab(xp):
+        return a0*time_envelope_t(xp)*spatial_amplitude(xp)*( 2*y2d*invWaist2(xp)*sin(modified_phase(xp)) + yoverRC(xp) * cos(modified_phase(xp) ))
 
+    for xp in xprior:
+        A[0,:,:] += integrand_hyperslab(xp)
+    A[0,:,:] = A[0,:,:]*dx  #This is the trapezoid method with homogeneous dx.  
+
+    for ix in range(nx-1):
+        slab = integrand_hyperslab(xpatch[ix])*dx/2.
+        A[ix,:,:] += slab
+        A[ix+1,:,:] = A[ix,:,:] + slab
+    A[-1,:,:] += integrand_hyperslab(xpatch[nx-1])*dx/2.
+    
+    return A
 
 
 def Ey(x,y,z):
@@ -127,7 +149,7 @@ def Ey(x,y,z):
 
 
 def Ez(x,y,z):
-        return 0.
+        return 0.*x
 
 # Magnetic field
 def Bx(x,y,z):
@@ -136,7 +158,7 @@ def Bx(x,y,z):
         return real(complexBx)*time_envelope_t_plus_half_dt(x)
 
 def By(x,y,z):
-        return 0.
+        return 0.*x
 
 def Bz(x,y,z):
         complexBz = 1j * space_envelope(x,y,z) * complex_exponential_comoving(x,dt/2.)
