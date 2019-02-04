@@ -248,11 +248,12 @@ Profile::Profile( PyObject *py_profile, unsigned int nvariables, string name, bo
                         && PyArray_ISNUMBER( ( PyArrayObject * )ret ) // must be an array of floats
                         && PyArray_SIZE( ( PyArrayObject * )ret ) == numel ) { // must have the same size as arguments
                     uses_numpy = true;
-                } else {
-                    DEBUG( "Profile `"<<name<<"`: does not seem to accept numpy arrays (and will be slow)" );
                 }
                 if( ret ) Py_DECREF( ret );
                 if( uses_numpy ) break;
+            }
+            if( !uses_numpy ) {
+                DEBUG( "Profile `"<<name<<"`: does not seem to accept numpy arrays (and will be slow)" );
             }
         }
 #endif
