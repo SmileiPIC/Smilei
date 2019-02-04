@@ -634,6 +634,11 @@ div.header > * {
 	box-shadow: 0 6px 12px rgba(0,0,0,0.175);
 }
 
+.last.menu > div + div {
+    left:unset;
+    right: -1px;
+}
+
 .menu div.toctree-smilei {
 	border-left:   1px solid {{ theme_main_color_bold }};
 	border-right:  1px solid {{ theme_main_color_bold }};

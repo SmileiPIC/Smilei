@@ -55,7 +55,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Smilei'
-copyright = u'2017'
+copyright = u'2019'
 author = u''
 
 # The version info for the project you're documenting, acts as replacement for
@@ -143,12 +143,6 @@ html_theme_options = dict(
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = ["."]
-
-# Smilei's theme adds colors and menus
-html_context = dict(
-    menu_start_with = ["Licence", "Units", "Install", "Publications"],
-    menu_name = ["Overview", "Understand", "Use", "More"],
-)
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
