@@ -1,33 +1,33 @@
 import math
 import cmath
 from numpy import exp, sqrt, arctan, vectorize, real, sin, cos, arctan, zeros_like, arange
-from scipy import integrate
+from scipy import integrate,zeros_like 
 from math import log
+import h5py
 
-l0 = 2.0*math.pi              # laser wavelength
-t0 = l0                       # optical cicle
-Lsim = [7.*l0,10.*l0,10.*l0]  # length of the simulation
-Tsim = 90.                # duration of the simulation
-resx = 16.                    # nb of cells in one laser wavelength
-rest = 30.                    # nb of timesteps in one optical cycle 
+dx = 0.393
+dtrans = 4.712
+dt = 0.96 * dx
+nx =  600 
+ntrans = 100*2 
+Lx = nx * dx
+Ltrans = ntrans * dtrans
+npatch_x = 8 
+npatch_trans = 8
+Nit =  1
 
-dt = t0/rest
+
 
 Main(
     geometry = "3Dcartesian",
-    
     interpolation_order = 2 ,
-    
-    cell_length = [l0/resx,l0/resx,l0/resx],
-    grid_length  = Lsim,
-    
-    number_of_patches = [ 4,4,4 ],
-    
+    cell_length  = [dx, dtrans, dtrans],
+    grid_length = [ Lx,  Ltrans, Ltrans],
+    number_of_patches = [ npatch_x, npatch_trans, npatch_trans ],
     timestep = dt,
-    simulation_time = Tsim,
-    
+    simulation_time = dt*Nit,
+    clrw = 5,
     EM_boundary_conditions = [ ['silver-muller'] ],
-    
     random_seed = smilei_mpi_rank
 )
 
@@ -46,18 +46,13 @@ Main(
 # formulas from B. Quesnel, P. Mora, PHYSICAL REVIEW E 58, no. 3, 1998 
 # (https://journals.aps.org/pre/abstract/10.1103/PhysRevE.58.3719)
 
-a0    = 1.
-laser_FWHM_E = 10.
-focus = [ 2.*laser_FWHM_E, 5.*l0, 5.*l0 ]
-laser_initial_position = 2.*laser_FWHM_E
+a0    = 0.01
+laser_FWHM_E = 58.81
+focus = [ Main.grid_length[0]/2., Main.grid_length[1]/2.,Main.grid_length[2]/2.]
+laser_initial_position = Main.grid_length[0]/2.
 
 c_vacuum = 1.
-dx = Main.cell_length[0]
-dy = Main.cell_length[1]
-dz = Main.cell_length[2]
-dt = Main.timestep
-
-waist       = 10.
+waist       = 157.
 omega       = 1.
 Zr          = omega * waist**2/2.  # Rayleigh length
 
@@ -99,43 +94,15 @@ def complex_exponential_comoving(x,t):
 
 # Define Ex as solution of Poisson
 def Ex(x,y,z):
-    integration_constant = 0.
-    nx, ny, nz = x.shape
     A = zeros_like(x)
-    y2d = y[0,:,:]-focus[1]
-    z2d = z[0,:,:]-focus[2]
-    xpatch = x[:,0,0]
-    rsquare2d = y2d**2+z2d**2
-    dx = Main.cell_length[0]
-    xprior = arange(dx/2.,xpatch[0],dx/2.) #Ex is dual along x
-    
-    def r2overRC(xp):
-        if xp != 0. :
-            return -0.5*rsquare2d/(xp + Zr**2/xp)
-        else:
-            return 0.
-    def yoverRC(xp):
-        if xp != 0. :
-            return y2d/(xp + Zr**2/xp)
-        else:
-            return 0.
-    def invWaist2(xp):
-        return  (w(xp)/waist)**2
-    def spatial_amplitude(xp):
-        return   w(xp) * exp( -invWaist2(xp)*rsquare2d)
-    def modified_phase(xp):
-        return xp + r2overRC(xp) + arctan(xp/Zr)
-    def integrand_hyperslab(xp):
-        return a0*time_envelope_t(xp)*spatial_amplitude(xp)*( 2*y2d*invWaist2(xp)*sin(modified_phase(xp)) + yoverRC(xp) * cos(modified_phase(xp) ))
-    for xp in xprior:
-        A[0,:,:] += integrand_hyperslab(xp)
-    A[0,:,:] *= dx  #This is the trapezoid method with homogeneous dx.
-    
-    for ix in range(nx-1):
-        slab = integrand_hyperslab(xpatch[ix])*dx/2.
-        A[ix,:,:] += slab
-        A[ix+1,:,:] = A[ix,:,:] + slab
-    A[-1,:,:] += integrand_hyperslab(xpatch[nx-1])*dx/2.
+    nx, ny, nz = x.shape
+    ix = round((x[0,0,0]+5*dx/2.)/dx) 
+    iy = round((y[0,0,0]+2*dtrans)/dtrans )
+    iz = round((z[0,0,0]+2*dtrans)/dtrans )
+    h5f = h5py.File('tabulated.h5','r') 
+    B = h5f['dataset_1'][ix:ix+nx,iy:iy+ny,iz:iz+nz]
+    print ix, nx, iy, ny, iz, nz
+    h5f.close()
     return A
 
 
@@ -171,56 +138,45 @@ for field in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz']:
 
 ##########################################################################################
 
-globalEvery = int(rest)
+globalEvery = int(100)
 
 DiagScalar(
     every=globalEvery
 )
 
-DiagFields(
-    every = globalEvery,
-    fields = ['Ex','Ey','Ez']
-)
-from numpy import s_
-DiagFields(
-    every = globalEvery,
-    fields = ['Ex','Ey','Ez'],
-    subgrid = s_[4:100:3, 5:400:10, 6:300:80]
-)
+#DiagFields(
+#    every = globalEvery,
+#    fields = ['Ex','Ey','Ez']
+#)
+#from numpy import s_
+#DiagFields(
+#    every = globalEvery,
+#    fields = ['Ex','Ey','Ez'],
+#    subgrid = s_[4:100:3, 5:400:10, 6:300:80]
+#)
 
 DiagProbe(
     every = 10,
-    origin = [0.1*Lsim[0], 0.5*Lsim[1], 0.5*Lsim[2]],
+    origin = [0.1*Main.grid_length[0], 0.5*Main.grid_length[1], 0.5*Main.grid_length[2]],
     fields = []
 )
 
 DiagProbe(
     every = 100,
-    number = [30],
-    origin = [0.1*Lsim[0], 0.5*Lsim[1], 0.5*Lsim[2]],
-    corners = [[0.9*Lsim[0], 0.5*Lsim[1], 0.5*Lsim[2]]],
+    number = [nx],
+    origin = [0.1*Main.grid_length[0], 0.5*Main.grid_length[1], 0.5*Main.grid_length[2]],
+    corners = [[0.9*Main.grid_length[0], 0.5*Main.grid_length[1], 0.5*Main.grid_length[2]]],
     fields = []
 )
 
 DiagProbe(
     every = 100,
-    number = [10, 10],
-    origin = [0.1*Lsim[0], 0.*Lsim[1], 0.5*Lsim[2]],
+    number = [nx, ntrans],
+    origin = [0.*Main.grid_length[0], 0.*Main.grid_length[1], 0.5*Main.grid_length[2]],
     corners = [
-        [0.9*Lsim[0], 0. *Lsim[1], 0.5*Lsim[2]],
-        [0.1*Lsim[0], 0.9*Lsim[1], 0.5*Lsim[2]],
+        [1.*Main.grid_length[0], 0. *Main.grid_length[1], 0.5*Main.grid_length[2]],
+        [0.*Main.grid_length[0], 1.*Main.grid_length[1], 0.5*Main.grid_length[2]],
     ],
     fields = []
 )
 
-DiagProbe(
-    every = 100,
-    number = [4, 4, 4],
-    origin = [0.1*Lsim[0], 0.*Lsim[1], 0.5*Lsim[2]],
-    corners = [
-        [0.9*Lsim[0], 0. *Lsim[1], 0.5*Lsim[2]],
-        [0.1*Lsim[0], 0.9*Lsim[1], 0.5*Lsim[2]],
-        [0.1*Lsim[0], 0. *Lsim[1], 0.9*Lsim[2]],
-    ],
-    fields = []
-)
