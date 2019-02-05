@@ -31,7 +31,6 @@ import shlex
 # ones.
 mathjax_path = 'https://www.gitcdn.xyz/repo/mathjax/MathJax/master/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
 extensions = [
-    'sphinx.ext.todo',
     'sphinx.ext.mathjax',
 # In order to generate the doc in pdf:
 #    'rst2pdf.pdfbuilder'
