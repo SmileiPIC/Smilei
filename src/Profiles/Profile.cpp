@@ -222,7 +222,8 @@ Profile::Profile( PyObject *py_profile, unsigned int nvariables, string name, bo
         if( try_numpy ) {
             // If numpy available, verify that the profile accepts numpy arguments
             // We test 2 options : the arrays dimension equal to nvariables or nvariables-1
-            for( unsigned int ndim=nvariables-1; ndim<=nvariables; ndim++ ) {
+            unsigned int ndim;
+            for( ndim=nvariables-1; ndim<=nvariables; ndim++ ) {
                 unsigned int numel = pow(2, ndim);
                 double test_value[numel];
                 for( unsigned int i=0; i<numel; i++ )
@@ -241,7 +242,12 @@ Profile::Profile( PyObject *py_profile, unsigned int nvariables, string name, bo
                 } else if( nvariables_ == 4 ) {
                     ret = PyObject_CallFunctionObjArgs( py_profile, a, a, a, a, NULL );
                 }
+#ifdef  __DEBUG
+                DEBUG( "Profile `"<<name<<"`: try numpy array of dimension " << ndim);
+                PyTools::checkPyError( false, true );
+#else
                 PyTools::checkPyError( false, false );
+#endif
                 Py_DECREF( a );
                 if( ret
                         && PyArray_Check( ret ) // must be a numpy array
@@ -252,7 +258,9 @@ Profile::Profile( PyObject *py_profile, unsigned int nvariables, string name, bo
                 if( ret ) Py_DECREF( ret );
                 if( uses_numpy ) break;
             }
-            if( !uses_numpy ) {
+            if( uses_numpy ) {
+                DEBUG( "Profile `"<<name<<"`: accepts numpy arrays of dimension " << ndim);
+            } else {
                 DEBUG( "Profile `"<<name<<"`: does not seem to accept numpy arrays (and will be slow)" );
             }
         }

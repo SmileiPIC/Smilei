@@ -101,7 +101,7 @@ def Ex(x,y,z):
     iz = round((z[0,0,0]+2*dtrans)/dtrans )
     h5f = h5py.File('tabulated.h5','r') 
     B = h5f['dataset_1'][ix:ix+nx,iy:iy+ny,iz:iz+nz]
-    print ix, nx, iy, ny, iz, nz
+    print(ix, nx, iy, ny, iz, nz)
     h5f.close()
     return A
 
