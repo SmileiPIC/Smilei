@@ -457,7 +457,7 @@ def tsin2plateau(start=0., fwhm=0., plateau=None, slope1=None, slope2=None):
 
 
 def transformPolarization(polarization_phi, ellipticity):
-    from math import sqrt, sin, cos, tan, atan
+    from math import pi, sqrt, sin, cos, tan, atan
     e2 = ellipticity**2
     p = (1.-e2)*sin(2.*polarization_phi)/2.
     if abs(p) < 1e-10:
