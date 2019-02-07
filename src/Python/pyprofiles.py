@@ -523,7 +523,7 @@ def LaserGaussian2D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
         invWaist2 = (w/waist)**2
         coeff = -omega * focus[0] * w**2 / (2.*Zr**2)
         def spatial(y):
-            return w * exp( -invWaist2*(y-focus[1])**2 )
+            return sqrt(w) * exp( -invWaist2*(y-focus[1])**2 )
         def phase(y):
             return coeff * (y-focus[1])**2
     else:
@@ -537,7 +537,7 @@ def LaserGaussian2D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
         amplitudeZ *= cos(incidence_angle)
         def spatial(y):
             w2 = 1./(1. + invZr2*(y-Y1)**2)
-            return sqrt(w2) * exp( -invWaist2*w2*(y-Y2)**2 )
+            return sqrt(sqrt(w2)) * exp( -invWaist2*w2*(y-Y2)**2 )
         def phase(y):
             dy = y-Y1
             return omega_*dy*(1.+ invZr3*(y-Y2)**2/(1.+invZr2*dy**2)) + atan(invZr*dy)
@@ -568,7 +568,7 @@ def LaserEnvelopeGaussian2D( a0=1., omega=1., focus=None, waist=3., time_envelop
         return coeff
     def spatial_amplitude(x,y):
         invWaist2 = (w(x)/waist)**2
-        return w(x) * math.exp( -invWaist2*(  (y-focus[1])**2  ) )
+        return math.sqrt(w(x)) * math.exp( -invWaist2*(  (y-focus[1])**2  ) )
     def phase(x,y):
         return coeff(x) * ( (y-focus[1])**2 )
     def Gouy_phase(x):
