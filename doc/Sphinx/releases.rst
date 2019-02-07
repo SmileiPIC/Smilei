@@ -20,6 +20,10 @@ Upcoming changes
 * Interface with the PICSAR library (currently experimental)
 * Cylindrical geometry with Fourier decomposition in azimuthal direction
 
+* Different convention for circular polarization amplitude
+* Bugfix: `LaserGaussian2D` when focused far from boundary
+* Bugfix: laser :py:data:`a0` normalization to :py:data:`omega`
+
 ----
 
 .. _latestVersion:

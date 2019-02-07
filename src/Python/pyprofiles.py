@@ -457,20 +457,18 @@ def tsin2plateau(start=0., fwhm=0., plateau=None, slope1=None, slope2=None):
 
 
 def transformPolarization(polarization_phi, ellipticity):
-    import math
-    p = (1.-ellipticity**2)*math.sin(2.*polarization_phi)/2.
+    from math import sqrt, sin, cos, tan, atan
+    e2 = ellipticity**2
+    p = (1.-e2)*sin(2.*polarization_phi)/2.
     if abs(p) < 1e-10:
-        if abs(ellipticity**2-1.)<1e-10: polarization_phi=0.
-        dephasing = math.pi/2.
-        amplitude = math.sqrt(1./(1.+ellipticity**2))
-        amplitudeY = amplitude * (math.cos(polarization_phi)+math.sin(polarization_phi)*ellipticity)
-        amplitudeZ = amplitude * (math.sin(polarization_phi)+math.cos(polarization_phi)*ellipticity)
+        dephasing = pi/2.
     else:
-        dephasing = math.atan(ellipticity/p)
-        theta = 0.5 * math.atan( math.tan(2.*polarization_phi) / math.cos(dephasing) )
-        while theta<0.: theta += math.pi/2.
-        amplitudeY = math.sqrt(2.) * math.cos(theta)
-        amplitudeZ = math.sqrt(2.) * math.sin(theta)
+        dephasing = atan(ellipticity/p)
+    amplitude = sqrt(1./(1.+e2))
+    c2 = cos(polarization_phi)**2
+    s2 = 1. - c2
+    amplitudeY = amplitude * sqrt(c2 + e2*s2)
+    amplitudeZ = amplitude * sqrt(s2 + e2*c2)
     return [dephasing, amplitudeY, amplitudeZ]
 
 def LaserPlanar1D( box_side="xmin", a0=1., omega=1.,
@@ -478,8 +476,8 @@ def LaserPlanar1D( box_side="xmin", a0=1., omega=1.,
     import math
     # Polarization and amplitude
     [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarization_phi, ellipticity)
-    amplitudeY *= a0
-    amplitudeZ *= a0
+    amplitudeY *= a0 * omega
+    amplitudeZ *= a0 * omega
     # Create Laser
     Laser(
         box_side        = box_side,
@@ -497,7 +495,7 @@ def LaserEnvelopePlanar1D( a0=1., omega=1., focus=None, time_envelope=tconstant(
     from numpy import vectorize
 
     def space_time_envelope(x,t):
-        return a0*complex( vectorize(time_envelope)(t) )
+        return (a0*omega) * complex( vectorize(time_envelope)(t) )
 
     # Create Laser Envelope
     LaserEnvelope(
@@ -512,8 +510,8 @@ def LaserGaussian2D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
     from math import cos, sin, tan, atan, sqrt, exp
     # Polarization and amplitude
     [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarization_phi, ellipticity)
-    amplitudeY *= a0
-    amplitudeZ *= a0
+    amplitudeY *= a0 * omega
+    amplitudeZ *= a0 * omega
     # Space and phase envelopes
     Zr = omega * waist**2/2.
     if incidence_angle == 0.:
@@ -564,7 +562,7 @@ def LaserEnvelopeGaussian2D( a0=1., omega=1., focus=None, waist=3., time_envelop
         phase = coeff * ( (y-focus[1])**2 )
         exponential_with_total_phase = exp(1j*(phase-arctan( (x-focus[0])/Zr )))
         invWaist2 = (w/waist)**2
-        spatial_amplitude = a0*w * exp( -invWaist2*(y-focus[1])**2)
+        spatial_amplitude = a0*omega * w * exp( -invWaist2*(y-focus[1])**2)
         space_time_envelope = spatial_amplitude * vectorize(time_envelope)(t)
         return space_time_envelope * exponential_with_total_phase
 
@@ -582,8 +580,8 @@ def LaserGaussian3D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
     import math
     # Polarization and amplitude
     [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarization_phi, ellipticity)
-    amplitudeY *= a0
-    amplitudeZ *= a0
+    amplitudeY *= a0 * omega
+    amplitudeZ *= a0 * omega
     # Space and phase envelopes
     Zr = omega * waist**2/2.
     if incidence_angle == [0.,0.]:
@@ -639,7 +637,7 @@ def LaserEnvelopeGaussian3D( a0=1., omega=1., focus=None, waist=3., time_envelop
         phase = coeff * ( (y-focus[1])**2 + (z-focus[2])**2 )
         exponential_with_total_phase = exp(1j*(phase-arctan( (x-focus[0])/Zr )))
         invWaist2 = (w/waist)**2
-        spatial_amplitude = a0*w * exp( -invWaist2*(  (y-focus[1])**2 + (z-focus[2])**2 )  )
+        spatial_amplitude = a0*omega * w * exp( -invWaist2*(  (y-focus[1])**2 + (z-focus[2])**2 )  )
         space_time_envelope = spatial_amplitude * vectorize(time_envelope)(t)
         return space_time_envelope * exponential_with_total_phase
 
