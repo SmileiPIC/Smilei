@@ -634,12 +634,9 @@ void Projector3D2OrderV::susceptibility( ElectroMagn *EMfields, Particles &parti
         int np_computed( min( cell_nparts-ivect, vecSize ) );
         int istart0 = ( int )istart + ivect;
         
-        //for (unsigned int ipart=istart ; (int)ipart<iend; ipart++ ) {
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
         
-            //int iloc,jloc;
-            
             double momentum[3];
             
             double gamma_ponderomotive, gamma0, gamma0_sq;

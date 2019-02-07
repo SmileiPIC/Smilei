@@ -47,6 +47,10 @@ public:
     {
         return NULL;
     };
+    //! Gets the value of an N-D function at points specified as numpy arrays
+    virtual PyArrayObject* complexValueAt(std::vector<PyArrayObject*>,PyArrayObject*) {
+       return NULL;
+    };
 #endif
 };
 
@@ -122,24 +126,30 @@ private:
 class Function_Python4D : public Function
 {
 public:
-    Function_Python4D( PyObject *pp ) : py_profile( pp ) {};
-    Function_Python4D( Function_Python4D *f ) : py_profile( f->py_profile ) {};
-    double valueAt( std::vector<double>, double ); // space + time
-    std::complex<double> complexValueAt( std::vector<double>, double ); // space + time
+    Function_Python4D(PyObject *pp) : py_profile(pp) {};
+    Function_Python4D(Function_Python4D *f) : py_profile(f->py_profile) {};
+    double valueAt(std::vector<double>, double); // space + time
+    std::complex<double> complexValueAt(std::vector<double>, double); // space + time
+#ifdef SMILEI_USE_NUMPY
+    PyArrayObject* complexValueAt(std::vector<PyArrayObject*>, PyArrayObject*); // numpy
+#endif
 private:
     PyObject *py_profile;
 };
-
+/*
 class Function_Python4D_Complex : public Function
 {
 public:
-    Function_Python4D_Complex( PyObject *pp ) : py_profile( pp ) {};
-    Function_Python4D_Complex( Function_Python4D_Complex *f ) : py_profile( f->py_profile ) {};
-    std::complex<double> valueAtComplex( std::vector<double>, double ); // space + time
+    Function_Python4D_Complex(PyObject *pp) : py_profile(pp) {};
+    Function_Python4D_Complex(Function_Python4D_Complex *f) : py_profile(f->py_profile) {};
+    std::complex<double> valueAtComplex(std::vector<double>, double); // space + time
+//#ifdef SMILEI_USE_NUMPY
+    //PyArrayObject* complexValueAt(std::vector<PyArrayObject*>,std::vector<PyArrayObject*>); // numpy
+//#endif
 private:
     PyObject *py_profile;
 };
-
+*/
 
 
 // Children classes for hard-coded functions

@@ -91,8 +91,7 @@ void LaserEnvelope1D::initEnvelope( Patch *patch, ElectroMagn *EMfields )
     //! 1/(2Dx), where dx is the spatial step dx for 1D3V cartesian simulations
     double one_ov_2dx=1./2./cell_length[0];
     
-    // position_time[0]: x coordinate
-    
+    // position[0]: x coordinate
     // t: time coordinate --> x/c for the envelope initialization
     
     position[0]           = cell_length[0]*( ( double )( patch->getCellStartingGlobalIndex( 0 ) )+( A1D->isDual( 0 )?-0.5:0. ) );
@@ -106,17 +105,15 @@ void LaserEnvelope1D::initEnvelope( Patch *patch, ElectroMagn *EMfields )
         // init envelope through Python function
         ( *A1D )( i )      += profile_->complexValueAt( position, t );
         ( *A01D )( i )     += profile_->complexValueAt( position, t_previous_timestep );
+
+        // |A|
         ( *Env_Aabs1D )( i )= std::abs( ( *A1D )( i ) );
-        
         // |E envelope| = |-(dA/dt-ik0cA)|
-        ( *Env_Eabs1D )( i )= std::abs( ( ( *A1D )( i )-( *A01D )( i ) )/timestep - i1*( *A1D )( i ) );
-        
+        ( *Env_Eabs1D )( i )= std::abs( ( ( *A1D )( i )-( *A01D )( i ) )/timestep - i1*( *A1D )( i ) );  
         // compute ponderomotive potential at timestep n
         ( *Phi1D )( i )     = std::abs( ( *A1D )( i ) ) * std::abs( ( *A1D )( i ) ) * 0.5;
-        
         // compute ponderomotive potential at timestep n-1
         ( *Phi_m1D )( i )   = std::abs( ( *A01D )( i ) ) * std::abs( ( *A01D )( i ) ) * 0.5;
-        
         // interpolate in time
         ( *Phi_m1D )( i )   = 0.5*( ( *Phi_m1D )( i )+( *Phi1D )( i ) );
         
