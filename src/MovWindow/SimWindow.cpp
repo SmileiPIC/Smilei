@@ -367,7 +367,7 @@ void SimWindow::operate( VectorPatch &vecPatches, SmileiMPI *smpi, Params &param
                             #endif*/
                         }
                         
-                        //mypatch->EMfields->applyExternalFields( mypatch );
+                        mypatch->EMfields->applyExternalFields( mypatch );
                         if( params.save_magnectic_fields_for_SM ) {
                             mypatch->EMfields->saveExternalFields( mypatch );
                         }
