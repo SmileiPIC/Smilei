@@ -16,15 +16,15 @@ public:
     inline void currentsAndDensity( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, int ipart_ref = 0 );
     
     //! Project global current charge (EMfields->rho_), frozen & diagFields timestep
-    void densityFrozen( double *rhoj, Particles &particles, unsigned int ipart, unsigned int bin ) override final;
+    void basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int bin ) override final;
     
     //! Project global current densities if Ionization in Species::dynamics,
     void ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Particles &particles, int ipart, LocalFields Jion ) override final;
     
     //!Wrapper
-    void currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec,int icell = 0, int ipart_ref = 0 ) override final;
+    void currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec,int icell, int ipart_ref) override final;
     
-    void susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int ibin, int ipart_ref = 0 ) override;
+    void susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref) override;
     
 private:
     static constexpr double dble_1_ov_384   = 1.0/384.0;

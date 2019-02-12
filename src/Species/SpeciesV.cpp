@@ -377,7 +377,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                 b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
                 
                 for( iPart=first_index[scell] ; ( int )iPart<last_index[scell]; iPart++ ) {
-                    Proj->densityFrozen( b_rho, ( *particles ), iPart, 0 );
+                    Proj->basic( b_rho, ( *particles ), iPart, 0 );
                 } //End loop on particles
             }//End loop on bins
             
@@ -401,7 +401,7 @@ void SpeciesV::computeCharge( unsigned int ispec, ElectroMagn *EMfields )
         double *b_rho=&( *EMfields->rho_ )( 0 );
         
         for( unsigned int iPart=first_index[0] ; ( int )iPart<last_index[last_index.size()-1]; iPart++ ) {
-            Proj->densityFrozen( b_rho, ( *particles ), iPart, 0 );
+            Proj->basic( b_rho, ( *particles ), iPart, 0 );
         }
         
     }
@@ -996,7 +996,7 @@ void SpeciesV::ponderomotive_update_position_and_currents( double time_dual, uns
                     b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
                 }
                 for( iPart=first_index[scell] ; ( int )iPart<last_index[scell]; iPart++ ) {
-                    Proj->densityFrozen( b_rho, ( *particles ), iPart, 0 );
+                    Proj->basic( b_rho, ( *particles ), iPart, 0 );
                 } //End loop on particles
             }
         }

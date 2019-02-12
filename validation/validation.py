@@ -472,6 +472,44 @@ except CalledProcessError as e:
 	sys.exit(3)
 if VERBOSE: print( "")
 
+def findReference(bench_name):
+	try:
+		try:
+			with open(SMILEI_REFERENCES+s+bench_name+".txt", 'rb') as f:
+				return pickle.load(f, fix_imports=True, encoding='latin1')
+		except:
+			with open(SMILEI_REFERENCES+s+bench_name+".txt", 'r') as f:
+				return pickle.load(f)
+	except:
+		print( "Unable to find the reference data for "+bench_name)
+		sys.exit(1)
+
+def matchesWithReference(data, expected_data, data_name, precision):
+	# ok if exactly equal (including strings or lists of strings)
+	try   :
+		if expected_data == data:
+			return True
+	except: pass
+	# If numbers:
+	try:
+		double_data = np.array(np.double(data), ndmin=1)
+		if precision is not None:
+			error = np.abs( double_data-np.array(np.double(expected_data), ndmin=1) )
+			max_error_location = np.unravel_index(np.argmax(error), error.shape)
+			max_error = error[max_error_location]
+			if max_error < precision:
+				return True
+			print( "Reference quantity '"+data_name+"' does not match the data (required precision "+str(precision)+")")
+			print( "Max error = "+str(max_error)+" at index "+str(max_error_location))
+		else:
+			if np.all(double_data == np.double(expected_data)):
+				return True
+			print( "Reference quantity '"+data_name+"' does not match the data")
+	except Exception as e:
+		print( "Reference quantity '"+data_name+"': unable to compare to data")
+		print( e )
+	return False
+
 
 # DEFINE A CLASS TO CREATE A REFERENCE
 class CreateReference(object):
@@ -496,63 +534,28 @@ class CreateReference(object):
 # DEFINE A CLASS TO COMPARE A SIMULATION TO A REFERENCE
 class CompareToReference(object):
 	def __init__(self, bench_name):
-		try:
-			try:
-				with open(SMILEI_REFERENCES+s+bench_name+".txt", 'rb') as f:
-					self.data = pickle.load(f, fix_imports=True, encoding='latin1')
-			except:
-				with open(SMILEI_REFERENCES+s+bench_name+".txt", 'r') as f:
-					self.data = pickle.load(f)
-		except:
-			print( "Unable to find the reference data for "+bench_name)
-			sys.exit(1)
-
+		self.data = findReference(bench_name)
+	
 	def __call__(self, data_name, data, precision=None):
 		# verify the name is in the reference
 		if data_name not in self.data.keys():
 			print( "Reference quantity '"+data_name+"' not found")
 			sys.exit(1)
 		expected_data = self.data[data_name]
-		# ok if exactly equal (including strings or lists of strings)
-		try   :
-			if expected_data == data: return
-		except: pass
-		# If numbers:
-		try:
-			double_data = np.array(np.double(data), ndmin=1)
-			if precision is not None:
-				error = np.abs( double_data-np.array(np.double(expected_data), ndmin=1) )
-				max_error_location = np.unravel_index(np.argmax(error), error.shape)
-				max_error = error[max_error_location]
-				if max_error < precision: return
-				print( "Reference quantity '"+data_name+"' does not match the data (required precision "+str(precision)+")")
-				print( "Max error = "+str(max_error)+" at index "+str(max_error_location))
-			else:
-				if np.all(double_data == np.double(expected_data)): return
-				print( "Reference quantity '"+data_name+"' does not match the data")
-		except Exception as e:
-			print( "Reference quantity '"+data_name+"': unable to compare to data")
-			print( e )
-		print( "Reference data:")
-		print( expected_data)
-		print( "New data:")
-		print( data)
-		sys.exit(1)
+		if not matchesWithReference(data, expected_data, data_name, precision):
+			print( "Reference data:")
+			print( expected_data)
+			print( "New data:")
+			print( data)
+			print( "" )
+			global _dataNotMatching
+			_dataNotMatching = True
 
 # DEFINE A CLASS TO VIEW DIFFERENCES BETWEEN A SIMULATION AND A REFERENCE
 class ShowDiffWithReference(object):
 	def __init__(self, bench_name):
-		try:
-			try:
-				with open(SMILEI_REFERENCES+s+bench_name+".txt", 'rb') as f:
-					self.data = pickle.load(f, fix_imports=True, encoding='latin1')
-			except:
-				with open(SMILEI_REFERENCES+s+bench_name+".txt", 'r') as f:
-					self.data = pickle.load(f)
-		except:
-			print( "Unable to find the reference data for "+bench_name)
-			sys.exit(1)
-
+		self.data = findReference(bench_name)
+	
 	def __call__(self, data_name, data, precision=None):
 		import matplotlib.pyplot as plt
 		plt.ion()
@@ -565,6 +568,10 @@ class ShowDiffWithReference(object):
 		else:
 			expected_data = self.data[data_name]
 		print_data = False
+		# First, check whether the data matches
+		if not matchesWithReference(data, expected_data, data_name, precision):
+			global _dataNotMatching
+			_dataNotMatching = True
 		# try to convert to array
 		try:
 			data_float = np.array(data, dtype=float)
@@ -637,7 +644,7 @@ class ShowDiffWithReference(object):
 
 
 # RUN THE BENCHMARKS
-
+_dataNotMatching = False
 for BENCH in SMILEI_BENCH_LIST :
 
 	SMILEI_BENCH = SMILEI_BENCHS + BENCH
@@ -761,11 +768,13 @@ for BENCH in SMILEI_BENCH_LIST :
 	if not os.path.exists(validation_script):
 		print( "Unable to find the validation script "+validation_script)
 		sys.exit(1)
-
+	
 	# IF REQUIRED, GENERATE THE REFERENCES
 	if GENERATE:
 		if VERBOSE:
+			print( '----------------------------------------------------')
 			print( 'Generating reference for '+BENCH)
+			print( '----------------------------------------------------')
 		Validate = CreateReference(BENCH)
 		execfile(validation_script)
 		Validate.write()
@@ -773,22 +782,34 @@ for BENCH in SMILEI_BENCH_LIST :
 	# OR PLOT DIFFERENCES WITH RESPECT TO EXISTING REFERENCES
 	elif SHOWDIFF:
 		if VERBOSE:
+			print( '----------------------------------------------------')
 			print( 'Viewing differences for '+BENCH)
+			print( '----------------------------------------------------')
 		Validate = ShowDiffWithReference(BENCH)
 		execfile(validation_script)
-
+		if _dataNotMatching:
+			print("Benchmark "+BENCH+" did NOT pass")
+	
 	# OTHERWISE, COMPARE TO THE EXISTING REFERENCES
 	else:
 		if VERBOSE:
+			print( '----------------------------------------------------')
 			print( 'Validating '+BENCH)
+			print( '----------------------------------------------------')
 		Validate = CompareToReference(BENCH)
 		execfile(validation_script)
-
+		if _dataNotMatching:
+			sys.exit(1)
+		# DATA DID NOT MATCH REFERENCES
+	
 	# CLEAN WORKDIRS, GOES HERE ONLY IF SUCCEED
 	os.chdir(WORKDIR_BASE)
 	shutil.rmtree( WORKDIR_BASE+s+'wd_'+os.path.basename(os.path.splitext(BENCH)[0]), True )
 
 	if VERBOSE: print( "")
 
-print( "Everything passed")
+if _dataNotMatching:
+	print( "Errors detected")
+else:
+	print( "Everything passed")
 os.chdir(INITIAL_DIRECTORY)

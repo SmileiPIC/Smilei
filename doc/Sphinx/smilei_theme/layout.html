@@ -1,13 +1,35 @@
 {%- extends "basic/layout.html" %}
 
-{# Extract the toctree and remove html #}
-{% set theTocTree = toctree(includehidden=True)
+{# Extract the toctree in a list of menus and sections #}
+{%- set theTocTree = toctree(collapse=False, includehidden=True)
     | replace("</a>", "")
     | replace(" href=\"", "></a>")
-    | replace("</li>", "</li>;")
+    | replace("<li ", ";<li ")
+    | replace("</ul>", "</ul>*")
     | striptags
     | replace("\">", "%") %}
-{% set theTocTree = theTocTree.split(";") %}
+{%- set menus = [] %}
+{%- set current_menu = [] %}
+{%- for menu in theTocTree.split("*") %}
+    {%- set sections = menu.split(";") %}
+    {%- if sections|length > 1 %}
+        {%- set this_menu = sections[1].split("%") %}
+        {%- set this_menu_url = this_menu[0] | trim | safe %}
+        {%- set this_menu_name = this_menu[1] | trim | safe %}
+        {%- set this_menu = [this_menu_url, this_menu_name] %}
+        {%- for section in sections[2:] %}
+            {%- set this_section = section.split("%")%}
+            {%- set this_section_url = this_section[0] | trim | safe %}
+            {%- set this_section_name = this_section[1] | trim | safe %}
+            {%- if this_section_name == title %}
+                {%- set _ = current_menu.append(this_menu_name) %}
+            {%- endif %}
+            {%- set _ = this_menu.append([this_section_url, this_section_name]) %}
+        {%- endfor %}
+        {%- set _ = menus.append(this_menu) %}
+    {%- endif %}
+{%- endfor %}
+{%- set last_menu = menus[-1][1] %}
 
 {%- block extrahead %}
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -19,9 +41,8 @@
     }
   });
   </script>
-  
   {{ super() }}
-{% endblock %}
+{%- endblock %}
 
 {%- block sidebarlogo %}
 {%- endblock %}
@@ -32,33 +53,26 @@
 
     {# Loop through toctree #}
     <div class="toctree-smilei">
+    {%- for menu in menus %}
         <ul>
-    {%- set menu_start = cycler(*menu_start_with) %}
-    {%- set this_menu = [] %}
-    {%- for element in theTocTree %}
-        {%- set el = element.split("%") %}
-        {%- set url = el[0] | trim | safe %}
-        {%- set entry = el[1] | trim | safe %}
-        {%- if entry == menu_start.current %}
-            {%- if entry != menu_start_with[0] %}
+        {%- set menu_name = menu[1] %}
+        {%- set sections = menu[2:] %}
+        {%- for section in sections %}
+            {%- set url = section[0] %}
+            {%- set entry = section[1] %}
+            {%- if entry == title %}
+            </ul>
+                {{ toc }}
+            <ul>
+            {%- else %}
+                <li class="outer">
+                    <a href="{{ url }}">{{ entry }}</a>
+                </li>
+            {%- endif %}
+        {%- endfor %}
         </ul>
         <hr />
-        <ul>
-            {%- endif %}
-            {%- set _ = menu_start.next() %}
-        {%- endif %}
-        {%- if entry == title %}
-            {%- set _ = this_menu.append(menu_start.current) %}
-        </ul>
-            {{ toc }}
-        <ul>
-        {%- elif entry != "" %}
-          <li class="outer">
-              <a href="{{ url }}">{{ entry }}</a>
-          </li>
-        {%- endif %}
     {%- endfor %}
-        </ul>
     </div>
 
 </div>
@@ -85,36 +99,29 @@
             </a>
         </div>
         
-    {# Loop through toctree #}
-    {%- set menu_start = cycler(*menu_start_with) %}
-    {%- set menu_title = cycler(*menu_name) %}
-    {%- for element in theTocTree %}
-        {%- set el = element.split("%") %}
-        {%- set url = el[0] | trim | safe %}
-        {%- set entry = el[1] | trim | safe %}
-        {%- if entry == menu_start.current %}
-            {% if entry != menu_start_with[0] %}
-                    </ul>
-                </div>
-            </div>
-        </div>
-            {%- endif %}
-            
-            {%- set menu_here = menu_start.current %}
-            {%- set _ = menu_start.next() %}
-        
-        <div class="menu" id="menu_{{ menu_here }}"{% if menu_start.current == this_menu[0] %} style="font-weight:bold"{% endif %}>
-            <div id="menuButton_{{ menu_here }}" class="menuButton"
-                 onmouseenter="prepareMenu('menu_{{ menu_here }}')"
+    {%- for menu in menus %}
+        {%- set menu_url = menu[0] %}
+        {%- set menu_name = menu[1] %}
+        {%- set sections = menu[2:] %}
+        <div class="{% if menu_name == last_menu %}last {% endif %}menu"
+            id="menu_{{ menu_name }}"
+            {% if menu_name == current_menu[0] %}style="font-weight:bold"{% endif %}
+        >
+            <div id="menuButton_{{ menu_name }}" class="menuButton"
+                 onmouseenter="prepareMenu('menu_{{ menu_name }}')"
                  onmousedown="event.preventDefault()"
             >
-                <span>{{ menu_title.next() }}</span>
+                <a href="{{ menu_url }}">
+                    <span>{{ menu_name }}</span>
+                </a>
             </div>
-            <div class="off" onmouseleave="leaveMenu('menu_{{ menu_here }}',this)">
+            <div class="off" onmouseleave="leaveMenu('menu_{{ menu_name }}',this)">
                 <div class="toctree-smilei">
                     <ul>
-        {%- endif %}
-        {%- if entry != "" %}
+        
+        {%- for section in sections %}
+            {%- set url = section[0] %}
+            {%- set entry = section[1] %}
             {%- if entry == title %}
                         <li >
             {%- else %}
@@ -122,12 +129,13 @@
             {%- endif %}
                             <a href="{{ url }}">{{ entry }}</a>
                         </li>
-        {%- endif %}
-    {%- endfor %}
+        {%- endfor %}
+        
                     </ul>
                 </div>
             </div>
         </div>
+    {%- endfor %}
         
         <script type="text/javascript">
             var es=document.getElementsByClassName("menuButton"), i=0;
@@ -215,40 +223,29 @@
 
 {%- block document %}
     <div class="documentwrapper">
-    {%- if render_sidebar %}
-      <div class="bodywrapper">
-    {%- endif %}
         <div class="body" role="main">
           {% block body %} {% endblock %}
           {%- if title | lower == "index" %}
             <div class="siteindex"><div>
-              {%- set menu_start = cycler(*menu_start_with) %}
-              {%- set menu_title = cycler(*menu_name) %}
-              {%- for element in theTocTree %}
-                  {%- set el = element.split("%") %}
-                  {%- set url = el[0] | trim | safe %}
-                  {%- set entry = el[1] | trim | safe %}
-                  {%- if entry == menu_start.current %}
-                    {%- if entry != menu_start_with[0] %}
-              </ul>
-                    {%- endif %}
-              <h2>{{ menu_title.next() }}</h2>
-              <ul>
-                    {%- set _ = menu_start.next() %}
-                  {%- endif %}
-                  {%- if entry != "" %}
+            
+            {%- for menu in menus %}
+                {%- set menu_name = menu[1] %}
+                {%- set sections = menu[2:] %}
+                <h2>{{ menu_name }}</h2>
+                <ul>
+                {%- for section in sections %}
+                    {%- set url = section[0] %}
+                    {%- set entry = section[1] %}
                     <li>
                         <a href="{{ url }}">{{ entry }}</a>
                     </li>
-                  {%- endif %}
-              {%- endfor %}
-              </ul>
+                {%- endfor %}
+                </ul>
+            {%- endfor %}
+            
             </div>
           {%- endif %}
         </div></div>
-    {%- if render_sidebar %}
-      </div>
-    {%- endif %}
     </div>
 {%- endblock %}
 
@@ -409,6 +406,15 @@
         });
     </script>
 
+{%- endblock %}
+
+{%- block relbar1 %}
+{%- endblock %}
+
+{%- block relbar2 %}
+{%- endblock %}
+
+{%- block sidebar1 %}
 {%- endblock %}
 
 {%- block sidebar2 %}

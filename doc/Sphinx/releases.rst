@@ -18,8 +18,11 @@ Upcoming changes
 ^^^^^^^^^^^^^^^^
 
 * Interface with the PICSAR library (currently experimental)
-
 * Cylindrical geometry with Fourier decomposition in azimuthal direction
+
+* Different convention for circular polarization amplitude
+* Bugfix: `LaserGaussian2D` when focused far from boundary
+* Bugfix: laser :py:data:`a0` normalization to :py:data:`omega`
 
 ----
 
@@ -33,10 +36,13 @@ Release 4.1
 * Probe diagnostics of currents and density per species
 * Field diagnostics with more than 2^32 points
 * Bugfixes:
+
  * collisions (badly affected by vectorization)
  * adaptive vectorization with dynamic load balancing
  * memory leak in the laser envelope model
+ 
 * Disable usage of `-ipo` to compile on supercomputers despite of saving time simulation
+
  * it needs too many resources (time and memory) to link
  * it is recommended to do some tests on a new supercomputer without and then to re-establish it
 

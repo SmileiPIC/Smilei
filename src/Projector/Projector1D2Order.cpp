@@ -182,7 +182,7 @@ void Projector1D2Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project charge : frozen & diagFields timstep
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector1D2Order::densityFrozen( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type )
+void Projector1D2Order::basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type )
 {
 
     //Warning : this function is used for frozen species or initialization only and doesn't use the standard scheme.
@@ -347,7 +347,7 @@ void Projector1D2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
 }
 
 // Projector for susceptibility used as source term in envelope equation
-void Projector1D2Order::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int ibin, int ipart_ref )
+void Projector1D2Order::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
 
 {
     double *Chi_envelope = &( *EMfields->Env_Chi_ )( 0 );
@@ -431,7 +431,7 @@ void Projector1D2Order::susceptibility( ElectroMagn *EMfields, Particles &partic
         // ---------------------------
         // Calculate the total susceptibility
         // ---------------------------
-        ip -= index_domain_begin + ibin +2;
+        ip -= index_domain_begin + 2;
         
         for( unsigned int i=0 ; i<5 ; i++ ) {
             iloc = ( i+ip );

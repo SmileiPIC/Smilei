@@ -300,29 +300,31 @@ void VectorPatch::dynamics( Params &params,
         ( *this )( ipatch )->EMfields->restartRhoJ();
         //MESSAGE("restart rhoj");
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
-            if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
+            Species * spec = species( ipatch, ispec );
+            if( spec->ponderomotive_dynamics ) continue;
+            if( spec->isProj( time_dual, simWindow ) || diag_flag ) {
                 // Dynamics with vectorized operators
-                if( ( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators )&&( !( *this )( ipatch )->vecSpecies[ispec]->ponderomotive_dynamics ) ) {
-                    species( ipatch, ispec )->dynamics( time_dual, ispec,
-                                                        emfields( ipatch ),
-                                                        params, diag_flag, partwalls( ipatch ),
-                                                        ( *this )( ipatch ), smpi,
-                                                        RadiationTables,
-                                                        MultiphotonBreitWheelerTables,
-                                                        localDiags );
+                if( spec->vectorized_operators ) {
+                    spec->dynamics( time_dual, ispec,
+                                    emfields( ipatch ),
+                                    params, diag_flag, partwalls( ipatch ),
+                                    ( *this )( ipatch ), smpi,
+                                    RadiationTables,
+                                    MultiphotonBreitWheelerTables,
+                                    localDiags );
                 }
                 // Dynamics with scalar operators
                 else {
-                    if( ( params.vectorization_mode == "adaptive" ) && ( !( *this )( ipatch )->vecSpecies[ispec]->ponderomotive_dynamics ) ) {
-                        species( ipatch, ispec )->scalar_dynamics( time_dual, ispec,
+                    if( params.vectorization_mode == "adaptive" ) {
+                        spec->scalar_dynamics( time_dual, ispec,
                                 emfields( ipatch ),
                                 params, diag_flag, partwalls( ipatch ),
                                 ( *this )( ipatch ), smpi,
                                 RadiationTables,
                                 MultiphotonBreitWheelerTables,
                                 localDiags );
-                    } else if( !( *this )( ipatch )->vecSpecies[ispec]->ponderomotive_dynamics ) {
-                        species( ipatch, ispec )->Species::dynamics( time_dual, ispec,
+                    } else {
+                        spec->Species::dynamics( time_dual, ispec,
                                 emfields( ipatch ),
                                 params, diag_flag, partwalls( ipatch ),
                                 ( *this )( ipatch ), smpi,
@@ -350,11 +352,10 @@ void VectorPatch::dynamics( Params &params,
     
     timers.syncPart.restart();
     for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size(); ispec++ ) {
-        if( !( *this )( 0 )->vecSpecies[ispec]->ponderomotive_dynamics ) {
-            if( ( *this )( 0 )->vecSpecies[ispec]->isProj( time_dual, simWindow ) ) {
-                SyncVectorPatch::exchangeParticles( ( *this ), ispec, params, smpi, timers, itime ); // Included sort_part
-            } // end condition on species
-        } // end condition on envelope dynamics
+        Species * spec = species( 0, ispec );
+        if( !spec->ponderomotive_dynamics && spec->isProj( time_dual, simWindow ) ) {
+            SyncVectorPatch::exchangeParticles( ( *this ), ispec, params, smpi, timers, itime ); // Included sort_part
+        } // end condition on species
     } // end loop on species
     //MESSAGE("exchange particles");
     timers.syncPart.update( params.printNow( itime ) );

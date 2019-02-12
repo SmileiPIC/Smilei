@@ -153,7 +153,7 @@ void Projector3D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project charge : frozen & diagFields timstep (not vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D2OrderV::densityFrozen( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type )
+void Projector3D2OrderV::basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type )
 {
     //Warning : this function is used for frozen species or initialization only and doesn't use the standard scheme.
     //rho type = 0
@@ -634,12 +634,9 @@ void Projector3D2OrderV::susceptibility( ElectroMagn *EMfields, Particles &parti
         int np_computed( min( cell_nparts-ivect, vecSize ) );
         int istart0 = ( int )istart + ivect;
         
-        //for (unsigned int ipart=istart ; (int)ipart<iend; ipart++ ) {
         #pragma omp simd
         for( int ipart=0 ; ipart<np_computed; ipart++ ) {
         
-            //int iloc,jloc;
-            
             double momentum[3];
             
             double gamma_ponderomotive, gamma0, gamma0_sq;

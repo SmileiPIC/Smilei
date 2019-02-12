@@ -469,7 +469,7 @@ class TrackParticles(Diagnostic):
 								stop = start + bs
 								start_in_file = int(
 									(ID[start].astype("uint32"))
-									+ offset[ (int(ID[start])>>32).astype("uint32") & 16777215 ]
+									+ offset[ int(ID[start])>>32 & 16777215 ]
 									-1
 								)
 								stop_in_file = start_in_file + bs
@@ -495,6 +495,7 @@ class TrackParticles(Diagnostic):
 					first = ichunk * limitedchunksize
 					last  = int(min( first + limitedchunksize, total_number_of_particles ))
 					npart = last-first
+					if npart <= 0: break
 					f0["Id"].read_direct( ID, source_sel=self._np.s_[:, first:last], dest_sel=self._np.s_[:,:npart] )
 					f0["unique_Ids"].write_direct( self._np.max(ID[:,:npart], axis=0), source_sel=self._np.s_[:npart], dest_sel=self._np.s_[first:last] )
 			# Indicate that the ordering is finished

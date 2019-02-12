@@ -300,7 +300,7 @@ void SpeciesAdaptiveV2::scalar_dynamics( double time_dual, unsigned int ispec,
                 b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
                 
                 for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
-                    Proj->densityFrozen( b_rho, ( *particles ), iPart, 0 );
+                    Proj->basic( b_rho, ( *particles ), iPart, 0 );
                 } //End loop on particles
             }//End loop on bins
             
@@ -527,7 +527,7 @@ void SpeciesAdaptiveV2::scalar_ponderomotive_update_susceptibility_and_momentum(
 #ifdef  __DETAILED_TIMERS
         timer = MPI_Wtime();
 #endif
-        Proj->susceptibility( EMfields, *particles, mass, smpi, first_index[0], last_index.back(), ithread, 0 );
+        Proj->susceptibility( EMfields, *particles, mass, smpi, first_index[0], last_index.back(), ithread );
 #ifdef  __DETAILED_TIMERS
         patch->patch_timers[8] += MPI_Wtime() - timer;
 #endif
@@ -673,7 +673,7 @@ void SpeciesAdaptiveV2::scalar_ponderomotive_update_position_and_currents( doubl
                     b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
                 }
                 for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
-                    Proj->densityFrozen( b_rho, ( *particles ), iPart, 0 );
+                    Proj->basic( b_rho, ( *particles ), iPart, 0 );
                 } //End loop on particles
             }//End loop on bins
         } // end condition on diag and not particle test

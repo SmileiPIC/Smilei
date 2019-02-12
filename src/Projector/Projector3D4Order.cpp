@@ -439,7 +439,7 @@ void Projector3D4Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local densities only (Frozen species)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D4Order::densityFrozen( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type )
+void Projector3D4Order::basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type )
 {
     //Warning : this function is used for frozen species or initialization only and doesn't use the standard scheme.
     //rho type = 0
@@ -592,7 +592,7 @@ void Projector3D4Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
 
 
 // Projector for susceptibility used as source term in envelope equation
-void Projector3D4Order::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int ibin, int ipart_ref )
+void Projector3D4Order::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
 {
     ERROR( "Projection and interpolation for the envelope model are implemented only for interpolation_order = 2" );
 }

@@ -78,7 +78,7 @@ def space_envelope(x,y,z):
         coeff = omega * (x-focus[0]) * w(x)**2 / (2.*Zr**2)
         invWaist2 = (w(x)/waist)**2
         spatial_amplitude = w(x) * exp( -invWaist2*(  (y-focus[1])**2 + (z-focus[2])**2 )  )
-        phase = coeff * ( (y-focus[1])**2 + (z-focus[2])**2 )
+	phase = coeff * ( (y-focus[1])**2 + (z-focus[2])**2 )
         return a0 * spatial_amplitude * exp( 1j*( phase-arctan((x-focus[0])/ Zr)  )  )
 
 def complex_exponential_comoving(x,t):
