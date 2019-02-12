@@ -183,7 +183,7 @@ void Projector2D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project charge : frozen & diagFields timstep (not vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector2D2OrderV::densityFrozen( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type )
+void Projector2D2OrderV::basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type )
 {
 
     // -------------------------------------
