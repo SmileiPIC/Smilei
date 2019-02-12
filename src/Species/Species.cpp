@@ -846,7 +846,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                 b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
                 
                 for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
-                    Proj->densityFrozen( b_rho, ( *particles ), iPart, 0 );
+                    Proj->basic( b_rho, ( *particles ), iPart, 0 );
                 } //End loop on particles
             }//End loop on bins
             
@@ -897,7 +897,7 @@ void Species::projection_for_diags( double time_dual, unsigned int ispec,
                 
                 for( int iPart=first_index[ibin] ; iPart<last_index[ibin]; iPart++ ) {
                     for( unsigned int quantity=0; quantity < 4; quantity++ ) {
-                        Proj->densityFrozen( buf[quantity], ( *particles ), iPart, quantity );
+                        Proj->basic( buf[quantity], ( *particles ), iPart, quantity );
                     }
                 } //End loop on particles
             }//End loop on bins
@@ -917,7 +917,7 @@ void Species::projection_for_diags( double time_dual, unsigned int ispec,
                     
                     for( int iPart=first_index[ibin] ; iPart<last_index[ibin]; iPart++ ) {
                         for( unsigned int quantity=0; quantity < 4; quantity++ ) {
-                            Proj->densityFrozenComplex( buf[quantity], ( *particles ), iPart, quantity, imode );
+                            Proj->basicForComplex( buf[quantity], ( *particles ), iPart, quantity, imode );
                         }
                     } //End loop on particles
                 }//End loop on bins
@@ -990,7 +990,7 @@ void Species::computeCharge( unsigned int ispec, ElectroMagn *EMfields )
                 double *b_rho = &( *EMfields->rho_ )( 0 );
                 
                 for( unsigned int iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
-                    Proj->densityFrozen( b_rho, ( *particles ), iPart, 0 );
+                    Proj->basic( b_rho, ( *particles ), iPart, 0 );
                 }
             } else {
                 ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
@@ -998,7 +998,7 @@ void Species::computeCharge( unsigned int ispec, ElectroMagn *EMfields )
                 for( unsigned int imode=0; imode<Nmode; imode++ ) {
                     complex<double> *b_rho = &( *emAM->rho_AM_[imode] )( 0 );
                     for( unsigned int iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
-                        Proj->densityFrozenComplex( b_rho, ( *particles ), iPart, 0, imode );
+                        Proj->basicForComplex( b_rho, ( *particles ), iPart, 0, imode );
                     }
                 }
             }
@@ -2047,7 +2047,7 @@ void Species::ponderomotive_update_position_and_currents( double time_dual, unsi
                     b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
                 }
                 for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
-                    Proj->densityFrozen( b_rho, ( *particles ), iPart, 0 );
+                    Proj->basic( b_rho, ( *particles ), iPart, 0 );
                 } //End loop on particles
             }//End loop on bins
         } // end condition on diag and not particle test

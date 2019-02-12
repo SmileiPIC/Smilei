@@ -16,7 +16,7 @@ public:
     inline void currentsAndDensity( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, int ipart_ref = 0 );
     
     //! Project global current charge (EMfields->rho_), frozen & diagFields timestep
-    void densityFrozen( double *rhoj, Particles &particles, unsigned int ipart, unsigned int bin ) override final;
+    void basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int bin ) override final;
     
     //! Project global current densities if Ionization in Species::dynamics,
     void ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Particles &particles, int ipart, LocalFields Jion ) override final;
