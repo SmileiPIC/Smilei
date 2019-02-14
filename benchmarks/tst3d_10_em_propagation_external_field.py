@@ -5,18 +5,16 @@ from scipy import integrate,zeros_like
 from math import log
 import h5py
 
-dx = 0.393
+dx = 0.393*0.5
 dtrans = 4.712
 dt = 0.96 * dx
-nx =  600 
-ntrans = 100*2 
+nx =  1000 *2
+ntrans = 200 
 Lx = nx * dx
 Ltrans = ntrans * dtrans
 npatch_x = 8 
 npatch_trans = 8
-Nit =  1
-
-
+Nit =  50
 
 Main(
     geometry = "3Dcartesian",
@@ -28,17 +26,16 @@ Main(
     simulation_time = dt*Nit,
     clrw = 5,
     EM_boundary_conditions = [ ['silver-muller'] ],
+    print_every = 1,
     random_seed = smilei_mpi_rank
 )
 
-#LaserGaussian3D(
-#    a0              = 1.,
-#    omega           = 1.,
-#    focus           = [2.*10, 5.*l0, 5.*l0],
-#    waist           = 10,
-#    incidence_angle = [0., 0.],
-#    time_envelope   = tgaussian(center=2*10., fwhm=10.)
-#)
+MovingWindow(
+    time_start = 0.,
+    velocity_x = 1.
+)
+
+
 
 ################ Laser gaussian pulse, defined through external fields ###################
 
@@ -78,7 +75,7 @@ def space_envelope(x,y,z):
         coeff = omega * (x-focus[0]) * w(x)**2 / (2.*Zr**2)
         invWaist2 = (w(x)/waist)**2
         spatial_amplitude = w(x) * exp( -invWaist2*(  (y-focus[1])**2 + (z-focus[2])**2 )  )
-	phase = coeff * ( (y-focus[1])**2 + (z-focus[2])**2 )
+        phase = coeff * ( (y-focus[1])**2 + (z-focus[2])**2 )
         return a0 * spatial_amplitude * exp( 1j*( phase-arctan((x-focus[0])/ Zr)  )  )
 
 def complex_exponential_comoving(x,t):
@@ -87,29 +84,14 @@ def complex_exponential_comoving(x,t):
 
 ### Electromagnetic field
 # Electric field        
-#def Ex(x,y,z):
-#        invWaist2 = (w(x)/waist)**2
-#        complexEx = 2.* (y-focus[1]) * invWaist2 * space_envelope(x,y,z) * complex_exponential_comoving(x,0.)
-#        return real(complexEx)*time_envelope_t(x)
-
-# Define Ex as solution of Poisson
 def Ex(x,y,z):
-    A = zeros_like(x)
-    nx, ny, nz = x.shape
-    ix = round((x[0,0,0]+5*dx/2.)/dx) 
-    iy = round((y[0,0,0]+2*dtrans)/dtrans )
-    iz = round((z[0,0,0]+2*dtrans)/dtrans )
-    h5f = h5py.File('tabulated.h5','r') 
-    B = h5f['dataset_1'][ix:ix+nx,iy:iy+ny,iz:iz+nz]
-    print(ix, nx, iy, ny, iz, nz)
-    h5f.close()
-    return A
-
+        invWaist2 = (w(x)/waist)**2
+        complexEx = 2.* (y-focus[1]) * invWaist2 * space_envelope(x,y,z) * complex_exponential_comoving(x,0.)
+        return real(complexEx)*time_envelope_t(x)
 
 def Ey(x,y,z):
         complexEy  = 1j * space_envelope(x,y,z) * complex_exponential_comoving(x,0)
         return real(complexEy)*time_envelope_t(x)
-
 
 def Ez(x,y,z):
         return 0.*x
@@ -138,7 +120,7 @@ for field in ['Ex', 'Ey', 'Ez', 'Bx', 'By', 'Bz']:
 
 ##########################################################################################
 
-globalEvery = int(100)
+globalEvery = int(50)
 
 DiagScalar(
     every=globalEvery
@@ -156,13 +138,13 @@ DiagScalar(
 #)
 
 DiagProbe(
-    every = 10,
+    every = 50,
     origin = [0.1*Main.grid_length[0], 0.5*Main.grid_length[1], 0.5*Main.grid_length[2]],
     fields = []
 )
 
 DiagProbe(
-    every = 100,
+    every = 50,
     number = [nx],
     origin = [0.1*Main.grid_length[0], 0.5*Main.grid_length[1], 0.5*Main.grid_length[2]],
     corners = [[0.9*Main.grid_length[0], 0.5*Main.grid_length[1], 0.5*Main.grid_length[2]]],
@@ -170,8 +152,8 @@ DiagProbe(
 )
 
 DiagProbe(
-    every = 100,
-    number = [nx, ntrans],
+    every = 50,
+    number = [nx/2, ntrans/2],
     origin = [0.*Main.grid_length[0], 0.*Main.grid_length[1], 0.5*Main.grid_length[2]],
     corners = [
         [1.*Main.grid_length[0], 0. *Main.grid_length[1], 0.5*Main.grid_length[2]],
