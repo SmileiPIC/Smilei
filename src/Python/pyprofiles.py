@@ -681,7 +681,3 @@ except:
         )
         print("WARNING: LaserOffset unavailable because numpy was not found")
 
-"""
------------------------------------------------------------------------
-    BEGINNING OF THE USER NAMELIST
-"""
