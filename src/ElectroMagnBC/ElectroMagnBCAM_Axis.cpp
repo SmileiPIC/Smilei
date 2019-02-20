@@ -68,7 +68,7 @@ void ElectroMagnBCAM_Axis::disableExternalFields()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBCAM_Axis::apply( ElectroMagn *EMfields, double time_dual, Patch *patch )
 {
-    return;
+    return; // For the moment, boundary conditions on axis are handled directly in the solvers.
     // Loop on imode
     for( unsigned int imode=0 ; imode< Nmode ; imode++ ) {
     
