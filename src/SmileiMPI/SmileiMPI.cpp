@@ -590,7 +590,7 @@ void SmileiMPI::isend(Patch* patch, int to, int tag, Params& params)
     // we communicate the operator state (vectorized_operators variable)
     // to deduce the bin number (last_index.size())
     // In both adaptive cases :
-    //   - a reconfiguration of opertors is done after patch exchange (DLB and MW)
+    //   - a reconfiguration of operators is done after patch exchange (DLB and MW)
     //   - default values of the bin number is defined by the vectorized conf
     if (params.vectorization_mode == "adaptive_mixed_sort")
     {
@@ -653,7 +653,7 @@ void SmileiMPI::isend_species(Patch* patch, int to, int tag, Params& params)
     // we communicate the operator state (vectorized_operators variable)
     // to deduce the bin number (last_index.size())
     // In both adaptive cases :
-    //   - a reconfiguration of opertors is done after patch exchange (DLB and MW)
+    //   - a reconfiguration of operators is done after patch exchange (DLB and MW)
     //   - default values of the bin number is defined by the vectorized conf
     if (params.vectorization_mode == "adaptive_mixed_sort")
     {
@@ -748,7 +748,7 @@ void SmileiMPI::recv(Patch* patch, int from, int tag, Params& params)
     // we communicate the operator state (vectorized_operators variable)
     // to deduce the bin number (last_index.size())
     // In both adaptive cases :
-    //   - a reconfiguration of opertors is done after patch exchange (DLB and MW)
+    //   - a reconfiguration of operators is done after patch exchange (DLB and MW)
     //   - default values of the bin number is defined by the vectorized conf
     if (params.vectorization_mode == "adaptive_mixed_sort")
     {
@@ -837,7 +837,7 @@ void SmileiMPI::recv_species(Patch* patch, int from, int tag, Params& params)
     // we communicate the operator state (vectorized_operators variable)
     // to deduce the bin number (last_index.size())
     // In both adaptive cases :
-    //   - a reconfiguration of opertors is done after patch exchange (DLB and MW)
+    //   - a reconfiguration of operators is done after patch exchange (DLB and MW)
     //   - default values of the bin number is defined by the vectorized conf
     if (params.vectorization_mode == "adaptive_mixed_sort")
     {

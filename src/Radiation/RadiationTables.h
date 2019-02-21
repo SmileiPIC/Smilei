@@ -288,7 +288,7 @@ class RadiationTables
         // ---------------------------------------------
 
         //! Output format of the tables
-        std::string output_format;
+        std::string output_format_;
 
         //! Path to the tables
         std::string table_path;

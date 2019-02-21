@@ -20,18 +20,18 @@
 
 #include "Tools.h"
 
-//  --------------------------------------------------------------------------------------------------------------------
+//  ----------------------------------------------------------------------------
 //! Class RadiationFactory
 //
-//  --------------------------------------------------------------------------------------------------------------------
+//  ----------------------------------------------------------------------------
 
 class RadiationFactory {
 public:
-    //  --------------------------------------------------------------------------------------------------------------------
-    //! Create appropriate radiation model for the species ispec
-    //! \param ispec Species Id
+    //  ------------------------------------------------------------------------
+    //! Create appropriate radiation model for the species `species`
+    //! \param species Species object
     //! \param params Parameters
-    //  --------------------------------------------------------------------------------------------------------------------
+    //  ------------------------------------------------------------------------
     static Radiation* create(Params& params, Species * species) {
         Radiation* Radiate = NULL;
 
@@ -65,8 +65,7 @@ public:
         int n_envlaser = params.Laser_Envelope_model;
         if ( (n_envlaser >=1) & (species->ponderomotive_dynamics) & (species->radiation_model != "none")  ){
             ERROR( "Radiation model is not yet implemented for species interacting with Laser Envelope model.");
-                                                                   }
-
+        }
 
         return Radiate;
     }
