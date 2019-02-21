@@ -3,50 +3,52 @@
 
 #include "Diagnostic.h"
 
-class DiagnosticFields  : public Diagnostic {
+class DiagnosticFields  : public Diagnostic
+{
 
 public :
-    
-    DiagnosticFields( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, int, OpenPMDparams& );
+
+    DiagnosticFields( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, int, OpenPMDparams & );
     ~DiagnosticFields() override;
     
-    virtual void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
+    virtual void openFile( Params &params, SmileiMPI *smpi, bool newfile ) override;
     
     void closeFile() override;
     
-    virtual void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) override;
+    virtual void init( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches ) override;
     
     virtual bool prepare( int itime ) override;
     
-    virtual void setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatches ) = 0;
+    virtual void setFileSplitting( SmileiMPI *smpi, VectorPatch &vecPatches ) = 0;
     
-    virtual void run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, SimWindow* simWindow, Timers & timers ) override;
+    virtual void run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, SimWindow *simWindow, Timers &timers ) override;
     
-    virtual void writeField(hid_t, int) = 0;
+    virtual void writeField( hid_t, int ) = 0;
     
-    virtual bool needsRhoJs(int itime) override;
+    virtual bool needsRhoJs( int itime ) override;
     
-    bool hasField(std::string field_name, std::vector<std::string> fieldsToDump);
+    bool hasField( std::string field_name, std::vector<std::string> fieldsToDump );
     
-    void findSubgridIntersection(unsigned int subgrid_start,
-                                 unsigned int subgrid_stop,
-                                 unsigned int subgrid_step,
-                                 unsigned int zone_begin,
-                                 unsigned int zone_end,
-                                 unsigned int &istart_in_zone,
-                                 unsigned int &istart_in_file,
-                                 unsigned int &nsteps          );
-    
+    void findSubgridIntersection( unsigned int subgrid_start,
+                                  unsigned int subgrid_stop,
+                                  unsigned int subgrid_step,
+                                  unsigned int zone_begin,
+                                  unsigned int zone_end,
+                                  unsigned int &istart_in_zone,
+                                  unsigned int &istart_in_file,
+                                  unsigned int &nsteps );
+                                  
     //! Get memory footprint of current diagnostic
-    int getMemFootPrint() override {
+    int getMemFootPrint() override
+    {
         return 0;
     };
     
     //! Get disk footprint of current diagnostic
-    uint64_t getDiskFootPrint(int istart, int istop, Patch* patch) override;
-
-protected :
+    uint64_t getDiskFootPrint( int istart, int istop, Patch *patch ) override;
     
+protected :
+
     //! Index of this diag
     unsigned int diag_n;
     
@@ -62,7 +64,7 @@ protected :
     double time_average_inv;
     
     //! Subgrid requested
-    std::vector<unsigned int> subgrid_start, subgrid_stop, subgrid_step;
+    std::vector<unsigned int> subgrid_start_, subgrid_stop_, subgrid_step_;
     
     //! Property list for collective dataset write, set for // IO.
     hid_t write_plist;
@@ -83,7 +85,7 @@ protected :
     int tot_number_of_patches;
     
     //! Copy patch field to current "data" buffer
-    virtual void getField( Patch* patch, unsigned int ) = 0;
+    virtual void getField( Patch *patch, unsigned int ) = 0;
     
     //! Temporary dataset that is used for folding the 2D hilbert curve
     hid_t tmp_dset_id;

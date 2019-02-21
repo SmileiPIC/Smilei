@@ -15,10 +15,11 @@
 #define SMILEI_UNIT_CHARGE   7
 #define SMILEI_UNIT_TIME     8
 
-class OpenPMDparams {
+class OpenPMDparams
+{
 
 public:
-    OpenPMDparams(Params&);
+    OpenPMDparams( Params & );
     virtual ~OpenPMDparams() {};
     
     //! current version of the OpenPMD standard
@@ -66,7 +67,7 @@ public:
     void writeParticlesAttributes( hid_t );
     
     //! Write the attributes for a field in the meshesPath
-    void writeFieldAttributes( hid_t, std::vector<unsigned int> subgrid_start={}, std::vector<unsigned int> subgrid_step={});
+    void writeFieldAttributes( hid_t, std::vector<unsigned int> subgrid_start= {}, std::vector<unsigned int> subgrid_step= {} );
     
     //! Write the attributes for the particlesPath
     void writeSpeciesAttributes( hid_t );
@@ -76,13 +77,13 @@ public:
     
     //! Write the attributes for a field record
     void writeFieldRecordAttributes( hid_t );
-
+    
     //! Write the attributes for a component
     void writeComponentAttributes( hid_t, unsigned int );
     
-
+    
 private:
-    Params * params;
+    Params *params;
     
 };
 

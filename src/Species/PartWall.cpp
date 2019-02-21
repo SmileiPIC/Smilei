@@ -16,29 +16,30 @@
 using namespace std;
 
 // Partwall constructor
-PartWall::PartWall(double pos, unsigned short dir, string kind) :
-    position(pos),
-    direction(dir)
+PartWall::PartWall( double pos, unsigned short dir, string kind ) :
+    position( pos ),
+    direction( dir )
 {
     // Define the "wall" function pointer
-    if (kind == "reflective" ) {
+    if( kind == "reflective" ) {
         wall = &reflect_particle;
-    } else if (kind == "remove" ) {
+    } else if( kind == "remove" ) {
         wall = &remove_particle;
-    } else if (kind == "stop" ) {
+    } else if( kind == "stop" ) {
         wall = &stop_particle;
-    } else if (kind == "thermalize" ) {
+    } else if( kind == "thermalize" ) {
         wall = &thermalize_particle;
     }
 }
 
 // Applies the wall's boundary condition to one particle
-int PartWall::apply( Particles &particles, int ipart, Species * species, double dtgf, double &nrj_iPart) {
+int PartWall::apply( Particles &particles, int ipart, Species *species, double dtgf, double &nrj_iPart )
+{
     // The particle previous position needs to be computed
-    double particle_position     = particles.position(direction, ipart);
-    double particle_position_old = particle_position - dtgf*particles.momentum(direction, ipart);
-    if( (position-particle_position_old)*(position-particle_position)<0.) {
-        return (*wall)( particles, ipart, direction, 2.*position, species, nrj_iPart );
+    double particle_position     = particles.position( direction, ipart );
+    double particle_position_old = particle_position - dtgf*particles.momentum( direction, ipart );
+    if( ( position-particle_position_old )*( position-particle_position )<0. ) {
+        return ( *wall )( particles, ipart, direction, 2.*position, species, nrj_iPart );
     } else {
         return 1;
     }
@@ -46,82 +47,90 @@ int PartWall::apply( Particles &particles, int ipart, Species * species, double 
 
 
 // Reads the input file and creates the ParWall objects accordingly
-PartWalls::PartWalls(Params& params, Patch* patch)
+PartWalls::PartWalls( Params &params, Patch *patch )
 {
-    if (patch->isMaster()) MESSAGE(1,"Adding particle walls:");
+    if( patch->isMaster() ) {
+        MESSAGE( 1, "Adding particle walls:" );
+    }
     
-    resize(0);
-    unsigned int numpartwall=PyTools::nComponents("PartWall");
-    direction.resize(numpartwall);
-    position .resize(numpartwall);
-    kind     .resize(numpartwall);
+    resize( 0 );
+    unsigned int numpartwall=PyTools::nComponents( "PartWall" );
+    direction.resize( numpartwall );
+    position .resize( numpartwall );
+    kind     .resize( numpartwall );
     
     // Loop over each wall component and parse info
-    for (unsigned int iwall = 0; iwall < numpartwall; iwall++) {
-        
+    for( unsigned int iwall = 0; iwall < numpartwall; iwall++ ) {
+    
         // Extract the direction of the wall
         direction[iwall] = -1;
         string dirstring;
-        if (PyTools::extract("x",position[iwall],"PartWall",iwall)) {
+        if( PyTools::extract( "x", position[iwall], "PartWall", iwall ) ) {
             direction[iwall]=0;
             dirstring="x";
         }
-        if (PyTools::extract("y",position[iwall],"PartWall",iwall)) {
-            if (direction[iwall]>=0)
-                ERROR("For PartWall #" << iwall << ", cannot have several locations (x, y or z)");
-            if (params.nDim_particle < 2)
-                ERROR("PartWall #" << iwall << " cannot have y-location in 1D");
+        if( PyTools::extract( "y", position[iwall], "PartWall", iwall ) ) {
+            if( direction[iwall]>=0 ) {
+                ERROR( "For PartWall #" << iwall << ", cannot have several locations (x, y or z)" );
+            }
+            if( params.nDim_particle < 2 ) {
+                ERROR( "PartWall #" << iwall << " cannot have y-location in 1D" );
+            }
             direction[iwall]=1;
             dirstring="y";
         }
-        if (PyTools::extract("z",position[iwall],"PartWall",iwall)) {
-            if (direction[iwall]>=0)
-                ERROR("For PartWall #" << iwall << ", cannot have several locations (x, y or z)");
-            if (params.nDim_particle < 3)
-                ERROR("PartWall #" << iwall << " cannot have z-location y in 1D or 2D");
+        if( PyTools::extract( "z", position[iwall], "PartWall", iwall ) ) {
+            if( direction[iwall]>=0 ) {
+                ERROR( "For PartWall #" << iwall << ", cannot have several locations (x, y or z)" );
+            }
+            if( params.nDim_particle < 3 ) {
+                ERROR( "PartWall #" << iwall << " cannot have z-location y in 1D or 2D" );
+            }
             direction[iwall]=2;
             dirstring="z";
         }
         if( direction[iwall] < 0 ) {
-            ERROR("PartWall #" << iwall << " must have one location (x, y or z)");
+            ERROR( "PartWall #" << iwall << " must have one location (x, y or z)" );
         }
         
         // Ewtract the kind of wall
-        PyTools::extract("kind",kind[iwall],"PartWall",iwall);
-        if (kind[iwall].empty() || (kind[iwall]!="reflective" && kind[iwall]!="remove" && kind[iwall]!="stop" && kind[iwall]!="thermalize")) {
-            ERROR("For PartWall #" << iwall << ", `kind` must be one of reflective, remove, stop, thermalize");
+        PyTools::extract( "kind", kind[iwall], "PartWall", iwall );
+        if( kind[iwall].empty() || ( kind[iwall]!="reflective" && kind[iwall]!="remove" && kind[iwall]!="stop" && kind[iwall]!="thermalize" ) ) {
+            ERROR( "For PartWall #" << iwall << ", `kind` must be one of reflective, remove, stop, thermalize" );
         }
         
         // Find out wether this proc has the wall or not
-        if ( position[iwall] >= patch->getDomainLocalMin(direction[iwall])
-          && position[iwall] <= patch->getDomainLocalMax(direction[iwall])) {
-            push_back( new PartWall(position[iwall], direction[iwall], kind[iwall]) );
+        if( position[iwall] >= patch->getDomainLocalMin( direction[iwall] )
+                && position[iwall] <= patch->getDomainLocalMax( direction[iwall] ) ) {
+            push_back( new PartWall( position[iwall], direction[iwall], kind[iwall] ) );
         }
         
         // Create new wall
-        MESSAGE(2,"Adding a wall at "<<dirstring<<" = "<< position[iwall] << ", kind:" << kind[iwall] << (kind[iwall]=="thermalize" ? " thermCond" : ""));
+        MESSAGE( 2, "Adding a wall at "<<dirstring<<" = "<< position[iwall] << ", kind:" << kind[iwall] << ( kind[iwall]=="thermalize" ? " thermCond" : "" ) );
     }
     
-    if (!direction.size()) {
-        if (patch->isMaster()) MESSAGE(2,"Nothing to do");
+    if( !direction.size() ) {
+        if( patch->isMaster() ) {
+            MESSAGE( 2, "Nothing to do" );
+        }
     }
 }
 
 // Clones an existing vector of partWalls
-PartWalls::PartWalls(PartWalls* partWalls, Patch* patch)
+PartWalls::PartWalls( PartWalls *partWalls, Patch *patch )
 {
     // Copy all the walls info, so that all patches know about all walls
-    resize(0);
+    resize( 0 );
     direction = partWalls->direction;
     position  = partWalls->position ;
     kind      = partWalls->kind     ;
     
     // Create walls, but only those within the current domain
     unsigned int nwalls=direction.size();
-    for (unsigned int iwall = 0; iwall < nwalls; iwall++) {
-        if ( position[iwall] >= patch->getDomainLocalMin(direction[iwall])
-          && position[iwall] <= patch->getDomainLocalMax(direction[iwall])) {
-            push_back( new PartWall(position[iwall], direction[iwall], kind[iwall]) );
+    for( unsigned int iwall = 0; iwall < nwalls; iwall++ ) {
+        if( position[iwall] >= patch->getDomainLocalMin( direction[iwall] )
+                && position[iwall] <= patch->getDomainLocalMax( direction[iwall] ) ) {
+            push_back( new PartWall( position[iwall], direction[iwall], kind[iwall] ) );
         }
     }
 }
@@ -131,7 +140,9 @@ PartWalls::PartWalls(PartWalls* partWalls, Patch* patch)
 PartWalls::~PartWalls()
 {
     int nwalls=size();
-    for( int i=0; i<nwalls; i++ ) delete vecPartWall[i];
+    for( int i=0; i<nwalls; i++ ) {
+        delete vecPartWall[i];
+    }
     clear();
 }
 

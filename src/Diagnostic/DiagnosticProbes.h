@@ -6,46 +6,48 @@
 #include "Field2D.h"
 
 
-class DiagnosticProbes : public Diagnostic {
+class DiagnosticProbes : public Diagnostic
+{
     friend class SmileiMPI;
-
-public :
     
+public :
+
     //! Default constructor
-    DiagnosticProbes( Params &params, SmileiMPI* smpi, VectorPatch &vecPatches, int n_probe );
+    DiagnosticProbes( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, int n_probe );
     //! Default destructor
     ~DiagnosticProbes() override;
     
-    void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
+    void openFile( Params &params, SmileiMPI *smpi, bool newfile ) override;
     
     void closeFile() override;
     
     bool prepare( int timestep ) override;
     
-    void run( SmileiMPI* smpi, VectorPatch& vecPatches, int timestep, SimWindow* simWindow, Timers & timers ) override;
+    void run( SmileiMPI *smpi, VectorPatch &vecPatches, int timestep, SimWindow *simWindow, Timers &timers ) override;
     
-    void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) override;
+    void init( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches ) override;
     
-    virtual bool needsRhoJs(int timestep) override;
+    virtual bool needsRhoJs( int timestep ) override;
     
     //! Creates the probe's particles (or "points")
-    void createPoints(SmileiMPI* smpi, VectorPatch& vecPatches, bool createFile, double x_moved);
+    void createPoints( SmileiMPI *smpi, VectorPatch &vecPatches, bool createFile, double x_moved );
     
     //! Get memory footprint of current diagnostic
-    int getMemFootPrint() override {
+    int getMemFootPrint() override
+    {
         return nPart_MPI * (
-            // Size of the simili particles structure
-            (nDim_particle+3+1)*sizeof(double) + sizeof(short)
-            // eval probesArray (even if temporary)
-            + 10*sizeof(double)
-        );
+                   // Size of the simili particles structure
+                   ( nDim_particle+3+1 )*sizeof( double ) + sizeof( short )
+                   // eval probesArray (even if temporary)
+                   + 10*sizeof( double )
+               );
     }
     
     //! Get disk footprint of current diagnostic
-    uint64_t getDiskFootPrint(int istart, int istop, Patch* patch) override;
-
-private :
+    uint64_t getDiskFootPrint( int istart, int istop, Patch *patch ) override;
     
+private :
+
     //! Index of the probe diagnostic
     int probe_n;
     
@@ -56,7 +58,7 @@ private :
     unsigned int nDim_particle;
     //! Dimension of field coordinates
     unsigned int nDim_field;
-
+    
     //! Geometry
     std::string geometry;
     
@@ -100,7 +102,7 @@ private :
     htri_t status;
     
     //! Temporary buffer to write probes
-    Field2D* probesArray;
+    Field2D *probesArray;
     
     //! Array to locate the current patch in the local buffer
     std::vector<unsigned int> offset_in_MPI;
@@ -123,10 +125,14 @@ private :
 
 
 
-class ProbeParticles {
+class ProbeParticles
+{
 public :
     ProbeParticles() {};
-    ProbeParticles( ProbeParticles* probe ) { offset_in_file=probe->offset_in_file; }
+    ProbeParticles( ProbeParticles *probe )
+    {
+        offset_in_file=probe->offset_in_file;
+    }
     ~ProbeParticles() {};
     
     Particles particles;

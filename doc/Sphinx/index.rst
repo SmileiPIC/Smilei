@@ -69,31 +69,10 @@ interaction to astrophysics.
 
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :hidden:
 
-   licence
-   synopsis
-   highlights
-   releases
-
-   units
-   algorithms
-   parallelization
-   vectorization
-   collisions
-   ionization
-   radiation_loss
-   multiphoton_Breit_Wheeler
-   laser_envelope
-   relativistic_fields_initialization
-
-   installation
-   namelist
-   run
-   post-processing
-   contribute
-
-   material
-   partners
-   Smilei tutorials <https://smileipic.github.io/tutorials>
+   overview
+   understand
+   use
+   more

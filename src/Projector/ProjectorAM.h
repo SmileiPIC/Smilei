@@ -14,12 +14,18 @@ class ProjectorAM : public Projector
 
 public:
     //! Constructor for ProjectorAM
-    ProjectorAM(Params& params, Patch* patch);
+    ProjectorAM( Params &params, Patch *patch );
     virtual ~ProjectorAM() {};
-
-    virtual void mv_win(unsigned int shift) { i_domain_begin+=shift; }
-    virtual void setMvWinLimits(unsigned int shift) {i_domain_begin = shift;}
-
+    
+    virtual void mv_win( unsigned int shift )
+    {
+        i_domain_begin+=shift;
+    }
+    virtual void setMvWinLimits( unsigned int shift )
+    {
+        i_domain_begin = shift;
+    }
+    
 protected:
     double dr;
     double dt;
@@ -35,7 +41,7 @@ protected:
     int nprimr;
     //! Inverse volume of cells normalized by 2pi
     std::vector<double> rprim, invV, invVd;
-
+    
 };
 
 #endif

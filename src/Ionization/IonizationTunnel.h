@@ -16,10 +16,10 @@ class IonizationTunnel : public Ionization
 
 public:
     //! Constructor for IonizationTunnel: with no input argument
-    IonizationTunnel(Params& params, Species * species);
+    IonizationTunnel( Params &params, Species *species );
     
     //! apply the Tunnel Ionization model to the species (with ionization current)
-    void operator() (Particles*, unsigned int, unsigned int, std::vector<double>*, Patch*, Projector*, int ipart_ref = 0) override;
+    void operator()( Particles *, unsigned int, unsigned int, std::vector<double> *, Patch *, Projector *, int ipart_ref = 0 ) override;
     
 private:
     unsigned int atomic_number_;

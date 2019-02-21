@@ -9,14 +9,14 @@ class ElectroMagn;
 //  --------------------------------------------------------------------------------------------------------------------
 class MF_Solver2D_Cowan : public Solver2D
 {
-    
+
 public:
     //! Creator for MF_Solver2D_Cowan
-    MF_Solver2D_Cowan(Params &params);
+    MF_Solver2D_Cowan( Params &params );
     virtual ~MF_Solver2D_Cowan();
     
     //! Overloading of () operator
-    virtual void operator()( ElectroMagn* fields);
+    virtual void operator()( ElectroMagn *fields );
     
     // Parameters for the Maxwell-Faraday solver
     double dx;
@@ -30,7 +30,7 @@ public:
     bool istimeFilterApplied;
     
 protected:
-    
+
 };//END class
 
 #endif

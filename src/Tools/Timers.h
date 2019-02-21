@@ -11,13 +11,14 @@ class SmileiMPI;
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class Timers
 //  --------------------------------------------------------------------------------------------------------------------
-class Timers {
+class Timers
+{
 public:
     //! Constructor
-    Timers(SmileiMPI *smpi );
+    Timers( SmileiMPI *smpi );
     //! Destructor
     ~Timers();
-
+    
     Timer global    ;
     Timer particles ;
     Timer maxwell   ;
@@ -41,32 +42,32 @@ public:
     Timer ionization  ;
     Timer radiation  ;
     Timer multiphoton_Breit_Wheeler_timer  ;
-
+    
     Timer interp_fields_env  ;
     Timer proj_susceptibility  ;
     Timer push_mom ;
     Timer interp_env_old  ;
     Timer proj_currents  ;
     Timer push_pos ;
-
+    
     Timer sorting ;
-
+    
 #endif
-
+    
     // Where the patch timers start in the timer vector
     unsigned int patch_timer_id_start ;
-
+    
     //! Output the timer profile
-    void profile(SmileiMPI * smpi);
-
+    void profile( SmileiMPI *smpi );
+    
     //! Perform the required processing on the timers for output
-    std::vector<Timer*> consolidate(SmileiMPI * smpi, bool final_profile = false);
-
+    std::vector<Timer *> consolidate( SmileiMPI *smpi, bool final_profile = false );
+    
     void reboot();
-
+    
 private:
-    std::vector<Timer*> timers;
-
+    std::vector<Timer *> timers;
+    
 };
 
 
