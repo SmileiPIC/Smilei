@@ -140,7 +140,7 @@ Open a Field diagnostic
     :ref:`moving window<movingWindow>`
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
-  In the case of a spectral cylindrical geometry (``3drz``), additional argument are
+  In the case of a spectral cylindrical geometry (``AMcylindrical``), additional argument are
   available. You must choose one of ``theta`` or ``build3d``, defined below, in order
   to construct fields from their complex angular Fourier modes. In addition, the ``modes``
   argument is optional.
@@ -153,7 +153,7 @@ Open a Field diagnostic
      | Each *range* is a list ``[start, stop, step]`` indicating the beginning,
      | the end and the step of this grid.
   * ``modes``: An integer or a list of integers
-     | Only these modes numbers will be used in the calculation
+     | Only these modes numbers will be used in the calculation. If ommited, all modes are used.
 
 **Example**::
 
