@@ -134,8 +134,9 @@ The black lines correspond to the theoretical rates taken from the NRL formulary
 
 .. math::
   
-  \nu_\epsilon=\frac{e^4\,Z^{\star 2} \sqrt{m_em_i}\,n_i\,\ln\Lambda }
-  { 8 \epsilon_0^2 \,\left(m_eT_e+m_iT_i\right)^{3/2} }
+  \nu_\epsilon = \frac{2}{3}\sqrt\frac{2}{\pi}
+  \frac{e^4\,Z^{\star 2} \sqrt{m_em_i}\,n_i\,\ln\Lambda }
+  { 4 \pi\epsilon_0^2 \,\left(m_eT_e+m_iT_i\right)^{3/2} }
 
 
 
