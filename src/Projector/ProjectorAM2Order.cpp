@@ -862,7 +862,7 @@ void ProjectorAM2Order::currentsAndDensity( complex<double> *Jl, complex<double>
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project for diags and frozen species - mode >= 0
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2Order::densityFrozenComplex( complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode )
+void ProjectorAM2Order::basicForComplex( complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode )
 {
     //Warning : this function is not charge conserving.
     

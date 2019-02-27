@@ -13,8 +13,8 @@ Main(
 
     interpolation_order = 2,
 
-    timestep = 0.5 * L0,
-    simulation_time = 100 * L0,
+    timestep = 0.2 * L0,
+    simulation_time = 20 * L0,
 
 
     time_fields_frozen = 100000000000.,
@@ -25,7 +25,7 @@ Main(
     EM_boundary_conditions = [ ["periodic"] ],
 
 
-    random_seed = 0,
+    random_seed = smilei_mpi_rank,
 
 	reference_angular_frequency_SI = L0 * 3e8 /1.e-6,
     print_every = 10,
@@ -42,7 +42,7 @@ Species(
 	charge = 1.0,
 	charge_density = 10.,
 	mean_velocity = [0., 0., 0.],
-	temperature = [0.00015],
+	temperature = [0.00018],
 	time_frozen = 100000000.0,
 	boundary_conditions = [
 		["periodic", "periodic"],
@@ -73,52 +73,37 @@ Collisions(
 Collisions(
 	species1 = ["electron1"],
 	species2 = ["electron1"],
-	coulomb_log = 1
+	coulomb_log = 1000
 )
 Collisions(
 	species1 = ["ion1"],
 	species2 = ["ion1"],
-	coulomb_log = 1
-)
-
-
-
-
-DiagFields(
-	every = 1
-)
-
-
-DiagScalar(
-	every = 1
+	coulomb_log = 1000
 )
 
 
 
 DiagParticleBinning(
 	deposited_quantity = "weight",
-	every = 5,
+	every = 1,
 	species = ["electron1"],
 	axes = [
-		 ["x",    0*L0,    100.*L0,   10],
 		 ["vx",  -0.2,  0.2,    1000]
 	]
 )
 DiagParticleBinning(
 	deposited_quantity = "weight",
-	every = 5,
+	every = 1,
 	species = ["electron1"],
 	axes = [
-		 ["x",    0*L0,    100.*L0,   10],
 		 ["vy",  -0.2,  0.2,    1000]
 	]
 )
 DiagParticleBinning(
 	deposited_quantity = "weight",
-	every = 5,
+	every = 1,
 	species = ["electron1"],
 	axes = [
-		 ["x",    0*L0,    100.*L0,   10],
 		 ["vz",  -0.2,  0.2,    1000]
 	]
 )
@@ -126,28 +111,25 @@ DiagParticleBinning(
 
 DiagParticleBinning(
 	deposited_quantity = "weight",
-	every = 5,
+	every = 1,
 	species = ["ion1"],
 	axes = [
-		 ["x",    0*L0,    100.*L0,   10],
 		 ["vx",  -0.05,  0.05,    1000]
 	]
 )
 DiagParticleBinning(
 	deposited_quantity = "weight",
-	every = 5,
+	every = 1,
 	species = ["ion1"],
 	axes = [
-		 ["x",    0*L0,    100.*L0,   10],
 		 ["vy",  -0.05,  0.05,    1000]
 	]
 )
 DiagParticleBinning(
 	deposited_quantity = "weight",
-	every = 5,
+	every = 1,
 	species = ["ion1"],
 	axes = [
-		 ["x",    0*L0,    100.*L0,   10],
 		 ["vz",  -0.05,  0.05,    1000]
 	]
 )

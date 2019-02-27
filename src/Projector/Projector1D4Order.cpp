@@ -201,7 +201,7 @@ void Projector1D4Order::currentsAndDensity( double *Jx, double *Jy, double *Jz, 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project charge : frozen & diagFields timstep
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector1D4Order::densityFrozen( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type )
+void Projector1D4Order::basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type )
 {
 
     //Warning : this function is used for frozen species or initialization only and doesn't use the standard scheme.

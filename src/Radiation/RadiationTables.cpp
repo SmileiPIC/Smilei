@@ -122,7 +122,7 @@ void RadiationTables::initializeParameters( Params &params )
         // With any radiation model
         if( params.hasNielRadiation || params.hasMCRadiation ) {
             // Format of the tables
-            PyTools::extract( "output_format", output_format, "RadiationReaction" );
+            PyTools::extract( "output_format", output_format_, "RadiationReaction" );
             
             // Path to the databases
             PyTools::extract( "table_path", table_path, "RadiationReaction" );
@@ -715,7 +715,7 @@ void RadiationTables::compute_tables( Params &params, SmileiMPI *smpi )
 void RadiationTables::output_h_table()
 {
 
-    if( output_format == "ascii" ) {
+    if( output_format_ == "ascii" ) {
         std::ofstream file;
         file.open( table_path + "/tab_h.dat" );
         
@@ -739,7 +739,7 @@ void RadiationTables::output_h_table()
             
             file.close();
         }
-    } else if( output_format == "binary" ) {
+    } else if( output_format_ == "binary" ) {
         std::ofstream file;
         file.open( table_path + "/tab_h.bin", std::ios::binary );
         
@@ -759,7 +759,7 @@ void RadiationTables::output_h_table()
     }
     // HDF5
     // The table is written as a dataset
-    else if( output_format == "hdf5" ) {
+    else if( output_format_ == "hdf5" ) {
     
         hid_t       fileId;
         hid_t       datasetId;
@@ -812,7 +812,7 @@ void RadiationTables::output_h_table()
         H5Fclose( fileId );
         
     } else {
-        MESSAGE( "The table output format " << output_format
+        MESSAGE( "The table output format " << output_format_
                  << " is not recognized" );
     }
 }
@@ -824,7 +824,7 @@ void RadiationTables::output_h_table()
 void RadiationTables::output_integfochi_table()
 {
 
-    if( output_format == "ascii" ) {
+    if( output_format_ == "ascii" ) {
         std::ofstream file;
         file.open( table_path + "/tab_integfochi.dat" );
         
@@ -848,7 +848,7 @@ void RadiationTables::output_integfochi_table()
             
             file.close();
         }
-    } else if( output_format == "binary" ) {
+    } else if( output_format_ == "binary" ) {
         std::ofstream file;
         file.open( table_path + "/tab_integfochi.bin", std::ios::binary );
         
@@ -873,7 +873,7 @@ void RadiationTables::output_integfochi_table()
     }
     // HDF5
     // The table is written as a dataset
-    else if( output_format == "hdf5" ) {
+    else if( output_format_ == "hdf5" ) {
     
         hid_t       fileId;
         hid_t       datasetId;
@@ -926,7 +926,7 @@ void RadiationTables::output_integfochi_table()
         H5Fclose( fileId );
         
     } else {
-        MESSAGE( "The table output format " << output_format
+        MESSAGE( "The table output format " << output_format_
                  << " is not recognized" );
     }
 }
@@ -938,7 +938,7 @@ void RadiationTables::output_integfochi_table()
 void RadiationTables::output_xip_table()
 {
 
-    if( output_format == "ascii" ) {
+    if( output_format_ == "ascii" ) {
         std::ofstream file;
         file.open( table_path + "/tab_xip.dat" );
         
@@ -965,7 +965,7 @@ void RadiationTables::output_xip_table()
             
             file.close();
         }
-    } else if( output_format == "binary" ) {
+    } else if( output_format_ == "binary" ) {
         std::ofstream file;
         file.open( table_path + "/tab_xip.bin", std::ios::binary );
         
@@ -992,7 +992,7 @@ void RadiationTables::output_xip_table()
     }
     // HDF5
     // The table is written as a dataset
-    else if( output_format == "hdf5" ) {
+    else if( output_format_ == "hdf5" ) {
     
         hid_t       fileId;
         hid_t       datasetId;
@@ -1067,7 +1067,7 @@ void RadiationTables::output_xip_table()
         H5Sclose( dataspaceId );
         H5Fclose( fileId );
     } else {
-        MESSAGE( "The output format " << output_format << " is not recognized" );
+        MESSAGE( "The output format " << output_format_ << " is not recognized" );
     }
 }
 

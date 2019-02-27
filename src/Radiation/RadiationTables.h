@@ -29,6 +29,7 @@
 class RadiationTables
 {
 
+
 public:
 
     //! Constructor for RadiationTables
@@ -288,7 +289,7 @@ private:
     // ---------------------------------------------
     
     //! Output format of the tables
-    std::string output_format;
+    std::string output_format_;
     
     //! Path to the tables
     std::string table_path;
@@ -430,6 +431,7 @@ private:
     
     //! Normalized reduced Compton wavelength
     double normalized_Compton_wavelength_;
+    
     
 };
 

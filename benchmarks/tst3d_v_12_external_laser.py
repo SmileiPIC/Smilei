@@ -1,9 +1,10 @@
 # ----------------------------------------------------------------------------------------
 # 					SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
 # ----------------------------------------------------------------------------------------
-import numpy
-import math
+from numpy import exp, sqrt, arctan, vectorize, real
+from math import log
 import cmath
+import math
 
 lambda0 = 0.8e-6               # m
 c = 299792458                  # m/s
@@ -97,6 +98,12 @@ Species(
 
 ################################# Laser field, from external fields
 
+# Electromagnetic fields of a gaussian beam (fundamental mode), linearly polarized in the y direction
+# formulas from B. Quesnel, P. Mora, PHYSICAL REVIEW E 58, no. 3, 1998 
+# (https://journals.aps.org/pre/abstract/10.1103/PhysRevE.58.3719)
+
+
+
 focus = [laser_focus_x, Main.grid_length[1]/2., Main.grid_length[2]/2.]
 
 c_vacuum = 1.
@@ -111,105 +118,57 @@ Zr          = omega * waist**2/2.  # Rayleigh length
 # time gaussian function
 def time_gaussian(fwhm, center, order=2):
     import math
-    import numpy as np
-    sigma = (0.5*fwhm)**order/math.log(2.0)
-
+    sigma = (0.5*fwhm)**order/log(2.0)
     def f(t):
-        return np.exp( -(t-center)**order / sigma )
-
+        return exp( -(t-center)**order / sigma )
     return f
-
 
 time_envelope_t              = time_gaussian(center=laser_initial_position                  , fwhm=laser_FWHM_E)
 time_envelope_t_plus_half_dt = time_gaussian(center=(laser_initial_position+c_vacuum*0.5*dt), fwhm=laser_FWHM_E)
 
 # laser waist function
 def w(x):
-        import numpy as np
-        w  = np.sqrt(1./(1.+   ( (x-focus[0])/Zr  )**2 ) )
+        w  = sqrt(1./(1.+   ( (x-focus[0])/Zr  )**2 ) )
         return w
-
-def coeff(x):
-        import numpy as np
-        coeff = omega * (x-focus[0]) * w(x)**2 / (2.*Zr**2)
-        return coeff
-
-def spatial_amplitude(x,y,z):
-        import numpy as np
-        invWaist2 = (w(x)/waist)**2
-        return w(x) * np.exp( -invWaist2*(  (y-focus[1])**2 + (z-focus[2])**2 )  )
-
-# laser phase   
-def phase(x,y,z):
-        import numpy as np
-
-# laser waist function
-def w(x):
-        import numpy as np
-        w  = np.sqrt(1./(1.+   ( (x-focus[0])/Zr  )**2 ) )
-        return w
-
-def coeff(x):
-        import numpy as np
-        coeff = omega * (x-focus[0]) * w(x)**2 / (2.*Zr**2)
-        return coeff
-
-def spatial_amplitude(x,y,z):
-        import numpy as np
-        invWaist2 = (w(x)/waist)**2
-        return w(x) * np.exp( -invWaist2*(  (y-focus[1])**2 + (z-focus[2])**2 )  )
-
-# laser phase   
-def phase(x,y,z):
-        import numpy as np
-        return coeff(x) * ( (y-focus[1])**2 + (z-focus[2])**2 )
-
-def Gouy_phase(x):
-        import numpy as np
-        return np.arctan(   (x-focus[0]) / Zr     )
 
 def space_envelope(x,y,z):
-        import numpy as np
-        return a0 * spatial_amplitude(x,y,z) * np.exp(1j*phase(x,y,z)) * np.exp(-1j*Gouy_phase(x))
+        coeff = omega * (x-focus[0]) * w(x)**2 / (2.*Zr**2)
+        invWaist2 = (w(x)/waist)**2
+        spatial_amplitude = w(x) * exp( -invWaist2*(  (y-focus[1])**2 + (z-focus[2])**2 )  )
+		phase = coeff * ( (y-focus[1])**2 + (z-focus[2])**2 )
+        return a0 * spatial_amplitude * exp( 1j*( phase-arctan((x-focus[0])/ Zr)  )  )
 
 def complex_exponential_comoving(x,t):
-        import numpy as np
         csi = x-c_vacuum*t-laser_initial_position # comoving coordinate
-        return np.exp(1j*csi)
+        return exp(1j*csi)
 
 ### Electromagnetic field
 # Electric field        
 def Ex(x,y,z):
-        import numpy as np
         invWaist2 = (w(x)/waist)**2
         complexEx = 2.* (y-focus[1]) * invWaist2 * space_envelope(x,y,z) * complex_exponential_comoving(x,0.)
-        return np.multiply(np.real(complexEx),time_envelope_t(x))
+        return real(complexEx)*time_envelope_t(x)
 
 def Ey(x,y,z):
-        import numpy as np
         complexEy  = 1j * space_envelope(x,y,z) * complex_exponential_comoving(x,0)
-        return np.multiply(np.real(complexEy),time_envelope_t(x))
+        return real(complexEy)*time_envelope_t(x)
 
 
 def Ez(x,y,z):
-        import numpy as np
-        return np.zeros(shape=np.shape(x))
+        return 0.
 
 # Magnetic field
 def Bx(x,y,z):
-        import numpy as np
         invWaist2 = (w(x)/waist)**2
         complexBx = 2.* (z-focus[2]) * invWaist2 * space_envelope(x,y,z) * complex_exponential_comoving(x,dt/2.)
-        return np.multiply(np.real(complexBx),time_envelope_t_plus_half_dt(x))
+        return real(complexBx)*time_envelope_t_plus_half_dt(x)
 
 def By(x,y,z):
-        import numpy as np
-        return np.zeros(shape=np.shape(x))
+        return 0.
 
 def Bz(x,y,z):
-        import numpy as np
         complexBz = 1j * space_envelope(x,y,z) * complex_exponential_comoving(x,dt/2.)
-        return np.multiply(np.real(complexBz),time_envelope_t_plus_half_dt(x))
+        return real(complexBz)*time_envelope_t_plus_half_dt(x)
 
 
 

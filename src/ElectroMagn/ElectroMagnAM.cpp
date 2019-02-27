@@ -684,34 +684,38 @@ void ElectroMagnAM::applyExternalFields( Patch *patch )
 {
 #ifdef _TODO_AM
 #endif
-    int imode = 0;
+    int Nmodes = El_.size();
     
     Field *field;
-    for( vector<ExtField>::iterator extfield=extFields.begin(); extfield!=extFields.end(); extfield++ ) {
-        string name = LowerCase( extfield->field );
-        if( El_[imode] && name==LowerCase( El_[imode]->name ) ) {
-            field = El_[imode];
-        } else if( Er_[imode] && name==LowerCase( Er_[imode]->name ) ) {
-            field = Er_[imode];
-        } else if( Et_[imode] && name==LowerCase( Et_[imode]->name ) ) {
-            field = Et_[imode];
-        } else if( Bl_[imode] && name==LowerCase( Bl_[imode]->name ) ) {
-            field = Bl_[imode];
-        } else if( Br_[imode] && name==LowerCase( Br_[imode]->name ) ) {
-            field = Br_[imode];
-        } else if( Bt_[imode] && name==LowerCase( Bt_[imode]->name ) ) {
-            field = Bt_[imode];
-        } else {
-            field = NULL;
+
+    for (int imode=0;imode<Nmodes;imode++){
+        for( vector<ExtField>::iterator extfield=extFields.begin(); extfield!=extFields.end(); extfield++ ) {
+            string name = LowerCase( extfield->field );
+            if( El_[imode] && name==LowerCase( El_[imode]->name ) ) {
+                field = El_[imode];
+            } else if( Er_[imode] && name==LowerCase( Er_[imode]->name ) ) {
+                field = Er_[imode];
+            } else if( Et_[imode] && name==LowerCase( Et_[imode]->name ) ) {
+                field = Et_[imode];
+            } else if( Bl_[imode] && name==LowerCase( Bl_[imode]->name ) ) {
+                field = Bl_[imode];
+            } else if( Br_[imode] && name==LowerCase( Br_[imode]->name ) ) {
+                field = Br_[imode];
+            } else if( Bt_[imode] && name==LowerCase( Bt_[imode]->name ) ) {
+                field = Bt_[imode];
+            } else {
+                field = NULL;
+            }
+            
+            if( field ){ 
+                applyExternalField( field, extfield->profile, patch );
+            };
         }
-        
-        if( field ) {
-            applyExternalField( field, extfield->profile, patch );
-        }
+        Bl_m[imode]->copyFrom( Bl_[imode] );
+        Br_m[imode]->copyFrom( Br_[imode] );
+        Bt_m[imode]->copyFrom( Bt_[imode] );
     }
-    Bl_m[imode]->copyFrom( Bl_[imode] );
-    Br_m[imode]->copyFrom( Br_[imode] );
-    Bt_m[imode]->copyFrom( Bt_[imode] );
+
 }
 
 void ElectroMagnAM::applyExternalField( Field *my_field,  Profile *profile, Patch *patch )
@@ -725,21 +729,37 @@ void ElectroMagnAM::applyExternalField( Field *my_field,  Profile *profile, Patc
     int N0 = ( int )field2D->dims()[0];
     int N1 = ( int )field2D->dims()[1];
     
-    // UNSIGNED INT LEADS TO PB IN PERIODIC BCs
+    vector<Field *> xr( 2 );
+    vector<unsigned int> n_space_to_create( 2 );
+    n_space_to_create[0] = N0;
+    n_space_to_create[1] = N1;
+
+    for( unsigned int idim=0 ; idim<2 ; idim++ ) {
+        xr[idim] = new Field2D( n_space_to_create );
+    }
+
     for( int i=0 ; i<N0 ; i++ ) {
         pos[1] = pos1;
         for( int j=0 ; j<N1 ; j++ ) {
-            ( *field2D )( i, j ) += profile->valueAt( pos );
+            for( unsigned int idim=0 ; idim<2 ; idim++ ) {
+                ( *xr[idim] )( i, j ) = pos[idim];
+            }
             pos[1] += dr;
         }
         pos[0] += dl;
     }
-    
-    for( auto &embc: emBoundCond ) {
-        if( embc ) {
-            embc->save_fields( my_field, patch );
-        }
+
+    profile->complexValuesAt( xr, *field2D );
+
+    for( unsigned int idim=0 ; idim<2 ; idim++ ) {
+        delete xr[idim];
     }
+
+    //for( auto &embc: emBoundCond ) {
+    //    if( embc ) {
+    //        embc->save_fields( my_field, patch );
+    //    }
+    //}
     
 }
 

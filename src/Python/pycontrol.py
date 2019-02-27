@@ -120,6 +120,9 @@ def _keep_python_running():
     if len(MovingWindow)>0 or len(LoadBalancing)>0:
         for s in Species:
             profiles += [s.number_density, s.charge_density, s.particles_per_cell, s.charge] + s.mean_velocity + s.temperature
+    if len(MovingWindow)>0:
+        for e in ExternalField:
+            profiles += [e.profile]
     for prof in profiles:
         if callable(prof) and not hasattr(prof,"profileName"):
             return True
