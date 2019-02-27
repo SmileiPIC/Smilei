@@ -155,10 +155,6 @@ void LaserEnvelope1D::compute( ElectroMagn *EMfields )
     
     
     //// auxiliary quantities
-    //! laser wavenumber, i.e. omega0/c
-    double              k0 = 1.;
-    //! laser wavenumber times the temporal step, i.e. omega0/c * dt
-    double           k0_dt = 1.*timestep;
     //! 1/dt^2, where dt is the temporal step
     double           dt_sq = timestep*timestep;
     // imaginary unit
@@ -175,9 +171,6 @@ void LaserEnvelope1D::compute( ElectroMagn *EMfields )
     
     
     //! 1/(1Dx), where dx is the spatial step dx for 1D3V cartesian simulations
-    double one_ov_2dx      = 1./2./cell_length[0];
-    
-    //! 1/(1Dx), where dx is the spatial step dx for 1D3V cartesian simulations
     double one_ov_2dt      = 1./2./timestep;
     
     // temporary variable for updated envelope
@@ -191,13 +184,13 @@ void LaserEnvelope1D::compute( ElectroMagn *EMfields )
         ( *A1Dnew )( i ) += ( ( *A1D )( i-1 )-2.*( *A1D )( i )+( *A1D )( i+1 ) )*one_ov_dx_sq; // x part
         
         // A1Dnew = A1Dnew+2ik0*dA/dx
-        ( *A1Dnew )( i ) += 2.*i1*k0*( ( *A1D )( i+1 )-( *A1D )( i-1 ) )*one_ov_2dx;
+        ( *A1Dnew )( i ) += i1_2k0_over_2dx*( ( *A1D )( i+1 )-( *A1D )( i-1 ) );
         // A1Dnew = A1Dnew*dt^2
         ( *A1Dnew )( i )  = ( *A1Dnew )( i )*dt_sq;
         // A1Dnew = A1Dnew + 2/c^2 A1D - (1+ik0cdt)A01D/c^2
-        ( *A1Dnew )( i ) += 2.*( *A1D )( i )-( 1.+i1*k0_dt )*( *A01D )( i );
+        ( *A1Dnew )( i ) += 2.*( *A1D )( i )-one_plus_ik0dt*( *A01D )( i );
         // A1Dnew = A1Dnew * (1+ik0dct)/(1+k0^2c^1Dt^2)
-        ( *A1Dnew )( i )  = ( *A1Dnew )( i )*( 1.+i1*k0_dt )/( 1.+k0_dt*k0_dt );
+        ( *A1Dnew )( i )  = ( *A1Dnew )( i )*one_plus_ik0dt_ov_one_plus_k0sq_dtsq;
     } // end x loop
     
     for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // x loop
