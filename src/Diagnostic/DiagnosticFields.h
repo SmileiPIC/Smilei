@@ -94,7 +94,7 @@ protected :
     htri_t status;
     
     //! Tools for re-reading and re-writing the file in a folded pattern
-    unsigned int one_patch_buffer_size;
+    unsigned int one_patch_buffer_size, total_dataset_size;
     hid_t filespace_reread, filespace_firstwrite, memspace_reread, memspace_firstwrite;
     std::vector<double> data_reread, data_rewrite;
     
