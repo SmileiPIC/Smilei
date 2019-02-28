@@ -3,6 +3,7 @@
 #define LaserENVELOPE_H
 
 #include <vector>
+#include <complex>
 
 #include "Params.h"
 #include "Patch.h"
@@ -49,6 +50,8 @@ public:
     //! Vector of boundary-condition per side for the envelope field
     std::vector<EnvelopeBC *> EnvBoundCond;
     //EnvBoundCond = EnvelopeBC_Factory::create(params, patch);
+  
+    std::complex<double> i1_2k0_over_2dx,one_plus_ik0dt,one_plus_ik0dt_ov_one_plus_k0sq_dtsq;
 };
 
 // Class for envelope
