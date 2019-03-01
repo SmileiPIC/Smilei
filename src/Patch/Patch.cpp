@@ -794,7 +794,7 @@ void Patch::cornersParticles(SmileiMPI* smpi, int ispec, Params& params, int iDi
 
 void Patch::injectParticles(SmileiMPI* smpi, int ispec, Params& params, VectorPatch * vecPatch)
 {
-    
+
 #ifdef  __DETAILED_TIMERS
     double timer;
     timer = MPI_Wtime();
@@ -803,7 +803,7 @@ void Patch::injectParticles(SmileiMPI* smpi, int ispec, Params& params, VectorPa
     vecSpecies[ispec]->sort_part(params);
 
 #ifdef  __DETAILED_TIMERS
-    this->patch_timers[13] += MPI_Wtime() - timer;
+    this->patch_timers[14] += MPI_Wtime() - timer;
 #endif
 
 } // sortParticles(...)

@@ -50,6 +50,7 @@ public:
     Timer push_pos ;
 
     Timer sorting ;
+    Timer merging ;
 
 #endif
 

@@ -342,6 +342,12 @@ public:
                 << ": merging method not valid, must be `vranic` or `none`");
             }
 
+            if (params.vectorization_mode == "off" && thisSpecies->merging_method_ != "none")
+            {
+                ERROR("In Species " << thisSpecies->name
+                << ": particle merging only available with `vectorization_mode` = `on` or `adpative`");
+            }
+
             // get parameter "every" which describes a timestep selection
             if( !thisSpecies->merging_time_selection_ ) {
                 thisSpecies->merging_time_selection_ = new TimeSelection(
