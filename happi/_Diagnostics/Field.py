@@ -138,8 +138,8 @@ class Field(Diagnostic):
 					return
 				self._getDataAtTime = self._build3d_getDataAtTime
 			# Test whether "modes" is an int or an iterable on ints
+			max_nmode = max([self._fields[f] for f in self._fieldname])
 			if modes is None:
-				max_nmode = max([self._fields[f] for f in self._fieldname])
 				self._modes = range(max_nmode)
 			else:
 				try:
@@ -150,6 +150,11 @@ class Field(Diagnostic):
 					except:
 						self._error += ["Option `modes` must be a number or an iterable on numbers"]
 						return
+				for imode in self._modes:
+					if imode >= max_nmode:
+						self._error += ["Option `modes` cannot contain modes larger than "+str(max_nmode)]
+						return
+				
 		
 		# Get the shape of fields
 		fields = [f for f in self._h5items[0].values() if f]
