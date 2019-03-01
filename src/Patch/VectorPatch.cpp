@@ -722,24 +722,13 @@ void VectorPatch::solveEnvelope( Params &params, SimWindow *simWindow, int itime
             
             // Compute ponderomotive potential Phi=|A|^2/2
             ( *this )( ipatch )->EMfields->envelope->compute_Phi( ( *this )( ipatch )->EMfields );
-            
-            // Compute gradient of Phi
-            ( *this )( ipatch )->EMfields->envelope->compute_gradient_Phi( ( *this )( ipatch )->EMfields );
-            
-            // Computes Phi and GradPhi at time n+1/2 using their values at timestep n+1 and n (these ones already in Phi_m and GradPhi_m)
-            ( *this )( ipatch )->EMfields->envelope->centerPhi_and_GradPhi();
+                
         }
         
         // Exchange envelope A
         SyncVectorPatch::exchangeA( params, ( *this ), smpi );
         SyncVectorPatch::finalizeexchangeA( params, ( *this ) );
-        
-        
-        // Compute ponderomotive potential Phi=|A|^2/2
-        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-            ( *this )( ipatch )->EMfields->envelope->compute_Phi( ( *this )( ipatch )->EMfields );
-        }
-        
+           
         // Exchange Phi
         SyncVectorPatch::exchangePhi( params, ( *this ), smpi );
         SyncVectorPatch::finalizeexchangePhi( params, ( *this ) );
@@ -748,6 +737,8 @@ void VectorPatch::solveEnvelope( Params &params, SimWindow *simWindow, int itime
         // Compute gradients of Phi
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             ( *this )( ipatch )->EMfields->envelope->compute_gradient_Phi( ( *this )( ipatch )->EMfields );
+            // Computes Phi and GradPhi at time n+1/2 using their values at timestep n+1 and n (the latter already in Phi_m and GradPhi_m)
+            ( *this )( ipatch )->EMfields->envelope->centerPhi_and_GradPhi();
         }
         
         // Exchange GradPhi
