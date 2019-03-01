@@ -56,11 +56,19 @@ class Field(Diagnostic):
 		if self.cylindrical:
 			all_fields = list(self._fields)
 			self._fields = {}
-			for f in ["El","Er","Et","Bl","Br","Bt","Jl","Jr","Jt","Rho"]:
-				imode = 0
-				while f+"_mode_"+str(imode) in all_fields:
-					imode += 1
-					self._fields[f] = imode
+			for f in all_fields:
+				try:
+					fname, wordmode, imode = f.split('_')
+					if wordmode != "mode":
+						raise
+					if fname not in ["El","Er","Et","Bl","Br","Bt","Jl","Jr","Jt","Rho"]:
+						raise
+					if fname not in self._fields:
+						self._fields[fname] = []
+					self._fields[fname] += [int(imode)]
+				except:
+					print('WARNING: found unknown field '+f)
+					continue
 		
 		# If no field selected, print available fields and leave
 		if field is None:
@@ -97,6 +105,9 @@ class Field(Diagnostic):
 			if self._re.search(r"\b"+f+r"\b",self._operation):
 				self._operation = self._re.sub(r"\b"+f+r"\b","C['"+f+"']",self._operation)
 				self._fieldname.append(f)
+		if not self._fieldname:
+			self._error += ["String "+self.operation+" does not seem to include any field"]
+			return
 		
 		# Check subset
 		if subset is None: subset = {}
@@ -138,7 +149,7 @@ class Field(Diagnostic):
 					return
 				self._getDataAtTime = self._build3d_getDataAtTime
 			# Test whether "modes" is an int or an iterable on ints
-			max_nmode = max([self._fields[f] for f in self._fieldname])
+			max_nmode = max([max(self._fields[f]) for f in self._fieldname])+1
 			if modes is None:
 				self._modes = range(max_nmode)
 			else:
@@ -154,7 +165,11 @@ class Field(Diagnostic):
 					if imode >= max_nmode:
 						self._error += ["Option `modes` cannot contain modes larger than "+str(max_nmode-1)]
 						return
-				
+			# Warning if some modes are not available
+			for f in self._fieldname:
+				unavailable_modes = [str(i) for i in set(self._modes) - set(self._fields[f])]
+				if unavailable_modes:
+					print("WARNING: field "+f+" does not have mode(s): "+','.join(unavailable_modes))
 		
 		# Get the shape of fields
 		fields = [f for f in self._h5items[0].values() if f]
@@ -411,11 +426,11 @@ class Field(Diagnostic):
 		C = {}
 		h5item = self._h5items[index]
 		for field in self._fieldname: # for each field in operation
-			nmode = self._fields[field]
+			available_modes = self._fields[field]
 			F = self._np.zeros(self._finalShape)
 			f = field + "_mode_"
 			for imode in self._modes:
-				if imode >= nmode: continue
+				if imode not in available_modes: continue
 				B_real = self._np.empty(self._finalShape)
 				B_imag = self._np.empty(self._finalShape)
 				try:
@@ -464,11 +479,11 @@ class Field(Diagnostic):
 		C = {}
 		h5item = self._h5items[index]
 		for field in self._fieldname: # for each field in operation
-			nmode = self._fields[field]
+			available_modes = self._fields[field]
 			F = self._np.zeros(self._finalShape)
 			f = field + "_mode_"
 			for imode in self._modes:
-				if imode >= nmode: continue
+				if imode not in available_modes: continue
 				B = self._np.empty(self._raw_shape)
 				try:
 					h5item[f+str(imode)].read_direct(B)
