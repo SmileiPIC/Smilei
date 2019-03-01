@@ -325,6 +325,39 @@ public:
             }
         }
 
+        // Particle Merging
+
+        // Extract merging method
+        thisSpecies->merging_method_ = "none"; // default value
+        if (PyTools::extract("merging_method", thisSpecies->merging_method_ ,"Species",ispec) )
+        {
+            // Cancelation of the letter case for `merging_method_`
+            std::transform(thisSpecies->merging_method_.begin(),
+                            thisSpecies->merging_method_.end(),
+                            thisSpecies->merging_method_.begin(), tolower);
+
+            if ( (thisSpecies->merging_method_ != "vranic") &&
+                   (thisSpecies->merging_method_ != "none")) {
+                ERROR("In Species " << thisSpecies->name
+                << ": merging method not valid, must be `vranic` or `none`");
+            }
+
+            // get parameter "every" which describes a timestep selection
+            if( !thisSpecies->merging_time_selection_ ) {
+                thisSpecies->merging_time_selection_ = new TimeSelection(
+                    PyTools::extract_py("merge_every","Species",ispec), "Particle merging"
+                );
+            }
+
+            if (thisSpecies->merging_method_ != "none") {
+                MESSAGE(2,"> Particle merging with the method: "
+                          << thisSpecies->merging_method_);
+                MESSAGE(2,"> Merging time selection: "
+                          << thisSpecies->merging_time_selection_->info());
+            }
+        }
+
+
         PyObject *py_pos_init = PyTools::extract_py("position_initialization", "Species",ispec);
         if ( PyTools::convert(py_pos_init, thisSpecies->position_initialization) ){
             if (thisSpecies->position_initialization.empty()) {

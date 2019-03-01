@@ -241,6 +241,9 @@ public:
     //! Merging method
     std::string merging_method_;
 
+    //! Time selection for the particle merging
+    TimeSelection * merging_time_selection_;
+
     // -----------------------------------------------------------------------------
     //  4. Operators
 

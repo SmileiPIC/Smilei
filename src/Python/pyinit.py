@@ -348,12 +348,21 @@ class Species(SmileiComponent):
     thermal_boundary_temperature = []
     thermal_boundary_velocity = [0.,0.,0.]
     pusher = "boris"
+
+    # Radiation species parameters
     radiation_model = "none"
     radiation_photon_species = None
     radiation_photon_sampling = 1
     radiation_photon_gamma_threshold = 2
+
+    # Multiphoton Breit-Wheeler parameters
     multiphoton_Breit_Wheeler = [None,None]
     multiphoton_Breit_Wheeler_sampling = [1,1]
+
+    # Particle merging species Parameters
+    merging_method = "none"
+    merge_every = 0
+
     time_frozen = 0.0
     radiating = False
     relativistic_field_initialization = False

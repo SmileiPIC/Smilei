@@ -84,8 +84,9 @@ min_loc_vec(patch->getDomainLocalMin()),
 tracking_diagnostic(10000),
 nDim_particle(params.nDim_particle),
 partBoundCond(NULL),
-min_loc(patch->getDomainLocalMin(0))
-
+min_loc(patch->getDomainLocalMin(0)),
+merging_method_("none"),
+merging_time_selection_(0)
 {
     DEBUG(name);
 
