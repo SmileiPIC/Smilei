@@ -55,7 +55,7 @@ Patch::Patch(Params& params, SmileiMPI* smpi, DomainDecomposition* domain_decomp
     // 4 - ionization
     // 5 - radiation
     // 6 - Breit-Wheeler
-    patch_timers.resize(14,0.);
+    patch_timers.resize(15,0.);
 #endif
 
 } // END Patch::Patch
@@ -74,7 +74,7 @@ Patch::Patch(Patch* patch, Params& params, SmileiMPI* smpi, DomainDecomposition*
 
 #ifdef  __DETAILED_TIMERS
     // Initialize timers
-    patch_timers.resize(14,0.);
+    patch_timers.resize(15,0.);
 #endif
 
 }
@@ -803,7 +803,7 @@ void Patch::injectParticles(SmileiMPI* smpi, int ispec, Params& params, VectorPa
     vecSpecies[ispec]->sort_part(params);
 
 #ifdef  __DETAILED_TIMERS
-    this->patch_timers[14] += MPI_Wtime() - timer;
+    this->patch_timers[13] += MPI_Wtime() - timer;
 #endif
 
 } // sortParticles(...)

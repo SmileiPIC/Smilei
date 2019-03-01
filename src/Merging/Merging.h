@@ -48,6 +48,9 @@ public:
     // discretization dans chaque direction
     unsigned int dimensions_[3];
 
+    // Minimum number of particles per cell to process the merging
+    unsigned int merging_ppc_min_threshold_;
+
 protected:
 private:
 };
