@@ -257,7 +257,7 @@ void ProjectorAM2Order::currents( complex<double> *Jl, complex<double> *Jr, comp
     // arrays used for the Esirkepov projection method
     double  Sl0[5], Sl1[5], Sr0[5], Sr1[5], DSl[5], DSr[5];
     complex<double>  Wl[5][5], Wr[5][5], Wt[5][5], Jl_p[5][5], Jr_p[5][5], Jt_p[5][5];
-    complex<double> e_delta, e_delta_m1, e_delta_inv, e_theta, e_theta_old, e_bar, e_bar_m1, C_m; //, C_m_old;
+    complex<double> e_delta, e_delta_m1, e_delta_inv, e_theta_old, e_bar, e_bar_m1, C_m; //, C_m_old;
     
     for( unsigned int i=0; i<5; i++ ) {
         Sl1[i] = 0.;
@@ -288,7 +288,6 @@ void ProjectorAM2Order::currents( complex<double> *Jl, complex<double> *Jr, comp
     double yp = particles.position( 1, ipart );
     double zp = particles.position( 2, ipart );
     double rp = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
-    e_theta = ( yp + Icpx*zp )/rp;   //exp(i theta)
     e_theta_old =exp_m_theta_old[0]; //exp(-i theta_old)
     double theta = atan2( zp, yp );
     double theta_old =atan2( -std::imag( e_theta_old ), std::real( e_theta_old ) );
@@ -660,7 +659,7 @@ void ProjectorAM2Order::currentsAndDensity( complex<double> *Jl, complex<double>
     // arrays used for the Esirkepov projection method
     double  Sl0[5], Sl1[5], Sr0[5], Sr1[5], DSl[5], DSr[5];
     complex<double>  Wl[5][5], Wr[5][5], Wt[5][5], Jl_p[5][5], Jr_p[5][5], Jt_p[5][5];
-    complex<double> e_delta, e_delta_m1, e_delta_inv, e_theta, e_theta_old, e_bar, e_bar_m1, C_m; //, C_m_old;
+    complex<double> e_delta, e_delta_m1, e_delta_inv, e_theta_old, e_bar, e_bar_m1, C_m; //, C_m_old;
     
     for( unsigned int i=0; i<5; i++ ) {
         Sl1[i] = 0.;
@@ -691,7 +690,6 @@ void ProjectorAM2Order::currentsAndDensity( complex<double> *Jl, complex<double>
     double yp = particles.position( 1, ipart );
     double zp = particles.position( 2, ipart );
     double rp = sqrt( yp*yp+zp*zp );
-    e_theta = ( yp + Icpx*zp )/rp;    //exp(i theta)
     e_theta_old = exp_m_theta_old[0]; //exp(-i theta_old)
     e_delta = 1.;
     e_bar =  1.;
@@ -719,8 +717,10 @@ void ProjectorAM2Order::currentsAndDensity( complex<double> *Jl, complex<double>
     Sr1[jp_m_jpo+2] = 0.75-delta2;
     Sr1[jp_m_jpo+3] = 0.5 * ( delta2+delta+0.25 );
     
+
     double dtheta = std::remainder( theta-theta_old, 2*M_PI )/2.; // Otherwise dtheta is overestimated when going from -pi to +pi
     double theta_bar = theta_old+dtheta ;
+    
     e_delta_m1 = std::polar( 1.0, dtheta );
     e_bar_m1 = std::polar( 1.0, theta_bar );
     
