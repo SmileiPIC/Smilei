@@ -152,7 +152,7 @@ class Field(Diagnostic):
 						return
 				for imode in self._modes:
 					if imode >= max_nmode:
-						self._error += ["Option `modes` cannot contain modes larger than "+str(max_nmode)]
+						self._error += ["Option `modes` cannot contain modes larger than "+str(max_nmode-1)]
 						return
 				
 		
