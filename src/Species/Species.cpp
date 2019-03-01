@@ -16,6 +16,7 @@
 #include "IonizationFactory.h"
 #include "RadiationFactory.h"
 #include "MultiphotonBreitWheelerFactory.h"
+#include "MergingFactory.h"
 #include "PartBoundCond.h"
 #include "PartWall.h"
 #include "BoundaryConditionType.h"
@@ -224,6 +225,10 @@ void Species::initOperators(Params& params, Patch* patch)
     if (Multiphoton_Breit_Wheeler_process) {
         DEBUG("Species " << name << " will undergo multiphoton Breit-Wheeler!");
     }
+
+    // assign the correct Merging method to Merge
+    Merge = MergingFactory::create(params, this);
+
     // define limits for BC and functions applied and for domain decomposition
     partBoundCond = new PartBoundCond(params, this, patch);
     for (unsigned int iDim=0 ; iDim < nDim_particle ; iDim++){
@@ -249,6 +254,7 @@ Species::~Species()
     delete Push;
     delete Interp;
     delete Proj;
+    if (Merge) delete Merge;
     if (Ionize) delete Ionize;
     if (Radiate) delete Radiate;
     if (Multiphoton_Breit_Wheeler_process) delete Multiphoton_Breit_Wheeler_process;
@@ -953,6 +959,8 @@ void Species::dynamics_import_particles(double time_dual, unsigned int ispec,
         }
     }//END if time vs. time_frozen
 }
+
+
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1734,6 +1742,14 @@ vector<double> Species::maxwellJuttner(unsigned int npoints, double temperature)
 
     return energies;
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Particle merging cell by cell
+// ---------------------------------------------------------------------------------------------------------------------
+void Species::mergeParticles(double time_dual, unsigned int ispec,
+                    Params &params,
+                    Patch* patch, SmileiMPI* smpi,
+                    std::vector<Diagnostic*>& localDiags) {}
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all particles of the species reacting to laser envelope

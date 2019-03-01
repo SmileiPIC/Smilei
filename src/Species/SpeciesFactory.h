@@ -776,6 +776,8 @@ public:
         newSpecies->ionization_model                         = species->ionization_model;
         newSpecies->densityProfileType                       = species->densityProfileType;
         newSpecies->vectorized_operators                     = species->vectorized_operators;
+        newSpecies->merging_method_                          = species->merging_method_;
+        newSpecies->merging_time_selection_                  = species->merging_time_selection_;
         newSpecies->chargeProfile                            = new Profile(species->chargeProfile);
         if ( species->densityProfile ){
             newSpecies->densityProfile                       = new Profile(species->densityProfile);

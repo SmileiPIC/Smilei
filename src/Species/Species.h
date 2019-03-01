@@ -352,7 +352,6 @@ public:
                            Patch* patch, SmileiMPI* smpi,
                                                           std::vector<Diagnostic*>& localDiags) {};
 
-
     virtual void projection_for_diags(double time, unsigned int ispec,
                           ElectroMagn* EMfields,
                           Params &params, bool diag_flag,
@@ -364,6 +363,12 @@ public:
                         Patch* patch, SmileiMPI* smpi,
                         RadiationTables &RadiationTables,
                         MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
+                        std::vector<Diagnostic*>& localDiags);
+
+    //! Method performing the merging of particles
+    virtual void mergeParticles(double time_dual, unsigned int ispec,
+                        Params &params,
+                        Patch* patch, SmileiMPI* smpi,
                         std::vector<Diagnostic*>& localDiags);
 
     //! Method calculating the Particle charge on the grid (projection)

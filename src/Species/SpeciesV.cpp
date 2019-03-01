@@ -674,6 +674,49 @@ void SpeciesV::importParticles( Params& params, Patch* patch, Particles& source_
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+// Particle merging cell by cell
+// ---------------------------------------------------------------------------------------------------------------------
+void SpeciesV::mergeParticles(double time_dual, unsigned int ispec,
+                    Params &params,
+                    Patch* patch, SmileiMPI* smpi,
+                    std::vector<Diagnostic*>& localDiags)
+{
+    int ithread;
+    #ifdef _OPENMP
+        ithread = omp_get_thread_num();
+    #else
+        ithread = 0;
+    #endif
+
+    #ifdef  __DETAILED_TIMERS
+        double timer;
+    #endif
+
+    // if (npack_==0) {
+    //     npack_    = 1;
+    //     packsize_ = (f_dim1-2*oversize[1]);
+    //
+    //     //if ( (long int)last_index.back() < (long int)60000 || (Radiate) || (Ionize) || (Multiphoton_Breit_Wheeler_process) )
+    //     packsize_ *= (f_dim0-2*oversize[0]);
+    //     //else
+    //     //    npack_ *= (f_dim0-2*oversize[0]);
+    //
+    //     if (nDim_particle == 3)
+    //         packsize_ *= (f_dim2-2*oversize[2]);
+    // }
+    //
+    // // Only for moving particles
+    // if (time_dual>time_frozen) { // advance particle momentum
+    //
+    //     for ( unsigned int ipack = 0 ; ipack < npack_ ; ipack++ ) {
+    //     }
+    //
+    // }
+
+}
+
+
+// ---------------------------------------------------------------------------------------------------------------------
 // For all particles of the species reacting to laser envelope
 //   - interpolate the fields at the particle position
 //   - deposit susceptibility

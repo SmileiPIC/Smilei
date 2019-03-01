@@ -413,6 +413,10 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
                            double time_dual, Timers &timers, int itime)
 {
     timers.syncPart.restart();
+
+    // Particle synchronization and sorting
+    // ----------------------------------------
+
     for (unsigned int ispec=0 ; ispec<(*this)(0)->vecSpecies.size(); ispec++) {
         if ( (*this)(0)->vecSpecies[ispec]->isProj(time_dual, simWindow) ){
             SyncVectorPatch::finalize_and_sort_parts((*this), ispec, params, smpi, timers, itime ); // Included sort_part
@@ -433,6 +437,22 @@ void VectorPatch::finalize_and_sort_parts(Params& params, SmileiMPI* smpi, SimWi
                                                                   RadiationTables,
                                                                   MultiphotonBreitWheelerTables,
                                                                   localDiags);
+            }
+        }
+    }
+
+    // Particle merging
+    // ---------------------------------------
+
+    #pragma omp for schedule(runtime)
+    for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
+        // Particle importation for all species
+        for (unsigned int ispec=0 ; ispec<(*this)(ipatch)->vecSpecies.size() ; ispec++) {
+            if (species(ipatch, ispec)->merging_time_selection_->theTimeIsNow(itime)) {
+                species(ipatch, ispec)->mergeParticles(time_dual, ispec,
+                                                   params,
+                                                   (*this)(ipatch), smpi,
+                                                   localDiags);
             }
         }
     }
