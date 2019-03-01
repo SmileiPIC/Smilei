@@ -1835,9 +1835,9 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
         // Recompute the cell keys before the next step and configure operators
         for( unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++ ) {
             for( unsigned int ispec=0 ; ispec< recv_patches_[ipatch]->vecSpecies.size() ; ispec++ ) {
-                if( dynamic_cast<SpeciesAdaptiveV *>( recv_patches_[ipatch]->vecSpecies[ispec] ) ) {
-                    dynamic_cast<SpeciesAdaptiveV *>( recv_patches_[ipatch]->vecSpecies[ispec] )->compute_part_cell_keys( params );
-                    dynamic_cast<SpeciesAdaptiveV *>( recv_patches_[ipatch]->vecSpecies[ispec] )->reconfigure_operators( params, recv_patches_[ipatch] );
+                if( dynamic_cast<SpeciesVAdaptive *>( recv_patches_[ipatch]->vecSpecies[ispec] ) ) {
+                    dynamic_cast<SpeciesVAdaptive *>( recv_patches_[ipatch]->vecSpecies[ispec] )->compute_part_cell_keys( params );
+                    dynamic_cast<SpeciesVAdaptive *>( recv_patches_[ipatch]->vecSpecies[ispec] )->reconfigure_operators( params, recv_patches_[ipatch] );
                 }
             }
         }
@@ -1846,9 +1846,9 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
         // Recompute the cell keys before the next step and configure operators
         for( unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++ ) {
             for( unsigned int ispec=0 ; ispec< recv_patches_[ipatch]->vecSpecies.size() ; ispec++ ) {
-                if( dynamic_cast<SpeciesAdaptiveV2 *>( recv_patches_[ipatch]->vecSpecies[ispec] ) ) {
-                    dynamic_cast<SpeciesAdaptiveV2 *>( recv_patches_[ipatch]->vecSpecies[ispec] )->compute_part_cell_keys( params );
-                    dynamic_cast<SpeciesAdaptiveV2 *>( recv_patches_[ipatch]->vecSpecies[ispec] )->reconfigure_operators( params, recv_patches_[ipatch] );
+                if( dynamic_cast<SpeciesVAdaptiveMixedSort *>( recv_patches_[ipatch]->vecSpecies[ispec] ) ) {
+                    dynamic_cast<SpeciesVAdaptiveMixedSort *>( recv_patches_[ipatch]->vecSpecies[ispec] )->compute_part_cell_keys( params );
+                    dynamic_cast<SpeciesVAdaptiveMixedSort *>( recv_patches_[ipatch]->vecSpecies[ispec] )->reconfigure_operators( params, recv_patches_[ipatch] );
                 }
             }
         }
