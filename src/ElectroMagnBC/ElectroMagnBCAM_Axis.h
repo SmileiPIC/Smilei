@@ -14,20 +14,21 @@ class Params;
 class ElectroMagn;
 class Field;
 
-class ElectroMagnBCAM_Axis : public ElectroMagnBC {
+class ElectroMagnBCAM_Axis : public ElectroMagnBC
+{
 public:
-    
-    ElectroMagnBCAM_Axis( Params &params, Patch* patch, unsigned int _min_max );
+
+    ElectroMagnBCAM_Axis( Params &params, Patch *patch, unsigned int _min_max );
     ~ElectroMagnBCAM_Axis() {};
     
-    virtual void apply(ElectroMagn* EMfields, double time_dual, Patch* patch) override;
+    virtual void apply( ElectroMagn *EMfields, double time_dual, Patch *patch ) override;
     
-    void save_fields(Field*, Patch* patch) override;
+    void save_fields( Field *, Patch *patch ) override;
     void disableExternalFields() override;
-
+    
 private:
-    
-    
+
+
     //! Conversion factor from degree to radian
     double conv_deg2rad;
     
@@ -60,12 +61,12 @@ private:
     
     //! Ratio of the spatial-step by the time-step dy/dt for 2D3V cartesian simulations
     double dl_ov_dt;
-
-    //! Number of modes 
+    
+    //! Number of modes
     unsigned int Nmode;
     
     //! Oversize along the radial direction
-    unsigned int oversize_R;
+    //unsigned int oversize_R;
     
 };
 

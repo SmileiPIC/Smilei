@@ -71,7 +71,10 @@ class TrackParticles(Diagnostic):
 			              "charge":"q", "weight":"w", "chi":"chi",
 			              "E/x":"Ex", "E/y":"Ey", "E/z":"Ez",
 			              "B/x":"Bx", "B/y":"By", "B/z":"Bz"}
-			T0 = next(f["data"].itervalues())["particles/"+self.species]
+			try: # python 2
+				T0 = next(f["data"].itervalues())["particles/"+self.species]
+			except: # python 3
+				T0 = next(iter(f["data"].values()))["particles/"+self.species]
 			self.available_properties = [v for k,v in properties.items() if k in T0]
 
 		# Get available times in the hdf5 file
@@ -258,38 +261,37 @@ class TrackParticles(Diagnostic):
 			self.axes = self.available_properties
 
 		# Then figure out axis units
-		if self._sort:
-			self._type = self.axes
-			for axis in self.axes:
-				axisunits = ""
-				if axis == "Id":
-					self._centers.append( [0, 281474976710655] )
-				elif axis in ["x" , "y" , "z" ]:
-					axisunits = "L_r"
-					self._centers.append( [0., self.namelist.Main.grid_length[{"x":0,"y":1,"z":2}[axis]]] )
-				elif axis in ["px", "py", "pz"]:
-					axisunits = "P_r"
-					self._centers.append( [-1., 1.] )
-				elif axis == "w":
-					axisunits = "N_r * L_r^%i" % self._ndim
-					self._centers.append( [0., 1.] )
-				elif axis == "q":
-					axisunits = "Q_r"
-					self._centers.append( [-10., 10.] )
-				elif axis == "chi":
-					axisunits = "1"
-					self._centers.append( [0., 2.] )
-				elif axis[0] == "E":
-					axisunits = "E_r"
-					self._centers.append( [-1., 1.] )
-				elif axis[0] == "B":
-					axisunits = "B_r"
-					self._centers.append( [-1., 1.] )
-				self._log.append( False )
-				self._label.append( axis )
-				self._units.append( axisunits )
-			self._title = "Track particles '"+species+"'"
-			self._shape = [0]*len(self.axes)
+		self._type = self.axes
+		for axis in self.axes:
+			axisunits = ""
+			if axis == "Id":
+				self._centers.append( [0, 281474976710655] )
+			elif axis in ["x" , "y" , "z" ]:
+				axisunits = "L_r"
+				self._centers.append( [0., self.namelist.Main.grid_length[{"x":0,"y":1,"z":2}[axis]]] )
+			elif axis in ["px", "py", "pz"]:
+				axisunits = "P_r"
+				self._centers.append( [-1., 1.] )
+			elif axis == "w":
+				axisunits = "N_r * L_r^%i" % self._ndim
+				self._centers.append( [0., 1.] )
+			elif axis == "q":
+				axisunits = "Q_r"
+				self._centers.append( [-10., 10.] )
+			elif axis == "chi":
+				axisunits = "1"
+				self._centers.append( [0., 2.] )
+			elif axis[0] == "E":
+				axisunits = "E_r"
+				self._centers.append( [-1., 1.] )
+			elif axis[0] == "B":
+				axisunits = "B_r"
+				self._centers.append( [-1., 1.] )
+			self._log.append( False )
+			self._label.append( axis )
+			self._units.append( axisunits )
+		self._title = "Track particles '"+species+"'"
+		self._shape = [0]*len(self.axes)
 
 		# Hack to work with 1 axis
 		if len(axes)==1: self._vunits = self._units[0]
@@ -467,7 +469,7 @@ class TrackParticles(Diagnostic):
 								stop = start + bs
 								start_in_file = int(
 									(ID[start].astype("uint32"))
-									+ offset[ (int(ID[start])>>32).astype("uint32") & 16777215 ]
+									+ offset[ int(ID[start])>>32 & 16777215 ]
 									-1
 								)
 								stop_in_file = start_in_file + bs
@@ -493,6 +495,7 @@ class TrackParticles(Diagnostic):
 					first = ichunk * limitedchunksize
 					last  = int(min( first + limitedchunksize, total_number_of_particles ))
 					npart = last-first
+					if npart <= 0: break
 					f0["Id"].read_direct( ID, source_sel=self._np.s_[:, first:last], dest_sel=self._np.s_[:,:npart] )
 					f0["unique_Ids"].write_direct( self._np.max(ID[:,:npart], axis=0), source_sel=self._np.s_[:npart], dest_sel=self._np.s_[first:last] )
 			# Indicate that the ordering is finished

@@ -18,7 +18,8 @@
 //! Class MergingFactory
 //  ----------------------------------------------------------------------------
 
-class MergingFactory {
+class MergingFactory
+{
 public:
 
     //  ------------------------------------------------------------------------
@@ -26,15 +27,15 @@ public:
     //! \param species Species object
     //! \param params Parameters
     //  ------------------------------------------------------------------------
-    static Merging* create(Params& params, Species * species) {
-        Merging* Merge = NULL;
-
+    static Merging *create( Params &params, Species *species )
+    {
+        Merging *Merge = NULL;
+        
         // assign the correct Radiation model to Radiate
-        if ( species->merging_method_ == "vranic" )
-        {
+        if( species->merging_method_ == "vranic" ) {
             Merge = new MergingVranic( params, species );
         }
-
+        
         return Merge;
     }
 };

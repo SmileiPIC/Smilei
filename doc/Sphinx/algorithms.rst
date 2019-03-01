@@ -438,7 +438,7 @@ In this geometry, fields are expressed in cylindrical frame :math:`(e_x,e_r,e_\t
 
 .. math::
 
-    F\left(x,r,\theta\right) = \sum_{m=1}^{+\infty}\tilde{F}^{m}\left(x,r\right)\exp{\left(-im\theta\right)},
+    F\left(x,r,\theta\right) = \textrm{Re}\left[\sum_{m=0}^{+\infty}\tilde{F}^{m}\left(x,r\right)\exp{\left(-im\theta\right)}\right],
 
 where :math:`m` is the azimuthal mode, :math:`F` any field component and :math:`\tilde{F}^{m}` the :math:`m^{th}` Fourier mode of :math:`F`.
 :math:`\tilde{F}^{m}` are given as follows:

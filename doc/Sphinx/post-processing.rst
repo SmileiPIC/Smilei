@@ -140,25 +140,25 @@ Open a Field diagnostic
     :ref:`moving window<movingWindow>`
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
-  In the case of a spectral cylindrical geometry (``3drz``), additional argument are
+  In the case of an azimuthal mode cylindrical geometry (``AMcylindrical``), additional argument are
   available. You must choose one of ``theta`` or ``build3d``, defined below, in order
   to construct fields from their complex angular Fourier modes. In addition, the ``modes``
   argument is optional.
 
   * ``theta``: An angle (in radians)
      | Calculates the field in a plane passing through the :math:`r=0` axis
-     | and making an angle ``theta`` with the :math:`xz` plane.
+     | and making an angle ``theta`` with the :math:`xy` plane.
   * ``build3d``: A list of three *ranges*
      | Calculates the field interpolated in a 3D :math:`xyz` grid.
      | Each *range* is a list ``[start, stop, step]`` indicating the beginning,
      | the end and the step of this grid.
   * ``modes``: An integer or a list of integers
-     | Only these modes numbers will be used in the calculation
+     | Only these modes numbers will be used in the calculation. If omited, all modes are used.
 
 **Example**::
 
   S = happi.Open("path/to/my/results")
-  Diag = S.Field(0, "Ex", average = {"x":[4,5]})
+  Diag = S.Field(0, "Ex", average = {"x":[4,5]}, theta=math.pi/4.)
 
 
 ----
@@ -350,6 +350,7 @@ In the latter case, ``patch_information = True`` has to be put in the namelist.
   * ``timer_syncDens``             : time spent synchronzing densities by each proc
   * ``timer_diags``                : time spent by each proc calculating and writing diagnostics
   * ``timer_total``                : the sum of all timers above (except timer_global)
+  * ``memory_total``               : the total memory used by the process
 
 **Available quantities at the patch level**:
   * ``mpi_rank``                   : the MPI rank that contains the current patch
@@ -422,7 +423,7 @@ Obtain the data
 
   Returns a list of the data arrays (one element for each timestep requested).
   In the case of ``TrackParticles``, this method returns a dictionary containing one
-  entry for each axis, and if ``sort==True``, these entries are included inside an entry
+  entry for each axis, and if ``sort==False``, these entries are included inside an entry
   for each timestep.
 
   * ``timestep``, if specified, is the only timestep number that is read and returned.

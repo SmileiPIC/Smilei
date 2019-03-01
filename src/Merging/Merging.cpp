@@ -16,7 +16,7 @@
 //! \param params simulation parameters
 //! \param species Species index
 // -----------------------------------------------------------------------------
-Merging::Merging(Params& params, Species * species)
+Merging::Merging( Params &params, Species *species )
 {
     merging_ppc_min_threshold_ = 4;
 }

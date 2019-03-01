@@ -17,14 +17,15 @@
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class PusherPhoton
 //  --------------------------------------------------------------------------------------------------------------------
-class PusherPhoton : public Pusher {
+class PusherPhoton : public Pusher
+{
 public:
     //! Creator for Pusher
-    PusherPhoton(Params& params, Species *species);
+    PusherPhoton( Params &params, Species *species );
     ~PusherPhoton();
     //! Overloading of () operator
-    virtual void operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ipart_ref = 0);
-
+    virtual void operator()( Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, int ipart_ref = 0 );
+    
 };
 
 #endif

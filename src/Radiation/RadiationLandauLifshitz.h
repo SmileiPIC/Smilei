@@ -25,44 +25,45 @@
 //! RadiationLandauLifshitz class: holds parameters and functions to apply the
 //! Landau-Lifshitz continuous radiation loss on Particles.
 //------------------------------------------------------------------------------
-class RadiationLandauLifshitz : public Radiation {
+class RadiationLandauLifshitz : public Radiation
+{
 
-    public:
+public:
 
-        //! Constructor for RadiationLandauLifshitz
-        RadiationLandauLifshitz(Params& params, Species * species);
+    //! Constructor for RadiationLandauLifshitz
+    RadiationLandauLifshitz( Params &params, Species *species );
+    
+    //! Destructor for RadiationLandauLifshitz
+    ~RadiationLandauLifshitz();
+    
+    // ---------------------------------------------------------------------
+    //! Overloading of () operator: perform the Landau-Lifshitz
+    //! radiation loops.
+    //! \param particles   particle object containing the particle
+    //!                    properties
+    //! \param smpi        MPI properties
+    //! \param nlicsTables Cross-section data tables and useful functions
+    //                     for nonlinear inverse Compton scattering
+    //! \param istart      Index of the first particle
+    //! \param iend        Index of the last particle
+    //! \param ithread     Thread index
+    // ---------------------------------------------------------------------
+    virtual void operator()(
+        Particles &particles,
+        Species *photon_species,
+        SmileiMPI *smpi,
+        RadiationTables &RadiationTables,
+        int istart,
+        int iend,
+        int ithread, int ipart_ref = 0 );
+        
+protected:
 
-        //! Destructor for RadiationLandauLifshitz
-        ~RadiationLandauLifshitz();
-
-        // ---------------------------------------------------------------------
-        //! Overloading of () operator: perform the Landau-Lifshitz
-        //! radiation loops.
-        //! \param particles   particle object containing the particle
-        //!                    properties
-        //! \param smpi        MPI properties
-        //! \param nlicsTables Cross-section data tables and useful functions
-        //                     for nonlinear inverse Compton scattering
-        //! \param istart      Index of the first particle
-        //! \param iend        Index of the last particle
-        //! \param ithread     Thread index
-        // ---------------------------------------------------------------------
-        virtual void operator() (
-                Particles &particles,
-                Species * photon_species,
-                SmileiMPI* smpi,
-                RadiationTables &RadiationTables,
-                int istart,
-                int iend,
-                int ithread, int ipart_ref = 0);
-
-    protected:
-
-        // ________________________________________
-        // General parameters
-
-
-    private:
+    // ________________________________________
+    // General parameters
+    
+    
+private:
 
 };
 

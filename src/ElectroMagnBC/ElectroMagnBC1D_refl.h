@@ -2,20 +2,21 @@
 #ifndef ELECTROMAGNBC1D_REFL_H
 #define ELECTROMAGNBC1D_REFL_H
 
-#include "ElectroMagnBC1D.h" 
+#include "ElectroMagnBC1D.h"
 
 class Params;
 class ElectroMagn;
 
-class ElectroMagnBC1D_refl : public ElectroMagnBC1D {
+class ElectroMagnBC1D_refl : public ElectroMagnBC1D
+{
 public:
-    ElectroMagnBC1D_refl( Params &param, Patch* patch, unsigned int _min_max );
+    ElectroMagnBC1D_refl( Params &param, Patch *patch, unsigned int _min_max );
     ~ElectroMagnBC1D_refl() {};
     
-    void apply(ElectroMagn* EMfields, double time_dual, Patch* patch) override;
-
- private:
+    void apply( ElectroMagn *EMfields, double time_dual, Patch *patch ) override;
     
+private:
+
     //! Oversize
     unsigned int oversize_;
     

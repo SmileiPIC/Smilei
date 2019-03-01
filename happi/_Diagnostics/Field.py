@@ -138,8 +138,8 @@ class Field(Diagnostic):
 					return
 				self._getDataAtTime = self._build3d_getDataAtTime
 			# Test whether "modes" is an int or an iterable on ints
+			max_nmode = max([self._fields[f] for f in self._fieldname])
 			if modes is None:
-				max_nmode = max([self._fields[f] for f in self._fieldname])
 				self._modes = range(max_nmode)
 			else:
 				try:
@@ -150,6 +150,11 @@ class Field(Diagnostic):
 					except:
 						self._error += ["Option `modes` must be a number or an iterable on numbers"]
 						return
+				for imode in self._modes:
+					if imode >= max_nmode:
+						self._error += ["Option `modes` cannot contain modes larger than "+str(max_nmode-1)]
+						return
+				
 		
 		# Get the shape of fields
 		fields = [f for f in self._h5items[0].values() if f]
@@ -163,7 +168,7 @@ class Field(Diagnostic):
 		axis_stop  = self._offset + (self._initialShape-0.5)*self._spacing
 		axis_step  = self._spacing
 		if self.cylindrical:
-			if build3d:
+			if build3d is not None:
 				self._initialShape = [int(self._np.ceil( (s[1]-s[0])/float(s[2]) )) for s in build3d]
 				axis_start = build3d[:,0]
 				axis_stop  = build3d[:,1]
@@ -200,7 +205,7 @@ class Field(Diagnostic):
 		self._selection = [self._np.s_[:]]*self._naxes
 		self._offset  = fields[0].attrs['gridGlobalOffset']
 		self._spacing = fields[0].attrs['gridSpacing']
-		axis_name = "xyz" if not self.cylindrical or not build3d else "xr"
+		axis_name = "xyz" if not self.cylindrical or build3d is not None else "xr"
 		for iaxis in range(self._naxes):
 			centers = self._np.arange(axis_start[iaxis], axis_stop[iaxis], axis_step[iaxis])
 			label = axis_name[iaxis]
@@ -261,7 +266,7 @@ class Field(Diagnostic):
 			self._complex_selection_imag = tuple(self._complex_selection_imag)
 			
 			# In the case of "build3d", prepare some data for the 3D construction
-			if build3d:
+			if build3d is not None:
 				# Calculate the raw data positions
 				self._raw_positions = (
 					self._np.arange(self._offset[0], self._offset[0] + (self._raw_shape[0]  -0.5)*self._spacing[0], self._spacing[0] ),

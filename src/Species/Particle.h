@@ -7,17 +7,18 @@
 
 class Particles;
 
-class Particle {
+class Particle
+{
 public:
     Particle() {};
-    Particle(Particles& parts, int iPart);
-
+    Particle( Particles &parts, int iPart );
+    
     ~Particle() {};
-
-    friend std::ostream& operator<<(std::ostream& os, const Particle& part);
-
+    
+    friend std::ostream &operator<<( std::ostream &os, const Particle &part );
+    
 private:
-     //! array containing the particle position
+    //! array containing the particle position
     std::vector<double> Position;
     //! array containing the particle former (old) positions
     std::vector<double> Position_old;
@@ -27,7 +28,7 @@ private:
     double Weight;
     //! containing the particle quantum parameter
     double Chi;
-    //! containing the particle optical depth    
+    //! containing the particle optical depth
     double Tau;
     //! charge state of the particle (multiples of e>0)
     short Charge;

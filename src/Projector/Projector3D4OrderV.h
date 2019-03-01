@@ -4,27 +4,28 @@
 #include "Projector3D.h"
 
 
-class Projector3D4OrderV : public Projector3D {
+class Projector3D4OrderV : public Projector3D
+{
 public:
-    Projector3D4OrderV(Params&, Patch* patch);
+    Projector3D4OrderV( Params &, Patch *patch );
     ~Projector3D4OrderV();
-
+    
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_)
-    inline void currents(double* Jx, double* Jy, double* Jz, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, std::vector<unsigned int> &b_dim, int* iold, double *deltaold, int ipart_ref = 0);
+    inline void currents( double *Jx, double *Jy, double *Jz, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, int ipart_ref = 0 );
     //! Project global current densities (EMfields->Jx_/Jy_/Jz_/rho), diagFields timestep
-    inline void currentsAndDensity(double* Jx, double* Jy, double* Jz, double* rho, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double>* invgf, std::vector<unsigned int> &b_dim, int* iold, double* deltaold, int ipart_ref = 0);
-
+    inline void currentsAndDensity( double *Jx, double *Jy, double *Jz, double *rho, Particles &particles, unsigned int istart, unsigned int iend, std::vector<double> *invgf, int *iold, double *deltaold, int ipart_ref = 0 );
+    
     //! Project global current charge (EMfields->rho_), frozen & diagFields timestep
-    void densityFrozen(double* rhoj, Particles &particles, unsigned int ipart, unsigned int bin) override final;
-
+    void basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int bin ) override final;
+    
     //! Project global current densities if Ionization in Species::dynamics,
-    void ionizationCurrents(Field* Jx, Field* Jy, Field* Jz, Particles &particles, int ipart, LocalFields Jion) override final;
-
+    void ionizationCurrents( Field *Jx, Field *Jy, Field *Jz, Particles &particles, int ipart, LocalFields Jion ) override final;
+    
     //!Wrapper
-    void currentsAndDensityWrapper(ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int icell, int clrw, bool diag_flag, bool is_spectral, std::vector<unsigned int> &b_dim, int ispec, int ipart_ref = 0) override final;
-
-    void susceptibility(ElectroMagn* EMfields, Particles &particles, double species_mass, SmileiMPI* smpi, int istart, int iend,  int ithread, int ibin, std::vector<unsigned int> &b_dim, int ipart_ref = 0);
-
+    void currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell, int ipart_ref ) override final;
+    
+    void susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref ) override;
+    
 private:
     static constexpr double dble_1_ov_384   = 1.0/384.0;
     static constexpr double dble_1_ov_48    = 1.0/48.0;
@@ -37,7 +38,7 @@ private:
     static constexpr double dble_1_ov_6     = 1.0/6.0;
     static constexpr double dble_115_ov_192 = 115.0/192.0;
     static constexpr double dble_5_ov_8     = 5.0/8.0;
-
+    
 };
 
 #endif

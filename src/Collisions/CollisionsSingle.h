@@ -18,7 +18,7 @@ class CollisionsSingle : public Collisions
 
 public:
     //! Constructor for Collisions between two species
-    CollisionsSingle( Params & params,
+    CollisionsSingle( Params &params,
                       unsigned int n_collisions,
                       std::vector<unsigned int> sg1,
                       std::vector<unsigned int> sg2,
@@ -30,27 +30,27 @@ public:
                       bool tracked_electrons,
                       int nDim,
                       std::string fname
-    ) : Collisions( params,
-                    n_collisions,
-                    sg1,
-                    sg2,
-                    coulomb_log,
-                    intra_collisions,
-                    debug_every,
-                    Z,
-                    ionizing,
-                    tracked_electrons,
-                    nDim,
-                    fname
-    ) {} ;
+                    ) : Collisions( params,
+                                        n_collisions,
+                                        sg1,
+                                        sg2,
+                                        coulomb_log,
+                                        intra_collisions,
+                                        debug_every,
+                                        Z,
+                                        ionizing,
+                                        tracked_electrons,
+                                        nDim,
+                                        fname
+                                      ) {} ;
     //! Cloning Constructor
-    CollisionsSingle(Collisions* coll, int ndim) : Collisions(coll, ndim) {};
+    CollisionsSingle( Collisions *coll, int ndim ) : Collisions( coll, ndim ) {};
     //! destructor
     ~CollisionsSingle() {};
-
+    
     //! Method called in the main smilei loop to apply collisions at each timestep
-    void collide(Params&, Patch* ,int, std::vector<Diagnostic*>&) override;
-
+    void collide( Params &, Patch *, int, std::vector<Diagnostic *> & ) override;
+    
 };
 
 

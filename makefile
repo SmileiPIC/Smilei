@@ -31,7 +31,7 @@ SITEDIR = $(shell $(PYTHONEXE) -c 'import site; site._script()' --user-site)
 # Smilei version
 CXXFLAGS += -D__VERSION=\"$(VERSION)\" -D_VECTO
 # C++ version
-CXXFLAGS += -std=c++11 -Wall
+CXXFLAGS += -std=c++11 -Wall #-Wshadow
 # HDF5 library
 ifneq ($(strip $(HDF5_ROOT_DIR)),)
 CXXFLAGS += -I${HDF5_ROOT_DIR}/include
@@ -229,6 +229,13 @@ tar:
 	$(Q) tar -czf $(EXEC)-$(VERSION).tgz $(EXEC)-$(VERSION) && rm -R $(EXEC)-$(VERSION)
 
 
+
+#-----------------------------------------------------
+# astyle
+style:
+	@echo "Astyle is applied on all files"
+	$(Q) astyle --style=1tbs --fill-empty-lines --pad-comma --unpad-paren --pad-paren-in --align-pointer=name --align-reference=name -n -r src/*.cpp,*.h
+
 #-----------------------------------------------------
 # Python module rules
 
@@ -267,6 +274,7 @@ help:
 	@echo '  make config="[ verbose ] [ debug ] [ scalasca ] [ noopenmp ]"'
 	@echo '    verbose              : to print compile command lines'
 	@echo '    debug                : to compile in debug mode (code runs really slow)'
+	@echo '    detailed_timers      : to compile the code with more refined timers (refined time report)'
 	@echo '    noopenmp             : to compile without openmp'
 	@echo '    no_mpi_tm            : to compile with a MPI library without MPI_THREAD_MULTIPLE support'
 	@echo '    opt-report           : to generate a report about optimization, vectorization and inlining (Intel compiler)'
@@ -311,4 +319,3 @@ help:
 	@echo
 	@if [ -f  scripts/CompileTools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/CompileTools/machine/$(machine)|| echo "None"; fi
 	@if [ -f scripts/CompileTools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/CompileTools/machine/$(machine) || echo "None"; else echo "Available machines:"; ls -1 scripts/CompileTools/machine; fi
-

@@ -21,65 +21,69 @@
 
 #include "Tools.h"
 
-class ProjectorFactory {
+class ProjectorFactory
+{
 public:
-  static Projector* create(Params& params, Patch* patch, bool vectorization) {
-        Projector* Proj = NULL;
+    static Projector *create( Params &params, Patch *patch, bool vectorization )
+    {
+        Projector *Proj = NULL;
         // ---------------
         // 1Dcartesian simulation
         // ---------------
-        if ( ( params.geometry == "1Dcartesian" ) && ( params.interpolation_order == (unsigned int)2 ) ) {
-            Proj = new Projector1D2Order(params, patch);
-        }
-        else if ( ( params.geometry == "1Dcartesian" ) && ( params.interpolation_order == (unsigned int)4 ) ) {
-            Proj = new Projector1D4Order(params, patch);
+        if( ( params.geometry == "1Dcartesian" ) && ( params.interpolation_order == ( unsigned int )2 ) ) {
+            Proj = new Projector1D2Order( params, patch );
+        } else if( ( params.geometry == "1Dcartesian" ) && ( params.interpolation_order == ( unsigned int )4 ) ) {
+            Proj = new Projector1D4Order( params, patch );
         }
         // ---------------
         // 2Dcartesian simulation
         // ---------------
-        else if ( ( params.geometry == "2Dcartesian" ) && ( params.interpolation_order == (unsigned int)2 ) ) {
-            if (!vectorization)
-                Proj = new Projector2D2Order(params, patch);
+        else if( ( params.geometry == "2Dcartesian" ) && ( params.interpolation_order == ( unsigned int )2 ) ) {
+            if( !vectorization ) {
+                Proj = new Projector2D2Order( params, patch );
+            }
 #ifdef _VECTO
-            else
-                Proj = new Projector2D2OrderV(params, patch);
+            else {
+                Proj = new Projector2D2OrderV( params, patch );
+            }
 #endif
-        }
-        else if ( ( params.geometry == "2Dcartesian" ) && ( params.interpolation_order == (unsigned int)4 ) ) {
-            Proj = new Projector2D4Order(params, patch);
+        } else if( ( params.geometry == "2Dcartesian" ) && ( params.interpolation_order == ( unsigned int )4 ) ) {
+            Proj = new Projector2D4Order( params, patch );
         }
         // ---------------
         // 3Dcartesian simulation
         // ---------------
-        else if ( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == (unsigned int)2 ) ) {
-            if (!vectorization)
-                Proj = new Projector3D2Order(params, patch);
+        else if( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == ( unsigned int )2 ) ) {
+            if( !vectorization ) {
+                Proj = new Projector3D2Order( params, patch );
+            }
 #ifdef _VECTO
-            else
-                Proj = new Projector3D2OrderV(params, patch);
+            else {
+                Proj = new Projector3D2OrderV( params, patch );
+            }
 #endif
-        }
-        else if ( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == (unsigned int)4 ) ) {
-            if (!vectorization)
-                Proj = new Projector3D4Order(params, patch);
+        } else if( ( params.geometry == "3Dcartesian" ) && ( params.interpolation_order == ( unsigned int )4 ) ) {
+            if( !vectorization ) {
+                Proj = new Projector3D4Order( params, patch );
+            }
 #ifdef _VECTO
-            else
-                Proj = new Projector3D4OrderV(params, patch);
+            else {
+                Proj = new Projector3D4OrderV( params, patch );
+            }
 #endif
-
+            
         }
         // ---------------
         // AM simulation
         // ---------------
-        else if ( params.geometry == "AMcylindrical" ) {
-            Proj = new ProjectorAM2Order(params, patch);
-        }
-        else {
+        else if( params.geometry == "AMcylindrical" ) {
+            Proj = new ProjectorAM2Order( params, patch );
+        } else {
             ERROR( "Unknwon parameters : " << params.geometry << ", Order : " << params.interpolation_order );
         }
-
+        
         return Proj;
     }
-
+    
 };
 #endif

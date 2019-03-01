@@ -24,16 +24,17 @@
 //! MergingVranic class: holds parameters and functions to apply the
 //! Vranic et al. particle merging algorithm.
 //------------------------------------------------------------------------------
-class MergingVranic : public Merging {
+class MergingVranic : public Merging
+{
 
 public:
 
     //! Constructor for RadiationLandauLifshitz
-    MergingVranic(Params& params, Species * species);
-
+    MergingVranic( Params &params, Species *species );
+    
     //! Destructor for RadiationLandauLifshitz
     ~MergingVranic();
-
+    
     // ---------------------------------------------------------------------
     //! Overloading of () operator: perform the Vranic particle merging
     //! \param particles   particle object containing the particle
@@ -43,20 +44,20 @@ public:
     //! \param iend        Index of the last particle
     //! \param ithread     Thread index
     // ---------------------------------------------------------------------
-    virtual void operator() (
-            Particles &particles,
-            SmileiMPI* smpi,
-            int istart,
-            int iend,
-            int ithread,
-            int ipart_ref = 0);
-
+    virtual void operator()(
+        Particles &particles,
+        SmileiMPI *smpi,
+        int istart,
+        int iend,
+        int ithread,
+        int ipart_ref = 0 );
+        
     // Parameters __________________________________________________
-
+    
     // Minimum and maximum number of particles per packet to be merged
     unsigned int min_packet_size_;
     unsigned int max_packet_size_;
-
+    
 protected:
 
 
