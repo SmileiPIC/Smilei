@@ -55,18 +55,18 @@ void MergingVranic::operator() (
 
         // Minima
         double mx_min;
-        float theta_min;
-        float phi_min;
+        double theta_min;
+        double phi_min;
 
         // Maxima
         double mx_max;
-        float theta_max;
-        float phi_max;
+        double theta_max;
+        double phi_max;
 
         // Delta
         double mx_delta;
-        float theta_delta;
-        float phi_delta;
+        double theta_delta;
+        double phi_delta;
 
         // Index in each direction
         unsigned int mx_i;
@@ -75,7 +75,9 @@ void MergingVranic::operator() (
 
         // Local particle index
         unsigned int ic;
+        unsigned int ipack;
         int ip;
+        unsigned ipart;
 
         // Dimensions
         dimensions_[0] = 5;
@@ -85,10 +87,21 @@ void MergingVranic::operator() (
                                     * dimensions_[1]
                                     * dimensions_[2];
 
+        // Total weight for merging process
+        double total_weight;
+        double total_momentum[3];
+        double total_energy;
+
         // Momentum shortcut
         double* momentum[3];
         for ( int i = 0 ; i<3 ; i++ )
             momentum[i] =  &( particles.momentum(i,0) );
+
+        // Weight shortcut
+        double *weight = &( particles.weight( 0 ) );
+
+        // Id shortcut
+        uint64_t *id = &( particles.id( 0 ) );
 
         // Norm of the momentum
         double momentum_norm;
@@ -99,12 +112,21 @@ void MergingVranic::operator() (
         // Sorted array of particle index
         std::vector <unsigned int> sorted_particles(iend-istart,0);
 
+        // Array containing the number of particles per momentum cells
         std::vector <unsigned int> particles_per_momentum_cells(momentum_cells,0);
+
+        // Array containing the first particle index of each momentum cell
+        // in the sorted particle array
         std::vector <unsigned int> momentum_cells_index(momentum_cells,0);
 
         // Local vector to store the momentum angles in the spherical base
-        std::vector <float> phi(iend-istart,0);
-        std::vector <float> theta(iend-istart,0);
+        std::vector <double> phi(iend-istart,0);
+        std::vector <double> theta(iend-istart,0);
+
+        // Cell center coordinates in the spherical base
+        std::vector <double> cell_center_mx(dimensions_[0],0);
+        std::vector <double> cell_center_theta(dimensions_[1],0);
+        std::vector <double> cell_center_phi(dimensions_[2],0);
 
         //std::cerr << iend-istart << std::endl;
 
@@ -127,7 +149,7 @@ void MergingVranic::operator() (
         theta_max = theta_min;
         phi_max   = phi_min;
 
-        for (int ipart=istart+1 ; ipart<iend; ipart++ ) {
+        for (ipart=istart+1 ; ipart<iend; ipart++ ) {
 
             // Local array index
             ip = ipart - istart;
@@ -150,6 +172,11 @@ void MergingVranic::operator() (
 
         }
 
+        // Extra to include the max in the discretization
+        mx_max += (mx_max - mx_min)*0.01;
+        theta_max += (theta_max - theta_min)*0.01;
+        phi_max += (phi_max - phi_min)*0.01;
+
         // __________________________________________________________
         // Second step : Computation of the discretization and steps
 
@@ -158,11 +185,37 @@ void MergingVranic::operator() (
         theta_delta = (theta_max - theta_min) / dimensions_[1];
         phi_delta = (phi_max - phi_min) / dimensions_[2];
 
+        // Check if min and max are very close
+        if (mx_delta < 1e-10) {
+            mx_delta = 0.;
+            dimensions_[0] = 1;
+        }
+        if (theta_delta < 1e-10) {
+            theta_delta = 0.;
+            dimensions_[1] = 1;
+        }
+        if (phi_delta < 1e-10) {
+            phi_delta = 0.;
+            dimensions_[2] = 1;
+        }
+
+        // Computation of the cell centers
+        for (mx_i = 0 ; mx_i < dimensions_[0] ; mx_i ++) {
+            cell_center_mx[mx_i] = mx_min + (mx_i + 0.5) * mx_delta;
+        }
+        for (theta_i = 0 ; theta_i < dimensions_[1] ; theta_i ++) {
+            cell_center_theta[theta_i] = theta_min + (theta_i + 0.5) * theta_delta;
+        }
+        for (phi_i = 0 ; phi_i < dimensions_[2] ; phi_i ++) {
+            cell_center_phi[phi_i] = phi_min + (phi_i + 0.5) * phi_delta;
+        }
+
         // ___________________________________________________________________
         // Third step: for each particle, momentum indexes are computed in the
         // requested discretization. The number of particles per momentum bin
         // is also determined.
 
+        #pragma omp simd
         for (int ipart=istart ; ipart<iend; ipart++ ) {
 
             ip = ipart - istart;
@@ -224,12 +277,42 @@ void MergingVranic::operator() (
         for (ic=0 ; ic<momentum_cells; ic++ ) {
             if (particles_per_momentum_cells[ic] >= 4 )
             {
-                std::cerr << "ic: " << ic
+                /*std::cerr << "ic: " << ic
                           << ", ppmc: " << particles_per_momentum_cells[ic]
-                          << std::endl;
+                          << std::endl;*/
 
                 // Loop over the packets of particles that can be merged
-                for (ip = 0 ; ip < particles_per_momentum_cells[ic] ; ip+= 4) {
+                for (ipack = 0 ; ipack < particles_per_momentum_cells[ic] ; ipack += 4) {
+
+                    total_weight = 0;
+                    total_momentum[0] = 0;
+                    total_momentum[1] = 0;
+                    total_momentum[2] = 0;
+                    total_energy = 0;
+
+                    std::cerr << "Merging start: " << std::endl;
+
+                    // Compute total weight, total momentum and total energy
+                    for (ip = ipack ; ip < ipack + 4 ; ip ++) {
+
+                        ipart = sorted_particles[momentum_cells_index[ic] + ip];
+
+                        std::cerr << " ipart: " << ipart << std::endl;
+                        std::cerr << " w: "  << weight[ipart]
+                                  << " mx: " << momentum[0][ipart] << std::endl;
+
+                        //total_weight += weight[ipart];
+
+                        // total momentum vector (pt)
+                        //total_momentum[0] += momentum[0][ipart]*weight[ipart];
+                        //total_momentum[1] += momentum[1][ipart]*weight[ipart];
+                        //total_momentum[2] += momentum[2][ipart]*weight[ipart];
+
+                        // total energy
+                        /*total_energy += sqrt(1.0 + momentum[0][ipart]*momentum[0][ipart]
+                                                 + momentum[1][ipart]*momentum[1][ipart]
+                                                 + momentum[2][ipart]*momentum[2][ipart]);*/
+                    }
 
                 }
             }
