@@ -240,7 +240,7 @@ void ProjectorAM2Order::currents_mode0( complex<double> *Jl, complex<double> *Jr
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents for m>0
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2Order::currents( complex<double> *Jl, complex<double> *Jr, complex<double> *Jt, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, complex<double> *exp_m_theta_old, int imode )
+void ProjectorAM2Order::currents( complex<double> *Jl, complex<double> *Jr, complex<double> *Jt, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, double *array_theta_old, int imode )
 {
     // -------------------------------------
     // Variable declaration & initialization
@@ -257,7 +257,7 @@ void ProjectorAM2Order::currents( complex<double> *Jl, complex<double> *Jr, comp
     // arrays used for the Esirkepov projection method
     double  Sl0[5], Sl1[5], Sr0[5], Sr1[5], DSl[5], DSr[5];
     complex<double>  Wl[5][5], Wr[5][5], Wt[5][5], Jl_p[5][5], Jr_p[5][5], Jt_p[5][5];
-    complex<double> e_delta, e_delta_m1, e_delta_inv, e_theta_old, e_bar, e_bar_m1, C_m; //, C_m_old;
+    complex<double> e_delta, e_delta_m1, e_delta_inv, e_bar, e_bar_m1, C_m; //, C_m_old;
     
     for( unsigned int i=0; i<5; i++ ) {
         Sl1[i] = 0.;
@@ -288,9 +288,8 @@ void ProjectorAM2Order::currents( complex<double> *Jl, complex<double> *Jr, comp
     double yp = particles.position( 1, ipart );
     double zp = particles.position( 2, ipart );
     double rp = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
-    e_theta_old =exp_m_theta_old[0]; //exp(-i theta_old)
+    double theta_old = array_theta_old[0];
     double theta = atan2( zp, yp );
-    double theta_old =atan2( -std::imag( e_theta_old ), std::real( e_theta_old ) );
     e_delta = 1.;
     e_bar = 1.;
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
@@ -642,7 +641,7 @@ void ProjectorAM2Order::currentsAndDensity_mode0( complex<double> *Jl, complex<d
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents with diag for m>0
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2Order::currentsAndDensity( complex<double> *Jl, complex<double> *Jr, complex<double> *Jt, complex<double> *rho, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, complex<double> *exp_m_theta_old,  int imode )
+void ProjectorAM2Order::currentsAndDensity( complex<double> *Jl, complex<double> *Jr, complex<double> *Jt, complex<double> *rho, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, double *array_theta_old,  int imode )
 {
     // -------------------------------------
     // Variable declaration & initialization
@@ -659,7 +658,7 @@ void ProjectorAM2Order::currentsAndDensity( complex<double> *Jl, complex<double>
     // arrays used for the Esirkepov projection method
     double  Sl0[5], Sl1[5], Sr0[5], Sr1[5], DSl[5], DSr[5];
     complex<double>  Wl[5][5], Wr[5][5], Wt[5][5], Jl_p[5][5], Jr_p[5][5], Jt_p[5][5];
-    complex<double> e_delta, e_delta_m1, e_delta_inv, e_theta_old, e_bar, e_bar_m1, C_m; //, C_m_old;
+    complex<double> e_delta, e_delta_m1, e_delta_inv, e_bar, e_bar_m1, C_m; //, C_m_old;
     
     for( unsigned int i=0; i<5; i++ ) {
         Sl1[i] = 0.;
@@ -690,11 +689,10 @@ void ProjectorAM2Order::currentsAndDensity( complex<double> *Jl, complex<double>
     double yp = particles.position( 1, ipart );
     double zp = particles.position( 2, ipart );
     double rp = sqrt( yp*yp+zp*zp );
-    e_theta_old = exp_m_theta_old[0]; //exp(-i theta_old)
+    double theta_old = array_theta_old[0];
     e_delta = 1.;
     e_bar =  1.;
     double theta = atan2( zp, yp );
-    double theta_old =atan2( -std::imag( e_theta_old ), std::real( e_theta_old ) );
     
     // locate the particle on the primal grid at current time-step & calculate coeff. S1
     xpn = particles.position( 0, ipart ) * dl_inv_;
@@ -1045,7 +1043,7 @@ void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
     std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
     std::vector<double> *invgf = &( smpi->dynamics_invgf[ithread] );
-    std::vector<std::complex<double>> *exp_m_theta_old = &( smpi->dynamics_thetaold[ithread] );
+    std::vector<double> *array_theta_old = &( smpi->dynamics_thetaold[ithread] );
     
     ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
     
@@ -1064,7 +1062,7 @@ void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
                 }
             } else {
                 for( int ipart=istart ; ipart<iend; ipart++ ) {
-                    currents( b_Jl, b_Jr, b_Jt, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart], &( *exp_m_theta_old )[ipart], imode );
+                    currents( b_Jl, b_Jr, b_Jt, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart], &( *array_theta_old )[ipart], imode );
                 }
             }
         }       // Otherwise, the projection may apply to the species-specific arrays
@@ -1086,7 +1084,7 @@ void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
                 }
             } else {
                 for( int ipart=istart ; ipart<iend; ipart++ ) {
-                    currentsAndDensity( b_Jl, b_Jr, b_Jt, b_rho, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart], &( *exp_m_theta_old )[ipart], imode );
+                    currentsAndDensity( b_Jl, b_Jr, b_Jt, b_rho, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart], &( *array_theta_old )[ipart], imode );
                 }
             }
             
