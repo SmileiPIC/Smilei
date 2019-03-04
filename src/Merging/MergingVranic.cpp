@@ -72,6 +72,8 @@ void MergingVranic::operator() (
         double phi;
         double theta;
         double omega;
+        double cos_omega;
+        double sin_omega;
 
         // Index in each direction
         unsigned int mr_i;
@@ -92,6 +94,9 @@ void MergingVranic::operator() (
         unsigned int momentum_cells = dimensions_[0]
                                     * dimensions_[1]
                                     * dimensions_[2];
+
+        unsigned int momentum_angular_cells = dimensions_[1]
+                                            * dimensions_[2];
 
         // Total weight for merging process
         double total_weight;
@@ -346,8 +351,7 @@ void MergingVranic::operator() (
                     icc = theta_i * dimensions_[2] + phi_i;
 
                     // 1D cell index
-                    ic = mr_i * dimensions_[1]*dimensions_[2]
-                       + icc;
+                    ic = mr_i * momentum_angular_cells + icc;
 
                     if (particles_per_momentum_cells[ic] >= 4 ) {
                         /*std::cerr << "ic: " << ic
@@ -391,12 +395,13 @@ void MergingVranic::operator() (
                                 total_momentum[1] += momentum[1][ipart]*weight[ipart];
                                 total_momentum[2] += momentum[2][ipart]*weight[ipart];
 
-                                // total energy
+                                // total energy (\varespilon_t)
                                 total_energy += sqrt(1.0 + momentum[0][ipart]*momentum[0][ipart]
                                                          + momentum[1][ipart]*momentum[1][ipart]
                                                          + momentum[2][ipart]*momentum[2][ipart]);
                             }
 
+                            // \varepsilon_a in Vranic et al
                             new_energy = total_energy / total_weight;
 
                             // pa in Vranic et al.
@@ -408,6 +413,8 @@ void MergingVranic::operator() (
 
                             // Angle between pa and pt, pb and pt in Vranic et al.
                             omega = acos(total_momentum_norm / (total_weight*new_momentum_norm));
+                            sin_omega = sin(omega);
+                            cos_omega = cos(omega);
 
                             // Computation of e1 unit vector
                             e1_x = total_momentum[0] / total_momentum_norm;
@@ -427,12 +434,25 @@ void MergingVranic::operator() (
                                  + e1_y*e1_y*cell_vec_z[icc];
 
                             // The first 2 particles of the list will
-                            // be the merged particles
+                            // be the merged particles.
+
                             // Update momentum of the first particle
                             ipart = sorted_particles[momentum_cell_particle_index[ic] + ipack*4];
+                            momentum[0][ipart] = new_momentum_norm*(cos_omega*e1_x + sin_omega*e2_x);
+                            momentum[1][ipart] = new_momentum_norm*(cos_omega*e1_y + sin_omega*e2_y);
+                            momentum[2][ipart] = new_momentum_norm*(cos_omega*e1_z + sin_omega*e2_z);
 
                             // Update momentum of the second particle
                             ipart = sorted_particles[momentum_cell_particle_index[ic] + ipack*4 + 1];
+                            momentum[0][ipart] = new_momentum_norm*(cos_omega*e1_x - sin_omega*e2_x);
+                            momentum[1][ipart] = new_momentum_norm*(cos_omega*e1_y - sin_omega*e2_y);
+                            momentum[2][ipart] = new_momentum_norm*(cos_omega*e1_z - sin_omega*e2_z);
+
+                            // Other particles are tagged to be removed after
+                            for (ip = ipack*4 + 2; ip < ipack*4 + 4 ; ip ++) {
+                                ipart = sorted_particles[momentum_cell_particle_index[ic] + ipack*4 + ip];
+                                // id[ipart] = 0;
+                            }
 
                         }
                     }
