@@ -328,7 +328,7 @@ and are therefore averaged other the patches.
 Some are provided at the patch level.
 In the latter case, ``patch_information = True`` has to be put in the namelist.
 
-  **WARNING**: The patch quantities are only compatible with the ``raw`` mode in 3D.
+  **WARNING**: The patch quantities are only compatible with the ``raw`` mode and in `3Dcartesian` geometry.
   The result is the patch matrix with the quantity on each patch
 
 **Available quantities at the MPI level**:
