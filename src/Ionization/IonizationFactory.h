@@ -30,8 +30,7 @@ public:
             
             Ionize = new IonizationTunnel( params, species );
             
-            int n_envlaser = PyTools::nComponents( "LaserEnvelope" );
-            if( ( n_envlaser >=1 ) & ( species->ponderomotive_dynamics ) ) {
+            if( params.Laser_Envelope_model & species->ponderomotive_dynamics ) {
                 ERROR( "Ionization is not yet implemented for species interacting with Laser Envelope model." );
             }
             
