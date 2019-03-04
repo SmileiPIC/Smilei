@@ -1980,7 +1980,7 @@ The full list of available scalars is given in the table below.
 +----------------+---------------------------------------------------------------------------+
 | **Particle information**                                                                   |
 +----------------+---------------------------------------------------------------------------+
-| | Zavg_abc     | | Average charge of species "abc"                                         |
+| | Zavg_abc     | | Average charge of species "abc" (equals `nan` if no particle)           |
 | | Dens_abc     | |  ... its integrated density                                             |
 | | Ukin_abc     | |  ... its integrated kinetic energy density                              |
 | | Urad_abc     | |  ... its integrated radiated energy density                             |
