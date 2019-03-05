@@ -40,10 +40,21 @@ public:
     {
         return 0.; // virtual => will be redefined
     };
+  
+    //! Gets the complex value of a N-D function from a vector.
+    virtual std::complex<double> complexValueAt( std::vector<double> )
+    {
+        return 0.; // virtual => will be redefined
+    };
     
 #ifdef SMILEI_USE_NUMPY
     //! Gets the value of an N-D function at points specified as numpy arrays
     virtual PyArrayObject *valueAt( std::vector<PyArrayObject *> )
+    {
+        return NULL;
+    };
+    //! Gets the value of an N-D function at points specified as numpy arrays
+    virtual PyArrayObject *complexValueAt( std::vector<PyArrayObject *> )
     {
         return NULL;
     };
@@ -81,8 +92,10 @@ public:
     double valueAt( std::vector<double>, double ); // space + time
     double valueAt( std::vector<double> ); // space
     std::complex<double> complexValueAt( std::vector<double>, double ); // space + time
+    std::complex<double> complexValueAt( std::vector<double>); // space 
 #ifdef SMILEI_USE_NUMPY
     PyArrayObject *valueAt( std::vector<PyArrayObject *> ); // numpy
+    PyArrayObject *complexValueAt( std::vector<PyArrayObject *> ); // numpy
 #endif
 private:
     PyObject *py_profile;

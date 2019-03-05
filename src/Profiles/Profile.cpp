@@ -1,6 +1,5 @@
 #include <cmath>
 
-#include "ElectroMagn.h"
 #include "Profile.h"
 #include "PyTools.h"
 
@@ -222,31 +221,47 @@ Profile::Profile( PyObject *py_profile, unsigned int nvariables, string name, bo
 #ifdef SMILEI_USE_NUMPY
         if( try_numpy ) {
             // If numpy available, verify that the profile accepts numpy arguments
-            double test_value[2] = {0., 0.};
-            npy_intp dims[1] = {2};
-            PyArrayObject *a = ( PyArrayObject * )PyArray_SimpleNewFromData( 1, dims, NPY_DOUBLE, &test_value );
-            PyObject *ret( nullptr );
-            if( nvariables_ == 1 ) {
-                ret = PyObject_CallFunctionObjArgs( py_profile, a, NULL );
-            } else if( nvariables_ == 2 ) {
-                ret = PyObject_CallFunctionObjArgs( py_profile, a, a, NULL );
-            } else if( nvariables_ == 3 ) {
-                ret = PyObject_CallFunctionObjArgs( py_profile, a, a, a, NULL );
-            } else if( nvariables_ == 4 ) {
-                ret = PyObject_CallFunctionObjArgs( py_profile, a, a, a, a, NULL );
+            // We test 2 options : the arrays dimension equal to nvariables or nvariables-1
+            unsigned int ndim;
+            for( ndim=nvariables-1; ndim<=nvariables; ndim++ ) {
+                unsigned int numel = pow(2, ndim);
+                double test_value[numel];
+                for( unsigned int i=0; i<numel; i++ )
+                    test_value[i] = 0.;
+                npy_intp dims[ndim];
+                for( unsigned int i=0; i<ndim; i++ )
+                    dims[i] = 2;
+                PyArrayObject *a = ( PyArrayObject * )PyArray_SimpleNewFromData( ndim, dims, NPY_DOUBLE, &test_value );
+                PyObject *ret( nullptr );
+                if( nvariables_ == 1 ) {
+                    ret = PyObject_CallFunctionObjArgs( py_profile, a, NULL );
+                } else if( nvariables_ == 2 ) {
+                    ret = PyObject_CallFunctionObjArgs( py_profile, a, a, NULL );
+                } else if( nvariables_ == 3 ) {
+                    ret = PyObject_CallFunctionObjArgs( py_profile, a, a, a, NULL );
+                } else if( nvariables_ == 4 ) {
+                    ret = PyObject_CallFunctionObjArgs( py_profile, a, a, a, a, NULL );
+                }
+#ifdef  __DEBUG
+                DEBUG( "Profile `"<<name<<"`: try numpy array of dimension " << ndim);
+                PyTools::checkPyError( false, true );
+#else
+                PyTools::checkPyError( false, false );
+#endif
+                Py_DECREF( a );
+                if( ret
+                        && PyArray_Check( ret ) // must be a numpy array
+                        && PyArray_ISNUMBER( ( PyArrayObject * )ret ) // must be an array of floats
+                        && PyArray_SIZE( ( PyArrayObject * )ret ) == numel ) { // must have the same size as arguments
+                    uses_numpy = true;
+                }
+                if( ret ) Py_DECREF( ret );
+                if( uses_numpy ) break;
             }
-            PyTools::checkPyError( false, false );
-            Py_DECREF( a );
-            if( ret
-                    && PyArray_Check( ret ) // must be a numpy array
-                    && PyArray_ISNUMBER( ( PyArrayObject * )ret ) // must be an array of floats
-                    && PyArray_SIZE( ( PyArrayObject * )ret ) == 2 ) { // must have the same size as arguments
-                uses_numpy = true;
+            if( uses_numpy ) {
+                DEBUG( "Profile `"<<name<<"`: accepts numpy arrays of dimension " << ndim);
             } else {
                 DEBUG( "Profile `"<<name<<"`: does not seem to accept numpy arrays (and will be slow)" );
-            }
-            if( ret ) {
-                Py_DECREF( ret );
             }
         }
 #endif
@@ -285,6 +300,13 @@ Profile::Profile( PyObject *py_profile, unsigned int nvariables, string name, bo
         }
         
         info_ << " user-defined function";
+        if( try_numpy ) {
+            if( uses_numpy ) {
+                info_ << " (uses numpy)";
+            } else {
+                info_ << " (does not use numpy)";
+            }
+        }
     }
     
     info = info_.str();
@@ -295,7 +317,7 @@ Profile::Profile( PyObject *py_profile, unsigned int nvariables, string name, bo
 Profile::Profile( Profile *p )
 {
     profileName = p->profileName;
-    nvariables_  = p->nvariables_ ;
+    nvariables_ = p->nvariables_;
     info        = p->info       ;
     uses_numpy  = p->uses_numpy ;
     if( profileName != "" ) {

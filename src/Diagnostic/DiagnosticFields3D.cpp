@@ -126,6 +126,7 @@ DiagnosticFields3D::DiagnosticFields3D( Params &params, SmileiMPI *smpi, VectorP
     count2 [2] = 1;
     // Take subgrid into account
     unsigned int istart[3];
+    total_dataset_size = 1;
     for( unsigned int i=0; i<3; i++ ) {
         findSubgridIntersection(
             subgrid_start_[i], subgrid_stop_[i], subgrid_step_[i],
@@ -133,6 +134,7 @@ DiagnosticFields3D::DiagnosticFields3D( Params &params, SmileiMPI *smpi, VectorP
             istart[i], rewrite_start_in_file[i], rewrite_size[i]
         );
         final_array_size[i] = rewrite_size[i];
+        total_dataset_size *= final_array_size[i];
         findSubgridIntersection(
             subgrid_start_[i], subgrid_stop_[i], subgrid_step_[i],
             offset2[i], offset2[i] + block2[i],

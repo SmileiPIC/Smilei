@@ -238,10 +238,11 @@ void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                 //            MESSAGE((*Br)(i,j));
                 //        }
             }//j  ---end compute Br
+
             
             // for Bt^(d,d)
             vector<double> yd( 1 );
-            for( unsigned int j=2*isYmin; j<nr_d-1 ; j++ ) {
+            for( unsigned int j=3*isYmin; j<nr_d-1 ; j++ ) {
             
                 std::complex<double> bzW = 0.;
                 yd[0] = patch->getDomainLocalMin( 1 ) + ( j - 0.5 - EMfields->oversize[1] )*dr;
@@ -274,6 +275,9 @@ void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                 //MESSAGE(Epsilon_SM_Xmin *(double)imode/((j_glob+j+0.5)*dr));
                 
             }//j  ---end compute Bt
+            if( isYmin && imode != 1 ) {
+                ( *Bt )( 0, 2 ) = -( *Bt )( 0, 3 );
+            }
         } else if( min_max == 1 && patch->isXmax() ) {
             //MESSAGE("Xmax");
             // for Br^(d,p)
@@ -311,7 +315,7 @@ void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             
             // for Bt^(d,d)
             vector<double> yd( 1 );
-            for( unsigned int j=2*isYmin ; j<nr_d-1 ; j++ ) {
+            for( unsigned int j=3*isYmin ; j<nr_d-1 ; j++ ) {
             
                 std::complex<double> bzE = 0.;
                 yd[0] = patch->getDomainLocalMin( 1 ) + ( j - 0.5  - EMfields->oversize[1] )*dr;
@@ -341,6 +345,9 @@ void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                 //}
                 
             }//j  ---end compute Bt
+            if( isYmin && imode != 1 ) {
+                ( *Bt )( nl_d-1, 2 ) = -( *Bt )( nl_d-1, 3 );
+            }
         }
     }
 }

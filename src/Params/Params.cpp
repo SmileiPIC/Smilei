@@ -126,18 +126,25 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     PyObject_SetAttrString( Py_main, "_test_mode", Py_False );
     PyTools::checkPyError();
     
-    // Running pyprofiles.py
-    runScript( string( reinterpret_cast<const char *>( pyprofiles_py ), pyprofiles_py_len ), "pyprofiles.py", globals );
-    
     // here we add the rank, in case some script need it
     PyModule_AddIntConstant( Py_main, "smilei_mpi_rank", smpi->getRank() );
     
     // here we add the MPI size, in case some script need it
     PyModule_AddIntConstant( Py_main, "smilei_mpi_size", smpi->getSize() );
+    namelist += string("smilei_mpi_size = ") + to_string(smpi->getSize()) + "\n";
     
     // here we add the larget int, important to get a valid seed for randomization
     PyModule_AddIntConstant( Py_main, "smilei_rand_max", RAND_MAX );
+    namelist += string("smilei_rand_max = ") + to_string(RAND_MAX) + "\n\n";
     
+    // Running pyprofiles.py
+    runScript( string( reinterpret_cast<const char *>( pyprofiles_py ), pyprofiles_py_len ), "pyprofiles.py", globals );
+    
+    namelist += "\n\n";
+    namelist += "\"\"\"\n";
+    namelist += "-----------------------------------------------------------------------\n";
+    namelist += "BEGINNING OF THE USER NAMELIST\n";
+    namelist += "\"\"\"\n\n";
     
     // Running the namelists
     for( vector<string>::iterator it=namelistsFiles.begin(); it!=namelistsFiles.end(); it++ ) {
@@ -165,9 +172,14 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         smpi->bcast( strNamelist );
         runScript( strNamelist, ( *it ), globals );
     }
-    // Running pycontrol.py
     
+    // Running pycontrol.py
     runScript( string( reinterpret_cast<const char *>( pycontrol_py ), pycontrol_py_len ), "pycontrol.py", globals );
+    
+    // Run custom pre-processing function
+    MESSAGE(1, "Check for function preprocess()");
+    PyTools::runPyFunction( "preprocess" );
+    PyErr_Clear();
     
     smpi->barrier();
     

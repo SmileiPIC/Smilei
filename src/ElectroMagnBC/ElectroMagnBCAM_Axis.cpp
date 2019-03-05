@@ -54,7 +54,7 @@ ElectroMagnBCAM_Axis::ElectroMagnBCAM_Axis( Params &params, Patch *patch, unsign
 
 void ElectroMagnBCAM_Axis::save_fields( Field *my_field, Patch *patch )
 {
-    ERROR( "Impossible" );
+//    ERROR( "Impossible" );
 }
 
 void ElectroMagnBCAM_Axis::disableExternalFields()
@@ -68,7 +68,7 @@ void ElectroMagnBCAM_Axis::disableExternalFields()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBCAM_Axis::apply( ElectroMagn *EMfields, double time_dual, Patch *patch )
 {
-    return;
+    return; // For the moment, boundary conditions on axis are handled directly in the solvers.
     // Loop on imode
     for( unsigned int imode=0 ; imode< Nmode ; imode++ ) {
     

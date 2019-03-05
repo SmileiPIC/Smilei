@@ -18,13 +18,13 @@ class SimWindow;
 
 
 //! class Species
-class SpeciesAdaptiveV : public SpeciesV
+class SpeciesVAdaptive : public SpeciesV
 {
 public:
     //! Species creator
-    SpeciesAdaptiveV( Params &, Patch * );
+    SpeciesVAdaptive( Params &, Patch * );
     //! Species destructor
-    virtual ~SpeciesAdaptiveV();
+    virtual ~SpeciesVAdaptive();
     
     void resizeCluster( Params &params ) override;
     

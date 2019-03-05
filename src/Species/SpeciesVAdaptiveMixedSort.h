@@ -18,13 +18,13 @@ class SimWindow;
 
 
 //! class Species
-class SpeciesAdaptiveV2 : public SpeciesV
+class SpeciesVAdaptiveMixedSort : public SpeciesV
 {
 public:
     //! Species creator
-    SpeciesAdaptiveV2( Params &, Patch * );
+    SpeciesVAdaptiveMixedSort( Params &, Patch * );
     //! Species destructor
-    virtual ~SpeciesAdaptiveV2();
+    virtual ~SpeciesVAdaptiveMixedSort();
     
     //! Method calculating the Particle dynamics (interpolation, pusher, projection)
     //! without vectorized operators but with the cell sorting algorithm

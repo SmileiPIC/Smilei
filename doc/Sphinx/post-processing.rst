@@ -140,25 +140,25 @@ Open a Field diagnostic
     :ref:`moving window<movingWindow>`
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
-  In the case of a spectral cylindrical geometry (``3drz``), additional argument are
+  In the case of an azimuthal mode cylindrical geometry (``AMcylindrical``), additional argument are
   available. You must choose one of ``theta`` or ``build3d``, defined below, in order
   to construct fields from their complex angular Fourier modes. In addition, the ``modes``
   argument is optional.
 
   * ``theta``: An angle (in radians)
      | Calculates the field in a plane passing through the :math:`r=0` axis
-     | and making an angle ``theta`` with the :math:`xz` plane.
+     | and making an angle ``theta`` with the :math:`xy` plane.
   * ``build3d``: A list of three *ranges*
      | Calculates the field interpolated in a 3D :math:`xyz` grid.
      | Each *range* is a list ``[start, stop, step]`` indicating the beginning,
      | the end and the step of this grid.
   * ``modes``: An integer or a list of integers
-     | Only these modes numbers will be used in the calculation
+     | Only these modes numbers will be used in the calculation. If omited, all modes are used.
 
 **Example**::
 
   S = happi.Open("path/to/my/results")
-  Diag = S.Field(0, "Ex", average = {"x":[4,5]})
+  Diag = S.Field(0, "Ex", average = {"x":[4,5]}, theta=math.pi/4.)
 
 
 ----
@@ -328,7 +328,7 @@ and are therefore averaged other the patches.
 Some are provided at the patch level.
 In the latter case, ``patch_information = True`` has to be put in the namelist.
 
-  **WARNING**: The patch quantities are only compatible with the ``raw`` mode in 3D.
+  **WARNING**: The patch quantities are only compatible with the ``raw`` mode and in `3Dcartesian` geometry.
   The result is the patch matrix with the quantity on each patch
 
 **Available quantities at the MPI level**:

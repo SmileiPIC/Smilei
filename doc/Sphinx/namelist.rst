@@ -64,8 +64,14 @@ for each MPI process). The following steps are executed:
 
 #. The namelist(s) is executed.
 
-#. *Python* runs :py:data:`cleanup()` if the user has defined it
-   (this can be a good place to delete unused heavy variables and unload unused modules).
+#. *Python* runs :py:data:`preprocess()` if the user has defined it.
+   This is a good place to calculate things that are not needed for
+   post-processing with :program:`happi`.
+
+#. The simulation is initialized (including field and particle arrays).
+
+#. *Python* runs :py:data:`cleanup()` if the user has defined it.
+   This is a good place to delete unused heavy variables.
 
 #. *Python* checks whether the *python* interpreter is needed during the simulation
    (e.g. the user has defined a temporal :ref:`profile <profiles>` which requires *python*
@@ -1974,7 +1980,7 @@ The full list of available scalars is given in the table below.
 +----------------+---------------------------------------------------------------------------+
 | **Particle information**                                                                   |
 +----------------+---------------------------------------------------------------------------+
-| | Zavg_abc     | | Average charge of species "abc"                                         |
+| | Zavg_abc     | | Average charge of species "abc" (equals `nan` if no particle)           |
 | | Dens_abc     | |  ... its integrated density                                             |
 | | Ukin_abc     | |  ... its integrated kinetic energy density                              |
 | | Urad_abc     | |  ... its integrated radiated energy density                             |

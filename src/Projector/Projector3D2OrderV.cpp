@@ -153,7 +153,7 @@ void Projector3D2OrderV::currentsAndDensity( double *Jx, double *Jy, double *Jz,
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project charge : frozen & diagFields timstep (not vectorized)
 // ---------------------------------------------------------------------------------------------------------------------
-void Projector3D2OrderV::densityFrozen( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type )
+void Projector3D2OrderV::basic( double *rhoj, Particles &particles, unsigned int ipart, unsigned int type )
 {
     //Warning : this function is used for frozen species or initialization only and doesn't use the standard scheme.
     //rho type = 0

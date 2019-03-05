@@ -265,13 +265,13 @@ void LaserEnvelope3D::compute( ElectroMagn *EMfields )
                 ( *A3Dnew )( i, j, k ) += ( ( *A3D )( i, j-1, k )-2.*( *A3D )( i, j, k )+( *A3D )( i, j+1, k ) )*one_ov_dy_sq; // y part
                 ( *A3Dnew )( i, j, k ) += ( ( *A3D )( i, j, k-1 )-2.*( *A3D )( i, j, k )+( *A3D )( i, j, k+1 ) )*one_ov_dz_sq; // z part
                 // A3Dnew = A3Dnew+2ik0*dA/dx
-                ( *A3Dnew )( i, j, k ) += 2.*i1*k0*( ( *A3D )( i+1, j, k )-( *A3D )( i-1, j, k ) )*one_ov_2dx;
+                ( *A3Dnew )( i, j, k ) += i1_2k0_over_2dx*( ( *A3D )( i+1, j, k )-( *A3D )( i-1, j, k ) );
                 // A3Dnew = A3Dnew*dt^2
                 ( *A3Dnew )( i, j, k )  = ( *A3Dnew )( i, j, k )*dt_sq;
                 // A3Dnew = A3Dnew + 2/c^2 A3D - (1+ik0cdt)A03D/c^2
-                ( *A3Dnew )( i, j, k ) += 2.*( *A3D )( i, j, k )-( 1.+i1*k0_dt )*( *A03D )( i, j, k );
+                ( *A3Dnew )( i, j, k ) += 2.*( *A3D )( i, j, k )-one_plus_ik0dt*( *A03D )( i, j, k );
                 // A3Dnew = A3Dnew * (1+ik0dct)/(1+k0^2c^2dt^2)
-                ( *A3Dnew )( i, j, k )  = ( *A3Dnew )( i, j, k )*( 1.+i1*k0_dt )/( 1.+k0_dt*k0_dt );
+                ( *A3Dnew )( i, j, k )  = ( *A3Dnew )( i, j, k )*one_plus_ik0dt_ov_one_plus_k0sq_dtsq;
             } // end z loop
         } // end y loop
     } // end x loop

@@ -405,7 +405,7 @@ uint64_t DiagnosticFields::getDiskFootPrint( int istart, int istop, Patch *patch
     footprint += ndumps * nfields * 1200;
     
     // Add size of each field
-    footprint += ndumps * nfields * ( uint64_t )( one_patch_buffer_size * tot_number_of_patches * 8 );
+    footprint += ndumps * nfields * ( uint64_t )( total_dataset_size * 8 );
     
     return footprint;
 }

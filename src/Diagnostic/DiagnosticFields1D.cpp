@@ -30,6 +30,7 @@ DiagnosticFields1D::DiagnosticFields1D( Params &params, SmileiMPI *smpi, VectorP
     );
     hsize_t file_size = nsteps;
     one_patch_buffer_size = nsteps;
+    total_dataset_size = nsteps;
     filespace = H5Screate_simple( 1, &file_size, NULL );
     memspace  = H5Screate_simple( 1, &file_size, NULL );
 }
