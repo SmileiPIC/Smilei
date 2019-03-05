@@ -192,36 +192,26 @@ void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
     // Loop on imode
     for( unsigned int imode=0 ; imode<Nmode ; imode++ ) {
         // Static cast of the fields
-        //cField2D* El = (static_cast<ElectroMagnAM*>(EMfields))->El_[imode];
         cField2D *Er = ( static_cast<ElectroMagnAM *>( EMfields ) )->Er_[imode];
         cField2D *Et = ( static_cast<ElectroMagnAM *>( EMfields ) )->Et_[imode];
         cField2D *Bl = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bl_[imode];
         cField2D *Br = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_[imode];
         cField2D *Bt = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_[imode];
         bool isYmin = ( static_cast<ElectroMagnAM *>( EMfields ) )->isYmin;
-        //bool isYmax = (static_cast<ElectroMagnAM*>(EMfields))->isYmax;
         int     j_glob = ( static_cast<ElectroMagnAM *>( EMfields ) )->j_glob_;
         
         if( min_max == 0 && patch->isXmin() ) {
-            //MESSAGE("Xmin");
             // for Br^(d,p)
             vector<double> yp( 1 );
-            //yp[0] = patch->getDomainLocalMin(1) - EMfields->oversize[1]*dr;
-            for( unsigned int j=2*isYmin ; j<nr_p-1 ; j++ ) {
+            for( unsigned int j=2*isYmin ; j<nr_p ; j++ ) {
             
                 std::complex<double> byW = 0.;
-                //yp[0] += dr;
                 yp[0] = patch->getDomainLocalMin( 1 ) +( j - EMfields->oversize[1] )*dr;
                 if( imode==1 ) {
                     // Lasers
                     for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
                         byW +=          vecLaser[ilaser]->getAmplitude0( yp, time_dual, 1+2*j, 0 )
                                         + Icpx * vecLaser[ilaser]->getAmplitude1( yp, time_dual, 1+2*j, 0 );
-                        //if (std::abs(byW)>1.0){
-                        //MESSAGE("byW");
-                        //MESSAGE(byW);
-                        //MESSAGE("j");
-                        //MESSAGE(j);}
                     }
                 }
                 
@@ -231,18 +221,12 @@ void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                                   +              Beta_SM_Xmin    * ( *Br )( i+1, j )
                                   +              Gamma_SM_Xmin   * byW;
                 +              Delta_SM_Xmin   *( ( *Bl )( i, j+1 )- ( *Bl )( i, j ) );
-                //        if (std::abs((*Br)(i,j))>1.){
-                //            MESSAGE("BrAMSM");
-                //            MESSAGE(i);
-                //            MESSAGE(j);
-                //            MESSAGE((*Br)(i,j));
-                //        }
             }//j  ---end compute Br
 
             
             // for Bt^(d,d)
             vector<double> yd( 1 );
-            for( unsigned int j=3*isYmin; j<nr_d-1 ; j++ ) {
+            for( unsigned int j=3*isYmin; j<nr_d ; j++ ) {
             
                 std::complex<double> bzW = 0.;
                 yd[0] = patch->getDomainLocalMin( 1 ) + ( j - 0.5 - EMfields->oversize[1] )*dr;
@@ -251,11 +235,6 @@ void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                     for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
                         bzW +=          vecLaser[ilaser]->getAmplitude1( yd, time_dual, 2*j, 0 )
                                         - Icpx * vecLaser[ilaser]->getAmplitude0( yd, time_dual, 2*j, 0 );
-                        //if (std::abs(bzW)>1.0){
-                        //	MESSAGE("bzW");
-                        //	MESSAGE(bzW);
-                        //	MESSAGE("j");
-                        //	MESSAGE(j);}
                     }
                 }
                 //x=Xmin
@@ -264,89 +243,55 @@ void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                                   +               Beta_SM_Xmin  *( ( *Bt )( i+1, j ) )
                                   +               Gamma_SM_Xmin * bzW
                                   +               Epsilon_SM_Xmin *( double )imode/( ( j_glob+j+0.5 )*dr )*( *Bl )( i, j ) ;
-                //if (std::abs((*Bt)(i,j))>1.){
-                //MESSAGE("BtSM");
-                //MESSAGE(i);
-                //MESSAGE(j);
-                //MESSAGE((*Bt)(i,j));
-                //}
-                
-                //MESSAGE("EPS")
-                //MESSAGE(Epsilon_SM_Xmin *(double)imode/((j_glob+j+0.5)*dr));
                 
             }//j  ---end compute Bt
             if( isYmin && imode != 1 ) {
                 ( *Bt )( 0, 2 ) = -( *Bt )( 0, 3 );
             }
         } else if( min_max == 1 && patch->isXmax() ) {
-            //MESSAGE("Xmax");
             // for Br^(d,p)
             vector<double> yp( 1 );
-            for( unsigned int j=2*isYmin ; j<nr_p-1 ; j++ ) {
+            for( unsigned int j=2*isYmin ; j<nr_p ; j++ ) {
             
                 std::complex<double> byE = 0.;
                 yp[0] = patch->getDomainLocalMin( 1 ) + ( j - EMfields->oversize[1] )*dr;
                 // Lasers
                 if( imode==1 ) {
-                    // Lasers
                     for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
                         byE +=          vecLaser[ilaser]->getAmplitude0( yp, time_dual, 1+2*j, 0 )
                                         + Icpx * vecLaser[ilaser]->getAmplitude1( yp, time_dual, 1+2*j, 0 );
-                        //if (std::abs(byE)>1.0){
-                        //MESSAGE("byE");
-                        //MESSAGE(byE);
-                        //MESSAGE("j");
-                        //MESSAGE(j);}
                     }
                 }
-                unsigned int i= nl_d-1;
+                unsigned int i= nl_p;
                 ( *Br )( i, j ) = - Alpha_SM_Xmax   * ( *Et )( i-1, j )
                                   +                   Beta_SM_Xmax    * ( *Br )( i-1, j )
                                   +                   Gamma_SM_Xmax   * byE
                                   +                   Delta_SM_Xmax   * ( ( *Bl )( i-1, j+1 )- ( *Bl )( i-1, j ) ); // Check x-index
-                //if (std::abs((*Br)(i,j))>1.){
-                //MESSAGE("BrSMM");
-                //MESSAGE(i);
-                //MESSAGE(j);
-                //MESSAGE((*Br)(i,j));
-                //}
                 
             }//j  ---end compute Br
             
             // for Bt^(d,d)
             vector<double> yd( 1 );
-            for( unsigned int j=3*isYmin ; j<nr_d-1 ; j++ ) {
+            for( unsigned int j=3*isYmin ; j<nr_d ; j++ ) {
             
                 std::complex<double> bzE = 0.;
                 yd[0] = patch->getDomainLocalMin( 1 ) + ( j - 0.5  - EMfields->oversize[1] )*dr;
-                // Lasers
                 if( imode==1 ) {
                     // Lasers
                     for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
                         bzE +=         vecLaser[ilaser]->getAmplitude1( yd, time_dual, 2*j, 0 )
                                        -Icpx * vecLaser[ilaser]->getAmplitude0( yd, time_dual, 2*j, 0 );
-                        //if (std::abs(bzE)>1.0){
-                        //MESSAGE("bzE");
-                        //MESSAGE(bzE);
-                        //MESSAGE("j");
-                        //MESSAGE(j);}
                     }
                 }
-                unsigned int i= nl_d-1;
+                unsigned int i= nl_p;
                 ( *Bt )( i, j ) = Alpha_SM_Xmax * ( *Er )( i-1, j )
                                   +                    Beta_SM_Xmax  * ( *Bt )( i-1, j )
                                   +                    Gamma_SM_Xmax * bzE
                                   +					  Epsilon_SM_Xmax * ( double )imode /( ( j_glob+j+0.5 )*dr )* ( *Bl )( i-1, j )	;
-                //if (std::abs((*Bt)(i,j))>1.){
-                //MESSAGE("BtSMM");
-                //MESSAGE(i);
-                //MESSAGE(j);
-                //MESSAGE((*Bt)(i,j));
-                //}
                 
             }//j  ---end compute Bt
             if( isYmin && imode != 1 ) {
-                ( *Bt )( nl_d-1, 2 ) = -( *Bt )( nl_d-1, 3 );
+                ( *Bt )( nl_p, 2 ) = -( *Bt )( nl_p, 3 );
             }
         }
     }
