@@ -110,7 +110,7 @@ Open a Scalar diagnostic
 Open a Field diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Field(diagNumber=None, field=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, moving=False, **kwargs)
+.. py:method:: Field(diagNumber=None, field=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, moving=False, export_dir=None, **kwargs)
 
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``diagNumber``: The number of the fields diagnostic
@@ -138,6 +138,7 @@ Open a Field diagnostic
      | Example: ``average = {"x":[4,5]}`` will average for :math:`x` within [4,5].
   * ``moving``: If ``True``, plots will display the X coordinates evolving according to the
     :ref:`moving window<movingWindow>`
+  * ``export_dir``: The directory where to export VTK files.
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
   In the case of an azimuthal mode cylindrical geometry (``AMcylindrical``), additional argument are
@@ -168,7 +169,7 @@ Open a Probe diagnostic
 
 .. py:method:: Probe(probeNumber=None, field=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, **kwargs)
 
-  * ``timesteps``, ``units``, ``data_log``: same as before.
+  * ``timesteps``, ``units``, ``data_log``, ``export_dir``: same as before.
   * ``probeNumber``: number of the probe (the first one has number 0).
      | If not given, a list of available probes is printed.
   * ``field``: name of the field (``"Bx"``, ``"By"``, ``"Bz"``, ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Jx"``, ``"Jy"``, ``"Jz"`` or ``"Rho"``).
@@ -191,7 +192,7 @@ Open a ParticleBinning diagnostic
 
 .. py:method:: ParticleBinning(diagNumber=None, timesteps=None, subset=None, sum=None, units=[""], data_log=False, **kwargs)
 
-  * ``timesteps``, ``units``, ``data_log``: same as before.
+  * ``timesteps``, ``units``, ``data_log``, ``export_dir``: same as before.
   * ``diagNumber``: number of the particle binning diagnostic (starts at 0).
      | If not given, a list of available diagnostics is printed.
      | It can also be an operation between several diagnostics.
@@ -236,7 +237,7 @@ Open a Screen diagnostic
 
 .. py:method:: Screen(diagNumber=None, timesteps=None, subset=None, sum=None, units=[""], data_log=False, **kwargs)
 
-  * ``timesteps``, ``units``, ``data_log``: same as before.
+  * ``timesteps``, ``units``, ``data_log``, ``export_dir``: same as before.
   * ``diagNumber``: number of the screen diagnostic (the first one has number 0).
      | If not given, a list of available screen diagnostics is printed.
      | It can also be an operation between several Screen diagnostics.
@@ -258,7 +259,7 @@ Open a TrackParticles diagnostic
 
 .. py:method:: TrackParticles(species=None, select="", axes=[], timesteps=None, sort=True, length=None, units=[""], **kwargs)
 
-  * ``timesteps``, ``units``: same as before.
+  * ``timesteps``, ``units``, ``export_dir``: same as before.
   * ``species``: the name of a tracked-particle species.
      | If omitted, a list of available tracked-particle species is printed.
   * ``select``: Instructions for selecting particles among those available.
@@ -313,7 +314,7 @@ and only one mode between those three.
 
 .. py:method:: Performances(raw=None, map=None, histogram=None, timesteps=None, units=[""], data_log=False, species=None, **kwargs)
 
-  * ``timesteps``, ``units``, ``data_log``: same as before.
+  * ``timesteps``, ``units``, ``data_log``, ``export_dir``: same as before.
   * ``raw`` : The name of a quantity, or an operation between them (see quantities below).
     The requested quantity is listed for each process.
   * ``map`` : The name of a quantity, or an operation between them (see quantities below).
@@ -508,10 +509,12 @@ Export 2D or 3D data to VTK
 .. py:method:: Field.toVTK( numberOfPieces=1 )
                Probe.toVTK( numberOfPieces=1 )
                ParticleBinning.toVTK( numberOfPieces=1 )
+               Performances.toVTK( numberOfPieces=1 )
                Screen.toVTK( numberOfPieces=1 )
                TrackParticles.toVTK( rendering="trajectory", data_format="xml" )
 
   Converts the data from a diagnostic object to the vtk format.
+  Note the ``export_dir`` argument available for each diagnostic (see above).
 
   * ``numberOfPieces``: the number of files into which the data will be split.
 
