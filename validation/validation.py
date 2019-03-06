@@ -342,7 +342,7 @@ def RUN_JOLLYJUMPER(command, dir):
 		if VERBOSE :
 	            print(  "qsub command failed once: `"+COMMAND+"`")
                     print(  "Wait and retry")
-		time.sleep(30)
+		time.sleep(10)
 	        try:
 	        	check_call(COMMAND, shell=True)
 	        except CalledProcessError:
