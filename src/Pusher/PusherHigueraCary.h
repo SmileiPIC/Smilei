@@ -15,13 +15,14 @@
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class PusherHigueraCary
 //  --------------------------------------------------------------------------------------------------------------------
-class PusherHigueraCary : public Pusher {
-    public:
-        //! Creator for Pusher
-        PusherHigueraCary(Params& params, Species *species);
-        ~PusherHigueraCary();
-        //! Overloading of () operator
-        virtual void operator() (Particles &particles, SmileiMPI* smpi, int istart, int iend, int ithread, int ipart_ref = 0);
+class PusherHigueraCary : public Pusher
+{
+public:
+    //! Creator for Pusher
+    PusherHigueraCary( Params &params, Species *species );
+    ~PusherHigueraCary();
+    //! Overloading of () operator
+    virtual void operator()( Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, int ipart_ref = 0 );
 };
 
 #endif

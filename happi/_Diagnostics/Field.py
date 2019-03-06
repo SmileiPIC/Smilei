@@ -56,11 +56,25 @@ class Field(Diagnostic):
 		if self.cylindrical:
 			all_fields = list(self._fields)
 			self._fields = {}
-			for f in ["El","Er","Et","Bl","Br","Bt","Jl","Jr","Jt","Rho"]:
-				imode = 0
-				while f+"_mode_"+str(imode) in all_fields:
-					imode += 1
-					self._fields[f] = imode
+			for f in all_fields:
+				try:
+					try:
+						fname, wordmode, imode = f.split('_')
+						species_name = ""
+					except:
+						fname, species_name, wordmode, imode = f.split('_')
+						species_name = "_" + species_name
+					if wordmode != "mode":
+						raise
+					if fname not in ["El","Er","Et","Bl","Br","Bt","Jl","Jr","Jt","Rho"]:
+						raise
+					fname += species_name
+					if fname not in self._fields:
+						self._fields[fname] = []
+					self._fields[fname] += [int(imode)]
+				except:
+					print('WARNING: found unknown field '+f)
+					continue
 		
 		# If no field selected, print available fields and leave
 		if field is None:
@@ -97,6 +111,9 @@ class Field(Diagnostic):
 			if self._re.search(r"\b"+f+r"\b",self._operation):
 				self._operation = self._re.sub(r"\b"+f+r"\b","C['"+f+"']",self._operation)
 				self._fieldname.append(f)
+		if not self._fieldname:
+			self._error += ["String "+self.operation+" does not seem to include any field"]
+			return
 		
 		# Check subset
 		if subset is None: subset = {}
@@ -138,8 +155,8 @@ class Field(Diagnostic):
 					return
 				self._getDataAtTime = self._build3d_getDataAtTime
 			# Test whether "modes" is an int or an iterable on ints
+			max_nmode = max([max(self._fields[f]) for f in self._fieldname])+1
 			if modes is None:
-				max_nmode = max([self._fields[f] for f in self._fieldname])
 				self._modes = range(max_nmode)
 			else:
 				try:
@@ -150,6 +167,15 @@ class Field(Diagnostic):
 					except:
 						self._error += ["Option `modes` must be a number or an iterable on numbers"]
 						return
+				for imode in self._modes:
+					if imode >= max_nmode:
+						self._error += ["Option `modes` cannot contain modes larger than "+str(max_nmode-1)]
+						return
+			# Warning if some modes are not available
+			for f in self._fieldname:
+				unavailable_modes = [str(i) for i in set(self._modes) - set(self._fields[f])]
+				if unavailable_modes:
+					print("WARNING: field "+f+" does not have mode(s): "+','.join(unavailable_modes))
 		
 		# Get the shape of fields
 		fields = [f for f in self._h5items[0].values() if f]
@@ -163,7 +189,7 @@ class Field(Diagnostic):
 		axis_stop  = self._offset + (self._initialShape-0.5)*self._spacing
 		axis_step  = self._spacing
 		if self.cylindrical:
-			if build3d:
+			if build3d is not None:
 				self._initialShape = [int(self._np.ceil( (s[1]-s[0])/float(s[2]) )) for s in build3d]
 				axis_start = build3d[:,0]
 				axis_stop  = build3d[:,1]
@@ -200,7 +226,7 @@ class Field(Diagnostic):
 		self._selection = [self._np.s_[:]]*self._naxes
 		self._offset  = fields[0].attrs['gridGlobalOffset']
 		self._spacing = fields[0].attrs['gridSpacing']
-		axis_name = "xyz" if not self.cylindrical or not build3d else "xr"
+		axis_name = "xyz" if not self.cylindrical or build3d is not None else "xr"
 		for iaxis in range(self._naxes):
 			centers = self._np.arange(axis_start[iaxis], axis_stop[iaxis], axis_step[iaxis])
 			label = axis_name[iaxis]
@@ -261,7 +287,7 @@ class Field(Diagnostic):
 			self._complex_selection_imag = tuple(self._complex_selection_imag)
 			
 			# In the case of "build3d", prepare some data for the 3D construction
-			if build3d:
+			if build3d is not None:
 				# Calculate the raw data positions
 				self._raw_positions = (
 					self._np.arange(self._offset[0], self._offset[0] + (self._raw_shape[0]  -0.5)*self._spacing[0], self._spacing[0] ),
@@ -365,8 +391,8 @@ class Field(Diagnostic):
 		if self.moving and "x_moved" in h5item.attrs and 'x' in self._type:
 			self._xoffset = h5item.attrs["x_moved"]
 			if self.dim>1 and hasattr(self,"_extent"):
-				self._extent[0] = self._xoffset + self._xfactor*self._centers[0][0]
-				self._extent[1] = self._xoffset + self._xfactor*self._centers[0][-1]
+				self._extent[0] = self._xfactor*(self._xoffset + self._centers[0][ 0])
+				self._extent[1] = self._xfactor*(self._xoffset + self._centers[0][-1])
 		
 		 # for each field in operation, obtain the data
 		for field in self._fieldname:
@@ -406,11 +432,11 @@ class Field(Diagnostic):
 		C = {}
 		h5item = self._h5items[index]
 		for field in self._fieldname: # for each field in operation
-			nmode = self._fields[field]
+			available_modes = self._fields[field]
 			F = self._np.zeros(self._finalShape)
 			f = field + "_mode_"
 			for imode in self._modes:
-				if imode >= nmode: continue
+				if imode not in available_modes: continue
 				B_real = self._np.empty(self._finalShape)
 				B_imag = self._np.empty(self._finalShape)
 				try:
@@ -459,11 +485,11 @@ class Field(Diagnostic):
 		C = {}
 		h5item = self._h5items[index]
 		for field in self._fieldname: # for each field in operation
-			nmode = self._fields[field]
+			available_modes = self._fields[field]
 			F = self._np.zeros(self._finalShape)
 			f = field + "_mode_"
 			for imode in self._modes:
-				if imode >= nmode: continue
+				if imode not in available_modes: continue
 				B = self._np.empty(self._raw_shape)
 				try:
 					h5item[f+str(imode)].read_direct(B)

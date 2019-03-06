@@ -8,20 +8,21 @@
 #include "DiagnosticCartFields.h"
 #include "Tools.h"
 
-class DiagnosticCartFields3D : public DiagnosticCartFields {
+class DiagnosticCartFields3D : public DiagnosticCartFields
+{
 public:
-    DiagnosticCartFields3D( Params &params, SmileiMPI* smpi, VectorPatch &vecPatches, int, OpenPMDparams& );
+    DiagnosticCartFields3D( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, int, OpenPMDparams & );
     ~DiagnosticCartFields3D();
     
-    void setFileSplitting( SmileiMPI* smpi, VectorPatch& vecPatches ) override;
+    void setFileSplitting( SmileiMPI *smpi, VectorPatch &vecPatches ) override;
     
     //! Copy patch field to current "data" buffer
-    void getField( Patch* patch, unsigned int ) override;
+    void getField( Patch *patch, unsigned int ) override;
     
-    void writeField(hid_t, int) override;
-
+    void writeField( hid_t, int ) override;
+    
 private:
-    
+
     // Tools for re-reading and re-writing the file in a folded pattern
     hid_t filespace_reread, filespace_firstwrite, memspace_reread, memspace_firstwrite;
     std::vector<double> data_reread, data_rewrite;

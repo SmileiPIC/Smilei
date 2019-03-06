@@ -19,11 +19,42 @@ Upcoming changes
 
 * Interface with the PICSAR library (currently experimental)
 * Cylindrical geometry with Fourier decomposition in azimuthal direction
-* Probe diagnostics of currents and density per species
+
+* Different convention for circular polarization amplitude
+* Bugfix: `LaserGaussian2D` when focused far from boundary
+* Bugfix: laser :py:data:`a0` normalization to :py:data:`omega`
 
 ----
 
 .. _latestVersion:
+
+Release 4.1
+^^^^^^^^^^^^^^^^^^^^^
+
+**Download**: `Smilei v4.1 <_downloads/smilei-v4.1.tar.gz>`_
+
+* Probe diagnostics of currents and density per species
+* Field diagnostics with more than 2^32 points
+* Bugfixes:
+
+ * collisions (badly affected by vectorization)
+ * adaptive vectorization with dynamic load balancing
+ * memory leak in the laser envelope model
+ 
+* Disable usage of `-ipo` to compile on supercomputers despite of saving time simulation
+
+ * it needs too many resources (time and memory) to link
+ * it is recommended to do some tests on a new supercomputer without and then to re-establish it
+
+.. warning::
+
+  Since version 4.1, the :ref:`definition of macro-particle weights<Weights>`
+  has changed to ensure they do not depend on the cell volume. This impacts
+  only the users working directly with values of weights. Other simulation
+  results should be unchanged.
+
+
+----
 
 Release 4.0
 ^^^^^^^^^^^^^^^^^^^^^
@@ -31,10 +62,10 @@ Release 4.0
 **Download**: `Smilei v4.0 <_downloads/smilei-v4.0.tar.gz>`_
 
 * :ref:`vectorization`
+* :ref:`laser_envelope`
 * MPI option `MPI_THREAD_MULTIPLE` is now optional (but recommended)
 * Faster collisions
 * Bugfixes: handling `sum` for happi's `ParticleBinning`
-* :ref:`laser_envelope`
 
 ----
 

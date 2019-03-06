@@ -6,7 +6,6 @@ compile:
   stage: compile
   only:
     - develop
-    - release-4.0.0
     - dev_fields_uncoupling
 
   script:
@@ -20,12 +19,6 @@ compile:
     - make uninstall_happi
     - make happi
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-    - module purge
-    - module load compilers/icc/17.3.191
-    - module load hdf5/1.8.12-icc
-    - module load mpi/openmpi/1.6.5-ib-icc
-    - module load python/2.7.10
-    - module list 2> module.log
     # Run validation script
     - python validation.py -c  -v
 
@@ -33,9 +26,7 @@ makerun1D:
   stage: makerun
   only:
     - develop
-    - release-4.0.0
     - dev_fields_uncoupling
-
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -46,7 +37,6 @@ makerun2D:
   stage: makerun
   only:
     - develop
-    - release-4.0.0
     - dev_fields_uncoupling
 
   script:
@@ -59,7 +49,6 @@ makerun3D:
   stage: makerun
   only:
     - develop
-    - release-4.0.0
     - dev_fields_uncoupling
 
   script:
@@ -68,24 +57,21 @@ makerun3D:
     # Run validation script
     - python validation.py -b "tst3d_??_*.py" -m 4 -o 4 -v -r 1
 
-makerunAM:
-  stage: makerun
-  only:
-    - develop
-    #- release-4.0.0
-    #- dev_fields_uncoupling
-
-  script:
-    # Move in test dir
-    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-    # Run validation script
-    - python validation.py -b "tstAM_??_*.py" -m 4 -o 4 -v
+#makerunAM:
+#  stage: makerun
+#  only:
+#    - develop
+#
+#  script:
+#    # Move in test dir
+#    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+#    # Run validation script
+#    - python validation.py -b "tstAM_??_*.py" -m 4 -o 4 -v
 
 makerunV:
   stage: makerun
   only:
     - develop
-    - release-4.0.0
     - dev_fields_uncoupling
 
   script:
@@ -98,7 +84,6 @@ makerunCollisions:
   stage: makerun
   only:
     - develop
-    - release-4.0.0
     - dev_fields_uncoupling
     
   script:

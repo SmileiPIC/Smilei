@@ -282,7 +282,7 @@ def RUN_POINCARE(command, dir):
 		# if execution fails, exit with exit status 2
 		if VERBOSE :
 			print(  "Execution failed for command `"+command+"`")
-			COMMAND = "/bin/bash cat "+WORKDIR+s+SMILEI_EXE_OUT
+			COMMAND = "/bin/bash cat "+SMILEI_EXE_OUT
 			try :
 				check_call(COMMAND, shell=True)
 			except CalledProcessError:
@@ -302,9 +302,9 @@ def RUN_JOLLYJUMPER(command, dir):
 	- dir: working directory
 	"""
 	EXIT_STATUS="100"
-	exit_status_fd = open(dir+s+"exit_status_file", "w+")
+	exit_status_fd = open(dir+s+"exit_status_file", "w")
 	exit_status_fd.write(str(EXIT_STATUS))
-	exit_status_fd.seek(0)
+	exit_status_fd.close()
 	# Create script
 	with open(EXEC_SCRIPT, 'w') as exec_script_desc:
 		NODES=((int(MPI)*int(OMP)-1)/24)+1
@@ -312,6 +312,15 @@ def RUN_JOLLYJUMPER(command, dir):
 			"#PBS -l nodes="+str(NODES)+":ppn=24 \n"
 			+"#PBS -q default \n"
 			+"#PBS -j oe\n"
+			+"module purge\n"
+                        +"unset MODULEPATH;\n"
+                        +"module use /opt/exp_soft/vo.llr.in2p3.fr/modulefiles_el7\n"
+			+"module load compilers/icc/17.4.196\n"
+			+"module load python/2.7.9\n"
+			+"module load mpi/openmpi/1.6.5-ib-icc\n"
+			+"module load hdf5/1.8.19-icc-omp1.6.5\n"
+			+"module load h5py/hdf5_1.8.19-icc-omp1.6.5-py2.7.9\n"
+			+"module load compilers/gcc/4.9.2\n"
 			+"export OMP_NUM_THREADS="+str(OMP)+" \n"
 			+"export OMP_SCHEDULE=DYNAMIC \n"
 			+"export KMP_AFFINITY=verbose \n"
@@ -319,6 +328,7 @@ def RUN_JOLLYJUMPER(command, dir):
 			+"#Specify the number of sockets per node in -mca orte_num_sockets \n"
 			+"#Specify the number of cores per sockets in -mca orte_num_cores \n"
 			+"cd "+dir+" \n"
+			+"module list 2> module.log\n"
 			+command+" \n"
 			+"echo $? > exit_status_file \n"
 		)
@@ -339,18 +349,18 @@ def RUN_JOLLYJUMPER(command, dir):
 		print( "Submitted job with command `"+command+"`")
 	while ( EXIT_STATUS == "100" ) :
 		time.sleep(5)
+		exit_status_fd = open(dir+s+"exit_status_file", "r+")
 		EXIT_STATUS = exit_status_fd.readline()
-		exit_status_fd.seek(0)
+		exit_status_fd.close()
 	if ( int(EXIT_STATUS) != 0 )  :
 		if VERBOSE :
 			print(  "Execution failed for command `"+command+"`")
-			COMMAND = "cat "+WORKDIR+s+SMILEI_EXE_OUT
+			COMMAND = "cat "+SMILEI_EXE_OUT
 			try :
 				check_call(COMMAND, shell=True)
 			except CalledProcessError:
 				print(  "cat command failed")
 				sys.exit(2)
-		exit_status_fd.close()
 		sys.exit(2)
 
 def RUN_OTHER(command, dir):
@@ -393,7 +403,7 @@ if JOLLYJUMPER in HOSTNAME :
 	NODES=((int(MPI)*int(OMP)-1)/24)+1
 	NPERSOCKET = int(math.ceil(MPI/NODES/2.))
 	COMPILE_COMMAND = 'make -j 12 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
-	CLEAN_COMMAND = 'unset MODULEPATH;module use /opt/exp_soft/vo.llr.in2p3.fr/modulefiles; module load compilers/icc/16.0.109 mpi/openmpi/1.6.5-ib-icc python/2.7.10 hdf5 compilers/gcc/4.8.2 > /dev/null 2>&1;make clean > /dev/null 2>&1'
+	CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
 	SMILEI_DATABASE = SMILEI_ROOT + '/databases/'
 	RUN_COMMAND = "mpirun -mca orte_num_sockets 2 -mca orte_num_cores 12 -cpus-per-proc "+str(OMP)+" --npersocket "+str(NPERSOCKET)+" -n "+str(MPI)+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
 	RUN = RUN_JOLLYJUMPER
@@ -463,6 +473,44 @@ except CalledProcessError as e:
 	sys.exit(3)
 if VERBOSE: print( "")
 
+def findReference(bench_name):
+	try:
+		try:
+			with open(SMILEI_REFERENCES+s+bench_name+".txt", 'rb') as f:
+				return pickle.load(f, fix_imports=True, encoding='latin1')
+		except:
+			with open(SMILEI_REFERENCES+s+bench_name+".txt", 'r') as f:
+				return pickle.load(f)
+	except:
+		print( "Unable to find the reference data for "+bench_name)
+		sys.exit(1)
+
+def matchesWithReference(data, expected_data, data_name, precision):
+	# ok if exactly equal (including strings or lists of strings)
+	try   :
+		if expected_data == data:
+			return True
+	except: pass
+	# If numbers:
+	try:
+		double_data = np.array(np.double(data), ndmin=1)
+		if precision is not None:
+			error = np.abs( double_data-np.array(np.double(expected_data), ndmin=1) )
+			max_error_location = np.unravel_index(np.argmax(error), error.shape)
+			max_error = error[max_error_location]
+			if max_error < precision:
+				return True
+			print( "Reference quantity '"+data_name+"' does not match the data (required precision "+str(precision)+")")
+			print( "Max error = "+str(max_error)+" at index "+str(max_error_location))
+		else:
+			if np.all(double_data == np.double(expected_data)):
+				return True
+			print( "Reference quantity '"+data_name+"' does not match the data")
+	except Exception as e:
+		print( "Reference quantity '"+data_name+"': unable to compare to data")
+		print( e )
+	return False
+
 
 # DEFINE A CLASS TO CREATE A REFERENCE
 class CreateReference(object):
@@ -487,63 +535,28 @@ class CreateReference(object):
 # DEFINE A CLASS TO COMPARE A SIMULATION TO A REFERENCE
 class CompareToReference(object):
 	def __init__(self, bench_name):
-		try:
-			try:
-				with open(SMILEI_REFERENCES+s+bench_name+".txt", 'rb') as f:
-					self.data = pickle.load(f, fix_imports=True, encoding='latin1')
-			except:
-				with open(SMILEI_REFERENCES+s+bench_name+".txt", 'r') as f:
-					self.data = pickle.load(f)
-		except:
-			print( "Unable to find the reference data for "+bench_name)
-			sys.exit(1)
-
+		self.data = findReference(bench_name)
+	
 	def __call__(self, data_name, data, precision=None):
 		# verify the name is in the reference
 		if data_name not in self.data.keys():
 			print( "Reference quantity '"+data_name+"' not found")
 			sys.exit(1)
 		expected_data = self.data[data_name]
-		# ok if exactly equal (including strings or lists of strings)
-		try   :
-			if expected_data == data: return
-		except: pass
-		# If numbers:
-		try:
-			double_data = np.array(np.double(data), ndmin=1)
-			if precision is not None:
-				error = np.abs( double_data-np.array(np.double(expected_data), ndmin=1) )
-				max_error_location = np.unravel_index(np.argmax(error), error.shape)
-				max_error = error[max_error_location]
-				if max_error < precision: return
-				print( "Reference quantity '"+data_name+"' does not match the data (required precision "+str(precision)+")")
-				print( "Max error = "+str(max_error)+" at index "+str(max_error_location))
-			else:
-				if np.all(double_data == np.double(expected_data)): return
-				print( "Reference quantity '"+data_name+"' does not match the data")
-		except Exception as e:
-			print( "Reference quantity '"+data_name+"': unable to compare to data")
-			print( e )
-		print( "Reference data:")
-		print( expected_data)
-		print( "New data:")
-		print( data)
-		sys.exit(1)
+		if not matchesWithReference(data, expected_data, data_name, precision):
+			print( "Reference data:")
+			print( expected_data)
+			print( "New data:")
+			print( data)
+			print( "" )
+			global _dataNotMatching
+			_dataNotMatching = True
 
 # DEFINE A CLASS TO VIEW DIFFERENCES BETWEEN A SIMULATION AND A REFERENCE
 class ShowDiffWithReference(object):
 	def __init__(self, bench_name):
-		try:
-			try:
-				with open(SMILEI_REFERENCES+s+bench_name+".txt", 'rb') as f:
-					self.data = pickle.load(f, fix_imports=True, encoding='latin1')
-			except:
-				with open(SMILEI_REFERENCES+s+bench_name+".txt", 'r') as f:
-					self.data = pickle.load(f)
-		except:
-			print( "Unable to find the reference data for "+bench_name)
-			sys.exit(1)
-
+		self.data = findReference(bench_name)
+	
 	def __call__(self, data_name, data, precision=None):
 		import matplotlib.pyplot as plt
 		plt.ion()
@@ -556,6 +569,10 @@ class ShowDiffWithReference(object):
 		else:
 			expected_data = self.data[data_name]
 		print_data = False
+		# First, check whether the data matches
+		if not matchesWithReference(data, expected_data, data_name, precision):
+			global _dataNotMatching
+			_dataNotMatching = True
 		# try to convert to array
 		try:
 			data_float = np.array(data, dtype=float)
@@ -628,7 +645,7 @@ class ShowDiffWithReference(object):
 
 
 # RUN THE BENCHMARKS
-
+_dataNotMatching = False
 for BENCH in SMILEI_BENCH_LIST :
 
 	SMILEI_BENCH = SMILEI_BENCHS + BENCH
@@ -752,11 +769,13 @@ for BENCH in SMILEI_BENCH_LIST :
 	if not os.path.exists(validation_script):
 		print( "Unable to find the validation script "+validation_script)
 		sys.exit(1)
-
+	
 	# IF REQUIRED, GENERATE THE REFERENCES
 	if GENERATE:
 		if VERBOSE:
+			print( '----------------------------------------------------')
 			print( 'Generating reference for '+BENCH)
+			print( '----------------------------------------------------')
 		Validate = CreateReference(BENCH)
 		execfile(validation_script)
 		Validate.write()
@@ -764,22 +783,34 @@ for BENCH in SMILEI_BENCH_LIST :
 	# OR PLOT DIFFERENCES WITH RESPECT TO EXISTING REFERENCES
 	elif SHOWDIFF:
 		if VERBOSE:
+			print( '----------------------------------------------------')
 			print( 'Viewing differences for '+BENCH)
+			print( '----------------------------------------------------')
 		Validate = ShowDiffWithReference(BENCH)
 		execfile(validation_script)
-
+		if _dataNotMatching:
+			print("Benchmark "+BENCH+" did NOT pass")
+	
 	# OTHERWISE, COMPARE TO THE EXISTING REFERENCES
 	else:
 		if VERBOSE:
+			print( '----------------------------------------------------')
 			print( 'Validating '+BENCH)
+			print( '----------------------------------------------------')
 		Validate = CompareToReference(BENCH)
 		execfile(validation_script)
-
+		if _dataNotMatching:
+			sys.exit(1)
+		# DATA DID NOT MATCH REFERENCES
+	
 	# CLEAN WORKDIRS, GOES HERE ONLY IF SUCCEED
 	os.chdir(WORKDIR_BASE)
 	shutil.rmtree( WORKDIR_BASE+s+'wd_'+os.path.basename(os.path.splitext(BENCH)[0]), True )
 
 	if VERBOSE: print( "")
 
-print( "Everything passed")
+if _dataNotMatching:
+	print( "Errors detected")
+else:
+	print( "Everything passed")
 os.chdir(INITIAL_DIRECTORY)

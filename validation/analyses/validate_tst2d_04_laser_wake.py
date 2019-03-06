@@ -1,4 +1,4 @@
-import os, re, numpy as np, math, glob 
+import os, re, numpy as np, math, glob
 import happi
 
 S = happi.Open(["./restart*"], verbose=False)
@@ -8,6 +8,11 @@ S = happi.Open(["./restart*"], verbose=False)
 # COMPARE THE Ey FIELD
 Ey = S.Field.Field0.Ey(timesteps=1600).getData()[0][::10,:]
 Validate("Ey field at iteration 1600", Ey, 0.1)
+
+# VERIFY SPECIES PROBE
+Validate("Probe Rho_electron == Rho",
+	all(S.Probe(0,'Rho_electron',timesteps=1800).getData()[0] == S.Probe(0,'Rho',timesteps=1800).getData()[0])
+)
 
 # CHECK THE LOAD BALANCING
 txt = ""
@@ -29,4 +34,3 @@ Validate("Scalar Ukin_out_mvw", S.Scalar.Ukin_out_mvw().getData(), 1.    )
 Validate("Scalar Ukin_inj_mvw", S.Scalar.Ukin_inj_mvw().getData(), 2.e-7 )
 Validate("Scalar Uelm_out_mvw", S.Scalar.Uelm_out_mvw().getData(), 1.    )
 Validate("Scalar Uelm_inj_mvw", S.Scalar.Uelm_inj_mvw().getData(), 1.    )
-

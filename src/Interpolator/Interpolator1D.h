@@ -10,14 +10,15 @@
 class Interpolator1D : public Interpolator
 {
 public:
-    Interpolator1D(Params &params, Patch *patch) ;
+    Interpolator1D( Params &params, Patch *patch ) ;
     
     virtual ~Interpolator1D() override {};
     
-    virtual void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, int ipart_ref = 0) override = 0;
-    virtual void operator() (ElectroMagn* EMfields, Particles &particles, SmileiMPI* smpi, int *istart, int *iend, int ithread, LocalFields* JLoc, double* RhoLoc) override = 0;
-    virtual void operator() (ElectroMagn* EMfields, Particles &particles, double *buffer, int offset, std::vector<unsigned int> * selection) override = 0;
-
+    virtual void fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc ) override = 0;
+    virtual void fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 ) override = 0;
+    virtual void fieldsSelection( ElectroMagn *EMfields, Particles &particles, double *buffer, int offset, std::vector<unsigned int> *selection ) override = 0;
+    virtual void oneField( Field *field, Particles &particles, int *istart, int *iend, double *FieldLoc ) override = 0;
+    
 protected:
     //! Inverse of the spatial-step
     double dx_inv_;

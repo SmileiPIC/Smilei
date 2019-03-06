@@ -17,16 +17,16 @@ class Ionization
 
 public:
     //! Constructor for Ionization
-    Ionization(Params& params, Species * species);
+    Ionization( Params &params, Species *species );
     virtual ~Ionization();
     
     //! Overloading of () operator
-    virtual void operator() (Particles*, unsigned int, unsigned int, std::vector<double>*, Patch*, Projector*, int ipart_ref = 0) {};
+    virtual void operator()( Particles *, unsigned int, unsigned int, std::vector<double> *, Patch *, Projector *, int ipart_ref = 0 ) {};
     
     Particles new_electrons;
-
-protected:
     
+protected:
+
     double eV_to_au;
     double au_to_mec2;
     double EC_to_au;
@@ -38,7 +38,7 @@ protected:
     unsigned int nDim_field;
     unsigned int nDim_particle;
     double ionized_species_invmass;
-
+    
 private:
 
 

@@ -113,6 +113,49 @@ but not in the main PIC algorithms.
   The outputs of the code are not converted to SI.
   They are all kept in the reference units listed above.
 
+----
+
+.. _integrated_quantities:
+
+Quantities integrated over the grid
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Special care must be taken when considering local quantities that are spatially
+integrated.
+
+.. rubric:: 1. The spatially-integrated kinetic energy density
+
+The particle kinetic energy density is naturally in units of :math:`K_r N_r`.
+Integrating over space give different results depending on the simulation dimension.
+In 1D, this space a length, with units :math:`L_r`; in 2D, it is a surface, with units
+:math:`L_r^2`; and in 3D, it is a volume, with units :math:`L_r^3`.
+Overall, the integrated energy has the units :math:`K_r N_r L_r^D`
+where :math:`D` is the simulation dimension. Note that we could expect
+to obtain, in 3D, an energy with units :math:`K_r`, but counter-intuitively
+it has the units :math:`K_r N_r L_r^3`.
+
+These kinetic energies appear, for instance, in the :ref:`DiagScalar` as
+``Ukin`` (and associated quantities).
+
+.. rubric:: 2. The spatially-integrated electromagnetic energy density
+
+The electromagnetic energy density has the units :math:`E_r^2/\varepsilon_0 = K_r N_r`.
+Consequently, the spatially-integrated electromagnetic energy density has
+the units :math:`K_r N_r L_r^D`; the same as the integrated kinetic energy density above.
+
+These electromagnetic energies appear, for instance, in the :ref:`DiagScalar` as
+``Uelm`` (and associated quantities).
+
+.. rubric:: 3. The space- & time-integrated Poynting flux
+
+The Poynting flux has the units :math:`E_r B_r / \mu_0 = V_r K_r N_r`.
+Consequently, the flux integrated over a boundary, and over time, has the units
+:math:`V_r K_r N_r L_r^{D-1} T_r = K_r N_r L_r^D`, which is the same as the
+integrated energy densities above.
+
+This integrated Poynting flux appears, for instance, in the :ref:`DiagScalar` as
+``Uelm_bnd``, ``PoyXmin``, ``PoyXminInst`` (and associated quantities).
+
 
 ----
 
@@ -129,21 +172,15 @@ for each particle and is never modified afterwards. Its definition reads:
 .. math::
   
   \textrm{macro-particle weight} = \frac
-      {\textrm{species density in the cell}}
-      {\textrm{number of particles of this species in the cell}}
+      {\textrm{species density} \times \textrm{cell hypervolume}}
+      {\textrm{number of macro-particles in cell}}
 
-As a consequence, the sum of all weights of the particles in one cell is equal to
-the density of the species in this cell, in units of :math:`N_r`.
+As the density is in units of :math:`N_r` and the cell hypervolume in
+units of :math:`L_r^D` (where :math:`D` is the simulation dimension),
+then the units of weights is :math:`N_r L_r^D`.
 
-The charge carried by a macro-particle (in Coulomb) can therefore be retrieved by the inverse operation:
-
-.. math::
-
- \textrm{macro-particle charge} = \tilde{w}\tilde{q}V_{\rm cell}N_r
-
-
-:math:`\tilde{w}` and :math:`\tilde{q}` are the normalized weight and charge of the particle.
-:math:`V_{\rm cell}` is the volume of a single cell of the simulation.
-This last equation can be used to derive charge carried by track particles or to initialize weights in the case of a species which positions are initialized via a numpy array (see :ref:`Species`).
+This definition of weights ensures that they do not depend on the
+cell hypervolume, i.e. they can be reused in another simulation, as long as
+:math:`D`, :math:`L_r` and :math:`N_r` are unchanged.
 
 

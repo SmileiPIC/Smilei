@@ -34,7 +34,7 @@ Set a few environment variables, typically in your `~/.bashrc` or `~/.bash_profi
 Install PICSAR as a library
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-1. Download the `latest version of Picsar <git@bitbucket.org:berkeleylab/picsar.git>`_
+1. Download the `latest version of Picsar <https://bitbucket.org/berkeleylab/picsar.git>`_
 
   .. code-block:: bash  
 

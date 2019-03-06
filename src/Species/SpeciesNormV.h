@@ -15,10 +15,10 @@ class SpeciesNormV : public SpeciesV
 
 public:
     //! Creator for SpeciesNorm
-    SpeciesNormV(Params&, Patch*);
+    SpeciesNormV( Params &, Patch * );
     //! Destructor for SpeciesNorm
     ~SpeciesNormV();
-
+    
 private:
 
 };

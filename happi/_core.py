@@ -76,6 +76,7 @@ class FieldFactory(object):
 	units : a units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
+	export_dir : the directory to export to VTK
 	
 	Usage:
 	------
@@ -170,6 +171,7 @@ class ProbeFactory(object):
 	units : A units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
+	export_dir : the directory to export to VTK
 	
 	Usage:
 	------
@@ -257,6 +259,7 @@ class ParticleBinningFactory(object):
 	units : A units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
+	export_dir : the directory to export to VTK
 	
 	Usage:
 	------
@@ -328,6 +331,7 @@ class PerformancesFactory(object):
 	units : A units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
+	export_dir : the directory to export to VTK
 	
 	Available "quantities":
 	-----------------------
@@ -390,6 +394,7 @@ class ScreenFactory(object):
 	units : A units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
+	export_dir : the directory to export to VTK
 	
 	Usage:
 	------
@@ -471,6 +476,7 @@ class TrackParticlesFactory(object):
 		Example: axes = ["x","px"] correspond to phase-space trajectories.
 	skipAnimation: bool (default: False)
 		When True, the plot() will directly show the full trajectory.
+	export_dir : the directory to export to VTK
 	
 	Usage:
 	------
@@ -567,6 +573,8 @@ def Open(*args, **kwargs):
 		A method to access the `DiagParticleBinning` diagnostic.
 	TrackParticles :
 		A method to access the tracked particles diagnostic.
+	Performances :
+		A method to access the `Performances` diagnostic.
 		
 	"""
 	return SmileiSimulation(*args, **kwargs)
@@ -589,6 +597,8 @@ class SmileiSimulation(object):
 		A method to access the `DiagParticleBinning` diagnostic.
 	TrackParticles :
 		A method to access the tracked particles diagnostic.
+	Performances :
+		A method to access the `Performances` diagnostic.
 		
 	"""
 	

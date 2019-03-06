@@ -11,7 +11,12 @@ class Solver2D : public Solver
 
 public:
     //! Creator for Solver
-    Solver2D(Params &params) : Solver(params) {
+    Solver2D( Params &params ) : Solver( params )
+    {
+        nx_p = params.n_space[0] * params.global_factor[0]+1+2*params.oversize[0];
+        nx_d = params.n_space[0] * params.global_factor[0]+2+2*params.oversize[0];
+        ny_p = params.n_space[1] * params.global_factor[1]+1+2*params.oversize[1];
+        ny_d = params.n_space[1] * params.global_factor[1]+2+2*params.oversize[1];
         
         std::vector<unsigned int> n_space(params.n_space);
         if (params.uncoupled_grids)
@@ -29,8 +34,8 @@ public:
     virtual ~Solver2D() {};
     
     //! Overloading of () operator
-    virtual void operator()( ElectroMagn* fields) = 0;
-
+    virtual void operator()( ElectroMagn *fields ) = 0;
+    
 protected:
     unsigned int nx_p;
     unsigned int nx_d;
@@ -39,7 +44,7 @@ protected:
     double dt;
     double dt_ov_dy;
     double dt_ov_dx;
-
+    
 };//END class
 
 #endif

@@ -110,7 +110,7 @@ Open a Scalar diagnostic
 Open a Field diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Field(diagNumber=None, field=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, moving=False, **kwargs)
+.. py:method:: Field(diagNumber=None, field=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, moving=False, export_dir=None, **kwargs)
 
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``diagNumber``: The number of the fields diagnostic
@@ -138,27 +138,28 @@ Open a Field diagnostic
      | Example: ``average = {"x":[4,5]}`` will average for :math:`x` within [4,5].
   * ``moving``: If ``True``, plots will display the X coordinates evolving according to the
     :ref:`moving window<movingWindow>`
+  * ``export_dir``: The directory where to export VTK files.
   * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
 
-  In the case of a spectral cylindrical geometry (``3drz``), additional argument are
+  In the case of an azimuthal mode cylindrical geometry (``AMcylindrical``), additional argument are
   available. You must choose one of ``theta`` or ``build3d``, defined below, in order
   to construct fields from their complex angular Fourier modes. In addition, the ``modes``
   argument is optional.
 
   * ``theta``: An angle (in radians)
      | Calculates the field in a plane passing through the :math:`r=0` axis
-     | and making an angle ``theta`` with the :math:`xz` plane.
+     | and making an angle ``theta`` with the :math:`xy` plane.
   * ``build3d``: A list of three *ranges*
      | Calculates the field interpolated in a 3D :math:`xyz` grid.
      | Each *range* is a list ``[start, stop, step]`` indicating the beginning,
      | the end and the step of this grid.
   * ``modes``: An integer or a list of integers
-     | Only these modes numbers will be used in the calculation
+     | Only these modes numbers will be used in the calculation. If omited, all modes are used.
 
 **Example**::
 
   S = happi.Open("path/to/my/results")
-  Diag = S.Field(0, "Ex", average = {"x":[4,5]})
+  Diag = S.Field(0, "Ex", average = {"x":[4,5]}, theta=math.pi/4.)
 
 
 ----
@@ -168,7 +169,7 @@ Open a Probe diagnostic
 
 .. py:method:: Probe(probeNumber=None, field=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, **kwargs)
 
-  * ``timesteps``, ``units``, ``data_log``: same as before.
+  * ``timesteps``, ``units``, ``data_log``, ``export_dir``: same as before.
   * ``probeNumber``: number of the probe (the first one has number 0).
      | If not given, a list of available probes is printed.
   * ``field``: name of the field (``"Bx"``, ``"By"``, ``"Bz"``, ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Jx"``, ``"Jy"``, ``"Jz"`` or ``"Rho"``).
@@ -191,7 +192,7 @@ Open a ParticleBinning diagnostic
 
 .. py:method:: ParticleBinning(diagNumber=None, timesteps=None, subset=None, sum=None, units=[""], data_log=False, **kwargs)
 
-  * ``timesteps``, ``units``, ``data_log``: same as before.
+  * ``timesteps``, ``units``, ``data_log``, ``export_dir``: same as before.
   * ``diagNumber``: number of the particle binning diagnostic (starts at 0).
      | If not given, a list of available diagnostics is printed.
      | It can also be an operation between several diagnostics.
@@ -220,6 +221,13 @@ Open a ParticleBinning diagnostic
   S = happi.Open("path/to/my/results")
   Diag = S.ParticleBinning(1)
 
+**Note**:
+
+The :ref:`macro-particle weights<Weights>` are not in units of density,
+but of density multiplied by hypervolume.
+In the ``ParticleBinning`` post-processing, this is accounted for: the
+results are divided by the hypervolume corresponding to the diagnostic's
+definition.
 
 
 ----
@@ -229,7 +237,7 @@ Open a Screen diagnostic
 
 .. py:method:: Screen(diagNumber=None, timesteps=None, subset=None, sum=None, units=[""], data_log=False, **kwargs)
 
-  * ``timesteps``, ``units``, ``data_log``: same as before.
+  * ``timesteps``, ``units``, ``data_log``, ``export_dir``: same as before.
   * ``diagNumber``: number of the screen diagnostic (the first one has number 0).
      | If not given, a list of available screen diagnostics is printed.
      | It can also be an operation between several Screen diagnostics.
@@ -251,7 +259,7 @@ Open a TrackParticles diagnostic
 
 .. py:method:: TrackParticles(species=None, select="", axes=[], timesteps=None, sort=True, length=None, units=[""], **kwargs)
 
-  * ``timesteps``, ``units``: same as before.
+  * ``timesteps``, ``units``, ``export_dir``: same as before.
   * ``species``: the name of a tracked-particle species.
      | If omitted, a list of available tracked-particle species is printed.
   * ``select``: Instructions for selecting particles among those available.
@@ -306,7 +314,7 @@ and only one mode between those three.
 
 .. py:method:: Performances(raw=None, map=None, histogram=None, timesteps=None, units=[""], data_log=False, species=None, **kwargs)
 
-  * ``timesteps``, ``units``, ``data_log``: same as before.
+  * ``timesteps``, ``units``, ``data_log``, ``export_dir``: same as before.
   * ``raw`` : The name of a quantity, or an operation between them (see quantities below).
     The requested quantity is listed for each process.
   * ``map`` : The name of a quantity, or an operation between them (see quantities below).
@@ -321,7 +329,7 @@ and are therefore averaged other the patches.
 Some are provided at the patch level.
 In the latter case, ``patch_information = True`` has to be put in the namelist.
 
-  **WARNING**: The patch quantities are only compatible with the ``raw`` mode in 3D.
+  **WARNING**: The patch quantities are only compatible with the ``raw`` mode and in `3Dcartesian` geometry.
   The result is the patch matrix with the quantity on each patch
 
 **Available quantities at the MPI level**:
@@ -343,6 +351,7 @@ In the latter case, ``patch_information = True`` has to be put in the namelist.
   * ``timer_syncDens``             : time spent synchronzing densities by each proc
   * ``timer_diags``                : time spent by each proc calculating and writing diagnostics
   * ``timer_total``                : the sum of all timers above (except timer_global)
+  * ``memory_total``               : the total memory used by the process
 
 **Available quantities at the patch level**:
   * ``mpi_rank``                   : the MPI rank that contains the current patch
@@ -401,56 +410,6 @@ It has three different syntaxes:
   Otherwise, this parameter can be set during post-processing as an argument to the
   :py:meth:`happi.Open` function.
 
-
-----
-
-Units of ParticleBinning and Screen
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Most of the data output from the ``ParticleBinning`` and ``Screen`` diagnostics is
-proportional to the macro-particle statistical weights, as stated by their
-:py:data:`deposited_quantity` argument. These weights :ref:`are defined as <Weights>`
-the species density divided by the number of macro-particles of this species in the
-cell where the particle is born. Consequently, weights are in units of the number
-density :math:`N_r` (see :doc:`units`), and the sum of all macro-particle weights in
-one cell corresponds to the local species density.
-
-However, the ``DiagParticleBinning`` and ``DiagScreen`` diagnostics do not necessarily
-sum the weights in one cell: they calculate a sum over a *bin* that can be of any size,
-and in any space (phase-space, etc). The data written in the outputs
-``ParticleBinning*.h5`` and ``Screen*.h5`` is thus in units of :math:`N_r`, but does not
-always represent the actual plasma density.
-
-In ``happi``, the post-processing takes into account these features in order for outputs
-to represent the actual plasma density. For instance, if your ``DiagParticleBinning``
-has two axes ``x`` and ``y``, the output will represent the real plasma density. Another
-example: if your ``DiagParticleBinning`` has two axes ``x`` and ``px``, the output
-will be in units of :math:`N_r/P_r` and represents the real plasma density per unit of
-:math:`p_x`.
-
-Let us briefly explain how ``happi`` applies the correction. The idea is that the output
-has to be divided by the number of cells *relevant* to each bin.
-
-* The output is divided by the total number of cells in the simulation
-
-* For each axis of the diagnostic :py:data:`axes`:
-
-  * If the axis is one of ``"x"``, ``"y"`` or ``"z"``:
-
-    * Multiply the outputs by the simulation length along that axis.
-    * If the axis is included in a ``subset`` or a ``sum``: divide by the corresponding *length*.
-    * Otherwise, divide by the length of each bin.
-
-  * Otherwise:
-
-    * If the axis is included in a ``subset`` or a ``sum``: do nothing.
-    * Otherwise, divide by the length of each bin.
-
-As a final note, remember that the :py:data:`axes` of a diagnostic may be a *python function*.
-In this case, if the function represents some spatial axis, then happi cannot know how to
-apply the correction. The user has to figure it out.
-
-
 ----
 
 Obtain the data
@@ -465,7 +424,7 @@ Obtain the data
 
   Returns a list of the data arrays (one element for each timestep requested).
   In the case of ``TrackParticles``, this method returns a dictionary containing one
-  entry for each axis, and if ``sort==True``, these entries are included inside an entry
+  entry for each axis, and if ``sort==False``, these entries are included inside an entry
   for each timestep.
 
   * ``timestep``, if specified, is the only timestep number that is read and returned.
@@ -550,10 +509,12 @@ Export 2D or 3D data to VTK
 .. py:method:: Field.toVTK( numberOfPieces=1 )
                Probe.toVTK( numberOfPieces=1 )
                ParticleBinning.toVTK( numberOfPieces=1 )
+               Performances.toVTK( numberOfPieces=1 )
                Screen.toVTK( numberOfPieces=1 )
                TrackParticles.toVTK( rendering="trajectory", data_format="xml" )
 
   Converts the data from a diagnostic object to the vtk format.
+  Note the ``export_dir`` argument available for each diagnostic (see above).
 
   * ``numberOfPieces``: the number of files into which the data will be split.
 

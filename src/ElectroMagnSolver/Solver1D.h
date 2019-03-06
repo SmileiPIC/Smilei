@@ -11,7 +11,8 @@ class Solver1D : public Solver
 
 public:
     //! Creator for Solver
-    Solver1D(Params &params) : Solver(params) {
+    Solver1D( Params &params ) : Solver( params )
+    {
         std::vector<unsigned int> n_space(params.n_space);
         if (params.uncoupled_grids)
             n_space = params.n_space_domain;
@@ -24,14 +25,14 @@ public:
     virtual ~Solver1D() {};
     
     //! Overloading of () operator
-    virtual void operator()( ElectroMagn* fields) = 0;
-
+    virtual void operator()( ElectroMagn *fields ) = 0;
+    
 protected:
     unsigned int nx_p;
     unsigned int nx_d;
     double dt;
     double dt_ov_dx;
-
+    
 };//END class
 
 #endif

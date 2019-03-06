@@ -12,7 +12,7 @@ interaction to astrophysics.
 .. raw:: html
 
   <div style="width:100%; text-align:center; margin-bottom:8em;">
-  <a href="releases.html#current-release-4-0" class="icon">
+  <a href="releases.html#current-release-4-1" class="icon">
 
 .. image:: _static/download.svg
 
@@ -69,31 +69,10 @@ interaction to astrophysics.
 
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :hidden:
 
-   licence
-   synopsis
-   highlights
-   releases
-
-   units
-   algorithms
-   parallelization
-   vectorization
-   collisions
-   ionization
-   radiation_loss
-   multiphoton_Breit_Wheeler
-   laser_envelope
-   relativistic_fields_initialization
-
-   installation
-   namelist
-   run
-   post-processing
-   contribute
-
-   material
-   partners
-   Smilei tutorials <https://smileipic.github.io/tutorials>
+   overview
+   understand
+   use
+   more

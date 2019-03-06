@@ -20,47 +20,48 @@
 //! RadiationCorrLandauLifshitz class: holds parameters and functions to apply the
 //! continuous radiation loss on particles.
 //------------------------------------------------------------------------------
-class RadiationCorrLandauLifshitz : public Radiation {
+class RadiationCorrLandauLifshitz : public Radiation
+{
 
-    public:
+public:
 
-        //! Constructor for RadiationCorrLandauLifshitz
-        RadiationCorrLandauLifshitz(Params& params, Species * species);
+    //! Constructor for RadiationCorrLandauLifshitz
+    RadiationCorrLandauLifshitz( Params &params, Species *species );
+    
+    //! Destructor for RadiationCorrLandauLifshitz
+    ~RadiationCorrLandauLifshitz();
+    
+    // ---------------------------------------------------------------------
+    //! Overloading of () operator: perform the discontinuous radiation
+    //! reaction induced by the nonlinear inverse Compton scattering
+    //! \param particles   particle object containing the particle
+    //!                    properties
+    //! \param photon_species species that will receive emitted photons
+    //! \param smpi        MPI properties
+    //! \param nlicsTables Cross-section data tables and useful functions
+    //                     for nonlinear inverse Compton scattering
+    //! \param istart      Index of the first particle
+    //! \param iend        Index of the last particle
+    //! \param ithread     Thread index
+    // ---------------------------------------------------------------------
+    virtual void operator()(
+        Particles &particles,
+        Species *photon_species,
+        SmileiMPI *smpi,
+        RadiationTables &RadiationTables,
+        int istart,
+        int iend,
+        int ithread, int ipart_ref = 0 );
+        
+protected:
 
-        //! Destructor for RadiationCorrLandauLifshitz
-        ~RadiationCorrLandauLifshitz();
-
-        // ---------------------------------------------------------------------
-        //! Overloading of () operator: perform the discontinuous radiation
-        //! reaction induced by the nonlinear inverse Compton scattering
-        //! \param particles   particle object containing the particle
-        //!                    properties
-        //! \param photon_species species that will receive emitted photons
-        //! \param smpi        MPI properties
-        //! \param nlicsTables Cross-section data tables and useful functions
-        //                     for nonlinear inverse Compton scattering
-        //! \param istart      Index of the first particle
-        //! \param iend        Index of the last particle
-        //! \param ithread     Thread index
-        // ---------------------------------------------------------------------
-        virtual void operator() (
-                Particles &particles,
-                Species * photon_species,
-                SmileiMPI* smpi,
-                RadiationTables &RadiationTables,
-                int istart,
-                int iend,
-                int ithread, int ipart_ref = 0);
-
-    protected:
-
-        // ________________________________________
-        // General parameters
-
-        //! Under this value, no radiation loss
-        const double chipa_radiation_threshold = 1e-5;
-
-    private:
+    // ________________________________________
+    // General parameters
+    
+    //! Under this value, no radiation loss
+    const double minimum_chi_continuous_ = 1e-5;
+    
+private:
 
 };
 

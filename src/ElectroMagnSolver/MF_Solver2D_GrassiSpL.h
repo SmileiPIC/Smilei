@@ -1,7 +1,7 @@
 #ifndef MF_SOLVER2D_GRASSISPL_H
 #define MF_SOLVER2D_GRASSISPL_H
 
-#include "Solver2D.h" 
+#include "Solver2D.h"
 class ElectroMagn;
 
 //  --------------------------------------------------------------------------------------------------------------------
@@ -12,11 +12,11 @@ class MF_Solver2D_GrassiSpL : public Solver2D
 
 public:
     //! Creator for MF_Solver2D_Yee
-    MF_Solver2D_GrassiSpL(Params &params);
+    MF_Solver2D_GrassiSpL( Params &params );
     virtual ~MF_Solver2D_GrassiSpL();
-
+    
     //! Overloading of () operator
-    virtual void operator()( ElectroMagn* fields);
+    virtual void operator()( ElectroMagn *fields );
     
     // Parameters for the Maxwell-Faraday solver
     double dt_ov_dx;
@@ -27,12 +27,12 @@ public:
     double Ay;
     double Dx;
     double Dy;
-
+    
     
 protected:
     // Check if time filter is applied or not
     bool isEFilterApplied;
-
+    
 };//END class
 
 #endif

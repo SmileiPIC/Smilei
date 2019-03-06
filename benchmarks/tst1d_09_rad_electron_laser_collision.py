@@ -139,7 +139,7 @@ for i,radiation in enumerate(radiation_list):
 # Radiation parameters
 
 RadiationReaction(
-    chipa_disc_min_threshold = 1e-3,
+    minimum_chi_discontinuous = 1e-3,
     table_path = "./"
 )
 

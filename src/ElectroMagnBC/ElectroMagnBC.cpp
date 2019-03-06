@@ -13,10 +13,10 @@
 using namespace std;
 
 // Constructor for ElectromagnBC
-ElectroMagnBC::ElectroMagnBC( Params &params, Patch* patch, unsigned int _min_max ) :
-min_max(_min_max)
+ElectroMagnBC::ElectroMagnBC( Params &params, Patch *patch, unsigned int _min_max ) :
+    min_max( _min_max )
 {
-    vecLaser.resize(0);
+    vecLaser.resize( 0 );
     
     // time step
     dt = params.timestep;
@@ -25,7 +25,7 @@ min_max(_min_max)
 // Destructor for ElectromagnBC
 ElectroMagnBC::~ElectroMagnBC()
 {
-    for (unsigned int i=0; i< vecLaser.size(); i++) {
+    for( unsigned int i=0; i< vecLaser.size(); i++ ) {
         delete vecLaser[i];
     }
     vecLaser.clear();
@@ -38,6 +38,6 @@ void ElectroMagnBC::laserDisabled()
     //for (unsigned int i=0; i< vecLaser.size(); i++) {
     //    vecLaser[i]->disable();
     //}
-    vecLaser.resize(0);
+    vecLaser.resize( 0 );
 }
 

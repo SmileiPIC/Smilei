@@ -19,13 +19,13 @@ using namespace std;
 
 Domain::Domain( Params &params ) :
     vecPatch_( params ),
-    decomposition_(NULL),
-    patch_(NULL),
-    diag_(NULL)
+    decomposition_( NULL ),
+    patch_( NULL ),
+    diag_( NULL )
 {
 }
 
-void Domain::build( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, OpenPMDparams& openPMD )
+void Domain::build( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, OpenPMDparams &openPMD )
 {
     // New_DD
     int rk(0);
@@ -38,59 +38,60 @@ void Domain::build( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, Op
     patch_ = PatchesFactory::create( params, smpi, decomposition_, rk );
     patch_->set( params, decomposition_, vecPatches );
     vecPatch_.patches_.push_back( patch_ );
-
+    
     //vecPatch_.refHindex_ = vecPatches.refHindex_ / vecPatches.size();
-    vecPatch_.update_field_list(smpi);
-
+    vecPatch_.update_field_list( smpi );
+    
     //vecPatch_.update_field_list(0, smpi);
-    vecPatch_.patches_[0]->finalizeMPIenvironment(params);
-    vecPatch_.nrequests = vecPatches(0)->requests_.size();
-    vecPatch_.nAntennas = vecPatch_(0)->EMfields->antennas.size();
+    vecPatch_.patches_[0]->finalizeMPIenvironment( params );
+    vecPatch_.nrequests = vecPatches( 0 )->requests_.size();
+    vecPatch_.nAntennas = vecPatch_( 0 )->EMfields->antennas.size();
     vecPatch_.initExternals( params );
-
+    
     fake_patch = PatchesFactory::clone(vecPatches(0), params, smpi, vecPatches.domain_decomposition_, 0, 0, false);
-
-/*    if ( params.nDim_field == 1 )
-        diag_ = new DiagnosticFields1D( params, smpi, vecPatch_, 0, openPMD ); 
-    else if ( params.nDim_field == 2 )
-        diag_ = new DiagnosticCartFields2D( params, smpi, vecPatch_, 0, openPMD ); 
-    else if ( params.nDim_field == 3 )
-        diag_ = new DiagnosticCartFields3D( params, smpi, vecPatch_, 0, openPMD );
-
-    for (unsigned int ifield=0 ; ifield<vecPatch_(0)->EMfields->Jx_s.size(); ifield++) {
-        if( vecPatch_(0)->EMfields->Jx_s[ifield]->data_ == NULL ){
-            delete vecPatch_(0)->EMfields->Jx_s[ifield];
-            vecPatch_(0)->EMfields->Jx_s[ifield]=NULL;
+        
+    /*    if ( params.nDim_field == 1 )
+            diag_ = new DiagnosticFields1D( params, smpi, vecPatch_, 0, openPMD );
+        else if ( params.nDim_field == 2 )
+            diag_ = new DiagnosticCartFields2D( params, smpi, vecPatch_, 0, openPMD );
+        else if ( params.nDim_field == 3 )
+            diag_ = new DiagnosticCartFields3D( params, smpi, vecPatch_, 0, openPMD );
+    
+        for (unsigned int ifield=0 ; ifield<vecPatch_(0)->EMfields->Jx_s.size(); ifield++) {
+            if( vecPatch_(0)->EMfields->Jx_s[ifield]->data_ == NULL ){
+                delete vecPatch_(0)->EMfields->Jx_s[ifield];
+                vecPatch_(0)->EMfields->Jx_s[ifield]=NULL;
+            }
         }
-    }
-    for (unsigned int ifield=0 ; ifield<vecPatch_(0)->EMfields->Jy_s.size(); ifield++) {
-        if( vecPatch_(0)->EMfields->Jy_s[ifield]->data_ == NULL ){
-            delete vecPatch_(0)->EMfields->Jy_s[ifield];
-            vecPatch_(0)->EMfields->Jy_s[ifield]=NULL;
+        for (unsigned int ifield=0 ; ifield<vecPatch_(0)->EMfields->Jy_s.size(); ifield++) {
+            if( vecPatch_(0)->EMfields->Jy_s[ifield]->data_ == NULL ){
+                delete vecPatch_(0)->EMfields->Jy_s[ifield];
+                vecPatch_(0)->EMfields->Jy_s[ifield]=NULL;
+            }
         }
-    }
-    for (unsigned int ifield=0 ; ifield<vecPatch_(0)->EMfields->Jz_s.size(); ifield++) {
-        if( vecPatch_(0)->EMfields->Jz_s[ifield]->data_ == NULL ){
-            delete vecPatch_(0)->EMfields->Jz_s[ifield];
-            vecPatch_(0)->EMfields->Jz_s[ifield]=NULL;
+        for (unsigned int ifield=0 ; ifield<vecPatch_(0)->EMfields->Jz_s.size(); ifield++) {
+            if( vecPatch_(0)->EMfields->Jz_s[ifield]->data_ == NULL ){
+                delete vecPatch_(0)->EMfields->Jz_s[ifield];
+                vecPatch_(0)->EMfields->Jz_s[ifield]=NULL;
+            }
         }
-    }
-    for (unsigned int ifield=0 ; ifield<vecPatch_(0)->EMfields->rho_s.size(); ifield++) {
-        if( vecPatch_(0)->EMfields->rho_s[ifield]->data_ == NULL ){
-            delete vecPatch_(0)->EMfields->rho_s[ifield];
-            vecPatch_(0)->EMfields->rho_s[ifield]=NULL;
+        for (unsigned int ifield=0 ; ifield<vecPatch_(0)->EMfields->rho_s.size(); ifield++) {
+            if( vecPatch_(0)->EMfields->rho_s[ifield]->data_ == NULL ){
+                delete vecPatch_(0)->EMfields->rho_s[ifield];
+                vecPatch_(0)->EMfields->rho_s[ifield]=NULL;
+            }
         }
+    
+        diag_->init( params, smpi, vecPatch_ );
+        diag_->theTimeIsNow = diag_->prepare( 0 );
+        //if ( diag_->theTimeIsNow )
+        //    diag_->run( smpi, vecPatch_, 0, simWindow );
+    
+    */
+    
+    if( params.is_pxr ) {
+        vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, vecPatch_( 0 )->EMfields );
     }
-
-    diag_->init( params, smpi, vecPatch_ );
-    diag_->theTimeIsNow = diag_->prepare( 0 );
-    //if ( diag_->theTimeIsNow )
-    //    diag_->run( smpi, vecPatch_, 0, simWindow );
-
-*/
-
-    if (params.is_pxr)
-        vecPatch_(0)->EMfields->MaxwellAmpereSolver_->coupling( params, vecPatch_(0)->EMfields ); 
 }
 
 Domain::~Domain()
@@ -99,21 +100,25 @@ Domain::~Domain()
 
 void Domain::clean()
 {
-    if (diag_ !=NULL) {
+    if( diag_ !=NULL ) {
         diag_->closeFile();
         delete diag_;
     }
-    if (patch_!=NULL) delete patch_;
-    if (decomposition_ !=NULL) delete decomposition_;
-
+    if( patch_!=NULL ) {
+        delete patch_;
+    }
+    if( decomposition_ !=NULL ) {
+        delete decomposition_;
+    }
+    
     delete fake_patch;
-
+    
 }
 
-void Domain::solveMaxwell( Params& params, SimWindow* simWindow, int itime, double time_dual, Timers& timers, SmileiMPI* smpi )
+void Domain::solveMaxwell( Params &params, SimWindow *simWindow, int itime, double time_dual, Timers &timers, SmileiMPI *smpi )
 {
     vecPatch_.solveMaxwell( params, simWindow, itime, time_dual, timers, smpi );
-
+    
     // current no more used for now, reinitialized for next timestep
     vecPatch_.resetRhoJ();
 
@@ -282,10 +287,10 @@ void Domain::identify_missing_patches(SmileiMPI* smpi, VectorPatch& vecPatches, 
      
 }
 
-void Domain::solveEnvelope( Params& params, SimWindow* simWindow, int itime, double time_dual, Timers& timers, SmileiMPI* smpi )
+void Domain::solveEnvelope( Params &params, SimWindow *simWindow, int itime, double time_dual, Timers &timers, SmileiMPI *smpi )
 {
     vecPatch_.solveEnvelope( params, simWindow, itime, time_dual, timers, smpi );
-
+    
 }
 
 void Domain::reset_mapping()

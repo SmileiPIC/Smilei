@@ -11,13 +11,13 @@ class PXR_Solver3D_GPSTD : public Solver3D
 {
 
 public:
-    PXR_Solver3D_GPSTD(Params &params);
+    PXR_Solver3D_GPSTD( Params &params );
     virtual ~PXR_Solver3D_GPSTD();
-
-    void coupling( Params &params, ElectroMagn* EMfields ) override;
+    
+    void coupling( Params &params, ElectroMagn *EMfields ) override;
     //! Overloading of () operator
-    virtual void operator()( ElectroMagn* fields);
-
+    virtual void operator()( ElectroMagn *fields ) override;
+    
 protected:
 
 };//END class

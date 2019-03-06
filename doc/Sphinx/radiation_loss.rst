@@ -83,7 +83,7 @@ In the intermediate regime (:math:`\chi \sim 1`), where the energy of the emitte
 small with respect to that of the emitting electrons, but for which the
 stochastic nature of photon emission cannot be neglected, the electron dynamics
 is described by the addition of a stochastic term derived from a Fokker-Planck
-expansion ([Niel2017]_).
+expansion ([Niel2018]_).
 
 Use :numref:`radiationRegimes` to choose properly
 the most appropriate radiation reaction model
@@ -171,6 +171,24 @@ can be written as:
   \frac{d^2N}{dt d\chi_\gamma} = \frac{1}{\pi \sqrt{3}} \frac{\alpha^2}{\tau_e \chi_\pm}
   \left[ \int_\nu^{+\infty}{K_{5/3(y)}dy} + \frac{2 \chi_\gamma \nu}{2} K_{2/3}(\nu) \right]
 
+
+This equation can be also decomposed into:
+
+.. math::
+  :label: PhotonProdRate2
+
+  \frac{d^2N}{dt d\chi} = \frac{2}{3} \frac{\alpha^2}{\tau_e} \frac{S(\chi_\pm , \chi)}{\chi}
+
+where :math:`S(\chi_\pm , \chi)` is so called the synchrotron emissity function.
+
+We therefore have:
+
+.. math::
+  :label: synchrotron_emissivity_function
+
+  S(\chi_\pm , \chi) = \frac{\sqrt{3}}{2\pi} \frac{\chi_\gamma}{\chi}
+  \left[ \int_\nu^{+\infty}{K_{5/3(y)}dy} + \frac{2 \chi_\gamma \nu}{2} K_{2/3}(\nu) \right]
+
 Condition (i) is fulfilled when :math:`a_0 = e \| A^{\mu} \| / mc^2 \gg 1`, :math:`A^{\mu}`
 being the four-potential laser amplitude.
 
@@ -218,7 +236,7 @@ Fokker-Planck stochastic model
 
 The Fokker-Planck approach is an extension of the corrected Landau-Lifshitz
 model with an operator that takes into account diffusive stochastic effects
-([Niel2017]_):
+([Niel2018]_):
 
 .. math::
   :label: NielStochasticForce
@@ -252,65 +270,72 @@ the previous ones and can be divided into several steps ([Duclous2011]_,
 [Lobet2013]_, [Lobet2015]_):
 
 1. An incremental optical depth :math:`\tau`, initially set to 0, is assigned to the particle.
-Emission occurs when it reaches the final optical depth :math:`\tau_f`
-sampled from :math:`\tau_f = -\log{\xi}` where :math:`\xi` is a random number in :math:`\left]0,1\right]`.
+   Emission occurs when it reaches the final optical depth :math:`\tau_f`
+   sampled from :math:`\tau_f = -\log{\xi}` where :math:`\xi` is a random number in :math:`\left]0,1\right]`.
 
 2. The optical depth :math:`\tau` evolves according to the field and particle
-energy variations following this integral:
+   energy variations following this integral:
+   
+   .. math::
+     :label: MCDtauDt
+   
+       \frac{d\tau}{dt} = \int_0^{\chi_{\pm}}{ \frac{d^2N}{d\chi dt}  d\chi }
+       = \frac{2}{3} \frac{\alpha^2}{\tau_e} \int_0^{\chi_{\pm}}{ \frac{S(\chi_\pm, \chi)}{\chi}  d\chi }
+       = \frac{2}{3} \frac{\alpha^2}{\tau_e} K (\chi_\pm)
+   
+   that simply is the production rate of photons
+   (integration of Eq. :eq:`PhotonProdRate`).
+   Here, :math:`\chi_{\pm}` is the emitting electron (or positron) quantum parameter and
+   :math:`\chi` the integration variable.
 
-.. math::
-  :label: MCDtauDt
-
-    \frac{d\tau}{dt} = \int_0^{\chi_{\pm}}{ \frac{d^2N}{d\chi dt}  d\chi }
-
-that simply is the production rate of photons
-(integration of Eq. :eq:`PhotonProdRate`).
-Here, :math:`\chi_{\pm}` is the emitting electron (or positron) quantum parameter and
-:math:`\chi` the integration variable.
-
-3. The emitted photon's quantum parameter :math:`\chi_\gamma` is computed by
-inverting the cumulative distribution function:
-
-.. math::
-  :label: CumulativeDistr
-
-    P(\chi_\pm,\chi_\gamma) = \frac{\displaystyle{\int_0^{\chi_\gamma}{F(\chi_\pm, \chi)
-    d\chi}}}{\displaystyle{\int_0^{\chi_\pm}{F(\chi_\pm, \chi) d\chi}}}
-
-where :math:`F` is the so-called synchrotron emissivity function so that
-
-.. math::
-  :label: MCF
-
-    \frac{d^2 N}{dt d\chi_{\pm}} = \frac{2}{3} \frac{\alpha^2}{\tau_e} F (\chi_\pm, \chi_\gamma)
-
-The inversion of  :math:`P(\chi_\pm,\chi_\gamma)=\xi'` is done after drawing
-a second random number
-:math:`\xi' \in \left[ 0,1\right]` to find :math:`\chi_\gamma`.
+3. The emitted photon's quantum parameter :math:`\chi_{\gamma}` is computed by
+   inverting the cumulative distribution function:
+   
+   .. math::
+     :label: CumulativeDistr
+   
+       \xi = P(\chi_\pm,\chi_{\gamma}) = \frac{\displaystyle{\int_0^{\chi_\gamma}{S(\chi_\pm, \chi) / \chi
+       d\chi}}}{\displaystyle{\int_0^{\chi_\pm}{S(\chi_\pm, \chi) / \chi d\chi}}}
+   
+   where :math:`S` is the so-called synchrotron emissivity function so that
+   
+   .. math::
+     :label: MCF
+   
+       \frac{d^2 N}{dt d\chi} = \frac{2}{3} \frac{\alpha^2}{\tau_e} \frac{S (\chi_\pm, \chi)}{\chi}
+   
+   The inversion of  :math:`\xi = P(\chi_\pm,\chi_{\gamma})` is done after drawing
+   a second random number
+   :math:`\phi \in \left[ 0,1\right]` to find :math:`\chi_{\gamma}` by solving :
+   
+   .. math::
+     :label: inverse_xi
+   
+     \xi^{-1} = P^{-1}(\chi_\pm, \chi_{\gamma}) = \phi
 
 4. The energy of the emitted photon is then computed:
-:math:`\varepsilon_\gamma = mc^2 \gamma_\gamma =
-mc^2 \gamma_\pm \chi_\gamma / \chi_\pm`.
+   :math:`\varepsilon_\gamma = mc^2 \gamma_\gamma =
+   mc^2 \gamma_\pm \chi_\gamma / \chi_\pm`.
 
 5. The particle momentum is then updated using momentum conservation
-considering forward emission (valid when :math:`\gamma_\pm \gg 1`).
-
-.. math::
-  :label: momentumUpdate
-
-    F_{rad} = - \frac{\varepsilon_\gamma}{c} \frac{\mathbf{p_\pm}}{\| \mathbf{p_\pm} \|}
-
-The radiated force is the recoil induced by the photon emission.
-Radiation reaction is therefore a discrete process.
-Note that momentum conservation does not exactly conserve energy.
-It can be shown that the error :math:`\epsilon` tends to 0 when the particle
-energy tends to infinity [Lobet2015]_ and that the error is low when
-:math:`\varepsilon_\pm \gg 1` and :math:`\varepsilon_\gamma \ll \varepsilon_\pm`.
-Between emission events, the electron dynamics is still governed by the
-Lorentz force.
-
-If the photon is emitted as a macro-photon, initial position is the same as
-for the emitting particle. The weight is also conserved.
+   considering forward emission (valid when :math:`\gamma_\pm \gg 1`).
+   
+   .. math::
+     :label: momentumUpdate
+   
+       F_{rad} = - \frac{\varepsilon_\gamma}{c} \frac{\mathbf{p_\pm}}{\| \mathbf{p_\pm} \|}
+   
+   The radiated force is the recoil induced by the photon emission.
+   Radiation reaction is therefore a discrete process.
+   Note that momentum conservation does not exactly conserve energy.
+   It can be shown that the error :math:`\epsilon` tends to 0 when the particle
+   energy tends to infinity [Lobet2015]_ and that the error is low when
+   :math:`\varepsilon_\pm \gg 1` and :math:`\varepsilon_\gamma \ll \varepsilon_\pm`.
+   Between emission events, the electron dynamics is still governed by the
+   Lorentz force.
+   
+   If the photon is emitted as a macro-photon, initial position is the same as
+   for the emitting particle. The weight is also conserved.
 
 --------------------------------------------------------------------------------
 
@@ -330,7 +355,7 @@ Description of the files:
 * Class ``RadiationFactory``: manages the choice of the radiation model among the following.
 * Class ``RadiationLandauLifshitz``: classical Landau-Lifshitz radiation process.
 * Class ``RadiationCorrLandauLifshitz``: corrected Landau-Lifshitz radiation process.
-* Class ``RadiationNiel``: stochastic diffusive model of [Niel2017]_.
+* Class ``RadiationNiel``: stochastic diffusive model of [Niel2018]_.
 * Class ``RadiationMonteCarlo``: Monte-Carlo model.
 
 As explained below, many functions have been tabulated because of
@@ -415,7 +440,12 @@ Monte-Carlo quantum model
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 The computation of Eq. :eq:`MCDtauDt` would be too expensive for every single
-particles. Instead, the integral of the function :math:`F` is tabulated.
+particles.
+Instead, the integral of the function :math:`S(\chi_\pm, \chi) / \chi`
+called :math:`K(\chi_\pm)` is tabulated.
+The tabulation boundaries depend on the user.
+They can be specified in the :program:`\Smilei` input file.
+
 This table is referred to as ``integfochi_table`` and related parameters
 start by ``integfochi`` in the code.
 
@@ -426,8 +456,8 @@ The only difference is that a minimum photon quantum parameter
 .. math::
   :label: chiMin
 
-    \frac{\displaystyle{\int_{0}^{\chi_{\gamma,\min}}{F(\chi_\pm, \chi)
-    d\chi}}}{\displaystyle{\int_0^{\chi_\pm}{F(\chi_\pm, \chi) d\chi}}} < \epsilon
+    \frac{\displaystyle{\int_{0}^{\chi_{\gamma,\min}}{S(\chi_\pm, \chi) / \chi
+    d\chi}}}{\displaystyle{\int_0^{\chi_\pm}{S(\chi_\pm, \chi) / \chi d\chi}}} < \epsilon
 
 This enables to find a lower bound to the :math:`\chi_\gamma` range
 (discretization in the log domain) so that the
@@ -494,7 +524,7 @@ follow the same trajectories.
 The stochastic nature of the emission for high :math:`\chi` values can
 have consequences in term of final spatial and energy distributions.
 Not shown here, the Niel stochastic model does not reproduce correctly the
-moment of order 3 as explained in [Niel2017]_.
+moment of order 3 as explained in [Niel2018]_.
 
 Synchrotron, 2D
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -744,6 +774,7 @@ the Monte-Carlo radiation process.
 +-------------------------------------+------------+----------+--------------+----------+---------------------+
 
 ..
+
     +-------------------------------------+------------+----------+--------------+---------------------+
     | Radiation model                     | None       | LL       | CLL          | MC                  |
     +=====================================+============+==========+==============+=====================+
@@ -773,7 +804,8 @@ Descriptions of the cases:
   configured in quadrant cache using 1 MPI rank and 64 OpenMP threads.
   On KNL, the ``KMP_AFFINITY`` is set to ``fine`` and ``scatter``.
 
-  ..
+..
+
     Only the Niel model provides better performance with a ``compact`` affinity.
 
 * **Thin foil 2D**:

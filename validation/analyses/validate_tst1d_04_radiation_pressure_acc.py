@@ -37,7 +37,7 @@ for i,d in enumerate(S.namelist.DiagScreen):
 	if d.direction=="backward":
 		precision = 0.4
 	elif d.direction=="canceling":
-		precision = 0.7
+		precision = 1.
 	else:
 		precision = 1.5
 	Validate("Screen "+d.shape+" diag with "+d.direction+" direction", last_data, precision)

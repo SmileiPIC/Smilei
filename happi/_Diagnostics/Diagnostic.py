@@ -23,7 +23,8 @@ class Diagnostic(object):
 		self._log = []
 		self._data_log = False
 		self._error = []
-
+		self._xoffset = 0.
+		
 		# The 'simulation' is a SmileiSimulation object. It is passed as an instance attribute
 		self.simulation = simulation
 
@@ -530,7 +531,6 @@ class Diagnostic(object):
 		self._yfactor = (self.options.yfactor or 1.) * self.units.ycoeff
 		self._vfactor = self.units.vcoeff
 		self._tfactor = (self.options.xfactor or 1.) * self.units.tcoeff * self.timestep
-		self._xoffset = 0.
 	def _prepare2(self):
 		# prepare the animating function
 		if not self._animateOnAxes:
@@ -557,7 +557,12 @@ class Diagnostic(object):
 			self._ylabel = self._label[1] + " (" + self._ylabel + ")"
 			if self._log[1]: self._ylabel = "Log[ "+self._ylabel+" ]"
 			# prepare extent for 2d plots
-			self._extent = [self._xfactor*self._centers[0][0], self._xfactor*self._centers[0][-1], self._yfactor*self._centers[1][0], self._yfactor*self._centers[1][-1]]
+			self._extent = [
+				self._xfactor*self._centers[0][0],
+				self._xfactor*self._centers[0][-1],
+				self._yfactor*self._centers[1][0],
+				self._yfactor*self._centers[1][-1]
+			]
 			if self._log[0]:
 				self._extent[0] = self._np.log10(self._extent[0])
 				self._extent[1] = self._np.log10(self._extent[1])
@@ -612,7 +617,7 @@ class Diagnostic(object):
 		return im
 	def _animateOnAxes_1D(self, ax, t, cax_id=0):
 		A = self._getDataAtTime(t)
-		im, = ax.plot(self._xoffset+self._xfactor*self._centers[0], self._vfactor*A, **self.options.plot)
+		im, = ax.plot(self._xfactor*(self._xoffset+self._centers[0]), self._vfactor*A, **self.options.plot)
 		if self._log[0]: ax.set_xscale("log")
 		ax.set_xlabel(self._xlabel)
 		ax.set_ylabel(self._ylabel)
@@ -668,7 +673,9 @@ class Diagnostic(object):
 
 	# Define and output directory in case of exporting
 	def _setExportDir(self, diagName):
-		if len(self._results_path) == 1:
+		if self.options.export_dir is not None:
+			directory = self.options.export_dir
+		elif len(self._results_path) == 1:
 			directory = self._results_path[0]
 		else:
 			directory = self._results_path[0] +self._os.sep+ ".."

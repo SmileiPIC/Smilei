@@ -112,6 +112,8 @@ class SmileiComponent(object):
                 "sim_length"       :"grid_length",
                 "sim_time"         :"simulation_time",
                 "output"           :"deposited_quantity",
+                "chipa_radiation_threshold":"minimum_chi_continuous",
+                "chipa_disc_min_threshold":"minimum_chi_discontinuous",
             }
             for key, value in kwargs.items():
                 if key in deprecated:
@@ -506,11 +508,11 @@ class RadiationReaction(SmileiComponent):
     xip_chiph_dim = 128
     # Output format, can be "ascii", "binary", "hdf5"
     output_format = "hdf5"
-    # Threshold on chipa between the continuous and
-    # the discontinuous approaches
-    chipa_disc_min_threshold = 1e-2
-    # Threshold on chipa: if chipa < 1E-3 no radiation reaction
-    chipa_radiation_threshold = 1e-3
+    # Minimum particle_chi value for the discontinuous radiation
+    # Under this value, the discontinuous approach is not applied
+    minimum_chi_discontinuous = 1e-2
+    # Threshold on particle_chi: if particle_chi < 1E-3 no radiation reaction
+    minimum_chi_continuous = 1e-3
     # Path the tables/databases
     table_path = "./"
 
