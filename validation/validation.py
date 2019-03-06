@@ -352,7 +352,7 @@ def RUN_JOLLYJUMPER(command, dir):
 	        	if VERBOSE :
 	        		print(  "qsub command failed twice: `"+COMMAND+"`")
                                 print(  "Exit")
-	        		sys.exit(2)
+	        	sys.exit(2)
 	if VERBOSE:
 		print( "Submitted job with command `"+command+"`")
 	while ( EXIT_STATUS == "100" ) :
