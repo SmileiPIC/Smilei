@@ -31,10 +31,10 @@ public:
 
     //! Constructor for RadiationLandauLifshitz
     MergingVranic( Params &params, Species *species );
-    
+
     //! Destructor for RadiationLandauLifshitz
     ~MergingVranic();
-    
+
     // ---------------------------------------------------------------------
     //! Overloading of () operator: perform the Vranic particle merging
     //! \param particles   particle object containing the particle
@@ -42,22 +42,23 @@ public:
     //! \param smpi        MPI properties
     //! \param istart      Index of the first particle
     //! \param iend        Index of the last particle
-    //! \param ithread     Thread index
+    //! \param remaining_particles number of remaining particles after the merge
+    //! \param merged_particles number of merged particles after the process
     // ---------------------------------------------------------------------
     virtual void operator()(
         Particles &particles,
         SmileiMPI *smpi,
         int istart,
-        int iend,
-        int ithread,
-        int ipart_ref = 0 );
-        
+        int iend);
+        //unsigned int &remaining_particles,
+        //unsigned int &merged_particles);
+
     // Parameters __________________________________________________
-    
+
     // Minimum and maximum number of particles per packet to be merged
     unsigned int min_packet_size_;
     unsigned int max_packet_size_;
-    
+
 protected:
 
 

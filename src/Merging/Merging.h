@@ -24,33 +24,29 @@ public:
 
     //! Creator for Merging
     Merging( Params &params, Species *species );
-    
+
     virtual ~Merging();
-    
+
     //! Overloading of () operator
     //! \param particles   particle object containing the particle
     //!                    properties of the current species
     //! \param smpi        MPI properties
     //! \param istart      Index of the first particle
     //! \param iend        Index of the last particle
-    //! \param ithread     Thread index
-    //! \param ipart_ref
     virtual void operator()(
         Particles &particles,
         SmileiMPI *smpi,
         int istart,
-        int iend,
-        int ithread,
-        int ipart_ref = 0 ) = 0;
-        
+        int iend) = 0;
+
     // parameters _______________________________________________
-    
+
     // discretization dans chaque direction
     unsigned int dimensions_[3];
-    
+
     // Minimum number of particles per cell to process the merging
     unsigned int merging_ppc_min_threshold_;
-    
+
 protected:
 private:
 };

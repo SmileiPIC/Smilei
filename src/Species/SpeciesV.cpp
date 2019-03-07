@@ -683,12 +683,12 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
                                Patch *patch, SmileiMPI *smpi,
                                std::vector<Diagnostic *> &localDiags )
 {
-    int ithread;
-#ifdef _OPENMP
-    ithread = omp_get_thread_num();
-#else
-    ithread = 0;
-#endif
+//     int ithread;
+// #ifdef _OPENMP
+//     ithread = omp_get_thread_num();
+// #else
+//     ithread = 0;
+// #endif
 
 #ifdef  __DETAILED_TIMERS
     double timer;
@@ -697,11 +697,46 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
 
 
     // Only for moving particles
-    if( time_dual>time_frozen ) { // advance particle momentum
+    if( time_dual>time_frozen ) {
 
-        for( unsigned int scell = 0 ; scell < first_index.size() ; scell++ ) {
-            ( *Merge )( *particles, smpi, first_index[scell], last_index[scell], ithread, first_index[scell] );
+        int scell ;
+        int ip;
+
+        // Resize the cell_keys
+        particles->cell_keys.resize( last_index.back() );
+
+        // For each cell, we apply independently the merging process
+        for( scell = 0 ; scell < first_index.size() ; scell++ ) {
+            ( *Merge )( *particles, smpi, first_index[scell],
+                        last_index[scell]);
         }
+
+        std::cerr << "begin: Removing of the merged particles" << std::endl;
+
+        // Removing of the merged particles
+        for( scell = first_index.size()-1 ; scell >= 0 ; scell-- ) {
+            std::cerr << " count[scell]: " << count[scell] << std::endl;
+            for ( ip = last_index[scell]-1 ; ip >= first_index[scell] ; ip--) {
+                std::cerr << " ip: " << ip
+                          << " cell_keys[ip]: " << particles->cell_keys[ip]
+                          << std::endl;
+                if (particles->cell_keys[ip] < 0) {
+                    //particles->erase_particle(ip);
+                    //particles->cell_keys.erase(particles->cell_keys.begin() + ip);
+                    //count[scell] --;
+                }
+            }
+        }
+
+        std::cerr << "begin: Update of first and last cell indexes" << std::endl;
+
+        // Update of first and last cell indexes
+        // first_index[0] = 0;
+        // last_index[0] = count[0];
+        // for( scell = 1 ; scell < first_index.size(); scell++ ) {
+        //     first_index[scell] = last_index[scell-1];
+        //     last_index[scell] = first_index[scell];
+        // }
 
     }
 

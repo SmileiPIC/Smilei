@@ -38,15 +38,16 @@ MergingVranic::~MergingVranic()
 //! \param smpi        MPI properties
 //! \param istart      Index of the first particle
 //! \param iend        Index of the last particle
-//! \param ithread     Thread index
+//! \param remaining_particles number of remaining particles after the merge
+//! \param merged_particles number of merged particles after the process
 // ---------------------------------------------------------------------
 void MergingVranic::operator() (
         Particles &particles,
         SmileiMPI* smpi,
         int istart,
-        int iend,
-        int ithread,
-        int ipart_ref)
+        int iend)
+        //unsigned int &remaining_particles,
+        //unsigned int &merged_particles)
 {
 
     // First of all, we check that there is enought particles per cell
@@ -118,8 +119,8 @@ void MergingVranic::operator() (
         // Weight shortcut
         double *weight = &( particles.weight( 0 ) );
 
-        // Id shortcut
-        uint64_t *id = &( particles.id( 0 ) );
+        // CEll keys shortcut
+        int *cell_keys = &( particles.cell_keys[0] );
 
         // Norm of the momentum
         double momentum_norm;
@@ -441,17 +442,19 @@ void MergingVranic::operator() (
                             momentum[0][ipart] = new_momentum_norm*(cos_omega*e1_x + sin_omega*e2_x);
                             momentum[1][ipart] = new_momentum_norm*(cos_omega*e1_y + sin_omega*e2_y);
                             momentum[2][ipart] = new_momentum_norm*(cos_omega*e1_z + sin_omega*e2_z);
+                            weight[ipart] = 0.5*total_weight;
 
                             // Update momentum of the second particle
                             ipart = sorted_particles[momentum_cell_particle_index[ic] + ipack*4 + 1];
                             momentum[0][ipart] = new_momentum_norm*(cos_omega*e1_x - sin_omega*e2_x);
                             momentum[1][ipart] = new_momentum_norm*(cos_omega*e1_y - sin_omega*e2_y);
                             momentum[2][ipart] = new_momentum_norm*(cos_omega*e1_z - sin_omega*e2_z);
+                            weight[ipart] = 0.5*total_weight;
 
                             // Other particles are tagged to be removed after
                             for (ip = ipack*4 + 2; ip < ipack*4 + 4 ; ip ++) {
                                 ipart = sorted_particles[momentum_cell_particle_index[ic] + ipack*4 + ip];
-                                // id[ipart] = 0;
+                                cell_keys[ipart] = -1;
                             }
 
                         }
