@@ -110,6 +110,7 @@ void MergingVranic::operator() (
         double new_momentum_norm;
         double e1_x,e1_y,e1_z;
         double e2_x,e2_y,e2_z;
+        double e2_norm;
 
         // Momentum shortcut
         double* momentum[3];
@@ -397,7 +398,8 @@ void MergingVranic::operator() (
                                 total_momentum[2] += momentum[2][ipart]*weight[ipart];
 
                                 // total energy (\varespilon_t)
-                                total_energy += sqrt(1.0 + momentum[0][ipart]*momentum[0][ipart]
+                                total_energy += weight[ipart]
+                                                         * sqrt(1.0 + momentum[0][ipart]*momentum[0][ipart]
                                                          + momentum[1][ipart]*momentum[1][ipart]
                                                          + momentum[2][ipart]*momentum[2][ipart]);
                             }
@@ -406,7 +408,7 @@ void MergingVranic::operator() (
                             new_energy = total_energy / total_weight;
 
                             // pa in Vranic et al.
-                            new_momentum_norm = sqrt(new_energy*new_energy - 1);
+                            new_momentum_norm = sqrt(new_energy*new_energy - 1.0);
 
                             total_momentum_norm = sqrt(total_momentum[0]*total_momentum[0]
                                                 +      total_momentum[1]*total_momentum[1]
@@ -434,6 +436,13 @@ void MergingVranic::operator() (
                                  - e1_z * (e1_x*cell_vec_x[icc] + e1_y*cell_vec_y[icc])
                                  + e1_y*e1_y*cell_vec_z[icc];
 
+                            e2_norm = sqrt(e2_x*e2_x + e2_y*e2_y + e2_z*e2_z);
+
+                            // e2 is normalized to be a unit vector
+                            e2_x = e2_x / e2_norm;
+                            e2_y = e2_y / e2_norm;
+                            e2_z = e2_z / e2_norm;
+
                             // The first 2 particles of the list will
                             // be the merged particles.
 
@@ -451,9 +460,20 @@ void MergingVranic::operator() (
                             momentum[2][ipart] = new_momentum_norm*(cos_omega*e1_z - sin_omega*e2_z);
                             weight[ipart] = 0.5*total_weight;
 
+                            // std::cerr << " Total energy: " << sqrt(1.0
+                            //                                   + momentum[0][ipart]*momentum[0][ipart]
+                            //                                   + momentum[1][ipart]*momentum[1][ipart]
+                            //                                   + momentum[2][ipart]*momentum[2][ipart])
+                            //           << " New energy: " << new_energy
+                            //           << " Momentum norm: " << sqrt(momentum[0][ipart]*momentum[0][ipart]
+                            //           + momentum[1][ipart]*momentum[1][ipart]
+                            //           + momentum[2][ipart]*momentum[2][ipart])
+                            //           << " new momentum: " << new_momentum_norm
+                            //           << std::endl;
+
                             // Other particles are tagged to be removed after
                             for (ip = ipack*4 + 2; ip < ipack*4 + 4 ; ip ++) {
-                                ipart = sorted_particles[momentum_cell_particle_index[ic] + ipack*4 + ip];
+                                ipart = sorted_particles[momentum_cell_particle_index[ic] + ip];
                                 cell_keys[ipart] = -1;
                             }
 

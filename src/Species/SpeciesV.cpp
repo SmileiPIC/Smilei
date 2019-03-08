@@ -705,38 +705,45 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
         // Resize the cell_keys
         particles->cell_keys.resize( last_index.back() );
 
+        //std::cerr << " count[scell]: " << count[scell] << std::endl;
+        // Reinitialize the cell_keys array
+        #pragma omp simd
+        for ( ip = 0; ip <= last_index.back() ; ip++) {
+                particles->cell_keys[ip] = 0;
+        }
+
         // For each cell, we apply independently the merging process
         for( scell = 0 ; scell < first_index.size() ; scell++ ) {
             ( *Merge )( *particles, smpi, first_index[scell],
                         last_index[scell]);
         }
 
-        std::cerr << "begin: Removing of the merged particles" << std::endl;
+        //std::cerr << "begin: Removing of the merged particles" << std::endl;
 
         // Removing of the merged particles
         for( scell = first_index.size()-1 ; scell >= 0 ; scell-- ) {
-            std::cerr << " count[scell]: " << count[scell] << std::endl;
+            //std::cerr << " count[scell]: " << count[scell] << std::endl;
             for ( ip = last_index[scell]-1 ; ip >= first_index[scell] ; ip--) {
-                std::cerr << " ip: " << ip
-                          << " cell_keys[ip]: " << particles->cell_keys[ip]
-                          << std::endl;
+                // std::cerr << " ip: " << ip
+                //           << " cell_keys[ip]: " << particles->cell_keys[ip]
+                //           << std::endl;
                 if (particles->cell_keys[ip] < 0) {
-                    //particles->erase_particle(ip);
-                    //particles->cell_keys.erase(particles->cell_keys.begin() + ip);
-                    //count[scell] --;
+                    particles->erase_particle(ip);
+                    particles->cell_keys.erase(particles->cell_keys.begin() + ip);
+                    count[scell] --;
                 }
             }
         }
 
-        std::cerr << "begin: Update of first and last cell indexes" << std::endl;
+        //std::cerr << "begin: Update of first and last cell indexes" << std::endl;
 
         // Update of first and last cell indexes
-        // first_index[0] = 0;
-        // last_index[0] = count[0];
-        // for( scell = 1 ; scell < first_index.size(); scell++ ) {
-        //     first_index[scell] = last_index[scell-1];
-        //     last_index[scell] = first_index[scell];
-        // }
+        first_index[0] = 0;
+        last_index[0] = count[0];
+        for( scell = 1 ; scell < first_index.size(); scell++ ) {
+            first_index[scell] = last_index[scell-1];
+            last_index[scell] = first_index[scell]+ count[scell];
+        }
 
     }
 
