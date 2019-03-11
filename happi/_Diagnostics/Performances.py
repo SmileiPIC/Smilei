@@ -36,6 +36,22 @@ def HilbertCurveMatrix2D(m1, m2=None, oversize=0):
 			A[o:K2, (j*J+o):((j+1)*J+o)] = A[o:K2, o:K2] + (j*Npoints)
 	return A
 
+# Method to create a matrix containing the hindex of a 2D linXY curve
+def LinXYCurveMatrix2D(n, oversize=0):
+	import numpy as np
+	o = oversize
+	A = np.zeros((n[1]+2*o, n[0]+2*o), dtype="uint32")
+	A[o:-o, o:-o] = np.arange(n[0]*n[1]).reshape(n[1],n[0])
+	return A
+
+# Method to create a matrix containing the hindex of a 2D linYX curve
+def LinYXCurveMatrix2D(n, oversize=0):
+	import numpy as np
+	o = oversize
+	A = np.zeros((n[1]+2*o, n[0]+2*o), dtype="uint32")
+	A[o:-o, o:-o] = np.arange(n[0]*n[1]).reshape(n[0],n[1]).T
+	return A
+
 # Method to partition a matrix depending on a list of values
 def PartitionMatrix( matrix, listOfValues, oversize=0 ):
 	import numpy as np
@@ -77,6 +93,8 @@ class Performances(Diagnostic):
 				if self._availableQuantities_double and self._availableQuantities_double!=quantities_double: raise
 				self._availableQuantities_uint   = quantities_uint
 				self._availableQuantities_double = quantities_double
+				if "patch_arrangement" in f.attrs:
+					self.patch_arrangement = f.attrs["patch_arrangement"].decode()
 			except:
 				self._error += ["Diagnostic not loaded: file '"+file+"' does not seem to contain correct data"]
 				return
@@ -119,7 +137,7 @@ class Performances(Diagnostic):
 				self._error += ["Diagnostic not loaded: argument `raw` must be a string"]
 				return
 			self.operation = raw
-			self._mode = 0
+			self._mode = "raw"
 
 		elif map is not None:
 			if type(map) is not str:
@@ -129,7 +147,7 @@ class Performances(Diagnostic):
 				self._error += ["Diagnostic not loaded: argument `map` not available in "+str(self._ndim)+"D"]
 				return
 			self.operation = map
-			self._mode = 1
+			self._mode = "map"
 			self._m = [int(self._np.log2(n)) for n in self._number_of_patches]
 
 		elif histogram is not None:
@@ -147,7 +165,7 @@ class Performances(Diagnostic):
 			except:
 				self._error += ["Diagnostic not loaded: argument `histogram` must be a list like ['quantity',min,max,nsteps]"]
 				return
-			self._mode = 2
+			self._mode = "hist"
 
 		# Parse the operation
 		self._operation = self.operation
@@ -176,6 +194,9 @@ class Performances(Diagnostic):
 		# Put data_log as object's variable
 		self._data_log = data_log
 
+		# In case of "vecto" quantity, get the species
+		if species is not None:
+			self._species = str(species)
 
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
@@ -190,13 +211,6 @@ class Performances(Diagnostic):
 			except:
 				self._error += ["Argument `timesteps` must be one or two non-negative integers"]
 				return
-
-		if species is not None:
-			if type(species) is not str:
-				print("Species must a string and refers to the name of one of the available species")
-				return
-			else:
-				self._species = species
 
 		# Need at least one timestep
 		if self._timesteps.size < 1:
@@ -338,11 +352,11 @@ class Performances(Diagnostic):
 		if self._data_log: A = self._np.log10(A)
 
 		# If raw requested
-		if self._mode == 0:
+		if self._mode == "raw":
 			return A
 
 		# If map requested
-		elif self._mode == 1:
+		elif self._mode == "map":
 
 			# Extract the array "hindex"
 			hindices = self._np.empty((self._nprocs,), dtype="uint")
@@ -366,17 +380,25 @@ class Performances(Diagnostic):
 
 			elif self._ndim == 2:
 				# Make a matrix with patch indices on the Hilbert curve
-				if not hasattr(self, "_hilbert"):
-					self._hilbert = HilbertCurveMatrix2D(self._m[0], self._m[1], oversize=1)
-
+				if not hasattr(self, "_curvematrix"):
+					if self.patch_arrangement == 'hilbertian':
+						self._curvematrix = HilbertCurveMatrix2D(self._m[0], self._m[1], oversize=1)
+					elif self.patch_arrangement == 'linearized_XY':
+						self._curvematrix = LinXYCurveMatrix2D(self._number_of_patches, oversize=1)
+					elif self.patch_arrangement == 'linearized_YX':
+						self._curvematrix = LinYXCurveMatrix2D(self._number_of_patches, oversize=1)
+					else:
+						print("Error: patch arrangement "+str(self.patch_arrangement)+" not implemented")
+						return []
+					
 				# Make a matrix with MPI ranks at each patch location
-				self._ranks = PartitionMatrix( self._hilbert, hindices, oversize=1 )
+				self._ranks = PartitionMatrix( self._curvematrix, hindices, oversize=1 )
 
 				# For each patch, associate the data of corresponding MPI rank
 				return A[self._ranks[1:-1,1:-1]]
 
 		# If histogram requested
-		elif self._mode == 2:
+		elif self._mode == "hist":
 			histogram, _ = self._np.histogram( A, self._edges )
 			return histogram
 
@@ -432,7 +454,7 @@ class Performances(Diagnostic):
 			if self._verbose: print("Successfully exported to VTK, folder='"+self._exportDir)
 
 	def _prepare4(self):
-		if self._mode == 1 and self._ndim==2:
+		if self._mode == "map" and self._ndim==2:
 			self._extent = [
 				0., self._xfactor*self._number_of_patches[0]*self._patch_length[0],
 				0., self._yfactor*self._number_of_patches[1]*self._patch_length[1]

@@ -313,8 +313,8 @@ def RUN_JOLLYJUMPER(command, dir):
 			+"#PBS -q default \n"
 			+"#PBS -j oe\n"
 			+"module purge\n"
-                        +"unset MODULEPATH;\n"
-                        +"module use /opt/exp_soft/vo.llr.in2p3.fr/modulefiles_el7\n"
+			+"unset MODULEPATH;\n"
+			+"module use /opt/exp_soft/vo.llr.in2p3.fr/modulefiles_el7\n"
 			+"module load compilers/icc/17.4.196\n"
 			+"module load python/2.7.9\n"
 			+"module load mpi/openmpi/1.6.5-ib-icc\n"
@@ -338,21 +338,21 @@ def RUN_JOLLYJUMPER(command, dir):
 		check_call(COMMAND, shell=True)
 	except CalledProcessError:
 		# if command qsub fails, exit with exit status 2
-                #Retry once in case the server was rebooting
+		#Retry once in case the server was rebooting
 		if VERBOSE :
-	            print(  "qsub command failed once: `"+COMMAND+"`")
-                    print(  "Wait and retry")
+			print(  "qsub command failed once: `"+COMMAND+"`")
+			print(  "Wait and retry")
 		time.sleep(10)
-	        try:
-	        	check_call(COMMAND, shell=True)
-	        except CalledProcessError:
-	        	if dir==WORKDIR:
-	        		os.chdir(WORKDIR_BASE)
-	        		shutil.rmtree(WORKDIR)
-	        	if VERBOSE :
-	        		print(  "qsub command failed twice: `"+COMMAND+"`")
-                                print(  "Exit")
-	        	sys.exit(2)
+		try:
+			check_call(COMMAND, shell=True)
+		except CalledProcessError:
+			if dir==WORKDIR:
+				os.chdir(WORKDIR_BASE)
+				shutil.rmtree(WORKDIR)
+			if VERBOSE :
+				print(  "qsub command failed twice: `"+COMMAND+"`")
+				print(  "Exit")
+			sys.exit(2)
 	if VERBOSE:
 		print( "Submitted job with command `"+command+"`")
 	while ( EXIT_STATUS == "100" ) :
