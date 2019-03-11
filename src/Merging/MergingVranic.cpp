@@ -25,6 +25,10 @@ MergingVranic::MergingVranic(Params& params,
     dimensions_[0] = (unsigned int)(species->merge_momentum_cell_size_[0]);
     dimensions_[1] = (unsigned int)(species->merge_momentum_cell_size_[1]);
     dimensions_[2] = (unsigned int)(species->merge_momentum_cell_size_[2]);
+
+    // Min and max particle per cell number
+    min_packet_size_ = species->merge_min_packet_size_;
+    max_packet_size_ = species->merge_max_packet_size_;
 }
 
 // -----------------------------------------------------------------------------
@@ -97,6 +101,7 @@ void MergingVranic::operator() (
                                     * dimensions_[1]
                                     * dimensions_[2];
 
+        // Total number of angular momentum cells
         unsigned int momentum_angular_cells = dimensions_[1]
                                             * dimensions_[2];
 
@@ -152,7 +157,7 @@ void MergingVranic::operator() (
         //std::cerr << iend-istart << std::endl;
 
         // ________________________________________________
-        // First step: Computation of the maxima and minima
+        // Computation of the maxima and minima for each direction
 
         momentum_norm = sqrt(momentum[0][istart]*momentum[0][istart]
                       + momentum[1][istart]*momentum[1][istart]
@@ -267,7 +272,7 @@ void MergingVranic::operator() (
 
         // The number of particles per momentum cells
         // is then determined.
-        // This loop is not efficient when vectorized because of random memory accesses
+        // No vectorization because of random memory accesses
         for (ip=0; ip<(unsigned int)(iend-istart); ip++ ) {
             // Number of particles per momentum cells
             particles_per_momentum_cells[momentum_cell_index[ip]] += 1;
@@ -356,7 +361,7 @@ void MergingVranic::operator() (
                     // 1D cell index
                     ic = mr_i * momentum_angular_cells + icc;
 
-                    if (particles_per_momentum_cells[ic] >= 4 ) {
+                    if (particles_per_momentum_cells[ic] >= min_packet_size_ ) {
                         /*std::cerr << "ic: " << ic
                                   << ", ppmc: " << particles_per_momentum_cells[ic]
                                   << std::endl;*/
@@ -368,7 +373,7 @@ void MergingVranic::operator() (
                                               << (theta_i+1) * theta_delta + theta_min  << "]"
                                 << std::endl;*/
 
-                        npack = particles_per_momentum_cells[ic]/4;
+                        npack = particles_per_momentum_cells[ic]/max_packet_size_;
 
                         // Loop over the packets of particles that can be merged
                         for (ipack = 0 ; ipack < npack ; ipack += 1) {
@@ -382,7 +387,7 @@ void MergingVranic::operator() (
                             /*std::cerr << "   Merging start: " << std::endl;*/
 
                             // Compute total weight, total momentum and total energy
-                            for (ip = ipack*4 ; ip < ipack*4 + 4 ; ip ++) {
+                            for (ip = ipack*max_packet_size_ ; ip < (ipack+1)*max_packet_size_ ; ip ++) {
 
                                 ipart = sorted_particles[momentum_cell_particle_index[ic] + ip];
 
@@ -448,14 +453,14 @@ void MergingVranic::operator() (
                             // be the merged particles.
 
                             // Update momentum of the first particle
-                            ipart = sorted_particles[momentum_cell_particle_index[ic] + ipack*4];
+                            ipart = sorted_particles[momentum_cell_particle_index[ic] + ipack*max_packet_size_];
                             momentum[0][ipart] = new_momentum_norm*(cos_omega*e1_x + sin_omega*e2_x);
                             momentum[1][ipart] = new_momentum_norm*(cos_omega*e1_y + sin_omega*e2_y);
                             momentum[2][ipart] = new_momentum_norm*(cos_omega*e1_z + sin_omega*e2_z);
                             weight[ipart] = 0.5*total_weight;
 
                             // Update momentum of the second particle
-                            ipart = sorted_particles[momentum_cell_particle_index[ic] + ipack*4 + 1];
+                            ipart = sorted_particles[momentum_cell_particle_index[ic] + ipack*max_packet_size_ + 1];
                             momentum[0][ipart] = new_momentum_norm*(cos_omega*e1_x - sin_omega*e2_x);
                             momentum[1][ipart] = new_momentum_norm*(cos_omega*e1_y - sin_omega*e2_y);
                             momentum[2][ipart] = new_momentum_norm*(cos_omega*e1_z - sin_omega*e2_z);
@@ -473,7 +478,7 @@ void MergingVranic::operator() (
                             //           << std::endl;
 
                             // Other particles are tagged to be removed after
-                            for (ip = ipack*4 + 2; ip < ipack*4 + 4 ; ip ++) {
+                            for (ip = ipack*max_packet_size_ + 2; ip < (ipack+1)*max_packet_size_ ; ip ++) {
                                 ipart = sorted_particles[momentum_cell_particle_index[ic] + ip];
                                 cell_keys[ipart] = -1;
                             }

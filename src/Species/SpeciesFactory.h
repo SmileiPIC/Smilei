@@ -371,17 +371,17 @@ public:
             if( thisSpecies->merging_method_ != "none" ) {
                 MESSAGE( 2, "> Particle merging with the method: "
                          << thisSpecies->merging_method_ );
-                MESSAGE( 2, "> Merging time selection: "
+                MESSAGE( 3, "| Merging time selection: "
                          << thisSpecies->merging_time_selection_->info() );
-                MESSAGE( 2, "> Momentum cell discretization: "
+                MESSAGE( 3, "| Momentum cell discretization: "
                          << thisSpecies->merge_momentum_cell_size_[0] << " "
                          << thisSpecies->merge_momentum_cell_size_[1] << " "
                          << thisSpecies->merge_momentum_cell_size_[2] << " ");
-                MESSAGE( 2, "> Minimum particle number per cell: "
+                MESSAGE( 3, "| Minimum particle number per cell: "
                          << thisSpecies->merge_ppc_min_threshold_ );
-                MESSAGE( 2, "> Minimum particle packet size: "
+                MESSAGE( 3, "| Minimum particle packet size: "
                          << thisSpecies->merge_min_packet_size_ );
-                MESSAGE( 2, "> Maximum particle packet size: "
+                MESSAGE( 3, "| Maximum particle packet size: "
                          << thisSpecies->merge_max_packet_size_ );
             }
         }
