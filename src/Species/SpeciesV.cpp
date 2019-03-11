@@ -701,6 +701,7 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
 
         int scell ;
         int ip;
+        int ipp;
 
         // Resize the cell_keys
         particles->cell_keys.resize( last_index.back() );
@@ -708,7 +709,7 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
         //std::cerr << " count[scell]: " << count[scell] << std::endl;
         // Reinitialize the cell_keys array
         #pragma omp simd
-        for ( ip = 0; ip <= last_index.back() ; ip++) {
+        for ( ip = 0; ip < last_index.back() ; ip++) {
                 particles->cell_keys[ip] = 0;
         }
 
@@ -721,17 +722,35 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
         //std::cerr << "begin: Removing of the merged particles" << std::endl;
 
         // Removing of the merged particles
-        for( scell = first_index.size()-1 ; scell >= 0 ; scell-- ) {
-            //std::cerr << " count[scell]: " << count[scell] << std::endl;
-            for ( ip = last_index[scell]-1 ; ip >= first_index[scell] ; ip--) {
-                // std::cerr << " ip: " << ip
-                //           << " cell_keys[ip]: " << particles->cell_keys[ip]
-                //           << std::endl;
-                if (particles->cell_keys[ip] < 0) {
-                    particles->erase_particle(ip);
-                    particles->cell_keys.erase(particles->cell_keys.begin() + ip);
-                    count[scell] --;
+        // for( scell = first_index.size()-1 ; scell >= 0 ; scell-- ) {
+        //     //std::cerr << " count[scell]: " << count[scell] << std::endl;
+        //     for ( ip = last_index[scell]-1 ; ip >= first_index[scell] ; ip--) {
+        //         // std::cerr << " ip: " << ip
+        //         //           << " cell_keys[ip]: " << particles->cell_keys[ip]
+        //         //           << std::endl;
+        //         if (particles->cell_keys[ip] < 0) {
+        //             particles->erase_particle(ip);
+        //             particles->cell_keys.erase(particles->cell_keys.begin() + ip);
+        //             count[scell] --;
+        //         }
+        //     }
+        // }
+
+        // Removing of the merged particles
+        // Compression method
+        ipp = 0;
+        ip = 0;
+        while( ip < last_index.back()) {
+            if (particles->cell_keys[ipp] < 0) {
+                ip ++;
+                if (particles->cell_keys[ip] >= 0) {
+                    particles->cp_particle( ip, *particles, ipp);
+                    particles->cell_keys[ip] = -1;
+                    ipp++;
                 }
+            } else {
+                ipp++;
+                ip++;
             }
         }
 
