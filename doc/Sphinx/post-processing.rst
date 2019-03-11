@@ -122,7 +122,7 @@ Open a Field diagnostic
      | Syntax 1: ``subset = { axis : location, ... }``
      | Syntax 2: ``subset = { axis : [start, stop] , ... }``
      | Syntax 3: ``subset = { axis : [start, stop, step] , ... }``
-     | ``axis`` must be ``"x"``, ``"y"`` or ``"z"``.
+     | ``axis`` must be ``"x"``, ``"y"`` , ``"z"`` or ``"r"``.
      | Only the data within the chosen axes' selections is extracted.
      | **WARNING:** THE VALUE OF ``step`` IS A NUMBER OF CELLS.
      | Example: ``subset = {"y":[10, 80, 4]}``
@@ -130,7 +130,7 @@ Open a Field diagnostic
      | Syntax 1: ``average = { axis : "all", ... }``
      | Syntax 2: ``average = { axis : location, ... }``
      | Syntax 3: ``average = { axis : [start, stop] , ... }``
-     | ``axis`` must be ``"x"``, ``"y"`` or ``"z"``.
+     | ``axis`` must be ``"x"``, ``"y"`` , ``"z"`` or ``"r"``.
      | The chosen axes will be removed:
      | - With syntax 1, an average is performed over all the axis.
      | - With syntax 2, only the bin closest to ``location`` is kept.
