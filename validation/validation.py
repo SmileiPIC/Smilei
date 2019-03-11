@@ -338,13 +338,21 @@ def RUN_JOLLYJUMPER(command, dir):
 		check_call(COMMAND, shell=True)
 	except CalledProcessError:
 		# if command qsub fails, exit with exit status 2
-		exit_status_fd.close()
-		if dir==WORKDIR:
-			os.chdir(WORKDIR_BASE)
-			shutil.rmtree(WORKDIR)
+                #Retry once in case the server was rebooting
 		if VERBOSE :
-			print(  "qsub command failed: `"+COMMAND+"`")
-			sys.exit(2)
+	            print(  "qsub command failed once: `"+COMMAND+"`")
+                    print(  "Wait and retry")
+		time.sleep(10)
+	        try:
+	        	check_call(COMMAND, shell=True)
+	        except CalledProcessError:
+	        	if dir==WORKDIR:
+	        		os.chdir(WORKDIR_BASE)
+	        		shutil.rmtree(WORKDIR)
+	        	if VERBOSE :
+	        		print(  "qsub command failed twice: `"+COMMAND+"`")
+                                print(  "Exit")
+	        	sys.exit(2)
 	if VERBOSE:
 		print( "Submitted job with command `"+command+"`")
 	while ( EXIT_STATUS == "100" ) :
