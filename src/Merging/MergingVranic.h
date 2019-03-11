@@ -55,7 +55,10 @@ public:
 
     // Parameters __________________________________________________
 
-    // Minimum and maximum number of particles per packet to be merged
+    // discretization dans chaque direction
+    unsigned int dimensions_[3];
+
+    // Minimum and maximum number of particles per packet to merge
     unsigned int min_packet_size_;
     unsigned int max_packet_size_;
 

@@ -21,6 +21,10 @@ MergingVranic::MergingVranic(Params& params,
                              Species * species)
       : Merging(params, species)
 {
+    // Momentum cell discretization
+    dimensions_[0] = (unsigned int)(species->merge_momentum_cell_size_[0]);
+    dimensions_[1] = (unsigned int)(species->merge_momentum_cell_size_[1]);
+    dimensions_[2] = (unsigned int)(species->merge_momentum_cell_size_[2]);
 }
 
 // -----------------------------------------------------------------------------
@@ -52,7 +56,7 @@ void MergingVranic::operator() (
 
     // First of all, we check that there is enought particles per cell
     // to process the merging.
-    if ((unsigned int)(iend - istart) > merging_ppc_min_threshold_) {
+    if ((unsigned int)(iend - istart) > ppc_min_threshold_) {
 
         // Minima
         double mr_min;
@@ -88,10 +92,7 @@ void MergingVranic::operator() (
         unsigned int ip;
         unsigned int ipart;
 
-        // Dimensions
-        dimensions_[0] = 5;
-        dimensions_[1] = 5;
-        dimensions_[2] = 5;
+        // Total number of momentum cells
         unsigned int momentum_cells = dimensions_[0]
                                     * dimensions_[1]
                                     * dimensions_[2];

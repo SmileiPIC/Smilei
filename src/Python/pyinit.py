@@ -362,6 +362,10 @@ class Species(SmileiComponent):
     # Particle merging species Parameters
     merging_method = "none"
     merge_every = 0
+    merge_min_packet_size = 4
+    merge_max_packet_size = 4
+    merge_ppc_min_threshold = 4
+    merge_momentum_cell_size = [10,10,10]
 
     time_frozen = 0.0
     radiating = False

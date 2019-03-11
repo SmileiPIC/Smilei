@@ -18,7 +18,7 @@
 // -----------------------------------------------------------------------------
 Merging::Merging( Params &params, Species *species )
 {
-    merging_ppc_min_threshold_ = 4;
+    ppc_min_threshold_ = species->merge_ppc_min_threshold_;
 }
 
 // -----------------------------------------------------------------------------
