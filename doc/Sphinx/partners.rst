@@ -21,7 +21,7 @@ Partners
   :width: 6em
   :align: middle
 
-.. |intel| image:: _static/labs/intel.jpg
+.. |intel| image:: _static/labs/intel.png
   :width: 6em
   :align: middle
 
@@ -205,7 +205,7 @@ Financial support from the *Laboratoires d'Excellence*:
   :width: 130px
   :align: middle
 
-.. |P2IO| image:: _static/labs/p2io.jpg
+.. |P2IO| image:: _static/labs/p2io.png
   :width: 6em
   :align: middle
 

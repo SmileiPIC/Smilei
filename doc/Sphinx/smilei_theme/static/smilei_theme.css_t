@@ -297,8 +297,26 @@ blockquote {
 }
 
 ul, ol {
-	margin: 10px 0 10px 30px;
+	margin: 4px 0 4px 30px;
 	padding: 0;
+}
+
+li.toctree-l1 {
+  list-style: none;
+  font-weight: bold;
+  font-family: {{ theme_head_font_family }};
+  font-size: 1.4em;
+	margin-bottom: 10px;
+}
+
+li.toctree-l1 ul {
+    list-style: none;
+    font-weight: normal;
+    font-size: 0.9em;
+}
+
+li.toctree-l1 > ul {
+    font-size: 0.7em;
 }
 
 pre {
@@ -432,14 +450,16 @@ div.header > * {
 	cursor:pointer;
 	text-align: center;
 	background-color: #eee;
-	border-right: 1px solid #aaa;
-	border-left: 1px solid #aaa;
-	border-bottom: 1px solid #aaa;
+	color: #888;
+	border-right: 2px solid #aaa;
+	border-left: 2px solid #aaa;
+	border-bottom: 2px solid #aaa;
 	border-bottom-left-radius: 4px;
 	border-bottom-right-radius: 4px;
 	margin-right:12px;
 	padding:0.2em 1em;
 	font-size:80%;
+	font-weight:bold;
 	z-index:10;
 }
 #nav_button.pushed {
@@ -455,8 +475,8 @@ div.header > * {
 }
 #nav_title {
 	line-height: {{ theme_head_height |float *0.8 }}mm;
-	border-left: 1px solid #aaa;
-	border-right: 1px solid #aaa;
+	border-left: 2px solid #aaa;
+	border-right: 2px solid #aaa;
 	background-color: #eee;
 	padding: 0 1em;
 	font-weight: bold;
@@ -470,9 +490,9 @@ div.header > * {
 	position: relative;
 	right:0;
 	background-color: #eee;
-	border-left: 1px solid #aaa;
-	border-right: 1px solid #aaa;
-	border-bottom: 1px solid #aaa;
+	border-left: 2px solid #aaa;
+	border-right: 2px solid #aaa;
+	border-bottom: 2px solid #aaa;
 	border-bottom-left-radius: 4px;
 	border-bottom-right-radius: 4px;
 }

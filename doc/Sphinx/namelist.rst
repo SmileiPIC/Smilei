@@ -2661,7 +2661,7 @@ Only one block ``DiagPerformances()`` may be added in the namelist, for instance
   DiagPerformances(
       every = 100,
   #    flush_every = 100,
-      patch_information = True,
+  #    patch_information = True,
   )
 
 .. py:data:: every
@@ -2683,7 +2683,8 @@ Only one block ``DiagPerformances()`` may be added in the namelist, for instance
 
   :default: False
 
-  Activation of the performance per patch output.
+  If `True`, some information is calculated at the patch level (see :py:meth:`Performances`)
+  but this may impact the code performances.
 
 ----
 
