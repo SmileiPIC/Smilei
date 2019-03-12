@@ -710,18 +710,26 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
         // Reinitialize the cell_keys array
         #pragma omp simd
         for ( ip = 0; ip < last_index.back() ; ip++) {
-                particles->cell_keys[ip] = 0;
+                particles->cell_keys[ip] = 1;
         }
 
         // For each cell, we apply independently the merging process
         for( scell = 0 ; scell < first_index.size() ; scell++ ) {
             ( *Merge )( *particles, smpi, first_index[scell],
                         last_index[scell]);
+
+            for ( ip = first_index[scell] ; ip < last_index[scell] ; ip++) {
+                if (particles->cell_keys[ip] < 0) {
+                    count[scell] --;
+                }
+            }
+
         }
 
         //std::cerr << "begin: Removing of the merged particles" << std::endl;
 
         // Removing of the merged particles
+        // Naive method
         // for( scell = first_index.size()-1 ; scell >= 0 ; scell-- ) {
         //     //std::cerr << " count[scell]: " << count[scell] << std::endl;
         //     for ( ip = last_index[scell]-1 ; ip >= first_index[scell] ; ip--) {
@@ -744,8 +752,10 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
             if (particles->cell_keys[ipp] < 0) {
                 ip ++;
                 if (particles->cell_keys[ip] >= 0) {
-                    particles->cp_particle( ip, *particles, ipp);
+                    particles->overwrite_part( ip, ipp);
+                    //particles->cp_particle( ip, *particles, ipp);
                     particles->cell_keys[ip] = -1;
+                    particles->cell_keys[ipp] = 1;
                     ipp++;
                 }
             } else {
@@ -753,6 +763,18 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
                 ip++;
             }
         }
+        particles->erase_particle_trail(ipp);
+        particles->cell_keys.resize(ipp);
+        //particles->resize(ipp,3);
+
+        for(ip=0 ; ip < particles->size() ; ip ++) {
+            if (particles->cell_keys[ip] < 0) {
+                std::cerr << " Ip: " << ip
+                          << " Particle cell keys: " << particles->cell_keys[ip]
+                          << std::endl;
+            }
+        }
+
 
         //std::cerr << "begin: Update of first and last cell indexes" << std::endl;
 
