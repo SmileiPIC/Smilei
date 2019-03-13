@@ -652,8 +652,10 @@ class Diagnostic(object):
 	# set options during animation
 	def _setSomeOptions(self, ax, t=None):
 		title = []
-		if self._vlabel: title += [self._vlabel]
-		if t is not None: title += ["t = "+str(t*self.timestep)]
+		if self._vlabel:
+			title += [self._vlabel]
+		if t is not None:
+			title += ["t = %.2f "%(t*self.timestep*self.units.tcoeff)+self.units.tname]
 		ax.set_title("  ".join(title))
 		for option, value in self.options.axes.items():
 			if type(value) is dict:
