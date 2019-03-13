@@ -42,14 +42,14 @@ public:
     //! \param smpi        MPI properties
     //! \param istart      Index of the first particle
     //! \param iend        Index of the last particle
-    //! \param remaining_particles number of remaining particles after the merge
-    //! \param merged_particles number of merged particles after the process
+    //! \param count       Final number of particles
     // ---------------------------------------------------------------------
     virtual void operator()(
         Particles &particles,
         SmileiMPI *smpi,
         int istart,
-        int iend);
+        int iend,
+        int & count);
         //unsigned int &remaining_particles,
         //unsigned int &merged_particles);
 

@@ -46,14 +46,14 @@ MergingVranic::~MergingVranic()
 //! \param smpi        MPI properties
 //! \param istart      Index of the first particle
 //! \param iend        Index of the last particle
-//! \param remaining_particles number of remaining particles after the merge
-//! \param merged_particles number of merged particles after the process
+//! \param count       Final number of particles
 // ---------------------------------------------------------------------
 void MergingVranic::operator() (
         Particles &particles,
         SmileiMPI* smpi,
         int istart,
-        int iend)
+        int iend,
+        int & count)
         //unsigned int &remaining_particles,
         //unsigned int &merged_particles)
 {
@@ -481,6 +481,7 @@ void MergingVranic::operator() (
                             for (ip = ipack*max_packet_size_ + 2; ip < (ipack+1)*max_packet_size_ ; ip ++) {
                                 ipart = sorted_particles[momentum_cell_particle_index[ic] + ip];
                                 cell_keys[ipart] = -1;
+                                count--;
                             }
 
                         }

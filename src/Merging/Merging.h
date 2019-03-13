@@ -37,7 +37,8 @@ public:
         Particles &particles,
         SmileiMPI *smpi,
         int istart,
-        int iend) = 0;
+        int iend,
+        int & count) = 0;
 
     // parameters _______________________________________________
 
