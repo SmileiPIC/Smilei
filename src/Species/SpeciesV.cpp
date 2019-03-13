@@ -747,22 +747,34 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
         // Removing of the merged particles
         // Compression method
         ipp = 0;
-        ip = 1;
-        while( ip < last_index.back()) {
+        // ip = 1;
+        // while( ip < last_index.back()) {
+        //     if (particles->cell_keys[ipp] < 0) {
+        //         if (particles->cell_keys[ip] >= 0) {
+        //             particles->overwrite_part( ip, ipp);
+        //             //particles->cp_particle( ip, *particles, ipp);
+        //             particles->cell_keys[ip] = -1;
+        //             particles->cell_keys[ipp] = 1;
+        //             ipp++;
+        //             ip++;
+        //         } else {
+        //            ip++;
+        //         }
+        //     } else {
+        //         ipp++;
+        //         ip++;
+        //     }
+        // }
+        for (ip = 1 ; ip < last_index.back() ; ip ++) {
             if (particles->cell_keys[ipp] < 0) {
                 if (particles->cell_keys[ip] >= 0) {
                     particles->overwrite_part( ip, ipp);
-                    //particles->cp_particle( ip, *particles, ipp);
                     particles->cell_keys[ip] = -1;
                     particles->cell_keys[ipp] = 1;
                     ipp++;
-                    ip++;
-                } else {
-                    ip++;
                 }
             } else {
                 ipp++;
-                ip++;
             }
         }
         //particles->erase_particle_trail(ipp);
