@@ -268,14 +268,14 @@ void MergingVranic::operator() (
             phi_i   = (unsigned int)( (particles_phi[ip] - phi_min)      / phi_delta);
 
             // 1D Index in the momentum discretization
-            momentum_cell_index[ip] = mr_i    * dimensions_[1]*dimensions_[2]
-                          + theta_i * dimensions_[2] + phi_i;
+            momentum_cell_index[ip] = phi_i    * dimensions_[0]*dimensions_[1]
+                          + theta_i * dimensions_[0] + mr_i;
         }
 
         // The number of particles per momentum cells
         // is then determined.
         // No vectorization because of random memory accesses
-        for (ip=0; ip<(unsigned int)(iend-istart); ip++ ) {
+        for (ip=0; ip<number_of_particles; ip++ ) {
             // Number of particles per momentum cells
             particles_per_momentum_cells[momentum_cell_index[ip]] += 1;
 
@@ -346,20 +346,21 @@ void MergingVranic::operator() (
             }
         }*/
 
-        // ___________________________________________________________________
-        // Fifth step: for each momentum bin, merge packet of particles composed of
+
+        // For each momentum bin, merge packet of particles composed of
         // at least `min_packet_size_` and `max_packet_size_`
 
         // Loop over the the momentum cells that have enough particules
-        for (mr_i=0 ; mr_i< dimensions_[0]; mr_i++ ) {
+        for (phi_i=0 ; phi_i< dimensions_[2]; phi_i++ ) {
             for (theta_i=0 ; theta_i< dimensions_[1]; theta_i++ ) {
-                for (phi_i=0 ; phi_i< dimensions_[2]; phi_i++ ) {
 
-                    // 1D cell direction index
-                    icc = theta_i * dimensions_[2] + phi_i;
+                // 1D cell direction index
+                icc = theta_i + phi_i* dimensions_[1] ;
+
+                for (mr_i=0 ; mr_i< dimensions_[0]; mr_i++ ) {
 
                     // 1D cell index
-                    ic = mr_i * momentum_angular_cells + icc;
+                    ic = mr_i + icc*dimensions_[0];
 
                     if (particles_per_momentum_cells[ic] >= min_packet_size_ ) {
                         /*std::cerr << "ic: " << ic
