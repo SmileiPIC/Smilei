@@ -185,10 +185,10 @@ void MergingVranic::operator() (
         // double  * momentum_z_loc = (double*) aligned_alloc(64, max_packet_size_*sizeof(double));
         // double  * weight_loc = (double*)  aligned_alloc(64, max_packet_size_*sizeof(double));
         // unsigned int ipp;
-     
+
         // Computation of the particle momentum properties
         #pragma omp simd aligned(momentum_norm, particles_theta, particles_phi: 64) private(ip)
-        for (ipart=istart ; ipart<iend; ipart++ ) {
+        for (ipart=(unsigned int)(istart) ; ipart<(unsigned int) (iend); ipart++ ) {
 
             // Local array index
             ip = ipart - istart;
@@ -281,7 +281,7 @@ void MergingVranic::operator() (
         // requested discretization.
         // This loop can be efficiently vectorized
         #pragma omp simd \
-        aligned(momentum_norm, particles_theta, particles_phi: 64) private(ip) \
+        aligned(momentum_norm, particles_theta, particles_phi: 64) \
         aligned(momentum_cell_index: 64)
         for (ip= 0; ip < number_of_particles ; ip++ ) {
 
@@ -313,7 +313,7 @@ void MergingVranic::operator() (
 
         // sort particles in correct bins according to their
         // momentum properties
-        // Not vectorizable 
+        // Not vectorizable
         for (ip=0 ; ip<number_of_particles; ip++ ) {
 
             // Momentum cell index for this particle
@@ -369,7 +369,7 @@ void MergingVranic::operator() (
                     // 1D cell index
                     ic = mr_i + icc*dimensions_[0];
 
-                    // Check if there is enought particles in the momentum 
+                    // Check if there is enought particles in the momentum
                     // cell to trigger the merging procecc
                     if (particles_per_momentum_cells[ic] >= min_packet_size_ ) {
 
@@ -399,7 +399,7 @@ void MergingVranic::operator() (
                             // This simd optimization is not efficient
                             // kept for memory
 
-                            // Store in an aligned vector the momentum and weight of 
+                            // Store in an aligned vector the momentum and weight of
                             // the particles of the packet
                             // Vectorizable but important Random Memory Accesses
                             // for (ip = ip_min ; ip < ip_max ; ip ++) {
