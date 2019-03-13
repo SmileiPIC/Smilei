@@ -32,6 +32,7 @@
 #include "Diagnostic.h"
 #include "Domain.h"
 #include "SyncCartesianPatch.h"
+#include "SyncCartesianPatchAM.h"
 #include "Timers.h"
 #include "RadiationTables.h"
 #include "MultiphotonBreitWheelerTables.h"
@@ -381,13 +382,21 @@ int main( int argc, char *argv[] )
             //#else
             else { //if ( params.uncoupled_grids ) {
                 if( time_dual > params.time_fields_frozen ) {
-                    SyncCartesianPatch::patchedToCartesian( vecPatches, domain, params, &smpi, timers, itime );
+                    if ( params.geometry != "AMcylindrical" )
+                        SyncCartesianPatch::patchedToCartesian( vecPatches, domain, params, &smpi, timers, itime );
+                    else {
+                        int imode = 0;
+                        SyncCartesianPatchAM::patchedToCartesian( vecPatches, domain, params, &smpi, timers, itime, imode );
+                    }
                     timers.syncDens.restart();
                     domain.vecPatch_.diag_flag = false;
                     SyncVectorPatch::sumRhoJ( params, domain.vecPatch_, &smpi, timers, itime ); // MPI
                     timers.syncDens.update( params.printNow( itime ) );
                     domain.solveMaxwell( params, simWindow, itime, time_dual, timers, &smpi );
-                    SyncCartesianPatch::cartesianToPatches( domain, vecPatches, params, &smpi, timers, itime );
+                    if ( params.geometry != "AMcylindrical" )
+                        SyncCartesianPatch::cartesianToPatches( domain, vecPatches, params, &smpi, timers, itime );
+                    else
+                        SyncCartesianPatchAM::cartesianToPatches( domain, vecPatches, params, &smpi, timers, itime );
                 }
             }
 
