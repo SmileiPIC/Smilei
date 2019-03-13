@@ -344,6 +344,17 @@ class Probe(Diagnostic):
 			except: fields = fields_here
 		try   : return fields
 		except: return []
+	
+	# get the value of x_moved for a requested timestep
+	def getXmoved(self, t):
+		if not self._validate(): return
+		# Verify that the timestep is valid
+		if t not in self._timesteps:
+			print("Timestep "+str(t)+" not found in this diagnostic")
+			return []
+		# get h5 iteration group
+		h5item = self._dataForTime[t]
+		return h5item.attrs["x_moved"] if "x_moved" in h5item.attrs else 0.
 
 	# get all available timesteps
 	def getAvailableTimesteps(self):
