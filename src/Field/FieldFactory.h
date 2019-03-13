@@ -7,6 +7,7 @@
 #include "Field1D.h"
 #include "Field2D.h"
 #include "Field3D.h"
+#include "cField2D.h"
 
 #include "Params.h"
 
@@ -45,6 +46,30 @@ public:
         else
             return nullptr;
     }
+
+    static cField2D* createComplex( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, std::string name_in, Params& params ) {
+        if ( !params.is_pxr ) { // FDTD, staggered grids
+            if( params.geometry == "AMcylindrical" )
+                return new cField2D( dims, mainDim, isPrimal, name_in );
+            else
+                return nullptr;
+        }
+        else { // if PXR, same size for all grids
+            if( params.geometry == "AMcylindrical" )
+                return new cField2D( dims, name_in );
+            else
+                return nullptr;
+        }
+    }
+
+    static cField2D* createComplex( std::string name, std::vector<unsigned int> dims, Params& params ) {
+        if( params.geometry == "AMcylindrical" )
+            return new cField2D( name, dims );
+        else
+            return nullptr;
+    }
+
+
 
 };
 
