@@ -746,7 +746,7 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
 
         // Removing of the merged particles
         // Compression method
-        ipp = 0;
+        // ipp = 0;
         // ip = 1;
         // while( ip < last_index.back()) {
         //     if (particles->cell_keys[ipp] < 0) {
@@ -765,22 +765,22 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
         //         ip++;
         //     }
         // }
-        for (ip = 1 ; ip < last_index.back() ; ip ++) {
-            if (particles->cell_keys[ipp] < 0) {
-                if (particles->cell_keys[ip] >= 0) {
-                    particles->overwrite_part( ip, ipp);
-                    particles->cell_keys[ip] = -1;
-                    particles->cell_keys[ipp] = 1;
-                    ipp++;
-                }
-            } else {
-                ipp++;
-            }
-        }
+        // for (ip = 1 ; ip < last_index.back() ; ip ++) {
+        //     if (particles->cell_keys[ipp] < 0) {
+        //         if (particles->cell_keys[ip] >= 0) {
+        //             particles->overwrite_part( ip, ipp);
+        //             particles->cell_keys[ip] = -1;
+        //             particles->cell_keys[ipp] = 1;
+        //             ipp++;
+        //         }
+        //     } else {
+        //         ipp++;
+        //     }
+        // }
         //particles->erase_particle_trail(ipp);
-        particles->cell_keys.resize(ipp);
-        particles->resize(ipp,3);
-
+        //particles->cell_keys.resize(ipp);
+        // particles->resize(ipp,3);
+        particles->compressParticles(0, last_index.back(), particles->cell_keys);
         // for(ip=0 ; ip < particles->size() ; ip ++) {
         //     if (particles->cell_keys[ip] < 0) {
         //         std::cerr << " Ip: " << ip

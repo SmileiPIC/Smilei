@@ -122,6 +122,10 @@ public:
     //! Create nParticles new particles
     void create_particles( int nAdditionalParticles );
 
+    //! Compress the particles vectors according to the provided mask
+    //! between istart and iend
+    void compressParticles( int istart, int iend, std::vector <int> & mask );
+
     //! Test if ipart is in the local patch
     bool is_part_in_domain( unsigned int ipart, Patch *patch );
 

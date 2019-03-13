@@ -678,6 +678,34 @@ void Particles::create_particles( int nAdditionalParticles )
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+//! This method compresses the particles vectors according to the provided mask
+//! between istart and iend
+//! The mask determines which particles to keep (>= 0) and which to delete (< 0)
+//! Particle order is kept in case the vector is sorted
+//! Warning: This method do not update count, first_index and last_index in Species
+// ---------------------------------------------------------------------------------------------------------------------
+void Particles::compressParticles( int istart, int iend, vector <int> & mask ) {
+
+    unsigned int ip, ipp;
+
+    ipp = istart;
+    for (ip = istart+1 ; ip < iend ; ip ++) {
+        if (mask[ipp] < 0) {
+            if (mask[ip] >= 0) {
+                overwrite_part( ip, ipp);
+                mask[ip] = -1;
+                mask[ipp] = 1;
+                ipp++;
+            }
+        } else {
+            ipp++;
+        }
+    }
+    // At the end we resize particles
+    resize(ipp,3);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Create nParticles new particles at the end of vectors
 // ---------------------------------------------------------------------------------------------------------------------
 //void Particles::create_particles(int nAdditionalParticles )

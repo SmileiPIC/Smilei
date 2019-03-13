@@ -58,9 +58,11 @@ void MergingVranic::operator() (
         //unsigned int &merged_particles)
 {
 
+    unsigned int number_of_particles = (unsigned int)(iend - istart);
+
     // First of all, we check that there is enought particles per cell
     // to process the merging.
-    if ((unsigned int)(iend - istart) > ppc_min_threshold_) {
+    if (number_of_particles > ppc_min_threshold_) {
 
         // Minima
         double mr_min;
@@ -93,7 +95,7 @@ void MergingVranic::operator() (
         unsigned int ic, icc;
         unsigned int ipack;
         unsigned int npack;
-        unsigned int ip;
+        unsigned int ip, ip_min, ip_max;
         unsigned int ipart;
 
         // Total number of momentum cells
@@ -292,11 +294,9 @@ void MergingVranic::operator() (
         }
         particles_per_momentum_cells[momentum_cells-1] = 0;
 
-        // ___________________________________________________________________
-        // Fourth step: sort particles in correct bins according to their
+        // sort particles in correct bins according to their
         // momentum properties
-
-        for (ip=0 ; ip<(unsigned int)(iend-istart); ip++ ) {
+        for (ip=0 ; ip<number_of_particles; ip++ ) {
 
             // Momentum cell index for this particle
             ic = momentum_cell_index[ip];
@@ -373,7 +373,13 @@ void MergingVranic::operator() (
                                               << (theta_i+1) * theta_delta + theta_min  << "]"
                                 << std::endl;*/
 
+                        // Computation of the number of particle packets to merge
                         npack = particles_per_momentum_cells[ic]/max_packet_size_;
+
+                        // Check if the rest is sufficient to add an additional smaller packet
+                        if (particles_per_momentum_cells[ic]%max_packet_size_ >= min_packet_size_) {
+                            npack += 1;
+                        }
 
                         // Loop over the packets of particles that can be merged
                         for (ipack = 0 ; ipack < npack ; ipack += 1) {
@@ -385,9 +391,11 @@ void MergingVranic::operator() (
                             total_energy = 0;
 
                             /*std::cerr << "   Merging start: " << std::endl;*/
+                            ip_min = ipack*max_packet_size_;
+                            ip_max = std::min((ipack+1)*max_packet_size_,number_of_particles);
 
                             // Compute total weight, total momentum and total energy
-                            for (ip = ipack*max_packet_size_ ; ip < (ipack+1)*max_packet_size_ ; ip ++) {
+                            for (ip = ip_min ; ip < ip_max ; ip ++) {
 
                                 ipart = sorted_particles[momentum_cell_particle_index[ic] + ip];
 
@@ -478,7 +486,7 @@ void MergingVranic::operator() (
                             //           << std::endl;
 
                             // Other particles are tagged to be removed after
-                            for (ip = ipack*max_packet_size_ + 2; ip < (ipack+1)*max_packet_size_ ; ip ++) {
+                            for (ip = ip_min + 2; ip < ip_max ; ip ++) {
                                 ipart = sorted_particles[momentum_cell_particle_index[ic] + ip];
                                 cell_keys[ipart] = -1;
                                 count--;
