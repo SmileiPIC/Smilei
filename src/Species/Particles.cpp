@@ -182,7 +182,30 @@ void Particles::resize( unsigned int nParticles, unsigned int nDim )
 
 }
 
-void Particles::shrink_to_fit( unsigned int nDim )
+// ---------------------------------------------------------------------------------------------------------------------
+// Resize Particle vectors with nParticles
+// ---------------------------------------------------------------------------------------------------------------------
+void Particles::resize( unsigned int nParticles)
+{
+
+    for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
+        ( *double_prop[iprop] ).resize( nParticles, 0. );
+    }
+
+    for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
+        ( *short_prop[iprop] ).resize( nParticles, 0 );
+    }
+
+    for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
+        ( *uint64_prop[iprop] ).resize( nParticles, 0 );
+    }
+
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Remove extra capacity of Particles vectors
+// ---------------------------------------------------------------------------------------------------------------------
+void Particles::shrink_to_fit()
 {
 
     for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
@@ -689,7 +712,7 @@ void Particles::compressParticles( int istart, int iend, vector <int> & mask ) {
     unsigned int ip, ipp;
 
     ipp = istart;
-    for (ip = istart+1 ; ip < iend ; ip ++) {
+    for (ip = (unsigned int)(istart+1) ; ip < (unsigned int) iend ; ip ++) {
         if (mask[ipp] < 0) {
             if (mask[ip] >= 0) {
                 overwrite_part( ip, ipp);
@@ -702,7 +725,7 @@ void Particles::compressParticles( int istart, int iend, vector <int> & mask ) {
         }
     }
     // At the end we resize particles
-    resize(ipp,3);
+    resize(ipp);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

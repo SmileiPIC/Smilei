@@ -34,6 +34,7 @@ public:
     //! \param istart      Index of the first particle
     //! \param iend        Index of the last particle
     virtual void operator()(
+        double mass,
         Particles &particles,
         SmileiMPI *smpi,
         int istart,

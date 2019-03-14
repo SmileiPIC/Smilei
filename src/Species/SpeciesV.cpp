@@ -700,30 +700,21 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
     if( time_dual>time_frozen ) {
 
         unsigned int scell ;
-        int ip;
-        int ipp;
+        unsigned int ip;
 
         // Resize the cell_keys
         particles->cell_keys.resize( last_index.back() );
 
-        //std::cerr << " count[scell]: " << count[scell] << std::endl;
         // Reinitialize the cell_keys array
         #pragma omp simd
-        for ( ip = 0; ip < last_index.back() ; ip++) {
+        for ( ip = 0; ip < (unsigned int)(last_index.back()) ; ip++) {
                 particles->cell_keys[ip] = 1;
         }
 
         // For each cell, we apply independently the merging process
         for( scell = 0 ; scell < first_index.size() ; scell++ ) {
-            ( *Merge )( *particles, smpi, first_index[scell],
+            ( *Merge )( mass, *particles, smpi, first_index[scell],
                         last_index[scell], count[scell]);
-
-            // for ( ip = first_index[scell] ; ip < last_index[scell] ; ip++) {
-            //     if (particles->cell_keys[ip] < 0) {
-            //         count[scell] --;
-            //     }
-            // }
-
         }
 
         //std::cerr << "begin: Removing of the merged particles" << std::endl;
@@ -765,21 +756,7 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
         //         ip++;
         //     }
         // }
-        // for (ip = 1 ; ip < last_index.back() ; ip ++) {
-        //     if (particles->cell_keys[ipp] < 0) {
-        //         if (particles->cell_keys[ip] >= 0) {
-        //             particles->overwrite_part( ip, ipp);
-        //             particles->cell_keys[ip] = -1;
-        //             particles->cell_keys[ipp] = 1;
-        //             ipp++;
-        //         }
-        //     } else {
-        //         ipp++;
-        //     }
-        // }
-        //particles->erase_particle_trail(ipp);
-        //particles->cell_keys.resize(ipp);
-        // particles->resize(ipp,3);
+
         particles->compressParticles(0, last_index.back(), particles->cell_keys);
         // for(ip=0 ; ip < particles->size() ; ip ++) {
         //     if (particles->cell_keys[ip] < 0) {

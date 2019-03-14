@@ -42,8 +42,11 @@ public:
     //! Resize Particles vectors
     void resize( unsigned int nParticles, unsigned int nDim );
 
+    //! Resize Particles vectors
+    void resize( unsigned int nParticles);
+
     //! Remove extra capacity of Particles vectors
-    void shrink_to_fit( unsigned int nDim );
+    void shrink_to_fit();
 
     //! Reset Particles vectors
     void clear();

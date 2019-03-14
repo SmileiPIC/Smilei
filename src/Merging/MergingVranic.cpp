@@ -49,6 +49,7 @@ MergingVranic::~MergingVranic()
 //! \param count       Final number of particles
 // ---------------------------------------------------------------------
 void MergingVranic::operator() (
+        double mass,
         Particles &particles,
         SmileiMPI* smpi,
         int istart,
@@ -233,30 +234,29 @@ void MergingVranic::operator() (
         phi_max += (phi_max - phi_min)*0.01;
 
         // Computation of the deltas (discretization steps)
-        mr_delta = (mr_max - mr_min) / dimensions_[0];
-        theta_delta = (theta_max - theta_min) / dimensions_[1];
-        phi_delta = (phi_max - phi_min) / dimensions_[2];
-
-        // Check if min and max are very close
-        if (mr_delta < 1e-10) {
+        // Check if min and max boundaries are very close
+        if (abs((mr_max - mr_min)/mr_min) < 1e-10) {
             mr_delta = 0.;
             inv_mr_delta = 0.;
             dimensions_[0] = 1;
         } else {
+            mr_delta = (mr_max - mr_min) / dimensions_[0];
             inv_mr_delta = 1./mr_delta;
         }
-        if (theta_delta < 1e-10) {
+        if (abs((theta_max - theta_min)/theta_min) < 1e-10) {
             theta_delta = 0.;
             inv_theta_delta = 0.;
             dimensions_[1] = 1;
         } else {
+            theta_delta = (theta_max - theta_min) / dimensions_[1];
             inv_theta_delta = 1./theta_delta;
         }
-        if (phi_delta < 1e-10) {
+        if (abs((phi_max - phi_min)/phi_min) < 1e-10) {
             phi_delta = 0.;
             inv_phi_delta = 0;
             dimensions_[2] = 1;
         } else {
+            phi_delta = (phi_max - phi_min) / dimensions_[2];
             inv_phi_delta = 1./phi_delta;
         }
 
@@ -413,9 +413,9 @@ void MergingVranic::operator() (
 
                             // Compute total weight, total momentum and total energy
                             // #pragma omp simd reduction(+:total_weight) \
-                            reduction(+:total_momentum_x) reduction(+:total_momentum_y) \
-                            reduction(+:total_momentum_z) reduction(+:total_energy) \
-                            aligned(weight_loc, momentum_x_loc, momentum_y_loc, momentum_z_loc: 64)
+                            // reduction(+:total_momentum_x) reduction(+:total_momentum_y) \
+                            // reduction(+:total_momentum_z) reduction(+:total_energy) \
+                            // aligned(weight_loc, momentum_x_loc, momentum_y_loc, momentum_z_loc: 64)
                             // for (ipp = 0 ; ipp < ip_max - ip_min ; ipp ++) {
 
                             //     // Total weight (wt)
@@ -436,32 +436,61 @@ void MergingVranic::operator() (
                             // _______________________________________________________________
 
                             // Compute total weight, total momentum and total energy
-                            for (ip = ip_min ; ip < ip_max ; ip ++) {
+                            // Photons
+                            if (mass == 0) {
+                                for (ip = ip_min ; ip < ip_max ; ip ++) {
 
-                                // Particle index in Particles
-                                ipart = sorted_particles[momentum_cell_particle_index[ic] + ip];
+                                    // Particle index in Particles
+                                    ipart = sorted_particles[momentum_cell_particle_index[ic] + ip];
 
-                                // Total weight (wt)
-                                total_weight += weight[ipart];
+                                    // Total weight (wt)
+                                    total_weight += weight[ipart];
 
-                                // total momentum vector (pt)
-                                total_momentum_x += momentum[0][ipart]*weight[ipart];
-                                total_momentum_y += momentum[1][ipart]*weight[ipart];
-                                total_momentum_z += momentum[2][ipart]*weight[ipart];
+                                    // total momentum vector (pt)
+                                    total_momentum_x += momentum[0][ipart]*weight[ipart];
+                                    total_momentum_y += momentum[1][ipart]*weight[ipart];
+                                    total_momentum_z += momentum[2][ipart]*weight[ipart];
 
-                                // total energy (\varespilon_t)
-                                total_energy += weight[ipart]
-                                                         * sqrt(1.0 + momentum[0][ipart]*momentum[0][ipart]
-                                                         + momentum[1][ipart]*momentum[1][ipart]
-                                                         + momentum[2][ipart]*momentum[2][ipart]);
+                                    // total energy (\varespilon_t)
+                                    total_energy += weight[ipart]*momentum_norm[ipart - istart];
+
+                                }
+
+                                // \varepsilon_a in Vranic et al
+                                new_energy = total_energy / total_weight;
+
+                                // pa in Vranic et al.
+                                new_momentum_norm = new_energy;
+
+                            // Mass particles
+                            } else {
+                                for (ip = ip_min ; ip < ip_max ; ip ++) {
+
+                                    // Particle index in Particles
+                                    ipart = sorted_particles[momentum_cell_particle_index[ic] + ip];
+
+                                    // Total weight (wt)
+                                    total_weight += weight[ipart];
+
+                                    // total momentum vector (pt)
+                                    total_momentum_x += momentum[0][ipart]*weight[ipart];
+                                    total_momentum_y += momentum[1][ipart]*weight[ipart];
+                                    total_momentum_z += momentum[2][ipart]*weight[ipart];
+
+                                    // total energy (\varespilon_t)
+                                    total_energy += weight[ipart]
+                                                             * sqrt(1.0 + momentum[0][ipart]*momentum[0][ipart]
+                                                             + momentum[1][ipart]*momentum[1][ipart]
+                                                             + momentum[2][ipart]*momentum[2][ipart]);
+                                }
+
+                                // \varepsilon_a in Vranic et al
+                                new_energy = total_energy / total_weight;
+
+                                // pa in Vranic et al.
+                                new_momentum_norm = sqrt(new_energy*new_energy - 1.0);
 
                             }
-
-                            // \varepsilon_a in Vranic et al
-                            new_energy = total_energy / total_weight;
-
-                            // pa in Vranic et al.
-                            new_momentum_norm = sqrt(new_energy*new_energy - 1.0);
 
                             total_momentum_norm = sqrt(total_momentum_x*total_momentum_x
                                                 +      total_momentum_y*total_momentum_y

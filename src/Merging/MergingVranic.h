@@ -45,6 +45,7 @@ public:
     //! \param count       Final number of particles
     // ---------------------------------------------------------------------
     virtual void operator()(
+        double mass,
         Particles &particles,
         SmileiMPI *smpi,
         int istart,
