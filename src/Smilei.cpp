@@ -388,10 +388,10 @@ int main( int argc, char *argv[] )
                         for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
                             SyncCartesianPatchAM::patchedToCartesian( vecPatches, domain, params, &smpi, timers, itime, imode );
                     }
-                    timers.syncDens.restart();
-                    domain.vecPatch_.diag_flag = false;
-                    SyncVectorPatch::sumRhoJ( params, domain.vecPatch_, &smpi, timers, itime ); // MPI
-                    timers.syncDens.update( params.printNow( itime ) );
+                    //timers.syncDens.restart();
+                    //domain.vecPatch_.diag_flag = false;
+                    //SyncVectorPatch::sumRhoJ( params, domain.vecPatch_, &smpi, timers, itime ); // MPI
+                    //timers.syncDens.update( params.printNow( itime ) );
                     domain.solveMaxwell( params, simWindow, itime, time_dual, timers, &smpi );
                     if ( params.geometry != "AMcylindrical" )
                         SyncCartesianPatch::cartesianToPatches( domain, vecPatches, params, &smpi, timers, itime );

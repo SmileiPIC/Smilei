@@ -676,8 +676,9 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
         if( params.is_spectral ) {
             SyncVectorPatch::finalizeexchangeE( params, ( *this ) );
         }
-        
-        SyncVectorPatch::finalizeexchangeB( params, ( *this ) );
+
+        if( params.geometry != "AMcylindrical" )
+            SyncVectorPatch::finalizeexchangeB( params, ( *this ) );
         timers.syncField.update( params.printNow( itime ) );
         
         #pragma omp for schedule(static)
