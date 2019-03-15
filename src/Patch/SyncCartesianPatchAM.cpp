@@ -85,13 +85,13 @@ void SyncCartesianPatchAM::sendPatchedToCartesian( ElectroMagnAM* localfields, u
 {
     //smpi->send( localfields->Jx_, hindex, send_to_global_patch_rank );
     //    isend( EM->Bz_m, to, mpi_tag+tag, requests[tag]); tag++;
-    //smpi->isend( localfields->Jl_[imode], send_to_global_patch_rank, hindex*5  , patch->requests_[0] );
-    //smpi->isend( localfields->Jr_[imode], send_to_global_patch_rank, hindex*5+1, patch->requests_[1] );
-    //smpi->isend( localfields->Jt_[imode], send_to_global_patch_rank, hindex*5+2, patch->requests_[2] );
+    smpi->isendComplex( localfields->Jl_[imode], send_to_global_patch_rank, hindex*5  , patch->requests_[0] );
+    smpi->isendComplex( localfields->Jr_[imode], send_to_global_patch_rank, hindex*5+1, patch->requests_[1] );
+    smpi->isendComplex( localfields->Jt_[imode], send_to_global_patch_rank, hindex*5+2, patch->requests_[2] );
     
 
     if(params.is_spectral) {
-        //smpi->isend( localfields->rho_AM_[imode],    send_to_global_patch_rank, hindex*5+3, patch->requests_[3] );
+        smpi->isendComplex( localfields->rho_AM_[imode],    send_to_global_patch_rank, hindex*5+3, patch->requests_[3] );
         //smpi->isend( localfields->rhoold_, send_to_global_patch_rank, hindex*5+4, patch->requests_[4] );
     }
 
@@ -126,17 +126,17 @@ void SyncCartesianPatchAM::recvPatchedToCartesian( ElectroMagnAM* globalfields, 
     domain.fake_patch->hindex = hindex;
     domain.fake_patch->Pcoordinates = vecPatches.domain_decomposition_->getDomainCoordinates( hindex );
 
-    //smpi->recv( fake_fields->Jl_[imode], local_patch_rank, hindex*5 );
+    smpi->recvComplex( fake_fields->Jl_[imode], local_patch_rank, hindex*5 );
     fake_fields->Jl_[imode]->put( globalfields->Jl_[imode], params, smpi, domain.fake_patch, domain.patch_ );
 
-    //smpi->recv( fake_fields->Jr_[imode], local_patch_rank, hindex*5+1 );
+    smpi->recvComplex( fake_fields->Jr_[imode], local_patch_rank, hindex*5+1 );
     fake_fields->Jr_[imode]->put( globalfields->Jr_[imode], params, smpi, domain.fake_patch, domain.patch_ );
 
-    //smpi->recv( fake_fields->Jt_[imode], local_patch_rank, hindex*5+2 );
+    smpi->recvComplex( fake_fields->Jt_[imode], local_patch_rank, hindex*5+2 );
     fake_fields->Jt_[imode]->put( globalfields->Jt_[imode], params, smpi, domain.fake_patch, domain.patch_ );
 
     if(params.is_spectral) {
-        //smpi->recv( fake_fields->rho_AM_[imode], local_patch_rank, hindex*5+3 );
+        smpi->recvComplex( fake_fields->rho_AM_[imode], local_patch_rank, hindex*5+3 );
         fake_fields->rho_AM_[imode]->put( globalfields->rho_AM_[imode], params, smpi, domain.fake_patch, domain.patch_ );
         //smpi->recv( domain.fake_patch->EMfields->rhoold_, local_patch_rank, hindex*5+4 );
         //domain.fake_patch->EMfields->rhoold_->put( globalfields->rhoold_, params, smpi, domain.fake_patch, domain.patch_ );
