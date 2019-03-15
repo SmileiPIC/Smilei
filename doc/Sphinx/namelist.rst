@@ -664,6 +664,7 @@ Each species has to be defined in a ``Species`` block::
 
   The initial drift velocity of the particles, in units of the speed of light :math:`c`.
 
+  **WARNING**: For massless particles, this is actually the momentum in units of :math:`m_e c`.
 
 .. py:data:: temperature
 
