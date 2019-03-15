@@ -36,9 +36,9 @@ ElectroMagnAM::ElectroMagnAM( Params &params, DomainDecomposition *domain_decomp
         for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
             ostringstream species_mode_name( "" );
             species_mode_name << vecSpecies[ispec]->name << "_mode_" << imode;
-            Jx_s[imode*n_species+ispec]  = FieldFactory::createComplex( Tools::merge("Jl_" , vecSpecies[ispec]->name, "_mode_",  imode ).c_str(), dimPrim, params );
-            Jy_s[imode*n_species+ispec]  = FieldFactory::createComplex( Tools::merge("Jr_" , vecSpecies[ispec]->name, "_mode_",  imode ).c_str(), dimPrim, params );
-            Jz_s[imode*n_species+ispec]  = FieldFactory::createComplex( Tools::merge("Jt_" , vecSpecies[ispec]->name, "_mode_",  imode ).c_str(), dimPrim, params );
+            Jl_s[imode*n_species+ispec]  = FieldFactory::createComplex( Tools::merge("Jl_" , vecSpecies[ispec]->name, "_mode_",  imode ).c_str(), dimPrim, params );
+            Jr_s[imode*n_species+ispec]  = FieldFactory::createComplex( Tools::merge("Jr_" , vecSpecies[ispec]->name, "_mode_",  imode ).c_str(), dimPrim, params );
+            Jt_s[imode*n_species+ispec]  = FieldFactory::createComplex( Tools::merge("Jt_" , vecSpecies[ispec]->name, "_mode_",  imode ).c_str(), dimPrim, params );
             rho_AM_s[imode*n_species+ispec] = new cField2D( ( "Rho_"+ species_mode_name.str() ).c_str(), dimPrim );
         }
     }
