@@ -57,7 +57,7 @@ public:
     //! finalize comm / exchange fields in direction iDim only
     void finalizeExchangeComplex( Field *field, int iDim ) override final;
     
-    void exchangeField_movewin( Field* field, int clrw ) override final {};
+    void exchangeField_movewin( Field* field, int clrw ) override final;
     
     // Create MPI_Datatype to exchange fields
     void createType( Params &params ) override final;
@@ -67,7 +67,7 @@ public:
     //! MPI_Datatype to sum [ndims_][iDim=0 prim/dial][iDim=1 prim/dial]
     MPI_Datatype ntypeSum_[2][2][2];
     //! MPI_Datatype to exchange [ndims_+1][iDim=0 prim/dial][iDim=1 prim/dial]
-    MPI_Datatype ntype_[2][2][2];
+    MPI_Datatype ntype_[3][2][2];
     
     
     

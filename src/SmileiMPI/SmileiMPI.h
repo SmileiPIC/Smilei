@@ -93,7 +93,10 @@ public:
     void isendComplex( Field *field, int to, int hindex, MPI_Request &request );
     void recv( Field *field, int from, int hindex );
     void recvComplex( Field *field, int from, int hindex );
-    
+
+    void sendComplex( Field *field, int to, int hindex );
+    void irecvComplex( Field *field, int from, int hindex, MPI_Request &request );
+
     void isend( ProbeParticles *probe, int to, int hindex, unsigned int );
     void recv( ProbeParticles *probe, int from, int hindex, unsigned int );
     

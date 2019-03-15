@@ -1497,6 +1497,13 @@ void SmileiMPI::isendComplex( Field *field, int to, int hindex, MPI_Request &req
     
 } // End isendComplex ( Field )
 
+void SmileiMPI::sendComplex( Field *field, int to, int hindex )
+{
+    cField *cf = static_cast<cField *>( field );
+    MPI_Send( &( ( *cf )( 0 ) ), 2*field->globalDims_, MPI_DOUBLE, to, hindex, MPI_COMM_WORLD );
+    
+} // End isendComplex ( Field )
+
 
 void SmileiMPI::send(Field* field, int to, int hindex)
 {
@@ -1520,6 +1527,13 @@ void SmileiMPI::recvComplex( Field *field, int from, int hindex )
     
 } // End recv ( Field )
 
+void SmileiMPI::irecvComplex( Field *field, int from, int hindex, MPI_Request &request )
+{
+    MPI_Status status;
+    cField *cf = static_cast<cField *>( field );
+    MPI_Irecv( &( ( *cf )( 0 ) ), 2*field->globalDims_, MPI_DOUBLE, from, hindex, MPI_COMM_WORLD, &request );
+    
+} // End recv ( Field )
 
 void SmileiMPI::irecv(Field* field, int from, int hindex, MPI_Request& request)
 {

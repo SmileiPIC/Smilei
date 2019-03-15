@@ -555,7 +555,12 @@ void SimWindow::operate( VectorPatch &vecPatches, SmileiMPI *smpi, Params &param
 #endif
     
     if (params.uncoupled_grids)
-        operate(domain, vecPatches, smpi, params, time_dual);
+        if ( params.geometry != "AMcylindrical" )
+            operate(domain, vecPatches, smpi, params, time_dual);
+        else {
+            for (unsigned int imode = 0 ; imode < params.nmodes ; imode++ )
+                operate(domain, vecPatches, smpi, params, time_dual, imode);
+        }
 
 }
 
@@ -576,6 +581,43 @@ void SimWindow::operate(Domain& domain,  VectorPatch& vecPatches, SmileiMPI* smp
     if (params.is_spectral) {
         domain.patch_->exchangeField_movewin( domain.patch_->EMfields->rho_, params.n_space[0] );
         domain.patch_->exchangeField_movewin( domain.patch_->EMfields->rhoold_, params.n_space[0] );
+    }
+
+    //SyncCartesianPatch::patchedToCartesian_MW( vecPatches, domain, params, smpi );
+
+    domain.patch_->EMfields->laserDisabled();
+    // External fields
+
+    //mypatch->EMfields->emBoundCond[1]->disableExternalFields();
+
+    // Deadlock if moving window & load balancing enabled
+    //     Recompute patch distribution does not change
+    //if (params.uncoupled_grids) {
+    //    domain.reset_mapping();
+    //    domain.identify_additional_patches( smpi, vecPatches, params );
+    //    domain.identify_missing_patches( smpi, vecPatches, params );
+    //}
+}
+
+
+void SimWindow::operate(Domain& domain,  VectorPatch& vecPatches, SmileiMPI* smpi, Params& params, double time_dual, unsigned int imode)
+{
+    ElectroMagnAM * domain_fields = static_cast<ElectroMagnAM *>( domain.patch_->EMfields );
+    
+    domain.patch_->exchangeField_movewin( domain_fields->El_[imode], params.n_space[0] );
+    domain.patch_->exchangeField_movewin( domain_fields->Er_[imode], params.n_space[0] );
+    domain.patch_->exchangeField_movewin( domain_fields->Et_[imode], params.n_space[0] );
+    
+    domain.patch_->exchangeField_movewin( domain_fields->Bl_[imode], params.n_space[0] );
+    domain.patch_->exchangeField_movewin( domain_fields->Br_[imode], params.n_space[0] );
+    domain.patch_->exchangeField_movewin( domain_fields->Bt_[imode], params.n_space[0] );
+    
+    domain.patch_->exchangeField_movewin( domain_fields->Bl_m[imode], params.n_space[0] );
+    domain.patch_->exchangeField_movewin( domain_fields->Br_m[imode], params.n_space[0] );
+    domain.patch_->exchangeField_movewin( domain_fields->Bt_m[imode], params.n_space[0] );
+
+    if (params.is_spectral) {
+        domain.patch_->exchangeField_movewin( domain_fields->rho_AM_[imode], params.n_space[0] );
     }
 
     //SyncCartesianPatch::patchedToCartesian_MW( vecPatches, domain, params, smpi );

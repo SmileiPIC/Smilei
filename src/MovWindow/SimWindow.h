@@ -28,7 +28,8 @@ public:
     void operate( VectorPatch &vecPatches, SmileiMPI *smpi, Params &param, unsigned int itime, double time_dual, Domain& domain );
     
     void operate( Domain& domain,  VectorPatch& vecPatches, SmileiMPI* smpi, Params& param, double time_dual );
-    
+    void operate( Domain& domain,  VectorPatch& vecPatches, SmileiMPI* smpi, Params& param, double time_dual, unsigned int imode );
+
     //! Tells whether there is a moving window or not
     inline bool isActive()
     {
