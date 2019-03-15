@@ -101,6 +101,25 @@ void ElectroMagnAM::initElectroMagnAMQuantities( Params &params, Patch *patch )
 {
 
     nmodes = params.nmodes;
+
+    dimPrim.resize( nDim_field );
+    dimDual.resize( nDim_field );
+    
+    // Dimension of the primal and dual grids
+    for( size_t i=0 ; i<nDim_field ; i++ ) {
+        // Standard scheme
+        dimPrim[i] = n_space[i]+1;
+        dimDual[i] = n_space[i]+2;
+        // + Ghost domain
+        dimPrim[i] += 2*oversize[i];
+        dimDual[i] += 2*oversize[i];
+    }
+    // number of nodes of the primal and dual grid in the x-direction
+    nl_p = n_space[0]+1+2*oversize[0];
+    nl_d = n_space[0]+2+2*oversize[0];
+    // number of nodes of the primal and dual grid in the r-direction
+    nr_p = n_space[1]+1+2*oversize[1];
+    nr_d = n_space[1]+2+2*oversize[1];
     
     // Species charge currents and density
     Jl_s.resize( n_species*nmodes );
@@ -123,35 +142,30 @@ void ElectroMagnAM::initElectroMagnAMQuantities( Params &params, Patch *patch )
     dt_ov_dl = timestep/dl;
     dl_ov_dt = 1.0/dt_ov_dl;
     
-    // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the y-direction)
+    // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the r-direction)
     dr       = cell_length[1];
     dt_ov_dr = timestep/dr;
     dr_ov_dt = 1.0/dt_ov_dr;
     j_glob_ = patch->getCellStartingGlobalIndex( 1 );
+
+    inv_R.resize( nr_p );
+    inv_Rd.resize( nr_d );
+    for( int j = 0; j< nr_p; j++ ) {
+        if( j_glob_ + j == 0 ) {
+            inv_R[j] = nan(""); 
+        } else {
+            inv_R[j] = 1./(((double)j_glob_ + (double)j)*dr);
+        }
+    }
+    for( int j = 0; j< nr_d; j++ ) {
+        inv_Rd[j] = 1./(((double)j_glob_ + (double)j - 0.5)*dr);
+    }
     
     
     // ----------------------
     // Electromagnetic fields
     // ----------------------
     
-    dimPrim.resize( nDim_field );
-    dimDual.resize( nDim_field );
-    
-    // Dimension of the primal and dual grids
-    for( size_t i=0 ; i<nDim_field ; i++ ) {
-        // Standard scheme
-        dimPrim[i] = n_space[i]+1;
-        dimDual[i] = n_space[i]+2;
-        // + Ghost domain
-        dimPrim[i] += 2*oversize[i];
-        dimDual[i] += 2*oversize[i];
-    }
-    // number of nodes of the primal and dual grid in the x-direction
-    nl_p = n_space[0]+1+2*oversize[0];
-    nl_d = n_space[0]+2+2*oversize[0];
-    // number of nodes of the primal and dual grid in the y-direction
-    nr_p = n_space[1]+1+2*oversize[1];
-    nr_d = n_space[1]+2+2*oversize[1];
     
     // Allocation of the EM fields
     
