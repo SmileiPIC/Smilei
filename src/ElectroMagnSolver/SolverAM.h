@@ -17,6 +17,17 @@ public:
         nl_d = params.n_space[0]+2+2*params.oversize[0];
         nr_p = params.n_space[1]+1+2*params.oversize[1];
         nr_d = params.n_space[1]+2+2*params.oversize[1];
+        
+        std::vector<unsigned int> n_space(params.n_space);
+        if (params.uncoupled_grids)
+            n_space = params.n_space_domain;
+
+        nl_p = n_space[0] +1+2*params.oversize[0];
+        nl_d = n_space[0] +2+2*params.oversize[0];
+        nr_p = n_space[1] +1+2*params.oversize[1];
+        nr_d = n_space[1] +2+2*params.oversize[1];
+
+
         Nmode= params.nmodes;
         dt = params.timestep;
         dr = params.cell_length[1];
