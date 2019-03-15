@@ -535,9 +535,10 @@ void VectorPatch::sumDensities( Params &params, double time_dual, Timers &timers
         if (!params.uncoupled_grids)
             SyncVectorPatch::sumRhoJ( params, ( *this ), smpi, timers, itime ); // MPI
     } else {
-        for( unsigned int imode = 0 ; imode < static_cast<ElectroMagnAM *>( patches_[0]->EMfields )->Jl_.size() ; imode++ ) {
-            SyncVectorPatch::sumRhoJ( params, ( *this ), imode, smpi, timers, itime );
-        }
+        if (!params.uncoupled_grids)
+            for( unsigned int imode = 0 ; imode < static_cast<ElectroMagnAM *>( patches_[0]->EMfields )->Jl_.size() ; imode++ ) {
+                SyncVectorPatch::sumRhoJ( params, ( *this ), imode, smpi, timers, itime );
+            }
     }
     //MESSAGE ("bug after");
     if( diag_flag ) {

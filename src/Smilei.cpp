@@ -392,6 +392,10 @@ int main( int argc, char *argv[] )
                     domain.vecPatch_.diag_flag = false;
                     if( params.geometry != "AMcylindrical" )
                         SyncVectorPatch::sumRhoJ( params, domain.vecPatch_, &smpi, timers, itime ); // MPI
+                    else
+                        for( unsigned int imode = 0 ; imode < params.nmodes ; imode++ ) {
+                            SyncVectorPatch::sumRhoJ( params, domain.vecPatch_, imode, &smpi, timers, itime );
+                        }
                     timers.syncDens.update( params.printNow( itime ) );
                     domain.solveMaxwell( params, simWindow, itime, time_dual, timers, &smpi );
                     if ( params.geometry != "AMcylindrical" )
