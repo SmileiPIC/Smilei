@@ -526,6 +526,7 @@ void Patch::set( Params &params, DomainDecomposition *domain_decomposition, Vect
     vecCollisions.resize( 0 );
     partWalls = NULL;
     probes.resize( 0 );
+    probesInterp = NULL;
     
     if( has_an_MPI_neighbor() ) {
         createType2( params );
