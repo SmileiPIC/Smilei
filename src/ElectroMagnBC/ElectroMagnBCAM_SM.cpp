@@ -75,7 +75,11 @@ ElectroMagnBCAM_SM::ElectroMagnBCAM_SM( Params &params, Patch *patch, unsigned i
     Epsilon_SM_Xmax  = Icpx*factor*dt;
     
     
-    
+    if (params.is_pxr)
+        pxr_offset = params.oversize[0];
+    else
+        pxr_offset = 0;
+   
 }
 
 
@@ -172,6 +176,14 @@ void ElectroMagnBCAM_SM::disableExternalFields()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *patch )
 {
+    if (pxr_offset) {
+        if (nl_p==nl_d) {
+            nl_p--;
+            nr_p--;
+        }
+    }
+
+
     // Loop on imode
     for( unsigned int imode=0 ; imode<Nmode ; imode++ ) {
         // Static cast of the fields
