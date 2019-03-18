@@ -570,6 +570,13 @@ void SpeciesV::sort_part( Params &params )
         first_index[ic] = last_index[ic-1];
     }
 
+    // for ( unsigned int ip = 0; ip < (unsigned int)(last_index.back()) ; ip++) {
+    //     for( unsigned int i = 0 ; i<nDim_particle; i++ ) {
+    //         particles->cell_keys[ip] *= this->length_[i];
+    //         particles->cell_keys[ip] += round( ( particles->Position[i][ip]-min_loc_vec[i] ) * dx_inv_[i] );
+    //     }
+    // }
+
 }
 
 
@@ -700,73 +707,88 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
     if( time_dual>time_frozen ) {
 
         unsigned int scell ;
-        unsigned int ip;
+        //std::vector <int> mask(last_index.back(), 1);
 
         // Resize the cell_keys
-        particles->cell_keys.resize( last_index.back() );
-
-        // Reinitialize the cell_keys array
         #pragma omp simd
-        for ( ip = 0; ip < (unsigned int)(last_index.back()) ; ip++) {
+        particles->cell_keys.resize( last_index.back(), 1 );
+        for (unsigned int ip = 0; ip < (unsigned int)(last_index.back()) ; ip++) {
                 particles->cell_keys[ip] = 1;
         }
 
+        // Reinitialize the cell_keys array
+        // #pragma omp simd
+        // for ( ip = 0; ip < (unsigned int)(last_index.back()) ; ip++) {
+        //     for( unsigned int i = 0 ; i<nDim_particle; i++ ) {
+        //         particles->cell_keys[ip] *= this->length_[i];
+        //         particles->cell_keys[ip] += round( ( particles->Position[i][ip]-min_loc_vec[i] ) * dx_inv_[i] );
+        //     }
+        // }
+
+        // for( scell = 0 ; scell < first_index.size(); scell++ ) {
+        //     for(ip = (unsigned int) first_index[scell] ; ip < (unsigned int) last_index[scell] ; ip++){
+        //
+        //         if (scell != (unsigned int) particles->cell_keys[ip]) {
+        //
+        //             std::cerr << " Ip: " << ip << "/" << particles->size()
+        //                        << " Particle cell keys: " << particles->cell_keys[ip]
+        //                        << " / " << first_index.size()
+        //                        << " scell: " << scell
+        //                        << " Mask: " << mask[ip]
+        //                        << " weight: " << particles->Weight[ip]
+        //                        << " x: " << particles->Position[0][ip]
+        //                        << " y: " << particles->Position[1][ip]
+        //                        << " mx: " << particles->Momentum[0][ip]
+        //                        << " my: " << particles->Momentum[1][ip]
+        //                        << std::endl;
+        //         }
+        //     }
+        // }
+
         // For each cell, we apply independently the merging process
         for( scell = 0 ; scell < first_index.size() ; scell++ ) {
-            ( *Merge )( mass, *particles, smpi, first_index[scell],
+            ( *Merge )( mass, *particles, particles->cell_keys, smpi, first_index[scell],
                         last_index[scell], count[scell]);
         }
 
-        //std::cerr << "begin: Removing of the merged particles" << std::endl;
+        // for( scell = 0 ; scell < first_index.size(); scell++ ) {
+        //     for(ip = (unsigned int) first_index[scell] ; ip < (unsigned int) last_index[scell] ; ip++){
+        //
+        //         if ((scell != (unsigned int) particles->cell_keys[ip]) || (mask[ip] < 0)) {
+        //         //if ((mask[ip] < 0)) {
+        //             std::cerr << " Ip: " << ip << "/" << particles->size()
+        //                        << " Particle cell keys: " << particles->cell_keys[ip]
+        //                        << " / " << first_index.size()
+        //                        << " scell: " << scell
+        //                        << " Mask: " << mask[ip]
+        //                        << " weight: " << particles->Weight[ip]
+        //                        << " x: " << particles->Position[0][ip]
+        //                        << " y: " << particles->Position[1][ip]
+        //                        << " mx: " << particles->Momentum[0][ip]
+        //                        << " my: " << particles->Momentum[1][ip]
+        //                        << std::endl;
+        //         }
+        //     }
+        // }
 
-        // Removing of the merged particles
-        // Naive method
-        // for( scell = first_index.size()-1 ; scell >= 0 ; scell-- ) {
+        particles->compressParticles(0, last_index.back(), particles->cell_keys);
+
+        // // Removing of the merged particles
+        // // Naive method
+        // for( int ic = first_index.size()-1 ; ic >= 0 ; ic-- ) {
         //     //std::cerr << " count[scell]: " << count[scell] << std::endl;
-        //     for ( ip = last_index[scell]-1 ; ip >= first_index[scell] ; ip--) {
+        //     for ( int ip = last_index[ic]-1 ; ip >= first_index[ic] ; ip--) {
         //         // std::cerr << " ip: " << ip
         //         //           << " cell_keys[ip]: " << particles->cell_keys[ip]
         //         //           << std::endl;
-        //         if (particles->cell_keys[ip] < 0) {
+        //         if (mask[ip] < 0) {
         //             particles->erase_particle(ip);
+        //             mask.erase(mask.begin() + ip);
         //             particles->cell_keys.erase(particles->cell_keys.begin() + ip);
         //             //count[scell] --;
         //         }
         //     }
         // }
-
-        // Removing of the merged particles
-        // Compression method
-        // ipp = 0;
-        // ip = 1;
-        // while( ip < last_index.back()) {
-        //     if (particles->cell_keys[ipp] < 0) {
-        //         if (particles->cell_keys[ip] >= 0) {
-        //             particles->overwrite_part( ip, ipp);
-        //             //particles->cp_particle( ip, *particles, ipp);
-        //             particles->cell_keys[ip] = -1;
-        //             particles->cell_keys[ipp] = 1;
-        //             ipp++;
-        //             ip++;
-        //         } else {
-        //            ip++;
-        //         }
-        //     } else {
-        //         ipp++;
-        //         ip++;
-        //     }
-        // }
-
-        particles->compressParticles(0, last_index.back(), particles->cell_keys);
-        // for(ip=0 ; ip < particles->size() ; ip ++) {
-        //     if (particles->cell_keys[ip] < 0) {
-        //         std::cerr << " Ip: " << ip
-        //                   << " Particle cell keys: " << particles->cell_keys[ip]
-        //                   << std::endl;
-        //     }
-        // }
-
-        //std::cerr << "begin: Update of first and last cell indexes" << std::endl;
 
         // Update of first and last cell indexes
         first_index[0] = 0;
@@ -775,6 +797,25 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
             first_index[scell] = last_index[scell-1];
             last_index[scell] = first_index[scell]+ count[scell];
         }
+
+        // for( scell = 0 ; scell < first_index.size(); scell++ ) {
+        //     for(ip = (unsigned int) first_index[scell] ; ip < (unsigned int) last_index[scell] ; ip++){
+        //
+        //         if (scell != (unsigned int) particles->cell_keys[ip]) {
+        //
+        //             std::cerr << " Ip: " << ip << "/" << particles->size() << " " << last_index.back() << " " << np
+        //                        << " Particle cell keys: " << particles->cell_keys[ip]
+        //                        << " / " << first_index.size()
+        //                        << " scell: " << scell
+        //                        << " Mask: " << mask[ip]
+        //                        << " x: " << particles->Position[0][ip]
+        //                        << " y: " << particles->Position[1][ip]
+        //                        << " mx: " << particles->Momentum[0][ip]
+        //                        << " my: " << particles->Momentum[1][ip]
+        //                        << std::endl;
+        //         }
+        //     }
+        // }
 
     }
 

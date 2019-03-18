@@ -539,20 +539,20 @@ void Particles::translate_parts( std::vector<unsigned int> parts )
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Move particle part1 into part2 memory location, erasing part2.
+// Move particle src_particle into dest_particle memory location, erasing dest_particle.
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::overwrite_part( unsigned int part1, unsigned int part2 )
+void Particles::overwrite_part( unsigned int src_particle, unsigned int dest_particle )
 {
     for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
-        ( *double_prop[iprop] )[part2] = ( *double_prop[iprop] )[part1];
+        ( *double_prop[iprop] )[dest_particle] = ( *double_prop[iprop] )[src_particle];
     }
 
     for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
-        ( *short_prop[iprop] )[part2] = ( *short_prop[iprop] )[part1];
+        ( *short_prop[iprop] )[dest_particle] = ( *short_prop[iprop] )[src_particle];
     }
 
     for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
-        ( *uint64_prop[iprop] )[part2] = ( *uint64_prop[iprop] )[part1];
+        ( *uint64_prop[iprop] )[dest_particle] = ( *uint64_prop[iprop] )[src_particle];
     }
 }
 
@@ -709,23 +709,44 @@ void Particles::create_particles( int nAdditionalParticles )
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::compressParticles( int istart, int iend, vector <int> & mask ) {
 
-    unsigned int ip, ipp;
+    // unsigned int ipp = istart;
+    // for (unsigned int ip = (unsigned int)(istart+1) ; ip < (unsigned int) iend ; ip ++) {
+    //     if (mask[ipp] < 0) {
+    //         if (mask[ip] >= 0) {
+    //             overwrite_part( ip, ipp);
+    //             mask[ip] = -1;
+    //             mask[ipp] = 1;
+    //             cell_keys[ipp] = cell_keys[ip];
+    //             ipp++;
+    //         }
+    //     } else {
+    //         ipp++;
+    //     }
+    // }
 
-    ipp = istart;
-    for (ip = (unsigned int)(istart+1) ; ip < (unsigned int) iend ; ip ++) {
-        if (mask[ipp] < 0) {
+    unsigned int idest = istart;
+    unsigned int ip = istart;
+    while (ip < (unsigned int) iend) {
+        if (mask[idest] < 0) {
             if (mask[ip] >= 0) {
-                overwrite_part( ip, ipp);
+                overwrite_part( ip, idest);
                 mask[ip] = -1;
-                mask[ipp] = 1;
-                ipp++;
+                mask[idest] = 1;
+                cell_keys[idest] = cell_keys[ip];
+                idest++;
+            } else {
+                ip++;
             }
         } else {
-            ipp++;
+            idest++;
+            ip = idest;
         }
     }
+
+
     // At the end we resize particles
-    resize(ipp);
+    resize(idest);
+    cell_keys.resize(idest);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

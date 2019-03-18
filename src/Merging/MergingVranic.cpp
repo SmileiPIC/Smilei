@@ -51,6 +51,7 @@ MergingVranic::~MergingVranic()
 void MergingVranic::operator() (
         double mass,
         Particles &particles,
+        std::vector <int> &mask,
         SmileiMPI* smpi,
         int istart,
         int iend,
@@ -393,7 +394,7 @@ void MergingVranic::operator() (
                             // First index of the packet
                             ip_min = ipack*max_packet_size_;
                             // last index of the packet
-                            ip_max = std::min((ipack+1)*max_packet_size_,number_of_particles);
+                            ip_max = std::min((ipack+1)*max_packet_size_,particles_per_momentum_cells[ic]);
 
                             // _______________________________________________________________
                             // This simd optimization is not efficient
@@ -438,6 +439,7 @@ void MergingVranic::operator() (
                             // Compute total weight, total momentum and total energy
                             // Photons
                             if (mass == 0) {
+
                                 for (ip = ip_min ; ip < ip_max ; ip ++) {
 
                                     // Particle index in Particles
@@ -529,14 +531,14 @@ void MergingVranic::operator() (
                             // be the merged particles.
 
                             // Update momentum of the first particle
-                            ipart = sorted_particles[momentum_cell_particle_index[ic] + ipack*max_packet_size_];
+                            ipart = sorted_particles[momentum_cell_particle_index[ic] + ip_min];
                             momentum[0][ipart] = new_momentum_norm*(cos_omega*e1_x + sin_omega*e2_x);
                             momentum[1][ipart] = new_momentum_norm*(cos_omega*e1_y + sin_omega*e2_y);
                             momentum[2][ipart] = new_momentum_norm*(cos_omega*e1_z + sin_omega*e2_z);
                             weight[ipart] = 0.5*total_weight;
 
                             // Update momentum of the second particle
-                            ipart = sorted_particles[momentum_cell_particle_index[ic] + ipack*max_packet_size_ + 1];
+                            ipart = sorted_particles[momentum_cell_particle_index[ic] + ip_min + 1];
                             momentum[0][ipart] = new_momentum_norm*(cos_omega*e1_x - sin_omega*e2_x);
                             momentum[1][ipart] = new_momentum_norm*(cos_omega*e1_y - sin_omega*e2_y);
                             momentum[2][ipart] = new_momentum_norm*(cos_omega*e1_z - sin_omega*e2_z);
@@ -546,7 +548,7 @@ void MergingVranic::operator() (
                             // Other particles are tagged to be removed after
                             for (ip = ip_min + 2; ip < ip_max ; ip ++) {
                                 ipart = sorted_particles[momentum_cell_particle_index[ic] + ip];
-                                cell_keys[ipart] = -1;
+                                mask[ipart] = -1;
                                 count--;
                             }
 

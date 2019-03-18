@@ -47,6 +47,7 @@ public:
     virtual void operator()(
         double mass,
         Particles &particles,
+        std::vector <int> &mask,
         SmileiMPI *smpi,
         int istart,
         int iend,
