@@ -240,8 +240,13 @@ void ProjectorAM2Order::currents_mode0( complex<double> *Jl, complex<double> *Jr
 // ---------------------------------------------------------------------------------------------------------------------
 //! Project local currents for m>0
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2Order::currents( complex<double> *Jl, complex<double> *Jr, complex<double> *Jt, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, double *array_theta_old, int imode )
+void ProjectorAM2Order::currents( std::vector<complex<double> *>Jln, std::vector<complex<double> *> Jrn, std::vector<complex<double> *> Jtn, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, double *array_theta_old, int imode )
 {
+
+    complex<double> *Jl = Jln[imode];
+    complex<double> *Jr = Jrn[imode];
+    complex<double> *Jt = Jtn[imode];
+
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------   int iloc,
@@ -1049,7 +1054,17 @@ void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
     
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
     if( !diag_flag ) {
-    
+        std::vector<complex<double > *> b_Jln, b_Jrn, b_Jtn; //To be initialized only once. 
+        b_Jln.resize(Nmode);
+        b_Jrn.resize(Nmode);
+        b_Jtn.resize(Nmode);
+        for( unsigned int imode = 0; imode<Nmode; imode++ ) {
+        
+            b_Jln[imode] =  &( *emAM->Jl_[imode] )( 0 );
+            b_Jrn[imode] =  &( *emAM->Jr_[imode] )( 0 );
+            b_Jtn[imode] =  &( *emAM->Jt_[imode] )( 0 );
+        }
+
         for( unsigned int imode = 0; imode<Nmode; imode++ ) {
         
             complex<double> *b_Jl =  &( *emAM->Jl_[imode] )( 0 );
@@ -1062,7 +1077,7 @@ void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
                 }
             } else {
                 for( int ipart=istart ; ipart<iend; ipart++ ) {
-                    currents( b_Jl, b_Jr, b_Jt, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart], &( *array_theta_old )[ipart], imode );
+                    currents( b_Jln, b_Jrn, b_Jtn, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart], &( *array_theta_old )[ipart], imode );
                 }
             }
         }       // Otherwise, the projection may apply to the species-specific arrays
