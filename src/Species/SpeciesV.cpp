@@ -710,8 +710,8 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
         //std::vector <int> mask(last_index.back(), 1);
 
         // Resize the cell_keys
-        #pragma omp simd
         particles->cell_keys.resize( last_index.back(), 1 );
+        #pragma omp simd
         for (unsigned int ip = 0; ip < (unsigned int)(last_index.back()) ; ip++) {
                 particles->cell_keys[ip] = 1;
         }
