@@ -999,6 +999,23 @@ void SyncVectorPatch::finalizeexchangeJ( Params &params, VectorPatch &vecPatches
 }
 
 
+void SyncVectorPatch::exchangeE( Params &params, VectorPatch &vecPatches, int imode, SmileiMPI *smpi )
+{
+
+    SyncVectorPatch::exchangeComplex( vecPatches.listEl_[imode], vecPatches, smpi );
+    SyncVectorPatch::exchangeComplex( vecPatches.listEr_[imode], vecPatches, smpi );
+    SyncVectorPatch::exchangeComplex( vecPatches.listEt_[imode], vecPatches, smpi );
+}
+
+void SyncVectorPatch::finalizeexchangeE( Params &params, VectorPatch &vecPatches, int imode )
+{
+
+    SyncVectorPatch::finalizeexchangeComplex( vecPatches.listEl_[imode], vecPatches );
+    SyncVectorPatch::finalizeexchangeComplex( vecPatches.listEr_[imode], vecPatches );
+    SyncVectorPatch::finalizeexchangeComplex( vecPatches.listEt_[imode], vecPatches );
+}
+
+
 void SyncVectorPatch::exchangeB( Params &params, VectorPatch &vecPatches, int imode, SmileiMPI *smpi )
 {
 
