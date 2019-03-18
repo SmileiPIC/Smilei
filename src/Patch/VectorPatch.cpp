@@ -453,14 +453,20 @@ void VectorPatch::finalize_and_sort_parts( Params &params, SmileiMPI *smpi, SimW
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         // Particle importation for all species
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
-            if( species( ipatch, ispec )->merging_time_selection_->theTimeIsNow( itime ) ) {
-                species( ipatch, ispec )->mergeParticles( time_dual, ispec,
-                        params,
-                        ( *this )( ipatch ), smpi,
-                        localDiags );
+            // Check if the particle merging is activated for this species
+            if (species( ipatch, ispec )->has_merging) {
+
+                // Check the time selection
+                if( species( ipatch, ispec )->merging_time_selection_->theTimeIsNow( itime ) ) {
+                    species( ipatch, ispec )->mergeParticles( time_dual, ispec,
+                            params,
+                            ( *this )( ipatch ), smpi,
+                            localDiags );
+                }
             }
         }
     }
+
 
     // Species reconfiguration for best performance
     // Change the status to use vectorized or not-vectorized operators

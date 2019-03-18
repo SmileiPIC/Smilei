@@ -105,15 +105,6 @@ void MergingVranic::operator() (
         unsigned int ip, ip_min, ip_max;
         unsigned int ipart;
 
-        // Total number of momentum cells
-        unsigned int momentum_cells = dimensions_[0]
-                                    * dimensions_[1]
-                                    * dimensions_[2];
-
-        // Total number of angular momentum cells
-        unsigned int momentum_angular_cells = dimensions_[1]
-                                            * dimensions_[2];
-
         // Total weight for merging process
         double total_weight;
         double total_momentum_x;
@@ -152,34 +143,11 @@ void MergingVranic::operator() (
         // std::vector <unsigned int> sorted_particles(number_of_particles,0);
         unsigned int  * sorted_particles = (unsigned int*) aligned_alloc(64, number_of_particles*sizeof(unsigned int));
 
-        // Array containing the number of particles per momentum cells
-        // std::vector <unsigned int> particles_per_momentum_cells(momentum_cells,0);
-        unsigned int  * particles_per_momentum_cells = (unsigned int*) aligned_alloc(64, momentum_cells*sizeof(unsigned int));
-
-        // Array containing the first particle index of each momentum cell
-        // in the sorted particle array
-        // std::vector <unsigned int> momentum_cell_particle_index(momentum_cells,0);
-        unsigned int  * momentum_cell_particle_index = (unsigned int*) aligned_alloc(64, momentum_cells*sizeof(unsigned int));
-
-        // Initialization when using aligned_alloc
-        for (ic = 0 ; ic < momentum_cells ; ic++) {
-            momentum_cell_particle_index[ic] = 0;
-            particles_per_momentum_cells[ic] = 0;
-        }
-
         // Local vector to store the momentum angles in the spherical base
         // std::vector <double> particles_phi(number_of_particles,0);
         // std::vector <double> particles_theta(number_of_particles,0);
         double  * particles_phi = (double*) aligned_alloc(64, number_of_particles*sizeof(double));
         double  * particles_theta = (double*) aligned_alloc(64, number_of_particles*sizeof(double));
-
-        // Cell direction unit vector in the spherical base
-        // std::vector <double> cell_vec_x(momentum_angular_cells,0);
-        // std::vector <double> cell_vec_y(momentum_angular_cells,0);
-        // std::vector <double> cell_vec_z(momentum_angular_cells,0);
-        double  * cell_vec_x = (double*) aligned_alloc(64, momentum_angular_cells*sizeof(double));
-        double  * cell_vec_y = (double*) aligned_alloc(64, momentum_angular_cells*sizeof(double));
-        double  * cell_vec_z = (double*) aligned_alloc(64, momentum_angular_cells*sizeof(double));
 
         // Arrays for inefficient vectorization strategy
         // double  * momentum_x_loc = (double*) aligned_alloc(64, max_packet_size_*sizeof(double));
@@ -238,7 +206,7 @@ void MergingVranic::operator() (
         // Check if min and max boundaries are very close
         if (abs((mr_max - mr_min)/mr_min) < 1e-10) {
             mr_delta = 0.;
-            inv_mr_delta = 0.;
+            inv_mr_delta = 0;
             dimensions_[0] = 1;
         } else {
             mr_delta = (mr_max - mr_min) / dimensions_[0];
@@ -246,7 +214,7 @@ void MergingVranic::operator() (
         }
         if (abs((theta_max - theta_min)/theta_min) < 1e-10) {
             theta_delta = 0.;
-            inv_theta_delta = 0.;
+            inv_theta_delta = 0;
             dimensions_[1] = 1;
         } else {
             theta_delta = (theta_max - theta_min) / dimensions_[1];
@@ -259,6 +227,38 @@ void MergingVranic::operator() (
         } else {
             phi_delta = (phi_max - phi_min) / dimensions_[2];
             inv_phi_delta = 1./phi_delta;
+        }
+
+        // Total number of momentum cells
+        unsigned int momentum_cells = dimensions_[0]
+                                    * dimensions_[1]
+                                    * dimensions_[2];
+
+        // Array containing the number of particles per momentum cells
+        // std::vector <unsigned int> particles_per_momentum_cells(momentum_cells,0);
+        unsigned int  * particles_per_momentum_cells = (unsigned int*) aligned_alloc(64, momentum_cells*sizeof(unsigned int));
+
+        // Array containing the first particle index of each momentum cell
+        // in the sorted particle array
+        // std::vector <unsigned int> momentum_cell_particle_index(momentum_cells,0);
+        unsigned int  * momentum_cell_particle_index = (unsigned int*) aligned_alloc(64, momentum_cells*sizeof(unsigned int));
+
+        // Total number of angular momentum cells
+        unsigned int momentum_angular_cells = dimensions_[1]
+                                            * dimensions_[2];
+
+        // Cell direction unit vector in the spherical base
+        // std::vector <double> cell_vec_x(momentum_angular_cells,0);
+        // std::vector <double> cell_vec_y(momentum_angular_cells,0);
+        // std::vector <double> cell_vec_z(momentum_angular_cells,0);
+        double  * cell_vec_x = (double*) aligned_alloc(64, momentum_angular_cells*sizeof(double));
+        double  * cell_vec_y = (double*) aligned_alloc(64, momentum_angular_cells*sizeof(double));
+        double  * cell_vec_z = (double*) aligned_alloc(64, momentum_angular_cells*sizeof(double));
+
+        // Initialization when using aligned_alloc
+        for (ic = 0 ; ic < momentum_cells ; ic++) {
+            momentum_cell_particle_index[ic] = 0;
+            particles_per_momentum_cells[ic] = 0;
         }
 
         // Computation of the cell direction unit vector (vector d in Vranic et al.)
@@ -294,6 +294,8 @@ void MergingVranic::operator() (
             // 1D Index in the momentum discretization
             momentum_cell_index[ip] = phi_i    * dimensions_[0]*dimensions_[1]
                           + theta_i * dimensions_[0] + mr_i;
+
+            std::cerr << "momentum_cell_index: " << momentum_cell_index[ip] << std::endl;
         }
 
         // The number of particles per momentum cells

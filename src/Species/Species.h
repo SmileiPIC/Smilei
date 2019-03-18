@@ -241,6 +241,9 @@ public:
     //! Merging method
     std::string merging_method_;
 
+    //! Boolean to test if the species has the merging ready
+    bool has_merging;
+
     //! Time selection for the particle merging
     TimeSelection *merging_time_selection_;
 

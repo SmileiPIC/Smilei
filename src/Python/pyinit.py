@@ -502,6 +502,18 @@ class RadiationReaction(SmileiComponent):
     Fine-tuning of synchrotron-like radiation reaction
     (classical continuous, quantum correction, stochastics and MC algorithms)
     """
+    # Minimum particle_chi value for the discontinuous radiation
+    # Under this value, the discontinuous approach is not applied
+    minimum_chi_discontinuous = 1e-2
+    # Threshold on particle_chi: if particle_chi < 1E-3 no radiation reaction
+    minimum_chi_continuous = 1e-3
+    # If one wants to recompute the tables
+    compute_table = False
+
+    # Path to read or write the tables/databases
+    table_path = "./"
+
+    # Parameters for computing the tables
     # Table h parameters
     h_chipa_min = 1e-3
     h_chipa_max = 1e1
@@ -520,13 +532,6 @@ class RadiationReaction(SmileiComponent):
     xip_chiph_dim = 128
     # Output format, can be "ascii", "binary", "hdf5"
     output_format = "hdf5"
-    # Minimum particle_chi value for the discontinuous radiation
-    # Under this value, the discontinuous approach is not applied
-    minimum_chi_discontinuous = 1e-2
-    # Threshold on particle_chi: if particle_chi < 1E-3 no radiation reaction
-    minimum_chi_continuous = 1e-3
-    # Path the tables/databases
-    table_path = "./"
 
 # MutliphotonBreitWheeler pair creation
 class MultiphotonBreitWheeler(SmileiComponent):

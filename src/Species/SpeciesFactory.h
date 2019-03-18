@@ -196,7 +196,7 @@ public:
             thisSpecies-> pusher = "norm";
 
             MESSAGE( 2, "> " <<species_name <<" is a photon species (mass==0)." );
-            MESSAGE( 2, "> Radiation model set to none." );
+            //MESSAGE( 2, "> Radiation model set to none." );
             MESSAGE( 2, "> Pusher set to norm." );
         }
 
@@ -218,11 +218,11 @@ public:
             if( thisSpecies->radiation_model == "mc" ) {
                 if( PyTools::extract( "radiation_photon_species", thisSpecies->radiation_photon_species, "Species", ispec ) ) {
 
-                    MESSAGE( 2, "> Macro-photon emission activated" );
+                    MESSAGE( 3, "| Macro-photon emission activated" );
 
                     // Species that will receive the emitted photons
                     if( !thisSpecies->radiation_photon_species.empty() ) {
-                        MESSAGE( 2, "> Emitted photon species set to `" << thisSpecies->radiation_photon_species << "`" );
+                        MESSAGE( 3, "| Emitted photon species set to `" << thisSpecies->radiation_photon_species << "`" );
                     } else {
                         ERROR( " The radiation photon species is not specified." )
                     }
@@ -237,7 +237,7 @@ public:
                     } else {
                         thisSpecies->radiation_photon_sampling_ = 1;
                     }
-                    MESSAGE( 2, "> Number of macro-photons emitted per MC event: "
+                    MESSAGE( 3, "| Number of macro-photons emitted per MC event: "
                              << thisSpecies->radiation_photon_sampling_ );
 
                     // Photon energy threshold
@@ -245,10 +245,10 @@ public:
                                            thisSpecies->radiation_photon_gamma_threshold_, "Species", ispec ) ) {
                         thisSpecies->radiation_photon_gamma_threshold_ = 2.;
                     }
-                    MESSAGE( 2, "> Photon energy threshold for macro-photon emission: "
+                    MESSAGE( 3, "| Photon energy threshold for macro-photon emission: "
                              << thisSpecies->radiation_photon_gamma_threshold_ );
                 } else {
-                    MESSAGE( 2, "> Macro-photon emission not activated" );
+                    MESSAGE( 3, "| Macro-photon emission not activated" );
                 }
 
             }
@@ -269,7 +269,7 @@ public:
                     thisSpecies->particles->isMonteCarlo = true;
 
                     MESSAGE( 2, "> Decay into pair via the multiphoton Breit-Wheeler activated" );
-                    MESSAGE( 2, "> Generated electrons and positrons go to species: "
+                    MESSAGE( 3, "| Generated electrons and positrons go to species: "
                              << thisSpecies->multiphoton_Breit_Wheeler[0]
                              << " & " << thisSpecies->multiphoton_Breit_Wheeler[1] );
 
@@ -280,7 +280,7 @@ public:
                         thisSpecies->mBW_pair_creation_sampling[0] = 1;
                         thisSpecies->mBW_pair_creation_sampling[1] = 1;
                     }
-                    MESSAGE( 2, "> Number of emitted macro-particles per MC event: "
+                    MESSAGE( 3, "| Number of emitted macro-particles per MC event: "
                              << thisSpecies->mBW_pair_creation_sampling[0]
                              << " & " << thisSpecies->mBW_pair_creation_sampling[1] );
                 }
@@ -291,6 +291,7 @@ public:
 
         // Extract merging method
         thisSpecies->merging_method_ = "none"; // default value
+        thisSpecies->has_merging = false; // default value
         if( PyTools::extract( "merging_method", thisSpecies->merging_method_, "Species", ispec ) ) {
             // Cancelation of the letter case for `merging_method_`
             std::transform( thisSpecies->merging_method_.begin(),
@@ -308,63 +309,69 @@ public:
                        << ": particle merging only available with `vectorization_mode` = `on` or `adpative`" );
             }
 
-            // get parameter "every" which describes a timestep selection
-            if( !thisSpecies->merging_time_selection_ ) {
-                thisSpecies->merging_time_selection_ = new TimeSelection(
-                    PyTools::extract_py( "merge_every", "Species", ispec ), "Particle merging"
-                );
-            }
+            if ( thisSpecies->merging_method_ != "none" ) {
 
-            // get extra parameters
-            // Maximum particle number per packet to merge
-            if( PyTools::extract( "merge_min_packet_size", thisSpecies->merge_min_packet_size_ , "Species", ispec ) ) {
-                if (thisSpecies->merge_min_packet_size_ < 4)
-                {
-                    ERROR( "In Species " << thisSpecies->name
-                           << ": minimum number of particle per merging packet "
-                           << "(`merge_min_packet_size`)"
-                           << "must be above or equal to 4.");
+                // get parameter "every" which describes a timestep selection
+                if( !thisSpecies->merging_time_selection_ ) {
+                    thisSpecies->merging_time_selection_ = new TimeSelection(
+                        PyTools::extract_py( "merge_every", "Species", ispec ), "Particle merging"
+                    );
                 }
-            }
-            // Minimum particle number per packet to merge
-            if( PyTools::extract( "merge_max_packet_size", thisSpecies->merge_max_packet_size_ , "Species", ispec ) ) {
-                if (thisSpecies->merge_max_packet_size_ < 4)
-                {
-                    ERROR( "In Species " << thisSpecies->name
-                           << ": maximum number of particle per merging packet "
-                           << "(`merge_max_packet_size`)"
-                           << "must be above or equal to 4.");
-                }
-                if (thisSpecies->merge_max_packet_size_ < thisSpecies->merge_min_packet_size_) {
-                    ERROR( "In Species " << thisSpecies->name
-                           << ": maximum number of particle per merging packet "
-                           << "(`merge_max_packet_size`)"
-                           << "must be below or equal to the minimum particle number"
-                           << " per merging packet (`merge_min_packet_size`)");
-                }
-            }
 
-            // Read and check the threshold on the number of particles per cell
-            if( PyTools::extract( "merge_ppc_min_threshold", thisSpecies->merge_ppc_min_threshold_ , "Species", ispec ) ) {
-                if (thisSpecies->merge_ppc_min_threshold_ < 4) {
-                    ERROR( "In Species " << thisSpecies->name
-                           << ": The threshold on the number of particles per cell "
-                           << "(`merge_ppc_min_threshold`)"
-                           << "must be above or equal to 4");
-                }
-            }
-
-            // Momentum cell discretization
-            if( PyTools::extract( "merge_momentum_cell_size",
-                                  thisSpecies->merge_momentum_cell_size_ ,
-                                  "Species", ispec ) ) {
-                for (unsigned int i = 0 ; i < 3 ; i++) {
-                    if (thisSpecies->merge_momentum_cell_size_[i] <= 0) {
+                // get extra parameters
+                // Minimum particle number per packet to merge
+                if( PyTools::extract( "merge_min_packet_size", thisSpecies->merge_min_packet_size_ , "Species", ispec ) ) {
+                    if (thisSpecies->merge_min_packet_size_ < 4)
+                    {
                         ERROR( "In Species " << thisSpecies->name
-                               << ": The momentum cell discretization can not be equal or below 0 "
-                               << "(`merge_momentum_cell_size_`).");
+                               << ": minimum number of particle per merging packet "
+                               << "(`merge_min_packet_size`)"
+                               << "must be above or equal to 4.");
                     }
                 }
+                // Maximum particle number per packet to merge
+                if( PyTools::extract( "merge_max_packet_size", thisSpecies->merge_max_packet_size_ , "Species", ispec ) ) {
+                    if (thisSpecies->merge_max_packet_size_ < 4)
+                    {
+                        ERROR( "In Species " << thisSpecies->name
+                               << ": maximum number of particle per merging packet "
+                               << "(`merge_max_packet_size`)"
+                               << "must be above or equal to 4.");
+                    }
+                    if (thisSpecies->merge_max_packet_size_ < thisSpecies->merge_min_packet_size_) {
+                        ERROR( "In Species " << thisSpecies->name
+                               << ": maximum number of particle per merging packet "
+                               << "(`merge_max_packet_size`)"
+                               << "must be below or equal to the minimum particle number"
+                               << " per merging packet (`merge_min_packet_size`)");
+                    }
+                }
+
+                // Read and check the threshold on the number of particles per cell
+                if( PyTools::extract( "merge_ppc_min_threshold", thisSpecies->merge_ppc_min_threshold_ , "Species", ispec ) ) {
+                    if (thisSpecies->merge_ppc_min_threshold_ < 4) {
+                        ERROR( "In Species " << thisSpecies->name
+                               << ": The threshold on the number of particles per cell "
+                               << "(`merge_ppc_min_threshold`)"
+                               << "must be above or equal to 4");
+                    }
+                }
+
+                // Momentum cell discretization
+                if( PyTools::extract( "merge_momentum_cell_size",
+                                      thisSpecies->merge_momentum_cell_size_ ,
+                                      "Species", ispec ) ) {
+                    for (unsigned int i = 0 ; i < 3 ; i++) {
+                        if (thisSpecies->merge_momentum_cell_size_[i] <= 0) {
+                            ERROR( "In Species " << thisSpecies->name
+                                   << ": The momentum cell discretization can not be equal or below 0 "
+                                   << "(`merge_momentum_cell_size_`).");
+                        }
+                    }
+                }
+
+                // We activate the merging
+                thisSpecies->has_merging = true;
             }
 
             // Information about the merging process
@@ -843,6 +850,7 @@ public:
         newSpecies->densityProfileType                       = species->densityProfileType;
         newSpecies->vectorized_operators                     = species->vectorized_operators;
         newSpecies->merging_method_                          = species->merging_method_;
+        newSpecies->has_merging                              = species->has_merging;
         newSpecies->merging_time_selection_                  = species->merging_time_selection_;
         newSpecies->merge_ppc_min_threshold_                 = species->merge_ppc_min_threshold_;
         newSpecies->merge_min_packet_size_                   = species->merge_min_packet_size_;
