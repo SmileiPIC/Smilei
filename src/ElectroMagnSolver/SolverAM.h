@@ -23,9 +23,9 @@ public:
             n_space = params.n_space_domain;
 
         nl_p = n_space[0] +1+2*params.oversize[0];
-        nl_d = n_space[0] +2+2*params.oversize[0];
+        nl_d = n_space[0] +2+2*params.oversize[0]-(params.is_pxr);
         nr_p = n_space[1] +1+2*params.oversize[1];
-        nr_d = n_space[1] +2+2*params.oversize[1];
+        nr_d = n_space[1] +2+2*params.oversize[1]-(params.is_pxr);
 
 
         Nmode= params.nmodes;
