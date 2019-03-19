@@ -129,6 +129,10 @@ public:
     //! between istart and iend
     void compressParticles( int istart, int iend, std::vector <int> & mask );
 
+    //! Compress the particles vectors using cell_keys as a mask
+    //! between istart and iend
+    void compressParticles( int istart, int iend);
+
     //! Test if ipart is in the local patch
     bool is_part_in_domain( unsigned int ipart, Patch *patch );
 

@@ -66,6 +66,12 @@ void MergingVranic::operator() (
     // to process the merging.
     if (number_of_particles > ppc_min_threshold_) {
 
+        // Momentum discretization
+        unsigned int dim[3];
+        for (unsigned int i = 0; i < 3 ; i++) {
+            dim[i] = dimensions_[i];
+        }
+
         // Minima
         double mr_min;
         double theta_min;
@@ -129,7 +135,7 @@ void MergingVranic::operator() (
         double *weight = &( particles.weight( 0 ) );
 
         // Cell keys shortcut
-        int *cell_keys = &( particles.cell_keys[0] );
+        // int *cell_keys = &( particles.cell_keys[0] );
 
         // Norm of the momentum
         // std::vector <double> momentum_norm(number_of_particles,0);;
@@ -204,35 +210,39 @@ void MergingVranic::operator() (
 
         // Computation of the deltas (discretization steps)
         // Check if min and max boundaries are very close
-        if (abs((mr_max - mr_min)/mr_min) < 1e-10) {
-            mr_delta = 0.;
+        if (abs((mr_max - mr_min)) < 1e-10) {
+            mr_delta = 0.1;
             inv_mr_delta = 0;
-            dimensions_[0] = 1;
+            dim[0] = 1;
         } else {
-            mr_delta = (mr_max - mr_min) / dimensions_[0];
+            mr_delta = (mr_max - mr_min) / dim[0];
             inv_mr_delta = 1./mr_delta;
         }
-        if (abs((theta_max - theta_min)/theta_min) < 1e-10) {
-            theta_delta = 0.;
+        if (abs((theta_max - theta_min)) < 1e-10) {
+            theta_delta = 0.1*M_PI;
             inv_theta_delta = 0;
-            dimensions_[1] = 1;
+            dim[1] = 1;
         } else {
-            theta_delta = (theta_max - theta_min) / dimensions_[1];
+            theta_delta = (theta_max - theta_min) / dim[1];
             inv_theta_delta = 1./theta_delta;
         }
-        if (abs((phi_max - phi_min)/phi_min) < 1e-10) {
-            phi_delta = 0.;
+        if (abs((phi_max - phi_min)) < 1e-10) {
+            phi_delta = 0.1*M_PI;
             inv_phi_delta = 0;
-            dimensions_[2] = 1;
+            dim[2] = 1;
         } else {
-            phi_delta = (phi_max - phi_min) / dimensions_[2];
+            phi_delta = (phi_max - phi_min) / dim[2];
             inv_phi_delta = 1./phi_delta;
         }
 
+        // std::cerr << " phi min: " << phi_min << " max: " << phi_max
+        //           << " phi error: " << abs((phi_max - phi_min))
+        //           << " phi_delta: " << phi_delta << std::endl;
+
         // Total number of momentum cells
-        unsigned int momentum_cells = dimensions_[0]
-                                    * dimensions_[1]
-                                    * dimensions_[2];
+        unsigned int momentum_cells = dim[0]
+                                    * dim[1]
+                                    * dim[2];
 
         // Array containing the number of particles per momentum cells
         // std::vector <unsigned int> particles_per_momentum_cells(momentum_cells,0);
@@ -244,8 +254,8 @@ void MergingVranic::operator() (
         unsigned int  * momentum_cell_particle_index = (unsigned int*) aligned_alloc(64, momentum_cells*sizeof(unsigned int));
 
         // Total number of angular momentum cells
-        unsigned int momentum_angular_cells = dimensions_[1]
-                                            * dimensions_[2];
+        unsigned int momentum_angular_cells = dim[1]
+                                            * dim[2];
 
         // Cell direction unit vector in the spherical base
         // std::vector <double> cell_vec_x(momentum_angular_cells,0);
@@ -262,12 +272,12 @@ void MergingVranic::operator() (
         }
 
         // Computation of the cell direction unit vector (vector d in Vranic et al.)
-        for (theta_i = 0 ; theta_i < dimensions_[1] ; theta_i ++) {
+        for (phi_i = 0 ; phi_i < dim[2] ; phi_i ++) {
             #pragma omp simd private(theta, phi, icc) \
             aligned(cell_vec_x, cell_vec_y, cell_vec_z: 64)
-            for (phi_i = 0 ; phi_i < dimensions_[2] ; phi_i ++) {
+            for (theta_i = 0 ; theta_i < dim[1] ; theta_i ++) {
 
-                icc = theta_i * dimensions_[2] + phi_i;
+                icc = theta_i + phi_i * dim[1];
 
                 theta = theta_min + (theta_i + 0.5) * theta_delta;
                 phi = phi_min + (phi_i + 0.5) * phi_delta;
@@ -275,6 +285,11 @@ void MergingVranic::operator() (
                 cell_vec_x[icc] = cos(phi)*cos(theta);
                 cell_vec_y[icc] = cos(phi)*sin(theta);
                 cell_vec_z[icc] = sin(phi);
+
+                // std::cerr << " theta: " << theta
+                //           << " phi: " << phi
+                //           << std::endl;
+
             }
         }
 
@@ -292,10 +307,18 @@ void MergingVranic::operator() (
             phi_i   = (unsigned int)( (particles_phi[ip] - phi_min)      * inv_phi_delta);
 
             // 1D Index in the momentum discretization
-            momentum_cell_index[ip] = phi_i    * dimensions_[0]*dimensions_[1]
-                          + theta_i * dimensions_[0] + mr_i;
+            momentum_cell_index[ip] = phi_i * dim[0]*dim[1]
+                          + theta_i * dim[0] + mr_i;
 
-            std::cerr << "momentum_cell_index: " << momentum_cell_index[ip] << std::endl;
+                // std::cerr << "momentum_cell_index: " << momentum_cell_index[ip]
+                //           << " momentum_norm: " << momentum_norm[ip]
+                //           << " particles_theta: " << particles_theta[ip]
+                //           << " particles_phi: " << particles_phi[ip]
+                //           << " phi_i: " << phi_i
+                //           << " theta_i: " << theta_i
+                //           << " mr_i: " << mr_i
+                //           << std::endl;
+
         }
 
         // The number of particles per momentum cells
@@ -304,7 +327,6 @@ void MergingVranic::operator() (
         for (ip=0; ip<number_of_particles; ip++ ) {
             // Number of particles per momentum cells
             particles_per_momentum_cells[momentum_cell_index[ip]] += 1;
-
         }
 
         // Computation of the cell index in the sorted array of particles
@@ -329,12 +351,12 @@ void MergingVranic::operator() (
         }
 
         // Debugging
-        /*for (mr_i=0 ; mr_i< dimensions_[0]; mr_i++ ) {
-            for (theta_i=0 ; theta_i< dimensions_[1]; theta_i++ ) {
-                for (phi_i=0 ; phi_i< dimensions_[2]; phi_i++ ) {
+        /*for (mr_i=0 ; mr_i< dim[0]; mr_i++ ) {
+            for (theta_i=0 ; theta_i< dim[1]; theta_i++ ) {
+                for (phi_i=0 ; phi_i< dim[2]; phi_i++ ) {
 
-                    ic = mr_i * dimensions_[1]*dimensions_[2]
-                       + theta_i * dimensions_[2] + phi_i;
+                    ic = mr_i * dim[1]*dim[2]
+                       + theta_i * dim[2] + phi_i;
 
                     std::cerr << " Momentum cell: " << ic
                               << "   Momentum cell p index: " << momentum_cell_particle_index[ic]
@@ -361,16 +383,16 @@ void MergingVranic::operator() (
         // at least `min_packet_size_` and `max_packet_size_`
 
         // Loop over the the momentum cells that have enough particules
-        for (phi_i=0 ; phi_i< dimensions_[2]; phi_i++ ) {
-            for (theta_i=0 ; theta_i< dimensions_[1]; theta_i++ ) {
+        for (phi_i=0 ; phi_i< dim[2]; phi_i++ ) {
+            for (theta_i=0 ; theta_i< dim[1]; theta_i++ ) {
 
                 // 1D cell direction index
-                icc = theta_i + phi_i* dimensions_[1] ;
+                icc = theta_i + phi_i* dim[1] ;
 
-                for (mr_i=0 ; mr_i< dimensions_[0]; mr_i++ ) {
+                for (mr_i=0 ; mr_i< dim[0]; mr_i++ ) {
 
                     // 1D cell index
-                    ic = mr_i + icc*dimensions_[0];
+                    ic = mr_i + icc*dim[0];
 
                     // Check if there is enought particles in the momentum
                     // cell to trigger the merging procecc
@@ -466,6 +488,24 @@ void MergingVranic::operator() (
                                 // pa in Vranic et al.
                                 new_momentum_norm = new_energy;
 
+                                total_momentum_norm = 1./sqrt(total_momentum_x*total_momentum_x
+                                                    +      total_momentum_y*total_momentum_y
+                                                    +      total_momentum_z*total_momentum_z);
+
+                                // Update momentum of the first photon
+                                ipart = sorted_particles[momentum_cell_particle_index[ic] + ip_min];
+                                momentum[0][ipart] = new_momentum_norm*total_momentum_x*total_momentum_norm;
+                                momentum[1][ipart] = new_momentum_norm*total_momentum_y*total_momentum_norm;
+                                momentum[2][ipart] = new_momentum_norm*total_momentum_z*total_momentum_norm;
+                                weight[ipart] = total_weight;
+
+                                // Other photons are tagged to be removed after
+                                for (ip = ip_min + 1; ip < ip_max ; ip ++) {
+                                    ipart = sorted_particles[momentum_cell_particle_index[ic] + ip];
+                                    mask[ipart] = -1;
+                                    count--;
+                                }
+
                             // Mass particles
                             } else {
                                 for (ip = ip_min ; ip < ip_max ; ip ++) {
@@ -494,64 +534,87 @@ void MergingVranic::operator() (
                                 // pa in Vranic et al.
                                 new_momentum_norm = sqrt(new_energy*new_energy - 1.0);
 
-                            }
+                                total_momentum_norm = sqrt(total_momentum_x*total_momentum_x
+                                                    +      total_momentum_y*total_momentum_y
+                                                    +      total_momentum_z*total_momentum_z);
 
-                            total_momentum_norm = sqrt(total_momentum_x*total_momentum_x
-                                                +      total_momentum_y*total_momentum_y
-                                                +      total_momentum_z*total_momentum_z);
+                                // Angle between pa and pt, pb and pt in Vranic et al.
+                                omega = std::acos(total_momentum_norm / (total_weight*new_momentum_norm));
+                                sin_omega = sin(omega);
+                                cos_omega = cos(omega);
 
-                            // Angle between pa and pt, pb and pt in Vranic et al.
-                            omega = acos(total_momentum_norm / (total_weight*new_momentum_norm));
-                            sin_omega = sin(omega);
-                            cos_omega = cos(omega);
+                                // std::cerr << "new_energy: " << new_energy
+                                //           << " new_momentum_norm: " << new_momentum_norm
+                                //           << " total_momentum_norm: " << total_momentum_norm
+                                //           << " omega: " << omega
+                                //           << std::endl;
 
-                            // Computation of e1 unit vector
-                            e1_x = total_momentum_x / total_momentum_norm;
-                            e1_y = total_momentum_y / total_momentum_norm;
-                            e1_z = total_momentum_z / total_momentum_norm;
+                                // Computation of e1 unit vector
+                                e1_x = total_momentum_x / total_momentum_norm;
+                                e1_y = total_momentum_y / total_momentum_norm;
+                                e1_z = total_momentum_z / total_momentum_norm;
 
-                            // Computation of e2  = e1 x e3 unit vector
-                            // e3 = e1 x cell_vec
-                            e2_x = e1_y*e1_y*cell_vec_x[icc]
-                                 - e1_x * (e1_y*cell_vec_y[icc] + e1_z*cell_vec_z[icc])
-                                 + e1_z*e1_z*cell_vec_x[icc];
-                            e2_y = e1_z*e1_z*cell_vec_y[icc]
-                                 - e1_y * (e1_z*cell_vec_z[icc] + e1_x*cell_vec_x[icc])
-                                 + e1_x*e1_x*cell_vec_y[icc];
-                            e2_z = e1_x*e1_x*cell_vec_z[icc]
-                                 - e1_z * (e1_x*cell_vec_x[icc] + e1_y*cell_vec_y[icc])
-                                 + e1_y*e1_y*cell_vec_z[icc];
+                                // Computation of e2  = e1 x e3 unit vector
+                                // e3 = e1 x cell_vec
+                                e2_x = e1_y*e1_y*cell_vec_x[icc]
+                                     - e1_x * (e1_y*cell_vec_y[icc] + e1_z*cell_vec_z[icc])
+                                     + e1_z*e1_z*cell_vec_x[icc];
+                                e2_y = e1_z*e1_z*cell_vec_y[icc]
+                                     - e1_y * (e1_z*cell_vec_z[icc] + e1_x*cell_vec_x[icc])
+                                     + e1_x*e1_x*cell_vec_y[icc];
+                                e2_z = e1_x*e1_x*cell_vec_z[icc]
+                                     - e1_z * (e1_x*cell_vec_x[icc] + e1_y*cell_vec_y[icc])
+                                     + e1_y*e1_y*cell_vec_z[icc];
 
-                            e2_norm = sqrt(e2_x*e2_x + e2_y*e2_y + e2_z*e2_z);
+                                e2_norm = sqrt(e2_x*e2_x + e2_y*e2_y + e2_z*e2_z);
 
-                            // e2 is normalized to be a unit vector
-                            e2_x = e2_x / e2_norm;
-                            e2_y = e2_y / e2_norm;
-                            e2_z = e2_z / e2_norm;
+                                // e2 is normalized to be a unit vector
+                                e2_x = e2_x / e2_norm;
+                                e2_y = e2_y / e2_norm;
+                                e2_z = e2_z / e2_norm;
 
-                            // The first 2 particles of the list will
-                            // be the merged particles.
+                                // The first 2 particles of the list will
+                                // be the merged particles.
 
-                            // Update momentum of the first particle
-                            ipart = sorted_particles[momentum_cell_particle_index[ic] + ip_min];
-                            momentum[0][ipart] = new_momentum_norm*(cos_omega*e1_x + sin_omega*e2_x);
-                            momentum[1][ipart] = new_momentum_norm*(cos_omega*e1_y + sin_omega*e2_y);
-                            momentum[2][ipart] = new_momentum_norm*(cos_omega*e1_z + sin_omega*e2_z);
-                            weight[ipart] = 0.5*total_weight;
+                                // Update momentum of the first particle
+                                ipart = sorted_particles[momentum_cell_particle_index[ic] + ip_min];
+                                momentum[0][ipart] = new_momentum_norm*(cos_omega*e1_x + sin_omega*e2_x);
+                                momentum[1][ipart] = new_momentum_norm*(cos_omega*e1_y + sin_omega*e2_y);
+                                momentum[2][ipart] = new_momentum_norm*(cos_omega*e1_z + sin_omega*e2_z);
+                                weight[ipart] = 0.5*total_weight;
 
-                            // Update momentum of the second particle
-                            ipart = sorted_particles[momentum_cell_particle_index[ic] + ip_min + 1];
-                            momentum[0][ipart] = new_momentum_norm*(cos_omega*e1_x - sin_omega*e2_x);
-                            momentum[1][ipart] = new_momentum_norm*(cos_omega*e1_y - sin_omega*e2_y);
-                            momentum[2][ipart] = new_momentum_norm*(cos_omega*e1_z - sin_omega*e2_z);
-                            weight[ipart] = 0.5*total_weight;
+                                // if (isnan(momentum[0][ipart])) {
+                                //     std::cerr << " mx: " << momentum[0][ipart]
+                                //               << " my: " << momentum[1][ipart]
+                                //               << " mz: " << momentum[2][ipart]
+                                //               << " new_momentum_norm: " << new_momentum_norm
+                                //               << " total_weight: " << total_weight
+                                //               << " total_momentum_norm: " << total_momentum_norm
+                                //               << " weight[ipart]: " << weight[ipart]
+                                //               << " omega: " << omega
+                                //               << " " << total_momentum_norm / (total_weight*new_momentum_norm)
+                                //               << " cos_omega: " << cos_omega << " " << sin_omega
+                                //               << " cell_vec: " << cell_vec_x[icc] << " " << cell_vec_y[icc] << " " << cell_vec_z[icc]
+                                //               << " e1: " << e1_x << " " << e1_y << " " << e1_z
+                                //               << " e2: " << e2_x << " " << e2_y << " " << e2_z
+                                //               << std::endl;
+                                // }
+
+                                // Update momentum of the second particle
+                                ipart = sorted_particles[momentum_cell_particle_index[ic] + ip_min + 1];
+                                momentum[0][ipart] = new_momentum_norm*(cos_omega*e1_x - sin_omega*e2_x);
+                                momentum[1][ipart] = new_momentum_norm*(cos_omega*e1_y - sin_omega*e2_y);
+                                momentum[2][ipart] = new_momentum_norm*(cos_omega*e1_z - sin_omega*e2_z);
+                                weight[ipart] = 0.5*total_weight;
 
 
-                            // Other particles are tagged to be removed after
-                            for (ip = ip_min + 2; ip < ip_max ; ip ++) {
-                                ipart = sorted_particles[momentum_cell_particle_index[ic] + ip];
-                                mask[ipart] = -1;
-                                count--;
+                                // Other particles are tagged to be removed after
+                                for (ip = ip_min + 2; ip < ip_max ; ip ++) {
+                                    ipart = sorted_particles[momentum_cell_particle_index[ic] + ip];
+                                    mask[ipart] = -1;
+                                    count--;
+                                }
+
                             }
 
                         }

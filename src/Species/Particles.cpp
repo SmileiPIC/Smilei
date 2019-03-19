@@ -709,40 +709,57 @@ void Particles::create_particles( int nAdditionalParticles )
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::compressParticles( int istart, int iend, vector <int> & mask ) {
 
-    // unsigned int ipp = istart;
-    // for (unsigned int ip = (unsigned int)(istart+1) ; ip < (unsigned int) iend ; ip ++) {
-    //     if (mask[ipp] < 0) {
-    //         if (mask[ip] >= 0) {
-    //             overwrite_part( ip, ipp);
-    //             mask[ip] = -1;
-    //             mask[ipp] = 1;
-    //             cell_keys[ipp] = cell_keys[ip];
-    //             ipp++;
-    //         }
-    //     } else {
-    //         ipp++;
-    //     }
-    // }
-
-    unsigned int idest = istart;
-    unsigned int ip = istart;
-    while (ip < (unsigned int) iend) {
+    unsigned int idest = (unsigned int) istart;
+    unsigned int isrc = (unsigned int) istart;
+    while (isrc < (unsigned int) iend) {
         if (mask[idest] < 0) {
-            if (mask[ip] >= 0) {
-                overwrite_part( ip, idest);
-                mask[ip] = -1;
+            if (mask[isrc] >= 0) {
+                overwrite_part( isrc, idest);
                 mask[idest] = 1;
-                cell_keys[idest] = cell_keys[ip];
+                mask[isrc] = -1;
+                // std::cerr << " idest: " << idest
+                //           << " iend: " << iend
+                //           << " ip: " << ip
+                //           << " mask[idest]: " << mask[idest]
+                //           << std::endl;
+                //cell_keys[idest] = cell_keys[ip];
                 idest++;
             } else {
-                ip++;
+                isrc++;
             }
         } else {
             idest++;
-            ip = idest;
+            isrc = idest;
         }
     }
 
+    // At the end we resize particles
+    resize(idest);
+    cell_keys.resize(idest);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! This method compresses the particles vectors according to cell_keys as a mask
+//! between istart and iend
+// ---------------------------------------------------------------------------------------------------------------------
+void Particles::compressParticles( int istart, int iend) {
+
+    unsigned int idest = (unsigned int) istart;
+    unsigned int isrc = (unsigned int) istart;
+    while (isrc < (unsigned int) iend) {
+        if (cell_keys[idest] < 0) {
+            if (cell_keys[isrc] >= 0) {
+                overwrite_part( isrc, idest);
+                cell_keys[idest] = cell_keys[isrc];
+                idest++;
+            } else {
+                isrc++;
+            }
+        } else {
+            idest++;
+            isrc = idest;
+        }
+    }
 
     // At the end we resize particles
     resize(idest);
