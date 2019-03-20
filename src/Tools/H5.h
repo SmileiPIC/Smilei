@@ -12,6 +12,10 @@
 #include <vector>
 #include "Tools.h"
 
+#if ! H5_HAVE_PARALLEL == 1
+#error "HDF5 was not built with --enable-parallel option"
+#endif
+
 class DividedString
 {
 public:
