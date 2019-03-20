@@ -30,6 +30,7 @@ public:
     void currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell = 0, int ipart_ref = 0 ) override final;
     
 private:
+    int pxr;
 };
 
 #endif

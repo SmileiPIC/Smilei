@@ -33,7 +33,7 @@ ProjectorAM2Order::ProjectorAM2Order( Params &params, Patch *patch ) : Projector
     
     rprim.resize( nprimr );
     invV.resize( nprimr );
-    invVd.resize( nprimr+1 );
+    invVd.resize( nprimr+1*(!params.is_pxr) );
     
     for( int j = 0; j< nprimr; j++ ) {
         rprim[j] = abs( ( j_domain_begin+j )*dr );
@@ -44,9 +44,11 @@ ProjectorAM2Order::ProjectorAM2Order( Params &params, Patch *patch ) : Projector
             invV[j] = 1./rprim[j];
         }
     }
-    for( int j = 0; j< nprimr+1; j++ ) {
+    for( int j = 0; j< nprimr+1*(!params.is_pxr); j++ ) {
         invVd[j] = 1./abs( j_domain_begin+j-0.5 );
     }
+    pxr = !params.is_pxr;
+
 }
 
 
@@ -188,7 +190,7 @@ void ProjectorAM2Order::currents_mode0( complex<double> *Jl, complex<double> *Jr
     }
     
     for( int j=3 ; j>=0 ; j-- ) {
-        jloc = j+jpo+1;
+        jloc = j+jpo+1*pxr;
         double Vd = abs( jloc + j_domain_begin + 0.5 ) ;
         for( unsigned int i=0 ; i<5 ; i++ ) {
             Jr_p[i][j] = ( Jr_p[i][j+1] * Vd + crr_p * Wr[i][j+1] ) * invVd[jloc];
@@ -217,9 +219,9 @@ void ProjectorAM2Order::currents_mode0( complex<double> *Jl, complex<double> *Jr
     
     // Jr^(p,d)
     for( unsigned int i=0 ; i<5 ; i++ ) {
-        iloc = ( i+ipo )*( nprimr+1 );
+        iloc = ( i+ipo )*( nprimr+1*pxr );
         for( unsigned int j=0 ; j<4 ; j++ ) {
-            jloc = j+jpo+1;
+            jloc = j+jpo+1*pxr;
             linindex = iloc+jloc;
             Jr [linindex] += Jr_p[i][j];
         }
@@ -391,7 +393,7 @@ void ProjectorAM2Order::currents( complex<double> *Jl, complex<double> *Jr, comp
     }
     
     for( int j=3 ; j>=0 ; j-- ) {
-        jloc = j+jpo+1;
+        jloc = j+jpo+1*pxr;
         double Vd = abs( jloc + j_domain_begin + 0.5 ) ;
         for( unsigned int i=0 ; i<5 ; i++ ) {
             Jr_p[i][j] = ( Jr_p[i][j+1] * Vd + crr_p * Wr[i][j+1] ) * invVd[jloc];
@@ -431,9 +433,9 @@ void ProjectorAM2Order::currents( complex<double> *Jl, complex<double> *Jr, comp
     }
     // Jr^(p,d)
     for( unsigned int i=0 ; i<5 ; i++ ) {
-        iloc = ( i+ipo )*( nprimr+1 );
+        iloc = ( i+ipo )*( nprimr+1*pxr );
         for( unsigned int j=0 ; j<4 ; j++ ) {
-            jloc = j+jpo+1;
+            jloc = j+jpo+1*pxr;
             linindex = iloc+jloc;
             Jr [linindex] += C_m * Jr_p[i][j] ;
         }
@@ -580,7 +582,7 @@ void ProjectorAM2Order::currentsAndDensity_mode0( complex<double> *Jl, complex<d
     }
     
     for( int j=3 ; j>=0 ; j-- ) {
-        jloc = j+jpo+1;
+        jloc = j+jpo+1*pxr;
         double Vd = abs( jloc + j_domain_begin + 0.5 ) ;
         for( unsigned int i=0 ; i<5 ; i++ ) {
             Jr_p[i][j] = ( Jr_p[i][j+1] * Vd + crr_p * Wr[i][j+1] ) * invVd[jloc];
@@ -609,9 +611,9 @@ void ProjectorAM2Order::currentsAndDensity_mode0( complex<double> *Jl, complex<d
     
     // Jr^(p,d)
     for( unsigned int i=0 ; i<5 ; i++ ) {
-        iloc = ( i+ipo )*( nprimr+1 );
+        iloc = ( i+ipo )*( nprimr+1*pxr );
         for( unsigned int j=0 ; j<4 ; j++ ) {
-            jloc = j+jpo+1;
+            jloc = j+jpo+1*pxr;
             linindex = iloc+jloc;
             Jr [linindex] += Jr_p[i][j] ;
         }
@@ -793,7 +795,7 @@ void ProjectorAM2Order::currentsAndDensity( complex<double> *Jl, complex<double>
     }
     
     for( int j=3 ; j>=0 ; j-- ) {
-        jloc = j+jpo+1;
+        jloc = j+jpo+1*pxr;
         double Vd = abs( jloc + j_domain_begin + 0.5 ) ;
         for( unsigned int i=0 ; i<5 ; i++ ) {
             Jr_p[i][j] = ( Jr_p[i][j+1] * Vd + crr_p * Wr[i][j+1] ) * invVd[jloc];
@@ -835,9 +837,9 @@ void ProjectorAM2Order::currentsAndDensity( complex<double> *Jl, complex<double>
     
     // Jr^(p,d)
     for( unsigned int i=0 ; i<5 ; i++ ) {
-        iloc = ( i+ipo )*( nprimr+1 );
+        iloc = ( i+ipo )*( nprimr+1*pxr );
         for( unsigned int j=0 ; j<4 ; j++ ) {
-            jloc = j+jpo+1;
+            jloc = j+jpo+1*pxr;
             linindex = iloc+jloc;
             Jr [linindex] += C_m * Jr_p[i][j];
         }
