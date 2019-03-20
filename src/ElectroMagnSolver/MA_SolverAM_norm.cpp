@@ -36,13 +36,13 @@ void MA_SolverAM_norm::operator()( ElectroMagn *fields )
         
         // Electric field Elr^(d,p)
         for( unsigned int i=0 ; i<nl_d ; i++ ) {
-            for( unsigned int j=isYmin*3 ; j<nr_p ; j++ ) {
+            for( unsigned int j=isYmin*3 ; j<nr_p-1 ; j++ ) {
                 ( *El )( i, j ) += -dt*( *Jl )( i, j )
                                    +                 dt/( ( j_glob+j )*dr )*( ( j+j_glob+0.5 )*( *Bt )( i, j+1 ) - ( j+j_glob-0.5 )*( *Bt )( i, j ) )
                                    +                 Icpx*dt*( double )imode/( ( j_glob+j )*dr )*( *Br )( i, j );
             }
         }
-        for( unsigned int i=0 ; i<nl_p ; i++ ) {
+        for( unsigned int i=0 ; i<nl_p-1 ; i++ ) {
             for( unsigned int j=isYmin*3 ; j<nr_d ; j++ ) {
                 ( *Er )( i, j ) += -dt*( *Jr )( i, j )
                                    -                  dt_ov_dl * ( ( *Bt )( i+1, j ) - ( *Bt )( i, j ) )
@@ -50,8 +50,8 @@ void MA_SolverAM_norm::operator()( ElectroMagn *fields )
                                    
             }
         }
-        for( unsigned int i=0 ;  i<nl_p ; i++ ) {
-            for( unsigned int j=isYmin*3 ; j<nr_p ; j++ ) {
+        for( unsigned int i=0 ;  i<nl_p-1 ; i++ ) {
+            for( unsigned int j=isYmin*3 ; j<nr_p-1 ; j++ ) {
                 ( *Et )( i, j ) += -dt*( *Jt )( i, j )
                                    +                  dt_ov_dl * ( ( *Br )( i+1, j ) - ( *Br )( i, j ) )
                                    -                  dt_ov_dr * ( ( *Bl )( i, j+1 ) - ( *Bl )( i, j ) );

@@ -397,6 +397,14 @@ int main( int argc, char *argv[] )
                             SyncVectorPatch::sumRhoJ( params, domain.vecPatch_, imode, &smpi, timers, itime );
                         }
                     timers.syncDens.update( params.printNow( itime ) );
+
+
+                    if( params.geometry == "AMcylindrical" ) {
+                        ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( domain.vecPatch_ )( 0 )->EMfields );
+                        emAM->on_axis_J( domain.vecPatch_.diag_flag );
+                    }
+
+
                     domain.solveMaxwell( params, simWindow, itime, time_dual, timers, &smpi );
                     if ( params.geometry != "AMcylindrical" )
                         SyncCartesianPatch::cartesianToPatches( domain, vecPatches, params, &smpi, timers, itime );
