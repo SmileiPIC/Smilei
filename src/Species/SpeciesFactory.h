@@ -321,26 +321,42 @@ public:
                 // get extra parameters
                 // Minimum particle number per packet to merge
                 if( PyTools::extract( "merge_min_packet_size", thisSpecies->merge_min_packet_size_ , "Species", ispec ) ) {
-                    if (thisSpecies->merge_min_packet_size_ < 4)
+                    if (thisSpecies->merge_min_packet_size_ < 4 && thisSpecies->mass > 0)
                     {
                         ERROR( "In Species " << thisSpecies->name
-                               << ": minimum number of particle per merging packet "
+                               << ": minimum number of particles per merging packet "
                                << "(`merge_min_packet_size`)"
                                << "must be above or equal to 4.");
+                    }
+                    if (thisSpecies->merge_min_packet_size_ < 2 && thisSpecies->mass > 0)
+                    {
+                        ERROR( "In Species " << thisSpecies->name
+                               << " of type photon"
+                               << ": minimum number of particles per merging packet "
+                               << "(`merge_min_packet_size`)"
+                               << "must be above or equal to 2.");
                     }
                 }
                 // Maximum particle number per packet to merge
                 if( PyTools::extract( "merge_max_packet_size", thisSpecies->merge_max_packet_size_ , "Species", ispec ) ) {
-                    if (thisSpecies->merge_max_packet_size_ < 4)
+                    if (thisSpecies->merge_max_packet_size_ < 4 && thisSpecies->mass > 0)
                     {
                         ERROR( "In Species " << thisSpecies->name
-                               << ": maximum number of particle per merging packet "
+                               << ": maximum number of particles per merging packet "
+                               << "(`merge_max_packet_size`)"
+                               << "must be above or equal to 4.");
+                    }
+                    if (thisSpecies->merge_max_packet_size_ < 2 && thisSpecies->mass > 0)
+                    {
+                        ERROR( "In Species " << thisSpecies->name
+                               << " of type photon"
+                               << ": maximum number of particles per merging packet "
                                << "(`merge_max_packet_size`)"
                                << "must be above or equal to 4.");
                     }
                     if (thisSpecies->merge_max_packet_size_ < thisSpecies->merge_min_packet_size_) {
                         ERROR( "In Species " << thisSpecies->name
-                               << ": maximum number of particle per merging packet "
+                               << ": maximum number of particles per merging packet "
                                << "(`merge_max_packet_size`)"
                                << "must be below or equal to the minimum particle number"
                                << " per merging packet (`merge_min_packet_size`)");

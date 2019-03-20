@@ -95,6 +95,7 @@ void MergingVranic::operator() (
         // Angles
         double phi;
         double theta;
+        double mr;
         double omega;
         double cos_omega;
         double sin_omega;
@@ -244,6 +245,10 @@ void MergingVranic::operator() (
                                     * dim[1]
                                     * dim[2];
 
+        // Total number of angular momentum cells
+        unsigned int momentum_angular_cells = dim[1]
+                                            * dim[2];
+
         // Array containing the number of particles per momentum cells
         // std::vector <unsigned int> particles_per_momentum_cells(momentum_cells,0);
         unsigned int  * particles_per_momentum_cells = (unsigned int*) aligned_alloc(64, momentum_cells*sizeof(unsigned int));
@@ -253,18 +258,6 @@ void MergingVranic::operator() (
         // std::vector <unsigned int> momentum_cell_particle_index(momentum_cells,0);
         unsigned int  * momentum_cell_particle_index = (unsigned int*) aligned_alloc(64, momentum_cells*sizeof(unsigned int));
 
-        // Total number of angular momentum cells
-        unsigned int momentum_angular_cells = dim[1]
-                                            * dim[2];
-
-        // Cell direction unit vector in the spherical base
-        // std::vector <double> cell_vec_x(momentum_angular_cells,0);
-        // std::vector <double> cell_vec_y(momentum_angular_cells,0);
-        // std::vector <double> cell_vec_z(momentum_angular_cells,0);
-        double  * cell_vec_x = (double*) aligned_alloc(64, momentum_angular_cells*sizeof(double));
-        double  * cell_vec_y = (double*) aligned_alloc(64, momentum_angular_cells*sizeof(double));
-        double  * cell_vec_z = (double*) aligned_alloc(64, momentum_angular_cells*sizeof(double));
-
         // Initialization when using aligned_alloc
         for (ic = 0 ; ic < momentum_cells ; ic++) {
             momentum_cell_particle_index[ic] = 0;
@@ -272,24 +265,41 @@ void MergingVranic::operator() (
         }
 
         // Computation of the cell direction unit vector (vector d in Vranic et al.)
-        for (phi_i = 0 ; phi_i < dim[2] ; phi_i ++) {
-            #pragma omp simd private(theta, phi, icc) \
-            aligned(cell_vec_x, cell_vec_y, cell_vec_z: 64)
-            for (theta_i = 0 ; theta_i < dim[1] ; theta_i ++) {
+        // Only necessary for mass particles
 
-                icc = theta_i + phi_i * dim[1];
+        double  * cell_vec_x ;
+        double  * cell_vec_y ;
+        double  * cell_vec_z ;
 
-                theta = theta_min + (theta_i + 0.5) * theta_delta;
-                phi = phi_min + (phi_i + 0.5) * phi_delta;
+        if (mass > 0) {
 
-                cell_vec_x[icc] = cos(phi)*cos(theta);
-                cell_vec_y[icc] = cos(phi)*sin(theta);
-                cell_vec_z[icc] = sin(phi);
+            // Cell direction unit vector in the spherical base
+            // std::vector <double> cell_vec_x(momentum_angular_cells,0);
+            // std::vector <double> cell_vec_y(momentum_angular_cells,0);
+            // std::vector <double> cell_vec_z(momentum_angular_cells,0);
+            cell_vec_x = (double*) aligned_alloc(64, momentum_angular_cells*sizeof(double));
+            cell_vec_y = (double*) aligned_alloc(64, momentum_angular_cells*sizeof(double));
+            cell_vec_z = (double*) aligned_alloc(64, momentum_angular_cells*sizeof(double));
 
-                // std::cerr << " theta: " << theta
-                //           << " phi: " << phi
-                //           << std::endl;
+            for (phi_i = 0 ; phi_i < dim[2] ; phi_i ++) {
+                #pragma omp simd private(theta, phi, icc) \
+                aligned(cell_vec_x, cell_vec_y, cell_vec_z: 64)
+                for (theta_i = 0 ; theta_i < dim[1] ; theta_i ++) {
 
+                    icc = theta_i + phi_i * dim[1];
+
+                    theta = theta_min + (theta_i + 0.5) * theta_delta;
+                    phi = phi_min + (phi_i + 0.5) * phi_delta;
+
+                    cell_vec_x[icc] = cos(phi)*cos(theta);
+                    cell_vec_y[icc] = cos(phi)*sin(theta);
+                    cell_vec_z[icc] = sin(phi);
+
+                    // std::cerr << " theta: " << theta
+                    //           << " phi: " << phi
+                    //           << std::endl;
+
+                }
             }
         }
 
@@ -302,9 +312,9 @@ void MergingVranic::operator() (
         for (ip= 0; ip < number_of_particles ; ip++ ) {
 
             // 3d indexes in the momentum discretization
-            mr_i    = (unsigned int)( (momentum_norm[ip] - mr_min) * inv_mr_delta);
-            theta_i = (unsigned int)( (particles_theta[ip] - theta_min)  * inv_theta_delta);
-            phi_i   = (unsigned int)( (particles_phi[ip] - phi_min)      * inv_phi_delta);
+            mr_i    = (unsigned int) floor( (momentum_norm[ip] - mr_min) * inv_mr_delta);
+            theta_i = (unsigned int) floor( (particles_theta[ip] - theta_min)  * inv_theta_delta);
+            phi_i   = (unsigned int) floor( (particles_phi[ip] - phi_min)      * inv_phi_delta);
 
             // 1D Index in the momentum discretization
             momentum_cell_index[ip] = phi_i * dim[0]*dim[1]
@@ -410,10 +420,13 @@ void MergingVranic::operator() (
                         for (ipack = 0 ; ipack < npack ; ipack += 1) {
 
                             total_weight = 0;
-                            total_momentum_x = 0;
-                            total_momentum_y = 0;
-                            total_momentum_z = 0;
+                            // total_momentum_x = 0;
+                            // total_momentum_y = 0;
+                            // total_momentum_z = 0;
                             total_energy = 0;
+                            mr = 0;
+                            theta=0;
+                            phi = 0;
 
                             // First index of the packet
                             ip_min = ipack*max_packet_size_;
@@ -472,32 +485,61 @@ void MergingVranic::operator() (
                                     // Total weight (wt)
                                     total_weight += weight[ipart];
 
+                                    mr += weight[ipart]*momentum_norm[ipart - istart];
+                                    theta += weight[ipart]*particles_theta[ipart - istart];
+                                    phi += weight[ipart]*particles_phi[ipart - istart];
+
                                     // total momentum vector (pt)
-                                    total_momentum_x += momentum[0][ipart]*weight[ipart];
-                                    total_momentum_y += momentum[1][ipart]*weight[ipart];
-                                    total_momentum_z += momentum[2][ipart]*weight[ipart];
+                                    // total_momentum_x += momentum[0][ipart]*weight[ipart];
+                                    // total_momentum_y += momentum[1][ipart]*weight[ipart];
+                                    // total_momentum_z += momentum[2][ipart]*weight[ipart];
 
                                     // total energy (\varespilon_t)
-                                    total_energy += weight[ipart]*momentum_norm[ipart - istart];
-
+                                    // total_energy += weight[ipart]*momentum_norm[ipart - istart];
+                                    // std::cerr << " E: " << sqrt(momentum[0][ipart]*momentum[0][ipart]
+                                    //                  + momentum[1][ipart]*momentum[1][ipart]
+                                    //                  + momentum[2][ipart]*momentum[2][ipart])
+                                    //         << " w: " << weight[ipart]
+                                    //         << " mr: " << momentum_norm[ipart - istart]
+                                    //         << " phi: " << particles_phi[ipart - istart]
+                                    //         << " theta: " << particles_theta[ipart - istart]
+                                    //         << std::endl;
                                 }
 
+                                // here for photon, this parameter is the inverse of total_weight
+                                new_momentum_norm = 1 / total_weight;
+
+                                mr = mr * new_momentum_norm;
+                                theta = theta * new_momentum_norm;
+                                phi = phi * new_momentum_norm;
+
+                                total_momentum_x = mr * cos(theta)*cos(phi);
+                                total_momentum_y = mr * sin(theta)*cos(phi);
+                                total_momentum_z = mr * sin(phi);
+
                                 // \varepsilon_a in Vranic et al
-                                new_energy = total_energy / total_weight;
+                                // new_energy = total_energy / total_weight;
 
-                                // pa in Vranic et al.
-                                new_momentum_norm = new_energy;
-
-                                total_momentum_norm = 1./sqrt(total_momentum_x*total_momentum_x
-                                                    +      total_momentum_y*total_momentum_y
-                                                    +      total_momentum_z*total_momentum_z);
+                                // total_momentum_norm = 1./sqrt(total_momentum_x*total_momentum_x
+                                //                     +      total_momentum_y*total_momentum_y
+                                //                     +      total_momentum_z*total_momentum_z);
 
                                 // Update momentum of the first photon
                                 ipart = sorted_particles[momentum_cell_particle_index[ic] + ip_min];
-                                momentum[0][ipart] = new_momentum_norm*total_momentum_x*total_momentum_norm;
-                                momentum[1][ipart] = new_momentum_norm*total_momentum_y*total_momentum_norm;
-                                momentum[2][ipart] = new_momentum_norm*total_momentum_z*total_momentum_norm;
+                                // momentum[0][ipart] = new_momentum_norm*total_momentum_x*total_momentum_norm;
+                                // momentum[1][ipart] = new_momentum_norm*total_momentum_y*total_momentum_norm;
+                                // momentum[2][ipart] = new_momentum_norm*total_momentum_z*total_momentum_norm;
+                                momentum[0][ipart] = total_momentum_x;
+                                momentum[1][ipart] = total_momentum_y;
+                                momentum[2][ipart] = total_momentum_z;
                                 weight[ipart] = total_weight;
+
+                                // std::cerr << " Energy final: " << sqrt(momentum[0][ipart]*momentum[0][ipart]
+                                //                  + momentum[1][ipart]*momentum[1][ipart]
+                                //                  + momentum[2][ipart]*momentum[2][ipart])
+                                //                  << " phi: " << asin(momentum[2][ipart] / momentum_norm[ip])
+                                //                  << " theta: " << atan2(momentum[1][ipart] , momentum[0][ipart])
+                                //                  << std::endl;
 
                                 // Other photons are tagged to be removed after
                                 for (ip = ip_min + 1; ip < ip_max ; ip ++) {
@@ -517,19 +559,36 @@ void MergingVranic::operator() (
                                     total_weight += weight[ipart];
 
                                     // total momentum vector (pt)
-                                    total_momentum_x += momentum[0][ipart]*weight[ipart];
-                                    total_momentum_y += momentum[1][ipart]*weight[ipart];
-                                    total_momentum_z += momentum[2][ipart]*weight[ipart];
+                                    // total_momentum_x += momentum[0][ipart]*weight[ipart];
+                                    // total_momentum_y += momentum[1][ipart]*weight[ipart];
+                                    // total_momentum_z += momentum[2][ipart]*weight[ipart];
+
+                                    mr += weight[ipart]*momentum_norm[ipart - istart];
+                                    theta += weight[ipart]*particles_theta[ipart - istart];
+                                    phi += weight[ipart]*particles_phi[ipart - istart];
 
                                     // total energy (\varespilon_t)
                                     total_energy += weight[ipart]
                                                              * sqrt(1.0 + momentum[0][ipart]*momentum[0][ipart]
                                                              + momentum[1][ipart]*momentum[1][ipart]
                                                              + momentum[2][ipart]*momentum[2][ipart]);
+                                    // total_energy += weight[ipart]
+                                    //     * sqrt(1.0 + momentum_norm[ipart - istart]*momentum_norm[ipart - istart]);
                                 }
 
+                                // here for photon, this parameter is the inverse of total_weight
+                                new_momentum_norm = 1 / total_weight;
+
+                                //mr = mr * new_momentum_norm;
+                                theta = theta * new_momentum_norm;
+                                phi = phi * new_momentum_norm;
+
+                                total_momentum_x = mr * cos(theta)*cos(phi);
+                                total_momentum_y = mr * sin(theta)*cos(phi);
+                                total_momentum_z = mr * sin(phi);
+
                                 // \varepsilon_a in Vranic et al
-                                new_energy = total_energy / total_weight;
+                                new_energy = total_energy * new_momentum_norm;
 
                                 // pa in Vranic et al.
                                 new_momentum_norm = sqrt(new_energy*new_energy - 1.0);
@@ -584,20 +643,20 @@ void MergingVranic::operator() (
                                 weight[ipart] = 0.5*total_weight;
 
                                 // if (isnan(momentum[0][ipart])) {
-                                //     std::cerr << " mx: " << momentum[0][ipart]
-                                //               << " my: " << momentum[1][ipart]
-                                //               << " mz: " << momentum[2][ipart]
-                                //               << " new_momentum_norm: " << new_momentum_norm
-                                //               << " total_weight: " << total_weight
-                                //               << " total_momentum_norm: " << total_momentum_norm
-                                //               << " weight[ipart]: " << weight[ipart]
-                                //               << " omega: " << omega
-                                //               << " " << total_momentum_norm / (total_weight*new_momentum_norm)
-                                //               << " cos_omega: " << cos_omega << " " << sin_omega
-                                //               << " cell_vec: " << cell_vec_x[icc] << " " << cell_vec_y[icc] << " " << cell_vec_z[icc]
-                                //               << " e1: " << e1_x << " " << e1_y << " " << e1_z
-                                //               << " e2: " << e2_x << " " << e2_y << " " << e2_z
-                                //               << std::endl;
+                                    // std::cerr << " mx: " << momentum[0][ipart]
+                                    //           << " my: " << momentum[1][ipart]
+                                    //           << " mz: " << momentum[2][ipart]
+                                    //           << " new_momentum_norm: " << new_momentum_norm
+                                    //           << " total_weight: " << total_weight
+                                    //           << " total_momentum_norm: " << total_momentum_norm
+                                    //           << " weight[ipart]: " << weight[ipart]
+                                    //           << " omega: " << omega
+                                    //           << " " << total_momentum_norm / (total_weight*new_momentum_norm)
+                                    //           << " cos_omega: " << cos_omega << " " << sin_omega
+                                    //           << " cell_vec: " << cell_vec_x[icc] << " " << cell_vec_y[icc] << " " << cell_vec_z[icc]
+                                    //           << " e1: " << e1_x << " " << e1_y << " " << e1_z
+                                    //           << " e2: " << e2_x << " " << e2_y << " " << e2_z
+                                    //           << std::endl;
                                 // }
 
                                 // Update momentum of the second particle
@@ -627,9 +686,11 @@ void MergingVranic::operator() (
         // Free aligned arrays
         free(momentum_norm);
         free(momentum_cell_index);
-        free(cell_vec_x);
-        free(cell_vec_y);
-        free(cell_vec_z);
+        if (mass > 0) {
+            free(cell_vec_x);
+            free(cell_vec_y);
+            free(cell_vec_z);
+        }
         free(particles_phi);
         free(particles_theta);
         free(sorted_particles);
