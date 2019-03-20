@@ -49,8 +49,10 @@ public:
 
     static cField2D* createComplex( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal, std::string name_in, Params& params ) {
         if ( !params.is_pxr ) { // FDTD, staggered grids
-            if( params.geometry == "AMcylindrical" )
-                return new cField2D( dims, mainDim, isPrimal, name_in );
+            if( params.geometry == "AMcylindrical" ) {
+                return new cField2D( dims, name_in );
+                //return new cField2D( dims, mainDim, isPrimal, name_in );
+            }
             else
                 return nullptr;
         }

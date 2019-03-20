@@ -555,7 +555,7 @@ void VectorPatch::sumDensities( Params &params, double time_dual, Timers &timers
             }
         }
     }
-    if( params.geometry == "AMcylindrical" ) {
+    if ( ( params.geometry == "AMcylindrical" ) && (!params.uncoupled_grids) ) {
         #pragma omp for schedule(static)
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
@@ -646,6 +646,21 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
         // Computes Ex_, Ey_, Ez_ on all points.
         // E is already synchronized because J has been synchronized before.
         ( *( *this )( ipatch )->EMfields->MaxwellAmpereSolver_ )( ( *this )( ipatch )->EMfields );
+    }
+
+
+//    if( params.geometry != "AMcylindrical" ) {
+//        if( params.uncoupled_grids ) {
+//            for( unsigned int imode = 0 ; imode < static_cast<ElectroMagnAM *>( patches_[0]->EMfields )->El_.size() ; imode++ ) {
+//                SyncVectorPatch::exchangeE( params, ( *this ), imode, smpi );
+//                SyncVectorPatch::finalizeexchangeE( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
+//            }
+//        }
+//    }
+
+
+    #pragma omp for schedule(static)
+    for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         //MESSAGE("SOLVE MAXWELL AMPERE");
         // Computes Bx_, By_, Bz_ at time n+1 on interior points.
         //for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
