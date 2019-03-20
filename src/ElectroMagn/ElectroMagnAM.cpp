@@ -628,7 +628,7 @@ void ElectroMagnAM::computeTotalRhoJ()
             // MESSAGE(ifield);
             if( Jl_s[ifield] ) {
                 cField2D *Jl2D_s  = Jl_s[ifield];
-                for( unsigned int i=0 ; i<=nl_p ; i++ ) {
+                for( unsigned int i=0 ; i<nl_d ; i++ ) {
                     //MESSAGE("here");
                     //MESSAGE(nr_p);
                     //MESSAGE(nl_p);
@@ -642,7 +642,7 @@ void ElectroMagnAM::computeTotalRhoJ()
             if( Jr_s[ifield] ) {
                 cField2D *Jr2D_s  = Jr_s[ifield];
                 for( unsigned int i=0 ; i<nl_p ; i++ )
-                    for( unsigned int j=0 ; j<=nr_p ; j++ ) {
+                    for( unsigned int j=0 ; j<nr_d ; j++ ) {
                         ( *Jr )( i, j ) += ( *Jr2D_s )( i, j );
                     }
             }
