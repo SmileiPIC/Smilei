@@ -11,6 +11,14 @@ HDF5_ROOT_DIR ?= $(HDF5_ROOT)
 BUILD_DIR ?= build
 PYTHONEXE ?= python
 
+#-----------------------------------------------------
+# check whether to use a machine specific definitions
+ifneq ($(machine),)
+	ifneq ($(wildcard scripts/CompileTools/machine/$(machine)),)
+	-include scripts/CompileTools/machine/$(machine)
+	endif
+endif
+
 PYTHONCONFIG := $(PYTHONEXE) scripts/CompileTools/python-config.py
 
 #-----------------------------------------------------
@@ -123,14 +131,6 @@ ifneq (,$(findstring no_mpi_tm,$(config)))
     CXXFLAGS += -D_NO_MPI_TM
 endif
 
-
-#-----------------------------------------------------
-# check whether to use a machine specific definitions
-ifneq ($(machine),)
-	ifneq ($(wildcard scripts/CompileTools/machine/$(machine)),)
-	-include scripts/CompileTools/machine/$(machine)
-	endif
-endif
 #-----------------------------------------------------
 # Set the verbosity prefix
 ifeq (,$(findstring verbose,$(config)))
