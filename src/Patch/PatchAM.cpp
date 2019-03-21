@@ -101,22 +101,22 @@ void PatchAM::initStep2( Params &params, DomainDecomposition *domain_decompositi
             
         }
     }
-    //int j_glob_ = Pcoordinates[1]*params.n_space[1]-params.oversize[1]; //cell_starting_global_index is only define later during patch creation.
-    //int nr_p = params.n_space[1]+1+2*params.oversize[1];
-    //double dr = params.cell_length[1];
-    //invR.resize( nr_p );
-    //invRd.resize( nr_p+1 );
+    int j_glob_ = Pcoordinates[1]*params.n_space[1]-params.oversize[1]; //cell_starting_global_index is only define later during patch creation.
+    int nr_p = params.n_space[1]+1+2*params.oversize[1];
+    double dr = params.cell_length[1];
+    invR.resize( nr_p );
+    invRd.resize( nr_p+1 );
 
-    //for( int j = 0; j< nr_p; j++ ) {
-    //    if( j_glob_ + j == 0 ) {
-    //        invR[j] = 8./dr; // No Verboncoeur correction
-    //    } else {
-    //        invR[j] = 1./abs(((double)j_glob_ + (double)j)*dr);
-    //    }
-    //}
-    //for( int j = 0; j< nr_p + 1; j++ ) {
-    //    invRd[j] = 1./abs(((double)j_glob_ + (double)j - 0.5)*dr);
-    //}
+    for( int j = 0; j< nr_p; j++ ) {
+        if( j_glob_ + j == 0 ) {
+            invR[j] = 8./dr; // No Verboncoeur correction
+        } else {
+            invR[j] = 1./abs(((double)j_glob_ + (double)j)*dr);
+        }
+    }
+    for( int j = 0; j< nr_p + 1; j++ ) {
+        invRd[j] = 1./abs(((double)j_glob_ + (double)j - 0.5)*dr);
+    }
     
 }
 

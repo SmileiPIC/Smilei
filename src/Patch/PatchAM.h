@@ -68,7 +68,7 @@ public:
     MPI_Datatype ntype_[2][2][2];
 
     //! Inverse r coordinate
-    //std::vector<double> invR, invRd;
+    std::vector<double> invR, invRd;
     
     
     

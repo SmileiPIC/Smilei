@@ -34,9 +34,8 @@ void MF_SolverAM_Yee::operator()( ElectroMagn *fields )
         cField2D *Bt = ( static_cast<ElectroMagnAM *>( fields ) )->Bt_[imode];
         int  j_glob = ( static_cast<ElectroMagnAM *>( fields ) )->j_glob_;
         bool isYmin = ( static_cast<ElectroMagnAM *>( fields ) )->isYmin;
-        //bool isXmin = (static_cast<ElectroMagnAM*>(fields))->isXmin;
-        //bool isYmax = (static_cast<ElectroMagnAM*>(fields))->isYmax;
-        //bool isXmax = (static_cast<ElectroMagnAM*>(fields))->isXmax;
+        double *invR = ( static_cast<ElectroMagnAM *>( fields ) )->invR;
+        double *invRd = ( static_cast<ElectroMagnAM *>( fields ) )->invRd;
         
         // Magnetic field Bl^(p,d)
         for( unsigned int i=0 ; i<nl_p;  i++ ) {
