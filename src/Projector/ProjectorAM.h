@@ -39,8 +39,8 @@ protected:
     unsigned int Nmode;
     unsigned int n_species;
     int nprimr;
-    //! Inverse volume of cells normalized by 2pi
-    std::vector<double> rprim, invV, invVd;
+    //! Inverse radius
+    double *invR, *invRd;
     
 };
 
