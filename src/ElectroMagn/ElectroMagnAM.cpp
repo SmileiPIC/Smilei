@@ -11,6 +11,7 @@
 #include "cField2D.h"
 
 #include "Patch.h"
+#include "PatchAM.h"
 #include <cstring>
 
 #include "Profile.h"
@@ -146,20 +147,22 @@ void ElectroMagnAM::initElectroMagnAMQuantities( Params &params, Patch *patch )
     dr       = cell_length[1];
     dt_ov_dr = timestep/dr;
     dr_ov_dt = 1.0/dt_ov_dr;
+
     j_glob_ = patch->getCellStartingGlobalIndex( 1 );
 
-    inv_R.resize( nr_p );
-    inv_Rd.resize( nr_d );
-    for( int j = 0; j< nr_p; j++ ) {
-        if( j_glob_ + j == 0 ) {
-            inv_R[j] = nan(""); 
-        } else {
-            inv_R[j] = 1./(((double)j_glob_ + (double)j)*dr);
-        }
-    }
-    for( int j = 0; j< nr_d; j++ ) {
-        inv_Rd[j] = 1./(((double)j_glob_ + (double)j - 0.5)*dr);
-    }
+    //ptr_invR  = &((( static_cast<PatchAM *>( patch ))->invR )[0]);
+    //ptr_invRd = &((( static_cast<PatchAM *>( patch ))->invRd)[0]);
+
+    //for( int j = 0; j< nr_p; j++ ) {
+    //    if( j_glob_ + j == 0 ) {
+    //        inv_R[j] = nan(""); 
+    //    } else {
+    //        inv_R[j] = 1./(((double)j_glob_ + (double)j)*dr);
+    //    }
+    //}
+    //for( int j = 0; j< nr_d; j++ ) {
+    //    inv_Rd[j] = 1./(((double)j_glob_ + (double)j - 0.5)*dr);
+    //}
     
     
     // ----------------------

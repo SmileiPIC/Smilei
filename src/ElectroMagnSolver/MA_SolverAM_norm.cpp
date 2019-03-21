@@ -16,6 +16,12 @@ MA_SolverAM_norm::~MA_SolverAM_norm()
 
 void MA_SolverAM_norm::operator()( ElectroMagn *fields )
 {
+
+    int j_glob    = ( static_cast<ElectroMagnAM *>( fields ) )->j_glob_;
+    bool isYmin = ( static_cast<ElectroMagnAM *>( fields ) )->isYmin;
+    //double*  inv_Rd = ( static_cast<ElectroMagnAM *>( fields ) )->ptr_invRd;
+    //double*  inv_R = ( static_cast<ElectroMagnAM *>( fields ) )->ptr_invR;
+
     for( unsigned int imode=0 ; imode<Nmode ; imode++ ) {
     
         // Static-cast of the fields_SolverAM_norm.cpp
@@ -28,10 +34,6 @@ void MA_SolverAM_norm::operator()( ElectroMagn *fields )
         cField2D *Jl = ( static_cast<ElectroMagnAM *>( fields ) )->Jl_[imode];
         cField2D *Jr = ( static_cast<ElectroMagnAM *>( fields ) )->Jr_[imode];
         cField2D *Jt = ( static_cast<ElectroMagnAM *>( fields ) )->Jt_[imode];
-        int j_glob    = ( static_cast<ElectroMagnAM *>( fields ) )->j_glob_;
-        bool isYmin = ( static_cast<ElectroMagnAM *>( fields ) )->isYmin;
-        std::vector<double>  inv_Rd = ( static_cast<ElectroMagnAM *>( fields ) )->inv_Rd;
-        std::vector<double>  inv_R = ( static_cast<ElectroMagnAM *>( fields ) )->inv_R;
         //bool isXmin = (static_cast<ElectroMagnAM*>(fields))->isXmin;
         //bool isXmax = (static_cast<ElectroMagnAM*>(fields))->isXmax;
         //bool isYmax = (static_cast<ElectroMagnAM*>(fields))->isYmax;
@@ -40,7 +42,7 @@ void MA_SolverAM_norm::operator()( ElectroMagn *fields )
         for( unsigned int i=0 ; i<nl_d ; i++ ) {
             for( unsigned int j=isYmin*3 ; j<nr_p ; j++ ) {
                 ( *El )( i, j ) += -dt*( ( *Jl )( i, j )
-                                        +inv_R[j]*( ( j+j_glob+0.5 )*( *Bt )( i, j+1 ) - ( j+j_glob-0.5 )*( *Bt )( i, j )
+                                        + 1./((j_glob + j)*dr)*( ( j+j_glob+0.5 )*( *Bt )( i, j+1 ) - ( j+j_glob-0.5 )*( *Bt )( i, j )
                                                  + Icpx*( double )imode * ( *Br )( i, j ))) ;
             }
         }

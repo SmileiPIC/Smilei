@@ -171,7 +171,7 @@ public:
     int j_glob_;
 
     //! Inverse radius
-    std::vector<double> inv_R, inv_Rd;
+    //double *ptr_invR, *ptr_invRd;
     
     //! compute Poynting on borders
     void computePoynting() override;
