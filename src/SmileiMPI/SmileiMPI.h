@@ -162,8 +162,8 @@ public:
     std::vector<std::vector<int>> dynamics_iold;
     //! delta_old_pos
     std::vector<std::vector<double>> dynamics_deltaold;
-    //! exp i theta old
-    std::vector<std::vector<std::complex<double>>> dynamics_thetaold;
+    //! theta old
+    std::vector<std::vector<double>> dynamics_thetaold;
     
     //! value of the grad(AA*) at itime and itime-1
     std::vector<std::vector<double>> dynamics_GradPHIpart;

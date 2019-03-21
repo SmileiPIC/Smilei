@@ -673,7 +673,9 @@ class Diagnostic(object):
 
 	# Define and output directory in case of exporting
 	def _setExportDir(self, diagName):
-		if len(self._results_path) == 1:
+		if self.options.export_dir is not None:
+			directory = self.options.export_dir
+		elif len(self._results_path) == 1:
 			directory = self._results_path[0]
 		else:
 			directory = self._results_path[0] +self._os.sep+ ".."

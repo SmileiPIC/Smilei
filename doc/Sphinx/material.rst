@@ -20,11 +20,19 @@ Publications
 
 .. rst-class:: bigcitation
 
+.. [Thiele]
+
+  I. Thiele and E. Siminos,
+  `Laser wakefield driven generation of isolated CEP-tunable intense sub-cycle pulses`,
+  `arXiv:1902.05014 <https://arxiv.org/abs/1902.05014>`_
+
+.. rst-class:: bigcitation
+
 .. [Massimo]
 
   F. Massimo, A. Beck, J. Dérouillat, M. Grech., F. Perez, I. Zemzemi and A. Specka,
   `Efficient modeling of Laser Wakefield Acceleration through the PIC code SMILEI in CILEX project`,
-  `Proceedings of the International Computational Accelerator Physics Conference (ICAP 2018), JACoW pre-release <http://icap2018.vrws.de/papers/mopag02.pdf>`_,
+  `Proceedings of the International Computational Accelerator Physics Conference (ICAP 2018), JACoW pre-release <http://icap2018.vrws.de/papers/mopag02.pdf>`_
 
 .. rst-class:: bigcitation
 
@@ -32,7 +40,7 @@ Publications
 
   A. Beck, J. Dérouillat, M. Lobet, A. Farjallah, F. Massimo, I. Zemzemi, F. Perez, T. Vinci, M. Grech,
   `Adaptive SIMD optimizations in particle-in-cell codes with fine-grain particle sorting`,
-  `arXiv:1810.03949 <https://arxiv.org/abs/1810.03949>`_,
+  `arXiv:1810.03949 <https://arxiv.org/abs/1810.03949>`_
 
 .. rst-class:: bigcitation
 
@@ -42,7 +50,15 @@ Publications
   `Oblique-incidence, arbitrary-profile wave injection for electromagnetic simulations`,
   `arXiv:1809.04435 <https://arxiv.org/abs/1809.04435>`_
 
-  .. rst-class:: bigcitation
+.. rst-class:: bigcitation
+
+.. [Thiele2019]
+
+  I. Thiele, E. Siminos and T. Fülöp,
+  `Electron beam driven generation of frequency-tunable isolated relativistic sub-cycle pulses`,
+  `arXiv:1806.04976 <https://arxiv.org/abs/1806.04976>`_, accepted in Phys. Rev. Lett.
+
+.. rst-class:: bigcitation
 
 .. [Niel2018b]
 

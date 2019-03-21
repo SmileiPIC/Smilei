@@ -169,6 +169,9 @@ public:
     double dr_ov_dt;
     //! Minimum radius in the current patch
     int j_glob_;
+
+    //! Inverse radius
+    std::vector<double> inv_R, inv_Rd;
     
     //! compute Poynting on borders
     void computePoynting() override;

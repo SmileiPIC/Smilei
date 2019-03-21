@@ -99,6 +99,7 @@ class Options(object):
 		self.ytick = {"useOffset":False}
 		self.side = "left"
 		self.transparent = None
+		self.export_dir = None
 
 	# Method to set optional plotting arguments
 	def set(self, **kwargs):
@@ -115,6 +116,7 @@ class Options(object):
 		self.vmax        = kwargs.pop("vmax"       , self.vmax )
 		self.side        = kwargs.pop("side"       , self.side )
 		self.transparent = kwargs.pop("transparent", self.transparent )
+		self.export_dir  = kwargs.pop("export_dir", self.export_dir )
 		# Second, we manage all the other arguments that are directly the ones of matplotlib
 		for kwa, val in kwargs.copy().items():
 			if kwa in ["figsize"]:

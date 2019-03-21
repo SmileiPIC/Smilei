@@ -227,7 +227,7 @@ void InterpolatorAM2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
     std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
     std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
-    std::vector<std::complex<double>> *exp_m_theta_old = &( smpi->dynamics_thetaold[ithread] );
+    std::vector<double> *theta_old = &( smpi->dynamics_thetaold[ithread] );
     
     //Loop on bin particles
     int nparts( particles.size() );
@@ -239,7 +239,7 @@ void InterpolatorAM2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
         ( *iold )[ipart+1*nparts]  = jp_;
         ( *delta )[ipart+0*nparts] = deltax;
         ( *delta )[ipart+1*nparts] = deltar;
-        ( *exp_m_theta_old )[ipart] = exp_m_theta;
+        ( *theta_old )[ipart] = atan2( particles.position( 2, ipart ), particles.position( 1, ipart ));
     }
 }
 

@@ -58,6 +58,10 @@ public:
                 MESSAGE( "For species #" << ispec << ", name will be " << species_name );
             }
         }
+        
+        if( species_name.size() < 2 ) {
+            ERROR("For species #" << ispec << ", name cannot be only 1 character");
+        }
 
         // Extract type of species dynamics from namelist
         std::string pusher = "boris"; // default value
@@ -459,8 +463,7 @@ public:
         if( thisSpecies->ponderomotive_dynamics && ( params.geometry != "1Dcartesian" ) && ( params.geometry != "2Dcartesian" ) && ( params.geometry != "3Dcartesian" ) ) {
             ERROR( "Ponderomotive/Envelope model only available in 1D, 2D, 3D cartesian geometry" );
         }
-        int n_envlaser = PyTools::nComponents( "LaserEnvelope" );
-        if( thisSpecies->ponderomotive_dynamics && ( n_envlaser < 1 ) ) {
+        if( thisSpecies->ponderomotive_dynamics && ! params.Laser_Envelope_model ) {
             MESSAGE( "No Laser Envelope is specified - Standard PIC dynamics will be used for all species" );
             thisSpecies->ponderomotive_dynamics = false;
         }
@@ -933,10 +936,14 @@ public:
         unsigned int tot_species_number = PyTools::nComponents( "Species" );
         for( unsigned int ispec = 0; ispec < tot_species_number; ispec++ ) {
             Species *thisSpecies = SpeciesFactory::create( params, ispec, patch );
-
+            // Verify the new species does not have the same name as a previous one
+            for( unsigned int i = 0; i < ispec; i++ ) {
+                if( thisSpecies->name == retSpecies[i]->name ) {
+                    ERROR("Two species cannot have the same name `"<<thisSpecies->name<<"`");
+                }
+            }
             // Put the newly created species in the vector of species
             retSpecies.push_back( thisSpecies );
-
         }
 
         // Loop species to find species which their particles positions is on another species

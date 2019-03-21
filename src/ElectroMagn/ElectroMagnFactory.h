@@ -37,8 +37,7 @@ public:
         EMfields->finishInitialization( vecSpecies.size(), patch );
         
         // initialize the envelope if used
-        int n_envlaser = PyTools::nComponents( "LaserEnvelope" );
-        if( n_envlaser ==1 ) { // for the moment it works only with one envelope
+        if( params.Laser_Envelope_model ) { // for the moment it works only with one envelope
             EMfields->envelope = EnvelopeFactory::create( params, patch, EMfields );
         }
         
