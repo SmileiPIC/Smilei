@@ -33,18 +33,15 @@ void MF_SolverAM_Yee::operator()( ElectroMagn *fields )
         cField2D *Br = ( static_cast<ElectroMagnAM *>( fields ) )->Br_[imode];
         cField2D *Bt = ( static_cast<ElectroMagnAM *>( fields ) )->Bt_[imode];
         int  j_glob = ( static_cast<ElectroMagnAM *>( fields ) )->j_glob_;
-        std::vector<double>  inv_Rd = ( static_cast<ElectroMagnAM *>( fields ) )->inv_Rd;
-        std::vector<double>  inv_R = ( static_cast<ElectroMagnAM *>( fields ) )->inv_R;
         bool isYmin = ( static_cast<ElectroMagnAM *>( fields ) )->isYmin;
-        //bool isXmin = (static_cast<ElectroMagnAM*>(fields))->isXmin;
-        //bool isYmax = (static_cast<ElectroMagnAM*>(fields))->isYmax;
-        //bool isXmax = (static_cast<ElectroMagnAM*>(fields))->isXmax;
+        double *invR = ( static_cast<ElectroMagnAM *>( fields ) )->invR;
+        double *invRd = ( static_cast<ElectroMagnAM *>( fields ) )->invRd;
         
         // Magnetic field Bl^(p,d)
         for( unsigned int i=0 ; i<nl_p;  i++ ) {
             #pragma omp simd
             for( unsigned int j=1+isYmin*2 ; j<nr_d-1 ; j++ ) {
-                ( *Bl )( i, j ) += - dt*inv_Rd[j] * ( ( double )( j+j_glob )*( *Et )( i, j ) - ( double )( j+j_glob-1. )*( *Et )( i, j-1 ) + Icpx*( double )imode*( *Er )( i, j ) );
+                ( *Bl )( i, j ) += - dt/( ( j_glob+j-0.5 )*dr ) * ( ( double )( j+j_glob )*( *Et )( i, j ) - ( double )( j+j_glob-1. )*( *Et )( i, j-1 ) + Icpx*( double )imode*( *Er )( i, j ) );
             }
         }
         
@@ -53,7 +50,7 @@ void MF_SolverAM_Yee::operator()( ElectroMagn *fields )
             #pragma omp simd
             for( unsigned int j=isYmin*3 ; j<nr_p ; j++ ) { //Specific condition on axis
                 ( *Br )( i, j ) += dt_ov_dl * ( ( *Et )( i, j ) - ( *Et )( i-1, j ) )
-                                   +Icpx*dt*( double )imode*inv_R[j]*( *El )( i, j ) ;
+                                   +Icpx*dt*( double )imode/( ( double )( j_glob+j )*dr )*( *El )( i, j ) ;
             }
         }
         // Magnetic field Bt^(d,d)
