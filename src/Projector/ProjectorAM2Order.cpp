@@ -239,7 +239,7 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
     double crl_p = charge_weight*dl_ov_dt;
-    double crr_p = charge_weight*dr_ov_dt;
+    double crr_p = charge_weight*one_ov_dt;
     
     // variable declaration
     double xpn, ypn;
@@ -349,7 +349,7 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
             e_bar *= e_bar_m1;
             C_m = 2. * e_bar ; //multiply modes > 0 by 2 and C_m = 1 otherwise.
             e_delta_inv =1./e_delta;
-            crt_p = charge_weight*Icpx*e_bar / ( dt*( double )imode )*2.;
+            crt_p = charge_weight*Icpx*e_bar / ( dt*( double )imode )*2.*rp;
         }
    
     
@@ -400,11 +400,12 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
                 Jl_p[i][j]= Jl_p[i-1][j] - crl_p * Wl[i-1][j];
             }
         }
-        
+
         for( int j=3 ; j>=0 ; j-- ) {
             jloc = j+jpo+1;
+            double Vd = abs( jloc + j_domain_begin + 0.5 ) ;
             for( unsigned int i=0 ; i<5 ; i++ ) {
-                Jr_p[i][j] = Jr_p[i][j+1]  + crr_p * Wr[i][j+1] * invRd[jloc];
+                Jr_p[i][j] = ( Jr_p[i][j+1] * Vd + crr_p * Wr[i][j+1] ) * invRd[jloc]*dr;
             }
         }
 
@@ -413,7 +414,6 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
                 Jt_p[i][j] = crt_p  * Wt[i][j];
             }
         }
-
         
 
         complex<double> *Jl =  &( *emAM->Jl_[imode] )( 0 );
@@ -444,11 +444,7 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
             iloc = ( i+ipo )*nprimr + jpo;
             for( unsigned int j=0 ; j<5 ; j++ ) {
                 linindex = iloc+j;
-                if (imode == 0) {
                     Jt [linindex] += Jt_p[i][j]* invR_local[j];
-                } else {
-                    Jt [linindex] += Jt_p[i][j]* invR_local[j]*(jpo+j)*dr ;
-                }
             }
         }
     }
@@ -742,7 +738,7 @@ void ProjectorAM2Order::currentsAndDensity( complex<double> *Jl, complex<double>
     }
     e_delta_inv =1./e_delta;
     //defining crt_p
-    complex<double> crt_p = charge_weight*Icpx*e_bar / ( dt*( double )imode )*2.;
+    complex<double> crt_p = charge_weight*Icpx*e_bar / ( dt*( double )imode )*2.*rp;
     for( unsigned int i=0; i < 5; i++ ) {
         DSl[i] = Sl1[i] - Sl0[i];
         DSr[i] = Sr1[i] - Sr0[i];
@@ -843,7 +839,7 @@ void ProjectorAM2Order::currentsAndDensity( complex<double> *Jl, complex<double>
         for( unsigned int j=0 ; j<5 ; j++ ) {
             jloc = j+jpo;
             linindex = iloc+jloc;
-            Jt [linindex] += Jt_p[i][j] ;
+            Jt [linindex] += Jt_p[i][j]*invR[jloc] ;
         }
     }//i
     
@@ -1063,27 +1059,10 @@ void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
     
     // If no field diagnostics this timestep, then the projection is done directly on the total arrays
     if( !diag_flag ) {
-        
-        for( unsigned int imode = 0; imode<Nmode; imode++ ) {
-        complex<double> *b_Jl =  &( *emAM->Jl_[imode] )( 0 );
-        complex<double> *b_Jr =  &( *emAM->Jr_[imode] )( 0 );
-        complex<double> *b_Jt =  &( *emAM->Jt_[imode] )( 0 );
-        complex<double> *b_rho =  &( *emAM->rho_AM_[imode] )( 0 );
 
-            if( imode==0 ) {
-                for( int ipart=istart ; ipart<iend; ipart++ ) {
-                    currentsAndDensity_mode0( b_Jl, b_Jr, b_Jt, b_rho, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart] );
-                }
-            } else {
-                for( int ipart=istart ; ipart<iend; ipart++ ) {
-                    currentsAndDensity( b_Jl, b_Jr, b_Jt, b_rho, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart], &( *array_theta_old )[ipart], imode );
-                }
-            }
-         }
-
-        //for( int ipart=istart ; ipart<iend; ipart++ ) {
-        //    currents( emAM, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart], &( *array_theta_old )[ipart], 666 );
-        //}
+        for( int ipart=istart ; ipart<iend; ipart++ ) {
+            currents( emAM, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart], &( *array_theta_old )[ipart], 666 );
+        }
     } else {
         //Loop on modes
         for( unsigned int imode = 0; imode<Nmode; imode++ ) {
