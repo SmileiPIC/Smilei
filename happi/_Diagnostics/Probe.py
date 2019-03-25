@@ -242,7 +242,7 @@ class Probe(Diagnostic):
 				positions = self._np.sqrt(self._np.sum(positions**2,1))
 			# If 2D or 3D probe, must calculate matrix inverse
 			else:
-				if self._naxes==2 and self._ndim==3:
+				if self._naxes==2 and (self.namelist.Main.geometry=="AMcylindrical" or self._ndim==3):
 					pp = self._np.cross(p[0],p[1])
 					p.append(pp/self._np.linalg.norm(pp))
 					tmpShape = self._np.hstack((tmpShape, 1))
