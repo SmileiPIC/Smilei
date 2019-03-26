@@ -2072,22 +2072,22 @@ This is done by including a block ``DiagFields``::
   +----------------+-------------------------------------------------------+
 
   In ``AMcylindrical`` geometry, the ``x``, ``y`` and ``z``
-  indices are replaced by ``x``, ``r`` and ``t`` (theta). In addition,
+  indices are replaced by ``l`` (longitudinal), ``r`` (radial) and ``t`` (theta). In addition,
   the angular Fourier modes are denoted by the suffix ``_mode_i`` where ``i``
   is the mode number. In summary, the list of fields reads as follows.
 
   .. rst-class:: nowrap
 
   +------------------------------+-----------------------------------------+
-  | | Bx_mode_0, Bx_mode_1, etc. | |                                       |
+  | | Bl_mode_0, Bl_mode_1, etc. | |                                       |
   | | Br_mode_0, Br_mode_1, etc. | | Components of the magnetic field      |
   | | Bt_mode_0, Bt_mode_1, etc. | |                                       |
   +------------------------------+-----------------------------------------+
-  | | Ex_mode_0, Ex_mode_1, etc. | |                                       |
+  | | El_mode_0, El_mode_1, etc. | |                                       |
   | | Er_mode_0, Er_mode_1, etc. | | Components of the electric field      |
   | | Et_mode_0, Et_mode_1, etc. | |                                       |
   +------------------------------+-----------------------------------------+
-  |  The same notation works for Jx, Jr, Jt, and Rho                       |
+  |  The same notation works for Jl, Jr, Jt, and Rho                       |
   +------------------------------+-----------------------------------------+
 
   In the case of an envelope model for the laser (see :doc:`laser_envelope`),
