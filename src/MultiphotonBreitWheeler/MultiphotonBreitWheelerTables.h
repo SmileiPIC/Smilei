@@ -97,12 +97,12 @@ public:
     //! \details Under the minimum particle_chi value, the particle kinetic energy is
     //! considered negligible. All energy goes to the other.
     //! \param smpi Object of class SmileiMPI containing MPI properties
-    void compute_xip_table( SmileiMPI *smpi );
+    void computeXipTable( SmileiMPI *smpi );
     
     //! Output the computed tables so that thay can be read at the next run.
     //! \param params list of simulation parameters
     //! \param smpi MPI parameters
-    void compute_tables( Params &params,
+    void computeTables( Params &params,
                          SmileiMPI *smpi );
                          
     // ---------------------------------------------------------------------
@@ -114,12 +114,12 @@ public:
     void output_T_table();
     
     //! File output of xip_chipamin_table and xip_table
-    void output_xip_table();
+    void outputXipTable();
     
     //! Output the computed tables so that thay can be read at the next run.
     //! Table output by the master MPI rank
     //! \param smpi Object of class SmileiMPI containing MPI properties
-    void output_tables( SmileiMPI *smpi );
+    void outputTables( SmileiMPI *smpi );
     
     // ---------------------------------------------------------------------
     // TABLE READING
@@ -143,7 +143,7 @@ public:
     
     //! Bcast of the external table xip_chipamin and xip
     //! \param smpi Object of class SmileiMPI containing MPI properties
-    void bcast_xip_table( SmileiMPI *smpi );
+    void bcastXipTable( SmileiMPI *smpi );
     
 private:
 

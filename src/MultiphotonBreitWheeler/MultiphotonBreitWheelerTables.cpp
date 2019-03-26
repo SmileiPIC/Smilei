@@ -495,7 +495,7 @@ void MultiphotonBreitWheelerTables::compute_T_table( SmileiMPI *smpi )
     
     // Final timer
     t1 = MPI_Wtime();
-    MESSAGE( "        done in " << ( t1 - t0 ) << "s" );
+    MESSAGE( "        Done in " << ( t1 - t0 ) << "s" );
 }
 
 // -----------------------------------------------------------------------------
@@ -507,7 +507,7 @@ void MultiphotonBreitWheelerTables::compute_T_table( SmileiMPI *smpi )
 //
 //! \param smpi Object of class SmileiMPI containing MPI properties
 // -----------------------------------------------------------------------------
-void MultiphotonBreitWheelerTables::compute_xip_table( SmileiMPI *smpi )
+void MultiphotonBreitWheelerTables::computeXipTable( SmileiMPI *smpi )
 {
 
     // Parameters
@@ -739,7 +739,7 @@ void MultiphotonBreitWheelerTables::compute_xip_table( SmileiMPI *smpi )
     }
     
     t1 = MPI_Wtime();
-    MESSAGE( "        done in " << ( t1 - t0 ) << "s" );
+    MESSAGE( "        Done in " << ( t1 - t0 ) << "s" );
     
 }
 
@@ -749,12 +749,12 @@ void MultiphotonBreitWheelerTables::compute_xip_table( SmileiMPI *smpi )
 //! \param params list of simulation parameters
 //! \param smpi MPI parameters
 // -----------------------------------------------------------------------------
-void MultiphotonBreitWheelerTables::compute_tables( Params &params, SmileiMPI *smpi )
+void MultiphotonBreitWheelerTables::computeTables( Params &params, SmileiMPI *smpi )
 {
     // These tables are loaded only if if one species has Monte-Carlo Compton radiation
     if( params.hasMultiphotonBreitWheeler ) {
         MultiphotonBreitWheelerTables::compute_T_table( smpi );
-        MultiphotonBreitWheelerTables::compute_xip_table( smpi );
+        MultiphotonBreitWheelerTables::computeXipTable( smpi );
     }
 }
 
@@ -875,7 +875,7 @@ void MultiphotonBreitWheelerTables::output_T_table()
 //! File output of xip_chipamin_table and xip_table
 //
 // -----------------------------------------------------------------------------
-void MultiphotonBreitWheelerTables::output_xip_table()
+void MultiphotonBreitWheelerTables::outputXipTable()
 {
 
     if( output_format_ == "ascii" ) {
@@ -1016,7 +1016,7 @@ void MultiphotonBreitWheelerTables::output_xip_table()
 //! Table output by the master MPI rank
 //! \param smpi Object of class SmileiMPI containing MPI properties
 // -----------------------------------------------------------------------------
-void MultiphotonBreitWheelerTables::output_tables( SmileiMPI *smpi )
+void MultiphotonBreitWheelerTables::outputTables( SmileiMPI *smpi )
 {
     // Sequential output
     if( smpi->isMaster() ) {
@@ -1026,7 +1026,7 @@ void MultiphotonBreitWheelerTables::output_tables( SmileiMPI *smpi )
             output_T_table();
         }
         if( xip_computed ) {
-            output_xip_table();
+            outputXipTable();
         }
     }
 }
@@ -1257,7 +1257,7 @@ bool MultiphotonBreitWheelerTables::read_xip_table( SmileiMPI *smpi )
         MESSAGE( "            Maximum photon chi: " << xip_chiph_max );
         
         // Bcast the table to all MPI ranks
-        MultiphotonBreitWheelerTables::bcast_xip_table( smpi );
+        MultiphotonBreitWheelerTables::bcastXipTable( smpi );
     }
     
     return table_exists;
@@ -1354,7 +1354,7 @@ void MultiphotonBreitWheelerTables::bcast_T_table( SmileiMPI *smpi )
 //
 //! \param smpi Object of class SmileiMPI containing MPI properties
 // -----------------------------------------------------------------------------
-void MultiphotonBreitWheelerTables::bcast_xip_table( SmileiMPI *smpi )
+void MultiphotonBreitWheelerTables::bcastXipTable( SmileiMPI *smpi )
 {
     // Position for MPI pack and unack
     int position = 0;

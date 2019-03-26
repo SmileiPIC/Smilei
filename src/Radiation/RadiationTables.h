@@ -40,7 +40,7 @@ public:
 
     //! Initialization of the parmeters for the nonlinear
     //! inverse Compton scattering
-    void initializeParameters( Params &params );
+    void initializeParameters( Params &params , SmileiMPI *smpi );
 
     // ---------------------------------------------------------------------
     // PHYSICAL COMPUTATION
@@ -217,38 +217,38 @@ public:
     //! Computation of the table h that is a discetization of the h function
     //! in the stochastic model of Niel.
     //! \param smpi Object of class SmileiMPI containing MPI properties
-    void compute_h_table( SmileiMPI *smpi );
+    void computeHTable( SmileiMPI *smpi );
 
     //! Generate table values for Integration of F/chi: integfochi_table
     //! \param smpi Object of class SmileiMPI containing MPI properties
-    void compute_integfochi_table( SmileiMPI *smpi );
+    void computeIntegfochiTable( SmileiMPI *smpi );
 
     //! Computation of the minimum photon quantum parameter for the array
     //! xip (xip_chiphmin) and computation of the xip array.
     //! \param smpi Object of class SmileiMPI containing MPI properties
-    void compute_xip_table( SmileiMPI *smpi );
+    void computeXipTable( SmileiMPI *smpi );
 
     //! Compute all the tables
-    void compute_tables( Params &params, SmileiMPI *smpi );
+    void computeTables( Params &params, SmileiMPI *smpi );
 
     // ---------------------------------------------------------------------
     // TABLE OUTPUTS
     // ---------------------------------------------------------------------
 
     //! Write in a file table values of the h table
-    void output_h_table();
+    void outputHTable();
 
     //! Write in a file table values for Integration of F/chi: integfochi_table
-    void output_integfochi_table();
+    void outputIntegfochiTable();
 
     //! Write in a file the table xip_chiphmin and xip
-    void output_xip_table();
+    void outputXipTable();
 
     //! Output all computed tables so that they can be
     //! read at the next run
     //! Table output by the master MPI rank
     //! \param smpi Object of class SmileiMPI containing MPI properties
-    void output_tables( SmileiMPI *smpi );
+    void outputTables( SmileiMPI *smpi );
 
     // ---------------------------------------------------------------------
     // TABLE READING
@@ -256,15 +256,19 @@ public:
 
     //! Read the external table h
     //! \param smpi Object of class SmileiMPI containing MPI properties
-    bool read_h_table( SmileiMPI *smpi );
+    void readHTable( SmileiMPI *smpi );
 
     //! Read the external table integfochi
     //! \param smpi Object of class SmileiMPI containing MPI properties
-    bool read_integfochi_table( SmileiMPI *smpi );
+    void readIntegfochiTable( SmileiMPI *smpi );
 
     //! Read the external table xip_chiphmin and xip
     //! \param smpi Object of class SmileiMPI containing MPI properties
-    bool read_xip_table( SmileiMPI *smpi );
+    void readXipTable( SmileiMPI *smpi );
+
+    //! Read the external all external tables for the radiation
+    //! \param smpi Object of class SmileiMPI containing MPI properties
+    void readTables( Params &params, SmileiMPI *smpi );
 
     // ---------------------------------------------------------------------
     // TABLE COMMUNICATIONS
@@ -272,15 +276,15 @@ public:
 
     //! Bcast of the external table h
     //! \param smpi Object of class SmileiMPI containing MPI properties
-    void bcast_h_table( SmileiMPI *smpi );
+    void bcastHTable( SmileiMPI *smpi );
 
     //! Bcast of the external table integfochi
     //! \param smpi Object of class SmileiMPI containing MPI properties
-    void bcast_integfochi_table( SmileiMPI *smpi );
+    void bcastIntegfochiTable( SmileiMPI *smpi );
 
     //! Bcast of the external table xip_chiphmin and xip
     //! \param smpi Object of class SmileiMPI containing MPI properties
-    void bcast_xip_table( SmileiMPI *smpi );
+    void bcastXipTable( SmileiMPI *smpi );
 
 private:
 
@@ -292,10 +296,10 @@ private:
     std::string output_format_;
 
     //! Path to the tables
-    std::string table_path;
+    std::string table_path_;
 
     //! Flag that activate the table computation
-    bool compute_table;
+    bool compute_table_;
 
     //! Minimum threshold above which the Monte-Carlo algorithm is working
     //! This avoids using the Monte-Carlo algorithm when particle_chi is too low

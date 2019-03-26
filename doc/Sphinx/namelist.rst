@@ -1224,7 +1224,7 @@ The arguments appearing ``LaserEnvelopePlanar1D``, ``LaserEnvelopeGaussian2D`` a
 .. py:data:: waist
 
    Please note that a waist size comparable to the laser wavelength does not satisfy the assumptions of the envelope model.
-   
+
 .. py:data:: time_envelope
 
    Since the envelope will be entirely initialized in the simulation box already at the start of the simulation, the time envelope will be applied in the ``x`` direction instead of time. It is recommended to initialize the laser envelope in vacuum, separated from the plasma, to avoid unphysical results.
@@ -1646,6 +1646,16 @@ tables.
 
   RadiationReaction(
 
+    # Radiation parameters
+    minimum_chi_continuous = 1e-3,
+    minimum_chi_discontinuous = 1e-2,
+    table_path = "../databases/",
+    compute_table = False,
+
+    # Following parameters are only if you want to compute the tables
+
+    output_format = "hdf5",
+
      # Parameters to generate the table h used by Niel et al.
      h_chipa_min = 1E-3,
      h_chipa_max = 1E1,
@@ -1664,13 +1674,42 @@ tables.
      xip_threshold = 1e-3,
      chipa_xip_dim = 128,
      chiph_xip_dim = 128,
-
-     # Radiation parameters
-     minimum_chi_continuous = 1e-3,
-     minimum_chi_discontinuous = 1e-2,
-     table_path = "../databases/"
   )
 
+.. py:data:: output_format
+
+  :default: ``"hdf5"``
+
+  Output format of the tables: ``"hdf5"``, ``"binary"`` or ``"ascii"``.
+
+.. py:data:: minimum_chi_continuous
+
+  :default: 1e-3
+
+  Threshold on the particle quantum parameter *particle_chi*. When a particle has a
+  quantum parameter below this threshold, radiation reaction is not taken
+  into account.
+
+.. py:data:: minimum_chi_discontinuous
+
+  :default: 1e-2
+
+  Threshold on the particle quantum parameter *particle_chi* between the continuous
+  and the discontinuous radiation model.
+
+.. py:data:: table_path
+
+  :default: ``"./"``
+
+  Path to the external tables for the radiation losses.
+  Default tables are located in ``databases``.
+
+.. py:data:: compute_table
+
+  :default: False
+
+  If True, the tables for the selected radiation model are computed
+  with the requested parameters and stored at the path `table_path`.
 
 .. py:data:: h_chipa_min
 
@@ -1771,33 +1810,6 @@ tables.
 
   Discretization of the *xip* tables in the *photon_chi* direction.
 
-.. py:data:: output_format
-
-  :default: ``"hdf5"``
-
-  Output format of the tables: ``"hdf5"``, ``"binary"`` or ``"ascii"``.
-
-.. py:data:: minimum_chi_continuous
-
-  :default: 1e-3
-
-  Threshold on the particle quantum parameter *particle_chi*. When a particle has a
-  quantum parameter below this threshold, radiation reaction is not taken
-  into account.
-
-.. py:data:: minimum_chi_discontinuous
-
-  :default: 1e-2
-
-  Threshold on the particle quantum parameter *particle_chi* between the continuous
-  and the discontinuous radiation model.
-
-.. py:data:: table_path
-
-  :default: ``"./"``
-
-  Path to the external tables for the radiation losses.
-  Default tables are located in ``databases``.
 
 --------------------------------------------------------------------------------
 
