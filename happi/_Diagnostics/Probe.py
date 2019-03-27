@@ -198,7 +198,7 @@ class Probe(Diagnostic):
 			offset = p2[0,:]
 			p2 = self._np.apply_along_axis(lambda x: x-offset, 1, p2) # move points
 			# Trick in a 3D simulation (the probe has to be projected)
-			if self._ndim==3:
+			if self._ndim==3 or self.namelist.Main.geometry=="AMcylindrical":
 				# unit vectors in the two dimensions + perpendicular
 				u1 = p[0] / self._np.linalg.norm(p[0])
 				u2 = p[1] / self._np.linalg.norm(p[1])
