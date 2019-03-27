@@ -600,6 +600,10 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
                 PyTools::extract_py( "reconfigure_every", "Vectorization" ), "Adaptive vectorization"
             );
     }
+
+    ;
+    PyTools::extract( "cell_sorting", cell_sorting, "Main" );
+    MESSAGE("Sorting per cell : " << cell_sorting );
     
     // In case of collisions, ensure particle sort per cell
     if( PyTools::nComponents( "Collisions" ) > 0 ) {

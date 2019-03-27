@@ -318,6 +318,8 @@ public:
     
     //! Characters width for timestep output
     unsigned int timestep_width;
+
+    bool cell_sorting;
 };
 
 #endif
