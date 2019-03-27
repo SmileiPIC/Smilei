@@ -38,8 +38,7 @@ protected:
     int i_domain_begin;
     int j_domain_begin;
     unsigned int Nmode;
-    unsigned int n_species;
-    int nprimr;
+    int nprimr, npriml;
     //! Inverse radius
     double *invR, *invRd;
     
