@@ -71,11 +71,11 @@ void RadiationTables::initializeParameters( Params &params , SmileiMPI *smpi )
     }
 
     if( params.hasMCRadiation ) {
-        MESSAGE( "        The Monte-Carlo Compton radiation module"
+        MESSAGE( 1,"The Monte-Carlo Compton radiation module"
                  << " is requested by some species.\n" );
     }
     if( params.hasNielRadiation ) {
-        MESSAGE( "        The synchrotron-like stochastic radiation module"
+        MESSAGE( 1,"The synchrotron-like stochastic radiation module"
                  << " of Niel et al. is requested by some species.\n" );
     }
 
@@ -179,7 +179,7 @@ void RadiationTables::initializeParameters( Params &params , SmileiMPI *smpi )
         // Computation of the factor for the classical radiated power
         factor_classical_radiated_power_ = 2.*params.fine_struct_cst/( 3.*normalized_Compton_wavelength_ );
 
-        MESSAGE( 2, "Factor classical radiated power: " << factor_classical_radiated_power_ )
+        MESSAGE( 1, "Factor classical radiated power: " << factor_classical_radiated_power_ )
 
     }
 
@@ -188,23 +188,23 @@ void RadiationTables::initializeParameters( Params &params , SmileiMPI *smpi )
     if( params.hasMCRadiation ||
             params.hasLLRadiation ||
             params.hasNielRadiation ) {
-        MESSAGE( 2, "Minimum quantum parameter for continuous radiation: "
+        MESSAGE( 1, "Minimum quantum parameter for continuous radiation: "
                  << std::setprecision( 5 ) << minimum_chi_continuous_ );
     }
     if( params.hasMCRadiation ) {
-        MESSAGE( "        Minimum quantum parameter for discontinuous radiation: "
+        MESSAGE( 1,"Minimum quantum parameter for discontinuous radiation: "
                  << std::setprecision( 5 ) << minimum_chi_discontinuous_ );
     }
     if( params.hasMCRadiation ||
             params.hasNielRadiation ) {
-        MESSAGE( "        Table path: " << table_path_ );
+        MESSAGE( 1,"Table path: " << table_path_ );
     }
     if( params.hasNielRadiation ) {
         if( h_computation_method == "table" ||
                 h_computation_method == "fit5"  ||
                 h_computation_method == "fit10" ||
                 h_computation_method == "ridgers" ) {
-            MESSAGE( "        Niel h function computation method: " << h_computation_method )
+            MESSAGE( 1,"Niel h function computation method: " << h_computation_method )
         } else {
             ERROR( " The parameter `h_computation_method` must be `table`, `fit5`, `fit10` or `ridgers`." )
         }
@@ -246,7 +246,7 @@ void RadiationTables::computeHTable( SmileiMPI *smpi )
     // Get the MPI rank
     rank = smpi->getRank();
 
-    MESSAGE( 2,"--- h table:" );
+    MESSAGE( 1,"--- h table:" );
 
     // Initial timer
     t0 = MPI_Wtime();
@@ -297,23 +297,23 @@ void RadiationTables::computeHTable( SmileiMPI *smpi )
     // Allocation of the local buffer
     buffer = new double [length_table[rank]];
 
-    MESSAGE( std::setprecision( 5 ) <<std::setprecision( 5 ) <<"            Dimension quantum parameter: "
+    MESSAGE( 2,std::setprecision( 5 ) <<std::setprecision( 5 ) <<"Dimension quantum parameter: "
              << h_dim );
-    MESSAGE( std::setprecision( 5 ) <<"            Minimum particle quantum parameter chi: "
+    MESSAGE( 2,std::setprecision( 5 ) <<"Minimum particle quantum parameter chi: "
              << h_chipa_min );
-    MESSAGE( std::setprecision( 5 ) <<"            Maximum particle quantum parameter chi: "
+    MESSAGE( 2,std::setprecision( 5 ) <<"Maximum particle quantum parameter chi: "
              << h_chipa_max );
-    MESSAGE( "            MPI repartition:" );
+    MESSAGE( 2,"MPI repartition:" );
     // Print repartition
     if( rank==0 ) {
         for( int i =0 ; i < nb_ranks ; i++ ) {
-            MESSAGE( "            Rank: " << i
+            MESSAGE( 2,"Rank: " << i
                      << " imin: " << imin_table[i]
                      << " length: " << length_table[i] );
         }
     }
 
-    MESSAGE( "            Computation:" );
+    MESSAGE( 2,"Computation:" );
     dpct = std::max( dpct, 100./length_table[rank] );
     // Loop over the table values
     for( int i = 0 ; i < length_table[rank] ; i++ ) {
@@ -326,7 +326,7 @@ void RadiationTables::computeHTable( SmileiMPI *smpi )
 
         if( 100.*i >= length_table[rank]*pct ) {
             pct += dpct;
-            MESSAGE( "            " << i + 1<< "/" << length_table[rank]
+            MESSAGE( 3, i + 1<< "/" << length_table[rank]
                      << " - " << ( int )( std::round( pct ) )
                      << "%" );
         }
@@ -347,7 +347,7 @@ void RadiationTables::computeHTable( SmileiMPI *smpi )
 
     // Final timer
     t1 = MPI_Wtime();
-    MESSAGE( "        Done in " << ( t1 - t0 ) << "s" );
+    MESSAGE( 2,"Done in " << ( t1 - t0 ) << "s" );
 }
 
 // -----------------------------------------------------------------------------
@@ -366,7 +366,7 @@ void RadiationTables::computeIntegfochiTable( SmileiMPI *smpi )
     // Get the MPI rank
     rank = smpi->getRank();
 
-    MESSAGE( "        --- Integration F/particle_chi table:" );
+    MESSAGE( 1,"--- Integration F/particle_chi table:" );
 
     // Initial timer
     t0 = MPI_Wtime();
@@ -411,17 +411,17 @@ void RadiationTables::computeIntegfochiTable( SmileiMPI *smpi )
     buffer = new double [length_table[rank]];
 
 
-    MESSAGE( "            MPI repartition:" );
+    MESSAGE( 2,"MPI repartition:" );
     // Print repartition
     if( rank==0 ) {
         for( int i =0 ; i < nb_ranks ; i++ ) {
-            MESSAGE( "            Rank: " << i
+            MESSAGE( 2,"Rank: " << i
                      << " imin: " << imin_table[i]
                      << " length: " << length_table[i] );
         }
     }
 
-    MESSAGE( "            Computation:" );
+    MESSAGE( 2,"Computation:" );
     dpct = std::max( dpct, 100./length_table[rank] );
     // Loop over the table values
     for( int i = 0 ; i < length_table[rank] ; i++ ) {
@@ -477,7 +477,7 @@ void RadiationTables::computeXipTable( SmileiMPI *smpi )
 
     t0 = MPI_Wtime();
 
-    MESSAGE( 2, "--- Table chiphmin and xip:" );
+    MESSAGE( 1, "--- Table chiphmin and xip:" );
 
     // Parameters:
     double particle_chi; // Temporary particle chi value
@@ -529,18 +529,18 @@ void RadiationTables::computeXipTable( SmileiMPI *smpi )
     // Allocation of the local buffer
     buffer = new double [length_table[rank]];
 
-    MESSAGE( "            MPI repartition:" );
+    MESSAGE( 2,"MPI repartition:" );
     // Print repartition
     if( rank==0 ) {
         for( int i =0 ; i < nb_ranks ; i++ ) {
-            MESSAGE( "            Rank: " << i
+            MESSAGE( 2,"Rank: " << i
                      << " imin: "   << imin_table[i]
                      << " length: " << length_table[i] );
         }
     }
 
     // 1. - Computation of xip_chiphmin_table
-    MESSAGE( "            Computation of log10(chiphmin):" );
+    MESSAGE( 2,"Computation of log10(chiphmin):" );
     dpct = std::max( 10., 100./length_table[rank] );
 
     // Loop for chiphmin
@@ -578,7 +578,7 @@ void RadiationTables::computeXipTable( SmileiMPI *smpi )
         // display percentage
         if( 100.*ichipa >= length_table[rank]*pct ) {
             pct += dpct;
-            MESSAGE( "            " << ichipa + 1 << "/" << length_table[rank]
+            MESSAGE( 3,ichipa + 1 << "/" << length_table[rank]
                      << " - " << ( int )( std::round( pct ) ) << "%" );
         }
     }
@@ -589,7 +589,7 @@ void RadiationTables::computeXipTable( SmileiMPI *smpi )
                     MPI_DOUBLE, smpi->getGlobalComm() );
 
     // 2. - Computation of the xip table
-    MESSAGE( "            Computation of xip:" );
+    MESSAGE( 2,"Computation of xip:" );
 
     // Allocation of the local buffer
     buffer = new double [length_table[rank]*xip_chiph_dim];
@@ -644,7 +644,7 @@ void RadiationTables::computeXipTable( SmileiMPI *smpi )
             if( 100.*( ichipa*xip_chiph_dim+ichiph )
                     >= length_table[rank]*xip_chiph_dim*pct ) {
                 pct += dpct;
-                MESSAGE( "            " << ichipa*xip_chiph_dim+ichiph + 1
+                MESSAGE( 3,ichipa*xip_chiph_dim+ichiph + 1
                          << "/"
                          << length_table[rank]*xip_chiph_dim
                          << " - " << ( int )( std::round( pct ) )
@@ -674,7 +674,7 @@ void RadiationTables::computeXipTable( SmileiMPI *smpi )
     delete imin_table;
 
     t1 = MPI_Wtime();
-    MESSAGE( "        Done in " << ( t1 - t0 ) << "s" );
+    MESSAGE( 2,"Done in " << ( t1 - t0 ) << "s" );
 
 }
 
@@ -1552,12 +1552,13 @@ void RadiationTables::readHTable( SmileiMPI *smpi )
                    << "the radiation threshold on chi." )
         }
 
-        MESSAGE( 3, "Reading of the external database" );
-        MESSAGE( 3,"Dimension quantum parameter: "
+        MESSAGE( 1, "--- h table:" );
+        MESSAGE( 2, "Reading of the external database" );
+        MESSAGE( 2,"Dimension quantum parameter: "
                  << h_dim );
-        MESSAGE( 3,"Minimum particle quantum parameter chi: "
+        MESSAGE( 2,"Minimum particle quantum parameter chi: "
                  << h_chipa_min );
-        MESSAGE( 3,"Maximum particle quantum parameter chi: "
+        MESSAGE( 2,"Maximum particle quantum parameter chi: "
                  << h_chipa_max );
 
         // Bcast the table to all MPI ranks
@@ -1665,10 +1666,11 @@ void RadiationTables::readIntegfochiTable( SmileiMPI *smpi )
     // If the table exists, they have been read...
     if( table_exists ) {
 
-        MESSAGE( 3,"Reading of the external database" );
-        MESSAGE( 3,"Dimension quantum parameter: " << integfochi_dim );
-        MESSAGE( 3,"Minimum particle quantum parameter chi: " << integfochi_chipa_min );
-        MESSAGE( 3,"Maximum particle quantum parameter chi: " << integfochi_chipa_max );
+        MESSAGE( 1,"--- Integration F/particle_chi table:" );
+        MESSAGE( 2,"Reading of the external database" );
+        MESSAGE( 2,"Dimension quantum parameter: " << integfochi_dim );
+        MESSAGE( 2,"Minimum particle quantum parameter chi: " << integfochi_chipa_min );
+        MESSAGE( 2,"Maximum particle quantum parameter chi: " << integfochi_chipa_max );
 
         // Bcast the table to all MPI ranks
         RadiationTables::bcastIntegfochiTable( smpi );
@@ -1786,11 +1788,12 @@ void RadiationTables::readXipTable( SmileiMPI *smpi )
     // If the table exists, they have been read...
     if( table_exists ) {
 
-        MESSAGE( 3, "Reading of the external database" );
-        MESSAGE( "Dimension particle chi: " << xip_chipa_dim );
-        MESSAGE( "            Dimension photon chi: " << xip_chiph_dim );
-        MESSAGE( "            Minimum particle chi: " << xip_chipa_min );
-        MESSAGE( "            Maximum particle chi: " << xip_chipa_max );
+        MESSAGE( 1,"--- Table chiphmin and xip:" );
+        MESSAGE( 2,"Reading of the external database" );
+        MESSAGE( 2,"Dimension particle chi: " << xip_chipa_dim );
+        MESSAGE( 2,"Dimension photon chi: " << xip_chiph_dim );
+        MESSAGE( 2,"Minimum particle chi: " << xip_chipa_min );
+        MESSAGE( 2,"Maximum particle chi: " << xip_chipa_max );
 
         // Bcast the table to all MPI ranks
         RadiationTables::bcastXipTable( smpi );
@@ -1935,7 +1938,7 @@ void RadiationTables::bcastIntegfochiTable( SmileiMPI *smpi )
         buf_size += position;
     }
 
-    MESSAGE( 3,"Buffer size: " << buf_size );
+    MESSAGE( 2,"Buffer size: " << buf_size );
 
     // Exchange buf_size with all ranks
     MPI_Bcast( &buf_size, 1, MPI_INT, 0, smpi->getGlobalComm() );
@@ -2020,7 +2023,7 @@ void RadiationTables::bcastXipTable( SmileiMPI *smpi )
         buf_size += position;
     }
 
-    MESSAGE( 3,"Buffer size for MPI exchange: " << buf_size );
+    MESSAGE( 2,"Buffer size for MPI exchange: " << buf_size );
 
     // Exchange buf_size with all ranks
     MPI_Bcast( &buf_size, 1, MPI_INT, 0, smpi->getGlobalComm() );

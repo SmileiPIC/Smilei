@@ -30,7 +30,6 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
     vector<PyObject *>  space_profile, phase_profile, space_time_profile;
     bool has_time, has_space, has_omega, has_chirp, has_phase, has_space_time, has_file;
     double omega( 0 );
-    double a0( 0 );
     Profile *p, *pchirp, *pchirp2, *ptime, *ptime2, *pspace1, *pspace2, *pphase1, *pphase2;
     pchirp2 = NULL;
     ptime2  = NULL;
@@ -42,7 +41,6 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
     has_phase      = PyTools::extract2Profiles( "phase", ilaser, phase_profile );
     has_space_time = PyTools::extract2Profiles( "space_time_profile", ilaser, space_time_profile );
     has_file       = PyTools::extract( "file", file, "Laser", ilaser );
-    PyTools::extract( "a0", a0, "Laser", ilaser );
 
     if( has_space_time && has_file ) {
         ERROR( errorPrefix << ": `space_time_profile` and `file` cannot both be set" );
@@ -132,7 +130,6 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
 
         // omega
         info << "\t\t\tomega              : " << omega << endl;
-        info << "\t\t\ta0                 : " << a0 << endl;
 
         // chirp
         name.str( "" );

@@ -1656,24 +1656,24 @@ tables.
 
     output_format = "hdf5",
 
-     # Parameters to generate the table h used by Niel et al.
-     h_chipa_min = 1E-3,
-     h_chipa_max = 1E1,
-     h_dim = 128,
-     h_computation_method = "table",
+    # Parameters to generate the table h used by Niel et al.
+    h_chipa_min = 1E-3,
+    h_chipa_max = 1E1,
+    h_dim = 128,
+    h_computation_method = "table",
 
-     # Parameter to generate the table integfochi used by the Monte-Carlo model
-     integfochi_chipa_min = 1e-4,
-     integfochi_chipa_max = 1e1,
-     integfochi_dim = 128,
+    # Parameter to generate the table integfochi used by the Monte-Carlo model
+    integfochi_chipa_min = 1e-4,
+    integfochi_chipa_max = 1e1,
+    integfochi_dim = 128,
 
-     # Parameter to generate the table xip used by the Monte-Carlo model
-     xip_chipa_min = 1e-4,
-     xip_chipa_max = 1e1,
-     xip_power = 4,
-     xip_threshold = 1e-3,
-     chipa_xip_dim = 128,
-     chiph_xip_dim = 128,
+    # Parameter to generate the table xip used by the Monte-Carlo model
+    xip_chipa_min = 1e-4,
+    xip_chipa_max = 1e1,
+    xip_power = 4,
+    xip_threshold = 1e-3,
+    xip_chipa_dim = 128,
+    xip_chiph_dim = 128,
   )
 
 .. py:data:: output_format
