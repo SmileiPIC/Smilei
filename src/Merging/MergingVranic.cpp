@@ -205,9 +205,9 @@ void MergingVranic::operator() (
         }
 
         // Extra to include the max in the discretization
-        mr_max += (mr_max - mr_min)*0.01;
-        theta_max += (theta_max - theta_min)*0.01;
-        phi_max += (phi_max - phi_min)*0.01;
+        // mr_max += (mr_max - mr_min)*0.01;
+        // theta_max += (theta_max - theta_min)*0.01;
+        // phi_max += (phi_max - phi_min)*0.01;
 
         // Computation of the deltas (discretization steps)
         // Check if min and max boundaries are very close
@@ -216,7 +216,10 @@ void MergingVranic::operator() (
             inv_mr_delta = 0;
             dim[0] = 1;
         } else {
-            mr_delta = (mr_max - mr_min) / dim[0];
+            // mr_delta = (mr_max - mr_min) / dim[0];
+            mr_delta = (mr_max - mr_min) / (dim[0]-1);
+            // A bit of chaos to kill the accumulation effect
+            mr_min -= 0.9*mr_delta*Rand::uniform();
             inv_mr_delta = 1./mr_delta;
         }
         if (abs((theta_max - theta_min)) < 1e-10) {
@@ -224,7 +227,10 @@ void MergingVranic::operator() (
             inv_theta_delta = 0;
             dim[1] = 1;
         } else {
-            theta_delta = (theta_max - theta_min) / dim[1];
+            //theta_delta = (theta_max - theta_min) / dim[1];
+            theta_delta = (theta_max - theta_min) / (dim[1]-1);
+            // A bit of chaos to kill the accumulation effect
+            theta_min -= 0.9*theta_delta*Rand::uniform();
             inv_theta_delta = 1./theta_delta;
         }
         if (abs((phi_max - phi_min)) < 1e-10) {
@@ -232,7 +238,10 @@ void MergingVranic::operator() (
             inv_phi_delta = 0;
             dim[2] = 1;
         } else {
-            phi_delta = (phi_max - phi_min) / dim[2];
+            //phi_delta = (phi_max - phi_min) / dim[2];
+            phi_delta = (phi_max - phi_min) / (dim[2]-1);
+            // A bit of chaos to kill the accumulation effect
+            phi_min -= 0.9*phi_delta*Rand::uniform();
             inv_phi_delta = 1./phi_delta;
         }
 
