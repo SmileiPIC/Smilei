@@ -201,6 +201,8 @@ public:
     
     void finishInitialization( int nspecies, Patch *patch ) override final;
     
+    //!Pointers toward R inverse values stored in patch
+    double *invR, *invRd; 
 };
 
 #endif

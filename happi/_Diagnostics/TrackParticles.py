@@ -418,9 +418,9 @@ class TrackParticles(Diagnostic):
 				group = f["data"][tname]["particles"][self.species]
 				nparticles = group["id"].size
 				if nparticles == 0: continue
-
+				
 				# If not too many particles, sort all at once
-				if nparticles < chunksize:
+				if total_number_of_particles < chunksize:
 					# Get the Ids and find where they should be stored in the final file
 					locs = (
 						group["id"].value.astype("uint32") # takes the second hald of id (meaning particle number)
@@ -437,44 +437,46 @@ class TrackParticles(Diagnostic):
 
 				# If too many particles, sort by chunks
 				else:
-					nchunks = int(float(nparticles)/(chunksize+1) + 1)
-					adjustedchunksize = int(math.ceil(float(nparticles)/nchunks))
+					nchunks = int(float(total_number_of_particles)/(chunksize+1) + 1)
+					adjustedchunksize = int(math.ceil(float(total_number_of_particles)/nchunks))
 					ID = self._np.empty((adjustedchunksize,), dtype=self._np.uint64)
-					data_double = self._np.empty((adjustedchunksize,))
-					data_int16  = self._np.empty((adjustedchunksize,), dtype=self._np.int16)
-					# Loop chunks
-					for ichunk in range(nchunks):
-						first = ichunk * adjustedchunksize
-						last  = min( first + adjustedchunksize, nparticles )
-						npart = last-first
-						# Obtain IDs and find their sorting indices
-						group["id"].read_direct( ID, source_sel=self._np.s_[first:last], dest_sel=self._np.s_[:npart] )
-						sort = self._np.argsort(ID[:npart])
-						ID[:npart] = ID[sort]
-						# Find consecutive-ID batches
-						batchsize = self._np.diff(self._np.concatenate(([0],1+self._np.flatnonzero(self._np.diff(ID[:npart])-1), [npart])))
-						# Loop datasets
+					data = {}
+					for k, name in properties.items():
+						if k == "charge":
+							data[k] = self._np.empty((adjustedchunksize,), dtype=self._np.int16)
+						else:
+							data[k] = self._np.empty((adjustedchunksize,), dtype=self._np.double)
+					data_double = self._np.empty((adjustedchunksize,), dtype=self._np.double)
+					data_int16  = self._np.empty((adjustedchunksize,), dtype=self._np.int16 )
+					# Loop chunks of the output
+					for ichunk_o in range(nchunks):
+						first_o = ichunk_o * adjustedchunksize
+						last_o  = min( first_o + adjustedchunksize, total_number_of_particles )
+						npart_o = last_o-first_o
+						# Loop chunks of the input
+						for ichunk_i in range(nchunks):
+							first_i = ichunk_i * adjustedchunksize
+							last_i  = min( first_i + adjustedchunksize, nparticles )
+							npart_i = last_i-first_i
+							# Obtain IDs
+							group["id"].read_direct( ID, source_sel=self._np.s_[first_i:last_i], dest_sel=self._np.s_[:npart_i] )
+							# Extract useful IDs for this output chunk
+							loc_in_output = ID[:npart_i] + offset[ (ID[:npart_i]>>32) & 16777215 ] - 1
+							keep = self._np.flatnonzero((loc_in_output >= first_o) * (loc_in_output < last_o))
+							loc_in_output = loc_in_output[keep] - first_o
+							# Loop datasets
+							for k, name in properties.items():
+								if k not in group: continue
+								# Accumulate the data for this chunk
+								if k == "charge": data_in = data_int16
+								else            : data_in = data_double
+								group[k].read_direct( data_in, source_sel=self._np.s_[first_i:last_i], dest_sel=self._np.s_[:npart_i] )
+								data[k][loc_in_output] = data_in[keep]
+						# Accumulated data is written out
 						for k, name in properties.items():
 							if k not in group: continue
-							# Get the data for this chunk and sort by ID
-							if k == "charge": data = data_int16
-							else:             data = data_double
-							group[k].read_direct( data, source_sel=self._np.s_[first:last], dest_sel=self._np.s_[:npart] )
-							data[:npart] = data[sort]
-							# Loop by batch inside this chunk and store at the right place
-							stop = 0
-							for ibatch in range(len(batchsize)):
-								bs = int(batchsize[ibatch])
-								start = stop
-								stop = start + bs
-								start_in_file = int(
-									(ID[start].astype("uint32"))
-									+ offset[ int(ID[start])>>32 & 16777215 ]
-									-1
-								)
-								stop_in_file = start_in_file + bs
-								f0[name].write_direct( data, source_sel=self._np.s_[start:stop], dest_sel=self._np.s_[it, start_in_file:stop_in_file] )
-
+							f0[name].write_direct( data[k], source_sel=self._np.s_[:npart_o], dest_sel=self._np.s_[it, first_o:last_o] )
+						
 				# Indicate that this iteration was succesfully ordered
 				f0.attrs["latestOrdered"] = it
 				f0.flush()
@@ -724,7 +726,8 @@ class TrackParticles(Diagnostic):
 		y = self._tmpdata[1][timeSelection,:][:,~self._rawData["brokenLine"]]
 		ax.plot(self._xfactor*x, self._yfactor*y, **self.options.plot)
 		# Then plot the broken lines
-		ax.hold("on")
+		try   : ax.hold("on")
+		except: pass
 		for line, breaks in self._rawData['lineBreaks'].items():
 			x = self._tmpdata[0][:, line]
 			y = self._tmpdata[1][:, line]
@@ -739,7 +742,8 @@ class TrackParticles(Diagnostic):
 				else:
 					prevline, = ax.plot(self._xfactor*x[iti:itf], self._yfactor*y[iti:itf], **self.options.plot)
 				if breaks[ibrk] > itmax: break
-		ax.hold("off")
+		try   : ax.hold("off")
+		except: pass
 		# Add labels and options
 		ax.set_xlabel(self._xlabel)
 		ax.set_ylabel(self._ylabel)

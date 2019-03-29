@@ -21,7 +21,7 @@ Partners
   :width: 6em
   :align: middle
 
-.. |intel| image:: _static/labs/intel.jpg
+.. |intel| image:: _static/labs/intel.png
   :width: 6em
   :align: middle
 
@@ -205,6 +205,9 @@ Financial support from the *Laboratoires d'Excellence*:
   :width: 130px
   :align: middle
 
+.. |P2IO| image:: _static/labs/p2io.png
+  :width: 6em
+  :align: middle
 
 .. rst-class:: noborder
 
@@ -218,3 +221,11 @@ Financial support from the *Laboratoires d'Excellence*:
 | |palm|     | | Smilei was initiated thanks to the SimPLE junior chair                    |
 |            | | granted by the labex `PALM <http://www.labex-palm.fr>`_.                  |
 +------------+-----------------------------------------------------------------------------+
+
+.. rst-class:: noborder
+
++------------+-----------------------------------------------------------------------------+
+| |P2IO|     | | Francesco Massimo's 2 years post-doc was funded by the                    |
+|            | | labex `P2IO <http://www.labex-p2io.fr>`_.                                 |
++------------+-----------------------------------------------------------------------------+
+
