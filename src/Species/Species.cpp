@@ -593,10 +593,6 @@ void Species::initMomentum( unsigned int nPart, unsigned int iPart, double *temp
 
         }
     }
-
-    //std::cout<<"particle momentum in x "<< particles->momentum(0,0)*10<<std::endl;
-    //std::cout<<"particle momentum in y "<< particles->momentum(1,0)*10<<std::endl;
-    //std::cout<<"particle momentum in z "<< particles->momentum(2,0)*10<<std::endl;
 }//END initMomentum
 
 

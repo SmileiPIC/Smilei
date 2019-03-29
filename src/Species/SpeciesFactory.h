@@ -58,7 +58,7 @@ public:
                 MESSAGE( "For species #" << ispec << ", name will be " << species_name );
             }
         }
-        
+
         if( species_name.size() < 2 ) {
             ERROR("For species #" << ispec << ", name cannot be only 1 character");
         }
@@ -509,7 +509,7 @@ public:
                 //Check number of coordinates provided
                 ndim_local =  PyArray_SHAPE( np_ret_mom )[0]; // ok
             if( ndim_local != 3 )
-                ERROR( "For species '" << species_name << "' momentum_initializtion must provide a 2-dimensional array with " <<  3 << " columns." )
+                ERROR( "For species '" << species_name << "' momentum_initialization must provide a 2-dimensional array with " <<  3 << " columns." )
 
                 //Get number of particles
                 if( !params.restart && thisSpecies->n_numpy_particles != PyArray_SHAPE( np_ret_mom )[1] )
@@ -715,7 +715,8 @@ public:
                 ok1 = PyTools::extract_pyProfile( "number_density", profile1, "Species", ispec );
                 ok2 = PyTools::extract_pyProfile( "charge_density", profile1, "Species", ispec );
                 if( ok2 ) {
-                    ERROR( "For photon species '" << species_name << "', charge_density has no meaning." );
+                    ERROR( "For photon species '" << species_name << "', `charge_density` has no meaning."
+                            << "You must use `number_density`." );
                 }
                 if( !ok1 ) {
                     ERROR( "For photon species '" << species_name << "', must define `number_density`." );
@@ -746,7 +747,7 @@ public:
             ERROR( "For species '" << species_name << "', charge not found or not understood" );
         }
         thisSpecies->chargeProfile = new Profile( profile1, params.nDim_field, Tools::merge( "charge ", species_name ), true );
-        //MESSAGE("creating charge profile");
+
         if( thisSpecies->momentum_initialization_array == NULL ) {
             // Mean velocity
             if( PyTools::extract3Profiles( "mean_velocity", ispec, profile1, profile2, profile3 ) ) {
@@ -754,13 +755,13 @@ public:
                 thisSpecies->velocityProfile[1] = new Profile( profile2, params.nDim_field, Tools::merge( "mean_velocity[1] ", species_name ), true );
                 thisSpecies->velocityProfile[2] = new Profile( profile3, params.nDim_field, Tools::merge( "mean_velocity[2] ", species_name ), true );
             }
-            //MESSAGE("velocity profile");
+
             // Temperature
             if( PyTools::extract3Profiles( "temperature", ispec, profile1, profile2, profile3 ) ) {
                 thisSpecies->temperatureProfile[0] = new Profile( profile1, params.nDim_field, Tools::merge( "temperature[0] ", species_name ), true );
                 thisSpecies->temperatureProfile[1] = new Profile( profile2, params.nDim_field, Tools::merge( "temperature[1] ", species_name ), true );
                 thisSpecies->temperatureProfile[2] = new Profile( profile3, params.nDim_field, Tools::merge( "temperature[2] ", species_name ), true );
-            } //MESSAGE("TEMPERATURE");
+            }
         } else {
             ok1 = PyTools::extract3Profiles( "mean_velocity", ispec, profile1, profile2, profile3 ) ;
             ok2 = PyTools::extract3Profiles( "temperature", ispec, profile1, profile2, profile3 ) ;
@@ -1064,15 +1065,19 @@ public:
             if( !retSpecies[ispec1]->Multiphoton_Breit_Wheeler_process ) {
                 continue;
             } else {
-                for( unsigned int ispec2 = 0; ispec2<retSpecies.size(); ispec2++ ) {
-                    for( int k=0; k<2; k++ ) {
+                unsigned int ispec2;
+                for( int k=0; k<2; k++ ) {
+                    ispec2 = 0;
+                    while( ispec2<retSpecies.size()) {
+                        // We llok for the pair species multiphoton_Breit_Wheeler[k]
                         if( retSpecies[ispec1]->multiphoton_Breit_Wheeler[k] == retSpecies[ispec2]->name ) {
                             if( ispec1==ispec2 ) {
                                 ERROR( "For species '" << retSpecies[ispec1]->name
                                        << "' pair species must be a distinct particle species" );
                             }
                             if( retSpecies[ispec2]->mass != 1 ) {
-                                ERROR( "For species '"<<retSpecies[ispec1]->name<<"' pair species must be an electron and positron species" );
+                                ERROR( "For species '"<<retSpecies[ispec1]->name
+                                  <<"' pair species must be an electron and positron species (mass = 1)" );
                             }
                             retSpecies[ispec1]->mBW_pair_species_index[k] = ispec2;
                             retSpecies[ispec1]->mBW_pair_species[k] = retSpecies[ispec2];
@@ -1083,7 +1088,15 @@ public:
                                     params.nDim_particle );
                             retSpecies[ispec2]->particles->reserve( retSpecies[ispec1]->getNbrOfParticles(),
                                                                     retSpecies[ispec2]->particles->dimension() );
+                            ispec2 = retSpecies.size() + 1;
                         }
+                        ispec2++ ;
+                    }
+                    // This means that one of the pair species has not been fould
+                    if( ispec2 == retSpecies.size() ) {
+                        ERROR( "In Species `" << retSpecies[ispec1]->name << "`"
+                           << " the pair species `" << retSpecies[ispec1]->multiphoton_Breit_Wheeler[k]
+                           << "` does not exist." )
                     }
                 }
             }
