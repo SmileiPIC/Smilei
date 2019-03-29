@@ -158,9 +158,9 @@ int main( int argc, char *argv[] )
         // ---------------------------------------------------------------------
         // Init and compute tables for multiphoton Breit-Wheeler pair creation
         // ---------------------------------------------------------------------
-        MultiphotonBreitWheelerTables.initialization( params );
-        MultiphotonBreitWheelerTables.computeTables( params, &smpi );
-        MultiphotonBreitWheelerTables.outputTables( &smpi );
+        MultiphotonBreitWheelerTables.initialization( params, &smpi );
+        //MultiphotonBreitWheelerTables.computeTables( params, &smpi );
+        //MultiphotonBreitWheelerTables.outputTables( &smpi );
 
         TITLE( "Initializing diagnostics" );
         vecPatches.initAllDiags( params, &smpi );
@@ -207,9 +207,9 @@ int main( int argc, char *argv[] )
         // ---------------------------------------------------------------------
         // Init and compute tables for multiphoton Breit-Wheeler pair decay
         // ---------------------------------------------------------------------
-        MultiphotonBreitWheelerTables.initialization( params );
-        MultiphotonBreitWheelerTables.computeTables( params, &smpi );
-        MultiphotonBreitWheelerTables.outputTables( &smpi );
+        MultiphotonBreitWheelerTables.initialization( params, &smpi );
+        //MultiphotonBreitWheelerTables.computeTables( params, &smpi );
+        //MultiphotonBreitWheelerTables.outputTables( &smpi );
 
         // Apply antennas
         // --------------

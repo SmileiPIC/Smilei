@@ -507,7 +507,7 @@ class RadiationReaction(SmileiComponent):
     minimum_chi_discontinuous = 1e-2
     # Threshold on particle_chi: if particle_chi < 1E-3 no radiation reaction
     minimum_chi_continuous = 1e-3
-    # If one wants to recompute the tables
+    # Flag to recompute the tables
     compute_table = False
 
     # Path to read or write the tables/databases
@@ -538,10 +538,12 @@ class MultiphotonBreitWheeler(SmileiComponent):
     """
     Photon decay into electron-positron pairs
     """
-    # Output format, can be "ascii", "binary", "hdf5"
-    output_format = "hdf5"
     # Path the tables/databases
     table_path = "./"
+    # Flag to recompute the tables
+    compute_table = False
+
+    # Parameters for computing the tables
     # Table T parameters
     T_chiph_min = 1e-2
     T_chiph_max = 1e1
@@ -553,6 +555,8 @@ class MultiphotonBreitWheeler(SmileiComponent):
     xip_threshold = 1e-3
     xip_chipa_dim = 128
     xip_chiph_dim = 128
+    # Output format, can be "ascii", "binary", "hdf5"
+    output_format = "hdf5"
 
 # Smilei-defined
 smilei_mpi_rank = 0

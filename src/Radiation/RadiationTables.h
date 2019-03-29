@@ -284,7 +284,7 @@ public:
 
     //! Bcast of the external table xip_chiphmin and xip
     //! \param smpi Object of class SmileiMPI containing MPI properties
-    void bcastXipTable( SmileiMPI *smpi );
+    void bcastTableXip( SmileiMPI *smpi );
 
 private:
 

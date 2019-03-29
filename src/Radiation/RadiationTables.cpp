@@ -86,6 +86,9 @@ void RadiationTables::initializeParameters( Params &params , SmileiMPI *smpi )
         // Flag to activate the table computation
         PyTools::extract( "compute_table", compute_table_, "RadiationReaction" );
 
+        // How to handle the h function (table or fit)
+        PyTools::extract( "h_computation_method", h_computation_method, "RadiationReaction" );
+
         // If we compute the table, we read the table parameters
         if (compute_table_)
         {
@@ -95,7 +98,6 @@ void RadiationTables::initializeParameters( Params &params , SmileiMPI *smpi )
                 PyTools::extract( "h_chipa_min", h_chipa_min, "RadiationReaction" );
                 PyTools::extract( "h_chipa_max", h_chipa_max, "RadiationReaction" );
                 PyTools::extract( "h_dim", h_dim, "RadiationReaction" );
-                PyTools::extract( "h_computation_method", h_computation_method, "RadiationReaction" );
 
                 h_log10_chipa_min = log10( h_chipa_min );
             }
@@ -644,6 +646,9 @@ void RadiationTables::computeXipTable( SmileiMPI *smpi )
             if( 100.*( ichipa*xip_chiph_dim+ichiph )
                     >= length_table[rank]*xip_chiph_dim*pct ) {
                 pct += dpct;
+                if (ichiph >= xip_chiph_dim) {
+                    ichiph = xip_chiph_dim-1;
+                }
                 MESSAGE( 3,ichipa*xip_chiph_dim+ichiph + 1
                          << "/"
                          << length_table[rank]*xip_chiph_dim
@@ -1460,14 +1465,10 @@ double RadiationTables::getNielStochasticTerm( double gamma,
 // -----------------------------------------------------------------------------
 void RadiationTables::readHTable( SmileiMPI *smpi )
 {
-    // Flag database available
-    bool table_exists = false;
 
     // Test if an external table exists, if yes we read the table...
     // Binary table
     if( Tools::file_exists( table_path_ + "/tab_h.bin" ) ) {
-
-        table_exists = true;
 
         if( smpi->getRank()==0 ) {
 
@@ -1514,8 +1515,6 @@ void RadiationTables::readHTable( SmileiMPI *smpi )
             // If this dataset exists, we read it
             if( datasetId > 0 ) {
 
-                table_exists = true;
-
                 // First, we read attributes
                 H5::getAttr( datasetId, "chipa_dim", h_dim );
                 H5::getAttr( datasetId, "chipa_min", h_chipa_min );
@@ -1533,42 +1532,37 @@ void RadiationTables::readHTable( SmileiMPI *smpi )
                 H5Dclose( datasetId );
                 H5Fclose( fileId );
             }
+            else {
+                ERROR("Table H does not exist in the specified file `radiation_tables.h5`");
+            }
         }
 
-        // Bcast table_exists
-        int TE = table_exists;
-        MPI_Bcast( &TE, 1, MPI_INT, 0, smpi->getGlobalComm() );
-        table_exists = TE;
-
     }
-
-    // If the table exists, it has been read...
-    if( table_exists ) {
-
-        // checks
-        if( minimum_chi_continuous_ < h_chipa_min ) {
-            ERROR( "Parameter `minimum_chi_continuous_` is below `h_chipa_min`,"
-                   << "the lower bound of the h table should be equal or below"
-                   << "the radiation threshold on chi." )
-        }
-
-        MESSAGE( 1, "--- h table:" );
-        MESSAGE( 2, "Reading of the external database" );
-        MESSAGE( 2,"Dimension quantum parameter: "
-                 << h_dim );
-        MESSAGE( 2,"Minimum particle quantum parameter chi: "
-                 << h_chipa_min );
-        MESSAGE( 2,"Maximum particle quantum parameter chi: "
-                 << h_chipa_max );
-
-        // Bcast the table to all MPI ranks
-        RadiationTables::bcastHTable( smpi );
-    }
-    // Else, the table can not be found, we throw an error
     else {
         ERROR("The table H could not be read from the provided path: `"
               << table_path_<<"`. Please check that the path is correct.")
     }
+
+    // If the table exists, it has been read...
+
+    // checks
+    if( minimum_chi_continuous_ < h_chipa_min ) {
+        ERROR( "Parameter `minimum_chi_continuous_` is below `h_chipa_min`,"
+               << "the lower bound of the h table should be equal or below"
+               << "the radiation threshold on chi." )
+    }
+
+    MESSAGE( 1, "--- h table:" );
+    MESSAGE( 2, "Reading of the external database" );
+    MESSAGE( 2,"Dimension quantum parameter: "
+             << h_dim );
+    MESSAGE( 2,"Minimum particle quantum parameter chi: "
+             << h_chipa_min );
+    MESSAGE( 2,"Maximum particle quantum parameter chi: "
+             << h_chipa_max );
+
+    // Bcast the table to all MPI ranks
+    RadiationTables::bcastHTable( smpi );
 }
 
 // -----------------------------------------------------------------------------
@@ -1796,7 +1790,7 @@ void RadiationTables::readXipTable( SmileiMPI *smpi )
         MESSAGE( 2,"Maximum particle chi: " << xip_chipa_max );
 
         // Bcast the table to all MPI ranks
-        RadiationTables::bcastXipTable( smpi );
+        RadiationTables::bcastTableXip( smpi );
     }
     // Else, the table can not be found, we throw an error
     else {
@@ -1856,7 +1850,7 @@ void RadiationTables::bcastHTable( SmileiMPI *smpi )
         buf_size += position;
     }
 
-    MESSAGE( 3,"Buffer size: " << buf_size );
+    MESSAGE( 2,"Buffer size: " << buf_size );
 
     // Exchange buf_size with all ranks
     MPI_Bcast( &buf_size, 1, MPI_INT, 0, smpi->getGlobalComm() );
@@ -1997,7 +1991,7 @@ void RadiationTables::bcastIntegfochiTable( SmileiMPI *smpi )
 //
 //! \param smpi Object of class SmileiMPI containing MPI properties
 // -----------------------------------------------------------------------------
-void RadiationTables::bcastXipTable( SmileiMPI *smpi )
+void RadiationTables::bcastTableXip( SmileiMPI *smpi )
 {
     // Position for MPI pack and unack
     int position = 0;
