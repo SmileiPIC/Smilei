@@ -1196,135 +1196,145 @@ void ElectroMagn3D::binomialCurrentFilter()
     
     // applying a single pass of the binomial filter
     // on Jx^(d,p) -- external points are treated by exchange. Boundary points not concerned by exchange are treated with a lower order filter.
+    Field3D *tmp   = new Field3D( dimPrim, 0, false );
+    tmp->copyFrom( Jx3D );
     for( unsigned int i=0; i<nx_d-1; i++ ) {
         for( unsigned int j=1; j<ny_p-1; j++ ) {
             for( unsigned int k=1; k<nz_p-1; k++ ) {
-                ( *Jx3D )( i, j, k ) = ( ( *Jx3D )( i, j, k ) + ( *Jx3D )( i+1, j, k ) )*0.5;
+                ( *Jx3D )( i, j, k ) = ( ( *tmp )( i, j, k ) + ( *tmp )( i+1, j, k ) )*0.5;
             }
         }
     }
     for( unsigned int i=1; i<nx_d-1; i++ ) {
         for( unsigned int j=1; j<ny_p-1; j++ ) {
             for( unsigned int k=1; k<nz_p-1; k++ ) {
-                ( *Jx3D )( i, j, k ) = ( ( *Jx3D )( i, j, k ) + ( *Jx3D )( i-1, j, k ) )*0.5;
+                ( *Jx3D )( i, j, k ) = ( ( *tmp )( i, j, k ) + ( *tmp )( i-1, j, k ) )*0.5;
             }
         }
     }
     for( unsigned int i=1; i<nx_d-1; i++ ) {
         for( unsigned int j=0; j<ny_p-1; j++ ) {
             for( unsigned int k=1; k<nz_p-1; k++ ) {
-                ( *Jx3D )( i, j, k ) = ( ( *Jx3D )( i, j, k ) + ( *Jx3D )( i, j+1, k ) )*0.5;
+                ( *Jx3D )( i, j, k ) = ( ( *tmp )( i, j, k ) + ( *tmp )( i, j+1, k ) )*0.5;
             }
         }
     }
     for( unsigned int i=1; i<nx_d-1; i++ ) {
         for( unsigned int j=1; j<ny_p-1; j++ ) {
             for( unsigned int k=1; k<nz_p-1; k++ ) {
-                ( *Jx3D )( i, j, k ) = ( ( *Jx3D )( i, j, k ) + ( *Jx3D )( i, j-1, k ) )*0.5;
+                ( *Jx3D )( i, j, k ) = ( ( *tmp )( i, j, k ) + ( *tmp )( i, j-1, k ) )*0.5;
             }
         }
     }
     for( unsigned int i=1; i<nx_d-1; i++ ) {
         for( unsigned int j=1; j<ny_p-1; j++ ) {
             for( unsigned int k=0; k<nz_p-1; k++ ) {
-                ( *Jx3D )( i, j, k ) = ( ( *Jx3D )( i, j, k ) + ( *Jx3D )( i, j, k+1 ) )*0.5;
+                ( *Jx3D )( i, j, k ) = ( ( *tmp )( i, j, k ) + ( *tmp )( i, j, k+1 ) )*0.5;
             }
         }
     }
     for( unsigned int i=1; i<nx_d-1; i++ ) {
         for( unsigned int j=1; j<ny_p-1; j++ ) {
             for( unsigned int k=1; k<nz_p-1; k++ ) {
-                ( *Jx3D )( i, j, k ) = ( ( *Jx3D )( i, j, k ) + ( *Jx3D )( i, j, k-1 ) )*0.5;
+                ( *Jx3D )( i, j, k ) = ( ( *tmp )( i, j, k ) + ( *tmp )( i, j, k-1 ) )*0.5;
             }
         }
     }
+    delete tmp;
+
+    tmp   = new Field3D( dimPrim, 1, false );
+    tmp->copyFrom( Jy3D );
     // Jy
     for( unsigned int i=0; i<nx_p-1; i++ ) {
         for( unsigned int j=1; j<ny_d-1; j++ ) {
             for( unsigned int k=1; k<nz_p-1; k++ ) {
-                ( *Jy3D )( i, j, k ) = ( ( *Jy3D )( i, j, k ) + ( *Jy3D )( i+1, j, k ) )*0.5;
+                ( *Jy3D )( i, j, k ) = ( ( *tmp )( i, j, k ) + ( *tmp )( i+1, j, k ) )*0.5;
             }
         }
     }
     for( unsigned int i=1; i<nx_p-1; i++ ) {
         for( unsigned int j=1; j<ny_d-1; j++ ) {
             for( unsigned int k=1; k<nz_p-1; k++ ) {
-                ( *Jy3D )( i, j, k ) = ( ( *Jy3D )( i, j, k ) + ( *Jy3D )( i-1, j, k ) )*0.5;
+                ( *Jy3D )( i, j, k ) = ( ( *tmp )( i, j, k ) + ( *tmp )( i-1, j, k ) )*0.5;
             }
         }
     }
     for( unsigned int i=1; i<nx_p-1; i++ ) {
         for( unsigned int j=0; j<ny_d-1; j++ ) {
             for( unsigned int k=1; k<nz_p-1; k++ ) {
-                ( *Jy3D )( i, j, k ) = ( ( *Jy3D )( i, j, k ) + ( *Jy3D )( i, j+1, k ) )*0.5;
+                ( *Jy3D )( i, j, k ) = ( ( *tmp )( i, j, k ) + ( *tmp )( i, j+1, k ) )*0.5;
             }
         }
     }
     for( unsigned int i=1; i<nx_p-1; i++ ) {
         for( unsigned int j=1; j<ny_d-1; j++ ) {
             for( unsigned int k=1; k<nz_p-1; k++ ) {
-                ( *Jy3D )( i, j, k ) = ( ( *Jy3D )( i, j, k ) + ( *Jy3D )( i, j-1, k ) )*0.5;
+                ( *Jy3D )( i, j, k ) = ( ( *tmp )( i, j, k ) + ( *tmp )( i, j-1, k ) )*0.5;
             }
         }
     }
     for( unsigned int i=1; i<nx_p-1; i++ ) {
         for( unsigned int j=1; j<ny_d-1; j++ ) {
             for( unsigned int k=0; k<nz_p-1; k++ ) {
-                ( *Jy3D )( i, j, k ) = ( ( *Jy3D )( i, j, k ) + ( *Jy3D )( i, j, k+1 ) )*0.5;
+                ( *Jy3D )( i, j, k ) = ( ( *tmp )( i, j, k ) + ( *tmp )( i, j, k+1 ) )*0.5;
             }
         }
     }
     for( unsigned int i=1; i<nx_p-1; i++ ) {
         for( unsigned int j=1; j<ny_d-1; j++ ) {
             for( unsigned int k=1; k<nz_p-1; k++ ) {
-                ( *Jy3D )( i, j, k ) = ( ( *Jy3D )( i, j, k ) + ( *Jy3D )( i, j, k-1 ) )*0.5;
+                ( *Jy3D )( i, j, k ) = ( ( *tmp )( i, j, k ) + ( *tmp )( i, j, k-1 ) )*0.5;
             }
         }
     }
+    delete tmp;
+
+    tmp   = new Field3D( dimPrim, 2, false );
+    tmp->copyFrom( Jz3D );
     // Jz
     for( unsigned int i=0; i<nx_p-1; i++ ) {
         for( unsigned int j=1; j<ny_p-1; j++ ) {
             for( unsigned int k=1; k<nz_d-1; k++ ) {
-                ( *Jz3D )( i, j, k ) = ( ( *Jz3D )( i, j, k ) + ( *Jz3D )( i+1, j, k ) )*0.5;
+                ( *Jz3D )( i, j, k ) = ( ( *tmp )( i, j, k ) + ( *tmp )( i+1, j, k ) )*0.5;
             }
         }
     }
     for( unsigned int i=1; i<nx_p-1; i++ ) {
         for( unsigned int j=1; j<ny_p-1; j++ ) {
             for( unsigned int k=1; k<nz_d-1; k++ ) {
-                ( *Jz3D )( i, j, k ) = ( ( *Jz3D )( i, j, k ) + ( *Jz3D )( i-1, j, k ) )*0.5;
+                ( *Jz3D )( i, j, k ) = ( ( *tmp )( i, j, k ) + ( *tmp )( i-1, j, k ) )*0.5;
             }
         }
     }
     for( unsigned int i=1; i<nx_p-1; i++ ) {
         for( unsigned int j=0; j<ny_p-1; j++ ) {
             for( unsigned int k=1; k<nz_d-1; k++ ) {
-                ( *Jz3D )( i, j, k ) = ( ( *Jz3D )( i, j, k ) + ( *Jz3D )( i, j+1, k ) )*0.5;
+                ( *Jz3D )( i, j, k ) = ( ( *tmp )( i, j, k ) + ( *tmp )( i, j+1, k ) )*0.5;
             }
         }
     }
     for( unsigned int i=1; i<nx_p-1; i++ ) {
         for( unsigned int j=1; j<ny_p-1; j++ ) {
             for( unsigned int k=1; k<nz_d-1; k++ ) {
-                ( *Jz3D )( i, j, k ) = ( ( *Jz3D )( i, j, k ) + ( *Jz3D )( i, j-1, k ) )*0.5;
+                ( *Jz3D )( i, j, k ) = ( ( *tmp )( i, j, k ) + ( *tmp )( i, j-1, k ) )*0.5;
             }
         }
     }
     for( unsigned int i=1; i<nx_p-1; i++ ) {
         for( unsigned int j=1; j<ny_p-1; j++ ) {
             for( unsigned int k=0; k<nz_d-1; k++ ) {
-                ( *Jz3D )( i, j, k ) = ( ( *Jz3D )( i, j, k ) + ( *Jz3D )( i, j, k+1 ) )*0.5;
+                ( *Jz3D )( i, j, k ) = ( ( *tmp )( i, j, k ) + ( *tmp )( i, j, k+1 ) )*0.5;
             }
         }
     }
     for( unsigned int i=1; i<nx_p-1; i++ ) {
         for( unsigned int j=1; j<ny_p-1; j++ ) {
             for( unsigned int k=1; k<nz_d-1; k++ ) {
-                ( *Jz3D )( i, j, k ) = ( ( *Jz3D )( i, j, k ) + ( *Jz3D )( i, j, k-1 ) )*0.5;
+                ( *Jz3D )( i, j, k ) = ( ( *tmp )( i, j, k ) + ( *tmp )( i, j, k-1 ) )*0.5;
             }
         }
     }
-    
+    delete tmp;
     
 }
 
