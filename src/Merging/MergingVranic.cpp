@@ -217,9 +217,10 @@ void MergingVranic::operator() (
             dim[0] = 1;
         } else {
             // mr_delta = (mr_max - mr_min) / dim[0];
+            dim[0] += 1;
             mr_delta = (mr_max - mr_min) / (dim[0]-1);
             // A bit of chaos to kill the accumulation effect
-            mr_min -= 0.9*mr_delta*Rand::uniform();
+            mr_min -= 0.99*mr_delta*Rand::uniform();
             inv_mr_delta = 1./mr_delta;
         }
         if (abs((theta_max - theta_min)) < 1e-10) {
@@ -228,9 +229,10 @@ void MergingVranic::operator() (
             dim[1] = 1;
         } else {
             //theta_delta = (theta_max - theta_min) / dim[1];
+            dim[1] += 1;
             theta_delta = (theta_max - theta_min) / (dim[1]-1);
             // A bit of chaos to kill the accumulation effect
-            theta_min -= 0.9*theta_delta*Rand::uniform();
+            theta_min -= 0.99*theta_delta*Rand::uniform();
             inv_theta_delta = 1./theta_delta;
         }
         if (abs((phi_max - phi_min)) < 1e-10) {
@@ -239,9 +241,10 @@ void MergingVranic::operator() (
             dim[2] = 1;
         } else {
             //phi_delta = (phi_max - phi_min) / dim[2];
+            dim[2] += 1;
             phi_delta = (phi_max - phi_min) / (dim[2]-1);
             // A bit of chaos to kill the accumulation effect
-            phi_min -= 0.9*phi_delta*Rand::uniform();
+            phi_min -= 0.99*phi_delta*Rand::uniform();
             inv_phi_delta = 1./phi_delta;
         }
 
