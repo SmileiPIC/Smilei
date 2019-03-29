@@ -64,7 +64,7 @@ void MergingVranic::operator() (
 
     // First of all, we check that there is enought particles per cell
     // to process the merging.
-    if (number_of_particles > ppc_min_threshold_) {
+    if (number_of_particles > min_particles_per_cell) {
 
         // Momentum discretization
         unsigned int dim[3];

@@ -368,11 +368,11 @@ public:
                 }
 
                 // Read and check the threshold on the number of particles per cell
-                if( PyTools::extract( "merge_ppc_min_threshold", thisSpecies->merge_ppc_min_threshold_ , "Species", ispec ) ) {
-                    if (thisSpecies->merge_ppc_min_threshold_ < 4) {
+                if( PyTools::extract( "merge_min_particles_per_cell", thisSpecies->merge_min_particles_per_cell_ , "Species", ispec ) ) {
+                    if (thisSpecies->merge_min_particles_per_cell_ < 4) {
                         ERROR( "In Species " << thisSpecies->name
                                << ": The threshold on the number of particles per cell "
-                               << "(`merge_ppc_min_threshold`)"
+                               << "(`merge_min_particles_per_cell`)"
                                << "must be above or equal to 4");
                     }
                 }
@@ -405,7 +405,7 @@ public:
                          << thisSpecies->merge_momentum_cell_size_[1] << " "
                          << thisSpecies->merge_momentum_cell_size_[2] << " ");
                 MESSAGE( 3, "| Minimum particle number per cell: "
-                         << thisSpecies->merge_ppc_min_threshold_ );
+                         << thisSpecies->merge_min_particles_per_cell_ );
                 MESSAGE( 3, "| Minimum particle packet size: "
                          << thisSpecies->merge_min_packet_size_ );
                 MESSAGE( 3, "| Maximum particle packet size: "
@@ -872,7 +872,7 @@ public:
         newSpecies->merging_method_                          = species->merging_method_;
         newSpecies->has_merging                              = species->has_merging;
         newSpecies->merging_time_selection_                  = species->merging_time_selection_;
-        newSpecies->merge_ppc_min_threshold_                 = species->merge_ppc_min_threshold_;
+        newSpecies->merge_min_particles_per_cell_                 = species->merge_min_particles_per_cell_;
         newSpecies->merge_min_packet_size_                   = species->merge_min_packet_size_;
         newSpecies->merge_max_packet_size_                   = species->merge_max_packet_size_;
         newSpecies->merge_momentum_cell_size_[0]             = species->merge_momentum_cell_size_[0];

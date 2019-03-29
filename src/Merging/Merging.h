@@ -45,7 +45,7 @@ public:
     // parameters _______________________________________________
 
     // Minimum number of particles per cell to process the merging
-    unsigned int ppc_min_threshold_;
+    unsigned int min_particles_per_cell;
 
 protected:
 private:

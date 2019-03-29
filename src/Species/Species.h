@@ -256,7 +256,7 @@ public:
     unsigned int merge_max_packet_size_;
 
     //! Minimum number of particles per cell to be able to merge
-    unsigned int merge_ppc_min_threshold_;
+    unsigned int merge_min_particles_per_cell_;
 
     //! Discreatization in the momentum space (number of momentum cells in each direction)
     std::vector<unsigned int> merge_momentum_cell_size_;

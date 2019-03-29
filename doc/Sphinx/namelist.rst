@@ -575,6 +575,14 @@ Each species has to be defined in a ``Species`` block::
       # For photon species only:
       multiphoton_Breit_Wheeler = ["electron","positron"],
       multiphoton_Breit_Wheeler_sampling = [1,1]
+
+      # Merging
+      merging_method = "vranic",
+      merge_every = 5,
+      merge_min_particles_per_cell = 16,
+      merge_max_packet_size = 4,
+      merge_min_packet_size = 2,
+      merge_momentum_cell_size = [32,16,16],
   )
 
 .. py:data:: name
@@ -866,6 +874,45 @@ Each species has to be defined in a ``Species`` block::
   Large numbers may rapidly slow down the performances and lead to memory saturation.
 
   This parameter can **only** be assigned to photons species (mass = 0).
+
+.. py:data:: merging_method
+
+  :default: ``None``
+
+  The particle merging method to use:
+
+  * ``none``: the merging process is not activated
+  * ``vranic``: merging process using the method of M. Vranic
+
+.. py:data:: merge_every
+
+  :default: ``0``
+
+  The particle merging time selection (:ref:`time selection <TimeSelections>`).
+
+.. py:data:: min_particles_per_cell
+
+  :default: ``4`` for mass particles, ``2`` for photons
+
+  The minimum number of particles per cell for the merging.
+
+.. py:data:: merge_min_packet_size
+
+  :default: ``4`` for mass particles, ``2`` for photons
+
+  The minimum number of particles per packet to merge.
+
+.. py:data:: merge_max_packet_size
+
+  :default: ``4``
+
+  The maximum number of particles per packet to merge.
+
+.. py:data:: merge_momentum_cell_size
+
+  :default: ``[16,16,16]``
+
+  The momentum space discretization.
 
 ----
 
@@ -1831,21 +1878,24 @@ There are two tables used for the multiphoton Breit-Wheeler refers to as the
     # Table output format, can be "ascii", "binary", "hdf5"
     output_format = "hdf5",
 
-    # Path the tables
-    table_path = "../databases/"
+    # Path to the tables
+    table_path = "../databases/",
+
+    # Flag to compute the tables
+    compute_table = False,
 
     # Table T parameters
-    T_chiph_min = 1e-2
-    T_chiph_max = 1e1
-    T_dim = 128
+    T_chiph_min = 1e-2,
+    T_chiph_max = 1e1,
+    T_dim = 128,
 
     # Table xip parameters
-    xip_chiph_min = 1e-2
-    xip_chiph_max = 1e1
-    xip_power = 4
-    xip_threshold = 1e-3
-    xip_chipa_dim = 128
-    xip_chiph_dim = 128
+    xip_chiph_min = 1e-2,
+    xip_chiph_max = 1e1,
+    xip_power = 4,
+    xip_threshold = 1e-3,
+    xip_chipa_dim = 128,
+    xip_chiph_dim = 128,
 
   )
 
@@ -1855,6 +1905,13 @@ There are two tables used for the multiphoton Breit-Wheeler refers to as the
 
   Path to the external tables for the multiphoton Breit-Wheeler.
   Default tables are located in ``databases``.
+
+.. py:data:: compute_table
+
+  :default: False
+
+  If True, the tables for the selected radiation model are computed
+  with the requested parameters and stored at the path `table_path`.
 
 .. py:data:: output_format
 
@@ -2370,7 +2427,6 @@ for instance::
 
   A list of one or several species' :py:data:`name`.
   All these species are combined into the same diagnostic.
-
 
 .. py:data:: axes
 
