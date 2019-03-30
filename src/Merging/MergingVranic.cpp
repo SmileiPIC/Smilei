@@ -216,41 +216,55 @@ void MergingVranic::operator() (
             inv_mr_delta = 0;
             dim[0] = 1;
         } else {
-            // mr_delta = (mr_max - mr_min) / dim[0];
-            dim[0] += 1;
-            mr_delta = (mr_max - mr_min) / (dim[0]-1);
-            // A bit of chaos to kill the accumulation effect
-            mr_min -= 0.99*mr_delta*Rand::uniform();
-            inv_mr_delta = 1./mr_delta;
+            if (dim[0] == 1) {
+                mr_max += (mr_max - mr_min)*0.01;
+                mr_delta = (mr_max - mr_min);
+                inv_mr_delta = 1./mr_delta;
+            }
+            else {
+                // mr_delta = (mr_max - mr_min) / dim[0];
+                mr_delta = (mr_max - mr_min) / (dim[0]-1);
+                // A bit of chaos to kill the accumulation effect
+                mr_min -= 0.99*mr_delta*Rand::uniform();
+                inv_mr_delta = 1./mr_delta;
+            }
         }
         if (abs((theta_max - theta_min)) < 1e-10) {
             theta_delta = 0.1*M_PI;
             inv_theta_delta = 0;
             dim[1] = 1;
         } else {
-            //theta_delta = (theta_max - theta_min) / dim[1];
-            dim[1] += 1;
-            theta_delta = (theta_max - theta_min) / (dim[1]-1);
-            // A bit of chaos to kill the accumulation effect
-            theta_min -= 0.99*theta_delta*Rand::uniform();
-            inv_theta_delta = 1./theta_delta;
+            if (dim[1] == 1) {
+                theta_max += (theta_max - theta_min)*0.01;
+                theta_delta = (theta_max - theta_min);
+                inv_theta_delta = 1./theta_delta;
+            }
+            else {
+                //theta_delta = (theta_max - theta_min) / dim[1];
+                theta_delta = (theta_max - theta_min) / (dim[1]-1);
+                // A bit of chaos to kill the accumulation effect
+                theta_min -= 0.99*theta_delta*Rand::uniform();
+                inv_theta_delta = 1./theta_delta;
+            }
         }
         if (abs((phi_max - phi_min)) < 1e-10) {
             phi_delta = 0.1*M_PI;
             inv_phi_delta = 0;
             dim[2] = 1;
         } else {
-            //phi_delta = (phi_max - phi_min) / dim[2];
-            dim[2] += 1;
-            phi_delta = (phi_max - phi_min) / (dim[2]-1);
-            // A bit of chaos to kill the accumulation effect
-            phi_min -= 0.99*phi_delta*Rand::uniform();
-            inv_phi_delta = 1./phi_delta;
+            if (dim[2] == 1) {
+                phi_max += (phi_max - phi_min)*0.01;
+                phi_delta = (phi_max - phi_min);
+                inv_phi_delta = 1./phi_delta;
+            }
+            else {
+                //phi_delta = (phi_max - phi_min) / dim[2];
+                phi_delta = (phi_max - phi_min) / (dim[2]-1);
+                // A bit of chaos to kill the accumulation effect
+                phi_min -= 0.99*phi_delta*Rand::uniform();
+                inv_phi_delta = 1./phi_delta;
+            }
         }
-
-        // std::cerr << " phi min: " << phi_min << " max: " << phi_max
-        //           << " phi error: " << abs((phi_max - phi_min))
-        //           << " phi_delta: " << phi_delta << std::endl;
 
         // Total number of momentum cells
         unsigned int momentum_cells = dim[0]
