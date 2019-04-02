@@ -24,4 +24,11 @@ If relevant, provide a step-by-step guide
 - Smilei version ?
 - Input file ?
 - Commands or script used to run the faulty simulation ?
-- Computing resources (type of computer, OS, C++ compiler, MPI version, HDF5 version, python version, ...)
+- Computing resources
+  - type of computer
+  - OS
+  - C++ compiler (to get some information `g++ --version`)
+  - MPI version (`mpic++ --version`, `mpic++ -show`)
+  - HDF5 version (`h5cc --version`)
+  - Python version (`python --version`)
+  - ...
