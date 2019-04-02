@@ -1196,72 +1196,135 @@ void ElectroMagn3D::binomialCurrentFilter()
     
     // applying a single pass of the binomial filter
     // on Jx^(d,p) -- external points are treated by exchange. Boundary points not concerned by exchange are treated with a lower order filter.
+    for( unsigned int i=0; i<nx_d-1; i++ ) {
+        for( unsigned int j=0; j<ny_p; j++ ) {
+            for( unsigned int k=0; k<nz_p; k++ ) {
+                ( *Jx3D )( i, j, k ) = ( ( *Jx3D )( i, j, k ) + ( *Jx3D )( i+1, j, k ) )*0.5;
+            }
+        }
+    }
     for( unsigned int i=1; i<nx_d-1; i++ ) {
         for( unsigned int j=0; j<ny_p; j++ ) {
             for( unsigned int k=0; k<nz_p; k++ ) {
-                ( *Jx3D )( i, j, k ) = ( 2*( *Jx3D )( i, j, k ) + ( *Jx3D )( i+1, j, k ) + ( *Jx3D )( i-1, j, k ))*0.25;
+                ( *Jx3D )( i, j, k ) = ( ( *Jx3D )( i, j, k ) + ( *Jx3D )( i-1, j, k ) )*0.5;
+            }
+        }
+    }
+    for( unsigned int i=1; i<nx_d-1; i++ ) {
+        for( unsigned int j=0; j<ny_p-1; j++ ) {
+            for( unsigned int k=0; k<nz_p; k++ ) {
+                ( *Jx3D )( i, j, k ) = ( ( *Jx3D )( i, j, k ) + ( *Jx3D )( i, j+1, k ) )*0.5;
             }
         }
     }
     for( unsigned int i=1; i<nx_d-1; i++ ) {
         for( unsigned int j=1; j<ny_p-1; j++ ) {
             for( unsigned int k=0; k<nz_p; k++ ) {
-                ( *Jx3D )( i, j, k ) = ( 2*( *Jx3D )( i, j, k ) + ( *Jx3D )( i, j+1, k ) + ( *Jx3D )( i, j-1, k ))*0.25;
+                ( *Jx3D )( i, j, k ) = ( ( *Jx3D )( i, j, k ) + ( *Jx3D )( i, j-1, k ) )*0.5;
+            }
+        }
+    }
+    for( unsigned int i=1; i<nx_d-1; i++ ) {
+        for( unsigned int j=1; j<ny_p-1; j++ ) {
+            for( unsigned int k=0; k<nz_p-1; k++ ) {
+                ( *Jx3D )( i, j, k ) = ( ( *Jx3D )( i, j, k ) + ( *Jx3D )( i, j, k+1 ) )*0.5;
             }
         }
     }
     for( unsigned int i=1; i<nx_d-1; i++ ) {
         for( unsigned int j=1; j<ny_p-1; j++ ) {
             for( unsigned int k=1; k<nz_p-1; k++ ) {
-                ( *Jx3D )( i, j, k ) = ( 2*( *Jx3D )( i, j, k ) + ( *Jx3D )( i, j, k+1 ) + ( *Jx3D )( i, j, k-1 ) )*0.25;
+                ( *Jx3D )( i, j, k ) = ( ( *Jx3D )( i, j, k ) + ( *Jx3D )( i, j, k-1 ) )*0.5;
             }
         }
     }
-    // on Jy^(p,d) -- external points are treated by exchange. Boundary points not concerned by exchange are treated with a lower order filter.
+    // Jy
+    for( unsigned int i=0; i<nx_p-1; i++ ) {
+        for( unsigned int j=0; j<ny_d; j++ ) {
+            for( unsigned int k=0; k<nz_p; k++ ) {
+                ( *Jy3D )( i, j, k ) = ( ( *Jy3D )( i, j, k ) + ( *Jy3D )( i+1, j, k ) )*0.5;
+            }
+        }
+    }
     for( unsigned int i=1; i<nx_p-1; i++ ) {
         for( unsigned int j=0; j<ny_d; j++ ) {
             for( unsigned int k=0; k<nz_p; k++ ) {
-                ( *Jy3D )( i, j, k ) = ( 2*( *Jy3D )( i, j, k ) + ( *Jy3D )( i+1, j, k ) + ( *Jy3D )( i-1, j, k ))*0.25;
+                ( *Jy3D )( i, j, k ) = ( ( *Jy3D )( i, j, k ) + ( *Jy3D )( i-1, j, k ) )*0.5;
+            }
+        }
+    }
+    for( unsigned int i=1; i<nx_p-1; i++ ) {
+        for( unsigned int j=0; j<ny_d-1; j++ ) {
+            for( unsigned int k=0; k<nz_p; k++ ) {
+                ( *Jy3D )( i, j, k ) = ( ( *Jy3D )( i, j, k ) + ( *Jy3D )( i, j+1, k ) )*0.5;
             }
         }
     }
     for( unsigned int i=1; i<nx_p-1; i++ ) {
         for( unsigned int j=1; j<ny_d-1; j++ ) {
             for( unsigned int k=0; k<nz_p; k++ ) {
-                ( *Jy3D )( i, j, k ) = ( 2*( *Jy3D )( i, j, k ) + ( *Jy3D )( i, j+1, k ) + ( *Jy3D )( i, j-1, k ))*0.25;
+                ( *Jy3D )( i, j, k ) = ( ( *Jy3D )( i, j, k ) + ( *Jy3D )( i, j-1, k ) )*0.5;
+            }
+        }
+    }
+    for( unsigned int i=1; i<nx_p-1; i++ ) {
+        for( unsigned int j=1; j<ny_d-1; j++ ) {
+            for( unsigned int k=0; k<nz_p-1; k++ ) {
+                ( *Jy3D )( i, j, k ) = ( ( *Jy3D )( i, j, k ) + ( *Jy3D )( i, j, k+1 ) )*0.5;
             }
         }
     }
     for( unsigned int i=1; i<nx_p-1; i++ ) {
         for( unsigned int j=1; j<ny_d-1; j++ ) {
             for( unsigned int k=1; k<nz_p-1; k++ ) {
-                ( *Jy3D )( i, j, k ) = ( 2*( *Jy3D )( i, j, k ) + ( *Jy3D )( i, j, k+1 ) + ( *Jy3D )( i, j, k-1 ) )*0.25;
+                ( *Jy3D )( i, j, k ) = ( ( *Jy3D )( i, j, k ) + ( *Jy3D )( i, j, k-1 ) )*0.5;
             }
         }
     }
-    // on Jz^(p,p) -- external points are treated by exchange. Boundary points not concerned by exchange are treated with a lower order filter.
+    // Jz
+    for( unsigned int i=0; i<nx_p-1; i++ ) {
+        for( unsigned int j=0; j<ny_p; j++ ) {
+            for( unsigned int k=0; k<nz_d; k++ ) {
+                ( *Jz3D )( i, j, k ) = ( ( *Jz3D )( i, j, k ) + ( *Jz3D )( i+1, j, k ) )*0.5;
+            }
+        }
+    }
     for( unsigned int i=1; i<nx_p-1; i++ ) {
         for( unsigned int j=0; j<ny_p; j++ ) {
             for( unsigned int k=0; k<nz_d; k++ ) {
-                ( *Jz3D )( i, j, k ) = ( 2*( *Jz3D )( i, j, k ) + ( *Jz3D )( i+1, j, k ) + ( *Jz3D )( i-1, j, k ))*0.25;
+                ( *Jz3D )( i, j, k ) = ( ( *Jz3D )( i, j, k ) + ( *Jz3D )( i-1, j, k ) )*0.5;
+            }
+        }
+    }
+    for( unsigned int i=1; i<nx_p-1; i++ ) {
+        for( unsigned int j=0; j<ny_p-1; j++ ) {
+            for( unsigned int k=0; k<nz_d; k++ ) {
+                ( *Jz3D )( i, j, k ) = ( ( *Jz3D )( i, j, k ) + ( *Jz3D )( i, j+1, k ) )*0.5;
             }
         }
     }
     for( unsigned int i=1; i<nx_p-1; i++ ) {
         for( unsigned int j=1; j<ny_p-1; j++ ) {
             for( unsigned int k=0; k<nz_d; k++ ) {
-                ( *Jz3D )( i, j, k ) = ( 2*( *Jz3D )( i, j, k ) + ( *Jz3D )( i, j+1, k ) + ( *Jz3D )( i, j-1, k ))*0.25;
+                ( *Jz3D )( i, j, k ) = ( ( *Jz3D )( i, j, k ) + ( *Jz3D )( i, j-1, k ) )*0.5;
+            }
+        }
+    }
+    for( unsigned int i=1; i<nx_p-1; i++ ) {
+        for( unsigned int j=1; j<ny_p-1; j++ ) {
+            for( unsigned int k=0; k<nz_d-1; k++ ) {
+                ( *Jz3D )( i, j, k ) = ( ( *Jz3D )( i, j, k ) + ( *Jz3D )( i, j, k+1 ) )*0.5;
             }
         }
     }
     for( unsigned int i=1; i<nx_p-1; i++ ) {
         for( unsigned int j=1; j<ny_p-1; j++ ) {
             for( unsigned int k=1; k<nz_d-1; k++ ) {
-                ( *Jz3D )( i, j, k ) = ( 2*( *Jz3D )( i, j, k ) + ( *Jz3D )( i, j, k+1 ) + ( *Jz3D )( i, j, k-1 ) )*0.25;
+                ( *Jz3D )( i, j, k ) = ( ( *Jz3D )( i, j, k ) + ( *Jz3D )( i, j, k-1 ) )*0.5;
             }
         }
     }
- 
+    
     
 }
 
