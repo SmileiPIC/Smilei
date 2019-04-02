@@ -108,10 +108,9 @@ RadiationReaction(
 
     # General radiation parameters
     minimum_chi_discontinuous = 1e-2,
-    compute_table = False,
+    compute_table = True,
     output_format = "hdf5",
-    #table_path = "./",
-    table_path = "/home/mathieu/Documents/Codes/particle_merging/databases",
+    table_path = "./",
 
     # Parameter to generate the table integfochi used by the Monte-Carlo model
     integfochi_chipa_min = 1e-4,
