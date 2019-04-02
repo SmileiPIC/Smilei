@@ -229,20 +229,20 @@ public:
     void computeXipTable( SmileiMPI *smpi );
 
     //! Compute all the tables
-    void computeTables( Params &params, SmileiMPI *smpi );
+    void computeAndOutputTables( Params &params, SmileiMPI *smpi );
 
     // ---------------------------------------------------------------------
     // TABLE OUTPUTS
     // ---------------------------------------------------------------------
 
     //! Write in a file table values of the h table
-    void outputHTable();
+    void outputHTable(SmileiMPI *smpi);
 
     //! Write in a file table values for Integration of F/chi: integfochi_table
-    void outputIntegfochiTable();
+    void outputIntegfochiTable(SmileiMPI *smpi);
 
     //! Write in a file the table xip_chiphmin and xip
-    void outputXipTable();
+    void outputXipTable(SmileiMPI *smpi);
 
     //! Output all computed tables so that they can be
     //! read at the next run

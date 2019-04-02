@@ -221,8 +221,8 @@ void RadiationTables::initializeParameters( Params &params , SmileiMPI *smpi )
     }
     // Else, the tables are computed and store in the provided path `table_path_`
     else {
-        computeTables( params, smpi );
-        outputTables( smpi );
+        computeAndOutputTables( params, smpi );
+        //outputTables( smpi );
     }
 
 }
@@ -689,16 +689,19 @@ void RadiationTables::computeXipTable( SmileiMPI *smpi )
 //! \param params list of simulation parameters
 //! \param smpi MPI parameters
 // -----------------------------------------------------------------------------
-void RadiationTables::computeTables( Params &params, SmileiMPI *smpi )
+void RadiationTables::computeAndOutputTables( Params &params, SmileiMPI *smpi )
 {
     // These tables are loaded only if if one species has Monte-Carlo Compton radiation
     // And if the h values are not computed from a numerical fit
     if( params.hasNielRadiation && this->h_computation_method == "table" ) {
         RadiationTables::computeHTable( smpi );
+        RadiationTables::outputHTable( smpi );
     }
     if( params.hasMCRadiation ) {
         RadiationTables::computeIntegfochiTable( smpi );
+        RadiationTables::outputIntegfochiTable(smpi );
         RadiationTables::computeXipTable( smpi );
+        RadiationTables::outputXipTable( smpi );
     }
 }
 
@@ -710,108 +713,111 @@ void RadiationTables::computeTables( Params &params, SmileiMPI *smpi )
 //! Ouput in a file of the table values of h for the Niel radiation model
 //
 // -----------------------------------------------------------------------------
-void RadiationTables::outputHTable()
+void RadiationTables::outputHTable(SmileiMPI *smpi)
 {
 
-    if( output_format_ == "ascii" ) {
-        std::ofstream file;
-        file.open( table_path_ + "/tab_h.dat" );
+    if( smpi->isMaster() ) {
 
-        if( file.is_open() ) {
+        if( output_format_ == "ascii" ) {
+            std::ofstream file;
+            file.open( table_path_ + "/tab_h.dat" );
 
-            file.precision( 12 );
+            if( file.is_open() ) {
 
-            file << "Stochastic synchrotron-like radiation model of Niel \n";
+                file.precision( 12 );
 
-            file << "Dimension particle_chi - particle_chi min - particle_chi max \n";
+                file << "Stochastic synchrotron-like radiation model of Niel \n";
 
-            file << h_dim;
-            file << " "
-                 << h_chipa_min << " "
-                 << h_chipa_max << "\n";;
+                file << "Dimension particle_chi - particle_chi min - particle_chi max \n";
 
-            // Loop over the table values
-            for( int i = 0 ; i < h_dim ; i++ ) {
-                file <<  h_table[i] << "\n";
+                file << h_dim;
+                file << " "
+                     << h_chipa_min << " "
+                     << h_chipa_max << "\n";;
+
+                // Loop over the table values
+                for( int i = 0 ; i < h_dim ; i++ ) {
+                    file <<  h_table[i] << "\n";
+                }
+
+                file.close();
+            }
+        } else if( output_format_ == "binary" ) {
+            std::ofstream file;
+            file.open( table_path_ + "/tab_h.bin", std::ios::binary );
+
+            if( file.is_open() ) {
+
+                file.write( ( char * )&h_dim, sizeof( h_dim ) );
+                file.write( ( char * )&h_chipa_min, sizeof( double ) );
+                file.write( ( char * )&h_chipa_max, sizeof( double ) );
+
+                // Loop over the table values
+                for( int i = 0 ; i < h_dim ; i++ ) {
+                    file.write( ( char * )&h_table[i], sizeof( double ) );
+                }
+
+                file.close();
+            }
+        }
+        // HDF5
+        // The table is written as a dataset
+        else if( output_format_ == "hdf5" ) {
+
+            hid_t       fileId;
+            hid_t       datasetId;
+            hid_t       dataspaceId;
+            hsize_t     dims;
+            std::string buffer;
+
+            buffer = table_path_ + "/radiation_tables.h5";
+
+            // We first check whether the file already exists
+            // If yes, we simply open the file
+            if( Tools::file_exists( buffer ) ) {
+                fileId = H5Fopen( buffer.c_str(),
+                                  H5F_ACC_RDWR,
+                                  H5P_DEFAULT );
+
+            }
+            // Else, we create the file
+            else {
+                fileId  = H5Fcreate( buffer.c_str(),
+                                     H5F_ACC_TRUNC,
+                                     H5P_DEFAULT,
+                                     H5P_DEFAULT );
             }
 
-            file.close();
+            // Create the data space for the dataset.
+            dims = h_dim;
+            dataspaceId = H5Screate_simple( 1, &dims, NULL );
+
+            // Creation of the dataset
+            datasetId = H5Dcreate( fileId,
+                                   "h",
+                                   H5T_NATIVE_DOUBLE,
+                                   dataspaceId,
+                                   H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
+
+            // Fill the dataset
+            H5Dwrite( datasetId, H5T_NATIVE_DOUBLE,
+                      H5S_ALL, H5S_ALL, H5P_DEFAULT,
+                      &h_table[0] );
+
+            // Create attributes
+            H5::attr( datasetId, "chipa_min", h_chipa_min );
+            H5::attr( datasetId, "chipa_max", h_chipa_max );
+            H5::attr( datasetId, "chipa_dim", h_dim );
+
+            // Close everything
+            H5Dclose( datasetId );
+            H5Sclose( dataspaceId );
+            H5Fclose( fileId );
+
+        } else {
+            ERROR( "The table output format " << output_format_
+                     << " is not recognized" );
         }
-    } else if( output_format_ == "binary" ) {
-        std::ofstream file;
-        file.open( table_path_ + "/tab_h.bin", std::ios::binary );
-
-        if( file.is_open() ) {
-
-            file.write( ( char * )&h_dim, sizeof( h_dim ) );
-            file.write( ( char * )&h_chipa_min, sizeof( double ) );
-            file.write( ( char * )&h_chipa_max, sizeof( double ) );
-
-            // Loop over the table values
-            for( int i = 0 ; i < h_dim ; i++ ) {
-                file.write( ( char * )&h_table[i], sizeof( double ) );
-            }
-
-            file.close();
-        }
-    }
-    // HDF5
-    // The table is written as a dataset
-    else if( output_format_ == "hdf5" ) {
-
-        hid_t       fileId;
-        hid_t       datasetId;
-        hid_t       dataspaceId;
-        hsize_t     dims;
-        std::string buffer;
-
-        buffer = table_path_ + "/radiation_tables.h5";
-
-        // We first check whether the file already exists
-        // If yes, we simply open the file
-        if( Tools::file_exists( buffer ) ) {
-            fileId = H5Fopen( buffer.c_str(),
-                              H5F_ACC_RDWR,
-                              H5P_DEFAULT );
-
-        }
-        // Else, we create the file
-        else {
-            fileId  = H5Fcreate( buffer.c_str(),
-                                 H5F_ACC_TRUNC,
-                                 H5P_DEFAULT,
-                                 H5P_DEFAULT );
-        }
-
-        // Create the data space for the dataset.
-        dims = h_dim;
-        dataspaceId = H5Screate_simple( 1, &dims, NULL );
-
-        // Creation of the dataset
-        datasetId = H5Dcreate( fileId,
-                               "h",
-                               H5T_NATIVE_DOUBLE,
-                               dataspaceId,
-                               H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
-
-        // Fill the dataset
-        H5Dwrite( datasetId, H5T_NATIVE_DOUBLE,
-                  H5S_ALL, H5S_ALL, H5P_DEFAULT,
-                  &h_table[0] );
-
-        // Create attributes
-        H5::attr( datasetId, "chipa_min", h_chipa_min );
-        H5::attr( datasetId, "chipa_max", h_chipa_max );
-        H5::attr( datasetId, "chipa_dim", h_dim );
-
-        // Close everything
-        H5Dclose( datasetId );
-        H5Sclose( dataspaceId );
-        H5Fclose( fileId );
-
-    } else {
-        ERROR( "The table output format " << output_format_
-                 << " is not recognized" );
     }
 }
 
@@ -819,113 +825,116 @@ void RadiationTables::outputHTable()
 //! Ouput in a file of the table values of integfochi
 //
 // -----------------------------------------------------------------------------
-void RadiationTables::outputIntegfochiTable()
+void RadiationTables::outputIntegfochiTable(SmileiMPI *smpi)
 {
 
-    if( output_format_ == "ascii" ) {
-        std::ofstream file;
-        file.open( table_path_ + "/tab_integfochi.dat" );
+    if( smpi->isMaster() ) {
 
-        if( file.is_open() ) {
+        if( output_format_ == "ascii" ) {
+            std::ofstream file;
+            file.open( table_path_ + "/tab_integfochi.dat" );
 
-            file.precision( 12 );
+            if( file.is_open() ) {
 
-            file << "Table Integration F(CHI)/CHI for Nonlinear Compton Scattering \n";
+                file.precision( 12 );
 
-            file << "Dimension particle_chi - particle_chi min - particle_chi max \n";
+                file << "Table Integration F(CHI)/CHI for Nonlinear Compton Scattering \n";
 
-            file << integfochi_dim ;
-            file << " "
-                 << integfochi_chipa_min << " "
-                 << integfochi_chipa_max << "\n";;
+                file << "Dimension particle_chi - particle_chi min - particle_chi max \n";
 
-            // Loop over the table values
-            for( int i = 0 ; i < integfochi_dim ; i++ ) {
-                file <<  integfochi_table[i] << "\n";
+                file << integfochi_dim ;
+                file << " "
+                     << integfochi_chipa_min << " "
+                     << integfochi_chipa_max << "\n";;
+
+                // Loop over the table values
+                for( int i = 0 ; i < integfochi_dim ; i++ ) {
+                    file <<  integfochi_table[i] << "\n";
+                }
+
+                file.close();
+            }
+        } else if( output_format_ == "binary" ) {
+            std::ofstream file;
+            file.open( table_path_ + "/tab_integfochi.bin", std::ios::binary );
+
+            if( file.is_open() ) {
+
+                double temp0, temp1;
+
+                temp0 = integfochi_chipa_min;
+                temp1 = integfochi_chipa_max;
+
+                file.write( ( char * )&integfochi_dim, sizeof( integfochi_dim ) );
+                file.write( ( char * )&temp0, sizeof( double ) );
+                file.write( ( char * )&temp1, sizeof( double ) );
+
+                // Loop over the table values
+                for( int i = 0 ; i < integfochi_dim ; i++ ) {
+                    file.write( ( char * )&integfochi_table[i], sizeof( double ) );
+                }
+
+                file.close();
+            }
+        }
+        // HDF5
+        // The table is written as a dataset
+        else if( output_format_ == "hdf5" ) {
+
+            hid_t       fileId;
+            hid_t       datasetId;
+            hid_t       dataspaceId;
+            hsize_t     dims;
+            std::string buffer;
+
+            buffer = table_path_ + "/radiation_tables.h5";
+
+            // We first check whether the file already exists
+            // If yes, we simply open the file
+            if( Tools::file_exists( buffer ) ) {
+                fileId = H5Fopen( buffer.c_str(),
+                                  H5F_ACC_RDWR,
+                                  H5P_DEFAULT );
+
+            }
+            // Else, we create the file
+            else {
+                fileId  = H5Fcreate( buffer.c_str(),
+                                     H5F_ACC_TRUNC,
+                                     H5P_DEFAULT,
+                                     H5P_DEFAULT );
             }
 
-            file.close();
+            // Create the data space for the dataset.
+            dims = integfochi_dim;
+            dataspaceId = H5Screate_simple( 1, &dims, NULL );
+
+            // Creation of the dataset
+            datasetId = H5Dcreate( fileId,
+                                   "integfochi",
+                                   H5T_NATIVE_DOUBLE,
+                                   dataspaceId,
+                                   H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
+
+            // Fill the dataset
+            H5Dwrite( datasetId, H5T_NATIVE_DOUBLE,
+                      H5S_ALL, H5S_ALL, H5P_DEFAULT,
+                      &integfochi_table[0] );
+
+            // Create attributes
+            H5::attr( datasetId, "chipa_min", integfochi_chipa_min );
+            H5::attr( datasetId, "chipa_max", integfochi_chipa_max );
+            H5::attr( datasetId, "chipa_dim", integfochi_dim );
+
+            // Close everything
+            H5Dclose( datasetId );
+            H5Sclose( dataspaceId );
+            H5Fclose( fileId );
+
+        } else {
+            ERROR( "The table output format " << output_format_
+                     << " is not recognized" );
         }
-    } else if( output_format_ == "binary" ) {
-        std::ofstream file;
-        file.open( table_path_ + "/tab_integfochi.bin", std::ios::binary );
-
-        if( file.is_open() ) {
-
-            double temp0, temp1;
-
-            temp0 = integfochi_chipa_min;
-            temp1 = integfochi_chipa_max;
-
-            file.write( ( char * )&integfochi_dim, sizeof( integfochi_dim ) );
-            file.write( ( char * )&temp0, sizeof( double ) );
-            file.write( ( char * )&temp1, sizeof( double ) );
-
-            // Loop over the table values
-            for( int i = 0 ; i < integfochi_dim ; i++ ) {
-                file.write( ( char * )&integfochi_table[i], sizeof( double ) );
-            }
-
-            file.close();
-        }
-    }
-    // HDF5
-    // The table is written as a dataset
-    else if( output_format_ == "hdf5" ) {
-
-        hid_t       fileId;
-        hid_t       datasetId;
-        hid_t       dataspaceId;
-        hsize_t     dims;
-        std::string buffer;
-
-        buffer = table_path_ + "/radiation_tables.h5";
-
-        // We first check whether the file already exists
-        // If yes, we simply open the file
-        if( Tools::file_exists( buffer ) ) {
-            fileId = H5Fopen( buffer.c_str(),
-                              H5F_ACC_RDWR,
-                              H5P_DEFAULT );
-
-        }
-        // Else, we create the file
-        else {
-            fileId  = H5Fcreate( buffer.c_str(),
-                                 H5F_ACC_TRUNC,
-                                 H5P_DEFAULT,
-                                 H5P_DEFAULT );
-        }
-
-        // Create the data space for the dataset.
-        dims = integfochi_dim;
-        dataspaceId = H5Screate_simple( 1, &dims, NULL );
-
-        // Creation of the dataset
-        datasetId = H5Dcreate( fileId,
-                               "integfochi",
-                               H5T_NATIVE_DOUBLE,
-                               dataspaceId,
-                               H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
-
-        // Fill the dataset
-        H5Dwrite( datasetId, H5T_NATIVE_DOUBLE,
-                  H5S_ALL, H5S_ALL, H5P_DEFAULT,
-                  &integfochi_table[0] );
-
-        // Create attributes
-        H5::attr( datasetId, "chipa_min", integfochi_chipa_min );
-        H5::attr( datasetId, "chipa_max", integfochi_chipa_max );
-        H5::attr( datasetId, "chipa_dim", integfochi_dim );
-
-        // Close everything
-        H5Dclose( datasetId );
-        H5Sclose( dataspaceId );
-        H5Fclose( fileId );
-
-    } else {
-        ERROR( "The table output format " << output_format_
-                 << " is not recognized" );
     }
 }
 
@@ -933,8 +942,10 @@ void RadiationTables::outputIntegfochiTable()
 //! File output of xip_chiphmin_table and xip_table
 //
 // -----------------------------------------------------------------------------
-void RadiationTables::outputXipTable()
+void RadiationTables::outputXipTable(SmileiMPI *smpi)
 {
+
+    if( smpi->isMaster() ) {
 
     if( output_format_ == "ascii" ) {
         std::ofstream file;
@@ -1067,6 +1078,7 @@ void RadiationTables::outputXipTable()
     } else {
         ERROR( "The output format " << output_format_ << " is not recognized" );
     }
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -1077,18 +1089,16 @@ void RadiationTables::outputXipTable()
 void RadiationTables::outputTables( SmileiMPI *smpi )
 {
     // Sequential output
-    if( smpi->isMaster() ) {
-        // If tables have been computed, they are output on the disk
-        // to be used for the next run
-        if( h_computed ) {
-            RadiationTables::outputHTable();
-        }
-        if( integfochi_computed ) {
-            RadiationTables::outputIntegfochiTable();
-        }
-        if( xip_computed ) {
-            RadiationTables::outputXipTable();
-        }
+    // If tables have been computed, they are output on the disk
+    // to be used for the next run
+    if( h_computed ) {
+        RadiationTables::outputHTable(smpi);
+    }
+    if( integfochi_computed ) {
+        RadiationTables::outputIntegfochiTable(smpi);
+    }
+    if( xip_computed ) {
+        RadiationTables::outputXipTable(smpi);
     }
 }
 
