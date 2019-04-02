@@ -329,16 +329,17 @@ class Diagnostic(object):
 			print("WARNING: times are not evenly spaced. Time-scale not plotted")
 			ylabel = "Unevenly-spaced times"
 		else:
+			self._yfactor = self.options.yfactor or 1.
 			ylabel = "Timesteps"
+			if self._yfactor != 1.:
+				ylabel += " x "+str(self._yfactor)
 		# Loop times and accumulate data
-		A = []
-		for time in self._timesteps: A.append(self._getDataAtTime(time))
-		A = self._np.double(A)
+		A = self._np.double([self._getDataAtTime(t) for t in self._timesteps])
 		# Plot
 		ax.cla()
 		xmin = self._xfactor*self._centers[0][0]
 		xmax = self._xfactor*self._centers[0][-1]
-		extent = [xmin, xmax, self._timesteps[0], self._timesteps[-1]]
+		extent = [xmin, xmax, self._yfactor*self._timesteps[0], self._yfactor*self._timesteps[-1]]
 		if self._log[0]: extent[0:2] = [self._np.log10(xmin), self._np.log10(xmax)]
 		im = ax.imshow(self._np.flipud(A), vmin = self.options.vmin, vmax = self.options.vmax, extent=extent, **self.options.image)
 		ax.set_xlabel(self._xlabel)
@@ -652,8 +653,10 @@ class Diagnostic(object):
 	# set options during animation
 	def _setSomeOptions(self, ax, t=None):
 		title = []
-		if self._vlabel: title += [self._vlabel]
-		if t is not None: title += ["t = "+str(t*self.timestep)]
+		if self._vlabel:
+			title += [self._vlabel]
+		if t is not None:
+			title += ["t = %.2f "%(t*self.timestep*self.units.tcoeff)+self.units.tname]
 		ax.set_title("  ".join(title))
 		for option, value in self.options.axes.items():
 			if type(value) is dict:

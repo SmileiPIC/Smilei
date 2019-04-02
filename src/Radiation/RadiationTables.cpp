@@ -642,6 +642,7 @@ void RadiationTables::computeXipTable( SmileiMPI *smpi )
                     buffer[ichipa*xip_chiph_dim + ichiph -1];
             }
 
+
             // display percentage
             if( 100.*( ichipa*xip_chiph_dim+ichiph )
                     >= length_table[rank]*xip_chiph_dim*pct ) {
@@ -1305,6 +1306,9 @@ double RadiationTables::integrateSynchrotronEmissivity( double particle_chi,
         integ += gauleg_w[i]*sync_emi*log( 10 );
     }
 
+    delete[] gauleg_x;
+    delete[] gauleg_w;
+
     return integ;
 
 }
@@ -1360,6 +1364,9 @@ double RadiationTables::computeRitusSynchrotronEmissivity( double particle_chi,
         // Factor for final result
         y = 2*photon_chi/( 3*pow( particle_chi, 2. ) );
 
+        delete[] gauleg_x;
+        delete[] gauleg_w;
+
         return ( part1 - part2 )*y;
 
 
@@ -1411,6 +1418,9 @@ double RadiationTables::computeHNiel( double particle_chi,
                  + ( 54.*pow( particle_chi, 5 )*pow( nu, 4 ) / pow( 2. + 3.*nu*particle_chi, 5 )*K23 ) );
 
     }
+
+    delete[] gauleg_x;
+    delete[] gauleg_w;
 
     return 9.*sqrt( 3. )/( 4.*M_PI )*h;
 
@@ -1904,6 +1914,8 @@ void RadiationTables::bcastHTable( SmileiMPI *smpi )
 
     }
 
+    delete[] buffer;
+
     h_log10_chipa_min = log10( h_chipa_min );
 
     // Computation of the delta
@@ -1985,6 +1997,8 @@ void RadiationTables::bcastIntegfochiTable( SmileiMPI *smpi )
                     integfochi_dim, MPI_DOUBLE, smpi->getGlobalComm() );
 
     }
+
+    delete[] buffer;
 
     integfochi_log10_chipa_min = log10( integfochi_chipa_min );
 
@@ -2079,6 +2093,8 @@ void RadiationTables::bcastTableXip( SmileiMPI *smpi )
         MPI_Unpack( buffer, buf_size, &position, &xip_table[0],
                     xip_chipa_dim*xip_chiph_dim, MPI_DOUBLE, smpi->getGlobalComm() );
     }
+
+    delete[] buffer;
 
     // Log10 of xip_chipa_min for efficiency
     xip_log10_chipa_min = log10( xip_chipa_min );

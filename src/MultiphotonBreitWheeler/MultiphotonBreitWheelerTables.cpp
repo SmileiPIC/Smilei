@@ -248,6 +248,10 @@ double MultiphotonBreitWheelerTables::compute_integration_Ritus_dTdchi( double p
         u = pow( 10., gauleg_x[i] );
         T += gauleg_w[i]*compute_Ritus_dTdchi( photon_chi, u, nb_iterations, eps )*u*log( 10. );
     }
+
+    delete[] gauleg_x;
+    delete[] gauleg_w;
+
     return T;
 
 }
@@ -396,6 +400,9 @@ double MultiphotonBreitWheelerTables::compute_Ritus_dTdchi( double photon_chi,
         //p2 += gauleg_w[i]*K*u*log(10.);
     }
 
+    delete[] gauleg_x;
+    delete[] gauleg_w;
+
     return ( p2 - p1 )/( M_PI*sqrt( 3. )*pow( photon_chi, 2 ) );
 }
 
@@ -498,7 +505,10 @@ void MultiphotonBreitWheelerTables::computeTtable( SmileiMPI *smpi )
     T_computed = true;
 
     // Free memory
-    delete length_table;
+    delete[] length_table;
+    delete[] buffer;
+    delete[] imin_table;
+
 
     // Final timer
     t1 = MPI_Wtime();
@@ -1335,6 +1345,8 @@ void MultiphotonBreitWheelerTables::bcastTableT( SmileiMPI *smpi )
 
     }
 
+    delete[] buffer;
+
     T_log10_chiph_min = log10( T_chiph_min );
 
     // Computation of the delta
@@ -1428,6 +1440,8 @@ void MultiphotonBreitWheelerTables::bcastTableXip( SmileiMPI *smpi )
         MPI_Unpack( buffer, buf_size, &position, &xip_table[0],
                     xip_chipa_dim*xip_chiph_dim, MPI_DOUBLE, smpi->getGlobalComm() );
     }
+
+    delete[] buffer;
 
     // Log10 of xip_chiph_min for efficiency
     xip_log10_chiph_min = log10( xip_chiph_min );
