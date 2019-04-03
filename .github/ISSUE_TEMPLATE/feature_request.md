@@ -1,20 +1,20 @@
 ---
 name: Feature request
 about: Suggest an idea for Smilei
-title: "[Feature] title"
+title: ''
 labels: feature-request
 assignees: ''
 
 ---
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+## The problem and the context
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+I cannot do ...
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+## The solution
 
-**Additional context**
-Add any other context or screenshots about the feature request here.
+I would like to ...
+
+## Failed attempts
+
+I have tried other things already ...
