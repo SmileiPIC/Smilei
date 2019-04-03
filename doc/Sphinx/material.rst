@@ -28,7 +28,7 @@ Publications
 
 .. rst-class:: bigcitation
 
-.. [Massimo]
+.. [Massimo2018]
 
   F. Massimo, A. Beck, J. Dérouillat, M. Grech., F. Perez, I. Zemzemi and A. Specka,
   `Efficient modeling of Laser Wakefield Acceleration through the PIC code SMILEI in CILEX project`,
@@ -44,10 +44,11 @@ Publications
 
 .. rst-class:: bigcitation
 
-.. [Perez]
+.. [Perez2019]
 
   F. Pérez, M. Grech,
   `Oblique-incidence, arbitrary-profile wave injection for electromagnetic simulations`,
+  `Phys. Rev. E 99, 033307 (2019) <https://doi.org/10.1103/PhysRevE.99.033307>`_,
   `arXiv:1809.04435 <https://arxiv.org/abs/1809.04435>`_
 
 .. rst-class:: bigcitation
@@ -56,7 +57,8 @@ Publications
 
   I. Thiele, E. Siminos and T. Fülöp,
   `Electron beam driven generation of frequency-tunable isolated relativistic sub-cycle pulses`,
-  `arXiv:1806.04976 <https://arxiv.org/abs/1806.04976>`_, accepted in Phys. Rev. Lett.
+  `Phys. Rev. Lett. 122, 104803 (2019) <https://doi.org/10.1103/PhysRevLett.122.104803>`_,
+  `arXiv:1806.04976 <https://arxiv.org/abs/1806.04976>`_
 
 .. rst-class:: bigcitation
 
