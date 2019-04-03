@@ -86,11 +86,8 @@ void ProjectorAM1Order::basicForComplex( complex<double> *rhoj, Particles &parti
     double delta;
     double Sl1[2], Sr1[2];
     
-    // --------------------------------------------------------
-    // Locate particles & Calculate Esirkepov coef. S, DS and W
-    // --------------------------------------------------------
     
-    // locate the particle on the primal grid at current time-step & calculate coeff. S1
+    // locate the particle on the primal and dual grid at current time-step & calculate coeff. S1
     xpn = particles.position( 0, ipart ) * dl_inv_;
     int ip = round( xpn + 0.5 * ( type==1 ) );
     delta  = xpn - ( double )ip;
@@ -102,9 +99,6 @@ void ProjectorAM1Order::basicForComplex( complex<double> *rhoj, Particles &parti
     Sr1[0] = delta;
     Sr1[1] = 1.-delta;
     
-    // ---------------------------
-    // Calculate the total charge
-    // ---------------------------
     ip -= i_domain_begin ;
     jp -= j_domain_begin ;
     
@@ -143,14 +137,9 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     double delta;
     complex<double>  Jl_p[2][2], Jr_p[2][2], Jt_p[2][2];
 
-    // arrays used for the Esirkepov projection method
     double  Sl1[2], Sr1[2],Sl1d[2], Sr1d[2];
-    complex<double> e_theta, C_m = 1.; //, C_m_old;
+    complex<double> e_theta, C_m = 1.; 
     complex<double> *Jl, *Jr, *Jt, *rho;
-
-    // --------------------------------------------------------
-    // Locate particles & Calculate Esirkepov coef. S, DS and W
-    // --------------------------------------------------------
     
     double yp = particles.position( 1, ipart );
     double zp = particles.position( 2, ipart );
@@ -159,7 +148,7 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     double crl_p = charge_weight * ( particles.momentum( 0, ipart )) *invgf;
     double crr_p = charge_weight * ( particles.momentum( 1, ipart )*particles.position( 1, ipart ) + particles.momentum( 2, ipart )*particles.position( 2, ipart ))/rp*invgf;
     e_theta = ( particles.position( 1, ipart ) + Icpx*particles.position( 2, ipart ) )/rp;
-    // locate the particle on the primal grid at current time-step & calculate coeff. S1
+    // locate the particle on the primal and dual grid at current time-step & calculate coeff. S1
     xpn = particles.position( 0, ipart ) * dl_inv_;
     int ip = round( xpn );
     int ipd = round( xpn + 0.5 );
@@ -195,7 +184,6 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
             C_m *= e_theta;
         }
         
-        // Add contribution J_p to global array
         if (!diag_flag){
             Jl =  &( *emAM->Jl_[imode] )( 0 );
             Jr =  &( *emAM->Jr_[imode] )( 0 );
@@ -244,7 +232,7 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
         }
     }// end loop on modes
     
-} // END Project local current densities (Jl, Jr, Jt, sort)
+} // END Project local current densities (Jl, Jr, Jt)
 
 //------------------------------------//
 //Wrapper for projection
