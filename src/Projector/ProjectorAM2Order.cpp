@@ -277,7 +277,7 @@ void ProjectorAM2Order::basicForComplex( complex<double> *rhoj, Particles &parti
         if( type == 1 ) { //if Jl
             charge_weight *= particles.momentum( 0, ipart );
         } else if( type == 2 ) { //if Jr
-            charge_weight *= ( particles.momentum( 1, ipart )*particles.position( 1, ipart ) + particles.momentum( 2, ipart )*particles.position( 2, ipart ) )*dr_inv_ / r ;
+            charge_weight *= ( particles.momentum( 1, ipart )*particles.position( 1, ipart ) + particles.momentum( 2, ipart )*particles.position( 2, ipart ) )/ r ;
             nr++;
         } else { //if Jt
             charge_weight *= ( -particles.momentum( 1, ipart )*particles.position( 2, ipart ) + particles.momentum( 2, ipart )*particles.position( 1, ipart ) ) / r ;
@@ -334,7 +334,7 @@ void ProjectorAM2Order::basicForComplex( complex<double> *rhoj, Particles &parti
         for( unsigned int i=1 ; i<4 ; i++ ) {
             iloc = ( i+ip )*nr+jp;
             for( unsigned int j=1 ; j<4 ; j++ ) {
-                rhoj [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invRd[j+jp]*dr;
+                rhoj [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invRd[j+jp];
             }
         }//i
     }
