@@ -1,7 +1,7 @@
 ---
 name: Bug report
 about: Describe your bug issue (crash, physical inconsistency, performance, memory...)
-title: Bug report
+title: "[Bug] Title"
 labels: bug
 assignees: ''
 

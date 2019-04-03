@@ -1,7 +1,7 @@
 ---
 name: Feature request
 about: Suggest an idea for Smilei
-title: "[Feature]"
+title: "[Feature] title"
 labels: feature-request
 assignees: ''
 
