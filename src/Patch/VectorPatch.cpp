@@ -1679,8 +1679,8 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
     unsigned int iteration=0;
     
     // Init & Store internal data (phi, r, p, Ap) per patch
-    std::complex<double> rnew_dot_rnew_local( 0. );
-    std::complex<double> rnew_dot_rnew( 0. );
+    std::complex<double> rnew_dot_rnew_localAM_( 0. );
+    std::complex<double> rnew_dot_rnewAM_( 0. );
 
 
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
@@ -1714,7 +1714,7 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
     std::vector<cField *> Br_rel_t_minus_halfdt_;
     std::vector<cField *> Bt_rel_t_minus_halfdt_;
     
-    std::vector<Field *> Ap_;
+    std::vector<cField *> Ap_AM_;
 
     
     
@@ -1728,10 +1728,10 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
             emAM->initPoisson_init_phi_r_p_Ap( ( *this )( ipatch ), imode );
-            rnew_dot_rnew_local += ( *this )( ipatch )->EMfields->compute_r();
+            rnew_dot_rnew_localAM_ += ( *this )( ipatch )->EMfields->compute_r();
         }
         
-        MPI_Allreduce( &rnew_dot_rnew_local, &rnew_dot_rnew, 1, MPI_COMPLEX, MPI_SUM, MPI_COMM_WORLD );
+        MPI_Allreduce( &rnew_dot_rnew_localAM_, &rnew_dot_rnewAM_, 1, MPI_COMPLEX, MPI_SUM, MPI_COMM_WORLD );
 
         // for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         //     El_.push_back( ( *this )( ipatch )->EMfields->El_[imode] );

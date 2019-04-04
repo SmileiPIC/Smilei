@@ -42,11 +42,13 @@ public:
     void restartRhoJs() override;
     
     void initPoisson( Patch *patch ) override;
-    double compute_r() override;
+    double compute_r() override {return 0;};
+    std::complex<double> compute_r_AM();
     void compute_Ap( Patch *patch ) override;
     void compute_Ap_relativistic_Poisson( Patch *patch, double gamma_mean ) override {;}
     //Access to Ap
-    double compute_pAp() override;
+    double compute_pAp() override {return 0.;};
+    std::complex<double> compute_pAp_AM();
     void update_pand_r( double r_dot_r, double p_dot_Ap ) override;
     void update_p( double rnew_dot_rnew, double r_dot_r ) override;
     void initE( Patch *patch ) override;

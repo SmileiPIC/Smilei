@@ -387,10 +387,10 @@ void ElectroMagnAM::initPoisson( Patch *patch )
         index_max_p_[0] = nl_p-1;
     }
     
-    phi_ = new cField2D( dimPrim );  // scalar potential
-    r_   = new cField2D( dimPrim );  // residual vector
-    p_   = new cField2D( dimPrim );  // direction vector
-    Ap_  = new cField2D( dimPrim );  // A*p vector
+    phi_AM_ = new cField2D( dimPrim );  // scalar potential
+    r_AM_   = new cField2D( dimPrim );  // residual vector
+    p_AM_   = new cField2D( dimPrim );  // direction vector
+    Ap_AM_  = new cField2D( dimPrim );  // A*p vector
     
 } // initPoisson
 
@@ -399,24 +399,24 @@ void ElectroMagnAM::initPoisson_init_phi_r_p_Ap( Patch *patch, unsigned int imod
     cField2D *rho   = rho_AM_[imode];
     for( unsigned int i=0; i<nl_p; i++ ) {
         for( unsigned int j=0; j<nr_p; j++ ) {
-            ( *phi_ )( i, j )   = 0.0;
-            //( *r_ )( i, j )     = -( *rho )( i, j );
-            ( *p_ )( i, j )     = ( *r_ )( i, j );
+            ( *phi_AM_ )( i, j )   = 0.;
+            ( *r_AM_ )( i, j )     = -( *rho )( i, j );
+            ( *p_AM_ )( i, j )     = ( *r_AM_ )( i, j );
         }//j
     }//i
 
 }
 
 
-double ElectroMagnAM::compute_r()
+std::complex<double> ElectroMagnAM::compute_r_AM()
 {
-    double rnew_dot_rnew_local( 0. );
+    std::complex<double> rnew_dot_rnew_localAM_( 0. );
     for( unsigned int i=index_min_p_[0]; i<=index_max_p_[0]; i++ ) {
         for( unsigned int j=index_min_p_[1]; j<=index_max_p_[1]; j++ ) {
-            rnew_dot_rnew_local += ( *r_ )( i, j )*( *r_ )( i, j );
+            rnew_dot_rnew_localAM_ += ( *r_AM_ )( i, j )*( *r_AM_ )( i, j );
         }
     }
-    return rnew_dot_rnew_local;
+    return rnew_dot_rnew_localAM_;
 } // compute_r
 
 void ElectroMagnAM::compute_Ap( Patch *patch )
@@ -425,9 +425,9 @@ void ElectroMagnAM::compute_Ap( Patch *patch )
 #endif
 } // compute_pAp
 
-double ElectroMagnAM::compute_pAp()
+std::complex<double> ElectroMagnAM::compute_pAp_AM()
 {
-    double p_dot_Ap_local = 0.0;
+    std::complex<double> p_dot_Ap_local = 0.0;
 #ifdef _TODO_AM
 #endif
     return p_dot_Ap_local;
@@ -438,8 +438,8 @@ void ElectroMagnAM::update_pand_r( double r_dot_r, double p_dot_Ap )
     double alpha_k = r_dot_r/p_dot_Ap;
     for( unsigned int i=0; i<nl_p; i++ ) {
         for( unsigned int j=0; j<nr_p; j++ ) {
-            ( *phi_ )( i, j ) += alpha_k * ( *p_ )( i, j );
-            ( *r_ )( i, j )   -= alpha_k * ( *Ap_ )( i, j );
+            ( *phi_AM_ )( i, j ) += alpha_k * ( *p_AM_ )( i, j );
+            ( *r_AM_ )( i, j )   -= alpha_k * ( *Ap_AM_ )( i, j );
         }
     }
     
@@ -450,7 +450,7 @@ void ElectroMagnAM::update_p( double rnew_dot_rnew, double r_dot_r )
     double beta_k = rnew_dot_rnew/r_dot_r;
     for( unsigned int i=0; i<nl_p; i++ ) {
         for( unsigned int j=0; j<nr_p; j++ ) {
-            ( *p_ )( i, j ) = ( *r_ )( i, j ) + beta_k * ( *p_ )( i, j );
+            ( *p_AM_ )( i, j ) = ( *r_AM_ )( i, j ) + beta_k * ( *p_AM_ )( i, j );
         }
     }
 } // update_p

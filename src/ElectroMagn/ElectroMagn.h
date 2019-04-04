@@ -290,6 +290,11 @@ public:
     Field *r_;
     Field *p_;
     Field *Ap_;
+
+    cField *phi_AM_;
+    cField *r_AM_;
+    cField *p_AM_;
+    cField *Ap_AM_;
     
     //! \todo check time_dual or time_prim (MG)
 //    //! method used to solve Maxwell's equation (takes current time and time-step as input parameter)
