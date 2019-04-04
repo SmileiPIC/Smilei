@@ -2220,7 +2220,7 @@ To add one probe diagnostic, include the block ``DiagProbe``::
   the following fields are also available: ``"Env_A_abs"``, ``"Env_Chi"``, ``"Env_E_abs"``.
 
   Note that when running a simulation in cylindrical geometry, contrary to the Field diagnostic, Probes are defined as in a
-  3D Cartesian geometry and returne Cartesian fields.
+  3D Cartesian geometry and return Cartesian fields.
 
 
 
