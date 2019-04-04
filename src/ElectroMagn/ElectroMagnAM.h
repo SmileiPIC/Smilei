@@ -50,8 +50,10 @@ public:
     //Access to Ap
     double compute_pAp() override {return 0.;};
     std::complex<double> compute_pAp_AM();
-    void update_pand_r( double r_dot_r, double p_dot_Ap ) override;
-    void update_p( double rnew_dot_rnew, double r_dot_r ) override;
+    void update_pand_r( double r_dot_r, double p_dot_Ap ) override {;};
+    void update_p( double rnew_dot_rnew, double r_dot_r ) override {;};
+    void update_pand_r_AM( double r_dot_r, double p_dot_Ap );
+    void update_p_AM( double rnew_dot_rnew, double r_dot_r );
     void initE( Patch *patch ) override;
     void initE_relativistic_Poisson( Patch *patch, double gamma_mean ) override {;}
     void initB_relativistic_Poisson( Patch *patch, double gamma_mean ) override {;}

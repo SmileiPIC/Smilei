@@ -445,9 +445,9 @@ std::complex<double> ElectroMagnAM::compute_pAp_AM()
     return p_dot_Ap_local;
 } // compute_pAp
 
-void ElectroMagnAM::update_pand_r( double r_dot_r, double p_dot_Ap )
+void ElectroMagnAM::update_pand_r_AM( double r_dot_r, double p_dot_Ap )
 {
-    double alpha_k = r_dot_r/p_dot_Ap;
+    std::complex<double> alpha_k = r_dot_r/p_dot_Ap;
     for( unsigned int i=0; i<nl_p; i++ ) {
         for( unsigned int j=0; j<nr_p; j++ ) {
             ( *phi_AM_ )( i, j ) += alpha_k * ( *p_AM_ )( i, j );
@@ -457,9 +457,9 @@ void ElectroMagnAM::update_pand_r( double r_dot_r, double p_dot_Ap )
     
 } // update_pand_r
 
-void ElectroMagnAM::update_p( double rnew_dot_rnew, double r_dot_r )
+void ElectroMagnAM::update_p_AM( double rnew_dot_rnew, double r_dot_r )
 {
-    double beta_k = rnew_dot_rnew/r_dot_r;
+    std::complex<double> beta_k = rnew_dot_rnew/r_dot_r;
     for( unsigned int i=0; i<nl_p; i++ ) {
         for( unsigned int j=0; j<nr_p; j++ ) {
             ( *p_AM_ )( i, j ) = ( *r_AM_ )( i, j ) + beta_k * ( *p_AM_ )( i, j );
