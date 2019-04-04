@@ -413,7 +413,7 @@ std::complex<double> ElectroMagnAM::compute_r_AM()
     std::complex<double> rnew_dot_rnew_localAM_( 0. );
     for( unsigned int i=index_min_p_[0]; i<=index_max_p_[0]; i++ ) {
         for( unsigned int j=index_min_p_[1]; j<=index_max_p_[1]; j++ ) {
-            rnew_dot_rnew_localAM_ += ( *r_AM_ )( i, j )*( *r_AM_ )( i, j );
+            rnew_dot_rnew_localAM_ += ( *r_AM_ )( i, j )*std::conj(( *r_AM_ )( i, j ));
         }
     }
     return rnew_dot_rnew_localAM_;

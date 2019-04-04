@@ -1715,10 +1715,6 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
     std::vector<cField *> Bt_rel_t_minus_halfdt_;
     
     std::vector<cField *> Ap_AM_;
-
-    
-    
-    
     
     // For each mode, repeat the initialization procedure 
     // (the relativistic Poisson equation is linear, so it can be decomposed in azimuthal modes)
@@ -1760,7 +1756,117 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
             Ap_AM_.push_back( emAM->Ap_AM_ );
         }
 
+        unsigned int nx_p2_global = ( params.n_space_global[0]+1 );
+        //if ( Ex_[0]->dims_.size()>1 ) {
+        if( El_rel_[0]->dims_.size()>1 ) {
+            nx_p2_global *= ( params.n_space_global[1]+1 );
+            if( El_rel_[0]->dims_.size()>2 ) {
+                nx_p2_global *= ( params.n_space_global[2]+1 );
+            }
+        }
 
+        // compute control parameter
+        double norm2_source_term = sqrt( std::abs(rnew_dot_rnewAM_) );
+        //double ctrl = rnew_dot_rnew / (double)(nx_p2_global);
+        double ctrl = sqrt( std::abs(rnew_dot_rnewAM_) ) / norm2_source_term; // initially is equal to one
+        
+        // ---------------------------------------------------------
+        // Starting iterative loop for the conjugate gradient method
+        // ---------------------------------------------------------
+        if( smpi->isMaster() ) {
+            DEBUG( "Starting iterative loop for CG method for the mode"<<imode );
+        }
+
+        //cout << std::scientific << ctrl << "\t" << error_max << "\t" << iteration << "\t" << iteration_max << endl;
+        while( ( ctrl > error_max ) && ( iteration<iteration_max ) ) {
+            iteration++;
+        
+            if( ( smpi->isMaster() ) && ( iteration%1000==0 ) ) {
+                MESSAGE( "iteration " << iteration << " started with control parameter ctrl = " << 1.0e22*ctrl << " x 1.e-22" );
+            }
+        
+            // scalar product of the residual
+            std::complex<double> r_dot_r = rnew_dot_rnewAM_;
+        // 
+        //     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+        //         ( *this )( ipatch )->EMfields->compute_Ap_relativistic_Poisson( ( *this )( ipatch ), gamma_mean );
+        //     }
+        // 
+        //     // Exchange Ap_ (intra & extra MPI)
+        //     SyncVectorPatch::exchange_along_all_directions_noomp( Ap_, *this, smpi );
+        //     SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Ap_, *this );
+        // 
+        // 
+        //     // scalar product p.Ap
+        //     double p_dot_Ap       = 0.0;
+        //     double p_dot_Ap_local = 0.0;
+        //     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+        //         p_dot_Ap_local += ( *this )( ipatch )->EMfields->compute_pAp();
+        //     }
+        //     MPI_Allreduce( &p_dot_Ap_local, &p_dot_Ap, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+        // 
+        // 
+        //     // compute new potential and residual
+        //     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+        //         ( *this )( ipatch )->EMfields->update_pand_r( r_dot_r, p_dot_Ap );
+        //     }
+        // 
+        //     // compute new residual norm
+        //     rnew_dot_rnew       = 0.0;
+        //     rnew_dot_rnew_local = 0.0;
+        //     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+        //         rnew_dot_rnew_local += ( *this )( ipatch )->EMfields->compute_r();
+        //     }
+        //     MPI_Allreduce( &rnew_dot_rnew_local, &rnew_dot_rnew, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+        //     if( smpi->isMaster() ) {
+        //         DEBUG( "new residual norm: rnew_dot_rnew = " << rnew_dot_rnew );
+        //     }
+        // 
+        //     // compute new directio
+        //     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+        //         ( *this )( ipatch )->EMfields->update_p( rnew_dot_rnew, r_dot_r );
+        //     }
+        // 
+        //     // compute control parameter
+        //     //ctrl = rnew_dot_rnew / (double)(nx_p2_global);
+        //     ctrl = sqrt( rnew_dot_rnew )/norm2_source_term;
+        //     if( smpi->isMaster() ) {
+        //         DEBUG( "iteration " << iteration << " done, exiting with control parameter ctrl = " << 1.0e22*ctrl << " x 1.e-22" );
+        //     }
+        // 
+        }//End of the iterative loop
+
+
+
+
+
+
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            
+            El_.pop_back();
+            Er_.pop_back();
+            Et_.pop_back();
+            Bl_.pop_back();
+            Br_.pop_back();
+            Bt_.pop_back();
+            Bl_m.pop_back();
+            Br_m.pop_back();
+            Bt_m.pop_back();
+            El_rel_.pop_back();
+            Er_rel_.pop_back();
+            Et_rel_.pop_back();
+            Bl_rel_.pop_back();
+            Br_rel_.pop_back();
+            Bt_rel_.pop_back();
+            Bl_rel_t_plus_halfdt_.pop_back();
+            Br_rel_t_plus_halfdt_.pop_back();
+            Bt_rel_t_plus_halfdt_.pop_back();
+            Bl_rel_t_minus_halfdt_.pop_back();
+            Br_rel_t_minus_halfdt_.pop_back();
+            Bt_rel_t_minus_halfdt_.pop_back();
+            
+            Ap_AM_.pop_back();
+        }
         
 
 
