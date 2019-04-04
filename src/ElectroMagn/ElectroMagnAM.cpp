@@ -364,8 +364,8 @@ void ElectroMagnAM::restartRhoJs()
 
 void ElectroMagnAM::initPoisson( Patch *patch )
 {
-#ifdef _TODO_AM
-    cField2D *rho = rho_AM_[0];
+
+    
     
     // Min and max indices for calculation of the scalar product (for primal & dual grid)
     //     scalar products are computed accounting only on real nodes
@@ -392,17 +392,21 @@ void ElectroMagnAM::initPoisson( Patch *patch )
     p_   = new cField2D( dimPrim );  // direction vector
     Ap_  = new cField2D( dimPrim );  // A*p vector
     
-    
+} // initPoisson
+
+void ElectroMagnAM::initPoisson_init_phi_r_p_Ap( Patch *patch, unsigned int imode ){
+
+    cField2D *rho   = rho_AM_[imode];
     for( unsigned int i=0; i<nl_p; i++ ) {
         for( unsigned int j=0; j<nr_p; j++ ) {
             ( *phi_ )( i, j )   = 0.0;
-            ( *r_ )( i, j )     = -( *rho )( i, j );
+            //( *r_ )( i, j )     = -( *rho )( i, j );
             ( *p_ )( i, j )     = ( *r_ )( i, j );
         }//j
     }//i
-#endif
-    
-} // initPoisson
+
+}
+
 
 double ElectroMagnAM::compute_r()
 {
@@ -450,6 +454,38 @@ void ElectroMagnAM::update_p( double rnew_dot_rnew, double r_dot_r )
         }
     }
 } // update_p
+
+
+
+void ElectroMagnAM::initRelativisticPoissonFields( Patch *patch ){
+    // ------ Init temporary fields for relativistic field initialization
+    
+    // E fields centered as in FDTD, to be added to the already present electric fields
+    El_rel_  = new cField2D( dimPrim, 0, false, "El_rel" );
+    Er_rel_  = new cField2D( dimPrim, 1, false, "Er_rel" );
+    Et_rel_  = new cField2D( dimPrim, 2, false, "Et_rel" );
+    
+    
+    // B fields centered as the E fields in FDTD (Bx null)
+    Bl_rel_  = new cField2D( dimPrim, 0, true,  "Bl_rel" );  // null
+    Br_rel_  = new cField2D( dimPrim, 2, false,  "Br_rel" ); // centered as Et initially
+    Bt_rel_  = new cField2D( dimPrim, 1, false,  "Bt_rel" ); // centered as Er initially
+    
+    
+    // ----- B fields centered as in FDTD, to be added to the already present magnetic fields
+    
+    // B field advanced by dt/2
+    Bl_rel_t_plus_halfdt_  = new cField2D( dimPrim, 0, true,  "Bl_rel_t_plus_halfdt" );
+    Br_rel_t_plus_halfdt_  = new cField2D( dimPrim, 1, true,  "Br_rel_t_plus_halfdt" );
+    Bt_rel_t_plus_halfdt_  = new cField2D( dimPrim, 2, true,  "Bt_rel_t_plus_halfdt" );
+    // B field "advanced" by -dt/2
+    Bl_rel_t_minus_halfdt_  = new cField2D( dimPrim, 0, true,  "Bl_rel_t_plus_halfdt" );
+    Br_rel_t_minus_halfdt_  = new cField2D( dimPrim, 1, true,  "Br_rel_t_plus_halfdt" );
+    Bt_rel_t_minus_halfdt_  = new cField2D( dimPrim, 2, true,  "Bt_rel_t_plus_halfdt" );
+
+
+}
+
 
 void ElectroMagnAM::initE( Patch *patch )
 {

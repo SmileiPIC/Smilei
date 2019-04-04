@@ -1679,79 +1679,88 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
     unsigned int iteration=0;
     
     // Init & Store internal data (phi, r, p, Ap) per patch
-    double rnew_dot_rnew_local( 0. );
-    double rnew_dot_rnew( 0. );
+    std::complex<double> rnew_dot_rnew_local( 0. );
+    std::complex<double> rnew_dot_rnew( 0. );
 
-    // for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-    //     ( *this )( ipatch )->EMfields->initPoisson( ( *this )( ipatch ) );
-    //     rnew_dot_rnew_local += ( *this )( ipatch )->EMfields->compute_r();
-    //     //cout << std::scientific << "rnew_dot_rnew_local = " << rnew_dot_rnew_local << endl;
-    //     ( *this )( ipatch )->EMfields->initRelativisticPoissonFields( ( *this )( ipatch ) );
-    // }
+
+    for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+        ( *this )( ipatch )->EMfields->initPoisson( ( *this )( ipatch ) );
+        //cout << std::scientific << "rnew_dot_rnew_local = " << rnew_dot_rnew_local << endl;
+        ( *this )( ipatch )->EMfields->initRelativisticPoissonFields( ( *this )( ipatch ) );
+    }
     // //cout << std::scientific << "rnew_dot_rnew_local = " << rnew_dot_rnew_local << endl;
-    // MPI_Allreduce( &rnew_dot_rnew_local, &rnew_dot_rnew, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
 
-    std::vector<Field *> El_;
-    std::vector<Field *> Er_;
-    std::vector<Field *> Et_;
-    std::vector<Field *> Bl_;
-    std::vector<Field *> Br_;
-    std::vector<Field *> Bt_;
-    std::vector<Field *> Bl_m;
-    std::vector<Field *> Br_m;
-    std::vector<Field *> Bt_m;
+    std::vector<cField *> El_;
+    std::vector<cField *> Er_;
+    std::vector<cField *> Et_;
+    std::vector<cField *> Bl_;
+    std::vector<cField *> Br_;
+    std::vector<cField *> Bt_;
+    std::vector<cField *> Bl_m;
+    std::vector<cField *> Br_m;
+    std::vector<cField *> Bt_m;
     
-    std::vector<Field *> El_rel_;
-    std::vector<Field *> Er_rel_;
-    std::vector<Field *> Et_rel_;
-    std::vector<Field *> Bl_rel_;
-    std::vector<Field *> Br_rel_;
-    std::vector<Field *> Bt_rel_;
+    std::vector<cField *> El_rel_;
+    std::vector<cField *> Er_rel_;
+    std::vector<cField *> Et_rel_;
+    std::vector<cField *> Bl_rel_;
+    std::vector<cField *> Br_rel_;
+    std::vector<cField *> Bt_rel_;
     
-    std::vector<Field *> Bl_rel_t_plus_halfdt_;
-    std::vector<Field *> Br_rel_t_plus_halfdt_;
-    std::vector<Field *> Bt_rel_t_plus_halfdt_;
-    std::vector<Field *> Bl_rel_t_minus_halfdt_;
-    std::vector<Field *> Br_rel_t_minus_halfdt_;
-    std::vector<Field *> Bt_rel_t_minus_halfdt_;
+    std::vector<cField *> Bl_rel_t_plus_halfdt_;
+    std::vector<cField *> Br_rel_t_plus_halfdt_;
+    std::vector<cField *> Bt_rel_t_plus_halfdt_;
+    std::vector<cField *> Bl_rel_t_minus_halfdt_;
+    std::vector<cField *> Br_rel_t_minus_halfdt_;
+    std::vector<cField *> Bt_rel_t_minus_halfdt_;
     
     std::vector<Field *> Ap_;
+
     
-    ElectroMagnAM *emfields = static_cast<ElectroMagnAM *>( patch->EMfields );
-
-
+    
+    
+    
     // For each mode, repeat the initialization procedure 
     // (the relativistic Poisson equation is linear, so it can be decomposed in azimuthal modes)
-    for( unsigned int imode=0 ; imode<Nmode ; imode++ ) {
+    for( unsigned int imode=0 ; imode<params.nmodes ; imode++ ) {
+
+        // init Phi, r, p values
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+            emAM->initPoisson_init_phi_r_p_Ap( ( *this )( ipatch ), imode );
+            rnew_dot_rnew_local += ( *this )( ipatch )->EMfields->compute_r();
+        }
+        
+        MPI_Allreduce( &rnew_dot_rnew_local, &rnew_dot_rnew, 1, MPI_COMPLEX, MPI_SUM, MPI_COMM_WORLD );
+
+        // for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+        //     El_.push_back( ( *this )( ipatch )->EMfields->El_[imode] );
+        //     Er_.push_back( ( *this )( ipatch )->EMfields->Er_[imode] );
+        //     Et_.push_back( ( *this )( ipatch )->EMfields->Et_[imode] );
+        //     Bl_.push_back( ( *this )( ipatch )->EMfields->Bl_[imode] );
+        //     Br_.push_back( ( *this )( ipatch )->EMfields->Br_[imode] );
+        //     Bt_.push_back( ( *this )( ipatch )->EMfields->Bt_[imode] );
+        //     Bl_m.push_back( ( *this )( ipatch )->EMfields->Bl_m[imode] );
+        //     Br_m.push_back( ( *this )( ipatch )->EMfields->Br_m[imode] );
+        //     Bt_m.push_back( ( *this )( ipatch )->EMfields->Bt_m[imode] );
+        //     El_rel_.push_back( ( *this )( ipatch )->EMfields->El_rel_[imode] );
+        //     Er_rel_.push_back( ( *this )( ipatch )->EMfields->Er_rel_[imode] );
+        //     Et_rel_.push_back( ( *this )( ipatch )->EMfields->Et_rel_[imode] );
+        //     Bl_rel_.push_back( ( *this )( ipatch )->EMfields->Bl_rel_[imode] );
+        //     Br_rel_.push_back( ( *this )( ipatch )->EMfields->Br_rel_[imode] );
+        //     Bt_rel_.push_back( ( *this )( ipatch )->EMfields->Bt_rel_[imode] );
+        //     Bl_rel_t_plus_halfdt_.push_back( ( *this )( ipatch )->EMfields->Bl_rel_t_plus_halfdt_[imode] );
+        //     Br_rel_t_plus_halfdt_.push_back( ( *this )( ipatch )->EMfields->Br_rel_t_plus_halfdt_[imode] );
+        //     Bt_rel_t_plus_halfdt_.push_back( ( *this )( ipatch )->EMfields->Bt_rel_t_plus_halfdt_[imode] );
+        //     Bl_rel_t_minus_halfdt_.push_back( ( *this )( ipatch )->EMfields->Bl_rel_t_minus_halfdt_[imode] );
+        //     Br_rel_t_minus_halfdt_.push_back( ( *this )( ipatch )->EMfields->Br_rel_t_minus_halfdt_[imode] );
+        //     Bt_rel_t_minus_halfdt_.push_back( ( *this )( ipatch )->EMfields->Bt_rel_t_minus_halfdt_[imode] );
+        // 
+        //     Ap_.push_back( ( *this )( ipatch )->EMfields->Ap_ );
+        // }
 
 
         
-
-        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-            El_.push_back( ( *this )( ipatch )->EMfields->El_[imode] );
-            Er_.push_back( ( *this )( ipatch )->EMfields->Er_[imode] );
-            Et_.push_back( ( *this )( ipatch )->EMfields->Et_[imode] );
-            Bl_.push_back( ( *this )( ipatch )->EMfields->Bl_[imode] );
-            Br_.push_back( ( *this )( ipatch )->EMfields->Br_[imode] );
-            Bt_.push_back( ( *this )( ipatch )->EMfields->Bt_[imode] );
-            Bl_m.push_back( ( *this )( ipatch )->EMfields->Bl_m[imode] );
-            Br_m.push_back( ( *this )( ipatch )->EMfields->Br_m[imode] );
-            Bt_m.push_back( ( *this )( ipatch )->EMfields->Bt_m[imode] );
-            El_rel_.push_back( ( *this )( ipatch )->EMfields->El_rel_[imode] );
-            Er_rel_.push_back( ( *this )( ipatch )->EMfields->Er_rel_[imode] );
-            Et_rel_.push_back( ( *this )( ipatch )->EMfields->Et_rel_[imode] );
-            Bl_rel_.push_back( ( *this )( ipatch )->EMfields->Bl_rel_[imode] );
-            Br_rel_.push_back( ( *this )( ipatch )->EMfields->Br_rel_[imode] );
-            Bt_rel_.push_back( ( *this )( ipatch )->EMfields->Bt_rel_[imode] );
-            Bl_rel_t_plus_halfdt_.push_back( ( *this )( ipatch )->EMfields->Bl_rel_t_plus_halfdt_[imode] );
-            Br_rel_t_plus_halfdt_.push_back( ( *this )( ipatch )->EMfields->Br_rel_t_plus_halfdt_[imode] );
-            Bt_rel_t_plus_halfdt_.push_back( ( *this )( ipatch )->EMfields->Bt_rel_t_plus_halfdt_[imode] );
-            Bl_rel_t_minus_halfdt_.push_back( ( *this )( ipatch )->EMfields->Bl_rel_t_minus_halfdt_[imode] );
-            Br_rel_t_minus_halfdt_.push_back( ( *this )( ipatch )->EMfields->Br_rel_t_minus_halfdt_[imode] );
-            Bt_rel_t_minus_halfdt_.push_back( ( *this )( ipatch )->EMfields->Bt_rel_t_minus_halfdt_[imode] );
-            
-            Ap_.push_back( ( *this )( ipatch )->EMfields->Ap_ );
-        }
 
 
     } 

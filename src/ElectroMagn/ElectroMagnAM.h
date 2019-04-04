@@ -3,6 +3,7 @@
 
 #include "ElectroMagn.h"
 #include "Field.h"
+#include "cField.h"
 #include "Field2D.h"
 #include "cField2D.h"
 
@@ -52,7 +53,8 @@ public:
     void initE_relativistic_Poisson( Patch *patch, double gamma_mean ) override {;}
     void initB_relativistic_Poisson( Patch *patch, double gamma_mean ) override {;}
     void center_fields_from_relativistic_Poisson( Patch *patch ) override {;}
-    void initRelativisticPoissonFields( Patch *patch ) override {;}
+    void initRelativisticPoissonFields( Patch *patch ) override;
+    void initPoisson_init_phi_r_p_Ap( Patch *patch, unsigned int imode );
     void sum_rel_fields_to_em_fields( Patch *patch ) override {;}
     void centeringE( std::vector<double> E_Add ) override;
     void centeringErel( std::vector<double> E_Add ) override {;}

@@ -142,18 +142,18 @@ public:
     Field *Bz_rel_t_plus_halfdt_;
 
     // Fields for relativistic Initialization in AM
-    Field *El_rel_;
-    Field *Er_rel_;
-    Field *Et_rel_;
-    Field *Bl_rel_;
-    Field *Br_rel_;
-    Field *Bt_rel_;
-    Field *Bl_rel_t_minus_halfdt_;
-    Field *Br_rel_t_minus_halfdt_;
-    Field *Bt_rel_t_minus_halfdt_;
-    Field *Bl_rel_t_plus_halfdt_;
-    Field *Br_rel_t_plus_halfdt_;
-    Field *Bt_rel_t_plus_halfdt_;
+    cField *El_rel_;
+    cField *Er_rel_;
+    cField *Et_rel_;
+    cField *Bl_rel_;
+    cField *Br_rel_;
+    cField *Bt_rel_;
+    cField *Bl_rel_t_minus_halfdt_;
+    cField *Br_rel_t_minus_halfdt_;
+    cField *Bt_rel_t_minus_halfdt_;
+    cField *Bl_rel_t_plus_halfdt_;
+    cField *Br_rel_t_plus_halfdt_;
+    cField *Bt_rel_t_plus_halfdt_;
     
     //PXR quantities:
     Field *Ex_pxr;
