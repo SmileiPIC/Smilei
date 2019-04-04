@@ -1628,6 +1628,63 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
 } // END solveRelativisticPoisson
 
 
+
+void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, double time_primal )
+{
+
+    //Timer ptimer("global");
+    //ptimer.init(smpi);
+    //ptimer.restart();
+    
+    // Assumption: one or more species move in vacuum with mean lorentz gamma factor gamma_mean in the x direction,
+    // with low energy spread.
+    // The electromagnetic fields of this species can be initialized solving a Poisson-like problem (here informally
+    // referred to as "relativistic Poisson problem") and then performing a Lorentz back-transformation to find the
+    // electromagnetic fields of the species in the lab frame.
+    // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details
+    // In case of non-monoenergetic relativistic distribution (NOT IMPLEMENTED AT THE MOMENT), the linearity of Maxwell's equations can be exploited:
+    // divide the species in quasi-monoenergetic bins with gamma_i and repeat the same procedure for described above
+    // for all bins. Finally, in the laboratory frame sum all the fields of the various energy-bin ensembles of particles.
+    
+    // All the parameters for the Poisson problem (e.g. maximum iteration) are the same used in the namelist
+    // for the traditional Poisson problem
+    
+    // compute gamma_mean for the species for which the field is initialized
+    double s_gamma( 0. );
+    uint64_t nparticles( 0 );
+    for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size() ; ispec++ ) {
+        if( species( 0, ispec )->relativistic_field_initialization ) {
+            for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+                if( time_primal==species( ipatch, ispec )->time_relativistic_initialization ) {
+                    s_gamma += species( ipatch, ispec )->sum_gamma();
+                    nparticles += species( ipatch, ispec )->getNbrOfParticles();
+                }
+            }
+        }
+    }
+    double gamma_global( 0. );
+    MPI_Allreduce( &s_gamma, &gamma_global, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+    uint64_t nparticles_global( 0 );
+    MPI_Allreduce( &nparticles, &nparticles_global, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, MPI_COMM_WORLD );
+    MESSAGE( "GAMMA = " << gamma_global/( double )nparticles_global );
+    
+    //Timer ptimer("global");
+    //ptimer.init(smpi);
+    //ptimer.restart();
+    
+    double gamma_mean = gamma_global/( double )nparticles_global;
+    
+    unsigned int iteration_max = params.relativistic_poisson_max_iteration;
+    double           error_max = params.relativistic_poisson_max_error;
+    unsigned int iteration=0;
+    
+    // Init & Store internal data (phi, r, p, Ap) per patch
+    double rnew_dot_rnew_local( 0. );
+    double rnew_dot_rnew( 0. );
+
+
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 // ---------------------------------------------------------------------------------------------------------------------
 // ----------------------------------------------    BALANCING METHODS    ----------------------------------------------
