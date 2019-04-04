@@ -265,7 +265,9 @@ Open a TrackParticles diagnostic
   * ``select``: Instructions for selecting particles among those available.
     A detailed explanation is provided below
   * ``axes``: A list of axes for plotting the trajectories or obtaining particle data.
-     | Each axis is one of the :py:data:`attributes` defined in the namelist.
+     Each axis is one of the :py:data:`attributes` defined in the namelist.
+     In addition, when there is a moving window, the axis ``"moving_x"`` is automatically available.
+     
      | **Example:** ``axes = ["x"]`` corresponds to :math:`x` versus time.
      | **Example:** ``axes = ["x","y"]`` correspond to 2-D trajectories.
      | **Example:** ``axes = ["x","px"]`` correspond to phase-space trajectories.

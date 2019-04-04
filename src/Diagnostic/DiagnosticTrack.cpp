@@ -320,6 +320,9 @@ void DiagnosticTrack::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, 
         // Add openPMD attributes ( path of a given species )
         openPMD_->writeSpeciesAttributes( species_group );
         
+        // Write x_moved
+        H5::attr( iteration_group, "x_moved", simWindow ? simWindow->getXmoved() : 0. );
+        
         // Set the dataset parameters
         plist = H5Pcreate( H5P_DATASET_CREATE );
         H5Pset_alloc_time( plist, H5D_ALLOC_TIME_EARLY ); // necessary for collective dump
