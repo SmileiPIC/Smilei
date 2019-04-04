@@ -1787,12 +1787,13 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
         
             // scalar product of the residual
             std::complex<double> r_dot_r = rnew_dot_rnewAM_;
-        // 
-        //     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-        //         ( *this )( ipatch )->EMfields->compute_Ap_relativistic_Poisson( ( *this )( ipatch ), gamma_mean );
-        //     }
-        // 
-        //     // Exchange Ap_ (intra & extra MPI)
+        
+            for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+                ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+                emAM->compute_Ap_relativistic_Poisson_AM( ( *this )( ipatch ), gamma_mean, imode );
+            }
+        
+            // Exchange Ap_ (intra & extra MPI)
         //     SyncVectorPatch::exchange_along_all_directions_noomp( Ap_, *this, smpi );
         //     SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Ap_, *this );
         // 

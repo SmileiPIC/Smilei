@@ -46,6 +46,7 @@ public:
     std::complex<double> compute_r_AM();
     void compute_Ap( Patch *patch ) override;
     void compute_Ap_relativistic_Poisson( Patch *patch, double gamma_mean ) override {;}
+    void compute_Ap_relativistic_Poisson_AM( Patch *patch, double gamma_mean, unsigned int imode );
     //Access to Ap
     double compute_pAp() override {return 0.;};
     std::complex<double> compute_pAp_AM();

@@ -425,11 +425,23 @@ void ElectroMagnAM::compute_Ap( Patch *patch )
 #endif
 } // compute_pAp
 
+void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gamma_mean, unsigned int imode )
+{
+
+} // compute_pAp
+
 std::complex<double> ElectroMagnAM::compute_pAp_AM()
 {
     std::complex<double> p_dot_Ap_local = 0.0;
-#ifdef _TODO_AM
-#endif
+
+    for( unsigned int i=index_min_p_[0]; i<=index_max_p_[0]; i++ ) {
+        for( unsigned int j=index_min_p_[1]; j<=index_max_p_[1]; j++ ) {
+            p_dot_Ap_local += ( *p_ )( i, j )*std::conj(( *Ap_ )( i, j ));
+        }
+    }
+    return p_dot_Ap_local;
+
+
     return p_dot_Ap_local;
 } // compute_pAp
 
