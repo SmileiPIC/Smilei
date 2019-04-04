@@ -1682,6 +1682,32 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
     double rnew_dot_rnew_local( 0. );
     double rnew_dot_rnew( 0. );
 
+    std::vector<Field *> Ex_;
+    std::vector<Field *> El_;
+    std::vector<Field *> Et_;
+    std::vector<Field *> Bx_;
+    std::vector<Field *> Br_;
+    std::vector<Field *> Bt_;
+    std::vector<Field *> Bx_m;
+    std::vector<Field *> Br_m;
+    std::vector<Field *> Bt_m;
+    
+    std::vector<Field *> Ex_rel_;
+    std::vector<Field *> Er_rel_;
+    std::vector<Field *> Et_rel_;
+    std::vector<Field *> Bx_rel_;
+    std::vector<Field *> Br_rel_;
+    std::vector<Field *> Bt_rel_;
+    
+    std::vector<Field *> Bx_rel_t_plus_halfdt_;
+    std::vector<Field *> Br_rel_t_plus_halfdt_;
+    std::vector<Field *> Bt_rel_t_plus_halfdt_;
+    std::vector<Field *> Bx_rel_t_minus_halfdt_;
+    std::vector<Field *> Br_rel_t_minus_halfdt_;
+    std::vector<Field *> Bt_rel_t_minus_halfdt_;
+    
+    std::vector<Field *> Ap_;
+
 
 }
 
