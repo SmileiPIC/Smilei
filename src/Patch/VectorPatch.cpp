@@ -1728,7 +1728,7 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
             emAM->initPoisson_init_phi_r_p_Ap( ( *this )( ipatch ), imode );
-            rnew_dot_rnew_localAM_ += ( *this )( ipatch )->EMfields->compute_r();
+            rnew_dot_rnew_localAM_ += emAM->compute_r_AM();
         }
         
         MPI_Allreduce( &rnew_dot_rnew_localAM_, &rnew_dot_rnewAM_, 1, MPI_COMPLEX, MPI_SUM, MPI_COMM_WORLD );
