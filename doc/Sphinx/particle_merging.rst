@@ -125,8 +125,8 @@ conserve weight, energy and momentum. Vranic *et al.* proposes to merge to 2 mac
 .. math::
   :label: merged_particle_relation
 
-  w_t = w_a + w_b \
-  \mathbf{p}_t = w_a \mathbf{p}_a + w_b \mathbf{p}_b \
+  w_t = w_a + w_b \\
+  \mathbf{p}_t = w_a \mathbf{p}_a + w_b \mathbf{p}_b \\
   \varepsilon_t = w_a \varepsilon_a + w_b \varepsilon_b
 
 The following energy-momentum relation has to be satisfied for macro-particles a and b:
@@ -145,7 +145,7 @@ As illustrated in :numref:`vranic_planar_merging`, it follows table_h_attrs
 .. math::
   :label: energy_momentum_relation
 
-  \mathbf{p}_a
+  \mathbf{p}_a +  \mathbf{p}_b = \frac{2 \mathbf{p}_t}{w_t}
 
 Implementation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
