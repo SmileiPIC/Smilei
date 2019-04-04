@@ -1733,31 +1733,32 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
         
         MPI_Allreduce( &rnew_dot_rnew_localAM_, &rnew_dot_rnewAM_, 1, MPI_COMPLEX, MPI_SUM, MPI_COMM_WORLD );
 
-        // for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-        //     El_.push_back( ( *this )( ipatch )->EMfields->El_[imode] );
-        //     Er_.push_back( ( *this )( ipatch )->EMfields->Er_[imode] );
-        //     Et_.push_back( ( *this )( ipatch )->EMfields->Et_[imode] );
-        //     Bl_.push_back( ( *this )( ipatch )->EMfields->Bl_[imode] );
-        //     Br_.push_back( ( *this )( ipatch )->EMfields->Br_[imode] );
-        //     Bt_.push_back( ( *this )( ipatch )->EMfields->Bt_[imode] );
-        //     Bl_m.push_back( ( *this )( ipatch )->EMfields->Bl_m[imode] );
-        //     Br_m.push_back( ( *this )( ipatch )->EMfields->Br_m[imode] );
-        //     Bt_m.push_back( ( *this )( ipatch )->EMfields->Bt_m[imode] );
-        //     El_rel_.push_back( ( *this )( ipatch )->EMfields->El_rel_[imode] );
-        //     Er_rel_.push_back( ( *this )( ipatch )->EMfields->Er_rel_[imode] );
-        //     Et_rel_.push_back( ( *this )( ipatch )->EMfields->Et_rel_[imode] );
-        //     Bl_rel_.push_back( ( *this )( ipatch )->EMfields->Bl_rel_[imode] );
-        //     Br_rel_.push_back( ( *this )( ipatch )->EMfields->Br_rel_[imode] );
-        //     Bt_rel_.push_back( ( *this )( ipatch )->EMfields->Bt_rel_[imode] );
-        //     Bl_rel_t_plus_halfdt_.push_back( ( *this )( ipatch )->EMfields->Bl_rel_t_plus_halfdt_[imode] );
-        //     Br_rel_t_plus_halfdt_.push_back( ( *this )( ipatch )->EMfields->Br_rel_t_plus_halfdt_[imode] );
-        //     Bt_rel_t_plus_halfdt_.push_back( ( *this )( ipatch )->EMfields->Bt_rel_t_plus_halfdt_[imode] );
-        //     Bl_rel_t_minus_halfdt_.push_back( ( *this )( ipatch )->EMfields->Bl_rel_t_minus_halfdt_[imode] );
-        //     Br_rel_t_minus_halfdt_.push_back( ( *this )( ipatch )->EMfields->Br_rel_t_minus_halfdt_[imode] );
-        //     Bt_rel_t_minus_halfdt_.push_back( ( *this )( ipatch )->EMfields->Bt_rel_t_minus_halfdt_[imode] );
-        // 
-        //     Ap_.push_back( ( *this )( ipatch )->EMfields->Ap_ );
-        // }
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+            El_.push_back( emAM->El_[imode] );
+            Er_.push_back( emAM->Er_[imode] );
+            Et_.push_back( emAM->Et_[imode] );
+            Bl_.push_back( emAM->Bl_[imode] );
+            Br_.push_back( emAM->Br_[imode] );
+            Bt_.push_back( emAM->Bt_[imode] );
+            Bl_m.push_back( emAM->Bl_m[imode] );
+            Br_m.push_back( emAM->Br_m[imode] );
+            Bt_m.push_back( emAM->Bt_m[imode] );
+            El_rel_.push_back( emAM->El_rel_ );
+            Er_rel_.push_back( emAM->Er_rel_ );
+            Et_rel_.push_back( emAM->Et_rel_ );
+            Bl_rel_.push_back( emAM->Bl_rel_ );
+            Br_rel_.push_back( emAM->Br_rel_ );
+            Bt_rel_.push_back( emAM->Bt_rel_ );
+            Bl_rel_t_plus_halfdt_.push_back( emAM->Bl_rel_t_plus_halfdt_ );
+            Br_rel_t_plus_halfdt_.push_back( emAM->Br_rel_t_plus_halfdt_ );
+            Bt_rel_t_plus_halfdt_.push_back( emAM->Bt_rel_t_plus_halfdt_);
+            Bl_rel_t_minus_halfdt_.push_back( emAM->Bl_rel_t_minus_halfdt_ );
+            Br_rel_t_minus_halfdt_.push_back( emAM->Br_rel_t_minus_halfdt_ );
+            Bt_rel_t_minus_halfdt_.push_back( emAM->Bt_rel_t_minus_halfdt_ );
+            
+            Ap_AM_.push_back( emAM->Ap_AM_ );
+        }
 
 
         
