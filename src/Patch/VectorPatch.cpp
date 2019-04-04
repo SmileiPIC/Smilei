@@ -1709,6 +1709,17 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
     std::vector<Field *> Ap_;
 
 
+    // For each mode, repeat the initialization procedure 
+    // (the relativistic Poisson equation is linear, so it can be decomposed in azimuthal modes)
+    for( unsigned int imode=0 ; imode<Nmode ; imode++ ) {
+
+
+
+
+
+    } 
+
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
