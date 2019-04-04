@@ -19,7 +19,7 @@
 # module load mkl/2018--binary
 # module load szip/2.1--gnu--6.1.0  # For hdf5
 # module load zlib/1.2.8--gnu--6.1.0 # For hdf5
-# module load hdf5/1.8.18--intelmpi--2018--binary
+# module load hdf5/1.10.4--intelmpi--2018--binary
 #
 # Python:
 # Install `Anaconda 2` for Python because the default version does not work properly for Smilei.
@@ -30,10 +30,8 @@
 # ```
 # Additional compilation flags:
 # - -fno-alias
-
-#HDF5_ROOT_DIR = ${HDF5_HOME}   #This one must be exported manually, a simple call to machine=marconi_knl_intel doesn't work
+# Must manually export SMILEICXX=mpiicpc
+HDF5_ROOT_DIR += /cineca/prod/opt/libraries/hdf5/1.10.4/intelmpi--2018--binary/
 CXXFLAGS += -cxx=icpc -xMIC-AVX512 -ip -inline-factor=1000 #-ipo
-LDFLAGS += -L/cineca/prod/opt/compilers/intel/pe-xe-2018/binary/lib/intel64 -limf -lsvml -lirng -lintlc -liomp5
-#LDFLAGS += -limf -lsvml -lirng -lintlc -liomp5
 #
 # make -j64 machine=marconi_knl_intel
