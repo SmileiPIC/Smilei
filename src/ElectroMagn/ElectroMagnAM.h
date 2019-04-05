@@ -59,6 +59,7 @@ public:
     void initE_relativistic_Poisson( Patch *patch, double gamma_mean ) override {;}
     void initE_relativistic_Poisson_AM( Patch *patch, double gamma_mean, unsigned int imode );
     void initB_relativistic_Poisson( Patch *patch, double gamma_mean ) override {;}
+    void initB_relativistic_Poisson_AM( Patch *patch, double gamma_mean );
     void center_fields_from_relativistic_Poisson( Patch *patch ) override {;}
     void initRelativisticPoissonFields( Patch *patch ) override;
     void initPoisson_init_phi_r_p_Ap( Patch *patch, unsigned int imode );

@@ -579,6 +579,62 @@ void ElectroMagnAM::initE_relativistic_Poisson_AM( Patch *patch, double gamma_me
     
 } // initE_relativistic_Poisson_AM
 
+void ElectroMagnAM::initB_relativistic_Poisson_AM( Patch *patch, double gamma_mean )
+{
+    // gamma_mean is the average Lorentz factor of the species whose fields will be computed
+    // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details
+    
+    
+    cField2D *ErAM  = static_cast<cField2D *>( Er_rel_ );
+    cField2D *EtAM  = static_cast<cField2D *>( Et_rel_ );
+    
+    cField2D *BlAM  = static_cast<cField2D *>( Bl_rel_ ); // Bl is zero everywhere
+    cField2D *BrAM  = static_cast<cField2D *>( Br_rel_ );
+    cField2D *BtAM  = static_cast<cField2D *>( Bt_rel_ );
+
+    // ------------------------------------------
+    // Compute the field Bl, Br, Bt
+    // ------------------------------------------
+    
+    double beta_mean = sqrt( 1.-1./gamma_mean/gamma_mean );
+    MESSAGE( 0, "In relativistic Poisson solver, gamma_mean = " << gamma_mean );
+    
+    // Bl^(p,d) is identically zero
+    MESSAGE( 1, "Computing Bl, relativistic Poisson problem" );
+    for( unsigned int i=0; i<nl_p; i++ ) {
+        for( unsigned int j=0; j<nr_d; j++ ) {
+            ( *BlAM )( i, j ) = 0.;
+        }
+    }
+    MESSAGE( 1, "Bl: done" );
+    
+    // Br^(d,d) from Et^(d,d)
+    MESSAGE( 1, "Computing Br from scalar potential, relativistic Poisson problem" );
+    for( unsigned int i=0; i<nl_d; i++ ) {
+        for( unsigned int j=0; j<nr_d; j++ ) {
+            ( *BrAM )( i, j ) = -beta_mean*( *EtAM )( i, j );
+        }
+    }
+    MESSAGE( 1, "Br: done" );
+
+    // Bt^(d,p) from Er^(d,p)
+    MESSAGE( 1, "Computing Bt from scalar potential, relativistic Poisson problem" );
+    for( unsigned int i=0; i<nl_d; i++ ) {
+        for( unsigned int j=0; j<nr_p; j++ ) {
+            ( *BtAM )( i, j ) = beta_mean*( *ErAM )( i, j );
+        }
+    }
+    MESSAGE( 1, "Bt: done" );
+
+
+    // Should we add BCs here?
+    
+    
+} // initB_relativistic_Poisson_AM
+
+
+
+
 void ElectroMagnAM::delete_phi_r_p_Ap( Patch *patch ){
     delete phi_AM_;
     delete r_AM_;

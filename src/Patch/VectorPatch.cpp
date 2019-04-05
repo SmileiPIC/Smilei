@@ -1877,6 +1877,57 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
         SyncVectorPatch::exchange_along_all_directions_noompComplex( Et_rel_, *this, smpi );
         SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( Et_rel_, *this );
 
+        // compute B and sync
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            // begin loop on patches
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+            emAM->initB_relativistic_Poisson_AM( ( *this )( ipatch ), gamma_mean );
+        } // end loop on patches
+      
+        SyncVectorPatch::exchange_along_all_directions_noompComplex( Bl_rel_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( Bl_rel_, *this );
+        SyncVectorPatch::exchange_along_all_directions_noompComplex( Br_rel_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( Br_rel_, *this );
+        SyncVectorPatch::exchange_along_all_directions_noompComplex( Bt_rel_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( Bt_rel_, *this );
+        
+        
+        // // Proper spatial centering of the B fields in the Yee Cell through interpolation
+        // // (from B_rel to B_rel_t_plus_halfdt and B_rel_t_minus_halfdt)
+        // for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+        //     // begin loop on patches
+        //     ( *this )( ipatch )->EMfields->center_fields_from_relativistic_Poisson( ( *this )( ipatch ) );
+        // } // end loop on patches
+        // 
+        // Re-exchange the properly spatially centered B field
+        SyncVectorPatch::exchange_along_all_directions_noompComplex( Bl_rel_t_plus_halfdt_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( Bl_rel_t_plus_halfdt_, *this );
+        SyncVectorPatch::exchange_along_all_directions_noompComplex( Br_rel_t_plus_halfdt_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( Br_rel_t_plus_halfdt_, *this );
+        SyncVectorPatch::exchange_along_all_directions_noompComplex( Bt_rel_t_plus_halfdt_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( Bt_rel_t_plus_halfdt_, *this );
+        
+        SyncVectorPatch::exchange_along_all_directions_noompComplex( Bl_rel_t_minus_halfdt_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( Bl_rel_t_minus_halfdt_, *this );
+        SyncVectorPatch::exchange_along_all_directions_noompComplex( Br_rel_t_minus_halfdt_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( Br_rel_t_minus_halfdt_, *this );
+        SyncVectorPatch::exchange_along_all_directions_noompComplex( Bt_rel_t_minus_halfdt_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( Bt_rel_t_minus_halfdt_, *this );
+        
+        
+        MESSAGE( 0, "Summing fields of relativistic species to the grid fields" );
+        // sum the fields found  by relativistic Poisson solver to the existing em fields
+        // E  = E  + E_rel
+        // B  = B  + B_rel_t_plus_halfdt
+        // Bm = Bm + B_rel_t_minus_halfdt
+        
+        // for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+        //     // begin loop on patches
+        //     ( *this )( ipatch )->EMfields->sum_rel_fields_to_em_fields( ( *this )( ipatch ) );
+        // } // end loop on patches
+        
+        
+        // clean the auxiliary vectors for the present azimuthal mode
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             
             El_.pop_back();
@@ -1905,14 +1956,48 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
 
         }
         
-
-
     }  // end loop on the modes
 
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
         emAM->delete_phi_r_p_Ap( ( *this )( ipatch ) );
     }
+
+    // // Exchange the fields after the addition of the relativistic species fields
+    // SyncVectorPatch::exchange_along_all_directions_noomp( Ex_, *this, smpi );
+    // SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Ex_, *this );
+    // SyncVectorPatch::exchange_along_all_directions_noomp( Ey_, *this, smpi );
+    // SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Ey_, *this );
+    // SyncVectorPatch::exchange_along_all_directions_noomp( Ez_, *this, smpi );
+    // SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Ez_, *this );
+    // SyncVectorPatch::exchange_along_all_directions_noomp( Bx_, *this, smpi );
+    // SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Bx_, *this );
+    // SyncVectorPatch::exchange_along_all_directions_noomp( By_, *this, smpi );
+    // SyncVectorPatch::finalize_exchange_along_all_directions_noomp( By_, *this );
+    // SyncVectorPatch::exchange_along_all_directions_noomp( Bz_, *this, smpi );
+    // SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Bz_, *this );
+    // SyncVectorPatch::exchange_along_all_directions_noomp( Bx_m, *this, smpi );
+    // SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Bx_m, *this );
+    // SyncVectorPatch::exchange_along_all_directions_noomp( By_m, *this, smpi );
+    // SyncVectorPatch::finalize_exchange_along_all_directions_noomp( By_m, *this );
+    // SyncVectorPatch::exchange_along_all_directions_noomp( Bz_m, *this, smpi );
+    // SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Bz_m, *this );
+    
+    MESSAGE( 0, "Fields of relativistic species initialized" );
+    //!\todo Reduce to find global max
+    //if (smpi->isMaster())
+    //  MESSAGE(1,"Relativistic Poisson equation solved. Maximum err = ");
+    
+    //ptimer.update();
+    //MESSAGE("Time in Relativistic Poisson : " << ptimer.getTime() );
+    
+    
+    //ptimer.update();
+    //MESSAGE("Time in Relativistic Poisson : " << ptimer.getTime() );
+    MESSAGE( "Relativistic Poisson finished" );
+
+
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
