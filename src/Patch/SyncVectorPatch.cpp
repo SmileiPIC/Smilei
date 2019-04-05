@@ -1345,7 +1345,7 @@ void SyncVectorPatch::exchange_along_all_directions_noomp( std::vector<Field *> 
     
 }
 
-void SyncVectorPatch::exchange_along_all_directions_noompComplex( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
+void SyncVectorPatch::exchange_along_all_directions_noompComplex( std::vector<cField *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
 {
     for( unsigned int iDim=0 ; iDim<fields[0]->dims_.size() ; iDim++ ) {
         for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
@@ -1355,7 +1355,7 @@ void SyncVectorPatch::exchange_along_all_directions_noompComplex( std::vector<Fi
     
     
     unsigned int nx_, ny_( 1 ), nz_( 1 ), h0, oversize[3], n_space[3], gsp[3];
-    double *pt1, *pt2;
+    std::complex<double> *pt1, *pt2;
     h0 = vecPatches( 0 )->hindex;
     
     oversize[0] = vecPatches( 0 )->EMfields->oversize[0];
@@ -1446,7 +1446,7 @@ void SyncVectorPatch::finalize_exchange_along_all_directions_noomp( std::vector<
     
 }
 
-void SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( std::vector<Field *> fields, VectorPatch &vecPatches )
+void SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( std::vector<cField *> fields, VectorPatch &vecPatches )
 {
     for( unsigned int iDim=0 ; iDim<fields[0]->dims_.size() ; iDim++ ) {
         for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {

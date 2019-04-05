@@ -1794,8 +1794,8 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
             }
         
             // Exchange Ap_ (intra & extra MPI)
-            SyncVectorPatch::exchange_along_all_directions_noomp( Ap_AM_, *this, smpi );
-            SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Ap_AM_, *this );
+            SyncVectorPatch::exchange_along_all_directions_noompComplex( Ap_AM_, *this, smpi );
+            SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( Ap_AM_, *this );
         
         
             // scalar product p.Ap
@@ -1840,6 +1840,20 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
             }
         
         }//End of the iterative loop
+
+
+        // --------------------------------
+        // Status of the solver convergence
+        // --------------------------------
+        if( iteration_max>0 && iteration == iteration_max ) {
+            if( smpi->isMaster() )
+                WARNING( "Relativistic Poisson solver did not converge: reached maximum iteration number: " << iteration
+                         << ", relative err is ctrl = " << 1.0e22*ctrl << "x 1.e-22" );
+        } else {
+            if( smpi->isMaster() )
+                MESSAGE( 1, "Relativistic Poisson solver converged at iteration: " << iteration
+                         << ", relative err is ctrl = " << 1.0e22*ctrl << " x 1.e-22" );
+        }
 
 
 
