@@ -183,7 +183,13 @@ int main( int argc, char *argv[] )
         if( params.solve_relativistic_poisson == true ) {
             // Compute rho only for species needing relativistic field Initialization
             vecPatches.computeChargeRelativisticSpecies( time_prim );
-            SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, &smpi, timers, 0 );
+            if (params.geometry != "AMcylindrical"){
+                SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, &smpi, timers, 0 );
+            } else {
+                for( unsigned int imode=0 ; imode<params.nmodes ; imode++ ) {
+                    SyncVectorPatch::sumRhoJ( params, vecPatches, imode, &smpi, timers, 0 );
+                } 
+            }
             
             // Initialize the fields for these species
             if( !vecPatches.isRhoNull( &smpi ) ) {
@@ -331,7 +337,13 @@ int main( int argc, char *argv[] )
             if( params.solve_relativistic_poisson == true ) {
                 // Compute rho only for species needing relativistic field Initialization
                 vecPatches.computeChargeRelativisticSpecies( time_prim );
-                SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, &smpi, timers, 0 );
+                if (params.geometry != "AMcylindrical"){
+                    SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, &smpi, timers, 0 );
+                } else {
+                    for( unsigned int imode=0 ; imode<params.nmodes ; imode++ ) {
+                        SyncVectorPatch::sumRhoJ( params, vecPatches, imode, &smpi, timers, 0 );
+                    }
+                }
                 #pragma omp master
                 {
                 
