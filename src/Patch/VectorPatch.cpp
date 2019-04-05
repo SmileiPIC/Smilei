@@ -1855,10 +1855,27 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
                          << ", relative err is ctrl = " << 1.0e22*ctrl << " x 1.e-22" );
         }
 
-
-
-
-
+        // ------------------------------------------
+        // Compute the electromagnetic fields E and B
+        // ------------------------------------------
+        
+        // sync the potential
+        //SyncVectorPatch::exchange( (*this)(ipatch)->EMfields->phi_, *this, smpi );
+        //SyncVectorPatch::finalizeexchange( (*this)(ipatch)->EMfields->phi_, *this );
+        
+        // compute E and sync
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+            // begin loop on patches
+            emAM->initE_relativistic_Poisson_AM( ( *this )( ipatch ), gamma_mean, imode );
+        } // end loop on patches
+        
+        SyncVectorPatch::exchange_along_all_directions_noompComplex( El_rel_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( El_rel_, *this );
+        SyncVectorPatch::exchange_along_all_directions_noompComplex( Er_rel_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( Er_rel_, *this );
+        SyncVectorPatch::exchange_along_all_directions_noompComplex( Et_rel_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( Et_rel_, *this );
 
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             
@@ -1885,13 +1902,17 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
             Bt_rel_t_minus_halfdt_.pop_back();
             
             Ap_AM_.pop_back();
+
         }
         
 
 
-    } 
+    }  // end loop on the modes
 
-
+    for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+        ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+        emAM->delete_phi_r_p_Ap( ( *this )( ipatch ) );
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

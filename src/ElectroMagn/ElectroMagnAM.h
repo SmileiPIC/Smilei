@@ -55,7 +55,9 @@ public:
     void update_pand_r_AM( std::complex<double> r_dot_r, std::complex<double> p_dot_Ap );
     void update_p_AM( std::complex<double> rnew_dot_rnew, std::complex<double> r_dot_r );
     void initE( Patch *patch ) override;
+    void delete_phi_r_p_Ap( Patch *patch );
     void initE_relativistic_Poisson( Patch *patch, double gamma_mean ) override {;}
+    void initE_relativistic_Poisson_AM( Patch *patch, double gamma_mean, unsigned int imode );
     void initB_relativistic_Poisson( Patch *patch, double gamma_mean ) override {;}
     void center_fields_from_relativistic_Poisson( Patch *patch ) override {;}
     void initRelativisticPoissonFields( Patch *patch ) override;

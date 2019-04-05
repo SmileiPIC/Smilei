@@ -499,6 +499,93 @@ void ElectroMagnAM::initRelativisticPoissonFields( Patch *patch ){
 }
 
 
+void ElectroMagnAM::initE_relativistic_Poisson_AM( Patch *patch, double gamma_mean, unsigned int imode )
+{
+    // gamma_mean is the average Lorentz factor of the species whose fields will be computed
+    // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details
+    
+    cField2D *ElAM  = static_cast<cField2D *>( El_rel_ );
+    cField2D *ErAM  = static_cast<cField2D *>( Er_rel_ );
+    cField2D *EtAM  = static_cast<cField2D *>( Et_rel_ );
+    //cField2D *rhoAM = static_cast<cField2D *>( rho_AM_[imode] );
+
+    complex<double>     i1 = std::complex<double>( 0., 1 );
+
+    // ------------------------------------------
+    // Compute the fields El, Er and Et
+    // ------------------------------------------
+    
+    // El
+    MESSAGE( 1, "Computing El from scalar potential, relativistic Poisson problem" );
+    for( unsigned int i=1; i<nl_d-1; i++ ) {
+        for( unsigned int j=isYmin*3; j<nr_p; j++ ) {
+            ( *ElAM )( i, j ) = ( ( *phi_AM_ )( i-1, j )-( *phi_AM_ )( i, j ) )/dl/gamma_mean/gamma_mean;
+        }
+    }
+    MESSAGE( 1, "Ex: done" );
+    // Er
+    MESSAGE( 1, "Computing Er from scalar potential, relativistic Poisson problem" );
+    for( unsigned int i=0; i<nl_d; i++ ) {
+        for( unsigned int j=isYmin*3; j<nr_p-1; j++ ) {
+            ( *ErAM )( i, j ) = ( ( *phi_AM_ )( i, j-1 )-( *phi_AM_ )( i, j ) )/dr;
+        }
+    }
+    MESSAGE( 1, "Er: done" );
+    // Et
+    MESSAGE( 1, "Computing Er from scalar potential, relativistic Poisson problem" );
+    for( unsigned int i=0; i<nl_p; i++ ) {
+        for( unsigned int j=isYmin*3; j<nr_p-1; j++ ) {
+            ( *EtAM )( i, j ) = i1*((double )imode)/(((double)( j_glob_+j-0.5 ))*dr)* ( *phi_AM_ )( i, j );
+        }
+    }
+    MESSAGE( 1, "Et: done" );
+
+    
+    if( isYmin ) { // Conditions on axis
+        unsigned int j=2;
+        if( imode==0 ) {
+            for( unsigned int i=0 ; i<nl_p  ; i++ ) {
+                ( *EtAM )( i, j )=0;
+            }
+            for( unsigned int i=0 ; i<nl_p  ; i++ ) {
+                ( *ErAM )( i, j )= -( *ErAM )( i, j+1 );
+            }
+            for( unsigned int i=0 ; i<nl_d ; i++ ) {
+                ( *ElAM )( i, j ) = ( *ElAM )( i, j+1 ) ;  // not sure about this one
+            }
+        } else if( imode==1 ) {
+            for( unsigned int i=0 ; i<nl_d  ; i++ ) {
+                ( *ElAM )( i, j )= 0;
+            }
+            for( unsigned int i=0 ; i<nl_p  ; i++ ) {
+                ( *EtAM )( i, j )= -1./3.*( 4.*i1*( *ErAM )( i, j+1 )+( *EtAM )( i, j+1 ) );
+            }
+            for( unsigned int i=0 ; i<nl_p ; i++ ) {
+                ( *ErAM )( i, j )=2.*i1*( *EtAM )( i, j )-( *ErAM )( i, j+1 );
+            }
+        } else {
+            for( unsigned int  i=0 ; i<nl_d; i++ ) {
+                ( *ElAM )( i, j )= 0;
+            }
+            for( unsigned int  i=0 ; i<nl_p; i++ ) {
+                ( *ErAM )( i, j )= -( *ErAM )( i, j+1 );
+            }
+            for( unsigned int i=0 ; i<nl_p; i++ ) {
+                ( *EtAM )( i, j )= 0;
+            }
+        }
+    }
+  
+    
+} // initE_relativistic_Poisson_AM
+
+void ElectroMagnAM::delete_phi_r_p_Ap( Patch *patch ){
+    delete phi_AM_;
+    delete r_AM_;
+    delete p_AM_;
+    delete Ap_AM_;
+}
+
 void ElectroMagnAM::initE( Patch *patch )
 {
 #ifdef _TODO_AM
