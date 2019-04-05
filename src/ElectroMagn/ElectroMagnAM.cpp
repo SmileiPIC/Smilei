@@ -438,23 +438,34 @@ void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gam
     
     // vector product Ap = A*p
     for( unsigned int i=1; i<nl_p-1; i++ ) {
-        for( unsigned int j=1; j<nr_p-1; j++ ) {
+        for( unsigned int j=isYmin*3; j<nr_p-1; j++ ) {
             ( *Ap_ )( i, j ) = one_ov_dl_sq_ov_gamma_sq*( ( *p_ )( i-1, j )+( *p_ )( i+1, j ) )
                                + one_ov_dr_sq*( ( *p_ )( i, j-1 )+( *p_ )( i, j+1 ) )
-                               + one_ov_dr   *( ( *p_ )( i, j+1 )-( *p_ )( i, j+1 ) )
+                               + one_ov_dr   *( ( *p_ )( i, j+1 )-( *p_ )( i, j-1 ) )
                                - two_ov_dlgam2dr2*( *p_ )( i, j )
                                - (double)(imode*imode)/( ( j_glob_+j-0.5 )*dr )/( ( j_glob_+j-0.5 )*dr )*( *p_ )( i, j );
         }//j
     }//i
     
     
+    // Axis BC
+    if( patch->isYmin() ) {
+        unsigned int j=2;
+        for( unsigned int i=1; i<nl_p-1; j++ ) {
+            ( *Ap_ )( i, j ) = one_ov_dl_sq_ov_gamma_sq*( ( *p_ )( i-1, j )+( *p_ )( i+1, j ) )
+                               + one_ov_dr_sq*( ( *p_ )( i, j+1 )+( *p_ )( i, j+1 ) )
+                               - two_ov_dlgam2dr2*( *p_ )( i, j )
+                               - (double)(imode*imode)/( ( j_glob_+j-0.5 )*dr )/( ( j_glob_+j-0.5 )*dr )*( *p_ )( i, j );
+        }
+    }
+
     // Xmin BC
     if( patch->isXmin() ) {
-        for( unsigned int j=1; j<nr_p-1; j++ ) {
+        for( unsigned int j=isYmin*3; j<nr_p-1; j++ ) {
             //Ap_(0,j)      = one_ov_dx_sq*(pXmin[j]+p_(1,j))
             ( *Ap_ )( 0, j )      = one_ov_dl_sq_ov_gamma_sq*( ( *p_ )( 1, j ) )
                                     +              one_ov_dr_sq*( ( *p_ )( 0, j-1 )+( *p_ )( 0, j+1 ) )
-                                    +              one_ov_dr   *( ( *p_ )( 0, j+1 )-( *p_ )( 0, j+1 ) )
+                                    +              one_ov_dr   *( ( *p_ )( 0, j+1 )-( *p_ )( 0, j-1 ) )
                                     -              two_ov_dlgam2dr2*( *p_ )( 0, j )
                                     - (double)(imode*imode)/( ( j_glob_+j-0.5 )*dr )/( ( j_glob_+j-0.5 )*dr )*( *p_ )( 0, j );
         }
@@ -478,11 +489,11 @@ void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gam
     // Xmax BC
     if( patch->isXmax() ) {
     
-        for( unsigned int j=1; j<nr_p-1; j++ ) {
+        for( unsigned int j=isYmin*3; j<nr_p-1; j++ ) {
             //Ap_(nx_p-1,j) = one_ov_dx_sq*(p_(nx_p-2,j)+pXmax[j])
             ( *Ap_ )( nl_p-1, j ) = one_ov_dl_sq_ov_gamma_sq*( ( *p_ )( nl_p-2, j ) )
                                     +              one_ov_dr_sq*( ( *p_ )( nl_p-1, j-1 )+( *p_ )( nl_p-1, j+1 ) )
-                                    +              one_ov_dr   *( ( *p_ )( nl_p-1, j-1 )-( *p_ )( nl_p-1, j+1 ) )
+                                    +              one_ov_dr   *( ( *p_ )( nl_p-1, j+1 )-( *p_ )( nl_p-1, j-1 ) )
                                     -              two_ov_dlgam2dr2*( *p_ )( nl_p-1, j )
                                     - (double)(imode*imode)/( ( j_glob_+j-0.5 )*dr )/( ( j_glob_+j-0.5 )*dr )*( *p_ )( nl_p-1, j );
         }
