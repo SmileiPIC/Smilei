@@ -632,7 +632,55 @@ void ElectroMagnAM::initB_relativistic_Poisson_AM( Patch *patch, double gamma_me
     
 } // initB_relativistic_Poisson_AM
 
+void ElectroMagnAM::center_fields_from_relativistic_Poisson_AM( Patch *patch )
+{
 
+    // B field centered in time as E field, at time t
+    cField2D *BlAMrel  = static_cast<cField2D *>( Bl_rel_ );
+    cField2D *BrAMrel  = static_cast<cField2D *>( Br_rel_ );
+    cField2D *BtAMrel  = static_cast<cField2D *>( Bt_rel_ );
+    
+    // B field centered in time at time t+dt/2
+    cField2D *BlAM  = static_cast<cField2D *>( Bl_rel_t_plus_halfdt_ );
+    cField2D *BrAM  = static_cast<cField2D *>( Br_rel_t_plus_halfdt_ );
+    cField2D *BtAM  = static_cast<cField2D *>( Bt_rel_t_plus_halfdt_ );
+    // B field centered in time at time t-dt/2
+    cField2D *BlAM0  = static_cast<cField2D *>( Bl_rel_t_minus_halfdt_ );
+    cField2D *BrAM0  = static_cast<cField2D *>( Br_rel_t_minus_halfdt_ );
+    cField2D *BtAM0  = static_cast<cField2D *>( Bt_rel_t_minus_halfdt_ );
+    
+    
+    // The B_rel fields, centered as B, will be advanced by dt/2 and -dt/2
+    // for proper centering in FDTD, but first they have to be centered in space
+    // The advance by dt and -dt and the sum to the existing grid fields is performed in
+    // ElectroMagn2D::sum_rel_fields_to_em_fields
+    
+    // Bl (p,d)   Bl_rel is identically zero and centered as Bl, no special interpolation of indices
+    for( unsigned int i=0; i<nl_p; i++ ) {
+        for( unsigned int j=0; j<nr_d; j++ ) {
+            ( *BlAM )( i, j ) = ( *BlAMrel )( i, j );
+            ( *BlAM0 )( i, j )= ( *BlAMrel )( i, j );
+        }
+    }
+    
+    // ---------- center the B fields
+    // Br (d,p) - remember that Byrel is centered as Etrel (p,p)
+    for( unsigned int i=1; i<nl_d-1; i++ ) {
+        for( unsigned int j=0; j<nr_p; j++ ) {
+            ( *BrAM )( i, j ) = 0.5 * ( ( *BrAMrel )( i, j ) + ( *BrAMrel )( i-1, j ) );
+            ( *BrAM0 )( i, j )= 0.5 * ( ( *BrAMrel )( i, j ) + ( *BrAMrel )( i-1, j ) );
+        }
+    }
+    
+    // Bt (d,d) - remember that Btrel is centered as Errel (p,d)
+    for( unsigned int i=1; i<nl_d-1; i++ ) {
+        for( unsigned int j=0; j<nr_d; j++ ) {
+            ( *BtAM )( i, j ) = 0.5 * ( ( *BtAMrel )( i, j ) + ( *BtAMrel )( i-1, j ) );
+            ( *BtAM0 )( i, j )= 0.5 * ( ( *BtAMrel )( i, j ) + ( *BtAMrel )( i-1, j ) );
+        }
+    }
+    
+}
 
 
 void ElectroMagnAM::delete_phi_r_p_Ap( Patch *patch ){

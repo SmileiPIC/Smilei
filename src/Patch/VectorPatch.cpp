@@ -1892,13 +1892,14 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
         SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( Bt_rel_, *this );
         
         
-        // // Proper spatial centering of the B fields in the Yee Cell through interpolation
-        // // (from B_rel to B_rel_t_plus_halfdt and B_rel_t_minus_halfdt)
-        // for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-        //     // begin loop on patches
-        //     ( *this )( ipatch )->EMfields->center_fields_from_relativistic_Poisson( ( *this )( ipatch ) );
-        // } // end loop on patches
-        // 
+        // Proper spatial centering of the B fields in the Yee Cell through interpolation
+        // (from B_rel to B_rel_t_plus_halfdt and B_rel_t_minus_halfdt)
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            // begin loop on patches
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+            emAM->center_fields_from_relativistic_Poisson_AM( ( *this )( ipatch ) );
+        } // end loop on patches
+        
         // Re-exchange the properly spatially centered B field
         SyncVectorPatch::exchange_along_all_directions_noompComplex( Bl_rel_t_plus_halfdt_, *this, smpi );
         SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( Bl_rel_t_plus_halfdt_, *this );

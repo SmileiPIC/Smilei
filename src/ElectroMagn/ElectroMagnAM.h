@@ -61,6 +61,7 @@ public:
     void initB_relativistic_Poisson( Patch *patch, double gamma_mean ) override {;}
     void initB_relativistic_Poisson_AM( Patch *patch, double gamma_mean );
     void center_fields_from_relativistic_Poisson( Patch *patch ) override {;}
+    void center_fields_from_relativistic_Poisson_AM( Patch *patch );
     void initRelativisticPoissonFields( Patch *patch ) override;
     void initPoisson_init_phi_r_p_Ap( Patch *patch, unsigned int imode );
     void sum_rel_fields_to_em_fields( Patch *patch ) override {;}
