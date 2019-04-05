@@ -753,9 +753,6 @@ void ElectroMagnAM::sum_rel_fields_to_em_fields_AM( Patch *patch, Params &params
             // backward advance by dt/2
             ( *Bl_rel_t_minus_halfdt )( i, j )-= - dt/2./( ( j_glob_+j-0.5 )*dr ) * ( ( double )( j+j_glob_ )*( *EtAMrel )( i, j ) 
                                                  - ( double )( j+j_glob_-1. )*( *EtAMrel )( i, j-1 ) + i1*( double )imode*( *ErAMrel )( i, j ) );
-            // sum to the fields on grid
-            ( *BlAM )( i, j )  += ( *Bl_rel_t_plus_halfdt )( i, j );
-            ( *BlAM0 )( i, j ) += ( *Bl_rel_t_minus_halfdt )( i, j );
         }
     }
     
@@ -768,9 +765,6 @@ void ElectroMagnAM::sum_rel_fields_to_em_fields_AM( Patch *patch, Params &params
             // backward advance by dt/2
             ( *Br_rel_t_minus_halfdt )( i, j )-= dt_ov_dl/2. * ( ( *EtAMrel )( i, j ) - ( *EtAMrel )( i-1, j ) )
                                                  +i1*dt/2.*( double )imode/( ( double )( j_glob_+j )*dr )*( *ElAMrel )( i, j ) ;
-            // sum to the fields on grid
-            ( *BrAM )( i, j )  += ( *Br_rel_t_plus_halfdt )( i, j );
-            ( *BrAM0 )( i, j ) += ( *Br_rel_t_minus_halfdt )( i, j );
         }
     }
     
@@ -784,15 +778,88 @@ void ElectroMagnAM::sum_rel_fields_to_em_fields_AM( Patch *patch, Params &params
             // backward advance by dt/2
             ( *Bt_rel_t_minus_halfdt )( i, j )-= dt_ov_dr/2. * ( ( *ElAMrel )( i, j ) - ( *ElAMrel )( i, j-1 ) )
                                                 -dt_ov_dl/2. * ( ( *ErAMrel )( i, j ) - ( *ErAMrel )( i-1, j ) );
-
-            ( *BtAM )( i, j )  += ( *Bt_rel_t_plus_halfdt )( i, j );
-            ( *BtAM0 )( i, j ) += ( *Bt_rel_t_minus_halfdt )( i, j );
         }
     }
     
 
     // Boundary conditions on Axis
-  
+    if( isYmin ) {
+        unsigned int j=2;
+        if( imode==0 ) {
+            for( unsigned int i=0 ; i<nl_d ; i++ ) {
+                ( *Br_rel_t_plus_halfdt )( i, j ) =0;
+                ( *Br_rel_t_minus_halfdt )( i, j )=0;
+            }
+            for( unsigned int i=0 ; i<nl_d ; i++ ) {
+                ( *Bt_rel_t_plus_halfdt )( i, j ) = -( *Bt_rel_t_plus_halfdt )( i, j+1 );
+                ( *Bt_rel_t_minus_halfdt )( i, j )= -( *Bt_rel_t_minus_halfdt )( i, j+1 );
+            }
+            for( unsigned int i=0 ; i<nl_p ; i++ ) {
+                ( *Bl_rel_t_plus_halfdt )( i, j ) = ( *Bl_rel_t_plus_halfdt )( i, j+1 );
+                ( *Bl_rel_t_minus_halfdt )( i, j )= ( *Bl_rel_t_minus_halfdt )( i, j+1 );
+            }
+        }
+        
+        else if( imode==1 ) {
+            for( unsigned int i=0 ; i<nl_p  ; i++ ) {
+                ( *Bl_rel_t_plus_halfdt )( i, j ) = -( *Bl_rel_t_plus_halfdt )( i, j+1 );
+                ( *Bl_rel_t_minus_halfdt )( i, j )= -( *Bl_rel_t_minus_halfdt )( i, j+1 );
+            }
+            
+            for( unsigned int i=1 ; i<nl_d-1 ; i++ ) {
+                ( *Br_rel_t_plus_halfdt )( i, j ) +=  i1*dt/dr/2.*( *ElAMrel )( i, j+1 )
+                                              +			dt/dl/2.*( ( *EtAMrel )( i, j )-( *EtAMrel )( i-1, j ) );
+                ( *Br_rel_t_minus_halfdt )( i, j )-=  i1*dt/dr/2.*( *ElAMrel )( i, j+1 )
+                                              +			dt/dl/2.*( ( *EtAMrel )( i, j )-( *EtAMrel )( i-1, j ) );
+            }
+            for( unsigned int i=0; i<nl_d ; i++ ) {
+                ( *Bt_rel_t_plus_halfdt )( i, j ) = -2.*i1*( *Br_rel_t_plus_halfdt )( i, j ) -( *Bt_rel_t_plus_halfdt )( i, j+1 );
+                ( *Bt_rel_t_minus_halfdt )( i, j )= -2.*i1*( *Br_rel_t_minus_halfdt )( i, j )-( *Bt_rel_t_minus_halfdt )( i, j+1 );
+            }
+            
+        } else { // modes > 1
+            for( unsigned int  i=0 ; i<nl_p; i++ ) {
+                ( *Bl_rel_t_plus_halfdt )( i, j ) = -( *Bl_rel_t_plus_halfdt )( i, j+1 );
+                ( *Bl_rel_t_minus_halfdt )( i, j )= -( *Bl_rel_t_minus_halfdt )( i, j+1 );
+            }
+            for( unsigned int i=0 ; i<nl_d; i++ ) {
+                ( *Br_rel_t_plus_halfdt )( i, j ) =0;
+                ( *Br_rel_t_minus_halfdt )( i, j )=0;
+            }
+            for( unsigned int  i=0 ; i<nl_d ; i++ ) {
+                ( *Bt_rel_t_plus_halfdt )( i, j ) = - ( *Bt_rel_t_plus_halfdt )( i, j+1 );
+                ( *Bt_rel_t_minus_halfdt )( i, j )= - ( *Bt_rel_t_minus_halfdt )( i, j+1 );
+            }
+        }
+    }
+
+
+    // Final addition of the relativistic fields to the grid fields
+    // Magnetic field Bl^(p,d)
+    for( unsigned int i=0 ; i<nl_p;  i++ ) {
+        for( unsigned int j=0 ; j<nr_d-1 ; j++ ) {
+            // sum to the fields on grid
+            ( *BlAM )( i, j )  += ( *Bl_rel_t_plus_halfdt )( i, j );
+            ( *BlAM0 )( i, j ) += ( *Bl_rel_t_minus_halfdt )( i, j );
+        }
+    }
+    
+    // Magnetic field Br^(d,p)
+    for( unsigned int i=1 ; i<nl_d-1 ; i++ ) {
+        for( unsigned int j=0 ; j<nr_p ; j++ ) {
+            // sum to the fields on grid
+            ( *BrAM )( i, j )  += ( *Br_rel_t_plus_halfdt )( i, j );
+            ( *BrAM0 )( i, j ) += ( *Br_rel_t_minus_halfdt )( i, j );
+        }
+    }
+    
+    // Magnetic field Bt^(d,d)
+    for( unsigned int i=1 ; i<nl_d-1 ; i++ ) {
+        for( unsigned int j=0 ; j<nr_d-1 ; j++ ) {
+            ( *BtAM )( i, j )  += ( *Bt_rel_t_plus_halfdt )( i, j );
+            ( *BtAM0 )( i, j ) += ( *Bt_rel_t_minus_halfdt )( i, j );
+        }
+    }
     
 } // sum_rel_fields_to_em_fields
 
