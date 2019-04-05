@@ -1382,7 +1382,7 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
         }
         
         // compute control parameter
-        //ctrl = rnew_dot_rnew / (double)(nx_p2_global);
+        
         ctrl = sqrt( rnew_dot_rnew )/norm2_source_term;
         if( smpi->isMaster() ) {
             DEBUG( "iteration " << iteration << " done, exiting with control parameter ctrl = " << 1.0e22*ctrl << " x 1.e-22" );
@@ -1786,7 +1786,7 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
             }
         
             // scalar product of the residual
-            std::complex<double> r_dot_r = rnew_dot_rnewAM_;
+            std::complex<double> r_dot_rAM_ = rnew_dot_rnewAM_;
         
             for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
                 ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
@@ -1798,43 +1798,47 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
         //     SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Ap_, *this );
         // 
         // 
-        //     // scalar product p.Ap
-        //     double p_dot_Ap       = 0.0;
-        //     double p_dot_Ap_local = 0.0;
-        //     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-        //         p_dot_Ap_local += ( *this )( ipatch )->EMfields->compute_pAp();
-        //     }
-        //     MPI_Allreduce( &p_dot_Ap_local, &p_dot_Ap, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
-        // 
-        // 
-        //     // compute new potential and residual
-        //     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-        //         ( *this )( ipatch )->EMfields->update_pand_r( r_dot_r, p_dot_Ap );
-        //     }
-        // 
-        //     // compute new residual norm
-        //     rnew_dot_rnew       = 0.0;
-        //     rnew_dot_rnew_local = 0.0;
-        //     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-        //         rnew_dot_rnew_local += ( *this )( ipatch )->EMfields->compute_r();
-        //     }
-        //     MPI_Allreduce( &rnew_dot_rnew_local, &rnew_dot_rnew, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
-        //     if( smpi->isMaster() ) {
-        //         DEBUG( "new residual norm: rnew_dot_rnew = " << rnew_dot_rnew );
-        //     }
-        // 
-        //     // compute new directio
-        //     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-        //         ( *this )( ipatch )->EMfields->update_p( rnew_dot_rnew, r_dot_r );
-        //     }
-        // 
-        //     // compute control parameter
-        //     //ctrl = rnew_dot_rnew / (double)(nx_p2_global);
-        //     ctrl = sqrt( rnew_dot_rnew )/norm2_source_term;
-        //     if( smpi->isMaster() ) {
-        //         DEBUG( "iteration " << iteration << " done, exiting with control parameter ctrl = " << 1.0e22*ctrl << " x 1.e-22" );
-        //     }
-        // 
+            // scalar product p.Ap
+            std::complex<double> p_dot_ApAM_       = 0.0;
+            std::complex<double> p_dot_Ap_localAM_ = 0.0;
+            for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+                ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+                p_dot_Ap_localAM_ += emAM->compute_pAp_AM();
+            }
+            MPI_Allreduce( &p_dot_Ap_localAM_, &p_dot_ApAM_, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+        
+        
+            // compute new potential and residual
+            for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+                ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+                emAM->update_pand_r_AM( r_dot_rAM_, p_dot_ApAM_ );
+            }
+        
+            // compute new residual norm
+            rnew_dot_rnewAM_       = 0.0;
+            rnew_dot_rnew_localAM_ = 0.0;
+            for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+                ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+                rnew_dot_rnew_localAM_ += emAM->compute_r_AM();
+            }
+            MPI_Allreduce( &rnew_dot_rnew_localAM_, &rnew_dot_rnewAM_, 1, MPI_COMPLEX, MPI_SUM, MPI_COMM_WORLD );
+            if( smpi->isMaster() ) {
+                DEBUG( "new residual norm: rnew_dot_rnew = " << rnew_dot_rnewAM_ );
+            }
+        
+            // compute new directio
+            for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+                ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+                emAM->update_p_AM( rnew_dot_rnewAM_, r_dot_rAM_ );
+            }
+        
+            // compute control parameter
+          
+            ctrl = sqrt( std::abs(rnew_dot_rnewAM_) )/norm2_source_term;
+            if( smpi->isMaster() ) {
+                DEBUG( "iteration " << iteration << " done, exiting with control parameter ctrl = " << 1.0e22*ctrl << " x 1.e-22" );
+            }
+        
         }//End of the iterative loop
 
 
