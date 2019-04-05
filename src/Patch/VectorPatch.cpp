@@ -1962,6 +1962,7 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
         emAM->delete_phi_r_p_Ap( ( *this )( ipatch ) );
+        emAM->delete_relativistic_fields( ( *this )( ipatch ) );
     }
 
     // // Exchange the fields after the addition of the relativistic species fields

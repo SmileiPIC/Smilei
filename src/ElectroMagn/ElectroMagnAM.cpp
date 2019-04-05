@@ -690,6 +690,23 @@ void ElectroMagnAM::delete_phi_r_p_Ap( Patch *patch ){
     delete Ap_AM_;
 }
 
+void ElectroMagnAM::delete_relativistic_fields(Patch *patch){
+    delete El_rel_;
+    delete Er_rel_;
+    delete Et_rel_;
+    delete Bl_rel_;
+    delete Br_rel_;
+    delete Bt_rel_;
+    
+    delete Bl_rel_t_plus_halfdt_;
+    delete Br_rel_t_plus_halfdt_;
+    delete Bt_rel_t_plus_halfdt_;
+    delete Bl_rel_t_minus_halfdt_;
+    delete Br_rel_t_minus_halfdt_;
+    delete Bt_rel_t_minus_halfdt_;
+}
+
+
 void ElectroMagnAM::initE( Patch *patch )
 {
 #ifdef _TODO_AM
