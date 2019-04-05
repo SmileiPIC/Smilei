@@ -1967,24 +1967,12 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
     }
 
     // // Exchange the fields after the addition of the relativistic species fields
-    // SyncVectorPatch::exchange_along_all_directions_noomp( Ex_, *this, smpi );
-    // SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Ex_, *this );
-    // SyncVectorPatch::exchange_along_all_directions_noomp( Ey_, *this, smpi );
-    // SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Ey_, *this );
-    // SyncVectorPatch::exchange_along_all_directions_noomp( Ez_, *this, smpi );
-    // SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Ez_, *this );
-    // SyncVectorPatch::exchange_along_all_directions_noomp( Bx_, *this, smpi );
-    // SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Bx_, *this );
-    // SyncVectorPatch::exchange_along_all_directions_noomp( By_, *this, smpi );
-    // SyncVectorPatch::finalize_exchange_along_all_directions_noomp( By_, *this );
-    // SyncVectorPatch::exchange_along_all_directions_noomp( Bz_, *this, smpi );
-    // SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Bz_, *this );
-    // SyncVectorPatch::exchange_along_all_directions_noomp( Bx_m, *this, smpi );
-    // SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Bx_m, *this );
-    // SyncVectorPatch::exchange_along_all_directions_noomp( By_m, *this, smpi );
-    // SyncVectorPatch::finalize_exchange_along_all_directions_noomp( By_m, *this );
-    // SyncVectorPatch::exchange_along_all_directions_noomp( Bz_m, *this, smpi );
-    // SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Bz_m, *this );
+    for( unsigned int imode = 0 ; params.nmodes ; imode++ ) {
+        SyncVectorPatch::exchangeE( params, ( *this ), imode, smpi );
+        SyncVectorPatch::finalizeexchangeE( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
+        SyncVectorPatch::exchangeB( params, ( *this ), imode, smpi );
+        SyncVectorPatch::finalizeexchangeB( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
+    }
     
     MESSAGE( 0, "Fields of relativistic species initialized" );
     //!\todo Reduce to find global max
