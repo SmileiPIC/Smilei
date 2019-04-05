@@ -62,6 +62,8 @@ public :
     static void finalizeexchangeComplex( std::vector<Field *> fields, VectorPatch &vecPatches );
     static void exchange_along_all_directions_noomp( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
     static void finalize_exchange_along_all_directions_noomp( std::vector<Field *> fields, VectorPatch &vecPatches );
+    static void exchange_along_all_directions_noompComplex( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
+    static void finalize_exchange_along_all_directions_noompComplex( std::vector<Field *> fields, VectorPatch &vecPatches );
     
     static void exchange_synchronized_per_direction( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
     

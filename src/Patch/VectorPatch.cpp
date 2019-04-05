@@ -1794,10 +1794,10 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
             }
         
             // Exchange Ap_ (intra & extra MPI)
-        //     SyncVectorPatch::exchange_along_all_directions_noomp( Ap_, *this, smpi );
-        //     SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Ap_, *this );
-        // 
-        // 
+            SyncVectorPatch::exchange_along_all_directions_noomp( Ap_AM_, *this, smpi );
+            SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Ap_AM_, *this );
+        
+        
             // scalar product p.Ap
             std::complex<double> p_dot_ApAM_       = 0.0;
             std::complex<double> p_dot_Ap_localAM_ = 0.0;
