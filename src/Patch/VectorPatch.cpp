@@ -1922,10 +1922,11 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
         // B  = B  + B_rel_t_plus_halfdt
         // Bm = Bm + B_rel_t_minus_halfdt
         
-        // for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-        //     // begin loop on patches
-        //     ( *this )( ipatch )->EMfields->sum_rel_fields_to_em_fields( ( *this )( ipatch ) );
-        // } // end loop on patches
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            // begin loop on patches
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+            emAM->sum_rel_fields_to_em_fields_AM( ( *this )( ipatch ), params, imode );
+        } // end loop on patches
         
         
         // clean the auxiliary vectors for the present azimuthal mode

@@ -682,8 +682,122 @@ void ElectroMagnAM::center_fields_from_relativistic_Poisson_AM( Patch *patch )
     
 }
 
+void ElectroMagnAM::sum_rel_fields_to_em_fields_AM( Patch *patch, Params &params, unsigned int imode )
+{
+    cField2D *ElAMrel  = static_cast<cField2D *>( El_rel_ );
+    cField2D *ErAMrel  = static_cast<cField2D *>( Er_rel_ );
+    cField2D *EtAMrel  = static_cast<cField2D *>( Et_rel_ );
+    
+    // B_t_plus_halfdt
+    cField2D *Bl_rel_t_plus_halfdt = static_cast<cField2D *>( Bl_rel_t_plus_halfdt_ );
+    cField2D *Br_rel_t_plus_halfdt = static_cast<cField2D *>( Br_rel_t_plus_halfdt_ );
+    cField2D *Bt_rel_t_plus_halfdt = static_cast<cField2D *>( Bt_rel_t_plus_halfdt_ );
+    
+    // B_t_minus_halfdt
+    cField2D *Bl_rel_t_minus_halfdt = static_cast<cField2D *>( Bl_rel_t_minus_halfdt_ );
+    cField2D *Br_rel_t_minus_halfdt = static_cast<cField2D *>( Br_rel_t_minus_halfdt_ );
+    cField2D *Bt_rel_t_minus_halfdt = static_cast<cField2D *>( Bt_rel_t_minus_halfdt_ );
+    
+    // E and B fields already existing on the grid
+    cField2D *ElAM  = static_cast<cField2D *>( El_[imode] );
+    cField2D *ErAM  = static_cast<cField2D *>( Er_[imode] );
+    cField2D *EtAM  = static_cast<cField2D *>( Et_[imode] );
+    cField2D *BlAM  = static_cast<cField2D *>( Bl_[imode] );
+    cField2D *BrAM  = static_cast<cField2D *>( Br_[imode]);
+    cField2D *BtAM  = static_cast<cField2D *>( Bt_[imode] );
+    cField2D *BlAM0  = static_cast<cField2D *>( Bl_m[imode] );
+    cField2D *BrAM0  = static_cast<cField2D *>( Br_m[imode] );
+    cField2D *BtAM0  = static_cast<cField2D *>( Bt_m[imode] );
+
+    complex<double>     i1 = std::complex<double>( 0., 1 );
+    double dt = params.timestep;
+    // El (d,p)
+    for( unsigned int i=0; i<nl_d; i++ ) {
+        for( unsigned int j=0; j<nr_p; j++ ) {
+            ( *ElAM )( i, j ) = ( *ElAM )( i, j ) + ( *ElAMrel )( i, j );
+        }
+    }
+    
+    // Er (p,d)
+    for( unsigned int i=0; i<nl_p; i++ ) {
+        for( unsigned int j=0; j<nr_d; j++ ) {
+            ( *ErAM )( i, j ) = ( *ErAM )( i, j ) + ( *ErAMrel )( i, j );
+        }
+    }
+    
+    // Et (p,p)
+    for( unsigned int i=0; i<nl_p; i++ ) {
+        for( unsigned int j=0; j<nr_p; j++ ) {
+            ( *EtAM )( i, j ) = ( *EtAM )( i, j ) + ( *EtAMrel )( i, j );
+        }
+    }
+    
+    
+    
+    // Since Brel is centered in time as E, it is inconsistent with FDTD,
+    // where E and B are staggered in time.
+    // Possible solution:
+    // Use FDTD scheme to integrate Maxwell-Faraday equation forward in time by dt/2 to obtain B
+    // Use FDTD scheme to integrate Maxwell-Faraday equation backwards in time by dt/2 to obtain Bm
+    // Add the forward-evolved and backward-evolved fields to the grid fields
+    
+    
+    
+    // Magnetic field Bl^(p,d)
+    for( unsigned int i=0 ; i<nl_p;  i++ ) {
+        for( unsigned int j=1+isYmin*2 ; j<nr_d-1 ; j++ ) {
+            // forward advance by dt/2
+            ( *Bl_rel_t_plus_halfdt )( i, j ) += - dt/2./( ( j_glob_+j-0.5 )*dr ) * ( ( double )( j+j_glob_ )*( *EtAMrel )( i, j ) 
+                                                 - ( double )( j+j_glob_-1. )*( *EtAMrel )( i, j-1 ) + i1*( double )imode*( *ErAMrel )( i, j ) );
+            
+            // backward advance by dt/2
+            ( *Bl_rel_t_minus_halfdt )( i, j )-= - dt/2./( ( j_glob_+j-0.5 )*dr ) * ( ( double )( j+j_glob_ )*( *EtAMrel )( i, j ) 
+                                                 - ( double )( j+j_glob_-1. )*( *EtAMrel )( i, j-1 ) + i1*( double )imode*( *ErAMrel )( i, j ) );
+            // sum to the fields on grid
+            ( *BlAM )( i, j )  += ( *Bl_rel_t_plus_halfdt )( i, j );
+            ( *BlAM0 )( i, j ) += ( *Bl_rel_t_minus_halfdt )( i, j );
+        }
+    }
+    
+    // Magnetic field Br^(d,p)
+    for( unsigned int i=1 ; i<nl_d-1 ; i++ ) {
+        for( unsigned int j=isYmin*3 ; j<nr_p ; j++ ) {
+            // forward advance by dt/2
+            ( *Br_rel_t_plus_halfdt )( i, j ) += dt_ov_dl/2. * ( ( *EtAMrel )( i, j ) - ( *EtAMrel )( i-1, j ) )
+                                                 +i1*dt/2.*( double )imode/( ( double )( j_glob_+j )*dr )*( *ElAMrel )( i, j ) ;
+            // backward advance by dt/2
+            ( *Br_rel_t_minus_halfdt )( i, j )-= dt_ov_dl/2. * ( ( *EtAMrel )( i, j ) - ( *EtAMrel )( i-1, j ) )
+                                                 +i1*dt/2.*( double )imode/( ( double )( j_glob_+j )*dr )*( *ElAMrel )( i, j ) ;
+            // sum to the fields on grid
+            ( *BrAM )( i, j )  += ( *Br_rel_t_plus_halfdt )( i, j );
+            ( *BrAM0 )( i, j ) += ( *Br_rel_t_minus_halfdt )( i, j );
+        }
+    }
+    
+    // Magnetic field Bt^(d,d)
+    for( unsigned int i=1 ; i<nl_d-1 ; i++ ) {
+        for( unsigned int j=1 + isYmin*2 ; j<nr_d-1 ; j++ ) {
+            // forward advance by dt/2
+            ( *Bt_rel_t_plus_halfdt )( i, j ) += dt_ov_dr/2. * ( ( *ElAMrel )( i, j ) - ( *ElAMrel )( i, j-1 ) )
+                                                -dt_ov_dl/2. * ( ( *ErAMrel )( i, j ) - ( *ErAMrel )( i-1, j ) );
+            
+            // backward advance by dt/2
+            ( *Bt_rel_t_minus_halfdt )( i, j )-= dt_ov_dr/2. * ( ( *ElAMrel )( i, j ) - ( *ElAMrel )( i, j-1 ) )
+                                                -dt_ov_dl/2. * ( ( *ErAMrel )( i, j ) - ( *ErAMrel )( i-1, j ) );
+
+            ( *BtAM )( i, j )  += ( *Bt_rel_t_plus_halfdt )( i, j );
+            ( *BtAM0 )( i, j ) += ( *Bt_rel_t_minus_halfdt )( i, j );
+        }
+    }
+    
+
+    // Boundary conditions on Axis
+  
+    
+} // sum_rel_fields_to_em_fields
 
 void ElectroMagnAM::delete_phi_r_p_Ap( Patch *patch ){
+    // delete temporary fields used for relativistic initialization
     delete phi_AM_;
     delete r_AM_;
     delete p_AM_;
@@ -691,6 +805,7 @@ void ElectroMagnAM::delete_phi_r_p_Ap( Patch *patch ){
 }
 
 void ElectroMagnAM::delete_relativistic_fields(Patch *patch){
+    // delete temporary fields used for relativistic initialization
     delete El_rel_;
     delete Er_rel_;
     delete Et_rel_;
