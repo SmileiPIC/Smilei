@@ -51,6 +51,9 @@ impacting significantly the physical resuls.
   This suppose that the parameters are adequatly tuned.
   Otherwise, the macro-particle merging can affect the final simulation results.
 
+Momentum cell decomposition
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
 In a position merge cell, step 2 starts by the computation of the minimum and maximum momentum
 boundaries (refered to as :math:`p_{min}` and :math:`p_{max}` in :numref:`fig_vranic_particle_merging`).
 The boundaries define the momentum space that is then discretized.
@@ -92,6 +95,9 @@ anymore for cold ones.
 The spherical geometry ensures that the merging accuracy depends
 on the discretization and is similar for all momentum cells.
 The overhead induced by the change of geometry is a small fraction of the entire process.
+
+Merging algorithm for mass macro-particles
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 Step 3 starts after the momentum space discretization.
 For each momentum cell with more than 4 macro-particles,
@@ -143,7 +149,7 @@ and same energy :math:`\varepsilon_a = \varepsilon_b = \varepsilon_t / w_t`.
 .. _fig_vranic_planar_merging:
 
 .. figure:: _static/vranic_planar_merging.png
-  :width: 100%
+  :width: 80%
 
   View of the plane made by vector :math:`\mathbf{d}` and :math:`\mathbf{p_t}`.
   The corresponding Cartesian frame is given by :math:`(\mathbf{e_1}, \mathbf{e_2}, \mathbf{e_3})`.
@@ -217,12 +223,26 @@ Finally, the new macro-particle momentum are:
   \mathbf{p_a} = p_a \left( \cos{\left( \omega \right)} \mathbf{e_1} +  \sin{\left(\omega\right)} \mathbf{e_2} \right) \\
   \mathbf{p_b} = p_b \left( \cos{\left( \omega \right)} \mathbf{e_1} -  \sin{\left(\omega\right)} \mathbf{e_2} \right)
 
+The method is summarized grpahically in :numref:`fig_3d_schematic`.
+It has been drawn using Python with Matplotlib.
+The Python script in available `here <_static/vranic_geometry.py>`_.
+
 .. _fig_3d_schematic:
 
 .. figure:: _static/vranic_3d_schematics.png
-  :width: 100%
+  :width: 80%
 
-  Momentum cell vector in Cartesian and spherical geometries.
+  3d view of the different vectors involved in the merging method.
+
+The new macro-particle positions are assigned at the position of one of
+the merged macro-particles.
+
+Merging algorithm for macro-photons
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+Macro-photons can be merged in a single macro-particles while ensuring
+concervation of the weight, the momentum and the energy.
+The new macro-photon is emitted in the direction of :math:`p_t`.
 
 Implementation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
