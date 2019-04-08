@@ -167,7 +167,14 @@ so that:
 
 We define :math:`\mathbf{d}` the cell direction or location vector.
 It represents the location (or the direction in spherical coordinates) of the momentum cell where the macro-particles are located
-as shown in :numref:`fig_cell_vector`.
+as shown in :numref:`fig_momentum_cell_vector`.
+
+.. _fig_momentum_cell_vector:
+
+.. figure:: _static/vranic_momentum_cell_vector.png
+  :width: 100%
+
+  Momentum cell vector in Cartesian and spherical geometries.
 
 The plane :math:`(\mathbf{e_1},\mathbf{e_2})` is the plane made by the vector :math:`\mathbf{p_t}` and :math:`\mathbf{d}`.
 We decide that it contains :math:`\mathbf{p_a}` and :math:`\mathbf{p_b}` so that we have only one possible solution.
@@ -209,6 +216,13 @@ Finally, the new macro-particle momentum are:
 
   \mathbf{p_a} = p_a \left( \cos{\left( \omega \right)} \mathbf{e_1} +  \sin{\left(\omega\right)} \mathbf{e_2} \right) \\
   \mathbf{p_b} = p_b \left( \cos{\left( \omega \right)} \mathbf{e_1} -  \sin{\left(\omega\right)} \mathbf{e_2} \right)
+
+.. _fig_3d_schematic:
+
+.. figure:: _static/vranic_3d_schematics.png
+  :width: 100%
+
+  Momentum cell vector in Cartesian and spherical geometries.
 
 Implementation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
