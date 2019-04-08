@@ -461,7 +461,7 @@ void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gam
 
     // Xmin BC
     if( patch->isXmin() ) {
-        for( unsigned int j=isYmin*3; j<nr_p-2; j++ ) {
+        for( unsigned int j=1; j<nr_p-2; j++ ) {
             //Ap_(0,j)      = one_ov_dx_sq*(pXmin[j]+p_(1,j))
             ( *Ap_AM_ )( 0, j )     = one_ov_dl_sq_ov_gamma_sq*( ( *p_AM_ )( 1, j ) )
                                     +              one_ov_dr_sq*( ( *p_AM_ )( 0, j+1 )+( *p_AM_ )( 0, j+1 ) )
