@@ -197,7 +197,7 @@ public:
     {
         double norm2( 0 );
         for( unsigned int imode = 0 ; imode<nmodes ; imode++ ) {
-            rho_AM_[imode]->norm2( istart, bufsize );
+            norm2 += rho_AM_[imode]->norm2( istart, bufsize );
         }
         return norm2;
     }
