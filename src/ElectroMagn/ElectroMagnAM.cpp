@@ -461,10 +461,10 @@ void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gam
 
     // Xmin BC
     if( patch->isXmin() ) {
-        for( unsigned int j=isYmin*3; j<nr_p-1; j++ ) {
+        for( unsigned int j=isYmin*3; j<nr_p-2; j++ ) {
             //Ap_(0,j)      = one_ov_dx_sq*(pXmin[j]+p_(1,j))
             ( *Ap_AM_ )( 0, j )     = one_ov_dl_sq_ov_gamma_sq*( ( *p_AM_ )( 1, j ) )
-                                    +              one_ov_dr_sq*( ( *p_AM_ )( 0, j-1 )+( *p_AM_ )( 0, j+1 ) )
+                                    +              one_ov_dr_sq*( ( *p_AM_ )( 0, j+1 )+( *p_AM_ )( 0, j+1 ) )
                                     +              one_ov_dr   *( ( *p_AM_ )( 0, j+1 )-( *p_AM_ )( 0, j-1 ) )
                                     -              two_ov_dlgam2dr2*( *p_AM_ )( 0, j )
                                     - (double)(imode*imode)/( ( j_glob_+j-0.5 )*dr )/( ( j_glob_+j-0.5 )*dr )*( *p_AM_ )( 0, j );
@@ -608,18 +608,18 @@ void ElectroMagnAM::initE_relativistic_Poisson_AM( Patch *patch, double gamma_me
             ( *ElAM )( i, j ) = ( ( *phi_AM_ )( i-1, j )-( *phi_AM_ )( i, j ) )/dl/gamma_mean/gamma_mean;
         }
     }
-    MESSAGE( 1, "Ex: done" );
+    MESSAGE( 1, "El: done" );
     // Er
     MESSAGE( 1, "Computing Er from scalar potential, relativistic Poisson problem" );
-    for( unsigned int i=0; i<nl_d; i++ ) {
-        for( unsigned int j=isYmin*3; j<nr_p-1; j++ ) {
+    for( unsigned int i=1; i<nl_d-1; i++ ) {
+        for( unsigned int j=2; j<nr_p-1; j++ ) {
             ( *ErAM )( i, j ) = ( ( *phi_AM_ )( i, j-1 )-( *phi_AM_ )( i, j ) )/dr;
         }
     }
     MESSAGE( 1, "Er: done" );
     // Et
     MESSAGE( 1, "Computing Er from scalar potential, relativistic Poisson problem" );
-    for( unsigned int i=0; i<nl_p; i++ ) {
+    for( unsigned int i=1; i<nl_p-1; i++ ) {
         for( unsigned int j=isYmin*3; j<nr_p-1; j++ ) {
             ( *EtAM )( i, j ) = i1*((double )imode)/(((double)( j_glob_+j-0.5 ))*dr)* ( *phi_AM_ )( i, j );
         }
@@ -687,8 +687,8 @@ void ElectroMagnAM::initB_relativistic_Poisson_AM( Patch *patch, double gamma_me
     
     // Bl^(p,d) is identically zero
     MESSAGE( 1, "Computing Bl, relativistic Poisson problem" );
-    for( unsigned int i=0; i<nl_p; i++ ) {
-        for( unsigned int j=0; j<nr_d; j++ ) {
+    for( unsigned int i=1; i<nl_p-1; i++ ) {
+        for( unsigned int j=1; j<nr_d-1; j++ ) {
             ( *BlAM )( i, j ) = 0.;
         }
     }
@@ -696,8 +696,8 @@ void ElectroMagnAM::initB_relativistic_Poisson_AM( Patch *patch, double gamma_me
     
     // Br^(d,d) from Et^(d,d)
     MESSAGE( 1, "Computing Br from scalar potential, relativistic Poisson problem" );
-    for( unsigned int i=0; i<nl_d; i++ ) {
-        for( unsigned int j=0; j<nr_d; j++ ) {
+    for( unsigned int i=1; i<nl_d-1; i++ ) {
+        for( unsigned int j=1; j<nr_d-1; j++ ) {
             ( *BrAM )( i, j ) = -beta_mean*( *EtAM )( i, j );
         }
     }
@@ -705,8 +705,8 @@ void ElectroMagnAM::initB_relativistic_Poisson_AM( Patch *patch, double gamma_me
 
     // Bt^(d,p) from Er^(d,p)
     MESSAGE( 1, "Computing Bt from scalar potential, relativistic Poisson problem" );
-    for( unsigned int i=0; i<nl_d; i++ ) {
-        for( unsigned int j=0; j<nr_p; j++ ) {
+    for( unsigned int i=1; i<nl_d-1; i++ ) {
+        for( unsigned int j=1; j<nr_p-1; j++ ) {
             ( *BtAM )( i, j ) = beta_mean*( *ErAM )( i, j );
         }
     }
