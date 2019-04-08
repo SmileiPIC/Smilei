@@ -140,12 +140,75 @@ To simplify the problem, Vranic *et al* assume that merged macro-particles
 have the same weight :math:`w_a = w_b = w_t / 2`
 and same energy :math:`\varepsilon_a = \varepsilon_b = \varepsilon_t / w_t`.
 
-As illustrated in :numref:`vranic_planar_merging`, it follows table_h_attrs
+.. _fig_vranic_planar_merging:
+
+.. figure:: _static/vranic_planar_merging.png
+  :width: 100%
+
+  View of the plane made by vector :math:`\mathbf{d}` and :math:`\mathbf{p_t}`.
+  The corresponding Cartesian frame is given by :math:`(\mathbf{e_1}, \mathbf{e_2}, \mathbf{e_3})`.
+
+As illustrated in :numref:`fig_vranic_planar_merging`, it follows that:
 
 .. math::
-  :label: energy_momentum_relation
+  :label: new_momentum_relation
 
-  \mathbf{p}_a +  \mathbf{p}_b = \frac{2 \mathbf{p}_t}{w_t}
+  \mathbf{p}_a +  \mathbf{p}_b = \frac{2 \mathbf{p}_t}{w_t} \\
+  \mathbf{p}_{a,\perp} = - \mathbf{p}_{b,\perp} \\
+  \mathbf{p}_{a,\parallel} = \mathbf{p}_{b,\parallel} = \mathbf{p_t} / w_t
+
+We all :math:`\omega` the angle betweeb :math:`\mathbf{p_a}` and :math:`\mathbf{p_t}`
+so that:
+
+.. math::
+  :label: angle_omega
+
+  \cos{\omega} = \frac{\mathbf{p_t}}{w_t \mathbf{p_a}}
+
+We define :math:`\mathbf{d}` the cell direction or location vector.
+It represents the location (or the direction in spherical coordinates) of the momentum cell where the macro-particles are located
+as shown in :numref:`fig_cell_vector`.
+
+The plane :math:`(\mathbf{e_1},\mathbf{e_2})` is the plane made by the vector :math:`\mathbf{p_t}` and :math:`\mathbf{d}`.
+We decide that it contains :math:`\mathbf{p_a}` and :math:`\mathbf{p_b}` so that we have only one possible solution.
+
+Now, it is just necessary to determine :math:`\mathbf{e_1}` and :math:`\mathbf{e_2}` in the momentum frame used by the PIC code.
+They are given by the following formula:
+
+.. math::
+  :label: planar_coordinates_e1
+
+  \mathbf{e_1} = \mathbf{p_t} / p_t
+
+.. math::
+  :label: planar_coordinates_e3
+
+  \mathbf{e_3} & = &  \frac{ \mathbf{d} \times \mathbf{e_1} }{d} \\
+               & = & \frac{ 1 }{d.p_t}
+   \begin{array}{|l}
+      p_{t,z} \cdot d_y - p_{t,y} \cdot d_z \\
+      p_{t,x} \cdot d_z - p_{t,z} \cdot d_x \\
+      p_{t,y} \cdot d_x - p_{t,x} \cdot d_y
+   \end{array}
+
+.. math::
+  :label: planar_coordinates_e2
+
+  \mathbf{e_2} & = & \mathbf{e_1} \times \mathbf{e_3} \\
+               & = & \frac{1}{p_t^2 . d}
+   \begin{array}{|l}
+      p_{t,y}^2 .d_x - p_{t,x}(d_y.p_{t,y} + d_z.p_{t,z}) + p_{t,z}^2.d_x \\
+      p_{t,z}^2 .d_y - p_{t,y}(d_z.p_{t,z} + d_x.p_{t,x}) + p_{t,x}^2.d_y \\
+      p_{t,x}^2 .d_z - p_{t,z}(d_x.p_{t,x} + d_y.p_{t,y}) + p_{t,y}^2.d_z
+   \end{array}
+
+Finally, the new macro-particle momentum are:
+
+.. math::
+  :label: new_macroparticle_momentum
+
+  \mathbf{p_a} = p_a \left( \cos{\left( \omega \right)} \mathbf{e_1} +  \sin{\left(\omega\right)} \mathbf{e_2} \right) \\
+  \mathbf{p_b} = p_b \left( \cos{\left( \omega \right)} \mathbf{e_1} -  \sin{\left(\omega\right)} \mathbf{e_2} \right)
 
 Implementation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
