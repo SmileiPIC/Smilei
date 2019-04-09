@@ -1967,9 +1967,11 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
     }
 
     // // Exchange the fields after the addition of the relativistic species fields
-    for( unsigned int imode = 0 ; params.nmodes ; imode++ ) {
+    for( unsigned int imode = 0 ; imode < params.nmodes ; imode++ ) {
         SyncVectorPatch::exchangeE( params, ( *this ), imode, smpi );
         SyncVectorPatch::finalizeexchangeE( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
+    }
+    for( unsigned int imode = 0 ; imode < params.nmodes ; imode++ ) {
         SyncVectorPatch::exchangeB( params, ( *this ), imode, smpi );
         SyncVectorPatch::finalizeexchangeB( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
     }
