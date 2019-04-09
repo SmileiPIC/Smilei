@@ -302,10 +302,11 @@ public:
                             thisSpecies->merging_method_.end(),
                             thisSpecies->merging_method_.begin(), tolower );
 
-            if( ( thisSpecies->merging_method_ != "vranic" ) &&
-                    ( thisSpecies->merging_method_ != "none" ) ) {
+            if( ( thisSpecies->merging_method_ != "vranic_spherical" ) &&
+                ( thisSpecies->merging_method_ != "vranic_cartesian" ) &&
+                ( thisSpecies->merging_method_ != "none" ) ) {
                 ERROR( "In Species " << thisSpecies->name
-                       << ": merging method not valid, must be `vranic` or `none`" );
+                       << ": merging method not valid, must be `vranic_spherical`, `vranic_cartesian` or `none`" );
             }
 
             if( params.vectorization_mode == "off" && thisSpecies->merging_method_ != "none" ) {

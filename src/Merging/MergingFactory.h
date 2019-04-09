@@ -12,7 +12,8 @@
 #define MERGINGFACTORY_H
 
 #include "Merging.h"
-#include "MergingVranic.h"
+#include "MergingVranicSpherical.h"
+#include "MergingVranicCartesian.h"
 
 //  ----------------------------------------------------------------------------
 //! Class MergingFactory
@@ -30,12 +31,14 @@ public:
     static Merging *create( Params &params, Species *species )
     {
         Merging *Merge = NULL;
-        
+
         // assign the correct Radiation model to Radiate
-        if( species->merging_method_ == "vranic" ) {
-            Merge = new MergingVranic( params, species );
+        if( species->merging_method_ == "vranic_spherical" ) {
+            Merge = new MergingVranicSpherical( params, species );
+        } else if (species->merging_method_ == "vranic_cartesian") {
+            Merge = new MergingVranicCartesian( params, species );
         }
-        
+
         return Merge;
     }
 };

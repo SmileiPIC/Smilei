@@ -242,7 +242,9 @@ Merging algorithm for macro-photons
 
 Macro-photons can be merged in a single macro-particles while ensuring
 concervation of the weight, the momentum and the energy.
-The new macro-photon is emitted in the direction of :math:`p_t`.
+This is possible because the momentum norm is equal to the energy :math:`\varepsilon = p`.
+The new macro-photon is emitted in the direction of :math:`\mathbf{p_t}` with weight :math:`w_t`
+and energy :math:`p = \varepsilon = \varepsilon_t / w_t`.
 
 Implementation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

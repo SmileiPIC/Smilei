@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
-//! \file MergingVranic.h
+//! \file MergingVranicCartesian.h
 //
-//! \brief Header for the class MergingVranic
+//! \brief Header for the class MergingVranicCartesian
 //! Particle merging with the method of Vranic et al.
 //! Vranic CPC 191 65-73 (2015)
 //
@@ -12,8 +12,8 @@
 //
 // ----------------------------------------------------------------------------
 
-#ifndef MERGINGVRANIC_H
-#define MERGINGVRANIC_H
+#ifndef MERGINGVRANICCARTESIAN_H
+#define MERGINGVRANICCARTESIAN_H
 
 #include <cmath>
 
@@ -21,19 +21,19 @@
 
 
 //------------------------------------------------------------------------------
-//! MergingVranic class: holds parameters and functions to apply the
+//! MergingVranicCartesian class: holds parameters and functions to apply the
 //! Vranic et al. particle merging algorithm.
 //------------------------------------------------------------------------------
-class MergingVranic : public Merging
+class MergingVranicCartesian : public Merging
 {
 
 public:
 
     //! Constructor for RadiationLandauLifshitz
-    MergingVranic( Params &params, Species *species );
+    MergingVranicCartesian( Params &params, Species *species );
 
     //! Destructor for RadiationLandauLifshitz
-    ~MergingVranic();
+    ~MergingVranicCartesian();
 
     // ---------------------------------------------------------------------
     //! Overloading of () operator: perform the Vranic particle merging

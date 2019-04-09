@@ -1,7 +1,7 @@
 // ----------------------------------------------------------------------------
-//! \file MerginngVranic.cpp
+//! \file MergingVranicSpherical.cpp
 //
-//! \brief Functions of the class MergingVranic
+//! \brief Functions of the class MergingVranicSpherical
 //! Particle merging with the method of Vranic et al.
 //! Vranic CPC 191 65-73 (2015)
 //
@@ -9,7 +9,7 @@
 //
 // ----------------------------------------------------------------------------
 
-#include "MergingVranic.h"
+#include "MergingVranicSpherical.h"
 
 #include <cmath>
 
@@ -17,7 +17,7 @@
 //! Constructor for RadiationNLandauLifshitz
 //! Inherited from Radiation
 // -----------------------------------------------------------------------------
-MergingVranic::MergingVranic(Params& params,
+MergingVranicSpherical::MergingVranicSpherical(Params& params,
                              Species * species)
       : Merging(params, species)
 {
@@ -32,9 +32,9 @@ MergingVranic::MergingVranic(Params& params,
 }
 
 // -----------------------------------------------------------------------------
-//! Destructor for MergingVranic
+//! Destructor for MergingVranicSpherical
 // -----------------------------------------------------------------------------
-MergingVranic::~MergingVranic()
+MergingVranicSpherical::~MergingVranicSpherical()
 {
 }
 
@@ -48,7 +48,7 @@ MergingVranic::~MergingVranic()
 //! \param iend        Index of the last particle
 //! \param count       Final number of particles
 // ---------------------------------------------------------------------
-void MergingVranic::operator() (
+void MergingVranicSpherical::operator() (
         double mass,
         Particles &particles,
         std::vector <int> &mask,
@@ -602,7 +602,7 @@ void MergingVranic::operator() (
                                     //     * sqrt(1.0 + momentum_norm[ipart - istart]*momentum_norm[ipart - istart]);
                                 }
 
-                                // here for photon, this parameter is the inverse of total_weight
+                                // This parameter is temporary the inverse of total_weight
                                 new_momentum_norm = 1 / total_weight;
 
                                 //mr = mr * new_momentum_norm;

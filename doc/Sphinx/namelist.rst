@@ -577,7 +577,7 @@ Each species has to be defined in a ``Species`` block::
       multiphoton_Breit_Wheeler_sampling = [1,1]
 
       # Merging
-      merging_method = "vranic",
+      merging_method = "vranic_spherical",
       merge_every = 5,
       merge_min_particles_per_cell = 16,
       merge_max_packet_size = 4,
