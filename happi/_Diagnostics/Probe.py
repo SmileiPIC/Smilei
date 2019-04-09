@@ -34,16 +34,16 @@ class Probe(Diagnostic):
 			# Verify that this file is compatible with the previous ones
 			try:
 				for key, val in verifications.items():
-					if self._h5probe[-1][key].value != val:
+					if self._h5probe[-1][key][()] != val:
 						self._error += ["Probe #"+str(probeNumber)+" in path '"+path+"' is incompatible with the other ones"]
 						return
 			except:
-				verifications = {"number":self._h5probe[-1]["number"].value}
+				verifications = {"number":self._h5probe[-1]["number"][()]}
 				npoints = self._h5probe[-1]["number"].size
-				if self._h5probe[-1]["number"].value.prod() > 1:
+				if self._h5probe[-1]["number"][()].prod() > 1:
 					npoints += 1
 				for i in range(npoints):
-					verifications["p"+str(i)] = self._h5probe[-1]["p"+str(i)].value
+					verifications["p"+str(i)] = self._h5probe[-1]["p"+str(i)][()]
 
 		# Get available times
 		self._dataForTime = {}
@@ -227,7 +227,7 @@ class Probe(Diagnostic):
 			self._units = [axisunits, axisunits]
 
 		# Prepare the reordering of the points for patches disorder
-		positions = self._h5probe[0]["positions"].value # actual probe points positions
+		positions = self._h5probe[0]["positions"][()] # actual probe points positions
 		self._ordering = None
 		tmpShape = self._initialShape
 		if self._naxes>0:
