@@ -42,8 +42,7 @@ public:
     void restartRhoJs() override;
     
     void initPoisson( Patch *patch ) override;
-    double compute_r() override {return 0;};
-    std::complex<double> compute_r_AM();
+    double compute_r();
     void compute_Ap( Patch *patch ) override;
     void compute_Ap_relativistic_Poisson( Patch *patch, double gamma_mean ) override {;}
     void compute_Ap_relativistic_Poisson_AM( Patch *patch, double gamma_mean, unsigned int imode );
@@ -51,9 +50,8 @@ public:
     double compute_pAp() override {return 0.;};
     std::complex<double> compute_pAp_AM();
     void update_pand_r( double r_dot_r, double p_dot_Ap ) override {;};
-    void update_p( double rnew_dot_rnew, double r_dot_r ) override {;};
-    void update_pand_r_AM( std::complex<double> r_dot_r, std::complex<double> p_dot_Ap );
-    void update_p_AM( std::complex<double> rnew_dot_rnew, std::complex<double> r_dot_r );
+    void update_p( double rnew_dot_rnew, double r_dot_r );
+    void update_pand_r_AM( double r_dot_r, std::complex<double> p_dot_Ap );
     void initE( Patch *patch ) override;
     void delete_phi_r_p_Ap( Patch *patch );
     void delete_relativistic_fields( Patch *patch );

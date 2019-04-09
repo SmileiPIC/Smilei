@@ -408,12 +408,12 @@ void ElectroMagnAM::initPoisson_init_phi_r_p_Ap( Patch *patch, unsigned int imod
 }
 
 
-std::complex<double> ElectroMagnAM::compute_r_AM()
+double ElectroMagnAM::compute_r()
 {
-    std::complex<double> rnew_dot_rnew_localAM_( 0. );
+    double rnew_dot_rnew_localAM_( 0. );
     for( unsigned int i=index_min_p_[0]; i<=index_max_p_[0]; i++ ) {
         for( unsigned int j=index_min_p_[1]; j<=index_max_p_[1]; j++ ) {
-            rnew_dot_rnew_localAM_ += ( *r_AM_ )( i, j )*std::conj(( *r_AM_ )( i, j ));
+            rnew_dot_rnew_localAM_ += std::abs(( *r_AM_ )( i, j ))*std::abs(( *r_AM_ )( i, j ));
         }
     }
     return rnew_dot_rnew_localAM_;
@@ -524,7 +524,7 @@ std::complex<double> ElectroMagnAM::compute_pAp_AM()
     return p_dot_Ap_local;
 } // compute_pAp
 
-void ElectroMagnAM::update_pand_r_AM( std::complex<double> r_dot_r, std::complex<double> p_dot_Ap )
+void ElectroMagnAM::update_pand_r_AM( double r_dot_r, std::complex<double> p_dot_Ap )
 {
     std::complex<double> alpha_k = r_dot_r/p_dot_Ap;
     for( unsigned int i=0; i<nl_p; i++ ) {
@@ -536,9 +536,9 @@ void ElectroMagnAM::update_pand_r_AM( std::complex<double> r_dot_r, std::complex
     
 } // update_pand_r
 
-void ElectroMagnAM::update_p_AM( std::complex<double> rnew_dot_rnew, std::complex<double> r_dot_r )
+void ElectroMagnAM::update_p( double rnew_dot_rnew, double r_dot_r )
 {
-    std::complex<double> beta_k = rnew_dot_rnew/r_dot_r;
+    double beta_k = rnew_dot_rnew/r_dot_r;
     for( unsigned int i=0; i<nl_p; i++ ) {
         for( unsigned int j=0; j<nr_p; j++ ) {
             ( *p_AM_ )( i, j ) = ( *r_AM_ )( i, j ) + beta_k * ( *p_AM_ )( i, j );

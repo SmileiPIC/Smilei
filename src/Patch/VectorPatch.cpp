@@ -1679,8 +1679,8 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
     unsigned int iteration=0;
     
     // Init & Store internal data (phi, r, p, Ap) per patch
-    std::complex<double> rnew_dot_rnew_localAM_( 0. );
-    std::complex<double> rnew_dot_rnewAM_( 0. );
+    double rnew_dot_rnew_localAM_( 0. );
+    double rnew_dot_rnewAM_( 0. );
 
 
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
@@ -1724,10 +1724,10 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
             emAM->initPoisson_init_phi_r_p_Ap( ( *this )( ipatch ), imode );
-            rnew_dot_rnew_localAM_ += emAM->compute_r_AM();
+            rnew_dot_rnew_localAM_ += emAM->compute_r();
         }
         
-        MPI_Allreduce( &rnew_dot_rnew_localAM_, &rnew_dot_rnewAM_, 1, MPI_COMPLEX, MPI_SUM, MPI_COMM_WORLD );
+        MPI_Allreduce( &rnew_dot_rnew_localAM_, &rnew_dot_rnewAM_, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
 
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
@@ -1786,7 +1786,7 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
             }
         
             // scalar product of the residual
-            std::complex<double> r_dot_rAM_ = rnew_dot_rnewAM_;
+            double r_dot_rAM_ = rnew_dot_rnewAM_;
         
             for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
                 ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
@@ -1819,9 +1819,9 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
             rnew_dot_rnew_localAM_ = 0.0;
             for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
                 ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
-                rnew_dot_rnew_localAM_ += emAM->compute_r_AM();
+                rnew_dot_rnew_localAM_ += emAM->compute_r();
             }
-            MPI_Allreduce( &rnew_dot_rnew_localAM_, &rnew_dot_rnewAM_, 1, MPI_COMPLEX, MPI_SUM, MPI_COMM_WORLD );
+            MPI_Allreduce( &rnew_dot_rnew_localAM_, &rnew_dot_rnewAM_, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
             if( smpi->isMaster() ) {
                 DEBUG( "new residual norm: rnew_dot_rnew = " << rnew_dot_rnewAM_ );
             }
@@ -1829,7 +1829,7 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
             // compute new directio
             for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
                 ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
-                emAM->update_p_AM( rnew_dot_rnewAM_, r_dot_rAM_ );
+                emAM->update_p( rnew_dot_rnewAM_, r_dot_rAM_ );
             }
         
             // compute control parameter
