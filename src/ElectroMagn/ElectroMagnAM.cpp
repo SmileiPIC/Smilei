@@ -527,9 +527,6 @@ std::complex<double> ElectroMagnAM::compute_pAp_AM()
         }
     }
     return p_dot_Ap_local;
-
-
-    return p_dot_Ap_local;
 } // compute_pAp
 
 void ElectroMagnAM::update_pand_r_AM( std::complex<double> r_dot_r, std::complex<double> p_dot_Ap )
