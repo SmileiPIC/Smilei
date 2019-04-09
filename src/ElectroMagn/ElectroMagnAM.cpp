@@ -433,7 +433,7 @@ void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gam
     
     double one_ov_dl_sq_ov_gamma_sq       = 1.0/( dl*dl )/( gamma_mean*gamma_mean );
     double one_ov_dr_sq                   = 1.0/( dr*dr );
-    double one_ov_dr                      = 1.0/dr;
+    double one_ov_2dr                     = 1.0/2./dr;
     double two_ov_dlgam2dr2               = 2.0*( 1.0/( dl*dl )/( gamma_mean*gamma_mean )+1.0/( dr*dr ) );
     double two_ov_dlgam2                  = 2.0/( dl*dl )/( gamma_mean*gamma_mean );
     
@@ -442,7 +442,7 @@ void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gam
         for( unsigned int j=isYmin*3; j<nr_p-1; j++ ) {
             ( *Ap_AM_ )( i, j )= one_ov_dl_sq_ov_gamma_sq*( ( *p_AM_ )( i-1, j )+( *p_AM_ )( i+1, j ) )
                                + one_ov_dr_sq*( ( *p_AM_ )( i, j-1 )+( *p_AM_ )( i, j+1 ) )
-                               + one_ov_dr   *( ( *p_AM_ )( i, j+1 )-( *p_AM_ )( i, j-1 ) ) / ( ( j_glob_+j-0.5 )*dr )
+                               + one_ov_2dr   *( ( *p_AM_ )( i, j+1 )-( *p_AM_ )( i, j-1 ) ) / ( ( j_glob_+j-0.5 )*dr )
                                - two_ov_dlgam2dr2*( *p_AM_ )( i, j )
                                - (double)(imode*imode)/( ( j_glob_+j-0.5 )*dr )/( ( j_glob_+j-0.5 )*dr )*( *p_AM_ )( i, j );
         }//j
@@ -466,7 +466,7 @@ void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gam
             
             ( *Ap_AM_ )( 0, j )     = one_ov_dl_sq_ov_gamma_sq*( ( *p_AM_ )( 1, j ) )
                                     +              one_ov_dr_sq*( ( *p_AM_ )( 0, j+1 )+( *p_AM_ )( 0, j+1 ) )
-                                    +              one_ov_dr   *( ( *p_AM_ )( 0, j+1 )-( *p_AM_ )( 0, j-1 ) ) / ( ( j_glob_+j-0.5 )*dr )
+                                    +              one_ov_2dr   *( ( *p_AM_ )( 0, j+1 )-( *p_AM_ )( 0, j-1 ) ) / ( ( j_glob_+j-0.5 )*dr )
                                     -              two_ov_dlgam2dr2*( *p_AM_ )( 0, j )
                                     - (double)(imode*imode)/( ( j_glob_+j-0.5 )*dr )/( ( j_glob_+j-0.5 )*dr )*( *p_AM_ )( 0, j );
         }
@@ -479,7 +479,7 @@ void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gam
         
         ( *Ap_AM_ )( 0, nr_p-1 )     = one_ov_dl_sq_ov_gamma_sq*( ( *p_AM_ )( 1, nr_p-1 ) ) // Xmin/Ymax
                                      +                   one_ov_dr_sq*( ( *p_AM_ )( 0, nr_p-2 ) )
-                                     +                   one_ov_dr   *( -( *p_AM_ )( 0, nr_p-2 ) ) / ( ( j_glob_+nr_p-1-0.5 )*dr )
+                                     +                   one_ov_2dr   *( -( *p_AM_ )( 0, nr_p-2 ) ) / ( ( j_glob_+nr_p-1-0.5 )*dr )
                                      -                   two_ov_dlgam2*( *p_AM_ )( 0, nr_p-1 )
                                      - (double)(imode*imode)/( ( j_glob_+nr_p-1-0.5 )*dr )/( ( j_glob_+nr_p-1-0.5 )*dr )*( *p_AM_ )( 0, nr_p-1 );
     }
@@ -491,7 +491,7 @@ void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gam
             
             ( *Ap_AM_ )( nl_p-1, j )= one_ov_dl_sq_ov_gamma_sq*( ( *p_AM_ )( nl_p-2, j ) )
                                     +              one_ov_dr_sq*( ( *p_AM_ )( nl_p-1, j-1 )+( *p_AM_ )( nl_p-1, j+1 ) )
-                                    +              one_ov_dr   *( ( *p_AM_ )( nl_p-1, j+1 )-( *p_AM_ )( nl_p-1, j-1 ) ) / ( ( j_glob_+j-0.5 )*dr )
+                                    +              one_ov_2dr   *( ( *p_AM_ )( nl_p-1, j+1 )-( *p_AM_ )( nl_p-1, j-1 ) ) / ( ( j_glob_+j-0.5 )*dr )
                                     -              two_ov_dlgam2dr2*( *p_AM_ )( nl_p-1, j )
                                     - (double)(imode*imode)/( ( j_glob_+j-0.5 )*dr )/( ( j_glob_+j-0.5 )*dr )*( *p_AM_ )( nl_p-1, j );
         }
@@ -504,7 +504,7 @@ void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gam
         
         ( *Ap_AM_ )( nl_p-1, nr_p-1 )= one_ov_dl_sq_ov_gamma_sq*( ( *p_AM_ )( nl_p-2, nr_p-1 ) ) // Xmax/Ymax
                                      +                   one_ov_dr_sq*( ( *p_AM_ )( nl_p-1, nr_p-2 ) )
-                                     +                   one_ov_dr   *( -( *p_AM_ )( nl_p-1, nr_p-2 ) ) / ( ( j_glob_+nr_p-1-0.5 )*dr )
+                                     +                   one_ov_2dr   *( -( *p_AM_ )( nl_p-1, nr_p-2 ) ) / ( ( j_glob_+nr_p-1-0.5 )*dr )
                                      -                   two_ov_dlgam2*( *p_AM_ )( nl_p-1, nr_p-1 )
                                      - (double)(imode*imode)/( ( j_glob_+nr_p-1-0.5 )*dr )/( ( j_glob_+nr_p-1-0.5 )*dr )*( *p_AM_ )( nl_p-1, nr_p-1 );;
     }
