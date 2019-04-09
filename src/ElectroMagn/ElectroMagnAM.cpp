@@ -460,6 +460,14 @@ void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gam
         }
     }
 
+    if( patch->isYmax() ) {
+        unsigned int j=nr_p-1; // Von Neumann condition, derivative = 0
+        for( unsigned int i=1; i<nl_p-1; i++ ) {
+            ( *Ap_AM_ )( i, j )= one_ov_dl_sq_ov_gamma_sq*( ( *p_AM_ )( i-1, j-1 )+( *p_AM_ )( i+1, j-1 ) -2.*( *p_AM_ )( i, j-1 ) )
+                               - (double)(imode*imode)/( ( j_glob_+j-1-0.5 )*dr )/( ( j_glob_+j-0.5 )*dr )*( *p_AM_ )( i, j-1 );    
+        }
+    }
+
     // Xmin BC
     if( patch->isXmin() ) {
         for( unsigned int j=1; j<nr_p-2; j++ ) {
