@@ -69,7 +69,7 @@ This installation procedure has been tested on macOS 10.14.4
 
    .. code-block:: bash
 
-     brew install ipython iltommi/homebrew-brews/hdf5
+     brew install ipython iltommi/homebrew-brews/hdf5-parallel
      pip3 install h5py pint sphinx matplotlib scipy
 
 #. Edit your ``.bash_profile`` hidden file located in your home folder:
@@ -83,8 +83,8 @@ This installation procedure has been tested on macOS 10.14.4
    .. code-block:: bash
   
      export OMPI_CXX=g++-8 
-     export HDF5_ROOT_DIR=/usr/local
+     export HDF5_ROOT_DIR=/usr/local/opt/hdf5-parallel
      export PYTHONEXE=python3
 
-#. now you can compile :program:`smilei` (see :ref:`compile` for other options)
+#. In a new terminal window, you can now compile :program:`smilei` (see :ref:`compile` for other options)
 
