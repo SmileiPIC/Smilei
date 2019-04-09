@@ -603,17 +603,17 @@ void ElectroMagnAM::initE_relativistic_Poisson_AM( Patch *patch, double gamma_me
     
     // El
     MESSAGE( 1, "Computing El from scalar potential, relativistic Poisson problem" );
-    for( unsigned int i=1; i<nl_d-1; i++ ) {
+    for( unsigned int i=1; i<nl_d-2; i++ ) {
         for( unsigned int j=1; j<nr_p; j++ ) {
-            ( *ElAM )( i, j ) = ( ( *phi_AM_ )( i-1, j )-( *phi_AM_ )( i, j ) )/dl/gamma_mean/gamma_mean;
+            ( *ElAM )( i, j ) = ( ( *phi_AM_ )( i, j )-( *phi_AM_ )( i+1, j ) )/dl/gamma_mean/gamma_mean;
         }
     }
     MESSAGE( 1, "El: done" );
     // Er
     MESSAGE( 1, "Computing Er from scalar potential, relativistic Poisson problem" );
     for( unsigned int i=1; i<nl_d-1; i++ ) {
-        for( unsigned int j=1; j<nr_p-1; j++ ) {
-            ( *ErAM )( i, j ) = ( ( *phi_AM_ )( i, j-1 )-( *phi_AM_ )( i, j ) )/dr;
+        for( unsigned int j=1; j<nr_p-2; j++ ) {
+            ( *ErAM )( i, j ) = ( ( *phi_AM_ )( i, j )-( *phi_AM_ )( i, j+1 ) )/dr;
         }
     }
     MESSAGE( 1, "Er: done" );
@@ -634,7 +634,7 @@ void ElectroMagnAM::initE_relativistic_Poisson_AM( Patch *patch, double gamma_me
                 ( *EtAM )( i, j )=0;
             }
             for( unsigned int i=0 ; i<nl_p  ; i++ ) {
-                ( *ErAM )( i, j )= -( *ErAM )( i, j+1 );
+                ( *ErAM )( i, j )= 0; //( *ErAM )( i, j+1 );
             }
             for( unsigned int i=0 ; i<nl_d ; i++ ) {
                 ( *ElAM )( i, j ) = ( *ElAM )( i, j+1 ) ;  // not sure about this one
