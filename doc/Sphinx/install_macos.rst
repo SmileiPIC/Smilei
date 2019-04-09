@@ -57,22 +57,34 @@ that you can install following `these instructions <https://www.macports.org/ins
 Via HomeBrew
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This installation procedure has been tested on macOS 10.13
+This installation procedure has been tested on macOS 10.14.4
 
 #. `HomeBrew <http://brew.sh>`_ can easily installed via:
 
    .. code-block:: bash
 
-     ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+     /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 
 #. Once installed, you need these packages:
 
    .. code-block:: bash
 
-     brew install gcc python numpy
-     brew install openmpi --with-mpi-thread-multiple
-     brew install hdf5 --with-mpi
-     pip3 install ipython h5py pint sphinx matplotlib scipy
+     brew install ipython iltommi/homebrew-brews/hdf5
+     pip3 install h5py pint sphinx matplotlib scipy
+
+#. Edit your ``.bash_profile`` hidden file located in your home folder:
+   
+   .. code-block:: bash
+
+     open ~/.bash_profile
+   
+   and add the following lines at the end:
+     
+   .. code-block:: bash
+  
+     export OMPI_CXX=g++-8 
+     export HDF5_ROOT_DIR=/usr/local
+     export PYTHONEXE=python3
 
 #. now you can compile :program:`smilei` (see :ref:`compile` for other options)
 
