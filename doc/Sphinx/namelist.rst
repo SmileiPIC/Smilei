@@ -883,7 +883,8 @@ Each species has to be defined in a ``Species`` block::
   The particle merging method to use:
 
   * ``none``: the merging process is not activated
-  * ``vranic``: merging process using the method of M. Vranic
+  * ``vranic_cartesian``: merging process using the method of M. Vranic with a cartesian momentum space decomposition
+  * ``vranic_spherical``: merging process using the method of M. Vranic with a spherical momentum space decomposition
 
 .. py:data:: merge_every
 
