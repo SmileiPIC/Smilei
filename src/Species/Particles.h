@@ -122,6 +122,9 @@ public:
     //! Create nParticles new particles
     void create_particles( int nAdditionalParticles );
     
+    //! Create nParticles new particles at position pstart in the particles data structure
+    void create_particles( int nAdditionalParticles, int pstart );
+    
     //! Test if ipart is in the local patch
     bool is_part_in_domain( unsigned int ipart, Patch *patch );
     

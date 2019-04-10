@@ -1298,7 +1298,7 @@ void Species::count_sort_part( Params &params )
 }
 
 
-int Species::createParticles( vector<unsigned int> n_space_to_create, Params &params, Patch *patch, int new_bin_idx )
+int Species::createParticles( vector<unsigned int> n_space_to_create, Params &params, Patch *patch, int new_cell_idx )
 {
     // n_space_to_create_generalized = n_space_to_create, + copy of 2nd direction data among 3rd direction
     // same for local Species::cell_length[2]
@@ -1327,6 +1327,7 @@ int Species::createParticles( vector<unsigned int> n_space_to_create, Params &pa
                 for( unsigned int idim=0 ; idim<nDim_field ; idim++ ) {
                     ( *xyz[idim] )( ijk[0], ijk[1], ijk[2] ) = cell_position[idim] + ( ijk[idim]+0.5 )*cell_length[idim];
                 }
+                ( *xyz[0] )( ijk[0], ijk[1], ijk[2] ) += new_cell_idx*cell_length[0];
             }
         }
     }
@@ -1468,7 +1469,8 @@ int Species::createParticles( vector<unsigned int> n_space_to_create, Params &pa
     // }
     
     unsigned int n_existing_particles = particles->size();
-    particles->initialize( n_existing_particles+npart_effective, nDim_particle );
+    if (!n_existing_particles)
+        particles->initialize( n_existing_particles+npart_effective, nDim_particle );
     
     // Initialization of the particles properties
     // ------------------------------------------
@@ -1485,8 +1487,8 @@ int Species::createParticles( vector<unsigned int> n_space_to_create, Params &pa
     
     if( position_initialization_array == NULL ) {
         for( i=0; i<n_space_to_create_generalized[0]; i++ ) {
-            if( i%clrw == 0 ) {
-                first_index[new_bin_idx+i/clrw] = iPart;
+            if((!n_existing_particles)&&( i%clrw == 0 )) {
+                first_index[(new_cell_idx+i)/clrw] = iPart;
             }
             for( j=0; j<n_space_to_create_generalized[1]; j++ ) {
                 for( k=0; k<n_space_to_create_generalized[2]; k++ ) {
@@ -1501,7 +1503,18 @@ int Species::createParticles( vector<unsigned int> n_space_to_create, Params &pa
                         temp[2] = temperature[2]( i, j, k );
                         nPart = n_part_in_cell( i, j, k );
                         
-                        indexes[0]=i*cell_length[0]+cell_position[0];
+                        if (n_existing_particles) { 
+                            iPart = first_index[(new_cell_idx+i)/clrw];
+                            last_index[(new_cell_idx+i)/clrw] += nPart;
+                            for ( int idx=(new_cell_idx+i)/clrw+1 ; idx<last_index.size() ; idx++ ) {
+                                first_index[idx] += nPart;
+                                last_index[idx] += nPart;
+                            }
+                            particles->create_particles( nPart, iPart );
+
+                        }
+
+                        indexes[0]=i*cell_length[0]+cell_position[0] + new_cell_idx*cell_length[0];;
                         if( nDim_particle > 1 ) {
                             indexes[1]=j*cell_length[1]+cell_position[1];
                             if( nDim_particle > 2 ) {
@@ -1521,13 +1534,43 @@ int Species::createParticles( vector<unsigned int> n_space_to_create, Params &pa
                             }
                         }
                         initCharge( nPart, iPart, charge( i, j, k ) );
+
+                        if (n_existing_particles) { 
+                            // operate filter 
+                            for ( int ip = nPart-1 ; ip >= 0 ; ip-- ){
+                                if ( ( patch->isXmin() ) &&
+                                     ( ( particles->Position[0][iPart+ip] > cell_length[0]* vel[0] ) || (particles->Momentum[0][iPart+ip]<0.) ) ) {
+                                    nPart--; // ne sert à rien ici
+                                    particles->erase_particle(iPart+ip);
+                                    last_index[(new_cell_idx+i)/clrw]--;
+                                    for ( int idx=(new_cell_idx+i)/clrw+1 ; idx<last_index.size() ; idx++ ) {
+                                        first_index[idx]--;
+                                        last_index[idx]--;
+                                    }
+                                }
+                                else if ( ( patch->isXmax() ) &&
+                                          ( ( particles->Position[0][iPart+ip] < params.grid_length[0] + cell_length[0]*vel[0] ) || (particles->Momentum[0][iPart+ip]>0.) ) ) {
+                                    //cout << "params.grid_length[0]+ cell_length[0]*vel[0] = " << params.grid_length[0]+ cell_length[0]*vel[0] << endl;
+                                    //cout << "params.grid_length[0]                        = " << params.grid_length[0] << endl;
+                                    nPart--; // ne sert à rien ici
+                                    particles->erase_particle(iPart+ip);
+                                    last_index[(new_cell_idx+i)/clrw]--;
+                                    for ( int idx=(new_cell_idx+i)/clrw+1 ; idx<last_index.size() ; idx++ ) {
+                                        first_index[idx]--;
+                                        last_index[idx]--;
+                                    }
+                                }
+
+                            }
+                        }
+
                         
                         iPart+=nPart;
                     }//END if density > 0
                 }//k end the loop on all cells
             }//j
-            if( i%clrw == clrw -1 ) {
-                last_index[new_bin_idx+i/clrw] = iPart;
+            if((!n_existing_particles)&&( i%clrw == clrw -1 )) {
+                last_index[(new_cell_idx+i)/clrw] = iPart;
             }
             
         }//i
