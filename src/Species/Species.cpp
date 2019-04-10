@@ -107,6 +107,8 @@ Species::Species( Params &params, Patch *patch ) :
 
     merge_momentum_cell_size_.resize(3);
 
+    merge_min_momentum_cell_length_.resize(3);
+
 }//END Species creator
 
 void Species::initCluster( Params &params )

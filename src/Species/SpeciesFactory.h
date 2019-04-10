@@ -367,6 +367,21 @@ public:
                                << " per merging packet (`merge_min_packet_size`)");
                     }
                 }
+                // Minimum momentum cell length for the momentum discretization
+                if( PyTools::extract( "merge_min_momentum_cell_length",
+                                      thisSpecies->merge_min_momentum_cell_length_ ,
+                                      "Species", ispec ) ) {
+                    for (unsigned int i = 0 ; i < 3 ; i++) {
+                        if (thisSpecies->merge_min_momentum_cell_length_[i] <= 0) {
+                            ERROR( "In Species " << thisSpecies->name
+                                     << ": The minimal momentum cell length "
+                                     << "(`merge_min_particles_per_cell`)"
+                                     << " must be above 0 ("
+                                     << thisSpecies->merge_min_momentum_cell_length_[i]
+                                     << ")");
+                        }
+                    }
+                }
 
                 // Read and check the threshold on the number of particles per cell
                 if( PyTools::extract( "merge_min_particles_per_cell", thisSpecies->merge_min_particles_per_cell_ , "Species", ispec ) ) {
@@ -405,6 +420,11 @@ public:
                          << thisSpecies->merge_momentum_cell_size_[0] << " "
                          << thisSpecies->merge_momentum_cell_size_[1] << " "
                          << thisSpecies->merge_momentum_cell_size_[2] << " ");
+                MESSAGE( 3, "| Minimum momentum cell length: "
+                        << std::setprecision( 15 )
+                        << thisSpecies->merge_min_momentum_cell_length_[0] << " "
+                        << thisSpecies->merge_min_momentum_cell_length_[1] << " "
+                        << thisSpecies->merge_min_momentum_cell_length_[2] << " ");
                 MESSAGE( 3, "| Minimum particle number per cell: "
                          << thisSpecies->merge_min_particles_per_cell_ );
                 MESSAGE( 3, "| Minimum particle packet size: "

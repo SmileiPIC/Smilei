@@ -29,6 +29,12 @@ MergingVranicSpherical::MergingVranicSpherical(Params& params,
     // Min and max particle per cell number
     min_packet_size_ = species->merge_min_packet_size_;
     max_packet_size_ = species->merge_max_packet_size_;
+
+    // Minimum momentum cell length
+    min_momentum_cell_length_[0] = species->merge_min_momentum_cell_length_[0];
+    min_momentum_cell_length_[1] = species->merge_min_momentum_cell_length_[1];
+    min_momentum_cell_length_[2] = species->merge_min_momentum_cell_length_[2];
+
 }
 
 // -----------------------------------------------------------------------------
@@ -211,7 +217,7 @@ void MergingVranicSpherical::operator() (
 
         // Computation of the deltas (discretization steps)
         // Check if min and max boundaries are very close
-        if (abs((mr_max - mr_min)) < 1e-10) {
+        if (abs((mr_max - mr_min)) < min_momentum_cell_length_[0]) {
             mr_delta = 0.1;
             inv_mr_delta = 0;
             dim[0] = 1;
@@ -229,7 +235,7 @@ void MergingVranicSpherical::operator() (
                 inv_mr_delta = 1./mr_delta;
             }
         }
-        if (abs((theta_max - theta_min)) < 1e-10) {
+        if (abs((theta_max - theta_min)) < min_momentum_cell_length_[1]) {
             theta_delta = 0.1*M_PI;
             inv_theta_delta = 0;
             dim[1] = 1;
@@ -247,7 +253,7 @@ void MergingVranicSpherical::operator() (
                 inv_theta_delta = 1./theta_delta;
             }
         }
-        if (abs((phi_max - phi_min)) < 1e-10) {
+        if (abs((phi_max - phi_min)) < min_momentum_cell_length_[2]) {
             phi_delta = 0.1*M_PI;
             inv_phi_delta = 0;
             dim[2] = 1;

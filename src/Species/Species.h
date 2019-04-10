@@ -258,6 +258,9 @@ public:
     //! Minimum number of particles per cell to be able to merge
     unsigned int merge_min_particles_per_cell_;
 
+    //! Minimum momentum cell length for the merging
+    std::vector<double>  merge_min_momentum_cell_length_;
+
     //! Discreatization in the momentum space (number of momentum cells in each direction)
     std::vector<unsigned int> merge_momentum_cell_size_;
 

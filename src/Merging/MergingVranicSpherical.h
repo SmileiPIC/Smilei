@@ -64,6 +64,9 @@ public:
     unsigned int min_packet_size_;
     unsigned int max_packet_size_;
 
+    // Minimum and maximum number of particles per packet to merge
+    double min_momentum_cell_length_[3];
+
 protected:
 
 

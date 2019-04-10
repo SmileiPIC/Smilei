@@ -583,6 +583,7 @@ Each species has to be defined in a ``Species`` block::
       merge_max_packet_size = 4,
       merge_min_packet_size = 2,
       merge_momentum_cell_size = [32,16,16],
+      merge_min_momentum_cell_length = [1e-10, 1e-10, 1e-10],
   )
 
 .. py:data:: name
@@ -876,6 +877,29 @@ Each species has to be defined in a ``Species`` block::
 
   This parameter can **only** be assigned to photons species (mass = 0).
 
+----
+
+.. _Particle Merging:
+
+Particle Merging
+^^^^^^^^^^^^^^^^
+
+The macro-particle merging method is documented in the :doc:`corresponding page <particle_merging>`.
+It is defined in the ``Species`` block::
+
+  Species(
+      ....
+
+      # Merging
+      merging_method = "vranic_spherical",
+      merge_every = 5,
+      merge_min_particles_per_cell = 16,
+      merge_max_packet_size = 4,
+      merge_min_packet_size = 2,
+      merge_momentum_cell_size = [32,16,16],
+      merge_min_momentum_cell_length = [1e-10, 1e-10, 1e-10],
+  )
+
 .. py:data:: merging_method
 
   :default: ``None``
@@ -909,6 +933,14 @@ Each species has to be defined in a ``Species`` block::
   :default: ``4``
 
   The maximum number of particles per packet to merge.
+
+.. py:data:: merge_min_momentum_cell_length
+
+  :default: ``[1e-10,1e-10,1e-10]``
+
+  The minimum momentum cell length for the discretization.
+  If the specified discretization induces smaller momentum cell length,
+  then the momentum cell size is set to 1 in this direction.
 
 .. py:data:: merge_momentum_cell_size
 
