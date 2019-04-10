@@ -421,11 +421,12 @@ public:
                          << thisSpecies->merge_momentum_cell_size_[1] << " "
                          << thisSpecies->merge_momentum_cell_size_[2] << " ");
                 MESSAGE( 3, "| Minimum momentum cell length: "
-                        << std::setprecision( 15 )
+                        << std::scientific
                         << thisSpecies->merge_min_momentum_cell_length_[0] << " "
                         << thisSpecies->merge_min_momentum_cell_length_[1] << " "
                         << thisSpecies->merge_min_momentum_cell_length_[2] << " ");
                 MESSAGE( 3, "| Minimum particle number per cell: "
+                         << std::fixed
                          << thisSpecies->merge_min_particles_per_cell_ );
                 MESSAGE( 3, "| Minimum particle packet size: "
                          << thisSpecies->merge_min_packet_size_ );
