@@ -312,3 +312,10 @@ void ProjectorAM1Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
 
     }
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! Project global current densities : ionization NOT DONE YET
+// ---------------------------------------------------------------------------------------------------------------------
+void ProjectorAM1Order::ionizationCurrents( Field *Jl, Field *Jr, Field *Jt, Particles &particles, int ipart, LocalFields Jion )
+{
+}
