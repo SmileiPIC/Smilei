@@ -634,9 +634,7 @@ void ElectroMagnAM::initE_relativistic_Poisson_AM( Patch *patch, double gamma_me
                 ( *EtAM )( i, j )=0;
             }
             for( unsigned int i=0 ; i<nl_p  ; i++ ) {
-                ( *Er )( i, j )= -( *Er )( i, j+1 );
-                //( *ErAM )( i, j   )= 0; //( *ErAM )( i, j+1 );
-                //( *ErAM )( i, j-1 )= 0;
+                ( *ErAM )( i, j )= -( *ErAM )( i, j+1 );
             }
             for( unsigned int i=0 ; i<nl_d ; i++ ) {
                 ( *ElAM )( i, j-1 ) = ( *ElAM )( i, j ) ; //( *ElAM )( i, j ) = ( *ElAM )( i, j+1 ) ;  // not sure about this one
