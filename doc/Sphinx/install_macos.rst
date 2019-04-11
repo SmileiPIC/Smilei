@@ -48,7 +48,7 @@ To keep up-to-date date Smilei with just type
 
   .. code-block:: bash
   
-     brew upgrade
+     brew upgrade --fetch-HEAD smilei
 
 Please note that changes in the sources located in ``~/Library/Caches/Homebrew/smilei--git``
 will be overwritten on every ``brew upgrade``.
