@@ -19,6 +19,7 @@
 #include "PXR_Solver2D_GPSTD.h"
 #include "PXR_Solver3D_FDTD.h"
 #include "PXR_Solver3D_GPSTD.h"
+#include "PXR_SolverAM_GPSTD.h"
 
 #include "Params.h"
 
@@ -62,7 +63,10 @@ public:
                 solver = new PXR_Solver3D_GPSTD( params );
             }
         } else if( params.geometry == "AMcylindrical" ) {
-            solver = new MA_SolverAM_norm( params );
+            if( params.is_pxr == false )
+                solver = new MA_SolverAM_norm( params );
+            else
+                solver = new PXR_SolverAM_GPSTD( params );
         }
         
         if( !solver ) {
@@ -113,9 +117,13 @@ public:
                 solver = new NullSolver( params );
             }
         } else if( params.geometry == "AMcylindrical" ) {
-            if( params.maxwell_sol == "Yee" ) {
-                solver = new MF_SolverAM_Yee( params );
+            if( params.is_pxr == false ) {
+                if( params.maxwell_sol == "Yee" ) {
+                    solver = new MF_SolverAM_Yee( params );
+                }
             }
+            else
+                solver = new NullSolver( params );
         }
         
         if( !solver ) {

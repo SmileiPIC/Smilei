@@ -171,7 +171,7 @@ void ElectroMagnAM::initElectroMagnAMQuantities( Params &params, Patch *patch )
     Jr_.resize( nmodes );
     Jt_.resize( nmodes );
     rho_AM_.resize( nmodes );
-    
+
     for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
         ostringstream mode_id( "" );
         mode_id << "_mode_" << imode;
@@ -192,6 +192,18 @@ void ElectroMagnAM::initElectroMagnAMQuantities( Params &params, Patch *patch )
         Jt_[imode]   = FieldFactory::createComplex( dimPrim, 2, false, ( "Jt"+mode_id.str() ).c_str(), params );
         rho_AM_[imode]  = new cField2D( dimPrim, ( "Rho"+mode_id.str() ).c_str() );
     }
+
+    if(params.is_pxr == true) {
+        rho_old_AM_.resize( nmodes );
+        for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
+            ostringstream mode_id( "" );
+            mode_id << "_mode_" << imode;
+            rho_old_AM_[imode]  = new cField2D( dimPrim, ( "RhoOld"+mode_id.str() ).c_str() );
+        }
+    } 
+
+    
+
     
     // ----------------------------------------------------------------
     // Definition of the min and max index according to chosen oversize
