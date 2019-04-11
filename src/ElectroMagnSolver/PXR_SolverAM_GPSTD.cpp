@@ -16,8 +16,7 @@ PXR_SolverAM_GPSTD::~PXR_SolverAM_GPSTD()
 
 void PXR_SolverAM_GPSTD::coupling( Params &params, ElectroMagn *EMfields )
 {
-    int cdim=3;
-    
+
     int nl, nr;
     int ovl, ovr;
     // unable to convert unsigned int to an iso_c_binding supported type
@@ -62,23 +61,25 @@ void PXR_SolverAM_GPSTD::coupling( Params &params, ElectroMagn *EMfields )
         rhoold = ( static_cast<ElectroMagnAM *>( EMfields ) )->rho_old_AM_[imode];
 
 #ifdef _PICSAR    
+
+
         //call of extern init routine (defined in picsar)
         picsar::init_params_picsar_AM( &nr, &nl, &nmode, &imode, 
                                     &pxr_dr, &pxr_dl, &params.timestep,
                                     &ovr, &ovl,
                                     &params.norder[1], &params.norder[0],
                                     &params.is_spectral,
-                                    &( El->cdata_[0] ),
-                                    &( Er->cdata_[0] ),
                                     &( Et->cdata_[0] ),
-                                    &( Bl->cdata_[0] ),
-                                    &( Br->cdata_[0] ),
+                                    &( Er->cdata_[0] ),
+                                    &( El->cdata_[0] ),
                                     &( Bt->cdata_[0] ),
-                                    &( Jl->cdata_[0] ),
-                                    &( Jr->cdata_[0] ),
+                                    &( Br->cdata_[0] ),
+                                    &( Bl->cdata_[0] ),
                                     &( Jt->cdata_[0] ),
+                                    &( Jr->cdata_[0] ),
+                                    &( Jl->cdata_[0] ),
                                     &( rho->cdata_[0] ),
-                                    &( rhoold->cdata_[0] ), &cdim );
+                                    &( rhoold->cdata_[0] ) );
 #else
     ERROR( "Smilei not linked with picsar" );
 #endif
