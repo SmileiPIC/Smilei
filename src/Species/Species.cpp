@@ -1538,27 +1538,39 @@ int Species::createParticles( vector<unsigned int> n_space_to_create, Params &pa
                         if (n_existing_particles) { 
                             // operate filter 
                             for ( int ip = nPart-1 ; ip >= 0 ; ip-- ){
-                                if ( ( patch->isXmin() ) &&
-                                     ( ( particles->Position[0][iPart+ip] > cell_length[0]* vel[0] ) || (particles->Momentum[0][iPart+ip]<0.) ) ) {
-                                    nPart--; // ne sert à rien ici
-                                    particles->erase_particle(iPart+ip);
-                                    last_index[(new_cell_idx+i)/clrw]--;
-                                    for ( int idx=(new_cell_idx+i)/clrw+1 ; idx<last_index.size() ; idx++ ) {
-                                        first_index[idx]--;
-                                        last_index[idx]--;
+                                double lf=1;
+                                for (int iDim=0;iDim<3;iDim++)
+                                    lf += particles->Momentum[iDim][iPart+ip]*particles->Momentum[iDim][iPart+ip];
+                                lf =sqrt( lf );
+                                double X = particles->Position[0][iPart+ip] - cell_length[0]+params.timestep*particles->Momentum[0][iPart+ip]/lf;
+                                if ( patch->isXmin() ) {
+                                    if ( ( X < 0. ) ) {
+                                        nPart--; // ne sert à rien ici
+                                        particles->erase_particle(iPart+ip);
+                                        last_index[(new_cell_idx+i)/clrw]--;
+                                        for ( int idx=(new_cell_idx+i)/clrw+1 ; idx<last_index.size() ; idx++ ) {
+                                            first_index[idx]--;
+                                            last_index[idx]--;
+                                        }
                                     }
+                                    else
+                                        particles->Position[0][iPart+ip] = X;
                                 }
-                                else if ( ( patch->isXmax() ) &&
-                                          ( ( particles->Position[0][iPart+ip] < params.grid_length[0] + cell_length[0]*vel[0] ) || (particles->Momentum[0][iPart+ip]>0.) ) ) {
-                                    //cout << "params.grid_length[0]+ cell_length[0]*vel[0] = " << params.grid_length[0]+ cell_length[0]*vel[0] << endl;
-                                    //cout << "params.grid_length[0]                        = " << params.grid_length[0] << endl;
-                                    nPart--; // ne sert à rien ici
-                                    particles->erase_particle(iPart+ip);
-                                    last_index[(new_cell_idx+i)/clrw]--;
-                                    for ( int idx=(new_cell_idx+i)/clrw+1 ; idx<last_index.size() ; idx++ ) {
-                                        first_index[idx]--;
-                                        last_index[idx]--;
+                                else if ( patch->isXmax() ) {
+                                    X = particles->Position[0][iPart+ip] + cell_length[0]+params.timestep*particles->Momentum[0][iPart+ip]/lf;
+                                    if (  X > params.grid_length[0] ) {
+                                        //cout << "params.grid_length[0]+ cell_length[0]*vel[0] = " << params.grid_length[0]+ cell_length[0]*vel[0] << endl;
+                                        //cout << "params.grid_length[0]                        = " << params.grid_length[0] << endl;
+                                        nPart--; // ne sert à rien ici
+                                        particles->erase_particle(iPart+ip);
+                                        last_index[(new_cell_idx+i)/clrw]--;
+                                        for ( int idx=(new_cell_idx+i)/clrw+1 ; idx<last_index.size() ; idx++ ) {
+                                            first_index[idx]--;
+                                            last_index[idx]--;
+                                        }
                                     }
+                                    else
+                                        particles->Position[0][iPart+ip] = X;
                                 }
 
                             }
