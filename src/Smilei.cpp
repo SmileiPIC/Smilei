@@ -400,23 +400,27 @@ int main( int argc, char *argv[] )
             // call the various diagnostics
             vecPatches.runAllDiags( params, &smpi, itime, timers, simWindow );
 
-            vector<unsigned int> init_space( 3, 1 );
-            init_space[0] = 1;
-            init_space[1] = params.n_space[1];
-            init_space[2] = params.n_space[2];
-            for (int iPatch=0 ; iPatch<vecPatches.size() ; iPatch++) {
-                for (int iSpecies=0 ; iSpecies<vecPatches(0)->vecSpecies.size() ; iSpecies++) {
-                    if ( ( (vecPatches(iPatch)->isXmin()) && (iSpecies<2) ) ||
-                         ( (vecPatches(iPatch)->isXmax()) && (iSpecies>1) ) ) {
-                        int icell;
-                        if (vecPatches(iPatch)->isXmin())
-                            icell = 0;
-                        if (vecPatches(iPatch)->isXmax())
-                            icell = params.n_space[0]-1;
-                        vecPatches(iPatch)->vecSpecies[iSpecies]->createParticles( init_space, params, vecPatches(iPatch), icell );
+            #pragma omp master
+            {
+                vector<unsigned int> init_space( 3, 1 );
+                init_space[0] = 1;
+                init_space[1] = params.n_space[1];
+                init_space[2] = params.n_space[2];
+                for (int iPatch=0 ; iPatch<vecPatches.size() ; iPatch++) {
+                    for (int iSpecies=0 ; iSpecies<vecPatches(0)->vecSpecies.size() ; iSpecies++) {
+                        if ( ( (vecPatches(iPatch)->isXmin()) && (iSpecies<2) ) ||
+                             ( (vecPatches(iPatch)->isXmax()) && (iSpecies>1) ) ) {
+                            int icell;
+                            if (vecPatches(iPatch)->isXmin())
+                                icell = 0;
+                            if (vecPatches(iPatch)->isXmax())
+                                icell = params.n_space[0]-1;
+                            vecPatches(iPatch)->vecSpecies[iSpecies]->createParticles( init_space, params, vecPatches(iPatch), icell );
+                        }
                     }
                 }
             }
+            #pragma omp barrier
             
             timers.movWindow.restart();
             simWindow->operate( vecPatches, &smpi, params, itime, time_dual );
