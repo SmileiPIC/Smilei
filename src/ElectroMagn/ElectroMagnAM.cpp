@@ -444,7 +444,7 @@ void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gam
                                + one_ov_dr_sq*( ( *p_AM_ )( i, j-1 )+( *p_AM_ )( i, j+1 ) )
                                + one_ov_2dr   *( ( *p_AM_ )( i, j+1 )-( *p_AM_ )( i, j-1 ) ) / ( ( j_glob_+j-0.5 )*dr )
                                - two_ov_dlgam2dr2*( *p_AM_ )( i, j )
-                               - (double)(imode*imode)/( ( j_glob_+j-0.5 )*dr )/( ( j_glob_+j-0.5 )*dr )*( *p_AM_ )( i, j );
+                               - (double)(imode*imode)/( ( j_glob_+j )*dr )/( ( j_glob_+j )*dr )*( *p_AM_ )( i, j );
         }//j
     }//i
     
@@ -452,69 +452,69 @@ void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gam
     // Axis BC
     if( patch->isYmin() ) {
         unsigned int j=2;
-        for( unsigned int i=1; i<nl_p-1; i++ ) {
+        for( unsigned int i=1; i<nl_p-1; i++ ) { // radial derivative is zero on axis r=0 (p = phi is all on primal grid)
             ( *Ap_AM_ )( i, j )= one_ov_dl_sq_ov_gamma_sq*( ( *p_AM_ )( i-1, j )+( *p_AM_ )( i+1, j ) )
                                + one_ov_dr_sq*( ( *p_AM_ )( i, j+1 )-( *p_AM_ )( i, j ) )
                                - two_ov_dlgam2*( *p_AM_ )( i, j )
-                               - (double)(imode*imode)/( ( j_glob_+j-0.5 )*dr )/( ( j_glob_+j-0.5 )*dr )*( *p_AM_ )( i, j );
+                               //- (double)(imode*imode)/( ( j_glob_+j )*dr )/( ( j_glob_+j )*dr )*( *p_AM_ )( i, j );
         }
     }
 
     if( patch->isYmax() ) {
-        unsigned int j=nr_p-1; // Von Neumann condition, derivative = 0
+        unsigned int j=nr_p-1; // Von Neumann condition, radial derivative = 0
         for( unsigned int i=1; i<nl_p-1; i++ ) {
             ( *Ap_AM_ )( i, j )= one_ov_dl_sq_ov_gamma_sq*( ( *p_AM_ )( i-1, j-1 )+( *p_AM_ )( i+1, j-1 ) -2.*( *p_AM_ )( i, j-1 ) )
-                               - (double)(imode*imode)/( ( j_glob_+j-1-0.5 )*dr )/( ( j_glob_+j-0.5 )*dr )*( *p_AM_ )( i, j-1 );    
+                               - (double)(imode*imode)/( ( j_glob_+j-1 )*dr )/( ( j_glob_+j-1 )*dr )*( *p_AM_ )( i, j-1 );    
         }
     }
 
     // Xmin BC
-    if( patch->isXmin() ) {
+    if( patch->isXmin() ) { // p = phi = 0 on the left border
         for( unsigned int j=1; j<nr_p-2; j++ ) {
             
             ( *Ap_AM_ )( 0, j )     = one_ov_dl_sq_ov_gamma_sq*( ( *p_AM_ )( 1, j ) )
-                                    +              one_ov_dr_sq*( ( *p_AM_ )( 0, j+1 )+( *p_AM_ )( 0, j+1 ) )
-                                    +              one_ov_2dr   *( ( *p_AM_ )( 0, j+1 )-( *p_AM_ )( 0, j-1 ) ) / ( ( j_glob_+j-0.5 )*dr )
-                                    -              two_ov_dlgam2dr2*( *p_AM_ )( 0, j )
-                                    - (double)(imode*imode)/( ( j_glob_+j-0.5 )*dr )/( ( j_glob_+j-0.5 )*dr )*( *p_AM_ )( 0, j );
+                                    //+              one_ov_dr_sq*( ( *p_AM_ )( 0, j+1 )+( *p_AM_ )( 0, j+1 ) )
+                                    //+              one_ov_2dr   *( ( *p_AM_ )( 0, j+1 )-( *p_AM_ )( 0, j-1 ) ) / ( ( j_glob_+j )*dr )
+                                    //-              two_ov_dlgam2dr2*( *p_AM_ )( 0, j )
+                                    //- (double)(imode*imode)/( ( j_glob_+j )*dr )/( ( j_glob_+j )*dr )*( *p_AM_ )( 0, j );
         }
         // at corners
         
         ( *Ap_AM_ )( 0, 0 )          = one_ov_dl_sq_ov_gamma_sq*( ( *p_AM_ )( 1, 0 ) )   // Xmin/Ymin
-                                     +                   one_ov_dr_sq*( ( *p_AM_ )( 0, 1 ) )
-                                     -                   two_ov_dlgam2*( *p_AM_ )( 0, 0 )
-                                     - (double)(imode*imode)/( ( j_glob_-0.5 )*dr )/( ( j_glob_-0.5 )*dr )*( *p_AM_ )( 0, 0 );
+                                     //+                   one_ov_dr_sq*( ( *p_AM_ )( 0, 1 ) )
+                                     //-                   two_ov_dlgam2*( *p_AM_ )( 0, 0 )
+                                     //- (double)(imode*imode)/( ( j_glob_ )*dr )/( ( j_glob_ )*dr )*( *p_AM_ )( 0, 0 );
         
         ( *Ap_AM_ )( 0, nr_p-1 )     = one_ov_dl_sq_ov_gamma_sq*( ( *p_AM_ )( 1, nr_p-1 ) ) // Xmin/Ymax
-                                     +                   one_ov_dr_sq*( ( *p_AM_ )( 0, nr_p-2 ) )
-                                     +                   one_ov_2dr   *( -( *p_AM_ )( 0, nr_p-2 ) ) / ( ( j_glob_+nr_p-1-0.5 )*dr )
-                                     -                   two_ov_dlgam2*( *p_AM_ )( 0, nr_p-1 )
-                                     - (double)(imode*imode)/( ( j_glob_+nr_p-1-0.5 )*dr )/( ( j_glob_+nr_p-1-0.5 )*dr )*( *p_AM_ )( 0, nr_p-1 );
+                                     //+                   one_ov_dr_sq*( ( *p_AM_ )( 0, nr_p-2 ) )
+                                     //+                   one_ov_2dr   *( -( *p_AM_ )( 0, nr_p-2 ) ) / ( ( j_glob_+nr_p-1 )*dr )
+                                     //-                   two_ov_dlgam2*( *p_AM_ )( 0, nr_p-1 )
+                                     //- (double)(imode*imode)/( ( j_glob_+nr_p-1 )*dr )/( ( j_glob_+nr_p-1 )*dr )*( *p_AM_ )( 0, nr_p-1 );
     }
     
     // Xmax BC
-    if( patch->isXmax() ) {
+    if( patch->isXmax() ) { // p = phi = 0 on the right border 
     
         for( unsigned int j=isYmin*3; j<nr_p-1; j++ ) {
             
             ( *Ap_AM_ )( nl_p-1, j )= one_ov_dl_sq_ov_gamma_sq*( ( *p_AM_ )( nl_p-2, j ) )
-                                    +              one_ov_dr_sq*( ( *p_AM_ )( nl_p-1, j-1 )+( *p_AM_ )( nl_p-1, j+1 ) )
-                                    +              one_ov_2dr   *( ( *p_AM_ )( nl_p-1, j+1 )-( *p_AM_ )( nl_p-1, j-1 ) ) / ( ( j_glob_+j-0.5 )*dr )
-                                    -              two_ov_dlgam2dr2*( *p_AM_ )( nl_p-1, j )
-                                    - (double)(imode*imode)/( ( j_glob_+j-0.5 )*dr )/( ( j_glob_+j-0.5 )*dr )*( *p_AM_ )( nl_p-1, j );
+                                    //+              one_ov_dr_sq*( ( *p_AM_ )( nl_p-1, j-1 )+( *p_AM_ )( nl_p-1, j+1 ) )
+                                    //+              one_ov_2dr   *( ( *p_AM_ )( nl_p-1, j+1 )-( *p_AM_ )( nl_p-1, j-1 ) ) / ( ( j_glob_+j )*dr )
+                                    //-              two_ov_dlgam2dr2*( *p_AM_ )( nl_p-1, j )
+                                    //- (double)(imode*imode)/( ( j_glob_+j )*dr )/( ( j_glob_+j )*dr )*( *p_AM_ )( nl_p-1, j );
         }
         // at corners
     
         ( *Ap_AM_ )( nl_p-1, 0 )     = one_ov_dl_sq_ov_gamma_sq*( ( *p_AM_ )( nl_p-2, 0 ) )     // Xmax/Ymin
-                                     +                   one_ov_dr_sq*( ( *p_AM_ )( nl_p-1, 1 ) )
-                                     -                   two_ov_dlgam2*( *p_AM_ )( nl_p-1, 0 )
-                                     - (double)(imode*imode)/( ( j_glob_-0.5 )*dr )/( ( j_glob_-0.5 )*dr )*( *p_AM_ )( nl_p-1, 0 );;
+                                     //+                   one_ov_dr_sq*( ( *p_AM_ )( nl_p-1, 1 ) )
+                                     //-                   two_ov_dlgam2*( *p_AM_ )( nl_p-1, 0 )
+                                     //- (double)(imode*imode)/( ( j_glob_ )*dr )/( ( j_glob_-0.5 )*dr )*( *p_AM_ )( nl_p-1, 0 );;
         
         ( *Ap_AM_ )( nl_p-1, nr_p-1 )= one_ov_dl_sq_ov_gamma_sq*( ( *p_AM_ )( nl_p-2, nr_p-1 ) ) // Xmax/Ymax
-                                     +                   one_ov_dr_sq*( ( *p_AM_ )( nl_p-1, nr_p-2 ) )
-                                     +                   one_ov_2dr   *( -( *p_AM_ )( nl_p-1, nr_p-2 ) ) / ( ( j_glob_+nr_p-1-0.5 )*dr )
-                                     -                   two_ov_dlgam2*( *p_AM_ )( nl_p-1, nr_p-1 )
-                                     - (double)(imode*imode)/( ( j_glob_+nr_p-1-0.5 )*dr )/( ( j_glob_+nr_p-1-0.5 )*dr )*( *p_AM_ )( nl_p-1, nr_p-1 );;
+                                     //+                   one_ov_dr_sq*( ( *p_AM_ )( nl_p-1, nr_p-2 ) )
+                                     //+                   one_ov_2dr   *( -( *p_AM_ )( nl_p-1, nr_p-2 ) ) / ( ( j_glob_+nr_p-1 )*dr )
+                                     //-                   two_ov_dlgam2*( *p_AM_ )( nl_p-1, nr_p-1 )
+                                     //- (double)(imode*imode)/( ( j_glob_+nr_p-1 )*dr )/( ( j_glob_+nr_p-1 )*dr )*( *p_AM_ )( nl_p-1, nr_p-1 );;
     }
     
 
@@ -621,7 +621,7 @@ void ElectroMagnAM::initE_relativistic_Poisson_AM( Patch *patch, double gamma_me
     MESSAGE( 1, "Computing Er from scalar potential, relativistic Poisson problem" );
     for( unsigned int i=1; i<nl_p-1; i++ ) {
         for( unsigned int j=1; j<nr_p-1; j++ ) {
-            ( *EtAM )( i, j ) = i1*((double )imode)/(((double)( j_glob_+j-0.5 ))*dr)* ( *phi_AM_ )( i, j );
+            ( *EtAM )( i, j ) = i1*((double )imode)/(((double)( j_glob_+j ))*dr)* ( *phi_AM_ )( i, j );
         }
     }
     MESSAGE( 1, "Et: done" );
@@ -634,12 +634,10 @@ void ElectroMagnAM::initE_relativistic_Poisson_AM( Patch *patch, double gamma_me
                 ( *EtAM )( i, j )=0;
             }
             for( unsigned int i=0 ; i<nl_p  ; i++ ) {
-                ( *Er )( i, j )= -( *Er )( i, j+1 );
-                //( *ErAM )( i, j   )= 0; //( *ErAM )( i, j+1 );
-                //( *ErAM )( i, j-1 )= 0;
+                ( *ErAM )( i, j )= -( *Er )( i, j+1 );
             }
             for( unsigned int i=0 ; i<nl_d ; i++ ) {
-                ( *ElAM )( i, j-1 ) = ( *ElAM )( i, j ) ; //( *ElAM )( i, j ) = ( *ElAM )( i, j+1 ) ;  // not sure about this one
+                ( *ElAM )( i, j ) = ( *ElAM )( i, j+1 ) ; //( *ElAM )( i, j ) = ( *ElAM )( i, j+1 ) ;  // not sure about this one
             }
         } else if( imode==1 ) {
             for( unsigned int i=0 ; i<nl_d  ; i++ ) {
