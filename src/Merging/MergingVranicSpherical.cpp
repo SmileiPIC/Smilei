@@ -217,7 +217,7 @@ void MergingVranicSpherical::operator() (
 
         // Computation of the deltas (discretization steps)
         // Check if min and max boundaries are very close
-        if (abs((mr_max - mr_min)) < min_momentum_cell_length_[0]) {
+        if (fabs((mr_max - mr_min)) < min_momentum_cell_length_[0]) {
             mr_delta = 0.1;
             inv_mr_delta = 0;
             dim[0] = 1;
@@ -235,7 +235,7 @@ void MergingVranicSpherical::operator() (
                 inv_mr_delta = 1./mr_delta;
             }
         }
-        if (abs((theta_max - theta_min)) < min_momentum_cell_length_[1]) {
+        if (fabs((theta_max - theta_min)) < min_momentum_cell_length_[1]) {
             theta_delta = 0.1*M_PI;
             inv_theta_delta = 0;
             dim[1] = 1;
@@ -253,7 +253,7 @@ void MergingVranicSpherical::operator() (
                 inv_theta_delta = 1./theta_delta;
             }
         }
-        if (abs((phi_max - phi_min)) < min_momentum_cell_length_[2]) {
+        if (fabs((phi_max - phi_min)) < min_momentum_cell_length_[2]) {
             phi_delta = 0.1*M_PI;
             inv_phi_delta = 0;
             dim[2] = 1;
