@@ -110,3 +110,12 @@ DiagFields(
     every = globalEvery,
     fields = ['Ex','Ey','Ez','Bx','By','Bz','Rho_pon1','Rho_eon1','Rho_pon2','Rho_eon2']
 )
+
+DiagProbe(
+    every = globalEvery,
+    origin = [0., Main.grid_length[1]/2.],
+    corners = [[Main.grid_length[0],Main.grid_length[1]/2.]],
+    number = [256],
+    fields = ['Ex','Ey','Ez','Rho_pon1','Jx_pon1','Jy_pon1','Jz_pon1']
+)
+
