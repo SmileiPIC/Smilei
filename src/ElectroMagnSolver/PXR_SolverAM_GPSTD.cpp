@@ -62,13 +62,12 @@ void PXR_SolverAM_GPSTD::coupling( Params &params, ElectroMagn *EMfields )
 
 #ifdef _PICSAR    
 
-
+        int nmodes ( Nmode );
         //call of extern init routine (defined in picsar)
-        picsar::init_params_picsar_AM( &nr, &nl, &nmode, &imode, 
+        picsar::init_params_picsar_AM( &nr, &nl, &nmodes, &imode, 
                                     &pxr_dr, &pxr_dl, &params.timestep,
                                     &ovr, &ovl,
                                     &params.norder[1], &params.norder[0],
-                                    &params.is_spectral,
                                     &( Et->cdata_[0] ),
                                     &( Er->cdata_[0] ),
                                     &( El->cdata_[0] ),

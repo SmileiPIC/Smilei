@@ -53,7 +53,7 @@ ifneq ($(strip $(PYTHONHOME)),)
 endif
 
 
-PICSAR=FALSE
+PICSAR=TRUE
 ifeq ($(PICSAR),TRUE)
         # New environment variable
 	FFTW3_LIB ?= $(FFTW_LIB_DIR)
@@ -61,7 +61,7 @@ ifeq ($(PICSAR),TRUE)
 	# Set Picsar link environment
 	CXXFLAGS += -D_PICSAR
 	LDFLAGS += -L$(LIBPXR) -lpxr
-	LDFLAGS += -L$(FFTW3_LIB) -lfftw3_mpi
+	LDFLAGS += -L$(FFTW3_LIB) -lfftw3_mpi -mkl
 
 	LDFLAGS += -L$(FFTW3_LIB) -lfftw3_threads
 	LDFLAGS += -L$(FFTW3_LIB) -lfftw3
