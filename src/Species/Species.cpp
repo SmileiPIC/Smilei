@@ -1469,8 +1469,8 @@ int Species::createParticles( vector<unsigned int> n_space_to_create, Params &pa
     // }
     
     unsigned int n_existing_particles = particles->size();
-    if (!n_existing_particles)
-        particles->initialize( n_existing_particles+npart_effective, nDim_particle );
+    //if (!n_existing_particles)
+    particles->initialize( n_existing_particles+npart_effective, nDim_particle );
     
     // Initialization of the particles properties
     // ------------------------------------------
@@ -1503,16 +1503,17 @@ int Species::createParticles( vector<unsigned int> n_space_to_create, Params &pa
                         temp[2] = temperature[2]( i, j, k );
                         nPart = n_part_in_cell( i, j, k );
                         
-                        if (n_existing_particles) { 
-                            iPart = first_index[(new_cell_idx+i)/clrw];
-                            last_index[(new_cell_idx+i)/clrw] += nPart;
-                            for ( int idx=(new_cell_idx+i)/clrw+1 ; idx<last_index.size() ; idx++ ) {
-                                first_index[idx] += nPart;
-                                last_index[idx] += nPart;
-                            }
-                            particles->create_particles( nPart, iPart );
-
-                        }
+                        //if (n_existing_particles) {
+                        //    iPart = n_existing_particles;
+                        //    iPart = first_index[(new_cell_idx+i)/clrw];
+                        //    last_index[(new_cell_idx+i)/clrw] += nPart;
+                        //    for ( int idx=(new_cell_idx+i)/clrw+1 ; idx<last_index.size() ; idx++ ) {
+                        //        first_index[idx] += nPart;
+                        //        last_index[idx] += nPart;
+                        //    }
+                        //    particles->create_particles( nPart, iPart );
+                        //
+                        //}
 
                         indexes[0]=i*cell_length[0]+cell_position[0] + new_cell_idx*cell_length[0];;
                         if( nDim_particle > 1 ) {
@@ -1535,46 +1536,46 @@ int Species::createParticles( vector<unsigned int> n_space_to_create, Params &pa
                         }
                         initCharge( nPart, iPart, charge( i, j, k ) );
 
-                        if (n_existing_particles) { 
-                            // operate filter 
-                            for ( int ip = nPart-1 ; ip >= 0 ; ip-- ){
-                                double lf=1;
-                                for (int iDim=0;iDim<3;iDim++)
-                                    lf += particles->Momentum[iDim][iPart+ip]*particles->Momentum[iDim][iPart+ip];
-                                lf =sqrt( lf );
-                                double X = particles->Position[0][iPart+ip] - cell_length[0]+params.timestep*particles->Momentum[0][iPart+ip]/lf;
-                                if ( patch->isXmin() ) {
-                                    if ( ( X < 0. ) ) {
-                                        nPart--; // ne sert à rien ici
-                                        particles->erase_particle(iPart+ip);
-                                        last_index[(new_cell_idx+i)/clrw]--;
-                                        for ( int idx=(new_cell_idx+i)/clrw+1 ; idx<last_index.size() ; idx++ ) {
-                                            first_index[idx]--;
-                                            last_index[idx]--;
-                                        }
-                                    }
-                                    else
-                                        particles->Position[0][iPart+ip] = X;
-                                }
-                                else if ( patch->isXmax() ) {
-                                    X = particles->Position[0][iPart+ip] + cell_length[0]+params.timestep*particles->Momentum[0][iPart+ip]/lf;
-                                    if (  X > params.grid_length[0] ) {
-                                        //cout << "params.grid_length[0]+ cell_length[0]*vel[0] = " << params.grid_length[0]+ cell_length[0]*vel[0] << endl;
-                                        //cout << "params.grid_length[0]                        = " << params.grid_length[0] << endl;
-                                        nPart--; // ne sert à rien ici
-                                        particles->erase_particle(iPart+ip);
-                                        last_index[(new_cell_idx+i)/clrw]--;
-                                        for ( int idx=(new_cell_idx+i)/clrw+1 ; idx<last_index.size() ; idx++ ) {
-                                            first_index[idx]--;
-                                            last_index[idx]--;
-                                        }
-                                    }
-                                    else
-                                        particles->Position[0][iPart+ip] = X;
-                                }
-
-                            }
-                        }
+                        //if (n_existing_particles) { 
+                        //    // operate filter 
+                        //    for ( int ip = nPart-1 ; ip >= 0 ; ip-- ){
+                        //        double lf=1;
+                        //        for (int iDim=0;iDim<3;iDim++)
+                        //            lf += particles->Momentum[iDim][iPart+ip]*particles->Momentum[iDim][iPart+ip];
+                        //        lf =sqrt( lf );
+                        //        double X = particles->Position[0][iPart+ip] - cell_length[0]+params.timestep*particles->Momentum[0][iPart+ip]/lf;
+                        //        if ( patch->isXmin() ) {
+                        //            if ( ( X < 0. ) ) {
+                        //                nPart--; // ne sert à rien ici
+                        //                particles->erase_particle(iPart+ip);
+                        //                last_index[(new_cell_idx+i)/clrw]--;
+                        //                for ( int idx=(new_cell_idx+i)/clrw+1 ; idx<last_index.size() ; idx++ ) {
+                        //                    first_index[idx]--;
+                        //                    last_index[idx]--;
+                        //                }
+                        //            }
+                        //            else
+                        //                particles->Position[0][iPart+ip] = X;
+                        //        }
+                        //        else if ( patch->isXmax() ) {
+                        //            X = particles->Position[0][iPart+ip] + cell_length[0]+params.timestep*particles->Momentum[0][iPart+ip]/lf;
+                        //            if (  X > params.grid_length[0] ) {
+                        //                //cout << "params.grid_length[0]+ cell_length[0]*vel[0] = " << params.grid_length[0]+ cell_length[0]*vel[0] << endl;
+                        //                //cout << "params.grid_length[0]                        = " << params.grid_length[0] << endl;
+                        //                nPart--; // ne sert à rien ici
+                        //                particles->erase_particle(iPart+ip);
+                        //                last_index[(new_cell_idx+i)/clrw]--;
+                        //                for ( int idx=(new_cell_idx+i)/clrw+1 ; idx<last_index.size() ; idx++ ) {
+                        //                    first_index[idx]--;
+                        //                    last_index[idx]--;
+                        //                }
+                        //            }
+                        //            else
+                        //                particles->Position[0][iPart+ip] = X;
+                        //        }
+                        //
+                        //    }
+                        //}
 
                         
                         iPart+=nPart;

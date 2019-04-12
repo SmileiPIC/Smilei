@@ -11,6 +11,9 @@ resx = 8.          # nb of cells in on laser wavelength
 rest = 16.         # time of timestep in one optical cycle
 nppc = 16
 
+mean_V = 0.4
+pos_all = 'random'
+
 Main(
     geometry = "2Dcartesian",
     interpolation_order = 2 ,
@@ -31,7 +34,7 @@ fm = trapezoidal(1., xvacuum=Lsim[0]/2.,xplateau=Lsim[0]/2.)
 
 Species(
 	name = 'pon1',
-	position_initialization = 'regular',
+	position_initialization = pos_all,
 	momentum_initialization = 'mj',
 	ionization_model = 'none',
 	particles_per_cell = nppc,
@@ -39,7 +42,7 @@ Species(
 	mass = 1.0,
 	charge = 1.0,
 	number_density = fp,
-	mean_velocity = [0.5,0.,0.],
+	mean_velocity = [mean_V,0.,0.],
 	temperature = [0.001],
 	time_frozen = 0.0,
 	boundary_conditions = [
@@ -49,7 +52,7 @@ Species(
 )
 Species(
 	name = 'eon1',
-	position_initialization = 'regular',
+	position_initialization = pos_all,
 	momentum_initialization = 'mj',
 	ionization_model = 'none',
 	particles_per_cell = nppc,
@@ -57,7 +60,7 @@ Species(
 	mass = 1.0,
 	charge = -1.0,
 	number_density = fp,
-	mean_velocity = [0.5,0.,0.],
+	mean_velocity = [mean_V,0.,0.],
 	temperature = [0.001],
 	time_frozen = 0.0,
 	boundary_conditions = [
@@ -67,7 +70,7 @@ Species(
 )
 Species(
 	name = 'pon2',
-	position_initialization = 'regular',
+	position_initialization = pos_all,
 	momentum_initialization = 'mj',
 	ionization_model = 'none',
 	particles_per_cell = nppc,
@@ -75,7 +78,7 @@ Species(
 	mass = 1.0,
 	charge = 1.0,
 	number_density = fm,
-	mean_velocity = [-0.5,0.,0.],
+	mean_velocity = [-mean_V,0.,0.],
 	temperature = [0.001],
 	time_frozen = 0.0,
 	boundary_conditions = [
@@ -85,7 +88,7 @@ Species(
 )
 Species(
 	name = 'eon2',
-	position_initialization = 'regular',
+	position_initialization = pos_all,
 	momentum_initialization = 'mj',
 	ionization_model = 'none',
 	particles_per_cell = nppc,
@@ -93,7 +96,7 @@ Species(
 	mass = 1.0,
 	charge = -1.0,
 	number_density = fm,
-	mean_velocity = [-0.5,0.,0.],
+	mean_velocity = [-mean_V,0.,0.],
 	temperature = [0.001],
 	time_frozen = 0.0,
 	boundary_conditions = [

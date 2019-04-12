@@ -695,6 +695,26 @@ void Particles::create_particles( int nAdditionalParticles, int pstart )
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+//! Move ipart at new_pos in the particles data structure
+// ---------------------------------------------------------------------------------------------------------------------
+void Particles::mv_particles( int iPart, int new_pos )
+{
+    for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
+        ( *double_prop[iprop] ).insert( ( *double_prop[iprop] ).begin()+new_pos,( *double_prop[iprop] )[iPart]  );
+    }
+    
+    for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
+        ( *short_prop[iprop] ).insert( ( *short_prop[iprop] ).begin()+new_pos, ( *short_prop[iprop] )[iPart] );
+    }
+    
+    for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
+        ( *uint64_prop[iprop] ).insert( ( *uint64_prop[iprop] ).begin()+new_pos,( *uint64_prop[iprop] )[iPart]  );
+    }
+  
+    erase_particle( iPart+1 );
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 // Create nParticles new particles at the end of vectors
 // ---------------------------------------------------------------------------------------------------------------------
 //void Particles::create_particles(int nAdditionalParticles )
