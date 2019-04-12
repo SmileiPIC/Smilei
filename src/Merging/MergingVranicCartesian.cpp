@@ -109,7 +109,6 @@ void MergingVranicCartesian::operator() (
         unsigned int mz_i;
 
         // Adjustement of the discretization
-        double div_delta;
         double nb_delta;
 
         // Local particle index
@@ -218,7 +217,7 @@ void MergingVranicCartesian::operator() (
 
         // Computation of the deltas (discretization steps)
         // Check if min and max boundaries are very close
-        if (abs((mx_max - mx_min)) < min_momentum_cell_length_[0]) {
+        if (fabs((mx_max - mx_min)) < min_momentum_cell_length_[0]) {
             mx_delta = 0.1;
             inv_mx_delta = 0;
             dim[0] = 1;
@@ -237,17 +236,16 @@ void MergingVranicCartesian::operator() (
             // else, discretization centerd in 0
             } else {
                 dim[0] = int(dim[0]*(1+Rand::uniform()));
-                mx_delta = (mx_max - mx_min) / dim[0];
+                mx_delta = fabs(mx_max - mx_min) / dim[0];
                 inv_mx_delta = 1.0/mx_delta;
-                div_delta = abs(mx_min) * inv_mx_delta;
-                nb_delta = ceil(div_delta);
+                nb_delta = ceil(fabs(mx_min) * inv_mx_delta);
                 mx_min = -nb_delta*mx_delta;
                 dim[0] += 1;
                 mx_max = mx_min + dim[0] * mx_delta;
             }
         }
 
-        if (abs((my_max - my_min)) < min_momentum_cell_length_[1]) {
+        if (fabs((my_max - my_min)) < min_momentum_cell_length_[1]) {
             my_delta = 0.1;
             inv_my_delta = 0;
             dim[1] = 1;
@@ -265,17 +263,16 @@ void MergingVranicCartesian::operator() (
             // else, discretization centerd in 0
             } else {
                 dim[1] = int(dim[1]*(1+Rand::uniform()));
-                my_delta = (my_max - my_min) / dim[1];
+                my_delta = fabs(my_max - my_min) / dim[1];
                 inv_my_delta = 1.0/my_delta;
-                div_delta = abs(my_min) * inv_my_delta;
-                nb_delta = ceil(div_delta);
+                nb_delta = ceil(fabs(my_min) * inv_my_delta);
                 my_min = -nb_delta*my_delta;
                 dim[1] += 1;
                 my_max = my_min + dim[1] * my_delta;
             }
         }
         // Momentum z direction
-        if (abs((mz_max - mz_min)) < min_momentum_cell_length_[2]) {
+        if (fabs((mz_max - mz_min)) < min_momentum_cell_length_[2]) {
             mz_delta = 0.1;
             inv_mz_delta = 0;
             dim[2] = 1;
@@ -293,10 +290,9 @@ void MergingVranicCartesian::operator() (
             // discretization centerd in 0
             } else {
                 dim[2] = int(dim[2]*(1+Rand::uniform()));
-                mz_delta = abs(mz_max - mz_min) / dim[2];
+                mz_delta = fabs(mz_max - mz_min) / dim[2];
                 inv_mz_delta = 1.0/mz_delta;
-                div_delta = abs(mz_min) * inv_mz_delta;
-                nb_delta = ceil(div_delta);
+                nb_delta = ceil(fabs(mz_min) * inv_mz_delta);
                 mz_min = -nb_delta*mz_delta;
                 dim[2] += 1;
                 mz_max = mz_min + dim[2] * mz_delta;
