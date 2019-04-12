@@ -38,7 +38,7 @@ protected:
     int i_domain_begin;
     int j_domain_begin;
     unsigned int Nmode;
-    int nprimr, npriml;
+    int nprimr, npriml, oversizeR;
     //! Inverse radius
     double *invR, *invRd;
     

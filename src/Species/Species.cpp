@@ -1458,7 +1458,8 @@ int Species::createParticles( vector<unsigned int> n_space_to_create, Params &pa
                     density( i, j, k ) = abs( density( i, j, k ) );
                     // multiply by the cell volume
                     density( i, j, k ) *= params.cell_volume;
-                    if( params.geometry=="AMcylindrical" ) {
+                    if( params.geometry=="AMcylindrical" && position_initialization != "regular" ) {
+                        //Particles weight in regular is normalized later.
                         density( i, j, k ) *= ( *xyz[1] )( i, j, k );
                     }
                     // increment the effective number of particle by n_part_in_cell(i,j,k)
@@ -1527,6 +1528,13 @@ int Species::createParticles( vector<unsigned int> n_space_to_create, Params &pa
                         }
                         initMomentum( nPart, iPart, temp, vel );
                         initWeight( nPart, iPart, density( i, j, k ) );
+
+                        if( params.geometry=="AMcylindrical" && position_initialization == "regular" ) {
+                            //Particles in regular have a weight proportional to their position along r.
+                            for (unsigned int ipart=iPart; ipart < iPart+nPart; ipart++){
+                                particles->weight(ipart) *= sqrt(particles->position(1,ipart)*particles->position(1,ipart) + particles->position(2,ipart)*particles->position(2,ipart));
+                            }
+                        }
                         initCharge( nPart, iPart, charge( i, j, k ) );
 
                         iPart+=nPart;
