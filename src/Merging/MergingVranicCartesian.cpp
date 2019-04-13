@@ -413,18 +413,18 @@ void MergingVranicCartesian::operator() (
         // Loop over the the momentum cells that have enough particules
         for (mz_i=0 ; mz_i< dim[2]; mz_i++ ) {
 
-            cell_vec_z = mz_min + (mz_i+1)*mz_delta;
+            cell_vec_z = mz_min + (mz_i+0.5)*mz_delta;
 
             for (my_i=0 ; my_i< dim[1]; my_i++ ) {
 
-                cell_vec_y = my_min + (my_i+1)*my_delta;
+                cell_vec_y = my_min + (my_i+0.5)*my_delta;
 
                 // 1D cell direction index
                 icc = my_i + mz_i* dim[1] ;
 
                 for (mx_i=0 ; mx_i< dim[0]; mx_i++ ) {
 
-                    cell_vec_x = mx_min + (mx_i+1)*mx_delta;
+                    cell_vec_x = mx_min + (mx_i+0.5)*mx_delta;
 
                     // 1D cell index
                     ic = mx_i + icc*dim[0];
@@ -606,6 +606,7 @@ void MergingVranicCartesian::operator() (
                                     //std::cerr <<
                                     ERROR(
                                                  " dim: " << dim[0] << " " << dim[1] << " " << dim[2]
+                                              << std::scientific
                                               << " mx: " << momentum[0][ip]
                                               << " my: " << momentum[1][ip]
                                               << " mz: " << momentum[2][ip]
