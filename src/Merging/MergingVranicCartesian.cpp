@@ -496,16 +496,16 @@ void MergingVranicCartesian::operator() (
                                     isnan(momentum[1][ip]) ||
                                     isnan(momentum[2][ip])) {
                                     //std::cerr <<
-                                    ERROR(
-                                                 " dim: " << dim[0] << " " << dim[1] << " " << dim[2]
-                                              << " mx: " << momentum[0][ip]
-                                              << " my: " << momentum[1][ip]
-                                              << " mz: " << momentum[2][ip]
-                                              << " total_weight: " << total_weight
-                                              << " total_momentum_norm: " << total_momentum_norm
-                                              << " weight[ip]: " << weight[ip]
-                                              << " cell_vec: " << cell_vec_x << " " << cell_vec_y << " " << cell_vec_z
-                                          )
+                                    // ERROR(
+                                    //              " dim: " << dim[0] << " " << dim[1] << " " << dim[2]
+                                    //           << " mx: " << momentum[0][ip]
+                                    //           << " my: " << momentum[1][ip]
+                                    //           << " mz: " << momentum[2][ip]
+                                    //           << " total_weight: " << total_weight
+                                    //           << " total_momentum_norm: " << total_momentum_norm
+                                    //           << " weight[ip]: " << weight[ip]
+                                    //           << " cell_vec: " << cell_vec_x << " " << cell_vec_y << " " << cell_vec_z
+                                    //       )
                                     //<< std::endl;
 
                                 }
@@ -599,31 +599,31 @@ void MergingVranicCartesian::operator() (
                                 momentum[2][ip] = new_momentum_norm*(cos_omega*e1_z + sin_omega*e2_z);
                                 weight[ip] = 0.5*total_weight;
 
-                                if (isnan(momentum[0][ip]) ||
-                                    isnan(omega) ||
-                                    isnan(momentum[1][ip]) ||
-                                    isnan(momentum[2][ip])) {
-                                    //std::cerr <<
-                                    ERROR(
-                                                 " dim: " << dim[0] << " " << dim[1] << " " << dim[2]
-                                              << std::scientific
-                                              << " mx: " << momentum[0][ip]
-                                              << " my: " << momentum[1][ip]
-                                              << " mz: " << momentum[2][ip]
-                                              << " new_momentum_norm: " << new_momentum_norm
-                                              << " total_weight: " << total_weight
-                                              << " total_momentum_norm: " << total_momentum_norm
-                                              << " weight[ip]: " << weight[ip]
-                                              << " omega: " << omega
-                                              << " " << total_momentum_norm / (total_weight*new_momentum_norm)
-                                              << " cos_omega: " << cos_omega << " sin_omega" << sin_omega
-                                              << " cell_vec: " << cell_vec_x << " " << cell_vec_y << " " << cell_vec_z
-                                              << " e1: " << e1_x << " " << e1_y << " " << e1_z
-                                              << " e2: " << e2_x << " " << e2_y << " " << e2_z
-                                          )
-                                    //<< std::endl;
-
-                                }
+                                // if (isnan(momentum[0][ip]) ||
+                                //     isnan(omega) ||
+                                //     isnan(momentum[1][ip]) ||
+                                //     isnan(momentum[2][ip])) {
+                                //     //std::cerr <<
+                                //     ERROR(
+                                //                  " dim: " << dim[0] << " " << dim[1] << " " << dim[2]
+                                //               << std::scientific
+                                //               << " mx: " << momentum[0][ip]
+                                //               << " my: " << momentum[1][ip]
+                                //               << " mz: " << momentum[2][ip]
+                                //               << " new_momentum_norm: " << new_momentum_norm
+                                //               << " total_weight: " << total_weight
+                                //               << " total_momentum_norm: " << total_momentum_norm
+                                //               << " weight[ip]: " << weight[ip]
+                                //               << " omega: " << omega
+                                //               << " " << total_momentum_norm / (total_weight*new_momentum_norm)
+                                //               << " cos_omega: " << cos_omega << " sin_omega" << sin_omega
+                                //               << " cell_vec: " << cell_vec_x << " " << cell_vec_y << " " << cell_vec_z
+                                //               << " e1: " << e1_x << " " << e1_y << " " << e1_z
+                                //               << " e2: " << e2_x << " " << e2_y << " " << e2_z
+                                //           )
+                                //     //<< std::endl;
+                                //
+                                // }
 
                                 // Update momentum of the second particle
                                 ip = sorted_particles[momentum_cell_particle_index[ic] + ipr_min + 1];

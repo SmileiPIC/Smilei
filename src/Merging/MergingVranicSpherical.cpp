@@ -672,29 +672,29 @@ void MergingVranicSpherical::operator() (
                                 momentum[2][ipart] = new_momentum_norm*(cos_omega*e1_z + sin_omega*e2_z);
                                 weight[ipart] = 0.5*total_weight;
 
-                                if (isnan(momentum[0][ipart])) {
-                                    //std::cerr <<
-                                    ERROR(
-                                                 " theta: " << theta
-                                              << " phi: " << phi
-                                              << " dim: " << dim[0] << " " << dim[1] << " " << dim[2]
-                                              << " mx: " << momentum[0][ipart]
-                                              << " my: " << momentum[1][ipart]
-                                              << " mz: " << momentum[2][ipart]
-                                              << " new_momentum_norm: " << new_momentum_norm
-                                              << " total_weight: " << total_weight
-                                              << " total_momentum_norm: " << total_momentum_norm
-                                              << " weight[ipart]: " << weight[ipart]
-                                              << " omega: " << omega
-                                              << " " << total_momentum_norm / (total_weight*new_momentum_norm)
-                                              << " cos_omega: " << cos_omega << " sin_omega" << sin_omega
-                                              << " cell_vec: " << cell_vec_x[icc] << " " << cell_vec_y[icc] << " " << cell_vec_z[icc]
-                                              << " e1: " << e1_x << " " << e1_y << " " << e1_z
-                                              << " e2: " << e2_x << " " << e2_y << " " << e2_z
-                                          )
-                                    //<< std::endl;
-
-                                }
+                                // if (isnan(momentum[0][ipart])) {
+                                //     //std::cerr <<
+                                //     ERROR(
+                                //                  " theta: " << theta
+                                //               << " phi: " << phi
+                                //               << " dim: " << dim[0] << " " << dim[1] << " " << dim[2]
+                                //               << " mx: " << momentum[0][ipart]
+                                //               << " my: " << momentum[1][ipart]
+                                //               << " mz: " << momentum[2][ipart]
+                                //               << " new_momentum_norm: " << new_momentum_norm
+                                //               << " total_weight: " << total_weight
+                                //               << " total_momentum_norm: " << total_momentum_norm
+                                //               << " weight[ipart]: " << weight[ipart]
+                                //               << " omega: " << omega
+                                //               << " " << total_momentum_norm / (total_weight*new_momentum_norm)
+                                //               << " cos_omega: " << cos_omega << " sin_omega" << sin_omega
+                                //               << " cell_vec: " << cell_vec_x[icc] << " " << cell_vec_y[icc] << " " << cell_vec_z[icc]
+                                //               << " e1: " << e1_x << " " << e1_y << " " << e1_z
+                                //               << " e2: " << e2_x << " " << e2_y << " " << e2_z
+                                //           )
+                                //     //<< std::endl;
+                                //
+                                // }
 
                                 // Update momentum of the second particle
                                 ipart = sorted_particles[momentum_cell_particle_index[ic] + ip_min + 1];
