@@ -414,8 +414,6 @@ class Field(Diagnostic):
 				A = self._np.mean(A, axis=iaxis, keepdims=True)
 		# remove averaged axes
 		A = self._np.squeeze(A)
-		# log scale if requested
-		if self._data_log: A = self._np.log10(A)
 		return A
 	
 	# Method to obtain the data only
@@ -466,8 +464,6 @@ class Field(Diagnostic):
 				A = self._np.mean(A, axis=iaxis, keepdims=True)
 		# remove averaged axes
 		A = self._np.squeeze(A)
-		# log scale if requested
-		if self._data_log: A = self._np.log10(A)
 		return A
 	
 	# Method to obtain the data only
@@ -514,6 +510,4 @@ class Field(Diagnostic):
 				A = self._np.mean(A, axis=iaxis, keepdims=True)
 		# remove averaged axes
 		A = self._np.squeeze(A)
-		# log scale if requested
-		if self._data_log: A = self._np.log10(A)
 		return A

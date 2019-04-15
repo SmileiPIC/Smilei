@@ -152,6 +152,4 @@ class Scalar(Diagnostic):
 			return []
 		# Get value at selected time
 		A = self._values[ self._data[t] ]
-		# log scale if requested
-		if self._data_log: A = self._np.log10(A)
 		return A
