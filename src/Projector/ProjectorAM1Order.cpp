@@ -169,13 +169,14 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     Sr1d[0] = delta;
     Sr1d[1] = 1.-delta;
 
-    double *invR_local  = &(invR[jp]);
-    double *invRd_local = &(invRd[jpd]);
 
     ip  -= i_domain_begin ;
     ipd -= i_domain_begin ;
     jp  -= j_domain_begin ;
     jpd -= j_domain_begin ;
+    double *invR_local  = &(invR[jp]);
+    double *invRd_local = &(invRd[jpd]);
+
     for( unsigned int imode=0; imode<( unsigned int )Nmode; imode++ ) {
         if( imode == 1 ) {
             C_m = 2.;
