@@ -78,25 +78,39 @@ void MergingVranicSpherical::operator() (
             dim[i] = dimensions_[i];
         }
 
+        unsigned int mr_dim = dimensions_[0];
+        unsigned int theta_dim_ref = dimensions_[1];
+        unsigned int theta_dim_min = 1;
+        unsigned int phi_dim = dimensions_[2];
+        std::vector <unsigned int> theta_dim(phi_dim,0);
+
         // Minima
         double mr_min;
-        double theta_min;
+        double theta_min_ref;
+        std::vector <double> theta_min(phi_dim,0);
         double phi_min;
 
         // Maxima
         double mr_max;
-        double theta_max;
+        double theta_max_ref;
+        std::vector <double> theta_max(phi_dim,0);
         double phi_max;
 
         // Delta
         double mr_delta;
-        double theta_delta;
+        double theta_delta_ref;
+        std::vector <double> theta_delta(phi_dim,0);
         double phi_delta;
 
         // Inverse Delta
         double inv_mr_delta;
-        double inv_theta_delta;
+        std::vector <double> inv_theta_delta(phi_dim,0);
         double inv_phi_delta;
+
+        // Interval
+        double mr_interval;
+        double theta_interval;
+        double phi_interval;
 
         // Angles
         double phi;
@@ -145,7 +159,7 @@ void MergingVranicSpherical::operator() (
         // int *cell_keys = &( particles.cell_keys[0] );
 
         // Norm of the momentum
-        // std::vector <double> momentum_norm(number_of_particles,0);;
+        // std::vector <double> momentum_norm(number_of_particles,0);
         double  * momentum_norm = (double*) aligned_alloc(64, number_of_particles*sizeof(double));
 
         // Local vector to store the momentum index in the momentum discretization
@@ -188,22 +202,22 @@ void MergingVranicSpherical::operator() (
         mr_min = momentum_norm[0];
         mr_max = mr_min;
 
-        theta_min = particles_theta[0];
+        theta_min_ref = particles_theta[0];
         phi_min   = particles_phi[0];
 
-        theta_max = theta_min;
+        theta_max_ref = theta_min_ref;
         phi_max   = phi_min;
 
         #pragma omp simd \
-        reduction(min:mr_min) reduction(min:theta_min) reduction(min:phi_min) \
-        reduction(max:mr_max) reduction(max:theta_max) reduction(max:phi_max) \
+        reduction(min:mr_min) reduction(min:theta_min_ref) reduction(min:phi_min) \
+        reduction(max:mr_max) reduction(max:theta_max_ref) reduction(max:phi_max) \
         aligned(momentum_norm, particles_theta, particles_phi: 64)
         for (ip=1 ; ip < number_of_particles; ip++ ) {
             mr_min = fmin(mr_min,momentum_norm[ip]);
             mr_max = fmax(mr_max,momentum_norm[ip]);
 
-            theta_min = fmin(theta_min,particles_theta[ip]);
-            theta_max = fmax(theta_max,particles_theta[ip]);
+            theta_min_ref = fmin(theta_min_ref,particles_theta[ip]);
+            theta_max_ref = fmax(theta_max_ref,particles_theta[ip]);
 
             phi_min = fmin(phi_min,particles_phi[ip]);
             phi_max = fmax(phi_max,particles_phi[ip]);
@@ -218,68 +232,145 @@ void MergingVranicSpherical::operator() (
         // Computation of the deltas (discretization steps)
         // Check if min and max boundaries are very close
         if (fabs((mr_max - mr_min)) < min_momentum_cell_length_[0]) {
-            mr_delta = 0.1;
+            mr_delta = min_momentum_cell_length_[0];
             inv_mr_delta = 0;
-            dim[0] = 1;
+            mr_dim = 1;
         } else {
-            if (dim[0] == 1) {
-                mr_max += (mr_max - mr_min)*0.01;
-                mr_delta = (mr_max - mr_min);
+            if (mr_dim == 1) {
+                mr_interval = fabs(mr_max - mr_min);
+                mr_max += (mr_interval)*0.01;
+                mr_interval = fabs(mr_max - mr_min);
+                mr_delta = mr_interval;
                 inv_mr_delta = 1./mr_delta;
             }
             else {
-                // mr_delta = (mr_max - mr_min) / dim[0];
-                mr_delta = (mr_max - mr_min) / (dim[0]-1);
+                // mr_delta = (mr_max - mr_min) / mr_dim;
+                mr_delta = (mr_max - mr_min) / (mr_dim-1);
                 // A bit of chaos to kill the accumulation effect
                 mr_min -= 0.99*mr_delta*Rand::uniform();
                 inv_mr_delta = 1./mr_delta;
             }
         }
-        if (fabs((theta_max - theta_min)) < min_momentum_cell_length_[1]) {
-            theta_delta = 0.1*M_PI;
-            inv_theta_delta = 0;
-            dim[1] = 1;
-        } else {
-            if (dim[1] == 1) {
-                theta_max += (theta_max - theta_min)*0.01;
-                theta_delta = (theta_max - theta_min);
-                inv_theta_delta = 1./theta_delta;
-            }
-            else {
-                //theta_delta = (theta_max - theta_min) / dim[1];
-                theta_delta = (theta_max - theta_min) / (dim[1]-1);
-                // A bit of chaos to kill the accumulation effect
-                theta_min -= 0.99*theta_delta*Rand::uniform();
-                inv_theta_delta = 1./theta_delta;
-            }
-        }
+
+        // Computation of the discretization for phi
         if (fabs((phi_max - phi_min)) < min_momentum_cell_length_[2]) {
-            phi_delta = 0.1*M_PI;
+            phi_delta = min_momentum_cell_length_[2];
             inv_phi_delta = 0;
-            dim[2] = 1;
+            phi_dim = 1;
         } else {
-            if (dim[2] == 1) {
+            if (phi_dim == 1) {
                 phi_max += (phi_max - phi_min)*0.01;
                 phi_delta = (phi_max - phi_min);
                 inv_phi_delta = 1./phi_delta;
             }
             else {
-                //phi_delta = (phi_max - phi_min) / dim[2];
-                phi_delta = (phi_max - phi_min) / (dim[2]-1);
+                //phi_delta = (phi_max - phi_min) / phi_dim;
+                phi_delta = (phi_max - phi_min) / (phi_dim-1);
                 // A bit of chaos to kill the accumulation effect
                 phi_min -= 0.99*phi_delta*Rand::uniform();
                 inv_phi_delta = 1./phi_delta;
             }
         }
 
+        // Computation of the discretization for theta
+        // Special treatment to keep the solid angle constant
+        // we first compute the reference parameter
+        if (fabs(theta_max_ref - theta_min_ref) < min_momentum_cell_length_[1]) {
+            theta_delta_ref = min_momentum_cell_length_[1];
+            theta_interval  = min_momentum_cell_length_[1];
+            theta_dim_ref = 1;
+        } else {
+            if (theta_dim_ref == 1) {
+                theta_max_ref  += (theta_max_ref - theta_min_ref)*0.01;
+                theta_delta_ref = fabs(theta_max_ref - theta_min_ref);
+                theta_interval  = fabs(theta_max_ref - theta_min_ref);
+                //inv_theta_delta = 1./theta_delta;
+            }
+            else {
+                //theta_delta = (theta_max - theta_min) / theta_dim;
+                theta_delta_ref = fabs(theta_max_ref - theta_min_ref) / (theta_dim_ref);
+                // A bit of chaos to kill the accumulation effect
+                // theta_min_ref -= 0.99*theta_delta_ref*Rand::uniform();
+                // theta_max_ref = theta_dim_ref*theta_delta_ref + theta_min_ref;
+                theta_interval = fabs(theta_max_ref - theta_min_ref);
+                //inv_theta_delta = 1./theta_delta;
+                theta_dim_min  = std::max((int)(ceil(2 * theta_interval / M_PI)),2);
+            }
+        }
+        // Phi value that corresponds to the largest solid angle
+        double absolute_phi_min = 0.5*M_PI;
+        for(phi_i=0 ; phi_i < phi_dim ; phi_i++) {
+            absolute_phi_min = fmin(fabs((phi_i + 0.5)*phi_delta + phi_min),absolute_phi_min);
+        }
+        // Then we use the reference to compute all the theta discretization
+        // that depends on phi for the solid angle compensation
+        for(phi_i=0 ; phi_i < phi_dim ; phi_i++) {
+            if (theta_dim_ref == 1) {
+                theta_min[phi_i]       = theta_min_ref;
+                theta_max[phi_i]       = theta_min_ref + theta_delta_ref;
+                theta_delta[phi_i]     = theta_delta_ref;
+                inv_theta_delta[phi_i] = 1./theta_delta[phi_i];
+                theta_dim[phi_i]       = 1;
+            } else {
+                // the largest solid angle is for the phi value the closest to 0
+                phi = 0.5*M_PI - (fabs((phi_i + 0.5)*phi_delta + phi_min) - absolute_phi_min)  ;
+                // If the corrected theta delta is lower than the theta interval
+                // (means that sin(phi) is not too close to zero)
+                if (fabs(sin(phi)) > theta_delta_ref / theta_interval) {
+                    theta_delta[phi_i] = fmin(theta_delta_ref / fabs(sin(phi)),theta_interval);
+                    theta_dim[phi_i]   = std::max((unsigned int)(round(theta_interval / theta_delta[phi_i])), theta_dim_min);
+                    theta_delta[phi_i] = theta_interval / (theta_dim[phi_i]-1);
+                    theta_min[phi_i]   = theta_min_ref - 0.99*theta_delta[phi_i]*Rand::uniform();
+                    theta_max[phi_i]   = theta_delta[phi_i]*theta_dim[phi_i] + theta_min[phi_i];
+                // Else the interval is divided by the minimum number of bin for theta
+                // given by theta_dim_min
+                } else {
+                    theta_dim[phi_i]   = theta_dim_min;
+                    theta_delta[phi_i] = theta_interval / (theta_dim[phi_i]-1);
+                    theta_min[phi_i]   = theta_min_ref - 0.99*theta_delta[phi_i]*Rand::uniform();
+                    theta_max[phi_i]   = theta_delta[phi_i]*theta_dim[phi_i] + theta_min[phi_i];
+                }
+                inv_theta_delta[phi_i] = 1./theta_delta[phi_i];
+
+            }
+
+
+            // if (isnan(theta_min[phi_i])
+            //   || isnan(theta_max[phi_i])
+            //    ) {
+            //     std::cerr << std::scientific
+            //               << std::setprecision(15)
+            //               << " phi_i: " << phi_i
+            //               << " phi_dim: " << phi_dim
+            //               << " phi: " << phi - 0.5*M_PI
+            //               << " fabs(sin(phi + pi/2)): " << fabs(sin(phi))
+            //               << " theta_delta_ref/theta_interval: " << theta_delta_ref / theta_interval
+            //               << " theta_delta: " << theta_delta[phi_i]
+            //               << " theta_min_ref: " << theta_min_ref
+            //               << " theta_max_ref: " << theta_max_ref
+            //               << " theta_min: " << theta_min[phi_i]
+            //               << " theta_max: " << theta_max[phi_i]
+            //               << " inv_theta_delta: " << inv_theta_delta[phi_i]
+            //               << " theta_dim: " << theta_dim[phi_i]
+            //               << " theta_dim_ref: " << theta_dim_ref
+            //               << " theta_dim_min: " << theta_dim_min
+            //               << " theta_interval: " << fabs(theta_max_ref - theta_min_ref)
+            //               << std::endl;
+            // }
+
+        }
+
         // Total number of momentum cells
-        unsigned int momentum_cells = dim[0]
-                                    * dim[1]
-                                    * dim[2];
+        unsigned int momentum_cells = 0;
+        for(phi_i=0 ; phi_i < phi_dim ; phi_i++) {
+            momentum_cells += theta_dim[phi_i] * mr_dim;
+        }
 
         // Total number of angular momentum cells
-        unsigned int momentum_angular_cells = dim[1]
-                                            * dim[2];
+        unsigned int momentum_angular_cells = 0;
+        for(phi_i=0 ; phi_i < phi_dim ; phi_i++) {
+            momentum_angular_cells += theta_dim[phi_i];
+        }
 
         // Array containing the number of particles per momentum cells
         // std::vector <unsigned int> particles_per_momentum_cells(momentum_cells,0);
@@ -294,6 +385,16 @@ void MergingVranicSpherical::operator() (
         for (ic = 0 ; ic < momentum_cells ; ic++) {
             momentum_cell_particle_index[ic] = 0;
             particles_per_momentum_cells[ic] = 0;
+        }
+
+        // First Cell index in theta for each phi coordinates
+        // (necessary since the theta_dim depends on phi)
+        unsigned int  * theta_start_index = (unsigned int*) aligned_alloc(64, phi_dim*sizeof(unsigned int));
+
+        // Computation of the first cell index for each phi
+        theta_start_index[0] = 0;
+        for (phi_i = 1 ; phi_i < phi_dim ; phi_i++) {
+            theta_start_index[phi_i] = theta_start_index[phi_i-1] + theta_dim[phi_i-1];
         }
 
         // Computation of the cell direction unit vector (vector d in Vranic et al.)
@@ -313,14 +414,15 @@ void MergingVranicSpherical::operator() (
             cell_vec_y = (double*) aligned_alloc(64, momentum_angular_cells*sizeof(double));
             cell_vec_z = (double*) aligned_alloc(64, momentum_angular_cells*sizeof(double));
 
-            for (phi_i = 0 ; phi_i < dim[2] ; phi_i ++) {
+            for (phi_i = 0 ; phi_i < phi_dim ; phi_i ++) {
+
                 #pragma omp simd private(theta, phi, icc) \
                 aligned(cell_vec_x, cell_vec_y, cell_vec_z: 64)
-                for (theta_i = 0 ; theta_i < dim[1] ; theta_i ++) {
+                for (theta_i = 0 ; theta_i < theta_dim[phi_i] ; theta_i ++) {
 
-                    icc = theta_i + phi_i * dim[1];
+                    icc = theta_start_index[phi_i] + theta_i;
 
-                    theta = theta_min + (theta_i + 0.5) * theta_delta;
+                    theta = theta_min[phi_i] + (theta_i + 0.5) * theta_delta[phi_i];
                     phi = phi_min + (phi_i + 0.5) * phi_delta;
 
                     cell_vec_x[icc] = cos(phi)*cos(theta);
@@ -332,6 +434,7 @@ void MergingVranicSpherical::operator() (
                     //           << std::endl;
 
                 }
+
             }
         }
 
@@ -345,12 +448,12 @@ void MergingVranicSpherical::operator() (
 
             // 3d indexes in the momentum discretization
             mr_i    = (unsigned int) floor( (momentum_norm[ip] - mr_min) * inv_mr_delta);
-            theta_i = (unsigned int) floor( (particles_theta[ip] - theta_min)  * inv_theta_delta);
             phi_i   = (unsigned int) floor( (particles_phi[ip] - phi_min)      * inv_phi_delta);
+            theta_i = (unsigned int) floor( (particles_theta[ip] - theta_min[phi_i])  * inv_theta_delta[phi_i]);
 
             // 1D Index in the momentum discretization
-            momentum_cell_index[ip] = phi_i * dim[0]*dim[1]
-                          + theta_i * dim[0] + mr_i;
+            momentum_cell_index[ip] = (theta_start_index[phi_i]
+                                    + theta_i) * mr_dim + mr_i;
 
                 // std::cerr << "momentum_cell_index: " << momentum_cell_index[ip]
                 //           << " momentum_norm: " << momentum_norm[ip]
@@ -393,12 +496,12 @@ void MergingVranicSpherical::operator() (
         }
 
         // Debugging
-        /*for (mr_i=0 ; mr_i< dim[0]; mr_i++ ) {
-            for (theta_i=0 ; theta_i< dim[1]; theta_i++ ) {
-                for (phi_i=0 ; phi_i< dim[2]; phi_i++ ) {
+        /*for (mr_i=0 ; mr_i< mr_dim; mr_i++ ) {
+            for (theta_i=0 ; theta_i< theta_dim; theta_i++ ) {
+                for (phi_i=0 ; phi_i< phi_dim; phi_i++ ) {
 
-                    ic = mr_i * dim[1]*dim[2]
-                       + theta_i * dim[2] + phi_i;
+                    ic = mr_i * theta_dim*phi_dim
+                       + theta_i * phi_dim + phi_i;
 
                     std::cerr << " Momentum cell: " << ic
                               << "   Momentum cell p index: " << momentum_cell_particle_index[ic]
@@ -425,16 +528,16 @@ void MergingVranicSpherical::operator() (
         // at least `min_packet_size_` and `max_packet_size_`
 
         // Loop over the the momentum cells that have enough particules
-        for (phi_i=0 ; phi_i< dim[2]; phi_i++ ) {
-            for (theta_i=0 ; theta_i< dim[1]; theta_i++ ) {
+        for (phi_i=0 ; phi_i< phi_dim; phi_i++ ) {
+            for (theta_i=0 ; theta_i< theta_dim[phi_i]; theta_i++ ) {
 
                 // 1D cell direction index
-                icc = theta_i + phi_i* dim[1] ;
+                icc = theta_i + theta_start_index[phi_i] ;
 
-                for (mr_i=0 ; mr_i< dim[0]; mr_i++ ) {
+                for (mr_i=0 ; mr_i< mr_dim; mr_i++ ) {
 
                     // 1D cell index
-                    ic = mr_i + icc*dim[0];
+                    ic = mr_i + icc*mr_dim;
 
                     // Check if there is enought particles in the momentum
                     // cell to trigger the merging procecc
@@ -566,6 +669,51 @@ void MergingVranicSpherical::operator() (
                                 momentum[2][ipart] = total_momentum_z;
                                 weight[ipart] = total_weight;
 
+                                // double phi2 = asin(momentum[2][ipart] / mr);
+                                // double theta2 = atan2(momentum[1][ipart] , momentum[0][ipart]);
+                                // if (isnan(momentum[0][ipart])
+                                //      || (isnan(momentum[1][ipart]))
+                                //      || (isnan(momentum[2][ipart]))
+                                //     // || (fabs(momentum[0][ipart]) > 0)
+                                //     // (phi < phi_i * phi_delta + phi_min) ||
+                                //     // (phi > (phi_i+1) * phi_delta + phi_min) ||
+                                //     // (theta < theta_i * theta_delta[phi_i] + theta_min) ||
+                                //     // (theta > (theta_i+1) * theta_delta[phi_i] + theta_min) ||
+                                //     // (theta2 < theta_i * theta_delta[phi_i] + theta_min) ||
+                                //     // (theta2 > (theta_i+1) * theta_delta[phi_i] + theta_min) ||
+                                //     // (mr < (mr_i) * mr_delta + mr_min) ||
+                                //     // (mr > (mr_i+1) * mr_delta + mr_min)
+                                //     ) {
+                                //     //std::cerr <<
+                                //     ERROR( std::scientific
+                                //               << std::setprecision(15)
+                                //               << " theta: " << theta
+                                //               << " theta2: " << theta2
+                                //               << " Pi/2: " << M_PI*0.5
+                                //               << " theta[i]: " << theta_i * theta_delta[phi_i] + theta_min[phi_i]
+                                //               << " theta[i+1]: " << (theta_i+1) * theta_delta[phi_i] + theta_min[phi_i]
+                                //               << " theta_min: " << theta_min[phi_i]
+                                //               << " theta_max: " << theta_max[phi_i]
+                                //               << " cos(theta): " << cos(theta)
+                                //               << " phi: " << phi
+                                //               << " phi2: " << phi2
+                                //               << " phi[i]: " << phi_i * phi_delta + phi_min
+                                //               << " phi[i+1]: " << (phi_i+1) * phi_delta + phi_min
+                                //               << " cos(phi): " << cos(phi)
+                                //               << " mr: " << mr
+                                //               << " mr[i]: " << (mr_i) * mr_delta + mr_min
+                                //               << " mr[i+1]: " << (mr_i+1) * mr_delta + mr_min
+                                //               << " dim: " << mr_dim << " " << theta_dim[phi_i] << " " << phi_dim
+                                //               << " mx: " << momentum[0][ipart]
+                                //               << " my: " << momentum[1][ipart]
+                                //               << " mz: " << momentum[2][ipart]
+                                //               << " new_momentum_norm: " << new_momentum_norm
+                                //               << " total_weight: " << total_weight
+                                //               << " weight[ipart]: " << weight[ipart]
+                                //           )
+                                //     //<< std::endl;
+                                // }
+
                                 // std::cerr << " Energy final: " << sqrt(momentum[0][ipart]*momentum[0][ipart]
                                 //                  + momentum[1][ipart]*momentum[1][ipart]
                                 //                  + momentum[2][ipart]*momentum[2][ipart])
@@ -672,12 +820,31 @@ void MergingVranicSpherical::operator() (
                                 momentum[2][ipart] = new_momentum_norm*(cos_omega*e1_z + sin_omega*e2_z);
                                 weight[ipart] = 0.5*total_weight;
 
-                                // if (isnan(momentum[0][ipart])) {
+                                // if (isnan(momentum[0][ipart])
+                                //   || isnan(momentum[1][ipart])
+                                //   || isnan(momentum[2][ipart])
+                                //     // (phi < phi_i * phi_delta + phi_min) ||
+                                //     // (phi > (phi_i+1) * phi_delta + phi_min) ||
+                                //     // (theta < theta_i * theta_delta[phi_i] + theta_min) ||
+                                //     // (theta > (theta_i+1) * theta_delta[phi_i] + theta_min) ||
+                                //     // (new_momentum_norm < (mr_i) * mr_delta + mr_min) ||
+                                //     // (new_momentum_norm > (mr_i+1) * mr_delta + mr_min)
+                                // ) {
                                 //     //std::cerr <<
                                 //     ERROR(
-                                //                  " theta: " << theta
+                                //                  std::scientific
+                                //              << " theta: " << theta
+                                //              << " theta[i]: " << theta_i * theta_delta[phi_i] + theta_min[phi_i]
+                                //              << " theta[i+1]: " << (theta_i+1) * theta_delta[phi_i] + theta_min[phi_i]
+                                //              << " theta_min: " << theta_min[phi_i]
+                                //              << " theta_max: " << theta_max[phi_i]
                                 //               << " phi: " << phi
-                                //               << " dim: " << dim[0] << " " << dim[1] << " " << dim[2]
+                                //               << " phi[i]: " << phi_i * phi_delta + phi_min
+                                //               << " phi[i+1]: " << (phi_i+1) * phi_delta + phi_min
+                                //               << " dim: " << mr_dim << " " << theta_dim[phi_i] << " " << phi_dim
+                                //               << " mr: " << new_momentum_norm
+                                //               << " mr[i]: " << (mr_i) * mr_delta + mr_min
+                                //               << " mr[i+1]: " << (mr_i+1) * mr_delta + mr_min
                                 //               << " mx: " << momentum[0][ipart]
                                 //               << " my: " << momentum[1][ipart]
                                 //               << " mz: " << momentum[2][ipart]
@@ -693,7 +860,6 @@ void MergingVranicSpherical::operator() (
                                 //               << " e2: " << e2_x << " " << e2_y << " " << e2_z
                                 //           )
                                 //     //<< std::endl;
-                                //
                                 // }
 
                                 // Update momentum of the second particle
@@ -733,6 +899,7 @@ void MergingVranicSpherical::operator() (
         free(sorted_particles);
         free(particles_per_momentum_cells);
         free(momentum_cell_particle_index);
+        free(theta_start_index);
     }
 
 }
