@@ -11,6 +11,9 @@ Validate("Env_A_abs field at iteration 350", Env_A_abs, 0.01)
 Ex = S.Field.Field0.Ex(timesteps=350.).getData()[0]
 Validate("Ex field at iteration 350", Ex, 0.01)
 
+# COMPARE THE Ex FIELD
+Env_Chi = S.Field.Field0.Ex(timesteps=350.).getData()[0]
+Validate("Ex field at iteration 350", Env_Chi, 0.01)
 
 # TEST THE GRID PARAMETERS
 with h5py.File("./restart000/Fields0.h5") as f:

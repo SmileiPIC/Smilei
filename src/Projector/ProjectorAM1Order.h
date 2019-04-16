@@ -1,5 +1,5 @@
-#ifndef PROJECTORAM2ORDER_H
-#define PROJECTORAM2ORDER_H
+#ifndef PROJECTORAM1ORDER_H
+#define PROJECTORAM1ORDER_H
 
 #include <complex>
 
@@ -19,7 +19,7 @@ public:
     void basicForComplex( std::complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode ) override final;
     
     //! Project global current densities if Ionization in Species::dynamics,
-    //void ionizationCurrents( Field *Jl, Field *Jr, Field *Jt, Particles &particles, int ipart, LocalFields Jion ) override final;
+    void ionizationCurrents( Field *Jl, Field *Jr, Field *Jt, Particles &particles, int ipart, LocalFields Jion ) override final;
     
     //!Wrapper
     void currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell = 0, int ipart_ref = 0 ) override final;
