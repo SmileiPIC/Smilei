@@ -22,13 +22,20 @@ This installation procedure has been tested on macOS 10.14.4
 
      /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 
-#. Once installed, install python packages needed for the happi python module:
+#. Install Smilei
+
+   .. code-block:: bash
+
+     brew install --HEAD iltommi/brews/smilei
+
+   Smilei executables (``smilei`` and ``smilei_test``) and the python module are now accessible from everywhere.
+
+#. Install python packages needed for the happi python module:
 
    .. code-block:: bash
 
      pip3 install ipython h5py pint sphinx matplotlib scipy
      
-Smilei executables (``smilei`` and ``smilei_test``) and the python module are now accessible from everywhere.
 
 Documentation can be opened with
 
@@ -36,15 +43,11 @@ Documentation can be opened with
   
      open /usr/local/opt/smilei/share/html/index.html     
      
-To keep up-to-date date Smilei with just type
+To update Smilei with just type
 
   .. code-block:: bash
   
      brew upgrade --fetch-HEAD smilei
-
-Please note that changes in the sources located in ``~/Library/Caches/Homebrew/smilei--git``
-will be overwritten on every ``brew upgrade``.
-
 
 Brew : install dependencies
 ---------------------------------
