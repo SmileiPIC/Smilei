@@ -30,8 +30,8 @@
 # ```
 # Additional compilation flags:
 # - -fno-alias
-# Must manually export SMILEICXX=mpiicpc
-HDF5_ROOT_DIR += /cineca/prod/opt/libraries/hdf5/1.10.4/intelmpi--2018--binary/
+SMILEICXX=mpiicpc
+HDF5_ROOT_DIR = /cineca/prod/opt/libraries/hdf5/1.10.4/intelmpi--2018--binary/
 CXXFLAGS += -cxx=icpc -xMIC-AVX512 -ip -inline-factor=1000 #-ipo
 #
 # make -j64 machine=marconi_knl_intel
