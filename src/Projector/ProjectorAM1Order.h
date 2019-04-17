@@ -1,5 +1,5 @@
-#ifndef PROJECTORAM2ORDER_H
-#define PROJECTORAM2ORDER_H
+#ifndef PROJECTORAM1ORDER_H
+#define PROJECTORAM1ORDER_H
 
 #include <complex>
 
@@ -7,13 +7,13 @@
 #include "ElectroMagnAM.h"
 
 
-class ProjectorAM2Order : public ProjectorAM
+class ProjectorAM1Order : public ProjectorAM
 {
 public:
-    ProjectorAM2Order( Params &, Patch *patch );
-    ~ProjectorAM2Order();
+    ProjectorAM1Order( Params &, Patch *patch );
+    ~ProjectorAM1Order();
     
-    inline void currents( ElectroMagnAM *emAM, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, double *array_theta_old, bool diag_flag, int ispec);
+    inline void currents( ElectroMagnAM *emAM, Particles &particles, unsigned int ipart, double invgf, bool diag_flag, int ispec);
     
     //! Project global current charge (EMfields->rho_), frozen & diagFields timestep
     void basicForComplex( std::complex<double> *rhoj, Particles &particles, unsigned int ipart, unsigned int type, int imode ) override final;

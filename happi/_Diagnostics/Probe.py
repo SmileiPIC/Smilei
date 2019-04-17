@@ -389,8 +389,6 @@ class Probe(Diagnostic):
 			if self._averages[iaxis]:
 				A = self._np.mean(A, axis=iaxis, keepdims=True)
 		A = self._np.squeeze(A) # remove averaged axes
-		# log scale if requested
-		if self._data_log: A = self._np.log10(A)
 		return A
 
 	# We override _prepare4
