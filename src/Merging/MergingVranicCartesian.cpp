@@ -218,7 +218,9 @@ void MergingVranicCartesian::operator() (
         // Computation of the deltas (discretization steps)
         // Check if min and max boundaries are very close
         if (fabs((mx_max - mx_min)) < min_momentum_cell_length_[0]) {
-            mx_delta = 0.1;
+            mx_delta = min_momentum_cell_length_[0];
+            mx_min = (mx_max + mx_min - mx_delta)*0.5;
+            mx_max = (mx_max + mx_min + mx_delta)*0.5;
             inv_mx_delta = 0;
             dim[0] = 1;
         } else {
@@ -246,7 +248,9 @@ void MergingVranicCartesian::operator() (
         }
 
         if (fabs((my_max - my_min)) < min_momentum_cell_length_[1]) {
-            my_delta = 0.1;
+            my_delta = min_momentum_cell_length_[1];
+            my_min = (my_max + my_min - my_delta)*0.5;
+            my_max = (my_max + my_min + my_delta)*0.5;
             inv_my_delta = 0;
             dim[1] = 1;
         } else {
@@ -272,8 +276,10 @@ void MergingVranicCartesian::operator() (
             }
         }
         // Momentum z direction
-        if (fabs((mz_max - mz_min)) < min_momentum_cell_length_[2]) {
-            mz_delta = 0.1;
+        if (fabs(mz_max - mz_min) < min_momentum_cell_length_[2]) {
+            mz_delta = min_momentum_cell_length_[2];
+            mz_min = (mz_max + mz_min - mz_delta)*0.5;
+            mz_max = (mz_max + mz_min + mz_delta)*0.5;
             inv_mz_delta = 0;
             dim[2] = 1;
         } else {
@@ -296,19 +302,21 @@ void MergingVranicCartesian::operator() (
                 mz_min = -nb_delta*mz_delta;
                 dim[2] += 1;
                 mz_max = mz_min + dim[2] * mz_delta;
-
-                // std::cerr << " Mz centering: "
-                //           << " mz_min: " << mz_min
-                //           << " mz_max: " << mz_max
-                //           << " mz_delta: " << mz_delta
-                //           << " mz_dim: " << dim[2]
-                //           << " div_delta: " << div_delta
-                //           << " nb_delta: " << nb_delta
-                //           << std::endl;
-
             }
         }
 
+        // std::cerr << std::scientific << std::setprecision(15)
+        //           << " Mz centering: "
+        //           << " mz interval: " << fabs(mz_max - mz_min)
+        //           << " min_momentum_cell_length_[0]: " << min_momentum_cell_length_[0]
+        //           << " min_momentum_cell_length_[1]: " << min_momentum_cell_length_[1]
+        //           << " min_momentum_cell_length_[2]: " << min_momentum_cell_length_[2]
+        //           << " mz_min: " << mz_min
+        //           << " mz_max: " << mz_max
+        //           << " mz_delta: " << mz_delta
+        //           << " mz_dim: " << dim[2]
+        //           << " nb_delta: " << nb_delta
+        //           << std::endl;
 
         // Total number of momentum cells
         unsigned int momentum_cells = dim[0]
@@ -492,20 +500,28 @@ void MergingVranicCartesian::operator() (
                                 //                  + momentum[2][ip]*momentum[2][ip])
                                 //                  << std::endl;
 
-                                if (isnan(momentum[0][ip]) ||
-                                    isnan(momentum[1][ip]) ||
-                                    isnan(momentum[2][ip])) {
+                                if (isnan(momentum[0][ip])
+                                    || isnan(momentum[1][ip])
+                                    || isnan(momentum[2][ip])
+                                    || momentum[0][ip] < mx_min + mx_i*mx_delta
+                                    || momentum[1][ip] < my_min + my_i*my_delta
+                                    || momentum[2][ip] < mz_min + mz_i*mz_delta
+                                    || momentum[0][ip] > mx_min + (mx_i+1)*mx_delta
+                                    || momentum[1][ip] > my_min + (my_i+1)*my_delta
+                                    || momentum[2][ip] > mz_min + (mz_i+1)*mz_delta
+                                ) {
                                     //std::cerr <<
-                                    // ERROR(
-                                    //              " dim: " << dim[0] << " " << dim[1] << " " << dim[2]
-                                    //           << " mx: " << momentum[0][ip]
-                                    //           << " my: " << momentum[1][ip]
-                                    //           << " mz: " << momentum[2][ip]
-                                    //           << " total_weight: " << total_weight
-                                    //           << " total_momentum_norm: " << total_momentum_norm
-                                    //           << " weight[ip]: " << weight[ip]
-                                    //           << " cell_vec: " << cell_vec_x << " " << cell_vec_y << " " << cell_vec_z
-                                    //       )
+                                    ERROR(std::scientific << std::setprecision(15)
+                                              << " dim: " << dim[0] << " " << dim[1] << " " << dim[2]
+                                              << " mx: " << momentum[0][ip]
+                                              << " my: " << momentum[1][ip]
+                                              << " mz: " << momentum[2][ip]
+                                              << " mz[i]: " << mz_min + mz_i*mz_delta
+                                              << " mz[i+1]: " << mz_min + (mz_i+1)*mz_delta
+                                              << " total_weight: " << total_weight
+                                              << " weight[ip]: " << weight[ip]
+                                              << " cell_vec: " << cell_vec_x << " " << cell_vec_y << " " << cell_vec_z
+                                          )
                                     //<< std::endl;
 
                                 }
@@ -599,31 +615,31 @@ void MergingVranicCartesian::operator() (
                                 momentum[2][ip] = new_momentum_norm*(cos_omega*e1_z + sin_omega*e2_z);
                                 weight[ip] = 0.5*total_weight;
 
-                                // if (isnan(momentum[0][ip]) ||
-                                //     isnan(omega) ||
-                                //     isnan(momentum[1][ip]) ||
-                                //     isnan(momentum[2][ip])) {
-                                //     //std::cerr <<
-                                //     ERROR(
-                                //                  " dim: " << dim[0] << " " << dim[1] << " " << dim[2]
-                                //               << std::scientific
-                                //               << " mx: " << momentum[0][ip]
-                                //               << " my: " << momentum[1][ip]
-                                //               << " mz: " << momentum[2][ip]
-                                //               << " new_momentum_norm: " << new_momentum_norm
-                                //               << " total_weight: " << total_weight
-                                //               << " total_momentum_norm: " << total_momentum_norm
-                                //               << " weight[ip]: " << weight[ip]
-                                //               << " omega: " << omega
-                                //               << " " << total_momentum_norm / (total_weight*new_momentum_norm)
-                                //               << " cos_omega: " << cos_omega << " sin_omega" << sin_omega
-                                //               << " cell_vec: " << cell_vec_x << " " << cell_vec_y << " " << cell_vec_z
-                                //               << " e1: " << e1_x << " " << e1_y << " " << e1_z
-                                //               << " e2: " << e2_x << " " << e2_y << " " << e2_z
-                                //           )
-                                //     //<< std::endl;
-                                //
-                                // }
+                                if (isnan(momentum[0][ip]) ||
+                                    isnan(omega) ||
+                                    isnan(momentum[1][ip]) ||
+                                    isnan(momentum[2][ip])) {
+                                    //std::cerr <<
+                                    ERROR(
+                                                 " dim: " << dim[0] << " " << dim[1] << " " << dim[2]
+                                              << std::scientific
+                                              << " mx: " << momentum[0][ip]
+                                              << " my: " << momentum[1][ip]
+                                              << " mz: " << momentum[2][ip]
+                                              << " new_momentum_norm: " << new_momentum_norm
+                                              << " total_weight: " << total_weight
+                                              << " total_momentum_norm: " << total_momentum_norm
+                                              << " weight[ip]: " << weight[ip]
+                                              << " omega: " << omega
+                                              << " " << total_momentum_norm / (total_weight*new_momentum_norm)
+                                              << " cos_omega: " << cos_omega << " sin_omega" << sin_omega
+                                              << " cell_vec: " << cell_vec_x << " " << cell_vec_y << " " << cell_vec_z
+                                              << " e1: " << e1_x << " " << e1_y << " " << e1_z
+                                              << " e2: " << e2_x << " " << e2_y << " " << e2_z
+                                          )
+                                    //<< std::endl;
+                                
+                                }
 
                                 // Update momentum of the second particle
                                 ip = sorted_particles[momentum_cell_particle_index[ic] + ipr_min + 1];

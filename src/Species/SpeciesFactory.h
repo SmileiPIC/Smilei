@@ -894,12 +894,16 @@ public:
         newSpecies->merging_method_                          = species->merging_method_;
         newSpecies->has_merging                              = species->has_merging;
         newSpecies->merging_time_selection_                  = species->merging_time_selection_;
-        newSpecies->merge_min_particles_per_cell_                 = species->merge_min_particles_per_cell_;
+        newSpecies->merge_min_particles_per_cell_            = species->merge_min_particles_per_cell_;
         newSpecies->merge_min_packet_size_                   = species->merge_min_packet_size_;
         newSpecies->merge_max_packet_size_                   = species->merge_max_packet_size_;
         newSpecies->merge_momentum_cell_size_[0]             = species->merge_momentum_cell_size_[0];
         newSpecies->merge_momentum_cell_size_[1]             = species->merge_momentum_cell_size_[1];
         newSpecies->merge_momentum_cell_size_[2]             = species->merge_momentum_cell_size_[2];
+        newSpecies->merge_min_momentum_cell_length_[0]       = species->merge_min_momentum_cell_length_[0];
+        newSpecies->merge_min_momentum_cell_length_[1]       = species->merge_min_momentum_cell_length_[1];
+        newSpecies->merge_min_momentum_cell_length_[2]       = species->merge_min_momentum_cell_length_[2];
+        
 
         newSpecies->chargeProfile                            = new Profile( species->chargeProfile );
         if( species->densityProfile ) {
