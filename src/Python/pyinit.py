@@ -183,6 +183,8 @@ class Main(SmileiSingleton):
     timestep = None
     number_of_AM = 2
     timestep_over_CFL = None
+    cell_sorting = False
+
 
     # PXR tuning
     global_factor = []

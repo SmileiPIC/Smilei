@@ -708,7 +708,7 @@ void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &ve
                 H5::getVect( gid, "Id", vecSpecies[ispec]->particles->Id, H5T_NATIVE_UINT64 );
             }
             
-            if( params.vectorization_mode == "off" || params.vectorization_mode == "on" ) {
+            if( params.vectorization_mode == "off" || params.vectorization_mode == "on" || params.cell_sorting ) {
                 H5::getVect( gid, "first_index", vecSpecies[ispec]->first_index, true );
                 H5::getVect( gid, "last_index", vecSpecies[ispec]->last_index, true );
             }

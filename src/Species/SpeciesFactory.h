@@ -112,12 +112,12 @@ public:
                 // Species with nonrelativistic Boris pusher == 'borisnr'
                 // Species with J.L. Vay pusher if == "vay"
                 // Species with Higuary Cary pusher if == "higueracary"
-                if( params.vectorization_mode == "off" ) {
+                if( ( params.vectorization_mode == "off" ) && !params.cell_sorting ) {
                     thisSpecies = new SpeciesNorm( params, patch );
                 }
 
 #ifdef _VECTO
-                else if( params.vectorization_mode == "on" ) {
+                else if( ( params.vectorization_mode == "on" ) || params.cell_sorting ) {
                     thisSpecies = new SpeciesNormV( params, patch );
                 } else if( params.vectorization_mode == "adaptive_mixed_sort" ) {
                     thisSpecies = new SpeciesVAdaptive( params, patch );
@@ -183,11 +183,11 @@ public:
 
         // Photon species
         else if( mass == 0 ) {
-            if( params.vectorization_mode == "off" ) {
+            if( ( params.vectorization_mode == "off" ) && !params.cell_sorting ) {
                 thisSpecies = new SpeciesNorm( params, patch );
             }
 #ifdef _VECTO
-            else if( params.vectorization_mode == "on" ) {
+            else if( ( params.vectorization_mode == "on" ) || params.cell_sorting ) {
                 thisSpecies = new SpeciesNormV( params, patch );
             } else if( params.vectorization_mode == "adaptive_mixed_sort" ) {
                 thisSpecies = new SpeciesVAdaptive( params, patch );
@@ -842,11 +842,11 @@ public:
         Species *newSpecies = NULL;
 
         // Boris, Vay or Higuera-Cary
-        if( params.vectorization_mode == "off" ) {
+        if ( ( params.vectorization_mode == "off" ) && !params.cell_sorting ) {
             newSpecies = new SpeciesNorm( params, patch );
         }
 #ifdef _VECTO
-        else if( params.vectorization_mode == "on" ) {
+        else if( ( params.vectorization_mode == "on" ) || params.cell_sorting  ) {
             newSpecies = new SpeciesNormV( params, patch );
         } else if( params.vectorization_mode == "adaptive_mixed_sort" ) {
             newSpecies = new SpeciesVAdaptive( params, patch );

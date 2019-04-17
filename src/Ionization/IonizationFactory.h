@@ -48,7 +48,7 @@ public:
             WARNING( "For species " << species->name << ": unknown ionization model `" << model << "` ... assuming no ionization" );
         }
 
-        if( ( Ionize!=NULL )  && ( params.vectorization_mode != "off" ) ) {
+        if( ( Ionize!=NULL )  && ( ( params.vectorization_mode != "off" ) || ( params.cell_sorting ) ) ) {
             WARNING( "Performances of advanced physical processes which generates new particles could be degraded for the moment!" );
             WARNING( "\t The improvement of their integration in vectorized algorithms is in progress." );
         }
