@@ -267,7 +267,7 @@ void VectorPatch::reconfiguration( Params &params, Timers &timers, int itime )
 void VectorPatch::sort_all_particles( Params &params )
 {
 #ifdef _VECTO
-    if( params.vectorization_mode != "off" ) {
+    if((  params.vectorization_mode != "off" ) || (params.cell_sorting) ) {
         //Need to sort because particles are not well sorted at creation
         for( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
             for( unsigned int ispec=0 ; ispec<patches_[ipatch]->vecSpecies.size(); ispec++ ) {
@@ -304,7 +304,7 @@ void VectorPatch::dynamics( Params &params,
             if( spec->ponderomotive_dynamics ) continue;
             if( spec->isProj( time_dual, simWindow ) || diag_flag ) {
                 // Dynamics with vectorized operators
-                if( spec->vectorized_operators ) {
+                if( spec->vectorized_operators || params.cell_sorting ) {
                     spec->dynamics( time_dual, ispec,
                                     emfields( ipatch ),
                                     params, diag_flag, partwalls( ipatch ),
@@ -2683,7 +2683,7 @@ void VectorPatch::ponderomotive_update_susceptibility_and_momentum( Params &para
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
                 if( species( ipatch, ispec )->ponderomotive_dynamics ) {
-                    if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators )
+                    if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators || params.cell_sorting )
                         species( ipatch, ispec )->ponderomotive_update_susceptibility_and_momentum( time_dual, ispec,
                                 emfields( ipatch ),
                                 params, diag_flag,
@@ -2735,7 +2735,7 @@ void VectorPatch::ponderomotive_update_position_and_currents( Params &params,
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
                 if( species( ipatch, ispec )->ponderomotive_dynamics ) {
-                    if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators )
+                    if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators || params.cell_sorting )
                         species( ipatch, ispec )->ponderomotive_update_position_and_currents( time_dual, ispec,
                                 emfields( ipatch ),
                                 params, diag_flag, partwalls( ipatch ),

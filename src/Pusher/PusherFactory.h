@@ -51,7 +51,7 @@ public:
         if( species->mass > 0 ) {
             // assign the correct Pusher to Push
             if( species->pusher == "boris" ) {
-                if( !species->vectorized_operators ) {
+                if( !species->vectorized_operators && !params.cell_sorting ) {
                     Push = new PusherBoris( params, species );
                 }
 #ifdef _VECTO
@@ -70,7 +70,7 @@ public:
                     ERROR( "if ponderomotive_boris pusher is chosen for a species, the flag ponderomotive_dynamics for that species must be set to true." );
                 }
                 
-                if( !species->vectorized_operators ) {
+                if( !species->vectorized_operators && !params.cell_sorting ) {
                     Push = new PusherPonderomotiveBoris( params, species );
                 }
 #ifdef _VECTO
@@ -122,7 +122,7 @@ public:
         if( species->mass > 0 ) {
             // assign the correct Pusher to Push_ponderomotive_position
             if( species->pusher == "ponderomotive_boris" ) {
-                if( !species->vectorized_operators ) {
+                if( !species->vectorized_operators && !params.cell_sorting ) {
                     Push_ponderomotive_position = new PusherPonderomotivePositionBoris( params, species );
                 }
 #ifdef _VECTO

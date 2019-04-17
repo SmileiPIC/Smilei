@@ -604,8 +604,8 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     ;
     PyTools::extract( "cell_sorting", cell_sorting, "Main" );
     MESSAGE("Sorting per cell : " << cell_sorting );
-    if (cell_sorting)
-        vectorization_mode = "on";
+    //if (cell_sorting)
+    //    vectorization_mode = "on";
     
     // In case of collisions, ensure particle sort per cell
     if( PyTools::nComponents( "Collisions" ) > 0 ) {
@@ -929,10 +929,8 @@ void Params::compute()
 void Params::check_consistency()
 {
     if( vectorization_mode != "off" ) {
-        if ( geometry=="1Dcartesian" )
-            WARNING( "Mixing per cell sorting and scalar algorithms" );
 
-        if( ( geometry=="AMcylindrical" ) ) {
+        if( ( geometry=="1Dcartesian" ) || ( geometry=="AMcylindrical" ) ) {
             ERROR( "Vectorized algorithms not implemented for this geometry" );
         }
         
