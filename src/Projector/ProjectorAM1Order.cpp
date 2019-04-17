@@ -89,12 +89,12 @@ void ProjectorAM1Order::basicForComplex( complex<double> *rhoj, Particles &parti
     
     // locate the particle on the primal and dual grid at current time-step & calculate coeff. S1
     xpn = particles.position( 0, ipart ) * dl_inv_;
-    int ip = round( xpn + 0.5 * ( type==1 ) );
+    int ip = int( xpn + 0.5 * ( type==1 ) );
     delta  = xpn - ( double )ip;
     Sl1[0] = delta ;
     Sl1[1] = 1.-delta;
     rpn = r * dr_inv_ ;
-    int jp = round( rpn + 0.5*( type==2 ) );
+    int jp = int( rpn + 0.5*( type==2 ) );
     delta  = rpn - ( double )jp;
     Sr1[0] = delta;
     Sr1[1] = 1.-delta;
@@ -150,8 +150,8 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     e_theta = ( particles.position( 1, ipart ) + Icpx*particles.position( 2, ipart ) )/rp;
     // locate the particle on the primal and dual grid at current time-step & calculate coeff. S1
     xpn = particles.position( 0, ipart ) * dl_inv_;
-    int ip = round( xpn );
-    int ipd = round( xpn + 0.5 );
+    int ip = int( xpn );
+    int ipd = int( xpn + 0.5 );
     delta  = xpn - ( double )ip;
     Sl1[0] = delta;
     Sl1[1] = 1.-delta;
@@ -160,8 +160,8 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     Sl1d[1] = 1.-delta;
     
     ypn = rp *dr_inv_ ;
-    int jp = round( ypn );
-    int jpd = round( ypn +0.5 );
+    int jp = int( ypn );
+    int jpd = int( ypn +0.5 );
     delta  = ypn - ( double )jp;
     Sr1[0] = delta;
     Sr1[1] = 1.-delta;
@@ -169,13 +169,14 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     Sr1d[0] = delta;
     Sr1d[1] = 1.-delta;
 
-    double *invR_local  = &(invR[jp]);
-    double *invRd_local = &(invRd[jpd]);
 
     ip  -= i_domain_begin ;
     ipd -= i_domain_begin ;
     jp  -= j_domain_begin ;
     jpd -= j_domain_begin ;
+    double *invR_local  = &(invR[jp]);
+    double *invRd_local = &(invRd[jpd]);
+
     for( unsigned int imode=0; imode<( unsigned int )Nmode; imode++ ) {
         if( imode == 1 ) {
             C_m = 2.;
@@ -227,7 +228,7 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
             iloc = ( i+ip )*nprimr + jp;
             for( unsigned int j=0 ; j<2 ; j++ ) {
                 linindex = iloc+j;
-                Jr [linindex] += C_m * crr_p* Sl1[i]*Sr1[j]*invR_local[j] ;
+                Jt [linindex] += C_m * crt_p* Sl1[i]*Sr1[j]*invR_local[j] ;
             }
         }
     }// end loop on modes

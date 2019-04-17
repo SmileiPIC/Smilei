@@ -110,6 +110,7 @@ void PatchAM::initStep2( Params &params, DomainDecomposition *domain_decompositi
     for( int j = 0; j< nr_p; j++ ) {
         if( j_glob_ + j == 0 ) {
             invR[j] = 8./dr; // No Verboncoeur correction
+            //invR[j] = 64./(13.*dr); // Order 2 Verboncoeur correction
         } else {
             invR[j] = 1./abs(((double)j_glob_ + (double)j)*dr);
         }

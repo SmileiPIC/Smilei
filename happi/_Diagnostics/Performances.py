@@ -347,10 +347,7 @@ class Performances(Diagnostic):
 		# Or global performance information
 		else:
 			A = eval(self._operation)
-
-		# log scale if requested
-		if self._data_log: A = self._np.log10(A)
-
+		
 		# If raw requested
 		if self._mode == "raw":
 			return A
