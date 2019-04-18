@@ -92,7 +92,7 @@ void MA_SolverAM_norm::operator()( ElectroMagn *fields )
                 }
             }
             // Conditions below axis (matters for primal quantities interpolated on particles)
-            unsigned int j=1;
+            j=1;
             for( unsigned int i=0 ; i<nl_p  ; i++ ) {
                 ( *Et )( i, j )=( *Et )( i, j+2 );
             }
