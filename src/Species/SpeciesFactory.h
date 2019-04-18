@@ -309,10 +309,10 @@ public:
                        << ": merging method not valid, must be `vranic_spherical`, `vranic_cartesian` or `none`" );
             }
 
-            if( params.vectorization_mode == "off" && thisSpecies->merging_method_ != "none" ) {
-                ERROR( "In Species " << thisSpecies->name
-                       << ": particle merging only available with `vectorization_mode` = `on` or `adaptive`" );
-            }
+            // if( params.vectorization_mode == "off" && thisSpecies->merging_method_ != "none" ) {
+            //     ERROR( "In Species " << thisSpecies->name
+            //            << ": particle merging only available with `vectorization_mode` = `on` or `adaptive`" );
+            // }
 
             if ( thisSpecies->merging_method_ != "none" ) {
 

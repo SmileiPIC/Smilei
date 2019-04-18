@@ -131,6 +131,7 @@ void MergingVranicCartesian::operator() (
         double new_energy;
         double new_momentum_norm;
         double e1_x,e1_y,e1_z;
+        double e3_x,e3_y,e3_z;
         double e2_x,e2_y,e2_z;
         double e2_norm;
 
@@ -218,11 +219,19 @@ void MergingVranicCartesian::operator() (
         // Computation of the deltas (discretization steps)
         // Check if min and max boundaries are very close
         if (fabs((mx_max - mx_min)) < min_momentum_cell_length_[0]) {
-            mx_delta = min_momentum_cell_length_[0];
-            mx_min = (mx_max + mx_min - mx_delta)*0.5;
-            mx_max = (mx_max + mx_min + mx_delta)*0.5;
-            inv_mx_delta = 0;
-            dim[0] = 1;
+            if (mx_max <= 0 || mx_min >= 0) {
+                mx_delta = min_momentum_cell_length_[0];
+                mx_min = (mx_max + mx_min - mx_delta)*0.5;
+                mx_max = (mx_max + mx_min + mx_delta)*0.5;
+                inv_mx_delta = 0;
+                dim[0] = 1;
+            } else {
+                mx_max = std::max(fabs((mx_max + mx_min + min_momentum_cell_length_[0])*0.5),fabs((mx_max + mx_min - min_momentum_cell_length_[0])*0.5));
+                mx_min = -mx_max;
+                mx_delta = mx_max;
+                inv_mx_delta = 1.0/mx_delta;
+                dim[0] = 2;
+            }
         } else {
             // 1 element in this direction
             if (dim[0] == 1) {
@@ -235,7 +244,8 @@ void MergingVranicCartesian::operator() (
                 mx_delta = (mx_max - mx_min) / (dim[0]-1);
                 mx_min -= 0.99*mx_delta*Rand::uniform();
                 inv_mx_delta = 1.0/mx_delta;
-            // else, discretization centerd in 0
+            // else mx_min and mx_max have different signs,
+            // discretization centerd in 0
             } else {
                 dim[0] = int(dim[0]*(1+Rand::uniform()));
                 mx_delta = fabs(mx_max - mx_min) / dim[0];
@@ -247,12 +257,20 @@ void MergingVranicCartesian::operator() (
             }
         }
 
-        if (fabs((my_max - my_min)) < min_momentum_cell_length_[1]) {
-            my_delta = min_momentum_cell_length_[1];
-            my_min = (my_max + my_min - my_delta)*0.5;
-            my_max = (my_max + my_min + my_delta)*0.5;
-            inv_my_delta = 0;
-            dim[1] = 1;
+        if (fabs(my_max - my_min) < min_momentum_cell_length_[1]) {
+            if (my_max <= 0 || my_min >= 0) {
+                my_delta = min_momentum_cell_length_[1];
+                my_min = (my_max + my_min - my_delta)*0.5;
+                my_max = (my_max + my_min + my_delta)*0.5;
+                inv_my_delta = 0;
+                dim[1] = 1;
+            } else {
+                my_max = std::max(fabs((my_max + my_min + min_momentum_cell_length_[1])*0.5),fabs((my_max + my_min - min_momentum_cell_length_[1])*0.5));
+                my_min = -my_max;
+                my_delta = my_max;
+                inv_my_delta = 1.0/my_delta;
+                dim[1] = 2;
+            }
         } else {
             if (dim[1] == 1) {
                 my_max += (my_max - my_min)*0.01;
@@ -275,13 +293,36 @@ void MergingVranicCartesian::operator() (
                 my_max = my_min + dim[1] * my_delta;
             }
         }
+        
+        // std::cerr << std::scientific << std::setprecision(15)
+        //           << " My centering: "
+        //           << " my interval: " << fabs(my_max - my_min)
+        //           << " min_momentum_cell_length_[1]: " << min_momentum_cell_length_[1]
+        //           << " my_min: " << my_min
+        //           << " my_max: " << my_max
+        //           << " my_delta: " << my_delta
+        //           << " my_dim: " << dim[1]
+        //           << " nb_delta: " << nb_delta
+        //           << std::endl;
+        
         // Momentum z direction
         if (fabs(mz_max - mz_min) < min_momentum_cell_length_[2]) {
-            mz_delta = min_momentum_cell_length_[2];
-            mz_min = (mz_max + mz_min - mz_delta)*0.5;
-            mz_max = (mz_max + mz_min + mz_delta)*0.5;
-            inv_mz_delta = 0;
-            dim[2] = 1;
+            // If mz_min and mz_max have the same sign
+            if (mz_max <= 0 || mz_min >= 0) {
+                mz_delta = min_momentum_cell_length_[2];
+                mz_min = (mz_max + mz_min - mz_delta)*0.5;
+                mz_max = (mz_max + mz_min + mz_delta)*0.5;
+                inv_mz_delta = 0;
+                dim[2] = 1;
+            // else if mz_min and mz_max does not have the same sign,
+            // discretization centerd in 0 and dim = 2 instead of 1
+            } else {
+                mz_max = std::max(fabs((mz_max + mz_min + min_momentum_cell_length_[1])*0.5),fabs((mz_max + mz_min - min_momentum_cell_length_[2])*0.5));
+                mz_min = -mz_max;
+                mz_delta = mz_max;
+                inv_mz_delta = 1.0/mz_delta;
+                dim[2] = 2;
+            }
         } else {
             if (dim[2] == 1) {
                 mz_max += (mz_max - mz_min)*0.01;
@@ -290,7 +331,8 @@ void MergingVranicCartesian::operator() (
             // If mz_min and mz_max have the same sign
             } else if (mz_max <= 0 || mz_min >= 0) {
                 mz_max += (mz_max - mz_min)*0.01;
-                mz_delta = (mz_max - mz_min) / dim[2];
+                mz_delta = (mz_max - mz_min) / (dim[2]-1);
+                mz_min -= 0.99*mz_delta*Rand::uniform();
                 inv_mz_delta = 1.0/mz_delta;
             // else if mz_min and mz_max does not have the same sign,
             // discretization centerd in 0
@@ -482,52 +524,167 @@ void MergingVranicCartesian::operator() (
                                     total_momentum_y += momentum[1][ip]*weight[ip];
                                     total_momentum_z += momentum[2][ip]*weight[ip];
 
+                                    // total energy
+                                    total_energy += weight[ip]*sqrt(momentum[0][ip]*momentum[0][ip]
+                                                      + momentum[1][ip]*momentum[1][ip]
+                                                      + momentum[2][ip]*momentum[2][ip]);
+
                                 }
 
-                                // here for photon, this parameter is the inverse of total_weight
-                                new_momentum_norm = 1 / total_weight;
+                                // \varepsilon_a in Vranic et al
+                                new_energy = total_energy / total_weight;
 
-                                // Update momentum of the first photon
-                                ip = sorted_particles[momentum_cell_particle_index[ic] + ipr_min];
+                                // pa in Vranic et al.
+                                new_momentum_norm = new_energy;
 
-                                momentum[0][ip] = total_momentum_x * new_momentum_norm;
-                                momentum[1][ip] = total_momentum_y * new_momentum_norm;
-                                momentum[2][ip] = total_momentum_z * new_momentum_norm;
-                                weight[ip] = total_weight;
+                                // Total momentum norm
+                                total_momentum_norm = sqrt(total_momentum_x*total_momentum_x
+                                                    +      total_momentum_y*total_momentum_y
+                                                    +      total_momentum_z*total_momentum_z);
+
+                                // Angle between pa and pt, pb and pt in Vranic et al.
+                                omega = std::acos(std::min(total_momentum_norm / (total_weight*new_momentum_norm),1.0));
+                                cos_omega = std::min(total_momentum_norm / (total_weight*new_momentum_norm),1.0);
+                                sin_omega = sqrt(1 - cos_omega*cos_omega);
+
+                                // Now, represents the inverse to avoid useless division
+                                total_momentum_norm = 1/total_momentum_norm;
+
+                                // Computation of e1 unit vector
+                                e1_x = total_momentum_x*total_momentum_norm;
+                                e1_y = total_momentum_y*total_momentum_norm;
+                                e1_z = total_momentum_z*total_momentum_norm;
+
+                                e3_x = e1_y*cell_vec_z - e1_z*cell_vec_y;
+                                e3_y = e1_z*cell_vec_x - e1_x*cell_vec_z;
+                                e3_z = e1_x*cell_vec_y - e1_y*cell_vec_x;
+
+                                // Computation of e2  = e1 x e3 unit vector
+                                // e3 = e1 x cell_vec
+                                // e2_x = e1_y*e1_y*cell_vec_x
+                                //      - e1_x * (e1_y*cell_vec_y + e1_z*cell_vec_z)
+                                //      + e1_z*e1_z*cell_vec_x;
+                                // e2_y = e1_z*e1_z*cell_vec_y
+                                //      - e1_y * (e1_z*cell_vec_z + e1_x*cell_vec_x)
+                                //      + e1_x*e1_x*cell_vec_y;
+                                // e2_z = e1_x*e1_x*cell_vec_z
+                                //      - e1_z * (e1_x*cell_vec_x + e1_y*cell_vec_y)
+                                //      + e1_y*e1_y*cell_vec_z;
+
+                                e2_x = e1_y*e3_z - e1_z*e3_y;
+                                e2_y = e1_z*e3_x - e1_x*e3_z;
+                                e2_z = e1_x*e3_y - e1_y*e3_x;
+                                
+                                e2_norm = 1./sqrt(e2_x*e2_x + e2_y*e2_y + e2_z*e2_z);
+
+                                // e2 is normalized to be a unit vector
+                                e2_x = e2_x * e2_norm;
+                                e2_y = e2_y * e2_norm;
+                                e2_z = e2_z * e2_norm;
+
+                                // momentum[0][ip] = total_momentum_x * new_momentum_norm;
+                                // momentum[1][ip] = total_momentum_y * new_momentum_norm;
+                                // momentum[2][ip] = total_momentum_z * new_momentum_norm;
+                                // weight[ip] = total_weight;
 
                                 // std::cerr << " Energy final: " << sqrt(momentum[0][ip]*momentum[0][ip]
                                 //                  + momentum[1][ip]*momentum[1][ip]
                                 //                  + momentum[2][ip]*momentum[2][ip])
                                 //                  << std::endl;
-
-                                if (isnan(momentum[0][ip])
-                                    || isnan(momentum[1][ip])
-                                    || isnan(momentum[2][ip])
-                                    || momentum[0][ip] < mx_min + mx_i*mx_delta
-                                    || momentum[1][ip] < my_min + my_i*my_delta
-                                    || momentum[2][ip] < mz_min + mz_i*mz_delta
-                                    || momentum[0][ip] > mx_min + (mx_i+1)*mx_delta
-                                    || momentum[1][ip] > my_min + (my_i+1)*my_delta
-                                    || momentum[2][ip] > mz_min + (mz_i+1)*mz_delta
+                                double mx1 = new_momentum_norm*(cos_omega*e1_x + sin_omega*e2_x);
+                                double mx2 = new_momentum_norm*(cos_omega*e1_x - sin_omega*e2_x);
+                                total_momentum_y = new_momentum_norm*(cos_omega*e1_y + sin_omega*e2_y);
+                                double my2 = new_momentum_norm*(cos_omega*e1_y - sin_omega*e2_y);
+                                total_momentum_z = new_momentum_norm*(cos_omega*e1_z + sin_omega*e2_z);
+                                double mz2 = new_momentum_norm*(cos_omega*e1_z - sin_omega*e2_z);
+                                if (isnan(total_momentum_x)
+                                    || isnan(total_momentum_y)
+                                    || isnan(total_momentum_z)
+                                    // || mx1 < mx_min + mx_i*mx_delta
+                                    // || total_momentum_y < my_min + my_i*my_delta
+                                    // || total_momentum_z < mz_min + mz_i*mz_delta
+                                    // || mx1 > mx_min + (mx_i+1)*mx_delta
+                                    // || total_momentum_y > my_min + (my_i+1)*my_delta
+                                    // || total_momentum_z > mz_min + (mz_i+1)*mz_delta
+                                    || fabs(new_energy - sqrt(mx1*mx1
+                                                      + total_momentum_y*total_momentum_y
+                                                      + total_momentum_z*total_momentum_z)) > 1e-7
                                 ) {
+                                    
+                                    for (ipr = ipr_min; ipr < ipr_max ; ipr ++) {
+                                        ip = sorted_particles[momentum_cell_particle_index[ic] + ipr];
+                                        std::cerr
+                                        << " mx: " << momentum[0][ip]
+                                        << " my: " << momentum[1][ip]
+                                        << " mz: " << momentum[2][ip]
+                                        << std::endl;
+                                    }
+                                    
+                                    ip = sorted_particles[momentum_cell_particle_index[ic] + ipr_min];
+                                    
                                     //std::cerr <<
                                     ERROR(std::scientific << std::setprecision(15)
-                                              << " dim: " << dim[0] << " " << dim[1] << " " << dim[2]
-                                              << " mx: " << momentum[0][ip]
-                                              << " my: " << momentum[1][ip]
-                                              << " mz: " << momentum[2][ip]
+                                              << " dim: " << dim[0] << " " << dim[1] << " " << dim[2] << "\n"
+                                              << " mx1: " << mx1
+                                              << " mx2: " << mx2
+                                              << " mx[i]: " << mx_min + mx_i*mx_delta
+                                              << " mx[i+1]: " << mx_min + (mx_i+1)*mx_delta
+                                              << " mx_delta: " << mx_delta
+                                              << "\n"
+                                              << " my1: " << total_momentum_y
+                                              << " my2: " << my2
+                                              << " my[i]: " << my_min + my_i*my_delta
+                                              << " my[i+1]: " << my_min + (my_i+1)*my_delta << "\n"
+                                              << " mz: " << total_momentum_z
+                                              << " mz2: " << mz2
                                               << " mz[i]: " << mz_min + mz_i*mz_delta
-                                              << " mz[i+1]: " << mz_min + (mz_i+1)*mz_delta
-                                              << " total_weight: " << total_weight
-                                              << " weight[ip]: " << weight[ip]
-                                              << " cell_vec: " << cell_vec_x << " " << cell_vec_y << " " << cell_vec_z
+                                              << " mz[i+1]: " << mz_min + (mz_i+1)*mz_delta << "\n"
+                                              << " total_weight: " << 0.5*total_weight
+                                              << " energy: " << total_energy / total_weight
+                                              << " energy: " << sqrt(mx1*mx1
+                                                                + total_momentum_y*total_momentum_y
+                                                                + total_momentum_z*total_momentum_z)
+                                              << " " << fabs(new_energy - sqrt(total_momentum_x*total_momentum_x
+                                                                + total_momentum_y*total_momentum_y
+                                                                + total_momentum_z*total_momentum_z)) << "\n"
+                                              << " total energy: " << 0.5*total_energy
+                                              << " total energy: " << 0.5*total_weight*sqrt(mx1*mx1
+                                                                + total_momentum_y*total_momentum_y
+                                                                + total_momentum_z*total_momentum_z)
+                                              << " " << fabs(total_energy - total_weight*sqrt(mx1*mx1
+                                                                + total_momentum_y*total_momentum_y
+                                                                + total_momentum_z*total_momentum_z)) << "\n"
+                                            << " omega: " << omega
+                                            << " " << total_momentum_norm / (total_weight*new_momentum_norm)
+                                            << " cos_omega: " << cos_omega << " sin_omega: " << sin_omega << "\n"
+                                            << " cell_vec: " << cell_vec_x << " " << cell_vec_y << " " << cell_vec_z << "\n"
+                                            << " e1: " << e1_x << " " << e1_y << " " << e1_z << "\n"
+                                            << " e3: " << e3_x << " " << e3_y << " " << e3_z << "\n"
+                                            << " e2: " << e2_x << " " << e2_y << " " << e2_z << "\n"
+                                            << " e1.e2: " << e1_x*e2_x + e1_y*e2_y + e1_z*e2_z
                                           )
                                     //<< std::endl;
 
                                 }
 
+                                
+                                // Update momentum of the first photon
+                                ip = sorted_particles[momentum_cell_particle_index[ic] + ipr_min];
+                                
+                                momentum[0][ip] = new_momentum_norm*(cos_omega*e1_x + sin_omega*e2_x);
+                                momentum[1][ip] = new_momentum_norm*(cos_omega*e1_y + sin_omega*e2_y);
+                                momentum[2][ip] = new_momentum_norm*(cos_omega*e1_z + sin_omega*e2_z);
+                                weight[ip] = 0.5*total_weight;
+                                
+                                // Update momentum of the second particle
+                                ip = sorted_particles[momentum_cell_particle_index[ic] + ipr_min + 1];
+                                momentum[0][ip] = new_momentum_norm*(cos_omega*e1_x - sin_omega*e2_x);
+                                momentum[1][ip] = new_momentum_norm*(cos_omega*e1_y - sin_omega*e2_y);
+                                momentum[2][ip] = new_momentum_norm*(cos_omega*e1_z - sin_omega*e2_z);
+                                weight[ip] = 0.5*total_weight;
+
                                 // Other photons are tagged to be removed after
-                                for (ipr = ipr_min + 1; ipr < ipr_max ; ipr ++) {
+                                for (ipr = ipr_min + 2; ipr < ipr_max ; ipr ++) {
                                     ip = sorted_particles[momentum_cell_particle_index[ic] + ipr];
                                     mask[ip] = -1;
                                     count--;
@@ -615,10 +772,17 @@ void MergingVranicCartesian::operator() (
                                 momentum[2][ip] = new_momentum_norm*(cos_omega*e1_z + sin_omega*e2_z);
                                 weight[ip] = 0.5*total_weight;
 
-                                if (isnan(momentum[0][ip]) ||
-                                    isnan(omega) ||
-                                    isnan(momentum[1][ip]) ||
-                                    isnan(momentum[2][ip])) {
+                                if (isnan(momentum[0][ip])
+                                    || isnan(omega)
+                                    || isnan(momentum[1][ip])
+                                    || isnan(momentum[2][ip])
+                                    || momentum[0][ip] < mx_min + mx_i*mx_delta
+                                    || momentum[1][ip] < my_min + my_i*my_delta
+                                    || momentum[2][ip] < mz_min + mz_i*mz_delta
+                                    || momentum[0][ip] > mx_min + (mx_i+1)*mx_delta
+                                    || momentum[1][ip] > my_min + (my_i+1)*my_delta
+                                    || momentum[2][ip] > mz_min + (mz_i+1)*mz_delta
+                                ) {
                                     //std::cerr <<
                                     ERROR(
                                                  " dim: " << dim[0] << " " << dim[1] << " " << dim[2]
