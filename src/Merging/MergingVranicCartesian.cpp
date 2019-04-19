@@ -575,7 +575,7 @@ void MergingVranicCartesian::operator() (
                             e3_y = e1_z*cell_vec_x - e1_x*cell_vec_z;
                             e3_z = e1_x*cell_vec_y - e1_y*cell_vec_x;
 
-                            // All particle momenta are collinear
+                            // All particle momenta are not collinear
                             if (fabs(e3_x*e3_x + e3_y*e3_y + e3_z*e3_z) > 0)
                             {
                                 
@@ -734,42 +734,45 @@ void MergingVranicCartesian::operator() (
                                 // }
                                 
                             // Special treatment for collinear photons
+                            // Collinear particles are merged
                             } else {
                                 
-                                // Method 1: determinist - use the position of
-                                // the first particles of the list
-                                
-                                // Update momentum of the first photon
-                                ip = sorted_particles[momentum_cell_particle_index[ic] + ipr_min];
-                                
-                                momentum[0][ip] = new_momentum_norm*e1_x;
-                                momentum[1][ip] = new_momentum_norm*e1_y;
-                                momentum[2][ip] = new_momentum_norm*e1_z;
-                                weight[ip] = total_weight;
-                                
-                                // Other photons are tagged to be removed after
-                                for (ipr = ipr_min + 1; ipr < ipr_max ; ipr ++) {
-                                    ip = sorted_particles[momentum_cell_particle_index[ic] + ipr];
-                                    mask[ip] = -1;
-                                    count--;
+                                if (mass == 0) {
+                                    // Method 1: determinist - use the position of
+                                    // the first particles of the list
+                                    
+                                    // Update momentum of the first photon
+                                    ip = sorted_particles[momentum_cell_particle_index[ic] + ipr_min];
+                                    
+                                    momentum[0][ip] = new_momentum_norm*e1_x;
+                                    momentum[1][ip] = new_momentum_norm*e1_y;
+                                    momentum[2][ip] = new_momentum_norm*e1_z;
+                                    weight[ip] = total_weight;
+                                    
+                                    // Other photons are tagged to be removed after
+                                    for (ipr = ipr_min + 1; ipr < ipr_max ; ipr ++) {
+                                        ip = sorted_particles[momentum_cell_particle_index[ic] + ipr];
+                                        mask[ip] = -1;
+                                        count--;
+                                    }
+                                    
+                                    // Method 2: random - pick up randomly old particle positions
+                                    
+                                    // unsigned int ipr1 = ipr_min + int(Rand::uniform()*(ipr_max - ipr_min));
+                                    // for (ipr = ipr_min; ipr < ipr_max ; ipr ++) {
+                                    //     if (ipr == ipr1) {
+                                    //         ip = sorted_particles[momentum_cell_particle_index[ic] + ipr1];
+                                    //         momentum[0][ip] = new_momentum_norm*e1_x;
+                                    //         momentum[1][ip] = new_momentum_norm*e1_y;
+                                    //         momentum[2][ip] = new_momentum_norm*e1_z;
+                                    //         weight[ip] = total_weight;
+                                    //     } else {
+                                    //         ip = sorted_particles[momentum_cell_particle_index[ic] + ipr];
+                                    //         mask[ip] = -1;
+                                    //         count--;
+                                    //     }
+                                    // }
                                 }
-                                
-                                // Method 2: random - pick up randomly old particle positions
-                                
-                                // unsigned int ipr1 = ipr_min + int(Rand::uniform()*(ipr_max - ipr_min));
-                                // for (ipr = ipr_min; ipr < ipr_max ; ipr ++) {
-                                //     if (ipr == ipr1) {
-                                //         ip = sorted_particles[momentum_cell_particle_index[ic] + ipr1];
-                                //         momentum[0][ip] = new_momentum_norm*e1_x;
-                                //         momentum[1][ip] = new_momentum_norm*e1_y;
-                                //         momentum[2][ip] = new_momentum_norm*e1_z;
-                                //         weight[ip] = total_weight;
-                                //     } else {
-                                //         ip = sorted_particles[momentum_cell_particle_index[ic] + ipr];
-                                //         mask[ip] = -1;
-                                //         count--;
-                                //     }
-                                // }
                                 
                             }// end check collinear momenta
 

@@ -339,7 +339,7 @@ public:
                                << " of type photon"
                                << ": minimum number of particles per merging packet "
                                << "(`merge_min_packet_size`)"
-                               << "must be above or equal to 2.");
+                               << "must be above or equal to 4.");
                     }
                 }
                 // Maximum particle number per packet to merge
@@ -351,7 +351,7 @@ public:
                                << "(`merge_max_packet_size`)"
                                << "must be above or equal to 4.");
                     }
-                    if (thisSpecies->merge_max_packet_size_ < 2 && thisSpecies->mass > 0)
+                    if (thisSpecies->merge_max_packet_size_ < 4 && thisSpecies->mass > 0)
                     {
                         ERROR( "In Species " << thisSpecies->name
                                << " of type photon"
