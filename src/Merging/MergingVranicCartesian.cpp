@@ -35,6 +35,9 @@ MergingVranicCartesian::MergingVranicCartesian(Params& params,
     min_momentum_cell_length_[0] = species->merge_min_momentum_cell_length_[0];
     min_momentum_cell_length_[1] = species->merge_min_momentum_cell_length_[1];
     min_momentum_cell_length_[2] = species->merge_min_momentum_cell_length_[2];
+    
+    // Accumulation correction
+    accumulation_correction = true;
 }
 
 // -----------------------------------------------------------------------------
@@ -237,7 +240,7 @@ void MergingVranicCartesian::operator() (
                     dim[ip] = 2;
                 }
             } else {
-                // 1 element in this direction
+                // If the user request a single bin in this direction
                 if (dim[ip] == 1) {
                     momentum_max[ip] += (momentum_max[ip] - momentum_min[ip])*0.01;
                     momentum_delta[ip] = (momentum_max[ip] - momentum_min[ip]);
@@ -245,13 +248,19 @@ void MergingVranicCartesian::operator() (
                 // If momentum_min[ip] and momentum_max[ip] have the same sign
                 } else if (momentum_max[ip] <= 0 || momentum_min[ip] >= 0) {
                     momentum_max[ip] += (momentum_max[ip] - momentum_min[ip])*0.01;
-                    momentum_delta[ip] = (momentum_max[ip] - momentum_min[ip]) / (dim[ip]-1);
-                    momentum_min[ip] -= 0.99*momentum_delta[ip]*Rand::uniform();
+                    if (accumulation_correction) {
+                        momentum_delta[ip] = (momentum_max[ip] - momentum_min[ip]) / (dim[ip]-1);
+                        momentum_min[ip] -= 0.99*momentum_delta[ip]*Rand::uniform();
+                    } else {
+                        momentum_delta[ip] = (momentum_max[ip] - momentum_min[ip]) / (dim[ip]);
+                    }
                     inv_momentum_delta[ip] = 1.0/momentum_delta[ip];
-                // else momentum_min[ip] and momentum_max[ip] have different signs,
+                // Else momentum_min[ip] and momentum_max[ip] have different signs,
                 // discretization centerd in 0
                 } else {
-                    dim[ip] = int(dim[ip]*(1+Rand::uniform()));
+                    if (accumulation_correction) {
+                        dim[ip] = int(dim[ip]*(1+Rand::uniform()));
+                    }
                     momentum_delta[ip] = fabs(momentum_max[ip] - momentum_min[ip]) / dim[ip];
                     inv_momentum_delta[ip] = 1.0/momentum_delta[ip];
                     nb_delta = ceil(fabs(momentum_min[ip]) * inv_momentum_delta[ip]);
@@ -667,6 +676,12 @@ void MergingVranicCartesian::operator() (
                                 //     //<< std::endl;
                                 // }
                                 
+                                // Create the merged particles
+                                // --------------------------------------------
+                                
+                                // Method 1: determinist - use the position of
+                                // the first particles of the list
+                                
                                 // Update momentum of the first photon
                                 ip = sorted_particles[momentum_cell_particle_index[ic] + ipr_min];
                                 
@@ -681,15 +696,49 @@ void MergingVranicCartesian::operator() (
                                 momentum[1][ip] = new_momentum_norm*(cos_omega*e1_y - sin_omega*e2_y);
                                 momentum[2][ip] = new_momentum_norm*(cos_omega*e1_z - sin_omega*e2_z);
                                 weight[ip] = 0.5*total_weight;
-
+                                
                                 // Other photons are tagged to be removed after
                                 for (ipr = ipr_min + 2; ipr < ipr_max ; ipr ++) {
                                     ip = sorted_particles[momentum_cell_particle_index[ic] + ipr];
                                     mask[ip] = -1;
                                     count--;
                                 }
+                                
+                                // Method 2: random - pick up randomly old particle positions
+                                
+                                // unsigned int ipr1 = ipr_min + int(Rand::uniform()*(ipr_max - ipr_min));
+                                // unsigned int ipr2 = ipr_min + int(Rand::uniform()*(ipr_max - ipr_min));
+                                // while (ipr1 == ipr2)
+                                // {
+                                //     ipr2 = ipr_min + int(Rand::uniform()*(ipr_max - ipr_min));
+                                // }
+                                //
+                                // for (ipr = ipr_min; ipr < ipr_max ; ipr ++) {
+                                //     if (ipr == ipr1) {
+                                //         ip = sorted_particles[momentum_cell_particle_index[ic] + ipr];
+                                //         momentum[0][ip] = new_momentum_norm*(cos_omega*e1_x + sin_omega*e2_x);
+                                //         momentum[1][ip] = new_momentum_norm*(cos_omega*e1_y + sin_omega*e2_y);
+                                //         momentum[2][ip] = new_momentum_norm*(cos_omega*e1_z + sin_omega*e2_z);
+                                //         weight[ip] = 0.5*total_weight;
+                                //     } else if (ipr == ipr2) {
+                                //         ip = sorted_particles[momentum_cell_particle_index[ic] + ipr];
+                                //         momentum[0][ip] = new_momentum_norm*(cos_omega*e1_x - sin_omega*e2_x);
+                                //         momentum[1][ip] = new_momentum_norm*(cos_omega*e1_y - sin_omega*e2_y);
+                                //         momentum[2][ip] = new_momentum_norm*(cos_omega*e1_z - sin_omega*e2_z);
+                                //         weight[ip] = 0.5*total_weight;
+                                //     } else {
+                                //         ip = sorted_particles[momentum_cell_particle_index[ic] + ipr];
+                                //         mask[ip] = -1;
+                                //         count--;
+                                //     }
+                                // }
+                                
                             // Special treatment for collinear photons
                             } else {
+                                
+                                // Method 1: determinist - use the position of
+                                // the first particles of the list
+                                
                                 // Update momentum of the first photon
                                 ip = sorted_particles[momentum_cell_particle_index[ic] + ipr_min];
                                 
@@ -704,6 +753,23 @@ void MergingVranicCartesian::operator() (
                                     mask[ip] = -1;
                                     count--;
                                 }
+                                
+                                // Method 2: random - pick up randomly old particle positions
+                                
+                                // unsigned int ipr1 = ipr_min + int(Rand::uniform()*(ipr_max - ipr_min));
+                                // for (ipr = ipr_min; ipr < ipr_max ; ipr ++) {
+                                //     if (ipr == ipr1) {
+                                //         ip = sorted_particles[momentum_cell_particle_index[ic] + ipr1];
+                                //         momentum[0][ip] = new_momentum_norm*e1_x;
+                                //         momentum[1][ip] = new_momentum_norm*e1_y;
+                                //         momentum[2][ip] = new_momentum_norm*e1_z;
+                                //         weight[ip] = total_weight;
+                                //     } else {
+                                //         ip = sorted_particles[momentum_cell_particle_index[ic] + ipr];
+                                //         mask[ip] = -1;
+                                //         count--;
+                                //     }
+                                // }
                                 
                             }// end check collinear momenta
 
