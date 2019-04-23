@@ -102,7 +102,7 @@ void MF_SolverAM_Yee::operator()( ElectroMagn *fields )
                 }
             }
             // Conditions below axis (matters for primal quantities interpolated on particles)
-            j=1;
+            unsigned int j=1;
             for( unsigned int i=0 ; i<nl_d  ; i++ ) {
                 ( *Br )( i, j )=( *Br )( i, j+2 );
             }
