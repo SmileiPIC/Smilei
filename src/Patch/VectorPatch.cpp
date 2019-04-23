@@ -1774,7 +1774,7 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
         // Starting iterative loop for the conjugate gradient method
         // ---------------------------------------------------------
         if( smpi->isMaster() ) {
-            DEBUG( "Starting iterative loop for CG method for the mode"<<imode );
+            DEBUG( "Starting iterative loop for CG method for the mode "<<imode );
         }
         
         iteration = 0;
