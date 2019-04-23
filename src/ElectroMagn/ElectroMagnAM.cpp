@@ -454,17 +454,17 @@ void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gam
         unsigned int j=2;
         for( unsigned int i=1; i<nl_p-1; i++ ) { // radial derivative is zero on axis r=0 (p = phi is all on primal grid)
             ( *Ap_AM_ )( i, j )= one_ov_dl_sq_ov_gamma_sq*( ( *p_AM_ )( i-1, j )+( *p_AM_ )( i+1, j ) )
-                               + one_ov_dr_sq*( ( *p_AM_ )( i, j+1 )-( *p_AM_ )( i, j ) )
+                               + 2.*one_ov_dr_sq*( ( *p_AM_ )( i, j+1 )-( *p_AM_ )( i, j ) )
                                - two_ov_dlgam2*( *p_AM_ )( i, j );
                                //- (double)(imode*imode)/( ( j_glob_+j )*dr )/( ( j_glob_+j )*dr )*( *p_AM_ )( i, j );
         }
     }
 
     if( patch->isYmax() ) {
-        unsigned int j=nr_p-1; // Von Neumann condition, radial derivative = 0
+        unsigned int j=nr_p-2; // Von Neumann condition, radial derivative = 0
         for( unsigned int i=1; i<nl_p-1; i++ ) {
-            ( *Ap_AM_ )( i, j )= one_ov_dl_sq_ov_gamma_sq*( ( *p_AM_ )( i-1, j-1 )+( *p_AM_ )( i+1, j-1 ) -2.*( *p_AM_ )( i, j-1 ) )
-                               - (double)(imode*imode)/( ( j_glob_+j-1 )*dr )/( ( j_glob_+j-1 )*dr )*( *p_AM_ )( i, j-1 );    
+            ( *Ap_AM_ )( i, j )= one_ov_dl_sq_ov_gamma_sq*( ( *p_AM_ )( i-1, j )+( *p_AM_ )( i+1, j ) -2.*( *p_AM_ )( i, j ) )
+                               - (double)(imode*imode)/( ( j_glob_+j )*dr )/( ( j_glob_+j )*dr )*( *p_AM_ )( i, j );    
         }
     }
 
