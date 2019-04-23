@@ -1714,7 +1714,7 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
     std::vector<cField *> Br_rel_t_minus_halfdt_;
     std::vector<cField *> Bt_rel_t_minus_halfdt_;
     
-    std::vector<cField *> Ap_AM_;
+    std::vector<Field *> Ap_AM_;
     
     // For each mode, repeat the initialization procedure 
     // (the relativistic Poisson equation is linear, so it can be decomposed in azimuthal modes)
@@ -1795,18 +1795,23 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
             }
         
             // Exchange Ap_ (intra & extra MPI)
-            SyncVectorPatch::exchange_along_all_directions_noompComplex( Ap_AM_, *this, smpi );
-            SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( Ap_AM_, *this );
+            //SyncVectorPatch::exchange_along_all_directions_noompComplex( Ap_AM_, *this, smpi );
+            //SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( Ap_AM_, *this );
+            SyncVectorPatch::exchange_along_all_directions_noomp( Ap_AM_, *this, smpi );
+            SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Ap_AM_, *this );
         
         
             // scalar product p.Ap
-            std::complex<double> p_dot_ApAM_       = 0.0;
-            std::complex<double> p_dot_Ap_localAM_ = 0.0;
+            //std::complex<double> p_dot_ApAM_       = 0.0;
+            //std::complex<double> p_dot_Ap_localAM_ = 0.0;
+            double p_dot_ApAM_       = 0.0;
+            double p_dot_Ap_localAM_ = 0.0;
             for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
                 ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
                 p_dot_Ap_localAM_ += emAM->compute_pAp_AM();
             }
-            MPI_Allreduce( &p_dot_Ap_localAM_, &p_dot_ApAM_, 1, MPI_COMPLEX, MPI_SUM, MPI_COMM_WORLD );
+            //MPI_Allreduce( &p_dot_Ap_localAM_, &p_dot_ApAM_, 1, MPI_COMPLEX, MPI_SUM, MPI_COMM_WORLD );
+            MPI_Allreduce( &p_dot_Ap_localAM_, &p_dot_ApAM_, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
         
         
             // compute new potential and residual
