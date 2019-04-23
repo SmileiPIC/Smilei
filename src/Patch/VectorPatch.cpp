@@ -1719,7 +1719,7 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
     // For each mode, repeat the initialization procedure 
     // (the relativistic Poisson equation is linear, so it can be decomposed in azimuthal modes)
     for( unsigned int imode=0 ; imode<params.nmodes ; imode++ ) {
-
+        
         // init Phi, r, p values
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
@@ -1776,7 +1776,8 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
         if( smpi->isMaster() ) {
             DEBUG( "Starting iterative loop for CG method for the mode"<<imode );
         }
-
+        
+        iteration = 0;
         //cout << std::scientific << ctrl << "\t" << error_max << "\t" << iteration << "\t" << iteration_max << endl;
         while( ( ctrl > error_max ) && ( iteration<iteration_max ) ) {
             iteration++;

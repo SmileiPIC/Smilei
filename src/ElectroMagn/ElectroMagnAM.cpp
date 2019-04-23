@@ -427,7 +427,7 @@ void ElectroMagnAM::compute_Ap( Patch *patch )
 
 void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gamma_mean, unsigned int imode )
 {
-
+    
     // gamma_mean is the average Lorentz factor of the species whose fields will be computed
     // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details
     
