@@ -1777,7 +1777,7 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
             DEBUG( "Starting iterative loop for CG method for the mode "<<imode );
         }
         
-        iteration = 0;
+        iteration = 0;MESSAGE("Initial error parameter (must be 1) : "<<ctrl);
         //cout << std::scientific << ctrl << "\t" << error_max << "\t" << iteration << "\t" << iteration_max << endl;
         while( ( ctrl > error_max ) && ( iteration<iteration_max ) ) {
             iteration++;

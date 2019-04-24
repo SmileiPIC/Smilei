@@ -401,9 +401,9 @@ void ElectroMagnAM::initPoisson_init_phi_r_p_Ap( Patch *patch, unsigned int imod
     double dr_sq_dl = dr*dr*dl; // Poisson's equation including the source term is multiplied by r_j*dr*dl
     for( unsigned int i=0; i<nl_p; i++ ) {
         for( unsigned int j=0; j<nr_p; j++ ) {
-            j_ = (double)( j_glob_+j );
+            j_ = (double)( j_glob_+j);
             ( *phi_AM_ )( i, j )   = 0.; 
-            ( *r_AM_ )( i, j )     = -( *rho )( i, j )*j_*dr_sq_dl; 
+            ( *r_AM_ )( i, j )     = -(( *rho )( i, j ))*j_*dr_sq_dl; 
             ( *p_AM_ )( i, j )     = ( *r_AM_ )( i, j );
         }//j
     }//i
@@ -412,10 +412,12 @@ void ElectroMagnAM::initPoisson_init_phi_r_p_Ap( Patch *patch, unsigned int imod
 
 
 double ElectroMagnAM::compute_r()
-{
+{//MESSAGE(index_min_p_[0]<<" "<<index_max_p_[0]<<" "<<index_min_p_[1]<<" "<<index_max_p_[1]);
+//MESSAGE(nl_p<<" "<<nr_p);
+//ERROR("");
     double rnew_dot_rnew_localAM_( 0. );
-    for( unsigned int i=index_min_p_[0]; i<=index_max_p_[0]; i++ ) {
-        for( unsigned int j=index_min_p_[1]; j<=index_max_p_[1]; j++ ) {
+    for( unsigned int i=index_min_p_[0]; i<index_max_p_[0]; i++ ) {
+        for( unsigned int j=index_min_p_[1]; j<index_max_p_[1]; j++ ) {
             rnew_dot_rnew_localAM_ += std::abs(( *r_AM_ )( i, j ))*std::abs(( *r_AM_ )( i, j ));
         }
     }
@@ -531,11 +533,11 @@ void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gam
     
     // vector product Ap = A*p
     for( unsigned int i=1; i<nl_p-1; i++ ) {
-        for( unsigned int j=isYmin*3; j<nr_p-1; j++ ) {
-            j_ = (double)( j_glob_+j );
+        for( unsigned int j=isYmin*3; j<index_max_p_[1]; j++ ) {
+            j_ = (double)( j_glob_+j);
             ( *Ap_AM_ )( i, j )= j_ * dr_sq_ov_dl_ov_gamma_sq * (          ( *p_AM_ )( i-1, j   )-2.*   ( *p_AM_ )( i, j   )+         ( *p_AM_ )( i+1, j ) )
                                + dl                           * ( (j_-0.5)*( *p_AM_ )( i  , j-1 )-2.*j_*( *p_AM_ )( i, j   )+(j_+0.5)*( *p_AM_ )( i, j+1 ) )
-                               - m_sq_dl/j_                  *                                         ( *p_AM_ )( i, j   );                     
+                               - m_sq_dl/j_                  *                                          ( *p_AM_ )( i, j   );                     
         }//j
     }//i
     
@@ -543,16 +545,16 @@ void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gam
     // Axis BC
     if( patch->isYmin() ) {
         unsigned int j=2;
-        j_ = (double)( j_glob_+j );
+        j_ = (double)( j_glob_+j+0.5);
         for( unsigned int i=1; i<nl_p-1; i++ ) { // radial and azimuthal derivative are zero on axis r=0 (p = phi is all on primal grid)
             ( *Ap_AM_ )( i, j )= j_ * dr_sq_ov_dl_ov_gamma_sq * (          ( *p_AM_ )( i-1, j   )-2.*   ( *p_AM_ )( i, j   )+         ( *p_AM_ )( i+1, j ) )
-                               + j_ * dl * 2.                 * (                                       ( *p_AM_ )( i, j+1 )-         ( *p_AM_ )( i  , j)  );                           
+                               + j_ * dl * 1.                 * (                                       ( *p_AM_ )( i, j+1 )-         ( *p_AM_ )( i  , j)  );                           
         }
     }
 
     if( patch->isYmax() ) {
-        unsigned int j=nr_p-2; // Von Neumann condition, radial derivative = 0
-        j_ = (double)( j_glob_+j );
+        unsigned int j=index_max_p_[1]; // Von Neumann condition, radial derivative = 0
+        j_ = (double)( j_glob_+j);
         for( unsigned int i=1; i<nl_p-1; i++ ) {
             ( *Ap_AM_ )( i, j )= j_ * dr_sq_ov_dl_ov_gamma_sq * (          ( *p_AM_ )( i-1, j   )-2. *  ( *p_AM_ )( i, j   )+         ( *p_AM_ )( i+1, j ) )
                                + j_ * dl                      * (          ( *p_AM_ )( i  , j-1 )-      ( *p_AM_ )( i, j   )                               )
@@ -562,25 +564,25 @@ void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gam
 
     // Xmin BC
     if( patch->isXmin() ) { // p = phi = 0 on the left border
-        for( unsigned int j=1; j<nr_p-2; j++ ) {
+        for( unsigned int j=1; j<index_max_p_[1]; j++ ) {
             ( *Ap_AM_ )( 0, j )     = 0.;
         }
         // at corners
         ( *Ap_AM_ )( 0, 0 )          = 0.;
-        
-        ( *Ap_AM_ )( 0, nr_p-1 )     = 0.;
+        ( *Ap_AM_ )( 0, 1 )          = 0.;
+        ( *Ap_AM_ )( 0, index_max_p_[1] )     = 0.;
     }
     
     // Xmax BC
     if( patch->isXmax() ) { // p = phi = 0 on the right border 
     
-        for( unsigned int j=isYmin*3; j<nr_p-1; j++ ) {
-            ( *Ap_AM_ )( nl_p-1, j )= 0.;
+        for( unsigned int j=isYmin*3; j<index_max_p_[1]; j++ ) {
+            ( *Ap_AM_ )( index_max_p_[0], j )= 0.;
         }
         // at corners
-        ( *Ap_AM_ )( nl_p-1, 0 )     = 0.;
-        
-        ( *Ap_AM_ )( nl_p-1, nr_p-1 )= 0.;
+        ( *Ap_AM_ )( index_max_p_[0], 0 )     = 0.;
+        ( *Ap_AM_ )( index_max_p_[0], 1 )     = 0.;
+        ( *Ap_AM_ )( index_max_p_[0], index_max_p_[1] )= 0.;
     }
     
 
@@ -590,8 +592,8 @@ std::complex<double> ElectroMagnAM::compute_pAp_AM()
 {
     std::complex<double> p_dot_Ap_local = 0.0;
 
-    for( unsigned int i=index_min_p_[0]; i<=index_max_p_[0]; i++ ) {
-        for( unsigned int j=index_min_p_[1]; j<=index_max_p_[1]; j++ ) {
+    for( unsigned int i=index_min_p_[0]; i<index_max_p_[0]; i++ ) {
+        for( unsigned int j=index_min_p_[1]; j<index_max_p_[1]; j++ ) {
             p_dot_Ap_local += ( *p_AM_ )( i, j )*std::conj(( *Ap_AM_ )( i, j ));
         }
     }
@@ -601,8 +603,8 @@ std::complex<double> ElectroMagnAM::compute_pAp_AM()
 void ElectroMagnAM::update_pand_r_AM( double r_dot_r, std::complex<double> p_dot_Ap )
 {
     std::complex<double> alpha_k = r_dot_r/p_dot_Ap;
-    for( unsigned int i=0; i<nl_p; i++ ) {
-        for( unsigned int j=0; j<nr_p; j++ ) {
+    for( unsigned int i=index_min_p_[0]; i<index_max_p_[0]; i++ ) {
+        for( unsigned int j=index_min_p_[1]; j<index_max_p_[1]; j++ ) {
             ( *phi_AM_ )( i, j ) += alpha_k * ( *p_AM_ )( i, j );
             ( *r_AM_ )( i, j )   -= alpha_k * ( *Ap_AM_ )( i, j );
         }
@@ -613,8 +615,8 @@ void ElectroMagnAM::update_pand_r_AM( double r_dot_r, std::complex<double> p_dot
 void ElectroMagnAM::update_p( double rnew_dot_rnew, double r_dot_r )
 {
     double beta_k = rnew_dot_rnew/r_dot_r;
-    for( unsigned int i=0; i<nl_p; i++ ) {
-        for( unsigned int j=0; j<nr_p; j++ ) {
+    for( unsigned int i=index_min_p_[0]; i<index_max_p_[0]; i++ ) {
+        for( unsigned int j=index_min_p_[1]; j<index_max_p_[1]; j++ ) {
             ( *p_AM_ )( i, j ) = ( *r_AM_ )( i, j ) + beta_k * ( *p_AM_ )( i, j );
         }
     }
@@ -678,7 +680,7 @@ void ElectroMagnAM::initE_relativistic_Poisson_AM( Patch *patch, double gamma_me
     // Er
     MESSAGE( 1, "Computing Er from scalar potential, relativistic Poisson problem" );
     for( unsigned int i=1; i<nl_d-1; i++ ) {
-        for( unsigned int j=1; j<nr_p-2; j++ ) {
+        for( unsigned int j=2; j<index_max_p_[1]-1; j++ ) {
             ( *ErAM )( i, j ) = ( ( *phi_AM_ )( i, j )-( *phi_AM_ )( i, j+1 ) )/dr;
         }
     }
@@ -686,7 +688,7 @@ void ElectroMagnAM::initE_relativistic_Poisson_AM( Patch *patch, double gamma_me
     // Et
     MESSAGE( 1, "Computing Er from scalar potential, relativistic Poisson problem" );
     for( unsigned int i=1; i<nl_p-1; i++ ) {
-        for( unsigned int j=1; j<nr_p-1; j++ ) {
+        for( unsigned int j=1; j<index_max_p_[1]-1; j++ ) {
             ( *EtAM )( i, j ) = i1*((double )imode)/(((double)( j_glob_+j ))*dr)* ( *phi_AM_ )( i, j );
         }
     }
