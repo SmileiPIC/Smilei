@@ -237,7 +237,9 @@ void Particles::cp_particle( unsigned int ipart )
 void Particles::cp_particle( unsigned int ipart, Particles &dest_parts )
 {
     for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
-        dest_parts.double_prop[iprop]->push_back( ( *double_prop[iprop] )[ipart] );
+        if( iprop < dest_parts.double_prop.size() ) {
+            dest_parts.double_prop[iprop]->push_back( ( *double_prop[iprop] )[ipart] );
+        }
     }
     
     for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
