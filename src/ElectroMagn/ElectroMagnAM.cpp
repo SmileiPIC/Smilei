@@ -458,7 +458,7 @@ void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gam
         j_ = (double)( j_glob_+j+0.5);
         for( unsigned int i=1; i<nl_p-1; i++ ) { // radial and azimuthal derivative are zero on axis r=0 (p = phi is all on primal grid)
             ( *Ap_AM_ )( i, j )= j_ * dr_sq_ov_dl_ov_gamma_sq * (          ( *p_AM_ )( i-1, j   )-2.*   ( *p_AM_ )( i, j   )+         ( *p_AM_ )( i+1, j ) )
-                               + j_ * dl * 1.                 * (                                       ( *p_AM_ )( i, j+1 )-         ( *p_AM_ )( i  , j)  );                           
+                               + j_ * dl * 2.                 * (                                       ( *p_AM_ )( i, j+1 )-         ( *p_AM_ )( i  , j)  );                           
         }
     }
 
