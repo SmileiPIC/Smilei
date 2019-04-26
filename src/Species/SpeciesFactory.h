@@ -17,8 +17,8 @@
 #ifdef _VECTO
 #include "SpeciesNormV.h"
 #include "SpeciesV.h"
-#include "SpeciesVAdaptive.h"
 #include "SpeciesVAdaptiveMixedSort.h"
+#include "SpeciesVAdaptive.h"
 #include "SpeciesNormV.h"
 #endif
 
@@ -120,9 +120,9 @@ public:
                 else if( params.vectorization_mode == "on" ) {
                     thisSpecies = new SpeciesNormV( params, patch );
                 } else if( params.vectorization_mode == "adaptive_mixed_sort" ) {
-                    thisSpecies = new SpeciesVAdaptive( params, patch );
-                } else if( params.vectorization_mode == "adaptive" ) {
                     thisSpecies = new SpeciesVAdaptiveMixedSort( params, patch );
+                } else if( params.vectorization_mode == "adaptive" ) {
+                    thisSpecies = new SpeciesVAdaptive( params, patch );
                 }
 #endif
             } else {
@@ -190,9 +190,9 @@ public:
             else if( params.vectorization_mode == "on" ) {
                 thisSpecies = new SpeciesNormV( params, patch );
             } else if( params.vectorization_mode == "adaptive_mixed_sort" ) {
-                thisSpecies = new SpeciesVAdaptive( params, patch );
-            } else if( params.vectorization_mode == "adaptive" ) {
                 thisSpecies = new SpeciesVAdaptiveMixedSort( params, patch );
+            } else if( params.vectorization_mode == "adaptive" ) {
+                thisSpecies = new SpeciesVAdaptive( params, patch );
             }
 #endif
             // Photon can not radiate
@@ -720,9 +720,9 @@ public:
 #ifdef _VECTO
         else if( params.vectorization_mode == "on" ) {
             newSpecies = new SpeciesNormV( params, patch );
-        } else if( params.vectorization_mode == "adaptive_mixed_sort" ) {
-            newSpecies = new SpeciesVAdaptive( params, patch );
         } else if( params.vectorization_mode == "adaptive" ) {
+            newSpecies = new SpeciesVAdaptive( params, patch );
+        } else if( params.vectorization_mode == "adaptive_mixed_sort" ) {
             newSpecies = new SpeciesVAdaptiveMixedSort( params, patch );
         }
 #endif
