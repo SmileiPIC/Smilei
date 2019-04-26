@@ -493,7 +493,11 @@ void Species::initMomentum( unsigned int nPart, unsigned int iPart, double *temp
         vz  = -vel[2];
         v2  = vx*vx + vy*vy + vz*vz;
         if( v2>0. ) {
-        
+            
+            if( v2>=1. ) {
+                ERROR("The mean velocity should not be higher than the speed of light");
+            }
+            
             g   = 1.0/sqrt( 1.0-v2 );
             gm1 = g - 1.0;
             

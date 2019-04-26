@@ -451,7 +451,7 @@ void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
     //Boundary conditions for currents on axis
     if (emAM->isYmin ) {
         complex<double> *rho, *Jl, *Jr, *Jt; 
-        double sign = -1. ;
+        double sign = 1. ;
         for ( int imode = 0; imode < Nmode; imode++){
             sign *= -1.;
 
@@ -469,8 +469,7 @@ void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
                 //Fold rho
                 for( unsigned int i=2 ; i<npriml*nprimr+2; i+=nprimr ) {
                     for( unsigned int j=1 ; j<3; j++ ) {
-                        rho[i+j] = rho[i+j] + sign * rho[i-j];
-                        rho[i-j] = 0.; 
+                        rho[i+j] = rho[i+j] - sign * rho[i-j];
                     }
                     if (imode > 0) rho[i] = 0.;
                 }//i
@@ -481,15 +480,13 @@ void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
                 int iloc = i*nprimr;
                 for( unsigned int j=1 ; j<3; j++ ) {
                     Jt [iloc+2+j] = Jt [iloc+2+j] + sign * Jt [iloc+2-j];
-                    Jt [iloc+2-j] = 0.; 
                 }
             }//i
             //Fold Jl
             for( unsigned int i=0 ; i<npriml+1; i++ ) {
                 int iloc = i*nprimr;
                 for( unsigned int j=1 ; j<3; j++ ) {
-                    Jl [iloc+2+j] = Jl [iloc+2+j] + sign * Jl [iloc+2-j];
-                    Jl [iloc+2-j] = 0.; 
+                    Jl [iloc+2+j] = Jl [iloc+2+j] - sign * Jl [iloc+2-j];
                  }
             }//i
 
@@ -498,7 +495,6 @@ void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
                 int ilocr = i*(nprimr+1);
                 for( unsigned int j=0 ; j<3; j++ ) {
                     Jr [ilocr+5-j] = Jr [ilocr+5-j] + sign * Jr [ilocr+j];
-                    Jr [ilocr+j] = 0.; 
                 }
             }//i
 
@@ -511,18 +507,18 @@ void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
                     Jl [iloc+j] = 0. ;
                 }//i
             }
-            if (imode == 1){
-                for( unsigned int i=0 ; i<npriml; i++ ) {
-                    int iloc = i*nprimr;
-                    int ilocr = i*(nprimr+1);
-                    Jt [iloc+j] = -1./3.*(4.*Icpx*Jr[ilocr+j+1] + Jt[iloc+j+1]) ;
-                }//i
-            } else{
-                for( unsigned int i=0 ; i<npriml; i++ ) {
-                    int iloc = i*nprimr;
-                    Jt [iloc+j] = 0. ;
-                }
-            }
+            //if (imode == 1){
+            //    for( unsigned int i=0 ; i<npriml; i++ ) {
+            //        int iloc = i*nprimr;
+            //        int ilocr = i*(nprimr+1);
+            //        Jt [iloc+j] = -1./3.*(4.*Icpx*Jr[ilocr+j+1] + Jt[iloc+j+1]) ;
+            //    }//i
+            //} else{
+            //    for( unsigned int i=0 ; i<npriml; i++ ) {
+            //        int iloc = i*nprimr;
+            //        Jt [iloc+j] = 0. ;
+            //    }
+            //}
         }
 
     }

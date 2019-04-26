@@ -77,6 +77,9 @@ public:
     //! Insert particle iPart at dest_id in dest_parts
     void cp_particle( unsigned int ipart, Particles &dest_parts, int dest_id );
     
+    //! Copy particle iPart at the end of dest_parts -- safe
+    void cp_particle_safe( unsigned int ipart, Particles &dest_parts );
+    
     //! Suppress particle iPart
     void erase_particle( unsigned int iPart );
     //! Suppress nPart particles from iPart

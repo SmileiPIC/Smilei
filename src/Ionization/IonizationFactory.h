@@ -21,41 +21,26 @@ public:
         std::string model=species->ionization_model;
         
         if( model == "tunnel" ) {
+            
             if( species->max_charge > ( int )species->atomic_number ) {
                 ERROR( "Charge > atomic_number for species " << species->name );
-            }
-            if( species->particles->is_test ) {
-                ERROR( "Cannot ionize test species " << species->name );
             }
             
             Ionize = new IonizationTunnel( params, species );
             
-            if( params.Laser_Envelope_model & species->ponderomotive_dynamics ) {
-                ERROR( "Ionization is not yet implemented for species interacting with Laser Envelope model." );
-            }
-            
         } else if( model == "from_rate" ) {
+            
             if( species->max_charge > ( int )species->maximum_charge_state ) {
-                ERROR( "Charge > atomic_number for species " << species->name );
-            }
-            if( species->particles->is_test ) {
-                ERROR( "Cannot ionize test species " << species->name );
+                ERROR( "For species '" << species->name << ": charge > maximum_charge_state" );
             }
             
             Ionize = new IonizationFromRate( params, species );
             
-        } else if( model != "none" ) {
-            WARNING( "For species " << species->name << ": unknown ionization model `" << model << "` ... assuming no ionization" );
-        }
-        
-        if( ( Ionize!=NULL )  && ( params.vectorization_mode != "off" ) ) {
-            WARNING( "Performances of advanced physical processes which generates nezw particles could be degraded for the moment !" );
-            WARNING( "\t The improvment of their integration in vectorized algorithm is in progress." );
         }
         
         return Ionize;
     }
-    
+
 };
 
 #endif

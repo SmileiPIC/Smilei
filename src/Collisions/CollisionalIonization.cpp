@@ -326,7 +326,7 @@ void CollisionalIonization::calculate( double gamma_s, double gammae, double gam
         // Ionize the atom and create electron
         if( U2 < WeWi ) {
             pi->charge( ii )++; // increase ion charge
-            pe->cp_particle( ie, new_electrons ); // duplicate electron
+            pe->cp_particle_safe( ie, new_electrons ); // duplicate electron
             new_electrons.Weight.back() = Wi; // new electron has ion weight
             // Calculate the new electron momentum
             pr = sqrt( w*( w+2. )/p2 );
