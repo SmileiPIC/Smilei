@@ -941,7 +941,7 @@ void Params::check_consistency()
         
         
         if( hasMultiphotonBreitWheeler ) {
-            WARNING( "Performances of advanced physical processes which generates nezw particles could be degraded for the moment !" );
+            WARNING( "Performances of advanced physical processes which generates new particles could be degraded for the moment !" );
             WARNING( "\t The improvment of their integration in vectorized algorithm is in progress." );
         }
         

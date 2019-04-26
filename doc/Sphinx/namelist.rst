@@ -664,6 +664,7 @@ Each species has to be defined in a ``Species`` block::
 
   The initial drift velocity of the particles, in units of the speed of light :math:`c`.
 
+  **WARNING**: For massless particles, this is actually the momentum in units of :math:`m_e c`.
 
 .. py:data:: temperature
 
@@ -2072,22 +2073,22 @@ This is done by including a block ``DiagFields``::
   +----------------+-------------------------------------------------------+
 
   In ``AMcylindrical`` geometry, the ``x``, ``y`` and ``z``
-  indices are replaced by ``x``, ``r`` and ``t`` (theta). In addition,
+  indices are replaced by ``l`` (longitudinal), ``r`` (radial) and ``t`` (theta). In addition,
   the angular Fourier modes are denoted by the suffix ``_mode_i`` where ``i``
   is the mode number. In summary, the list of fields reads as follows.
 
   .. rst-class:: nowrap
 
   +------------------------------+-----------------------------------------+
-  | | Bx_mode_0, Bx_mode_1, etc. | |                                       |
+  | | Bl_mode_0, Bl_mode_1, etc. | |                                       |
   | | Br_mode_0, Br_mode_1, etc. | | Components of the magnetic field      |
   | | Bt_mode_0, Bt_mode_1, etc. | |                                       |
   +------------------------------+-----------------------------------------+
-  | | Ex_mode_0, Ex_mode_1, etc. | |                                       |
+  | | El_mode_0, El_mode_1, etc. | |                                       |
   | | Er_mode_0, Er_mode_1, etc. | | Components of the electric field      |
   | | Et_mode_0, Et_mode_1, etc. | |                                       |
   +------------------------------+-----------------------------------------+
-  |  The same notation works for Jx, Jr, Jt, and Rho                       |
+  |  The same notation works for Jl, Jr, Jt, and Rho                       |
   +------------------------------+-----------------------------------------+
 
   In the case of an envelope model for the laser (see :doc:`laser_envelope`),
@@ -2217,6 +2218,9 @@ To add one probe diagnostic, include the block ``DiagProbe``::
 
   In the case of an envelope model for the laser (see :doc:`laser_envelope`),
   the following fields are also available: ``"Env_A_abs"``, ``"Env_Chi"``, ``"Env_E_abs"``.
+
+  Note that when running a simulation in cylindrical geometry, contrary to the Field diagnostic, Probes are defined as in a
+  3D Cartesian geometry and return Cartesian fields.
 
 
 
@@ -2661,7 +2665,7 @@ Only one block ``DiagPerformances()`` may be added in the namelist, for instance
   DiagPerformances(
       every = 100,
   #    flush_every = 100,
-      patch_information = True,
+  #    patch_information = True,
   )
 
 .. py:data:: every
@@ -2683,7 +2687,8 @@ Only one block ``DiagPerformances()`` may be added in the namelist, for instance
 
   :default: False
 
-  Activation of the performance per patch output.
+  If `True`, some information is calculated at the patch level (see :py:meth:`Performances`)
+  but this may impact the code performances.
 
 ----
 

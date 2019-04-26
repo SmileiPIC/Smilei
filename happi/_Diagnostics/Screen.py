@@ -130,7 +130,6 @@ class Screen(Diagnostic):
 		# Fabricate all axes values for all diags
 		plot_diff = []
 		coeff = 1.
-		unitsa = [0,0,0,0]
 		spatialaxes = {"x":False, "y":False, "z":False}
 		self._finalShape = [[]]*self._naxes
 		self._sums = [False]*self._naxes
@@ -460,6 +459,4 @@ class Screen(Diagnostic):
 		for d in reversed(self._diags):
 			data_operation = data_operation.replace("#"+str(d),"A["+str(d)+"]")
 		A = eval(data_operation)
-		# log scale if requested
-		if self._data_log: A = self._np.log10(A)
 		return A

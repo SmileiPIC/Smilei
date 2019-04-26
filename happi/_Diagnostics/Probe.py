@@ -34,16 +34,16 @@ class Probe(Diagnostic):
 			# Verify that this file is compatible with the previous ones
 			try:
 				for key, val in verifications.items():
-					if self._h5probe[-1][key].value != val:
+					if self._h5probe[-1][key][()] != val:
 						self._error += ["Probe #"+str(probeNumber)+" in path '"+path+"' is incompatible with the other ones"]
 						return
 			except:
-				verifications = {"number":self._h5probe[-1]["number"].value}
+				verifications = {"number":self._h5probe[-1]["number"][()]}
 				npoints = self._h5probe[-1]["number"].size
-				if self._h5probe[-1]["number"].value.prod() > 1:
+				if self._h5probe[-1]["number"][()].prod() > 1:
 					npoints += 1
 				for i in range(npoints):
-					verifications["p"+str(i)] = self._h5probe[-1]["p"+str(i)].value
+					verifications["p"+str(i)] = self._h5probe[-1]["p"+str(i)][()]
 
 		# Get available times
 		self._dataForTime = {}
@@ -198,7 +198,7 @@ class Probe(Diagnostic):
 			offset = p2[0,:]
 			p2 = self._np.apply_along_axis(lambda x: x-offset, 1, p2) # move points
 			# Trick in a 3D simulation (the probe has to be projected)
-			if self._ndim==3:
+			if self._ndim==3 or self.namelist.Main.geometry=="AMcylindrical":
 				# unit vectors in the two dimensions + perpendicular
 				u1 = p[0] / self._np.linalg.norm(p[0])
 				u2 = p[1] / self._np.linalg.norm(p[1])
@@ -227,7 +227,7 @@ class Probe(Diagnostic):
 			self._units = [axisunits, axisunits]
 
 		# Prepare the reordering of the points for patches disorder
-		positions = self._h5probe[0]["positions"].value # actual probe points positions
+		positions = self._h5probe[0]["positions"][()] # actual probe points positions
 		self._ordering = None
 		tmpShape = self._initialShape
 		if self._naxes>0:
@@ -242,7 +242,7 @@ class Probe(Diagnostic):
 				positions = self._np.sqrt(self._np.sum(positions**2,1))
 			# If 2D or 3D probe, must calculate matrix inverse
 			else:
-				if self._naxes==2 and self._ndim==3:
+				if self._naxes==2 and (self.namelist.Main.geometry=="AMcylindrical" or self._ndim==3):
 					pp = self._np.cross(p[0],p[1])
 					p.append(pp/self._np.linalg.norm(pp))
 					tmpShape = self._np.hstack((tmpShape, 1))
@@ -344,6 +344,17 @@ class Probe(Diagnostic):
 			except: fields = fields_here
 		try   : return fields
 		except: return []
+	
+	# get the value of x_moved for a requested timestep
+	def getXmoved(self, t):
+		if not self._validate(): return
+		# Verify that the timestep is valid
+		if t not in self._timesteps:
+			print("Timestep "+str(t)+" not found in this diagnostic")
+			return []
+		# get h5 iteration group
+		h5item = self._dataForTime[t]
+		return h5item.attrs["x_moved"] if "x_moved" in h5item.attrs else 0.
 
 	# get all available timesteps
 	def getAvailableTimesteps(self):
@@ -378,8 +389,6 @@ class Probe(Diagnostic):
 			if self._averages[iaxis]:
 				A = self._np.mean(A, axis=iaxis, keepdims=True)
 		A = self._np.squeeze(A) # remove averaged axes
-		# log scale if requested
-		if self._data_log: A = self._np.log10(A)
 		return A
 
 	# We override _prepare4

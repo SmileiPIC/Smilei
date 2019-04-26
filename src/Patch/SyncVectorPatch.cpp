@@ -917,38 +917,31 @@ void SyncVectorPatch::exchangeB( Params &params, VectorPatch &vecPatches, Smilei
     if( vecPatches.listBx_[0]->dims_.size()==1 ) {
         // Exchange Bs0 : By_ and Bz_ (dual in X)
         SyncVectorPatch::exchange_all_components_along_X( vecPatches.Bs0, vecPatches, smpi );
-    } else if( vecPatches.listBx_[0]->dims_.size()==2 ) {
-        if( !params.full_B_exchange ) {
-            // Exchange Bs0 : By_ and Bz_ (dual in X)
-            SyncVectorPatch::exchange_all_components_along_X( vecPatches.Bs0, vecPatches, smpi );
-            // Exchange Bs1 : Bx_ and Bz_ (dual in Y)
-            SyncVectorPatch::exchange_all_components_along_Y( vecPatches.Bs1, vecPatches, smpi );
-        } else {
+    } else { 
+        if( params.full_B_exchange ) {
             // Exchange Bx_ in Y then X
             SyncVectorPatch::exchange_synchronized_per_direction( vecPatches.listBx_, vecPatches, smpi );
             // Exchange By_ in Y then X
             SyncVectorPatch::exchange_synchronized_per_direction( vecPatches.listBy_, vecPatches, smpi );
             // Exchange Bz_ in Y then X
             SyncVectorPatch::exchange_synchronized_per_direction( vecPatches.listBz_, vecPatches, smpi );
-        }
-    } else if( vecPatches.listBx_[0]->dims_.size()==3 ) {
-        if( !params.full_B_exchange ) {
-            // Exchange Bs0 : By_ and Bz_ (dual in X)
-            SyncVectorPatch::exchange_all_components_along_X( vecPatches.Bs0, vecPatches, smpi );
-            // Exchange Bs1 : Bx_ and Bz_ (dual in Y)
-            SyncVectorPatch::exchange_all_components_along_Y( vecPatches.Bs1, vecPatches, smpi );
-            // Exchange Bs2 : Bx_ and By_ (dual in Z)
-            SyncVectorPatch::exchange_all_components_along_Z( vecPatches.Bs2, vecPatches, smpi );
+
         } else {
-            // Exchange Bx_ in Z, Y then X
-            SyncVectorPatch::exchange_synchronized_per_direction( vecPatches.listBx_, vecPatches, smpi );
-            // Exchange By_ in Z, Y then X
-            SyncVectorPatch::exchange_synchronized_per_direction( vecPatches.listBy_, vecPatches, smpi );
-            // Exchange Bz_ in Z, Y then X
-            SyncVectorPatch::exchange_synchronized_per_direction( vecPatches.listBz_, vecPatches, smpi );
+            if( vecPatches.listBx_[0]->dims_.size()==2 ) {
+                // Exchange Bs0 : By_ and Bz_ (dual in X)
+                SyncVectorPatch::exchange_all_components_along_X( vecPatches.Bs0, vecPatches, smpi );
+                // Exchange Bs1 : Bx_ and Bz_ (dual in Y)
+                SyncVectorPatch::exchange_all_components_along_Y( vecPatches.Bs1, vecPatches, smpi );
+            } else if( vecPatches.listBx_[0]->dims_.size()==3 ) {
+                // Exchange Bs0 : By_ and Bz_ (dual in X)
+                SyncVectorPatch::exchange_all_components_along_X( vecPatches.Bs0, vecPatches, smpi );
+                // Exchange Bs1 : Bx_ and Bz_ (dual in Y)
+                SyncVectorPatch::exchange_all_components_along_Y( vecPatches.Bs1, vecPatches, smpi );
+                // Exchange Bs2 : Bx_ and By_ (dual in Z)
+                SyncVectorPatch::exchange_all_components_along_Z( vecPatches.Bs2, vecPatches, smpi );
+            }
         }
-    }
-    
+    }    
 }
 
 void SyncVectorPatch::finalizeexchangeB( Params &params, VectorPatch &vecPatches )

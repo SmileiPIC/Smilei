@@ -12,6 +12,7 @@
 #include "FieldFactory.h"
 
 #include "Patch.h"
+#include "PatchAM.h"
 #include <cstring>
 
 #include "Profile.h"
@@ -102,6 +103,10 @@ void ElectroMagnAM::initElectroMagnAMQuantities( Params &params, Patch *patch )
 {
 
     nmodes = params.nmodes;
+
+    PatchAM *patchAM = static_cast<PatchAM *>( patch );
+    invR = &(patchAM->invR[0]);
+    invRd = &(patchAM->invRd[0]);
     
     // Species charge currents and density
     Jl_s.resize( n_species*nmodes );

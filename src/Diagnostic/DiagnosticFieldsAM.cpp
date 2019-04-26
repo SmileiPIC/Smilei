@@ -98,6 +98,7 @@ DiagnosticFieldsAM::DiagnosticFieldsAM( Params &params, SmileiMPI *smpi, VectorP
     final_array_size[1] = params.number_of_patches[1] * params.n_space[1] + 1;
     ifinal_array_size[0] =     final_array_size[0];
     ifinal_array_size[1] = 2 * final_array_size[1];
+    total_dataset_size = ifinal_array_size[0] * ifinal_array_size[1];
     filespace = H5Screate_simple( 2, ifinal_array_size, NULL );
     offset2[0] = rewrite_xmin * params.n_space[0] + ( ( rewrite_xmin==0 )?0:1 );
     offset2[1] = rewrite_ymin * params.n_space[1] + ( ( rewrite_ymin==0 )?0:1 );

@@ -86,7 +86,11 @@ class Diagnostic(object):
 			if self.dim > 0: xunits = self._units[0]
 			if self.dim > 1: yunits = self._units[1]
 			self.units.prepare(self.simulation._reference_angular_frequency_SI, xunits, yunits, self._vunits)
-	
+		
+		# Prepare data_log output
+		if self._data_log:
+			self._dataAtTime = self._dataLogAtTime
+		
 	# When no action is performed on the object, this is what appears
 	def __repr__(self):
 		self.info()
@@ -158,11 +162,11 @@ class Diagnostic(object):
 
 		if timestep is None:
 			for t in self._timesteps:
-				data.append( self._vfactor*self._getDataAtTime(t) )
+				data.append( self._dataAtTime(t) )
 		elif timestep not in self._timesteps:
 			print("ERROR: timestep "+str(timestep)+" not available")
 		else:
-			data.append( self._vfactor*self._getDataAtTime(timestep) )
+			data.append( self._dataAtTime(timestep) )
 
 		return data
 
@@ -329,16 +333,17 @@ class Diagnostic(object):
 			print("WARNING: times are not evenly spaced. Time-scale not plotted")
 			ylabel = "Unevenly-spaced times"
 		else:
+			self._yfactor = self.options.yfactor or 1.
 			ylabel = "Timesteps"
+			if self._yfactor != 1.:
+				ylabel += " x "+str(self._yfactor)
 		# Loop times and accumulate data
-		A = []
-		for time in self._timesteps: A.append(self._getDataAtTime(time))
-		A = self._np.double(A)
+		A = self._np.double([self._dataAtTime(t) for t in self._timesteps])
 		# Plot
 		ax.cla()
 		xmin = self._xfactor*self._centers[0][0]
 		xmax = self._xfactor*self._centers[0][-1]
-		extent = [xmin, xmax, self._timesteps[0], self._timesteps[-1]]
+		extent = [xmin, xmax, self._yfactor*self._timesteps[0], self._yfactor*self._timesteps[-1]]
 		if self._log[0]: extent[0:2] = [self._np.log10(xmin), self._np.log10(xmax)]
 		im = ax.imshow(self._np.flipud(A), vmin = self.options.vmin, vmax = self.options.vmax, extent=extent, **self.options.image)
 		ax.set_xlabel(self._xlabel)
@@ -583,7 +588,7 @@ class Diagnostic(object):
 		if self.dim == 0 and self._tmpdata is None:
 			self._tmpdata = self._np.zeros(self._timesteps.size)
 			for i, t in enumerate(self._timesteps):
-				self._tmpdata[i] = self._getDataAtTime(t)
+				self._tmpdata[i] = self._dataAtTime(t)
 		# prepare the colormap if 2d plot
 		if self.dim == 2 and self.options.transparent:
 			cmap = self.options.image["cmap"]
@@ -610,14 +615,14 @@ class Diagnostic(object):
 	def _animateOnAxes_0D(self, ax, t, cax_id=0):
 		times = self._timesteps[self._timesteps<=t]
 		A     = self._tmpdata[self._timesteps<=t]
-		im, = ax.plot(self._tfactor*times, self._vfactor*A, **self.options.plot)
+		im, = ax.plot(self._tfactor*times, A, **self.options.plot)
 		ax.set_xlabel(self._tlabel)
 		self._setLimits(ax, xmax=self._tfactor*self._timesteps[-1], ymin=self.options.vmin, ymax=self.options.vmax)
 		self._setSomeOptions(ax, t)
 		return im
 	def _animateOnAxes_1D(self, ax, t, cax_id=0):
-		A = self._getDataAtTime(t)
-		im, = ax.plot(self._xfactor*(self._xoffset+self._centers[0]), self._vfactor*A, **self.options.plot)
+		A = self._dataAtTime(t)
+		im, = ax.plot(self._xfactor*(self._xoffset+self._centers[0]), A, **self.options.plot)
 		if self._log[0]: ax.set_xscale("log")
 		ax.set_xlabel(self._xlabel)
 		ax.set_ylabel(self._ylabel)
@@ -625,8 +630,8 @@ class Diagnostic(object):
 		self._setSomeOptions(ax, t)
 		return im
 	def _animateOnAxes_2D(self, ax, t, cax_id=0):
-		A = self._getDataAtTime(t)
-		im = self._animateOnAxes_2D_(ax, self._vfactor*A)
+		A = self._dataAtTime(t)
+		im = self._animateOnAxes_2D_(ax, A)
 		ax.set_xlabel(self._xlabel)
 		ax.set_ylabel(self._ylabel)
 		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.ymin, ymax=self.options.ymax)
@@ -652,8 +657,10 @@ class Diagnostic(object):
 	# set options during animation
 	def _setSomeOptions(self, ax, t=None):
 		title = []
-		if self._vlabel: title += [self._vlabel]
-		if t is not None: title += ["t = "+str(t*self.timestep)]
+		if self._vlabel:
+			title += [self._vlabel]
+		if t is not None:
+			title += ["t = %.2f "%(t*self.timestep*self.units.tcoeff)+self.units.tname]
 		ax.set_title("  ".join(title))
 		for option, value in self.options.axes.items():
 			if type(value) is dict:
@@ -681,10 +688,15 @@ class Diagnostic(object):
 			directory = self._results_path[0] +self._os.sep+ ".."
 		directory += self._os.sep + diagName + self._os.sep
 		return directory
-
+	
 	def _mkdir(self, dir):
 		if not self._os.path.exists(dir): self._os.makedirs(dir)
-
+	
+	def _dataAtTime(self, t):
+		return self._vfactor*self._getDataAtTime(t)
+	def _dataLogAtTime(self, t):
+		return self._np.log10( self._vfactor*self._getDataAtTime(t) )
+	
 	# Convert data to VTK format
 	def toVTK(self, numberOfPieces=1):
 		if not self._validate(): return
@@ -711,7 +723,7 @@ class Diagnostic(object):
 			# Get the data
 			data = self._np.zeros(list(self._shape)+[ntimes])
 			for itime in range(ntimes):
-				data[:,:,itime] = self._getDataAtTime(self._timesteps[itime])
+				data[:,:,itime] = self._dataAtTime(self._timesteps[itime])
 			arr = vtk.Array(self._np.ascontiguousarray(data.flatten(order='F'), dtype='float32'), self._title)
 
 			# If all timesteps are regularly spaced
@@ -737,7 +749,7 @@ class Diagnostic(object):
 		# If 3D data, then do a 3D plot
 		elif self.dim == 3:
 			for itime in range(ntimes):
-				data = self._np.ascontiguousarray(self._getDataAtTime(self._timesteps[itime]).flatten(order='F'), dtype='float32')
+				data = self._np.ascontiguousarray(self._dataAtTime(self._timesteps[itime]).flatten(order='F'), dtype='float32')
 				arr = vtk.Array(data, self._title)
 				# Output using the diag number
 				#vtk.WriteImage(arr, origin, extent, spacings, fileprefix+"_"+str(itime)+".pvti", numberOfPieces)

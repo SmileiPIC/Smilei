@@ -20,7 +20,8 @@ Main(
 	cell_length = [l0/resx,l0/resx],
 	grid_length  = Lsim,
 	
-	number_of_patches = [ 16, 16 ],
+	number_of_patches = [ 16, 20 ],
+	patch_arrangement = "linearized_XY",
 	
 	timestep = t0/rest,
 	simulation_time = Tsim,
@@ -31,11 +32,6 @@ Main(
 	],
 	
 	random_seed = smilei_mpi_rank
-)
-
-LoadBalancing(
-	every = 10,
-	cell_load = 0.001
 )
 
 LaserGaussian2D(
