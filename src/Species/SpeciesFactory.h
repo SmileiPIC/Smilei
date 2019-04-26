@@ -499,36 +499,42 @@ public:
                 }
             }
         }
-
+        
         // Manage the ionization parameters
         if( thisSpecies->mass > 0 ) {
             thisSpecies->atomic_number = 0;
             PyTools::extract( "atomic_number", thisSpecies->atomic_number, "Species", ispec );
-
+            
             thisSpecies->maximum_charge_state = 0;
             PyTools::extract( "maximum_charge_state", thisSpecies->maximum_charge_state, "Species", ispec );
-
+            
             std::string model;
             if( PyTools::extract( "ionization_model", model, "Species", ispec ) && model!="none" ) {
-
+                
                 thisSpecies->ionization_model = model;
-
-                if( ! PyTools::extract( "ionization_electrons", thisSpecies->ionization_electrons, "Species", ispec ) ) {
-                    ERROR( "For species '" << species_name << " undefined ionization_electrons (required for ionization)" );
+                
+                if( thisSpecies->particles->is_test ) {
+                    ERROR( "For species '" << species_name << ": cannot ionize test species" );
                 }
-
+                
                 if( ( thisSpecies->atomic_number==0 )&&( thisSpecies->maximum_charge_state==0 ) ) {
-                    ERROR( "For species '" << species_name << " undefined atomic_number & maximum_charge_state (required for ionization)" );
+                    ERROR( "For species '" << species_name << ": undefined atomic_number & maximum_charge_state (required for ionization)" );
                 }
-
-                if( ( thisSpecies->ionization_model == "from_rate" ) && ( thisSpecies->maximum_charge_state == 0 ) ) {
-                    thisSpecies->maximum_charge_state = thisSpecies->atomic_number;
-                    WARNING( "For species '" << species_name << " ionization 'from_rate' is used with maximum_charge_state = "<<thisSpecies->maximum_charge_state << " taken from atomic_number" );
-                }
-
-                if( thisSpecies->ionization_model == "from_rate" ) {
+                
+                if( model == "tunnel" ) {
+                    
+                    if( params.Laser_Envelope_model & thisSpecies->ponderomotive_dynamics ) {
+                        ERROR( "For species '" << species_name << ": Ionization is not yet implemented for species interacting with Laser Envelope model." );
+                    }
+                
+                } else if( model == "from_rate" ) {
+                    
+                    if( thisSpecies->maximum_charge_state == 0 ) {
+                        thisSpecies->maximum_charge_state = thisSpecies->atomic_number;
+                        WARNING( "For species '" << species_name << ": ionization 'from_rate' is used with maximum_charge_state = "<<thisSpecies->maximum_charge_state << " taken from atomic_number" );
+                    }
                     thisSpecies->ionization_rate = PyTools::extract_py( "ionization_rate", "Species", ispec );
-                    if( thisSpecies->ionization_rate==Py_None ) {
+                    if( thisSpecies->ionization_rate == Py_None ) {
                         ERROR( "For species '" << species_name << " ionization 'from_rate' requires 'ionization_rate' " );
                     } else {
 #ifdef SMILEI_USE_NUMPY
@@ -539,15 +545,27 @@ public:
                         double *dummy = NULL;
                         ParticleData test( params.nDim_particle, thisSpecies->ionization_rate, name.str(), dummy );
 #else
-                        ERROR( "For species '" << species_name << " ionization 'from_rate' requires Numpy package " );
+                        ERROR( "For species '" << species_name << " ionization 'from_rate' requires Numpy" );
 #endif
                     }
+                    
+                } else if( model != "none" ) {
+                    ERROR( "For species " << species_name << ": unknown ionization model `" << model );
                 }
+        
+                if( params.vectorization_mode != "off" ) {
+                    WARNING( "Performances of advanced physical processes which generates new particles could be degraded for the moment!" );
+                    WARNING( "\t The improvement of their integration in vectorized algorithms is in progress." );
+                }
+                
+                if( ! PyTools::extract( "ionization_electrons", thisSpecies->ionization_electrons, "Species", ispec ) ) {
+                    ERROR( "For species '" << species_name << ": undefined ionization_electrons (required for ionization)" );
+                }
+                
             }
-
-
+            
         }
-
+        
         // Extract if the species is relativistic and needs ad hoc fields initialization
         bool relativistic_field_initialization = false;
         if( !PyTools::extract( "relativistic_field_initialization", relativistic_field_initialization, "Species", ispec ) ) {

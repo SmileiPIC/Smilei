@@ -245,7 +245,7 @@ References
 
 .. [ALaDynZenodo] `S. Sinigardi et al., ALaDyn v2017.1 zenodo (2017) <https://doi.org/10.5281/zenodo.1065413>`_
 
-.. [Terzani] D. Terzani and P. Londrillo, Yet a faster numerical implementation of envelope model for laser-plasma dynamics (submitted)
+.. [Terzani] `D. Terzani and P. Londrillo, Computer Physics Communications (2019) <https://doi.org/10.1016/j.cpc.2019.04.007>`_ 
 
 
 
