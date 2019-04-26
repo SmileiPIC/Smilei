@@ -72,7 +72,7 @@ ElectroMagnBCAM_SM::ElectroMagnBCAM_SM( Params &params, Patch *patch, unsigned i
     Beta_SM_Xmax     = - ( 1.0 -dt_ov_dl )*factor;
     Gamma_SM_Xmax    = 4.0*factor;
     Delta_SM_Xmax    = - dt_ov_dr*factor;
-    Epsilon_SM_Xmax  = Icpx*factor*dt;
+    Epsilon_SM_Xmax  = - Icpx*factor*dt;
     
     
     if (params.is_pxr)
@@ -198,11 +198,11 @@ void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
         if( min_max == 0 && patch->isXmin() ) {
             // for Br^(d,p)
             vector<double> yp( 1 );
-            for( unsigned int j=2*isYmin ; j<nr_p ; j++ ) {
+            for( unsigned int j=3*isYmin ; j<nr_p ; j++ ) {
             
                 std::complex<double> byW = 0.;
-                yp[0] = patch->getDomainLocalMin( 1 ) +( j - EMfields->oversize[1] )*dr;
                 if( imode==1 ) {
+                    yp[0] = patch->getDomainLocalMin( 1 ) +( j - EMfields->oversize[1] )*dr;
                     // Lasers
                     for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
                         byW +=          vecLaser[ilaser]->getAmplitude0( yp, time_dual, 1+2*j, 0 )
@@ -224,8 +224,8 @@ void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             for( unsigned int j=3*isYmin; j<nr_d ; j++ ) {
             
                 std::complex<double> bzW = 0.;
-                yd[0] = patch->getDomainLocalMin( 1 ) + ( j - 0.5 - EMfields->oversize[1] )*dr;
                 if( imode==1 ) {
+                    yd[0] = patch->getDomainLocalMin( 1 ) + ( j - 0.5 - EMfields->oversize[1] )*dr;
                     // Lasers
                     for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
                         bzW +=          vecLaser[ilaser]->getAmplitude1( yd, time_dual, 2*j, 0 )
@@ -237,21 +237,25 @@ void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                 ( *Bt )( i, j ) = -Alpha_SM_Xmin * ( *Er )( i, j )
                                   +               Beta_SM_Xmin  *( ( *Bt )( i+1, j ) )
                                   +               Gamma_SM_Xmin * bzW
-                                  +               Epsilon_SM_Xmin *( double )imode/( ( j_glob+j+0.5 )*dr )*( *Bl )( i, j ) ;
+                                  +               Epsilon_SM_Xmin *( double )imode/( ( j_glob+j-0.5 )*dr )*( *Bl )( i, j ) ;
                 
             }//j  ---end compute Bt
+            //Redo condition on axis for Bt because it was modified
             if( isYmin && imode != 1 ) {
                 ( *Bt )( 0, 2 ) = -( *Bt )( 0, 3 );
+            }
+            if( isYmin && imode == 1 ) {
+                ( *Bt )( 0, 2 )= -2.*Icpx*( *Br )( 0, 2 )-( *Bt )( 0, 3 );
             }
         } else if( min_max == 1 && patch->isXmax() ) {
             // for Br^(d,p)
             vector<double> yp( 1 );
-            for( unsigned int j=2*isYmin ; j<nr_p ; j++ ) {
+            for( unsigned int j=3*isYmin ; j<nr_p ; j++ ) {
             
                 std::complex<double> byE = 0.;
-                yp[0] = patch->getDomainLocalMin( 1 ) + ( j - EMfields->oversize[1] )*dr;
                 // Lasers
                 if( imode==1 ) {
+                    yp[0] = patch->getDomainLocalMin( 1 ) + ( j - EMfields->oversize[1] )*dr;
                     for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
                         byE +=          vecLaser[ilaser]->getAmplitude0( yp, time_dual, 1+2*j, 0 )
                                         + Icpx * vecLaser[ilaser]->getAmplitude1( yp, time_dual, 1+2*j, 0 );
@@ -270,8 +274,8 @@ void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             for( unsigned int j=3*isYmin ; j<nr_d ; j++ ) {
             
                 std::complex<double> bzE = 0.;
-                yd[0] = patch->getDomainLocalMin( 1 ) + ( j - 0.5  - EMfields->oversize[1] )*dr;
                 if( imode==1 ) {
+                    yd[0] = patch->getDomainLocalMin( 1 ) + ( j - 0.5  - EMfields->oversize[1] )*dr;
                     // Lasers
                     for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
                         bzE +=         vecLaser[ilaser]->getAmplitude1( yd, time_dual, 2*j, 0 )
@@ -282,11 +286,15 @@ void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                 ( *Bt )( i, j ) = Alpha_SM_Xmax * ( *Er )( i-1, j )
                                   +                    Beta_SM_Xmax  * ( *Bt )( i-1, j )
                                   +                    Gamma_SM_Xmax * bzE
-                                  +					  Epsilon_SM_Xmax * ( double )imode /( ( j_glob+j+0.5 )*dr )* ( *Bl )( i-1, j )	;
+                                  +					  Epsilon_SM_Xmax * ( double )imode /( ( j_glob+j-0.5 )*dr )* ( *Bl )( i-1, j )	;
                 
             }//j  ---end compute Bt
+            //Redo condition on axis for Bt because it was modified
             if( isYmin && imode != 1 ) {
                 ( *Bt )( nl_p, 2 ) = -( *Bt )( nl_p, 3 );
+            }
+            if( isYmin && imode == 1 ) {
+                ( *Bt )( nl_p, 2 )= -2.*Icpx*( *Br )( nl_p, 2 )-( *Bt )( nl_p, 3 );
             }
         }
     }

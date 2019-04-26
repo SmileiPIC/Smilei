@@ -50,25 +50,32 @@ From this reference frequency :math:`\omega_r`, we define:
 
 .. warning::
   
-  Counter-intuitively, the reference density :math:`N_r` is **not equal** to :math:`L_r^{-3}`.
+  :math:`1/N_r` is a volume, but counter-intuitively, it is **not equal** to :math:`L_r^{3}`.
 
 Normalizing all quantities to these references is convenient for resolving Maxwell's equations,
-as it converts them into a dimension-less set of equations:
+and the charges equation of motion, as it converts them into a dimension-less set of equations:
 
 .. math::
-  
+
   \mathbf{\nabla}\cdot\mathbf{E} = \rho
   \quad\quad
-  \nabla\cdot\mathbf{B} = 0
+  \nabla\cdot\mathbf{B} & = 0 \\
 
   \nabla\times\mathbf{E} = - \partial_t \mathbf{B}
   \quad\quad
-  \nabla\times\mathbf{B} = \mathbf{j} + \partial_t \mathbf{E}
+  \nabla\times\mathbf{B} = & \; \mathbf{j} + \partial_t \mathbf{E} 
 
+.. math::
+
+  \partial_t \mathbf{p} = Z \mathbf{E} + Z \mathbf{v}\times\mathbf{B}
+  
 where :math:`\mathbf{E}`, :math:`\mathbf{B}`, :math:`\mathbf{j}` and :math:`\mathbf{\rho}`
 are the electric field, magnetic field, current density and charge density, normalized to
-:math:`E_r`, :math:`B_r`, :math:`J_r` and :math:`Q_r N_r`, respectively. Note that the
-temporal and spatial derivatives are also normalized to :math:`T_r` and :math:`L_r`, respectively.
+:math:`E_r`, :math:`B_r`, :math:`J_r` and :math:`Q_r N_r`, respectively. :math:`Z` and
+:math:`\mathbf p` are a particle's charge and momentum, normalized to :math:`Q_r` and 
+:math:`P_r`, respectively. Note that the temporal and spatial derivatives are also
+normalized to :math:`T_r` and :math:`L_r`, respectively.
+
 
 ----
 

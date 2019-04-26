@@ -427,8 +427,8 @@ void DiagnosticProbes::createPoints( SmileiMPI *smpi, VectorPatch &vecPatches, b
             for( k=1; k<3; k++ ) {
                 mins[k] = numeric_limits<double>::max();
                 maxs[k] = -mins[k];
-                patchMax[k] = ( ( double )vecPatches( ipatch )->Pcoordinates[1]+1. )*( double )patch_size[1];
-                patchMin[k] = -1. *  patchMax[k] ; //patchMin = -rmax for the first filter
+                patchMax[k] = ( vecPatches( ipatch )->Pcoordinates[1]+1 )*patch_size[1];
+                patchMin[k] = - patchMax[k] ; //patchMin = -rmax for the first filter
             }
         } else {
             for( k=0; k<nDim_particle; k++ ) {
@@ -457,10 +457,9 @@ void DiagnosticProbes::createPoints( SmileiMPI *smpi, VectorPatch &vecPatches, b
             }
         }
         // Loop directions to figure out the range of useful indices
-        
         for( i=0; i<dimProbe; i++ ) {
             if( mins[i]<0. ) {
-                mins[i]=0.;    // Why ?
+                mins[i]=0.;
             }
             if( mins[i]>1. ) {
                 mins[i]=1.;
@@ -491,7 +490,10 @@ void DiagnosticProbes::createPoints( SmileiMPI *smpi, VectorPatch &vecPatches, b
         // Initialize the list of "fake" particles (points) just as actual macro-particles
         Particles *particles = &( vecPatches( ipatch )->probes[probe_n]->particles );
         particles->initialize( ntot, nDim_particle );
-        
+        // In AM, redefine patchmin as rmin and not -rmax anymore
+        if( geometry == "AMcylindrical" ) {
+            patchMin[1] = patchMax[1] - ( double )patch_size[1];
+        }
         // Loop useful probe points
         ipart_local=0;
         for( unsigned int ip=0; ip<ntot; ip++ ) {
@@ -506,23 +508,24 @@ void DiagnosticProbes::createPoints( SmileiMPI *smpi, VectorPatch &vecPatches, b
             }
             // Compute this point's coordinates in terms of x, y, ...
             point = matrixTimesVector( axes, point );
-            //Redefine patchmin as rmin and not -rmax any more
-            if( geometry == "AMcylindrical" ) {
-                patchMin[1] = patchMax[1] - ( double )patch_size[1]  ;
-            }
             // Check if point is in patch
             is_in_domain = true;
-            for( i=0; i<nDim_field; i++ ) {
-                if( i == 1 && geometry == "AMcylindrical" ) {
-                    point[1] += origin[1];
-                    point[2] += origin[2];
-                    point[1] = sqrt( point[1]*point[1] + point[2]*point[2] );
-                } else {
-                    point[i] += origin[i];
-                }
-                if( point[i] < patchMin[i] || point[i] >= patchMax[i] ) {
+            if( geometry == "AMcylindrical" ) {
+                point[0] += origin[0];
+                point[1] += origin[1];
+                point[2] += origin[2];
+                double r = sqrt( point[1]*point[1] + point[2]*point[2] );
+                if( point[0] < patchMin[0] || point[0] >= patchMax[0]
+                 || r < patchMin[1] || r>= patchMax[1] ) {
                     is_in_domain = false;
-                    break;
+                }
+            } else {
+                for( i=0; i<nDim_field; i++ ) {
+                    point[i] += origin[i];
+                    if( point[i] < patchMin[i] || point[i] >= patchMax[i] ) {
+                        is_in_domain = false;
+                        break;
+                    }
                 }
             }
             if( is_in_domain ) {

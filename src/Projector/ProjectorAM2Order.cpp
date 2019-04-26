@@ -9,6 +9,7 @@
 #include "Particles.h"
 #include "Tools.h"
 #include "Patch.h"
+#include "PatchAM.h"
 
 using namespace std;
 
@@ -22,32 +23,20 @@ ProjectorAM2Order::ProjectorAM2Order( Params &params, Patch *patch ) : Projector
     dr = params.cell_length[1];
     dl_inv_   = 1.0/params.cell_length[0];
     dl_ov_dt  = params.cell_length[0] / params.timestep;
+    dr_ov_dt  = params.cell_length[1] / params.timestep;
     dr_inv_   = 1.0 / dr;
     one_ov_dt  = 1.0 / params.timestep;
     Nmode=params.nmodes;
     i_domain_begin = patch->getCellStartingGlobalIndex( 0 );
     j_domain_begin = patch->getCellStartingGlobalIndex( 1 );
-    n_species = patch->vecSpecies.size();
     
     nprimr = params.n_space[1] + 2*params.oversize[1] + 1;
-    
-    rprim.resize( nprimr );
-    invV.resize( nprimr );
-    invVd.resize( nprimr+1*(!params.is_pxr) );
-    
-    for( int j = 0; j< nprimr; j++ ) {
-        rprim[j] = abs( ( j_domain_begin+j )*dr );
-        if( j_domain_begin+j == 0 ) {
-            //invV[j] = 6./dr; // Correction de Verboncoeur ordre 1.
-            invV[j] = 8./dr;   // No correction.
-        } else {
-            invV[j] = 1./rprim[j];
-        }
-    }
-    for( int j = 0; j< nprimr+1*(!params.is_pxr); j++ ) {
-        invVd[j] = 1./abs( j_domain_begin+j-0.5 );
-    }
+    npriml = params.n_space[0] + 2*params.oversize[0] + 1;
+
     pxr = !params.is_pxr;
+  
+    invR = &((static_cast<PatchAM *>( patch )->invR)[0]);
+    invRd = &((static_cast<PatchAM *>( patch )->invRd)[0]);
 
 }
 
@@ -59,195 +48,17 @@ ProjectorAM2Order::~ProjectorAM2Order()
 {
 }
 
-
 // ---------------------------------------------------------------------------------------------------------------------
-//! Project local currents for mode=0
+//! Project local currents for all modes
 // ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2Order::currents_mode0( complex<double> *Jl, complex<double> *Jr, complex<double> *Jt, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold )
+void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, double *array_theta_old, bool diag_flag, int ispec)
 {
-    int nparts= particles.size();
+
     // -------------------------------------
     // Variable declaration & initialization
     // -------------------------------------   int iloc,
-    // (x,y,z) components of the current density for the macro-particle
-    double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
-    double crl_p = charge_weight*dl_ov_dt;
-    double crr_p = charge_weight*one_ov_dt;
-    
-    // variable declaration
-    double xpn, ypn, rp;
-    double delta, delta2;
-    // arrays used for the Esirkepov projection method
-    double  Sl0[5], Sl1[5], Sr0[5], Sr1[5], DSl[5], DSr[5];
-    double  Wl[5][5], Wr[5][5], Wt[5][5], Jl_p[5][5], Jr_p[5][5], Jt_p[5][5];
-    for( unsigned int i=0; i<5; i++ ) {
-        Sl1[i] = 0.;
-        Sr1[i] = 0.;
-    }
-    Sl0[0] = 0.;
-    Sl0[4] = 0.;
-    Sr0[0] = 0.;
-    Sr0[4] = 0.;
-    
-    
-    // --------------------------------------------------------
-    // Locate particles & Calculate Esirkepov coef. S, DS and W
-    // --------------------------------------------------------
-    
-    // locate the particle on the primal grid at former time-step & calculate coeff. S0
-    delta = deltaold[0*nparts];
-    delta2 = delta*delta;
-    Sl0[1] = 0.5 * ( delta2-delta+0.25 );
-    Sl0[2] = 0.75-delta2;
-    Sl0[3] = 0.5 * ( delta2+delta+0.25 );
-    
-    delta = deltaold[1*nparts];
-    delta2 = delta*delta;
-    Sr0[1] = 0.5 * ( delta2-delta+0.25 );
-    Sr0[2] = 0.75-delta2;
-    Sr0[3] = 0.5 * ( delta2+delta+0.25 );
-    
-    
-    // locate the particle on the primal grid at current time-step & calculate coeff. S1
-    xpn = particles.position( 0, ipart ) * dl_inv_;
-    int ip = round( xpn );
-    int ipo = iold[0*nparts];
-    int ip_m_ipo = ip-ipo-i_domain_begin;
-    
-    delta  = xpn - ( double )ip;
-    delta2 = delta*delta;
-    Sl1[ip_m_ipo+1] = 0.5 * ( delta2-delta+0.25 );
-    Sl1[ip_m_ipo+2] = 0.75-delta2;
-    Sl1[ip_m_ipo+3] = 0.5 * ( delta2+delta+0.25 );
-    rp = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
-    ypn =  rp * dr_inv_ ;
-    double crt_p= charge_weight*( particles.momentum( 2, ipart )*particles.position( 1, ipart )-particles.momentum( 1, ipart )*particles.position( 2, ipart ) )/( rp )*invgf;
-    
-    int jp = round( ypn );
-    int jpo = iold[1*nparts];
-    int jp_m_jpo = jp-jpo-j_domain_begin;
-    delta  = ypn - ( double )jp;
-    delta2 = delta*delta;
-    Sr1[jp_m_jpo+1] = 0.5 * ( delta2-delta+0.25 );
-    Sr1[jp_m_jpo+2] = 0.75-delta2;
-    Sr1[jp_m_jpo+3] = 0.5 * ( delta2+delta+0.25 );
-    
-    for( unsigned int i=0; i < 5; i++ ) {
-        DSl[i] = Sl1[i] - Sl0[i];
-        DSr[i] = Sr1[i] - Sr0[i];
-    }
-    
-    // ------------------------------------------------
-    // Local current created by the particle
-    // calculate using the charge conservation equation
-    // ------------------------------------------------
-    
-    
-    for( unsigned int i=0 ; i<5 ; i++ ) {
-        for( unsigned int j=0 ; j<5 ; j++ ) {
-            Wl[i][j] = DSl[i] * ( Sr0[j] + 0.5*DSr[j] );
-            Wr[i][j] = DSr[j] * ( Sl0[i] + 0.5*DSl[i] );
-            Wt[i][j] = 0.5 * ( Sl0[i]*Sr0[j] + Sl1[i]*Sr1[j] ) ;
-        }
-    }
-    
-    
-    //Fold W if the particles project anything below axis
-    unsigned int nfold = max( 2-jpo, 0 ); // Number of cells touched below axis
-    if( nfold > 0 ) {
-        // Cancel contribution on axis for mode > 0
-        // Add contributions for mode 0
-        for( unsigned int i=0 ; i<5 ; i++ ) {
-            for( unsigned int j = 0 ; j < nfold ; j++ ) {
-                Wl[i][2*nfold-j] += Wl[i][j];
-                Wr[i][2*nfold-j] += Wr[i][j];
-                Wt[i][2*nfold-j] += Wt[i][j];
-            }
-        }
-        // Substract contribution for modes > 0
-    }
-    
+    int nparts= particles.size();
     int iloc, jloc, linindex;
-    ipo -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
-    // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
-    jpo -= 2;
-    
-    // ------------------------------------------------
-    // Local current created by the particle
-    // calculate using the charge conservation equation
-    // ------------------------------------------------
-    for( unsigned int j=0 ; j<5 ; j++ ) {
-        Jl_p[0][j]= 0.;
-    }
-    for( unsigned int i=0 ; i<5 ; i++ ) {
-        Jr_p[i][4]= 0.;
-    }
-    
-    for( unsigned int i=1 ; i<5 ; i++ ) {
-        for( unsigned int j=0 ; j<5 ; j++ ) {
-            Jl_p[i][j]= Jl_p[i-1][j] - crl_p * Wl[i-1][j];
-        }
-    }
-    
-    for( int j=3 ; j>=0 ; j-- ) {
-        jloc = j+jpo+1*pxr;
-        double Vd = abs( jloc + j_domain_begin + 0.5 ) ;
-        for( unsigned int i=0 ; i<5 ; i++ ) {
-            Jr_p[i][j] = ( Jr_p[i][j+1] * Vd + crr_p * Wr[i][j+1] ) * invVd[jloc];
-        }
-    }
-    
-    for( unsigned int i=0 ; i<5 ; i++ ) {
-        for( unsigned int j=0 ; j<5 ; j++ ) {
-            Jt_p[i][j] =   crt_p  * Wt[i][j];
-        }
-    }
-    // ---------------------------
-    // Calculate the total current
-    // ---------------------------
-    
-    
-    // Jl^(d,p)
-    for( unsigned int i=1 ; i<5 ; i++ ) {
-        iloc = ( i+ipo )*nprimr;
-        for( unsigned int j=0 ; j<5 ; j++ ) {
-            jloc = j+jpo;
-            linindex = iloc+jloc;
-            Jl [linindex] += Jl_p[i][j]*invV[jloc];
-        }
-    }//i
-    
-    // Jr^(p,d)
-    for( unsigned int i=0 ; i<5 ; i++ ) {
-        iloc = ( i+ipo )*( nprimr+1*pxr );
-        for( unsigned int j=0 ; j<4 ; j++ ) {
-            jloc = j+jpo+1*pxr;
-            linindex = iloc+jloc;
-            Jr [linindex] += Jr_p[i][j];
-        }
-    }//i
-    
-    // Jt^(p,p)
-    for( unsigned int i=0 ; i<5 ; i++ ) {
-        iloc = ( i+ipo )*nprimr;
-        for( unsigned int j=0 ; j<5 ; j++ ) {
-            jloc = j+jpo;
-            linindex = iloc+jloc;
-            Jt [linindex] += Jt_p[i][j] *invV[jloc];
-        }
-    }//i
-    
-} // END Project local current densities (Jl, Jr, Jt, sort)
-
-// ---------------------------------------------------------------------------------------------------------------------
-//! Project local currents for m>0
-// ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2Order::currents( complex<double> *Jl, complex<double> *Jr, complex<double> *Jt, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, double *array_theta_old, int imode )
-{
-    // -------------------------------------
-    // Variable declaration & initialization
-    // -------------------------------------   int iloc,
-    int nparts= particles.size();
     // (x,y,z) components of the current density for the macro-particle
     double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
     double crl_p = charge_weight*dl_ov_dt;
@@ -258,8 +69,10 @@ void ProjectorAM2Order::currents( complex<double> *Jl, complex<double> *Jr, comp
     double delta, delta2;
     // arrays used for the Esirkepov projection method
     double  Sl0[5], Sl1[5], Sr0[5], Sr1[5], DSl[5], DSr[5];
-    complex<double>  Wl[5][5], Wr[5][5], Wt[5][5], Jl_p[5][5], Jr_p[5][5], Jt_p[5][5];
-    complex<double> e_delta, e_delta_m1, e_delta_inv, e_bar, e_bar_m1, C_m; //, C_m_old;
+    //complex<double>  Wl[5][5], Wr[5][5], Wt[5][5], Jl_p[5][5], Jr_p[5][5], Jt_p[5][5];
+    complex<double>  Wl[5][5], Wr[5][5], Jl_p[5][5], Jr_p[5][5];
+    complex<double> e_delta, e_delta_m1, e_delta_inv, e_bar, e_bar_m1, C_m = 1.; //, C_m_old;
+    complex<double> *Jl, *Jr, *Jt, *rho;
     
     for( unsigned int i=0; i<5; i++ ) {
         Sl1[i] = 0.;
@@ -315,62 +128,23 @@ void ProjectorAM2Order::currents( complex<double> *Jl, complex<double> *Jr, comp
     Sr1[jp_m_jpo+2] = 0.75-delta2;
     Sr1[jp_m_jpo+3] = 0.5 * ( delta2+delta+0.25 );
     
+    for( unsigned int i=0; i < 5; i++ ) {
+        DSl[i] = Sl1[i] - Sl0[i];
+        DSr[i] = Sr1[i] - Sr0[i];
+    }
+
     double dtheta = std::remainder( theta-theta_old, 2*M_PI )/2.; // Otherwise dtheta is overestimated when going from -pi to +pi
     double theta_bar = theta_old+dtheta;
     e_delta_m1 = std::polar( 1.0, dtheta );
     e_bar_m1 = std::polar( 1.0, theta_bar );
     
-    for( unsigned int i=0; i<( unsigned int )imode; i++ ) {
-        e_delta *= e_delta_m1;
-        e_bar *= e_bar_m1;
-    }
-    
-    e_delta_inv =1./e_delta;
-    //defining crt_p
-    complex<double> crt_p = charge_weight*Icpx*e_bar / ( dt*( double )imode )*2.;
-    for( unsigned int i=0; i < 5; i++ ) {
-        DSl[i] = Sl1[i] - Sl0[i];
-        DSr[i] = Sr1[i] - Sr0[i];
-    }
-    
-    // ------------------------------------------------
-    // Local current created by the particle
-    // calculate using the charge conservation equation
-    // ------------------------------------------------
-    
-    
-    for( unsigned int i=0 ; i<5 ; i++ ) {
-        for( unsigned int j=0 ; j<5 ; j++ ) {
-            Wl[i][j] = DSl[i] * ( Sr0[j] + 0.5*DSr[j] );
-            Wr[i][j] = DSr[j] * ( Sl0[i] + 0.5*DSl[i] );
-            Wt[i][j] = Sr1[j]*Sl1[i]*( e_delta_inv-1. )-Sr0[j]*Sl0[i]*( e_delta-1. );
-            
-        }
-    }
-    
-    //Fold W if the particles project anything below axis
-    unsigned int nfold = max( 2-jpo, 0 ) ; // Number of cells touched below axis
-    if( nfold > 0 ) {
-        // Cancel contribution on axis for mode > 0
-        for( unsigned int i=0 ; i<5 ; i++ ) {
-            Wl[i][nfold] = 0.;
-            Wr[i][nfold] = 0.;
-            Wt[i][nfold] = 0.;
-        }
-        // Add contributions for mode 0
-        // Substract contribution for modes > 0
-        for( unsigned int i=0 ; i<5 ; i++ ) {
-            for( unsigned int j = 0 ; j < nfold ; j++ ) {
-                Wl[i][2*nfold-j] += Wl[i][j];
-                Wr[i][2*nfold-j] += Wr[i][j];
-                Wt[i][2*nfold-j] += Wt[i][j];
-            }
-        }
-    }
-    
     ipo -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
     // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
     jpo -= 2;
+
+    double *invR_local = &(invR[jpo]);
+
+    unsigned int nfold = max( -jpo, 0 ) ; // Number of cells touched below axis
     
     // ------------------------------------------------
     // Local current created by the particle
@@ -383,479 +157,106 @@ void ProjectorAM2Order::currents( complex<double> *Jl, complex<double> *Jr, comp
         Jr_p[i][4]= 0.;
     }
     
-    
-    int iloc, jloc, linindex;
-    
+    // ---------------------------
+    // Calculate the total current
+    // ---------------------------
+
+    //initial value of crt_p for imode = 0.
+    complex<double> crt_p= charge_weight*( particles.momentum( 2, ipart )*particles.position( 1, ipart )-particles.momentum( 1, ipart )*particles.position( 2, ipart ) )/( rp )*invgf;
+
+    // Compute everything independent of theta
+    for( unsigned int i=0 ; i<5 ; i++ ) {
+        for( unsigned int j=0 ; j<5 ; j++ ) {
+            Wl[i][j] = DSl[i] * ( Sr0[j] + 0.5*DSr[j] )* invR_local[j]; // a priori independant du mode !!
+            Wr[i][j] = DSr[j] * ( Sl0[i] + 0.5*DSl[i] )* invRd[jpo+j]*dr; // a priori independant du mode !!
+        }
+    }
+
     for( unsigned int i=1 ; i<5 ; i++ ) {
         for( unsigned int j=0 ; j<5 ; j++ ) {
             Jl_p[i][j]= Jl_p[i-1][j] - crl_p * Wl[i-1][j];
         }
     }
-    
+
     for( int j=3 ; j>=0 ; j-- ) {
         jloc = j+jpo+1*pxr;
-        double Vd = abs( jloc + j_domain_begin + 0.5 ) ;
+        double Vd = abs( jloc + j_domain_begin + 0.5 )* invRd[jloc]*dr ;
         for( unsigned int i=0 ; i<5 ; i++ ) {
-            Jr_p[i][j] = ( Jr_p[i][j+1] * Vd + crr_p * Wr[i][j+1] ) * invVd[jloc];
+            Jr_p[i][j] =  Jr_p[i][j+1] * Vd + crr_p * Wr[i][j+1] ;
         }
     }
-    
-    for( unsigned int i=0 ; i<5 ; i++ ) {
-        for( unsigned int j=0 ; j<5 ; j++ ) {
-            Jt_p[i][j] = crt_p  * Wt[i][j];
-        }
-    }
-    
-    // ---------------------------
-    // Calculate the total current
-    // ---------------------------
-    
-    C_m = 2. * e_bar ; //multiply modes > 0 by 2
-    
-    // Jl^(d,p)
-    for( unsigned int i=1 ; i<5 ; i++ ) {
-        iloc = ( i+ipo )*nprimr;
-        for( unsigned int j=0 ; j<5 ; j++ ) {
-            jloc = j+jpo;
-            linindex = iloc+jloc;
-            Jl [linindex] += C_m * Jl_p[i][j] * invV[jloc];
-        }
-    }//i
-    
-    // Jt^(p,p)
-    for( unsigned int i=0 ; i<5 ; i++ ) {
-        iloc = ( i+ipo )*nprimr;
-        for( unsigned int j=0 ; j<5 ; j++ ) {
-            jloc = j+jpo;
-            linindex = iloc+jloc;
-            Jt [linindex] += Jt_p[i][j] * invV[jloc] * rprim[jloc] ;
-        }
-    }
-    // Jr^(p,d)
-    for( unsigned int i=0 ; i<5 ; i++ ) {
-        iloc = ( i+ipo )*( nprimr+1*pxr );
-        for( unsigned int j=0 ; j<4 ; j++ ) {
-            jloc = j+jpo+1*pxr;
-            linindex = iloc+jloc;
-            Jr [linindex] += C_m * Jr_p[i][j] ;
-        }
-    }//i
-    
-} // END Project local current densities (Jl, Jr, Jt, sort)
+ 
+    e_delta = 1.5;
+    e_delta_inv = 0.5;   
 
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-//! Project local currents with diag for mode=0
-// ---------------------------------------------------------------------------------------------------------------------
-
-void ProjectorAM2Order::currentsAndDensity_mode0( complex<double> *Jl, complex<double> *Jr, complex<double> *Jt, complex<double> *rho, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold )
-{
-    // -------------------------------------
-    // Variable declaration & initialization
-    // -------------------------------------
-    int nparts= particles.size();
-    // (x,y,z) components of the current density for the macro-particle
-    double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
-    double crl_p = charge_weight*dl_ov_dt;
-    double crr_p = charge_weight*one_ov_dt;
-    
-    // variable declaration
-    double xpn, ypn, rp;
-    double delta, delta2;
-    // arrays used for the Esirkepov projection method
-    double  Sl0[5], Sl1[5], Sr0[5], Sr1[5], DSl[5], DSr[5];
-    double  Wl[5][5], Wr[5][5], Wt[5][5], Jl_p[5][5], Jr_p[5][5], Jt_p[5][5];
-    for( unsigned int i=0; i<5; i++ ) {
-        Sl1[i] = 0.;
-        Sr1[i] = 0.;
+   //Compute division by R in advance for Jt and rho evaluation. 
+    for( unsigned int j=0 ; j<5 ; j++ ) {
+        Sr0[j] *= invR_local[j];
+        Sr1[j] *= invR_local[j];
     }
-    Sl0[0] = 0.;
-    Sl0[4] = 0.;
-    Sr0[0] = 0.;
-    Sr0[4] = 0.;
-    
-    
-    // --------------------------------------------------------
-    // Locate particles & Calculate Esirkepov coef. S, DS and W
-    // --------------------------------------------------------
-    
-    // locate the particle on the primal grid at former time-step & calculate coeff. S0
-    delta = deltaold[0*nparts];
-    delta2 = delta*delta;
-    Sl0[1] = 0.5 * ( delta2-delta+0.25 );
-    Sl0[2] = 0.75-delta2;
-    Sl0[3] = 0.5 * ( delta2+delta+0.25 );
-    
-    delta = deltaold[1*nparts];
-    delta2 = delta*delta;
-    Sr0[1] = 0.5 * ( delta2-delta+0.25 );
-    Sr0[2] = 0.75-delta2;
-    Sr0[3] = 0.5 * ( delta2+delta+0.25 );
-    
-    
-    // locate the particle on the primal grid at current time-step & calculate coeff. S1
-    xpn = particles.position( 0, ipart ) * dl_inv_;
-    int ip = round( xpn );
-    int ipo = iold[0*nparts];
-    int ip_m_ipo = ip-ipo-i_domain_begin;
-    delta  = xpn - ( double )ip;
-    delta2 = delta*delta;
-    Sl1[ip_m_ipo+1] = 0.5 * ( delta2-delta+0.25 );
-    Sl1[ip_m_ipo+2] = 0.75-delta2;
-    Sl1[ip_m_ipo+3] = 0.5 * ( delta2+delta+0.25 );
-    rp = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
-    ypn = rp * dr_inv_ ;
-    double crt_p= charge_weight*( particles.momentum( 2, ipart )*particles.position( 1, ipart )-particles.momentum( 1, ipart )*particles.position( 2, ipart ) )/( rp )*invgf;
-    
-    int jp = round( ypn );
-    int jpo = iold[1*nparts];
-    int jp_m_jpo = jp-jpo-j_domain_begin;
-    delta  = ypn - ( double )jp;
-    delta2 = delta*delta;
-    Sr1[jp_m_jpo+1] = 0.5 * ( delta2-delta+0.25 );
-    Sr1[jp_m_jpo+2] = 0.75-delta2;
-    Sr1[jp_m_jpo+3] = 0.5 * ( delta2+delta+0.25 );
-    
-    for( unsigned int i=0; i < 5; i++ ) {
-        DSl[i] = Sl1[i] - Sl0[i];
-        DSr[i] = Sr1[i] - Sr0[i];
-    }
-    
-    // ------------------------------------------------
-    // Local current created by the particle
-    // calculate using the charge conservation equation
-    // ------------------------------------------------
-    
-    
-    for( unsigned int i=0 ; i<5 ; i++ ) {
-        for( unsigned int j=0 ; j<5 ; j++ ) {
-            Wl[i][j] = DSl[i] * ( Sr0[j] + 0.5*DSr[j] );
-            Wr[i][j] = DSr[j] * ( Sl0[i] + 0.5*DSl[i] );
-            Wt[i][j] = 0.5 * ( Sl0[i]*Sr0[j] + Sl1[i]*Sr1[j] ) ;
+
+    for( unsigned int imode=0; imode<( unsigned int )Nmode; imode++ ) {
+
+        if (imode > 0){
+            e_delta *= e_delta_m1;
+            e_bar *= e_bar_m1;
+            C_m = 2. * e_bar ; //multiply modes > 0 by 2 and C_m = 1 otherwise.
+            e_delta_inv =1./e_delta - 1.;
+            crt_p = charge_weight*Icpx*e_bar / ( dt*( double )imode )*2.*rp;
         }
-    }
-    
-    
-    
-    //Fold W if the particles project anything below axis
-    unsigned int nfold = max( 2-jpo, 0 ); // Number of cells touched below axis
-    if( nfold > 0 ) {
-        // Cancel contribution on axis for mode > 0
-        //        Wl[i][-nfold] = 0.;
-        //        Wr[i][-nfold] = 0.;
-        //        Wt[i][-nfold] = 0.;
-        // Add contributions for mode 0
+        
+        // Add contribution J_p to global array
+        if (!diag_flag){
+            Jl =  &( *emAM->Jl_[imode] )( 0 );
+            Jr =  &( *emAM->Jr_[imode] )( 0 );
+            Jt =  &( *emAM->Jt_[imode] )( 0 );
+        } else {
+            unsigned int n_species = emAM->Jl_.size() / Nmode;
+            unsigned int ifield = imode*n_species+ispec;
+            Jl  = emAM->Jl_s    [ifield] ? &( * ( emAM->Jl_s    [ifield] ) )( 0 ) : &( *emAM->Jl_    [imode] )( 0 ) ;
+            Jr  = emAM->Jr_s    [ifield] ? &( * ( emAM->Jr_s    [ifield] ) )( 0 ) : &( *emAM->Jr_    [imode] )( 0 ) ;
+            Jt  = emAM->Jt_s    [ifield] ? &( * ( emAM->Jt_s    [ifield] ) )( 0 ) : &( *emAM->Jt_    [imode] )( 0 ) ;
+            rho = emAM->rho_AM_s[ifield] ? &( * ( emAM->rho_AM_s[ifield] ) )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
+
+            for( unsigned int i=0 ; i<5 ; i++ ) {
+                iloc = ( i+ipo )*nprimr;
+                for( unsigned int j=0 ; j<5 ; j++ ) {
+                    jloc = j+jpo;
+                    linindex = iloc+jloc;
+                    rho [linindex] += C_m*charge_weight* Sl1[i]*Sr1[j];
+                }
+            }//i
+        }
+        
+        // Jl^(d,p)
+        for( unsigned int i=1 ; i<5 ; i++ ) {
+            iloc = ( i+ipo )*nprimr+jpo;
+            for( unsigned int j=0 ; j<5 ; j++ ) {
+                linindex = iloc+j;
+                Jl [linindex] += C_m * Jl_p[i][j] ;
+            }
+        }//i
+
+        // Jr^(p,d)
         for( unsigned int i=0 ; i<5 ; i++ ) {
-            for( unsigned int j = 0 ; j < nfold ; j++ ) {
-                Wl[i][2*nfold-j] += Wl[i][j];
-                Wr[i][2*nfold-j] += Wr[i][j];
-                Wt[i][2*nfold-j] += Wt[i][j];
+            iloc = ( i+ipo )*( nprimr+1*pxr )+jpo+1*pxr;
+            for( unsigned int j=0 ; j<4 ; j++ ) {
+                linindex = iloc+j;
+                Jr [linindex] += C_m * Jr_p[i][j] ;
+            }
+        }//i
+
+        // Jt^(p,p)
+        for( unsigned int i=0 ; i<5 ; i++ ) {
+            iloc = ( i+ipo )*nprimr + jpo;
+            for( unsigned int j=0 ; j<5 ; j++ ) {
+                linindex = iloc+j;
+                Jt [linindex] += crt_p*(Sr1[j]*Sl1[i]*e_delta_inv - Sr0[j]*Sl0[i]*( e_delta-1. )); 
             }
         }
-        // Substract contribution for modes > 0
-    }
-    
-    ipo -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
-    // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
-    jpo -= 2;
-    
-    // ------------------------------------------------
-    // Local current created by the particle
-    // calculate using the charge conservation equation
-    // ------------------------------------------------
-    for( unsigned int j=0 ; j<5 ; j++ ) {
-        Jl_p[0][j]= 0.;
-    }
-    for( unsigned int i=0 ; i<5 ; i++ ) {
-        Jr_p[i][4]= 0.;
-    }
-    
-    
-    int iloc, jloc, linindex;
-    
-    
-    for( unsigned int i=1 ; i<5 ; i++ ) {
-        for( unsigned int j=0 ; j<5 ; j++ ) {
-            Jl_p[i][j]= Jl_p[i-1][j] - crl_p * Wl[i-1][j];
-        }
-    }
-    
-    for( int j=3 ; j>=0 ; j-- ) {
-        jloc = j+jpo+1*pxr;
-        double Vd = abs( jloc + j_domain_begin + 0.5 ) ;
-        for( unsigned int i=0 ; i<5 ; i++ ) {
-            Jr_p[i][j] = ( Jr_p[i][j+1] * Vd + crr_p * Wr[i][j+1] ) * invVd[jloc];
-        }
-    }
-    
-    for( unsigned int i=0 ; i<5 ; i++ ) {
-        for( unsigned int j=0 ; j<5 ; j++ ) {
-            Jt_p[i][j] =   crt_p  * Wt[i][j];
-        }
-    }
-    
-    // ---------------------------
-    // Calculate the total current
-    // ---------------------------
-    
-    // Jl^(d,p)
-    for( unsigned int i=1 ; i<5 ; i++ ) {
-        iloc = ( i+ipo )*nprimr;
-        for( unsigned int j=0 ; j<5 ; j++ ) {
-            jloc = j+jpo;
-            linindex = iloc+jloc;
-            Jl [linindex] += Jl_p[i][j] * invV[jloc];
-        }
-    }//i
-    
-    // Jr^(p,d)
-    for( unsigned int i=0 ; i<5 ; i++ ) {
-        iloc = ( i+ipo )*( nprimr+1*pxr );
-        for( unsigned int j=0 ; j<4 ; j++ ) {
-            jloc = j+jpo+1*pxr;
-            linindex = iloc+jloc;
-            Jr [linindex] += Jr_p[i][j] ;
-        }
-    }//i
-    
-    // Jt^(p,p)
-    for( unsigned int i=0 ; i<5 ; i++ ) {
-        iloc = ( i+ipo )*nprimr;
-        for( unsigned int j=0 ; j<5 ; j++ ) {
-            jloc = j+jpo;
-            linindex = iloc+jloc;
-            Jt [linindex] += Jt_p[i][j] * invV[jloc];
-        }
-    }//i
-    
-    // Rho^(p,p)
-    for( unsigned int i=0 ; i<5 ; i++ ) {
-        iloc = ( i+ipo )*nprimr;
-        for( unsigned int j=0 ; j<5 ; j++ ) {
-            jloc = j+jpo;
-            linindex = iloc+jloc;
-            rho [linindex] += charge_weight * Sl1[i]*Sr1[j] * invV[jloc];
-        }
-    }//i
-} // END Project local densities (Jl, Jr, Jt, rho, sort)
 
-// ---------------------------------------------------------------------------------------------------------------------
-//! Project local currents with diag for m>0
-// ---------------------------------------------------------------------------------------------------------------------
-void ProjectorAM2Order::currentsAndDensity( complex<double> *Jl, complex<double> *Jr, complex<double> *Jt, complex<double> *rho, Particles &particles, unsigned int ipart, double invgf, int *iold, double *deltaold, double *array_theta_old,  int imode )
-{
-    // -------------------------------------
-    // Variable declaration & initialization
-    // -------------------------------------
-    int nparts= particles.size();
-    // (x,y,z) components of the current density for the macro-particle
-    double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*particles.weight( ipart );
-    double crl_p = charge_weight*dl_ov_dt;
-    double crr_p = charge_weight*one_ov_dt;
-    
-    // variable declaration
-    double xpn, ypn;
-    double delta, delta2;
-    // arrays used for the Esirkepov projection method
-    double  Sl0[5], Sl1[5], Sr0[5], Sr1[5], DSl[5], DSr[5];
-    complex<double>  Wl[5][5], Wr[5][5], Wt[5][5], Jl_p[5][5], Jr_p[5][5], Jt_p[5][5];
-    complex<double> e_delta, e_delta_m1, e_delta_inv, e_bar, e_bar_m1, C_m; //, C_m_old;
-    
-    for( unsigned int i=0; i<5; i++ ) {
-        Sl1[i] = 0.;
-        Sr1[i] = 0.;
-    }
-    Sl0[0] = 0.;
-    Sl0[4] = 0.;
-    Sr0[0] = 0.;
-    Sr0[4] = 0.;
-    // --------------------------------------------------------
-    // Locate particles & Calculate Esirkepov coef. S, DS and W
-    // --------------------------------------------------------
-    
-    // locate the particle on the primal grid at former time-step & calculate coeff. S0
-    delta = deltaold[0*nparts];
-    delta2 = delta*delta;
-    Sl0[1] = 0.5 * ( delta2-delta+0.25 );
-    Sl0[2] = 0.75-delta2;
-    Sl0[3] = 0.5 * ( delta2+delta+0.25 );
-    
-    delta = deltaold[1*nparts];
-    delta2 = delta*delta;
-    Sr0[1] = 0.5 * ( delta2-delta+0.25 );
-    Sr0[2] = 0.75-delta2;
-    Sr0[3] = 0.5 * ( delta2+delta+0.25 );
-    //calculate exponential coefficients
-    
-    double yp = particles.position( 1, ipart );
-    double zp = particles.position( 2, ipart );
-    double rp = sqrt( yp*yp+zp*zp );
-    double theta_old = array_theta_old[0];
-    e_delta = 1.;
-    e_bar =  1.;
-    double theta = atan2( zp, yp );
-    
-    // locate the particle on the primal grid at current time-step & calculate coeff. S1
-    xpn = particles.position( 0, ipart ) * dl_inv_;
-    int ip = round( xpn );
-    int ipo = iold[0*nparts];
-    int ip_m_ipo = ip-ipo-i_domain_begin;
-    delta  = xpn - ( double )ip;
-    delta2 = delta*delta;
-    Sl1[ip_m_ipo+1] = 0.5 * ( delta2-delta+0.25 );
-    Sl1[ip_m_ipo+2] = 0.75-delta2;
-    Sl1[ip_m_ipo+3] = 0.5 * ( delta2+delta+0.25 );
-    
-    ypn = rp *dr_inv_ ;
-    int jp = round( ypn );
-    int jpo = iold[1*nparts];
-    int jp_m_jpo = jp-jpo-j_domain_begin;
-    delta  = ypn - ( double )jp;
-    delta2 = delta*delta;
-    Sr1[jp_m_jpo+1] = 0.5 * ( delta2-delta+0.25 );
-    Sr1[jp_m_jpo+2] = 0.75-delta2;
-    Sr1[jp_m_jpo+3] = 0.5 * ( delta2+delta+0.25 );
-    
-
-    double dtheta = std::remainder( theta-theta_old, 2*M_PI )/2.; // Otherwise dtheta is overestimated when going from -pi to +pi
-    double theta_bar = theta_old+dtheta ;
-    
-    e_delta_m1 = std::polar( 1.0, dtheta );
-    e_bar_m1 = std::polar( 1.0, theta_bar );
-    
-    for( unsigned int i=0; i<( unsigned int )imode; i++ ) {
-        e_delta *= e_delta_m1;
-        e_bar *= e_bar_m1;
-    }
-    e_delta_inv =1./e_delta;
-    //defining crt_p
-    complex<double> crt_p = charge_weight*Icpx*e_bar / ( dt*( double )imode )*2.*rp ;
-    for( unsigned int i=0; i < 5; i++ ) {
-        DSl[i] = Sl1[i] - Sl0[i];
-        DSr[i] = Sr1[i] - Sr0[i];
-    }
-    
-    // ------------------------------------------------
-    // Local current created by the particle
-    // calculate using the charge conservation equation
-    // ------------------------------------------------
-    
-    
-    for( unsigned int i=0 ; i<5 ; i++ ) {
-        for( unsigned int j=0 ; j<5 ; j++ ) {
-            Wl[i][j] = DSl[i] * ( Sr0[j] + 0.5*DSr[j] );
-            Wr[i][j] = DSr[j] * ( Sl0[i] + 0.5*DSl[i] );
-            Wt[i][j] = Sr1[j]*Sl1[i]*( e_delta_inv-1. )-Sr0[j]*Sl0[i]*( e_delta-1. );
-        }
-    }
-    
-    
-    //Fold W if the particles project anything below axis
-    unsigned int nfold = max( 2-jpo, 0 ); // Number of cells touched below axis
-    if( nfold > 0 ) {
-        // Cancel contribution on axis for mode > 0
-        for( unsigned int i=0 ; i<5 ; i++ ) {
-            Wl[i][nfold] = 0.;
-            Wr[i][nfold] = 0.;
-            Wt[i][nfold] = 0.;
-        }
-        // Add contributions for mode 0
-        // Substract contribution for modes > 0
-        for( unsigned int i=0 ; i<5 ; i++ ) {
-            for( unsigned int j = 0 ; j < nfold ; j++ ) {
-                Wl[i][2*nfold-j] += Wl[i][j];
-                Wr[i][2*nfold-j] += Wr[i][j];
-                Wt[i][2*nfold-j] += Wt[i][j];
-            }
-        }
-    }
-    
-    // ------------------------------------------------
-    // Local current created by the particle
-    // calculate using the charge conservation equation
-    // ------------------------------------------------
-    for( unsigned int j=0 ; j<5 ; j++ ) {
-        Jl_p[0][j]= 0.;
-    }
-    for( unsigned int i=0 ; i<5 ; i++ ) {
-        Jr_p[i][4]= 0.;
-    }
-    
-    ipo -= 2;   //This minus 2 come from the order 2 scheme, based on a 5 points stencil from -2 to +2.
-    // i/j/kpo stored with - i/j/k_domain_begin in Interpolator
-    jpo -= 2;
-    
-    int iloc, jloc, linindex;
-    
-    for( unsigned int i=1 ; i<5 ; i++ ) {
-        for( unsigned int j=0 ; j<5 ; j++ ) {
-            Jl_p[i][j]= Jl_p[i-1][j] - crl_p * Wl[i-1][j];
-        }
-    }
-    
-    for( int j=3 ; j>=0 ; j-- ) {
-        jloc = j+jpo+1*pxr;
-        double Vd = abs( jloc + j_domain_begin + 0.5 ) ;
-        for( unsigned int i=0 ; i<5 ; i++ ) {
-            Jr_p[i][j] = ( Jr_p[i][j+1] * Vd + crr_p * Wr[i][j+1] ) * invVd[jloc];
-        }
-    }
-    
-    for( unsigned int i=0 ; i<5 ; i++ ) {
-        for( unsigned int j=0 ; j<5 ; j++ ) {
-            Jt_p[i][j] = crt_p * Wt[i][j];
-        }
-    }
-    
-    // ---------------------------
-    // Calculate the total current
-    // ---------------------------
-    
-    C_m = 2. * e_bar ; //multiply modes > 0 by 2 AND exp(i theta_medium) = ( exp(i theta) + exp(i theta_old) ) /2.
-    
-    
-    // Jl^(d,p)
-    for( unsigned int i=1 ; i<5 ; i++ ) {
-        iloc = ( i+ipo )*nprimr;
-        for( unsigned int j=0 ; j<5 ; j++ ) {
-            jloc = j+jpo;
-            linindex = iloc+jloc;
-            Jl [linindex] += C_m * Jl_p[i][j] * invV[jloc] ;
-        }
-    }//i
-    
-    // Jt^(p,p)
-    for( unsigned int i=0 ; i<5 ; i++ ) {
-        iloc = ( i+ipo )*nprimr;
-        for( unsigned int j=0 ; j<5 ; j++ ) {
-            jloc = j+jpo;
-            linindex = iloc+jloc;
-            Jt [linindex] += Jt_p[i][j] * invV[jloc] ;
-        }
-    }//i
-    
-    // Jr^(p,d)
-    for( unsigned int i=0 ; i<5 ; i++ ) {
-        iloc = ( i+ipo )*( nprimr+1*pxr );
-        for( unsigned int j=0 ; j<4 ; j++ ) {
-            jloc = j+jpo+1*pxr;
-            linindex = iloc+jloc;
-            Jr [linindex] += C_m * Jr_p[i][j];
-        }
-    }//i
-    
-    // Rho^(p,p)
-    for( unsigned int i=0 ; i<5 ; i++ ) {
-        iloc = ( i+ipo )*nprimr;
-        for( unsigned int j=0 ; j<5 ; j++ ) {
-            jloc = j+jpo;
-            linindex = iloc+jloc;
-            rho [linindex] += C_m*charge_weight* Sl1[i]*Sr1[j] * invV[jloc];
-        }
-    }//i
-    
-    
+        if (imode == 0) e_delta = 1. ; //Restore e_delta correct initial value.
+    }// end loop on modes
     
 } // END Project local current densities (Jl, Jr, Jt, sort)
 
@@ -881,7 +282,7 @@ void ProjectorAM2Order::basicForComplex( complex<double> *rhoj, Particles &parti
         if( type == 1 ) { //if Jl
             charge_weight *= particles.momentum( 0, ipart );
         } else if( type == 2 ) { //if Jr
-            charge_weight *= ( particles.momentum( 1, ipart )*particles.position( 1, ipart ) + particles.momentum( 2, ipart )*particles.position( 2, ipart ) )*dr_inv_ / r ;
+            charge_weight *= ( particles.momentum( 1, ipart )*particles.position( 1, ipart ) + particles.momentum( 2, ipart )*particles.position( 2, ipart ) )/ r ;
             nr++;
         } else { //if Jt
             charge_weight *= ( -particles.momentum( 1, ipart )*particles.position( 2, ipart ) + particles.momentum( 2, ipart )*particles.position( 1, ipart ) ) / r ;
@@ -931,14 +332,14 @@ void ProjectorAM2Order::basicForComplex( complex<double> *rhoj, Particles &parti
         for( unsigned int i=1 ; i<4 ; i++ ) {
             iloc = ( i+ip )*nr+jp;
             for( unsigned int j=1 ; j<4 ; j++ ) {
-                rhoj [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invV[j+jp];
+                rhoj [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invR[j+jp];
             }
         }//i
     } else {
         for( unsigned int i=1 ; i<4 ; i++ ) {
             iloc = ( i+ip )*nr+jp;
             for( unsigned int j=1 ; j<4 ; j++ ) {
-                rhoj [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invVd[j+jp];
+                rhoj [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invRd[j+jp];
             }
         }//i
     }
@@ -1037,7 +438,6 @@ void ProjectorAM2Order::ionizationCurrents( Field *Jl, Field *Jr, Field *Jt, Par
 //Wrapper for projection
 void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell, int ipart_ref )
 {
-    //std::cout<<"projecting"<<std::endl;
     if( is_spectral ) {
         ERROR( "Not implemented" );
     }
@@ -1046,50 +446,85 @@ void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
     std::vector<double> *invgf = &( smpi->dynamics_invgf[ithread] );
     std::vector<double> *array_theta_old = &( smpi->dynamics_thetaold[ithread] );
-    
+    complex<double> *rho, *Jl, *Jr, *Jt; 
     ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
-    
-    // If no field diagnostics this timestep, then the projection is done directly on the total arrays
-    if( !diag_flag ) {
-    
-        for( unsigned int imode = 0; imode<Nmode; imode++ ) {
-        
-            complex<double> *b_Jl =  &( *emAM->Jl_[imode] )( 0 );
-            complex<double> *b_Jr =  &( *emAM->Jr_[imode] )( 0 );
-            complex<double> *b_Jt =  &( *emAM->Jt_[imode] )( 0 );
-            
-            if( imode==0 ) {
-                for( int ipart=istart ; ipart<iend; ipart++ ) {
-                    currents_mode0( b_Jl, b_Jr, b_Jt, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart] );
-                }
+
+    for( int ipart=istart ; ipart<iend; ipart++ ) {
+        currents( emAM, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart], &( *array_theta_old )[ipart], diag_flag, ispec);
+    }
+
+    //Boundary conditions for currents on axis
+    if (emAM->isYmin ) {
+        complex<double> *rho, *Jl, *Jr, *Jt; 
+        double sign = 1. ;
+        for ( int imode = 0; imode < Nmode; imode++){
+            sign *= -1.;
+
+            if (!diag_flag){
+                Jl =  &( *emAM->Jl_[imode] )( 0 );
+                Jr =  &( *emAM->Jr_[imode] )( 0 );
+                Jt =  &( *emAM->Jt_[imode] )( 0 );
             } else {
-                for( int ipart=istart ; ipart<iend; ipart++ ) {
-                    currents( b_Jl, b_Jr, b_Jt, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart], &( *array_theta_old )[ipart], imode );
-                }
+                unsigned int n_species = emAM->Jl_.size() / Nmode;
+                unsigned int ifield = imode*n_species+ispec;
+                Jl  = emAM->Jl_s    [ifield] ? &( * ( emAM->Jl_s    [ifield] ) )( 0 ) : &( *emAM->Jl_    [imode] )( 0 ) ;
+                Jr  = emAM->Jr_s    [ifield] ? &( * ( emAM->Jr_s    [ifield] ) )( 0 ) : &( *emAM->Jr_    [imode] )( 0 ) ;
+                Jt  = emAM->Jt_s    [ifield] ? &( * ( emAM->Jt_s    [ifield] ) )( 0 ) : &( *emAM->Jt_    [imode] )( 0 ) ;
+                rho = emAM->rho_AM_s[ifield] ? &( * ( emAM->rho_AM_s[ifield] ) )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
+                //Fold rho
+                for( unsigned int i=2 ; i<npriml*nprimr+2; i+=nprimr ) {
+                    for( unsigned int j=1 ; j<3; j++ ) {
+                        rho[i+j] = rho[i+j] - sign * rho[i-j];
+                    }
+                    if (imode > 0) rho[i] = 0.;
+                }//i
             }
-        }       // Otherwise, the projection may apply to the species-specific arrays
-    } else {
-        //Loop on modes
-        for( unsigned int imode = 0; imode<Nmode; imode++ ) {
-        
-            // Fix for n_species which is not know in constructors : now the projector is inside each species
-            n_species = emAM->Jl_.size() / Nmode;
-            
-            int ifield = imode*n_species+ispec;
-            complex<double> *b_Jl  = emAM->Jl_s    [ifield] ? &( * ( emAM->Jl_s    [ifield] ) )( 0 ) : &( *emAM->Jl_    [imode] )( 0 ) ;
-            complex<double> *b_Jr  = emAM->Jr_s    [ifield] ? &( * ( emAM->Jr_s    [ifield] ) )( 0 ) : &( *emAM->Jr_    [imode] )( 0 ) ;
-            complex<double> *b_Jt  = emAM->Jt_s    [ifield] ? &( * ( emAM->Jt_s    [ifield] ) )( 0 ) : &( *emAM->Jt_    [imode] )( 0 ) ;
-            complex<double> *b_rho = emAM->rho_AM_s[ifield] ? &( * ( emAM->rho_AM_s[ifield] ) )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
-            if( imode==0 ) {
-                for( int ipart=istart ; ipart<iend; ipart++ ) {
-                    currentsAndDensity_mode0( b_Jl, b_Jr, b_Jt, b_rho, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart] );
+
+            //Fold Jt
+            for( unsigned int i=0 ; i<npriml; i++ ) {
+                int iloc = i*nprimr;
+                for( unsigned int j=1 ; j<3; j++ ) {
+                    Jt [iloc+2+j] = Jt [iloc+2+j] + sign * Jt [iloc+2-j];
                 }
-            } else {
-                for( int ipart=istart ; ipart<iend; ipart++ ) {
-                    currentsAndDensity( b_Jl, b_Jr, b_Jt, b_rho, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart], &( *array_theta_old )[ipart], imode );
+            }//i
+            //Fold Jl
+            for( unsigned int i=0 ; i<npriml+1; i++ ) {
+                int iloc = i*nprimr;
+                for( unsigned int j=1 ; j<3; j++ ) {
+                    Jl [iloc+2+j] = Jl [iloc+2+j] - sign * Jl [iloc+2-j];
+                 }
+            }//i
+
+            //Fold Jr
+            for( unsigned int i=0 ; i<npriml; i++ ) {
+                int ilocr = i*(nprimr+1);
+                for( unsigned int j=0 ; j<3; j++ ) {
+                    Jr [ilocr+5-j] = Jr [ilocr+5-j] + sign * Jr [ilocr+j];
                 }
+            }//i
+
+            // Jl and Jt boundaries on axis
+            int j = 2;
+            if (imode > 0){
+                // All Jl = zero on axis for imode > 0. Mode 0 is treated in general case.
+                for( unsigned int i=0 ; i<npriml+1; i++ ) {
+                    int iloc = i*nprimr;
+                    Jl [iloc+j] = 0. ;
+                }//i
             }
-            
+            //if (imode == 1){
+            //    for( unsigned int i=0 ; i<npriml; i++ ) {
+            //        int iloc = i*nprimr;
+            //        int ilocr = i*(nprimr+1);
+            //        Jt [iloc+j] = -1./3.*(4.*Icpx*Jr[ilocr+j+1] + Jt[iloc+j+1]) ;
+            //    }//i
+            //} else{
+            //    for( unsigned int i=0 ; i<npriml; i++ ) {
+            //        int iloc = i*nprimr;
+            //        Jt [iloc+j] = 0. ;
+            //    }
+            //}
         }
+
     }
 }

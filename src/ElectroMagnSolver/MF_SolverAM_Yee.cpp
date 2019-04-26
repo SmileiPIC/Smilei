@@ -34,9 +34,8 @@ void MF_SolverAM_Yee::operator()( ElectroMagn *fields )
         cField2D *Bt = ( static_cast<ElectroMagnAM *>( fields ) )->Bt_[imode];
         int  j_glob = ( static_cast<ElectroMagnAM *>( fields ) )->j_glob_;
         bool isYmin = ( static_cast<ElectroMagnAM *>( fields ) )->isYmin;
-        //bool isXmin = (static_cast<ElectroMagnAM*>(fields))->isXmin;
-        //bool isYmax = (static_cast<ElectroMagnAM*>(fields))->isYmax;
-        //bool isXmax = (static_cast<ElectroMagnAM*>(fields))->isXmax;
+        double *invR = ( static_cast<ElectroMagnAM *>( fields ) )->invR;
+        double *invRd = ( static_cast<ElectroMagnAM *>( fields ) )->invRd;
         
         // Magnetic field Bl^(p,d)
         for( unsigned int i=0 ; i<nl_p;  i++ ) {
@@ -67,10 +66,10 @@ void MF_SolverAM_Yee::operator()( ElectroMagn *fields )
         if( isYmin ) {
             unsigned int j=2;
             if( imode==0 ) {
-                for( unsigned int i=1 ; i<nl_d-1 ; i++ ) {
+                for( unsigned int i=0 ; i<nl_d ; i++ ) {
                     ( *Br )( i, j )=0;
                 }
-                for( unsigned int i=1 ; i<nl_d-1 ; i++ ) {
+                for( unsigned int i=0 ; i<nl_d ; i++ ) {
                     ( *Bt )( i, j )= -( *Bt )( i, j+1 );
                 }
                 for( unsigned int i=0 ; i<nl_p ; i++ ) {
@@ -87,7 +86,7 @@ void MF_SolverAM_Yee::operator()( ElectroMagn *fields )
                     ( *Br )( i, j )+=  Icpx*dt_ov_dr*( *El )( i, j+1 )
                                        +			dt_ov_dl*( ( *Et )( i, j )-( *Et )( i-1, j ) );
                 }
-                for( unsigned int i=1; i<nl_d-1 ; i++ ) {
+                for( unsigned int i=0; i<nl_d ; i++ ) {
                     ( *Bt )( i, j )= -2.*Icpx*( *Br )( i, j )-( *Bt )( i, j+1 );
                 }
                 
@@ -95,12 +94,17 @@ void MF_SolverAM_Yee::operator()( ElectroMagn *fields )
                 for( unsigned int  i=0 ; i<nl_p; i++ ) {
                     ( *Bl )( i, j )= -( *Bl )( i, j+1 );
                 }
-                for( unsigned int i=1 ; i<nl_d-1; i++ ) {
+                for( unsigned int i=0 ; i<nl_d; i++ ) {
                     ( *Br )( i, j )= 0;
                 }
-                for( unsigned int  i=1 ; i<nl_d-1 ; i++ ) {
+                for( unsigned int  i=0 ; i<nl_d ; i++ ) {
                     ( *Bt )( i, j )= - ( *Bt )( i, j+1 );
                 }
+            }
+            // Conditions below axis (matters for primal quantities interpolated on particles)
+            j=1;
+            for( unsigned int i=0 ; i<nl_d  ; i++ ) {
+                ( *Br )( i, j )=( *Br )( i, j+2 );
             }
         }
     }

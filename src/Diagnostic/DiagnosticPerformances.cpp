@@ -87,6 +87,7 @@ void DiagnosticPerformances::openFile( Params &params, SmileiMPI *smpi, bool new
         
         // write all parameters as HDF5 attributes
         H5::attr( fileId_, "MPI_SIZE", smpi->getSize() );
+        H5::attr( fileId_, "patch_arrangement", params.patch_arrangement );
         
         vector<string> quantities_uint( n_quantities_uint );
         quantities_uint[0] = "hindex"                    ;
@@ -260,10 +261,7 @@ void DiagnosticPerformances::run( SmileiMPI *smpi, VectorPatch &vecPatches, int 
         if( patch_information ) {
         
             // Creation of the group
-            ostringstream group_name;
-            group_name.str( "" );
-            group_name << "patches";
-            hid_t patch_group = H5::group( iteration_group_id, group_name.str().c_str() );
+            hid_t patch_group = H5::group( iteration_group_id, "patches" );
             
             // Get the number of patches per MPI processes
             vector<unsigned int> patches_per_mpi( smpi->getSize() );

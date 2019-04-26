@@ -27,6 +27,7 @@ makerun1D:
   only:
     - develop
     - dev_fields_uncoupling
+
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation

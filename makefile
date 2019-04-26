@@ -7,9 +7,17 @@
 # PYTHON_CONFIG : the executable `python-config` usually shipped with python installation
 
 SMILEICXX ?= mpicxx
-HDF5_ROOT_DIR ?=
+HDF5_ROOT_DIR ?= $(HDF5_ROOT)
 BUILD_DIR ?= build
 PYTHONEXE ?= python
+
+#-----------------------------------------------------
+# check whether to use a machine specific definitions
+ifneq ($(machine),)
+	ifneq ($(wildcard scripts/CompileTools/machine/$(machine)),)
+	-include scripts/CompileTools/machine/$(machine)
+	endif
+endif
 
 PYTHONCONFIG := $(PYTHONEXE) scripts/CompileTools/python-config.py
 
@@ -34,8 +42,8 @@ CXXFLAGS += -D__VERSION=\"$(VERSION)\" -D_VECTO
 CXXFLAGS += -std=c++11 -Wall #-Wshadow
 # HDF5 library
 ifneq ($(strip $(HDF5_ROOT_DIR)),)
-CXXFLAGS += -I${HDF5_ROOT_DIR}/include
-LDFLAGS := -L${HDF5_ROOT_DIR}/lib $(LDFLAGS)
+CXXFLAGS += -I$(HDF5_ROOT_DIR)/include
+LDFLAGS := -L$(HDF5_ROOT_DIR)/lib $(LDFLAGS)
 endif
 LDFLAGS += -lhdf5
 # Include subdirs
@@ -124,14 +132,6 @@ ifneq (,$(findstring no_mpi_tm,$(config)))
     CXXFLAGS += -D_NO_MPI_TM
 endif
 
-
-#-----------------------------------------------------
-# check whether to use a machine specific definitions
-ifneq ($(machine),)
-	ifneq ($(wildcard scripts/CompileTools/machine/$(machine)),)
-	-include scripts/CompileTools/machine/$(machine)
-	endif
-endif
 #-----------------------------------------------------
 # Set the verbosity prefix
 ifeq (,$(findstring verbose,$(config)))
@@ -305,7 +305,7 @@ help:
 	@echo ''
 	@echo 'Environment variables:'
 	@echo '  SMILEICXX             : mpi c++ compiler [$(SMILEICXX)]'
-	@echo '  HDF5_ROOT_DIR         : HDF5 dir [$(HDF5_ROOT_DIR)]'
+	@echo '  HDF5_ROOT_DIR         : HDF5 dir. Defaults to the value of HDF5_ROOT [$(HDF5_ROOT_DIR)]'
 	@echo '  BUILD_DIR             : directory used to store build files [$(BUILD_DIR)]'
 	@echo '  OPENMP_FLAG           : openmp flag [$(OPENMP_FLAG)]'
 	@echo '  PYTHONEXE             : python executable [$(PYTHONEXE)]'

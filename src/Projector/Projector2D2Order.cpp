@@ -561,7 +561,7 @@ void Projector2D2Order::susceptibility( ElectroMagn *EMfields, Particles &partic
         ( *inv_gamma_ponderomotive )[ipart] = 1./gamma_ponderomotive;
         
         // susceptibility for the macro-particle
-        double charge_weight = ( double )( particles.charge( ipart ) )*( double )( particles.charge( ipart ) )*particles.weight( ipart )*one_over_mass/gamma_ponderomotive;
+        double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*( double )( particles.charge( ipart ) )*particles.weight( ipart )*one_over_mass/gamma_ponderomotive;
         
         // variable declaration
         double xpn, ypn;

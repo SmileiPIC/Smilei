@@ -68,6 +68,9 @@ public:
     MPI_Datatype ntypeSum_[2][2][2];
     //! MPI_Datatype to exchange [ndims_+1][iDim=0 prim/dial][iDim=1 prim/dial]
     MPI_Datatype ntype_[3][2][2];
+
+    //! Inverse r coordinate
+    std::vector<double> invR, invRd;
     
     
     
