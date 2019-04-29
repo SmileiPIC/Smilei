@@ -389,7 +389,11 @@ void MultiphotonBreitWheeler::decayed_photon_cleaning(
     std::vector<double> *gamma = &( smpi->dynamics_invgf[ithread] );
     std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
     std::vector<double> *deltaold = &( smpi->dynamics_deltaold[ithread] );
-    // if AM or Envelope !!!
+
+    std::vector<double> *thetaold = NULL;
+    if ( smpi->dynamics_thetaold.size() )
+        thetaold = &( smpi->dynamics_thetaold[ithread] );
+    
     int nparts = Epart->size()/3;
 
 
@@ -439,6 +443,11 @@ void MultiphotonBreitWheeler::decayed_photon_cleaning(
                     }
                     (*gamma)[0*nparts+ipart] = (*gamma)[0*nparts+last_photon_index];
                     gamma->erase(gamma->begin()+0*nparts+last_photon_index);
+
+                    if (thetaold) {
+                        (*thetaold)[0*nparts+ipart] = (*thetaold)[0*nparts+last_photon_index];
+                        thetaold->erase(thetaold->begin()+0*nparts+last_photon_index);
+                    }
 
                     nparts--;
                     last_photon_index --;
