@@ -425,32 +425,19 @@ void MultiphotonBreitWheeler::decayed_photon_cleaning(
                     // the deleted photon
                     particles.overwrite_part( last_photon_index, ipart );
 
-                    (*Epart)[2*nparts+ipart] = (*Epart)[2*nparts+last_photon_index];
-                    (*Epart)[1*nparts+ipart] = (*Epart)[1*nparts+last_photon_index];
-                    (*Epart)[0*nparts+ipart] = (*Epart)[0*nparts+last_photon_index];
-                    (*Bpart)[2*nparts+ipart] = (*Bpart)[2*nparts+last_photon_index];
-                    (*Bpart)[1*nparts+ipart] = (*Bpart)[1*nparts+last_photon_index];
-                    (*Bpart)[0*nparts+ipart] = (*Bpart)[0*nparts+last_photon_index];
-                    (*iold)[2*nparts+ipart] = (*iold)[2*nparts+last_photon_index];
-                    (*iold)[1*nparts+ipart] = (*iold)[1*nparts+last_photon_index];
-                    (*iold)[0*nparts+ipart] = (*iold)[0*nparts+last_photon_index];
-                    (*deltaold)[2*nparts+ipart] = (*deltaold)[2*nparts+last_photon_index];
-                    (*deltaold)[1*nparts+ipart] = (*deltaold)[1*nparts+last_photon_index];
-                    (*deltaold)[0*nparts+ipart] = (*deltaold)[0*nparts+last_photon_index];
+                    for ( int iDim=2 ; iDim>=0 ; iDim-- ) {
+                        (*Epart)[iDim*nparts+ipart] = (*Epart)[iDim*nparts+last_photon_index];
+                        Epart->erase(Epart->begin()+iDim*nparts+last_photon_index);
+                        (*Bpart)[iDim*nparts+ipart] = (*Bpart)[iDim*nparts+last_photon_index];
+                        Bpart->erase(Bpart->begin()+iDim*nparts+last_photon_index);
+                    }
+                    for ( int iDim=n_dimensions_-1 ; iDim>=0 ; iDim-- ) {
+                        (*iold)[iDim*nparts+ipart] = (*iold)[iDim*nparts+last_photon_index];
+                        iold->erase(iold->begin()+iDim*nparts+last_photon_index);
+                        (*deltaold)[iDim*nparts+ipart] = (*deltaold)[iDim*nparts+last_photon_index];
+                        deltaold->erase(deltaold->begin()+iDim*nparts+last_photon_index);
+                    }
                     (*gamma)[0*nparts+ipart] = (*gamma)[0*nparts+last_photon_index];
-
-                    Epart->erase(Epart->begin()+2*nparts+last_photon_index);
-                    Epart->erase(Epart->begin()+1*nparts+last_photon_index);
-                    Epart->erase(Epart->begin()+0*nparts+last_photon_index);
-                    Bpart->erase(Bpart->begin()+2*nparts+last_photon_index);
-                    Bpart->erase(Bpart->begin()+1*nparts+last_photon_index);
-                    Bpart->erase(Bpart->begin()+0*nparts+last_photon_index);
-                    iold->erase(iold->begin()+2*nparts+last_photon_index);
-                    iold->erase(iold->begin()+1*nparts+last_photon_index);
-                    iold->erase(iold->begin()+0*nparts+last_photon_index);
-                    deltaold->erase(deltaold->begin()+2*nparts+last_photon_index);
-                    deltaold->erase(deltaold->begin()+1*nparts+last_photon_index);
-                    deltaold->erase(deltaold->begin()+0*nparts+last_photon_index);
                     gamma->erase(gamma->begin()+0*nparts+last_photon_index);
 
                     nparts--;
