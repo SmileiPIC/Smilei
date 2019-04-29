@@ -183,7 +183,7 @@ void SpeciesVAdaptive::scalar_dynamics( double time_dual, unsigned int ispec,
 
                 // Suppression of the decayed photons into pairs
                 Multiphoton_Breit_Wheeler_process->decayed_photon_cleaning(
-                    *particles, scell, first_index.size(), &first_index[0], &last_index[0] );
+                    *particles, smpi, scell, first_index.size(), &first_index[0], &last_index[0], ithread );
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[6] += MPI_Wtime() - timer;
 #endif

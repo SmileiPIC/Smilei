@@ -380,9 +380,19 @@ void MultiphotonBreitWheeler::pair_emission( int ipart,
 // -----------------------------------------------------------------------------
 void MultiphotonBreitWheeler::decayed_photon_cleaning(
     Particles &particles,
+    SmileiMPI *smpi,
     int ibin, int nbin,
-    int *bmin, int *bmax )
+    int *bmin, int *bmax, int ithread )
 {
+    std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
+    std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
+    std::vector<double> *gamma = &( smpi->dynamics_invgf[ithread] );
+    std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
+    std::vector<double> *deltaold = &( smpi->dynamics_deltaold[ithread] );
+    // if AM or Envelope !!!
+    int nparts = Epart->size()/3;
+
+
     if( bmax[ibin] > bmin[ibin] ) {
         // Weight shortcut
         double *weight = &( particles.weight( 0 ) );
@@ -414,6 +424,36 @@ void MultiphotonBreitWheeler::decayed_photon_cleaning(
                     // The last existing photon comes to the position of
                     // the deleted photon
                     particles.overwrite_part( last_photon_index, ipart );
+
+                    (*Epart)[2*nparts+ipart] = (*Epart)[2*nparts+last_photon_index];
+                    (*Epart)[1*nparts+ipart] = (*Epart)[1*nparts+last_photon_index];
+                    (*Epart)[0*nparts+ipart] = (*Epart)[0*nparts+last_photon_index];
+                    (*Bpart)[2*nparts+ipart] = (*Bpart)[2*nparts+last_photon_index];
+                    (*Bpart)[1*nparts+ipart] = (*Bpart)[1*nparts+last_photon_index];
+                    (*Bpart)[0*nparts+ipart] = (*Bpart)[0*nparts+last_photon_index];
+                    (*iold)[2*nparts+ipart] = (*iold)[2*nparts+last_photon_index];
+                    (*iold)[1*nparts+ipart] = (*iold)[1*nparts+last_photon_index];
+                    (*iold)[0*nparts+ipart] = (*iold)[0*nparts+last_photon_index];
+                    (*deltaold)[2*nparts+ipart] = (*deltaold)[2*nparts+last_photon_index];
+                    (*deltaold)[1*nparts+ipart] = (*deltaold)[1*nparts+last_photon_index];
+                    (*deltaold)[0*nparts+ipart] = (*deltaold)[0*nparts+last_photon_index];
+                    (*gamma)[0*nparts+ipart] = (*gamma)[0*nparts+last_photon_index];
+
+                    Epart->erase(Epart->begin()+2*nparts+last_photon_index);
+                    Epart->erase(Epart->begin()+1*nparts+last_photon_index);
+                    Epart->erase(Epart->begin()+0*nparts+last_photon_index);
+                    Bpart->erase(Bpart->begin()+2*nparts+last_photon_index);
+                    Bpart->erase(Bpart->begin()+1*nparts+last_photon_index);
+                    Bpart->erase(Bpart->begin()+0*nparts+last_photon_index);
+                    iold->erase(iold->begin()+2*nparts+last_photon_index);
+                    iold->erase(iold->begin()+1*nparts+last_photon_index);
+                    iold->erase(iold->begin()+0*nparts+last_photon_index);
+                    deltaold->erase(deltaold->begin()+2*nparts+last_photon_index);
+                    deltaold->erase(deltaold->begin()+1*nparts+last_photon_index);
+                    deltaold->erase(deltaold->begin()+0*nparts+last_photon_index);
+                    gamma->erase(gamma->begin()+0*nparts+last_photon_index);
+
+                    nparts--;
                     last_photon_index --;
                 }
             }
