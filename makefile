@@ -69,7 +69,7 @@ ifeq ($(PICSAR),TRUE)
 	# Set Picsar link environment
 	CXXFLAGS += -D_PICSAR
 	LDFLAGS += -L$(LIBPXR) -lpxr
-	LDFLAGS += -L$(FFTW3_LIB) -lfftw3_mpi -mkl
+	LDFLAGS += -L$(FFTW3_LIB) -lfftw3_mpi -lopenblas
 
 	LDFLAGS += -L$(FFTW3_LIB) -lfftw3_threads
 	LDFLAGS += -L$(FFTW3_LIB) -lfftw3

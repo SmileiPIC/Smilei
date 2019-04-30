@@ -143,6 +143,14 @@ void Patch::initStep3( Params &params, SmileiMPI *smpi, unsigned int n_moved )
     min_local[0] += n_moved*params.cell_length[0];
     max_local[0] += n_moved*params.cell_length[0];
     center   [0] += n_moved*params.cell_length[0];
+
+    if ( (params.is_spectral) && (params.geometry== "AMcylindrical") ) {
+        for ( int iDim=0 ; iDim<2 ; iDim++ ) {
+            min_local[iDim] += params.cell_length[iDim]/2.;
+            max_local[iDim] += params.cell_length[iDim]/2.;
+            center   [iDim] += params.cell_length[iDim]/2.;
+        }
+    }
     
 }
 
