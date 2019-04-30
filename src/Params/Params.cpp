@@ -843,9 +843,14 @@ void Params::compute()
     cell_volume=1.0;
     n_cell_per_patch = 1;
     
+    PyTools::extract( "is_spectral", is_spectral, "Main" );
     // compute number of cells & normalized lengths
     for( unsigned int i=0; i<nDim_field; i++ ) {
-        n_space[i] = round( grid_length[i]/cell_length[i] );
+        if( is_spectral ) {
+            n_space[i] = round( (grid_length[i]-cell_length[i]/2.)/cell_length[i] );
+        } else {
+            n_space[i] = round( grid_length[i]/cell_length[i] );
+        }
         double entered_grid_length = grid_length[i];
         grid_length[i] = ( double )( n_space[i] )*cell_length[i]; // ensure that nspace = grid_length/cell_length
         if( grid_length[i]!=entered_grid_length ) {
