@@ -66,10 +66,10 @@ void PXR_SolverAM_GPSTD::coupling( Params &params, ElectroMagn *EMfields )
     // Dimension of the primal and dual grids
     for( size_t i=0 ; i<params.nDim_field ; i++ ) {
         // Standard scheme
-        dimPrim[i] = n_space[i]+1;
-        dimPrim[i] += 2*params.oversize[i];
+        dimPrim[i+1] = n_space[i]+1;
+        dimPrim[i+1] += 2*params.oversize[i];
     }
-    dimPrim[2] = params.nmodes;
+    dimPrim[0] = params.nmodes;
 
     El_pxr = new cField3D( dimPrim );
     Er_pxr = new cField3D( dimPrim );
@@ -206,17 +206,17 @@ void PXR_SolverAM_GPSTD::_2Dvectors_to_3D( ElectroMagn *fields )
 
         for (int il=0;il<El->dims_[0];il++) {
             for (int ir=0;ir<El->dims_[1];ir++) {
-                (*El_pxr)(il,ir,imode) = (*El)(il,ir); 
-                (*Er_pxr)(il,ir,imode) = (*Er)(il,ir); 
-                (*Et_pxr)(il,ir,imode) = (*Et)(il,ir); 
-                (*Bl_pxr)(il,ir,imode) = (*Bl)(il,ir); 
-                (*Br_pxr)(il,ir,imode) = (*Br)(il,ir); 
-                (*Bt_pxr)(il,ir,imode) = (*Bt)(il,ir); 
-                (*Jl_pxr)(il,ir,imode) = (*Jl)(il,ir); 
-                (*Jr_pxr)(il,ir,imode) = (*Jr)(il,ir); 
-                (*Jt_pxr)(il,ir,imode) = (*Jt)(il,ir); 
-                (*rho_pxr)(il,ir,imode) = (*rho)(il,ir); 
-                (*rhoold_pxr)(il,ir,imode) = (*rhoold)(il,ir); 
+                (*El_pxr)(imode,il,ir) = (*El)(il,ir); 
+                (*Er_pxr)(imode,il,ir) = (*Er)(il,ir); 
+                (*Et_pxr)(imode,il,ir) = (*Et)(il,ir); 
+                (*Bl_pxr)(imode,il,ir) = (*Bl)(il,ir); 
+                (*Br_pxr)(imode,il,ir) = (*Br)(il,ir); 
+                (*Bt_pxr)(imode,il,ir) = (*Bt)(il,ir); 
+                (*Jl_pxr)(imode,il,ir) = (*Jl)(il,ir); 
+                (*Jr_pxr)(imode,il,ir) = (*Jr)(il,ir); 
+                (*Jt_pxr)(imode,il,ir) = (*Jt)(il,ir); 
+                (*rho_pxr)(imode,il,ir) = (*rho)(il,ir); 
+                (*rhoold_pxr)(imode,il,ir) = (*rhoold)(il,ir); 
             }
         }
     }
@@ -252,17 +252,17 @@ void PXR_SolverAM_GPSTD::_3D_to_2Dvectors( ElectroMagn *fields )
 
         for (int il=0;il<El->dims_[0];il++) {
             for (int ir=0;ir<El->dims_[1];ir++) {
-                (*El)(il,ir) = (*El_pxr)(il,ir,imode); 
-                (*Er)(il,ir) = (*Er_pxr)(il,ir,imode); 
-                (*Et)(il,ir) = (*Et_pxr)(il,ir,imode); 
-                (*Bl)(il,ir) = (*Bl_pxr)(il,ir,imode); 
-                (*Br)(il,ir) = (*Br_pxr)(il,ir,imode); 
-                (*Bt)(il,ir) = (*Bt_pxr)(il,ir,imode); 
-                (*Jl)(il,ir) = (*Jl_pxr)(il,ir,imode); 
-                (*Jr)(il,ir) = (*Jr_pxr)(il,ir,imode); 
-                (*Jt)(il,ir) = (*Jt_pxr)(il,ir,imode); 
-                (*rho)(il,ir) = (*rho_pxr)(il,ir,imode); 
-                (*rhoold)(il,ir) = (*rhoold_pxr)(il,ir,imode); 
+                (*El)(il,ir) = (*El_pxr)(imode,il,ir); 
+                (*Er)(il,ir) = (*Er_pxr)(imode,il,ir); 
+                (*Et)(il,ir) = (*Et_pxr)(imode,il,ir); 
+                (*Bl)(il,ir) = (*Bl_pxr)(imode,il,ir); 
+                (*Br)(il,ir) = (*Br_pxr)(imode,il,ir); 
+                (*Bt)(il,ir) = (*Bt_pxr)(imode,il,ir); 
+                (*Jl)(il,ir) = (*Jl_pxr)(imode,il,ir); 
+                (*Jr)(il,ir) = (*Jr_pxr)(imode,il,ir); 
+                (*Jt)(il,ir) = (*Jt_pxr)(imode,il,ir); 
+                (*rho)(il,ir) = (*rho_pxr)(imode,il,ir); 
+                (*rhoold)(il,ir) = (*rhoold_pxr)(imode,il,ir); 
             }
         }
     }
