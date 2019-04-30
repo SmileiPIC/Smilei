@@ -3,6 +3,7 @@
 
 #include "SolverAM.h"
 class ElectroMagn;
+class cField3D;
 
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class Pusher
@@ -17,8 +18,21 @@ public:
     void coupling( Params &params, ElectroMagn *EMfields ) override;
     //! Overloading of () operator
     virtual void operator()( ElectroMagn *fields ) override;
-    
+    void _2Dvectors_to_3D( ElectroMagn *fields );
+    void _3D_to_2Dvectors( ElectroMagn *fields );
+
 protected:
+    cField3D* El_pxr;
+    cField3D* Er_pxr;
+    cField3D* Et_pxr;
+    cField3D* Bl_pxr;
+    cField3D* Br_pxr;
+    cField3D* Bt_pxr;
+    cField3D* Jl_pxr;
+    cField3D* Jr_pxr;
+    cField3D* Jt_pxr;
+    cField3D* rho_pxr;
+    cField3D* rhoold_pxr;
 
 };//END class
 
