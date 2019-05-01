@@ -45,17 +45,6 @@ class Probe(Diagnostic):
 				for i in range(npoints):
 					verifications["p"+str(i)] = self._h5probe[-1]["p"+str(i)][()]
 
-		# Get available times
-		self._dataForTime = {}
-		for file in self._h5probe:
-			for key, val in file.items():
-				try   : self._dataForTime[int(key)] = val
-				except: break
-		self._alltimesteps = self._np.double(sorted(self._dataForTime.keys()))
-		if self._alltimesteps.size == 0:
-			self._error += ["No timesteps found"]
-			return
-
 		# Extract available fields
 		fields = self.getFields()
 		if len(fields) == 0:
@@ -66,6 +55,17 @@ class Probe(Diagnostic):
 			self._error += ["Printing available fields for probe #"+str(probeNumber)+":"]
 			self._error += ["----------------------------------------"]
 			self._error += [str(", ".join(fields))]
+			return
+
+		# Get available times
+		self._dataForTime = {}
+		for file in self._h5probe:
+			for key, val in file.items():
+				try   : self._dataForTime[int(key)] = val
+				except: break
+		self._alltimesteps = self._np.double(sorted(self._dataForTime.keys()))
+		if self._alltimesteps.size == 0:
+			self._error += ["No timesteps found"]
 			return
 
 		# 1 - verifications, initialization
