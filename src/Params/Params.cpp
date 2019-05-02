@@ -860,9 +860,14 @@ void Params::compute()
     for( unsigned int i=nDim_field; i<3; i++ ) {
         cell_length[i]=0.0;
     }
-    
+   
+    //Define number of cells per patch and number of ghost cells 
     for( unsigned int i=0; i<nDim_field; i++ ) {
         oversize[i]  = max( interpolation_order, ( unsigned int )( norder[i]/2+1 ) ) + ( exchange_particles_each-1 );;
+        //Force zero ghost cells in R when spectral
+        if( is_spectral && geometry == "AMcylindrical" && i==1 ) {
+            oversize[i]=0 ;
+        }
         n_space_global[i] = n_space[i];
         n_space[i] /= number_of_patches[i];
         if( n_space_global[i]%number_of_patches[i] !=0 ) {
