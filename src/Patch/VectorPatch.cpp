@@ -2561,14 +2561,27 @@ void VectorPatch::check_memory_consumption( SmileiMPI *smpi )
 
 void VectorPatch::save_old_rho( Params &params )
 {
+    //Spectral methods need the old density. This function is not called in FDTD.
     int n=0;
-    #pragma omp for schedule(static)
-    for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-        n = ( *this )( ipatch )->EMfields->rhoold_->dims_[0]*( *this )( ipatch )->EMfields->rhoold_->dims_[1]; //*(*this)(ipatch)->EMfields->rhoold_->dims_[2];
-        if( params.nDim_field ==3 ) {
-            n*=( *this )( ipatch )->EMfields->rhoold_->dims_[2];
+    if( params.geometry!="AMcylindrical" ) {
+        #pragma omp for schedule(static)
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            n = ( *this )( ipatch )->EMfields->rhoold_->dims_[0]*( *this )( ipatch )->EMfields->rhoold_->dims_[1]; //*(*this)(ipatch)->EMfields->rhoold_->dims_[2];
+            if( params.nDim_field ==3 ) {
+                n*=( *this )( ipatch )->EMfields->rhoold_->dims_[2];
+            }
+            std::memcpy( ( *this )( ipatch )->EMfields->rhoold_->data_, ( *this )( ipatch )->EMfields->rho_->data_, sizeof( double )*n );
         }
-        std::memcpy( ( *this )( ipatch )->EMfields->rhoold_->data_, ( *this )( ipatch )->EMfields->rho_->data_, sizeof( double )*n );
+    } else {
+        #pragma omp for schedule(static)
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            ElectroMagnAM* amfield = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields);
+            n = amfield->rho_old_AM_[0]->dims_[0] * amfield->rho_old_AM_[0]->dims_[1]; 
+            for( unsigned int imode=0 ; imode < params.nmodes ; imode++ ) {
+                std::memcpy( amfield->rho_old_AM_[imode]->data_, amfield->rho_AM_[imode]->data_, 2*sizeof( double )*n );
+            }
+        }
+
     }
 }
 
