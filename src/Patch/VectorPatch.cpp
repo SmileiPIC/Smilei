@@ -661,11 +661,11 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
 
     #pragma omp for schedule(static)
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-        //MESSAGE("SOLVE MAXWELL AMPERE");
+        MESSAGE("SOLVE MAXWELL AMPERE");
         // Computes Bx_, By_, Bz_ at time n+1 on interior points.
         //for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
         ( *( *this )( ipatch )->EMfields->MaxwellFaradaySolver_ )( ( *this )( ipatch )->EMfields );
-        //MESSAGE("SOLVE MAXWELL FARADAY");
+        MESSAGE("SOLVE MAXWELL FARADAY");
     }
     //Synchronize B fields between patches.
     timers.maxwell.update( params.printNow( itime ) );
@@ -678,10 +678,11 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
         }
         SyncVectorPatch::exchangeB( params, ( *this ), smpi );
     } else {
-        for( unsigned int imode = 0 ; imode < static_cast<ElectroMagnAM *>( patches_[0]->EMfields )->El_.size() ; imode++ ) {
-            SyncVectorPatch::exchangeB( params, ( *this ), imode, smpi );
-            SyncVectorPatch::finalizeexchangeB( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
-        }
+        // Something needs to be added in AM spectral ???
+        //for( unsigned int imode = 0 ; imode < static_cast<ElectroMagnAM *>( patches_[0]->EMfields )->El_.size() ; imode++ ) {
+        //    SyncVectorPatch::exchangeB( params, ( *this ), imode, smpi );
+        //    SyncVectorPatch::finalizeexchangeB( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
+        //}
     }
     timers.syncField.update( params.printNow( itime ) );
     
@@ -690,7 +691,7 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
     if ( (params.uncoupled_grids) && ( itime!=0 ) && ( time_dual > params.time_fields_frozen ) ) { // uncoupled_grids = true -> is_spectral = true 
         timers.syncField.restart();
         if( params.is_spectral ) {
-            SyncVectorPatch::finalizeexchangeE( params, ( *this ) );
+           // SyncVectorPatch::finalizeexchangeE( params, ( *this ) );
         }
 
         if( params.geometry != "AMcylindrical" )
@@ -707,11 +708,13 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
                 ( *this )( ipatch )->EMfields->centerMagneticFields();
             } else {
                 ( *this )( ipatch )->EMfields->saveMagneticFields( params.is_spectral );
+                std::cout<< "save magnetic error" << endl ;
             }
         }
-        if( params.is_spectral ) {
-            save_old_rho( params );
-        }
+        //if( params.is_spectral ) {
+        //    save_old_rho( params );
+        //    std::cout<< "save rho error" << endl;
+        //}
     }
     //#endif
     
