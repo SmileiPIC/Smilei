@@ -515,25 +515,30 @@ void ElectroMagnAM::centeringE( std::vector<double> E_Add )
 void ElectroMagnAM::saveMagneticFields( bool is_spectral )
 {
     if( is_spectral ) {
-        return;
-    }
-    for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
-        // Static cast of the fields
-        cField2D *Bl   = Bl_[imode];
-        cField2D *Br   = Br_[imode];
-        cField2D *Bt   = Bt_[imode];
-        cField2D *Bl_old = Bl_m[imode];
-        cField2D *Br_old = Br_m[imode];
-        cField2D *Bt_old = Bt_m[imode];
-        
-        // Magnetic field Bl^(p,d)
-        memcpy( &( ( *Bl_old )( 0, 0 ) ), &( ( *Bl )( 0, 0 ) ), nl_p*nr_d*sizeof( complex<double> ) );
-        
-        // Magnetic field Br^(d,p)
-        memcpy( &( ( *Br_old )( 0, 0 ) ), &( ( *Br )( 0, 0 ) ), nl_d*nr_p*sizeof( complex<double> ) );
-        
-        // Magnetic field Bt^(d,d)
-        memcpy( &( ( *Bt_old )( 0, 0 ) ), &( ( *Bt )( 0, 0 ) ), nl_d*nr_d*sizeof( complex<double> ) );
+        for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
+            Bl_m[imode] = Bl_[imode];
+            Br_m[imode] = Br_[imode];
+            Bt_m[imode] = Bt_[imode];
+        }
+    } else {
+        for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
+            // Static cast of the fields
+            cField2D *Bl   = Bl_[imode];
+            cField2D *Br   = Br_[imode];
+            cField2D *Bt   = Bt_[imode];
+            cField2D *Bl_old = Bl_m[imode];
+            cField2D *Br_old = Br_m[imode];
+            cField2D *Bt_old = Bt_m[imode];
+            
+            // Magnetic field Bl^(p,d)
+            memcpy( &( ( *Bl_old )( 0, 0 ) ), &( ( *Bl )( 0, 0 ) ), nl_p*nr_d*sizeof( complex<double> ) );
+            
+            // Magnetic field Br^(d,p)
+            memcpy( &( ( *Br_old )( 0, 0 ) ), &( ( *Br )( 0, 0 ) ), nl_d*nr_p*sizeof( complex<double> ) );
+            
+            // Magnetic field Bt^(d,d)
+            memcpy( &( ( *Bt_old )( 0, 0 ) ), &( ( *Bt )( 0, 0 ) ), nl_d*nr_d*sizeof( complex<double> ) );
+        }
     }
     
 }//END saveMagneticFields
