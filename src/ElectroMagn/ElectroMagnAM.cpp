@@ -515,7 +515,7 @@ void ElectroMagnAM::centeringE( std::vector<double> E_Add )
 void ElectroMagnAM::saveMagneticFields( bool is_spectral )
 {
     if( is_spectral ) {
-        ERROR( "Not implemented" );
+        return;
     }
     for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
         // Static cast of the fields
