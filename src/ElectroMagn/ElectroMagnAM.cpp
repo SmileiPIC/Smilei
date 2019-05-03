@@ -747,11 +747,11 @@ void ElectroMagnAM::applyExternalField( Field *my_field,  Profile *profile, Patc
     cField2D *field2D=static_cast<cField2D *>( my_field );
     
     vector<double> pos( 2 );
-    pos[0]      = dl*( ( double )( patch->getCellStartingGlobalIndex( 0 ) )+( field2D->isDual( 0 )?-0.5:0. ) );
-    double pos1 = dr*( ( double )( patch->getCellStartingGlobalIndex( 1 ) )+( field2D->isDual( 1 )?-0.5:0. ) );
+    pos[0]      = patch->getDomainLocalMin(0) + dl*( (field2D->isDual( 0 )?-0.5:0.) - oversize[0]);
+    double pos1 = patch->getDomainLocalMin(1) + dr*( (field2D->isDual( 1 )?-0.5:0.) - oversize[1]);
     int N0 = ( int )field2D->dims()[0];
     int N1 = ( int )field2D->dims()[1];
-    
+ 
     vector<Field *> xr( 2 );
     vector<unsigned int> n_space_to_create( 2 );
     n_space_to_create[0] = N0;

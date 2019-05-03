@@ -365,7 +365,15 @@ void Patch::set( Params &params, DomainDecomposition *domain_decomposition, Vect
                         max_local[0] = (params.offset_map[0][xDom]+params.n_space_domain[0]) * params.cell_length[0];
                         min_local[1] =  params.offset_map[1][yDom]                           * params.cell_length[1];
                         max_local[1] = (params.offset_map[1][yDom]+params.n_space_domain[1]) * params.cell_length[1];
-
+                        
+                        if ( (params.is_spectral) && (params.geometry== "AMcylindrical") ) {
+                            for ( int iDim=0 ; iDim<2 ; iDim++ ) {
+                                min_local[iDim] += params.cell_length[iDim]/2.;
+                                max_local[iDim] += params.cell_length[iDim]/2.;
+                            }
+                        }
+                        //Shouldn't center be recalculated here too ?
+ 
                         cell_starting_global_index[0] = params.offset_map[0][xDom];
                         cell_starting_global_index[1] = params.offset_map[1][yDom];
 
