@@ -648,24 +648,10 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
         ( *( *this )( ipatch )->EMfields->MaxwellAmpereSolver_ )( ( *this )( ipatch )->EMfields );
     }
 
-
-//    if( params.geometry != "AMcylindrical" ) {
-//        if( params.uncoupled_grids ) {
-//            for( unsigned int imode = 0 ; imode < static_cast<ElectroMagnAM *>( patches_[0]->EMfields )->El_.size() ; imode++ ) {
-//                SyncVectorPatch::exchangeE( params, ( *this ), imode, smpi );
-//                SyncVectorPatch::finalizeexchangeE( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
-//            }
-//        }
-//    }
-
-
     #pragma omp for schedule(static)
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-        MESSAGE("SOLVE MAXWELL AMPERE");
         // Computes Bx_, By_, Bz_ at time n+1 on interior points.
-        //for (unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++) {
         ( *( *this )( ipatch )->EMfields->MaxwellFaradaySolver_ )( ( *this )( ipatch )->EMfields );
-        MESSAGE("SOLVE MAXWELL FARADAY");
     }
     //Synchronize B fields between patches.
     timers.maxwell.update( params.printNow( itime ) );
@@ -678,7 +664,6 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
         }
         SyncVectorPatch::exchangeB( params, ( *this ), smpi );
     } else {
-        // Something needs to be added in AM spectral ???
         for( unsigned int imode = 0 ; imode < static_cast<ElectroMagnAM *>( patches_[0]->EMfields )->El_.size() ; imode++ ) {
         if( params.is_spectral ) {
             SyncVectorPatch::exchangeE( params, ( *this ), imode, smpi );
