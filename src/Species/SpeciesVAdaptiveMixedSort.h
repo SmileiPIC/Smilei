@@ -1,5 +1,5 @@
-#ifndef SPECIESADAPTIVEV2_H
-#define SPECIESADAPTIVEV2_H
+#ifndef SPECIESADAPTIVEMIXED_H
+#define SPECIESADAPTIVEMIXED_H
 
 #include <vector>
 #include <string>
@@ -26,19 +26,13 @@ public:
     //! Species destructor
     virtual ~SpeciesVAdaptiveMixedSort();
     
-    //! Method calculating the Particle dynamics (interpolation, pusher, projection)
-    //! without vectorized operators but with the cell sorting algorithm
-    void scalar_dynamics( double time, unsigned int ispec,
-                          ElectroMagn *EMfields,
-                          Params &params, bool diag_flag,
-                          PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
-                          RadiationTables &RadiationTables,
-                          MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
-                          std::vector<Diagnostic *> &localDiags ) override;
-                          
+    void resizeCluster( Params &params ) override;
+    
     //! This function configures the type of species according to the default mode
     //! regardless the number of particles per cell
     void initial_configuration( Params &params, Patch *patch ) override;
+    
+    void sort_part( Params &params ) override;
     
     //! This function configures the species according to the vectorization mode
     void configuration( Params &params, Patch *patch ) override;
@@ -49,22 +43,15 @@ public:
     //! This function reconfigures the species operators
     void reconfigure_operators( Params &param, Patch   *patch );
     
-    //void count_sort_part(Params& param);
-    //void compute_part_cell_keys(Params &params);
+    //! This function reconfigures the species to be imported
+    void reconfigure_particle_importation();
     
-    void scalar_ponderomotive_update_susceptibility_and_momentum( double time_dual, unsigned int ispec,
-            ElectroMagn *EMfields,
-            Params &params, bool diag_flag,
-            Patch *patch, SmileiMPI *smpi,
-            std::vector<Diagnostic *> &localDiags ) override;
-            
-    void scalar_ponderomotive_update_position_and_currents( double time_dual, unsigned int ispec,
-            ElectroMagn *EMfields,
-            Params &params, bool diag_flag, PartWalls *partWalls,
-            Patch *patch, SmileiMPI *smpi,
-            std::vector<Diagnostic *> &localDiags ) override;
-            
-            
+    //! Compute cell_keys for all particles of the current species
+    void compute_part_cell_keys( Params &params ) override;
+    
+    //! Method to import particles in this species while conserving the sorting among bins
+    void importParticles( Params &, Patch *, Particles &, std::vector<Diagnostic *> & )override;
+    
 private:
 
     // Metrics for the adaptive vectorization

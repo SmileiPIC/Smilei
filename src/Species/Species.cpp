@@ -510,7 +510,11 @@ void Species::initMomentum( unsigned int nPart, unsigned int iPart, double *temp
         vz  = -vel[2];
         v2  = vx*vx + vy*vy + vz*vz;
         if( v2>0. ) {
-
+            
+            if( v2>=1. ) {
+                ERROR("The mean velocity should not be higher than the speed of light");
+            }
+            
             g   = 1.0/sqrt( 1.0-v2 );
             gm1 = g - 1.0;
 
@@ -724,11 +728,11 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                         first_index[ibin],
                         last_index[ibin],
                         ithread );
-
+                
                 // Suppression of the decayed photons into pairs
                 Multiphoton_Breit_Wheeler_process->decayed_photon_cleaning(
-                    *particles, ibin, first_index.size(), &first_index[0], &last_index[0] );
-
+                    *particles, smpi, ibin, first_index.size(), &first_index[0], &last_index[0], ithread );
+                    
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[6] += MPI_Wtime() - timer;
 #endif

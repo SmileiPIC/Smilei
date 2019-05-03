@@ -34,27 +34,16 @@ class Probe(Diagnostic):
 			# Verify that this file is compatible with the previous ones
 			try:
 				for key, val in verifications.items():
-					if self._h5probe[-1][key].value != val:
+					if self._h5probe[-1][key][()] != val:
 						self._error += ["Probe #"+str(probeNumber)+" in path '"+path+"' is incompatible with the other ones"]
 						return
 			except:
-				verifications = {"number":self._h5probe[-1]["number"].value}
+				verifications = {"number":self._h5probe[-1]["number"][()]}
 				npoints = self._h5probe[-1]["number"].size
-				if self._h5probe[-1]["number"].value.prod() > 1:
+				if self._h5probe[-1]["number"][()].prod() > 1:
 					npoints += 1
 				for i in range(npoints):
-					verifications["p"+str(i)] = self._h5probe[-1]["p"+str(i)].value
-
-		# Get available times
-		self._dataForTime = {}
-		for file in self._h5probe:
-			for key, val in file.items():
-				try   : self._dataForTime[int(key)] = val
-				except: break
-		self._alltimesteps = self._np.double(sorted(self._dataForTime.keys()))
-		if self._alltimesteps.size == 0:
-			self._error += ["No timesteps found"]
-			return
+					verifications["p"+str(i)] = self._h5probe[-1]["p"+str(i)][()]
 
 		# Extract available fields
 		fields = self.getFields()
@@ -66,6 +55,17 @@ class Probe(Diagnostic):
 			self._error += ["Printing available fields for probe #"+str(probeNumber)+":"]
 			self._error += ["----------------------------------------"]
 			self._error += [str(", ".join(fields))]
+			return
+
+		# Get available times
+		self._dataForTime = {}
+		for file in self._h5probe:
+			for key, val in file.items():
+				try   : self._dataForTime[int(key)] = val
+				except: break
+		self._alltimesteps = self._np.double(sorted(self._dataForTime.keys()))
+		if self._alltimesteps.size == 0:
+			self._error += ["No timesteps found"]
 			return
 
 		# 1 - verifications, initialization
@@ -227,7 +227,7 @@ class Probe(Diagnostic):
 			self._units = [axisunits, axisunits]
 
 		# Prepare the reordering of the points for patches disorder
-		positions = self._h5probe[0]["positions"].value # actual probe points positions
+		positions = self._h5probe[0]["positions"][()] # actual probe points positions
 		self._ordering = None
 		tmpShape = self._initialShape
 		if self._naxes>0:

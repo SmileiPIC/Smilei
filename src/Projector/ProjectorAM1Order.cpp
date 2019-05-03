@@ -252,7 +252,7 @@ void ProjectorAM1Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
     }
 
     //Boundary conditions for currents on axis
-    if (invR[0] < 0. ) {
+    if (emAM->isYmin ) {
         double sign = -1. ;
         unsigned int n_species = emAM->Jl_.size() / Nmode;
         for ( int imode = 0; imode < Nmode; imode++){
@@ -264,24 +264,23 @@ void ProjectorAM1Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
             sign *= -1.;
 
             // Fold primal quantities along r
-            for( unsigned int i=0 ; i<npriml; i++ ) {
-                int iloc = i*nprimr;
-                for( unsigned int j=1 ; j<= oversizeR; j++ ) {
-                    Jt [iloc+oversizeR+j] +=  sign * Jt [iloc+oversizeR-j];
-                    Jt [iloc+oversizeR-j] = 0.; 
-                    Jl [iloc+oversizeR+j] +=  sign * Jl [iloc+oversizeR-j];
-                    Jl [iloc+oversizeR-j] = 0.; 
-                    rho[iloc+oversizeR+j] +=  sign * rho[iloc+oversizeR-j];
-                    rho[iloc+oversizeR-j] = 0.; 
-                }
-            }//i
+            //for( unsigned int i=0 ; i<npriml; i++ ) {
+            //    int iloc = i*nprimr;
+            //    for( unsigned int j=1 ; j<= oversizeR; j++ ) {
+            //        Jt [iloc+oversizeR+j] +=  sign * Jt [iloc+oversizeR-j];
+            //        Jt [iloc+oversizeR-j] = 0.; 
+            //        Jl [iloc+oversizeR+j] +=  sign * Jl [iloc+oversizeR-j];
+            //        Jl [iloc+oversizeR-j] = 0.; 
+            //        rho[iloc+oversizeR+j] +=  sign * rho[iloc+oversizeR-j];
+            //        rho[iloc+oversizeR-j] = 0.; 
+            //    }
+            //}//i
             // Fold dual quantities along r
             int max_fold = 2*oversizeR+1;
             for( unsigned int i=0 ; i<npriml; i++ ) {
                 int iloc = i*(nprimr+1);
                 for( unsigned int j=0 ; j<= oversizeR; j++ ) {
-                    Jr [iloc+max_fold-j] += sign * Jr [iloc+j];
-                    Jr [iloc+j] = 0.; 
+                    Jr [iloc+3] += sign * Jr [iloc+2];
                 }
             }//i
 
