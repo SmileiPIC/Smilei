@@ -679,10 +679,14 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
         SyncVectorPatch::exchangeB( params, ( *this ), smpi );
     } else {
         // Something needs to be added in AM spectral ???
-        //for( unsigned int imode = 0 ; imode < static_cast<ElectroMagnAM *>( patches_[0]->EMfields )->El_.size() ; imode++ ) {
-        //    SyncVectorPatch::exchangeB( params, ( *this ), imode, smpi );
-        //    SyncVectorPatch::finalizeexchangeB( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
-        //}
+        for( unsigned int imode = 0 ; imode < static_cast<ElectroMagnAM *>( patches_[0]->EMfields )->El_.size() ; imode++ ) {
+        if( params.is_spectral ) {
+            SyncVectorPatch::exchangeE( params, ( *this ), imode, smpi );
+            SyncVectorPatch::finalizeexchangeE( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
+        }
+            SyncVectorPatch::exchangeB( params, ( *this ), imode, smpi );
+            SyncVectorPatch::finalizeexchangeB( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
+        }
     }
     timers.syncField.update( params.printNow( itime ) );
     
@@ -690,8 +694,8 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
     //#ifdef _PICSAR
     if ( (params.uncoupled_grids) && ( itime!=0 ) && ( time_dual > params.time_fields_frozen ) ) { // uncoupled_grids = true -> is_spectral = true 
         timers.syncField.restart();
-        if( params.is_spectral ) {
-           // SyncVectorPatch::finalizeexchangeE( params, ( *this ) );
+        if( params.is_spectral && params.geometry != "AMcylindrical" ) {
+            SyncVectorPatch::finalizeexchangeE( params, ( *this ) );
         }
 
         if( params.geometry != "AMcylindrical" )
@@ -708,7 +712,6 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
                 ( *this )( ipatch )->EMfields->centerMagneticFields();
             } else {
                 ( *this )( ipatch )->EMfields->saveMagneticFields( params.is_spectral );
-                std::cout<< "save magnetic error" << endl ;
             }
         }
         if( params.is_spectral ) {
