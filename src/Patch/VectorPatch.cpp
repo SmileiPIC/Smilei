@@ -711,10 +711,9 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
                 std::cout<< "save magnetic error" << endl ;
             }
         }
-        //if( params.is_spectral ) {
-        //    save_old_rho( params );
-        //    std::cout<< "save rho error" << endl;
-        //}
+        if( params.is_spectral ) {
+            save_old_rho( params );
+        }
     }
     //#endif
     
@@ -2576,12 +2575,15 @@ void VectorPatch::save_old_rho( Params &params )
             std::memcpy( ( *this )( ipatch )->EMfields->rhoold_->data_, ( *this )( ipatch )->EMfields->rho_->data_, sizeof( double )*n );
         }
     } else {
+        cField2D *rho, *rhoold;
         #pragma omp for schedule(static)
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             ElectroMagnAM* amfield = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields);
             n = amfield->rho_old_AM_[0]->dims_[0] * amfield->rho_old_AM_[0]->dims_[1]; 
             for( unsigned int imode=0 ; imode < params.nmodes ; imode++ ) {
-                std::memcpy( amfield->rho_old_AM_[imode]->data_, amfield->rho_AM_[imode]->data_, 2*sizeof( double )*n );
+                rho = amfield->rho_AM_[imode];
+                rhoold = amfield->rho_old_AM_[imode];
+                std::memcpy( &((*rhoold)(0,0)), &((*rho)(0,0)) , sizeof( complex<double> )*n );
             }
         }
 
