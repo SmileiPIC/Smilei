@@ -280,6 +280,7 @@ class TrackParticles(Diagnostic):
 		
 		# Then figure out axis units
 		self._type = self.axes
+		self._factors = []
 		for axis in self.axes:
 			axisunits = ""
 			if axis == "Id":
@@ -305,9 +306,14 @@ class TrackParticles(Diagnostic):
 			elif axis[0] == "B":
 				axisunits = "B_r"
 				self._centers.append( [-1., 1.] )
-			self._log.append( False )
-			self._label.append( axis )
-			self._units.append( axisunits )
+			self._log += [False]
+			self._label += [axis]
+			self._units += [axisunits]
+			if axis == "Id":
+				self._factors += [1]
+			else:
+				factor, _ = self.units._convert(axisunits, None)
+				self._factors += [factor]
 		self._title = "Track particles '"+species+"'"
 		self._shape = [0]*len(self.axes)
 
@@ -645,19 +651,17 @@ class TrackParticles(Diagnostic):
 		data.update({ "times":ts })
 
 		if self._sort:
-			for axis in self.axes:
+			for axis, factor in zip(self.axes, self._factors):
 				if timestep is None:
 					data[axis] = self._rawData[axis]
 				else:
 					data[axis] = self._rawData[axis][indexOfRequestedTime]
-				if axis not in ["Id", "q"]: data[axis] *= self._vfactor
+				data[axis] *= factor
 		else:
 			for t in ts:
 				data[t] = {}
-				for axis in self.axes:
-					data[t][axis] = self._rawData[t][axis]
-					if axis not in ["Id", "q"]: data[t][axis] *= self._vfactor
-
+				for axis, factor in zip(self.axes, self._factors):
+					data[t][axis] = self._rawData[t][axis] * factor
 		return data
 
 	def get(self):

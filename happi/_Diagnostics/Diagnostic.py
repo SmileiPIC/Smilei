@@ -62,6 +62,7 @@ class Diagnostic(object):
 		if type(self.units) is not Units:
 			self._error += ["Could not understand the 'units' argument"]
 			return
+		self.units.prepare(self.simulation._reference_angular_frequency_SI)
 		
 		# DEPRECATION ERRORS
 		if "slice" in kwargs:
@@ -78,14 +79,14 @@ class Diagnostic(object):
 			self._error += ["The following keyword-arguments are unknown: "+", ".join(remaining_kwargs.keys())]
 			return
 		
-		# Prepare units
+		# Prepare units for axes
 		self.dim = len(self._shape)
 		if self.valid:
 			xunits = None
 			yunits = None
 			if self.dim > 0: xunits = self._units[0]
 			if self.dim > 1: yunits = self._units[1]
-			self.units.prepare(self.simulation._reference_angular_frequency_SI, xunits, yunits, self._vunits)
+			self.units.convertAxes(xunits, yunits, self._vunits)
 		
 		# Prepare data_log output
 		if self._data_log:
