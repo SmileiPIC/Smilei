@@ -235,19 +235,55 @@ The Python script in available `here <_static/vranic_geometry.py>`_.
   3d view of the different vectors involved in the merging method.
 
 The new macro-particle positions are assigned at the position of one of
-the merged macro-particles.
+the merged macro-particles. We have tested to assign them randomly
+or to the first macro-particles of the merged list and we did
+not observe any difference.
+
+This algorithm does not work when the total momentum :math:`\mathbf{p}_t` of the macro-particles to be merged
+is in the direction of :math:`\mathbf{d}`.
+In this case :math:`|| \mathbf{e_3} || = 0` and it is not
+possible to determine the system :math:`(\mathbf{e}_1, \mathbf{e}_2, \mathbf{e}_3)`.
+In this specific case, the merging is not processed.
 
 Merging algorithm for macro-photons
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Macro-photons can be merged in a single macro-particles while ensuring
-concervation of the weight, the momentum and the energy.
-This is possible because the momentum norm is equal to the energy :math:`\varepsilon = p`.
-The new macro-photon is emitted in the direction of :math:`\mathbf{p_t}` with weight :math:`w_t`
-and energy :math:`p = \varepsilon = \varepsilon_t / w_t`.
+Macro-photons can be merged with the same algorithm.
+The only difference is that the momentum norm is equal to the energy :math:`\varepsilon = p`.
+
+When the total momentum :math:`\mathbf{p}_t` is in the direction of :math:`\mathbf{d}`, macro-photons can be merged into a single one contrary to the mass macro-particles since :math:`\varepsilon_t = || \mathbf{p}_t ||`.
+This specific situation is implemented in the code.
+
 
 Implementation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The Vranic merging method is implemented with the Cartesian
+and the Spherical momentum discretization.
+
+For both methods, the implemented algorithm is very similar.
+
+For each cells (in the real space):
+
+1. Initialization of the discretization
+2. Computation of the cell direction vectors (:math:`\mathbf{d}`): this step depends on the discretization and can be efficiently vectorized
+3. Comutation of the momentum cell indexes for each macro-particles
+4. Computation of the number of particles per momentum cells
+
+Solid angle correction
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+With the classical spherical discretization, the solid angle that represents the surface crossed by the macro-particles having the same momentum cell direction depends on this direction as shown in :numref:`fig_spherical_discretization`. In our discretization, the solid angle is larger near :math:`\phi = 0` and smaller near :math:`\phi = \pi / 2`. Therefore, 
+
+.. _fig_spherical_discretization:
+
+.. figure:: _static/spherical_discretization.png
+  :width: 80%
+
+  Classical spherical discretization (a) and the spherical discretization with solid angle correction (b).
+
+Accumulation effect
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 Namelist
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
