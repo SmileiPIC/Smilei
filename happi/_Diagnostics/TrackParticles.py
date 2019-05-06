@@ -78,7 +78,14 @@ class TrackParticles(Diagnostic):
 		
 		# Add moving_x in the list of properties
 		if "x" in self.available_properties:
-			self.available_properties += ["moving_x"]
+			file = disorderedfiles[0]
+			with self._h5py.File(file) as f:
+				try: # python 2
+					D = next(f["data"].itervalues())
+				except: # python 3
+					D = next(iter(f["data"].values()))
+				if "x_moved" in D.attrs:
+					self.available_properties += ["moving_x"]
 		
 		# Get available times in the hdf5 file
 		if self._timesteps.size == 0:
