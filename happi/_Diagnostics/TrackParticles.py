@@ -292,7 +292,7 @@ class TrackParticles(Diagnostic):
 				axisunits = "P_r"
 				self._centers.append( [-1., 1.] )
 			elif axis == "w":
-				axisunits = "N_r * L_r^%i" % self._ndim
+				axisunits = "N_r * L_r^%i" % self._ndim_particles
 				self._centers.append( [0., 1.] )
 			elif axis == "q":
 				axisunits = "Q_r"
@@ -794,8 +794,8 @@ class TrackParticles(Diagnostic):
 			print("Cannot export non-sorted data")
 			return
 
-		if self._ndim != 3:
-			print ("Cannot export tracked particles of a "+str(self._ndim)+"D simulation to VTK")
+		if self._ndim_particles != 3:
+			print ("Cannot export tracked particles of a "+str(self._ndim_particles)+"D simulation to VTK")
 			return
 
 		# The specified rendering option is checked

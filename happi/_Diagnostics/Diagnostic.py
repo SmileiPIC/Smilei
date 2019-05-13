@@ -44,12 +44,13 @@ class Diagnostic(object):
 			return
 		
 		# Copy some parameters from the simulation
-		self._results_path = self.simulation._results_path
-		self.namelist      = self.simulation.namelist
-		self._ndim         = self.simulation._ndim
-		self._cell_length  = self.simulation._cell_length
-		self._ncels        = self.simulation._ncels
-		self.timestep      = self.simulation._timestep
+		self._results_path   = self.simulation._results_path
+		self.namelist        = self.simulation.namelist
+		self._ndim_fields    = self.simulation._ndim_fields
+		self._ndim_particles = self.simulation._ndim_particles
+		self._cell_length    = self.simulation._cell_length
+		self._ncels          = self.simulation._ncels
+		self.timestep        = self.simulation._timestep
 		
 		# Make the Options object
 		self.options = Options()
