@@ -701,6 +701,8 @@ class Diagnostic(object):
 	# Convert data to VTK format
 	def toVTK(self, numberOfPieces=1):
 		if not self._validate(): return
+		# prepare vfactor
+		self._prepare1()
 
 		if self.dim<2 or self.dim>3:
 			print ("Cannot export "+str(self.dim)+"D data to VTK")
