@@ -287,7 +287,7 @@ class TrackParticles(Diagnostic):
 				self._centers.append( [0, 281474976710655] )
 			elif axis in ["x" , "y" , "z", "moving_x"]:
 				axisunits = "L_r"
-				self._centers.append( [0., self.namelist.Main.grid_length[{"x":0,"y":1,"z":2}[axis[-1]]]] )
+				self._centers.append( [0., self.namelist.Main.grid_length[{"x":0,"y":1,"z":-1}[axis[-1]]]] )
 			elif axis in ["px", "py", "pz"]:
 				axisunits = "P_r"
 				self._centers.append( [-1., 1.] )
