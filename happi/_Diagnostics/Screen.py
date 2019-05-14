@@ -236,7 +236,7 @@ class Screen(Diagnostic):
 					self._label  .append(axistype)
 					self._units  .append(axis_units)
 					if axistype == "theta" and self._ndim_particles==3:
-						uniform = Fals
+						uniform = False
 						plot_diff.append(self._np.diff(self._np.cos(edges))[self._selection[iaxis]])
 					else:
 						plot_diff.append(self._np.diff(edges)[self._selection[iaxis]])
