@@ -686,7 +686,8 @@ class VTKfile:
 				elif (attribute.GetDataType() == 10):
 					data_type = "float"
 				size = attribute.GetSize()
-				file_object.write("Scalar {} {} \n".format(attribute.GetName(),data_type))
+				file_object.write("POINT_DATA {} \n".format(pdata.GetNumberOfPoints()))
+				file_object.write("SCALARS {} {} \n".format(attribute.GetName(),data_type))
 				file_object.write("LOOKUP_TABLE default \n")
 				for i in range(0,size,8):
 					remaining = min(size - i,8)
