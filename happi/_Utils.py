@@ -689,7 +689,8 @@ class VTKfile:
 				file_object.write("Scalar {} {} \n".format(attribute.GetName(),data_type))
 				file_object.write("LOOKUP_TABLE default \n")
 				for i in range(0,size,8):
-					for j in range(8):
+					remaining = min(size - i,8)
+					for j in range(remaining):
 						file_object.write("{} ".format(attribute.GetValue(i + j)))
 					file_object.write("\n")
 
