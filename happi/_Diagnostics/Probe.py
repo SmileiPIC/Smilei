@@ -198,7 +198,7 @@ class Probe(Diagnostic):
 			offset = p2[0,:]
 			p2 = self._np.apply_along_axis(lambda x: x-offset, 1, p2) # move points
 			# Trick in a 3D simulation (the probe has to be projected)
-			if self._ndim==3 or self.namelist.Main.geometry=="AMcylindrical":
+			if self._ndim_particles==3:
 				# unit vectors in the two dimensions + perpendicular
 				u1 = p[0] / self._np.linalg.norm(p[0])
 				u2 = p[1] / self._np.linalg.norm(p[1])
@@ -242,7 +242,7 @@ class Probe(Diagnostic):
 				positions = self._np.sqrt(self._np.sum(positions**2,1))
 			# If 2D or 3D probe, must calculate matrix inverse
 			else:
-				if self._naxes==2 and (self.namelist.Main.geometry=="AMcylindrical" or self._ndim==3):
+				if (self._naxes==2 and self._ndim_particles==3):
 					pp = self._np.cross(p[0],p[1])
 					p.append(pp/self._np.linalg.norm(pp))
 					tmpShape = self._np.hstack((tmpShape, 1))

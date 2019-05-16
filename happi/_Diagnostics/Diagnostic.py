@@ -44,12 +44,13 @@ class Diagnostic(object):
 			return
 		
 		# Copy some parameters from the simulation
-		self._results_path = self.simulation._results_path
-		self.namelist      = self.simulation.namelist
-		self._ndim         = self.simulation._ndim
-		self._cell_length  = self.simulation._cell_length
-		self._ncels        = self.simulation._ncels
-		self.timestep      = self.simulation._timestep
+		self._results_path   = self.simulation._results_path
+		self.namelist        = self.simulation.namelist
+		self._ndim_fields    = self.simulation._ndim_fields
+		self._ndim_particles = self.simulation._ndim_particles
+		self._cell_length    = self.simulation._cell_length
+		self._ncels          = self.simulation._ncels
+		self.timestep        = self.simulation._timestep
 		
 		# Make the Options object
 		self.options = Options()
@@ -62,6 +63,7 @@ class Diagnostic(object):
 		if type(self.units) is not Units:
 			self._error += ["Could not understand the 'units' argument"]
 			return
+		self.units.prepare(self.simulation._reference_angular_frequency_SI)
 		
 		# DEPRECATION ERRORS
 		if "slice" in kwargs:
@@ -78,14 +80,14 @@ class Diagnostic(object):
 			self._error += ["The following keyword-arguments are unknown: "+", ".join(remaining_kwargs.keys())]
 			return
 		
-		# Prepare units
+		# Prepare units for axes
 		self.dim = len(self._shape)
 		if self.valid:
 			xunits = None
 			yunits = None
 			if self.dim > 0: xunits = self._units[0]
 			if self.dim > 1: yunits = self._units[1]
-			self.units.prepare(self.simulation._reference_angular_frequency_SI, xunits, yunits, self._vunits)
+			self.units.convertAxes(xunits, yunits, self._vunits)
 		
 		# Prepare data_log output
 		if self._data_log:
@@ -700,6 +702,8 @@ class Diagnostic(object):
 	# Convert data to VTK format
 	def toVTK(self, numberOfPieces=1):
 		if not self._validate(): return
+		# prepare vfactor
+		self._prepare1()
 
 		if self.dim<2 or self.dim>3:
 			print ("Cannot export "+str(self.dim)+"D data to VTK")

@@ -661,8 +661,12 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
             // Current spatial filtering
             ( *this )( ipatch )->EMfields->binomialCurrentFilter();
         }
-        SyncVectorPatch::exchangeJ( params, ( *this ), smpi );
-        SyncVectorPatch::finalizeexchangeJ( params, ( *this ) );
+        SyncVectorPatch::exchange_along_all_directions( listJx_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions( listJx_, *this );
+        SyncVectorPatch::exchange_along_all_directions( listJy_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions( listJy_, *this );
+        SyncVectorPatch::exchange_along_all_directions( listJz_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions( listJz_, *this );
     }
     #pragma omp for schedule(static)
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
