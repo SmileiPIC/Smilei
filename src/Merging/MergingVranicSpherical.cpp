@@ -498,6 +498,7 @@ void MergingVranicSpherical::operator() (
         }
 
         // Computation of the cell index in the sorted array of particles
+        // Noy vectorizable
         for (ic = 1 ; ic < momentum_cells ; ic++) {
             momentum_cell_particle_index[ic]  = momentum_cell_particle_index[ic-1] + particles_per_momentum_cells[ic-1];
             particles_per_momentum_cells[ic-1] = 0;

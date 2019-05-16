@@ -149,7 +149,7 @@ and same energy :math:`\varepsilon_a = \varepsilon_b = \varepsilon_t / w_t`.
 .. _fig_vranic_planar_merging:
 
 .. figure:: _static/vranic_planar_merging.png
-  :width: 80%
+  :width: 100%
 
   View of the plane made by vector :math:`\mathbf{d}` and :math:`\mathbf{p_t}`.
   The corresponding Cartesian frame is given by :math:`(\mathbf{e_1}, \mathbf{e_2}, \mathbf{e_3})`.
@@ -230,7 +230,7 @@ The Python script in available `here <_static/vranic_geometry.py>`_.
 .. _fig_3d_schematic:
 
 .. figure:: _static/vranic_3d_schematics.png
-  :width: 80%
+  :width: 100%
 
   3d view of the different vectors involved in the merging method.
 
@@ -265,22 +265,38 @@ For both methods, the implemented algorithm is very similar.
 
 For each cells (in the real space):
 
-1. Initialization of the discretization
+1. Initialization of the momentum cell discretization
 2. Computation of the cell direction vectors (:math:`\mathbf{d}`): this step depends on the discretization and can be efficiently vectorized
-3. Comutation of the momentum cell indexes for each macro-particles
-4. Computation of the number of particles per momentum cells
+3. Comutation of the momentum cell indexes for each macro-particle
+4. Computation of the number of particles per momentum cells.  Not vectorizable because of random memory accesses.
+5. Computation of the cell index of each momentum cell in the sorted array of particles (only the particle indexes are sorted). Not vectorizable.
+6. Sorting of the macro-particles per momentum cells, the cell index previously computed determine where starts each momentum cell. Not vectorizable.
+
+Then, for each momentum cell:
+
+1. Division of the macro-particles of the momentum cell in small packs according to the user parameters
+2. Merge of the packs using the previously described Vranic algorithm
+3. Creation of the merged macro-particles at the position of the previous ones
+4. Tag of the macro-particles to be removed
+
+Then, once the merging finished for a given patch:
+
+1. Compression of the macro-particle list (remove hole let by removed and tagged particles)
+
 
 Solid angle correction
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-With the classical spherical discretization, the solid angle that represents the surface crossed by the macro-particles having the same momentum cell direction depends on this direction as shown in :numref:`fig_spherical_discretization`. In our discretization, the solid angle is larger near :math:`\phi = 0` and smaller near :math:`\phi = \pi / 2`. Therefore, 
+With the classical spherical discretization, the solid angle that represents the surface crossed by the macro-particles having the same momentum cell direction depends on this direction as shown in :numref:`fig_spherical_discretization` a). In our discretization, the solid angle is larger near :math:`\phi = 0` (equator) and smaller near :math:`\phi = \pi / 2` (poles). Therefore, momentum cells near the equator will potentially have more particles than cells near poles and will undergo more particle merging processes.
 
 .. _fig_spherical_discretization:
 
 .. figure:: _static/spherical_discretization.png
-  :width: 80%
+  :width: 100%
 
   Classical spherical discretization (a) and the spherical discretization with solid angle correction (b).
+
+To composate this phenomenon, the discretization (number of cells) in :math:`\theta`, :math:`N_\theta`, is made to depend on :math:`\phi` so that the solid angle is approximatly constant. For this aim, a reference solid angle :math:`\Omega_{ref}` has to be set . It corresponds to the solid angle at the smallest  :math:`|\phi|` value with the :math:`\theta` discretization given by the user in the namelist. For larger :math:`|\phi|` values, the :math:`\theta` discretization :math:`N_\theta` varies to satisfy :math:`\Omega = \sin{(\phi)}\Delta \theta \Delta \phi = \Omega_{ref}`. An example of such a discretization is shown in :numref:`fig_spherical_discretization` b).
 
 Accumulation effect
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
