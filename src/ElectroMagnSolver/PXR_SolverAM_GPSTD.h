@@ -16,6 +16,7 @@ public:
     virtual ~PXR_SolverAM_GPSTD();
     
     void coupling( Params &params, ElectroMagn *EMfields ) override;
+    void divergence_cleaning( ElectroMagn *fields ) override;
     //! Overloading of () operator
     virtual void operator()( ElectroMagn *fields ) override;
     void _2Dvectors_to_3D( ElectroMagn *fields );
