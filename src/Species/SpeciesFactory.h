@@ -393,6 +393,10 @@ public:
                     }
                 }
 
+                // Read flag to activate the accumulation correction
+                if( PyTools::extract( "merge_accumulation_correction", thisSpecies->merge_accumulation_correction_ , "Species", ispec ) ) {
+                }
+
                 // Momentum cell discretization
                 if( PyTools::extract( "merge_momentum_cell_size",
                                       thisSpecies->merge_momentum_cell_size_ ,
@@ -915,6 +919,7 @@ public:
         newSpecies->merge_min_particles_per_cell_            = species->merge_min_particles_per_cell_;
         newSpecies->merge_min_packet_size_                   = species->merge_min_packet_size_;
         newSpecies->merge_max_packet_size_                   = species->merge_max_packet_size_;
+        newSpecies->merge_accumulation_correction_           = species->merge_accumulation_correction_;
         newSpecies->merge_momentum_cell_size_[0]             = species->merge_momentum_cell_size_[0];
         newSpecies->merge_momentum_cell_size_[1]             = species->merge_momentum_cell_size_[1];
         newSpecies->merge_momentum_cell_size_[2]             = species->merge_momentum_cell_size_[2];

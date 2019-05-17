@@ -36,7 +36,7 @@ MergingVranicSpherical::MergingVranicSpherical(Params& params,
     min_momentum_cell_length_[2] = species->merge_min_momentum_cell_length_[2];
 
     // Accumulation correction
-    accumulation_correction = true;
+    accumulation_correction = species->merge_accumulation_correction_;
 
 }
 
@@ -808,7 +808,7 @@ void MergingVranicSpherical::operator() (
                                     // the first particles of the list
                                     
                                     // Update momentum of the first particle/photon
-                                    ip = sorted_particles[momentum_cell_particle_index[ic] + ipr_min + 1];
+                                    ip = sorted_particles[momentum_cell_particle_index[ic] + ipr_min];
                                     momentum[0][ip] = new_momentum_norm*e1_x;
                                     momentum[1][ip] = new_momentum_norm*e1_y;
                                     momentum[2][ip] = new_momentum_norm*e1_z;

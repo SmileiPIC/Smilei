@@ -258,6 +258,9 @@ public:
     //! Minimum number of particles per cell to be able to merge
     unsigned int merge_min_particles_per_cell_;
 
+    //! Flag to activate the correction against the accumulation effect
+    bool merge_accumulation_correction_;
+
     //! Minimum momentum cell length for the merging
     std::vector<double>  merge_min_momentum_cell_length_;
 

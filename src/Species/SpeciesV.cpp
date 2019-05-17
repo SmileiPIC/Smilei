@@ -709,6 +709,8 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
     if( time_dual>time_frozen ) {
 
         unsigned int scell ;
+        // double weight_before = 0;
+        // double weight_after = 0;
         //std::vector <int> mask(last_index.back(), 1);
 
         // Resize the cell_keys
@@ -716,6 +718,7 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
         #pragma omp simd
         for (unsigned int ip = 0; ip < (unsigned int)(last_index.back()) ; ip++) {
                 particles->cell_keys[ip] = 1;
+                // weight_before += particles->Weight[ip];
         }
 
         // Reinitialize the cell_keys array
@@ -827,6 +830,19 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
         //         //}
         //     }
         // }
+
+        // #pragma omp simd
+        // for (unsigned int ip = 0; ip < (unsigned int)(last_index.back()) ; ip++) {
+        //         weight_after += particles->Weight[ip];
+        // }
+        //
+        // if (fabs(weight_before - weight_after) > 1e-10) {
+        //     std::cerr << std::scientific << std::setprecision(15)
+        //               << " Weight before: " << weight_before
+        //               << " Weight after: " << weight_after
+        //               << std::endl;
+        // }
+
 
     }
 

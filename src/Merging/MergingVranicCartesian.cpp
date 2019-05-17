@@ -37,7 +37,7 @@ MergingVranicCartesian::MergingVranicCartesian(Params& params,
     min_momentum_cell_length_[2] = species->merge_min_momentum_cell_length_[2];
     
     // Accumulation correction
-    accumulation_correction = true;
+    accumulation_correction = species->merge_accumulation_correction_;
 }
 
 // -----------------------------------------------------------------------------
@@ -226,12 +226,14 @@ void MergingVranicCartesian::operator() (
         // Check if min and max boundaries are very close
         for (ip = 0 ; ip < 3 ; ip++) {
             if (fabs((momentum_max[ip] - momentum_min[ip])) < min_momentum_cell_length_[ip]) {
+                // If momentum_min[ip] and momentum_max[ip] have the same sign
                 if (momentum_max[ip] <= 0 || momentum_min[ip] >= 0) {
                     momentum_delta[ip] = min_momentum_cell_length_[ip];
                     momentum_min[ip] = (momentum_max[ip] + momentum_min[ip] - momentum_delta[ip])*0.5;
                     momentum_max[ip] = (momentum_max[ip] + momentum_min[ip] + momentum_delta[ip])*0.5;
                     inv_momentum_delta[ip] = 0;
                     dim[ip] = 1;
+                // Else momentum_min[ip] and momentum_max[ip] have opposite signs,
                 } else {
                     momentum_max[ip] = std::max(fabs((momentum_max[ip] + momentum_min[ip] + min_momentum_cell_length_[ip])*0.5),fabs((momentum_max[ip] + momentum_min[ip] - min_momentum_cell_length_[ip])*0.5));
                     momentum_min[ip] = -momentum_max[ip];
@@ -240,7 +242,7 @@ void MergingVranicCartesian::operator() (
                     dim[ip] = 2;
                 }
             } else {
-                // If the user request a single bin in this direction
+                // If the user request a single cell in this direction
                 if (dim[ip] == 1) {
                     momentum_max[ip] += (momentum_max[ip] - momentum_min[ip])*0.01;
                     momentum_delta[ip] = (momentum_max[ip] - momentum_min[ip]);
@@ -255,8 +257,8 @@ void MergingVranicCartesian::operator() (
                         momentum_delta[ip] = (momentum_max[ip] - momentum_min[ip]) / (dim[ip]);
                     }
                     inv_momentum_delta[ip] = 1.0/momentum_delta[ip];
-                // Else momentum_min[ip] and momentum_max[ip] have different signs,
-                // discretization centerd in 0
+                // Else momentum_min[ip] and momentum_max[ip] have opposite signs,
+                // The 0 value is at the boundary between 2 cells
                 } else {
                     if (accumulation_correction) {
                         dim[ip] = int(dim[ip]*(1+Rand::uniform()));

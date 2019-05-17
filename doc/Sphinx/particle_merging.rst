@@ -24,7 +24,7 @@ The merging method of M. Vranic
 
 .. _ref_understand_vranic_method:
 
-Understand the method
+1. Understand the method
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The method of M. Vranic basically consists on 3 main steps and is schematically described (in 2D) in Fig. :numref:`fig_vranic_particle_merging`:
@@ -51,17 +51,20 @@ impacting significantly the physical resuls.
   This suppose that the parameters are adequatly tuned.
   Otherwise, the macro-particle merging can affect the final simulation results.
 
-Momentum cell decomposition
+1.1 Momentum cell decomposition
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-In a position merge cell, step 2 starts by the computation of the minimum and maximum momentum
-boundaries (refered to as :math:`p_{min}` and :math:`p_{max}` in :numref:`fig_vranic_particle_merging`).
-The boundaries define the momentum space that is then discretized.
-The momentum space is divided into momentum cells following a given discretization
-given by the user for instance.
+Let us defined some notations first. Momentum norm is called :math:`p` and momentum components
+:math:`p_{\alpha}` with :math:`\alpha` equal to x, y or z for each particle.
+The number of cells in the direction :math:`\alpha` for the discretization is :math:`N_{\alpha}`.
+The discretization step in the direction :math:`\alpha` is called :math:`\Delta_{\alpha}`.
 
-In :program:`Smilei`, we use a spherical discretization geometry for the momentum
-discretization instead of a Cartesian one as it is the case in :numref:`fig_vranic_particle_merging`.
+In a position merge cell, step 2 starts by the computation of the minimum :math:`p_{\alpha,min}` and maximum :math:`p_{\alpha,max}` momentum boundaries (also given in :numref:`fig_vranic_particle_merging`).
+The boundaries define the momentum space that is then discretized.
+The momentum space is divided into momentum cells (of size :math:`\Delta_{\alpha}`) following the discretization (:math:`N_{\alpha}`) given by the user.
+
+In :program:`Smilei`, we use both a spherical discretization geometry for the momentum
+discretization and  a Cartesian one as it is the case in :numref:`fig_vranic_particle_merging`.
 The momentum space decomposition is basically the same except that the boundaries now concern
 the directions :math:`p`, :math:`\theta` and :math:`\phi` in 3D as shown in :numref:`fig_vranic_momentum_discretization`.
 
@@ -81,6 +84,15 @@ The spherical components are related to the Cartesian momentum components by:
   \theta = \arctan{ \left( p_y / p_x \right)}\ ;
   \phi = \arcsin{\left( pz / p \right)}
 
+This corresponds to :numref:`fig_spherical_coordinates`.
+
+.. _fig_spherical_coordinates:
+
+.. figure:: _static/spherical_coordinates.png
+  :width: 50%
+
+  Spherical coordinates used for the momentum cell discretization.
+
 Since macro-particle momentum components are defined in the Cartesian geometry
 by default, considering a spherical discretization induces small additional computation.
 However, it makes the merging process more accurate.
@@ -96,7 +108,7 @@ The spherical geometry ensures that the merging accuracy depends
 on the discretization and is similar for all momentum cells.
 The overhead induced by the change of geometry is a small fraction of the entire process.
 
-Merging algorithm for mass macro-particles
+1.2 Merging algorithm for mass macro-particles
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 Step 3 starts after the momentum space discretization.
@@ -245,7 +257,7 @@ In this case :math:`|| \mathbf{e_3} || = 0` and it is not
 possible to determine the system :math:`(\mathbf{e}_1, \mathbf{e}_2, \mathbf{e}_3)`.
 In this specific case, the merging is not processed.
 
-Merging algorithm for macro-photons
+1.3 Merging algorithm for macro-photons
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 Macro-photons can be merged with the same algorithm.
@@ -254,37 +266,77 @@ The only difference is that the momentum norm is equal to the energy :math:`\var
 When the total momentum :math:`\mathbf{p}_t` is in the direction of :math:`\mathbf{d}`, macro-photons can be merged into a single one contrary to the mass macro-particles since :math:`\varepsilon_t = || \mathbf{p}_t ||`.
 This specific situation is implemented in the code.
 
+.. _vranic_implementation:
 
-Implementation
+2. Implementation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The Vranic merging method is implemented with the Cartesian
-and the Spherical momentum discretization.
+and the Spherical momentum discretization in the source directory ``Merging``.
+It is considered as a particle operator and the merging algorithm is managed with a factory (``MergingFactory.h``) as any operator with multiple implementations.
+The Cartesian implementation is done in the class ``MergingVranicCartesian`` and the Sphericla one in ``MergingVranicSpherical``.
 
 For both methods, the implemented algorithm is very similar.
 
-For each cells (in the real space):
+    For each cells (in the real space):
 
-1. Initialization of the momentum cell discretization
-2. Computation of the cell direction vectors (:math:`\mathbf{d}`): this step depends on the discretization and can be efficiently vectorized
-3. Comutation of the momentum cell indexes for each macro-particle
-4. Computation of the number of particles per momentum cells.  Not vectorizable because of random memory accesses.
-5. Computation of the cell index of each momentum cell in the sorted array of particles (only the particle indexes are sorted). Not vectorizable.
-6. Sorting of the macro-particles per momentum cells, the cell index previously computed determine where starts each momentum cell. Not vectorizable.
+    1. Initialization of the momentum cell discretization
+    2. Computation of the cell direction vectors (:math:`\mathbf{d}`): this step depends on the discretization and can be efficiently vectorized.
+    3. Comutation of the momentum cell indexes for each macro-particle. Efficiently Vectorizable.
+    4. Computation of the number of particles per momentum cells.  Not vectorizable because of random memory accesses.
+    5. Computation of the cell index of each momentum cell in the sorted array of particles (only the particle indexes are sorted). Not vectorizable.
+    6. Sorting of the macro-particles per momentum cells, the cell index previously computed determine where starts each momentum cell. Not vectorizable.
 
-Then, for each momentum cell:
+    Then, for each momentum cell:
 
-1. Division of the macro-particles of the momentum cell in small packs according to the user parameters
-2. Merge of the packs using the previously described Vranic algorithm
-3. Creation of the merged macro-particles at the position of the previous ones
-4. Tag of the macro-particles to be removed
+    1. Division of the macro-particles of the momentum cell in small packs according to the user parameters
+    2. Merge of the packs using the previously described Vranic algorithm. Partly vectorized.
+    3. Creation of the merged macro-particles at the position of the previous ones
+    4. Tag of the macro-particles to be removed
 
-Then, once the merging finished for a given patch:
+    Then, once the merging finished for a given patch:
 
-1. Compression of the macro-particle list (remove hole let by removed and tagged particles)
+    1. Compression of the macro-particle list (remove hole let by removed and tagged particles). By cleaning the particle vector at the end, we limit the computational impact of this step.
 
+2.1 Cartesian momentum Cell discretization
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Solid angle correction
+How to discretize the momentum space is in fact one of the most important point.
+The user gives :math:`N_x`, :math:`N_y` and :math:`N_z` via the namelist.
+The momentum space boundary corresponds to :math:`p_{\alpha,min}` and :math:`p_{\alpha,max}` with :math:`\alpha` equal to x, y or z.
+For this discretization, we force the origin (:math:`p_x = p_y = p_z = 0`) to not be contained in a cell so that there is not in the same cell particles with positive and negative momenta.
+The user-defined discretiztion can be slightly adjusted for algorithmic reasons.
+
+    For each momentum component :math:`p_\alpha` with :math:`\alpha` equal to x, y or z:
+        If :math:`p_{\alpha,min}` is very close to :math:`p_{\alpha,max}`:
+            If :math:`p_{\alpha,min}` and :math:`p_{\alpha,max}` have the same sign:
+                Only one cell is used for this component.
+                The unique momentum cell is centered around the average particle momentum.
+            If :math:`p_{\alpha,min}` and :math:`p_{\alpha,max}` have opposite sign:
+                Two cells are used, one for the negative and one for the positive values.
+                The discretization is therefore centered in 0.
+        Else:
+            If :math:`N_\alpha = 1`:
+                The unique cell has the size of :math:`p_{\alpha,max} - p_{\alpha,min}`.
+            Else if :math:`p_{\alpha,min}` and :math:`p_{\alpha,max}` have the same sign:
+                The discretization is classically computed using :math:`N_\alpha`.
+            Else if :math:`p_{\alpha,min}` and :math:`p_{\alpha,max}` have opposite sign:
+                The discretization is adjusted so that :math:`p_{\alpha} = 0` is at the boundary between 2 consecutive cells. We do it by shifting the discretization and adding an extra cell. At the end, there is an additonal cell than requested (:math:`N_\alpha` = :math:`N_\alpha` + 1).
+                
+
+2.2 Spherical momentum Cell discretization
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+The user gives :math:`N_r`, :math:`N_\theta` and :math:`N_\phi` via the namelist.
+The momentum space boundary corresponds to :math:`p_{r,min}`, :math:`p_{r,max}`, :math:`\theta_{min}`, :math:`\theta_{max}`, :math:`\phi_{min}` and :math:`\phi_{max}`.
+
+    For each momentum component :math:`p_r`, :math:`\theta` and :math:`\phi`:
+        If the the minimum boundary is too close to the maximum boundary:
+            Only one cell is used for this component.
+        Else:
+            If :math:`N_\alpha = 1` (here :math:`\alpha` is :math:`r`, :math:`\theta` or :math:`\phi`):
+
+2.3 Solid angle correction
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 With the classical spherical discretization, the solid angle that represents the surface crossed by the macro-particles having the same momentum cell direction depends on this direction as shown in :numref:`fig_spherical_discretization` a). In our discretization, the solid angle is larger near :math:`\phi = 0` (equator) and smaller near :math:`\phi = \pi / 2` (poles). Therefore, momentum cells near the equator will potentially have more particles than cells near poles and will undergo more particle merging processes.
@@ -294,15 +346,19 @@ With the classical spherical discretization, the solid angle that represents the
 .. figure:: _static/spherical_discretization.png
   :width: 100%
 
-  Classical spherical discretization (a) and the spherical discretization with solid angle correction (b).
+  Classical spherical discretization (a) and the spherical discretization with solid angle correction (b). This figure has been generated with the following `Python script <_static/vranic_spherical_discretization.py>`_.
 
 To composate this phenomenon, the discretization (number of cells) in :math:`\theta`, :math:`N_\theta`, is made to depend on :math:`\phi` so that the solid angle is approximatly constant. For this aim, a reference solid angle :math:`\Omega_{ref}` has to be set . It corresponds to the solid angle at the smallest  :math:`|\phi|` value with the :math:`\theta` discretization given by the user in the namelist. For larger :math:`|\phi|` values, the :math:`\theta` discretization :math:`N_\theta` varies to satisfy :math:`\Omega = \sin{(\phi)}\Delta \theta \Delta \phi = \Omega_{ref}`. An example of such a discretization is shown in :numref:`fig_spherical_discretization` b).
 
-Accumulation effect
+2.4 Accumulation effect
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Namelist
+.. _vranic_namelist:
+
+3. Namelist
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Simulation results
+.. _vranic_simulation results:
+
+4. Simulation results
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
