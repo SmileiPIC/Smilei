@@ -165,7 +165,7 @@ void PXR_SolverAM_GPSTD::divergence_cleaning( ElectroMagn *fields )
     _2Dvectors_to_3D(fields);
     
 #ifdef _PICSAR
-    //picsar::divergence_cleaning();
+    picsar::divergence_cleaning();
 #else
     ERROR( "Smilei not linked with picsar" );
 #endif

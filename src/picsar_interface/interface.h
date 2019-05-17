@@ -28,7 +28,7 @@ extern  "C"
                                 std::complex<double> *, std::complex<double> * );
     void push_psatd_ebfield_();
     void solve_maxwell_fdtd_pxr();
-    //void divergence_cleaning();
+    void divergence_cleaning();
 };
 
 }
