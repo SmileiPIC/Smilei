@@ -440,10 +440,10 @@ void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gam
     double dl_ov_2                   = dl/2.;
     double m_sq_dl                   = (double)(imode*imode)*dl;
     double j_;
-    
+    unsigned int j_min =max(2,isYmin*3); // prevent a segmentation fault
     // vector product Ap = A*p
     for( unsigned int i=1; i<nl_p-1; i++ ) {
-        for( unsigned int j=isYmin*3; j<index_max_p_[1]; j++ ) {
+        for( unsigned int j=j_min; j<index_max_p_[1]; j++ ) {
             j_ = (double)( j_glob_+j);
             ( *Ap_AM_ )( i, j )= j_ * dr_sq_ov_dl_ov_gamma_sq * (          ( *p_AM_ )( i-1, j   )-2.*   ( *p_AM_ )( i, j   )+         ( *p_AM_ )( i+1, j ) )
                                + dl                           * ( (j_-0.5)*( *p_AM_ )( i  , j-1 )-2.*j_*( *p_AM_ )( i, j   )+(j_+0.5)*( *p_AM_ )( i, j+1 ) )
@@ -501,7 +501,6 @@ void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gam
 std::complex<double> ElectroMagnAM::compute_pAp_AM()
 {
     std::complex<double> p_dot_Ap_local = 0.0;
-
     for( unsigned int i=index_min_p_[0]; i<index_max_p_[0]; i++ ) {
         for( unsigned int j=index_min_p_[1]; j<index_max_p_[1]; j++ ) {
             p_dot_Ap_local += ( *p_AM_ )( i, j )*std::conj(( *Ap_AM_ )( i, j ));
