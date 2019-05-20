@@ -107,19 +107,25 @@ void PatchAM::initStep2( Params &params, DomainDecomposition *domain_decompositi
     int nr_p = params.n_space[1]+1+2*params.oversize[1];
     double dr = params.cell_length[1];
     invR.resize( nr_p );
-    invRd.resize( nr_p+1 );
 
-    for( int j = 0; j< nr_p; j++ ) {
-        if( j_glob_ + j == 0 ) {
-            invR[j] = 8./dr; // No Verboncoeur correction
-            //invR[j] = 64./(13.*dr); // Order 2 Verboncoeur correction
-        } else {
-            invR[j] = 1./abs(((double)j_glob_ + (double)j)*dr);
+    if (!params.is_spectral){
+        invRd.resize( nr_p+1 );
+        for( int j = 0; j< nr_p; j++ ) {
+            if( j_glob_ + j == 0 ) {
+                invR[j] = 8./dr; // No Verboncoeur correction
+                //invR[j] = 64./(13.*dr); // Order 2 Verboncoeur correction
+            } else {
+                invR[j] = 1./abs(((double)j_glob_ + (double)j)*dr);
+            }
         }
-    }
-    for( int j = 0; j< nr_p + 1; j++ ) {
-        invRd[j] = 1./abs(((double)j_glob_ + (double)j - 0.5)*dr);
-    }
+        for( int j = 0; j< nr_p + 1; j++ ) {
+            invRd[j] = 1./abs(((double)j_glob_ + (double)j - 0.5)*dr);
+        }
+     } else { // if spectral, primal grid shifted by half cell length
+        for( int j = 0; j< nr_p; j++ ) {
+            invR[j] = 1./( ((double)j + 0.5)*dr);
+        }
+     }
     
 }
 

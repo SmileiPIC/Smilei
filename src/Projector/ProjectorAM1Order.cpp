@@ -13,6 +13,7 @@
 
 using namespace std;
 
+//ProjectorAM1Order is written for exclusive use of spectral solvers with non staggered grids, primal size grids with half cell length shift.
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for ProjectorAM1Order
@@ -67,7 +68,6 @@ void ProjectorAM1Order::basicForComplex( complex<double> *rhoj, Particles &parti
             charge_weight *= particles.momentum( 0, ipart );
         } else if( type == 2 ) { //if Jr
             charge_weight *= ( particles.momentum( 1, ipart )*particles.position( 1, ipart ) + particles.momentum( 2, ipart )*particles.position( 2, ipart ) ) / r ;
-            nr++;
         } else { //if Jt
             charge_weight *= ( -particles.momentum( 1, ipart )*particles.position( 2, ipart ) + particles.momentum( 2, ipart )*particles.position( 1, ipart ) ) / r ;
         }
@@ -87,36 +87,34 @@ void ProjectorAM1Order::basicForComplex( complex<double> *rhoj, Particles &parti
     double Sl1[2], Sr1[2];
     
     
-    // locate the particle on the primal and dual grid at current time-step & calculate coeff. S1
-    xpn = particles.position( 0, ipart ) * dl_inv_;
-    int ip = int( xpn + 0.5 * ( type==1 ) );
+    // locate the particle on the shifted primal grid at current time-step & calculate coeff. S1
+    xpn = (particles.position( 0, ipart ) ) * dl_inv_ - 0.5;
+    int ip = floor( xpn );
     delta  = xpn - ( double )ip;
     Sl1[0] = delta ;
     Sl1[1] = 1.-delta;
-    rpn = r * dr_inv_ ;
-    int jp = int( rpn + 0.5*( type==2 ) );
+
+    rpn = r * dr_inv_ - 0.5 ;
+    int jp = floor( rpn );
     delta  = rpn - ( double )jp;
     Sr1[0] = delta;
     Sr1[1] = 1.-delta;
-    
-    ip -= i_domain_begin ;
-    jp -= j_domain_begin ;
-    
-    if( type != 2 ) {
-        for( unsigned int i=0 ; i<2 ; i++ ) {
-            iloc = ( i+ip )*nr+jp;
-            for( unsigned int j=0 ; j<2 ; j++ ) {
-                rhoj [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invR[j+jp];
-            }
-        }//i
-    } else {
-        for( unsigned int i=0 ; i<2 ; i++ ) {
-            iloc = ( i+ip )*nr+jp;
-            for( unsigned int j=0 ; j<2 ; j++ ) {
-                rhoj [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invRd[j+jp];
-            }
-        }//i
+   
+    if (jp == -1){ // If particle is between 0 and dr/2.
+        jp = 0.;
+        Sr1[0] = Sr1[1];
+        Sr1[1] = 0.; // Only account for deposition above axis. Symetry is handled in interpolation.
     }
+ 
+    ip -= i_domain_begin ;
+    // j_domain_begin should always be zero in spectral since no paralellization along r.
+    
+    for( unsigned int i=0 ; i<2 ; i++ ) {
+        iloc = ( i+ip )*nr+jp;
+        for( unsigned int j=0 ; j<2 ; j++ ) {
+            rhoj [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invR[j+jp];
+        }
+    }//i
 } // END Project for diags local current densities
 
 // ---------------------------------------------------------------------------------------------------------------------
