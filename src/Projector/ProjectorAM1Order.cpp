@@ -101,7 +101,7 @@ void ProjectorAM1Order::basicForComplex( complex<double> *rhoj, Particles &parti
     Sr1[1] = 1.-delta;
    
     if (jp == -1){ // If particle is between 0 and dr/2.
-        jp = 0.;
+        jp = 0;
         Sr1[0] = Sr1[1];
         Sr1[1] = 0.; // Only account for deposition above axis. Symetry is handled in interpolation.
     }
@@ -147,33 +147,28 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     double crr_p = charge_weight * ( particles.momentum( 1, ipart )*particles.position( 1, ipart ) + particles.momentum( 2, ipart )*particles.position( 2, ipart ))/rp*invgf;
     e_theta = ( particles.position( 1, ipart ) + Icpx*particles.position( 2, ipart ) )/rp;
     // locate the particle on the primal and dual grid at current time-step & calculate coeff. S1
-    xpn = particles.position( 0, ipart ) * dl_inv_;
-    int ip = int( xpn );
-    int ipd = int( xpn + 0.5 );
+    xpn = particles.position( 0, ipart ) * dl_inv_ -0.5;
+    int ip = floor( xpn );
     delta  = xpn - ( double )ip;
     Sl1[0] = delta;
     Sl1[1] = 1.-delta;
-    delta  = xpn - ( double )ipd;
-    Sl1d[0] = delta;
-    Sl1d[1] = 1.-delta;
     
-    ypn = rp *dr_inv_ ;
-    int jp = int( ypn );
-    int jpd = int( ypn +0.5 );
+    ypn = rp *dr_inv_ -0.5 ;
+    int jp = floor( ypn );
     delta  = ypn - ( double )jp;
     Sr1[0] = delta;
     Sr1[1] = 1.-delta;
-    delta  = ypn - ( double )jpd;
-    Sr1d[0] = delta;
-    Sr1d[1] = 1.-delta;
+
+    if (jp == -1){ // If particle is between 0 and dr/2.
+        jp = 0;
+        Sr1[0] = Sr1[1];
+        Sr1[1] = 0.; // Only account for deposition above axis. Symetry is handled in interpolation.
+    }
 
 
     ip  -= i_domain_begin ;
-    ipd -= i_domain_begin ;
-    jp  -= j_domain_begin ;
-    jpd -= j_domain_begin ;
+
     double *invR_local  = &(invR[jp]);
-    double *invRd_local = &(invRd[jpd]);
 
     for( unsigned int imode=0; imode<( unsigned int )Nmode; imode++ ) {
         if( imode == 1 ) {
@@ -187,6 +182,7 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
             Jl =  &( *emAM->Jl_[imode] )( 0 );
             Jr =  &( *emAM->Jr_[imode] )( 0 );
             Jt =  &( *emAM->Jt_[imode] )( 0 );
+            rho = &( *emAM->rho_AM_[imode] )( 0 ) ; // In spectral, always project density
         } else {
             unsigned int n_species = emAM->Jl_.size() / Nmode;
             unsigned int ifield = imode*n_species+ispec;
@@ -195,30 +191,31 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
             Jt  = emAM->Jt_s    [ifield] ? &( * ( emAM->Jt_s    [ifield] ) )( 0 ) : &( *emAM->Jt_    [imode] )( 0 ) ;
             rho = emAM->rho_AM_s[ifield] ? &( * ( emAM->rho_AM_s[ifield] ) )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
 
-            for( unsigned int i=0 ; i<2 ; i++ ) {
-                iloc = ( i+ip )*nprimr;
-                for( unsigned int j=0 ; j<2 ; j++ ) {
-                    jloc = j+jp;
-                    linindex = iloc+jloc;
-                    rho [linindex] += C_m*charge_weight* Sl1[i]*Sr1[j]*invR_local[j];
-                }
-            }//i
         }
+
+        // Rho
+        for( unsigned int i=0 ; i<2 ; i++ ) {
+            iloc = ( i+ip )*nprimr+jp;
+            for( unsigned int j=0 ; j<2 ; j++ ) {
+                linindex = iloc+j;
+                rho [linindex] += C_m*charge_weight* Sl1[i]*Sr1[j]*invR_local[j];
+            }
+        }//i
         
         // Jl^(d,p)
         for( unsigned int i=0 ; i<2 ; i++ ) {
-            iloc = ( i+ipd )*nprimr+jp;
+            iloc = ( i+ip )*nprimr + jp;
             for( unsigned int j=0 ; j<2 ; j++ ) {
                 linindex = iloc+j;
-                Jl [linindex] += C_m * crl_p* Sl1d[i]*Sr1[j]*invR_local[j] ;
+                Jl [linindex] += C_m * crl_p* Sl1[i]*Sr1[j]*invR_local[j] ;
             }
         }//i
         // Jr^(p,d)
         for( unsigned int i=0 ; i<2 ; i++ ) {
-            iloc = ( i+ip )*( nprimr+1 )+jpd;
+            iloc = ( i+ip )* nprimr + jp;
             for( unsigned int j=0 ; j<2 ; j++ ) {
                 linindex = iloc+j;
-                Jr [linindex] += C_m * crr_p* Sl1[i]*Sr1d[j]*invRd_local[j] ;
+                Jr [linindex] += C_m * crr_p* Sl1[i]*Sr1[j]*invRd_local[j] ;
             }
         }//i
         // Jt^(p,p)
