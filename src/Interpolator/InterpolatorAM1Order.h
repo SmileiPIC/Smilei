@@ -1,5 +1,5 @@
-#ifndef INTERPOLATORAM2ORDER_H
-#define INTERPOLATORAM2ORDER_H
+#ifndef INTERPOLATORAM1ORDER_H
+#define INTERPOLATORAM1ORDER_H
 
 
 #include "InterpolatorAM.h"
@@ -7,14 +7,14 @@
 
 
 //  --------------------------------------------------------------------------------------------------------------------
-//! Class for 2nd order interpolator for AM spectral simulations
+//! Class for 1st order interpolator for AM simulations
 //  --------------------------------------------------------------------------------------------------------------------
-class InterpolatorAM2Order : public InterpolatorAM
+class InterpolatorAM1Order : public InterpolatorAM
 {
 
 public:
-    InterpolatorAM2Order( Params &, Patch * );
-    ~InterpolatorAM2Order() override final {};
+    InterpolatorAM1Order( Params &, Patch * );
+    ~InterpolatorAM1Order() override final {};
     
     inline void fields( ElectroMagn *EMfields, Particles &particles, int ipart, int nparts, double *ELoc, double *BLoc );
     void fieldsAndCurrents( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, LocalFields *JLoc, double *RhoLoc ) override final ;
