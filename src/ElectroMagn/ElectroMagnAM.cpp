@@ -440,9 +440,12 @@ void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gam
     double dl_ov_2                   = dl/2.;
     double m_sq_dl                   = (double)(imode*imode)*dl;
     double j_;
-    unsigned int j_min =max(2,isYmin*3); // prevent a segmentation fault
+    unsigned int j_min =max(1,isYmin*3); // prevent a segmentation fault
+    unsigned int i_min =1; //max(1,(int)(index_min_p_[0]));
+    unsigned int i_max = nl_p-1; //index_max_p_[0]; 
+   
     // vector product Ap = A*p
-    for( unsigned int i=1; i<nl_p-1; i++ ) {
+    for( unsigned int i=i_min; i<i_max; i++ ) {
         for( unsigned int j=j_min; j<index_max_p_[1]; j++ ) {
             j_ = (double)( j_glob_+j);
             ( *Ap_AM_ )( i, j )= j_ * dr_sq_ov_dl_ov_gamma_sq * (          ( *p_AM_ )( i-1, j   )-2.*   ( *p_AM_ )( i, j   )+         ( *p_AM_ )( i+1, j ) )
@@ -456,7 +459,7 @@ void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gam
     if( patch->isYmin() ) {
         unsigned int j=2;
         j_ = (double)( j_glob_+j+0.5);
-        for( unsigned int i=1; i<nl_p-1; i++ ) { // radial and azimuthal derivative are zero on axis r=0 (p = phi is all on primal grid)
+        for( unsigned int i=i_min; i<i_max; i++ ) { // radial and azimuthal derivative are zero on axis r=0 (p = phi is all on primal grid)
             ( *Ap_AM_ )( i, j )= j_ * dr_sq_ov_dl_ov_gamma_sq * (          ( *p_AM_ )( i-1, j   )-2.*   ( *p_AM_ )( i, j   )+         ( *p_AM_ )( i+1, j ) )
                                + j_ * dl * 2.                 * (                                       ( *p_AM_ )( i, j+1 )-         ( *p_AM_ )( i  , j)  );                           
         }
@@ -465,7 +468,7 @@ void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gam
     if( patch->isYmax() ) {
         unsigned int j=index_max_p_[1]; // Von Neumann condition, radial derivative = 0
         j_ = (double)( j_glob_+j);
-        for( unsigned int i=1; i<nl_p-1; i++ ) {
+        for( unsigned int i=i_min; i<i_max; i++ ) {
             ( *Ap_AM_ )( i, j )= j_ * dr_sq_ov_dl_ov_gamma_sq * (          ( *p_AM_ )( i-1, j   )-2. *  ( *p_AM_ )( i, j   )+         ( *p_AM_ )( i+1, j ) )
                                + j_ * dl                      * (          ( *p_AM_ )( i  , j-1 )-      ( *p_AM_ )( i, j   )                               )
                                - m_sq_dl/ j_                  *                                         ( *p_AM_ )( i, j   );
