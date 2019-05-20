@@ -215,7 +215,7 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
             iloc = ( i+ip )* nprimr + jp;
             for( unsigned int j=0 ; j<2 ; j++ ) {
                 linindex = iloc+j;
-                Jr [linindex] += C_m * crr_p* Sl1[i]*Sr1[j]*invRd_local[j] ;
+                Jr [linindex] += C_m * crr_p* Sl1[i]*Sr1[j]*invR_local[j] ;
             }
         }//i
         // Jt^(p,p)
