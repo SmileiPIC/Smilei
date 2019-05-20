@@ -436,6 +436,8 @@ public:
                          << thisSpecies->merge_min_packet_size_ );
                 MESSAGE( 3, "| Maximum particle packet size: "
                          << thisSpecies->merge_max_packet_size_ );
+                MESSAGE( 3, "| Accumulation correction: "
+                         << thisSpecies->merge_accumulation_correction_ );
             }
         }
 
