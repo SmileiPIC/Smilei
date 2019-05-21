@@ -378,8 +378,8 @@ void ElectroMagnAM::initPoisson( Patch *patch )
     
     index_min_p_[0] = oversize[0];
     index_min_p_[1] = oversize[1];
-    index_max_p_[0] = nl_p - 2 - oversize[0];
-    index_max_p_[1] = nr_p - 2 - oversize[1];
+    index_max_p_[0] = nl_p + 1 - oversize[0];
+    index_max_p_[1] = nr_p + 1 - oversize[1];
     if( patch->isXmin() ) {
         index_min_p_[0] = 0;
     }
