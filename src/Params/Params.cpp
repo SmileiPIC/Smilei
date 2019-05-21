@@ -466,10 +466,17 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         res_space2 += res_space[i]*res_space[i];
     }
     if( geometry == "AMcylindrical" ) {
-        res_space2 += ( ( nmodes-1 )*( nmodes-1 )-1 )*res_space[1]*res_space[1];
+        if(!is_spectral){
+            res_space2 += ( ( nmodes-1 )*( nmodes-1 )-1 )*res_space[1]*res_space[1];
+        } else { //if spectral
+            res_space2 = max(res_space[0], res_space[1]) * max(res_space[0], res_space[1]); 
+            if( timestep != min(cell_length[0], cell_length[1]) ) {
+                WARNING( " timestep=" << timestep << " is not equal to optimal timestep for this solver = " << min(cell_length[0], cell_length[1])  );
+            }
+        }
     }
     dtCFL=1.0/sqrt( res_space2 );
-    if( timestep>dtCFL ) {
+    if( timestep>dtCFL && !is_spectral ) {
         WARNING( "CFL problem: timestep=" << timestep << " should be smaller than " << dtCFL );
     }
     
