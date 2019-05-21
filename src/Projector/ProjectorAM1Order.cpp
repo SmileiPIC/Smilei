@@ -234,10 +234,7 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
 //Wrapper for projection
 void ProjectorAM1Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int istart, int iend, int ithread, bool diag_flag, bool is_spectral, int ispec, int icell, int ipart_ref )
 {
-    if( is_spectral ) {
-        ERROR( "Not implemented" );
-    }
-    
+        
     std::vector<double> *invgf = &( smpi->dynamics_invgf[ithread] );
     
     ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
