@@ -348,17 +348,39 @@ With the classical spherical discretization, the solid angle that represents the
 
   Classical spherical discretization (a) and the spherical discretization with solid angle correction (b). This figure has been generated with the following `Python script <_static/vranic_spherical_discretization.py>`_.
 
-To composate this phenomenon, the discretization (number of cells) in :math:`\theta`, :math:`N_\theta`, is made to depend on :math:`\phi` so that the solid angle is approximatly constant. For this aim, a reference solid angle :math:`\Omega_{ref}` has to be set . It corresponds to the solid angle at the smallest  :math:`|\phi|` value with the :math:`\theta` discretization given by the user in the namelist. For larger :math:`|\phi|` values, the :math:`\theta` discretization :math:`N_\theta` varies to satisfy :math:`\Omega = \sin{(\phi)}\Delta \theta \Delta \phi = \Omega_{ref}`. An example of such a discretization is shown in :numref:`fig_spherical_discretization` b).
+To composate this phenomenon, the discretization (number of cells) in :math:`\theta`, :math:`N_\theta`, is made to depend on :math:`\phi` so that the solid angle is approximatly constant. For this aim, a reference solid angle :math:`\Omega_{ref}` has to be set . It corresponds to the solid angle at the smallest  :math:`|\phi|` value with the :math:`\theta` discretization given by the user in the namelist. For larger :math:`|\phi|` values, the :math:`\theta` discretization :math:`N_\theta` varies to satisfy :math:`\Omega = \sin{(\phi)}\Delta \theta \Delta \phi = \Omega_{ref}`. Since we keep :math:`\phi` constant, it is equivalent to determine a :math:`\theta_{ref}`. An example of such a discretization is shown in :numref:`fig_spherical_discretization` b).
+
+.. _vranic_accululation_effect:
 
 2.4 Accumulation effect
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+When several macro-particles are merged, the contribution of each of them to the final ones depends on their weights.
+In other words, newly-created macro-particles will be more determined from the merged ones with high weight values than smaller macro-particles. Due to the merging process some particles can become super-heavy and dominates other macro-particles so that they will continue to grow with few change in their kinetic properties. This can be a problem if the momentum cells are large and the momentum distribution is broad. Heavy macro-particles continuously absorb their neighbors and damage the momentum distribution.
+
+To illustrate this phenomenon, let us consider the magnetic shower benchmark in 3D. This benchmark is the equivalent of the synchrotron one applied to pair production. The domain is filled with a plasma of electron-positron. electron and positron macro-particles all initialized with the same Lorentz factor :math:`\gamma = 8125` and same direction. The macro-particles evolve in a constant homogeneous and uniform magnetic field of amplitude :math:`B = 1000 e/(m\omega)` orthogonal to the propagation direction of the particles. The initial electron and positron quantum parameters are therefore both equal to :math:`\chi = 20`.
+
+.. _fig_magentic_shower_photon_energy_distribution:
+
+.. figure:: _static/magentic_shower_photon_energy_distribution.png
+  :width: 100%
+
 
 .. _vranic_namelist:
 
 3. Namelist
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Please refer to :ref:`that doc <Particle_merging>` for an explanation of how to configure the merging in the namelist file.
+
 .. _vranic_simulation results:
 
 4. Simulation results
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+--------------------------------------------------------------------------------
+
+References
+^^^^^^^^^^
+
+.. [Vranic2005] `M. Vranic et al., CPC, 191 65-73 (2015) <https://doi.org/10.1016/j.cpc.2015.01.020>`_

@@ -709,8 +709,10 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
     if( time_dual>time_frozen ) {
 
         unsigned int scell ;
-        // double weight_before = 0;
-        // double weight_after = 0;
+        double weight_before = 0;
+        double weight_after = 0;
+        double energy_before = 0;
+        double energy_after = 0;
         //std::vector <int> mask(last_index.back(), 1);
 
         // Resize the cell_keys
@@ -719,6 +721,9 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
         for (unsigned int ip = 0; ip < (unsigned int)(last_index.back()) ; ip++) {
                 particles->cell_keys[ip] = 1;
                 // weight_before += particles->Weight[ip];
+                // energy_before += particles->Weight[ip]*sqrt(particles->Momentum[0][ip]*particles->Momentum[0][ip]
+                //                 + particles->Momentum[1][ip]*particles->Momentum[1][ip]
+                //                 + particles->Momentum[2][ip]*particles->Momentum[2][ip]);
         }
 
         // Reinitialize the cell_keys array
@@ -834,12 +839,19 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
         // #pragma omp simd
         // for (unsigned int ip = 0; ip < (unsigned int)(last_index.back()) ; ip++) {
         //         weight_after += particles->Weight[ip];
+        //         energy_after += particles->Weight[ip]*sqrt(particles->Momentum[0][ip]*particles->Momentum[0][ip]
+        //                         + particles->Momentum[1][ip]*particles->Momentum[1][ip]
+        //                         + particles->Momentum[2][ip]*particles->Momentum[2][ip]);
         // }
         //
-        // if (fabs(weight_before - weight_after) > 1e-10) {
+        // if (fabs(weight_before - weight_after)/weight_before > 1e-3 || fabs(energy_before - energy_after)/energy_before > 1e-3) {
         //     std::cerr << std::scientific << std::setprecision(15)
+        //               << " " << this->name
         //               << " Weight before: " << weight_before
         //               << " Weight after: " << weight_after
+        //               << " Energy before: " << energy_before
+        //               << " Energy after: " << energy_after
+        //               << " Err energy: " << fabs(energy_before - energy_after)/energy_before
         //               << std::endl;
         // }
 

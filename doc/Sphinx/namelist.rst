@@ -879,7 +879,7 @@ Each species has to be defined in a ``Species`` block::
 
 ----
 
-.. _Particle Merging:
+.. _Particle_merging:
 
 Particle Merging
 ^^^^^^^^^^^^^^^^
@@ -897,7 +897,9 @@ It is defined in the ``Species`` block::
       merge_max_packet_size = 4,
       merge_min_packet_size = 2,
       merge_momentum_cell_size = [32,16,16],
+      # Extra parameters for experts:
       merge_min_momentum_cell_length = [1e-10, 1e-10, 1e-10],
+      merge_accumulation_correction = True
   )
 
 .. py:data:: merging_method
@@ -918,13 +920,13 @@ It is defined in the ``Species`` block::
 
 .. py:data:: min_particles_per_cell
 
-  :default: ``4`` for mass particles, ``2`` for photons
+  :default: ``4``
 
   The minimum number of particles per cell for the merging.
 
 .. py:data:: merge_min_packet_size
 
-  :default: ``4`` for mass particles, ``2`` for photons
+  :default: ``4``
 
   The minimum number of particles per packet to merge.
 
@@ -934,19 +936,25 @@ It is defined in the ``Species`` block::
 
   The maximum number of particles per packet to merge.
 
-.. py:data:: merge_min_momentum_cell_length
-
-  :default: ``[1e-10,1e-10,1e-10]``
-
-  The minimum momentum cell length for the discretization.
-  If the specified discretization induces smaller momentum cell length,
-  then the momentum cell size is set to 1 in this direction.
-
 .. py:data:: merge_momentum_cell_size
 
   :default: ``[16,16,16]``
 
   The momentum space discretization.
+
+.. py:data:: merge_min_momentum_cell_length
+
+  :default: ``[1e-10,1e-10,1e-10]``
+
+  :red:`[for experts]` The minimum momentum cell length for the discretization.
+  If the specified discretization induces smaller momentum cell length,
+  then the momentum cell size is set to 1 in this direction.
+
+.. py:data:: merge_accumulation_correction
+
+  :default: ``True``
+
+  :red:`[for experts]` Activation of the accumulation correction. (see :ref:`vranic_accululation_effect` for more information)
 
 ----
 
