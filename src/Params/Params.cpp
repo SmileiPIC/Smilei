@@ -283,6 +283,16 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     }
     // Number of modes in AMcylindrical geometry
     PyTools::extract( "number_of_AM", nmodes, "Main" );
+
+    nmodes_rel_field_init = nmodes;
+
+    // Number of modes in AMcylindrical geometry for relativistic field initialization
+    // if not specified, it will be equal to the number of modes of the simulation
+    PyTools::extract( "number_of_AM_relativistic_field_initialization", nmodes_rel_field_init, "Main" );
+    if (nmodes_rel_field_init>nmodes){
+        ERROR( "The number of AM modes computed in relativistic field initialization must be lower or equal than the number of modes of the simulation" );
+    }
+
     
     // simulation duration & length
     PyTools::extract( "simulation_time", simulation_time, "Main" );
