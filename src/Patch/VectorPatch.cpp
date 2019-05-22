@@ -1806,7 +1806,7 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
                 ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
                 p_dot_Ap_localAM_ += emAM->compute_pAp_AM();
             }
-            MPI_Allreduce( &p_dot_Ap_localAM_, &p_dot_ApAM_, 1, MPI_COMPLEX, MPI_SUM, MPI_COMM_WORLD );
+            MPI_Allreduce( &p_dot_Ap_localAM_, &p_dot_ApAM_, 2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
         
         
             // compute new potential and residual

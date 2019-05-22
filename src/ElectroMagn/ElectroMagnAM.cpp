@@ -378,8 +378,8 @@ void ElectroMagnAM::initPoisson( Patch *patch )
     
     index_min_p_[0] = oversize[0];
     index_min_p_[1] = oversize[1];
-    index_max_p_[0] = nl_p + 1 - oversize[0];
-    index_max_p_[1] = nr_p + 1 - oversize[1];
+    index_max_p_[0] = nl_p - 2 - oversize[0];
+    index_max_p_[1] = nr_p - 2 - oversize[1];
     if( patch->isXmin() ) {
         index_min_p_[0] = 0;
     }
@@ -414,8 +414,8 @@ void ElectroMagnAM::initPoisson_init_phi_r_p_Ap( Patch *patch, unsigned int imod
 double ElectroMagnAM::compute_r()
 {
     double rnew_dot_rnew_localAM_( 0. );
-    for( unsigned int i=index_min_p_[0]; i<index_max_p_[0]; i++ ) {
-        for( unsigned int j=index_min_p_[1]; j<index_max_p_[1]; j++ ) {
+    for( unsigned int i=index_min_p_[0]; i<=index_max_p_[0]; i++ ) {
+        for( unsigned int j=index_min_p_[1]; j<=index_max_p_[1]; j++ ) {
             rnew_dot_rnew_localAM_ += std::abs(( *r_AM_ )( i, j ))*std::abs(( *r_AM_ )( i, j ));
         }
     }
@@ -443,10 +443,11 @@ void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gam
     unsigned int j_min =max(1,isYmin*3); // prevent a segmentation fault
     unsigned int i_min =1; //max(1,(int)(index_min_p_[0]));
     unsigned int i_max = nl_p-1; //index_max_p_[0]; 
+    unsigned int j_max = nr_p-1; //index_max_p_[0]; 
    
     // vector product Ap = A*p
     for( unsigned int i=i_min; i<i_max; i++ ) {
-        for( unsigned int j=j_min; j<index_max_p_[1]; j++ ) {
+        for( unsigned int j=j_min; j<j_max; j++ ) {
             j_ = (double)( j_glob_+j);
             ( *Ap_AM_ )( i, j )= j_ * dr_sq_ov_dl_ov_gamma_sq * (          ( *p_AM_ )( i-1, j   )-2.*   ( *p_AM_ )( i, j   )+         ( *p_AM_ )( i+1, j ) )
                                + dl                           * ( (j_-0.5)*( *p_AM_ )( i  , j-1 )-2.*j_*( *p_AM_ )( i, j   )+(j_+0.5)*( *p_AM_ )( i, j+1 ) )
@@ -465,37 +466,35 @@ void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gam
         }
     }
 
-    if( patch->isYmax() ) {
-        unsigned int j=index_max_p_[1]; // Von Neumann condition, radial derivative = 0
-        j_ = (double)( j_glob_+j);
-        for( unsigned int i=i_min; i<i_max; i++ ) {
-            ( *Ap_AM_ )( i, j )= j_ * dr_sq_ov_dl_ov_gamma_sq * (          ( *p_AM_ )( i-1, j   )-2. *  ( *p_AM_ )( i, j   )+         ( *p_AM_ )( i+1, j ) )
-                               + j_ * dl                      * (          ( *p_AM_ )( i  , j-1 )-      ( *p_AM_ )( i, j   )                               )
-                               - m_sq_dl/ j_                  *                                         ( *p_AM_ )( i, j   );
-        }
-    }
+//    if( patch->isYmax() ) {
+//        unsigned int j=index_max_p_[1]; // Von Neumann condition, radial derivative = 0
+//        j_ = (double)( j_glob_+j);
+//        for( unsigned int i=i_min; i<i_max; i++ ) {
+//            ( *Ap_AM_ )( i, j )= j_ * dr_sq_ov_dl_ov_gamma_sq * (          ( *p_AM_ )( i-1, j   )-2. *  ( *p_AM_ )( i, j   )+         ( *p_AM_ )( i+1, j ) )
+//                               + j_ * dl                      * (          ( *p_AM_ )( i  , j-1 )-      ( *p_AM_ )( i, j   )                               )
+//                               - m_sq_dl/ j_                  *                                         ( *p_AM_ )( i, j   );
+//        }
+//    }
 
     // Xmin BC
     if( patch->isXmin() ) { // p = phi = 0 on the left border
-        for( unsigned int j=1; j<index_max_p_[1]; j++ ) {
+        for( unsigned int j=1; j<j_max; j++ ) {
             ( *Ap_AM_ )( 0, j )     = 0.;
         }
         // at corners
         ( *Ap_AM_ )( 0, 0 )          = 0.;
-        ( *Ap_AM_ )( 0, 1 )          = 0.;
-        ( *Ap_AM_ )( 0, index_max_p_[1] )     = 0.;
+        ( *Ap_AM_ )( 0, nr_p-1 )     = 0.;
     }
     
     // Xmax BC
     if( patch->isXmax() ) { // p = phi = 0 on the right border 
     
-        for( unsigned int j=isYmin*3; j<index_max_p_[1]; j++ ) {
-            ( *Ap_AM_ )( index_max_p_[0], j )= 0.;
+        for( unsigned int j=1; j<j_max; j++ ) {
+            ( *Ap_AM_ )( nl_p-1, j )= 0.;
         }
         // at corners
-        ( *Ap_AM_ )( index_max_p_[0], 0 )     = 0.;
-        ( *Ap_AM_ )( index_max_p_[0], 1 )     = 0.;
-        ( *Ap_AM_ )( index_max_p_[0], index_max_p_[1] )= 0.;
+        ( *Ap_AM_ )( nl_p-1, 0 )     = 0.;
+        ( *Ap_AM_ )( nl_p-1, nr_p-1 )= 0.;
     }
     
 
@@ -504,8 +503,8 @@ void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gam
 std::complex<double> ElectroMagnAM::compute_pAp_AM()
 {
     std::complex<double> p_dot_Ap_local = 0.0;
-    for( unsigned int i=index_min_p_[0]; i<index_max_p_[0]; i++ ) {
-        for( unsigned int j=index_min_p_[1]; j<index_max_p_[1]; j++ ) {
+    for( unsigned int i=index_min_p_[0]; i<=index_max_p_[0]; i++ ) {
+        for( unsigned int j=index_min_p_[1]; j<=index_max_p_[1]; j++ ) {
             p_dot_Ap_local += ( *p_AM_ )( i, j )*std::conj(( *Ap_AM_ )( i, j ));
         }
     }
@@ -515,8 +514,8 @@ std::complex<double> ElectroMagnAM::compute_pAp_AM()
 void ElectroMagnAM::update_pand_r_AM( double r_dot_r, std::complex<double> p_dot_Ap )
 {
     std::complex<double> alpha_k = r_dot_r/p_dot_Ap;
-    for( unsigned int i=index_min_p_[0]; i<index_max_p_[0]; i++ ) {
-        for( unsigned int j=index_min_p_[1]; j<index_max_p_[1]; j++ ) {
+    for( unsigned int i=0; i<nl_p; i++ ) {
+        for( unsigned int j=0; j<nr_p; j++ ) {
             ( *phi_AM_ )( i, j ) += alpha_k * ( *p_AM_ )( i, j );
             ( *r_AM_ )( i, j )   -= alpha_k * ( *Ap_AM_ )( i, j );
         }
@@ -527,8 +526,8 @@ void ElectroMagnAM::update_pand_r_AM( double r_dot_r, std::complex<double> p_dot
 void ElectroMagnAM::update_p( double rnew_dot_rnew, double r_dot_r )
 {
     double beta_k = rnew_dot_rnew/r_dot_r;
-    for( unsigned int i=index_min_p_[0]; i<index_max_p_[0]; i++ ) {
-        for( unsigned int j=index_min_p_[1]; j<index_max_p_[1]; j++ ) {
+    for( unsigned int i=0; i<nl_p; i++ ) {
+        for( unsigned int j=0; j<nr_p; j++ ) {
             ( *p_AM_ )( i, j ) = ( *r_AM_ )( i, j ) + beta_k * ( *p_AM_ )( i, j );
         }
     }
