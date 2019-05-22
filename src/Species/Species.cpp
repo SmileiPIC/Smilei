@@ -1316,9 +1316,13 @@ int Species::createParticles( vector<unsigned int> n_space_to_create, Params &pa
     // Create particles in a space starting at cell_position
     vector<double> cell_position( 3, 0 );
     vector<double> cell_index( 3, 0 );
+    if (params.geometry=="AMcylindrical" && params.is_spectral){
+        cell_position[1] -= 0.5*cell_length[1];   
+        n_space_to_create_generalized[1] ++;
+    }
     for( unsigned int idim=0 ; idim<nDim_field ; idim++ ) {
         //if (params.cell_length[idim]!=0) { // Useless, nDim_field defined for (params.cell_length[idim>=nDim_field]==0)
-        cell_position[idim] = patch->getDomainLocalMin( idim );
+        cell_position[idim] += patch->getDomainLocalMin( idim );
         cell_index   [idim] = ( double ) patch->getCellStartingGlobalIndex( idim );
         xyz[idim] = new Field3D( n_space_to_create_generalized );
         //}
@@ -1394,7 +1398,7 @@ int Species::createParticles( vector<unsigned int> n_space_to_create, Params &pa
             if( position[0][ip] >= patch->getDomainLocalMin( 0 ) && position[0][ip] < patch->getDomainLocalMax( 0 )
                     && ( nDim_particle < 2  || ( position[1][ip] >= patch->getDomainLocalMin( 1 ) && position[1][ip] < patch->getDomainLocalMax( 1 ) ) )
                     && ( nDim_particle < 3  || ( position[2][ip] >= patch->getDomainLocalMin( 2 ) && position[2][ip] < patch->getDomainLocalMax( 2 ) ) ) ) {
-                my_particles_indices.push_back( ip ); //This vector stores particles initially sittinig in the current patch.
+                my_particles_indices.push_back( ip ); //This vector stores particles initially sitting in the current patch.
             }
         }
         npart_effective = my_particles_indices.size();
