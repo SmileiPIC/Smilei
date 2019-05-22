@@ -326,6 +326,14 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   The number of azimuthal modes used for the Fourier decomposition in ``"AMcylindrical"`` geometry.
 
+.. py:data:: number_of_AM_relativistic_field_initialization
+
+  :default: equal to :py:data:`number_of_AM`
+
+  The (optional) number of azimuthal modes used for the relativistic field initialization in ``"AMcylindrical"`` geometry.
+  Note that this number must be lower or equal to the number of modes of the simulation. 
+  If not specified it will be equal to the :py:data:`number_of_AM`.
+
 ----
 
 Load Balancing
