@@ -351,7 +351,7 @@ public:
                                << "(`merge_max_packet_size`)"
                                << "must be above or equal to 4.");
                     }
-                    if (thisSpecies->merge_max_packet_size_ < 4 && thisSpecies->mass > 0)
+                    if (thisSpecies->merge_max_packet_size_ < 4 && thisSpecies->mass == 0)
                     {
                         ERROR( "In Species " << thisSpecies->name
                                << " of type photon"

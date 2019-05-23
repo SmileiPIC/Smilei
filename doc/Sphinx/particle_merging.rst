@@ -358,12 +358,23 @@ To composate this phenomenon, the discretization (number of cells) in :math:`\th
 When several macro-particles are merged, the contribution of each of them to the final ones depends on their weights.
 In other words, newly-created macro-particles will be more determined from the merged ones with high weight values than smaller macro-particles. Due to the merging process some particles can become super-heavy and dominates other macro-particles so that they will continue to grow with few change in their kinetic properties. This can be a problem if the momentum cells are large and the momentum distribution is broad. Heavy macro-particles continuously absorb their neighbors and damage the momentum distribution.
 
-To illustrate this phenomenon, let us consider the magnetic shower benchmark in 3D. This benchmark is the equivalent of the synchrotron one applied to pair production. The domain is filled with a plasma of electron-positron. electron and positron macro-particles all initialized with the same Lorentz factor :math:`\gamma = 8125` and same direction. The macro-particles evolve in a constant homogeneous and uniform magnetic field of amplitude :math:`B = 1000 e/(m\omega)` orthogonal to the propagation direction of the particles. The initial electron and positron quantum parameters are therefore both equal to :math:`\chi = 20`.
+To illustrate this phenomenon, let us consider the magnetic shower benchmark in 3D. This benchmark is the equivalent of the synchrotron one applied to pair production. The domain is filled with a plasma of electron-positron. electron and positron macro-particles all initialized with the same Lorentz factor :math:`\gamma = 8125` and same direction. The macro-particles evolve in a constant homogeneous and uniform magnetic field of amplitude :math:`B = 1000 e/(m\omega)` orthogonal to the propagation direction of the particles. The initial electron and positron quantum parameters are therefore both equal to :math:`\chi = 20`. The input script of this simulation is available `here <_static/magnetic_shower_3d_vranic_merging.py>`_.
 
-.. _fig_magentic_shower_photon_energy_distribution:
+Oscillations at low energy in the photon energy distribution can be seen in :numref:`fig_magnetic_shower_photon_energy_distribution` a) due to the accumulation effects.
 
-.. figure:: _static/magentic_shower_photon_energy_distribution.png
+.. _fig_magnetic_shower_photon_energy_distribution:
+
+.. figure:: _static/magnetic_shower_photon_energy_distribution.png
   :width: 100%
+
+  Photon energy distribution for the 3d magnetic shower benchmark at the end of the simulation without (a) and with accumulation correction (b) for both the Spherical and Cartesian momentum discretization.
+
+.. _fig_magnetic_shower_photon_pxpy_distribution:
+
+.. figure:: _static/magnetic_shower_photon_pxpy_distribution.png
+  :width: 100%
+
+  Photon px-py momentum distribution for the 3d magnetic shower benchmark at the end of the simulation for different configuration: a) wihtout merging, b) Cartesian discretization without correction, c) Spherical discretization without correction, d) Cartesian discretization with correction and e) Spherical discretization with correction.
 
 
 .. _vranic_namelist:
