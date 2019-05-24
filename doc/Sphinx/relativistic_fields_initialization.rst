@@ -42,7 +42,7 @@ An important assumption of this calculation is that the species is highly relati
 
   \left(\mathbf{J},\rho \right) = \left(\rho \beta_0, 0, 0, \rho\right),
 
-where :math:`\beta_0` is the initial mean velocity of the relativistic species. At least locally, the potentials :math:`\mathbf{A}`, :math:`\Phi` in the laboratory frame will be only function of :math:`x-\beta_0 t`, as they are propagating with the species at uniform velocity.
+where :math:`\beta_0` is the initial mean velocity of the relativistic species. At least locally, the potentials :math:`\mathbf{A}`, :math:`\Phi` in the laboratory frame will be only function of :math:`x-\beta_0 t`, as they are propagating with the species at uniform relativistic velocity.
 
 In the relativistic species rest frame :math:`S'`, the charge distribution is static and the electrostatic potential in that reference frame :math:`\Phi'` is related to the charge density in that reference frame :math:`\rho'` through Poisson's equation:
 
@@ -64,7 +64,7 @@ Similarly, the potential :math:`\Phi'` can be rewritten in terms of the potentia
 
 .. math::
   
-  x=\gamma_0(x'+\beta_0 t'),\quad  t = \gamma_0(t'+\beta x'), \quad y=y', \quad z=z'
+  x=\gamma_0(x'+\beta_0 t'),\quad  t = \gamma_0(t'+\beta_0 x'), \quad y=y', \quad z=z'
 
 allows to transform the derivatives in Eq. :eq:`Poisson` as 
 
@@ -72,7 +72,7 @@ allows to transform the derivatives in Eq. :eq:`Poisson` as
   
   \partial_{x'}=\gamma_0\left(\partial_x+\beta_0\partial_t\right), \quad \partial_{y'}=\partial_y, \quad \partial_{z'}=\partial_z. 
 
-The partial derivative along the :math:`x'` direction can be further simplified, through the hypothesis of temporary dependence of all quantities on :math:`x-\beta_0 t`, implying :math:`\partial_t=-\beta \partial_x`:
+The partial derivative along the :math:`x'` direction can be further simplified, through the hypothesis of temporary dependence of all quantities on :math:`x-\beta_0 t`, implying :math:`\partial_t=-\beta_0 \partial_x`:
 
 .. math::
   
@@ -87,7 +87,7 @@ Equation :eq:`Poisson` can thus be rewritten as
 
 here informally referred to as the relativistic Poisson's equation. In :program:`Smilei`, as for Eq. :eq:`Poisson`, the solution of the relativistic Poisson's equation is performed through the conjugate gradient method.
 
-Once the potential :math:`\Phi` is found, we can compute all the components of the electromagnetic field, using again the relations :math:`\partial_t=-\beta \partial_x`, :math:`\Phi'=-\Phi/\gamma_0` and the Lorentz back-transformation of the vector potential :math:`\mathbf{A}`:
+Once the potential :math:`\Phi` is found, we can compute all the components of the electromagnetic field, using again the relations :math:`\partial_t=-\beta_0 \partial_x`, :math:`\Phi'=-\Phi/\gamma_0` and the Lorentz back-transformation of the vector potential :math:`\mathbf{A}`:
 
 .. math::
   
