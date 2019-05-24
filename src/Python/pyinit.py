@@ -370,6 +370,8 @@ class Species(SmileiComponent):
     merge_min_momentum_cell_length = [1e-10,1e-10,1e-10]
     merge_momentum_cell_size = [16,16,16]
     merge_accumulation_correction = True
+    merge_discretization_scale = "linear"
+    merge_min_momentum = 1e-5
 
     time_frozen = 0.0
     radiating = False

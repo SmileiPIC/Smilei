@@ -37,7 +37,7 @@ MergingVranicCartesian::MergingVranicCartesian(Params& params,
     min_momentum_cell_length_[2] = species->merge_min_momentum_cell_length_[2];
     
     // Accumulation correction
-    accumulation_correction = species->merge_accumulation_correction_;
+    accumulation_correction_ = species->merge_accumulation_correction_;
 }
 
 // -----------------------------------------------------------------------------
@@ -250,7 +250,7 @@ void MergingVranicCartesian::operator() (
                 // If momentum_min[ip] and momentum_max[ip] have the same sign
                 } else if (momentum_max[ip] <= 0 || momentum_min[ip] >= 0) {
                     momentum_max[ip] += (momentum_max[ip] - momentum_min[ip])*0.01;
-                    if (accumulation_correction) {
+                    if (accumulation_correction_) {
                         momentum_delta[ip] = (momentum_max[ip] - momentum_min[ip]) / (dim[ip]-1);
                         momentum_min[ip] -= 0.99*momentum_delta[ip]*Rand::uniform();
                     } else {
@@ -260,7 +260,7 @@ void MergingVranicCartesian::operator() (
                 // Else momentum_min[ip] and momentum_max[ip] have opposite signs,
                 // The 0 value is at the boundary between 2 cells
                 } else {
-                    if (accumulation_correction) {
+                    if (accumulation_correction_) {
                         dim[ip] = int(dim[ip]*(1+Rand::uniform()));
                     }
                     momentum_delta[ip] = fabs(momentum_max[ip] - momentum_min[ip]) / dim[ip];

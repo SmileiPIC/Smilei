@@ -242,7 +242,7 @@ public:
     std::string merging_method_;
 
     //! Boolean to test if the species has the merging ready
-    bool has_merging;
+    bool has_merging_;
 
     //! Time selection for the particle merging
     TimeSelection *merging_time_selection_;
@@ -266,6 +266,12 @@ public:
 
     //! Discreatization in the momentum space (number of momentum cells in each direction)
     std::vector<unsigned int> merge_momentum_cell_size_;
+
+    //! Discretization scale
+    bool merge_log_scale_;
+    
+    //! Minimum momentum value in log scale
+    double merge_min_momentum_log_scale_;
 
     // -----------------------------------------------------------------------------
     //  4. Operators

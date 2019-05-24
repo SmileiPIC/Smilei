@@ -68,7 +68,7 @@ public:
     double min_momentum_cell_length_[3];
     
     // Active the accumultion correction
-    bool accumulation_correction;
+    bool accumulation_correction_;
 
 protected:
 

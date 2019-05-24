@@ -295,7 +295,7 @@ public:
 
         // Extract merging method
         thisSpecies->merging_method_ = "none"; // default value
-        thisSpecies->has_merging = false; // default value
+        thisSpecies->has_merging_ = false; // default value
         if( PyTools::extract( "merging_method", thisSpecies->merging_method_, "Species", ispec ) ) {
             // Cancelation of the letter case for `merging_method_`
             std::transform( thisSpecies->merging_method_.begin(),
@@ -410,8 +410,39 @@ public:
                     }
                 }
 
+                // Momentum cell discretization
+                std::string discretization_scale;
+                if( PyTools::extract( "merge_discretization_scale",
+                                      discretization_scale ,
+                                      "Species", ispec ) ) {
+                    if (discretization_scale == "linear") {
+                        thisSpecies->merge_log_scale_ = false;
+                    } else if (discretization_scale == "log") {
+                        thisSpecies->merge_log_scale_ = true;
+                        if (thisSpecies->merge_accumulation_correction_ == true)
+                        {
+                            thisSpecies->merge_accumulation_correction_ = false;
+                        }
+                    } else {
+                        ERROR( "In Species " << thisSpecies->name
+                               << ": The discretization scale (`discretization_scale`) must be `linear` "
+                               << "or `log`.");
+                    }
+                }
+
+                // Minimum momentum in log scale
+                if( PyTools::extract( "merge_min_momentum",
+                                      thisSpecies->merge_min_momentum_log_scale_,
+                                      "Species", ispec ) ) {
+                    if (thisSpecies->merge_min_momentum_log_scale_ <= 0) {
+                        ERROR( "In Species " << thisSpecies->name
+                               << ": The minimum momentum for log discretization scale (`merge_min_momentum`) "
+                               << "must be above 0.");
+                    }
+                }
+
                 // We activate the merging
-                thisSpecies->has_merging = true;
+                thisSpecies->has_merging_ = true;
             }
 
             // Information about the merging process
@@ -420,6 +451,17 @@ public:
                          << thisSpecies->merging_method_ );
                 MESSAGE( 3, "| Merging time selection: "
                          << thisSpecies->merging_time_selection_->info() );
+                if (thisSpecies->merge_log_scale_) {
+                    MESSAGE( 3, "| Discretization scale: log");
+                    MESSAGE( 3, "| Minimum momentum: " << thisSpecies->merge_min_momentum_log_scale_);
+                } else {
+                    MESSAGE( 3, "| Discretization scale: linear");
+                    if (thisSpecies->merge_accumulation_correction_) {
+                        MESSAGE( 3, "| Accumulation correction activated");
+                    } else {
+                        MESSAGE( 3, "| Accumulation correction disabled");
+                    }
+                }
                 MESSAGE( 3, "| Momentum cell discretization: "
                          << thisSpecies->merge_momentum_cell_size_[0] << " "
                          << thisSpecies->merge_momentum_cell_size_[1] << " "
@@ -436,8 +478,6 @@ public:
                          << thisSpecies->merge_min_packet_size_ );
                 MESSAGE( 3, "| Maximum particle packet size: "
                          << thisSpecies->merge_max_packet_size_ );
-                MESSAGE( 3, "| Accumulation correction: "
-                         << thisSpecies->merge_accumulation_correction_ );
             }
         }
 
@@ -916,8 +956,10 @@ public:
         newSpecies->densityProfileType                       = species->densityProfileType;
         newSpecies->vectorized_operators                     = species->vectorized_operators;
         newSpecies->merging_method_                          = species->merging_method_;
-        newSpecies->has_merging                              = species->has_merging;
+        newSpecies->has_merging_                             = species->has_merging_;
         newSpecies->merging_time_selection_                  = species->merging_time_selection_;
+        newSpecies->merge_log_scale_                         = species->merge_log_scale_;
+        newSpecies->merge_min_momentum_log_scale_            = species->merge_min_momentum_log_scale_;
         newSpecies->merge_min_particles_per_cell_            = species->merge_min_particles_per_cell_;
         newSpecies->merge_min_packet_size_                   = species->merge_min_packet_size_;
         newSpecies->merge_max_packet_size_                   = species->merge_max_packet_size_;
