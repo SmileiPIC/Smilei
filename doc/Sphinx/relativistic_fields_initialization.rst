@@ -72,11 +72,7 @@ allows to transform the derivatives in Eq. :eq:`Poisson` as
   
   \partial_{x'}=\gamma_0\left(\partial_x+\beta_0\partial_t\right), \quad \partial_{y'}=\partial_y, \quad \partial_{z'}=\partial_z. 
 
-<<<<<<< HEAD
 The partial derivative along the :math:`x'` direction can be further simplified, through the hypothesis of temporary dependence of all quantities on :math:`x-\beta_0 t`, implying :math:`\partial_t=-\beta_0\partial_x`:
-=======
-The partial derivative along the :math:`x'` direction can be further simplified, through the hypothesis of temporary dependence of all quantities on :math:`x-\beta_0 t`, implying :math:`\partial_t=-\beta_0 \partial_x`:
->>>>>>> 183e5487... add forgotten subscript in relativistic field initialization doc
 
 .. math::
   
@@ -91,11 +87,7 @@ Equation :eq:`Poisson` can thus be rewritten as
 
 here informally referred to as the relativistic Poisson's equation. In :program:`Smilei`, as for Eq. :eq:`Poisson`, the solution of the relativistic Poisson's equation is performed through the conjugate gradient method.
 
-<<<<<<< HEAD
 Once the potential :math:`\Phi` is found, we can compute all the components of the electromagnetic field, using again the relations :math:`\partial_t=-\beta_0\partial_x`, :math:`\Phi'=-\Phi/\gamma_0` and the Lorentz back-transformation of the vector potential :math:`\mathbf{A}`:
-=======
-Once the potential :math:`\Phi` is found, we can compute all the components of the electromagnetic field, using again the relations :math:`\partial_t=-\beta_0 \partial_x`, :math:`\Phi'=-\Phi/\gamma_0` and the Lorentz back-transformation of the vector potential :math:`\mathbf{A}`:
->>>>>>> 183e5487... add forgotten subscript in relativistic field initialization doc
 
 .. math::
   
