@@ -453,7 +453,8 @@ public:
                          << thisSpecies->merging_time_selection_->info() );
                 if (thisSpecies->merge_log_scale_) {
                     MESSAGE( 3, "| Discretization scale: log");
-                    MESSAGE( 3, "| Minimum momentum: " << thisSpecies->merge_min_momentum_log_scale_);
+                    MESSAGE( 3, "| Minimum momentum: " << std::scientific << std::setprecision(5)
+                    << thisSpecies->merge_min_momentum_log_scale_);
                 } else {
                     MESSAGE( 3, "| Discretization scale: linear");
                     if (thisSpecies->merge_accumulation_correction_) {

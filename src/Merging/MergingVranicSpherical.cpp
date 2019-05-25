@@ -233,41 +233,51 @@ void MergingVranicSpherical::operator() (
             phi_max = fmax(phi_max,particles_phi[ipr]);
         }
 
-        if (log_scale_) {
-            // Computation of the maxima and minima for each direction
-            mr_min = log10(fmax(mr_min,min_momentum_log_scale_));
-            mr_max = log10(fmax(mr_max,min_momentum_log_scale_));
-        }
-
-        // Extra to include the max in the discretization
-        // mr_max += (mr_max - mr_min)*0.01;
-        // theta_max += (theta_max - theta_min)*0.01;
-        // phi_max += (phi_max - phi_min)*0.01;
-
         // Computation of the deltas (discretization steps)
         // Check if min and max boundaries are very close
-        mr_interval = fabs(mr_max - mr_min);
-        if (mr_interval < min_momentum_cell_length_[0]) {
-            mr_delta = min_momentum_cell_length_[0];
-            inv_mr_delta = 0;
-            mr_dim = 1;
-        } else {
-            if (mr_dim == 1) {
-                mr_max += (mr_interval)*0.01;
-                mr_interval = fabs(mr_max - mr_min);
-                mr_delta = mr_interval;
-                inv_mr_delta = 1./mr_delta;
+        // Log scale
+        if (log_scale_) {
+            mr_min = fmax(mr_min,min_momentum_log_scale_);
+            mr_max = fmax(mr_max,min_momentum_log_scale_);
+            mr_interval = fabs(mr_max - mr_min);
+            // mr_min and mr_max are very close
+            if (mr_interval < min_momentum_cell_length_[0]) {
+                mr_delta = min_momentum_cell_length_[0];
+                inv_mr_delta = 0;
+                mr_dim = 1;
+                mr_min = log10(mr_min);
+                mr_max = log10(mr_max);
             } else {
-                if (accumulation_correction_) {
-                    mr_delta = (mr_interval) / (mr_dim-1);
-                    // A bit of chaos to kill the accumulation effect
-                    mr_min -= 0.99*mr_delta*Rand::uniform();
+                mr_max += (mr_interval)*0.01;
+                mr_min = log10(mr_min);
+                mr_max = log10(mr_max);
+                mr_delta = fabs(mr_max - mr_min) / (mr_dim);
+                inv_mr_delta = 1./mr_delta;
+            }
+        // Linear scale
+        } else {
+            mr_interval = fabs(mr_max - mr_min);
+            if (mr_interval < min_momentum_cell_length_[0]) {
+                mr_delta = min_momentum_cell_length_[0];
+                inv_mr_delta = 0;
+                mr_dim = 1;
+            } else {
+                if (mr_dim == 1) {
+                    mr_max += (mr_interval)*0.01;
+                    mr_interval = fabs(mr_max - mr_min);
+                    mr_delta = mr_interval;
                     inv_mr_delta = 1./mr_delta;
                 } else {
-                    mr_max += (mr_interval)*0.01;
-                    mr_delta = (mr_max - mr_min) / (mr_dim);
-                    // A bit of chaos to kill the accumulation effect
-                    inv_mr_delta = 1./mr_delta;
+                    if (accumulation_correction_) {
+                        mr_delta = (mr_interval) / (mr_dim-1);
+                        // A bit of chaos to kill the accumulation effect
+                        mr_min -= 0.99*mr_delta*Rand::uniform();
+                        inv_mr_delta = 1./mr_delta;
+                    } else {
+                        mr_max += (mr_interval)*0.01;
+                        mr_delta = (mr_max - mr_min) / (mr_dim);
+                        inv_mr_delta = 1./mr_delta;
+                    }
                 }
             }
         }
