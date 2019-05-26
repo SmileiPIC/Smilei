@@ -390,7 +390,9 @@ void MergingVranicSpherical::operator() (
 
             }
 
-
+            // ---------------------------------------------------------------------------------------------------------
+            // Checkpoint for debugging
+            //
             // if (isnan(theta_min[phi_i])
             //   || isnan(theta_max[phi_i])
             //    ) {
@@ -413,6 +415,7 @@ void MergingVranicSpherical::operator() (
             //               << " theta_interval: " << fabs(theta_max_ref - theta_min_ref)
             //               << std::endl;
             // }
+            // ---------------------------------------------------------------------------------------------------------
 
         }
 
@@ -508,15 +511,26 @@ void MergingVranicSpherical::operator() (
                 momentum_cell_index[ipr] = (theta_start_index[phi_i]
                                         + theta_i) * mr_dim + mr_i;
 
-                    // std::cerr << "momentum_cell_index: " << momentum_cell_index[ipr]
-                    //           << " momentum_norm: " << momentum_norm[ipr]
-                    //           << " particles_theta: " << particles_theta[ipr]
-                    //           << " particles_phi: " << particles_phi[ipr]
-                    //           << " phi_i: " << phi_i
-                    //           << " theta_i: " << theta_i
-                    //           << " mr_i: " << mr_i
-                    //           << std::endl;
+                // -----------------------------------------------------------------------------------------------------
+                // Checkpoint for debugging
 
+                if ( (mr_i < 0 || mr_i > (mr_dim-1) || isnan(mr_i))
+                     || (phi_i < 0 || phi_i > (phi_dim-1) || isnan(phi_i))
+                     || (theta_i < 0 || theta_i > (theta_dim[phi_i]-1) || isnan(theta_i))
+                    )
+                {
+                    std::cerr << " momentum_cell_index: " << momentum_cell_index[ipr]
+                              << " theta_start_index: " << theta_start_index[phi_i]
+                              << " momentum_norm: " << momentum_norm[ipr]
+                              << " particles_theta: " << particles_theta[ipr]
+                              << " particles_phi: " << particles_phi[ipr]
+                              << " phi_i: " << phi_i
+                              << " theta_i: " << theta_i
+                              << " mr_i: " << mr_i
+                              << std::endl;
+                }
+                // -----------------------------------------------------------------------------------------------------
+                
             }
         } else {
             #pragma omp simd \
