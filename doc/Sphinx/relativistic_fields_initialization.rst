@@ -42,7 +42,7 @@ An important assumption of this calculation is that the species is highly relati
 
   \left(\mathbf{J},\rho\right) = \left(\rho \beta_0 , 0, 0, \rho \right),
 
-where :math:`\beta_0` is the initial mean velocity of the relativistic species. At least locally, the potentials :math:`\mathbf{A}`, :math:`\Phi` in the laboratory frame will be only function of :math:`x-\beta_0 t`, as they are propagating with the species at uniform velocity.
+where :math:`\beta_0` is the initial mean velocity of the relativistic species. At least locally, the potentials :math:`\mathbf{A}`, :math:`\Phi` in the laboratory frame will be only function of :math:`x-\beta_0 t`, as they are propagating with the species at uniform relativistic velocity.
 
 In the relativistic species rest frame :math:`S'`, the charge distribution is static and the electrostatic potential in that reference frame :math:`\Phi'` is related to the charge density in that reference frame :math:`\rho'` through Poisson's equation:
 

@@ -441,9 +441,9 @@ void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gam
     double m_sq_dl                   = (double)(imode*imode)*dl;
     double j_;
     unsigned int j_min =max(1,isYmin*3); // prevent a segmentation fault
-    unsigned int i_min =1; //max(1,(int)(index_min_p_[0]));
-    unsigned int i_max = nl_p-1; //index_max_p_[0]; 
-    unsigned int j_max = nr_p-1; //index_max_p_[0]; 
+    unsigned int i_min =1; 
+    unsigned int i_max = nl_p-1; 
+    unsigned int j_max = nr_p-1; 
    
     // vector product Ap = A*p
     for( unsigned int i=i_min; i<i_max; i++ ) {
@@ -465,16 +465,6 @@ void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gam
                                + j_ * dl * 2.                 * (                                       ( *p_AM_ )( i, j+1 )-         ( *p_AM_ )( i  , j)  );                           
         }
     }
-
-//    if( patch->isYmax() ) {
-//        unsigned int j=index_max_p_[1]; // Von Neumann condition, radial derivative = 0
-//        j_ = (double)( j_glob_+j);
-//        for( unsigned int i=i_min; i<i_max; i++ ) {
-//            ( *Ap_AM_ )( i, j )= j_ * dr_sq_ov_dl_ov_gamma_sq * (          ( *p_AM_ )( i-1, j   )-2. *  ( *p_AM_ )( i, j   )+         ( *p_AM_ )( i+1, j ) )
-//                               + j_ * dl                      * (          ( *p_AM_ )( i  , j-1 )-      ( *p_AM_ )( i, j   )                               )
-//                               - m_sq_dl/ j_                  *                                         ( *p_AM_ )( i, j   );
-//        }
-//    }
 
     // Xmin BC
     if( patch->isXmin() ) { // p = phi = 0 on the left border
