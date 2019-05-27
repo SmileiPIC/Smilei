@@ -809,7 +809,7 @@ class TrackParticles(Diagnostic):
 			return
 
 		self._mkdir(self._exportDir)
-		fileprefix = self._exportDir + self._exportPrefix
+		fileprefix = self._exportDir + self._exportPrefix + "_" + rendering 
 
 		ntimes = len(self._timesteps)
 
@@ -837,7 +837,18 @@ class TrackParticles(Diagnostic):
 			data = self.getData()
 
 			for istep,step in enumerate(self._timesteps):
-				pcoords_step = self._np.stack((data[xaxis][istep],data["y"][istep],data["z"][istep])).transpose()
+				
+				data_clean_step = {}
+				
+				# Clean data at istep: remove NaN
+				mask = self._np.ones(len(data[self.axes[0]][istep]), dtype=bool)
+				for ax in self.axes:
+					mask = self._np.logical_and(mask,self._np.logical_not(self._np.isnan(self._np.asarray(data[ax][istep]))))
+				for ax in self.axes:
+					#print(ax,data[ax][istep])
+					data_clean_step[ax] = self._np.asarray(data[ax][istep])[mask]
+				
+				pcoords_step = self._np.stack((data_clean_step[xaxis],data_clean_step["y"],data_clean_step["z"])).transpose()
 				pcoords_step = self._np.ascontiguousarray(pcoords_step, dtype='float32')
 
 				# Convert pcoords that is a numpy array into vtkFloatArray
@@ -847,10 +858,10 @@ class TrackParticles(Diagnostic):
 				attributes = []
 				for ax in self.axes:
 					if ax not in ["x", "y", "z", "moving_x", "Id"]:
-						attributes += [vtk.Array(self._np.ascontiguousarray(data[ax][istep].flatten(),'float32'),ax)]
+						attributes += [vtk.Array(self._np.ascontiguousarray(data_clean_step[ax].flatten(),'float32'),ax)]
 					# Integer arrays
 					elif ax == "Id":
-						attributes += [vtk.Array(self._np.ascontiguousarray(data[ax][istep].flatten(),'int32'),ax)]
+						attributes += [vtk.Array(self._np.ascontiguousarray(data_clean_step[ax].flatten(),'int32'),ax)]
 
 				vtk.WriteCloud(pcoords_step, attributes, data_format, fileprefix+"_{:06d}.{}".format(step,extension))
 				print("Exportation of {}_{:06d}.{}".format(fileprefix,step,extension))
