@@ -436,6 +436,57 @@ class Diagnostic(object):
 		# Movie ?
 		if mov.writer is not None: mov.finish()
 
+
+	def slide(self, axes=None, **kwargs):
+		""" Plots the diagnostic with a slider to change the timestep
+		If the data is 1D, it is plotted as a curve
+		If the data is 2D, it is plotted as a map
+		If the data is 0D, it is plotted as a curve as function of time
+
+		Parameters:
+		-----------
+		figure: int (default: 1)
+			The figure number that is passed to matplotlib.
+		axes: (default: None)
+			Matplotlib's axes handle on which to plot. If None, make new axes.
+		vmin, vmax: floats (default to the current limits)
+			Data value limits.
+		xmin, xmax, ymin, ymax: floats (default to the current limits)
+			Axes limits.
+		xfactor, yfactor: floats (default: 1)
+			Factors to rescale axes.
+
+		Example:
+		--------
+			S = happi.Open("path/to/my/results")
+			S.ParticleBinning(1).slide(vmin=0, vmax=1e14)
+		"""
+		if not self._validate(): return
+		if not self._prepare(): return
+		if not self._setAndCheck(**kwargs): return
+		self.info()
+		ax = self._make_axes(axes)
+		fig = ax.figure
+		ax.set_position([0.1,0.2,0.85,0.7])
+		
+		from matplotlib.widgets import Slider
+		slider_axes = self._plt.axes([0.2, 0.05, 0.55, 0.03])
+		slider = Slider(slider_axes, 'time', self._timesteps[0], self._timesteps[-1], valinit=self._timesteps[0])
+		def update(t):
+			time = self._timesteps[(self._np.abs(self._timesteps - t)).argmin()]
+			self._animateOnAxes(ax, time)
+			self._plt.draw()
+		slider.on_changed(update)
+		
+		self._plotOnAxes(ax, self._timesteps[0])
+		
+		# We need to make a global variable to prevent garbage collecting
+		n = 0
+		while '_happi_slider%d'%n in globals(): n += 1
+		globals()['_happi_slider%d'%n] = slider
+		
+	
+	
 	# Method to select specific timesteps among those available in times
 	def _selectTimesteps(self, timesteps, times):
 		ts = self._np.array(self._np.double(timesteps),ndmin=1)
@@ -629,7 +680,8 @@ class Diagnostic(object):
 		self._plot, = ax.plot(self._tfactor*times, A, **self.options.plot)
 		ax.set_xlabel(self._tlabel)
 		self._setLimits(ax, xmax=self._tfactor*self._timesteps[-1], ymin=self.options.vmin, ymax=self.options.vmax)
-		self._setSomeOptions(ax, t)
+		self._setTitle(ax, t)
+		self._setOptions(ax)
 		return self._plot
 	def _plotOnAxes_1D(self, ax, t, cax_id=0):
 		A = self._dataAtTime(t)
@@ -638,7 +690,8 @@ class Diagnostic(object):
 		ax.set_xlabel(self._xlabel)
 		ax.set_ylabel(self._ylabel)
 		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.vmin, ymax=self.options.vmax)
-		self._setSomeOptions(ax, t)
+		self._setTitle(ax, t)
+		self._setOptions(ax)
 		return self._plot
 	def _plotOnAxes_2D(self, ax, t, cax_id=0):
 		A = self._dataAtTime(t)
@@ -649,7 +702,8 @@ class Diagnostic(object):
 		ax.cax = {}
 		if "aspect" not in self.options.colorbar.keys() or self.options.colorbar["aspect"]>0:
 			ax.cax[cax_id] = ax.figure.colorbar(mappable=self._plot, ax=ax, use_gridspec=False, **self.options.colorbar)
-		self._setSomeOptions(ax, t)
+		self._setTitle(ax, t)
+		self._setOptions(ax)
 		return self._plot
 
 	# Methods to re-plot
@@ -660,6 +714,7 @@ class Diagnostic(object):
 		self._plot.set_ydata( A )
 		ax.relim()
 		self._setLimits(ax, xmax=self._tfactor*self._timesteps[-1], ymin=self.options.vmin, ymax=self.options.vmax)
+		self._setTitle(ax, t)
 		return self._plot
 	def _animateOnAxes_1D(self, ax, t, cax_id=0):
 		A = self._dataAtTime(t)
@@ -667,6 +722,7 @@ class Diagnostic(object):
 		self._plot.set_ydata(A)
 		ax.relim()
 		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.vmin, ymax=self.options.vmax)
+		self._setTitle(ax, t)
 		return self._plot
 	def _animateOnAxes_2D(self, ax, t, cax_id=0):
 		A = self._dataAtTime(t)
@@ -678,6 +734,7 @@ class Diagnostic(object):
 		if vmax is None: vmax = A.max()
 		self._plot.set_clim(vmin, vmax)
 		ax.cax[cax_id].set_clim(vmin, vmax)
+		self._setTitle(ax, t)
 		return self._plot
 
 	# Special case: 2D plot
@@ -692,13 +749,14 @@ class Diagnostic(object):
 		return self._plot
 
 	# set options during animation
-	def _setSomeOptions(self, ax, t=None):
+	def _setTitle(self, ax, t=None):
 		title = []
 		if self._vlabel:
 			title += [self._vlabel]
 		if t is not None:
 			title += ["t = %.2f "%(t*self.timestep*self.units.tcoeff)+self.units.tname]
 		ax.set_title("  ".join(title))
+	def _setOptions(self, ax):
 		for option, value in self.options.axes.items():
 			if type(value) is dict:
 				getattr(ax, "set_"+option)( **value )
