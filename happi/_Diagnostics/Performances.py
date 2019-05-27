@@ -456,13 +456,8 @@ class Performances(Diagnostic):
 				0., self._xfactor*self._number_of_patches[0]*self._patch_length[0],
 				0., self._yfactor*self._number_of_patches[1]*self._patch_length[1]
 			]
-
-
-	def _animateOnAxes_2D_(self, ax, A):
-		# Display the data
-		im = ax.imshow( self._np.flipud(A),
-			vmin = self.options.vmin, vmax = self.options.vmax, extent=self._extent, **self.options.image)
-
+	
+	def _calculateMPIcontours_2D(self):
 		# Add lines to visualize MPI contours
 		# Vertical lines
 		vlines_i    = []
@@ -478,7 +473,6 @@ class Performances(Diagnostic):
 		vlines_i    = self._np.concatenate( vlines_i    )*self._xfactor*self._patch_length[0]
 		vlines_jmin = self._np.concatenate( vlines_jmin )*self._yfactor*self._patch_length[1]
 		vlines_jmax = self._np.concatenate( vlines_jmax )*self._yfactor*self._patch_length[1]
-		ax.vlines( vlines_i, vlines_jmin, vlines_jmax, **self.options.plot)
 
 		# Horizontal lines
 		hlines_j    = []
@@ -494,6 +488,23 @@ class Performances(Diagnostic):
 		hlines_j    = self._np.concatenate( hlines_j    )*self._yfactor*self._patch_length[1]
 		hlines_imin = self._np.concatenate( hlines_imin )*self._xfactor*self._patch_length[0]
 		hlines_imax = self._np.concatenate( hlines_imax )*self._xfactor*self._patch_length[0]
-		ax.hlines( hlines_j, hlines_imin, hlines_imax, **self.options.plot)
+		
+		return vlines_i, vlines_jmin, vlines_jmax, hlines_j, hlines_imin, hlines_imax
+	
+	def _plotOnAxes_2D_(self, ax, A):
+		# Display the data
+		self._plot = ax.imshow( self._np.flipud(A),
+			vmin = self.options.vmin, vmax = self.options.vmax, extent=self._extent, **self.options.image)
+		vlines_i, vlines_jmin, vlines_jmax, hlines_j, hlines_imin, hlines_imax = self._calculateMPIcontours_2D()
+		self._vlines = ax.vlines( vlines_i, vlines_jmin, vlines_jmax, **self.options.plot)
+		self._hlines = ax.hlines( hlines_j, hlines_imin, hlines_imax, **self.options.plot)
+		return self._plot
 
-		return im
+	def _animateOnAxes_2D_(self, ax, A):
+		# Display the data
+		self._plot.set_data( self._np.flipud(A))
+		vlines_i, vlines_jmin, vlines_jmax, hlines_j, hlines_imin, hlines_imax = self._calculateMPIcontours_2D()
+		ax.collections = [c for c in ax.collections if c not in [self._vlines,self._hlines]]
+		self._vlines = ax.vlines( vlines_i, vlines_jmin, vlines_jmax, **self.options.plot)
+		self._hlines = ax.hlines( hlines_j, hlines_imin, hlines_imax, **self.options.plot)
+		return self._plot
