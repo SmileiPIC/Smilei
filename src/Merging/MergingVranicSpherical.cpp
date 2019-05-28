@@ -91,29 +91,34 @@ void MergingVranicSpherical::operator() (
         unsigned int theta_dim_ref = dimensions_[1];
         unsigned int theta_dim_min = 1;
         unsigned int phi_dim = dimensions_[2];
-        std::vector <unsigned int> theta_dim(phi_dim,0);
+        //std::vector <unsigned int> theta_dim(phi_dim,0);
+        unsigned int  * theta_dim = (unsigned int*) aligned_alloc(64, phi_dim*sizeof(unsigned int));
 
         // Minima
         double mr_min;
         double theta_min_ref;
-        std::vector <double> theta_min(phi_dim,0);
+        //std::vector <double> theta_min(phi_dim,0);
+        double  * theta_min = (double*) aligned_alloc(64, phi_dim*sizeof(double));
         double phi_min;
 
         // Maxima
         double mr_max;
         double theta_max_ref;
-        std::vector <double> theta_max(phi_dim,0);
+        //std::vector <double> theta_max(phi_dim,0);
+        double  * theta_max = (double*) aligned_alloc(64, phi_dim*sizeof(double));
         double phi_max;
 
         // Delta
         double mr_delta;
         double theta_delta_ref;
-        std::vector <double> theta_delta(phi_dim,0);
+        //std::vector <double> theta_delta(phi_dim,0);
+        double  * theta_delta = (double*) aligned_alloc(64, phi_dim*sizeof(double));
         double phi_delta;
 
         // Inverse Delta
         double inv_mr_delta;
-        std::vector <double> inv_theta_delta(phi_dim,0);
+        //std::vector <double> inv_theta_delta(phi_dim,0);
+        double  * inv_theta_delta = (double*) aligned_alloc(64, phi_dim*sizeof(double));
         double inv_phi_delta;
 
         // Interval
@@ -185,13 +190,6 @@ void MergingVranicSpherical::operator() (
         // std::vector <double> particles_theta(number_of_particles,0);
         double  * particles_phi = (double*) aligned_alloc(64, number_of_particles*sizeof(double));
         double  * particles_theta = (double*) aligned_alloc(64, number_of_particles*sizeof(double));
-
-        // Arrays for inefficient vectorization strategy
-        // double  * momentum_x_loc = (double*) aligned_alloc(64, max_packet_size_*sizeof(double));
-        // double  * momentum_y_loc = (double*) aligned_alloc(64, max_packet_size_*sizeof(double));
-        // double  * momentum_z_loc = (double*) aligned_alloc(64, max_packet_size_*sizeof(double));
-        // double  * weight_loc = (double*)  aligned_alloc(64, max_packet_size_*sizeof(double));
-        // unsigned int ipp;
 
         // Computation of the particle momentum properties
         #pragma omp simd aligned(momentum_norm, particles_theta, particles_phi: 64) private(ipr)
@@ -421,12 +419,14 @@ void MergingVranicSpherical::operator() (
 
         // Total number of momentum cells
         unsigned int momentum_cells = 0;
+        #pragma omp simd reduction(+:momentum_cells)
         for(phi_i=0 ; phi_i < phi_dim ; phi_i++) {
             momentum_cells += theta_dim[phi_i] * mr_dim;
         }
 
         // Total number of angular momentum cells
         unsigned int momentum_angular_cells = 0;
+        #pragma omp simd reduction(+:momentum_angular_cells)
         for(phi_i=0 ; phi_i < phi_dim ; phi_i++) {
             momentum_angular_cells += theta_dim[phi_i];
         }
@@ -490,9 +490,13 @@ void MergingVranicSpherical::operator() (
         // requested discretization.
         // This loop can be efficiently vectorized
         if (log_scale_) {
+#ifdef __INTEL_COMPILER
+            #pragma novector
+#else
             #pragma omp simd \
             aligned(momentum_norm, particles_theta, particles_phi: 64) \
-            aligned(momentum_cell_index: 64)
+            aligned(momentum_cell_index: 64) private(phi_i,theta_i,mr_i)
+#endif
             for (ipr= 0; ipr < number_of_particles ; ipr++ ) {
                 
                 // index in the radial direction mr
@@ -513,22 +517,21 @@ void MergingVranicSpherical::operator() (
 
                 // -----------------------------------------------------------------------------------------------------
                 // Checkpoint for debugging
-
-                if ( (mr_i < 0 || mr_i > (mr_dim-1) || isnan(mr_i))
-                     || (phi_i < 0 || phi_i > (phi_dim-1) || isnan(phi_i))
-                     || (theta_i < 0 || theta_i > (theta_dim[phi_i]-1) || isnan(theta_i))
-                    )
-                {
-                    std::cerr << " momentum_cell_index: " << momentum_cell_index[ipr]
-                              << " theta_start_index: " << theta_start_index[phi_i]
-                              << " momentum_norm: " << momentum_norm[ipr]
-                              << " particles_theta: " << particles_theta[ipr]
-                              << " particles_phi: " << particles_phi[ipr]
-                              << " phi_i: " << phi_i
-                              << " theta_i: " << theta_i
-                              << " mr_i: " << mr_i
-                              << std::endl;
-                }
+                // if ( (mr_i < 0 || mr_i > (mr_dim-1) || isnan(mr_i))
+                //      || (phi_i < 0 || phi_i > (phi_dim-1) || isnan(phi_i))
+                //      || (theta_i < 0 || theta_i > (theta_dim[phi_i]-1) || isnan(theta_i))
+                //     )
+                // {
+                //     std::cerr << " momentum_cell_index: " << momentum_cell_index[ipr]
+                //               << " theta_start_index: " << theta_start_index[phi_i]
+                //               << " momentum_norm: " << momentum_norm[ipr]
+                //               << " particles_theta: " << particles_theta[ipr]
+                //               << " particles_phi: " << particles_phi[ipr]
+                //               << " phi_i: " << phi_i
+                //               << " theta_i: " << theta_i
+                //               << " mr_i: " << mr_i
+                //               << std::endl;
+                // }
                 // -----------------------------------------------------------------------------------------------------
                 
             }
@@ -547,15 +550,19 @@ void MergingVranicSpherical::operator() (
                 momentum_cell_index[ipr] = (theta_start_index[phi_i]
                                         + theta_i) * mr_dim + mr_i;
 
-                    // std::cerr << "momentum_cell_index: " << momentum_cell_index[ipr]
-                    //           << " momentum_norm: " << momentum_norm[ipr]
-                    //           << " particles_theta: " << particles_theta[ipr]
-                    //           << " particles_phi: " << particles_phi[ipr]
-                    //           << " phi_i: " << phi_i
-                    //           << " theta_i: " << theta_i
-                    //           << " mr_i: " << mr_i
-                    //           << std::endl;
-
+                // -----------------------------------------------------------------------------------------------------
+                // Checkpoint for debugging
+                //
+                // std::cerr << "momentum_cell_index: " << momentum_cell_index[ipr]
+                //           << " momentum_norm: " << momentum_norm[ipr]
+                //           << " particles_theta: " << particles_theta[ipr]
+                //           << " particles_phi: " << particles_phi[ipr]
+                //           << " phi_i: " << phi_i
+                //           << " theta_i: " << theta_i
+                //           << " mr_i: " << mr_i
+                //           << std::endl;
+                // -----------------------------------------------------------------------------------------------------
+                
             }
         }
 
@@ -823,6 +830,9 @@ void MergingVranicSpherical::operator() (
                                     count--;
                                 }
 
+                                // -------------------------------------------------------------------------------------
+                                // Checkpoint for debugging
+
                                 // double phi2 = asin(momentum[2][ip] / mr);
                                 // double theta2 = atan2(momentum[1][ip] , momentum[0][ip]);
                                 // if (isnan(momentum[0][ip])
@@ -867,6 +877,7 @@ void MergingVranicSpherical::operator() (
                                 //           )
                                 //     //<< std::endl;
                                 // }
+                                // -------------------------------------------------------------------------------------
                                 
                             // Special treatment for collinear photons
                             // Collinear particles are merged
