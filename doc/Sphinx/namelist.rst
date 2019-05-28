@@ -583,7 +583,6 @@ Each species has to be defined in a ``Species`` block::
       merge_max_packet_size = 4,
       merge_min_packet_size = 2,
       merge_momentum_cell_size = [32,16,16],
-      merge_min_momentum_cell_length = [1e-10, 1e-10, 1e-10],
   )
 
 .. py:data:: name
@@ -897,9 +896,10 @@ It is defined in the ``Species`` block::
       merge_max_packet_size = 4,
       merge_min_packet_size = 2,
       merge_momentum_cell_size = [32,16,16],
+      merge_discretization_scale = "linear",
       # Extra parameters for experts:
       merge_min_momentum_cell_length = [1e-10, 1e-10, 1e-10],
-      merge_accumulation_correction = True
+      merge_accumulation_correction = True,
   )
 
 .. py:data:: merging_method
@@ -942,19 +942,37 @@ It is defined in the ``Species`` block::
 
   The momentum space discretization.
 
+.. py:data:: merge_discretization_scale
+
+  :default: ``linear``
+
+  The momentum discretization scale. The scale can be ``linear`` or ``log``.
+  In logarithmic scale, Smilei needs a minimum momentum value to avoid 0.
+  This value is provided by the parameter ``merge_min_momentum``.
+  By default, this value is set to :math:`10^{-5}`.
+
+.. py:data:: merge_min_momentum
+
+  :default: ``1e-5``
+
+  :red:`[for experts]` The minimum momentum value when the log scale is chosen (``merge_discretization_scale = log``).
+  To set a minimum value is compulsory to avoid the potential 0 value in the log domain.
+
 .. py:data:: merge_min_momentum_cell_length
 
   :default: ``[1e-10,1e-10,1e-10]``
 
   :red:`[for experts]` The minimum momentum cell length for the discretization.
   If the specified discretization induces smaller momentum cell length,
-  then the momentum cell size is set to 1 in this direction.
+  then the number of momentum cell (momentum cell size) is set to 1 in this direction.
 
 .. py:data:: merge_accumulation_correction
 
   :default: ``True``
 
-  :red:`[for experts]` Activation of the accumulation correction. (see :ref:`vranic_accululation_effect` for more information)
+  :red:`[for experts]` Activation of the accumulation correction (see :ref:`vranic_accululation_effect` for more information). The correction only works in linear scale.
+
+
 
 ----
 
