@@ -38,6 +38,13 @@ MergingVranicCartesian::MergingVranicCartesian(Params& params,
     
     // Accumulation correction
     accumulation_correction_ = species->merge_accumulation_correction_;
+    
+    // Discretization scale
+    log_scale_ = species->merge_log_scale_;
+    
+    // Minimum momentum value in log scale
+    min_momentum_log_scale_ = species->merge_min_momentum_log_scale_;
+    
 }
 
 // -----------------------------------------------------------------------------

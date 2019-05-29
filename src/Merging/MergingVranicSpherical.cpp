@@ -921,6 +921,11 @@ void MergingVranicSpherical::operator() (
         free(particles_per_momentum_cells);
         free(momentum_cell_particle_index);
         free(theta_start_index);
+        free(theta_dim);
+        free(theta_min);
+        free(theta_max);
+        free(theta_delta);
+        free(inv_theta_delta);
     }
 
 }
