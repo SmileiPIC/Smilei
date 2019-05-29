@@ -699,7 +699,8 @@ class Diagnostic(object):
 		ax.set_xlabel(self._xlabel)
 		ax.set_ylabel(self._ylabel)
 		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.ymin, ymax=self.options.ymax)
-		ax.cax = {}
+		if 'cax' not in dir(ax):
+			ax.cax = {}
 		if "aspect" not in self.options.colorbar.keys() or self.options.colorbar["aspect"]>0:
 			ax.cax[cax_id] = ax.figure.colorbar(mappable=self._plot, ax=ax, use_gridspec=False, **self.options.colorbar)
 		self._setTitle(ax, t)
