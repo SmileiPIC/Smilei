@@ -284,7 +284,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     // Number of modes in AMcylindrical geometry
     PyTools::extract( "number_of_AM", nmodes, "Main" );
 
-    nmodes_rel_field_init = nmodes;
+    nmodes_rel_field_init = 1;
 
     // Number of modes in AMcylindrical geometry for relativistic field initialization
     // if not specified, it will be equal to the number of modes of the simulation
