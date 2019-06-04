@@ -151,7 +151,7 @@ void Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI *s
         // master checks whenever we passed the time limit
         if( smpi->isMaster() && time_dump_step==0 ) {
             double elapsed_time = ( MPI_Wtime() - time_reference )/60.;
-            if( elapsed_time > dump_minutes*( dump_number+1 ) ) {
+            if( elapsed_time > dump_minutes ) {
                 time_dump_step = itime+1; // we will dump at next timestep (in case non-master already passed)
                 MESSAGE( "Reached time limit : " << elapsed_time << " minutes. Dump timestep : " << time_dump_step );
                 // master does a non-blocking send
@@ -177,6 +177,7 @@ void Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI *s
         }
         signal_received=0;
         time_dump_step=0;
+        time_reference = MPI_Wtime();
     }
 }
 
