@@ -56,7 +56,7 @@ public:
                 }
 #ifdef _VECTO
                 else {
-                    Push = new PusherBorisV( params, species );
+                    Push = new PusherBoris( params, species );
                 }
 #endif
             } else if( species->pusher == "ponderomotive_boris" ) {
@@ -75,7 +75,7 @@ public:
                 }
 #ifdef _VECTO
                 else {
-                    Push = new PusherPonderomotiveBorisV( params, species );
+                    Push = new PusherPonderomotiveBoris( params, species );
                 }
 #endif
             } else if( species->pusher == "borisnr" ) {
@@ -127,7 +127,7 @@ public:
                 }
 #ifdef _VECTO
                 else {
-                    Push_ponderomotive_position = new PusherPonderomotivePositionBorisV( params, species );
+                    Push_ponderomotive_position = new PusherPonderomotivePositionBoris( params, species );
                 }
 #endif
             }
