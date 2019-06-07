@@ -188,6 +188,7 @@ class Main(SmileiSingleton):
     uncoupled_grids = False
     global_factor = []
     norder = []
+    pseudo_spectral_guardells = 0
     is_spectral = False
     is_pxr = False
 

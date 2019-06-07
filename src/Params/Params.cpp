@@ -523,6 +523,13 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     //norderx=norder[0];
     //nordery=norder[1];
     //norderz=norder[2];
+
+    if ( is_spectral && geometry == "AMcylindrical" ) {
+        PyTools::extract( "pseudo_spectral_guardells", pseudo_spectral_guardells, "Main" );
+        if (!pseudo_spectral_guardells) {
+            ERROR( "You must specify Main.pseudo_spectral_guardells with is_spectral=True in AM" );
+        }
+    }
     
     
     if( PyTools::extract( "patch_arrangement", patch_arrangement, "Main" ) ) {
@@ -871,10 +878,6 @@ void Params::compute()
     //Define number of cells per patch and number of ghost cells 
     for( unsigned int i=0; i<nDim_field; i++ ) {
         oversize[i]  = max( interpolation_order, ( unsigned int )( norder[i]/2+1 ) ) + ( exchange_particles_each-1 );;
-        //Force zero ghost cells in R when spectral
-        if( is_spectral && geometry == "AMcylindrical" && i==1 ) {
-            oversize[i]=0 ;
-        }
         n_space_global[i] = n_space[i];
         n_space[i] /= number_of_patches[i];
         if( n_space_global[i]%number_of_patches[i] !=0 ) {
@@ -885,6 +888,12 @@ void Params::compute()
         }
         patch_dimensions[i] = n_space[i] * cell_length[i];
         n_cell_per_patch *= n_space[i];
+    }
+    if ( is_spectral && geometry == "AMcylindrical" )  {
+        //Force ghost cells number in L when spectral
+        oversize[0] = pseudo_spectral_guardells;
+        //Force zero ghost cells in R when spectral
+        oversize[1] = 0;
     }
     
     // Set clrw if not set by the user

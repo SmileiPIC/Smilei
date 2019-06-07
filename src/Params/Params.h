@@ -218,6 +218,8 @@ public:
     
     //! Oversize domain to exchange less particles
     std::vector<unsigned int> oversize;
+
+    unsigned int pseudo_spectral_guardells;
     
     //! True if restart requested
     bool restart;
