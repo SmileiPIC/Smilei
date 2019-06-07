@@ -223,7 +223,7 @@ class Units(object):
 				return 1., ""
 		return 1., ""
 
-	def prepare(self, reference_angular_frequency_SI=None, xunits="", yunits="", vunits="", tunits=""):
+	def prepare(self, reference_angular_frequency_SI=None):
 		if self.UnitRegistry:
 			if reference_angular_frequency_SI:
 				# Load pint's default unit registry
@@ -254,7 +254,9 @@ class Units(object):
 			self.ureg.define("B_r = M_r * W_r / Q_r "                 ) # magnetic field
 			self.ureg.define("E_r = B_r * V_r"                        ) # electric field
 			self.ureg.define("S_r = K_r * V_r * N_r"                  ) # poynting
-			# Convert units if possible
+	
+	def convertAxes(self, xunits="", yunits="", vunits="", tunits=""):
+		if self.UnitRegistry:
 			self.xcoeff, self.xname = self._convert(xunits, self.requestedX)
 			self.ycoeff, self.yname = self._convert(yunits, self.requestedY)
 			self.vcoeff, self.vname = self._convert(vunits, self.requestedV)
@@ -684,10 +686,12 @@ class VTKfile:
 				elif (attribute.GetDataType() == 10):
 					data_type = "float"
 				size = attribute.GetSize()
-				file_object.write("Scalar {} {} \n".format(attribute.GetName(),data_type))
+				file_object.write("POINT_DATA {} \n".format(pdata.GetNumberOfPoints()))
+				file_object.write("SCALARS {} {} \n".format(attribute.GetName(),data_type))
 				file_object.write("LOOKUP_TABLE default \n")
 				for i in range(0,size,8):
-					for j in range(8):
+					remaining = min(size - i,8)
+					for j in range(remaining):
 						file_object.write("{} ".format(attribute.GetValue(i + j)))
 					file_object.write("\n")
 

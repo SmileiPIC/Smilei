@@ -4,6 +4,8 @@ Vectorization
 For enhanced performances on most recent CPUs, :program:`Smilei` exploits
 efficiently vectorization using refactored and optimized operators.
 
+Vectorization optimizations are published in [Beck2019]_.
+
 ----
 
 Notion of Single Instruction Multiple Data (SIMD) Vectorization
@@ -76,11 +78,15 @@ Every given number of time steps, for each
 patch, and for each species, the most efficient operator is determined
 from the number of particles per cell.
 
-Adaptive vectorization has been validated on large-scale simulations.
-One of the case was the simulation of Mildly-relativistic collisionless.
-The simulation is illustrated by :numref:`weibel_3d_ne_vecto_it510_fig2`.
+Adaptive vectorization has been validated on large-scale simulations with
+different benchmarks.
 
-.. _weibel_3d_ne_vecto_it510_fig2:
+One of the case was the simulation of Mildly-relativistic collisionless shock.
+The effect of the adaptive vectorization mode is illustrated by :numref:`fig_weibel_3d_ne_vecto_it510`.
+The electron density is shown in the volume rendering of the top.
+The volume rendering at the bottom shows and patch computational state for the electron species.
+
+.. _fig_weibel_3d_ne_vecto_it510:
 
 .. figure:: _static/Weibel_3d_ne_vecto_it510.jpg
     :width: 90%
@@ -94,13 +100,24 @@ The simulation is illustrated by :numref:`weibel_3d_ne_vecto_it510_fig2`.
     mode for the electron species at the same time.
     An animated version of these can be viewed by clicking on this image.
 
-The electron density and the patch computational state for the electron species
-are shown.
-Adaptive vectorization puts the high-density regions rich in
-particles in vectorized mode.
+
+Thanks to the adaptive vectorization, high-density regions that contains many macro-particles per cell corresponds to the patches in vectorized mode.
 Incoming plasma flows, with 8 particles per cell in average, are in scalar mode.
+How the simulation configures dynamically in time the scalar and vectorized regions is demonstrated in the following video:
+
+.. _video_weibel_3d_ne_vecto_it510:
+
+.. raw:: html
+
+  <video style="display:block; margin: 0 auto; width: 100%;" controls src="http://www.maisondelasimulation.fr/projects/Smilei/uploads/videos/weibel_interp.mp4" width="100%">
+  </video>
+
 On examined cases, this method allows for speed-ups from x1.3 to x2 regarding only
 the macro-particle operators.
 
-This work has been recently submitted for publication
-and is avaliable on `ArXiV <https://arxiv.org/abs/1810.03949>`_.
+----
+
+References
+^^^^^^^^^^
+
+.. [Beck2019] `A. Beck et al., ArXiV 1810.03949 (2019) <https://arxiv.org/abs/1810.03949>`_

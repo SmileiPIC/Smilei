@@ -580,8 +580,8 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         PyTools::extract( "mode", vectorization_mode, "Vectorization" );
         if( !( vectorization_mode == "off" ||
                 vectorization_mode == "on" ||
-                vectorization_mode == "adaptive_mixed_sort" ||
-                vectorization_mode == "adaptive" ) ) {
+                vectorization_mode == "adaptive" ||
+                vectorization_mode == "adaptive_mixed_sort" ) ) {
             ERROR( "In block `Vectorization`, parameter `mode` must be `off`, `on`, `adaptive`" );
         } else if( vectorization_mode == "adaptive_mixed_sort" || vectorization_mode == "adaptive" ) {
             has_adaptive_vectorization = true;
@@ -606,24 +606,27 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     
         if( geometry!="1Dcartesian"
                 && geometry!="2Dcartesian"
-                && geometry!="3Dcartesian" )
+                && geometry!="3Dcartesian" ) {
             ERROR( "Collisions only valid for cartesian geometries for the moment" )
-            
-            if( vectorization_mode == "adaptive_mixed_sort" ) // collisions need sorting per cell
-                ERROR( "Collisions are incompatible with the vectorization mode 'adaptive_mixed_sort'." )
-                
-                if( vectorization_mode == "off" ) {
-                    if( geometry == "1Dcartesian" ) {
-                        WARNING( "For collisions, clrw is forced to 1" );
-                        clrw = 1;
-                    } else {
-                        WARNING( "For collisions, particles have been forced to be sorted per cell" );
-                        vectorization_mode = "adaptive";
-                        has_adaptive_vectorization = true;
-                        adaptive_default_mode = "off";
-                        adaptive_vecto_time_selection = new TimeSelection();
-                    }
-                }
+        }
+        
+        // collisions need sorting per cell
+        if( vectorization_mode == "adaptive_mixed_sort" ) {
+            ERROR( "Collisions are incompatible with the vectorization mode 'adaptive_mixed_sort'." )
+        }
+        
+        if( vectorization_mode == "off" ) {
+            if( geometry == "1Dcartesian" ) {
+                WARNING( "For collisions, clrw is forced to 1" );
+                clrw = 1;
+            } else {
+                WARNING( "For collisions, particles have been forced to be sorted per cell" );
+                vectorization_mode = "adaptive";
+                has_adaptive_vectorization = true;
+                adaptive_default_mode = "off";
+                adaptive_vecto_time_selection = new TimeSelection();
+            }
+        }
     }
     
     // Read the "print_every" parameter
