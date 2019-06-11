@@ -134,6 +134,7 @@ class Diagnostic(object):
 		--------
 		A list of [min, max] for each axis.
 		"""
+		self._prepare1()
 		l = []
 		factor = [self._xfactor, self._yfactor]
 		for i in range(self.dim):

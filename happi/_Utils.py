@@ -439,6 +439,8 @@ def multiPlot(*Diags, **kwargs):
 	ax = []
 	xmin =  float("inf")
 	xmax = -float("inf")
+	ymin =  float("inf")
+	ymax = -float("inf")
 	option_xmin = []
 	option_xmax = []
 	option_ymin = []
@@ -475,18 +477,18 @@ def multiPlot(*Diags, **kwargs):
 		if "color" not in Diag.options.plot:
 			Diag.options.plot.update({ "color":c[i%len(c)] })
 		Diag._prepare()
-		try:
-			l = Diag.limits()[0]
-			xmin = min(xmin,l[0])
-			xmax = max(xmax,l[1])
-		except:
-			pass
+		l = Diag.limits()
+		if Diag.options.xmin is None: xmin = min(xmin,l[0][0])
+		if Diag.options.xmax is None: xmax = max(xmax,l[0][1])
+		if len(l) > 1:
+			if Diag.options.ymin is None: ymin = min(ymin,l[1][0])
+			if Diag.options.ymax is None: ymax = max(ymax,l[1][1])
 	# Find min max
 	if option_xmin: xmin = min([xmin]+option_xmin)
 	if option_xmax: xmax = max([xmax]+option_xmax)
 	if option_ymin: ymin = min([ymin]+option_ymin)
 	if option_ymax: ymax = max([ymax]+option_ymax)
-
+	
 	# Static plot
 	if sameAxes and Diags[0].dim==0:
 		for Diag in Diags:
