@@ -876,8 +876,8 @@ Lasers
 ^^^^^^
 
 A laser consists in applying oscillating boundary conditions for the magnetic
-field on one of the box sides. The only boundary conditions that support lasers
-are ``"silver-muller"`` (see :py:data:`EM_boundary_conditions`).
+field on one of the box sides. The only boundary condition that supports lasers
+is ``"silver-muller"`` (see :py:data:`EM_boundary_conditions`).
 There are several syntaxes to introduce a laser in :program:`Smilei`:
 
 .. rubric:: 1. Defining a generic wave
