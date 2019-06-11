@@ -284,16 +284,33 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
 
 void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpecies, Params &params, hid_t patch_gid )
 {
-
-    dumpFieldsPerProc( patch_gid, EMfields->Ex_ );
-    dumpFieldsPerProc( patch_gid, EMfields->Ey_ );
-    dumpFieldsPerProc( patch_gid, EMfields->Ez_ );
-    dumpFieldsPerProc( patch_gid, EMfields->Bx_ );
-    dumpFieldsPerProc( patch_gid, EMfields->By_ );
-    dumpFieldsPerProc( patch_gid, EMfields->Bz_ );
-    dumpFieldsPerProc( patch_gid, EMfields->Bx_m );
-    dumpFieldsPerProc( patch_gid, EMfields->By_m );
-    dumpFieldsPerProc( patch_gid, EMfields->Bz_m );
+    if (  params.geometry != "AMcylindrical" ) {
+        dumpFieldsPerProc( patch_gid, EMfields->Ex_ );
+        dumpFieldsPerProc( patch_gid, EMfields->Ey_ );
+        dumpFieldsPerProc( patch_gid, EMfields->Ez_ );
+        dumpFieldsPerProc( patch_gid, EMfields->Bx_ );
+        dumpFieldsPerProc( patch_gid, EMfields->By_ );
+        dumpFieldsPerProc( patch_gid, EMfields->Bz_ );
+        dumpFieldsPerProc( patch_gid, EMfields->Bx_m );
+        dumpFieldsPerProc( patch_gid, EMfields->By_m );
+        dumpFieldsPerProc( patch_gid, EMfields->Bz_m );
+    }
+    else {
+        for ( unsigned int imode = 0 ; imode < params.nmodes ; imode++ ) {
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+            dump_cFieldsPerProc( patch_gid, emAM->El_[imode] );
+            dump_cFieldsPerProc( patch_gid, emAM->Er_[imode] );
+            dump_cFieldsPerProc( patch_gid, emAM->Et_[imode] );
+            dump_cFieldsPerProc( patch_gid, emAM->Bl_[imode] );
+            dump_cFieldsPerProc( patch_gid, emAM->Br_[imode] );
+            dump_cFieldsPerProc( patch_gid, emAM->Bt_[imode] );
+            dump_cFieldsPerProc( patch_gid, emAM->Bl_m[imode] );
+            dump_cFieldsPerProc( patch_gid, emAM->Br_m[imode] );
+            dump_cFieldsPerProc( patch_gid, emAM->Bt_m[imode] );
+            if(params.is_pxr == true)
+                dump_cFieldsPerProc( patch_gid, emAM->rho_old_AM_[imode] );
+        }
+    }
     
     if( EMfields->envelope!=NULL ) {
         dump_cFieldsPerProc( patch_gid, EMfields->envelope->A_ );
@@ -552,16 +569,35 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI *smpi, SimWindo
 
 void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &vecSpecies, Params &params, hid_t patch_gid )
 {
-    restartFieldsPerProc( patch_gid, EMfields->Ex_ );
-    restartFieldsPerProc( patch_gid, EMfields->Ey_ );
-    restartFieldsPerProc( patch_gid, EMfields->Ez_ );
-    restartFieldsPerProc( patch_gid, EMfields->Bx_ );
-    restartFieldsPerProc( patch_gid, EMfields->By_ );
-    restartFieldsPerProc( patch_gid, EMfields->Bz_ );
-    restartFieldsPerProc( patch_gid, EMfields->Bx_m );
-    restartFieldsPerProc( patch_gid, EMfields->By_m );
-    restartFieldsPerProc( patch_gid, EMfields->Bz_m );
+    if ( params.geometry != "AMcylindrical" ) {
+        restartFieldsPerProc( patch_gid, EMfields->Ex_ );
+        restartFieldsPerProc( patch_gid, EMfields->Ey_ );
+        restartFieldsPerProc( patch_gid, EMfields->Ez_ );
+        restartFieldsPerProc( patch_gid, EMfields->Bx_ );
+        restartFieldsPerProc( patch_gid, EMfields->By_ );
+        restartFieldsPerProc( patch_gid, EMfields->Bz_ );
+        restartFieldsPerProc( patch_gid, EMfields->Bx_m );
+        restartFieldsPerProc( patch_gid, EMfields->By_m );
+        restartFieldsPerProc( patch_gid, EMfields->Bz_m );
+    }
+    else {
+        for ( unsigned int imode = 0 ; imode < params.nmodes ; imode++ ) {
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+            restart_cFieldsPerProc( patch_gid, emAM->El_[imode] );
+            restart_cFieldsPerProc( patch_gid, emAM->Er_[imode] );
+            restart_cFieldsPerProc( patch_gid, emAM->Et_[imode] );
+            restart_cFieldsPerProc( patch_gid, emAM->Bl_[imode] );
+            restart_cFieldsPerProc( patch_gid, emAM->Br_[imode] );
+            restart_cFieldsPerProc( patch_gid, emAM->Bt_[imode] );
+            restart_cFieldsPerProc( patch_gid, emAM->Bl_m[imode] );
+            restart_cFieldsPerProc( patch_gid, emAM->Br_m[imode] );
+            restart_cFieldsPerProc( patch_gid, emAM->Bt_m[imode] );
+            if(params.is_pxr == true)
+                restart_cFieldsPerProc( patch_gid, emAM->rho_old_AM_[imode] );
+        }
+    }
     
+
     if( EMfields->envelope!=NULL ) {
         DEBUG( "restarting envelope" );
         restart_cFieldsPerProc( patch_gid, EMfields->envelope->A_ );
