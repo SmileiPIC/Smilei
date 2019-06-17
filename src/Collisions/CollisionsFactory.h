@@ -18,8 +18,8 @@ public:
         std::vector<std::string> sg1, sg2;
         std::vector<std::vector<unsigned int>> sgroup;
         double clog;
-        bool intra, ionizing;
-        int debug_every, Z, Z0, Z1;
+        bool intra;
+        int debug_every, Z, Z0, Z1, ionization_electrons;
         std::string filename;
         std::ostringstream mystream;
         Species *s0, *s;
@@ -73,10 +73,39 @@ public:
         PyTools::extract( "debug_every", debug_every, "Collisions", n_collisions );
         
         // Collisional ionization
-        ionizing = false;
         Z = 0; // default
-        PyTools::extract( "ionizing", ionizing, "Collisions", n_collisions );
-        if( ionizing ) {
+        PyObject * ionizing = PyTools::extract_py( "ionizing", "Collisions", n_collisions );
+        bool ionization = false;
+        ionization_electrons = -1;
+        
+        // If `ionizing` is a species name, then use that one
+        std::string ionization_electrons_name = "";
+        if( PyTools::convert( ionizing, ionization_electrons_name ) ) {
+            
+            for( int i=0; i<(int)vecSpecies.size(); i++ ) {
+                if( vecSpecies[i]->name == ionization_electrons_name ) {
+                    ionization_electrons = i;
+                    break;
+                }
+            }
+            if( ionization_electrons < 0 ) {
+                ERROR( "In collisions #" << n_collisions << ": ionizing in unknown species `" << ionization_electrons_name << "`" );
+            }
+            if( vecSpecies[ionization_electrons]->atomic_number != 0 ) {
+                ERROR( "In collisions #" << n_collisions << ": ionization species are not electrons (atomic_number>0)" );
+            }
+            ionization = true;
+        
+        } else if( ionizing == Py_True ) {
+            
+            ionization = true;
+        
+        } else if( ionizing != Py_False ) {
+            ERROR( "In collisions #" << n_collisions << ": `ionizing` must be True, False, or the name of an electron species" );
+        }
+        
+        if( ionization ) {
+            
             if( intra ) {
                 ERROR( "In collisions #" << n_collisions << ": cannot ionize with intra-collisions" );
             }
@@ -110,12 +139,16 @@ public:
             if( Z==0 ) {
                 ERROR( "In collisions #" << n_collisions << ": ionization requires ions (atomic_number>0)" );
             }
-            // Check whether electrons are tracked
-            if( Z0==0 ) {
-                tracked_electrons = vecSpecies[sgroup[0][0]]->particles->tracked;
-            } else if( Z1==0 ) {
-                tracked_electrons = vecSpecies[sgroup[1][0]]->particles->tracked;
+            // If ionizing = True, then select ionization electrons as 1st electron species
+            if( ionizing == Py_True ) {
+                if( Z0==0 ) {
+                    ionization_electrons = sgroup[0][0];
+                } else if( Z1==0 ) {
+                    ionization_electrons = sgroup[1][0];
+                }
             }
+            // Check whether electrons are tracked
+            tracked_electrons = vecSpecies[ionization_electrons]->particles->tracked;
         }
         
         // Print collisions parameters
@@ -139,7 +172,7 @@ public:
         }
         mystream.str( "" ); // clear
         if( ionizing>0 ) {
-            MESSAGE( 2, "Collisional ionization with atomic number "<<Z );
+            MESSAGE( 2, "Collisional ionization with atomic number "<<Z<<" towards species `"<<vecSpecies[ionization_electrons]->name << "`" );
         }
         
         // If debugging log requested
@@ -187,7 +220,7 @@ public:
                        clog, intra,
                        debug_every,
                        Z,
-                       ionizing,
+                       ionization_electrons,
                        tracked_electrons,
                        params.nDim_particle,
                        filename
@@ -201,7 +234,7 @@ public:
                        clog, intra,
                        debug_every,
                        Z,
-                       ionizing,
+                       ionization_electrons,
                        tracked_electrons,
                        params.nDim_particle,
                        filename

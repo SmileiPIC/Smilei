@@ -26,8 +26,8 @@ public:
                       bool intra_collisions,
                       int debug_every,
                       int Z,
-                      bool ionizing,
-                      bool tracked_electrons,
+                      int ionization_electrons,
+                      bool tracked,
                       int nDim,
                       std::string fname
                     ) : Collisions( params,
@@ -38,8 +38,8 @@ public:
                                         intra_collisions,
                                         debug_every,
                                         Z,
-                                        ionizing,
-                                        tracked_electrons,
+                                        ionization_electrons,
+                                        tracked,
                                         nDim,
                                         fname
                                       ) {} ;

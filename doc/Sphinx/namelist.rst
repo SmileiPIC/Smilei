@@ -1621,9 +1621,15 @@ Collisions
 
   :default: False
 
-  If ``True``, :ref:`collisional ionization <CollIonization>` will occur. One of the
-  species groups must be all electrons (:py:data:`mass` = 1), and the other one all ions of the
-  same :py:data:`atomic_number`.
+  :ref:`Collisional ionization <CollIonization>` is set when this parameter is not ``False``.
+  It can either be set to the name of a pre-existing electron species (where the ionized
+  electrons are created), or to ``True`` (the first electron species in :py:data:`species1`
+  or :py:data:`species2` is then chosen for ionized electrons).
+  
+  One of the species groups must be all electrons (:py:data:`mass` = 1), and the other
+  one all ions of the same :py:data:`atomic_number`.
+  
+  
 
 
 
