@@ -170,7 +170,7 @@ public:
             MESSAGE( 2, "Debug every " << debug_every << " timesteps" );
         }
         mystream.str( "" ); // clear
-        if( ionizing>0 ) {
+        if( ionization_electrons>0 ) {
             MESSAGE( 2, "Collisional ionization with atomic number "<<Z<<" towards species `"<<vecSpecies[ionization_electrons]->name << "`" );
         }
         
