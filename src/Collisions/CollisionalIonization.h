@@ -15,7 +15,7 @@ class CollisionalIonization
 
 public:
     //! Constructor
-    CollisionalIonization( int, int, double, int, bool );
+    CollisionalIonization( int, int, double, int, Particles* );
     //! Cloning Constructor
     CollisionalIonization( CollisionalIonization * );
     //! Destructor
@@ -107,7 +107,7 @@ private:
 class CollisionalNoIonization : public CollisionalIonization
 {
 public:
-    CollisionalNoIonization() : CollisionalIonization( 0, 0, 0., -1, false ) {};
+    CollisionalNoIonization() : CollisionalIonization( 0, 0, 0., -1, NULL ) {};
     ~CollisionalNoIonization() {};
     
     unsigned int createDatabase( double ) override

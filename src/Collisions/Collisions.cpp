@@ -26,7 +26,7 @@ Collisions::Collisions(
     int debug_every,
     int Z,
     int ionization_electrons,
-    bool tracked,
+    Particles * ionization_particles,
     int nDim,
     string filename
 ) :
@@ -41,7 +41,7 @@ Collisions::Collisions(
 {
     // Create the ionization object
     if( ionization_electrons >= 0 ) {
-        Ionization = new CollisionalIonization( Z, nDim, params.reference_angular_frequency_SI, ionization_electrons, tracked );
+        Ionization = new CollisionalIonization( Z, nDim, params.reference_angular_frequency_SI, ionization_electrons, ionization_particles );
     } else {
         Ionization = new CollisionalNoIonization();
     }

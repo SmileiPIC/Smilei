@@ -23,7 +23,6 @@ public:
         std::string filename;
         std::ostringstream mystream;
         Species *s0, *s;
-        bool tracked_electrons = false;
         
         MESSAGE( 1, "Parameters for collisions #" << n_collisions << " :" );
         
@@ -77,6 +76,7 @@ public:
         PyObject * ionizing = PyTools::extract_py( "ionizing", "Collisions", n_collisions );
         bool ionization = false;
         ionization_electrons = -1;
+        Particles * ionization_particles = NULL;
         
         // If `ionizing` is a species name, then use that one
         std::string ionization_electrons_name = "";
@@ -147,8 +147,7 @@ public:
                     ionization_electrons = sgroup[1][0];
                 }
             }
-            // Check whether electrons are tracked
-            tracked_electrons = vecSpecies[ionization_electrons]->particles->tracked;
+            ionization_particles = vecSpecies[ionization_electrons]->particles;
         }
         
         // Print collisions parameters
@@ -221,7 +220,7 @@ public:
                        debug_every,
                        Z,
                        ionization_electrons,
-                       tracked_electrons,
+                       ionization_particles,
                        params.nDim_particle,
                        filename
                    );
@@ -235,7 +234,7 @@ public:
                        debug_every,
                        Z,
                        ionization_electrons,
-                       tracked_electrons,
+                       ionization_particles,
                        params.nDim_particle,
                        filename
                    );
