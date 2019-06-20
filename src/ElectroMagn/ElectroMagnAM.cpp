@@ -307,6 +307,13 @@ ElectroMagnAM::~ElectroMagnAM()
         delete Jr_[imode];
         delete Jt_[imode];
         delete rho_AM_[imode];
+        for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
+            int ifield = imode*n_species+ispec;
+            delete Jl_s[ifield];
+            delete Jr_s[ifield];
+            delete Jt_s[ifield];
+            delete rho_AM_s[ifield];            
+        }
     }
     
 }//END ElectroMagnAM
