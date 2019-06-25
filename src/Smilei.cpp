@@ -261,6 +261,11 @@ int main( int argc, char *argv[] )
     if (params.uncoupled_grids) {
         domain.build( params, &smpi, vecPatches, openPMD );
     }
+    else {
+        if (params.is_pxr) {
+            vecPatches( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, vecPatches( 0 )->EMfields );
+        }
+    }
     //#endif
 
     timers.global.reboot();

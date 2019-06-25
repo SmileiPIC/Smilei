@@ -771,9 +771,14 @@ void VectorPatch::finalize_sync_and_bc_fields( Params &params, SmileiMPI *smpi, 
         #pragma omp for schedule(static)
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             // Applies boundary conditions on B
-            ( *this )( ipatch )->EMfields->boundaryConditions( itime, time_dual, ( *this )( ipatch ), params, simWindow );
+            if ( (!params.is_spectral) && (params.geometry!= "AMcylindrical") )
+                ( *this )( ipatch )->EMfields->boundaryConditions( itime, time_dual, ( *this )( ipatch ), params, simWindow );
             // Computes B at time n using B and B_m.
-            ( *this )( ipatch )->EMfields->centerMagneticFields();
+            if( !params.is_spectral ) {
+                ( *this )( ipatch )->EMfields->centerMagneticFields();
+            } else {
+                ( *this )( ipatch )->EMfields->saveMagneticFields( params.is_spectral );
+            }
         }
     }
     //#endif
