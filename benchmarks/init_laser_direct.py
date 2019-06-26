@@ -66,7 +66,7 @@ Main(
     uncoupled_grids = True,
     is_pxr = True,
     norder = [0,0],
-
+    pseudo_spectral_guardells = 20
 )
 
 ################ Laser gaussian pulse, defined through external fields ###################
