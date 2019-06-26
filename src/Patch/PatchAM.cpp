@@ -436,7 +436,7 @@ void PatchAM::initExchangeComplex( Field *field, int iDim, SmileiMPI *smpi )
     
         if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
         
-            istart = iNeighbor * ( n_elem[iDim]- ( 2*oversize[iDim]+1+isDual[iDim] ) ) + ( 1-iNeighbor ) * ( oversize[iDim] + 1 + isDual[iDim] );
+            istart = iNeighbor * ( n_elem[iDim]- ( 2*oversize[iDim]+1+isDual[iDim] ) ) + ( 1-iNeighbor ) * ( oversize[iDim] + isDual[iDim] );
             ix = idx[0]*istart;
             iy = idx[1]*istart;
             int tag = f3D->MPIbuff.send_tags_[iDim][iNeighbor];
@@ -447,7 +447,7 @@ void PatchAM::initExchangeComplex( Field *field, int iDim, SmileiMPI *smpi )
         
         if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
         
-            istart = ( ( iNeighbor+1 )%2 ) * ( n_elem[iDim] - 1- ( oversize[iDim]-1 ) ) + ( 1-( iNeighbor+1 )%2 ) * ( 0 )  ;
+            istart = ( ( iNeighbor+1 )%2 ) * ( n_elem[iDim] - 1- ( oversize[iDim] ) ) + ( 1-( iNeighbor+1 )%2 ) * ( 0 )  ;
             ix = idx[0]*istart;
             iy = idx[1]*istart;
             int tag = f3D->MPIbuff.recv_tags_[iDim][iNeighbor];
@@ -455,6 +455,15 @@ void PatchAM::initExchangeComplex( Field *field, int iDim, SmileiMPI *smpi )
                        MPI_COMM_WORLD, &( f3D->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ) );
                        
         } // END of Recv
+
+        MPI_Status sstat    [patch_ndims_][2];
+        MPI_Status rstat    [patch_ndims_][2];
+        if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
+            MPI_Wait( &( f3D->MPIbuff.srequest[iDim][iNeighbor] ), &( sstat[iDim][iNeighbor] ) );
+        }
+        if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
+            MPI_Wait( &( f3D->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ), &( rstat[iDim][( iNeighbor+1 )%2] ) );
+        }
         
     } // END for iNeighbor
     
@@ -475,17 +484,17 @@ void PatchAM::finalizeExchangeComplex( Field *field, int iDim )
     
     cField2D *f3D =  static_cast<cField2D *>( field );
     
-    MPI_Status sstat    [patch_ndims_][2];
-    MPI_Status rstat    [patch_ndims_][2];
-    
-    for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
-        if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
-            MPI_Wait( &( f3D->MPIbuff.srequest[iDim][iNeighbor] ), &( sstat[iDim][iNeighbor] ) );
-        }
-        if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
-            MPI_Wait( &( f3D->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ), &( rstat[iDim][( iNeighbor+1 )%2] ) );
-        }
-    }
+//    MPI_Status sstat    [patch_ndims_][2];
+//    MPI_Status rstat    [patch_ndims_][2];
+//    
+//    for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
+//        if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
+//            MPI_Wait( &( f3D->MPIbuff.srequest[iDim][iNeighbor] ), &( sstat[iDim][iNeighbor] ) );
+//        }
+//        if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
+//            MPI_Wait( &( f3D->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ), &( rstat[iDim][( iNeighbor+1 )%2] ) );
+//        }
+//    }
     
 } // END finalizeExchangeComplex( Field* field )
 
@@ -513,7 +522,7 @@ void PatchAM::createType( Params &params )
             
             // Standard Type
             ntype_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            MPI_Type_contiguous( 2*params.oversize[0]*ny,
+            MPI_Type_contiguous( 2*(params.oversize[0]+1)*ny,
                                  MPI_DOUBLE, &( ntype_[0][ix_isPrim][iy_isPrim] ) );
             MPI_Type_commit( &( ntype_[0][ix_isPrim][iy_isPrim] ) );
             
@@ -570,7 +579,7 @@ void PatchAM::createType2( Params &params )
             
             // Standard Type
             ntype_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            MPI_Type_contiguous( 2*params.oversize[0]*ny,
+            MPI_Type_contiguous( 2*(params.oversize[0]+1)*ny,
                                  MPI_DOUBLE, &( ntype_[0][ix_isPrim][iy_isPrim] ) );
             MPI_Type_commit( &( ntype_[0][ix_isPrim][iy_isPrim] ) );
             
