@@ -529,6 +529,11 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         if (!pseudo_spectral_guardells) {
             ERROR( "You must specify Main.pseudo_spectral_guardells with is_spectral=True in AM" );
         }
+        PyTools::extract( "apply_divergence_cleaning", apply_divergence_cleaning, "Main" );
+        if ( ( apply_divergence_cleaning ) && ( smpi->getSize() > 1 ) ) {
+            WARNING("Divergence cleaning not parallelized for now");
+        }
+        
     }
     
     

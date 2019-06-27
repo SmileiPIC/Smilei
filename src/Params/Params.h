@@ -220,6 +220,7 @@ public:
     std::vector<unsigned int> oversize;
 
     unsigned int pseudo_spectral_guardells;
+    bool apply_divergence_cleaning;
     
     //! True if restart requested
     bool restart;
