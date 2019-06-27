@@ -6,7 +6,7 @@ compile:
   stage: compile
   only:
     - develop
-    - robust_validation
+    - merge_relativistic_init_AM
 
   script:
     # Force workdir cleaning in case of retried
@@ -26,7 +26,7 @@ makerun1D:
   stage: makerun
   only:
     - develop
-    - robust_validation
+    - merge_relativistic_init_AM
 
   script:
     # Move in test dir
@@ -38,7 +38,7 @@ makerun2D:
   stage: makerun
   only:
     - develop
-    - robust_validation
+    - merge_relativistic_init_AM
 
   script:
     # Move in test dir
@@ -50,7 +50,7 @@ makerun3D:
   stage: makerun
   only:
     - develop
-    - robust_validation
+    - merge_relativistic_init_AM
 
   script:
     # Move in test dir
@@ -62,6 +62,7 @@ makerunAM:
   stage: makerun
   only:
     - develop
+    - merge_relativistic_init_AM
 
   script:
     # Move in test dir
@@ -73,7 +74,7 @@ makerunV:
   stage: makerun
   only:
     - develop
-    - robust_validation
+    - merge_relativistic_init_AM
 
   script:
     # Move in test dir
@@ -85,7 +86,7 @@ makerunCollisions:
   stage: makerun
   only:
     - develop
-    - robust_validation
+    - merge_relativistic_init_AM
     
   script:
     # Move in test dir

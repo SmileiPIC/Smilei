@@ -33,6 +33,11 @@ PatchAM::PatchAM( Params &params, SmileiMPI *smpi, DomainDecomposition *domain_d
                 ntype_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
                 ntypeSum_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
                 ntypeSum_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+
+                ntype_complex_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+                ntype_complex_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+                ntype_complex_[2][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+                
             }
         }
         
@@ -423,7 +428,7 @@ void PatchAM::initExchangeComplex( Field *field, int iDim, SmileiMPI *smpi )
     
     int istart, ix, iy;
     
-    MPI_Datatype ntype = ntype_[iDim][isDual[0]][isDual[1]];
+    MPI_Datatype ntype = ntype_complex_[iDim][isDual[0]][isDual[1]]; //ntype_[iDim][isDual[0]][isDual[1]];
     for( int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++ ) {
     
         if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
@@ -526,7 +531,15 @@ void PatchAM::createType( Params &params )
             MPI_Type_vector( nx, 2*ny_sum, 2*ny,
                              MPI_DOUBLE, &( ntypeSum_[1][ix_isPrim][iy_isPrim] ) );
             MPI_Type_commit( &( ntypeSum_[1][ix_isPrim][iy_isPrim] ) );
-            
+
+            // Complex Type
+            ntype_complex_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+            MPI_Type_contiguous( 2*params.oversize[0]*ny, MPI_DOUBLE, &( ntype_complex_[0][ix_isPrim][iy_isPrim] ) ); //line
+            MPI_Type_commit( &( ntype_complex_[0][ix_isPrim][iy_isPrim] ) );
+            ntype_complex_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+            MPI_Type_vector( nx, 2*params.oversize[1], 2*ny, MPI_DOUBLE, &( ntype_complex_[1][ix_isPrim][iy_isPrim] ) ); // column
+            MPI_Type_commit( &( ntype_complex_[1][ix_isPrim][iy_isPrim] ) );
+      
         }
     }
     
@@ -595,6 +608,10 @@ void PatchAM::cleanType()
             MPI_Type_free( &( ntype_[1][ix_isPrim][iy_isPrim] ) );
             MPI_Type_free( &( ntypeSum_[0][ix_isPrim][iy_isPrim] ) );
             MPI_Type_free( &( ntypeSum_[1][ix_isPrim][iy_isPrim] ) );
+      
+            MPI_Type_free( &( ntype_complex_[0][ix_isPrim][iy_isPrim] ) );
+            MPI_Type_free( &( ntype_complex_[1][ix_isPrim][iy_isPrim] ) );
+            //MPI_Type_free( &(ntype_complex_[2][ix_isPrim][iy_isPrim]) );
         }
     }
 }
