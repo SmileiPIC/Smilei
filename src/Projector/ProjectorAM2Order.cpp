@@ -340,6 +340,9 @@ void ProjectorAM2Order::basicForComplex( complex<double> *rhoj, Particles &parti
 // ---------------------------------------------------------------------------------------------------------------------
 void ProjectorAM2Order::ionizationCurrents( Field *Jl, Field *Jr, Field *Jt, Particles &particles, int ipart, LocalFields Jion )
 {
+
+    return;
+
     cField2D *JlAM  = static_cast<cField2D *>( Jl );
     cField2D *JrAM  = static_cast<cField2D *>( Jr );
     cField2D *JtAM  = static_cast<cField2D *>( Jt );
