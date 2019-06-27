@@ -12,7 +12,7 @@ Lx = nx * dx
 Ltrans = ntrans * dtrans
 npatch_x = 64
 npatch_trans =32
-Nit = 700
+Nit = 2000
 
 
 Main(
@@ -55,10 +55,10 @@ def my_profile(x,y):
 
 Species( 
     name = "electron",
-    position_initialization = "random",
+    position_initialization = "regular",
     momentum_initialization = "cold",
     ionization_model = "none",
-    particles_per_cell = 25,
+    particles_per_cell = 30,
     c_part_max = 1.0,
     mass = 1.0,
     charge = -1.0,
@@ -80,36 +80,22 @@ LaserGaussian2D(
     time_envelope   = tgaussian(center=2**0.5*laser_fwhm, fwhm=laser_fwhm)
 )
 
-DiagFields(
-    every = 100,
+DiagProbe(
+	every = 1000,
+	origin = [0., 2*dtrans, 0.],
+	corners = [
+              [Main.grid_length[0], 2*dtrans, 0.]
+                  ],
+	number = [nx],
 )
 
 #DiagProbe(
-#	every = 100,
-#	origin = [0., 0., 0.],
-#	corners = [
-#              [Main.grid_length[0], 0., 0.]
-#                  ],
-#	number = [nx],
-#)
-#
-#DiagProbe(
-#	every = 100,
-#	origin = [0., 0., 0.],
+#	every = 1000,
+#	origin = [0., -Main.grid_length[1], 0.],
 #	corners =  [
-#           [Main.grid_length[0], 0., 0.],
+#           [Main.grid_length[0], -Main.grid_length[1], 0.],
 #	   [0., Main.grid_length[1], 0.],
 #                   ],
-#	number = [nx,ntrans],
-#)
-#
-#DiagProbe(
-#	every = 100,
-#	origin = [0., 0., 0.],
-#	corners =  [
-#           [Main.grid_length[0], 0., 0.],
-#	   [0., 0., Main.grid_length[1]],
-#                   ],
-#	number = [nx,ntrans],
+#	number = [nx,2*ntrans],
 #)
 
