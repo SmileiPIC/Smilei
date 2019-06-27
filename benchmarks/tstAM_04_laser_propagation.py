@@ -72,7 +72,7 @@ Species(
 )
 
 laser_fwhm = 82. 
-LaserGaussian2D(
+LaserGaussianAM(
     box_side         = "xmin",
     a0              = 2.,
     focus           = [10.,0.],  
