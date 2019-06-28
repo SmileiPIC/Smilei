@@ -13,7 +13,7 @@
 
 using namespace std;
 
-//ProjectorAM1Order is written for exclusive use of spectral solvers with non staggered grids, primal size grids with half cell length shift.
+//ProjectorAM1Order is written for exclusive use of spectral solvers with non staggered grids, primal size grids with half cell length shift along r.
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Constructor for ProjectorAM1Order
@@ -87,14 +87,14 @@ void ProjectorAM1Order::basicForComplex( complex<double> *rhoj, Particles &parti
     double Sl1[2], Sr1[2];
     
     
-    // locate the particle on the shifted primal grid at current time-step & calculate coeff. S1
-    xpn = (particles.position( 0, ipart ) ) * dl_inv_ - 0.5;
+    // locate the particle on the primal grid at current time-step & calculate coeff. S1
+    xpn = (particles.position( 0, ipart ) ) * dl_inv_ ;
     int ip = floor( xpn );
     delta  = xpn - ( double )ip;
     Sl1[0] = 1. - delta ;
     Sl1[1] = delta;
 
-    rpn = r * dr_inv_ - 0.5 ;
+    rpn = r * dr_inv_ - 0.5 ; //-0.5 because of cells being shifted by dr/2
     int jp = floor( rpn );
     delta  = rpn - ( double )jp;
     Sr1[0] = 1. - delta;
@@ -146,14 +146,15 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     double crl_p = charge_weight * ( particles.momentum( 0, ipart )) *invgf;
     double crr_p = charge_weight * ( particles.momentum( 1, ipart )*particles.position( 1, ipart ) + particles.momentum( 2, ipart )*particles.position( 2, ipart ))/rp*invgf;
     e_theta = ( particles.position( 1, ipart ) + Icpx*particles.position( 2, ipart ) )/rp;
-    // locate the particle on the primal and dual grid at current time-step & calculate coeff. S1
-    xpn = particles.position( 0, ipart ) * dl_inv_ -0.5;
+    
+    // locate the particle on the primal grid at current time-step & calculate coeff. S1
+    xpn = particles.position( 0, ipart ) * dl_inv_ ;
     int ip = floor( xpn );
     delta  = xpn - ( double )ip;
     Sl1[0] = 1. - delta;
     Sl1[1] = delta;
     
-    ypn = rp *dr_inv_ -0.5 ;
+    ypn = rp *dr_inv_ -0.5 ; //-0.5 because grid is shifted by dr/2
     int jp = floor( ypn );
     delta  = ypn - ( double )jp;
     Sr1[0] = 1. - delta;

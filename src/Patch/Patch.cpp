@@ -144,12 +144,11 @@ void Patch::initStep3( Params &params, SmileiMPI *smpi, unsigned int n_moved )
     max_local[0] += n_moved*params.cell_length[0];
     center   [0] += n_moved*params.cell_length[0];
 
+    //Shift point position by dr/2 for the AM spectral geometry
     if ( (params.is_spectral) && (params.geometry== "AMcylindrical") ) {
-        for ( int iDim=0 ; iDim<2 ; iDim++ ) {
-            min_local[iDim] += params.cell_length[iDim]/2.;
-            max_local[iDim] += params.cell_length[iDim]/2.;
-            center   [iDim] += params.cell_length[iDim]/2.;
-        }
+        min_local[1] += params.cell_length[1]/2.;
+        max_local[1] += params.cell_length[1]/2.;
+        center   [1] += params.cell_length[1]/2.;
     }
     
 }
@@ -365,14 +364,14 @@ void Patch::set( Params &params, DomainDecomposition *domain_decomposition, Vect
                         max_local[0] = (params.offset_map[0][xDom]+params.n_space_domain[0]) * params.cell_length[0];
                         min_local[1] =  params.offset_map[1][yDom]                           * params.cell_length[1];
                         max_local[1] = (params.offset_map[1][yDom]+params.n_space_domain[1]) * params.cell_length[1];
-                        
+
+
+                        //Shift point position by dr/2 for the AM spectral geometry
                         if ( (params.is_spectral) && (params.geometry== "AMcylindrical") ) {
-                            for ( int iDim=0 ; iDim<2 ; iDim++ ) {
-                                min_local[iDim] += params.cell_length[iDim]/2.;
-                                max_local[iDim] += params.cell_length[iDim]/2.;
-                            }
+                            min_local[1] += params.cell_length[1]/2.;
+                            max_local[1] += params.cell_length[1]/2.;
+                            center   [1] += params.cell_length[1]/2.;
                         }
-                        //Shouldn't center be recalculated here too ?
  
                         cell_starting_global_index[0] = params.offset_map[0][xDom];
                         cell_starting_global_index[1] = params.offset_map[1][yDom];
