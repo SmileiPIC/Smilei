@@ -10,6 +10,8 @@ compile:
 
   script:
     # Force workdir cleaning in case of retried
+    - echo "CI_PIPELINE_ID = " $CI_PIPELINE_ID 
+    - env
     - if [ -d /sps2/gitlab-runner/$CI_PIPELINE_ID ] ; then rm -rf /sps2/gitlab-runner/$CI_PIPELINE_ID ; fi
     # Move in test dir
     - mkdir -p /sps2/gitlab-runner/$CI_PIPELINE_ID
