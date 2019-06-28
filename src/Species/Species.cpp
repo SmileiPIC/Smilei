@@ -843,17 +843,28 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 
     } else { // immobile particle (at the moment only project density)
         if( diag_flag &&( !particles->is_test ) ) {
-            double *b_rho=nullptr;
-            
-            for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
-            
-                b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
-                
-                for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
-                    Proj->basic( b_rho, ( *particles ), iPart, 0 );
-                } //End loop on particles
-            }//End loop on bins
-            
+            if( params.geometry != "AMcylindrical" ) {
+                double *b_rho=nullptr;
+                for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
+                    b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
+                    for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
+                        Proj->basic( b_rho, ( *particles ), iPart, 0 );
+                    } //End loop on particles
+                }//End loop on bins
+            } else {
+                int n_species = patch->vecSpecies.size();
+                complex<double> *b_rho=nullptr;
+                ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+                for( unsigned int imode = 0; imode<params.nmodes; imode++ ) {
+                    int ifield = imode*n_species+ispec;
+                    for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
+                        b_rho = emAM->rho_AM_s[ifield] ? &( *emAM->rho_AM_s[ifield] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
+                        for( int iPart=first_index[ibin] ; iPart<last_index[ibin]; iPart++ ) {
+                            Proj->basicForComplex( b_rho, ( *particles ), iPart, 0, imode );
+                        } //End loop on particles
+                    }// End loop on bins 
+                }//End loop on modes
+            }
         }
     }//END if time vs. time_frozen
 }//END dynamic
@@ -926,7 +937,7 @@ void Species::projection_for_diags( double time_dual, unsigned int ispec,
                     } //End loop on particles
                 }//End loop on bins
             } //End loop on modes
-        } // End Theta mode
+        } 
         
     }
 }
