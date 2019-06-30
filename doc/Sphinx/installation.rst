@@ -38,17 +38,24 @@ If you have successfully installed these dependencies on other platforms, please
 Download and compile
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-#. Download the latest :program:`Smilei` tarball :ref:`here <latestVersion>`.
+#. Clone the latest :program:`Smilei` version from Github:
 
-#. Extract the tarball at the location of your choice.
-   Let us assume it is located in your home directory ``~/smilei/``.
+   .. code-block:: bash
+    
+     cd /path/of/your/choice/
+     git clone https://github.com/SmileiPIC/Smilei.git
+    
+   If you do not have ``git``, you can dowload a tarball :ref:`here <latestVersion>`
+   and extract it in a new folder.
 
 #. In a terminal, go to that location and compile:
 
    .. code-block:: bash
 
-     cd ~/smilei
+     cd ~/Smilei
      make
+   
+   If the compilation is successful, you should now have a new ``smilei`` executable.
 
 #. The next step is to :doc:`write a namelist <namelist>`.
 
