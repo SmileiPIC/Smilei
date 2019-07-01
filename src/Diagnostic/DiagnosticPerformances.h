@@ -37,12 +37,6 @@ public :
     //! Set the hdf5 spaces for 2D arrays with one column selected per proc
     void setHDF5spaces( hid_t &filespace, hid_t &memspace, unsigned int height, unsigned int width, unsigned int column );
     
-    //! Set the hdf5 spaces for 1D arrays for patches
-    void set_HDF5_patch_spaces( hid_t &filespace,
-                                hid_t &memspace,
-                                std::vector <unsigned int> &patches_per_mpi,
-                                const unsigned int mpi_rank );
-                                
 private :
 
     //! HDF5 link to the group corresponding to one iteration
@@ -53,6 +47,9 @@ private :
     hid_t filespace_uint, memspace_uint  ;
     //! HDF5 shapes of patch datasets
     hid_t filespace_patches, memspace_patches;
+    
+    //! Total number of patches
+    unsigned int tot_number_of_patches;
     
     //! Property list for collective dataset write, set for // IO.
     hid_t write_plist;

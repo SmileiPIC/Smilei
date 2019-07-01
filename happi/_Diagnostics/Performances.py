@@ -309,15 +309,13 @@ class Performances(Diagnostic):
 		# Calculate the operation
 		# First patch performance information
 		if  self.operation in ["vecto", "mpi_rank"]:
-
+			if self._mode != "raw":
+				print("With quantities `vecto` or `mpi_rank`, only mode `raw` is supported")
+				return []
+			
 			if "patches" not in self._h5items[index].keys():
 				print("No patches group in timestep {}".format(str(t)))
 				return []
-
-			# Get the position of the patches
-			x_patches = self._np.array(self._h5items[index]["patches"]["x"][:])
-			y_patches = self._np.array(self._h5items[index]["patches"]["y"][:])
-			z_patches = self._np.array(self._h5items[index]["patches"]["z"][:])
 
 			if self.operation=="vecto":
 
@@ -334,15 +332,22 @@ class Performances(Diagnostic):
 
 				patches_buffer = self._np.array(self._h5items[index]["patches"]["mpi_rank"])
 
-			# Get the dimension of the patch matrix
-			x_max = x_patches.max()
-			y_max = y_patches.max()
-			z_max = z_patches.max()
-
+			# Get the position of the patches
+			x_patches = self._np.array(self._h5items[index]["patches"]["x"][:])
+			y_patches = self._np.array(self._h5items[index]["patches"]["y"][:])
+			if "z" in self._h5items[index]["patches"]:
+				z_patches = self._np.array(self._h5items[index]["patches"]["z"][:])
+			else:
+				z_patches = self._np.zeros_like(x_patches)	
+			i_patch = self._np.ravel_multi_index(
+				(x_patches, y_patches, z_patches),
+				(x_patches.max()+1, y_patches.max()+1, z_patches.max()+1)
+			)
+			
 			# Matrix of patches reconstituted
-			A = self._np.zeros([x_max+1,y_max+1,z_max+1])
-			for i in range(len(patches_buffer)):
-				A[x_patches[i],y_patches[i],z_patches[i]] = patches_buffer[i]
+			A = self._np.empty_like(i_patch)
+			A[i_patch] = patches_buffer
+			A = self._np.squeeze(A.reshape([x_patches.max()+1, y_patches.max()+1, z_patches.max()+1]))
 
 		# Or global performance information
 		else:
