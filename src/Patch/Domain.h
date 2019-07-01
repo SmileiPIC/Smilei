@@ -18,6 +18,7 @@ public:
     ~Domain();
     
     void build( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, OpenPMDparams &openPMD );
+    void build_full( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, OpenPMDparams &openPMD );
     void solveMaxwell( Params &params, SimWindow *simWindow, int itime, double time_dual, Timers &timers, SmileiMPI *smpi );
     void solveEnvelope( Params &params, SimWindow *simWindow, int itime, double time_dual, Timers &timers, SmileiMPI *smpi );
     void clean();

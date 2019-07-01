@@ -36,12 +36,15 @@ ElectroMagn::ElectroMagn( Params &params, DomainDecomposition *domain_decomposit
     nrj_new_fields( 0. )
 {
     n_space.resize( params.n_space.size() );
-    if ( !dynamic_cast<GlobalDomainDecomposition*>( domain_decomposition ) )
+    if ( (!dynamic_cast<GlobalDomainDecomposition*>( domain_decomposition )) && ( domain_decomposition!=NULL ) )
         n_space = params.n_space;
-    else {
+    else if ( dynamic_cast<GlobalDomainDecomposition*>( domain_decomposition ) ) {
         for ( unsigned int i = 0 ; i < nDim_field ; i++ ) {
             n_space[i] = params.n_space_domain[i];
         }
+    }
+    else { //NULL
+        n_space = params.n_space_global;
     }
     
     // take useful things from params
