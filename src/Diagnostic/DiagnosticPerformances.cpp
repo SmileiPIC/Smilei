@@ -16,6 +16,7 @@ DiagnosticPerformances::DiagnosticPerformances( Params &params, SmileiMPI *smpi 
     timestep = params.timestep;
     cell_load = params.cell_load;
     frozen_particle_load = params.frozen_particle_load;
+    tot_number_of_patches = params.tot_number_of_patches;
     
     ostringstream name( "" );
     name << "Diagnostic performances";
@@ -263,31 +264,19 @@ void DiagnosticPerformances::run( SmileiMPI *smpi, VectorPatch &vecPatches, int 
             // Creation of the group
             hid_t patch_group = H5::group( iteration_group_id, "patches" );
             
-            // Get the number of patches per MPI processes
-            vector<unsigned int> patches_per_mpi( smpi->getSize() );
-            
-            // We get the number of patches for each MPI process
-            // Global communication, this may impact the global code performances
-            MPI_Allgather( &number_of_patches, 1, MPI_UNSIGNED,
-                           &patches_per_mpi[0], 1, MPI_UNSIGNED,
-                           smpi->getGlobalComm() );
-                           
-            // Checking
-            /*if (smpi->getRank() == 1)
-            {
-                for(unsigned int impi=0; impi < smpi->getSize(); impi++){
-                std::cerr << patches_per_mpi[impi] << '\n';
-                }
-            }*/
-            
-            // Prepapre the hyperslab
-            set_HDF5_patch_spaces( filespace_patches, memspace_patches, patches_per_mpi, mpi_rank_ );
+            // Prepare the hyperslab
+            hsize_t matrix  = tot_number_of_patches;
+            hsize_t start = vecPatches(0)->hindex;
+            hsize_t count = 1;
+            hsize_t block = vecPatches.size();
+            hid_t filespace_patches = H5Screate_simple( 1, &matrix , NULL );
+            hid_t memspace_patches  = H5Screate_simple( 1, &block, NULL );
+            H5Sselect_hyperslab( filespace_patches, H5S_SELECT_SET, &start, NULL, &count, &block );
             
             // Gather x patch position in a buffer
             vector <unsigned int> buffer( number_of_patches );
             for( unsigned int ipatch=0; ipatch < number_of_patches; ipatch++ ) {
                 buffer[ipatch] = vecPatches( ipatch )->Pcoordinates[0];
-                //std::cerr << vecPatches(ipatch)->hindex << '\n';
             }
             
             // Write x patch position to file
@@ -295,7 +284,7 @@ void DiagnosticPerformances::run( SmileiMPI *smpi, VectorPatch &vecPatches, int 
             H5Dwrite( dset_patches, H5T_NATIVE_UINT, memspace_patches, filespace_patches, write_plist, &buffer[0] );
             H5Dclose( dset_patches );
             
-            if( ndim > 0 ) {
+            if( ndim > 1 ) {
                 // Gather y patch position in a buffer
                 for( unsigned int ipatch=0; ipatch < number_of_patches; ipatch++ ) {
                     buffer[ipatch] = vecPatches( ipatch )->Pcoordinates[1];
@@ -307,7 +296,7 @@ void DiagnosticPerformances::run( SmileiMPI *smpi, VectorPatch &vecPatches, int 
                 H5Dclose( dset_patches );
             }
             
-            if( ndim > 1 ) {
+            if( ndim > 2 ) {
                 // Gather z patch position in a buffer
                 for( unsigned int ipatch=0; ipatch < number_of_patches; ipatch++ ) {
                     buffer[ipatch] = vecPatches( ipatch )->Pcoordinates[2];
@@ -354,10 +343,13 @@ void DiagnosticPerformances::run( SmileiMPI *smpi, VectorPatch &vecPatches, int 
             for( unsigned int ipatch=0; ipatch < number_of_patches; ipatch++ ) {
                 buffer[ipatch] = mpi_rank_;
             }
-            // Write patch index to file
+            // Write mpi rank to file
             dset_patches  = H5Dcreate( patch_group, "mpi_rank", H5T_NATIVE_UINT, filespace_patches, H5P_DEFAULT, create_plist, H5P_DEFAULT );
             H5Dwrite( dset_patches, H5T_NATIVE_UINT, memspace_patches, filespace_patches, write_plist, &buffer[0] );
             H5Dclose( dset_patches );
+            
+            H5Sclose( filespace_patches );
+            H5Sclose( memspace_patches );
             
             // Close patch group
             H5Gclose( patch_group );
@@ -406,33 +398,5 @@ void DiagnosticPerformances::setHDF5spaces( hid_t &filespace, hid_t &memspace, u
     hsize_t start[2] = {0, column};
     hsize_t count[2] = {1, 1};
     hsize_t block[2] = {height, 1};
-    H5Sselect_hyperslab( filespace, H5S_SELECT_SET, &start[0], NULL, &count[0], &block[0] );
-}
-
-//! Set the hdf5 spaces for 1D arrays for patches
-void DiagnosticPerformances::set_HDF5_patch_spaces( hid_t &filespace, hid_t &memspace,
-        vector<unsigned int> &patches_per_mpi,
-        const unsigned int mpi_rank )
-{
-
-    // Compute the total number of patches in the simulation
-    unsigned int global_number_of_patches = 0;
-    for( std::vector<unsigned int>::iterator it = patches_per_mpi.begin(); it != patches_per_mpi.end(); ++it ) {
-        global_number_of_patches += *it;
-    }
-    
-    // Compute the start position of this mpi process in the global array
-    unsigned int start_ = 0;
-    for( unsigned int impi = 0 ; impi < mpi_rank ; impi++ ) {
-        start_ += patches_per_mpi[impi];
-    }
-    
-    hsize_t matrix [1] = {global_number_of_patches};
-    hsize_t portion[2] = {patches_per_mpi[mpi_rank]};
-    filespace = H5Screate_simple( 1, &matrix [0], NULL );
-    memspace  = H5Screate_simple( 1, &portion[0], NULL );
-    hsize_t start[1] = {start_};
-    hsize_t count[1] = {1};
-    hsize_t block[1] = {patches_per_mpi[mpi_rank]};
     H5Sselect_hyperslab( filespace, H5S_SELECT_SET, &start[0], NULL, &count[0], &block[0] );
 }

@@ -371,8 +371,8 @@ void ElectroMagnAM::restartRhoJs()
 
 void ElectroMagnAM::initPoisson( Patch *patch )
 {
-#ifdef _TODO_AM
-    cField2D *rho = rho_AM_[0];
+
+    
     
     // Min and max indices for calculation of the scalar product (for primal & dual grid)
     //     scalar products are computed accounting only on real nodes
@@ -394,32 +394,39 @@ void ElectroMagnAM::initPoisson( Patch *patch )
         index_max_p_[0] = nl_p-1;
     }
     
-    phi_ = new cField2D( dimPrim );  // scalar potential
-    r_   = new cField2D( dimPrim );  // residual vector
-    p_   = new cField2D( dimPrim );  // direction vector
-    Ap_  = new cField2D( dimPrim );  // A*p vector
-    
-    
-    for( unsigned int i=0; i<nl_p; i++ ) {
-        for( unsigned int j=0; j<nr_p; j++ ) {
-            ( *phi_ )( i, j )   = 0.0;
-            ( *r_ )( i, j )     = -( *rho )( i, j );
-            ( *p_ )( i, j )     = ( *r_ )( i, j );
-        }//j
-    }//i
-#endif
+    phi_AM_ = new cField2D( dimPrim );  // scalar potential
+    r_AM_   = new cField2D( dimPrim );  // residual vector
+    p_AM_   = new cField2D( dimPrim );  // direction vector
+    Ap_AM_  = new cField2D( dimPrim );  // A*p vector
     
 } // initPoisson
 
+void ElectroMagnAM::initPoisson_init_phi_r_p_Ap( Patch *patch, unsigned int imode ){
+
+    cField2D *rho   = rho_AM_[imode];
+    double j_;
+    double dr_sq_dl = dr*dr*dl; // Poisson's equation including the source term is multiplied by r_j*dr*dl
+    for( unsigned int i=0; i<nl_p; i++ ) {
+        for( unsigned int j=0; j<nr_p; j++ ) {
+            j_ = (double)( j_glob_+j);
+            ( *phi_AM_ )( i, j )   = 0.; 
+            ( *r_AM_ )( i, j )     = -(( *rho )( i, j ))*j_*dr_sq_dl; 
+            ( *p_AM_ )( i, j )     = ( *r_AM_ )( i, j );
+        }//j
+    }//i
+
+}
+
+
 double ElectroMagnAM::compute_r()
 {
-    double rnew_dot_rnew_local( 0. );
+    double rnew_dot_rnew_localAM_( 0. );
     for( unsigned int i=index_min_p_[0]; i<=index_max_p_[0]; i++ ) {
         for( unsigned int j=index_min_p_[1]; j<=index_max_p_[1]; j++ ) {
-            rnew_dot_rnew_local += ( *r_ )( i, j )*( *r_ )( i, j );
+            rnew_dot_rnew_localAM_ += std::abs(( *r_AM_ )( i, j ))*std::abs(( *r_AM_ )( i, j ));
         }
     }
-    return rnew_dot_rnew_local;
+    return rnew_dot_rnew_localAM_;
 } // compute_r
 
 void ElectroMagnAM::compute_Ap( Patch *patch )
@@ -428,21 +435,86 @@ void ElectroMagnAM::compute_Ap( Patch *patch )
 #endif
 } // compute_pAp
 
-double ElectroMagnAM::compute_pAp()
+void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gamma_mean, unsigned int imode )
 {
-    double p_dot_Ap_local = 0.0;
-#ifdef _TODO_AM
-#endif
+    
+    // gamma_mean is the average Lorentz factor of the species whose fields will be computed
+    // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details
+      
+    // relativistic Poisson's equation in finite differences is multiplied by r_j*dr*dl to condition it before conjugate gradient
+
+    double dr_sq_ov_dl_ov_gamma_sq   = ( dr*dr )/dl/( gamma_mean*gamma_mean );
+    double dl_ov_2                   = dl/2.;
+    double m_sq_dl                   = (double)(imode*imode)*dl;
+    double j_;
+    unsigned int j_min =max(1,isYmin*3); // prevent a segmentation fault
+    unsigned int i_min =1; 
+    unsigned int i_max = nl_p-1; 
+    unsigned int j_max = nr_p-1; 
+   
+    // vector product Ap = A*p
+    for( unsigned int i=i_min; i<i_max; i++ ) {
+        for( unsigned int j=j_min; j<j_max; j++ ) {
+            j_ = (double)( j_glob_+j);
+            ( *Ap_AM_ )( i, j )= j_ * dr_sq_ov_dl_ov_gamma_sq * (          ( *p_AM_ )( i-1, j   )-2.*   ( *p_AM_ )( i, j   )+         ( *p_AM_ )( i+1, j ) )
+                               + dl                           * ( (j_-0.5)*( *p_AM_ )( i  , j-1 )-2.*j_*( *p_AM_ )( i, j   )+(j_+0.5)*( *p_AM_ )( i, j+1 ) )
+                               - m_sq_dl/j_                  *                                          ( *p_AM_ )( i, j   );                     
+        }//j
+    }//i
+    
+    
+    // Axis BC
+    if( patch->isYmin() ) {
+        unsigned int j=2;
+        j_ = (double)( j_glob_+j+0.5);
+        for( unsigned int i=i_min; i<i_max; i++ ) { // radial and azimuthal derivative are zero on axis r=0 (p = phi is all on primal grid)
+            ( *Ap_AM_ )( i, j )= j_ * dr_sq_ov_dl_ov_gamma_sq * (          ( *p_AM_ )( i-1, j   )-2.*   ( *p_AM_ )( i, j   )+         ( *p_AM_ )( i+1, j ) )
+                               + j_ * dl * 2.                 * (                                       ( *p_AM_ )( i, j+1 )-         ( *p_AM_ )( i  , j)  );                           
+        }
+    }
+
+    // Xmin BC
+    if( patch->isXmin() ) { // p = phi = 0 on the left border
+        for( unsigned int j=1; j<j_max; j++ ) {
+            ( *Ap_AM_ )( 0, j )     = 0.;
+        }
+        // at corners
+        ( *Ap_AM_ )( 0, 0 )          = 0.;
+        ( *Ap_AM_ )( 0, nr_p-1 )     = 0.;
+    }
+    
+    // Xmax BC
+    if( patch->isXmax() ) { // p = phi = 0 on the right border 
+    
+        for( unsigned int j=1; j<j_max; j++ ) {
+            ( *Ap_AM_ )( nl_p-1, j )= 0.;
+        }
+        // at corners
+        ( *Ap_AM_ )( nl_p-1, 0 )     = 0.;
+        ( *Ap_AM_ )( nl_p-1, nr_p-1 )= 0.;
+    }
+    
+
+} // compute_pAp
+
+std::complex<double> ElectroMagnAM::compute_pAp_AM()
+{
+    std::complex<double> p_dot_Ap_local = 0.0;
+    for( unsigned int i=index_min_p_[0]; i<=index_max_p_[0]; i++ ) {
+        for( unsigned int j=index_min_p_[1]; j<=index_max_p_[1]; j++ ) {
+            p_dot_Ap_local += ( *p_AM_ )( i, j )*std::conj(( *Ap_AM_ )( i, j ));
+        }
+    }
     return p_dot_Ap_local;
 } // compute_pAp
 
-void ElectroMagnAM::update_pand_r( double r_dot_r, double p_dot_Ap )
+void ElectroMagnAM::update_pand_r_AM( double r_dot_r, std::complex<double> p_dot_Ap )
 {
-    double alpha_k = r_dot_r/p_dot_Ap;
+    std::complex<double> alpha_k = r_dot_r/p_dot_Ap;
     for( unsigned int i=0; i<nl_p; i++ ) {
         for( unsigned int j=0; j<nr_p; j++ ) {
-            ( *phi_ )( i, j ) += alpha_k * ( *p_ )( i, j );
-            ( *r_ )( i, j )   -= alpha_k * ( *Ap_ )( i, j );
+            ( *phi_AM_ )( i, j ) += alpha_k * ( *p_AM_ )( i, j );
+            ( *r_AM_ )( i, j )   -= alpha_k * ( *Ap_AM_ )( i, j );
         }
     }
     
@@ -453,10 +525,431 @@ void ElectroMagnAM::update_p( double rnew_dot_rnew, double r_dot_r )
     double beta_k = rnew_dot_rnew/r_dot_r;
     for( unsigned int i=0; i<nl_p; i++ ) {
         for( unsigned int j=0; j<nr_p; j++ ) {
-            ( *p_ )( i, j ) = ( *r_ )( i, j ) + beta_k * ( *p_ )( i, j );
+            ( *p_AM_ )( i, j ) = ( *r_AM_ )( i, j ) + beta_k * ( *p_AM_ )( i, j );
         }
     }
 } // update_p
+
+
+
+void ElectroMagnAM::initRelativisticPoissonFields( Patch *patch ){
+    // ------ Init temporary fields for relativistic field initialization
+    
+    // E fields centered as in FDTD, to be added to the already present electric fields
+    El_rel_  = new cField2D( dimPrim, 0, false, "El_rel" );
+    Er_rel_  = new cField2D( dimPrim, 1, false, "Er_rel" );
+    Et_rel_  = new cField2D( dimPrim, 2, false, "Et_rel" );
+    
+    
+    // B fields centered as the E fields in FDTD (Bx null)
+    Bl_rel_  = new cField2D( dimPrim, 0, true,  "Bl_rel" );  // null
+    Br_rel_  = new cField2D( dimPrim, 2, false,  "Br_rel" ); // centered as Et initially
+    Bt_rel_  = new cField2D( dimPrim, 1, false,  "Bt_rel" ); // centered as Er initially
+    
+    
+    // ----- B fields centered as in FDTD, to be added to the already present magnetic fields
+    
+    // B field advanced by dt/2
+    Bl_rel_t_plus_halfdt_  = new cField2D( dimPrim, 0, true,  "Bl_rel_t_plus_halfdt" );
+    Br_rel_t_plus_halfdt_  = new cField2D( dimPrim, 1, true,  "Br_rel_t_plus_halfdt" );
+    Bt_rel_t_plus_halfdt_  = new cField2D( dimPrim, 2, true,  "Bt_rel_t_plus_halfdt" );
+    // B field "advanced" by -dt/2
+    Bl_rel_t_minus_halfdt_  = new cField2D( dimPrim, 0, true,  "Bl_rel_t_plus_halfdt" );
+    Br_rel_t_minus_halfdt_  = new cField2D( dimPrim, 1, true,  "Br_rel_t_plus_halfdt" );
+    Bt_rel_t_minus_halfdt_  = new cField2D( dimPrim, 2, true,  "Bt_rel_t_plus_halfdt" );
+
+
+}
+
+void ElectroMagnAM::initE_relativistic_Poisson_AM( Patch *patch, double gamma_mean, unsigned int imode )
+{
+    // gamma_mean is the average Lorentz factor of the species whose fields will be computed
+    // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details
+    
+    cField2D *ElAM  = static_cast<cField2D *>( El_rel_ );
+    cField2D *ErAM  = static_cast<cField2D *>( Er_rel_ );
+    cField2D *EtAM  = static_cast<cField2D *>( Et_rel_ );
+    //cField2D *rhoAM = static_cast<cField2D *>( rho_AM_[imode] );
+
+    complex<double>     i1 = std::complex<double>( 0., 1 );
+
+    // ------------------------------------------
+    // Compute the fields El, Er and Et
+    // ------------------------------------------
+    
+    // El
+    MESSAGE( 1, "Computing El from scalar potential, relativistic Poisson problem" );
+    for( unsigned int i=1; i<nl_d-1; i++ ) {
+        for( unsigned int j=1; j<nr_p; j++ ) {
+            ( *ElAM )( i, j ) = ( ( *phi_AM_ )( i-1, j )-( *phi_AM_ )( i, j ) )/dl/gamma_mean/gamma_mean;
+        }
+    }
+    MESSAGE( 1, "El: done" );
+    // Er
+    MESSAGE( 1, "Computing Er from scalar potential, relativistic Poisson problem" );
+    for( unsigned int i=1; i<nl_p-1; i++ ) {
+        for( unsigned int j=1; j<nr_d; j++ ) {
+            ( *ErAM )( i, j ) = ( ( *phi_AM_ )( i, j-1 )-( *phi_AM_ )( i, j ) )/dr;
+        }
+    }
+    MESSAGE( 1, "Er: done" );
+    // Et
+    MESSAGE( 1, "Computing Er from scalar potential, relativistic Poisson problem" );
+    for( unsigned int i=1; i<nl_p-1; i++ ) {
+        for( unsigned int j=1; j<nr_p; j++ ) {
+            ( *EtAM )( i, j ) = i1*((double )imode)/(((double)( j_glob_+j ))*dr)* ( *phi_AM_ )( i, j );
+        }
+    }
+    MESSAGE( 1, "Et: done" );
+
+    
+    if( isYmin ) { // Conditions on axis
+        unsigned int j=2;
+        if( imode==0 ) {
+            for( unsigned int i=0 ; i<nl_p  ; i++ ) {
+                ( *EtAM )( i, j )=0;
+            }
+            for( unsigned int i=0 ; i<nl_p  ; i++ ) {
+                ( *ErAM )( i, j )= -( *ErAM )( i, j+1 );
+            }
+            for( unsigned int i=0 ; i<nl_d ; i++ ) {
+                ( *ElAM )( i, j ) = ( *ElAM )( i, j+1 ) ; //( *ElAM )( i, j ) = ( *ElAM )( i, j+1 ) ;  // not sure about this one
+            }
+        } else if( imode==1 ) {
+            for( unsigned int i=0 ; i<nl_d  ; i++ ) {
+                ( *ElAM )( i, j )= 0;
+            }
+            for( unsigned int i=0 ; i<nl_p  ; i++ ) {
+                ( *EtAM )( i, j )= -1./3.*( 4.*i1*( *ErAM )( i, j+1 )+( *EtAM )( i, j+1 ) );
+            }
+            for( unsigned int i=0 ; i<nl_p ; i++ ) {
+                ( *ErAM )( i, j )=2.*i1*( *EtAM )( i, j )-( *ErAM )( i, j+1 );
+            }
+        } else {
+            for( unsigned int  i=0 ; i<nl_d; i++ ) {
+                ( *ElAM )( i, j )= 0;
+            }
+            for( unsigned int  i=0 ; i<nl_p; i++ ) {
+                ( *ErAM )( i, j )= -( *ErAM )( i, j+1 );
+            }
+            for( unsigned int i=0 ; i<nl_p; i++ ) {
+                ( *EtAM )( i, j )= 0;
+            }
+        }
+    }
+  
+    
+} // initE_relativistic_Poisson_AM
+
+void ElectroMagnAM::initB_relativistic_Poisson_AM( Patch *patch, double gamma_mean )
+{
+    // gamma_mean is the average Lorentz factor of the species whose fields will be computed
+    // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details
+    
+    
+    cField2D *ErAM  = static_cast<cField2D *>( Er_rel_ );
+    cField2D *EtAM  = static_cast<cField2D *>( Et_rel_ );
+    
+    cField2D *BlAM  = static_cast<cField2D *>( Bl_rel_ ); // Bl is zero everywhere
+    cField2D *BrAM  = static_cast<cField2D *>( Br_rel_ );
+    cField2D *BtAM  = static_cast<cField2D *>( Bt_rel_ );
+
+    // ------------------------------------------
+    // Compute the field Bl, Br, Bt
+    // ------------------------------------------
+    
+    double beta_mean = sqrt( 1.-1./gamma_mean/gamma_mean );
+    MESSAGE( 0, "In relativistic Poisson solver, gamma_mean = " << gamma_mean );
+    
+    // Bl^(p,d) is identically zero
+    MESSAGE( 1, "Computing Bl, relativistic Poisson problem" );
+    for( unsigned int i=1; i<nl_p-1; i++ ) {
+        for( unsigned int j=1; j<nr_d-1; j++ ) {
+            ( *BlAM )( i, j ) = 0.;
+        }
+    }
+    MESSAGE( 1, "Bl: done" );
+    
+    // Br^(d,d) from Et^(p,p)
+    MESSAGE( 1, "Computing Br from scalar potential, relativistic Poisson problem" );
+    for( unsigned int i=1; i<nl_p-1; i++ ) {
+        for( unsigned int j=1; j<nr_p-1; j++ ) {
+            ( *BrAM )( i, j ) = -beta_mean*( *EtAM )( i, j );
+        }
+    }
+    MESSAGE( 1, "Br: done" );
+
+    // Bt^(d,p) from Er^(p,d)
+    MESSAGE( 1, "Computing Bt from scalar potential, relativistic Poisson problem" );
+    for( unsigned int i=1; i<nl_p-1; i++ ) {
+        for( unsigned int j=1; j<nr_d-1; j++ ) {
+            ( *BtAM )( i, j ) = beta_mean*( *ErAM )( i, j );
+        }
+    }
+    MESSAGE( 1, "Bt: done" );
+
+
+    // Should we add BCs here?
+    
+    
+} // initB_relativistic_Poisson_AM
+
+void ElectroMagnAM::center_fields_from_relativistic_Poisson_AM( Patch *patch )
+{
+
+    // B field centered in time as E field, at time t
+    cField2D *BlAMrel  = static_cast<cField2D *>( Bl_rel_ );
+    cField2D *BrAMrel  = static_cast<cField2D *>( Br_rel_ );
+    cField2D *BtAMrel  = static_cast<cField2D *>( Bt_rel_ );
+    
+    // B field centered in time at time t+dt/2
+    cField2D *BlAM  = static_cast<cField2D *>( Bl_rel_t_plus_halfdt_ );
+    cField2D *BrAM  = static_cast<cField2D *>( Br_rel_t_plus_halfdt_ );
+    cField2D *BtAM  = static_cast<cField2D *>( Bt_rel_t_plus_halfdt_ );
+    // B field centered in time at time t-dt/2
+    cField2D *BlAM0  = static_cast<cField2D *>( Bl_rel_t_minus_halfdt_ );
+    cField2D *BrAM0  = static_cast<cField2D *>( Br_rel_t_minus_halfdt_ );
+    cField2D *BtAM0  = static_cast<cField2D *>( Bt_rel_t_minus_halfdt_ );
+    
+    
+    // The B_rel fields, centered as B, will be advanced by dt/2 and -dt/2
+    // for proper centering in FDTD, but first they have to be centered in space
+    // The advance by dt and -dt and the sum to the existing grid fields is performed in
+    // ElectroMagn2D::sum_rel_fields_to_em_fields
+    
+    // Bl (p,d)   Bl_rel is identically zero and centered as Bl, no special interpolation of indices
+    for( unsigned int i=0; i<nl_p; i++ ) {
+        for( unsigned int j=0; j<nr_d; j++ ) {
+            ( *BlAM )( i, j ) = ( *BlAMrel )( i, j );
+            ( *BlAM0 )( i, j )= ( *BlAMrel )( i, j );
+        }
+    }
+    
+    // ---------- center the B fields
+    // Br (d,p) - remember that Byrel is centered as Etrel (p,p)
+    for( unsigned int i=1; i<nl_d-1; i++ ) {
+        for( unsigned int j=0; j<nr_p; j++ ) {
+            ( *BrAM )( i, j ) = 0.5 * ( ( *BrAMrel )( i, j ) + ( *BrAMrel )( i-1, j ) );
+            ( *BrAM0 )( i, j )= 0.5 * ( ( *BrAMrel )( i, j ) + ( *BrAMrel )( i-1, j ) );
+        }
+    }
+    
+    // Bt (d,d) - remember that Btrel is centered as Errel (p,d)
+    for( unsigned int i=1; i<nl_d-1; i++ ) {
+        for( unsigned int j=0; j<nr_d; j++ ) {
+            ( *BtAM )( i, j ) = 0.5 * ( ( *BtAMrel )( i, j ) + ( *BtAMrel )( i-1, j ) );
+            ( *BtAM0 )( i, j )= 0.5 * ( ( *BtAMrel )( i, j ) + ( *BtAMrel )( i-1, j ) );
+        }
+    }
+    
+}
+
+void ElectroMagnAM::sum_rel_fields_to_em_fields_AM( Patch *patch, Params &params, unsigned int imode )
+{
+    cField2D *ElAMrel  = static_cast<cField2D *>( El_rel_ );
+    cField2D *ErAMrel  = static_cast<cField2D *>( Er_rel_ );
+    cField2D *EtAMrel  = static_cast<cField2D *>( Et_rel_ );
+    
+    // B_t_plus_halfdt
+    cField2D *Bl_rel_t_plus_halfdt = static_cast<cField2D *>( Bl_rel_t_plus_halfdt_ );
+    cField2D *Br_rel_t_plus_halfdt = static_cast<cField2D *>( Br_rel_t_plus_halfdt_ );
+    cField2D *Bt_rel_t_plus_halfdt = static_cast<cField2D *>( Bt_rel_t_plus_halfdt_ );
+    
+    // B_t_minus_halfdt
+    cField2D *Bl_rel_t_minus_halfdt = static_cast<cField2D *>( Bl_rel_t_minus_halfdt_ );
+    cField2D *Br_rel_t_minus_halfdt = static_cast<cField2D *>( Br_rel_t_minus_halfdt_ );
+    cField2D *Bt_rel_t_minus_halfdt = static_cast<cField2D *>( Bt_rel_t_minus_halfdt_ );
+    
+    // E and B fields already existing on the grid
+    cField2D *ElAM  = static_cast<cField2D *>( El_[imode] );
+    cField2D *ErAM  = static_cast<cField2D *>( Er_[imode] );
+    cField2D *EtAM  = static_cast<cField2D *>( Et_[imode] );
+    cField2D *BlAM  = static_cast<cField2D *>( Bl_[imode] );
+    cField2D *BrAM  = static_cast<cField2D *>( Br_[imode]);
+    cField2D *BtAM  = static_cast<cField2D *>( Bt_[imode] );
+    cField2D *BlAM0  = static_cast<cField2D *>( Bl_m[imode] );
+    cField2D *BrAM0  = static_cast<cField2D *>( Br_m[imode] );
+    cField2D *BtAM0  = static_cast<cField2D *>( Bt_m[imode] );
+
+    complex<double>     i1 = std::complex<double>( 0., 1 );
+    double dt = params.timestep;
+    // El (d,p)
+    for( unsigned int i=0; i<nl_d; i++ ) {
+        for( unsigned int j=0; j<nr_p; j++ ) {
+            ( *ElAM )( i, j ) = ( *ElAM )( i, j ) + ( *ElAMrel )( i, j );
+        }
+    }
+    
+    // Er (p,d)
+    for( unsigned int i=0; i<nl_p; i++ ) {
+        for( unsigned int j=0; j<nr_d; j++ ) {
+            ( *ErAM )( i, j ) = ( *ErAM )( i, j ) + ( *ErAMrel )( i, j );
+        }
+    }
+    
+    // Et (p,p)
+    for( unsigned int i=0; i<nl_p; i++ ) {
+        for( unsigned int j=0; j<nr_p; j++ ) {
+            ( *EtAM )( i, j ) = ( *EtAM )( i, j ) + ( *EtAMrel )( i, j );
+        }
+    }
+    
+    
+    
+    // Since Brel is centered in time as E, it is inconsistent with FDTD,
+    // where E and B are staggered in time.
+    // Possible solution:
+    // Use FDTD scheme to integrate Maxwell-Faraday equation forward in time by dt/2 to obtain B
+    // Use FDTD scheme to integrate Maxwell-Faraday equation backwards in time by dt/2 to obtain Bm
+    // Add the forward-evolved and backward-evolved fields to the grid fields
+    
+    
+    
+    // Magnetic field Bl^(p,d)
+    for( unsigned int i=0 ; i<nl_p;  i++ ) {
+        for( unsigned int j=1+isYmin*2 ; j<nr_d-1 ; j++ ) {
+            // forward advance by dt/2
+            ( *Bl_rel_t_plus_halfdt )( i, j ) += - dt/2./( ( j_glob_+j-0.5 )*dr ) * ( ( double )( j+j_glob_ )*( *EtAMrel )( i, j ) 
+                                                 - ( double )( j+j_glob_-1. )*( *EtAMrel )( i, j-1 ) + i1*( double )imode*( *ErAMrel )( i, j ) );
+            
+            // backward advance by dt/2
+            ( *Bl_rel_t_minus_halfdt )( i, j )-= - dt/2./( ( j_glob_+j-0.5 )*dr ) * ( ( double )( j+j_glob_ )*( *EtAMrel )( i, j ) 
+                                                 - ( double )( j+j_glob_-1. )*( *EtAMrel )( i, j-1 ) + i1*( double )imode*( *ErAMrel )( i, j ) );
+        }
+    }
+    
+    // Magnetic field Br^(d,p)
+    for( unsigned int i=1 ; i<nl_d-1 ; i++ ) {
+        for( unsigned int j=isYmin*3 ; j<nr_p ; j++ ) {
+            // forward advance by dt/2
+            ( *Br_rel_t_plus_halfdt )( i, j ) += dt_ov_dl/2. * ( ( *EtAMrel )( i, j ) - ( *EtAMrel )( i-1, j ) )
+                                                 +i1*dt/2.*( double )imode/( ( double )( j_glob_+j )*dr )*( *ElAMrel )( i, j ) ;
+            // backward advance by dt/2
+            ( *Br_rel_t_minus_halfdt )( i, j )-= dt_ov_dl/2. * ( ( *EtAMrel )( i, j ) - ( *EtAMrel )( i-1, j ) )
+                                                 +i1*dt/2.*( double )imode/( ( double )( j_glob_+j )*dr )*( *ElAMrel )( i, j ) ;
+        }
+    }
+    
+    // Magnetic field Bt^(d,d)
+    for( unsigned int i=1 ; i<nl_d-1 ; i++ ) {
+        for( unsigned int j=1 + isYmin*2 ; j<nr_d-1 ; j++ ) {
+            // forward advance by dt/2
+            ( *Bt_rel_t_plus_halfdt )( i, j ) += dt_ov_dr/2. * ( ( *ElAMrel )( i, j ) - ( *ElAMrel )( i, j-1 ) )
+                                                -dt_ov_dl/2. * ( ( *ErAMrel )( i, j ) - ( *ErAMrel )( i-1, j ) );
+            
+            // backward advance by dt/2
+            ( *Bt_rel_t_minus_halfdt )( i, j )-= dt_ov_dr/2. * ( ( *ElAMrel )( i, j ) - ( *ElAMrel )( i, j-1 ) )
+                                                -dt_ov_dl/2. * ( ( *ErAMrel )( i, j ) - ( *ErAMrel )( i-1, j ) );
+        }
+    }
+    
+
+    // Boundary conditions on Axis
+    if( isYmin ) {
+        unsigned int j=2;
+        if( imode==0 ) {
+            for( unsigned int i=0 ; i<nl_d ; i++ ) {
+                ( *Br_rel_t_plus_halfdt )( i, j ) =0;
+                ( *Br_rel_t_minus_halfdt )( i, j )=0;
+            }
+            for( unsigned int i=0 ; i<nl_d ; i++ ) {
+                ( *Bt_rel_t_plus_halfdt )( i, j ) = -( *Bt_rel_t_plus_halfdt )( i, j+1 );
+                ( *Bt_rel_t_minus_halfdt )( i, j )= -( *Bt_rel_t_minus_halfdt )( i, j+1 );
+            }
+            for( unsigned int i=0 ; i<nl_p ; i++ ) {
+                ( *Bl_rel_t_plus_halfdt )( i, j ) = ( *Bl_rel_t_plus_halfdt )( i, j+1 );
+                ( *Bl_rel_t_minus_halfdt )( i, j )= ( *Bl_rel_t_minus_halfdt )( i, j+1 );
+            }
+        }
+        
+        else if( imode==1 ) {
+            for( unsigned int i=0 ; i<nl_p  ; i++ ) {
+                ( *Bl_rel_t_plus_halfdt )( i, j ) = -( *Bl_rel_t_plus_halfdt )( i, j+1 );
+                ( *Bl_rel_t_minus_halfdt )( i, j )= -( *Bl_rel_t_minus_halfdt )( i, j+1 );
+            }
+            
+            for( unsigned int i=1 ; i<nl_d-1 ; i++ ) {
+                ( *Br_rel_t_plus_halfdt )( i, j ) +=  i1*dt/dr/2.*( *ElAMrel )( i, j+1 )
+                                              +			dt/dl/2.*( ( *EtAMrel )( i, j )-( *EtAMrel )( i-1, j ) );
+                ( *Br_rel_t_minus_halfdt )( i, j )-=  i1*dt/dr/2.*( *ElAMrel )( i, j+1 )
+                                              +			dt/dl/2.*( ( *EtAMrel )( i, j )-( *EtAMrel )( i-1, j ) );
+            }
+            for( unsigned int i=0; i<nl_d ; i++ ) {
+                ( *Bt_rel_t_plus_halfdt )( i, j ) = -2.*i1*( *Br_rel_t_plus_halfdt )( i, j ) -( *Bt_rel_t_plus_halfdt )( i, j+1 );
+                ( *Bt_rel_t_minus_halfdt )( i, j )= -2.*i1*( *Br_rel_t_minus_halfdt )( i, j )-( *Bt_rel_t_minus_halfdt )( i, j+1 );
+            }
+            
+        } else { // modes > 1
+            for( unsigned int  i=0 ; i<nl_p; i++ ) {
+                ( *Bl_rel_t_plus_halfdt )( i, j ) = -( *Bl_rel_t_plus_halfdt )( i, j+1 );
+                ( *Bl_rel_t_minus_halfdt )( i, j )= -( *Bl_rel_t_minus_halfdt )( i, j+1 );
+            }
+            for( unsigned int i=0 ; i<nl_d; i++ ) {
+                ( *Br_rel_t_plus_halfdt )( i, j ) =0;
+                ( *Br_rel_t_minus_halfdt )( i, j )=0;
+            }
+            for( unsigned int  i=0 ; i<nl_d ; i++ ) {
+                ( *Bt_rel_t_plus_halfdt )( i, j ) = - ( *Bt_rel_t_plus_halfdt )( i, j+1 );
+                ( *Bt_rel_t_minus_halfdt )( i, j )= - ( *Bt_rel_t_minus_halfdt )( i, j+1 );
+            }
+        }
+    }
+
+
+    // Final addition of the relativistic fields to the grid fields
+    // Magnetic field Bl^(p,d)
+    for( unsigned int i=0 ; i<nl_p;  i++ ) {
+        for( unsigned int j=0 ; j<nr_d-1 ; j++ ) {
+            // sum to the fields on grid
+            ( *BlAM )( i, j )  += ( *Bl_rel_t_plus_halfdt )( i, j );
+            ( *BlAM0 )( i, j ) += ( *Bl_rel_t_minus_halfdt )( i, j );
+        }
+    }
+    
+    // Magnetic field Br^(d,p)
+    for( unsigned int i=1 ; i<nl_d-1 ; i++ ) {
+        for( unsigned int j=0 ; j<nr_p ; j++ ) {
+            // sum to the fields on grid
+            ( *BrAM )( i, j )  += ( *Br_rel_t_plus_halfdt )( i, j );
+            ( *BrAM0 )( i, j ) += ( *Br_rel_t_minus_halfdt )( i, j );
+        }
+    }
+    
+    // Magnetic field Bt^(d,d)
+    for( unsigned int i=1 ; i<nl_d-1 ; i++ ) {
+        for( unsigned int j=0 ; j<nr_d-1 ; j++ ) {
+            ( *BtAM )( i, j )  += ( *Bt_rel_t_plus_halfdt )( i, j );
+            ( *BtAM0 )( i, j ) += ( *Bt_rel_t_minus_halfdt )( i, j );
+        }
+    }
+    
+} // sum_rel_fields_to_em_fields
+
+void ElectroMagnAM::delete_phi_r_p_Ap( Patch *patch ){
+    // delete temporary fields used for relativistic initialization
+    delete phi_AM_;
+    delete r_AM_;
+    delete p_AM_;
+    delete Ap_AM_;
+}
+
+void ElectroMagnAM::delete_relativistic_fields(Patch *patch){
+    // delete temporary fields used for relativistic initialization
+    delete El_rel_;
+    delete Er_rel_;
+    delete Et_rel_;
+    delete Bl_rel_;
+    delete Br_rel_;
+    delete Bt_rel_;
+    
+    delete Bl_rel_t_plus_halfdt_;
+    delete Br_rel_t_plus_halfdt_;
+    delete Bt_rel_t_plus_halfdt_;
+    delete Bl_rel_t_minus_halfdt_;
+    delete Br_rel_t_minus_halfdt_;
+    delete Bt_rel_t_minus_halfdt_;
+}
+
 
 void ElectroMagnAM::initE( Patch *patch )
 {
