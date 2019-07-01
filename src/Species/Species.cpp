@@ -1028,6 +1028,7 @@ void Species::computeCharge( unsigned int ispec, ElectroMagn *EMfields )
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::sort_part( Params &params )
 {
+
     int ndim = params.nDim_field;
     int idim;
     //cleanup_sent_particles(ispec, indexes_of_particles_to_exchange);
@@ -1103,7 +1104,7 @@ void Species::sort_part( Params &params )
     }
     
     //idim=0
-    shift[1] += MPIbuff.part_index_recv_sz[0][0];//Particles coming from ymin all go to bin 0 and shift all the other bins.
+    shift[1] += MPIbuff.part_index_recv_sz[0][0];//Particles coming from xmin all go to bin 0 and shift all the other bins.
     shift[last_index.size()] += MPIbuff.part_index_recv_sz[0][1];//Used only to count the total number of particles arrived.
     //idim>0
     for( idim = 1; idim < ndim; idim++ ) {
@@ -1284,16 +1285,6 @@ void Species::count_sort_part( Params &params )
         indices[ixy] = tot;
         tot += oc;
     }
-    
-    //Bookmarking is not needed if normal sort is called before.
-    //first_index[0] = 0;
-    //for (bin=0; bin<first_index.size()-1; bin++) { //Loop on the bins.
-    //
-    //    first_index[bin+1] = indices[(bin+1)*params.n_space[1]*clrw] ;
-    //    last_index[bin] = first_index[bin+1];
-    //}
-    //bin = first_index.size()-1 ;
-    //last_index[bin] = npart;
     
     // last loop puts the particles and update the count array
     for( ip=0; ip < npart; ip++ ) {
