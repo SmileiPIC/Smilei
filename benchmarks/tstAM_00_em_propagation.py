@@ -37,7 +37,7 @@ MovingWindow(
 )
 
 laser_fwhm = 19.80
-LaserGaussian2D(
+LaserGaussianAM(
     box_side         = "xmin",
     a0              = 2.,
     focus           = [0., 0.],

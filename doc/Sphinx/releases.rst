@@ -1,16 +1,8 @@
 Releases
 --------
 
-Major releases are available here as well as on the
-`GitHub page <https://github.com/SmileiPIC/Smilei>`_.
-We greatly appreciate external users trying this code and giving feedback.
-You can submit *issues* when experiencing difficulties,
-or *pull requests* for your changes to become part of the official releases.
-
-Note that most of the development of the code is currently hosted in
-a `different repository <https://llrgit.in2p3.fr/smilei/smilei>`_
-reserved for the :doc:`partners`. It is regularly synchronized with
-the GitHub page.
+This page lists major releases, but it is recommended to
+get the latest version of Smilei on `GitHub <https://github.com/SmileiPIC/Smilei>`_.
 
 ----
 
@@ -21,8 +13,10 @@ Upcoming changes
 * Cylindrical geometry with Fourier decomposition in azimuthal direction
 
 * Different convention for circular polarization amplitude
+* Bugfix: Various crashes with vectorization
 * Bugfix: `LaserGaussian2D` when focused far from boundary
 * Bugfix: laser :py:data:`a0` normalization to :py:data:`omega`
+* Bugfix: Compatibility between various ionization and QED models
 
 ----
 

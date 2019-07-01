@@ -12,7 +12,7 @@ interaction to astrophysics.
 .. raw:: html
 
   <div style="width:100%; text-align:center; margin-bottom:8em;">
-  <a href="releases.html#current-release-4-1" class="icon">
+  <a href="releases.html" class="icon">
 
 .. image:: _static/download.svg
 
