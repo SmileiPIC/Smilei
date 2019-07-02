@@ -21,7 +21,8 @@ Domain::Domain( Params &params ) :
     vecPatch_( params ),
     decomposition_( NULL ),
     patch_( NULL ),
-    diag_( NULL )
+    diag_( NULL ),
+    fake_patch( NULL )
 {
 }
 
@@ -147,7 +148,9 @@ void Domain::clean()
         delete decomposition_;
     }
     
-    delete fake_patch;
+    if( fake_patch!=NULL ) {
+        delete fake_patch;
+    }
     
 }
 
