@@ -175,7 +175,9 @@ void SyncCartesianPatchAM::cartesianToPatches( Domain &domain, VectorPatch &vecP
 
     }
 
-    ElectroMagnAM * domain_fields = static_cast<ElectroMagnAM *>( domain.patch_->EMfields );
+    ElectroMagnAM * domain_fields = NULL;
+    if ( domain.local_patches_.size() )
+        domain_fields = static_cast<ElectroMagnAM *>( domain.patch_->EMfields );
 
     //for ( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ ) {
     for ( unsigned int i=0 ; i<domain.local_patches_.size() ; i++ ) {

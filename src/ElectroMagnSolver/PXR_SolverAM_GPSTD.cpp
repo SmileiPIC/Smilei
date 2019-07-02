@@ -83,7 +83,7 @@ void PXR_SolverAM_GPSTD::coupling( Params &params, ElectroMagn *EMfields )
     rho_pxr = new cField3D( dimPrim );
     rhoold_pxr = new cField3D( dimPrim );
 
-    _2Dvectors_to_3D(EMfields);
+    //_2Dvectors_to_3D(EMfields);
 
 
     double pxr_dl = params.cell_length[0];
@@ -138,21 +138,21 @@ void PXR_SolverAM_GPSTD::coupling( Params &params, ElectroMagn *EMfields )
 
         int nmodes ( Nmode );
         //call of extern init routine (defined in picsar)
-        picsar::init_params_picsar_AM( &nr, &nl, &nmodes, &nmodes, 
-                                    &pxr_dr, &pxr_dl, &params.timestep,
-                                    &ovr, &ovl,
-                                    &params.norder[1], &params.norder[0],
-                                    &( Et_pxr->cdata_[0] ),
-                                    &( Er_pxr->cdata_[0] ),
-                                    &( El_pxr->cdata_[0] ),
-                                    &( Bt_pxr->cdata_[0] ),
-                                    &( Br_pxr->cdata_[0] ),
-                                    &( Bl_pxr->cdata_[0] ),
-                                    &( Jt_pxr->cdata_[0] ),
-                                    &( Jr_pxr->cdata_[0] ),
-                                    &( Jl_pxr->cdata_[0] ),
-                                    &( rho_pxr->cdata_[0] ),
-                                    &( rhoold_pxr->cdata_[0] ) );
+        //picsar::init_params_picsar_AM( &nr, &nl, &nmodes, &nmodes, 
+        //                            &pxr_dr, &pxr_dl, &params.timestep,
+        //                            &ovr, &ovl,
+        //                            &params.norder[1], &params.norder[0],
+        //                            &( Et_pxr->cdata_[0] ),
+        //                            &( Er_pxr->cdata_[0] ),
+        //                            &( El_pxr->cdata_[0] ),
+        //                            &( Bt_pxr->cdata_[0] ),
+        //                            &( Br_pxr->cdata_[0] ),
+        //                            &( Bl_pxr->cdata_[0] ),
+        //                            &( Jt_pxr->cdata_[0] ),
+        //                            &( Jr_pxr->cdata_[0] ),
+        //                            &( Jl_pxr->cdata_[0] ),
+        //                            &( rho_pxr->cdata_[0] ),
+        //                            &( rhoold_pxr->cdata_[0] ) );
 #else
     ERROR( "Smilei not linked with picsar" );
 #endif
@@ -162,16 +162,16 @@ void PXR_SolverAM_GPSTD::coupling( Params &params, ElectroMagn *EMfields )
 
 void PXR_SolverAM_GPSTD::divergence_cleaning( ElectroMagn *fields )
 {
-    _2Dvectors_to_3D(fields);
+    //_2Dvectors_to_3D(fields);
     
 #ifdef _PICSAR
-    picsar::divergence_cleaning();
+    //picsar::divergence_cleaning();
 #else
     ERROR( "Smilei not linked with picsar" );
 #endif
     
     //duplicate_field_into_smilei( fields );
-    _3D_to_2Dvectors(fields);
+    //_3D_to_2Dvectors(fields);
 
 }
 

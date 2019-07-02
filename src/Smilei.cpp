@@ -260,16 +260,20 @@ int main( int argc, char *argv[] )
     Domain domain_dc( params );
     domain_dc.build_full( params, &smpi, vecPatches, openPMD );
 
-    //domain_dc.identify_additional_patches( &smpi, vecPatches, params, simWindow );
-    //domain_dc.identify_missing_patches( &smpi, vecPatches, params );
-    //
-    //if ( params.geometry != "AMcylindrical" )
-    //    SyncCartesianPatch::cartesianToPatches( domain_dc, vecPatches, params, &smpi, timers, 0 );
-    //else {
-    //    for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
-    //        SyncCartesianPatchAM::cartesianToPatches( domain_dc, vecPatches, params, &smpi, timers, 0, imode );
-    //}
+    domain_dc.identify_additional_patches( &smpi, vecPatches, params, simWindow );
+    domain_dc.identify_missing_patches( &smpi, vecPatches, params );
+
+    if ( params.geometry != "AMcylindrical" )
+        SyncCartesianPatch::cartesianToPatches( domain_dc, vecPatches, params, &smpi, timers, 0 );
+    else {
+        for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
+            SyncCartesianPatchAM::cartesianToPatches( domain_dc, vecPatches, params, &smpi, timers, 0, imode );
+    }
     domain_dc.clean();
+
+    MPI_Barrier( MPI_COMM_WORLD );
+    MPI_Finalize();
+    return 0;
 
     
     Domain domain( params );

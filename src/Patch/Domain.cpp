@@ -102,6 +102,8 @@ void Domain::build_full( Params &params, SmileiMPI *smpi, VectorPatch &vecPatche
 {
     int rk(0);
     MPI_Comm_rank( MPI_COMM_WORLD, &rk );
+    decomposition_ = NULL;
+    vecPatch_.patches_.clear();
 
     if (rk)
         return;
@@ -114,7 +116,7 @@ void Domain::build_full( Params &params, SmileiMPI *smpi, VectorPatch &vecPatche
     
     vecPatch_.patches_[0]->finalizeMPIenvironment( params );
     vecPatch_.nrequests = vecPatches( 0 )->requests_.size();
-    //vecPatch_.nAntennas = vecPatch_( 0 )->EMfields->antennas.size();
+    vecPatch_.nAntennas = vecPatch_( 0 )->EMfields->antennas.size();
     vecPatch_.initExternals( params );
     vecPatch_.applyExternalFields();
     
@@ -167,12 +169,20 @@ void Domain::identify_additional_patches(SmileiMPI* smpi, VectorPatch& vecPatche
     //cout << "patch_->getDomainLocalMin(1) = " << patch_->getDomainLocalMin(1) << endl;
     //cout << "patch_->getDomainLocalMax(1) = " << patch_->getDomainLocalMax(1) << endl;
 
+    // vecPatch_.patches_
+    double domain_min( 10 );
+    double domain_max( 0 );
+
     for ( int ipatch = 0 ; ipatch < vecPatches.size() ; ipatch++ ) {
         
         bool patch_is_in( true );
-        for ( int iDim = 0 ; iDim < patch_->getDomainLocalMin().size() ; iDim++ ) {
+        for ( int iDim = 0 ; iDim < params.nDim_field ; iDim++ ) {
+            if ( vecPatch_.patches_.size() ) {
+                domain_min = patch_->getDomainLocalMin(iDim);
+                domain_max = patch_->getDomainLocalMax(iDim);
+            }
             double center = ( vecPatches(ipatch)->getDomainLocalMin(iDim) + vecPatches(ipatch)->getDomainLocalMax(iDim) - 2. * delta_moving_win *(iDim==0)  ) /2.;
-            if ( ( center < patch_->getDomainLocalMin(iDim) ) || ( center > patch_->getDomainLocalMax(iDim) ) )
+            if ( ( center < domain_min ) || ( center > domain_max ) )
                 patch_is_in = false;
         }
         if (!patch_is_in) {
@@ -195,30 +205,38 @@ void Domain::identify_additional_patches(SmileiMPI* smpi, VectorPatch& vecPatche
 int Domain::hrank_global_domain( int hindex, Params& params, VectorPatch& vecPatches )
 {
     int rank(0);
-    std::vector<unsigned int> patch_coordinates = vecPatches.domain_decomposition_->getDomainCoordinates( hindex );
-    std::vector<int> rank_coordinates;
-    //rank_coordinates.resize( params.nDim_field );
-    rank_coordinates.resize( 3, 0 );
 
-    for ( int iDim = 0 ; iDim < params.nDim_field ; iDim++ ) {
-        int min =  patch_coordinates[iDim]    * params.n_space[iDim];
-        int max = (patch_coordinates[iDim]+1) * params.n_space[iDim];
-        int center = (min+max)/2;
+    if (decomposition_!=NULL) { // real double decomposition
+        std::vector<unsigned int> patch_coordinates = vecPatches.domain_decomposition_->getDomainCoordinates( hindex );
+        std::vector<int> rank_coordinates;
+        //rank_coordinates.resize( params.nDim_field );
+        rank_coordinates.resize( 3, 0 );
 
-        int idomain(0);
-        while ( ( center > params.offset_map[iDim][idomain] ) && ( idomain < params.number_of_domain[iDim] ) )
-            idomain++;
+        for ( int iDim = 0 ; iDim < params.nDim_field ; iDim++ ) {
+            int min =  patch_coordinates[iDim]    * params.n_space[iDim];
+            int max = (patch_coordinates[iDim]+1) * params.n_space[iDim];
+            int center = (min+max)/2;
 
-        rank_coordinates[iDim] = idomain-1;
+            int idomain(0);
+            while ( ( center > params.offset_map[iDim][idomain] ) && ( idomain < params.number_of_domain[iDim] ) )
+                idomain++;
 
+            rank_coordinates[iDim] = idomain-1;
+
+        }
+        rank = params.map_rank[ rank_coordinates[0] ][ rank_coordinates[1] ][ rank_coordinates[2] ];
     }
-    rank = params.map_rank[ rank_coordinates[0] ][ rank_coordinates[1] ][ rank_coordinates[2] ];
+    else { // Gather everything on MPI 0 
+        rank = 0;
+    }
 
     return rank;
 }
 
 void Domain::identify_missing_patches(SmileiMPI* smpi, VectorPatch& vecPatches, Params& params)
 {
+    if (smpi->getRank())
+        return;
     //missing_patches_.push_back()
 
     // Loop on theroritical patches
