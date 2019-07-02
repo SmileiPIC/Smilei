@@ -123,7 +123,7 @@ void Domain::build_full( Params &params, SmileiMPI *smpi, VectorPatch &vecPatche
     
     fake_patch = PatchesFactory::clone(vecPatches(0), params, smpi, vecPatches.domain_decomposition_, 0, 0, false);
     if( params.is_pxr ) {
-        vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, vecPatch_( 0 )->EMfields );
+        vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, vecPatch_( 0 )->EMfields, true );
         if ( ( params.geometry == "AMcylindrical" ) && ( params.apply_divergence_cleaning ) )
             vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->divergence_cleaning( vecPatch_( 0 )->EMfields );
 

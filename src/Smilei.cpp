@@ -271,10 +271,6 @@ int main( int argc, char *argv[] )
     }
     domain_dc.clean();
 
-    MPI_Barrier( MPI_COMM_WORLD );
-    MPI_Finalize();
-    return 0;
-
     
     Domain domain( params );
     //#ifdef _PICSAR

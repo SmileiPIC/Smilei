@@ -15,7 +15,7 @@ public:
     PXR_SolverAM_GPSTD( Params &params );
     virtual ~PXR_SolverAM_GPSTD();
     
-    void coupling( Params &params, ElectroMagn *EMfields ) override;
+    void coupling( Params &params, ElectroMagn *EMfields, bool full_domain = false ) override;
     void uncoupling() override;
     void divergence_cleaning( ElectroMagn *fields ) override;
     //! Overloading of () operator

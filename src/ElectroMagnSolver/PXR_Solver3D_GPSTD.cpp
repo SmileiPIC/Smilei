@@ -14,7 +14,7 @@ PXR_Solver3D_GPSTD::~PXR_Solver3D_GPSTD()
 {
 }
 
-void PXR_Solver3D_GPSTD::coupling( Params &params, ElectroMagn *EMfields )
+void PXR_Solver3D_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool full_domain )
 {
 #ifdef _PICSAR
     int cdim=3;
@@ -24,7 +24,9 @@ void PXR_Solver3D_GPSTD::coupling( Params &params, ElectroMagn *EMfields )
     // unable to convert unsigned int to an iso_c_binding supported type
     
     std::vector<unsigned int> n_space(params.n_space);
-    if (params.uncoupled_grids)
+    if (full_domain)
+        n_space = params.n_space_global;
+    else if (params.uncoupled_grids)
         n_space = params.n_space_domain;
     
     n0=( int ) (0 + n_space[0]);
