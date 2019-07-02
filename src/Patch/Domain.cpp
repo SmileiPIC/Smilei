@@ -137,6 +137,9 @@ Domain::~Domain()
 
 void Domain::clean()
 {
+    if (vecPatch_.patches_.size())
+        vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->uncoupling();
+
     if( diag_ !=NULL ) {
         diag_->closeFile();
         delete diag_;
@@ -238,7 +241,7 @@ int Domain::hrank_global_domain( int hindex, Params& params, VectorPatch& vecPat
 
 void Domain::identify_missing_patches(SmileiMPI* smpi, VectorPatch& vecPatches, Params& params)
 {
-    if (smpi->getRank())
+    if ( (decomposition_==NULL) && (smpi->getRank()) )
         return;
     //missing_patches_.push_back()
 

@@ -17,6 +17,7 @@ public:
     virtual ~Solver() {};
     
     virtual void coupling( Params &params, ElectroMagn *EMfields ) {};
+    virtual void uncoupling() {};
     virtual void divergence_cleaning( ElectroMagn *EMfields ) {};
     //! Overloading of () operator
     virtual void operator()( ElectroMagn *fields ) = 0;

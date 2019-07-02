@@ -160,6 +160,15 @@ void PXR_SolverAM_GPSTD::coupling( Params &params, ElectroMagn *EMfields )
                                 
 }
 
+void PXR_SolverAM_GPSTD::uncoupling()
+{
+#ifdef _PICSAR
+    //picsar::free_params_picsar_AM();
+#else
+    ERROR( "Smilei not linked with picsar" );
+#endif
+}
+
 void PXR_SolverAM_GPSTD::divergence_cleaning( ElectroMagn *fields )
 {
     //_2Dvectors_to_3D(fields);
