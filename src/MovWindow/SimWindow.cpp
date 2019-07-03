@@ -311,6 +311,7 @@ void SimWindow::operate( VectorPatch &vecPatches, SmileiMPI *smpi, Params &param
                     if( patch_particle_created[ithread][j] ) {
                         for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
                             mypatch->vecSpecies[ispec]->createParticles( params.n_space, params, mypatch, 0 );
+
                             /*#ifdef _VECTO
                                                     // Classical vectorized mode
                                                     if (params.vectorization_mode == "on")
@@ -368,6 +369,7 @@ void SimWindow::operate( VectorPatch &vecPatches, SmileiMPI *smpi, Params &param
                                                     }
                             #endif*/
                         }
+                        mypatch->copy_positions(mypatch->vecSpecies);
                         
                         mypatch->EMfields->applyExternalFields( mypatch );
                         if( params.save_magnectic_fields_for_SM ) {
