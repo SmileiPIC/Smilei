@@ -714,8 +714,10 @@ Each species has to be defined in a ``Species`` block::
 
   :default: 0.
 
-  The time during which the particle positions are not updated, in units of :math:`T_r`.
-
+  The time during which the particles are "frozen", in units of :math:`T_r`.
+  Frozen particles do not move and therefore do not deposit any current either.
+  They are computationally much cheaper than non-frozen particles and oblivious to any EM-fields
+  in the simulation.
 
 .. py:data:: ionization_model
 
