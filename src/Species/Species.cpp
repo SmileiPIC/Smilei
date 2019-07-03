@@ -413,12 +413,7 @@ void Species::initPosition( unsigned int nPart, unsigned int iPart, double *inde
             for( unsigned int i=0; i<nDim_particle ; i++ ) {
                 particles->position( i, p )=indexes[i]+0.5*cell_length[i];
             }
-            
     }
-    
-    //std::cout<<"particle position in x "<< particles->position(0,iPart)<<std::endl;
-    //std::cout<<"particle position in y "<< particles->position(1,iPart)<<std::endl;
-    //std::cout<<"particle position in z "<< particles->position(2,iPart)<<std::endl;
 }
 
 
@@ -582,10 +577,6 @@ void Species::initMomentum( unsigned int nPart, unsigned int iPart, double *temp
             
         }
     }
-    
-    //std::cout<<"particle momentum in x "<< particles->momentum(0,0)*10<<std::endl;
-    //std::cout<<"particle momentum in y "<< particles->momentum(1,0)*10<<std::endl;
-    //std::cout<<"particle momentum in z "<< particles->momentum(2,0)*10<<std::endl;
 }//END initMomentum
 
 
@@ -842,6 +833,33 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 //        }
 
     } else { // immobile particle (at the moment only project density)
+
+        if( Ionize ) { // If ionized, interpolation is required.
+            smpi->dynamics_resize( ithread, nDim_field, last_index.back(), params.geometry=="AMcylindrical" );
+            //Point to local thread dedicated buffers
+            //Still needed for ionization
+            vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
+            
+            for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin++ ) {
+            
+#ifdef      __DETAILED_TIMERS
+                timer = MPI_Wtime();
+#endif
+                // Interpolate the fields at the particle position
+                Interp->fieldsWrapper( EMfields, *particles, smpi, &( first_index[ibin] ), &( last_index[ibin] ), ithread );
+#ifdef      __DETAILED_TIMERS
+                patch->patch_timers[0] += MPI_Wtime() - timer;
+#endif
+#ifdef  __DETAILED_TIMERS
+                timer = MPI_Wtime();
+#endif
+                ( *Ionize )( particles, first_index[ibin], last_index[ibin], Epart, patch, Proj );
+#ifdef  __DETAILED_TIMERS
+                patch->patch_timers[4] += MPI_Wtime() - timer;
+#endif
+            }
+        } //end if ionize for frozen species
+
         if( diag_flag &&( !particles->is_test ) ) {
             if( params.geometry != "AMcylindrical" ) {
                 double *b_rho=nullptr;
