@@ -139,9 +139,15 @@ Recommendations for relativistic species field initialization
 In :program:`Smilei`, each species can independently benefit from this field initialization procedure. Its field will be initialized when the species will start to move, in order not to interfere with the other species' dynamics. 
 The initialized fields will be superimposed to the electromagnetic fields already present in the simulation. To have physically meaningful results, we recommend to place a species which requires this method of field initialization far from other species, otherwise the latter could experience instantaneous unphysical forces by the relativistic species’ fields.
 
+Remember that the transverse field of a moving charge with relativistic factor :math:`\gamma` is greater than the electrostatic transverse field of that charge, by a factor :math:`\gamma`. 
+This means that for highly relativistic particles, you will need to use a transversely large simulation window to let the field decrease enough to reduce border effects during its propagation. 
+A complete absence of boundary effects in this case would be provided by perfectly absorbing boundary conditions, which are not implemented yet in the code. 
+If the relativistic species propagates in a plasma, these border effects could be partially screened by the plasma.
+
 A relativistic mean velocity in the :math:`x` direction and a negligible energy spread are assumed in the hypotheses of this procedure, so the user must ensure these conditions when defining the species requiring field initialization in the namelist. 
 The procedure could be extended to non-monoenergetic species, dividing the species particles in monoenergetic energy bins and then superimposing the fields by each of the monoenergetic bins, computed with the same procedure. 
 At the moment, this energy binning technique is not available in :program:`Smilei`.  
+
 
 
 ----
