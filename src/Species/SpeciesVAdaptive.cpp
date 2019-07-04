@@ -660,6 +660,40 @@ void SpeciesVAdaptive::scalar_ponderomotive_update_position_and_currents( double
     } // end case of moving particle
     else { // immobile particle
 
+        if( Ionize ) {
+            smpi->dynamics_resize( ithread, nDim_particle, last_index.back() );
+
+            //Point to local thread dedicated buffers
+            //Still needed for ionization
+            vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
+
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
+
+            // Interpolate the fields at the particle position
+            Interp->fieldsWrapper( EMfields, *particles, smpi, &( first_index[0] ), &( last_index[last_index.size()-1] ), ithread, first_index[0] );
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[0] += MPI_Wtime() - timer;
+#endif
+
+            // Interpolate the fields at the particle position
+            //for (unsigned int scell = 0 ; scell < first_index.size() ; scell++)
+            //    (*Interp)(EMfields, *particles, smpi, &(first_index[scell]), &(last_index[scell]), ithread );
+            for( unsigned int scell = 0 ; scell < first_index.size() ; scell++ ) {
+
+                // Ionization
+#ifdef  __DETAILED_TIMERS
+                timer = MPI_Wtime();
+#endif
+                ( *Ionize )( particles, first_index[scell], last_index[scell], Epart, patch, Proj );
+#ifdef  __DETAILED_TIMERS
+                patch->patch_timers[4] += MPI_Wtime() - timer;
+#endif
+            }// end loop on scells
+        }// end if ionize
+
         if( diag_flag &&( !particles->is_test ) ) {
             double *b_rho=nullptr;
             for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
