@@ -368,7 +368,52 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
             
         }
         
-    } else { // immobile particle (at the moment only project density)
+    } else { // immobile particle (at the moment only project density and ionize if necessary)
+
+        if( Ionize ) {
+            smpi->dynamics_resize( ithread, nDim_field, last_index.back(), params.geometry=="AMcylindrical" );
+            
+            //Point to local thread dedicated buffers
+            //Still needed for ionization
+            vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
+            
+            //Prepare for sorting
+            for( unsigned int i=0; i<count.size(); i++ ) {
+                count[i] = 0;
+            }
+            
+            for( unsigned int ipack = 0 ; ipack < npack_ ; ipack++ ) {
+            
+                int nparts_in_pack = last_index[( ipack+1 ) * packsize_-1 ];
+                smpi->dynamics_resize( ithread, nDim_particle, nparts_in_pack );
+            
+#ifdef  __DETAILED_TIMERS
+                timer = MPI_Wtime();
+#endif
+            
+                // Interpolate the fields at the particle position
+                for( unsigned int scell = 0 ; scell < packsize_ ; scell++ )
+                    Interp->fieldsWrapper( EMfields, *particles, smpi, &( first_index[ipack*packsize_+scell] ),
+                                           &( last_index[ipack*packsize_+scell] ),
+                                           ithread, first_index[ipack*packsize_] );
+                                       
+#ifdef  __DETAILED_TIMERS
+                patch->patch_timers[0] += MPI_Wtime() - timer;
+#endif
+            
+                // Ionization
+#ifdef  __DETAILED_TIMERS
+                timer = MPI_Wtime();
+#endif
+                for( unsigned int scell = 0 ; scell < first_index.size() ; scell++ ) {
+                    ( *Ionize )( particles, first_index[scell], last_index[scell], Epart, patch, Proj );
+                }
+#ifdef  __DETAILED_TIMERS
+                patch->patch_timers[4] += MPI_Wtime() - timer;
+#endif
+            }
+        }
+
         if( diag_flag &&( !particles->is_test ) ) {
             double *b_rho=nullptr;
             
