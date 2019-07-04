@@ -617,8 +617,7 @@ Each species has to be defined in a ``Species`` block::
   * ``"cold"`` for zero temperature
   * A *numpy* array defining all the momenta of the species' particles (requires that
     :py:data:`position_initialization` also be an array with the same number of particles).
-    The array shape must be `(Ndim, Npart)` where `Ndim` is the number of particle dimensions of the simulation,
-    and `Npart` is the total number of particles. Momentum components `px`, `py`, `pz`
+    The array shape must be `(3, Npart)` where `Npart` is the total number of particles. Momentum components `px`, `py`, `pz`
     are given in successive columns.This initialization is incompatible with
     :py:data:`temperature` and :py:data:`mean_velocity`.
 

@@ -1608,7 +1608,7 @@ int Species::createParticles( vector<unsigned int> n_space_to_create, Params &pa
                 initMomentum( 1, ip, temp, vel );
             } else {
                 for( unsigned int idim=0; idim < 3; idim++ ) {
-                    particles->momentum( idim, ip ) = momentum[idim][ippy] ;
+                    particles->momentum( idim, ip ) = momentum[idim][ippy]/this->mass ;
                 }
             }
             
