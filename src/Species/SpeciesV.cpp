@@ -377,11 +377,6 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
             //Still needed for ionization
             vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
             
-            //Prepare for sorting
-            for( unsigned int i=0; i<count.size(); i++ ) {
-                count[i] = 0;
-            }
-            
             for( unsigned int ipack = 0 ; ipack < npack_ ; ipack++ ) {
             
                 int nparts_in_pack = last_index[( ipack+1 ) * packsize_-1 ];
