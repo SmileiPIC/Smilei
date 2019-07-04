@@ -10,7 +10,7 @@ install:
 script:
  - mkdir -p build/html/_downloads
  - git describe --abbrev > scripts/CompileTools/ver
- - git archive --format tar -o build/html/_downloads/Smilei.tar
+ - git archive --format tar -o build/html/_downloads/Smilei.tar HEAD
  - tar rf build/html/_downloads/Smilei.tar scripts/CompileTools/ver
  - gzip -f build/html/_downloads/Smilei.tar
  - make doc
