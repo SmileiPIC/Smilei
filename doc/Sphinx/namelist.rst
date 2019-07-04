@@ -601,7 +601,7 @@ Each species has to be defined in a ``Species`` block::
      of both species are identical in each cell.
    * A *numpy* array defining all the positions of the species' particles.
      In this case you must also provide the weight of each particle (see :ref:`Weights`).
-     The array shape must be `(Ndim+1, Npart)` where `Ndim` is the simulation dimension (of the particles),
+     The array shape must be `(Ndim+1, Npart)` where `Ndim` is the number of particle dimensions (of the particles),
      and `Npart` is the total number of particles. Positions components `x`, `y`, `z` are
      given along the first `Ndim` columns and the weights are given in the last column of the array.
      This initialization is incompatible with :py:data:`number_density`, :py:data:`charge_density`
@@ -617,7 +617,7 @@ Each species has to be defined in a ``Species`` block::
   * ``"cold"`` for zero temperature
   * A *numpy* array defining all the momenta of the species' particles (requires that
     :py:data:`position_initialization` also be an array with the same number of particles).
-    The array shape must be `(Ndim, Npart)` where `Ndim` is the simulation dimension,
+    The array shape must be `(Ndim, Npart)` where `Ndim` is the number of particle dimensions of the simulation,
     and `Npart` is the total number of particles. Momentum components `px`, `py`, `pz`
     are given in successive columns.This initialization is incompatible with
     :py:data:`temperature` and :py:data:`mean_velocity`.

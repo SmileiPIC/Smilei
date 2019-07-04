@@ -10,13 +10,15 @@ Upcoming changes
 ^^^^^^^^^^^^^^^^
 
 * Interface with the PICSAR library (currently experimental)
-* Cylindrical geometry with Fourier decomposition in azimuthal direction
+* Cylindrical geometry with Fourier decomposition in azimuthal direction is almost out of beta phase
 
 * Different convention for circular polarization amplitude
 * Bugfix: Various crashes with vectorization
 * Bugfix: `LaserGaussian2D` when focused far from boundary
 * Bugfix: laser :py:data:`a0` normalization to :py:data:`omega`
 * Bugfix: Compatibility between various ionization and QED models
+* Bugfix: Frozen particles are now properly ionized
+* Bugfix: Species position initialization over another species now works properly when a moving window is used
 
 ----
 
