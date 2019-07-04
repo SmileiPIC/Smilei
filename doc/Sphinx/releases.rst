@@ -28,7 +28,12 @@ Upcoming changes
 
 .. _latestVersion:
 
-The latest version tarball can be donloaded here
+
+Latest Release 
+^^^^^^^^^^^^^^^^^^^^^
+
+The latest version tarball can be donwloaded here:
+
 **Download**: `Smilei latest <_downloads/Smilei.tar.gz>`_
 
 
