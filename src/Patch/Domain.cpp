@@ -48,7 +48,7 @@ void Domain::build( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, Op
     vecPatch_.nrequests = vecPatches( 0 )->requests_.size();
     vecPatch_.nAntennas = vecPatch_( 0 )->EMfields->antennas.size();
     vecPatch_.initExternals( params );
-    vecPatch_.applyExternalFields();
+    //vecPatch_.applyExternalFields();
     
     fake_patch = PatchesFactory::clone(vecPatches(0), params, smpi, vecPatches.domain_decomposition_, 0, 0, false);
         
@@ -91,12 +91,12 @@ void Domain::build( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, Op
     
     */
     
-    if( params.is_pxr ) {
-        vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, vecPatch_( 0 )->EMfields );
-        if ( ( params.geometry == "AMcylindrical" ) && ( params.apply_divergence_cleaning ) )
-            vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->divergence_cleaning( vecPatch_( 0 )->EMfields );
-
-    }
+    //if( params.is_pxr ) {
+    //    vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, vecPatch_( 0 )->EMfields );
+    //    //if ( ( params.geometry == "AMcylindrical" ) && ( params.apply_divergence_cleaning ) )
+    //    //    vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->divergence_cleaning( vecPatch_( 0 )->EMfields );
+    //
+    //}
 }
 
 void Domain::build_full( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, OpenPMDparams &openPMD )
@@ -105,6 +105,7 @@ void Domain::build_full( Params &params, SmileiMPI *smpi, VectorPatch &vecPatche
     MPI_Comm_rank( MPI_COMM_WORLD, &rk );
     decomposition_ = NULL;
     vecPatch_.patches_.clear();
+    vecPatch_.refHindex_ = rk;
 
     if (rk)
         return;
@@ -119,15 +120,15 @@ void Domain::build_full( Params &params, SmileiMPI *smpi, VectorPatch &vecPatche
     vecPatch_.nrequests = vecPatches( 0 )->requests_.size();
     vecPatch_.nAntennas = vecPatch_( 0 )->EMfields->antennas.size();
     vecPatch_.initExternals( params );
-    vecPatch_.applyExternalFields();
+    //vecPatch_.applyExternalFields();
     
     fake_patch = PatchesFactory::clone(vecPatches(0), params, smpi, vecPatches.domain_decomposition_, 0, 0, false);
-    if( params.is_pxr ) {
-        vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, vecPatch_( 0 )->EMfields, true );
-        if ( ( params.geometry == "AMcylindrical" ) && ( params.apply_divergence_cleaning ) )
-            vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->divergence_cleaning( vecPatch_( 0 )->EMfields );
-
-    }
+    //if( params.is_pxr ) {
+    //    vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, vecPatch_( 0 )->EMfields, true );
+    //    if ( ( params.geometry == "AMcylindrical" ) && ( params.apply_divergence_cleaning ) )
+    //        vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->divergence_cleaning( vecPatch_( 0 )->EMfields );
+    //
+    //}
 
 }
 

@@ -259,16 +259,17 @@ int main( int argc, char *argv[] )
     // divergence cleaning
     Domain domain_dc( params );
     domain_dc.build_full( params, &smpi, vecPatches, openPMD );
-
     domain_dc.identify_additional_patches( &smpi, vecPatches, params, simWindow );
     domain_dc.identify_missing_patches( &smpi, vecPatches, params );
-
-    if ( params.geometry != "AMcylindrical" )
-        SyncCartesianPatch::cartesianToPatches( domain_dc, vecPatches, params, &smpi, timers, 0 );
-    else {
-        for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
-            SyncCartesianPatchAM::cartesianToPatches( domain_dc, vecPatches, params, &smpi, timers, 0, imode );
+    for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
+        SyncCartesianPatchAM::patchedToCartesian_MW( vecPatches, domain_dc, params, &smpi, imode );
+    if( params.is_pxr && smpi.isMaster()) {
+        domain_dc.vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, domain_dc.vecPatch_( 0 )->EMfields, true );
+        if ( ( params.geometry == "AMcylindrical" ) && ( params.apply_divergence_cleaning ) )
+            domain_dc.vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->divergence_cleaning( domain_dc.vecPatch_( 0 )->EMfields );
     }
+    for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
+        SyncCartesianPatchAM::cartesianToPatches( domain_dc, vecPatches, params, &smpi, timers, 0, imode );
     domain_dc.clean();
 
     
@@ -276,6 +277,12 @@ int main( int argc, char *argv[] )
     //#ifdef _PICSAR
     if (params.uncoupled_grids) {
         domain.build( params, &smpi, vecPatches, openPMD );
+        domain.identify_additional_patches( &smpi, vecPatches, params, simWindow );
+        domain.identify_missing_patches( &smpi, vecPatches, params );
+        for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
+            SyncCartesianPatchAM::patchedToCartesian_MW( vecPatches, domain, params, &smpi, imode );
+        if( params.is_pxr )
+            domain.vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, domain.vecPatch_( 0 )->EMfields );
     }
     else {
         if (params.is_pxr) {
@@ -308,10 +315,6 @@ int main( int argc, char *argv[] )
     // ------------------------------------------------------------------
     //                     HERE STARTS THE PIC LOOP
     // ------------------------------------------------------------------
-    if (params.uncoupled_grids) {
-        domain.identify_additional_patches( &smpi, vecPatches, params, simWindow );
-        domain.identify_missing_patches( &smpi, vecPatches, params );
-    }
 
     TITLE( "Time-Loop started: number of time-steps n_time = " << params.n_time );
     if( smpi.isMaster() ) {

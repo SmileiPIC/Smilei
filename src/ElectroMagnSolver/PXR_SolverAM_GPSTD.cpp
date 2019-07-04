@@ -173,16 +173,16 @@ void PXR_SolverAM_GPSTD::uncoupling()
 
 void PXR_SolverAM_GPSTD::divergence_cleaning( ElectroMagn *fields )
 {
-    //_2Dvectors_to_3D(fields);
+    _2Dvectors_to_3D(fields);
     
 #ifdef _PICSAR
-    //picsar::divergence_cleaning();
+    picsar::divergence_cleaning();
 #else
     ERROR( "Smilei not linked with picsar" );
 #endif
     
     //duplicate_field_into_smilei( fields );
-    //_3D_to_2Dvectors(fields);
+    _3D_to_2Dvectors(fields);
 
 }
 

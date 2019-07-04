@@ -319,7 +319,9 @@ void SyncCartesianPatchAM::patchedToCartesian_MW( VectorPatch& vecPatches, Domai
         SyncCartesianPatchAM::finalize_sendPatchedToCartesian_MW( static_cast<ElectroMagnAM *>(vecPatches(ipatch)->EMfields), domain.additional_patches_[i], domain.additional_patches_ranks[i], smpi, vecPatches(ipatch), params, imode );
     }
 
-    ElectroMagnAM * domain_fields = static_cast<ElectroMagnAM *>( domain.patch_->EMfields );
+    ElectroMagnAM * domain_fields = NULL;
+    if ( domain.local_patches_.size() )
+        domain_fields = static_cast<ElectroMagnAM *>( domain.patch_->EMfields );
 
     for ( unsigned int i=0 ; i<domain.local_patches_.size() ; i++ ) {
         unsigned int ipatch = domain.local_patches_[i]-vecPatches.refHindex_;
@@ -344,17 +346,17 @@ void SyncCartesianPatchAM::patchedToCartesian_MW( VectorPatch& vecPatches, Domai
 
 void SyncCartesianPatchAM::sendPatchedToCartesian_MW( ElectroMagnAM* localfields, unsigned int hindex, int send_to_global_patch_rank, SmileiMPI* smpi, Patch* patch, Params& params, unsigned int imode )
 {
-    smpi->isend( localfields->El_[imode], send_to_global_patch_rank, hindex*9  , patch->requests_[0] );
-    smpi->isend( localfields->Er_[imode], send_to_global_patch_rank, hindex*9+1, patch->requests_[1] );
-    smpi->isend( localfields->Et_[imode], send_to_global_patch_rank, hindex*9+2, patch->requests_[2] );
+    smpi->isendComplex( localfields->El_[imode], send_to_global_patch_rank, hindex*9  , patch->requests_[0] );
+    smpi->isendComplex( localfields->Er_[imode], send_to_global_patch_rank, hindex*9+1, patch->requests_[1] );
+    smpi->isendComplex( localfields->Et_[imode], send_to_global_patch_rank, hindex*9+2, patch->requests_[2] );
 
-    smpi->isend( localfields->Bl_[imode], send_to_global_patch_rank, hindex*9+3, patch->requests_[3] );
-    smpi->isend( localfields->Br_[imode], send_to_global_patch_rank, hindex*9+4, patch->requests_[4] );
-    smpi->isend( localfields->Bt_[imode], send_to_global_patch_rank, hindex*9+5, patch->requests_[5] );
+    smpi->isendComplex( localfields->Bl_[imode], send_to_global_patch_rank, hindex*9+3, patch->requests_[3] );
+    smpi->isendComplex( localfields->Br_[imode], send_to_global_patch_rank, hindex*9+4, patch->requests_[4] );
+    smpi->isendComplex( localfields->Bt_[imode], send_to_global_patch_rank, hindex*9+5, patch->requests_[5] );
 
-    smpi->isend( localfields->Bl_m[imode], send_to_global_patch_rank, hindex*9+6, patch->requests_[6] );
-    smpi->isend( localfields->Br_m[imode], send_to_global_patch_rank, hindex*9+7, patch->requests_[7] );
-    smpi->isend( localfields->Bt_m[imode], send_to_global_patch_rank, hindex*9+8, patch->requests_[8] );
+    smpi->isendComplex( localfields->Bl_m[imode], send_to_global_patch_rank, hindex*9+6, patch->requests_[6] );
+    smpi->isendComplex( localfields->Br_m[imode], send_to_global_patch_rank, hindex*9+7, patch->requests_[7] );
+    smpi->isendComplex( localfields->Bt_m[imode], send_to_global_patch_rank, hindex*9+8, patch->requests_[8] );
     
 }
 
@@ -387,31 +389,31 @@ void SyncCartesianPatchAM::recvPatchedToCartesian_MW( ElectroMagnAM* globalfield
     domain.fake_patch->hindex = hindex;
     domain.fake_patch->Pcoordinates = vecPatches.domain_decomposition_->getDomainCoordinates( hindex );
 
-    smpi->recv( fake_fields->El_[imode], local_patch_rank, hindex*9 );
+    smpi->recvComplex( fake_fields->El_[imode], local_patch_rank, hindex*9 );
     fake_fields->El_[imode]->put( globalfields->El_[imode], params, smpi, domain.fake_patch, domain.patch_ );
 
-    smpi->recv( fake_fields->Er_[imode], local_patch_rank, hindex*9+1 );
+    smpi->recvComplex( fake_fields->Er_[imode], local_patch_rank, hindex*9+1 );
     fake_fields->Er_[imode]->put( globalfields->Er_[imode], params, smpi, domain.fake_patch, domain.patch_ );
 
-    smpi->recv( fake_fields->Et_[imode], local_patch_rank, hindex*9+2 );
+    smpi->recvComplex( fake_fields->Et_[imode], local_patch_rank, hindex*9+2 );
     fake_fields->Et_[imode]->put( globalfields->Et_[imode], params, smpi, domain.fake_patch, domain.patch_ );
 
-    smpi->recv( fake_fields->Bl_[imode], local_patch_rank, hindex*9+3 );
+    smpi->recvComplex( fake_fields->Bl_[imode], local_patch_rank, hindex*9+3 );
     fake_fields->Bl_[imode]->put( globalfields->Bl_[imode], params, smpi, domain.fake_patch, domain.patch_ );
 
-    smpi->recv( fake_fields->Br_[imode], local_patch_rank, hindex*9+4 );
+    smpi->recvComplex( fake_fields->Br_[imode], local_patch_rank, hindex*9+4 );
     fake_fields->Br_[imode]->put( globalfields->Br_[imode], params, smpi, domain.fake_patch, domain.patch_ );
 
-    smpi->recv( fake_fields->Bt_[imode], local_patch_rank, hindex*9+5 );
+    smpi->recvComplex( fake_fields->Bt_[imode], local_patch_rank, hindex*9+5 );
     fake_fields->Bt_[imode]->put( globalfields->Bt_[imode], params, smpi, domain.fake_patch, domain.patch_ );
 
-    smpi->recv( fake_fields->Bl_m[imode], local_patch_rank, hindex*9+6 );
+    smpi->recvComplex( fake_fields->Bl_m[imode], local_patch_rank, hindex*9+6 );
     fake_fields->Bl_m[imode]->put( globalfields->Bl_m[imode], params, smpi, domain.fake_patch, domain.patch_ );
 
-    smpi->recv( fake_fields->Br_m[imode], local_patch_rank, hindex*9+7 );
+    smpi->recvComplex( fake_fields->Br_m[imode], local_patch_rank, hindex*9+7 );
     fake_fields->Br_m[imode]->put( globalfields->Br_m[imode], params, smpi, domain.fake_patch, domain.patch_ );
 
-    smpi->recv( fake_fields->Bt_m[imode], local_patch_rank, hindex*9+8 );
+    smpi->recvComplex( fake_fields->Bt_m[imode], local_patch_rank, hindex*9+8 );
     fake_fields->Bt_m[imode]->put( globalfields->Bt_m[imode], params, smpi, domain.fake_patch, domain.patch_ );
 
 }
