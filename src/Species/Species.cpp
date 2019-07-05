@@ -621,7 +621,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
-    if( time_dual>time_frozen ) { // moving particle
+    if( time_dual>time_frozen || Ionize) { // moving particle
     
         smpi->dynamics_resize( ithread, nDim_field, last_index.back(), params.geometry=="AMcylindrical" );
         //Point to local thread dedicated buffers
@@ -655,6 +655,8 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #endif
             }
             
+            if( time_dual<=time_frozen ) continue; // Do not push nor project frozen particles
+
             // Radiation losses
             if( Radiate ) {
             
@@ -832,60 +834,33 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 //            }
 //        }
 
-    } else { // immobile particle (at the moment only project density)
+    } //End if moving or ionized particles 
 
-        if( Ionize ) { // If ionized, interpolation is required.
-            smpi->dynamics_resize( ithread, nDim_field, last_index.back(), params.geometry=="AMcylindrical" );
-            //Point to local thread dedicated buffers
-            //Still needed for ionization
-            vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
-            
-            for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin++ ) {
-            
-#ifdef      __DETAILED_TIMERS
-                timer = MPI_Wtime();
-#endif
-                // Interpolate the fields at the particle position
-                Interp->fieldsWrapper( EMfields, *particles, smpi, &( first_index[ibin] ), &( last_index[ibin] ), ithread );
-#ifdef      __DETAILED_TIMERS
-                patch->patch_timers[0] += MPI_Wtime() - timer;
-#endif
-#ifdef  __DETAILED_TIMERS
-                timer = MPI_Wtime();
-#endif
-                ( *Ionize )( particles, first_index[ibin], last_index[ibin], Epart, patch, Proj );
-#ifdef  __DETAILED_TIMERS
-                patch->patch_timers[4] += MPI_Wtime() - timer;
-#endif
-            }
-        } //end if ionize for frozen species
-
-        if( diag_flag &&( !particles->is_test ) ) {
-            if( params.geometry != "AMcylindrical" ) {
-                double *b_rho=nullptr;
+    if(time_dual <= time_frozen && diag_flag &&( !particles->is_test ) ) { //immobile particle (at the moment only project density)
+        if( params.geometry != "AMcylindrical" ) {
+            double *b_rho=nullptr;
+            for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
+                b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
+                for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
+                    Proj->basic( b_rho, ( *particles ), iPart, 0 );
+                } 
+            } 
+        } else {
+            int n_species = patch->vecSpecies.size();
+            complex<double> *b_rho=nullptr;
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+            for( unsigned int imode = 0; imode<params.nmodes; imode++ ) {
+                int ifield = imode*n_species+ispec;
                 for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
-                    b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
-                    for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
-                        Proj->basic( b_rho, ( *particles ), iPart, 0 );
-                    } //End loop on particles
-                }//End loop on bins
-            } else {
-                int n_species = patch->vecSpecies.size();
-                complex<double> *b_rho=nullptr;
-                ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
-                for( unsigned int imode = 0; imode<params.nmodes; imode++ ) {
-                    int ifield = imode*n_species+ispec;
-                    for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
-                        b_rho = emAM->rho_AM_s[ifield] ? &( *emAM->rho_AM_s[ifield] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
-                        for( int iPart=first_index[ibin] ; iPart<last_index[ibin]; iPart++ ) {
-                            Proj->basicForComplex( b_rho, ( *particles ), iPart, 0, imode );
-                        } //End loop on particles
-                    }// End loop on bins 
-                }//End loop on modes
-            }
+                    b_rho = emAM->rho_AM_s[ifield] ? &( *emAM->rho_AM_s[ifield] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
+                    for( int iPart=first_index[ibin] ; iPart<last_index[ibin]; iPart++ ) {
+                        Proj->basicForComplex( b_rho, ( *particles ), iPart, 0, imode );
+                    } 
+                } 
+            } 
         }
-    }//END if time vs. time_frozen
-}//END dynamic
+    } // End projection for frozen particles
+} //END dynamics
 
 
 // ---------------------------------------------------------------------------------------------------------------------
