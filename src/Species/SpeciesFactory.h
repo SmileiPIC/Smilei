@@ -1092,7 +1092,9 @@ public:
                     }
                     retSpecies[ispec1]->electron_species_index = ispec2;
                     retSpecies[ispec1]->electron_species = retSpecies[ispec2];
-                    retSpecies[ispec1]->Ionize->new_electrons.tracked = retSpecies[ispec1]->electron_species->particles->tracked;
+                    retSpecies[ispec1]->Ionize->new_electrons.tracked            = retSpecies[ispec1]->electron_species->particles->tracked;
+                    retSpecies[ispec1]->Ionize->new_electrons.isQuantumParameter = retSpecies[ispec1]->electron_species->particles->isQuantumParameter;
+                    retSpecies[ispec1]->Ionize->new_electrons.isMonteCarlo       = retSpecies[ispec1]->electron_species->particles->isMonteCarlo;
                     retSpecies[ispec1]->Ionize->new_electrons.initialize( 0, params.nDim_particle );
                     if( ( !retSpecies[ispec1]->getNbrOfParticles() ) && ( !retSpecies[ispec2]->getNbrOfParticles() ) ) {
                         if( retSpecies[ispec1]->atomic_number!=0 ) {
@@ -1209,18 +1211,7 @@ public:
             Species *newSpecies = SpeciesFactory::clone( vecSpecies[ispec], params, patch, with_particles );
             retSpecies.push_back( newSpecies );
         }
-
-        // Init position on another specie
-        for( unsigned int i=0; i<retSpecies.size(); i++ ) {
-            if( retSpecies[i]->position_initialization_on_species==true ) {
-                unsigned int pos_init_index = retSpecies[i]->position_initialization_on_species_index;
-                if( retSpecies[i]->getNbrOfParticles() != retSpecies[pos_init_index]->getNbrOfParticles() ) {
-                    ERROR( "Number of particles in species '"<<retSpecies[i]->name<<"' is not equal to the number of particles in species '"<<retSpecies[pos_init_index]->name<<"'." );
-                }
-                // We copy ispec2 which is the index of the species, already created, on which initialize particles of the new created species
-                retSpecies[i]->particles->Position=retSpecies[pos_init_index]->particles->Position;
-            }
-        }
+        patch->copy_positions(retSpecies);
 
         // Ionization
         for( unsigned int i=0; i<retSpecies.size(); i++ ) {
@@ -1228,6 +1219,8 @@ public:
                 retSpecies[i]->electron_species_index = vecSpecies[i]->electron_species_index;
                 retSpecies[i]->electron_species = retSpecies[retSpecies[i]->electron_species_index];
                 retSpecies[i]->Ionize->new_electrons.tracked = retSpecies[i]->electron_species->particles->tracked;
+                retSpecies[i]->Ionize->new_electrons.isQuantumParameter = retSpecies[i]->electron_species->particles->isQuantumParameter;
+                retSpecies[i]->Ionize->new_electrons.isMonteCarlo = retSpecies[i]->electron_species->particles->isMonteCarlo;
                 retSpecies[i]->Ionize->new_electrons.initialize( 0, params.nDim_particle );
             }
         }

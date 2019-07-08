@@ -40,7 +40,7 @@ Publications
 
   A. Beck, J. Dérouillat, M. Lobet, A. Farjallah, F. Massimo, I. Zemzemi, F. Perez, T. Vinci, M. Grech,
   `Adaptive SIMD optimizations in particle-in-cell codes with fine-grain particle sorting`,
-  `arXiv:1810.03949 <https://arxiv.org/abs/1810.03949>`_
+  `Comput. Phys. Commun.  <https://doi.org/10.1016/j.cpc.2019.05.001>`_
 
 .. rst-class:: bigcitation
 

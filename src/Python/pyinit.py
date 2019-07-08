@@ -182,6 +182,7 @@ class Main(SmileiSingleton):
     every_clean_particles_overhead = 100
     timestep = None
     number_of_AM = 2
+    number_of_AM_relativistic_field_initialization = 1
     timestep_over_CFL = None
     cell_sorting = False
 

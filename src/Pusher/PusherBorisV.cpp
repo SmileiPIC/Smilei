@@ -62,17 +62,16 @@ void PusherBorisV::operator()( Particles &particles, SmileiMPI *smpi, int istart
     //particles.cell_keys.resize(nparts);
     //cell_keys = &( particles.cell_keys[0]);
     
-    double dcharge[nparts];
-    #pragma omp simd
+    vector<double> dcharge(nparts);
     for( int ipart=istart ; ipart<iend; ipart++ ) {
-        dcharge[ipart] = ( double )( charge[ipart] );
+        dcharge[ipart-ipart_ref] = ( double )( charge[ipart] );
     }
     
     #pragma omp simd
     for( int ipart=istart ; ipart<iend; ipart++ ) {
         double psm[3], um[3];
         
-        charge_over_mass_dts2 = dcharge[ipart]*one_over_mass_*dts2;
+        charge_over_mass_dts2 = dcharge[ipart-ipart_ref]*one_over_mass_*dts2;
         
         // init Half-acceleration in the electric field
         psm[0] = charge_over_mass_dts2*( *( Ex+ipart-ipart_ref ) );

@@ -93,7 +93,7 @@ void SpeciesVAdaptive::scalar_dynamics( double time_dual, unsigned int ispec,
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
-    if( time_dual>time_frozen ) {
+    if( time_dual>time_frozen || Ionize ) {
         // moving particle
 
         smpi->dynamics_resize( ithread, nDim_particle, last_index.back() );
@@ -134,6 +134,7 @@ void SpeciesVAdaptive::scalar_dynamics( double time_dual, unsigned int ispec,
 #endif
             }
 
+            if( time_dual<=time_frozen ) continue; // Do not push nor project frozen particles
 
             // Radiation losses
             if( Radiate ) {
@@ -291,21 +292,19 @@ void SpeciesVAdaptive::scalar_dynamics( double time_dual, unsigned int ispec,
             nrj_bc_lost += nrj_lost_per_thd[tid];
         }
 
-    } else { // immobile particle (at the moment only project density)
-        if( diag_flag &&( !particles->is_test ) ) {
-            double *b_rho=nullptr;
+    } 
 
-            for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
+    if(time_dual <= time_frozen && diag_flag &&( !particles->is_test ) ) { //immobile particle (at the moment only project density)
 
-                b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
+        double *b_rho=nullptr;
+        for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
 
-                for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
-                    Proj->basic( b_rho, ( *particles ), iPart, 0 );
-                } //End loop on particles
-            }//End loop on bins
-
+            b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
+            for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
+                Proj->basic( b_rho, ( *particles ), iPart, 0 );
+            } 
         }
-    }//END if time vs. time_frozen
+    }
 
 }//END scalar_dynamics
 
@@ -651,6 +650,40 @@ void SpeciesVAdaptive::scalar_ponderomotive_update_position_and_currents( double
 
     } // end case of moving particle
     else { // immobile particle
+
+        if( Ionize ) {
+            smpi->dynamics_resize( ithread, nDim_particle, last_index.back() );
+
+            //Point to local thread dedicated buffers
+            //Still needed for ionization
+            vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
+
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
+
+            // Interpolate the fields at the particle position
+            Interp->fieldsWrapper( EMfields, *particles, smpi, &( first_index[0] ), &( last_index[last_index.size()-1] ), ithread, first_index[0] );
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[0] += MPI_Wtime() - timer;
+#endif
+
+            // Interpolate the fields at the particle position
+            //for (unsigned int scell = 0 ; scell < first_index.size() ; scell++)
+            //    (*Interp)(EMfields, *particles, smpi, &(first_index[scell]), &(last_index[scell]), ithread );
+            for( unsigned int scell = 0 ; scell < first_index.size() ; scell++ ) {
+
+                // Ionization
+#ifdef  __DETAILED_TIMERS
+                timer = MPI_Wtime();
+#endif
+                ( *Ionize )( particles, first_index[scell], last_index[scell], Epart, patch, Proj );
+#ifdef  __DETAILED_TIMERS
+                patch->patch_timers[4] += MPI_Wtime() - timer;
+#endif
+            }// end loop on scells
+        }// end if ionize
 
         if( diag_flag &&( !particles->is_test ) ) {
             double *b_rho=nullptr;

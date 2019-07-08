@@ -439,6 +439,8 @@ def multiPlot(*Diags, **kwargs):
 	ax = []
 	xmin =  float("inf")
 	xmax = -float("inf")
+	ymin =  float("inf")
+	ymax = -float("inf")
 	option_xmin = []
 	option_xmax = []
 	option_ymin = []
@@ -467,7 +469,7 @@ def multiPlot(*Diags, **kwargs):
 			else:
 				Diag._ax.yaxis.tick_right()
 				Diag._ax.yaxis.set_label_position("right")
-		Diag._artist = None
+		Diag._plot = None
 		if Diag.options.xmin is not None: option_xmin += [Diag.options.xmin]
 		if Diag.options.xmax is not None: option_xmax += [Diag.options.xmax]
 		if Diag.options.ymin is not None: option_ymin += [Diag.options.ymin]
@@ -475,22 +477,23 @@ def multiPlot(*Diags, **kwargs):
 		if "color" not in Diag.options.plot:
 			Diag.options.plot.update({ "color":c[i%len(c)] })
 		Diag._prepare()
-		try:
-			l = Diag.limits()[0]
-			xmin = min(xmin,l[0])
-			xmax = max(xmax,l[1])
-		except:
-			pass
+		l = Diag.limits()
+		if len(l) > 0:
+			if Diag.options.xmin is None: xmin = min(xmin,l[0][0])
+			if Diag.options.xmax is None: xmax = max(xmax,l[0][1])
+			if len(l) > 1:
+				if Diag.options.ymin is None: ymin = min(ymin,l[1][0])
+				if Diag.options.ymax is None: ymax = max(ymax,l[1][1])
 	# Find min max
 	if option_xmin: xmin = min([xmin]+option_xmin)
 	if option_xmax: xmax = max([xmax]+option_xmax)
 	if option_ymin: ymin = min([ymin]+option_ymin)
 	if option_ymax: ymax = max([ymax]+option_ymax)
-
+	
 	# Static plot
 	if sameAxes and Diags[0].dim==0:
 		for Diag in Diags:
-			Diag._artist = Diag._animateOnAxes(Diag._ax, Diag.getTimesteps()[-1])
+			Diag._plotOnAxes(Diag._ax, Diag.getTimesteps()[-1])
 			plt.draw()
 			plt.pause(0.00001)
 	# Animated plot
@@ -503,15 +506,14 @@ def multiPlot(*Diags, **kwargs):
 			for Diag in Diags:
 				t = np.round(time/Diag.timestep) # convert time to timestep
 				if t in Diag.getTimesteps():
-					if sameAxes:
-						if Diag._artist is not None: Diag._artist.remove()
+					if Diag._plot is None:
+						Diag._plotOnAxes(Diag._ax, t, cax_id = Diag._cax_id)
 					else:
-						Diag._ax.cla()
-					Diag._artist = Diag._animateOnAxes(Diag._ax, t, cax_id = Diag._cax_id)
+						Diag._animateOnAxes(Diag._ax, t, cax_id = Diag._cax_id)
 					if sameAxes:
 						Diag._ax.set_xlim(xmin,xmax)
 						if Diag.dim<2 and bothsides:
-							color = Diag._artist.get_color()
+							color = Diag._plot.get_color()
 							Diag._ax.yaxis.label.set_color(color)
 							Diag._ax.tick_params(axis='y', colors=color)
 							if Diag.options.side == "right":

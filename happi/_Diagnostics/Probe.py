@@ -402,7 +402,10 @@ class Probe(Diagnostic):
 			self.options.image = newoptionsimage
 
 	# Overloading a plotting function in order to use pcolormesh instead of imshow
-	def _animateOnAxes_2D_(self, ax, A):
-		im = ax.pcolormesh(self._xfactor*self._edges[0], self._yfactor*self._edges[1], (A),
+	def _plotOnAxes_2D_(self, ax, A):
+		self._plot = ax.pcolormesh(self._xfactor*self._edges[0], self._yfactor*self._edges[1], (A),
 			vmin = self.options.vmin, vmax = self.options.vmax, **self.options.image)
-		return im
+		return self._plot
+	def _animateOnAxes_2D_(self, ax, A):
+		self._plot.set_array( A.flatten() )
+		return self._plot

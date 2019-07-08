@@ -505,6 +505,52 @@ def LaserEnvelopePlanar1D( a0=1., omega=1., focus=None, time_envelope=tconstant(
         Envelope_boundary_conditions = Envelope_boundary_conditions,
     )
 
+
+def LaserGaussianAM( box_side="xmin", a0=1., omega=1., focus=None, waist=3., incidence_angle=0.,
+        polarization_phi=0., ellipticity=0., time_envelope=tconstant(), phaseZero=0.):
+    from math import cos, sin, tan, atan, sqrt, exp
+    # Polarization and amplitude
+    [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarization_phi, ellipticity)
+    amplitudeY *= a0 * omega
+    amplitudeZ *= a0 * omega
+    # Space and phase envelopes
+    Zr = omega * waist**2/2.
+    if incidence_angle == 0.:
+        Y1 = focus[1]
+        w  = sqrt(1./(1.+(focus[0]/Zr)**2))
+        invWaist2 = (w/waist)**2
+        coeff = -omega * focus[0] * w**2 / (2.*Zr**2)
+        def spatial(y):
+            return w * exp( -invWaist2*(y-focus[1])**2 )
+        def phase(y):
+            return coeff * (y-focus[1])**2
+    else:
+        invZr  = sin(incidence_angle) / Zr
+        invZr2 = invZr**2
+        invZr3 = (cos(incidence_angle) / Zr)**2 / 2.
+        invWaist2 = (cos(incidence_angle) / waist)**2
+        omega_ = omega * sin(incidence_angle)
+        Y1 = focus[1] + focus[0]/tan(incidence_angle)
+        Y2 = focus[1] - focus[0]*tan(incidence_angle)
+        amplitudeZ *= cos(incidence_angle)
+        def spatial(y):
+            w2 = 1./(1. + invZr2*(y-Y1)**2)
+            return sqrt(w2) * exp( -invWaist2*w2*(y-Y2)**2 )
+        def phase(y):
+            dy = y-Y1
+            return omega_*dy*(1.+ invZr3*(y-Y2)**2/(1.+invZr2*dy**2)) + atan(invZr*dy)
+        phaseZero += phase(Y2)
+    # Create Laser
+    Laser(
+        box_side        = box_side,
+        omega          = omega,
+        chirp_profile  = tconstant(),
+        time_envelope  = time_envelope,
+        space_envelope = [ lambda y:amplitudeZ*spatial(y), lambda y:amplitudeY*spatial(y) ],
+        phase          = [ lambda y:phase(y)-phaseZero+dephasing, lambda y:phase(y)-phaseZero ],
+        delay_phase    = [ 0., dephasing ]
+    )
+
 def LaserGaussian2D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., incidence_angle=0.,
         polarization_phi=0., ellipticity=0., time_envelope=tconstant(), phaseZero=0.):
     from math import cos, sin, tan, atan, sqrt, exp

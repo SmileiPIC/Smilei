@@ -40,9 +40,9 @@ An important assumption of this calculation is that the species is highly relati
 
 .. math::
 
-  \left(\mathbf{J},\rho \right) = \left(\rho \beta_0, 0, 0, \rho\right),
+  \left(\mathbf{J},\rho\right) = \left(\rho \beta_0 , 0, 0, \rho \right),
 
-where :math:`\beta_0` is the initial mean velocity of the relativistic species. At least locally, the potentials :math:`\mathbf{A}`, :math:`\Phi` in the laboratory frame will be only function of :math:`x-\beta_0 t`, as they are propagating with the species at uniform velocity.
+where :math:`\beta_0` is the initial mean velocity of the relativistic species. At least locally, the potentials :math:`\mathbf{A}`, :math:`\Phi` in the laboratory frame will be only function of :math:`x-\beta_0 t`, as they are propagating with the species at uniform relativistic velocity.
 
 In the relativistic species rest frame :math:`S'`, the charge distribution is static and the electrostatic potential in that reference frame :math:`\Phi'` is related to the charge density in that reference frame :math:`\rho'` through Poisson's equation:
 
@@ -64,7 +64,7 @@ Similarly, the potential :math:`\Phi'` can be rewritten in terms of the potentia
 
 .. math::
   
-  x=\gamma_0(x'+\beta_0 t'),\quad  t = \gamma_0(t'+\beta x'), \quad y=y', \quad z=z'
+  x=\gamma_0(x'+\beta_0 t'),\quad  t = \gamma_0(t'+\beta_0 x'), \quad y=y', \quad z=z'
 
 allows to transform the derivatives in Eq. :eq:`Poisson` as 
 
@@ -72,7 +72,7 @@ allows to transform the derivatives in Eq. :eq:`Poisson` as
   
   \partial_{x'}=\gamma_0\left(\partial_x+\beta_0\partial_t\right), \quad \partial_{y'}=\partial_y, \quad \partial_{z'}=\partial_z. 
 
-The partial derivative along the :math:`x'` direction can be further simplified, through the hypothesis of temporary dependence of all quantities on :math:`x-\beta_0 t`, implying :math:`\partial_t=-\beta \partial_x`:
+The partial derivative along the :math:`x'` direction can be further simplified, through the hypothesis of temporary dependence of all quantities on :math:`x-\beta_0 t`, implying :math:`\partial_t=-\beta_0\partial_x`:
 
 .. math::
   
@@ -87,7 +87,7 @@ Equation :eq:`Poisson` can thus be rewritten as
 
 here informally referred to as the relativistic Poisson's equation. In :program:`Smilei`, as for Eq. :eq:`Poisson`, the solution of the relativistic Poisson's equation is performed through the conjugate gradient method.
 
-Once the potential :math:`\Phi` is found, we can compute all the components of the electromagnetic field, using again the relations :math:`\partial_t=-\beta \partial_x`, :math:`\Phi'=-\Phi/\gamma_0` and the Lorentz back-transformation of the vector potential :math:`\mathbf{A}`:
+Once the potential :math:`\Phi` is found, we can compute all the components of the electromagnetic field, using again the relations :math:`\partial_t=-\beta_0\partial_x`, :math:`\Phi'=-\Phi/\gamma_0` and the Lorentz back-transformation of the vector potential :math:`\mathbf{A}`:
 
 .. math::
   
@@ -110,6 +110,27 @@ or in more compact form: :math:`\mathbf{E}=\left( -\frac{1}{\gamma_0^2}\partial_
 From the previous equations, it can be inferred that, in a 1D cartesian geometry, the fields computed through this procedure equal those obtained through the standard Poisson's problem. 
 This can also be inferred from the relativistic transformations of fields, which conserve the :math:`x` components of the electromagnetic fields for boosts in the :math:`x` direction. 
 
+In the case of azimuthal Fourier decomposition (``geometry = "AMcylindrical"`` in the namelist - see :doc:`namelist`, :doc:`algorithms`), given the linearity of the relativistic Poisson equation, the full equation
+can be decomposed in azimuthal modes, with the correspondent mode component of the charge density :math:`-\tilde{\rho}^m` as source term.
+
+The relativistic Poisson equation for the potential component :math:`\tilde{\Phi}^m` of the mode :math:`m` in this  geometry is thus:
+
+.. math::
+  :label: RelPoissonModes
+
+  \left[ \frac{1}{\gamma^2_0}\partial^2_x\tilde{\Phi}^m+\frac{1}{r}\partial_r\left(r\partial_r\tilde{\Phi}^m\right)-\frac{m^2}{r^2}\tilde{\Phi}^m \right]\Phi = -\tilde{\rho}^m.
+
+Solving each of these relativistic Poisson's equations allows to initialize the azimuthal components of the electromagnetic fields:
+
+.. math::
+  \begin{eqnarray}
+  \tilde{E}^m_x &=& -\frac{1}{\gamma_0^2}\partial_x \tilde{\Phi}^m,\\ 
+  \tilde{E}^m_r &=& -\partial_r \tilde{\Phi}^m, \\ 
+  \tilde{E}^m_{\theta} &=& \frac{im}{r} \tilde{\Phi}^m,\newline\\
+  \tilde{\mathbf{B}}^m &=& \beta_0\mathbf{\hat{x}}\times\tilde{\mathbf{E}}^m.
+  \end{eqnarray} 
+
+
 ----
 
 Recommendations for relativistic species field initialization
@@ -118,9 +139,15 @@ Recommendations for relativistic species field initialization
 In :program:`Smilei`, each species can independently benefit from this field initialization procedure. Its field will be initialized when the species will start to move, in order not to interfere with the other species' dynamics. 
 The initialized fields will be superimposed to the electromagnetic fields already present in the simulation. To have physically meaningful results, we recommend to place a species which requires this method of field initialization far from other species, otherwise the latter could experience instantaneous unphysical forces by the relativistic species’ fields.
 
+Remember that the transverse field of a moving charge with relativistic factor :math:`\gamma` is greater than the electrostatic transverse field of that charge, by a factor :math:`\gamma`. 
+This means that for highly relativistic particles, you will need to use a transversely large simulation window to let the field decrease enough to reduce border effects during its propagation. 
+A complete absence of boundary effects in this case would be provided by perfectly absorbing boundary conditions, which are not implemented yet in the code. 
+If the relativistic species propagates in a plasma, these border effects could be partially screened by the plasma.
+
 A relativistic mean velocity in the :math:`x` direction and a negligible energy spread are assumed in the hypotheses of this procedure, so the user must ensure these conditions when defining the species requiring field initialization in the namelist. 
 The procedure could be extended to non-monoenergetic species, dividing the species particles in monoenergetic energy bins and then superimposing the fields by each of the monoenergetic bins, computed with the same procedure. 
 At the moment, this energy binning technique is not available in :program:`Smilei`.  
+
 
 
 ----

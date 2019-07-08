@@ -14,6 +14,7 @@ class Diagnostic(object):
 	def __init__(self, simulation, *args, **kwargs):
 		self.valid = False
 		self._tmpdata = None
+		self._plotOnAxes = None
 		self._animateOnAxes = None
 		self._shape = []
 		self._centers = []
@@ -134,6 +135,7 @@ class Diagnostic(object):
 		--------
 		A list of [min, max] for each axis.
 		"""
+		self._prepare1()
 		l = []
 		factor = [self._xfactor, self._yfactor]
 		for i in range(self.dim):
@@ -283,7 +285,7 @@ class Diagnostic(object):
 			return
 
 		save = SaveAs(saveAs, fig, self._plt)
-		self._animateOnAxes(ax, timestep)
+		self._plotOnAxes(ax, timestep)
 		self._plt.draw()
 		self._plt.pause(0.00001)
 		save.frame()
@@ -417,11 +419,12 @@ class Diagnostic(object):
 		mov = Movie(fig, movie, fps, dpi)
 		# Save to file requested ?
 		save = SaveAs(saveAs, fig, self._plt)
+		# Plot first time
+		self._plotOnAxes(ax, self._timesteps[0])
 		# Loop times for animation
-		for time in self._timesteps:
+		for time in self._timesteps[1:]:
 			if self._verbose: print("timestep "+str(time))
 			# plot
-			ax.cla()
 			if self._animateOnAxes(ax, time) is None: return
 			self._plt.draw()
 			self._plt.pause(0.00001)
@@ -434,6 +437,57 @@ class Diagnostic(object):
 		# Movie ?
 		if mov.writer is not None: mov.finish()
 
+
+	def slide(self, axes=None, **kwargs):
+		""" Plots the diagnostic with a slider to change the timestep
+		If the data is 1D, it is plotted as a curve
+		If the data is 2D, it is plotted as a map
+		If the data is 0D, it is plotted as a curve as function of time
+
+		Parameters:
+		-----------
+		figure: int (default: 1)
+			The figure number that is passed to matplotlib.
+		axes: (default: None)
+			Matplotlib's axes handle on which to plot. If None, make new axes.
+		vmin, vmax: floats (default to the current limits)
+			Data value limits.
+		xmin, xmax, ymin, ymax: floats (default to the current limits)
+			Axes limits.
+		xfactor, yfactor: floats (default: 1)
+			Factors to rescale axes.
+
+		Example:
+		--------
+			S = happi.Open("path/to/my/results")
+			S.ParticleBinning(1).slide(vmin=0, vmax=1e14)
+		"""
+		if not self._validate(): return
+		if not self._prepare(): return
+		if not self._setAndCheck(**kwargs): return
+		self.info()
+		ax = self._make_axes(axes)
+		fig = ax.figure
+		ax.set_position([0.1,0.2,0.85,0.7])
+		
+		from matplotlib.widgets import Slider
+		slider_axes = self._plt.axes([0.2, 0.05, 0.55, 0.03])
+		slider = Slider(slider_axes, 'time', self._timesteps[0], self._timesteps[-1], valinit=self._timesteps[0])
+		def update(t):
+			time = self._timesteps[(self._np.abs(self._timesteps - t)).argmin()]
+			self._animateOnAxes(ax, time)
+			self._plt.draw()
+		slider.on_changed(update)
+		
+		self._plotOnAxes(ax, self._timesteps[0])
+		
+		# We need to make a global variable to prevent garbage collecting
+		n = 0
+		while '_happi_slider%d'%n in globals(): n += 1
+		globals()['_happi_slider%d'%n] = slider
+		
+	
+	
 	# Method to select specific timesteps among those available in times
 	def _selectTimesteps(self, timesteps, times):
 		ts = self._np.array(self._np.double(timesteps),ndmin=1)
@@ -540,10 +594,16 @@ class Diagnostic(object):
 		self._tfactor = (self.options.xfactor or 1.) * self.units.tcoeff * self.timestep
 	def _prepare2(self):
 		# prepare the animating function
-		if not self._animateOnAxes:
-			if   self.dim == 0: self._animateOnAxes = self._animateOnAxes_0D
-			elif self.dim == 1: self._animateOnAxes = self._animateOnAxes_1D
-			elif self.dim == 2: self._animateOnAxes = self._animateOnAxes_2D
+		if not self._plotOnAxes:
+			if   self.dim == 0:
+				self._plotOnAxes = self._plotOnAxes_0D
+				self._animateOnAxes = self._animateOnAxes_0D
+			elif self.dim == 1:
+				self._plotOnAxes = self._plotOnAxes_1D
+				self._animateOnAxes = self._animateOnAxes_1D
+			elif self.dim == 2:
+				self._plotOnAxes = self._plotOnAxes_2D
+				self._animateOnAxes = self._animateOnAxes_2D
 			else:
 				print("Cannot plot in "+str(self.dim)+" dimensions !")
 				return False
@@ -608,62 +668,97 @@ class Diagnostic(object):
 
 	# Method to set limits to a plot
 	def _setLimits(self, ax, xmin=None, xmax=None, ymin=None, ymax=None):
-		if xmin is not None: ax.set_xlim(xmin=xmin)
-		if xmax is not None: ax.set_xlim(xmax=xmax)
-		if ymin is not None: ax.set_ylim(ymin=ymin)
-		if ymax is not None: ax.set_ylim(ymax=ymax)
+		ax.autoscale(tight=True)
+		if xmin is not None: ax.set_xlim(left=xmin)
+		if xmax is not None: ax.set_xlim(right=xmax)
+		if ymin is not None: ax.set_ylim(bottom=ymin)
+		if ymax is not None: ax.set_ylim(top=ymax)
 
 	# Methods to plot the data when axes are made
-	def _animateOnAxes_0D(self, ax, t, cax_id=0):
+	def _plotOnAxes_0D(self, ax, t, cax_id=0):
 		times = self._timesteps[self._timesteps<=t]
 		A     = self._tmpdata[self._timesteps<=t]
-		im, = ax.plot(self._tfactor*times, A, **self.options.plot)
+		self._plot, = ax.plot(self._tfactor*times, A, **self.options.plot)
 		ax.set_xlabel(self._tlabel)
 		self._setLimits(ax, xmax=self._tfactor*self._timesteps[-1], ymin=self.options.vmin, ymax=self.options.vmax)
-		self._setSomeOptions(ax, t)
-		return im
-	def _animateOnAxes_1D(self, ax, t, cax_id=0):
+		self._setTitle(ax, t)
+		self._setOptions(ax)
+		return self._plot
+	def _plotOnAxes_1D(self, ax, t, cax_id=0):
 		A = self._dataAtTime(t)
-		im, = ax.plot(self._xfactor*(self._xoffset+self._centers[0]), A, **self.options.plot)
+		self._plot, = ax.plot(self._xfactor*(self._xoffset+self._centers[0]), A, **self.options.plot)
 		if self._log[0]: ax.set_xscale("log")
 		ax.set_xlabel(self._xlabel)
 		ax.set_ylabel(self._ylabel)
 		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.vmin, ymax=self.options.vmax)
-		self._setSomeOptions(ax, t)
-		return im
-	def _animateOnAxes_2D(self, ax, t, cax_id=0):
+		self._setTitle(ax, t)
+		self._setOptions(ax)
+		return self._plot
+	def _plotOnAxes_2D(self, ax, t, cax_id=0):
 		A = self._dataAtTime(t)
-		im = self._animateOnAxes_2D_(ax, A)
+		self._plot = self._plotOnAxes_2D_(ax, A)
 		ax.set_xlabel(self._xlabel)
 		ax.set_ylabel(self._ylabel)
 		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.ymin, ymax=self.options.ymax)
-		try: ax.cax
-		except: ax.cax = {}
+		if 'cax' not in dir(ax):
+			ax.cax = {}
 		if "aspect" not in self.options.colorbar.keys() or self.options.colorbar["aspect"]>0:
-			try: # if colorbar exists
-				ax.cax[cax_id].cla()
-				ax.figure.colorbar(mappable=im, cax=ax.cax[cax_id])
-			except:
-				ax.cax[cax_id] = ax.figure.colorbar(mappable=im, ax=ax, use_gridspec=False, **self.options.colorbar).ax
-		self._setSomeOptions(ax, t)
-		return im
+			ax.cax[cax_id] = ax.figure.colorbar(mappable=self._plot, ax=ax, use_gridspec=False, **self.options.colorbar)
+		self._setTitle(ax, t)
+		self._setOptions(ax)
+		return self._plot
+
+	# Methods to re-plot
+	def _animateOnAxes_0D(self, ax, t, cax_id=0):
+		times = self._timesteps[self._timesteps<=t]
+		A     = self._tmpdata[self._timesteps<=t]
+		self._plot.set_xdata( self._tfactor*times )
+		self._plot.set_ydata( A )
+		ax.relim()
+		self._setLimits(ax, xmax=self._tfactor*self._timesteps[-1], ymin=self.options.vmin, ymax=self.options.vmax)
+		self._setTitle(ax, t)
+		return self._plot
+	def _animateOnAxes_1D(self, ax, t, cax_id=0):
+		A = self._dataAtTime(t)
+		self._plot.set_xdata(self._xfactor*(self._xoffset+self._centers[0]))
+		self._plot.set_ydata(A)
+		ax.relim()
+		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.vmin, ymax=self.options.vmax)
+		self._setTitle(ax, t)
+		return self._plot
+	def _animateOnAxes_2D(self, ax, t, cax_id=0):
+		A = self._dataAtTime(t)
+		self._plot = self._animateOnAxes_2D_(ax, A)
+		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.ymin, ymax=self.options.ymax)
+		vmin = self.options.vmin
+		if vmin is None: vmin = A.min()
+		vmax = self.options.vmax
+		if vmax is None: vmax = A.max()
+		self._plot.set_clim(vmin, vmax)
+		ax.cax[cax_id].set_clim(vmin, vmax)
+		self._setTitle(ax, t)
+		return self._plot
 
 	# Special case: 2D plot
 	# This is overloaded by class "Probe" because it requires to replace imshow
 	# Also overloaded by class "Performances" to add a line plot
-	def _animateOnAxes_2D_(self, ax, A):
-		im = ax.imshow( self._np.rot90(A),
+	def _plotOnAxes_2D_(self, ax, A):
+		self._plot = ax.imshow( self._np.rot90(A),
 			vmin = self.options.vmin, vmax = self.options.vmax, extent=self._extent, **self.options.image)
-		return im
+		return self._plot
+	def _animateOnAxes_2D_(self, ax, A):
+		self._plot.set_data( self._np.rot90(A) )
+		return self._plot
 
 	# set options during animation
-	def _setSomeOptions(self, ax, t=None):
+	def _setTitle(self, ax, t=None):
 		title = []
 		if self._vlabel:
 			title += [self._vlabel]
 		if t is not None:
 			title += ["t = %.2f "%(t*self.timestep*self.units.tcoeff)+self.units.tname]
 		ax.set_title("  ".join(title))
+	def _setOptions(self, ax):
 		for option, value in self.options.axes.items():
 			if type(value) is dict:
 				getattr(ax, "set_"+option)( **value )
