@@ -639,17 +639,9 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
         }
         
         if( vectorization_mode == "off" ) {
-            if( geometry == "1Dcartesian" ) {
-                WARNING( "For collisions, clrw is forced to 1" );
-                clrw = 1;
-            } else {
-                WARNING( "For collisions, particles have been forced to be sorted per cell" );
-                vectorization_mode = "adaptive";
-                has_adaptive_vectorization = true;
-                adaptive_default_mode = "off";
-                adaptive_vecto_time_selection = new TimeSelection();
-            }
+            cell_sorting = true;
         }
+            
     }
 
     // Read the "print_every" parameter
