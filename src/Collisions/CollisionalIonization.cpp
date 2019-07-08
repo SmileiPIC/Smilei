@@ -19,15 +19,20 @@ const double CollisionalIonization::a1 = 510998.9 ; // = me*c^2/Emin
 const double CollisionalIonization::a2 = 6.142165 ; // = (npoints-1) / ln( Emax/Emin )
 
 // Constructor
-CollisionalIonization::CollisionalIonization( int Z, int nDim_, double reference_angular_frequency_SI, bool tracked_electrons )
+CollisionalIonization::CollisionalIonization( int Z, int nDim_, double reference_angular_frequency_SI, int ionization_electrons, Particles* particles )
 {
     nDim = nDim_;
     atomic_number = Z;
     rate .resize( Z );
     irate.resize( Z );
     prob .resize( Z );
-    new_electrons.tracked = tracked_electrons;
-    new_electrons.initialize( 0, nDim ); // to be removed if bins removed
+    ionization_electrons_ = ionization_electrons;
+    if( particles ) {
+        new_electrons.tracked            = particles->tracked;
+        new_electrons.isQuantumParameter = particles->isQuantumParameter;
+        new_electrons.isMonteCarlo       = particles->isMonteCarlo;
+    }
+    new_electrons.initialize( 0, nDim );
     
     if( Z>0 ) {
         dataBaseIndex = createDatabase( reference_angular_frequency_SI );
@@ -44,8 +49,11 @@ CollisionalIonization::CollisionalIonization( CollisionalIonization *CI )
     rate .resize( atomic_number );
     irate.resize( atomic_number );
     prob .resize( atomic_number );
-    new_electrons.tracked = CI->new_electrons.tracked;
-    new_electrons.initialize( 0, nDim ); // to be removed if bins removed
+    ionization_electrons_            = CI->ionization_electrons_;
+    new_electrons.tracked            = CI->new_electrons.tracked;
+    new_electrons.isQuantumParameter = CI->new_electrons.isQuantumParameter;
+    new_electrons.isMonteCarlo       = CI->new_electrons.isMonteCarlo;
+    new_electrons.initialize( 0, nDim );
     
     dataBaseIndex = CI->dataBaseIndex;
     assignDatabase( dataBaseIndex );
@@ -338,6 +346,10 @@ void CollisionalIonization::calculate( double gamma_s, double gammae, double gam
             new_electrons.Momentum[0].back() += pr * pi->momentum( 0, ii );
             new_electrons.Momentum[1].back() += pr * pi->momentum( 1, ii );
             new_electrons.Momentum[2].back() += pr * pi->momentum( 2, ii );
+            // If quantum parameter exists for new electron, then calculate it
+            if( new_electrons.isQuantumParameter ) {
+                new_electrons.Chi.back() *= (w+1.) / gammae;
+            }
         }
         // Lose incident electron energy
         if( U2 < WiWe ) {
@@ -365,11 +377,7 @@ void CollisionalIonization::calculate( double gamma_s, double gammae, double gam
 
 
 // Finish the ionization (moves new electrons in place)
-void CollisionalIonization::finish( Species *s1, Species *s2, Params &params, Patch *patch, std::vector<Diagnostic *> &localDiags )
+void CollisionalIonization::finish( Params &params, Patch *patch, std::vector<Diagnostic *> &localDiags )
 {
-    if( electronFirst ) {
-        s1->importParticles( params, patch, new_electrons, localDiags );
-    } else {
-        s2->importParticles( params, patch, new_electrons, localDiags );
-    }
+    patch->vecSpecies[ionization_electrons_]->importParticles( params, patch, new_electrons, localDiags );
 }

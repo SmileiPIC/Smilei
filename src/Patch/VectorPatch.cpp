@@ -632,8 +632,12 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
             // Current spatial filtering
             ( *this )( ipatch )->EMfields->binomialCurrentFilter();
         }
-        SyncVectorPatch::exchangeJ( params, ( *this ), smpi );
-        SyncVectorPatch::finalizeexchangeJ( params, ( *this ) );
+        SyncVectorPatch::exchange_along_all_directions( listJx_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions( listJx_, *this );
+        SyncVectorPatch::exchange_along_all_directions( listJy_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions( listJy_, *this );
+        SyncVectorPatch::exchange_along_all_directions( listJz_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions( listJz_, *this );
     }
 
     #pragma omp for schedule(static)
@@ -1395,7 +1399,7 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
         }
         
         // compute control parameter
-        //ctrl = rnew_dot_rnew / (double)(nx_p2_global);
+        
         ctrl = sqrt( rnew_dot_rnew )/norm2_source_term;
         if( smpi->isMaster() ) {
             DEBUG( "iteration " << iteration << " done, exiting with control parameter ctrl = " << 1.0e22*ctrl << " x 1.e-22" );
@@ -1641,6 +1645,372 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
 } // END solveRelativisticPoisson
 
 
+
+void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, double time_primal )
+{
+
+    //Timer ptimer("global");
+    //ptimer.init(smpi);
+    //ptimer.restart();
+    
+    // Assumption: one or more species move in vacuum with mean lorentz gamma factor gamma_mean in the x direction,
+    // with low energy spread.
+    // The electromagnetic fields of this species can be initialized solving a Poisson-like problem (here informally
+    // referred to as "relativistic Poisson problem") and then performing a Lorentz back-transformation to find the
+    // electromagnetic fields of the species in the lab frame.
+    // See for example https://doi.org/10.1016/j.nima.2016.02.043 for more details
+    // In case of non-monoenergetic relativistic distribution (NOT IMPLEMENTED AT THE MOMENT), the linearity of Maxwell's equations can be exploited:
+    // divide the species in quasi-monoenergetic bins with gamma_i and repeat the same procedure for described above
+    // for all bins. Finally, in the laboratory frame sum all the fields of the various energy-bin ensembles of particles.
+    
+    // All the parameters for the Poisson problem (e.g. maximum iteration) are the same used in the namelist
+    // for the traditional Poisson problem
+    
+    // compute gamma_mean for the species for which the field is initialized
+    double s_gamma( 0. );
+    uint64_t nparticles( 0 );
+    for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size() ; ispec++ ) {
+        if( species( 0, ispec )->relativistic_field_initialization ) {
+            for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+                if( time_primal==species( ipatch, ispec )->time_relativistic_initialization ) {
+                    s_gamma += species( ipatch, ispec )->sum_gamma();
+                    nparticles += species( ipatch, ispec )->getNbrOfParticles();
+                }
+            }
+        }
+    }
+    double gamma_global( 0. );
+    MPI_Allreduce( &s_gamma, &gamma_global, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+    uint64_t nparticles_global( 0 );
+    MPI_Allreduce( &nparticles, &nparticles_global, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, MPI_COMM_WORLD );
+    MESSAGE( "GAMMA = " << gamma_global/( double )nparticles_global );
+    
+    //Timer ptimer("global");
+    //ptimer.init(smpi);
+    //ptimer.restart();
+    
+    double gamma_mean = gamma_global/( double )nparticles_global;
+    
+    unsigned int iteration_max = params.relativistic_poisson_max_iteration;
+    double           error_max = params.relativistic_poisson_max_error;
+    unsigned int iteration=0;
+    
+    // Init & Store internal data (phi, r, p, Ap) per patch
+    double rnew_dot_rnew_localAM_( 0. );
+    double rnew_dot_rnewAM_( 0. );
+
+
+    for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+        ( *this )( ipatch )->EMfields->initPoisson( ( *this )( ipatch ) );
+        //cout << std::scientific << "rnew_dot_rnew_local = " << rnew_dot_rnew_local << endl;
+        ( *this )( ipatch )->EMfields->initRelativisticPoissonFields( ( *this )( ipatch ) );
+    }
+    // //cout << std::scientific << "rnew_dot_rnew_local = " << rnew_dot_rnew_local << endl;
+
+    std::vector<cField *> El_;
+    std::vector<cField *> Er_;
+    std::vector<cField *> Et_;
+    std::vector<cField *> Bl_;
+    std::vector<cField *> Br_;
+    std::vector<cField *> Bt_;
+    std::vector<cField *> Bl_m;
+    std::vector<cField *> Br_m;
+    std::vector<cField *> Bt_m;
+    
+    std::vector<cField *> El_rel_;
+    std::vector<cField *> Er_rel_;
+    std::vector<cField *> Et_rel_;
+    std::vector<cField *> Bl_rel_;
+    std::vector<cField *> Br_rel_;
+    std::vector<cField *> Bt_rel_;
+    
+    std::vector<cField *> Bl_rel_t_plus_halfdt_;
+    std::vector<cField *> Br_rel_t_plus_halfdt_;
+    std::vector<cField *> Bt_rel_t_plus_halfdt_;
+    std::vector<cField *> Bl_rel_t_minus_halfdt_;
+    std::vector<cField *> Br_rel_t_minus_halfdt_;
+    std::vector<cField *> Bt_rel_t_minus_halfdt_;
+    
+    std::vector<cField *> Ap_AM_;
+    
+    // For each mode, repeat the initialization procedure 
+    // (the relativistic Poisson equation is linear, so it can be decomposed in azimuthal modes)
+    for( unsigned int imode=0 ; imode<params.nmodes_rel_field_init ; imode++ ) {
+        
+        // init Phi, r, p values
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+            emAM->initPoisson_init_phi_r_p_Ap( ( *this )( ipatch ), imode );
+            rnew_dot_rnew_localAM_ += emAM->compute_r();
+        }
+        
+        MPI_Allreduce( &rnew_dot_rnew_localAM_, &rnew_dot_rnewAM_, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+            El_.push_back( emAM->El_[imode] );
+            Er_.push_back( emAM->Er_[imode] );
+            Et_.push_back( emAM->Et_[imode] );
+            Bl_.push_back( emAM->Bl_[imode] );
+            Br_.push_back( emAM->Br_[imode] );
+            Bt_.push_back( emAM->Bt_[imode] );
+            Bl_m.push_back( emAM->Bl_m[imode] );
+            Br_m.push_back( emAM->Br_m[imode] );
+            Bt_m.push_back( emAM->Bt_m[imode] );
+            El_rel_.push_back( emAM->El_rel_ );
+            Er_rel_.push_back( emAM->Er_rel_ );
+            Et_rel_.push_back( emAM->Et_rel_ );
+            Bl_rel_.push_back( emAM->Bl_rel_ );
+            Br_rel_.push_back( emAM->Br_rel_ );
+            Bt_rel_.push_back( emAM->Bt_rel_ );
+            Bl_rel_t_plus_halfdt_.push_back( emAM->Bl_rel_t_plus_halfdt_ );
+            Br_rel_t_plus_halfdt_.push_back( emAM->Br_rel_t_plus_halfdt_ );
+            Bt_rel_t_plus_halfdt_.push_back( emAM->Bt_rel_t_plus_halfdt_);
+            Bl_rel_t_minus_halfdt_.push_back( emAM->Bl_rel_t_minus_halfdt_ );
+            Br_rel_t_minus_halfdt_.push_back( emAM->Br_rel_t_minus_halfdt_ );
+            Bt_rel_t_minus_halfdt_.push_back( emAM->Bt_rel_t_minus_halfdt_ );
+            
+            Ap_AM_.push_back( emAM->Ap_AM_ );
+        }
+
+        unsigned int nx_p2_global = ( params.n_space_global[0]+1 );
+        //if ( Ex_[0]->dims_.size()>1 ) {
+        if( El_rel_[0]->dims_.size()>1 ) {
+            nx_p2_global *= ( params.n_space_global[1]+1 );
+            if( El_rel_[0]->dims_.size()>2 ) {
+                nx_p2_global *= ( params.n_space_global[2]+1 );
+            }
+        }
+
+        // compute control parameter
+        double norm2_source_term = sqrt( std::abs(rnew_dot_rnewAM_) );
+        //double ctrl = rnew_dot_rnew / (double)(nx_p2_global);
+        double ctrl = sqrt( std::abs(rnew_dot_rnewAM_) ) / norm2_source_term; // initially is equal to one
+        
+        // ---------------------------------------------------------
+        // Starting iterative loop for the conjugate gradient method
+        // ---------------------------------------------------------
+        if( smpi->isMaster() ) {
+            DEBUG( "Starting iterative loop for CG method for the mode "<<imode );
+        }
+        
+        iteration = 0;//MESSAGE("Initial error parameter (must be 1) : "<<ctrl);
+        //cout << std::scientific << ctrl << "\t" << error_max << "\t" << iteration << "\t" << iteration_max << endl;
+        while( ( ctrl > error_max ) && ( iteration<iteration_max ) ) {
+            iteration++;
+        
+            if( ( smpi->isMaster() ) && ( iteration%1000==0 ) ) {
+                MESSAGE( "iteration " << iteration << " started with control parameter ctrl = " << 1.0e22*ctrl << " x 1.e-22" );
+            }
+        
+            // scalar product of the residual
+            double r_dot_rAM_ = rnew_dot_rnewAM_;
+        
+            for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+                ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+                emAM->compute_Ap_relativistic_Poisson_AM( ( *this )( ipatch ), gamma_mean, imode );
+            }
+        
+            // Exchange Ap_ (intra & extra MPI)
+            SyncVectorPatch::exchange_along_all_directions_noompComplex( Ap_AM_, *this, smpi );
+            SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( Ap_AM_, *this );
+        
+        
+            // scalar product p.Ap
+            std::complex<double> p_dot_ApAM_       = 0.0;
+            std::complex<double> p_dot_Ap_localAM_ = 0.0;
+            for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+                ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+                p_dot_Ap_localAM_ += emAM->compute_pAp_AM();
+            }
+            MPI_Allreduce( &p_dot_Ap_localAM_, &p_dot_ApAM_, 2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+        
+        
+            // compute new potential and residual
+            for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+                ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+                emAM->update_pand_r_AM( r_dot_rAM_, p_dot_ApAM_ );
+            }
+        
+            // compute new residual norm
+            rnew_dot_rnewAM_       = 0.0;
+            rnew_dot_rnew_localAM_ = 0.0;
+            for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+                ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+                rnew_dot_rnew_localAM_ += emAM->compute_r();
+            }
+            MPI_Allreduce( &rnew_dot_rnew_localAM_, &rnew_dot_rnewAM_, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+            if( smpi->isMaster() ) {
+                DEBUG( "new residual norm: rnew_dot_rnew = " << rnew_dot_rnewAM_ );
+            }
+        
+            // compute new directio
+            for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+                ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+                emAM->update_p( rnew_dot_rnewAM_, r_dot_rAM_ );
+            }
+        
+            // compute control parameter
+          
+            ctrl = sqrt( std::abs(rnew_dot_rnewAM_) )/norm2_source_term;
+            if( smpi->isMaster() ) {
+                DEBUG( "iteration " << iteration << " done, exiting with control parameter ctrl = " << 1.0e22*ctrl << " x 1.e-22" );
+            }
+        
+        }//End of the iterative loop
+
+
+        // --------------------------------
+        // Status of the solver convergence
+        // --------------------------------
+        if( iteration_max>0 && iteration == iteration_max ) {
+            if( smpi->isMaster() )
+                WARNING( "Relativistic Poisson solver did not converge: reached maximum iteration number: " << iteration
+                         << ", relative err is ctrl = " << 1.0e22*ctrl << "x 1.e-22" );
+        } else {
+            if( smpi->isMaster() )
+                MESSAGE( 1, "Relativistic Poisson solver converged at iteration: " << iteration
+                         << ", relative err is ctrl = " << 1.0e22*ctrl << " x 1.e-22" );
+        }
+
+        // ------------------------------------------
+        // Compute the electromagnetic fields E and B
+        // ------------------------------------------
+        
+        // sync the potential
+        //SyncVectorPatch::exchange( (*this)(ipatch)->EMfields->phi_, *this, smpi );
+        //SyncVectorPatch::finalizeexchange( (*this)(ipatch)->EMfields->phi_, *this );
+        
+        // compute E and sync
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+            // begin loop on patches
+            emAM->initE_relativistic_Poisson_AM( ( *this )( ipatch ), gamma_mean, imode );
+        } // end loop on patches
+        
+        SyncVectorPatch::exchange_along_all_directions_noompComplex( El_rel_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( El_rel_, *this );
+        SyncVectorPatch::exchange_along_all_directions_noompComplex( Er_rel_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( Er_rel_, *this );
+        SyncVectorPatch::exchange_along_all_directions_noompComplex( Et_rel_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( Et_rel_, *this );
+
+        // compute B and sync
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            // begin loop on patches
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+            emAM->initB_relativistic_Poisson_AM( ( *this )( ipatch ), gamma_mean );
+        } // end loop on patches
+      
+        SyncVectorPatch::exchange_along_all_directions_noompComplex( Bl_rel_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( Bl_rel_, *this );
+        SyncVectorPatch::exchange_along_all_directions_noompComplex( Br_rel_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( Br_rel_, *this );
+        SyncVectorPatch::exchange_along_all_directions_noompComplex( Bt_rel_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( Bt_rel_, *this );
+        
+        
+        // Proper spatial centering of the B fields in the Yee Cell through interpolation
+        // (from B_rel to B_rel_t_plus_halfdt and B_rel_t_minus_halfdt)
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            // begin loop on patches
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+            emAM->center_fields_from_relativistic_Poisson_AM( ( *this )( ipatch ) );
+        } // end loop on patches
+        
+        // Re-exchange the properly spatially centered B field
+        SyncVectorPatch::exchange_along_all_directions_noompComplex( Bl_rel_t_plus_halfdt_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( Bl_rel_t_plus_halfdt_, *this );
+        SyncVectorPatch::exchange_along_all_directions_noompComplex( Br_rel_t_plus_halfdt_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( Br_rel_t_plus_halfdt_, *this );
+        SyncVectorPatch::exchange_along_all_directions_noompComplex( Bt_rel_t_plus_halfdt_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( Bt_rel_t_plus_halfdt_, *this );
+        
+        SyncVectorPatch::exchange_along_all_directions_noompComplex( Bl_rel_t_minus_halfdt_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( Bl_rel_t_minus_halfdt_, *this );
+        SyncVectorPatch::exchange_along_all_directions_noompComplex( Br_rel_t_minus_halfdt_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( Br_rel_t_minus_halfdt_, *this );
+        SyncVectorPatch::exchange_along_all_directions_noompComplex( Bt_rel_t_minus_halfdt_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions_noompComplex( Bt_rel_t_minus_halfdt_, *this );
+        
+        
+        MESSAGE( 0, "Summing fields of relativistic species to the grid fields" );
+        // sum the fields found  by relativistic Poisson solver to the existing em fields
+        // E  = E  + E_rel
+        // B  = B  + B_rel_t_plus_halfdt
+        // Bm = Bm + B_rel_t_minus_halfdt
+        
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            // begin loop on patches
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+            emAM->sum_rel_fields_to_em_fields_AM( ( *this )( ipatch ), params, imode );
+        } // end loop on patches
+        
+        
+        // clean the auxiliary vectors for the present azimuthal mode
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            
+            El_.pop_back();
+            Er_.pop_back();
+            Et_.pop_back();
+            Bl_.pop_back();
+            Br_.pop_back();
+            Bt_.pop_back();
+            Bl_m.pop_back();
+            Br_m.pop_back();
+            Bt_m.pop_back();
+            El_rel_.pop_back();
+            Er_rel_.pop_back();
+            Et_rel_.pop_back();
+            Bl_rel_.pop_back();
+            Br_rel_.pop_back();
+            Bt_rel_.pop_back();
+            Bl_rel_t_plus_halfdt_.pop_back();
+            Br_rel_t_plus_halfdt_.pop_back();
+            Bt_rel_t_plus_halfdt_.pop_back();
+            Bl_rel_t_minus_halfdt_.pop_back();
+            Br_rel_t_minus_halfdt_.pop_back();
+            Bt_rel_t_minus_halfdt_.pop_back();
+            
+            Ap_AM_.pop_back();
+
+        }
+        
+    }  // end loop on the modes
+
+    for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+        ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+        emAM->delete_phi_r_p_Ap( ( *this )( ipatch ) );
+        emAM->delete_relativistic_fields( ( *this )( ipatch ) );
+    }
+
+    // // Exchange the fields after the addition of the relativistic species fields
+    for( unsigned int imode = 0 ; imode < params.nmodes_rel_field_init ; imode++ ) {
+        SyncVectorPatch::exchangeE( params, ( *this ), imode, smpi );
+        SyncVectorPatch::finalizeexchangeE( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
+    }
+    for( unsigned int imode = 0 ; imode < params.nmodes_rel_field_init ; imode++ ) {
+        SyncVectorPatch::exchangeB( params, ( *this ), imode, smpi );
+        SyncVectorPatch::finalizeexchangeB( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
+    }
+    
+    MESSAGE( 0, "Fields of relativistic species initialized" );
+    //!\todo Reduce to find global max
+    //if (smpi->isMaster())
+    //  MESSAGE(1,"Relativistic Poisson equation solved. Maximum err = ");
+    
+    //ptimer.update();
+    //MESSAGE("Time in Relativistic Poisson : " << ptimer.getTime() );
+    
+    
+    //ptimer.update();
+    //MESSAGE("Time in Relativistic Poisson : " << ptimer.getTime() );
+    MESSAGE( "Relativistic Poisson finished" );
+
+
+
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 // ---------------------------------------------------------------------------------------------------------------------
 // ----------------------------------------------    BALANCING METHODS    ----------------------------------------------
@@ -1844,24 +2214,24 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
     
 #ifdef _VECTO
     if( params.vectorization_mode == "adaptive_mixed_sort" ) {
-        // adaptive vectorization
-        // Recompute the cell keys before the next step and configure operators
-        for( unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++ ) {
-            for( unsigned int ispec=0 ; ispec< recv_patches_[ipatch]->vecSpecies.size() ; ispec++ ) {
-                if( dynamic_cast<SpeciesVAdaptive *>( recv_patches_[ipatch]->vecSpecies[ispec] ) ) {
-                    dynamic_cast<SpeciesVAdaptive *>( recv_patches_[ipatch]->vecSpecies[ispec] )->compute_part_cell_keys( params );
-                    dynamic_cast<SpeciesVAdaptive *>( recv_patches_[ipatch]->vecSpecies[ispec] )->reconfigure_operators( params, recv_patches_[ipatch] );
-                }
-            }
-        }
-    } else if( params.vectorization_mode == "adaptive" ) {
-        // adaptive vectorization mode 2
+        // adaptive vectorization -- mixed sort
         // Recompute the cell keys before the next step and configure operators
         for( unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++ ) {
             for( unsigned int ispec=0 ; ispec< recv_patches_[ipatch]->vecSpecies.size() ; ispec++ ) {
                 if( dynamic_cast<SpeciesVAdaptiveMixedSort *>( recv_patches_[ipatch]->vecSpecies[ispec] ) ) {
                     dynamic_cast<SpeciesVAdaptiveMixedSort *>( recv_patches_[ipatch]->vecSpecies[ispec] )->compute_part_cell_keys( params );
                     dynamic_cast<SpeciesVAdaptiveMixedSort *>( recv_patches_[ipatch]->vecSpecies[ispec] )->reconfigure_operators( params, recv_patches_[ipatch] );
+                }
+            }
+        }
+    } else if( params.vectorization_mode == "adaptive" ) {
+        // adaptive vectorization --  always sort
+        // Recompute the cell keys before the next step and configure operators
+        for( unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++ ) {
+            for( unsigned int ispec=0 ; ispec< recv_patches_[ipatch]->vecSpecies.size() ; ispec++ ) {
+                if( dynamic_cast<SpeciesVAdaptive *>( recv_patches_[ipatch]->vecSpecies[ispec] ) ) {
+                    dynamic_cast<SpeciesVAdaptive *>( recv_patches_[ipatch]->vecSpecies[ispec] )->compute_part_cell_keys( params );
+                    dynamic_cast<SpeciesVAdaptive *>( recv_patches_[ipatch]->vecSpecies[ispec] )->reconfigure_operators( params, recv_patches_[ipatch] );
                 }
             }
         }
