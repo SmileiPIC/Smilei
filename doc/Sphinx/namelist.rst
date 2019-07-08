@@ -947,6 +947,7 @@ It is defined in the ``Species`` block::
   :default: ``linear``
 
   The momentum discretization scale. The scale can be ``linear`` or ``log``.
+  The ``log`` scale only works with the spherical discretization for the moment.
   In logarithmic scale, Smilei needs a minimum momentum value to avoid 0.
   This value is provided by the parameter ``merge_min_momentum``.
   By default, this value is set to :math:`10^{-5}`.

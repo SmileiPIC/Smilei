@@ -230,7 +230,7 @@ void MergingVranicCartesian::operator() (
         // phi_max += (phi_max - phi_min)*0.01;
 
         // Computation of the deltas (discretization steps)
-        // Check if min and max boundaries are very close
+        // Check if min and max boundaries are very close in each momentum direction
         for (ip = 0 ; ip < 3 ; ip++) {
             if (fabs((momentum_max[ip] - momentum_min[ip])) < min_momentum_cell_length_[ip]) {
                 // If momentum_min[ip] and momentum_max[ip] have the same sign
@@ -328,47 +328,7 @@ void MergingVranicCartesian::operator() (
         //           << " nb_delta: " << nb_delta
         //           << std::endl;
         
-        // Momentum z direction
-        // if (fabs(momentum_max[2] - momentum_min[2]) < min_momentum_cell_length_[2]) {
-        //     // If momentum_min[2] and momentum_max[2] have the same sign
-        //     if (momentum_max[2] <= 0 || momentum_min[2] >= 0) {
-        //         momentum_delta[2] = min_momentum_cell_length_[2];
-        //         momentum_min[2] = (momentum_max[2] + momentum_min[2] - momentum_delta[2])*0.5;
-        //         momentum_max[2] = (momentum_max[2] + momentum_min[2] + momentum_delta[2])*0.5;
-        //         inv_momentum_delta[2] = 0;
-        //         dim[2] = 1;
-        //     // else if momentum_min[2] and momentum_max[2] does not have the same sign,
-        //     // discretization centerd in 0 and dim = 2 instead of 1
-        //     } else {
-        //         momentum_max[2] = std::max(fabs((momentum_max[2] + momentum_min[2] + min_momentum_cell_length_[1])*0.5),fabs((momentum_max[2] + momentum_min[2] - min_momentum_cell_length_[2])*0.5));
-        //         momentum_min[2] = -momentum_max[2];
-        //         momentum_delta[2] = momentum_max[2];
-        //         inv_momentum_delta[2] = 1.0/momentum_delta[2];
-        //         dim[2] = 2;
-        //     }
-        // } else {
-        //     if (dim[2] == 1) {
-        //         momentum_max[2] += (momentum_max[2] - momentum_min[2])*0.01;
-        //         momentum_delta[2] = (momentum_max[2] - momentum_min[2]);
-        //         inv_momentum_delta[2] = 1.0/momentum_delta[2];
-        //     // If momentum_min[2] and momentum_max[2] have the same sign
-        //     } else if (momentum_max[2] <= 0 || momentum_min[2] >= 0) {
-        //         momentum_max[2] += (momentum_max[2] - momentum_min[2])*0.01;
-        //         momentum_delta[2] = (momentum_max[2] - momentum_min[2]) / (dim[2]-1);
-        //         momentum_min[2] -= 0.99*momentum_delta[2]*Rand::uniform();
-        //         inv_momentum_delta[2] = 1.0/momentum_delta[2];
-        //     // else if momentum_min[2] and momentum_max[2] does not have the same sign,
-        //     // discretization centerd in 0
-        //     } else {
-        //         dim[2] = int(dim[2]*(1+Rand::uniform()));
-        //         momentum_delta[2] = fabs(momentum_max[2] - momentum_min[2]) / dim[2];
-        //         inv_momentum_delta[2] = 1.0/momentum_delta[2];
-        //         nb_delta = ceil(fabs(momentum_min[2]) * inv_momentum_delta[2]);
-        //         momentum_min[2] = -nb_delta*momentum_delta[2];
-        //         dim[2] += 1;
-        //         momentum_max[2] = momentum_min[2] + dim[2] * momentum_delta[2];
-        //     }
-        // }
+
 
         // std::cerr << std::scientific << std::setprecision(15)
         //           << " Mz centering: "
