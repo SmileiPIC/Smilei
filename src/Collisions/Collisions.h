@@ -20,8 +20,8 @@ public:
     //! Constructor for Collisions between two species
     Collisions( Params &params, unsigned int n_collisions, std::vector<unsigned int>,
                 std::vector<unsigned int>, double coulomb_log, bool intra_collisions,
-                int debug_every, int Z, bool ionizing, bool tracked_electrons, int nDim,
-                std::string );
+                int debug_every, int Z, int ionization_electrons, Particles * ionization_particles,
+                int nDim, std::string );
     //! Cloning Constructor
     Collisions( Collisions *, int );
     //! destructor

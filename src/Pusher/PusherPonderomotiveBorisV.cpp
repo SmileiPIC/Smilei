@@ -54,19 +54,18 @@ void PusherPonderomotiveBorisV::operator()( Particles &particles, SmileiMPI *smp
     double *GradPhiz = &( ( *GradPhipart )[2*nparts] );
     double *inv_gamma_ponderomotive = &( ( *dynamics_inv_gamma_ponderomotive )[0*nparts] );
     
-    double dcharge[nparts];
-    #pragma omp simd
+    vector<double> dcharge(nparts);
     for( int ipart=istart ; ipart<iend; ipart++ ) {
-        dcharge[ipart] = ( double )( charge[ipart] );
+        dcharge[ipart-ipart_ref] = ( double )( charge[ipart] );
     }
     
     #pragma omp simd
     for( int ipart=istart ; ipart<iend; ipart++ ) {
         double psm[3], um[3];
         
-        charge_over_mass_dts2 = dcharge[ipart]*one_over_mass_*dts2;
+        charge_over_mass_dts2 = dcharge[ipart-ipart_ref]*one_over_mass_*dts2;
         // ! ponderomotive force is proportional to charge squared and the field is divided by 4 instead of 2
-        charge_sq_over_mass_sq_dts4 = ( double )( charge[ipart] )*( double )( charge[ipart] )*one_over_mass_*one_over_mass_*dts4;
+        charge_sq_over_mass_sq_dts4 = ( dcharge[ipart-ipart_ref] )*( dcharge[ipart-ipart_ref] )*one_over_mass_*one_over_mass_*dts4;
         
         // ponderomotive gamma buffered from susceptibility
         one_ov_gamma_ponderomotive = ( *( inv_gamma_ponderomotive+ipart ) );

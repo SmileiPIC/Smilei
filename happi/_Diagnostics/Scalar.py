@@ -94,9 +94,9 @@ class Scalar(Diagnostic):
 			self._vunits = ""
 		else:
 			self._vunits = {
-				"U":"K_r * N_r * L_r^%i" % self._ndim,
-				"P":"K_r * N_r * L_r^%i" % self._ndim,
-				"D":"N_r * L_r^%i" % self._ndim,
+				"U":"K_r * N_r * L_r^%i" % self._ndim_particles,
+				"P":"K_r * N_r * L_r^%i" % self._ndim_particles,
+				"D":"N_r * L_r^%i" % self._ndim_particles,
 				"E":"E_r",
 				"B":"B_r",
 				"J":"J_r",

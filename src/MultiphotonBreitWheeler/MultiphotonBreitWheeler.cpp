@@ -92,7 +92,6 @@ void MultiphotonBreitWheeler::compute_thread_chiph( Particles &particles,
     double *Bx = &( ( *Bpart )[0*nparts] );
     double *By = &( ( *Bpart )[1*nparts] );
     double *Bz = &( ( *Bpart )[2*nparts] );
-    
     #pragma omp simd
     for( int ipart=istart ; ipart<iend; ipart++ ) {
     
@@ -380,9 +379,23 @@ void MultiphotonBreitWheeler::pair_emission( int ipart,
 // -----------------------------------------------------------------------------
 void MultiphotonBreitWheeler::decayed_photon_cleaning(
     Particles &particles,
+    SmileiMPI *smpi,
     int ibin, int nbin,
-    int *bmin, int *bmax )
+    int *bmin, int *bmax, int ithread )
 {
+    std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
+    std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
+    std::vector<double> *gamma = &( smpi->dynamics_invgf[ithread] );
+    std::vector<int> *iold = &( smpi->dynamics_iold[ithread] );
+    std::vector<double> *deltaold = &( smpi->dynamics_deltaold[ithread] );
+
+    std::vector<double> *thetaold = NULL;
+    if ( smpi->dynamics_thetaold.size() )
+        thetaold = &( smpi->dynamics_thetaold[ithread] );
+    
+    int nparts = Epart->size()/3;
+
+
     if( bmax[ibin] > bmin[ibin] ) {
         // Weight shortcut
         double *weight = &( particles.weight( 0 ) );
@@ -414,7 +427,24 @@ void MultiphotonBreitWheeler::decayed_photon_cleaning(
                     // The last existing photon comes to the position of
                     // the deleted photon
                     particles.overwrite_part( last_photon_index, ipart );
+                    // Overwrite bufferised data
+                    for ( int iDim=2 ; iDim>=0 ; iDim-- ) {
+                        (*Epart)[iDim*nparts+ipart] = (*Epart)[iDim*nparts+last_photon_index];
+                        (*Bpart)[iDim*nparts+ipart] = (*Bpart)[iDim*nparts+last_photon_index];
+                    }
+                    for ( int iDim=n_dimensions_-1 ; iDim>=0 ; iDim-- ) {
+                        (*iold)[iDim*nparts+ipart] = (*iold)[iDim*nparts+last_photon_index];
+                        (*deltaold)[iDim*nparts+ipart] = (*deltaold)[iDim*nparts+last_photon_index];
+                    }
+                    (*gamma)[0*nparts+ipart] = (*gamma)[0*nparts+last_photon_index];
+
+                    if (thetaold) {
+                        (*thetaold)[0*nparts+ipart] = (*thetaold)[0*nparts+last_photon_index];
+                    }
+
                     last_photon_index --;
+
+
                 }
             }
         }
@@ -424,6 +454,23 @@ void MultiphotonBreitWheeler::decayed_photon_cleaning(
         
         if( nb_deleted_photon > 0 ) {
             particles.erase_particle( last_photon_index+1, nb_deleted_photon );
+            // Erase bufferised data
+            for ( int iDim=2 ; iDim>=0 ; iDim-- ) {
+                Epart->erase(Epart->begin()+iDim*nparts+last_photon_index+1,Epart->begin()+iDim*nparts+last_photon_index+1+nb_deleted_photon);
+                Bpart->erase(Bpart->begin()+iDim*nparts+last_photon_index+1,Bpart->begin()+iDim*nparts+last_photon_index+1+nb_deleted_photon);
+            }
+            for ( int iDim=n_dimensions_-1 ; iDim>=0 ; iDim-- ) {
+                iold->erase(iold->begin()+iDim*nparts+last_photon_index+1,iold->begin()+iDim*nparts+last_photon_index+1+nb_deleted_photon);
+                deltaold->erase(deltaold->begin()+iDim*nparts+last_photon_index+1,deltaold->begin()+iDim*nparts+last_photon_index+1+nb_deleted_photon);
+            }
+            gamma->erase(gamma->begin()+0*nparts+last_photon_index+1,gamma->begin()+0*nparts+last_photon_index+1+nb_deleted_photon);
+
+            if (thetaold) {
+                thetaold->erase(thetaold->begin()+0*nparts+last_photon_index+1,thetaold->begin()+0*nparts+last_photon_index+1+nb_deleted_photon);
+            }
+
+
+
             bmax[ibin] = last_photon_index+1;
             for( ii=ibin+1; ii<nbin; ii++ ) {
                 bmin[ii] -= nb_deleted_photon;

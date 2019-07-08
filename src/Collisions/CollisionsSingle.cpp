@@ -158,7 +158,7 @@ void CollisionsSingle::collide( Params &params, Patch *patch, int itime, vector<
         
     } // end loop on bins
     
-    Ionization->finish( s1, s2, params, patch, localDiags );
+    Ionization->finish( params, patch, localDiags );
     
     if( debug && ncol>0. ) {
         smean_    /= ncol;

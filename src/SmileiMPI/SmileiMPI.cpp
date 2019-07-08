@@ -352,7 +352,7 @@ void SmileiMPI::init_patch_count( Params &params, DomainDecomposition *domain_de
         // The master cpu also writes the patch count to the file
         ofstream fout;
         fout.open( "patch_load.txt" );
-        fout << "Total load = " << Tload << endl;
+        fout << "Target load = " << Tload << endl;
         for( rk=0; rk<smilei_sz; rk++ ) {
             fout << "patch count = " << patch_count[rk]<<endl;
         }

@@ -351,7 +351,7 @@ class Field(Diagnostic):
 			diagNumbers = [ int(self._re.findall("Fields([0-9]+).h5$",file)[0]) for file in files ]
 			if diags == []: diags = diagNumbers
 			else          : diags = [ d for d in diags if d in diagNumbers ]
-		return diags
+		return sorted(diags)
 	
 	# get all available fields, sorted by name length
 	def getFields(self):
