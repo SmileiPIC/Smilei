@@ -281,8 +281,11 @@ int main( int argc, char *argv[] )
         domain.identify_missing_patches( &smpi, vecPatches, params );
         for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
             SyncCartesianPatchAM::patchedToCartesian_MW( vecPatches, domain, params, &smpi, imode );
-        if( params.is_pxr )
+        if( params.is_pxr ){
             domain.vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, domain.vecPatch_( 0 )->EMfields );
+            //if ( ( params.geometry == "AMcylindrical" ) && ( params.apply_divergence_cleaning ) )
+            //    domain.vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->divergence_cleaning( domain.vecPatch_( 0 )->EMfields );
+        }
     }
     else {
         if (params.is_pxr) {
