@@ -145,12 +145,14 @@ void IonizationTunnel::operator()( Particles *particles, unsigned int ipart_min,
         }//END Multiple ionization routine
         
         // Compute ionization current
-        factorJion *= TotalIonizPot;
-        Jion.x = factorJion * *( Ex+ipart );
-        Jion.y = factorJion * *( Ey+ipart );
-        Jion.z = factorJion * *( Ez+ipart );
-        
-        Proj->ionizationCurrents( patch->EMfields->Jx_, patch->EMfields->Jy_, patch->EMfields->Jz_, *particles, ipart, Jion );
+        if (patch->EMfields->Jx_ != NULL){  // For the moment ionization current is not accounted for in AM geometry
+            factorJion *= TotalIonizPot;
+            Jion.x = factorJion * *( Ex+ipart );
+            Jion.y = factorJion * *( Ey+ipart );
+            Jion.z = factorJion * *( Ez+ipart );
+            
+            Proj->ionizationCurrents( patch->EMfields->Jx_, patch->EMfields->Jy_, patch->EMfields->Jz_, *particles, ipart, Jion );
+        }
         
         // Creation of the new electrons
         // (variable weights are used)

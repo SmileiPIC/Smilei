@@ -175,6 +175,7 @@ public :
     
     //! Solve relativistic Poisson problem to initialize E and B of a relativistic bunch
     void solveRelativisticPoisson( Params &params, SmileiMPI *smpi, double time_primal );
+    void solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, double time_primal );
     
     //! For all patch initialize the externals (lasers, fields, antennas)
     void initExternals( Params &params );

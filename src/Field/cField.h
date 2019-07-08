@@ -63,6 +63,23 @@ public:
         DEBUGEXEC( if( !std::isfinite( real( cdata_[i] )+imag( cdata_[i] ) ) ) ERROR( name << " Not finite "<< i << " = " << cdata_[i] ) );
         return cdata_[i];
     };
+
+    //! 2D reference access to the linearized array (with check in DEBUG mode)
+    inline std::complex<double> &operator()( unsigned int i, unsigned int j )
+    {
+        int unsigned idx = i*dims_[1]+j;
+        DEBUGEXEC( if( idx>=globalDims_ ) ERROR( "Out of limits & "<< i << " " << j ) );
+        DEBUGEXEC( if( !std::isfinite( real( cdata_[idx] )+imag( cdata_[idx] ) ) ) ERROR( "Not finite "<< i << " " << j << " = " << cdata_[idx] ) );
+        return cdata_[idx];
+    };
+    //! 2D access to the linearized array (with check in DEBUG mode)
+    inline std::complex<double> operator()( unsigned int i, unsigned int j ) const
+    {
+        unsigned int idx = i*dims_[1]+j;
+        DEBUGEXEC( if( idx>=globalDims_ ) ERROR( "Out of limits "<< i << " " << j ) );
+        DEBUGEXEC( if( !std::isfinite( real( cdata_[idx] )+imag( cdata_[idx] ) ) ) ERROR( "Not finite "<< i << " " << j << " = " << cdata_[idx] ) );
+        return cdata_[idx];
+    };
     
     void put( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch ) = 0;
     void get( Field  *inField, Params &params, SmileiMPI *smpi, Patch   *inPatch, Patch *thisPatch ) = 0;

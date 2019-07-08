@@ -67,7 +67,7 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     // arrays used for the Esirkepov projection method
     double  Sl0[5], Sl1[5], Sr0[5], Sr1[5], DSl[5], DSr[5];
     //complex<double>  Wl[5][5], Wr[5][5], Wt[5][5], Jl_p[5][5], Jr_p[5][5], Jt_p[5][5];
-    complex<double>  Wl[5][5], Wr[5][5], Jl_p[5][5], Jr_p[5][5];
+    complex<double>  Jl_p[5][5], Jr_p[5][5];
     complex<double> e_delta, e_delta_m1, e_delta_inv, e_bar, e_bar_m1, C_m = 1.; //, C_m_old;
     complex<double> *Jl, *Jr, *Jt, *rho;
     
@@ -162,24 +162,19 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     complex<double> crt_p= charge_weight*( particles.momentum( 2, ipart )*particles.position( 1, ipart )-particles.momentum( 1, ipart )*particles.position( 2, ipart ) )/( rp )*invgf;
 
     // Compute everything independent of theta
-    for( unsigned int i=0 ; i<5 ; i++ ) {
-        for( unsigned int j=0 ; j<5 ; j++ ) {
-            Wl[i][j] = DSl[i] * ( Sr0[j] + 0.5*DSr[j] )* invR_local[j]; // a priori independant du mode !!
-            Wr[i][j] = DSr[j] * ( Sl0[i] + 0.5*DSl[i] )* invRd[jpo+j]*dr; // a priori independant du mode !!
-        }
-    }
-
-    for( unsigned int i=1 ; i<5 ; i++ ) {
-        for( unsigned int j=0 ; j<5 ; j++ ) {
-            Jl_p[i][j]= Jl_p[i-1][j] - crl_p * Wl[i-1][j];
+    for( unsigned int j=0 ; j<5 ; j++ ) {
+        double tmp = crl_p * ( Sr0[j] + 0.5*DSr[j] )* invR_local[j];
+        for( unsigned int i=1 ; i<5 ; i++ ) {
+            Jl_p[i][j]= Jl_p[i-1][j] - DSl[i-1] * tmp;
         }
     }
 
     for( int j=3 ; j>=0 ; j-- ) {
         jloc = j+jpo+1;
         double Vd = abs( jloc + j_domain_begin + 0.5 )* invRd[jloc]*dr ;
+        double tmp = crr_p * DSr[j+1] * invRd[jpo+j+1]*dr;
         for( unsigned int i=0 ; i<5 ; i++ ) {
-            Jr_p[i][j] =  Jr_p[i][j+1] * Vd + crr_p * Wr[i][j+1] ;
+            Jr_p[i][j] =  Jr_p[i][j+1] * Vd + ( Sl0[i] + 0.5*DSl[i] ) * tmp;
         }
     }
  
@@ -345,6 +340,9 @@ void ProjectorAM2Order::basicForComplex( complex<double> *rhoj, Particles &parti
 // ---------------------------------------------------------------------------------------------------------------------
 void ProjectorAM2Order::ionizationCurrents( Field *Jl, Field *Jr, Field *Jt, Particles &particles, int ipart, LocalFields Jion )
 {
+
+    return;
+
     cField2D *JlAM  = static_cast<cField2D *>( Jl );
     cField2D *JrAM  = static_cast<cField2D *>( Jr );
     cField2D *JtAM  = static_cast<cField2D *>( Jt );

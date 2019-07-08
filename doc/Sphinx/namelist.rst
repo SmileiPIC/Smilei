@@ -326,6 +326,13 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   The number of azimuthal modes used for the Fourier decomposition in ``"AMcylindrical"`` geometry.
 
+.. py:data:: number_of_AM_relativistic_field_initialization
+
+  :default: 1
+
+  The number of azimuthal modes used for the relativistic field initialization in ``"AMcylindrical"`` geometry.
+  Note that this number must be lower or equal to the number of modes of the simulation. 
+
 ----
 
 Load Balancing
@@ -1090,7 +1097,30 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
      Time envelope of the field (not intensity).
 
 
-.. rubric:: 5. Defining a 3D gaussian wave
+.. rubric:: 5. Defining a gaussian wave with Azimuthal Fourier decomposition
+
+..
+
+  For simulations with ``"AMcylindrical"`` geometry, you may use the simplified laser creator::
+
+    LaserGaussianAM(
+        box_side         = "xmin",
+        a0               = 1.,
+        omega            = 1.,
+        focus            = [50., 40., 40.],
+        waist            = 3.,
+        incidence_angle  = [0., 0.1],
+        polarization_phi = 0.,
+        ellipticity      = 0.,
+        time_envelope    = tconstant()
+    )
+
+  This is almost the same as ``LaserGaussian2D``, with the ``focus`` parameter having
+  now 3 elements (focus position in 3D), and the ``incidence_angle`` being a list of
+  two angles, corresponding to rotations around `y` and `z`, respectively.
+
+
+.. rubric:: 6. Defining a 3D gaussian wave
 
 ..
 
@@ -1112,7 +1142,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   now 3 elements (focus position in 3D), and the ``incidence_angle`` being a list of
   two angles, corresponding to rotations around `y` and `z`, respectively.
 
-.. rubric:: 5. Defining a generic wave at some distance from the boundary
+.. rubric:: 7. Defining a generic wave at some distance from the boundary
 
 
 
