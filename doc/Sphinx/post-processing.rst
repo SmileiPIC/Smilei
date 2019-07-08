@@ -635,7 +635,7 @@ This third plotting method animates the data over time.
 
   All these methods have the same arguments described below.
 
-.. py:function:: animate(movie="", fps=15, dpi=200, saveAs=None, axes=None)
+.. py:function:: animate(movie="", fps=15, dpi=200, saveAs=None, axes=None, **kwargs)
 
   All arguments are identical to those of ``streak``, with the addition of:
 
@@ -648,6 +648,31 @@ This third plotting method animates the data over time.
 
     S = happi.Open("path/to/my/results")
     S.ParticleBinning(1).animate()
+
+----
+
+Plot with a slider
+^^^^^^^^^^^^^^^^^^
+
+This methods provides an interactive slider to change the time.
+
+.. py:method:: Scalar.slide(...)
+               Field.slide(...)
+               Probe.slide(...)
+               ParticleBinning.slide(...)
+               TrackParticles.slide(...)
+               Screen.slide(...)
+
+  All these methods have the same arguments described below.
+
+.. py:function:: slide(axes=None, **kwargs)
+
+  See ``plot`` for the description of the arguments.
+
+**Example**::
+
+    S = happi.Open("path/to/my/results")
+    S.ParticleBinning(1).slide(vmin=0)
 
 ----
 

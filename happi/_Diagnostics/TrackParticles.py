@@ -78,7 +78,14 @@ class TrackParticles(Diagnostic):
 		
 		# Add moving_x in the list of properties
 		if "x" in self.available_properties:
-			self.available_properties += ["moving_x"]
+			file = disorderedfiles[0]
+			with self._h5py.File(file) as f:
+				try: # python 2
+					D = next(f["data"].itervalues())
+				except: # python 3
+					D = next(iter(f["data"].values()))
+				if "x_moved" in D.attrs:
+					self.available_properties += ["moving_x"]
 		
 		# Get available times in the hdf5 file
 		if self._timesteps.size == 0:
@@ -273,18 +280,19 @@ class TrackParticles(Diagnostic):
 		
 		# Then figure out axis units
 		self._type = self.axes
+		self._factors = []
 		for axis in self.axes:
 			axisunits = ""
 			if axis == "Id":
 				self._centers.append( [0, 281474976710655] )
 			elif axis in ["x" , "y" , "z", "moving_x"]:
 				axisunits = "L_r"
-				self._centers.append( [0., self.namelist.Main.grid_length[{"x":0,"y":1,"z":2}[axis[-1]]]] )
+				self._centers.append( [0., self.namelist.Main.grid_length[{"x":0,"y":1,"z":-1}[axis[-1]]]] )
 			elif axis in ["px", "py", "pz"]:
 				axisunits = "P_r"
 				self._centers.append( [-1., 1.] )
 			elif axis == "w":
-				axisunits = "N_r * L_r^%i" % self._ndim
+				axisunits = "N_r * L_r^%i" % self._ndim_particles
 				self._centers.append( [0., 1.] )
 			elif axis == "q":
 				axisunits = "Q_r"
@@ -298,9 +306,14 @@ class TrackParticles(Diagnostic):
 			elif axis[0] == "B":
 				axisunits = "B_r"
 				self._centers.append( [-1., 1.] )
-			self._log.append( False )
-			self._label.append( axis )
-			self._units.append( axisunits )
+			self._log += [False]
+			self._label += [axis]
+			self._units += [axisunits]
+			if axis == "Id":
+				self._factors += [1]
+			else:
+				factor, _ = self.units._convert(axisunits, None)
+				self._factors += [factor]
 		self._title = "Track particles '"+species+"'"
 		self._shape = [0]*len(self.axes)
 
@@ -638,19 +651,17 @@ class TrackParticles(Diagnostic):
 		data.update({ "times":ts })
 
 		if self._sort:
-			for axis in self.axes:
+			for axis, factor in zip(self.axes, self._factors):
 				if timestep is None:
 					data[axis] = self._rawData[axis]
 				else:
 					data[axis] = self._rawData[axis][indexOfRequestedTime]
-				if axis not in ["Id", "q"]: data[axis] *= self._vfactor
+				data[axis] *= factor
 		else:
 			for t in ts:
 				data[t] = {}
-				for axis in self.axes:
-					data[t][axis] = self._rawData[t][axis]
-					if axis not in ["Id", "q"]: data[t][axis] *= self._vfactor
-
+				for axis, factor in zip(self.axes, self._factors):
+					data[t][axis] = self._rawData[t][axis] * factor
 		return data
 
 	def get(self):
@@ -783,8 +794,8 @@ class TrackParticles(Diagnostic):
 			print("Cannot export non-sorted data")
 			return
 
-		if self._ndim != 3:
-			print ("Cannot export tracked particles of a "+str(self._ndim)+"D simulation to VTK")
+		if self._ndim_particles != 3:
+			print ("Cannot export tracked particles of a "+str(self._ndim_particles)+"D simulation to VTK")
 			return
 
 		# The specified rendering option is checked
@@ -798,7 +809,7 @@ class TrackParticles(Diagnostic):
 			return
 
 		self._mkdir(self._exportDir)
-		fileprefix = self._exportDir + self._exportPrefix
+		fileprefix = self._exportDir + self._exportPrefix + "_" + rendering 
 
 		ntimes = len(self._timesteps)
 
@@ -826,7 +837,18 @@ class TrackParticles(Diagnostic):
 			data = self.getData()
 
 			for istep,step in enumerate(self._timesteps):
-				pcoords_step = self._np.stack((data[xaxis][istep],data["y"][istep],data["z"][istep])).transpose()
+				
+				data_clean_step = {}
+				
+				# Clean data at istep: remove NaN
+				mask = self._np.ones(len(data[self.axes[0]][istep]), dtype=bool)
+				for ax in self.axes:
+					mask = self._np.logical_and(mask,self._np.logical_not(self._np.isnan(self._np.asarray(data[ax][istep]))))
+				for ax in self.axes:
+					#print(ax,data[ax][istep])
+					data_clean_step[ax] = self._np.asarray(data[ax][istep])[mask]
+				
+				pcoords_step = self._np.stack((data_clean_step[xaxis],data_clean_step["y"],data_clean_step["z"])).transpose()
 				pcoords_step = self._np.ascontiguousarray(pcoords_step, dtype='float32')
 
 				# Convert pcoords that is a numpy array into vtkFloatArray
@@ -836,10 +858,10 @@ class TrackParticles(Diagnostic):
 				attributes = []
 				for ax in self.axes:
 					if ax not in ["x", "y", "z", "moving_x", "Id"]:
-						attributes += [vtk.Array(self._np.ascontiguousarray(data[ax][istep].flatten(),'float32'),ax)]
+						attributes += [vtk.Array(self._np.ascontiguousarray(data_clean_step[ax].flatten(),'float32'),ax)]
 					# Integer arrays
 					elif ax == "Id":
-						attributes += [vtk.Array(self._np.ascontiguousarray(data[ax][istep].flatten(),'int32'),ax)]
+						attributes += [vtk.Array(self._np.ascontiguousarray(data_clean_step[ax].flatten(),'int32'),ax)]
 
 				vtk.WriteCloud(pcoords_step, attributes, data_format, fileprefix+"_{:06d}.{}".format(step,extension))
 				print("Exportation of {}_{:06d}.{}".format(fileprefix,step,extension))

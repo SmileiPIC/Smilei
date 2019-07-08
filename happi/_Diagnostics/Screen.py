@@ -163,11 +163,11 @@ class Screen(Diagnostic):
 			elif axistype in ["a","b"]:
 				axis_units = "L_r"
 				hasComposite = True
-			elif axistype == "theta" and self._ndim==2:
+			elif axistype == "theta" and self._ndim_particles==2:
 				axis_units = "rad"
 				overall_min = "-3.141592653589793"
 				overall_max = "3.141592653589793"
-			elif axistype == "theta" and self._ndim==3:
+			elif axistype == "theta" and self._ndim_particles==3:
 				axis_units = "rad"
 				overall_min = "0"
 				overall_max = "3.141592653589793"
@@ -235,7 +235,7 @@ class Screen(Diagnostic):
 					self._log    .append(axis["log"])
 					self._label  .append(axistype)
 					self._units  .append(axis_units)
-					if axistype == "theta" and self._ndim==3:
+					if axistype == "theta" and self._ndim_particles==3:
 						uniform = False
 						plot_diff.append(self._np.diff(self._np.cos(edges))[self._selection[iaxis]])
 					else:
@@ -286,11 +286,11 @@ class Screen(Diagnostic):
 			self._title  = self._title .replace("#"+str(d), titles[d])
 		
 		# If any spatial dimension did not appear, then count it for calculating the correct density
-		if self._ndim>=1 and not spatialaxes["x"]: coeff /= self._ncels[0]*self._cell_length[0]
-		if self._ndim>=2 and not spatialaxes["y"]: coeff /= self._ncels[1]*self._cell_length[1]
-		if self._ndim==3 and not spatialaxes["z"]: coeff /= self._ncels[2]*self._cell_length[2]
+		if self._ndim_particles>=1 and not spatialaxes["x"]: coeff /= self._ncels[ 0]*self._cell_length[ 0]
+		if self._ndim_particles>=2 and not spatialaxes["y"]: coeff /= self._ncels[ 1]*self._cell_length[ 1]
+		if self._ndim_particles==3 and not spatialaxes["z"]: coeff /= self._ncels[-1]*self._cell_length[-1]
 		
-		# Calculate the array that represents the bins sizes in order to get units right.
+		# Calculate th e array that represents the bins sizes in order to get units right.
 		# This array will be the same size as the plotted array
 		if uniform:
 			self._bsize = 1.

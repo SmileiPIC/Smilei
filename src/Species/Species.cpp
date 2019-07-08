@@ -413,12 +413,7 @@ void Species::initPosition( unsigned int nPart, unsigned int iPart, double *inde
             for( unsigned int i=0; i<nDim_particle ; i++ ) {
                 particles->position( i, p )=indexes[i]+0.5*cell_length[i];
             }
-            
     }
-    
-    //std::cout<<"particle position in x "<< particles->position(0,iPart)<<std::endl;
-    //std::cout<<"particle position in y "<< particles->position(1,iPart)<<std::endl;
-    //std::cout<<"particle position in z "<< particles->position(2,iPart)<<std::endl;
 }
 
 
@@ -582,10 +577,6 @@ void Species::initMomentum( unsigned int nPart, unsigned int iPart, double *temp
             
         }
     }
-    
-    //std::cout<<"particle momentum in x "<< particles->momentum(0,0)*10<<std::endl;
-    //std::cout<<"particle momentum in y "<< particles->momentum(1,0)*10<<std::endl;
-    //std::cout<<"particle momentum in z "<< particles->momentum(2,0)*10<<std::endl;
 }//END initMomentum
 
 
@@ -630,7 +621,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
-    if( time_dual>time_frozen ) { // moving particle
+    if( time_dual>time_frozen || Ionize) { // moving particle
     
         smpi->dynamics_resize( ithread, nDim_field, last_index.back(), params.geometry=="AMcylindrical" );
         //Point to local thread dedicated buffers
@@ -664,6 +655,8 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #endif
             }
             
+            if( time_dual<=time_frozen ) continue; // Do not push nor project frozen particles
+
             // Radiation losses
             if( Radiate ) {
             
@@ -714,11 +707,11 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                         smpi,
                         first_index[ibin],
                         last_index[ibin],
-                        ithread );
-                        
+                        ithread ); 
+                
                 // Suppression of the decayed photons into pairs
                 Multiphoton_Breit_Wheeler_process->decayed_photon_cleaning(
-                    *particles, ibin, first_index.size(), &first_index[0], &last_index[0] );
+                    *particles, smpi, ibin, first_index.size(), &first_index[0], &last_index[0], ithread );
                     
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[6] += MPI_Wtime() - timer;
@@ -841,22 +834,33 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 //            }
 //        }
 
-    } else { // immobile particle (at the moment only project density)
-        if( diag_flag &&( !particles->is_test ) ) {
+    } //End if moving or ionized particles 
+
+    if(time_dual <= time_frozen && diag_flag &&( !particles->is_test ) ) { //immobile particle (at the moment only project density)
+        if( params.geometry != "AMcylindrical" ) {
             double *b_rho=nullptr;
-            
             for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
-            
                 b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
-                
                 for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
                     Proj->basic( b_rho, ( *particles ), iPart, 0 );
-                } //End loop on particles
-            }//End loop on bins
-            
+                } 
+            } 
+        } else {
+            int n_species = patch->vecSpecies.size();
+            complex<double> *b_rho=nullptr;
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+            for( unsigned int imode = 0; imode<params.nmodes; imode++ ) {
+                int ifield = imode*n_species+ispec;
+                for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
+                    b_rho = emAM->rho_AM_s[ifield] ? &( *emAM->rho_AM_s[ifield] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
+                    for( int iPart=first_index[ibin] ; iPart<last_index[ibin]; iPart++ ) {
+                        Proj->basicForComplex( b_rho, ( *particles ), iPart, 0, imode );
+                    } 
+                } 
+            } 
         }
-    }//END if time vs. time_frozen
-}//END dynamic
+    } // End projection for frozen particles
+} //END dynamics
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -926,7 +930,7 @@ void Species::projection_for_diags( double time_dual, unsigned int ispec,
                     } //End loop on particles
                 }//End loop on bins
             } //End loop on modes
-        } // End Theta mode
+        } 
         
     }
 }
@@ -1017,6 +1021,7 @@ void Species::computeCharge( unsigned int ispec, ElectroMagn *EMfields )
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::sort_part( Params &params )
 {
+
     int ndim = params.nDim_field;
     int idim;
     //cleanup_sent_particles(ispec, indexes_of_particles_to_exchange);
@@ -1092,7 +1097,7 @@ void Species::sort_part( Params &params )
     }
     
     //idim=0
-    shift[1] += MPIbuff.part_index_recv_sz[0][0];//Particles coming from ymin all go to bin 0 and shift all the other bins.
+    shift[1] += MPIbuff.part_index_recv_sz[0][0];//Particles coming from xmin all go to bin 0 and shift all the other bins.
     shift[last_index.size()] += MPIbuff.part_index_recv_sz[0][1];//Used only to count the total number of particles arrived.
     //idim>0
     for( idim = 1; idim < ndim; idim++ ) {
@@ -1273,16 +1278,6 @@ void Species::count_sort_part( Params &params )
         indices[ixy] = tot;
         tot += oc;
     }
-    
-    //Bookmarking is not needed if normal sort is called before.
-    //first_index[0] = 0;
-    //for (bin=0; bin<first_index.size()-1; bin++) { //Loop on the bins.
-    //
-    //    first_index[bin+1] = indices[(bin+1)*params.n_space[1]*clrw] ;
-    //    last_index[bin] = first_index[bin+1];
-    //}
-    //bin = first_index.size()-1 ;
-    //last_index[bin] = npart;
     
     // last loop puts the particles and update the count array
     for( ip=0; ip < npart; ip++ ) {
@@ -1588,7 +1583,7 @@ int Species::createParticles( vector<unsigned int> n_space_to_create, Params &pa
                 initMomentum( 1, ip, temp, vel );
             } else {
                 for( unsigned int idim=0; idim < 3; idim++ ) {
-                    particles->momentum( idim, ip ) = momentum[idim][ippy] ;
+                    particles->momentum( idim, ip ) = momentum[idim][ippy]/this->mass ;
                 }
             }
             

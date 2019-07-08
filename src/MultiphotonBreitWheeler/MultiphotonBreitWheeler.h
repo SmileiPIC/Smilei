@@ -107,8 +107,9 @@ public:
     //! \param ithread     Thread index
     void decayed_photon_cleaning(
         Particles &particles,
+        SmileiMPI *smpi,
         int ibin, int nbin,
-        int *bmin, int *bmax );
+        int *bmin, int *bmax, int ithread );
         
     //! Return the pair converted energy
     double inline getPairEnergy( void )

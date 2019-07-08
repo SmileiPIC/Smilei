@@ -12,8 +12,8 @@
 
 #ifdef _VECTO
 #include "SpeciesV.h"
-#include "SpeciesVAdaptive.h"
 #include "SpeciesVAdaptiveMixedSort.h"
+#include "SpeciesVAdaptive.h"
 #endif
 
 class PatchesFactory

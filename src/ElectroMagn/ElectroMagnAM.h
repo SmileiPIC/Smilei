@@ -3,6 +3,7 @@
 
 #include "ElectroMagn.h"
 #include "Field.h"
+#include "cField.h"
 #include "Field2D.h"
 #include "cField2D.h"
 
@@ -42,19 +43,29 @@ public:
     void restartRhoJs() override;
     
     void initPoisson( Patch *patch ) override;
-    double compute_r() override;
+    double compute_r();
     void compute_Ap( Patch *patch ) override;
     void compute_Ap_relativistic_Poisson( Patch *patch, double gamma_mean ) override {;}
+    void compute_Ap_relativistic_Poisson_AM( Patch *patch, double gamma_mean, unsigned int imode );
     //Access to Ap
-    double compute_pAp() override;
-    void update_pand_r( double r_dot_r, double p_dot_Ap ) override;
-    void update_p( double rnew_dot_rnew, double r_dot_r ) override;
+    double compute_pAp() override {return 0.;};
+    std::complex<double> compute_pAp_AM();
+    void update_pand_r( double r_dot_r, double p_dot_Ap ) override {;};
+    void update_p( double rnew_dot_rnew, double r_dot_r );
+    void update_pand_r_AM( double r_dot_r, std::complex<double> p_dot_Ap );
     void initE( Patch *patch ) override;
+    void delete_phi_r_p_Ap( Patch *patch );
+    void delete_relativistic_fields( Patch *patch );
     void initE_relativistic_Poisson( Patch *patch, double gamma_mean ) override {;}
+    void initE_relativistic_Poisson_AM( Patch *patch, double gamma_mean, unsigned int imode );
     void initB_relativistic_Poisson( Patch *patch, double gamma_mean ) override {;}
+    void initB_relativistic_Poisson_AM( Patch *patch, double gamma_mean );
     void center_fields_from_relativistic_Poisson( Patch *patch ) override {;}
-    void initRelativisticPoissonFields( Patch *patch ) override {;}
+    void center_fields_from_relativistic_Poisson_AM( Patch *patch );
+    void initRelativisticPoissonFields( Patch *patch ) override;
+    void initPoisson_init_phi_r_p_Ap( Patch *patch, unsigned int imode );
     void sum_rel_fields_to_em_fields( Patch *patch ) override {;}
+    void sum_rel_fields_to_em_fields_AM( Patch *patch, Params &params, unsigned int imode );
     void centeringE( std::vector<double> E_Add ) override;
     void centeringErel( std::vector<double> E_Add ) override {;}
     
@@ -185,7 +196,7 @@ public:
     {
         double norm2( 0 );
         for( unsigned int imode = 0 ; imode<nmodes ; imode++ ) {
-            rho_AM_[imode]->norm2( istart, bufsize );
+            norm2 += rho_AM_[imode]->norm2( istart, bufsize );
         }
         return norm2;
     }

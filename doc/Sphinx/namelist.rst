@@ -326,6 +326,13 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   The number of azimuthal modes used for the Fourier decomposition in ``"AMcylindrical"`` geometry.
 
+.. py:data:: number_of_AM_relativistic_field_initialization
+
+  :default: 1
+
+  The number of azimuthal modes used for the relativistic field initialization in ``"AMcylindrical"`` geometry.
+  Note that this number must be lower or equal to the number of modes of the simulation. 
+
 ----
 
 Load Balancing
@@ -594,7 +601,7 @@ Each species has to be defined in a ``Species`` block::
      of both species are identical in each cell.
    * A *numpy* array defining all the positions of the species' particles.
      In this case you must also provide the weight of each particle (see :ref:`Weights`).
-     The array shape must be `(Ndim+1, Npart)` where `Ndim` is the simulation dimension (of the particles),
+     The array shape must be `(Ndim+1, Npart)` where `Ndim` is the number of particle dimensions (of the particles),
      and `Npart` is the total number of particles. Positions components `x`, `y`, `z` are
      given along the first `Ndim` columns and the weights are given in the last column of the array.
      This initialization is incompatible with :py:data:`number_density`, :py:data:`charge_density`
@@ -610,8 +617,7 @@ Each species has to be defined in a ``Species`` block::
   * ``"cold"`` for zero temperature
   * A *numpy* array defining all the momenta of the species' particles (requires that
     :py:data:`position_initialization` also be an array with the same number of particles).
-    The array shape must be `(Ndim, Npart)` where `Ndim` is the simulation dimension,
-    and `Npart` is the total number of particles. Momentum components `px`, `py`, `pz`
+    The array shape must be `(3, Npart)` where `Npart` is the total number of particles. Momentum components `px`, `py`, `pz`
     are given in successive columns.This initialization is incompatible with
     :py:data:`temperature` and :py:data:`mean_velocity`.
 
@@ -707,8 +713,10 @@ Each species has to be defined in a ``Species`` block::
 
   :default: 0.
 
-  The time during which the particle positions are not updated, in units of :math:`T_r`.
-
+  The time during which the particles are "frozen", in units of :math:`T_r`.
+  Frozen particles do not move and therefore do not deposit any current either.
+  They are computationally much cheaper than non-frozen particles and oblivious to any EM-fields
+  in the simulation.
 
 .. py:data:: ionization_model
 
@@ -876,8 +884,8 @@ Lasers
 ^^^^^^
 
 A laser consists in applying oscillating boundary conditions for the magnetic
-field on one of the box sides. The only boundary conditions that support lasers
-are ``"silver-muller"`` (see :py:data:`EM_boundary_conditions`).
+field on one of the box sides. The only boundary condition that supports lasers
+is ``"silver-muller"`` (see :py:data:`EM_boundary_conditions`).
 There are several syntaxes to introduce a laser in :program:`Smilei`:
 
 .. rubric:: 1. Defining a generic wave
@@ -1090,7 +1098,30 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
      Time envelope of the field (not intensity).
 
 
-.. rubric:: 5. Defining a 3D gaussian wave
+.. rubric:: 5. Defining a gaussian wave with Azimuthal Fourier decomposition
+
+..
+
+  For simulations with ``"AMcylindrical"`` geometry, you may use the simplified laser creator::
+
+    LaserGaussianAM(
+        box_side         = "xmin",
+        a0               = 1.,
+        omega            = 1.,
+        focus            = [50., 40., 40.],
+        waist            = 3.,
+        incidence_angle  = [0., 0.1],
+        polarization_phi = 0.,
+        ellipticity      = 0.,
+        time_envelope    = tconstant()
+    )
+
+  This is almost the same as ``LaserGaussian2D``, with the ``focus`` parameter having
+  now 3 elements (focus position in 3D), and the ``incidence_angle`` being a list of
+  two angles, corresponding to rotations around `y` and `z`, respectively.
+
+
+.. rubric:: 6. Defining a 3D gaussian wave
 
 ..
 
@@ -1112,7 +1143,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   now 3 elements (focus position in 3D), and the ``incidence_angle`` being a list of
   two angles, corresponding to rotations around `y` and `z`, respectively.
 
-.. rubric:: 5. Defining a generic wave at some distance from the boundary
+.. rubric:: 7. Defining a generic wave at some distance from the boundary
 
 
 
@@ -1621,9 +1652,15 @@ Collisions
 
   :default: False
 
-  If ``True``, :ref:`collisional ionization <CollIonization>` will occur. One of the
-  species groups must be all electrons (:py:data:`mass` = 1), and the other one all ions of the
-  same :py:data:`atomic_number`.
+  :ref:`Collisional ionization <CollIonization>` is set when this parameter is not ``False``.
+  It can either be set to the name of a pre-existing electron species (where the ionized
+  electrons are created), or to ``True`` (the first electron species in :py:data:`species1`
+  or :py:data:`species2` is then chosen for ionized electrons).
+  
+  One of the species groups must be all electrons (:py:data:`mass` = 1), and the other
+  one all ions of the same :py:data:`atomic_number`.
+  
+  
 
 
 
