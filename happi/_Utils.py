@@ -478,11 +478,12 @@ def multiPlot(*Diags, **kwargs):
 			Diag.options.plot.update({ "color":c[i%len(c)] })
 		Diag._prepare()
 		l = Diag.limits()
-		if Diag.options.xmin is None: xmin = min(xmin,l[0][0])
-		if Diag.options.xmax is None: xmax = max(xmax,l[0][1])
-		if len(l) > 1:
-			if Diag.options.ymin is None: ymin = min(ymin,l[1][0])
-			if Diag.options.ymax is None: ymax = max(ymax,l[1][1])
+		if len(l) > 0:
+			if Diag.options.xmin is None: xmin = min(xmin,l[0][0])
+			if Diag.options.xmax is None: xmax = max(xmax,l[0][1])
+			if len(l) > 1:
+				if Diag.options.ymin is None: ymin = min(ymin,l[1][0])
+				if Diag.options.ymax is None: ymax = max(ymax,l[1][1])
 	# Find min max
 	if option_xmin: xmin = min([xmin]+option_xmin)
 	if option_xmax: xmax = max([xmax]+option_xmax)

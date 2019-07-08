@@ -882,7 +882,9 @@ public:
                     }
                     retSpecies[ispec1]->electron_species_index = ispec2;
                     retSpecies[ispec1]->electron_species = retSpecies[ispec2];
-                    retSpecies[ispec1]->Ionize->new_electrons.tracked = retSpecies[ispec1]->electron_species->particles->tracked;
+                    retSpecies[ispec1]->Ionize->new_electrons.tracked            = retSpecies[ispec1]->electron_species->particles->tracked;
+                    retSpecies[ispec1]->Ionize->new_electrons.isQuantumParameter = retSpecies[ispec1]->electron_species->particles->isQuantumParameter;
+                    retSpecies[ispec1]->Ionize->new_electrons.isMonteCarlo       = retSpecies[ispec1]->electron_species->particles->isMonteCarlo;
                     retSpecies[ispec1]->Ionize->new_electrons.initialize( 0, params.nDim_particle );
                     if( ( !retSpecies[ispec1]->getNbrOfParticles() ) && ( !retSpecies[ispec2]->getNbrOfParticles() ) ) {
                         if( retSpecies[ispec1]->atomic_number!=0 ) {
@@ -995,6 +997,8 @@ public:
                 retSpecies[i]->electron_species_index = vecSpecies[i]->electron_species_index;
                 retSpecies[i]->electron_species = retSpecies[retSpecies[i]->electron_species_index];
                 retSpecies[i]->Ionize->new_electrons.tracked = retSpecies[i]->electron_species->particles->tracked;
+                retSpecies[i]->Ionize->new_electrons.isQuantumParameter = retSpecies[i]->electron_species->particles->isQuantumParameter;
+                retSpecies[i]->Ionize->new_electrons.isMonteCarlo = retSpecies[i]->electron_species->particles->isMonteCarlo;
                 retSpecies[i]->Ionize->new_electrons.initialize( 0, params.nDim_particle );
             }
         }
