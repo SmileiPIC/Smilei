@@ -92,16 +92,10 @@ void Domain::build( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, Op
         //    diag_->run( smpi, vecPatch_, 0, simWindow );
     
     */
-    
-    //if( params.is_pxr ) {
-    //    vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, vecPatch_( 0 )->EMfields );
-    //    //if ( ( params.geometry == "AMcylindrical" ) && ( params.apply_divergence_cleaning ) )
-    //    //    vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->divergence_cleaning( vecPatch_( 0 )->EMfields );
-    //
-    //}
+
 }
 
-void Domain::build_full( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, OpenPMDparams &openPMD )
+void Domain::build_global( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, OpenPMDparams &openPMD )
 {
     int rk(0);
     MPI_Comm_rank( MPI_COMM_WORLD, &rk );
@@ -127,12 +121,14 @@ void Domain::build_full( Params &params, SmileiMPI *smpi, VectorPatch &vecPatche
     fake_patch = PatchesFactory::clone(vecPatches(0), params, smpi, vecPatches.domain_decomposition_, 0, 0, false);
     if (params.is_spectral)
         patch_->EMfields->saveMagneticFields( true );
-    //if( params.is_pxr ) {
-    //    vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, vecPatch_( 0 )->EMfields, true );
-    //    if ( ( params.geometry == "AMcylindrical" ) && ( params.apply_divergence_cleaning ) )
-    //        vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->divergence_cleaning( vecPatch_( 0 )->EMfields );
-    //
-    //}
+
+}
+
+void Domain::coupling( Params &params, bool global_domain )
+{
+    vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, vecPatch_( 0 )->EMfields, global_domain );
+    if ( ( params.geometry == "AMcylindrical" ) && ( global_domain ) )
+        vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->divergence_cleaning( vecPatch_( 0 )->EMfields );
 
 }
 
