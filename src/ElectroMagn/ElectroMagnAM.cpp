@@ -312,9 +312,11 @@ ElectroMagnAM::~ElectroMagnAM()
         delete Bl_[imode];
         delete Br_[imode];
         delete Bt_[imode];
-        delete Bl_m[imode];
-        delete Br_m[imode];
-        delete Bt_m[imode];
+        if (!is_pxr) {
+            delete Bl_m[imode];
+            delete Br_m[imode];
+            delete Bt_m[imode];
+        }
         
         delete Jl_[imode];
         delete Jr_[imode];
