@@ -26,16 +26,22 @@ Domain::Domain( Params &params ) :
 {
 }
 
-void Domain::build( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, OpenPMDparams &openPMD )
+void Domain::build( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, OpenPMDparams &openPMD, bool global_domain )
 {
     // New_DD
     int rk(0);
     MPI_Comm_rank( MPI_COMM_WORLD, &rk );
-    vecPatch_.refHindex_ = rk; // OK with assertion neighbor_[i][j] = MPI_neighbor_[i][j];
+    vecPatch_.patches_.clear();
+    vecPatch_.refHindex_ = rk;
 
+    if (global_domain) 
+        decomposition_ = NULL;
+    else
+        decomposition_ = DomainDecompositionFactory::createGlobal( params );
 
-    decomposition_ = DomainDecompositionFactory::createGlobal( params );
-    //patch_ = PatchesFactory::create( params, smpi, decomposition_, vecPatches.refHindex_ / vecPatches.size() );
+    if ( (global_domain) && (rk) )
+        return;
+
     patch_ = PatchesFactory::create( params, smpi, decomposition_, rk );
     patch_->set( params, decomposition_, vecPatches );
     vecPatch_.patches_.push_back( patch_ );
@@ -95,34 +101,6 @@ void Domain::build( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, Op
 
 }
 
-void Domain::build_global( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, OpenPMDparams &openPMD )
-{
-    int rk(0);
-    MPI_Comm_rank( MPI_COMM_WORLD, &rk );
-    decomposition_ = NULL;
-    vecPatch_.patches_.clear();
-    vecPatch_.refHindex_ = rk;
-
-    if (rk)
-        return;
-
-    // No decomposition, everything on the master
-    decomposition_ = NULL;
-    patch_ = PatchesFactory::create( params, smpi, decomposition_, rk );
-    patch_->set( params, decomposition_, vecPatches );
-    vecPatch_.patches_.push_back( patch_ );
-    
-    vecPatch_.patches_[0]->finalizeMPIenvironment( params );
-    vecPatch_.nrequests = vecPatches( 0 )->requests_.size();
-    vecPatch_.nAntennas = vecPatch_( 0 )->EMfields->antennas.size();
-    vecPatch_.initExternals( params );
-    //vecPatch_.applyExternalFields();
-    
-    fake_patch = PatchesFactory::clone(vecPatches(0), params, smpi, vecPatches.domain_decomposition_, 0, 0, false);
-    if (params.is_spectral)
-        patch_->EMfields->saveMagneticFields( true );
-
-}
 
 void Domain::coupling( Params &params, bool global_domain )
 {

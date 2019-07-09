@@ -269,7 +269,7 @@ int main( int argc, char *argv[] )
     // divergence cleaning
     if ( params.apply_divergence_cleaning ) {
         Domain domain_global( params );
-        domain_global.build_global( params, &smpi, vecPatches, openPMD );
+        domain_global.build( params, &smpi, vecPatches, openPMD, true );
         domain_global.identify_additional_patches( &smpi, vecPatches, params, simWindow );
         domain_global.identify_missing_patches( &smpi, vecPatches, params );
         for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
@@ -285,7 +285,7 @@ int main( int argc, char *argv[] )
     Domain domain( params );
     //#ifdef _PICSAR
     if (params.uncoupled_grids) {
-        domain.build( params, &smpi, vecPatches, openPMD );
+        domain.build( params, &smpi, vecPatches, openPMD, false );
         domain.identify_additional_patches( &smpi, vecPatches, params, simWindow );
         domain.identify_missing_patches( &smpi, vecPatches, params );
         for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
