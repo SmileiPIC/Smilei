@@ -1,7 +1,7 @@
 Releases
 --------
 
-This page lists major releases, but it is recommended to
+This page lists the major changes, but it is recommended to
 get the latest version of Smilei on `GitHub <https://github.com/SmileiPIC/Smilei>`_.
 
 ----
@@ -10,7 +10,8 @@ Upcoming changes
 ^^^^^^^^^^^^^^^^
 
 * Interface with the PICSAR library (currently experimental)
-* Cylindrical geometry with Fourier decomposition in azimuthal direction is almost out of beta phase
+* Cylindrical geometry with azimuthal Fourier decomposition (beta version)
+* Particle merging (beta version)
 
 * Different convention for circular polarization amplitude
 * Bugfix: Various crashes with vectorization
@@ -18,20 +19,20 @@ Upcoming changes
 * Bugfix: laser :py:data:`a0` normalization to :py:data:`omega`
 * Bugfix: Compatibility between various ionization and QED models
 * Bugfix: Frozen particles are now properly ionized
-* Bugfix: Species position initialization over another species now works properly when a moving window is used
+* Bugfix: position initialization over another species with moving window
+* Bugfix: tracked particles output was missing the mass factor for momenta
+
 
 ----
 
 .. _latestVersion:
 
-
-Latest Release 
+Latest version
 ^^^^^^^^^^^^^^^^^^^^^
 
 The latest version tarball can be donwloaded here:
 
 **Download**: `Smilei latest <_downloads/Smilei.tar.gz>`_
-
 
 
 ----

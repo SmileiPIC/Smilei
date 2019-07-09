@@ -430,6 +430,10 @@ void DiagnosticTrack::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, 
             if( write_momentum[idim] ) {
                 #pragma omp barrier
                 fill_buffer( vecPatches, nDim_particle+idim, data_double );
+                // Multiply by the mass to obtain an actual momentum
+                for( unsigned int ip=0; ip<nParticles_local; ip++ ) {
+                    data_double[ip] *= vecPatches( 0 )->vecSpecies[speciesId_]->mass;
+                }
                 #pragma omp master
                 write_component( momentum_group, xyz.substr( idim, 1 ).c_str(), data_double[0], H5T_NATIVE_DOUBLE, file_space, mem_space, plist, SMILEI_UNIT_MOMENTUM, nParticles_global );
             }
