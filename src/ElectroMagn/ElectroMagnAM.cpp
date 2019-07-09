@@ -1018,9 +1018,12 @@ void ElectroMagnAM::saveMagneticFields( bool is_spectral )
 {
     if( is_spectral ) {
         for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
-            Bl_m[imode] = Bl_[imode];
-            Br_m[imode] = Br_[imode];
-            Bt_m[imode] = Bt_[imode];
+            Bl_m[imode]->deallocateDims();
+            Bl_m[imode]->cdata_ = Bl_[imode]->cdata_;
+            Br_m[imode]->deallocateDims();
+            Br_m[imode]->cdata_ = Br_[imode]->cdata_;
+            Bt_m[imode]->deallocateDims();
+            Bt_m[imode]->cdata_ = Bt_[imode]->cdata_;
         }
     } else {
         for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {

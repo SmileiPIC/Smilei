@@ -699,9 +699,11 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
             // Computes B at time n using B and B_m.
             if( !params.is_spectral ) {
                 ( *this )( ipatch )->EMfields->centerMagneticFields();
-            } else {
-                ( *this )( ipatch )->EMfields->saveMagneticFields( params.is_spectral );
             }
+            //Done at domain initializtion
+            //else {
+            //    ( *this )( ipatch )->EMfields->saveMagneticFields( params.is_spectral );
+            //}
         }
         if( params.is_spectral ) {
             save_old_rho( params );
@@ -780,9 +782,11 @@ void VectorPatch::finalize_sync_and_bc_fields( Params &params, SmileiMPI *smpi, 
             // Computes B at time n using B and B_m.
             if( !params.is_spectral ) {
                 ( *this )( ipatch )->EMfields->centerMagneticFields();
-            } else {
-                ( *this )( ipatch )->EMfields->saveMagneticFields( params.is_spectral );
             }
+            //Done at domain initializtion
+            //else {
+            //    ( *this )( ipatch )->EMfields->saveMagneticFields( params.is_spectral );
+            //}
         }
     }
     //#endif

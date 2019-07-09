@@ -51,6 +51,8 @@ void Domain::build( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, Op
     //vecPatch_.applyExternalFields();
     
     fake_patch = PatchesFactory::clone(vecPatches(0), params, smpi, vecPatches.domain_decomposition_, 0, 0, false);
+    if (params.is_spectral)
+        patch_->EMfields->saveMagneticFields( true );
         
     /*    if ( params.nDim_field == 1 )
             diag_ = new DiagnosticFields1D( params, smpi, vecPatch_, 0, openPMD );
@@ -123,6 +125,8 @@ void Domain::build_full( Params &params, SmileiMPI *smpi, VectorPatch &vecPatche
     //vecPatch_.applyExternalFields();
     
     fake_patch = PatchesFactory::clone(vecPatches(0), params, smpi, vecPatches.domain_decomposition_, 0, 0, false);
+    if (params.is_spectral)
+        patch_->EMfields->saveMagneticFields( true );
     //if( params.is_pxr ) {
     //    vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, vecPatch_( 0 )->EMfields, true );
     //    if ( ( params.geometry == "AMcylindrical" ) && ( params.apply_divergence_cleaning ) )
