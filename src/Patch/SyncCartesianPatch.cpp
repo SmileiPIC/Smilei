@@ -11,7 +11,7 @@
 
 using namespace std;
 
-void SyncCartesianPatch::patchedToCartesian( VectorPatch &vecPatches, Domain &domain, Params &params, SmileiMPI *smpi, Timers &timers, int itime )
+void SyncCartesianPatch::sendCurrentsToDomain( VectorPatch &vecPatches, Domain &domain, Params &params, SmileiMPI *smpi, Timers &timers, int itime )
 {
     timers.grids.restart();
 
@@ -140,7 +140,7 @@ void SyncCartesianPatch::recvPatchedToCartesian( ElectroMagn* globalfields, unsi
 }
 
 
-void SyncCartesianPatch::cartesianToPatches( Domain &domain, VectorPatch &vecPatches, Params &params, SmileiMPI *smpi, Timers &timers, int itime )
+void SyncCartesianPatch::recvFieldsFromDomain( Domain &domain, VectorPatch &vecPatches, Params &params, SmileiMPI *smpi, Timers &timers, int itime )
 {
     timers.grids.restart();
 
@@ -280,7 +280,7 @@ void SyncCartesianPatch::sendCartesianToPatches( ElectroMagn* globalfields, unsi
 // ---------------------------------
 
 
-void SyncCartesianPatch::patchedToCartesian_MW( VectorPatch& vecPatches, Domain& domain, Params &params, SmileiMPI* smpi )
+void SyncCartesianPatch::sendFieldsToDomain( VectorPatch& vecPatches, Domain& domain, Params &params, SmileiMPI* smpi )
 {
 
     // Loop / local_patches_ -> OK

@@ -11,7 +11,7 @@
 
 using namespace std;
 
-void SyncCartesianPatchAM::patchedToCartesian( VectorPatch &vecPatches, Domain &domain, Params &params, SmileiMPI *smpi, Timers &timers, int itime, unsigned int imode )
+void SyncCartesianPatchAM::sendCurrentsToDomain( VectorPatch &vecPatches, Domain &domain, Params &params, SmileiMPI *smpi, Timers &timers, int itime, unsigned int imode )
 {
     timers.grids.restart();
 
@@ -147,7 +147,7 @@ void SyncCartesianPatchAM::recvPatchedToCartesian( ElectroMagnAM* globalfields, 
 }
 
 
-void SyncCartesianPatchAM::cartesianToPatches( Domain &domain, VectorPatch &vecPatches, Params &params, SmileiMPI *smpi, Timers &timers, int itime, unsigned int imode )
+void SyncCartesianPatchAM::recvFieldsFromDomain( Domain &domain, VectorPatch &vecPatches, Params &params, SmileiMPI *smpi, Timers &timers, int itime, unsigned int imode )
 {
     timers.grids.restart();
 
@@ -314,7 +314,7 @@ void SyncCartesianPatchAM::sendCartesianToPatches( ElectroMagnAM* globalfields, 
 // ---------------------------------
 
 
-void SyncCartesianPatchAM::patchedToCartesian_MW( VectorPatch& vecPatches, Domain& domain, Params &params, SmileiMPI* smpi, unsigned int imode )
+void SyncCartesianPatchAM::sendFieldsToDomain( VectorPatch& vecPatches, Domain& domain, Params &params, SmileiMPI* smpi, unsigned int imode )
 {
 
     // Loop / local_patches_ -> OK
