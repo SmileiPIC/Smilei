@@ -152,7 +152,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
-    if( time_dual>time_frozen ) { // moving particle
+    if( time_dual>time_frozen || Ionize ) { // moving particle
     
         smpi->dynamics_resize( ithread, nDim_field, last_index.back(), params.geometry=="AMcylindrical" );
         
@@ -197,6 +197,8 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
 #endif
             }
             
+            if ( time_dual <= time_frozen ) continue;
+
             // Radiation losses
             if( Radiate ) {
 #ifdef  __DETAILED_TIMERS
@@ -365,26 +367,21 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
             for( unsigned int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++ ) {
                 nrj_bc_lost += nrj_lost_per_thd[tid];
             }
-            
-        }
-        
-    } else { // immobile particle (at the moment only project density)
-        if( diag_flag &&( !particles->is_test ) ) {
-            double *b_rho=nullptr;
-            
-            for( unsigned int scell = 0 ; scell < first_index.size() ; scell ++ ) { //Loop for projection on buffer_proj
-            
-                b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
-                
-                for( iPart=first_index[scell] ; ( int )iPart<last_index[scell]; iPart++ ) {
-                    Proj->basic( b_rho, ( *particles ), iPart, 0 );
-                } //End loop on particles
-            }//End loop on bins
-            
-        }
-    }//END if time vs. time_frozen
-    
-}//END dynamic
+        } // End loop on packs
+    } //End if moving or ionized particles  
+
+    if(time_dual <= time_frozen && diag_flag &&( !particles->is_test ) ) { //immobile particle (at the moment only project density)
+
+        double *b_rho=nullptr;
+        for( unsigned int scell = 0 ; scell < first_index.size() ; scell ++ ) { //Loop for projection on buffer_proj
+            b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
+            for( iPart=first_index[scell] ; ( int )iPart<last_index[scell]; iPart++ ) {
+                Proj->basic( b_rho, ( *particles ), iPart, 0 );
+            } //End loop on particles
+        }//End loop on scells
+    } // End projection for frozen particles
+
+}//END dynamics
 
 
 // ---------------------------------------------------------------------------------------------------------------------
