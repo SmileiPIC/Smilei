@@ -7,7 +7,7 @@ tracked_x = S.TrackParticles.ion(axes=["x"], timesteps=0).getData()["x"][0]
 Validate("Regularly spaced particles", tracked_x, 1e-7)
 
 tracked_px = S.TrackParticles.ion(axes=["px"], timesteps=5000).getData()["px"][0]
-Validate("Tracked particles px", tracked_px, 1.)
+Validate("Tracked particles px", tracked_px, 1e-5)
 
 tracked_Ex = S.TrackParticles("ion",axes=["Ex"], timesteps=5000).getData()["Ex"][0]
 Validate("Tracked particles Ex", tracked_Ex, 1e-7)
