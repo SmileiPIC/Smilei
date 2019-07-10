@@ -1,5 +1,5 @@
 
-#include "SyncCartesianPatch.h"
+#include "DoubleGrids.h"
 
 #include <vector>
 
@@ -11,114 +11,97 @@
 
 using namespace std;
 
-void SyncCartesianPatch::sendCurrentsToDomain( VectorPatch &vecPatches, Domain &domain, Params &params, SmileiMPI *smpi, Timers &timers, int itime )
+// ------------------------------------------------------------
+// Gather Currents on Domain to apply Maxwell solvers on Domain
+// ------------------------------------------------------------
+void DoubleGrids::syncCurrentsOnDomain( VectorPatch &vecPatches, Domain &domain, Params &params, SmileiMPI *smpi, Timers &timers, int itime )
 {
     timers.grids.restart();
 
-    // Loop / local_patches_ -> OK
-    //     put()
-
-    // Loop / additional_patches_ (identify where goes the additionnal patches regarding patch_count)
-    //     patch().send()
+    // Loop / additional_patches_ ( = patches included in the local vecPatches but not in local Domain, the Domain of others MPI will need this data )
+    //        additional_patches_ranks stores the MPI rank of the Domain which owns additional_patches_
     for ( unsigned int i=0 ; i<domain.additional_patches_.size() ; i++ ) {
-        //cout << smpi->getRank() << " will send " << domain.additional_patches_[i] << " to " << domain.additional_patches_ranks[i] << endl;
+
         unsigned int ipatch = domain.additional_patches_[i]-vecPatches.refHindex_;
+        DoubleGrids::currentsOnDomainSend( vecPatches(ipatch)->EMfields,
+                                           domain.additional_patches_[i], domain.additional_patches_ranks[i], smpi, vecPatches(ipatch), params );
 
-        SyncCartesianPatch::sendPatchedToCartesian( vecPatches(ipatch)->EMfields, domain.additional_patches_[i], domain.additional_patches_ranks[i], smpi, vecPatches(ipatch), params );
-
-        // who = smpi->hrank_THEORIQUE( domain.additional_patches_[i] );
-        //     MANAGED WITH --> domain.additional_patches_ranks !!!
-        // Send( vecPatches(ipatch)->EMfields->Jx_, who )
     }
 
 
-    // Loop / missing_patches_ (identify where are the missing patches)
-    //     domain.recv( domain.missing_patches_[i] from smpi->hrank( domain.missing_patches_[i] ) )
-    //     put to domain
+    // Loop / missing_patches_ ( = patches whose data is needed by the local Domain but not own by the local vecPatches )
+    //        missing_patches_ranks stores the MPI rank of the vecPacthes which own missing_patches_
     for ( unsigned int i=0 ; i<domain.missing_patches_.size() ; i++ ) {
+
         unsigned int ipatch = domain.missing_patches_[i]-vecPatches.refHindex_;
-        //cout << smpi->getRank() << " will recv " << domain.missing_patches_[i] << " from " << domain.missing_patches_ranks[i] << endl;
-
-        SyncCartesianPatch::recvPatchedToCartesian( domain.patch_->EMfields, domain.missing_patches_[i], domain.missing_patches_ranks[i], vecPatches, params, smpi, domain );
+        DoubleGrids::currentsOnDomainRecv( domain.patch_->EMfields,
+                                           domain.missing_patches_[i], domain.missing_patches_ranks[i], vecPatches, params, smpi, domain );
 
     }
 
 
+    // Loop / additional_patches_ to finalize send ( currentsOnDomainSend relies on MPI_Isend )
     for ( unsigned int i=0 ; i<domain.additional_patches_.size() ; i++ ) {
-        //cout << smpi->getRank() << " will send " << domain.additional_patches_[i] << endl;
-        //cout << smpi->getRank() << " finaliser send " << domain.additional_patches_[i] << " to " << domain.additional_patches_ranks[i] << endl;
+
         unsigned int ipatch = domain.additional_patches_[i]-vecPatches.refHindex_;
+        DoubleGrids::currentsOnDomainSendFinalize( vecPatches(ipatch)->EMfields,
+                                                   domain.additional_patches_[i], domain.additional_patches_ranks[i], smpi, vecPatches(ipatch), params );
 
-        SyncCartesianPatch::finalize_sendPatchedToCartesian( vecPatches(ipatch)->EMfields, domain.additional_patches_[i], domain.additional_patches_ranks[i], smpi, vecPatches(ipatch), params );
-
-        // who = smpi->hrank_THEORIQUE( domain.additional_patches_[i] );
-        //     MANAGED WITH --> domain.additional_patches_ranks !!!
-        // Send( vecPatches(ipatch)->EMfields->Jx_, who )
     }
 
-    //cout << smpi->getRank() << " - "; 
-    //for ( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ ) {
+    // Loop / local_patches_ ( patches own by the local vePatches whose data are used by the local Domain )
     for ( unsigned int i=0 ; i<domain.local_patches_.size() ; i++ ) {
-        unsigned int ipatch = domain.local_patches_[i]-vecPatches.refHindex_;
 
+        unsigned int ipatch = domain.local_patches_[i]-vecPatches.refHindex_;
         vecPatches(ipatch)->EMfields->Jx_->put( domain.patch_->EMfields->Jx_, params, smpi, vecPatches(ipatch), domain.patch_ );
         vecPatches(ipatch)->EMfields->Jy_->put( domain.patch_->EMfields->Jy_, params, smpi, vecPatches(ipatch), domain.patch_ );
         vecPatches(ipatch)->EMfields->Jz_->put( domain.patch_->EMfields->Jz_, params, smpi, vecPatches(ipatch), domain.patch_ );
+
 	if(params.is_spectral){
-          vecPatches(ipatch)->EMfields->rho_->put( domain.patch_->EMfields->rho_,       params, smpi, vecPatches(ipatch), domain.patch_ );
-          // useless rho_old is save directly on vecPatches concerned by the Maxwell soler see VectorPatches::solveMaxwell()
-          //vecPatches(ipatch)->EMfields->rhoold_->put( domain.patch_->EMfields->rhoold_, params, smpi, vecPatches(ipatch), domain.patch_ );
+            vecPatches(ipatch)->EMfields->rho_->put( domain.patch_->EMfields->rho_, params, smpi, vecPatches(ipatch), domain.patch_ );
+            // rho_old is save directly on the Domain after the resolution of the Maxwell solver
 	}
 
     }
-    //cout << endl;
     timers.grids.update();
 }
 
-void SyncCartesianPatch::sendPatchedToCartesian( ElectroMagn* localfields, unsigned int hindex, int send_to_global_patch_rank, SmileiMPI* smpi, Patch* patch, Params& params )
+void DoubleGrids::currentsOnDomainSend( ElectroMagn* localfields, unsigned int hindex, int send_to_global_patch_rank, SmileiMPI* smpi, Patch* patch, Params& params )
 {
-    //smpi->send( localfields->Jx_, hindex, send_to_global_patch_rank );
-    //    isend( EM->Bz_m, to, mpi_tag+tag, requests[tag]); tag++;
+    // isend( Fields, targeted_mpi_rank, tag, requests );
+    //               tag = *5 ? 5 communications are required per patch : 3 currents + rho + rho_old
     smpi->isend( localfields->Jx_, send_to_global_patch_rank, hindex*5  , patch->requests_[0] );
     smpi->isend( localfields->Jy_, send_to_global_patch_rank, hindex*5+1, patch->requests_[1] );
     smpi->isend( localfields->Jz_, send_to_global_patch_rank, hindex*5+2, patch->requests_[2] );
-    
 
     if(params.is_spectral) {
         smpi->isend( localfields->rho_,    send_to_global_patch_rank, hindex*5+3, patch->requests_[3] );
-        //smpi->isend( localfields->rhoold_, send_to_global_patch_rank, hindex*5+4, patch->requests_[4] );
     }
 
 }
 
-void SyncCartesianPatch::finalize_sendPatchedToCartesian( ElectroMagn* localfields, unsigned int hindex, int send_to_global_patch_rank, SmileiMPI* smpi, Patch* patch, Params& params )
+void DoubleGrids::currentsOnDomainSendFinalize( ElectroMagn* localfields, unsigned int hindex, int send_to_global_patch_rank, SmileiMPI* smpi, Patch* patch, Params& params )
 {
     MPI_Status status;
+    // Wait for currentsOnDomainSend (isend)
     MPI_Wait( &(patch->requests_[0]), &status );
     MPI_Wait( &(patch->requests_[1]), &status );
     MPI_Wait( &(patch->requests_[2]), &status );
+
     if(params.is_spectral) {
         MPI_Wait( &(patch->requests_[3]), &status );
-        //MPI_Wait( &(patch->requests_[4]), &status ); 
     }
 }
 
-void SyncCartesianPatch::recvPatchedToCartesian( ElectroMagn* globalfields, unsigned int hindex, int local_patch_rank, VectorPatch& vecPatches, Params &params, SmileiMPI* smpi, Domain& domain )
+void DoubleGrids::currentsOnDomainRecv( ElectroMagn* globalfields, unsigned int hindex, int local_patch_rank, VectorPatch& vecPatches, Params &params, SmileiMPI* smpi, Domain& domain )
 {
-    // Jx_
-    // define fake_patch
-    unsigned int n_moved = 0;
-    //Patch* fake_patch = PatchesFactory::clone(vecPatches(0), params, smpi, vecPatches.domain_decomposition_, hindex, n_moved, false);
-    //smpi->recv( fake_patch->Jx_, hindex, local_patch_rank );
-    //    recv(  EM->Bz_m, from, tag ); tag++;
-
-    //smpi->recv( fake_patch->EMfields->Jx_, local_patch_rank, hindex );
-
-    //  vecPatches(ipatch) -> need sender patch coordinates : vecPatches.getDomainCoordinates( hindex )
-    // Buffer will be resized for each component, fake local patch, which wil have Jxyz, and coordinates to update ?
+    // fake_patch consists in a piece of the local Domain to handle naturally patches communications
+    //            need to update its hindex and coordinates to put recv data at the good place in the local Domain (put)
     domain.fake_patch->hindex = hindex;
     domain.fake_patch->Pcoordinates = vecPatches.domain_decomposition_->getDomainCoordinates( hindex );
 
+    // recv( Fields, sender_mpi_rank, tag );
+    //       tag = *5 ? 5 communications are required per patch : 3 currents + rho + rho_old
     smpi->recv( domain.fake_patch->EMfields->Jx_, local_patch_rank, hindex*5 );
     domain.fake_patch->EMfields->Jx_->put( globalfields->Jx_, params, smpi, domain.fake_patch, domain.patch_ );
 
@@ -131,49 +114,50 @@ void SyncCartesianPatch::recvPatchedToCartesian( ElectroMagn* globalfields, unsi
     if(params.is_spectral) {
         smpi->recv( domain.fake_patch->EMfields->rho_, local_patch_rank, hindex*5+3 );
         domain.fake_patch->EMfields->rho_->put( globalfields->rho_, params, smpi, domain.fake_patch, domain.patch_ );
-        //smpi->recv( domain.fake_patch->EMfields->rhoold_, local_patch_rank, hindex*5+4 );
-        //domain.fake_patch->EMfields->rhoold_->put( globalfields->rhoold_, params, smpi, domain.fake_patch, domain.patch_ );
     }
-
-    //delete fake_patch;
 
 }
 
 
-void SyncCartesianPatch::recvFieldsFromDomain( Domain &domain, VectorPatch &vecPatches, Params &params, SmileiMPI *smpi, Timers &timers, int itime )
+// ---------------------------------------------------------------------------
+// Scatter Fields on Patches for particles interpolation or divergece cleaning
+// ---------------------------------------------------------------------------
+void DoubleGrids::syncFieldsOnPatches( Domain &domain, VectorPatch &vecPatches, Params &params, SmileiMPI *smpi, Timers &timers, int itime )
 {
     timers.grids.restart();
 
-    // Loop / additional_patches_ (regarding cartesian), get data from cartesian
+    // Loop / additional_patches_ ( within local vecPatches but not in local Domain )
+    //                            get data from Domain of others MPI
     for ( unsigned int i=0 ; i<domain.additional_patches_.size() ; i++ ) {
-        unsigned int ipatch = domain.additional_patches_[i]-vecPatches.refHindex_;
 
-        SyncCartesianPatch::recvCartesianToPatches( vecPatches(ipatch)->EMfields, domain.additional_patches_[i], domain.additional_patches_ranks[i], smpi,  vecPatches(ipatch) );
+        unsigned int ipatch = domain.additional_patches_[i]-vecPatches.refHindex_;
+        DoubleGrids::fieldsOnPatchesRecv( vecPatches(ipatch)->EMfields,
+                                          domain.additional_patches_[i], domain.additional_patches_ranks[i], smpi,  vecPatches(ipatch) );
 
     }
 
-
-    // Loop / missing_patches_ (regarding cartesian), send data which do not concern myself
-    //     patch().send()
+    // Loop / missing_patches_ ( within local Domain but not in local vecPatches,  )
+    //                         send data which do not concern local Domain
     for ( unsigned int i=0 ; i<domain.missing_patches_.size() ; i++ ) {
+
         unsigned int ipatch = domain.missing_patches_[i]-vecPatches.refHindex_;
-
-        SyncCartesianPatch::sendCartesianToPatches( domain.patch_->EMfields, domain.missing_patches_[i], domain.missing_patches_ranks[i], vecPatches, params, smpi, domain );
+        DoubleGrids::fieldsOnPatchesSend( domain.patch_->EMfields,
+                                          domain.missing_patches_[i], domain.missing_patches_ranks[i], vecPatches, params, smpi, domain );
 
     }
 
-
+    // Loop / additional_patches_ to finalize recv ( fieldsOnPatchesRecv relies on MPI_Irecv )
     for ( unsigned int i=0 ; i<domain.additional_patches_.size() ; i++ ) {
-        unsigned int ipatch = domain.additional_patches_[i]-vecPatches.refHindex_;
 
-        SyncCartesianPatch::finalize_recvCartesianToPatches( vecPatches(ipatch)->EMfields, domain.additional_patches_[i], domain.additional_patches_ranks[i], smpi, vecPatches(ipatch) );
+        unsigned int ipatch = domain.additional_patches_[i]-vecPatches.refHindex_;
+        DoubleGrids::fieldsOnPatchesRecvFinalize( vecPatches(ipatch)->EMfields,
+                                                  domain.additional_patches_[i], domain.additional_patches_ranks[i], smpi, vecPatches(ipatch) );
 
     }
 
-
-
-    //for ( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ ) {
+    // Loop / local_patches_ ( patches own by the local vePatches whose data are used by the local Domain )
     for ( unsigned int i=0 ; i<domain.local_patches_.size() ; i++ ) {
+
         unsigned int ipatch = domain.local_patches_[i]-vecPatches.refHindex_;
 
         vecPatches(ipatch)->EMfields->Ex_->get( domain.patch_->EMfields->Ex_, params, smpi, domain.patch_, vecPatches(ipatch) );
@@ -184,41 +168,31 @@ void SyncCartesianPatch::recvFieldsFromDomain( Domain &domain, VectorPatch &vecP
         vecPatches(ipatch)->EMfields->By_m->get( domain.patch_->EMfields->By_m, params, smpi, domain.patch_, vecPatches(ipatch) );
         vecPatches(ipatch)->EMfields->Bz_m->get( domain.patch_->EMfields->Bz_m, params, smpi, domain.patch_, vecPatches(ipatch) );
 
-//        vecPatches(ipatch)->EMfields->Bx_->get( domain.patch_->EMfields->Bx_, params, smpi, domain.patch_, vecPatches(ipatch) );
-//        vecPatches(ipatch)->EMfields->By_->get( domain.patch_->EMfields->By_, params, smpi, domain.patch_, vecPatches(ipatch) );
-//        vecPatches(ipatch)->EMfields->Bz_->get( domain.patch_->EMfields->Bz_, params, smpi, domain.patch_, vecPatches(ipatch) );
-
-//        vecPatches(ipatch)->EMfields->Jx_->get( domain.patch_->EMfields->Jx_, params, smpi, domain.patch_, vecPatches(ipatch) );
-//        vecPatches(ipatch)->EMfields->Jy_->get( domain.patch_->EMfields->Jy_, params, smpi, domain.patch_, vecPatches(ipatch) );
-//        vecPatches(ipatch)->EMfields->Jz_->get( domain.patch_->EMfields->Jz_, params, smpi, domain.patch_, vecPatches(ipatch) );
-//	if(params.is_spectral) {
-//          vecPatches(ipatch)->EMfields->rho_->get( domain.patch_->EMfields->rho_, params, smpi, domain.patch_, vecPatches(ipatch) );
-//          vecPatches(ipatch)->EMfields->rhoold_->get( domain.patch_->EMfields->rhoold_, params, smpi, domain.patch_,
-//	  vecPatches(ipatch) );
-//	}
-
     }
 
     timers.grids.update();
 }
 
 
-void SyncCartesianPatch::recvCartesianToPatches( ElectroMagn* localfields, unsigned int hindex, int recv_from_global_patch_rank, SmileiMPI* smpi, Patch* patch )
+void DoubleGrids::fieldsOnPatchesRecv( ElectroMagn* localfields, unsigned int hindex, int recv_from_global_patch_rank, SmileiMPI* smpi, Patch* patch )
 {
+    // irecv( Fields, sender_mpi_rank, tag, requests );
+    //        tag = *6 ? 6 communications could be are required per patch
+    //        clarify which usage need B, B_m or both
     smpi->irecv( localfields->Ex_, recv_from_global_patch_rank, hindex*6  , patch->requests_[0] );
     smpi->irecv( localfields->Ey_, recv_from_global_patch_rank, hindex*6+1, patch->requests_[1] );
     smpi->irecv( localfields->Ez_, recv_from_global_patch_rank, hindex*6+2, patch->requests_[2] );
    
-
     smpi->irecv( localfields->Bx_m, recv_from_global_patch_rank, hindex*6+3, patch->requests_[3] );
     smpi->irecv( localfields->By_m, recv_from_global_patch_rank, hindex*6+4, patch->requests_[4] );
     smpi->irecv( localfields->Bz_m, recv_from_global_patch_rank, hindex*6+5, patch->requests_[5] );
 
 }
 
-void SyncCartesianPatch::finalize_recvCartesianToPatches( ElectroMagn* localfields, unsigned int hindex, int recv_from_global_patch_rank, SmileiMPI* smpi, Patch* patch )
+void DoubleGrids::fieldsOnPatchesRecvFinalize( ElectroMagn* localfields, unsigned int hindex, int recv_from_global_patch_rank, SmileiMPI* smpi, Patch* patch )
 {
     MPI_Status status;
+    // Wait for fieldsOnPatchesRecv (irecv)
     MPI_Wait( &(patch->requests_[0]), &status );
     MPI_Wait( &(patch->requests_[1]), &status );
     MPI_Wait( &(patch->requests_[2]), &status );
@@ -227,24 +201,16 @@ void SyncCartesianPatch::finalize_recvCartesianToPatches( ElectroMagn* localfiel
     MPI_Wait( &(patch->requests_[5]), &status );
 }
 
-void SyncCartesianPatch::sendCartesianToPatches( ElectroMagn* globalfields, unsigned int hindex, int local_patch_rank, VectorPatch& vecPatches, Params &params, SmileiMPI* smpi, Domain& domain )
+void DoubleGrids::fieldsOnPatchesSend( ElectroMagn* globalfields, unsigned int hindex, int local_patch_rank, VectorPatch& vecPatches, Params &params, SmileiMPI* smpi, Domain& domain )
 {
-    // Jx_
-    // define fake_patch
-    unsigned int n_moved = 0;
-    //Patch* fake_patch = PatchesFactory::clone(vecPatches(0), params, smpi, vecPatches.domain_decomposition_, hindex, n_moved, false);
-    //smpi->recv( fake_patch->Jx_, hindex, local_patch_rank );
-    //    recv(  EM->Bz_m, from, tag ); tag++;
-
-    //smpi->recv( fake_patch->EMfields->Jx_, local_patch_rank, hindex );
-
-    //  vecPatches(ipatch) -> need sender patch coordinates : vecPatches.getDomainCoordinates( hindex )
-    // Buffer will be resized for each component, fake local patch, which wil have Jxyz, and coordinates to update ?
-
-
+    // fake_patch consists in a piece of the local Domain to handle naturally patches communications
+    //            need to update its hindex and coordinates to extract (get) appropriate data from the local Domain data before send it
     domain.fake_patch->hindex = hindex;
     domain.fake_patch->Pcoordinates = vecPatches.domain_decomposition_->getDomainCoordinates( hindex );
 
+    // send( Fields, targeted_mpi_rank, tag );
+    //       tag = *6 ? 6 communications could be required per patch
+    //       clarify which usage need B, B_m or both
     domain.fake_patch->EMfields->Ex_->get( globalfields->Ex_, params, smpi, domain.patch_, domain.fake_patch );
     smpi->send( domain.fake_patch->EMfields->Ex_, local_patch_rank, hindex*6 );
 
@@ -263,53 +229,45 @@ void SyncCartesianPatch::sendCartesianToPatches( ElectroMagn* globalfields, unsi
     domain.fake_patch->EMfields->Bz_m->get( globalfields->Bz_m, params, smpi, domain.patch_, domain.fake_patch );
     smpi->send( domain.fake_patch->EMfields->Bz_m, local_patch_rank, hindex*6+5 );
 
-
-    //if(params.is_spectral){
-    //    smpi->send( localfields->rho_, hindex, global_patch_rank, params, smpi );
-    //
-    //}
-
-    //delete fake_patch;
 }
 
 
-
-
-// ---------------------------------
-// --------------- MW --------------
-// ---------------------------------
-
-
-void SyncCartesianPatch::sendFieldsToDomain( VectorPatch& vecPatches, Domain& domain, Params &params, SmileiMPI* smpi )
+// -----------------------------------------------------------
+// Gather Fields on Domain to compute the divergence cleaning
+//                         could be used for the moving window
+// -----------------------------------------------------------
+void DoubleGrids::syncFieldsOnDomain( VectorPatch& vecPatches, Domain& domain, Params &params, SmileiMPI* smpi )
 {
-
-    // Loop / local_patches_ -> OK
-    //     put()
-
-    // Loop / additional_patches_ (identify where goes the additionnal patches regarding patch_count)
-    //     patch().send()
+    // Loop / additional_patches_ ( = patches included in the local vecPatches but not in local Domain, the Domain of others MPI will need this data )
+    //        additional_patches_ranks stores the MPI rank of the Domain which owns additional_patches_
     for ( unsigned int i=0 ; i<domain.additional_patches_.size() ; i++ ) {
+
         unsigned int ipatch = domain.additional_patches_[i]-vecPatches.refHindex_;
-        SyncCartesianPatch::sendPatchedToCartesian_MW( vecPatches(ipatch)->EMfields, domain.additional_patches_[i], domain.additional_patches_ranks[i], smpi, vecPatches(ipatch), params );
+        DoubleGrids::fieldsOnDomainSend( vecPatches(ipatch)->EMfields, domain.additional_patches_[i], domain.additional_patches_ranks[i], smpi, vecPatches(ipatch), params );
     }
 
-
-    // Loop / missing_patches_ (identify where are the missing patches)
-    //     domain.recv( domain.missing_patches_[i] from smpi->hrank( domain.missing_patches_[i] ) )
-    //     put to domain
+    // Loop / missing_patches_ ( = patches whose data is needed by the local Domain but not own by the local vecPatches )
+    //        missing_patches_ranks stores the MPI rank of the vecPacthes which own missing_patches_
     for ( unsigned int i=0 ; i<domain.missing_patches_.size() ; i++ ) {
+
         unsigned int ipatch = domain.missing_patches_[i]-vecPatches.refHindex_;
-        SyncCartesianPatch::recvPatchedToCartesian_MW( domain.patch_->EMfields, domain.missing_patches_[i], domain.missing_patches_ranks[i], vecPatches, params, smpi, domain );
+        DoubleGrids::fieldsOnDomainRecv( domain.patch_->EMfields,
+                                         domain.missing_patches_[i], domain.missing_patches_ranks[i], vecPatches, params, smpi, domain );
 
     }
 
 
+    // Loop / additional_patches_ to finalize send ( currentsOnDomainSend relies on MPI_Isend )
     for ( unsigned int i=0 ; i<domain.additional_patches_.size() ; i++ ) {
+
         unsigned int ipatch = domain.additional_patches_[i]-vecPatches.refHindex_;
-        SyncCartesianPatch::finalize_sendPatchedToCartesian_MW( vecPatches(ipatch)->EMfields, domain.additional_patches_[i], domain.additional_patches_ranks[i], smpi, vecPatches(ipatch), params );
+        DoubleGrids::fieldsOnDomainSendFinalize( vecPatches(ipatch)->EMfields,
+                                                 domain.additional_patches_[i], domain.additional_patches_ranks[i], smpi, vecPatches(ipatch), params );
     }
 
+    // Loop / local_patches_ ( patches own by the local vePatches whose data are used by the local Domain )
     for ( unsigned int i=0 ; i<domain.local_patches_.size() ; i++ ) {
+
         unsigned int ipatch = domain.local_patches_[i]-vecPatches.refHindex_;
 
         vecPatches(ipatch)->EMfields->Ex_->put( domain.patch_->EMfields->Ex_, params, smpi, vecPatches(ipatch), domain.patch_ );
@@ -324,12 +282,13 @@ void SyncCartesianPatch::sendFieldsToDomain( VectorPatch& vecPatches, Domain& do
         vecPatches(ipatch)->EMfields->By_m->put( domain.patch_->EMfields->By_m, params, smpi, vecPatches(ipatch), domain.patch_ );
         vecPatches(ipatch)->EMfields->Bz_m->put( domain.patch_->EMfields->Bz_m, params, smpi, vecPatches(ipatch), domain.patch_ );
 
-
     }
 }
 
-void SyncCartesianPatch::sendPatchedToCartesian_MW( ElectroMagn* localfields, unsigned int hindex, int send_to_global_patch_rank, SmileiMPI* smpi, Patch* patch, Params& params )
+void DoubleGrids::fieldsOnDomainSend( ElectroMagn* localfields, unsigned int hindex, int send_to_global_patch_rank, SmileiMPI* smpi, Patch* patch, Params& params )
 {
+    // isend( Fields, targeted_mpi_rank, tag, requests );
+    //        tag = *9 ? 9 communications could be required per patch : B, B_m, both (at least for the moving window)
     smpi->isend( localfields->Ex_, send_to_global_patch_rank, hindex*9  , patch->requests_[0] );
     smpi->isend( localfields->Ey_, send_to_global_patch_rank, hindex*9+1, patch->requests_[1] );
     smpi->isend( localfields->Ez_, send_to_global_patch_rank, hindex*9+2, patch->requests_[2] );
@@ -344,9 +303,10 @@ void SyncCartesianPatch::sendPatchedToCartesian_MW( ElectroMagn* localfields, un
     
 }
 
-void SyncCartesianPatch::finalize_sendPatchedToCartesian_MW( ElectroMagn* localfields, unsigned int hindex, int send_to_global_patch_rank, SmileiMPI* smpi, Patch* patch, Params& params )
+void DoubleGrids::fieldsOnDomainSendFinalize( ElectroMagn* localfields, unsigned int hindex, int send_to_global_patch_rank, SmileiMPI* smpi, Patch* patch, Params& params )
 {
     MPI_Status status;
+    // Wait for fieldsOnDomainSend (isend)
     MPI_Wait( &(patch->requests_[0]), &status );
     MPI_Wait( &(patch->requests_[1]), &status );
     MPI_Wait( &(patch->requests_[2]), &status );
@@ -361,16 +321,15 @@ void SyncCartesianPatch::finalize_sendPatchedToCartesian_MW( ElectroMagn* localf
 
 }
 
-void SyncCartesianPatch::recvPatchedToCartesian_MW( ElectroMagn* globalfields, unsigned int hindex, int local_patch_rank, VectorPatch& vecPatches, Params &params, SmileiMPI* smpi, Domain& domain )
+void DoubleGrids::fieldsOnDomainRecv( ElectroMagn* globalfields, unsigned int hindex, int local_patch_rank, VectorPatch& vecPatches, Params &params, SmileiMPI* smpi, Domain& domain )
 {
-    // Jx_
-    unsigned int n_moved = 0;
-
-    //  vecPatches(ipatch) -> need sender patch coordinates : vecPatches.getDomainCoordinates( hindex )
-    // Buffer will be resized for each component, fake local patch, which wil have Jxyz, and coordinates to update ?
+    // fake_patch consists in a piece of the local Domain to handle naturally patches communications
+    //            need to update its hindex and coordinates to put recv data at the good place in the local Domain (put)
     domain.fake_patch->hindex = hindex;
     domain.fake_patch->Pcoordinates = vecPatches.domain_decomposition_->getDomainCoordinates( hindex );
 
+    // recv( Fields, sender_mpi_rank, tag );
+    //       tag = *9 ? 9 communications could be required per patch : B, B_m, both (at least for the moving window)
     smpi->recv( domain.fake_patch->EMfields->Ex_, local_patch_rank, hindex*9 );
     domain.fake_patch->EMfields->Ex_->put( globalfields->Ex_, params, smpi, domain.fake_patch, domain.patch_ );
 

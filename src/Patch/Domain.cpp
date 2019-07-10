@@ -13,7 +13,7 @@
 #include "OpenPMDparams.h"
 #include "SimWindow.h"
 #include "Timers.h"
-#include "SyncCartesianPatch.h"
+#include "DoubleGrids.h"
 
 using namespace std;
 

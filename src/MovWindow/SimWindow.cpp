@@ -22,7 +22,7 @@
 #include <fstream>
 #include <limits>
 #include "ElectroMagnBC_Factory.h"
-#include "SyncCartesianPatch.h"
+#include "DoubleGrids.h"
 
 using namespace std;
 
@@ -585,7 +585,7 @@ void SimWindow::operate(Domain& domain,  VectorPatch& vecPatches, SmileiMPI* smp
         domain.patch_->exchangeField_movewin( domain.patch_->EMfields->rhoold_, params.n_space[0] );
     }
 
-    //SyncCartesianPatch::patchedToCartesian_MW( vecPatches, domain, params, smpi );
+    //DoubleGrids::syncFieldsOnDomain( vecPatches, domain, params, smpi );
 
     domain.patch_->EMfields->laserDisabled();
     // External fields
@@ -622,7 +622,7 @@ void SimWindow::operate(Domain& domain,  VectorPatch& vecPatches, SmileiMPI* smp
         domain.patch_->exchangeField_movewin( domain_fields->rho_AM_[imode], params.n_space[0] );
     }
 
-    //SyncCartesianPatch::patchedToCartesian_MW( vecPatches, domain, params, smpi );
+    //DoubleGrids::syncFieldsOnDomain( vecPatches, domain, params, smpi );
 
     domain.patch_->EMfields->laserDisabled();
     // External fields

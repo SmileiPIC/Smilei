@@ -31,8 +31,8 @@
 #include "SimWindow.h"
 #include "Diagnostic.h"
 #include "Domain.h"
-#include "SyncCartesianPatch.h"
-#include "SyncCartesianPatchAM.h"
+#include "DoubleGrids.h"
+#include "DoubleGridsAM.h"
 #include "Timers.h"
 #include "RadiationTables.h"
 #include "MultiphotonBreitWheelerTables.h"
@@ -273,12 +273,12 @@ int main( int argc, char *argv[] )
         domain_global.identify_additional_patches( &smpi, vecPatches, params, simWindow );
         domain_global.identify_missing_patches( &smpi, vecPatches, params );
         for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
-            SyncCartesianPatchAM::sendFieldsToDomain( vecPatches, domain_global, params, &smpi, imode );
+            DoubleGridsAM::syncFieldsOnDomain( vecPatches, domain_global, params, &smpi, imode );
         if( params.is_pxr && smpi.isMaster()) {
             domain_global.coupling( params, true );
         }
         for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
-            SyncCartesianPatchAM::recvFieldsFromDomain( domain_global, vecPatches, params, &smpi, timers, 0, imode );
+            DoubleGridsAM::syncFieldsOnPatches( domain_global, vecPatches, params, &smpi, timers, 0, imode );
         domain_global.clean();
     }
     
@@ -289,7 +289,7 @@ int main( int argc, char *argv[] )
         domain.identify_additional_patches( &smpi, vecPatches, params, simWindow );
         domain.identify_missing_patches( &smpi, vecPatches, params );
         for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
-            SyncCartesianPatchAM::sendFieldsToDomain( vecPatches, domain, params, &smpi, imode );
+            DoubleGridsAM::syncFieldsOnDomain( vecPatches, domain, params, &smpi, imode );
         if( params.is_pxr ){
             domain.coupling( params, false );
         }
@@ -427,10 +427,10 @@ int main( int argc, char *argv[] )
             else { //if ( params.uncoupled_grids ) {
                 if( time_dual > params.time_fields_frozen ) {
                     if ( params.geometry != "AMcylindrical" )
-                        SyncCartesianPatch::sendCurrentsToDomain( vecPatches, domain, params, &smpi, timers, itime );
+                        DoubleGrids::syncCurrentsOnDomain( vecPatches, domain, params, &smpi, timers, itime );
                     else {
                         for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
-                            SyncCartesianPatchAM::sendCurrentsToDomain( vecPatches, domain, params, &smpi, timers, itime, imode );
+                            DoubleGridsAM::syncCurrentsOnDomain( vecPatches, domain, params, &smpi, timers, itime, imode );
                     }
                     timers.syncDens.restart();
                     domain.vecPatch_.diag_flag = false;
@@ -451,10 +451,10 @@ int main( int argc, char *argv[] )
 
                     domain.solveMaxwell( params, simWindow, itime, time_dual, timers, &smpi );
                     if ( params.geometry != "AMcylindrical" )
-                        SyncCartesianPatch::recvFieldsFromDomain( domain, vecPatches, params, &smpi, timers, itime );
+                        DoubleGrids::syncFieldsOnPatches( domain, vecPatches, params, &smpi, timers, itime );
                     else {
                         for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
-                            SyncCartesianPatchAM::recvFieldsFromDomain( domain, vecPatches, params, &smpi, timers, itime, imode );
+                            DoubleGridsAM::syncFieldsOnPatches( domain, vecPatches, params, &smpi, timers, itime, imode );
                     }
                 }
             }
