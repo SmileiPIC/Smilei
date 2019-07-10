@@ -182,6 +182,20 @@ void cField1D::put( Field *outField, Params &params, SmileiMPI *smpi, Patch *thi
     
 }
 
+void cField1D::add( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch )
+{
+    cField1D *out1D = static_cast<cField1D *>( outField );
+    
+    std::vector<unsigned int> dual =  this->isDual_;
+    
+    int iout = thisPatch->Pcoordinates[0]*params.n_space[0] - outPatch->Pcoordinates[0]*params.n_space[0]*params.global_factor[0] ;
+    
+    for( unsigned int i = 0 ; i < this->dims_[0] ; i++ ) {
+        ( *out1D )( iout+i ) += ( *this )( i );
+    }
+    
+}
+
 
 void cField1D::get( Field *inField, Params &params, SmileiMPI *smpi, Patch *inPatch, Patch *thisPatch )
 {

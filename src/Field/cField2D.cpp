@@ -206,8 +206,26 @@ void cField2D::put( Field *outField, Params &params, SmileiMPI *smpi, Patch *thi
     //    for ( unsigned int j = params.oversize[1] ; j < this->dims_[1]-params.oversize[1] ; j++ ) {
     for( unsigned int i = 0 ; i < this->dims_[0] ; i++ ) {
         for( unsigned int j = 0 ; j < this->dims_[1] ; j++ ) {
+            ( *out2D )( iout+i, jout+j ) = ( *this )( i, j );
+        }
+    }
+    
+}
+
+void cField2D::add( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch )
+{
+    cField2D *out2D = static_cast<cField2D *>( outField );
+    
+    std::vector<unsigned int> dual =  this->isDual_;
+    
+    int iout = thisPatch->Pcoordinates[0]*params.n_space[0] - ( outPatch->getCellStartingGlobalIndex(0) + params.oversize[0] ) ;
+    int jout = thisPatch->Pcoordinates[1]*params.n_space[1] - ( outPatch->getCellStartingGlobalIndex(1) + params.oversize[1] ) ;
+    
+    //for ( unsigned int i = params.oversize[0] ; i < this->dims_[0]-params.oversize[0] ; i++ ) {
+    //    for ( unsigned int j = params.oversize[1] ; j < this->dims_[1]-params.oversize[1] ; j++ ) {
+    for( unsigned int i = 0 ; i < this->dims_[0] ; i++ ) {
+        for( unsigned int j = 0 ; j < this->dims_[1] ; j++ ) {
             ( *out2D )( iout+i, jout+j ) += ( *this )( i, j );
-            //( *out2D )( iout+i, jout+j ) += (thisPatch->hindex+1);
         }
     }
     

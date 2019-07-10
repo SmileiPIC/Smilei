@@ -55,11 +55,11 @@ void DoubleGridsAM::syncCurrentsOnDomain( VectorPatch &vecPatches, Domain &domai
         unsigned int ipatch = domain.local_patches_[i]-vecPatches.refHindex_;        
         ElectroMagnAM * patch_fields = static_cast<ElectroMagnAM *>( vecPatches(ipatch)->EMfields );
 
-        patch_fields->Jl_[imode]->put( domain_fields->Jl_[imode], params, smpi, vecPatches(ipatch), domain.patch_ );
-        patch_fields->Jr_[imode]->put( domain_fields->Jr_[imode], params, smpi, vecPatches(ipatch), domain.patch_ );
-        patch_fields->Jt_[imode]->put( domain_fields->Jt_[imode], params, smpi, vecPatches(ipatch), domain.patch_ );
+        patch_fields->Jl_[imode]->add( domain_fields->Jl_[imode], params, smpi, vecPatches(ipatch), domain.patch_ );
+        patch_fields->Jr_[imode]->add( domain_fields->Jr_[imode], params, smpi, vecPatches(ipatch), domain.patch_ );
+        patch_fields->Jt_[imode]->add( domain_fields->Jt_[imode], params, smpi, vecPatches(ipatch), domain.patch_ );
         if(params.is_spectral){
-            patch_fields->rho_AM_[imode]->put( domain_fields->rho_AM_[imode], params, smpi, vecPatches(ipatch), domain.patch_ );
+            patch_fields->rho_AM_[imode]->add( domain_fields->rho_AM_[imode], params, smpi, vecPatches(ipatch), domain.patch_ );
             // rho_old is save directly on the Domain after the resolution of the Maxwell solver
         }
 
@@ -100,24 +100,24 @@ void DoubleGridsAM::currentsOnDomainRecv( ElectroMagnAM* globalfields, unsigned 
     ElectroMagnAM * fake_fields = static_cast<ElectroMagnAM *>( domain.fake_patch->EMfields );
 
     // fake_patch consists in a piece of the local Domain to handle naturally patches communications
-    //            need to update its hindex and coordinates to put recv data at the good place in the local Domain (put)
+    //            need to update its hindex and coordinates to put recv data at the good place in the local Domain (add)
     domain.fake_patch->hindex = hindex;
     domain.fake_patch->Pcoordinates = vecPatches.domain_decomposition_->getDomainCoordinates( hindex );
 
     // recvComplex( cFields, sender_mpi_rank, tag );
     //              tag = *5 ? 5 communications are required per patch : 3 currents + rho + rho_old
     smpi->recvComplex( fake_fields->Jl_[imode], local_patch_rank, hindex*5 );
-    fake_fields->Jl_[imode]->put( globalfields->Jl_[imode], params, smpi, domain.fake_patch, domain.patch_ );
+    fake_fields->Jl_[imode]->add( globalfields->Jl_[imode], params, smpi, domain.fake_patch, domain.patch_ );
 
     smpi->recvComplex( fake_fields->Jr_[imode], local_patch_rank, hindex*5+1 );
-    fake_fields->Jr_[imode]->put( globalfields->Jr_[imode], params, smpi, domain.fake_patch, domain.patch_ );
+    fake_fields->Jr_[imode]->add( globalfields->Jr_[imode], params, smpi, domain.fake_patch, domain.patch_ );
 
     smpi->recvComplex( fake_fields->Jt_[imode], local_patch_rank, hindex*5+2 );
-    fake_fields->Jt_[imode]->put( globalfields->Jt_[imode], params, smpi, domain.fake_patch, domain.patch_ );
+    fake_fields->Jt_[imode]->add( globalfields->Jt_[imode], params, smpi, domain.fake_patch, domain.patch_ );
 
     if(params.is_spectral) {
         smpi->recvComplex( fake_fields->rho_AM_[imode], local_patch_rank, hindex*5+3 );
-        fake_fields->rho_AM_[imode]->put( globalfields->rho_AM_[imode], params, smpi, domain.fake_patch, domain.patch_ );
+        fake_fields->rho_AM_[imode]->add( globalfields->rho_AM_[imode], params, smpi, domain.fake_patch, domain.patch_ );
     }
 
 }
@@ -135,7 +135,7 @@ void DoubleGridsAM::syncFieldsOnPatches( Domain &domain, VectorPatch &vecPatches
 
         unsigned int ipatch = domain.additional_patches_[i]-vecPatches.refHindex_;
         DoubleGridsAM::fieldsOnPatchesRecv( static_cast<ElectroMagnAM *>(vecPatches(ipatch)->EMfields),
-                                            domain.additional_patches_[i], domain.additional_patches_ranks[i], smpi,  vecPatches(ipatch), imode );
+                                            domain.additional_patches_[i], domain.additional_patches_ranks[i], smpi,  vecPatches(ipatch), params, imode );
 
     }
 
@@ -172,11 +172,11 @@ void DoubleGridsAM::syncFieldsOnPatches( Domain &domain, VectorPatch &vecPatches
         patch_fields->Er_[imode]->get( domain_fields->Er_[imode], params, smpi, domain.patch_, vecPatches(ipatch) );
         patch_fields->Et_[imode]->get( domain_fields->Et_[imode], params, smpi, domain.patch_, vecPatches(ipatch) );
         
-        //if (!params.is_spectral) {
+        if (!params.is_spectral) {
             patch_fields->Bl_m[imode]->get( domain_fields->Bl_m[imode], params, smpi, domain.patch_, vecPatches(ipatch) );
             patch_fields->Br_m[imode]->get( domain_fields->Br_m[imode], params, smpi, domain.patch_, vecPatches(ipatch) );
             patch_fields->Bt_m[imode]->get( domain_fields->Bt_m[imode], params, smpi, domain.patch_, vecPatches(ipatch) );
-            //}
+        }
 
         patch_fields->Bl_[imode]->get( domain_fields->Bl_[imode], params, smpi, domain.patch_, vecPatches(ipatch) );
         patch_fields->Br_[imode]->get( domain_fields->Br_[imode], params, smpi, domain.patch_, vecPatches(ipatch) );
@@ -188,7 +188,7 @@ void DoubleGridsAM::syncFieldsOnPatches( Domain &domain, VectorPatch &vecPatches
 }
 
 
-void DoubleGridsAM::fieldsOnPatchesRecv( ElectroMagnAM* localfields, unsigned int hindex, int recv_from_global_patch_rank, SmileiMPI* smpi, Patch* patch, unsigned int imode )
+void DoubleGridsAM::fieldsOnPatchesRecv( ElectroMagnAM* localfields, unsigned int hindex, int recv_from_global_patch_rank, SmileiMPI* smpi, Patch* patch, Params& params, unsigned int imode )
 {
     // irecvComplex( cFields, sender_mpi_rank, tag, requests );
     //               tag = *9 ? 9 communications could be are required per patch
@@ -201,11 +201,11 @@ void DoubleGridsAM::fieldsOnPatchesRecv( ElectroMagnAM* localfields, unsigned in
     smpi->irecvComplex( localfields->Br_[imode], recv_from_global_patch_rank, hindex*9+4, patch->requests_[4] );
     smpi->irecvComplex( localfields->Bt_[imode], recv_from_global_patch_rank, hindex*9+5, patch->requests_[5] );
 
-    //if (localfields->Bl_m[imode]->cdata_!=localfields->Bl_m[imode]->cdata_) {
+    if (!params.is_spectral) {
         smpi->irecvComplex( localfields->Bl_m[imode], recv_from_global_patch_rank, hindex*9+6, patch->requests_[6] );
         smpi->irecvComplex( localfields->Br_m[imode], recv_from_global_patch_rank, hindex*9+7, patch->requests_[7] );
         smpi->irecvComplex( localfields->Bt_m[imode], recv_from_global_patch_rank, hindex*9+8, patch->requests_[8] );
-        //}
+    }
 
 }
 
@@ -254,7 +254,7 @@ void DoubleGridsAM::fieldsOnPatchesSend( ElectroMagnAM* globalfields, unsigned i
     fake_fields->Bt_[imode]->get( globalfields->Bt_[imode], params, smpi, domain.patch_, domain.fake_patch );
     smpi->sendComplex( fake_fields->Bt_[imode], local_patch_rank, hindex*9+5 );
 
-    //if (globalfields->Bl_m[imode]->cdata_!=globalfields->Bl_[imode]->cdata_) {
+    if (!params.is_spectral) {
        fake_fields->Bl_m[imode]->get( globalfields->Bl_m[imode], params, smpi, domain.patch_, domain.fake_patch );
        smpi->sendComplex( fake_fields->Bl_m[imode], local_patch_rank, hindex*9+6 );
        
@@ -263,7 +263,7 @@ void DoubleGridsAM::fieldsOnPatchesSend( ElectroMagnAM* globalfields, unsigned i
        
        fake_fields->Bt_m[imode]->get( globalfields->Bt_m[imode], params, smpi, domain.patch_, domain.fake_patch );
        smpi->sendComplex( fake_fields->Bt_m[imode], local_patch_rank, hindex*9+8 );
-       //}
+    }
 
 }
 

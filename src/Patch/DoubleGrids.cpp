@@ -53,12 +53,12 @@ void DoubleGrids::syncCurrentsOnDomain( VectorPatch &vecPatches, Domain &domain,
     for ( unsigned int i=0 ; i<domain.local_patches_.size() ; i++ ) {
 
         unsigned int ipatch = domain.local_patches_[i]-vecPatches.refHindex_;
-        vecPatches(ipatch)->EMfields->Jx_->put( domain.patch_->EMfields->Jx_, params, smpi, vecPatches(ipatch), domain.patch_ );
-        vecPatches(ipatch)->EMfields->Jy_->put( domain.patch_->EMfields->Jy_, params, smpi, vecPatches(ipatch), domain.patch_ );
-        vecPatches(ipatch)->EMfields->Jz_->put( domain.patch_->EMfields->Jz_, params, smpi, vecPatches(ipatch), domain.patch_ );
+        vecPatches(ipatch)->EMfields->Jx_->add( domain.patch_->EMfields->Jx_, params, smpi, vecPatches(ipatch), domain.patch_ );
+        vecPatches(ipatch)->EMfields->Jy_->add( domain.patch_->EMfields->Jy_, params, smpi, vecPatches(ipatch), domain.patch_ );
+        vecPatches(ipatch)->EMfields->Jz_->add( domain.patch_->EMfields->Jz_, params, smpi, vecPatches(ipatch), domain.patch_ );
 
 	if(params.is_spectral){
-            vecPatches(ipatch)->EMfields->rho_->put( domain.patch_->EMfields->rho_, params, smpi, vecPatches(ipatch), domain.patch_ );
+            vecPatches(ipatch)->EMfields->rho_->add( domain.patch_->EMfields->rho_, params, smpi, vecPatches(ipatch), domain.patch_ );
             // rho_old is save directly on the Domain after the resolution of the Maxwell solver
 	}
 
@@ -96,24 +96,24 @@ void DoubleGrids::currentsOnDomainSendFinalize( ElectroMagn* localfields, unsign
 void DoubleGrids::currentsOnDomainRecv( ElectroMagn* globalfields, unsigned int hindex, int local_patch_rank, VectorPatch& vecPatches, Params &params, SmileiMPI* smpi, Domain& domain )
 {
     // fake_patch consists in a piece of the local Domain to handle naturally patches communications
-    //            need to update its hindex and coordinates to put recv data at the good place in the local Domain (put)
+    //            need to update its hindex and coordinates to put recv data at the good place in the local Domain (add)
     domain.fake_patch->hindex = hindex;
     domain.fake_patch->Pcoordinates = vecPatches.domain_decomposition_->getDomainCoordinates( hindex );
 
     // recv( Fields, sender_mpi_rank, tag );
     //       tag = *5 ? 5 communications are required per patch : 3 currents + rho + rho_old
     smpi->recv( domain.fake_patch->EMfields->Jx_, local_patch_rank, hindex*5 );
-    domain.fake_patch->EMfields->Jx_->put( globalfields->Jx_, params, smpi, domain.fake_patch, domain.patch_ );
+    domain.fake_patch->EMfields->Jx_->add( globalfields->Jx_, params, smpi, domain.fake_patch, domain.patch_ );
 
     smpi->recv( domain.fake_patch->EMfields->Jy_, local_patch_rank, hindex*5+1 );
-    domain.fake_patch->EMfields->Jy_->put( globalfields->Jy_, params, smpi, domain.fake_patch, domain.patch_ );
+    domain.fake_patch->EMfields->Jy_->add( globalfields->Jy_, params, smpi, domain.fake_patch, domain.patch_ );
 
     smpi->recv( domain.fake_patch->EMfields->Jz_, local_patch_rank, hindex*5+2 );
-    domain.fake_patch->EMfields->Jz_->put( globalfields->Jz_, params, smpi, domain.fake_patch, domain.patch_ );
+    domain.fake_patch->EMfields->Jz_->add( globalfields->Jz_, params, smpi, domain.fake_patch, domain.patch_ );
 
     if(params.is_spectral) {
         smpi->recv( domain.fake_patch->EMfields->rho_, local_patch_rank, hindex*5+3 );
-        domain.fake_patch->EMfields->rho_->put( globalfields->rho_, params, smpi, domain.fake_patch, domain.patch_ );
+        domain.fake_patch->EMfields->rho_->add( globalfields->rho_, params, smpi, domain.fake_patch, domain.patch_ );
     }
 
 }

@@ -222,6 +222,25 @@ void cField3D::put( Field *outField, Params &params, SmileiMPI *smpi, Patch *thi
     
 }
 
+void cField3D::add( Field *outField, Params &params, SmileiMPI *smpi, Patch *thisPatch, Patch *outPatch )
+{
+    cField3D *out3D = static_cast<cField3D *>( outField );
+    
+    std::vector<unsigned int> dual =  this->isDual_;
+    
+    int iout = thisPatch->Pcoordinates[0]*params.n_space[0] - ( outPatch->getCellStartingGlobalIndex(0) + params.oversize[0] ) ;
+    int jout = thisPatch->Pcoordinates[1]*params.n_space[1] - ( outPatch->getCellStartingGlobalIndex(1) + params.oversize[1] ) ;
+    int kout = thisPatch->Pcoordinates[2]*params.n_space[2] - ( outPatch->getCellStartingGlobalIndex(2) + params.oversize[2] ) ;
+    
+    for( unsigned int i = 0 ; i < this->dims_[0] ; i++ ) {
+        for( unsigned int j = 0 ; j < this->dims_[1] ; j++ ) {
+            for( unsigned int k = 0 ; k < this->dims_[2] ; k++ ) {
+                ( *out3D )( iout+i, jout+j, kout+k ) += ( *this )( i, j, k );
+            }
+        }
+    }
+    
+}
 
 void cField3D::get( Field *inField, Params &params, SmileiMPI *smpi, Patch *inPatch, Patch *thisPatch )
 {
