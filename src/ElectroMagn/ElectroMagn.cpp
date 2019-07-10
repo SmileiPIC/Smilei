@@ -36,14 +36,17 @@ ElectroMagn::ElectroMagn( Params &params, DomainDecomposition *domain_decomposit
     nrj_new_fields( 0. )
 {
     n_space.resize( params.n_space.size() );
-    if ( (!dynamic_cast<GlobalDomainDecomposition*>( domain_decomposition )) && ( domain_decomposition!=NULL ) )
+    // Test if the patch is a small patch (Hilbert or Linearized are for VectorPatch)
+    if( ( dynamic_cast<HilbertDomainDecomposition *>( domain_decomposition ) )
+        || ( dynamic_cast<LinearizedDomainDecomposition *>( domain_decomposition ) ) ) {
         n_space = params.n_space;
-    else if ( dynamic_cast<GlobalDomainDecomposition*>( domain_decomposition ) ) {
+    }
+    else if ( dynamic_cast<CartesianDomainDecomposition*>( domain_decomposition ) ) {
         for ( unsigned int i = 0 ; i < nDim_field ; i++ ) {
             n_space[i] = params.n_space_domain[i];
         }
     }
-    else { //NULL
+    else { //NULL (Global domain)
         n_space = params.n_space_global;
     }
     

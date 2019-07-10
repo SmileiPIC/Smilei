@@ -49,7 +49,7 @@ public:
     //! Finalize MPI environment : especially requests array for non blocking communications
     void finalizeMPIenvironment( Params &params );
     
-    void set( Params &params, DomainDecomposition *domain_decomposition, VectorPatch &vecPatch );
+    void setLocationAndAllocateFields( Params &params, DomainDecomposition *domain_decomposition, VectorPatch &vecPatch );
    
     //Copy positions of particles from source species to species which are initialized on top of another one. 
     void copy_positions( std::vector<Species *> vecSpecies_to_update);

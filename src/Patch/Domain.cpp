@@ -43,7 +43,7 @@ void Domain::build( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, Op
         return;
 
     patch_ = PatchesFactory::create( params, smpi, decomposition_, rk );
-    patch_->set( params, decomposition_, vecPatches );
+    patch_->setLocationAndAllocateFields( params, decomposition_, vecPatches );
     vecPatch_.patches_.push_back( patch_ );
     
     //vecPatch_.refHindex_ = vecPatches.refHindex_ / vecPatches.size();

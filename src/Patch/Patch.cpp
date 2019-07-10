@@ -265,7 +265,7 @@ void Patch::finalizeMPIenvironment( Params &params )
 }
 
 
-void Patch::set( Params &params, DomainDecomposition *domain_decomposition, VectorPatch &vecPatch )
+void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *domain_decomposition, VectorPatch &vecPatch )
 {
     Pcoordinates.resize( params.nDim_field );
     
@@ -315,7 +315,8 @@ void Patch::set( Params &params, DomainDecomposition *domain_decomposition, Vect
     int sz(1);
     MPI_Comm_size( MPI_COMM_WORLD, &sz );
 
-    if ( dynamic_cast<GlobalDomainDecomposition*>( domain_decomposition ) ) {
+    // If current patch is a Domain's patch
+    if ( dynamic_cast<CartesianDomainDecomposition*>( domain_decomposition ) ) {
 
         if (nDim_fields_==1) {
             for ( int xDom = 0 ; xDom < params.number_of_domain[0] ; xDom++ )
@@ -513,7 +514,7 @@ void Patch::set( Params &params, DomainDecomposition *domain_decomposition, Vect
         } // Fin 3D
 
     } // ENd if 
-    else if ( domain_decomposition == NULL ) {
+    else if ( domain_decomposition == NULL ) { // If current patch is the global Domain's patch
         if ( params.geometry != "AMcylindrical" ) {
             WARNING ("Global gathering not tested on non AM configuration" ) ;
         }

@@ -20,7 +20,9 @@ using namespace std;
 PatchAM::PatchAM( Params &params, SmileiMPI *smpi, DomainDecomposition *domain_decomposition, unsigned int ipatch, unsigned int n_moved )
     : Patch( params, smpi, domain_decomposition, ipatch, n_moved )
 {
-    if( (!dynamic_cast<GlobalDomainDecomposition *>( domain_decomposition )) && ( domain_decomposition!=NULL ) ) {
+    // Test if the patch is a particle patch (Hilbert or Linearized are for VectorPatch)
+    if( ( dynamic_cast<HilbertDomainDecomposition *>( domain_decomposition ) ) 
+        || ( dynamic_cast<LinearizedDomainDecomposition *>( domain_decomposition ) ) ) {
         initStep2( params, domain_decomposition );
         initStep3( params, smpi, n_moved );
         finishCreation( params, smpi, domain_decomposition );
