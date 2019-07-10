@@ -505,10 +505,12 @@ void Patch1D::cleanType()
         MPI_Type_free( &( ntype_[0][ix_isPrim] ) );
         MPI_Type_free( &( ntype_[1][ix_isPrim] ) );
         MPI_Type_free( &( ntypeSum_[0][ix_isPrim] ) );
-        
-        MPI_Type_free( &( ntype_complex_[0][ix_isPrim] ) );
-        MPI_Type_free( &( ntype_complex_[1][ix_isPrim] ) );
-        //MPI_Type_free( &(ntypeSum_complex_[0][ix_isPrim]) );
+
+        if ( ntype_complex_[0][ix_isPrim] != MPI_DATATYPE_NULL ) {
+            MPI_Type_free( &( ntype_complex_[0][ix_isPrim] ) );
+            MPI_Type_free( &( ntype_complex_[1][ix_isPrim] ) );
+            //MPI_Type_free( &(ntypeSum_complex_[0][ix_isPrim]) );
+        }
     }
 }
 
