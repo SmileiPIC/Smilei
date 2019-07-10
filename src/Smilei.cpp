@@ -288,8 +288,10 @@ int main( int argc, char *argv[] )
         domain.build( params, &smpi, vecPatches, openPMD, false );
         domain.identify_additional_patches( &smpi, vecPatches, params, simWindow );
         domain.identify_missing_patches( &smpi, vecPatches, params );
-        for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
-            DoubleGridsAM::syncFieldsOnDomain( vecPatches, domain, params, &smpi, imode );
+        if ( params.apply_divergence_cleaning ) { // Need to upload corrected data on Domain
+            for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
+                DoubleGridsAM::syncFieldsOnDomain( vecPatches, domain, params, &smpi, imode );
+        }
         if( params.is_pxr ){
             domain.coupling( params, false );
         }
