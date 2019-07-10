@@ -553,13 +553,6 @@ void VectorPatch::sumDensities( Params &params, double time_dual, Timers &timers
             }
         }
     }
-    if( params.geometry == "AMcylindrical" ) {
-        #pragma omp for schedule(static)
-        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
-            emAM->on_axis_J( diag_flag );
-        }
-    }
     timers.syncDens.update( params.printNow( itime ) );
 } // End sumDensities
 
