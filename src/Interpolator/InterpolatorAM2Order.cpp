@@ -189,7 +189,31 @@ void InterpolatorAM2Order::fieldsAndCurrents( ElectroMagn *EMfields, Particles &
 // Interpolator on another field than the basic ones
 void InterpolatorAM2Order::oneField( Field *field, Particles &particles, int *istart, int *iend, double *FieldLoc )
 {
-    ERROR( "Single field AM2O interpolator not available" );
+    cField2D *F = static_cast<cField2D *>( field );
+    nmodes = std::stoi(&(F->name.back())); //Works only if number_of_AM < 10
+
+    double *coeffx = field->isDual( 0 ) ? &coeffxd_[1] : &coeffxp_[1];
+    double *coeffy = field->isDual( 1 ) ? &coeffyd_[1] : &coeffyp_[1];
+    int *i = field->isDual( 0 ) ? &id_ : &ip_;
+    int *j = field->isDual( 1 ) ? &jd_ : &jp_;
+    
+    for( int ipart=*istart ; ipart<*iend; ipart++ ) {
+        complex<double> exp_m_theta, exp_mm_theta = 1. ;
+        double xpn = particles.position( 0, ipart )*dl_inv_;
+        double r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
+        double rpn = r * dr_inv_;
+        if (r > 0){ 
+            exp_m_theta = ( particles.position( 1, ipart ) - Icpx * particles.position( 2, ipart ) ) / r ;
+        } else {
+            exp_m_theta = 1. ;
+        }
+        for (unsigned int imode=0; imode < nmodes; imode++){
+            exp_mm_theta *= exp_m_theta;
+        }
+        coeffs( xpn, rpn);
+        FieldLoc[ipart] = std::real( compute( coeffx, coeffy, F, *i, *j) * exp_mm_theta);
+    }
+
 }
 
 void InterpolatorAM2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )

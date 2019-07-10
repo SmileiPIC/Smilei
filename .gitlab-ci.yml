@@ -6,10 +6,12 @@ compile:
   stage: compile
   only:
     - develop
-    - robust_validation
+    - merge_relativistic_init_AM
 
   script:
     # Force workdir cleaning in case of retried
+    - echo "CI_PIPELINE_ID = " $CI_PIPELINE_ID 
+    - env
     - if [ -d /sps2/gitlab-runner/$CI_PIPELINE_ID ] ; then rm -rf /sps2/gitlab-runner/$CI_PIPELINE_ID ; fi
     # Move in test dir
     - mkdir -p /sps2/gitlab-runner/$CI_PIPELINE_ID
@@ -26,7 +28,7 @@ makerun1D:
   stage: makerun
   only:
     - develop
-    - robust_validation
+    - merge_relativistic_init_AM
 
   script:
     # Move in test dir
@@ -38,7 +40,7 @@ makerun2D:
   stage: makerun
   only:
     - develop
-    - robust_validation
+    - merge_relativistic_init_AM
 
   script:
     # Move in test dir
@@ -50,7 +52,7 @@ makerun3D:
   stage: makerun
   only:
     - develop
-    - robust_validation
+    - merge_relativistic_init_AM
 
   script:
     # Move in test dir
@@ -58,22 +60,23 @@ makerun3D:
     # Run validation script
     - python validation.py -b "tst3d_??_*.py" -m 4 -o 4 -v -r 1
 
-#makerunAM:
-#  stage: makerun
-#  only:
-#    - develop
-#
-#  script:
-#    # Move in test dir
-#    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-#    # Run validation script
-#    - python validation.py -b "tstAM_??_*.py" -m 4 -o 4 -v
+makerunAM:
+  stage: makerun
+  only:
+    - develop
+    - merge_relativistic_init_AM
+
+  script:
+    # Move in test dir
+    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    # Run validation script
+    - python validation.py -b "tstAM_??_*.py" -m 4 -o 4 -v
 
 makerunV:
   stage: makerun
   only:
     - develop
-    - robust_validation
+    - merge_relativistic_init_AM
 
   script:
     # Move in test dir
@@ -85,10 +88,11 @@ makerunCollisions:
   stage: makerun
   only:
     - develop
-    - robust_validation
+    - merge_relativistic_init_AM
     
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run checking script
     - python validation.py -b "tst_collisions*.py" -m 4 -o 4 -v -r 1
+

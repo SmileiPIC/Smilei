@@ -140,6 +140,20 @@ public:
     Field *Bx_rel_t_plus_halfdt_;
     Field *By_rel_t_plus_halfdt_;
     Field *Bz_rel_t_plus_halfdt_;
+
+    // Fields for relativistic Initialization in AM
+    cField *El_rel_;
+    cField *Er_rel_;
+    cField *Et_rel_;
+    cField *Bl_rel_;
+    cField *Br_rel_;
+    cField *Bt_rel_;
+    cField *Bl_rel_t_minus_halfdt_;
+    cField *Br_rel_t_minus_halfdt_;
+    cField *Bt_rel_t_minus_halfdt_;
+    cField *Bl_rel_t_plus_halfdt_;
+    cField *Br_rel_t_plus_halfdt_;
+    cField *Bt_rel_t_plus_halfdt_;
     
     //PXR quantities:
     Field *Ex_pxr;
@@ -276,6 +290,11 @@ public:
     Field *r_;
     Field *p_;
     Field *Ap_;
+
+    cField *phi_AM_;
+    cField *r_AM_;
+    cField *p_AM_;
+    cField *Ap_AM_;
     
     //! \todo check time_dual or time_prim (MG)
 //    //! method used to solve Maxwell's equation (takes current time and time-step as input parameter)

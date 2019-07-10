@@ -62,7 +62,11 @@ public:
         if( species_name.size() < 2 ) {
             ERROR("For species #" << ispec << ", name cannot be only 1 character");
         }
-
+        
+        if( species_name.substr(0,2) == "m_" ) {
+            ERROR("For species #" << ispec << ", name cannot start  with `m_`");
+        }
+        
         // Extract type of species dynamics from namelist
         std::string pusher = "boris"; // default value
         PyTools::extract( "pusher", pusher, "Species", ispec );
@@ -989,18 +993,7 @@ public:
             Species *newSpecies = SpeciesFactory::clone( vecSpecies[ispec], params, patch, with_particles );
             retSpecies.push_back( newSpecies );
         }
-
-        // Init position on another specie
-        for( unsigned int i=0; i<retSpecies.size(); i++ ) {
-            if( retSpecies[i]->position_initialization_on_species==true ) {
-                unsigned int pos_init_index = retSpecies[i]->position_initialization_on_species_index;
-                if( retSpecies[i]->getNbrOfParticles() != retSpecies[pos_init_index]->getNbrOfParticles() ) {
-                    ERROR( "Number of particles in species '"<<retSpecies[i]->name<<"' is not equal to the number of particles in species '"<<retSpecies[pos_init_index]->name<<"'." );
-                }
-                // We copy ispec2 which is the index of the species, already created, on which initialize particles of the new created species
-                retSpecies[i]->particles->Position=retSpecies[pos_init_index]->particles->Position;
-            }
-        }
+        patch->copy_positions(retSpecies);
 
         // Ionization
         for( unsigned int i=0; i<retSpecies.size(); i++ ) {

@@ -58,15 +58,26 @@ class Field(Diagnostic):
 			self._fields = {}
 			for f in all_fields:
 				try:
+					if f[:5] in ["Bl_m_","Br_m_","Bt_m_"]:
+						fname = f[:4]
+						f = f[5:]
+					elif f[:4] in ["Rho_"]:
+						fname = f[:3]
+						f = f[4:]
+					elif f[:3] in ["El_","Er_","Et_","Bl_","Br_","Bt_","Jl_","Jr_","Jt_"]:
+						fname = f[:2]
+						f = f[3:]
+					else:
+						raise
 					try:
-						fname, wordmode, imode = f.split('_')
+						wordmode, imode = f.split('_')
 						species_name = ""
 					except:
-						fname, species_name, wordmode, imode = f.split('_')
-						species_name = "_" + species_name
+						ff = f.split('_')
+						species_name = "_" + "_".join(ff[:-2])
+						wordmode = ff[-2]
+						imode = ff[-1]
 					if wordmode != "mode":
-						raise
-					if fname not in ["El","Er","Et","Bl","Br","Bt","Jl","Jr","Jt","Rho"]:
 						raise
 					fname += species_name
 					if fname not in self._fields:

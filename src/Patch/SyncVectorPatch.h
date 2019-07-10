@@ -8,6 +8,7 @@ class VectorPatch;
 class Params;
 class SmileiMPI;
 class Field;
+class cField;
 class Timers;
 
 class SyncVectorPatch
@@ -44,6 +45,8 @@ public :
     
     static void exchangeB( Params &params, VectorPatch &vecPatches, int imode, SmileiMPI *smpi );
     static void finalizeexchangeB( Params &params, VectorPatch &vecPatches, int imode );
+    static void exchangeE( Params &params, VectorPatch &vecPatches, int imode, SmileiMPI *smpi );
+    static void finalizeexchangeE( Params &params, VectorPatch &vecPatches, int imode );
     static void exchangeJ( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
     static void finalizeexchangeJ( Params &params, VectorPatch &vecPatches );
     
@@ -62,6 +65,8 @@ public :
     static void finalizeexchangeComplex( std::vector<Field *> fields, VectorPatch &vecPatches );
     static void exchange_along_all_directions_noomp( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
     static void finalize_exchange_along_all_directions_noomp( std::vector<Field *> fields, VectorPatch &vecPatches );
+    static void exchange_along_all_directions_noompComplex( std::vector<cField *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
+    static void finalize_exchange_along_all_directions_noompComplex( std::vector<cField *> fields, VectorPatch &vecPatches );
     
     static void exchange_synchronized_per_direction( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
     
