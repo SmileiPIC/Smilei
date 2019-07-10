@@ -200,7 +200,6 @@ public:
         return norm2;
     }
     
-    void on_axis_J( bool diag_flag );
     //! from smpi is ymax
     const bool isYmin;
     
