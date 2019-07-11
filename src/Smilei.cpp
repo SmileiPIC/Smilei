@@ -283,7 +283,6 @@ int main( int argc, char *argv[] )
     }
     
     Domain domain( params );
-    //#ifdef _PICSAR
     if (params.uncoupled_grids) {
         domain.build( params, &smpi, vecPatches, openPMD, false );
         domain.identify_additional_patches( &smpi, vecPatches, params, simWindow );
@@ -301,7 +300,6 @@ int main( int argc, char *argv[] )
             vecPatches( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, vecPatches( 0 )->EMfields );
         }
     }
-    //#endif
 
     timers.global.reboot();
     
@@ -422,7 +420,6 @@ int main( int argc, char *argv[] )
         } //End omp parallel region
 
         // solve Maxwell's equations
-        //#ifndef _PICSAR
         if (!params.uncoupled_grids) {
             if( time_dual > params.time_fields_frozen ) {
                 #pragma omp parallel shared (time_dual,smpi,params, vecPatches, domain, simWindow, checkpoint, itime)
@@ -431,7 +428,6 @@ int main( int argc, char *argv[] )
                 }
             }
         }
-        //#else
         else { //if ( params.uncoupled_grids ) {
             if( time_dual > params.time_fields_frozen ) {
                 if ( params.geometry != "AMcylindrical" )
@@ -466,7 +462,6 @@ int main( int argc, char *argv[] )
                 }
             }
         }
-        //#endif
 
         #pragma omp parallel shared (time_dual,smpi,params, vecPatches, domain, simWindow, checkpoint, itime)
         {

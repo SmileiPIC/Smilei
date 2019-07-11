@@ -75,7 +75,7 @@ void PXR_Solver3D_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool f
                                 &( rho3D_pxr->data_[0] ),
                                 &( rhoold3D_pxr->data_[0] ), &cdim );
 #else
-    ERROR( "Smilei not linked with picsar" );
+    ERROR( "Smilei not linked with picsar, use make config=picsar" );
 #endif
                                 
                                 
@@ -88,7 +88,7 @@ void PXR_Solver3D_GPSTD::operator()( ElectroMagn *fields )
 #ifdef _PICSAR
     picsar::push_psatd_ebfield_();
 #else
-    ERROR( "Smilei not linked with picsar" );
+    ERROR( "Smilei not linked with picsar, use make config=picsar" );
 #endif
     
     //duplicate_field_into_smilei( fields );

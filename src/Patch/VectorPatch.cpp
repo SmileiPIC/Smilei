@@ -680,7 +680,6 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
     timers.syncField.update( params.printNow( itime ) );
     
     
-    //#ifdef _PICSAR
     if ( (params.uncoupled_grids) && ( itime!=0 ) && ( time_dual > params.time_fields_frozen ) ) { // uncoupled_grids = true -> is_spectral = true 
         timers.syncField.restart();
         if( params.is_spectral && params.geometry != "AMcylindrical" ) {
@@ -709,7 +708,6 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
             save_old_rho( params );
         }
     }
-    //#endif
     
 } // END solveMaxwell
 
@@ -766,7 +764,6 @@ void VectorPatch::solveEnvelope( Params &params, SimWindow *simWindow, int itime
 void VectorPatch::finalize_sync_and_bc_fields( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
         double time_dual, Timers &timers, int itime )
 {
-    //#ifndef _PICSAR
     if ( (!params.uncoupled_grids) && ( itime!=0 ) && ( time_dual > params.time_fields_frozen ) ) { // uncoupled_grids = true -> is_spectral = true 
         if( params.geometry != "AMcylindrical" ) {
             timers.syncField.restart();
@@ -789,7 +786,6 @@ void VectorPatch::finalize_sync_and_bc_fields( Params &params, SmileiMPI *smpi, 
             //}
         }
     }
-    //#endif
     
 } // END finalize_sync_and_bc_fields
 

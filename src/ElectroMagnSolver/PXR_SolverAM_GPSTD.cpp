@@ -156,7 +156,7 @@ void PXR_SolverAM_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool f
                                     &( rho_pxr->cdata_[0] ),
                                     &( rhoold_pxr->cdata_[0] ) );
 #else
-    ERROR( "Smilei not linked with picsar" );
+    ERROR( "Smilei not linked with picsar, use make config=picsar" );
 #endif
                                 
                                 
@@ -167,7 +167,7 @@ void PXR_SolverAM_GPSTD::uncoupling()
 #ifdef _PICSAR
     picsar::free_params_picsar_AM();
 #else
-    ERROR( "Smilei not linked with picsar" );
+    ERROR( "Smilei not linked with picsar, use make config=picsar" );
 #endif
 }
 
@@ -178,7 +178,7 @@ void PXR_SolverAM_GPSTD::divergence_cleaning( ElectroMagn *fields )
 #ifdef _PICSAR
     picsar::divergence_cleaning();
 #else
-    ERROR( "Smilei not linked with picsar" );
+    ERROR( "Smilei not linked with picsar, use make config=picsar" );
 #endif
     
     //duplicate_field_into_smilei( fields );
@@ -195,7 +195,7 @@ void PXR_SolverAM_GPSTD::operator()( ElectroMagn *fields )
 #ifdef _PICSAR
     picsar::push_psatd_ebfield_();
 #else
-    ERROR( "Smilei not linked with picsar" );
+    ERROR( "Smilei not linked with picsar, use make config=picsar" );
 #endif
     
     //duplicate_field_into_smilei( fields );

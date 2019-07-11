@@ -61,21 +61,6 @@ ifneq ($(strip $(PYTHONHOME)),)
 endif
 
 
-PICSAR=TRUE
-ifeq ($(PICSAR),TRUE)
-        # New environment variable
-	FFTW3_LIB ?= $(FFTW_LIB_DIR)
-	LIBPXR ?= picsar/lib
-	# Set Picsar link environment
-	CXXFLAGS += -D_PICSAR
-	LDFLAGS += -L$(LIBPXR) -lpxr
-	LDFLAGS += -L$(FFTW3_LIB) -lfftw3_mpi -lopenblas
-
-	LDFLAGS += -L$(FFTW3_LIB) -lfftw3_threads
-	LDFLAGS += -L$(FFTW3_LIB) -lfftw3
-	LDFLAGS += -lgfortran
-endif
-
 CXXFLAGS += -D_VECTO
 
 # Manage options in the "config" parameter
@@ -126,6 +111,21 @@ ifeq (,$(findstring noopenmp,$(config)))
 else
     LDFLAGS += -mt_mpi # intelmpi only
 endif
+
+ifneq (,$(findstring picsar,$(config)))
+        # New environment variable
+	FFTW3_LIB ?= $(FFTW_LIB_DIR)
+	LIBPXR ?= picsar/lib
+	# Set Picsar link environment
+	CXXFLAGS += -D_PICSAR
+	LDFLAGS += -L$(LIBPXR) -lpxr
+	LDFLAGS += -L$(FFTW3_LIB) -lfftw3_mpi  -L/gpfsdata/jderouillat/SMILEI/smilei.pxr/OpenBLAS -lopenblas
+
+	LDFLAGS += -L$(FFTW3_LIB) -lfftw3_threads
+	LDFLAGS += -L$(FFTW3_LIB) -lfftw3
+	LDFLAGS += -lgfortran
+endif
+
 
 # Manage MPI communications by a single thread (master in MW)
 ifneq (,$(findstring no_mpi_tm,$(config)))
