@@ -502,26 +502,21 @@ int main( int argc, char *argv[] )
 
                 }
             }
-            
-            // print message at given time-steps
-            // --------------------------------
-            if( smpi.isMaster() &&  params.printNow( itime ) ) {
-                params.print_timestep( itime, time_dual, timers.global );    //contain a timer.update !!!
-            }
-            
-            if( params.printNow( itime ) ) {
-                #pragma omp master
-                timers.consolidate( &smpi );
-                #pragma omp barrier
-            }
-            
-            #pragma omp single
-            {
-                itime++;
-            }
-
         } //End omp parallel region
 
+        // print message at given time-steps
+        // --------------------------------
+        if( smpi.isMaster() &&  params.printNow( itime ) ) {
+            params.print_timestep( itime, time_dual, timers.global );    //contain a timer.update !!!
+        }
+
+        if( params.printNow( itime ) ) {
+            #pragma omp master
+            timers.consolidate( &smpi );
+            #pragma omp barrier
+        }
+
+        itime++;
             
     }//END of the time loop
         
