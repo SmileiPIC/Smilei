@@ -333,12 +333,13 @@ int main( int argc, char *argv[] )
         params.print_timestep_headers();
     }
     
-    #pragma omp parallel shared (time_dual,smpi,params, vecPatches, domain, simWindow, checkpoint)
-    {
     
-        unsigned int itime=checkpoint.this_run_start_step+1;
-        while( ( itime <= params.n_time ) && ( !checkpoint.exit_asap ) ) {
-        
+    unsigned int itime=checkpoint.this_run_start_step+1;
+    while( ( itime <= params.n_time ) && ( !checkpoint.exit_asap ) ) {
+
+        #pragma omp parallel shared (time_dual,smpi,params, vecPatches, domain, simWindow, checkpoint, itime)
+        {
+
             // calculate new times
             // -------------------
             #pragma omp single
@@ -417,51 +418,58 @@ int main( int argc, char *argv[] )
             
             // apply currents from antennas
             vecPatches.applyAntennas( time_dual );
-            
-            // solve Maxwell's equations
-            //#ifndef _PICSAR
-            if (!params.uncoupled_grids) {
-                if( time_dual > params.time_fields_frozen ) {
+
+        } //End omp parallel region
+
+        // solve Maxwell's equations
+        //#ifndef _PICSAR
+        if (!params.uncoupled_grids) {
+            if( time_dual > params.time_fields_frozen ) {
+                #pragma omp parallel shared (time_dual,smpi,params, vecPatches, domain, simWindow, checkpoint, itime)
+                {
                     vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers, &smpi );
                 }
             }
-            //#else
-            else { //if ( params.uncoupled_grids ) {
-                if( time_dual > params.time_fields_frozen ) {
-                    if ( params.geometry != "AMcylindrical" )
-                        DoubleGrids::syncCurrentsOnDomain( vecPatches, domain, params, &smpi, timers, itime );
-                    else {
-                        for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
-                            DoubleGridsAM::syncCurrentsOnDomain( vecPatches, domain, params, &smpi, timers, itime, imode );
+        }
+        //#else
+        else { //if ( params.uncoupled_grids ) {
+            if( time_dual > params.time_fields_frozen ) {
+                if ( params.geometry != "AMcylindrical" )
+                    DoubleGrids::syncCurrentsOnDomain( vecPatches, domain, params, &smpi, timers, itime );
+                else {
+                    for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
+                        DoubleGridsAM::syncCurrentsOnDomain( vecPatches, domain, params, &smpi, timers, itime, imode );
+                }
+                timers.syncDens.restart();
+                domain.vecPatch_.diag_flag = false;
+                if( params.geometry != "AMcylindrical" )
+                    SyncVectorPatch::sumRhoJ( params, domain.vecPatch_, &smpi, timers, itime ); // MPI
+                else
+                    for( unsigned int imode = 0 ; imode < params.nmodes ; imode++ ) {
+                        SyncVectorPatch::sumRhoJ( params, domain.vecPatch_, imode, &smpi, timers, itime );
                     }
-                    timers.syncDens.restart();
-                    domain.vecPatch_.diag_flag = false;
-                    if( params.geometry != "AMcylindrical" )
-                        SyncVectorPatch::sumRhoJ( params, domain.vecPatch_, &smpi, timers, itime ); // MPI
-                    else
-                        for( unsigned int imode = 0 ; imode < params.nmodes ; imode++ ) {
-                            SyncVectorPatch::sumRhoJ( params, domain.vecPatch_, imode, &smpi, timers, itime );
-                        }
-                    timers.syncDens.update( params.printNow( itime ) );
+                timers.syncDens.update( params.printNow( itime ) );
 
 
-                    if( params.geometry == "AMcylindrical" ) {
-                        ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( domain.vecPatch_ )( 0 )->EMfields );
-                        emAM->on_axis_J( domain.vecPatch_.diag_flag );
-                    }
+                if( params.geometry == "AMcylindrical" ) {
+                    ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( domain.vecPatch_ )( 0 )->EMfields );
+                    emAM->on_axis_J( domain.vecPatch_.diag_flag );
+                }
 
 
-                    domain.solveMaxwell( params, simWindow, itime, time_dual, timers, &smpi );
-                    if ( params.geometry != "AMcylindrical" )
-                        DoubleGrids::syncFieldsOnPatches( domain, vecPatches, params, &smpi, timers, itime );
-                    else {
-                        for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
-                            DoubleGridsAM::syncFieldsOnPatches( domain, vecPatches, params, &smpi, timers, itime, imode );
-                    }
+                domain.solveMaxwell( params, simWindow, itime, time_dual, timers, &smpi );
+                if ( params.geometry != "AMcylindrical" )
+                    DoubleGrids::syncFieldsOnPatches( domain, vecPatches, params, &smpi, timers, itime );
+                else {
+                    for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
+                        DoubleGridsAM::syncFieldsOnPatches( domain, vecPatches, params, &smpi, timers, itime, imode );
                 }
             }
+        }
+        //#endif
 
-            //#endif
+        #pragma omp parallel shared (time_dual,smpi,params, vecPatches, domain, simWindow, checkpoint, itime)
+        {
             vecPatches.finalize_sync_and_bc_fields( params, &smpi, simWindow, time_dual, timers, itime );
             
             // call the various diagnostics
@@ -507,11 +515,16 @@ int main( int argc, char *argv[] )
                 #pragma omp barrier
             }
             
-            itime++;
+            #pragma omp single
+            {
+                itime++;
+            }
+
+        } //End omp parallel region
+
             
-        }//END of the time loop
+    }//END of the time loop
         
-    } //End omp parallel region
     
     smpi.barrier();
     
