@@ -25,6 +25,7 @@ deploy:
    local-dir: build/html
    on:
      branch: master
+     tags: true
 
  - provider: script
    script: curl -X POST "https://registry.hub.docker.com/u/iltommi/docker-smilei/trigger/${DOCKER_HUB_TOKEN}/"
