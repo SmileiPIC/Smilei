@@ -118,7 +118,7 @@ The relativistic Poisson equation for the potential component :math:`\tilde{\Phi
 .. math::
   :label: RelPoissonModes
 
-  \left[ \frac{1}{\gamma^2_0}\partial^2_x\tilde{\Phi}^m+\frac{1}{r}\partial_r\left(r\partial_r\tilde{\Phi}^m\right)-\frac{m^2}{r^2}\tilde{\Phi}^m \right]\Phi = -\tilde{\rho}^m.
+  \left[ \frac{1}{\gamma^2_0}\partial^2_x\tilde{\Phi}^m+\frac{1}{r}\partial_r\left(r\partial_r\tilde{\Phi}^m\right)-\frac{m^2}{r^2}\tilde{\Phi}^m \right] = -\tilde{\rho}^m.
 
 Solving each of these relativistic Poisson's equations allows to initialize the azimuthal components of the electromagnetic fields:
 

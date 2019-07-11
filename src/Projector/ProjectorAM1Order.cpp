@@ -135,14 +135,11 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     // variable declaration
     double xpn, ypn;
     double delta;
-    complex<double>  Jl_p[2][2], Jr_p[2][2], Jt_p[2][2];
 
     double  Sl1[2], Sr1[2],Sl1d[2], Sr1d[2];
     complex<double> e_theta, C_m = 1.; 
     complex<double> *Jl, *Jr, *Jt, *rho;
     
-    double yp = particles.position( 1, ipart );
-    double zp = particles.position( 2, ipart );
     double rp = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
     double crt_p = charge_weight * ( particles.momentum( 2, ipart )*particles.position( 1, ipart )-particles.momentum( 1, ipart )*particles.position( 2, ipart ) )/( rp )*invgf;
     double crl_p = charge_weight * ( particles.momentum( 0, ipart )) *invgf;
@@ -255,7 +252,7 @@ void ProjectorAM1Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
     if (emAM->isYmin ) {
         double sign = -1. ;
         unsigned int n_species = emAM->Jl_.size() / Nmode;
-        for ( int imode = 0; imode < Nmode; imode++){
+        for ( unsigned int imode = 0; imode < Nmode; imode++){
             unsigned int ifield = imode*n_species+ispec;
             complex<double> *Jl  = emAM->Jl_s    [ifield] ? &( * ( emAM->Jl_s    [ifield] ) )( 0 ) : &( *emAM->Jl_    [imode] )( 0 ) ;
             complex<double> *Jr  = emAM->Jr_s    [ifield] ? &( * ( emAM->Jr_s    [ifield] ) )( 0 ) : &( *emAM->Jr_    [imode] )( 0 ) ;
@@ -276,7 +273,6 @@ void ProjectorAM1Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
             //    }
             //}//i
             // Fold dual quantities along r
-            int max_fold = 2*oversizeR+1;
             for( unsigned int i=0 ; i<npriml; i++ ) {
                 int iloc = i*(nprimr+1);
                 for( unsigned int j=0 ; j<= oversizeR; j++ ) {

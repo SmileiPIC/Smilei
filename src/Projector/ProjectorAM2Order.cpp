@@ -140,8 +140,6 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     jpo -= 2;
 
     double *invR_local = &(invR[jpo]);
-
-    unsigned int nfold = max( -jpo, 0 ) ; // Number of cells touched below axis
     
     // ------------------------------------------------
     // Local current created by the particle
@@ -439,7 +437,6 @@ void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
     std::vector<double> *invgf = &( smpi->dynamics_invgf[ithread] );
     std::vector<double> *array_theta_old = &( smpi->dynamics_thetaold[ithread] );
-    complex<double> *rho, *Jl, *Jr, *Jt; 
     ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
 
     for( int ipart=istart ; ipart<iend; ipart++ ) {
@@ -450,7 +447,7 @@ void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
     if (emAM->isYmin ) {
         complex<double> *rho, *Jl, *Jr, *Jt; 
         double sign = 1. ;
-        for ( int imode = 0; imode < Nmode; imode++){
+        for ( unsigned int imode = 0; imode < Nmode; imode++){
             sign *= -1.;
 
             if (!diag_flag){
