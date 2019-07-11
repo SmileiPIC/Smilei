@@ -486,23 +486,23 @@ int main( int argc, char *argv[] )
             #pragma omp barrier
             // ----------------------------------------------------------------------
             
-            
-            if( params.has_load_balancing ) {
-                if( params.load_balancing_time_selection->theTimeIsNow( itime ) ) {
-                    timers.loadBal.restart();
-                    #pragma omp single
-                    vecPatches.load_balance( params, time_dual, &smpi, simWindow, itime );
-                    timers.loadBal.update( params.printNow( itime ) );
-
-                    if (params.uncoupled_grids) {
-                        domain.reset_mapping();
-                        domain.identify_additional_patches( &smpi, vecPatches, params, simWindow );
-                        domain.identify_missing_patches( &smpi, vecPatches, params );
-                    }
-
-                }
-            }
         } //End omp parallel region
+            
+        if( params.has_load_balancing ) {
+            if( params.load_balancing_time_selection->theTimeIsNow( itime ) ) {
+                timers.loadBal.restart();
+                #pragma omp single
+                vecPatches.load_balance( params, time_dual, &smpi, simWindow, itime );
+                timers.loadBal.update( params.printNow( itime ) );
+
+                if (params.uncoupled_grids) {
+                    domain.reset_mapping();
+                    domain.identify_additional_patches( &smpi, vecPatches, params, simWindow );
+                    domain.identify_missing_patches( &smpi, vecPatches, params );
+                }
+
+            }
+        }
 
         // print message at given time-steps
         // --------------------------------
