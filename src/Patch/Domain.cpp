@@ -54,7 +54,8 @@ void Domain::build( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, Op
     vecPatch_.nrequests = vecPatches( 0 )->requests_.size();
     vecPatch_.nAntennas = vecPatch_( 0 )->EMfields->antennas.size();
     vecPatch_.initExternals( params );
-    //vecPatch_.applyExternalFields();
+    if (!params.apply_divergence_cleaning)
+        vecPatch_.applyExternalFields();
     
     fake_patch = PatchesFactory::clone(vecPatches(0), params, smpi, vecPatches.domain_decomposition_, 0, 0, false);
     if (params.is_spectral)
