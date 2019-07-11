@@ -555,14 +555,17 @@ void SimWindow::operate( VectorPatch &vecPatches, SmileiMPI *smpi, Params &param
 #ifdef _NO_MPI_TM
     } // end omp master
 #endif
-    
-    if (params.uncoupled_grids)
-        if ( params.geometry != "AMcylindrical" )
-            operate(domain, vecPatches, smpi, params, time_dual);
-        else {
-            for (unsigned int imode = 0 ; imode < params.nmodes ; imode++ )
-                operate(domain, vecPatches, smpi, params, time_dual, imode);
-        }
+
+    #pragma omp single
+    {
+        if (params.uncoupled_grids)
+            if ( params.geometry != "AMcylindrical" )
+                operate(domain, vecPatches, smpi, params, time_dual);
+            else {
+                for (unsigned int imode = 0 ; imode < params.nmodes ; imode++ )
+                    operate(domain, vecPatches, smpi, params, time_dual, imode);
+            }
+    }
 
 }
 
