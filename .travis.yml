@@ -24,7 +24,6 @@ deploy:
    keep-history: false
    local-dir: build/html
    on:
-     branch: master
      tags: true
 
  - provider: script
