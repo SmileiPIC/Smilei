@@ -1102,7 +1102,78 @@ void ElectroMagnAM::centerMagneticFields()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnAM::binomialCurrentFilter()
 {
-    ERROR( "Binomial current filtering not yet implemented in AM" );
+    for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
+    
+        // Static cast of the fields
+        cField2D *Jl     = Jl_ [imode];
+        cField2D *Jr     = Jr_ [imode];
+        cField2D *Jt     = Jt_ [imode];
+        
+        // applying a single pass of the binomial filter
+        // on Jx^(d,p) -- external points are treated by exchange. Boundary points not concerned by exchange are treated with a lower order filter.
+        for( unsigned int i=0; i<nl_d-1; i++ ) {
+            for( unsigned int j=0; j<nr_p; j++ ) {
+                ( *Jl )( (i, j )) = ( ( *Jl )( (i, j )) + ( *Jl )( (i+1, j )) )*0.5;
+            }
+        }
+        for( unsigned int i=nl_d-2; i>0; i-- ) {
+            for( unsigned int j=0; j<nr_p; j++ ) {
+                ( *Jl )( (i, j )) = ( ( *Jl )( (i, j )) + ( *Jl )( (i-1, j )) )*0.5;
+            }
+        }
+        for( unsigned int i=1; i<nl_d-1; i++ ) {
+            for( unsigned int j=0; j<nr_p-1; j++ ) {
+                ( *Jl )( (i, j )) = ( ( *Jl )( (i, j )) + ( *Jl )( (i, j+1 )) )*0.5;
+            }
+        }
+        for( unsigned int i=1; i<nl_d-1; i++ ) {
+            for( unsigned int j=nr_p-2; j>0; j-- ) {
+                ( *Jl )( (i, j )) = ( ( *Jl )( (i, j )) + ( *Jl )( (i, j-1 )) )*0.5;
+            }
+        }
+        // Jy
+        for( unsigned int i=0; i<nl_p-1; i++ ) {
+            for( unsigned int j=0; j<nr_d; j++ ) {
+                ( *Jr )( (i, j )) = ( ( *Jr )( (i, j )) + ( *Jr )( (i+1, j )) )*0.5;
+            }
+        }
+        for( unsigned int i=nl_p-2; i>0; i-- ) {
+            for( unsigned int j=0; j<nr_d; j++ ) {
+                ( *Jr )( (i, j )) = ( ( *Jr )( (i, j )) + ( *Jr )( (i-1, j )) )*0.5;
+            }
+        }
+        for( unsigned int i=1; i<nl_p-1; i++ ) {
+            for( unsigned int j=0; j<nr_d-1; j++ ) {
+                ( *Jr )( (i, j )) = ( ( *Jr )( (i, j )) + ( *Jr )( (i, j+1 )) )*0.5;
+            }
+        }
+        for( unsigned int i=1; i<nl_p-1; i++ ) {
+            for( unsigned int j=nr_d-2; j>0; j-- ) {
+                ( *Jr )( (i, j )) = ( ( *Jr )( (i, j )) + ( *Jr )( (i, j-1 )) )*0.5;
+            }
+        }
+        // Jz
+        for( unsigned int i=0; i<nl_p-1; i++ ) {
+            for( unsigned int j=0; j<nr_p; j++ ) {
+                ( *Jt )( (i, j )) = ( ( *Jt )( (i, j )) + ( *Jt )( (i+1, j )) )*0.5;
+            }
+        }
+        for( unsigned int i=nl_p-2; i>0; i-- ) {
+            for( unsigned int j=0; j<nr_p; j++ ) {
+                ( *Jt )( (i, j )) = ( ( *Jt )( (i, j )) + ( *Jt )( (i-1, j )) )*0.5;
+            }
+        }
+        for( unsigned int i=1; i<nl_p-1; i++ ) {
+            for( unsigned int j=0; j<nr_p-1; j++ ) {
+                ( *Jt )( (i, j )) = ( ( *Jt )( (i, j )) + ( *Jt )( (i, j+1 )) )*0.5;
+            }
+        }
+        for( unsigned int i=1; i<nl_p-1; i++ ) {
+            for( unsigned int j=nr_p-2; j>0; j-- ) {
+                ( *Jt )( (i, j )) = ( ( *Jt )( (i, j )) + ( *Jt )( (i, j-1 )) )*0.5;
+            }
+        }
+    }
 }
 
 
