@@ -119,7 +119,7 @@ ifneq (,$(findstring picsar,$(config)))
 	# Set Picsar link environment
 	CXXFLAGS += -D_PICSAR
 	LDFLAGS += -L$(LIBPXR) -lpxr
-	LDFLAGS += -L$(FFTW3_LIB) -lfftw3_mpi  -L/gpfsdata/jderouillat/SMILEI/smilei.pxr/OpenBLAS -lopenblas
+	LDFLAGS += -L$(FFTW3_LIB) -lfftw3_mpi  -lopenblas
 
 	LDFLAGS += -L$(FFTW3_LIB) -lfftw3_threads
 	LDFLAGS += -L$(FFTW3_LIB) -lfftw3
