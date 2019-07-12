@@ -389,6 +389,40 @@ Please refer to :ref:`that doc <Particle_merging>` for an explanation of how to 
 4. Simulation results
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+4.1 QED cascade
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+.. _fig_qed_cascade_photon_gamma_spectrum:
+
+.. figure:: _static/QED_cascade_gamma_spectrum.png
+  :width: 100%
+
+  Electron, energy spectrum at simulation time :math:`t = 39.5 \omega^{-1}`
+  for the different merging configuration: no merging, mergign with the logarithmic and linear spherical discretization and the cartesian discretization.
+
+.. _fig_qed_cascade_photon_pxpy_spectrum:
+
+.. figure:: _static/QED_cascade_photon_px_py_distribution.png
+  :width: 100%
+
+  :math:`p_x-p_y` photon momentum distribution at simulation time :math:`t = 39.5 \omega^{-1}`
+  for the different merging configuration: no merging, mergign with the logarithmic and linear spherical discretization and the cartesian discretization.
+
+.. _fig_qed_cascade_electron_pxpy_spectrum:
+
+.. figure:: _static/QED_cascade_electron_px_py_distribution.png
+  :width: 100%
+
+  :math:`p_x-p_y` electron momentum distribution at simulation time :math:`t = 39.5 \omega^{-1}`
+  for the different merging configuration: no merging, mergign with the logarithmic and linear spherical discretization and the cartesian discretization.
+
+.. _video_qed_cascade:
+
+.. raw:: html
+
+  <video style="display:block; margin: 0 auto; width: 100%;" controls src="http://www.maisondelasimulation.fr/projects/Smilei/uploads/videos/qed_cascade.mp4" width="100%">
+  </video>
+
 --------------------------------------------------------------------------------
 
 References
