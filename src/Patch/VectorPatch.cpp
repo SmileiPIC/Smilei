@@ -1192,6 +1192,39 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI *smpi )
 } // END solvePoisson
 
 
+void VectorPatch::runRelativisticModule( double time_prim, Params &params, SmileiMPI* smpi,  Timers &timers ) 
+{
+    // Compute rho only for species needing relativistic field Initialization
+    computeChargeRelativisticSpecies( time_prim );
+
+    if (params.geometry != "AMcylindrical"){
+        SyncVectorPatch::sum( listrho_, (*this), smpi, timers, 0 );
+    } else {
+        for( unsigned int imode=0 ; imode<params.nmodes ; imode++ ) {
+            SyncVectorPatch::sumRhoJ( params, (*this), imode, smpi, timers, 0 );
+        }
+    }
+
+    #pragma omp master
+    {
+        // Initialize the fields for these species
+        if( !isRhoNull( smpi ) ) {
+            TITLE( "Initializing relativistic species fields" );
+            if (params.geometry != "AMcylindrical"){
+                solveRelativisticPoisson( params, smpi, time_prim );
+            } else {
+                solveRelativisticPoissonAM( params, smpi, time_prim );
+            }
+        }
+    }
+    #pragma omp barrier
+
+    // Reset rho and J and return to PIC loop
+    resetRhoJ();
+
+}
+
+
 void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, double time_primal )
 {
 
