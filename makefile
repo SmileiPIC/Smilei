@@ -145,7 +145,7 @@ endif
 
 EXEC = smilei
 
-default: $(EXEC) $(EXEC)_test
+default: check $(EXEC) $(EXEC)_test
 
 clean:
 	@echo "Cleaning $(BUILD_DIR)"
@@ -155,6 +155,9 @@ clean:
 distclean: clean uninstall_happi
 	$(Q) rm -f $(EXEC) $(EXEC)_test
 
+check:
+	$(Q) python scripts/CompileTools/check_make_options.py config $(config)
+	$(Q) python scripts/CompileTools/check_make_options.py machine $(machine)
 
 # Create python header files
 $(BUILD_DIR)/%.pyh: %.py
