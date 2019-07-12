@@ -1192,6 +1192,39 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI *smpi )
 } // END solvePoisson
 
 
+void VectorPatch::runRelativisticModule( double time_prim, Params &params, SmileiMPI* smpi,  Timers &timers ) 
+{
+    // Compute rho only for species needing relativistic field Initialization
+    computeChargeRelativisticSpecies( time_prim );
+
+    if (params.geometry != "AMcylindrical"){
+        SyncVectorPatch::sum( listrho_, (*this), smpi, timers, 0 );
+    } else {
+        for( unsigned int imode=0 ; imode<params.nmodes ; imode++ ) {
+            SyncVectorPatch::sumRhoJ( params, (*this), imode, smpi, timers, 0 );
+        }
+    }
+
+    #pragma omp master
+    {
+        // Initialize the fields for these species
+        if( !isRhoNull( smpi ) ) {
+            TITLE( "Initializing relativistic species fields" );
+            if (params.geometry != "AMcylindrical"){
+                solveRelativisticPoisson( params, smpi, time_prim );
+            } else {
+                solveRelativisticPoissonAM( params, smpi, time_prim );
+            }
+        }
+    }
+    #pragma omp barrier
+
+    // Reset rho and J and return to PIC loop
+    resetRhoJ();
+
+}
+
+
 void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, double time_primal )
 {
 
@@ -3024,6 +3057,25 @@ void VectorPatch::check_expected_disk_usage( SmileiMPI *smpi, Params &params, Ch
         }
         
     }
+}
+
+void VectorPatch::runEnvelopeModule( Params &params,
+        SmileiMPI *smpi,
+        SimWindow *simWindow,
+        double time_dual, Timers &timers, int itime )
+{
+    // interpolate envelope for susceptibility deposition, project susceptibility for envelope equation, momentum advance
+    ponderomotive_update_susceptibility_and_momentum( params, smpi, simWindow, time_dual, timers, itime );
+
+    // comm and sum susceptibility
+    sumSusceptibility( params, time_dual, timers, itime, simWindow, smpi );
+
+    // solve envelope equation and comm envelope
+    solveEnvelope( params, simWindow, itime, time_dual, timers, smpi );
+
+    // interp updated envelope for position advance, update positions and currents for Maxwell's equations
+    ponderomotive_update_position_and_currents( params, smpi, simWindow, time_dual, timers, itime );
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

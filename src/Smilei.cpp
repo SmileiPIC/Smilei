@@ -126,7 +126,22 @@ int main( int argc, char *argv[] )
         execute_test_mode( vecPatches, &smpi, simWindow, params, checkpoint, openPMD );
         return 0;
     }
-    
+
+    // ---------------------------------------------------------------------
+    // Init and compute tables for radiation effects
+    // (nonlinear inverse Compton scattering)
+    // ---------------------------------------------------------------------
+    RadiationTables.initializeParameters( params );
+    RadiationTables.compute_tables( params, &smpi );
+    RadiationTables.output_tables( &smpi );
+
+    // ---------------------------------------------------------------------
+    // Init and compute tables for multiphoton Breit-Wheeler pair decay
+    // ---------------------------------------------------------------------
+    MultiphotonBreitWheelerTables.initialization( params );
+    MultiphotonBreitWheelerTables.compute_tables( params, &smpi );
+    MultiphotonBreitWheelerTables.output_tables( &smpi );
+
     // reading from dumped file the restart values
     if( params.restart ) {
         // smpi.patch_count recomputed in readPatchDistribution
@@ -146,22 +161,7 @@ int main( int argc, char *argv[] )
         time_prim = checkpoint.this_run_start_step * params.timestep;
         // time at half-integer time-steps (dual grid)
         time_dual = ( checkpoint.this_run_start_step +0.5 ) * params.timestep;
-        
-        // ---------------------------------------------------------------------
-        // Init and compute tables for radiation effects
-        // (nonlinear inverse Compton scattering)
-        // ---------------------------------------------------------------------
-        RadiationTables.initializeParameters( params );
-        RadiationTables.compute_tables( params, &smpi );
-        RadiationTables.output_tables( &smpi );
-        
-        // ---------------------------------------------------------------------
-        // Init and compute tables for multiphoton Breit-Wheeler pair creation
-        // ---------------------------------------------------------------------
-        MultiphotonBreitWheelerTables.initialization( params );
-        MultiphotonBreitWheelerTables.compute_tables( params, &smpi );
-        MultiphotonBreitWheelerTables.output_tables( &smpi );
-        
+
         TITLE( "Initializing diagnostics" );
         vecPatches.initAllDiags( params, &smpi );
         
@@ -181,46 +181,11 @@ int main( int argc, char *argv[] )
         // Note: the mean gamma for initialization will be computed for all the species
         // whose fields are initialized at this iteration
         if( params.solve_relativistic_poisson == true ) {
-            // Compute rho only for species needing relativistic field Initialization
-            vecPatches.computeChargeRelativisticSpecies( time_prim );
-            if (params.geometry != "AMcylindrical"){
-                SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, &smpi, timers, 0 );
-            } else {
-                for( unsigned int imode=0 ; imode<params.nmodes ; imode++ ) {
-                    SyncVectorPatch::sumRhoJ( params, vecPatches, imode, &smpi, timers, 0 );
-                } 
-            }
-            
-            // Initialize the fields for these species
-            if( !vecPatches.isRhoNull( &smpi ) ) {
-                TITLE( "Initializing relativistic species fields at time t = 0" );
-                if (params.geometry != "AMcylindrical"){
-                    vecPatches.solveRelativisticPoisson( params, &smpi, time_prim );
-                } else {
-                    vecPatches.solveRelativisticPoissonAM( params, &smpi, time_prim );
-                }
-            }
-            // Reset rho and J and return to initialization
-            vecPatches.resetRhoJ();
+            vecPatches.runRelativisticModule( time_prim, params, &smpi,  timers );
         }
         
         vecPatches.computeCharge();
         vecPatches.sumDensities( params, time_dual, timers, 0, simWindow, &smpi );
-        // ---------------------------------------------------------------------
-        // Init and compute tables for radiation effects
-        // (nonlinear inverse Compton scattering)
-        // ---------------------------------------------------------------------
-        RadiationTables.initializeParameters( params );
-        RadiationTables.compute_tables( params, &smpi );
-        RadiationTables.output_tables( &smpi );
-        
-        // ---------------------------------------------------------------------
-        // Init and compute tables for multiphoton Breit-Wheeler pair decay
-        // ---------------------------------------------------------------------
-        MultiphotonBreitWheelerTables.initialization( params );
-        MultiphotonBreitWheelerTables.compute_tables( params, &smpi );
-        MultiphotonBreitWheelerTables.output_tables( &smpi );
-        
         // Apply antennas
         // --------------
         vecPatches.applyAntennas( 0.5 * params.timestep );
@@ -335,31 +300,7 @@ int main( int argc, char *argv[] )
             // Note: the mean gamma for initialization will be computed for all the species
             // whose fields are initialized at this iteration
             if( params.solve_relativistic_poisson == true ) {
-                // Compute rho only for species needing relativistic field Initialization
-                vecPatches.computeChargeRelativisticSpecies( time_prim );
-                if (params.geometry != "AMcylindrical"){
-                    SyncVectorPatch::sum( vecPatches.listrho_, vecPatches, &smpi, timers, 0 );
-                } else {
-                    for( unsigned int imode=0 ; imode<params.nmodes ; imode++ ) {
-                        SyncVectorPatch::sumRhoJ( params, vecPatches, imode, &smpi, timers, 0 );
-                    }
-                }
-                #pragma omp master
-                {
-                
-                    // Initialize the fields for these species
-                    if( !vecPatches.isRhoNull( &smpi ) ) {
-                        TITLE( "Initializing relativistic species fields" );
-                        if (params.geometry != "AMcylindrical"){
-                            vecPatches.solveRelativisticPoisson( params, &smpi, time_prim );
-                        } else {
-                            vecPatches.solveRelativisticPoissonAM( params, &smpi, time_prim );
-                        }
-                    }
-                }
-                #pragma omp barrier
-                // Reset rho and J and return to PIC loop
-                vecPatches.resetRhoJ();
+                vecPatches.runRelativisticModule( time_prim, params, &smpi,  timers );
             }
             
             // (1) interpolate the fields at the particle position
@@ -371,17 +312,7 @@ int main( int argc, char *argv[] )
                                  
             // if Laser Envelope is used, execute particles and envelope sections of ponderomotive loop
             if( params.Laser_Envelope_model ) {
-                // interpolate envelope for susceptibility deposition, project susceptibility for envelope equation, momentum advance
-                vecPatches.ponderomotive_update_susceptibility_and_momentum( params, &smpi, simWindow, time_dual, timers, itime );
-                
-                // comm and sum susceptibility
-                vecPatches.sumSusceptibility( params, time_dual, timers, itime, simWindow, &smpi );
-                
-                // solve envelope equation and comm envelope
-                vecPatches.solveEnvelope( params, simWindow, itime, time_dual, timers, &smpi );
-                
-                // interp updated envelope for position advance, update positions and currents for Maxwell's equations
-                vecPatches.ponderomotive_update_position_and_currents( params, &smpi, simWindow, time_dual, timers, itime );
+                vecPatches.runEnvelopeModule( params, &smpi, simWindow, time_dual, timers, itime );
             } // end condition if Laser Envelope Model is used
             
             // Sum densities

@@ -136,6 +136,11 @@ public :
     // compute rho only given by relativistic species which require initialization of the relativistic fields
     void computeChargeRelativisticSpecies( double time_primal );
     
+    // run particles ponderomptive dynamics, envelope's solver
+    void runEnvelopeModule( Params &params,
+            SmileiMPI *smpi,
+            SimWindow *simWindow,
+            double time_dual, Timers &timers, int itime );
     //! For all patches, deposit susceptibility, then advance momentum of particles interacting with envelope
     void ponderomotive_update_susceptibility_and_momentum( Params &params,
             SmileiMPI *smpi,
@@ -174,6 +179,7 @@ public :
     void solvePoisson( Params &params, SmileiMPI *smpi );
     
     //! Solve relativistic Poisson problem to initialize E and B of a relativistic bunch
+    void runRelativisticModule( double time_prim, Params &params, SmileiMPI* smpi,  Timers &timers );
     void solveRelativisticPoisson( Params &params, SmileiMPI *smpi, double time_primal );
     void solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, double time_primal );
     
