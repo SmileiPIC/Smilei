@@ -3059,6 +3059,25 @@ void VectorPatch::check_expected_disk_usage( SmileiMPI *smpi, Params &params, Ch
     }
 }
 
+void VectorPatch::runEnvelopeModule( Params &params,
+        SmileiMPI *smpi,
+        SimWindow *simWindow,
+        double time_dual, Timers &timers, int itime )
+{
+    // interpolate envelope for susceptibility deposition, project susceptibility for envelope equation, momentum advance
+    ponderomotive_update_susceptibility_and_momentum( params, smpi, simWindow, time_dual, timers, itime );
+
+    // comm and sum susceptibility
+    sumSusceptibility( params, time_dual, timers, itime, simWindow, smpi );
+
+    // solve envelope equation and comm envelope
+    solveEnvelope( params, simWindow, itime, time_dual, timers, smpi );
+
+    // interp updated envelope for position advance, update positions and currents for Maxwell's equations
+    ponderomotive_update_position_and_currents( params, smpi, simWindow, time_dual, timers, itime );
+
+}
+
 // ---------------------------------------------------------------------------------------------------------------------
 // For all patch, update momentum for particles interacting with envelope
 // ---------------------------------------------------------------------------------------------------------------------

@@ -126,7 +126,22 @@ int main( int argc, char *argv[] )
         execute_test_mode( vecPatches, &smpi, simWindow, params, checkpoint, openPMD );
         return 0;
     }
-    
+
+    // ---------------------------------------------------------------------
+    // Init and compute tables for radiation effects
+    // (nonlinear inverse Compton scattering)
+    // ---------------------------------------------------------------------
+    RadiationTables.initializeParameters( params );
+    RadiationTables.compute_tables( params, &smpi );
+    RadiationTables.output_tables( &smpi );
+
+    // ---------------------------------------------------------------------
+    // Init and compute tables for multiphoton Breit-Wheeler pair decay
+    // ---------------------------------------------------------------------
+    MultiphotonBreitWheelerTables.initialization( params );
+    MultiphotonBreitWheelerTables.compute_tables( params, &smpi );
+    MultiphotonBreitWheelerTables.output_tables( &smpi );
+
     // reading from dumped file the restart values
     if( params.restart ) {
         // smpi.patch_count recomputed in readPatchDistribution
@@ -146,22 +161,7 @@ int main( int argc, char *argv[] )
         time_prim = checkpoint.this_run_start_step * params.timestep;
         // time at half-integer time-steps (dual grid)
         time_dual = ( checkpoint.this_run_start_step +0.5 ) * params.timestep;
-        
-        // ---------------------------------------------------------------------
-        // Init and compute tables for radiation effects
-        // (nonlinear inverse Compton scattering)
-        // ---------------------------------------------------------------------
-        RadiationTables.initializeParameters( params );
-        RadiationTables.compute_tables( params, &smpi );
-        RadiationTables.output_tables( &smpi );
-        
-        // ---------------------------------------------------------------------
-        // Init and compute tables for multiphoton Breit-Wheeler pair creation
-        // ---------------------------------------------------------------------
-        MultiphotonBreitWheelerTables.initialization( params );
-        MultiphotonBreitWheelerTables.compute_tables( params, &smpi );
-        MultiphotonBreitWheelerTables.output_tables( &smpi );
-        
+
         TITLE( "Initializing diagnostics" );
         vecPatches.initAllDiags( params, &smpi );
         
@@ -186,21 +186,6 @@ int main( int argc, char *argv[] )
         
         vecPatches.computeCharge();
         vecPatches.sumDensities( params, time_dual, timers, 0, simWindow, &smpi );
-        // ---------------------------------------------------------------------
-        // Init and compute tables for radiation effects
-        // (nonlinear inverse Compton scattering)
-        // ---------------------------------------------------------------------
-        RadiationTables.initializeParameters( params );
-        RadiationTables.compute_tables( params, &smpi );
-        RadiationTables.output_tables( &smpi );
-        
-        // ---------------------------------------------------------------------
-        // Init and compute tables for multiphoton Breit-Wheeler pair decay
-        // ---------------------------------------------------------------------
-        MultiphotonBreitWheelerTables.initialization( params );
-        MultiphotonBreitWheelerTables.compute_tables( params, &smpi );
-        MultiphotonBreitWheelerTables.output_tables( &smpi );
-        
         // Apply antennas
         // --------------
         vecPatches.applyAntennas( 0.5 * params.timestep );
@@ -327,17 +312,7 @@ int main( int argc, char *argv[] )
                                  
             // if Laser Envelope is used, execute particles and envelope sections of ponderomotive loop
             if( params.Laser_Envelope_model ) {
-                // interpolate envelope for susceptibility deposition, project susceptibility for envelope equation, momentum advance
-                vecPatches.ponderomotive_update_susceptibility_and_momentum( params, &smpi, simWindow, time_dual, timers, itime );
-                
-                // comm and sum susceptibility
-                vecPatches.sumSusceptibility( params, time_dual, timers, itime, simWindow, &smpi );
-                
-                // solve envelope equation and comm envelope
-                vecPatches.solveEnvelope( params, simWindow, itime, time_dual, timers, &smpi );
-                
-                // interp updated envelope for position advance, update positions and currents for Maxwell's equations
-                vecPatches.ponderomotive_update_position_and_currents( params, &smpi, simWindow, time_dual, timers, itime );
+                vecPatches.runEnvelopeModule( params, &smpi, simWindow, time_dual, timers, itime );
             } // end condition if Laser Envelope Model is used
             
             // Sum densities
