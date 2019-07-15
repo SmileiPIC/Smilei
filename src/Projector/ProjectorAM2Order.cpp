@@ -201,7 +201,7 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
             Jr =  &( *emAM->Jr_[imode] )( 0 );
             Jt =  &( *emAM->Jt_[imode] )( 0 );
         } else {
-            unsigned int n_species = emAM->Jl_.size() / Nmode;
+            unsigned int n_species = emAM->Jl_s.size() / Nmode;
             unsigned int ifield = imode*n_species+ispec;
             Jl  = emAM->Jl_s    [ifield] ? &( * ( emAM->Jl_s    [ifield] ) )( 0 ) : &( *emAM->Jl_    [imode] )( 0 ) ;
             Jr  = emAM->Jr_s    [ifield] ? &( * ( emAM->Jr_s    [ifield] ) )( 0 ) : &( *emAM->Jr_    [imode] )( 0 ) ;
@@ -455,7 +455,7 @@ void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
                 Jr =  &( *emAM->Jr_[imode] )( 0 );
                 Jt =  &( *emAM->Jt_[imode] )( 0 );
             } else {
-                unsigned int n_species = emAM->Jl_.size() / Nmode;
+                unsigned int n_species = emAM->Jl_s.size() / Nmode;
                 unsigned int ifield = imode*n_species+ispec;
                 Jl  = emAM->Jl_s    [ifield] ? &( * ( emAM->Jl_s    [ifield] ) )( 0 ) : &( *emAM->Jl_    [imode] )( 0 ) ;
                 Jr  = emAM->Jr_s    [ifield] ? &( * ( emAM->Jr_s    [ifield] ) )( 0 ) : &( *emAM->Jr_    [imode] )( 0 ) ;
