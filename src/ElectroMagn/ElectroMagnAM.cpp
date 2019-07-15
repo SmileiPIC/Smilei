@@ -1105,11 +1105,11 @@ void ElectroMagnAM::binomialCurrentFilter()
     for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
     
         // Static cast of the fields
-        cField2D *Jl     = Jl_ [imode];
-        cField2D *Jr     = Jr_ [imode];
-        cField2D *Jt     = Jt_ [imode];
-        Field2D *tmp   = new Field2D( dimPrim, 0, false );
+        cField2D *Jl     = static_cast<cField2D *>(Jl_ [imode]);
+        cField2D *Jr     = static_cast<cField2D *>(Jr_ [imode]);
+        cField2D *Jt     = static_cast<cField2D *>(Jt_ [imode]);
 
+        cField2D *tmp   = new cField2D( dimPrim, 0, false );
         tmp->copyFrom( Jl );
         for( unsigned int i=1; i<nl_d-1; i++ ) {
             for( unsigned int j=isYmin*2+1; j<nr_p-1; j++ ) {
@@ -1121,9 +1121,10 @@ void ElectroMagnAM::binomialCurrentFilter()
         }
         delete tmp;
 
+        tmp   = new cField2D( dimPrim, 1, false );
         tmp->copyFrom( Jr );
         for( unsigned int i=1; i<nl_p-1; i++ ) {
-            for( unsigned int j=isYmin*3+1; j<nr_p-1; j++ ) {
+            for( unsigned int j=isYmin*3+1; j<nr_d-1; j++ ) {
                 ( *Jr )( i, j ) = ( (   ( *tmp )( i+1, j-1 )+ 2.*( *tmp )( i, j-1 )+    ( *tmp )( i-1, j-1 ))*(j_glob_+j-1.5)
                                   + (2.*( *tmp )( i+1, j   )+ 4.*( *tmp )( i, j   )+ 2.*( *tmp )( i-1, j   ))*(j_glob_+j-0.5)
                                   + (   ( *tmp )( i+1, j+1 )+ 2.*( *tmp )( i, j+1 )+    ( *tmp )( i-1, j+1 ))*(j_glob_+j+0.5)
@@ -1132,6 +1133,7 @@ void ElectroMagnAM::binomialCurrentFilter()
         }
         delete tmp;
 
+        tmp   = new cField2D( dimPrim, 2, false );
         tmp->copyFrom( Jt );
         for( unsigned int i=1; i<nl_p-1; i++ ) {
             for( unsigned int j=isYmin*2+1; j<nr_p-1; j++ ) {

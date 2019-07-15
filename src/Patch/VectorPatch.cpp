@@ -623,12 +623,23 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
             // Current spatial filtering
             ( *this )( ipatch )->EMfields->binomialCurrentFilter();
         }
-        SyncVectorPatch::exchange_along_all_directions( listJx_, *this, smpi );
-        SyncVectorPatch::finalize_exchange_along_all_directions( listJx_, *this );
-        SyncVectorPatch::exchange_along_all_directions( listJy_, *this, smpi );
-        SyncVectorPatch::finalize_exchange_along_all_directions( listJy_, *this );
-        SyncVectorPatch::exchange_along_all_directions( listJz_, *this, smpi );
-        SyncVectorPatch::finalize_exchange_along_all_directions( listJz_, *this );
+        if (params.geometry != "AMcylindrical"){
+            SyncVectorPatch::exchange_along_all_directions( listJx_, *this, smpi );
+            SyncVectorPatch::finalize_exchange_along_all_directions( listJx_, *this );
+            SyncVectorPatch::exchange_along_all_directions( listJy_, *this, smpi );
+            SyncVectorPatch::finalize_exchange_along_all_directions( listJy_, *this );
+            SyncVectorPatch::exchange_along_all_directions( listJz_, *this, smpi );
+            SyncVectorPatch::finalize_exchange_along_all_directions( listJz_, *this );
+        } else {
+            for (unsigned int imode=0 ; imode < params.nmodes; imode++) {
+                SyncVectorPatch::exchange_along_all_directions( listJl_[imode], *this, smpi );
+                SyncVectorPatch::finalize_exchange_along_all_directions( listJl_[imode], *this );
+                SyncVectorPatch::exchange_along_all_directions( listJr_[imode], *this, smpi );
+                SyncVectorPatch::finalize_exchange_along_all_directions( listJr_[imode], *this );
+                SyncVectorPatch::exchange_along_all_directions( listJt_[imode], *this, smpi );
+                SyncVectorPatch::finalize_exchange_along_all_directions( listJt_[imode], *this );
+            }
+        }
     }
     #pragma omp for schedule(static)
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
