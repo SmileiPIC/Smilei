@@ -632,12 +632,12 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
             SyncVectorPatch::finalize_exchange_along_all_directions( listJz_, *this );
         } else {
             for (unsigned int imode=0 ; imode < params.nmodes; imode++) {
-                SyncVectorPatch::exchange_along_all_directions( listJl_[imode], *this, smpi );
-                SyncVectorPatch::finalize_exchange_along_all_directions( listJl_[imode], *this );
-                SyncVectorPatch::exchange_along_all_directions( listJr_[imode], *this, smpi );
-                SyncVectorPatch::finalize_exchange_along_all_directions( listJr_[imode], *this );
-                SyncVectorPatch::exchange_along_all_directions( listJt_[imode], *this, smpi );
-                SyncVectorPatch::finalize_exchange_along_all_directions( listJt_[imode], *this );
+                SyncVectorPatch::exchangeComplex( listJl_[imode], *this, smpi );
+                SyncVectorPatch::finalizeexchangeComplex( listJl_[imode], *this );
+                SyncVectorPatch::exchangeComplex( listJr_[imode], *this, smpi );
+                SyncVectorPatch::finalizeexchangeComplex( listJr_[imode], *this );
+                SyncVectorPatch::exchangeComplex( listJt_[imode], *this, smpi );
+                SyncVectorPatch::finalizeexchangeComplex( listJt_[imode], *this );
             }
         }
     }
