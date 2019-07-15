@@ -1386,10 +1386,19 @@ int Species::createParticles( vector<unsigned int> n_space_to_create, Params &pa
         //Idea to speed up selection, provides xmin, xmax of the bunch and check if there is an intersection with the patch instead of going through all particles for all patches.
         for( unsigned int ip = 0; ip < n_numpy_particles; ip++ ) {
             //If the particle belongs to this patch
-            if( position[0][ip] >= patch->getDomainLocalMin( 0 ) && position[0][ip] < patch->getDomainLocalMax( 0 )
+            if (params.geometry!="AMcylindrical") {
+                if( position[0][ip] >= patch->getDomainLocalMin( 0 ) && position[0][ip] < patch->getDomainLocalMax( 0 )
                     && ( nDim_particle < 2  || ( position[1][ip] >= patch->getDomainLocalMin( 1 ) && position[1][ip] < patch->getDomainLocalMax( 1 ) ) )
                     && ( nDim_particle < 3  || ( position[2][ip] >= patch->getDomainLocalMin( 2 ) && position[2][ip] < patch->getDomainLocalMax( 2 ) ) ) ) {
-                my_particles_indices.push_back( ip ); //This vector stores particles initially sittinig in the current patch.
+                    my_particles_indices.push_back( ip ); //This vector stores particles initially sittinig in the current patch.
+                }
+            }
+            else {
+                double distance =  sqrt( position[1][ip]*position[1][ip]+position[2][ip]*position[2][ip] );
+                if( position[0][ip] >= patch->getDomainLocalMin( 0 ) && position[0][ip] < patch->getDomainLocalMax( 0 )
+                    && ( distance >= patch->getDomainLocalMin( 1 ) && distance < patch->getDomainLocalMax( 1 ) ) ) {
+                    my_particles_indices.push_back( ip ); //This vector stores particles initially sittinig in the current patch.
+                }
             }
         }
         npart_effective = my_particles_indices.size();
