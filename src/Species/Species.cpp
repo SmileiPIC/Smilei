@@ -1578,9 +1578,17 @@ int Species::createParticles( vector<unsigned int> n_space_to_create, Params &pa
             int ip = indices[ibin] ; //Indice of the position of the particle in the particles array.
             
             unsigned int int_ijk[3] = {0, 0, 0};
-            for( unsigned int idim=0; idim<nDim_particle; idim++ ) {
-                particles->position( idim, ip ) = position[idim][ippy];
-                int_ijk[idim] = ( unsigned int )( ( particles->position( idim, ip ) - min_loc_vec[idim] )/cell_length[idim] );
+            if ( params.geometry != "AMcylindrical") {
+                for( unsigned int idim=0; idim<nDim_particle; idim++ ) {
+                    particles->position( idim, ip ) = position[idim][ippy];
+                    int_ijk[idim] = ( unsigned int )( ( particles->position( idim, ip ) - min_loc_vec[idim] )/cell_length[idim] );
+                }
+            }
+            else {
+                particles->position( 0, ip ) = position[0][ippy];
+                int_ijk[0] = ( unsigned int )( ( particles->position( 0, ip ) - min_loc_vec[0] )/cell_length[0] );
+                particles->position( 1, ip ) =  sqrt( position[1][ippy]*position[1][ippy]+position[2][ippy]*position[2][ippy] );
+                int_ijk[1] = ( unsigned int )( ( particles->position( 1, ip ) - min_loc_vec[1] )/cell_length[1] );
             }
             if( !momentum_initialization_array ) {
                 vel [0] = velocity   [0]( int_ijk[0], int_ijk[1], int_ijk[2] );
