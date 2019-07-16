@@ -444,7 +444,7 @@ void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gam
     // relativistic Poisson's equation in finite differences is multiplied by r_j*dr*dl to condition it before conjugate gradient
 
     double dr_sq_ov_dl_ov_gamma_sq   = ( dr*dr )/dl/( gamma_mean*gamma_mean );
-    double dl_ov_2                   = dl/2.;
+//    double dl_ov_2                   = dl/2.;
     double m_sq_dl                   = (double)(imode*imode)*dl;
     double j_;
     unsigned int j_min =max(1,isYmin*3); // prevent a segmentation fault
@@ -1113,9 +1113,9 @@ void ElectroMagnAM::binomialCurrentFilter()
         tmp->copyFrom( Jl );
         for( unsigned int i=1; i<nl_d-1; i++ ) {
             for( unsigned int j=isYmin*2+1; j<nr_p-1; j++ ) {
-                ( *Jl )( i, j ) = ( (   ( *tmp )( i+1, j-1 )+ 2.*( *tmp )( i, j-1 )+    ( *tmp )( i-1, j-1 ))*(j_glob_+j-1)
-                                  + (2.*( *tmp )( i+1, j   )+ 4.*( *tmp )( i, j   )+ 2.*( *tmp )( i-1, j   ))*(j_glob_+j  )
-                                  + (   ( *tmp )( i+1, j+1 )+ 2.*( *tmp )( i, j+1 )+    ( *tmp )( i-1, j+1 ))*(j_glob_+j+1)
+                ( *Jl )( i, j ) = ( (   ( *tmp )( i+1, j-1 )+ 2.*( *tmp )( i, j-1 )+    ( *tmp )( i-1, j-1 ))*(double)(j_glob_+j-1)
+                                  + (2.*( *tmp )( i+1, j   )+ 4.*( *tmp )( i, j   )+ 2.*( *tmp )( i-1, j   ))*(double)(j_glob_+j  )
+                                  + (   ( *tmp )( i+1, j+1 )+ 2.*( *tmp )( i, j+1 )+    ( *tmp )( i-1, j+1 ))*(double)(j_glob_+j+1)
                                   )/16.*dr*invR[j];
             }
         }
@@ -1125,9 +1125,9 @@ void ElectroMagnAM::binomialCurrentFilter()
         tmp->copyFrom( Jr );
         for( unsigned int i=1; i<nl_p-1; i++ ) {
             for( unsigned int j=isYmin*3+1; j<nr_d-1; j++ ) {
-                ( *Jr )( i, j ) = ( (   ( *tmp )( i+1, j-1 )+ 2.*( *tmp )( i, j-1 )+    ( *tmp )( i-1, j-1 ))*(j_glob_+j-1.5)
-                                  + (2.*( *tmp )( i+1, j   )+ 4.*( *tmp )( i, j   )+ 2.*( *tmp )( i-1, j   ))*(j_glob_+j-0.5)
-                                  + (   ( *tmp )( i+1, j+1 )+ 2.*( *tmp )( i, j+1 )+    ( *tmp )( i-1, j+1 ))*(j_glob_+j+0.5)
+                ( *Jr )( i, j ) = ( (   ( *tmp )( i+1, j-1 )+ 2.*( *tmp )( i, j-1 )+    ( *tmp )( i-1, j-1 ))*(double)(j_glob_+j-1.5)
+                                  + (2.*( *tmp )( i+1, j   )+ 4.*( *tmp )( i, j   )+ 2.*( *tmp )( i-1, j   ))*(double)(j_glob_+j-0.5)
+                                  + (   ( *tmp )( i+1, j+1 )+ 2.*( *tmp )( i, j+1 )+    ( *tmp )( i-1, j+1 ))*(double)(j_glob_+j+0.5)
                                   )/16.*dr*invRd[j];
             }
         }
@@ -1137,9 +1137,9 @@ void ElectroMagnAM::binomialCurrentFilter()
         tmp->copyFrom( Jt );
         for( unsigned int i=1; i<nl_p-1; i++ ) {
             for( unsigned int j=isYmin*2+1; j<nr_p-1; j++ ) {
-                ( *Jt )( i, j ) = ( (   ( *tmp )( i+1, j-1 )+ 2.*( *tmp )( i, j-1 )+    ( *tmp )( i-1, j-1 ))*(j_glob_+j-1)
-                                  + (2.*( *tmp )( i+1, j   )+ 4.*( *tmp )( i, j   )+ 2.*( *tmp )( i-1, j   ))*(j_glob_+j  )
-                                  + (   ( *tmp )( i+1, j+1 )+ 2.*( *tmp )( i, j+1 )+    ( *tmp )( i-1, j+1 ))*(j_glob_+j+1)
+                ( *Jt )( i, j ) = ( (   ( *tmp )( i+1, j-1 )+ 2.*( *tmp )( i, j-1 )+    ( *tmp )( i-1, j-1 ))*(double)(j_glob_+j-1)
+                                  + (2.*( *tmp )( i+1, j   )+ 4.*( *tmp )( i, j   )+ 2.*( *tmp )( i-1, j   ))*(double)(j_glob_+j  )
+                                  + (   ( *tmp )( i+1, j+1 )+ 2.*( *tmp )( i, j+1 )+    ( *tmp )( i-1, j+1 ))*(double)(j_glob_+j+1)
                                   )/16.*dr*invR[j];
             }
         }
