@@ -30,8 +30,8 @@ void MA_SolverAM_norm::operator()( ElectroMagn *fields )
         cField2D *Jt = ( static_cast<ElectroMagnAM *>( fields ) )->Jt_[imode];
         int j_glob    = ( static_cast<ElectroMagnAM *>( fields ) )->j_glob_;
         bool isYmin = ( static_cast<ElectroMagnAM *>( fields ) )->isYmin;
-        double *invR = ( static_cast<ElectroMagnAM *>( fields ) )->invR;
-        double *invRd = ( static_cast<ElectroMagnAM *>( fields ) )->invRd;
+        //double *invR = ( static_cast<ElectroMagnAM *>( fields ) )->invR;
+        //double *invRd = ( static_cast<ElectroMagnAM *>( fields ) )->invRd;
         
         // Electric field Elr^(d,p)
         for( unsigned int i=0 ; i<nl_d ; i++ ) {
