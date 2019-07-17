@@ -32,8 +32,7 @@ public :
     static void sumEnvChi( Params &params, VectorPatch &vecPatches, SmileiMPI *smp, Timers &timers, int itime );
     static void sumEnvChis( Params &params, VectorPatch &vecPatches, int ispec, SmileiMPI *smp, Timers &timers, int itime );
     
-    static void sum( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime );
-    static void sumComplex( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime );
+    template<typename T, typename MT>  static void sum( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime );
     static void sum_all_components( std::vector<Field *> &fields, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime );
     
     

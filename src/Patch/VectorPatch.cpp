@@ -1209,7 +1209,7 @@ void VectorPatch::runRelativisticModule( double time_prim, Params &params, Smile
     computeChargeRelativisticSpecies( time_prim );
 
     if (params.geometry != "AMcylindrical"){
-        SyncVectorPatch::sum( listrho_, (*this), smpi, timers, 0 );
+        SyncVectorPatch::sum<double,Field>( listrho_, (*this), smpi, timers, 0 );
     } else {
         for( unsigned int imode=0 ; imode<params.nmodes ; imode++ ) {
             SyncVectorPatch::sumRhoJ( params, (*this), imode, smpi, timers, 0 );
