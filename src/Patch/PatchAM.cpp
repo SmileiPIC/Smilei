@@ -291,113 +291,16 @@ void PatchAM::reallyfinalizeSumField( Field *field, int iDim )
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Initialize current patch exhange Fields communications through MPI (includes loop / nDim_fields_)
-// Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
-// ---------------------------------------------------------------------------------------------------------------------
-void PatchAM::initExchange( Field *field )
-{
-    ERROR( "Circ geometry initExchange not implemented" );
-} // END initExchange( Field* field )
-
-void PatchAM::initExchangeComplex( Field *field )
-{
-    cout << "On ne passe jamais ici !!!!" << endl;
-    
-    if( field->MPIbuff.srequest.size()==0 ) {
-        field->MPIbuff.allocate( 2 );
-    }
-    
-    int patch_ndims_( 2 );
-    int patch_nbNeighbors_( 2 );
-    
-    std::vector<unsigned int> n_elem   = field->dims_;
-    std::vector<unsigned int> isDual = field->isDual_;
-    cField2D *f3D =  static_cast<cField2D *>( field );
-    
-    int istart, ix, iy;
-    
-    // Loop over dimField
-    for( int iDim=0 ; iDim<patch_ndims_ ; iDim++ ) {
-    
-        vector<int> idx( patch_ndims_, 0 );
-        idx[iDim] = 1;
-        
-        MPI_Datatype ntype = ntype_[iDim][isDual[0]][isDual[1]];
-        for( int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++ ) {
-        
-            if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
-            
-                istart = iNeighbor * ( n_elem[iDim]- ( 2*oversize[iDim]+1+isDual[iDim] ) ) + ( 1-iNeighbor ) * ( oversize[iDim] + 1 + isDual[iDim] );
-                ix = idx[0]*istart;
-                iy = idx[1]*istart;
-                int tag = buildtag( hindex, iDim, iNeighbor );
-                MPI_Isend( &( ( *f3D )( ix, iy ) ), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag,
-                           MPI_COMM_WORLD, &( f3D->MPIbuff.srequest[iDim][iNeighbor] ) );
-                           
-            } // END of Send
-            
-            if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
-            
-                istart = ( ( iNeighbor+1 )%2 ) * ( n_elem[iDim] - 1 - ( oversize[iDim]-1 ) ) + ( 1-( iNeighbor+1 )%2 ) * ( 0 )  ;
-                ix = idx[0]*istart;
-                iy = idx[1]*istart;
-                int tag = buildtag( neighbor_[iDim][( iNeighbor+1 )%2], iDim, iNeighbor );
-                MPI_Irecv( &( ( *f3D )( ix, iy ) ), 1, ntype, MPI_neighbor_[iDim][( iNeighbor+1 )%2], tag,
-                           MPI_COMM_WORLD, &( f3D->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ) );
-                           
-            } // END of Recv
-            
-        } // END for iNeighbor
-        
-    } // END for iDim
-} // END initExchangeComplex( Field* field )
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Initialize current patch exhange Fields communications through MPI  (includes loop / nDim_fields_)
-// Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
-// ---------------------------------------------------------------------------------------------------------------------
-void PatchAM::finalizeExchange( Field *field )
-{
-    ERROR( "Circ geometry finalizeExchange not implemented" );
-} // END finalizeExchange( Field* field )
-
-void PatchAM::finalizeExchangeComplex( Field *field )
-{
-    cField2D *f3D =  static_cast<cField2D *>( field );
-    
-    int patch_ndims_( 2 );
-    MPI_Status sstat    [patch_ndims_][2];
-    MPI_Status rstat    [patch_ndims_][2];
-    
-    // Loop over dimField
-    for( int iDim=0 ; iDim<patch_ndims_ ; iDim++ ) {
-    
-        for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
-            if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
-                MPI_Wait( &( f3D->MPIbuff.srequest[iDim][iNeighbor] ), &( sstat[iDim][iNeighbor] ) );
-            }
-            if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
-                MPI_Wait( &( f3D->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ), &( rstat[iDim][( iNeighbor+1 )%2] ) );
-            }
-        }
-        
-    } // END for iDim
-    
-} // END finalizeExchangeComplex( Field* field )
-
-
-// ---------------------------------------------------------------------------------------------------------------------
 // Initialize current patch exhange Fields communications through MPI for direction iDim
 // Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
 // ---------------------------------------------------------------------------------------------------------------------
-void PatchAM::initExchange( Field *field, int iDim, SmileiMPI *smpi )
+void PatchAM::initExchangeComplex( Field *field, int iDim, SmileiMPI *smpi )
 {
     ERROR( "Circ geometry initExchange not implemented" );
     
 } // END initExchange( Field* field, int iDim )
 
-void PatchAM::initExchangeComplex( Field *field, int iDim, SmileiMPI *smpi )
+void PatchAM::initExchange( Field *field, int iDim, SmileiMPI *smpi )
 {
     if( field->MPIbuff.srequest.size()==0 ) {
         field->MPIbuff.allocate( 2 );
@@ -455,18 +358,18 @@ void PatchAM::initExchangeComplex( Field *field, int iDim, SmileiMPI *smpi )
         
     } // END for iNeighbor
     
-} // END initExchangeComplex( Field* field )
+} // END initExchange( Field* field )
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Initialize current patch exhange Fields communications through MPI for direction iDim
 // Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
 // ---------------------------------------------------------------------------------------------------------------------
-void PatchAM::finalizeExchange( Field *field, int iDim )
+void PatchAM::finalizeExchangeComplex( Field *field, int iDim )
 {
     ERROR( "Circ geometry finalizeExchange not implemented" );
 } // END finalizeExchange( Field* field, int iDim )
 
-void PatchAM::finalizeExchangeComplex( Field *field, int iDim )
+void PatchAM::finalizeExchange( Field *field, int iDim )
 {
     int patch_ndims_( 2 );
     

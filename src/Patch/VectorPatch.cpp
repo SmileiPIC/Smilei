@@ -624,20 +624,20 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
             ( *this )( ipatch )->EMfields->binomialCurrentFilter();
         }
         if (params.geometry != "AMcylindrical"){
-            SyncVectorPatch::exchange_along_all_directions( listJx_, *this, smpi );
+            SyncVectorPatch::exchange_along_all_directions<double,Field>( listJx_, *this, smpi );
             SyncVectorPatch::finalize_exchange_along_all_directions( listJx_, *this );
-            SyncVectorPatch::exchange_along_all_directions( listJy_, *this, smpi );
+            SyncVectorPatch::exchange_along_all_directions<double,Field>( listJy_, *this, smpi );
             SyncVectorPatch::finalize_exchange_along_all_directions( listJy_, *this );
-            SyncVectorPatch::exchange_along_all_directions( listJz_, *this, smpi );
+            SyncVectorPatch::exchange_along_all_directions<double,Field>( listJz_, *this, smpi );
             SyncVectorPatch::finalize_exchange_along_all_directions( listJz_, *this );
         } else {
             for (unsigned int imode=0 ; imode < params.nmodes; imode++) {
-                SyncVectorPatch::exchangeComplex( listJl_[imode], *this, smpi );
-                SyncVectorPatch::finalizeexchangeComplex( listJl_[imode], *this );
-                SyncVectorPatch::exchangeComplex( listJr_[imode], *this, smpi );
-                SyncVectorPatch::finalizeexchangeComplex( listJr_[imode], *this );
-                SyncVectorPatch::exchangeComplex( listJt_[imode], *this, smpi );
-                SyncVectorPatch::finalizeexchangeComplex( listJt_[imode], *this );
+                SyncVectorPatch::exchange_along_all_directions<complex<double>,cField>( listJl_[imode], *this, smpi );
+                SyncVectorPatch::finalize_exchange_along_all_directions( listJl_[imode], *this );
+                SyncVectorPatch::exchange_along_all_directions<complex<double>,cField>( listJr_[imode], *this, smpi );
+                SyncVectorPatch::finalize_exchange_along_all_directions( listJr_[imode], *this );
+                SyncVectorPatch::exchange_along_all_directions<complex<double>,cField>( listJt_[imode], *this, smpi );
+                SyncVectorPatch::finalize_exchange_along_all_directions( listJt_[imode], *this );
             }
         }
     }
@@ -998,7 +998,7 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI *smpi )
         }
         
         // Exchange Ap_ (intra & extra MPI)
-        SyncVectorPatch::exchange_along_all_directions( Ap_, *this, smpi );
+        SyncVectorPatch::exchange_along_all_directions<double,Field>( Ap_, *this, smpi );
         SyncVectorPatch::finalize_exchange_along_all_directions( Ap_, *this );
         
         // scalar product p.Ap

@@ -57,11 +57,9 @@ public :
     static void finalizeexchangeGradPhi( Params &params, VectorPatch &vecPatches );
     static void exchangeEnvChi( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
     
-    static void exchange_along_all_directions( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
+    template<typename T, typename MT> static void exchange_along_all_directions( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
     static void finalize_exchange_along_all_directions( std::vector<Field *> fields, VectorPatch &vecPatches );
     
-    static void exchangeComplex( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
-    static void finalizeexchangeComplex( std::vector<Field *> fields, VectorPatch &vecPatches );
     static void exchange_along_all_directions_noomp( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
     static void finalize_exchange_along_all_directions_noomp( std::vector<Field *> fields, VectorPatch &vecPatches );
     static void exchange_along_all_directions_noompComplex( std::vector<cField *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
