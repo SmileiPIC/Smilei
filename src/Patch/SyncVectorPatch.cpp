@@ -685,6 +685,8 @@ void SyncVectorPatch::exchangeE( Params &params, VectorPatch &vecPatches, Smilei
     // E is exchange if spectral solver and/or at the end of initialisation of non-neutral plasma
     
     if( !params.full_B_exchange ) {
+        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listEx_, vecPatches, smpi );
+        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listEy_, vecPatches, smpi );
         SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listEz_, vecPatches, smpi );
     } else {
         SyncVectorPatch::exchange_synchronized_per_direction( vecPatches.listEx_, vecPatches, smpi );
