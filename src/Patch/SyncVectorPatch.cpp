@@ -916,7 +916,10 @@ void SyncVectorPatch::exchange_along_all_directions( std::vector<Field *> fields
         #pragma omp single
 #endif
         for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
-            vecPatches( ipatch )->initExchange( fields[ipatch], iDim, smpi );
+            if ( !dynamic_cast<cField*>( fields[ipatch] ) )
+                vecPatches( ipatch )->initExchange       ( fields[ipatch], iDim, smpi );
+            else
+                vecPatches( ipatch )->initExchangeComplex( fields[ipatch], iDim, smpi );
         }
     } // End for iDim
     
@@ -1005,7 +1008,10 @@ void SyncVectorPatch::finalize_exchange_along_all_directions( std::vector<Field 
         #pragma omp single
 #endif
         for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
-            vecPatches( ipatch )->finalizeExchange( fields[ipatch], iDim );
+            if ( !dynamic_cast<cField*>( fields[ipatch] ) )
+                vecPatches( ipatch )->finalizeExchange       ( fields[ipatch], iDim );
+            else
+                vecPatches( ipatch )->finalizeExchangeComplex( fields[ipatch], iDim );
         }
     } // End for iDim
     
@@ -1019,7 +1025,10 @@ void SyncVectorPatch::exchange_along_all_directions_noomp( std::vector<Field *> 
 {
     for( unsigned int iDim=0 ; iDim<fields[0]->dims_.size() ; iDim++ ) {
         for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
-            vecPatches( ipatch )->initExchange( fields[ipatch], iDim, smpi );
+            if ( !dynamic_cast<cField*>( fields[ipatch] ) )
+                vecPatches( ipatch )->initExchange       ( fields[ipatch], iDim, smpi );
+            else
+                vecPatches( ipatch )->initExchangeComplex( fields[ipatch], iDim, smpi );
         }
     } // End for iDim
     
@@ -1103,7 +1112,10 @@ void SyncVectorPatch::finalize_exchange_along_all_directions_noomp( std::vector<
 {
     for( unsigned int iDim=0 ; iDim<fields[0]->dims_.size() ; iDim++ ) {
         for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
-            vecPatches( ipatch )->finalizeExchange( fields[ipatch], iDim );
+            if ( !dynamic_cast<cField*>( fields[ipatch] ) )
+                vecPatches( ipatch )->finalizeExchange       ( fields[ipatch], iDim );
+            else
+                vecPatches( ipatch )->finalizeExchangeComplex( fields[ipatch], iDim );
         }
     } // End for iDim
     

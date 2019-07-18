@@ -294,13 +294,13 @@ void PatchAM::reallyfinalizeSumField( Field *field, int iDim )
 // Initialize current patch exhange Fields communications through MPI for direction iDim
 // Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
 // ---------------------------------------------------------------------------------------------------------------------
-void PatchAM::initExchangeComplex( Field *field, int iDim, SmileiMPI *smpi )
+void PatchAM::initExchange( Field *field, int iDim, SmileiMPI *smpi )
 {
     ERROR( "Circ geometry initExchange not implemented" );
     
 } // END initExchange( Field* field, int iDim )
 
-void PatchAM::initExchange( Field *field, int iDim, SmileiMPI *smpi )
+void PatchAM::initExchangeComplex( Field *field, int iDim, SmileiMPI *smpi )
 {
     if( field->MPIbuff.srequest.size()==0 ) {
         field->MPIbuff.allocate( 2 );
@@ -364,12 +364,12 @@ void PatchAM::initExchange( Field *field, int iDim, SmileiMPI *smpi )
 // Initialize current patch exhange Fields communications through MPI for direction iDim
 // Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
 // ---------------------------------------------------------------------------------------------------------------------
-void PatchAM::finalizeExchangeComplex( Field *field, int iDim )
+void PatchAM::finalizeExchange( Field *field, int iDim )
 {
     ERROR( "Circ geometry finalizeExchange not implemented" );
 } // END finalizeExchange( Field* field, int iDim )
 
-void PatchAM::finalizeExchange( Field *field, int iDim )
+void PatchAM::finalizeExchangeComplex( Field *field, int iDim )
 {
     int patch_ndims_( 2 );
     
