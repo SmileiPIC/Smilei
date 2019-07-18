@@ -60,10 +60,8 @@ public :
     template<typename T, typename MT> static void exchange_along_all_directions( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
     static void finalize_exchange_along_all_directions( std::vector<Field *> fields, VectorPatch &vecPatches );
     
-    static void exchange_along_all_directions_noomp( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
+    template<typename T, typename MT> static void exchange_along_all_directions_noomp( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
     static void finalize_exchange_along_all_directions_noomp( std::vector<Field *> fields, VectorPatch &vecPatches );
-    static void exchange_along_all_directions_noompComplex( std::vector<cField *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
-    static void finalize_exchange_along_all_directions_noompComplex( std::vector<cField *> fields, VectorPatch &vecPatches );
     
     static void exchange_synchronized_per_direction( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
     
