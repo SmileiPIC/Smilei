@@ -346,7 +346,7 @@ With the classical spherical discretization, the solid angle that represents the
 .. figure:: _static/spherical_discretization.png
   :width: 100%
 
-  Classical spherical discretization (a) and the spherical discretization with solid angle correction (b). This figure has been generated with the following `Python script <_static/vranic_spherical_discretization.py>`_.
+  Classical spherical discretization (a) and the spherical discretization with solid angle correction (b). This figure has been generated with the following `Python script <_static/scripts/vranic_spherical_discretization.py>`_.
 
 To composate this phenomenon, the discretization (number of cells) in :math:`\theta`, :math:`N_\theta`, is made to depend on :math:`\phi` so that the solid angle is approximatly constant. For this aim, a reference solid angle :math:`\Omega_{ref}` has to be set . It corresponds to the solid angle at the smallest  :math:`|\phi|` value with the :math:`\theta` discretization given by the user in the namelist. For larger :math:`|\phi|` values, the :math:`\theta` discretization :math:`N_\theta` varies to satisfy :math:`\Omega = \sin{(\phi)}\Delta \theta \Delta \phi = \Omega_{ref}`. Since we keep :math:`\phi` constant, it is equivalent to determine a :math:`\theta_{ref}`. An example of such a discretization is shown in :numref:`fig_spherical_discretization` b).
 
@@ -389,8 +389,55 @@ Please refer to :ref:`that doc <Particle_merging>` for an explanation of how to 
 4. Simulation results
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-4.1 QED cascade
+4.1 3D QED cascade
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+In this section, the particle merging is tested with a simulation scenario of QED pair cascading.
+Cascade means here that QED mechanisms, i.e. creation fo electron-positron pairs, are self-sustained.
+As for the magnetic shower, a seed of electrons or positrons in a strong electromagnetic field generates high-energy photons that in turns decay into electron-positron pairs.
+The difference is that the seed particles and the newly-created ones can gain again some energy from the fields and participate to the generation of pairs.
+The production of electron-positron pairs can therefore be maintained as long as there is a source of energy.
+In such a scenario, we can expect an exponential growth of particules with the creation of an electron-positron plasma.
+In this scenario, a bunch of electrons and positrons (the seed) is initally irradiated by two counter-propagating lasers (strong field and source of energy) as shown in :numref:`fig_qed_pair_cascade`.
+
+.. _fig_qed_pair_cascade:
+
+.. figure:: _static/figures/qed_pair_cascade.png
+  :width: 100%
+
+  Example of QED pair cascade configuration with two counter-propagating lasers.
+
+We use two counter-propagating circularly polarized plane waves.
+When they collide, the two waves form a steady plane wave of very strong amplitude able to trigger strong QED effetcs.
+The seed is a group of electrons and positrons located at the middle of the domain in the plane :math:`x = (0.5 L_x + \Delta_x )` where :math:`L_x` is the domain size in the :math:`x` direction.
+The macro-positrons are located at the same location that the macro-electrons to be neutral.
+Since we have plane waves, the transverse boundary conditions are periodic.
+The longitudinal boundary conditions are absorbing for both the fields and the particles.
+This very academic scenario is complicated to simulate because the particles can only escape the domain via the longitudinal boundaries.
+Furthermore, the lasers have inifinite duration.
+They simply start with a short ramp of :math:`\lambda / 4`.
+
+Some simulation parameters are given in the following table and the Smilei namelist is avalaible `here <_static/scripts/qed_pair_cascade.py>`_.
+
+.. _table_qed_cascade_parameters:
+
++-------------------------------------------+-----------------------------------------------------+
+| Parameters                                | Values                                              |
++===========================================+=====================================================+
+| Laser Wavelength (:math:`\lambda`)        | :math:`10^{-6}\ \mu \mathrm{m}`                     |
++-------------------------------------------+-----------------------------------------------------+
+| Domain size                               | :math:`4 \lambda \times 2 \lambda \times 2 \lambda` |
++-------------------------------------------+-----------------------------------------------------+
+| Laser normalized intensity (:math:`a_0`)  | 1000                                                |
++-------------------------------------------+-----------------------------------------------------+
+
+.. _fig_qed_cascade_scalar:
+
+.. figure:: _static/figures/QED_cascade_scalar.png
+  :width: 100%
+
+  Study and comparison of the scalar diagnostics for all merging configuration: no merging, mergign with the logarithmic and linear spherical discretization and the cartesian discretization. The scalar diagnostics shown here are the number of macroparticles (first row), the normalized kinetic energy (second row) and the weight (third row).
+  Each column respectively concerns a different species: the photons, the electrons and the protons.
 
 .. _fig_qed_cascade_photon_gamma_spectrum:
 
@@ -415,6 +462,13 @@ Please refer to :ref:`that doc <Particle_merging>` for an explanation of how to 
 
   :math:`p_x-p_y` electron momentum distribution at simulation time :math:`t = 39.5 \omega^{-1}`
   for the different merging configuration: no merging, mergign with the logarithmic and linear spherical discretization and the cartesian discretization.
+
+.. _fig_qed_cascade_iteration_time:
+
+.. figure:: _static/figures/QED_cascade_iteration_time.png
+  :width: 100%
+
+  Evolution of the average computation time per iteration for each merging method: no merging, mergign with the logarithmic and linear spherical discretization and the cartesian discretization.
 
 .. _video_qed_cascade:
 
