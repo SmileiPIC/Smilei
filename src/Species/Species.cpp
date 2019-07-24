@@ -1585,10 +1585,11 @@ int Species::createParticles( vector<unsigned int> n_space_to_create, Params &pa
                 }
             }
             else {
-                particles->position( 0, ip ) = position[0][ippy];
+                for( unsigned int idim=0; idim<nDim_particle; idim++ ) {
+                    particles->position( idim, ip ) = position[idim][ippy];
+                }
                 int_ijk[0] = ( unsigned int )( ( particles->position( 0, ip ) - min_loc_vec[0] )/cell_length[0] );
-                particles->position( 1, ip ) =  sqrt( position[1][ippy]*position[1][ippy]+position[2][ippy]*position[2][ippy] );
-                int_ijk[1] = ( unsigned int )( ( particles->position( 1, ip ) - min_loc_vec[1] )/cell_length[1] );
+                int_ijk[1] = ( unsigned int )( ( sqrt( position[1][ippy]*position[1][ippy]+position[2][ippy]*position[2][ippy] ) - min_loc_vec[1] )/cell_length[1] );
             }
             if( !momentum_initialization_array ) {
                 vel [0] = velocity   [0]( int_ijk[0], int_ijk[1], int_ijk[2] );
