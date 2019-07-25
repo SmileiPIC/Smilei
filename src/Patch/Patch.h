@@ -142,14 +142,6 @@ public:
     virtual void finalizeSumField( Field *field, int iDim ) = 0;
     virtual void reallyfinalizeSumField( Field *field, int iDim ) = 0;
     
-    //! init comm / exchange fields
-    virtual void initExchange( Field *field ) = 0;
-    //! init comm / exchange complex fields
-    virtual void initExchangeComplex( Field *field ) = 0;
-    //! finalize comm / exchange fields
-    virtual void finalizeExchange( Field *field ) = 0;
-    //! finalize comm / exchange complex fields
-    virtual void finalizeExchangeComplex( Field *field ) = 0;
     //! init comm / exchange fields in direction iDim only
     virtual void initExchange( Field *field, int iDim, SmileiMPI *smpi ) = 0;
     //! init comm / exchange complex fields in direction iDim only

@@ -140,8 +140,6 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     jpo -= 2;
 
     double *invR_local = &(invR[jpo]);
-
-    unsigned int nfold = max( -jpo, 0 ) ; // Number of cells touched below axis
     
     // ------------------------------------------------
     // Local current created by the particle
@@ -203,7 +201,7 @@ void ProjectorAM2Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
             Jr =  &( *emAM->Jr_[imode] )( 0 );
             Jt =  &( *emAM->Jt_[imode] )( 0 );
         } else {
-            unsigned int n_species = emAM->Jl_.size() / Nmode;
+            unsigned int n_species = emAM->Jl_s.size() / Nmode;
             unsigned int ifield = imode*n_species+ispec;
             Jl  = emAM->Jl_s    [ifield] ? &( * ( emAM->Jl_s    [ifield] ) )( 0 ) : &( *emAM->Jl_    [imode] )( 0 ) ;
             Jr  = emAM->Jr_s    [ifield] ? &( * ( emAM->Jr_s    [ifield] ) )( 0 ) : &( *emAM->Jr_    [imode] )( 0 ) ;
@@ -439,7 +437,6 @@ void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
     std::vector<double> *invgf = &( smpi->dynamics_invgf[ithread] );
     std::vector<double> *array_theta_old = &( smpi->dynamics_thetaold[ithread] );
-    complex<double> *rho, *Jl, *Jr, *Jt; 
     ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
 
     for( int ipart=istart ; ipart<iend; ipart++ ) {
@@ -450,7 +447,7 @@ void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
     if (emAM->isYmin ) {
         complex<double> *rho, *Jl, *Jr, *Jt; 
         double sign = 1. ;
-        for ( int imode = 0; imode < Nmode; imode++){
+        for ( unsigned int imode = 0; imode < Nmode; imode++){
             sign *= -1.;
 
             if (!diag_flag){
@@ -458,7 +455,7 @@ void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
                 Jr =  &( *emAM->Jr_[imode] )( 0 );
                 Jt =  &( *emAM->Jt_[imode] )( 0 );
             } else {
-                unsigned int n_species = emAM->Jl_.size() / Nmode;
+                unsigned int n_species = emAM->Jl_s.size() / Nmode;
                 unsigned int ifield = imode*n_species+ispec;
                 Jl  = emAM->Jl_s    [ifield] ? &( * ( emAM->Jl_s    [ifield] ) )( 0 ) : &( *emAM->Jl_    [imode] )( 0 ) ;
                 Jr  = emAM->Jr_s    [ifield] ? &( * ( emAM->Jr_s    [ifield] ) )( 0 ) : &( *emAM->Jr_    [imode] )( 0 ) ;
@@ -505,18 +502,19 @@ void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
                     Jl [iloc+j] = 0. ;
                 }//i
             }
-            //if (imode == 1){
-            //    for( unsigned int i=0 ; i<npriml; i++ ) {
-            //        int iloc = i*nprimr;
-            //        int ilocr = i*(nprimr+1);
-            //        Jt [iloc+j] = -1./3.*(4.*Icpx*Jr[ilocr+j+1] + Jt[iloc+j+1]) ;
-            //    }//i
-            //} else{
-            //    for( unsigned int i=0 ; i<npriml; i++ ) {
-            //        int iloc = i*nprimr;
-            //        Jt [iloc+j] = 0. ;
-            //    }
-            //}
+            if (imode == 1){
+                for( unsigned int i=0 ; i<npriml; i++ ) {
+                    int iloc = i*nprimr;
+                    int ilocr = i*(nprimr+1);
+                    //Jt [iloc+j] = -1./3.*(4.*Icpx*Jr[ilocr+j+1] + Jt[iloc+j+1]) ;
+                    Jt [iloc+j]= -Icpx/8.*( 9.*Jr[ilocr+j+1]- Jr[ilocr+j+2]);
+                }//i
+            } else{
+                for( unsigned int i=0 ; i<npriml; i++ ) {
+                    int iloc = i*nprimr;
+                    Jt [iloc+j] = 0. ;
+                }
+            }
         }
 
     }

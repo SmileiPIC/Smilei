@@ -62,7 +62,11 @@ public:
         if( species_name.size() < 2 ) {
             ERROR("For species #" << ispec << ", name cannot be only 1 character");
         }
-
+        
+        if( species_name.substr(0,2) == "m_" ) {
+            ERROR("For species #" << ispec << ", name cannot start  with `m_`");
+        }
+        
         // Extract type of species dynamics from namelist
         std::string pusher = "boris"; // default value
         PyTools::extract( "pusher", pusher, "Species", ispec );

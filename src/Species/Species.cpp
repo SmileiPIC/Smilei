@@ -1405,10 +1405,19 @@ int Species::createParticles( vector<unsigned int> n_space_to_create, Params &pa
         //Idea to speed up selection, provides xmin, xmax of the bunch and check if there is an intersection with the patch instead of going through all particles for all patches.
         for( unsigned int ip = 0; ip < n_numpy_particles; ip++ ) {
             //If the particle belongs to this patch
-            if( position[0][ip] >= patch->getDomainLocalMin( 0 ) && position[0][ip] < patch->getDomainLocalMax( 0 )
+            if (params.geometry!="AMcylindrical") {
+                if( position[0][ip] >= patch->getDomainLocalMin( 0 ) && position[0][ip] < patch->getDomainLocalMax( 0 )
                     && ( nDim_particle < 2  || ( position[1][ip] >= patch->getDomainLocalMin( 1 ) && position[1][ip] < patch->getDomainLocalMax( 1 ) ) )
                     && ( nDim_particle < 3  || ( position[2][ip] >= patch->getDomainLocalMin( 2 ) && position[2][ip] < patch->getDomainLocalMax( 2 ) ) ) ) {
-                my_particles_indices.push_back( ip ); //This vector stores particles initially sittinig in the current patch.
+                    my_particles_indices.push_back( ip ); //This vector stores particles initially sittinig in the current patch.
+                }
+            }
+            else {
+                double distance =  sqrt( position[1][ip]*position[1][ip]+position[2][ip]*position[2][ip] );
+                if( position[0][ip] >= patch->getDomainLocalMin( 0 ) && position[0][ip] < patch->getDomainLocalMax( 0 )
+                    && ( distance >= patch->getDomainLocalMin( 1 ) && distance < patch->getDomainLocalMax( 1 ) ) ) {
+                    my_particles_indices.push_back( ip ); //This vector stores particles initially sittinig in the current patch.
+                }
             }
         }
         npart_effective = my_particles_indices.size();
@@ -1588,9 +1597,18 @@ int Species::createParticles( vector<unsigned int> n_space_to_create, Params &pa
             int ip = indices[ibin] ; //Indice of the position of the particle in the particles array.
 
             unsigned int int_ijk[3] = {0, 0, 0};
-            for( unsigned int idim=0; idim<nDim_particle; idim++ ) {
-                particles->position( idim, ip ) = position[idim][ippy];
-                int_ijk[idim] = ( unsigned int )( ( particles->position( idim, ip ) - min_loc_vec[idim] )/cell_length[idim] );
+            if ( params.geometry != "AMcylindrical") {
+                for( unsigned int idim=0; idim<nDim_particle; idim++ ) {
+                    particles->position( idim, ip ) = position[idim][ippy];
+                    int_ijk[idim] = ( unsigned int )( ( particles->position( idim, ip ) - min_loc_vec[idim] )/cell_length[idim] );
+                }
+            }
+            else {
+                for( unsigned int idim=0; idim<nDim_particle; idim++ ) {
+                    particles->position( idim, ip ) = position[idim][ippy];
+                }
+                int_ijk[0] = ( unsigned int )( ( particles->position( 0, ip ) - min_loc_vec[0] )/cell_length[0] );
+                int_ijk[1] = ( unsigned int )( ( sqrt( position[1][ippy]*position[1][ippy]+position[2][ippy]*position[2][ippy] ) - min_loc_vec[1] )/cell_length[1] );
             }
             if( !momentum_initialization_array ) {
                 vel [0] = velocity   [0]( int_ijk[0], int_ijk[1], int_ijk[2] );
