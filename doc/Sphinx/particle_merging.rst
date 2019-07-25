@@ -421,15 +421,39 @@ Some simulation parameters are given in the following table and the Smilei namel
 
 .. _table_qed_cascade_parameters:
 
-+-------------------------------------------+-----------------------------------------------------+
-| Parameters                                | Values                                              |
-+===========================================+=====================================================+
-| Laser Wavelength (:math:`\lambda`)        | :math:`10^{-6}\ \mu \mathrm{m}`                     |
-+-------------------------------------------+-----------------------------------------------------+
-| Domain size                               | :math:`4 \lambda \times 2 \lambda \times 2 \lambda` |
-+-------------------------------------------+-----------------------------------------------------+
-| Laser normalized intensity (:math:`a_0`)  | 1000                                                |
-+-------------------------------------------+-----------------------------------------------------+
++-------------------------------------------------------------+-----------------------------------------------------+
+| Parameters                                                  | Values                                              |
++=============================================================+=====================================================+
+| Laser Wavelength (:math:`\lambda`)                          | :math:`10^{-6}\ \mu \mathrm{m}`                     |
++-------------------------------------------------------------+-----------------------------------------------------+
+| Domain size :math:`L_x \times L_y \times L_z`               | :math:`4 \lambda \times 2 \lambda \times 2 \lambda` |
++-------------------------------------------------------------+-----------------------------------------------------+
+| Laser normalized intensity (:math:`a_0`)                    | 1000                                                |
++-------------------------------------------------------------+-----------------------------------------------------+
+| Space discretization :math:`\Delta_x, \Delta_y`             | :math:`\lambda / 48`                                |
++-------------------------------------------------------------+-----------------------------------------------------+
+| Time step :math:`\Delta_t`                                  | :math:`0.95 \times` CFL                             |
++-------------------------------------------------------------+-----------------------------------------------------+
+| Simulation duration                                         | :math:`2 L_x / c`                                   |
++-------------------------------------------------------------+-----------------------------------------------------+
+| Patch size                                                  | :math:`8 \times 8 \times 8` cells                   |
++-------------------------------------------------------------+-----------------------------------------------------+
+| Vectorization                                               | on                                                  |
++-------------------------------------------------------------+-----------------------------------------------------+
+| Merging period                                              | every iterations                                    |
++-------------------------------------------------------------+-----------------------------------------------------+
+| Minimal number of particle per momentum cell for merging    | 4                                                   |
++-------------------------------------------------------------+-----------------------------------------------------+
+
+We decide to have an agressive merging process performed at every timesteps with a relatively restricted momentum-space discretization.
+The merging is applied on all species.
+We have performed the same simulation case in 2D and 1D.
+The merging process can be performed with a finer momentum-space dicretization and every longer period in these dimensions because the number of macro-particles per mometum cells is higher.
+In 3D, the number of particles per momentum cells can be too small to have a frequend merging with a fine momentum-space dicretization.
+
+This case is simulated identically with different merging configuration:
+- No merging
+-
 
 .. _fig_qed_cascade_scalar:
 
