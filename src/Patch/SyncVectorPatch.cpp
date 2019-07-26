@@ -903,6 +903,8 @@ void SyncVectorPatch::template_generator()
     VectorPatch patches;
     SyncVectorPatch::exchange_along_all_directions_noomp<double         ,Field >( patches.listEx_, patches, smpi );
     SyncVectorPatch::exchange_along_all_directions_noomp<complex<double>,cField>( patches.listEx_, patches, smpi );
+    SyncVectorPatch::exchange_along_all_directions_noomp<double         ,Field >( patches.listEx_, patches, smpi );
+    SyncVectorPatch::exchange_along_all_directions_noomp<double         ,Field >( patches.listEx_, patches, smpi );
 }
 
 // fields : contains a single field component (X, Y or Z) for all patches of vecPatches
