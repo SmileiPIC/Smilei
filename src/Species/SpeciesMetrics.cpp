@@ -125,8 +125,15 @@ double SpeciesMetrics::get_particle_computation_time_vectorization(const double 
 //#pragma omp declare simd
 float SpeciesMetrics::get_particle_computation_time_vectorization( const float log_particle_number )
 {
-// Skylake 8168 (Ex: Irene)
-#if defined __INTEL_SKYLAKE_8168
+// Cascade lake 6248 (Ex: Jean Zay)
+#if defined __INTEL_CASCADELAKE_6248
+    return -2.189138797721152e-03 * pow(log_particle_number,4)
+            + 7.915767517190369e-03 * pow(log_particle_number,3)
+            + 1.699504381893973e-01 * pow(log_particle_number,2)
+            -1.233925279218733e+00 * log_particle_number
+            + 2.729912991221435e+00;
+// Skylake 8168 (Ex: Irene Joliot-Curie)
+#elif defined __INTEL_SKYLAKE_8168
     return    -5.500324176161280e-03 * pow( log_particle_number, 4 )
               + 5.302690106220765e-02 * pow( log_particle_number, 3 )
               -2.390999177899332e-02 * pow( log_particle_number, 2 )
@@ -178,8 +185,12 @@ double SpeciesMetrics::get_particle_computation_time_scalar(const double log_par
 //#pragma omp declare simd
 float SpeciesMetrics::get_particle_computation_time_scalar( const float log_particle_number )
 {
+// Cascade lake 6248 (Ex: Jean Zay)
+#if defined __INTEL_CASCADELAKE_6248
+    return  -8.672655727778544e-03 * log_particle_number
+            + 9.957292932684755e-01;
 // Skylake 8168 (Ex: Irene)
-#if defined __INTEL_SKYLAKE_8168
+#elif defined __INTEL_SKYLAKE_8168
     return   -1.476070257489217e-02 * log_particle_number
              + 9.539747447809775e-01;
 // Knight Landings Intel Xeon Phi 7250 (Ex: Frioul)

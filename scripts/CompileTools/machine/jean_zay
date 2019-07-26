@@ -15,4 +15,4 @@
 # HDF5
 # export HDF5_ROOT_DIR=/gpfslocalsup/spack_soft/hdf5/1.8.21/intel-19.0.4-ze52g22lxxwb7ezsvxepmcixo6lmotwe
 
-CXXFLAGS += -xCOMMON-AVX512 -ip -inline-factor=1000 -D__INTEL_SKYLAKE_8168 -qopt-zmm-usage=high -fno-alias -ipo
+CXXFLAGS += -xCOMMON-AVX512 -ip -inline-factor=1000 -D__INTEL_CASCADELAKE_6248 -qopt-zmm-usage=high -fno-alias -ipo
