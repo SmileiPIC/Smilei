@@ -1,0 +1,18 @@
+#
+# Machine file for Jean Zay at IDRIS
+# __________________________________________________________
+#
+# Documentation:
+# http://www.idris.fr/jean-zay/cpu/
+#
+# Load the correct modules:
+#
+# module load intel-compilers-19/19.0.4.243
+# module load intel-mpi-19/19.0.4.243
+# module load hdf5/1.8.21/intel-19.0.4-mpi
+# module load python/2.7.16
+#
+# HDF5
+# export HDF5_ROOT_DIR=/gpfslocalsup/spack_soft/hdf5/1.8.21/intel-19.0.4-ze52g22lxxwb7ezsvxepmcixo6lmotwe
+
+CXXFLAGS += -xCOMMON-AVX512 -ip -inline-factor=1000 -D__INTEL_SKYLAKE_8168 -qopt-zmm-usage=high -fno-alias -ipo
