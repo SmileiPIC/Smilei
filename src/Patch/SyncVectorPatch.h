@@ -34,7 +34,8 @@ public :
     
     template<typename T, typename MT>  static void sum( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime );
     static void sum_all_components( std::vector<Field *> &fields, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime );
-    
+
+    void template_generator();   
     
     //! Fields synchronization
     static void exchangeE( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
