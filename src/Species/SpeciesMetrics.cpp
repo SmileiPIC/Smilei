@@ -127,11 +127,11 @@ float SpeciesMetrics::get_particle_computation_time_vectorization( const float l
 {
 // Cascade lake 6248 (Ex: Jean Zay)
 #if defined __INTEL_CASCADELAKE_6248
-    return -2.189138797721152e-03 * pow(log_particle_number,4)
-            + 7.915767517190369e-03 * pow(log_particle_number,3)
-            + 1.699504381893973e-01 * pow(log_particle_number,2)
-            -1.233925279218733e+00 * log_particle_number
-            + 2.729912991221435e+00;
+    return -3.878426186471072e-03 * pow(log_particle_number,4)
+            + 3.143999691029673e-02 * pow(log_particle_number,3)
+            + 6.520005335065826e-02 * pow(log_particle_number,2)
+            -1.103410559576951e+00 * log_particle_number
+            + 2.851575999756124e+00;
 // Skylake 8168 (Ex: Irene Joliot-Curie)
 #elif defined __INTEL_SKYLAKE_8168
     return    -5.500324176161280e-03 * pow( log_particle_number, 4 )
@@ -162,11 +162,11 @@ float SpeciesMetrics::get_particle_computation_time_vectorization( const float l
                + 2.893485213852858e+00;
 // General fit
 #else
-    return   -7.983397022180499e-05 * pow( log_particle_number, 4 )
-             -1.220834603123080e-02 * pow( log_particle_number, 3 )
-             + 2.262009704511124e-01 * pow( log_particle_number, 2 )
-             -1.346529777726451e+00 * log_particle_number
-             + 3.053068997965275e+00;
+    return    -1.760649180606238e-03 * pow(log_particle_number,4)
+            + 8.410553824987992e-03 * pow(log_particle_number,3)
+            + 1.447576003168199e-01 * pow(log_particle_number,2)
+             -1.192593070397785e+00 * log_particle_number
+            + 2.855507642982689e+00;
 #endif
 
 };
@@ -187,8 +187,8 @@ float SpeciesMetrics::get_particle_computation_time_scalar( const float log_part
 {
 // Cascade lake 6248 (Ex: Jean Zay)
 #if defined __INTEL_CASCADELAKE_6248
-    return  -8.672655727778544e-03 * log_particle_number
-            + 9.957292932684755e-01;
+    return  -1.109419407609368e-02 * log_particle_number
+            + 9.564834436679180e-01;
 // Skylake 8168 (Ex: Irene)
 #elif defined __INTEL_SKYLAKE_8168
     return   -1.476070257489217e-02 * log_particle_number
@@ -207,7 +207,7 @@ float SpeciesMetrics::get_particle_computation_time_scalar( const float log_part
               + 9.761935025470106e-01;
 // General fit
 #else
-    return   -3.227685432492503e-02 * log_particle_number
-             + 9.344604887689714e-01;
+    return    -8.274579739804833e-03 * log_particle_number
+            + 9.405673399529412e-01;
 #endif
 };
