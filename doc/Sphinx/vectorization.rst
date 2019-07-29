@@ -54,29 +54,116 @@ The most expensive operators and most difficult to vectorize are the current pro
 there is an interpolation between the grids and the macro-particles.
 These two steps have been vectorized taking advantage of the cycle sort.
 
-It has been observed that vectorization is more efficient than using scalar
-operators when the number of
-particles per cell is sufficiently high.
-The threshold is evaluated around 10 particles on recent Intel
-architectures (Skylake, Knights Landing (KNL), Broadwell).
-Vectorization efficiency increases with the number of particles per cell.
-Around 256 particles per cell, a speed-up of x2 has been obtained on Intel Skylake
-and a speed-up of x3 on Intel KNL using the AVX512 instruction set.
-For few particles per cell, scalar implementations are still more efficient
-and the ratio is significant.
+----
+
+Vectorization Performance
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Vectorization is not always the most efficient choice.
+It depends on the number of macro-particles per cell.
+To demonstrate this, we have evaluated in [Beck2019]_ the performance with a series of tests on different architectures: Intel Cascade
+Lake, Intel Skylake, Intel Knights Landing, Intel Haswell, Intel Broadwell.
+The Cascade Lake processor is not in the original study and has been added after.
+We have used the 3D homogeneous Maxwellian benchmark.
+The number of macro-particles per cell is varied from 1 to 512.
+This study has been focused on the particle operators (interpolator, pusher, projector, sorting) and discards the
+computational costs of the Maxwell solver and of the communications between processes.
+Each run has been performed on a single node with both the scalar and the vectorized operators..
+Since the number of cores varies from an architecture
+to another, the runs were conducted so that the load per core
+(i.e. OpenMP thread) is constant.
+The number of patches per core also remains the same for all cores throughout the whole simulation since the imbalance
+in this configuration is never high enough to trigger patch exchanges.
+The patch size is kept constant at 8 × 8 × 8 cells.
+The total number of patches for each architecture is determined so that each core has 8 patches to handle.
+The numerical parameters are given in :numref:`vecto_numerical_parameters`.
+
+.. _vecto_numerical_parameters:
+
++-------------------------------------+-------------------------------------------------------+-------------------+---------------------------+
+| Cluster                             | Architecture                                          | Number of patches | Configuration             |
++=====================================+=======================================================+===================+===========================+
+| Jean Zay, IDRIS, France             | 2 x Cascade Lake (Intel® Xeon® Gold 6248, 20 cores)   | 5 x 8 x 8         | Intel 19, IntelMPI 19     |
++-------------------------------------+-------------------------------------------------------+-------------------+---------------------------+
+| Irene Joliot-Curie, TGCC, France    | 2 x skylake (Intel® Skylake 8168, 24 cores)           | 6 x 8 x 8         | Intel 18, IntelMPI 18     |
++-------------------------------------+-------------------------------------------------------+-------------------+---------------------------+
+| Frioul, Cines, France               | 2 x Knights Landing (Intel® Xeon® Phi 7250, 68 cores) | 8 x 8 x 8         | Intel 18, IntelMPI 18     |
++-------------------------------------+-------------------------------------------------------+-------------------+---------------------------+
+| Tornado, LPP, France                | 2 x Broadwell (Intel® Xeon® E5-2697 v4, 16 cores)     | 4 x 8 x 8         | Intel 17, openMPI 1.6.5   |
++-------------------------------------+-------------------------------------------------------+-------------------+---------------------------+
+| Jureca, Juelich, Germany            | 2 x Haswell (Intel® Xeon® E5-2680 v3, 12 cores)       | 3 x 8 x 8         | Intel 18, IntelMPI 18     |
++-------------------------------------+-------------------------------------------------------+-------------------+---------------------------+
+
+The results of the simulation tests (shape factor of order 2) for both scalar and vectorized versions are
+shown in :numref:`vecto_particle_times_o2_all`.
+Contrary to the scalar mode, the vectorized operators efficiency depends strongly on the number of particles per cell.
+It shows improved efficiency, compared to the scalar mode, above a certain number of particles per cell denoted *inversion point*.
+
+.. _vecto_particle_times_o2_all:
+
+.. figure:: _static/vecto_particle_times_o2_all.png
+  :width: 100%
+
+  Particle computational cost as a function of the number of particles per cell. Vectorized
+  operators are compared to their scalar versions on various cluster
+  architectures. Note that the Skylake compilations accepts both AVX512 and AVX2
+  instruction sets.
+
+The lower performances of the vectorized operators at low particles per cell can be easily understood:
+
+1. The complexity of vectorized algorithms is higher than their scalar counter-parts.
+#. New schemes with additional loops and local buffers induced an overhead that is onmy compensated when the number of particles is large enough.
+#. SIMD instructions are not efficient if not fulfilled
+#. SIMD instructions operate at a lower clock frequency than scalar ones on recent architectures
+
+The location of the inversion point of the speed-ups brought by vectorization depends on the architecture.
+The performance results are summarized in :numref:`vecto_performance_results`.
+
+.. _vecto_performance_results:
+
++-------------------------------------+-------------------------------------------------------+------------------------+
+| Architecture (Cluster)              | Inversion point (particles per cell)                  | Vectorization speed-up |
++=====================================+=======================================================+========================+
+| Cascade lake (Jean Zay)             | 8 particles per cell                                  | x2                     |
++-------------------------------------+-------------------------------------------------------+------------------------+
+| Skylake (Irene Joliot-Curie)        | 10 particles per cell (most advanced instruction set) | x2.1                   |
++-------------------------------------+-------------------------------------------------------+------------------------+
+| KNL (Frioul)                        | 12 particles per cell                                 | x2.8                   |
++-------------------------------------+-------------------------------------------------------+------------------------+
+| Broadwell (LLR)                     | 10 particles per cell                                 | x1.9                   |
++-------------------------------------+-------------------------------------------------------+------------------------+
+| Haswell (Jureca)                    | 10 particles per cell                                 | x1.9                   |
++-------------------------------------+-------------------------------------------------------+------------------------+
+
+Vectorization efficiency increases with the number of particles per cell above the inversion point.
+It tends to stabilize far from the inversion point above 256 particles per cell.
+
 
 ----
 
 Adaptive vectorization
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Adaptive vectorization consists on locally switch between the scalar and
+Adaptive vectorization consists on switching localy between scalar and
 vectorized operators during the simulation, choosing the most efficient one
 in the region of interest.
 The concept has been successfully implemented at the lower granularity of the code.
 Every given number of time steps, for each
-patch, and for each species, the most efficient operator is determined
+patch, and for each species, the most efficient set of operator is determined
 from the number of particles per cell.
+The concept is schematically described in :numref:`fig_vecto_domain_decomposition`.
+
+.. _fig_vecto_domain_decomposition:
+
+.. figure:: _static/vecto_domain_decomposition.png
+  :width: 100%
+
+  Description of the adaptive vectorization withn the multi-stage domain decomposition.
+  Patches with many macro-particles per cell are faster in with vectorized operators whereas with few macro-particles per cell, scalar operators are more efficient.
+
+
+Large-scale simulations
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 Adaptive vectorization has been validated on large-scale simulations with
 different benchmarks.
