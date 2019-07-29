@@ -1,6 +1,8 @@
 Particle Merging
 ================================================================================
 
+:red:`BETA: be careful when using this module and read carrefully.`
+
 The ability to merge macro-marticles can speed-up the code efficiency
 and reduce the memory footprint in some specific simulation senarii:
 
@@ -334,8 +336,13 @@ The momentum space boundary corresponds to :math:`p_{r,min}`, :math:`p_{r,max}`,
         If the the minimum boundary is too close to the maximum boundary:
             Only one cell is used for this component.
         Else:
-            If :math:`N_\alpha = 1` (here :math:`\alpha` is :math:`r`, :math:`\theta` or :math:`\phi`):
-
+            If :math:`N_\alpha = 1` (here :math:`\alpha` is :math:`p_r`, :math:`\theta` or :math:`\phi`):
+                The unique cell has the size of :math:`(\alpha_{max} - \alpha_{min}) \times 1.01` (the multiplication by 1.01 enables to include :math:`\alpha_{max}`).
+            Else:
+                The discretization is classically computed using :math:`N_\alpha`.
+                :math:`\Delta_\alpha = 1.01 \times (\alpha_{max} - \alpha_{min}) / N_\alpha` (the multiplication by 1.01 enables to include :math:`\alpha_{max}`).
+                
+                
 2.3 Solid angle correction
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
@@ -348,7 +355,7 @@ With the classical spherical discretization, the solid angle that represents the
 
   Classical spherical discretization (a) and the spherical discretization with solid angle correction (b). This figure has been generated with the following `Python script <_static/scripts/vranic_spherical_discretization.py>`_.
 
-To composate this phenomenon, the discretization (number of cells) in :math:`\theta`, :math:`N_\theta`, is made to depend on :math:`\phi` so that the solid angle is approximatly constant. For this aim, a reference solid angle :math:`\Omega_{ref}` has to be set . It corresponds to the solid angle at the smallest  :math:`|\phi|` value with the :math:`\theta` discretization given by the user in the namelist. For larger :math:`|\phi|` values, the :math:`\theta` discretization :math:`N_\theta` varies to satisfy :math:`\Omega = \sin{(\phi)}\Delta \theta \Delta \phi = \Omega_{ref}`. Since we keep :math:`\phi` constant, it is equivalent to determine a :math:`\theta_{ref}`. An example of such a discretization is shown in :numref:`fig_spherical_discretization` b).
+To compensate this phenomenon, the discretization (number of cells) in :math:`\theta`, :math:`N_\theta`, is made to depend on :math:`\phi` so that the solid angle is approximatly constant. For this aim, a reference solid angle :math:`\Omega_{ref}` has to be set . It corresponds to the solid angle at the smallest  :math:`|\phi|` value with the :math:`\theta` discretization given by the user in the namelist. For larger :math:`|\phi|` values, the :math:`\theta` discretization :math:`N_\theta` varies to satisfy :math:`\Omega = \sin{(\phi)}\Delta \theta \Delta \phi = \Omega_{ref}`. Since we keep :math:`\phi` constant, it is equivalent to determine a :math:`\theta_{ref}`. An example of such a discretization is shown in :numref:`fig_spherical_discretization` b).
 
 .. _vranic_accululation_effect:
 
@@ -376,6 +383,31 @@ Oscillations at low energy in the photon energy distribution can be seen in :num
 
   Photon px-py momentum distribution for the 3d magnetic shower benchmark at the end of the simulation for different configuration: a) wihtout merging, b) Cartesian discretization without correction, c) Spherical discretization without correction, d) Cartesian discretization with correction and e) Spherical discretization with correction.
 
+**Warning:** the accumulation correction is not working with the logarithmic discretization.
+
+.. _vranic_log_scale:
+
+2.5 Logarithmic scale
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+Only for the **spherical discretization**, we have implemented the possibility to have a logarithmic discretization for the momentum norm :math:`p`.
+Due to the logarithmic computation, this option is slightly slower than the linear discretization.
+Nonetheless, it can be useful when the distribution is very broad with several orders of magnitude between low-energy
+and high-energy particles.
+The logarithmic or linear discretization scale can be chosen via the parameter `merge_discretization_scale` in the namelist.
+
+On the magnetic shower case presented in section :ref:`vranic_accululation_effect`, the logarithmic discretization
+gives very good results and perfectly fit the distribution without merging as presented in :numref:`magnetic_shower_gamma_distribution_log`.
+
+.. _magnetic_shower_gamma_distribution_log:
+
+.. figure:: _static/figures/magnetic_shower_gamma_distribution_log.png
+  :width: 100%
+
+  Photon px-py momentum distribution for the 3d magnetic shower benchmark
+  at the end of the simulation wihtout merging and with the spherical method in the logarithmic scale.
+
+**Warning:** the logarithmic discretization is not working with the accumulation correction.
 
 .. _vranic_namelist:
 
@@ -447,13 +479,14 @@ Some simulation parameters are given in the following table and the Smilei namel
 
 We decide to have an agressive merging process performed at every timesteps with a relatively restricted momentum-space discretization.
 The merging is applied on all species.
-We have performed the same simulation case in 2D and 1D.
-The merging process can be performed with a finer momentum-space dicretization and every longer period in these dimensions because the number of macro-particles per mometum cells is higher.
+Prior to 3D, we have performed the same simulation case in lower dimensions 1D and 2D.
+The merging process can be performed with a finer momentum-space dicretization and every longer period in these dimensions (1D and 2D) because the number of macro-particles per mometum cells is higher.
 In 3D, the number of particles per momentum cells can be too small to have a frequend merging with a fine momentum-space dicretization.
 
 This case is simulated identically with different merging configuration:
-- No merging
--
+
+* No merging
+*
 
 .. _fig_qed_cascade_scalar:
 
