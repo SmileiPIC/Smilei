@@ -64,7 +64,7 @@ It depends on the number of macro-particles per cell.
 To demonstrate this, we have evaluated in [Beck2019]_ the performance with a series of tests on different architectures: Intel Cascade
 Lake, Intel Skylake, Intel Knights Landing, Intel Haswell, Intel Broadwell.
 The Cascade Lake processor is not in the original study and has been added after.
-We have used the 3D homogeneous Maxwellian benchmark.
+We have used the 3D homogeneous Maxwellian benchmark available `here <_static/vecto_maxwellian_plasma_3d.py>`_.
 The number of macro-particles per cell is varied from 1 to 512.
 This study has been focused on the particle operators (interpolator, pusher, projector, sorting) and discards the
 computational costs of the Maxwell solver and of the communications between processes.
@@ -161,9 +161,55 @@ The concept is schematically described in :numref:`fig_vecto_domain_decompositio
   Description of the adaptive vectorization withn the multi-stage domain decomposition.
   Patches with many macro-particles per cell are faster in with vectorized operators whereas with few macro-particles per cell, scalar operators are more efficient.
 
+An advanced empirical criterion has been developed.
+It is computed from the parametric studies presented in :numref:`vecto_particle_times_o2_all`
+summarizes their results and indicates, for a given species in a given patch, the approximate time to compute the particle
+operators using both the scalar and the vectorized operator.
+The computation times have been normalized to that of the scalar operator for a single particle.
+The comparision of all normalized curves is presented in :numref:`fig_vecto_efficiency_o2_all_mc`.
+
+.. _fig_vecto_efficiency_o2_all_mc:
+
+.. figure:: _static/vecto_efficiency_o2_all_mc.png
+  :width: 100%
+
+  Normalized time per particle spent for all particle operators in
+  the scalar and vectorized modes with various architectures, and 2nd-order
+  interpolation shape functions.
+
+The outcomes from different architectures appear sufficiently similar to consider an average between their results.
+A linear regression of the average between all is applied on the scalar results to have a fit function to implement in the code.
+It writes:
+
+.. math::
+  :label: fit_scalar
+
+  S(N) = -1.11 \times 10^{-2} \log{\left( N \right)} + 9.56 \times 10^{-1}
+
+S is the computation time per particle normalized to that with 1 PPC, and N is the number of PPC.
+For the average between vectorized results, a fourth-order polynomial regression writes:
+
+.. math::
+  :label: vecto_scalar
+
+  V(N) = 1.76 \times 10^{ -3 } \log{ \left( N \right)}^4 \\ \nonumber
+  + 8.41 \times 10^{ -2 } \log{ \left( N \right)}^3 \\ \nonumber
+  + 1.45 \times 10^{ -2 } \log{ \left( N \right)}^2 \\ \nonumber
+  -1.19 \log{ \left( N \right) } \\ \nonumber
+  + 2.86
+
+.. _vecto_efficiency_o2_all_fit:
+
+.. figure:: _static/vecto_efficiency_o2_all_fit.png
+  :width: 100%
+
+  Averages of the curves in panel (a), and polynomial regressions.
 
 Large-scale simulations
 ^^^^^^^^^^^^^^^^^^^^^^^^
+
+Mildly-relativistic collisionless shock
+"""""""""""""""""""""""""""""""""""""""
 
 Adaptive vectorization has been validated on large-scale simulations with
 different benchmarks.
