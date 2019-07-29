@@ -198,21 +198,40 @@ For the average between vectorized results, a fourth-order polynomial regression
   -1.19 \log{ \left( N \right) } \\ \nonumber
   + 2.86
 
+The polynomial regressions are shown in :numref:`vecto_efficiency_o2_all_fit`.
+
 .. _vecto_efficiency_o2_all_fit:
 
 .. figure:: _static/vecto_efficiency_o2_all_fit.png
   :width: 100%
 
-  Averages of the curves in panel (a), and polynomial regressions.
+  Averages of the curves of :numref:`fig_vecto_efficiency_o2_all_mc` , and polynomial regressions.
+
+These functions are implemented in the code to determine approximately the normalized single-particle cost.
+Assuming every particle takes the same amount of time, the total time to advance a species in a given patch can then be simply evaluated with a
+sum on all cells within the patch as:
+
+.. math::
+  :label: adaptive_vecto_time_evaluation
+
+  T_{\rm s,v} = \sum_{c \ \in\ patch\ cells} N(c) \times F\!\left(N(c)\right)
+
+where F is either S or V.
+Comparing :math:`T_s` and :math:`T_v` determines which of the scalar or vectorized operators should be locally selected.
+This operation is repeated every given number of time steps to adapt to the evolving plasma distribution. Note that similar
+approximations may be computed for specific processors instead of using a general rule.
+In Smilei, other typical processors have been included, requiring an additional compilation flag automatically included in the machine files for `make`.
+
+The process of computing the faster mode and changing operators accordingly is called reconfiguration
 
 Large-scale simulations
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-Mildly-relativistic collisionless shock
-"""""""""""""""""""""""""""""""""""""""
-
 Adaptive vectorization has been validated on large-scale simulations with
 different benchmarks.
+
+Mildly-relativistic collisionless shock
+"""""""""""""""""""""""""""""""""""""""
 
 One of the case was the simulation of Mildly-relativistic collisionless shock.
 The effect of the adaptive vectorization mode is illustrated by :numref:`fig_weibel_3d_ne_vecto_it510`.
@@ -222,7 +241,7 @@ The volume rendering at the bottom shows and patch computational state for the e
 .. _fig_weibel_3d_ne_vecto_it510:
 
 .. figure:: _static/Weibel_3d_ne_vecto_it510.jpg
-    :width: 90%
+    :width: 100%
     :align: center
     :target: https://youtu.be/-ENUekyE_A4
 
@@ -236,7 +255,7 @@ The volume rendering at the bottom shows and patch computational state for the e
 
 Thanks to the adaptive vectorization, high-density regions that contains many macro-particles per cell corresponds to the patches in vectorized mode.
 Incoming plasma flows, with 8 particles per cell in average, are in scalar mode.
-How the simulation configures dynamically in time the scalar and vectorized regions is demonstrated in the following video:
+The following video shows how the patches are dynamically switched in vectorized or scalar mode.
 
 .. _video_weibel_3d_ne_vecto_it510:
 
@@ -245,8 +264,9 @@ How the simulation configures dynamically in time the scalar and vectorized regi
   <video style="display:block; margin: 0 auto; width: 100%;" controls src="http://www.maisondelasimulation.fr/projects/Smilei/uploads/videos/weibel_interp.mp4" width="100%">
   </video>
 
-On examined cases, this method allows for speed-ups from x1.3 to x2 regarding only
-the macro-particle operators.
+For this specific benchmark, the speed-up obtained with vectorization is
+of x2.
+Adaptive vectorization brinds a small additional speed-up in some cases.
 
 ----
 
