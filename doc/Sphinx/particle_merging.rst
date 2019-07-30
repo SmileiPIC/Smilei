@@ -371,14 +371,14 @@ Oscillations at low energy in the photon energy distribution can be seen in :num
 
 .. _fig_magnetic_shower_photon_energy_distribution:
 
-.. figure:: _static/magnetic_shower_photon_energy_distribution.png
+.. figure:: _static/figures/magnetic_shower_photon_energy_distribution.png
   :width: 100%
 
   Photon energy distribution for the 3d magnetic shower benchmark at the end of the simulation without (a) and with accumulation correction (b) for both the Spherical and Cartesian momentum discretization.
 
 .. _fig_magnetic_shower_photon_pxpy_distribution:
 
-.. figure:: _static/magnetic_shower_photon_pxpy_distribution.png
+.. figure:: _static/figures/magnetic_shower_photon_pxpy_distribution.png
   :width: 100%
 
   Photon px-py momentum distribution for the 3d magnetic shower benchmark at the end of the simulation for different configuration: a) wihtout merging, b) Cartesian discretization without correction, c) Spherical discretization without correction, d) Cartesian discretization with correction and e) Spherical discretization with correction.
@@ -494,14 +494,19 @@ This case is simulated identically with different merging configuration:
 * Merging with the Spherical linear discretization
 * Merging with the Spherical logarithmic discretization
 
-The comparision of the scalar diagnostics if presented in :numref:`fig_qed_cascade_scalar`.
+The comparision of the scalar diagnostics is presented in :numref:`fig_qed_cascade_scalar`.
+The scalar diagnosctics shown in this figure are the total number of macro-particles, the total kinetic energy and the total weight.
+
 
 .. _fig_qed_cascade_scalar:
 
 .. figure:: _static/figures/QED_cascade_scalar.png
   :width: 100%
 
-  Study and comparison of the scalar diagnostics for all merging configuration: no merging, mergign with the logarithmic and linear spherical discretization and the cartesian discretization. The scalar diagnostics shown here are the number of macroparticles (first row), the normalized kinetic energy (second row) and the weight (third row).
+  Study and comparison of the scalar diagnostics for all merging configuration: no merging, mergign with
+  the logarithmic and linear spherical discretization and the cartesian discretization.
+  The scalar diagnostics shown here are the number of macroparticles (first row), the normalized kinetic energy
+  (second row) and the weight (third row).
   Each column respectively concerns a different species: the photons, the electrons and the protons.
 
 .. _fig_qed_cascade_photon_gamma_spectrum:

@@ -655,17 +655,6 @@ void MergingVranicSpherical::operator() (
                         // Loop over the packets of particles that can be merged
                         for (ipack = 0 ; ipack < npack ; ipack += 1) {
 
-                            total_weight = 0;
-                            total_energy = 0;
-                            mr = 0;
-                            theta=0;
-                            phi = 0;
-
-                            // First index of the packet
-                            ipr_min = ipack*max_packet_size_;
-                            // last index of the packet
-                            ipr_max = std::min((ipack+1)*max_packet_size_,particles_per_momentum_cells[ic]);
-
                             // _______________________________________________________________
                             // This simd optimization is not efficient
                             // kept for memory
@@ -706,8 +695,103 @@ void MergingVranicSpherical::operator() (
 
                             // _______________________________________________________________
 
-                            // Compute total weight, total momentum and total energy
-                            // Photons
+                            // // First Method
+                            // // Compute total weight, total momentum and total energy
+                            // // Photons
+                            // // Average on mr, theta and phi
+                            //
+                            // total_weight = 0;
+                            // total_energy = 0;
+                            // mr = 0;
+                            // theta=0;
+                            // phi = 0;
+                            //
+                            // // First index of the packet
+                            // ipr_min = ipack*max_packet_size_;
+                            // // last index of the packet
+                            // ipr_max = std::min((ipack+1)*max_packet_size_,particles_per_momentum_cells[ic]);
+                            //
+                            // if (mass == 0) {
+                            //
+                            //     for (ipr = ipr_min ; ipr < ipr_max ; ipr ++) {
+                            //
+                            //         // Particle index in Particles
+                            //         ip = sorted_particles[momentum_cell_particle_index[ic] + ipr];
+                            //
+                            //         // Total weight (wt)
+                            //         total_weight += weight[ip];
+                            //
+                            //         mr += weight[ip]*momentum_norm[ip - istart];
+                            //         theta += weight[ip]*particles_theta[ip - istart];
+                            //         phi += weight[ip]*particles_phi[ip - istart];
+                            //
+                            //     }
+                            //
+                            //     total_energy = mr;
+                            // // Compute total weight, total momentum and total energy
+                            // // for particles
+                            // } else {
+                            //
+                            //     for (ipr = ipr_min ; ipr < ipr_max ; ipr ++) {
+                            //
+                            //         // Particle index in Particles
+                            //         ip = sorted_particles[momentum_cell_particle_index[ic] + ipr];
+                            //
+                            //         // Total weight (wt)
+                            //         total_weight += weight[ip];
+                            //
+                            //         mr += weight[ip]*momentum_norm[ip - istart];
+                            //         theta += weight[ip]*particles_theta[ip - istart];
+                            //         phi += weight[ip]*particles_phi[ip - istart];
+                            //
+                            //         // total energy (\varespilon_t)
+                            //         total_energy += weight[ip]
+                            //                                  * sqrt(1.0 + momentum[0][ip]*momentum[0][ip]
+                            //                                  + momentum[1][ip]*momentum[1][ip]
+                            //                                  + momentum[2][ip]*momentum[2][ip]);
+                            //
+                            //     }
+                            // }
+                            //
+                            // // here for photon, this parameter is the inverse of total_weight
+                            // new_momentum_norm = 1 / total_weight;
+                            //
+                            // theta = theta * new_momentum_norm;
+                            // phi = phi * new_momentum_norm;
+                            //
+                            // // \varepsilon_a in Vranic et al
+                            // new_energy = total_energy * new_momentum_norm;
+                            //
+                            // // pa in Vranic et al.
+                            // // For photons
+                            // if (mass == 0) {
+                            //     new_momentum_norm = new_energy;
+                            // // For mass particles
+                            // } else {
+                            //     new_momentum_norm = sqrt(new_energy*new_energy - 1.0);
+                            // }
+                            //
+                            // // Angle between pa and pt, pb and pt in Vranic et al.
+                            // // omega = std::acos(std::min(mr / (total_weight*new_momentum_norm),1.0));
+                            // cos_omega = std::min(mr / (total_weight*new_momentum_norm),1.0);
+                            // sin_omega = sqrt(1 - cos_omega*cos_omega);
+                            //
+                            // // Computation of e1 unit vector
+                            // e1_x = cos(theta)*cos(phi);
+                            // e1_y = sin(theta)*cos(phi);
+                            // e1_z = sin(phi);
+
+                            // _______________________________________________________________
+                            // Second method
+                            // Average on mx, my mz
+
+                            total_weight = 0;
+                            total_energy = 0;
+                            double total_momentum_x = 0;
+                            double total_momentum_y = 0;
+                            double total_momentum_z = 0;
+                            double total_momentum_norm = 0;
+                            
                             if (mass == 0) {
 
                                 for (ipr = ipr_min ; ipr < ipr_max ; ipr ++) {
@@ -718,13 +802,14 @@ void MergingVranicSpherical::operator() (
                                     // Total weight (wt)
                                     total_weight += weight[ip];
 
-                                    mr += weight[ip]*momentum_norm[ip - istart];
-                                    theta += weight[ip]*particles_theta[ip - istart];
-                                    phi += weight[ip]*particles_phi[ip - istart];
+                                    // total momentum vector (pt)
+                                    total_momentum_x += momentum[0][ip]*weight[ip];
+                                    total_momentum_y += momentum[1][ip]*weight[ip];
+                                    total_momentum_z += momentum[2][ip]*weight[ip];
+                                    
+                                    total_energy += weight[ip]*momentum_norm[ip - istart];
 
                                 }
-                                
-                                total_energy = mr;
                             // Compute total weight, total momentum and total energy
                             // for particles
                             } else {
@@ -737,27 +822,20 @@ void MergingVranicSpherical::operator() (
                                     // Total weight (wt)
                                     total_weight += weight[ip];
 
-                                    mr += weight[ip]*momentum_norm[ip - istart];
-                                    theta += weight[ip]*particles_theta[ip - istart];
-                                    phi += weight[ip]*particles_phi[ip - istart];
+                                    // total momentum vector (pt)
+                                    total_momentum_x += momentum[0][ip]*weight[ip];
+                                    total_momentum_y += momentum[1][ip]*weight[ip];
+                                    total_momentum_z += momentum[2][ip]*weight[ip];
 
                                     // total energy (\varespilon_t)
                                     total_energy += weight[ip]
-                                                             * sqrt(1.0 + momentum[0][ip]*momentum[0][ip]
-                                                             + momentum[1][ip]*momentum[1][ip]
-                                                             + momentum[2][ip]*momentum[2][ip]);
+                                            * sqrt(1.0 + momentum_norm[ip - istart]*momentum_norm[ip - istart]);
 
                                 }
                             }
 
-                            // here for photon, this parameter is the inverse of total_weight
-                            new_momentum_norm = 1 / total_weight;
-
-                            theta = theta * new_momentum_norm;
-                            phi = phi * new_momentum_norm;
-
                             // \varepsilon_a in Vranic et al
-                            new_energy = total_energy * new_momentum_norm;
+                            new_energy = total_energy / total_weight;
 
                             // pa in Vranic et al.
                             // For photons
@@ -768,15 +846,23 @@ void MergingVranicSpherical::operator() (
                                 new_momentum_norm = sqrt(new_energy*new_energy - 1.0);
                             }
 
+                            // Total momentum norm
+                            total_momentum_norm = sqrt(total_momentum_x*total_momentum_x
+                                                +      total_momentum_y*total_momentum_y
+                                                +      total_momentum_z*total_momentum_z);
+
                             // Angle between pa and pt, pb and pt in Vranic et al.
                             // omega = std::acos(std::min(mr / (total_weight*new_momentum_norm),1.0));
-                            cos_omega = std::min(mr / (total_weight*new_momentum_norm),1.0);
+                            cos_omega = std::min(total_momentum_norm / (total_weight*new_momentum_norm),1.0);
                             sin_omega = sqrt(1 - cos_omega*cos_omega);
 
+                            // Now, represents the inverse to avoid useless division
+                            total_momentum_norm = 1/total_momentum_norm;
+
                             // Computation of e1 unit vector
-                            e1_x = cos(theta)*cos(phi);
-                            e1_y = sin(theta)*cos(phi);
-                            e1_z = sin(phi);
+                            e1_x = total_momentum_x*total_momentum_norm;
+                            e1_y = total_momentum_y*total_momentum_norm;
+                            e1_z = total_momentum_z*total_momentum_norm;
 
                             // e3 = e1 x cell_vec
                             e3_x = e1_y*cell_vec_z[icc] - e1_z*cell_vec_y[icc];
