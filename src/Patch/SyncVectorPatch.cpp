@@ -694,13 +694,6 @@ void SyncVectorPatch::exchangeE( Params &params, VectorPatch &vecPatches, Smilei
         SyncVectorPatch::exchange_synchronized_per_direction( vecPatches.listEz_, vecPatches, smpi );
     }
 
-    bool never_used( true );
-    if (!never_used) {
-        SyncVectorPatch::exchange_along_all_directions_noomp<double,Field>( vecPatches.listEx_, vecPatches, smpi );
-        SyncVectorPatch::exchange_along_all_directions_noomp<complex<double>,cField>( vecPatches.listEx_, vecPatches, smpi );
-        SyncVectorPatch::exchange_along_all_directions_noomp<double,Field>( vecPatches.listEx_, vecPatches, smpi );
-    }
-
 }
 
 void SyncVectorPatch::finalizeexchangeE( Params &params, VectorPatch &vecPatches )
@@ -903,6 +896,16 @@ void SyncVectorPatch::exchangeEnvChi( Params &params, VectorPatch &vecPatches, S
     SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listEnv_Chi_, vecPatches );
 }
 
+
+void SyncVectorPatch::template_generator()
+{
+    SmileiMPI* smpi = NULL;
+    VectorPatch patches;
+    SyncVectorPatch::exchange_along_all_directions_noomp<double         ,Field >( patches.listEx_, patches, smpi );
+    SyncVectorPatch::exchange_along_all_directions_noomp<complex<double>,cField>( patches.listEx_, patches, smpi );
+    SyncVectorPatch::exchange_along_all_directions_noomp<double         ,Field >( patches.listEx_, patches, smpi );
+    SyncVectorPatch::exchange_along_all_directions_noomp<double         ,Field >( patches.listEx_, patches, smpi );
+}
 
 // fields : contains a single field component (X, Y or Z) for all patches of vecPatches
 // timers and itime were here introduced for debugging
