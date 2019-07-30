@@ -791,7 +791,12 @@ void MergingVranicSpherical::operator() (
                             double total_momentum_y = 0;
                             double total_momentum_z = 0;
                             double total_momentum_norm = 0;
-                            
+
+                            // // First index of the packet
+                            ipr_min = ipack*max_packet_size_;
+                            // // last index of the packet
+                            ipr_max = std::min((ipack+1)*max_packet_size_,particles_per_momentum_cells[ic]);
+
                             if (mass == 0) {
 
                                 for (ipr = ipr_min ; ipr < ipr_max ; ipr ++) {
