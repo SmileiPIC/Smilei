@@ -1,7 +1,7 @@
 Particle Merging
 ================================================================================
 
-:red:`BETA: be careful when using this module and read carrefully.`
+:red:`BETA: be careful when using this module and read carrefully the documentation.`
 
 The ability to merge macro-marticles can speed-up the code efficiency
 and reduce the memory footprint in some specific simulation senarii:
@@ -407,7 +407,8 @@ gives very good results and perfectly fit the distribution without merging as pr
   Photon px-py momentum distribution for the 3d magnetic shower benchmark
   at the end of the simulation wihtout merging and with the spherical method in the logarithmic scale.
 
-**Warning:** the logarithmic discretization is not working with the accumulation correction.
+**Warning:** the logarithmic discretization is subject to accumulutation oscilations
+but is not working with the current accumulation correction.
 
 .. _vranic_namelist:
 
@@ -468,6 +469,8 @@ Some simulation parameters are given in the following table and the Smilei namel
 +-------------------------------------------------------------+-----------------------------------------------------+
 | Simulation duration                                         | :math:`2 L_x / c`                                   |
 +-------------------------------------------------------------+-----------------------------------------------------+
+| Allocation time                                             | 1000 seconds                                        |
++-------------------------------------------------------------+-----------------------------------------------------+
 | Patch size                                                  | :math:`8 \times 8 \times 8` cells                   |
 +-------------------------------------------------------------+-----------------------------------------------------+
 | Vectorization                                               | on                                                  |
@@ -481,12 +484,17 @@ We decide to have an agressive merging process performed at every timesteps with
 The merging is applied on all species.
 Prior to 3D, we have performed the same simulation case in lower dimensions 1D and 2D.
 The merging process can be performed with a finer momentum-space dicretization and every longer period in these dimensions (1D and 2D) because the number of macro-particles per mometum cells is higher.
-In 3D, the number of particles per momentum cells can be too small to have a frequend merging with a fine momentum-space dicretization.
+In 3D, the number of particles per momentum cells can be too small to have a frequent merging with a fine momentum-space dicretization.
+The cases are run during a maximum of 1000 seconds.
 
 This case is simulated identically with different merging configuration:
 
 * No merging
-*
+* Merging with the Cartesian discretization
+* Merging with the Spherical linear discretization
+* Merging with the Spherical logarithmic discretization
+
+The comparision of the scalar diagnostics if presented in :numref:`fig_qed_cascade_scalar`.
 
 .. _fig_qed_cascade_scalar:
 
