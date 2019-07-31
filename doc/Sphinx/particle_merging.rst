@@ -1,16 +1,16 @@
 Particle Merging
 ================================================================================
 
-:red:`BETA: be careful when using this module and read carrefully the documentation.`
+:red:`BETA: be careful when using this module and read carefully  the documentation.`
 
-The ability to merge macro-marticles can speed-up the code efficiency
-and reduce the memory footprint in some specific simulation senarii:
+The ability to merge macro-particles can speed-up the code efficiency
+and reduce the memory footprint in some specific simulation senarios:
 
 * When macro-particles accumulate in a fraction of the simulation domain
-  hence strongly worsening the load imbalance (ex: Weibel collison shocks,
+  hence strongly worsening the load imbalance (ex: Weibel collision shocks,
   laser wakefield electron acceleration).
 * When macro-particles are generated in a large quantity due to some
-  additonal physical mechanisms (ionization, macro-photon emission, QED pair production...)
+  additional physical mechanisms (ionization, macro-photon emission, QED pair production...)
 * When macro-particles travel in large quantities outside interesting physical regions.
 
 Available implemented methods:
@@ -29,11 +29,13 @@ The merging method of M. Vranic
 1. Understand the method
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The method of M. Vranic basically consists on 3 main steps and is schematically described (in 2D) in Fig. :numref:`fig_vranic_particle_merging`:
+The method of M. Vranic consists of 3 main steps and is schematically described (in 2D) in Fig. :numref:`fig_vranic_particle_merging`:
 
-1. To Decompose macro-particles in position space into groups so that they share close location. In :program:`Smilei`, macro-particles are sorted by field cells. In the article of M. Vranic *et al.*, the decomposition can be larger than just a cell.
+1. To Decompose macro-particles into groups according to their location so that they share close positions.
+  In :program:`Smilei`, macro-particles are sorted by field cells.
+  In the article of M. Vranic *et al.*, the decomposition can be larger than just a cell.
 
-2. Then, to subdivide the macro-particles into sub-groups in the momentum space so that they share close kinteic properties.
+2. Then, to subdivide the macro-particles into sub-groups in the momentum space so that they share close kinetic properties.
 
 3. To merge macro-particles located in the same groups in 2 new macro-particles to respect the charge, energy and momentum conserving laws.
 
@@ -42,15 +44,15 @@ The method of M. Vranic basically consists on 3 main steps and is schematically 
 .. figure:: _static/vranic_particle_merging.png
   :width: 100%
 
-  Basic description of the Vranic merging method in 2D geometry. In 3D, the idea is strictly the same.
+  Basic description of M. Vranic merging method in 2D geometry. In 3D, the idea is strictly the same.
 
-This method has several advantages. It is relatively easy to understand and to implement.
-It has a relatively low computational costs and is efficient without
-impacting significantly the physical resuls.
+This method has several advantages.
+It is relatively easy to understand and to implement.
+It has a relatively low computational costs and is efficient without impacting significantly the physical results.
 
 .. warning::
 
-  This suppose that the parameters are adequatly tuned.
+  This suppose that the parameters are adequately tuned.
   Otherwise, the macro-particle merging can affect the final simulation results.
 
 1.1 Momentum cell decomposition
@@ -62,7 +64,7 @@ The number of cells in the direction :math:`\alpha` for the discretization is :m
 The discretization step in the direction :math:`\alpha` is called :math:`\Delta_{\alpha}`.
 
 In a position merge cell, step 2 starts by the computation of the minimum :math:`p_{\alpha,min}` and maximum :math:`p_{\alpha,max}` momentum boundaries (also given in :numref:`fig_vranic_particle_merging`).
-The boundaries define the momentum space that is then discretized.
+The momentum boundaries define the limits of the momentum space that we use and discretize.
 The momentum space is divided into momentum cells (of size :math:`\Delta_{\alpha}`) following the discretization (:math:`N_{\alpha}`) given by the user.
 
 In :program:`Smilei`, we use both a spherical discretization geometry for the momentum
@@ -484,7 +486,7 @@ We decide to have an agressive merging process performed at every timesteps with
 The merging is applied on all species.
 Prior to 3D, we have performed the same simulation case in lower dimensions 1D and 2D.
 The merging process can be performed with a finer momentum-space dicretization and every longer period in these dimensions (1D and 2D) because the number of macro-particles per mometum cells is higher.
-In 3D, the number of particles per momentum cells can be too small to have a frequent merging with a fine momentum-space dicretization.
+In 3D, the number of particles per momentum cells can be too small to have a frequent merging with a thin momentum-space dicretization.
 The cases are run during a maximum of 1000 seconds.
 
 This case is simulated identically with different merging configuration:
@@ -514,8 +516,13 @@ As we will see, the merging processes modify the momentum distribution and influ
 
 The electron, positron and photon energy spectrum at time :math:`t = 39 \omega^{-1}`
 (nearly when the no merging case saturates) is shown in :numref:`fig_qed_cascade_photon_gamma_spectrum`.
-It reaveals that for this configuration, the Cartesian and the linear spherical discretization strongly impact the
-mass particle energy distribution.
+It reaveals that for this configuration, all merging methods significantly impact the energy distributions.
+For particles, the spherical methods tend to overestimate the energy distribution with a large bump
+between 50 and 300 :math:`m_ec^2`.
+The Cartesian discretization overestimates it before 150 :math:`m_ec^2` and then goes below the no-merging curve.
+This phenomenon is less important with a thinner discretization but at the cost of less particle merging events.
+For photons, we observe oscillations with all methods due to the accumulation effect.
+The logarithmic merging curve seems to oscilate around the no-merging one.
 
 .. _fig_qed_cascade_photon_gamma_spectrum:
 
@@ -526,13 +533,20 @@ mass particle energy distribution.
   for the different merging configuration: no merging, mergign with the logarithmic and linear spherical
   discretization and the Cartesian discretization.
 
+:numref:`fig_qed_cascade_photon_pxpy_spectrum` shows the :math:`k_x-k_y` momentum distribution of the photons.
+It clearly shows that with the level of discretization we have for these simulation, none of the merging process
+can perfectly reproduce the distribution without merging.
+
 .. _fig_qed_cascade_photon_pxpy_spectrum:
 
 .. figure:: _static/figures/QED_cascade_photon_px_py_distribution.png
   :width: 100%
 
-  :math:`p_x-p_y` photon momentum distribution at simulation time :math:`t = 39.5 \omega^{-1}`
-  for the different merging configuration: no merging, mergign with the logarithmic and linear spherical discretization and the cartesian discretization.
+  :math:`k_x-k_y` photon momentum distribution at simulation time :math:`t = 39.5 \omega^{-1}`
+  for the different merging configuration: no merging, mergign with the logarithmic and linear
+  spherical discretization and the cartesian discretization.
+
+:numref:`fig_qed_cascade_electron_pxpy_spectrum` shows the :math:`p_x-p_y` momentum distribution of the electrons.
 
 .. _fig_qed_cascade_electron_pxpy_spectrum:
 
@@ -542,12 +556,30 @@ mass particle energy distribution.
   :math:`p_x-p_y` electron momentum distribution at simulation time :math:`t = 39.5 \omega^{-1}`
   for the different merging configuration: no merging, mergign with the logarithmic and linear spherical discretization and the cartesian discretization.
 
+:numref:`fig_qed_cascade_iteration_time` shows the CPU time necessary to compute a numerical timestep all
+along the simulations.
+This enables to compare the merging methods in term of performance.
+The linear spherical discretization is faster than the others.
+It can be explaine easily: the solid angle correction diminishes the number of cells to treat in the momentum space.
+The logarithmic spherical discretization has the same advantage but the computation in the log-space adds a
+computational time overhead.
+The consequence is that this method has at the end almost the same computational cost than the Cartesian method described in [Vranic2005]_.
+
+
 .. _fig_qed_cascade_iteration_time:
 
 .. figure:: _static/figures/QED_cascade_iteration_time.png
   :width: 100%
 
-  Evolution of the average computation time per iteration for each merging method: no merging, mergign with the logarithmic and linear spherical discretization and the cartesian discretization.
+  Evolution of the average computation time per iteration for
+  each merging method: no merging, mergign with the logarithmic and linear spherical discretization and the cartesian discretization.
+
+The following video shows what happens during this simulation benchmark.
+It has been obtained using the logarithmic spherical discretization.
+Specifically, it shows the time evolution of the electron, the positron and the photon density in the plane :math:`x-y`.
+The z-axis is integrated.
+The exponential growth of photons and mass particles can be seen.
+It first happens in the plane y-z near the center of the domain and then expand longitudinaly.
 
 .. _video_qed_cascade:
 
