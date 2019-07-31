@@ -495,8 +495,11 @@ This case is simulated identically with different merging configuration:
 * Merging with the Spherical logarithmic discretization
 
 The comparision of the scalar diagnostics is presented in :numref:`fig_qed_cascade_scalar`.
-The scalar diagnosctics shown in this figure are the total number of macro-particles, the total kinetic energy and the total weight.
-
+The scalar diagnostics shown in this figure are the total number of macro-particles, the total kinetic energy and the total weight.
+Merging process starts when the number of macro-particles is high-enough around :math:`10^5` for the photons.
+It enables to perform between 10% and 20% more iterations than the no merging case.
+Each merging method does not exactly gives the same kintetic energy and weight evolution.
+As we will see, the merging processes modify the momentum distribution and influence the physical processes.
 
 .. _fig_qed_cascade_scalar:
 
@@ -509,17 +512,23 @@ The scalar diagnosctics shown in this figure are the total number of macro-parti
   (second row) and the weight (third row).
   Each column respectively concerns a different species: the photons, the electrons and the protons.
 
+The electron, positron and photon energy spectrum at time :math:`t = 39 \omega^{-1}`
+(nearly when the no merging case saturates) is shown in :numref:`fig_qed_cascade_photon_gamma_spectrum`.
+It reaveals that for this configuration, the Cartesian and the linear spherical discretization strongly impact the
+mass particle energy distribution.
+
 .. _fig_qed_cascade_photon_gamma_spectrum:
 
-.. figure:: _static/QED_cascade_gamma_spectrum.png
+.. figure:: _static/figures/QED_cascade_gamma_spectrum.png
   :width: 100%
 
-  Electron, energy spectrum at simulation time :math:`t = 39.5 \omega^{-1}`
-  for the different merging configuration: no merging, mergign with the logarithmic and linear spherical discretization and the cartesian discretization.
+  Electron, positron and photon energy spectrum at simulation time :math:`t = 39 \omega^{-1}`
+  for the different merging configuration: no merging, mergign with the logarithmic and linear spherical
+  discretization and the Cartesian discretization.
 
 .. _fig_qed_cascade_photon_pxpy_spectrum:
 
-.. figure:: _static/QED_cascade_photon_px_py_distribution.png
+.. figure:: _static/figures/QED_cascade_photon_px_py_distribution.png
   :width: 100%
 
   :math:`p_x-p_y` photon momentum distribution at simulation time :math:`t = 39.5 \omega^{-1}`
@@ -527,7 +536,7 @@ The scalar diagnosctics shown in this figure are the total number of macro-parti
 
 .. _fig_qed_cascade_electron_pxpy_spectrum:
 
-.. figure:: _static/QED_cascade_electron_px_py_distribution.png
+.. figure:: _static/figures/QED_cascade_electron_px_py_distribution.png
   :width: 100%
 
   :math:`p_x-p_y` electron momentum distribution at simulation time :math:`t = 39.5 \omega^{-1}`
