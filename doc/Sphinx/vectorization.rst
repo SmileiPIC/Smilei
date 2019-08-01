@@ -264,8 +264,7 @@ The following video shows how the patches are dynamically switched in vectorized
   <video style="display:block; margin: 0 auto; width: 100%;" controls src="http://www.maisondelasimulation.fr/projects/Smilei/uploads/videos/weibel_interp.mp4" width="100%">
   </video>
 
-For this specific benchmark, the speed-up obtained with vectorization is
-of x2.
+For this specific benchmark, the speed-up obtained with vectorization is of x2.
 Adaptive vectorization brinds a small additional speed-up in some cases.
 
 ----

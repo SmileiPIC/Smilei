@@ -12,8 +12,8 @@ table_xip = f["./xip"]
 
 Validate("Table H for Niel", table_h.value, 0.01)
 Validate("Table H attributes", table_h_attrs, 0.01)
-Validate("Table integration f / chi (integfochi)", table_integfochi.value, 0.01)
-Validate("Table photon chi min (xip_chiphmin)", table_xip_chiphmin.value, 0.01)
+Validate("Table integration f / chi (integfochi)", table_integfochi.value, 0.1)
+Validate("Table photon chi min (xip_chiphmin)", table_xip_chiphmin.value, 0.1)
 Validate("Table xip", table_xip.value, 0.01)
 
 # Read the multiphoton Breit-Wheeler tables
@@ -24,5 +24,5 @@ table_xip_chipamin = f_bw["./xip_chipamin"]
 table_xip_bw = f_bw["./xip"]
 
 Validate("Table H for for BW", table_h_bw.value, 0.01)
-Validate("Table particle chi min (xip_chipamin)", table_xip_chipamin.value, 0.01)
-Validate("Table xip for BW", table_xip_bw.value, 0.01)
+Validate("Table particle chi min (xip_chipamin)", table_xip_chipamin.value, 0.1)
+Validate("Table xip for BW", table_xip_bw.value, 0.1)
