@@ -179,7 +179,7 @@ As illustrated in :numref:`fig_vranic_planar_merging`, it follows that:
   \mathbf{p}_{a,\perp} = - \mathbf{p}_{b,\perp} \\
   \mathbf{p}_{a,\parallel} = \mathbf{p}_{b,\parallel} = \mathbf{p_t} / w_t
 
-We all :math:`\omega` the angle betweeb :math:`\mathbf{p_a}` and :math:`\mathbf{p_t}`
+We call :math:`\omega` the angle between :math:`\mathbf{p_a}` and :math:`\mathbf{p_t}`
 so that:
 
 .. math::
@@ -187,7 +187,7 @@ so that:
 
   \cos{\omega} = \frac{\mathbf{p_t}}{w_t \mathbf{p_a}}
 
-We define :math:`\mathbf{d}` the cell direction or location vector.
+We define :math:`\mathbf{d}` the cell direction (also refered to as coordinate vector of the cell).
 It represents the location (or the direction in spherical coordinates) of the momentum cell where the macro-particles are located
 as shown in :numref:`fig_momentum_cell_vector`.
 
@@ -231,7 +231,7 @@ They are given by the following formula:
       p_{t,x}^2 .d_z - p_{t,z}(d_x.p_{t,x} + d_y.p_{t,y}) + p_{t,y}^2.d_z
    \end{array}
 
-Finally, the new macro-particle momentum are:
+Finally, the new macro-particle momentums are:
 
 .. math::
   :label: new_macroparticle_momentum
@@ -239,8 +239,8 @@ Finally, the new macro-particle momentum are:
   \mathbf{p_a} = p_a \left( \cos{\left( \omega \right)} \mathbf{e_1} +  \sin{\left(\omega\right)} \mathbf{e_2} \right) \\
   \mathbf{p_b} = p_b \left( \cos{\left( \omega \right)} \mathbf{e_1} -  \sin{\left(\omega\right)} \mathbf{e_2} \right)
 
-The method is summarized grpahically in :numref:`fig_3d_schematic`.
-It has been drawn using Python with Matplotlib.
+The method is summarized graphically in :numref:`fig_3d_schematic`.
+It has been generated using Python with Matplotlib.
 The Python script in available `here <_static/vranic_geometry.py>`_.
 
 .. _fig_3d_schematic:
@@ -248,10 +248,11 @@ The Python script in available `here <_static/vranic_geometry.py>`_.
 .. figure:: _static/vranic_3d_schematics.png
   :width: 100%
 
-  3d view of the different vectors involved in the merging method.
+  3D view of the different vectors involved in the merging method.
 
 The new macro-particle positions are assigned at the position of one of
-the merged macro-particles. We have tested to assign them randomly
+the merged macro-particles.
+We have tested to assign them randomly
 or to the first macro-particles of the merged list and we did
 not observe any difference.
 
@@ -259,7 +260,7 @@ This algorithm does not work when the total momentum :math:`\mathbf{p}_t` of the
 is in the direction of :math:`\mathbf{d}`.
 In this case :math:`|| \mathbf{e_3} || = 0` and it is not
 possible to determine the system :math:`(\mathbf{e}_1, \mathbf{e}_2, \mathbf{e}_3)`.
-In this specific case, the merging is not processed.
+In this specific case, the merging is not proceeded.
 
 1.3 Merging algorithm for macro-photons
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -267,7 +268,8 @@ In this specific case, the merging is not processed.
 Macro-photons can be merged with the same algorithm.
 The only difference is that the momentum norm is equal to the energy :math:`\varepsilon = p`.
 
-When the total momentum :math:`\mathbf{p}_t` is in the direction of :math:`\mathbf{d}`, macro-photons can be merged into a single one contrary to the mass macro-particles since :math:`\varepsilon_t = || \mathbf{p}_t ||`.
+When the total momentum :math:`\mathbf{p}_t` is in the direction of :math:`\mathbf{d}`, macro-photons can be merged
+into a single one contrary to the mass macro-particles since :math:`\varepsilon_t = || \mathbf{p}_t ||`.
 This specific situation is implemented in the code.
 
 .. _vranic_implementation:
@@ -277,8 +279,9 @@ This specific situation is implemented in the code.
 
 The Vranic merging method is implemented with the Cartesian
 and the Spherical momentum discretization in the source directory ``Merging``.
-It is considered as a particle operator and the merging algorithm is managed with a factory (``MergingFactory.h``) as any operator with multiple implementations.
-The Cartesian implementation is done in the class ``MergingVranicCartesian`` and the Sphericla one in ``MergingVranicSpherical``.
+It is considered as a particle operator and the merging algorithm is managed with a factory (``MergingFactory.h``) as
+any operator with multiple implementations.
+The Cartesian implementation is done in the class ``MergingVranicCartesian`` and the spherical one in ``MergingVranicSpherical``.
 
 For both methods, the implemented algorithm is very similar.
 
@@ -286,10 +289,11 @@ For both methods, the implemented algorithm is very similar.
 
     1. Initialization of the momentum cell discretization
     2. Computation of the cell direction vectors (:math:`\mathbf{d}`): this step depends on the discretization and can be efficiently vectorized.
-    3. Comutation of the momentum cell indexes for each macro-particle. Efficiently Vectorizable.
-    4. Computation of the number of particles per momentum cells.  Not vectorizable because of random memory accesses.
+    3. Computation of the momentum cell indexes for each macro-particle. Efficiently Vectorizable.
+    4. Computation of the number of particles per momentum cell.  Not vectorizable because of random memory accesses.
     5. Computation of the cell index of each momentum cell in the sorted array of particles (only the particle indexes are sorted). Not vectorizable.
-    6. Sorting of the macro-particles per momentum cells, the cell index previously computed determine where starts each momentum cell. Not vectorizable.
+    6. Sorting of the macro-particles per momentum cells, the cell index previously computed determine where
+    starts each momentum cell. Not vectorizable.
 
     Then, for each momentum cell:
 
@@ -300,7 +304,8 @@ For both methods, the implemented algorithm is very similar.
 
     Then, once the merging finished for a given patch:
 
-    1. Compression of the macro-particle list (remove hole let by removed and tagged particles). By cleaning the particle vector at the end, we limit the computational impact of this step.
+    1. Compression of the macro-particle list (remove hole in arrays let by removed and tagged particles).
+    By cleaning the particle vector at the end, we limit the computational impact of this step.
 
 2.1 Cartesian momentum Cell discretization
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -308,8 +313,9 @@ For both methods, the implemented algorithm is very similar.
 How to discretize the momentum space is in fact one of the most important point.
 The user gives :math:`N_x`, :math:`N_y` and :math:`N_z` via the namelist.
 The momentum space boundary corresponds to :math:`p_{\alpha,min}` and :math:`p_{\alpha,max}` with :math:`\alpha` equal to x, y or z.
-For this discretization, we force the origin (:math:`p_x = p_y = p_z = 0`) to not be contained in a cell so that there is not in the same cell particles with positive and negative momenta.
-The user-defined discretiztion can be slightly adjusted for algorithmic reasons.
+For this discretization, we force the origin (:math:`p_x = p_y = p_z = 0`) to not be contained in a cell and be one of the grid node
+so that there is not in the same cell particles with positive and negative momenta.
+The user-defined discretization can be slightly adjusted for algorithmic reasons.
 
     For each momentum component :math:`p_\alpha` with :math:`\alpha` equal to x, y or z:
         If :math:`p_{\alpha,min}` is very close to :math:`p_{\alpha,max}`:
@@ -318,37 +324,47 @@ The user-defined discretiztion can be slightly adjusted for algorithmic reasons.
                 The unique momentum cell is centered around the average particle momentum.
             If :math:`p_{\alpha,min}` and :math:`p_{\alpha,max}` have opposite sign:
                 Two cells are used, one for the negative and one for the positive values.
-                The discretization is therefore centered in 0.
+                The discretization is therefore adjusted for origin.
         Else:
             If :math:`N_\alpha = 1`:
                 The unique cell has the size of :math:`p_{\alpha,max} - p_{\alpha,min}`.
             Else if :math:`p_{\alpha,min}` and :math:`p_{\alpha,max}` have the same sign:
                 The discretization is classically computed using :math:`N_\alpha`.
             Else if :math:`p_{\alpha,min}` and :math:`p_{\alpha,max}` have opposite sign:
-                The discretization is adjusted so that :math:`p_{\alpha} = 0` is at the boundary between 2 consecutive cells. We do it by shifting the discretization and adding an extra cell. At the end, there is an additonal cell than requested (:math:`N_\alpha` = :math:`N_\alpha` + 1).
+                The discretization is adjusted so that :math:`p_{\alpha} = 0` is at the boundary between 2 consecutive cells.
+                We do it by shifting the discretization and adding an extra cell.
+                At the end, there is an additional cell than requested (:math:`N_\alpha` = :math:`N_\alpha` + 1).
                 
 
 2.2 Spherical momentum Cell discretization
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 The user gives :math:`N_r`, :math:`N_\theta` and :math:`N_\phi` via the namelist.
-The momentum space boundary corresponds to :math:`p_{r,min}`, :math:`p_{r,max}`, :math:`\theta_{min}`, :math:`\theta_{max}`, :math:`\phi_{min}` and :math:`\phi_{max}`.
+The momentum space boundary corresponds to :math:`p_{r,min}`, :math:`p_{r,max}`, :math:`\theta_{min}`,
+:math:`\theta_{max}`, :math:`\phi_{min}` and :math:`\phi_{max}`.
 
     For each momentum component :math:`p_r`, :math:`\theta` and :math:`\phi`:
         If the the minimum boundary is too close to the maximum boundary:
             Only one cell is used for this component.
         Else:
             If :math:`N_\alpha = 1` (here :math:`\alpha` is :math:`p_r`, :math:`\theta` or :math:`\phi`):
-                The unique cell has the size of :math:`(\alpha_{max} - \alpha_{min}) \times 1.01` (the multiplication by 1.01 enables to include :math:`\alpha_{max}`).
+                The unique cell has the size of :math:`(\alpha_{max} - \alpha_{min}) \times 1.01`
+                (the multiplication by 1.01 enables to include :math:`\alpha_{max}`).
             Else:
                 The discretization is classically computed using :math:`N_\alpha`.
-                :math:`\Delta_\alpha = 1.01 \times (\alpha_{max} - \alpha_{min}) / N_\alpha` (the multiplication by 1.01 enables to include :math:`\alpha_{max}`).
+                :math:`\Delta_\alpha = 1.01 \times (\alpha_{max} - \alpha_{min}) / N_\alpha`
+                (the multiplication by 1.01 enables to include :math:`\alpha_{max}`).
                 
                 
 2.3 Solid angle correction
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-With the classical spherical discretization, the solid angle that represents the surface crossed by the macro-particles having the same momentum cell direction depends on this direction as shown in :numref:`fig_spherical_discretization` a). In our discretization, the solid angle is larger near :math:`\phi = 0` (equator) and smaller near :math:`\phi = \pi / 2` (poles). Therefore, momentum cells near the equator will potentially have more particles than cells near poles and will undergo more particle merging processes.
+With the classical spherical discretization, the solid angle that represents the surface crossed by
+the macro-particles having the same momentum cell direction depends on this direction as
+shown in :numref:`fig_spherical_discretization` a). In our discretization, the solid angle
+is larger near :math:`\phi = 0` (equator) and smaller near :math:`\phi = \pi / 2` (poles).
+Therefore, momentum cells near the equator will potentially have more particles than cells
+near poles and will undergo more particle merging processes.
 
 .. _fig_spherical_discretization:
 
@@ -357,33 +373,57 @@ With the classical spherical discretization, the solid angle that represents the
 
   Classical spherical discretization (a) and the spherical discretization with solid angle correction (b). This figure has been generated with the following `Python script <_static/scripts/vranic_spherical_discretization.py>`_.
 
-To compensate this phenomenon, the discretization (number of cells) in :math:`\theta`, :math:`N_\theta`, is made to depend on :math:`\phi` so that the solid angle is approximatly constant. For this aim, a reference solid angle :math:`\Omega_{ref}` has to be set . It corresponds to the solid angle at the smallest  :math:`|\phi|` value with the :math:`\theta` discretization given by the user in the namelist. For larger :math:`|\phi|` values, the :math:`\theta` discretization :math:`N_\theta` varies to satisfy :math:`\Omega = \sin{(\phi)}\Delta \theta \Delta \phi = \Omega_{ref}`. Since we keep :math:`\phi` constant, it is equivalent to determine a :math:`\theta_{ref}`. An example of such a discretization is shown in :numref:`fig_spherical_discretization` b).
+To compensate this phenomenon, the discretization (number of cells) in :math:`\theta`, :math:`N_\theta`,
+is made to depend on :math:`\phi` so that the solid angle is approximately constant.
+For this aim, a reference solid angle :math:`\Omega_{ref}` has to be set .
+It corresponds to the solid angle at the smallest  :math:`|\phi|` value with the :math:`\theta` discretization given
+by the user in the namelist. For larger :math:`|\phi|` values, the :math:`\theta` discretization :math:`N_\theta`
+varies to satisfy :math:`\Omega = \sin{(\phi)}\Delta \theta \Delta \phi = \Omega_{ref}`.
+Since we keep :math:`\phi` constant, it is equivalent to determine a :math:`\theta_{ref}`.
+An example of such a discretization is shown in :numref:`fig_spherical_discretization` b).
 
 .. _vranic_accululation_effect:
 
 2.4 Accumulation effect
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-When several macro-particles are merged, the contribution of each of them to the final ones depends on their weights.
-In other words, newly-created macro-particles will be more determined from the merged ones with high weight values than smaller macro-particles. Due to the merging process some particles can become super-heavy and dominates other macro-particles so that they will continue to grow with few change in their kinetic properties. This can be a problem if the momentum cells are large and the momentum distribution is broad. Heavy macro-particles continuously absorb their neighbors and damage the momentum distribution.
+When several macro-particles are merged, the contribution of each of them to the properties of the final ones depends on their weights.
+In other words, the properties of the generated macro-particles after a merging event will be mostly inherited from the
+biggest merged macro-particle mostly coming from the previous merging process rather than smaller macro-particles.
+Due to the merging process, some particles can become super-heavy and dominates other macro-particles so that
+they will continue to grow with few change in their kinetic properties.
+This can be a problem if the momentum cells are large and the momentum distribution is broad.
+Heavy macro-particles continuously absorb their neighbors and potentially damage the momentum distribution.
 
-To illustrate this phenomenon, let us consider the magnetic shower benchmark in 3D. This benchmark is the equivalent of the synchrotron one applied to pair production. The domain is filled with a plasma of electron-positron. electron and positron macro-particles all initialized with the same Lorentz factor :math:`\gamma = 8125` and same direction. The macro-particles evolve in a constant homogeneous and uniform magnetic field of amplitude :math:`B = 1000 e/(m\omega)` orthogonal to the propagation direction of the particles. The initial electron and positron quantum parameters are therefore both equal to :math:`\chi = 20`. The input script of this simulation is available `here <_static/magnetic_shower_3d_vranic_merging.py>`_.
+To illustrate this phenomenon, let us consider the magnetic shower benchmark in 3D.
+This benchmark is the equivalent of the synchrotron one applied to pair production.
+The domain is filled with a plasma of electron-positron.
+Electron and positron macro-particles all initialized with the same Lorentz factor :math:`\gamma = 8125` and same direction.
+The macro-particles evolve in a constant homogeneous and uniform magnetic field of amplitude :math:`B = 1000 e/(m\omega)`
+orthogonal to the propagation direction of the particles.
+The initial electron and positron quantum parameters are therefore both equal to :math:`\chi = 20`.
+The input script of this simulation is available `here <_static/magnetic_shower_3d_vranic_merging.py>`_.
 
-Oscillations at low energy in the photon energy distribution can be seen in :numref:`fig_magnetic_shower_photon_energy_distribution` a) due to the accumulation effects.
+Oscillations at low energy in the photon energy distribution can be seen in :numref:`fig_magnetic_shower_photon_energy_distribution`
+a) due to the accumulation effects.
 
 .. _fig_magnetic_shower_photon_energy_distribution:
 
 .. figure:: _static/figures/magnetic_shower_photon_energy_distribution.png
   :width: 100%
 
-  Photon energy distribution for the 3d magnetic shower benchmark at the end of the simulation without (a) and with accumulation correction (b) for both the Spherical and Cartesian momentum discretization.
+  Photon energy distribution for the 3D magnetic shower benchmark at the end of the simulation without (a)
+  and with accumulation correction (b) for both the Spherical and Cartesian momentum discretization.
 
 .. _fig_magnetic_shower_photon_pxpy_distribution:
 
 .. figure:: _static/figures/magnetic_shower_photon_pxpy_distribution.png
   :width: 100%
 
-  Photon px-py momentum distribution for the 3d magnetic shower benchmark at the end of the simulation for different configuration: a) wihtout merging, b) Cartesian discretization without correction, c) Spherical discretization without correction, d) Cartesian discretization with correction and e) Spherical discretization with correction.
+  Photon px-py momentum distribution for the 3D magnetic shower benchmark at the end of the simulation
+  for different configuration: a) without merging, b) Cartesian discretization without correction, c)
+  Spherical discretization without correction, d) Cartesian discretization with correction and e)
+  Spherical discretization with correction.
 
 **Warning:** the accumulation correction is not working with the logarithmic discretization.
 
@@ -392,7 +432,8 @@ Oscillations at low energy in the photon energy distribution can be seen in :num
 2.5 Logarithmic scale
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Only for the **spherical discretization**, we have implemented the possibility to have a logarithmic discretization for the momentum norm :math:`p`.
+Only for the **spherical discretization**, we have implemented the possibility to have a logarithmic
+discretization for the momentum norm :math:`p`.
 Due to the logarithmic computation, this option is slightly slower than the linear discretization.
 Nonetheless, it can be useful when the distribution is very broad with several orders of magnitude between low-energy
 and high-energy particles.
@@ -406,10 +447,10 @@ gives very good results and perfectly fit the distribution without merging as pr
 .. figure:: _static/figures/magnetic_shower_gamma_distribution_log.png
   :width: 100%
 
-  Photon px-py momentum distribution for the 3d magnetic shower benchmark
-  at the end of the simulation wihtout merging and with the spherical method in the logarithmic scale.
+  Photon :math:`k_x - k_y` momentum distribution for the 3D magnetic shower benchmark
+  at the end of the simulation without merging and with the spherical method in the logarithmic scale.
 
-**Warning:** the logarithmic discretization is subject to accumulutation oscilations
+**Warning:** the logarithmic discretization is subject to accumulation oscillations
 but is not working with the current accumulation correction.
 
 .. _vranic_namelist:
@@ -429,11 +470,14 @@ Please refer to :ref:`that doc <Particle_merging>` for an explanation of how to 
 
 In this section, the particle merging is tested with a simulation scenario of QED pair cascading.
 Cascade means here that QED mechanisms, i.e. creation fo electron-positron pairs, are self-sustained.
-As for the magnetic shower, a seed of electrons or positrons in a strong electromagnetic field generates high-energy photons that in turns decay into electron-positron pairs.
-The difference is that the seed particles and the newly-created ones can gain again some energy from the fields and participate to the generation of pairs.
+As for the magnetic shower, a seed of electrons or positrons in a strong electromagnetic field generates
+high-energy photons that in turns decay into electron-positron pairs.
+The difference is that the seed particles and the newly created ones can gain again some energy from the fields and
+participate to the generation of pairs.
 The production of electron-positron pairs can therefore be maintained as long as there is a source of energy.
-In such a scenario, we can expect an exponential growth of particules with the creation of an electron-positron plasma.
-In this scenario, a bunch of electrons and positrons (the seed) is initally irradiated by two counter-propagating lasers (strong field and source of energy) as shown in :numref:`fig_qed_pair_cascade`.
+In such a scenario, we can expect an exponential growth of particles with the creation of an electron-positron plasma.
+In this scenario, a bunch of electrons and positrons (the seed) is initially irradiated by two counter-propagating
+lasers (strong field and source of energy) as shown in :numref:`fig_qed_pair_cascade`.
 
 .. _fig_qed_pair_cascade:
 
@@ -443,16 +487,19 @@ In this scenario, a bunch of electrons and positrons (the seed) is initally irra
   Example of QED pair cascade configuration with two counter-propagating lasers.
 
 We use two counter-propagating circularly polarized plane waves.
-When they collide, the two waves form a steady plane wave of very strong amplitude able to trigger strong QED effetcs.
-The seed is a group of electrons and positrons located at the middle of the domain in the plane :math:`x = (0.5 L_x + \Delta_x )` where :math:`L_x` is the domain size in the :math:`x` direction.
+When they collide, the two waves form a steady plane wave of very strong amplitude able to trigger strong QED effects.
+The seed is a group of electrons and positrons located at the middle of the domain in the plane :math:`x = (0.5 L_x + \Delta_x )`
+where :math:`L_x` is the domain size in the :math:`x` direction.
 The macro-positrons are located at the same location that the macro-electrons to be neutral.
 Since we have plane waves, the transverse boundary conditions are periodic.
 The longitudinal boundary conditions are absorbing for both the fields and the particles.
-This very academic scenario is complicated to simulate because the particles can only escape the domain via the longitudinal boundaries.
-Furthermore, the lasers have inifinite duration.
+This very academic scenario is complicated to simulate because the particles can only escape the domain
+via the longitudinal boundaries.
+Furthermore, the lasers have infinite duration.
 They simply start with a short ramp of :math:`\lambda / 4`.
 
-Some simulation parameters are given in the following table and the Smilei namelist is avalaible `here <_static/scripts/qed_pair_cascade.py>`_.
+Some simulation parameters are given in the following table and the Smilei
+namelist is avalaible `here <_static/scripts/qed_pair_cascade.py>`_.
 
 .. _table_qed_cascade_parameters:
 
@@ -482,11 +529,12 @@ Some simulation parameters are given in the following table and the Smilei namel
 | Minimal number of particle per momentum cell for merging    | 4                                                   |
 +-------------------------------------------------------------+-----------------------------------------------------+
 
-We decide to have an agressive merging process performed at every timesteps with a relatively restricted momentum-space discretization.
+We decide to have an aggressive merging process performed at every timesteps with a relatively restricted momentum-space discretization.
 The merging is applied on all species.
 Prior to 3D, we have performed the same simulation case in lower dimensions 1D and 2D.
-The merging process can be performed with a finer momentum-space dicretization and every longer period in these dimensions (1D and 2D) because the number of macro-particles per mometum cells is higher.
-In 3D, the number of particles per momentum cells can be too small to have a frequent merging with a thin momentum-space dicretization.
+The merging process can be performed with a finer momentum-space dicretization and every longer period in these
+dimensions (1D and 2D) because the number of macro-particles per mometum cells is higher.
+In 3D, the number of particles per momentum cells can be too small to have a frequent merging with a thin momentum-space discretization.
 The cases are run during a maximum of 1000 seconds.
 
 This case is simulated identically with different merging configuration:
@@ -496,11 +544,11 @@ This case is simulated identically with different merging configuration:
 * Merging with the Spherical linear discretization
 * Merging with the Spherical logarithmic discretization
 
-The comparision of the scalar diagnostics is presented in :numref:`fig_qed_cascade_scalar`.
+The comparison of the scalar diagnostics is presented in :numref:`fig_qed_cascade_scalar`.
 The scalar diagnostics shown in this figure are the total number of macro-particles, the total kinetic energy and the total weight.
-Merging process starts when the number of macro-particles is high-enough around :math:`10^5` for the photons.
+Merging process starts when the number of macro-particles is high-enough around :math:`10^5` for the macro-photons.
 It enables to perform between 10% and 20% more iterations than the no merging case.
-Each merging method does not exactly gives the same kintetic energy and weight evolution.
+Each merging method does not exactly gives the same kinetic energy and weight evolution.
 As we will see, the merging processes modify the momentum distribution and influence the physical processes.
 
 .. _fig_qed_cascade_scalar:
@@ -508,21 +556,21 @@ As we will see, the merging processes modify the momentum distribution and influ
 .. figure:: _static/figures/QED_cascade_scalar.png
   :width: 100%
 
-  Study and comparison of the scalar diagnostics for all merging configuration: no merging, mergign with
-  the logarithmic and linear spherical discretization and the cartesian discretization.
-  The scalar diagnostics shown here are the number of macroparticles (first row), the normalized kinetic energy
+  Study and comparison of the scalar diagnostics for all merging configuration: no merging, merging with
+  the logarithmic and linear spherical discretization and the Cartesian discretization.
+  The scalar diagnostics shown here are the number of macro-particles (first row), the normalized kinetic energy
   (second row) and the weight (third row).
   Each column respectively concerns a different species: the photons, the electrons and the protons.
 
 The electron, positron and photon energy spectrum at time :math:`t = 39 \omega^{-1}`
 (nearly when the no merging case saturates) is shown in :numref:`fig_qed_cascade_photon_gamma_spectrum`.
-It reaveals that for this configuration, all merging methods significantly impact the energy distributions.
+It reveals that for this configuration, all merging methods significantly affect the energy distributions.
 For particles, the spherical methods tend to overestimate the energy distribution with a large bump
 between 50 and 300 :math:`m_ec^2`.
 The Cartesian discretization overestimates it before 150 :math:`m_ec^2` and then goes below the no-merging curve.
 This phenomenon is less important with a thinner discretization but at the cost of less particle merging events.
 For photons, we observe oscillations with all methods due to the accumulation effect.
-The logarithmic merging curve seems to oscilate around the no-merging one.
+The logarithmic merging curve seems to oscillate around the no-merging one.
 
 .. _fig_qed_cascade_photon_gamma_spectrum:
 
@@ -530,11 +578,11 @@ The logarithmic merging curve seems to oscilate around the no-merging one.
   :width: 100%
 
   Electron, positron and photon energy spectrum at simulation time :math:`t = 39 \omega^{-1}`
-  for the different merging configuration: no merging, mergign with the logarithmic and linear spherical
+  for the different merging configuration: no merging, merging with the logarithmic and linear spherical
   discretization and the Cartesian discretization.
 
 :numref:`fig_qed_cascade_photon_pxpy_spectrum` shows the :math:`k_x-k_y` momentum distribution of the photons.
-It clearly shows that with the level of discretization we have for these simulation, none of the merging process
+It clearly shows that with the level of discretization we have for these simulations, none of the merging process
 can perfectly reproduce the distribution without merging.
 
 .. _fig_qed_cascade_photon_pxpy_spectrum:
@@ -543,8 +591,8 @@ can perfectly reproduce the distribution without merging.
   :width: 100%
 
   :math:`k_x-k_y` photon momentum distribution at simulation time :math:`t = 39.5 \omega^{-1}`
-  for the different merging configuration: no merging, mergign with the logarithmic and linear
-  spherical discretization and the cartesian discretization.
+  for the different merging configuration: no merging, merging with the logarithmic and linear
+  spherical discretization and the Cartesian discretization.
 
 :numref:`fig_qed_cascade_electron_pxpy_spectrum` shows the :math:`p_x-p_y` momentum distribution of the electrons.
 
@@ -554,13 +602,14 @@ can perfectly reproduce the distribution without merging.
   :width: 100%
 
   :math:`p_x-p_y` electron momentum distribution at simulation time :math:`t = 39.5 \omega^{-1}`
-  for the different merging configuration: no merging, mergign with the logarithmic and linear spherical discretization and the cartesian discretization.
+  for the different merging configuration: no merging, merging with the logarithmic and linear spherical
+  discretization and the Cartesian discretization.
 
 :numref:`fig_qed_cascade_iteration_time` shows the CPU time necessary to compute a numerical timestep all
 along the simulations.
 This enables to compare the merging methods in term of performance.
 The linear spherical discretization is faster than the others.
-It can be explaine easily: the solid angle correction diminishes the number of cells to treat in the momentum space.
+It can be explained easily: the solid angle correction diminishes the number of cells to treat in the momentum space.
 The logarithmic spherical discretization has the same advantage but the computation in the log-space adds a
 computational time overhead.
 The consequence is that this method has at the end almost the same computational cost than the Cartesian method described in [Vranic2005]_.
@@ -572,14 +621,14 @@ The consequence is that this method has at the end almost the same computational
   :width: 100%
 
   Evolution of the average computation time per iteration for
-  each merging method: no merging, mergign with the logarithmic and linear spherical discretization and the cartesian discretization.
+  each merging method: no merging, merging with the logarithmic and linear spherical discretization and the Cartesian discretization.
 
 The following video shows what happens during this simulation benchmark.
 It has been obtained using the logarithmic spherical discretization.
 Specifically, it shows the time evolution of the electron, the positron and the photon density in the plane :math:`x-y`.
 The z-axis is integrated.
 The exponential growth of photons and mass particles can be seen.
-It first happens in the plane y-z near the center of the domain and then expand longitudinaly.
+It first happens in the plane y-z near the center of the domain and then expand longitudinally.
 
 .. _video_qed_cascade:
 
