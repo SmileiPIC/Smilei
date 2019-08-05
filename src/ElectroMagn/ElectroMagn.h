@@ -366,12 +366,22 @@ public:
     //! external fields parameters the key string is the name of the field and the value is a vector of ExtField
     std::vector<ExtField> extFields;
     
+    //! external time fields parameters the key string is the name of the field and the value is a vector of ExtField
+    std::vector<ExtField> extTimeFields;
+    
     //! Method used to impose external fields (apply to all Fields)
     virtual void applyExternalFields( Patch * );
+
+    //! Method used to impose external time fields (apply to all Fields)
+    virtual void applyExternalTimeFields( Patch *, double time_prim );
+
     void saveExternalFields( Patch * );
     
     //! Method used to impose external fields (apply to a given Field)
     virtual void applyExternalField( Field *, Profile *, Patch * ) = 0 ;
+    
+    //! Method used to impose external time fields (apply to a given Field)
+    virtual void applyExternalTimeField( Field *, Profile *, Patch *, double time_prim) = 0 ;
     
     //! Antenna
     std::vector<Antenna> antennas;

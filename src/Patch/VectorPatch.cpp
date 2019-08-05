@@ -2821,6 +2821,15 @@ void VectorPatch::applyExternalFields()
 
 
 // For each patch, apply external fields
+void VectorPatch::applyExternalTimeFields(double time_prim)
+{
+    for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
+        patches_[ipatch]->EMfields->applyExternalTimeFields( ( *this )( ipatch ), time_prim );    // Must be patch
+    }
+}
+
+
+// For each patch, apply external fields
 void VectorPatch::saveExternalFields( Params &params )
 {
     if( params.save_magnectic_fields_for_SM ) {

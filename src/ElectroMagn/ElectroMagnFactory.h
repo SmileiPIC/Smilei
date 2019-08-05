@@ -99,6 +99,39 @@ public:
             MESSAGE(1, "External field " << extField.field << ": " << extField.profile->getInfo());
             EMfields->extFields.push_back( extField );
         }
+
+        // -----------------
+        // ExtTimeFields properties
+        // -----------------
+        for( unsigned int n_extfield = 0; n_extfield < PyTools::nComponents( "ExternalTimeField" ); n_extfield++ ) {
+            ExtField extField;
+            PyObject *profile;
+            if( !PyTools::extract( "field", extField.field, "ExternalTimeField", n_extfield ) ) {
+                ERROR( "ExternalTimeField #"<<n_extfield<<": parameter 'field' not provided'" );
+            }
+            // Now import the profile
+            std::ostringstream name( "" );
+            name << "ExternalTimeField[" << n_extfield <<"].profile";
+            if( !PyTools::extract_pyProfile( "profile", profile, "ExternalTimeField", n_extfield ) ) {
+                ERROR( "ExternalTimeField #"<<n_extfield<<": parameter 'profile' not understood" );
+            }
+            extField.profile = new Profile( profile, params.nDim_field, name.str(), true );
+            // Find which index the field is in the allFields vector
+            extField.index = 1000;
+            for( unsigned int ifield=0; ifield<EMfields->allFields.size(); ifield++ ) {
+                if( EMfields->allFields[ifield]
+                        && extField.field==EMfields->allFields[ifield]->name ) {
+                    extField.index = ifield;
+                    break;
+                }
+            }
+            if( extField.index > EMfields->allFields.size()-1 ) {
+                ERROR( "ExternalField #"<<n_extfield<<": field "<<extField.field<<" not found" );
+            }
+            
+            MESSAGE(1, "External field " << extField.field << ": " << extField.profile->getInfo());
+            EMfields->extTimeFields.push_back( extField );
+        }
         
         
         // -----------------
@@ -231,6 +264,17 @@ public:
             extField.profile = EMfields->extFields[n_extfield].profile;
             extField.index   = EMfields->extFields[n_extfield].index;
             newEMfields->extFields.push_back( extField );
+        }
+        
+        // -----------------
+        // Clone ExternalTimeFields properties
+        // -----------------
+        for( unsigned int n_extfield = 0; n_extfield < EMfields->extTimeFields.size(); n_extfield++ ) {
+            ExtField extField;
+            extField.field   = EMfields->extTimeFields[n_extfield].field;
+            extField.profile = EMfields->extTimeFields[n_extfield].profile;
+            extField.index   = EMfields->extTimeFields[n_extfield].index;
+            newEMfields->extTimeFields.push_back( extField );
         }
         
         // -----------------

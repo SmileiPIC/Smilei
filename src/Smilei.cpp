@@ -329,6 +329,9 @@ int main( int argc, char *argv[] )
             
             // apply collisions if requested
             vecPatches.applyCollisions( params, itime, timers );
+
+            // apply externale timefields if requested
+	        vecPatches.applyExternalTimeFields(time_prim);
             
             // Solve "Relativistic Poisson" problem (including proper centering of fields)
             // for species who stop to be frozen

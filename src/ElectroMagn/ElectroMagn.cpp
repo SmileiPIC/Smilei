@@ -466,6 +466,19 @@ void ElectroMagn::applyExternalFields( Patch *patch )
     Bz_m->copyFrom( Bz_ );
 }
 
+void ElectroMagn::applyExternalTimeFields( Patch *patch, double time_prim )
+{
+    for( vector<ExtField>::iterator extfield=extTimeFields.begin(); extfield!=extTimeFields.end(); extfield++ ) {
+        if( extfield->index < allFields.size() ) {
+            applyExternalTimeField( allFields[extfield->index], extfield->profile, patch, time_prim );
+        }
+    }
+    Bx_m->copyFrom( Bx_ );
+    By_m->copyFrom( By_ );
+    Bz_m->copyFrom( Bz_ );
+}
+
+
 void ElectroMagn::saveExternalFields( Patch *patch )
 {
     for( vector<ExtField>::iterator extfield=extFields.begin(); extfield!=extFields.end(); extfield++ ) {
