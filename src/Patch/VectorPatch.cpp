@@ -2836,7 +2836,6 @@ void VectorPatch::resetExternalTimeFields()
     }
 }
 
-
 // For each patch, apply external fields
 void VectorPatch::saveExternalFields( Params &params )
 {

@@ -330,6 +330,9 @@ int main( int argc, char *argv[] )
             // apply collisions if requested
             vecPatches.applyCollisions( params, itime, timers );
 
+            // apply externale timefields if requested
+	        vecPatches.applyExternalTimeFields(time_prim);
+            
             // Solve "Relativistic Poisson" problem (including proper centering of fields)
             // for species who stop to be frozen
             // Note: the mean gamma for initialization will be computed for all the species
@@ -373,7 +376,7 @@ int main( int argc, char *argv[] )
                                  time_dual, timers, itime );
                         
             // de-apply external time fields if requested
-	        vecPatches.applyExternalTimeFields(time_prim); 
+	        vecPatches.resetExternalTimeFields(); 
                                  
             // if Laser Envelope is used, execute particles and envelope sections of ponderomotive loop
             if( params.Laser_Envelope_model ) {

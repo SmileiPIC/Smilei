@@ -276,7 +276,6 @@ public:
             extField.savedField   = EMfields->extTimeFields[n_extfield].savedField;
             extField.profile = EMfields->extTimeFields[n_extfield].profile;
             extField.index   = EMfields->extTimeFields[n_extfield].index;
-            extField.savedField = NULL;
             newEMfields->extTimeFields.push_back( extField );
         }
         
