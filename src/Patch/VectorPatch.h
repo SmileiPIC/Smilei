@@ -192,6 +192,12 @@ public :
     //! For each patch, apply external fields
     void applyExternalFields();
     
+    //! For each patch, apply external time fields
+    void applyExternalTimeFields(double time_prim);
+
+	//! reset all external time fields;
+    void resetExternalTimeFields();
+    
     void saveExternalFields( Params &params );
     
     //  Balancing methods

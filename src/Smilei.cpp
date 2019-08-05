@@ -329,7 +329,7 @@ int main( int argc, char *argv[] )
             
             // apply collisions if requested
             vecPatches.applyCollisions( params, itime, timers );
-            
+
             // Solve "Relativistic Poisson" problem (including proper centering of fields)
             // for species who stop to be frozen
             // Note: the mean gamma for initialization will be computed for all the species
@@ -362,12 +362,18 @@ int main( int argc, char *argv[] )
                 vecPatches.resetRhoJ();
             }
             
+            // apply external time fields if requested
+	        vecPatches.applyExternalTimeFields(time_prim);
+            
             // (1) interpolate the fields at the particle position
             // (2) move the particle
             // (3) calculate the currents (charge conserving method)
             vecPatches.dynamics( params, &smpi, simWindow, RadiationTables,
                                  MultiphotonBreitWheelerTables,
                                  time_dual, timers, itime );
+                        
+            // de-apply external time fields if requested
+	        vecPatches.applyExternalTimeFields(time_prim); 
                                  
             // if Laser Envelope is used, execute particles and envelope sections of ponderomotive loop
             if( params.Laser_Envelope_model ) {

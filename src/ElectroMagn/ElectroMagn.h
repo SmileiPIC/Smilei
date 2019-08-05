@@ -42,6 +42,18 @@ struct ExtField {
 };
 
 // ---------------------------------------------------------------------------------------------------------------------
+//! This structure contains the properties of each ExtTimeField
+// ---------------------------------------------------------------------------------------------------------------------
+struct ExtTimeField { 
+   
+    Profile *profile;
+    
+    Field *savedField;
+    
+    unsigned int index;
+};
+
+// ---------------------------------------------------------------------------------------------------------------------
 //! This structure contains the properties of each Antenna
 // ---------------------------------------------------------------------------------------------------------------------
 struct Antenna {
@@ -366,12 +378,25 @@ public:
     //! external fields parameters the key string is the name of the field and the value is a vector of ExtField
     std::vector<ExtField> extFields;
     
+    //! external time fields parameters the key string is the name of the field and the value is a vector of ExtField
+    std::vector<ExtTimeField> extTimeFields;
+    
     //! Method used to impose external fields (apply to all Fields)
     virtual void applyExternalFields( Patch * );
+
+    //! Method used to copy real field and impose an external time fields (apply to all Fields)
+    virtual void applyExternalTimeFields( Patch *, double time );
+
+	//! Method use to reset the real value of all fields on which we imposed an external time field
+	virtual void resetExternalTimeFields();
+
     void saveExternalFields( Patch * );
     
     //! Method used to impose external fields (apply to a given Field)
     virtual void applyExternalField( Field *, Profile *, Patch * ) = 0 ;
+    
+    //! Method used to impose external time fields (apply to a given Field)
+    virtual void applyExternalTimeField( Field *, Profile *, Patch *, double time_prim) = 0 ;
     
     //! Antenna
     std::vector<Antenna> antennas;
