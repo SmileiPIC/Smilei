@@ -786,7 +786,7 @@ void ElectroMagn1D::applyExternalTimeField( Field *my_field,  Profile *profile, 
 {
     Field1D *field1D=static_cast<Field1D *>( my_field );
     if( patch->hindex==0 ) {
-        MESSAGE( my_field->name );
+        MESSAGE( my_field->name << " time: " << time );
     }
     
     vector<double> pos( 1 );

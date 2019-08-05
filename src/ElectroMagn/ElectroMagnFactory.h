@@ -116,14 +116,23 @@ public:
             if( !PyTools::extract_pyProfile( "profile", profile, "ExternalTimeField", n_extfield ) ) {
                 ERROR( "ExternalTimeField #"<<n_extfield<<": parameter 'profile' not understood" );
             }
-            extField.profile = new Profile( profile, params.nDim_field, name.str(), true );
+            extField.profile = new Profile( profile, params.nDim_field+1, name.str(), true );
             // Find which index the field is in the allFields vector
             extField.index = 1000;
             for( unsigned int ifield=0; ifield<EMfields->allFields.size(); ifield++ ) {
                 if( EMfields->allFields[ifield]
                         && fieldName==EMfields->allFields[ifield]->name ) {
-                    extField.index = ifield;
-                    extField.savedField->createFrom(EMfields->allFields[ifield]);
+                	
+                	if (params.nDim_field == 1) {
+                		extField.savedField = new Field1D(EMfields->allFields[ifield]->dims());
+                	} else if (params.nDim_field == 2){
+                		extField.savedField = new Field2D(EMfields->allFields[ifield]->dims());
+                	} else if (params.nDim_field == 3){
+                		extField.savedField = new Field3D(EMfields->allFields[ifield]->dims());
+                	}                	
+                    extField.savedField->copyFrom(EMfields->allFields[ifield]);
+                    extField.savedField->name = EMfields->allFields[ifield]->name;  
+                    extField.index =  ifield;            
                     break;
                 }
             }

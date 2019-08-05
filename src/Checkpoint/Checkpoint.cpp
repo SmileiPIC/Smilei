@@ -25,6 +25,7 @@
 #include "PatchesFactory.h"
 #include "DiagnosticScreen.h"
 #include "DiagnosticTrack.h"
+#include "LaserEnvelope.h"
 
 using namespace std;
 

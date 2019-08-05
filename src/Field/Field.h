@@ -220,20 +220,7 @@ public:
         }
         return sum;
     }
-	
-    inline void createFrom( Field *from_field )  // FIXME should we make a real copy contructor ?
-    {
-    	globalDims_ = from_field->globalDims_;
-    	dims_=from_field->dims_;
-    	isDual_ = from_field->isDual_;
-    	name = from_field->name;
-    	if (data_ ) {
-    		delete []  data_;
-    	}    	
-   		data_ = new double[globalDims_];	
-    	copyFrom(from_field);
-    }
-    
+	    
     inline void copyFrom( Field *from_field )
     {
         DEBUGEXEC( if( globalDims_!=from_field->globalDims_ ) ERROR( "Field size do not match "<< name << " " << from_field->name ) );

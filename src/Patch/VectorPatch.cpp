@@ -18,6 +18,8 @@
 #include "SolverFactory.h"
 #include "DiagnosticFactory.h"
 #include "LaserEnvelope.h"
+#include "ElectroMagnBC.h"
+#include "Laser.h"
 
 #include "SyncVectorPatch.h"
 #include "interface.h"

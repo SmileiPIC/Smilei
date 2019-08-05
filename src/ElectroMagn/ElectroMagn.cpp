@@ -293,9 +293,10 @@ ElectroMagn::~ElectroMagn()
         antenna->field=NULL;
     }
 
-    for ( unsigned int iExt = 0 ; iExt < extTimeFields.size() ; iExt++ ) {
-    	delete extTimeFields[iExt].savedField;
-    }
+//     for ( unsigned int iExt = 0 ; iExt < extTimeFields.size() ; iExt++ ) {
+//     	delete extTimeFields[iExt].savedField;
+//     	extTimeFields[iExt].savedField =NULL;
+//     }
     
     /*for ( unsigned int iExt = 0 ; iExt < extFields.size() ; iExt++ ) {
         if (extFields[iExt].profile!=NULL) {

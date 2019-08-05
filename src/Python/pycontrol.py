@@ -96,7 +96,7 @@ def _smilei_check():
     for e in ExternalField:
         e.profile         = toSpaceProfile(e.profile         )
     for e in ExternalTimeField:
-        e.profile         = toSpaceProfile(e.profile         )
+        e.profile         = toTimeProfile(e.profile         )
     for a in Antenna:
         a.space_profile   = toSpaceProfile(a.space_profile   )
         a.time_profile    = toTimeProfile (a.time_profile    )
@@ -125,8 +125,8 @@ def _keep_python_running():
     if len(MovingWindow)>0:
         for e in ExternalField:
             profiles += [e.profile]
-        for e in ExternalTimeField:
-            profiles += [e.profile]
+    for e in ExternalTimeField:
+        profiles += [e.profile]
     for prof in profiles:
         if callable(prof) and not hasattr(prof,"profileName"):
             return True
