@@ -276,36 +276,6 @@ void Patch2D::reallyfinalizeSumField( Field *field, int iDim )
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Initialize current patch exhange Fields communications through MPI (includes loop / nDim_fields_)
-// Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
-// ---------------------------------------------------------------------------------------------------------------------
-void Patch2D::initExchange( Field *field )
-{
-    ERROR( "On ne passe jamais ici !!!!" );
-} // END initExchange( Field* field )
-
-void Patch2D::initExchangeComplex( Field *field )
-{
-    ERROR( "2D initExchangeComplex not implemented" );
-} // END initExchangeComplex( Field* field )
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-// Initialize current patch exhange Fields communications through MPI  (includes loop / nDim_fields_)
-// Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
-// ---------------------------------------------------------------------------------------------------------------------
-void Patch2D::finalizeExchange( Field *field )
-{
-    ERROR( "On ne passe jamais ici !!!!" );
-} // END finalizeExchange( Field* field )
-
-void Patch2D::finalizeExchangeComplex( Field *field )
-{
-    ERROR( "2D finalizeExchangeComplex not implemented" );
-} // END finalizeExchangeComplex( Field* field )
-
-
-// ---------------------------------------------------------------------------------------------------------------------
 // Initialize current patch exhange Fields communications through MPI for direction iDim
 // Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
 // ---------------------------------------------------------------------------------------------------------------------

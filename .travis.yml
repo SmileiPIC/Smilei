@@ -8,10 +8,14 @@ install:
  - pip install Sphinx
 
 script:
+ - mkdir -p build/html/_downloads
+ - git rev-parse --short HEAD > scripts/CompileTools/version
+ - git archive --format tar -o build/html/_downloads/Smilei.tar HEAD
+ - tar rf build/html/_downloads/Smilei.tar scripts/CompileTools/version
+ - gzip -f build/html/_downloads/Smilei.tar
  - make doc
  - touch build/html/.nojekyll
- - mkdir -p build/html/_downloads
- - for v in `git tag | grep '^v'`; do  git archive -o build/html/_downloads/smilei-${v}.tar.gz $v; done
+ - for v in `git tag | grep '^v'`; do  echo ${v}; git archive --format tar -o build/html/_downloads/smilei-${v}.tar $v; git show-ref --abbrev -s ${v} > scripts/CompileTools/version; tar rf build/html/_downloads/smilei-${v}.tar scripts/CompileTools/version; gzip -f build/html/_downloads/smilei-${v}.tar; done
 
 deploy:
  - provider: pages

@@ -40,7 +40,7 @@ public:
     {
         return 0.; // virtual => will be redefined
     };
-  
+    
     //! Gets the complex value of a N-D function from a vector.
     virtual std::complex<double> complexValueAt( std::vector<double> )
     {
@@ -59,8 +59,9 @@ public:
         return NULL;
     };
     //! Gets the value of an N-D function at points specified as numpy arrays
-    virtual PyArrayObject* complexValueAt(std::vector<PyArrayObject*>,PyArrayObject*) {
-       return NULL;
+    virtual PyArrayObject *complexValueAt( std::vector<PyArrayObject *>, PyArrayObject * )
+    {
+        return NULL;
     };
 #endif
 };
@@ -92,7 +93,7 @@ public:
     double valueAt( std::vector<double>, double ); // space + time
     double valueAt( std::vector<double> ); // space
     std::complex<double> complexValueAt( std::vector<double>, double ); // space + time
-    std::complex<double> complexValueAt( std::vector<double>); // space 
+    std::complex<double> complexValueAt( std::vector<double> ); // space
 #ifdef SMILEI_USE_NUMPY
     PyArrayObject *valueAt( std::vector<PyArrayObject *> ); // numpy
     PyArrayObject *complexValueAt( std::vector<PyArrayObject *> ); // numpy
@@ -139,12 +140,12 @@ private:
 class Function_Python4D : public Function
 {
 public:
-    Function_Python4D(PyObject *pp) : py_profile(pp) {};
-    Function_Python4D(Function_Python4D *f) : py_profile(f->py_profile) {};
-    double valueAt(std::vector<double>, double); // space + time
-    std::complex<double> complexValueAt(std::vector<double>, double); // space + time
+    Function_Python4D( PyObject *pp ) : py_profile( pp ) {};
+    Function_Python4D( Function_Python4D *f ) : py_profile( f->py_profile ) {};
+    double valueAt( std::vector<double>, double ); // space + time
+    std::complex<double> complexValueAt( std::vector<double>, double ); // space + time
 #ifdef SMILEI_USE_NUMPY
-    PyArrayObject* complexValueAt(std::vector<PyArrayObject*>, PyArrayObject*); // numpy
+    PyArrayObject *complexValueAt( std::vector<PyArrayObject *>, PyArrayObject * ); // numpy
 #endif
 private:
     PyObject *py_profile;

@@ -132,7 +132,6 @@ class ParticleBinning(Diagnostic):
 		# Fabricate all axes values for all diags
 		plot_diff = []
 		coeff = 1.
-		unitsa = [0,0,0,0]
 		spatialaxes = {"x":False, "y":False, "z":False}
 		self._finalShape = [[]]*self._naxes
 		self._sums = [False]*self._naxes
@@ -273,9 +272,9 @@ class ParticleBinning(Diagnostic):
 			self._title  = self._title .replace("#"+str(d), titles[d])
 		
 		# If any spatial dimension did not appear, then count it for calculating the correct density
-		if self._ndim>=1 and not spatialaxes["x"]: coeff /= self._ncels[0]*self._cell_length[0]
-		if self._ndim>=2 and not spatialaxes["y"]: coeff /= self._ncels[1]*self._cell_length[1]
-		if self._ndim==3 and not spatialaxes["z"]: coeff /= self._ncels[2]*self._cell_length[2]
+		if self._ndim_particles>=1 and not spatialaxes["x"]: coeff /= self._ncels[ 0]*self._cell_length[ 0]
+		if self._ndim_particles>=2 and not spatialaxes["y"]: coeff /= self._ncels[ 1]*self._cell_length[ 1]
+		if self._ndim_particles==3 and not spatialaxes["z"]: coeff /= self._ncels[-1]*self._cell_length[-1]
 		
 		# Calculate the array that represents the bins sizes in order to get units right.
 		# This array will be the same size as the plotted array
@@ -453,6 +452,4 @@ class ParticleBinning(Diagnostic):
 				A = self._np.sum(A, axis=iaxis, keepdims=True)
 		# remove summed axes
 		A = self._np.squeeze(A)
-		# log scale if requested
-		if self._data_log: A = self._np.log10(A)
 		return A

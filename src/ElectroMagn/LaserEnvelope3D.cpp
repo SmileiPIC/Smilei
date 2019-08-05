@@ -87,7 +87,7 @@ void LaserEnvelope3D::initEnvelope( Patch *patch, ElectroMagn *EMfields )
     
     Field3D *GradPhiz3D    = static_cast<Field3D *>( GradPhiz_ );
     Field3D *GradPhiz_m3D  = static_cast<Field3D *>( GradPhiz_m );
-  
+    
     
     complex<double>     i1 = std::complex<double>( 0., 1 );
     
@@ -97,7 +97,7 @@ void LaserEnvelope3D::initEnvelope( Patch *patch, ElectroMagn *EMfields )
     double dy=cell_length[1];
     // dz is the spatial step dz for 3D3V cartesian simulations
     double dz=cell_length[2];
-
+    
     //! 1/(2dx)
     double one_ov_2dx=1./2./dx;
     //! 1/(2dy)
@@ -132,7 +132,7 @@ void LaserEnvelope3D::initEnvelope( Patch *patch, ElectroMagn *EMfields )
     }
     t                   = new Field3D( n_space_to_create );
     t_previous_timestep = new Field3D( n_space_to_create );
-
+    
     for( int i=0 ; i<N0 ; i++ ) {
         position[1] = pos1;
         for( int j=0 ; j<N1 ; j++ ) {
@@ -142,8 +142,8 @@ void LaserEnvelope3D::initEnvelope( Patch *patch, ElectroMagn *EMfields )
                 for( unsigned int idim=0 ; idim<3 ; idim++ ) {
                     ( *xyz[idim] )( i, j, k ) = position[idim];
                 }
-                (*t)(i,j,k)                   = position[0];
-                (*t_previous_timestep)(i,j,k) = (*t)(i,j,k)+timestep;
+                ( *t )( i, j, k )                   = position[0];
+                ( *t_previous_timestep )( i, j, k ) = ( *t )( i, j, k )+timestep;
                 position[2] += dz;
             }
             position[1] += dy;
@@ -151,16 +151,16 @@ void LaserEnvelope3D::initEnvelope( Patch *patch, ElectroMagn *EMfields )
         position[0] += dx;
     }
     
-    profile_->complexValuesAt( xyz, t                  , *A3D  );
+    profile_->complexValuesAt( xyz, t, *A3D );
     profile_->complexValuesAt( xyz, t_previous_timestep, *A03D );
     
     for( unsigned int idim=0 ; idim<3 ; idim++ ) {
         delete xyz[idim];
     }
-   
+    
     delete t;
     delete t_previous_timestep;
-
+    
     // UNSIGNED INT LEADS TO PB IN PERIODIC BCs
     for( unsigned int i=0 ; i<A_->dims_[0] ; i++ ) { // x loop
         //position[1] = pos1;
@@ -168,7 +168,7 @@ void LaserEnvelope3D::initEnvelope( Patch *patch, ElectroMagn *EMfields )
             //position[2] = pos2;
             for( unsigned int k=0 ; k<A_->dims_[2] ; k++ ) { // z loop
                 // |A|
-                ( *Env_Aabs3D )( i, j, k )= std::abs( ( *A3D )( i, j, k ) );  
+                ( *Env_Aabs3D )( i, j, k )= std::abs( ( *A3D )( i, j, k ) );
                 // |E envelope| = |-(dA/dt-ik0cA)|
                 ( *Env_Eabs3D )( i, j, k )= std::abs( ( ( *A3D )( i, j, k )-( *A03D )( i, j, k ) )/timestep - i1*( *A3D )( i, j, k ) );
                 // compute ponderomotive potential at timestep n

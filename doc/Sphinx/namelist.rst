@@ -326,6 +326,13 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   The number of azimuthal modes used for the Fourier decomposition in ``"AMcylindrical"`` geometry.
 
+.. py:data:: number_of_AM_relativistic_field_initialization
+
+  :default: 1
+
+  The number of azimuthal modes used for the relativistic field initialization in ``"AMcylindrical"`` geometry.
+  Note that this number must be lower or equal to the number of modes of the simulation.
+
 ----
 
 Load Balancing
@@ -575,6 +582,14 @@ Each species has to be defined in a ``Species`` block::
       # For photon species only:
       multiphoton_Breit_Wheeler = ["electron","positron"],
       multiphoton_Breit_Wheeler_sampling = [1,1]
+
+      # Merging
+      merging_method = "vranic_spherical",
+      merge_every = 5,
+      merge_min_particles_per_cell = 16,
+      merge_max_packet_size = 4,
+      merge_min_packet_size = 2,
+      merge_momentum_cell_size = [32,16,16],
   )
 
 .. py:data:: name
@@ -594,7 +609,7 @@ Each species has to be defined in a ``Species`` block::
      of both species are identical in each cell.
    * A *numpy* array defining all the positions of the species' particles.
      In this case you must also provide the weight of each particle (see :ref:`Weights`).
-     The array shape must be `(Ndim+1, Npart)` where `Ndim` is the simulation dimension (of the particles),
+     The array shape must be `(Ndim+1, Npart)` where `Ndim` is the number of particle dimensions (of the particles),
      and `Npart` is the total number of particles. Positions components `x`, `y`, `z` are
      given along the first `Ndim` columns and the weights are given in the last column of the array.
      This initialization is incompatible with :py:data:`number_density`, :py:data:`charge_density`
@@ -610,8 +625,7 @@ Each species has to be defined in a ``Species`` block::
   * ``"cold"`` for zero temperature
   * A *numpy* array defining all the momenta of the species' particles (requires that
     :py:data:`position_initialization` also be an array with the same number of particles).
-    The array shape must be `(Ndim, Npart)` where `Ndim` is the simulation dimension,
-    and `Npart` is the total number of particles. Momentum components `px`, `py`, `pz`
+    The array shape must be `(3, Npart)` where `Npart` is the total number of particles. Momentum components `px`, `py`, `pz`
     are given in successive columns.This initialization is incompatible with
     :py:data:`temperature` and :py:data:`mean_velocity`.
 
@@ -707,8 +721,10 @@ Each species has to be defined in a ``Species`` block::
 
   :default: 0.
 
-  The time during which the particle positions are not updated, in units of :math:`T_r`.
-
+  The time during which the particles are "frozen", in units of :math:`T_r`.
+  Frozen particles do not move and therefore do not deposit any current either.
+  They are computationally much cheaper than non-frozen particles and oblivious to any EM-fields
+  in the simulation.
 
 .. py:data:: ionization_model
 
@@ -870,14 +886,113 @@ Each species has to be defined in a ``Species`` block::
 
 ----
 
+.. _Particle_merging:
+
+Particle Merging
+^^^^^^^^^^^^^^^^
+
+The macro-particle merging method is documented in the :doc:`corresponding page <particle_merging>`.
+It is defined in the ``Species`` block::
+
+  Species(
+      ....
+
+      # Merging
+      merging_method = "vranic_spherical",
+      merge_every = 5,
+      merge_min_particles_per_cell = 16,
+      merge_max_packet_size = 4,
+      merge_min_packet_size = 2,
+      merge_momentum_cell_size = [32,16,16],
+      merge_discretization_scale = "linear",
+      # Extra parameters for experts:
+      merge_min_momentum_cell_length = [1e-10, 1e-10, 1e-10],
+      merge_accumulation_correction = True,
+  )
+
+.. py:data:: merging_method
+
+  :default: ``None``
+
+  The particle merging method to use:
+
+  * ``none``: the merging process is not activated
+  * ``vranic_cartesian``: merging process using the method of M. Vranic with a cartesian momentum space decomposition
+  * ``vranic_spherical``: merging process using the method of M. Vranic with a spherical momentum space decomposition
+
+.. py:data:: merge_every
+
+  :default: ``0``
+
+  The particle merging time selection (:ref:`time selection <TimeSelections>`).
+
+.. py:data:: min_particles_per_cell
+
+  :default: ``4``
+
+  The minimum number of particles per cell for the merging.
+
+.. py:data:: merge_min_packet_size
+
+  :default: ``4``
+
+  The minimum number of particles per packet to merge.
+
+.. py:data:: merge_max_packet_size
+
+  :default: ``4``
+
+  The maximum number of particles per packet to merge.
+
+.. py:data:: merge_momentum_cell_size
+
+  :default: ``[16,16,16]``
+
+  The momentum space discretization.
+
+.. py:data:: merge_discretization_scale
+
+  :default: ``linear``
+
+  The momentum discretization scale. The scale can be ``linear`` or ``log``.
+  The ``log`` scale only works with the spherical discretization for the moment.
+  In logarithmic scale, Smilei needs a minimum momentum value to avoid 0.
+  This value is provided by the parameter ``merge_min_momentum``.
+  By default, this value is set to :math:`10^{-5}`.
+
+.. py:data:: merge_min_momentum
+
+  :default: ``1e-5``
+
+  :red:`[for experts]` The minimum momentum value when the log scale is chosen (``merge_discretization_scale = log``).
+  To set a minimum value is compulsory to avoid the potential 0 value in the log domain.
+
+.. py:data:: merge_min_momentum_cell_length
+
+  :default: ``[1e-10,1e-10,1e-10]``
+
+  :red:`[for experts]` The minimum momentum cell length for the discretization.
+  If the specified discretization induces smaller momentum cell length,
+  then the number of momentum cell (momentum cell size) is set to 1 in this direction.
+
+.. py:data:: merge_accumulation_correction
+
+  :default: ``True``
+
+  :red:`[for experts]` Activation of the accumulation correction (see :ref:`vranic_accululation_effect` for more information). The correction only works in linear scale.
+
+
+
+----
+
 .. _Lasers:
 
 Lasers
 ^^^^^^
 
 A laser consists in applying oscillating boundary conditions for the magnetic
-field on one of the box sides. The only boundary conditions that support lasers
-are ``"silver-muller"`` (see :py:data:`EM_boundary_conditions`).
+field on one of the box sides. The only boundary condition that supports lasers
+is ``"silver-muller"`` (see :py:data:`EM_boundary_conditions`).
 There are several syntaxes to introduce a laser in :program:`Smilei`:
 
 .. rubric:: 1. Defining a generic wave
@@ -1112,10 +1227,26 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   now 3 elements (focus position in 3D), and the ``incidence_angle`` being a list of
   two angles, corresponding to rotations around `y` and `z`, respectively.
 
-.. rubric:: 5. Defining a generic wave at some distance from the boundary
+
+.. rubric:: 6. Defining a gaussian wave with Azimuthal Fourier decomposition
+
+..
+
+  For simulations with ``"AMcylindrical"`` geometry, you may use the simplified laser creator::
+
+    LaserGaussianAM(
+        box_side         = "xmin",
+        a0               = 1.,
+        omega            = 1.,
+        focus            = [50., 40., 40.],
+        waist            = 3.,
+        polarization_phi = 0.,
+        ellipticity      = 0.,
+        time_envelope    = tconstant()
+    )
 
 
-
+.. rubric:: 7. Defining a generic wave at some distance from the boundary
 
 ..
 
@@ -1155,7 +1286,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     An extra envelope applied at the boundary, on top of the :py:data:`space_time_profile`.
     This envelope takes two arguments (`y`, `t`) in 2D, and three arguments (`y`, `z`, `t`)
     in 3D.
-    As the wave propagation technique stores a limited Fourier transform (in the time
+    As the wave propagation technique stores a limited number of Fourier modes (in the time
     domain) of the wave, some periodicity can be obtained in the actual laser.
     One may thus observe that the laser pulse is repeated several times.
     The envelope can be used to remove these spurious repetitions.
@@ -1181,12 +1312,26 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 Laser envelope model
 ^^^^^^^^^^^^^^^^^^^^^^
 
-In the geometries ``"1Dcartesian"``, ``"2Dcartesian"``, ``"3Dcartesian"`` it is possible to model a laser pulse propagating in the ``x`` direction through an envelope model (see :doc:`laser_envelope` for the advantages and limits of this approximation).
-The fast oscillations of the laser are neglected and all the physical quantities of the simulation, including the electromagnetic fields and their source terms, as well as the particles positions and momenta, are meant as an average over one or more optical cycles.
-Effects involving characteristic lengths comparable to the laser central wavelength (i.e. sharp plasma density profiles) cannot be modeled with this option.
+In the geometries ``"1Dcartesian"``, ``"2Dcartesian"``, ``"3Dcartesian"``
+it is possible to model a laser pulse propagating in the ``x`` direction
+using an envelope model (see :doc:`laser_envelope` for the advantages
+and limits of this approximation).
+The fast oscillations of the laser are neglected and all the physical
+quantities of the simulation, including the electromagnetic fields and
+their source terms, as well as the particles positions and momenta, are
+meant as an average over one or more optical cycles.
+Effects involving characteristic lengths comparable to the laser central
+wavelength (i.e. sharp plasma density profiles) cannot be modeled with
+this option.
 
-For the moment the only way to specify a laser pulse through this model in :program:`Smilei` is through a gaussian beam (cylindrically symmetric for the geometries ``"2Dcartesian"``, ``"3Dcartesian"``). Currently only one laser pulse can be specified through the envelope model in a simulation, thus multi-pulse set-ups cannot be defined.
-Contrarily to a standard Laser initialized throught the Silver-Müller boundary conditions, the laser envelope will be entirely initialized inside the simulation box at the start of the simulation.
+For the moment the only way to specify a laser pulse through this model
+in :program:`Smilei` is through a gaussian beam (cylindrically symmetric
+for the geometries ``"2Dcartesian"``, ``"3Dcartesian"``). Currently only
+one laser pulse can be specified through the envelope model in a simulation,
+thus multi-pulse set-ups cannot be defined.
+Contrarily to a standard Laser initialized with the Silver-Müller
+boundary conditions, the laser envelope will be entirely initialized inside
+the simulation box at the start of the simulation.
 
 Following is the laser envelope creator in 1D ::
 
@@ -1220,34 +1365,51 @@ Following is the laser envelope creator in 3D ::
     )
 
 
-The arguments appearing ``LaserEnvelopePlanar1D``, ``LaserEnvelopeGaussian2D`` and ``LaserEnvelopeGaussian3D`` have the same meaning they would have in a normal ``LaserPlanar1D``, ``LaserGaussian2D`` and ``LaserGaussian3D``, with some differences:
+The arguments appearing ``LaserEnvelopePlanar1D``, ``LaserEnvelopeGaussian2D``
+and ``LaserEnvelopeGaussian3D`` have the same meaning they would have in a
+normal ``LaserPlanar1D``, ``LaserGaussian2D`` and ``LaserGaussian3D``,
+with some differences:
 
 .. py:data:: waist
 
-   Please note that a waist size comparable to the laser wavelength does not satisfy the assumptions of the envelope model.
-   
+   Please note that a waist size comparable to the laser wavelength does not
+   satisfy the assumptions of the envelope model.
+
 .. py:data:: time_envelope
 
-   Since the envelope will be entirely initialized in the simulation box already at the start of the simulation, the time envelope will be applied in the ``x`` direction instead of time. It is recommended to initialize the laser envelope in vacuum, separated from the plasma, to avoid unphysical results.
-   Temporal envelopes with variation scales near to the laser wavelength do not satisfy the assumptions of the envelope model (see :doc:`laser_envelope`), yielding inaccurate results.
+   Since the envelope will be entirely initialized in the simulation box
+   already at the start of the simulation, the time envelope will be applied
+   in the ``x`` direction instead of time. It is recommended to initialize the
+   laser envelope in vacuum, separated from the plasma, to avoid unphysical
+   results.
+   Temporal envelopes with variation scales near to the laser wavelength do not
+   satisfy the assumptions of the envelope model (see :doc:`laser_envelope`),
+   yielding inaccurate results.
 
 .. py:data:: envelope_solver
 
   :default: ``explicit``
 
-  For the moment the only available solver for the laser envelope equation is an explicit solver with centered finite differences in space and time.
+  For the moment the only available solver for the laser envelope equation is an
+  explicit solver with centered finite differences in space and time.
 
 .. py:data:: Envelope_boundary_conditions
 
   :type: list of lists of strings
   :default: ``[["reflective"]]``
 
-  For the moment, only reflective boundary conditions are implemented in the resolution of the envelope equation.
+  For the moment, only reflective boundary conditions are implemented in the
+  resolution of the envelope equation.
 
 
-It is important to remember that the profile defined through the blocks ``LaserEnvelopePlanar1D``, ``LaserEnvelopeGaussian2D``, ``LaserEnvelopeGaussian3D`` correspond to the complex envelope of the laser vector potential component :math:`\tilde{A}` in the polarization direction.
-The calculation of the correspondent complex envelope for the laser electric field component in that direction is described in :doc:`laser_envelope`.
-Note that only order 2 interpolation and projection are supported in presence of the envelope model for the laser.
+It is important to remember that the profile defined through the blocks
+``LaserEnvelopePlanar1D``, ``LaserEnvelopeGaussian2D``, ``LaserEnvelopeGaussian3D``
+correspond to the complex envelope of the laser vector potential component
+:math:`\tilde{A}` in the polarization direction.
+The calculation of the correspondent complex envelope for the laser electric field
+component in that direction is described in :doc:`laser_envelope`.
+Note that only order 2 interpolation and projection are supported in presence of
+the envelope model for the laser.
 
 
 ----
@@ -1621,9 +1783,15 @@ Collisions
 
   :default: False
 
-  If ``True``, :ref:`collisional ionization <CollIonization>` will occur. One of the
-  species groups must be all electrons (:py:data:`mass` = 1), and the other one all ions of the
-  same :py:data:`atomic_number`.
+  :ref:`Collisional ionization <CollIonization>` is set when this parameter is not ``False``.
+  It can either be set to the name of a pre-existing electron species (where the ionized
+  electrons are created), or to ``True`` (the first electron species in :py:data:`species1`
+  or :py:data:`species2` is then chosen for ionized electrons).
+  
+  One of the species groups must be all electrons (:py:data:`mass` = 1), and the other
+  one all ions of the same :py:data:`atomic_number`.
+  
+  
 
 
 
@@ -1647,31 +1815,70 @@ tables.
 
   RadiationReaction(
 
-     # Parameters to generate the table h used by Niel et al.
-     h_chipa_min = 1E-3,
-     h_chipa_max = 1E1,
-     h_dim = 128,
-     h_computation_method = "table",
+    # Radiation parameters
+    minimum_chi_continuous = 1e-3,
+    minimum_chi_discontinuous = 1e-2,
+    table_path = "../databases/",
+    compute_table = False,
 
-     # Parameter to generate the table integfochi used by the Monte-Carlo model
-     integfochi_chipa_min = 1e-4,
-     integfochi_chipa_max = 1e1,
-     integfochi_dim = 128,
+    # Following parameters are only if you want to compute the tables
 
-     # Parameter to generate the table xip used by the Monte-Carlo model
-     xip_chipa_min = 1e-4,
-     xip_chipa_max = 1e1,
-     xip_power = 4,
-     xip_threshold = 1e-3,
-     chipa_xip_dim = 128,
-     chiph_xip_dim = 128,
+    output_format = "hdf5",
 
-     # Radiation parameters
-     minimum_chi_continuous = 1e-3,
-     minimum_chi_discontinuous = 1e-2,
-     table_path = "../databases/"
+    # Parameters to generate the table h used by Niel et al.
+    h_chipa_min = 1E-3,
+    h_chipa_max = 1E1,
+    h_dim = 128,
+    h_computation_method = "table",
+
+    # Parameter to generate the table integfochi used by the Monte-Carlo model
+    integfochi_chipa_min = 1e-4,
+    integfochi_chipa_max = 1e1,
+    integfochi_dim = 128,
+
+    # Parameter to generate the table xip used by the Monte-Carlo model
+    xip_chipa_min = 1e-4,
+    xip_chipa_max = 1e1,
+    xip_power = 4,
+    xip_threshold = 1e-3,
+    xip_chipa_dim = 128,
+    xip_chiph_dim = 128,
   )
 
+.. py:data:: output_format
+
+  :default: ``"hdf5"``
+
+  Output format of the tables: ``"hdf5"``, ``"binary"`` or ``"ascii"``.
+
+.. py:data:: minimum_chi_continuous
+
+  :default: 1e-3
+
+  Threshold on the particle quantum parameter *particle_chi*. When a particle has a
+  quantum parameter below this threshold, radiation reaction is not taken
+  into account.
+
+.. py:data:: minimum_chi_discontinuous
+
+  :default: 1e-2
+
+  Threshold on the particle quantum parameter *particle_chi* between the continuous
+  and the discontinuous radiation model.
+
+.. py:data:: table_path
+
+  :default: ``"./"``
+
+  Path to the external tables for the radiation losses.
+  Default tables are located in ``databases``.
+
+.. py:data:: compute_table
+
+  :default: False
+
+  If True, the tables for the selected radiation model are computed
+  with the requested parameters and stored at the path `table_path`.
 
 .. py:data:: h_chipa_min
 
@@ -1772,33 +1979,6 @@ tables.
 
   Discretization of the *xip* tables in the *photon_chi* direction.
 
-.. py:data:: output_format
-
-  :default: ``"hdf5"``
-
-  Output format of the tables: ``"hdf5"``, ``"binary"`` or ``"ascii"``.
-
-.. py:data:: minimum_chi_continuous
-
-  :default: 1e-3
-
-  Threshold on the particle quantum parameter *particle_chi*. When a particle has a
-  quantum parameter below this threshold, radiation reaction is not taken
-  into account.
-
-.. py:data:: minimum_chi_discontinuous
-
-  :default: 1e-2
-
-  Threshold on the particle quantum parameter *particle_chi* between the continuous
-  and the discontinuous radiation model.
-
-.. py:data:: table_path
-
-  :default: ``"./"``
-
-  Path to the external tables for the radiation losses.
-  Default tables are located in ``databases``.
 
 --------------------------------------------------------------------------------
 
@@ -1820,21 +2000,24 @@ There are two tables used for the multiphoton Breit-Wheeler refers to as the
     # Table output format, can be "ascii", "binary", "hdf5"
     output_format = "hdf5",
 
-    # Path the tables
-    table_path = "../databases/"
+    # Path to the tables
+    table_path = "../databases/",
+
+    # Flag to compute the tables
+    compute_table = False,
 
     # Table T parameters
-    T_chiph_min = 1e-2
-    T_chiph_max = 1e1
-    T_dim = 128
+    T_chiph_min = 1e-2,
+    T_chiph_max = 1e1,
+    T_dim = 128,
 
     # Table xip parameters
-    xip_chiph_min = 1e-2
-    xip_chiph_max = 1e1
-    xip_power = 4
-    xip_threshold = 1e-3
-    xip_chipa_dim = 128
-    xip_chiph_dim = 128
+    xip_chiph_min = 1e-2,
+    xip_chiph_max = 1e1,
+    xip_power = 4,
+    xip_threshold = 1e-3,
+    xip_chipa_dim = 128,
+    xip_chiph_dim = 128,
 
   )
 
@@ -1844,6 +2027,13 @@ There are two tables used for the multiphoton Breit-Wheeler refers to as the
 
   Path to the external tables for the multiphoton Breit-Wheeler.
   Default tables are located in ``databases``.
+
+.. py:data:: compute_table
+
+  :default: False
+
+  If True, the tables for the selected radiation model are computed
+  with the requested parameters and stored at the path `table_path`.
 
 .. py:data:: output_format
 
@@ -2362,7 +2552,6 @@ for instance::
 
   A list of one or several species' :py:data:`name`.
   All these species are combined into the same diagnostic.
-
 
 .. py:data:: axes
 

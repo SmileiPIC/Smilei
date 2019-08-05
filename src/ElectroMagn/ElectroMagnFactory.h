@@ -96,7 +96,7 @@ public:
                 ERROR( "ExternalField #"<<n_extfield<<": field "<<extField.field<<" not found" );
             }
             
-            MESSAGE(1, "External field " << extField.field << ": " << extField.profile->getInfo());
+            MESSAGE( 1, "External field " << extField.field << ": " << extField.profile->getInfo() );
             EMfields->extFields.push_back( extField );
         }
         

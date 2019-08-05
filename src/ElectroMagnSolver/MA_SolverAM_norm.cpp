@@ -30,8 +30,8 @@ void MA_SolverAM_norm::operator()( ElectroMagn *fields )
         cField2D *Jt = ( static_cast<ElectroMagnAM *>( fields ) )->Jt_[imode];
         int j_glob    = ( static_cast<ElectroMagnAM *>( fields ) )->j_glob_;
         bool isYmin = ( static_cast<ElectroMagnAM *>( fields ) )->isYmin;
-        double *invR = ( static_cast<ElectroMagnAM *>( fields ) )->invR;
-        double *invRd = ( static_cast<ElectroMagnAM *>( fields ) )->invRd;
+        //double *invR = ( static_cast<ElectroMagnAM *>( fields ) )->invR;
+        //double *invRd = ( static_cast<ElectroMagnAM *>( fields ) )->invRd;
         
         // Electric field Elr^(d,p)
         for( unsigned int i=0 ; i<nl_d ; i++ ) {
@@ -56,7 +56,8 @@ void MA_SolverAM_norm::operator()( ElectroMagn *fields )
                                    -                  dt_ov_dr * ( ( *Bl )( i, j+1 ) - ( *Bl )( i, j ) );
             }
         }
-        if( isYmin ) { // Conditions on axis
+        if( isYmin ) { 
+            // Conditions on axis
             unsigned int j=2;
             if( imode==0 ) {
                 for( unsigned int i=0 ; i<nl_p  ; i++ ) {
@@ -73,12 +74,13 @@ void MA_SolverAM_norm::operator()( ElectroMagn *fields )
                     ( *El )( i, j )= 0;
                 }
                 for( unsigned int i=0 ; i<nl_p  ; i++ ) {
-                    ( *Et )( i, j )= -1./3.*( 4.*Icpx*( *Er )( i, j+1 )+( *Et )( i, j+1 ) );
+                    //( *Et )( i, j )= -1./3.*( 4.*Icpx*( *Er )( i, j+1 )+( *Et )( i, j+1 ) );
+                    ( *Et )( i, j )= -Icpx/8.*( 9.*( *Er )( i, j+1 )-( *Er )( i, j+2 ) );
                 }
                 for( unsigned int i=0 ; i<nl_p ; i++ ) {
                     ( *Er )( i, j )=2.*Icpx*( *Et )( i, j )-( *Er )( i, j+1 );
                 }
-            } else {
+            } else { // mode > 1
                 for( unsigned int  i=0 ; i<nl_d; i++ ) {
                     ( *El )( i, j )= 0;
                 }
@@ -88,6 +90,14 @@ void MA_SolverAM_norm::operator()( ElectroMagn *fields )
                 for( unsigned int i=0 ; i<nl_p; i++ ) {
                     ( *Et )( i, j )= 0;
                 }
+            }
+            // Conditions below axis (matters for primal quantities interpolated on particles)
+            j=1;
+            for( unsigned int i=0 ; i<nl_p  ; i++ ) {
+                ( *Et )( i, j )=( *Et )( i, j+2 );
+            }
+            for( unsigned int i=0 ; i<nl_d ; i++ ) {
+                ( *El )( i, j )=( *El )( i, j+2 );
             }
         }
     }

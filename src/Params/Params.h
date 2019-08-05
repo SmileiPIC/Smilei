@@ -186,6 +186,9 @@ public:
     
     //! Number of modes
     unsigned int nmodes;
+ 
+    //! Number of modes for relativistic field initialization
+    unsigned int nmodes_rel_field_init;
     
     //! max value for dt (due to usual FDTD CFL condition: should be moved to ElectroMagn solver (MG))
     double dtCFL;
@@ -318,6 +321,8 @@ public:
     
     //! Characters width for timestep output
     unsigned int timestep_width;
+
+    bool cell_sorting;
 };
 
 #endif

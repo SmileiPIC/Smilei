@@ -151,7 +151,7 @@ void Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI *s
         // master checks whenever we passed the time limit
         if( smpi->isMaster() && time_dump_step==0 ) {
             double elapsed_time = ( MPI_Wtime() - time_reference )/60.;
-            if( elapsed_time > dump_minutes*( dump_number+1 ) ) {
+            if( elapsed_time > dump_minutes ) {
                 time_dump_step = itime+1; // we will dump at next timestep (in case non-master already passed)
                 MESSAGE( "Reached time limit : " << elapsed_time << " minutes. Dump timestep : " << time_dump_step );
                 // master does a non-blocking send
@@ -177,6 +177,7 @@ void Checkpoint::dump( VectorPatch &vecPatches, unsigned int itime, SmileiMPI *s
         }
         signal_received=0;
         time_dump_step=0;
+        time_reference = MPI_Wtime();
     }
 }
 
@@ -283,16 +284,31 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
 
 void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpecies, Params &params, hid_t patch_gid )
 {
-
-    dumpFieldsPerProc( patch_gid, EMfields->Ex_ );
-    dumpFieldsPerProc( patch_gid, EMfields->Ey_ );
-    dumpFieldsPerProc( patch_gid, EMfields->Ez_ );
-    dumpFieldsPerProc( patch_gid, EMfields->Bx_ );
-    dumpFieldsPerProc( patch_gid, EMfields->By_ );
-    dumpFieldsPerProc( patch_gid, EMfields->Bz_ );
-    dumpFieldsPerProc( patch_gid, EMfields->Bx_m );
-    dumpFieldsPerProc( patch_gid, EMfields->By_m );
-    dumpFieldsPerProc( patch_gid, EMfields->Bz_m );
+    if (  params.geometry != "AMcylindrical" ) {
+        dumpFieldsPerProc( patch_gid, EMfields->Ex_ );
+        dumpFieldsPerProc( patch_gid, EMfields->Ey_ );
+        dumpFieldsPerProc( patch_gid, EMfields->Ez_ );
+        dumpFieldsPerProc( patch_gid, EMfields->Bx_ );
+        dumpFieldsPerProc( patch_gid, EMfields->By_ );
+        dumpFieldsPerProc( patch_gid, EMfields->Bz_ );
+        dumpFieldsPerProc( patch_gid, EMfields->Bx_m );
+        dumpFieldsPerProc( patch_gid, EMfields->By_m );
+        dumpFieldsPerProc( patch_gid, EMfields->Bz_m );
+    }
+    else {
+        for ( unsigned int imode = 0 ; imode < params.nmodes ; imode++ ) {
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+            dump_cFieldsPerProc( patch_gid, emAM->El_[imode] );
+            dump_cFieldsPerProc( patch_gid, emAM->Er_[imode] );
+            dump_cFieldsPerProc( patch_gid, emAM->Et_[imode] );
+            dump_cFieldsPerProc( patch_gid, emAM->Bl_[imode] );
+            dump_cFieldsPerProc( patch_gid, emAM->Br_[imode] );
+            dump_cFieldsPerProc( patch_gid, emAM->Bt_[imode] );
+            dump_cFieldsPerProc( patch_gid, emAM->Bl_m[imode] );
+            dump_cFieldsPerProc( patch_gid, emAM->Br_m[imode] );
+            dump_cFieldsPerProc( patch_gid, emAM->Bt_m[imode] );
+        }
+    }
     
     if( EMfields->envelope!=NULL ) {
         dump_cFieldsPerProc( patch_gid, EMfields->envelope->A_ );
@@ -551,16 +567,33 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI *smpi, SimWindo
 
 void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &vecSpecies, Params &params, hid_t patch_gid )
 {
-    restartFieldsPerProc( patch_gid, EMfields->Ex_ );
-    restartFieldsPerProc( patch_gid, EMfields->Ey_ );
-    restartFieldsPerProc( patch_gid, EMfields->Ez_ );
-    restartFieldsPerProc( patch_gid, EMfields->Bx_ );
-    restartFieldsPerProc( patch_gid, EMfields->By_ );
-    restartFieldsPerProc( patch_gid, EMfields->Bz_ );
-    restartFieldsPerProc( patch_gid, EMfields->Bx_m );
-    restartFieldsPerProc( patch_gid, EMfields->By_m );
-    restartFieldsPerProc( patch_gid, EMfields->Bz_m );
+    if ( params.geometry != "AMcylindrical" ) {
+        restartFieldsPerProc( patch_gid, EMfields->Ex_ );
+        restartFieldsPerProc( patch_gid, EMfields->Ey_ );
+        restartFieldsPerProc( patch_gid, EMfields->Ez_ );
+        restartFieldsPerProc( patch_gid, EMfields->Bx_ );
+        restartFieldsPerProc( patch_gid, EMfields->By_ );
+        restartFieldsPerProc( patch_gid, EMfields->Bz_ );
+        restartFieldsPerProc( patch_gid, EMfields->Bx_m );
+        restartFieldsPerProc( patch_gid, EMfields->By_m );
+        restartFieldsPerProc( patch_gid, EMfields->Bz_m );
+    }
+    else {
+        for ( unsigned int imode = 0 ; imode < params.nmodes ; imode++ ) {
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+            restart_cFieldsPerProc( patch_gid, emAM->El_[imode] );
+            restart_cFieldsPerProc( patch_gid, emAM->Er_[imode] );
+            restart_cFieldsPerProc( patch_gid, emAM->Et_[imode] );
+            restart_cFieldsPerProc( patch_gid, emAM->Bl_[imode] );
+            restart_cFieldsPerProc( patch_gid, emAM->Br_[imode] );
+            restart_cFieldsPerProc( patch_gid, emAM->Bt_[imode] );
+            restart_cFieldsPerProc( patch_gid, emAM->Bl_m[imode] );
+            restart_cFieldsPerProc( patch_gid, emAM->Br_m[imode] );
+            restart_cFieldsPerProc( patch_gid, emAM->Bt_m[imode] );
+        }
+    }
     
+
     if( EMfields->envelope!=NULL ) {
         DEBUG( "restarting envelope" );
         restart_cFieldsPerProc( patch_gid, EMfields->envelope->A_ );
@@ -708,7 +741,7 @@ void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &ve
                 H5::getVect( gid, "Id", vecSpecies[ispec]->particles->Id, H5T_NATIVE_UINT64 );
             }
             
-            if( params.vectorization_mode == "off" || params.vectorization_mode == "on" ) {
+            if( params.vectorization_mode == "off" || params.vectorization_mode == "on" || params.cell_sorting ) {
                 H5::getVect( gid, "first_index", vecSpecies[ispec]->first_index, true );
                 H5::getVect( gid, "last_index", vecSpecies[ispec]->last_index, true );
             }

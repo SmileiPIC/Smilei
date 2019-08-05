@@ -44,7 +44,7 @@ MultiphotonBreitWheelerTables::~MultiphotonBreitWheelerTables()
 //
 //! \param params Object Params for the parameters from the input script
 // -----------------------------------------------------------------------------
-void MultiphotonBreitWheelerTables::initialization( Params &params )
+void MultiphotonBreitWheelerTables::initialization( Params &params, SmileiMPI *smpi )
 {
     if( params.hasMultiphotonBreitWheeler ) {
         TITLE( "Initializing mutliphoton Breit-Wheeler" )
@@ -61,30 +61,55 @@ void MultiphotonBreitWheelerTables::initialization( Params &params )
     // We read the properties
     if( PyTools::nComponents( "MultiphotonBreitWheeler" ) ) {
 
-        // Extraction of the parameter from the input file
-        PyTools::extract( "T_chiph_min", T_chiph_min, "MultiphotonBreitWheeler" );
-        PyTools::extract( "T_chiph_max", T_chiph_max, "MultiphotonBreitWheeler" );
-        PyTools::extract( "T_dim", T_dim, "MultiphotonBreitWheeler" );
+        // Flag to activate the table computation
+        PyTools::extract( "compute_table", compute_table_, "MultiphotonBreitWheeler" );
 
-        T_log10_chiph_min = log10( T_chiph_min );
+        // If we compute the table, we read the table parameters
+        if (compute_table_)
+        {
+            // Extraction of the parameter from the input file
+            PyTools::extract( "T_chiph_min", T_chiph_min, "MultiphotonBreitWheeler" );
+            PyTools::extract( "T_chiph_max", T_chiph_max, "MultiphotonBreitWheeler" );
+            PyTools::extract( "T_dim", T_dim, "MultiphotonBreitWheeler" );
 
-        // xip table
-        PyTools::extract( "xip_chiph_min", xip_chiph_min, "MultiphotonBreitWheeler" );
-        PyTools::extract( "xip_chiph_max", xip_chiph_max, "MultiphotonBreitWheeler" );
-        PyTools::extract( "xip_chiph_dim", xip_chiph_dim, "MultiphotonBreitWheeler" );
-        PyTools::extract( "xip_chipa_dim", xip_chipa_dim, "MultiphotonBreitWheeler" );
-        PyTools::extract( "xip_power", xip_power, "MultiphotonBreitWheeler" );
-        PyTools::extract( "xip_threshold", xip_threshold, "MultiphotonBreitWheeler" );
+            T_log10_chiph_min = log10( T_chiph_min );
 
-        // Additional regularly used parameters
-        xip_log10_chiph_min = log10( xip_chiph_min );
-        xip_inv_chipa_dim_minus_one = 1./( xip_chipa_dim - 1. );
+            // xip table
+            PyTools::extract( "xip_chiph_min", xip_chiph_min, "MultiphotonBreitWheeler" );
+            PyTools::extract( "xip_chiph_max", xip_chiph_max, "MultiphotonBreitWheeler" );
+            PyTools::extract( "xip_chiph_dim", xip_chiph_dim, "MultiphotonBreitWheeler" );
+            PyTools::extract( "xip_chipa_dim", xip_chipa_dim, "MultiphotonBreitWheeler" );
+            PyTools::extract( "xip_power", xip_power, "MultiphotonBreitWheeler" );
+            PyTools::extract( "xip_threshold", xip_threshold, "MultiphotonBreitWheeler" );
 
-        // Format of the tables
-        PyTools::extract( "output_format", output_format_, "MultiphotonBreitWheeler" );
+            if( T_chiph_min >= T_chiph_max ) {
+                ERROR( "T_chiph_min (" << T_chiph_min
+                       << ") >= T_chiph_max (" << T_chiph_max << ")" );
+            }
+            if( T_dim < 1 ) {
+                ERROR( "T_dim is too low" );
+            }
+            if( xip_chiph_min >= xip_chiph_max ) {
+                ERROR( "xip_chiph_min (" << xip_chiph_min
+                       << ") >= xip_chiph_max (" << xip_chiph_max << ")" );
+            }
+            if( xip_chiph_dim < 1 ) {
+                ERROR( "In MultiphotonBreitWheelerTables, xip_chiph_dim must be above 0" );
+            }
+            if( xip_chipa_dim < 1 ) {
+                ERROR( "In MultiphotonBreitWheelerTables, xip_chipa_dim must be above 0" );
+            }
+
+            // Additional regularly used parameters
+            xip_log10_chiph_min = log10( xip_chiph_min );
+            xip_inv_chipa_dim_minus_one = 1./( xip_chipa_dim - 1. );
+
+            // Format of the tables
+            PyTools::extract( "output_format", output_format_, "MultiphotonBreitWheeler" );
+        }
 
         // Path to the databases
-        PyTools::extract( "table_path", table_path, "MultiphotonBreitWheeler" );
+        PyTools::extract( "table_path", table_path_, "MultiphotonBreitWheeler" );
     }
 
     // Computation of some parameters
@@ -99,28 +124,22 @@ void MultiphotonBreitWheelerTables::initialization( Params &params )
 
     // Messages and checks
     if( params.hasMultiphotonBreitWheeler ) {
-        MESSAGE( "        table path: " << table_path );
-
-        if( T_chiph_min >= T_chiph_max ) {
-            ERROR( "T_chiph_min (" << T_chiph_min
-                   << ") >= T_chiph_max (" << T_chiph_max << ")" );
-        }
-        if( T_dim < 1 ) {
-            ERROR( "T_dim is too low" );
-        }
-        if( xip_chiph_min >= xip_chiph_max ) {
-            ERROR( "xip_chiph_min (" << xip_chiph_min
-                   << ") >= xip_chiph_max (" << xip_chiph_max << ")" );
-        }
-        if( xip_chiph_dim < 1 ) {
-            ERROR( "In MultiphotonBreitWheelerTables, xip_chiph_dim is too low" );
-        }
-        if( xip_chipa_dim < 1 ) {
-            ERROR( "In MultiphotonBreitWheelerTables, xip_chipa_dim is too low" );
-        }
+        MESSAGE( 1,"table path: " << table_path_ );
     }
 
     MESSAGE( "" )
+
+    // If the user does not request to compute the tables, then we read them
+    if (!compute_table_) {
+        readTables( params, smpi );
+    }
+    // Else, the tables are computed and store in the provided path `table_path_`
+    else {
+        computeTables( params, smpi );
+        outputTables( smpi );
+    }
+
+
 }
 
 // -----------------------------------------------------------------------------
@@ -234,6 +253,7 @@ double MultiphotonBreitWheelerTables::compute_integration_Ritus_dTdchi( double p
     delete[] gauleg_w;
 
     return T;
+
 }
 
 // -----------------------------------------------------------------------------
@@ -393,115 +413,106 @@ double MultiphotonBreitWheelerTables::compute_Ritus_dTdchi( double photon_chi,
 //! Computation of the table T_table that is a discetization of the T function
 //! for the multiphoton Breit-Wheeler process
 //! \param smpi Object of class SmileiMPI containing MPI properties
-void MultiphotonBreitWheelerTables::compute_T_table( SmileiMPI *smpi )
+void MultiphotonBreitWheelerTables::computeTtable( SmileiMPI *smpi )
 {
     // Parameters
     int rank; // Rank number
     // timers
     double t0, t1;
-    // tabel_exists
-    bool table_exists;
 
     // Get the MPI rank
     rank = smpi->getRank();
 
-    MESSAGE( "        --- T table:" );
+    MESSAGE( 1,"--- T table:" );
 
     // Initial timer
     t0 = MPI_Wtime();
 
-    // If external tables are available, we read them
-    table_exists = MultiphotonBreitWheelerTables::read_T_table( smpi );
+    // Temporary photon chi value
+    double photon_chi;
+    // For percentages
+    double pct = 0.;
+    double dpct = 10.;
+    // table load repartition
+    int *imin_table;
+    int *length_table;
+    // Local array
+    double *buffer;
+    int nb_ranks; // Number of ranks
+    //int err;  // error MPI
 
-    // Else we compute them
-    if( !table_exists ) {
+    // Get the number of ranks
+    nb_ranks = smpi->getSize();
 
-        // Temporary photon chi value
-        double photon_chi;
-        // For percentages
-        double pct = 0.;
-        double dpct = 10.;
-        // table load repartition
-        int *imin_table;
-        int *length_table;
-        // Local array
-        double *buffer;
-        int nb_ranks; // Number of ranks
-        //int err;  // error MPI
+    // Allocation of the array T_table
+    T_table.resize( T_dim );
 
-        // Get the number of ranks
-        nb_ranks = smpi->getSize();
+    // Allocation of the table for load repartition
+    imin_table = new int[nb_ranks];
+    length_table = new int[nb_ranks];
 
-        // Allocation of the array T_table
-        T_table.resize( T_dim );
+    // Computation of the delta
+    T_chiph_delta = ( log10( T_chiph_max )
+                      - T_log10_chiph_min )/( T_dim-1 );
 
-        // Allocation of the table for load repartition
-        imin_table = new int[nb_ranks];
-        length_table = new int[nb_ranks];
+    // Inverse delta
+    T_chiph_inv_delta = 1./T_chiph_delta;
 
-        // Computation of the delta
-        T_chiph_delta = ( log10( T_chiph_max )
-                          - T_log10_chiph_min )/( T_dim-1 );
+    // Load repartition
+    userFunctions::distribute_load_1d_table( nb_ranks,
+            T_dim,
+            imin_table,
+            length_table );
 
-        // Inverse delta
-        T_chiph_inv_delta = 1./T_chiph_delta;
-
-        // Load repartition
-        userFunctions::distribute_load_1d_table( nb_ranks,
-                T_dim,
-                imin_table,
-                length_table );
-
-        // Allocation of the local buffer
-        buffer = new double [length_table[rank]];
+    // Allocation of the local buffer
+    buffer = new double [length_table[rank]];
 
 
-        MESSAGE( "            MPI repartition:" );
-        // Print repartition
-        if( rank==0 ) {
-            for( int i =0 ; i < nb_ranks ; i++ ) {
-                MESSAGE( "            Rank: " << i
-                         << " imin: " << imin_table[i]
-                         << " length: " << length_table[i] );
-            }
+    MESSAGE( 2,"MPI repartition:" );
+    // Print repartition
+    if( rank==0 ) {
+        for( int i =0 ; i < nb_ranks ; i++ ) {
+            MESSAGE( 2,"Rank: " << i
+                     << " imin: " << imin_table[i]
+                     << " length: " << length_table[i] );
         }
-
-        MESSAGE( "            Computation:" );
-        dpct = std::max( dpct, 100./length_table[rank] );
-        // Loop over the table values
-        for( int i = 0 ; i < length_table[rank] ; i++ ) {
-            photon_chi = pow( 10., ( imin_table[rank] + i )*T_chiph_delta
-                              + T_log10_chiph_min );
-
-            buffer[i] = 2.*MultiphotonBreitWheelerTables::compute_integration_Ritus_dTdchi( photon_chi, 0.5*photon_chi, 200, 1e-15 );
-            //buffer[i] = MultiphotonBreitWheelerTables::compute_Erber_T(photon_chi,500000,1e-10);
-
-            if( 100.*i >= length_table[rank]*pct ) {
-                pct += dpct;
-                MESSAGE( "            " << i + 1<< "/" << length_table[rank]
-                         << " - " << ( int )( std::round( pct ) )
-                         << "%" );
-            }
-        }
-
-        // Communication of the data
-        MPI_Allgatherv( &buffer[0], length_table[rank], MPI_DOUBLE,
-                        &T_table[0], &length_table[0], &imin_table[0],
-                        MPI_DOUBLE, smpi->getGlobalComm() );
-
-        // flag computed at true
-        T_computed = true;
-
-        // Free memory
-        delete buffer;
-        delete imin_table;
-        delete length_table;
-
     }
+
+    MESSAGE( 2,"Computation:" );
+    dpct = std::max( dpct, 100./length_table[rank] );
+    // Loop over the table values
+    for( int i = 0 ; i < length_table[rank] ; i++ ) {
+        photon_chi = pow( 10., ( imin_table[rank] + i )*T_chiph_delta
+                          + T_log10_chiph_min );
+
+        buffer[i] = 2.*MultiphotonBreitWheelerTables::compute_integration_Ritus_dTdchi( photon_chi, 0.5*photon_chi, 200, 1e-15 );
+        //buffer[i] = MultiphotonBreitWheelerTables::compute_Erber_T(photon_chi,500000,1e-10);
+
+        if( 100.*i >= length_table[rank]*pct ) {
+            pct += dpct;
+            MESSAGE( 3,i + 1<< "/" << length_table[rank]
+                     << " - " << ( int )( std::round( pct ) )
+                     << "%" );
+        }
+    }
+
+    // Communication of the data
+    MPI_Allgatherv( &buffer[0], length_table[rank], MPI_DOUBLE,
+                    &T_table[0], &length_table[0], &imin_table[0],
+                    MPI_DOUBLE, smpi->getGlobalComm() );
+
+    // flag computed at true
+    T_computed = true;
+
+    // Free memory
+    delete[] length_table;
+    delete[] buffer;
+    delete[] imin_table;
+
 
     // Final timer
     t1 = MPI_Wtime();
-    MESSAGE( "        done in " << ( t1 - t0 ) << "s" );
+    MESSAGE( 2,"Done in " << ( t1 - t0 ) << "s" );
 }
 
 // -----------------------------------------------------------------------------
@@ -513,239 +524,230 @@ void MultiphotonBreitWheelerTables::compute_T_table( SmileiMPI *smpi )
 //
 //! \param smpi Object of class SmileiMPI containing MPI properties
 // -----------------------------------------------------------------------------
-void MultiphotonBreitWheelerTables::compute_xip_table( SmileiMPI *smpi )
+void MultiphotonBreitWheelerTables::computeXipTable( SmileiMPI *smpi )
 {
 
     // Parameters
     int rank; // Rank number
     // timers
     double t0, t1;
-    // Flag table exists
-    bool table_exists;
 
     // Get the MPI rank
     rank = smpi->getRank();
 
     t0 = MPI_Wtime();
 
-    MESSAGE( "        --- Table chipamin and xip:" );
+    MESSAGE( 1,"--- Table chipamin and xip:" );
 
-    // If external tables are available, we read them
-    table_exists = MultiphotonBreitWheelerTables::read_xip_table( smpi );
+    // Parameters:
+    double particle_chi; // Temporary particle chi value
+    double photon_chi; // Temporary photon chi value
+    double chipa_delta; // Temporary delta for photon_chi
+    double logchipamin; // Temporary log10 of photon chi value
+    double xip;   // Temporary xip
+    double numerator;
+    double denominator;
+    // For percentages
+    double pct = 0.;
+    double dpct = 10.;
+    // table load repartition
+    int *imin_table;
+    int *length_table;
+    // Local array
+    double *buffer;
+    //int err;  // error MPI
+    int nb_ranks; // Number of ranks
+    // Iterator
+    int  k;
 
-    // Else we compute them
-    if( !table_exists ) {
-        // Parameters:
-        double particle_chi; // Temporary particle chi value
-        double photon_chi; // Temporary photon chi value
-        double chipa_delta; // Temporary delta for photon_chi
-        double logchipamin; // Temporary log10 of photon chi value
-        double xip;   // Temporary xip
-        double numerator;
-        double denominator;
-        // For percentages
-        double pct = 0.;
-        double dpct = 10.;
-        // table load repartition
-        int *imin_table;
-        int *length_table;
-        // Local array
-        double *buffer;
-        //int err;  // error MPI
-        int nb_ranks; // Number of ranks
-        // Iterator
-        int  k;
+    // Get the number of ranks
+    nb_ranks = smpi->getSize();
 
-        // Get the number of ranks
-        nb_ranks = smpi->getSize();
+    // Allocation of the array xip_chiphmin_table
+    xip_chipamin_table.resize( xip_chiph_dim );
 
-        // Allocation of the array xip_chiphmin_table
-        xip_chipamin_table.resize( xip_chiph_dim );
+    // Allocation of the array xip_table
+    xip_table.resize( xip_chipa_dim*xip_chiph_dim );
 
-        // Allocation of the array xip_table
-        xip_table.resize( xip_chipa_dim*xip_chiph_dim );
+    // Allocation of the table for load repartition
+    imin_table = new int[nb_ranks];
+    length_table = new int[nb_ranks];
 
-        // Allocation of the table for load repartition
-        imin_table = new int[nb_ranks];
-        length_table = new int[nb_ranks];
+    // Computation of the delta
+    xip_chiph_delta = ( log10( xip_chiph_max )
+                        - xip_log10_chiph_min )/( xip_chiph_dim-1 );
 
-        // Computation of the delta
-        xip_chiph_delta = ( log10( xip_chiph_max )
-                            - xip_log10_chiph_min )/( xip_chiph_dim-1 );
+    // Inverse of delta
+    xip_chiph_inv_delta = 1./xip_chiph_delta;
 
-        // Inverse of delta
-        xip_chiph_inv_delta = 1./xip_chiph_delta;
+    // Load repartition
+    userFunctions::distribute_load_1d_table( nb_ranks,
+            xip_chiph_dim,
+            imin_table,
+            length_table );
 
-        // Load repartition
-        userFunctions::distribute_load_1d_table( nb_ranks,
-                xip_chiph_dim,
-                imin_table,
-                length_table );
+    // Allocation of the local buffer
+    buffer = new double [length_table[rank]];
 
-        // Allocation of the local buffer
-        buffer = new double [length_table[rank]];
-
-        MESSAGE( "            MPI repartition:" );
-        // Print repartition
-        if( rank==0 ) {
-            for( int i =0 ; i < nb_ranks ; i++ ) {
-                MESSAGE( "            Rank: " << i
-                         << " imin: "   << imin_table[i]
-                         << " length: " << length_table[i] );
-            }
+    MESSAGE( 2,"MPI repartition:" );
+    // Print repartition
+    if( rank==0 ) {
+        for( int i =0 ; i < nb_ranks ; i++ ) {
+            MESSAGE( 3,"Rank: " << i
+                     << " imin: "   << imin_table[i]
+                     << " length: " << length_table[i] );
         }
-
-        // _______________________________________________________________
-        // 1. - Computation of xip_chipamin_table
-
-        MESSAGE( "            Computation of log10(chipamin):" );
-        dpct = std::max( 10., 100./length_table[rank] );
-
-        // Loop for chiphmin
-        for( int ichiph = 0 ; ichiph < length_table[rank] ; ichiph++ ) {
-
-            xip = 1;
-            logchipamin = ( imin_table[rank] + ichiph )*xip_chiph_delta
-                          + xip_log10_chiph_min;
-
-            photon_chi = pow( 10., logchipamin );
-
-            logchipamin = log10( 0.5*photon_chi );
-
-            // Denominator of xip
-            denominator = MultiphotonBreitWheelerTables::compute_integration_Ritus_dTdchi( photon_chi,
-                          0.5*photon_chi, 200, 1e-15 );
-
-            k = 0;
-            while( k < xip_power ) {
-                logchipamin -= pow( 0.1, k );
-                particle_chi = pow( 10., logchipamin );
-                numerator = MultiphotonBreitWheelerTables::compute_integration_Ritus_dTdchi( photon_chi,
-                            particle_chi, 200, 1e-15 );
-
-                if( numerator == 0 || denominator == 0 ) {
-                    xip = 0;
-                } else {
-                    xip = numerator/( 2.*denominator );
-                }
-
-                if( xip < xip_threshold ) {
-                    logchipamin += pow( 0.1, k );
-                    k += 1;
-                }
-            }
-            buffer[ichiph] = logchipamin;
-
-            // display percentage
-            if( 100.*ichiph >= length_table[rank]*pct ) {
-                pct += dpct;
-                MESSAGE( "            " << ichiph + 1 << "/" << length_table[rank]
-                         << " - " << ( int )( std::round( pct ) ) << "%" );
-            }
-        }
-
-        // Communication of the xip_chipamin table
-        MPI_Allgatherv( &buffer[0], length_table[rank], MPI_DOUBLE,
-                        &xip_chipamin_table[0], &length_table[0], &imin_table[0],
-                        MPI_DOUBLE, smpi->getGlobalComm() );
-
-        // _______________________________________________________________
-        // 2. - Computation of the xip table
-        MESSAGE( "            Computation of xip:" );
-
-        // Allocation of the local buffer
-        buffer = new double [length_table[rank]*xip_chipa_dim];
-
-        // Loop for xip in the photon_chi dimension
-        dpct = std::max( 10., 100./( length_table[rank]*xip_chipa_dim ) );
-        pct = dpct;
-        for( int ichiph = 0 ; ichiph < length_table[rank] ; ichiph++ ) {
-
-            // log10(photon_chi) for the current ichiph
-            photon_chi = ( imin_table[rank] + ichiph )*xip_chiph_delta
-                         + xip_log10_chiph_min;
-
-            // photon_chi for the current ichiph
-            photon_chi = pow( 10., photon_chi );
-
-            // Delta on particle_chi
-            chipa_delta = ( log10( 0.5*photon_chi ) - xip_chipamin_table[imin_table[rank] + ichiph] )
-                          / ( xip_chipa_dim - 1 );
-
-            // Denominator of xip
-            denominator = MultiphotonBreitWheelerTables::compute_integration_Ritus_dTdchi( photon_chi,
-                          0.5*photon_chi, 200, 1e-15 );
-
-            // Loop in the particle_chi dimension
-            for( int ichipa = 0 ; ichipa < xip_chipa_dim ; ichipa ++ ) {
-                // Local particle_chi value
-                particle_chi = pow( 10., ichipa*chipa_delta +
-                                    xip_chipamin_table[imin_table[rank] + ichiph] );
-
-                // Numerator of xip
-                numerator = MultiphotonBreitWheelerTables::compute_integration_Ritus_dTdchi( photon_chi,
-                            particle_chi, 200, 1e-15 );
-
-                // Update local buffer value
-                // buffer[ichiph*xip_chipa_dim + ichipa] = std::min(1.,numerator / 2*denominator);
-                buffer[ichiph*xip_chipa_dim + ichipa] = numerator / ( 2*denominator );
-
-                // If buffer == 1, end of the loop with 1
-                /*if (buffer[ichiph*xip_chipa_dim + ichipa] == 1)
-                {
-                    for (int i = ichipa+1 ; i < xip_chipa_dim ; i ++)
-                    {
-                        buffer[ichiph*xip_chipa_dim + ichipa] = 1.;
-                    }
-                    ichipa = xip_chipa_dim;
-                }*/
-
-                // Artificial monotony
-                /*if ((ichipa > 0) &&
-                    (buffer[ichiph*xip_chipa_dim + ichipa] <
-                     buffer[ichiph*xip_chipa_dim + ichipa -1]))
-                {
-                    buffer[ichiph*xip_chipa_dim + ichipa] =
-                    buffer[ichiph*xip_chipa_dim + ichipa -1];
-                }*/
-
-                // display percentage
-                if( 100.*( ichiph*xip_chipa_dim+ichipa )
-                        >= length_table[rank]*xip_chipa_dim*pct ) {
-                    MESSAGE( "            " << ichiph*xip_chipa_dim+ichipa
-                             << "/"
-                             << length_table[rank]*xip_chipa_dim
-                             << " - " << ( int )( std::round( pct ) )
-                             << "%" );
-                    pct += dpct;
-                }
-
-            }
-        }
-
-        // Update length_table and imin_table
-        for( int i = 0 ; i < nb_ranks ; i++ ) {
-            length_table[i] *= xip_chipa_dim;
-            imin_table[i] *= xip_chipa_dim;
-        }
-
-        // Communication of the xip table
-        MPI_Allgatherv( &buffer[0], length_table[rank], MPI_DOUBLE,
-                        &xip_table[0], &length_table[0], &imin_table[0],
-                        MPI_DOUBLE, smpi->getGlobalComm() );
-
-        // flag computed at true
-        xip_computed = true;
-
-        // clean temporary arrays
-        delete buffer;
-        delete length_table;
-        delete imin_table;
-
     }
 
+    // _______________________________________________________________
+    // 1. - Computation of xip_chipamin_table
+
+    MESSAGE( 2,"Computation of log10(chipamin):" );
+    dpct = std::max( 10., 100./length_table[rank] );
+
+    // Loop for chiphmin
+    for( int ichiph = 0 ; ichiph < length_table[rank] ; ichiph++ ) {
+
+        xip = 1;
+        logchipamin = ( imin_table[rank] + ichiph )*xip_chiph_delta
+                      + xip_log10_chiph_min;
+
+        photon_chi = pow( 10., logchipamin );
+
+        logchipamin = log10( 0.5*photon_chi );
+
+        // Denominator of xip
+        denominator = MultiphotonBreitWheelerTables::compute_integration_Ritus_dTdchi( photon_chi,
+                      0.5*photon_chi, 200, 1e-15 );
+
+        k = 0;
+        while( k < xip_power ) {
+            logchipamin -= pow( 0.1, k );
+            particle_chi = pow( 10., logchipamin );
+            numerator = MultiphotonBreitWheelerTables::compute_integration_Ritus_dTdchi( photon_chi,
+                        particle_chi, 200, 1e-15 );
+
+            if( numerator == 0 || denominator == 0 ) {
+                xip = 0;
+            } else {
+                xip = numerator/( 2.*denominator );
+            }
+
+            if( xip < xip_threshold ) {
+                logchipamin += pow( 0.1, k );
+                k += 1;
+            }
+        }
+        buffer[ichiph] = logchipamin;
+
+        // display percentage
+        if( 100.*ichiph >= length_table[rank]*pct ) {
+            pct += dpct;
+            MESSAGE( 3,ichiph + 1 << "/" << length_table[rank]
+                     << " - " << ( int )( std::round( pct ) ) << "%" );
+        }
+    }
+
+    // Communication of the xip_chipamin table
+    MPI_Allgatherv( &buffer[0], length_table[rank], MPI_DOUBLE,
+                    &xip_chipamin_table[0], &length_table[0], &imin_table[0],
+                    MPI_DOUBLE, smpi->getGlobalComm() );
+
+    // _______________________________________________________________
+    // 2. - Computation of the xip table
+    MESSAGE( 2,"Computation of xip:" );
+
+    // Allocation of the local buffer
+    buffer = new double [length_table[rank]*xip_chipa_dim];
+
+    // Loop for xip in the photon_chi dimension
+    dpct = std::max( 10., 100./( length_table[rank]*xip_chipa_dim ) );
+    pct = dpct;
+    for( int ichiph = 0 ; ichiph < length_table[rank] ; ichiph++ ) {
+
+        // log10(photon_chi) for the current ichiph
+        photon_chi = ( imin_table[rank] + ichiph )*xip_chiph_delta
+                     + xip_log10_chiph_min;
+
+        // photon_chi for the current ichiph
+        photon_chi = pow( 10., photon_chi );
+
+        // Delta on particle_chi
+        chipa_delta = ( log10( 0.5*photon_chi ) - xip_chipamin_table[imin_table[rank] + ichiph] )
+                      / ( xip_chipa_dim - 1 );
+
+        // Denominator of xip
+        denominator = MultiphotonBreitWheelerTables::compute_integration_Ritus_dTdchi( photon_chi,
+                      0.5*photon_chi, 200, 1e-15 );
+
+        // Loop in the particle_chi dimension
+        for( int ichipa = 0 ; ichipa < xip_chipa_dim ; ichipa ++ ) {
+            // Local particle_chi value
+            particle_chi = pow( 10., ichipa*chipa_delta +
+                                xip_chipamin_table[imin_table[rank] + ichiph] );
+
+            // Numerator of xip
+            numerator = MultiphotonBreitWheelerTables::compute_integration_Ritus_dTdchi( photon_chi,
+                        particle_chi, 200, 1e-15 );
+
+            // Update local buffer value
+            // buffer[ichiph*xip_chipa_dim + ichipa] = std::min(1.,numerator / 2*denominator);
+            buffer[ichiph*xip_chipa_dim + ichipa] = numerator / ( 2*denominator );
+
+            // If buffer == 1, end of the loop with 1
+            /*if (buffer[ichiph*xip_chipa_dim + ichipa] == 1)
+            {
+                for (int i = ichipa+1 ; i < xip_chipa_dim ; i ++)
+                {
+                    buffer[ichiph*xip_chipa_dim + ichipa] = 1.;
+                }
+                ichipa = xip_chipa_dim;
+            }*/
+
+            // Artificial monotony
+            /*if ((ichipa > 0) &&
+                (buffer[ichiph*xip_chipa_dim + ichipa] <
+                 buffer[ichiph*xip_chipa_dim + ichipa -1]))
+            {
+                buffer[ichiph*xip_chipa_dim + ichipa] =
+                buffer[ichiph*xip_chipa_dim + ichipa -1];
+            }*/
+
+            // display percentage
+            if( 100.*( ichiph*xip_chipa_dim+ichipa )
+                >= length_table[rank]*xip_chipa_dim*pct ) {
+                MESSAGE( 3,ichiph*xip_chipa_dim+ichipa
+                         << "/"
+                         << length_table[rank]*xip_chipa_dim
+                         << " - " << ( int )( std::round( pct ) )
+                         << "%" );
+                pct += dpct;
+            }
+
+        }
+    }
+
+    // Update length_table and imin_table
+    for( int i = 0 ; i < nb_ranks ; i++ ) {
+        length_table[i] *= xip_chipa_dim;
+        imin_table[i] *= xip_chipa_dim;
+    }
+
+    // Communication of the xip table
+    MPI_Allgatherv( &buffer[0], length_table[rank], MPI_DOUBLE,
+                    &xip_table[0], &length_table[0], &imin_table[0],
+                    MPI_DOUBLE, smpi->getGlobalComm() );
+
+    // flag computed at true
+    xip_computed = true;
+
+    // clean temporary arrays
+    delete buffer;
+    delete length_table;
+    delete imin_table;
+
     t1 = MPI_Wtime();
-    MESSAGE( "        done in " << ( t1 - t0 ) << "s" );
+    MESSAGE( 2,"Done in " << ( t1 - t0 ) << "s" );
 
 }
 
@@ -755,12 +757,12 @@ void MultiphotonBreitWheelerTables::compute_xip_table( SmileiMPI *smpi )
 //! \param params list of simulation parameters
 //! \param smpi MPI parameters
 // -----------------------------------------------------------------------------
-void MultiphotonBreitWheelerTables::compute_tables( Params &params, SmileiMPI *smpi )
+void MultiphotonBreitWheelerTables::computeTables( Params &params, SmileiMPI *smpi )
 {
     // These tables are loaded only if if one species has Monte-Carlo Compton radiation
     if( params.hasMultiphotonBreitWheeler ) {
-        MultiphotonBreitWheelerTables::compute_T_table( smpi );
-        MultiphotonBreitWheelerTables::compute_xip_table( smpi );
+        MultiphotonBreitWheelerTables::computeTtable( smpi );
+        MultiphotonBreitWheelerTables::computeXipTable( smpi );
     }
 }
 
@@ -772,12 +774,12 @@ void MultiphotonBreitWheelerTables::compute_tables( Params &params, SmileiMPI *s
 //! Ouput in a file of the table values of T for the
 //! mutliphoton Breit-Wheeler process
 // -----------------------------------------------------------------------------
-void MultiphotonBreitWheelerTables::output_T_table()
+void MultiphotonBreitWheelerTables::outputTableT()
 {
 
     if( output_format_ == "ascii" ) {
         std::ofstream file;
-        file.open( table_path + "/tab_T.dat" );
+        file.open( table_path_ + "/tab_T.dat" );
 
         if( file.is_open() ) {
 
@@ -801,7 +803,7 @@ void MultiphotonBreitWheelerTables::output_T_table()
         }
     } else if( output_format_ == "binary" ) {
         std::ofstream file;
-        file.open( table_path + "/tab_T.bin", std::ios::binary );
+        file.open( table_path_ + "/tab_T.bin", std::ios::binary );
 
         if( file.is_open() ) {
 
@@ -827,7 +829,7 @@ void MultiphotonBreitWheelerTables::output_T_table()
         hsize_t     dims;
         std::string buffer;
 
-        buffer = table_path + "/multiphoton_Breit_Wheeler_tables.h5";
+        buffer = table_path_ + "/multiphoton_Breit_Wheeler_tables.h5";
 
         // We first check whether the file already exists
         // If yes, we simply open the file
@@ -872,7 +874,7 @@ void MultiphotonBreitWheelerTables::output_T_table()
         H5Fclose( fileId );
 
     } else {
-        MESSAGE( "The table output format " << output_format_
+        ERROR( "The table output format " << output_format_
                  << " is not recognized" );
     }
 }
@@ -881,12 +883,12 @@ void MultiphotonBreitWheelerTables::output_T_table()
 //! File output of xip_chipamin_table and xip_table
 //
 // -----------------------------------------------------------------------------
-void MultiphotonBreitWheelerTables::output_xip_table()
+void MultiphotonBreitWheelerTables::outputXipTable()
 {
 
     if( output_format_ == "ascii" ) {
         std::ofstream file;
-        file.open( table_path + "/tab_mBW_xip.dat" );
+        file.open( table_path_ + "/tab_mBW_xip.dat" );
 
         if( file.is_open() ) {
 
@@ -913,7 +915,7 @@ void MultiphotonBreitWheelerTables::output_xip_table()
         }
     } else if( output_format_ == "binary" ) {
         std::ofstream file;
-        file.open( table_path + "/tab_mBW_xip.bin", std::ios::binary );
+        file.open( table_path_ + "/tab_mBW_xip.bin", std::ios::binary );
 
         if( file.is_open() ) {
 
@@ -946,7 +948,7 @@ void MultiphotonBreitWheelerTables::output_xip_table()
         hsize_t     dims[2];
         std::string buffer;
 
-        buffer = table_path + "/multiphoton_Breit_Wheeler_tables.h5";
+        buffer = table_path_ + "/multiphoton_Breit_Wheeler_tables.h5";
 
         // We first check whether the file already exists
         // If yes, we simply open the file
@@ -1013,7 +1015,7 @@ void MultiphotonBreitWheelerTables::output_xip_table()
         H5Sclose( dataspaceId );
         H5Fclose( fileId );
     } else {
-        MESSAGE( "The output format " << output_format_ << " is not recognized" );
+        ERROR( "The output format " << output_format_ << " is not recognized" );
     }
 }
 
@@ -1022,17 +1024,17 @@ void MultiphotonBreitWheelerTables::output_xip_table()
 //! Table output by the master MPI rank
 //! \param smpi Object of class SmileiMPI containing MPI properties
 // -----------------------------------------------------------------------------
-void MultiphotonBreitWheelerTables::output_tables( SmileiMPI *smpi )
+void MultiphotonBreitWheelerTables::outputTables( SmileiMPI *smpi )
 {
     // Sequential output
     if( smpi->isMaster() ) {
         // If tables have been computed, they are output on the disk
         // to be used for the next run
         if( T_computed ) {
-            output_T_table();
+            outputTableT();
         }
         if( xip_computed ) {
-            output_xip_table();
+            outputXipTable();
         }
     }
 }
@@ -1046,22 +1048,18 @@ void MultiphotonBreitWheelerTables::output_tables( SmileiMPI *smpi )
 //
 //! \param smpi Object of class SmileiMPI containing MPI properties
 // -----------------------------------------------------------------------------
-bool MultiphotonBreitWheelerTables::read_T_table( SmileiMPI *smpi )
+void MultiphotonBreitWheelerTables::readTableT( SmileiMPI *smpi )
 {
-    // Flag database available
-    bool table_exists = false;
 
     // Test if an external table exists, if yes we read the table...
     // Binary table
-    if( Tools::file_exists( table_path + "/tab_T.bin" ) ) {
-
-        table_exists = true;
+    if( Tools::file_exists( table_path_ + "/tab_T.bin" ) ) {
 
         if( smpi->getRank()==0 ) {
 
             // Reading of the table file
             std::ifstream file;
-            file.open( table_path + "/tab_T.bin", std::ios::binary );
+            file.open( table_path_ + "/tab_T.bin", std::ios::binary );
 
             if( file.is_open() ) {
 
@@ -1086,14 +1084,14 @@ bool MultiphotonBreitWheelerTables::read_T_table( SmileiMPI *smpi )
 
     }
     // HDF5 format
-    else if( Tools::file_exists( table_path + "/multiphoton_Breit_Wheeler_tables.h5" ) ) {
+    else if( Tools::file_exists( table_path_ + "/multiphoton_Breit_Wheeler_tables.h5" ) ) {
         hid_t       fileId;
         hid_t       datasetId;
         std::string buffer;
 
         if( smpi->getRank()==0 ) {
 
-            buffer = table_path + "/multiphoton_Breit_Wheeler_tables.h5";
+            buffer = table_path_ + "/multiphoton_Breit_Wheeler_tables.h5";
 
             fileId = H5Fopen( buffer.c_str(), H5F_ACC_RDWR, H5P_DEFAULT );
 
@@ -1101,8 +1099,6 @@ bool MultiphotonBreitWheelerTables::read_T_table( SmileiMPI *smpi )
 
             // If this dataset exists, we read it
             if( datasetId > 0 ) {
-
-                table_exists = true;
 
                 // First, we read attributes
                 H5::getAttr( datasetId, "chiph_dim", T_dim );
@@ -1121,33 +1117,28 @@ bool MultiphotonBreitWheelerTables::read_T_table( SmileiMPI *smpi )
                 H5Dclose( datasetId );
                 H5Fclose( fileId );
             }
-            // Else, we will have to compute it
             else {
-                table_exists = false;
+                ERROR("Table T does not exist in the specified file `multiphoton_Breit_Wheeler_tables.h5`")
             }
         }
-
-        // Bcast table_exists
-        MPI_Bcast( &table_exists, 1, MPI_INT, 0, smpi->getGlobalComm() );
-
+    }
+    else
+    {
+        ERROR("The table T for the nonlinear Breit-Wheeler pair process could not be read from the provided path: `"
+              << table_path_<<"`. Please check that the path is correct.")
     }
 
-    // If the table exists, they have been read...
-    if( table_exists ) {
+    MESSAGE( 1,"--- Table T:" );
+    MESSAGE( 2,"Reading of the external database" );
+    MESSAGE( 2,"Dimension quantum parameter: "
+             << T_dim );
+    MESSAGE( 2,"Minimum photon quantum parameter chi: "
+             << T_chiph_min );
+    MESSAGE( 2,"Maximum photon quantum parameter chi: "
+             << T_chiph_max );
 
-        MESSAGE( "            Reading of the external database" );
-        MESSAGE( "            Dimension quantum parameter: "
-                 << T_dim );
-        MESSAGE( "            Minimum photon quantum parameter chi: "
-                 << T_chiph_min );
-        MESSAGE( "            Maximum photon quantum parameter chi: "
-                 << T_chiph_max );
-
-        // Bcast the table to all MPI ranks
-        MultiphotonBreitWheelerTables::bcast_T_table( smpi );
-    }
-
-    return table_exists;
+    // Bcast the table to all MPI ranks
+    MultiphotonBreitWheelerTables::bcastTableT( smpi );
 
 }
 
@@ -1156,21 +1147,17 @@ bool MultiphotonBreitWheelerTables::read_T_table( SmileiMPI *smpi )
 //
 //! \param smpi Object of class SmileiMPI containing MPI properties
 // -----------------------------------------------------------------------------
-bool MultiphotonBreitWheelerTables::read_xip_table( SmileiMPI *smpi )
+void MultiphotonBreitWheelerTables::readTableXip( SmileiMPI *smpi )
 {
-    // Flag database available
-    bool table_exists = false;
 
     // Test if an external table exists, we read the table...
-    if( Tools::file_exists( table_path + "/tab_mBW_xip.bin" ) ) {
-
-        table_exists = true;
+    if( Tools::file_exists( table_path_ + "/tab_mBW_xip.bin" ) ) {
 
         if( smpi->getRank()==0 ) {
 
             // Reading of the table file
             std::ifstream file;
-            file.open( table_path + "/tab_mBW_xip.bin", std::ios::binary );
+            file.open( table_path_ + "/tab_mBW_xip.bin", std::ios::binary );
 
             if( file.is_open() ) {
 
@@ -1196,7 +1183,7 @@ bool MultiphotonBreitWheelerTables::read_xip_table( SmileiMPI *smpi )
         }
     }
     // HDF5 format
-    else if( Tools::file_exists( table_path + "/multiphoton_Breit_Wheeler_tables.h5" ) ) {
+    else if( Tools::file_exists( table_path_ + "/multiphoton_Breit_Wheeler_tables.h5" ) ) {
         if( smpi->getRank()==0 ) {
 
             hid_t       fileId;
@@ -1204,7 +1191,7 @@ bool MultiphotonBreitWheelerTables::read_xip_table( SmileiMPI *smpi )
             hid_t       datasetId_xip;
             std::string buffer;
 
-            buffer = table_path + "/multiphoton_Breit_Wheeler_tables.h5";
+            buffer = table_path_ + "/multiphoton_Breit_Wheeler_tables.h5";
 
             fileId = H5Fopen( buffer.c_str(), H5F_ACC_RDWR, H5P_DEFAULT );
 
@@ -1213,8 +1200,6 @@ bool MultiphotonBreitWheelerTables::read_xip_table( SmileiMPI *smpi )
 
             // If this dataset exists, we read it
             if( datasetId_chipamin > 0 && datasetId_xip > 0 ) {
-
-                table_exists = true;
 
                 // First, we read attributes
                 H5::getAttr( datasetId_xip, "chiph_dim", xip_chiph_dim );
@@ -1242,31 +1227,46 @@ bool MultiphotonBreitWheelerTables::read_xip_table( SmileiMPI *smpi )
                 H5Dclose( datasetId_chipamin );
                 H5Fclose( fileId );
             }
-            // Else, we will have to compute it
             else {
-                table_exists = false;
+                ERROR("Table xip or xip_chipamin does not exist in the"
+                <<" specified file `multiphoton_Breit_Wheeler_tables.h5`")
             }
         }
 
-        // Bcast table_exists
-        MPI_Bcast( &table_exists, 1, MPI_INT, 0, smpi->getGlobalComm() );
-
+    }
+    else
+    {
+        ERROR("The tables chipamin and xip for the nonlinear Breit-Wheeler pair"
+              << " process could not be read from the provided path: `"
+              << table_path_<<"`. Please check that the path is correct.")
     }
 
-    // If the table exists, they have been read...
-    if( table_exists ) {
+    MESSAGE( 1,"--- Table chipamin and xip:" );
+    MESSAGE( 2,"Reading of the external database" );
+    MESSAGE( 2,"Dimension photon chi: " << xip_chiph_dim );
+    MESSAGE( 2,"Dimension particle chi: " << xip_chipa_dim );
+    MESSAGE( 2,"Minimum photon chi: " << xip_chiph_min );
+    MESSAGE( 2,"Maximum photon chi: " << xip_chiph_max );
 
-        MESSAGE( "            Reading of the external database" );
-        MESSAGE( "            Dimension photon chi: " << xip_chiph_dim );
-        MESSAGE( "            Dimension particle chi: " << xip_chipa_dim );
-        MESSAGE( "            Minimum photon chi: " << xip_chiph_min );
-        MESSAGE( "            Maximum photon chi: " << xip_chiph_max );
+    // Bcast the table to all MPI ranks
+    MultiphotonBreitWheelerTables::bcastTableXip( smpi );
 
-        // Bcast the table to all MPI ranks
-        MultiphotonBreitWheelerTables::bcast_xip_table( smpi );
+}
+
+// -----------------------------------------------------------------------------
+//! Read all tables
+//
+//! \param params list of simulation parameters
+//! \param smpi MPI parameters
+// -----------------------------------------------------------------------------
+void MultiphotonBreitWheelerTables::readTables( Params &params, SmileiMPI *smpi )
+{
+    // These tables are loaded only if if one species has Monte-Carlo Compton radiation
+    // And if the h values are not computed from a numerical fit
+    if( params.hasMultiphotonBreitWheeler) {
+        MultiphotonBreitWheelerTables::readTableT( smpi );
+        MultiphotonBreitWheelerTables::readTableXip( smpi );
     }
-
-    return table_exists;
 }
 
 // -----------------------------------------------------------------------------
@@ -1278,7 +1278,7 @@ bool MultiphotonBreitWheelerTables::read_xip_table( SmileiMPI *smpi )
 //
 //! \param smpi Object of class SmileiMPI containing MPI properties
 // -----------------------------------------------------------------------------
-void MultiphotonBreitWheelerTables::bcast_T_table( SmileiMPI *smpi )
+void MultiphotonBreitWheelerTables::bcastTableT( SmileiMPI *smpi )
 {
     // Position for MPI pack and unack
     int position;
@@ -1301,7 +1301,7 @@ void MultiphotonBreitWheelerTables::bcast_T_table( SmileiMPI *smpi )
         buf_size += position;
     }
 
-    MESSAGE( "            Buffer size: " << buf_size );
+    MESSAGE( 2,"Buffer size: " << buf_size );
 
     // Exchange buf_size with all ranks
     MPI_Bcast( &buf_size, 1, MPI_INT, 0, smpi->getGlobalComm() );
@@ -1362,7 +1362,7 @@ void MultiphotonBreitWheelerTables::bcast_T_table( SmileiMPI *smpi )
 //
 //! \param smpi Object of class SmileiMPI containing MPI properties
 // -----------------------------------------------------------------------------
-void MultiphotonBreitWheelerTables::bcast_xip_table( SmileiMPI *smpi )
+void MultiphotonBreitWheelerTables::bcastTableXip( SmileiMPI *smpi )
 {
     // Position for MPI pack and unack
     int position = 0;
@@ -1388,7 +1388,7 @@ void MultiphotonBreitWheelerTables::bcast_xip_table( SmileiMPI *smpi )
         buf_size += position;
     }
 
-    MESSAGE( "            Buffer size for MPI exchange: " << buf_size );
+    MESSAGE( 2,"Buffer size for MPI exchange: " << buf_size );
 
     // Exchange buf_size with all ranks
     MPI_Bcast( &buf_size, 1, MPI_INT, 0, smpi->getGlobalComm() );

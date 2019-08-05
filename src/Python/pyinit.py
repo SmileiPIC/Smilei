@@ -182,7 +182,10 @@ class Main(SmileiSingleton):
     every_clean_particles_overhead = 100
     timestep = None
     number_of_AM = 2
+    number_of_AM_relativistic_field_initialization = 1
     timestep_over_CFL = None
+    cell_sorting = False
+
 
     # PXR tuning
     global_factor = []
@@ -348,12 +351,29 @@ class Species(SmileiComponent):
     thermal_boundary_temperature = []
     thermal_boundary_velocity = [0.,0.,0.]
     pusher = "boris"
+
+    # Radiation species parameters
     radiation_model = "none"
     radiation_photon_species = None
     radiation_photon_sampling = 1
     radiation_photon_gamma_threshold = 2
+
+    # Multiphoton Breit-Wheeler parameters
     multiphoton_Breit_Wheeler = [None,None]
     multiphoton_Breit_Wheeler_sampling = [1,1]
+
+    # Particle merging species Parameters
+    merging_method = "none"
+    merge_every = 0
+    merge_min_packet_size = 4
+    merge_max_packet_size = 4
+    merge_min_particles_per_cell = 4
+    merge_min_momentum_cell_length = [1e-10,1e-10,1e-10]
+    merge_momentum_cell_size = [16,16,16]
+    merge_accumulation_correction = True
+    merge_discretization_scale = "linear"
+    merge_min_momentum = 1e-5
+
     time_frozen = 0.0
     radiating = False
     relativistic_field_initialization = False
@@ -489,6 +509,18 @@ class RadiationReaction(SmileiComponent):
     Fine-tuning of synchrotron-like radiation reaction
     (classical continuous, quantum correction, stochastics and MC algorithms)
     """
+    # Minimum particle_chi value for the discontinuous radiation
+    # Under this value, the discontinuous approach is not applied
+    minimum_chi_discontinuous = 1e-2
+    # Threshold on particle_chi: if particle_chi < 1E-3 no radiation reaction
+    minimum_chi_continuous = 1e-3
+    # Flag to recompute the tables
+    compute_table = False
+
+    # Path to read or write the tables/databases
+    table_path = "./"
+
+    # Parameters for computing the tables
     # Table h parameters
     h_chipa_min = 1e-3
     h_chipa_max = 1e1
@@ -507,23 +539,18 @@ class RadiationReaction(SmileiComponent):
     xip_chiph_dim = 128
     # Output format, can be "ascii", "binary", "hdf5"
     output_format = "hdf5"
-    # Minimum particle_chi value for the discontinuous radiation
-    # Under this value, the discontinuous approach is not applied
-    minimum_chi_discontinuous = 1e-2
-    # Threshold on particle_chi: if particle_chi < 1E-3 no radiation reaction
-    minimum_chi_continuous = 1e-3
-    # Path the tables/databases
-    table_path = "./"
 
 # MutliphotonBreitWheeler pair creation
 class MultiphotonBreitWheeler(SmileiComponent):
     """
     Photon decay into electron-positron pairs
     """
-    # Output format, can be "ascii", "binary", "hdf5"
-    output_format = "hdf5"
     # Path the tables/databases
     table_path = "./"
+    # Flag to recompute the tables
+    compute_table = False
+
+    # Parameters for computing the tables
     # Table T parameters
     T_chiph_min = 1e-2
     T_chiph_max = 1e1
@@ -535,6 +562,8 @@ class MultiphotonBreitWheeler(SmileiComponent):
     xip_threshold = 1e-3
     xip_chipa_dim = 128
     xip_chiph_dim = 128
+    # Output format, can be "ascii", "binary", "hdf5"
+    output_format = "hdf5"
 
 # Smilei-defined
 smilei_mpi_rank = 0

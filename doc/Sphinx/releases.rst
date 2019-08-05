@@ -1,16 +1,8 @@
 Releases
 --------
 
-Major releases are available here as well as on the
-`GitHub page <https://github.com/SmileiPIC/Smilei>`_.
-We greatly appreciate external users trying this code and giving feedback.
-You can submit *issues* when experiencing difficulties,
-or *pull requests* for your changes to become part of the official releases.
-
-Note that most of the development of the code is currently hosted in
-a `different repository <https://llrgit.in2p3.fr/smilei/smilei>`_
-reserved for the :doc:`partners`. It is regularly synchronized with
-the GitHub page.
+This page lists the major changes, but it is recommended to
+get the latest version of Smilei on `GitHub <https://github.com/SmileiPIC/Smilei>`_.
 
 ----
 
@@ -18,15 +10,45 @@ Upcoming changes
 ^^^^^^^^^^^^^^^^
 
 * Interface with the PICSAR library (currently experimental)
-* Cylindrical geometry with Fourier decomposition in azimuthal direction
+* Particle merging (beta version)
 
-* Different convention for circular polarization amplitude
-* Bugfix: `LaserGaussian2D` when focused far from boundary
-* Bugfix: laser :py:data:`a0` normalization to :py:data:`omega`
 
 ----
 
 .. _latestVersion:
+
+Latest version
+^^^^^^^^^^^^^^^^^^^^^
+
+The latest version tarball can be donwloaded here:
+
+**Download**: `Smilei latest <_downloads/Smilei.tar.gz>`_
+
+
+----
+
+Release 4.2
+^^^^^^^^^^^^^^^^^^^^^
+
+**Download**: `Smilei v4.2 <_downloads/smilei-v4.2.tar.gz>`_
+
+
+* Different convention for circular polarization amplitude
+* Binomial filter in Cartesian 3D bug fix in parallel implementation
+* 1D and 2D laser envelope model
+* Cylindrical geometry with azimuthal Fourier decomposition (beta version)
+* Compatibility between various ionization and QED models
+* Bugfixes:
+   * Various crashes linked to vectorization
+   * `LaserGaussian2D` when focused far from boundary
+   * Laser :py:data:`a0` normalization to :py:data:`omega`
+   * Frozen particles are now properly ionized
+   * Position initialization over another species with moving window
+   * Tracked particles output was missing the mass factor for momenta
+   * Breit-Wheeler pair production with fine grain sorted particles
+
+
+----
 
 Release 4.1
 ^^^^^^^^^^^^^^^^^^^^^

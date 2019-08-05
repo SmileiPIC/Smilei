@@ -89,12 +89,12 @@ void ProjectorAM1Order::basicForComplex( complex<double> *rhoj, Particles &parti
     
     // locate the particle on the primal and dual grid at current time-step & calculate coeff. S1
     xpn = particles.position( 0, ipart ) * dl_inv_;
-    int ip = round( xpn + 0.5 * ( type==1 ) );
+    int ip = int( xpn + 0.5 * ( type==1 ) );
     delta  = xpn - ( double )ip;
     Sl1[0] = delta ;
     Sl1[1] = 1.-delta;
     rpn = r * dr_inv_ ;
-    int jp = round( rpn + 0.5*( type==2 ) );
+    int jp = int( rpn + 0.5*( type==2 ) );
     delta  = rpn - ( double )jp;
     Sr1[0] = delta;
     Sr1[1] = 1.-delta;
@@ -135,14 +135,11 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     // variable declaration
     double xpn, ypn;
     double delta;
-    complex<double>  Jl_p[2][2], Jr_p[2][2], Jt_p[2][2];
 
     double  Sl1[2], Sr1[2],Sl1d[2], Sr1d[2];
     complex<double> e_theta, C_m = 1.; 
     complex<double> *Jl, *Jr, *Jt, *rho;
     
-    double yp = particles.position( 1, ipart );
-    double zp = particles.position( 2, ipart );
     double rp = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
     double crt_p = charge_weight * ( particles.momentum( 2, ipart )*particles.position( 1, ipart )-particles.momentum( 1, ipart )*particles.position( 2, ipart ) )/( rp )*invgf;
     double crl_p = charge_weight * ( particles.momentum( 0, ipart )) *invgf;
@@ -150,8 +147,8 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     e_theta = ( particles.position( 1, ipart ) + Icpx*particles.position( 2, ipart ) )/rp;
     // locate the particle on the primal and dual grid at current time-step & calculate coeff. S1
     xpn = particles.position( 0, ipart ) * dl_inv_;
-    int ip = round( xpn );
-    int ipd = round( xpn + 0.5 );
+    int ip = int( xpn );
+    int ipd = int( xpn + 0.5 );
     delta  = xpn - ( double )ip;
     Sl1[0] = delta;
     Sl1[1] = 1.-delta;
@@ -160,8 +157,8 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     Sl1d[1] = 1.-delta;
     
     ypn = rp *dr_inv_ ;
-    int jp = round( ypn );
-    int jpd = round( ypn +0.5 );
+    int jp = int( ypn );
+    int jpd = int( ypn +0.5 );
     delta  = ypn - ( double )jp;
     Sr1[0] = delta;
     Sr1[1] = 1.-delta;
@@ -169,13 +166,14 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     Sr1d[0] = delta;
     Sr1d[1] = 1.-delta;
 
-    double *invR_local  = &(invR[jp]);
-    double *invRd_local = &(invRd[jpd]);
 
     ip  -= i_domain_begin ;
     ipd -= i_domain_begin ;
     jp  -= j_domain_begin ;
     jpd -= j_domain_begin ;
+    double *invR_local  = &(invR[jp]);
+    double *invRd_local = &(invRd[jpd]);
+
     for( unsigned int imode=0; imode<( unsigned int )Nmode; imode++ ) {
         if( imode == 1 ) {
             C_m = 2.;
@@ -227,7 +225,7 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
             iloc = ( i+ip )*nprimr + jp;
             for( unsigned int j=0 ; j<2 ; j++ ) {
                 linindex = iloc+j;
-                Jr [linindex] += C_m * crr_p* Sl1[i]*Sr1[j]*invR_local[j] ;
+                Jt [linindex] += C_m * crt_p* Sl1[i]*Sr1[j]*invR_local[j] ;
             }
         }
     }// end loop on modes
@@ -251,10 +249,10 @@ void ProjectorAM1Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
     }
 
     //Boundary conditions for currents on axis
-    if (invR[0] < 0. ) {
+    if (emAM->isYmin ) {
         double sign = -1. ;
         unsigned int n_species = emAM->Jl_.size() / Nmode;
-        for ( int imode = 0; imode < Nmode; imode++){
+        for ( unsigned int imode = 0; imode < Nmode; imode++){
             unsigned int ifield = imode*n_species+ispec;
             complex<double> *Jl  = emAM->Jl_s    [ifield] ? &( * ( emAM->Jl_s    [ifield] ) )( 0 ) : &( *emAM->Jl_    [imode] )( 0 ) ;
             complex<double> *Jr  = emAM->Jr_s    [ifield] ? &( * ( emAM->Jr_s    [ifield] ) )( 0 ) : &( *emAM->Jr_    [imode] )( 0 ) ;
@@ -263,24 +261,22 @@ void ProjectorAM1Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
             sign *= -1.;
 
             // Fold primal quantities along r
-            for( unsigned int i=0 ; i<npriml; i++ ) {
-                int iloc = i*nprimr;
-                for( unsigned int j=1 ; j<= oversizeR; j++ ) {
-                    Jt [iloc+oversizeR+j] +=  sign * Jt [iloc+oversizeR-j];
-                    Jt [iloc+oversizeR-j] = 0.; 
-                    Jl [iloc+oversizeR+j] +=  sign * Jl [iloc+oversizeR-j];
-                    Jl [iloc+oversizeR-j] = 0.; 
-                    rho[iloc+oversizeR+j] +=  sign * rho[iloc+oversizeR-j];
-                    rho[iloc+oversizeR-j] = 0.; 
-                }
-            }//i
+            //for( unsigned int i=0 ; i<npriml; i++ ) {
+            //    int iloc = i*nprimr;
+            //    for( unsigned int j=1 ; j<= oversizeR; j++ ) {
+            //        Jt [iloc+oversizeR+j] +=  sign * Jt [iloc+oversizeR-j];
+            //        Jt [iloc+oversizeR-j] = 0.; 
+            //        Jl [iloc+oversizeR+j] +=  sign * Jl [iloc+oversizeR-j];
+            //        Jl [iloc+oversizeR-j] = 0.; 
+            //        rho[iloc+oversizeR+j] +=  sign * rho[iloc+oversizeR-j];
+            //        rho[iloc+oversizeR-j] = 0.; 
+            //    }
+            //}//i
             // Fold dual quantities along r
-            int max_fold = 2*oversizeR+1;
             for( unsigned int i=0 ; i<npriml; i++ ) {
                 int iloc = i*(nprimr+1);
                 for( unsigned int j=0 ; j<= oversizeR; j++ ) {
-                    Jr [iloc+max_fold-j] += sign * Jr [iloc+j];
-                    Jr [iloc+j] = 0.; 
+                    Jr [iloc+3] += sign * Jr [iloc+2];
                 }
             }//i
 
@@ -311,4 +307,11 @@ void ProjectorAM1Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
         }
 
     }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! Project global current densities : ionization NOT DONE YET
+// ---------------------------------------------------------------------------------------------------------------------
+void ProjectorAM1Order::ionizationCurrents( Field *Jl, Field *Jr, Field *Jt, Particles &particles, int ipart, LocalFields Jion )
+{
 }

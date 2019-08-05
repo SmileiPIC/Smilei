@@ -58,15 +58,26 @@ class Field(Diagnostic):
 			self._fields = {}
 			for f in all_fields:
 				try:
+					if f[:5] in ["Bl_m_","Br_m_","Bt_m_"]:
+						fname = f[:4]
+						f = f[5:]
+					elif f[:4] in ["Rho_"]:
+						fname = f[:3]
+						f = f[4:]
+					elif f[:3] in ["El_","Er_","Et_","Bl_","Br_","Bt_","Jl_","Jr_","Jt_"]:
+						fname = f[:2]
+						f = f[3:]
+					else:
+						raise
 					try:
-						fname, wordmode, imode = f.split('_')
+						wordmode, imode = f.split('_')
 						species_name = ""
 					except:
-						fname, species_name, wordmode, imode = f.split('_')
-						species_name = "_" + species_name
+						ff = f.split('_')
+						species_name = "_" + "_".join(ff[:-2])
+						wordmode = ff[-2]
+						imode = ff[-1]
 					if wordmode != "mode":
-						raise
-					if fname not in ["El","Er","Et","Bl","Br","Bt","Jl","Jr","Jt","Rho"]:
 						raise
 					fname += species_name
 					if fname not in self._fields:
@@ -351,7 +362,7 @@ class Field(Diagnostic):
 			diagNumbers = [ int(self._re.findall("Fields([0-9]+).h5$",file)[0]) for file in files ]
 			if diags == []: diags = diagNumbers
 			else          : diags = [ d for d in diags if d in diagNumbers ]
-		return diags
+		return sorted(diags)
 	
 	# get all available fields, sorted by name length
 	def getFields(self):
@@ -414,8 +425,6 @@ class Field(Diagnostic):
 				A = self._np.mean(A, axis=iaxis, keepdims=True)
 		# remove averaged axes
 		A = self._np.squeeze(A)
-		# log scale if requested
-		if self._data_log: A = self._np.log10(A)
 		return A
 	
 	# Method to obtain the data only
@@ -466,8 +475,6 @@ class Field(Diagnostic):
 				A = self._np.mean(A, axis=iaxis, keepdims=True)
 		# remove averaged axes
 		A = self._np.squeeze(A)
-		# log scale if requested
-		if self._data_log: A = self._np.log10(A)
 		return A
 	
 	# Method to obtain the data only
@@ -514,6 +521,4 @@ class Field(Diagnostic):
 				A = self._np.mean(A, axis=iaxis, keepdims=True)
 		# remove averaged axes
 		A = self._np.squeeze(A)
-		# log scale if requested
-		if self._data_log: A = self._np.log10(A)
 		return A

@@ -8,6 +8,7 @@ class VectorPatch;
 class Params;
 class SmileiMPI;
 class Field;
+class cField;
 class Timers;
 
 class SyncVectorPatch
@@ -31,10 +32,10 @@ public :
     static void sumEnvChi( Params &params, VectorPatch &vecPatches, SmileiMPI *smp, Timers &timers, int itime );
     static void sumEnvChis( Params &params, VectorPatch &vecPatches, int ispec, SmileiMPI *smp, Timers &timers, int itime );
     
-    static void sum( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime );
-    static void sumComplex( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime );
+    template<typename T, typename MT>  static void sum( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime );
     static void sum_all_components( std::vector<Field *> &fields, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime );
-    
+
+    void template_generator();   
     
     //! Fields synchronization
     static void exchangeE( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
@@ -44,6 +45,8 @@ public :
     
     static void exchangeB( Params &params, VectorPatch &vecPatches, int imode, SmileiMPI *smpi );
     static void finalizeexchangeB( Params &params, VectorPatch &vecPatches, int imode );
+    static void exchangeE( Params &params, VectorPatch &vecPatches, int imode, SmileiMPI *smpi );
+    static void finalizeexchangeE( Params &params, VectorPatch &vecPatches, int imode );
     static void exchangeJ( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
     static void finalizeexchangeJ( Params &params, VectorPatch &vecPatches );
     
@@ -55,12 +58,10 @@ public :
     static void finalizeexchangeGradPhi( Params &params, VectorPatch &vecPatches );
     static void exchangeEnvChi( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
     
-    static void exchange_along_all_directions( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
+    template<typename T, typename MT> static void exchange_along_all_directions( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
     static void finalize_exchange_along_all_directions( std::vector<Field *> fields, VectorPatch &vecPatches );
     
-    static void exchangeComplex( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
-    static void finalizeexchangeComplex( std::vector<Field *> fields, VectorPatch &vecPatches );
-    static void exchange_along_all_directions_noomp( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
+    template<typename T, typename MT> static void exchange_along_all_directions_noomp( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
     static void finalize_exchange_along_all_directions_noomp( std::vector<Field *> fields, VectorPatch &vecPatches );
     
     static void exchange_synchronized_per_direction( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );

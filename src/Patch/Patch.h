@@ -50,7 +50,10 @@ public:
     void finalizeMPIenvironment( Params &params );
     
     void set( Params &params, DomainDecomposition *domain_decomposition, VectorPatch &vecPatch );
-    
+   
+    //Copy positions of particles from source species to species which are initialized on top of another one. 
+    void copy_positions( std::vector<Species *> vecSpecies_to_update);
+
     //! Destructor for Patch
     virtual ~Patch();
     
@@ -139,14 +142,6 @@ public:
     virtual void finalizeSumField( Field *field, int iDim ) = 0;
     virtual void reallyfinalizeSumField( Field *field, int iDim ) = 0;
     
-    //! init comm / exchange fields
-    virtual void initExchange( Field *field ) = 0;
-    //! init comm / exchange complex fields
-    virtual void initExchangeComplex( Field *field ) = 0;
-    //! finalize comm / exchange fields
-    virtual void finalizeExchange( Field *field ) = 0;
-    //! finalize comm / exchange complex fields
-    virtual void finalizeExchangeComplex( Field *field ) = 0;
     //! init comm / exchange fields in direction iDim only
     virtual void initExchange( Field *field, int iDim, SmileiMPI *smpi ) = 0;
     //! init comm / exchange complex fields in direction iDim only
@@ -402,5 +397,6 @@ inline int buildtag( int hindex, int send, int recv, int tagp )
     stag >> tag;
     return ( int )( tag );
 }
+
 
 #endif
