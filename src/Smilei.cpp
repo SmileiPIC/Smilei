@@ -362,9 +362,6 @@ int main( int argc, char *argv[] )
                 vecPatches.resetRhoJ();
             }
             
-            // apply external time fields if requested
-	        vecPatches.applyExternalTimeFields(time_prim);
-            
             // (1) interpolate the fields at the particle position
             // (2) move the particle
             // (3) calculate the currents (charge conserving method)
@@ -372,8 +369,6 @@ int main( int argc, char *argv[] )
                                  MultiphotonBreitWheelerTables,
                                  time_dual, timers, itime );
                         
-            // de-apply external time fields if requested
-	        vecPatches.resetExternalTimeFields(); 
                                  
             // if Laser Envelope is used, execute particles and envelope sections of ponderomotive loop
             if( params.Laser_Envelope_model ) {
