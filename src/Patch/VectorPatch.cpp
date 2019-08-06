@@ -293,12 +293,13 @@ void VectorPatch::dynamics( Params &params,
 {
 
     #pragma omp single
-
+	{
 	// apply external time fields if requested
 	applyExternalTimeFields(time_dual);
     
     diag_flag = needsRhoJsNow( itime );
-    
+	}    
+	
     timers.particles.restart();
     ostringstream t;
     #pragma omp for schedule(runtime)
@@ -2831,10 +2832,10 @@ void VectorPatch::applyExternalFields()
 
 
 // For each patch, apply external fields
-void VectorPatch::applyExternalTimeFields(double time_prim)
+void VectorPatch::applyExternalTimeFields(double time)
 {
     for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
-        patches_[ipatch]->EMfields->applyExternalTimeFields( ( *this )( ipatch ), time_prim );    // Must be patch
+        patches_[ipatch]->EMfields->applyExternalTimeFields( ( *this )( ipatch ), time ); 
     }
 }
 
