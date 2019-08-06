@@ -104,9 +104,9 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI *smpi, VectorPatch &
             write_momentum[1] = true;
         } else if( attributes[i] == "pz" ) {
             write_momentum[2] = true;
-        } else if( attributes[i] == "charge" ) {
+        } else if( attributes[i] == "charge" || attributes[i] == "q" ) {
             write_charge      = true;
-        } else if( attributes[i] == "weight" ) {
+        } else if( attributes[i] == "weight" || attributes[i] == "w" ) {
             write_weight      = true;
         } else if( attributes[i] == "chi" ) {
             write_chi         = true;

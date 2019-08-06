@@ -220,7 +220,7 @@ public:
         }
         return sum;
     }
-    
+	    
     inline void copyFrom( Field *from_field )
     {
         DEBUGEXEC( if( globalDims_!=from_field->globalDims_ ) ERROR( "Field size do not match "<< name << " " << from_field->name ) );

@@ -13,6 +13,7 @@
 #include "MergingVranicCartesian.h"
 
 #include <cmath>
+#include <cstdlib>
 
 // -----------------------------------------------------------------------------
 //! Constructor for RadiationNLandauLifshitz

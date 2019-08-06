@@ -15,16 +15,14 @@ script:
  - gzip -f build/html/_downloads/Smilei.tar
  - make doc
  - touch build/html/.nojekyll
- - for v in `git tag | grep '^v'`; do  echo ${v}; git archive --format tar -o build/html/_downloads/smilei-${v}.tar $v; git show-ref --abbrev -s ${v} > scripts/CompileTools/version; tar rf build/html/_downloads/smilei-${v}.tar scripts/CompileTools/version; gzip -f build/html/_downloads/smilei-${v}.tar; done
+ - for v in `git tag | grep '^v[0-9].[0-9].\?[0-9]\?$'`; do  echo ${v}; git archive --format tar -o build/html/_downloads/smilei-${v}.tar $v; git show-ref --abbrev -s ${v} > scripts/CompileTools/version; tar rf build/html/_downloads/smilei-${v}.tar scripts/CompileTools/version; gzip -f build/html/_downloads/smilei-${v}.tar; done
 
 deploy:
  - provider: pages
    skip-cleanup: true
    github-token: $GH_TOKEN
-   keep-history: true
+   keep-history: false
    local-dir: build/html
-   on:
-     branch: master
 
  - provider: script
    script: curl -X POST "https://registry.hub.docker.com/u/iltommi/docker-smilei/trigger/${DOCKER_HUB_TOKEN}/"
