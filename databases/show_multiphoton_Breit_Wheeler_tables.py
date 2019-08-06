@@ -144,7 +144,7 @@ if if_file_exist('./multiphoton_Breit_Wheeler_tables.h5'):
     #ax2.set_yscale('log')
     ax2.set_xlabel(r'$\chi_\gamma$')
     ax2.set_ylabel(r'index from $\chi_{\pm,min}$ to $\chi_\gamma$')
-    ax2.set_ylim([0,127])
+    ax2.set_ylim([1,128])
 
     im.set_norm(LogNorm())
     cb = colorbar(im,ax=ax2)
