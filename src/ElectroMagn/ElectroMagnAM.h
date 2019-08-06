@@ -185,8 +185,12 @@ public:
     void computePoynting() override;
     //! Method used to impose external fields
     void applyExternalFields( Patch *patch ) override;
-    //! Method used to impose external fields
+    //! Method used to impose external time fields
+    void applyExternalTimeFields( Patch *patch, double time ) override;
+    //! Method used to impose one external field
     void applyExternalField( Field *, Profile *, Patch * ) override;
+    //! Method used to impose one external time field
+    void applyExternalTimeField( Field *, Profile *, Patch *, double time ) override;
     
     void initAntennas( Patch *patch ) override;
     

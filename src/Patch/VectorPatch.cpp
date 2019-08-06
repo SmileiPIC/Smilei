@@ -18,6 +18,8 @@
 #include "SolverFactory.h"
 #include "DiagnosticFactory.h"
 #include "LaserEnvelope.h"
+#include "ElectroMagnBC.h"
+#include "Laser.h"
 
 #include "SyncVectorPatch.h"
 #include "interface.h"
@@ -291,8 +293,13 @@ void VectorPatch::dynamics( Params &params,
 {
 
     #pragma omp single
+	{
+	// apply external time fields if requested
+	applyExternalTimeFields(time_dual);
+    
     diag_flag = needsRhoJsNow( itime );
-
+	}    
+	
     timers.particles.restart();
     ostringstream t;
     #pragma omp for schedule(runtime)
@@ -361,6 +368,10 @@ void VectorPatch::dynamics( Params &params,
     } // end loop on species
     //MESSAGE("exchange particles");
     timers.syncPart.update( params.printNow( itime ) );
+    
+    // de-apply external time fields if requested
+	resetExternalTimeFields(); 
+
 #ifdef __DETAILED_TIMERS
     timers.sorting.update( *this, params.printNow( itime ) );
     timers.merging.update( *this, params.printNow( itime ) );
@@ -2894,6 +2905,22 @@ void VectorPatch::applyExternalFields()
     }
 }
 
+
+// For each patch, apply external fields
+void VectorPatch::applyExternalTimeFields(double time)
+{
+    for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
+        patches_[ipatch]->EMfields->applyExternalTimeFields( ( *this )( ipatch ), time ); 
+    }
+}
+
+//! Method use to reset the real value of all fields on which we imposed an external time field
+void VectorPatch::resetExternalTimeFields()
+{
+    for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
+        patches_[ipatch]->EMfields->resetExternalTimeFields();
+    }
+}
 
 // For each patch, apply external fields
 void VectorPatch::saveExternalFields( Params &params )
