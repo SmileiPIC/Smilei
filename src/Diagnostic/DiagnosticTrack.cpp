@@ -432,8 +432,9 @@ void DiagnosticTrack::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, 
                 fill_buffer( vecPatches, nDim_particle+idim, data_double );
                 #pragma omp master
                 {
-                    // Multiply by the mass to obtain an actual momentum
-                    if( vecPatches( 0 )->vecSpecies[speciesId_]->mass != 1. ) {
+                    // Multiply by the mass to obtain an actual momentum (except for photons (mass = 0))
+                    if( vecPatches( 0 )->vecSpecies[speciesId_]->mass != 1. &&
+                        vecPatches( 0 )->vecSpecies[speciesId_]->mass > 0) {
                         for( unsigned int ip=0; ip<nParticles_local; ip++ ) {
                             data_double[ip] *= vecPatches( 0 )->vecSpecies[speciesId_]->mass;
                         }
