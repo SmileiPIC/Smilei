@@ -1780,7 +1780,7 @@ void ElectroMagn3D::applyExternalTimeField( Field *my_field,  Profile *profile, 
         pos[0] += dx;
     }
     
-    profile->valuesAt( xyz, *field3D );
+    profile->valuesAtTime( xyz, time, *field3D );
     
     for( unsigned int idim=0 ; idim<3 ; idim++ ) {
         delete xyz[idim];

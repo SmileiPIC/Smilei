@@ -396,7 +396,7 @@ public:
     virtual void applyExternalField( Field *, Profile *, Patch * ) = 0 ;
     
     //! Method used to impose external time fields (apply to a given Field)
-    virtual void applyExternalTimeField( Field *, Profile *, Patch *, double time_prim) = 0 ;
+    virtual void applyExternalTimeField( Field *, Profile *, Patch *, double time) = 0 ;
     
     //! Antenna
     std::vector<Antenna> antennas;

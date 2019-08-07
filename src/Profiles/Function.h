@@ -63,6 +63,14 @@ public:
     {
         return NULL;
     };
+    
+    // time dependent
+    //! Gets the value of an N-D function at points specified as numpy arrays
+    virtual PyArrayObject *valueAt( std::vector<PyArrayObject *> , double)
+    {
+        return NULL;
+    };
+    
 #endif
 };
 
@@ -79,6 +87,7 @@ public:
     double valueAt( std::vector<double> ); // space
 #ifdef SMILEI_USE_NUMPY
     PyArrayObject *valueAt( std::vector<PyArrayObject *> ); // numpy
+    PyArrayObject *valueAt( std::vector<PyArrayObject *>, double ); // numpy + time
 #endif
 private:
     PyObject *py_profile;
@@ -96,6 +105,7 @@ public:
     std::complex<double> complexValueAt( std::vector<double> ); // space
 #ifdef SMILEI_USE_NUMPY
     PyArrayObject *valueAt( std::vector<PyArrayObject *> ); // numpy
+    PyArrayObject *valueAt( std::vector<PyArrayObject *>, double ); // numpy + time
     PyArrayObject *complexValueAt( std::vector<PyArrayObject *> ); // numpy
 #endif
 private:
@@ -122,6 +132,7 @@ public:
     std::complex<double> complexValueAt( std::vector<double>, double ); // space + time
 #ifdef SMILEI_USE_NUMPY
     PyArrayObject *valueAt( std::vector<PyArrayObject *> ); // numpy
+    PyArrayObject *valueAt( std::vector<PyArrayObject *> , double ); // numpy + time
 #endif
 private:
     PyObject *py_profile;

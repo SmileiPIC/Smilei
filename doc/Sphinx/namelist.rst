@@ -1440,6 +1440,37 @@ An external field can be applied using an ``ExternalField`` block::
 
 ----
 
+.. _ExternalTimeField:
+
+External time dependent fields
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+An time dependent external field can be applied using an ``ExternalTimeField`` block::
+
+  def myExtProfile(x,t):
+  	return np.cos(x)*np.sin(x)
+  	
+  ExternalTimeField(
+      field = "Ex",
+      profile = myExtProfile
+  )
+
+.. py:data:: field
+
+  Field name: ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"`` or ``"Bz"``.
+
+.. py:data:: profile
+
+  :type: float or *python* function (see section :ref:`profiles`)
+
+  The spatio-temporal profile of the applied field.
+  Refer to :doc:`units` to understand the units of this field.
+
+.. note:: These fields will only be used to push particles but Maxwell solver will keep using original
+
+
+----
+
 .. _antennas:
 
 Antennas

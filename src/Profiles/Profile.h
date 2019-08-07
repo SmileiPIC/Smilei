@@ -85,6 +85,48 @@ public:
             }
         }
     };
+
+    //! Get the value of the profile at several locations (spatial) and particular time
+    inline void valuesAtTime( std::vector<Field *> &coordinates, double time, Field &ret )
+    {
+        unsigned int nvar = coordinates.size();
+        unsigned int size = coordinates[0]->globalDims_;
+#ifdef SMILEI_USE_NUMPY
+        // If numpy profile, then expose coordinates as numpy before evaluating profile
+        if( uses_numpy ) {
+            std::vector<PyArrayObject *> x( nvar );
+            int ndim = coordinates[0]->dims().size();
+            npy_intp dims[ndim];
+            for( int idim=0; idim<ndim; idim++ ) {
+                dims[idim] = ( npy_intp )( coordinates[0]->dims()[idim] );
+            }
+            // Expose arrays as numpy, and evaluate
+            for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
+                x[ivar] = ( PyArrayObject * )PyArray_SimpleNewFromData( ndim, dims, NPY_DOUBLE, ( double * )( coordinates[ivar]->data() ) );
+            }
+            PyArrayObject *values = function->valueAt( x, time );
+            for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
+                Py_DECREF( x[ivar] );
+            }
+            // Copy array to return Field3D
+            double *arr = ( double * ) PyArray_GETPTR1( values, 0 );
+            for( unsigned int i=0; i<size; i++ ) {
+                ret( i ) = arr[i];
+            }
+            Py_DECREF( values );
+        } else
+#endif
+            // Otherwise, calculate profile for each point
+        {
+            std::vector<double> x( nvar );
+            for( unsigned int i=0; i<size; i++ ) {
+                for( unsigned int ivar=0; ivar<nvar; ivar++ ) {
+                    x[ivar]=( *coordinates[ivar] )( i );
+                }
+                ret( i ) = function->valueAt( x, time );
+            }
+        }
+    };
     
     //! Get the value of the profile at several locations (spatial)
     inline void complexValuesAt( std::vector<Field *> &coordinates, cField &ret )
