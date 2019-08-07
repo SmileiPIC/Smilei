@@ -6,26 +6,21 @@ compile:
   stage: compile
   only:
     - develop
-    - dev_issue226
-    - fix_numpy_part
-    - radiationSpectrum
+    - sync_integration
 
   script:
     # Force workdir cleaning in case of retried
+    - echo "CI_PIPELINE_ID = " $CI_PIPELINE_ID
+    - env
     - if [ -d /sps2/gitlab-runner/$CI_PIPELINE_ID ] ; then rm -rf /sps2/gitlab-runner/$CI_PIPELINE_ID ; fi
     # Move in test dir
     - mkdir -p /sps2/gitlab-runner/$CI_PIPELINE_ID
     - cp -r $CI_PROJECT_DIR /sps2/gitlab-runner/$CI_PIPELINE_ID
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
     # Set the environment
+    - make uninstall_happi
     - make happi
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
-    - module purge
-    - module load compilers/icc/17.3.191
-    - module load hdf5/1.8.12-icc
-    - module load mpi/openmpi/1.6.5-ib-icc
-    - module load python/2.7.10
-    - module list 2> module.log
     # Run validation script
     - python validation.py -c  -v
 
@@ -33,9 +28,7 @@ makerun1D:
   stage: makerun
   only:
     - develop
-    - dev_issue226
-    - fix_numpy_part
-    - radiationSpectrum
+    - sync_integration
 
   script:
     # Move in test dir
@@ -47,9 +40,7 @@ makerun2D:
   stage: makerun
   only:
     - develop
-    - dev_issue226
-    - fix_numpy_part
-    - radiationSpectrum
+    - sync_integration
 
   script:
     # Move in test dir
@@ -61,24 +52,44 @@ makerun3D:
   stage: makerun
   only:
     - develop
-    - dev_issue226
-    - fix_numpy_part
-    - radiationSpectrum
+    - sync_integration
 
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -b "tst3d_*_*.py" -m 4 -o 4 -v -r 1
+    - python validation.py -b "tst3d_??_*.py" -m 4 -o 4 -v -r 1
+
+makerunAM:
+  stage: makerun
+  only:
+    - develop
+    - sync_integration
+
+  script:
+    # Move in test dir
+    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    # Run validation script
+    - python validation.py -b "tstAM_??_*.py" -m 4 -o 4 -v
+
+makerunV:
+  stage: makerun
+  only:
+    - develop
+    - sync_integration
+
+  script:
+    # Move in test dir
+    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    # Run validation script
+    - python validation.py -b "tst?d_v_??_*.py" -m 4 -o 4 -v -r 1
 
 makerunCollisions:
   stage: makerun
   only:
     - develop
-    - dev_issue226
-    - fix_numpy_part
-    - radiationSpectrum
-    
+    - sync_integration
+
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation

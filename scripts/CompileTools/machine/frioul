@@ -1,2 +1,14 @@
-CXXFLAGS += -xMIC-AVX512 -qopt-report=5
+#
+# Machine file for the KNL cluster Frioul at CINES
+# __________________________________________________________
+#
+#
+# module load intel intelmpi
+# module load szip/2.1
+# module load hdf5/1.8.17
+# module load python/2.7.12
+# export SMILEI=<path to Smilei>
+# export PYTHONPATH=$SMILEI/scripts/PythonModule/:$PYTHONPATH
 
+
+CXXFLAGS += -xMIC-AVX512 -D__INTEL_KNL_7250 -fno-alias  -ip -inline-factor=1000 #-ipo

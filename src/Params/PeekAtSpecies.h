@@ -3,11 +3,13 @@
 
 #include "PyTools.h"
 #include "Params.h"
+#include "Profile.h"
 
 //! Class to get a quick view of a species profile, even when the species particles have not been created
-class PeekAtSpecies {
+class PeekAtSpecies
+{
 public:
-    PeekAtSpecies(Params& params, unsigned int species_id);
+    PeekAtSpecies( Params &params, unsigned int species_id );
     ~PeekAtSpecies();
     
     double numberOfParticlesInPatch( unsigned int hindex );
@@ -19,7 +21,7 @@ public:
 private:
     Profile *densityProfile;
     Profile *ppcProfile;
-    Params * params;
+    Params *params;
 };
 
 #endif

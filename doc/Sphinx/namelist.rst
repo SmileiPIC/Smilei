@@ -64,8 +64,14 @@ for each MPI process). The following steps are executed:
 
 #. The namelist(s) is executed.
 
-#. *Python* runs :py:data:`cleanup()` if the user has defined it
-   (this can be a good place to delete unused heavy variables and unload unused modules).
+#. *Python* runs :py:data:`preprocess()` if the user has defined it.
+   This is a good place to calculate things that are not needed for
+   post-processing with :program:`happi`.
+
+#. The simulation is initialized (including field and particle arrays).
+
+#. *Python* runs :py:data:`cleanup()` if the user has defined it.
+   This is a good place to delete unused heavy variables.
 
 #. *Python* checks whether the *python* interpreter is needed during the simulation
    (e.g. the user has defined a temporal :ref:`profile <profiles>` which requires *python*
@@ -104,14 +110,39 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
 .. py:data:: geometry
 
-  The geometry of the simulation: ``"1Dcartesian"``, ``"2Dcartesian"``, or ``"3Dcartesian"``.
+  The geometry of the simulation:
 
+  * ``"1Dcartesian"``
+  * ``"2Dcartesian"``
+  * ``"3Dcartesian"``
+  * ``"AMcylindrical"``: cylindrical geometry with azimuthal Fourier decomposition. See :doc:`algorithms`.
+
+  In the following documentation, all references to dimensions or coordinates
+  depend on the ``geometry``.
+  1D, 2D and 3D stand for 1-dimensional, 2-dimensional and 3-dimensional cartesian
+  geometries, respectively. All coordinates are ordered as :math:`(x)`, :math:`(x,y)` or :math:`(x,y,z)`.
+  In the ``"AMcylindrical"`` case, all grid coordinates are 2-dimensional
+  :math:`(x,r)`, while particle coordinates (in :ref:`Species`)
+  are expressed in the 3-dimensional Cartesian frame :math:`(x,y,z)`.
+
+  .. warning::
+
+    The ``"AMcylindrical"`` geometry is currently proposed in alpha version.
+    It has not been thoroughly tested and only Fields diagnostics are available.
+    Boundary conditions must be set to ``"remove"`` for particles,
+    ``"silver-muller"`` for longitudinal EM boundaries and
+    ``"buneman"`` for transverse EM boundaries.
+    Vectorization, checkpoints, load balancing, ionization, collisions and
+    order-4 interpolation are not supported yet.
 
 .. py:data:: interpolation_order
 
-  :default: 2
+  :default: ``2``
 
-  Interpolation order. To this day, only ``2`` is available.
+  Interpolation order, defines particle shape function:
+
+  * ``2``  : 3 points stencil, supported in all configurations.
+  * ``4``  : 5 points stencil, not supported in vectorized 2D geometry.
 
 
 .. py:data:: grid_length
@@ -148,25 +179,39 @@ The block ``Main`` is **mandatory** and has the following syntax::
   A list of integers: the number of patches in each direction.
   Each integer must be a power of 2, and the total number of patches must be
   greater or equal than the number of MPI processes.
+  It is also strongly advised to have more patches than the total number of openMP threads.
   See :doc:`parallelization`.
 
+
+.. py:data:: patch_arrangement
+
+  :default: ``"hilbertian"``
+
+  Determines the ordering of patches and the way they are separated into the
+  various MPI processes. Options are:
+
+  * ``"hilbertian"``: following the Hilbert curve (see :ref:`this explanation<LoadBalancingExplanation>`).
+  * ``"linearized_XY"`` in 2D or ``"linearized_XYZ"`` in 3D: following the
+    row-major (C-style) ordering.
+  * ``"linearized_YX"`` in 2D or ``"linearized_ZYX"`` in 3D: following the
+    column-major (fortran-style) ordering. This prevents the usage of
+    :ref:`Fields diagnostics<DiagFields>` (see :doc:`parallelization`).
 
 .. py:data:: clrw
 
   :default: set to minimize the memory footprint of the particles pusher, especially interpolation and projection processes
 
-  Advanced users. Integer specifying the cluster width along X direction in number of cells.
+  For advanced users. Integer specifying the cluster width along X direction in number of cells.
   The "cluster" is a sub-patch structure in which particles are sorted for cache improvement.
-  clrw must divide the number of cells in one patch (in dimension X).
-  The finest sorting is achieved with clrw=1 and no sorting with clrw equal to the full size of a patch along dimension X.
+  ``clrw`` must divide the number of cells in one patch (in dimension X).
+  The finest sorting is achieved with ``clrw=1`` and no sorting with ``clrw`` equal to the full size of a patch along dimension X.
   The cluster size in dimension Y and Z is always the full extent of the patch.
 
 .. py:data:: maxwell_solver
 
   :default: 'Yee'
 
-  The solver for Maxwell's equations. Only ``"Yee"`` is available for all geometries at the moment. ``"Cowan"``, ``"Grassi"`` and ``"Lehe"``
-  are available for 2DCartesian and ``"Lehe"`` is available for 3DCartesian. Lehe solver is described in this `paper <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.021301>`_
+  The solver for Maxwell's equations. Only ``"Yee"`` is available for all geometries at the moment. ``"Cowan"``, ``"Grassi"`` and ``"Lehe"`` are available for ``2DCartesian`` and ``"Lehe"`` is available for ``3DCartesian``. The Lehe solver is described in `this paper <https://journals.aps.org/prab/abstract/10.1103/PhysRevSTAB.16.021301>`_
 
 .. py:data:: solve_poisson
 
@@ -192,7 +237,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
    Decides if relativistic Poisson problem must be solved for at least one species.
    See :doc:`relativistic_fields_initialization` for more details.
-   
+
 .. py:data:: relativistic_poisson_max_iteration
 
   :default: 50000
@@ -217,9 +262,9 @@ The block ``Main`` is **mandatory** and has the following syntax::
   | **Syntax 2:** ``[[bc_X], [bc_Y], ...]``, different depending on x, y or z.
   | **Syntax 3:** ``[[bc_Xmin, bc_Xmax], ...]``,  different on each boundary.
 
-  ``"silver-muller"`` is an open boundary condition. The incident wave vector :math:`k_i` on each face is defined by ``"EM_boundary_conditions_k"``.
-  When using ``"silver-muller"`` as an injecting boundary, make sure :math:`k_i` is aligned with the wave you are injecting.
-  When using ``"silver-muller"`` as an absorbing boundary, the optimal wave absorption on a given face will be along :math:`k_{abs}` the specular reflection of :math:`k_i` on face `i`. 
+  ``"silver-muller"`` is an open boundary condition. The incident wave vector :math:`k_{inc}` on each face is defined by ``"EM_boundary_conditions_k"``.
+  When using ``"silver-muller"`` as an injecting boundary, make sure :math:`k_{inc}` is aligned with the wave you are injecting.
+  When using ``"silver-muller"`` as an absorbing boundary, the optimal wave absorption on a given face will be along :math:`k_{abs}` the specular reflection of :math:`k_{inc}` on the considered face.
 
 .. py:data:: EM_boundary_conditions_k
 
@@ -227,18 +272,19 @@ The block ``Main`` is **mandatory** and has the following syntax::
   :default: ``[[1.,0.],[-1.,0.],[0.,1.],[0.,-1.]]`` in 2D
   :default: ``[[1.,0.,0.],[-1.,0.,0.],[0.,1.,0.],[0.,-1.,0.],[0.,0.,1.],[0.,0.,-1.]]`` in 3D
 
-  The incident unit wave vector for each face (sequentially Xmin, Xmax, Ymin, Ymax, Zmin, Zmax)
-  defined by its coordinates in the `xyz` frame.  
-  The number of coordinates is equal to the dimension of the simulation.
+  The incident unit wave vector `k` for each face (sequentially Xmin, Xmax, Ymin, Ymax, Zmin, Zmax) is
+  defined by its coordinates in the `xyz` frame.
+  The number of coordinates is equal to the dimension of the simulation. The number of given vectors must be equal to 1 or to the number of faces which is twice the dimension of the simulation. In cylindrical geometry, `k` coordinates are given in the `xr` frame and only the Rmax face is affected.
 
   | **Syntax 1:** ``[[1,0,0]]``, identical for all boundaries.
   | **Syntax 2:** ``[[1,0,0],[-1,0,0], ...]``,  different on each boundary.
+
 
 .. py:data:: time_fields_frozen
 
   :default: 0.
 
-  Time, at the beginning of the simulation, during which fields are frozen. 
+  Time, at the beginning of the simulation, during which fields are frozen.
 
 
 .. _reference_angular_frequency_SI:
@@ -273,6 +319,19 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   The value of the random seed. To create a per-processor random seed, you may use
   the variable  :py:data:`smilei_mpi_rank`.
+
+.. py:data:: number_of_AM
+
+  :default: 2
+
+  The number of azimuthal modes used for the Fourier decomposition in ``"AMcylindrical"`` geometry.
+
+.. py:data:: number_of_AM_relativistic_field_initialization
+
+  :default: 1
+
+  The number of azimuthal modes used for the relativistic field initialization in ``"AMcylindrical"`` geometry.
+  Note that this number must be lower or equal to the number of modes of the simulation.
 
 ----
 
@@ -324,10 +383,69 @@ occur every 150 iterations.
 
 ----
 
+.. _Vectorization:
+
+Vectorization
+^^^^^^^^^^^^^^^^^^^^^
+
+The block ``Vectorization`` is optional.
+It controls the SIMD operations that can enhance the performance of some computations.
+The technique is detailed in Ref. [Beck]_ and summarized in :doc:`this doc <vectorization>`.
+It requires :ref:`additional compilation options<vectorization_flags>` to be actived.
+
+.. code-block:: python
+
+  Vectorization(
+      mode = "adaptive",
+      reconfigure_every = 20,
+      initial_mode = "on"
+  )
+
+.. py:data:: mode
+
+  :default: ``"off"``
+
+  * ``"off"``: non-vectorized operators are used.
+    Recommended when the number of particles per cell stays below 10.
+  * ``"on"``: vectorized operators are used.
+    Recommended when the number of particles per cell stays above 10.
+    Particles are sorted per cell.
+  * ``"adaptive"``: the best operators (scalar or vectorized)
+    are determined and configured dynamically and locally
+    (per patch and per species).
+    Particles are sorted per cell.
+
+  In the ``"adaptive"`` mode, :py:data:`clrw` is set to the maximum.
+
+.. py:data:: reconfigure_every
+
+  :default: 20
+
+  The number of timesteps between each dynamic reconfiguration of
+  the vectorized operators, when using the  ``"adaptive"`` vectorization mode.
+  It may be set to a :ref:`time selection <TimeSelections>` as well.
+
+
+.. py:data:: initial_mode
+
+  :default: ``off``
+
+  Default state when the ``"adaptive"`` mode is activated
+  and no particle is present in the patch.
+
+
+----
+
 .. _movingWindow:
 
 Moving window
 ^^^^^^^^^^^^^
+
+The simulated box can move relative to the initial plasma position. This "moving window"
+basically consists in removing periodically some plasma from the ``x_min`` border and
+adding new plasma after the ``x_max`` border, thus changing the physical domain that the
+simulation represents but keeping the same box size. This is particularly useful to
+*follow* plasma moving at high speed.
 
 The block ``MovingWindow`` is optional. The window does not move it you do not define it.
 
@@ -430,6 +548,7 @@ Each species has to be defined in a ``Species`` block::
       particles_per_cell = 100,
       mass = 1.,
       atomic_number = None,
+      #maximum_charge_state = None,
       number_density = 10.,
       # charge_density = None,
       charge = -1.,
@@ -445,7 +564,9 @@ Each species has to be defined in a ``Species`` block::
       time_frozen = 0.0,
       # ionization_model = "none",
       # ionization_electrons = None,
+      # ionization_rate = None,
       is_test = False,
+      # ponderomotive_dynamics = False,
       c_part_max = 1.0,
       pusher = "boris",
 
@@ -461,6 +582,14 @@ Each species has to be defined in a ``Species`` block::
       # For photon species only:
       multiphoton_Breit_Wheeler = ["electron","positron"],
       multiphoton_Breit_Wheeler_sampling = [1,1]
+
+      # Merging
+      merging_method = "vranic_spherical",
+      merge_every = 5,
+      merge_min_particles_per_cell = 16,
+      merge_max_packet_size = 4,
+      merge_min_packet_size = 2,
+      merge_momentum_cell_size = [32,16,16],
   )
 
 .. py:data:: name
@@ -480,11 +609,12 @@ Each species has to be defined in a ``Species`` block::
      of both species are identical in each cell.
    * A *numpy* array defining all the positions of the species' particles.
      In this case you must also provide the weight of each particle (see :ref:`Weights`).
-     The array shape must be `(Ndim+1, Npart)` where `Ndim` is the simulation dimension,
+     The array shape must be `(Ndim+1, Npart)` where `Ndim` is the number of particle dimensions (of the particles),
      and `Npart` is the total number of particles. Positions components `x`, `y`, `z` are
-     given along the first columns and the weights are given in the last column of the array.
+     given along the first `Ndim` columns and the weights are given in the last column of the array.
      This initialization is incompatible with :py:data:`number_density`, :py:data:`charge_density`
-     and :py:data:`particles_per_cell`.
+     and :py:data:`particles_per_cell`. Particles initialized outside of the initial simulation domain
+     will not be created. This initalization is disregarded when running a `restart`.
 
 .. py:data:: momentum_initialization
 
@@ -495,11 +625,10 @@ Each species has to be defined in a ``Species`` block::
   * ``"cold"`` for zero temperature
   * A *numpy* array defining all the momenta of the species' particles (requires that
     :py:data:`position_initialization` also be an array with the same number of particles).
-    The array shape must be `(Ndim, Npart)` where `Ndim` is the simulation dimension,
-    and `Npart` is the total number of particles. Momentum components `px`, `py`, `pz`
+    The array shape must be `(3, Npart)` where `Npart` is the total number of particles. Momentum components `px`, `py`, `pz`
     are given in successive columns.This initialization is incompatible with
     :py:data:`temperature` and :py:data:`mean_velocity`.
-  
+
   The first 2 distributions depend on the parameter :py:data:`temperature` explained below.
 
 .. py:data:: particles_per_cell
@@ -521,6 +650,11 @@ Each species has to be defined in a ``Species`` block::
   The atomic number of the particles, required only for ionization.
   It must be lower than 101.
 
+.. py:data:: maximum_charge_state
+
+  :default: 0
+
+  The maximum charge state of a species for which the ionization model is ``"from_rate"``.
 
 .. py:data:: number_density
              charge_density
@@ -544,6 +678,7 @@ Each species has to be defined in a ``Species`` block::
 
   The initial drift velocity of the particles, in units of the speed of light :math:`c`.
 
+  **WARNING**: For massless particles, this is actually the momentum in units of :math:`m_e c`.
 
 .. py:data:: temperature
 
@@ -586,20 +721,49 @@ Each species has to be defined in a ``Species`` block::
 
   :default: 0.
 
-  The time during which the particle positions are not updated, in units of :math:`T_r`.
-
+  The time during which the particles are "frozen", in units of :math:`T_r`.
+  Frozen particles do not move and therefore do not deposit any current either.
+  They are computationally much cheaper than non-frozen particles and oblivious to any EM-fields
+  in the simulation.
 
 .. py:data:: ionization_model
 
   :default: ``"none"``
 
-  The model for field ionization. Currently, only ``"tunnel"`` is available.
-  See :ref:`this <CollisionalIonization>` for collisional ionization instead.
+  The model for ionization:
 
+  * ``"tunnel"`` for :ref:`field ionization <field_ionization>` (requires species with an :py:data:`atomic_number`)
+  * ``"from_rate"``, relying on a :ref:`user-defined ionization rate <rate_ionization>` (requires species with a :py:data:`maximum_charge_state`).
+
+.. py:data:: ionization_rate
+
+  A python function giving the user-defined ionisation rate as a function of various particle attributes.
+  To use this option, the `numpy package <http://www.numpy.org/>`_ must be available in your python installation.
+  The function must have one argument, that you may call, for instance, ``particles``.
+  This object has several attributes ``x``, ``y``, ``z``, ``px``, ``py``, ``pz``, ``charge``, ``weight`` and ``id``.
+  Each of these attributes are provided as **numpy** arrays where each cell corresponds to one particle.
+
+  The following example defines, for a species with maximum charge state of 2,
+  an ionization rate that depends on the initial particle charge
+  and linear in the x coordinate:
+
+  .. code-block:: python
+
+    from numpy import exp, zeros_like
+
+    def my_rate(particles):
+        rate = zeros_like(particles.x)
+        charge_0 = (particles.charge==0)
+        charge_1 = (particles.charge==1)
+        rate[charge_0] = r0 * particles.x[charge_0]
+        rate[charge_1] = r1 * particles.x[charge_1]
+        return rate
+
+    Species( ..., ionization_rate = my_rate )
 
 .. py:data:: ionization_electrons
 
-  The name of the electron species that field ionization uses when creating new electrons.
+  The name of the electron species that :py:data:`ionization_model` uses when creating new electrons.
 
 
 .. py:data:: is_test
@@ -608,6 +772,15 @@ Each species has to be defined in a ``Species`` block::
 
   Flag for test particles. If ``True``, this species will contain only test particles
   which do not participate in the charge and currents.
+
+.. py:data:: ponderomotive_dynamics
+
+  :default: ``False``
+
+  Flag for particles interacting with an envelope model for the laser, if present.
+  If ``True``, this species will project its susceptibility and be influenced by the laser envelope field.
+  See :doc:`laser_envelope` for details on the dynamics of particles in presence of a laser envelope field.
+.. note:: Ionization, Radiation and Multiphoton Breit-Wheeler pair creation are not yet implemented for species interacting with an envelope model for the laser.
 
 
 .. py:data:: c_part_max
@@ -626,49 +799,50 @@ Each species has to be defined in a ``Species`` block::
   * ``"vay"``: The relativistic pusher of J. L. Vay
   * ``"higueracary"``: The relativistic pusher of A. V. Higuera and J. R. Cary
   * ``"norm"``:  For photon species only (rectilinear propagation)
+  * ``"ponderomotive_boris"``: modified relativistic Boris pusher for species whose flag ``"ponderomotive_dynamics"`` is ``True``. Valid only if the species has non-zero mass
 
 .. py:data:: radiation_model
 
   :default: ``"none"``
 
   The **radiation reaction** model used for this species (see :doc:`radiation_loss`).
-  
+
   * ``"none"``: no radiation
   * ``"Landau-Lifshitz"`` (or ``ll``): Landau-Lifshitz model approximated for high energies
   * ``"corrected-Landau-Lifshitz"`` (or ``cll``): with quantum correction
   * ``""Niel"``: a `stochastic radiation model <https://arxiv.org/abs/1707.02618>`_ based on the work of Niel `et al.`.
   * ``"Monte-Carlo"`` (or ``mc``): Monte-Carlo radiation model. This model can be configured to generate macro-photons with :py:data:`radiation_photon_species`.
-  
+
   This parameter cannot be assigned to photons (mass = 0).
-  
+
   Radiation is emitted only with the ``"Monte-Carlo"`` model when
   :py:data:`radiation_photon_species` is defined.
 
 .. py:data:: radiation_photon_species
-  
+
   The :py:data:`name` of the photon species in which the Monte-Carlo :py:data:`radiation_model`
   will generate macro-photons. If unset (or ``None``), no macro-photon will be created.
   The *target* photon species must be have its mass set to 0, and appear *after* the
   particle species in the namelist.
-  
+
   This parameter cannot be assigned to photons (mass = 0).
 
 .. py:data:: radiation_photon_sampling
 
   :default: ``1``
-  
+
   The number of macro-photons generated per emission event, when the macro-photon creation
   is activated (see :py:data:`radiation_photon_species`). The total macro-photon weight
   is still conserved.
-  
+
   A large number may rapidly slow down the performances and lead to memory saturation.
-  
+
   This parameter cannot be assigned to photons (mass = 0).
 
 .. py:data:: radiation_photon_gamma_threshold
 
   :default: ``2``
-  
+
   The threshold on the photon energy for the macro-photon emission when using the
   radiation reaction Monte-Carlo process.
   Under this threshold, the macro-photon from the radiation reaction Monte-Carlo
@@ -681,17 +855,17 @@ Each species has to be defined in a ``Species`` block::
 .. py:data:: relativistic_field_initialization
 
   :default: ``False``
-  
+
   Flag for relativistic particles. If ``True``, the electromagnetic fields of this species will added to the electromagnetic fields already present in the simulation.
   This operation will be performed when time equals :py:data:`time_frozen`. See :doc:`relativistic_fields_initialization` for details on the computation of the electromagentic fields of a relativistic species.
-  To have physically meaningful results, we recommend to place a species which requires this method of field initialization far from other species, otherwise the latter could experience instantly turned-on unphysical forces by the relativistic species' fields.   
+  To have physically meaningful results, we recommend to place a species which requires this method of field initialization far from other species, otherwise the latter could experience instantly turned-on unphysical forces by the relativistic species' fields.
 
-    
+
 
 .. py:data:: multiphoton_Breit_Wheeler
 
   :default: ``[None,None]``
-  
+
   An list of the :py:data:`name` of two species: electrons and positrons created through
   the :doc:`multiphoton_Breit_Wheeler`.
   By default, the process is not activated.
@@ -704,20 +878,121 @@ Each species has to be defined in a ``Species`` block::
 
   A list of two integers: the number of electrons and positrons generated per photon decay
   in the :doc:`multiphoton_Breit_Wheeler`. The total macro-particle weight is still
-  conserved. 
-  
+  conserved.
+
   Large numbers may rapidly slow down the performances and lead to memory saturation.
-  
+
   This parameter can **only** be assigned to photons species (mass = 0).
 
 ----
+
+.. _Particle_merging:
+
+Particle Merging
+^^^^^^^^^^^^^^^^
+
+The macro-particle merging method is documented in the :doc:`corresponding page <particle_merging>`.
+It is defined in the ``Species`` block::
+
+  Species(
+      ....
+
+      # Merging
+      merging_method = "vranic_spherical",
+      merge_every = 5,
+      merge_min_particles_per_cell = 16,
+      merge_max_packet_size = 4,
+      merge_min_packet_size = 2,
+      merge_momentum_cell_size = [32,16,16],
+      merge_discretization_scale = "linear",
+      # Extra parameters for experts:
+      merge_min_momentum_cell_length = [1e-10, 1e-10, 1e-10],
+      merge_accumulation_correction = True,
+  )
+
+.. py:data:: merging_method
+
+  :default: ``None``
+
+  The particle merging method to use:
+
+  * ``none``: the merging process is not activated
+  * ``vranic_cartesian``: merging process using the method of M. Vranic with a cartesian momentum space decomposition
+  * ``vranic_spherical``: merging process using the method of M. Vranic with a spherical momentum space decomposition
+
+.. py:data:: merge_every
+
+  :default: ``0``
+
+  The particle merging time selection (:ref:`time selection <TimeSelections>`).
+
+.. py:data:: min_particles_per_cell
+
+  :default: ``4``
+
+  The minimum number of particles per cell for the merging.
+
+.. py:data:: merge_min_packet_size
+
+  :default: ``4``
+
+  The minimum number of particles per packet to merge.
+
+.. py:data:: merge_max_packet_size
+
+  :default: ``4``
+
+  The maximum number of particles per packet to merge.
+
+.. py:data:: merge_momentum_cell_size
+
+  :default: ``[16,16,16]``
+
+  The momentum space discretization.
+
+.. py:data:: merge_discretization_scale
+
+  :default: ``linear``
+
+  The momentum discretization scale. The scale can be ``linear`` or ``log``.
+  The ``log`` scale only works with the spherical discretization for the moment.
+  In logarithmic scale, Smilei needs a minimum momentum value to avoid 0.
+  This value is provided by the parameter ``merge_min_momentum``.
+  By default, this value is set to :math:`10^{-5}`.
+
+.. py:data:: merge_min_momentum
+
+  :default: ``1e-5``
+
+  :red:`[for experts]` The minimum momentum value when the log scale is chosen (``merge_discretization_scale = log``).
+  To set a minimum value is compulsory to avoid the potential 0 value in the log domain.
+
+.. py:data:: merge_min_momentum_cell_length
+
+  :default: ``[1e-10,1e-10,1e-10]``
+
+  :red:`[for experts]` The minimum momentum cell length for the discretization.
+  If the specified discretization induces smaller momentum cell length,
+  then the number of momentum cell (momentum cell size) is set to 1 in this direction.
+
+.. py:data:: merge_accumulation_correction
+
+  :default: ``True``
+
+  :red:`[for experts]` Activation of the accumulation correction (see :ref:`vranic_accululation_effect` for more information). The correction only works in linear scale.
+
+
+
+----
+
+.. _Lasers:
 
 Lasers
 ^^^^^^
 
 A laser consists in applying oscillating boundary conditions for the magnetic
-field on one of the box sides. The only boundary conditions that support lasers
-are ``"silver-muller"`` (see :py:data:`EM_boundary_conditions`).
+field on one of the box sides. The only boundary condition that supports lasers
+is ``"silver-muller"`` (see :py:data:`EM_boundary_conditions`).
 There are several syntaxes to introduce a laser in :program:`Smilei`:
 
 .. rubric:: 1. Defining a generic wave
@@ -755,7 +1030,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
   .. code-block:: python
 
     Laser(
-        box_side        = "xmin",
+        box_side       = "xmin",
         omega          = 1.,
         chirp_profile  = tconstant(),
         time_envelope  = tgaussian(),
@@ -793,37 +1068,37 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
     The variation of the laser frequency over time, such that
     :math:`\omega(t)=\mathtt{omega}\times\mathtt{chirp\_profile}(t)`.
-    
+
   .. warning::
-  
+
     This definition of the chirp profile is not standard.
     Indeed, :math:`\omega(t)` as defined here **is not** the instantaneous frequency, :math:`\omega_{\rm inst}(t)`,
     which is obtained from the time derivative of the phase :math:`\omega(t) t`.
-    
+
     Should one define the chirp as :math:`C(t) = \omega_{\rm inst}(t)/\omega` (with :math:`\omega` defined by the input
-    parameter :math:`\mathtt{omega}`), the user can easily obtain the corresponding chirp profile as defined in 
+    parameter :math:`\mathtt{omega}`), the user can easily obtain the corresponding chirp profile as defined in
     :program:`Smilei` as:
-    
-    .. math:: 
-    
+
+    .. math::
+
         \mathtt{chirp\_profile}(t) = \frac{1}{t} \int_0^t dt' C(t')\,.
-        
-    Let us give as an example the case of a *linear chirp*, with the instantaneous frequency 
+
+    Let us give as an example the case of a *linear chirp*, with the instantaneous frequency
     :math:`\omega_{\rm inst}(t) = \omega [1+\alpha\,\omega(t-t_0)]`.
     :math:`C(t) = 1+\alpha\,\omega(t-t_0)`. The corresponding input chirp profile reads:
-    
-    .. math:: 
-    
+
+    .. math::
+
         \mathtt{chirp\_profile}(t) = 1 - \alpha\, \omega t_0 + \frac{\alpha}{2} \omega t
-        
+
     Similarly, for a *geometric (exponential) chirp* such that :math:`\omega_{\rm inst}(t) = \omega\, \alpha^{\omega t}`,
     :math:`C(t) = \alpha^{\omega t}`, and the corresponding input chirp profile reads:
-    
-    .. math:: 
-    
+
+    .. math::
+
         \mathtt{chirp\_profile}(t) = \frac{\alpha^{\omega t} - 1}{\omega t \, \ln \alpha}\,.
-    
-        
+
+
   .. py:data:: time_envelope
 
     :type: a *python* function or a :ref:`time profile <profiles>`
@@ -851,7 +1126,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     :default: ``[ 0., 0. ]``
 
     An extra phase for the time envelopes of :math:`B_y` and :math:`B_z`. Useful in the
-    case of elliptical polarization where the two temporal profiles might have a slight 
+    case of elliptical polarization where the two temporal profiles might have a slight
     delay due to the mismatched :py:data:`phase`.
 
 
@@ -864,11 +1139,11 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
     LaserPlanar1D(
         box_side         = "xmin",
-        a0              = 1.,
-        omega           = 1.,
+        a0               = 1.,
+        omega            = 1.,
         polarization_phi = 0.,
-        ellipticity     = 0.,
-        time_envelope   = tconstant()
+        ellipticity      = 0.,
+        time_envelope    = tconstant()
     )
 
   .. py:data:: a0
@@ -899,14 +1174,14 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
     LaserGaussian2D(
         box_side         = "xmin",
-        a0              = 1.,
-        omega           = 1.,
-        focus           = [50., 40.],
-        waist           = 3.,
-        incidence_angle = 0.,
+        a0               = 1.,
+        omega            = 1.,
+        focus            = [50., 40.],
+        waist            = 3.,
+        incidence_angle  = 0.,
         polarization_phi = 0.,
-        ellipticity     = 0.,
-        time_envelope   = tconstant()
+        ellipticity      = 0.,
+        time_envelope    = tconstant()
     )
 
   .. py:data:: focus
@@ -938,20 +1213,203 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 
     LaserGaussian3D(
         box_side         = "xmin",
-        a0              = 1.,
-        omega           = 1.,
-        focus           = [50., 40., 40.],
-        waist           = 3.,
-        incidence_angle = [0., 0.1],
+        a0               = 1.,
+        omega            = 1.,
+        focus            = [50., 40., 40.],
+        waist            = 3.,
+        incidence_angle  = [0., 0.1],
         polarization_phi = 0.,
-        ellipticity     = 0.,
-        time_envelope   = tconstant()
+        ellipticity      = 0.,
+        time_envelope    = tconstant()
     )
 
   This is almost the same as ``LaserGaussian2D``, with the ``focus`` parameter having
   now 3 elements (focus position in 3D), and the ``incidence_angle`` being a list of
   two angles, corresponding to rotations around `y` and `z`, respectively.
 
+
+.. rubric:: 6. Defining a gaussian wave with Azimuthal Fourier decomposition
+
+..
+
+  For simulations with ``"AMcylindrical"`` geometry, you may use the simplified laser creator::
+
+    LaserGaussianAM(
+        box_side         = "xmin",
+        a0               = 1.,
+        omega            = 1.,
+        focus            = [50., 40., 40.],
+        waist            = 3.,
+        polarization_phi = 0.,
+        ellipticity      = 0.,
+        time_envelope    = tconstant()
+    )
+
+
+.. rubric:: 7. Defining a generic wave at some distance from the boundary
+
+..
+
+  In some cases, the laser field is not known at the box boundary, but rather at some
+  plane inside the box. Smilei can pre-calculate the corresponding wave at the boundary
+  using the *angular spectrum method*. This technique is only available in 2D and 3D
+  cartesian geometries and requires the python packages *numpy*.
+  A :doc:`detailed explanation <laser_offset>` of the method is available.
+  The laser is introduced using::
+
+    LaserOffset(
+        box_side               = "xmin",
+        space_time_profile     = [ By_profile, Bz_profile ],
+        offset                 = 10.,
+        extra_envelope          = tconstant(),
+        keep_n_strongest_modes = 100,
+        angle = 10./180.*3.14159
+    )
+
+  .. py:data:: space_time_profile
+
+    :type: A list of two *python* functions
+
+    The magnetic field profiles at some arbitrary plane, as a function of space and time.
+    The arguments of these profiles are ``(y,t)`` in 2D and ``(y,z,t)`` in 3D.
+
+  .. py:data:: offset
+
+     The distance from the box boundary to the plane where :py:data:`space_time_profile`
+     is defined.
+
+  .. py:data:: extra_envelope
+
+    :type: a *python* function or a :ref:`python profile <profiles>`
+    :default:  ``lambda *z: 1.``, which means a profile of value 1 everywhere
+
+    An extra envelope applied at the boundary, on top of the :py:data:`space_time_profile`.
+    This envelope takes two arguments (`y`, `t`) in 2D, and three arguments (`y`, `z`, `t`)
+    in 3D.
+    As the wave propagation technique stores a limited number of Fourier modes (in the time
+    domain) of the wave, some periodicity can be obtained in the actual laser.
+    One may thus observe that the laser pulse is repeated several times.
+    The envelope can be used to remove these spurious repetitions.
+
+  .. py:data:: keep_n_strongest_modes
+
+    :default: 100
+
+    The number of temporal Fourier modes that are kept during the pre-processing.
+    See :doc:`this page <laser_offset>` for more details.
+
+  .. py:data:: angle
+
+    :default: 0.
+
+    Angle between the boundary and the profile's plane, the rotation being around :math:`z`.
+    See :doc:`this page <laser_offset>` for more details.
+
+----
+
+.. _laser_envelope:
+
+Laser envelope model
+^^^^^^^^^^^^^^^^^^^^^^
+
+In the geometries ``"1Dcartesian"``, ``"2Dcartesian"``, ``"3Dcartesian"``
+it is possible to model a laser pulse propagating in the ``x`` direction
+using an envelope model (see :doc:`laser_envelope` for the advantages
+and limits of this approximation).
+The fast oscillations of the laser are neglected and all the physical
+quantities of the simulation, including the electromagnetic fields and
+their source terms, as well as the particles positions and momenta, are
+meant as an average over one or more optical cycles.
+Effects involving characteristic lengths comparable to the laser central
+wavelength (i.e. sharp plasma density profiles) cannot be modeled with
+this option.
+
+For the moment the only way to specify a laser pulse through this model
+in :program:`Smilei` is through a gaussian beam (cylindrically symmetric
+for the geometries ``"2Dcartesian"``, ``"3Dcartesian"``). Currently only
+one laser pulse can be specified through the envelope model in a simulation,
+thus multi-pulse set-ups cannot be defined.
+Contrarily to a standard Laser initialized with the Silver-Müller
+boundary conditions, the laser envelope will be entirely initialized inside
+the simulation box at the start of the simulation.
+
+Following is the laser envelope creator in 1D ::
+
+    LaserEnvelopePlanar1D(
+        a0              = 1.,
+        time_envelope   = tgaussian(center=150., fwhm=40.),
+        envelope_solver = 'explicit',
+        Envelope_boundary_conditions = [ ["reflective"] ],
+    )
+
+Following is the laser envelope creator in 2D ::
+
+    LaserEnvelopeGaussian2D(
+        a0              = 1.,
+        focus           = [150., 40.],
+        waist           = 30.,
+        time_envelope   = tgaussian(center=150., fwhm=40.),
+        envelope_solver = 'explicit',
+        Envelope_boundary_conditions = [ ["reflective"] ],
+    )
+
+Following is the laser envelope creator in 3D ::
+
+    LaserEnvelopeGaussian3D(
+        a0              = 1.,
+        focus           = [150., 40., 40.],
+        waist           = 30.,
+        time_envelope   = tgaussian(center=150., fwhm=40.),
+        envelope_solver = 'explicit',
+        Envelope_boundary_conditions = [ ["reflective"] ],
+    )
+
+
+The arguments appearing ``LaserEnvelopePlanar1D``, ``LaserEnvelopeGaussian2D``
+and ``LaserEnvelopeGaussian3D`` have the same meaning they would have in a
+normal ``LaserPlanar1D``, ``LaserGaussian2D`` and ``LaserGaussian3D``,
+with some differences:
+
+.. py:data:: waist
+
+   Please note that a waist size comparable to the laser wavelength does not
+   satisfy the assumptions of the envelope model.
+
+.. py:data:: time_envelope
+
+   Since the envelope will be entirely initialized in the simulation box
+   already at the start of the simulation, the time envelope will be applied
+   in the ``x`` direction instead of time. It is recommended to initialize the
+   laser envelope in vacuum, separated from the plasma, to avoid unphysical
+   results.
+   Temporal envelopes with variation scales near to the laser wavelength do not
+   satisfy the assumptions of the envelope model (see :doc:`laser_envelope`),
+   yielding inaccurate results.
+
+.. py:data:: envelope_solver
+
+  :default: ``explicit``
+
+  For the moment the only available solver for the laser envelope equation is an
+  explicit solver with centered finite differences in space and time.
+
+.. py:data:: Envelope_boundary_conditions
+
+  :type: list of lists of strings
+  :default: ``[["reflective"]]``
+
+  For the moment, only reflective boundary conditions are implemented in the
+  resolution of the envelope equation.
+
+
+It is important to remember that the profile defined through the blocks
+``LaserEnvelopePlanar1D``, ``LaserEnvelopeGaussian2D``, ``LaserEnvelopeGaussian3D``
+correspond to the complex envelope of the laser vector potential component
+:math:`\tilde{A}` in the polarization direction.
+The calculation of the correspondent complex envelope for the laser electric field
+component in that direction is described in :doc:`laser_envelope`.
+Note that only order 2 interpolation and projection are supported in presence of
+the envelope model for the laser.
 
 
 ----
@@ -1263,7 +1721,7 @@ reflect, stop, thermalize or kill particles which reach it::
 Collisions
 ^^^^^^^^^^
 
-To have binary collisions in :program:`Smilei`, add one or several ``Collisions`` blocks::
+:doc:`collisions` are specified by one or several ``Collisions`` blocks::
 
   Collisions(
       species1 = ["electrons1",  "electrons2"],
@@ -1294,6 +1752,12 @@ To have binary collisions in :program:`Smilei`, add one or several ``Collisions`
   then they cannot have any common species.
   If the two groups are exactly equal, we call this situation **intra-collisions**.
 
+  .. note::
+
+    If both lists ``species1`` and ``species2`` contain only one species,
+    the algorithm is potentially faster than the situation with several
+    species in one or the other list. This is especially true if the
+    machine accepts SIMD vectorization.
 
 .. py:data:: coulomb_log
 
@@ -1309,8 +1773,8 @@ To have binary collisions in :program:`Smilei`, add one or several ``Collisions`
 
   :default: 0
 
-  | Number of timesteps between each output of information about collisions.
-  | If 0, there will be no outputs.
+  Number of timesteps between each output of information about collisions.
+  If 0, there will be no outputs.
 
 
 .. _CollisionalIonization:
@@ -1319,19 +1783,23 @@ To have binary collisions in :program:`Smilei`, add one or several ``Collisions`
 
   :default: False
 
-  If ``True``, :ref:`collisional ionization <CollIonization>` will occur. One of the
-  species groups must be all electrons (:py:data:`mass` = 1), and the other one all ions of the
-  same :py:data:`atomic_number`.
+  :ref:`Collisional ionization <CollIonization>` is set when this parameter is not ``False``.
+  It can either be set to the name of a pre-existing electron species (where the ionized
+  electrons are created), or to ``True`` (the first electron species in :py:data:`species1`
+  or :py:data:`species2` is then chosen for ionized electrons).
+  
+  One of the species groups must be all electrons (:py:data:`mass` = 1), and the other
+  one all ions of the same :py:data:`atomic_number`.
+  
+  
 
-
-For more details about the collision scheme in :program:`Smilei`, see :doc:`collisions`
 
 
 --------------------------------------------------------------------------------
 
 .. _RadiationReaction:
 
-Radiations reaction
+Radiation reaction
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The block ``RadiationReaction()`` enables to tune the radiation loss properties
@@ -1340,38 +1808,77 @@ Many parameters are used for the generation of the cross-section tables
 for the Monte-Carlo emission process.
 If the tables already exist in the simulation directory, then they will be read
 and no new table will be generated by :program:`Smilei`.
-Else, :program:`Smilei` has all the components to compute and output these
+Otherwise, :program:`Smilei` can compute and output these
 tables.
 
 ::
 
   RadiationReaction(
 
-     # Parameters to generate the table h used by Niel et al.
-     h_chipa_min = 1E-3,
-     h_chipa_max = 1E1,
-     h_dim = 128,
-     h_computation_method = "table",
+    # Radiation parameters
+    minimum_chi_continuous = 1e-3,
+    minimum_chi_discontinuous = 1e-2,
+    table_path = "../databases/",
+    compute_table = False,
 
-     # Parameter to generate the table integfochi used by the Monte-Carlo model
-     integfochi_chipa_min = 1e-4,
-     integfochi_chipa_max = 1e1,
-     integfochi_dim = 128,
+    # Following parameters are only if you want to compute the tables
 
-     # Parameter to generate the table xip used by the Monte-Carlo model
-     xip_chipa_min = 1e-4,
-     xip_chipa_max = 1e1,
-     xip_power = 4,
-     xip_threshold = 1e-3,
-     chipa_xip_dim = 128,
-     chiph_xip_dim = 128,
+    output_format = "hdf5",
 
-     # Radiation parameters
-     chipa_radiation_threshold = 1e-3,
-     chipa_disc_min_threshold = 1e-2,
-     table_path = "../databases/"
+    # Parameters to generate the table h used by Niel et al.
+    h_chipa_min = 1E-3,
+    h_chipa_max = 1E1,
+    h_dim = 128,
+    h_computation_method = "table",
+
+    # Parameter to generate the table integfochi used by the Monte-Carlo model
+    integfochi_chipa_min = 1e-4,
+    integfochi_chipa_max = 1e1,
+    integfochi_dim = 128,
+
+    # Parameter to generate the table xip used by the Monte-Carlo model
+    xip_chipa_min = 1e-4,
+    xip_chipa_max = 1e1,
+    xip_power = 4,
+    xip_threshold = 1e-3,
+    xip_chipa_dim = 128,
+    xip_chiph_dim = 128,
   )
 
+.. py:data:: output_format
+
+  :default: ``"hdf5"``
+
+  Output format of the tables: ``"hdf5"``, ``"binary"`` or ``"ascii"``.
+
+.. py:data:: minimum_chi_continuous
+
+  :default: 1e-3
+
+  Threshold on the particle quantum parameter *particle_chi*. When a particle has a
+  quantum parameter below this threshold, radiation reaction is not taken
+  into account.
+
+.. py:data:: minimum_chi_discontinuous
+
+  :default: 1e-2
+
+  Threshold on the particle quantum parameter *particle_chi* between the continuous
+  and the discontinuous radiation model.
+
+.. py:data:: table_path
+
+  :default: ``"./"``
+
+  Path to the external tables for the radiation losses.
+  Default tables are located in ``databases``.
+
+.. py:data:: compute_table
+
+  :default: False
+
+  If True, the tables for the selected radiation model are computed
+  with the requested parameters and stored at the path `table_path`.
 
 .. py:data:: h_chipa_min
 
@@ -1464,41 +1971,14 @@ tables.
 
   :default: 128
 
-  Discretization of the *chimin* and *xip* tables in the *chipa* direction.
+  Discretization of the *chimin* and *xip* tables in the *particle_chi* direction.
 
 .. py:data:: xip_chiph_dim
 
   :default: 128
 
-  Discretization of the *xip* tables in the *chiph* direction.
+  Discretization of the *xip* tables in the *photon_chi* direction.
 
-.. py:data:: output_format
-
-  :default: ``"hdf5"``
-
-  Output format of the tables: ``"hdf5"``, ``"binary"`` or ``"ascii"``.
-
-.. py:data:: chipa_radiation_threshold
-
-  :default: 1e-3
-
-  Threshold on the particle quantum parameter *chipa*. When a particle has a
-  quantum parameter below this threshold, radiation reaction is not taken
-  into account.
-
-.. py:data:: chipa_disc_min_threshold
-
-  :default: 1e-2
-
-  Threshold on the particle quantum parameter *chipa* between the continuous
-  and the discontinuous radiation model.
-
-.. py:data:: table_path
-
-  :default: ``"./"``
-
-  Path to the external tables for the radiation losses.
-  Default tables are located in ``databases``.
 
 --------------------------------------------------------------------------------
 
@@ -1520,21 +2000,24 @@ There are two tables used for the multiphoton Breit-Wheeler refers to as the
     # Table output format, can be "ascii", "binary", "hdf5"
     output_format = "hdf5",
 
-    # Path the tables
-    table_path = "../databases/"
+    # Path to the tables
+    table_path = "../databases/",
+
+    # Flag to compute the tables
+    compute_table = False,
 
     # Table T parameters
-    T_chiph_min = 1e-2
-    T_chiph_max = 1e1
-    T_dim = 128
+    T_chiph_min = 1e-2,
+    T_chiph_max = 1e1,
+    T_dim = 128,
 
     # Table xip parameters
-    xip_chiph_min = 1e-2
-    xip_chiph_max = 1e1
-    xip_power = 4
-    xip_threshold = 1e-3
-    xip_chipa_dim = 128
-    xip_chiph_dim = 128
+    xip_chiph_min = 1e-2,
+    xip_chiph_max = 1e1,
+    xip_power = 4,
+    xip_threshold = 1e-3,
+    xip_chipa_dim = 128,
+    xip_chiph_dim = 128,
 
   )
 
@@ -1544,6 +2027,13 @@ There are two tables used for the multiphoton Breit-Wheeler refers to as the
 
   Path to the external tables for the multiphoton Breit-Wheeler.
   Default tables are located in ``databases``.
+
+.. py:data:: compute_table
+
+  :default: False
+
+  If True, the tables for the selected radiation model are computed
+  with the requested parameters and stored at the path `table_path`.
 
 .. py:data:: output_format
 
@@ -1604,13 +2094,13 @@ There are two tables used for the multiphoton Breit-Wheeler refers to as the
 
   :default: 128
 
-  Discretization of the *chimin* and *xip* tables in the *chiph* direction.
+  Discretization of the *chimin* and *xip* tables in the *photon_chi* direction.
 
 .. py:data:: xip_chipa_dim
 
   :default: 128
 
-  Discretization of the *xip* tables in the *chipa* direction.
+  Discretization of the *xip* tables in the *particle_chi* direction.
 
 --------------------------------------------------------------------------------
 
@@ -1647,40 +2137,45 @@ This is done by including the block ``DiagScalar``::
 
 
 
-The full list of scalars that are saved by this diagnostic:
+The full list of available scalars is given in the table below.
 
+.. warning::
+
+  As some of these quantities are integrated in space and/or time, their
+  units are unusual, and depend on the simulation dimension.
+  All details :ref:`here<integrated_quantities>`.
 
 .. rst-class:: nowrap
 
 +----------------+---------------------------------------------------------------------------+
-| **Global energies**                                                                        |
+| **Space-integrated energy densities**                                                      |
 +----------------+---------------------------------------------------------------------------+
-| | Utot         | | Total energy                                                            |
-| | Ukin         | | Total kinetic energy (in the particles)                                 |
-| | Uelm         | | Total EM energy (in the fields)                                         |
-| | Uexp         | | Expected value (Initial energy :math:`-` lost :math:`+` gained)         |
-| | Ubal         | | Energy balance (Utot :math:`-` Uexp)                                    |
-| | Ubal_norm    | | Normalized energy balance (Ubal :math:`/` Utot)                         |
-| | Uelm_Ex      | | Energy in Ex field (:math:`\int E_x^2 dV /2`)                           |
-| |              | |  ... and idem for fields Ey, Ez, Bx_m, By_m and Bz_m                    |
-| | Urad         | | Total radiated energy                                                   |
+| | Utot         | | Total                                                                   |
+| | Ukin         | | Total kinetic (in the particles)                                        |
+| | Uelm         | | Total electromagnetic (in the fields)                                   |
+| | Uexp         | | Expected (Initial :math:`-` lost :math:`+` gained)                      |
+| | Ubal         | | Balance (Utot :math:`-` Uexp)                                           |
+| | Ubal_norm    | | Normalized balance (Ubal :math:`/` Utot)                                |
+| | Uelm_Ex      | | Ex field contribution (:math:`\int E_x^2 dV /2`)                        |
+| |              | |  ... same for fields Ey, Ez, Bx_m, By_m and Bz_m                        |
+| | Urad         | | Total radiated                                                          |
 +----------------+---------------------------------------------------------------------------+
-| **Energies lost/gained at boundaries**                                                     |
+| **Space- & time-integrated Energies lost/gained at boundaries**                            |
 +----------------+---------------------------------------------------------------------------+
-| | Ukin_bnd     | | Kinetic energy exchanged at the boundaries during the timestep          |
-| | Uelm_bnd     | | EM energy exchanged at boundaries during the timestep                   |
-| | Ukin_out_mvw | | Kinetic energy lost during the timestep due to the moving window        |
-| | Ukin_inj_mvw | | Kinetic energy injected during the timestep due to the moving window    |
-| | Uelm_out_mvw | | EM energy lost during the timestep due to the moving window             |
-| | Uelm_inj_mvw | | EM energy injected during the timestep due to the moving window         |
+| | Ukin_bnd     | | Kinetic contribution exchanged at the boundaries during the timestep    |
+| | Uelm_bnd     | | EM contribution exchanged at boundaries during the timestep             |
+| |              | |                                                                         |
+| | PoyXminInst  | | Poynting contribution through xmin boundary during the timestep         |
+| | PoyXmin      | | Time-accumulated Poynting contribution through xmin boundary            |
+| |              | |  ... same for other boundaries                                          |
 +----------------+---------------------------------------------------------------------------+
-| **Species information**                                                                    |
+| **Particle information**                                                                   |
 +----------------+---------------------------------------------------------------------------+
-| | Dens_abc     | | Average density of species "abc"                                        |
-| | Zavg_abc     | |  ... its average charge                                                 |
-| | Ukin_abc     | |  ... its total kinetic energy                                           |
-| | Urad_abc     | |  ... its total radiated energy                                          |
-| | Ntot_abc     | |  ... and number of particles                                            |
+| | Zavg_abc     | | Average charge of species "abc" (equals `nan` if no particle)           |
+| | Dens_abc     | |  ... its integrated density                                             |
+| | Ukin_abc     | |  ... its integrated kinetic energy density                              |
+| | Urad_abc     | |  ... its integrated radiated energy density                             |
+| | Ntot_abc     | |  ... and number of macro-particles                                      |
 +----------------+---------------------------------------------------------------------------+
 | **Fields information**                                                                     |
 +----------------+---------------------------------------------------------------------------+
@@ -1689,9 +2184,6 @@ The full list of scalars that are saved by this diagnostic:
 | | ExMax        | | Maximum of :math:`E_x`                                                  |
 | | ExMaxCell    | |  ... and its location (cell index)                                      |
 | |              | | ... same for fields Ey Ez Bx_m By_m Bz_m Jx Jy Jz Rho                   |
-| | PoyXmin      | | Accumulated Poynting flux through xmin boundary                         |
-| | PoyXminInst  | | Current Poynting flux through xmin boundary                             |
-| |              | |  ... same for other boundaries                                          |
 +----------------+---------------------------------------------------------------------------+
 
 Checkout the :doc:`post-processing <post-processing>` documentation as well.
@@ -1742,9 +2234,9 @@ This is done by including a block ``DiagFields``::
 
   List of the field names that are saved. By default, they all are.
   The full list of fields that are saved by this diagnostic:
-  
+
   .. rst-class:: nowrap
-  
+
   +----------------+-------------------------------------------------------+
   | | Bx           | |                                                     |
   | | By           | | Components of the magnetic field                    |
@@ -1770,6 +2262,42 @@ This is done by including a block ``DiagFields``::
   | | Rho_abc      | |  Density of species "abc"                           |
   +----------------+-------------------------------------------------------+
 
+  In ``AMcylindrical`` geometry, the ``x``, ``y`` and ``z``
+  indices are replaced by ``l`` (longitudinal), ``r`` (radial) and ``t`` (theta). In addition,
+  the angular Fourier modes are denoted by the suffix ``_mode_i`` where ``i``
+  is the mode number. In summary, the list of fields reads as follows.
+
+  .. rst-class:: nowrap
+
+  +------------------------------+-----------------------------------------+
+  | | Bl_mode_0, Bl_mode_1, etc. | |                                       |
+  | | Br_mode_0, Br_mode_1, etc. | | Components of the magnetic field      |
+  | | Bt_mode_0, Bt_mode_1, etc. | |                                       |
+  +------------------------------+-----------------------------------------+
+  | | El_mode_0, El_mode_1, etc. | |                                       |
+  | | Er_mode_0, Er_mode_1, etc. | | Components of the electric field      |
+  | | Et_mode_0, Et_mode_1, etc. | |                                       |
+  +------------------------------+-----------------------------------------+
+  |  The same notation works for Jl, Jr, Jt, and Rho                       |
+  +------------------------------+-----------------------------------------+
+
+  In the case of an envelope model for the laser (see :doc:`laser_envelope`),
+  the following fields are also available:
+
+  .. rst-class:: nowrap
+
+  +----------------+-------------------------------------------------------+
+  | |              | | Module of laser vector potential's complex envelope |
+  | | Env_A_abs    | | :math:`\tilde{A}` (component along the polarization |
+  | |              | | direction)                                          |
+  +----------------+-------------------------------------------------------+
+  | | Env_Chi      | | Total  susceptibility :math:`\chi`                  |
+  +----------------+-------------------------------------------------------+
+  | |              | | Module of laser electric field's complex envelope   |
+  | | Env_E_abs    | | :math:`\tilde{E}` (component along the polarization |
+  | |              | | direction)                                          |
+  +----------------+-------------------------------------------------------+
+
 .. py:data:: subgrid
 
   :default: ``None`` *(the whole grid is used)*
@@ -1777,26 +2305,26 @@ This is done by including a block ``DiagFields``::
   A list of slices indicating a portion of the simulation grid to be written by this
   diagnostic. This list must have as many elements as the simulation dimension.
   For example, in a 3D simulation, the list has 3 elements. Each element can be:
-  
+
   * ``None``, to select the whole grid along that dimension
   * an integer, to select only the corresponding cell index along that dimension
   * a *python* `slice object <https://docs.python.org/3/library/functions.html#slice>`_
     to select regularly-spaced cell indices along that dimension.
-  
+
   This can be easily implemented using the
   `numpy.s_ expression <https://docs.scipy.org/doc/numpy/reference/generated/numpy.s_.html>`_.
   For instance, in a 3D simulation, the following subgrid selects only every other element
   in each dimension::
-    
+
     from numpy import s_
     DiagFields( #...
     	subgrid = s_[::2, ::2, ::2]
     )
-  
+
   while this one selects cell indices included in a contiguous parallelepiped::
-    
+
     	subgrid = s_[100:300, 300:500, 300:600]
-  
+
 
 
 ----
@@ -1867,12 +2395,23 @@ To add one probe diagnostic, include the block ``DiagProbe``::
 
 .. py:data:: fields
 
-  :default: ``[]`` (all fields)
+  :default: ``[]``, which means ``["Ex", "Ey", "Ez", "Bx", "By", "Bz", "Jx", "Jy", "Jz", "Rho"]``
 
   A list of fields among ``"Ex"``, ``"Ey"``, ``"Ez"``,
-  ``"Bx"``, ``"By"``, ``"Bz"``, ``"Jx"``, ``"Jy"``, ``"Jz"`` and ``"Rho"``. Only these
-  fields will be saved.
-  Note that it does NOT speed up calculation much, but it saves disk space.
+  ``"Bx"``, ``"By"``, ``"Bz"``, ``"Jx"``, ``"Jy"``, ``"Jz"`` and ``"Rho"``.
+  Only listed fields will be saved although they are all calculated.
+
+  The contributions of each species to the currents and the density are also available,
+  although they are not included by default. They may be added to the list as
+  ``"Jx_abc"``, ``"Jy_abc"``, ``"Jz_abc"`` or ``"Rho_abc"``, where ``abc`` is the
+  species name.
+
+  In the case of an envelope model for the laser (see :doc:`laser_envelope`),
+  the following fields are also available: ``"Env_A_abs"``, ``"Env_Chi"``, ``"Env_E_abs"``.
+
+  Note that when running a simulation in cylindrical geometry, contrary to the Field diagnostic, Probes are defined as in a
+  3D Cartesian geometry and return Cartesian fields.
+
 
 
 **Examples of probe diagnostics**
@@ -2013,7 +2552,6 @@ for instance::
 
   A list of one or several species' :py:data:`name`.
   All these species are combined into the same diagnostic.
-
 
 .. py:data:: axes
 
@@ -2226,7 +2764,7 @@ for instance::
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A *particle tracking diagnostic* records the macro-particle positions and momenta at various timesteps.
-Typically, this is used for plotting trajectories. 
+Typically, this is used for plotting trajectories.
 
 You can add a tracking diagnostic by including a block ``DiagTrackParticles()`` in the namelist,
 for instance::
@@ -2297,7 +2835,7 @@ for instance::
   A list of strings indicating the particle attributes to be written in the output.
   The attributes may be the particles' spatial coordinates (``"x"``, ``"y"``, ``"z"``),
   their momenta (``"px"``, ``"py"``, ``"pz"``), their electrical charge (``"q"``),
-  their statistical weight (``"w"``), their quantum parameter
+  their statistical weight (``"weight"``), their quantum parameter
   (``"chi"``, only for species with radiation losses) or the fields interpolated
   at their  positions (``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"``, ``"Bz"``).
 
@@ -2309,13 +2847,14 @@ for instance::
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The *performances* diagnostic records information on the computational load and timers
-for each MPI process in the simulation.
+for each MPI process  or for each patch in the simulation.
 
 Only one block ``DiagPerformances()`` may be added in the namelist, for instance::
 
   DiagPerformances(
       every = 100,
   #    flush_every = 100,
+  #    patch_information = True,
   )
 
 .. py:data:: every
@@ -2333,6 +2872,12 @@ Only one block ``DiagPerformances()`` may be added in the namelist, for instance
   When ``flush_every`` coincides with ``every``, the output file is actually written
   ("flushed" from the buffer). Flushing too often might *dramatically* slow down the simulation.
 
+.. py:data:: patch_information
+
+  :default: False
+
+  If `True`, some information is calculated at the patch level (see :py:meth:`Performances`)
+  but this may impact the code performances.
 
 ----
 

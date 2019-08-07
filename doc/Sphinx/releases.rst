@@ -1,42 +1,136 @@
 Releases
 --------
 
-Major releases are available here as well as on the
-`GitHub page <https://github.com/SmileiPIC/Smilei>`_.
-We greatly appreciate external users trying this code and giving feedback.
-You can submit *issues* when experiencing difficulties,
-or *pull requests* for your changes to become part of the official releases.
-
-Note that most of the development of the code is currently hosted in
-a `different repository <https://llrgit.in2p3.fr/smilei/smilei>`_
-reserved for the :doc:`partners`. It is regularly synchronized with
-the GitHub page.
-
-.. warning::
-  
-  In v3.3, :doc:`significant changes<syntax_changes>` have been made to the input syntax.
+This page lists the major changes, but it is recommended to
+get the latest version of Smilei on `GitHub <https://github.com/SmileiPIC/Smilei>`_.
 
 ----
 
 Upcoming changes
 ^^^^^^^^^^^^^^^^
 
-* Vectorization
-* Interface with the PICSAR library
+* Interface with the PICSAR library (currently experimental)
+* Particle merging (beta version)
+
+
+----
+
+.. _latestVersion:
+
+Latest version
+^^^^^^^^^^^^^^^^^^^^^
+
+The latest version tarball can be donwloaded here:
+
+**Download**: `Smilei latest <_downloads/Smilei.tar.gz>`_
+
+
+----
+
+Release 4.2
+^^^^^^^^^^^^^^^^^^^^^
+
+**Download**: `Smilei v4.2 <_downloads/smilei-v4.2.tar.gz>`_
+
+
+* Different convention for circular polarization amplitude
+* Binomial filter in Cartesian 3D bug fix in parallel implementation
+* 1D and 2D laser envelope model
+* Cylindrical geometry with azimuthal Fourier decomposition (beta version)
+* Compatibility between various ionization and QED models
+* Bugfixes:
+   * Various crashes linked to vectorization
+   * `LaserGaussian2D` when focused far from boundary
+   * Laser :py:data:`a0` normalization to :py:data:`omega`
+   * Frozen particles are now properly ionized
+   * Position initialization over another species with moving window
+   * Tracked particles output was missing the mass factor for momenta
+   * Breit-Wheeler pair production with fine grain sorted particles
+
+
+----
+
+Release 4.1
+^^^^^^^^^^^^^^^^^^^^^
+
+**Download**: `Smilei v4.1 <_downloads/smilei-v4.1.tar.gz>`_
+
+* Probe diagnostics of currents and density per species
+* Field diagnostics with more than 2^32 points
+* Bugfixes:
+
+ * collisions (badly affected by vectorization)
+ * adaptive vectorization with dynamic load balancing
+ * memory leak in the laser envelope model
+ 
+* Disable usage of `-ipo` to compile on supercomputers despite of saving time simulation
+
+ * it needs too many resources (time and memory) to link
+ * it is recommended to do some tests on a new supercomputer without and then to re-establish it
+
+.. warning::
+
+  Since version 4.1, the :ref:`definition of macro-particle weights<Weights>`
+  has changed to ensure they do not depend on the cell volume. This impacts
+  only the users working directly with values of weights. Other simulation
+  results should be unchanged.
+
+
+----
+
+Release 4.0
+^^^^^^^^^^^^^^^^^^^^^
+
+**Download**: `Smilei v4.0 <_downloads/smilei-v4.0.tar.gz>`_
+
+* :ref:`vectorization`
+* :ref:`laser_envelope`
+* MPI option `MPI_THREAD_MULTIPLE` is now optional (but recommended)
+* Faster collisions
+* Bugfixes: handling `sum` for happi's `ParticleBinning`
+
+----
+
+Release 3.5
+^^^^^^^^^^^^^^^^^^^^^
+
+**Download**: `Smilei v3.5 <_downloads/smilei-v3.5.tar.gz>`_
+
+* :doc:`Laser defined in tilted plane<laser_offset>`
+* Bugfixes: Field diagnostic subgrid, Scalar diagnostic PoyInst, MPI tags for large number of patches
+
+----
+
+Release 3.4.1
+^^^^^^^^^^^^^^^^^^^^^
+
+**Download**: `Smilei v3.4.1 <_downloads/smilei-v3.4.1.tar.gz>`_
+
+* Ionization considering a user-defined rate
+
+----
+
+Release 3.4
+^^^^^^^^^^^
+
+**Download**: `Smilei v3.4 <_downloads/smilei-v3.4.tar.gz>`_
+
 * Compatibility with Python 3
 * New 'Performances' diagnostic
 * Tracked particles may output the fields at their location
 * 'subgrid' option in Fields diagnostics
 * Printout of the expected disk usage
 * Laser propagation pre-processing
-* Bugfixes: circular polarization
+* More flexible domain decomposition
+* Relativistic initialization
+* Particles injection using Numpy arrays
+* Possibility to use user-defined ionization rates
+* Bugfixes: circular polarization, collisional ionization
 
 ----
 
-.. _latestVersion:
-
-Current release 3.3
-^^^^^^^^^^^^^^^^^^^
+Release 3.3
+^^^^^^^^^^^
 
 **Download**: `Smilei v3.3 <_downloads/smilei-v3.3.tar.gz>`_
 
@@ -130,4 +224,3 @@ Release 1.0
 * Hybrid MPI-OpenMP parallelization
 * Field ionization
 * Some python diagnostics
-

@@ -1,3 +1,4 @@
+
 #include "Species.h"
 
 #include <cmath>
@@ -15,6 +16,7 @@
 #include "IonizationFactory.h"
 #include "RadiationFactory.h"
 #include "MultiphotonBreitWheelerFactory.h"
+#include "MergingFactory.h"
 #include "PartBoundCond.h"
 #include "PartWall.h"
 #include "BoundaryConditionType.h"
@@ -22,9 +24,11 @@
 #include "ElectroMagn.h"
 #include "Interpolator.h"
 #include "InterpolatorFactory.h"
+#include "ProjectorFactory.h"
 #include "Profile.h"
-
+#include "ElectroMagnAM.h"
 #include "Projector.h"
+#include "ProjectorFactory.h"
 
 #include "SimWindow.h"
 #include "Patch.h"
@@ -44,46 +48,47 @@ using namespace std;
 // Constructor for Species
 // input: simulation parameters & Species index
 // ---------------------------------------------------------------------------------------------------------------------
-Species::Species(Params& params, Patch* patch) :
-c_part_max(1),
-pusher("boris"),
-radiation_model("none"),
-time_frozen(0),
-time_relativistic_initialization(0),
-radiating(false),
-relativistic_field_initialization(false),
-multiphoton_Breit_Wheeler(2,""),
-ionization_model("none"),
-densityProfileType("none"),
-chargeProfile(NULL),
-densityProfile(NULL),
-velocityProfile(3,NULL),
-temperatureProfile(3,NULL),
-ppcProfile(NULL),
-max_charge(0.),
-particles(&particles_sorted[0]),
-position_initialization_array(NULL),
-momentum_initialization_array(NULL),
-n_numpy_particles(0),
-position_initialization_on_species(false),
-position_initialization_on_species_index(-1),
-electron_species(NULL),
-electron_species_index(-1),
-photon_species(NULL),
-//photon_species_index(-1),
-radiation_photon_species(""),
-mBW_pair_creation_sampling(2,1),
-clrw(params.clrw),
-oversize(params.oversize),
-cell_length(params.cell_length),
-min_loc_vec(patch->getDomainLocalMin()),
-tracking_diagnostic(10000),
-nDim_particle(params.nDim_particle),
-partBoundCond(NULL),
-min_loc(patch->getDomainLocalMin(0))
-
+Species::Species( Params &params, Patch *patch ) :
+    c_part_max( 1 ),
+    ionization_rate( Py_None ),
+    pusher( "boris" ),
+    radiation_model( "none" ),
+    time_frozen( 0 ),
+    radiating( false ),
+    relativistic_field_initialization( false ),
+    time_relativistic_initialization( 0 ),
+    multiphoton_Breit_Wheeler( 2, "" ),
+    ionization_model( "none" ),
+    densityProfileType( "none" ),
+    chargeProfile( NULL ),
+    densityProfile( NULL ),
+    velocityProfile( 3, NULL ),
+    temperatureProfile( 3, NULL ),
+    ppcProfile( NULL ),
+    max_charge( 0. ),
+    particles( &particles_sorted[0] ),
+    position_initialization_array( NULL ),
+    momentum_initialization_array( NULL ),
+    n_numpy_particles( 0 ),
+    position_initialization_on_species( false ),
+    position_initialization_on_species_index( -1 ),
+    electron_species( NULL ),
+    electron_species_index( -1 ),
+    photon_species( NULL ),
+    //photon_species_index(-1),
+    radiation_photon_species( "" ),
+    mBW_pair_creation_sampling( 2, 1 ),
+    clrw( params.clrw ),
+    oversize( params.oversize ),
+    cell_length( params.cell_length ),
+    min_loc_vec( patch->getDomainLocalMin() ),
+    tracking_diagnostic( 10000 ),
+    nDim_particle( params.nDim_particle ),
+    partBoundCond( NULL ),
+    min_loc( patch->getDomainLocalMin( 0 ) ),
+    merging_method_( "none" ),
+    merging_time_selection_( 0 )
 {
-    DEBUG(name);
 
     PI2 = 2.0 * M_PI;
     PI_ov_2 = 0.5*M_PI;
@@ -92,17 +97,25 @@ min_loc(patch->getDomainLocalMin(0))
     dx_inv_[1] = 1./cell_length[1];
     dx_inv_[2] = 1./cell_length[2];
 
-    initCluster(params);
+    initCluster( params );
     nDim_field = params.nDim_field;
-    inv_nDim_field = 1./((double)nDim_field);
+    inv_nDim_field = 1./( ( double )nDim_field );
+
+    length_[0]=0;
+    length_[1]=params.n_space[1]+1;
+    length_[2]=params.n_space[2]+1;
+
+    merge_momentum_cell_size_.resize(3);
+
+    merge_min_momentum_cell_length_.resize(3);
 
 }//END Species creator
 
-void Species::initCluster(Params& params)
+void Species::initCluster( Params &params )
 {
     // Arrays of the min and max indices of the particle bins
-    bmin.resize(params.n_space[0]/clrw);
-    bmax.resize(params.n_space[0]/clrw);
+    first_index.resize( params.n_space[0]/clrw );
+    last_index.resize( params.n_space[0]/clrw );
 
     //Size in each dimension of the buffers on which each bin are projected
     //In 1D the particles of a given bin can be projected on 6 different nodes at the second order (oversize = 2)
@@ -112,25 +125,25 @@ void Species::initCluster(Params& params)
     f_dim1 =  params.n_space[1] + 2 * oversize[1] +1;
     f_dim2 =  params.n_space[2] + 2 * oversize[2] +1;
 
-    b_dim.resize(params.nDim_field, 1);
-    if (nDim_particle == 1){
-        b_dim[0] =  (1 + clrw) + 2 * oversize[0];
+    b_dim.resize( params.nDim_field, 1 );
+    if( nDim_particle == 1 ) {
+        b_dim[0] = ( 1 + clrw ) + 2 * oversize[0];
         f_dim1 = 1;
         f_dim2 = 1;
     }
-    if (nDim_particle == 2){
-        b_dim[0] =  (1 + clrw) + 2 * oversize[0]; // There is a primal number of bins.
+    if( nDim_particle == 2 ) {
+        b_dim[0] = ( 1 + clrw ) + 2 * oversize[0]; // There is a primal number of bins.
         b_dim[1] =  f_dim1;
         f_dim2 = 1;
     }
-    if (nDim_particle == 3){
-        b_dim[0] =  (1 + clrw) + 2 * oversize[0]; // There is a primal number of bins.
+    if( nDim_particle == 3 ) {
+        b_dim[0] = ( 1 + clrw ) + 2 * oversize[0]; // There is a primal number of bins.
         b_dim[1] = f_dim1;
         b_dim[2] = f_dim2;
     }
 
     //Initialize specMPI
-    MPIbuff.allocate(nDim_particle);
+    MPIbuff.allocate( nDim_particle );
 
     //ener_tot = 0.;
     nrj_bc_lost = 0.;
@@ -140,49 +153,85 @@ void Species::initCluster(Params& params)
 
 }//END initCluster
 
+// -----------------------------------------------------------------------------
+//! This function enables to resize the number of bins
+// -----------------------------------------------------------------------------
+void Species::resizeCluster( Params &params )
+{
+
+    // We keep the current number of particles
+    int npart = particles->size();
+    int size = params.n_space[0]/clrw;
+
+    // Arrays of the min and max indices of the particle bins
+    first_index.resize( size );
+    last_index.resize( size );
+
+    // We redistribute the particles between the bins
+    int quotient = npart / size; // Fixed part for all bin
+    int remainder = npart - quotient*size; // To be distributed among the first bin
+
+    for( int ibin=0 ; ibin < size ; ibin++ ) {
+        if( ibin < remainder ) {
+            first_index[ibin] = ibin*quotient + ibin;
+            last_index[ibin] = first_index[ibin] + quotient + 1;
+        } else {
+            first_index[ibin] = ibin*quotient + remainder;
+            last_index[ibin] = first_index[ibin] + quotient;
+        }
+    }
+
+    //std::cout << "size: " << size << " " << npart << " " << first_index[0] << " " << last_index[0] << '\n';
+
+    // Recommended: A sorting process may be needed for best porfermance after this step
+
+}// end resizeCluster
 
 // Initialize the operators (Push, Ionize, PartBoundCond)
 // This must be separate from the parameters because the Species cloning copies
 // the parameters but not the operators.
-void Species::initOperators(Params& params, Patch* patch)
+void Species::initOperators( Params &params, Patch *patch )
 {
-    // assign the correct Pusher to Push
-    Push = PusherFactory::create(params, this);
 
+    // interpolation operator (virtual)
+    Interp = InterpolatorFactory::create( params, patch, this->vectorized_operators && !params.cell_sorting ); // + patchId -> idx_domain_begin (now = ref smpi)
+    
+    // assign the correct Pusher to Push
+    Push = PusherFactory::create( params, this );
+    if( this->ponderomotive_dynamics ) {
+        Push_ponderomotive_position = PusherFactory::create_ponderomotive_position_updater( params, this );
+    }
+
+    // projection operator (virtual)
+    Proj = ProjectorFactory::create( params, patch, this->vectorized_operators && !params.cell_sorting );  // + patchId -> idx_domain_begin (now = ref smpi)
+    
     // Assign the Ionization model (if needed) to Ionize
     //  Needs to be placed after createParticles() because requires the knowledge of max_charge
     // \todo pay attention to restart
-    Ionize = IonizationFactory::create(params, this);
-    if (Ionize) {
-        DEBUG("Species " << name << " can be ionized!");
-    }
+    Ionize = IonizationFactory::create( params, this );
 
     // Create the radiation model
-    Radiate = RadiationFactory::create(params, this);
-    if (Radiate) {
-        DEBUG("Species " << name << " will undergo radiation loss!");
-    }
+    Radiate = RadiationFactory::create( params, this );
 
     // Create the multiphoton Breit-Wheeler model
-    Multiphoton_Breit_Wheeler_process = MultiphotonBreitWheelerFactory::create(params, this);
-    if (Multiphoton_Breit_Wheeler_process) {
-        DEBUG("Species " << name << " will undergo multiphoton Breit-Wheeler!");
-    }
+    Multiphoton_Breit_Wheeler_process = MultiphotonBreitWheelerFactory::create( params, this );
+
+    // assign the correct Merging method to Merge
+    Merge = MergingFactory::create( params, this );
 
     // define limits for BC and functions applied and for domain decomposition
-    partBoundCond = new PartBoundCond(params, this, patch);
-
-    for (unsigned int iDim=0 ; iDim < nDim_particle ; iDim++){
-        for (unsigned int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++) {
-            MPIbuff.partRecv[iDim][iNeighbor].initialize(0, (*particles));
-            MPIbuff.partSend[iDim][iNeighbor].initialize(0, (*particles));
-            MPIbuff.part_index_send[iDim][iNeighbor].resize(0);
+    partBoundCond = new PartBoundCond( params, this, patch );
+    for( unsigned int iDim=0 ; iDim < nDim_particle ; iDim++ ) {
+        for( unsigned int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++ ) {
+            MPIbuff.partRecv[iDim][iNeighbor].initialize( 0, ( *particles ) );
+            MPIbuff.partSend[iDim][iNeighbor].initialize( 0, ( *particles ) );
+            MPIbuff.part_index_send[iDim][iNeighbor].resize( 0 );
             MPIbuff.part_index_recv_sz[iDim][iNeighbor] = 0;
             MPIbuff.part_index_send_sz[iDim][iNeighbor] = 0;
         }
     }
-    typePartSend.resize(nDim_particle*2, MPI_DATATYPE_NULL);
-    typePartRecv.resize(nDim_particle*2, MPI_DATATYPE_NULL);
+    typePartSend.resize( nDim_particle*2, MPI_DATATYPE_NULL );
+    typePartRecv.resize( nDim_particle*2, MPI_DATATYPE_NULL );
     exchangePatch = MPI_DATATYPE_NULL;
 
 }
@@ -193,19 +242,44 @@ void Species::initOperators(Params& params, Patch* patch)
 Species::~Species()
 {
     delete Push;
-    if (Ionize) delete Ionize;
-    if (Radiate) delete Radiate;
-    if (Multiphoton_Breit_Wheeler_process) delete Multiphoton_Breit_Wheeler_process;
-    if (partBoundCond) delete partBoundCond;
-    if (ppcProfile) delete ppcProfile;
-    if (chargeProfile) delete chargeProfile;
-    if (densityProfile) delete densityProfile;
-    for (unsigned int i=0; i<velocityProfile.size(); i++)
-        delete velocityProfile[i];
-    for (unsigned int i=0; i<temperatureProfile.size(); i++)
-        delete temperatureProfile[i];
+    delete Interp;
+    delete Proj;
 
-    DEBUG("Species deleted");
+    if( Merge ) {
+        delete Merge;
+    }
+
+    if( Ionize ) {
+        delete Ionize;
+    }
+    if( Radiate ) {
+        delete Radiate;
+    }
+    if( Multiphoton_Breit_Wheeler_process ) {
+        delete Multiphoton_Breit_Wheeler_process;
+    }
+    if( partBoundCond ) {
+        delete partBoundCond;
+    }
+    if( ppcProfile ) {
+        delete ppcProfile;
+    }
+    if( chargeProfile ) {
+        delete chargeProfile;
+    }
+    if( densityProfile ) {
+        delete densityProfile;
+    }
+    for( unsigned int i=0; i<velocityProfile.size(); i++ ) {
+        delete velocityProfile[i];
+    }
+    for( unsigned int i=0; i<temperatureProfile.size(); i++ ) {
+        delete temperatureProfile[i];
+    }
+    if( ionization_rate!=Py_None ) {
+        Py_DECREF( ionization_rate );
+    }
+
 }
 
 
@@ -213,11 +287,11 @@ Species::~Species()
 // ---------------------------------------------------------------------------------------------------------------------
 // For all (np) particles in a mesh initialize its numerical weight (equivalent to a number density)
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::initWeight(unsigned int nPart, unsigned int iPart, double density)
+void Species::initWeight( unsigned int nPart, unsigned int iPart, double n_real_particles )
 {
-    double w = density / nPart;
-    for (unsigned  p= iPart; p<iPart+nPart; p++) {
-        particles->weight(p) = w;
+    double w = n_real_particles / nPart;
+    for( unsigned  p= iPart; p<iPart+nPart; p++ ) {
+        particles->weight( p ) = w ;
     }
 }
 
@@ -226,34 +300,35 @@ void Species::initWeight(unsigned int nPart, unsigned int iPart, double density)
 // ---------------------------------------------------------------------------------------------------------------------
 // For all (np) particles in a mesh initialize its charge state
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::initCharge(unsigned int nPart, unsigned int iPart, double q)
+void Species::initCharge( unsigned int nPart, unsigned int iPart, double q )
 {
-    short Z = (short)q;
-    double r = q-(double)Z;
+    short Z = ( short )q;
+    double r = q-( double )Z;
 
     // if charge is integer, then all particles have the same charge
-    if ( r == 0. ) {
-        for (unsigned int p = iPart; p<iPart+nPart; p++)
-            particles->charge(p) = Z;
-    // if charge is not integer, then particles can have two different charges
+    if( r == 0. ) {
+        for( unsigned int p = iPart; p<iPart+nPart; p++ ) {
+            particles->charge( p ) = Z;
+        }
+        // if charge is not integer, then particles can have two different charges
     } else {
         int tot = 0, Nm, Np;
-        double rr=r/(1.-r), diff;
-        Np = (int)round(r*(double)nPart);
-        Nm = (int)nPart - Np;
-        for (unsigned int p = iPart; p<iPart+nPart; p++) {
-            if (Np > rr*Nm) {
-                particles->charge(p) = Z+1;
+        double rr=r/( 1.-r ), diff;
+        Np = ( int )round( r*( double )nPart );
+        Nm = ( int )nPart - Np;
+        for( unsigned int p = iPart; p<iPart+nPart; p++ ) {
+            if( Np > rr*Nm ) {
+                particles->charge( p ) = Z+1;
                 Np--;
             } else {
-                particles->charge(p) = Z;
+                particles->charge( p ) = Z;
                 Nm--;
             }
-            tot += particles->charge(p);
+            tot += particles->charge( p );
         }
-        diff = q - ((double)tot)/((double)nPart); // missing charge
-        if (diff != 0.) {
-            WARNING("Could not match exactly charge="<<q<<" for species "<< name <<" (difference of "<<diff<<"). Try to add particles.");
+        diff = q - ( ( double )tot )/( ( double )nPart ); // missing charge
+        if( diff != 0. ) {
+            WARNING( "Could not match exactly charge="<<q<<" for species "<< name <<" (difference of "<<diff<<"). Try to add particles." );
         }
     }
 }
@@ -265,38 +340,96 @@ void Species::initCharge(unsigned int nPart, unsigned int iPart, double q)
 //   - either using regular distribution in the mesh (position_initialization = regular)
 //   - or using uniform random distribution (position_initialization = random)
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::initPosition(unsigned int nPart, unsigned int iPart, double *indexes)
+void Species::initPosition( unsigned int nPart, unsigned int iPart, double *indexes, Params &params )
 {
-    if (position_initialization == "regular") {
+    if( position_initialization == "regular" ) {
 
-        double coeff = pow((double)nPart,inv_nDim_field);
-        if( nPart != (unsigned int) pow(round(coeff), (double)nDim_field) )
-            ERROR( "Impossible to put "<<nPart<<" particles regularly spaced in one cell. Use a square number, or `position_initialization = 'random'`");
+        double coeff = pow( ( double )nPart, inv_nDim_field );
 
-        int coeff_ = coeff;
-        coeff = 1./coeff;
-        for (unsigned int  p=iPart; p<iPart+nPart; p++) {
-            int i = (int)(p-iPart);
-            for(unsigned int idim=0; idim<nDim_particle; idim++) {
-                particles->position(idim,p) = indexes[idim] + cell_length[idim] * coeff * (0.5 + i%coeff_);
-                i /= coeff_; // integer division
+        if( params.geometry != "AMcylindrical" ) {
+            if( nPart != ( unsigned int ) pow( round( coeff ), ( double )nDim_field ) ) {
+                ERROR( "Impossible to put "<<nPart<<" particles regularly spaced in one cell. Use a square number, or `position_initialization = 'random'`" );
+            }
+
+            int coeff_ = coeff;
+            coeff = 1./coeff;
+
+            for( unsigned int  p=iPart; p<iPart+nPart; p++ ) {
+                int i = ( int )( p-iPart );
+                for( unsigned int idim=0; idim<nDim_particle; idim++ ) {
+                    particles->position( idim, p ) = indexes[idim] + cell_length[idim] * 0.975 * coeff * ( 0.5 + i%coeff_ );
+                    i /= coeff_; // integer division
+                }
+            }
+        } else {
+
+            //Trick to derive number of particles per dimension from total number of particles per cell
+            unsigned int Np_array[nDim_particle];
+            int Np = nPart;
+            int counter = 0;
+            unsigned int prime = 2;
+            double dx, dr, dtheta, theta_offset;
+            for( unsigned int idim=0; idim<nDim_particle; idim++ ) {
+                Np_array[idim] = 1;
+            }
+
+            while( prime <= 23 && Np > 1 ) {
+                if( Np%prime == 0 ) {
+                    Np = Np/prime;
+                    Np_array[counter%nDim_particle] *= prime;
+                    counter++;
+                } else {
+                    prime++;
+                }
+            }
+            Np_array[counter%nDim_particle] *= Np; //At that point, if Np is not equal to 1, it means that nPart has a prime divisor greater than 23.
+            std::sort( Np_array, Np_array + nDim_particle ); //sort so that the largest number of particles per dimension is used along theta.
+
+            dx = cell_length[0]/Np_array[0];
+            dr = cell_length[1]/Np_array[1];
+            dtheta = 2.*M_PI   /Np_array[2];
+
+            for( unsigned int ix = 0 ; ix < Np_array[0]; ix++ ) {
+                double qx = indexes[0] + dx*( ix+0.5 );
+                int nx = ix*( Np_array[2]*Np_array[1] );
+                for( unsigned int ir = 0 ; ir < Np_array[1]; ir++ ) {
+                    double qr = indexes[1] + dr*( ir+0.5 );
+                    int nr = ir*( Np_array[2] );
+                    theta_offset = Rand::uniform()*2.*M_PI;
+                    for( unsigned int itheta = 0 ; itheta < Np_array[2]; itheta++ ) {
+                        int p = nx+nr+itheta+iPart;
+                        double theta = theta_offset + itheta*dtheta;
+                        particles->position( 0, p ) = qx ;
+                        particles->position( 1, p ) = qr*cos( theta );
+                        particles->position( 2, p ) = qr*sin( theta );
+                    }
+                }
             }
         }
 
-    } else if (position_initialization == "random") {
-
-        for (unsigned int p= iPart; p<iPart+nPart; p++) {
-            for (unsigned int i=0; i<nDim_particle ; i++) {
-                particles->position(i,p)=indexes[i]+Rand::uniform()*cell_length[i];
+    } else if( position_initialization == "random" ) {
+        if( params.geometry=="AMcylindrical" ) {
+            double particles_r, particles_theta;
+            for( unsigned int p= iPart; p<iPart+nPart; p++ ) {
+                particles->position( 0, p )=indexes[0]+Rand::uniform()*cell_length[0];
+                particles_r=sqrt( indexes[1]*indexes[1]+ 2.*Rand::uniform()*( indexes[1]+cell_length[1]*0.5 )*cell_length[1] );
+                particles_theta=Rand::uniform()*2.*M_PI;
+                particles->position( 2, p )=particles_r*sin( particles_theta );
+                particles->position( 1, p )= particles_r*cos( particles_theta );
+            }
+        } else {
+            for( unsigned int p= iPart; p<iPart+nPart; p++ ) {
+                for( unsigned int i=0; i<nDim_particle ; i++ ) {
+                    particles->position( i, p )=indexes[i]+Rand::uniform()*cell_length[i];
+                }
             }
         }
+    } else if( position_initialization == "centered" ) {
 
-    } else if (position_initialization == "centered") {
-
-        for (unsigned int p=iPart; p<iPart+nPart; p++)
-            for (unsigned int i=0; i<nDim_particle ; i++)
-                particles->position(i,p)=indexes[i]+0.5*cell_length[i];
-
+        for( unsigned int p=iPart; p<iPart+nPart; p++ )
+            for( unsigned int i=0; i<nDim_particle ; i++ ) {
+                particles->position( i, p )=indexes[i]+0.5*cell_length[i];
+            }
     }
 }
 
@@ -307,61 +440,60 @@ void Species::initPosition(unsigned int nPart, unsigned int iPart, double *index
 //   - at zero (init_momentum_type = cold)
 //   - using random distribution (init_momentum_type = maxwell-juettner)
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp, double *vel)
+void Species::initMomentum( unsigned int nPart, unsigned int iPart, double *temp, double *vel )
 {
 
     // -------------------------------------------------------------------------
     // Particles
     // -------------------------------------------------------------------------
-    if (mass > 0)
-    {
-        
+    if( mass > 0 ) {
+
         // Cold distribution
-        if (momentum_initialization == "cold") {
-            
-            for (unsigned int p=iPart; p<iPart+nPart; p++) {
-                particles->momentum(0,p) = 0.0;
-                particles->momentum(1,p) = 0.0;
-                particles->momentum(2,p) = 0.0;
+        if( momentum_initialization == "cold" ) {
+
+            for( unsigned int p=iPart; p<iPart+nPart; p++ ) {
+                particles->momentum( 0, p ) = 0.0;
+                particles->momentum( 1, p ) = 0.0;
+                particles->momentum( 2, p ) = 0.0;
             }
-            
-        // Maxwell-Juttner distribution
-        } else if (momentum_initialization == "maxwell-juettner") {
-            
+
+            // Maxwell-Juttner distribution
+        } else if( momentum_initialization == "maxwell-juettner" ) {
+
             // Sample the energies in the MJ distribution
-            vector<double> energies = maxwellJuttner(nPart, temp[0]/mass);
-            
+            vector<double> energies = maxwellJuttner( nPart, temp[0]/mass );
+
             // Sample angles randomly and calculate the momentum
-            for (unsigned int p=iPart; p<iPart+nPart; p++) {
-                double phi   = acos(-Rand::uniform2());
+            for( unsigned int p=iPart; p<iPart+nPart; p++ ) {
+                double phi   = acos( -Rand::uniform2() );
                 double theta = 2.0*M_PI*Rand::uniform();
-                double psm = sqrt(pow(1.0+energies[p-iPart],2)-1.0);
-                
-                particles->momentum(0,p) = psm*cos(theta)*sin(phi);
-                particles->momentum(1,p) = psm*sin(theta)*sin(phi);
-                particles->momentum(2,p) = psm*cos(phi);
+                double psm = sqrt( pow( 1.0+energies[p-iPart], 2 )-1.0 );
+
+                particles->momentum( 0, p ) = psm*cos( theta )*sin( phi );
+                particles->momentum( 1, p ) = psm*sin( theta )*sin( phi );
+                particles->momentum( 2, p ) = psm*cos( phi );
             }
-            
+
             // Trick to have non-isotropic distribution (not good)
-            double t1 = sqrt(temp[1]/temp[0]), t2 = sqrt(temp[2]/temp[0]);
+            double t1 = sqrt( temp[1]/temp[0] ), t2 = sqrt( temp[2]/temp[0] );
             if( t1!=1. || t2 !=1. ) {
-                for (unsigned int p= iPart; p<iPart+nPart; p++) {
-                    particles->momentum(1,p) *= t1;
-                    particles->momentum(2,p) *= t2;
+                for( unsigned int p= iPart; p<iPart+nPart; p++ ) {
+                    particles->momentum( 1, p ) *= t1;
+                    particles->momentum( 2, p ) *= t2;
                 }
             }
-            
-        // Rectangular distribution
-        } else if (momentum_initialization == "rectangular") {
-            
-            double t0 = sqrt(temp[0]/mass), t1 = sqrt(temp[1]/mass), t2 = sqrt(temp[2]/mass);
-            for (unsigned int p= iPart; p<iPart+nPart; p++) {
-                particles->momentum(0,p) = Rand::uniform2() * t0;
-                particles->momentum(1,p) = Rand::uniform2() * t1;
-                particles->momentum(2,p) = Rand::uniform2() * t2;
+
+            // Rectangular distribution
+        } else if( momentum_initialization == "rectangular" ) {
+
+            double t0 = sqrt( temp[0]/mass ), t1 = sqrt( temp[1]/mass ), t2 = sqrt( temp[2]/mass );
+            for( unsigned int p= iPart; p<iPart+nPart; p++ ) {
+                particles->momentum( 0, p ) = Rand::uniform2() * t0;
+                particles->momentum( 1, p ) = Rand::uniform2() * t1;
+                particles->momentum( 2, p ) = Rand::uniform2() * t2;
             }
         }
-        
+
         // Adding the mean velocity (using relativistic composition)
         // Also relies on the method proposed in Zenitani, Phys. Plasmas 22, 042116 (2015)
         // to ensure the correct properties of a boosted distribution function
@@ -372,11 +504,15 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
         vy  = -vel[1];
         vz  = -vel[2];
         v2  = vx*vx + vy*vy + vz*vz;
-        if ( v2>0. ){
+        if( v2>0. ) {
             
-            g   = 1.0/sqrt(1.0-v2);
+            if( v2>=1. ) {
+                ERROR("The mean velocity should not be higher than the speed of light");
+            }
+            
+            g   = 1.0/sqrt( 1.0-v2 );
             gm1 = g - 1.0;
-            
+
             // compute the different component of the Matrix block of the Lorentz transformation
             Lxx = 1.0 + gm1 * vx*vx/v2;
             Lyy = 1.0 + gm1 * vy*vy/v2;
@@ -384,84 +520,80 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
             Lxy = gm1 * vx*vy/v2;
             Lxz = gm1 * vx*vz/v2;
             Lyz = gm1 * vy*vz/v2;
-            
+
             // Volume transformation method (here is the correction by Zenitani)
             double Volume_Acc;
             double CheckVelocity;
-            
+
             // Lorentz transformation of the momentum
-            for (unsigned int p=iPart; p<iPart+nPart; p++)
-            {
-                gp = sqrt(1.0 + pow(particles->momentum(0,p), 2)
-                              + pow(particles->momentum(1,p), 2)
-                              + pow(particles->momentum(2,p), 2) );
-                
-                CheckVelocity = ( vx*particles->momentum(0,p) + vy*particles->momentum(1,p) + vz*particles->momentum(2,p) ) / gp;
+            for( unsigned int p=iPart; p<iPart+nPart; p++ ) {
+                gp = sqrt( 1.0 + pow( particles->momentum( 0, p ), 2 )
+                           + pow( particles->momentum( 1, p ), 2 )
+                           + pow( particles->momentum( 2, p ), 2 ) );
+
+                CheckVelocity = ( vx*particles->momentum( 0, p ) + vy*particles->momentum( 1, p ) + vz*particles->momentum( 2, p ) ) / gp;
                 Volume_Acc = Rand::uniform();
-                if (CheckVelocity > Volume_Acc){
-                    
-                    double Phi , Theta , vfl ,vflx , vfly, vflz, vpx , vpy , vpz ;
-                    Phi = atan2(sqrt(vx*vx +vy*vy), vz);
-                    Theta = atan2(vy, vx);
-                    
-                    vpx = particles->momentum(0,p)/gp ;
-                    vpy = particles->momentum(1,p)/gp ;
-                    vpz = particles->momentum(2,p)/gp ;
-                    vfl = vpx*cos(Theta)*sin(Phi) +vpy*sin(Theta)*sin(Phi) + vpz*cos(Phi) ;
-                    vflx = vfl*cos(Theta)*sin(Phi) ;
-                    vfly = vfl*sin(Theta)*sin(Phi) ;
-                    vflz = vfl*cos(Phi) ;
+                if( CheckVelocity > Volume_Acc ) {
+
+                    double Phi, Theta, vfl, vflx, vfly, vflz, vpx, vpy, vpz ;
+                    Phi = atan2( sqrt( vx*vx +vy*vy ), vz );
+                    Theta = atan2( vy, vx );
+
+                    vpx = particles->momentum( 0, p )/gp ;
+                    vpy = particles->momentum( 1, p )/gp ;
+                    vpz = particles->momentum( 2, p )/gp ;
+                    vfl = vpx*cos( Theta )*sin( Phi ) +vpy*sin( Theta )*sin( Phi ) + vpz*cos( Phi ) ;
+                    vflx = vfl*cos( Theta )*sin( Phi ) ;
+                    vfly = vfl*sin( Theta )*sin( Phi ) ;
+                    vflz = vfl*cos( Phi ) ;
                     vpx -= 2.*vflx ;
                     vpy -= 2.*vfly ;
                     vpz -= 2.*vflz ;
-                    gp = 1./sqrt(1.0 - vpx*vpx - vpy*vpy - vpz*vpz);
-                    particles->momentum(0,p) = vpx*gp ;
-                    particles->momentum(1,p) = vpy*gp ;
-                    particles->momentum(2,p) = vpz*gp ;
-                    
+                    gp = 1./sqrt( 1.0 - vpx*vpx - vpy*vpy - vpz*vpz );
+                    particles->momentum( 0, p ) = vpx*gp ;
+                    particles->momentum( 1, p ) = vpy*gp ;
+                    particles->momentum( 2, p ) = vpz*gp ;
+
                 }//here ends the corrections by Zenitani
-                
-                px = -gp*g*vx + Lxx * particles->momentum(0,p) + Lxy * particles->momentum(1,p) + Lxz * particles->momentum(2,p);
-                py = -gp*g*vy + Lxy * particles->momentum(0,p) + Lyy * particles->momentum(1,p) + Lyz * particles->momentum(2,p);
-                pz = -gp*g*vz + Lxz * particles->momentum(0,p) + Lyz * particles->momentum(1,p) + Lzz * particles->momentum(2,p);
-                
-                particles->momentum(0,p) = px;
-                particles->momentum(1,p) = py;
-                particles->momentum(2,p) = pz;
+
+                px = -gp*g*vx + Lxx * particles->momentum( 0, p ) + Lxy * particles->momentum( 1, p ) + Lxz * particles->momentum( 2, p );
+                py = -gp*g*vy + Lxy * particles->momentum( 0, p ) + Lyy * particles->momentum( 1, p ) + Lyz * particles->momentum( 2, p );
+                pz = -gp*g*vz + Lxz * particles->momentum( 0, p ) + Lyz * particles->momentum( 1, p ) + Lzz * particles->momentum( 2, p );
+
+                particles->momentum( 0, p ) = px;
+                particles->momentum( 1, p ) = py;
+                particles->momentum( 2, p ) = pz;
             }
-        
+
         }//ENDif vel != 0
-    
+
     }
     // -------------------------------------------------------------------------
     // Photons
     // -------------------------------------------------------------------------
-    else if (mass == 0)
-    {
+    else if( mass == 0 ) {
         // Cold distribution
-        if (momentum_initialization == "cold") {
+        if( momentum_initialization == "cold" ) {
 
             //double gamma =sqrt(vel[0]*vel[0] + vel[1]*vel[1] + vel[2]*vel[2]);
-            for (unsigned int p=iPart; p<iPart+nPart; p++) {
-                particles->momentum(0,p) = vel[0];
-                particles->momentum(1,p) = vel[1];
-                particles->momentum(2,p) = vel[2];
+            for( unsigned int p=iPart; p<iPart+nPart; p++ ) {
+                particles->momentum( 0, p ) = vel[0];
+                particles->momentum( 1, p ) = vel[1];
+                particles->momentum( 2, p ) = vel[2];
             }
 
-        // Rectangular distribution
-        } else if (momentum_initialization == "rectangular") {
+            // Rectangular distribution
+        } else if( momentum_initialization == "rectangular" ) {
 
             //double gamma =sqrt(temp[0]*temp[0] + temp[1]*temp[1] + temp[2]*temp[2]);
-            for (unsigned int p= iPart; p<iPart+nPart; p++) {
-                particles->momentum(0,p) = Rand::uniform2()*temp[0];
-                particles->momentum(1,p) = Rand::uniform2()*temp[1];
-                particles->momentum(2,p) = Rand::uniform2()*temp[2];
+            for( unsigned int p= iPart; p<iPart+nPart; p++ ) {
+                particles->momentum( 0, p ) = Rand::uniform2()*temp[0];
+                particles->momentum( 1, p ) = Rand::uniform2()*temp[1];
+                particles->momentum( 2, p ) = Rand::uniform2()*temp[2];
             }
 
         }
     }
-
-
 }//END initMomentum
 
 
@@ -470,138 +602,182 @@ void Species::initMomentum(unsigned int nPart, unsigned int iPart, double *temp,
 //   - interpolate the fields at the particle position
 //   - perform ionization
 //   - perform the radiation reaction
-//   - perform the multiphoton Breit-Wheeler
 //   - calculate the new velocity
 //   - calculate the new position
 //   - apply the boundary conditions
 //   - increment the currents (projection)
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::dynamics(double time_dual, unsigned int ispec,
-                       ElectroMagn* EMfields, Interpolator* Interp,
-                       Projector* Proj, Params &params, bool diag_flag,
-                       PartWalls* partWalls,
-                       Patch* patch, SmileiMPI* smpi,
-                       RadiationTables & RadiationTables,
-                       MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
-                       vector<Diagnostic*>& localDiags)
+void Species::dynamics( double time_dual, unsigned int ispec,
+                        ElectroMagn *EMfields,
+                        Params &params, bool diag_flag,
+                        PartWalls *partWalls,
+                        Patch *patch, SmileiMPI *smpi,
+                        RadiationTables &RadiationTables,
+                        MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
+                        vector<Diagnostic *> &localDiags )
 {
-    int ithread;
-    #ifdef _OPENMP
-        ithread = omp_get_thread_num();
-    #else
-        ithread = 0;
-    #endif
+    int ithread, tid( 0 );
+#ifdef _OPENMP
+    ithread = omp_get_thread_num();
+#else
+    ithread = 0;
+#endif
+
+#ifdef  __DETAILED_TIMERS
+    double timer;
+#endif
 
     unsigned int iPart;
 
     // Reset list of particles to exchange
     clearExchList();
 
-    int tid(0);
-    double ener_iPart(0.);
-    std::vector<double> nrj_lost_per_thd(1, 0.);
+    double ener_iPart( 0. );
+    std::vector<double> nrj_lost_per_thd( 1, 0. );
 
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
-    if (time_dual>time_frozen) { // moving particle
-
-        smpi->dynamics_resize(ithread, nDim_particle, bmax.back());
-
+    if( time_dual>time_frozen || Ionize) { // moving particle
+    
+        smpi->dynamics_resize( ithread, nDim_field, last_index.back(), params.geometry=="AMcylindrical" );
         //Point to local thread dedicated buffers
         //Still needed for ionization
-        vector<double> *Epart = &(smpi->dynamics_Epart[ithread]);
+        vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
 
-        for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin++) {
+        for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin++ ) {
 
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
 
             // Interpolate the fields at the particle position
-            (*Interp)(EMfields, *particles, smpi, &(bmin[ibin]), &(bmax[ibin]), ithread );
+            Interp->fieldsWrapper( EMfields, *particles, smpi, &( first_index[ibin] ), &( last_index[ibin] ), ithread );
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[0] += MPI_Wtime() - timer;
+#endif
 
             // Ionization
-            if (Ionize)
-                (*Ionize)(particles, bmin[ibin], bmax[ibin], Epart, EMfields, Proj);
+            if( Ionize ) {
+
+#ifdef  __DETAILED_TIMERS
+                timer = MPI_Wtime();
+#endif
+
+                ( *Ionize )( particles, first_index[ibin], last_index[ibin], Epart, patch, Proj );
+
+#ifdef  __DETAILED_TIMERS
+                patch->patch_timers[4] += MPI_Wtime() - timer;
+#endif
+            }
+            
+            if( time_dual<=time_frozen ) continue; // Do not push nor project frozen particles
 
             // Radiation losses
-            if (Radiate)
-            {
+            if( Radiate ) {
+
+#ifdef  __DETAILED_TIMERS
+                timer = MPI_Wtime();
+#endif
 
                 // Radiation process
-                (*Radiate)(*particles, this->photon_species, smpi,
-                         RadiationTables,
-                         bmin[ibin], bmax[ibin], ithread );
+                ( *Radiate )( *particles, this->photon_species, smpi,
+                              RadiationTables,
+                              first_index[ibin], last_index[ibin], ithread );
 
                 // Update scalar variable for diagnostics
-                nrj_radiation += (*Radiate).getRadiatedEnergy();
+                nrj_radiation += Radiate->getRadiatedEnergy();
 
                 // Update the quantum parameter chi
-                (*Radiate).compute_thread_chipa(*particles,
-                                                smpi,
-                                                bmin[ibin],
-                                                bmax[ibin],
-                                                ithread );
+                Radiate->computeParticlesChi( *particles,
+                                              smpi,
+                                              first_index[ibin],
+                                              last_index[ibin],
+                                              ithread );
+#ifdef  __DETAILED_TIMERS
+                patch->patch_timers[5] += MPI_Wtime() - timer;
+#endif
+
             }
+
 
             // Multiphoton Breit-Wheeler
-            if (Multiphoton_Breit_Wheeler_process)
-            {
+            if( Multiphoton_Breit_Wheeler_process ) {
+
+#ifdef  __DETAILED_TIMERS
+                timer = MPI_Wtime();
+#endif
 
                 // Pair generation process
-                (*Multiphoton_Breit_Wheeler_process)(*particles,
-                         smpi,
-                         MultiphotonBreitWheelerTables,
-                         bmin[ibin], bmax[ibin], ithread );
+                ( *Multiphoton_Breit_Wheeler_process )( *particles,
+                                                        smpi,
+                                                        MultiphotonBreitWheelerTables,
+                                                        first_index[ibin], last_index[ibin], ithread );
 
-                 // Update scalar variable for diagnostics
-                 // We reuse nrj_radiation for the pairs
-                 nrj_radiation += (*Multiphoton_Breit_Wheeler_process).getPairEnergy();
+                // Update scalar variable for diagnostics
+                // We reuse nrj_radiation for the pairs
+                nrj_radiation += Multiphoton_Breit_Wheeler_process->getPairEnergy();
 
-                 // Update the photon quantum parameter chi of all photons
-                 (*Multiphoton_Breit_Wheeler_process).compute_thread_chiph(*particles,
-                                                 smpi,
-                                                 bmin[ibin],
-                                                 bmax[ibin],
-                                                 ithread );
-
-                 // Suppression of the decayed photons into pairs
-                 (*Multiphoton_Breit_Wheeler_process).decayed_photon_cleaning(
-                                 *particles,ibin, bmin.size(), &bmin[0], &bmax[0]);
+                // Update the photon quantum parameter chi of all photons
+                Multiphoton_Breit_Wheeler_process->compute_thread_chiph( *particles,
+                        smpi,
+                        first_index[ibin],
+                        last_index[ibin],
+                        ithread );
+                
+                // Suppression of the decayed photons into pairs
+                Multiphoton_Breit_Wheeler_process->decayed_photon_cleaning(
+                    *particles, smpi, ibin, first_index.size(), &first_index[0], &last_index[0], ithread );
+                    
+#ifdef  __DETAILED_TIMERS
+                patch->patch_timers[6] += MPI_Wtime() - timer;
+#endif
 
             }
 
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
+
             // Push the particles and the photons
-            (*Push)(*particles, smpi, bmin[ibin], bmax[ibin], ithread );
-            //particles->test_move( bmin[ibin], bmax[ibin], params );
+            ( *Push )( *particles, smpi, first_index[ibin], last_index[ibin], ithread );
+            //particles->test_move( first_index[ibin], last_index[ibin], params );
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[1] += MPI_Wtime() - timer;
+            timer = MPI_Wtime();
+#endif
 
             // Apply wall and boundary conditions
-            if (mass>0)
-            {
-                for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
-                    for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+            if( mass>0 ) {
+                for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
+                    for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
                         double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
-                        if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
+                        if( !( *partWalls )[iwall]->apply( *particles, iPart, this, dtgf, ener_iPart ) ) {
                             nrj_lost_per_thd[tid] += mass * ener_iPart;
                         }
                     }
                 }
-
                 // Boundary Condition may be physical or due to domain decomposition
                 // apply returns 0 if iPart is not in the local domain anymore
                 //        if omp, create a list per thread
-                for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
-                    if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
+                for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
+                    if( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
                         addPartInExchList( iPart );
                         nrj_lost_per_thd[tid] += mass * ener_iPart;
+                        //}
+                        //else if ( partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
+                        //std::cout<<"removed particle position"<< particles->position(0,iPart)<<" , "<<particles->position(1,iPart)<<" ,"<<particles->position(2,iPart)<<std::endl;
                     }
-                 }
+                }
 
-
-            } else if (mass==0) {
-                for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
-                    for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
+            } else if( mass==0 ) {
+                for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
+                    for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
                         double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
-                        if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
-                                nrj_lost_per_thd[tid] += ener_iPart;
+                        if( !( *partWalls )[iwall]->apply( *particles, iPart, this, dtgf, ener_iPart ) ) {
+                            nrj_lost_per_thd[tid] += ener_iPart;
                         }
                     }
                 }
@@ -609,26 +785,41 @@ void Species::dynamics(double time_dual, unsigned int ispec,
                 // Boundary Condition may be physical or due to domain decomposition
                 // apply returns 0 if iPart is not in the local domain anymore
                 //        if omp, create a list per thread
-                for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
-                    if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
+                for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
+                    if( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
                         addPartInExchList( iPart );
                         nrj_lost_per_thd[tid] += ener_iPart;
                     }
-                 }
+                }
 
             }
 
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[3] += MPI_Wtime() - timer;
+#endif
+
             //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
 
-             // Project currents if not a Test species and charges as well if a diag is needed.
-             // Do not project if a photon
-             if ((!particles->is_test) && (mass > 0))
-                 (*Proj)(EMfields, *particles, smpi, bmin[ibin], bmax[ibin], ithread, ibin, clrw, diag_flag, params.is_spectral, b_dim, ispec );
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
+
+            // Project currents if not a Test species and charges as well if a diag is needed.
+            // Do not project if a photon
+            if( ( !particles->is_test ) && ( mass > 0 ) ) {
+                Proj->currentsAndDensityWrapper( EMfields, *particles, smpi, first_index[ibin], last_index[ibin], ithread, diag_flag, params.is_spectral, ispec );
+            }
+
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[2] += MPI_Wtime() - timer;
+#endif
 
         }// ibin
 
-        for (unsigned int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++)
+
+        for( unsigned int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++ ) {
             nrj_bc_lost += nrj_lost_per_thd[tid];
+        }
 
 //        // Add the ionized electrons to the electron species
 //        if (Ionize)
@@ -642,7 +833,7 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 //            {
 //                photon_species->importParticles(params,
 //                                                patch,
-//                                                Radiate->new_photons,
+//                                                Radiate->new_photons_,
 //                                                localDiags);
 //            }
 //        }
@@ -660,29 +851,106 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 //            }
 //        }
 
-    }
-    else { // immobile particle (at the moment only project density)
-        if ( diag_flag &&(!particles->is_test)){
-            double* b_rho=nullptr;
-            for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
+    } //End if moving or ionized particles
 
-                if (nDim_field==2)
-                    b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1) : &(*EMfields->rho_)(ibin*clrw*f_dim1) ;
-                if (nDim_field==3)
-                    b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw*f_dim1*f_dim2) : &(*EMfields->rho_)(ibin*clrw*f_dim1*f_dim2) ;
-                else if (nDim_field==1)
-                    b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(ibin*clrw) : &(*EMfields->rho_)(ibin*clrw) ;
-                for (iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
-                    (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_dim);
+    if(time_dual <= time_frozen && diag_flag &&( !particles->is_test ) ) { //immobile particle (at the moment only project density)
+        if( params.geometry != "AMcylindrical" ) {
+            double *b_rho=nullptr;
+            for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
+                b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
+                for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
+                    Proj->basic( b_rho, ( *particles ), iPart, 0 );
+                }
+            }
+        } else {
+            int n_species = patch->vecSpecies.size();
+            complex<double> *b_rho=nullptr;
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+            for( unsigned int imode = 0; imode<params.nmodes; imode++ ) {
+                int ifield = imode*n_species+ispec;
+                for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
+                    b_rho = emAM->rho_AM_s[ifield] ? &( *emAM->rho_AM_s[ifield] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
+                    for( int iPart=first_index[ibin] ; iPart<last_index[ibin]; iPart++ ) {
+                        Proj->basicForComplex( b_rho, ( *particles ), iPart, 0, imode );
+                    }
+                }
+            }
+        }
+    } // End projection for frozen particles
+} //END dynamics
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// For all particles of the species
+//   - interpolate the fields at the particle position
+//   - perform ionization
+//   - perform the radiation reaction
+//   - perform the multiphoton Breit-Wheeler
+//   - calculate the new velocity
+//   - calculate the new position
+//   - apply the boundary conditions
+//   - increment the currents (projection)
+// ---------------------------------------------------------------------------------------------------------------------
+void Species::scalar_dynamics( double time_dual, unsigned int ispec,
+                               ElectroMagn *EMfields,
+                               Params &params, bool diag_flag,
+                               PartWalls *partWalls,
+                               Patch *patch, SmileiMPI *smpi,
+                               RadiationTables &RadiationTables,
+                               MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
+                               vector<Diagnostic *> &localDiags )
+{
+
+}
+
+void Species::projection_for_diags( double time_dual, unsigned int ispec,
+                                    ElectroMagn *EMfields,
+                                    Params &params, bool diag_flag,
+                                    Patch *patch, SmileiMPI *smpi )
+{
+    if( diag_flag &&( !particles->is_test ) ) {
+
+        if( params.geometry != "AMcylindrical" ) {
+            double *buf[4];
+
+            for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
+
+                buf[0] = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
+                buf[1] = EMfields->Jx_s [ispec] ? &( *EMfields->Jx_s [ispec] )( 0 ) : &( *EMfields->Jx_ )( 0 ) ;
+                buf[2] = EMfields->Jy_s [ispec] ? &( *EMfields->Jy_s [ispec] )( 0 ) : &( *EMfields->Jy_ )( 0 ) ;
+                buf[3] = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )( 0 ) : &( *EMfields->Jz_ )( 0 ) ;
+
+                for( int iPart=first_index[ibin] ; iPart<last_index[ibin]; iPart++ ) {
+                    for( unsigned int quantity=0; quantity < 4; quantity++ ) {
+                        Proj->basic( buf[quantity], ( *particles ), iPart, quantity );
+                    }
                 } //End loop on particles
             }//End loop on bins
+        } else { // AM case
+            complex<double> *buf[4];
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+            int n_species = patch->vecSpecies.size();
+            for( unsigned int imode = 0; imode<params.nmodes; imode++ ) {
+                int ifield = imode*n_species+ispec;
 
+                for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
+
+                    buf[0] = emAM->rho_AM_s[ifield] ? &( *emAM->rho_AM_s[ifield] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
+                    buf[1] = emAM->Jl_s [ifield] ? &( *emAM->Jl_s [ifield] )( 0 ) : &( *emAM->Jl_[imode] )( 0 ) ;
+                    buf[2] = emAM->Jr_s [ifield] ? &( *emAM->Jr_s [ifield] )( 0 ) : &( *emAM->Jr_[imode] )( 0 ) ;
+                    buf[3] = emAM->Jt_s [ifield] ? &( *emAM->Jt_s [ifield] )( 0 ) : &( *emAM->Jt_[imode] )( 0 ) ;
+
+                    for( int iPart=first_index[ibin] ; iPart<last_index[ibin]; iPart++ ) {
+                        for( unsigned int quantity=0; quantity < 4; quantity++ ) {
+                            Proj->basicForComplex( buf[quantity], ( *particles ), iPart, quantity, imode );
+                        }
+                    } //End loop on particles
+                }//End loop on bins
+            } //End loop on modes
         }
-    }//END if time vs. time_frozen
-
-}//END dynamic
-
-
+        
+    }
+}
 
 // -----------------------------------------------------------------------------
 //! For all particles of the species, import the new particles generated
@@ -691,46 +959,44 @@ void Species::dynamics(double time_dual, unsigned int ispec,
 //! - radiation reaction
 //! - multiphoton Breit-Wheeler
 // -----------------------------------------------------------------------------
-void Species::dynamics_import_particles(double time_dual, unsigned int ispec,
-                       Params &params,
-                       Patch* patch, SmileiMPI* smpi,
-                       RadiationTables & RadiationTables,
-                       MultiphotonBreitWheelerTables & MultiphotonBreitWheelerTables,
-                       vector<Diagnostic*>& localDiags)
+void Species::dynamics_import_particles( double time_dual, unsigned int ispec,
+        Params &params,
+        Patch *patch, SmileiMPI *smpi,
+        vector<Diagnostic *> &localDiags )
 {
     // if moving particle
-    if (time_dual>time_frozen) { // moving particle
+    if( time_dual>time_frozen ) { // moving particle
 
         // Add the ionized electrons to the electron species
-        if (Ionize)
+        if( Ionize ) {
             electron_species->importParticles( params, patch, Ionize->new_electrons, localDiags );
+        }
 
         // Radiation losses
-        if (Radiate)
-        {
+        if( Radiate ) {
             // If creation of macro-photon, we add them to photon_species
-            if (photon_species)
-            {
-                photon_species->importParticles(params,
-                                                patch,
-                                                Radiate->new_photons,
-                                                localDiags);
+            if( photon_species ) {
+                photon_species->importParticles( params,
+                                                 patch,
+                                                 Radiate->new_photons_,
+                                                 localDiags );
             }
         }
 
         // Multiphoton Breit-Wheeler
-        if (Multiphoton_Breit_Wheeler_process)
-        {
+        if( Multiphoton_Breit_Wheeler_process ) {
             // Addition of the electron-positron particles
-            for (int k=0; k<2; k++) {
-                mBW_pair_species[k]->importParticles(params,
-                                             patch,
-                                             Multiphoton_Breit_Wheeler_process->new_pair[k],
-                                             localDiags);
+            for( int k=0; k<2; k++ ) {
+                mBW_pair_species[k]->importParticles( params,
+                                                      patch,
+                                                      Multiphoton_Breit_Wheeler_process->new_pair[k],
+                                                      localDiags );
             }
         }
     }//END if time vs. time_frozen
 }
+
+
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -738,35 +1004,43 @@ void Species::dynamics_import_particles(double time_dual, unsigned int ispec,
 //   - increment the charge (projection)
 //   - used at initialisation for Poisson (and diags if required, not for now dynamics )
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::computeCharge(unsigned int ispec, ElectroMagn* EMfields, Projector* Proj)
+void Species::computeCharge( unsigned int ispec, ElectroMagn *EMfields )
 {
     // -------------------------------
     // calculate the particle charge
     // -------------------------------
-    if ( (!particles->is_test) ) {
-        double* b_rho=nullptr;
-        for (unsigned int ibin = 0 ; ibin < bmin.size() ; ibin ++) { //Loop for projection on buffer_proj
-            unsigned int bin_start = ibin*clrw*f_dim1*f_dim2;
+    if( ( !particles->is_test ) ) {
+        for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
             // Not for now, else rho is incremented twice. Here and dynamics. Must add restartRhoJs and manage independantly diags output
             //b_rho = EMfields->rho_s[ispec] ? &(*EMfields->rho_s[ispec])(bin_start) : &(*EMfields->rho_)(bin_start);
-            b_rho = &(*EMfields->rho_)(bin_start);
+            if( !dynamic_cast<ElectroMagnAM *>( EMfields ) ) {
+                double *b_rho = &( *EMfields->rho_ )( 0 );
 
-            for (unsigned int iPart=bmin[ibin] ; (int)iPart<bmax[ibin]; iPart++ ) {
-                (*Proj)(b_rho, (*particles), iPart, ibin*clrw, b_dim);
-
-            } //End loop on particles
-        }//End loop on bins
+                for( unsigned int iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
+                    Proj->basic( b_rho, ( *particles ), iPart, 0 );
+                }
+            } else {
+                ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+                unsigned int Nmode = emAM->rho_AM_.size();
+                for( unsigned int imode=0; imode<Nmode; imode++ ) {
+                    complex<double> *b_rho = &( *emAM->rho_AM_[imode] )( 0 );
+                    for( unsigned int iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
+                        Proj->basicForComplex( b_rho, ( *particles ), iPart, 0, imode );
+                    }
+                }
+            }
+        }
 
     }
-
 }//END computeCharge
 
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Sort particles
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::sort_part(Params& params)
+void Species::sort_part( Params &params )
 {
+
     int ndim = params.nDim_field;
     int idim;
     //cleanup_sent_particles(ispec, indexes_of_particles_to_exchange);
@@ -777,30 +1051,30 @@ void Species::sort_part(Params& params)
     /********************************************************************************/
     int ii, iPart;
 
-
     // Push lost particles at the end of bins
-    for (unsigned int ibin = 0 ; ibin < bmax.size() ; ibin++ ) {
+    for( unsigned int ibin = 0 ; ibin < last_index.size() ; ibin++ ) {
         ii = indexes_of_particles_to_exchange.size()-1;
-        if (ii >= 0) { // Push lost particles to the end of the bin
+        if( ii >= 0 ) { // Push lost particles to the end of the bin
             iPart = indexes_of_particles_to_exchange[ii];
-            while (iPart >= bmax[ibin] && ii > 0) {
+            while( iPart >= last_index[ibin] && ii > 0 ) {
                 ii--;
                 iPart = indexes_of_particles_to_exchange[ii];
             }
-            while (iPart == bmax[ibin]-1 && iPart >= bmin[ibin] && ii > 0) {
-                bmax[ibin]--;
+            while( iPart == last_index[ibin]-1 && iPart >= first_index[ibin] && ii > 0 ) {
+                last_index[ibin]--;
                 ii--;
                 iPart = indexes_of_particles_to_exchange[ii];
             }
-            while (iPart >= bmin[ibin] && ii > 0) {
-                particles->overwrite_part(bmax[ibin]-1, iPart );
-                bmax[ibin]--;
+            while( iPart >= first_index[ibin] && ii > 0 ) {
+                particles->overwrite_part( last_index[ibin]-1, iPart );
+                last_index[ibin]--;
                 ii--;
                 iPart = indexes_of_particles_to_exchange[ii];
             }
-            if (iPart >= bmin[ibin] && iPart < bmax[ibin]) { //On traite la dernière particule (qui peut aussi etre la premiere)
-                particles->overwrite_part(bmax[ibin]-1, iPart );
-                bmax[ibin]--;
+            //On traite la dernière particule (qui peut aussi etre la premiere)
+            if( iPart >= first_index[ibin] && iPart < last_index[ibin] ) {
+                particles->overwrite_part( last_index[ibin]-1, iPart );
+                last_index[ibin]--;
             }
         }
     }
@@ -808,22 +1082,24 @@ void Species::sort_part(Params& params)
 
     //Shift the bins in memory
     //Warning: this loop must be executed sequentially. Do not use openMP here.
-    for (int unsigned ibin = 1 ; ibin < bmax.size() ; ibin++ ) { //First bin don't need to be shifted
-        ii = bmin[ibin]-bmax[ibin-1]; // Shift the bin in memory by ii slots.
-        iPart = min(ii,bmax[ibin]-bmin[ibin]); // Number of particles we have to shift = min (Nshift, Nparticle in the bin)
-        if(iPart > 0) particles->overwrite_part(bmax[ibin]-iPart,bmax[ibin-1],iPart);
-        bmax[ibin] -= ii;
-        bmin[ibin] = bmax[ibin-1];
+    for( int unsigned ibin = 1 ; ibin < last_index.size() ; ibin++ ) { //First bin don't need to be shifted
+        ii = first_index[ibin]-last_index[ibin-1]; // Shift the bin in memory by ii slots.
+        iPart = min( ii, last_index[ibin]-first_index[ibin] ); // Number of particles we have to shift = min (Nshift, Nparticle in the bin)
+        if( iPart > 0 ) {
+            particles->overwrite_part( last_index[ibin]-iPart, last_index[ibin-1], iPart );
+        }
+        last_index[ibin] -= ii;
+        first_index[ibin] = last_index[ibin-1];
     }
 
 
 
-    int nmove,lmove; // local, OK
-    int shift[bmax.size()+1];//how much we need to shift each bin in order to leave room for the new particle
+    int nmove, lmove; // local, OK
+    int shift[last_index.size()+1];//how much we need to shift each bin in order to leave room for the new particle
     double dbin;
 
     dbin = params.cell_length[0]*params.clrw; //width of a bin.
-    for (unsigned int j=0; j<bmax.size()+1 ;j++){
+    for( unsigned int j=0; j<last_index.size()+1 ; j++ ) {
         shift[j]=0;
     }
 
@@ -832,23 +1108,23 @@ void Species::sort_part(Params& params)
     int n_part_recv;
 
     indexes_of_particles_to_exchange.clear();
-    particles->erase_particle_trail(bmax.back());
+    particles->erase_particle_trail( last_index.back() );
 
     //Evaluation of the necessary shift of all bins.2
-    for (unsigned int j=0; j<bmax.size()+1 ;j++){
+    for( unsigned int j=0; j<last_index.size()+1 ; j++ ) {
         shift[j]=0;
     }
 
     //idim=0
-    shift[1] += MPIbuff.part_index_recv_sz[0][0];//Particles coming from ymin all go to bin 0 and shift all the other bins.
-    shift[bmax.size()] += MPIbuff.part_index_recv_sz[0][1];//Used only to count the total number of particles arrived.
+    shift[1] += MPIbuff.part_index_recv_sz[0][0];//Particles coming from xmin all go to bin 0 and shift all the other bins.
+    shift[last_index.size()] += MPIbuff.part_index_recv_sz[0][1];//Used only to count the total number of particles arrived.
     //idim>0
-    for (idim = 1; idim < ndim; idim++){
-        for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+    for( idim = 1; idim < ndim; idim++ ) {
+        for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
             n_part_recv = MPIbuff.part_index_recv_sz[idim][iNeighbor];
-            for (unsigned int j=0; j<(unsigned int)n_part_recv ;j++){
+            for( unsigned int j=0; j<( unsigned int )n_part_recv ; j++ ) {
                 //We first evaluate how many particles arrive in each bin.
-                ii = int((MPIbuff.partRecv[idim][iNeighbor].position(0,j)-min_loc)/dbin);//bin in which the particle goes.
+                ii = int( ( MPIbuff.partRecv[idim][iNeighbor].position( 0, j )-min_loc )/dbin ); //bin in which the particle goes.
                 shift[ii+1]++; // It makes the next bins shift.
             }
         }
@@ -856,48 +1132,52 @@ void Species::sort_part(Params& params)
 
 
     //Must be done sequentially
-    for (unsigned int j=1; j<bmax.size()+1;j++){ //bin 0 is not shifted.Last element of shift stores total number of arriving particles.
+    for( unsigned int j=1; j<last_index.size()+1; j++ ) { //bin 0 is not shifted.Last element of shift stores total number of arriving particles.
         shift[j]+=shift[j-1];
     }
     //Make room for new particles
-    if (shift[bmax.size()]) {
+    if( shift[last_index.size()] ) {
         //! vecor::resize of Charge crashed ! Temporay solution : push_back / Particle
-        //particles->initialize( particles->size()+shift[bmax.size()], particles->Position.size() );
-        for (int inewpart=0 ; inewpart<shift[bmax.size()] ; inewpart++) particles->create_particle();
+        //particles->initialize( particles->size()+shift[last_index.size()], particles->Position.size() );
+        for( int inewpart=0 ; inewpart<shift[last_index.size()] ; inewpart++ ) {
+            particles->create_particle();
+        }
     }
 
     //Shift bins, must be done sequentially
-    for (unsigned int j=bmax.size()-1; j>=1; j--){
-        int n_particles = bmax[j]-bmin[j]; //Nbr of particle in this bin
-        nmove = min(n_particles,shift[j]); //Nbr of particles to move
-        lmove = max(n_particles,shift[j]); //How far particles must be shifted
-        if (nmove>0) particles->overwrite_part(bmin[j], bmin[j]+lmove, nmove);
-        bmin[j] += shift[j];
-        bmax[j] += shift[j];
+    for( unsigned int j=last_index.size()-1; j>=1; j-- ) {
+        int n_particles = last_index[j]-first_index[j]; //Nbr of particle in this bin
+        nmove = min( n_particles, shift[j] ); //Nbr of particles to move
+        lmove = max( n_particles, shift[j] ); //How far particles must be shifted
+        if( nmove>0 ) {
+            particles->overwrite_part( first_index[j], first_index[j]+lmove, nmove );
+        }
+        first_index[j] += shift[j];
+        last_index[j] += shift[j];
     }
 
     //Space has been made now to write the arriving particles into the correct bins
     //idim == 0  is the easy case, when particles arrive either in first or last bin.
-    for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+    for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
         n_part_recv = MPIbuff.part_index_recv_sz[0][iNeighbor];
         //if ( (neighbor_[0][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
-        if (                                               (n_part_recv!=0) ) {
-            ii = iNeighbor*(bmax.size()-1);//0 if iNeighbor=0(particles coming from Xmin) and bmax.size()-1 otherwise.
-            MPIbuff.partRecv[0][iNeighbor].overwrite_part(0, *particles,bmax[ii],n_part_recv);
-            bmax[ii] += n_part_recv ;
+        if( ( n_part_recv!=0 ) ) {
+            ii = iNeighbor*( last_index.size()-1 ); //0 if iNeighbor=0(particles coming from Xmin) and last_index.size()-1 otherwise.
+            MPIbuff.partRecv[0][iNeighbor].overwrite_part( 0, *particles, last_index[ii], n_part_recv );
+            last_index[ii] += n_part_recv ;
         }
     }
     //idim > 0; this is the difficult case, when particles can arrive in any bin.
-    for (idim = 1; idim < ndim; idim++){
+    for( idim = 1; idim < ndim; idim++ ) {
         //if (idim!=iDim) continue;
-        for (int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++) {
+        for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
             n_part_recv = MPIbuff.part_index_recv_sz[idim][iNeighbor];
             //if ( (neighbor_[idim][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
-            if (                                                  (n_part_recv!=0) ) {
-                for(unsigned int j=0; j<(unsigned int)n_part_recv; j++){
-                    ii = int((MPIbuff.partRecv[idim][iNeighbor].position(0,j)-min_loc)/dbin);//bin in which the particle goes.
-                    MPIbuff.partRecv[idim][iNeighbor].overwrite_part(j, *particles,bmax[ii]);
-                    bmax[ii] ++ ;
+            if( ( n_part_recv!=0 ) ) {
+                for( unsigned int j=0; j<( unsigned int )n_part_recv; j++ ) {
+                    ii = int( ( MPIbuff.partRecv[idim][iNeighbor].position( 0, j )-min_loc )/dbin ); //bin in which the particle goes.
+                    MPIbuff.partRecv[idim][iNeighbor].overwrite_part( j, *particles, last_index[ii] );
+                    last_index[ii] ++ ;
                 }
             }
         }
@@ -906,125 +1186,128 @@ void Species::sort_part(Params& params)
 
     //The width of one bin is cell_length[0] * clrw.
 
-    int p1,p2,bmin_init;
+    int p1, p2, first_index_init;
     unsigned int bin;
     double limit;
 
 
     //Backward pass
-    for (bin=0; bin<bmin.size()-1; bin++) { //Loop on the bins.
-        limit = min_loc + (bin+1)*cell_length[0]*clrw;
-        p1 = bmax[bin]-1;
+    for( bin=0; bin<first_index.size()-1; bin++ ) { //Loop on the bins.
+        limit = min_loc + ( bin+1 )*cell_length[0]*clrw;
+        p1 = last_index[bin]-1;
         //If first particles change bin, they do not need to be swapped.
-        while (p1 == bmax[bin]-1 && p1 >= bmin[bin]) {
-            if (particles->position(0,p1) >= limit ) {
-                bmax[bin]--;
+        while( p1 == last_index[bin]-1 && p1 >= first_index[bin] ) {
+            if( particles->position( 0, p1 ) >= limit ) {
+                last_index[bin]--;
             }
             p1--;
         }
         //         Now particles have to be swapped
-        for( p2 = p1 ; p2 >= bmin[bin] ; p2-- ) { //Loop on the bin's particles.
-            if (particles->position(0,p2) >= limit ) {
+        for( p2 = p1 ; p2 >= first_index[bin] ; p2-- ) { //Loop on the bin's particles.
+            if( particles->position( 0, p2 ) >= limit ) {
                 //This particle goes up one bin.
-                particles->swap_part(p2,bmax[bin]-1);
-                bmax[bin]--;
+                particles->swap_part( p2, last_index[bin]-1 );
+                last_index[bin]--;
             }
         }
     }
     //Forward pass + Rebracketting
-    for (bin=1; bin<bmin.size(); bin++) { //Loop on the bins.
+    for( bin=1; bin<first_index.size(); bin++ ) { //Loop on the bins.
         limit = min_loc + bin*cell_length[0]*clrw;
-        bmin_init = bmin[bin];
-        p1 = bmin[bin];
-        while (p1 == bmin[bin] && p1 < bmax[bin]) {
-            if (particles->position(0,p1) < limit ) {
-                bmin[bin]++;
+        first_index_init = first_index[bin];
+        p1 = first_index[bin];
+        while( p1 == first_index[bin] && p1 < last_index[bin] ) {
+            if( particles->position( 0, p1 ) < limit ) {
+                first_index[bin]++;
             }
             p1++;
         }
-        for( p2 = p1 ; p2 < bmax[bin] ; p2++ ) { //Loop on the bin's particles.
-            if (particles->position(0,p2) < limit ) {
+        for( p2 = p1 ; p2 < last_index[bin] ; p2++ ) { //Loop on the bin's particles.
+            if( particles->position( 0, p2 ) < limit ) {
                 //This particle goes down one bin.
-                particles->swap_part(p2,bmin[bin]);
-                bmin[bin]++;
+                particles->swap_part( p2, first_index[bin] );
+                first_index[bin]++;
             }
         }
 
         //Rebracketting
-        //Number of particles from bin going down is: bmin[bin]-bmin_init.
-        //Number of particles from bin-1 going up is: bmin_init-bmax[bin-1].
+        //Number of particles from bin going down is: first_index[bin]-first_index_init.
+        //Number of particles from bin-1 going up is: first_index_init-last_index[bin-1].
         //Total number of particles we need to swap is the min of both.
-        p2 = min(bmin[bin]-bmin_init,bmin_init-bmax[bin-1]);
-        if (p2 >0) particles->swap_part(bmax[bin-1],bmin[bin]-p2,p2);
-        bmax[bin-1] += bmin[bin] - bmin_init;
-        bmin[bin] = bmax[bin-1];
+        p2 = min( first_index[bin]-first_index_init, first_index_init-last_index[bin-1] );
+        if( p2 >0 ) {
+            particles->swap_part( last_index[bin-1], first_index[bin]-p2, p2 );
+        }
+        last_index[bin-1] += first_index[bin] - first_index_init;
+        first_index[bin] = last_index[bin-1];
     }
+}
+
+void Species::initial_configuration( Params &param, Patch *patch )
+{
+}
+
+void Species::configuration( Params &param, Patch *patch )
+{
+}
+
+void Species::reconfiguration( Params &param, Patch *patch )
+{
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Sort particles
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::count_sort_part(Params &params)
+void Species::count_sort_part( Params &params )
 {
-    unsigned int ip, npart, ixy,tot, oc, nxy, token;
-    int ix,iy;
-    double x,y;
+    unsigned int ip, npart, ixy, tot, oc, nxy, token;
+    int ix, iy;
+    double x, y;
 
     nxy = params.n_space[0]*params.n_space[1];
-    token = (particles == &particles_sorted[0]);
+    token = ( particles == &particles_sorted[0] );
 
     int indices[nxy];
     npart = particles->size();
     //particles_sorted = particles ;
-    particles_sorted[token].initialize(npart, *particles);
+    particles_sorted[token].initialize( npart, *particles );
 
-    for (unsigned int i=0; i < nxy ; i++) indices[i] = 0 ;
+    for( unsigned int i=0; i < nxy ; i++ ) {
+        indices[i] = 0 ;
+    }
 
     // first loop counts the # of particles in each cell
-    for (ip=0; ip < npart; ip++)
-        {
-            x = particles->position(0,ip)-min_loc;
-            y = particles->position(1,ip)-min_loc_vec[1];
+    for( ip=0; ip < npart; ip++ ) {
+        x = particles->position( 0, ip )-min_loc;
+        y = particles->position( 1, ip )-min_loc_vec[1];
 
-            ix = floor(x * dx_inv_[0]) ;
-            iy = floor(y * dx_inv_[1]) ;
-
-            ixy = iy + ix*params.n_space[1];
-
-
-            indices[ixy] ++;
-        }
-
-    // second loop convert the count array in cumulative sum
-    tot=0;
-    for (unsigned int ixy=0; ixy < nxy; ixy++)
-        {
-            oc = indices[ixy];
-            indices[ixy] = tot;
-            tot += oc;
-        }
-
-    //Bookmarking is not needed if normal sort is called before.
-    //bmin[0] = 0;
-    //for (bin=0; bin<bmin.size()-1; bin++) { //Loop on the bins.
-    //
-    //    bmin[bin+1] = indices[(bin+1)*params.n_space[1]*clrw] ;
-    //    bmax[bin] = bmin[bin+1];
-    //}
-    //bin = bmin.size()-1 ;
-    //bmax[bin] = npart;
-
-    // last loop puts the particles and update the count array
-    for (ip=0; ip < npart; ip++) {
-        x = particles->position(0,ip)-min_loc;
-        y = particles->position(1,ip)-min_loc_vec[1];
-
-        ix = floor(x * dx_inv_[1]) ;
-        iy = floor(y * dx_inv_[2]) ;
+        ix = floor( x * dx_inv_[0] ) ;
+        iy = floor( y * dx_inv_[1] ) ;
 
         ixy = iy + ix*params.n_space[1];
 
-        particles->overwrite_part(ip, particles_sorted[token] , indices[ixy]);
+
+        indices[ixy] ++;
+    }
+
+    // second loop convert the count array in cumulative sum
+    tot=0;
+    for( ixy=0; ixy < nxy; ixy++ ) {
+        oc = indices[ixy];
+        indices[ixy] = tot;
+        tot += oc;
+    }
+    
+    // last loop puts the particles and update the count array
+    for( ip=0; ip < npart; ip++ ) {
+        x = particles->position( 0, ip )-min_loc;
+        y = particles->position( 1, ip )-min_loc_vec[1];
+
+        ix = floor( x * dx_inv_[1] ) ;
+        iy = floor( y * dx_inv_[2] ) ;
+
+        ixy = iy + ix*params.n_space[1];
+        particles->overwrite_part( ip, particles_sorted[token], indices[ixy] );
         indices[ixy]++;
     }
 
@@ -1033,149 +1316,172 @@ void Species::count_sort_part(Params &params)
 }
 
 
-int Species::createParticles(vector<unsigned int> n_space_to_create, Params& params, Patch *patch, int new_bin_idx)
+int Species::createParticles( vector<unsigned int> n_space_to_create, Params &params, Patch *patch, int new_bin_idx )
 {
-    unsigned int nPart, i,j,k, idim;
+    // n_space_to_create_generalized = n_space_to_create, + copy of 2nd direction data among 3rd direction
+    // same for local Species::cell_length[2]
+    vector<unsigned int> n_space_to_create_generalized( n_space_to_create );
+    unsigned int nPart, i, j, k;
     unsigned int npart_effective = 0 ;
     double *momentum[nDim_particle], *position[nDim_particle], *weight_arr;
     std::vector<int> my_particles_indices;
-    vector<Field*> xyz(nDim_field);
+    vector<Field *> xyz( nDim_field );
 
     // Create particles in a space starting at cell_position
-    vector<double> cell_position(3,0);
-    vector<double> cell_index(3,0);
-    for (unsigned int idim=0 ; idim<nDim_field ; idim++) {
-        if (params.cell_length[idim]!=0) {
-            cell_position[idim] = patch->getDomainLocalMin(idim);
-            cell_index   [idim] = (double) patch->getCellStartingGlobalIndex(idim);
-            xyz[idim] = new Field3D(n_space_to_create);
+    vector<double> cell_position( 3, 0 );
+    vector<double> cell_index( 3, 0 );
+    for( unsigned int idim=0 ; idim<nDim_field ; idim++ ) {
+        //if (params.cell_length[idim]!=0) { // Useless, nDim_field defined for (params.cell_length[idim>=nDim_field]==0)
+        cell_position[idim] = patch->getDomainLocalMin( idim );
+        cell_index   [idim] = ( double ) patch->getCellStartingGlobalIndex( idim );
+        xyz[idim] = new Field3D( n_space_to_create_generalized );
+        //}
+    }
+    // Create the x,y,z maps where profiles will be evaluated
+    vector<double> ijk( 3 );
+    for( ijk[0]=0; ijk[0]<n_space_to_create_generalized[0]; ijk[0]++ ) {
+        for( ijk[1]=0; ijk[1]<n_space_to_create_generalized[1]; ijk[1]++ ) {
+            for( ijk[2]=0; ijk[2]<n_space_to_create_generalized[2]; ijk[2]++ ) {
+                for( unsigned int idim=0 ; idim<nDim_field ; idim++ ) {
+                    ( *xyz[idim] )( ijk[0], ijk[1], ijk[2] ) = cell_position[idim] + ( ijk[idim]+0.5 )*cell_length[idim];
+                }
+            }
         }
     }
-
-    // Create the x,y,z maps where profiles will be evaluated
-    vector<double> ijk(3);
-    for (ijk[0]=0; ijk[0]<n_space_to_create[0]; ijk[0]++)
-        for (ijk[1]=0; ijk[1]<n_space_to_create[1]; ijk[1]++)
-            for (ijk[2]=0; ijk[2]<n_space_to_create[2]; ijk[2]++)
-                for (idim=0 ; idim<nDim_field ; idim++)
-                    (*xyz[idim])(ijk[0],ijk[1],ijk[2]) = cell_position[idim] + (ijk[idim]+0.5)*cell_length[idim];
-
     // ---------------------------------------------------------
     // Calculate density and number of particles for the species
     // ---------------------------------------------------------
 
+
     // field containing the charge distribution (always 3d)
-    Field3D charge(n_space_to_create);
+    Field3D charge( n_space_to_create_generalized );
     max_charge = 0.;
 
     // field containing the number of particles in each cell
-    Field3D n_part_in_cell(n_space_to_create);
+    Field3D n_part_in_cell( n_space_to_create_generalized );
 
     // field containing the density distribution (always 3d)
-    Field3D density(n_space_to_create);
+    Field3D density( n_space_to_create_generalized );
 
     // field containing the temperature distribution along all 3 momentum coordinates (always 3d * 3)
     Field3D temperature[3];
     // field containing the temperature distribution along all 3 momentum coordinates (always 3d * 3)
     Field3D velocity[3];
 
-    if ( momentum_initialization_array != NULL ){
-        for (unsigned int idim = 0; idim < nDim_particle; idim++) momentum[idim] = &(momentum_initialization_array[idim*n_numpy_particles]);
+    if( momentum_initialization_array != NULL ) {
+        for( unsigned int idim = 0; idim < 3; idim++ ) {
+            momentum[idim] = &( momentum_initialization_array[idim*n_numpy_particles] );
+        }
     } else {
         //Initialize velocity and temperature profiles
-        for (unsigned int i=0; i<3; i++) {
-            velocity[i].allocateDims(n_space_to_create);
-            temperature[i].allocateDims(n_space_to_create);
+        for( i=0; i<3; i++ ) {
+            velocity[i].allocateDims( n_space_to_create_generalized );
+            temperature[i].allocateDims( n_space_to_create_generalized );
         }
-
         // Evaluate profiles
-        for (unsigned int m=0; m<3; m++) {
-            if ( temperatureProfile[m]){
-                temperatureProfile[m]->valuesAt(xyz, temperature[m]); 
+        for( unsigned int m=0; m<3; m++ ) {
+            if( temperatureProfile[m] ) {
+                temperatureProfile[m]->valuesAt( xyz, temperature[m] );
             } else {
-                 temperature[m].put_to(0.0000000001); // default value
+                temperature[m].put_to( 0.0000000001 ); // default value
             }
 
-            if ( velocityProfile[m]){
-                velocityProfile[m]   ->valuesAt(xyz, velocity   [m]);
+            if( velocityProfile[m] ) {
+                velocityProfile[m]   ->valuesAt( xyz, velocity   [m] );
             } else {
-                velocity[m].put_to(0.0);  //default value
+                velocity[m].put_to( 0.0 ); //default value
             }
         }
     }
-
     // Initialize charge profile
-    if (this->mass > 0) chargeProfile ->valuesAt(xyz, charge );
-
-    if ( position_initialization_array != NULL ){
-        for (unsigned int idim = 0; idim < nDim_particle; idim++)
-            position[idim] = &(position_initialization_array[idim*n_numpy_particles]);
-        weight_arr = &(position_initialization_array[nDim_particle*n_numpy_particles]);
+    if( this->mass > 0 ) {
+        chargeProfile ->valuesAt( xyz, charge );
+    }
+    if( position_initialization_array != NULL ) {
+        for( unsigned int idim = 0; idim < nDim_particle; idim++ ) {
+            position[idim] = &( position_initialization_array[idim*n_numpy_particles] );
+        }
+        weight_arr =         &( position_initialization_array[nDim_particle*n_numpy_particles] );
         //Idea to speed up selection, provides xmin, xmax of the bunch and check if there is an intersection with the patch instead of going through all particles for all patches.
-        for (int ip = 0; ip < n_numpy_particles; ip++){
+        for( unsigned int ip = 0; ip < n_numpy_particles; ip++ ) {
             //If the particle belongs to this patch
-            if (                              position[0][ip] >= patch->getDomainLocalMin(0) && position[0][ip] < patch->getDomainLocalMax(0)
-                 && ( nDim_particle < 2  || ( position[1][ip] >= patch->getDomainLocalMin(1) && position[1][ip] < patch->getDomainLocalMax(1)) )
-                 && ( nDim_particle < 3  || ( position[2][ip] >= patch->getDomainLocalMin(2) && position[2][ip] < patch->getDomainLocalMax(2)) ) ){
-                my_particles_indices.push_back(ip); //This vector stores particles initially sittinig in the current patch.
+            if (params.geometry!="AMcylindrical") {
+                if( position[0][ip] >= patch->getDomainLocalMin( 0 ) && position[0][ip] < patch->getDomainLocalMax( 0 )
+                    && ( nDim_particle < 2  || ( position[1][ip] >= patch->getDomainLocalMin( 1 ) && position[1][ip] < patch->getDomainLocalMax( 1 ) ) )
+                    && ( nDim_particle < 3  || ( position[2][ip] >= patch->getDomainLocalMin( 2 ) && position[2][ip] < patch->getDomainLocalMax( 2 ) ) ) ) {
+                    my_particles_indices.push_back( ip ); //This vector stores particles initially sittinig in the current patch.
+                }
+            }
+            else {
+                double distance =  sqrt( position[1][ip]*position[1][ip]+position[2][ip]*position[2][ip] );
+                if( position[0][ip] >= patch->getDomainLocalMin( 0 ) && position[0][ip] < patch->getDomainLocalMax( 0 )
+                    && ( distance >= patch->getDomainLocalMin( 1 ) && distance < patch->getDomainLocalMax( 1 ) ) ) {
+                    my_particles_indices.push_back( ip ); //This vector stores particles initially sittinig in the current patch.
+                }
             }
         }
         npart_effective = my_particles_indices.size();
     } else {
         //Initialize density and ppc profiles
-        densityProfile->valuesAt(xyz, density       );
-        ppcProfile    ->valuesAt(xyz, n_part_in_cell);
+        densityProfile->valuesAt( xyz, density );
+        ppcProfile    ->valuesAt( xyz, n_part_in_cell );
         weight_arr = NULL;
-
         //Now compute number of particles per cell
         double remainder, nppc;
-        for (i=0; i<n_space_to_create[0]; i++) {
-            for (j=0; j<n_space_to_create[1]; j++) {
-                for (k=0; k<n_space_to_create[2]; k++) {
+        for( i=0; i<n_space_to_create_generalized[0]; i++ ) {
+            for( j=0; j<n_space_to_create_generalized[1]; j++ ) {
+                for( k=0; k<n_space_to_create_generalized[2]; k++ ) {
 
                     // Obtain the number of particles per cell
-                    nppc = n_part_in_cell(i,j,k);
-                    n_part_in_cell(i,j,k) = floor(nppc);
+                    nppc = n_part_in_cell( i, j, k );
+                    n_part_in_cell( i, j, k ) = floor( nppc );
                     // If not a round number, then we need to decide how to round
                     double intpart;
-                    if ( modf(nppc, &intpart) > 0) {
-                        remainder = pow(nppc - floor(nppc), -inv_nDim_field);
-                        if(   fmod(cell_index[0]+(double)i, remainder) < 1.
-                           && fmod(cell_index[1]+(double)j, remainder) < 1.
-                           && fmod(cell_index[2]+(double)k, remainder) < 1. ) n_part_in_cell(i,j,k)++;
+                    if( modf( nppc, &intpart ) > 0 ) {
+                        remainder = pow( nppc - floor( nppc ), -inv_nDim_field );
+                        if( fmod( cell_index[0]+( double )i, remainder ) < 1.
+                                && fmod( cell_index[1]+( double )j, remainder ) < 1.
+                                && fmod( cell_index[2]+( double )k, remainder ) < 1. ) {
+                            n_part_in_cell( i, j, k )++;
+                        }
                     }
 
                     // assign charge its correct value in the cell
-                    if (this->mass > 0)
-                    {
-                        if( charge(i,j,k)>max_charge ) max_charge=charge(i,j,k);
+                    if( this->mass > 0 ) {
+                        if( charge( i, j, k )>max_charge ) {
+                            max_charge=charge( i, j, k );
+                        }
                     }
 
                     // If zero or less, zero particles
-                    if( n_part_in_cell(i,j,k)<=0. || density(i,j,k)==0. ) {
-                        n_part_in_cell(i,j,k) = 0.;
-                        density(i,j,k) = 0.;
+                    if( n_part_in_cell( i, j, k )<=0. || density( i, j, k )==0. ) {
+                        n_part_in_cell( i, j, k ) = 0.;
+                        density( i, j, k ) = 0.;
                         continue;
                     }
 
                     // assign density its correct value in the cell
-                    if(densityProfileType=="charge") {
-                        if(charge(i,j,k)==0.) ERROR("Encountered non-zero charge density and zero charge at the same location");
-                        density(i,j,k) /= charge(i,j,k);
+                    if( densityProfileType=="charge" ) {
+                        if( charge( i, j, k )==0. ) {
+                            ERROR( "Encountered non-zero charge density and zero charge at the same location" );
+                        }
+                        density( i, j, k ) /= charge( i, j, k );
                     }
-                    density(i,j,k) = abs(density(i,j,k));
-
+                    density( i, j, k ) = abs( density( i, j, k ) );
+                    // multiply by the cell volume
+                    density( i, j, k ) *= params.cell_volume;
+                    if( params.geometry=="AMcylindrical" && position_initialization != "regular" ) {
+                        //Particles weight in regular is normalized later.
+                        density( i, j, k ) *= ( *xyz[1] )( i, j, k );
+                    }
                     // increment the effective number of particle by n_part_in_cell(i,j,k)
                     // for each cell with as non-zero density
-                    npart_effective += (unsigned int) n_part_in_cell(i,j,k);
+                    npart_effective += ( unsigned int ) n_part_in_cell( i, j, k );
 
                 }//i
             }//j
         }//k end the loop on all cells
     }
-    
-    // Delete map xyz.
-    for (unsigned int idim=0 ; idim<nDim_field ; idim++) delete xyz[idim];
 
     // defines npart_effective for the Species & create the corresponding particles
     // -----------------------------------------------------------------------
@@ -1189,7 +1495,7 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
     // }
 
     unsigned int n_existing_particles = particles->size();
-    particles->initialize(n_existing_particles+npart_effective, nDim_particle);
+    particles->initialize( n_existing_particles+npart_effective, nDim_particle );
 
     // Initialization of the particles properties
     // ------------------------------------------
@@ -1200,165 +1506,201 @@ int Species::createParticles(vector<unsigned int> n_space_to_create, Params& par
 
     // start a loop on all cells
 
-    //bmin[bin] point to begining of bin (first particle)
-    //bmax[bin] point to end of bin (= bmin[bin+1])
-    //if bmax = bmin, bin is empty of particle.
+    //first_index[bin] point to begining of bin (first particle)
+    //last_index[bin] point to end of bin (= first_index[bin+1])
+    //if last_index = first_index, bin is empty of particle.
 
-    if ( position_initialization_array == NULL ){
-        for (i=0; i<n_space_to_create[0]; i++) {
-            if (i%clrw == 0) bmin[new_bin_idx+i/clrw] = iPart;
-            for (j=0; j<n_space_to_create[1]; j++) {
-                for (k=0; k<n_space_to_create[2]; k++) {
+    if( position_initialization_array == NULL ) {
+        for( i=0; i<n_space_to_create_generalized[0]; i++ ) {
+            if( i%clrw == 0 ) {
+                first_index[new_bin_idx+i/clrw] = iPart;
+            }
+            for( j=0; j<n_space_to_create_generalized[1]; j++ ) {
+                for( k=0; k<n_space_to_create_generalized[2]; k++ ) {
                     // initialize particles in meshes where the density is non-zero
-                    if (density(i,j,k)>0) {
+                    if( density( i, j, k )>0 ) {
 
-                        vel[0]  = velocity[0](i,j,k);
-                        vel[1]  = velocity[1](i,j,k);
-                        vel[2]  = velocity[2](i,j,k);
-                        temp[0] = temperature[0](i,j,k);
-                        temp[1] = temperature[1](i,j,k);
-                        temp[2] = temperature[2](i,j,k);
-                        nPart = n_part_in_cell(i,j,k);
+                        vel[0]  = velocity[0]( i, j, k );
+                        vel[1]  = velocity[1]( i, j, k );
+                        vel[2]  = velocity[2]( i, j, k );
+                        temp[0] = temperature[0]( i, j, k );
+                        temp[1] = temperature[1]( i, j, k );
+                        temp[2] = temperature[2]( i, j, k );
+                        nPart = n_part_in_cell( i, j, k );
 
                         indexes[0]=i*cell_length[0]+cell_position[0];
-                        if (nDim_particle > 1) {
+                        if( nDim_particle > 1 ) {
                             indexes[1]=j*cell_length[1]+cell_position[1];
-                            if (nDim_particle > 2) {
+                            if( nDim_particle > 2 ) {
                                 indexes[2]=k*cell_length[2]+cell_position[2];
                             }
                         }
-                        if (position_initialization_on_species==false){
-                            initPosition(nPart, iPart, indexes);
+                        if( position_initialization_on_species==false ) {
+                            initPosition( nPart, iPart, indexes, params );
                         }
-                        initMomentum(nPart,iPart, temp, vel);
-                        initWeight(nPart, iPart, density(i,j,k));
-                        initCharge(nPart, iPart, charge(i,j,k));
+                        initMomentum( nPart, iPart, temp, vel );
+                        initWeight( nPart, iPart, density( i, j, k ) );
+
+                        if( params.geometry=="AMcylindrical" && position_initialization == "regular" ) {
+                            //Particles in regular have a weight proportional to their position along r.
+                            for (unsigned int ipart=iPart; ipart < iPart+nPart; ipart++){
+                                particles->weight(ipart) *= sqrt(particles->position(1,ipart)*particles->position(1,ipart) + particles->position(2,ipart)*particles->position(2,ipart));
+                            }
+                        }
+                        initCharge( nPart, iPart, charge( i, j, k ) );
 
                         iPart+=nPart;
                     }//END if density > 0
                 }//k end the loop on all cells
             }//j
-            if (i%clrw == clrw -1) bmax[new_bin_idx+i/clrw] = iPart;
-        }//i
-    } else if ( n_existing_particles == 0  ) {  //Do not recreate particles from numpy array again after initialization. Is this condition enough ?
-        //Initializing particles from numpy array and based on a count sort to comply with initial sorting.
-        int nbins = bmin.size();
-        int indices[nbins];
-        double one_ov_dbin = 1. / (cell_length[0] * clrw) ;
-
-        for (int i=0; i < nbins ; i++) indices[i] = 0 ;
-        
-        ///Compute proper indices for particle susing a count sort
-        for (unsigned int ipart = 0; ipart < npart_effective ; ipart++){
-                unsigned int ip = my_particles_indices[ipart];
-                double x = position[0][ip]-min_loc ;
-                int ix = int(x * one_ov_dbin) ;
-                indices[ix] ++;
-        }
-        unsigned int tot=0;
-        for (int ibin=0; ibin < nbins; ibin++){
-                unsigned int oc = indices[ibin];
-                indices[ibin] = tot;
-                tot += oc;
-        }
-        for (int i=0; i < nbins   ; i++) bmin[i] = indices[i] ;
-        for (int i=0; i < nbins-1 ; i++) bmax[i] = bmin[i+1] ;
-        bmax[nbins-1] = npart_effective ;
-
-        //Now initialize particles at thier proper indices
-        for (unsigned int ipart = 0; ipart < npart_effective ; ipart++){
-            unsigned int ippy = my_particles_indices[ipart];//Indice of the particle in the python array.
-            double x = position[0][ippy]-min_loc ;
-            unsigned int ibin = int(x * one_ov_dbin) ;
-            int ip = indices[ibin] ; //Indice of the position of the particle in the particles array.
-            
-            
-            for(unsigned int idim=0; idim<nDim_particle; idim++)
-                particles->position(idim,ip) = position[idim][ippy] ;
-            //If momentum is not initialized by a numpy array
-            unsigned int i =  (unsigned int)( (particles->position(0,ip) - min_loc_vec[0])/cell_length[0] );
-            unsigned int j =  (unsigned int)( (particles->position(1,ip) - min_loc_vec[1])/cell_length[1] );
-            unsigned int k =  (unsigned int)( (particles->position(2,ip) - min_loc_vec[2])/cell_length[2] );
-            if (!momentum_initialization_array) {
-                vel[0]  = velocity[0](i,j,k);
-                vel[1]  = velocity[1](i,j,k);
-                vel[2]  = velocity[2](i,j,k);
-                temp[0] = temperature[0](i,j,k);
-                temp[1] = temperature[1](i,j,k);
-                temp[2] = temperature[2](i,j,k);
-                initMomentum(1,ip, temp, vel);
-            } else {
-            for(unsigned int idim=0; idim<nDim_particle; idim++)
-                particles->momentum(idim,ip) = momentum[idim][ippy] ;
+            if( i%clrw == clrw -1 ) {
+                last_index[new_bin_idx+i/clrw] = iPart;
             }
 
-            particles->weight(ip) = weight_arr[ippy] ;
-            initCharge(1, ip, charge(i,j,k));
+        }//i
+    } else if( n_existing_particles == 0 ) {    //Here position are created from a numpy array. Do not recreate particles from numpy array again after initialization. Is this condition enough ?
+        //Initializing particles from numpy array and based on a count sort to comply with initial sorting.
+        int nbins = first_index.size();
+        int indices[nbins];
+        double one_ov_dbin = 1. / ( cell_length[0] * clrw ) ;
+
+        for( int ibin=0; ibin < nbins ; ibin++ ) {
+            indices[ibin] = 0 ;
+        }
+
+        ///Compute proper indices for particle susing a count sort
+        for( unsigned int ipart = 0; ipart < npart_effective ; ipart++ ) {
+            unsigned int ip = my_particles_indices[ipart];
+            double x = position[0][ip]-min_loc ;
+            int ix = int( x * one_ov_dbin ) ;
+            indices[ix] ++;
+        }
+        unsigned int tot=0;
+        for( int ibin=0; ibin < nbins; ibin++ ) {
+            unsigned int oc = indices[ibin];
+            indices[ibin] = tot;
+            tot += oc;
+        }
+        for( int ibin=0; ibin < nbins   ; ibin++ ) {
+            first_index[ibin] = indices[ibin] ;
+        }
+        for( int ibin=0; ibin < nbins-1 ; ibin++ ) {
+            last_index[ibin] = first_index[ibin+1] ;
+        }
+        last_index[nbins-1] = npart_effective ;
+
+        //Now initialize particles at thier proper indices
+        for( unsigned int ipart = 0; ipart < npart_effective ; ipart++ ) {
+            unsigned int ippy = my_particles_indices[ipart];//Indice of the particle in the python array.
+            double x = position[0][ippy]-min_loc ;
+            unsigned int ibin = int( x * one_ov_dbin ) ;
+            int ip = indices[ibin] ; //Indice of the position of the particle in the particles array.
+
+            unsigned int int_ijk[3] = {0, 0, 0};
+            if ( params.geometry != "AMcylindrical") {
+                for( unsigned int idim=0; idim<nDim_particle; idim++ ) {
+                    particles->position( idim, ip ) = position[idim][ippy];
+                    int_ijk[idim] = ( unsigned int )( ( particles->position( idim, ip ) - min_loc_vec[idim] )/cell_length[idim] );
+                }
+            }
+            else {
+                for( unsigned int idim=0; idim<nDim_particle; idim++ ) {
+                    particles->position( idim, ip ) = position[idim][ippy];
+                }
+                int_ijk[0] = ( unsigned int )( ( particles->position( 0, ip ) - min_loc_vec[0] )/cell_length[0] );
+                int_ijk[1] = ( unsigned int )( ( sqrt( position[1][ippy]*position[1][ippy]+position[2][ippy]*position[2][ippy] ) - min_loc_vec[1] )/cell_length[1] );
+            }
+            if( !momentum_initialization_array ) {
+                vel [0] = velocity   [0]( int_ijk[0], int_ijk[1], int_ijk[2] );
+                vel [1] = velocity   [1]( int_ijk[0], int_ijk[1], int_ijk[2] );
+                vel [2] = velocity   [2]( int_ijk[0], int_ijk[1], int_ijk[2] );
+                temp[0] = temperature[0]( int_ijk[0], int_ijk[1], int_ijk[2] );
+                temp[1] = temperature[1]( int_ijk[0], int_ijk[1], int_ijk[2] );
+                temp[2] = temperature[2]( int_ijk[0], int_ijk[1], int_ijk[2] );
+                initMomentum( 1, ip, temp, vel );
+            } else {
+                for( unsigned int idim=0; idim < 3; idim++ ) {
+                    particles->momentum( idim, ip ) = momentum[idim][ippy]/this->mass ;
+                }
+            }
+
+            particles->weight( ip ) = weight_arr[ippy] ;
+            initCharge( 1, ip, charge( int_ijk[0], int_ijk[1], int_ijk[2] ) );
             indices[ibin]++;
         }
     }
 
+    // Delete map xyz.
+    for( unsigned int idim=0 ; idim<nDim_field ; idim++ ) {
+        delete xyz[idim];
+    }
 
     delete [] indexes;
     delete [] temp;
     delete [] vel;
-
     // Recalculate former position using the particle velocity
     // (necessary to calculate currents at time t=0 using the Esirkepov projection scheme)
-    if (patch->isXmax()) {
+    if( patch->isXmax() ) {
         // Matter particle case
-        if (mass > 0)
-        {
-            for (unsigned int iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++) {
+        if( mass > 0 ) {
+            for( iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++ ) {
                 /*897 for (int i=0; i<(int)nDim_particle; i++) {
                   particles->position_old(i,iPart) -= particles->momentum(i,iPart)/particles->lor_fac(iPart) * params.timestep;
                   }897*/
-                nrj_new_particles += particles->weight(iPart)*(particles->lor_fac(iPart)-1.0);
+                nrj_new_particles += particles->weight( iPart )*( particles->lor_fac( iPart )-1.0 );
             }
         }
         // Photon case
-        else if (mass == 0)
-        {
-            for (unsigned int iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++) {
+        else if( mass == 0 ) {
+            for( iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++ ) {
                 /*897 for (int i=0; i<(int)nDim_particle; i++) {
                   particles->position_old(i,iPart) -= particles->momentum(i,iPart)/particles->lor_fac(iPart) * params.timestep;
                   }897*/
-                nrj_new_particles += particles->weight(iPart)*(particles->momentum_norm(iPart));
+                nrj_new_particles += particles->weight( iPart )*( particles->momentum_norm( iPart ) );
             }
         }
     }
-
-    if (particles->tracked)
+    if( particles->tracked ) {
         particles->resetIds();
-
+    }
     return npart_effective;
 
 } // End createParticles
 
 
 // Move all particles from another species to this one
-void Species::importParticles( Params& params, Patch* patch, Particles& source_particles, vector<Diagnostic*>& localDiags )
+void Species::importParticles( Params &params, Patch *patch, Particles &source_particles, vector<Diagnostic *> &localDiags )
 {
-    unsigned int npart = source_particles.size(), ibin, ii, nbin=bmin.size();
+    unsigned int npart = source_particles.size(), ibin, ii, nbin=first_index.size();
     double inv_cell_length = 1./ params.cell_length[0];
 
+    // std::cerr << "Species::importParticles "
+    //           << " for "<< this->name
+    //           << " in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ") "
+    //           << " mpi process " << patch->MPI_me_ << " - "
+    //           << " mode: " << this->vectorized_operators << " - "
+    //           << " nb bin: " << first_index.size() << " - "
+    //           << " nbp: " << npart
+    //           << std::endl;
+
     // If this species is tracked, set the particle IDs
-    if( particles->tracked )
-        dynamic_cast<DiagnosticTrack*>(localDiags[tracking_diagnostic])->setIDs( source_particles );
+    if( particles->tracked ) {
+        dynamic_cast<DiagnosticTrack *>( localDiags[tracking_diagnostic] )->setIDs( source_particles );
+    }
 
     // Move particles
     for( unsigned int i=0; i<npart; i++ ) {
         // Copy particle to the correct bin
-        ibin = source_particles.position(0,i)*inv_cell_length - ( patch->getCellStartingGlobalIndex(0) + params.oversize[0] );
+        ibin = source_particles.position( 0, i )*inv_cell_length - ( patch->getCellStartingGlobalIndex( 0 ) + params.oversize[0] );
 
         ibin /= params.clrw;
-        source_particles.cp_particle(i, *particles, bmin[ibin] );
+        source_particles.cp_particle( i, *particles, first_index[ibin] );
 
         // Update the bin counts
-        bmax[ibin]++;
-        for (ii=ibin+1; ii<nbin; ii++) {
-            bmin[ii]++;
-            bmax[ii]++;
+        last_index[ibin]++;
+        for( ii=ibin+1; ii<nbin; ii++ ) {
+            first_index[ii]++;
+            last_index[ii]++;
         }
     }
 
@@ -1379,9 +1721,10 @@ void Species::importParticles( Params& params, Patch* patch, Particles& source_p
 
 
 //Do we have to project this species ?
-bool Species::isProj(double time_dual, SimWindow* simWindow) {
+bool Species::isProj( double time_dual, SimWindow *simWindow )
+{
 
-    return time_dual > time_frozen  || (simWindow->isMoving(time_dual)) ;
+    return time_dual > time_frozen  || ( simWindow->isMoving( time_dual ) ) ;
 
     //Recompute frozen particles density if
     //moving window is activated, actually moving at this time step, and we are not in a density slope.
@@ -1402,78 +1745,80 @@ bool Species::isProj(double time_dual, SimWindow* simWindow) {
     //return time_dual > species_param.time_frozen  || (simWindow && simWindow->isMoving(time_dual)) ;
 }
 
-void Species::disableXmax() {
+void Species::disableXmax()
+{
     partBoundCond->bc_xmax   = NULL;
 }
 
-void Species::setXminBoundaryCondition() {
+void Species::setXminBoundaryCondition()
+{
     partBoundCond->bc_xmin   = &remove_particle;
 }
 
 // Provides a Maxwell-Juttner distribution of energies
-vector<double> Species::maxwellJuttner(unsigned int npoints, double temperature)
+vector<double> Species::maxwellJuttner( unsigned int npoints, double temperature )
 {
-    if (temperature==0.) {
+    if( temperature==0. ) {
         ERROR( "The species " << speciesNumber << " is initializing its momentum with the following temperature : " << temperature );
     }
-    vector<double> energies(npoints);
+    vector<double> energies( npoints );
 
     // Classical case: Maxwell-Bolztmann
     if( temperature < 0.1 ) {
         double U, lnlnU, invF, I, remainder;
-        const double invdU_F = 999./(2.+19.);
+        const double invdU_F = 999./( 2.+19. );
         unsigned int index;
         // For each particle
         for( unsigned int i=0; i<npoints; i++ ) {
             // Pick a random number
             U = Rand::uniform();
             // Calculate the inverse of F
-            lnlnU = log(-log(U));
+            lnlnU = log( -log( U ) );
             if( lnlnU>2. ) {
-                invF = 3.*sqrt(M_PI)/4. * pow(U,2./3.);
-            } else if ( lnlnU<-19. ) {
+                invF = 3.*sqrt( M_PI )/4. * pow( U, 2./3. );
+            } else if( lnlnU<-19. ) {
                 invF = 1.;
             } else {
-                I = (lnlnU + 19.)*invdU_F;
-                index = (unsigned int)I;
-                remainder = I - (double)index;
-                invF = exp( lnInvF[index] + remainder*(lnInvF[index+1]-lnInvF[index]) );
+                I = ( lnlnU + 19. )*invdU_F;
+                index = ( unsigned int )I;
+                remainder = I - ( double )index;
+                invF = exp( lnInvF[index] + remainder*( lnInvF[index+1]-lnInvF[index] ) );
             }
             // Store that value of the energy
             energies[i] = temperature * invF;
         }
 
-    // Relativistic case: Maxwell-Juttner
+        // Relativistic case: Maxwell-Juttner
     } else {
         double U, lnU, invH, I, remainder, gamma;
-        const double invdU_H = 999./(12.+30.);
+        const double invdU_H = 999./( 12.+30. );
         unsigned int index;
         // Calculate the constant H(1/T)
         double invT = 1./temperature;
-        double H0 = -invT + log(1. + invT + 0.5*invT*invT);
+        double H0 = -invT + log( 1. + invT + 0.5*invT*invT );
         // For each particle
         for( unsigned int i=0; i<npoints; i++ ) {
             do {
                 // Pick a random number
                 U = Rand::uniform();
                 // Calculate the inverse of H at the point log(1.-U) + H0
-                lnU = log(-log(1.-U) - H0);
+                lnU = log( -log( 1.-U ) - H0 );
                 if( lnU<-26. ) {
-                    invH = pow(-6.*U, 1./3.);
+                    invH = pow( -6.*U, 1./3. );
                 } else if( lnU>12. ) {
-                    invH = -U + 11.35 * pow(-U, 0.06);
+                    invH = -U + 11.35 * pow( -U, 0.06 );
                 } else {
-                    I = (lnU + 30.)*invdU_H;
-                    index = (unsigned int)I;
-                    remainder = I - (double)index;
-                    invH = exp( lnInvH[index] + remainder*(lnInvH[index+1]-lnInvH[index]) );
+                    I = ( lnU + 30. )*invdU_H;
+                    index = ( unsigned int )I;
+                    remainder = I - ( double )index;
+                    invH = exp( lnInvH[index] + remainder*( lnInvH[index+1]-lnInvH[index] ) );
                 }
                 // Make a first guess for the value of gamma
                 gamma = temperature * invH;
                 // We use the rejection method, so we pick another random number
                 U = Rand::uniform();
                 // And we are done only if U < beta, otherwise we try again
-            } while( U >= sqrt(1.-1./(gamma*gamma) ) );
+            } while( U >= sqrt( 1.-1./( gamma*gamma ) ) );
             // Store that value of the energy
             energies[i] = gamma - 1.;
         }
@@ -1481,6 +1826,324 @@ vector<double> Species::maxwellJuttner(unsigned int npoints, double temperature)
 
     return energies;
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Particle merging cell by cell
+// ---------------------------------------------------------------------------------------------------------------------
+void Species::mergeParticles( double time_dual, unsigned int ispec,
+                              Params &params,
+                              Patch *patch, SmileiMPI *smpi,
+                              std::vector<Diagnostic *> &localDiags ) {}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// For all particles of the species reacting to laser envelope
+//   - interpolate the fields at the particle position
+//   - deposit susceptibility
+//   - calculate the new momentum
+// ---------------------------------------------------------------------------------------------------------------------
+void Species::ponderomotive_update_susceptibility_and_momentum( double time_dual, unsigned int ispec,
+        ElectroMagn *EMfields,
+        Params &params, bool diag_flag,
+        Patch *patch, SmileiMPI *smpi,
+        vector<Diagnostic *> &localDiags )
+{
+
+    int ithread;
+#ifdef _OPENMP
+    ithread = omp_get_thread_num();
+#else
+    ithread = 0;
+#endif
+
+#ifdef  __DETAILED_TIMERS
+    double timer;
+#endif
+
+    // -------------------------------
+    // calculate the particle updated momentum
+    // -------------------------------
+    if( time_dual>time_frozen ) { // moving particle
+
+        smpi->dynamics_resize( ithread, nDim_field, last_index.back(), params.geometry=="AMcylindrical" );
+
+        for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin++ ) { // loop on ibin
+
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
+            Interp->fieldsAndEnvelope( EMfields, *particles, smpi, &( first_index[ibin] ), &( last_index[ibin] ), ithread );
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[7] += MPI_Wtime() - timer;
+#endif
+
+
+            // Project susceptibility, the source term of envelope equation
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
+            Proj->susceptibility( EMfields, *particles, mass, smpi, first_index[ibin], last_index[ibin], ithread );
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[8] += MPI_Wtime() - timer;
+#endif
+
+
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
+            // Push only the particle momenta
+            ( *Push )( *particles, smpi, first_index[ibin], last_index[ibin], ithread );
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[9] += MPI_Wtime() - timer;
+#endif
+
+        } // end loop on ibin
+    } else { // immobile particle
+    } //END if time vs. time_frozen
+} // ponderomotive_update_susceptibility_and_momentum
+
+// ---------------------------------------------------------------------------------------------------------------------
+// For all particles of the species reacting to laser envelope
+//   - interpolate the fields at the particle position
+//   - deposit susceptibility
+// ---------------------------------------------------------------------------------------------------------------------
+void Species::ponderomotive_project_susceptibility( double time_dual, unsigned int ispec,
+        ElectroMagn *EMfields,
+        Params &params, bool diag_flag,
+        Patch *patch, SmileiMPI *smpi,
+        vector<Diagnostic *> &localDiags )
+{
+
+    int ithread;
+#ifdef _OPENMP
+    ithread = omp_get_thread_num();
+#else
+    ithread = 0;
+#endif
+
+#ifdef  __DETAILED_TIMERS
+    double timer;
+#endif
+
+    // -------------------------------
+    // calculate the particle updated momentum
+    // -------------------------------
+    if( time_dual>time_frozen ) { // moving particle
+
+        smpi->dynamics_resize( ithread, nDim_particle, last_index.back(), false );
+
+        for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin++ ) { // loop on ibin
+
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
+            Interp->fieldsAndEnvelope( EMfields, *particles, smpi, &( first_index[ibin] ), &( last_index[ibin] ), ithread );
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[7] += MPI_Wtime() - timer;
+#endif
+
+
+            // Project susceptibility, the source term of envelope equation
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
+            Proj->susceptibility( EMfields, *particles, mass, smpi, first_index[ibin], last_index[ibin], ithread );
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[8] += MPI_Wtime() - timer;
+#endif
+
+
+        } // end loop on ibin
+    } else { // immobile particle
+    } //END if time vs. time_frozen
+} // ponderomotive_project_susceptibility
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// For all particles of the species reacting to laser envelope
+//   - interpolate the ponderomotive potential and its gradient at the particle position, for present and previous timestep
+//   - calculate the new particle position
+//   - particles BC
+//   - project charge and current density
+// ---------------------------------------------------------------------------------------------------------------------
+void Species::ponderomotive_update_position_and_currents( double time_dual, unsigned int ispec,
+        ElectroMagn *EMfields,
+        Params &params, bool diag_flag, PartWalls *partWalls,
+        Patch *patch, SmileiMPI *smpi,
+        vector<Diagnostic *> &localDiags )
+{
+
+    int ithread;
+#ifdef _OPENMP
+    ithread = omp_get_thread_num();
+#else
+    ithread = 0;
+#endif
+
+#ifdef  __DETAILED_TIMERS
+    double timer;
+#endif
+
+    unsigned int iPart;
+
+    // Reset list of particles to exchange - WARNING Should it be reset?
+    clearExchList();
+
+    int tid( 0 );
+    double ener_iPart( 0. );
+    std::vector<double> nrj_lost_per_thd( 1, 0. );
+
+    // -------------------------------
+    // calculate the particle updated position
+    // -------------------------------
+    if( time_dual>time_frozen ) { // moving particle
+
+        smpi->dynamics_resize( ithread, nDim_field, last_index.back(), params.geometry=="AMcylindrical" );
+
+        for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin++ ) {
+
+            // Interpolate the ponderomotive potential and its gradient at the particle position, present and previous timestep
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
+            Interp->timeCenteredEnvelope( EMfields, *particles, smpi, &( first_index[ibin] ), &( last_index[ibin] ), ithread );
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[10] += MPI_Wtime() - timer;
+#endif
+
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
+            // Push only the particle position
+            ( *Push_ponderomotive_position )( *particles, smpi, first_index[ibin], last_index[ibin], ithread );
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[11] += MPI_Wtime() - timer;
+#endif
+
+            // Apply wall and boundary conditions
+            if( mass>0 ) {
+                for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
+                    for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
+                        double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
+                        if( !( *partWalls )[iwall]->apply( *particles, iPart, this, dtgf, ener_iPart ) ) {
+                            nrj_lost_per_thd[tid] += mass * ener_iPart;
+                        }
+                    }
+                }
+
+                // Boundary Condition may be physical or due to domain decomposition
+                // apply returns 0 if iPart is not in the local domain anymore
+                //        if omp, create a list per thread
+                for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
+                    if( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
+                        addPartInExchList( iPart );
+                        nrj_lost_per_thd[tid] += mass * ener_iPart;
+                    }
+                }
+
+            } else if( mass==0 ) {
+                ERROR( "Particles with zero mass cannot interact with envelope" );
+                // for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
+                //     for (iPart=first_index[ibin] ; (int)iPart<last_index[ibin]; iPart++ ) {
+                //         double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
+                //         if ( !(*partWalls)[iwall]->apply(*particles, iPart, this, dtgf, ener_iPart)) {
+                //                 nrj_lost_per_thd[tid] += ener_iPart;
+                //         }
+                //     }
+                // }
+                //
+                // // Boundary Condition may be physical or due to domain decomposition
+                // // apply returns 0 if iPart is not in the local domain anymore
+                // //        if omp, create a list per thread
+                // for (iPart=first_index[ibin] ; (int)iPart<last_index[ibin]; iPart++ ) {
+                //     if ( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
+                //         addPartInExchList( iPart );
+                //         nrj_lost_per_thd[tid] += ener_iPart;
+                //     }
+                //  }
+
+            } // end mass = 0? condition
+
+            //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
+
+            // Project currents if not a Test species and charges as well if a diag is needed.
+            // Do not project if a photon
+#ifdef  __DETAILED_TIMERS
+            timer = MPI_Wtime();
+#endif
+            if( ( !particles->is_test ) && ( mass > 0 ) ) {
+                Proj->currentsAndDensityWrapper( EMfields, *particles, smpi, first_index[ibin], last_index[ibin], ithread, diag_flag, params.is_spectral, ispec );
+            }
+#ifdef  __DETAILED_TIMERS
+            patch->patch_timers[12] += MPI_Wtime() - timer;
+#endif
+
+        } // end ibin loop
+
+        for( unsigned int ithd=0 ; ithd<nrj_lost_per_thd.size() ; ithd++ ) {
+            nrj_bc_lost += nrj_lost_per_thd[tid];
+        }
+
+    } // end case of moving particle
+    else { // immobile particle
+
+        if( diag_flag &&( !particles->is_test ) ) {
+            double *b_rho=nullptr;
+            for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
+                // only 3D is implemented actually
+                if( nDim_field==2 ) {
+                    b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
+                }
+                if( nDim_field==3 ) {
+                    b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
+                } else if( nDim_field==1 ) {
+                    b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
+                }
+                for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
+                    Proj->basic( b_rho, ( *particles ), iPart, 0 );
+                } //End loop on particles
+            }//End loop on bins
+        } // end condition on diag and not particle test
+
+    }//END if time vs. time_frozen
+} // End ponderomotive_position_update
+
+void Species::check( Patch *patch, std::string title )
+{
+    double sum_x = 0;
+    double sum_y = 0;
+    double sum_z = 0;
+    double sum_px = 0;
+    double sum_py = 0;
+    double sum_pz = 0;
+    double sum_w = 0;
+    unsigned int sum_ck = 0;
+    for( unsigned int ip=0; ip < particles->size() ; ip++ ) {
+        sum_x += particles->position( 0, ip );
+        sum_y += particles->position( 1, ip );
+        sum_z += particles->position( 2, ip );
+        sum_px += particles->momentum( 0, ip );
+        sum_py += particles->momentum( 1, ip );
+        sum_pz += particles->momentum( 1, ip );
+        sum_w += particles->weight( ip );
+        sum_ck += particles->cell_keys[ip];
+    }
+    std::cerr << "Check sum at " << title
+              << " for "<< this->name
+              << " in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ") "
+              << " mpi process " << patch->MPI_me_
+              << " - mode: " << this->vectorized_operators
+              << " - nb bin: " << first_index.size()
+              << " - nbp: " << particles->size()
+              << " - w: " << sum_w
+              << " - x: " << sum_x
+              << " - y: " << sum_y
+              << " - z: " << sum_z
+              << " - px: " << sum_px
+              << " - py: " << sum_py
+              << " - pz: " << sum_pz
+              << " - ck: " << sum_ck
+              << '\n';
+};
 
 // Array used in the Maxwell-Juttner sampling
 const double Species::lnInvF[1000] = {
@@ -1632,146 +2295,146 @@ const double Species::lnInvF[1000] = {
 // Array used in the Maxwell-Juttner sampling
 const double Species::lnInvH[1000] = {
     -9.402756483482924921e+00, -9.388318921346392898e+00, -9.374883046130019437e+00, -9.360818128319227327e+00, -9.346352500952018971e+00, -9.332609535599788231e+00, -9.318636378401940590e+00,
-    -9.304555775711108367e+00, -9.290525531420621874e+00, -9.276495588326515218e+00, -9.262659647248140615e+00, -9.248642923366197977e+00, -9.234537986282660427e+00, -9.220440348595868585e+00,
-    -9.206526581779595375e+00, -9.192429091051817380e+00, -9.178493014106759773e+00, -9.164404479064138798e+00, -9.150395754817472138e+00, -9.136394001864923453e+00, -9.122462891956370612e+00,
-    -9.108479530895117193e+00, -9.094472838919676505e+00, -9.080484396623118570e+00, -9.066302396191021629e+00, -9.052305266120191263e+00, -9.038372060472962488e+00, -9.024257614905998537e+00,
-    -9.010261730228865673e+00, -8.996299574888430683e+00, -8.982360935717023764e+00, -8.968261999420034769e+00, -8.954257835762128082e+00, -8.940289487588648498e+00, -8.926164230689391133e+00,
-    -8.912199784045913731e+00, -8.898161019156789919e+00, -8.884171549684843683e+00, -8.870206113458378283e+00, -8.856192689655291161e+00, -8.842146098452111858e+00, -8.828133587340268207e+00,
-    -8.814141950394821734e+00, -8.800128482639740568e+00, -8.786091791355046254e+00, -8.772065927576454314e+00, -8.758060948224377640e+00, -8.744020933568334542e+00, -8.729979616492244077e+00,
-    -8.715998025917098602e+00, -8.701976304743247681e+00, -8.688005470915637574e+00, -8.673989982215227101e+00, -8.659985003093263245e+00, -8.645943134466779867e+00, -8.631941877630428195e+00,
-    -8.617932722102422005e+00, -8.603896655344126287e+00, -8.589888145629942073e+00, -8.575831329584334028e+00, -8.561871862507890896e+00, -8.547821679997451128e+00, -8.533818689215104669e+00,
-    -8.519833016046151286e+00, -8.505800768836330406e+00, -8.491788588790452508e+00, -8.477763718789315561e+00, -8.463751871535670546e+00, -8.449750573726415581e+00, -8.435726296060591878e+00,
-    -8.421710291650438052e+00, -8.407696461704228241e+00, -8.393684105181973720e+00, -8.379666566421843044e+00, -8.365649358002741565e+00, -8.351631625725728370e+00, -8.337625365285765255e+00,
-    -8.323606711928743351e+00, -8.309588119961361485e+00, -8.295570530937240505e+00, -8.281566039082182584e+00, -8.267550775100456661e+00, -8.253535360283727584e+00, -8.239518589650394631e+00,
-    -8.225500054829783636e+00, -8.211478531743365394e+00, -8.197475804036692182e+00, -8.183450797927536158e+00, -8.169443383719595886e+00, -8.155428558470900313e+00, -8.141413336443854121e+00,
-    -8.127399047429936019e+00, -8.113385870188610127e+00, -8.099365847720060074e+00, -8.085356566734459349e+00, -8.071338108809586132e+00, -8.057323083786892326e+00, -8.043308533608312771e+00,
-    -8.029283462705111063e+00, -8.015277322954988293e+00, -8.001260912686870341e+00, -7.987248308454050871e+00, -7.973235083485832320e+00, -7.959214299713621266e+00, -7.945203032260913290e+00,
-    -7.931188194720145468e+00, -7.917173759481055839e+00, -7.903154847403775385e+00, -7.889135491874881723e+00, -7.875121967064339756e+00, -7.861110899903347438e+00, -7.847093968442999667e+00,
-    -7.833077727373989774e+00, -7.819062115094970622e+00, -7.805048389543351561e+00, -7.791032607063780091e+00, -7.777020408512951732e+00, -7.762999809997588763e+00, -7.748986096367973531e+00,
-    -7.734970856036877507e+00, -7.720951970669967857e+00, -7.706938603231540341e+00, -7.692924736361460347e+00, -7.678906461019358254e+00, -7.664893161079090689e+00, -7.650876041121127180e+00,
-    -7.636861215452872997e+00, -7.622845466222778477e+00, -7.608828024984916283e+00, -7.594812640914675228e+00, -7.580797680436783814e+00, -7.566782149947995251e+00, -7.552765744609319931e+00,
-    -7.538750580869197471e+00, -7.524734998913311657e+00, -7.510718694153761810e+00, -7.496702604314066321e+00, -7.482686172118370393e+00, -7.468669842403806491e+00, -7.454654512935313448e+00,
-    -7.440638616231906255e+00, -7.426621810922931388e+00, -7.412607158172065169e+00, -7.398589434939852438e+00, -7.384574035610326881e+00, -7.370557463576223434e+00, -7.356540657627733459e+00,
-    -7.342525153318804065e+00, -7.328508954197332059e+00, -7.314492188771704484e+00, -7.300475443269295539e+00, -7.286460013886568277e+00, -7.272443057492030682e+00, -7.258426815444318336e+00,
-    -7.244409972475176929e+00, -7.230393545186772464e+00, -7.216377394851891225e+00, -7.202360689208528122e+00, -7.188344086261769128e+00, -7.174327161166150546e+00, -7.160310137083985893e+00,
-    -7.146293051212126102e+00, -7.132276902050797673e+00, -7.118259888890483111e+00, -7.104242846535062661e+00, -7.090226085231720710e+00, -7.076209195279213660e+00, -7.062192351651393807e+00,
-    -7.048175543678467214e+00, -7.034158119357607930e+00, -7.020141117404175013e+00, -7.006123850412526721e+00, -6.992106579636755193e+00, -6.978089207294207341e+00, -6.964072209306565675e+00,
-    -6.950054581777039608e+00, -6.936037293725791031e+00, -6.922019986767113942e+00, -6.908002377494772084e+00, -6.893984966736285358e+00, -6.879967314518558474e+00, -6.865949626461007149e+00,
-    -6.851932031486784425e+00, -6.837914145871644145e+00, -6.823896411506032322e+00, -6.809878490100980564e+00, -6.795860633787632388e+00, -6.781842802936246528e+00, -6.767824770899844466e+00,
-    -6.753806395345270275e+00, -6.739788309358444529e+00, -6.725770146734140198e+00, -6.711752028083568966e+00, -6.697733741195642132e+00, -6.683715263982263011e+00, -6.669697011456180213e+00,
-    -6.655678448295303973e+00, -6.641659934976074986e+00, -6.627641256235382805e+00, -6.613622641520617407e+00, -6.599603827649048959e+00, -6.585584973605825176e+00, -6.571566171568333559e+00,
-    -6.557547183105451261e+00, -6.543528196118535867e+00, -6.529509089637392627e+00, -6.515489894663369697e+00, -6.501470707639946056e+00, -6.487451315675093255e+00, -6.473431951649657456e+00,
-    -6.459412536766182988e+00, -6.445392946609437068e+00, -6.431373347339028435e+00, -6.417353628364098839e+00, -6.403333843548605131e+00, -6.389314006174331873e+00, -6.375294070149028158e+00,
-    -6.361274032230475051e+00, -6.347253896227756265e+00, -6.333233728056003820e+00, -6.319213446735220785e+00, -6.305193076729772805e+00, -6.291172602855333196e+00, -6.277152056531630109e+00,
-    -6.263131434948522092e+00, -6.249110669730993273e+00, -6.235089834011095178e+00, -6.221068901366077597e+00, -6.207047871955993834e+00, -6.193026738061672809e+00, -6.179005530463898666e+00,
-    -6.164984203796887385e+00, -6.150962772820938618e+00, -6.136941223435446346e+00, -6.122919590081422392e+00, -6.108897823041722575e+00, -6.094875982483746846e+00, -6.080853991215137810e+00,
-    -6.066831914689460703e+00, -6.052809719325111359e+00, -6.038787398623465918e+00, -6.024764964099071030e+00, -6.010742424656190686e+00, -5.996719754664948887e+00, -5.982696958028578038e+00,
-    -5.968674044105862997e+00, -5.954650997286028868e+00, -5.940627840583593944e+00, -5.926604542202445813e+00, -5.912581112044525078e+00, -5.898557539480430378e+00, -5.884533835062183194e+00,
-    -5.870510003642364083e+00, -5.856486031202377873e+00, -5.842461916555514279e+00, -5.828437659701839024e+00, -5.814413251724160681e+00, -5.800388708424720541e+00, -5.786364015360013546e+00,
-    -5.772339155289128776e+00, -5.758314155110069166e+00, -5.744288994507930290e+00, -5.730263684034876626e+00, -5.716238206091529328e+00, -5.702212571495541837e+00, -5.688186769701041534e+00,
-    -5.674160802365624257e+00, -5.660134668080841536e+00, -5.646108355685827362e+00, -5.632081881824617220e+00, -5.618055220226613855e+00, -5.604028383548823378e+00, -5.590001365458268090e+00,
-    -5.575974167980627172e+00, -5.561946776948706095e+00, -5.547919199106292609e+00, -5.533891426332606223e+00, -5.519863466651733219e+00, -5.505835303004738890e+00, -5.491806946614043561e+00,
-    -5.477778380315056594e+00, -5.463749609942059493e+00, -5.449720632566440237e+00, -5.435691440821471154e+00, -5.421662039716173886e+00, -5.407632416902895756e+00, -5.393602573387089372e+00,
-    -5.379572509719777074e+00, -5.365542216350482008e+00, -5.351511692335392034e+00, -5.337480935451307751e+00, -5.323449941825153076e+00, -5.309418707795056314e+00, -5.295387229476762769e+00,
-    -5.281355504533746803e+00, -5.267323530078401816e+00, -5.253291301650716782e+00, -5.239258814888134275e+00, -5.225226066090911559e+00, -5.211193053448391233e+00, -5.197159771824590990e+00,
-    -5.183126218151476117e+00, -5.169092385672625412e+00, -5.155058275382643274e+00, -5.141023879201224389e+00, -5.126989194548196238e+00, -5.112954218078122892e+00, -5.098918945828792459e+00,
-    -5.084883371575669386e+00, -5.070847492041045790e+00, -5.056811303731988616e+00, -5.042774801179291444e+00, -5.028737980487945514e+00, -5.014700836583935839e+00, -5.000663365711495167e+00,
-    -4.986625562378193877e+00, -4.972587422641337795e+00, -4.958548941040521463e+00, -4.944510113413161712e+00, -4.930470934645069470e+00, -4.916431399638748090e+00, -4.902391502425701653e+00,
-    -4.888351239474742371e+00, -4.874310604571175709e+00, -4.860269592484651291e+00, -4.846228198304002532e+00, -4.832186416119078842e+00, -4.818144241376513648e+00, -4.804101666899612155e+00,
-    -4.790058688038118184e+00, -4.776015299456037866e+00, -4.761971494014358264e+00, -4.747927267417144215e+00, -4.733882612267035661e+00, -4.719837522939142715e+00, -4.705791993126767991e+00,
-    -4.691746016933713292e+00, -4.677699588149253351e+00, -4.663652699310194549e+00, -4.649605345185644723e+00, -4.635557518140910105e+00, -4.621509212121083898e+00, -4.607460419599018309e+00,
-    -4.593411134326189860e+00, -4.579361349129068337e+00, -4.565311056852286775e+00, -4.551260249935657143e+00, -4.537208921127983352e+00, -4.523157063716806370e+00, -4.509104669361667206e+00,
-    -4.495051730786109978e+00, -4.480998239915424008e+00, -4.466944189213031713e+00, -4.452889570797960772e+00, -4.438834376060603049e+00, -4.424778597381012979e+00, -4.410722225868971336e+00,
-    -4.396665253509551619e+00, -4.382607671517379622e+00, -4.368549471322706879e+00, -4.354490643789567628e+00, -4.340431180308653047e+00, -4.326371071702013182e+00, -4.312310308837443706e+00,
-    -4.298248882124207526e+00, -4.284186782349916456e+00, -4.270123999670713211e+00, -4.256060524440004933e+00, -4.241996346796963913e+00, -4.227931456807191068e+00, -4.213865843972508074e+00,
-    -4.199799498259279673e+00, -4.185732409026496903e+00, -4.171664565769908073e+00, -4.157595957540261011e+00, -4.143526573541322477e+00, -4.129456402581863195e+00, -4.115385433401063331e+00,
-    -4.101313654585375446e+00, -4.087241054608058199e+00, -4.073167621647699299e+00, -4.059093343771843720e+00, -4.045018208971966622e+00, -4.030942204774508930e+00, -4.016865318883647618e+00,
-    -4.002787538662525790e+00, -3.988708851168091929e+00, -3.974629243506720311e+00, -3.960548702433660750e+00, -3.946467214545992253e+00, -3.932384766302702506e+00, -3.918301343838640260e+00,
-    -3.904216933265594491e+00, -3.890131520343185656e+00, -3.876045090659561154e+00, -3.861957629639284129e+00, -3.847869122433445366e+00, -3.833779554071717666e+00, -3.819688909227958007e+00,
-    -3.805597172458903277e+00, -3.791504328004591251e+00, -3.777410359985496235e+00, -3.763315252231650643e+00, -3.749218988318105961e+00, -3.735121551585395494e+00, -3.721022925173522733e+00,
-    -3.706923091918343349e+00, -3.692822034423430377e+00, -3.678719735067865759e+00, -3.664616175927026820e+00, -3.650511338833094754e+00, -3.636405205371272764e+00, -3.622297756801203583e+00,
-    -3.608188974152441997e+00, -3.594078838159660005e+00, -3.579967329266379839e+00, -3.565854427652642045e+00, -3.551740113183203373e+00, -3.537624365419402839e+00, -3.523507163639728823e+00,
-    -3.509388486827117681e+00, -3.495268313597620136e+00, -3.481146622322163875e+00, -3.467023390990199516e+00, -3.452898597305658956e+00, -3.438772218629355226e+00, -3.424644231970350283e+00,
-    -3.410514614028766545e+00, -3.396383341118600185e+00, -3.382250389237801524e+00, -3.368115734004724082e+00, -3.353979350675957427e+00, -3.339841214159893212e+00, -3.325701298958231078e+00,
-    -3.311559579221938776e+00, -3.297416028694333701e+00, -3.283270620742043899e+00, -3.269123328322449229e+00, -3.254974123986548840e+00, -3.240822979894216527e+00, -3.226669867761286170e+00,
-    -3.212514758894621458e+00, -3.198357624168206126e+00, -3.184198434015861778e+00, -3.170037158433746782e+00, -3.155873766953881443e+00, -3.141708228660941238e+00, -3.127540512170100762e+00,
-    -3.113370585620815145e+00, -3.099198416671123280e+00, -3.085023972502690448e+00, -3.070847219786304816e+00, -3.056668124686660715e+00, -3.042486652874943243e+00, -3.028302769482326795e+00,
-    -3.014116439119186808e+00, -2.999927625862666591e+00, -2.985736293235094152e+00, -2.971542404209721155e+00, -2.957345921201353089e+00, -2.943146806038983154e+00, -2.928945019976269659e+00,
-    -2.914740523681580875e+00, -2.900533277212366645e+00, -2.886323240022723002e+00, -2.872110370940061053e+00, -2.857894628167629847e+00, -2.843675969261741709e+00, -2.829454351133278145e+00,
-    -2.815229730025366806e+00, -2.801002061511853380e+00, -2.786771300482580038e+00, -2.772537401131430990e+00, -2.758300316947211339e+00, -2.744060000697740698e+00, -2.729816404423872633e+00,
-    -2.715569479423635801e+00, -2.701319176241026909e+00, -2.687065444653787605e+00, -2.672808233660158184e+00, -2.658547491464986923e+00, -2.644283165469476504e+00, -2.630015202255621354e+00,
-    -2.615743547571750316e+00, -2.601468146322303721e+00, -2.587188942549503601e+00, -2.572905879421945929e+00, -2.558618899217506293e+00, -2.544327943310193074e+00, -2.530032952155425452e+00,
-    -2.515733865272170355e+00, -2.501430621229792539e+00, -2.487123157629747006e+00, -2.472811411091746070e+00, -2.458495317233948541e+00, -2.444174810658960695e+00, -2.429849824935295999e+00,
-    -2.415520292579488970e+00, -2.401186145038158415e+00, -2.386847312671634747e+00, -2.372503724731980679e+00, -2.358155309347800266e+00, -2.343801993501943404e+00, -2.329443703013275524e+00,
-    -2.315080362516850343e+00, -2.300711895443124710e+00, -2.286338223996969177e+00, -2.271959269136864634e+00, -2.257574950553179249e+00, -2.243185186646586615e+00, -2.228789894504906499e+00,
-    -2.214388989881381331e+00, -2.199982387170757114e+00, -2.185569999385429174e+00, -2.171151738131902764e+00, -2.156727513586190081e+00, -2.142297234468256484e+00, -2.127860808017024041e+00,
-    -2.113418139964494014e+00, -2.098969134508561929e+00, -2.084513694286517005e+00, -2.070051720347950930e+00, -2.055583112125752177e+00, -2.041107767408548490e+00, -2.026625582310815243e+00,
-    -2.012136451243868418e+00, -1.997640266884977533e+00, -1.983136920147360760e+00, -1.968626300148024644e+00, -1.954108294176254423e+00, -1.939582787661000784e+00, -1.925049664137404415e+00,
-    -1.910508805213203543e+00, -1.895960090533721276e+00, -1.881403397747692496e+00, -1.866838602470123343e+00, -1.852265578246936162e+00, -1.837684196517090696e+00, -1.823094326574594470e+00,
-    -1.808495835530226525e+00, -1.793888588271750573e+00, -1.779272447423927428e+00, -1.764647273307479391e+00, -1.750012923897452444e+00, -1.735369254780609216e+00, -1.720716119112000175e+00,
-    -1.706053367570993240e+00, -1.691380848315968466e+00, -1.676698406938626595e+00, -1.662005886417345257e+00, -1.647303127068936668e+00, -1.632589966500902712e+00, -1.617866239561131625e+00,
-    -1.603131778288010123e+00, -1.588386411858628611e+00, -1.573629966536664426e+00, -1.558862265618827125e+00, -1.544083129380501962e+00, -1.529292375020237182e+00, -1.514489816603383998e+00,
-    -1.499675265004333014e+00, -1.484848527848137811e+00, -1.470009409450440341e+00, -1.455157710756823208e+00, -1.440293229280589449e+00, -1.425415759039740937e+00, -1.410525090492460665e+00,
-    -1.395621010471538304e+00, -1.380703302117652687e+00, -1.365771744811192123e+00, -1.350826114103020892e+00, -1.335866181643817541e+00, -1.320891715112248566e+00, -1.305902478141627965e+00,
-    -1.290898230245432377e+00, -1.275878726741366043e+00, -1.260843718673973157e+00, -1.245792952735989001e+00, -1.230726171188135876e+00, -1.215643111777624297e+00, -1.200543507654948661e+00,
-    -1.185427087289522730e+00, -1.170293574383549196e+00, -1.155142687784439515e+00, -1.139974141395854179e+00, -1.124787644086856497e+00, -1.109582899599844241e+00, -1.094359606456657197e+00,
-    -1.079117457863106644e+00, -1.063856141612011585e+00, -1.048575339984358035e+00, -1.033274729649019674e+00, -1.017953981560683063e+00, -1.002612760856079754e+00, -9.872507267485509663e-01,
-    -9.718675324209239408e-01, -9.564628249165176843e-01, -9.410362450286021696e-01, -9.255874271879587223e-01, -9.101159993487000222e-01, -8.946215828724155550e-01, -8.791037924103899392e-01,
-    -8.635622357841905572e-01, -8.479965138643655864e-01, -8.324062204473884341e-01, -8.167909421308313656e-01, -8.011502581867100403e-01, -7.854837404331064254e-01, -7.697909531039377473e-01,
-    -7.540714527170240267e-01, -7.383247879403610492e-01, -7.225504994566308570e-01, -7.067481198260057162e-01, -6.909171733472264654e-01, -6.750571759169931019e-01, -6.591676348876497338e-01,
-    -6.432480489232650367e-01, -6.272979078540815712e-01, -6.113166925293762599e-01, -5.953038746687773219e-01, -5.792589167121133809e-01, -5.631812716677440100e-01, -5.470703829595495726e-01,
-    -5.309256842725363912e-01, -5.147465993971619413e-01, -4.985325420724325274e-01, -4.822829158278582606e-01, -4.659971138243255151e-01, -4.496745186939796191e-01, -4.333145023792023820e-01,
-    -4.169164259707845432e-01, -4.004796395453985025e-01, -3.840034820024536555e-01, -3.674872809005117480e-01, -3.509303522933207575e-01, -3.343320005656342242e-01, -3.176915182689690753e-01,
-    -3.010081859574224028e-01, -2.842812720237357094e-01, -2.675100325357526176e-01, -2.506937110734680507e-01, -2.338315385668545687e-01, -2.169227331346592069e-01, -1.999664999244038510e-01,
-    -1.829620309537795531e-01, -1.659085049536948575e-01, -1.488050872132367364e-01, -1.316509294267726449e-01, -1.144451695435026312e-01, -9.718693161971100891e-02, -7.987532567406357975e-02,
-    -6.250944754623571908e-02, -4.508837875921357929e-02, -2.761118638561238861e-02, -1.007692291837952031e-02, 7.515373853751791157e-03, 2.516668096563849308e-02, 4.287799038955116687e-02,
-    6.065030914300877790e-02, 7.848465939016274762e-02, 9.638207853628300015e-02, 1.143436193148676949e-01, 1.323703498668596101e-01, 1.504633538114835134e-01, 1.686237303081316863e-01,
-    1.868525941087738618e-01, 2.051510756003103453e-01, 2.235203208362644411e-01, 2.419614915572445846e-01, 2.604757651994907275e-01, 2.790643348909225274e-01, 2.977284094339847642e-01,
-    3.164692132746190767e-01, 3.352879864566974955e-01, 3.541859845611505797e-01, 3.731644786291101745e-01, 3.922247550683047868e-01, 4.113681155419415814e-01, 4.305958768393399749e-01,
-    4.499093707274900988e-01, 4.693099437827778497e-01, 4.887989572020708939e-01, 5.083777865923346795e-01, 5.280478217380019101e-01, 5.478104663452385559e-01, 5.676671377623091486e-01,
-    5.876192666752143579e-01, 6.076682967777744526e-01, 6.278156844153628402e-01, 6.480628982014593475e-01, 6.684114186062461993e-01, 6.888627375164465549e-01, 7.094183577656660855e-01,
-    7.300797926344519961e-01, 7.508485653193812670e-01, 7.717262083704640174e-01, 7.927142630961924175e-01, 8.138142789356321849e-01, 8.350278127969287256e-01, 8.563564283617107753e-01,
-    8.778016953548820611e-01, 8.993651887793497890e-01, 9.210484881153276904e-01, 9.428531764838573581e-01, 9.647808397743138364e-01, 9.868330657357101687e-01, 1.009011443031680555e+00,
-    1.031317560259154220e+00, 1.053753004930747306e+00, 1.076319362421058745e+00, 1.099018214877129251e+00, 1.121851140093406807e+00, 1.144819710351726805e+00, 1.167925491226848189e+00,
-    1.191170040358282112e+00, 1.214554906189223793e+00, 1.238081626673530833e+00, 1.261751727951857527e+00, 1.285566722998118916e+00, 1.309528110237661025e+00, 1.333637372138616994e+00,
-    1.357895973778068477e+00, 1.382305361384801090e+00, 1.406866960860538418e+00, 1.431582176281727126e+00, 1.456452388384066099e+00, 1.481478953032097312e+00, 1.506663199676377740e+00,
-    1.532006429800786274e+00, 1.557509915362758957e+00, 1.583174897229287392e+00, 1.609002583611719883e+00, 1.634994148502431299e+00, 1.661150730116619734e+00, 1.687473429342547293e+00,
-    1.713963308203631852e+00, 1.740621388335936937e+00, 1.767448649484585133e+00, 1.794446028022785189e+00, 1.821614415497148087e+00, 1.848954657203021990e+00, 1.876467550793639250e+00,
-    1.904153844926801176e+00, 1.932014237952910163e+00, 1.960049376648085095e+00, 1.988259854996070608e+00, 2.016646213022645018e+00, 2.045208935686086527e+00, 2.073948451827253514e+00,
-    2.102865133182698631e+00, 2.131959293464111393e+00, 2.161231187507307805e+00, 2.190681010493759295e+00, 2.220308897247562196e+00, 2.250114921610536278e+00, 2.280099095897945016e+00,
-    2.310261370437167727e+00, 2.340601633191360609e+00, 2.371119709469981629e+00, 2.401815361727784648e+00, 2.432688289453607489e+00, 2.463738129150097489e+00, 2.494964454405129484e+00,
-    2.526366776055511743e+00, 2.557944542443212121e+00, 2.589697139764099543e+00, 2.621623892508883724e+00, 2.653724063995622107e+00, 2.685996856992998172e+00, 2.718441414433075298e+00,
-    2.751056820212167686e+00, 2.783842100078050663e+00, 2.816796222601529287e+00, 2.849918100230090179e+00, 2.883206590421129256e+00, 2.916660496851998019e+00, 2.950278570703887215e+00,
-    2.984059512016312254e+00, 3.018001971108888792e+00, 3.052104550066684130e+00, 3.086365804285480685e+00, 3.120784244073000924e+00, 3.155358336302044542e+00, 3.190086506111383446e+00,
-    3.224967138650136622e+00, 3.259998580861284800e+00, 3.295179143299920455e+00, 3.330507101981744711e+00, 3.365980700257427571e+00, 3.401598150708227575e+00, 3.437357637058491289e+00,
-    3.473257316100561987e+00, 3.509295319627706355e+00, 3.545469756370736469e+00, 3.581778713934076208e+00, 3.618220260727126991e+00, 3.654792447886851203e+00, 3.691493311187746151e+00,
-    3.728320872935293906e+00, 3.765273143839341863e+00, 3.802348124863886181e+00, 3.839543809049948297e+00, 3.876858183308386607e+00, 3.914289230179682999e+00, 3.951834929557909604e+00,
-    3.989493260376288930e+00, 4.027262202251907119e+00, 4.065139737087459793e+00, 4.103123850627900637e+00, 4.141212533970256793e+00, 4.179403785024969231e+00, 4.217695609927317513e+00,
-    4.256086024397712109e+00, 4.294573055049793808e+00, 4.333154740645484004e+00, 4.371829133296307290e+00, 4.410594299610440139e+00, 4.449448321785244964e+00, 4.488389298644973380e+00,
-    4.527415346623724801e+00, 4.566524600693744773e+00, 4.605715215239329474e+00, 4.644985364876748513e+00, 4.684333245220703823e+00, 4.723757073597968592e+00, 4.763255089708972712e+00,
-    4.802825556238135896e+00, 4.842466759414006283e+00, 4.882177009520106914e+00, 4.921954641357675797e+00, 4.961798014661471079e+00, 5.001705514469860780e+00, 5.041675551450504500e+00,
-    5.081706562182967346e+00, 5.121797009399650769e+00, 5.161945382186415188e+00, 5.202150196144439853e+00, 5.242409993514641542e+00, 5.282723343266237492e+00, 5.323088841150888761e+00,
-    5.363505109723930353e+00, 5.403970798334178482e+00, 5.444484583083772478e+00, 5.485045166759582536e+00, 5.525651278737584882e+00, 5.566301674861654725e+00, 5.606995137298286913e+00,
-    5.647730474368503728e+00, 5.688506520358434848e+00, 5.729322135309868003e+00, 5.770176204792100805e+00, 5.811067639656364747e+00, 5.851995375774075470e+00, 5.892958373760132318e+00,
-    5.933955618682425381e+00, 5.974986119758676217e+00, 6.016048910041793540e+00, 6.057143046094681793e+00, 6.098267607655615485e+00, 6.139421697295129654e+00, 6.180604440065376792e+00,
-    6.221814983142841982e+00, 6.263052495465290193e+00, 6.304316167363771761e+00, 6.345605210190464085e+00, 6.386918855943076956e+00, 6.428256356886620004e+00, 6.469616985173070489e+00,
-    6.511000032459687503e+00, 6.552404809526525931e+00, 6.593830645893738129e+00, 6.635276889439174042e+00, 6.676742906016807311e+00, 6.718228079076448367e+00, 6.759731809285145054e+00,
-    6.801253514150790380e+00, 6.842792627648170978e+00, 6.884348599847924355e+00, 6.925920896548682926e+00, 6.967508998912713913e+00, 7.009112403105341116e+00, 7.050730619938390120e+00,
-    7.092363174517901214e+00, 7.134009605896315165e+00, 7.175669466729295287e+00, 7.217342322937444266e+00, 7.259027753372938818e+00, 7.300725349491324678e+00, 7.342434715028535841e+00,
-    7.384155465683258868e+00, 7.425887228804723961e+00, 7.467629643086000080e+00, 7.509382358262848278e+00, 7.551145034818199875e+00, 7.592917343692232812e+00, 7.634698965998204301e+00,
-    7.676489592743889645e+00, 7.718288924558750708e+00, 7.760096671426786941e+00, 7.801912552425056546e+00, 7.843736295467861552e+00, 7.885567637056555945e+00, 7.927406322034950215e+00,
-    7.969252103350283001e+00, 8.011104741819659480e+00, 8.052964005902026656e+00, 8.094829671475483934e+00, 8.136701521619965405e+00, 8.178579346405202344e+00, 8.220462942683900209e+00,
-    8.262352113890059968e+00, 8.304246669842363815e+00, 8.346146426552573772e+00, 8.388051206038806384e+00, 8.429960836143713721e+00, 8.471875150357364603e+00, 8.513793987644810102e+00,
-    8.555717192278262218e+00, 8.597644613673752545e+00, 8.639576106232228270e+00, 8.681511529184973597e+00, 8.723450746443274895e+00, 8.765393626452272713e+00, 8.807340042048823037e+00,
-    8.849289870323442386e+00, 8.891242992486070307e+00, 8.933199293735690105e+00, 8.975158663133653292e+00, 9.017120993480681079e+00, 9.059086181197388399e+00, 9.101054126208316220e+00,
-    9.143024731829335394e+00, 9.184997904658382950e+00, 9.226973554469383387e+00, 9.268951594109404724e+00, 9.310931939398793489e+00, 9.352914509034373935e+00, 9.394899224495514289e+00,
-    9.436886009953081356e+00, 9.478874792181123610e+00, 9.520865500471277443e+00, 9.562858066549781100e+00, 9.604852424497055452e+00, 9.646848510669737919e+00, 9.688846263625196187e+00,
-    9.730845624048324538e+00, 9.772846534680663666e+00, 9.814848940251730269e+00, 9.856852787412515582e+00, 9.898858024671071121e+00, 9.940864602330142574e+00, 9.982872472426784327e+00,
-    1.002488158867386936e+01, 1.006689190640353360e+01, 1.010890338251236287e+01, 1.015091597540838286e+01, 1.019292964495973486e+01, 1.023494435244503542e+01, 1.027696006050531352e+01,
-    1.031897673309754104e+01, 1.036099433544965187e+01, 1.040301283401705135e+01, 1.044503219644050596e+01, 1.048705239150549318e+01, 1.052907338910280899e+01, 1.057109516019052187e+01,
-    1.061311767675715778e+01, 1.065514091178612688e+01, 1.069716483922131189e+01, 1.073918943393381298e+01, 1.078121467168979386e+01, 1.082324052911941337e+01, 1.086526698368675881e+01,
-    1.090729401366085582e+01, 1.094932159808758954e+01, 1.099134971676259376e+01, 1.103337835020506397e+01, 1.107540747963243177e+01, 1.111743708693592225e+01, 1.115946715465691952e+01,
-    1.120149766596414409e+01, 1.124352860463161008e+01, 1.128555995501730358e+01, 1.132759170204265331e+01, 1.136962383117263720e+01, 1.141165632839659239e+01, 1.145368918020970028e+01,
-    1.149572237359508264e+01, 1.153775589600653184e+01, 1.157978973535181844e+01, 1.162182387997659738e+01, 1.166385831864882938e+01, 1.170589304054380619e+01, 1.174792803522962892e+01,
-    1.178996329265322451e+01, 1.183199880312684549e+01, 1.187403455731502611e+01, 1.191607054622200579e+01, 1.195810676117958415e+01, 1.200014319383540240e+01
-};
+        -9.304555775711108367e+00, -9.290525531420621874e+00, -9.276495588326515218e+00, -9.262659647248140615e+00, -9.248642923366197977e+00, -9.234537986282660427e+00, -9.220440348595868585e+00,
+        -9.206526581779595375e+00, -9.192429091051817380e+00, -9.178493014106759773e+00, -9.164404479064138798e+00, -9.150395754817472138e+00, -9.136394001864923453e+00, -9.122462891956370612e+00,
+        -9.108479530895117193e+00, -9.094472838919676505e+00, -9.080484396623118570e+00, -9.066302396191021629e+00, -9.052305266120191263e+00, -9.038372060472962488e+00, -9.024257614905998537e+00,
+        -9.010261730228865673e+00, -8.996299574888430683e+00, -8.982360935717023764e+00, -8.968261999420034769e+00, -8.954257835762128082e+00, -8.940289487588648498e+00, -8.926164230689391133e+00,
+        -8.912199784045913731e+00, -8.898161019156789919e+00, -8.884171549684843683e+00, -8.870206113458378283e+00, -8.856192689655291161e+00, -8.842146098452111858e+00, -8.828133587340268207e+00,
+        -8.814141950394821734e+00, -8.800128482639740568e+00, -8.786091791355046254e+00, -8.772065927576454314e+00, -8.758060948224377640e+00, -8.744020933568334542e+00, -8.729979616492244077e+00,
+        -8.715998025917098602e+00, -8.701976304743247681e+00, -8.688005470915637574e+00, -8.673989982215227101e+00, -8.659985003093263245e+00, -8.645943134466779867e+00, -8.631941877630428195e+00,
+        -8.617932722102422005e+00, -8.603896655344126287e+00, -8.589888145629942073e+00, -8.575831329584334028e+00, -8.561871862507890896e+00, -8.547821679997451128e+00, -8.533818689215104669e+00,
+        -8.519833016046151286e+00, -8.505800768836330406e+00, -8.491788588790452508e+00, -8.477763718789315561e+00, -8.463751871535670546e+00, -8.449750573726415581e+00, -8.435726296060591878e+00,
+        -8.421710291650438052e+00, -8.407696461704228241e+00, -8.393684105181973720e+00, -8.379666566421843044e+00, -8.365649358002741565e+00, -8.351631625725728370e+00, -8.337625365285765255e+00,
+        -8.323606711928743351e+00, -8.309588119961361485e+00, -8.295570530937240505e+00, -8.281566039082182584e+00, -8.267550775100456661e+00, -8.253535360283727584e+00, -8.239518589650394631e+00,
+        -8.225500054829783636e+00, -8.211478531743365394e+00, -8.197475804036692182e+00, -8.183450797927536158e+00, -8.169443383719595886e+00, -8.155428558470900313e+00, -8.141413336443854121e+00,
+        -8.127399047429936019e+00, -8.113385870188610127e+00, -8.099365847720060074e+00, -8.085356566734459349e+00, -8.071338108809586132e+00, -8.057323083786892326e+00, -8.043308533608312771e+00,
+        -8.029283462705111063e+00, -8.015277322954988293e+00, -8.001260912686870341e+00, -7.987248308454050871e+00, -7.973235083485832320e+00, -7.959214299713621266e+00, -7.945203032260913290e+00,
+        -7.931188194720145468e+00, -7.917173759481055839e+00, -7.903154847403775385e+00, -7.889135491874881723e+00, -7.875121967064339756e+00, -7.861110899903347438e+00, -7.847093968442999667e+00,
+        -7.833077727373989774e+00, -7.819062115094970622e+00, -7.805048389543351561e+00, -7.791032607063780091e+00, -7.777020408512951732e+00, -7.762999809997588763e+00, -7.748986096367973531e+00,
+        -7.734970856036877507e+00, -7.720951970669967857e+00, -7.706938603231540341e+00, -7.692924736361460347e+00, -7.678906461019358254e+00, -7.664893161079090689e+00, -7.650876041121127180e+00,
+        -7.636861215452872997e+00, -7.622845466222778477e+00, -7.608828024984916283e+00, -7.594812640914675228e+00, -7.580797680436783814e+00, -7.566782149947995251e+00, -7.552765744609319931e+00,
+        -7.538750580869197471e+00, -7.524734998913311657e+00, -7.510718694153761810e+00, -7.496702604314066321e+00, -7.482686172118370393e+00, -7.468669842403806491e+00, -7.454654512935313448e+00,
+        -7.440638616231906255e+00, -7.426621810922931388e+00, -7.412607158172065169e+00, -7.398589434939852438e+00, -7.384574035610326881e+00, -7.370557463576223434e+00, -7.356540657627733459e+00,
+        -7.342525153318804065e+00, -7.328508954197332059e+00, -7.314492188771704484e+00, -7.300475443269295539e+00, -7.286460013886568277e+00, -7.272443057492030682e+00, -7.258426815444318336e+00,
+        -7.244409972475176929e+00, -7.230393545186772464e+00, -7.216377394851891225e+00, -7.202360689208528122e+00, -7.188344086261769128e+00, -7.174327161166150546e+00, -7.160310137083985893e+00,
+        -7.146293051212126102e+00, -7.132276902050797673e+00, -7.118259888890483111e+00, -7.104242846535062661e+00, -7.090226085231720710e+00, -7.076209195279213660e+00, -7.062192351651393807e+00,
+        -7.048175543678467214e+00, -7.034158119357607930e+00, -7.020141117404175013e+00, -7.006123850412526721e+00, -6.992106579636755193e+00, -6.978089207294207341e+00, -6.964072209306565675e+00,
+        -6.950054581777039608e+00, -6.936037293725791031e+00, -6.922019986767113942e+00, -6.908002377494772084e+00, -6.893984966736285358e+00, -6.879967314518558474e+00, -6.865949626461007149e+00,
+        -6.851932031486784425e+00, -6.837914145871644145e+00, -6.823896411506032322e+00, -6.809878490100980564e+00, -6.795860633787632388e+00, -6.781842802936246528e+00, -6.767824770899844466e+00,
+        -6.753806395345270275e+00, -6.739788309358444529e+00, -6.725770146734140198e+00, -6.711752028083568966e+00, -6.697733741195642132e+00, -6.683715263982263011e+00, -6.669697011456180213e+00,
+        -6.655678448295303973e+00, -6.641659934976074986e+00, -6.627641256235382805e+00, -6.613622641520617407e+00, -6.599603827649048959e+00, -6.585584973605825176e+00, -6.571566171568333559e+00,
+        -6.557547183105451261e+00, -6.543528196118535867e+00, -6.529509089637392627e+00, -6.515489894663369697e+00, -6.501470707639946056e+00, -6.487451315675093255e+00, -6.473431951649657456e+00,
+        -6.459412536766182988e+00, -6.445392946609437068e+00, -6.431373347339028435e+00, -6.417353628364098839e+00, -6.403333843548605131e+00, -6.389314006174331873e+00, -6.375294070149028158e+00,
+        -6.361274032230475051e+00, -6.347253896227756265e+00, -6.333233728056003820e+00, -6.319213446735220785e+00, -6.305193076729772805e+00, -6.291172602855333196e+00, -6.277152056531630109e+00,
+        -6.263131434948522092e+00, -6.249110669730993273e+00, -6.235089834011095178e+00, -6.221068901366077597e+00, -6.207047871955993834e+00, -6.193026738061672809e+00, -6.179005530463898666e+00,
+        -6.164984203796887385e+00, -6.150962772820938618e+00, -6.136941223435446346e+00, -6.122919590081422392e+00, -6.108897823041722575e+00, -6.094875982483746846e+00, -6.080853991215137810e+00,
+        -6.066831914689460703e+00, -6.052809719325111359e+00, -6.038787398623465918e+00, -6.024764964099071030e+00, -6.010742424656190686e+00, -5.996719754664948887e+00, -5.982696958028578038e+00,
+        -5.968674044105862997e+00, -5.954650997286028868e+00, -5.940627840583593944e+00, -5.926604542202445813e+00, -5.912581112044525078e+00, -5.898557539480430378e+00, -5.884533835062183194e+00,
+        -5.870510003642364083e+00, -5.856486031202377873e+00, -5.842461916555514279e+00, -5.828437659701839024e+00, -5.814413251724160681e+00, -5.800388708424720541e+00, -5.786364015360013546e+00,
+        -5.772339155289128776e+00, -5.758314155110069166e+00, -5.744288994507930290e+00, -5.730263684034876626e+00, -5.716238206091529328e+00, -5.702212571495541837e+00, -5.688186769701041534e+00,
+        -5.674160802365624257e+00, -5.660134668080841536e+00, -5.646108355685827362e+00, -5.632081881824617220e+00, -5.618055220226613855e+00, -5.604028383548823378e+00, -5.590001365458268090e+00,
+        -5.575974167980627172e+00, -5.561946776948706095e+00, -5.547919199106292609e+00, -5.533891426332606223e+00, -5.519863466651733219e+00, -5.505835303004738890e+00, -5.491806946614043561e+00,
+        -5.477778380315056594e+00, -5.463749609942059493e+00, -5.449720632566440237e+00, -5.435691440821471154e+00, -5.421662039716173886e+00, -5.407632416902895756e+00, -5.393602573387089372e+00,
+        -5.379572509719777074e+00, -5.365542216350482008e+00, -5.351511692335392034e+00, -5.337480935451307751e+00, -5.323449941825153076e+00, -5.309418707795056314e+00, -5.295387229476762769e+00,
+        -5.281355504533746803e+00, -5.267323530078401816e+00, -5.253291301650716782e+00, -5.239258814888134275e+00, -5.225226066090911559e+00, -5.211193053448391233e+00, -5.197159771824590990e+00,
+        -5.183126218151476117e+00, -5.169092385672625412e+00, -5.155058275382643274e+00, -5.141023879201224389e+00, -5.126989194548196238e+00, -5.112954218078122892e+00, -5.098918945828792459e+00,
+        -5.084883371575669386e+00, -5.070847492041045790e+00, -5.056811303731988616e+00, -5.042774801179291444e+00, -5.028737980487945514e+00, -5.014700836583935839e+00, -5.000663365711495167e+00,
+        -4.986625562378193877e+00, -4.972587422641337795e+00, -4.958548941040521463e+00, -4.944510113413161712e+00, -4.930470934645069470e+00, -4.916431399638748090e+00, -4.902391502425701653e+00,
+        -4.888351239474742371e+00, -4.874310604571175709e+00, -4.860269592484651291e+00, -4.846228198304002532e+00, -4.832186416119078842e+00, -4.818144241376513648e+00, -4.804101666899612155e+00,
+        -4.790058688038118184e+00, -4.776015299456037866e+00, -4.761971494014358264e+00, -4.747927267417144215e+00, -4.733882612267035661e+00, -4.719837522939142715e+00, -4.705791993126767991e+00,
+        -4.691746016933713292e+00, -4.677699588149253351e+00, -4.663652699310194549e+00, -4.649605345185644723e+00, -4.635557518140910105e+00, -4.621509212121083898e+00, -4.607460419599018309e+00,
+        -4.593411134326189860e+00, -4.579361349129068337e+00, -4.565311056852286775e+00, -4.551260249935657143e+00, -4.537208921127983352e+00, -4.523157063716806370e+00, -4.509104669361667206e+00,
+        -4.495051730786109978e+00, -4.480998239915424008e+00, -4.466944189213031713e+00, -4.452889570797960772e+00, -4.438834376060603049e+00, -4.424778597381012979e+00, -4.410722225868971336e+00,
+        -4.396665253509551619e+00, -4.382607671517379622e+00, -4.368549471322706879e+00, -4.354490643789567628e+00, -4.340431180308653047e+00, -4.326371071702013182e+00, -4.312310308837443706e+00,
+        -4.298248882124207526e+00, -4.284186782349916456e+00, -4.270123999670713211e+00, -4.256060524440004933e+00, -4.241996346796963913e+00, -4.227931456807191068e+00, -4.213865843972508074e+00,
+        -4.199799498259279673e+00, -4.185732409026496903e+00, -4.171664565769908073e+00, -4.157595957540261011e+00, -4.143526573541322477e+00, -4.129456402581863195e+00, -4.115385433401063331e+00,
+        -4.101313654585375446e+00, -4.087241054608058199e+00, -4.073167621647699299e+00, -4.059093343771843720e+00, -4.045018208971966622e+00, -4.030942204774508930e+00, -4.016865318883647618e+00,
+        -4.002787538662525790e+00, -3.988708851168091929e+00, -3.974629243506720311e+00, -3.960548702433660750e+00, -3.946467214545992253e+00, -3.932384766302702506e+00, -3.918301343838640260e+00,
+        -3.904216933265594491e+00, -3.890131520343185656e+00, -3.876045090659561154e+00, -3.861957629639284129e+00, -3.847869122433445366e+00, -3.833779554071717666e+00, -3.819688909227958007e+00,
+        -3.805597172458903277e+00, -3.791504328004591251e+00, -3.777410359985496235e+00, -3.763315252231650643e+00, -3.749218988318105961e+00, -3.735121551585395494e+00, -3.721022925173522733e+00,
+        -3.706923091918343349e+00, -3.692822034423430377e+00, -3.678719735067865759e+00, -3.664616175927026820e+00, -3.650511338833094754e+00, -3.636405205371272764e+00, -3.622297756801203583e+00,
+        -3.608188974152441997e+00, -3.594078838159660005e+00, -3.579967329266379839e+00, -3.565854427652642045e+00, -3.551740113183203373e+00, -3.537624365419402839e+00, -3.523507163639728823e+00,
+        -3.509388486827117681e+00, -3.495268313597620136e+00, -3.481146622322163875e+00, -3.467023390990199516e+00, -3.452898597305658956e+00, -3.438772218629355226e+00, -3.424644231970350283e+00,
+        -3.410514614028766545e+00, -3.396383341118600185e+00, -3.382250389237801524e+00, -3.368115734004724082e+00, -3.353979350675957427e+00, -3.339841214159893212e+00, -3.325701298958231078e+00,
+        -3.311559579221938776e+00, -3.297416028694333701e+00, -3.283270620742043899e+00, -3.269123328322449229e+00, -3.254974123986548840e+00, -3.240822979894216527e+00, -3.226669867761286170e+00,
+        -3.212514758894621458e+00, -3.198357624168206126e+00, -3.184198434015861778e+00, -3.170037158433746782e+00, -3.155873766953881443e+00, -3.141708228660941238e+00, -3.127540512170100762e+00,
+        -3.113370585620815145e+00, -3.099198416671123280e+00, -3.085023972502690448e+00, -3.070847219786304816e+00, -3.056668124686660715e+00, -3.042486652874943243e+00, -3.028302769482326795e+00,
+        -3.014116439119186808e+00, -2.999927625862666591e+00, -2.985736293235094152e+00, -2.971542404209721155e+00, -2.957345921201353089e+00, -2.943146806038983154e+00, -2.928945019976269659e+00,
+        -2.914740523681580875e+00, -2.900533277212366645e+00, -2.886323240022723002e+00, -2.872110370940061053e+00, -2.857894628167629847e+00, -2.843675969261741709e+00, -2.829454351133278145e+00,
+        -2.815229730025366806e+00, -2.801002061511853380e+00, -2.786771300482580038e+00, -2.772537401131430990e+00, -2.758300316947211339e+00, -2.744060000697740698e+00, -2.729816404423872633e+00,
+        -2.715569479423635801e+00, -2.701319176241026909e+00, -2.687065444653787605e+00, -2.672808233660158184e+00, -2.658547491464986923e+00, -2.644283165469476504e+00, -2.630015202255621354e+00,
+        -2.615743547571750316e+00, -2.601468146322303721e+00, -2.587188942549503601e+00, -2.572905879421945929e+00, -2.558618899217506293e+00, -2.544327943310193074e+00, -2.530032952155425452e+00,
+        -2.515733865272170355e+00, -2.501430621229792539e+00, -2.487123157629747006e+00, -2.472811411091746070e+00, -2.458495317233948541e+00, -2.444174810658960695e+00, -2.429849824935295999e+00,
+        -2.415520292579488970e+00, -2.401186145038158415e+00, -2.386847312671634747e+00, -2.372503724731980679e+00, -2.358155309347800266e+00, -2.343801993501943404e+00, -2.329443703013275524e+00,
+        -2.315080362516850343e+00, -2.300711895443124710e+00, -2.286338223996969177e+00, -2.271959269136864634e+00, -2.257574950553179249e+00, -2.243185186646586615e+00, -2.228789894504906499e+00,
+        -2.214388989881381331e+00, -2.199982387170757114e+00, -2.185569999385429174e+00, -2.171151738131902764e+00, -2.156727513586190081e+00, -2.142297234468256484e+00, -2.127860808017024041e+00,
+        -2.113418139964494014e+00, -2.098969134508561929e+00, -2.084513694286517005e+00, -2.070051720347950930e+00, -2.055583112125752177e+00, -2.041107767408548490e+00, -2.026625582310815243e+00,
+        -2.012136451243868418e+00, -1.997640266884977533e+00, -1.983136920147360760e+00, -1.968626300148024644e+00, -1.954108294176254423e+00, -1.939582787661000784e+00, -1.925049664137404415e+00,
+        -1.910508805213203543e+00, -1.895960090533721276e+00, -1.881403397747692496e+00, -1.866838602470123343e+00, -1.852265578246936162e+00, -1.837684196517090696e+00, -1.823094326574594470e+00,
+        -1.808495835530226525e+00, -1.793888588271750573e+00, -1.779272447423927428e+00, -1.764647273307479391e+00, -1.750012923897452444e+00, -1.735369254780609216e+00, -1.720716119112000175e+00,
+        -1.706053367570993240e+00, -1.691380848315968466e+00, -1.676698406938626595e+00, -1.662005886417345257e+00, -1.647303127068936668e+00, -1.632589966500902712e+00, -1.617866239561131625e+00,
+        -1.603131778288010123e+00, -1.588386411858628611e+00, -1.573629966536664426e+00, -1.558862265618827125e+00, -1.544083129380501962e+00, -1.529292375020237182e+00, -1.514489816603383998e+00,
+        -1.499675265004333014e+00, -1.484848527848137811e+00, -1.470009409450440341e+00, -1.455157710756823208e+00, -1.440293229280589449e+00, -1.425415759039740937e+00, -1.410525090492460665e+00,
+        -1.395621010471538304e+00, -1.380703302117652687e+00, -1.365771744811192123e+00, -1.350826114103020892e+00, -1.335866181643817541e+00, -1.320891715112248566e+00, -1.305902478141627965e+00,
+        -1.290898230245432377e+00, -1.275878726741366043e+00, -1.260843718673973157e+00, -1.245792952735989001e+00, -1.230726171188135876e+00, -1.215643111777624297e+00, -1.200543507654948661e+00,
+        -1.185427087289522730e+00, -1.170293574383549196e+00, -1.155142687784439515e+00, -1.139974141395854179e+00, -1.124787644086856497e+00, -1.109582899599844241e+00, -1.094359606456657197e+00,
+        -1.079117457863106644e+00, -1.063856141612011585e+00, -1.048575339984358035e+00, -1.033274729649019674e+00, -1.017953981560683063e+00, -1.002612760856079754e+00, -9.872507267485509663e-01,
+        -9.718675324209239408e-01, -9.564628249165176843e-01, -9.410362450286021696e-01, -9.255874271879587223e-01, -9.101159993487000222e-01, -8.946215828724155550e-01, -8.791037924103899392e-01,
+        -8.635622357841905572e-01, -8.479965138643655864e-01, -8.324062204473884341e-01, -8.167909421308313656e-01, -8.011502581867100403e-01, -7.854837404331064254e-01, -7.697909531039377473e-01,
+        -7.540714527170240267e-01, -7.383247879403610492e-01, -7.225504994566308570e-01, -7.067481198260057162e-01, -6.909171733472264654e-01, -6.750571759169931019e-01, -6.591676348876497338e-01,
+        -6.432480489232650367e-01, -6.272979078540815712e-01, -6.113166925293762599e-01, -5.953038746687773219e-01, -5.792589167121133809e-01, -5.631812716677440100e-01, -5.470703829595495726e-01,
+        -5.309256842725363912e-01, -5.147465993971619413e-01, -4.985325420724325274e-01, -4.822829158278582606e-01, -4.659971138243255151e-01, -4.496745186939796191e-01, -4.333145023792023820e-01,
+        -4.169164259707845432e-01, -4.004796395453985025e-01, -3.840034820024536555e-01, -3.674872809005117480e-01, -3.509303522933207575e-01, -3.343320005656342242e-01, -3.176915182689690753e-01,
+        -3.010081859574224028e-01, -2.842812720237357094e-01, -2.675100325357526176e-01, -2.506937110734680507e-01, -2.338315385668545687e-01, -2.169227331346592069e-01, -1.999664999244038510e-01,
+        -1.829620309537795531e-01, -1.659085049536948575e-01, -1.488050872132367364e-01, -1.316509294267726449e-01, -1.144451695435026312e-01, -9.718693161971100891e-02, -7.987532567406357975e-02,
+        -6.250944754623571908e-02, -4.508837875921357929e-02, -2.761118638561238861e-02, -1.007692291837952031e-02, 7.515373853751791157e-03, 2.516668096563849308e-02, 4.287799038955116687e-02,
+        6.065030914300877790e-02, 7.848465939016274762e-02, 9.638207853628300015e-02, 1.143436193148676949e-01, 1.323703498668596101e-01, 1.504633538114835134e-01, 1.686237303081316863e-01,
+        1.868525941087738618e-01, 2.051510756003103453e-01, 2.235203208362644411e-01, 2.419614915572445846e-01, 2.604757651994907275e-01, 2.790643348909225274e-01, 2.977284094339847642e-01,
+        3.164692132746190767e-01, 3.352879864566974955e-01, 3.541859845611505797e-01, 3.731644786291101745e-01, 3.922247550683047868e-01, 4.113681155419415814e-01, 4.305958768393399749e-01,
+        4.499093707274900988e-01, 4.693099437827778497e-01, 4.887989572020708939e-01, 5.083777865923346795e-01, 5.280478217380019101e-01, 5.478104663452385559e-01, 5.676671377623091486e-01,
+        5.876192666752143579e-01, 6.076682967777744526e-01, 6.278156844153628402e-01, 6.480628982014593475e-01, 6.684114186062461993e-01, 6.888627375164465549e-01, 7.094183577656660855e-01,
+        7.300797926344519961e-01, 7.508485653193812670e-01, 7.717262083704640174e-01, 7.927142630961924175e-01, 8.138142789356321849e-01, 8.350278127969287256e-01, 8.563564283617107753e-01,
+        8.778016953548820611e-01, 8.993651887793497890e-01, 9.210484881153276904e-01, 9.428531764838573581e-01, 9.647808397743138364e-01, 9.868330657357101687e-01, 1.009011443031680555e+00,
+        1.031317560259154220e+00, 1.053753004930747306e+00, 1.076319362421058745e+00, 1.099018214877129251e+00, 1.121851140093406807e+00, 1.144819710351726805e+00, 1.167925491226848189e+00,
+        1.191170040358282112e+00, 1.214554906189223793e+00, 1.238081626673530833e+00, 1.261751727951857527e+00, 1.285566722998118916e+00, 1.309528110237661025e+00, 1.333637372138616994e+00,
+        1.357895973778068477e+00, 1.382305361384801090e+00, 1.406866960860538418e+00, 1.431582176281727126e+00, 1.456452388384066099e+00, 1.481478953032097312e+00, 1.506663199676377740e+00,
+        1.532006429800786274e+00, 1.557509915362758957e+00, 1.583174897229287392e+00, 1.609002583611719883e+00, 1.634994148502431299e+00, 1.661150730116619734e+00, 1.687473429342547293e+00,
+        1.713963308203631852e+00, 1.740621388335936937e+00, 1.767448649484585133e+00, 1.794446028022785189e+00, 1.821614415497148087e+00, 1.848954657203021990e+00, 1.876467550793639250e+00,
+        1.904153844926801176e+00, 1.932014237952910163e+00, 1.960049376648085095e+00, 1.988259854996070608e+00, 2.016646213022645018e+00, 2.045208935686086527e+00, 2.073948451827253514e+00,
+        2.102865133182698631e+00, 2.131959293464111393e+00, 2.161231187507307805e+00, 2.190681010493759295e+00, 2.220308897247562196e+00, 2.250114921610536278e+00, 2.280099095897945016e+00,
+        2.310261370437167727e+00, 2.340601633191360609e+00, 2.371119709469981629e+00, 2.401815361727784648e+00, 2.432688289453607489e+00, 2.463738129150097489e+00, 2.494964454405129484e+00,
+        2.526366776055511743e+00, 2.557944542443212121e+00, 2.589697139764099543e+00, 2.621623892508883724e+00, 2.653724063995622107e+00, 2.685996856992998172e+00, 2.718441414433075298e+00,
+        2.751056820212167686e+00, 2.783842100078050663e+00, 2.816796222601529287e+00, 2.849918100230090179e+00, 2.883206590421129256e+00, 2.916660496851998019e+00, 2.950278570703887215e+00,
+        2.984059512016312254e+00, 3.018001971108888792e+00, 3.052104550066684130e+00, 3.086365804285480685e+00, 3.120784244073000924e+00, 3.155358336302044542e+00, 3.190086506111383446e+00,
+        3.224967138650136622e+00, 3.259998580861284800e+00, 3.295179143299920455e+00, 3.330507101981744711e+00, 3.365980700257427571e+00, 3.401598150708227575e+00, 3.437357637058491289e+00,
+        3.473257316100561987e+00, 3.509295319627706355e+00, 3.545469756370736469e+00, 3.581778713934076208e+00, 3.618220260727126991e+00, 3.654792447886851203e+00, 3.691493311187746151e+00,
+        3.728320872935293906e+00, 3.765273143839341863e+00, 3.802348124863886181e+00, 3.839543809049948297e+00, 3.876858183308386607e+00, 3.914289230179682999e+00, 3.951834929557909604e+00,
+        3.989493260376288930e+00, 4.027262202251907119e+00, 4.065139737087459793e+00, 4.103123850627900637e+00, 4.141212533970256793e+00, 4.179403785024969231e+00, 4.217695609927317513e+00,
+        4.256086024397712109e+00, 4.294573055049793808e+00, 4.333154740645484004e+00, 4.371829133296307290e+00, 4.410594299610440139e+00, 4.449448321785244964e+00, 4.488389298644973380e+00,
+        4.527415346623724801e+00, 4.566524600693744773e+00, 4.605715215239329474e+00, 4.644985364876748513e+00, 4.684333245220703823e+00, 4.723757073597968592e+00, 4.763255089708972712e+00,
+        4.802825556238135896e+00, 4.842466759414006283e+00, 4.882177009520106914e+00, 4.921954641357675797e+00, 4.961798014661471079e+00, 5.001705514469860780e+00, 5.041675551450504500e+00,
+        5.081706562182967346e+00, 5.121797009399650769e+00, 5.161945382186415188e+00, 5.202150196144439853e+00, 5.242409993514641542e+00, 5.282723343266237492e+00, 5.323088841150888761e+00,
+        5.363505109723930353e+00, 5.403970798334178482e+00, 5.444484583083772478e+00, 5.485045166759582536e+00, 5.525651278737584882e+00, 5.566301674861654725e+00, 5.606995137298286913e+00,
+        5.647730474368503728e+00, 5.688506520358434848e+00, 5.729322135309868003e+00, 5.770176204792100805e+00, 5.811067639656364747e+00, 5.851995375774075470e+00, 5.892958373760132318e+00,
+        5.933955618682425381e+00, 5.974986119758676217e+00, 6.016048910041793540e+00, 6.057143046094681793e+00, 6.098267607655615485e+00, 6.139421697295129654e+00, 6.180604440065376792e+00,
+        6.221814983142841982e+00, 6.263052495465290193e+00, 6.304316167363771761e+00, 6.345605210190464085e+00, 6.386918855943076956e+00, 6.428256356886620004e+00, 6.469616985173070489e+00,
+        6.511000032459687503e+00, 6.552404809526525931e+00, 6.593830645893738129e+00, 6.635276889439174042e+00, 6.676742906016807311e+00, 6.718228079076448367e+00, 6.759731809285145054e+00,
+        6.801253514150790380e+00, 6.842792627648170978e+00, 6.884348599847924355e+00, 6.925920896548682926e+00, 6.967508998912713913e+00, 7.009112403105341116e+00, 7.050730619938390120e+00,
+        7.092363174517901214e+00, 7.134009605896315165e+00, 7.175669466729295287e+00, 7.217342322937444266e+00, 7.259027753372938818e+00, 7.300725349491324678e+00, 7.342434715028535841e+00,
+        7.384155465683258868e+00, 7.425887228804723961e+00, 7.467629643086000080e+00, 7.509382358262848278e+00, 7.551145034818199875e+00, 7.592917343692232812e+00, 7.634698965998204301e+00,
+        7.676489592743889645e+00, 7.718288924558750708e+00, 7.760096671426786941e+00, 7.801912552425056546e+00, 7.843736295467861552e+00, 7.885567637056555945e+00, 7.927406322034950215e+00,
+        7.969252103350283001e+00, 8.011104741819659480e+00, 8.052964005902026656e+00, 8.094829671475483934e+00, 8.136701521619965405e+00, 8.178579346405202344e+00, 8.220462942683900209e+00,
+        8.262352113890059968e+00, 8.304246669842363815e+00, 8.346146426552573772e+00, 8.388051206038806384e+00, 8.429960836143713721e+00, 8.471875150357364603e+00, 8.513793987644810102e+00,
+        8.555717192278262218e+00, 8.597644613673752545e+00, 8.639576106232228270e+00, 8.681511529184973597e+00, 8.723450746443274895e+00, 8.765393626452272713e+00, 8.807340042048823037e+00,
+        8.849289870323442386e+00, 8.891242992486070307e+00, 8.933199293735690105e+00, 8.975158663133653292e+00, 9.017120993480681079e+00, 9.059086181197388399e+00, 9.101054126208316220e+00,
+        9.143024731829335394e+00, 9.184997904658382950e+00, 9.226973554469383387e+00, 9.268951594109404724e+00, 9.310931939398793489e+00, 9.352914509034373935e+00, 9.394899224495514289e+00,
+        9.436886009953081356e+00, 9.478874792181123610e+00, 9.520865500471277443e+00, 9.562858066549781100e+00, 9.604852424497055452e+00, 9.646848510669737919e+00, 9.688846263625196187e+00,
+        9.730845624048324538e+00, 9.772846534680663666e+00, 9.814848940251730269e+00, 9.856852787412515582e+00, 9.898858024671071121e+00, 9.940864602330142574e+00, 9.982872472426784327e+00,
+        1.002488158867386936e+01, 1.006689190640353360e+01, 1.010890338251236287e+01, 1.015091597540838286e+01, 1.019292964495973486e+01, 1.023494435244503542e+01, 1.027696006050531352e+01,
+        1.031897673309754104e+01, 1.036099433544965187e+01, 1.040301283401705135e+01, 1.044503219644050596e+01, 1.048705239150549318e+01, 1.052907338910280899e+01, 1.057109516019052187e+01,
+        1.061311767675715778e+01, 1.065514091178612688e+01, 1.069716483922131189e+01, 1.073918943393381298e+01, 1.078121467168979386e+01, 1.082324052911941337e+01, 1.086526698368675881e+01,
+        1.090729401366085582e+01, 1.094932159808758954e+01, 1.099134971676259376e+01, 1.103337835020506397e+01, 1.107540747963243177e+01, 1.111743708693592225e+01, 1.115946715465691952e+01,
+        1.120149766596414409e+01, 1.124352860463161008e+01, 1.128555995501730358e+01, 1.132759170204265331e+01, 1.136962383117263720e+01, 1.141165632839659239e+01, 1.145368918020970028e+01,
+        1.149572237359508264e+01, 1.153775589600653184e+01, 1.157978973535181844e+01, 1.162182387997659738e+01, 1.166385831864882938e+01, 1.170589304054380619e+01, 1.174792803522962892e+01,
+        1.178996329265322451e+01, 1.183199880312684549e+01, 1.187403455731502611e+01, 1.191607054622200579e+01, 1.195810676117958415e+01, 1.200014319383540240e+01
+    };

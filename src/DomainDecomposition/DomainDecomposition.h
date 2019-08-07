@@ -8,14 +8,14 @@
 class DomainDecomposition
 {
 public:
-    DomainDecomposition( Params& params ) {};
+    DomainDecomposition( Params &params ) {};
     virtual ~DomainDecomposition( ) {};
-
+    
     std::vector<unsigned int> ndomain_;
-
+    
     virtual unsigned int getDomainId( std::vector<int> Coordinates ) = 0;
     virtual std::vector<unsigned int> getDomainCoordinates( unsigned int Id ) = 0;
-
+    
 };
 
 #endif

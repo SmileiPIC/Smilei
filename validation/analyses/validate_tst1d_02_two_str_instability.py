@@ -3,10 +3,11 @@ import happi
 
 S = happi.Open(["./restart*"], verbose=False)
 
+tracked_x = S.TrackParticles.ion(axes=["x"], timesteps=0).getData()["x"][0]
+Validate("Regularly spaced particles", tracked_x, 1e-7)
 
-
-some_particles_x = S.TrackParticles.ion(axes=["x"], timesteps=0).getData()["x"][0]
-Validate("Regularly spaced particles", some_particles_x, 1e-7)
+tracked_px = S.TrackParticles.ion(axes=["px"], timesteps=5000).getData()["px"][0]
+Validate("Tracked particles px", tracked_px, 1e-5)
 
 tracked_Ex = S.TrackParticles("ion",axes=["Ex"], timesteps=5000).getData()["Ex"][0]
 Validate("Tracked particles Ex", tracked_Ex, 1e-7)
@@ -20,6 +21,9 @@ Validate("Initial electron momentum distribution", px, 0.1 )
 px = S.ParticleBinning.Diag0(sum={"x":"all"}, timesteps=2000).getData()[0]
 Validate("Final electron momentum distribution", px, 0.1)
 
+Validate("List of fields in Probe", S.Probe(0).getFields() )
+
+Validate("Species probe", S.Probe(0, 'Rho_eon1', timesteps=2000).getData()[0], 1e-4 )
 
 # CONSISTENCY OF DIAGPERFORMANCES
 #   check available quantities

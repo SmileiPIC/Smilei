@@ -112,6 +112,8 @@ class SmileiComponent(object):
                 "sim_length"       :"grid_length",
                 "sim_time"         :"simulation_time",
                 "output"           :"deposited_quantity",
+                "chipa_radiation_threshold":"minimum_chi_continuous",
+                "chipa_disc_min_threshold":"minimum_chi_discontinuous",
             }
             for key, value in kwargs.items():
                 if key in deprecated:
@@ -175,13 +177,15 @@ class Main(SmileiSingleton):
     number_of_timesteps = None
     interpolation_order = 2
     number_of_patches = None
-    patch_decomposition = "hilbert"
-    patch_orientation = ""
+    patch_arrangement = "hilbertian"
     clrw = -1
     every_clean_particles_overhead = 100
     timestep = None
-    nmodes = 2
+    number_of_AM = 2
+    number_of_AM_relativistic_field_initialization = 1
     timestep_over_CFL = None
+    cell_sorting = False
+
 
     # PXR tuning
     global_factor = []
@@ -193,7 +197,7 @@ class Main(SmileiSingleton):
     solve_poisson = True
     poisson_max_iteration = 50000
     poisson_max_error = 1.e-14
-    
+
     # Relativistic Poisson tuning
     solve_relativistic_poisson = False
     relativistic_poisson_max_iteration = 50000
@@ -204,7 +208,6 @@ class Main(SmileiSingleton):
     EM_boundary_conditions = [["periodic"]]
     EM_boundary_conditions_k = []
     save_magnectic_fields_for_SM = True
-    Envelope_boundary_conditions = [["reflective"]]
     time_fields_frozen = 0.
     Laser_Envelope_model = False
 
@@ -214,9 +217,6 @@ class Main(SmileiSingleton):
     random_seed = None
     print_expected_disk_usage = True
 
-    # Vectorization flag
-    vecto = False
-    
     def __init__(self, **kwargs):
         # Load all arguments to Main()
         super(Main, self).__init__(**kwargs)
@@ -257,13 +257,13 @@ class Main(SmileiSingleton):
                 # None recognized solver
                 else:
                     raise Exception("timestep: maxwell_solver not implemented "+Main.maxwell_solver)
-        
+
         # Initialize simulation_time if not defined by the user
         if Main.simulation_time is None:
             if Main.number_of_timesteps is None:
                 raise Exception("simulation_time and number_of_timesteps are not defined")
             Main.simulation_time = Main.timestep * Main.number_of_timesteps
-        
+
         # Initialize grid_length if not defined based on number_of_cells and cell_length
         if (    len(Main.grid_length + Main.number_of_cells) == 0
              or len(Main.grid_length + Main.cell_length) == 0
@@ -290,10 +290,19 @@ class Main(SmileiSingleton):
 class LoadBalancing(SmileiSingleton):
     """Load balancing parameters"""
 
-    every = 150
-    initial_balance = True
-    cell_load = 1.0
+    every                = 150
+    initial_balance      = True
+    cell_load            = 1.0
     frozen_particle_load = 0.1
+
+# Radiation reaction configuration (continuous and MC algorithms)
+class Vectorization(SmileiSingleton):
+    """
+    Vectorization parameters
+    """
+    mode                = "off"
+    reconfigure_every   = 20
+    initial_mode        = "off"
 
 
 class MovingWindow(SmileiSingleton):
@@ -342,17 +351,39 @@ class Species(SmileiComponent):
     thermal_boundary_temperature = []
     thermal_boundary_velocity = [0.,0.,0.]
     pusher = "boris"
+
+    # Radiation species parameters
     radiation_model = "none"
     radiation_photon_species = None
     radiation_photon_sampling = 1
     radiation_photon_gamma_threshold = 2
+
+    # Multiphoton Breit-Wheeler parameters
     multiphoton_Breit_Wheeler = [None,None]
     multiphoton_Breit_Wheeler_sampling = [1,1]
+
+    # Particle merging species Parameters
+    merging_method = "none"
+    merge_every = 0
+    merge_min_packet_size = 4
+    merge_max_packet_size = 4
+    merge_min_particles_per_cell = 4
+    merge_min_momentum_cell_length = [1e-10,1e-10,1e-10]
+    merge_momentum_cell_size = [16,16,16]
+    merge_accumulation_correction = True
+    merge_discretization_scale = "linear"
+    merge_min_momentum = 1e-5
+
     time_frozen = 0.0
+    radiating = False
+    relativistic_field_initialization = False
+    time_relativistic_initialization = 0.0
     boundary_conditions = [["periodic"]]
     ionization_model = "none"
     ionization_electrons = None
+    ionization_rate = None
     atomic_number = None
+    maximum_charge_state = None
     is_test = False
     relativistic_field_initialization = False
     ponderomotive_dynamics = False
@@ -367,6 +398,8 @@ class Laser(SmileiComponent):
     phase = [0., 0.]
     delay_phase = [0., 0.]
     space_time_profile = None
+    file = None
+    _offset = None
 
 class LaserEnvelope(SmileiSingleton):
     """Laser Envelope parameters"""
@@ -374,7 +407,8 @@ class LaserEnvelope(SmileiSingleton):
     #time_envelope = 1.
     #space_envelope = [1., 0.]
     envelope_solver = "explicit"
-    envelope_profile = 0.
+    envelope_profile = None
+    Envelope_boundary_conditions = [["reflective"]]
 
 
 class Collisions(SmileiComponent):
@@ -454,10 +488,17 @@ class DiagPerformances(SmileiSingleton):
     """Performances diagnostic"""
     every = 0
     flush_every = 1
+    patch_information = True
 
 # external fields
 class ExternalField(SmileiComponent):
     """External Field"""
+    field = None
+    profile = None
+
+# external time fields
+class ExternalTimeField(SmileiComponent):
+    """External Time Field"""
     field = None
     profile = None
 
@@ -483,6 +524,18 @@ class RadiationReaction(SmileiComponent):
     Fine-tuning of synchrotron-like radiation reaction
     (classical continuous, quantum correction, stochastics and MC algorithms)
     """
+    # Minimum particle_chi value for the discontinuous radiation
+    # Under this value, the discontinuous approach is not applied
+    minimum_chi_discontinuous = 1e-2
+    # Threshold on particle_chi: if particle_chi < 1E-3 no radiation reaction
+    minimum_chi_continuous = 1e-3
+    # Flag to recompute the tables
+    compute_table = False
+
+    # Path to read or write the tables/databases
+    table_path = "./"
+
+    # Parameters for computing the tables
     # Table h parameters
     h_chipa_min = 1e-3
     h_chipa_max = 1e1
@@ -501,23 +554,18 @@ class RadiationReaction(SmileiComponent):
     xip_chiph_dim = 128
     # Output format, can be "ascii", "binary", "hdf5"
     output_format = "hdf5"
-    # Threshold on chipa between the continuous and
-    # the discontinuous approaches
-    chipa_disc_min_threshold = 1e-2
-    # Threshold on chipa: if chipa < 1E-3 no radiation reaction
-    chipa_radiation_threshold = 1e-3
-    # Path the tables/databases
-    table_path = "./"
 
 # MutliphotonBreitWheeler pair creation
 class MultiphotonBreitWheeler(SmileiComponent):
     """
     Photon decay into electron-positron pairs
     """
-    # Output format, can be "ascii", "binary", "hdf5"
-    output_format = "hdf5"
     # Path the tables/databases
     table_path = "./"
+    # Flag to recompute the tables
+    compute_table = False
+
+    # Parameters for computing the tables
     # Table T parameters
     T_chiph_min = 1e-2
     T_chiph_max = 1e1
@@ -529,6 +577,8 @@ class MultiphotonBreitWheeler(SmileiComponent):
     xip_threshold = 1e-3
     xip_chipa_dim = 128
     xip_chiph_dim = 128
+    # Output format, can be "ascii", "binary", "hdf5"
+    output_format = "hdf5"
 
 # Smilei-defined
 smilei_mpi_rank = 0
@@ -545,3 +595,6 @@ class DumpRestart(object):
 class ExtField(object):
     def __init__(self, *args, **kwargs):
         raise Exception("Deprecated `ExtField()` must be replaced by `ExternalField()`")
+
+# Variable to set to False for the actual run (useful for the test mode)
+_test_mode = True

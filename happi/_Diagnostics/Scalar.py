@@ -11,17 +11,18 @@ class Scalar(Diagnostic):
 		# If no scalar chosen, only print the available scalars
 		if scalar is None:
 			if len(scalars)>0:
-				self._error += "Printing available scalars:\n"
-				self._error += "---------------------------\n"
+				self._error += ["Error: no scalar chosen"]
+				self._error += ["Printing available scalars:"]
+				self._error += ["---------------------------"]
 				l = [""]
 				for s in scalars:
 					if len(s)>4 and s[:2]!=l[-1][:2] and s[-2:]!=l[-1][-2:]:
-						if l!=[""]: self._error += "\t".join(l)+"\n"
+						if l!=[""]: self._error += ["\t".join(l)]
 						l = []
 					l.append(s)
-				if l!=[""]: self._error += "\t".join(l)+"\n"
+				if l!=[""]: self._error += ["\t".join(l)]
 			else:
-				self._error += "No scalars found"
+				self._error += ["No scalars found"]
 			return
 		
 		# 1 - verifications, initialization
@@ -30,11 +31,11 @@ class Scalar(Diagnostic):
 		if scalar not in scalars:
 			fs = list(filter(lambda x:scalar in x, scalars))
 			if len(fs)==0:
-				self._error += "No scalar `"+scalar+"` found"
+				self._error += ["No scalar `"+scalar+"` found"]
 				return
 			if len(fs)>1:
-				self._error += "Several scalars match: "+(' '.join(fs))+"\n"
-				self._error += "Please be more specific and retry.\n"
+				self._error += ["Several scalars match: "+(' '.join(fs))]
+				self._error += ["Please be more specific and retry."]
 				return
 			scalar = fs[0]
 		self._scalarname = scalar
@@ -75,12 +76,12 @@ class Scalar(Diagnostic):
 			try:
 				self._timesteps = self._selectTimesteps(timesteps, self._timesteps)
 			except:
-				self._error += "Argument `timesteps` must be one or two non-negative integers"
+				self._error += ["Argument `timesteps` must be one or two non-negative integers"]
 				return
 		
 		# Need at least one timestep
 		if self._timesteps.size < 1:
-			self._error += "Timesteps not found"
+			self._error += ["Timesteps not found"]
 			return
 		
 		
@@ -89,11 +90,20 @@ class Scalar(Diagnostic):
 		self._vunits = "??"
 		if   self._scalarname == "time":
 			self._vunits = "T_r"
-		elif self._scalarname == "Ubal_norm" or self._scalarname[0] in ["N","Z"]:
+		elif self._scalarname == "Ubal_norm":
 			self._vunits = ""
 		else:
-			self._vunits = {"U":"K_r", "E":"E_r", "B":"B_r", "J":"J_r",
-									"R":"N_r", "P":"S_r", "D":"N_r"}[self._scalarname[0]]
+			self._vunits = {
+				"U":"K_r * N_r * L_r^%i" % self._ndim_particles,
+				"P":"K_r * N_r * L_r^%i" % self._ndim_particles,
+				"D":"N_r * L_r^%i" % self._ndim_particles,
+				"E":"E_r",
+				"B":"B_r",
+				"J":"J_r",
+				"R":"N_r",
+				"Z":"Q_r",
+				"N":"",
+				}[self._scalarname[0]]
 		self._title =self._scalarname
 		
 		# Finish constructor
@@ -111,10 +121,10 @@ class Scalar(Diagnostic):
 				file = path+'/scalars.txt'
 				f = open(file, 'r')
 			except:
-				self._error = "Cannot open 'scalars.txt' in directory '"+path+"'"
+				self._error += ["Cannot open 'scalars.txt' in directory '"+path+"'"]
 				return []
 			try:
-				# Find last commented line 
+				# Find last commented line
 				prevline = ""
 				for line in f:
 					line = line.strip()
@@ -142,6 +152,4 @@ class Scalar(Diagnostic):
 			return []
 		# Get value at selected time
 		A = self._values[ self._data[t] ]
-		# log scale if requested
-		if self._data_log: A = self._np.log10(A)
 		return A

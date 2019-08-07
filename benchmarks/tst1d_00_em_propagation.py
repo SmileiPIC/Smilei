@@ -49,10 +49,15 @@ DiagFields(
     fields = ['Ex','Ey','Ez','By_m','Bz_m'],
     subgrid = s_[4:100:3]
 )
+DiagFields(
+    every = int(rest*2.),
+    fields = ['Ex','Ey','Ez','By_m','Bz_m'],
+    time_average = int(rest)
+)
 
 DiagProbe(
-    every = 5, 
-    origin = [Main.grid_length[0]*0.2]   
+    every = 5,
+    origin = [Main.grid_length[0]*0.2]
 )
 
 DiagProbe(

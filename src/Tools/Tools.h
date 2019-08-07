@@ -1,22 +1,22 @@
 /*!
  \page macros Code macros
- 
+
  The c++ macros used in the code should be placed in the \ref Tools.h file.
- 
+
  \section caveats Warning, Error and Debug
  All these macros will print to the standard error a tag , the name, line of the source file that caused the call
  as well as the name of the function calling the macro. The arguments contained in the parenthesis will then be
  appended. Arguments can be chained together in c++ stream style (using <tt><<</tt> operator)
- 
+
  The macro <tt>WARNING("text")</tt> is the most basic and is itended for warnings that should always be present in the code.
- 
+
  The macro <tt>ERROR("text")</tt> is used to print an error and close the program.
- 
+
  The macro <tt>DEBUG("text")</tt> can be used in two ways: using just an argument, it will display a debug message
  (similar to <tt>WARNING("text")</tt> ) but it can be used in the form <tt>DEBUG(N,"text")</tt> in this case N is a number and
  represents the debug level starting at which the dubug must be displayed.
  The debug level can be changed int the namelist vie the key <tt>debug</tt>.
- 
+
  */
 
 #ifndef TOOLS_H
@@ -44,14 +44,16 @@
 
 #define MESSAGE1(__txt)  {int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); if (__rk==0) { std::cout << " ";  std::cout << __txt << std::endl;};}
 #define MESSAGE2(__val,__txt) {int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); if (__rk==0) {for (int __i=0;__i<__val;__i++) std::cout << "\t";}; MESSAGE1(__txt);}
+//#define MESSAGE1(__txt)  {;}
+//#define MESSAGE2(__val,__txt) {MESSAGE1(__txt);}
 
 #define MESSAGE3(arg1,arg2,arg3,...) arg3
 #define MESSAGE4(...) MESSAGE3(__VA_ARGS__,MESSAGE2,MESSAGE1,)
 #define MESSAGE(...) MESSAGE4(__VA_ARGS__)(__VA_ARGS__)
 
-#define __PRINTLINE(__num) {MESSAGE(std::string(__num,'-'))} 
+#define __PRINTLINE(__num) {MESSAGE(std::string(__num,'-'))}
 
-#define TITLE(...) {MESSAGE(std::endl); MESSAGE(__VA_ARGS__); __PRINTLINE(80);} 
+#define TITLE(...) {MESSAGE(std::endl); MESSAGE(__VA_ARGS__); __PRINTLINE(80);}
 
 // ATTENTION: this costs a lot! use with care!
 #define MESSAGEALL1(__txt)  {int __rk; MPI_Comm_rank( MPI_COMM_WORLD, &__rk ); \
@@ -103,25 +105,26 @@ if (__i==__rk) {std::cout << "Proc [" << __i << "] " <<__txt << std::endl;} MPI_
 
 #endif // __DEBUG
 
-class Tools {
+class Tools
+{
 public:
-    static void printMemFootPrint(std::string tag);
+    static void printMemFootPrint( std::string tag );
     static double getMemFootPrint();
-
+    
     //! Converts a number of Bytes in a readable string in KiB, MiB, GiB or TiB
-    static std::string printBytes(uint64_t nbytes);
+    static std::string printBytes( uint64_t nbytes );
     
     //! This function returns true/flase whether the file exists or not
     //! \param file file name to test
-    static bool file_exists(const std::string & filename) ;
+    static bool file_exists( const std::string &filename ) ;
     
     static std::string xyz;
     
     //! Concatenate several strings
     template<class T1, class T2, class T3=std::string, class T4=std::string>
-    static std::string merge(T1 s1, T2 s2, T3 s3="", T4 s4="")
+    static std::string merge( T1 s1, T2 s2, T3 s3="", T4 s4="" )
     {
-        std::ostringstream tot("");
+        std::ostringstream tot( "" );
         tot << s1 << s2 << s3 << s4;
         return tot.str();
     };

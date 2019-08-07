@@ -5,6 +5,7 @@
 
 #include "Tools.h"
 #include "Params.h"
+#include "Patch.h"
 #include "Field.h"
 #include "Particles.h"
 #include "Projector.h"
@@ -16,18 +17,16 @@ class Ionization
 
 public:
     //! Constructor for Ionization
-    Ionization(Params& params, Species * species);
+    Ionization( Params &params, Species *species );
     virtual ~Ionization();
     
     //! Overloading of () operator
-    virtual void operator() (Particles*, unsigned int, unsigned int, std::vector<double>*, ElectroMagn*, Projector*) {};
+    virtual void operator()( Particles *, unsigned int, unsigned int, std::vector<double> *, Patch *, Projector *, int ipart_ref = 0 ) {};
     
     Particles new_electrons;
-
-protected:
-    std::vector<double> Potential;
-    std::vector<double> Azimuthal_quantum_number;
     
+protected:
+
     double eV_to_au;
     double au_to_mec2;
     double EC_to_au;
@@ -38,9 +37,8 @@ protected:
     double invdt;
     unsigned int nDim_field;
     unsigned int nDim_particle;
-    unsigned int atomic_number_;
     double ionized_species_invmass;
-
+    
 private:
 
 

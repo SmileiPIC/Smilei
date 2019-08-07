@@ -96,7 +96,7 @@ Main(
 
     EM_boundary_conditions = [field_cond, field_cond],
 
-    random_seed = 0,
+    random_seed = smilei_mpi_rank,
 
     reference_angular_frequency_SI = wr
 )
@@ -163,7 +163,7 @@ Species(
 # QED parameters
 
 RadiationReaction(
-    chipa_disc_min_threshold = 1e-3,
+    minimum_chi_discontinuous = 1e-3,
     table_path = "./"
 )
 

@@ -76,6 +76,7 @@ class FieldFactory(object):
 	units : a units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
+	export_dir : the directory to export to VTK
 
 	Usage:
 	------
@@ -170,6 +171,7 @@ class ProbeFactory(object):
 	units : A units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
+	export_dir : the directory to export to VTK
 
 	Usage:
 	------
@@ -257,6 +259,7 @@ class ParticleBinningFactory(object):
 	units : A units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
+	export_dir : the directory to export to VTK
 
 	Usage:
 	------
@@ -398,6 +401,7 @@ class PerformancesFactory(object):
 	units : A units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
+	export_dir : the directory to export to VTK
 
 	Available "quantities":
 	-----------------------
@@ -460,6 +464,7 @@ class ScreenFactory(object):
 	units : A units specification such as ["m","second"]
 	data_log : bool (default: False)
 		If True, then log10 is applied to the output array before plotting.
+	export_dir : the directory to export to VTK
 
 	Usage:
 	------
@@ -541,6 +546,7 @@ class TrackParticlesFactory(object):
 		Example: axes = ["x","px"] correspond to phase-space trajectories.
 	skipAnimation: bool (default: False)
 		When True, the plot() will directly show the full trajectory.
+	export_dir : the directory to export to VTK
 
 	Usage:
 	------
@@ -637,6 +643,8 @@ def Open(*args, **kwargs):
 		A method to access the `DiagParticleBinning` diagnostic.
 	TrackParticles :
 		A method to access the tracked particles diagnostic.
+	Performances :
+		A method to access the `Performances` diagnostic.
 
 	"""
 	return SmileiSimulation(*args, **kwargs)
@@ -659,6 +667,8 @@ class SmileiSimulation(object):
 		A method to access the `DiagParticleBinning` diagnostic.
 	TrackParticles :
 		A method to access the tracked particles diagnostic.
+	Performances :
+		A method to access the `Performances` diagnostic.
 
 	"""
 
@@ -718,17 +728,21 @@ class SmileiSimulation(object):
 		# Get some info on the simulation
 		try:
 			# get number of dimensions
-			error = "Error extracting 'dim' from the input file"
-			ndim = int(namelist.Main.geometry[0])
-			if ndim not in [1,2,3]: raise
+			error = "Error extracting 'geometry' from the input file"
+			ndim_fields, ndim_particles = {
+				"1Dcartesian"   : (1,1),
+				"2Dcartesian"   : (2,2),
+				"3Dcartesian"   : (3,3),
+				"AMcylindrical" : (2,3),
+			} [namelist.Main.geometry]
 			# get box size
 			error = "Error extracting 'grid_length' from the input file"
 			grid_length = self._np.atleast_1d(self._np.double(namelist.Main.grid_length))
-			if grid_length.size != ndim: raise
+			if grid_length.size != ndim_fields: raise
 			# get cell size
 			error = "Error extracting 'cell_length' from the input file"
 			cell_length = self._np.atleast_1d(self._np.double(namelist.Main.cell_length))
-			if cell_length.size != ndim: raise
+			if cell_length.size != ndim_fields: raise
 			# calculate number of cells in each dimension
 			ncels = grid_length/cell_length
 			# extract time-step
@@ -742,7 +756,7 @@ class SmileiSimulation(object):
 			reference_angular_frequency_SI = namelist.Main.reference_angular_frequency_SI
 		except:
 			reference_angular_frequency_SI = None
-		return namelist, ndim, cell_length, ncels, timestep, reference_angular_frequency_SI
+		return namelist, ndim_fields, ndim_particles, cell_length, ncels, timestep, reference_angular_frequency_SI
 
 	def reload(self):
 		"""Reloads the simulation, if it has been updated"""
@@ -779,23 +793,32 @@ class SmileiSimulation(object):
 
 		# Reload if necessary
 		if lastmodif > self._mtime:
-			# Get the previous simulation parameters
-			try:    prevArgs = (self._ndim, self._cell_length, self._ncels, self._timestep, self._reference_angular_frequency_SI)
-			except: prevArgs = ()
+			W_r = None
 			# Loop paths and verify the namelist is compatible
 			for path in newPaths:
-				args = self._openNamelist(path)
-				if len(prevArgs)==0:
-					prevArgs = args[1:]
-				elif args[1]!=prevArgs[0] or (args[2]!=prevArgs[1]).any() or (args[3]!=prevArgs[2]).any() or args[4:]!=prevArgs[3:]:
-					print("The simulation in path '"+path+"' is not compatible with the other ones")
-					return
+				self.namelist, ndim_fields, ndim_particles, cell_length, ncels, timestep, reference_angular_frequency_SI = self._openNamelist(path)
+				try:
+					if (
+						ndim_fields != self._ndim_fields or
+						ndim_particles != self._ndim_particles or
+						(cell_length != self._cell_length).any() or
+						(ncels != self._ncels).any() or
+						timestep != self._timestep or
+						reference_angular_frequency_SI != W_r
+					):
+						print("The simulation in path '"+path+"' is not compatible with the other ones")
+						return
+				except:
+					pass
+				self._ndim_fields = ndim_fields
+				self._ndim_particles = ndim_particles
+				self._cell_length = cell_length
+				self._ncels = ncels
+				self._timestep = timestep
+				W_r = reference_angular_frequency_SI
 				if self._verbose: print("Loaded simulation '"+path+"'")
-			# Update the simulation parameters
-			self._ndim, self._cell_length, self._ncels, self._timestep, reference_angular_frequency_SI = args[1:]
 			if self._reference_angular_frequency_SI is None:
-				self._reference_angular_frequency_SI = reference_angular_frequency_SI
-			self.namelist = args[0]
+				self._reference_angular_frequency_SI = W_r
 
 		self._mtime = lastmodif
 		self.valid = True

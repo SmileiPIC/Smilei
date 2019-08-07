@@ -10,18 +10,18 @@ class TrackParticles(Diagnostic):
 		if species is None:
 			species = self.getTrackSpecies()
 			if len(species)>0:
-				self._error += "Printing available tracked species:\n"
-				self._error += "-----------------------------------\n"
-				self._error += "\n".join(species)
+				self._error += ["Printing available tracked species:"]
+				self._error += ["-----------------------------------"]
+				self._error += ["\n".join(species)]
 			else:
-				self._error = "No tracked particles files found"
+				self._error += ["No tracked particles files found"]
 			return
 
 		if sort not in [True, False]:
-			self._error += "Argument `sort` must be `True` or `False`\n"
+			self._error += ["Argument `sort` must be `True` or `False`"]
 			return
 		if not sort and select!="":
-			self._error += "Cannot select particles if not sorted\n"
+			self._error += ["Cannot select particles if not sorted"]
 			return
 		self._sort = sort
 
@@ -31,25 +31,16 @@ class TrackParticles(Diagnostic):
 		self.species  = species
 		self._h5items = {}
 		self._locationForTime = {}
-
+		disorderedfiles = self._findDisorderedFiles()
+		
 		# If sorting allowed, then do the sorting
 		if sort:
 			# If the first path does not contain the ordered file (or it is incomplete), we must create it
 			orderedfile = self._results_path[0]+self._os.sep+"TrackParticles_"+species+".h5"
-			needsOrdering = False
-			if not self._os.path.isfile(orderedfile):
-				needsOrdering = True
-			else:
-				try:
-					f = self._h5py.File(orderedfile)
-					if "finished_ordering" not in f.attrs.keys():
-						needsOrdering = True
-				except:
-					self._os.remove(orderedfile)
-					needsOrdering = True
-			if needsOrdering:
-				disorderedfiles = self._findDisorderedFiles()
+			if self._needsOrdering(orderedfile):
 				self._orderFiles(disorderedfiles, orderedfile, chunksize)
+				if self._needsOrdering(orderedfile):
+					return
 			# Create arrays to store h5 items
 			f = self._h5py.File(orderedfile)
 			for prop in ["Id", "x", "y", "z", "px", "py", "pz", "q", "w", "chi",
@@ -63,10 +54,9 @@ class TrackParticles(Diagnostic):
 			self._timesteps = self._np.array(sorted(f["Times"]))
 			self._alltimesteps = self._np.copy(self._timesteps)
 			self.nParticles = self._h5items["Id"].shape[1]
-
+		
 		# If sorting not allowed, only find the available times
 		else:
-			disorderedfiles = self._findDisorderedFiles()
 			self._timesteps = []
 			for file in disorderedfiles:
 				f = self._h5py.File(file)
@@ -80,12 +70,26 @@ class TrackParticles(Diagnostic):
 			              "charge":"q", "weight":"w", "chi":"chi",
 			              "E/x":"Ex", "E/y":"Ey", "E/z":"Ez",
 			              "B/x":"Bx", "B/y":"By", "B/z":"Bz"}
-			T0 = next(f["data"].itervalues())["particles/"+self.species]
+			try: # python 2
+				T0 = next(f["data"].itervalues())["particles/"+self.species]
+			except: # python 3
+				T0 = next(iter(f["data"].values()))["particles/"+self.species]
 			self.available_properties = [v for k,v in properties.items() if k in T0]
-
+		
+		# Add moving_x in the list of properties
+		if "x" in self.available_properties:
+			file = disorderedfiles[0]
+			with self._h5py.File(file) as f:
+				try: # python 2
+					D = next(f["data"].itervalues())
+				except: # python 3
+					D = next(iter(f["data"].values()))
+				if "x_moved" in D.attrs:
+					self.available_properties += ["moving_x"]
+		
 		# Get available times in the hdf5 file
 		if self._timesteps.size == 0:
-			self._error = "No tracked particles found"
+			self._error += ["No tracked particles found"]
 			return
 		# If specific timesteps requested, narrow the selection
 		if timesteps is not None:
@@ -100,13 +104,13 @@ class TrackParticles(Diagnostic):
 				else:
 					raise
 			except:
-				self._error = "Argument `timesteps` must be one or two non-negative integers"
+				self._error += ["Argument `timesteps` must be one or two non-negative integers"]
 				return
 		# Need at least one timestep
 		if self._timesteps.size < 1:
-			self._error = "Timesteps not found"
+			self._error += ["Timesteps not found"]
 			return
-
+		
 		# Select particles
 		# -------------------------------------------------------------------
 		# If the selection is a string (containing an operation)
@@ -228,7 +232,7 @@ class TrackParticles(Diagnostic):
 					IDs = f["unique_Ids"] # get all available IDs
 					self.selectedParticles = self._np.flatnonzero(self._np.in1d(IDs, select)) # find the requested IDs
 				except:
-					self._error = "Error: argument 'select' must be a string or a list of particle IDs"
+					self._error += ["Error: argument 'select' must be a string or a list of particle IDs"]
 					return
 
 			# Remove particles that are not actually tracked during the requested timesteps
@@ -245,60 +249,73 @@ class TrackParticles(Diagnostic):
 			else:
 				self.nselectedParticles = len(self.selectedParticles)
 			if self.nselectedParticles == 0:
-				self._error = "No particles found"
+				self._error += ["No particles found"]
 				return
 			if self._verbose: print("Kept "+str(self.nselectedParticles)+" particles")
 
 		# Manage axes
 		# -------------------------------------------------------------------
 		if type(axes) is not list:
-			self._error = "Error: Argument 'axes' must be a list"
+			self._error += ["Error: Argument 'axes' must be a list"]
 			return
 		# if axes provided, verify them
 		if len(axes)>0:
 			self.axes = axes
 			for axis in axes:
 				if axis not in self.available_properties:
-					self._error += "Error: Argument 'axes' has item '"+str(axis)+"' unknown.\n"
-					self._error += "       Available axes are: "+(", ".join(sorted(self.available_properties)))
+					self._error += ["Error: Argument 'axes' has item '"+str(axis)+"' unknown."]
+					self._error += ["       Available axes are: "+(", ".join(sorted(self.available_properties)))]
 					return
 		# otherwise use default
 		else:
 			self.axes = self.available_properties
-
+		
+		# Get x_moved if necessary
+		if "moving_x" in self.axes:
+			self._XmovedForTime = {}
+			for file in disorderedfiles:
+				with self._h5py.File(file) as f:
+					for t in f["data"].keys():
+						self._XmovedForTime[int(t)] = f["data"][t].attrs["x_moved"]
+		
 		# Then figure out axis units
-		if self._sort:
-			self._type = self.axes
-			for axis in self.axes:
-				axisunits = ""
-				if axis == "Id":
-					self._centers.append( [0, 281474976710655] )
-				elif axis in ["x" , "y" , "z" ]:
-					axisunits = "L_r"
-					self._centers.append( [0., self.namelist.Main.grid_length[{"x":0,"y":1,"z":2}[axis]]] )
-				elif axis in ["px", "py", "pz"]:
-					axisunits = "P_r"
-					self._centers.append( [-1., 1.] )
-				elif axis == "w":
-					axisunits = "N_r"
-					self._centers.append( [0., 1.] )
-				elif axis == "q":
-					axisunits = "Q_r"
-					self._centers.append( [-10., 10.] )
-				elif axis == "chi":
-					axisunits = "1"
-					self._centers.append( [0., 2.] )
-				elif axis[0] == "E":
-					axisunits = "E_r"
-					self._centers.append( [-1., 1.] )
-				elif axis[0] == "B":
-					axisunits = "B_r"
-					self._centers.append( [-1., 1.] )
-				self._log.append( False )
-				self._label.append( axis )
-				self._units.append( axisunits )
-			self._title = "Track particles '"+species+"'"
-			self._shape = [0]*len(self.axes)
+		self._type = self.axes
+		self._factors = []
+		for axis in self.axes:
+			axisunits = ""
+			if axis == "Id":
+				self._centers.append( [0, 281474976710655] )
+			elif axis in ["x" , "y" , "z", "moving_x"]:
+				axisunits = "L_r"
+				self._centers.append( [0., self.namelist.Main.grid_length[{"x":0,"y":1,"z":-1}[axis[-1]]]] )
+			elif axis in ["px", "py", "pz"]:
+				axisunits = "P_r"
+				self._centers.append( [-1., 1.] )
+			elif axis == "w":
+				axisunits = "N_r * L_r^%i" % self._ndim_particles
+				self._centers.append( [0., 1.] )
+			elif axis == "q":
+				axisunits = "Q_r"
+				self._centers.append( [-10., 10.] )
+			elif axis == "chi":
+				axisunits = "1"
+				self._centers.append( [0., 2.] )
+			elif axis[0] == "E":
+				axisunits = "E_r"
+				self._centers.append( [-1., 1.] )
+			elif axis[0] == "B":
+				axisunits = "B_r"
+				self._centers.append( [-1., 1.] )
+			self._log += [False]
+			self._label += [axis]
+			self._units += [axisunits]
+			if axis == "Id":
+				self._factors += [1]
+			else:
+				factor, _ = self.units._convert(axisunits, None)
+				self._factors += [factor]
+		self._title = "Track particles '"+species+"'"
+		self._shape = [0]*len(self.axes)
 
 		# Hack to work with 1 axis
 		if len(axes)==1: self._vunits = self._units[0]
@@ -314,6 +331,21 @@ class TrackParticles(Diagnostic):
 		self.length = length or self._timesteps[-1]
 		self.valid = True
 		return kwargs
+
+	def _needsOrdering(self, orderedfile):
+		if not self._os.path.isfile(orderedfile):
+			return True
+		else:
+			try:
+				f = self._h5py.File(orderedfile)
+				if "finished_ordering" not in f.attrs.keys():
+					return True
+			except:
+				self._os.remove(orderedfile)
+				return True
+			finally:
+				f.close()
+		return False
 
 	# Method to get info
 	def _info(self):
@@ -343,7 +375,7 @@ class TrackParticles(Diagnostic):
 		for path in self._results_path:
 			file = path+self._os.sep+"TrackParticlesDisordered_"+self.species+".h5"
 			if not self._os.path.isfile(file):
-				self._error = "Missing TrackParticles file in directory "+path
+				self._error += ["Missing TrackParticles file in directory "+path]
 				return
 			disorderedfiles += [file]
 		return disorderedfiles
@@ -361,12 +393,19 @@ class TrackParticles(Diagnostic):
 			# Obtain the list of all times in all disordered files
 			time_locations = {}
 			for fileIndex, fileD in enumerate(filesDisordered):
-				f = self._h5py.File(fileD, "r")
+				try:
+					f = self._h5py.File(fileD, "r")
+				except:
+					self._error += ["\tWarning: file cannot be opened: "+fileD]
+					continue
 				for t in f["data"].keys():
 					try   : time_locations[int(t)] = (fileIndex, t)
 					except: pass
 				f.close()
 			times = sorted(time_locations.keys())
+			if len(times) == 0:
+				self._error += ["Error: no times found"]
+				return
 			# Open the last file and get the number of particles from each MPI
 			last_file_index, tname = time_locations[times[-1]]
 			f = self._h5py.File(filesDisordered[last_file_index], "r")
@@ -403,9 +442,9 @@ class TrackParticles(Diagnostic):
 				group = f["data"][tname]["particles"][self.species]
 				nparticles = group["id"].size
 				if nparticles == 0: continue
-
+				
 				# If not too many particles, sort all at once
-				if nparticles < chunksize:
+				if total_number_of_particles < chunksize:
 					# Get the Ids and find where they should be stored in the final file
 					locs = (
 						group["id"].value.astype("uint32") # takes the second hald of id (meaning particle number)
@@ -422,44 +461,46 @@ class TrackParticles(Diagnostic):
 
 				# If too many particles, sort by chunks
 				else:
-					nchunks = int(float(nparticles)/(chunksize+1) + 1)
-					adjustedchunksize = int(math.ceil(float(nparticles)/nchunks))
+					nchunks = int(float(total_number_of_particles)/(chunksize+1) + 1)
+					adjustedchunksize = int(math.ceil(float(total_number_of_particles)/nchunks))
 					ID = self._np.empty((adjustedchunksize,), dtype=self._np.uint64)
-					data_double = self._np.empty((adjustedchunksize,))
-					data_int16  = self._np.empty((adjustedchunksize,), dtype=self._np.int16)
-					# Loop chunks
-					for ichunk in range(nchunks):
-						first = ichunk * adjustedchunksize
-						last  = min( first + adjustedchunksize, nparticles )
-						npart = last-first
-						# Obtain IDs and find their sorting indices
-						group["id"].read_direct( ID, source_sel=self._np.s_[first:last], dest_sel=self._np.s_[:npart] )
-						sort = self._np.argsort(ID[:npart])
-						ID[:npart] = ID[sort]
-						# Find consecutive-ID batches
-						batchsize = self._np.diff(self._np.concatenate(([0],1+self._np.flatnonzero(self._np.diff(ID[:npart])-1), [npart])))
-						# Loop datasets
+					data = {}
+					for k, name in properties.items():
+						if k == "charge":
+							data[k] = self._np.empty((adjustedchunksize,), dtype=self._np.int16)
+						else:
+							data[k] = self._np.empty((adjustedchunksize,), dtype=self._np.double)
+					data_double = self._np.empty((adjustedchunksize,), dtype=self._np.double)
+					data_int16  = self._np.empty((adjustedchunksize,), dtype=self._np.int16 )
+					# Loop chunks of the output
+					for ichunk_o in range(nchunks):
+						first_o = ichunk_o * adjustedchunksize
+						last_o  = min( first_o + adjustedchunksize, total_number_of_particles )
+						npart_o = last_o-first_o
+						# Loop chunks of the input
+						for ichunk_i in range(nchunks):
+							first_i = ichunk_i * adjustedchunksize
+							last_i  = min( first_i + adjustedchunksize, nparticles )
+							npart_i = last_i-first_i
+							# Obtain IDs
+							group["id"].read_direct( ID, source_sel=self._np.s_[first_i:last_i], dest_sel=self._np.s_[:npart_i] )
+							# Extract useful IDs for this output chunk
+							loc_in_output = ID[:npart_i] + offset[ (ID[:npart_i]>>32) & 16777215 ] - 1
+							keep = self._np.flatnonzero((loc_in_output >= first_o) * (loc_in_output < last_o))
+							loc_in_output = loc_in_output[keep] - first_o
+							# Loop datasets
+							for k, name in properties.items():
+								if k not in group: continue
+								# Accumulate the data for this chunk
+								if k == "charge": data_in = data_int16
+								else            : data_in = data_double
+								group[k].read_direct( data_in, source_sel=self._np.s_[first_i:last_i], dest_sel=self._np.s_[:npart_i] )
+								data[k][loc_in_output] = data_in[keep]
+						# Accumulated data is written out
 						for k, name in properties.items():
 							if k not in group: continue
-							# Get the data for this chunk and sort by ID
-							if k == "charge": data = data_int16
-							else:             data = data_double
-							group[k].read_direct( data, source_sel=self._np.s_[first:last], dest_sel=self._np.s_[:npart] )
-							data[:npart] = data[sort]
-							# Loop by batch inside this chunk and store at the right place
-							stop = 0
-							for ibatch in range(len(batchsize)):
-								bs = int(batchsize[ibatch])
-								start = stop
-								stop = start + bs
-								start_in_file = int(
-									(ID[start].astype("uint32"))
-									+ offset[ (int(ID[start])>>32).astype("uint32") & 16777215 ]
-									-1
-								)
-								stop_in_file = start_in_file + bs
-								f0[name].write_direct( data, source_sel=self._np.s_[start:stop], dest_sel=self._np.s_[it, start_in_file:stop_in_file] )
-
+							f0[name].write_direct( data[k], source_sel=self._np.s_[:npart_o], dest_sel=self._np.s_[it, first_o:last_o] )
+						
 				# Indicate that this iteration was succesfully ordered
 				f0.attrs["latestOrdered"] = it
 				f0.flush()
@@ -480,6 +521,7 @@ class TrackParticles(Diagnostic):
 					first = ichunk * limitedchunksize
 					last  = int(min( first + limitedchunksize, total_number_of_particles ))
 					npart = last-first
+					if npart <= 0: break
 					f0["Id"].read_direct( ID, source_sel=self._np.s_[:, first:last], dest_sel=self._np.s_[:,:npart] )
 					f0["unique_Ids"].write_direct( self._np.max(ID[:,:npart], axis=0), source_sel=self._np.s_[:npart], dest_sel=self._np.s_[first:last] )
 			# Indicate that the ordering is finished
@@ -529,6 +571,11 @@ class TrackParticles(Diagnostic):
 						elif axis == "q":
 							self._h5items[axis].read_direct(data_int16, source_sel=self._np.s_[timeIndex,self.selectedParticles])
 							self._rawData[axis][it, :] = data_int16.squeeze()
+						elif axis == "moving_x":
+							self._h5items["x"].read_direct(data_double, source_sel=self._np.s_[timeIndex,self.selectedParticles])
+							data_double -= self._XmovedForTime[time]
+							data_double[deadParticles]=self._np.nan
+							self._rawData[axis][it, :] = data_double.squeeze()
 						else:
 							self._h5items[axis].read_direct(data_double, source_sel=self._np.s_[timeIndex,self.selectedParticles])
 							data_double[deadParticles]=self._np.nan
@@ -576,6 +623,8 @@ class TrackParticles(Diagnostic):
 				self._rawData[time] = {}
 				for axis in self.axes:
 					self._rawData[time][axis] = group[properties[axis]].value
+				if "moving_x" in self.axes:
+					self._rawData[time]["moving_x"] -= self._XmovedForTime[time]
 
 			if self._verbose: print("... done")
 
@@ -602,19 +651,17 @@ class TrackParticles(Diagnostic):
 		data.update({ "times":ts })
 
 		if self._sort:
-			for axis in self.axes:
+			for axis, factor in zip(self.axes, self._factors):
 				if timestep is None:
 					data[axis] = self._rawData[axis]
 				else:
 					data[axis] = self._rawData[axis][indexOfRequestedTime]
-				if axis not in ["Id", "q"]: data[axis] *= self._vfactor
+				data[axis] *= factor
 		else:
 			for t in ts:
 				data[t] = {}
-				for axis in self.axes:
-					data[t][axis] = self._rawData[t][axis]
-					if axis not in ["Id", "q"]: data[t][axis] *= self._vfactor
-
+				for axis, factor in zip(self.axes, self._factors):
+					data[t][axis] = self._rawData[t][axis] * factor
 		return data
 
 	def get(self):
@@ -659,6 +706,9 @@ class TrackParticles(Diagnostic):
 					elif axis == "q":
 						group[properties[axis]].read_direct(data_int16, source_sel=self._np.s_[chunkstart:chunkend])
 						data[axis] = data_int16.copy()
+					elif axis == "moving_x":
+						group[properties["x"]].read_direct(data_double, source_sel=self._np.s_[chunkstart:chunkend])
+						data[axis] = data_double.copy()
 					else:
 						group[properties[axis]].read_direct(data_double, source_sel=self._np.s_[chunkstart:chunkend])
 						data[axis] = data_double.copy()
@@ -680,7 +730,7 @@ class TrackParticles(Diagnostic):
 	# We override the plotting methods
 	def _animateOnAxes_0D(self, ax, t):
 		pass
-
+	
 	def _animateOnAxes_1D(self, ax, t):
 		timeSelection = (self._timesteps<=t)*(self._timesteps>=t-self.length)
 		times = self._timesteps[timeSelection]
@@ -688,14 +738,16 @@ class TrackParticles(Diagnostic):
 		if times.size == 1:
 			times = self._np.double([times, times]).squeeze()
 			A = self._np.double([A, A]).squeeze()
-		ax.plot(self._tfactor*times, self._vfactor*A, **self.options.plot)
+		try   : ax.set_prop_cycle (None)
+		except:	ax.set_color_cycle(None)
+		self._plot = ax.plot(self._tfactor*times, self._vfactor*A, **self.options.plot)
 		ax.set_xlabel(self._tlabel)
 		ax.set_ylabel(self.axes[0]+" ("+self.units.vname+")")
 		self._setLimits(ax, xmax=self._tfactor*self._timesteps[-1], ymin=self.options.vmin, ymax=self.options.vmax)
-		self._setSomeOptions(ax)
 		ax.set_title(self._title) # override title
-		return 1
-
+		self._setOptions(ax)
+		return self._plot
+	
 	def _animateOnAxes_2D(self, ax, t):
 		tmin = t-self.length
 		tmax = t
@@ -706,9 +758,12 @@ class TrackParticles(Diagnostic):
 		# Plot first the non-broken lines
 		x = self._tmpdata[0][timeSelection,:][:,~self._rawData["brokenLine"]]
 		y = self._tmpdata[1][timeSelection,:][:,~self._rawData["brokenLine"]]
+		try   : ax.set_prop_cycle (None)
+		except:	ax.set_color_cycle(None)
 		ax.plot(self._xfactor*x, self._yfactor*y, **self.options.plot)
 		# Then plot the broken lines
-		ax.hold("on")
+		try   : ax.hold("on")
+		except: pass
 		for line, breaks in self._rawData['lineBreaks'].items():
 			x = self._tmpdata[0][:, line]
 			y = self._tmpdata[1][:, line]
@@ -723,14 +778,20 @@ class TrackParticles(Diagnostic):
 				else:
 					prevline, = ax.plot(self._xfactor*x[iti:itf], self._yfactor*y[iti:itf], **self.options.plot)
 				if breaks[ibrk] > itmax: break
-		ax.hold("off")
+		try   : ax.hold("off")
+		except: pass
 		# Add labels and options
 		ax.set_xlabel(self._xlabel)
 		ax.set_ylabel(self._ylabel)
 		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.ymin, ymax=self.options.ymax)
-		self._setSomeOptions(ax)
+		self._setTitle(ax, t)
+		self._setOptions(ax)
 		return 1
-
+	
+	_plotOnAxes_0D = _animateOnAxes_0D
+	_plotOnAxes_1D = _animateOnAxes_1D
+	_plotOnAxes_2D = _animateOnAxes_2D
+	
 	# Convert data to VTK format
 	def toVTK(self, rendering="trajectory", data_format="xml"):
 		"""
@@ -742,8 +803,8 @@ class TrackParticles(Diagnostic):
 			print("Cannot export non-sorted data")
 			return
 
-		if self._ndim!=3:
-			print ("Cannot export tracked particles of a "+str(self._ndim)+"D simulation to VTK")
+		if self._ndim_particles != 3:
+			print ("Cannot export tracked particles of a "+str(self._ndim_particles)+"D simulation to VTK")
 			return
 
 		# The specified rendering option is checked
@@ -757,7 +818,7 @@ class TrackParticles(Diagnostic):
 			return
 
 		self._mkdir(self._exportDir)
-		fileprefix = self._exportDir + self._exportPrefix
+		fileprefix = self._exportDir + self._exportPrefix + "_" + rendering 
 
 		ntimes = len(self._timesteps)
 
@@ -769,67 +830,77 @@ class TrackParticles(Diagnostic):
 
 		# Creation of a customed vtk object
 		vtk = VTKfile()
+		
+		# Require x, y and z
+		xaxis = "x"
+		if "x" not in self.axes:
+			xaxis = "moving_x"
+		if xaxis not in self.axes or "y" not in self.axes or "z" not in self.axes:
+			print("Error exporting tracked particles to VTK: axes 'x', 'y' and 'z' are required")
+			return
+		
+		# Cloud mode: each time step is a separated cloud of particles
+		# If there is only one timestep, the trajectory mode becomes a cloud
+		if (ntimes == 1)or(rendering == "cloud"):
 
-		# If 3D simulation, then do a 3D plot
-		if self._ndim == 3:
-			if "x" not in self.axes or "y" not in self.axes or "z" not in self.axes:
-				print("Error exporting tracked particles to VTK: axes 'x', 'y' and 'z' are required")
-				return
+			data = self.getData()
 
-			# Cloud mode: each time step is a separated cloud of particles
-			# If there is only one timestep, the trajectory mode becomes a cloud
-			if (ntimes == 1)or(rendering == "cloud"):
-
-				data = self.getData()
-				#pcoords = self._np.stack((data["x"],data["y"],data["z"]))
-				#nd, nt, npoints = pcoords.shape
-
-				for istep,step in enumerate(self._timesteps):
-					#pcoords_step = self._np.stack((pcoords[0][istep],pcoords[1][istep],pcoords[2][istep])).transpose()
-					pcoords_step = self._np.stack((data["x"][istep],data["y"][istep],data["z"][istep])).transpose()
-					pcoords_step = self._np.ascontiguousarray(pcoords_step, dtype='float32')
-
-					# Convert pcoords that is a numpy array into vtkFloatArray
-					pcoords_step = vtk.Array(pcoords_step, "")
-
-					# List of scalar arrays
-					attributes = []
-					for ax in self.axes:
-						if ax!="x" and  ax!="y" and  ax!="z" and ax!="Id":
-							attributes += [vtk.Array(self._np.ascontiguousarray(data[ax][istep].flatten(),'float32'),ax)]
-						# Integer arrays
-						if ax=="Id":
-							attributes += [vtk.Array(self._np.ascontiguousarray(data[ax][istep].flatten(),'int32'),ax)]
-
-					vtk.WriteCloud(pcoords_step, attributes, data_format, fileprefix+"_{:06d}.{}".format(step,extension))
-					print("Exportation of {}_{:06d}.{}".format(fileprefix,step,extension))
-
-				print("Successfully exported tracked particles to VTK, folder='"+self._exportDir)
-
-			# Trajectory mode
-			elif (rendering == "trajectory"):
-
-				data = self.getData()
-				pcoords = self._np.stack((data["x"],data["y"],data["z"])).transpose()
-				npoints, nt, nd = pcoords.shape
-
-				pcoords = self._np.reshape(pcoords, (npoints*nt, nd))
-				pcoords = self._np.ascontiguousarray(pcoords, dtype='float32')
+			for istep,step in enumerate(self._timesteps):
+				
+				data_clean_step = {}
+				
+				# Clean data at istep: remove NaN
+				mask = self._np.ones(len(data[self.axes[0]][istep]), dtype=bool)
+				for ax in self.axes:
+					mask = self._np.logical_and(mask,self._np.logical_not(self._np.isnan(self._np.asarray(data[ax][istep]))))
+				for ax in self.axes:
+					#print(ax,data[ax][istep])
+					data_clean_step[ax] = self._np.asarray(data[ax][istep])[mask]
+				
+				pcoords_step = self._np.stack((data_clean_step[xaxis],data_clean_step["y"],data_clean_step["z"])).transpose()
+				pcoords_step = self._np.ascontiguousarray(pcoords_step, dtype='float32')
 
 				# Convert pcoords that is a numpy array into vtkFloatArray
-				pcoords = vtk.Array(pcoords, "")
-
-				# Segments between points to describe the trajectories
-				connectivity = self._np.ascontiguousarray([[nt]+[nt*i+j for j in range(nt)] for i in range(npoints)])
+				pcoords_step = vtk.Array(pcoords_step, "")
 
 				# List of scalar arrays
 				attributes = []
 				for ax in self.axes:
-					if ax!="x" and  ax!="y" and  ax!="z" and ax!="Id":
-						attributes += [vtk.Array(self._np.ascontiguousarray(data[ax].flatten(),'float32'),ax)]
+					if ax not in ["x", "y", "z", "moving_x", "Id"]:
+						attributes += [vtk.Array(self._np.ascontiguousarray(data_clean_step[ax].flatten(),'float32'),ax)]
 					# Integer arrays
-					if ax=="Id":
-						attributes += [vtk.Array(self._np.ascontiguousarray(data[ax].flatten(),'int32'),ax)]
+					elif ax == "Id":
+						attributes += [vtk.Array(self._np.ascontiguousarray(data_clean_step[ax].flatten(),'int32'),ax)]
 
-				vtk.WriteLines(pcoords, connectivity, attributes, data_format, fileprefix+".{}".format(extension))
-				print("Successfully exported tracked particles to VTK, folder='"+self._exportDir)
+				vtk.WriteCloud(pcoords_step, attributes, data_format, fileprefix+"_{:06d}.{}".format(step,extension))
+				print("Exportation of {}_{:06d}.{}".format(fileprefix,step,extension))
+
+			print("Successfully exported tracked particles to VTK, folder='"+self._exportDir)
+
+		# Trajectory mode
+		elif (rendering == "trajectory"):
+
+			data = self.getData()
+			pcoords = self._np.stack((data[xaxis],data["y"],data["z"])).transpose()
+			npoints, nt, nd = pcoords.shape
+
+			pcoords = self._np.reshape(pcoords, (npoints*nt, nd))
+			pcoords = self._np.ascontiguousarray(pcoords, dtype='float32')
+
+			# Convert pcoords that is a numpy array into vtkFloatArray
+			pcoords = vtk.Array(pcoords, "")
+
+			# Segments between points to describe the trajectories
+			connectivity = self._np.ascontiguousarray([[nt]+[nt*i+j for j in range(nt)] for i in range(npoints)])
+
+			# List of scalar arrays
+			attributes = []
+			for ax in self.axes:
+				if ax not in ["x", "y", "z", "moving_x", "Id"]:
+					attributes += [vtk.Array(self._np.ascontiguousarray(data[ax].flatten(),'float32'),ax)]
+				# Integer arrays
+				elif ax == "Id":
+					attributes += [vtk.Array(self._np.ascontiguousarray(data[ax].flatten(),'int32'),ax)]
+
+			vtk.WriteLines(pcoords, connectivity, attributes, data_format, fileprefix+".{}".format(extension))
+			print("Successfully exported tracked particles to VTK, folder='"+self._exportDir)

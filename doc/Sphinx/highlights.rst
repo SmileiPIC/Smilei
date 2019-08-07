@@ -1,6 +1,40 @@
 Highlights
 ----------
 
+Improved performance using vectorization
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:program:`Smilei` computational performance has been recently enhanced with
+:doc:`vectorized operations<vectorization>`,
+in particular the projection of currents and the interpolation of fields.
+Typically, the new algorithms are more efficient than the old ones above
+10 particles per cell, up to 3 times faster. An *adaptive* switching technique
+ensures that the best version is used, dynamically and locally.
+
+This has been validated on large-scale simulations.
+An example of a mildly-relativistic collisionless shock simulation is provided
+in :numref:`weibel_3d_ne_vecto_it510_fig1` (watch the `video <https://youtu.be/-ENUekyE_A4>`_).
+
+.. _weibel_3d_ne_vecto_it510_fig1:
+
+.. figure:: _static/Weibel_3d_ne_vecto_it510.jpg
+    :width: 90%
+    :align: center
+    :name: weibel_3d_ne_vecto_it510
+
+    Mildly-relativistic collisionless shock simulation, with two drifting
+    plasmas colliding in the middle of the box.
+    Top panel: electron density.
+    Bottom panel: regions switched to vectorized operators are highlighted.
+
+High-density regions are switched to vectorized operators while low-density
+regions remain scalar (they have only 8 particles per cell).
+In this particular case, the treatment of particles can be sped-up by 2.
+
+For more details, checkout the :doc:`doc<vectorization>` and this
+`ArXiV paper <https://arxiv.org/abs/1810.03949>`_.
+
+----
 
 Scalability in a wakefield acceleration simulation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -19,28 +53,30 @@ In a local area around this hotspot, OpenMP is able to manage the computing
 resources to make the overall simulation faster. The following figure shows
 the evolution of the time to calculate 100 iterations, as a function of time.
 Each line corresponds to a different partition of the box in terms of
-MPI processes and OpenMP threads: :math:`N\times M`, where :math:`N` is 
+MPI processes and OpenMP threads: :math:`N\times M`, where :math:`N` is
 the total number of MPI processes, and :math:`M` is the number of threads
 in each MPI process.
 
 .. image:: _static/openMP_balancing.png
     :width: 500px
+    :align: center
 
 Using more OpenMP threads per MPI process (while keeping the total number
-of threads constant) clearly reduces the simulation time, because the 
+of threads constant) clearly reduces the simulation time, because the
 computing power is balanced within each MPI region.
 
 
 .. rubric :: 2. Dynamic load balancing between MPI processes
 
 At the global simulation scale, OpenMP cannot be used to smoothen the balance.
-Instead, a dynamic load balancing (DLB) algorithm periodically exchanges pieces of 
+Instead, a dynamic load balancing (DLB) algorithm periodically exchanges pieces of
 the simulation box (*patches*) between MPI processes, so that each MPI
 process owns a fair amount of the simulation load. The following figure
 shows how this balancing reduces the time of the simulation.
 
 .. image:: _static/DLB_balancing.png
     :width: 500px
+    :align: center
 
 The red curve is the best situation obtained in the previous section, while
 the black curve corresponds to the DLB algorithm enabled.
@@ -84,14 +120,16 @@ A close-up view of the interaction region is given in the bottom panel, illustra
 the electron bunches being pulled out from the plasma surface.
 
 .. image:: _static/hhg1.jpg
-   :width: 13cm
+    :width: 13cm
+    :align: center
 
 Fourier analysis of the reflected laser field, in space and time, provides the
-angular distribution of the frequency spectrum of the reflected light, shown in the 
+angular distribution of the frequency spectrum of the reflected light, shown in the
 following figure (top panel). High harmonics appear up to order 16.
 
 .. image:: _static/hhg2.jpg
-   :width: 13cm
+    :width: 13cm
+    :align: center
 
 The bottom panel shows trajectories of accelerated electrons ejected from the target.
 The angular histogram shows that the momenta of the escaping energetic electrons
@@ -101,7 +139,7 @@ laser direction.
 This simulation was run on the CINES/Occigen (Bullx) machine using 256 MPI x 14 OpenMP
 threads for about 10700 CPU-hours. The characteristic computing time per particle
 (average PIC iteration divided by the number of particles) is of the order of
-0.7 µs, including 25% for diagnostics. 
+0.7 µs, including 25% for diagnostics.
 
 
 
@@ -122,7 +160,7 @@ the `stimulated Brillouin scattering <http://aip.scitation.org/doi/abs/10.1063/1
 
 A pump with intensity :math:`10^{15}` W/cm² (wavelength 1 µm)
 correspond to the "strong-coupling" regime, particularly robust with respect to
-plasma inhomogeneities and seed frequency [Chiaramello2016]_. 
+plasma inhomogeneities and seed frequency [Chiaramello2016]_.
 
 A 2-dimensional simulation, in conditions close to actual experiments, ran
 on a box size of 1024 µm x 512 µm for  10 ps
@@ -132,6 +170,7 @@ The blue-yellow maps correspond to the plasma density while the white-red maps
 correspond to the lasers intensity.
 
 .. image:: _static/pump_seed.jpg
+    :align: center
 
 The final seed intensity is nearly 5 times its initial intensity
 while the spot size and phase front are well conserved,
@@ -177,14 +216,15 @@ in the magnetosphere to :math:`B_0=m_e\omega_{pe}/e` in the solar wind and is to
 simulation plane. The temperature is initially isotropic and its profile is calculated
 to balance the total pressure.
 
-The domain size is 1280 :math:`c/\omega_{pi} \times` 256 :math:`c/\omega_{pi}`. 
-The total simulation time is :math:`800\times` the ion gyration time. 
+The domain size is 1280 :math:`c/\omega_{pi} \times` 256 :math:`c/\omega_{pi}`.
+The total simulation time is :math:`800\times` the ion gyration time.
 We used a reduced ion to electron mass ratio :math:`m_i/m_e = 25`, and a ratio
-50 of the speed of light by the Alfvén velocity. 
+50 of the speed of light by the Alfvén velocity.
 There are initially 8.6 billion quasi-protons for the three populations, and 13 billion electrons.
 
 .. image:: _static/reconnection.jpg
-   :width: 15cm
+    :width: 15cm
+    :align: center
 
 This figure presents some of the simulation results:
 the electron density at three different times.
@@ -208,7 +248,7 @@ where the exhaust is filled with plume and solar wind plasma.
 This large-scale simulation has run for a total of 14 million CPU-hours on 16384 cores
 of the CINES/Occigen (Bullx) supercomputer within a GENCI-CINES special call.
 Overall, the characteristic (full) push-time for a single particle was of the order
-of 1.6 µs (including 31% for diagnostics). 
+of 1.6 µs (including 31% for diagnostics).
 No dynamic load balancing was used for this simulation.
 
 ----
@@ -221,7 +261,7 @@ Relativistic collisionless shocks play a fundamental role in various astrophysic
 where they cause high-energy radiation and particle acceleration related to the
 cosmic-ray spectrum. In the absence of particle collisions, the shock is mediated
 by collective plasma processes, produced by electromagnetic plasma instabilities
-at the shock front. 
+at the shock front.
 
 Specifically, the Weibel (or current filamentation) instability
 is observed in most of the astrophysical relativistic outflows interacting with
@@ -233,20 +273,21 @@ hence stopping it and leading to compression of the downstream (shocked plasma) 
 We present a 2-dimensional PIC simulation of such shock,
 driven in an initially unmagnetized electron-positron plasma.
 The simulation relies on the "piston" method that consists in initializing the
-simulation with a single cold electron-positron plasma drifting 
-at a relativistic velocity :math:`v_0 \simeq 0.995\,c`. 
+simulation with a single cold electron-positron plasma drifting
+at a relativistic velocity :math:`v_0 \simeq 0.995\,c`.
 Reflecting boundary conditions at the right border creates a counter-penetrating flow.
 
-The simulation box size is 2048 :math:`\delta_e \times` 128 :math:`\delta_e` 
-(:math:`\delta_e = c/\omega_p` being the electron skin-depth of the initial flow), 
-with a total of 2.15 billion quasi-particles. 
+The simulation box size is 2048 :math:`\delta_e \times` 128 :math:`\delta_e`
+(:math:`\delta_e = c/\omega_p` being the electron skin-depth of the initial flow),
+with a total of 2.15 billion quasi-particles.
 The following figure show an unstable overlapping region of incoming and
 reflected flows, resulting in the creation, before the shock
 of filamentary structures in both the magnetic field (panel a) and
 the total plasma density (panel b).
 
 .. image:: _static/shock1.jpg
-   :width: 15cm
+    :width: 15cm
+    :align: center
 
 The magnetic field at the shock front becomes turbulent and it is strong
 enough to stop the incoming particles leading to a pile-up of the plasma
@@ -259,10 +300,9 @@ It is characteristic of first-order Fermi acceleration at the shock front,
 and appears to follow a :math:`\gamma^{-2.5}` power law.
 
 .. image:: _static/shock3.jpg
-   :width: 11cm
+    :width: 11cm
+    :align: center
 
-This simulation run on the TGCC/Curie machine using 128 MPI x 8 OpenMP threads 
+This simulation run on the TGCC/Curie machine using 128 MPI x 8 OpenMP threads
 for a total of 18800 CPU-hours for 49780 timesteps.
-The average push time for one quasi-particle was of 0.63 µs (including 20% for diagnostics). 
-
-
+The average push time for one quasi-particle was of 0.63 µs (including 20% for diagnostics).

@@ -60,8 +60,8 @@ Once a simulation is opened as shown above, you can access the content of the na
 using the attribute ``namelist``::
 
   S = happi.Open("path/to/my/results") # Open a simulation
-  print S.namelist.Main.timestep   # print the timestep
-  print S.namelist.Main.geometry   # print the simulation dimensions
+  print(S.namelist.Main.timestep)   # print the timestep
+  print(S.namelist.Main.geometry)   # print the simulation dimensions
 
 All the variables defined in the original namelist are copied into this variable.
 
@@ -69,17 +69,17 @@ Concerning components like :ref:`Species`, :ref:`ExternalField` or :ref:`DiagPro
 several instances may exist, you can directly iterate over them::
 
   for species in S.namelist.Species:
-      print "species "+species.name+" has mass "+str(species.mass)
+      print("species "+species.name+" has mass "+str(species.mass))
 
 You can also access to a specific component by referencing its number::
 
   F = S.namelist.ExternalField[0]  # get the first external field
-  print "An external field "+F.field+" was applied"
+  print("An external field "+F.field+" was applied")
 
 In the case of the species, you can also obtain a given species by its name::
 
   species = S.namelist.Species["electron1"]
-  print "species "+species.name+" has mass "+str(species.mass)
+  print("species "+species.name+" has mass "+str(species.mass))
 
 
 ----
@@ -98,7 +98,7 @@ Open a Scalar diagnostic
   * ``units``: A unit specification (see :ref:`units`)
   * ``data_log``:
      | If ``True``, then :math:`\log_{10}` is applied to the output.
-  * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
+  * See also :ref:`otherkwargs`
 
 **Example**::
 
@@ -110,7 +110,7 @@ Open a Scalar diagnostic
 Open a Field diagnostic
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-.. py:method:: Field(diagNumber=None, field=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, **kwargs)
+.. py:method:: Field(diagNumber=None, field=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, moving=False, export_dir=None, **kwargs)
 
   * ``timesteps``, ``units``, ``data_log``: same as before.
   * ``diagNumber``: The number of the fields diagnostic
@@ -122,7 +122,7 @@ Open a Field diagnostic
      | Syntax 1: ``subset = { axis : location, ... }``
      | Syntax 2: ``subset = { axis : [start, stop] , ... }``
      | Syntax 3: ``subset = { axis : [start, stop, step] , ... }``
-     | ``axis`` must be ``"x"``, ``"y"`` or ``"z"``.
+     | ``axis`` must be ``"x"``, ``"y"`` , ``"z"`` or ``"r"``.
      | Only the data within the chosen axes' selections is extracted.
      | **WARNING:** THE VALUE OF ``step`` IS A NUMBER OF CELLS.
      | Example: ``subset = {"y":[10, 80, 4]}``
@@ -130,18 +130,36 @@ Open a Field diagnostic
      | Syntax 1: ``average = { axis : "all", ... }``
      | Syntax 2: ``average = { axis : location, ... }``
      | Syntax 3: ``average = { axis : [start, stop] , ... }``
-     | ``axis`` must be ``"x"``, ``"y"`` or ``"z"``.
+     | ``axis`` must be ``"x"``, ``"y"`` , ``"z"`` or ``"r"``.
      | The chosen axes will be removed:
      | - With syntax 1, an average is performed over all the axis.
      | - With syntax 2, only the bin closest to ``location`` is kept.
      | - With syntax 3, an average is performed from ``start`` to ``stop``.
      | Example: ``average = {"x":[4,5]}`` will average for :math:`x` within [4,5].
-  * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
+  * ``moving``: If ``True``, plots will display the X coordinates evolving according to the
+    :ref:`moving window<movingWindow>`
+  * ``export_dir``: The directory where to export VTK files.
+  * See also :ref:`otherkwargs`
+
+  In the case of an azimuthal mode cylindrical geometry (``AMcylindrical``), additional argument are
+  available. You must choose one of ``theta`` or ``build3d``, defined below, in order
+  to construct fields from their complex angular Fourier modes. In addition, the ``modes``
+  argument is optional.
+
+  * ``theta``: An angle (in radians)
+     | Calculates the field in a plane passing through the :math:`r=0` axis
+     | and making an angle ``theta`` with the :math:`xy` plane.
+  * ``build3d``: A list of three *ranges*
+     | Calculates the field interpolated in a 3D :math:`xyz` grid.
+     | Each *range* is a list ``[start, stop, step]`` indicating the beginning,
+     | the end and the step of this grid.
+  * ``modes``: An integer or a list of integers
+     | Only these modes numbers will be used in the calculation. If omited, all modes are used.
 
 **Example**::
 
   S = happi.Open("path/to/my/results")
-  Diag = S.Field(0, "Ex", average = {"x":[4,5]})
+  Diag = S.Field(0, "Ex", average = {"x":[4,5]}, theta=math.pi/4.)
 
 
 ----
@@ -151,7 +169,7 @@ Open a Probe diagnostic
 
 .. py:method:: Probe(probeNumber=None, field=None, timesteps=None, subset=None, average=None, units=[""], data_log=False, **kwargs)
 
-  * ``timesteps``, ``units``, ``data_log``: same as before.
+  * ``timesteps``, ``units``, ``data_log``, ``export_dir``: same as before.
   * ``probeNumber``: number of the probe (the first one has number 0).
      | If not given, a list of available probes is printed.
   * ``field``: name of the field (``"Bx"``, ``"By"``, ``"Bz"``, ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Jx"``, ``"Jy"``, ``"Jz"`` or ``"Rho"``).
@@ -159,7 +177,7 @@ Open a Probe diagnostic
      | The string can also be an operation between several fields, such as ``"Jx+Jy"``.
   * ``subset`` and ``average`` are very similar to those of :py:meth:`Field`, but they can only have the axes: ``"axis1"``, ``"axis2"`` and ``"axis3"``.
     For instance, ``average={"axis1":"all"}``. Note that the axes are not necessarily :math:`x`, :math:`y` or :math:`z` because the probe mesh is arbitrary.
-  * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
+  * See also :ref:`otherkwargs`
 
 **Example**::
 
@@ -174,7 +192,7 @@ Open a ParticleBinning diagnostic
 
 .. py:method:: ParticleBinning(diagNumber=None, timesteps=None, subset=None, sum=None, units=[""], data_log=False, **kwargs)
 
-  * ``timesteps``, ``units``, ``data_log``: same as before.
+  * ``timesteps``, ``units``, ``data_log``, ``export_dir``: same as before.
   * ``diagNumber``: number of the particle binning diagnostic (starts at 0).
      | If not given, a list of available diagnostics is printed.
      | It can also be an operation between several diagnostics.
@@ -196,13 +214,20 @@ Open a ParticleBinning diagnostic
      | - With syntax 2, only the bin closest to ``location`` is kept.
      | - With syntax 3, a sum is performed between ``begin`` and ``end``.
      | Example: ``sum={"x":[4,5]}`` will sum all the data for x within [4,5].
-  * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
+  * See also :ref:`otherkwargs`
 
 **Example**::
 
   S = happi.Open("path/to/my/results")
   Diag = S.ParticleBinning(1)
 
+**Note**:
+
+The :ref:`macro-particle weights<Weights>` are not in units of density,
+but of density multiplied by hypervolume.
+In the ``ParticleBinning`` post-processing, this is accounted for: the
+results are divided by the hypervolume corresponding to the diagnostic's
+definition.
 
 
 ----
@@ -212,13 +237,13 @@ Open a Screen diagnostic
 
 .. py:method:: Screen(diagNumber=None, timesteps=None, subset=None, sum=None, units=[""], data_log=False, **kwargs)
 
-  * ``timesteps``, ``units``, ``data_log``: same as before.
+  * ``timesteps``, ``units``, ``data_log``, ``export_dir``: same as before.
   * ``diagNumber``: number of the screen diagnostic (the first one has number 0).
      | If not given, a list of available screen diagnostics is printed.
      | It can also be an operation between several Screen diagnostics.
      | For example, ``"#0/#1"`` computes the division by diagnostics 0 and 1.
   * ``subset`` and ``sum``: identical to that of ParticleBinning diagnostics.
-  * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
+  * See also :ref:`otherkwargs`
 
 **Example**::
 
@@ -234,13 +259,15 @@ Open a TrackParticles diagnostic
 
 .. py:method:: TrackParticles(species=None, select="", axes=[], timesteps=None, sort=True, length=None, units=[""], **kwargs)
 
-  * ``timesteps``, ``units``: same as before.
+  * ``timesteps``, ``units``, ``export_dir``: same as before.
   * ``species``: the name of a tracked-particle species.
      | If omitted, a list of available tracked-particle species is printed.
   * ``select``: Instructions for selecting particles among those available.
     A detailed explanation is provided below
   * ``axes``: A list of axes for plotting the trajectories or obtaining particle data.
-     | Each axis is one of the :py:data:`attributes` defined in the namelist.
+     Each axis is one of the :py:data:`attributes` defined in the namelist.
+     In addition, when there is a moving window, the axis ``"moving_x"`` is automatically available.
+     
      | **Example:** ``axes = ["x"]`` corresponds to :math:`x` versus time.
      | **Example:** ``axes = ["x","y"]`` correspond to 2-D trajectories.
      | **Example:** ``axes = ["x","px"]`` correspond to phase-space trajectories.
@@ -249,7 +276,7 @@ Open a TrackParticles diagnostic
     ``getData()`` is available in this mode. Read :doc:`this <ids>` for more information
     on particle IDs.
   * ``length``: The length of each plotted trajectory, in number of timesteps.
-  * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
+  * See also :ref:`otherkwargs`
 
 **Example**::
 
@@ -287,9 +314,9 @@ The post-processing of the *performances* diagnostic may be achieved in three di
 modes: ``raw``, ``map``, or ``histogram``, described further below. You must choose one
 and only one mode between those three.
 
-.. py:method:: Performances(raw=None, map=None, histogram=None, timesteps=None, units=[""], data_log=False, **kwargs)
+.. py:method:: Performances(raw=None, map=None, histogram=None, timesteps=None, units=[""], data_log=False, species=None, **kwargs)
 
-  * ``timesteps``, ``units``, ``data_log``: same as before.
+  * ``timesteps``, ``units``, ``data_log``, ``export_dir``: same as before.
   * ``raw`` : The name of a quantity, or an operation between them (see quantities below).
     The requested quantity is listed for each process.
   * ``map`` : The name of a quantity, or an operation between them (see quantities below).
@@ -297,9 +324,10 @@ and only one mode between those three.
   * ``histogram`` : the list ``["quantity", min, max, nsteps]``.
     Makes a histogram of the requested quantity between ``min`` an ``max``, with ``nsteps`` bins.
     The ``"quantity"`` may be an operation between the quantities listed further below.
-  * Other keyword arguments (``kwargs``) are available, the same as the function :py:func:`plot`.
+  * See also :ref:`otherkwargs`
 
-**Available quantities**:
+
+**Quantities at the MPI-process level** (contain many patches):
 
   * ``hindex``                     : the starting index of each proc in the hilbert curve
   * ``number_of_cells``            : the number of cells in each proc
@@ -318,18 +346,35 @@ and only one mode between those three.
   * ``timer_syncDens``             : time spent synchronzing densities by each proc
   * ``timer_diags``                : time spent by each proc calculating and writing diagnostics
   * ``timer_total``                : the sum of all timers above (except timer_global)
+  * ``memory_total``               : the total memory used by the process
 
-  **WARNING**: The timers ``loadBal`` and ``diags`` span parts of the code where *global*
-  communications take place. This means they will include time spent doing no calculations,
-  waiting for  other processes. The timers ``syncPart``, ``syncField`` and ``syncDens``
-  contain *proc-to-proc* communications, which also represents some waiting time.
+  **WARNING**: The timers ``loadBal`` and ``diags`` include *global* communications.
+  This means they might contain time doing nothing, waiting for other processes.
+  The ``sync***`` timers contain *proc-to-proc* communications, which also represents
+  some waiting time.
 
-**Example**::
+**Quantities at the patch level**:
+
+  This requires :py:data:`patch_information` in the namelist.
+
+  * ``mpi_rank``                   : the MPI rank that contains the current patch
+  * ``vecto``                      : the mode of the specified species in the current patch
+    (vectorized of scalar) when the adaptive mode is activated. Here the ``species`` argument has to be specified.
+
+  **WARNING**: The patch quantities are only compatible with the ``raw`` mode
+  and only in ``3Dcartesian`` :py:data:`geometry`. The result is a patch matrix with the
+  quantity on each patch.
+
+
+**Example**: performance diagnostic at the MPI level::
 
   S = happi.Open("path/to/my/results")
   Diag = S.Performances(map="total_load")
 
+**Example**: performance diagnostic at the patch level::
 
+  S = happi.Open("path/to/my/results")
+  Diag = S.Performances(raw="vecto", species="electron")
 
 ----
 
@@ -366,57 +411,25 @@ It has three different syntaxes:
 * To obtain units in a non-normalized system (e.g. SI), the simulation must have the
   parameter :py:data:`reference_angular_frequency_SI` set to a finite value.
   Otherwise, this parameter can be set during post-processing as an argument to the
-  :py:meth:`Open` function.
-
+  :py:meth:`happi.Open` function.
 
 ----
 
-Units of ParticleBinning and Screen
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. _otherkwargs:
 
-Most of the data output from the ``ParticleBinning`` and ``Screen`` diagnostics is
-proportional to the macro-particle statistical weights, as stated by their
-:py:data:`deposited_quantity` argument. These weights :ref:`are defined as <Weights>`
-the species density divided by the number of macro-particles of this species in the
-cell where the particle is born. Consequently, weights are in units of the number
-density :math:`N_r` (see :doc:`units`), and the sum of all macro-particle weights in
-one cell corresponds to the local species density.
+Other arguments for diagnostics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-However, the ``DiagParticleBinning`` and ``DiagScreen`` diagnostics do not necessarily
-sum the weights in one cell: they calculate a sum over a *bin* that can be of any size,
-and in any space (phase-space, etc). The data written in the outputs
-``ParticleBinning*.h5`` and ``Screen*.h5`` is thus in units of :math:`N_r`, but does not
-always represent the actual plasma density.
+All diagnostics above can use additional keyword arguments (``kwargs``)
+to manipulate the plotting options:
 
-In ``happi``, the post-processing takes into account these features in order for outputs
-to represent the actual plasma density. For instance, if your ``DiagParticleBinning``
-has two axes ``x`` and ``y``, the output will represent the real plasma density. Another
-example: if your ``DiagParticleBinning`` has two axes ``x`` and ``px``, the output
-will be in units of :math:`N_r/P_r` and represents the real plasma density per unit of
-:math:`p_x`.
-
-Let us briefly explain how ``happi`` applies the correction. The idea is that the output
-has to be divided by the number of cells *relevant* to each bin.
-
-* The output is divided by the total number of cells in the simulation
-
-* For each axis of the diagnostic :py:data:`axes`:
-
-  * If the axis is one of ``"x"``, ``"y"`` or ``"z"``:
-
-    * Multiply the outputs by the simulation length along that axis.
-    * If the axis is included in a ``subset`` or a ``sum``: divide by the corresponding *length*.
-    * Otherwise, divide by the length of each bin.
-
-  * Otherwise:
-
-    * If the axis is included in a ``subset`` or a ``sum``: do nothing.
-    * Otherwise, divide by the length of each bin.
-
-As a final note, remember that the :py:data:`axes` of a diagnostic may be a *python function*.
-In this case, if the function represents some spatial axis, then happi cannot know how to
-apply the correction. The user has to figure it out.
-
+* ``figure``: The figure number that is passed to matplotlib.
+* ``vmin``, ``vmax``: data value limits.
+* ``xmin``, ``xmax``, ``ymin``, ``ymax``: axes limits.
+* ``xfactor``, ``yfactor``: factors to rescale axes.
+* ``side``: ``"left"`` (by default) or ``"right"`` puts the y-axis on the left- or the right-hand-side.
+* ``transparent``: ``None`` (by default), ``"over"``, ``"under"`` or ``"both"`` makes the colormap transparent outside the requested boundary.
+* Many Matplotlib arguments listed in :ref:`advancedOptions`.
 
 ----
 
@@ -432,7 +445,7 @@ Obtain the data
 
   Returns a list of the data arrays (one element for each timestep requested).
   In the case of ``TrackParticles``, this method returns a dictionary containing one
-  entry for each axis, and if ``sort==True``, these entries are included inside an entry
+  entry for each axis, and if ``sort==False``, these entries are included inside an entry
   for each timestep.
 
   * ``timestep``, if specified, is the only timestep number that is read and returned.
@@ -504,6 +517,11 @@ Obtain the data
       # Calculate the average px
       mean_px = sum_px / npart
 
+.. py:method:: Field.getXmoved( timestep )
+
+  Specific to Field diagnostics, this method returns the displacement of the moving
+  window at the required ``timestep``.
+
 ----
 
 Export 2D or 3D data to VTK
@@ -512,13 +530,15 @@ Export 2D or 3D data to VTK
 .. py:method:: Field.toVTK( numberOfPieces=1 )
                Probe.toVTK( numberOfPieces=1 )
                ParticleBinning.toVTK( numberOfPieces=1 )
+               Performances.toVTK( numberOfPieces=1 )
                Screen.toVTK( numberOfPieces=1 )
                TrackParticles.toVTK( rendering="trajectory", data_format="xml" )
 
   Converts the data from a diagnostic object to the vtk format.
-  
+  Note the ``export_dir`` argument available for each diagnostic (see above).
+
   * ``numberOfPieces``: the number of files into which the data will be split.
-  
+
   * ``rendering``: the type of output in the case of :py:meth:`TrackParticles`:
 
     * ``"trajectory"``: show particle trajectories. One file is generated for all trajectories.
@@ -566,16 +586,8 @@ at one given timestep.
     etc.
   * ``axes``: Matplotlib's axes handle on which to plot. If None, make new axes.
 
-  Other keyword-arguments (``kwargs``) include:
-
-  * ``figure``: The figure number that is passed to matplotlib.
-  * ``vmin``, ``vmax``: data value limits.
-  * ``xmin``, ``xmax``, ``ymin``, ``ymax``: axes limits.
-  * ``xfactor``, ``yfactor``: factors to rescale axes.
-  * ``side``: ``"left"`` (by default) or ``"right"`` puts the y-axis on the left- or the right-hand-side.
-  * ``transparent``: ``None`` (by default), ``"over"``, ``"under"`` or ``"both"`` makes the colormap transparent outside the requested boundary.
-  * Many Matplotlib arguments listed in :ref:`advancedOptions`.
-
+  You may also have keyword-arguments (``kwargs``) described in :ref:`otherkwargs`.
+  
 **Example**::
 
     S = happi.Open("path/to/my/results")
@@ -623,7 +635,7 @@ This third plotting method animates the data over time.
 
   All these methods have the same arguments described below.
 
-.. py:function:: animate(movie="", fps=15, dpi=200, saveAs=None, axes=None)
+.. py:function:: animate(movie="", fps=15, dpi=200, saveAs=None, axes=None, **kwargs)
 
   All arguments are identical to those of ``streak``, with the addition of:
 
@@ -636,6 +648,31 @@ This third plotting method animates the data over time.
 
     S = happi.Open("path/to/my/results")
     S.ParticleBinning(1).animate()
+
+----
+
+Plot with a slider
+^^^^^^^^^^^^^^^^^^
+
+This methods provides an interactive slider to change the time.
+
+.. py:method:: Scalar.slide(...)
+               Field.slide(...)
+               Probe.slide(...)
+               ParticleBinning.slide(...)
+               TrackParticles.slide(...)
+               Screen.slide(...)
+
+  All these methods have the same arguments described below.
+
+.. py:function:: slide(axes=None, **kwargs)
+
+  See ``plot`` for the description of the arguments.
+
+**Example**::
+
+    S = happi.Open("path/to/my/results")
+    S.ParticleBinning(1).slide(vmin=0)
 
 ----
 
@@ -676,6 +713,10 @@ Simultaneous plotting of multiple diagnostics
 
   This plots a Probe and a ParticleBinning on the same figure, and makes an animation for all available timesteps.
 
+.. note::
+
+  To plot several quantities on the same graph, you can try ``shape=[1,1]``.
+  One diagnostic may have the option ``side="right"`` to use the right-hand-side axis.
 
 ----
 
@@ -687,34 +728,33 @@ Advanced plotting options
 In addition to ``figure``, ``vmin``, ``vmax``, ``xmin``, ``xmax``, ``ymin`` and ``ymax``,
 there are many more optional arguments. They are directly passed to the *matplotlib* package.
 
-Options for the figure: ``figsize``, ``dpi``, ``facecolor``, ``edgecolor``
+* Options for the figure: ``figsize``, ``dpi``, ``facecolor``, ``edgecolor``
 
-    Please refer to `matplotlib's figure options <http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.figure>`_.
+  Please refer to `matplotlib's figure options <http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.figure>`_.
 
-Options for the axes frame: ``aspect``, ``axis_bgcolor``, ``frame_on``, ``position``, ``title``, ``visible``,
-``xlabel``, ``xscale``, ``xticklabels``, ``xticks``, ``ylabel``, ``yscale``, ``yticklabels``, ``yticks``, ``zorder``
+* Options for the axes frame: ``aspect``, ``axis_bgcolor``, ``frame_on``, ``position``, ``title``, ``visible``,
+  ``xlabel``, ``xscale``, ``xticklabels``, ``xticks``, ``ylabel``, ``yscale``, ``yticklabels``, ``yticks``, ``zorder``
 
-    Please refer to matplotlib's axes options: the same as functions starting with ``set_`` listed `here <http://matplotlib.org/api/axes_api.html>`_.
+  Please refer to matplotlib's axes options: the same as functions starting with ``set_`` listed `here <http://matplotlib.org/api/axes_api.html>`_.
 
-Options for the lines: ``color``, ``dashes``, ``drawstyle``, ``fillstyle``, ``label``, ``linestyle``, ``linewidth``,
-``marker``, ``markeredgecolor``, ``markeredgewidth``, ``markerfacecolor``, ``markerfacecoloralt``,
-``markersize``, ``markevery``, ``visible``, ``zorder``
+* Options for the lines: ``color``, ``dashes``, ``drawstyle``, ``fillstyle``, ``label``, ``linestyle``, ``linewidth``,
+  ``marker``, ``markeredgecolor``, ``markeredgewidth``, ``markerfacecolor``, ``markerfacecoloralt``,
+  ``markersize``, ``markevery``, ``visible``, ``zorder``
 
-    Please refer to `matplotlib's line options <http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.plot>`_.
+  Please refer to `matplotlib's line options <http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.plot>`_.
 
-Options for the image: ``cmap``, ``aspect``, ``interpolation``
+* Options for the image: ``cmap``, ``aspect``, ``interpolation``
 
-    Please refer to `matplotlib's image options <http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.imshow>`_.
+  Please refer to `matplotlib's image options <http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.imshow>`_.
 
-Options for the colorbar: ``cbaspect``, ``orientation``, ``fraction``, ``pad``, ``shrink``, ``anchor``, ``panchor``,
-``extend``, ``extendfrac``, ``extendrect``, ``spacing``, ``ticks``, ``format``, ``drawedges``
+* Options for the colorbar: ``cbaspect``, ``orientation``, ``fraction``, ``pad``, ``shrink``, ``anchor``, ``panchor``,
+  ``extend``, ``extendfrac``, ``extendrect``, ``spacing``, ``ticks``, ``format``, ``drawedges``
 
-    Please refer to `matplotlib's colorbar options <http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.colorbar>`_.
+  Please refer to `matplotlib's colorbar options <http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.colorbar>`_.
 
-Options for the tick labels: ``style_x``, ``scilimits_x``, ``useOffset_x``, ``style_y``, ``scilimits_y``, ``useOffset_y``
+* Options for the tick labels: ``style_x``, ``scilimits_x``, ``useOffset_x``, ``style_y``, ``scilimits_y``, ``useOffset_y``
 
-    Please refer to `matplotlib's tick label format <http://matplotlib.org/api/_as_gen/matplotlib.axes.Axes.ticklabel_format.html>`_.
-
+  Please refer to `matplotlib's tick label format <http://matplotlib.org/api/_as_gen/matplotlib.axes.Axes.ticklabel_format.html>`_.
 
 **Example**:
 
@@ -764,11 +804,3 @@ Other tools in ``happi``
   namelist = happi.openNamelist("path/no/my/namelist.py")
   print namelist.Main.timestep
 
-
-----
-
-Tutorials
-^^^^^^^^^
-
-A dedicated page for learning how to run and analyse Smilei simulations
-is `available here <https://smileipic.github.io/tutorials>`_.

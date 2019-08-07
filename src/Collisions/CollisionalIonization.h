@@ -15,42 +15,45 @@ class CollisionalIonization
 
 public:
     //! Constructor
-    CollisionalIonization(int, int, double, bool);
+    CollisionalIonization( int, int, double, int, Particles* );
     //! Cloning Constructor
-    CollisionalIonization(CollisionalIonization*);
+    CollisionalIonization( CollisionalIonization * );
     //! Destructor
     virtual ~CollisionalIonization() {};
     
     //! Initializes the arrays in the database and returns the index of these arrays in the DB
-    virtual unsigned int createDatabase(double);
+    virtual unsigned int createDatabase( double );
     //! Assigns the correct databases
-    virtual void assignDatabase(unsigned int);
+    virtual void assignDatabase( unsigned int );
     
     //! Gets the k-th binding energy of any neutral or ionized atom with atomic number Z and charge Zstar
-    double binding_energy(int Zstar, int k);
+    double binding_energy( int Zstar, int k );
     
     //! Coefficients used for interpolating the energy over a given initial list
     static const double a1, a2, npointsm1;
     static const int npoints;
     
     //! Methods to prepare the ionization
-    inline void prepare1(int Z_firstgroup) {
+    inline void prepare1( int Z_firstgroup )
+    {
         electronFirst = Z_firstgroup==0 ? true : false;
-        ne = 0.; ni = 0.; nei = 0.;
-        };
-    virtual void prepare2(Particles *p1, int i1, Particles *p2, int i2, bool);
-    virtual void prepare3(double, double);
+        ne = 0.;
+        ni = 0.;
+        nei = 0.;
+    };
+    virtual void prepare2( Particles *p1, int i1, Particles *p2, int i2, bool );
+    virtual void prepare3( double, double );
     //! Method to apply the ionization
-    virtual void apply(Particles *p1, int i1, Particles *p2, int i2);
+    virtual void apply( Patch *patch, Particles *p1, int i1, Particles *p2, int i2 );
     //! Method to finish the ionization and put new electrons in place
-    virtual void finish(Species *s1, Species *s2, Params&, Patch*, std::vector<Diagnostic*>&);
+    virtual void finish( Params &, Patch *, std::vector<Diagnostic *> & );
     
     //! Local table of integrated cross-section
-    std::vector<std::vector<double> > * crossSection;
+    std::vector<std::vector<double> > *crossSection;
     //! Local table of average secondary electron energy
-    std::vector<std::vector<double> > * transferredEnergy;
+    std::vector<std::vector<double> > *transferredEnergy;
     //! Local table of average incident electron energy lost
-    std::vector<std::vector<double> > * lostEnergy;
+    std::vector<std::vector<double> > *lostEnergy;
     
     //! New electrons temporary species
     Particles new_electrons;
@@ -65,6 +68,9 @@ private:
     
     //! Atomic number
     int atomic_number;
+    
+    //! Species where new electrons are sent
+    int ionization_electrons_;
     
     //! Global table of atomic numbers
     static std::vector<int> DB_Z;
@@ -93,7 +99,7 @@ private:
     std::vector<double> prob;
     
     //! Method called by ::apply to calculate the ionization, being sure that electrons are the first species
-    void calculate(double, double, double, Particles *pe, int ie, Particles *pi, int ii);
+    void calculate( double, double, double, Particles *pe, int ie, Particles *pi, int ii, double U1, double U2 );
     
 };
 
@@ -101,17 +107,20 @@ private:
 class CollisionalNoIonization : public CollisionalIonization
 {
 public:
-    CollisionalNoIonization() : CollisionalIonization(0,0,0.,false) {};
-    ~CollisionalNoIonization(){};
+    CollisionalNoIonization() : CollisionalIonization( 0, 0, 0., -1, NULL ) {};
+    ~CollisionalNoIonization() {};
     
-    unsigned int createDatabase(double) override { return 0; };
-    void assignDatabase(unsigned int) override {};
+    unsigned int createDatabase( double ) override
+    {
+        return 0;
+    };
+    void assignDatabase( unsigned int ) override {};
     
-    void prepare2(Particles*, int, Particles*, int, bool) override {};
-    void prepare3(double, double) override {};
-    void apply(Particles*, int, Particles*, int) override {};
+    void prepare2( Particles *, int, Particles *, int, bool ) override {};
+    void prepare3( double, double ) override {};
+    void apply( Patch *, Particles *, int, Particles *, int ) override {};
     //void finish(Species*, Species*, Params&, Patch*) override {};
-    void finish(Species*, Species*, Params&, Patch*, std::vector<Diagnostic*>&) override {};
+    void finish( Params &, Patch *, std::vector<Diagnostic *> & ) override {};
 };
 
 

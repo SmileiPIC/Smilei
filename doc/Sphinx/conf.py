@@ -29,10 +29,14 @@ import shlex
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
+mathjax_path = 'https://www.gitcdn.xyz/repo/mathjax/MathJax/master/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
 extensions = [
-    'sphinx.ext.todo',
-    'sphinx.ext.mathjax'
+    'sphinx.ext.mathjax',
+# In order to generate the doc in pdf:
+#    'rst2pdf.pdfbuilder'
 ]
+
+pdf_documents = [('index', u'rst2pdf', u'Sample rst2pdf doc', u'Your Name'),]
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -50,7 +54,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Smilei'
-copyright = u'2017'
+copyright = u'2019'
 author = u''
 
 # The version info for the project you're documenting, acts as replacement for
@@ -66,9 +70,9 @@ def get_version():
     """
     from subprocess import Popen, PIPE
     pipe = Popen('git describe --tags --always', stdout=PIPE, shell=True)
-    
+
     return str(pipe.stdout.read() or 'X.Y')
-    
+
 version = get_version()
 
 # The full version, including alpha/beta/rc tags.
@@ -138,12 +142,6 @@ html_theme_options = dict(
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = ["."]
-
-# Smilei's theme adds colors and menus
-html_context = dict(
-    menu_start_with = ["Licence", "Units", "Install", "Publications"],
-    menu_name = ["Overview", "Understand", "Use", "More"],
-)
 
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".

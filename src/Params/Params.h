@@ -11,7 +11,6 @@
 #undef _POSIX_C_SOURCE
 #undef _XOPEN_SOURCE
 
-#include "Profile.h"
 #include "Timer.h"
 #include "codeConstants.h"
 
@@ -30,34 +29,36 @@
 
 class SmileiMPI;
 class Species;
+class Profile;
 
 namespace Rand
 {
-    extern std::random_device device;
-    extern std::mt19937 gen;
+extern std::random_device device;
+extern std::mt19937 gen;
 
-    extern std::uniform_real_distribution<double> uniform_distribution;
-    extern double uniform();
+extern std::uniform_real_distribution<double> uniform_distribution;
+extern double uniform();
 
-    extern std::uniform_real_distribution<double> uniform_distribution1;
-    extern double uniform1();
+extern std::uniform_real_distribution<double> uniform_distribution1;
+extern double uniform1();
 
-    extern std::uniform_real_distribution<double> uniform_distribution2;
-    extern double uniform2();
+extern std::uniform_real_distribution<double> uniform_distribution2;
+extern double uniform2();
 
-    extern std::normal_distribution<double> normal_distribution;
-    extern double normal(double stddev);
+extern std::normal_distribution<double> normal_distribution;
+extern double normal( double stddev );
 }
 
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Params class: holds all the properties of the simulation that are read from the input file
 // ---------------------------------------------------------------------------------------------------------------------
-class Params {
+class Params
+{
 
 public:
     //! Creator for Params
-    Params(SmileiMPI*, std::vector<std::string>);
+    Params( SmileiMPI *, std::vector<std::string> );
 
     //! destructor
     ~Params();
@@ -65,22 +66,29 @@ public:
     //! compute grid-related parameters & apply normalization
     void compute();
 
+    //! check if input parameters & apply normalizationare coherent
+    void check_consistency();
+
     //! print a summary of the values in txt
     void print_init();
     //! Printing out some data at a given timestep
-    void print_timestep(unsigned int itime, double time_dual, Timer & timer);
+    void print_timestep( unsigned int itime, double time_dual, Timer &timer );
     void print_timestep_headers();
 
     //! Print information about the parallel aspects
-    void print_parallelism_params(SmileiMPI* smpi);
+    void print_parallelism_params( SmileiMPI *smpi );
 
     //! Tells whether standard output is this timestep
-    bool printNow( int timestep ) {
-        return (timestep % print_every == 0);
+    bool printNow( int current_timestep )
+    {
+        return ( current_timestep % print_every == 0 );
     }
 
     //! sets nDim_particle and nDim_field based on the geometry
     void setDimensions();
+
+    //! Find out whether a field name corresponds to a species field
+    bool isSpeciesField( std::string field_name );
 
     //! defines the geometry of the simulation
     std::string geometry;
@@ -120,7 +128,16 @@ public:
     //! Are open boundaries used ?
     bool open_boundaries;
     bool save_magnectic_fields_for_SM;
-    
+
+    //! Boundary conditions for Envelope Field
+    std::vector< std::vector<std::string> > Env_BCs;
+
+    //! Define if the ponderomotive force is computed (default = false)
+    //bool ponderomotive_force;
+
+    //! Define if laser envelope model is used (default = false)
+    bool Laser_Envelope_model=false;
+
     //Poisson solver
     //! Do we solve poisson
     bool solve_poisson;
@@ -142,10 +159,10 @@ public:
 
     //! Maxwell Solver (default='Yee')
     std::string maxwell_sol;
-    
+
     //! Current spatial filter: number of binomial passes
     unsigned int currentFilter_passes;
-    
+
     //! is Friedman filter applied [Greenwood et al., J. Comp. Phys. 201, 665 (2004)]
     bool Friedman_filter;
 
@@ -167,6 +184,12 @@ public:
     //! dt for the simulation
     double timestep;
 
+    //! Number of modes
+    unsigned int nmodes;
+
+    //! Number of modes for relativistic field initialization
+    unsigned int nmodes_rel_field_init;
+
     //! max value for dt (due to usual FDTD CFL condition: should be moved to ElectroMagn solver (MG))
     double dtCFL;
 
@@ -175,19 +198,19 @@ public:
 
     //! number of cells in every direction of the global domain
     std::vector<unsigned int> n_space_global;
-    
+
     //! spatial step (cell dimension in every direction)
     std::vector<double> cell_length;
-    
+
     //! Size of a patch in each direction
     std::vector<double> patch_dimensions;
-    
+
     //! volume of cell (this will be removed by untructured mesh!)
     double cell_volume;
 
     //! wavelength (in SI units)
     double reference_angular_frequency_SI;
-    
+
     //! Oversize domain to exchange less particles
     std::vector<unsigned int> oversize;
 
@@ -196,7 +219,7 @@ public:
 
     //! frequency of exchange particles (default = 1, disabled for now, incompatible with sort)
     int exchange_particles_each;
-    
+
     //! frequency to apply shrink_to_fit on particles structure
     int every_clean_particles_overhead;
 
@@ -205,12 +228,15 @@ public:
     //! Number of patches per direction
     std::vector<unsigned int> number_of_patches;
     //! Domain decomposition
-    std::string patch_decomposition;
-    //! Domain orientation
-    std::string patch_orientation;
+    std::string patch_arrangement;
+
+    //! Time selection for adaptive vectorization
+    TimeSelection *adaptive_vecto_time_selection;
+    //! Flag for the adaptive vectorization
+    bool has_adaptive_vectorization;
 
     //! Time selection for load balancing
-    TimeSelection * load_balancing_time_selection;
+    TimeSelection *load_balancing_time_selection;
     //! True if must balance at some point
     bool has_load_balancing;
     //! Load coefficient applied to a cell (default = 1)
@@ -222,7 +248,10 @@ public:
     //! Compute an initially balanced patch distribution right from the start
     bool initial_balance;
 
-    bool vecto;
+    //! String containing the vectorization mode: off, on, adaptive, adaptive_mixed_sort
+    std::string vectorization_mode;
+    //! Initial state of the patches in adaptive mode
+    std::string adaptive_default_mode;
 
     //! Tells whether there is a moving window
     bool hasWindow;
@@ -236,7 +265,7 @@ public:
     bool hasNielRadiation;
     //! Tells whether there is w/out radiation reaction but for which a RadiationSpectrum diag is called
     bool hasDiagRadiationSpectrum;
-    
+
     //! Tells whether there is a species with multiphoton Breit-Wheeler
     bool hasMultiphotonBreitWheeler;
 
@@ -250,10 +279,10 @@ public:
     //! call the python cleanup function and
     //! check if python can be closed (e.g. there is no laser python profile)
     //! by calling the _keep_python_running python function (part of pycontrol.pyh)
-    void cleanup(SmileiMPI*);
-    
+    void cleanup( SmileiMPI * );
+
     //! Method to find the numbers of requested species, sorted, and duplicates removed
-    static std::vector<unsigned int> FindSpecies(std::vector<Species*>&, std::vector<std::string>);
+    static std::vector<unsigned int> FindSpecies( std::vector<Species *> &, std::vector<std::string> );
 
     //! every for the standard pic timeloop output
     unsigned int print_every;
@@ -262,14 +291,17 @@ public:
     std::vector<unsigned int> global_factor;
     bool  is_spectral=false ;
     bool  is_pxr=false ;
-    int   norderx = 2; 
-    int   nordery = 2; 
+    int   norderx = 2;
+    int   nordery = 2;
     int   norderz = 2;
     std::vector<int> norder;
-    
+
     //! Boolean for printing the expected disk usage or not
     bool print_expected_disk_usage;
-    
+
+    //! Random seed
+    unsigned int random_seed;
+
     // ---------------------------------------------
     // Constants
     // ---------------------------------------------
@@ -287,10 +319,12 @@ public:
     const double c_vacuum = 299792458;
 
     //! passing named command to python
-    void runScript(std::string command, std::string name, PyObject*);
+    void runScript( std::string command, std::string name, PyObject * );
 
     //! Characters width for timestep output
     unsigned int timestep_width;
+
+    bool cell_sorting;
 };
 
 #endif

@@ -21,39 +21,37 @@
 
 #include "Tools.h"
 
-//  --------------------------------------------------------------------------------------------------------------------
+//  ----------------------------------------------------------------------------
 //! Class RadiationFactory
 //
-//  --------------------------------------------------------------------------------------------------------------------
+//  ----------------------------------------------------------------------------
 
-class RadiationFactory {
+class RadiationFactory
+{
 public:
-    //  --------------------------------------------------------------------------------------------------------------------
-    //! Create appropriate radiation model for the species ispec
-    //! \param ispec Species Id
+    //  ------------------------------------------------------------------------
+    //! Create appropriate radiation model for the species `species`
+    //! \param species Species object
     //! \param params Parameters
     //  --------------------------------------------------------------------------------------------------------------------
-    static Radiation* create(Params& params, Species * species) {
-        Radiation* Radiate = NULL;
+    static Radiation *create( Params &params, Species *species )
+    {
+        Radiation *Radiate = NULL;
 
         // assign the correct Radiation model to Radiate
-        if ( species->radiation_model == "mc" )
-        {
+        if( species->radiation_model == "mc" ) {
             Radiate = new RadiationMonteCarlo( params, species );
         }
         // Corrected LL + stochastic diffusive operator
-        else if ( species->radiation_model == "niel")
-        {
+        else if( species->radiation_model == "niel" ) {
             Radiate = new RadiationNiel( params, species );
         }
         // Corrected continuous radiation loss model
-        else if ( species->radiation_model == "cll" )
-        {
+        else if( species->radiation_model == "cll" ) {
             Radiate = new RadiationCorrLandauLifshitz( params, species );
         }
         // Classical continuous radiation loss model from Landau-Lifshitz (LL)
-        else if ( species->radiation_model == "ll" )
-        {
+        else if( species->radiation_model == "ll" ) {
             Radiate = new RadiationLandauLifshitz( params, species );
         }
         // Radiation is only a diagnostic (DiagRadiationSpectrum can be called for this species): only compute
@@ -65,9 +63,15 @@ public:
         else if ( species->radiation_model != "none" )
         {
             ERROR( "For species " << species->name
-                                  << ": unknown radiation_model `"
-                                  << species->radiation_model << "`");
+                   << ": unknown radiation_model `"
+                   << species->radiation_model << "`" );
         }
+
+        int n_envlaser = params.Laser_Envelope_model;
+        if( ( n_envlaser >=1 ) & ( species->ponderomotive_dynamics ) & ( species->radiation_model != "none" ) ) {
+            ERROR( "Radiation model is not yet implemented for species interacting with Laser Envelope model." );
+        }
+
 
         return Radiate;
     }

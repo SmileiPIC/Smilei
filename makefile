@@ -7,9 +7,17 @@
 # PYTHON_CONFIG : the executable `python-config` usually shipped with python installation
 
 SMILEICXX ?= mpicxx
-HDF5_ROOT_DIR ?=
+HDF5_ROOT_DIR ?= $(HDF5_ROOT)
 BUILD_DIR ?= build
 PYTHONEXE ?= python
+
+#-----------------------------------------------------
+# check whether to use a machine specific definitions
+ifneq ($(machine),)
+	ifneq ($(wildcard scripts/CompileTools/machine/$(machine)),)
+	-include scripts/CompileTools/machine/$(machine)
+	endif
+endif
 
 PYTHONCONFIG := $(PYTHONEXE) scripts/CompileTools/python-config.py
 
@@ -29,13 +37,13 @@ SITEDIR = $(shell $(PYTHONEXE) -c 'import site; site._script()' --user-site)
 # Flags
 
 # Smilei version
-CXXFLAGS += -D__VERSION=\"$(VERSION)\"
+CXXFLAGS += -D__VERSION=\"$(VERSION)\" -D_VECTO
 # C++ version
-CXXFLAGS += -std=c++11 -Wall
+CXXFLAGS += -std=c++17 -Wall #-Wshadow
 # HDF5 library
 ifneq ($(strip $(HDF5_ROOT_DIR)),)
-CXXFLAGS += -I${HDF5_ROOT_DIR}/include
-LDFLAGS := -L${HDF5_ROOT_DIR}/lib $(LDFLAGS)
+CXXFLAGS += -I$(HDF5_ROOT_DIR)/include
+LDFLAGS := -L$(HDF5_ROOT_DIR)/lib $(LDFLAGS)
 endif
 LDFLAGS += -lhdf5
 # Include subdirs
@@ -67,12 +75,14 @@ ifeq ($(PICSAR),TRUE)
 	LDFLAGS += -lgfortran
 endif
 
+CXXFLAGS += -D_VECTO
+
 # Manage options in the "config" parameter
 ifneq (,$(findstring debug,$(config)))
     CXXFLAGS += -g -pg -D__DEBUG -O0
 # With gdb
 else ifneq (,$(findstring gdb,$(config)))
-    CXXFLAGS += -v -da -Q
+    CXXFLAGS += -g -D__DEBUG -O0
 
 # With valgrind
 else ifneq (,$(findstring valgrind,$(config)))
@@ -85,7 +95,12 @@ else ifneq (,$(findstring scalasca,$(config)))
 
 # With Intel Advisor / Vtune
 else ifneq (,$(findstring advisor,$(config)))
-    CXXFLAGS += -g -O3 -debug inline-debug-info -shared-intel -parallel-source-info=2
+    CXXFLAGS += -g -O3 -shared-intel -debug inline-debug-info -qopenmp-link dynamic -parallel-source-info=2
+
+# With Intel Inspector
+else ifneq (,$(findstring inspector,$(config)))
+    CXXFLAGS += -g -O0 -I$(INSPECTOR_ROOT_DIR)/include/
+    LDFLAGS += $(INSPECTOR_ROOT_DIR)/lib64/libittnotify.a
 
 # Optimization report
 else ifneq (,$(findstring opt-report,$(config)))
@@ -93,9 +108,13 @@ else ifneq (,$(findstring opt-report,$(config)))
 
 # Default configuration
 else
-    CXXFLAGS += -O3 #-xHost -no-prec-div -ipo
+    CXXFLAGS += -O3 -g #-xHost -no-prec-div -ipo
 endif
 
+# Manage options in the "config" parameter
+ifneq (,$(findstring detailed_timers,$(config)))
+    CXXFLAGS += -D__DETAILED_TIMERS
+endif
 
 ifeq (,$(findstring noopenmp,$(config)))
     OPENMP_FLAG ?= -fopenmp
@@ -103,18 +122,15 @@ ifeq (,$(findstring noopenmp,$(config)))
     OPENMP_FLAG += -D_OMP
     LDFLAGS += $(OPENMP_FLAG)
     CXXFLAGS += $(OPENMP_FLAG)
-#else 
-#    LDFLAGS += -mt_mpi # intelmpi only
+else
+    LDFLAGS += -mt_mpi # intelmpi only
 endif
 
-
-#-----------------------------------------------------
-# check whether to use a machine specific definitions
-ifneq ($(machine),)
-	ifneq ($(wildcard scripts/CompileTools/machine/$(machine)),)
-	-include scripts/CompileTools/machine/$(machine)
-	endif
+# Manage MPI communications by a single thread (master in MW)
+ifneq (,$(findstring no_mpi_tm,$(config)))
+    CXXFLAGS += -D_NO_MPI_TM
 endif
+
 #-----------------------------------------------------
 # Set the verbosity prefix
 ifeq (,$(findstring verbose,$(config)))
@@ -153,7 +169,7 @@ $(BUILD_DIR)/%.d: %.cpp
 
 $(BUILD_DIR)/src/Diagnostic/DiagnosticScalar.o : src/Diagnostic/DiagnosticScalar.cpp
 	@echo "SPECIAL COMPILATION FOR $<"
-	$(Q) $(SMILEICXX) $(CXXFLAGS) -O2 -c $< -o $@
+	$(Q) $(SMILEICXX) $(CXXFLAGS) -O1 -c $< -o $@
 
 # Compile cpps
 $(BUILD_DIR)/%.o : %.cpp
@@ -213,14 +229,22 @@ tar:
 	$(Q) tar -czf $(EXEC)-$(VERSION).tgz $(EXEC)-$(VERSION) && rm -R $(EXEC)-$(VERSION)
 
 
+
+#-----------------------------------------------------
+# astyle
+style:
+	@echo "Astyle is applied on all files"
+	$(Q) astyle --style=1tbs --fill-empty-lines --pad-comma --unpad-paren --pad-paren-in --align-pointer=name --align-reference=name -n -r src/*.cpp,*.h
+
 #-----------------------------------------------------
 # Python module rules
 
 # Install the python module in the user python path
+
 happi:
 	@echo "Installing $(SITEDIR)/smilei.pth"
 	$(Q) mkdir -p "$(SITEDIR)"
-	$(Q) echo "$(PWD)" > "$(SITEDIR)/smilei.pth"
+	$(Q) echo "$(CURDIR)" > "$(SITEDIR)/smilei.pth"
 
 uninstall_happi:
 	@echo "Uninstalling $(SITEDIR)/smilei.pth"
@@ -250,9 +274,14 @@ help:
 	@echo '  make config="[ verbose ] [ debug ] [ scalasca ] [ noopenmp ]"'
 	@echo '    verbose              : to print compile command lines'
 	@echo '    debug                : to compile in debug mode (code runs really slow)'
-	@echo '    scalasca             : to compile using scalasca'
+	@echo '    detailed_timers      : to compile the code with more refined timers (refined time report)'
 	@echo '    noopenmp             : to compile without openmp'
-	@echo '    opt-report           : generate oprtimization report with the Intel compiler'
+	@echo '    no_mpi_tm            : to compile with a MPI library without MPI_THREAD_MULTIPLE support'
+	@echo '    opt-report           : to generate a report about optimization, vectorization and inlining (Intel compiler)'
+	@echo '    scalasca             : to compile using scalasca'
+	@echo '    advisor              : to compile for Intel Advisor analysis'
+	@echo '    vtune                : to compile for Intel Vtune analysis'
+	@echo '    inspector            : to compile for Intel Inspector analysis'
 	@echo
 	@echo 'Examples:'
 	@echo '  make config=verbose'
@@ -273,16 +302,20 @@ help:
 	@echo '  make env              : print important internal makefile variables'
 	@echo '  make print-XXX        : print internal makefile variable XXX'
 	@echo ''
-	@echo 'Environment variables :'
+	@echo 'Environment variables:'
 	@echo '  SMILEICXX             : mpi c++ compiler [$(SMILEICXX)]'
-	@echo '  HDF5_ROOT_DIR         : HDF5 dir [$(HDF5_ROOT_DIR)]'
+	@echo '  HDF5_ROOT_DIR         : HDF5 dir. Defaults to the value of HDF5_ROOT [$(HDF5_ROOT_DIR)]'
 	@echo '  BUILD_DIR             : directory used to store build files [$(BUILD_DIR)]'
 	@echo '  OPENMP_FLAG           : openmp flag [$(OPENMP_FLAG)]'
 	@echo '  PYTHONEXE             : python executable [$(PYTHONEXE)]'
 	@echo '  FFTW3_LIB             : FFTW3 libraries directory [$(FFTW3_LIB)]'
 	@echo '  LIB PXR               : Picsar library directory [$(LIBPXR)]'
 	@echo
+	@echo 'Intel Inspector environment:'
+	@echo '  INSPECTOR_ROOT_DIR    : only needed to use the inspector API (__itt functions) [$(INSPECTOR_ROOT_DIR)]'
+	@echo
 	@echo 'http://www.maisondelasimulation.fr/smilei'
 	@echo 'https://github.com/SmileiPIC/Smilei'
 	@echo
-	@if [ -f  scripts/CompileTools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/CompileTools/machine/$(machine); fi
+	@if [ -f  scripts/CompileTools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/CompileTools/machine/$(machine)|| echo "None"; fi
+	@if [ -f scripts/CompileTools/machine/$(machine) ]; then echo "Machine comments for $(machine):"; grep '^#' scripts/CompileTools/machine/$(machine) || echo "None"; else echo "Available machines:"; ls -1 scripts/CompileTools/machine; fi

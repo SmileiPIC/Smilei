@@ -1,0 +1,12 @@
+#
+# Machine file for Irene Joliot-Curie using AVX512
+# __________________________________________________________
+#
+# Load the correct modules:
+#
+# module load hdf5
+# module switch flavor/hdf5/serial flavor/hdf5/parallel
+# export HDF5_ROOT_DIR=${HDF5_ROOT}
+# export OMPI_MCA_btl_portals4_use_rdma=0
+
+CXXFLAGS += -xMIC-AVX512 -ip -inline-factor=1000 -D__INTEL_KNL_7250 -qopt-zmm-usage=high -fno-alias #-ipo

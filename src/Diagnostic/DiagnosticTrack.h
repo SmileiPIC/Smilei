@@ -8,46 +8,48 @@ class Params;
 class SmileiMPI;
 
 
-class DiagnosticTrack : public Diagnostic {
+class DiagnosticTrack : public Diagnostic
+{
 
 public :
     //! Default constructor
-    DiagnosticTrack( Params &params, SmileiMPI* smpi, VectorPatch& vecPatches, unsigned int, unsigned int, OpenPMDparams& );
+    DiagnosticTrack( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, unsigned int, unsigned int, OpenPMDparams & );
     //! Default destructor
     ~DiagnosticTrack() override;
     
-    void openFile( Params& params, SmileiMPI* smpi, bool newfile ) override;
+    void openFile( Params &params, SmileiMPI *smpi, bool newfile ) override;
     
     void closeFile() override;
     
-    void init(Params& params, SmileiMPI* smpi, VectorPatch& vecPatches) override;
+    void init( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches ) override;
     
     bool prepare( int itime ) override;
     
-    void run( SmileiMPI* smpi, VectorPatch& vecPatches, int itime, SimWindow* simWindow, Timers & timers ) override;
+    void run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, SimWindow *simWindow, Timers &timers ) override;
     
     //! Get memory footprint of current diagnostic
-    int getMemFootPrint() override {
+    int getMemFootPrint() override
+    {
         return 0;
     }
     
     //! Get disk footprint of current diagnostic
-    uint64_t getDiskFootPrint(int istart, int istop, Patch* patch) override;
+    uint64_t getDiskFootPrint( int istart, int istop, Patch *patch ) override;
     
     //! Fills a buffer with the required particle property
-    template<typename T> void fill_buffer(VectorPatch& vecPatches, unsigned int iprop, std::vector<T>& buffer);
+    template<typename T> void fill_buffer( VectorPatch &vecPatches, unsigned int iprop, std::vector<T> &buffer );
     
     //! Write a scalar dataset with the given buffer
-    template<typename T> void write_scalar( hid_t, std::string, T&, hid_t, hid_t, hid_t, hid_t, unsigned int, unsigned int );
+    template<typename T> void write_scalar( hid_t, std::string, T &, hid_t, hid_t, hid_t, hid_t, unsigned int, unsigned int );
     
     //! Write a vector component dataset with the given buffer
-    template<typename T> void write_component( hid_t, std::string, T&, hid_t, hid_t, hid_t, hid_t, unsigned int, unsigned int );
+    template<typename T> void write_component( hid_t, std::string, T &, hid_t, hid_t, hid_t, hid_t, unsigned int, unsigned int );
     
     //! Set a given patch's particles with the required IDs
-    void setIDs(Patch *);
+    void setIDs( Patch * );
     
     //! Set a given particles with the required IDs
-    void setIDs(Particles&);
+    void setIDs( Particles & );
     
     //! Index of the species used
     unsigned int speciesId_;
@@ -59,10 +61,10 @@ public :
     bool IDs_done;
     
 private :
-    
+
     //! HDF5 objects
     hid_t data_group_id, transfer;
-     
+    
     //! Number of spatial dimensions
     unsigned int nDim_particle;
     
@@ -73,7 +75,7 @@ private :
     bool has_filter;
     
     //! Tells whether this diag includes a particle filter
-    PyObject* filter;
+    PyObject *filter;
     
     //! Selection of the filtered particles in each patch
     std::vector<std::vector<unsigned int> > patch_selection;
@@ -104,7 +106,7 @@ private :
     bool write_any_momentum;
     bool write_any_E;
     bool write_any_B;
-
+    
 };
 
 #endif

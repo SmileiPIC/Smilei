@@ -176,7 +176,7 @@ Species(
 # QED parameters
 
 RadiationReaction(
-    chipa_disc_min_threshold = 1e-2,
+    minimum_chi_discontinuous = 1e-2,
     table_path = "./"
 )
 

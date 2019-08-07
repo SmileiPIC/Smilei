@@ -6,7 +6,7 @@ def constant(value, xvacuum=-float("inf"), yvacuum=-float("inf"), zvacuum=-float
         raise Exception("constant profile has been defined before `Main()`")
     if Main.geometry == "1Dcartesian":
         f = lambda x  : value if x>=xvacuum else 0.
-    if Main.geometry == "2Dcartesian":
+    if (Main.geometry == "2Dcartesian" or Main.geometry == "AMcylindrical"):
         f = lambda x,y: value if (x>=xvacuum and y>=yvacuum) else 0.
         f.yvacuum = yvacuum
     if Main.geometry == "3Dcartesian":
@@ -44,7 +44,7 @@ def trapezoidal(max,
             else: return 0.0
         return f
     if   Main.geometry == "1Dcartesian": dim = 1
-    elif Main.geometry == "2Dcartesian": dim = 2
+    elif (Main.geometry == "2Dcartesian" or Main.geometry == "AMcylindrical"): dim = 2
     elif Main.geometry == "3Dcartesian": dim = 3
     fx = trapeze(max, xvacuum, xplateau, xslope1, xslope2)
     f = fx
@@ -84,11 +84,11 @@ def gaussian(max,
         if xlength is None: xlength = Main.grid_length[0]-xvacuum
         if xfwhm   is None: xfwhm   = (Main.grid_length[0]-xvacuum)/3.
         if xcenter is None: xcenter = xvacuum + (Main.grid_length[0]-xvacuum)/2.
-    if len(Main.grid_length)>1: 
+    if len(Main.grid_length)>1:
         if ylength is None: ylength = Main.grid_length[1]-yvacuum
         if yfwhm   is None: yfwhm   = (Main.grid_length[1]-yvacuum)/3.
         if ycenter is None: ycenter = yvacuum + (Main.grid_length[1]-yvacuum)/2.
-    if len(Main.grid_length)>2: 
+    if len(Main.grid_length)>2:
         if zlength is None: zlength = Main.grid_length[2]-zvacuum
         if zfwhm   is None: zfwhm   = (Main.grid_length[2]-zvacuum)/3.
         if zcenter is None: zcenter = zvacuum + (Main.grid_length[2]-zvacuum)/2.
@@ -103,7 +103,7 @@ def gaussian(max,
             else: return 0.0
         return f
     if Main.geometry == "1Dcartesian": dim = 1
-    if Main.geometry == "2Dcartesian": dim = 2
+    if (Main.geometry == "2Dcartesian" or Main.geometry == "AMcylindrical"): dim = 2
     if Main.geometry == "3Dcartesian": dim = 3
     xsigma = (0.5*xfwhm)**xorder/math.log(2.0)
     fx = gauss(max, xvacuum, xlength, xsigma, xcenter, xorder)
@@ -173,11 +173,11 @@ def cosine(base,
     global Main
     if len(Main)==0:
         raise Exception("cosine profile has been defined before `Main()`")
-    
+
     if len(Main.grid_length)>0 and xlength is None: xlength = Main.grid_length[0]-xvacuum
     if len(Main.grid_length)>1 and ylength is None: ylength = Main.grid_length[1]-yvacuum
     if len(Main.grid_length)>2 and zlength is None: zlength = Main.grid_length[2]-zvacuum
-    
+
     def cos(base, amplitude, vacuum, length, phi, number):
         def f(position):
             #vacuum region
@@ -189,7 +189,7 @@ def cosine(base,
             else: return 0.
         return f
     if Main.geometry == "1Dcartesian": dim = 1
-    if Main.geometry == "2Dcartesian": dim = 2
+    if (Main.geometry == "2Dcartesian" or Main.geometry == "AMcylindrical"): dim = 2
     if Main.geometry == "3Dcartesian": dim = 3
     fx = cos(base, xamplitude, xvacuum, xlength, xphi, xnumber)
     f = fx
@@ -242,7 +242,7 @@ def polynomial(**kwargs):
             if Main.geometry=="1Dcartesian":
                 if len(a)!=1:
                     raise Exception("1D polynomial profile must have one coefficient at order "+str(order))
-            elif Main.geometry=="2Dcartesian":
+            elif (Main.geometry=="2Dcartesian" or Main.geometry == "AMcylindrical"):
                 if len(a)!=order+1:
                     raise Exception("2D polynomial profile must have "+str(order+1)+" coefficients at order "+str(order))
             elif Main.geometry=="3Dcartesian":
@@ -260,7 +260,7 @@ def polynomial(**kwargs):
                     xx *= xx0
                 r += c[0] * xx
             return r
-    elif Main.geometry=="2Dcartesian":
+    elif (Main.geometry=="2Dcartesian" or Main.geometry == "AMcylindrical"):
         def f(x,y):
             r = 0.
             xx0 = x-x0
@@ -457,20 +457,18 @@ def tsin2plateau(start=0., fwhm=0., plateau=None, slope1=None, slope2=None):
 
 
 def transformPolarization(polarization_phi, ellipticity):
-    import math
-    p = (1.-ellipticity**2)*math.sin(2.*polarization_phi)/2.
+    from math import pi, sqrt, sin, cos, tan, atan
+    e2 = ellipticity**2
+    p = (1.-e2)*sin(2.*polarization_phi)/2.
     if abs(p) < 1e-10:
-        if abs(ellipticity**2-1.)<1e-10: polarization_phi=0.
-        dephasing = math.pi/2.
-        amplitude = math.sqrt(1./(1.+ellipticity**2))
-        amplitudeY = amplitude * (math.cos(polarization_phi)+math.sin(polarization_phi)*ellipticity)
-        amplitudeZ = amplitude * (math.sin(polarization_phi)+math.cos(polarization_phi)*ellipticity)
+        dephasing = pi/2.
     else:
-        dephasing = math.atan(ellipticity/p)
-        theta = 0.5 * math.atan( math.tan(2.*polarization_phi) / math.cos(dephasing) )
-        while theta<0.: theta += math.pi/2.
-        amplitudeY = math.sqrt(2.) * math.cos(theta)
-        amplitudeZ = math.sqrt(2.) * math.sin(theta)
+        dephasing = atan(ellipticity/p)
+    amplitude = sqrt(1./(1.+e2))
+    c2 = cos(polarization_phi)**2
+    s2 = 1. - c2
+    amplitudeY = amplitude * sqrt(c2 + e2*s2)
+    amplitudeZ = amplitude * sqrt(s2 + e2*c2)
     return [dephasing, amplitudeY, amplitudeZ]
 
 def LaserPlanar1D( box_side="xmin", a0=1., omega=1.,
@@ -478,8 +476,8 @@ def LaserPlanar1D( box_side="xmin", a0=1., omega=1.,
     import math
     # Polarization and amplitude
     [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarization_phi, ellipticity)
-    amplitudeY *= a0
-    amplitudeZ *= a0
+    amplitudeY *= a0 * omega
+    amplitudeZ *= a0 * omega
     # Create Laser
     Laser(
         box_side        = box_side,
@@ -491,14 +489,30 @@ def LaserPlanar1D( box_side="xmin", a0=1., omega=1.,
         delay_phase    = [ 0., dephasing ]
     )
 
+def LaserEnvelopePlanar1D( a0=1., omega=1., focus=None, time_envelope=tconstant(),
+        envelope_solver = "explicit",Envelope_boundary_conditions = [["reflective"]]):
+    import cmath
+    from numpy import vectorize
+
+    def space_time_envelope(x,t):
+        return (a0*omega) * complex( vectorize(time_envelope)(t) )
+
+    # Create Laser Envelope
+    LaserEnvelope(
+        omega               = omega,
+        envelope_profile    = space_time_envelope,
+        envelope_solver     = "explicit",
+        Envelope_boundary_conditions = Envelope_boundary_conditions,
+    )
+
 
 def LaserGaussian2D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., incidence_angle=0.,
         polarization_phi=0., ellipticity=0., time_envelope=tconstant(), phaseZero=0.):
     from math import cos, sin, tan, atan, sqrt, exp
     # Polarization and amplitude
     [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarization_phi, ellipticity)
-    amplitudeY *= a0
-    amplitudeZ *= a0
+    amplitudeY *= a0 * omega
+    amplitudeZ *= a0 * omega
     # Space and phase envelopes
     Zr = omega * waist**2/2.
     if incidence_angle == 0.:
@@ -507,7 +521,7 @@ def LaserGaussian2D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
         invWaist2 = (w/waist)**2
         coeff = -omega * focus[0] * w**2 / (2.*Zr**2)
         def spatial(y):
-            return w * exp( -invWaist2*(y-focus[1])**2 )
+            return sqrt(w) * exp( -invWaist2*(y-focus[1])**2 )
         def phase(y):
             return coeff * (y-focus[1])**2
     else:
@@ -521,7 +535,7 @@ def LaserGaussian2D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
         amplitudeZ *= cos(incidence_angle)
         def spatial(y):
             w2 = 1./(1. + invZr2*(y-Y1)**2)
-            return sqrt(w2) * exp( -invWaist2*w2*(y-Y2)**2 )
+            return sqrt(sqrt(w2)) * exp( -invWaist2*w2*(y-Y2)**2 )
         def phase(y):
             dy = y-Y1
             return omega_*dy*(1.+ invZr3*(y-Y2)**2/(1.+invZr2*dy**2)) + atan(invZr*dy)
@@ -537,13 +551,37 @@ def LaserGaussian2D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
         delay_phase    = [ 0., dephasing ]
     )
 
+def LaserEnvelopeGaussian2D( a0=1., omega=1., focus=None, waist=3., time_envelope=tconstant(),
+        envelope_solver = "explicit",Envelope_boundary_conditions = [["reflective"]]):
+    import cmath
+    from numpy import exp, sqrt, arctan, vectorize
+
+    def gaussian_beam_with_temporal_profile(x,y,t):
+        Zr = omega * waist**2/2.
+        w  = sqrt(1./(1.+   ( (x-focus[0])/Zr  )**2 ) )
+        coeff = omega * (x-focus[0]) * w**2 / (2.*Zr**2)
+        phase = coeff * ( (y-focus[1])**2 )
+        exponential_with_total_phase = exp(1j*(phase-arctan( (x-focus[0])/Zr )))
+        invWaist2 = (w/waist)**2
+        spatial_amplitude = a0*omega * sqrt(w) * exp( -invWaist2*(y-focus[1])**2)
+        space_time_envelope = spatial_amplitude * vectorize(time_envelope)(t)
+        return space_time_envelope * exponential_with_total_phase
+
+    # Create Laser Envelope
+    LaserEnvelope(
+        omega               = omega,
+        envelope_profile    = gaussian_beam_with_temporal_profile,
+        envelope_solver     = "explicit",
+        Envelope_boundary_conditions = Envelope_boundary_conditions,
+    )
+
 def LaserGaussian3D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., incidence_angle=[0.,0.],
         polarization_phi=0., ellipticity=0., time_envelope=tconstant(), phaseZero=0.):
     import math
     # Polarization and amplitude
     [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarization_phi, ellipticity)
-    amplitudeY *= a0
-    amplitudeZ *= a0
+    amplitudeY *= a0 * omega
+    amplitudeZ *= a0 * omega
     # Space and phase envelopes
     Zr = omega * waist**2/2.
     if incidence_angle == [0.,0.]:
@@ -575,7 +613,7 @@ def LaserGaussian3D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
             Z = invZr * (-focus[0]*sycz + (y-focus[1])*sysz + (z-focus[2])*cy )
             return alpha * X*(1.+0.5*(Y**2+Z**2)/(1.+X**2)) - math.atan(X)
         phaseZero += phase(focus[1]-sz/cz*focus[0], focus[2]+sy/cy/cz*focus[0])
-        
+
     # Create Laser
     Laser(
         box_side        = box_side,
@@ -587,8 +625,92 @@ def LaserGaussian3D( box_side="xmin", a0=1., omega=1., focus=None, waist=3., inc
         delay_phase    = [ 0., dephasing ]
     )
 
+def LaserEnvelopeGaussian3D( a0=1., omega=1., focus=None, waist=3., time_envelope=tconstant(),
+        envelope_solver = "explicit",Envelope_boundary_conditions = [["reflective"]]):
+    import cmath
+    from numpy import exp, sqrt, arctan, vectorize
 
-"""
------------------------------------------------------------------------
-    BEGINNING OF THE USER NAMELIST
-"""
+    def gaussian_beam_with_temporal_profile(x,y,z,t):
+        Zr = omega * waist**2/2.
+        w  = sqrt(1./(1.+   ( (x-focus[0])/Zr  )**2 ) )
+        coeff = omega * (x-focus[0]) * w**2 / (2.*Zr**2)
+        phase = coeff * ( (y-focus[1])**2 + (z-focus[2])**2 )
+        exponential_with_total_phase = exp(1j*(phase-arctan( (x-focus[0])/Zr )))
+        invWaist2 = (w/waist)**2
+        spatial_amplitude = a0*omega * w * exp( -invWaist2*(  (y-focus[1])**2 + (z-focus[2])**2 )  )
+        space_time_envelope = spatial_amplitude * vectorize(time_envelope)(t)
+        return space_time_envelope * exponential_with_total_phase
+
+    # Create Laser Envelope
+    LaserEnvelope(
+        omega               = omega,
+        envelope_profile    = gaussian_beam_with_temporal_profile,
+        envelope_solver     = "explicit",
+        Envelope_boundary_conditions = Envelope_boundary_conditions,
+    )
+
+
+def LaserGaussianAM( box_side="xmin", a0=1., omega=1., focus=None, waist=3.,
+        polarization_phi=0., ellipticity=0., time_envelope=tconstant(), phaseZero=0.):
+    from math import cos, sin, tan, atan, sqrt, exp
+    # Polarization and amplitude
+    [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarization_phi, ellipticity)
+    amplitudeY *= a0 * omega
+    amplitudeZ *= a0 * omega
+    # Space and phase envelopes
+    Zr = omega * waist**2/2.
+    Y1 = focus[1]
+    w  = sqrt(1./(1.+(focus[0]/Zr)**2))
+    invWaist2 = (w/waist)**2
+    coeff = -omega * focus[0] * w**2 / (2.*Zr**2)
+    def spatial(y):
+        return w * exp( -invWaist2*(y-focus[1])**2 )
+    def phase(y):
+        return coeff * (y-focus[1])**2
+    # Create Laser
+    Laser(
+        box_side        = box_side,
+        omega          = omega,
+        chirp_profile  = tconstant(),
+        time_envelope  = time_envelope,
+        space_envelope = [ lambda y:amplitudeZ*spatial(y), lambda y:amplitudeY*spatial(y) ],
+        phase          = [ lambda y:phase(y)-phaseZero+dephasing, lambda y:phase(y)-phaseZero ],
+        delay_phase    = [ 0., dephasing ]
+    )
+
+
+
+# Define the tools for the propagation of a laser profile
+try:
+    import numpy as np
+    
+    _N_LaserOffset = 0
+    
+    def LaserOffset(box_side="xmin", space_time_profile=[], offset=0., extra_envelope=lambda *a:1., keep_n_strongest_modes=100, angle=0.):
+        global _N_LaserOffset
+        
+        file = 'LaserOffset'+str(_N_LaserOffset)+'.h5'
+        
+        L = Laser(
+            box_side = "xmin",
+            file = file,
+        )
+        
+        L._offset = offset
+        L._extra_envelope = extra_envelope
+        L._profiles = space_time_profile
+        L._keep_n_strongest_modes = keep_n_strongest_modes
+        L._angle = angle
+        
+        _N_LaserOffset += 1
+
+except:
+    
+    def LaserOffset(box_side="xmin", space_time_profile=[], offset=0., time_envelope=1.):
+        L = Laser(
+            box_side = "xmin",
+            file = "none",
+            time_envelope = time_envelope
+        )
+        print("WARNING: LaserOffset unavailable because numpy was not found")
+
