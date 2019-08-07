@@ -92,6 +92,7 @@ PyArrayObject *Function_Python2D::complexValueAt( std::vector<PyArrayObject *> x
     Py_DECREF( values );
     return cvalues;
 }
+
 // Time dependent
 
 PyArrayObject *Function_Python1D::valueAt( std::vector<PyArrayObject *> x, double time )
@@ -113,13 +114,6 @@ PyArrayObject *Function_Python4D::complexValueAt( std::vector<PyArrayObject *> x
     Py_DECREF( values );
     return cvalues;
 }
-// PyArrayObject *Function_Python2D::complexValueAt( std::vector<PyArrayObject *> x )
-// {
-//     PyObject *values = PyObject_CallFunctionObjArgs( py_profile, x[0], x[1], NULL );
-//     PyArrayObject *cvalues = ( PyArrayObject * )PyObject_CallMethod( values, "astype", "s", "complex", NULL );
-//     Py_DECREF( values );
-//     return cvalues;
-// }
 
 #endif
 
