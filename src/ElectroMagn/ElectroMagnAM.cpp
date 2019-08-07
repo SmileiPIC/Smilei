@@ -1379,7 +1379,7 @@ void ElectroMagnAM::applyExternalTimeField( Field *my_field,  Profile *profile, 
         pos[0] += dl;
     }
 
-    profile->complexValuesAt( xr, *field2D );
+    profile->complexValuesAtTime( xr, time, *field2D );
 
     for( unsigned int idim=0 ; idim<2 ; idim++ ) {
         delete xr[idim];
