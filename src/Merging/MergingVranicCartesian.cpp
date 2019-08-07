@@ -155,20 +155,21 @@ void MergingVranicCartesian::operator() (
         // int *cell_keys = &( particles.cell_keys[0] );
 
         // Local vector to store the momentum index in the momentum discretization
-        // std::vector <unsigned int> momentum_cell_index(number_of_particles,0);
-        unsigned int  * momentum_cell_index = (unsigned int*) aligned_alloc(64, number_of_particles*sizeof(unsigned int));
+        std::vector <unsigned int> momentum_cell_index(number_of_particles,0);
+//         unsigned int  * momentum_cell_index = (unsigned int*) aligned_alloc(64, number_of_particles*sizeof(unsigned int));
 
         // Sorted array of particle index
-        // std::vector <unsigned int> sorted_particles(number_of_particles,0);
-        unsigned int  * sorted_particles = (unsigned int*) aligned_alloc(64, number_of_particles*sizeof(unsigned int));
+        std::vector <unsigned int> sorted_particles(number_of_particles,0);
+//         unsigned int  * sorted_particles = (unsigned int*) aligned_alloc(64, number_of_particles*sizeof(unsigned int));
 
         // Particle gamma factor
-        // std::vector <double> gamma(number_of_particles,0);
-        double  * gamma = (double*) aligned_alloc(64, number_of_particles*sizeof(double));
+        std::vector <double> gamma(number_of_particles,0);
+//         double  * gamma = (double*) aligned_alloc(64, number_of_particles*sizeof(double));
 
         // Computation of the particle gamma factor
         if (mass == 0) {
-            #pragma omp simd aligned(gamma : 64) private(ipr)
+            #pragma omp simd private(ipr)
+//             aligned(gamma : 64)
             for (ip=(unsigned int)(istart) ; ip<(unsigned int) (iend); ip++ ) {
 
                 // Local (relative) array index
@@ -180,7 +181,8 @@ void MergingVranicCartesian::operator() (
 
             }
         } else {
-            #pragma omp simd aligned(gamma : 64) private(ipr)
+            #pragma omp simd private(ipr)
+//             aligned(gamma : 64) 
             for (ip=(unsigned int)(istart) ; ip<(unsigned int) (iend); ip++ ) {
 
                 // Local (relative) array index
@@ -350,19 +352,19 @@ void MergingVranicCartesian::operator() (
                                     * dim[2];
 
         // Array containing the number of particles per momentum cells
-        // std::vector <unsigned int> particles_per_momentum_cells(momentum_cells,0);
-        unsigned int  * particles_per_momentum_cells = (unsigned int*) aligned_alloc(64, momentum_cells*sizeof(unsigned int));
+        std::vector <unsigned int> particles_per_momentum_cells(momentum_cells,0);
+//         unsigned int  * particles_per_momentum_cells = (unsigned int*) aligned_alloc(64, momentum_cells*sizeof(unsigned int));
 
         // Array containing the first particle index of each momentum cell
         // in the sorted particle array
-        // std::vector <unsigned int> momentum_cell_particle_index(momentum_cells,0);
-        unsigned int  * momentum_cell_particle_index = (unsigned int*) aligned_alloc(64, momentum_cells*sizeof(unsigned int));
-
-        // Initialization when using aligned_alloc
-        for (ic = 0 ; ic < momentum_cells ; ic++) {
-            momentum_cell_particle_index[ic] = 0;
-            particles_per_momentum_cells[ic] = 0;
-        }
+        std::vector <unsigned int> momentum_cell_particle_index(momentum_cells,0);
+//         unsigned int  * momentum_cell_particle_index = (unsigned int*) aligned_alloc(64, momentum_cells*sizeof(unsigned int));
+// 
+//         // Initialization when using aligned_alloc
+//         for (ic = 0 ; ic < momentum_cells ; ic++) {
+//             momentum_cell_particle_index[ic] = 0;
+//             particles_per_momentum_cells[ic] = 0;
+//         }
 
         // std::cerr << "Cell index" << std::endl;
 
@@ -370,8 +372,8 @@ void MergingVranicCartesian::operator() (
         // requested discretization.
         // This loop can be efficiently vectorized
         #pragma omp simd \
-        private(ipr,mx_i,my_i,mz_i)     \
-        aligned(momentum_cell_index: 64)
+        private(ipr,mx_i,my_i,mz_i)     
+//         aligned(momentum_cell_index: 64)
         for (ip=(unsigned int) (istart) ; ip < (unsigned int) (iend); ip++ ) {
 
             // Relative particle array index
@@ -754,11 +756,11 @@ void MergingVranicCartesian::operator() (
         }
 
         // Free aligned arrays
-        free(gamma);
-        free(momentum_cell_index);
-        free(sorted_particles);
-        free(particles_per_momentum_cells);
-        free(momentum_cell_particle_index);
+//         free(gamma);
+//         free(momentum_cell_index);
+//         free(sorted_particles);
+//         free(particles_per_momentum_cells);
+//         free(momentum_cell_particle_index);
     }
 
 }
