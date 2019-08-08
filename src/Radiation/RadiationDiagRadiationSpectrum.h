@@ -39,14 +39,14 @@ class RadiationDiagRadiationSpectrum : public Radiation {
         //! \param iend        Index of the last particle
         //! \param ithread     Thread index
         // ---------------------------------------------------------------------
-        virtual void operator() (
-                Particles &particles,
-                Species * photon_species,
-                SmileiMPI* smpi,
-                RadiationTables &RadiationTables,
-                int istart,
-                int iend,
-                int ithread);
+        virtual void operator()(
+            Particles &particles,
+            Species *photon_species,
+            SmileiMPI *smpi,
+            RadiationTables &RadiationTables,
+            int istart,
+            int iend,
+            int ithread, int ipart_ref = 0 );
 
     protected:
 

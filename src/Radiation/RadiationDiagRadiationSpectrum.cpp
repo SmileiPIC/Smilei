@@ -43,13 +43,14 @@ RadiationDiagRadiationSpectrum::~RadiationDiagRadiationSpectrum()
 //! \param ithread     Thread index
 // -----------------------------------------------------------------------------
 void RadiationDiagRadiationSpectrum::operator() (
-        Particles &particles,
-        Species * photon_species,
-        SmileiMPI* smpi,
-        RadiationTables &RadiationTables,
-        int istart,
-        int iend,
-        int ithread)
+      Particles &particles,
+      Species *photon_species,
+      SmileiMPI *smpi,
+      RadiationTables &RadiationTables,
+      int istart,
+      int iend,
+      int ithread, int ipart_ref)
+
 {
 
     // _______________________________________________________________
@@ -78,9 +79,6 @@ void RadiationDiagRadiationSpectrum::operator() (
     // Temporary Lorentz factor
     double gamma;
 
-    // Temporary double parameter
-    double temp;
-
     // Momentum shortcut
     double* momentum[3];
     for ( int i = 0 ; i<3 ; i++ )
@@ -99,7 +97,8 @@ void RadiationDiagRadiationSpectrum::operator() (
     std::vector <double> rad_norm_energy (iend-istart,0);
 
     // Reinitialize the cumulative radiated energy for the current thread
-    this->radiated_energy = 0.;
+    //this->radiated_energy = 0.;
+    radiated_energy_ = 0.;
 
     // _______________________________________________________________
     // Computation
@@ -114,7 +113,7 @@ void RadiationDiagRadiationSpectrum::operator() (
                              + momentum[2][ipart]*momentum[2][ipart]);
 
         // Computation of the Lorentz invariant quantum parameter
-        chipa = Radiation::compute_chipa(charge_over_mass2,
+        chipa = Radiation::computeParticleChi(charge_over_mass2,
                      momentum[0][ipart],momentum[1][ipart],momentum[2][ipart],
                      gamma,
                      (*(Ex+ipart)),(*(Ey+ipart)),(*(Ez+ipart)),
@@ -132,5 +131,5 @@ void RadiationDiagRadiationSpectrum::operator() (
     {
         radiated_energy_loc += weight[ipart]*rad_norm_energy[ipart - istart] ;
     }
-    radiated_energy += radiated_energy_loc;
+    radiated_energy_ += radiated_energy_loc;
 }

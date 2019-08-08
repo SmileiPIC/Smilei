@@ -56,8 +56,7 @@ public:
         }
         // Radiation is only a diagnostic (DiagRadiationSpectrum can be called for this species): only compute
         // the electron quantum parameter
-        else if ( species->radiation_model == "diagradiationspectrum" )
-        {
+        else if( species->radiation_model == "diagradiationspectrum" ) {
             Radiate = new RadiationDiagRadiationSpectrum( params, species );
         }
         else if ( species->radiation_model != "none" )

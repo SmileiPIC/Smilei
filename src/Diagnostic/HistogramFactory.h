@@ -73,6 +73,8 @@ public:
                 histogram = new Histogram_ekin_vx();
             } else if( deposited_quantity == "weight_chi" ) {
                 histogram = new Histogram_chi( patch, species, errorPrefix );
+            } else if( deposited_quantity == "dummy_radiation_spectrum" ) {
+                histogram = new Histogram();
             } else {
                 ERROR( deposited_quantityPrefix << " not understood" );
             }
