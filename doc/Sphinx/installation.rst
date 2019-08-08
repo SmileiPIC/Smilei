@@ -3,8 +3,8 @@ Install
 
 Before installing :program:`Smilei`, you need to install a few dependencies:
 
-* A C++11 compiler, optionally implementing openMP
-* an MPI library (by default a version supporting ``MPI_THREAD_MULTIPLE`` is required)
+* A C++11 compiler, optionally implementing openMP version > 4.5 (gcc users: v6.0 or newer recommended)
+* an MPI library (by default a version supporting ``MPI_THREAD_MULTIPLE`` is required: v4.0 or newer recommended)
 * an HDF5 library compatible with your versions of C++ and MPI
 * Python 2.7 or Python 3 (with header files)
 
