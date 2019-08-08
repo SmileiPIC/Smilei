@@ -3,33 +3,33 @@ from .._Utils import *
 
 class RadiationSpectrum(Diagnostic):
 	"""Class for loading a radiation spectrum diagnostic"""
-	
-	def _init(self, diagNumber=None, timesteps=None, subset=None, sum=None, data_log=False, **kwargs):
-		
+
+	def _init(self, diagNumber=None, timesteps=None, subset=None, sum=None, data_log=False, include={}, **kwargs):
+
 		if diagNumber is None:
-			self._error += "Printing available radiation spectrum diagnostics:\n"
-			self._error += "------------------------------------------------\n"
+			self._error += ["Printing available radiation spectrum diagnostics:"]
+			self._error += ["-------------------------------------------------"]
 			diags = self.getDiags()
 			for diagNumber in diags:
-				self._error += self._printInfo(self._getInfo(diagNumber))
+				self._error += [self._printInfo(self._getInfo(diagNumber))]
 			if len(diags)==0:
-				self._error += "      No radiation spectrum diagnostics found"
+				self._error += ["      No radiation spectrum diagnostics found"]
 			return
-		
+
 		# 1 - verifications, initialization
 		# -------------------------------------------------------------------
 		# Check the requested diags are ok
 		if type(diagNumber) is int:
 			if diagNumber<0:
-				self._error = "Argument 'diagNumber' cannot be a negative integer."
+				self._error += ["Argument 'diagNumber' cannot be a negative integer."]
 				return
 			self.operation = '#' + str(diagNumber)
 		elif type(diagNumber) is str:
 			self.operation = diagNumber
 		else:
-			self._error = "Argument 'diagNumber' must be and integer or a string."
+			self._error += ["Argument 'diagNumber' must be and integer or a string."]
 			return
-		
+
 		# Get list of requested diags
 		self._myinfo = {}
 		self._diags = sorted(set([ int(d[1:]) for d in self._re.findall('#\d+',self.operation) ]))
@@ -39,13 +39,15 @@ class RadiationSpectrum(Diagnostic):
 				if info is False: raise
 				self._myinfo.update({ d:info })
 			except:
-				self._error = "Radiation spectrum diagnostic #"+str(d)+" invalid"
+				self._error += ["Radiation spectrum diagnostic #"+str(d)+" invalid or non-existent"]
 				return
+		# Test the operation
+		self._include = include
 		try:
-			exec(self._re.sub('#\d+','1.',self.operation))
+			exec(self._re.sub('#\d+','1.',self.operation), self._include, {"t":0})
 		except ZeroDivisionError: pass
 		except:
-			self._error = "Cannot understand operation '"+self.operation+"'"
+			self._error += ["Cannot understand operation '"+self.operation+"'"]
 			return
 		# Verify that all requested diags all have the same shape
 		self._axes = {}
@@ -54,34 +56,34 @@ class RadiationSpectrum(Diagnostic):
 			self._axes .update ({ d:self._myinfo[d]["axes"] })
 			self._naxes.update ({ d:len(self._axes[d]) })
 			if self._naxes[d] != self._naxes[self._diags[0]]:
-				self._error = "All diagnostics in operation '"+self.operation+"' must have as many axes." \
-					+ " Diagnotic #"+str(d)+" has "+str(self._naxes[d])+" axes and #"+ \
-					str(self._diags[0])+" has "+str(self._naxes[self._diags[0]])+" axes"
+				self._error += ["All diagnostics in operation '"+self.operation+"' must have as many axes."
+					+ " Diagnotic #"+str(d)+" has "+str(self._naxes[d])+" axes and #"
+					+ str(self._diags[0])+" has "+str(self._naxes[self._diags[0]])+" axes"]
 				return
 			for a in self._axes[d]:
 				if self._axes[d] != self._axes[self._diags[0]]:
-					self._error = "In operation '"+self.operation+"', diagnostics #"+str(d)+" and #"\
-						+str(self._diags[0])+" must have the same shape."
+					self._error += ["In operation '"+self.operation+"', diagnostics #"+str(d)+" and #"
+						+ str(self._diags[0])+" must have the same shape."]
 					return
-		
+
 		self._axes  = self._axes [self._diags[0]]
 		self._naxes = self._naxes[self._diags[0]]
-		
+
 		# Check subset
 		if subset is None: subset = {}
 		elif type(subset) is not dict:
-			self._error = "Argument `subset` must be a dictionary"
+			self._error += ["Argument `subset` must be a dictionary"]
 			return
-		
+
 		# Check sum
 		if sum is None: sum = {}
 		elif type(sum) is not dict:
-			self._error = "Argument 'sum' must be a dictionary"
+			self._error += ["Argument 'sum' must be a dictionary"]
 			return
-		
+
 		# Put data_log as object's variable
 		self._data_log = data_log
-		
+
 		# 2 - Manage timesteps
 		# -------------------------------------------------------------------
 		# Get available timesteps
@@ -108,23 +110,23 @@ class RadiationSpectrum(Diagnostic):
 				try:
 					self._timesteps[d] = self._selectTimesteps(timesteps, self._timesteps[d])
 				except:
-					self._error = "Argument 'timesteps' must be one or two non-negative integers"
+					self._error += ["Argument 'timesteps' must be one or two non-negative integers"]
 					return
 			# Verify that timesteps are the same for all diagnostics
 			if (self._timesteps[d] != self._timesteps[self._diags[0]]).any() :
-				self._error = "All diagnostics in operation '"+self.operation+"' must have the same timesteps."\
-					+" Diagnotic #"+str(d)+" has "+str(len(self._timesteps[d]))+ " timesteps and #"\
-					+str(self._diags[0])+" has "+str(len(self._timesteps[self._diags[0]]))+ " timesteps"
+				self._error += ["All diagnostics in operation '"+self.operation+"' must have the same timesteps."
+					+ " Diagnotic #"+str(d)+" has "+str(len(self._timesteps[d]))+ " timesteps and #"
+					+ str(self._diags[0])+" has "+str(len(self._timesteps[self._diags[0]]))+ " timesteps"]
 				return
 		# Now we need to keep only one array of timesteps because they should be all the same
 		self._timesteps  = self._timesteps [self._diags[0]]
 		self._alltimesteps = self._alltimesteps[self._diags[0]]
-		
+
 		# Need at least one timestep
 		if self._timesteps.size < 1:
-			self._error = "Timesteps not found"
+			self._error += ["Timesteps not found"]
 			return
-		
+
 		# 3 - Manage axes
 		# -------------------------------------------------------------------
 		# Fabricate all axes values for all diags
@@ -137,11 +139,11 @@ class RadiationSpectrum(Diagnostic):
 		self._sums = [False]*self._naxes
 		self._selection = [self._np.s_[:]]*self._naxes
 		uniform = True
-		
+
 		for iaxis in range(self._naxes):
 			axis = self._axes[iaxis]
 			axistype = axis["type"]
-			
+
 			# Find the vector of values along the axis
 			if axis["log"]:
 				edges = self._np.linspace(self._np.log10(axis["min"]), self._np.log10(axis["max"]), axis["size"]+1)
@@ -154,7 +156,7 @@ class RadiationSpectrum(Diagnostic):
 				centers = centers[:-1]
 			axis.update({ "edges"   : edges   })
 			axis.update({ "centers" : centers })
-			
+
 			# Find some quantities depending on the axis type
 			overall_min = "-inf"; overall_max = "inf"
 			axis_units = ""
@@ -178,26 +180,26 @@ class RadiationSpectrum(Diagnostic):
 				overall_min = "0"
 			elif axistype == "chi":
 				overall_min = "0"
-			
+
 			# if this axis has to be summed, then select the bounds
 			if axistype in sum:
 				if axistype in subset:
-					self._error = "`subset` not possible on the same axes as `sum`"
+					self._error += ["`subset` not possible on the same axes as `sum`"]
 					return
-				
+
 				self._sums[iaxis] = True
-				
+
 				try:
 					axis["sumInfo"], self._selection[iaxis], self._finalShape[iaxis] \
-						= self._selectRange(sum[axistype], centers, axistype, axis_units, "sum")
+						= self._selectRange(sum[axistype], centers, axistype, axis_units, "sum", axis["edges_included"])
 				except:
 					return
-				
+
 				if axistype in ["x","y","z","moving_x"]:
 					first_edge = edges[self._selection[iaxis].start or 0]
 					last_edge  = edges[(self._selection[iaxis].stop or len(centers))]
 					coeff /= last_edge - first_edge
-			
+
 			# if not summed
 			else:
 				# If taking a subset of this axis
@@ -212,7 +214,7 @@ class RadiationSpectrum(Diagnostic):
 						first_edge = edges[self._selection[iaxis]]
 						last_edge  = edges[self._selection[iaxis]+1]
 						coeff /= last_edge - first_edge
-				
+
 				# If no subset, or subset has more than 1 point, use this axis in the plot
 				if type(self._selection[iaxis]) is slice:
 					self._type   .append(axistype)
@@ -225,10 +227,11 @@ class RadiationSpectrum(Diagnostic):
 					self._finalShape[iaxis] = len(self._centers[-1])
 					if axis["log"]:
 						uniform = False
-		
-		
+				else:
+					plot_diff.append( self._np.ones((self._finalShape[iaxis],)) )
+
 		self._selection = tuple(self._selection)
-		
+
 		# Build units
 		titles = {}
 		units = {}
@@ -244,12 +247,12 @@ class RadiationSpectrum(Diagnostic):
 		for d in self._diags:
 			self._vunits = self._vunits.replace("#"+str(d), "( "+units[d]+" )")
 			self._title  = self._title .replace("#"+str(d), titles[d])
-		
+
 		# If any spatial dimension did not appear, then count it for calculating the correct density
-		if self._ndim>=1 and not spatialaxes["x"]: coeff /= self._ncels[0]*self._cell_length[0]
-		if self._ndim>=2 and not spatialaxes["y"]: coeff /= self._ncels[1]*self._cell_length[1]
-		if self._ndim==3 and not spatialaxes["z"]: coeff /= self._ncels[2]*self._cell_length[2]
-		
+		if self._ndim_particles>=1 and not spatialaxes["x"]: coeff /= self._ncels[ 0]*self._cell_length[ 0]
+		if self._ndim_particles>=2 and not spatialaxes["y"]: coeff /= self._ncels[ 1]*self._cell_length[ 1]
+		if self._ndim_particles==3 and not spatialaxes["z"]: coeff /= self._ncels[-1]*self._cell_length[-1]
+
 		# Calculate the array that represents the bins sizes in order to get units right.
 		# This array will be the same size as the plotted array
 		if uniform:
@@ -264,18 +267,20 @@ class RadiationSpectrum(Diagnostic):
 			else:
 				self._bsize = self._np.prod( self._np.array( self._np.meshgrid( *plot_diff ) ), axis=0)
 				self._bsize = self._bsize.transpose([1,0]+list(range(2,len(plot_diff))))
-		self._bsize = cell_volume / self._bsize
-		self._bsize *= coeff
-		self._bsize = self._np.squeeze(self._bsize)
-		
+		self._bsize = coeff / self._bsize
+		# 3 lines below most likely follow from the change of the weight definition
+		#self._bsize = cell_volume / self._bsize
+		#self._bsize *= coeff
+		#self._bsize = self._np.squeeze(self._bsize)
+
 		# Set the directory in case of exporting
 		self._exportPrefix = "RadiationSpectrumDiag_"+"-".join([str(d) for d in self._diags])
 		self._exportDir = self._setExportDir(self._exportPrefix)
-		
+
 		# Finish constructor
 		self.valid = True
 		return kwargs
-	
+
 	# Gets info about diagnostic number "diagNumber"
 	def _getInfo(self,diagNumber):
 		info = {}
@@ -323,24 +328,24 @@ class RadiationSpectrum(Diagnostic):
 					print("Radiation spectrum diagnostic #"+str(diagNumber)+" in path '"+path+"' is incompatible with the other ones")
 					return False
 		return info
-	
-	
+
+
 	# Prints the info obtained by the function "getInfo"
 	@staticmethod
 	def _printInfo(info):
 		if not info:
 			return "Error while reading file(s)"
-		
+
 		# 1 - diag number, type and list of species
 		species = ""
 		for i in range(len(info["species"])): species += str(info["species"][i])+" " # reconstitute species string
 		printedInfo = "Diag#"+str(info["#"])+" - species # "+species+"\n"
-		
+
 		# 2 - period and time-averaging
 		tavg = "no time-averaging"
 		if (info["tavg"] > 1):
 			printedInfo += "    Averaging over "+str(info["tavg"])+" timesteps\n"
-		
+
 		# 3 - axes
 		for i in range(len(info["axes"])):
 			axis = info["axes"][i];
@@ -349,7 +354,7 @@ class RadiationSpectrum(Diagnostic):
 			printedInfo += "    "+axis["type"]+" from "+str(axis["min"])+" to "+str(axis["max"]) \
 				   +" in "+str(axis["size"])+" steps "+logscale+edges+"\n"
 		return printedInfo
-	
+
 	# Method to print info on all included diags
 	def _info(self):
 		info = ""
@@ -370,8 +375,8 @@ class RadiationSpectrum(Diagnostic):
 				allDiags = [d for d in diags if d in allDiags]
 			else:
 				allDiags = diags
-		return allDiags
-	
+		return sorted(allDiags)
+
 	# get all available timesteps for a given diagnostic
 	def getAvailableTimesteps(self, diagNumber=None):
 		# if argument "diagNumber" not provided, return the times calculated in __init__
@@ -391,7 +396,7 @@ class RadiationSpectrum(Diagnostic):
 				f.close()
 			times = [int(t.strip("timestep")) for t in times]
 			return self._np.array(times)
-	
+
 	# Method to obtain the data only
 	def _getDataAtTime(self, t):
 		if not self._validate(): return
