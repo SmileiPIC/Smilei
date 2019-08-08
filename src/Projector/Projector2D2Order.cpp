@@ -112,6 +112,15 @@ void Projector2D2Order::currents( double *Jx, double *Jy, double *Jz, Particles 
     int jp_m_jpo = jp-jpo-j_domain_begin;
     delta  = ypn - ( double )jp;
     delta2 = delta*delta;
+    // cerr << " ipart: " << ipart
+    //      << " nparts: " << nparts
+    //      << " iold[0]: " << iold[0*nparts]
+    //      << " iold[1]: " << iold[1*nparts]
+    //      << " ip_m_ipo: " << ip_m_ipo
+    //      << " jp_m_jpo: " << jp_m_jpo
+    //      << " ypn: " << ypn
+    //      << endl;
+    
     Sy1[jp_m_jpo+1] = 0.5 * ( delta2-delta+0.25 );
     Sy1[jp_m_jpo+2] = 0.75-delta2;
     Sy1[jp_m_jpo+3] = 0.5 * ( delta2+delta+0.25 );
@@ -146,11 +155,17 @@ void Projector2D2Order::currents( double *Jx, double *Jy, double *Jz, Particles 
             tmp -= cry_p * DSy[j-1] * tmpY;
             Jy[iloc+j+ipo]  += tmp; //Because size of Jy in Y is nprimy+1.
             Jz[iloc+j]  += crz_p * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
+            // cerr << " iloc+j+ipo: " << iloc+j+ipo
+            //      << " iloc: " << iloc
+            //      << " ipo: " << ipo
+            //      << endl;
         }
     }//i
     
     for( unsigned int i=1 ; i<5 ; i++ ) {
         iloc = ( i+ipo )*nprimy+jpo;
+        // cerr << " iloc: " << iloc
+        //      << endl;
         tmpJx[0] -= crx_p *  DSx[i-1] * ( 0.5*DSy[0] );
         Jx[iloc]  += tmpJx[0];
         tmp2 = 0.5*Sx1[i] + Sx0[i];
@@ -166,6 +181,7 @@ void Projector2D2Order::currents( double *Jx, double *Jy, double *Jz, Particles 
             Jz[iloc+j]  += crz_p * ( Sy0[j]*tmp2 + Sy1[j]*tmp3 );
         }
     }//i
+    
 } // END Project local current densities (sort)
 
 
@@ -484,6 +500,8 @@ void Projector2D2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
     if( !diag_flag ) {
         if( !is_spectral ) {
             for( int ipart=istart ; ipart<iend; ipart++ ) {
+                // cerr << ipart << endl;
+                // cerr << ( *iold )[ipart] << endl;
                 currents( Jx_, Jy_, Jz_, particles,  ipart, ( *invgf )[ipart], &( *iold )[ipart], &( *delta )[ipart] );
             }
         } else {
@@ -611,5 +629,3 @@ void Projector2D2Order::susceptibility( ElectroMagn *EMfields, Particles &partic
     }
     
 }
-
-

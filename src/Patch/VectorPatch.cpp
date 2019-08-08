@@ -262,7 +262,7 @@ void VectorPatch::reconfiguration( Params &params, Timers &timers, int itime )
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Reconfigure all patches for the new time step
+// Sort all patches for the new time step
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::sort_all_particles( Params &params )
 {
@@ -430,7 +430,7 @@ void VectorPatch::finalize_and_sort_parts( Params &params, SmileiMPI *smpi, SimW
 
     }
 
-    // Particle importation
+    // Particle importation from physical mechanisms
     // ----------------------------------------
 
     #pragma omp for schedule(runtime)
@@ -491,7 +491,96 @@ void VectorPatch::finalize_and_sort_parts( Params &params, SmileiMPI *smpi, SimW
 
 } // END finalize_and_sort_parts
 
+//! Particle injection from the boundaries
+void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, int itime )
+{
+    timers.particleInjection.restart();
+    
+    #pragma omp for schedule(runtime)
+    for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+        
+        vector<unsigned int> init_space( 3, 1 );
+        init_space[0] = 1;
+        init_space[1] = params.n_space[1];
+        init_space[2] = params.n_space[2];
+        
+        vector<int>  previous_particle_number_per_species(( *this )( ipatch )->vecSpecies.size(),0);
+        
+        for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
 
+            // Create particles as if t0
+            for (int iSpecies=0 ; iSpecies<( *this )( ipatch )->vecSpecies.size() ; iSpecies++) {
+                previous_particle_number_per_species[iSpecies] = ( *this )( ipatch )->vecSpecies[iSpecies]->getNbrOfParticles();
+                if ( ( (( *this )( ipatch )->isXmin()) && (iSpecies<2) ) ||
+                     ( (( *this )( ipatch )->isXmax()) && (iSpecies>1) ) ) {
+                    int icell;
+                    if (( *this )( ipatch )->isXmin())
+                        icell = 0;
+                    if (( *this )( ipatch )->isXmax())
+                        icell = params.n_space[0]-1;
+                    ( *this )( ipatch )->vecSpecies[iSpecies]->createParticles( init_space, params, ( *this )( ipatch ), icell );
+                }
+            }
+
+            // Filter particles when initialized on different position
+            for (int iSpecies=0 ; iSpecies<( *this )( ipatch )->vecSpecies.size() ; iSpecies++) {
+
+                int new_particle_number = ( *this )( ipatch )->vecSpecies[iSpecies]->getNbrOfParticles();
+                Particles* particles = ( *this )( ipatch )->vecSpecies[iSpecies]->particles;
+
+                // Suppr not interesting parts ...
+                for ( int ip = new_particle_number-1 ; ip >= previous_particle_number_per_species[iSpecies] ; ip-- ){
+                    if ( ( *this )( ipatch )->isXmin() ) {
+                        particles->Position[0][ip] += ( params.timestep*particles->Momentum[0][ip]*particles->inv_lor_fac(ip)-params.cell_length[0] );
+                        if ( ( particles->Position[0][ip] < 0. ) ) {
+                            particles->erase_particle(ip);
+                            new_particle_number--;
+                        }
+                    }
+                    else if ( ( *this )( ipatch )->isXmax() ) {
+                        particles->Position[0][ip] += ( params.timestep*particles->Momentum[0][ip]*particles->inv_lor_fac(ip)+params.cell_length[0] );
+                        if (  particles->Position[0][ip] > params.grid_length[0] ) {
+                            particles->erase_particle(ip);
+                            new_particle_number--;
+                        }
+                    }
+                }
+                
+                // Move interesting parts to their place
+                for ( int ip = previous_particle_number_per_species[iSpecies] ; ip < new_particle_number ; ip++ ){
+                    if ( ( *this )( ipatch )->isXmin() ) {
+                        if ( ( particles->Position[0][ip] >= 0. ) ) {
+                            int new_cell_idx=0;
+                            particles->mv_particles(ip,( *this )( ipatch )->vecSpecies[iSpecies]->first_index[(new_cell_idx)/params.clrw]);
+                            ( *this )( ipatch )->vecSpecies[iSpecies]->last_index[(new_cell_idx)/params.clrw]++;
+                            for ( int idx=(new_cell_idx)/params.clrw+1 ; idx<( *this )( ipatch )->vecSpecies[iSpecies]->last_index.size() ; idx++ ) {
+                                ( *this )( ipatch )->vecSpecies[iSpecies]->first_index[idx]++;
+                                ( *this )( ipatch )->vecSpecies[iSpecies]->last_index[idx]++;
+                            }
+                        }
+                    }
+                    else if ( ( *this )( ipatch )->isXmax() ) {
+                        if (  particles->Position[0][ip] <= params.grid_length[0] ) {
+                            int new_cell_idx=params.n_space[0]-1;
+                            particles->mv_particles(ip,( *this )( ipatch )->vecSpecies[iSpecies]->first_index[(new_cell_idx)/params.clrw]);
+                            ( *this )( ipatch )->vecSpecies[iSpecies]->last_index[(new_cell_idx)/params.clrw]++;
+                            for ( int idx=(new_cell_idx)/params.clrw+1 ; idx<( *this )( ipatch )->vecSpecies[iSpecies]->last_index.size() ; idx++ ) {
+                                ( *this )( ipatch )->vecSpecies[iSpecies]->first_index[idx]++;
+                                ( *this )( ipatch )->vecSpecies[iSpecies]->last_index[idx]++;
+                            }
+                        }
+                    }
+                 
+                }
+                
+            } // end for ispecies
+        } // end for ipatch
+    }
+    
+    timers.particleInjection.update( params.printNow( itime ) );
+}
+
+//! Computation of the total charge
 void VectorPatch::computeCharge()
 {
     #pragma omp for schedule(runtime)

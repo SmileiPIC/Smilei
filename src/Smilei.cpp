@@ -353,106 +353,163 @@ int main( int argc, char *argv[] )
             // call the various diagnostics
             vecPatches.runAllDiags( params, &smpi, itime, timers, simWindow );
 
-            #pragma omp master
-            {
-                vector<unsigned int> init_space( 3, 1 );
-                init_space[0] = 1;
-                init_space[1] = params.n_space[1];
-                init_space[2] = params.n_space[2];
-                for (int iPatch=0 ; iPatch<vecPatches.size() ; iPatch++) {
+            // Particle injection from the boundaries
+            vecPatches.injectParticlesFromBoundaries(params, timers, itime );
 
-                    // Create particles as if t0
-                    vector<int>  nparts_per_species(vecPatches(0)->vecSpecies.size(),0);
-                    for (int iSpecies=0 ; iSpecies<vecPatches(0)->vecSpecies.size() ; iSpecies++) {
-                        nparts_per_species[iSpecies] = vecPatches(iPatch)->vecSpecies[iSpecies]->getNbrOfParticles();
-                        if ( ( (vecPatches(iPatch)->isXmin()) && (iSpecies<2) ) ||
-                             ( (vecPatches(iPatch)->isXmax()) && (iSpecies>1) ) ) {
-                            int icell;
-                            if (vecPatches(iPatch)->isXmin())
-                                icell = 0;
-                            if (vecPatches(iPatch)->isXmax())
-                                icell = params.n_space[0]-1;
-                            vecPatches(iPatch)->vecSpecies[iSpecies]->createParticles( init_space, params, vecPatches(iPatch), icell );
+            if (0) {
+                #pragma omp master
+                {
+                    vector<unsigned int> init_space( 3, 1 );
+                    init_space[0] = 1;
+                    init_space[1] = params.n_space[1];
+                    init_space[2] = params.n_space[2];
+                    for (int iPatch=0 ; iPatch<vecPatches.size() ; iPatch++) {
+
+                        // Create particles as if t0
+                        vector<int>  nparts_per_species(vecPatches(0)->vecSpecies.size(),0);
+                        for (int iSpecies=0 ; iSpecies<vecPatches(0)->vecSpecies.size() ; iSpecies++) {
+                            nparts_per_species[iSpecies] = vecPatches(iPatch)->vecSpecies[iSpecies]->getNbrOfParticles();
+                            if ( ( (vecPatches(iPatch)->isXmin()) && (iSpecies<2) ) ||
+                                 ( (vecPatches(iPatch)->isXmax()) && (iSpecies>1) ) ) {
+                                int icell;
+                                if (vecPatches(iPatch)->isXmin())
+                                    icell = 0;
+                                if (vecPatches(iPatch)->isXmax())
+                                    icell = params.n_space[0]-1;
+                                vecPatches(iPatch)->vecSpecies[iSpecies]->createParticles( init_space, params, vecPatches(iPatch), icell );
+                            }
+                        }
+
+                        // // Filter particles
+                        // // same position
+                        // for (int iSpecies=0 ; iSpecies<vecPatches(0)->vecSpecies.size() ; iSpecies=iSpecies+2) {
+                        //
+                        //     int new_nParts = vecPatches(iPatch)->vecSpecies[iSpecies]->getNbrOfParticles();
+                        //     int new_nPart2 = vecPatches(iPatch)->vecSpecies[iSpecies+1]->getNbrOfParticles();
+                        //     Particles* particles = vecPatches(iPatch)->vecSpecies[iSpecies]->particles;
+                        //     Particles* particle2 = vecPatches(iPatch)->vecSpecies[iSpecies+1]->particles;
+                        //
+                        //     // Suppr not interesting parts ...
+                        //     for ( int ip = new_nParts-1 ; ip >= nparts_per_species[iSpecies] ; ip-- ){
+                        //         int ip2 = nparts_per_species[iSpecies+1]+(ip-nparts_per_species[iSpecies]);
+                        //         if ( vecPatches(iPatch)->isXmin() ) {
+                        //             particles->Position[0][ip] += ( params.timestep*particles->Momentum[0][ip]*particles->inv_lor_fac(ip)-params.cell_length[0] );
+                        //             particle2->Position[0][ip2] = particles->Position[0][ip];
+                        //             //particles->Position[0][ip] += ( params.timestep*0.4-params.cell_length[0] );
+                        //             if ( ( particles->Position[0][ip] < 0. ) ) {
+                        //                 particles->erase_particle(ip);
+                        //                 particle2->erase_particle(ip2);
+                        //                 new_nParts--;
+                        //             }
+                        //         }
+                        //         else if ( vecPatches(iPatch)->isXmax() ) {
+                        //             particles->Position[0][ip] += ( params.timestep*particles->Momentum[0][ip]*particles->inv_lor_fac(ip)+params.cell_length[0] );
+                        //             particle2->Position[0][ip2] = particles->Position[0][ip];
+                        //             //particles->Position[0][ip] += ( -params.timestep*0.4+params.cell_length[0] );
+                        //             if (  particles->Position[0][ip] > params.grid_length[0] ) {
+                        //                 particles->erase_particle(ip);
+                        //                 particle2->erase_particle(ip2);
+                        //                 new_nParts--;
+                        //             }
+                        //         }
+                        //     }
+                        //
+                        //     // Move interesting parts to their place
+                        //     for ( int ip = nparts_per_species[iSpecies] ; ip < new_nParts ; ip++ ){
+                        //         int ip2 = nparts_per_species[iSpecies+1]+(ip-nparts_per_species[iSpecies]);
+                        //         if ( vecPatches(iPatch)->isXmin() ) {
+                        //             if ( ( particles->Position[0][ip] >= 0. ) ) {
+                        //                 int new_cell_idx=0;
+                        //                 particles->mv_particles(ip,vecPatches(iPatch)->vecSpecies[iSpecies]->first_index[(new_cell_idx)/params.clrw]);
+                        //                 vecPatches(iPatch)->vecSpecies[iSpecies]->last_index[(new_cell_idx)/params.clrw]++;
+                        //                 for ( int idx=(new_cell_idx)/params.clrw+1 ; idx<vecPatches(iPatch)->vecSpecies[iSpecies]->last_index.size() ; idx++ ) {
+                        //                     vecPatches(iPatch)->vecSpecies[iSpecies]->first_index[idx]++;
+                        //                     vecPatches(iPatch)->vecSpecies[iSpecies]->last_index[idx]++;
+                        //                 }
+                        //                 particle2->mv_particles(ip2,vecPatches(iPatch)->vecSpecies[iSpecies+1]->first_index[(new_cell_idx)/params.clrw]);
+                        //                 vecPatches(iPatch)->vecSpecies[iSpecies+1]->last_index[(new_cell_idx)/params.clrw]++;
+                        //                 for ( int idx=(new_cell_idx)/params.clrw+1 ; idx<vecPatches(iPatch)->vecSpecies[iSpecies+1]->last_index.size() ; idx++ ) {
+                        //                     vecPatches(iPatch)->vecSpecies[iSpecies+1]->first_index[idx]++;
+                        //                     vecPatches(iPatch)->vecSpecies[iSpecies+1]->last_index[idx]++;
+                        //                 }
+                        //             }
+                        //         }
+                        //         else if ( vecPatches(iPatch)->isXmax() ) {
+                        //             if (  particles->Position[0][ip] <= params.grid_length[0] ) {
+                        //                 int new_cell_idx=params.n_space[0]-1;
+                        //                 particles->mv_particles(ip,vecPatches(iPatch)->vecSpecies[iSpecies]->first_index[(new_cell_idx)/params.clrw]);
+                        //                 vecPatches(iPatch)->vecSpecies[iSpecies]->last_index[(new_cell_idx)/params.clrw]++;
+                        //                 for ( int idx=(new_cell_idx)/params.clrw+1 ; idx<vecPatches(iPatch)->vecSpecies[iSpecies]->last_index.size() ; idx++ ) {
+                        //                     vecPatches(iPatch)->vecSpecies[iSpecies]->first_index[idx]++;
+                        //                     vecPatches(iPatch)->vecSpecies[iSpecies]->last_index[idx]++;
+                        //                 }
+                        //                 particle2->mv_particles(ip2,vecPatches(iPatch)->vecSpecies[iSpecies+1]->first_index[(new_cell_idx)/params.clrw]);
+                        //                 vecPatches(iPatch)->vecSpecies[iSpecies+1]->last_index[(new_cell_idx)/params.clrw]++;
+                        //                 for ( int idx=(new_cell_idx)/params.clrw+1 ; idx<vecPatches(iPatch)->vecSpecies[iSpecies+1]->last_index.size() ; idx++ ) {
+                        //                     vecPatches(iPatch)->vecSpecies[iSpecies+1]->first_index[idx]++;
+                        //                     vecPatches(iPatch)->vecSpecies[iSpecies+1]->last_index[idx]++;
+                        //                 }
+                        //             }
+                        //         }
+                        //
+                        //     }
+                        // }
+                        
+                        // Filter
+                        // Different position
+                        for (int iSpecies=0 ; iSpecies<vecPatches(0)->vecSpecies.size() ; iSpecies++) {
+
+                            int new_nParts = vecPatches(iPatch)->vecSpecies[iSpecies]->getNbrOfParticles();
+                            Particles* particles = vecPatches(iPatch)->vecSpecies[iSpecies]->particles;
+
+                            // Suppr not interesting parts ...
+                            for ( int ip = new_nParts-1 ; ip >= nparts_per_species[iSpecies] ; ip-- ){
+                                if ( vecPatches(iPatch)->isXmin() ) {
+                                    particles->Position[0][ip] += ( params.timestep*particles->Momentum[0][ip]*particles->inv_lor_fac(ip)-params.cell_length[0] );
+                                    //particles->Position[0][ip] += ( params.timestep*0.4-params.cell_length[0] );
+                                    if ( ( particles->Position[0][ip] < 0. ) ) {
+                                        particles->erase_particle(ip);
+                                        new_nParts--;
+                                    }
+                                }
+                                else if ( vecPatches(iPatch)->isXmax() ) {
+                                    particles->Position[0][ip] += ( params.timestep*particles->Momentum[0][ip]*particles->inv_lor_fac(ip)+params.cell_length[0] );
+                                    //particles->Position[0][ip] += ( -params.timestep*0.4+params.cell_length[0] );
+                                    if (  particles->Position[0][ip] > params.grid_length[0] ) {
+                                        particles->erase_particle(ip);
+                                        new_nParts--;
+                                    }
+                                }
+                            }
+
+                            // Move interesting parts to their place
+                            for ( int ip = nparts_per_species[iSpecies] ; ip < new_nParts ; ip++ ){
+                                if ( vecPatches(iPatch)->isXmin() ) {
+                                    if ( ( particles->Position[0][ip] >= 0. ) ) {
+                                        int new_cell_idx=0;
+                                        particles->mv_particles(ip,vecPatches(iPatch)->vecSpecies[iSpecies]->first_index[(new_cell_idx)/params.clrw]);
+                                        vecPatches(iPatch)->vecSpecies[iSpecies]->last_index[(new_cell_idx)/params.clrw]++;
+                                        for ( int idx=(new_cell_idx)/params.clrw+1 ; idx<vecPatches(iPatch)->vecSpecies[iSpecies]->last_index.size() ; idx++ ) {
+                                            vecPatches(iPatch)->vecSpecies[iSpecies]->first_index[idx]++;
+                                            vecPatches(iPatch)->vecSpecies[iSpecies]->last_index[idx]++;
+                                        }
+                                    }
+                                }
+                                else if ( vecPatches(iPatch)->isXmax() ) {
+                                    if (  particles->Position[0][ip] <= params.grid_length[0] ) {
+                                        int new_cell_idx=params.n_space[0]-1;
+                                        particles->mv_particles(ip,vecPatches(iPatch)->vecSpecies[iSpecies]->first_index[(new_cell_idx)/params.clrw]);
+                                        vecPatches(iPatch)->vecSpecies[iSpecies]->last_index[(new_cell_idx)/params.clrw]++;
+                                        for ( int idx=(new_cell_idx)/params.clrw+1 ; idx<vecPatches(iPatch)->vecSpecies[iSpecies]->last_index.size() ; idx++ ) {
+                                            vecPatches(iPatch)->vecSpecies[iSpecies]->first_index[idx]++;
+                                            vecPatches(iPatch)->vecSpecies[iSpecies]->last_index[idx]++;
+                                        }
+                                    }
+                                }
+                             
+                            }
                         }
                     }
-
-                    // Filter particles
-                    for (int iSpecies=0 ; iSpecies<vecPatches(0)->vecSpecies.size() ; iSpecies=iSpecies+2) {
-
-                        int new_nParts = vecPatches(iPatch)->vecSpecies[iSpecies]->getNbrOfParticles();
-                        int new_nPart2 = vecPatches(iPatch)->vecSpecies[iSpecies+1]->getNbrOfParticles();
-                        Particles* particles = vecPatches(iPatch)->vecSpecies[iSpecies]->particles;
-                        Particles* particle2 = vecPatches(iPatch)->vecSpecies[iSpecies+1]->particles;
-
-                        // Suppr not intersting parts ...
-                        for ( int ip = new_nParts-1 ; ip >= nparts_per_species[iSpecies] ; ip-- ){
-                            int ip2 = nparts_per_species[iSpecies+1]+(ip-nparts_per_species[iSpecies]);
-                            if ( vecPatches(iPatch)->isXmin() ) {
-                                particles->Position[0][ip] += ( params.timestep*particles->Momentum[0][ip]*particles->inv_lor_fac(ip)-params.cell_length[0] );
-                                particle2->Position[0][ip2] = particles->Position[0][ip];
-                                //particles->Position[0][ip] += ( params.timestep*0.4-params.cell_length[0] );
-                                if ( ( particles->Position[0][ip] < 0. ) ) {
-                                    particles->erase_particle(ip);
-                                    particle2->erase_particle(ip2);
-                                    new_nParts--;
-                                }
-                            }
-                            else if ( vecPatches(iPatch)->isXmax() ) {
-                                particles->Position[0][ip] += ( params.timestep*particles->Momentum[0][ip]*particles->inv_lor_fac(ip)+params.cell_length[0] );
-                                particle2->Position[0][ip2] = particles->Position[0][ip];
-                                //particles->Position[0][ip] += ( -params.timestep*0.4+params.cell_length[0] );
-                                if (  particles->Position[0][ip] > params.grid_length[0] ) {
-                                    particles->erase_particle(ip);
-                                    particle2->erase_particle(ip2);
-                                    new_nParts--;
-                                }
-                            }
-                        }
-
-                        // Move intersting parts to their place
-                        for ( int ip = nparts_per_species[iSpecies] ; ip < new_nParts ; ip++ ){
-                            int ip2 = nparts_per_species[iSpecies+1]+(ip-nparts_per_species[iSpecies]);
-                            if ( vecPatches(iPatch)->isXmin() ) {
-                                if ( ( particles->Position[0][ip] >= 0. ) ) {
-                                    int new_cell_idx=0;
-                                    particles->mv_particles(ip,vecPatches(iPatch)->vecSpecies[iSpecies]->first_index[(new_cell_idx)/params.clrw]);
-                                    vecPatches(iPatch)->vecSpecies[iSpecies]->last_index[(new_cell_idx)/params.clrw]++;
-                                    for ( int idx=(new_cell_idx)/params.clrw+1 ; idx<vecPatches(iPatch)->vecSpecies[iSpecies]->last_index.size() ; idx++ ) {
-                                        vecPatches(iPatch)->vecSpecies[iSpecies]->first_index[idx]++;
-                                        vecPatches(iPatch)->vecSpecies[iSpecies]->last_index[idx]++;
-                                    }
-                                    particle2->mv_particles(ip2,vecPatches(iPatch)->vecSpecies[iSpecies+1]->first_index[(new_cell_idx)/params.clrw]);
-                                    vecPatches(iPatch)->vecSpecies[iSpecies+1]->last_index[(new_cell_idx)/params.clrw]++;
-                                    for ( int idx=(new_cell_idx)/params.clrw+1 ; idx<vecPatches(iPatch)->vecSpecies[iSpecies+1]->last_index.size() ; idx++ ) {
-                                        vecPatches(iPatch)->vecSpecies[iSpecies+1]->first_index[idx]++;
-                                        vecPatches(iPatch)->vecSpecies[iSpecies+1]->last_index[idx]++;
-                                    }
-                                }
-                            }
-                            else if ( vecPatches(iPatch)->isXmax() ) {
-                                if (  particles->Position[0][ip] <= params.grid_length[0] ) {
-                                    int new_cell_idx=params.n_space[0]-1;
-                                    particles->mv_particles(ip,vecPatches(iPatch)->vecSpecies[iSpecies]->first_index[(new_cell_idx)/params.clrw]);
-                                    vecPatches(iPatch)->vecSpecies[iSpecies]->last_index[(new_cell_idx)/params.clrw]++;
-                                    for ( int idx=(new_cell_idx)/params.clrw+1 ; idx<vecPatches(iPatch)->vecSpecies[iSpecies]->last_index.size() ; idx++ ) {
-                                        vecPatches(iPatch)->vecSpecies[iSpecies]->first_index[idx]++;
-                                        vecPatches(iPatch)->vecSpecies[iSpecies]->last_index[idx]++;
-                                    }
-                                    particle2->mv_particles(ip2,vecPatches(iPatch)->vecSpecies[iSpecies+1]->first_index[(new_cell_idx)/params.clrw]);
-                                    vecPatches(iPatch)->vecSpecies[iSpecies+1]->last_index[(new_cell_idx)/params.clrw]++;
-                                    for ( int idx=(new_cell_idx)/params.clrw+1 ; idx<vecPatches(iPatch)->vecSpecies[iSpecies+1]->last_index.size() ; idx++ ) {
-                                        vecPatches(iPatch)->vecSpecies[iSpecies+1]->first_index[idx]++;
-                                        vecPatches(iPatch)->vecSpecies[iSpecies+1]->last_index[idx]++;
-                                    }
-                                }
-                            }
-                         
-                        }
-
-
- 
-                    }
-
                 }
             }
             #pragma omp barrier

@@ -108,6 +108,7 @@ public :
     //! Reconfigure all patches for the new time step
     void reconfiguration( Params &params, Timers &timers, int itime );
     
+    //! Particle sorting for all patches
     void sort_all_particles( Params &params );
     
     //! For all patch, move particles (restartRhoJ(s), dynamics and exchangeParticles)
@@ -125,6 +126,10 @@ public :
     void finalize_sync_and_bc_fields( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
                                       double time_dual, Timers &timers, int itime );
                                       
+    //! Particle injection from the boundaries
+    void injectParticlesFromBoundaries( Params &params, Timers &timers, int itime );
+                                      
+    //! Computation of the total charge
     void computeCharge();
     
     void projection_for_diags( Params &params,

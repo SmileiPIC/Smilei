@@ -744,6 +744,171 @@ void Species::dynamics( double time_dual, unsigned int ispec,
             ( *Push )( *particles, smpi, first_index[ibin], last_index[ibin], ithread );
             //particles->test_move( first_index[ibin], last_index[ibin], params );
 
+        } //ibin
+
+        // Particle injection
+        if (0) {
+            vector<unsigned int> init_space( 3, 1 );
+            int previous_particle_number = getNbrOfParticles();
+            init_space[0] = 1;
+            init_space[1] = params.n_space[1];
+            init_space[2] = params.n_space[2];
+            if ( ( (patch->isXmin()) && (species_number_<2) ) ||
+                 ( (patch->isXmax()) && (species_number_>1) ) ) {
+                int icell;
+                if (patch->isXmin())
+                    icell = 0;
+                if (patch->isXmax())
+                    icell = params.n_space[0]-1;
+                this->createParticles( init_space, params, patch, icell );
+            }
+            // Suppr not interesting parts ...
+            int new_particle_number = getNbrOfParticles();
+            // cerr << "Number of new particles: " << new_particle_number-previous_particle_number
+            //      << endl;
+            for ( int ip = new_particle_number-1 ; ip >=  previous_particle_number; ip-- ){
+                if ( patch->isXmin() ) {
+                    particles->Position[0][ip] += ( params.timestep*particles->Momentum[0][ip]*
+                                                    particles->inv_lor_fac(ip)-params.cell_length[0]);
+                    if ( ( particles->Position[0][ip] < 0) ) {
+                        particles->erase_particle(ip);
+                        new_particle_number--;
+                    }
+                } else if ( patch->isXmax() ) {
+                    particles->Position[0][ip] += ( params.timestep*particles->Momentum[0][ip]*
+                                                    particles->inv_lor_fac(ip)+params.cell_length[0] );
+                    if (  particles->Position[0][ip] > params.grid_length[0]) {
+                        particles->erase_particle(ip);
+                        new_particle_number--;
+                    }
+                }
+            }
+            for ( int ip = new_particle_number-1 ; ip >=  previous_particle_number; ip-- ){
+                particles->Position[1][ip] += ( params.timestep*particles->Momentum[1][ip]*
+                                                particles->inv_lor_fac(ip));
+                if ( patch->isYmin() ) {
+                    particles->Position[0][ip] -= params.cell_length[1];
+                    if ( ( particles->Position[1][ip] < 0 ) ) {
+                        particles->erase_particle(ip);
+                        new_particle_number--;
+                    }
+                } else if ( patch->isYmax() ) {
+                    particles->Position[0][ip] += params.cell_length[1] ;
+                    if (  particles->Position[1][ip] > params.grid_length[1] ) {
+                        particles->erase_particle(ip);
+                        new_particle_number--;
+                    }
+                }
+            }
+            
+            double xpn,ypn,inv_gamma;
+            int new_particle_index;
+            int ioldx, ioldy;
+            // smpi->dynamics_resize( ithread, nDim_field, new_particle_number, params.geometry=="AMcylindrical");
+            // for ( int ip = previous_particle_number ; ip <  new_particle_number; ip++ ){
+            //     inv_gamma = particles->inv_lor_fac(ip);
+            //     xpn = (particles->Position[0][ip]
+            //         - particles->Momentum[0][ip]*inv_gamma*params.timestep)*dx_inv_[0];
+            //     ypn = (particles->Position[1][ip]
+            //         - particles->Momentum[1][ip]*inv_gamma*params.timestep)*dx_inv_[1];
+            //     smpi->dynamics_invgf[ithread][ip] = inv_gamma;
+            //
+            //     smpi->dynamics_iold[ithread][ip] = round(xpn);
+            //     smpi->dynamics_iold[ithread][ip + new_particle_number] = round(ypn);
+            //
+            //     smpi->dynamics_deltaold[ithread][ip] = xpn - ( double )(smpi->dynamics_iold[ithread][ip]);
+            //     smpi->dynamics_deltaold[ithread][ip + new_particle_number] = ypn - ( double )(smpi->dynamics_iold[ithread][ip + new_particle_number]);
+            //
+            //     smpi->dynamics_iold[ithread][ip] -= patch->getCellStartingGlobalIndex( 0 );
+            //     smpi->dynamics_iold[ithread][ip + new_particle_number] -= patch->getCellStartingGlobalIndex( 1 );
+            //
+            // }
+            
+            
+            // cerr << " clrw: " << params.clrw
+            //      << " params.grid_length[0]: " << params.grid_length[0]
+            //      << endl;
+            // Move interesting parts to their place
+            for ( int ip = previous_particle_number ; ip < new_particle_number ; ip++ ){
+                // cerr << " Particle x: " << particles->Position[0][ip]
+                //      << " Particle y: " << particles->Position[1][ip]
+                //      << " Ip: " << ip
+                //      << endl;
+                     
+                inv_gamma = particles->inv_lor_fac(ip);
+                     
+                xpn = (particles->Position[0][ip]
+                    - particles->Momentum[0][ip]*inv_gamma*params.timestep)*dx_inv_[0];
+                ypn = (particles->Position[1][ip]
+                    - particles->Momentum[1][ip]*inv_gamma*params.timestep)*dx_inv_[1];
+                
+                if ( patch->isXmin() ) {
+                    if ( ( particles->Position[0][ip] >= 0. ) ) {
+                        int new_cell_idx=0;
+                        
+                        new_particle_index = first_index[(new_cell_idx)/params.clrw];
+                        
+                        particles->mv_particles(ip,new_particle_index);
+                        
+                        smpi->dynamics_invgf[ithread].insert(smpi->dynamics_invgf[ithread].begin()+new_particle_index,inv_gamma);
+                        
+                        ioldx = round(xpn);
+                        ioldy = round(ypn);
+                        
+                        smpi->dynamics_iold[ithread].insert(smpi->dynamics_iold[ithread].begin()
+                                                        + new_particle_index,ioldx - patch->getCellStartingGlobalIndex( 0 ));
+                        smpi->dynamics_iold[ithread].insert(smpi->dynamics_iold[ithread].begin()
+                                                        + new_particle_index + new_particle_number,ioldy - patch->getCellStartingGlobalIndex( 1 ));
+                        
+                        smpi->dynamics_deltaold[ithread].insert(smpi->dynamics_deltaold[ithread].begin()
+                                                        + new_particle_index,xpn - (double)ioldx);
+                        smpi->dynamics_deltaold[ithread].insert(smpi->dynamics_deltaold[ithread].begin()
+                                                        + new_particle_index + new_particle_number,ypn - (double)ioldy);
+                        
+                        last_index[(new_cell_idx)/params.clrw]++;
+                        for ( int idx=(new_cell_idx)/params.clrw+1 ; idx<last_index.size() ; idx++ ) {
+                            first_index[idx]++;
+                            last_index[idx]++;
+                        }
+                    }
+                }
+                else if ( patch->isXmax() ) {
+                    if (  particles->Position[0][ip] <= params.grid_length[0] ) {
+                        int new_cell_idx=params.n_space[0]-1;
+                        
+                        new_particle_index = first_index[(new_cell_idx)/params.clrw];
+                        
+                        particles->mv_particles(ip,first_index[(new_cell_idx)/params.clrw]);
+                        
+                        smpi->dynamics_invgf[ithread].insert(smpi->dynamics_invgf[ithread].begin()+new_particle_index,inv_gamma);
+                        
+                        ioldx = round(xpn);
+                        ioldy = round(ypn);
+                        
+                        smpi->dynamics_iold[ithread].insert(smpi->dynamics_iold[ithread].begin()
+                                                        + new_particle_index,ioldx - patch->getCellStartingGlobalIndex( 0 ));
+                        smpi->dynamics_iold[ithread].insert(smpi->dynamics_iold[ithread].begin()
+                                                        + new_particle_index + new_particle_number,ioldy - patch->getCellStartingGlobalIndex( 1 ));
+                        
+                        smpi->dynamics_deltaold[ithread].insert(smpi->dynamics_deltaold[ithread].begin()
+                                                        + new_particle_index,xpn - (double)ioldx);
+                        smpi->dynamics_deltaold[ithread].insert(smpi->dynamics_deltaold[ithread].begin()
+                                                        + new_particle_index + new_particle_number,ypn - (double)ioldy);
+                        
+                        last_index[(new_cell_idx)/params.clrw]++;
+                        for ( int idx=(new_cell_idx)/params.clrw+1 ; idx<last_index.size() ; idx++ ) {
+                            first_index[idx]++;
+                            last_index[idx]++;
+                        }
+                    }
+                }
+            }
+        }
+        
+        
+        
+        for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin++ ) {
+
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[1] += MPI_Wtime() - timer;
             timer = MPI_Wtime();
@@ -1491,7 +1656,7 @@ int Species::createParticles( vector<unsigned int> n_space_to_create, Params &pa
     //     particles->create_particles(npart_effective);
     // else {
     //    // reserve included in initialize if particles emty
-    //    particles->reserve(round( params->species_param[speciesNumber].c_part_max * npart_effective ), ndim);
+    //    particles->reserve(round( params->species_param[species_number_].c_part_max * npart_effective ), ndim);
     //    particles->initialize(n_existing_particles+npart_effective, params_->nDim_particle);
     // }
 
@@ -1549,7 +1714,7 @@ int Species::createParticles( vector<unsigned int> n_space_to_create, Params &pa
                                 indexes[2]=k*cell_length[2]+cell_position[2];
                             }
                         }
-                        if( position_initialization_on_species==false ) {
+                        if( !position_initialization_on_species ) {
                             initPosition( nPart, iPart, indexes, params );
                         }
                         initMomentum( nPart, iPart, temp, vel );
@@ -1614,8 +1779,10 @@ int Species::createParticles( vector<unsigned int> n_space_to_create, Params &pa
             }
 
         }//i
-    } else if( n_existing_particles == 0 ) {    //Here position are created from a numpy array. Do not recreate particles from numpy array again after initialization. Is this condition enough ?
-        //Initializing particles from numpy array and based on a count sort to comply with initial sorting.
+    } else if( n_existing_particles == 0 ) {
+        // Here position are created from a numpy array.
+        // Do not recreate particles from numpy array again after initialization. Is this condition enough ?
+        // Initializing particles from numpy array and based on a count sort to comply with initial sorting.
         int nbins = first_index.size();
         int indices[nbins];
         double one_ov_dbin = 1. / ( cell_length[0] * clrw ) ;
@@ -1645,7 +1812,7 @@ int Species::createParticles( vector<unsigned int> n_space_to_create, Params &pa
         }
         last_index[nbins-1] = npart_effective ;
 
-        //Now initialize particles at thier proper indices
+        //Now initialize particles at their proper indices
         for( unsigned int ipart = 0; ipart < npart_effective ; ipart++ ) {
             unsigned int ippy = my_particles_indices[ipart];//Indice of the particle in the python array.
             double x = position[0][ippy]-min_loc ;
@@ -1815,7 +1982,7 @@ void Species::setXminBoundaryCondition()
 vector<double> Species::maxwellJuttner( unsigned int npoints, double temperature )
 {
     if( temperature==0. ) {
-        ERROR( "The species " << speciesNumber << " is initializing its momentum with the following temperature : " << temperature );
+        ERROR( "The species " << species_number_ << " is initializing its momentum with the following temperature : " << temperature );
     }
     vector<double> energies( npoints );
 

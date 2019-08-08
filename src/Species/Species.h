@@ -50,7 +50,7 @@ public:
     //  2. Species parameters
 
     //! number of the species
-    unsigned int speciesNumber;
+    unsigned int species_number_;
 
     //! kind/name of species
     std::string name;

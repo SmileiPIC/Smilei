@@ -30,6 +30,7 @@ public:
     Timer syncPart  ;
     Timer syncField ;
     Timer syncDens  ;
+    Timer particleInjection;
     Timer diagsNEW  ;
     Timer reconfiguration  ;
     Timer envelope  ;

@@ -210,7 +210,7 @@ public:
 
         thisSpecies->name = species_name;
         thisSpecies->mass = mass;
-        thisSpecies->speciesNumber = ispec;
+        thisSpecies->species_number_ = ispec;
 
         // Vectorized operators
         if( params.vectorization_mode == "off" ) {
@@ -932,7 +932,7 @@ public:
         newSpecies->radiation_photon_sampling_                = species->radiation_photon_sampling_;
         newSpecies->radiation_photon_gamma_threshold_         = species->radiation_photon_gamma_threshold_;
         newSpecies->photon_species                           = species->photon_species;
-        newSpecies->speciesNumber                            = species->speciesNumber;
+        newSpecies->species_number_                            = species->species_number_;
         newSpecies->position_initialization_on_species       = species->position_initialization_on_species;
         newSpecies->position_initialization_on_species_index = species->position_initialization_on_species_index;
         newSpecies->position_initialization                  = species->position_initialization;
