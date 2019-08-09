@@ -50,6 +50,7 @@ int PartWall::apply( Particles &particles, int ipart, Species *species, double d
 PartWalls::PartWalls( Params &params, Patch *patch )
 {
     if( patch->isMaster() ) {
+        MESSAGE( 1, "" );
         MESSAGE( 1, "Adding particle walls:" );
     }
     
@@ -145,5 +146,3 @@ PartWalls::~PartWalls()
     }
     clear();
 }
-
-

@@ -26,6 +26,7 @@
 #include "Hilbert_functions.h"
 #include "PatchesFactory.h"
 #include "SpeciesFactory.h"
+#include "ParticleInjectorFactory.h"
 #include "Particles.h"
 #include "ElectroMagnFactory.h"
 #include "ElectroMagnBC_Factory.h"
@@ -157,6 +158,9 @@ void Patch::finishCreation( Params &params, SmileiMPI *smpi, DomainDecomposition
     // Initialize the collisions
     vecCollisions = CollisionsFactory::create( params, this, vecSpecies );
 
+    // Initialize the particle injector
+    vecParticleInjector = ParticleInjectorFactory::createVector( params, this, vecSpecies );
+
     // Initialize the particle walls
     partWalls = new PartWalls( params, this );
 
@@ -182,6 +186,9 @@ void Patch::finishCloning( Patch *patch, Params &params, SmileiMPI *smpi, unsign
 
     // clone the collisions
     vecCollisions = CollisionsFactory::clone( patch->vecCollisions, params );
+
+    // Clone the particle injector
+    vecParticleInjector = ParticleInjectorFactory::cloneVector( patch->vecParticleInjector, params, patch);
 
     // clone the particle walls
     partWalls = new PartWalls( patch->partWalls, this );
@@ -681,10 +688,6 @@ void Patch::exchParticles( SmileiMPI *smpi, int ispec, Params &params, int iDim,
 // ---------------------------------------------------------------------------------------------------------------------
 void Patch::finalizeExchParticles( SmileiMPI *smpi, int ispec, Params &params, int iDim, VectorPatch *vecPatch )
 {
-
-#ifdef  __DETAILED_TIMERS
-    double timer;
-#endif
 
     int n_part_send, n_part_recv;
 

@@ -682,7 +682,7 @@ void SpeciesV::importParticles( Params &params, Patch *patch, Particles &source_
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Particle merging cell by cell
+//! Particle merging cell by cell
 // ---------------------------------------------------------------------------------------------------------------------
 void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
                                Params &params,
@@ -695,11 +695,6 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
 // #else
 //     ithread = 0;
 // #endif
-
-#ifdef  __DETAILED_TIMERS
-    double timer;
-    timer = MPI_Wtime();
-#endif
 
 
     // Only for moving particles
@@ -854,11 +849,6 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
 
 
     }
-
-#ifdef  __DETAILED_TIMERS
-    patch->patch_timers[14] += MPI_Wtime() - timer;
-#endif
-
 }
 
 

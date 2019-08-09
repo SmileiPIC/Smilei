@@ -346,15 +346,23 @@ int main( int argc, char *argv[] )
             }
 #endif
 
-            vecPatches.finalize_and_sort_parts( params, &smpi, simWindow,
+            // finalize particle exchanges and sort particles
+            vecPatches.finalizeAndSortParticles( params, &smpi, simWindow,
                                                 time_dual, timers, itime );
 
-            vecPatches.finalize_sync_and_bc_fields( params, &smpi, simWindow, time_dual, timers, itime );
-            // call the various diagnostics
-            vecPatches.runAllDiags( params, &smpi, itime, timers, simWindow );
+            vecPatches.mergeParticles(params, &smpi, time_dual,timers, itime );
+
+            // Clean buffers and resize arrays
+            vecPatches.cleanParticlesOverhead(params, timers, itime );
 
             // Particle injection from the boundaries
             vecPatches.importAndSortParticlesFromBoundaries(params, timers, itime );
+
+            // Finalize field synchronization and exchanges
+            vecPatches.finalize_sync_and_bc_fields( params, &smpi, simWindow, time_dual, timers, itime );
+            
+            // call the various diagnostics
+            vecPatches.runAllDiags( params, &smpi, itime, timers, simWindow );
 
             if (0) {
                 #pragma omp master

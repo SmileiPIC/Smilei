@@ -388,6 +388,12 @@ class Species(SmileiComponent):
     relativistic_field_initialization = False
     ponderomotive_dynamics = False
 
+class ParticleInjector(SmileiComponent):
+    """Parameters for particle injection at boundaries"""
+    name = None,
+    species = None,
+    box_side = "xmin"
+
 class Laser(SmileiComponent):
     """Laser parameters"""
     box_side = "xmin"

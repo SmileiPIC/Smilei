@@ -10,6 +10,7 @@
 #include "Params.h"
 #include "SmileiMPI.h"
 #include "PartWall.h"
+#include "ParticleInjector.h"
 #include "Interpolator.h"
 #include "Projector.h"
 
@@ -51,7 +52,7 @@ public:
     
     void set( Params &params, DomainDecomposition *domain_decomposition, VectorPatch &vecPatch );
    
-    //Copy positions of particles from source species to species which are initialized on top of another one. 
+    //Copy positions of particles from source species to species which are initialized on top of another one.
     void copy_positions( std::vector<Species *> vecSpecies_to_update);
 
     //! Destructor for Patch
@@ -69,6 +70,9 @@ public:
     PartWalls *partWalls;
     //! Optional binary collisions operators
     std::vector<Collisions *> vecCollisions;
+    
+    //! Injectors of the current patch
+    std::vector<ParticleInjector *> vecParticleInjector;
     
     //! "fake" particles for the probe diagnostics
     std::vector<ProbeParticles *> probes;
