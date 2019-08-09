@@ -205,6 +205,15 @@ public:
     {
         return locateOnBorders( 2, 1 );
     }
+    //! Determine wether the patch is at the domain boundary
+    inline bool isBoundary()
+    {
+        bool flag = false;
+        for (int i = 0 ; i < nDim_fields_ ; i++) {
+            flag = flag || locateOnBorders( i, 0 ) || locateOnBorders( i, 1 ) ;
+        }
+        return flag;
+    }
     //! Define old xmax patch for moiving window,(non periodic eature)
     inline bool wasXmax( Params &params )
     {

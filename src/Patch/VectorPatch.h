@@ -133,7 +133,7 @@ public :
     void cleanParticlesOverhead(Params &params, Timers &timers, int itime );
                               
     //! Particle injection from the boundaries
-    void importAndSortParticlesFromBoundaries( Params &params, Timers &timers, int itime );
+    void injectParticlesFromBoundaries( Params &params, Timers &timers, int itime );
                                       
     //! Computation of the total charge
     void computeCharge();
