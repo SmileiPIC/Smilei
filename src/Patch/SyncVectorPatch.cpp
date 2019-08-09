@@ -54,7 +54,7 @@ void SyncVectorPatch::finalize_and_sort_parts( VectorPatch &vecPatches, int ispe
     
     #pragma omp for schedule(runtime)
     for( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ ) {
-        vecPatches( ipatch )->injectParticles( smpi, ispec, params, &vecPatches );
+        vecPatches( ipatch )->importAndSortParticles( smpi, ispec, params, &vecPatches );
     }
     
     
@@ -210,7 +210,7 @@ void SyncVectorPatch::sumRhoJs( Params &params, VectorPatch &vecPatches, int imo
 
 // fields : contains a single field component for all patches of vecPatches
 // timers and itime were here introduced for debugging
-template<typename T, typename F> 
+template<typename T, typename F>
 void SyncVectorPatch::sum( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime )
 {
     unsigned int nx_, ny_, nz_, h0, oversize[3], n_space[3], gsp[3];
@@ -717,7 +717,7 @@ void SyncVectorPatch::exchangeB( Params &params, VectorPatch &vecPatches, Smilei
     if( vecPatches.listBx_[0]->dims_.size()==1 ) {
         // Exchange Bs0 : By_ and Bz_ (dual in X)
         SyncVectorPatch::exchange_all_components_along_X( vecPatches.Bs0, vecPatches, smpi );
-    } else { 
+    } else {
         if( params.full_B_exchange ) {
             // Exchange Bx_ in Y then X
             SyncVectorPatch::exchange_synchronized_per_direction( vecPatches.listBx_, vecPatches, smpi );
@@ -741,7 +741,7 @@ void SyncVectorPatch::exchangeB( Params &params, VectorPatch &vecPatches, Smilei
                 SyncVectorPatch::exchange_all_components_along_Z( vecPatches.Bs2, vecPatches, smpi );
             }
         }
-    }    
+    }
 }
 
 void SyncVectorPatch::finalizeexchangeB( Params &params, VectorPatch &vecPatches )
@@ -967,7 +967,7 @@ void SyncVectorPatch::exchange_along_all_directions( std::vector<Field *> fields
             gsp[1] = ( oversize[1] + 1 + fields[0]->isDual_[1] ); //Ghost size primal
             if( vecPatches( ipatch )->MPI_me_ == vecPatches( ipatch )->MPI_neighbor_[1][0] ) {
                 field1 = static_cast<F *>( fields[vecPatches( ipatch )->neighbor_[1][0]-h0] );
-                field2 = static_cast<F *>( fields[ipatch] );            
+                field2 = static_cast<F *>( fields[ipatch] );
                 pt1 = &( *field1 )( n_space[1]*nz_ );
                 pt2 = &( *field2 )( 0 );
                 for( unsigned int i = 0 ; i < nx_*ny_*nz_ ; i += ny_*nz_ ) {

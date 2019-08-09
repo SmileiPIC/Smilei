@@ -814,7 +814,8 @@ void Patch::cornersParticles( SmileiMPI *smpi, int ispec, Params &params, int iD
     } //loop i Neighbor
 }
 
-void Patch::injectParticles( SmileiMPI *smpi, int ispec, Params &params, VectorPatch *vecPatch )
+//! Import particles exchanged with surrounding patches/mpi and sort at the same time
+void Patch::importAndSortParticles( SmileiMPI *smpi, int ispec, Params &params, VectorPatch *vecPatch )
 {
 
 #ifdef  __DETAILED_TIMERS
@@ -916,7 +917,7 @@ void Patch::copy_positions( std::vector<Species *> vecSpecies_to_update )
     for( unsigned int i=0; i<vecSpecies_to_update.size(); i++ ) {
         if( vecSpecies_to_update[i]->position_initialization_on_species==false )
             continue;
-        unsigned int target_species = vecSpecies_to_update[i]->position_initialization_on_species_index; 
+        unsigned int target_species = vecSpecies_to_update[i]->position_initialization_on_species_index;
         if( vecSpecies_to_update[i]->getNbrOfParticles() != vecSpecies_to_update[target_species]->getNbrOfParticles() ) {
             ERROR( "Number of particles in species '"<<vecSpecies_to_update[i]->name<<"' is not equal to the number of particles in species '"<<vecSpecies_to_update[target_species]->name<<"'." );
         }
@@ -925,5 +926,3 @@ void Patch::copy_positions( std::vector<Species *> vecSpecies_to_update )
     }
     return;
 }
-
-

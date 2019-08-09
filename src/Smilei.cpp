@@ -354,7 +354,7 @@ int main( int argc, char *argv[] )
             vecPatches.runAllDiags( params, &smpi, itime, timers, simWindow );
 
             // Particle injection from the boundaries
-            vecPatches.injectParticlesFromBoundaries(params, timers, itime );
+            vecPatches.importAndSortParticlesFromBoundaries(params, timers, itime );
 
             if (0) {
                 #pragma omp master

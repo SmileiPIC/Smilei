@@ -129,7 +129,7 @@ public:
     //! Treat diagonalParticles
     void cornersParticles( SmileiMPI *smpi, int ispec, Params &params, int iDim, VectorPatch *vecPatch );
     //! inject particles received in main data structure and particles sorting
-    void injectParticles( SmileiMPI *smpi, int ispec, Params &params, VectorPatch *vecPatch );
+    void importAndSortParticles( SmileiMPI *smpi, int ispec, Params &params, VectorPatch *vecPatch );
     //! clean memory resizing particles structure
     void cleanParticlesOverhead( Params &params );
     //! delete Particles included in the index of particles to exchange. Assumes indexes are sorted.

@@ -125,9 +125,12 @@ public :
                                   Timers &timers, int itime );
     void finalize_sync_and_bc_fields( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
                                       double time_dual, Timers &timers, int itime );
-                                      
+
+    //! Clean MPI buffers and resize particle arrays to save memory
+    void cleanParticlesOverhead(Params &params, Timers &timers, int itime );
+                              
     //! Particle injection from the boundaries
-    void injectParticlesFromBoundaries( Params &params, Timers &timers, int itime );
+    void importAndSortParticlesFromBoundaries( Params &params, Timers &timers, int itime );
                                       
     //! Computation of the total charge
     void computeCharge();
