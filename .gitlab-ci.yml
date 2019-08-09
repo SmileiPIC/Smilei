@@ -7,10 +7,11 @@ compile:
   only:
     - develop
     - sync_integration
+    - dev_injector
 
   script:
     # Force workdir cleaning in case of retried
-    - echo "CI_PIPELINE_ID = " $CI_PIPELINE_ID 
+    - echo "CI_PIPELINE_ID = " $CI_PIPELINE_ID
     - env
     - if [ -d /sps2/gitlab-runner/$CI_PIPELINE_ID ] ; then rm -rf /sps2/gitlab-runner/$CI_PIPELINE_ID ; fi
     # Move in test dir
@@ -29,6 +30,7 @@ makerun1D:
   only:
     - develop
     - sync_integration
+    - dev_injector
 
   script:
     # Move in test dir
@@ -41,6 +43,7 @@ makerun2D:
   only:
     - develop
     - sync_integration
+    - dev_injector
 
   script:
     # Move in test dir
@@ -53,6 +56,7 @@ makerun3D:
   only:
     - develop
     - sync_integration
+    - dev_injector
 
   script:
     # Move in test dir
@@ -95,4 +99,3 @@ makerunCollisions:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run checking script
     - python validation.py -b "tst_collisions*.py" -m 4 -o 4 -v -r 1
-
