@@ -29,6 +29,7 @@
 #include "ElectroMagnAM.h"
 #include "Projector.h"
 #include "ProjectorFactory.h"
+#include "CreateParticles.h"
 
 #include "SimWindow.h"
 #include "Patch.h"
@@ -1891,7 +1892,12 @@ int Species::createParticles( vector<unsigned int> n_space_to_create, Params &pa
 } // End createParticles
 
 
-int Species::createParticles2( vector<unsigned int> n_space_to_create, Params &params, Patch *patch, int new_cell_idx )
+int Species::createParticles2( Particles * particles,
+                               Species * species,
+                               vector<unsigned int> n_space_to_create,
+                               Params &params,
+                               Patch *patch,
+                               int new_cell_idx )
 {
     // n_space_to_create_generalized = n_space_to_create, + copy of 2nd direction data among 3rd direction
     // same for local Species::cell_length[2]
@@ -1918,9 +1924,9 @@ int Species::createParticles2( vector<unsigned int> n_space_to_create, Params &p
         for( ijk[1]=0; ijk[1]<n_space_to_create_generalized[1]; ijk[1]++ ) {
             for( ijk[2]=0; ijk[2]<n_space_to_create_generalized[2]; ijk[2]++ ) {
                 for( unsigned int idim=0 ; idim<nDim_field ; idim++ ) {
-                    ( *xyz[idim] )( ijk[0], ijk[1], ijk[2] ) = cell_position[idim] + ( ijk[idim]+0.5 )*cell_length[idim];
+                    ( *xyz[idim] )( ijk[0], ijk[1], ijk[2] ) = cell_position[idim] + ( ijk[idim]+0.5 )*species->cell_length[idim];
                 }
-                ( *xyz[0] )( ijk[0], ijk[1], ijk[2] ) += new_cell_idx*cell_length[0];
+                ( *xyz[0] )( ijk[0], ijk[1], ijk[2] ) += new_cell_idx*species->cell_length[0];
             }
         }
     }
@@ -1974,7 +1980,7 @@ int Species::createParticles2( vector<unsigned int> n_space_to_create, Params &p
         chargeProfile ->valuesAt( xyz, charge );
     }
     if( position_initialization_array != NULL ) {
-        for( unsigned int idim = 0; idim < nDim_particle; idim++ ) {
+        for( unsigned int idim = 0; idim < species->nDim_particle; idim++ ) {
             position[idim] = &( position_initialization_array[idim*n_numpy_particles] );
         }
         weight_arr =         &( position_initialization_array[nDim_particle*n_numpy_particles] );
@@ -2072,7 +2078,7 @@ int Species::createParticles2( vector<unsigned int> n_space_to_create, Params &p
 
     unsigned int n_existing_particles = particles->size();
     //if (!n_existing_particles)
-    particles->initialize( n_existing_particles+npart_effective, nDim_particle );
+    particles->initialize( n_existing_particles+npart_effective, species->nDim_particle );
 
     // Initialization of the particles properties
     // ------------------------------------------
@@ -2125,7 +2131,7 @@ int Species::createParticles2( vector<unsigned int> n_space_to_create, Params &p
                             }
                         }
                         if( !position_initialization_on_species ) {
-                            initPosition( nPart, iPart, indexes, params );
+                            CreateParticles::createPosition( this->position_initialization, this->particles, this, nPart, iPart, indexes, params );
                         }
                         initMomentum( nPart, iPart, temp, vel );
                         initWeight( nPart, iPart, density( i, j, k ) );

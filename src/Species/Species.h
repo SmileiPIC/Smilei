@@ -222,6 +222,9 @@ public:
     //! Number of spatial dimension for the fields
     unsigned int nDim_field;
 
+    //! Inverse of the number of spatial dimension for the fields
+    double inv_nDim_field;
+
     //! sub primal dimensions of fields
     unsigned int f_dim0, f_dim1, f_dim2;
 
@@ -549,7 +552,9 @@ public:
     int  createParticles( std::vector<unsigned int> n_space_to_create, Params &params, Patch *patch, int new_bin_idx );
 
     //! Method to create new particles.
-    int  createParticles2( std::vector<unsigned int> n_space_to_create, Params &params, Patch *patch, int new_bin_idx );
+    int  createParticles2( Particles * particles,
+                           Species * species, 
+                           std::vector<unsigned int> n_space_to_create, Params &params, Patch *patch, int new_bin_idx );
 
     //! Method to import particles in this species while conserving the sorting among bins
     virtual void importParticles( Params &, Patch *, Particles &, std::vector<Diagnostic *> & );
@@ -592,9 +597,6 @@ private:
 
     //! Parameter used when defining the Maxwell-Juettner function (corresponds to a discretization step in energy)
 //    double dE;
-
-    //! Inverse of the number of spatial dimension for the fields
-    double inv_nDim_field;
 
     //! Local minimum of MPI domain
     double min_loc;
