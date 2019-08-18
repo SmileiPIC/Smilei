@@ -8,6 +8,416 @@
 
 #include "CreateParticles.h"
 
+// ---------------------------------------------------------------------------------------------------------------------
+//! \brief Creation of the particle properties in the given particle vector `particles`
+//! \param particles : vector of particles
+//! \param species : species object necessary for some properties
+//! \param n_space_to_create
+//! \param params : general parameters
+// ---------------------------------------------------------------------------------------------------------------------
+int CreateParticles::create( Particles * particles,
+                Species * species,
+                vector<unsigned int> n_space_to_create,
+                Params &params,
+                Patch *patch,
+                int new_cell_idx )
+{
+    
+    // n_space_to_create_generalized = n_space_to_create, + copy of 2nd direction data among 3rd direction
+    // same for local Species::cell_length[2]
+    vector<unsigned int> n_space_to_create_generalized( n_space_to_create );
+    unsigned int nPart, i, j, k;
+    unsigned int npart_effective = 0 ;
+    double *momentum[species->nDim_particle], *position[species->nDim_particle], *weight_arr;
+    std::vector<int> my_particles_indices;
+    vector<Field *> xyz( species->nDim_field );
+    
+    // Create particles in a space starting at cell_position
+    vector<double> cell_position( 3, 0 );
+    vector<double> cell_index( 3, 0 );
+    for( unsigned int idim=0 ; idim<species->nDim_field ; idim++ ) {
+        //if (params.cell_length[idim]!=0) { // Useless, nDim_field defined for (params.cell_length[idim>=nDim_field]==0)
+        cell_position[idim] = patch->getDomainLocalMin( idim );
+        cell_index   [idim] = ( double ) patch->getCellStartingGlobalIndex( idim );
+        xyz[idim] = new Field3D( n_space_to_create_generalized );
+        //}
+    }
+    // Create the x,y,z maps where profiles will be evaluated
+    vector<double> ijk( 3 );
+    for( ijk[0]=0; ijk[0]<n_space_to_create_generalized[0]; ijk[0]++ ) {
+        for( ijk[1]=0; ijk[1]<n_space_to_create_generalized[1]; ijk[1]++ ) {
+            for( ijk[2]=0; ijk[2]<n_space_to_create_generalized[2]; ijk[2]++ ) {
+                for( unsigned int idim=0 ; idim<species->nDim_field ; idim++ ) {
+                    ( *xyz[idim] )( ijk[0], ijk[1], ijk[2] ) = cell_position[idim] + ( ijk[idim]+0.5 )*species->cell_length[idim];
+                }
+                ( *xyz[0] )( ijk[0], ijk[1], ijk[2] ) += new_cell_idx*species->cell_length[0];
+            }
+        }
+    }
+    
+    // ---------------------------------------------------------
+    // Calculate density and number of particles for the species
+    // ---------------------------------------------------------
+
+    // field containing the charge distribution (always 3d)
+    Field3D charge( n_space_to_create_generalized );
+    species->max_charge = 0.;
+
+    // field containing the number of particles in each cell
+    Field3D n_part_in_cell( n_space_to_create_generalized );
+
+    // field containing the density distribution (always 3d)
+    Field3D density( n_space_to_create_generalized );
+
+    // field containing the temperature distribution along all 3 momentum coordinates (always 3d * 3)
+    Field3D temperature[3];
+    // field containing the temperature distribution along all 3 momentum coordinates (always 3d * 3)
+    Field3D velocity[3];
+    
+    if( species->momentum_initialization_array != NULL ) {
+        for( unsigned int idim = 0; idim < 3; idim++ ) {
+            momentum[idim] = &( species->momentum_initialization_array[idim*species->n_numpy_particles] );
+        }
+    } else {
+        //Initialize velocity and temperature profiles
+        for( i=0; i<3; i++ ) {
+            velocity[i].allocateDims( n_space_to_create_generalized );
+            temperature[i].allocateDims( n_space_to_create_generalized );
+        }
+        // Evaluate profiles
+        for( unsigned int m=0; m<3; m++ ) {
+            if( species->temperatureProfile[m] ) {
+                species->temperatureProfile[m]->valuesAt( xyz, temperature[m] );
+            } else {
+                temperature[m].put_to( 0.0000000001 ); // default value
+            }
+
+            if( species->velocityProfile[m] ) {
+                species->velocityProfile[m]   ->valuesAt( xyz, velocity   [m] );
+            } else {
+                velocity[m].put_to( 0.0 ); //default value
+            }
+        }
+    } // end if momentum_initialization_array
+    
+    // Initialize charge profile
+    if( species->mass > 0 ) {
+        species->chargeProfile ->valuesAt( xyz, charge );
+    }
+    if( species->position_initialization_array != NULL ) {
+        for( unsigned int idim = 0; idim < species->nDim_particle; idim++ ) {
+            position[idim] = &( species->position_initialization_array[idim*species->n_numpy_particles] );
+        }
+        weight_arr =         &( species->position_initialization_array[species->nDim_particle*species->n_numpy_particles] );
+        //Idea to speed up selection, provides xmin, xmax of the bunch and check if there is an intersection with the patch instead of going through all particles for all patches.
+        for( unsigned int ip = 0; ip < species->n_numpy_particles; ip++ ) {
+            //If the particle belongs to this patch
+            if (params.geometry!="AMcylindrical") {
+                if( position[0][ip] >= patch->getDomainLocalMin( 0 ) && position[0][ip] < patch->getDomainLocalMax( 0 )
+                    && ( species->nDim_particle < 2  || ( position[1][ip] >= patch->getDomainLocalMin( 1 ) && position[1][ip] < patch->getDomainLocalMax( 1 ) ) )
+                    && ( species->nDim_particle < 3  || ( position[2][ip] >= patch->getDomainLocalMin( 2 ) && position[2][ip] < patch->getDomainLocalMax( 2 ) ) ) ) {
+                    my_particles_indices.push_back( ip ); //This vector stores particles initially sittinig in the current patch.
+                }
+            }
+            else {
+                double distance =  sqrt( position[1][ip]*position[1][ip]+position[2][ip]*position[2][ip] );
+                if( position[0][ip] >= patch->getDomainLocalMin( 0 ) && position[0][ip] < patch->getDomainLocalMax( 0 )
+                    && ( distance >= patch->getDomainLocalMin( 1 ) && distance < patch->getDomainLocalMax( 1 ) ) ) {
+                    my_particles_indices.push_back( ip ); //This vector stores particles initially sittinig in the current patch.
+                }
+            }
+        }
+        npart_effective = my_particles_indices.size();
+    } else {
+        //Initialize density and ppc profiles
+        species->densityProfile->valuesAt( xyz, density );
+        species->ppcProfile    ->valuesAt( xyz, n_part_in_cell );
+        weight_arr = NULL;
+        //Now compute number of particles per cell
+        double remainder, nppc;
+        for( i=0; i<n_space_to_create_generalized[0]; i++ ) {
+            for( j=0; j<n_space_to_create_generalized[1]; j++ ) {
+                for( k=0; k<n_space_to_create_generalized[2]; k++ ) {
+
+                    // Obtain the number of particles per cell
+                    nppc = n_part_in_cell( i, j, k );
+                    n_part_in_cell( i, j, k ) = floor( nppc );
+                    // If not a round number, then we need to decide how to round
+                    double intpart;
+                    if( modf( nppc, &intpart ) > 0 ) {
+                        remainder = pow( nppc - floor( nppc ), -species->inv_nDim_field );
+                        if( fmod( cell_index[0]+( double )i, remainder ) < 1.
+                                && fmod( cell_index[1]+( double )j, remainder ) < 1.
+                                && fmod( cell_index[2]+( double )k, remainder ) < 1. ) {
+                            n_part_in_cell( i, j, k )++;
+                        }
+                    }
+
+                    // assign charge its correct value in the cell
+                    if( species->mass > 0 ) {
+                        if( charge( i, j, k )>species->max_charge ) {
+                            species->max_charge=charge( i, j, k );
+                        }
+                    }
+
+                    // If zero or less, zero particles
+                    if( n_part_in_cell( i, j, k )<=0. || density( i, j, k )==0. ) {
+                        n_part_in_cell( i, j, k ) = 0.;
+                        density( i, j, k ) = 0.;
+                        continue;
+                    }
+
+                    // assign density its correct value in the cell
+                    if( species->densityProfileType=="charge" ) {
+                        if( charge( i, j, k )==0. ) {
+                            ERROR( "Encountered non-zero charge density and zero charge at the same location" );
+                        }
+                        density( i, j, k ) /= charge( i, j, k );
+                    }
+                    density( i, j, k ) = abs( density( i, j, k ) );
+                    // multiply by the cell volume
+                    density( i, j, k ) *= params.cell_volume;
+                    if( params.geometry=="AMcylindrical" && species->position_initialization != "regular" ) {
+                        //Particles weight in regular is normalized later.
+                        density( i, j, k ) *= ( *xyz[1] )( i, j, k );
+                    }
+                    // increment the effective number of particle by n_part_in_cell(i,j,k)
+                    // for each cell with as non-zero density
+                    npart_effective += ( unsigned int ) n_part_in_cell( i, j, k );
+
+                }//i
+            }//j
+        }//k end the loop on all cells
+    }
+    
+    unsigned int n_existing_particles = particles->size();
+    //if (!n_existing_particles)
+    particles->initialize( n_existing_particles+npart_effective, species->nDim_particle );
+
+    // Initialization of the particles properties
+    // ------------------------------------------
+    unsigned int iPart=n_existing_particles;
+    double *indexes=new double[species->nDim_particle];
+    double *temp=new double[3];
+    double *vel=new double[3];
+    
+    if( species->position_initialization_array == NULL ) {
+        for( i=0; i<n_space_to_create_generalized[0]; i++ ) {
+            if((!n_existing_particles)&&( i%species->clrw == 0 )) {
+                species->first_index[(new_cell_idx+i)/species->clrw] = iPart;
+            }
+            for( j=0; j<n_space_to_create_generalized[1]; j++ ) {
+                for( k=0; k<n_space_to_create_generalized[2]; k++ ) {
+                    // initialize particles in meshes where the density is non-zero
+                    if( density( i, j, k )>0 ) {
+
+                        vel[0]  = velocity[0]( i, j, k );
+                        vel[1]  = velocity[1]( i, j, k );
+                        vel[2]  = velocity[2]( i, j, k );
+                        temp[0] = temperature[0]( i, j, k );
+                        temp[1] = temperature[1]( i, j, k );
+                        temp[2] = temperature[2]( i, j, k );
+                        nPart = n_part_in_cell( i, j, k );
+                        
+                        //if (n_existing_particles) {
+                        //    iPart = n_existing_particles;
+                        //    iPart = first_index[(new_cell_idx+i)/clrw];
+                        //    last_index[(new_cell_idx+i)/clrw] += nPart;
+                        //    for ( int idx=(new_cell_idx+i)/clrw+1 ; idx<last_index.size() ; idx++ ) {
+                        //        first_index[idx] += nPart;
+                        //        last_index[idx] += nPart;
+                        //    }
+                        //    particles->create_particles( nPart, iPart );
+                        //
+                        //}
+
+                        indexes[0]=i*species->cell_length[0]+cell_position[0] + new_cell_idx*species->cell_length[0];;
+                        if( species->nDim_particle > 1 ) {
+                            indexes[1]=j*species->cell_length[1]+cell_position[1];
+                            if( species->nDim_particle > 2 ) {
+                                indexes[2]=k*species->cell_length[2]+cell_position[2];
+                            }
+                        }
+                        if( !species->position_initialization_on_species ) {
+                            CreateParticles::createPosition( species->position_initialization, particles, species, nPart, iPart, indexes, params );
+                        }
+                        CreateParticles::createMomentum( species->momentum_initialization, particles, species,  nPart, iPart, temp, vel );
+                        CreateParticles::createWeight( particles, nPart, iPart, density( i, j, k ) );
+
+                        if( params.geometry=="AMcylindrical" && species->position_initialization == "regular" ) {
+                            //Particles in regular have a weight proportional to their position along r.
+                            for (unsigned int ipart=iPart; ipart < iPart+nPart; ipart++){
+                                particles->weight(ipart) *= sqrt(particles->position(1,ipart)*particles->position(1,ipart) + particles->position(2,ipart)*particles->position(2,ipart));
+                            }
+                        }
+                        CreateParticles::createCharge( particles, species, nPart, iPart, charge( i, j, k ) );
+
+                        //if (n_existing_particles) {
+                        //    // operate filter
+                        //    for ( int ip = nPart-1 ; ip >= 0 ; ip-- ){
+                        //        double lf=1;
+                        //        for (int iDim=0;iDim<3;iDim++)
+                        //            lf += particles->Momentum[iDim][iPart+ip]*particles->Momentum[iDim][iPart+ip];
+                        //        lf =sqrt( lf );
+                        //        double X = particles->Position[0][iPart+ip] - cell_length[0]+params.timestep*particles->Momentum[0][iPart+ip]/lf;
+                        //        if ( patch->isXmin() ) {
+                        //            if ( ( X < 0. ) ) {
+                        //                nPart--; // ne sert à rien ici
+                        //                particles->erase_particle(iPart+ip);
+                        //                last_index[(new_cell_idx+i)/clrw]--;
+                        //                for ( int idx=(new_cell_idx+i)/clrw+1 ; idx<last_index.size() ; idx++ ) {
+                        //                    first_index[idx]--;
+                        //                    last_index[idx]--;
+                        //                }
+                        //            }
+                        //            else
+                        //                particles->Position[0][iPart+ip] = X;
+                        //        }
+                        //        else if ( patch->isXmax() ) {
+                        //            X = particles->Position[0][iPart+ip] + cell_length[0]+params.timestep*particles->Momentum[0][iPart+ip]/lf;
+                        //            if (  X > params.grid_length[0] ) {
+                        //                //cout << "params.grid_length[0]+ cell_length[0]*vel[0] = " << params.grid_length[0]+ cell_length[0]*vel[0] << endl;
+                        //                //cout << "params.grid_length[0]                        = " << params.grid_length[0] << endl;
+                        //                nPart--; // ne sert à rien ici
+                        //                particles->erase_particle(iPart+ip);
+                        //                last_index[(new_cell_idx+i)/clrw]--;
+                        //                for ( int idx=(new_cell_idx+i)/clrw+1 ; idx<last_index.size() ; idx++ ) {
+                        //                    first_index[idx]--;
+                        //                    last_index[idx]--;
+                        //                }
+                        //            }
+                        //            else
+                        //                particles->Position[0][iPart+ip] = X;
+                        //        }
+                        //
+                        //    }
+                        //}
+
+                        
+                        iPart+=nPart;
+                    }//END if density > 0
+                }//k end the loop on all cells
+            }//j
+            if((!n_existing_particles)&&( i%species->clrw == species->clrw -1 )) {
+                species->last_index[(new_cell_idx+i)/species->clrw] = iPart;
+            }
+
+        }//i
+    } else if( n_existing_particles == 0 ) {
+        // Here position are created from a numpy array.
+        // Do not recreate particles from numpy array again after initialization. Is this condition enough ?
+        // Initializing particles from numpy array and based on a count sort to comply with initial sorting.
+        int nbins = species->first_index.size();
+        int indices[nbins];
+        double one_ov_dbin = 1. / ( species->cell_length[0] * species->clrw ) ;
+
+        for( int ibin=0; ibin < nbins ; ibin++ ) {
+            indices[ibin] = 0 ;
+        }
+
+        ///Compute proper indices for particle susing a count sort
+        for( unsigned int ipart = 0; ipart < npart_effective ; ipart++ ) {
+            unsigned int ip = my_particles_indices[ipart];
+            double x = position[0][ip]-species->min_loc ;
+            int ix = int( x * one_ov_dbin ) ;
+            indices[ix] ++;
+        }
+        unsigned int tot=0;
+        for( int ibin=0; ibin < nbins; ibin++ ) {
+            unsigned int oc = indices[ibin];
+            indices[ibin] = tot;
+            tot += oc;
+        }
+        for( int ibin=0; ibin < nbins   ; ibin++ ) {
+            species->first_index[ibin] = indices[ibin] ;
+        }
+        for( int ibin=0; ibin < nbins-1 ; ibin++ ) {
+            species->last_index[ibin] = species->first_index[ibin+1] ;
+        }
+        species->last_index[nbins-1] = npart_effective ;
+
+        //Now initialize particles at their proper indices
+        for( unsigned int ipart = 0; ipart < npart_effective ; ipart++ ) {
+            unsigned int ippy = my_particles_indices[ipart];//Indice of the particle in the python array.
+            double x = position[0][ippy]-species->min_loc ;
+            unsigned int ibin = int( x * one_ov_dbin ) ;
+            int ip = indices[ibin] ; //Indice of the position of the particle in the particles array.
+
+            unsigned int int_ijk[3] = {0, 0, 0};
+            if ( params.geometry != "AMcylindrical") {
+                for( unsigned int idim=0; idim<species->nDim_particle; idim++ ) {
+                    particles->position( idim, ip ) = position[idim][ippy];
+                    int_ijk[idim] = ( unsigned int )( ( particles->position( idim, ip ) - species->min_loc_vec[idim] )/species->cell_length[idim] );
+                }
+            }
+            else {
+                for( unsigned int idim=0; idim<species->nDim_particle; idim++ ) {
+                    particles->position( idim, ip ) = position[idim][ippy];
+                }
+                int_ijk[0] = ( unsigned int )( ( particles->position( 0, ip ) - species->min_loc_vec[0] )/species->cell_length[0] );
+                int_ijk[1] = ( unsigned int )( ( sqrt( position[1][ippy]*position[1][ippy]+position[2][ippy]*position[2][ippy] )
+                                               - species->min_loc_vec[1] )/species->cell_length[1] );
+            }
+            if( !species->momentum_initialization_array ) {
+                vel [0] = velocity   [0]( int_ijk[0], int_ijk[1], int_ijk[2] );
+                vel [1] = velocity   [1]( int_ijk[0], int_ijk[1], int_ijk[2] );
+                vel [2] = velocity   [2]( int_ijk[0], int_ijk[1], int_ijk[2] );
+                temp[0] = temperature[0]( int_ijk[0], int_ijk[1], int_ijk[2] );
+                temp[1] = temperature[1]( int_ijk[0], int_ijk[1], int_ijk[2] );
+                temp[2] = temperature[2]( int_ijk[0], int_ijk[1], int_ijk[2] );
+                CreateParticles::createMomentum( species->momentum_initialization, particles, species, 1, ip, temp, vel );
+            } else {
+                for( unsigned int idim=0; idim < 3; idim++ ) {
+                    particles->momentum( idim, ip ) = momentum[idim][ippy]/species->mass ;
+                }
+            }
+
+            particles->weight( ip ) = weight_arr[ippy] ;
+            CreateParticles::createCharge( particles, species, 1, ip, charge( int_ijk[0], int_ijk[1], int_ijk[2] ) );
+            indices[ibin]++;
+        }
+    }
+
+    // Delete map xyz.
+    for( unsigned int idim=0 ; idim<species->nDim_field ; idim++ ) {
+        delete xyz[idim];
+    }
+
+    delete [] indexes;
+    delete [] temp;
+    delete [] vel;
+    // Recalculate former position using the particle velocity
+    // (necessary to calculate currents at time t=0 using the Esirkepov projection scheme)
+    if( patch->isXmax() ) {
+        // Matter particle case
+        if( species->mass > 0 ) {
+            for( iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++ ) {
+                /*897 for (int i=0; i<(int)species->nDim_particle; i++) {
+                  particles->position_old(i,iPart) -= particles->momentum(i,iPart)/particles->lor_fac(iPart) * params.timestep;
+                  }897*/
+                species->nrj_new_particles += particles->weight( iPart )*( particles->lor_fac( iPart )-1.0 );
+            }
+        }
+        // Photon case
+        else if( species->mass == 0 ) {
+            for( iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++ ) {
+                /*897 for (int i=0; i<(int)species->nDim_particle; i++) {
+                  particles->position_old(i,iPart) -= particles->momentum(i,iPart)/particles->lor_fac(iPart) * params.timestep;
+                  }897*/
+                species->nrj_new_particles += particles->weight( iPart )*( particles->momentum_norm( iPart ) );
+            }
+        }
+    }
+    if( particles->tracked ) {
+        particles->resetIds();
+    }
+    return npart_effective;
+    
+} // end create
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! Creation of the position for all particles (nPart)
+// ---------------------------------------------------------------------------------------------------------------------
 void CreateParticles::createPosition( std::string position_initialization,
                                     Particles * particles,
                                     Species * species,
@@ -107,10 +517,12 @@ void CreateParticles::createPosition( std::string position_initialization,
     }
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
 //! Creation of the particle momentum
 //! For all (np) particles in a mesh initialize their momentum
 //!   - at zero (init_momentum_type = cold)
 //!   - using random distribution (init_momentum_type = maxwell-juettner)
+// ---------------------------------------------------------------------------------------------------------------------
 void CreateParticles::createMomentum( std::string momentum_initialization,
                                     Particles * particles,
                                     Species * species,
@@ -272,7 +684,59 @@ void CreateParticles::createMomentum( std::string momentum_initialization,
     }
 }
 
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! For all (nPart) particles in a mesh initialize its numerical weight (equivalent to a number density)
+// ---------------------------------------------------------------------------------------------------------------------
+void CreateParticles::createWeight( Particles * particles, unsigned int nPart, unsigned int iPart, double n_real_particles )
+{
+    double w = n_real_particles / nPart;
+    for( unsigned  p= iPart; p<iPart+nPart; p++ ) {
+        particles->weight( p ) = w ;
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+// For all (np) particles in a mesh initialize its charge state
+// ---------------------------------------------------------------------------------------------------------------------
+void CreateParticles::createCharge( Particles * particles, Species * species,
+                                    unsigned int nPart, unsigned int iPart, double q )
+{
+    short Z = ( short )q;
+    double r = q-( double )Z;
+
+    // if charge is integer, then all particles have the same charge
+    if( r == 0. ) {
+        for( unsigned int p = iPart; p<iPart+nPart; p++ ) {
+            particles->charge( p ) = Z;
+        }
+        // if charge is not integer, then particles can have two different charges
+    } else {
+        int tot = 0, Nm, Np;
+        double rr=r/( 1.-r ), diff;
+        Np = ( int )round( r*( double )nPart );
+        Nm = ( int )nPart - Np;
+        for( unsigned int p = iPart; p<iPart+nPart; p++ ) {
+            if( Np > rr*Nm ) {
+                particles->charge( p ) = Z+1;
+                Np--;
+            } else {
+                particles->charge( p ) = Z;
+                Nm--;
+            }
+            tot += particles->charge( p );
+        }
+        diff = q - ( ( double )tot )/( ( double )nPart ); // missing charge
+        if( diff != 0. ) {
+            WARNING( "Could not match exactly charge="<<q<<" for species "<< species->name
+                  << " (difference of "<<diff<<"). Try to add particles." );
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
 //! Provides a Maxwell-Juttner distribution of energies
+// ---------------------------------------------------------------------------------------------------------------------
 vector<double> CreateParticles::maxwellJuttner( Species * species, unsigned int npoints, double temperature )
 {
     if( temperature==0. ) {

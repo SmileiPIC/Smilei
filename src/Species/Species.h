@@ -276,6 +276,9 @@ public:
     //! Minimum momentum value in log scale
     double merge_min_momentum_log_scale_;
 
+    //! Local minimum of MPI domain
+    double min_loc;
+
     // -----------------------------------------------------------------------------
     //  4. Operators
 
@@ -553,7 +556,7 @@ public:
 
     //! Method to create new particles.
     int  createParticles2( Particles * particles,
-                           Species * species, 
+                           Species * species,
                            std::vector<unsigned int> n_space_to_create, Params &params, Patch *patch, int new_bin_idx );
 
     //! Method to import particles in this species while conserving the sorting among bins
@@ -597,9 +600,6 @@ private:
 
     //! Parameter used when defining the Maxwell-Juettner function (corresponds to a discretization step in energy)
 //    double dE;
-
-    //! Local minimum of MPI domain
-    double min_loc;
 
     //! Samples npoints values of energies in a Maxwell-Juttner distribution
     std::vector<double> maxwellJuttner( unsigned int npoints, double temperature );

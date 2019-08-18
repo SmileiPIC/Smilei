@@ -19,6 +19,7 @@
 #include "SimWindow.h"
 #include "Timers.h"
 #include "RadiationTables.h"
+#include "CreateParticles.h"
 
 class Field;
 class Timer;

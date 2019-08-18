@@ -538,10 +538,10 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                 
                 if ( patch->isXmin() && patch->vecParticleInjector[i_injector]->isXmin() ) {
                     particle_index[i_injector] = previous_particle_number_per_species[iSpecies];
-                    species( ipatch, iSpecies )->createParticles2( species( ipatch, iSpecies )->particles, species( ipatch, iSpecies ), init_space, params, patch, 0 );
+                    CreateParticles::create( species( ipatch, iSpecies )->particles, species( ipatch, iSpecies ), init_space, params, patch, 0 );
                 } else if ( patch->isXmax() && patch->vecParticleInjector[i_injector]->isXmax() ) {
                     particle_index[i_injector] = previous_particle_number_per_species[iSpecies];
-                    species( ipatch, iSpecies )->createParticles2( species( ipatch, iSpecies )->particles, species( ipatch, iSpecies ), init_space, params, patch, params.n_space[0]-1 );
+                    CreateParticles::create( species( ipatch, iSpecies )->particles, species( ipatch, iSpecies ), init_space, params, patch, params.n_space[0]-1 );
                 }
             }
 

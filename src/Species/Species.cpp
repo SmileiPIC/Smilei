@@ -1930,10 +1930,10 @@ int Species::createParticles2( Particles * particles,
             }
         }
     }
+    
     // ---------------------------------------------------------
     // Calculate density and number of particles for the species
     // ---------------------------------------------------------
-
 
     // field containing the charge distribution (always 3d)
     Field3D charge( n_space_to_create_generalized );
@@ -2131,18 +2131,18 @@ int Species::createParticles2( Particles * particles,
                             }
                         }
                         if( !position_initialization_on_species ) {
-                            CreateParticles::createPosition( this->position_initialization, this->particles, this, nPart, iPart, indexes, params );
+                            CreateParticles::createPosition( species->position_initialization, particles, species, nPart, iPart, indexes, params );
                         }
-                        initMomentum( nPart, iPart, temp, vel );
-                        initWeight( nPart, iPart, density( i, j, k ) );
+                        CreateParticles::createMomentum( species->momentum_initialization, particles, species,  nPart, iPart, temp, vel );
+                        CreateParticles::createWeight( particles, nPart, iPart, density( i, j, k ) );
 
-                        if( params.geometry=="AMcylindrical" && position_initialization == "regular" ) {
+                        if( params.geometry=="AMcylindrical" && species->position_initialization == "regular" ) {
                             //Particles in regular have a weight proportional to their position along r.
                             for (unsigned int ipart=iPart; ipart < iPart+nPart; ipart++){
                                 particles->weight(ipart) *= sqrt(particles->position(1,ipart)*particles->position(1,ipart) + particles->position(2,ipart)*particles->position(2,ipart));
                             }
                         }
-                        initCharge( nPart, iPart, charge( i, j, k ) );
+                        CreateParticles::createCharge( particles, species, nPart, iPart, charge( i, j, k ) );
 
                         //if (n_existing_particles) {
                         //    // operate filter
