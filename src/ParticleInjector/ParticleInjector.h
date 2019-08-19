@@ -42,6 +42,12 @@ public:
     //! position initialization of the injector
     std::string position_initialization_;
 
+    //! Boolean to know if we initialize particles with positions of another injector
+    bool position_initialization_on_injector_;
+    
+    //! Index of the species where position initialization is made
+    int position_initialization_on_injector_index_;
+
     // -----------------------------------------------------------------------------
     //  3. Methods
 

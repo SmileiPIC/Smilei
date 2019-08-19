@@ -63,7 +63,8 @@ public:
             }
         }
         if (!species_defined) {
-            ERROR( "For particle injector "<< injector_name << " (# " << injector_index << "), the specified species does not exist (" << species_name << ")" );
+            ERROR( "For particle injector "<< injector_name
+            << " (# " << injector_index << "), the specified species does not exist (" << species_name << ")" );
         } else {
             MESSAGE( 2, "> Associated species: " << species_name << " (of index "<< species_number << ")");
         }
@@ -95,7 +96,24 @@ public:
         thisParticleInjector->species_name_ = species_name;
         thisParticleInjector->species_number_ = species_number;
         thisParticleInjector->box_side_ = box_side;
-        
+        thisParticleInjector->position_initialization_on_injector_= false;
+
+        // Read the position initialization
+        PyTools::extract( "position_initialization", thisParticleInjector->position_initialization_, "ParticleInjector", injector_index );
+        if ( thisParticleInjector->position_initialization_=="species" || thisParticleInjector->position_initialization_=="") {
+            MESSAGE( 2, "> Position initialization defined as the species.");
+            thisParticleInjector->position_initialization_ = vecSpecies[thisParticleInjector->species_number_]->position_initialization;
+        } else if( ( thisParticleInjector->position_initialization_!="regular" )
+                   &&( thisParticleInjector->position_initialization_!="random" )
+                   &&( thisParticleInjector->position_initialization_!="centered" ) ) {
+            thisParticleInjector->position_initialization_on_injector_=true;
+            //ERROR("For particle injector " << injector_name << ", position initialization not or badly specified.");
+        }
+
+        if( patch->isMaster() ) {
+            MESSAGE( 2, "> Position initialization: " << thisParticleInjector->position_initialization_);
+        }
+
         return thisParticleInjector;
         
     }
@@ -121,6 +139,28 @@ public:
             vecParticleInjector.push_back( thisParticleInjector );
         }
         
+        // Prepare injector with position initialization from another injector
+        for( unsigned int i_inj = 0; i_inj < vecParticleInjector.size(); i_inj++ ) {
+            // if we need another injector to initialize the positions...
+            if (vecParticleInjector[i_inj]->position_initialization_on_injector_) {
+                if( vecParticleInjector[i_inj]->position_initialization_==vecParticleInjector[i_inj]->name_ ) {
+                    ERROR( "For injector '"<<vecParticleInjector[i_inj]->name_<<"' `position_initialization` can not be the same injector." );
+                }
+                // We look for this injector in the list
+                for( unsigned int i = 0; i < vecParticleInjector.size(); i++ ) {
+                    if (vecParticleInjector[i]->name_ == vecParticleInjector[i_inj]->position_initialization_) {
+                        if( vecParticleInjector[i]->position_initialization_on_injector_ ) {
+                            ERROR( "For injector '"<< vecParticleInjector[i]->name_
+                                                   << "' position_initialization must be 'centered', 'regular' or 'random' (pre-defined position) in order to attach '"
+                                                   << vecParticleInjector[i]->name_<<"' to its initial position." );
+                        }
+                        // We copy ispec2 which is the index of the species, already created, on which initialize particle of the new created species
+                        vecParticleInjector[i_inj]->position_initialization_on_injector_index_=i;
+                    }
+                }
+            }
+        }
+        
         return vecParticleInjector;
     }
     
@@ -135,6 +175,9 @@ public:
         newParticleInjector->species_name_    = particleInjector->species_name_;
         newParticleInjector->species_number_  = particleInjector->species_number_;
         newParticleInjector->box_side_        = particleInjector->box_side_;
+        newParticleInjector->position_initialization_                   = particleInjector->position_initialization_;
+        newParticleInjector->position_initialization_on_injector_       = particleInjector->position_initialization_on_injector_;
+        newParticleInjector->position_initialization_on_injector_index_ = particleInjector->position_initialization_on_injector_index_;
         
         return newParticleInjector;
         

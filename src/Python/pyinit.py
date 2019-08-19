@@ -393,7 +393,9 @@ class ParticleInjector(SmileiComponent):
     name = None,
     species = None,
     box_side = "xmin"
-
+    position_initialization = "species"
+    momentum_initialization = ""
+    
 class Laser(SmileiComponent):
     """Laser parameters"""
     box_side = "xmin"

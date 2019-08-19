@@ -536,16 +536,21 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                 
                 // cerr << "Number of particles: " << previous_particle_number_per_species[iSpecies] << endl;
                 
+                // Structure for the particle properties
+                struct particles_creator particles_creator;
+                particles_creator.position_initialization_ = patch->vecParticleInjector[i_injector]->position_initialization_;
+                particles_creator.position_initialization_on_species_ = patch->vecParticleInjector[i_injector]->position_initialization_on_injector_;
+                
                 if ( patch->isXmin() && patch->vecParticleInjector[i_injector]->isXmin() ) {
                     particle_index[i_injector] = previous_particle_number_per_species[iSpecies];
-                    CreateParticles::create( species( ipatch, iSpecies )->particles, species( ipatch, iSpecies ), init_space, params, patch, 0 );
+                    CreateParticles::create( particles_creator, species( ipatch, iSpecies )->particles, species( ipatch, iSpecies ), init_space, params, patch, 0 );
                 } else if ( patch->isXmax() && patch->vecParticleInjector[i_injector]->isXmax() ) {
                     particle_index[i_injector] = previous_particle_number_per_species[iSpecies];
-                    CreateParticles::create( species( ipatch, iSpecies )->particles, species( ipatch, iSpecies ), init_space, params, patch, params.n_space[0]-1 );
+                    CreateParticles::create( particles_creator, species( ipatch, iSpecies )->particles, species( ipatch, iSpecies ), init_space, params, patch, params.n_space[0]-1 );
                 }
             }
 
-            // cerr << "Shift" << endl;
+            //cerr << "Shift" << endl;
 
             // Shift to update the positions
             double position_shift[3];
@@ -589,20 +594,19 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                 // Pointer to simplify the code
                 Particles* particles = species( ipatch, i_species_1 )->particles;
                 
+                //cerr << patch->vecParticleInjector[i_injector]->position_initialization_on_injector_ << endl;
+                
                 // Particle created at the same position of another species
-                if (species( ipatch, i_species_1 )->position_initialization_on_species==true) {
-                    // Loop on species again to find the corresponding one for position copy
-                    // Normally, the number of created particles is the same (= new_particle_number - previous_particle_number_per_species[i_species_1])
-                    // Normally, misleading configurations have already been tested at initialization
-                    for (unsigned int i_species_2=0 ; i_species_2<( *this )( ipatch )->vecSpecies.size() ; i_species_2++) {
-                        if( species( ipatch, i_species_1 )->position_initialization == species( ipatch, i_species_2 )->name ) {
-                            for (int i=0; i< params.nDim_field; i++) {
-                                #pragma omp simd
-                                for ( int ip = 0; ip < new_particle_number - previous_particle_number_per_species[i_species_1]; ip++ ) {
-                                    particles->Position[i][previous_particle_number_per_species[i_species_1] + ip] =
-                                    particles->Position[i][previous_particle_number_per_species[i_species_2] + ip];
-                                }
-                            }
+                if (patch->vecParticleInjector[i_injector]->position_initialization_on_injector_) {
+
+                    unsigned int i_injector_2 = patch->vecParticleInjector[i_injector]->position_initialization_on_injector_index_;
+                    unsigned int i_species_2 = patch->vecParticleInjector[i_injector_2]->getSpeciesNumber();
+                    
+                    for (int i=0; i< params.nDim_field; i++) {
+                        #pragma omp simd
+                        for ( int ip = 0; ip < new_particle_number - previous_particle_number_per_species[i_species_1]; ip++ ) {
+                            particles->Position[i][previous_particle_number_per_species[i_species_1] + ip] =
+                            particles->Position[i][previous_particle_number_per_species[i_species_2] + ip];
                         }
                     }
                 // Particle created on different positions
@@ -618,7 +622,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                 }
             }
             
-            // cerr << "Filter particles" << endl;
+            //cerr << "Filter particles" << endl;
             
             // Filter particles when initialized on different position
             for (int i_injector=0 ; i_injector<patch->vecParticleInjector.size() ; i_injector++) {

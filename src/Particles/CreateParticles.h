@@ -21,20 +21,32 @@
 
 using namespace std;
 
+//! Structure that contains particle properties for their creation
+struct particles_creator {
+    // Initialization with the positions of another species
+    bool position_initialization_on_species_;
+    // Position initialization type
+    string position_initialization_;
+};
+
 class CreateParticles
 {
 public:
+    
+    //! Constructor
     CreateParticles() {};
     
+    //! Destructor
     ~CreateParticles() {};
     
     //! Creation of the particle properties in the given particle vector `particles`
-    static int create( Particles * particles,
-                    Species * species,
-                    vector<unsigned int> n_space_to_create,
-                    Params &params,
-                    Patch *patch,
-                    int new_cell_idx );
+    static int create( struct particles_creator particle_creator,
+                       Particles * particles,
+                       Species * species,
+                       vector<unsigned int> n_space_to_create,
+                       Params &params,
+                       Patch *patch,
+                       int new_cell_idx );
     
     //! Creation of the particle positions
     static void createPosition( string position_initialization,
