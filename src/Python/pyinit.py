@@ -394,7 +394,9 @@ class ParticleInjector(SmileiComponent):
     species = None,
     box_side = "xmin"
     position_initialization = "species"
-    momentum_initialization = ""
+    momentum_initialization = "species"
+    mean_velocity = []  # Default value is     0, set in createParticles function
+    temperature = []    # Default value is 1e-10, set in createParticles function
     
 class Laser(SmileiComponent):
     """Laser parameters"""

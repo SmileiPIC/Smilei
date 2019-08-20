@@ -934,27 +934,34 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
       This option requires (1) that the *target* injector' positions are initialized
       using one of the three other options above.
 
+    By default, injector uses the parameters provided with :py:data:`species`.
+
 .. py:data:: momentum_initialization
 
     The method for initialization of particle momenta. Options are:
 
+    * ``"species"`` or empty ``""``: injector uses the option of the specified :py:data:`species`.
     * ``"maxwell-juettner"`` for a relativistic maxwellian (see :doc:`how it is done<maxwell-juttner>`)
     * ``"rectangular"`` for a rectangular distribution
+    
+    By default, injector uses the parameters provided with :py:data:`species`.
 
 .. py:data:: mean_velocity
 
     :type: a list of 3 floats or *python* functions (see section :ref:`profiles`)
 
     The initial drift velocity of the particles, in units of the speed of light :math:`c`.
+    By default, injector uses the parameters provided with :py:data:`species`.
 
     **WARNING**: For massless particles, this is actually the momentum in units of :math:`m_e c`.
 
 .. py:data:: temperature
 
-      :type: a list of 3 floats or *python* functions (see section :ref:`profiles`)
+    :type: a list of 3 floats or *python* functions (see section :ref:`profiles`)
 
-      The initial temperature of the particles, in units of :math:`m_ec^2`.
-
+    The initial temperature of the particles, in units of :math:`m_ec^2`.
+    By default, injector uses the parameters provided with :py:data:`species`.
+    
 .. _Particle_merging:
 
 Particle Merging

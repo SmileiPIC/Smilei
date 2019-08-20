@@ -5,6 +5,7 @@
 #include <string>
 
 #include "Params.h"
+#include "Profile.h"
 
 //! class ParticleInjector
 class ParticleInjector
@@ -42,11 +43,20 @@ public:
     //! position initialization of the injector
     std::string position_initialization_;
 
+    //! momentum initialization type, possible values: "cold" or "maxwell-juettner"
+    std::string momentum_initialization_;
+
     //! Boolean to know if we initialize particles with positions of another injector
     bool position_initialization_on_injector_;
     
     //! Index of the species where position initialization is made
     int position_initialization_on_injector_index_;
+
+    //! vector of velocity profiles (vx, vy, vz)
+    std::vector<Profile *> velocity_profile_;
+    
+    //! vector of temperature profiles (Tx, Ty, Tz)
+    std::vector<Profile *> temperature_profile_;
 
     // -----------------------------------------------------------------------------
     //  3. Methods

@@ -87,17 +87,18 @@ int CreateParticles::create( struct particles_creator particles_creator,
         }
         // Evaluate profiles
         for( unsigned int m=0; m<3; m++ ) {
-            if( species->temperatureProfile[m] ) {
-                species->temperatureProfile[m]->valuesAt( xyz, temperature[m] );
+            if( particles_creator.temperature_profile_[m] ) {
+                particles_creator.temperature_profile_[m]->valuesAt( xyz, temperature[m] );
             } else {
                 temperature[m].put_to( 0.0000000001 ); // default value
             }
 
-            if( species->velocityProfile[m] ) {
-                species->velocityProfile[m]   ->valuesAt( xyz, velocity   [m] );
+            if( particles_creator.velocity_profile_[m] ) {
+                particles_creator.velocity_profile_[m]   ->valuesAt( xyz, velocity   [m] );
             } else {
                 velocity[m].put_to( 0.0 ); //default value
             }
+            //cerr << "m: " << velocity[m](0,0,0) << " " << temperature[m](0,0,0) << endl;
         }
     } // end if momentum_initialization_array
     
@@ -220,6 +221,8 @@ int CreateParticles::create( struct particles_creator particles_creator,
                         temp[2] = temperature[2]( i, j, k );
                         nPart = n_part_in_cell( i, j, k );
                         
+                        //cerr << vel[0] << endl;
+                        
                         //if (n_existing_particles) {
                         //    iPart = n_existing_particles;
                         //    iPart = first_index[(new_cell_idx+i)/clrw];
@@ -242,7 +245,7 @@ int CreateParticles::create( struct particles_creator particles_creator,
                         if( !particles_creator.position_initialization_on_species_ ) {
                             CreateParticles::createPosition( particles_creator.position_initialization_, particles, species, nPart, iPart, indexes, params );
                         }
-                        CreateParticles::createMomentum( species->momentum_initialization, particles, species,  nPart, iPart, temp, vel );
+                        CreateParticles::createMomentum( particles_creator.momentum_initialization_, particles, species,  nPart, iPart, temp, vel );
                         CreateParticles::createWeight( particles, nPart, iPart, density( i, j, k ) );
 
                         if( params.geometry=="AMcylindrical" && particles_creator.position_initialization_ == "regular" ) {
@@ -366,7 +369,7 @@ int CreateParticles::create( struct particles_creator particles_creator,
                 temp[0] = temperature[0]( int_ijk[0], int_ijk[1], int_ijk[2] );
                 temp[1] = temperature[1]( int_ijk[0], int_ijk[1], int_ijk[2] );
                 temp[2] = temperature[2]( int_ijk[0], int_ijk[1], int_ijk[2] );
-                CreateParticles::createMomentum( species->momentum_initialization, particles, species, 1, ip, temp, vel );
+                CreateParticles::createMomentum( particles_creator.momentum_initialization_, particles, species, 1, ip, temp, vel );
             } else {
                 for( unsigned int idim=0; idim < 3; idim++ ) {
                     particles->momentum( idim, ip ) = momentum[idim][ippy]/species->mass ;
