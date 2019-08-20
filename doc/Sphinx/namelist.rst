@@ -886,6 +886,75 @@ Each species has to be defined in a ``Species`` block::
 
 ----
 
+.. _Particle_injector:
+
+Particle Injector
+^^^^^^^^^^^^^^^^^
+
+Injectors enable to inject macro-particles in the simulation domain from the boundaries.
+
+Each particle injector has to be defined in a ``ParticleInjector`` block::
+
+    ParticleInjector(
+        name      = "injector1",
+        species   = "electrons1",
+        box_side  = "xmin",
+        position_initialization = "species",
+        momentum_initialization = "species",
+        mean_velocity = [0.5,0.,0.],
+        temperature = [1e-30],
+    )
+
+.. py:data:: name
+
+    The name you want to give to this injector.
+    If you do not specify a name, it will be attributed automatically.
+    The name is useful if you want to inject particles at the same position of another injector.
+
+.. py:data:: species
+
+    The name of the species in which to inject the new particles
+
+.. py:data:: box_side
+
+    From where the macro-particles are injected. Options are:
+    
+    * ``"xmin"``
+    * ``"xmax"``
+    
+.. py:data:: position_initialization
+
+    The method for initialization of particle positions. Options are:
+
+    * ``"species"`` or empty ``""``: injector uses the option of the specified :py:data:`species`.
+    * ``"regular"`` for regularly spaced
+    * ``"random"`` for randomly distributed
+    * ``"centered"`` for centered in each cell
+    * The :py:data:`name` of another injector from which the positions are copied.
+      This option requires (1) that the *target* injector' positions are initialized
+      using one of the three other options above.
+
+.. py:data:: momentum_initialization
+
+    The method for initialization of particle momenta. Options are:
+
+    * ``"maxwell-juettner"`` for a relativistic maxwellian (see :doc:`how it is done<maxwell-juttner>`)
+    * ``"rectangular"`` for a rectangular distribution
+
+.. py:data:: mean_velocity
+
+    :type: a list of 3 floats or *python* functions (see section :ref:`profiles`)
+
+    The initial drift velocity of the particles, in units of the speed of light :math:`c`.
+
+    **WARNING**: For massless particles, this is actually the momentum in units of :math:`m_e c`.
+
+.. py:data:: temperature
+
+      :type: a list of 3 floats or *python* functions (see section :ref:`profiles`)
+
+      The initial temperature of the particles, in units of :math:`m_ec^2`.
+
 .. _Particle_merging:
 
 Particle Merging
