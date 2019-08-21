@@ -132,7 +132,7 @@ int CreateParticles::create( struct particles_creator particles_creator,
         npart_effective = my_particles_indices.size();
     } else {
         //Initialize density and ppc profiles
-        species->densityProfile->valuesAt( xyz, density );
+        particles_creator.density_profile_->valuesAt( xyz, density );
         species->ppcProfile    ->valuesAt( xyz, n_part_in_cell );
         weight_arr = NULL;
         //Now compute number of particles per cell
@@ -170,7 +170,7 @@ int CreateParticles::create( struct particles_creator particles_creator,
                     }
 
                     // assign density its correct value in the cell
-                    if( species->densityProfileType=="charge" ) {
+                    if( particles_creator.density_profile_type_=="charge" ) {
                         if( charge( i, j, k )==0. ) {
                             ERROR( "Encountered non-zero charge density and zero charge at the same location" );
                         }

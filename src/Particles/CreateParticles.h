@@ -18,22 +18,9 @@
 #include "Particles.h"
 #include "Species.h"
 #include "Field3D.h"
+#include "ParticleCreatorContainer.h"
 
 using namespace std;
-
-//! Structure that contains particle properties for their creation
-struct particles_creator {
-    // Initialization with the positions of another species
-    bool position_initialization_on_species_;
-    // Position initialization type
-    string position_initialization_;
-    // Momentum initialization type
-    string momentum_initialization_;
-    //! vector of velocity profiles (vx, vy, vz)
-    vector<Profile *> velocity_profile_;
-    //! vector of temperature profiles (Tx, Ty, Tz)
-    vector<Profile *> temperature_profile_;
-};
 
 class CreateParticles
 {

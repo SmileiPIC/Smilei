@@ -6,6 +6,7 @@
 
 #include "Params.h"
 #include "Profile.h"
+#include "ParticleCreatorContainer.h"
 
 //! class ParticleInjector
 class ParticleInjector
@@ -58,6 +59,12 @@ public:
     //! vector of temperature profiles (Tx, Ty, Tz)
     std::vector<Profile *> temperature_profile_;
 
+    //! Type of density profile ("nb" or "charge")
+    std::string density_profile_type_;
+
+    //! density profile
+    Profile *density_profile_;
+
     // -----------------------------------------------------------------------------
     //  3. Methods
 
@@ -78,6 +85,9 @@ public:
     {
         return (box_side_ == "xmax");
     }
+
+    //! Return the particle_creator structure from the properties of the injector
+    struct particles_creator getParticlesCreator ();
 
 };
 

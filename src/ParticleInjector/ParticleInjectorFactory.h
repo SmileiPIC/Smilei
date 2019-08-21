@@ -14,7 +14,7 @@
 
 #include "Params.h"
 #include "Patch.h"
-
+#include "Species.h"
 #include "Tools.h"
 
 class ParticleInjectorFactory
@@ -91,6 +91,7 @@ public:
             MESSAGE( 2, "> Injection from from the side: " << box_side);
         }
             
+        // Creation of the injector object
         this_particle_injector = new ParticleInjector(params, patch);
         
         this_particle_injector->name_ = injector_name;
@@ -98,12 +99,15 @@ public:
         this_particle_injector->species_number_ = species_number;
         this_particle_injector->box_side_ = box_side;
         this_particle_injector->position_initialization_on_injector_= false;
+        
+        // Shortcut pointer to the associated species
+        Species * species = species_vector[this_particle_injector->species_number_];
 
         // Read the position initialization
         PyTools::extract( "position_initialization", this_particle_injector->position_initialization_, "ParticleInjector", injector_index );
         if ( this_particle_injector->position_initialization_=="species" || this_particle_injector->position_initialization_=="") {
             MESSAGE( 2, "> Position initialization defined as the species.");
-            this_particle_injector->position_initialization_ = species_vector[this_particle_injector->species_number_]->position_initialization;
+            this_particle_injector->position_initialization_ = species->position_initialization;
         } else if( ( this_particle_injector->position_initialization_!="regular" )
                    &&( this_particle_injector->position_initialization_!="random" )
                    &&( this_particle_injector->position_initialization_!="centered" ) ) {
@@ -122,7 +126,7 @@ public:
         }
         if ( this_particle_injector->momentum_initialization_=="species" || this_particle_injector->momentum_initialization_=="") {
             MESSAGE( 2, "> Momentum initialization defined as the species.");
-            this_particle_injector->momentum_initialization_ = species_vector[this_particle_injector->species_number_]->momentum_initialization;
+            this_particle_injector->momentum_initialization_ = species->momentum_initialization;
         }
         // Matter particles
         if( species_vector[this_particle_injector->species_number_]->mass > 0 ) {
@@ -155,43 +159,86 @@ public:
         PyObject *profile1( nullptr ), *profile2( nullptr ), *profile3( nullptr );
         
         // Mean velocity
-        std::vector<double> mean_velocity_input;
-        if( PyTools::extract( "mean_velocity", mean_velocity_input, "ParticleInjector", injector_index) ) {
-            PyTools::extract3Profiles( "mean_velocity", injector_index, profile1, profile2, profile3 );
+        // std::vector<double> mean_velocity_input;
+        if( PyTools::extract3Profiles( "mean_velocity", injector_index, profile1, profile2, profile3 ) ) {
             this_particle_injector->velocity_profile_[0] = new Profile( profile1, params.nDim_field, Tools::merge( "mean_velocity[0] ", this_particle_injector->name_ ), true );
             this_particle_injector->velocity_profile_[1] = new Profile( profile2, params.nDim_field, Tools::merge( "mean_velocity[1] ", this_particle_injector->name_ ), true );
             this_particle_injector->velocity_profile_[2] = new Profile( profile3, params.nDim_field, Tools::merge( "mean_velocity[2] ", this_particle_injector->name_ ), true );
-            string message =  "> Mean velocity: ";
-            for (unsigned int i = 0 ; i < mean_velocity_input.size()-1 ; i++) {
-                message += to_string(mean_velocity_input[i]) + ", ";
-            }
-            message += to_string(mean_velocity_input[mean_velocity_input.size()-1]);
-            MESSAGE(2, message);
+            // string message =  "> Mean velocity: ";
+            // for (unsigned int i = 0 ; i < mean_velocity_input.size()-1 ; i++) {
+            //     message += to_string(mean_velocity_input[i]) + ", ";
+            // }
+            // message += to_string(mean_velocity_input[mean_velocity_input.size()-1]);
+            // MESSAGE(2, message);
         } else {
             MESSAGE( 2, "> Mean velocity defined as the species.");
-            this_particle_injector->velocity_profile_[0] = new Profile(species_vector[this_particle_injector->species_number_]->velocityProfile[0]);
-            this_particle_injector->velocity_profile_[1] = new Profile(species_vector[this_particle_injector->species_number_]->velocityProfile[1]);
-            this_particle_injector->velocity_profile_[2] = new Profile(species_vector[this_particle_injector->species_number_]->velocityProfile[2]);
+            this_particle_injector->velocity_profile_[0] = new Profile(species->velocityProfile[0]);
+            this_particle_injector->velocity_profile_[1] = new Profile(species->velocityProfile[1]);
+            this_particle_injector->velocity_profile_[2] = new Profile(species->velocityProfile[2]);
         }
         
         // Temperature
-        std::vector<double> temperature_input;
-        if( PyTools::extract( "temperature", temperature_input, "ParticleInjector", injector_index) ) {
-            PyTools::extract3Profiles( "temperature", injector_index, profile1, profile2, profile3 );
+        // std::vector<double> temperature_input;
+        if( PyTools::extract3Profiles( "temperature", injector_index, profile1, profile2, profile3 ) ) {
             this_particle_injector->temperature_profile_[0] = new Profile( profile1, params.nDim_field, Tools::merge( "temperature[0] ", this_particle_injector->name_ ), true );
             this_particle_injector->temperature_profile_[1] = new Profile( profile2, params.nDim_field, Tools::merge( "temperature[1] ", this_particle_injector->name_  ), true );
             this_particle_injector->temperature_profile_[2] = new Profile( profile3, params.nDim_field, Tools::merge( "temperature[2] ", this_particle_injector->name_  ), true );
-            string message =  "> Temperature: ";
-            for (unsigned int i = 0 ; i < temperature_input.size()-1 ; i++) {
-                message += to_string(temperature_input[i]) + ", ";
-            }
-            message += to_string(temperature_input[temperature_input.size()-1]);
-            MESSAGE(2, message);
+            // string message =  "> Temperature: ";
+            // for (unsigned int i = 0 ; i < temperature_input.size()-1 ; i++) {
+            //     message += to_string(temperature_input[i]) + ", ";
+            // }
+            // message += to_string(temperature_input[temperature_input.size()-1]);
+            // MESSAGE(2, message);
         } else {
             MESSAGE( 2, "> Temperature defined as the species.");
-            this_particle_injector->temperature_profile_[0] = new Profile(species_vector[this_particle_injector->species_number_]->temperatureProfile[0]);
-            this_particle_injector->temperature_profile_[1] = new Profile(species_vector[this_particle_injector->species_number_]->temperatureProfile[1]);
-            this_particle_injector->temperature_profile_[2] = new Profile(species_vector[this_particle_injector->species_number_]->temperatureProfile[2]);
+            this_particle_injector->temperature_profile_[0] = new Profile(species->temperatureProfile[0]);
+            this_particle_injector->temperature_profile_[1] = new Profile(species->temperatureProfile[1]);
+            this_particle_injector->temperature_profile_[2] = new Profile(species->temperatureProfile[2]);
+        }
+
+        // We read the density profile specific for the injector
+        // If nothing specified, similar to the species
+        // First for mass particles:
+        bool ok1, ok2;
+        if( species->mass > 0 ) {
+            ok1 = PyTools::extract_pyProfile( "number_density", profile1, "ParticleInjector", injector_index );
+            ok2 = PyTools::extract_pyProfile( "charge_density", profile1, "ParticleInjector", injector_index );
+            if (ok1 && ok2) {
+                ERROR( "For injector '" << this_particle_injector->name_ << "', cannot define both `number_density ` and `charge_density`." );
+            } else if( !ok1 && !ok2 ) {
+                this_particle_injector->density_profile_type_ = species->densityProfileType;
+                if (species->densityProfileType == "nb") {
+                    MESSAGE( 2, "> Number density profile defined as the species.");
+                } else if (species->densityProfileType == "charge") {
+                    MESSAGE( 2, "> Charge density profile defined as the species.");
+                }
+                this_particle_injector->density_profile_ = species->densityProfile;
+            } else {
+                if( ok1 ) {
+                    this_particle_injector->density_profile_type_ = "nb";
+                }
+                if( ok2 ) {
+                    this_particle_injector->density_profile_type_ = "charge";
+                }
+                this_particle_injector->density_profile_ = new Profile( profile1, params.nDim_field, Tools::merge( this_particle_injector->density_profile_type_, "_density ", injector_name ), true );
+            }
+        }
+        // Photons
+        else if( species->mass == 0 ) {
+            ok1 = PyTools::extract_pyProfile( "number_density", profile1, "ParticleInjector", injector_index );
+            ok2 = PyTools::extract_pyProfile( "charge_density", profile1, "ParticleInjector", injector_index );
+            if( ok2 ) {
+                ERROR( "For photon injector '" << injector_name << "', `charge_density` has no meaning."
+                        << "You must use `number_density`." );
+            }
+            if( !ok1 ) {
+                species->densityProfileType = "nb";
+                this_particle_injector->density_profile_ = species->densityProfile;
+                MESSAGE( 2, "> Number density profile defined as the species.");
+            } else {
+                species->densityProfileType = "nb";
+                this_particle_injector->density_profile_ = new Profile( profile1, params.nDim_field, Tools::merge( this_particle_injector->density_profile_type_, "_density ", injector_name ), true );
+            }
         }
 
         return this_particle_injector;
@@ -275,6 +322,9 @@ public:
             new_particle_injector->temperature_profile_[1]                = new Profile( particle_injector->temperature_profile_[1] );
             new_particle_injector->temperature_profile_[2]                = new Profile( particle_injector->temperature_profile_[2] );
         }
+        
+        new_particle_injector->density_profile_type_ = particle_injector->density_profile_type_;
+        new_particle_injector->density_profile_     = new Profile( particle_injector->density_profile_ );
         
         return new_particle_injector;
         

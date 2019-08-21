@@ -103,7 +103,12 @@ def _smilei_check():
         l.time_envelope   = toTimeProfile( l.time_envelope )
         l.space_envelope  = [ toSpaceProfile(p) for p in l.space_envelope ]
         l.phase           = [ toSpaceProfile(p) for p in l.phase          ]
-    
+    for s in ParticleInjector:
+        s.number_density      = toSpaceProfile(s.number_density      )
+        s.charge_density  = toSpaceProfile(s.charge_density  )
+        s.particles_per_cell = toSpaceProfile(s.particles_per_cell )
+        s.mean_velocity   = [ toSpaceProfile(p) for p in s.mean_velocity ]
+        s.temperature     = [ toSpaceProfile(p) for p in s.temperature   ]
 # this function will be called after initialising the simulation, just before entering the time loop
 # if it returns false, the code will call a Py_Finalize();
 def _keep_python_running():
@@ -141,7 +146,7 @@ def _keep_python_running():
     for s in Species:
         if s.ionization_rate is not None:
             return True
-    # else False 
+    # else False
     return False
 
 # Prevent creating new components (by mistake)
