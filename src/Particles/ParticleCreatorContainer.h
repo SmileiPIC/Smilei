@@ -29,6 +29,8 @@ struct particles_creator {
     Profile * density_profile_;
     //! Type of profile
     std::string density_profile_type_;
+    //! Time profile
+    Profile * time_profile_;
 };
 
 #endif

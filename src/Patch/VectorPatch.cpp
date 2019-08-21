@@ -495,7 +495,7 @@ void VectorPatch::cleanParticlesOverhead(Params &params, Timers &timers, int iti
 }
 
 //! Particle injection from the boundaries
-void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, int itime )
+void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, unsigned int itime )
 {
         
     timers.particleInjection.restart();
@@ -549,10 +549,12 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                 
                 if ( patch->isXmin() && particle_injector->isXmin() ) {
                     particle_index[i_injector] = previous_particle_number_per_species[iSpecies];
-                    CreateParticles::create( particles_creator, species( ipatch, iSpecies )->particles, species( ipatch, iSpecies ), init_space, params, patch, 0 );
+                    CreateParticles::create( particles_creator, species( ipatch, iSpecies )->particles, species( ipatch, iSpecies ),
+                                             init_space, params, patch, 0, itime );
                 } else if ( patch->isXmax() && particle_injector->isXmax() ) {
                     particle_index[i_injector] = previous_particle_number_per_species[iSpecies];
-                    CreateParticles::create( particles_creator, species( ipatch, iSpecies )->particles, species( ipatch, iSpecies ), init_space, params, patch, params.n_space[0]-1 );
+                    CreateParticles::create( particles_creator, species( ipatch, iSpecies )->particles, species( ipatch, iSpecies ),
+                                             init_space, params, patch, params.n_space[0]-1, itime);
                 }
             }
 
@@ -706,9 +708,8 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     }
                 } // end loop on particles
             } // end for ispecies
-        } // end for ipatch
-        
-    } // Test patch at boundary
+        } // Test patch at boundary
+    } // end for ipatch
     
     timers.particleInjection.update( params.printNow( itime ) );
 }

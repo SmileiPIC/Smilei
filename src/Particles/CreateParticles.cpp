@@ -21,7 +21,8 @@ int CreateParticles::create( struct particles_creator particles_creator,
                              vector<unsigned int> n_space_to_create,
                              Params &params,
                              Patch *patch,
-                             int new_cell_idx )
+                             int new_cell_idx,
+                             unsigned int itime)
 {
     
     // n_space_to_create_generalized = n_space_to_create, + copy of 2nd direction data among 3rd direction
@@ -177,6 +178,11 @@ int CreateParticles::create( struct particles_creator particles_creator,
                         density( i, j, k ) /= charge( i, j, k );
                     }
                     density( i, j, k ) = abs( density( i, j, k ) );
+                    
+                    // Take into account the time profile
+                    double amplitude = particles_creator.time_profile_->valueAt(itime*params.timestep);
+                    density( i, j, k ) *= amplitude;
+                    
                     // multiply by the cell volume
                     density( i, j, k ) *= params.cell_volume;
                     if( params.geometry=="AMcylindrical" && particles_creator.position_initialization_ != "regular" ) {

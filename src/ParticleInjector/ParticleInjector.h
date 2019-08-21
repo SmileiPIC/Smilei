@@ -65,6 +65,9 @@ public:
     //! density profile
     Profile *density_profile_;
 
+    //! time profile
+    Profile *time_profile_;
+
     // -----------------------------------------------------------------------------
     //  3. Methods
 

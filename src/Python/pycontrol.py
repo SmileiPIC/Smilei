@@ -106,6 +106,7 @@ def _smilei_check():
     for s in ParticleInjector:
         s.number_density      = toSpaceProfile(s.number_density      )
         s.charge_density  = toSpaceProfile(s.charge_density  )
+        s.time_envelope  = toTimeProfile(s.time_envelope  )
         s.particles_per_cell = toSpaceProfile(s.particles_per_cell )
         s.mean_velocity   = [ toSpaceProfile(p) for p in s.mean_velocity ]
         s.temperature     = [ toSpaceProfile(p) for p in s.temperature   ]

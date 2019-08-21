@@ -400,6 +400,7 @@ class ParticleInjector(SmileiComponent):
     charge_density = None
     number_density = None
     particles_per_cell = None
+    time_envelope = 1
     
     
 class Laser(SmileiComponent):

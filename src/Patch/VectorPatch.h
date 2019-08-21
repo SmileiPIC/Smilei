@@ -134,7 +134,7 @@ public :
     void cleanParticlesOverhead(Params &params, Timers &timers, int itime );
                               
     //! Particle injection from the boundaries
-    void injectParticlesFromBoundaries( Params &params, Timers &timers, int itime );
+    void injectParticlesFromBoundaries( Params &params, Timers &timers, unsigned int itime );
                                       
     //! Computation of the total charge
     void computeCharge();

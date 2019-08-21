@@ -183,6 +183,7 @@ public:
             this_particle_injector->temperature_profile_[0] = new Profile( profile1, params.nDim_field, Tools::merge( "temperature[0] ", this_particle_injector->name_ ), true );
             this_particle_injector->temperature_profile_[1] = new Profile( profile2, params.nDim_field, Tools::merge( "temperature[1] ", this_particle_injector->name_  ), true );
             this_particle_injector->temperature_profile_[2] = new Profile( profile3, params.nDim_field, Tools::merge( "temperature[2] ", this_particle_injector->name_  ), true );
+            
             // string message =  "> Temperature: ";
             // for (unsigned int i = 0 ; i < temperature_input.size()-1 ; i++) {
             //     message += to_string(temperature_input[i]) + ", ";
@@ -220,7 +221,8 @@ public:
                 if( ok2 ) {
                     this_particle_injector->density_profile_type_ = "charge";
                 }
-                this_particle_injector->density_profile_ = new Profile( profile1, params.nDim_field, Tools::merge( this_particle_injector->density_profile_type_, "_density ", injector_name ), true );
+                this_particle_injector->density_profile_ =
+                new Profile( profile1, params.nDim_field, Tools::merge( this_particle_injector->density_profile_type_, "_density ", injector_name ), true );
             }
         }
         // Photons
@@ -237,9 +239,14 @@ public:
                 MESSAGE( 2, "> Number density profile defined as the species.");
             } else {
                 species->densityProfileType = "nb";
-                this_particle_injector->density_profile_ = new Profile( profile1, params.nDim_field, Tools::merge( this_particle_injector->density_profile_type_, "_density ", injector_name ), true );
+                this_particle_injector->density_profile_ =
+                new Profile( profile1, params.nDim_field, Tools::merge( this_particle_injector->density_profile_type_, "_density ", injector_name ), true );
             }
         }
+        
+        PyTools::extract_pyProfile( "time_envelope", profile1, "ParticleInjector", injector_index );
+        this_particle_injector->time_profile_ = new Profile( profile1, 1, Tools::merge( "time_profile_", injector_name ) );
+        MESSAGE( 2, "> Time profile: " << this_particle_injector->time_profile_->getInfo());
 
         return this_particle_injector;
         
@@ -325,6 +332,8 @@ public:
         
         new_particle_injector->density_profile_type_ = particle_injector->density_profile_type_;
         new_particle_injector->density_profile_     = new Profile( particle_injector->density_profile_ );
+        
+        new_particle_injector->time_profile_     = new Profile( particle_injector->time_profile_ );
         
         return new_particle_injector;
         

@@ -39,7 +39,8 @@ public:
                        vector<unsigned int> n_space_to_create,
                        Params &params,
                        Patch *patch,
-                       int new_cell_idx );
+                       int new_cell_idx,
+                       unsigned int itime );
     
     //! Creation of the particle positions
     static void createPosition( string position_initialization,
