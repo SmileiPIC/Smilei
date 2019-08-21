@@ -248,6 +248,18 @@ public:
         this_particle_injector->time_profile_ = new Profile( profile1, 1, Tools::merge( "time_profile_", injector_name ) );
         MESSAGE( 2, "> Time profile: " << this_particle_injector->time_profile_->getInfo());
 
+        // Number of particles per cell
+        if( !PyTools::extract_pyProfile( "particles_per_cell", profile1, "ParticleInjector", injector_index ) ) {
+            this_particle_injector->particles_per_cell_profile_ = species->ppcProfile;
+            MESSAGE( 2, "> Particles per cell defined as the associated species: "
+            << this_particle_injector->particles_per_cell_profile_->getInfo() << ".");
+        } else {
+            this_particle_injector->particles_per_cell_profile_ = new Profile( profile1, params.nDim_field,
+                                          Tools::merge( "particles_per_cell ", injector_name ), true );
+            MESSAGE( 2, "> Particles per cell profile: "
+            << this_particle_injector->particles_per_cell_profile_->getInfo() << ".");
+        }
+
         return this_particle_injector;
         
     }

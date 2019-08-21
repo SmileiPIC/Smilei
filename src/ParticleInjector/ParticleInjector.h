@@ -67,6 +67,9 @@ public:
 
     //! time profile
     Profile *time_profile_;
+    
+    //! Profile for the particles per cell
+    Profile *particles_per_cell_profile_;
 
     // -----------------------------------------------------------------------------
     //  3. Methods

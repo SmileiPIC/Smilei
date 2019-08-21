@@ -892,6 +892,7 @@ Particle Injector
 ^^^^^^^^^^^^^^^^^
 
 Injectors enable to inject macro-particles in the simulation domain from the boundaries.
+By default, some parameters that are not specified are inherited from the associated :py:data:`species`.
 
 Each particle injector has to be defined in a ``ParticleInjector`` block::
 
@@ -899,10 +900,16 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
         name      = "injector1",
         species   = "electrons1",
         box_side  = "xmin",
+        
+        # Parameters inherited from the associated `species` by default
+        
         position_initialization = "species",
-        momentum_initialization = "species",
+        momentum_initialization = "rectangular",
         mean_velocity = [0.5,0.,0.],
         temperature = [1e-30],
+        number_density = 1,
+        time_envelope = tgaussian(start=0, duration=10., order=4),
+        particles_per_cell = 16,
     )
 
 .. py:data:: name
@@ -951,7 +958,7 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
     :type: a list of 3 floats or *python* functions (see section :ref:`profiles`)
 
     The initial drift velocity of the particles, in units of the speed of light :math:`c`.
-    By default, injector uses the parameters provided with :py:data:`species`.
+    By default (nothing specified), injector uses the parameters provided with :py:data:`species`.
 
     **WARNING**: For massless particles, this is actually the momentum in units of :math:`m_e c`.
 
@@ -960,8 +967,29 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
     :type: a list of 3 floats or *python* functions (see section :ref:`profiles`)
 
     The initial temperature of the particles, in units of :math:`m_ec^2`.
-    By default, injector uses the parameters provided with :py:data:`species`.
+    By default (nothing specified), injector uses the parameters provided with :py:data:`species`.
     
+.. py:data:: particles_per_cell
+
+    :type: float or *python* function (see section :ref:`profiles`)
+
+    The number of particles per cell to use for the injector.
+    
+.. py:data:: number_density
+             charge_density
+
+    :type: float or *python* function (see section :ref:`profiles`)
+
+    The absolute value of the number density or charge density (choose one only)
+    of the particle distribution, in units of the reference density :math:`N_r` (see :doc:`units`)
+    
+.. py:data:: time_envelope
+
+    :type: a *python* function or a :ref:`time profile <profiles>`
+    :default:  ``tconstant()``
+
+    The temporal envelope of the injector.
+     
 .. _Particle_merging:
 
 Particle Merging
@@ -1082,14 +1110,14 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
         space_time_profile = [ By_profile, Bz_profile ]
     )
 
-  .. py:data:: box_side
+.. py:data:: box_side
 
     :default: ``"xmin"``
 
     Side of the box from which the laser originates: at the moment, only ``"xmin"`` and
     ``"xmax"`` are supported.
 
-  .. py:data:: space_time_profile
+.. py:data:: space_time_profile
 
     :type: A list of two *python* functions
 
