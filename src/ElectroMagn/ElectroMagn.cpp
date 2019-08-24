@@ -293,9 +293,9 @@ ElectroMagn::~ElectroMagn()
         antenna->field=NULL;
     }
 
-//    	#pragma omp single
 //     for ( unsigned int iExt = 0 ; iExt < extTimeFields.size() ; iExt++ ) {
 //     	delete extTimeFields[iExt].savedField;
+//     	#pragma omp single
 //         if (extTimeFields[iExt].profile!=NULL) {
 // 	    	delete extTimeFields[iExt].profile;
 // 	    }
