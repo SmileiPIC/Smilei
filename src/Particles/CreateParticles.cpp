@@ -15,7 +15,7 @@
 //! \param n_space_to_create
 //! \param params : general parameters
 // ---------------------------------------------------------------------------------------------------------------------
-int CreateParticles::create( struct particles_creator particles_creator,
+int CreateParticles::create( struct particles_creator * particles_creator,
                              Particles * particles,
                              Species * species,
                              vector<unsigned int> n_space_to_create,
@@ -88,18 +88,19 @@ int CreateParticles::create( struct particles_creator particles_creator,
         }
         // Evaluate profiles
         for( unsigned int m=0; m<3; m++ ) {
-            if( particles_creator.temperature_profile_[m] ) {
-                particles_creator.temperature_profile_[m]->valuesAt( xyz, temperature[m] );
+            if( particles_creator->temperature_profile_[m] ) {
+                particles_creator->temperature_profile_[m]->valuesAt( xyz, temperature[m] );
             } else {
                 temperature[m].put_to( 0.0000000001 ); // default value
             }
 
-            if( particles_creator.velocity_profile_[m] ) {
-                particles_creator.velocity_profile_[m]   ->valuesAt( xyz, velocity   [m] );
+            if( particles_creator->velocity_profile_[m] ) {
+                particles_creator->velocity_profile_[m]   ->valuesAt( xyz, velocity   [m] );
             } else {
                 velocity[m].put_to( 0.0 ); //default value
             }
-            //cerr << "m: " << velocity[m](0,0,0) << " " << temperature[m](0,0,0) << endl;
+            // cerr << species->name
+            //      << " Velocity[m] : " << velocity[m](0,0,0) << " Temperature[m]: " << temperature[m](0,0,0) << endl;
         }
     } // end if momentum_initialization_array
     
@@ -133,8 +134,8 @@ int CreateParticles::create( struct particles_creator particles_creator,
         npart_effective = my_particles_indices.size();
     } else {
         //Initialize density and ppc profiles
-        particles_creator.density_profile_->valuesAt( xyz, density );
-        particles_creator.particles_per_cell_profile_->valuesAt( xyz, n_part_in_cell );
+        particles_creator->density_profile_->valuesAt( xyz, density );
+        particles_creator->particles_per_cell_profile_->valuesAt( xyz, n_part_in_cell );
         weight_arr = NULL;
         //Now compute number of particles per cell
         double remainder, nppc;
@@ -171,7 +172,7 @@ int CreateParticles::create( struct particles_creator particles_creator,
                     }
 
                     // assign density its correct value in the cell
-                    if( particles_creator.density_profile_type_=="charge" ) {
+                    if( particles_creator->density_profile_type_=="charge" ) {
                         if( charge( i, j, k )==0. ) {
                             ERROR( "Encountered non-zero charge density and zero charge at the same location" );
                         }
@@ -180,12 +181,12 @@ int CreateParticles::create( struct particles_creator particles_creator,
                     density( i, j, k ) = abs( density( i, j, k ) );
                     
                     // Take into account the time profile
-                    double amplitude = particles_creator.time_profile_->valueAt(itime*params.timestep);
+                    double amplitude = particles_creator->time_profile_->valueAt(itime*params.timestep);
                     density( i, j, k ) *= amplitude;
                     
                     // multiply by the cell volume
                     density( i, j, k ) *= params.cell_volume;
-                    if( params.geometry=="AMcylindrical" && particles_creator.position_initialization_ != "regular" ) {
+                    if( params.geometry=="AMcylindrical" && particles_creator->position_initialization_ != "regular" ) {
                         //Particles weight in regular is normalized later.
                         density( i, j, k ) *= ( *xyz[1] )( i, j, k );
                     }
@@ -199,6 +200,9 @@ int CreateParticles::create( struct particles_creator particles_creator,
     }
     
     unsigned int n_existing_particles = particles->size();
+    
+    cerr << "Existing particles: " << n_existing_particles << " " << npart_effective << endl;
+    
     //if (!n_existing_particles)
     particles->initialize( n_existing_particles+npart_effective, species->nDim_particle );
 
@@ -248,13 +252,13 @@ int CreateParticles::create( struct particles_creator particles_creator,
                                 indexes[2]=k*species->cell_length[2]+cell_position[2];
                             }
                         }
-                        if( !particles_creator.position_initialization_on_species_ ) {
-                            CreateParticles::createPosition( particles_creator.position_initialization_, particles, species, nPart, iPart, indexes, params );
+                        if( !particles_creator->position_initialization_on_species_ ) {
+                            CreateParticles::createPosition( particles_creator->position_initialization_, particles, species, nPart, iPart, indexes, params );
                         }
-                        CreateParticles::createMomentum( particles_creator.momentum_initialization_, particles, species,  nPart, iPart, temp, vel );
+                        CreateParticles::createMomentum( particles_creator->momentum_initialization_, particles, species,  nPart, iPart, temp, vel );
                         CreateParticles::createWeight( particles, nPart, iPart, density( i, j, k ) );
 
-                        if( params.geometry=="AMcylindrical" && particles_creator.position_initialization_ == "regular" ) {
+                        if( params.geometry=="AMcylindrical" && particles_creator->position_initialization_ == "regular" ) {
                             //Particles in regular have a weight proportional to their position along r.
                             for (unsigned int ipart=iPart; ipart < iPart+nPart; ipart++){
                                 particles->weight(ipart) *= sqrt(particles->position(1,ipart)*particles->position(1,ipart) + particles->position(2,ipart)*particles->position(2,ipart));
@@ -375,7 +379,7 @@ int CreateParticles::create( struct particles_creator particles_creator,
                 temp[0] = temperature[0]( int_ijk[0], int_ijk[1], int_ijk[2] );
                 temp[1] = temperature[1]( int_ijk[0], int_ijk[1], int_ijk[2] );
                 temp[2] = temperature[2]( int_ijk[0], int_ijk[1], int_ijk[2] );
-                CreateParticles::createMomentum( particles_creator.momentum_initialization_, particles, species, 1, ip, temp, vel );
+                CreateParticles::createMomentum( particles_creator->momentum_initialization_, particles, species, 1, ip, temp, vel );
             } else {
                 for( unsigned int idim=0; idim < 3; idim++ ) {
                     particles->momentum( idim, ip ) = momentum[idim][ippy]/species->mass ;

@@ -307,6 +307,11 @@ public:
             }
         }
         
+        // Particle creator
+        for( unsigned int i_inj = 0; i_inj < particle_injector_vector.size(); i_inj++ ) {
+            particle_injector_vector[i_inj]->getParticlesCreator();
+        }
+        
         return particle_injector_vector;
     }
     
@@ -348,6 +353,8 @@ public:
         new_particle_injector->time_profile_     = new Profile( particle_injector->time_profile_ );
         
         new_particle_injector->particles_per_cell_profile_ = new Profile( particle_injector->particles_per_cell_profile_ );
+        
+        new_particle_injector->particles_creator_ = particle_injector->particles_creator_;
         
         return new_particle_injector;
         

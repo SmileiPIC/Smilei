@@ -70,6 +70,9 @@ public:
     
     //! Profile for the particles per cell
     Profile *particles_per_cell_profile_;
+    
+    //! Particle Creator Container
+    struct particles_creator particles_creator_;
 
     // -----------------------------------------------------------------------------
     //  3. Methods
@@ -93,7 +96,7 @@ public:
     }
 
     //! Return the particle_creator structure from the properties of the injector
-    struct particles_creator getParticlesCreator ();
+    void getParticlesCreator ();
 
 };
 

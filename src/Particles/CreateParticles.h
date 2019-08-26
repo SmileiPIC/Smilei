@@ -33,7 +33,7 @@ public:
     ~CreateParticles() {};
     
     //! Creation of the particle properties in the given particle vector `particles`
-    static int create( struct particles_creator particle_creator,
+    static int create( struct particles_creator * particle_creator,
                        Particles * particles,
                        Species * species,
                        vector<unsigned int> n_space_to_create,

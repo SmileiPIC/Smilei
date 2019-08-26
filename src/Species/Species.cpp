@@ -1558,6 +1558,7 @@ int Species::createParticles( vector<unsigned int> n_space_to_create, Params &pa
             } else {
                 velocity[m].put_to( 0.0 ); //default value
             }
+            
         }
     }
     // Initialize charge profile
