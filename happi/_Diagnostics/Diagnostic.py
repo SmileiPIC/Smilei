@@ -209,9 +209,12 @@ class Diagnostic(object):
 		"""
 		try: axis_index = self._type.index(axis)
 		except: return []
-		factor = 1.
-		if axis_index == 1: factor = (self.options.xfactor or 1.) * self.units.xcoeff
-		if axis_index == 2: factor = (self.options.yfactor or 1.) * self.units.ycoeff
+		if   axis_index == 0:
+			factor = (self.options.xfactor or 1.) * self.units.xcoeff
+		elif axis_index == 1:
+			factor = (self.options.yfactor or 1.) * self.units.ycoeff
+		else:
+			factor, _ = self.units._convert(self._units[axis_index], None)
 		return factor * self._np.array(self._centers[axis_index])
 
 	# Method to obtain the data and the axes
