@@ -31,6 +31,9 @@ struct particles_creator {
     std::string density_profile_type_;
     //! Time profile
     Profile * time_profile_;
+    //! Particles per cell
+    Profile * particles_per_cell_profile_;
+    
 };
 
 #endif

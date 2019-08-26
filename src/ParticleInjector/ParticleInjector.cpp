@@ -43,6 +43,7 @@ struct particles_creator ParticleInjector::getParticlesCreator() {
     particles_creator.density_profile_ = new Profile(density_profile_);
     particles_creator.density_profile_type_ = density_profile_type_;
     particles_creator.time_profile_ = new Profile(time_profile_);
+    particles_creator.particles_per_cell_profile_ = new Profile(particles_per_cell_profile_);
     
     return particles_creator;
 }

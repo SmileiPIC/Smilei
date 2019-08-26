@@ -347,6 +347,8 @@ public:
         
         new_particle_injector->time_profile_     = new Profile( particle_injector->time_profile_ );
         
+        new_particle_injector->particles_per_cell_profile_ = new Profile( particle_injector->particles_per_cell_profile_ );
+        
         return new_particle_injector;
         
     }

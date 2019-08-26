@@ -134,7 +134,7 @@ int CreateParticles::create( struct particles_creator particles_creator,
     } else {
         //Initialize density and ppc profiles
         particles_creator.density_profile_->valuesAt( xyz, density );
-        species->ppcProfile    ->valuesAt( xyz, n_part_in_cell );
+        particles_creator.particles_per_cell_profile_->valuesAt( xyz, n_part_in_cell );
         weight_arr = NULL;
         //Now compute number of particles per cell
         double remainder, nppc;
