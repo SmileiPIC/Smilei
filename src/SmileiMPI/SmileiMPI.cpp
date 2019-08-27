@@ -28,6 +28,9 @@
 #include "DiagnosticScreen.h"
 #include "DiagnosticProbes.h"
 
+#include "Laser.h"
+#include "LaserEnvelope.h"
+
 using namespace std;
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -502,6 +502,12 @@ class ExternalField(SmileiComponent):
     field = None
     profile = None
 
+# external time fields
+class ExternalTimeField(SmileiComponent):
+    """External Time Field"""
+    field = None
+    profile = None
+
 # external current (antenna)
 class Antenna(SmileiComponent):
     """Antenna"""
