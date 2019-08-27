@@ -792,12 +792,10 @@ void Particles::compressParticles( int istart, int iend) {
 //     for (int ip = iend ; ip >= istart ; ip-- )
 //     {
 //         if (to_be_erased[ip]) {
-//             if (last_index == ip) {
-//                 last_index--;
-//             } else {
+//             if (last_index != ip) {
 //                 overwrite_part( last_index, ip);
-//                 last_index--;
 //             }
+//             last_index--;
 //         }
 //     }
 // }

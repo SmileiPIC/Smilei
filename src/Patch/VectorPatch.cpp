@@ -510,19 +510,14 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
         
     timers.particleInjection.restart();
     
-    #pragma omp for schedule(runtime)
-    //#pragma omp master
+    //#pragma omp for schedule(runtime)
+    #pragma omp master
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         
         Patch * patch = ( *this )( ipatch );
         
         // Only for patch at the domain boundary
         if (patch->isBoundary()) {
-        
-            // cerr << " ipatch: " << ipatch
-            //      << " isXmin: " << patch->isXmin()
-            //      << " isXmax: " << patch->isXmax()
-            //      << endl;
             
             // Targeted species and species index
             unsigned int i_species ;
@@ -544,18 +539,25 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
             // Pointer to the current particle vector
             Particles* particles;
             
-            //Species * species;
+            // Pointer to the current species
+            Species * injector_species;
 
             int index;
             int new_cell_idx;
+            
+            // Boolean to quickly determine the boundary
+            bool patch_is_xmin;
+            bool patch_is_xmax;
 
             // Parameters that depend on the patch location
             if ( patch->isXmin() ) {
                 new_cell_idx=0;
                 index = (new_cell_idx)/params.clrw;
+                patch_is_xmin = true;
             } else if ( patch->isXmax() ) {
                 new_cell_idx=params.n_space[0]-1;
                 index = (new_cell_idx)/params.clrw;
+                patch_is_xmax = true;
             }
 
             // cerr << "Creation of the new particles for all injectors" << endl;
@@ -602,50 +604,27 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     // We first get the species id associated to this injector
                     i_species = particle_injector->getSpeciesNumber();
                     
-                    Species * species = patch->vecSpecies[i_species];
+                    injector_species = patch->vecSpecies[i_species];
                     
                     // We store the number of particles
-                    previous_particle_number_per_species[i_species] = species->getNbrOfParticles();
+                    previous_particle_number_per_species[i_species] = injector_species->getNbrOfParticles();
                      
                     // Pointer to simplify the code
                     particles = &local_particles_vector[i_injector];
      
                     //No particles at the begining
                     // particles->resize(0);
-                    particles->initialize(0,*species->particles);
-     
-                    // check
-                    // if (species->particles->size() > 5000) {
-                    //     for (int ip = 0 ; ip < species->particles->size() ; ip++) {
-                    //         if (species->particles->Position[0][ip] <= 0) {
-                    //         ERROR( "before - ip: " << ip << " / " << species->particles->size()
-                    //              << " Iteration: " << itime
-                    //              << " Injector side: " << particle_injector->isXmin() << " " << particle_injector->isXmax()
-                    //              << " Patch side: " << patch->isXmin() << " " << patch->isXmax()
-                    //              << " Species: " << species->name
-                    //              << " Weight: " << species->particles->Weight[ip]
-                    //              << " x: " << species->particles->Position[0][ip]
-                    //              << " y: " << species->particles->Position[1][ip]
-                    //              << " z: " << species->particles->Position[2][ip]
-                    //              << " px: " << species->particles->Momentum[0][ip]
-                    //              << " py: " << species->particles->Momentum[1][ip]
-                    //              << " pz: " << species->particles->Momentum[2][ip]
-                    //          );
-                    //         }
-                    //     }
-                    // }
+                    particles->initialize(0,*injector_species->particles);
      
                     // Particle creator object
                     ParticleCreator particle_creator_;
-                    particle_creator_.associate(particle_injector, particles, species);
+                    particle_creator_.associate(particle_injector, particles, injector_species);
                     
                     //particle_index[i_injector] = previous_particle_number_per_species[i_species];
                     // Creation of the particles in local_particles_vector
                     particle_creator_.create( init_space, params, patch, new_cell_idx, itime );
                 }
             }
-
-            //cerr << "Shift" << endl;
 
             // Shift to update the positions
             double position_shift[3];
@@ -798,8 +777,6 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                 }
             }
             
-            //cerr << "Filter particles" << endl;
-            
             // Filter particles when initialized on different position
             // for (int i_injector=0 ; i_injector<patch->particle_injector_vector.size() ; i_injector++) {
             //
@@ -854,14 +831,12 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
             //     } // end loop on particles
             // } // end for i_injector
             
-            // vector <bool> particle_not_in_domain(0);
+            int new_particle_number;
             
             // Filter particles when initialized on different position
             for (int i_injector=0 ; i_injector<patch->particle_injector_vector.size() ; i_injector++) {
 
                 if (local_particles_vector[i_injector].size() > 0) {
-
-                    // particle_not_in_domain.resize(local_particles_vector[i_injector].size());
 
                     // We first get the species id associated to this injector
                     i_species = patch->particle_injector_vector[i_injector]->getSpeciesNumber();
@@ -870,39 +845,51 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     particles =&local_particles_vector[i_injector];
 
                     // Then the new number of particles in species
-                    int new_particle_number = particles->size();
+                    new_particle_number = particles->size();
 
                     // Suppr not interesting parts ...
+                    // 1D
                     for ( int ip = new_particle_number-1 ; ip >= 0 ; ip-- ){
-                        
-                        // particle_in_domain = true;
-                        
-                        // 1D
                         if ( ( patch->isXmin() && ( particles->Position[0][ip] < 0.)) ||
                              ( patch->isXmax() && ( particles->Position[0][ip] > params.grid_length[0]) ) ) {
                             // particle_in_domain = false;
-                            particles->erase_particle(ip);
+                            // particles->erase_particle(ip);
+                            if (new_particle_number-1 != ip) {
+                                particles->overwrite_part(new_particle_number-1,ip);
+                            }
                             new_particle_number--;
                         }
+                    } // end loop on particles
 
-                        // 2D
-                        if (params.nDim_field > 1) {
+                    // 2D
+                    if (params.nDim_field > 1) {
+                        for ( int ip = new_particle_number-1 ; ip >= 0 ; ip-- ){
                             if (( patch->isYmin() && ( particles->Position[1][ip] < 0.) ) ||
                                 ( patch->isYmax() && ( particles->Position[1][ip] > params.grid_length[1]) )) {
                                 // particle_in_domain = false;
-                                particles->erase_particle(ip);
+                                if (new_particle_number-1 != ip) {
+                                    particles->overwrite_part(new_particle_number-1,ip);
+                                }
                                 new_particle_number--;
                             }
                         }
-                        // 3D
-                        if (params.nDim_field > 2) {
+                    } // end loop on particles
+                    
+                    // 3D
+                    if (params.nDim_field > 2) {
+                        for ( int ip = new_particle_number-1 ; ip >= 0 ; ip-- ){
                             if (( patch->isZmin() && ( particles->Position[2][ip] < 0.) ) ||
                                 ( patch->isZmax() && ( particles->Position[2][ip] > params.grid_length[2]) )) {
                                 // particle_in_domain = false;
-                                particles->erase_particle(ip);
+                                //particles->erase_particle(ip);
+                                if (new_particle_number > ip) {
+                                    particles->overwrite_part(new_particle_number,ip);
+                                }
                                 new_particle_number--;
                             }
                         }
+                    } // end loop on particles
+                        
                         
                         // Move interesting parts to their place
                         
@@ -916,7 +903,6 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                         //     }
                         // }
                         
-                    } // end loop on particles
                 
                     // Insertion of the particles as a group in the vector of species
                     if (new_particle_number > 0) {
