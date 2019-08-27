@@ -717,11 +717,11 @@ void ParticleCreator::createMomentum( std::string momentum_initialization,
 
             // Lorentz transformation of the momentum
             for( unsigned int p=iPart; p<iPart+nPart; p++ ) {
-                gp = sqrt( 1.0 + pow( particles->momentum( 0, p ), 2 )
-                           + pow( particles->momentum( 1, p ), 2 )
-                           + pow( particles->momentum( 2, p ), 2 ) );
+                gp = 1./sqrt( 1.0 + particles->momentum( 0, p )*particles->momentum( 0, p )
+                           + particles->momentum( 1, p )*particles->momentum( 1, p )
+                           + particles->momentum( 2, p )*particles->momentum( 2, p ) );
 
-                CheckVelocity = ( vx*particles->momentum( 0, p ) + vy*particles->momentum( 1, p ) + vz*particles->momentum( 2, p ) ) / gp;
+                CheckVelocity = ( vx*particles->momentum( 0, p ) + vy*particles->momentum( 1, p ) + vz*particles->momentum( 2, p ) ) * gp;
                 Volume_Acc = Rand::uniform();
                 if( CheckVelocity > Volume_Acc ) {
 
@@ -729,9 +729,9 @@ void ParticleCreator::createMomentum( std::string momentum_initialization,
                     Phi = atan2( sqrt( vx*vx +vy*vy ), vz );
                     Theta = atan2( vy, vx );
 
-                    vpx = particles->momentum( 0, p )/gp ;
-                    vpy = particles->momentum( 1, p )/gp ;
-                    vpz = particles->momentum( 2, p )/gp ;
+                    vpx = particles->momentum( 0, p )*gp ;
+                    vpy = particles->momentum( 1, p )*gp ;
+                    vpz = particles->momentum( 2, p )*gp ;
                     vfl = vpx*cos( Theta )*sin( Phi ) +vpy*sin( Theta )*sin( Phi ) + vpz*cos( Phi ) ;
                     vflx = vfl*cos( Theta )*sin( Phi ) ;
                     vfly = vfl*sin( Theta )*sin( Phi ) ;
