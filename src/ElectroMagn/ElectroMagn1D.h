@@ -136,6 +136,9 @@ public:
     //! Method used to impose external fields
     void applyExternalField( Field *, Profile *, Patch * );
     
+    //! Method used to impose external fields
+    void applyExternalTimeField( Field *, Profile *, Patch *, double time );
+    
     void initAntennas( Patch *patch );
     
 private:

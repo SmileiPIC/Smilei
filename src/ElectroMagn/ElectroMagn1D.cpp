@@ -782,6 +782,23 @@ void ElectroMagn1D::applyExternalField( Field *my_field,  Profile *profile, Patc
     
 }
 
+void ElectroMagn1D::applyExternalTimeField( Field *my_field,  Profile *profile, Patch *patch, double time )
+{
+    Field1D *field1D=static_cast<Field1D *>( my_field );
+    
+    vector<double> pos( 1 );
+    pos[0] = dx * ( ( double )( patch->getCellStartingGlobalIndex( 0 ) )+( field1D->isDual( 0 )?-0.5:0. ) );
+    int N = ( int )field1D->dims()[0];
+    
+    // USING UNSIGNED INT CREATES PB WITH PERIODIC BCs
+    for( int i=0 ; i<N ; i++ ) {
+        ( *field1D )( i ) += profile->valueAt( pos, time ); 
+        pos[0] += dx;
+    }
+    
+}
+
+
 
 void ElectroMagn1D::initAntennas( Patch *patch )
 {

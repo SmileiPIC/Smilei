@@ -358,7 +358,7 @@ class Diagnostic(object):
 			self._plt.colorbar(mappable=im, cax=ax.cax, **self.options.colorbar)
 		except AttributeError:
 			ax.cax = self._plt.colorbar(mappable=im, ax=ax, **self.options.colorbar).ax
-		self._setSomeOptions(ax)
+		self._setOptions(ax)
 		self._plt.draw()
 		self._plt.pause(0.00001)
 
