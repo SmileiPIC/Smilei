@@ -310,7 +310,6 @@ void Particles::cp_particles( unsigned int iPart, unsigned int nPart, Particles 
     for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
         dest_parts.uint64_prop[iprop]->insert( dest_parts.uint64_prop[iprop]->begin() + dest_id, uint64_prop[iprop]->begin()+iPart, uint64_prop[iprop]->begin()+iPart+nPart );
     }
-
 }
 
 
@@ -741,12 +740,6 @@ void Particles::compressParticles( int istart, int iend, vector <int> & mask ) {
                 overwrite_part( isrc, idest);
                 mask[idest] = 1;
                 mask[isrc] = -1;
-                // std::cerr << " idest: " << idest
-                //           << " iend: " << iend
-                //           << " ip: " << ip
-                //           << " mask[idest]: " << mask[idest]
-                //           << std::endl;
-                //cell_keys[idest] = cell_keys[ip];
                 idest++;
             } else {
                 isrc++;
@@ -789,6 +782,25 @@ void Particles::compressParticles( int istart, int iend) {
     resize(idest);
     cell_keys.resize(idest);
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! This method erases particles according to the provided mask
+//! between istart and iend
+// ---------------------------------------------------------------------------------------------------------------------
+// void Particles::eraseParticlesWithMask( int istart, int iend, vector <bool> & to_be_erased) {
+//     int last_index = iend;
+//     for (int ip = iend ; ip >= istart ; ip-- )
+//     {
+//         if (to_be_erased[ip]) {
+//             if (last_index == ip) {
+//                 last_index--;
+//             } else {
+//                 overwrite_part( last_index, ip);
+//                 last_index--;
+//             }
+//         }
+//     }
+// }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Create nParticles new particles at the end of vectors

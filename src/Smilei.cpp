@@ -353,6 +353,9 @@ int main( int argc, char *argv[] )
             // Particle merging
             vecPatches.mergeParticles(params, &smpi, time_dual,timers, itime );
 
+            // Particle injection from the boundaries
+            vecPatches.injectParticlesFromBoundaries(params, timers, itime );
+
             // Clean buffers and resize arrays
             vecPatches.cleanParticlesOverhead(params, timers, itime );
 
@@ -361,9 +364,6 @@ int main( int argc, char *argv[] )
             
             // call the various diagnostics
             vecPatches.runAllDiags( params, &smpi, itime, timers, simWindow );
-
-            // Particle injection from the boundaries
-            vecPatches.injectParticlesFromBoundaries(params, timers, itime );
 
             // if (0) {
             //     #pragma omp master

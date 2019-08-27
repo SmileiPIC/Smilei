@@ -118,7 +118,6 @@ public:
     //! Overwrite particle part1 into part2 of dest_parts memory location. Erasing part2
     void overwrite_part( unsigned int part1, Particles &dest_parts, unsigned int part2 );
 
-
     //! Move iPart at the end of vectors
     void push_to_end( unsigned int iPart );
 
@@ -141,6 +140,10 @@ public:
     //! Compress the particles vectors using cell_keys as a mask
     //! between istart and iend
     void compressParticles( int istart, int iend);
+
+    //! This method erases particles according to the provided mask
+    //! between istart and iend
+    // void eraseParticlesWithMask( int istart, int iend, vector <bool> & to_be_erased);
 
     //! Test if ipart is in the local patch
     bool is_part_in_domain( unsigned int ipart, Patch *patch );
