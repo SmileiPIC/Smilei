@@ -215,9 +215,9 @@ int CreateParticles::create( struct particles_creator * particles_creator,
     
     if( species->position_initialization_array == NULL ) {
         for( i=0; i<n_space_to_create_generalized[0]; i++ ) {
-            if((!n_existing_particles)&&( i%species->clrw == 0 )) {
-                species->first_index[(new_cell_idx+i)/species->clrw] = iPart;
-            }
+            //if((!n_existing_particles)&&( i%species->clrw == 0 )) {
+            //    species->first_index[(new_cell_idx+i)/species->clrw] = iPart;
+            //}
             for( j=0; j<n_space_to_create_generalized[1]; j++ ) {
                 for( k=0; k<n_space_to_create_generalized[2]; k++ ) {
                     // initialize particles in meshes where the density is non-zero
@@ -312,9 +312,9 @@ int CreateParticles::create( struct particles_creator * particles_creator,
                     }//END if density > 0
                 }//k end the loop on all cells
             }//j
-            if((!n_existing_particles)&&( i%species->clrw == species->clrw -1 )) {
-                species->last_index[(new_cell_idx+i)/species->clrw] = iPart;
-            }
+            //if((!n_existing_particles)&&( i%species->clrw == species->clrw -1 )) {
+            //    species->last_index[(new_cell_idx+i)/species->clrw] = iPart;
+            //}
 
         }//i
     } else if( n_existing_particles == 0 ) {
