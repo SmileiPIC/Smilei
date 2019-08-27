@@ -890,7 +890,7 @@ public:
         if( !params.restart ) {
             // does a loop over all cells in the simulation
             // considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
-            thisSpecies->createParticles( params.n_space, params, patch, 0 );
+            thisSpecies->ParticleCreator( params.n_space, params, patch, 0 );
             //MESSAGE(" PARTICLES");
         } else {
             thisSpecies->particles->initialize( 0, params.nDim_particle );
@@ -1014,7 +1014,7 @@ public:
 
         // \todo : NOT SURE HOW THIS BEHAVES WITH RESTART
         if( ( !params.restart ) && ( with_particles ) ) {
-            newSpecies->createParticles( params.n_space, params, patch, 0 );
+            newSpecies->ParticleCreator( params.n_space, params, patch, 0 );
         } else {
             newSpecies->particles->initialize( 0, ( *species->particles ) );
         }

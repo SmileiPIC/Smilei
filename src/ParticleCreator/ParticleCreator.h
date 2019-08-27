@@ -1,13 +1,13 @@
 // -----------------------------------------------------------------------------
 //
-//! \file createParticles.h
+//! \file ParticleCreator.h
 //
 //! \brief Class with functions to create particles
 //
 // -----------------------------------------------------------------------------
 
-#ifndef CREATEPARTICLE_H
-#define CREATEPARTICLE_H
+#ifndef PARTICLECREATOR_H
+#define PARTICLECREATOR_H
 
 #include <cstring>
 #include <string>
@@ -17,26 +17,29 @@
 #include "Params.h"
 #include "Particles.h"
 #include "Species.h"
+#include "ParticleInjector.h"
 #include "Field3D.h"
-#include "ParticleCreatorContainer.h"
 
 using namespace std;
 
-class CreateParticles
+class ParticleCreator
 {
 public:
     
     //! Constructor
-    CreateParticles() {};
+    ParticleCreator();
     
     //! Destructor
-    ~CreateParticles() {};
+    ~ParticleCreator();
+    
+    //! Associate this particle creator object to the specified particle injector
+    void associate( ParticleInjector * particle_injector, Particles * particles, Species * species);
+    
+    //! Associate this particle creator object to the specified species
+    void associate( Species * species );
     
     //! Creation of the particle properties in the given particle vector `particles`
-    static int create( struct particles_creator * particle_creator,
-                       Particles * particles,
-                       Species * species,
-                       vector<unsigned int> n_space_to_create,
+    int create( vector<unsigned int> n_space_to_create,
                        Params &params,
                        Patch *patch,
                        int new_cell_idx,
@@ -67,6 +70,42 @@ public:
     // For all particles in a mesh initialize its charge state
     static void createCharge( Particles * particles, Species * species,
                                        unsigned int nPart, unsigned int iPart, double q );
+    
+    //! Pointer the associated particle vector
+    Particles * particles_;
+    
+    //! Pointer to the associated species
+    Species * species_;
+    
+    //! Initialization with the positions of another species
+    bool position_initialization_on_species_;
+    
+    //! Flag if initialized in particles of a species
+    bool initialized_in_species_;
+    
+    //! Position initialization type
+    std::string position_initialization_;
+    
+    // Momentum initialization type
+    std::string momentum_initialization_;
+    
+    //! vector of velocity profiles (vx, vy, vz)
+    std::vector<Profile *> velocity_profile_;
+    
+    //! vector of temperature profiles (Tx, Ty, Tz)
+    std::vector<Profile *> temperature_profile_;
+    
+    //! Density profile
+    Profile * density_profile_;
+                                       
+    //! Type of profile
+    std::string density_profile_type_;
+
+    //! Time profile
+    Profile * time_profile_;
+
+    //! Particles per cell
+    Profile * particles_per_cell_profile_;
     
 private:
 

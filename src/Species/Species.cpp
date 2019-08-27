@@ -29,7 +29,7 @@
 #include "ElectroMagnAM.h"
 #include "Projector.h"
 #include "ProjectorFactory.h"
-#include "CreateParticles.h"
+#include "ParticleCreator.h"
 
 #include "SimWindow.h"
 #include "Patch.h"
@@ -207,7 +207,7 @@ void Species::initOperators( Params &params, Patch *patch )
     Proj = ProjectorFactory::create( params, patch, this->vectorized_operators && !params.cell_sorting );  // + patchId -> idx_domain_begin (now = ref smpi)
     
     // Assign the Ionization model (if needed) to Ionize
-    //  Needs to be placed after createParticles() because requires the knowledge of max_charge
+    //  Needs to be placed after ParticleCreator() because requires the knowledge of max_charge
     // \todo pay attention to restart
     Ionize = IonizationFactory::create( params, this );
 
@@ -761,7 +761,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
         //             icell = 0;
         //         if (patch->isXmax())
         //             icell = params.n_space[0]-1;
-        //         this->createParticles( init_space, params, patch, icell );
+        //         this->ParticleCreator( init_space, params, patch, icell );
         //     }
         //     // Suppr not interesting parts ...
         //     int new_particle_number = getNbrOfParticles();
@@ -1482,7 +1482,7 @@ void Species::count_sort_part( Params &params )
 }
 
 
-int Species::createParticles( vector<unsigned int> n_space_to_create, Params &params, Patch *patch, int new_cell_idx )
+int Species::ParticleCreator( vector<unsigned int> n_space_to_create, Params &params, Patch *patch, int new_cell_idx )
 {
     // n_space_to_create_generalized = n_space_to_create, + copy of 2nd direction data among 3rd direction
     // same for local Species::cell_length[2]
@@ -1890,7 +1890,7 @@ int Species::createParticles( vector<unsigned int> n_space_to_create, Params &pa
     }
     return npart_effective;
 
-} // End createParticles
+} // End ParticleCreator
 
 
 int Species::createParticles2( Particles * particles,
@@ -2132,10 +2132,10 @@ int Species::createParticles2( Particles * particles,
                             }
                         }
                         if( !position_initialization_on_species ) {
-                            CreateParticles::createPosition( species->position_initialization, particles, species, nPart, iPart, indexes, params );
+                            ParticleCreator::createPosition( species->position_initialization, particles, species, nPart, iPart, indexes, params );
                         }
-                        CreateParticles::createMomentum( species->momentum_initialization, particles, species,  nPart, iPart, temp, vel );
-                        CreateParticles::createWeight( particles, nPart, iPart, density( i, j, k ) );
+                        ParticleCreator::createMomentum( species->momentum_initialization, particles, species,  nPart, iPart, temp, vel );
+                        ParticleCreator::createWeight( particles, nPart, iPart, density( i, j, k ) );
 
                         if( params.geometry=="AMcylindrical" && species->position_initialization == "regular" ) {
                             //Particles in regular have a weight proportional to their position along r.
@@ -2143,7 +2143,7 @@ int Species::createParticles2( Particles * particles,
                                 particles->weight(ipart) *= sqrt(particles->position(1,ipart)*particles->position(1,ipart) + particles->position(2,ipart)*particles->position(2,ipart));
                             }
                         }
-                        CreateParticles::createCharge( particles, species, nPart, iPart, charge( i, j, k ) );
+                        ParticleCreator::createCharge( particles, species, nPart, iPart, charge( i, j, k ) );
 
                         //if (n_existing_particles) {
                         //    // operate filter
@@ -2305,7 +2305,7 @@ int Species::createParticles2( Particles * particles,
     }
     return npart_effective;
 
-} // End createParticles
+} // End ParticleCreator
 
 // Move all particles from another species to this one
 void Species::importParticles( Params &params, Patch *patch, Particles &source_particles, vector<Diagnostic *> &localDiags )

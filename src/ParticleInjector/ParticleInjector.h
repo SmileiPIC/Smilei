@@ -1,3 +1,11 @@
+// -----------------------------------------------------------------------------
+//
+//! \file ParticleInjector.h
+//
+//! \brief Class with functions to inject particles
+//
+// -----------------------------------------------------------------------------
+
 #ifndef PARTICLEINJECTOR_H
 #define PARTICLEINJECTOR_H
 
@@ -6,7 +14,6 @@
 
 #include "Params.h"
 #include "Profile.h"
-#include "ParticleCreatorContainer.h"
 
 //! class ParticleInjector
 class ParticleInjector
@@ -70,9 +77,6 @@ public:
     
     //! Profile for the particles per cell
     Profile *particles_per_cell_profile_;
-    
-    //! Particle Creator Container
-    struct particles_creator particles_creator_;
 
     // -----------------------------------------------------------------------------
     //  3. Methods
@@ -94,9 +98,6 @@ public:
     {
         return (box_side_ == "xmax");
     }
-
-    //! Return the particle_creator structure from the properties of the injector
-    void getParticlesCreator ();
 
 };
 

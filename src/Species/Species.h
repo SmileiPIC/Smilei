@@ -552,7 +552,7 @@ public:
     }
 
     //! Method to create new particles.
-    int  createParticles( std::vector<unsigned int> n_space_to_create, Params &params, Patch *patch, int new_bin_idx );
+    int  ParticleCreator( std::vector<unsigned int> n_space_to_create, Params &params, Patch *patch, int new_bin_idx );
 
     //! Method to create new particles.
     int  createParticles2( Particles * particles,

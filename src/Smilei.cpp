@@ -385,7 +385,7 @@ int main( int argc, char *argv[] )
             //                         icell = 0;
             //                     if (vecPatches(iPatch)->isXmax())
             //                         icell = params.n_space[0]-1;
-            //                     vecPatches(iPatch)->vecSpecies[iSpecies]->createParticles( init_space, params, vecPatches(iPatch), icell );
+            //                     vecPatches(iPatch)->vecSpecies[iSpecies]->ParticleCreator( init_space, params, vecPatches(iPatch), icell );
             //                 }
             //             }
 

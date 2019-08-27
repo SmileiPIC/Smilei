@@ -445,7 +445,6 @@ void VectorPatch::finalizeAndSortParticles( Params &params, SmileiMPI *smpi, Sim
         }
     }
 
-
     timers.syncPart.update( params.printNow( itime ) );
 
 } // END finalizeAndSortParticles
@@ -551,7 +550,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
             // cerr << "Creation of the new particles for all injectors" << endl;
 
             // Creation of the new particles for all injectors
-            // Create particles as if t0 with createParticles
+            // Create particles as if t0 with ParticleCreator
             // for (int i_injector=0 ; i_injector<patch->particle_injector_vector.size() ; i_injector++) {
             //
             //     // Pointer to the current particle injector
@@ -574,13 +573,13 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
             //         particles_creator = particle_injector->getParticlesCreator();
             //
             //         particle_index[i_injector] = previous_particle_number_per_species[i_species];
-            //         CreateParticles::create( particles_creator, particles, species( ipatch, i_species ),
+            //         ParticleCreator::create( particles_creator, particles, species( ipatch, i_species ),
             //                                  init_space, params, patch, new_cell_idx, itime );
             //     }
             // }
 
             // Creation of the new particles for all injectors
-            // Create particles as if t0 with createParticles
+            // Create particles as if t0 with ParticleCreator
             for (int i_injector=0 ; i_injector<patch->particle_injector_vector.size() ; i_injector++) {
                 
                 // Pointer to the current particle injector
@@ -605,33 +604,33 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     particles->initialize(0,*species->particles);
      
                     // check
-                    if (species->particles->size() > 5000) {
-                        for (int ip = 0 ; ip < species->particles->size() ; ip++) {
-                            if (species->particles->Position[0][ip] <= 0) {
-                            ERROR( "before - ip: " << ip << " / " << species->particles->size()
-                                 << " Iteration: " << itime
-                                 << " Injector side: " << particle_injector->isXmin() << " " << particle_injector->isXmax()
-                                 << " Patch side: " << patch->isXmin() << " " << patch->isXmax()
-                                 << " Species: " << species->name
-                                 << " Weight: " << species->particles->Weight[ip]
-                                 << " x: " << species->particles->Position[0][ip]
-                                 << " y: " << species->particles->Position[1][ip]
-                                 << " z: " << species->particles->Position[2][ip]
-                                 << " px: " << species->particles->Momentum[0][ip]
-                                 << " py: " << species->particles->Momentum[1][ip]
-                                 << " pz: " << species->particles->Momentum[2][ip]
-                             );
-                            }
-                        }
-                    }
+                    // if (species->particles->size() > 5000) {
+                    //     for (int ip = 0 ; ip < species->particles->size() ; ip++) {
+                    //         if (species->particles->Position[0][ip] <= 0) {
+                    //         ERROR( "before - ip: " << ip << " / " << species->particles->size()
+                    //              << " Iteration: " << itime
+                    //              << " Injector side: " << particle_injector->isXmin() << " " << particle_injector->isXmax()
+                    //              << " Patch side: " << patch->isXmin() << " " << patch->isXmax()
+                    //              << " Species: " << species->name
+                    //              << " Weight: " << species->particles->Weight[ip]
+                    //              << " x: " << species->particles->Position[0][ip]
+                    //              << " y: " << species->particles->Position[1][ip]
+                    //              << " z: " << species->particles->Position[2][ip]
+                    //              << " px: " << species->particles->Momentum[0][ip]
+                    //              << " py: " << species->particles->Momentum[1][ip]
+                    //              << " pz: " << species->particles->Momentum[2][ip]
+                    //          );
+                    //         }
+                    //     }
+                    // }
      
-                    // Structure for the particle properties
-                    // struct particles_creator particles_creator;
-                    // particles_creator = particle_injector->getParticlesCreator();
+                    // Particle creator object
+                    ParticleCreator particle_creator_;
+                    particle_creator_.associate(particle_injector, particles, species);
                     
                     //particle_index[i_injector] = previous_particle_number_per_species[i_species];
-                    CreateParticles::create( &particle_injector->particles_creator_, particles, species,
-                                             init_space, params, patch, new_cell_idx, itime );
+                    // Creation of the particles in local_particles_vector
+                    particle_creator_.create( init_space, params, patch, new_cell_idx, itime );
                 }
             }
 

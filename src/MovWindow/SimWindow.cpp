@@ -310,7 +310,7 @@ void SimWindow::operate( VectorPatch &vecPatches, SmileiMPI *smpi, Params &param
                     // If new particles are required
                     if( patch_particle_created[ithread][j] ) {
                         for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
-                            mypatch->vecSpecies[ispec]->createParticles( params.n_space, params, mypatch, 0 );
+                            mypatch->vecSpecies[ispec]->ParticleCreator( params.n_space, params, mypatch, 0 );
 
                             /*#ifdef _VECTO
                                                     // Classical vectorized mode

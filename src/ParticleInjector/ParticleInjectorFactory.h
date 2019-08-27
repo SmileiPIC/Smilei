@@ -307,11 +307,6 @@ public:
             }
         }
         
-        // Particle creator
-        for( unsigned int i_inj = 0; i_inj < particle_injector_vector.size(); i_inj++ ) {
-            particle_injector_vector[i_inj]->getParticlesCreator();
-        }
-        
         return particle_injector_vector;
     }
     
@@ -354,8 +349,6 @@ public:
         
         new_particle_injector->particles_per_cell_profile_ = new Profile( particle_injector->particles_per_cell_profile_ );
         
-        new_particle_injector->particles_creator_ = particle_injector->particles_creator_;
-        
         return new_particle_injector;
         
     }
@@ -364,15 +357,15 @@ public:
     static std::vector<ParticleInjector *> cloneVector(std::vector<ParticleInjector *> particle_injector_vector, Params &params, Patch *patch )
     {
         
-        std::vector<ParticleInjector *> newVecParticleInjector;
-        newVecParticleInjector.resize( 0 );
+        std::vector<ParticleInjector *> new_vector_particle_injector;
+        new_vector_particle_injector.resize( 0 );
         
         for( unsigned int i_inj = 0; i_inj < particle_injector_vector.size(); i_inj++ ) {
             ParticleInjector *new_particle_injector = ParticleInjectorFactory::clone( particle_injector_vector[i_inj], params, patch );
-            newVecParticleInjector.push_back( new_particle_injector );
+            new_vector_particle_injector.push_back( new_particle_injector );
         }
         
-        return newVecParticleInjector;
+        return new_vector_particle_injector;
     }
 };
 
