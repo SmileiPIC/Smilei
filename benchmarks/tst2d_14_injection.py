@@ -50,6 +50,12 @@ Species(
 		["periodic", "periodic"],
 	],
 )
+
+ParticleInjector(
+    species = 'pon1',
+    box_side = 'xmin',
+)
+
 Species(
 	name = 'eon1',
 	position_initialization = pos_all,
@@ -68,6 +74,11 @@ Species(
 		["periodic", "periodic"],
 	],
 )
+ParticleInjector(
+    species = 'eon1',
+    box_side = 'xmin',
+)
+
 Species(
 	name = 'pon2',
 	position_initialization = pos_all,
@@ -86,6 +97,11 @@ Species(
 		["periodic", "periodic"],
 	],
 )
+ParticleInjector(
+    species = 'pon2',
+    box_side = 'xmax',
+)
+
 Species(
 	name = 'eon2',
 	position_initialization = pos_all,
@@ -104,6 +120,11 @@ Species(
 		["periodic", "periodic"],
 	],
 )
+ParticleInjector(
+    species = 'eon2',
+    box_side = 'xmax',
+)
+
 
 globalEvery = rest/2
 
@@ -111,7 +132,7 @@ DiagScalar(every=globalEvery)
 
 DiagFields(
     every = globalEvery,
-    fields = ['Ex','Ey','Ez','Bx','By','Bz','Rho_pon1','Rho_eon1','Rho_pon2','Rho_eon2']
+    fields = ['Ex','Ey','Ez','Bx','By','Bz','Rho_pon1','Rho_eon1','Rho_pon2','Rho_eon2',"Jx","Jy","Jz"]
 )
 
 DiagProbe(
