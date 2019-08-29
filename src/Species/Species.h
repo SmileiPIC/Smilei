@@ -56,7 +56,7 @@ public:
     std::string name;
 
     //! position initialization type, possible values: "regular" or "random"
-    std::string position_initialization;
+    std::string position_initialization_;
 
     //! momentum initialization type, possible values: "cold" or "maxwell-juettner"
     std::string momentum_initialization;

@@ -487,12 +487,12 @@ public:
         }
 
         PyObject *py_pos_init = PyTools::extract_py( "position_initialization", "Species", ispec );
-        if( PyTools::convert( py_pos_init, thisSpecies->position_initialization ) ) {
-            if( thisSpecies->position_initialization.empty() ) {
+        if( PyTools::convert( py_pos_init, thisSpecies->position_initialization_ ) ) {
+            if( thisSpecies->position_initialization_.empty() ) {
                 ERROR( "For species '" << species_name << "' empty position_initialization" );
-            } else if( ( thisSpecies->position_initialization!="regular" )
-                       &&( thisSpecies->position_initialization!="random" )
-                       &&( thisSpecies->position_initialization!="centered" ) ) {
+            } else if( ( thisSpecies->position_initialization_!="regular" )
+                       &&( thisSpecies->position_initialization_!="random" )
+                       &&( thisSpecies->position_initialization_!="centered" ) ) {
                 thisSpecies->position_initialization_on_species=true;
 
             }
@@ -935,7 +935,7 @@ public:
         newSpecies->species_number_                            = species->species_number_;
         newSpecies->position_initialization_on_species       = species->position_initialization_on_species;
         newSpecies->position_initialization_on_species_index = species->position_initialization_on_species_index;
-        newSpecies->position_initialization                  = species->position_initialization;
+        newSpecies->position_initialization_                  = species->position_initialization_;
         newSpecies->position_initialization_array            = species->position_initialization_array;
         newSpecies->n_numpy_particles                        = species->n_numpy_particles            ;
         newSpecies->momentum_initialization                  = species->momentum_initialization;
@@ -1057,8 +1057,8 @@ public:
 
                 // Loop all other species
                 for( unsigned int ispec2 = 0; ispec2<retSpecies.size(); ispec2++ ) {
-                    if( retSpecies[ispec1]->position_initialization == retSpecies[ispec2]->name ) {
-                        if( retSpecies[ispec1]->position_initialization==retSpecies[ispec1]->name ) {
+                    if( retSpecies[ispec1]->position_initialization_ == retSpecies[ispec2]->name ) {
+                        if( retSpecies[ispec1]->position_initialization_==retSpecies[ispec1]->name ) {
                             ERROR( "For species '"<<retSpecies[ispec1]->name<<"' position_initialization must be different from '"<<retSpecies[ispec1]->name<<"'." );
                         }
                         if( retSpecies[ispec2]->position_initialization_on_species==true ) {
@@ -1074,7 +1074,7 @@ public:
                     }
                 }
                 if( retSpecies[ispec1]->position_initialization_on_species_index==-1 ) {
-                    ERROR( "Specie '"<<retSpecies[ispec1]->position_initialization<<"' doesn't exist. We can't initialize position on this species. Choose an already created specie or 'centered', 'regular', 'random'." )
+                    ERROR( "Specie '"<<retSpecies[ispec1]->position_initialization_<<"' doesn't exist. We can't initialize position on this species. Choose an already created specie or 'centered', 'regular', 'random'." )
                 }
             }
         }

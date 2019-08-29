@@ -338,12 +338,12 @@ void Species::initCharge( unsigned int nPart, unsigned int iPart, double q )
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all (np) particles in a mesh initialize their position
-//   - either using regular distribution in the mesh (position_initialization = regular)
-//   - or using uniform random distribution (position_initialization = random)
+//   - either using regular distribution in the mesh (position_initialization_ = regular)
+//   - or using uniform random distribution (position_initialization_ = random)
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::initPosition( unsigned int nPart, unsigned int iPart, double *indexes, Params &params )
 {
-    if( position_initialization == "regular" ) {
+    if( position_initialization_ == "regular" ) {
 
         double coeff = pow( ( double )nPart, inv_nDim_field );
 
@@ -408,7 +408,7 @@ void Species::initPosition( unsigned int nPart, unsigned int iPart, double *inde
             }
         }
 
-    } else if( position_initialization == "random" ) {
+    } else if( position_initialization_ == "random" ) {
         if( params.geometry=="AMcylindrical" ) {
             double particles_r, particles_theta;
             for( unsigned int p= iPart; p<iPart+nPart; p++ ) {
@@ -425,7 +425,7 @@ void Species::initPosition( unsigned int nPart, unsigned int iPart, double *inde
                 }
             }
         }
-    } else if( position_initialization == "centered" ) {
+    } else if( position_initialization_ == "centered" ) {
 
         for( unsigned int p=iPart; p<iPart+nPart; p++ )
             for( unsigned int i=0; i<nDim_particle ; i++ ) {
@@ -1638,7 +1638,7 @@ int Species::ParticleCreator( vector<unsigned int> n_space_to_create, Params &pa
                     density( i, j, k ) = abs( density( i, j, k ) );
                     // multiply by the cell volume
                     density( i, j, k ) *= params.cell_volume;
-                    if( params.geometry=="AMcylindrical" && position_initialization != "regular" ) {
+                    if( params.geometry=="AMcylindrical" && position_initialization_ != "regular" ) {
                         //Particles weight in regular is normalized later.
                         density( i, j, k ) *= ( *xyz[1] )( i, j, k );
                     }
@@ -1722,7 +1722,7 @@ int Species::ParticleCreator( vector<unsigned int> n_space_to_create, Params &pa
                         initMomentum( nPart, iPart, temp, vel );
                         initWeight( nPart, iPart, density( i, j, k ) );
 
-                        if( params.geometry=="AMcylindrical" && position_initialization == "regular" ) {
+                        if( params.geometry=="AMcylindrical" && position_initialization_ == "regular" ) {
                             //Particles in regular have a weight proportional to their position along r.
                             for (unsigned int ipart=iPart; ipart < iPart+nPart; ipart++){
                                 particles->weight(ipart) *= sqrt(particles->position(1,ipart)*particles->position(1,ipart) + particles->position(2,ipart)*particles->position(2,ipart));
@@ -2053,7 +2053,7 @@ int Species::createParticles2( Particles * particles,
                     density( i, j, k ) = abs( density( i, j, k ) );
                     // multiply by the cell volume
                     density( i, j, k ) *= params.cell_volume;
-                    if( params.geometry=="AMcylindrical" && position_initialization != "regular" ) {
+                    if( params.geometry=="AMcylindrical" && position_initialization_ != "regular" ) {
                         //Particles weight in regular is normalized later.
                         density( i, j, k ) *= ( *xyz[1] )( i, j, k );
                     }
@@ -2132,12 +2132,12 @@ int Species::createParticles2( Particles * particles,
                             }
                         }
                         if( !position_initialization_on_species ) {
-                            ParticleCreator::createPosition( species->position_initialization, particles, species, nPart, iPart, indexes, params );
+                            ParticleCreator::createPosition( species->position_initialization_, particles, species, nPart, iPart, indexes, params );
                         }
                         ParticleCreator::createMomentum( species->momentum_initialization, particles, species,  nPart, iPart, temp, vel );
                         ParticleCreator::createWeight( particles, nPart, iPart, density( i, j, k ) );
 
-                        if( params.geometry=="AMcylindrical" && species->position_initialization == "regular" ) {
+                        if( params.geometry=="AMcylindrical" && species->position_initialization_ == "regular" ) {
                             //Particles in regular have a weight proportional to their position along r.
                             for (unsigned int ipart=iPart; ipart < iPart+nPart; ipart++){
                                 particles->weight(ipart) *= sqrt(particles->position(1,ipart)*particles->position(1,ipart) + particles->position(2,ipart)*particles->position(2,ipart));

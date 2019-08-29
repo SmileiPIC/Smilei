@@ -107,7 +107,7 @@ public:
         PyTools::extract( "position_initialization", this_particle_injector->position_initialization_, "ParticleInjector", injector_index );
         if ( this_particle_injector->position_initialization_=="species" || this_particle_injector->position_initialization_=="") {
             MESSAGE( 2, "> Position initialization defined as the species.");
-            this_particle_injector->position_initialization_ = species->position_initialization;
+            this_particle_injector->position_initialization_ = species->position_initialization_;
         } else if( ( this_particle_injector->position_initialization_!="regular" )
                    &&( this_particle_injector->position_initialization_!="random" )
                    &&( this_particle_injector->position_initialization_!="centered" ) ) {

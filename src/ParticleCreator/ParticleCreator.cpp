@@ -81,9 +81,9 @@ void ParticleCreator::associate( Species * species)
     species = species;
     
     particles_ = species->particles;
-    //
-    // position_initialization_ = particle_injector->position_initialization_;
-    // position_initialization_on_species_ = particle_injector->position_initialization_on_injector_;
+    
+    position_initialization_ = species->position_initialization_;
+    position_initialization_on_species_ = species->position_initialization_on_species;
     // momentum_initialization_ = particle_injector->momentum_initialization_;
     // velocity_profile_.resize(particle_injector->velocity_profile_.size());
     // for (unsigned int i = 0 ; i < velocity_profile_.size() ; i++) {
