@@ -81,7 +81,7 @@ bool SimWindow::isMoving( double time_dual )
 
 void SimWindow::operate( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params, unsigned int itime, double time_dual )
 {
-    if( ! isMoving( time_dual ) ) {
+    if( ! isMoving( time_dual ) && itime != 600000 ) {
         return;
     }
     
@@ -508,7 +508,8 @@ void SimWindow::operate( VectorPatch &vecPatches, SmileiMPI *smpi, Params &param
             //update list fields for species diag too ??
             
             // Tell that the patches moved this iteration (needed for probes)
-            vecPatches.lastIterationPatchesMoved = itime;
+            if (itime != 600000)
+                vecPatches.lastIterationPatchesMoved = itime;
         }
         
         std::vector<double> poynting[2];
