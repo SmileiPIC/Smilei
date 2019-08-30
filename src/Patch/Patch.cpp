@@ -918,7 +918,7 @@ void Patch::cleanup_sent_particles( int ispec, std::vector<int> *indexes_of_part
 void Patch::copy_positions( std::vector<Species *> vecSpecies_to_update )
 {
     for( unsigned int i=0; i<vecSpecies_to_update.size(); i++ ) {
-        if( vecSpecies_to_update[i]->position_initialization_on_species==false )
+        if( vecSpecies_to_update[i]->position_initialization_on_species_==false )
             continue;
         unsigned int target_species = vecSpecies_to_update[i]->position_initialization_on_species_index;
         if( vecSpecies_to_update[i]->getNbrOfParticles() != vecSpecies_to_update[target_species]->getNbrOfParticles() ) {

@@ -63,7 +63,7 @@ Species::Species( Params &params, Patch *patch ) :
     densityProfileType( "none" ),
     chargeProfile( NULL ),
     densityProfile( NULL ),
-    velocityProfile( 3, NULL ),
+    velocity_profile_( 3, NULL ),
     temperatureProfile( 3, NULL ),
     ppcProfile( NULL ),
     max_charge( 0. ),
@@ -71,7 +71,7 @@ Species::Species( Params &params, Patch *patch ) :
     position_initialization_array( NULL ),
     momentum_initialization_array( NULL ),
     n_numpy_particles( 0 ),
-    position_initialization_on_species( false ),
+    position_initialization_on_species_( false ),
     position_initialization_on_species_index( -1 ),
     electron_species( NULL ),
     electron_species_index( -1 ),
@@ -271,8 +271,8 @@ Species::~Species()
     if( densityProfile ) {
         delete densityProfile;
     }
-    for( unsigned int i=0; i<velocityProfile.size(); i++ ) {
-        delete velocityProfile[i];
+    for( unsigned int i=0; i<velocity_profile_.size(); i++ ) {
+        delete velocity_profile_[i];
     }
     for( unsigned int i=0; i<temperatureProfile.size(); i++ ) {
         delete temperatureProfile[i];
@@ -338,12 +338,12 @@ void Species::initCharge( unsigned int nPart, unsigned int iPart, double q )
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all (np) particles in a mesh initialize their position
-//   - either using regular distribution in the mesh (position_initialization = regular)
-//   - or using uniform random distribution (position_initialization = random)
+//   - either using regular distribution in the mesh (position_initialization_ = regular)
+//   - or using uniform random distribution (position_initialization_ = random)
 // ---------------------------------------------------------------------------------------------------------------------
 void Species::initPosition( unsigned int nPart, unsigned int iPart, double *indexes, Params &params )
 {
-    if( position_initialization == "regular" ) {
+    if( position_initialization_ == "regular" ) {
 
         double coeff = pow( ( double )nPart, inv_nDim_field );
 
@@ -408,7 +408,7 @@ void Species::initPosition( unsigned int nPart, unsigned int iPart, double *inde
             }
         }
 
-    } else if( position_initialization == "random" ) {
+    } else if( position_initialization_ == "random" ) {
         if( params.geometry=="AMcylindrical" ) {
             double particles_r, particles_theta;
             for( unsigned int p= iPart; p<iPart+nPart; p++ ) {
@@ -425,7 +425,7 @@ void Species::initPosition( unsigned int nPart, unsigned int iPart, double *inde
                 }
             }
         }
-    } else if( position_initialization == "centered" ) {
+    } else if( position_initialization_ == "centered" ) {
 
         for( unsigned int p=iPart; p<iPart+nPart; p++ )
             for( unsigned int i=0; i<nDim_particle ; i++ ) {
@@ -450,7 +450,7 @@ void Species::initMomentum( unsigned int nPart, unsigned int iPart, double *temp
     if( mass > 0 ) {
 
         // Cold distribution
-        if( momentum_initialization == "cold" ) {
+        if( momentum_initialization_ == "cold" ) {
 
             for( unsigned int p=iPart; p<iPart+nPart; p++ ) {
                 particles->momentum( 0, p ) = 0.0;
@@ -459,7 +459,7 @@ void Species::initMomentum( unsigned int nPart, unsigned int iPart, double *temp
             }
 
             // Maxwell-Juttner distribution
-        } else if( momentum_initialization == "maxwell-juettner" ) {
+        } else if( momentum_initialization_ == "maxwell-juettner" ) {
 
             // Sample the energies in the MJ distribution
             vector<double> energies = maxwellJuttner( nPart, temp[0]/mass );
@@ -485,7 +485,7 @@ void Species::initMomentum( unsigned int nPart, unsigned int iPart, double *temp
             }
 
             // Rectangular distribution
-        } else if( momentum_initialization == "rectangular" ) {
+        } else if( momentum_initialization_ == "rectangular" ) {
 
             double t0 = sqrt( temp[0]/mass ), t1 = sqrt( temp[1]/mass ), t2 = sqrt( temp[2]/mass );
             for( unsigned int p= iPart; p<iPart+nPart; p++ ) {
@@ -574,7 +574,7 @@ void Species::initMomentum( unsigned int nPart, unsigned int iPart, double *temp
     // -------------------------------------------------------------------------
     else if( mass == 0 ) {
         // Cold distribution
-        if( momentum_initialization == "cold" ) {
+        if( momentum_initialization_ == "cold" ) {
 
             //double gamma =sqrt(vel[0]*vel[0] + vel[1]*vel[1] + vel[2]*vel[2]);
             for( unsigned int p=iPart; p<iPart+nPart; p++ ) {
@@ -584,7 +584,7 @@ void Species::initMomentum( unsigned int nPart, unsigned int iPart, double *temp
             }
 
             // Rectangular distribution
-        } else if( momentum_initialization == "rectangular" ) {
+        } else if( momentum_initialization_ == "rectangular" ) {
 
             //double gamma =sqrt(temp[0]*temp[0] + temp[1]*temp[1] + temp[2]*temp[2]);
             for( unsigned int p= iPart; p<iPart+nPart; p++ ) {
@@ -1553,8 +1553,8 @@ int Species::ParticleCreator( vector<unsigned int> n_space_to_create, Params &pa
                 temperature[m].put_to( 0.0000000001 ); // default value
             }
 
-            if( velocityProfile[m] ) {
-                velocityProfile[m]   ->valuesAt( xyz, velocity   [m] );
+            if( velocity_profile_[m] ) {
+                velocity_profile_[m]   ->valuesAt( xyz, velocity   [m] );
             } else {
                 velocity[m].put_to( 0.0 ); //default value
             }
@@ -1638,7 +1638,7 @@ int Species::ParticleCreator( vector<unsigned int> n_space_to_create, Params &pa
                     density( i, j, k ) = abs( density( i, j, k ) );
                     // multiply by the cell volume
                     density( i, j, k ) *= params.cell_volume;
-                    if( params.geometry=="AMcylindrical" && position_initialization != "regular" ) {
+                    if( params.geometry=="AMcylindrical" && position_initialization_ != "regular" ) {
                         //Particles weight in regular is normalized later.
                         density( i, j, k ) *= ( *xyz[1] )( i, j, k );
                     }
@@ -1716,13 +1716,13 @@ int Species::ParticleCreator( vector<unsigned int> n_space_to_create, Params &pa
                                 indexes[2]=k*cell_length[2]+cell_position[2];
                             }
                         }
-                        if( !position_initialization_on_species ) {
+                        if( !position_initialization_on_species_ ) {
                             initPosition( nPart, iPart, indexes, params );
                         }
                         initMomentum( nPart, iPart, temp, vel );
                         initWeight( nPart, iPart, density( i, j, k ) );
 
-                        if( params.geometry=="AMcylindrical" && position_initialization == "regular" ) {
+                        if( params.geometry=="AMcylindrical" && position_initialization_ == "regular" ) {
                             //Particles in regular have a weight proportional to their position along r.
                             for (unsigned int ipart=iPart; ipart < iPart+nPart; ipart++){
                                 particles->weight(ipart) *= sqrt(particles->position(1,ipart)*particles->position(1,ipart) + particles->position(2,ipart)*particles->position(2,ipart));
@@ -1969,8 +1969,8 @@ int Species::createParticles2( Particles * particles,
                 temperature[m].put_to( 0.0000000001 ); // default value
             }
 
-            if( velocityProfile[m] ) {
-                velocityProfile[m]   ->valuesAt( xyz, velocity   [m] );
+            if( velocity_profile_[m] ) {
+                velocity_profile_[m]   ->valuesAt( xyz, velocity   [m] );
             } else {
                 velocity[m].put_to( 0.0 ); //default value
             }
@@ -2053,7 +2053,7 @@ int Species::createParticles2( Particles * particles,
                     density( i, j, k ) = abs( density( i, j, k ) );
                     // multiply by the cell volume
                     density( i, j, k ) *= params.cell_volume;
-                    if( params.geometry=="AMcylindrical" && position_initialization != "regular" ) {
+                    if( params.geometry=="AMcylindrical" && position_initialization_ != "regular" ) {
                         //Particles weight in regular is normalized later.
                         density( i, j, k ) *= ( *xyz[1] )( i, j, k );
                     }
@@ -2131,13 +2131,13 @@ int Species::createParticles2( Particles * particles,
                                 indexes[2]=k*cell_length[2]+cell_position[2];
                             }
                         }
-                        if( !position_initialization_on_species ) {
-                            ParticleCreator::createPosition( species->position_initialization, particles, species, nPart, iPart, indexes, params );
+                        if( !position_initialization_on_species_ ) {
+                            ParticleCreator::createPosition( species->position_initialization_, particles, species, nPart, iPart, indexes, params );
                         }
-                        ParticleCreator::createMomentum( species->momentum_initialization, particles, species,  nPart, iPart, temp, vel );
+                        ParticleCreator::createMomentum( species->momentum_initialization_, particles, species,  nPart, iPart, temp, vel );
                         ParticleCreator::createWeight( particles, nPart, iPart, density( i, j, k ) );
 
-                        if( params.geometry=="AMcylindrical" && species->position_initialization == "regular" ) {
+                        if( params.geometry=="AMcylindrical" && species->position_initialization_ == "regular" ) {
                             //Particles in regular have a weight proportional to their position along r.
                             for (unsigned int ipart=iPart; ipart < iPart+nPart; ipart++){
                                 particles->weight(ipart) *= sqrt(particles->position(1,ipart)*particles->position(1,ipart) + particles->position(2,ipart)*particles->position(2,ipart));

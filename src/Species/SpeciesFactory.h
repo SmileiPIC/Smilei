@@ -487,13 +487,13 @@ public:
         }
 
         PyObject *py_pos_init = PyTools::extract_py( "position_initialization", "Species", ispec );
-        if( PyTools::convert( py_pos_init, thisSpecies->position_initialization ) ) {
-            if( thisSpecies->position_initialization.empty() ) {
+        if( PyTools::convert( py_pos_init, thisSpecies->position_initialization_ ) ) {
+            if( thisSpecies->position_initialization_.empty() ) {
                 ERROR( "For species '" << species_name << "' empty position_initialization" );
-            } else if( ( thisSpecies->position_initialization!="regular" )
-                       &&( thisSpecies->position_initialization!="random" )
-                       &&( thisSpecies->position_initialization!="centered" ) ) {
-                thisSpecies->position_initialization_on_species=true;
+            } else if( ( thisSpecies->position_initialization_!="regular" )
+                       &&( thisSpecies->position_initialization_!="random" )
+                       &&( thisSpecies->position_initialization_!="centered" ) ) {
+                thisSpecies->position_initialization_on_species_=true;
 
             }
         }
@@ -543,27 +543,27 @@ public:
 
 
         PyObject *py_mom_init = PyTools::extract_py( "momentum_initialization", "Species", ispec );
-        if( PyTools::convert( py_mom_init, thisSpecies->momentum_initialization ) ) {
-            if( ( thisSpecies->momentum_initialization=="mj" ) || ( thisSpecies->momentum_initialization=="maxj" ) ) {
-                thisSpecies->momentum_initialization="maxwell-juettner";
+        if( PyTools::convert( py_mom_init, thisSpecies->momentum_initialization_ ) ) {
+            if( ( thisSpecies->momentum_initialization_=="mj" ) || ( thisSpecies->momentum_initialization_=="maxj" ) ) {
+                thisSpecies->momentum_initialization_="maxwell-juettner";
             }
             // Matter particles
             if( thisSpecies->mass > 0 ) {
-                if( ( thisSpecies->momentum_initialization!="cold" )
-                        && ( thisSpecies->momentum_initialization!="maxwell-juettner" )
-                        && ( thisSpecies->momentum_initialization!="rectangular" ) ) {
+                if( ( thisSpecies->momentum_initialization_!="cold" )
+                        && ( thisSpecies->momentum_initialization_!="maxwell-juettner" )
+                        && ( thisSpecies->momentum_initialization_!="rectangular" ) ) {
                     ERROR( "For particle species '" << species_name
                            << "' unknown momentum_initialization: "
-                           <<thisSpecies->momentum_initialization );
+                           <<thisSpecies->momentum_initialization_ );
                 }
             }
             // Photons
             else if( thisSpecies->mass == 0 ) {
-                if( ( thisSpecies->momentum_initialization!="cold" )
-                        && ( thisSpecies->momentum_initialization!="rectangular" ) ) {
+                if( ( thisSpecies->momentum_initialization_!="cold" )
+                        && ( thisSpecies->momentum_initialization_!="rectangular" ) ) {
                     ERROR( "For photon species '" << species_name
                            << "' unknown momentum_initialization: "
-                           <<thisSpecies->momentum_initialization );
+                           <<thisSpecies->momentum_initialization_ );
                 }
             }
         }
@@ -604,7 +604,7 @@ public:
         PyTools::extract( "c_part_max", thisSpecies->c_part_max, "Species", ispec );
 
         PyTools::extract( "time_frozen", thisSpecies->time_frozen, "Species", ispec );
-        if( thisSpecies->time_frozen > 0 && thisSpecies->momentum_initialization!="cold" ) {
+        if( thisSpecies->time_frozen > 0 && thisSpecies->momentum_initialization_!="cold" ) {
             if( patch->isMaster() ) {
                 WARNING( "For species '" << species_name << "' possible conflict between time-frozen & not cold initialization" );
             }
@@ -842,9 +842,9 @@ public:
         if( thisSpecies->momentum_initialization_array == NULL ) {
             // Mean velocity
             if( PyTools::extract3Profiles( "mean_velocity", ispec, profile1, profile2, profile3 ) ) {
-                thisSpecies->velocityProfile[0] = new Profile( profile1, params.nDim_field, Tools::merge( "mean_velocity[0] ", species_name ), true );
-                thisSpecies->velocityProfile[1] = new Profile( profile2, params.nDim_field, Tools::merge( "mean_velocity[1] ", species_name ), true );
-                thisSpecies->velocityProfile[2] = new Profile( profile3, params.nDim_field, Tools::merge( "mean_velocity[2] ", species_name ), true );
+                thisSpecies->velocity_profile_[0] = new Profile( profile1, params.nDim_field, Tools::merge( "mean_velocity[0] ", species_name ), true );
+                thisSpecies->velocity_profile_[1] = new Profile( profile2, params.nDim_field, Tools::merge( "mean_velocity[1] ", species_name ), true );
+                thisSpecies->velocity_profile_[2] = new Profile( profile3, params.nDim_field, Tools::merge( "mean_velocity[2] ", species_name ), true );
             }
 
             // Temperature
@@ -933,12 +933,12 @@ public:
         newSpecies->radiation_photon_gamma_threshold_         = species->radiation_photon_gamma_threshold_;
         newSpecies->photon_species                           = species->photon_species;
         newSpecies->species_number_                            = species->species_number_;
-        newSpecies->position_initialization_on_species       = species->position_initialization_on_species;
+        newSpecies->position_initialization_on_species_       = species->position_initialization_on_species_;
         newSpecies->position_initialization_on_species_index = species->position_initialization_on_species_index;
-        newSpecies->position_initialization                  = species->position_initialization;
+        newSpecies->position_initialization_                  = species->position_initialization_;
         newSpecies->position_initialization_array            = species->position_initialization_array;
         newSpecies->n_numpy_particles                        = species->n_numpy_particles            ;
-        newSpecies->momentum_initialization                  = species->momentum_initialization;
+        newSpecies->momentum_initialization_                  = species->momentum_initialization_;
         newSpecies->momentum_initialization_array            = species->momentum_initialization_array;
         newSpecies->c_part_max                               = species->c_part_max;
         newSpecies->mass                                     = species->mass;
@@ -982,13 +982,13 @@ public:
             newSpecies->densityProfile                       = new Profile( species->densityProfile );
             newSpecies->ppcProfile                           = new Profile( species->ppcProfile );
         }
-        newSpecies->velocityProfile.resize( 3 );
+        newSpecies->velocity_profile_.resize( 3 );
         newSpecies->temperatureProfile.resize( 3 );
 
-        if( species->velocityProfile[0] ) {
-            newSpecies->velocityProfile[0]                   = new Profile( species->velocityProfile[0] );
-            newSpecies->velocityProfile[1]                   = new Profile( species->velocityProfile[1] );
-            newSpecies->velocityProfile[2]                   = new Profile( species->velocityProfile[2] );
+        if( species->velocity_profile_[0] ) {
+            newSpecies->velocity_profile_[0]                   = new Profile( species->velocity_profile_[0] );
+            newSpecies->velocity_profile_[1]                   = new Profile( species->velocity_profile_[1] );
+            newSpecies->velocity_profile_[2]                   = new Profile( species->velocity_profile_[2] );
         }
         if( species->temperatureProfile[0] ) {
             newSpecies->temperatureProfile[0]                = new Profile( species->temperatureProfile[0] );
@@ -1047,7 +1047,7 @@ public:
 
         // Loop species to find species which their particles positions is on another species
         for( unsigned int ispec1 = 0; ispec1<retSpecies.size(); ispec1++ ) {
-            if( retSpecies[ispec1]->position_initialization_on_species==true ) {
+            if( retSpecies[ispec1]->position_initialization_on_species_==true ) {
                 // If true then position_initialization of spec1 is not 'centered', 'regular' or 'random'
                 // So we have to check if :
                 // - 'position_initialization' of spec1 is another already created specie name;
@@ -1057,11 +1057,11 @@ public:
 
                 // Loop all other species
                 for( unsigned int ispec2 = 0; ispec2<retSpecies.size(); ispec2++ ) {
-                    if( retSpecies[ispec1]->position_initialization == retSpecies[ispec2]->name ) {
-                        if( retSpecies[ispec1]->position_initialization==retSpecies[ispec1]->name ) {
+                    if( retSpecies[ispec1]->position_initialization_ == retSpecies[ispec2]->name ) {
+                        if( retSpecies[ispec1]->position_initialization_==retSpecies[ispec1]->name ) {
                             ERROR( "For species '"<<retSpecies[ispec1]->name<<"' position_initialization must be different from '"<<retSpecies[ispec1]->name<<"'." );
                         }
-                        if( retSpecies[ispec2]->position_initialization_on_species==true ) {
+                        if( retSpecies[ispec2]->position_initialization_on_species_==true ) {
                             ERROR( "For species '"<<retSpecies[ispec2]->name<<"' position_initialization must be 'centered', 'regular' or 'random' (pre-defined position) in order to attach '"<<retSpecies[ispec1]->name<<"' to its initial position." );
                         }
                         if( retSpecies[ispec1]->getNbrOfParticles() != retSpecies[ispec2]->getNbrOfParticles() ) {
@@ -1074,7 +1074,7 @@ public:
                     }
                 }
                 if( retSpecies[ispec1]->position_initialization_on_species_index==-1 ) {
-                    ERROR( "Specie '"<<retSpecies[ispec1]->position_initialization<<"' doesn't exist. We can't initialize position on this species. Choose an already created specie or 'centered', 'regular', 'random'." )
+                    ERROR( "Specie '"<<retSpecies[ispec1]->position_initialization_<<"' doesn't exist. We can't initialize position on this species. Choose an already created specie or 'centered', 'regular', 'random'." )
                 }
             }
         }

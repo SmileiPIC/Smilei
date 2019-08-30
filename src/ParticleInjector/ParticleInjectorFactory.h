@@ -107,7 +107,7 @@ public:
         PyTools::extract( "position_initialization", this_particle_injector->position_initialization_, "ParticleInjector", injector_index );
         if ( this_particle_injector->position_initialization_=="species" || this_particle_injector->position_initialization_=="") {
             MESSAGE( 2, "> Position initialization defined as the species.");
-            this_particle_injector->position_initialization_ = species->position_initialization;
+            this_particle_injector->position_initialization_ = species->position_initialization_;
         } else if( ( this_particle_injector->position_initialization_!="regular" )
                    &&( this_particle_injector->position_initialization_!="random" )
                    &&( this_particle_injector->position_initialization_!="centered" ) ) {
@@ -126,7 +126,7 @@ public:
         }
         if ( this_particle_injector->momentum_initialization_=="species" || this_particle_injector->momentum_initialization_=="") {
             MESSAGE( 2, "> Momentum initialization defined as the species.");
-            this_particle_injector->momentum_initialization_ = species->momentum_initialization;
+            this_particle_injector->momentum_initialization_ = species->momentum_initialization_;
         }
         // Matter particles
         if( species_vector[this_particle_injector->species_number_]->mass > 0 ) {
@@ -172,9 +172,9 @@ public:
             // MESSAGE(2, message);
         } else {
             MESSAGE( 2, "> Mean velocity defined as the species.");
-            this_particle_injector->velocity_profile_[0] = new Profile(species->velocityProfile[0]);
-            this_particle_injector->velocity_profile_[1] = new Profile(species->velocityProfile[1]);
-            this_particle_injector->velocity_profile_[2] = new Profile(species->velocityProfile[2]);
+            this_particle_injector->velocity_profile_[0] = new Profile(species->velocity_profile_[0]);
+            this_particle_injector->velocity_profile_[1] = new Profile(species->velocity_profile_[1]);
+            this_particle_injector->velocity_profile_[2] = new Profile(species->velocity_profile_[2]);
         }
         
         // Temperature

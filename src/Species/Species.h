@@ -56,10 +56,10 @@ public:
     std::string name;
 
     //! position initialization type, possible values: "regular" or "random"
-    std::string position_initialization;
+    std::string position_initialization_;
 
     //! momentum initialization type, possible values: "cold" or "maxwell-juettner"
-    std::string momentum_initialization;
+    std::string momentum_initialization_;
 
     //! coefficient on the maximum number of particles for the species
     double c_part_max;
@@ -123,7 +123,7 @@ public:
     Profile *densityProfile;
 
     //! vector of velocity profiles (vx, vy, vz)
-    std::vector<Profile *> velocityProfile;
+    std::vector<Profile *> velocity_profile_;
 
     //! vector of temperature profiles (Tx, Ty, Tz)
     std::vector<Profile *> temperatureProfile;
@@ -151,7 +151,7 @@ public:
     //! Number of particles in the init array
     unsigned int n_numpy_particles;
     //! Boolean to know if we initialize particles one specie on another species
-    bool position_initialization_on_species;
+    bool position_initialization_on_species_;
     //! Index of the species where position initialization is made
     int position_initialization_on_species_index;
     //! Boolean to know if species follows ponderomotive loop (laser modeled with envelope)
