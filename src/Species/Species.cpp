@@ -450,7 +450,7 @@ void Species::initMomentum( unsigned int nPart, unsigned int iPart, double *temp
     if( mass > 0 ) {
 
         // Cold distribution
-        if( momentum_initialization == "cold" ) {
+        if( momentum_initialization_ == "cold" ) {
 
             for( unsigned int p=iPart; p<iPart+nPart; p++ ) {
                 particles->momentum( 0, p ) = 0.0;
@@ -459,7 +459,7 @@ void Species::initMomentum( unsigned int nPart, unsigned int iPart, double *temp
             }
 
             // Maxwell-Juttner distribution
-        } else if( momentum_initialization == "maxwell-juettner" ) {
+        } else if( momentum_initialization_ == "maxwell-juettner" ) {
 
             // Sample the energies in the MJ distribution
             vector<double> energies = maxwellJuttner( nPart, temp[0]/mass );
@@ -485,7 +485,7 @@ void Species::initMomentum( unsigned int nPart, unsigned int iPart, double *temp
             }
 
             // Rectangular distribution
-        } else if( momentum_initialization == "rectangular" ) {
+        } else if( momentum_initialization_ == "rectangular" ) {
 
             double t0 = sqrt( temp[0]/mass ), t1 = sqrt( temp[1]/mass ), t2 = sqrt( temp[2]/mass );
             for( unsigned int p= iPart; p<iPart+nPart; p++ ) {
@@ -574,7 +574,7 @@ void Species::initMomentum( unsigned int nPart, unsigned int iPart, double *temp
     // -------------------------------------------------------------------------
     else if( mass == 0 ) {
         // Cold distribution
-        if( momentum_initialization == "cold" ) {
+        if( momentum_initialization_ == "cold" ) {
 
             //double gamma =sqrt(vel[0]*vel[0] + vel[1]*vel[1] + vel[2]*vel[2]);
             for( unsigned int p=iPart; p<iPart+nPart; p++ ) {
@@ -584,7 +584,7 @@ void Species::initMomentum( unsigned int nPart, unsigned int iPart, double *temp
             }
 
             // Rectangular distribution
-        } else if( momentum_initialization == "rectangular" ) {
+        } else if( momentum_initialization_ == "rectangular" ) {
 
             //double gamma =sqrt(temp[0]*temp[0] + temp[1]*temp[1] + temp[2]*temp[2]);
             for( unsigned int p= iPart; p<iPart+nPart; p++ ) {
@@ -2134,7 +2134,7 @@ int Species::createParticles2( Particles * particles,
                         if( !position_initialization_on_species_ ) {
                             ParticleCreator::createPosition( species->position_initialization_, particles, species, nPart, iPart, indexes, params );
                         }
-                        ParticleCreator::createMomentum( species->momentum_initialization, particles, species,  nPart, iPart, temp, vel );
+                        ParticleCreator::createMomentum( species->momentum_initialization_, particles, species,  nPart, iPart, temp, vel );
                         ParticleCreator::createWeight( particles, nPart, iPart, density( i, j, k ) );
 
                         if( params.geometry=="AMcylindrical" && species->position_initialization_ == "regular" ) {

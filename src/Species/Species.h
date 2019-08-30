@@ -59,7 +59,7 @@ public:
     std::string position_initialization_;
 
     //! momentum initialization type, possible values: "cold" or "maxwell-juettner"
-    std::string momentum_initialization;
+    std::string momentum_initialization_;
 
     //! coefficient on the maximum number of particles for the species
     double c_part_max;

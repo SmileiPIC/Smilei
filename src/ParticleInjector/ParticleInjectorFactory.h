@@ -126,7 +126,7 @@ public:
         }
         if ( this_particle_injector->momentum_initialization_=="species" || this_particle_injector->momentum_initialization_=="") {
             MESSAGE( 2, "> Momentum initialization defined as the species.");
-            this_particle_injector->momentum_initialization_ = species->momentum_initialization;
+            this_particle_injector->momentum_initialization_ = species->momentum_initialization_;
         }
         // Matter particles
         if( species_vector[this_particle_injector->species_number_]->mass > 0 ) {

@@ -543,27 +543,27 @@ public:
 
 
         PyObject *py_mom_init = PyTools::extract_py( "momentum_initialization", "Species", ispec );
-        if( PyTools::convert( py_mom_init, thisSpecies->momentum_initialization ) ) {
-            if( ( thisSpecies->momentum_initialization=="mj" ) || ( thisSpecies->momentum_initialization=="maxj" ) ) {
-                thisSpecies->momentum_initialization="maxwell-juettner";
+        if( PyTools::convert( py_mom_init, thisSpecies->momentum_initialization_ ) ) {
+            if( ( thisSpecies->momentum_initialization_=="mj" ) || ( thisSpecies->momentum_initialization_=="maxj" ) ) {
+                thisSpecies->momentum_initialization_="maxwell-juettner";
             }
             // Matter particles
             if( thisSpecies->mass > 0 ) {
-                if( ( thisSpecies->momentum_initialization!="cold" )
-                        && ( thisSpecies->momentum_initialization!="maxwell-juettner" )
-                        && ( thisSpecies->momentum_initialization!="rectangular" ) ) {
+                if( ( thisSpecies->momentum_initialization_!="cold" )
+                        && ( thisSpecies->momentum_initialization_!="maxwell-juettner" )
+                        && ( thisSpecies->momentum_initialization_!="rectangular" ) ) {
                     ERROR( "For particle species '" << species_name
                            << "' unknown momentum_initialization: "
-                           <<thisSpecies->momentum_initialization );
+                           <<thisSpecies->momentum_initialization_ );
                 }
             }
             // Photons
             else if( thisSpecies->mass == 0 ) {
-                if( ( thisSpecies->momentum_initialization!="cold" )
-                        && ( thisSpecies->momentum_initialization!="rectangular" ) ) {
+                if( ( thisSpecies->momentum_initialization_!="cold" )
+                        && ( thisSpecies->momentum_initialization_!="rectangular" ) ) {
                     ERROR( "For photon species '" << species_name
                            << "' unknown momentum_initialization: "
-                           <<thisSpecies->momentum_initialization );
+                           <<thisSpecies->momentum_initialization_ );
                 }
             }
         }
@@ -604,7 +604,7 @@ public:
         PyTools::extract( "c_part_max", thisSpecies->c_part_max, "Species", ispec );
 
         PyTools::extract( "time_frozen", thisSpecies->time_frozen, "Species", ispec );
-        if( thisSpecies->time_frozen > 0 && thisSpecies->momentum_initialization!="cold" ) {
+        if( thisSpecies->time_frozen > 0 && thisSpecies->momentum_initialization_!="cold" ) {
             if( patch->isMaster() ) {
                 WARNING( "For species '" << species_name << "' possible conflict between time-frozen & not cold initialization" );
             }
@@ -938,7 +938,7 @@ public:
         newSpecies->position_initialization_                  = species->position_initialization_;
         newSpecies->position_initialization_array            = species->position_initialization_array;
         newSpecies->n_numpy_particles                        = species->n_numpy_particles            ;
-        newSpecies->momentum_initialization                  = species->momentum_initialization;
+        newSpecies->momentum_initialization_                  = species->momentum_initialization_;
         newSpecies->momentum_initialization_array            = species->momentum_initialization_array;
         newSpecies->c_part_max                               = species->c_part_max;
         newSpecies->mass                                     = species->mass;
