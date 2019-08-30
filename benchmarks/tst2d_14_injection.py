@@ -20,13 +20,14 @@ Main(
     cell_length = [1./resx,1./resx],
     grid_length  = Lsim,
     number_of_patches = [ 4, 4 ],
+    #cell_sorting = True,
     timestep = 1./rest,
     simulation_time = Tsim,
     EM_boundary_conditions = [
         ['silver-muller'],
         ['periodic'],
     ],
-    random_seed = smilei_mpi_rank
+    random_seed = smilei_mpi_rank,
 )
 
 fp = trapezoidal(1., xvacuum=0.        ,xplateau=Lsim[0]/2.)
