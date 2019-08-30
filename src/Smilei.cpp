@@ -356,8 +356,8 @@ int main( int argc, char *argv[] )
             timers.movWindow.restart();
             simWindow->operate( vecPatches, &smpi, params, itime, time_dual );
             
-            if (itime == 2000) {
-                for (unsigned int n=0;n < 0; n++)
+            if (itime == 1999) {
+                for (unsigned int n=0;n < 5; n++)
                     simWindow->operate( vecPatches, &smpi, params, 600000, time_dual );
             }
             timers.movWindow.update();
