@@ -1306,52 +1306,50 @@ void ElectroMagnAM::applyExternalTimeFields( Patch *patch, double time )
 
 void ElectroMagnAM::applyExternalField( Field *my_field,  Profile *profile, Patch *patch )
 {
-
-    cField2D *field2D=static_cast<cField2D *>( my_field );
-    
-    vector<double> pos( 2 );
-    pos[0]      = dl*( ( double )( patch->getCellStartingGlobalIndex( 0 ) )+( field2D->isDual( 0 )?-0.5:0. ) );
-    double pos1 = dr*( ( double )( patch->getCellStartingGlobalIndex( 1 ) )+( field2D->isDual( 1 )?-0.5:0. ) );
-    int N0 = ( int )field2D->dims()[0];
-    int N1 = ( int )field2D->dims()[1];
-    
-    vector<Field *> xr( 2 );
-    vector<unsigned int> n_space_to_create( 2 );
-    n_space_to_create[0] = N0;
-    n_space_to_create[1] = N1;
-    
-    for( unsigned int idim=0 ; idim<2 ; idim++ ) {
-        xr[idim] = new Field2D( n_space_to_create );
-    }
-    
-    for( int i=0 ; i<N0 ; i++ ) {
-        pos[1] = pos1;
-        for( int j=0 ; j<N1 ; j++ ) {
-            for( unsigned int idim=0 ; idim<2 ; idim++ ) {
-                ( *xr[idim] )( i, j ) = pos[idim];
-            }
-            pos[1] += dr;
-        }
-        pos[0] += dl;
-    }
-    
-    profile->complexValuesAt( xr, *field2D );
-    
-    for( unsigned int idim=0 ; idim<2 ; idim++ ) {
-        delete xr[idim];
-    }
-    
-    //for( auto &embc: emBoundCond ) {
-    //    if( embc ) {
-    //        embc->save_fields( my_field, patch );
-    //    }
-    //}
+     cField2D *field2D=static_cast<cField2D *>( my_field );
+     
+     vector<double> pos( 2 );
+     pos[0]      = dl*( ( double )( patch->getCellStartingGlobalIndex( 0 ) )+( field2D->isDual( 0 )?-0.5:0. ) );
+     double pos1 = dr*( ( double )( patch->getCellStartingGlobalIndex( 1 ) )+( field2D->isDual( 1 )?-0.5:0. ) );
+     int N0 = ( int )field2D->dims()[0];
+     int N1 = ( int )field2D->dims()[1];
+     
+     vector<Field *> xr( 2 );
+     vector<unsigned int> n_space_to_create( 2 );
+     n_space_to_create[0] = N0;
+     n_space_to_create[1] = N1;
+     
+     for( unsigned int idim=0 ; idim<2 ; idim++ ) {
+         xr[idim] = new Field2D( n_space_to_create );
+     }
+     
+     for( int i=0 ; i<N0 ; i++ ) {
+         pos[1] = pos1;
+         for( int j=0 ; j<N1 ; j++ ) {
+             for( unsigned int idim=0 ; idim<2 ; idim++ ) {
+                 ( *xr[idim] )( i, j ) = pos[idim];
+             }
+             pos[1] += dr;
+         }
+         pos[0] += dl;
+     }
+     
+     profile->complexValuesAt( xr, *field2D );
+     
+     for( unsigned int idim=0 ; idim<2 ; idim++ ) {
+         delete xr[idim];
+     }
+     
+     //for( auto &embc: emBoundCond ) {
+     //    if( embc ) {
+     //        embc->save_fields( my_field, patch );
+     //    }
+     //}
     
 }
 
 void ElectroMagnAM::applyExternalTimeField( Field *my_field,  Profile *profile, Patch *patch, double time )
 {
-
     cField2D *field2D=static_cast<cField2D *>( my_field );
     
     vector<double> pos( 2 );
@@ -1390,8 +1388,7 @@ void ElectroMagnAM::applyExternalTimeField( Field *my_field,  Profile *profile, 
     //    if( embc ) {
     //        embc->save_fields( my_field, patch );
     //    }
-    //}
-    
+    //}    
 }
 
 

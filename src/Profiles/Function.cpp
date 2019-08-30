@@ -176,7 +176,7 @@ double Function_Gaussian1D::valueAt( vector<double> x_cell )
 {
     double x = x_cell[0], xfactor=0.;
     if( x > xvacuum  && x < xvacuum+xlength ) {
-        xfactor = exp( -pow( x-xcenter, xorder ) * invxsigma );
+        xfactor = xorder ? exp( -pow( x-xcenter, xorder ) * invxsigma ) : 1.;
     }
     return value * xfactor;
 }
@@ -185,10 +185,10 @@ double Function_Gaussian2D::valueAt( vector<double> x_cell )
     double x = x_cell[0], xfactor=0.;
     double y = x_cell[1], yfactor=0.;
     if( x > xvacuum  && x < xvacuum+xlength ) {
-        xfactor = exp( -pow( x-xcenter, xorder ) * invxsigma );
+        xfactor = xorder ? exp( -pow( x-xcenter, xorder ) * invxsigma ) : 1.;
     }
     if( y > yvacuum  && y < yvacuum+ylength ) {
-        yfactor = exp( -pow( y-ycenter, yorder ) * invysigma );
+        yfactor = yorder ? exp( -pow( y-ycenter, yorder ) * invysigma ) : 1.;
     }
     return value * xfactor * yfactor;
 }
@@ -198,13 +198,13 @@ double Function_Gaussian3D::valueAt( vector<double> x_cell )
     double y = x_cell[1], yfactor=0.;
     double z = x_cell[2], zfactor=0.;
     if( x > xvacuum  && x < xvacuum+xlength ) {
-        xfactor = exp( -pow( x-xcenter, xorder ) * invxsigma );
+        xfactor = xorder ? exp( -pow( x-xcenter, xorder ) * invxsigma ) : 1.;
     }
     if( y > yvacuum  && y < yvacuum+ylength ) {
-        yfactor = exp( -pow( y-ycenter, yorder ) * invysigma );
+        yfactor = yorder ? exp( -pow( y-ycenter, yorder ) * invysigma ) : 1.;
     }
     if( z > zvacuum  && z < zvacuum+zlength ) {
-        zfactor = exp( -pow( z-zcenter, zorder ) * invzsigma );
+        zfactor = zorder ? exp( -pow( z-zcenter, zorder ) * invzsigma ) : 1.;
     }
     return value * xfactor * yfactor * zfactor;
 }

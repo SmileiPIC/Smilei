@@ -293,12 +293,13 @@ void VectorPatch::dynamics( Params &params,
 {
 
     #pragma omp single
-	{
+    {
 	// apply external time fields if requested
-	applyExternalTimeFields(time_dual);
-    
-    diag_flag = needsRhoJsNow( itime );
-	}    
+	if ( emfields(0)->extTimeFields.size() )
+            applyExternalTimeFields(time_dual);
+        
+        diag_flag = needsRhoJsNow( itime );
+    }    
 	
     timers.particles.restart();
     ostringstream t;
@@ -370,6 +371,7 @@ void VectorPatch::dynamics( Params &params,
     timers.syncPart.update( params.printNow( itime ) );
     
     // de-apply external time fields if requested
+    if ( emfields(0)->extTimeFields.size() )
 	resetExternalTimeFields(); 
 
 #ifdef __DETAILED_TIMERS
@@ -711,6 +713,8 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
         SyncVectorPatch::exchangeB( params, ( *this ), smpi );
     } else {
         for( unsigned int imode = 0 ; imode < static_cast<ElectroMagnAM *>( patches_[0]->EMfields )->El_.size() ; imode++ ) {
+            SyncVectorPatch::exchangeE( params, ( *this ), imode, smpi );
+            SyncVectorPatch::finalizeexchangeE( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
             SyncVectorPatch::exchangeB( params, ( *this ), imode, smpi );
             SyncVectorPatch::finalizeexchangeB( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
         }
@@ -2671,6 +2675,9 @@ void VectorPatch::update_field_list( SmileiMPI *smpi )
                 listBl_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
                 listBr_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
                 listBt_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                listEl_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                listEr_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                listEt_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
                 listrho_AM_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
             }
         }
