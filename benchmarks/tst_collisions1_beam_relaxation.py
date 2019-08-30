@@ -19,7 +19,7 @@ Main(
 	
 	time_fields_frozen = 100000000000.,
 	
-	cell_length = [2.*L0],
+	cell_length = [0.4*L0],
 	grid_length = [112.*L0],
 	
 	EM_boundary_conditions = [ ["periodic"] ],
@@ -32,7 +32,7 @@ Main(
 )
 
 i = 0
-for ion_nppc, eon_nppc in [[1000, 1000], [1000, 100], [100, 1000]]:
+for ion_nppc, eon_nppc in [[200, 200], [200, 20], [20, 200]]:
 	
 	ion = "ion"+str(i)
 	eon = "eon"+str(i)

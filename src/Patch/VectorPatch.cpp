@@ -957,6 +957,11 @@ void VectorPatch::runAllDiags( Params &params, SmileiMPI *smpi, unsigned int iti
     }
     timers.diags.update();
 
+    if (itime==0) {
+        for( unsigned int idiag = 0 ; idiag < diag_timers.size() ; idiag++ )
+            diag_timers[idiag]->reboot();
+    }
+
 } // END runAllDiags
 
 

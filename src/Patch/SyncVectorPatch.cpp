@@ -421,6 +421,8 @@ void SyncVectorPatch::sum( std::vector<Field *> fields, VectorPatch &vecPatches,
     
 }
 
+template void SyncVectorPatch::sum<double,Field>( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime );
+
 
 // The idea is to minimize the number of implicit barriers and maximize the workload between barriers
 // fields : contains all (Jx then Jy then Jz) components of a field for all patches of vecPatches
