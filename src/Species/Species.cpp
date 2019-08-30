@@ -71,7 +71,7 @@ Species::Species( Params &params, Patch *patch ) :
     position_initialization_array( NULL ),
     momentum_initialization_array( NULL ),
     n_numpy_particles( 0 ),
-    position_initialization_on_species( false ),
+    position_initialization_on_species_( false ),
     position_initialization_on_species_index( -1 ),
     electron_species( NULL ),
     electron_species_index( -1 ),
@@ -1716,7 +1716,7 @@ int Species::ParticleCreator( vector<unsigned int> n_space_to_create, Params &pa
                                 indexes[2]=k*cell_length[2]+cell_position[2];
                             }
                         }
-                        if( !position_initialization_on_species ) {
+                        if( !position_initialization_on_species_ ) {
                             initPosition( nPart, iPart, indexes, params );
                         }
                         initMomentum( nPart, iPart, temp, vel );
@@ -2131,7 +2131,7 @@ int Species::createParticles2( Particles * particles,
                                 indexes[2]=k*cell_length[2]+cell_position[2];
                             }
                         }
-                        if( !position_initialization_on_species ) {
+                        if( !position_initialization_on_species_ ) {
                             ParticleCreator::createPosition( species->position_initialization_, particles, species, nPart, iPart, indexes, params );
                         }
                         ParticleCreator::createMomentum( species->momentum_initialization, particles, species,  nPart, iPart, temp, vel );

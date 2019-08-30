@@ -151,7 +151,7 @@ public:
     //! Number of particles in the init array
     unsigned int n_numpy_particles;
     //! Boolean to know if we initialize particles one specie on another species
-    bool position_initialization_on_species;
+    bool position_initialization_on_species_;
     //! Index of the species where position initialization is made
     int position_initialization_on_species_index;
     //! Boolean to know if species follows ponderomotive loop (laser modeled with envelope)

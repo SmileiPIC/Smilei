@@ -493,7 +493,7 @@ public:
             } else if( ( thisSpecies->position_initialization_!="regular" )
                        &&( thisSpecies->position_initialization_!="random" )
                        &&( thisSpecies->position_initialization_!="centered" ) ) {
-                thisSpecies->position_initialization_on_species=true;
+                thisSpecies->position_initialization_on_species_=true;
 
             }
         }
@@ -933,7 +933,7 @@ public:
         newSpecies->radiation_photon_gamma_threshold_         = species->radiation_photon_gamma_threshold_;
         newSpecies->photon_species                           = species->photon_species;
         newSpecies->species_number_                            = species->species_number_;
-        newSpecies->position_initialization_on_species       = species->position_initialization_on_species;
+        newSpecies->position_initialization_on_species_       = species->position_initialization_on_species_;
         newSpecies->position_initialization_on_species_index = species->position_initialization_on_species_index;
         newSpecies->position_initialization_                  = species->position_initialization_;
         newSpecies->position_initialization_array            = species->position_initialization_array;
@@ -1047,7 +1047,7 @@ public:
 
         // Loop species to find species which their particles positions is on another species
         for( unsigned int ispec1 = 0; ispec1<retSpecies.size(); ispec1++ ) {
-            if( retSpecies[ispec1]->position_initialization_on_species==true ) {
+            if( retSpecies[ispec1]->position_initialization_on_species_==true ) {
                 // If true then position_initialization of spec1 is not 'centered', 'regular' or 'random'
                 // So we have to check if :
                 // - 'position_initialization' of spec1 is another already created specie name;
@@ -1061,7 +1061,7 @@ public:
                         if( retSpecies[ispec1]->position_initialization_==retSpecies[ispec1]->name ) {
                             ERROR( "For species '"<<retSpecies[ispec1]->name<<"' position_initialization must be different from '"<<retSpecies[ispec1]->name<<"'." );
                         }
-                        if( retSpecies[ispec2]->position_initialization_on_species==true ) {
+                        if( retSpecies[ispec2]->position_initialization_on_species_==true ) {
                             ERROR( "For species '"<<retSpecies[ispec2]->name<<"' position_initialization must be 'centered', 'regular' or 'random' (pre-defined position) in order to attach '"<<retSpecies[ispec1]->name<<"' to its initial position." );
                         }
                         if( retSpecies[ispec1]->getNbrOfParticles() != retSpecies[ispec2]->getNbrOfParticles() ) {
