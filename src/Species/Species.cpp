@@ -64,7 +64,7 @@ Species::Species( Params &params, Patch *patch ) :
     chargeProfile( NULL ),
     densityProfile( NULL ),
     velocity_profile_( 3, NULL ),
-    temperatureProfile( 3, NULL ),
+    temperature_profile_( 3, NULL ),
     ppcProfile( NULL ),
     max_charge( 0. ),
     particles( &particles_sorted[0] ),
@@ -274,8 +274,8 @@ Species::~Species()
     for( unsigned int i=0; i<velocity_profile_.size(); i++ ) {
         delete velocity_profile_[i];
     }
-    for( unsigned int i=0; i<temperatureProfile.size(); i++ ) {
-        delete temperatureProfile[i];
+    for( unsigned int i=0; i<temperature_profile_.size(); i++ ) {
+        delete temperature_profile_[i];
     }
     if( ionization_rate!=Py_None ) {
         Py_DECREF( ionization_rate );
@@ -1547,8 +1547,8 @@ int Species::ParticleCreator( vector<unsigned int> n_space_to_create, Params &pa
         }
         // Evaluate profiles
         for( unsigned int m=0; m<3; m++ ) {
-            if( temperatureProfile[m] ) {
-                temperatureProfile[m]->valuesAt( xyz, temperature[m] );
+            if( temperature_profile_[m] ) {
+                temperature_profile_[m]->valuesAt( xyz, temperature[m] );
             } else {
                 temperature[m].put_to( 0.0000000001 ); // default value
             }
@@ -1963,8 +1963,8 @@ int Species::createParticles2( Particles * particles,
         }
         // Evaluate profiles
         for( unsigned int m=0; m<3; m++ ) {
-            if( temperatureProfile[m] ) {
-                temperatureProfile[m]->valuesAt( xyz, temperature[m] );
+            if( temperature_profile_[m] ) {
+                temperature_profile_[m]->valuesAt( xyz, temperature[m] );
             } else {
                 temperature[m].put_to( 0.0000000001 ); // default value
             }

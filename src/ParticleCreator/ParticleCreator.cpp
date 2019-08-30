@@ -89,10 +89,10 @@ void ParticleCreator::associate( Species * species)
     for (unsigned int i = 0 ; i < velocity_profile_.size() ; i++) {
         velocity_profile_[i] = new Profile(species->velocity_profile_[i]);
     }
-    // temperature_profile_.resize(particle_injector->temperature_profile_.size());
-    // for (unsigned int i = 0 ; i < temperature_profile_.size() ; i++) {
-    //     temperature_profile_[i] = new Profile(particle_injector->temperature_profile_[i]);
-    // }
+    temperature_profile_.resize(species->temperature_profile_.size());
+    for (unsigned int i = 0 ; i < temperature_profile_.size() ; i++) {
+        temperature_profile_[i] = new Profile(species->temperature_profile_[i]);
+    }
     // density_profile_ = particle_injector->density_profile_;
     // density_profile_type_ = particle_injector->density_profile_type_;
     // time_profile_ = particle_injector->time_profile_;

@@ -126,7 +126,7 @@ public:
     std::vector<Profile *> velocity_profile_;
 
     //! vector of temperature profiles (Tx, Ty, Tz)
-    std::vector<Profile *> temperatureProfile;
+    std::vector<Profile *> temperature_profile_;
 
     //! number-of-particle-per-cell profile
     Profile *ppcProfile;

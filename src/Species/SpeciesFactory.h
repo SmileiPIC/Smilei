@@ -849,9 +849,9 @@ public:
 
             // Temperature
             if( PyTools::extract3Profiles( "temperature", ispec, profile1, profile2, profile3 ) ) {
-                thisSpecies->temperatureProfile[0] = new Profile( profile1, params.nDim_field, Tools::merge( "temperature[0] ", species_name ), true );
-                thisSpecies->temperatureProfile[1] = new Profile( profile2, params.nDim_field, Tools::merge( "temperature[1] ", species_name ), true );
-                thisSpecies->temperatureProfile[2] = new Profile( profile3, params.nDim_field, Tools::merge( "temperature[2] ", species_name ), true );
+                thisSpecies->temperature_profile_[0] = new Profile( profile1, params.nDim_field, Tools::merge( "temperature[0] ", species_name ), true );
+                thisSpecies->temperature_profile_[1] = new Profile( profile2, params.nDim_field, Tools::merge( "temperature[1] ", species_name ), true );
+                thisSpecies->temperature_profile_[2] = new Profile( profile3, params.nDim_field, Tools::merge( "temperature[2] ", species_name ), true );
             }
         } else {
             ok1 = PyTools::extract3Profiles( "mean_velocity", ispec, profile1, profile2, profile3 ) ;
@@ -983,17 +983,17 @@ public:
             newSpecies->ppcProfile                           = new Profile( species->ppcProfile );
         }
         newSpecies->velocity_profile_.resize( 3 );
-        newSpecies->temperatureProfile.resize( 3 );
+        newSpecies->temperature_profile_.resize( 3 );
 
         if( species->velocity_profile_[0] ) {
             newSpecies->velocity_profile_[0]                   = new Profile( species->velocity_profile_[0] );
             newSpecies->velocity_profile_[1]                   = new Profile( species->velocity_profile_[1] );
             newSpecies->velocity_profile_[2]                   = new Profile( species->velocity_profile_[2] );
         }
-        if( species->temperatureProfile[0] ) {
-            newSpecies->temperatureProfile[0]                = new Profile( species->temperatureProfile[0] );
-            newSpecies->temperatureProfile[1]                = new Profile( species->temperatureProfile[1] );
-            newSpecies->temperatureProfile[2]                = new Profile( species->temperatureProfile[2] );
+        if( species->temperature_profile_[0] ) {
+            newSpecies->temperature_profile_[0]                = new Profile( species->temperature_profile_[0] );
+            newSpecies->temperature_profile_[1]                = new Profile( species->temperature_profile_[1] );
+            newSpecies->temperature_profile_[2]                = new Profile( species->temperature_profile_[2] );
         }
         newSpecies->max_charge                               = species->max_charge;
         newSpecies->tracking_diagnostic                      = species->tracking_diagnostic;

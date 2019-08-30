@@ -192,9 +192,9 @@ public:
             // MESSAGE(2, message);
         } else {
             MESSAGE( 2, "> Temperature defined as the species.");
-            this_particle_injector->temperature_profile_[0] = new Profile(species->temperatureProfile[0]);
-            this_particle_injector->temperature_profile_[1] = new Profile(species->temperatureProfile[1]);
-            this_particle_injector->temperature_profile_[2] = new Profile(species->temperatureProfile[2]);
+            this_particle_injector->temperature_profile_[0] = new Profile(species->temperature_profile_[0]);
+            this_particle_injector->temperature_profile_[1] = new Profile(species->temperature_profile_[1]);
+            this_particle_injector->temperature_profile_[2] = new Profile(species->temperature_profile_[2]);
         }
 
         // We read the density profile specific for the injector
