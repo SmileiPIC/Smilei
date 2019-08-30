@@ -842,9 +842,9 @@ public:
         if( thisSpecies->momentum_initialization_array == NULL ) {
             // Mean velocity
             if( PyTools::extract3Profiles( "mean_velocity", ispec, profile1, profile2, profile3 ) ) {
-                thisSpecies->velocityProfile[0] = new Profile( profile1, params.nDim_field, Tools::merge( "mean_velocity[0] ", species_name ), true );
-                thisSpecies->velocityProfile[1] = new Profile( profile2, params.nDim_field, Tools::merge( "mean_velocity[1] ", species_name ), true );
-                thisSpecies->velocityProfile[2] = new Profile( profile3, params.nDim_field, Tools::merge( "mean_velocity[2] ", species_name ), true );
+                thisSpecies->velocity_profile_[0] = new Profile( profile1, params.nDim_field, Tools::merge( "mean_velocity[0] ", species_name ), true );
+                thisSpecies->velocity_profile_[1] = new Profile( profile2, params.nDim_field, Tools::merge( "mean_velocity[1] ", species_name ), true );
+                thisSpecies->velocity_profile_[2] = new Profile( profile3, params.nDim_field, Tools::merge( "mean_velocity[2] ", species_name ), true );
             }
 
             // Temperature
@@ -982,13 +982,13 @@ public:
             newSpecies->densityProfile                       = new Profile( species->densityProfile );
             newSpecies->ppcProfile                           = new Profile( species->ppcProfile );
         }
-        newSpecies->velocityProfile.resize( 3 );
+        newSpecies->velocity_profile_.resize( 3 );
         newSpecies->temperatureProfile.resize( 3 );
 
-        if( species->velocityProfile[0] ) {
-            newSpecies->velocityProfile[0]                   = new Profile( species->velocityProfile[0] );
-            newSpecies->velocityProfile[1]                   = new Profile( species->velocityProfile[1] );
-            newSpecies->velocityProfile[2]                   = new Profile( species->velocityProfile[2] );
+        if( species->velocity_profile_[0] ) {
+            newSpecies->velocity_profile_[0]                   = new Profile( species->velocity_profile_[0] );
+            newSpecies->velocity_profile_[1]                   = new Profile( species->velocity_profile_[1] );
+            newSpecies->velocity_profile_[2]                   = new Profile( species->velocity_profile_[2] );
         }
         if( species->temperatureProfile[0] ) {
             newSpecies->temperatureProfile[0]                = new Profile( species->temperatureProfile[0] );

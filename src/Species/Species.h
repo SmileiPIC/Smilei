@@ -123,7 +123,7 @@ public:
     Profile *densityProfile;
 
     //! vector of velocity profiles (vx, vy, vz)
-    std::vector<Profile *> velocityProfile;
+    std::vector<Profile *> velocity_profile_;
 
     //! vector of temperature profiles (Tx, Ty, Tz)
     std::vector<Profile *> temperatureProfile;

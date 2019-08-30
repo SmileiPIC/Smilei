@@ -63,7 +63,7 @@ Species::Species( Params &params, Patch *patch ) :
     densityProfileType( "none" ),
     chargeProfile( NULL ),
     densityProfile( NULL ),
-    velocityProfile( 3, NULL ),
+    velocity_profile_( 3, NULL ),
     temperatureProfile( 3, NULL ),
     ppcProfile( NULL ),
     max_charge( 0. ),
@@ -271,8 +271,8 @@ Species::~Species()
     if( densityProfile ) {
         delete densityProfile;
     }
-    for( unsigned int i=0; i<velocityProfile.size(); i++ ) {
-        delete velocityProfile[i];
+    for( unsigned int i=0; i<velocity_profile_.size(); i++ ) {
+        delete velocity_profile_[i];
     }
     for( unsigned int i=0; i<temperatureProfile.size(); i++ ) {
         delete temperatureProfile[i];
@@ -1553,8 +1553,8 @@ int Species::ParticleCreator( vector<unsigned int> n_space_to_create, Params &pa
                 temperature[m].put_to( 0.0000000001 ); // default value
             }
 
-            if( velocityProfile[m] ) {
-                velocityProfile[m]   ->valuesAt( xyz, velocity   [m] );
+            if( velocity_profile_[m] ) {
+                velocity_profile_[m]   ->valuesAt( xyz, velocity   [m] );
             } else {
                 velocity[m].put_to( 0.0 ); //default value
             }
@@ -1969,8 +1969,8 @@ int Species::createParticles2( Particles * particles,
                 temperature[m].put_to( 0.0000000001 ); // default value
             }
 
-            if( velocityProfile[m] ) {
-                velocityProfile[m]   ->valuesAt( xyz, velocity   [m] );
+            if( velocity_profile_[m] ) {
+                velocity_profile_[m]   ->valuesAt( xyz, velocity   [m] );
             } else {
                 velocity[m].put_to( 0.0 ); //default value
             }

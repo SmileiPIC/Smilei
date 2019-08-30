@@ -172,9 +172,9 @@ public:
             // MESSAGE(2, message);
         } else {
             MESSAGE( 2, "> Mean velocity defined as the species.");
-            this_particle_injector->velocity_profile_[0] = new Profile(species->velocityProfile[0]);
-            this_particle_injector->velocity_profile_[1] = new Profile(species->velocityProfile[1]);
-            this_particle_injector->velocity_profile_[2] = new Profile(species->velocityProfile[2]);
+            this_particle_injector->velocity_profile_[0] = new Profile(species->velocity_profile_[0]);
+            this_particle_injector->velocity_profile_[1] = new Profile(species->velocity_profile_[1]);
+            this_particle_injector->velocity_profile_[2] = new Profile(species->velocity_profile_[2]);
         }
         
         // Temperature

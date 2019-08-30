@@ -85,10 +85,10 @@ void ParticleCreator::associate( Species * species)
     position_initialization_ = species->position_initialization_;
     position_initialization_on_species_ = species->position_initialization_on_species_;
     momentum_initialization_ = species->momentum_initialization_;
-    // velocity_profile_.resize(particle_injector->velocity_profile_.size());
-    // for (unsigned int i = 0 ; i < velocity_profile_.size() ; i++) {
-    //     velocity_profile_[i] = new Profile(particle_injector->velocity_profile_[i]);
-    // }
+    velocity_profile_.resize(species->velocity_profile_.size());
+    for (unsigned int i = 0 ; i < velocity_profile_.size() ; i++) {
+        velocity_profile_[i] = new Profile(species->velocity_profile_[i]);
+    }
     // temperature_profile_.resize(particle_injector->temperature_profile_.size());
     // for (unsigned int i = 0 ; i < temperature_profile_.size() ; i++) {
     //     temperature_profile_[i] = new Profile(particle_injector->temperature_profile_[i]);
