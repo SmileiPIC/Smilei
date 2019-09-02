@@ -450,7 +450,7 @@ The volume of simulation removed at the ``x_min`` border for each operation of t
 is a column of patch.
 The frequency of this operation is adjusted so that the average velocity over many operations matches the velocity
 given by the user.
-The user may ask for a given number of additional operations at a given time step.
+The user may ask for a given number of additional operations at a given time.
 These additional operations are not taken into account for the evaluation of the average velocity of the moving window.
 
 The block ``MovingWindow`` is optional. The window does not move it you do not define it.
