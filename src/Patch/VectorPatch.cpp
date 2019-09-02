@@ -742,23 +742,9 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     // Insertion of the particles as a group in the vector of species
                     if (new_particle_number > 0) {
 
-                        if (!params.cell_sorting) {
-                            particles->cp_particles( 0, new_particle_number,
-                                                     *species( ipatch, i_species )->particles,
-                                                     species( ipatch, i_species )->first_index[index] );
-                                                
-                            species( ipatch, i_species )->last_index[index] += new_particle_number;
-                            for ( int idx=index+1 ; idx<species( ipatch, i_species )->last_index.size() ; idx++ ) {
-                                species( ipatch, i_species )->first_index[idx] += new_particle_number;
-                                species( ipatch, i_species )->last_index[idx] += new_particle_number;
-                            }
-                        }
-                        else { // cell sorting
+                        particles->erase_particle_trail(new_particle_number);
+                        species( ipatch, i_species )->importParticles( params, patches_[ipatch], *particles, localDiags );
 
-                            particles->erase_particle_trail(new_particle_number);
-                            species( ipatch, i_species )->importParticles( params, patches_[ipatch], *particles, localDiags );
-
-                        } //end else cell sorting
                     }                    
                 
                 } // if particles to inject
