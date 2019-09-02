@@ -46,11 +46,14 @@ SimWindow::SimWindow( Params &params )
         active = true;
         
         PyTools::extract( "time_start", time_start, "MovingWindow" );
-        
         PyTools::extract( "velocity_x", velocity_x, "MovingWindow" );
+        PyTools::extract( "number_of_additional_operations", number_of_additional_operations, "MovingWindow" );
+        PyTools::extract( "additional_operations_time", additional_operations_time, "MovingWindow" );
     }
     
     cell_length_x_   = params.cell_length[0];
+    n_space_x_       = params.n_space[0];
+    additional_operations_iteration = floor(additional_operations_time / params.timestep + 0.5);
     x_moved = 0.;      //The window has not moved at t=0. Warning: not true anymore for restarts.
     n_moved = 0 ;      //The window has not moved at t=0. Warning: not true anymore for restarts.
     
@@ -76,12 +79,12 @@ SimWindow::~SimWindow()
 
 bool SimWindow::isMoving( double time_dual )
 {
-    return active && ( ( time_dual - time_start )*velocity_x > x_moved - 5*cell_length_x_*13*(time_dual>360.) );
+    return active && ( ( time_dual - time_start )*velocity_x > x_moved - number_of_additional_operations*cell_length_x_*n_space_x_*(time_dual>additional_operations_time) );
 }
 
 void SimWindow::operate( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params, unsigned int itime, double time_dual )
 {
-    if( ! isMoving( time_dual ) && itime != 600000 ) {
+    if( ! isMoving( time_dual ) && itime != additional_operations_iteration ) {
         return;
     }
     
@@ -118,10 +121,8 @@ void SimWindow::operate( VectorPatch &vecPatches, SmileiMPI *smpi, Params &param
         {
             if( n_moved == 0 ) {
                 MESSAGE( ">>> Window starts moving" );
-            } else {
-                MESSAGE( ">>> Window moves" );
-           }
-            
+            }             
+
             vecPatches_old.resize( nPatches );
             n_moved += params.n_space[0];
         }
@@ -510,8 +511,7 @@ void SimWindow::operate( VectorPatch &vecPatches, SmileiMPI *smpi, Params &param
             //update list fields for species diag too ??
             
             // Tell that the patches moved this iteration (needed for probes)
-            if (itime != 600000)
-                vecPatches.lastIterationPatchesMoved = itime;
+            vecPatches.lastIterationPatchesMoved = itime;
         }
         
         std::vector<double> poynting[2];

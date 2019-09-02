@@ -59,6 +59,22 @@ public:
     {
         n_moved = new_val;
     }
+    //! Return number of additional operations
+    unsigned int getNumberOfAdditionalOperations()
+    {
+        return number_of_additional_operations;
+    }
+    //! Return additional operations iteration
+    unsigned int getAdditionalOperationsIteration()
+    {
+        return additional_operations_iteration;
+    }
+
+    //! Return additional operations time
+    double getAdditionalOperationsTime()
+    {
+        return additional_operations_time;
+    }
     
     
 private:
@@ -67,6 +83,8 @@ private:
     
     //! Store locally params.cell_length[0], window slides only in x
     double cell_length_x_;
+    //! Store locally params.n_space[0], window slides only in x
+    double n_space_x_;
     //! Total length the window has moved along x up to now.
     double x_moved;
     //! Total number of cell the window has moved along x up to now.
@@ -83,6 +101,13 @@ private:
     std::vector< std::vector<bool>> patch_particle_created;
     //! Max number of threads
     int max_threads;
+    //! Time of additional moving window operations
+    double additional_operations_time;
+    //! Iteration of additional moving window operations
+    unsigned int additional_operations_iteration;
+    //! Number of additional moving window operations
+    unsigned int number_of_additional_operations;
+    
     
 };
 

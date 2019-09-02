@@ -310,6 +310,8 @@ class MovingWindow(SmileiSingleton):
 
     time_start = 0.
     velocity_x = 1.
+    number_of_additional_operations = 0.
+    additional_operations_time = 0.
 
 
 class Checkpoints(SmileiSingleton):
