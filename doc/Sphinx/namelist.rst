@@ -446,6 +446,12 @@ basically consists in removing periodically some plasma from the ``x_min`` borde
 adding new plasma after the ``x_max`` border, thus changing the physical domain that the
 simulation represents but keeping the same box size. This is particularly useful to
 *follow* plasma moving at high speed.
+The volume of simulation removed at the ``x_min`` border for each operation of the moving window
+is a column of patch.
+The frequency of this operation is adjusted so that the average velocity over many operations matches the velocity
+given by the user.
+The user may ask for a given number of additional operations at a given time step.
+These additional operations are not taken into account for the evaluation of the average velocity of the moving window.
 
 The block ``MovingWindow`` is optional. The window does not move it you do not define it.
 
@@ -454,6 +460,8 @@ The block ``MovingWindow`` is optional. The window does not move it you do not d
   MovingWindow(
       time_start = 0.,
       velocity_x = 1.,
+      number_of_additional_operations = 0.,
+      additional_operations_time = 0.,
   )
 
 
@@ -469,6 +477,19 @@ The block ``MovingWindow`` is optional. The window does not move it you do not d
   :default: 0.
 
   The velocity of the moving window in the `x` direction.
+
+.. py:data:: number_of_additional_operations
+
+  :default: 0.
+
+  The number of additional operations of the moving window.
+
+.. py:data:: additional_operations_time
+
+  :default: 0.
+
+  The time at which the additional operations are done.
+
 
 .. note::
 
