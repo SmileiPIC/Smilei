@@ -755,68 +755,9 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                         }
                         else { // cell sorting
 
-                            // compute cell keys of new parts
-                            vector<int> cell_keys( new_particle_number, 0 );
-                            for ( int ip = 0 ; ip < new_particle_number ; ip++ ) {
-                                for( unsigned int ipos=0; ipos < params.nDim_particle ; ipos++ ) {
-                                    double X = particles->position( ipos, ip ) - patches_[ipatch]->getDomainLocalMin(ipos);
-                                    int IX = round( X / params.cell_length[ipos] );
-                                    cell_keys[ip] = cell_keys[ip] * (params.n_space[ipos]+1) + IX;
-                                }
-                            }
-                            int ncells = 1;
-                            for( unsigned int iDim=0 ; iDim<params.nDim_particle ; iDim++ ) {
-                                ncells *= ( params.n_space[iDim]+1 );
-                            }
-                            vector<int> count( ncells, 0 );
-                            for( unsigned int ip=0; ip < new_particle_number ; ip++ )
-                                count[cell_keys[ip]] ++;                            
+                            particles->erase_particle_trail(new_particle_number);
+                            species( ipatch, i_species )->importParticles( params, patches_[ipatch], *particles, localDiags );
 
-                            // sort new parts par cells 
-                            int istart = 0;
-                            int istop  = count[0];
-
-                            for ( int icell = 0 ; icell < ncells ; icell++ ) {
-                                if (count[icell]!=0) {
-                                    for( unsigned int ip=istart; ip < istop ; ip++ ) {
-                                        if ( cell_keys[ip] == icell )
-                                            continue;
-                                        else { // rearrange particles
-                                            int ip_swap = istop;
-                                            while (( cell_keys[ip_swap] != icell ) && (ip_swap<new_particle_number))
-                                                ip_swap++;
-                                            particles->swap_part(ip, ip_swap);
-                                            int tmp = cell_keys[ip];
-                                            cell_keys[ip] = cell_keys[ip_swap];
-                                            cell_keys[ip_swap] = tmp;
-                                        } // rearrange particles
-                                    } // end loop on particles of a cell
-
-                                    // inject in main data structure per cell
-                                    particles->cp_particles( istart, count[icell],
-                                                             *species( ipatch, i_species )->particles,
-                                                             species( ipatch, i_species )->first_index[icell] );
-                                    species( ipatch, i_species )->last_index[icell] += count[icell];
-                                    for ( int idx=icell+1 ; idx<species( ipatch, i_species )->last_index.size() ; idx++ ) {
-                                        species( ipatch, i_species )->first_index[idx] += count[icell];
-                                        species( ipatch, i_species )->last_index[idx]  += count[icell];
-                                    }
-
-                                }
-                                // update istart/istop fot the next cell
-                                istart += count[icell];
-                                if ( icell != ncells-1  )
-                                    istop  += count[icell+1];
-                                else
-                                    istop = new_particle_number;
-
-                            } // End cell loop
-                            particles->clear();
-
-                            // Set place for new particles in species->particles->cell_keys
-                            for (int ip=0;ip<species( ipatch, i_species )->getNbrOfParticles() ; ip++ )
-                                species( ipatch, i_species )->add_space_for_a_particle();
-                            
                         } //end else cell sorting
                     }                    
                 

@@ -695,7 +695,7 @@ void SpeciesV::importParticles( Params &params, Patch *patch, Particles &source_
             istop = npart;
 
     } // End cell loop
-    source_particles.clear();
+    //source_particles.clear();
 
     // Set place for new particles in species->particles->cell_keys
     for (int ip=0;ip<npart ; ip++ )
