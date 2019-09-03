@@ -2796,79 +2796,96 @@ A few things are important to know when you need dumps and restarts.
 
 * Do not restart the simulation in the same directory as the previous one. Files will be
   overwritten, and errors may occur. Create a new directory for your restarted simulation.
-* Manage your memory: each MPI process dumps one file, and the total can be significant.
-* The file written by a particular MPI process has the format
-  ``dump-XXXXX-YYYYYYYYYY.h5`` where ``XXXXX`` is the *dump number* that can be chosen
-  using :py:data:`restart_number` and ``YYYYYYYYYY`` is the MPI process number.
+* Manage your disk space: each MPI process dumps one file, and the total can be significant.
+* The restarted runs must have the same namelist as the initial simulation, except the
+  :ref:`Checkpoints` block, which can be modified.
 
 ::
 
   Checkpoints(
-      restart_dir = "dump1",
+      # restart_dir = "dump1",
       dump_step = 10000,
       dump_minutes = 240.,
-      dump_deflate = 0,
       exit_after_dump = True,
       keep_n_dumps = 2,
   )
 
-.. py:data:: restart_dir
-
-  :default: None
-
-  The directory of a previous simulation from which :program:`Smilei` should restart.
-  If not defined, it does not restart from a previous simulation.
-
-  **WARNING:** this path must either absolute or be relative to the current directory.
-
-.. py:data:: restart_number
-
-  :default: None
-
-  The number of the dump (from the previous run in :py:data:`restart_dir`)
-  that should be used for the restart.
-  Note that the dump number is reset to 0 for each new run. In a given run, the first dump has
-  number 0, the second dump number 1, etc.
-
-.. py:data:: dump_step
-
-  :default: 0
-
-  The number of timesteps between each dump of the full simulation.
-  If ``0``, no dump is done.
-
-.. py:data:: dump_minutes
-
-  :default: 0.
-
-  The number of minutes between each dump of the full simulation (combines with
-  :py:data:`dump_step`).
-  If ``0.``, no dump is done.
-
-.. py:data:: dump_deflate
-
-  :red:`to do`
-
-.. py:data:: exit_after_dump
-
-  :default: ``True``
-
-  If ``True``, the code stops after the first dump.
-
-.. py:data:: keep_n_dumps
-
-  :default: 2
-
-  This tells :program:`Smilei` to keep the last ``n`` dumps for a later restart.
-  The default value, 2, saves one extra dump in case of a crash during the file dump.
-
-.. py:data:: file_grouping
-
-  :default: None
-
-  The maximum number of checkpoint files that can be stored in one directory.
-  Subdirectories are created to accomodate for all files.
-  This is useful on filesystem with a limited number of files per directory.
+**Parameters to save the state of the current simulation**
+  
+  .. py:data:: dump_step
+  
+    :default: ``0``
+  
+    The number of timesteps between each dump.
+    If ``0``, no dump is done.
+  
+  .. py:data:: dump_minutes
+  
+    :default: ``0.``
+  
+    The number of minutes between each dump.
+    If ``0.``, no dump is done.
+    
+    May be used in combination with :py:data:`dump_step`.
+  
+  .. py:data:: exit_after_dump
+  
+    :default: ``True``
+  
+    If ``True``, the code stops after the first dump. If ``False``, the simulation continues.
+  
+  .. py:data:: keep_n_dumps
+  
+    :default: ``2``
+  
+    This tells :program:`Smilei` to keep, in the current run,  only the last ``n`` dumps.
+    Older dumps will be overwritten.
+    
+    The default value, ``2``, saves one extra dump in case of a crash during the next dump.
+  
+  .. py:data:: file_grouping
+  
+    :default: ``None``
+  
+    The maximum number of checkpoint files that can be stored in one directory.
+    Subdirectories are created to accomodate for all files.
+    This is useful on filesystem with a limited number of files per directory.
+  
+  .. py:data:: dump_deflate
+  
+    :red:`to do`
+  
+**Parameters to restart from a previous simulation**
+  
+  .. py:data:: restart_dir
+  
+    :default: ``None``
+  
+    The directory of a previous run from which :program:`Smilei` should restart.
+    For the first run, do not specify this parameter.
+  
+    **This path must either absolute or be relative to the current directory.**
+    
+    .. Note::
+    
+      In many situations, the restarted runs will have the exact same namelist as the initial
+      simulation, except this ``restart_dir`` parameter, which points to the previous simulation
+      folder.
+      You can use the same namelist file, and simply add an extra argument when you launch the
+      restart:
+      
+      ``mpirun ... ./smilei mynamelist.py "Checkpoints.restart_dir='/path/to/previous/run'"``
+  
+  .. py:data:: restart_number
+  
+    :default: ``None``
+  
+    The number of the dump (in the previous run) that should be used for the restart.
+    For the first run, do not specify this parameter.
+    
+    In a previous run, the simulation state may have been dumped several times.
+    These dumps are numbered 0, 1, 2, etc. until the number :py:data:`keep_n_dumps`.
+  
 
 ----
 
