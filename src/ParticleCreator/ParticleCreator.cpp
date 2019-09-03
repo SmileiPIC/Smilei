@@ -14,6 +14,7 @@
 ParticleCreator::ParticleCreator()
 {
     initialized_in_species_ = true;
+    add_new_particle_energy = true;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -95,7 +96,6 @@ void ParticleCreator::associate( Species * species)
     }
     density_profile_ = species->density_profile_;
     density_profile_type_ = species->density_profile_type_;
-    // time_profile_ = particle_injector->time_profile_;
     particles_per_cell_profile_ = species->particles_per_cell_profile_;
 }
 
@@ -224,6 +224,13 @@ int ParticleCreator::create( vector<unsigned int> n_space_to_create,
         //Initialize density and ppc profiles
         density_profile_->valuesAt( xyz, density );
         particles_per_cell_profile_->valuesAt( xyz, n_part_in_cell );
+        // Take into account the time profile
+        double time_amplitude;
+        if (time_profile_) {
+            time_amplitude = time_profile_->valueAt(itime*params.timestep);
+        } else {
+            time_amplitude = 1;
+        }
         weight_arr = NULL;
         //Now compute number of particles per cell
         double remainder, nppc;
@@ -268,9 +275,8 @@ int ParticleCreator::create( vector<unsigned int> n_space_to_create,
                     }
                     density( i, j, k ) = abs( density( i, j, k ) );
                     
-                    // Take into account the time profile
-                    double amplitude = time_profile_->valueAt(itime*params.timestep);
-                    density( i, j, k ) *= amplitude;
+                    // Time amplitude
+                    density( i, j, k ) *= time_amplitude;
                     
                     // multiply by the cell volume
                     density( i, j, k ) *= params.cell_volume;
@@ -488,28 +494,32 @@ int ParticleCreator::create( vector<unsigned int> n_space_to_create,
     delete [] indexes;
     delete [] temp;
     delete [] vel;
-    // Recalculate former position using the particle velocity
-    // (necessary to calculate currents at time t=0 using the Esirkepov projection scheme)
-    if( patch->isXmax() ) {
-        // Matter particle case
-        if( species_->mass > 0 ) {
-            for( iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++ ) {
-                /*897 for (int i=0; i<(int)species_->nDim_particle; i++) {
-                  particles->position_old(i,iPart) -= particles->momentum(i,iPart)/particles->lor_fac(iPart) * params.timestep;
-                  }897*/
-                species_->nrj_new_particles += particles_->weight( iPart )*( particles_->lor_fac( iPart )-1.0 );
+    
+    if (add_new_particle_energy) {
+        // Recalculate former position using the particle velocity
+        // (necessary to calculate currents at time t=0 using the Esirkepov projection scheme)
+        if( patch->isXmax() ) {
+            // Matter particle case
+            if( species_->mass > 0 ) {
+                for( iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++ ) {
+                    /*897 for (int i=0; i<(int)species_->nDim_particle; i++) {
+                      particles->position_old(i,iPart) -= particles->momentum(i,iPart)/particles->lor_fac(iPart) * params.timestep;
+                      }897*/
+                    species_->nrj_new_particles += particles_->weight( iPart )*( particles_->lor_fac( iPart )-1.0 );
+                }
             }
-        }
-        // Photon case
-        else if( species_->mass == 0 ) {
-            for( iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++ ) {
-                /*897 for (int i=0; i<(int)species_->nDim_particle; i++) {
-                  particles_->position_old(i,iPart) -= particles_->momentum(i,iPart)/particles_->lor_fac(iPart) * params.timestep;
-                  }897*/
-                species_->nrj_new_particles += particles_->weight( iPart )*( particles_->momentum_norm( iPart ) );
+            // Photon case
+            else if( species_->mass == 0 ) {
+                for( iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++ ) {
+                    /*897 for (int i=0; i<(int)species_->nDim_particle; i++) {
+                      particles_->position_old(i,iPart) -= particles_->momentum(i,iPart)/particles_->lor_fac(iPart) * params.timestep;
+                      }897*/
+                    species_->nrj_new_particles += particles_->weight( iPart )*( particles_->momentum_norm( iPart ) );
+                }
             }
         }
     }
+    
     if( particles_->tracked ) {
         particles_->resetIds();
     }
