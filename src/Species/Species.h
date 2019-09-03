@@ -146,6 +146,8 @@ public:
 
     //! Pointer toward position array
     double *position_initialization_array;
+    //! Pointer toward regular number of particles array
+    std::vector<int> regular_number_array;
     //! Number of particles in the init array
     double *momentum_initialization_array;
     //! Number of particles in the init array
@@ -590,8 +592,8 @@ private:
     //! Parameter used when defining the Maxwell-Juettner function (corresponds to a discretization step in energy)
 //    double dE;
 
-    //! Inverse of the number of spatial dimension for the fields
-    double inv_nDim_field;
+    //! Inverse of the number of spatial dimension for the particles
+    double inv_nDim_particles;
 
     //! Local minimum of MPI domain
     double min_loc;

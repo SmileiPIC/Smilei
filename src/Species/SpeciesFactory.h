@@ -497,6 +497,7 @@ public:
 
             }
         }
+
 #ifdef SMILEI_USE_NUMPY
         else if( PyArray_Check( py_pos_init ) ) {
             //Initialize position from this array
@@ -531,6 +532,14 @@ public:
         }
         Py_DECREF( py_pos_init );
 
+        if   (PyTools::extract( "regular_number", thisSpecies->regular_number_array, "Species", ispec )){
+             if (thisSpecies->position_initialization != "regular") {
+                 ERROR("regular_number may not be provided if species position_initialization is not set to 'regular'.");
+             }
+             if (thisSpecies->regular_number_array.size() != thisSpecies->nDim_particle) {
+                 ERROR("Please provide as many regular numbers of particles as there are particle dimensions in the domain.");
+             }
+        }
 
         PyTools::extract( "ponderomotive_dynamics", thisSpecies->ponderomotive_dynamics, "Species", ispec );
         if( thisSpecies->ponderomotive_dynamics && ( params.geometry != "1Dcartesian" ) && ( params.geometry != "2Dcartesian" ) && ( params.geometry != "3Dcartesian" ) ) {

@@ -67,6 +67,7 @@ Species::Species( Params &params, Patch *patch ) :
     ppcProfile( NULL ),
     max_charge( 0. ),
     particles( &particles_sorted[0] ),
+    regular_number_array(NULL),
     position_initialization_array( NULL ),
     momentum_initialization_array( NULL ),
     n_numpy_particles( 0 ),
@@ -99,7 +100,7 @@ Species::Species( Params &params, Patch *patch ) :
 
     initCluster( params );
     nDim_field = params.nDim_field;
-    inv_nDim_field = 1./( ( double )nDim_field );
+    inv_nDim_particles = 1./( ( double )nDim_particle );
 
     length_[0]=0;
     length_[1]=params.n_space[1]+1;
@@ -344,21 +345,40 @@ void Species::initPosition( unsigned int nPart, unsigned int iPart, double *inde
 {
     if( position_initialization == "regular" ) {
 
-        double coeff = pow( ( double )nPart, inv_nDim_field );
+        
 
         if( params.geometry != "AMcylindrical" ) {
-            if( nPart != ( unsigned int ) pow( round( coeff ), ( double )nDim_field ) ) {
-                ERROR( "Impossible to put "<<nPart<<" particles regularly spaced in one cell. Use a square number, or `position_initialization = 'random'`" );
-            }
+            double inv_coeff_array[3];
+            int    coeff_array[3];
+            if ( !(&regular_number_array)){
+                double coeff = pow( ( double )nPart, inv_nDim_particles );
+                if( nPart != ( unsigned int ) pow( round( coeff ), ( double )nDim_particle ) ) {
+                    ERROR( "Impossible to put "<<nPart<<" particles regularly spaced in one cell. Use a square number, or `position_initialization = 'random'`" );
+                }
+                for( unsigned int idim=0; idim<nDim_particle; idim++ ) {
+                    coeff_array[idim] = coeff;
+                    inv_coeff_array[idim] = 1./coeff;
+                }
+            } else{
+               int npart_check=1; 
+               for( unsigned int idim=0; idim<nDim_particle; idim++ ) {
+                   npart_check *= regular_number_array[idim]; 
+               }
+               if( nPart != npart_check) {
+                   ERROR( "The number of particles required per cell and per dimension is not coherent with the total number of particles per cell." );
+               }
+               for( unsigned int idim=0; idim<nDim_particle; idim++ ) {
+                   coeff_array[idim] = regular_number_array[idim];
+                   inv_coeff_array[idim] = 1./(double)coeff_array[idim];
+               }
 
-            int coeff_ = coeff;
-            coeff = 1./coeff;
+            }
 
             for( unsigned int  p=iPart; p<iPart+nPart; p++ ) {
                 int i = ( int )( p-iPart );
                 for( unsigned int idim=0; idim<nDim_particle; idim++ ) {
-                    particles->position( idim, p ) = indexes[idim] + cell_length[idim] * 0.975 * coeff * ( 0.5 + i%coeff_ );
-                    i /= coeff_; // integer division
+                    particles->position( idim, p ) = indexes[idim] + cell_length[idim] * 0.975 * inv_coeff_array[idim] * ( 0.5 + i%coeff_array[idim] );
+                    i /= coeff_array[idim]; // integer division
                 }
             }
         } else {
@@ -1438,7 +1458,7 @@ int Species::createParticles( vector<unsigned int> n_space_to_create, Params &pa
                     // If not a round number, then we need to decide how to round
                     double intpart;
                     if( modf( nppc, &intpart ) > 0 ) {
-                        remainder = pow( nppc - floor( nppc ), -inv_nDim_field );
+                        remainder = pow( nppc - floor( nppc ), -inv_nDim_particles );
                         if( fmod( cell_index[0]+( double )i, remainder ) < 1.
                                 && fmod( cell_index[1]+( double )j, remainder ) < 1.
                                 && fmod( cell_index[2]+( double )k, remainder ) < 1. ) {
