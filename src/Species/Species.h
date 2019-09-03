@@ -120,7 +120,7 @@ public:
     Profile *chargeProfile;
 
     //! density profile
-    Profile *densityProfile;
+    Profile *density_profile_;
 
     //! vector of velocity profiles (vx, vy, vz)
     std::vector<Profile *> velocity_profile_;

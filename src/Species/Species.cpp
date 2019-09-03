@@ -62,7 +62,7 @@ Species::Species( Params &params, Patch *patch ) :
     ionization_model( "none" ),
     densityProfileType( "none" ),
     chargeProfile( NULL ),
-    densityProfile( NULL ),
+    density_profile_( NULL ),
     velocity_profile_( 3, NULL ),
     temperature_profile_( 3, NULL ),
     ppcProfile( NULL ),
@@ -268,8 +268,8 @@ Species::~Species()
     if( chargeProfile ) {
         delete chargeProfile;
     }
-    if( densityProfile ) {
-        delete densityProfile;
+    if( density_profile_ ) {
+        delete density_profile_;
     }
     for( unsigned int i=0; i<velocity_profile_.size(); i++ ) {
         delete velocity_profile_[i];
@@ -1591,7 +1591,7 @@ int Species::ParticleCreator( vector<unsigned int> n_space_to_create, Params &pa
         npart_effective = my_particles_indices.size();
     } else {
         //Initialize density and ppc profiles
-        densityProfile->valuesAt( xyz, density );
+        density_profile_->valuesAt( xyz, density );
         ppcProfile    ->valuesAt( xyz, n_part_in_cell );
         weight_arr = NULL;
         //Now compute number of particles per cell
@@ -2006,7 +2006,7 @@ int Species::createParticles2( Particles * particles,
         npart_effective = my_particles_indices.size();
     } else {
         //Initialize density and ppc profiles
-        densityProfile->valuesAt( xyz, density );
+        density_profile_->valuesAt( xyz, density );
         ppcProfile    ->valuesAt( xyz, n_part_in_cell );
         weight_arr = NULL;
         //Now compute number of particles per cell

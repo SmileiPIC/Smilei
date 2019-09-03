@@ -213,7 +213,7 @@ public:
                 } else if (species->densityProfileType == "charge") {
                     MESSAGE( 2, "> Charge density profile defined as the species.");
                 }
-                this_particle_injector->density_profile_ = species->densityProfile;
+                this_particle_injector->density_profile_ = species->density_profile_;
             } else {
                 if( ok1 ) {
                     this_particle_injector->density_profile_type_ = "nb";
@@ -235,7 +235,7 @@ public:
             }
             if( !ok1 ) {
                 species->densityProfileType = "nb";
-                this_particle_injector->density_profile_ = species->densityProfile;
+                this_particle_injector->density_profile_ = species->density_profile_;
                 MESSAGE( 2, "> Number density profile defined as the species.");
             } else {
                 species->densityProfileType = "nb";

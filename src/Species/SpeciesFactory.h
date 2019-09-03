@@ -815,7 +815,7 @@ public:
                 thisSpecies->densityProfileType = "nb";
             }
 
-            thisSpecies->densityProfile = new Profile( profile1, params.nDim_field, Tools::merge( thisSpecies->densityProfileType, "_density ", species_name ), true );
+            thisSpecies->density_profile_ = new Profile( profile1, params.nDim_field, Tools::merge( thisSpecies->densityProfileType, "_density ", species_name ), true );
             //MESSAGE("creating density profile");
             // Number of particles per cell
             if( !PyTools::extract_pyProfile( "particles_per_cell", profile1, "Species", ispec ) ) {
@@ -978,8 +978,8 @@ public:
         
 
         newSpecies->chargeProfile                            = new Profile( species->chargeProfile );
-        if( species->densityProfile ) {
-            newSpecies->densityProfile                       = new Profile( species->densityProfile );
+        if( species->density_profile_ ) {
+            newSpecies->density_profile_                       = new Profile( species->density_profile_ );
             newSpecies->ppcProfile                           = new Profile( species->ppcProfile );
         }
         newSpecies->velocity_profile_.resize( 3 );

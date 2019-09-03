@@ -19,7 +19,7 @@ public:
     double totalNumberofParticles( );
     
 private:
-    Profile *densityProfile;
+    Profile *density_profile_;
     Profile *ppcProfile;
     Params *params;
 };

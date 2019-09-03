@@ -5,7 +5,7 @@ using namespace std;
 
 
 PeekAtSpecies::PeekAtSpecies( Params &p, unsigned int species_id ) :
-    densityProfile( NULL ),
+    density_profile_( NULL ),
     ppcProfile( NULL ),
     params( &p )
 {
@@ -25,7 +25,7 @@ PeekAtSpecies::PeekAtSpecies( Params &p, unsigned int species_id ) :
         if( ok2 ) {
             densityProfileType = "charge";
         }
-        densityProfile = new Profile( profile1, params->nDim_field, Tools::merge( densityProfileType, "_density ", species_name ) );
+        density_profile_ = new Profile( profile1, params->nDim_field, Tools::merge( densityProfileType, "_density ", species_name ) );
         PyTools::extract_pyProfile( "particles_per_cell", profile1, "Species", species_id );
         ppcProfile = new Profile( profile1, params->nDim_field, Tools::merge( "particles_per_cell ", species_name ) );
     }
@@ -35,7 +35,7 @@ PeekAtSpecies::PeekAtSpecies( Params &p, unsigned int species_id ) :
 
 PeekAtSpecies::~PeekAtSpecies()
 {
-    delete densityProfile;
+    delete density_profile_;
     delete ppcProfile;
 }
 
@@ -52,7 +52,7 @@ double PeekAtSpecies::numberOfParticlesInPatch( unsigned int hindex )
     // Evaluate the profile at that location
     if( ppcProfile ) {
         double n_part_in_cell = floor( ppcProfile->valueAt( x_cell ) );
-        if( n_part_in_cell<=0. || densityProfile->valueAt( x_cell )==0. ) {
+        if( n_part_in_cell<=0. || density_profile_->valueAt( x_cell )==0. ) {
             n_part_in_cell = 0.;
         }
         return n_part_in_cell * params->n_cell_per_patch;
@@ -67,7 +67,7 @@ double PeekAtSpecies::numberOfParticlesInPatch( vector<double> x_cell )
     // Evaluate the profile at that location
     if( ppcProfile ) {
         double n_part_in_cell = floor( ppcProfile->valueAt( x_cell ) );
-        if( n_part_in_cell<=0. || densityProfile->valueAt( x_cell )==0. ) {
+        if( n_part_in_cell<=0. || density_profile_->valueAt( x_cell )==0. ) {
             n_part_in_cell = 0.;
         }
         return n_part_in_cell * params->n_cell_per_patch;
@@ -92,7 +92,7 @@ double PeekAtSpecies::totalNumberofParticles()
         for( unsigned int k=0; k<params->tot_number_of_patches; k++ ) {
             // Find the approximate number of particles in this patch
             double n_part_in_cell = floor( ppcProfile->valueAt( x_cell ) );
-            if( n_part_in_cell>0. && densityProfile->valueAt( x_cell )!=0. ) {
+            if( n_part_in_cell>0. && density_profile_->valueAt( x_cell )!=0. ) {
                 npart_total += n_part_in_cell * params->n_cell_per_patch;
             }
             // Find next patch position
