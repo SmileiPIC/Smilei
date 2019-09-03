@@ -355,6 +355,12 @@ int main( int argc, char *argv[] )
 
             timers.movWindow.restart();
             simWindow->operate( vecPatches, &smpi, params, itime, time_dual );
+            
+            if (itime == simWindow->getAdditionalOperationsIteration() ) {
+                int adjust = simWindow->isMoving(time_dual)?0:1;
+                for (unsigned int n=0;n < simWindow->getNumberOfAdditionalOperations()-adjust; n++)
+                    simWindow->operate( vecPatches, &smpi, params, itime, time_dual );
+            }
             timers.movWindow.update();
             // ----------------------------------------------------------------------
             // Validate restart  : to do
