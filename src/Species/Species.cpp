@@ -60,12 +60,12 @@ Species::Species( Params &params, Patch *patch ) :
     time_relativistic_initialization( 0 ),
     multiphoton_Breit_Wheeler( 2, "" ),
     ionization_model( "none" ),
-    densityProfileType( "none" ),
+    density_profile_type_( "none" ),
     chargeProfile( NULL ),
     density_profile_( NULL ),
     velocity_profile_( 3, NULL ),
     temperature_profile_( 3, NULL ),
-    ppcProfile( NULL ),
+    particles_per_cell_profile_( NULL ),
     max_charge( 0. ),
     particles( &particles_sorted[0] ),
     position_initialization_array( NULL ),
@@ -262,8 +262,8 @@ Species::~Species()
     if( partBoundCond ) {
         delete partBoundCond;
     }
-    if( ppcProfile ) {
-        delete ppcProfile;
+    if( particles_per_cell_profile_ ) {
+        delete particles_per_cell_profile_;
     }
     if( chargeProfile ) {
         delete chargeProfile;
@@ -1592,7 +1592,7 @@ int Species::ParticleCreator( vector<unsigned int> n_space_to_create, Params &pa
     } else {
         //Initialize density and ppc profiles
         density_profile_->valuesAt( xyz, density );
-        ppcProfile    ->valuesAt( xyz, n_part_in_cell );
+        particles_per_cell_profile_    ->valuesAt( xyz, n_part_in_cell );
         weight_arr = NULL;
         //Now compute number of particles per cell
         double remainder, nppc;
@@ -1629,7 +1629,7 @@ int Species::ParticleCreator( vector<unsigned int> n_space_to_create, Params &pa
                     }
 
                     // assign density its correct value in the cell
-                    if( densityProfileType=="charge" ) {
+                    if( density_profile_type_=="charge" ) {
                         if( charge( i, j, k )==0. ) {
                             ERROR( "Encountered non-zero charge density and zero charge at the same location" );
                         }
@@ -2007,7 +2007,7 @@ int Species::createParticles2( Particles * particles,
     } else {
         //Initialize density and ppc profiles
         density_profile_->valuesAt( xyz, density );
-        ppcProfile    ->valuesAt( xyz, n_part_in_cell );
+        particles_per_cell_profile_    ->valuesAt( xyz, n_part_in_cell );
         weight_arr = NULL;
         //Now compute number of particles per cell
         double remainder, nppc;
@@ -2044,7 +2044,7 @@ int Species::createParticles2( Particles * particles,
                     }
 
                     // assign density its correct value in the cell
-                    if( densityProfileType=="charge" ) {
+                    if( density_profile_type_=="charge" ) {
                         if( charge( i, j, k )==0. ) {
                             ERROR( "Encountered non-zero charge density and zero charge at the same location" );
                         }
@@ -2378,8 +2378,6 @@ void Species::importParticles( Params &params, Patch *patch, Particles &source_p
             istop = npart;
 
     } // End cell loop
-
-
 
     source_particles.clear();
 }

@@ -20,7 +20,7 @@ public:
     
 private:
     Profile *density_profile_;
-    Profile *ppcProfile;
+    Profile *particles_per_cell_profile_;
     Params *params;
 };
 

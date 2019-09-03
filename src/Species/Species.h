@@ -114,7 +114,7 @@ public:
     std::string ionization_model;
 
     //! Type of density profile ("nb" or "charge")
-    std::string densityProfileType;
+    std::string density_profile_type_;
 
     //! charge profile
     Profile *chargeProfile;
@@ -129,7 +129,7 @@ public:
     std::vector<Profile *> temperature_profile_;
 
     //! number-of-particle-per-cell profile
-    Profile *ppcProfile;
+    Profile *particles_per_cell_profile_;
 
     // -----------------------------------------------------------------------------
     //  3. Variables for species processing

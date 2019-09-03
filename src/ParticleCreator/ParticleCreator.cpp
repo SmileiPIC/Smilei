@@ -94,9 +94,9 @@ void ParticleCreator::associate( Species * species)
         temperature_profile_[i] = new Profile(species->temperature_profile_[i]);
     }
     density_profile_ = species->density_profile_;
-    // density_profile_type_ = particle_injector->density_profile_type_;
+    density_profile_type_ = species->density_profile_type_;
     // time_profile_ = particle_injector->time_profile_;
-    // particles_per_cell_profile_ = particle_injector->particles_per_cell_profile_;
+    particles_per_cell_profile_ = species->particles_per_cell_profile_;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

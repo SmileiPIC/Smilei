@@ -794,12 +794,12 @@ public:
                     ERROR( "For species '" << species_name << "', must define `number_density ` or `charge_density`." );
                 }
                 if( ok1 ) {
-                    thisSpecies->densityProfileType = "nb";
+                    thisSpecies->density_profile_type_ = "nb";
                 }
                 if( ok2 ) {
-                    thisSpecies->densityProfileType = "charge";
+                    thisSpecies->density_profile_type_ = "charge";
                 }
-                //MESSAGE(thisSpecies->densityProfileType);
+                //MESSAGE(thisSpecies->density_profile_type_);
             }
             // Photons
             else if( thisSpecies->mass == 0 ) {
@@ -812,16 +812,16 @@ public:
                 if( !ok1 ) {
                     ERROR( "For photon species '" << species_name << "', must define `number_density`." );
                 }
-                thisSpecies->densityProfileType = "nb";
+                thisSpecies->density_profile_type_ = "nb";
             }
 
-            thisSpecies->density_profile_ = new Profile( profile1, params.nDim_field, Tools::merge( thisSpecies->densityProfileType, "_density ", species_name ), true );
+            thisSpecies->density_profile_ = new Profile( profile1, params.nDim_field, Tools::merge( thisSpecies->density_profile_type_, "_density ", species_name ), true );
             //MESSAGE("creating density profile");
             // Number of particles per cell
             if( !PyTools::extract_pyProfile( "particles_per_cell", profile1, "Species", ispec ) ) {
                 ERROR( "For species '" << species_name << "', particles_per_cell not found or not understood" );
             }
-            thisSpecies->ppcProfile = new Profile( profile1, params.nDim_field, Tools::merge( "particles_per_cell ", species_name ), true );
+            thisSpecies->particles_per_cell_profile_ = new Profile( profile1, params.nDim_field, Tools::merge( "particles_per_cell ", species_name ), true );
         } else {
             if( PyTools::extract_pyProfile( "particles_per_cell", profile1, "Species", ispec ) ) {
                 ERROR( "For species '" << species_name << "', cannot define both `particles_per_cell` and  `position_initialization` array." );
@@ -958,7 +958,7 @@ public:
             Py_INCREF( newSpecies->ionization_rate );
         }
         newSpecies->ionization_model                         = species->ionization_model;
-        newSpecies->densityProfileType                       = species->densityProfileType;
+        newSpecies->density_profile_type_                       = species->density_profile_type_;
         newSpecies->vectorized_operators                     = species->vectorized_operators;
         newSpecies->merging_method_                          = species->merging_method_;
         newSpecies->has_merging_                             = species->has_merging_;
@@ -979,21 +979,21 @@ public:
 
         newSpecies->chargeProfile                            = new Profile( species->chargeProfile );
         if( species->density_profile_ ) {
-            newSpecies->density_profile_                       = new Profile( species->density_profile_ );
-            newSpecies->ppcProfile                           = new Profile( species->ppcProfile );
+            newSpecies->density_profile_                     = new Profile( species->density_profile_ );
+            newSpecies->particles_per_cell_profile_          = new Profile( species->particles_per_cell_profile_ );
         }
         newSpecies->velocity_profile_.resize( 3 );
         newSpecies->temperature_profile_.resize( 3 );
 
         if( species->velocity_profile_[0] ) {
-            newSpecies->velocity_profile_[0]                   = new Profile( species->velocity_profile_[0] );
-            newSpecies->velocity_profile_[1]                   = new Profile( species->velocity_profile_[1] );
-            newSpecies->velocity_profile_[2]                   = new Profile( species->velocity_profile_[2] );
+            newSpecies->velocity_profile_[0]                 = new Profile( species->velocity_profile_[0] );
+            newSpecies->velocity_profile_[1]                 = new Profile( species->velocity_profile_[1] );
+            newSpecies->velocity_profile_[2]                 = new Profile( species->velocity_profile_[2] );
         }
         if( species->temperature_profile_[0] ) {
-            newSpecies->temperature_profile_[0]                = new Profile( species->temperature_profile_[0] );
-            newSpecies->temperature_profile_[1]                = new Profile( species->temperature_profile_[1] );
-            newSpecies->temperature_profile_[2]                = new Profile( species->temperature_profile_[2] );
+            newSpecies->temperature_profile_[0]              = new Profile( species->temperature_profile_[0] );
+            newSpecies->temperature_profile_[1]              = new Profile( species->temperature_profile_[1] );
+            newSpecies->temperature_profile_[2]              = new Profile( species->temperature_profile_[2] );
         }
         newSpecies->max_charge                               = species->max_charge;
         newSpecies->tracking_diagnostic                      = species->tracking_diagnostic;

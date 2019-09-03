@@ -207,10 +207,10 @@ public:
             if (ok1 && ok2) {
                 ERROR( "For injector '" << this_particle_injector->name_ << "', cannot define both `number_density ` and `charge_density`." );
             } else if( !ok1 && !ok2 ) {
-                this_particle_injector->density_profile_type_ = species->densityProfileType;
-                if (species->densityProfileType == "nb") {
+                this_particle_injector->density_profile_type_ = species->density_profile_type_;
+                if (species->density_profile_type_ == "nb") {
                     MESSAGE( 2, "> Number density profile defined as the species.");
-                } else if (species->densityProfileType == "charge") {
+                } else if (species->density_profile_type_ == "charge") {
                     MESSAGE( 2, "> Charge density profile defined as the species.");
                 }
                 this_particle_injector->density_profile_ = species->density_profile_;
@@ -234,11 +234,11 @@ public:
                         << "You must use `number_density`." );
             }
             if( !ok1 ) {
-                species->densityProfileType = "nb";
+                species->density_profile_type_ = "nb";
                 this_particle_injector->density_profile_ = species->density_profile_;
                 MESSAGE( 2, "> Number density profile defined as the species.");
             } else {
-                species->densityProfileType = "nb";
+                species->density_profile_type_ = "nb";
                 this_particle_injector->density_profile_ =
                 new Profile( profile1, params.nDim_field, Tools::merge( this_particle_injector->density_profile_type_, "_density ", injector_name ), true );
             }
@@ -250,7 +250,7 @@ public:
 
         // Number of particles per cell
         if( !PyTools::extract_pyProfile( "particles_per_cell", profile1, "ParticleInjector", injector_index ) ) {
-            this_particle_injector->particles_per_cell_profile_ = species->ppcProfile;
+            this_particle_injector->particles_per_cell_profile_ = species->particles_per_cell_profile_;
             MESSAGE( 2, "> Particles per cell defined as the associated species: "
             << this_particle_injector->particles_per_cell_profile_->getInfo() << ".");
         } else {
