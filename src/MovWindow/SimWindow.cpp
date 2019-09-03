@@ -33,6 +33,8 @@ SimWindow::SimWindow( Params &params )
     active = false;
     time_start = numeric_limits<double>::max();
     velocity_x = 1.;
+    number_of_additional_operations = 0;
+    additional_operations_time = 0.;
     
 #ifdef _OPENMP
     max_threads = omp_get_max_threads();
