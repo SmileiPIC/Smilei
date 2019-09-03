@@ -2328,20 +2328,58 @@ void Species::importParticles( Params &params, Patch *patch, Particles &source_p
     }
 
     // Move particles
+    vector<int> src_bin_keys( npart, 0 );
     for( unsigned int i=0; i<npart; i++ ) {
         // Copy particle to the correct bin
-        ibin = source_particles.position( 0, i )*inv_cell_length - ( patch->getCellStartingGlobalIndex( 0 ) + params.oversize[0] );
-
-        ibin /= params.clrw;
-        source_particles.cp_particle( i, *particles, first_index[ibin] );
-
-        // Update the bin counts
-        last_index[ibin]++;
-        for( ii=ibin+1; ii<nbin; ii++ ) {
-            first_index[ii]++;
-            last_index[ii]++;
-        }
+        src_bin_keys[i] = source_particles.position( 0, i )*inv_cell_length - ( patch->getCellStartingGlobalIndex( 0 ) + params.oversize[0] );
+        src_bin_keys[i] /= params.clrw;
     }
+
+    vector<int> bin_count( nbin, 0 );
+    for( unsigned int ip=0; ip < npart ; ip++ )
+        bin_count[src_bin_keys[ip]] ++;
+
+    // sort new parts par bins
+    int istart = 0;
+    int istop  = bin_count[0];
+
+    for ( int ibin = 0 ; ibin < nbin ; ibin++ ) {
+        if (bin_count[ibin]!=0) {
+            for( unsigned int ip=istart; ip < istop ; ip++ ) {
+                if ( src_bin_keys[ip] == ibin )
+                    continue;
+                else { // rearrange particles
+                    int ip_swap = istop;
+                    while (( src_bin_keys[ip_swap] != ibin ) && (ip_swap<npart))
+                        ip_swap++;
+                    source_particles.swap_part(ip, ip_swap);
+                    int tmp = src_bin_keys[ip];
+                    src_bin_keys[ip] = src_bin_keys[ip_swap];
+                    src_bin_keys[ip_swap] = tmp;
+                } // rearrange particles
+            } // end loop on particles of a cell
+
+            // inject in main data structure per cell
+            source_particles.cp_particles( istart, bin_count[ibin],
+                                        *particles,
+                                        first_index[ibin] );
+            last_index[ibin] += bin_count[ibin];
+            for ( int idx=ibin+1 ; idx<last_index.size() ; idx++ ) {
+                first_index[idx] += bin_count[ibin];
+                last_index[idx]  += bin_count[ibin];
+            }
+
+        }
+        // update istart/istop fot the next cell
+        istart += bin_count[ibin];
+        if ( ibin != nbin-1  )
+            istop  += bin_count[ibin+1];
+        else
+            istop = npart;
+
+    } // End cell loop
+
+
 
     source_particles.clear();
 }
