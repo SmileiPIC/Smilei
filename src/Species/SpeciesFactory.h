@@ -320,6 +320,12 @@ public:
 
             if ( thisSpecies->merging_method_ != "none" ) {
 
+                if (!params.cell_sorting) {
+                    ERROR( "In Species " << thisSpecies->name
+                           << ": merging required cell sorting to be "
+                           << "activated (`cell_sorting = True` in the mains or vectorization on).");
+                }
+
                 // get parameter "every" which describes a timestep selection
                 if( !thisSpecies->merging_time_selection_ ) {
                     thisSpecies->merging_time_selection_ = new TimeSelection(
