@@ -67,7 +67,7 @@ Species::Species( Params &params, Patch *patch ) :
     ppcProfile( NULL ),
     max_charge( 0. ),
     particles( &particles_sorted[0] ),
-    regular_number_array(NULL),
+    regular_number_array(0),
     position_initialization_array( NULL ),
     momentum_initialization_array( NULL ),
     n_numpy_particles( 0 ),
@@ -350,7 +350,8 @@ void Species::initPosition( unsigned int nPart, unsigned int iPart, double *inde
         if( params.geometry != "AMcylindrical" ) {
             double inv_coeff_array[3];
             int    coeff_array[3];
-            if ( !(&regular_number_array)){
+
+            if ( regular_number_array.size()==0){
                 double coeff = pow( ( double )nPart, inv_nDim_particles );
                 if( nPart != ( unsigned int ) pow( round( coeff ), ( double )nDim_particle ) ) {
                     ERROR( "Impossible to put "<<nPart<<" particles regularly spaced in one cell. Use a square number, or `position_initialization = 'random'`" );
