@@ -21,28 +21,28 @@ n0 = 1
 # Debye length
 Debye_length = 1. / np.sqrt( n0 / Te + Zi * n0 / Ti )
 # Cell length
-cell_length = [Debye_length*0.5, Debye_length*0.5]
+cell_length = [Debye_length*0.5]
 # Number of patches
-number_of_patches =[16, 2]
+number_of_patches =[16]
 # Cells per patches (patch shape)
-cells_per_patch = [16., 16.]
+cells_per_patch = [32.]
 # Grid length
-grid_length = [0.,0.]
-for i in range(2):
+grid_length = [0.]
+for i in range(1):
     grid_length[i] = number_of_patches[i] * cell_length[i] * cells_per_patch[i]
 # Number of particles per cell
 particles_per_cell = 32
 # Position init
 position_initialization = 'random'
 # Time step
-timestep = 0.95/np.sqrt(1./ cell_length[0]**2 + 1./ cell_length[1]**2 )
+timestep = 0.95 * cell_length[0]
 # Total simulation time
 simulation_time = ((0.5 - 0.125)*grid_length[0])/mean_velocity          # duration of the simulation
 # Period of output for the diags
 diag_every = int(simulation_time / timestep)
 
 Main(
-    geometry = "2Dcartesian",
+    geometry = "1Dcartesian",
     interpolation_order = 2 ,
     cell_length = cell_length,
     grid_length  = grid_length,
@@ -52,7 +52,6 @@ Main(
     simulation_time = simulation_time,
     EM_boundary_conditions = [
         ['silver-muller'],
-        ['periodic'],
     ],
     random_seed = smilei_mpi_rank,
 )
@@ -76,7 +75,6 @@ Species(
 	time_frozen = 0.0,
 	boundary_conditions = [
 		["remove", "remove"],
-		["periodic", "periodic"],
 	],
 )
 
@@ -100,7 +98,6 @@ Species(
 	time_frozen = 0.0,
 	boundary_conditions = [
 		["remove", "remove"],
-		["periodic", "periodic"],
 	],
 )
 ParticleInjector(
@@ -123,7 +120,6 @@ Species(
 	time_frozen = 0.0,
 	boundary_conditions = [
 		["remove", "remove"],
-		["periodic", "periodic"],
 	],
 )
 ParticleInjector(
@@ -146,7 +142,6 @@ Species(
 	time_frozen = 0.0,
 	boundary_conditions = [
 		["remove", "remove"],
-		["periodic", "periodic"],
 	],
 )
 ParticleInjector(

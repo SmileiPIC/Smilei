@@ -35,7 +35,7 @@ for i in range(4):
     particle_binning = S.ParticleBinning(diagNumber=i,timesteps=diag_every)
     data_final = np.array(particle_binning.getData()[0])
     
-    Validate("Gamma spectrum for {}".format(species_list[i]) , data_final, 0.01)
+    Validate("Gamma spectrum for {}".format(species_list[i]) , data_final, 0.05)
     
     sum_initial = np.sum(data_initial)
     sum_final = np.sum(data_final)
