@@ -20,8 +20,6 @@
 #include "ParticleInjector.h"
 #include "Field3D.h"
 
-using namespace std;
-
 class ParticleCreator
 {
 public:
@@ -39,21 +37,21 @@ public:
     void associate( Species * species );
     
     //! Creation of the particle properties in the given particle vector `particles`
-    int create( vector<unsigned int> n_space_to_create,
+    int create( std::vector<unsigned int> n_space_to_create,
                        Params &params,
                        Patch *patch,
                        int new_cell_idx,
                        unsigned int itime );
     
     //! Creation of the particle positions
-    static void createPosition( string position_initialization,
+    static void createPosition( std::string position_initialization,
                               Particles * particles,
                               Species * species,
                               unsigned int nPart,
                               unsigned int iPart, double *indexes, Params &params );
     
     //! Creation of the particle momentum
-    static void createMomentum( string momentum_initialization,
+    static void createMomentum( std::string momentum_initialization,
                             Particles * particles,
                             Species * species,
                             unsigned int nPart,
@@ -108,12 +106,12 @@ public:
     Profile * particles_per_cell_profile_;
     
     //! Flag for the addition of the energy coming from the created particles
-    bool add_new_particle_energy;
+    bool add_new_particle_energy_;
     
 private:
 
     //! Provides a Maxwell-Juttner distribution of energies
-    static vector<double> maxwellJuttner( Species * species, unsigned int npoints, double temperature );
+    static std::vector<double> maxwellJuttner( Species * species, unsigned int npoints, double temperature );
     //! Array used in the Maxwell-Juttner sampling (see doc)
     static const double lnInvF[1000];
     //! Array used in the Maxwell-Juttner sampling (see doc)

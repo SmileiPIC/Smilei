@@ -31,6 +31,8 @@
 
 #include "ParticleData.h"
 
+#include "ParticleCreator.h"
+
 #include "Tools.h"
 #ifdef SMILEI_USE_NUMPY
 #include <numpy/arrayobject.h>
@@ -890,6 +892,11 @@ public:
         if( !params.restart ) {
             // does a loop over all cells in the simulation
             // considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
+            // Particle creator object
+            // ParticleCreator particle_creator;
+            // particle_creator.associate(thisSpecies);
+            // particle_creator.create( params.n_space, params, patch, 0, 0 );
+            
             thisSpecies->ParticleCreator( params.n_space, params, patch, 0 );
             //MESSAGE(" PARTICLES");
         } else {

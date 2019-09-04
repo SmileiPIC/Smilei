@@ -102,7 +102,7 @@ void SpeciesV::initCluster( Params &params )
     //ener_tot = 0.;
     nrj_bc_lost = 0.;
     nrj_mw_lost = 0.;
-    nrj_new_particles = 0.;
+    new_particles_energy_ = 0.;
 
 }//END initCluster
 
@@ -654,9 +654,9 @@ void SpeciesV::importParticles( Params &params, Patch *patch, Particles &source_
     }
     vector<int> src_count( ncells, 0 );
     for( unsigned int ip=0; ip < npart ; ip++ )
-        src_count[src_cell_keys[ip]] ++;                            
+        src_count[src_cell_keys[ip]] ++;
 
-    // sort new parts par cells 
+    // sort new parts par cells
     int istart = 0;
     int istop  = src_count[0];
 

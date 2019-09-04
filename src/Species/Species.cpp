@@ -149,7 +149,7 @@ void Species::initCluster( Params &params )
     //ener_tot = 0.;
     nrj_bc_lost = 0.;
     nrj_mw_lost = 0.;
-    nrj_new_particles = 0.;
+    new_particles_energy_ = 0.;
     nrj_radiation = 0.;
 
 }//END initCluster
@@ -1872,7 +1872,7 @@ int Species::ParticleCreator( vector<unsigned int> n_space_to_create, Params &pa
                 /*897 for (int i=0; i<(int)nDim_particle; i++) {
                   particles->position_old(i,iPart) -= particles->momentum(i,iPart)/particles->lor_fac(iPart) * params.timestep;
                   }897*/
-                nrj_new_particles += particles->weight( iPart )*( particles->lor_fac( iPart )-1.0 );
+                new_particles_energy_ += particles->weight( iPart )*( particles->lor_fac( iPart )-1.0 );
             }
         }
         // Photon case
@@ -1881,7 +1881,7 @@ int Species::ParticleCreator( vector<unsigned int> n_space_to_create, Params &pa
                 /*897 for (int i=0; i<(int)nDim_particle; i++) {
                   particles->position_old(i,iPart) -= particles->momentum(i,iPart)/particles->lor_fac(iPart) * params.timestep;
                   }897*/
-                nrj_new_particles += particles->weight( iPart )*( particles->momentum_norm( iPart ) );
+                new_particles_energy_ += particles->weight( iPart )*( particles->momentum_norm( iPart ) );
             }
         }
     }
@@ -2287,7 +2287,7 @@ int Species::createParticles2( Particles * particles,
                 /*897 for (int i=0; i<(int)nDim_particle; i++) {
                   particles->position_old(i,iPart) -= particles->momentum(i,iPart)/particles->lor_fac(iPart) * params.timestep;
                   }897*/
-                nrj_new_particles += particles->weight( iPart )*( particles->lor_fac( iPart )-1.0 );
+                new_particles_energy_ += particles->weight( iPart )*( particles->lor_fac( iPart )-1.0 );
             }
         }
         // Photon case
@@ -2296,7 +2296,7 @@ int Species::createParticles2( Particles * particles,
                 /*897 for (int i=0; i<(int)nDim_particle; i++) {
                   particles->position_old(i,iPart) -= particles->momentum(i,iPart)/particles->lor_fac(iPart) * params.timestep;
                   }897*/
-                nrj_new_particles += particles->weight( iPart )*( particles->momentum_norm( iPart ) );
+                new_particles_energy_ += particles->weight( iPart )*( particles->momentum_norm( iPart ) );
             }
         }
     }

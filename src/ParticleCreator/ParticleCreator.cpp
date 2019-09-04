@@ -14,7 +14,7 @@
 ParticleCreator::ParticleCreator()
 {
     initialized_in_species_ = true;
-    add_new_particle_energy = true;
+    add_new_particle_energy_ = true;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -106,7 +106,7 @@ void ParticleCreator::associate( Species * species)
 //! \param n_space_to_create
 //! \param params : general parameters
 // ---------------------------------------------------------------------------------------------------------------------
-int ParticleCreator::create( vector<unsigned int> n_space_to_create,
+int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
                              Params &params,
                              Patch *patch,
                              int new_cell_idx,
@@ -115,16 +115,16 @@ int ParticleCreator::create( vector<unsigned int> n_space_to_create,
     
     // n_space_to_create_generalized = n_space_to_create, + copy of 2nd direction data among 3rd direction
     // same for local species_::cell_length[2]
-    vector<unsigned int> n_space_to_create_generalized( n_space_to_create );
+    std::vector<unsigned int> n_space_to_create_generalized( n_space_to_create );
     unsigned int nPart, i, j, k;
     unsigned int npart_effective = 0 ;
     double *momentum[species_->nDim_particle], *position[species_->nDim_particle], *weight_arr;
     std::vector<int> my_particles_indices;
-    vector<Field *> xyz( species_->nDim_field );
+    std::vector<Field *> xyz( species_->nDim_field );
     
     // Create particles_ in a space starting at cell_position
-    vector<double> cell_position( 3, 0 );
-    vector<double> cell_index( 3, 0 );
+    std::vector<double> cell_position( 3, 0 );
+    std::vector<double> cell_index( 3, 0 );
     for( unsigned int idim=0 ; idim<species_->nDim_field ; idim++ ) {
         //if (params.cell_length[idim]!=0) { // Useless, nDim_field defined for (params.cell_length[idim>=nDim_field]==0)
         cell_position[idim] = patch->getDomainLocalMin( idim );
@@ -133,7 +133,7 @@ int ParticleCreator::create( vector<unsigned int> n_space_to_create,
         //}
     }
     // Create the x,y,z maps where profiles will be evaluated
-    vector<double> ijk( 3 );
+    std::vector<double> ijk( 3 );
     for( ijk[0]=0; ijk[0]<n_space_to_create_generalized[0]; ijk[0]++ ) {
         for( ijk[1]=0; ijk[1]<n_space_to_create_generalized[1]; ijk[1]++ ) {
             for( ijk[2]=0; ijk[2]<n_space_to_create_generalized[2]; ijk[2]++ ) {
@@ -495,7 +495,7 @@ int ParticleCreator::create( vector<unsigned int> n_space_to_create,
     delete [] temp;
     delete [] vel;
     
-    if (add_new_particle_energy) {
+    if (add_new_particle_energy_) {
         // Recalculate former position using the particle velocity
         // (necessary to calculate currents at time t=0 using the Esirkepov projection scheme)
         if( patch->isXmax() ) {
@@ -505,7 +505,7 @@ int ParticleCreator::create( vector<unsigned int> n_space_to_create,
                     /*897 for (int i=0; i<(int)species_->nDim_particle; i++) {
                       particles->position_old(i,iPart) -= particles->momentum(i,iPart)/particles->lor_fac(iPart) * params.timestep;
                       }897*/
-                    species_->nrj_new_particles += particles_->weight( iPart )*( particles_->lor_fac( iPart )-1.0 );
+                    species_->new_particles_energy_ += particles_->weight( iPart )*( particles_->lor_fac( iPart )-1.0 );
                 }
             }
             // Photon case
@@ -514,7 +514,7 @@ int ParticleCreator::create( vector<unsigned int> n_space_to_create,
                     /*897 for (int i=0; i<(int)species_->nDim_particle; i++) {
                       particles_->position_old(i,iPart) -= particles_->momentum(i,iPart)/particles_->lor_fac(iPart) * params.timestep;
                       }897*/
-                    species_->nrj_new_particles += particles_->weight( iPart )*( particles_->momentum_norm( iPart ) );
+                    species_->new_particles_energy_ += particles_->weight( iPart )*( particles_->momentum_norm( iPart ) );
                 }
             }
         }
@@ -661,7 +661,7 @@ void ParticleCreator::createMomentum( std::string momentum_initialization,
         } else if( momentum_initialization == "maxwell-juettner" ) {
 
             // Sample the energies in the MJ distribution
-            vector<double> energies = maxwellJuttner( species, nPart, temp[0]/species->mass );
+            std::vector<double> energies = maxwellJuttner( species, nPart, temp[0]/species->mass );
 
             // Sample angles randomly and calculate the momentum
             for( unsigned int p=iPart; p<iPart+nPart; p++ ) {
@@ -849,12 +849,12 @@ void ParticleCreator::createCharge( Particles * particles, Species * species,
 // ---------------------------------------------------------------------------------------------------------------------
 //! Provides a Maxwell-Juttner distribution of energies
 // ---------------------------------------------------------------------------------------------------------------------
-vector<double> ParticleCreator::maxwellJuttner( Species * species, unsigned int npoints, double temperature )
+std::vector<double> ParticleCreator::maxwellJuttner( Species * species, unsigned int npoints, double temperature )
 {
     if( temperature==0. ) {
         ERROR( "The species " << species->species_number_ << " is initializing its momentum with the following temperature : " << temperature );
     }
-    vector<double> energies( npoints );
+    std::vector<double> energies( npoints );
 
     // Classical case: Maxwell-Bolztmann
     if( temperature < 0.1 ) {

@@ -233,7 +233,7 @@ public:
     //! Accumulate energy lost with moving window
     double nrj_mw_lost;
     //! Accumulate energy added with new particles
-    double nrj_new_particles;
+    double new_particles_energy_;
     //! Accumulate energy lost by the particle with the radiation
     double nrj_radiation;
 
@@ -505,7 +505,7 @@ public:
     //! Get energy gained via new particles
     double getNewParticlesNRJ() const
     {
-        return mass*nrj_new_particles;
+        return mass*new_particles_energy_;
     }
 
     //! Reinitialize the scalar diagnostics buffer
@@ -513,7 +513,7 @@ public:
     {
         //nrj_bc_lost = 0;
         nrj_mw_lost = 0;
-        nrj_new_particles = 0;
+        new_particles_energy_ = 0;
         //nrj_radiation = 0;
     }
 
