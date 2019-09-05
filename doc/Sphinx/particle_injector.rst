@@ -14,7 +14,7 @@ the particle sorting and exchange finalization.
 Injected macro-particles therefore do not contribute to the current and fields of the current iteration
 but they are taken into account in the diagnostics.
 
-The method implemente in Smilei in schematically shown in :ref:`fig_particle_injector`.
+The method implemented in Smilei in schematically shown in :ref:`fig_particle_injector`.
 
 .. _fig_particle_injector:
 
@@ -31,4 +31,8 @@ cross the boundary during this artificial timestep) are not taken into account a
 Macro-particles in the domain are kept and considered injected.
 They are put in the patch list of macro-particles for the next timestep.
 
-    
+2. Recommendation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+- Although the code can inject a single species, we recommend to use injectors to inject neutral plasmas.
+This means that positive and negative species should be simultaneously injected.

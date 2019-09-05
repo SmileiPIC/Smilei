@@ -62,7 +62,7 @@ public:
     std::string momentum_initialization_;
 
     //! coefficient on the maximum number of particles for the species
-    double c_part_max;
+    double c_part_max_;
 
     //! mass [electron mass]
     double mass;

@@ -609,7 +609,7 @@ public:
         }
         Py_DECREF( py_mom_init );
 
-        PyTools::extract( "c_part_max", thisSpecies->c_part_max, "Species", ispec );
+        PyTools::extract( "c_part_max", thisSpecies->c_part_max_, "Species", ispec );
 
         PyTools::extract( "time_frozen", thisSpecies->time_frozen, "Species", ispec );
         if( thisSpecies->time_frozen > 0 && thisSpecies->momentum_initialization_!="cold" ) {
@@ -946,7 +946,7 @@ public:
         newSpecies->n_numpy_particles                        = species->n_numpy_particles            ;
         newSpecies->momentum_initialization_                  = species->momentum_initialization_;
         newSpecies->momentum_initialization_array            = species->momentum_initialization_array;
-        newSpecies->c_part_max                               = species->c_part_max;
+        newSpecies->c_part_max_                               = species->c_part_max_;
         newSpecies->mass                                     = species->mass;
         newSpecies->time_frozen                              = species->time_frozen;
         newSpecies->radiating                                = species->radiating;

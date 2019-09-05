@@ -50,7 +50,7 @@ using namespace std;
 // input: simulation parameters & Species index
 // ---------------------------------------------------------------------------------------------------------------------
 Species::Species( Params &params, Patch *patch ) :
-    c_part_max( 1 ),
+    c_part_max_( 1 ),
     ionization_rate( Py_None ),
     pusher( "boris" ),
     radiation_model( "none" ),
@@ -1658,7 +1658,7 @@ int Species::ParticleCreator( vector<unsigned int> n_space_to_create, Params &pa
     //     particles->create_particles(npart_effective);
     // else {
     //    // reserve included in initialize if particles emty
-    //    particles->reserve(round( params->species_param[species_number_].c_part_max * npart_effective ), ndim);
+    //    particles->reserve(round( params->species_param[species_number_].c_part_max_ * npart_effective ), ndim);
     //    particles->initialize(n_existing_particles+npart_effective, params_->nDim_particle);
     // }
 
@@ -2073,7 +2073,7 @@ int Species::createParticles2( Particles * particles,
     //     particles->create_particles(npart_effective);
     // else {
     //    // reserve included in initialize if particles emty
-    //    particles->reserve(round( params->species_param[species_number_].c_part_max * npart_effective ), ndim);
+    //    particles->reserve(round( params->species_param[species_number_].c_part_max_ * npart_effective ), ndim);
     //    particles->initialize(n_existing_particles+npart_effective, params_->nDim_particle);
     // }
 
