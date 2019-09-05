@@ -320,7 +320,7 @@ public:
     
     //! Return the volume (or surface or length depending on simulation dimension)
     //! of one cell at the position of a given particle
-    virtual double getCellVolume( Particles *p, unsigned int ipart ) = 0;
+    virtual double getPrimalCellVolume( Particles *p, unsigned int ipart, Params &params ) = 0;
     
     //! Set geometry data in case of moving window restart
     //! \param x_moved difference on coordinates regarding t0 geometry
