@@ -24,7 +24,7 @@ public:
     //! SimWindow destructor
     ~SimWindow();
     //! Move the simulation window (particles, fields, MPI environment & operator related to the grid)
-    void operate( VectorPatch &vecPatches, SmileiMPI *smpi, Params &param, unsigned int itime, double time_dual );
+    void shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &param, unsigned int itime, double time_dual );
     
     //! Tells whether there is a moving window or not
     inline bool isActive()
@@ -33,10 +33,10 @@ public:
     }
     
     //! Returns a boolean : True if the window should be moved, False if it should not.
-    //! Warning : Actually moving the window (function operate) changes the value of x_moved so the returned value of isMoving changes
+    //! Warning : Actually moving the window (function shift) changes the value of x_moved so the returned value of isMoving changes
     //! directly after moving the window.
-    //! isMoving is called once in Smilei.cpp, in isProj and in solveMaxwell. Since this is BEFORE operate, it is correct. Take care not to
-    //! call isMoving AFTER operate because the returned result might not be the expected one.
+    //! isMoving is called once in Smilei.cpp, in isProj and in solveMaxwell. Since this is BEFORE shift, it is correct. Take care not to
+    //! call isMoving AFTER shift because the returned result might not be the expected one.
     bool isMoving( double time_dual );
     
     //! Return total length the window has moved

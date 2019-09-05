@@ -84,7 +84,7 @@ bool SimWindow::isMoving( double time_dual )
     return active && ( ( time_dual - time_start )*velocity_x > x_moved - number_of_additional_shifts*cell_length_x_*n_space_x_*(time_dual>additional_shifts_time) );
 }
 
-void SimWindow::operate( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params, unsigned int itime, double time_dual )
+void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params, unsigned int itime, double time_dual )
 {
     if( ! isMoving( time_dual ) && itime != additional_shifts_iteration ) {
         return;
