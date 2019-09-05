@@ -59,21 +59,21 @@ public:
     {
         n_moved = new_val;
     }
-    //! Return number of additional operations
-    unsigned int getNumberOfAdditionalOperations()
+    //! Return number of shifts operations
+    unsigned int getNumberOfAdditionalShifts()
     {
-        return number_of_additional_operations;
+        return number_of_additional_shifts;
     }
-    //! Return additional operations iteration
-    unsigned int getAdditionalOperationsIteration()
+    //! Return additional shifts iteration
+    unsigned int getAdditionalShiftsIteration()
     {
-        return additional_operations_iteration;
+        return additional_shifts_iteration;
     }
 
-    //! Return additional operations time
-    double getAdditionalOperationsTime()
+    //! Return additional shifts time
+    double getAdditionalShiftsTime()
     {
-        return additional_operations_time;
+        return additional_shifts_time;
     }
     
     
@@ -101,12 +101,12 @@ private:
     std::vector< std::vector<bool>> patch_particle_created;
     //! Max number of threads
     int max_threads;
-    //! Time of additional moving window operations
-    double additional_operations_time;
-    //! Iteration of additional moving window operations
-    unsigned int additional_operations_iteration;
-    //! Number of additional moving window operations
-    unsigned int number_of_additional_operations;
+    //! Time of additional moving window shifts
+    double additional_shifts_time;
+    //! Iteration of additional moving window shifts
+    unsigned int additional_shifts_iteration;
+    //! Number of additional moving window shifts
+    unsigned int number_of_additional_shifts;
     
     
 };
