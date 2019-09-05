@@ -12,19 +12,23 @@ diag_every = int(simulation_time / timestep)
 species_list = ["eon1", "pon1", "eon2", "pon2"]
 
 Scalar = {}
+relative_error = 0.05
 
 for species in species_list:
     name = "Ntot_{}".format(species)
     Scalar[name] = np.array(S.Scalar(name).getData())
-    Validate("Scalar {}".format(name) , Scalar[name], 0.01)
+    for index,value in enumerate(Scalar[name]):
+        Validate("Scalar {}[{}]".format(name,index) , value, value*relative_error)
     
     name = "Ukin_{}".format(species)
     Scalar[name] = np.array(S.Scalar(name).getData())
-    Validate("Scalar {}".format(name) , Scalar[name], 0.01)
+    for index,value in enumerate(Scalar[name]):
+        Validate("Scalar {}[{}]".format(name,index) , value, value*relative_error)
 
     name = "Dens_{}".format(species)
     Scalar[name] = np.array(S.Scalar(name).getData())
-    Validate("Scalar {}".format(name) , Scalar[name], 0.01)
+    for index,value in enumerate(Scalar[name]):
+        Validate("Scalar {}[{}]".format(name,index) , value, value*relative_error)
 
 # Energy _________________________________________________________________
 
