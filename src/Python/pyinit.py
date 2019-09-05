@@ -235,10 +235,13 @@ class Main(SmileiSingleton):
 
                 # Yee solver
                 if Main.maxwell_solver == 'Yee':
-                    dim = int(Main.geometry[0])
-                    if dim<1 or dim>3:
-                        raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
-                    Main.timestep = Main.timestep_over_CFL / math.sqrt(sum([1./l**2 for l in Main.cell_length]))
+                    if (Main.geometry=="AMcylindrical"):
+                        Main.timestep = Main.timestep_over_CFL / math.sqrt(1./Main.cell_length[0]**2 + ((Main.number_of_modes-1)/Main.cell_length[1])**2 )
+                    else:
+                        dim = int(Main.geometry[0])
+                        if dim<1 or dim>3:
+                            raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
+                        Main.timestep = Main.timestep_over_CFL / math.sqrt(sum([1./l**2 for l in Main.cell_length]))
 
                 # Grassi
                 elif Main.maxwell_solver == 'Grassi':
@@ -310,6 +313,8 @@ class MovingWindow(SmileiSingleton):
 
     time_start = 0.
     velocity_x = 1.
+    number_of_additional_shifts = 0.
+    additional_shifts_time = 0.
 
 
 class Checkpoints(SmileiSingleton):

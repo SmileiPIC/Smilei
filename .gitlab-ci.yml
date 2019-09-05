@@ -68,7 +68,7 @@ makerunAM:
   stage: makerun
   only:
     - develop
-    - sync_integration
+    - multisteps_movwin
 
   script:
     # Move in test dir
@@ -80,7 +80,7 @@ makerunV:
   stage: makerun
   only:
     - develop
-    - sync_integration
+    - multisteps_movwin
 
   script:
     # Move in test dir
@@ -92,7 +92,7 @@ makerunCollisions:
   stage: makerun
   only:
     - develop
-    - sync_integration
+    - multisteps_movwin
     
   script:
     # Move in test dir
