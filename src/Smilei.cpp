@@ -354,7 +354,13 @@ int main( int argc, char *argv[] )
             vecPatches.runAllDiags( params, &smpi, itime, timers, simWindow );
 
             timers.movWindow.restart();
-            simWindow->operate( vecPatches, &smpi, params, itime, time_dual );
+            simWindow->shift( vecPatches, &smpi, params, itime, time_dual );
+            
+            if (itime == simWindow->getAdditionalShiftsIteration() ) {
+                int adjust = simWindow->isMoving(time_dual)?0:1;
+                for (unsigned int n=0;n < simWindow->getNumberOfAdditionalShifts()-adjust; n++)
+                    simWindow->shift( vecPatches, &smpi, params, itime, time_dual );
+            }
             timers.movWindow.update();
             // ----------------------------------------------------------------------
             // Validate restart  : to do
