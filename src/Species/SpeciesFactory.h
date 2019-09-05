@@ -543,7 +543,7 @@ public:
                  ERROR("regular_number may not be provided if species position_initialization is not set to 'regular'.");
              }
              if (thisSpecies->regular_number_array.size() != thisSpecies->nDim_particle) {
-                 ERROR("Please provide as many regular numbers of particles as there are particle dimensions in the domain.");
+                 ERROR("Please provide as many regular numbers of particles as there are particle dimensions in the domain ("<< thisSpecies->nDim_particle <<").");
              }
         }
 
@@ -944,14 +944,15 @@ public:
         newSpecies->pusher                                   = species->pusher;
         newSpecies->radiation_model                          = species->radiation_model;
         newSpecies->radiation_photon_species                 = species->radiation_photon_species;
-        newSpecies->radiation_photon_sampling_                = species->radiation_photon_sampling_;
-        newSpecies->radiation_photon_gamma_threshold_         = species->radiation_photon_gamma_threshold_;
+        newSpecies->radiation_photon_sampling_               = species->radiation_photon_sampling_;
+        newSpecies->radiation_photon_gamma_threshold_        = species->radiation_photon_gamma_threshold_;
         newSpecies->photon_species                           = species->photon_species;
         newSpecies->speciesNumber                            = species->speciesNumber;
         newSpecies->position_initialization_on_species       = species->position_initialization_on_species;
         newSpecies->position_initialization_on_species_index = species->position_initialization_on_species_index;
         newSpecies->position_initialization                  = species->position_initialization;
         newSpecies->position_initialization_array            = species->position_initialization_array;
+        newSpecies->regular_number_array                     = species->regular_number_array;
         newSpecies->n_numpy_particles                        = species->n_numpy_particles            ;
         newSpecies->momentum_initialization                  = species->momentum_initialization;
         newSpecies->momentum_initialization_array            = species->momentum_initialization_array;
