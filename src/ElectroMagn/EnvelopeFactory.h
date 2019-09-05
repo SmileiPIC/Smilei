@@ -18,6 +18,9 @@ public:
         } else if( params.geometry == "3Dcartesian" ) {
             return new LaserEnvelope3D( params, patch, EMfields );
         } else if( params.geometry == "AMcylindrical" ) {
+            if (params.nmodes!=1){
+                ERROR("AMcylindrical geometry with envelope supports only one azimuthal mode"); 
+            }
             return new LaserEnvelopeAM( params, patch, EMfields );
         } else {
             return NULL;
@@ -36,6 +39,9 @@ public:
         } else if( dynamic_cast<LaserEnvelope3D *>( envelope ) ) {
             return new LaserEnvelope3D( envelope, patch, EMfields, params, n_moved );
         } else if( dynamic_cast<LaserEnvelopeAM *>( envelope ) ) {
+            if (params.nmodes!=1){
+                ERROR("AMcylindrical geometry with envelope supports only one azimuthal mode"); 
+            }
             return new LaserEnvelopeAM( envelope, patch, EMfields, params, n_moved );
         } else {
             return NULL;
