@@ -27,13 +27,13 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
     if( !PyTools::extract_pyProfile( "envelope_profile", profile, "LaserEnvelope" ) ) {
         MESSAGE( "No envelope profile set !" );
     }
-
+    
     bool try_numpy=false;
-    if( params.geometry == "3Dcartesian" ){
+    if( params.geometry == "3Dcartesian" ) {
         try_numpy = true; // use numpy for quicker initialisation in 3D
     }
-
-    profile_ = new Profile( profile, params.nDim_field+1, "envelope",try_numpy );
+    
+    profile_ = new Profile( profile, params.nDim_field+1, "envelope", try_numpy );
     // params.Laser_Envelope_model = true;
     
     ostringstream name( "" );
@@ -46,10 +46,10 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
     PyTools::extract( "envelope_solver", envelope_solver, "LaserEnvelope" );
     
     std::complex<double>     i1 = std::complex<double>( 0., 1 ); // imaginary unit
-    double k0 = 1.; // laser wavenumber 
+    double k0 = 1.; // laser wavenumber
     i1_2k0_over_2dx = i1*2.*k0/2./cell_length[0];;
     one_plus_ik0dt  = 1.+i1*k0*timestep;
-    one_plus_ik0dt_ov_one_plus_k0sq_dtsq = ( 1.+i1*k0*timestep )/( 1.+k0*k0*timestep*timestep);
+    one_plus_ik0dt_ov_one_plus_k0sq_dtsq = ( 1.+i1*k0*timestep )/( 1.+k0*k0*timestep*timestep );
     
     
     info << "\t Laser Envelope parameters: "<< endl;
@@ -80,7 +80,7 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
 // Cloning constructor
 LaserEnvelope::LaserEnvelope( LaserEnvelope *envelope, Patch *patch, ElectroMagn *EMfields, Params &params, unsigned int n_moved ) :
     cell_length( envelope->cell_length ), timestep( envelope->timestep ), i1_2k0_over_2dx( envelope->i1_2k0_over_2dx ),
-    one_plus_ik0dt( envelope->one_plus_ik0dt ), one_plus_ik0dt_ov_one_plus_k0sq_dtsq(envelope->one_plus_ik0dt_ov_one_plus_k0sq_dtsq)
+    one_plus_ik0dt( envelope->one_plus_ik0dt ), one_plus_ik0dt_ov_one_plus_k0sq_dtsq( envelope->one_plus_ik0dt_ov_one_plus_k0sq_dtsq )
 {
     if( n_moved ==0 ) {
         profile_ = new Profile( envelope->profile_ );

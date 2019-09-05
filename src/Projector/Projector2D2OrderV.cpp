@@ -764,10 +764,10 @@ void Projector2D2OrderV::currentsAndDensityWrapper( ElectroMagn *EMfields, Parti
         
         // Otherwise, the projection may apply to the species-specific arrays
     } else {
-        double *b_Jx  = EMfields->Jx_s [ispec] ? &( *EMfields->Jx_s [ispec] )(0) : &( *EMfields->Jx_  )(0) ;
-        double *b_Jy  = EMfields->Jy_s [ispec] ? &( *EMfields->Jy_s [ispec] )(0) : &( *EMfields->Jy_  )(0) ;
-        double *b_Jz  = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )(0) : &( *EMfields->Jz_  )(0) ;
-        double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )(0) : &( *EMfields->rho_ )(0) ;
+        double *b_Jx  = EMfields->Jx_s [ispec] ? &( *EMfields->Jx_s [ispec] )( 0 ) : &( *EMfields->Jx_ )( 0 ) ;
+        double *b_Jy  = EMfields->Jy_s [ispec] ? &( *EMfields->Jy_s [ispec] )( 0 ) : &( *EMfields->Jy_ )( 0 ) ;
+        double *b_Jz  = EMfields->Jz_s [ispec] ? &( *EMfields->Jz_s [ispec] )( 0 ) : &( *EMfields->Jz_ )( 0 ) ;
+        double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
         for( int ipart=istart ; ipart<iend; ipart++ ) {
             //Do not use cells sorting for now : f(ipart) for now, f(istart) laterfor now,
             //(*iold)[ipart       ] = round( particles.position(0, ipart)* dx_inv_ - dt*particles.momentum(0, ipart)*(*invgf)[ipart] * dx_inv_ ) - i_domain_begin ;

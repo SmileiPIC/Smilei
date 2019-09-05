@@ -242,7 +242,9 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
             swap( index1[i-1], index1[p] );
         }
         if( intra_collisions_ ) { // In the case of collisions within one species
-            if( npart1 < 2 ) continue;
+            if( npart1 < 2 ) {
+                continue;
+            }
             npairs = ( int ) ceil( ( ( double )npart1 )/2. ); // half as many pairs as macro-particles
             index2.resize( npairs );
             for( unsigned int i=0; i<npairs; i++ ) {

@@ -33,9 +33,9 @@ std::complex<double> Function_Python2D::complexValueAt( vector<double> x_cell, d
 {
     return PyTools::runPyFunction_complex( py_profile, x_cell[0], time );
 }
-std::complex<double> Function_Python2D::complexValueAt( vector<double> x_cell)
+std::complex<double> Function_Python2D::complexValueAt( vector<double> x_cell )
 {
-    return PyTools::runPyFunction_complex( py_profile, x_cell[0], x_cell[1]);
+    return PyTools::runPyFunction_complex( py_profile, x_cell[0], x_cell[1] );
 }
 
 // 3D
@@ -78,16 +78,18 @@ PyArrayObject *Function_Python3D::valueAt( std::vector<PyArrayObject *> x )
 {
     return ( PyArrayObject * )PyObject_CallFunctionObjArgs( py_profile, x[0], x[1], x[2], NULL );
 }
-PyArrayObject* Function_Python4D::complexValueAt(std::vector<PyArrayObject*> x, PyArrayObject* t) {
-    PyObject * values = PyObject_CallFunctionObjArgs(py_profile, x[0], x[1], x[2], t, NULL);
-    PyArrayObject * cvalues = (PyArrayObject*)PyObject_CallMethod(values, "astype", "s", "complex", NULL);
-    Py_DECREF(values);
+PyArrayObject *Function_Python4D::complexValueAt( std::vector<PyArrayObject *> x, PyArrayObject *t )
+{
+    PyObject *values = PyObject_CallFunctionObjArgs( py_profile, x[0], x[1], x[2], t, NULL );
+    PyArrayObject *cvalues = ( PyArrayObject * )PyObject_CallMethod( values, "astype", "s", "complex", NULL );
+    Py_DECREF( values );
     return cvalues;
 }
-PyArrayObject* Function_Python2D::complexValueAt(std::vector<PyArrayObject*> x) {
-    PyObject * values = PyObject_CallFunctionObjArgs(py_profile, x[0], x[1], NULL);
-    PyArrayObject * cvalues = (PyArrayObject*)PyObject_CallMethod(values, "astype", "s", "complex", NULL);
-    Py_DECREF(values);
+PyArrayObject *Function_Python2D::complexValueAt( std::vector<PyArrayObject *> x )
+{
+    PyObject *values = PyObject_CallFunctionObjArgs( py_profile, x[0], x[1], NULL );
+    PyArrayObject *cvalues = ( PyArrayObject * )PyObject_CallMethod( values, "astype", "s", "complex", NULL );
+    Py_DECREF( values );
     return cvalues;
 }
 #endif
@@ -151,7 +153,7 @@ double Function_Gaussian1D::valueAt( vector<double> x_cell )
 {
     double x = x_cell[0], xfactor=0.;
     if( x > xvacuum  && x < xvacuum+xlength ) {
-        xfactor = exp( -pow( x-xcenter, xorder ) * invxsigma );
+        xfactor = xorder ? exp( -pow( x-xcenter, xorder ) * invxsigma ) : 1.;
     }
     return value * xfactor;
 }
@@ -160,10 +162,10 @@ double Function_Gaussian2D::valueAt( vector<double> x_cell )
     double x = x_cell[0], xfactor=0.;
     double y = x_cell[1], yfactor=0.;
     if( x > xvacuum  && x < xvacuum+xlength ) {
-        xfactor = exp( -pow( x-xcenter, xorder ) * invxsigma );
+        xfactor = xorder ? exp( -pow( x-xcenter, xorder ) * invxsigma ) : 1.;
     }
     if( y > yvacuum  && y < yvacuum+ylength ) {
-        yfactor = exp( -pow( y-ycenter, yorder ) * invysigma );
+        yfactor = yorder ? exp( -pow( y-ycenter, yorder ) * invysigma ) : 1.;
     }
     return value * xfactor * yfactor;
 }
@@ -173,13 +175,13 @@ double Function_Gaussian3D::valueAt( vector<double> x_cell )
     double y = x_cell[1], yfactor=0.;
     double z = x_cell[2], zfactor=0.;
     if( x > xvacuum  && x < xvacuum+xlength ) {
-        xfactor = exp( -pow( x-xcenter, xorder ) * invxsigma );
+        xfactor = xorder ? exp( -pow( x-xcenter, xorder ) * invxsigma ) : 1.;
     }
     if( y > yvacuum  && y < yvacuum+ylength ) {
-        yfactor = exp( -pow( y-ycenter, yorder ) * invysigma );
+        yfactor = yorder ? exp( -pow( y-ycenter, yorder ) * invysigma ) : 1.;
     }
     if( z > zvacuum  && z < zvacuum+zlength ) {
-        zfactor = exp( -pow( z-zcenter, zorder ) * invzsigma );
+        zfactor = zorder ? exp( -pow( z-zcenter, zorder ) * invzsigma ) : 1.;
     }
     return value * xfactor * yfactor * zfactor;
 }

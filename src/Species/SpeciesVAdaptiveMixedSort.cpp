@@ -279,7 +279,7 @@ void SpeciesVAdaptiveMixedSort::reconfiguration( Params &params, Patch *patch )
     // Metrics 1 - based on the ratio of vectorized cells
     // Compute the number of cells that contain more than 8 particles
     //ratio_number_of_vecto_cells = SpeciesMetrics::get_ratio_number_of_vecto_cells(count,8);
-
+    
     // Test metrics, if necessary we reasign operators
     //if ( (ratio_number_of_vecto_cells > 0.5 && this->vectorized_operators == false)
     //  || (ratio_number_of_vecto_cells < 0.5 && this->vectorized_operators == true))
@@ -287,7 +287,7 @@ void SpeciesVAdaptiveMixedSort::reconfiguration( Params &params, Patch *patch )
     //    reasign_operators = true;
     //}
     // --------------------------------------------------------------------
-
+    
     // --------------------------------------------------------------------
     // Metrics 2 - based on the evaluation of the computational time
     SpeciesMetrics::get_computation_time( count,
@@ -302,7 +302,7 @@ void SpeciesVAdaptiveMixedSort::reconfiguration( Params &params, Patch *patch )
 
     // Operator reasignment if required by the metrics
     if( reasign_operators ) {
-
+    
         // The type of operator is changed
         this->vectorized_operators = !this->vectorized_operators;
 
@@ -345,7 +345,7 @@ void SpeciesVAdaptiveMixedSort::reconfigure_operators( Params &params, Patch *pa
         delete Push_ponderomotive_position;
     }
     delete Proj;
-
+    
     // Reassign the correct Interpolator
     Interp = InterpolatorFactory::create( params, patch, this->vectorized_operators );
     // Reassign the correct Pusher to Push

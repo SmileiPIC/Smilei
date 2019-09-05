@@ -331,7 +331,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   :default: 1
 
   The number of azimuthal modes used for the relativistic field initialization in ``"AMcylindrical"`` geometry.
-  Note that this number must be lower or equal to the number of modes of the simulation. 
+  Note that this number must be lower or equal to the number of modes of the simulation.
 
 ----
 
@@ -441,11 +441,16 @@ It requires :ref:`additional compilation options<vectorization_flags>` to be act
 Moving window
 ^^^^^^^^^^^^^
 
-The simulated box can move relative to the initial plasma position. This "moving window"
-basically consists in removing periodically some plasma from the ``x_min`` border and
-adding new plasma after the ``x_max`` border, thus changing the physical domain that the
+The simulated domain can move relatively to its the initial position. The "moving window"
+is (almost) periodically shifted in the ``x_max`` direction.
+Each "shift" consists in removing a column of patches from the ``x_min`` border and
+adding a new one after the ``x_max`` border, thus changing the physical domain that the
 simulation represents but keeping the same box size. This is particularly useful to
-*follow* plasma moving at high speed.
+*follow* waves or plasma moving at high speed.
+The frequency of the shifts is adjusted so that the average displacement velocity over many shifts matches the velocity
+given by the user.
+The user may ask for a given number of additional shifts at a given time.
+These additional shifts are not taken into account for the evaluation of the average velocity of the moving window.
 
 The block ``MovingWindow`` is optional. The window does not move it you do not define it.
 
@@ -454,6 +459,8 @@ The block ``MovingWindow`` is optional. The window does not move it you do not d
   MovingWindow(
       time_start = 0.,
       velocity_x = 1.,
+      number_of_additional_shifts = 0.,
+      additional_shifts_time = 0.,
   )
 
 
@@ -468,7 +475,20 @@ The block ``MovingWindow`` is optional. The window does not move it you do not d
 
   :default: 0.
 
-  The velocity of the moving window in the `x` direction.
+  The average velocity of the moving window in the `x_max` direction. It muste be between 0 and 1.
+
+.. py:data:: number_of_additional_shifts
+
+  :default: 0.
+
+  The number of additional shifts of the moving window.
+
+.. py:data:: additional_shifts_time
+
+  :default: 0.
+
+  The time at which the additional shifts are done.
+
 
 .. note::
 
@@ -582,6 +602,14 @@ Each species has to be defined in a ``Species`` block::
       # For photon species only:
       multiphoton_Breit_Wheeler = ["electron","positron"],
       multiphoton_Breit_Wheeler_sampling = [1,1]
+
+      # Merging
+      merging_method = "vranic_spherical",
+      merge_every = 5,
+      merge_min_particles_per_cell = 16,
+      merge_max_packet_size = 4,
+      merge_min_packet_size = 2,
+      merge_momentum_cell_size = [32,16,16],
   )
 
 .. py:data:: name
@@ -875,6 +903,105 @@ Each species has to be defined in a ``Species`` block::
   Large numbers may rapidly slow down the performances and lead to memory saturation.
 
   This parameter can **only** be assigned to photons species (mass = 0).
+
+----
+
+.. _Particle_merging:
+
+Particle Merging
+^^^^^^^^^^^^^^^^
+
+The macro-particle merging method is documented in the :doc:`corresponding page <particle_merging>`.
+It is defined in the ``Species`` block::
+
+  Species(
+      ....
+
+      # Merging
+      merging_method = "vranic_spherical",
+      merge_every = 5,
+      merge_min_particles_per_cell = 16,
+      merge_max_packet_size = 4,
+      merge_min_packet_size = 2,
+      merge_momentum_cell_size = [32,16,16],
+      merge_discretization_scale = "linear",
+      # Extra parameters for experts:
+      merge_min_momentum_cell_length = [1e-10, 1e-10, 1e-10],
+      merge_accumulation_correction = True,
+  )
+
+.. py:data:: merging_method
+
+  :default: ``None``
+
+  The particle merging method to use:
+
+  * ``none``: the merging process is not activated
+  * ``vranic_cartesian``: merging process using the method of M. Vranic with a cartesian momentum space decomposition
+  * ``vranic_spherical``: merging process using the method of M. Vranic with a spherical momentum space decomposition
+
+.. py:data:: merge_every
+
+  :default: ``0``
+
+  The particle merging time selection (:ref:`time selection <TimeSelections>`).
+
+.. py:data:: min_particles_per_cell
+
+  :default: ``4``
+
+  The minimum number of particles per cell for the merging.
+
+.. py:data:: merge_min_packet_size
+
+  :default: ``4``
+
+  The minimum number of particles per packet to merge.
+
+.. py:data:: merge_max_packet_size
+
+  :default: ``4``
+
+  The maximum number of particles per packet to merge.
+
+.. py:data:: merge_momentum_cell_size
+
+  :default: ``[16,16,16]``
+
+  The momentum space discretization.
+
+.. py:data:: merge_discretization_scale
+
+  :default: ``linear``
+
+  The momentum discretization scale. The scale can be ``linear`` or ``log``.
+  The ``log`` scale only works with the spherical discretization for the moment.
+  In logarithmic scale, Smilei needs a minimum momentum value to avoid 0.
+  This value is provided by the parameter ``merge_min_momentum``.
+  By default, this value is set to :math:`10^{-5}`.
+
+.. py:data:: merge_min_momentum
+
+  :default: ``1e-5``
+
+  :red:`[for experts]` The minimum momentum value when the log scale is chosen (``merge_discretization_scale = log``).
+  To set a minimum value is compulsory to avoid the potential 0 value in the log domain.
+
+.. py:data:: merge_min_momentum_cell_length
+
+  :default: ``[1e-10,1e-10,1e-10]``
+
+  :red:`[for experts]` The minimum momentum cell length for the discretization.
+  If the specified discretization induces smaller momentum cell length,
+  then the number of momentum cell (momentum cell size) is set to 1 in this direction.
+
+.. py:data:: merge_accumulation_correction
+
+  :default: ``True``
+
+  :red:`[for experts]` Activation of the accumulation correction (see :ref:`vranic_accululation_effect` for more information). The correction only works in linear scale.
+
+
 
 ----
 
@@ -1708,31 +1835,70 @@ tables.
 
   RadiationReaction(
 
-     # Parameters to generate the table h used by Niel et al.
-     h_chipa_min = 1E-3,
-     h_chipa_max = 1E1,
-     h_dim = 128,
-     h_computation_method = "table",
+    # Radiation parameters
+    minimum_chi_continuous = 1e-3,
+    minimum_chi_discontinuous = 1e-2,
+    table_path = "../databases/",
+    compute_table = False,
 
-     # Parameter to generate the table integfochi used by the Monte-Carlo model
-     integfochi_chipa_min = 1e-4,
-     integfochi_chipa_max = 1e1,
-     integfochi_dim = 128,
+    # Following parameters are only if you want to compute the tables
 
-     # Parameter to generate the table xip used by the Monte-Carlo model
-     xip_chipa_min = 1e-4,
-     xip_chipa_max = 1e1,
-     xip_power = 4,
-     xip_threshold = 1e-3,
-     chipa_xip_dim = 128,
-     chiph_xip_dim = 128,
+    output_format = "hdf5",
 
-     # Radiation parameters
-     minimum_chi_continuous = 1e-3,
-     minimum_chi_discontinuous = 1e-2,
-     table_path = "../databases/"
+    # Parameters to generate the table h used by Niel et al.
+    h_chipa_min = 1E-3,
+    h_chipa_max = 1E1,
+    h_dim = 128,
+    h_computation_method = "table",
+
+    # Parameter to generate the table integfochi used by the Monte-Carlo model
+    integfochi_chipa_min = 1e-4,
+    integfochi_chipa_max = 1e1,
+    integfochi_dim = 128,
+
+    # Parameter to generate the table xip used by the Monte-Carlo model
+    xip_chipa_min = 1e-4,
+    xip_chipa_max = 1e1,
+    xip_power = 4,
+    xip_threshold = 1e-3,
+    xip_chipa_dim = 128,
+    xip_chiph_dim = 128,
   )
 
+.. py:data:: output_format
+
+  :default: ``"hdf5"``
+
+  Output format of the tables: ``"hdf5"``, ``"binary"`` or ``"ascii"``.
+
+.. py:data:: minimum_chi_continuous
+
+  :default: 1e-3
+
+  Threshold on the particle quantum parameter *particle_chi*. When a particle has a
+  quantum parameter below this threshold, radiation reaction is not taken
+  into account.
+
+.. py:data:: minimum_chi_discontinuous
+
+  :default: 1e-2
+
+  Threshold on the particle quantum parameter *particle_chi* between the continuous
+  and the discontinuous radiation model.
+
+.. py:data:: table_path
+
+  :default: ``"./"``
+
+  Path to the external tables for the radiation losses.
+  Default tables are located in ``databases``.
+
+.. py:data:: compute_table
+
+  :default: False
+
+  If True, the tables for the selected radiation model are computed
+  with the requested parameters and stored at the path `table_path`.
 
 .. py:data:: h_chipa_min
 
@@ -1833,33 +1999,6 @@ tables.
 
   Discretization of the *xip* tables in the *photon_chi* direction.
 
-.. py:data:: output_format
-
-  :default: ``"hdf5"``
-
-  Output format of the tables: ``"hdf5"``, ``"binary"`` or ``"ascii"``.
-
-.. py:data:: minimum_chi_continuous
-
-  :default: 1e-3
-
-  Threshold on the particle quantum parameter *particle_chi*. When a particle has a
-  quantum parameter below this threshold, radiation reaction is not taken
-  into account.
-
-.. py:data:: minimum_chi_discontinuous
-
-  :default: 1e-2
-
-  Threshold on the particle quantum parameter *particle_chi* between the continuous
-  and the discontinuous radiation model.
-
-.. py:data:: table_path
-
-  :default: ``"./"``
-
-  Path to the external tables for the radiation losses.
-  Default tables are located in ``databases``.
 
 --------------------------------------------------------------------------------
 
@@ -1881,21 +2020,24 @@ There are two tables used for the multiphoton Breit-Wheeler refers to as the
     # Table output format, can be "ascii", "binary", "hdf5"
     output_format = "hdf5",
 
-    # Path the tables
-    table_path = "../databases/"
+    # Path to the tables
+    table_path = "../databases/",
+
+    # Flag to compute the tables
+    compute_table = False,
 
     # Table T parameters
-    T_chiph_min = 1e-2
-    T_chiph_max = 1e1
-    T_dim = 128
+    T_chiph_min = 1e-2,
+    T_chiph_max = 1e1,
+    T_dim = 128,
 
     # Table xip parameters
-    xip_chiph_min = 1e-2
-    xip_chiph_max = 1e1
-    xip_power = 4
-    xip_threshold = 1e-3
-    xip_chipa_dim = 128
-    xip_chiph_dim = 128
+    xip_chiph_min = 1e-2,
+    xip_chiph_max = 1e1,
+    xip_power = 4,
+    xip_threshold = 1e-3,
+    xip_chipa_dim = 128,
+    xip_chiph_dim = 128,
 
   )
 
@@ -1905,6 +2047,13 @@ There are two tables used for the multiphoton Breit-Wheeler refers to as the
 
   Path to the external tables for the multiphoton Breit-Wheeler.
   Default tables are located in ``databases``.
+
+.. py:data:: compute_table
+
+  :default: False
+
+  If True, the tables for the selected radiation model are computed
+  with the requested parameters and stored at the path `table_path`.
 
 .. py:data:: output_format
 
@@ -2423,7 +2572,6 @@ for instance::
 
   A list of one or several species' :py:data:`name`.
   All these species are combined into the same diagnostic.
-
 
 .. py:data:: axes
 

@@ -72,7 +72,9 @@ void CollisionsSingle::collide( Params &params, Patch *patch, int itime, vector<
         // Shuffle particles of species 1 to have random pairs
         // In the case of collisions within one species
         if( intra_collisions_ ) {
-            if( np1 < 2 ) continue;
+            if( np1 < 2 ) {
+                continue;
+            }
             npairs = ( int ) ceil( ( ( double )np1 )/2. ); // half as many pairs as macro-particles
             N2max = np1 - npairs; // number of not-repeated particles (in second half only)
             first_index2 += npairs;

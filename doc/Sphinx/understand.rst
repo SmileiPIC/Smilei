@@ -13,5 +13,6 @@ Understand
    ionization
    radiation_loss
    multiphoton_Breit_Wheeler
+   particle_merging
    laser_envelope
    relativistic_fields_initialization

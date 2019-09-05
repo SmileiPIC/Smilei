@@ -37,7 +37,7 @@ Species(
 	position_initialization = "regular",
 	momentum_initialization = "maxwell-juettner",
 	ionization_model = "none",
-	particles_per_cell = 10000,
+	particles_per_cell = 1000,
 	mass = 1.,
 	charge = -1.0,
 	charge_density = 10.,
@@ -53,7 +53,7 @@ Species(
 	name = "electron1",
 	position_initialization = "regular",
 	momentum_initialization = "maxwell-juettner",
-	particles_per_cell= 10000,
+	particles_per_cell= 1000,
 	mass = 1.0,
 	charge = -1.0,
 	charge_density = trapezoidal(0.00001, xplateau=16000.*L0),
@@ -69,7 +69,7 @@ Species(
 	name = "electron2",
 	position_initialization = "regular",
 	momentum_initialization = "maxwell-juettner",
-	particles_per_cell= 10000,
+	particles_per_cell= 1000,
 	mass = 1.0,
 	charge = -1.0,
 	charge_density = trapezoidal(0.00001, xvacuum=22000.*L0, xplateau=16000.*L0),
@@ -90,14 +90,14 @@ Collisions(
 
 
 
-DiagFields(
-	every = 1
-)
+# DiagFields(
+# 	every = 1
+# )
 
 
-DiagScalar(
-	every = 1
-)
+# DiagScalar(
+# 	every = 1
+# )
 
 
 

@@ -730,7 +730,7 @@ class TrackParticles(Diagnostic):
 	# We override the plotting methods
 	def _animateOnAxes_0D(self, ax, t):
 		pass
-
+	
 	def _animateOnAxes_1D(self, ax, t):
 		timeSelection = (self._timesteps<=t)*(self._timesteps>=t-self.length)
 		times = self._timesteps[timeSelection]
@@ -738,14 +738,16 @@ class TrackParticles(Diagnostic):
 		if times.size == 1:
 			times = self._np.double([times, times]).squeeze()
 			A = self._np.double([A, A]).squeeze()
-		ax.plot(self._tfactor*times, self._vfactor*A, **self.options.plot)
+		try   : ax.set_prop_cycle (None)
+		except:	ax.set_color_cycle(None)
+		self._plot = ax.plot(self._tfactor*times, self._vfactor*A, **self.options.plot)
 		ax.set_xlabel(self._tlabel)
 		ax.set_ylabel(self.axes[0]+" ("+self.units.vname+")")
 		self._setLimits(ax, xmax=self._tfactor*self._timesteps[-1], ymin=self.options.vmin, ymax=self.options.vmax)
-		self._setSomeOptions(ax)
 		ax.set_title(self._title) # override title
-		return 1
-
+		self._setOptions(ax)
+		return self._plot
+	
 	def _animateOnAxes_2D(self, ax, t):
 		tmin = t-self.length
 		tmax = t
@@ -756,6 +758,8 @@ class TrackParticles(Diagnostic):
 		# Plot first the non-broken lines
 		x = self._tmpdata[0][timeSelection,:][:,~self._rawData["brokenLine"]]
 		y = self._tmpdata[1][timeSelection,:][:,~self._rawData["brokenLine"]]
+		try   : ax.set_prop_cycle (None)
+		except:	ax.set_color_cycle(None)
 		ax.plot(self._xfactor*x, self._yfactor*y, **self.options.plot)
 		# Then plot the broken lines
 		try   : ax.hold("on")
@@ -780,9 +784,14 @@ class TrackParticles(Diagnostic):
 		ax.set_xlabel(self._xlabel)
 		ax.set_ylabel(self._ylabel)
 		self._setLimits(ax, xmin=self.options.xmin, xmax=self.options.xmax, ymin=self.options.ymin, ymax=self.options.ymax)
-		self._setSomeOptions(ax)
+		self._setTitle(ax, t)
+		self._setOptions(ax)
 		return 1
-
+	
+	_plotOnAxes_0D = _animateOnAxes_0D
+	_plotOnAxes_1D = _animateOnAxes_1D
+	_plotOnAxes_2D = _animateOnAxes_2D
+	
 	# Convert data to VTK format
 	def toVTK(self, rendering="trajectory", data_format="xml"):
 		"""
