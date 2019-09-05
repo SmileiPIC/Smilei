@@ -131,6 +131,9 @@ LaserEnvelope::~LaserEnvelope()
     if( GradPhiz_m ) {
         delete GradPhiz_m;
     }
+    if( GradPhir_m ) {
+        delete GradPhir_m;
+    }
     
     int nBC = EnvBoundCond.size();
     for( int i=0 ; i<nBC ; i++ )
