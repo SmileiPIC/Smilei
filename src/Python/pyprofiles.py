@@ -679,6 +679,29 @@ def LaserGaussianAM( box_side="xmin", a0=1., omega=1., focus=None, waist=3.,
     )
 
 
+def LaserEnvelopeGaussianAM( a0=1., omega=1., focus=None, waist=3., time_envelope=tconstant(),
+        envelope_solver = "explicit",Envelope_boundary_conditions = [["reflective"]]):
+    import cmath
+    from numpy import exp, sqrt, arctan, vectorize
+
+    def gaussian_beam_with_temporal_profile(x,r,t):
+        Zr = omega * waist**2/2.
+        w  = sqrt(1./(1.+   ( (x-focus[0])/Zr  )**2 ) )
+        coeff = omega * (x-focus[0]) * w**2 / (2.*Zr**2)
+        phase = coeff * ( r**2 )
+        exponential_with_total_phase = exp(1j*(phase-arctan( (x-focus[0])/Zr )))
+        invWaist2 = (w/waist)**2
+        spatial_amplitude = a0*omega * w * exp( -invWaist2*(  r**2  )
+        space_time_envelope = spatial_amplitude * vectorize(time_envelope)(t)
+        return space_time_envelope * exponential_with_total_phase
+
+    # Create Laser Envelope
+    LaserEnvelope(
+        omega               = omega,
+        envelope_profile    = gaussian_beam_with_temporal_profile,
+        envelope_solver     = "explicit",
+        Envelope_boundary_conditions = Envelope_boundary_conditions,
+    )
 
 # Define the tools for the propagation of a laser profile
 try:
