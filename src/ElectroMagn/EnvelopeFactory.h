@@ -17,6 +17,8 @@ public:
             return new LaserEnvelope2D( params, patch, EMfields );
         } else if( params.geometry == "3Dcartesian" ) {
             return new LaserEnvelope3D( params, patch, EMfields );
+        } else if( params.geometry == "AMcylindrical" ) {
+            return new LaserEnvelopeAM( params, patch, EMfields );
         } else {
             return NULL;
         }
@@ -33,6 +35,8 @@ public:
             return new LaserEnvelope2D( envelope, patch, EMfields, params, n_moved );
         } else if( dynamic_cast<LaserEnvelope3D *>( envelope ) ) {
             return new LaserEnvelope3D( envelope, patch, EMfields, params, n_moved );
+        } else if( dynamic_cast<LaserEnvelopeAM *>( envelope ) ) {
+            return new LaserEnvelopeAM( envelope, patch, EMfields, params, n_moved );
         } else {
             return NULL;
         }
