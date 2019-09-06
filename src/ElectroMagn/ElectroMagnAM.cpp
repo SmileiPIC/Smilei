@@ -345,6 +345,15 @@ ElectroMagnAM::~ElectroMagnAM()
             delete Jt_s[ifield];
             delete rho_AM_s[ifield];            
         }
+     
+        if (Env_A_abs_ != NULL){
+            delete Env_A_abs_;
+            delete Env_E_abs_;
+            delete Env_Chi_;
+            for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
+            delete Env_Chi_s[ispec];
+            }
+        }
     }
     
 }//END ElectroMagnAM
