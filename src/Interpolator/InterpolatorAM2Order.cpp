@@ -251,11 +251,11 @@ void InterpolatorAM2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
 {
     
     
-    std::vector<double> *ELoc = &( smpi->dynamics_Epart[ithread] );
-    std::vector<double> *BLoc = &( smpi->dynamics_Bpart[ithread] );
+    std::vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
+    std::vector<double> *Bpart = &( smpi->dynamics_Bpart[ithread] );
 
-    std::vector<double> *PHILoc        = &( smpi->dynamics_PHIpart[ithread] );
-    std::vector<double> *GradPHILoc    = &( smpi->dynamics_GradPHIpart[ithread] );
+    std::vector<double> *PHIpart        = &( smpi->dynamics_PHIpart[ithread] );
+    std::vector<double> *GradPHIpart    = &( smpi->dynamics_GradPHIpart[ithread] );
 
     std::vector<int>    *iold  = &( smpi->dynamics_iold[ithread] );
     std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
@@ -291,26 +291,25 @@ void InterpolatorAM2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
         // only mode 0 is used
 
         // Interpolation of El^(d,p)
-        ( *ELoc ) [ 0*nparts+ipart ]       = std::real( compute( &coeffxd_[1], &coeffyp_[1], El, id_, jp_ ) );
+        ( *Epart ) [ 0*nparts+ipart ]       = std::real( compute( &coeffxd_[1], &coeffyp_[1], El, id_, jp_ ) );
         // Interpolation of Er^(p,d)
-        ( *ELoc ) [ 1*nparts+ipart ]       = std::real( compute( &coeffxp_[1], &coeffyd_[1], Er, ip_, jd_ ) );
+        ( *Epart ) [ 1*nparts+ipart ]       = std::real( compute( &coeffxp_[1], &coeffyd_[1], Er, ip_, jd_ ) );
         // Interpolation of Et^(p,p)
-        ( *ELoc ) [ 2*nparts+ipart ]       = std::real( compute( &coeffxp_[1], &coeffyp_[1], Et, ip_, jp_ ) );
+        ( *Epart ) [ 2*nparts+ipart ]       = std::real( compute( &coeffxp_[1], &coeffyp_[1], Et, ip_, jp_ ) );
         // Interpolation of Bl^(p,d)
-        ( *BLoc ) [ 0*nparts+ipart ]       = std::real( compute( &coeffxp_[1], &coeffyd_[1], Bl, ip_, jd_ ) );
+        ( *Bpart ) [ 0*nparts+ipart ]       = std::real( compute( &coeffxp_[1], &coeffyd_[1], Bl, ip_, jd_ ) );
         // Interpolation of Br^(d,p)
-        ( *BLoc ) [ 1*nparts+ipart ]       = std::real( compute( &coeffxd_[1], &coeffyp_[1], Br, id_, jp_ ) );
+        ( *Bpart ) [ 1*nparts+ipart ]       = std::real( compute( &coeffxd_[1], &coeffyp_[1], Br, id_, jp_ ) );
         // Interpolation of Bt^(d,d)
-        ( *BLoc ) [ 2*nparts+ipart ]       = std::real( compute( &coeffxd_[1], &coeffyd_[1], Bt, id_, jd_ ) );
+        ( *Bpart ) [ 2*nparts+ipart ]       = std::real( compute( &coeffxd_[1], &coeffyd_[1], Bt, id_, jd_ ) );
         // Interpolation of Phi^(p,p)
-        ( *PHILoc ) [ 0*nparts+ipart ]     = std::real( compute( &coeffxd_[1], &coeffyp_[1], Phi, id_, jp_ ) );
+        ( *PHIpart ) [ 0*nparts+ipart ]     = std::real( compute( &coeffxd_[1], &coeffyp_[1], Phi, id_, jp_ ) );
         // Interpolation of GradPhil^(p,p)
-        ( *GradPHILoc ) [ 0*nparts+ipart ] = std::real( compute( &coeffxd_[1], &coeffyp_[1], GradPhil, ip_, jp_ ) );
-        
+        ( *GradPHIpart ) [ 0*nparts+ipart ] = std::real( compute( &coeffxd_[1], &coeffyp_[1], GradPhil, ip_, jp_ ) );
         // Interpolation of GradPhir^(p,p)
-        ( *GradPHILoc ) [ 1*nparts+ipart ] = std::real( compute( &coeffxd_[1], &coeffyp_[1], GradPhir, ip_, jp_ ) );
+        ( *GradPHIpart ) [ 1*nparts+ipart ] = std::real( compute( &coeffxd_[1], &coeffyp_[1], GradPhir, ip_, jp_ ) );
         // GradPhit = 0 in cylindrical symmetry
-        ( *GradPHILoc ) [ 2*nparts+ipart ] = 0.;
+        ( *GradPHIpart ) [ 2*nparts+ipart ] = 0.;
    
         if (r > 0){ 
             exp_m_theta = ( particles.position( 1, ipart ) - Icpx * particles.position( 2, ipart ) ) / r ;
@@ -319,16 +318,16 @@ void InterpolatorAM2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
         }
 
         // project on x,y,z
-        delta2 = std::real( exp_m_theta ) * ( *ELoc ) [ 1*nparts+ipart ] + std::imag( exp_m_theta ) * ( *ELoc ) [ 2*nparts+ipart ];
-        ( *ELoc ) [ 2*nparts+ipart ] = -std::imag( exp_m_theta ) * ( *ELoc ) [ 1*nparts+ipart ] + std::real( exp_m_theta ) * ( *ELoc ) [ 2*nparts+ipart ];
-        ( *ELoc ) [ 1*nparts+ipart ] = delta2 ;
-        delta2 = std::real( exp_m_theta ) * ( *BLoc ) [ 1*nparts+ipart ] + std::imag( exp_m_theta ) *  ( *BLoc ) [ 2*nparts+ipart ];
-        ( *BLoc ) [ 2*nparts+ipart ] = -std::imag( exp_m_theta ) * ( *BLoc ) [ 1*nparts+ipart ] + std::real( exp_m_theta ) * ( *BLoc ) [ 2*nparts+ipart ];
-        ( *BLoc ) [ 1*nparts+ipart ] = delta2 ;
+        delta2 = std::real( exp_m_theta ) * ( *Epart ) [ 1*nparts+ipart ] + std::imag( exp_m_theta ) * ( *Epart ) [ 2*nparts+ipart ];
+        ( *Epart ) [ 2*nparts+ipart ] = -std::imag( exp_m_theta ) * ( *Epart ) [ 1*nparts+ipart ] + std::real( exp_m_theta ) * ( *Epart ) [ 2*nparts+ipart ];
+        ( *Epart ) [ 1*nparts+ipart ] = delta2 ;
+        delta2 = std::real( exp_m_theta ) * ( *Bpart ) [ 1*nparts+ipart ] + std::imag( exp_m_theta ) *  ( *Bpart ) [ 2*nparts+ipart ];
+        ( *Bpart ) [ 2*nparts+ipart ] = -std::imag( exp_m_theta ) * ( *Bpart ) [ 1*nparts+ipart ] + std::real( exp_m_theta ) * ( *Bpart ) [ 2*nparts+ipart ];
+        ( *Bpart ) [ 1*nparts+ipart ] = delta2 ;
 
-        delta2 = std::real( exp_m_theta ) * ( *GradPHILoc ) [ 1*nparts+ipart ] ; 
-        ( *GradPHILoc ) [ 2*nparts+ipart ] = -std::imag( exp_m_theta ) * ( *GradPHILoc ) [ 1*nparts+ipart ] ;
-        ( *GradPHILoc ) [ 1*nparts+ipart ] = delta2 ;
+        delta2 = std::real( exp_m_theta ) * ( *GradPHIpart ) [ 1*nparts+ipart ] ; 
+        ( *GradPHIpart ) [ 2*nparts+ipart ] = -std::imag( exp_m_theta ) * ( *GradPHIpart ) [ 1*nparts+ipart ] ;
+        ( *GradPHIpart ) [ 1*nparts+ipart ] = delta2 ;
 
         //Buffering of iold and delta
         ( *iold )[ipart+0*nparts]  = ip_;
@@ -345,57 +344,74 @@ void InterpolatorAM2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
 void InterpolatorAM2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
 {
     // // Static cast of the envelope fields
-    // Field3D *Phi_m3D = static_cast<Field3D *>( EMfields->envelope->Phi_m );
-    // Field3D *GradPhix_m3D = static_cast<Field3D *>( EMfields->envelope->GradPhix_m );
-    // Field3D *GradPhiy_m3D = static_cast<Field3D *>( EMfields->envelope->GradPhiy_m );
-    // Field3D *GradPhiz_m3D = static_cast<Field3D *>( EMfields->envelope->GradPhiz_m );
-    // 
-    // std::vector<double> *PHI_mpart     = &( smpi->dynamics_PHI_mpart[ithread] );
-    // std::vector<double> *GradPHI_mpart = &( smpi->dynamics_GradPHI_mpart[ithread] );
-    // 
-    // std::vector<int>    *iold  = &( smpi->dynamics_iold[ithread] );
-    // std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
-    // 
-    // //Loop on bin particles
-    // int nparts( particles.size() );
-    // for( int ipart=*istart ; ipart<*iend; ipart++ ) {
-    // 
-    //     // Normalized particle position
-    //     double xpn = particles.position( 0, ipart )*dx_inv_;
-    //     double ypn = particles.position( 1, ipart )*dy_inv_;
-    //     double zpn = particles.position( 2, ipart )*dz_inv_;
-    // 
-    //     coeffs( xpn, ypn, zpn );
-    // 
-    //     // -------------------------
-    //     // Interpolation of Phi_m^(p,p,p)
-    //     // -------------------------
-    //     ( *PHI_mpart )[ipart] = compute( &coeffxp_[1], &coeffyp_[1], &coeffzp_[1], Phi_m3D, ip_, jp_, kp_ );
-    // 
-    //     // -------------------------
-    //     // Interpolation of GradPhix_m^(p,p,p)
-    //     // -------------------------
-    //     ( *GradPHI_mpart )[ipart+0*nparts] = compute( &coeffxp_[1], &coeffyp_[1], &coeffzp_[1], GradPhix_m3D, ip_, jp_, kp_ );
-    // 
-    //     // -------------------------
-    //     // Interpolation of GradPhiy_m^(p,p,p)
-    //     // -------------------------
-    //     ( *GradPHI_mpart )[ipart+1*nparts] = compute( &coeffxp_[1], &coeffyp_[1], &coeffzp_[1], GradPhiy_m3D, ip_, jp_, kp_ );
-    // 
-    //     // -------------------------
-    //     // Interpolation of GradPhiz_m^(p,p,p)
-    //     // -------------------------
-    //     ( *GradPHI_mpart )[ipart+2*nparts] = compute( &coeffxp_[1], &coeffyp_[1], &coeffzp_[1], GradPhiz_m3D, ip_, jp_, kp_ );
-    // 
-    //     //Buffering of iold and delta
-    //     ( *iold )[ipart+0*nparts]  = ip_;
-    //     ( *iold )[ipart+1*nparts]  = jp_;
-    //     ( *iold )[ipart+2*nparts]  = kp_;
-    //     ( *delta )[ipart+0*nparts] = deltax;
-    //     ( *delta )[ipart+1*nparts] = deltay;
-    //     ( *delta )[ipart+2*nparts] = deltaz;
-    // 
-    // }
+    // Static cast of the envelope fields
+    Field2D *Phi_m2Dcyl = static_cast<Field2D *>( EMfields->envelope->Phi_ );
+    Field2D *GradPhil_m2Dcyl = static_cast<Field2D *>( EMfields->envelope->GradPhil_ );
+    Field2D *GradPhir_m2Dcyl = static_cast<Field2D *>( EMfields->envelope->GradPhir_ );
+    
+    std::vector<double> *PHI_mpart     = &( smpi->dynamics_PHI_mpart[ithread] );
+    std::vector<double> *GradPHI_mpart = &( smpi->dynamics_GradPHI_mpart[ithread] );
+    
+    std::vector<int>    *iold  = &( smpi->dynamics_iold[ithread] );
+    std::vector<double> *delta = &( smpi->dynamics_deltaold[ithread] );
+    
+    double r, delta2, xpn, rpn;
+    //Loop on bin particles
+    int nparts =  particles.size() ;
+    for( int ipart=*istart ; ipart<*iend; ipart++ ) {
+    
+        // Normalized particle position
+        xpn = particles.position( 0, ipart ) * dl_inv_;
+        r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
+        rpn = r * dr_inv_;
+    
+        // Compute coefficients
+        coeffs( xpn, rpn );
+
+        // only mode 0 is used
+    
+        // -------------------------
+        // Interpolation of Phi_m^(p,p,p)
+        // -------------------------
+        ( *PHI_mpart )[ipart] = compute( &coeffxp_[1], &coeffyp_[1], Phi_m2Dcyl, ip_, jp_ );
+    
+        // -------------------------
+        // Interpolation of GradPhi_m^(p,p,p), l component
+        // -------------------------
+        ( *GradPHI_mpart )[ipart+0*nparts] = compute( &coeffxp_[1], &coeffyp_[1], GradPhil_m2Dcyl, ip_, jp_ );
+    
+        // -------------------------
+        // Interpolation of GradPhi_m^(p,p,p), r component
+        // -------------------------
+        ( *GradPHI_mpart )[ipart+1*nparts] = compute( &coeffxp_[1], &coeffyp_[1], GradPhir_m2Dcyl, ip_, jp_ );
+    
+        // -------------------------
+        // Interpolation of GradPhi_m^(p,p,p), theta component
+        // -------------------------
+        ( *GradPHI_mpart )[ipart+2*nparts] = 0.; // zero with cylindrical symmetry
+
+
+        if (r > 0){ 
+            exp_m_theta = ( particles.position( 1, ipart ) - Icpx * particles.position( 2, ipart ) ) / r ;
+        } else {
+            exp_m_theta = 1. ;
+        }
+
+
+        // project on x,y,z
+        delta2 = std::real( exp_m_theta ) * ( *GradPHI_mpart ) [ 1*nparts+ipart ] ; 
+        ( *GradPHI_mpart ) [ 2*nparts+ipart ] = -std::imag( exp_m_theta ) * ( *GradPHI_mpart ) [ 1*nparts+ipart ] ;
+        ( *GradPHI_mpart ) [ 1*nparts+ipart ] = delta2 ;
+
+        //Buffering of iold and delta
+        ( *iold )[ipart+0*nparts]  = ip_;
+        ( *iold )[ipart+1*nparts]  = jp_;
+      
+        ( *delta )[ipart+0*nparts] = deltax;
+        ( *delta )[ipart+1*nparts] = deltar;
+      
+    
+    }
     
 } // END Interpolator3D2Order
 
