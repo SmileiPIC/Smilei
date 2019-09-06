@@ -94,16 +94,6 @@ ElectroMagnAM::ElectroMagnAM( ElectroMagnAM *emFields, Params &params, Patch *pa
                     Env_Chi_s[ifield] = new Field2D( dimPrim, emFields->Env_Chi_s[ifield]->name );
                 } else {
                     Env_Chi_s[ifield]  = new Field2D( emFields->Env_Chi_s[ifield]->name, dimPrim );
-                } 
-                if( emFields->Env_A_abs_s[ifield]->data_ != NULL ) {
-                    Env_A_abs_s[ifield] = new Field2D( dimPrim, emFields->Env_A_abs_s[ifield]->name );
-                } else {
-                    Env_A_abs_s[ifield]  = new Field2D( emFields->Env_A_abs_s[ifield]->name, dimPrim );
-                } 
-                if( emFields->Env_E_abs_s[ifield]->data_ != NULL ) {
-                    Env_E_abs_s[ifield] = new Field2D( dimPrim, emFields->Env_E_abs_s[ifield]->name );
-                } else {
-                    Env_E_abs_s[ifield]  = new Field2D( emFields->Env_E_abs_s[ifield]->name, dimPrim );
                 }    
             }
 
@@ -136,6 +126,13 @@ void ElectroMagnAM::initElectroMagnAMQuantities( Params &params, Patch *patch )
         Jr_s[ispec]  = NULL;
         Jt_s[ispec]  = NULL;
         rho_AM_s[ispec] = NULL;
+    }
+
+    if (params.Laser_Envelope_model){
+        Env_Chi_s.resize( n_species );
+        for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
+        Env_Chi_s[ispec]  = NULL;
+        }
     }
     
     // --------------------------------------------------
