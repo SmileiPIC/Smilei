@@ -49,4 +49,4 @@ for i in range(4):
     
     print(' Gamma spectrum max error for {}: {}'.format(species_list[i], np.max(error)))
     
-    Validate("Gamma spectrum max error for {}".format(species_list[i]) , np.max(error), np.max(error)*relative_error)
+    Validate("Gamma spectrum max error for {}".format(species_list[i]) , np.max(error), relative_error)
