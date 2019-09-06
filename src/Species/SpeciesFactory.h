@@ -631,53 +631,46 @@ public:
         if( !PyTools::extract( "boundary_conditions", thisSpecies->boundary_conditions, "Species", ispec ) ) {
             ERROR( "For species '" << species_name << "', boundary_conditions not defined" );
         }
-        if( params.geometry != "AMcylindrical" ) {
-            if( thisSpecies->boundary_conditions.size() == 0 ) {
-                ERROR( "For species '" << species_name << "', boundary_conditions cannot be empty" );
-            } else if( thisSpecies->boundary_conditions.size() == 1 ) {
-                while( thisSpecies->boundary_conditions.size() < params.nDim_particle ) {
-                    thisSpecies->boundary_conditions.push_back( thisSpecies->boundary_conditions[0] );
-                }
-            } else if( thisSpecies->boundary_conditions.size() != params.nDim_particle ) {
-                ERROR( "For species '" << species_name << "', boundary_conditions must be the same size as the number of dimensions" );
+
+        int number_of_boundaries = (params.geometry=="AMcylindrical") ? 2 : params.nDim_particle;
+
+        if( thisSpecies->boundary_conditions.size() == 0 ) {
+            ERROR( "For species '" << species_name << "', boundary_conditions cannot be empty" );
+        } else if( thisSpecies->boundary_conditions.size() == 1 ) {
+            while( thisSpecies->boundary_conditions.size() < number_of_boundaries ) {
+                thisSpecies->boundary_conditions.push_back( thisSpecies->boundary_conditions[0] );
             }
-        } else if( params.geometry == "AMcylindrical" ) {
-            if( thisSpecies->boundary_conditions.size() == 0 ) {
-                ERROR( "For species '" << species_name << "', boundary_conditions cannot be empty" );
-            } else if( thisSpecies->boundary_conditions.size() == 1 ) {
-                while( thisSpecies->boundary_conditions.size() < params.nDim_particle ) {
-                    thisSpecies->boundary_conditions.push_back( thisSpecies->boundary_conditions[0] );
-                }
-            } else if( thisSpecies->boundary_conditions.size() != 2 ) {
-                ERROR( "For AM geometry boundary_conditions must not be the same size as the number of dimensions it is applied only for Rmax Xmin and Xmax" );
-            }
-            if( ( thisSpecies->boundary_conditions[1][1] != "remove" ) && ( thisSpecies->boundary_conditions[1][1] != "stop" ) ) {
-                ERROR( " In AM geometry particle boundary conditions supported in Rmax are 'remove' and 'stop' " );
-            }
+        } else if( thisSpecies->boundary_conditions.size() != number_of_boundaries ) {
+            ERROR( "For species '" << species_name << "', boundary_conditions must be of size "<< number_of_boundaries <<"." );
         }
+
+
         bool has_thermalize = false;
-        if( params.geometry != "AMcylindrical" ) {
-            for( unsigned int iDim=0; iDim<params.nDim_particle; iDim++ ) {
-                if( thisSpecies->boundary_conditions[iDim].size() == 1 ) {
-                    thisSpecies->boundary_conditions[iDim].push_back( thisSpecies->boundary_conditions[iDim][0] );
+
+        for( unsigned int iDim=0; iDim<number_of_boundaries; iDim++ ) {
+            if( thisSpecies->boundary_conditions[iDim].size() == 1 ) {
+                thisSpecies->boundary_conditions[iDim].push_back( thisSpecies->boundary_conditions[iDim][0] );
+            }
+            if( thisSpecies->boundary_conditions[iDim].size() != 2 )
+                ERROR( "For species '" << species_name << "', boundary_conditions["<<iDim<<"] must have one or two arguments" )
+            if( thisSpecies->boundary_conditions[iDim][0] == "thermalize"
+                    || thisSpecies->boundary_conditions[iDim][1] == "thermalize" ) {
+                has_thermalize = true;
+                if( thisSpecies->mass == 0 ) {
+                    ERROR( "For photon species '" << species_name << "' Thermalizing BCs are not available." );
                 }
-                if( thisSpecies->boundary_conditions[iDim].size() != 2 )
-                    ERROR( "For species '" << species_name << "', boundary_conditions["<<iDim<<"] must have one or two arguments" )
-                    if( thisSpecies->boundary_conditions[iDim][0] == "thermalize"
-                            || thisSpecies->boundary_conditions[iDim][1] == "thermalize" ) {
-                        has_thermalize = true;
-                        if( thisSpecies->mass == 0 ) {
-                            ERROR( "For photon species '" << species_name << "' Thermalizing BCs are not available." );
-                        }
-                    }
-                if( thisSpecies->boundary_conditions[iDim][0] == "stop"
-                        || thisSpecies->boundary_conditions[iDim][1] == "stop" ) {
-                    if( thisSpecies->mass == 0 ) {
-                        ERROR( "For photon species '" << species_name << "' stop BCs are not physical." );
-                    }
+            }
+            if( thisSpecies->boundary_conditions[iDim][0] == "stop"
+                    || thisSpecies->boundary_conditions[iDim][1] == "stop" ) {
+                if( thisSpecies->mass == 0 ) {
+                    ERROR( "For photon species '" << species_name << "' stop BCs are not physical." );
                 }
             }
         }
+        if( (params.geometry=="AMcylindrical") && ( thisSpecies->boundary_conditions[1][1] != "remove" ) && ( thisSpecies->boundary_conditions[1][1] != "stop" ) ) {
+            ERROR( " In AM geometry particle boundary conditions supported in Rmax are 'remove' and 'stop' " );
+        }
+
         // for thermalizing BCs on particles check if thermal_boundary_temperature is correctly defined
         bool has_temperature = PyTools::extract( "thermal_boundary_temperature", thisSpecies->thermal_boundary_temperature, "Species", ispec );
         bool has_velocity    = PyTools::extract( "thermal_boundary_velocity", thisSpecies->thermal_boundary_velocity, "Species", ispec );

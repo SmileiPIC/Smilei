@@ -115,7 +115,7 @@ as well as `refined methods based on this algorithm <https://doi.org/10.1140/epj
 In these methods, the electromagnetic
 fields are discretized onto a staggered grid, the so-called Yee-grid that allows for
 spatial-centering of the discretized curl operators in Maxwell's equations.
-The followingfigure summarizes at which points of the Yee-grid are defined the
+The following figure summarizes at which points of the Yee-grid are defined the
 electromagnetic fields as well as charge and density currents.
 
 .. image:: _static/figYee.png
@@ -434,7 +434,7 @@ Azimuthal modes decomposition
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :program:`Smilei` can run simulations in cyclindrical geometry with azimuthal modes decomposition as described in `this article <https://www.sciencedirect.com/science/article/pii/S0021999108005950?via%3Dihub>`_.
-In this geometry, fields are expressed in cylindrical frame :math:`(e_x,e_r,e_\theta)` and can be written as a Fourier series:
+In this geometry (see figure below), fields are expressed in cylindrical frame :math:`(e_x,e_r,e_\theta)` and can be written as a Fourier series:
 
 .. math::
 
@@ -452,6 +452,9 @@ for all :math:`m>0`. Mode 0 is given by:
 .. math::
 
     \tilde{F}^{0} = \frac{1}{2\pi}\int_0^{2\pi}F\left(x,r,\theta\right)d\theta.
+
+.. image:: _static/Coordinate_Reference_AMcylindrical.png
+   :width: 13cm
 
 In the azimuthal modes decomposition simulations, only the :math:`\tilde{F}^{m}` are computed and stored.
 Azimuthal modes from 0 to a maximum mode number defined by the user are considered.
