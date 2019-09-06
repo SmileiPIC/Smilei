@@ -29,17 +29,17 @@ LaserEnvelopeAM::LaserEnvelopeAM( Params &params, Patch *patch, ElectroMagn *EMf
     }
     
     
-    A_  = new cField2D( dimPrim, "A" );
-    A0_ = new cField2D( dimPrim, "Aold" );
+    A_  = new cField2D( dimPrim, "A_mode_0" );
+    A0_ = new cField2D( dimPrim, "Aold_mode_0" );
     
-    Phi_         = new Field2D( dimPrim, "Phi" );
-    Phi_m        = new Field2D( dimPrim, "Phi_m" );
+    Phi_         = new Field2D( dimPrim, "Phi_mode_0" );
+    Phi_m        = new Field2D( dimPrim, "Phi_m_mode_0" );
     
-    GradPhix_    = new Field2D( dimPrim, "GradPhix" );
-    GradPhix_m   = new Field2D( dimPrim, "GradPhix_m" );
+    GradPhil_    = new Field2D( dimPrim, "GradPhix_mode_0" );
+    GradPhil_m   = new Field2D( dimPrim, "GradPhix_m_mode_0" );
     
-    GradPhir_    = new Field2D( dimPrim, "GradPhir" );
-    GradPhir_m   = new Field2D( dimPrim, "GradPhir_m" );
+    GradPhir_    = new Field2D( dimPrim, "GradPhir_mode_0" );
+    GradPhir_m   = new Field2D( dimPrim, "GradPhir_m_mode_0" );
 
     // in cylindrical symmetry the gradient along theta is zero
     

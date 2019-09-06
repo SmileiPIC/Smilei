@@ -40,6 +40,10 @@ public:
     std::vector<cField2D *> rho_AM_s;
     void restartRhoJ() override;
     void restartRhoJs() override;
+
+    std::vector<Field2D *> Env_A_abs_s;
+    std::vector<Field2D *> Env_E_abs_s;
+    std::vector<Field2D *> Env_Chi_s;
     
     void initPoisson( Patch *patch ) override;
     double compute_r();

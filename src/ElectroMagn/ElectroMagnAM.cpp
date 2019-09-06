@@ -88,6 +88,25 @@ ElectroMagnAM::ElectroMagnAM( ElectroMagnAM *emFields, Params &params, Patch *pa
                     rho_AM_s[ifield]  = new cField2D( emFields->rho_AM_s[ifield]->name, dimPrim );
                 }
             }
+
+            if( (imode==0) and (params.Laser_Envelope_model) ) {
+                if( emFields->Env_Chi_s[ifield]->data_ != NULL ) {
+                    Env_Chi_s[ifield] = new Field2D( dimPrim, emFields->Env_Chi_s[ifield]->name );
+                } else {
+                    Env_Chi_s[ifield]  = new Field2D( emFields->Env_Chi_s[ifield]->name, dimPrim );
+                } 
+                if( emFields->Env_A_abs_s[ifield]->data_ != NULL ) {
+                    Env_A_abs_s[ifield] = new Field2D( dimPrim, emFields->Env_A_abs_s[ifield]->name );
+                } else {
+                    Env_A_abs_s[ifield]  = new Field2D( emFields->Env_A_abs_s[ifield]->name, dimPrim );
+                } 
+                if( emFields->Env_E_abs_s[ifield]->data_ != NULL ) {
+                    Env_E_abs_s[ifield] = new Field2D( dimPrim, emFields->Env_E_abs_s[ifield]->name );
+                } else {
+                    Env_E_abs_s[ifield]  = new Field2D( emFields->Env_E_abs_s[ifield]->name, dimPrim );
+                }    
+            }
+
         }
         
     }
@@ -195,6 +214,12 @@ void ElectroMagnAM::initElectroMagnAMQuantities( Params &params, Patch *patch )
         Jr_[imode]   = new cField2D( dimPrim, 1, false, ( "Jr"+mode_id.str() ).c_str() );
         Jt_[imode]   = new cField2D( dimPrim, 2, false, ( "Jt"+mode_id.str() ).c_str() );
         rho_AM_[imode]  = new cField2D( dimPrim, ( "Rho"+mode_id.str() ).c_str() );
+    }
+
+    if( params.Laser_Envelope_model ) {
+        Env_A_abs_ = new Field2D( dimPrim, "Env_A_abs_mode_0" );
+        Env_Chi_   = new Field2D( dimPrim, "Env_Chi_mode_0" );
+        Env_E_abs_ = new Field2D( dimPrim, "Env_E_abs_mode_0" );
     }
     
     // ----------------------------------------------------------------
