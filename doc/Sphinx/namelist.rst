@@ -565,6 +565,7 @@ Each species has to be defined in a ``Species`` block::
       name      = "electrons1",
       position_initialization = "random",
       momentum_initialization = "maxwell-juettner",
+      regular_number = [],
       particles_per_cell = 100,
       mass = 1.,
       atomic_number = None,
@@ -606,7 +607,7 @@ Each species has to be defined in a ``Species`` block::
       # Merging
       merging_method = "vranic_spherical",
       merge_every = 5,
-      merge_min_particles_per_cell = 16,
+      merge_min_particles_per_cell = 16,:q
       merge_max_packet_size = 4,
       merge_min_packet_size = 2,
       merge_momentum_cell_size = [32,16,16],
@@ -620,7 +621,9 @@ Each species has to be defined in a ``Species`` block::
 
    The method for initialization of particle positions. Options are:
 
-   * ``"regular"`` for regularly spaced
+   * ``"regular"`` for regularly spaced. In that case the number of particles per cell per dimension can be set by using `regular_number`.
+     Otherwise, the number of particles per cell per dimension is the same in all dimensions and therefore the `particles_per_cell` must be
+     an integer to the power of the simulation dimension ( i.e. a square number in dimension 2).
    * ``"random"`` for randomly distributed
    * ``"centered"`` for centered in each cell
    * The :py:data:`name` of another species from which the positions are copied.
@@ -635,6 +638,14 @@ Each species has to be defined in a ``Species`` block::
      This initialization is incompatible with :py:data:`number_density`, :py:data:`charge_density`
      and :py:data:`particles_per_cell`. Particles initialized outside of the initial simulation domain
      will not be created. This initalization is disregarded when running a `restart`.
+
+.. py:data:: regular_number
+
+   :type: A python list of integers.
+
+   The size of the list must be the simulation particle dimension. It can be used only if `position_initialization` is set to `regular`
+   and not in `AMcylindrical` geometry. The product of the elements of the provided list must be equal to `particles_per_cell`.
+   This list sets the number of evenly spaced particles per cell per dimension at their initial positions.
 
 .. py:data:: momentum_initialization
 

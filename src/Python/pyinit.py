@@ -346,6 +346,7 @@ class Species(SmileiComponent):
     position_initialization = None
     momentum_initialization = ""
     particles_per_cell = None
+    regular_number = []
     c_part_max = 1.0
     mass = None
     charge = None
