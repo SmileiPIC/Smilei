@@ -163,10 +163,10 @@ public:
     //! Number of nodes on the dual grid in the y-direction
     unsigned int nr_d;
     
-    //! Spatial step dl for 3D3V cartesian simulations
+    //! Spatial step dl for 2D3V cylindrical simulations
     double dl;
     
-    //! Spatial step dr for 3D3V cartesian simulations
+    //! Spatial step dr for 2D3V cylindrical simulations
     double dr;
     
     //! Ratio of the time-step by the spatial-step dt/dl for 3D3V cartesian simulations

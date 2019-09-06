@@ -2491,6 +2491,34 @@ void VectorPatch::update_field_list( SmileiMPI *smpi )
                 listBt_[imode][ipatch]     = static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->Bt_[imode] ;
             }
         }
+
+        if( patches_[0]->EMfields->envelope != NULL ) {
+            listA_.resize( size() ) ;
+            listA0_.resize( size() ) ;
+            listPhi_.resize( size() ) ;
+            listPhi0_.resize( size() ) ;
+            listGradPhil_.resize( size() ) ;
+            listGradPhir_.resize( size() ) ;
+            listGradPhil0_.resize( size() ) ;
+            listGradPhir0_.resize( size() ) ;
+            listEnv_Chi_.resize( size() ) ;
+        }
+
+
+        if( patches_[0]->EMfields->envelope != NULL ) {
+            for( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+                listA_[ipatch]         = patches_[ipatch]->EMfields->envelope->A_ ;
+                listA0_[ipatch]        = patches_[ipatch]->EMfields->envelope->A0_ ;
+                listPhi_[ipatch]       = patches_[ipatch]->EMfields->envelope->Phi_ ;
+                listPhi0_[ipatch]      = patches_[ipatch]->EMfields->envelope->Phi_m ;
+                listGradPhil_[ipatch]  = patches_[ipatch]->EMfields->envelope->GradPhil_ ;
+                listGradPhir_[ipatch]  = patches_[ipatch]->EMfields->envelope->GradPhir_ ;
+                listGradPhil0_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhil_m ;
+                listGradPhir0_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhir_m ;
+                listEnv_Chi_[ipatch]   = patches_[ipatch]->EMfields->Env_Chi_ ;
+            }
+        }
+
     }
 
     B_localx.clear();

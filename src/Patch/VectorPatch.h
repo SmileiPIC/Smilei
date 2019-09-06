@@ -274,9 +274,13 @@ public :
     std::vector<Field *> listGradPhix_;
     std::vector<Field *> listGradPhiy_;
     std::vector<Field *> listGradPhiz_;
+    std::vector<Field *> listGradPhil_;
+    std::vector<Field *> listGradPhir_;
     std::vector<Field *> listGradPhix0_;
     std::vector<Field *> listGradPhiy0_;
     std::vector<Field *> listGradPhiz0_;
+    std::vector<Field *> listGradPhil0_;
+    std::vector<Field *> listGradPhir0_;
     std::vector<Field *> listEnv_Chi_;
     std::vector<Field *> listEnv_Chis_;
     
