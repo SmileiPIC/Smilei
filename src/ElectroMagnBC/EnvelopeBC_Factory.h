@@ -3,6 +3,8 @@
 #define ENVELOPEBC_FACTORY_H
 
 #include "EnvelopeBC.h"
+#include "EnvelopeBCAM_Axis.h"
+#include "EnvelopeBCAM_refl.h"
 #include "EnvelopeBC3D_refl.h"
 #include "EnvelopeBC2D_refl.h"
 #include "EnvelopeBC1D_refl.h"
@@ -102,7 +104,32 @@ public:
                 }
             }
             
-        }//3Dcartesian
+        }  else if( params.geometry == "AMcylindrical" ) {
+
+            for( unsigned int ii=0; ii<2; ii++ ) {
+            
+                // X DIRECTION
+                if( params.EM_BCs[0][ii] == "reflective" ) {
+                    EnvBoundCond[ii] = new EnvelopeBCAM_refl( params, patch, ii );
+                    
+                } else {
+                    ERROR( "Unknown Envelope x-boundary condition `" << params.EM_BCs[0][ii] << "`" );
+                }
+            }
+            
+            // R DIRECTION
+            EnvBoundCond[2] = new EnvelopeBCAM_Axis( params, patch, 2 );
+            
+          
+            if( params.EM_BCs[1][1] == "reflective" ) {
+                EnvBoundCond[3] = new EnvelopeBCAM_refl( params, patch, 3 );
+              
+            } else  {
+                ERROR( "Unknown Envelope r-boundary condition `" << params.EM_BCs[1][1] << "`" );
+            }
+          
+
+        }
         
         
         // OTHER GEOMETRIES ARE NOT DEFINED ---
