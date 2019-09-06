@@ -117,7 +117,7 @@ void CollisionsSingle::collide( Params &params, Patch *patch, int itime, vector<
         }
         
         // Pre-calculate some numbers before the big loop
-        double inv_cell_volume = 1./patch->getCellVolume( p1, i1 );
+        double inv_cell_volume = 1./patch->getPrimalCellVolume( p1, i1, params );
         n1  *= inv_cell_volume;
         n2  *= inv_cell_volume;
         n12 *= inv_cell_volume;
