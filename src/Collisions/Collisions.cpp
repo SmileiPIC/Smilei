@@ -102,9 +102,10 @@ void Collisions::calculate_debye_length( Params &params, Patch *patch )
     for( unsigned int ibin = 0 ; ibin < nbin ; ibin++ ) {
         density_max = 0.;
         double inv_cell_volume = 1. /
-                                 patch->getCellVolume(
+                                 patch->getPrimalCellVolume(
                                      patch->vecSpecies[0]->particles,
-                                     patch->vecSpecies[0]->first_index[ibin]
+                                     patch->vecSpecies[0]->first_index[ibin],
+                                     params
                                  );
                                  
         for( unsigned int ispec=0 ; ispec<nspec ; ispec++ ) { // loop all species
@@ -301,7 +302,7 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
         }
         
         // Pre-calculate some numbers before the big loop
-        double inv_cell_volume = 1./patch->getCellVolume( p1, i1 );
+        double inv_cell_volume = 1./patch->getPrimalCellVolume( p1, i1, params );
         n1  *= inv_cell_volume;
         n2  *= inv_cell_volume;
         n12 *= inv_cell_volume;
