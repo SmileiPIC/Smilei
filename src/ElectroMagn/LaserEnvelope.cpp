@@ -47,7 +47,8 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
     
     std::complex<double>     i1 = std::complex<double>( 0., 1 ); // imaginary unit
     double k0 = 1.; // laser wavenumber
-    i1_2k0_over_2dx = i1*2.*k0/2./cell_length[0];;
+    i1_2k0_over_2dx = i1*2.*k0/2./cell_length[0];
+    i1_2k0_over_2dl = i1_2k0_over_2dx;
     one_plus_ik0dt  = 1.+i1*k0*timestep;
     one_plus_ik0dt_ov_one_plus_k0sq_dtsq = ( 1.+i1*k0*timestep )/( 1.+k0*k0*timestep*timestep );
     
@@ -123,17 +124,26 @@ LaserEnvelope::~LaserEnvelope()
     }
     if( GradPhiy_m ) {
         delete GradPhiy_m;
-    }
-    
+    }  
     if( GradPhiz_ ) {
         delete GradPhiz_;
     }
     if( GradPhiz_m ) {
         delete GradPhiz_m;
     }
+    if( GradPhil_ ) {
+        delete GradPhil_;
+    }
+    if( GradPhil_m ) {
+        delete GradPhil_m;
+    }
+    if( GradPhir_ ) {
+        delete GradPhir_;
+    }
     if( GradPhir_m ) {
         delete GradPhir_m;
     }
+    
     
     int nBC = EnvBoundCond.size();
     for( int i=0 ; i<nBC ; i++ )

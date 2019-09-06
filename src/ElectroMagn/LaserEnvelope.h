@@ -40,6 +40,7 @@ public:
     Field *GradPhix_;  // x component of the gradient of Phi at timestep n
     Field *GradPhiy_;  // y component of the gradient of Phi at timestep n
     Field *GradPhiz_;  // z component of the gradient of Phi at timestep n
+    Field *GradPhil_;  // l component of the gradient of Phi at timestep n
     Field *GradPhir_;  // r component of the gradient of Phi at timestep n
     
     // Correspondent time-centered quantities
@@ -47,13 +48,14 @@ public:
     Field *GradPhix_m;
     Field *GradPhiy_m;
     Field *GradPhiz_m;
+    Field *GradPhil_m;
     Field *GradPhir_m;
     
     //! Vector of boundary-condition per side for the envelope field
     std::vector<EnvelopeBC *> EnvBoundCond;
     //EnvBoundCond = EnvelopeBC_Factory::create(params, patch);
     
-    std::complex<double> i1_2k0_over_2dx, one_plus_ik0dt, one_plus_ik0dt_ov_one_plus_k0sq_dtsq;
+    std::complex<double> i1_2k0_over_2dx, one_plus_ik0dt, one_plus_ik0dt_ov_one_plus_k0sq_dtsq,i1_2k0_over_2dl;
 };
 
 // Class for envelope

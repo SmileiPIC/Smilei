@@ -4,6 +4,7 @@
 
 #include "InterpolatorAM.h"
 #include "cField2D.h"
+#include "Field2D.h"
 
 
 //  --------------------------------------------------------------------------------------------------------------------
@@ -88,6 +89,25 @@ public:
         }
         return interp_res;
     };
+
+    inline double compute( double *coeffx, double *coeffy, Field2D *f, int idx, int idy )
+    {
+        double interp_res( 0. );
+        for( int iloc=-1 ; iloc<2 ; iloc++ ) {
+            for( int jloc=-1 ; jloc<2 ; jloc++ ) {
+                interp_res += *( coeffx+iloc ) * *( coeffy+jloc ) * ( ( *f )( idx+iloc, idy+jloc ) ) ;
+                
+                //std::cout<<"f "<<std::fixed << std::setprecision(3)<<(*f)(idx+iloc,idy+jloc)<<std::endl;
+            }
+        }
+        //std::cout<<"interp res "<< interp_res <<std::endl;
+        return interp_res;
+    };
+
+
+
+
+
 private:
     inline void coeffs( double xpn, double rpn )
     {
