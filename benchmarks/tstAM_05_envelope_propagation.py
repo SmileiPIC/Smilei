@@ -62,11 +62,9 @@ Checkpoints(
     exit_after_dump = False,
 )
 
-list_fields = ['Ex','Ey','Rho','Jx','Env_A_abs','Env_E_abs']
 
 DiagFields(
     every = 100,
-        fields = list_fields
 )
 
 DiagProbe(
@@ -79,7 +77,7 @@ DiagProbe(
         fields = ['Ex','Ey','Rho','Jx','Env_A_abs','Env_Chi','Env_E_abs']
 )
 
-DiagScalar(every = 10, vars=['Env_A_absMax','Env_E_absMax'])
+#DiagScalar(every = 10, vars=['Env_A_absMax','Env_E_absMax'])
 
 
                                                                                                                                                                  
