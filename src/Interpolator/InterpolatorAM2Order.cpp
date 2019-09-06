@@ -338,7 +338,7 @@ void InterpolatorAM2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
 
     }
     
-} // END Interpolator3D2Order
+} // END InterpolatorAM2Order
 
 
 void InterpolatorAM2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
@@ -371,22 +371,22 @@ void InterpolatorAM2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particle
         // only mode 0 is used
     
         // -------------------------
-        // Interpolation of Phi_m^(p,p,p)
+        // Interpolation of Phi_m^(p,p)
         // -------------------------
         ( *PHI_mpart )[ipart] = compute( &coeffxp_[1], &coeffyp_[1], Phi_m2Dcyl, ip_, jp_ );
     
         // -------------------------
-        // Interpolation of GradPhi_m^(p,p,p), l component
+        // Interpolation of GradPhi_m^(p,p), l component
         // -------------------------
         ( *GradPHI_mpart )[ipart+0*nparts] = compute( &coeffxp_[1], &coeffyp_[1], GradPhil_m2Dcyl, ip_, jp_ );
     
         // -------------------------
-        // Interpolation of GradPhi_m^(p,p,p), r component
+        // Interpolation of GradPhi_m^(p,p), r component
         // -------------------------
         ( *GradPHI_mpart )[ipart+1*nparts] = compute( &coeffxp_[1], &coeffyp_[1], GradPhir_m2Dcyl, ip_, jp_ );
     
         // -------------------------
-        // Interpolation of GradPhi_m^(p,p,p), theta component
+        // Interpolation of GradPhi_m^(p,p), theta component
         // -------------------------
         ( *GradPHI_mpart )[ipart+2*nparts] = 0.; // zero with cylindrical symmetry
 
@@ -413,70 +413,60 @@ void InterpolatorAM2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particle
     
     }
     
-} // END Interpolator3D2Order
+} // END InterpolatorAM2Order
 
 
 void InterpolatorAM2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Particles &particles, int ipart, double *Env_A_abs_Loc, double *Env_Chi_Loc, double *Env_E_abs_Loc )
 {
-    // // Static cast of the electromagnetic fields
-    // Field3D *Env_A_abs_3D = static_cast<Field3D *>( EMfields->Env_A_abs_ );
-    // Field3D *Env_Chi_3D = static_cast<Field3D *>( EMfields->Env_Chi_ );
-    // Field3D *Env_E_abs_3D = static_cast<Field3D *>( EMfields->Env_E_abs_ );
-    // 
-    // // Normalized particle position
-    // double xpn = particles.position( 0, ipart )*dx_inv_;
-    // double ypn = particles.position( 1, ipart )*dy_inv_;
-    // double zpn = particles.position( 2, ipart )*dz_inv_;
-    // 
-    // 
-    // // Indexes of the central nodes
-    // ip_ = round( xpn );
-    // jp_ = round( ypn );
-    // kp_ = round( zpn );
-    // 
-    // 
-    // // Declaration and calculation of the coefficient for interpolation
-    // double delta2;
-    // 
-    // 
-    // deltax   = xpn - ( double )ip_;
-    // delta2  = deltax*deltax;
-    // coeffxp_[0] = 0.5 * ( delta2-deltax+0.25 );
-    // coeffxp_[1] = 0.75 - delta2;
-    // coeffxp_[2] = 0.5 * ( delta2+deltax+0.25 );
-    // 
-    // deltay   = ypn - ( double )jp_;
-    // delta2  = deltay*deltay;
-    // coeffyp_[0] = 0.5 * ( delta2-deltay+0.25 );
-    // coeffyp_[1] = 0.75 - delta2;
-    // coeffyp_[2] = 0.5 * ( delta2+deltay+0.25 );
-    // 
-    // deltaz   = zpn - ( double )kp_;
-    // delta2  = deltaz*deltaz;
-    // coeffzp_[0] = 0.5 * ( delta2-deltaz+0.25 );
-    // coeffzp_[1] = 0.75 - delta2;
-    // coeffzp_[2] = 0.5 * ( delta2+deltaz+0.25 );
-    // 
-    // 
-    // //!\todo CHECK if this is correct for both primal & dual grids !!!
-    // // First index for summation
-    // ip_ = ip_ - i_domain_begin;
-    // jp_ = jp_ - j_domain_begin;
-    // kp_ = kp_ - k_domain_begin;
-    // 
-    // // -------------------------
-    // // Interpolation of Env_A_abs_^(p,p,p)
-    // // -------------------------
-    // *( Env_A_abs_Loc ) = compute( &coeffxp_[1], &coeffyp_[1], &coeffzp_[1], Env_A_abs_3D, ip_, jp_, kp_ );
-    // 
-    // // -------------------------
-    // // Interpolation of Env_Chi_^(p,p,p)
-    // // -------------------------
-    // *( Env_Chi_Loc ) = compute( &coeffxp_[1], &coeffyp_[1], &coeffzp_[1], Env_Chi_3D, ip_, jp_, kp_ );
-    // 
-    // // -------------------------
-    // // Interpolation of Env_E_abs_^(p,p,p)
-    // // -------------------------
-    // *( Env_E_abs_Loc ) = compute( &coeffxp_[1], &coeffyp_[1], &coeffzp_[1], Env_E_abs_3D, ip_, jp_, kp_ );
+    // Static cast of the electromagnetic fields
+    Field2D *Env_A_abs_2Dcyl = static_cast<Field2D *>( EMfields->Env_A_abs_ );
+    Field2D *Env_Chi_2Dcyl   = static_cast<Field2D *>( EMfields->Env_Chi_ );
+    Field2D *Env_E_abs_2Dcyl = static_cast<Field2D *>( EMfields->Env_E_abs_ );
     
-} // END Interpolator3D2Order
+    // Normalized particle position
+    double xpn = particles.position( 0, ipart ) * dl_inv_;
+    double r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
+    double rpn = r * dr_inv_;
+
+    // Compute coefficients
+    coeffs( xpn, rpn );
+    
+    // Declaration and calculation of the coefficient for interpolation
+    double delta2;
+    
+    
+    deltax   = xpn - ( double )ip_;
+    delta2  = deltax*deltax;
+    coeffxp_[0] = 0.5 * ( delta2-deltax+0.25 );
+    coeffxp_[1] = 0.75 - delta2;
+    coeffxp_[2] = 0.5 * ( delta2+deltax+0.25 );
+    
+    deltar   = rpn - ( double )jp_;
+    delta2  = deltar*deltar;
+    coeffyp_[0] = 0.5 * ( delta2-deltar+0.25 );
+    coeffyp_[1] = 0.75 - delta2;
+    coeffyp_[2] = 0.5 * ( delta2+deltar+0.25 );
+    
+    
+    //!\todo CHECK if this is correct for both primal & dual grids !!!
+    // First index for summation
+    ip_ = ip_ - i_domain_begin ;
+    jp_ = jp_ - j_domain_begin ;
+    
+    
+    // -------------------------
+    // Interpolation of Env_A_abs_^(p,p)
+    // -------------------------
+    *( Env_A_abs_Loc ) = compute( &coeffxp_[1], &coeffyp_[1], Env_A_abs_2Dcyl, ip_, jp_);
+    
+    // -------------------------
+    // Interpolation of Env_Chi_^(p,p)
+    // -------------------------
+    *( Env_Chi_Loc ) = compute( &coeffxp_[1], &coeffyp_[1], Env_Chi_2Dcyl, ip_, jp_);
+    
+    // -------------------------
+    // Interpolation of Env_E_abs_^(p,p)
+    // -------------------------
+    *( Env_E_abs_Loc ) = compute( &coeffxp_[1], &coeffyp_[1], Env_E_abs_2Dcyl, ip_, jp_);
+    
+} // END InterpolatorAM2Order
