@@ -1,11 +1,11 @@
 ############################# Laser envelope propagation in vacuum
 dx = 1. 
-dtrans = 3. 
+dr = 3. 
 dt = 0.8*dx
 nx = 128
-ntrans = 64
+nr = 64
 Lx = nx * dx
-Ltrans = ntrans*dtrans
+Lr = nr*dr
 npatch_x=16
 laser_fwhm = 20. 
 center_laser = 2*laser_fwhm # here is the same as waist position of laser but in principle they can differ
@@ -20,13 +20,18 @@ Main(
     timestep = dt,
     simulation_time = 300.*dt,
 
-    cell_length  = [dx, dtrans, dtrans],
-    grid_length = [ Lx,  Ltrans, Ltrans],
+    cell_length  = [dx, dr],
+    grid_length = [ Lx,  Lr],
 
-    number_of_patches = [npatch_x,8,8],
+    number_of_AM = 1,
+
+    number_of_patches = [npatch_x,8],
     clrw = nx/npatch_x,
 
-    EM_boundary_conditions = [ ["silver-muller"] ],
+    EM_boundary_conditions = [
+        ["silver-muller","silver-muller"],
+        ["buneman","buneman"],
+    ],
 
     solve_poisson = False,
     print_every = 100,
@@ -46,7 +51,7 @@ LoadBalancing(
     frozen_particle_load = 0.1
 )
 
-LaserEnvelopeGaussian3D(
+LaserEnvelopeGaussianAM(
     a0              = 1.,
     focus           = [center_laser, Main.grid_length[1]/2.],
     waist           = 30.,
@@ -76,6 +81,16 @@ DiagProbe(
         number = [nx],
         fields = ['Ex','Ey','Rho','Jx','Env_A_abs','Env_Chi','Env_E_abs']
 )
+
+
+DiagProbe(
+    every = 200,
+    origin   = [0., -nr*dr,0.],
+    corners  = [ [nx*dx,-nr*dr,0.], [0,nr*dr,0.] ],
+    number   = [nx, 2*nr],
+    fields = ['Ex','Ey','Rho','Jx','Env_A_abs','Env_Chi','Env_E_abs']
+)
+
 
 #DiagScalar(every = 10, vars=['Env_A_absMax','Env_E_absMax'])
 
