@@ -691,7 +691,7 @@ def LaserEnvelopeGaussianAM( a0=1., omega=1., focus=None, waist=3., time_envelop
         phase = coeff * ( r**2 )
         exponential_with_total_phase = exp(1j*(phase-arctan( (x-focus[0])/Zr )))
         invWaist2 = (w/waist)**2
-        spatial_amplitude = a0*omega * w * exp( -invWaist2*(  r**2  )
+        spatial_amplitude = a0*omega * w * exp( -invWaist2*(  r**2  ) )
         space_time_envelope = spatial_amplitude * vectorize(time_envelope)(t)
         return space_time_envelope * exponential_with_total_phase
 
