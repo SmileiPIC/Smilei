@@ -12,6 +12,7 @@ diag_every = int(simulation_time / timestep)
 species_list = ["eon1", "pon1", "eon2", "pon2"]
 
 Scalar = {}
+
 relative_error = 0.05
 
 for species in species_list:
@@ -39,8 +40,9 @@ for i in range(4):
     particle_binning = S.ParticleBinning(diagNumber=i,timesteps=diag_every)
     data_final = np.array(particle_binning.getData()[0])
     
-    for index,value in enumerate(data_final):
-        Validate("Gamma spectrum for {} at {}".format(species_list[i],index) , value, value*relative_error)
+    sum_energy = np.sum(data_final)
+
+    Validate("Gamma spectrum for {} at {}".format(species_list[i],index) , sum_energy, relative_error)
     
     sum_initial = np.sum(data_initial)
     sum_final = np.sum(data_final)

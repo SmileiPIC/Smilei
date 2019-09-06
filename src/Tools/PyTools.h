@@ -449,18 +449,18 @@ public:
     }
     
     // extract 3 profiles from namelist (used for part mean velocity and temperature)
-    static bool extract3Profiles( std::string varname, int ispec, PyObject *&profx, PyObject *&profy, PyObject *&profz )
+    static bool extract3Profiles( std::string varname, std::string component, int element_index, PyObject *&profx, PyObject *&profy, PyObject *&profz )
     {
-        std::vector<PyObject *> pvec = PyTools::extract_pyVec( varname, "Species", ispec );
+        std::vector<PyObject *> pvec = PyTools::extract_pyVec( varname, component, element_index );
         if( pvec.size()==1 ) {
             if( !PyCallable_Check( pvec[0] ) ) {
-                ERROR( "For species #" << ispec << ", "<<varname<<" not understood" );
+                ERROR( "For " << component << " #" << element_index << ", "<<varname<<" not understood" );
             }
             profx =  profy =  profz = pvec[0];
             return true;
         } else if( pvec.size()==3 ) {
             if( !PyCallable_Check( pvec[0] ) || !PyCallable_Check( pvec[1] ) || !PyCallable_Check( pvec[2] ) ) {
-                ERROR( "For species #" << ispec << ", "<<varname<<" not understood" );
+                ERROR( "For " << component << " #" << element_index << ", "<<varname<<" not understood" );
             }
             profx = pvec[0];
             profy = pvec[1];
@@ -469,7 +469,7 @@ public:
         } else if( pvec.size()==0 ) {
             return false;
         } else {
-            ERROR( "For species #" << ispec << ", "<<varname<<" needs 1 or 3 components." );
+            ERROR( "For " << component << " #" << element_index << ", "<<varname<<" needs 1 or 3 components." );
             return false;
         }
     }

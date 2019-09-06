@@ -39,8 +39,10 @@ for i in range(4):
     
     particle_binning = S.ParticleBinning(diagNumber=i,timesteps=diag_every)
     data_final = np.array(particle_binning.getData()[0])
-    for index,value in enumerate(data_final):
-        Validate("Gamma spectrum for {} at {}".format(species_list[i],index) , value, value*relative_error)
+    
+    sum_energy = np.sum(data_final)
+
+    Validate("Gamma spectrum for {} at {}".format(species_list[i],index) , sum_energy, relative_error)
     
     sum_initial = np.sum(data_initial)
     sum_final = np.sum(data_final)
@@ -49,4 +51,4 @@ for i in range(4):
     
     print(' Gamma spectrum max error for {}: {}'.format(species_list[i], np.max(error)))
     
-    Validate("Gamma spectrum max error for {}".format(species_list[i]) , np.max(error),relative_error)
+    Validate("Gamma spectrum max error for {}".format(species_list[i]) , np.max(error), relative_error)

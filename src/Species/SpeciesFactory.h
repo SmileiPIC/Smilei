@@ -842,21 +842,21 @@ public:
 
         if( thisSpecies->momentum_initialization_array == NULL ) {
             // Mean velocity
-            if( PyTools::extract3Profiles( "mean_velocity", ispec, profile1, profile2, profile3 ) ) {
+            if( PyTools::extract3Profiles( "mean_velocity", "Species", ispec, profile1, profile2, profile3 ) ) {
                 thisSpecies->velocity_profile_[0] = new Profile( profile1, params.nDim_field, Tools::merge( "mean_velocity[0] ", species_name ), true );
                 thisSpecies->velocity_profile_[1] = new Profile( profile2, params.nDim_field, Tools::merge( "mean_velocity[1] ", species_name ), true );
                 thisSpecies->velocity_profile_[2] = new Profile( profile3, params.nDim_field, Tools::merge( "mean_velocity[2] ", species_name ), true );
             }
 
             // Temperature
-            if( PyTools::extract3Profiles( "temperature", ispec, profile1, profile2, profile3 ) ) {
+            if( PyTools::extract3Profiles( "temperature", "Species", ispec, profile1, profile2, profile3 ) ) {
                 thisSpecies->temperature_profile_[0] = new Profile( profile1, params.nDim_field, Tools::merge( "temperature[0] ", species_name ), true );
                 thisSpecies->temperature_profile_[1] = new Profile( profile2, params.nDim_field, Tools::merge( "temperature[1] ", species_name ), true );
                 thisSpecies->temperature_profile_[2] = new Profile( profile3, params.nDim_field, Tools::merge( "temperature[2] ", species_name ), true );
             }
         } else {
-            ok1 = PyTools::extract3Profiles( "mean_velocity", ispec, profile1, profile2, profile3 ) ;
-            ok2 = PyTools::extract3Profiles( "temperature", ispec, profile1, profile2, profile3 ) ;
+            ok1 = PyTools::extract3Profiles( "mean_velocity", "Species", ispec, profile1, profile2, profile3 ) ;
+            ok2 = PyTools::extract3Profiles( "temperature", "Species", ispec, profile1, profile2, profile3 ) ;
             if( ok1 ) {
                 ERROR( "For species '" << species_name << "', cannot define both `mean_velocity` and `momentum_initialization` array." );
             }
