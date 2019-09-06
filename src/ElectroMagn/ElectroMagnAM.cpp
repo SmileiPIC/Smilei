@@ -297,6 +297,11 @@ void ElectroMagnAM::finishInitialization( int nspecies, Patch *patch )
         allFields.push_back( Jr_[imode] );
         allFields.push_back( Jt_[imode] );
         allFields.push_back( rho_AM_[imode] );
+        if( (imode ==0) && (Env_A_abs_ != NULL) ) {
+            allFields.push_back( Env_A_abs_ );
+            allFields.push_back( Env_Chi_ );
+            allFields.push_back( Env_E_abs_ );
+        }
     }
     
     for( int ispec=0; ispec<nspecies*( int )nmodes; ispec++ ) {
@@ -304,7 +309,11 @@ void ElectroMagnAM::finishInitialization( int nspecies, Patch *patch )
         allFields.push_back( Jr_s[ispec] );
         allFields.push_back( Jt_s[ispec] );
         allFields.push_back( rho_AM_s[ispec] );
+        if ((ispec<nspecies) && (Env_A_abs_ != NULL) ){ // only mode 0
+            allFields.push_back( Env_Chi_s[ispec] );
+        }
     }
+
     
 }
 
