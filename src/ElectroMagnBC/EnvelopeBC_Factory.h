@@ -109,11 +109,11 @@ public:
             for( unsigned int ii=0; ii<2; ii++ ) {
             
                 // X DIRECTION
-                if( params.EM_BCs[0][ii] == "reflective" ) {
+                if( params.Env_BCs[0][ii] == "reflective" ) {
                     EnvBoundCond[ii] = new EnvelopeBCAM_refl( params, patch, ii );
                     
                 } else {
-                    ERROR( "Unknown Envelope x-boundary condition `" << params.EM_BCs[0][ii] << "`" );
+                    ERROR( "Unknown Envelope x-boundary condition `" << params.Env_BCs[0][ii] << "`" );
                 }
             }
             
@@ -121,11 +121,11 @@ public:
             EnvBoundCond[2] = new EnvelopeBCAM_Axis( params, patch, 2 );
             
           
-            if( params.EM_BCs[1][1] == "reflective" ) {
+            if( params.Env_BCs[1][1] == "reflective" ) {
                 EnvBoundCond[3] = new EnvelopeBCAM_refl( params, patch, 3 );
               
             } else  {
-                ERROR( "Unknown Envelope r-boundary condition `" << params.EM_BCs[1][1] << "`" );
+                ERROR( "Unknown Envelope r-boundary condition `" << params.Env_BCs[1][1] << "`" );
             }
           
 
