@@ -322,7 +322,158 @@ void Domain::identify_missing_patches(SmileiMPI* smpi, VectorPatch& vecPatches, 
     //for (int i = 0 ; i < local_patches_.size() ; i++)
     //    cout << local_patches_[i] << " " ;
     //cout << endl;
-     
+
+
+    // Reorder domain to minimize costs
+    int max  = -1;
+    int ref  = -1;
+    int ref2 = -1;
+
+    if (local_patches_.size()>0) {
+        max = local_patches_.size();
+        ref = smpi->getRank();
+    }
+        
+    for (int irk=0;irk<smpi->getSize();irk++) {
+        int count = std::count( missing_patches_ranks.begin(), missing_patches_ranks.end(), irk );
+        if (count==0) continue;
+        if (count>max ) {
+            ref2 = ref;
+            ref  = irk;
+            max = count;
+        }
+        else if (count==max) {
+            if ( irk%2 == smpi->getRank()%2 ) {
+                ref2 = ref;
+                ref = irk;
+            }
+            else {
+                ref2 = irk;
+            }
+                
+        }
+    }
+    //cout << "Target : " << ref << " or " << ref2 << "\n";
+
+    int local_map[2];
+    local_map[0] = ref;
+    local_map[1] = ref2;
+
+    int global_map[2*smpi->getSize()];
+
+    MPI_Gather(local_map, 2, MPI_INT,
+               global_map, 2, MPI_INT, 0,
+               MPI_COMM_WORLD);
+
+    int target_map[smpi->getSize()];
+    for (int i=0 ; i< smpi->getSize() ;i++)
+        target_map[i] = -1;    
+
+    if( smpi->getRank()==0) {
+        for (int i=0 ; i< smpi->getSize() ;i++)
+            cout << global_map[2*i] <<" " ;
+        cout << endl;
+        for (int i=0 ; i< smpi->getSize() ;i++)
+            cout << global_map[2*i+1] <<" " ;
+        cout << endl;
+
+
+
+        //local
+        for (int i=0 ; i< smpi->getSize() ;i++) {
+            if (global_map[2*i] == i) {
+                target_map[i] = global_map[2*i];
+                for (int j=0 ; j< smpi->getSize() ;j++) {
+                    if (j==i)continue;
+                    if ( global_map[2*j] == target_map[i] )
+                        target_map[j] = global_map[2*j+1];
+                    else if ( global_map[2*j+1] == target_map[i] )
+                        target_map[j] = global_map[2*j];                
+                }
+            }
+            else if  (global_map[2*i+1] == i) {
+                target_map[i] = global_map[2*i];
+                for (int j=0 ; j< smpi->getSize() ;j++) {
+                    if (j==i)continue;
+                    if ( global_map[2*j] == target_map[i] )
+                        target_map[j] = global_map[2*j+1];
+                    else if ( global_map[2*j+1] == target_map[i] )
+                        target_map[j] = global_map[2*j];                
+                }
+            }
+        }
+
+        // single
+        for (int i=0 ; i< smpi->getSize() ;i++) {
+            if (global_map[2*i] == -1) {
+                target_map[i] = global_map[2*i+1];
+                for (int j=0 ; j< smpi->getSize() ;j++) {
+                    if (j==i)continue;
+                    if ( global_map[2*j] == target_map[i] )
+                        target_map[j] = global_map[2*j+1];
+                    else if ( global_map[2*j+1] == target_map[i] )
+                        target_map[j] = global_map[2*j];                
+                }
+            }
+            else if  (global_map[2*i+1] == -1) {
+                target_map[i] = global_map[2*i];
+                for (int j=0 ; j< smpi->getSize() ;j++) {
+                    if (j==i)continue;
+                    if ( global_map[2*j] == target_map[i] )
+                        target_map[j] = global_map[2*j+1];
+                    else if ( global_map[2*j+1] == target_map[i] )
+                        target_map[j] = global_map[2*j];                
+                }
+            }
+        }
+
+        // pair
+        for (int i=0 ; i< smpi->getSize() ;i++) {
+            if (target_map[i]!=-1) continue;
+            for (int j=0 ; j< smpi->getSize() ;j++) {
+                if ((global_map[2*i] == global_map[2*j]) || (global_map[2*i] == global_map[2*j+1])
+                    || (global_map[2*i+1] == global_map[2*j]) || (global_map[2*i+1] == global_map[2*j+1] ) ) {
+                    target_map[i] = global_map[2*i];
+                    target_map[j] = global_map[2*i+1];
+                }
+            }
+        }
+
+        for (int i=0 ; i< smpi->getSize() ;i++)
+            cout << target_map[i] <<" " ;
+        cout << endl;
+
+        std::vector< std::vector< std::vector<int> > > new_map_rank;
+        new_map_rank.resize( params.number_of_domain[0] );
+        for ( int iDim = 0 ; iDim < params.number_of_domain[0] ; iDim++ ) {
+            new_map_rank[iDim].resize( params.number_of_domain[1] );
+            for ( int jDim = 0 ; jDim < params.number_of_domain[1] ; jDim++ ) {
+                new_map_rank[iDim][jDim].resize( params.number_of_domain[2], -1 );
+            }
+        }
+
+
+        //update params.map_rank[xDom][yDom][zDom]
+        for ( int xDom = 0 ; xDom < params.number_of_domain[0] ; xDom++ )
+            for ( int yDom = 0 ; yDom < params.number_of_domain[1] ; yDom++ ) {
+                for ( int zDom = 0 ; zDom < params.number_of_domain[2] ; zDom++ ) {
+                    
+                    for (int i=0 ; i< smpi->getSize() ;i++)
+                        if ( params.map_rank[xDom][yDom][zDom] == i )
+                            new_map_rank[xDom][yDom][zDom] == target_map[i];
+
+                }
+            }
+        
+
+
+    }
+    // mapt ?
+    int targeted_rk(-1);
+    MPI_Scatter(target_map,1,MPI_INT,&targeted_rk ,1, MPI_INT,0,MPI_COMM_WORLD);
+    cout << smpi->getRank()  << "  "<< targeted_rk << endl;
+
+
 }
 
 void Domain::solveEnvelope( Params &params, SimWindow *simWindow, int itime, double time_dual, Timers &timers, SmileiMPI *smpi )
