@@ -13,7 +13,7 @@ time_start_moving_window = 0.
 
 
 Main(
-    geometry = "3Dcartesian",
+    geometry = "AMcylindrical",
 
     interpolation_order = 2,
 
@@ -48,12 +48,11 @@ LoadBalancing(
 
 LaserEnvelopeGaussian3D(
     a0              = 1.,
-    focus           = [center_laser, Main.grid_length[1]/2.,Main.grid_length[2]/2.],
+    focus           = [center_laser, Main.grid_length[1]/2.],
     waist           = 30.,
     time_envelope   = tgaussian(center=center_laser, fwhm=laser_fwhm),
     envelope_solver = 'explicit',
     Envelope_boundary_conditions = [ ["reflective", "reflective"],
-        ["reflective", "reflective"],
         ["reflective", "reflective"], ],
 )
 
@@ -72,9 +71,9 @@ DiagFields(
 
 DiagProbe(
         every = 50,
-        origin = [0., Main.grid_length[1]/2., Main.grid_length[2]/2.],
+        origin = [0., 2.*dr, 2.*dr],
         corners = [
-            [Main.grid_length[0], Main.grid_length[1]/2., Main.grid_length[2]/2.]
+            [Main.grid_length[0], 2.*dr, 2.*dr]
         ],
         number = [nx],
         fields = ['Ex','Ey','Rho','Jx','Env_A_abs','Env_Chi','Env_E_abs']
