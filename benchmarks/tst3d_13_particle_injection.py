@@ -176,7 +176,7 @@ DiagParticleBinning(
     time_average = 1,
     species = ["pon1"],
     axes = [
-        ["gamma", 22., 23., 128],
+        ["gamma", 22.2, 22.8, 128],
     ]
 )
 
@@ -196,7 +196,7 @@ DiagParticleBinning(
     time_average = 1,
     species = ["pon2"],
     axes = [
-        ["gamma", 22., 23., 128],
+        ["gamma", 22.2, 22.8, 128],
     ]
 )
 
