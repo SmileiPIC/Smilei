@@ -505,6 +505,7 @@ public:
 
             }
         }
+
 #ifdef SMILEI_USE_NUMPY
         else if( PyArray_Check( py_pos_init ) ) {
             //Initialize position from this array
@@ -539,6 +540,14 @@ public:
         }
         Py_DECREF( py_pos_init );
 
+        if   (PyTools::extract( "regular_number", thisSpecies->regular_number_array, "Species", ispec )){
+             if (thisSpecies->position_initialization != "regular") {
+                 ERROR("regular_number may not be provided if species position_initialization is not set to 'regular'.");
+             }
+             if (thisSpecies->regular_number_array.size() != thisSpecies->nDim_particle) {
+                 ERROR("Please provide as many regular numbers of particles as there are particle dimensions in the domain ("<< thisSpecies->nDim_particle <<").");
+             }
+        }
 
         PyTools::extract( "ponderomotive_dynamics", thisSpecies->ponderomotive_dynamics, "Species", ispec );
         if( thisSpecies->ponderomotive_dynamics && ( params.geometry != "1Dcartesian" ) && ( params.geometry != "2Dcartesian" ) && ( params.geometry != "3Dcartesian" ) ) {
@@ -935,14 +944,15 @@ public:
         newSpecies->pusher                                   = species->pusher;
         newSpecies->radiation_model                          = species->radiation_model;
         newSpecies->radiation_photon_species                 = species->radiation_photon_species;
-        newSpecies->radiation_photon_sampling_                = species->radiation_photon_sampling_;
-        newSpecies->radiation_photon_gamma_threshold_         = species->radiation_photon_gamma_threshold_;
+        newSpecies->radiation_photon_sampling_               = species->radiation_photon_sampling_;
+        newSpecies->radiation_photon_gamma_threshold_        = species->radiation_photon_gamma_threshold_;
         newSpecies->photon_species                           = species->photon_species;
         newSpecies->species_number_                            = species->species_number_;
         newSpecies->position_initialization_on_species_       = species->position_initialization_on_species_;
         newSpecies->position_initialization_on_species_index = species->position_initialization_on_species_index;
         newSpecies->position_initialization_                  = species->position_initialization_;
         newSpecies->position_initialization_array            = species->position_initialization_array;
+        newSpecies->regular_number_array                     = species->regular_number_array;
         newSpecies->n_numpy_particles                        = species->n_numpy_particles            ;
         newSpecies->momentum_initialization_                  = species->momentum_initialization_;
         newSpecies->momentum_initialization_array            = species->momentum_initialization_array;

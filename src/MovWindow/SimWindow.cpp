@@ -68,6 +68,10 @@ SimWindow::SimWindow( Params &params )
         MESSAGE( 1, "Moving window is active:" );
         MESSAGE( 2, "velocity_x : " << velocity_x );
         MESSAGE( 2, "time_start : " << time_start );
+        if (number_of_additional_shifts > 0){
+            MESSAGE( 2, "number_of_additional_shifts : " << number_of_additional_shifts );
+            MESSAGE( 2, "additional_shifts_time : " << additional_shifts_time );
+        }
         params.hasWindow = true;
     } else {
         params.hasWindow = false;

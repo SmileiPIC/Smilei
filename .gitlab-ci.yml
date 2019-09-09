@@ -68,7 +68,6 @@ makerunAM:
   stage: makerun
   only:
     - develop
-    - multisteps_movwin
 
   script:
     # Move in test dir
@@ -93,7 +92,6 @@ makerunCollisions:
   stage: makerun
   only:
     - develop
-    - multisteps_movwin
     
   script:
     # Move in test dir

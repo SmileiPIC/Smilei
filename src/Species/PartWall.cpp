@@ -49,13 +49,12 @@ int PartWall::apply( Particles &particles, int ipart, Species *species, double d
 // Reads the input file and creates the ParWall objects accordingly
 PartWalls::PartWalls( Params &params, Patch *patch )
 {
-    if( patch->isMaster() ) {
-        MESSAGE( 1, "" );
-        MESSAGE( 1, "Adding particle walls:" );
-    }
     
     resize( 0 );
     unsigned int numpartwall=PyTools::nComponents( "PartWall" );
+    if( patch->isMaster() && numpartwall>0 ) {
+        MESSAGE( 1, "Adding particle walls:" );
+    }
     direction.resize( numpartwall );
     position .resize( numpartwall );
     kind     .resize( numpartwall );
@@ -108,12 +107,6 @@ PartWalls::PartWalls( Params &params, Patch *patch )
         
         // Create new wall
         MESSAGE( 2, "Adding a wall at "<<dirstring<<" = "<< position[iwall] << ", kind:" << kind[iwall] << ( kind[iwall]=="thermalize" ? " thermCond" : "" ) );
-    }
-    
-    if( !direction.size() ) {
-        if( patch->isMaster() ) {
-            MESSAGE( 2, "Nothing to do" );
-        }
     }
 }
 

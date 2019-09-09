@@ -565,6 +565,7 @@ Each species has to be defined in a ``Species`` block::
       name      = "electrons1",
       position_initialization = "random",
       momentum_initialization = "maxwell-juettner",
+      regular_number = [],
       particles_per_cell = 100,
       mass = 1.,
       atomic_number = None,
@@ -606,7 +607,7 @@ Each species has to be defined in a ``Species`` block::
       # Merging
       merging_method = "vranic_spherical",
       merge_every = 5,
-      merge_min_particles_per_cell = 16,
+      merge_min_particles_per_cell = 16,:q
       merge_max_packet_size = 4,
       merge_min_packet_size = 2,
       merge_momentum_cell_size = [32,16,16],
@@ -620,7 +621,9 @@ Each species has to be defined in a ``Species`` block::
 
    The method for initialization of particle positions. Options are:
 
-   * ``"regular"`` for regularly spaced
+   * ``"regular"`` for regularly spaced. In that case the number of particles per cell per dimension can be set by using `regular_number`.
+     Otherwise, the number of particles per cell per dimension is the same in all dimensions and therefore the `particles_per_cell` must be
+     an integer to the power of the simulation dimension ( i.e. a square number in dimension 2).
    * ``"random"`` for randomly distributed
    * ``"centered"`` for centered in each cell
    * The :py:data:`name` of another species from which the positions are copied.
@@ -635,6 +638,14 @@ Each species has to be defined in a ``Species`` block::
      This initialization is incompatible with :py:data:`number_density`, :py:data:`charge_density`
      and :py:data:`particles_per_cell`. Particles initialized outside of the initial simulation domain
      will not be created. This initalization is disregarded when running a `restart`.
+
+.. py:data:: regular_number
+
+   :type: A python list of integers.
+
+   The size of the list must be the simulation particle dimension. It can be used only if `position_initialization` is set to `regular`
+   and not in `AMcylindrical` geometry. The product of the elements of the provided list must be equal to `particles_per_cell`.
+   This list sets the number of evenly spaced particles per cell per dimension at their initial positions.
 
 .. py:data:: momentum_initialization
 
@@ -2466,6 +2477,13 @@ A probe interpolates the fields at either one point (0-D),
 several points arranged in a line (1-D),
 or several points arranged in a 2-D or 3-D grid.
 
+.. note::
+
+  Probes follow the moving window.
+  To obtain the fields at fixed points in the plasma instead, create a cold,
+  chargeless species, and :ref:`track the particles <DiagTrackParticles>`.
+  
+
 To add one probe diagnostic, include the block ``DiagProbe``::
 
   DiagProbe(
@@ -2533,7 +2551,8 @@ To add one probe diagnostic, include the block ``DiagProbe``::
   In the case of an envelope model for the laser (see :doc:`laser_envelope`),
   the following fields are also available: ``"Env_A_abs"``, ``"Env_Chi"``, ``"Env_E_abs"``.
 
-  Note that when running a simulation in cylindrical geometry, contrary to the Field diagnostic, Probes are defined as in a
+  Note that when running a simulation in cylindrical geometry,
+  contrary to the Field diagnostic, Probes are defined as in a
   3D Cartesian geometry and return Cartesian fields.
 
 
@@ -3064,79 +3083,96 @@ A few things are important to know when you need dumps and restarts.
 
 * Do not restart the simulation in the same directory as the previous one. Files will be
   overwritten, and errors may occur. Create a new directory for your restarted simulation.
-* Manage your memory: each MPI process dumps one file, and the total can be significant.
-* The file written by a particular MPI process has the format
-  ``dump-XXXXX-YYYYYYYYYY.h5`` where ``XXXXX`` is the *dump number* that can be chosen
-  using :py:data:`restart_number` and ``YYYYYYYYYY`` is the MPI process number.
+* Manage your disk space: each MPI process dumps one file, and the total can be significant.
+* The restarted runs must have the same namelist as the initial simulation, except the
+  :ref:`Checkpoints` block, which can be modified.
 
 ::
 
   Checkpoints(
-      restart_dir = "dump1",
+      # restart_dir = "dump1",
       dump_step = 10000,
       dump_minutes = 240.,
-      dump_deflate = 0,
       exit_after_dump = True,
       keep_n_dumps = 2,
   )
 
-.. py:data:: restart_dir
-
-  :default: None
-
-  The directory of a previous simulation from which :program:`Smilei` should restart.
-  If not defined, it does not restart from a previous simulation.
-
-  **WARNING:** this path must either absolute or be relative to the current directory.
-
-.. py:data:: restart_number
-
-  :default: None
-
-  The number of the dump (from the previous run in :py:data:`restart_dir`)
-  that should be used for the restart.
-  Note that the dump number is reset to 0 for each new run. In a given run, the first dump has
-  number 0, the second dump number 1, etc.
-
-.. py:data:: dump_step
-
-  :default: 0
-
-  The number of timesteps between each dump of the full simulation.
-  If ``0``, no dump is done.
-
-.. py:data:: dump_minutes
-
-  :default: 0.
-
-  The number of minutes between each dump of the full simulation (combines with
-  :py:data:`dump_step`).
-  If ``0.``, no dump is done.
-
-.. py:data:: dump_deflate
-
-  :red:`to do`
-
-.. py:data:: exit_after_dump
-
-  :default: ``True``
-
-  If ``True``, the code stops after the first dump.
-
-.. py:data:: keep_n_dumps
-
-  :default: 2
-
-  This tells :program:`Smilei` to keep the last ``n`` dumps for a later restart.
-  The default value, 2, saves one extra dump in case of a crash during the file dump.
-
-.. py:data:: file_grouping
-
-  :default: None
-
-  The maximum number of checkpoint files that can be stored in one directory.
-  Subdirectories are created to accomodate for all files.
-  This is useful on filesystem with a limited number of files per directory.
+**Parameters to save the state of the current simulation**
+  
+  .. py:data:: dump_step
+  
+    :default: ``0``
+  
+    The number of timesteps between each dump.
+    If ``0``, no dump is done.
+  
+  .. py:data:: dump_minutes
+  
+    :default: ``0.``
+  
+    The number of minutes between each dump.
+    If ``0.``, no dump is done.
+    
+    May be used in combination with :py:data:`dump_step`.
+  
+  .. py:data:: exit_after_dump
+  
+    :default: ``True``
+  
+    If ``True``, the code stops after the first dump. If ``False``, the simulation continues.
+  
+  .. py:data:: keep_n_dumps
+  
+    :default: ``2``
+  
+    This tells :program:`Smilei` to keep, in the current run,  only the last ``n`` dumps.
+    Older dumps will be overwritten.
+    
+    The default value, ``2``, saves one extra dump in case of a crash during the next dump.
+  
+  .. py:data:: file_grouping
+  
+    :default: ``None``
+  
+    The maximum number of checkpoint files that can be stored in one directory.
+    Subdirectories are created to accomodate for all files.
+    This is useful on filesystem with a limited number of files per directory.
+  
+  .. py:data:: dump_deflate
+  
+    :red:`to do`
+  
+**Parameters to restart from a previous simulation**
+  
+  .. py:data:: restart_dir
+  
+    :default: ``None``
+  
+    The directory of a previous run from which :program:`Smilei` should restart.
+    For the first run, do not specify this parameter.
+  
+    **This path must either absolute or be relative to the current directory.**
+    
+    .. Note::
+    
+      In many situations, the restarted runs will have the exact same namelist as the initial
+      simulation, except this ``restart_dir`` parameter, which points to the previous simulation
+      folder.
+      You can use the same namelist file, and simply add an extra argument when you launch the
+      restart:
+      
+      ``mpirun ... ./smilei mynamelist.py "Checkpoints.restart_dir='/path/to/previous/run'"``
+  
+  .. py:data:: restart_number
+  
+    :default: ``None``
+  
+    The number of the dump (in the previous run) that should be used for the restart.
+    For the first run, do not specify this parameter.
+    
+    In a previous run, the simulation state may have been dumped several times.
+    These dumps are numbered 0, 1, 2, etc. until the number :py:data:`keep_n_dumps`.
+  
 
 ----
 

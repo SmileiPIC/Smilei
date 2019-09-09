@@ -223,20 +223,21 @@ void DiagnosticParticleBinning::run( Patch *patch, int timestep, SimWindow *simW
     unsigned int npart, ndim = spatial_min.size();
     
     // Update spatial_min and spatial_max if needed
-    for( unsigned int i=0; i<histogram->axes.size(); i++ ) {
-        if( histogram->axes[i]->type == "moving_x" ) {
-            spatial_min[0] = histogram->axes[i]->min + simWindow->getXmoved();
-            spatial_max[0] = histogram->axes[i]->max + simWindow->getXmoved();
+    if( simWindow ) {
+        bool did_move = false;
+        for( unsigned int i=0; i<histogram->axes.size(); i++ ) {
+            if( histogram->axes[i]->type == "moving_x" ) {
+                spatial_min[0] = histogram->axes[i]->min + simWindow->getXmoved();
+                spatial_max[0] = histogram->axes[i]->max + simWindow->getXmoved();
+                did_move = true;
+            }
+        }
+        if( ! did_move ) {
+            spatial_max[0] += simWindow->getXmoved() - spatial_min[0];
+            spatial_min[0] = simWindow->getXmoved();
         }
     }
     
-    // Verify that this patch is in a useful region for this diag
-    for( unsigned int idim=0; idim<ndim; idim++ )
-        if( patch->getDomainLocalMax( idim ) < spatial_min[idim]
-                || patch->getDomainLocalMin( idim ) > spatial_max[idim] ) {
-            return;
-        }
-        
     // loop species
     for( unsigned int ispec=0 ; ispec < species.size() ; ispec++ ) {
     

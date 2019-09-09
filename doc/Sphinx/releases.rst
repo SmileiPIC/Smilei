@@ -11,7 +11,10 @@ Upcoming changes
 
 * Interface with the PICSAR library (currently experimental)
 * Particle merging (beta version)
-
+* Additional prescribed fields that only contribute to pushing particles
+* More control over the moving window movement
+* Bugfix: particle binning was not following the moving window
+* Bugfix: gaussian profile with order 0 was incorrect
 
 ----
 
