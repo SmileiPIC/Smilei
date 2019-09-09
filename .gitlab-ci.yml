@@ -81,6 +81,7 @@ makerunV:
   only:
     - develop
     - multisteps_movwin
+    - dev_injector
 
   script:
     # Move in test dir

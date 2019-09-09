@@ -42,7 +42,7 @@ for i in range(4):
     
     sum_energy = np.sum(data_final)
 
-    Validate("Gamma spectrum for {} at {}".format(species_list[i],index) , sum_energy, sum_energy*relative_error)
+    Validate("Sum of the gamma spectrum for {}".format(species_list[i]) , sum_energy, sum_energy*relative_error)
     
     sum_initial = np.sum(data_initial)
     sum_final = np.sum(data_final)

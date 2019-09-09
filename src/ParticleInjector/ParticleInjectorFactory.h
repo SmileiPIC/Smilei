@@ -164,6 +164,7 @@ public:
             this_particle_injector->velocity_profile_[0] = new Profile( profile1, params.nDim_field, Tools::merge( "mean_velocity[0] ", this_particle_injector->name_ ), true );
             this_particle_injector->velocity_profile_[1] = new Profile( profile2, params.nDim_field, Tools::merge( "mean_velocity[1] ", this_particle_injector->name_ ), true );
             this_particle_injector->velocity_profile_[2] = new Profile( profile3, params.nDim_field, Tools::merge( "mean_velocity[2] ", this_particle_injector->name_ ), true );
+            MESSAGE( 2, "> Mean velocity redefined: " << this_particle_injector->velocity_profile_[0]->getInfo());
             // string message =  "> Mean velocity: ";
             // for (unsigned int i = 0 ; i < mean_velocity_input.size()-1 ; i++) {
             //     message += to_string(mean_velocity_input[i]) + ", ";
