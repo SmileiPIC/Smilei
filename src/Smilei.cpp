@@ -284,9 +284,28 @@ int main( int argc, char *argv[] )
     
     Domain domain( params );
     if (params.uncoupled_grids) {
+        domain.vecPatch_.refHindex_ = smpi.getRank();
         domain.build( params, &smpi, vecPatches, openPMD, false );
         domain.identify_additional_patches( &smpi, vecPatches, params, simWindow );
         domain.identify_missing_patches( &smpi, vecPatches, params );
+
+        //cout << smpi.getRank() << "\t - local : " << domain.local_patches_.size()
+        //     <<  "\t - missing : " << domain.missing_patches_.size()
+        //     <<  "\t - additional : " << domain.additional_patches_.size() << endl;
+        //
+        //domain.reset_fitting( &smpi, params );
+        //
+        //domain.clean();
+        //domain.reset_mapping();
+        //
+        //domain.build( params, &smpi, vecPatches, openPMD, false );
+        //domain.identify_additional_patches( &smpi, vecPatches, params, simWindow );
+        //domain.identify_missing_patches( &smpi, vecPatches, params );
+        //
+        //cout << smpi.getRank() << "\t - local : " << domain.local_patches_.size()
+        //     <<  "\t - missing : " << domain.missing_patches_.size()
+        //     <<  "\t - additional : " << domain.additional_patches_.size() << endl;
+
         if ( params.apply_divergence_cleaning ) { // Need to upload corrected data on Domain
             for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
                 DoubleGridsAM::syncFieldsOnDomain( vecPatches, domain, params, &smpi, imode );

@@ -395,6 +395,8 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                                 MPI_neighbor_[0][1] = params.map_rank[(xDom+1)%params.number_of_domain[0]][yDom][zDom];
                             else 
                                 MPI_neighbor_[0][1] = MPI_PROC_NULL;
+
+                            //cout << MPI_neighbor_[0][0] << " me" << endl;
                                
                             // ---------------- Y ----------------
                             if (yDom>0)
@@ -416,10 +418,47 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                     }
                 }
 
-            neighbor_[0][0] = MPI_neighbor_[0][0];
-            neighbor_[0][1] = MPI_neighbor_[0][1];
-            neighbor_[1][0] = MPI_neighbor_[1][0];
-            neighbor_[1][1] = MPI_neighbor_[1][1];
+            //if (hindex==rk) {
+            //    neighbor_[0][0] = MPI_neighbor_[0][0];
+            //    neighbor_[0][1] = MPI_neighbor_[0][1];
+            //    neighbor_[1][0] = MPI_neighbor_[1][0];
+            //    neighbor_[1][1] = MPI_neighbor_[1][1];
+            //}
+            //else {
+                cout << "HERE - " <<Pcoordinates[0] << " " << Pcoordinates[1]<< endl; 
+                std::vector<int> xcall( 2, 0 );
+                // 1st direction
+                xcall[0] = Pcoordinates[0]-1;
+                xcall[1] = Pcoordinates[1];
+                if( params.EM_BCs[0][0]=="periodic" && xcall[0] < 0 ) {
+                    xcall[0] += domain_decomposition->ndomain_[0];
+                }
+                neighbor_[0][0] = domain_decomposition->getDomainId( xcall );
+    
+                xcall[0] = Pcoordinates[0]+1;
+                if( params.EM_BCs[0][0]=="periodic" && xcall[0] >= params.number_of_domain[0] ) {
+                    xcall[0] -= params.number_of_domain[0];
+                }
+                neighbor_[0][1] = domain_decomposition->getDomainId( xcall );
+    
+                // 2nd direction
+                xcall[0] = Pcoordinates[0];
+                xcall[1] = Pcoordinates[1]-1;
+                if( params.EM_BCs[1][0]=="periodic" && xcall[1] < 0 ) {
+                    xcall[1] += domain_decomposition->ndomain_[1];
+                }
+                neighbor_[1][0] = domain_decomposition->getDomainId( xcall );
+    
+                xcall[1] = Pcoordinates[1]+1;
+                if( params.EM_BCs[1][0]=="periodic" && xcall[1] >= params.number_of_domain[1] ) {
+                    xcall[1] -=  params.number_of_domain[1];
+                }
+                neighbor_[1][1] = domain_decomposition->getDomainId( xcall );
+
+                //}
+            cout << "\t"<< neighbor_[1][1] << endl;
+            cout << neighbor_[0][0] << "\t me \t" << neighbor_[0][1] << endl;
+            cout << "\t"<< neighbor_[1][0] << endl;
 
             cell_starting_global_index[0] -= params.oversize[0];
             cell_starting_global_index[1] -= params.oversize[1];
@@ -436,6 +475,7 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                             Pcoordinates[0] = xDom;
                             Pcoordinates[1] = yDom;
                             Pcoordinates[2] = zDom;
+                            //cout << hindex << " - coords = " << xDom << " " << yDom << " " << zDom << endl;
 
                             min_local[0] =  params.offset_map[0][xDom]                           * params.cell_length[0];
                             max_local[0] = (params.offset_map[0][xDom]+params.n_space_domain[0]) * params.cell_length[0];
@@ -463,6 +503,9 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                                 MPI_neighbor_[0][1] = params.map_rank[(xDom+1)%params.number_of_domain[0]][yDom][zDom];
                             else 
                                 MPI_neighbor_[0][1] = MPI_PROC_NULL;
+
+
+                            cout << MPI_neighbor_[0][0] << " " << " me "  << " "  << MPI_neighbor_[0][1] << endl;
                                
                             // ---------------- Y ----------------
                             if (yDom>0)
@@ -501,12 +544,58 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                     }
                 }
 
-            neighbor_[0][0] = MPI_neighbor_[0][0];
-            neighbor_[0][1] = MPI_neighbor_[0][1];
-            neighbor_[1][0] = MPI_neighbor_[1][0];
-            neighbor_[1][1] = MPI_neighbor_[1][1];
-            neighbor_[2][0] = MPI_neighbor_[2][0];
-            neighbor_[2][1] = MPI_neighbor_[2][1];
+            //neighbor_[0][0] = MPI_neighbor_[0][0];
+            //neighbor_[0][1] = MPI_neighbor_[0][1];
+            //neighbor_[1][0] = MPI_neighbor_[1][0];
+            //neighbor_[1][1] = MPI_neighbor_[1][1];
+            //neighbor_[2][0] = MPI_neighbor_[2][0];
+            //neighbor_[2][1] = MPI_neighbor_[2][1];
+            std::vector<int> xcall( 3, 0 );
+
+            // 1st direction
+            xcall[0] = Pcoordinates[0]-1;
+            xcall[1] = Pcoordinates[1];
+            xcall[2] = Pcoordinates[2];
+            if( params.EM_BCs[0][0]=="periodic" && xcall[0] < 0 ) {
+                xcall[0] += domain_decomposition->ndomain_[0];
+            }
+            neighbor_[0][0] = domain_decomposition->getDomainId( xcall );
+            xcall[0] = Pcoordinates[0]+1;
+            if( params.EM_BCs[0][0]=="periodic" && xcall[0] >= ( int )domain_decomposition->ndomain_[0] ) {
+                xcall[0] -= domain_decomposition->ndomain_[0];
+            }
+            neighbor_[0][1] = domain_decomposition->getDomainId( xcall );
+    
+            // 2st direction
+            xcall[0] = Pcoordinates[0];
+            xcall[1] = Pcoordinates[1]-1;
+            xcall[2] = Pcoordinates[2];
+            if( params.EM_BCs[1][0]=="periodic" && xcall[1] < 0 ) {
+                xcall[1] += domain_decomposition->ndomain_[1];
+            }
+            neighbor_[1][0] =  domain_decomposition->getDomainId( xcall );
+            xcall[1] = Pcoordinates[1]+1;
+            if( params.EM_BCs[1][0]=="periodic" && xcall[1] >= ( int )domain_decomposition->ndomain_[1] ) {
+                xcall[1] -= domain_decomposition->ndomain_[1];
+            }
+            neighbor_[1][1] =  domain_decomposition->getDomainId( xcall );
+    
+            // 3st direction
+            xcall[0] = Pcoordinates[0];
+            xcall[1] = Pcoordinates[1];
+            xcall[2] = Pcoordinates[2]-1;
+            if( params.EM_BCs[2][0]=="periodic" && xcall[2] < 0 ) {
+                xcall[2] += domain_decomposition->ndomain_[2];
+            }
+            neighbor_[2][0] =  domain_decomposition->getDomainId( xcall );
+            xcall[2] = Pcoordinates[2]+1;
+            if( params.EM_BCs[2][0]=="periodic" && xcall[2] >= ( int )domain_decomposition->ndomain_[2] ) {
+                xcall[2] -= domain_decomposition->ndomain_[2];
+            }
+            neighbor_[2][1] =  domain_decomposition->getDomainId( xcall );
+
+
+
 
             cell_starting_global_index[0] -= params.oversize[0];
             cell_starting_global_index[1] -= params.oversize[1];

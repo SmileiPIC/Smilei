@@ -4,7 +4,7 @@
 CartesianDomainDecomposition::CartesianDomainDecomposition( Params &params )
     : DomainDecomposition( params )
 {
-    ndomain_ = params.number_of_patches;
+    ndomain_ = params.number_of_domain;
     block_size_.resize( ndomain_.size(), 2 );
 }
 
