@@ -360,10 +360,19 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
             for ( int xDom = 0 ; xDom < params.number_of_domain[0] ; xDom++ )
                 for ( int yDom = 0 ; yDom < params.number_of_domain[1] ; yDom++ ) {
                     for ( int zDom = 0 ; zDom < params.number_of_domain[2] ; zDom++ ) {
-
+                        
                         if (params.map_rank[xDom][yDom][zDom] == rk ) {
-                            Pcoordinates[0] = xDom;
-                            Pcoordinates[1] = yDom;
+                            
+           
+                            Pcoordinates[0] =xDom ;
+                            Pcoordinates[1] =yDom;
+
+                           //int xDom = Pcoordinates[0] = hindex/params.number_of_domain[1];
+                           //int yDom = Pcoordinates[1] = hindex%params.number_of_domain[1];
+                           //int zDom =0;
+
+                            cout << "coords = " << Pcoordinates[0] << " " << Pcoordinates[1] <<endl;
+
                             min_local[0] =  params.offset_map[0][xDom]                           * params.cell_length[0];
                             max_local[0] = (params.offset_map[0][xDom]+params.n_space_domain[0]) * params.cell_length[0];
                             min_local[1] =  params.offset_map[1][yDom]                           * params.cell_length[1];
@@ -425,40 +434,44 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
             //    neighbor_[1][1] = MPI_neighbor_[1][1];
             //}
             //else {
-                cout << "HERE - " <<Pcoordinates[0] << " " << Pcoordinates[1]<< endl; 
-                std::vector<int> xcall( 2, 0 );
-                // 1st direction
-                xcall[0] = Pcoordinates[0]-1;
-                xcall[1] = Pcoordinates[1];
-                if( params.EM_BCs[0][0]=="periodic" && xcall[0] < 0 ) {
-                    xcall[0] += domain_decomposition->ndomain_[0];
-                }
-                neighbor_[0][0] = domain_decomposition->getDomainId( xcall );
+            cout << "HERE - " <<Pcoordinates[0] << " " << Pcoordinates[1]<< endl; 
+            std::vector<int> xcall( 2, 0 );
+            // 1st direction
+            xcall[0] = Pcoordinates[0]-1;
+            xcall[1] = Pcoordinates[1];
+            if( params.EM_BCs[0][0]=="periodic" && xcall[0] < 0 ) {
+                xcall[0] += domain_decomposition->ndomain_[0];
+            }
+            neighbor_[0][0] = domain_decomposition->getDomainId( xcall );
     
-                xcall[0] = Pcoordinates[0]+1;
-                if( params.EM_BCs[0][0]=="periodic" && xcall[0] >= params.number_of_domain[0] ) {
-                    xcall[0] -= params.number_of_domain[0];
-                }
-                neighbor_[0][1] = domain_decomposition->getDomainId( xcall );
+            xcall[0] = Pcoordinates[0]+1;
+            if( params.EM_BCs[0][0]=="periodic" && xcall[0] >= params.number_of_domain[0] ) {
+                xcall[0] -= params.number_of_domain[0];
+            }
+            neighbor_[0][1] = domain_decomposition->getDomainId( xcall );
     
-                // 2nd direction
-                xcall[0] = Pcoordinates[0];
-                xcall[1] = Pcoordinates[1]-1;
-                if( params.EM_BCs[1][0]=="periodic" && xcall[1] < 0 ) {
-                    xcall[1] += domain_decomposition->ndomain_[1];
-                }
-                neighbor_[1][0] = domain_decomposition->getDomainId( xcall );
+            // 2nd direction
+            xcall[0] = Pcoordinates[0];
+            xcall[1] = Pcoordinates[1]-1;
+            if( params.EM_BCs[1][0]=="periodic" && xcall[1] < 0 ) {
+                xcall[1] += domain_decomposition->ndomain_[1];
+            }
+            neighbor_[1][0] = domain_decomposition->getDomainId( xcall );
     
-                xcall[1] = Pcoordinates[1]+1;
-                if( params.EM_BCs[1][0]=="periodic" && xcall[1] >= params.number_of_domain[1] ) {
-                    xcall[1] -=  params.number_of_domain[1];
-                }
-                neighbor_[1][1] = domain_decomposition->getDomainId( xcall );
+            xcall[1] = Pcoordinates[1]+1;
+            if( params.EM_BCs[1][0]=="periodic" && xcall[1] >= params.number_of_domain[1] ) {
+                xcall[1] -=  params.number_of_domain[1];
+            }
+            neighbor_[1][1] = domain_decomposition->getDomainId( xcall );
 
-                //}
+            //}
             cout << "\t"<< neighbor_[1][1] << endl;
-            cout << neighbor_[0][0] << "\t me \t" << neighbor_[0][1] << endl;
+            cout << neighbor_[0][0] << "\t h_me \t" << neighbor_[0][1] << endl;
             cout << "\t"<< neighbor_[1][0] << endl;
+
+            cout << "\t"<< MPI_neighbor_[1][1] << endl;
+            cout << MPI_neighbor_[0][0] << "\t mpi_me \t" << MPI_neighbor_[0][1] << endl;
+            cout << "\t"<< MPI_neighbor_[1][0] << endl;
 
             cell_starting_global_index[0] -= params.oversize[0];
             cell_starting_global_index[1] -= params.oversize[1];

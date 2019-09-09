@@ -379,6 +379,7 @@ void Domain::reset_fitting(SmileiMPI* smpi, Params& params)
     for (int i=0 ; i< smpi->getSize() ;i++)
         target_map[i] = -1;
 
+    //cout << "GLOBAL MAP" <<endl;
     //for (int i=0 ; i< smpi->getSize() ;i++)
     //    cout << global_map[2*i] <<" " ;
     //cout << endl;
@@ -446,11 +447,39 @@ void Domain::reset_fitting(SmileiMPI* smpi, Params& params)
         }
     }
 
-    //for (int i=0 ; i< smpi->getSize() ;i++)
-    //    cout << target_map[i] <<" " ;
-    //cout << endl;
+    int mpi_map[smpi->getSize()];
+    for (int i=0 ; i< smpi->getSize() ;i++) {
+
+        for (int j=0 ; j< smpi->getSize() ;j++) {
+            if ( target_map[j] == i )
+                mpi_map[i] = j;
+        }
+
+        
+    }
+
+     for (int i=0 ; i< smpi->getSize() ;i++)
+         target_map[i] = mpi_map[i];
+
+     //cout << "TARGET MAP " << endl;
+     //for (int i=0 ; i< smpi->getSize() ;i++)
+     //    cout << target_map[i] <<" " ;
+     //cout << endl;
 
 
+
+
+    //TARGET MAP : map_rank = domain_id_in_current_mpi
+    // 0 1 2 3 6 7 5 4 
+
+    // 0 1 2 3
+    // 6 7 5 4 
+
+    // MPI 0 takes domain 0, 1-1, ... 3-3,
+    // MPI 4 takes domain 6
+    // MPI 5 takes domain 7
+    // MPI 6 takes domain 5
+    // MPI 7 takes domain 4
 
     std::vector< std::vector< std::vector<int> > > new_map_rank;
     new_map_rank.resize( params.number_of_domain[0] );
@@ -489,8 +518,10 @@ void Domain::reset_fitting(SmileiMPI* smpi, Params& params)
 
 
     // mapt ?
-    int targeted_rk = target_map[smpi->getRank()];
-    vecPatch_.refHindex_ = targeted_rk;
+    int targeted_rk = -1;//target_map[smpi->getRank()];
+    for (int i=0 ; i< smpi->getSize() ;i++)
+        if (target_map[i]==smpi->getRank())
+            vecPatch_.refHindex_ = i;
     //MPI_Scatter(target_map,1,MPI_INT,&targeted_rk ,1, MPI_INT,0,MPI_COMM_WORLD);
     //cout << smpi->getRank()  << "  "<< targeted_rk << endl;
 
@@ -501,7 +532,7 @@ void Domain::reset_fitting(SmileiMPI* smpi, Params& params)
         for ( int yDom = 0 ; yDom < params.number_of_domain[1] ; yDom++ )
             for ( int zDom = 0 ; zDom < params.number_of_domain[2] ; zDom++ ) {
 
-                if ( params.map_rank[xDom][yDom][zDom] == target_map[smpi->getRank()] ) {
+                if ( params.map_rank[xDom][yDom][zDom] ==  vecPatch_.refHindex_ ) {
                     params.coordinates[0] = xDom;
                     params.coordinates[1] = yDom;
                     params.coordinates[2] = zDom;
