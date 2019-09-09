@@ -541,7 +541,7 @@ public:
         Py_DECREF( py_pos_init );
 
         if   (PyTools::extract( "regular_number", thisSpecies->regular_number_array, "Species", ispec )){
-             if (thisSpecies->position_initialization != "regular") {
+             if (thisSpecies->position_initialization_ != "regular") {
                  ERROR("regular_number may not be provided if species position_initialization is not set to 'regular'.");
              }
              if (thisSpecies->regular_number_array.size() != thisSpecies->nDim_particle) {

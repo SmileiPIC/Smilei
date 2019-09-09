@@ -606,9 +606,6 @@ private:
     //! Inverse of the number of spatial dimension for the particles
     double inv_nDim_particles;
 
-    //! Local minimum of MPI domain
-    double min_loc;
-
     //! Samples npoints values of energies in a Maxwell-Juttner distribution
     std::vector<double> maxwellJuttner( unsigned int npoints, double temperature );
     //! Array used in the Maxwell-Juttner sampling (see doc)
