@@ -379,13 +379,13 @@ void Domain::reset_fitting(SmileiMPI* smpi, Params& params)
     for (int i=0 ; i< smpi->getSize() ;i++)
         target_map[i] = -1;
 
-    //cout << "GLOBAL MAP" <<endl;
-    //for (int i=0 ; i< smpi->getSize() ;i++)
-    //    cout << global_map[2*i] <<" " ;
-    //cout << endl;
-    //for (int i=0 ; i< smpi->getSize() ;i++)
-    //    cout << global_map[2*i+1] <<" " ;
-    //cout << endl;
+     cout << "GLOBAL MAP" <<endl;
+     for (int i=0 ; i< smpi->getSize() ;i++)
+         cout << global_map[2*i] <<" " ;
+     cout << endl;
+     for (int i=0 ; i< smpi->getSize() ;i++)
+         cout << global_map[2*i+1] <<" " ;
+     cout << endl;
 
     //local
     for (int i=0 ; i< smpi->getSize() ;i++) {
@@ -394,22 +394,28 @@ void Domain::reset_fitting(SmileiMPI* smpi, Params& params)
             for (int j=0 ; j< smpi->getSize() ;j++) {
                 if (j==i)continue;
                 if ( global_map[2*j] == target_map[i] )
-                    target_map[j] = global_map[2*j+1];
+                    global_map[2*j] = -1;
                 else if ( global_map[2*j+1] == target_map[i] )
-                    target_map[j] = global_map[2*j];
+                    global_map[2*j+1] = -1;
             }
         }
         else if  (global_map[2*i+1] == i) {
-            target_map[i] = global_map[2*i];
+            target_map[i] = global_map[2*i+1];
             for (int j=0 ; j< smpi->getSize() ;j++) {
                 if (j==i)continue;
                 if ( global_map[2*j] == target_map[i] )
-                    target_map[j] = global_map[2*j+1];
+                    global_map[2*j] = -1;
                 else if ( global_map[2*j+1] == target_map[i] )
-                    target_map[j] = global_map[2*j];
+                    global_map[2*j+1] = -1;
             }
         }
     }
+
+     cout << "TARGET MAP - STEP 1 " << endl;
+     for (int i=0 ; i< smpi->getSize() ;i++)
+         cout << target_map[i] <<" " ;
+     cout << endl;
+
 
     // single
     for (int i=0 ; i< smpi->getSize() ;i++) {
@@ -418,9 +424,9 @@ void Domain::reset_fitting(SmileiMPI* smpi, Params& params)
             for (int j=0 ; j< smpi->getSize() ;j++) {
                 if (j==i)continue;
                 if ( global_map[2*j] == target_map[i] )
-                    target_map[j] = global_map[2*j+1];
+                    global_map[2*j] = -1;
                 else if ( global_map[2*j+1] == target_map[i] )
-                    target_map[j] = global_map[2*j];
+                    global_map[2*j+1] = -1;
             }
         }
         else if  (global_map[2*i+1] == -1) {
@@ -428,24 +434,54 @@ void Domain::reset_fitting(SmileiMPI* smpi, Params& params)
             for (int j=0 ; j< smpi->getSize() ;j++) {
                 if (j==i)continue;
                 if ( global_map[2*j] == target_map[i] )
-                    target_map[j] = global_map[2*j+1];
+                    global_map[2*j] = -1;
                 else if ( global_map[2*j+1] == target_map[i] )
-                    target_map[j] = global_map[2*j];
+                    global_map[2*j+1] = -1;
             }
         }
     }
 
-    // pair
+     cout << "TARGET MAP - STEP 2 " << endl;
+     for (int i=0 ; i< smpi->getSize() ;i++)
+         cout << target_map[i] <<" " ;
+     cout << endl;
+
+     // pair
+     for (int i=0 ; i< smpi->getSize() ;i++) {
+         if (target_map[i]!=-1) continue;
+         for (int j=0 ; j< smpi->getSize() ;j++) {
+             if ((global_map[2*i] == global_map[2*j]) || (global_map[2*i] == global_map[2*j+1])
+                 || (global_map[2*i+1] == global_map[2*j]) || (global_map[2*i+1] == global_map[2*j+1] ) ) {
+                 target_map[i] = global_map[2*i];
+                 target_map[j] = global_map[2*i+1];
+             }
+         }
+     }
+
+    // Unattribuated
     for (int i=0 ; i< smpi->getSize() ;i++) {
-        if (target_map[i]!=-1) continue;
-        for (int j=0 ; j< smpi->getSize() ;j++) {
-            if ((global_map[2*i] == global_map[2*j]) || (global_map[2*i] == global_map[2*j+1])
-                || (global_map[2*i+1] == global_map[2*j]) || (global_map[2*i+1] == global_map[2*j+1] ) ) {
-                target_map[i] = global_map[2*i];
-                target_map[j] = global_map[2*i+1];
+        int todo = -1;
+        bool att(false);
+        for (int j=0 ; j< smpi->getSize() ;j++) { //0 1 2 -1 4 -1
+            if ( target_map[j] == i ) {
+                att = true;
+            }
+        }
+        if (att == false) {
+            for (int j=0 ; j< smpi->getSize() ;j++) {
+                if (target_map[j] == -1 ){                    
+                    target_map[j] = i;
+                    break;
+                }
             }
         }
     }
+
+     cout << "TARGET MAP - STEP 3 " << endl;
+     for (int i=0 ; i< smpi->getSize() ;i++)
+         cout << target_map[i] <<" " ;
+     cout << endl;
+
 
     int mpi_map[smpi->getSize()];
     for (int i=0 ; i< smpi->getSize() ;i++) {
@@ -458,13 +494,14 @@ void Domain::reset_fitting(SmileiMPI* smpi, Params& params)
         
     }
 
+     cout << "TARGET MAP " << endl;
+     for (int i=0 ; i< smpi->getSize() ;i++)
+         cout << target_map[i] <<" " ;
+     cout << endl;
+
      for (int i=0 ; i< smpi->getSize() ;i++)
          target_map[i] = mpi_map[i];
 
-     //cout << "TARGET MAP " << endl;
-     //for (int i=0 ; i< smpi->getSize() ;i++)
-     //    cout << target_map[i] <<" " ;
-     //cout << endl;
 
 
 
