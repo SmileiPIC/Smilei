@@ -1460,11 +1460,11 @@ void Params::uncoupled_decomposition_3D()
             number_of_domain[2] = (int)(rest / number_of_domain[1]);
         }
         else {
-            rest++;
+            number_of_domain[2]++;
             number_of_domain[1] = (int)(rest / number_of_domain[2]);
         }
     }
-    if (number_of_domain[0]*number_of_domain[1]*number_of_domain[2] != sz ) 
+    if ( (number_of_domain[0]*number_of_domain[1]*number_of_domain[2] != sz ) && (!rk) )
         ERROR( "Decomposition à affiner : " << number_of_domain[0] << " " << number_of_domain[1] << " " << number_of_domain[2] );
 
 
