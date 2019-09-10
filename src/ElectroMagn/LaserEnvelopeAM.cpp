@@ -184,7 +184,7 @@ void LaserEnvelopeAM::compute( ElectroMagn *EMfields )
     double one_ov_dl_sq    = 1./cell_length[0]/cell_length[0];
     double one_ov_dr_sq    = 1./cell_length[1]/cell_length[1];
     double dr              = cell_length[1];
-    
+   
     cField2D *A2Dcyl       = static_cast<cField2D *>( A_ );               // the envelope at timestep n
     cField2D *A02Dcyl      = static_cast<cField2D *>( A0_ );              // the envelope at timestep n-1
     Field2D *Env_Chi2Dcyl  = static_cast<Field2D *>( EMfields->Env_Chi_ ); // source term of envelope equation
@@ -192,17 +192,17 @@ void LaserEnvelopeAM::compute( ElectroMagn *EMfields )
     Field2D *Env_Eabs2Dcyl = static_cast<Field2D *>( EMfields->Env_E_abs_ ); // field for diagnostic
     int  j_glob = ( static_cast<ElectroMagnAM *>( EMfields ) )->j_glob_;
     bool isYmin = ( static_cast<ElectroMagnAM *>( EMfields ) )->isYmin;
-    
+  
     //! 1/(2dx), where dx is the spatial step dx for 2D3V cylindrical simulations
     double one_ov_2dt      = 1./2./timestep;
     
     // temporary variable for updated envelope
     cField2D *A2Dcylnew;
     A2Dcylnew  = new cField2D( A_->dims_ );
-    
+ 
     //// explicit solver
     for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // x loop
-        for( unsigned int j=isYmin*3 ; j < A_->dims_[1]-1 ; j++ ) { // r loop
+        for( unsigned int j=std::max(3*isYmin,1) ; j < A_->dims_[1]-1 ; j++ ) { // r loop
             ( *A2Dcylnew )( i, j ) -= ( *Env_Chi2Dcyl )( i, j )*( *A2Dcyl )( i, j ); // subtract here source term Chi*A from plasma
             // A2Dcylnew = laplacian - source term
             ( *A2Dcylnew )( i, j ) += ( ( *A2Dcyl )( i-1, j )-2.*( *A2Dcyl )( i, j )+( *A2Dcyl )( i+1, j ) )*one_ov_dl_sq; // x part
@@ -264,7 +264,7 @@ void LaserEnvelopeAM::compute( ElectroMagn *EMfields )
         } // end r loop
     } // end x loop
 
-    
+
     delete A2Dcylnew;
 } // end LaserEnvelopeAM::compute
 
