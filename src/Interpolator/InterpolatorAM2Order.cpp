@@ -422,7 +422,7 @@ void InterpolatorAM2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Par
     Field2D *Env_A_abs_2Dcyl = static_cast<Field2D *>( EMfields->Env_A_abs_ );
     Field2D *Env_Chi_2Dcyl   = static_cast<Field2D *>( EMfields->Env_Chi_ );
     Field2D *Env_E_abs_2Dcyl = static_cast<Field2D *>( EMfields->Env_E_abs_ );
-    
+
     // Normalized particle position
     double xpn = particles.position( 0, ipart ) * dl_inv_;
     double r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
@@ -447,26 +447,19 @@ void InterpolatorAM2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Par
     coeffyp_[1] = 0.75 - delta2;
     coeffyp_[2] = 0.5 * ( delta2+deltar+0.25 );
     
-    
-    //!\todo CHECK if this is correct for both primal & dual grids !!!
-    // First index for summation
-    ip_ = ip_ - i_domain_begin ;
-    jp_ = jp_ - j_domain_begin ;
-    
-    
     // -------------------------
     // Interpolation of Env_A_abs_^(p,p)
     // -------------------------
     *( Env_A_abs_Loc ) = compute( &coeffxp_[1], &coeffyp_[1], Env_A_abs_2Dcyl, ip_, jp_);
-    
-    // -------------------------
+  
+    // -------------------------  
     // Interpolation of Env_Chi_^(p,p)
     // -------------------------
     *( Env_Chi_Loc ) = compute( &coeffxp_[1], &coeffyp_[1], Env_Chi_2Dcyl, ip_, jp_);
-    
+   
     // -------------------------
     // Interpolation of Env_E_abs_^(p,p)
     // -------------------------
     *( Env_E_abs_Loc ) = compute( &coeffxp_[1], &coeffyp_[1], Env_E_abs_2Dcyl, ip_, jp_);
-    
+  
 } // END InterpolatorAM2Order
