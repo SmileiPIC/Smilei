@@ -195,7 +195,6 @@ void LaserEnvelopeAM::compute( ElectroMagn *EMfields )
   
     //! 1/(2dx), where dx is the spatial step dx for 2D3V cylindrical simulations
     double one_ov_2dt      = 1./2./timestep;
-    double one_ov_2dr      = 1./2./dr;
     
     // temporary variable for updated envelope
     cField2D *A2Dcylnew;
@@ -208,7 +207,7 @@ void LaserEnvelopeAM::compute( ElectroMagn *EMfields )
             // A2Dcylnew = laplacian - source term
             ( *A2Dcylnew )( i, j ) += ( ( *A2Dcyl )( i-1, j )-2.*( *A2Dcyl )( i, j )+( *A2Dcyl )( i+1, j ) )*one_ov_dl_sq; // x part
             ( *A2Dcylnew )( i, j ) += ( ( *A2Dcyl )( i, j-1 )-2.*( *A2Dcyl )( i, j )+( *A2Dcyl )( i, j+1 ) )*one_ov_dr_sq; // r part
-            ( *A2Dcylnew )( i, j ) += ( ( *A2Dcyl )( i, j+1 )-( *A2Dcyl )( i, j-1 ) ) * one_ov_2dr / ( ( double )( j_glob+j )*dr );          
+            ( *A2Dcylnew )( i, j ) += ( ( *A2Dcyl )( i, j+1 )-( *A2Dcyl )( i, j-1 ) ) / dr / ( ( double )( j_glob+j )*dr );          
 
             // A2Dcylnew = A2Dcylnew+2ik0*dA/dx
             ( *A2Dcylnew )( i, j ) += i1_2k0_over_2dl*( ( *A2Dcyl )( i+1, j )-( *A2Dcyl )( i-1, j ) );
@@ -226,7 +225,7 @@ void LaserEnvelopeAM::compute( ElectroMagn *EMfields )
            unsigned int j = 2;
 
            ( *A2Dcylnew )( i, j ) -= ( *Env_Chi2Dcyl )( i, j )*( *A2Dcyl )( i, j ); // subtract here source term Chi*A from plasma
-           ( *A2Dcylnew )( i, j ) += ( ( *A2Dcyl )( i-1, j )-2.*( *A2Dcyl )( i, j )+( *A2Dcyl )( i+1, j ) )*one_ov_dl_sq; // l part
+           ( *A2Dcylnew )( i, j ) += ( ( *A2Dcyl )( i-1, j )-2.*( *A2Dcyl )( i, j )+( *A2Dcyl )( i+1, j ) )*one_ov_dl_sq; // x part
            ( *A2Dcylnew )( i, j ) += 4. * ( ( *A2Dcyl )( i, j+1 )-( *A2Dcyl )( i, j ) ) * one_ov_dr_sq;
 
            // A2Dcylnew = A2Dcylnew+2ik0*dA/dx
@@ -242,7 +241,7 @@ void LaserEnvelopeAM::compute( ElectroMagn *EMfields )
     }    
 
     for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // x loop
-        for( unsigned int j=1 ; j < A_->dims_[1]-1 ; j++ ) { // r loop
+        for( unsigned int j=isYmin*3 ; j < A_->dims_[1]-1 ; j++ ) { // r loop
             // final back-substitution
             // |E envelope| = |-(dA/dt-ik0cA)|
             ( *Env_Eabs2Dcyl )( i, j ) = std::abs( ( ( *A2Dcylnew )( i, j )-( *A02Dcyl )( i, j ) )*one_ov_2dt - i1*( *A2Dcyl )( i, j ) );
@@ -254,7 +253,7 @@ void LaserEnvelopeAM::compute( ElectroMagn *EMfields )
     } // end l loop
 
     for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // x loop
-        for( unsigned int j=1 ; j < A_->dims_[1]-1 ; j++ ) { // r loop
+        for( unsigned int j=isYmin*3 ; j < A_->dims_[1]-1 ; j++ ) { // r loop
             // final back-substitution
             // |E envelope| = |-(dA/dt-ik0cA)|
             ( *Env_Eabs2Dcyl )( i, j ) = std::abs( ( ( *A2Dcylnew )( i, j )-( *A02Dcyl )( i, j ) )*one_ov_2dt - i1*( *A2Dcyl )( i, j ) );
