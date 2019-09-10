@@ -367,11 +367,7 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                             Pcoordinates[0] =xDom ;
                             Pcoordinates[1] =yDom;
 
-                           //int xDom = Pcoordinates[0] = hindex/params.number_of_domain[1];
-                           //int yDom = Pcoordinates[1] = hindex%params.number_of_domain[1];
-                           //int zDom =0;
-
-                            cout << "coords = " << Pcoordinates[0] << " " << Pcoordinates[1] <<endl;
+                            //cout << "coords = " << Pcoordinates[0] << " " << Pcoordinates[1] <<endl;
 
                             min_local[0] =  params.offset_map[0][xDom]                           * params.cell_length[0];
                             max_local[0] = (params.offset_map[0][xDom]+params.n_space_domain[0]) * params.cell_length[0];
@@ -405,13 +401,10 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                             else 
                                 MPI_neighbor_[0][1] = MPI_PROC_NULL;
 
-                            //cout << MPI_neighbor_[0][0] << " me" << endl;
-                               
                             // ---------------- Y ----------------
                             if (yDom>0)
                                 MPI_neighbor_[1][0] = params.map_rank[xDom][yDom-1][zDom];
                             else if (params.EM_BCs[1][0]=="periodic") {
-                                //cout << "blabla " << yDom << " " << (yDom-1+params.number_of_domain[1])%params.number_of_domain[1] << endl;
                                 MPI_neighbor_[1][0] = params.map_rank[xDom][yDom-1+params.number_of_domain[1]][zDom];
                             }
                             else 
@@ -427,14 +420,7 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                     }
                 }
 
-            //if (hindex==rk) {
-            //    neighbor_[0][0] = MPI_neighbor_[0][0];
-            //    neighbor_[0][1] = MPI_neighbor_[0][1];
-            //    neighbor_[1][0] = MPI_neighbor_[1][0];
-            //    neighbor_[1][1] = MPI_neighbor_[1][1];
-            //}
-            //else {
-            cout << "HERE - " <<Pcoordinates[0] << " " << Pcoordinates[1]<< endl; 
+            //cout << "HERE - " <<Pcoordinates[0] << " " << Pcoordinates[1]<< endl; 
             std::vector<int> xcall( 2, 0 );
             // 1st direction
             xcall[0] = Pcoordinates[0]-1;
@@ -464,14 +450,13 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
             }
             neighbor_[1][1] = domain_decomposition->getDomainId( xcall );
 
-            //}
-            cout << "\t"<< neighbor_[1][1] << endl;
-            cout << neighbor_[0][0] << "\t h_me \t" << neighbor_[0][1] << endl;
-            cout << "\t"<< neighbor_[1][0] << endl;
-
-            cout << "\t"<< MPI_neighbor_[1][1] << endl;
-            cout << MPI_neighbor_[0][0] << "\t mpi_me \t" << MPI_neighbor_[0][1] << endl;
-            cout << "\t"<< MPI_neighbor_[1][0] << endl;
+            //cout << "\t"<< neighbor_[1][1] << endl;
+            //cout << neighbor_[0][0] << "\t h_me \t" << neighbor_[0][1] << endl;
+            //cout << "\t"<< neighbor_[1][0] << endl;
+            //
+            //cout << "\t"<< MPI_neighbor_[1][1] << endl;
+            //cout << MPI_neighbor_[0][0] << "\t mpi_me \t" << MPI_neighbor_[0][1] << endl;
+            //cout << "\t"<< MPI_neighbor_[1][0] << endl;
 
             cell_starting_global_index[0] -= params.oversize[0];
             cell_starting_global_index[1] -= params.oversize[1];
@@ -518,13 +503,12 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                                 MPI_neighbor_[0][1] = MPI_PROC_NULL;
 
 
-                            cout << MPI_neighbor_[0][0] << " " << " me "  << " "  << MPI_neighbor_[0][1] << endl;
+                            //cout << MPI_neighbor_[0][0] << " " << " me "  << " "  << MPI_neighbor_[0][1] << endl;
                                
                             // ---------------- Y ----------------
                             if (yDom>0)
                                 MPI_neighbor_[1][0] = params.map_rank[xDom][yDom-1][zDom];
                             else if (params.EM_BCs[1][0]=="periodic") {
-                                //cout << "blabla " << yDom << " " << (yDom-1+params.number_of_domain[1])%params.number_of_domain[1] << endl;
                                 MPI_neighbor_[1][0] = params.map_rank[xDom][yDom-1+params.number_of_domain[1]][zDom];
                             }
                             else 

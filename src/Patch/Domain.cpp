@@ -363,7 +363,7 @@ void Domain::reset_fitting(SmileiMPI* smpi, Params& params)
                 
         }
     }
-    cout << "Target : " << ref << " or " << ref2 << "\n";
+    //cout << "Target : " << ref << " or " << ref2 << "\n";
 
     int local_map[2];
     local_map[0] = ref;
@@ -379,13 +379,13 @@ void Domain::reset_fitting(SmileiMPI* smpi, Params& params)
     for (int i=0 ; i< smpi->getSize() ;i++)
         target_map[i] = -1;
 
-     cout << "GLOBAL MAP" <<endl;
-     for (int i=0 ; i< smpi->getSize() ;i++)
-         cout << global_map[2*i] <<" " ;
-     cout << endl;
-     for (int i=0 ; i< smpi->getSize() ;i++)
-         cout << global_map[2*i+1] <<" " ;
-     cout << endl;
+     //cout << "GLOBAL MAP" <<endl;
+     //for (int i=0 ; i< smpi->getSize() ;i++)
+     //    cout << global_map[2*i] <<" " ;
+     //cout << endl;
+     //for (int i=0 ; i< smpi->getSize() ;i++)
+     //    cout << global_map[2*i+1] <<" " ;
+     //cout << endl;
 
     //local
     for (int i=0 ; i< smpi->getSize() ;i++) {
@@ -411,10 +411,10 @@ void Domain::reset_fitting(SmileiMPI* smpi, Params& params)
         }
     }
 
-     cout << "TARGET MAP - STEP 1 (local) " << endl;
-     for (int i=0 ; i< smpi->getSize() ;i++)
-         cout << target_map[i] <<" " ;
-     cout << endl;
+     //cout << "TARGET MAP - STEP 1 (local) " << endl;
+     //for (int i=0 ; i< smpi->getSize() ;i++)
+     //    cout << target_map[i] <<" " ;
+     //cout << endl;
 
 
     // single
@@ -441,10 +441,10 @@ void Domain::reset_fitting(SmileiMPI* smpi, Params& params)
         }
     }
 
-     cout << "TARGET MAP - STEP 2 (single) " << endl;
-     for (int i=0 ; i< smpi->getSize() ;i++)
-         cout << target_map[i] <<" " ;
-     cout << endl;
+     //cout << "TARGET MAP - STEP 2 (single) " << endl;
+     //for (int i=0 ; i< smpi->getSize() ;i++)
+     //    cout << target_map[i] <<" " ;
+     //cout << endl;
 
      // facor first
      for (int i=0 ; i< smpi->getSize() ;i++) {
@@ -459,10 +459,10 @@ void Domain::reset_fitting(SmileiMPI* smpi, Params& params)
                  global_map[2*j+1] = -1;
          }
      }
-     cout << "TARGET MAP - STEP 2.5 (favor first) " << endl;
-     for (int i=0 ; i< smpi->getSize() ;i++)
-         cout << target_map[i] <<" " ;
-     cout << endl;
+     //cout << "TARGET MAP - STEP 2.5 (favor first) " << endl;
+     //for (int i=0 ; i< smpi->getSize() ;i++)
+     //    cout << target_map[i] <<" " ;
+     //cout << endl;
 
 
     // Unattribuated
@@ -484,10 +484,10 @@ void Domain::reset_fitting(SmileiMPI* smpi, Params& params)
         }
     }
 
-     cout << "TARGET MAP - STEP 3 (unattribuated) " << endl;
-     for (int i=0 ; i< smpi->getSize() ;i++)
-         cout << target_map[i] <<" " ;
-     cout << endl;
+    //cout << "TARGET MAP - STEP 3 (unattribuated) " << endl;
+    //for (int i=0 ; i< smpi->getSize() ;i++)
+    //    cout << target_map[i] <<" " ;
+    //cout << endl;
 
 
     int mpi_map[smpi->getSize()];
@@ -501,29 +501,17 @@ void Domain::reset_fitting(SmileiMPI* smpi, Params& params)
         
     }
 
-     cout << "TARGET MAP " << endl;
-     for (int i=0 ; i< smpi->getSize() ;i++)
-         cout << target_map[i] <<" " ;
-     cout << endl;
+    //cout << "TARGET MAP " << endl;
+    //for (int i=0 ; i< smpi->getSize() ;i++)
+    //    cout << target_map[i] <<" " ;
+    //cout << endl;
 
+    // Revert the map for future usage :
+    //   - the computed one contains the domain id per MPI process
+    //   - the necessary one will contain the MPI rank associated to the domain distributer through a linearized arrangement
      for (int i=0 ; i< smpi->getSize() ;i++)
          target_map[i] = mpi_map[i];
 
-
-
-
-
-    //TARGET MAP : map_rank = domain_id_in_current_mpi
-    // 0 1 2 3 6 7 5 4 
-
-    // 0 1 2 3
-    // 6 7 5 4 
-
-    // MPI 0 takes domain 0, 1-1, ... 3-3,
-    // MPI 4 takes domain 6
-    // MPI 5 takes domain 7
-    // MPI 6 takes domain 5
-    // MPI 7 takes domain 4
 
     std::vector< std::vector< std::vector<int> > > new_map_rank;
     new_map_rank.resize( params.number_of_domain[0] );
@@ -534,12 +522,12 @@ void Domain::reset_fitting(SmileiMPI* smpi, Params& params)
         }
     }
 
-    for ( int xDom = 0 ; xDom < params.number_of_domain[0] ; xDom++ ) {
-        for ( int yDom = 0 ; yDom < params.number_of_domain[1] ; yDom++ ) {
-            cout << params.map_rank[xDom][yDom][0] << " ";
-        }
-        cout << endl;
-    }
+    //for ( int xDom = 0 ; xDom < params.number_of_domain[0] ; xDom++ ) {
+    //    for ( int yDom = 0 ; yDom < params.number_of_domain[1] ; yDom++ ) {
+    //        cout << params.map_rank[xDom][yDom][0] << " ";
+    //    }
+    //    cout << endl;
+    //}
 
 
     //update params.map_rank[xDom][yDom][zDom]
@@ -549,25 +537,20 @@ void Domain::reset_fitting(SmileiMPI* smpi, Params& params)
                 for (int i=0 ; i< smpi->getSize() ;i++)
                     if ( params.map_rank[xDom][yDom][zDom] == i ) {
                         new_map_rank[xDom][yDom][zDom] = target_map[i];
-                        //cout << new_map_rank[xDom][yDom][zDom] << " " << endl;
                     }
             }
-            cout << endl;
         }
-    cout << endl;
 
 
     //cout << "Befor : " << vecPatch_.refHindex_ << " -" << params.coordinates[0] << " " << params.coordinates[1] << " " << params.coordinates[2] << endl;
-    cout << "Befor : " << vecPatch_.refHindex_ << " -" << params.coordinates[0] << " " << params.coordinates[1] << " " << endl;
+    //cout << "Befor : " << vecPatch_.refHindex_ << " -" << params.coordinates[0] << " " << params.coordinates[1] << " " << endl;
 
 
-    // mapt ?
-    int targeted_rk = -1;//target_map[smpi->getRank()];
+    // Define the domain id of the domain hosted per current MPI rank
+    int targeted_rk = -1;
     for (int i=0 ; i< smpi->getSize() ;i++)
         if (target_map[i]==smpi->getRank())
             vecPatch_.refHindex_ = i;
-    //MPI_Scatter(target_map,1,MPI_INT,&targeted_rk ,1, MPI_INT,0,MPI_COMM_WORLD);
-    //cout << smpi->getRank()  << "  "<< targeted_rk << endl;
 
 
 
@@ -591,12 +574,12 @@ void Domain::reset_fitting(SmileiMPI* smpi, Params& params)
 
 
 
-    for ( int xDom = 0 ; xDom < params.number_of_domain[0] ; xDom++ ) {
-        for ( int yDom = 0 ; yDom < params.number_of_domain[1] ; yDom++ ) {
-            cout << params.map_rank[xDom][yDom][0] << " ";
-        }
-        cout << endl;
-    }
+    //for ( int xDom = 0 ; xDom < params.number_of_domain[0] ; xDom++ ) {
+    //    for ( int yDom = 0 ; yDom < params.number_of_domain[1] ; yDom++ ) {
+    //        cout << params.map_rank[xDom][yDom][0] << " ";
+    //    }
+    //    cout << endl;
+    //}
 
 
     // Compute size of local domain
@@ -609,9 +592,7 @@ void Domain::reset_fitting(SmileiMPI* smpi, Params& params)
         }
     }
 
-    //cout << "After : " << vecPatch_.refHindex_ << " -" << params.coordinates[0] << " " << params.coordinates[1] << " " << params.coordinates[2] << " -t map_rank " << params.map_rank[params.coordinates[0]][params.coordinates[1]][params.coordinates[2]] <<  endl;
-    //cout << "After : " << vecPatch_.refHindex_ << " -" << params.coordinates[0] << " " << params.coordinates[1] << " " << " -t map_rank " << params.map_rank[params.coordinates[0]][params.coordinates[1]][0] <<  endl;
-    cout << "After : " << vecPatch_.refHindex_ << " -" << params.coordinates[0] << " " << params.coordinates[1] << endl;//" " << " -t map_rank " << params.map_rank[params.coordinates[0]][params.coordinates[1]][0] <<  endl;
+    //cout << "After : " << vecPatch_.refHindex_ << " -" << params.coordinates[0] << " " << params.coordinates[1] << endl;
 
 
 }
