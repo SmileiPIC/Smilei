@@ -25,7 +25,7 @@ Main(
 
     number_of_AM = 1,
 
-    number_of_patches = [npatch_x,8],
+    number_of_patches = [1,1],#[npatch_x,8],
     clrw = nx/npatch_x,
 
     EM_boundary_conditions = [
@@ -39,10 +39,10 @@ Main(
     random_seed = smilei_mpi_rank
 )
 
-MovingWindow(
-    time_start = time_start_moving_window,
-    velocity_x = 1.0
-)
+#MovingWindow(
+#    time_start = time_start_moving_window,
+#    velocity_x = 1.0
+#)
 
 LoadBalancing(
     initial_balance = False,
@@ -73,7 +73,7 @@ Checkpoints(
 #)
 
 DiagProbe(
-        every = 50,
+        every = 20,
         origin = [0., 2.*dr, 2.*dr],
         corners = [
             [Main.grid_length[0], 2.*dr, 2.*dr]
@@ -84,7 +84,7 @@ DiagProbe(
 
 
 DiagProbe(
-    every = 200,
+    every = 20,
     origin   = [0., -nr*dr,0.],
     corners  = [ [nx*dx,-nr*dr,0.], [0,nr*dr,0.] ],
     number   = [nx, 2*nr],
