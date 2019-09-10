@@ -411,7 +411,7 @@ void Domain::reset_fitting(SmileiMPI* smpi, Params& params)
         }
     }
 
-     cout << "TARGET MAP - STEP 1 " << endl;
+     cout << "TARGET MAP - STEP 1 (local) " << endl;
      for (int i=0 ; i< smpi->getSize() ;i++)
          cout << target_map[i] <<" " ;
      cout << endl;
@@ -441,22 +441,29 @@ void Domain::reset_fitting(SmileiMPI* smpi, Params& params)
         }
     }
 
-     cout << "TARGET MAP - STEP 2 " << endl;
+     cout << "TARGET MAP - STEP 2 (single) " << endl;
      for (int i=0 ; i< smpi->getSize() ;i++)
          cout << target_map[i] <<" " ;
      cout << endl;
 
-     // pair
+     // facor first
      for (int i=0 ; i< smpi->getSize() ;i++) {
-         if (target_map[i]!=-1) continue;
+         if ( (target_map[i]!=-1) && (global_map[2*i]==-1) ) continue;
+         target_map[i] = global_map[2*i];
+         global_map[2*i+1] = -1;
          for (int j=0 ; j< smpi->getSize() ;j++) {
-             if ((global_map[2*i] == global_map[2*j]) || (global_map[2*i] == global_map[2*j+1])
-                 || (global_map[2*i+1] == global_map[2*j]) || (global_map[2*i+1] == global_map[2*j+1] ) ) {
-                 target_map[i] = global_map[2*i];
-                 target_map[j] = global_map[2*i+1];
-             }
+             if (j==i)continue;
+             if ( global_map[2*j] == target_map[i] )
+                 global_map[2*j] = -1;
+             else if ( global_map[2*j+1] == target_map[i] )
+                 global_map[2*j+1] = -1;
          }
      }
+     cout << "TARGET MAP - STEP 2.5 (favor first) " << endl;
+     for (int i=0 ; i< smpi->getSize() ;i++)
+         cout << target_map[i] <<" " ;
+     cout << endl;
+
 
     // Unattribuated
     for (int i=0 ; i< smpi->getSize() ;i++) {
@@ -477,7 +484,7 @@ void Domain::reset_fitting(SmileiMPI* smpi, Params& params)
         }
     }
 
-     cout << "TARGET MAP - STEP 3 " << endl;
+     cout << "TARGET MAP - STEP 3 (unattribuated) " << endl;
      for (int i=0 ; i< smpi->getSize() ;i++)
          cout << target_map[i] <<" " ;
      cout << endl;
