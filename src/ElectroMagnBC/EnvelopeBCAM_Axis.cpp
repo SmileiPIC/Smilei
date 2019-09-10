@@ -47,14 +47,17 @@ void EnvelopeBCAM_Axis::apply( LaserEnvelope *envelope, double time_dual, Patch 
     // APPLICATION OF BCs OVER THE FULL GHOST CELL REGION
   
 
-    if( min_max == 2 && patch->isYmin() ) {
+    if( min_max == 2 && patch->isYmin() ) { // j_p = 2 corresponds to r=0
     
         // zero radial derivative on axis 
-        unsigned int j=2;
+        //unsigned int j=2;
         for( unsigned int i=0; i<nx_p; i++ ) {
-            
-            ( *A2Dcyl )( i, j-1 ) =  (*A2Dcyl)(i,j);
-            ( *Phi2Dcyl )( i, j-1 ) = std::abs((*A2Dcyl)  (i,j)) * std::abs((*A2Dcyl)  (i,j)) * 0.5;
+           ( *A2Dcyl )  ( i, 1 ) = (*A2Dcyl)(i,3);
+           ( *Phi2Dcyl )( i, 1 ) = std::abs((*A2Dcyl)  (i,3)) * std::abs((*A2Dcyl)  (i,3)) * 0.5;
+           ( *A2Dcyl )  ( i, 0 ) =  (*A2Dcyl)(i,4);
+           ( *Phi2Dcyl )( i, 0 ) = std::abs((*A2Dcyl)  (i,4)) * std::abs((*A2Dcyl)  (i,4)) * 0.5; 
+           // ( *A2Dcyl )( i, j-1 ) =  (*A2Dcyl)(i,j);
+           // ( *Phi2Dcyl )( i, j-1 ) = std::abs((*A2Dcyl)  (i,j)) * std::abs((*A2Dcyl)  (i,j)) * 0.5;
             
         }//i
         
