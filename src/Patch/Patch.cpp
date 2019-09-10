@@ -639,7 +639,7 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
     //cart_updateMPIenv(smpi);
     
     MPI_me_ = vecPatch( 0 )->MPI_me_;
-    for( int i = 0 ; i<nDim_fields_ ; i++ ) {
+    /*for( int i = 0 ; i<nDim_fields_ ; i++ ) {
         if( ( MPI_neighbor_[i][0]==MPI_me_ ) && ( params.EM_BCs[i][0]!="periodic" ) ) {
             MPI_neighbor_[i][0] = MPI_PROC_NULL;
         }
@@ -652,7 +652,7 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
         if( ( neighbor_[i][1]==MPI_me_ ) && ( params.EM_BCs[i][0]!="periodic" ) ) {
             neighbor_[i][1] = MPI_PROC_NULL;
         }
-    }
+    }*/
     
     
     //cout << "MPI Nei\t"  << "\t" << MPI_neighbor_[1][1] << endl;
