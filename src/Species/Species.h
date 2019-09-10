@@ -281,6 +281,9 @@ public:
     //! Local minimum of MPI domain
     double min_loc;
 
+    //! Inverse of the number of spatial dimension for the particles
+    double inv_nDim_particles;
+
     // -----------------------------------------------------------------------------
     //  4. Operators
 
@@ -602,9 +605,6 @@ private:
 
     //! Parameter used when defining the Maxwell-Juettner function (corresponds to a discretization step in energy)
 //    double dE;
-
-    //! Inverse of the number of spatial dimension for the particles
-    double inv_nDim_particles;
 
     //! Samples npoints values of energies in a Maxwell-Juttner distribution
     std::vector<double> maxwellJuttner( unsigned int npoints, double temperature );

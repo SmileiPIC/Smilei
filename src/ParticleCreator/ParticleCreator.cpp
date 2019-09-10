@@ -15,6 +15,7 @@ ParticleCreator::ParticleCreator()
 {
     initialized_in_species_ = true;
     add_new_particle_energy_ = true;
+    time_profile_ = NULL;
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -88,11 +89,11 @@ void ParticleCreator::associate( Species * species)
     momentum_initialization_ = species->momentum_initialization_;
     velocity_profile_.resize(species->velocity_profile_.size());
     for (unsigned int i = 0 ; i < velocity_profile_.size() ; i++) {
-        velocity_profile_[i] = new Profile(species->velocity_profile_[i]);
+        velocity_profile_[i] = species->velocity_profile_[i];
     }
     temperature_profile_.resize(species->temperature_profile_.size());
     for (unsigned int i = 0 ; i < temperature_profile_.size() ; i++) {
-        temperature_profile_[i] = new Profile(species->temperature_profile_[i]);
+        temperature_profile_[i] = species->temperature_profile_[i];
     }
     density_profile_ = species->density_profile_;
     density_profile_type_ = species->density_profile_type_;
@@ -540,21 +541,39 @@ void ParticleCreator::createPosition( std::string position_initialization,
 {
     if( position_initialization == "regular" ) {
 
-        double coeff = pow( ( double )nPart, species->inv_nDim_field );
-
         if( params.geometry != "AMcylindrical" ) {
-            if( nPart != ( unsigned int ) pow( round( coeff ), ( double ) species->nDim_field ) ) {
-                ERROR( "Impossible to put "<<nPart<<" particles regularly spaced in one cell. Use a square number, or `position_initialization = 'random'`" );
-            }
+            double inv_coeff_array[3];
+            int    coeff_array[3];
 
-            int coeff_ = coeff;
-            coeff = 1./coeff;
+            if ( species->regular_number_array.size()==0){
+                double coeff = pow( ( double )nPart, species->inv_nDim_particles );
+                if( nPart != ( unsigned int ) pow( round( coeff ), ( double ) species->nDim_particle ) ) {
+                    ERROR( "Impossible to put "<<nPart<<" particles regularly spaced in one cell. Use a square number, or `position_initialization = 'random'`" );
+                }
+                for( unsigned int idim=0; idim<species->nDim_particle; idim++ ) {
+                    coeff_array[idim] = coeff;
+                    inv_coeff_array[idim] = 1./coeff;
+                }
+            } else{
+               int npart_check=1;
+               for( unsigned int idim=0; idim<species->nDim_particle; idim++ ) {
+                   npart_check *= species->regular_number_array[idim];
+               }
+               if( nPart != npart_check) {
+                   ERROR( "The number of particles required per cell and per dimension is not coherent with the total number of particles per cell." );
+               }
+               for( unsigned int idim=0; idim<species->nDim_particle; idim++ ) {
+                   coeff_array[idim] = species->regular_number_array[idim];
+                   inv_coeff_array[idim] = 1./(double)coeff_array[idim];
+               }
+
+            }
 
             for( unsigned int  p=iPart; p<iPart+nPart; p++ ) {
                 int i = ( int )( p-iPart );
                 for( unsigned int idim=0; idim<species->nDim_particle; idim++ ) {
-                    particles->position( idim, p ) = indexes[idim] + species->cell_length[idim] * 0.975 * coeff * ( 0.5 + i%coeff_ );
-                    i /= coeff_; // integer division
+                    particles->position( idim, p ) = indexes[idim] + species->cell_length[idim] * 0.975 * inv_coeff_array[idim] * ( 0.5 + i%coeff_array[idim] );
+                    i /= coeff_array[idim]; // integer division
                 }
             }
         } else {

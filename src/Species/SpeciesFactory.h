@@ -901,11 +901,12 @@ public:
             // does a loop over all cells in the simulation
             // considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
             // Particle creator object
-            // ParticleCreator particle_creator;
-            // particle_creator.associate(thisSpecies);
-            // particle_creator.create( params.n_space, params, patch, 0, 0 );
+            ParticleCreator particle_creator;
+            particle_creator.associate(thisSpecies);
+            particle_creator.create( params.n_space, params, patch, 0, 0 );
             
-            thisSpecies->ParticleCreator( params.n_space, params, patch, 0 );
+            // thisSpecies->ParticleCreator(params.n_space, params, patch, 0 );
+            //thisSpecies->createParticles2( thisSpecies->particles, thisSpecies, params.n_space, params, patch, 0 );
             //MESSAGE(" PARTICLES");
         } else {
             thisSpecies->particles->initialize( 0, params.nDim_particle );
@@ -1030,7 +1031,12 @@ public:
 
         // \todo : NOT SURE HOW THIS BEHAVES WITH RESTART
         if( ( !params.restart ) && ( with_particles ) ) {
-            newSpecies->ParticleCreator( params.n_space, params, patch, 0 );
+            ParticleCreator particle_creator;
+            particle_creator.associate(newSpecies);
+            particle_creator.create( params.n_space, params, patch, 0, 0 );
+            
+            //newSpecies->ParticleCreator( params.n_space, params, patch, 0 );
+            //newSpecies->createParticles2( newSpecies->particles, newSpecies, params.n_space, params, patch, 0 );
         } else {
             newSpecies->particles->initialize( 0, ( *species->particles ) );
         }
