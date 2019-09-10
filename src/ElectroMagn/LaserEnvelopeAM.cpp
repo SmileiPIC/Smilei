@@ -50,8 +50,8 @@ LaserEnvelopeAM::LaserEnvelopeAM( Params &params, Patch *patch, ElectroMagn *EMf
 LaserEnvelopeAM::LaserEnvelopeAM( LaserEnvelope *envelope, Patch *patch, ElectroMagn *EMfields, Params &params, unsigned int n_moved )
     : LaserEnvelope( envelope, patch, EMfields, params, n_moved )
 {
-    A_           = new cField2D( envelope->A_->dims_, "A" );
-    A0_          = new cField2D( envelope->A0_->dims_, "Aold" );
+    A_           = new cField2D( envelope->A_->dims_, "A_mode_0" );
+    A0_          = new cField2D( envelope->A0_->dims_, "Aold_mode_0" );
     
     Phi_         = new Field2D( envelope->Phi_->dims_ );
     Phi_m        = new Field2D( envelope->Phi_m->dims_ );
