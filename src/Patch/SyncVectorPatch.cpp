@@ -650,22 +650,36 @@ void SyncVectorPatch::finalizeexchangePhi( Params &params, VectorPatch &vecPatch
 
 
 void SyncVectorPatch::exchangeGradPhi( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi )
-{
-    // current Gradient value
-    SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhix_, vecPatches, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhix_, vecPatches );
-    SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhiy_, vecPatches, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhiy_, vecPatches );
-    SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhiz_, vecPatches, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhiz_, vecPatches );
+{   
+    if (  params.geometry != "AMcylindrical" ) {
+        // current Gradient value
+        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhix_, vecPatches, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhix_, vecPatches );
+        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhiy_, vecPatches, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhiy_, vecPatches );
+        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhiz_, vecPatches, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhiz_, vecPatches );
 
-    // value of Gradient at previous timestep
-    SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhix0_, vecPatches, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhix0_, vecPatches );
-    SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhiy0_, vecPatches, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhiy0_, vecPatches );
-    SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhiz0_, vecPatches, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhiz0_, vecPatches );
+        // value of Gradient at previous timestep
+        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhix0_, vecPatches, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhix0_, vecPatches );
+        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhiy0_, vecPatches, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhiy0_, vecPatches );
+        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhiz0_, vecPatches, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhiz0_, vecPatches );
+    } else {
+        // current Gradient value
+        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhil_, vecPatches, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhil_, vecPatches );
+        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhir_, vecPatches, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhir_, vecPatches );
+
+        // value of Gradient at previous timestep
+        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhil0_, vecPatches, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhil0_, vecPatches );
+        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhir0_, vecPatches, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhir0_, vecPatches );
+    }
 }
 
 void SyncVectorPatch::finalizeexchangeGradPhi( Params &params, VectorPatch &vecPatches )
