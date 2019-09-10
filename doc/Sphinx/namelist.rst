@@ -2193,8 +2193,8 @@ The full list of available scalars is given in the table below.
 +----------------+---------------------------------------------------------------------------+
 | **Space- & time-integrated Energies lost/gained at boundaries**                            |
 +----------------+---------------------------------------------------------------------------+
-| | Ukin_bnd     | | Kinetic contribution exchanged at the boundaries during the timestep    |
-| | Uelm_bnd     | | EM contribution exchanged at boundaries during the timestep             |
+| | Ukin_bnd     | | Time-accumulated kinetic energy exchanged at the boundaries             |
+| | Uelm_bnd     | | Time-accumulated EM energy exchanged at boundaries                      |
 | |              | |                                                                         |
 | | PoyXminInst  | | Poynting contribution through xmin boundary during the timestep         |
 | | PoyXmin      | | Time-accumulated Poynting contribution through xmin boundary            |
