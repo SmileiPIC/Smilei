@@ -135,7 +135,7 @@ void LaserEnvelopeAM::initEnvelope( Patch *patch, ElectroMagn *EMfields )
     
     // Compute gradient of ponderomotive potential
     for( unsigned int i=1 ; i<A_->dims_[0]-1 ; i++ ) { // x loop
-        for( unsigned int j=isYmin*3 ; j<A_->dims_[1]-1 ; j++ ) { // r loop
+        for( unsigned int j=std::max(isYmin*3,1) ; j<A_->dims_[1]-1 ; j++ ) { // r loop
             // gradient in x direction
             ( *GradPhil2Dcyl )( i, j ) = ( ( *Phi2Dcyl )( i+1, j )-( *Phi2Dcyl )( i-1, j ) ) * one_ov_2dl;
             ( *GradPhil_m2Dcyl )( i, j ) = ( ( *Phi_m2Dcyl )( i+1, j )-( *Phi_m2Dcyl )( i-1, j ) ) * one_ov_2dl;
@@ -307,7 +307,7 @@ void LaserEnvelopeAM::compute_gradient_Phi( ElectroMagn *EMfields )
     
     // Compute gradients of Phi, at timesteps n
     for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // l loop
-        for( unsigned int j=3*isYmin ; j < A_->dims_[1]-1 ; j++ ) { // r loop
+        for( unsigned int j=std::max(3*isYmin,1) ; j < A_->dims_[1]-1 ; j++ ) { // r loop
         
             // gradient in l direction
             ( *GradPhil2Dcyl )( i, j ) = ( ( *Phi2Dcyl )( i+1, j )-( *Phi2Dcyl )( i-1, j ) ) * one_ov_2dl;
