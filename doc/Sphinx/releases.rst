@@ -1,7 +1,7 @@
 Releases
 --------
 
-This page lists major releases, but it is recommended to
+This page lists the major changes, but it is recommended to
 get the latest version of Smilei on `GitHub <https://github.com/SmileiPIC/Smilei>`_.
 
 ----
@@ -10,28 +10,45 @@ Upcoming changes
 ^^^^^^^^^^^^^^^^
 
 * Interface with the PICSAR library (currently experimental)
-* Cylindrical geometry with Fourier decomposition in azimuthal direction is almost out of beta phase
-
-* Different convention for circular polarization amplitude
-* Bugfix: Various crashes with vectorization
-* Bugfix: `LaserGaussian2D` when focused far from boundary
-* Bugfix: laser :py:data:`a0` normalization to :py:data:`omega`
-* Bugfix: Compatibility between various ionization and QED models
-* Bugfix: Frozen particles are now properly ionized
-* Bugfix: Species position initialization over another species now works properly when a moving window is used
+* Particle merging (beta version)
+* Additional prescribed fields that only contribute to pushing particles
+* More control over the moving window movement
+* Bugfix: particle binning was not following the moving window
+* Bugfix: gaussian profile with order 0 was incorrect
 
 ----
 
 .. _latestVersion:
 
-
-Latest Release 
+Latest version
 ^^^^^^^^^^^^^^^^^^^^^
 
 The latest version tarball can be donwloaded here:
 
 **Download**: `Smilei latest <_downloads/Smilei.tar.gz>`_
 
+
+----
+
+Release 4.2
+^^^^^^^^^^^^^^^^^^^^^
+
+**Download**: `Smilei v4.2 <_downloads/smilei-v4.2.tar.gz>`_
+
+
+* Different convention for circular polarization amplitude
+* Binomial filter in Cartesian 3D bug fix in parallel implementation
+* 1D and 2D laser envelope model
+* Cylindrical geometry with azimuthal Fourier decomposition (beta version)
+* Compatibility between various ionization and QED models
+* Bugfixes:
+   * Various crashes linked to vectorization
+   * `LaserGaussian2D` when focused far from boundary
+   * Laser :py:data:`a0` normalization to :py:data:`omega`
+   * Frozen particles are now properly ionized
+   * Position initialization over another species with moving window
+   * Tracked particles output was missing the mass factor for momenta
+   * Breit-Wheeler pair production with fine grain sorted particles
 
 
 ----

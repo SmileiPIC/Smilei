@@ -298,6 +298,15 @@ ElectroMagn::~ElectroMagn()
         delete antenna->field;
         antenna->field=NULL;
     }
+
+//     for ( unsigned int iExt = 0 ; iExt < extTimeFields.size() ; iExt++ ) {
+//     	delete extTimeFields[iExt].savedField;
+//     	#pragma omp single
+//         if (extTimeFields[iExt].profile!=NULL) {
+// 	    	delete extTimeFields[iExt].profile;
+// 	    }
+//     }
+//     extTimeFields.clear();
     
     /*for ( unsigned int iExt = 0 ; iExt < extFields.size() ; iExt++ ) {
         if (extFields[iExt].profile!=NULL) {
@@ -471,6 +480,26 @@ void ElectroMagn::applyExternalFields( Patch *patch )
     By_m->copyFrom( By_ );
     Bz_m->copyFrom( Bz_ );
 }
+
+void ElectroMagn::applyExternalTimeFields( Patch *patch, double time )
+{
+    for( vector<ExtTimeField>::iterator extfield=extTimeFields.begin(); extfield!=extTimeFields.end(); extfield++ ) {
+        if( extfield->index < allFields.size() ) {
+        	extfield->savedField->copyFrom(allFields[extfield->index]);
+            applyExternalTimeField( allFields[extfield->index], extfield->profile, patch, time );
+        }
+    }
+}
+
+void ElectroMagn::resetExternalTimeFields()
+{
+    for( vector<ExtTimeField>::iterator extfield=extTimeFields.begin(); extfield!=extTimeFields.end(); extfield++ ) {
+        if( extfield->index < allFields.size() ) {
+        	allFields[extfield->index]->copyFrom(extfield->savedField);
+        }
+    }
+}
+
 
 void ElectroMagn::saveExternalFields( Patch *patch )
 {

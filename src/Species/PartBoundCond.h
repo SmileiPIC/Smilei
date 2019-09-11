@@ -54,6 +54,8 @@ public:
                   << std::endl;
         }*/
         
+        nrj_iPart = 0.;
+        
         int keep_part = 1;
         // iDim = 0
         if( particles.position( 0, ipart ) <  x_min ) {

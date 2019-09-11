@@ -137,6 +137,9 @@ public:
     void applyExternalField( Field *, Profile *, Patch * );
     
     void initAntennas( Patch *patch, Params& params );
+    //! Method used to impose external fields
+    void applyExternalTimeField( Field *, Profile *, Patch *, double time );
+    
     
 private:
     //! Initialize quantities needed in the creators of ElectroMagn1D

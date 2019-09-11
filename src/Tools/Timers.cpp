@@ -42,7 +42,8 @@ Timers::Timers( SmileiMPI *smpi ) :
     proj_currents( "Proj_Currents" ),
     push_pos( "Push_Pos" ),
     // Details of Sync Particles
-    sorting( "Sorting" )
+    sorting( "Sorting" ),
+    merging( "Merging" )
 #endif
 {
     timers.resize( 0 );
@@ -96,7 +97,8 @@ Timers::Timers( SmileiMPI *smpi ) :
     // Details of Sync Particles
     timers.push_back( &sorting ) ;
     timers.back()->patch_timer_id = 13;
-    
+    timers.push_back( &merging ) ;
+    timers.back()->patch_timer_id = 14;
 #endif
     
     for( unsigned int i=0; i<timers.size(); i++ ) {

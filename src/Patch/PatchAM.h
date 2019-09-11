@@ -23,9 +23,9 @@ public:
     
     //! Return the volume (or surface or length depending on simulation dimension)
     //! of one cell at the position of a given particle
-    double getCellVolume( Particles *p, unsigned int ipart ) override final
+    double getPrimalCellVolume( Particles *p, unsigned int ipart, Params &params ) override final
     {
-        ERROR( "getCellVolume not implemented in geometry AM" );
+        ERROR( "getPrimalCellVolume not implemented in geometry AM" );
         return cell_volume;
     };
     
@@ -40,14 +40,6 @@ public:
     void finalizeSumField( Field *field, int iDim ) override final;
     void reallyfinalizeSumField( Field *field, int iDim ) override final;
     
-    //! init comm / exchange fields
-    void initExchange( Field *field ) override final;
-    //! init comm / exchange complex fields
-    void initExchangeComplex( Field *field ) override final;
-    //! finalize comm / exchange fields
-    void finalizeExchange( Field *field ) override final;
-    //! finalize comm / exchange complex fields
-    void finalizeExchangeComplex( Field *field ) override final;
     //! init comm / exchange fields in direction iDim only
     void initExchange( Field *field, int iDim, SmileiMPI *smpi ) override final;
     //! init comm / exchange complex fields in direction iDim only

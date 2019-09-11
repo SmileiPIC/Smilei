@@ -17,13 +17,13 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
     name << "Laser #" << ilaser;
     string errorPrefix = name.str();
     ostringstream info( "" );
-    
+
     // side from which the laser enters the simulation box (only xmin/xmax at the moment)
     PyTools::extract( "box_side", box_side, "Laser", ilaser );
     if( box_side!="xmin" && box_side!="xmax" ) {
         ERROR( errorPrefix << ": box_side must be `xmin` or `xmax`" );
     }
-    
+
     // Profiles
     profiles.resize( 0 );
     PyObject *chirp_profile=nullptr, *time_profile=nullptr;
@@ -41,19 +41,19 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
     has_phase      = PyTools::extract2Profiles( "phase", ilaser, phase_profile );
     has_space_time = PyTools::extract2Profiles( "space_time_profile", ilaser, space_time_profile );
     has_file       = PyTools::extract( "file", file, "Laser", ilaser );
-    
+
     if( has_space_time && has_file ) {
         ERROR( errorPrefix << ": `space_time_profile` and `file` cannot both be set" );
     }
-    
+
     unsigned int space_dims = ( params.geometry=="3Dcartesian" ? 2 : 1 );
-    
+
     spacetime.resize( 2, false );
     if( has_space_time ) {
-    
+
         spacetime[0] = ( bool )( space_time_profile[0] );
         spacetime[1] = ( bool )( space_time_profile[1] );
-        
+
         if( has_time || has_space || has_omega || has_chirp || has_phase ) {
             name.str( "" );
             name << ( has_time ?"time_envelope ":"" )
@@ -63,9 +63,9 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
                  << ( has_phase?"phase ":"" );
             WARNING( errorPrefix << ": space-time profile defined, dismissing " << name.str() );
         }
-        
+
         info << "\t\t" << errorPrefix << ": space-time profile" << endl;
-        
+
         // By
         name.str( "" );
         name << "Laser[" << ilaser <<"].space_time_profile[0]";
@@ -88,12 +88,12 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
             profiles.push_back( new LaserProfileNULL() );
             info << "\t\t\tsecond axis : zero";
         }
-        
+
     } else if( has_file ) {
-    
+
         info << "\t\t" << errorPrefix << endl;
         info << "\t\t\tData in file : " << file << endl;
-        
+
         if( PyTools::extract_pyProfile( "_extra_envelope", time_profile, "Laser", ilaser ) ) {
             // extra envelope
             name.str( "" );
@@ -104,12 +104,12 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
         } else {
             ERROR( errorPrefix << ": `extra_envelope` missing or not understood" );
         }
-        
+
         profiles.push_back( new LaserProfileFile( file, ptime, true ) );
         profiles.push_back( new LaserProfileFile( file, ptime2, false ) );
-        
+
     } else {
-    
+
         if( ! has_time ) {
             ERROR( errorPrefix << ": missing `time_envelope`" );
         }
@@ -125,62 +125,62 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
         if( ! has_phase ) {
             ERROR( errorPrefix << ": missing `phase`" );
         }
-        
+
         info << "\t\t" << errorPrefix << ": separable profile" << endl;
-        
+
         // omega
         info << "\t\t\tomega              : " << omega << endl;
-        
+
         // chirp
         name.str( "" );
         name << "Laser[" << ilaser <<"].chirp_profile";
         pchirp = new Profile( chirp_profile, 1, name.str() );
         pchirp2 = new Profile( chirp_profile, 1, name.str() );
         info << "\t\t\tchirp_profile      : " << pchirp->getInfo();
-        
+
         // time envelope
         name.str( "" );
         name << "Laser[" << ilaser <<"].time_envelope";
         ptime = new Profile( time_profile, 1, name.str() );
         ptime2 = new Profile( time_profile, 1, name.str() );
         info << endl << "\t\t\ttime envelope      : " << ptime->getInfo();
-        
+
         // space envelope (By)
         name.str( "" );
         name << "Laser[" << ilaser <<"].space_envelope[0]";
         pspace1 = new Profile( space_profile[0], space_dims, name .str() );
         info << endl << "\t\t\tspace envelope (y) : " << pspace1->getInfo();
-        
+
         // space envelope (Bz)
         name.str( "" );
         name << "Laser[" << ilaser <<"].space_envelope[1]";
         pspace2 = new Profile( space_profile[1], space_dims, name .str() );
         info << endl << "\t\t\tspace envelope (z) : " << pspace2->getInfo();
-        
+
         // phase (By)
         name.str( "" );
         name << "Laser[" << ilaser <<"].phase[0]";
         pphase1 = new Profile( phase_profile[0], space_dims, name.str() );
         info << endl << "\t\t\tphase          (y) : " << pphase1->getInfo();
-        
+
         // phase (Bz)
         name.str( "" );
         name << "Laser[" << ilaser <<"].phase[1]";
         pphase2 = new Profile( phase_profile[1], space_dims, name.str() );
         info << endl << "\t\t\tphase          (z) : " << pphase2->getInfo();
-        
+
         // delay phase
         vector<double> delay_phase( 2, 0. );
         PyTools::extract( "delay_phase", delay_phase, "Laser", ilaser );
         info << endl << "\t\tdelay phase      (y) : " << delay_phase[0];
         info << endl << "\t\tdelay phase      (z) : " << delay_phase[1];
-        
+
         // Create the LaserProfiles
         profiles.push_back( new LaserProfileSeparable( omega, pchirp, ptime, pspace1, pphase1, delay_phase[0], true ) );
         profiles.push_back( new LaserProfileSeparable( omega, pchirp2, ptime2, pspace2, pphase2, delay_phase[1], false ) );
-        
+
     }
-    
+
     // Display info
     if( patch->isMaster() ) {
         MESSAGE( info.str() );
@@ -194,7 +194,7 @@ Laser::Laser( Laser *laser, Params &params )
     box_side  = laser->box_side;
     spacetime = laser->spacetime;
     file      = laser->file;
-    
+
     profiles.resize( 0 );
     if( spacetime[0] || spacetime[1] ) {
         if( spacetime[0] ) {
@@ -228,7 +228,7 @@ void Laser::disable()
 
     profiles[0] = new LaserProfileNULL();
     profiles[1] = new LaserProfileNULL();
-    
+
 }
 
 
@@ -270,7 +270,7 @@ LaserProfileSeparable::~LaserProfileSeparable()
     if( chirpProfile_ ) {
         delete chirpProfile_;
     }
-    
+
     if( spaceProfile_ ) {
         delete spaceProfile_;
     }
@@ -294,32 +294,32 @@ void LaserProfileSeparable::createFields( Params &params, Patch *patch )
     vector<unsigned int> dim( 2 );
     dim[0] = 1;
     dim[1] = 1;
-    
+
     if( params.geometry!="1Dcartesian" && params.geometry!="2Dcartesian" && params.geometry!="3Dcartesian" && params.geometry!="AMcylindrical" ) {
         ERROR( "Unknown geometry in laser" );
     }
-    
+
     // dim[0] for 2D and 3D Cartesian
     if( params.geometry=="2Dcartesian" || params.geometry=="3Dcartesian" ) {
         unsigned int ny_p = n_space[1]+1+2*params.oversize[1];
         unsigned int ny_d = ny_p+1;
         dim[0] = primal_ ? ny_p : ny_d;
     }
-    
+
     // dim[0] for LRT
     if( params.geometry=="AMcylindrical" ) {
         unsigned int nr_p = n_space[1]+1+2*params.oversize[1];
         unsigned int nr_d = nr_p+1;
         dim[0] = nr_p + nr_d;
     }
-    
+
     // dim[1] for 3D Cartesian
     if( params.geometry=="3Dcartesian" ) {
         unsigned int nz_p = n_space[2]+1+2*params.oversize[2];
         unsigned int nz_d = nz_p+1;
         dim[1] = primal_ ? nz_d : nz_p;
     }
-    
+
     //Create laser fields
     space_envelope = new Field2D( dim );
     phase          = new Field2D( dim );
@@ -332,13 +332,13 @@ void LaserProfileSeparable::initFields( Params &params, Patch *patch )
         n_space = params.n_space_domain;
 
     if( params.geometry=="1Dcartesian" ) {
-    
+
         // Assign profile (only one point in 1D)
         vector<double> pos( 1 );
         pos[0] = 0.;
         ( *space_envelope )( 0, 0 ) = spaceProfile_->valueAt( pos );
         ( *phase )( 0, 0 ) = phaseProfile_->valueAt( pos );
-        
+
     } else if( params.geometry=="2Dcartesian" ) {
         
         unsigned int ny_p = n_space[1]+1+2*params.oversize[1];
@@ -346,7 +346,7 @@ void LaserProfileSeparable::initFields( Params &params, Patch *patch )
         double dy = params.cell_length[1];
         vector<unsigned int> dim( 1 );
         dim[0] = primal_ ? ny_p : ny_d;
-        
+
         // Assign profile
         vector<double> pos( 1 );
         pos[0] = patch->getDomainLocalMin( 1 ) - ( ( primal_?0.:0.5 ) + params.oversize[1] )*dy;
@@ -355,7 +355,7 @@ void LaserProfileSeparable::initFields( Params &params, Patch *patch )
             ( *phase )( j, 0 ) = phaseProfile_->valueAt( pos );
             pos[0] += dy;
         }
-        
+
     } else if( params.geometry=="AMcylindrical" ) {
     
         unsigned int nr_p = n_space[1]+1+2*params.oversize[1];
@@ -363,7 +363,7 @@ void LaserProfileSeparable::initFields( Params &params, Patch *patch )
         double dr = params.cell_length[1];
         vector<unsigned int> dim( 1 );
         dim[0] = nr_p + nr_d; // Need to account for both primal and dual positions
-        
+
         // Assign profile
         vector<double> pos( 1 );
         for( unsigned int j=0 ; j<dim[0] ; j++ ) {
@@ -371,9 +371,8 @@ void LaserProfileSeparable::initFields( Params &params, Patch *patch )
             ( *space_envelope )( j, 0 ) = spaceProfile_->valueAt( pos );
             ( *phase )( j, 0 ) = phaseProfile_->valueAt( pos );
         }
-        
+
     } else if( params.geometry=="3Dcartesian" ) {
-    
         unsigned int ny_p = n_space[1]+1+2*params.oversize[1];
         unsigned int ny_d = ny_p+1;
         unsigned int nz_p = n_space[2]+1+2*params.oversize[2];
@@ -383,7 +382,7 @@ void LaserProfileSeparable::initFields( Params &params, Patch *patch )
         vector<unsigned int> dim( 2 );
         dim[0] = primal_ ? ny_p : ny_d;
         dim[1] = primal_ ? nz_d : nz_p;
-        
+
         // Assign profile
         vector<double> pos( 2 );
         pos[0] = patch->getDomainLocalMin( 1 ) - ( ( primal_?0.:0.5 ) + params.oversize[1] )*dy;
@@ -426,35 +425,39 @@ void LaserProfileFile::createFields( Params &params, Patch *patch )
     if( params.geometry!="2Dcartesian" && params.geometry!="3Dcartesian" ) {
         ERROR( "Unknown geometry in LaserOffset (cartesian 2D or 3D only)" );
     }
-    
+
     magnitude = new Field3D();
     phase     = new Field3D();
 }
 
 void LaserProfileFile::initFields( Params &params, Patch *patch )
 {
+    std::vector<unsigned int> n_space(params.n_space);
+    if (params.uncoupled_grids && (patch->vecSpecies.size() == 0) ) // If not species on the patch, cartesian decomposition
+        n_space = params.n_space_domain;
+
     unsigned int ndim = 2;
     if( params.geometry=="3Dcartesian" ) {
         ndim = 3;
     }
-    
+
     // Define the part of the array to obtain
     vector<hsize_t> dim( 3 ), offset( 3 );
-    hsize_t ny_p = params.n_space[1]*params.global_factor[1]+1+2*params.oversize[1];
+    hsize_t ny_p = n_space[1]+1+2*params.oversize[1];
     hsize_t ny_d = ny_p+1;
     dim[0] = primal_ ? ny_p : ny_d;
     dim[1] = 1;
     offset[0] = patch->getCellStartingGlobalIndex( 1 ) + params.oversize[1];
     offset[1] = 0;
     offset[2] = 0;
-    
+
     if( ndim == 3 ) {
-        hsize_t nz_p = params.n_space[2]*params.global_factor[2]+1+2*params.oversize[2];
+        hsize_t nz_p = n_space[2]+1+2*params.oversize[2];
         hsize_t nz_d = nz_p+1;
         dim[1] = primal_ ? nz_d : nz_p;
         offset[1] = patch->getCellStartingGlobalIndex( 2 ) + params.oversize[2];
     }
-    
+
     // Open file
     ifstream f( file.c_str() );
     if( !f.good() ) {
@@ -464,7 +467,7 @@ void LaserProfileFile::initFields( Params &params, Patch *patch )
         ERROR( "File " << file << " is not HDF5" );
     }
     hid_t fid = H5Fopen( file.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT );
-    
+
     // Obtain the omega dataset containing the different values of omega
     hid_t pid = H5Pcreate( H5P_DATASET_ACCESS );
     hssize_t npoints;
@@ -479,11 +482,11 @@ void LaserProfileFile::initFields( Params &params, Patch *patch )
     } else {
         ERROR( "File " << file << " does not contain the `omega` dataset" );
     }
-    
+
     // Allocate the fields
     magnitude->allocateDims( dim[0], dim[1], npoints );
     phase    ->allocateDims( dim[0], dim[1], npoints );
-    
+
     // Obtain the datasets for the magnitude and phase of the field
     dim[ndim-1] = npoints;
     hid_t memspace = H5Screate_simple( ndim, &dim[0], NULL );
@@ -509,7 +512,7 @@ void LaserProfileFile::initFields( Params &params, Patch *patch )
     } else {
         phase->put_to( 0. );
     }
-    
+
     H5Sclose( memspace );
     H5Pclose( pid );
     H5Fclose( fid );

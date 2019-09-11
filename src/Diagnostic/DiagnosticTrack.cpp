@@ -104,9 +104,9 @@ DiagnosticTrack::DiagnosticTrack( Params &params, SmileiMPI *smpi, VectorPatch &
             write_momentum[1] = true;
         } else if( attributes[i] == "pz" ) {
             write_momentum[2] = true;
-        } else if( attributes[i] == "charge" ) {
+        } else if( attributes[i] == "charge" || attributes[i] == "q" ) {
             write_charge      = true;
-        } else if( attributes[i] == "weight" ) {
+        } else if( attributes[i] == "weight" || attributes[i] == "w" ) {
             write_weight      = true;
         } else if( attributes[i] == "chi" ) {
             write_chi         = true;
@@ -431,7 +431,16 @@ void DiagnosticTrack::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, 
                 #pragma omp barrier
                 fill_buffer( vecPatches, nDim_particle+idim, data_double );
                 #pragma omp master
-                write_component( momentum_group, xyz.substr( idim, 1 ).c_str(), data_double[0], H5T_NATIVE_DOUBLE, file_space, mem_space, plist, SMILEI_UNIT_MOMENTUM, nParticles_global );
+                {
+                    // Multiply by the mass to obtain an actual momentum (except for photons (mass = 0))
+                    if( vecPatches( 0 )->vecSpecies[speciesId_]->mass != 1. &&
+                        vecPatches( 0 )->vecSpecies[speciesId_]->mass > 0) {
+                        for( unsigned int ip=0; ip<nParticles_local; ip++ ) {
+                            data_double[ip] *= vecPatches( 0 )->vecSpecies[speciesId_]->mass;
+                        }
+                    }
+                    write_component( momentum_group, xyz.substr( idim, 1 ).c_str(), data_double[0], H5T_NATIVE_DOUBLE, file_space, mem_space, plist, SMILEI_UNIT_MOMENTUM, nParticles_global );
+                }
             }
         }
         #pragma omp master

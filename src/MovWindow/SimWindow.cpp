@@ -35,6 +35,8 @@ SimWindow::SimWindow( Params &params )
     active = false;
     time_start = numeric_limits<double>::max();
     velocity_x = 1.;
+    number_of_additional_shifts = 0;
+    additional_shifts_time = 0.;
     
 #ifdef _OPENMP
     max_threads = omp_get_max_threads();
@@ -48,11 +50,14 @@ SimWindow::SimWindow( Params &params )
         active = true;
         
         PyTools::extract( "time_start", time_start, "MovingWindow" );
-        
         PyTools::extract( "velocity_x", velocity_x, "MovingWindow" );
+        PyTools::extract( "number_of_additional_shifts", number_of_additional_shifts, "MovingWindow" );
+        PyTools::extract( "additional_shifts_time", additional_shifts_time, "MovingWindow" );
     }
     
     cell_length_x_   = params.cell_length[0];
+    n_space_x_       = params.n_space[0];
+    additional_shifts_iteration = floor(additional_shifts_time / params.timestep + 0.5);
     x_moved = 0.;      //The window has not moved at t=0. Warning: not true anymore for restarts.
     n_moved = 0 ;      //The window has not moved at t=0. Warning: not true anymore for restarts.
     
@@ -65,6 +70,10 @@ SimWindow::SimWindow( Params &params )
         MESSAGE( 1, "Moving window is active:" );
         MESSAGE( 2, "velocity_x : " << velocity_x );
         MESSAGE( 2, "time_start : " << time_start );
+        if (number_of_additional_shifts > 0){
+            MESSAGE( 2, "number_of_additional_shifts : " << number_of_additional_shifts );
+            MESSAGE( 2, "additional_shifts_time : " << additional_shifts_time );
+        }
         params.hasWindow = true;
     } else {
         params.hasWindow = false;
@@ -78,12 +87,12 @@ SimWindow::~SimWindow()
 
 bool SimWindow::isMoving( double time_dual )
 {
-    return active && ( ( time_dual - time_start )*velocity_x > x_moved );
+    return active && ( ( time_dual - time_start )*velocity_x > x_moved - number_of_additional_shifts*cell_length_x_*n_space_x_*(time_dual>additional_shifts_time) );
 }
 
-void SimWindow::operate( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params, unsigned int itime, double time_dual, Domain& domain )
+void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params, unsigned int itime, double time_dual, Domain& domain )
 {
-    if( ! isMoving( time_dual ) ) {
+    if( ! isMoving( time_dual ) && itime != additional_shifts_iteration ) {
         return;
     }
     
@@ -120,8 +129,8 @@ void SimWindow::operate( VectorPatch &vecPatches, SmileiMPI *smpi, Params &param
         {
             if( n_moved == 0 ) {
                 MESSAGE( ">>> Window starts moving" );
-            }
-            
+            }             
+
             vecPatches_old.resize( nPatches );
             n_moved += params.n_space[0];
         }
@@ -388,7 +397,7 @@ void SimWindow::operate( VectorPatch &vecPatches, SmileiMPI *smpi, Params &param
         
         //Fill necessary patches with particles
 #ifdef _VECTO
-        if( params.vectorization_mode == "on" ) {
+        if( ( params.vectorization_mode == "on" ) || ( params.cell_sorting ) ) {
             //#pragma omp master
             //{
 #ifndef _NO_MPI_TM

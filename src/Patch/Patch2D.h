@@ -24,9 +24,23 @@ public:
     
     //! Return the volume (or surface or length depending on simulation dimension)
     //! of one cell at the position of a given particle
-    double getCellVolume( Particles *p, unsigned int ipart ) override final
+    double getPrimalCellVolume( Particles *p, unsigned int ipart, Params &params ) override final
     {
-        return cell_volume;
+        double factor = 1.;
+        
+        double halfcell = 0.5 * params.cell_length[0];
+        if( p->position(0,ipart) - getDomainLocalMin(0) < halfcell 
+         || getDomainLocalMax(0) - p->position(0,ipart) < halfcell ) {
+             factor *= 0.5;
+        }
+        
+        halfcell = 0.5 * params.cell_length[1];
+        if( p->position(1,ipart) - getDomainLocalMin(1) < halfcell 
+         || getDomainLocalMax(1) - p->position(1,ipart) < halfcell ) {
+             factor *= 0.5;
+        }
+        
+        return factor * cell_volume;
     };
     
     // MPI exchange/sum methods for particles/fields
@@ -40,14 +54,6 @@ public:
     void finalizeSumField( Field *field, int iDim ) override final;
     void reallyfinalizeSumField( Field *field, int iDim ) override final;
     
-    //! init comm / exchange fields
-    void initExchange( Field *field ) override final;
-    //! init comm / exchange complex fields
-    void initExchangeComplex( Field *field ) override final;
-    //! finalize comm / exchange fields
-    void finalizeExchange( Field *field ) override final;
-    //! finalize comm / exchange complex fields
-    void finalizeExchangeComplex( Field *field ) override final;
     //! init comm / exchange fields in direction iDim only
     void initExchange( Field *field, int iDim, SmileiMPI *smpi ) override final;
     //! init comm / exchange complex fields in direction iDim only

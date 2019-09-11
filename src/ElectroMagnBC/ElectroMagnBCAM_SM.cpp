@@ -217,7 +217,7 @@ void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                                   +              Gamma_SM_Xmin   * byW;
                 +              Delta_SM_Xmin   *( ( *Bl )( i, j+1 )- ( *Bl )( i, j ) );
             }//j  ---end compute Br
-
+            
             
             // for Bt^(d,d)
             vector<double> yd( 1 );

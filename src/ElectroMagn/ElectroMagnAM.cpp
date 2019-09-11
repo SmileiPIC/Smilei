@@ -459,7 +459,7 @@ void ElectroMagnAM::compute_Ap_relativistic_Poisson_AM( Patch *patch, double gam
     // relativistic Poisson's equation in finite differences is multiplied by r_j*dr*dl to condition it before conjugate gradient
 
     double dr_sq_ov_dl_ov_gamma_sq   = ( dr*dr )/dl/( gamma_mean*gamma_mean );
-    double dl_ov_2                   = dl/2.;
+//    double dl_ov_2                   = dl/2.;
     double m_sq_dl                   = (double)(imode*imode)*dl;
     double j_;
     unsigned int j_min =max(1,isYmin*3); // prevent a segmentation fault
@@ -1125,7 +1125,49 @@ void ElectroMagnAM::centerMagneticFields()
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnAM::binomialCurrentFilter()
 {
-    ERROR( "Binomial current filtering not yet implemented in AM" );
+    for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
+    
+        // Static cast of the fields
+        cField2D *Jl     = static_cast<cField2D *>(Jl_ [imode]);
+        cField2D *Jr     = static_cast<cField2D *>(Jr_ [imode]);
+        cField2D *Jt     = static_cast<cField2D *>(Jt_ [imode]);
+
+        cField2D *tmp   = new cField2D( dimPrim, 0, false );
+        tmp->copyFrom( Jl );
+        for( unsigned int i=1; i<nl_d-1; i++ ) {
+            for( unsigned int j=isYmin*2+1; j<nr_p-1; j++ ) {
+                ( *Jl )( i, j ) = ( (   ( *tmp )( i+1, j-1 )+ 2.*( *tmp )( i, j-1 )+    ( *tmp )( i-1, j-1 ))*(double)(j_glob_+j-1)
+                                  + (2.*( *tmp )( i+1, j   )+ 4.*( *tmp )( i, j   )+ 2.*( *tmp )( i-1, j   ))*(double)(j_glob_+j  )
+                                  + (   ( *tmp )( i+1, j+1 )+ 2.*( *tmp )( i, j+1 )+    ( *tmp )( i-1, j+1 ))*(double)(j_glob_+j+1)
+                                  )/16.*dr*invR[j];
+            }
+        }
+        delete tmp;
+
+        tmp   = new cField2D( dimPrim, 1, false );
+        tmp->copyFrom( Jr );
+        for( unsigned int i=1; i<nl_p-1; i++ ) {
+            for( unsigned int j=isYmin*3+1; j<nr_d-1; j++ ) {
+                ( *Jr )( i, j ) = ( (   ( *tmp )( i+1, j-1 )+ 2.*( *tmp )( i, j-1 )+    ( *tmp )( i-1, j-1 ))*(double)(j_glob_+j-1.5)
+                                  + (2.*( *tmp )( i+1, j   )+ 4.*( *tmp )( i, j   )+ 2.*( *tmp )( i-1, j   ))*(double)(j_glob_+j-0.5)
+                                  + (   ( *tmp )( i+1, j+1 )+ 2.*( *tmp )( i, j+1 )+    ( *tmp )( i-1, j+1 ))*(double)(j_glob_+j+0.5)
+                                  )/16.*dr*invRd[j];
+            }
+        }
+        delete tmp;
+
+        tmp   = new cField2D( dimPrim, 2, false );
+        tmp->copyFrom( Jt );
+        for( unsigned int i=1; i<nl_p-1; i++ ) {
+            for( unsigned int j=isYmin*2+1; j<nr_p-1; j++ ) {
+                ( *Jt )( i, j ) = ( (   ( *tmp )( i+1, j-1 )+ 2.*( *tmp )( i, j-1 )+    ( *tmp )( i-1, j-1 ))*(double)(j_glob_+j-1)
+                                  + (2.*( *tmp )( i+1, j   )+ 4.*( *tmp )( i, j   )+ 2.*( *tmp )( i-1, j   ))*(double)(j_glob_+j  )
+                                  + (   ( *tmp )( i+1, j+1 )+ 2.*( *tmp )( i, j+1 )+    ( *tmp )( i-1, j+1 ))*(double)(j_glob_+j+1)
+                                  )/16.*dr*invR[j];
+            }
+        }
+        delete tmp;
+    }
 }
 
 
@@ -1215,8 +1257,8 @@ void ElectroMagnAM::applyExternalFields( Patch *patch )
     int Nmodes = El_.size();
     
     Field *field;
-
-    for (int imode=0;imode<Nmodes;imode++){
+    
+    for( int imode=0; imode<Nmodes; imode++ ) {
         for( vector<ExtField>::iterator extfield=extFields.begin(); extfield!=extFields.end(); extfield++ ) {
             string name = LowerCase( extfield->field );
             if( El_[imode] && name==LowerCase( El_[imode]->name ) ) {
@@ -1235,7 +1277,7 @@ void ElectroMagnAM::applyExternalFields( Patch *patch )
                 field = NULL;
             }
             
-            if( field ){ 
+            if( field ) {
                 applyExternalField( field, extfield->profile, patch );
             };
         }
@@ -1243,51 +1285,137 @@ void ElectroMagnAM::applyExternalFields( Patch *patch )
         Br_m[imode]->copyFrom( Br_[imode] );
         Bt_m[imode]->copyFrom( Bt_[imode] );
     }
+    
+}
+
+void ElectroMagnAM::applyExternalTimeFields( Patch *patch, double time )
+{
+
+#ifdef _TODO_AM
+#endif
+//tommaso: not sure what to do in AM
+//     int Nmodes = El_.size();
+//     
+//     Field *field;
+// 
+//     for (int imode=0;imode<Nmodes;imode++){
+//         for( vector<ExtField>::iterator extfield=extFields.begin(); extfield!=extFields.end(); extfield++ ) {
+//             string name = LowerCase( extfield->field );
+//             if( El_[imode] && name==LowerCase( El_[imode]->name ) ) {
+//                 field = El_[imode];
+//             } else if( Er_[imode] && name==LowerCase( Er_[imode]->name ) ) {
+//                 field = Er_[imode];
+//             } else if( Et_[imode] && name==LowerCase( Et_[imode]->name ) ) {
+//                 field = Et_[imode];
+//             } else if( Bl_[imode] && name==LowerCase( Bl_[imode]->name ) ) {
+//                 field = Bl_[imode];
+//             } else if( Br_[imode] && name==LowerCase( Br_[imode]->name ) ) {
+//                 field = Br_[imode];
+//             } else if( Bt_[imode] && name==LowerCase( Bt_[imode]->name ) ) {
+//                 field = Bt_[imode];
+//             } else {
+//                 field = NULL;
+//             }
+//             
+//             if( field ){ 
+//                 applyExternalTimeField( field, extfield->profile, patch, time );
+//             };
+//         }
+//         Bl_m[imode]->copyFrom( Bl_[imode] );
+//         Br_m[imode]->copyFrom( Br_[imode] );
+//         Bt_m[imode]->copyFrom( Bt_[imode] );
+//     }
 
 }
 
 void ElectroMagnAM::applyExternalField( Field *my_field,  Profile *profile, Patch *patch )
 {
 
-    cField2D *field2D=static_cast<cField2D *>( my_field );
+     cField2D *field2D=static_cast<cField2D *>( my_field );
+     
+     vector<double> pos( 2 );
+     pos[0]      = dl*( ( double )( patch->getCellStartingGlobalIndex( 0 ) )+( field2D->isDual( 0 )?-0.5:0. ) );
+     double pos1 = dr*( ( double )( patch->getCellStartingGlobalIndex( 1 ) )+( field2D->isDual( 1 )?-0.5:0. ) );
+     int N0 = ( int )field2D->dims()[0];
+     int N1 = ( int )field2D->dims()[1];
+     
+     vector<Field *> xr( 2 );
+     vector<unsigned int> n_space_to_create( 2 );
+     n_space_to_create[0] = N0;
+     n_space_to_create[1] = N1;
+     
+     for( unsigned int idim=0 ; idim<2 ; idim++ ) {
+         xr[idim] = new Field2D( n_space_to_create );
+     }
+     
+     for( int i=0 ; i<N0 ; i++ ) {
+         pos[1] = pos1;
+         for( int j=0 ; j<N1 ; j++ ) {
+             for( unsigned int idim=0 ; idim<2 ; idim++ ) {
+                 ( *xr[idim] )( i, j ) = pos[idim];
+             }
+             pos[1] += dr;
+         }
+         pos[0] += dl;
+     }
+     
+     profile->complexValuesAt( xr, *field2D );
+     
+     for( unsigned int idim=0 ; idim<2 ; idim++ ) {
+         delete xr[idim];
+     }
+     
+     //for( auto &embc: emBoundCond ) {
+     //    if( embc ) {
+     //        embc->save_fields( my_field, patch );
+     //    }
+     //}
     
-    vector<double> pos( 2 );
-    pos[0]      = patch->getDomainLocalMin(0) + dl*( (field2D->isDual( 0 )?-0.5:0.) - oversize[0]);
-    double pos1 = patch->getDomainLocalMin(1) + dr*( (field2D->isDual( 1 )?-0.5:0.) - oversize[1]);
-    int N0 = ( int )field2D->dims()[0];
-    int N1 = ( int )field2D->dims()[1];
- 
-    vector<Field *> xr( 2 );
-    vector<unsigned int> n_space_to_create( 2 );
-    n_space_to_create[0] = N0;
-    n_space_to_create[1] = N1;
+}
 
-    for( unsigned int idim=0 ; idim<2 ; idim++ ) {
-        xr[idim] = new Field2D( n_space_to_create );
-    }
+void ElectroMagnAM::applyExternalTimeField( Field *my_field,  Profile *profile, Patch *patch, double time )
+{
 
-    for( int i=0 ; i<N0 ; i++ ) {
-        pos[1] = pos1;
-        for( int j=0 ; j<N1 ; j++ ) {
-            for( unsigned int idim=0 ; idim<2 ; idim++ ) {
-                ( *xr[idim] )( i, j ) = pos[idim];
-            }
-            pos[1] += dr;
-        }
-        pos[0] += dl;
-    }
-
-    profile->complexValuesAt( xr, *field2D );
-
-    for( unsigned int idim=0 ; idim<2 ; idim++ ) {
-        delete xr[idim];
-    }
-
-    //for( auto &embc: emBoundCond ) {
-    //    if( embc ) {
-    //        embc->save_fields( my_field, patch );
-    //    }
-    //}
+//tommaso: not sure what to do in AM
+//    cField2D *field2D=static_cast<cField2D *>( my_field );
+//    
+//    vector<double> pos( 2 );
+//    pos[0]      = dl*( ( double )( patch->getCellStartingGlobalIndex( 0 ) )+( field2D->isDual( 0 )?-0.5:0. ) );
+//    double pos1 = dr*( ( double )( patch->getCellStartingGlobalIndex( 1 ) )+( field2D->isDual( 1 )?-0.5:0. ) );
+//    int N0 = ( int )field2D->dims()[0];
+//    int N1 = ( int )field2D->dims()[1];
+//    
+//    vector<Field *> xr( 2 );
+//    vector<unsigned int> n_space_to_create( 2 );
+//    n_space_to_create[0] = N0;
+//    n_space_to_create[1] = N1;
+//
+//    for( unsigned int idim=0 ; idim<2 ; idim++ ) {
+//        xr[idim] = new Field2D( n_space_to_create );
+//    }
+//
+//    for( int i=0 ; i<N0 ; i++ ) {
+//        pos[1] = pos1;
+//        for( int j=0 ; j<N1 ; j++ ) {
+//            for( unsigned int idim=0 ; idim<2 ; idim++ ) {
+//                ( *xr[idim] )( i, j ) = pos[idim];
+//            }
+//            pos[1] += dr;
+//        }
+//        pos[0] += dl;
+//    }
+//
+//    profile->complexValuesAt( xr, *field2D );
+//
+//    for( unsigned int idim=0 ; idim<2 ; idim++ ) {
+//        delete xr[idim];
+//    }
+//
+//    //for( auto &embc: emBoundCond ) {
+//    //    if( embc ) {
+//    //        embc->save_fields( my_field, patch );
+//    //    }
+//    //}
     
 }
 
@@ -1312,123 +1440,5 @@ void ElectroMagnAM::initAntennas( Patch *patch, Params& params )
         }
     }
     
-}
-
-//! Evaluating EM fields modes correctly on axis
-void ElectroMagnAM::on_axis_J( bool diag_flag )
-{
-
-    if( isYmin ) {
-    
-        cField2D *Jl ;
-        cField2D *Jr ;
-        cField2D *Jt ;
-        
-        for( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
-        
-            //static cast of the total currents and densities
-            Jl    = Jl_[imode];
-            Jr    = Jr_[imode];
-            Jt    = Jt_[imode];
-            
-            // Set Jr below axis to zero for all modes
-            for( unsigned int i=0; i<nl_p; i++ ) {
-                for( unsigned int j=0; j<oversize[1]+1; j++ ) {
-                    ( *Jr )( i, j ) = 0. ;
-                }
-            }
-            // Set Jt below and on axis to zero for all modes except mode 1
-            if( imode != 1 ) {
-                for( unsigned int i=0; i<nl_p; i++ ) {
-                    for( unsigned int j=0; j<oversize[1]+1; j++ ) {
-                        ( *Jt )( i, j ) = 0. ;
-                    }
-                }
-            } else {
-                // Set Jt below axis to zero for all modes
-                for( unsigned int i=0; i<nl_p; i++ ) {
-                    for( unsigned int j=0; j<oversize[1]; j++ ) {
-                        ( *Jt )( i, j ) = 0. ;
-                    }
-                    // Set Jt on axis for mode 1 for continuity equation
-                    ( *Jt )( i, oversize[1] ) = - 1./3.* ( 4.* Icpx * ( *Jr )( i, oversize[1]+1 ) + ( *Jt )( i, oversize[1]+1 ) );
-                }
-            }
-            if( imode != 0 ) {
-                // Set Jx below and on axis to zero for all modes except mode 0
-                for( unsigned int i=0; i<nl_d; i++ ) {
-                    for( unsigned int j=0; j<oversize[1]+1; j++ ) {
-                        ( *Jl )( i, j ) = 0. ;
-                    }
-                }
-            } else {
-                // Set Jx below axis to zero for all modes
-                for( unsigned int i=0; i<nl_d; i++ ) {
-                    for( unsigned int j=0; j<oversize[1]; j++ ) {
-                        ( *Jl )( i, j ) = 0. ;
-                    }
-                }
-                
-            }
-            
-        }
-        //if(diag_flag){
-        //    for ( unsigned int imode=0 ; imode<nmodes ; imode++ ) {
-        //        cField2D* rho   = rho_AM_[imode];
-        //        if (imode == 0){
-        //            for (unsigned int ism=0; ism < n_species; ism++){
-        //                Jt    = Jt_s[ism];
-        //                Jr    = Jr_s[ism];
-        //                if ( ( Jt != NULL )  )
-        //                    for (unsigned int i=0; i<nl_p; i++)
-        //                        (*Jt)(i,oversize[1]) = 0. ;
-        //                if ( ( Jr != NULL )  )
-        //                    for (unsigned int i=0; i<nl_p; i++)
-        //                        (*Jr)(i,oversize[1]) =  -(*Jr)(i,oversize[1]) ;
-        
-        //            }
-        //        }
-        //        else if (imode == 1){
-        //            for (unsigned int i=0; i<nl_p; i++)
-        //                (*rho)(i,oversize[1])= 0.;
-        //            //Loop on all modes and species for J_s
-        //            for (unsigned int ism=n_species; ism <  2*n_species; ism++){
-        //                Jl    = Jl_s[ism];
-        //                Jt    = Jt_s[ism];
-        //                Jr    = Jr_s[ism];
-        //                //if ( ( Jt != NULL ) && (Jr != NULL ) ) {
-        //                //    for (unsigned int i=0; i<nl_p; i++)
-        //                //        (*Jt)(i,oversize[1]) = - 1./3.* (4.* Icpx * (*Jr)(i,oversize[1]+1) + (*Jt)(i,oversize[1]+1));
-        //                //    for (unsigned int i=0; i<nl_p; i++)
-        //                //        (*Jr)(i,oversize[1])= 2.*Icpx* (*Jt)(i,oversize[1])-(*Jr)(i,oversize[1]+1) ;
-        //                //}
-        //                if ( Jl != NULL )
-        //                    for (unsigned int i=0; i<nl_d; i++)
-        //                        (*Jl)(i,oversize[1])= 0. ;
-        //            }
-        //        }
-        //        else {  // imode > 1
-        //            //Loop on all modes and species for J_s
-        //            for (unsigned int ism=2*n_species; ism <  n_species*nmodes ; ism++){
-        //                Jt    = Jt_s[ism];
-        //                if ( Jt != NULL )
-        //                    for (unsigned int i=0; i<nl_p; i++)
-        //                        (*Jt)(i,oversize[1]) = 0.;
-        
-        //                Jr    = Jr_s[ism];
-        //                if ( Jr != NULL )
-        //                    for (unsigned int i=0; i<nl_p; i++)
-        //                        (*Jr)(i,oversize[1]) = -(*Jr)(i,oversize[1]+1) ;
-        
-        //                Jl    = Jl_s[ism];
-        //                if ( Jl != NULL )
-        //                    for (unsigned int i=0; i<nl_d; i++)
-        //                        (*Jl)(i,oversize[1])= 0. ;
-        //            }
-        //        }
-        //    }
-        //}
-    }
-    return;
 }
 

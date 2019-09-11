@@ -588,7 +588,7 @@ void ElectroMagn3D::initE( Patch *patch )
             for( unsigned int k=0; k<nz_p; k++ ) {
                 ( *Ex3D )( nx_d-1, j, k ) = ( *Ex3D )( nx_d-2, j, k ) + dx*( *rho3D )( nx_p-1, j, k )
                                             - ( ( *Ey3D )( nx_p-1, j+1, k )-( *Ey3D )( nx_p-1, j, k ) )*dx/dy
-                                            - ( ( *Ey3D )( nx_p-1, j, k+1 )-( *Ez3D )( nx_p-1, j, k ) )*dx/dz;
+                                            - ( ( *Ez3D )( nx_p-1, j, k+1 )-( *Ez3D )( nx_p-1, j, k ) )*dx/dz;
             }
         }
     }
@@ -1728,6 +1728,55 @@ void ElectroMagn3D::applyExternalField( Field *my_field,  Profile *profile, Patc
     }
     
     
+}
+
+void ElectroMagn3D::applyExternalTimeField( Field *my_field,  Profile *profile, Patch *patch, double time )
+{
+
+    Field3D *field3D = static_cast<Field3D *>( my_field );
+    
+    vector<double> pos( 3 );
+    pos[0]      = dx*( ( double )( patch->getCellStartingGlobalIndex( 0 ) )+( field3D->isDual( 0 )?-0.5:0. ) );
+    double pos1 = dy*( ( double )( patch->getCellStartingGlobalIndex( 1 ) )+( field3D->isDual( 1 )?-0.5:0. ) );
+    double pos2 = dz*( ( double )( patch->getCellStartingGlobalIndex( 2 ) )+( field3D->isDual( 2 )?-0.5:0. ) );
+    int N0 = ( int )field3D->dims()[0];
+    int N1 = ( int )field3D->dims()[1];
+    int N2 = ( int )field3D->dims()[2];
+    
+    // UNSIGNED INT LEADS TO PB IN PERIODIC BCs
+    // Create the x,y,z maps where profiles will be evaluated
+    vector<Field *> xyz( 3 );
+    vector<unsigned int> n_space_to_create( 3 );
+    n_space_to_create[0] = N0;
+    n_space_to_create[1] = N1;
+    n_space_to_create[2] = N2;
+    
+    for( unsigned int idim=0 ; idim<3 ; idim++ ) {
+        xyz[idim] = new Field3D( n_space_to_create );
+    }
+    
+    for( int i=0 ; i<N0 ; i++ ) {
+        pos[1] = pos1;
+        for( int j=0 ; j<N1 ; j++ ) {
+            pos[2] = pos2;
+            for( int k=0 ; k<N2 ; k++ ) {
+                //(*field3D)(i,j,k) += profile->valueAt(pos);
+                for( unsigned int idim=0 ; idim<3 ; idim++ ) {
+                    ( *xyz[idim] )( i, j, k ) = pos[idim];
+                }
+                pos[2] += dz;
+            }
+            pos[1] += dy;
+        }
+        pos[0] += dx;
+    }
+    
+    profile->valuesAt( xyz, *field3D );
+    
+    for( unsigned int idim=0 ; idim<3 ; idim++ ) {
+        delete xyz[idim];
+    }
+
 }
 
 

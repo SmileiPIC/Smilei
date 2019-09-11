@@ -33,15 +33,14 @@ relative_energy_spread = 0.01
 
 # normalized density of a bunch with gaussian density
 def nbunch_(x,r):
-        
-	profile_x = math.exp(-(x-center_bunch)**2/2./bunch_sigma_x**2)
-	profile_r = math.exp(-((r)**2)/2./bunch_sigma_r**2)
-        profile = alpha*n0*profile_x*profile_r
-	
-	if (((  (x-center_bunch)**2/(5.*bunch_sigma_x)**2 + ((r)**2)/(5.*bunch_sigma_r)**2 ) < 1. )):
-		return profile
-	else:
-		return 0.
+    profile_x = math.exp(-(x-center_bunch)**2/2./bunch_sigma_x**2)
+    profile_r = math.exp(-((r)**2)/2./bunch_sigma_r**2)
+    profile = alpha*n0*profile_x*profile_r
+    
+    if (((  (x-center_bunch)**2/(5.*bunch_sigma_x)**2 + ((r)**2)/(5.*bunch_sigma_r)**2 ) < 1. )):
+        return profile
+    else:
+        return 0.
 
 
 Main(

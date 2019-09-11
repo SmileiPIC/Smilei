@@ -368,7 +368,7 @@ void SpeciesVAdaptive::reconfiguration( Params &params, Patch *patch )
     // Metrics 1 - based on the ratio of vectorized cells
     // Compute the number of cells that contain more than 8 particles
     //ratio_number_of_vecto_cells = SpeciesMetrics::get_ratio_number_of_vecto_cells(count,8);
-
+    
     // Test metrics, if necessary we reasign operators
     //if ( (ratio_number_of_vecto_cells > 0.5 && this->vectorized_operators == false)
     //  || (ratio_number_of_vecto_cells < 0.5 && this->vectorized_operators == true))
@@ -376,30 +376,22 @@ void SpeciesVAdaptive::reconfiguration( Params &params, Patch *patch )
     //    reasign_operators = true;
     //}
     // --------------------------------------------------------------------
-
+    
     // --------------------------------------------------------------------
     // Metrics 2 - based on the evaluation of the computational time
     SpeciesMetrics::get_computation_time( count,
                                           vecto_time,
                                           scalar_time );
 
-    //std::cout << "vecto_time " << vecto_time << " " << scalar_time << '\n';
-
     if( ( vecto_time <= scalar_time && this->vectorized_operators == false )
             || ( vecto_time > scalar_time && this->vectorized_operators == true ) ) {
         reasign_operators = true;
     }
     // --------------------------------------------------------------------
-
-    /*std::cout << "Vectorized_operators: " << this->vectorized_operators
-              << " ratio_number_of_vecto_cells: " << this->ratio_number_of_vecto_cells
-              << " number_of_vecto_cells: " << number_of_vecto_cells
-              << " number_of_non_zero_cells: " << number_of_non_zero_cells
-              << " ncells: " << ncell << "\n";*/
-
+    
     // Operator reasignment if required by the metrics
     if( reasign_operators ) {
-
+    
         // The type of operator is changed
         this->vectorized_operators = !this->vectorized_operators;
 
@@ -478,7 +470,7 @@ void SpeciesVAdaptive::reconfigure_operators( Params &params, Patch *patch )
     delete Interp;
     //delete Push;
     delete Proj;
-
+    
     // Reassign the correct Interpolator
     Interp = InterpolatorFactory::create( params, patch, this->vectorized_operators );
     // Reassign the correct Pusher to Push
