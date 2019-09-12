@@ -1442,7 +1442,7 @@ void Params::uncoupled_decomposition_3D()
     // Number of domain in 3D
     // Decomposition in 2 times, X and larger side
     double tmp(0.);
-    tmp  = (double)number_of_patches[0] / (double)(max(number_of_patches[1],number_of_patches[2]));
+    tmp  = (double)number_of_patches[0] / (double)((number_of_patches[1]*number_of_patches[2]));
     number_of_domain[0] = min( sz, max(1, (int)sqrt ( (double)sz*tmp*tmp ) ) );
     int rest = (int)(sz / number_of_domain[0]);
     while ( number_of_domain[0]*rest != sz ) {
