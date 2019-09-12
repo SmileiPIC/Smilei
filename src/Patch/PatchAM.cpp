@@ -493,7 +493,7 @@ void PatchAM::createType2( Params &params )
             MPI_Type_commit( &( ntype_[0][ix_isPrim][iy_isPrim] ) );
             
             ntype_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            MPI_Type_vector( 2*nx, params.oversize[1], ny,
+            MPI_Type_vector( nx, 2*params.oversize[1], 2*ny,
                              MPI_DOUBLE, &( ntype_[1][ix_isPrim][iy_isPrim] ) );
             MPI_Type_commit( &( ntype_[1][ix_isPrim][iy_isPrim] ) );
             
@@ -512,7 +512,7 @@ void PatchAM::createType2( Params &params )
             MPI_Type_commit( &( ntypeSum_[0][ix_isPrim][iy_isPrim] ) );
             
             ntypeSum_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            MPI_Type_vector( 2*nx, ny_sum, ny,
+            MPI_Type_vector( nx, 2*ny_sum, 2*ny,
                              MPI_DOUBLE, &( ntypeSum_[1][ix_isPrim][iy_isPrim] ) );
             MPI_Type_commit( &( ntypeSum_[1][ix_isPrim][iy_isPrim] ) );
             
