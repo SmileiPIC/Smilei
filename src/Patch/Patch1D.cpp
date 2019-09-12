@@ -512,13 +512,13 @@ void Patch1D::exchangeField_movewin( Field* field, int clrw )
 
     field->shift_x(clrw);
 
-    if (neighbor_[0][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
+    if (MPI_neighbor_[0][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
         istart = ( (iNeighbor+1)%2 ) * ( n_elem[0] - clrw ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
-        MPI_Irecv( &(f1D->data_[istart]), clrw, MPI_DOUBLE, neighbor_[0][(iNeighbor+1)%2], 0, MPI_COMM_WORLD, &rrequest );
+        MPI_Irecv( &(f1D->data_[istart]), clrw, MPI_DOUBLE, MPI_neighbor_[0][(iNeighbor+1)%2], 0, MPI_COMM_WORLD, &rrequest );
     } // END of Recv
 
 
-    if (neighbor_[0][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
+    if (MPI_neighbor_[0][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
         MPI_Wait( &rrequest, &rstat );
     }
 

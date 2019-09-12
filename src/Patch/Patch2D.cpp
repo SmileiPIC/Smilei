@@ -649,28 +649,28 @@ void Patch2D::exchangeField_movewin( Field* field, int clrw )
     MPI_Request rrequest;
 
 
-    if (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
+    if (MPI_neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
 
         istart =  2*oversize[iDim] + 1 + isDual[iDim] ;
         ix = (1-iDim)*istart;
         iy =    iDim *istart;
-        MPI_Bsend( &(f2D->data_2D[ix][iy]), 1, ntype, neighbor_[iDim][iNeighbor], 0, MPI_COMM_WORLD);
+        MPI_Bsend( &(f2D->data_2D[ix][iy]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], 0, MPI_COMM_WORLD);
     } // END of Send
 
     //Once the message is in the buffer we can safely shift the field in memory. 
     field->shift_x(clrw);
     // and then receive the complementary field from the East.
 
-    if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
+    if (MPI_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
 
         istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - clrw ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
         ix = (1-iDim)*istart;
         iy =    iDim *istart;
-        MPI_Irecv( &(f2D->data_2D[ix][iy]), 1, ntype, neighbor_[iDim][(iNeighbor+1)%2], 0, MPI_COMM_WORLD, &rrequest);
+        MPI_Irecv( &(f2D->data_2D[ix][iy]), 1, ntype, MPI_neighbor_[iDim][(iNeighbor+1)%2], 0, MPI_COMM_WORLD, &rrequest);
     } // END of Recv
 
 
-    if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
+    if (MPI_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
         MPI_Wait( &rrequest, &rstat);
     }
     MPI_Buffer_detach( &b, &bufsize);

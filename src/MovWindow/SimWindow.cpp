@@ -231,7 +231,8 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                 }
                 mypatch->EMfields->emBoundCond = ElectroMagnBC_Factory::create( params, mypatch );
                 mypatch->EMfields->laserDisabled();
-                mypatch->EMfields->emBoundCond[0]->apply(mypatch->EMfields, time_dual, mypatch);
+                if (!params.uncoupled_grids)
+                    mypatch->EMfields->emBoundCond[0]->apply(mypatch->EMfields, time_dual, mypatch);
             }
             
             mypatch->EMfields->laserDisabled();
@@ -283,7 +284,8 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                 }
                 mypatch->EMfields->emBoundCond = ElectroMagnBC_Factory::create( params, mypatch );
                 mypatch->EMfields->laserDisabled();
-                mypatch->EMfields->emBoundCond[0]->apply(mypatch->EMfields, time_dual, mypatch);
+                if (!params.uncoupled_grids)
+                    mypatch->EMfields->emBoundCond[0]->apply(mypatch->EMfields, time_dual, mypatch);
             }
             if( mypatch->wasXmax( params ) ) {
                 for( auto &embc:mypatch->EMfields->emBoundCond ) {

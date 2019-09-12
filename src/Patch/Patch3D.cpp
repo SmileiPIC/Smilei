@@ -733,7 +733,7 @@ void Patch3D::exchangeField_movewin( Field* field, int clrw )
     vector<int> idx( patch_ndims_,0 );
     idx[iDim] = 1;
 
-    if (neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
+    if (MPI_neighbor_[iDim][iNeighbor]!=MPI_PROC_NULL) {
         if (!pxr)
             istart =  2*oversize[iDim] + 1 + isDual[iDim] ;
         else
@@ -741,14 +741,14 @@ void Patch3D::exchangeField_movewin( Field* field, int clrw )
         ix = idx[0]*istart;
         iy = idx[1]*istart;
         iz = idx[2]*istart;
-        MPI_Bsend( &(f3D->data_3D[ix][iy][iz]), 1, ntype, neighbor_[iDim][iNeighbor], 0, MPI_COMM_WORLD);
+        MPI_Bsend( &(f3D->data_3D[ix][iy][iz]), 1, ntype, MPI_neighbor_[iDim][iNeighbor], 0, MPI_COMM_WORLD);
     } // END of Send
 
     //Once the message is in the buffer we can safely shift the field in memory. 
     field->shift_x(clrw);
     // and then receive the complementary field from the East.
 
-    if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
+    if (MPI_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
          if (!pxr)
              istart = ( (iNeighbor+1)%2 ) * ( n_elem[iDim] - clrw ) + (1-(iNeighbor+1)%2) * ( 0 )  ;
          else
@@ -756,11 +756,11 @@ void Patch3D::exchangeField_movewin( Field* field, int clrw )
         ix = idx[0]*istart;
         iy = idx[1]*istart;
         iz = idx[2]*istart;
-        MPI_Irecv( &(f3D->data_3D[ix][iy][iz]), 1, ntype, neighbor_[iDim][(iNeighbor+1)%2], 0, MPI_COMM_WORLD, &rrequest);
+        MPI_Irecv( &(f3D->data_3D[ix][iy][iz]), 1, ntype, MPI_neighbor_[iDim][(iNeighbor+1)%2], 0, MPI_COMM_WORLD, &rrequest);
     } // END of Recv
 
 
-    if (neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
+    if (MPI_neighbor_[iDim][(iNeighbor+1)%2]!=MPI_PROC_NULL) {
         MPI_Wait( &rrequest, &rstat);
     }
     MPI_Buffer_detach( &b, &bufsize);
