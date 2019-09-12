@@ -534,6 +534,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     //nordery=norder[1];
     //norderz=norder[2];
 
+    apply_divergence_cleaning = false;
     if ( is_spectral && geometry == "AMcylindrical" ) {
         PyTools::extract( "pseudo_spectral_guardells", pseudo_spectral_guardells, "Main" );
         if (!pseudo_spectral_guardells) {
