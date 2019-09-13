@@ -35,8 +35,8 @@ LaserEnvelopeAM::LaserEnvelopeAM( Params &params, Patch *patch, ElectroMagn *EMf
     Phi_         = new Field2D( dimPrim, "Phi_mode_0" );
     Phi_m        = new Field2D( dimPrim, "Phi_m_mode_0" );
     
-    GradPhil_    = new Field2D( dimPrim, "GradPhix_mode_0" );
-    GradPhil_m   = new Field2D( dimPrim, "GradPhix_m_mode_0" );
+    GradPhil_    = new Field2D( dimPrim, "GradPhil_mode_0" );
+    GradPhil_m   = new Field2D( dimPrim, "GradPhil_m_mode_0" );
     
     GradPhir_    = new Field2D( dimPrim, "GradPhir_mode_0" );
     GradPhir_m   = new Field2D( dimPrim, "GradPhir_m_mode_0" );
