@@ -2809,6 +2809,15 @@ void VectorPatch::update_field_list( int ispec, SmileiMPI *smpi )
                     listrhos_AM_[imode].clear();
                 }
             }
+            if( patches_[0]->EMfields->envelope != NULL )
+            {
+                if( patches_[0]->EMfields->Env_Chi_s[ispec] ) {
+                    listEnv_Chis_.resize( size() ) ;
+                } else {
+                    listEnv_Chis_.clear();
+                }
+            }
+            
         }
         for( unsigned int imode=0 ; imode < nmodes ; imode++ ) {
             unsigned int ifield = imode*n_species + ispec ;
@@ -2833,7 +2842,14 @@ void VectorPatch::update_field_list( int ispec, SmileiMPI *smpi )
                 }
             }
         }
-
+        for( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            if( patches_[0]->EMfields->envelope != NULL ) {
+                if( patches_[ipatch]->EMfields->Env_Chi_s[ispec] ) {
+                    listEnv_Chis_[ipatch] = patches_[ipatch]->EMfields->Env_Chi_s[ispec];
+                    listEnv_Chis_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                }
+            }
+        }
     }
 
 
