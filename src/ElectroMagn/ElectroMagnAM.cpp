@@ -1263,7 +1263,26 @@ void ElectroMagnAM::computeTotalRhoJ()
 // Compute the total susceptibility from species susceptibility
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnAM::computeTotalEnvChi()
-{ } //END computeTotalEnvChi
+{ 
+    // static cast of the total susceptibility
+    Field2D *Env_Chi2Dcyl   = static_cast<Field2D *>( Env_Chi_);
+    
+    // -----------------------------------
+    // Species susceptibility
+    // -----------------------------------
+    for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
+        if( Env_Chi_s[ispec] ) {
+            Field2D *Env_Chi2Dcyl_s  = static_cast<Field2D *>( Env_Chi_s[ispec] );
+            for( unsigned int i=0 ; i<nl_p ; i++ ) {
+                for( unsigned int j=0 ; j<nr_p ; j++ ) {
+                    ( *Env_Chi2Dcyl )( i, j ) += ( *Env_Chi2Dcyl_s )( i, j );
+                }
+            }
+        }
+    }//END loop on species ispec
+
+
+} //END computeTotalEnvChi
 
 
 // ---------------------------------------------------------------------------------------------------------------------
