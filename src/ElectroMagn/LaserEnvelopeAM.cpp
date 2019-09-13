@@ -202,13 +202,13 @@ void LaserEnvelopeAM::compute( ElectroMagn *EMfields )
     A2Dcylnew  = new cField2D( A_->dims_ );
  
     //// explicit solver
-    for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // x loop
+    for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // l loop
         for( unsigned int j=std::max(3*isYmin,1) ; j < A_->dims_[1]-1 ; j++ ) { // r loop
             ( *A2Dcylnew )( i, j ) -= ( *Env_Chi2Dcyl )( i, j )*( *A2Dcyl )( i, j ); // subtract here source term Chi*A from plasma
             // A2Dcylnew = laplacian - source term
-            ( *A2Dcylnew )( i, j ) += ( ( *A2Dcyl )( i-1, j )-2.*( *A2Dcyl )( i, j )+( *A2Dcyl )( i+1, j ) )*one_ov_dl_sq; // x part
+            ( *A2Dcylnew )( i, j ) += ( ( *A2Dcyl )( i-1, j )-2.*( *A2Dcyl )( i, j )+( *A2Dcyl )( i+1, j ) )*one_ov_dl_sq; // l part
             ( *A2Dcylnew )( i, j ) += ( ( *A2Dcyl )( i, j-1 )-2.*( *A2Dcyl )( i, j )+( *A2Dcyl )( i, j+1 ) )*one_ov_dr_sq; // r part
-            ( *A2Dcylnew )( i, j ) += ( ( *A2Dcyl )( i, j+1 )-( *A2Dcyl )( i, j-1 ) ) * one_ov_2dr / ( ( double )( j_glob+j )*dr );          
+            ( *A2Dcylnew )( i, j ) += ( ( *A2Dcyl )( i, j+1 )-( *A2Dcyl )( i, j-1 ) ) * one_ov_2dr / ( ( double )( j_glob+j )*dr ); // r part         
 
             // A2Dcylnew = A2Dcylnew+2ik0*dA/dx
             ( *A2Dcylnew )( i, j ) += i1_2k0_over_2dl*( ( *A2Dcyl )( i+1, j )-( *A2Dcyl )( i-1, j ) );
@@ -222,11 +222,11 @@ void LaserEnvelopeAM::compute( ElectroMagn *EMfields )
     } // end l loop
 
     if (isYmin){ // axis BC
-        for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // x loop
+        for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // l loop
            unsigned int j = 2; // j_p = 2 corresponds to r=0
 
            ( *A2Dcylnew )( i, j ) -= ( *Env_Chi2Dcyl )( i, j )*( *A2Dcyl )( i, j ); // subtract here source term Chi*A from plasma
-           ( *A2Dcylnew )( i, j ) += ( ( *A2Dcyl )( i-1, j )-2.*( *A2Dcyl )( i, j )+( *A2Dcyl )( i+1, j ) )*one_ov_dl_sq; // x part
+           ( *A2Dcylnew )( i, j ) += ( ( *A2Dcyl )( i-1, j )-2.*( *A2Dcyl )( i, j )+( *A2Dcyl )( i+1, j ) )*one_ov_dl_sq; // l part
            ( *A2Dcylnew )( i, j ) += 4. * ( ( *A2Dcyl )( i, j+1 )-( *A2Dcyl )( i, j ) ) * one_ov_dr_sq;
 
            // A2Dcylnew = A2Dcylnew+2ik0*dA/dx
@@ -308,12 +308,12 @@ void LaserEnvelopeAM::compute_gradient_Phi( ElectroMagn *EMfields )
 
     // Compute gradients of Phi, at timesteps n
     if (isYmin){ // axis BC
-        for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // x loop
-            unsigned int j = 2;        
+        for( unsigned int i=1 ; i <A_->dims_[0]-1; i++ ) { // l loop
+            unsigned int j = 2;  // j_p corresponds to r=0      
       
             // gradient in x direction
             ( *GradPhil2Dcyl )( i, j ) = ( ( *Phi2Dcyl )( i+1, j )-( *Phi2Dcyl )( i-1, j ) ) * one_ov_2dl;
-            // gradient in r direction
+            // gradient in r direction, identically zero on r = 0
             ( *GradPhir2Dcyl )( i, j ) = 0. ; // ( ( *Phi2Dcyl )( i, j+1 )-( *Phi2Dcyl )( i, j-1 ) ) * one_ov_2dr;
                   
         } // end l loop
