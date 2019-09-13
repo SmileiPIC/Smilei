@@ -431,22 +431,6 @@ void InterpolatorAM2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Par
     // Compute coefficients
     coeffs( xpn, rpn );
     
-    // Declaration and calculation of the coefficient for interpolation
-    double delta2;
-    
-    
-    deltax   = xpn - ( double )ip_;
-    delta2  = deltax*deltax;
-    coeffxp_[0] = 0.5 * ( delta2-deltax+0.25 );
-    coeffxp_[1] = 0.75 - delta2;
-    coeffxp_[2] = 0.5 * ( delta2+deltax+0.25 );
-    
-    deltar   = rpn - ( double )jp_;
-    delta2  = deltar*deltar;
-    coeffyp_[0] = 0.5 * ( delta2-deltar+0.25 );
-    coeffyp_[1] = 0.75 - delta2;
-    coeffyp_[2] = 0.5 * ( delta2+deltar+0.25 );
-    
     // -------------------------
     // Interpolation of Env_A_abs_^(p,p)
     // -------------------------
