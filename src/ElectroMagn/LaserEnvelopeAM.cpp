@@ -328,8 +328,8 @@ void LaserEnvelopeAM::savePhi_and_GradPhi()
     Field2D *Phi2Dcyl         = static_cast<Field2D *>( Phi_ );
     Field2D *Phi_m2Dcyl       = static_cast<Field2D *>( Phi_m );
     
-    Field2D *GradPhix2Dcyl    = static_cast<Field2D *>( GradPhil_ );
-    Field2D *GradPhix_m2Dcyl  = static_cast<Field2D *>( GradPhil_m );
+    Field2D *GradPhil2Dcyl    = static_cast<Field2D *>( GradPhil_ );
+    Field2D *GradPhil_m2Dcyl  = static_cast<Field2D *>( GradPhil_m );
     
     Field2D *GradPhir2Dcyl    = static_cast<Field2D *>( GradPhir_ );
     Field2D *GradPhir_m2Dcyl  = static_cast<Field2D *>( GradPhir_m );
@@ -341,7 +341,7 @@ void LaserEnvelopeAM::savePhi_and_GradPhi()
             ( *Phi_m2Dcyl )( i, j )       = ( *Phi2Dcyl )( i, j );
             
             // gradient of ponderomotive potential
-            ( *GradPhix_m2Dcyl )( i, j )  = ( *GradPhix2Dcyl )( i, j );
+            ( *GradPhil_m2Dcyl )( i, j )  = ( *GradPhil2Dcyl )( i, j );
             ( *GradPhir_m2Dcyl )( i, j )  = ( *GradPhir2Dcyl )( i, j );
             
         } // end r loop
