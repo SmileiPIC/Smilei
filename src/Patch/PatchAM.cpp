@@ -490,12 +490,12 @@ void PatchAM::createType( Params &params )
             
             // Standard Type
             ntype_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            MPI_Type_contiguous( 2*params.oversize[0]*ny,
+            MPI_Type_contiguous( params.oversize[0]*ny,
                                  MPI_DOUBLE, &( ntype_[0][ix_isPrim][iy_isPrim] ) );
             MPI_Type_commit( &( ntype_[0][ix_isPrim][iy_isPrim] ) );
             
             ntype_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            MPI_Type_vector( nx, 2*params.oversize[1], 2*ny,
+            MPI_Type_vector( nx, params.oversize[1], ny,
                              MPI_DOUBLE, &( ntype_[1][ix_isPrim][iy_isPrim] ) );
             MPI_Type_commit( &( ntype_[1][ix_isPrim][iy_isPrim] ) );
             
@@ -549,12 +549,12 @@ void PatchAM::createType2( Params &params )
             
             // Standard Type
             ntype_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            MPI_Type_contiguous( 2*params.oversize[0]*ny,
+            MPI_Type_contiguous( params.oversize[0]*ny,
                                  MPI_DOUBLE, &( ntype_[0][ix_isPrim][iy_isPrim] ) );
             MPI_Type_commit( &( ntype_[0][ix_isPrim][iy_isPrim] ) );
             
             ntype_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            MPI_Type_vector( 2*nx, params.oversize[1], ny,
+            MPI_Type_vector( nx, params.oversize[1], ny,
                              MPI_DOUBLE, &( ntype_[1][ix_isPrim][iy_isPrim] ) );
             MPI_Type_commit( &( ntype_[1][ix_isPrim][iy_isPrim] ) );
             
