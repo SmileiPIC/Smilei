@@ -146,11 +146,19 @@ void VectorPatch::createDiags( Params &params, SmileiMPI *smpi, OpenPMDparams &o
                     EMfields->rho_AM_s[ifield]=NULL;
                 }
             }
-
+      
+            if (params.Laser_Envelope_model){
+                for( unsigned int ifield=0 ; ifield<EMfields->Env_Chi_s.size(); ifield++ ) {
+                if( EMfields->Env_Chi_s[ifield]->data_ == NULL ) {
+                    delete EMfields->Env_Chi_s[ifield];
+                    EMfields->Env_Chi_s[ifield]=NULL;
+                    }
+                }
+            }
         }
 
 
-        if( params.Laser_Envelope_model ) {
+        if( (params.Laser_Envelope_model) && (params.geometry != "AMcylindrical")) {
             for( unsigned int ifield=0 ; ifield<( *this )( ipatch )->EMfields->Env_Chi_s.size(); ifield++ ) {
                 if( ( *this )( ipatch )->EMfields->Env_Chi_s[ifield]->data_ == NULL ) {
                     delete( *this )( ipatch )->EMfields->Env_Chi_s[ifield];
