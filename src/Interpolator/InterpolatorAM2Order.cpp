@@ -303,11 +303,11 @@ void InterpolatorAM2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
         // Interpolation of Bt^(d,d)
         ( *Bpart ) [ 2*nparts+ipart ]       = std::real( compute( &coeffxd_[1], &coeffyd_[1], Bt, id_, jd_ ) );
         // Interpolation of Phi^(p,p)
-        ( *PHIpart ) [ 0*nparts+ipart ]     = std::real( compute( &coeffxd_[1], &coeffyp_[1], Phi, id_, jp_ ) );
+        ( *PHIpart ) [ 0*nparts+ipart ]     = compute( &coeffxp_[1], &coeffyp_[1], Phi, ip_, jp_ ) ;
         // Interpolation of GradPhil^(p,p)
-        ( *GradPHIpart ) [ 0*nparts+ipart ] = std::real( compute( &coeffxd_[1], &coeffyp_[1], GradPhil, ip_, jp_ ) );
+        ( *GradPHIpart ) [ 0*nparts+ipart ] = compute( &coeffxp_[1], &coeffyp_[1], GradPhil, ip_, jp_ ) ;
         // Interpolation of GradPhir^(p,p)
-        ( *GradPHIpart ) [ 1*nparts+ipart ] = std::real( compute( &coeffxd_[1], &coeffyp_[1], GradPhir, ip_, jp_ ) );
+        ( *GradPHIpart ) [ 1*nparts+ipart ] = compute( &coeffxp_[1], &coeffyp_[1], GradPhir, ip_, jp_ ) ;
         // GradPhit = 0 in cylindrical symmetry
         ( *GradPHIpart ) [ 2*nparts+ipart ] = 0.;
    
@@ -317,7 +317,7 @@ void InterpolatorAM2Order::fieldsAndEnvelope( ElectroMagn *EMfields, Particles &
             exp_m_theta = 1. ;
         }
 
-        // project on x,y,z
+        // project on x,y,z, remember that GradPhit = 0 in cylindrical symmetry
         delta2 = std::real( exp_m_theta ) * ( *Epart ) [ 1*nparts+ipart ] + std::imag( exp_m_theta ) * ( *Epart ) [ 2*nparts+ipart ];
         ( *Epart ) [ 2*nparts+ipart ] = -std::imag( exp_m_theta ) * ( *Epart ) [ 1*nparts+ipart ] + std::real( exp_m_theta ) * ( *Epart ) [ 2*nparts+ipart ];
         ( *Epart ) [ 1*nparts+ipart ] = delta2 ;
@@ -398,7 +398,7 @@ void InterpolatorAM2Order::timeCenteredEnvelope( ElectroMagn *EMfields, Particle
         }
 
 
-        // project on x,y,z
+        // project on x,y,z, remember that GradPhit = 0 in cylindrical symmetry
         delta2 = std::real( exp_m_theta ) * ( *GradPHI_mpart ) [ 1*nparts+ipart ] ; 
         ( *GradPHI_mpart ) [ 2*nparts+ipart ] = -std::imag( exp_m_theta ) * ( *GradPHI_mpart ) [ 1*nparts+ipart ] ;
         ( *GradPHI_mpart ) [ 1*nparts+ipart ] = delta2 ;
