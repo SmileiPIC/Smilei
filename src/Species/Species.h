@@ -147,7 +147,7 @@ public:
     //! Pointer toward position array
     double *position_initialization_array;
     //! Pointer toward regular number of particles array
-    std::vector<int> regular_number_array;
+    std::vector<int> regular_number_array_;
     //! Number of particles in the init array
     double *momentum_initialization_array;
     //! Number of particles in the init array
@@ -557,14 +557,8 @@ public:
     }
 
     //! Method to create new particles.
+    // Method to import particles in this species while conserving the sorting among bins
     int  ParticleCreator( std::vector<unsigned int> n_space_to_create, Params &params, Patch *patch, int new_bin_idx );
-
-    //! Method to create new particles.
-    int  createParticles2( Particles * particles,
-                           Species * species,
-                           std::vector<unsigned int> n_space_to_create, Params &params, Patch *patch, int new_bin_idx );
-
-    //! Method to import particles in this species while conserving the sorting among bins
     virtual void importParticles( Params &, Patch *, Particles &, std::vector<Diagnostic *> & );
 
     //! Moving window boundary conditions managment

@@ -545,7 +545,7 @@ void ParticleCreator::createPosition( std::string position_initialization,
             double inv_coeff_array[3];
             int    coeff_array[3];
 
-            if ( species->regular_number_array.size()==0){
+            if ( species->regular_number_array_.size()==0){
                 double coeff = pow( ( double )nPart, species->inv_nDim_particles );
                 if( nPart != ( unsigned int ) pow( round( coeff ), ( double ) species->nDim_particle ) ) {
                     ERROR( "Impossible to put "<<nPart<<" particles regularly spaced in one cell. Use a square number, or `position_initialization = 'random'`" );
@@ -557,13 +557,13 @@ void ParticleCreator::createPosition( std::string position_initialization,
             } else{
                int npart_check=1;
                for( unsigned int idim=0; idim<species->nDim_particle; idim++ ) {
-                   npart_check *= species->regular_number_array[idim];
+                   npart_check *= species->regular_number_array_[idim];
                }
                if( nPart != npart_check) {
                    ERROR( "The number of particles required per cell and per dimension is not coherent with the total number of particles per cell." );
                }
                for( unsigned int idim=0; idim<species->nDim_particle; idim++ ) {
-                   coeff_array[idim] = species->regular_number_array[idim];
+                   coeff_array[idim] = species->regular_number_array_[idim];
                    inv_coeff_array[idim] = 1./(double)coeff_array[idim];
                }
 
@@ -717,7 +717,8 @@ void ParticleCreator::createMomentum( std::string momentum_initialization,
         // Also relies on the method proposed in Zenitani, Phys. Plasmas 22, 042116 (2015)
         // to ensure the correct properties of a boosted distribution function
         // -------------------------------------------------------------------------------
-        double vx, vy, vz, v2, g, gm1, Lxx, Lyy, Lzz, Lxy, Lxz, Lyz, gp, px, py, pz;
+        double vx, vy, vz, v2, g, gm1, Lxx, Lyy, Lzz, Lxy, Lxz, Lyz, px, py, pz;
+        double gamma, inverse_gamma;
         // mean-velocity
         vx  = -vel[0];
         vy  = -vel[1];
@@ -746,11 +747,14 @@ void ParticleCreator::createMomentum( std::string momentum_initialization,
 
             // Lorentz transformation of the momentum
             for( unsigned int p=iPart; p<iPart+nPart; p++ ) {
-                gp = 1./sqrt( 1.0 + particles->momentum( 0, p )*particles->momentum( 0, p )
+                gamma = sqrt( 1.0 + particles->momentum( 0, p )*particles->momentum( 0, p )
                            + particles->momentum( 1, p )*particles->momentum( 1, p )
                            + particles->momentum( 2, p )*particles->momentum( 2, p ) );
+                inverse_gamma = 1./gamma;
 
-                CheckVelocity = ( vx*particles->momentum( 0, p ) + vy*particles->momentum( 1, p ) + vz*particles->momentum( 2, p ) ) * gp;
+                CheckVelocity = ( vx*particles->momentum( 0, p )
+                              + vy*particles->momentum( 1, p )
+                              + vz*particles->momentum( 2, p ) ) * inverse_gamma;
                 Volume_Acc = Rand::uniform();
                 if( CheckVelocity > Volume_Acc ) {
 
@@ -758,9 +762,9 @@ void ParticleCreator::createMomentum( std::string momentum_initialization,
                     Phi = atan2( sqrt( vx*vx +vy*vy ), vz );
                     Theta = atan2( vy, vx );
 
-                    vpx = particles->momentum( 0, p )*gp ;
-                    vpy = particles->momentum( 1, p )*gp ;
-                    vpz = particles->momentum( 2, p )*gp ;
+                    vpx = particles->momentum( 0, p )*inverse_gamma ;
+                    vpy = particles->momentum( 1, p )*inverse_gamma ;
+                    vpz = particles->momentum( 2, p )*inverse_gamma ;
                     vfl = vpx*cos( Theta )*sin( Phi ) +vpy*sin( Theta )*sin( Phi ) + vpz*cos( Phi ) ;
                     vflx = vfl*cos( Theta )*sin( Phi ) ;
                     vfly = vfl*sin( Theta )*sin( Phi ) ;
@@ -768,16 +772,17 @@ void ParticleCreator::createMomentum( std::string momentum_initialization,
                     vpx -= 2.*vflx ;
                     vpy -= 2.*vfly ;
                     vpz -= 2.*vflz ;
-                    gp = 1./sqrt( 1.0 - vpx*vpx - vpy*vpy - vpz*vpz );
-                    particles->momentum( 0, p ) = vpx*gp ;
-                    particles->momentum( 1, p ) = vpy*gp ;
-                    particles->momentum( 2, p ) = vpz*gp ;
+                    inverse_gamma = sqrt( 1.0 - vpx*vpx - vpy*vpy - vpz*vpz );
+                    gamma = 1./inverse_gamma;
+                    particles->momentum( 0, p ) = vpx*gamma ;
+                    particles->momentum( 1, p ) = vpy*gamma ;
+                    particles->momentum( 2, p ) = vpz*gamma ;
 
                 }//here ends the corrections by Zenitani
 
-                px = -gp*g*vx + Lxx * particles->momentum( 0, p ) + Lxy * particles->momentum( 1, p ) + Lxz * particles->momentum( 2, p );
-                py = -gp*g*vy + Lxy * particles->momentum( 0, p ) + Lyy * particles->momentum( 1, p ) + Lyz * particles->momentum( 2, p );
-                pz = -gp*g*vz + Lxz * particles->momentum( 0, p ) + Lyz * particles->momentum( 1, p ) + Lzz * particles->momentum( 2, p );
+                px = -gamma*g*vx + Lxx * particles->momentum( 0, p ) + Lxy * particles->momentum( 1, p ) + Lxz * particles->momentum( 2, p );
+                py = -gamma*g*vy + Lxy * particles->momentum( 0, p ) + Lyy * particles->momentum( 1, p ) + Lyz * particles->momentum( 2, p );
+                pz = -gamma*g*vz + Lxz * particles->momentum( 0, p ) + Lyz * particles->momentum( 1, p ) + Lzz * particles->momentum( 2, p );
 
                 particles->momentum( 0, p ) = px;
                 particles->momentum( 1, p ) = py;

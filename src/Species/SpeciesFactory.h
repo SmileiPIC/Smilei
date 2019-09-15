@@ -540,11 +540,11 @@ public:
         }
         Py_DECREF( py_pos_init );
 
-        if   (PyTools::extract( "regular_number", thisSpecies->regular_number_array, "Species", ispec )){
+        if   (PyTools::extract( "regular_number", thisSpecies->regular_number_array_, "Species", ispec )){
              if (thisSpecies->position_initialization_ != "regular") {
                  ERROR("regular_number may not be provided if species position_initialization is not set to 'regular'.");
              }
-             if (thisSpecies->regular_number_array.size() != thisSpecies->nDim_particle) {
+             if (thisSpecies->regular_number_array_.size() != thisSpecies->nDim_particle) {
                  ERROR("Please provide as many regular numbers of particles as there are particle dimensions in the domain ("<< thisSpecies->nDim_particle <<").");
              }
         }
@@ -901,11 +901,11 @@ public:
             // does a loop over all cells in the simulation
             // considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
             // Particle creator object
-            ParticleCreator particle_creator;
-            particle_creator.associate(thisSpecies);
-            particle_creator.create( params.n_space, params, patch, 0, 0 );
+            // ParticleCreator particle_creator;
+            // particle_creator.associate(thisSpecies);
+            // particle_creator.create( params.n_space, params, patch, 0, 0 );
             
-            // thisSpecies->ParticleCreator(params.n_space, params, patch, 0 );
+            thisSpecies->ParticleCreator(params.n_space, params, patch, 0 );
             //thisSpecies->createParticles2( thisSpecies->particles, thisSpecies, params.n_space, params, patch, 0 );
             //MESSAGE(" PARTICLES");
         } else {
@@ -953,7 +953,7 @@ public:
         newSpecies->position_initialization_on_species_index = species->position_initialization_on_species_index;
         newSpecies->position_initialization_                  = species->position_initialization_;
         newSpecies->position_initialization_array            = species->position_initialization_array;
-        newSpecies->regular_number_array                     = species->regular_number_array;
+        newSpecies->regular_number_array_                     = species->regular_number_array_;
         newSpecies->n_numpy_particles                        = species->n_numpy_particles            ;
         newSpecies->momentum_initialization_                  = species->momentum_initialization_;
         newSpecies->momentum_initialization_array            = species->momentum_initialization_array;
@@ -1031,11 +1031,11 @@ public:
 
         // \todo : NOT SURE HOW THIS BEHAVES WITH RESTART
         if( ( !params.restart ) && ( with_particles ) ) {
-            ParticleCreator particle_creator;
-            particle_creator.associate(newSpecies);
-            particle_creator.create( params.n_space, params, patch, 0, 0 );
+            // ParticleCreator particle_creator;
+            // particle_creator.associate(newSpecies);
+            // particle_creator.create( params.n_space, params, patch, 0, 0 );
             
-            //newSpecies->ParticleCreator( params.n_space, params, patch, 0 );
+            newSpecies->ParticleCreator( params.n_space, params, patch, 0 );
             //newSpecies->createParticles2( newSpecies->particles, newSpecies, params.n_space, params, patch, 0 );
         } else {
             newSpecies->particles->initialize( 0, ( *species->particles ) );
