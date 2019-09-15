@@ -320,11 +320,11 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                     if( patch_particle_created[ithread][j] ) {
                         for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
                             
-                            ParticleCreator particle_creator;
-                            particle_creator.associate(mypatch->vecSpecies[ispec]);
-                            particle_creator.create( params.n_space, params, mypatch, 0, 0 );
+                            // ParticleCreator particle_creator;
+                            // particle_creator.associate(mypatch->vecSpecies[ispec]);
+                            // particle_creator.create( params.n_space, params, mypatch, 0, 0 );
                             
-                            //mypatch->vecSpecies[ispec]->ParticleCreator( params.n_space, params, mypatch, 0 );
+                            mypatch->vecSpecies[ispec]->ParticleCreator( params.n_space, params, mypatch, 0 );
 
                             /*#ifdef _VECTO
                                                     // Classical vectorized mode
