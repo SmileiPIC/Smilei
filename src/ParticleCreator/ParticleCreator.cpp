@@ -351,14 +351,9 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
                             ParticleCreator::createPosition( position_initialization_, particles_, species_, nPart, iPart, indexes, params );
                         }
                         ParticleCreator::createMomentum( momentum_initialization_, particles_, species_,  nPart, iPart, temp, vel );
-                        ParticleCreator::createWeight( particles_, nPart, iPart, density( i, j, k ) );
+                        
+                        ParticleCreator::createWeight( position_initialization_, particles_, nPart, iPart, density( i, j, k ), params );
 
-                        if( params.geometry=="AMcylindrical" && position_initialization_ == "regular" ) {
-                            //Particles in regular have a weight proportional to their position along r.
-                            for (unsigned int ipart=iPart; ipart < iPart+nPart; ipart++){
-                                particles_->weight(ipart) *= sqrt(particles_->position(1,ipart)*particles_->position(1,ipart) + particles_->position(2,ipart)*particles_->position(2,ipart));
-                            }
-                        }
                         ParticleCreator::createCharge( particles_, species_, nPart, iPart, charge( i, j, k ) );
 
                         //if (n_existing_particles) {
@@ -824,12 +819,22 @@ void ParticleCreator::createMomentum( std::string momentum_initialization,
 // ---------------------------------------------------------------------------------------------------------------------
 //! For all (nPart) particles in a mesh initialize its numerical weight (equivalent to a number density)
 // ---------------------------------------------------------------------------------------------------------------------
-void ParticleCreator::createWeight( Particles * particles, unsigned int nPart, unsigned int iPart, double n_real_particles )
+void ParticleCreator::createWeight( std::string position_initialization,
+                                    Particles * particles, unsigned int nPart, unsigned int iPart, double n_real_particles,
+                                    Params &params )
 {
     double w = n_real_particles / nPart;
     for( unsigned  p= iPart; p<iPart+nPart; p++ ) {
         particles->weight( p ) = w ;
     }
+    
+    if( params.geometry=="AMcylindrical" && position_initialization == "regular" ) {
+        //Particles in regular have a weight proportional to their position along r.
+        for (unsigned int ipart=iPart; ipart < iPart+nPart; ipart++){
+            particles->weight(ipart) *= sqrt(particles->position(1,ipart)*particles->position(1,ipart) + particles->position(2,ipart)*particles->position(2,ipart));
+        }
+    }
+    
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

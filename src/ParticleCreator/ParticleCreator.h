@@ -60,10 +60,12 @@ public:
                             double *vel);
     
     //! Creation of the particle weight
-    static void createWeight( Particles * particles,
-                                               unsigned int nPart,
-                                               unsigned int iPart,
-                                               double n_real_particles );
+    static void createWeight( std::string position_initialization,
+                            Particles * particles,
+                            unsigned int nPart,
+                            unsigned int iPart,
+                            double n_real_particles,
+                            Params &params );
     
     // For all particles in a mesh initialize its charge state
     static void createCharge( Particles * particles, Species * species,

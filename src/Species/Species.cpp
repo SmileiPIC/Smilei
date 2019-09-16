@@ -1761,14 +1761,9 @@ int Species::ParticleCreator( vector<unsigned int> n_space_to_create, Params &pa
                                                 temp,
                                                 vel);
                         
-                        initWeight( nPart, iPart, density( i, j, k ) );
-
-                        if( params.geometry=="AMcylindrical" && position_initialization_ == "regular" ) {
-                            //Particles in regular have a weight proportional to their position along r.
-                            for (unsigned int ipart=iPart; ipart < iPart+nPart; ipart++){
-                                particles->weight(ipart) *= sqrt(particles->position(1,ipart)*particles->position(1,ipart) + particles->position(2,ipart)*particles->position(2,ipart));
-                            }
-                        }
+                        //initWeight( nPart, iPart, density( i, j, k ) );
+                        ParticleCreator::createWeight( position_initialization_, particles, nPart, iPart, density( i, j, k ), params );
+                        
                         initCharge( nPart, iPart, charge( i, j, k ) );
 
                         //if (n_existing_particles) {
