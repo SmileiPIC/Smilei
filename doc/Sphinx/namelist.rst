@@ -1348,7 +1348,7 @@ this option.
 
 For the moment the only way to specify a laser pulse through this model
 in :program:`Smilei` is through a gaussian beam (cylindrically symmetric
-for the geometries ``"2Dcartesian"``, ``"3Dcartesian"``). Currently only
+for the geometries ``"2Dcartesian"``, ``"3Dcartesian"`` and ``"AMcylindrical"``). Currently only
 one laser pulse can be specified through the envelope model in a simulation,
 thus multi-pulse set-ups cannot be defined.
 Contrarily to a standard Laser initialized with the Silver-Müller
