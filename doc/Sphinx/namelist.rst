@@ -1335,9 +1335,9 @@ Laser envelope model
 In the geometries ``"1Dcartesian"``, ``"2Dcartesian"``, ``"3Dcartesian"``
 it is possible to model a laser pulse propagating in the ``x`` direction
 using an envelope model (see :doc:`laser_envelope` for the advantages
-and limits of this approximation). In the geometry ``"AMcylindrical"`` is possible as well,
-but only retaining the azimuthal mode zero (``number_of_AM = 1``), 
-i.e. having a perfect cylindrical symmetry (see :doc:`algorithms`).
+and limits of this approximation). In the geometry ``"AMcylindrical"`` it is possible as well,
+but only limiting the number of azimuthal modes to one (``number_of_AM = 1``). 
+This is equivalent to perfect cylindrical symmetry, i.e. retaining only the azimuthal mode zero (see :doc:`algorithms`).
 The fast oscillations of the laser are neglected and all the physical
 quantities of the simulation, including the electromagnetic fields and
 their source terms, as well as the particles positions and momenta, are
