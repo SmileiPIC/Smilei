@@ -1435,7 +1435,7 @@ with some differences:
 
 
 It is important to remember that the profile defined through the blocks
-``LaserEnvelopePlanar1D``, ``LaserEnvelopeGaussian2D``, ``LaserEnvelopeGaussian3D``
+``LaserEnvelopePlanar1D``, ``LaserEnvelopeGaussian2D``, ``LaserEnvelopeGaussian3D`` and ``LaserEnvelopeGaussianAM``
 correspond to the complex envelope of the laser vector potential component
 :math:`\tilde{A}` in the polarization direction.
 The calculation of the correspondent complex envelope for the laser electric field
