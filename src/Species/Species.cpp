@@ -1764,7 +1764,9 @@ int Species::ParticleCreator( vector<unsigned int> n_space_to_create, Params &pa
                         //initWeight( nPart, iPart, density( i, j, k ) );
                         ParticleCreator::createWeight( position_initialization_, particles, nPart, iPart, density( i, j, k ), params );
                         
-                        initCharge( nPart, iPart, charge( i, j, k ) );
+                        //initCharge( nPart, iPart, charge( i, j, k ) );
+                        ParticleCreator::createCharge( particles, this,
+                                                        nPart, iPart, charge( i, j, k ) );
 
                         //if (n_existing_particles) {
                         //    // operate filter
@@ -1878,7 +1880,14 @@ int Species::ParticleCreator( vector<unsigned int> n_space_to_create, Params &pa
                 temp[0] = temperature[0]( int_ijk[0], int_ijk[1], int_ijk[2] );
                 temp[1] = temperature[1]( int_ijk[0], int_ijk[1], int_ijk[2] );
                 temp[2] = temperature[2]( int_ijk[0], int_ijk[1], int_ijk[2] );
-                initMomentum( 1, ip, temp, vel );
+                //initMomentum( 1, ip, temp, vel );
+                ParticleCreator::createMomentum( momentum_initialization_,
+                                        particles,
+                                        this,
+                                        1,
+                                        ip,
+                                        temp,
+                                        vel);
             } else {
                 for( unsigned int idim=0; idim < 3; idim++ ) {
                     particles->momentum( idim, ip ) = momentum[idim][ippy]/this->mass ;
@@ -1886,7 +1895,9 @@ int Species::ParticleCreator( vector<unsigned int> n_space_to_create, Params &pa
             }
 
             particles->weight( ip ) = weight_arr[ippy] ;
-            initCharge( 1, ip, charge( int_ijk[0], int_ijk[1], int_ijk[2] ) );
+            //initCharge( 1, ip, charge( int_ijk[0], int_ijk[1], int_ijk[2] ) );
+            ParticleCreator::createCharge( particles, this,
+                            1, ip, charge( int_ijk[0], int_ijk[1], int_ijk[2] ) );
             indices[ibin]++;
         }
     }
