@@ -76,6 +76,18 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
             MESSAGE( 1, "\t- Envelope boundary conditions: " << "(" << params.Env_BCs[i][0] << ", " << params.Env_BCs[i][1] << ")" );
         }
     }
+
+    GradPhix_  = NULL;
+    GradPhix_m = NULL;
+    GradPhiy_  = NULL;
+    GradPhiy_m = NULL;
+    GradPhiz_  = NULL;
+    GradPhiz_m = NULL;
+    GradPhil_  = NULL;
+    GradPhil_m = NULL;
+    GradPhir_  = NULL;
+    GradPhir_m = NULL;
+
 }
 
 // Cloning constructor
@@ -87,6 +99,18 @@ LaserEnvelope::LaserEnvelope( LaserEnvelope *envelope, Patch *patch, ElectroMagn
         profile_ = new Profile( envelope->profile_ );
     }
     EnvBoundCond = EnvelopeBC_Factory::create( params, patch );
+
+    GradPhix_  = NULL;
+    GradPhix_m = NULL;
+    GradPhiy_  = NULL;
+    GradPhiy_m = NULL;
+    GradPhiz_  = NULL;
+    GradPhiz_m = NULL;
+    GradPhil_  = NULL;
+    GradPhil_m = NULL;
+    GradPhir_  = NULL;
+    GradPhir_m = NULL;
+
 }
 
 

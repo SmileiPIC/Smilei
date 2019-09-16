@@ -41,8 +41,6 @@ public:
     void restartRhoJ() override;
     void restartRhoJs() override;
 
-    std::vector<Field2D *> Env_Chi_s;
-    
     void initPoisson( Patch *patch ) override;
     double compute_r();
     void compute_Ap( Patch *patch ) override;
