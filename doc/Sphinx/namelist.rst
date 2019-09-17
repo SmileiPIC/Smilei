@@ -1335,7 +1335,9 @@ Laser envelope model
 In the geometries ``"1Dcartesian"``, ``"2Dcartesian"``, ``"3Dcartesian"``
 it is possible to model a laser pulse propagating in the ``x`` direction
 using an envelope model (see :doc:`laser_envelope` for the advantages
-and limits of this approximation).
+and limits of this approximation). In the geometry ``"AMcylindrical"`` it is possible as well,
+but only limiting the number of azimuthal modes to one (``number_of_AM = 1``). 
+This is equivalent to perfect cylindrical symmetry, i.e. retaining only the azimuthal mode zero (see :doc:`algorithms`).
 The fast oscillations of the laser are neglected and all the physical
 quantities of the simulation, including the electromagnetic fields and
 their source terms, as well as the particles positions and momenta, are
@@ -1346,7 +1348,7 @@ this option.
 
 For the moment the only way to specify a laser pulse through this model
 in :program:`Smilei` is through a gaussian beam (cylindrically symmetric
-for the geometries ``"2Dcartesian"``, ``"3Dcartesian"``). Currently only
+for the geometries ``"2Dcartesian"``, ``"3Dcartesian"`` and ``"AMcylindrical"``). Currently only
 one laser pulse can be specified through the envelope model in a simulation,
 thus multi-pulse set-ups cannot be defined.
 Contrarily to a standard Laser initialized with the Silver-Müller
@@ -1384,10 +1386,20 @@ Following is the laser envelope creator in 3D ::
         Envelope_boundary_conditions = [ ["reflective"] ],
     )
 
+Following is the laser envelope creator in ``AMcylindrical`` geometry ::
 
-The arguments appearing ``LaserEnvelopePlanar1D``, ``LaserEnvelopeGaussian2D``
-and ``LaserEnvelopeGaussian3D`` have the same meaning they would have in a
-normal ``LaserPlanar1D``, ``LaserGaussian2D`` and ``LaserGaussian3D``,
+    LaserEnvelopeGaussianAM(
+        a0              = 1.,
+        focus           = [150., 40.],
+        waist           = 30.,
+        time_envelope   = tgaussian(center=150., fwhm=40.),
+        envelope_solver = 'explicit',
+        Envelope_boundary_conditions = [ ["reflective"] ],
+    )
+
+The arguments appearing ``LaserEnvelopePlanar1D``, ``LaserEnvelopeGaussian2D``, 
+``LaserEnvelopeGaussian3D`` and ``LaserEnvelopeGaussianAM`` have the same meaning they would have in a
+normal ``LaserPlanar1D``, ``LaserGaussian2D``, ``LaserGaussian3D`` and ``LaserGaussianAM``
 with some differences:
 
 .. py:data:: waist
@@ -1423,7 +1435,7 @@ with some differences:
 
 
 It is important to remember that the profile defined through the blocks
-``LaserEnvelopePlanar1D``, ``LaserEnvelopeGaussian2D``, ``LaserEnvelopeGaussian3D``
+``LaserEnvelopePlanar1D``, ``LaserEnvelopeGaussian2D``, ``LaserEnvelopeGaussian3D`` and ``LaserEnvelopeGaussianAM``
 correspond to the complex envelope of the laser vector potential component
 :math:`\tilde{A}` in the polarization direction.
 The calculation of the correspondent complex envelope for the laser electric field
