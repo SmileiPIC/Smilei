@@ -8,7 +8,7 @@ Lx = nx * dx
 Lr = nr*dr
 npatch_x=32
 laser_fwhm = 20. 
-center_laser = 2*laser_fwhm # here is the same as waist position of laser but in principle they can differ
+center_laser = Lx-2*laser_fwhm # here is the same as waist position of laser but in principle they can differ
 time_start_moving_window = 0.
 
 
