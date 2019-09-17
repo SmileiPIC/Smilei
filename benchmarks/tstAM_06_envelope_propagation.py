@@ -25,7 +25,7 @@ Main(
 
     number_of_AM = 1,
 
-    number_of_patches = [1,1],#[npatch_x,8],
+    number_of_patches = [npatch_x,4],
     clrw = nx/npatch_x,
 
     EM_boundary_conditions = [
@@ -39,10 +39,10 @@ Main(
     random_seed = smilei_mpi_rank
 )
 
-#MovingWindow(
-#    time_start = time_start_moving_window,
-#    velocity_x = 1.0
-#)
+MovingWindow(
+    time_start = time_start_moving_window,
+    velocity_x = 1.0
+)
 
 LoadBalancing(
     initial_balance = False,
