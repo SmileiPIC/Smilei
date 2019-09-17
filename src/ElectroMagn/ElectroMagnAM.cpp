@@ -91,7 +91,7 @@ ElectroMagnAM::ElectroMagnAM( ElectroMagnAM *emFields, Params &params, Patch *pa
                 }
             }
 
-            if( (imode==0) and (params.Laser_Envelope_model) ) {
+            if( (imode==0) && (params.Laser_Envelope_model) && (emFields->Env_Chi_s[ifield] != NULL) ) {
                 if( emFields->Env_Chi_s[ifield]->data_ != NULL ) {
                     Env_Chi_s[ifield] = new Field2D( dimPrim, emFields->Env_Chi_s[ifield]->name );
                 } else {
