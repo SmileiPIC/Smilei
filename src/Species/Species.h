@@ -151,7 +151,7 @@ public:
     //! Number of particles in the init array
     double *momentum_initialization_array_;
     //! Number of particles in the init array
-    unsigned int n_numpy_particles;
+    unsigned int n_numpy_particles_;
     //! Boolean to know if we initialize particles one specie on another species
     bool position_initialization_on_species_;
     //! Index of the species where position initialization is made

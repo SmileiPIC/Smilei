@@ -167,7 +167,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
     
     if( species_->momentum_initialization_array_ != NULL ) {
         for( unsigned int idim = 0; idim < 3; idim++ ) {
-            momentum[idim] = &( species_->momentum_initialization_array_[idim*species_->n_numpy_particles] );
+            momentum[idim] = &( species_->momentum_initialization_array_[idim*species_->n_numpy_particles_] );
         }
     } else {
         //Initialize velocity and temperature profiles
@@ -199,11 +199,11 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
     }
     if( species_->position_initialization_array_ != NULL ) {
         for( unsigned int idim = 0; idim < species_->nDim_particle; idim++ ) {
-            position[idim] = &( species_->position_initialization_array_[idim*species_->n_numpy_particles] );
+            position[idim] = &( species_->position_initialization_array_[idim*species_->n_numpy_particles_] );
         }
-        weight_arr =         &( species_->position_initialization_array_[species_->nDim_particle*species_->n_numpy_particles] );
+        weight_arr =         &( species_->position_initialization_array_[species_->nDim_particle*species_->n_numpy_particles_] );
         //Idea to speed up selection, provides xmin, xmax of the bunch and check if there is an intersection with the patch instead of going through all particles for all patches.
-        for( unsigned int ip = 0; ip < species_->n_numpy_particles; ip++ ) {
+        for( unsigned int ip = 0; ip < species_->n_numpy_particles_; ip++ ) {
             //If the particle belongs to this patch
             if (params.geometry!="AMcylindrical") {
                 if( position[0][ip] >= patch->getDomainLocalMin( 0 ) && position[0][ip] < patch->getDomainLocalMax( 0 )

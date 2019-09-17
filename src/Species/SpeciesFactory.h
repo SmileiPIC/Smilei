@@ -521,16 +521,16 @@ public:
                 ERROR( "For species '" << species_name << "' position_initializtion must provide a 2-dimensional array with " <<  params.nDim_particle + 1 << " columns." )
 
                 // OLD //Get number of particles
-                // OLD thisSpecies->n_numpy_particles =  PyArray_SHAPE(np_ret)[1];//  ok
+                // OLD thisSpecies->n_numpy_particles_ =  PyArray_SHAPE(np_ret)[1];//  ok
 
                 //Get number of particles. Do not initialize any more if this is a restart.
                 if( !params.restart ) {
-                    thisSpecies->n_numpy_particles =  PyArray_SHAPE( np_ret )[1];    //  ok
+                    thisSpecies->n_numpy_particles_ =  PyArray_SHAPE( np_ret )[1];    //  ok
                 }
-            thisSpecies->position_initialization_array_ = new double[ndim_local*thisSpecies->n_numpy_particles] ;
+            thisSpecies->position_initialization_array_ = new double[ndim_local*thisSpecies->n_numpy_particles_] ;
             for( unsigned int idim = 0; idim < ndim_local ; idim++ ) {
-                for( unsigned int ipart = 0; ipart < ( unsigned int )thisSpecies->n_numpy_particles; ipart++ ) {
-                    thisSpecies->position_initialization_array_[idim*thisSpecies->n_numpy_particles+ipart] = *( ( double * )PyArray_GETPTR2( np_ret, idim, ipart ) );
+                for( unsigned int ipart = 0; ipart < ( unsigned int )thisSpecies->n_numpy_particles_; ipart++ ) {
+                    thisSpecies->position_initialization_array_[idim*thisSpecies->n_numpy_particles_+ipart] = *( ( double * )PyArray_GETPTR2( np_ret, idim, ipart ) );
                 }
             }
         }
@@ -602,13 +602,13 @@ public:
                 ERROR( "For species '" << species_name << "' momentum_initialization must provide a 2-dimensional array with " <<  3 << " columns." )
 
                 //Get number of particles
-                if( !params.restart && thisSpecies->n_numpy_particles != PyArray_SHAPE( np_ret_mom )[1] )
+                if( !params.restart && thisSpecies->n_numpy_particles_ != PyArray_SHAPE( np_ret_mom )[1] )
                     ERROR( "For species '" << species_name << "' momentum_initialization must provide as many particles as position_initialization." )
 
-                    thisSpecies->momentum_initialization_array_ = new double[ndim_local*thisSpecies->n_numpy_particles] ;
+                    thisSpecies->momentum_initialization_array_ = new double[ndim_local*thisSpecies->n_numpy_particles_] ;
             for( unsigned int idim = 0; idim < ndim_local ; idim++ ) {
-                for( unsigned int ipart = 0; ipart < ( unsigned int )thisSpecies->n_numpy_particles; ipart++ ) {
-                    thisSpecies->momentum_initialization_array_[idim*thisSpecies->n_numpy_particles+ipart] = *( ( double * )PyArray_GETPTR2( np_ret_mom, idim, ipart ) );
+                for( unsigned int ipart = 0; ipart < ( unsigned int )thisSpecies->n_numpy_particles_; ipart++ ) {
+                    thisSpecies->momentum_initialization_array_[idim*thisSpecies->n_numpy_particles_+ipart] = *( ( double * )PyArray_GETPTR2( np_ret_mom, idim, ipart ) );
                 }
             }
         }
@@ -901,12 +901,12 @@ public:
             // does a loop over all cells in the simulation
             // considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
             // Particle creator object
-            // ParticleCreator particle_creator;
-            // particle_creator.associate(thisSpecies);
-            // particle_creator.create( params.n_space, params, patch, 0, 0 );
+            ParticleCreator particle_creator;
+            particle_creator.associate(thisSpecies);
+            particle_creator.create( params.n_space, params, patch, 0, 0 );
             
-            thisSpecies->ParticleCreator(params.n_space, params, patch, 0 );
-            //thisSpecies->createParticles2( thisSpecies->particles, thisSpecies, params.n_space, params, patch, 0 );
+            // thisSpecies->ParticleCreator(params.n_space, params, patch, 0 );
+
             //MESSAGE(" PARTICLES");
         } else {
             thisSpecies->particles->initialize( 0, params.nDim_particle );
@@ -954,7 +954,7 @@ public:
         newSpecies->position_initialization_                  = species->position_initialization_;
         newSpecies->position_initialization_array_            = species->position_initialization_array_;
         newSpecies->regular_number_array_                     = species->regular_number_array_;
-        newSpecies->n_numpy_particles                        = species->n_numpy_particles            ;
+        newSpecies->n_numpy_particles_                        = species->n_numpy_particles_            ;
         newSpecies->momentum_initialization_                  = species->momentum_initialization_;
         newSpecies->momentum_initialization_array_            = species->momentum_initialization_array_;
         newSpecies->c_part_max_                               = species->c_part_max_;
@@ -1031,12 +1031,12 @@ public:
 
         // \todo : NOT SURE HOW THIS BEHAVES WITH RESTART
         if( ( !params.restart ) && ( with_particles ) ) {
-            // ParticleCreator particle_creator;
-            // particle_creator.associate(newSpecies);
-            // particle_creator.create( params.n_space, params, patch, 0, 0 );
+            ParticleCreator particle_creator;
+            particle_creator.associate(newSpecies);
+            particle_creator.create( params.n_space, params, patch, 0, 0 );
             
-            newSpecies->ParticleCreator( params.n_space, params, patch, 0 );
-            //newSpecies->createParticles2( newSpecies->particles, newSpecies, params.n_space, params, patch, 0 );
+            // newSpecies->ParticleCreator( params.n_space, params, patch, 0 );
+
         } else {
             newSpecies->particles->initialize( 0, ( *species->particles ) );
         }
