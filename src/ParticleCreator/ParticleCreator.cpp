@@ -165,9 +165,9 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
     // field containing the temperature distribution along all 3 momentum coordinates (always 3d * 3)
     Field3D velocity[3];
     
-    if( species_->momentum_initialization_array != NULL ) {
+    if( species_->momentum_initialization_array_ != NULL ) {
         for( unsigned int idim = 0; idim < 3; idim++ ) {
-            momentum[idim] = &( species_->momentum_initialization_array[idim*species_->n_numpy_particles] );
+            momentum[idim] = &( species_->momentum_initialization_array_[idim*species_->n_numpy_particles] );
         }
     } else {
         //Initialize velocity and temperature profiles
@@ -191,17 +191,17 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
             // cerr << species_->name
             //      << " Velocity[m] : " << velocity[m](0,0,0) << " Temperature[m]: " << temperature[m](0,0,0) << endl;
         }
-    } // end if momentum_initialization_array
+    } // end if momentum_initialization_array_
     
     // Initialize charge profile
     if( species_->mass > 0 ) {
         species_->chargeProfile ->valuesAt( xyz, charge );
     }
-    if( species_->position_initialization_array != NULL ) {
+    if( species_->position_initialization_array_ != NULL ) {
         for( unsigned int idim = 0; idim < species_->nDim_particle; idim++ ) {
-            position[idim] = &( species_->position_initialization_array[idim*species_->n_numpy_particles] );
+            position[idim] = &( species_->position_initialization_array_[idim*species_->n_numpy_particles] );
         }
-        weight_arr =         &( species_->position_initialization_array[species_->nDim_particle*species_->n_numpy_particles] );
+        weight_arr =         &( species_->position_initialization_array_[species_->nDim_particle*species_->n_numpy_particles] );
         //Idea to speed up selection, provides xmin, xmax of the bunch and check if there is an intersection with the patch instead of going through all particles for all patches.
         for( unsigned int ip = 0; ip < species_->n_numpy_particles; ip++ ) {
             //If the particle belongs to this patch
@@ -308,7 +308,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
     double *temp=new double[3];
     double *vel=new double[3];
     
-    if( species_->position_initialization_array == NULL ) {
+    if( species_->position_initialization_array_ == NULL ) {
         for( i=0; i<n_space_to_create_generalized[0]; i++ ) {
             if(( !n_existing_particles )&&( i%species_->clrw == 0 )&&( initialized_in_species_ )) {
                 species_->first_index[(new_cell_idx+i)/species_->clrw] = iPart;
@@ -462,7 +462,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
                 int_ijk[1] = ( unsigned int )( ( sqrt( position[1][ippy]*position[1][ippy]+position[2][ippy]*position[2][ippy] )
                                                - species_->min_loc_vec[1] )/species_->cell_length[1] );
             }
-            if( !species_->momentum_initialization_array ) {
+            if( !species_->momentum_initialization_array_ ) {
                 vel [0] = velocity   [0]( int_ijk[0], int_ijk[1], int_ijk[2] );
                 vel [1] = velocity   [1]( int_ijk[0], int_ijk[1], int_ijk[2] );
                 vel [2] = velocity   [2]( int_ijk[0], int_ijk[1], int_ijk[2] );

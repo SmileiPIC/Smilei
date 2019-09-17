@@ -145,11 +145,11 @@ public:
     //std::vector<int> index_of_particles_to_exchange;
 
     //! Pointer toward position array
-    double *position_initialization_array;
+    double *position_initialization_array_;
     //! Pointer toward regular number of particles array
     std::vector<int> regular_number_array_;
     //! Number of particles in the init array
-    double *momentum_initialization_array;
+    double *momentum_initialization_array_;
     //! Number of particles in the init array
     unsigned int n_numpy_particles;
     //! Boolean to know if we initialize particles one specie on another species

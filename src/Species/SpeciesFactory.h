@@ -527,10 +527,10 @@ public:
                 if( !params.restart ) {
                     thisSpecies->n_numpy_particles =  PyArray_SHAPE( np_ret )[1];    //  ok
                 }
-            thisSpecies->position_initialization_array = new double[ndim_local*thisSpecies->n_numpy_particles] ;
+            thisSpecies->position_initialization_array_ = new double[ndim_local*thisSpecies->n_numpy_particles] ;
             for( unsigned int idim = 0; idim < ndim_local ; idim++ ) {
                 for( unsigned int ipart = 0; ipart < ( unsigned int )thisSpecies->n_numpy_particles; ipart++ ) {
-                    thisSpecies->position_initialization_array[idim*thisSpecies->n_numpy_particles+ipart] = *( ( double * )PyArray_GETPTR2( np_ret, idim, ipart ) );
+                    thisSpecies->position_initialization_array_[idim*thisSpecies->n_numpy_particles+ipart] = *( ( double * )PyArray_GETPTR2( np_ret, idim, ipart ) );
                 }
             }
         }
@@ -587,7 +587,7 @@ public:
 #ifdef SMILEI_USE_NUMPY
         else if( PyArray_Check( py_mom_init ) ) {
 
-            if( !thisSpecies->position_initialization_array ) {
+            if( !thisSpecies->position_initialization_array_ ) {
                 ERROR( "For species '" << species_name << "'. Momentum initialization by a numpy array is only possible if positions are initialized with a numpy array as well. " );
             }
 
@@ -605,10 +605,10 @@ public:
                 if( !params.restart && thisSpecies->n_numpy_particles != PyArray_SHAPE( np_ret_mom )[1] )
                     ERROR( "For species '" << species_name << "' momentum_initialization must provide as many particles as position_initialization." )
 
-                    thisSpecies->momentum_initialization_array = new double[ndim_local*thisSpecies->n_numpy_particles] ;
+                    thisSpecies->momentum_initialization_array_ = new double[ndim_local*thisSpecies->n_numpy_particles] ;
             for( unsigned int idim = 0; idim < ndim_local ; idim++ ) {
                 for( unsigned int ipart = 0; ipart < ( unsigned int )thisSpecies->n_numpy_particles; ipart++ ) {
-                    thisSpecies->momentum_initialization_array[idim*thisSpecies->n_numpy_particles+ipart] = *( ( double * )PyArray_GETPTR2( np_ret_mom, idim, ipart ) );
+                    thisSpecies->momentum_initialization_array_[idim*thisSpecies->n_numpy_particles+ipart] = *( ( double * )PyArray_GETPTR2( np_ret_mom, idim, ipart ) );
                 }
             }
         }
@@ -791,7 +791,7 @@ public:
         PyObject *profile1( nullptr ), *profile2( nullptr ), *profile3( nullptr );
 
 
-        if( thisSpecies->position_initialization_array == NULL ) {
+        if( thisSpecies->position_initialization_array_ == NULL ) {
             //These quantities are disregarded if positioning of the species is directly specified by the user
             // Matter particles
             if( thisSpecies->mass > 0 ) {
@@ -849,7 +849,7 @@ public:
         }
         thisSpecies->chargeProfile = new Profile( profile1, params.nDim_field, Tools::merge( "charge ", species_name ), true );
 
-        if( thisSpecies->momentum_initialization_array == NULL ) {
+        if( thisSpecies->momentum_initialization_array_ == NULL ) {
             // Mean velocity
             if( PyTools::extract3Profiles( "mean_velocity", "Species", ispec, profile1, profile2, profile3 ) ) {
                 thisSpecies->velocity_profile_[0] = new Profile( profile1, params.nDim_field, Tools::merge( "mean_velocity[0] ", species_name ), true );
@@ -952,11 +952,11 @@ public:
         newSpecies->position_initialization_on_species_       = species->position_initialization_on_species_;
         newSpecies->position_initialization_on_species_index = species->position_initialization_on_species_index;
         newSpecies->position_initialization_                  = species->position_initialization_;
-        newSpecies->position_initialization_array            = species->position_initialization_array;
+        newSpecies->position_initialization_array_            = species->position_initialization_array_;
         newSpecies->regular_number_array_                     = species->regular_number_array_;
         newSpecies->n_numpy_particles                        = species->n_numpy_particles            ;
         newSpecies->momentum_initialization_                  = species->momentum_initialization_;
-        newSpecies->momentum_initialization_array            = species->momentum_initialization_array;
+        newSpecies->momentum_initialization_array_            = species->momentum_initialization_array_;
         newSpecies->c_part_max_                               = species->c_part_max_;
         newSpecies->mass                                     = species->mass;
         newSpecies->time_frozen                              = species->time_frozen;

@@ -69,8 +69,8 @@ Species::Species( Params &params, Patch *patch ) :
     max_charge( 0. ),
     particles( &particles_sorted[0] ),
     regular_number_array_(0),
-    position_initialization_array( NULL ),
-    momentum_initialization_array( NULL ),
+    position_initialization_array_( NULL ),
+    momentum_initialization_array_( NULL ),
     n_numpy_particles( 0 ),
     position_initialization_on_species_( false ),
     position_initialization_on_species_index( -1 ),
@@ -1561,9 +1561,9 @@ int Species::ParticleCreator( vector<unsigned int> n_space_to_create, Params &pa
     // field containing the temperature distribution along all 3 momentum coordinates (always 3d * 3)
     Field3D velocity[3];
 
-    if( momentum_initialization_array != NULL ) {
+    if( momentum_initialization_array_ != NULL ) {
         for( unsigned int idim = 0; idim < 3; idim++ ) {
-            momentum[idim] = &( momentum_initialization_array[idim*n_numpy_particles] );
+            momentum[idim] = &( momentum_initialization_array_[idim*n_numpy_particles] );
         }
     } else {
         //Initialize velocity and temperature profiles
@@ -1591,11 +1591,11 @@ int Species::ParticleCreator( vector<unsigned int> n_space_to_create, Params &pa
     if( this->mass > 0 ) {
         chargeProfile ->valuesAt( xyz, charge );
     }
-    if( position_initialization_array != NULL ) {
+    if( position_initialization_array_ != NULL ) {
         for( unsigned int idim = 0; idim < nDim_particle; idim++ ) {
-            position[idim] = &( position_initialization_array[idim*n_numpy_particles] );
+            position[idim] = &( position_initialization_array_[idim*n_numpy_particles] );
         }
-        weight_arr =         &( position_initialization_array[nDim_particle*n_numpy_particles] );
+        weight_arr =         &( position_initialization_array_[nDim_particle*n_numpy_particles] );
         //Idea to speed up selection, provides xmin, xmax of the bunch and check if there is an intersection with the patch instead of going through all particles for all patches.
         for( unsigned int ip = 0; ip < n_numpy_particles; ip++ ) {
             //If the particle belongs to this patch
@@ -1705,7 +1705,7 @@ int Species::ParticleCreator( vector<unsigned int> n_space_to_create, Params &pa
     //last_index[bin] point to end of bin (= first_index[bin+1])
     //if last_index = first_index, bin is empty of particle.
 
-    if( position_initialization_array == NULL ) {
+    if( position_initialization_array_ == NULL ) {
         for( i=0; i<n_space_to_create_generalized[0]; i++ ) {
             if((!n_existing_particles)&&( i%clrw == 0 )) {
                 first_index[(new_cell_idx+i)/clrw] = iPart;
@@ -1764,7 +1764,7 @@ int Species::ParticleCreator( vector<unsigned int> n_space_to_create, Params &pa
                         //initWeight( nPart, iPart, density( i, j, k ) );
                         ParticleCreator::createWeight( position_initialization_, particles, nPart, iPart, density( i, j, k ), params );
                         
-                        //initCharge( nPart, iPart, charge( i, j, k ) );
+                        // initCharge( nPart, iPart, charge( i, j, k ) );
                         ParticleCreator::createCharge( particles, this,
                                                         nPart, iPart, charge( i, j, k ) );
 
@@ -1873,7 +1873,7 @@ int Species::ParticleCreator( vector<unsigned int> n_space_to_create, Params &pa
                 int_ijk[0] = ( unsigned int )( ( particles->position( 0, ip ) - min_loc_vec[0] )/cell_length[0] );
                 int_ijk[1] = ( unsigned int )( ( sqrt( position[1][ippy]*position[1][ippy]+position[2][ippy]*position[2][ippy] ) - min_loc_vec[1] )/cell_length[1] );
             }
-            if( !momentum_initialization_array ) {
+            if( !momentum_initialization_array_ ) {
                 vel [0] = velocity   [0]( int_ijk[0], int_ijk[1], int_ijk[2] );
                 vel [1] = velocity   [1]( int_ijk[0], int_ijk[1], int_ijk[2] );
                 vel [2] = velocity   [2]( int_ijk[0], int_ijk[1], int_ijk[2] );
@@ -1895,7 +1895,7 @@ int Species::ParticleCreator( vector<unsigned int> n_space_to_create, Params &pa
             }
 
             particles->weight( ip ) = weight_arr[ippy] ;
-            //initCharge( 1, ip, charge( int_ijk[0], int_ijk[1], int_ijk[2] ) );
+            // initCharge( 1, ip, charge( int_ijk[0], int_ijk[1], int_ijk[2] ) );
             ParticleCreator::createCharge( particles, this,
                             1, ip, charge( int_ijk[0], int_ijk[1], int_ijk[2] ) );
             indices[ibin]++;
