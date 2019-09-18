@@ -1378,7 +1378,7 @@ void Params::uncoupled_decomposition_2D()
     double tmp(0.);
     tmp  = number_of_patches[0] / number_of_patches[1];
 
-    number_of_domain[0] = min( sz, max(1, (int)sqrt ( (double)sz*tmp*tmp) ) );
+    number_of_domain[0] = min( sz, max(1, (int)sqrt ( (double)sz*tmp) ) );
     number_of_domain[1] = (int)(sz / number_of_domain[0]);
 
     while ( number_of_domain[0]*number_of_domain[1] != sz ) {
@@ -1443,8 +1443,9 @@ void Params::uncoupled_decomposition_3D()
     // Number of domain in 3D
     // Decomposition in 2 times, X and larger side
     double tmp(0.);
-    tmp  = (double)number_of_patches[0] / (double)((number_of_patches[1]*number_of_patches[2]));
-    number_of_domain[0] = min( sz, max(1, (int)sqrt ( (double)sz*tmp*tmp ) ) );
+    tmp  = (double)(number_of_patches[0]*number_of_patches[0]) / (double)(number_of_patches[1]*number_of_patches[2]);
+    number_of_domain[0] = min( sz, max(1, (int) pow( (double)sz*tmp, 1./3. ) ) );
+
     int rest = (int)(sz / number_of_domain[0]);
     while ( number_of_domain[0]*rest != sz ) {
         if (number_of_domain[0]>=rest ) {
@@ -1458,7 +1459,7 @@ void Params::uncoupled_decomposition_3D()
     }
     // then the 2 last sides
     double tmp2 = number_of_patches[1] / number_of_patches[2];
-    number_of_domain[1] = min( rest, max(1, (int)sqrt ( (double)rest*tmp2*tmp2 ) ) );
+    number_of_domain[1] = min( rest, max(1, (int)sqrt ( (double)rest*tmp2 ) ) );
     number_of_domain[2] = (int)( (double)rest / (double)number_of_domain[1] );
     while ( number_of_domain[1]*number_of_domain[2] != rest ) {
         if (number_of_domain[1]>=number_of_domain[2] ) {
