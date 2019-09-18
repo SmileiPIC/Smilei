@@ -1271,8 +1271,8 @@ void Params::uncoupled_decomposition()
     for ( int iDim = 0 ; iDim < nDim_field ; iDim++ ) {
         offset_map[iDim].resize( number_of_domain[iDim] );
         int nlocal_i = number_of_patches[iDim] / number_of_domain[iDim];
-        if ( nlocal_i*number_of_domain[iDim] != number_of_patches[iDim] )
-            nlocal_i++;
+        //if ( nlocal_i*number_of_domain[iDim] != number_of_patches[iDim] )
+        //    nlocal_i++;
         for ( int iDom = 0 ; iDom < number_of_domain[iDim] ; iDom++ ) {
             offset_map[iDim][iDom] = iDom * nlocal_i * n_space[iDim];
         }
