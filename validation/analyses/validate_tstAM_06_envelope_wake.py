@@ -8,11 +8,11 @@ S = happi.Open(["./restart*"], verbose=False)
 Env_A_abs = S.Field(0, "Env_A_abs", theta=0, timesteps=300.).getData()[0]
 Validate("Env_A_abs field at iteration 300", Env_A_abs, 0.01)
 
-# COMPARE THE Envelope FIELD, absolute value
+# COMPARE THE Ex FIELD
 Ex = S.Field(0, "Ex", theta=0, timesteps=300.).getData()[0]
 Validate("Ex field at iteration 300", Ex, 0.01)
 
-# COMPARE THE Envelope FIELD, absolute value
+# COMPARE THE Env_Chi FIELD
 Env_Chi = S.Field(0, "Env_Chi", theta=0, timesteps=300.).getData()[0]
 Validate("Env_Chi field at iteration 300", Env_Chi, 0.01)
 
