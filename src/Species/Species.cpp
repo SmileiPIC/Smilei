@@ -2166,6 +2166,31 @@ void Species::check( Patch *patch, std::string title )
               << '\n';
 };
 
+void Species::eraseWeightlessParticles()
+{
+    unsigned int nbins = first_index.size();
+    unsigned int i = 0, available_i = 0;
+    
+    // Loop all particles, bin per bin
+    // Overwrite over earlier particles to erase them
+    for( unsigned int ibin = 0; ibin < nbins; ibin++ ) {
+        first_index[ibin] = available_i;
+        while( i < (unsigned int) last_index[ibin] ) {
+            if( particles->weight(i) > 0. ) {
+                if( i > available_i ) {
+                    particles->overwrite_part( i, available_i );
+                }
+                available_i ++;
+            }
+            i++;
+        }
+        last_index[ibin] = available_i;
+    }
+    
+    // Remove trailing particles
+    particles->erase_particle_trail( available_i );
+}
+
 // Array used in the Maxwell-Juttner sampling
 const double Species::lnInvF[1000] = {
     3.028113261189336214e+00, 3.027071073732334305e+00, 3.026027773526156039e+00, 3.024983358705674252e+00, 3.023937826984889554e+00, 3.022891176588271556e+00, 3.021843405329281751e+00,

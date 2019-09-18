@@ -24,34 +24,27 @@ Collisions::Collisions(
     double coulomb_log,
     bool intra_collisions,
     int debug_every,
-    int Z,
-    int ionization_electrons,
-    Particles * ionization_particles,
-    int nDim,
+    CollisionalIonization *ionization,
+    CollisionalNuclearReaction *nuclear_reaction,
     string filename
 ) :
+    Ionization( ionization ),
+    NuclearReaction( nuclear_reaction ),
     n_collisions_( n_collisions ),
     species_group1_( species_group1 ),
     species_group2_( species_group2 ),
     coulomb_log_( coulomb_log ),
     intra_collisions_( intra_collisions ),
     debug_every_( debug_every ),
-    atomic_number( Z ),
     filename_( filename )
 {
-    // Create the ionization object
-    if( ionization_electrons >= 0 ) {
-        Ionization = new CollisionalIonization( Z, nDim, params.reference_angular_frequency_SI, ionization_electrons, ionization_particles );
-    } else {
-        Ionization = new CollisionalNoIonization();
-    }
     coeff1_ = 4.046650232e-21*params.reference_angular_frequency_SI; // h*omega/(2*me*c^2)
     coeff2_ = 2.817940327e-15*params.reference_angular_frequency_SI/299792458.; // re omega / c
 }
 
 
 // Cloning Constructor
-Collisions::Collisions( Collisions *coll, int nDim )
+Collisions::Collisions( Collisions *coll )
 {
 
     n_collisions_     = coll->n_collisions_    ;
@@ -60,15 +53,20 @@ Collisions::Collisions( Collisions *coll, int nDim )
     coulomb_log_      = coll->coulomb_log_     ;
     intra_collisions_ = coll->intra_collisions_;
     debug_every_      = coll->debug_every_     ;
-    atomic_number     = coll->atomic_number   ;
     filename_         = coll->filename_        ;
     coeff1_           = coll->coeff1_        ;
     coeff2_           = coll->coeff2_        ;
     
-    if( atomic_number>0 ) {
-        Ionization = new CollisionalIonization( coll->Ionization );
-    } else {
+    if( dynamic_cast<CollisionalNoIonization *>( coll->Ionization ) ) {
         Ionization = new CollisionalNoIonization();
+    } else {
+        Ionization = new CollisionalIonization( coll->Ionization );
+    }
+    
+    if( dynamic_cast<CollisionalNoNuclearReaction *>( coll->NuclearReaction ) ) {
+        NuclearReaction = new CollisionalNoNuclearReaction();
+    } else if ( dynamic_cast<CollisionalFusionDD *>( coll->NuclearReaction ) ) {
+        NuclearReaction = new CollisionalFusionDD( coll->NuclearReaction );
     }
 }
 
@@ -179,7 +177,7 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
     unsigned int i1=0, i2, ispec1, ispec2, N2max;
     Species   *s1, *s2;
     Particles *p1=NULL, *p2;
-    double m12, coeff3, coeff4, logL, s, ncol, debye2=0.;
+    double coeff3, coeff4, logL, s, ncol, debye2=0.;
     bool not_duplicated_particle;
     
     sg1 = &species_group1_;
@@ -188,12 +186,10 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
     
     bool debug = ( debug_every_ > 0 && itime % debug_every_ == 0 ); // debug only every N timesteps
     
-    if( debug ) {
-        ncol = 0.;
-        smean_       = 0.;
-        logLmean_    = 0.;
-        //temperature = 0.;
-    }
+    ncol = 0.;
+    smean_       = 0.;
+    logLmean_    = 0.;
+    //temperature = 0.;
     
     // Loop bins of particles (typically, cells, but may also be clusters)
     unsigned int nbin = patch->vecSpecies[0]->first_index.size();
@@ -318,8 +314,9 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
         coeff4 = pow( 3.*coeff2_, -1./3. ) * coeff3;
         coeff3 *= coeff2_;
         
-        // Prepare the ionization
+        // Prepare the ionization & nuclear reaction
         Ionization->prepare3( params.timestep, inv_cell_volume );
+        NuclearReaction->prepare();
         
         // Now start the real loop on pairs of particles
         // See equations in http://dx.doi.org/10.1063/1.4742167
@@ -344,19 +341,17 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
             p1 = s1->particles;
             p2 = s2->particles;
             
-            m12  = s1->mass / s2->mass; // mass ratio
-            
             logL = coulomb_log_;
             double U1  = patch->xorshift32() * patch->xorshift32_invmax;
             double U2  = patch->xorshift32() * patch->xorshift32_invmax;
             double phi = patch->xorshift32() * patch->xorshift32_invmax * twoPi;
-            s = one_collision( p1, i1, s1->mass, p2, i2, m12, coeff1_, coeff2_, coeff3, coeff4, n123, n223, debye2, logL, U1, U2, phi );
+            s = one_collision( p1, i1, s1->mass, p2, i2, s2->mass, coeff1_, coeff2_, coeff3, coeff4, n123, n223, debye2, logL, U1, U2, phi );
             
-            // Handle ionization
+            // Handle ionization & nuclear reaction
             Ionization->apply( patch, p1, i1, p2, i2 );
             
+            ncol ++;
             if( debug ) {
-                ncol     += 1;
                 smean_    += s;
                 logLmean_ += logL;
                 //temperature += m1 * (sqrt(1.+pow(p1->momentum(0,i1),2)+pow(p1->momentum(1,i1),2)+pow(p1->momentum(2,i1),2))-1.);
@@ -367,6 +362,7 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
     } // end loop on bins
     
     Ionization->finish( params, patch, localDiags );
+    NuclearReaction->finish( params, patch, localDiags, intra_collisions_, species_group1_, species_group2_, ncol, itime );
     
     if( debug && ncol>0. ) {
         smean_    /= ncol;

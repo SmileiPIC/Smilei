@@ -181,7 +181,7 @@ void Patch::finishCloning( Patch *patch, Params &params, SmileiMPI *smpi, unsign
     EMfields   = ElectroMagnFactory::clone( patch->EMfields, params, vecSpecies, this, n_moved );
 
     // clone the collisions
-    vecCollisions = CollisionsFactory::clone( patch->vecCollisions, params );
+    vecCollisions = CollisionsFactory::clone( patch->vecCollisions );
 
     // clone the particle walls
     partWalls = new PartWalls( patch->partWalls, this );

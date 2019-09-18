@@ -573,7 +573,9 @@ public:
 
         return s_gamma;
     }
-
+    
+    //! Erase all particles with zero weight
+    void eraseWeightlessParticles();
 
 protected:
 

@@ -1,4 +1,3 @@
-
 #ifndef COLLISIONSFACTORY_H
 #define COLLISIONSFACTORY_H
 
@@ -104,6 +103,7 @@ public:
             ERROR( "In collisions #" << n_collisions << ": `ionizing` must be True, False, or the name of an electron species" );
         }
         
+        CollisionalIonization *Ionization;
         if( ionization ) {
             
             if( intra ) {
@@ -148,6 +148,64 @@ public:
                 }
             }
             ionization_particles = vecSpecies[ionization_electrons]->particles;
+            
+            // Create the ionization object
+            Ionization = new CollisionalIonization( Z, &params, ionization_electrons, ionization_particles );
+            
+        } else {
+            
+            Ionization = new CollisionalNoIonization();
+            
+        }
+        
+        // D-D fusion
+        std::vector<std::string> nuclear_reaction(0);
+        PyTools::extract( "nuclear_reaction", nuclear_reaction, "Collisions", n_collisions );
+        CollisionalNuclearReaction *NuclearReaction;
+        // If fusion, verify parameters
+        if( nuclear_reaction.size() == 0 ) {
+            NuclearReaction = new CollisionalNoNuclearReaction();
+        } else {
+            
+            // Type of fusion (only D-D for now)
+            std::string nuclear_reaction_type = nuclear_reaction[0];
+            if( nuclear_reaction_type != "D-D" ) {
+                ERROR( "In collisions #" << n_collisions << ": nuclear_reaction first element should be 'D-D'" );
+            }
+            double mass = vecSpecies[sgroup[0][0]]->mass;
+            if( mass < 1839. ) {
+                ERROR( "In collisions #" << n_collisions << ": for nuclear_reaction D-D, mass must be larger than the neutron's" );
+            }
+            for( int g=0; g<2; g++ ) { // do sgroup[0], then sgroup[1]
+                for( unsigned int i=0; i<sgroup[g].size(); i++ ) {
+                    if( vecSpecies[sgroup[g][i]]->mass != mass ) {
+                        ERROR( "In collisions #" << n_collisions << ": for nuclear_reaction D-D, all masses must be equal" );
+                    }
+                }
+            }
+            
+            // Products' species
+            if( nuclear_reaction.size() < 2 ) {
+                ERROR( "In collisions #" << n_collisions << ": for nuclear_reaction D-D, one product species must be defined" );
+            }
+            int nuclear_reaction_product = -1;
+            for( int i=0; i<(int)vecSpecies.size(); i++ ) {
+                if( vecSpecies[i]->name == nuclear_reaction[1] ) {
+                    nuclear_reaction_product = i;
+                    break;
+                }
+            }
+            if( nuclear_reaction_product < 0 ) {
+                ERROR( "In collisions #" << n_collisions << ": for nuclear_reaction D-D, species `"<< nuclear_reaction[1] << "` unknown");
+            }
+            Particles *nuclear_reaction_particles = vecSpecies[nuclear_reaction_product]->particles;
+            
+            // Extra arguments
+            if( nuclear_reaction.size() > 2 ) {
+                ERROR( "In collisions #" << n_collisions << ": for nuclear_reaction D-D, too many arguments" );
+            }
+            
+            NuclearReaction = new CollisionalFusionDD( mass, &params, nuclear_reaction_product, nuclear_reaction_particles );
         }
         
         // Print collisions parameters
@@ -172,6 +230,9 @@ public:
         mystream.str( "" ); // clear
         if( ionization_electrons>0 ) {
             MESSAGE( 2, "Collisional ionization with atomic number "<<Z<<" towards species `"<<vecSpecies[ionization_electrons]->name << "`" );
+        }
+        if( nuclear_reaction.size() > 0 ) {
+            MESSAGE( 2, "Collisional nuclear reaction `"<<nuclear_reaction[0]<<"` towards species `"<< nuclear_reaction[1] << "`" );
         }
         
         // If debugging log requested
@@ -218,10 +279,8 @@ public:
                        sgroup[1],
                        clog, intra,
                        debug_every,
-                       Z,
-                       ionization_electrons,
-                       ionization_particles,
-                       params.nDim_particle,
+                       Ionization,
+                       NuclearReaction,
                        filename
                    );
         } else {
@@ -232,10 +291,8 @@ public:
                        sgroup[1],
                        clog, intra,
                        debug_every,
-                       Z,
-                       ionization_electrons,
-                       ionization_particles,
-                       params.nDim_particle,
+                       Ionization,
+                       NuclearReaction,
                        filename
                    );
         }
@@ -273,15 +330,15 @@ public:
     
     
     //! Clone a vector of Collisions objects
-    static std::vector<Collisions *> clone( std::vector<Collisions *> vecCollisions, Params &params )
+    static std::vector<Collisions *> clone( std::vector<Collisions *> vecCollisions )
     {
         std::vector<Collisions *> newVecCollisions( 0 );
         
         for( unsigned int i=0; i<vecCollisions.size(); i++ ) {
             if( dynamic_cast<CollisionsSingle *>( vecCollisions[i] ) ) {
-                newVecCollisions.push_back( new CollisionsSingle( vecCollisions[i], params.nDim_particle ) );
+                newVecCollisions.push_back( new CollisionsSingle( vecCollisions[i] ) );
             } else {
-                newVecCollisions.push_back( new Collisions( vecCollisions[i], params.nDim_particle ) );
+                newVecCollisions.push_back( new Collisions( vecCollisions[i] ) );
             }
         }
         
