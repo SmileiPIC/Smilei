@@ -37,6 +37,8 @@ PatchAM::PatchAM( Params &params, SmileiMPI *smpi, DomainDecomposition *domain_d
                 ntype_complex_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
                 ntype_complex_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
                 ntype_complex_[2][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+                ntypeSum_complex_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+                ntypeSum_complex_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
                 
             }
         }
@@ -101,6 +103,8 @@ void PatchAM::initStep2( Params &params, DomainDecomposition *domain_decompositi
         for( int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++ ) {
             ntype_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
             ntype_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+            ntypeSum_complex_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+            ntypeSum_complex_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
             ntypeSum_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
             ntypeSum_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
             
@@ -133,15 +137,144 @@ PatchAM::~PatchAM()
 }
 
 
-void PatchAM::reallyinitSumField( Field *field, int iDim )
-{
-}
-
 // ---------------------------------------------------------------------------------------------------------------------
 // Initialize current patch sum Fields communications through MPI in direction iDim
 // Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
 // ---------------------------------------------------------------------------------------------------------------------
 void PatchAM::initSumField( Field *field, int iDim, SmileiMPI *smpi )
+{
+    if( field->MPIbuff.buf[0][0].size()==0 ) {
+        field->MPIbuff.allocate( 2, field, oversize );
+        field->MPIbuff.defineTags( this, smpi, 0 );
+    }
+    
+    int patch_ndims_( 2 );
+    int patch_nbNeighbors_( 2 );
+    
+    std::vector<unsigned int> n_elem = field->dims_;
+    std::vector<unsigned int> isDual = field->isDual_;
+    Field2D *f2D =  static_cast<Field2D *>( field );
+    
+    // Use a buffer per direction to exchange data before summing
+    // Field2D buf[patch_ndims_][patch_nbNeighbors_];
+    // Size buffer is 2 oversize (1 inside & 1 outside of the current subdomain)
+    std::vector<unsigned int> oversize2 = oversize;
+    oversize2[0] *= 2;
+    oversize2[0] += 1 + f2D->isDual_[0];
+    if( field->dims_.size()>1 ) {
+        oversize2[1] *= 2;
+        oversize2[1] += 1 + f2D->isDual_[1];
+    }
+    
+    vector<int> idx( patch_ndims_, 1 );
+    idx[iDim] = 0;
+    
+    int istart, ix, iy;
+    /********************************************************************************/
+    // Send/Recv in a buffer data to sum
+    /********************************************************************************/
+    memset( &( idx[0] ), 0, sizeof( idx[0] )*idx.size() );
+    idx[iDim] = 1;
+    
+    MPI_Datatype ntype = ntypeSum_[iDim][isDual[0]][isDual[1]];
+    
+    for( int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++ ) {
+    
+        if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
+            istart = iNeighbor * ( n_elem[iDim]- oversize2[iDim] ) + ( 1-iNeighbor ) * ( 0 );
+            ix = idx[0]*istart;
+            iy = idx[1]*istart;
+            int tag = f2D->MPIbuff.send_tags_[iDim][iNeighbor];
+            MPI_Isend( &( ( *f2D )( ix, iy ) ), 1, ntype, MPI_neighbor_[iDim][iNeighbor], tag,
+                       MPI_COMM_WORLD, &( f2D->MPIbuff.srequest[iDim][iNeighbor] ) );
+        } // END of Send
+        
+        if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
+            int tmp_elem = f2D->MPIbuff.buf[iDim][( iNeighbor+1 )%2].size();
+            int tag = f2D->MPIbuff.recv_tags_[iDim][iNeighbor];
+            MPI_Irecv( &( f2D->MPIbuff.buf[iDim][( iNeighbor+1 )%2][0] ), tmp_elem, MPI_DOUBLE, MPI_neighbor_[iDim][( iNeighbor+1 )%2], tag,
+                       MPI_COMM_WORLD, &( f2D->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ) );
+        } // END of Recv
+        
+    } // END for iNeighbor
+    
+} // END initSumField
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Finalize current patch sum Fields communications through MPI for direction iDim
+// Proceed to the local reduction
+// Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
+// ---------------------------------------------------------------------------------------------------------------------
+void PatchAM::finalizeSumField( Field *field, int iDim )
+{
+    int patch_ndims_( 2 );
+//    int patch_nbNeighbors_(2);
+    std::vector<unsigned int> n_elem = field->dims_;
+    std::vector<unsigned int> isDual = field->isDual_;
+    Field2D *f2D =  static_cast<Field2D *>( field );
+    
+    // Use a buffer per direction to exchange data before summing
+    //cField2D buf[patch_ndims_][patch_nbNeighbors_];
+    // Size buffer is 2 oversize (1 inside & 1 outside of the current subdomain)
+    std::vector<unsigned int> oversize2 = oversize;
+    oversize2[0] *= 2;
+    oversize2[0] += 1 + f2D->isDual_[0];
+    oversize2[1] *= 2;
+    oversize2[1] += 1 + f2D->isDual_[1];
+    
+    /********************************************************************************/
+    // Send/Recv in a buffer data to sum
+    /********************************************************************************/
+    
+    MPI_Status sstat    [patch_ndims_][2];
+    MPI_Status rstat    [patch_ndims_][2];
+    
+    for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
+        if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
+            MPI_Wait( &( f2D->MPIbuff.srequest[iDim][iNeighbor] ), &( sstat[iDim][iNeighbor] ) );
+        }
+        if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
+            MPI_Wait( &( f2D->MPIbuff.rrequest[iDim][( iNeighbor+1 )%2] ), &( rstat[iDim][( iNeighbor+1 )%2] ) );
+        }
+    }
+    
+    int istart;
+    /********************************************************************************/
+    // Sum data on each process, same operation on both side
+    /********************************************************************************/
+    vector<int> idx( 2, 1 );
+    idx[iDim] = 0;
+    std::vector<unsigned int> tmp( 2, 0 );
+    tmp[0] =    idx[0]  * n_elem[0] + ( 1-idx[0] ) * oversize2[0];
+    tmp[1] =    idx[1]  * n_elem[1] + ( 1-idx[1] ) * oversize2[1];
+    
+    memset( &( idx[0] ), 0, sizeof( idx[0] )*idx.size() );
+    idx[iDim] = 1;
+    
+    for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
+    
+        istart = ( ( iNeighbor+1 )%2 ) * ( n_elem[iDim]- oversize2[iDim] ) + ( 1-( iNeighbor+1 )%2 ) * ( 0 );
+        int ix0 = idx[0]*istart;
+        int iy0 = idx[1]*istart;
+        if( is_a_MPI_neighbor( iDim, ( iNeighbor+1 )%2 ) ) {
+            for( unsigned int ix=0 ; ix< tmp[0] ; ix++ ) {
+                for( unsigned int iy=0 ; iy< tmp[1] ; iy++ ) {
+                    ( *f2D )( ix0+ix, iy0+iy ) += f2D->MPIbuff.buf[iDim][( iNeighbor+1 )%2][ix*tmp[1] + iy];
+                }
+            }
+        } // END if
+        
+    } // END for iNeighbor
+    
+} // END finalizeSumField
+
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Initialize current patch sum Fields communications through MPI in direction iDim
+// Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
+// ---------------------------------------------------------------------------------------------------------------------
+void PatchAM::initSumFieldComplex( Field *field, int iDim, SmileiMPI *smpi )
 {
     if( field->MPIbuff.ibuf[0][0].size()==0 ) {
         field->MPIbuff.iallocate( 2, field, oversize );
@@ -191,7 +324,7 @@ void PatchAM::initSumField( Field *field, int iDim, SmileiMPI *smpi )
     memset( &( idx[0] ), 0, sizeof( idx[0] )*idx.size() );
     idx[iDim] = 1;
     
-    MPI_Datatype ntype = ntypeSum_[iDim][isDual[0]][isDual[1]];
+    MPI_Datatype ntype = ntypeSum_complex_[iDim][isDual[0]][isDual[1]];
     
     for( int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++ ) {
     
@@ -213,7 +346,7 @@ void PatchAM::initSumField( Field *field, int iDim, SmileiMPI *smpi )
         
     } // END for iNeighbor
     
-} // END initSumField
+} // END initSumFieldComplex
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -221,7 +354,7 @@ void PatchAM::initSumField( Field *field, int iDim, SmileiMPI *smpi )
 // Proceed to the local reduction
 // Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
 // ---------------------------------------------------------------------------------------------------------------------
-void PatchAM::finalizeSumField( Field *field, int iDim )
+void PatchAM::finalizeSumFieldComplex( Field *field, int iDim )
 {
     int patch_ndims_( 2 );
 //    int patch_nbNeighbors_(2);
@@ -282,12 +415,7 @@ void PatchAM::finalizeSumField( Field *field, int iDim )
         
     } // END for iNeighbor
     
-} // END finalizeSumField
-
-
-void PatchAM::reallyfinalizeSumField( Field *field, int iDim )
-{
-} // END finalizeSumField
+} // END finalizeSumFieldComplex
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -503,15 +631,28 @@ void PatchAM::createType( Params &params )
             nx_sum = 1 + 2*params.oversize[0] + ix_isPrim;
             ny_sum = 1 + 2*params.oversize[1] + iy_isPrim;
             
+
             ntypeSum_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            MPI_Type_contiguous( 2*nx_sum*ny,
+            MPI_Type_contiguous( nx_sum*ny,
                                  MPI_DOUBLE, &( ntypeSum_[0][ix_isPrim][iy_isPrim] ) );
             MPI_Type_commit( &( ntypeSum_[0][ix_isPrim][iy_isPrim] ) );
             
             ntypeSum_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            MPI_Type_vector( nx, 2*ny_sum, 2*ny,
+            MPI_Type_vector( nx, ny_sum, ny,
                              MPI_DOUBLE, &( ntypeSum_[1][ix_isPrim][iy_isPrim] ) );
             MPI_Type_commit( &( ntypeSum_[1][ix_isPrim][iy_isPrim] ) );
+
+
+
+            ntypeSum_complex_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+            MPI_Type_contiguous( 2*nx_sum*ny,
+                                 MPI_DOUBLE, &( ntypeSum_complex_[0][ix_isPrim][iy_isPrim] ) );
+            MPI_Type_commit( &( ntypeSum_complex_[0][ix_isPrim][iy_isPrim] ) );
+            
+            ntypeSum_complex_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+            MPI_Type_vector( nx, 2*ny_sum, 2*ny,
+                             MPI_DOUBLE, &( ntypeSum_complex_[1][ix_isPrim][iy_isPrim] ) );
+            MPI_Type_commit( &( ntypeSum_complex_[1][ix_isPrim][iy_isPrim] ) );
 
             // Complex Type
             ntype_complex_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
@@ -562,13 +703,24 @@ void PatchAM::createType2( Params &params )
             nx_sum = 1 + 2*params.oversize[0] + ix_isPrim;
             ny_sum = 1 + 2*params.oversize[1] + iy_isPrim;
             
-            ntypeSum_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+            ntypeSum_complex_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
             MPI_Type_contiguous( 2*nx_sum*ny,
+                                 MPI_DOUBLE, &( ntypeSum_complex_[0][ix_isPrim][iy_isPrim] ) );
+            MPI_Type_commit( &( ntypeSum_complex_[0][ix_isPrim][iy_isPrim] ) );
+            
+            ntypeSum_complex_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+            MPI_Type_vector( 2*nx, ny_sum, ny,
+                             MPI_DOUBLE, &( ntypeSum_complex_[1][ix_isPrim][iy_isPrim] ) );
+            MPI_Type_commit( &( ntypeSum_complex_[1][ix_isPrim][iy_isPrim] ) );
+
+
+            ntypeSum_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+            MPI_Type_contiguous( nx_sum*ny,
                                  MPI_DOUBLE, &( ntypeSum_[0][ix_isPrim][iy_isPrim] ) );
             MPI_Type_commit( &( ntypeSum_[0][ix_isPrim][iy_isPrim] ) );
             
             ntypeSum_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            MPI_Type_vector( 2*nx, ny_sum, ny,
+            MPI_Type_vector( nx, ny_sum, ny,
                              MPI_DOUBLE, &( ntypeSum_[1][ix_isPrim][iy_isPrim] ) );
             MPI_Type_commit( &( ntypeSum_[1][ix_isPrim][iy_isPrim] ) );
             
@@ -587,8 +739,8 @@ void PatchAM::cleanType()
         for( int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++ ) {
             MPI_Type_free( &( ntype_[0][ix_isPrim][iy_isPrim] ) );
             MPI_Type_free( &( ntype_[1][ix_isPrim][iy_isPrim] ) );
-            MPI_Type_free( &( ntypeSum_[0][ix_isPrim][iy_isPrim] ) );
-            MPI_Type_free( &( ntypeSum_[1][ix_isPrim][iy_isPrim] ) );
+            MPI_Type_free( &( ntypeSum_complex_[0][ix_isPrim][iy_isPrim] ) );
+            MPI_Type_free( &( ntypeSum_complex_[1][ix_isPrim][iy_isPrim] ) );
       
             MPI_Type_free( &( ntype_complex_[0][ix_isPrim][iy_isPrim] ) );
             MPI_Type_free( &( ntype_complex_[1][ix_isPrim][iy_isPrim] ) );

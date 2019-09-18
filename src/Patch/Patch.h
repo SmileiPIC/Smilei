@@ -137,10 +137,12 @@ public:
     
     //! init comm / sum densities
     virtual void initSumField( Field *field, int iDim, SmileiMPI *smpi ) = 0;
-    virtual void reallyinitSumField( Field *field, int iDim ) = 0;
     //! finalize comm / sum densities
     virtual void finalizeSumField( Field *field, int iDim ) = 0;
-    virtual void reallyfinalizeSumField( Field *field, int iDim ) = 0;
+    //! init comm / sum densities
+    virtual void initSumFieldComplex( Field *field, int iDim, SmileiMPI *smpi ) = 0;
+    //! finalize comm / sum densities
+    virtual void finalizeSumFieldComplex( Field *field, int iDim ) = 0;
     
     //! init comm / exchange fields in direction iDim only
     virtual void initExchange( Field *field, int iDim, SmileiMPI *smpi ) = 0;
