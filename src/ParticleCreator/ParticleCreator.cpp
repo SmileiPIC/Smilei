@@ -13,6 +13,7 @@
 // ---------------------------------------------------------------------------------------------------------------------
 ParticleCreator::ParticleCreator()
 {
+    position_initialization_on_species_ = false;
     initialized_in_species_ = true;
     add_new_particle_energy_ = true;
     time_profile_ = NULL;

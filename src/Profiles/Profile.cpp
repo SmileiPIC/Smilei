@@ -401,6 +401,7 @@ Profile::Profile( Profile *p )
             function = new Function_Python4D( static_cast<Function_Python4D *>( p->function ) );
         }
     }
+    info += function->getInfo();
 }
 
 
@@ -409,6 +410,3 @@ Profile::~Profile()
 {
     delete function;
 }
-
-
-

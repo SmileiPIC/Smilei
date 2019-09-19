@@ -47,6 +47,12 @@ public:
         return 0.; // virtual => will be redefined
     };
     
+    //! Provide information about the function
+    virtual std::string getInfo()
+    {
+        return ""; // virtual => will be redefined
+    };
+    
 #ifdef SMILEI_USE_NUMPY
     //! Gets the value of an N-D function at points specified as numpy arrays
     virtual PyArrayObject *valueAt( std::vector<PyArrayObject *> )
@@ -584,6 +590,17 @@ public:
         xnumber2pi = f->xnumber2pi     ;
     };
     double valueAt( std::vector<double> );
+    std::string getInfo ()
+    {
+        std::string info = "";
+        info += " (base: " + std::to_string(base);
+        info += ", xamplitude: " + std::to_string(xamplitude);
+        info += ", xvacuum: " + std::to_string(base);
+        info += ", xlength: " + std::to_string(1./invxlength);
+        info += ", xnumber: " + std::to_string(xnumber2pi/(2.*M_PI));
+        info += ")";
+        return info;
+    };
 private:
     double base, xamplitude, xvacuum, invxlength, xphi, xnumber2pi;
 };
