@@ -358,3 +358,107 @@ void DoubleGrids::fieldsOnDomainRecv( ElectroMagn* globalfields, unsigned int hi
     domain.fake_patch->EMfields->Bz_m->put( globalfields->Bz_m, params, smpi, domain.fake_patch, domain.patch_ );
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ---------------------------------------------------------------------------
+// Scatter Fields on Patches for particles interpolation or divergece cleaning
+// ---------------------------------------------------------------------------
+void DoubleGrids::syncBOnPatches( Domain &domain, VectorPatch &vecPatches, Params &params, SmileiMPI *smpi, Timers &timers, int itime )
+{
+    timers.grids.restart();
+
+    // Loop / additional_patches_ ( within local vecPatches but not in local Domain )
+    //                            get data from Domain of others MPI
+    for ( unsigned int i=0 ; i<domain.additional_patches_.size() ; i++ ) {
+
+        unsigned int ipatch = domain.additional_patches_[i]-vecPatches.refHindex_;
+        DoubleGrids::bOnPatchesRecv( vecPatches(ipatch)->EMfields,
+                                     domain.additional_patches_[i], domain.additional_patches_ranks[i], smpi,  vecPatches(ipatch) );
+
+    }
+
+    // Loop / missing_patches_ ( within local Domain but not in local vecPatches,  )
+    //                         send data which do not concern local Domain
+    for ( unsigned int i=0 ; i<domain.missing_patches_.size() ; i++ ) {
+
+        unsigned int ipatch = domain.missing_patches_[i]-vecPatches.refHindex_;
+        DoubleGrids::bOnPatchesSend( domain.patch_->EMfields,
+                                     domain.missing_patches_[i], domain.missing_patches_ranks[i], vecPatches, params, smpi, domain );
+
+    }
+
+    // Loop / additional_patches_ to finalize recv ( fieldsOnPatchesRecv relies on MPI_Irecv )
+    for ( unsigned int i=0 ; i<domain.additional_patches_.size() ; i++ ) {
+
+        unsigned int ipatch = domain.additional_patches_[i]-vecPatches.refHindex_;
+        DoubleGrids::bOnPatchesRecvFinalize( vecPatches(ipatch)->EMfields,
+                                             domain.additional_patches_[i], domain.additional_patches_ranks[i], smpi, vecPatches(ipatch) );
+
+    }
+
+    // Loop / local_patches_ ( patches own by the local vePatches whose data are used by the local Domain )
+    for ( unsigned int i=0 ; i<domain.local_patches_.size() ; i++ ) {
+
+        unsigned int ipatch = domain.local_patches_[i]-vecPatches.refHindex_;
+
+        vecPatches(ipatch)->EMfields->Bx_->get( domain.patch_->EMfields->Bx_, params, smpi, domain.patch_, vecPatches(ipatch) );
+        vecPatches(ipatch)->EMfields->By_->get( domain.patch_->EMfields->By_, params, smpi, domain.patch_, vecPatches(ipatch) );
+        vecPatches(ipatch)->EMfields->Bz_->get( domain.patch_->EMfields->Bz_, params, smpi, domain.patch_, vecPatches(ipatch) );
+
+    }
+
+    timers.grids.update();
+}
+
+
+void DoubleGrids::bOnPatchesRecv( ElectroMagn* localfields, unsigned int hindex, int recv_from_global_patch_rank, SmileiMPI* smpi, Patch* patch )
+{
+    // irecv( Fields, sender_mpi_rank, tag, requests );
+    //        tag = *6 ? 6 communications could be are required per patch
+    //        clarify which usage need B, B_m or both
+    smpi->irecv( localfields->Bx_, recv_from_global_patch_rank, hindex*9+6, patch->requests_[6] );
+    smpi->irecv( localfields->By_, recv_from_global_patch_rank, hindex*9+7, patch->requests_[7] );
+    smpi->irecv( localfields->Bz_, recv_from_global_patch_rank, hindex*9+8, patch->requests_[8] );
+
+}
+
+void DoubleGrids::bOnPatchesRecvFinalize( ElectroMagn* localfields, unsigned int hindex, int recv_from_global_patch_rank, SmileiMPI* smpi, Patch* patch )
+{
+    MPI_Status status;
+    // Wait for fieldsOnPatchesRecv (irecv)
+    MPI_Wait( &(patch->requests_[6]), &status );
+    MPI_Wait( &(patch->requests_[7]), &status );
+    MPI_Wait( &(patch->requests_[8]), &status );
+}
+
+void DoubleGrids::bOnPatchesSend( ElectroMagn* globalfields, unsigned int hindex, int local_patch_rank, VectorPatch& vecPatches, Params &params, SmileiMPI* smpi, Domain& domain )
+{
+    // fake_patch consists in a piece of the local Domain to handle naturally patches communications
+    //            need to update its hindex and coordinates to extract (get) appropriate data from the local Domain data before send it
+    domain.fake_patch->hindex = hindex;
+    domain.fake_patch->Pcoordinates = vecPatches.domain_decomposition_->getDomainCoordinates( hindex );
+
+    // send( Fields, targeted_mpi_rank, tag );
+    //       tag = *9 ? 6 communications could be required per patch
+    //       clarify which usage need B, B_m or both
+    domain.fake_patch->EMfields->Bx_->get( globalfields->Bx_, params, smpi, domain.patch_, domain.fake_patch );
+    smpi->send( domain.fake_patch->EMfields->Bx_, local_patch_rank, hindex*9+6 );
+
+    domain.fake_patch->EMfields->By_->get( globalfields->By_, params, smpi, domain.patch_, domain.fake_patch );
+    smpi->send( domain.fake_patch->EMfields->By_, local_patch_rank, hindex*9+7 );
+
+    domain.fake_patch->EMfields->Bz_->get( globalfields->Bz_, params, smpi, domain.patch_, domain.fake_patch );
+    smpi->send( domain.fake_patch->EMfields->Bz_, local_patch_rank, hindex*9+8 );
+
+}

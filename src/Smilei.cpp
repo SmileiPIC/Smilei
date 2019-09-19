@@ -317,6 +317,7 @@ int main( int argc, char *argv[] )
         params.print_timestep_headers();
     }
     
+    int count_dlb = 0;
     
     unsigned int itime=checkpoint.this_run_start_step+1;
     while( ( itime <= params.n_time ) && ( !checkpoint.exit_asap ) ) {
@@ -443,12 +444,31 @@ int main( int argc, char *argv[] )
             
         if( params.has_load_balancing ) {
             if( params.load_balancing_time_selection->theTimeIsNow( itime ) ) {
+
+                count_dlb++;
+                if (params.uncoupled_grids && ((count_dlb%5)==0))
+                    DoubleGrids::syncBOnPatches( domain, vecPatches, params, &smpi, timers, itime );
+
                 timers.loadBal.restart();
                 #pragma omp single
                 vecPatches.load_balance( params, time_dual, &smpi, simWindow, itime );
                 timers.loadBal.update( params.printNow( itime ) );
 
-                if (params.uncoupled_grids) {
+                if (params.uncoupled_grids && ((count_dlb%5)==0)) {
+                    //if (params.uncoupled_grids ) {
+                    domain.reset_fitting( &smpi, params );
+
+                    domain.clean();
+                    domain.reset_mapping();
+
+                    domain.build( params, &smpi, vecPatches, openPMD, false );
+                    domain.identify_additional_patches( &smpi, vecPatches, params, simWindow );
+                    domain.identify_missing_patches( &smpi, vecPatches, params );
+
+                    DoubleGrids::syncFieldsOnDomain( vecPatches, domain, params, &smpi );
+
+                }
+                else if (params.uncoupled_grids) {
                     domain.reset_mapping();
                     domain.identify_additional_patches( &smpi, vecPatches, params, simWindow );
                     domain.identify_missing_patches( &smpi, vecPatches, params );

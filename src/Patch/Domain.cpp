@@ -554,8 +554,11 @@ void Domain::reset_fitting(SmileiMPI* smpi, Params& params)
     int targeted_rk = -1;
     for (int i=0 ; i< smpi->getSize() ;i++)
         if (target_map[i]==smpi->getRank())
-            vecPatch_.refHindex_ = i;
+            targeted_rk = i;
 
+    if ( targeted_rk==-1 ) {
+        MPI_Abort(MPI_COMM_WORLD,-1);
+    }
 
 
     // Compute coordinates of current patch in 3D
@@ -563,16 +566,23 @@ void Domain::reset_fitting(SmileiMPI* smpi, Params& params)
         for ( int yDom = 0 ; yDom < params.number_of_domain[1] ; yDom++ )
             for ( int zDom = 0 ; zDom < params.number_of_domain[2] ; zDom++ ) {
 
-                if ( params.map_rank[xDom][yDom][zDom] ==  vecPatch_.refHindex_ ) {
+                if ( params.map_rank[xDom][yDom][zDom] ==  targeted_rk ) {
                     params.coordinates[0] = xDom;
                     params.coordinates[1] = yDom;
                     params.coordinates[2] = zDom;
                 }
             }
+
+    int count_ = 0;
     for ( int xDom = 0 ; xDom < params.number_of_domain[0] ; xDom++ )
         for ( int yDom = 0 ; yDom < params.number_of_domain[1] ; yDom++ ) {
             for ( int zDom = 0 ; zDom < params.number_of_domain[2] ; zDom++ ) {
                 params.map_rank[xDom][yDom][zDom] = new_map_rank[xDom][yDom][zDom];
+
+                if ( new_map_rank[xDom][yDom][zDom] == smpi->getRank() )
+                    vecPatch_.refHindex_ = count_; //domain Id are distributed linearly
+                count_++;
+
             }
         }
 
