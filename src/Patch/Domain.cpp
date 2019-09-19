@@ -234,8 +234,12 @@ void Domain::identify_missing_patches(SmileiMPI* smpi, VectorPatch& vecPatches, 
     std::vector<int> patch_max_coord(patch_->getDomainLocalMin().size());
     int npatch_domain(1);
     for ( int iDim = 0 ; iDim < patch_->getDomainLocalMin().size() ; iDim++ ) {
-        patch_min_coord[iDim] = (int)( patch_->getDomainLocalMin(iDim) / params.cell_length[iDim] / (double)params.n_space[iDim] );
-        patch_max_coord[iDim] = (int)( patch_->getDomainLocalMax(iDim) / params.cell_length[iDim] / (double)params.n_space[iDim] ) - 1;
+        patch_min_coord[iDim] = params.offset_map[iDim][ patch_->Pcoordinates[iDim] ] / params.n_space[iDim];
+        if ( patch_->Pcoordinates[iDim] < params.number_of_domain[iDim]-1 )
+            patch_max_coord[iDim] = params.offset_map[iDim][ patch_->Pcoordinates[iDim]+1 ] / params.n_space[iDim] - 1;
+        else
+            patch_max_coord[iDim] = params.n_space_global[iDim] / params.n_space[iDim] - 1;
+
         npatch_domain *= params.n_space_domain[iDim] / params.n_space[iDim];
     }
     //cout << patch_min_coord[0] << " " << patch_min_coord[1] << endl;
