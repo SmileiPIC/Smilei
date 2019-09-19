@@ -7,7 +7,7 @@ compile:
   only:
     - develop
     - sync_integration
-    #- dev_injector
+    - dev_injector
 
   script:
     # Force workdir cleaning in case of retried
@@ -30,7 +30,7 @@ makerun1D:
   only:
     - develop
     - sync_integration
-    #- dev_injector
+    - dev_injector
 
   script:
     # Move in test dir
@@ -43,7 +43,7 @@ makerun2D:
   only:
     - develop
     - sync_integration
-    #- dev_injector
+    - dev_injector
 
   script:
     # Move in test dir
@@ -56,7 +56,7 @@ makerun3D:
   only:
     - develop
     - sync_integration
-    #- dev_injector
+    - dev_injector
 
   script:
     # Move in test dir
@@ -68,7 +68,8 @@ makerunAM:
   stage: makerun
   only:
     - develop
-
+    - dev_injector
+    
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -92,6 +93,7 @@ makerunCollisions:
   stage: makerun
   only:
     - develop
+    - dev_injector
     
   script:
     # Move in test dir

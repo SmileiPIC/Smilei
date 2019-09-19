@@ -1661,7 +1661,9 @@ int Species::ParticleCreator( vector<unsigned int> n_space_to_create, Params &pa
                         }
                         density( i, j, k ) /= charge( i, j, k );
                     }
+                    
                     density( i, j, k ) = abs( density( i, j, k ) );
+                    
                     // multiply by the cell volume
                     density( i, j, k ) *= params.cell_volume;
                     if( params.geometry=="AMcylindrical" && position_initialization_ != "regular" ) {

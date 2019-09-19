@@ -275,7 +275,8 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
                         }
                         density( i, j, k ) /= charge( i, j, k );
                     }
-                    density( i, j, k ) = abs( density( i, j, k ) );
+                    
+                    density( i, j, k ) = std::abs( density( i, j, k ) );
                     
                     // Time amplitude
                     density( i, j, k ) *= time_amplitude;

@@ -50,7 +50,8 @@ public:
     //! Provide information about the function
     virtual std::string getInfo()
     {
-        return ""; // virtual => will be redefined
+        std::string info = "";
+        return info; // virtual => will be redefined
     };
     
 #ifdef SMILEI_USE_NUMPY
@@ -188,6 +189,11 @@ public:
         xvacuum = f->xvacuum;
     };
     double valueAt( std::vector<double> );
+    std::string getInfo ()
+    {
+        std::string info = " (value: " + std::to_string(value) + ")";
+        return info;
+    };
 private:
     double value, xvacuum;
 };
@@ -595,7 +601,8 @@ public:
         std::string info = "";
         info += " (base: " + std::to_string(base);
         info += ", xamplitude: " + std::to_string(xamplitude);
-        info += ", xvacuum: " + std::to_string(base);
+        info += ", xvacuum: " + std::to_string(xvacuum);
+        info += ", xphi: " + std::to_string(xphi);
         info += ", xlength: " + std::to_string(1./invxlength);
         info += ", xnumber: " + std::to_string(xnumber2pi/(2.*M_PI));
         info += ")";
