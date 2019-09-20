@@ -314,8 +314,10 @@ Profile::Profile( PyObject *py_profile, unsigned int nvariables, string name, bo
             }
         }
     }
-    
     info = info_.str();
+    if (function) {
+        info += function->getInfo();
+    }
 }
 
 
@@ -401,7 +403,6 @@ Profile::Profile( Profile *p )
             function = new Function_Python4D( static_cast<Function_Python4D *>( p->function ) );
         }
     }
-    info += function->getInfo();
 }
 
 

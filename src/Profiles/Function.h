@@ -215,6 +215,11 @@ public:
         yvacuum = f->yvacuum;
     };
     double valueAt( std::vector<double> );
+    std::string getInfo ()
+    {
+        std::string info = " (value: " + std::to_string(value) + ")";
+        return info;
+    };
 private:
     double value, xvacuum, yvacuum;
 };
@@ -238,6 +243,11 @@ public:
         zvacuum = f->zvacuum;
     };
     double valueAt( std::vector<double> );
+    std::string getInfo ()
+    {
+        std::string info = " (value: " + std::to_string(value) + ")";
+        return info;
+    };
 private:
     double value, xvacuum, yvacuum, zvacuum;
 };
@@ -267,6 +277,16 @@ public:
         invxslope2 = 1./xslope2;
     };
     double valueAt( std::vector<double> );
+    std::string getInfo ()
+    {
+        std::string info = " (value: " + std::to_string(value)
+                         + ", xvacuum: " + std::to_string(xvacuum)
+                         + ", xplateau: " + std::to_string(xplateau)
+                         + ", xslope1: " + std::to_string(xslope1)
+                         + ", xslope2: " + std::to_string(xslope2)
+                         + ")";
+        return info;
+    };
 private:
     double value, xvacuum, xplateau, xslope1, xslope2, invxslope1, invxslope2;
 };
@@ -308,6 +328,20 @@ public:
         invyslope2 = 1./yslope2;
     };
     double valueAt( std::vector<double> );
+    std::string getInfo ()
+    {
+        std::string info = " (value: " + std::to_string(value)
+                         + ", xvacuum: " + std::to_string(xvacuum)
+                         + ", yvacuum: " + std::to_string(yvacuum)
+                         + ", xplateau: " + std::to_string(xplateau)
+                         + ", yplateau: " + std::to_string(yplateau)
+                         + ", xslope1: " + std::to_string(xslope1)
+                         + ", xslope2: " + std::to_string(xslope2)
+                         + ", yslope1: " + std::to_string(yslope1)
+                         + ", yslope2: " + std::to_string(yslope2)
+                         + ")";
+        return info;
+    };
 private:
     double value,
            xvacuum, xplateau, xslope1, xslope2, invxslope1, invxslope2,
@@ -363,6 +397,24 @@ public:
         invzslope2 = 1./zslope2;
     };
     double valueAt( std::vector<double> );
+    std::string getInfo ()
+    {
+        std::string info = " (value: " + std::to_string(value)
+                         + ", xvacuum: " + std::to_string(xvacuum)
+                         + ", yvacuum: " + std::to_string(yvacuum)
+                         + ", zvacuum: " + std::to_string(zvacuum)
+                         + ", xplateau: " + std::to_string(xplateau)
+                         + ", yplateau: " + std::to_string(yplateau)
+                         + ", zplateau: " + std::to_string(zplateau)
+                         + ", xslope1: " + std::to_string(xslope1)
+                         + ", xslope2: " + std::to_string(xslope2)
+                         + ", yslope1: " + std::to_string(yslope1)
+                         + ", yslope2: " + std::to_string(yslope2)
+                         + ", zslope1: " + std::to_string(zslope1)
+                         + ", zslope2: " + std::to_string(zslope2)
+                         + ")";
+        return info;
+    };
 private:
     double value,
            xvacuum, xplateau, xslope1, xslope2, invxslope1, invxslope2,
@@ -395,6 +447,17 @@ public:
         xorder    = f->xorder ;
     };
     double valueAt( std::vector<double> );
+    std::string getInfo ()
+    {
+        std::string info = " (value: " + std::to_string(value)
+                         + ", xvacuum: " + std::to_string(xvacuum)
+                         + ", xlength: " + std::to_string(xlength)
+                         + ", xsigma: " + std::to_string(1./invxsigma)
+                         + ", xcenter: " + std::to_string(xcenter)
+                         + ", xorder: " + std::to_string(xorder)
+                         + ")";
+        return info;
+    };
 private:
     double value, xvacuum, xlength, invxsigma, xcenter;
     int xorder;
@@ -436,6 +499,17 @@ public:
         yorder    = f->yorder ;
     };
     double valueAt( std::vector<double> );
+    std::string getInfo ()
+    {
+        std::string info = " (value: " + std::to_string(value)
+                         + ", xvacuum: " + std::to_string(xvacuum)
+                         + ", xlength: " + std::to_string(xlength)
+                         + ", xsigma: " + std::to_string(1./invxsigma)
+                         + ", xcenter: " + std::to_string(xcenter)
+                         + ", xorder: " + std::to_string(xorder)
+                         + ")";
+        return info;
+    };
 private:
     double value,
            xvacuum, xlength, invxsigma, xcenter,
@@ -490,6 +564,17 @@ public:
         zorder    = f->zorder ;
     };
     double valueAt( std::vector<double> );
+    std::string getInfo ()
+    {
+        std::string info = " (value: " + std::to_string(value)
+                         + ", xvacuum: " + std::to_string(xvacuum)
+                         + ", xlength: " + std::to_string(xlength)
+                         + ", xsigma: " + std::to_string(1./invxsigma)
+                         + ", xcenter: " + std::to_string(xcenter)
+                         + ", xorder: " + std::to_string(xorder)
+                         + ")";
+        return info;
+    };
 private:
     double value,
            xvacuum, xlength, invxsigma, xcenter,
@@ -517,6 +602,26 @@ public:
         npoints = xpoints.size();
     };
     double valueAt( std::vector<double> );
+    std::string getInfo ()
+    {
+        std::string info = " (xpoints: [";
+        for(std::vector<double>::iterator point = xpoints.begin(); point != xpoints.end(); ++point) {
+            info += " " + std::to_string(*point) ;
+        }
+        info += "]";
+        info += ", values: [";
+        for(std::vector<double>::iterator value = xvalues.begin(); value != xvalues.end(); ++value) {
+            info += " " + std::to_string(*value) ;
+        }
+        info += "]";
+        info += ", xslopes: [";
+        for(std::vector<double>::iterator slope = xslopes.begin(); slope != xslopes.end(); ++slope) {
+            info += " " + std::to_string(*slope) ;
+        }
+        info += "]";
+        info += ")";
+        return info;
+    };
 private:
     std::vector<double> xpoints, xvalues, xslopes;
     int npoints;

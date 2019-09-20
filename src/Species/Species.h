@@ -423,9 +423,6 @@ public:
     //! Method used to initialize the Particle position in a given cell
     void initPosition( unsigned int, unsigned int, double *, Params & );
 
-    //! Method used to initialize the Particle 3d momentum in a given cell
-    void initMomentum( unsigned int, unsigned int, double *, double * );
-
     //! Method used to sort particles
     virtual void sort_part( Params &param );
 
@@ -593,13 +590,6 @@ private:
 
     //! Parameter used when defining the Maxwell-Juettner function (corresponds to a discretization step in energy)
 //    double dE;
-
-    //! Samples npoints values of energies in a Maxwell-Juttner distribution
-    std::vector<double> maxwellJuttner( unsigned int npoints, double temperature );
-    //! Array used in the Maxwell-Juttner sampling (see doc)
-    static const double lnInvF[1000];
-    //! Array used in the Maxwell-Juttner sampling (see doc)
-    static const double lnInvH[1000];
 
 };
 

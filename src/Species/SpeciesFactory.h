@@ -135,6 +135,7 @@ public:
                 ERROR( "For species `" << species_name << "`, pusher must be 'boris', 'borisnr', 'vay', 'higueracary', 'ponderomotive_boris'" );
             }
             thisSpecies->pusher = pusher;
+            MESSAGE( 2, "> Pusher: " << thisSpecies->pusher );
 
             // Radiation model of the species
             // Species with a Monte-Carlo process for the radiation loss
@@ -826,7 +827,8 @@ public:
             }
 
             thisSpecies->density_profile_ = new Profile( profile1, params.nDim_field, Tools::merge( thisSpecies->density_profile_type_, "_density ", species_name ), true );
-            //MESSAGE("creating density profile");
+            MESSAGE(2, "Density profile: " << thisSpecies->density_profile_->getInfo());
+            
             // Number of particles per cell
             if( !PyTools::extract_pyProfile( "particles_per_cell", profile1, "Species", ispec ) ) {
                 ERROR( "For species '" << species_name << "', particles_per_cell not found or not understood" );
