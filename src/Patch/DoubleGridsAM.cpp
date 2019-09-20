@@ -406,3 +406,105 @@ void DoubleGridsAM::fieldsOnDomainRecv( ElectroMagnAM* globalfields, unsigned in
     }
 
 }
+
+
+
+// ---------------------------------------------------------------------------
+// Scatter Fields on Patches for particles interpolation or divergece cleaning
+// ---------------------------------------------------------------------------
+void DoubleGridsAM::syncBOnPatches( Domain &domain, VectorPatch &vecPatches, Params &params, SmileiMPI *smpi, Timers &timers, int itime, unsigned int imode )
+{
+    timers.grids.restart();
+
+    // Loop / additional_patches_ ( within local vecPatches but not in local Domain )
+    //                            get data from Domain of others MPI
+    for ( unsigned int i=0 ; i<domain.additional_patches_.size() ; i++ ) {
+
+        unsigned int ipatch = domain.additional_patches_[i]-vecPatches.refHindex_;
+        DoubleGridsAM::bOnPatchesRecv( static_cast<ElectroMagnAM *>(vecPatches(ipatch)->EMfields),
+                                            domain.additional_patches_[i], domain.additional_patches_ranks[i], smpi,  vecPatches(ipatch), params, imode );
+
+    }
+
+    // Loop / missing_patches_ ( within local Domain but not in local vecPatches,  )
+    //                         send data which do not concern local Domain
+    for ( unsigned int i=0 ; i<domain.missing_patches_.size() ; i++ ) {
+
+        unsigned int ipatch = domain.missing_patches_[i]-vecPatches.refHindex_;
+        DoubleGridsAM::bOnPatchesSend( static_cast<ElectroMagnAM *>(domain.patch_->EMfields),
+                                            domain.missing_patches_[i], domain.missing_patches_ranks[i], vecPatches, params, smpi, domain, imode );
+
+    }
+
+    // Loop / additional_patches_ to finalize recv ( fieldsOnPatchesRecv relies on MPI_Irecv )
+    for ( unsigned int i=0 ; i<domain.additional_patches_.size() ; i++ ) {
+
+        unsigned int ipatch = domain.additional_patches_[i]-vecPatches.refHindex_;
+        DoubleGridsAM::bOnPatchesRecvFinalize( static_cast<ElectroMagnAM *>(vecPatches(ipatch)->EMfields),
+                                                    domain.additional_patches_[i], domain.additional_patches_ranks[i], smpi, vecPatches(ipatch), imode );
+
+    }
+
+    ElectroMagnAM * domain_fields = NULL;
+    if ( domain.local_patches_.size() ) // could be empty for domain_global
+        domain_fields = static_cast<ElectroMagnAM *>( domain.patch_->EMfields );
+
+    // Loop / local_patches_ ( patches own by the local vePatches whose data are used by the local Domain )
+    for ( unsigned int i=0 ; i<domain.local_patches_.size() ; i++ ) {
+
+        unsigned int ipatch = domain.local_patches_[i]-vecPatches.refHindex_;
+        ElectroMagnAM * patch_fields = static_cast<ElectroMagnAM *>( vecPatches(ipatch)->EMfields );
+
+        patch_fields->Bl_[imode]->get( domain_fields->Bl_[imode], params, smpi, domain.patch_, vecPatches(ipatch) );
+        patch_fields->Br_[imode]->get( domain_fields->Br_[imode], params, smpi, domain.patch_, vecPatches(ipatch) );
+        patch_fields->Bt_[imode]->get( domain_fields->Bt_[imode], params, smpi, domain.patch_, vecPatches(ipatch) );
+
+    }
+
+    timers.grids.update();
+}
+
+
+void DoubleGridsAM::bOnPatchesRecv( ElectroMagnAM* localfields, unsigned int hindex, int recv_from_global_patch_rank, SmileiMPI* smpi, Patch* patch, Params& params, unsigned int imode )
+{
+    // irecvComplex( cFields, sender_mpi_rank, tag, requests );
+    //               tag = *9 ? 9 communications could be are required per patch
+    //               clarify which usage need B, B_m or both
+    smpi->irecvComplex( localfields->Bl_[imode], recv_from_global_patch_rank, hindex*9+3, patch->requests_[3] );
+    smpi->irecvComplex( localfields->Br_[imode], recv_from_global_patch_rank, hindex*9+4, patch->requests_[4] );
+    smpi->irecvComplex( localfields->Bt_[imode], recv_from_global_patch_rank, hindex*9+5, patch->requests_[5] );
+
+}
+
+void DoubleGridsAM::bOnPatchesRecvFinalize( ElectroMagnAM* localfields, unsigned int hindex, int recv_from_global_patch_rank, SmileiMPI* smpi, Patch* patch, unsigned int imode )
+{
+    MPI_Status status;
+    // Wait for fieldsOnPatchesRecv (irecv)
+    MPI_Wait( &(patch->requests_[3]), &status );
+    MPI_Wait( &(patch->requests_[4]), &status );
+    MPI_Wait( &(patch->requests_[5]), &status );
+}
+
+void DoubleGridsAM::bOnPatchesSend( ElectroMagnAM* globalfields, unsigned int hindex, int local_patch_rank, VectorPatch& vecPatches, Params &params, SmileiMPI* smpi, Domain& domain, unsigned int imode )
+{
+    ElectroMagnAM * fake_fields = static_cast<ElectroMagnAM *>( domain.fake_patch->EMfields );
+
+    // fake_patch consists in a piece of the local Domain to handle naturally patches communications
+    //            need to update its hindex and coordinates to extract (get) appropriate data from the local Domain data before send it
+    domain.fake_patch->hindex = hindex;
+    domain.fake_patch->Pcoordinates = vecPatches.domain_decomposition_->getDomainCoordinates( hindex );
+
+    // sendComplex( cFields, targeted_mpi_rank, tag );
+    //               tag = *9 ? 9 communications could be required per patch
+    //               clarify which usage need B, B_m or both
+    fake_fields->Bl_[imode]->get( globalfields->Bl_[imode], params, smpi, domain.patch_, domain.fake_patch );
+    smpi->sendComplex( fake_fields->Bl_[imode], local_patch_rank, hindex*9+3 );
+
+    fake_fields->Br_[imode]->get( globalfields->Br_[imode], params, smpi, domain.patch_, domain.fake_patch );
+    smpi->sendComplex( fake_fields->Br_[imode], local_patch_rank, hindex*9+4 );
+
+    fake_fields->Bt_[imode]->get( globalfields->Bt_[imode], params, smpi, domain.patch_, domain.fake_patch );
+    smpi->sendComplex( fake_fields->Bt_[imode], local_patch_rank, hindex*9+5 );
+
+}
+

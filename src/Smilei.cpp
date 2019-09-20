@@ -446,8 +446,14 @@ int main( int argc, char *argv[] )
             if( params.load_balancing_time_selection->theTimeIsNow( itime ) ) {
 
                 count_dlb++;
-                if (params.uncoupled_grids && ((count_dlb%5)==0))
-                    DoubleGrids::syncBOnPatches( domain, vecPatches, params, &smpi, timers, itime );
+                if (params.uncoupled_grids && ((count_dlb%5)==0)) {
+                    if ( params.geometry != "AMcylindrical" )
+                        DoubleGrids::syncBOnPatches( domain, vecPatches, params, &smpi, timers, itime );
+                    else {
+                        for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
+                            DoubleGridsAM::syncBOnPatches( domain, vecPatches, params, &smpi, timers, itime, imode );
+                    }
+                }
 
                 timers.loadBal.restart();
                 #pragma omp single
@@ -465,7 +471,12 @@ int main( int argc, char *argv[] )
                     domain.identify_additional_patches( &smpi, vecPatches, params, simWindow );
                     domain.identify_missing_patches( &smpi, vecPatches, params );
 
-                    DoubleGrids::syncFieldsOnDomain( vecPatches, domain, params, &smpi );
+                    if ( params.geometry != "AMcylindrical" )
+                        DoubleGrids::syncFieldsOnDomain( vecPatches, domain, params, &smpi );
+                    else {
+                        for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
+                            DoubleGridsAM::syncFieldsOnDomain( vecPatches, domain, params, &smpi, imode );
+                    }
 
                 }
                 else if (params.uncoupled_grids) {
