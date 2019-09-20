@@ -23,6 +23,7 @@
 #include <limits>
 #include "ElectroMagnBC_Factory.h"
 #include "DoubleGrids.h"
+#include "SyncVectorPatch.h"
 
 using namespace std;
 
@@ -616,7 +617,7 @@ void SimWindow::operate(Domain& domain,  VectorPatch& vecPatches, SmileiMPI* smp
 
 
     // warkaround for !params.full_B_exchange (in 3D, with SM some border elements are not computed)
-    SyncVectorPatch::exchangeB( params, domain.vecPatch_, &smpi );
+    SyncVectorPatch::exchangeB( params, domain.vecPatch_, smpi );
     SyncVectorPatch::finalizeexchangeB( params, domain.vecPatch_ );
 
 }
