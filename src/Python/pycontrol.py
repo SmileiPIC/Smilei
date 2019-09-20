@@ -125,6 +125,9 @@ def _keep_python_running():
     if len(MovingWindow)>0:
         for e in ExternalField:
             profiles += [e.profile]
+    if len(LoadBalancing)>0:
+        if (Main.uncoupled_grids):
+            return True
     for e in ExternalTimeField:
         profiles += [e.profile]
     for prof in profiles:
