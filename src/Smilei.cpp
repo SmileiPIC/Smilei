@@ -427,7 +427,7 @@ int main( int argc, char *argv[] )
             simWindow->shift( vecPatches, &smpi, params, itime, time_dual, domain );
 
             // warkaround for !params.full_B_exchange (in 3D, with SM some border elements are not computed)
-            if (params.uncoupled_grids) {
+            if ( (params.uncoupled_grids) && (params.geometry != "AMcylindrical" ) ) {
                 SyncVectorPatch::exchangeB( params, domain.vecPatch_, &smpi );
                 SyncVectorPatch::finalizeexchangeB( params, domain.vecPatch_ );
             }
