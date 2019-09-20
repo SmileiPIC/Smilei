@@ -426,12 +426,6 @@ int main( int argc, char *argv[] )
             timers.movWindow.restart();
             simWindow->shift( vecPatches, &smpi, params, itime, time_dual, domain );
 
-            // warkaround for !params.full_B_exchange (in 3D, with SM some border elements are not computed)
-            if ( (params.uncoupled_grids) && (params.geometry != "AMcylindrical" ) ) {
-                SyncVectorPatch::exchangeB( params, domain.vecPatch_, &smpi );
-                SyncVectorPatch::finalizeexchangeB( params, domain.vecPatch_ );
-            }
-            
             if (itime == simWindow->getAdditionalShiftsIteration() ) {
                 int adjust = simWindow->isMoving(time_dual)?0:1;
                 for (unsigned int n=0;n < simWindow->getNumberOfAdditionalShifts()-adjust; n++)

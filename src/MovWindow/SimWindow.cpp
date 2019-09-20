@@ -613,6 +613,12 @@ void SimWindow::operate(Domain& domain,  VectorPatch& vecPatches, SmileiMPI* smp
     //    domain.identify_additional_patches( smpi, vecPatches, params );
     //    domain.identify_missing_patches( smpi, vecPatches, params );
     //}
+
+
+    // warkaround for !params.full_B_exchange (in 3D, with SM some border elements are not computed)
+    SyncVectorPatch::exchangeB( params, domain.vecPatch_, &smpi );
+    SyncVectorPatch::finalizeexchangeB( params, domain.vecPatch_ );
+
 }
 
 
