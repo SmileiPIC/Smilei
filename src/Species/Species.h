@@ -426,12 +426,6 @@ public:
     //! Method used to initialize the Particle 3d momentum in a given cell
     void initMomentum( unsigned int, unsigned int, double *, double * );
 
-    //! Method used to initialize the Particle weight (equivalent to a charge density) in a given cell
-    void initWeight( unsigned int,  unsigned int, double );
-
-    //! Method used to initialize the Particle charge
-    void initCharge( unsigned int, unsigned int, double );
-
     //! Method used to sort particles
     virtual void sort_part( Params &param );
 

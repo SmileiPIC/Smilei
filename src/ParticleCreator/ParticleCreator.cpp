@@ -8,6 +8,8 @@
 
 #include "ParticleCreator.h"
 
+using namespace std;
+
 // ---------------------------------------------------------------------------------------------------------------------
 //! constructor for ParticleCreator
 // ---------------------------------------------------------------------------------------------------------------------
@@ -242,17 +244,27 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
 
                     // Obtain the number of particles per cell
                     nppc = n_part_in_cell( i, j, k );
+                    
+                    // if (nppc > 0) {
+                    //     std::cerr << " nppc: " << nppc << std::endl;
+                    // }
+                    
                     n_part_in_cell( i, j, k ) = floor( nppc );
+                    
                     // If not a round number, then we need to decide how to round
                     double intpart;
                     if( modf( nppc, &intpart ) > 0 ) {
-                        remainder = pow( nppc - floor( nppc ), -species_->inv_nDim_field );
+                        remainder = pow( nppc - floor( nppc ), -species_->inv_nDim_particles);
                         if( fmod( cell_index[0]+( double )i, remainder ) < 1.
                                 && fmod( cell_index[1]+( double )j, remainder ) < 1.
                                 && fmod( cell_index[2]+( double )k, remainder ) < 1. ) {
                             n_part_in_cell( i, j, k )++;
                         }
                     }
+
+                    // if (n_part_in_cell( i, j, k ) > 0) {
+                    //     std::cerr << " n_part_in_cell( " << i << ", " << j << ", k ): " << n_part_in_cell( i, j, k ) << std::endl;
+                    // }
 
                     // assign charge its correct value in the cell
                     if( species_->mass > 0 ) {
@@ -276,7 +288,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
                         density( i, j, k ) /= charge( i, j, k );
                     }
                     
-                    density( i, j, k ) = std::abs( density( i, j, k ) );
+                    density( i, j, k ) = abs( density( i, j, k ) );
                     
                     // Time amplitude
                     density( i, j, k ) *= time_amplitude;
@@ -298,7 +310,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
     
     unsigned int n_existing_particles = particles_->size();
     
-    //cerr << "Existing particles: " << n_existing_particles << " " << npart_effective << endl;
+    // cerr << " n_existing_particles: " << n_existing_particles << " npart_effective: " << npart_effective << endl;
     
     //if (!n_existing_particles)
     particles_->initialize( n_existing_particles+npart_effective, species_->nDim_particle );

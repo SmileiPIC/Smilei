@@ -287,57 +287,6 @@ Species::~Species()
 
 
 // ---------------------------------------------------------------------------------------------------------------------
-// For all (np) particles in a mesh initialize its numerical weight (equivalent to a number density)
-// ---------------------------------------------------------------------------------------------------------------------
-void Species::initWeight( unsigned int nPart, unsigned int iPart, double n_real_particles )
-{
-    double w = n_real_particles / nPart;
-    for( unsigned  p= iPart; p<iPart+nPart; p++ ) {
-        particles->weight( p ) = w ;
-    }
-}
-
-
-
-// ---------------------------------------------------------------------------------------------------------------------
-// For all (np) particles in a mesh initialize its charge state
-// ---------------------------------------------------------------------------------------------------------------------
-void Species::initCharge( unsigned int nPart, unsigned int iPart, double q )
-{
-    short Z = ( short )q;
-    double r = q-( double )Z;
-
-    // if charge is integer, then all particles have the same charge
-    if( r == 0. ) {
-        for( unsigned int p = iPart; p<iPart+nPart; p++ ) {
-            particles->charge( p ) = Z;
-        }
-        // if charge is not integer, then particles can have two different charges
-    } else {
-        int tot = 0, Nm, Np;
-        double rr=r/( 1.-r ), diff;
-        Np = ( int )round( r*( double )nPart );
-        Nm = ( int )nPart - Np;
-        for( unsigned int p = iPart; p<iPart+nPart; p++ ) {
-            if( Np > rr*Nm ) {
-                particles->charge( p ) = Z+1;
-                Np--;
-            } else {
-                particles->charge( p ) = Z;
-                Nm--;
-            }
-            tot += particles->charge( p );
-        }
-        diff = q - ( ( double )tot )/( ( double )nPart ); // missing charge
-        if( diff != 0. ) {
-            WARNING( "Could not match exactly charge="<<q<<" for species "<< name <<" (difference of "<<diff<<"). Try to add particles." );
-        }
-    }
-}
-
-
-
-// ---------------------------------------------------------------------------------------------------------------------
 // For all (np) particles in a mesh initialize their position
 //   - either using regular distribution in the mesh (position_initialization_ = regular)
 //   - or using uniform random distribution (position_initialization_ = random)
