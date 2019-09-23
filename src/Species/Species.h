@@ -420,9 +420,6 @@ public:
     //! Method calculating the Particle charge on the grid (projection)
     virtual void computeCharge( unsigned int ispec, ElectroMagn *EMfields );
 
-    //! Method used to initialize the Particle position in a given cell
-    void initPosition( unsigned int, unsigned int, double *, Params & );
-
     //! Method used to sort particles
     virtual void sort_part( Params &param );
 
