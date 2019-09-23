@@ -547,9 +547,7 @@ public:
         return speciesSize;
     }
 
-    //! Method to create new particles.
-    // Method to import particles in this species while conserving the sorting among bins
-    int  ParticleCreator( std::vector<unsigned int> n_space_to_create, Params &params, Patch *patch, int new_bin_idx );
+    //! Method to import particles in this species while conserving the sorting among bins
     virtual void importParticles( Params &, Patch *, Particles &, std::vector<Diagnostic *> & );
 
     //! Moving window boundary conditions managment
