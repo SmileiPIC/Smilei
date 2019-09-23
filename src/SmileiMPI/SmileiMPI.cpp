@@ -1157,7 +1157,29 @@ void SmileiMPI::isend( ElectroMagn *EM, int to, int tag, vector<MPI_Request> &re
         isendComplex( EMAM->Bt_m[imode], to, mpi_tag+tag, requests[tag] );
         tag++;
     }
-    
+
+    // if laser envelope is present, send it
+    // send also Phi, Phi_m, GradPhi, GradPhi_m
+    if( EM->envelope!=NULL ) {
+        isendComplex( EM->envelope->A_, to, mpi_tag+tag, requests[tag] );
+        tag++;
+        isendComplex( EM->envelope->A0_, to, mpi_tag+tag, requests[tag] );
+        tag++;
+        isend( EM->envelope->Phi_, to, mpi_tag+tag, requests[tag] );
+        tag++;
+        isend( EM->envelope->Phi_m, to, mpi_tag+tag, requests[tag] );
+        tag++;
+        isend( EM->envelope->GradPhil_, to, mpi_tag+tag, requests[tag] );
+        tag++;
+        isend( EM->envelope->GradPhil_m, to, mpi_tag+tag, requests[tag] );
+        tag++;
+        isend( EM->envelope->GradPhir_, to, mpi_tag+tag, requests[tag] );
+        tag++;
+        isend( EM->envelope->GradPhir_m, to, mpi_tag+tag, requests[tag] );
+        tag++;
+
+    }
+
     for( unsigned int idiag=0; idiag<EM->allFields_avg.size(); idiag++ ) {
         for( unsigned int ifield=0; ifield<EM->allFields_avg[idiag].size(); ifield++ ) {
             isend( EM->allFields_avg[idiag][ifield], to, mpi_tag+tag, requests[tag] );
@@ -1399,7 +1421,26 @@ void SmileiMPI::recv( ElectroMagn *EM, int from, int tag, unsigned int nmodes )
         recvComplex( EMAM->Bt_m[imode], from, tag );
         tag++;
     }
-    
+
+    if( EM->envelope!=NULL ) {
+        recvComplex( EM->envelope->A_, from, tag );
+        tag++;
+        recvComplex( EM->envelope->A0_, from, tag );
+        tag++;
+        recv( EM->envelope->Phi_, from, tag );
+        tag++;
+        recv( EM->envelope->Phi_m, from, tag );
+        tag++;
+        recv( EM->envelope->GradPhil_, from, tag );
+        tag++;
+        recv( EM->envelope->GradPhil_m, from, tag );
+        tag++;
+        recv( EM->envelope->GradPhir_, from, tag );
+        tag++;
+        recv( EM->envelope->GradPhir_m, from, tag );
+        tag++;
+    }
+
     for( unsigned int idiag=0; idiag<EM->allFields_avg.size(); idiag++ ) {
         for( unsigned int ifield=0; ifield<EM->allFields_avg[idiag].size(); ifield++ ) {
             recv( EM->allFields_avg[idiag][ifield], from, tag );
