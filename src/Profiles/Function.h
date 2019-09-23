@@ -608,17 +608,17 @@ public:
         for(std::vector<double>::iterator point = xpoints.begin(); point != xpoints.end(); ++point) {
             info += " " + std::to_string(*point) ;
         }
-        info += "]";
+        info += " ]";
         info += ", values: [";
         for(std::vector<double>::iterator value = xvalues.begin(); value != xvalues.end(); ++value) {
             info += " " + std::to_string(*value) ;
         }
-        info += "]";
+        info += " ]";
         info += ", xslopes: [";
         for(std::vector<double>::iterator slope = xslopes.begin(); slope != xslopes.end(); ++slope) {
             info += " " + std::to_string(*slope) ;
         }
-        info += "]";
+        info += " ]";
         info += ")";
         return info;
     };
@@ -646,6 +646,26 @@ public:
         npoints = xpoints.size();
     };
     double valueAt( std::vector<double> );
+    std::string getInfo ()
+    {
+        std::string info = " (xpoints: [";
+        for(std::vector<double>::iterator point = xpoints.begin(); point != xpoints.end(); ++point) {
+            info += " " + std::to_string(*point) ;
+        }
+        info += " ]";
+        info += ", values: [";
+        for(std::vector<double>::iterator value = xvalues.begin(); value != xvalues.end(); ++value) {
+            info += " " + std::to_string(*value) ;
+        }
+        info += " ]";
+        info += ", xslopes: [";
+        for(std::vector<double>::iterator slope = xslopes.begin(); slope != xslopes.end(); ++slope) {
+            info += " " + std::to_string(*slope) ;
+        }
+        info += " ]";
+        info += ")";
+        return info;
+    };
 private:
     std::vector<double> xpoints, xvalues, xslopes;
     int npoints;
@@ -670,6 +690,26 @@ public:
         npoints = xpoints.size();
     };
     double valueAt( std::vector<double> );
+    std::string getInfo ()
+    {
+        std::string info = " (xpoints: [";
+        for(std::vector<double>::iterator point = xpoints.begin(); point != xpoints.end(); ++point) {
+            info += " " + std::to_string(*point) ;
+        }
+        info += " ]";
+        info += ", values: [";
+        for(std::vector<double>::iterator value = xvalues.begin(); value != xvalues.end(); ++value) {
+            info += " " + std::to_string(*value) ;
+        }
+        info += " ]";
+        info += ", xslopes: [";
+        for(std::vector<double>::iterator slope = xslopes.begin(); slope != xslopes.end(); ++slope) {
+            info += " " + std::to_string(*slope) ;
+        }
+        info += " ]";
+        info += ")";
+        return info;
+    };
 private:
     std::vector<double> xpoints, xvalues, xslopes;
     int npoints;
@@ -755,6 +795,18 @@ public:
         ynumber2pi = f->ynumber2pi;
     };
     double valueAt( std::vector<double> );
+    std::string getInfo ()
+    {
+        std::string info = "";
+        info += " (base: " + std::to_string(base);
+        info += ", xamplitude: " + std::to_string(xamplitude);
+        info += ", xvacuum: " + std::to_string(xvacuum);
+        info += ", xphi: " + std::to_string(xphi);
+        info += ", xlength: " + std::to_string(1./invxlength);
+        info += ", xnumber: " + std::to_string(xnumber2pi/(2.*M_PI));
+        info += ")";
+        return info;
+    };
 private:
     double base,
            xamplitude, xvacuum, invxlength, xphi, xnumber2pi,
@@ -810,6 +862,18 @@ public:
         znumber2pi = f->znumber2pi;
     };
     double valueAt( std::vector<double> );
+    std::string getInfo ()
+    {
+        std::string info = "";
+        info += " (base: " + std::to_string(base);
+        info += ", xamplitude: " + std::to_string(xamplitude);
+        info += ", xvacuum: " + std::to_string(xvacuum);
+        info += ", xphi: " + std::to_string(xphi);
+        info += ", xlength: " + std::to_string(1./invxlength);
+        info += ", xnumber: " + std::to_string(xnumber2pi/(2.*M_PI));
+        info += ")";
+        return info;
+    };
 private:
     double base,
            xamplitude, xvacuum, invxlength, xphi, xnumber2pi,
@@ -836,6 +900,23 @@ public:
         n_orders = f->n_orders;
     };
     double valueAt( std::vector<double> );
+    std::string getInfo ()
+    {
+        std::string info = " (x0: " + std::to_string(x0) + ", orders: [";
+        for(std::vector<unsigned int>::iterator order = orders.begin(); order != orders.end(); ++order) {
+            info += " " + std::to_string(*order) ;
+        }
+        info += " ]";
+        info += ", coeffs: [";
+        for(unsigned int ix = 0 ; ix < coeffs.size() ; ix++) {
+            for(unsigned int iy = 0 ; iy < coeffs[ix].size() ; iy++) {
+                info += " " + std::to_string(coeffs[ix][iy]) ;
+            }
+        }
+        info += " ]";
+        info += ")";
+        return info;
+    };
 private:
     double x0;
     unsigned int n_orders;
@@ -870,6 +951,23 @@ public:
         n_coeffs = f->n_coeffs;
     };
     double valueAt( std::vector<double> );
+    std::string getInfo ()
+    {
+        std::string info = " (x0: " + std::to_string(x0) + ", y0: " + std::to_string(y0) + ", orders: [";
+        for(std::vector<unsigned int>::iterator order = orders.begin(); order != orders.end(); ++order) {
+            info += " " + std::to_string(*order) ;
+        }
+        info += " ]";
+        info += ", coeffs: [";
+        for(unsigned int ix = 0 ; ix < coeffs.size() ; ix++) {
+            for(unsigned int iy = 0 ; iy < coeffs[ix].size() ; iy++) {
+                info += " " + std::to_string(coeffs[ix][iy]) ;
+            }
+        }
+        info += " ]";
+        info += ")";
+        return info;
+    };
 private:
     double x0, y0;
     unsigned int n_orders, n_coeffs;
@@ -906,6 +1004,26 @@ public:
         n_coeffs = f->n_coeffs;
     };
     double valueAt( std::vector<double> );
+    std::string getInfo ()
+    {
+        std::string info = " (x0: " + std::to_string(x0)
+                         + ", y0: " + std::to_string(y0)
+                         + ", z0: " + std::to_string(z0)
+                         + ", orders: [";
+        for(std::vector<unsigned int>::iterator order = orders.begin(); order != orders.end(); ++order) {
+            info += " " + std::to_string(*order) ;
+        }
+        info += " ]";
+        info += ", coeffs: [";
+        for(unsigned int ix = 0 ; ix < coeffs.size() ; ix++) {
+            for(unsigned int iy = 0 ; iy < coeffs[ix].size() ; iy++) {
+                info += " " + std::to_string(coeffs[ix][iy]) ;
+            }
+        }
+        info += " ]";
+        info += ")";
+        return info;
+    };
 private:
     double x0, y0, z0;
     unsigned int n_orders, n_coeffs;
@@ -926,6 +1044,11 @@ public:
         start = f->start;
     };
     double valueAt( double );
+    std::string getInfo ()
+    {
+        std::string info = " (" + std::to_string(start) + ")";
+        return info;
+    };
 private:
     double start;
 };
@@ -953,6 +1076,15 @@ public:
         invslope2 = 1./slope2;
     };
     double valueAt( double );
+    std::string getInfo ()
+    {
+        std::string info = " (start: " + std::to_string(start)
+                         + ", plateau: " + std::to_string(plateau)
+                         + ", slope1: " + std::to_string(slope1)
+                         + ", slope2: " + std::to_string(slope2)
+                         + ")";
+        return info;
+    };
 private:
     double start, plateau, slope1, slope2, invslope1, invslope2;
 };
@@ -981,6 +1113,16 @@ public:
         order    = f->order   ;
     };
     double valueAt( double );
+    std::string getInfo ()
+    {
+        std::string info = " (start: " + std::to_string(start)
+                         + ", duration: " + std::to_string(end - start)
+                         + ", sigma: " + std::to_string(1./invsigma)
+                         + ", center: " + std::to_string(center)
+                         + ", order: " + std::to_string(order)
+                         + ")";
+        return info;
+    };
 private:
     double start, end, invsigma, center, order;
 };
