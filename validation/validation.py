@@ -72,7 +72,6 @@ This script may run anywhere: you can define a SMILEI_ROOT environment variable
 import sys, os, re, glob, time, math
 import shutil, getopt, inspect, socket, pickle
 from subprocess import call, check_call, check_output, CalledProcessError
-import happi
 import numpy as np
 s = os.sep
 INITIAL_DIRECTORY = os.getcwd()
