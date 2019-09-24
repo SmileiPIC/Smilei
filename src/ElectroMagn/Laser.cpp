@@ -100,9 +100,15 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
     } else if( has_space_time_AM ) {
 
         spacetime.resize( 2*params.nmodes, false );
+        //2*nmodes profiles organized as By_mode_0, Bz_mode_0, By_mode_1, Bz_mode_1, etc..
 
-        spacetime[0] = ( bool )( space_time_profile[0] );
-        spacetime[1] = ( bool )( space_time_profile[1] );
+        if(space_time_profile_am.size() < 2*params.nmodes ) {
+            WARNING( errorPrefix << ": not all modes are specified in the namelist. Unfilled higher order modes are considered null. " );
+        }
+
+        for (unsigned int i=0; i<space_time_profile_am.size(); i++){
+            spacetime[i] = ( bool )( space_time_profile[i] );
+        }
 
         if( has_time || has_space || has_omega || has_chirp || has_phase ) {
             name.str( "" );
