@@ -99,6 +99,8 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
         }
     } else if( has_space_time_AM ) {
 
+        info << "\t\t" << errorPrefix << ": space-time profile for AMCylindrical geometry" << endl;
+
         spacetime.resize( 2*params.nmodes, false );
         //2*nmodes profiles organized as By_mode_0, Bz_mode_0, By_mode_1, Bz_mode_1, etc..
 
@@ -110,7 +112,6 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
             spacetime[i] = ( bool )( space_time_profile[i] );
         }
 
-        info << "\t\t" << errorPrefix << ": space-time profile for AMCylindrical geometry" << endl;
 
 
         for (unsigned int imode=0; imode<2*params.nmodes; imode+=2){
