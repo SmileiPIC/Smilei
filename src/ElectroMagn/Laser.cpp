@@ -245,18 +245,20 @@ Laser::Laser( Laser *laser, Params &params )
     box_side  = laser->box_side;
     spacetime = laser->spacetime;
     file      = laser->file;
+    bool spacetime_defined=false;
+
+    for (unsigned int i=0;i<spacetime.size();i++){
+        if(spacetime[i]) spacetime_defined=true;
+    }
 
     profiles.resize( 0 );
-    if( spacetime[0] || spacetime[1] ) {
-        if( spacetime[0] ) {
-            profiles.push_back( new LaserProfileNonSeparable( static_cast<LaserProfileNonSeparable *>( laser->profiles[0] ) ) );
-        } else {
-            profiles.push_back( new LaserProfileNULL() );
-        }
-        if( spacetime[1] ) {
-            profiles.push_back( new LaserProfileNonSeparable( static_cast<LaserProfileNonSeparable *>( laser->profiles[1] ) ) );
-        } else {
-            profiles.push_back( new LaserProfileNULL() );
+    if( spacetime_defined ) {
+        for (unsigned int i=0;i<spacetime.size();i++){
+            if( spacetime[i] ) {
+                profiles.push_back( new LaserProfileNonSeparable( static_cast<LaserProfileNonSeparable *>( laser->profiles[i] ) ) );
+            } else {
+                profiles.push_back( new LaserProfileNULL() );
+            }
         }
     } else if( file != "" ) {
         profiles.push_back( new LaserProfileFile( static_cast<LaserProfileFile *>( laser->profiles[0] ) ) );
