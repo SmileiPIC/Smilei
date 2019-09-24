@@ -27,29 +27,32 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
     // Profiles
     profiles.resize( 0 );
     PyObject *chirp_profile=nullptr, *time_profile=nullptr;
-    vector<PyObject *>  space_profile, phase_profile, space_time_profile;
-    bool has_time, has_space, has_space_AM, has_omega, has_chirp, has_phase, has_phase_AM, has_space_time, has_file;
+    vector<PyObject *>  space_profile, phase_profile, space_time_profile, space_time_profile_am;
+    bool has_time, has_space, has_omega, has_chirp, has_phase, has_space_time, has_space_time_AM, has_file;
     double omega( 0 );
     Profile *p, *pchirp, *pchirp2, *ptime, *ptime2, *pspace1, *pspace2, *pphase1, *pphase2;
     pchirp2 = NULL;
     ptime2  = NULL;
     file = "";
-    has_omega      = PyTools::extract( "omega", omega, "Laser", ilaser );
-    has_chirp      = PyTools::extract_pyProfile( "chirp_profile", chirp_profile, "Laser", ilaser );
-    has_time       = PyTools::extract_pyProfile( "time_envelope", time_profile, "Laser", ilaser );
-    has_space      = PyTools::extract2Profiles( "space_envelope", ilaser, space_profile );
-    has_phase      = PyTools::extract2Profiles( "phase", ilaser, phase_profile );
-    has_space_time = PyTools::extract2Profiles( "space_time_profile", ilaser, space_time_profile );
-    has_file       = PyTools::extract( "file", file, "Laser", ilaser );
-    has_space_AM   = PyTools::extract2NProfiles( "space_envelope_AM", ilaser, space_profile );
-    has_phase_AM   = PyTools::extract2NProfiles( "phase_AM", ilaser, space_profile );
+    has_omega         = PyTools::extract( "omega", omega, "Laser", ilaser );
+    has_chirp         = PyTools::extract_pyProfile( "chirp_profile", chirp_profile, "Laser", ilaser );
+    has_time          = PyTools::extract_pyProfile( "time_envelope", time_profile, "Laser", ilaser );
+    has_space         = PyTools::extract2Profiles( "space_envelope", ilaser, space_profile );
+    has_phase         = PyTools::extract2Profiles( "phase", ilaser, phase_profile );
+    has_space_time    = PyTools::extract2Profiles( "space_time_profile", ilaser, space_time_profile );
+    has_file          = PyTools::extract( "file", file, "Laser", ilaser );
+    has_space_time_AM = PyTools::extract2NProfiles( "space_time_profile_AM", ilaser, space_time_profile_am );
 
     if( has_space_time && has_file ) {
         ERROR( errorPrefix << ": `space_time_profile` and `file` cannot both be set" );
     }
 
-    if((has_space_AM || has_phase_AM) && params.geometry!="AMcylindrical"){
+    if(( has_space_time_AM) && params.geometry!="AMcylindrical"){
         ERROR( errorPrefix << ": AM profiles can only be used in `AMcylindrical` geometry" );
+    }
+
+    if( has_space_time_AM && ( has_space || has_phase || has_space_time || has_file) ){
+        ERROR( errorPrefix << ": AM profiles and Cartesian profiles or `file` cannot both be set" );
     }
 
     unsigned int space_dims = ( params.geometry=="3Dcartesian" ? 2 : 1 );
@@ -94,6 +97,48 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
             profiles.push_back( new LaserProfileNULL() );
             info << "\t\t\tsecond axis : zero";
         }
+    } else if( has_space_time_AM ) {
+
+        spacetime.resize( 2*params.nmodes, false );
+
+        spacetime[0] = ( bool )( space_time_profile[0] );
+        spacetime[1] = ( bool )( space_time_profile[1] );
+
+        if( has_time || has_space || has_omega || has_chirp || has_phase ) {
+            name.str( "" );
+            name << ( has_time ?"time_envelope ":"" )
+                 << ( has_space?"space_envelope ":"" )
+                 << ( has_omega?"omega ":"" )
+                 << ( has_chirp?"chirp_profile ":"" )
+                 << ( has_phase?"phase ":"" );
+            WARNING( errorPrefix << ": space-time profile defined, dismissing " << name.str() );
+        }
+
+        info << "\t\t" << errorPrefix << ": space-time profile" << endl;
+
+        // By
+        name.str( "" );
+        name << "Laser[" << ilaser <<"].space_time_profile[0]";
+        if( spacetime[0] ) {
+            p = new Profile( space_time_profile[0], params.nDim_field, name.str() );
+            profiles.push_back( new LaserProfileNonSeparable( p ) );
+            info << "\t\t\tfirst  axis : " << p->getInfo() << endl;
+        } else {
+            profiles.push_back( new LaserProfileNULL() );
+            info << "\t\t\tfirst  axis : zero" << endl;
+        }
+        // Bz
+        name.str( "" );
+        name << "Laser[" << ilaser <<"].space_time_profile[1]";
+        if( spacetime[1] ) {
+            p = new Profile( space_time_profile[1], params.nDim_field, name.str() );
+            profiles.push_back( new LaserProfileNonSeparable( p ) );
+            info << "\t\t\tsecond axis : " << p->getInfo();
+        } else {
+            profiles.push_back( new LaserProfileNULL() );
+            info << "\t\t\tsecond axis : zero";
+        }
+
 
     } else if( has_file ) {
 
