@@ -43,7 +43,7 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
     has_file          = PyTools::extract( "file", file, "Laser", ilaser );
     has_space_time_AM = PyTools::extract2NProfiles( "space_time_profile_AM", ilaser, space_time_profile_am );
 
-    if( has_space_time && has_file ) {
+    if( (has_space_time ||  has_space_time_AM) && has_file ) {
         ERROR( errorPrefix << ": `space_time_profile` and `file` cannot both be set" );
     }
 
@@ -51,18 +51,11 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
         ERROR( errorPrefix << ": AM profiles can only be used in `AMcylindrical` geometry" );
     }
 
-    if( has_space_time_AM && ( has_space || has_phase || has_space_time || has_file) ){
-        ERROR( errorPrefix << ": AM profiles and Cartesian profiles or `file` cannot both be set" );
-    }
-
     unsigned int space_dims = ( params.geometry=="3Dcartesian" ? 2 : 1 );
 
     spacetime.resize( 2, false );
-    if( has_space_time ) {
 
-        spacetime[0] = ( bool )( space_time_profile[0] );
-        spacetime[1] = ( bool )( space_time_profile[1] );
-
+    if( has_space_time || has_space_time_AM) {
         if( has_time || has_space || has_omega || has_chirp || has_phase ) {
             name.str( "" );
             name << ( has_time ?"time_envelope ":"" )
@@ -72,6 +65,13 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
                  << ( has_phase?"phase ":"" );
             WARNING( errorPrefix << ": space-time profile defined, dismissing " << name.str() );
         }
+    }
+
+    if( has_space_time ) {
+
+        spacetime[0] = ( bool )( space_time_profile[0] );
+        spacetime[1] = ( bool )( space_time_profile[1] );
+
 
         info << "\t\t" << errorPrefix << ": space-time profile" << endl;
 
