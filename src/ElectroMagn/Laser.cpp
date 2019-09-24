@@ -272,16 +272,16 @@ Laser::Laser( Laser *laser, Params &params )
 
 Laser::~Laser()
 {
-    delete profiles[0];
-    delete profiles[1];
+    for (unsigned int i=0;i<profiles.size();i++){
+        delete profiles[i];
+    }
 }
 
 void Laser::disable()
 {
-
-    profiles[0] = new LaserProfileNULL();
-    profiles[1] = new LaserProfileNULL();
-
+    for (unsigned int i=0;i<profiles.size();i++){
+        profiles[i] = new LaserProfileNULL();
+    }
 }
 
 
