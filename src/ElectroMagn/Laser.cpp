@@ -28,7 +28,7 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
     profiles.resize( 0 );
     PyObject *chirp_profile=nullptr, *time_profile=nullptr;
     vector<PyObject *>  space_profile, phase_profile, space_time_profile;
-    bool has_time, has_space, has_omega, has_chirp, has_phase, has_space_time, has_file;
+    bool has_time, has_space, has_space_AM, has_omega, has_chirp, has_phase, has_phase_AM, has_space_time, has_file;
     double omega( 0 );
     Profile *p, *pchirp, *pchirp2, *ptime, *ptime2, *pspace1, *pspace2, *pphase1, *pphase2;
     pchirp2 = NULL;
@@ -41,9 +41,15 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
     has_phase      = PyTools::extract2Profiles( "phase", ilaser, phase_profile );
     has_space_time = PyTools::extract2Profiles( "space_time_profile", ilaser, space_time_profile );
     has_file       = PyTools::extract( "file", file, "Laser", ilaser );
+    has_space_AM   = PyTools::extract2NProfiles( "space_envelope_AM", ilaser, space_profile );
+    has_phase_AM   = PyTools::extract2NProfiles( "phase_AM", ilaser, space_profile );
 
     if( has_space_time && has_file ) {
         ERROR( errorPrefix << ": `space_time_profile` and `file` cannot both be set" );
+    }
+
+    if((has_space_AM || has_phase_AM) && params.geometry!="AMcylindrical"){
+        ERROR( errorPrefix << ": AM profiles can only be used in `AMcylindrical` geometry" );
     }
 
     unsigned int space_dims = ( params.geometry=="3Dcartesian" ? 2 : 1 );
