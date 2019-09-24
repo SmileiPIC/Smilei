@@ -12,7 +12,6 @@ using namespace std;
 
 Laser::Laser( Params &params, int ilaser, Patch *patch )
 {
-
     ostringstream name( "" );
     name << "Laser #" << ilaser;
     string errorPrefix = name.str();
@@ -27,7 +26,7 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
     // Profiles
     profiles.resize( 0 );
     PyObject *chirp_profile=nullptr, *time_profile=nullptr;
-    vector<PyObject *>  space_profile, phase_profile, space_time_profile, space_time_profile_am;
+    vector<PyObject *>  space_profile, phase_profile, space_time_profile;
     bool has_time, has_space, has_omega, has_chirp, has_phase, has_space_time, has_space_time_AM, has_file;
     double omega( 0 );
     Profile *p, *pchirp, *pchirp2, *ptime, *ptime2, *pspace1, *pspace2, *pphase1, *pphase2;
@@ -41,7 +40,7 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
     has_phase         = PyTools::extract2Profiles( "phase", ilaser, phase_profile );
     has_space_time    = PyTools::extract2Profiles( "space_time_profile", ilaser, space_time_profile );
     has_file          = PyTools::extract( "file", file, "Laser", ilaser );
-    has_space_time_AM = PyTools::extract2NProfiles( "space_time_profile_AM", ilaser, space_time_profile_am );
+    has_space_time_AM = PyTools::extract2NProfiles( "space_time_profile_AM", ilaser, space_time_profile );
 
     if( (has_space_time ||  has_space_time_AM) && has_file ) {
         ERROR( errorPrefix << ": `space_time_profile` and `file` cannot both be set" );
@@ -51,11 +50,14 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
         ERROR( errorPrefix << ": AM profiles can only be used in `AMcylindrical` geometry" );
     }
 
-    unsigned int space_dims = ( params.geometry=="3Dcartesian" ? 2 : 1 );
+    unsigned int space_dims     = ( params.geometry=="3Dcartesian" ? 2 : 1 );
+    unsigned int spacetime_size = ( has_space_time_AM ? 2*params.nmodes : 2 );
 
-    spacetime.resize( 2, false );
+    spacetime.resize( spacetime_size, false );
 
-    if( has_space_time || has_space_time_AM) {
+    if( has_space_time || has_space_time_AM ) {
+
+        info << "\t\t" << errorPrefix << ": space-time profile " << endl;
         if( has_time || has_space || has_omega || has_chirp || has_phase ) {
             name.str( "" );
             name << ( has_time ?"time_envelope ":"" )
@@ -65,77 +67,45 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
                  << ( has_phase?"phase ":"" );
             WARNING( errorPrefix << ": space-time profile defined, dismissing " << name.str() );
         }
-    }
 
-    if( has_space_time ) {
-
-        spacetime[0] = ( bool )( space_time_profile[0] );
-        spacetime[1] = ( bool )( space_time_profile[1] );
-
-
-        info << "\t\t" << errorPrefix << ": space-time profile" << endl;
-
-        // By
-        name.str( "" );
-        name << "Laser[" << ilaser <<"].space_time_profile[0]";
-        if( spacetime[0] ) {
-            p = new Profile( space_time_profile[0], params.nDim_field, name.str() );
-            profiles.push_back( new LaserProfileNonSeparable( p ) );
-            info << "\t\t\tfirst  axis : " << p->getInfo() << endl;
-        } else {
-            profiles.push_back( new LaserProfileNULL() );
-            info << "\t\t\tfirst  axis : zero" << endl;
-        }
-        // Bz
-        name.str( "" );
-        name << "Laser[" << ilaser <<"].space_time_profile[1]";
-        if( spacetime[1] ) {
-            p = new Profile( space_time_profile[1], params.nDim_field, name.str() );
-            profiles.push_back( new LaserProfileNonSeparable( p ) );
-            info << "\t\t\tsecond axis : " << p->getInfo();
-        } else {
-            profiles.push_back( new LaserProfileNULL() );
-            info << "\t\t\tsecond axis : zero";
-        }
-    } else if( has_space_time_AM ) {
-
-        info << "\t\t" << errorPrefix << ": space-time profile for AMCylindrical geometry" << endl;
-
-        spacetime.resize( 2*params.nmodes, false );
-        //2*nmodes profiles organized as By_mode_0, Bz_mode_0, By_mode_1, Bz_mode_1, etc..
-
-        if(space_time_profile_am.size() < 2*params.nmodes ) {
+        if(has_space_time_AM && space_time_profile.size() < 2*params.nmodes ) {
             WARNING( errorPrefix << ": not all modes are specified in the namelist. Unfilled higher order modes are considered null. " );
         }
 
-        for (unsigned int i=0; i<space_time_profile_am.size(); i++){
+        for (unsigned int i=0; i<space_time_profile.size(); i++){
             spacetime[i] = ( bool )( space_time_profile[i] );
         }
 
-
-
-        for (unsigned int imode=0; imode<2*params.nmodes; imode+=2){
-            // Br
+        for (unsigned int imode=0; imode<spacetime_size/2; imode++){ // only imode=0 if not AM
+            // First axis (By or Br)
             name.str( "" );
-            name << "Laser[" << ilaser <<"].space_time_profile_am["<< imode << "]";
-            if( spacetime[imode] ) {
-                p = new Profile( space_time_profile_am[imode], params.nDim_field, name.str() );
+            name << "Laser[" << ilaser <<"].space_time_profile["<< 2*imode << "]";
+            if( spacetime[2*imode] ) {
+                p = new Profile( space_time_profile[2*imode], params.nDim_field, name.str() );
                 profiles.push_back( new LaserProfileNonSeparable( p ) );
-                info << "\t\t\tfirst  axis mode "<< imode << ": " << p->getInfo() << endl;
+                info << "\t\t\tfirst  component : " << p->getInfo();
+                if (has_space_time_AM) info << " mode " << imode ;
+                info << endl;
             } else {
                 profiles.push_back( new LaserProfileNULL() );
-                info << "\t\t\tfirst  axis mode "<< imode << " : zero" << endl;
+                info << "\t\t\tfirst  component : zero" ;
+                if (has_space_time_AM) info << " mode " << imode ;
+                info << endl;
             }
-            // Bt
+            // Second axis (Bz or Bt)
             name.str( "" );
-            name << "Laser[" << ilaser <<"].space_time_profile_am[" << imode+1 << "]";
-            if( spacetime[imode+1] ) {
-                p = new Profile( space_time_profile_am[imode+1], params.nDim_field, name.str() );
+            name << "Laser[" << ilaser <<"].space_time_profile[" << 2*imode+1 << "]";
+            if( spacetime[2*imode+1] ) {
+                p = new Profile( space_time_profile[2*imode+1], params.nDim_field, name.str() );
                 profiles.push_back( new LaserProfileNonSeparable( p ) );
-                info << "\t\t\tsecond axis mode "<< imode << ": " << p->getInfo();
+                info << "\t\t\tsecond component : " << p->getInfo() ;
+                if (has_space_time_AM) info << " mode " << imode ;
+                info << endl;
             } else {
                 profiles.push_back( new LaserProfileNULL() );
-                info << "\t\t\tsecond axis mode "<< imode << ": zero";
+                info << "\t\t\tsecond component : zero" ;
+                if (has_space_time_AM) info << " mode " << imode ;
+                info << endl;
             }
         }
 
