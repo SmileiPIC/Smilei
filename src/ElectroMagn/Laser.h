@@ -89,14 +89,15 @@ public:
     
     //! Disables the laser
     void disable();
+
+    //! True if spatio-temporal profile (Bx and By)
+    std::vector<bool> spacetime;
     
 protected:
     //! Space and time profiles (Bx and By)
     std::vector<LaserProfile *> profiles;
     
 private:
-    //! True if spatio-temporal profile (Bx and By)
-    std::vector<bool> spacetime;
     
     //! Non empty if laser profile read from a file
     std::string file;

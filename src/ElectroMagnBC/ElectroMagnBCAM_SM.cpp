@@ -210,8 +210,12 @@ void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                     yp[0] = patch->getDomainLocalMin( 1 ) +( j - EMfields->oversize[1] )*dr;
                     // Lasers
                     for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
-                        byW +=          vecLaser[ilaser]->getAmplitude0( yp, time_dual, 1+2*j, 0 )
-                                        + Icpx * vecLaser[ilaser]->getAmplitude1( yp, time_dual, 1+2*j, 0 );
+                        if (vecLaser[ilaser]->spacetime.size() > 0){
+                            byW +=          vecLaser[ilaser]->getAmplitudecomplexN(yp, time_dual, 0, 0, 2*imode);
+                        } else {                        
+                            byW +=          vecLaser[ilaser]->getAmplitude0( yp, time_dual, 1+2*j, 0 )
+                                            + Icpx * vecLaser[ilaser]->getAmplitude1( yp, time_dual, 1+2*j, 0 );
+                        }
                     }
                 }
                 
