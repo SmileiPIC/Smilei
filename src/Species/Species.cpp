@@ -1344,7 +1344,7 @@ int Species::createParticles( vector<unsigned int> n_space_to_create, Params &pa
     vector<unsigned int> n_space_to_create_generalized( n_space_to_create );
     unsigned int nPart, i, j, k;
     unsigned int npart_effective = 0 ;
-    double *momentum[nDim_particle], *position[nDim_particle], *weight_arr;
+    double *momentum[3], *position[nDim_particle], *weight_arr;
     std::vector<int> my_particles_indices;
     vector<Field *> xyz( nDim_field );
 
