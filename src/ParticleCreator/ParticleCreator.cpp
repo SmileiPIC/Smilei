@@ -122,7 +122,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
     std::vector<unsigned int> n_space_to_create_generalized( n_space_to_create );
     unsigned int nPart, i, j, k;
     unsigned int npart_effective = 0 ;
-    double *momentum[species_->nDim_particle], *position[species_->nDim_particle], *weight_arr;
+    double *momentum[3], *position[species_->nDim_particle], *weight_arr;
     std::vector<int> my_particles_indices;
     std::vector<Field *> xyz( species_->nDim_field );
     

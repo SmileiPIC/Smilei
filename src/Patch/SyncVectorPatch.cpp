@@ -15,6 +15,12 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // ---------------------------------------------------------------------------------------------------------------------
 
+
+template void SyncVectorPatch::exchange_along_all_directions<double,Field>( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
+template void SyncVectorPatch::exchange_along_all_directions<complex<double>,cField>( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
+template void SyncVectorPatch::exchange_along_all_directions_noomp<double,Field>( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
+template void SyncVectorPatch::exchange_along_all_directions_noomp<complex<double>,cField>( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
+
 void SyncVectorPatch::exchangeParticles( VectorPatch &vecPatches, int ispec, Params &params, SmileiMPI *smpi, Timers &timers, int itime )
 {
     #pragma omp for schedule(runtime)
