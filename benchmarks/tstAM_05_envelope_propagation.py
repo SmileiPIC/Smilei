@@ -70,7 +70,6 @@ Checkpoints(
 
 DiagFields(
    every = 100,
-   fields = ['Env_A_abs','Env_E_abs']
 )
 
 DiagProbe(
