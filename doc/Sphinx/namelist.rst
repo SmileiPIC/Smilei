@@ -1376,7 +1376,7 @@ Thus, space-time profiles with variation scales larger than this length should b
 
 Following is the generic laser envelope creator ::
 
-    Laser(
+    LaserEnvelope(
         omega          = 1.,
         envelope_solver = 'explicit',
         envelope_profile = envelope_profile,
