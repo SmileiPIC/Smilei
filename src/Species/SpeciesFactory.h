@@ -31,6 +31,8 @@
 
 #include "ParticleData.h"
 
+#include "ParticleCreator.h"
+
 #include "Tools.h"
 #ifdef SMILEI_USE_NUMPY
 #include <numpy/arrayobject.h>
@@ -133,6 +135,7 @@ public:
                 ERROR( "For species `" << species_name << "`, pusher must be 'boris', 'borisnr', 'vay', 'higueracary', 'ponderomotive_boris'" );
             }
             thisSpecies->pusher = pusher;
+            MESSAGE( 2, "> Pusher: " << thisSpecies->pusher );
 
             // Radiation model of the species
             // Species with a Monte-Carlo process for the radiation loss
@@ -210,7 +213,7 @@ public:
 
         thisSpecies->name = species_name;
         thisSpecies->mass = mass;
-        thisSpecies->speciesNumber = ispec;
+        thisSpecies->species_number_ = ispec;
 
         // Vectorized operators
         if( params.vectorization_mode == "off" ) {
@@ -320,7 +323,7 @@ public:
 
             if ( thisSpecies->merging_method_ != "none" ) {
 
-                if (!params.cell_sorting) {
+                if (!params.cell_sorting || !thisSpecies->vectorized_operators) {
                     ERROR( "In Species " << thisSpecies->name
                            << ": merging required cell sorting to be "
                            << "activated (`cell_sorting = True` in the mains or vectorization on).");
@@ -493,13 +496,13 @@ public:
         }
 
         PyObject *py_pos_init = PyTools::extract_py( "position_initialization", "Species", ispec );
-        if( PyTools::convert( py_pos_init, thisSpecies->position_initialization ) ) {
-            if( thisSpecies->position_initialization.empty() ) {
+        if( PyTools::convert( py_pos_init, thisSpecies->position_initialization_ ) ) {
+            if( thisSpecies->position_initialization_.empty() ) {
                 ERROR( "For species '" << species_name << "' empty position_initialization" );
-            } else if( ( thisSpecies->position_initialization!="regular" )
-                       &&( thisSpecies->position_initialization!="random" )
-                       &&( thisSpecies->position_initialization!="centered" ) ) {
-                thisSpecies->position_initialization_on_species=true;
+            } else if( ( thisSpecies->position_initialization_!="regular" )
+                       &&( thisSpecies->position_initialization_!="random" )
+                       &&( thisSpecies->position_initialization_!="centered" ) ) {
+                thisSpecies->position_initialization_on_species_=true;
 
             }
         }
@@ -519,16 +522,16 @@ public:
                 ERROR( "For species '" << species_name << "' position_initializtion must provide a 2-dimensional array with " <<  params.nDim_particle + 1 << " columns." )
 
                 // OLD //Get number of particles
-                // OLD thisSpecies->n_numpy_particles =  PyArray_SHAPE(np_ret)[1];//  ok
+                // OLD thisSpecies->n_numpy_particles_ =  PyArray_SHAPE(np_ret)[1];//  ok
 
                 //Get number of particles. Do not initialize any more if this is a restart.
                 if( !params.restart ) {
-                    thisSpecies->n_numpy_particles =  PyArray_SHAPE( np_ret )[1];    //  ok
+                    thisSpecies->n_numpy_particles_ =  PyArray_SHAPE( np_ret )[1];    //  ok
                 }
-            thisSpecies->position_initialization_array = new double[ndim_local*thisSpecies->n_numpy_particles] ;
+            thisSpecies->position_initialization_array_ = new double[ndim_local*thisSpecies->n_numpy_particles_] ;
             for( unsigned int idim = 0; idim < ndim_local ; idim++ ) {
-                for( unsigned int ipart = 0; ipart < ( unsigned int )thisSpecies->n_numpy_particles; ipart++ ) {
-                    thisSpecies->position_initialization_array[idim*thisSpecies->n_numpy_particles+ipart] = *( ( double * )PyArray_GETPTR2( np_ret, idim, ipart ) );
+                for( unsigned int ipart = 0; ipart < ( unsigned int )thisSpecies->n_numpy_particles_; ipart++ ) {
+                    thisSpecies->position_initialization_array_[idim*thisSpecies->n_numpy_particles_+ipart] = *( ( double * )PyArray_GETPTR2( np_ret, idim, ipart ) );
                 }
             }
         }
@@ -538,11 +541,11 @@ public:
         }
         Py_DECREF( py_pos_init );
 
-        if   (PyTools::extract( "regular_number", thisSpecies->regular_number_array, "Species", ispec )){
-             if (thisSpecies->position_initialization != "regular") {
+        if   (PyTools::extract( "regular_number", thisSpecies->regular_number_array_, "Species", ispec )){
+             if (thisSpecies->position_initialization_ != "regular") {
                  ERROR("regular_number may not be provided if species position_initialization is not set to 'regular'.");
              }
-             if (thisSpecies->regular_number_array.size() != thisSpecies->nDim_particle) {
+             if (thisSpecies->regular_number_array_.size() != thisSpecies->nDim_particle) {
                  ERROR("Please provide as many regular numbers of particles as there are particle dimensions in the domain ("<< thisSpecies->nDim_particle <<").");
              }
         }
@@ -558,34 +561,34 @@ public:
 
 
         PyObject *py_mom_init = PyTools::extract_py( "momentum_initialization", "Species", ispec );
-        if( PyTools::convert( py_mom_init, thisSpecies->momentum_initialization ) ) {
-            if( ( thisSpecies->momentum_initialization=="mj" ) || ( thisSpecies->momentum_initialization=="maxj" ) ) {
-                thisSpecies->momentum_initialization="maxwell-juettner";
+        if( PyTools::convert( py_mom_init, thisSpecies->momentum_initialization_ ) ) {
+            if( ( thisSpecies->momentum_initialization_=="mj" ) || ( thisSpecies->momentum_initialization_=="maxj" ) ) {
+                thisSpecies->momentum_initialization_="maxwell-juettner";
             }
             // Matter particles
             if( thisSpecies->mass > 0 ) {
-                if( ( thisSpecies->momentum_initialization!="cold" )
-                        && ( thisSpecies->momentum_initialization!="maxwell-juettner" )
-                        && ( thisSpecies->momentum_initialization!="rectangular" ) ) {
+                if( ( thisSpecies->momentum_initialization_!="cold" )
+                        && ( thisSpecies->momentum_initialization_!="maxwell-juettner" )
+                        && ( thisSpecies->momentum_initialization_!="rectangular" ) ) {
                     ERROR( "For particle species '" << species_name
                            << "' unknown momentum_initialization: "
-                           <<thisSpecies->momentum_initialization );
+                           <<thisSpecies->momentum_initialization_ );
                 }
             }
             // Photons
             else if( thisSpecies->mass == 0 ) {
-                if( ( thisSpecies->momentum_initialization!="cold" )
-                        && ( thisSpecies->momentum_initialization!="rectangular" ) ) {
+                if( ( thisSpecies->momentum_initialization_!="cold" )
+                        && ( thisSpecies->momentum_initialization_!="rectangular" ) ) {
                     ERROR( "For photon species '" << species_name
                            << "' unknown momentum_initialization: "
-                           <<thisSpecies->momentum_initialization );
+                           <<thisSpecies->momentum_initialization_ );
                 }
             }
         }
 #ifdef SMILEI_USE_NUMPY
         else if( PyArray_Check( py_mom_init ) ) {
 
-            if( !thisSpecies->position_initialization_array ) {
+            if( !thisSpecies->position_initialization_array_ ) {
                 ERROR( "For species '" << species_name << "'. Momentum initialization by a numpy array is only possible if positions are initialized with a numpy array as well. " );
             }
 
@@ -600,13 +603,13 @@ public:
                 ERROR( "For species '" << species_name << "' momentum_initialization must provide a 2-dimensional array with " <<  3 << " columns." )
 
                 //Get number of particles
-                if( !params.restart && thisSpecies->n_numpy_particles != PyArray_SHAPE( np_ret_mom )[1] )
+                if( !params.restart && thisSpecies->n_numpy_particles_ != PyArray_SHAPE( np_ret_mom )[1] )
                     ERROR( "For species '" << species_name << "' momentum_initialization must provide as many particles as position_initialization." )
 
-                    thisSpecies->momentum_initialization_array = new double[ndim_local*thisSpecies->n_numpy_particles] ;
+                    thisSpecies->momentum_initialization_array_ = new double[ndim_local*thisSpecies->n_numpy_particles_] ;
             for( unsigned int idim = 0; idim < ndim_local ; idim++ ) {
-                for( unsigned int ipart = 0; ipart < ( unsigned int )thisSpecies->n_numpy_particles; ipart++ ) {
-                    thisSpecies->momentum_initialization_array[idim*thisSpecies->n_numpy_particles+ipart] = *( ( double * )PyArray_GETPTR2( np_ret_mom, idim, ipart ) );
+                for( unsigned int ipart = 0; ipart < ( unsigned int )thisSpecies->n_numpy_particles_; ipart++ ) {
+                    thisSpecies->momentum_initialization_array_[idim*thisSpecies->n_numpy_particles_+ipart] = *( ( double * )PyArray_GETPTR2( np_ret_mom, idim, ipart ) );
                 }
             }
         }
@@ -616,10 +619,10 @@ public:
         }
         Py_DECREF( py_mom_init );
 
-        PyTools::extract( "c_part_max", thisSpecies->c_part_max, "Species", ispec );
+        PyTools::extract( "c_part_max", thisSpecies->c_part_max_, "Species", ispec );
 
         PyTools::extract( "time_frozen", thisSpecies->time_frozen, "Species", ispec );
-        if( thisSpecies->time_frozen > 0 && thisSpecies->momentum_initialization!="cold" ) {
+        if( thisSpecies->time_frozen > 0 && thisSpecies->momentum_initialization_!="cold" ) {
             if( patch->isMaster() ) {
                 WARNING( "For species '" << species_name << "' possible conflict between time-frozen & not cold initialization" );
             }
@@ -789,7 +792,7 @@ public:
         PyObject *profile1( nullptr ), *profile2( nullptr ), *profile3( nullptr );
 
 
-        if( thisSpecies->position_initialization_array == NULL ) {
+        if( thisSpecies->position_initialization_array_ == NULL ) {
             //These quantities are disregarded if positioning of the species is directly specified by the user
             // Matter particles
             if( thisSpecies->mass > 0 ) {
@@ -802,12 +805,12 @@ public:
                     ERROR( "For species '" << species_name << "', must define `number_density ` or `charge_density`." );
                 }
                 if( ok1 ) {
-                    thisSpecies->densityProfileType = "nb";
+                    thisSpecies->density_profile_type_ = "nb";
                 }
                 if( ok2 ) {
-                    thisSpecies->densityProfileType = "charge";
+                    thisSpecies->density_profile_type_ = "charge";
                 }
-                //MESSAGE(thisSpecies->densityProfileType);
+                //MESSAGE(thisSpecies->density_profile_type_);
             }
             // Photons
             else if( thisSpecies->mass == 0 ) {
@@ -820,16 +823,17 @@ public:
                 if( !ok1 ) {
                     ERROR( "For photon species '" << species_name << "', must define `number_density`." );
                 }
-                thisSpecies->densityProfileType = "nb";
+                thisSpecies->density_profile_type_ = "nb";
             }
 
-            thisSpecies->densityProfile = new Profile( profile1, params.nDim_field, Tools::merge( thisSpecies->densityProfileType, "_density ", species_name ), true );
-            //MESSAGE("creating density profile");
+            thisSpecies->density_profile_ = new Profile( profile1, params.nDim_field, Tools::merge( thisSpecies->density_profile_type_, "_density ", species_name ), true );
+            MESSAGE(2, "Density profile: " << thisSpecies->density_profile_->getInfo());
+            
             // Number of particles per cell
             if( !PyTools::extract_pyProfile( "particles_per_cell", profile1, "Species", ispec ) ) {
                 ERROR( "For species '" << species_name << "', particles_per_cell not found or not understood" );
             }
-            thisSpecies->ppcProfile = new Profile( profile1, params.nDim_field, Tools::merge( "particles_per_cell ", species_name ), true );
+            thisSpecies->particles_per_cell_profile_ = new Profile( profile1, params.nDim_field, Tools::merge( "particles_per_cell ", species_name ), true );
         } else {
             if( PyTools::extract_pyProfile( "particles_per_cell", profile1, "Species", ispec ) ) {
                 ERROR( "For species '" << species_name << "', cannot define both `particles_per_cell` and  `position_initialization` array." );
@@ -847,23 +851,23 @@ public:
         }
         thisSpecies->chargeProfile = new Profile( profile1, params.nDim_field, Tools::merge( "charge ", species_name ), true );
 
-        if( thisSpecies->momentum_initialization_array == NULL ) {
+        if( thisSpecies->momentum_initialization_array_ == NULL ) {
             // Mean velocity
-            if( PyTools::extract3Profiles( "mean_velocity", ispec, profile1, profile2, profile3 ) ) {
-                thisSpecies->velocityProfile[0] = new Profile( profile1, params.nDim_field, Tools::merge( "mean_velocity[0] ", species_name ), true );
-                thisSpecies->velocityProfile[1] = new Profile( profile2, params.nDim_field, Tools::merge( "mean_velocity[1] ", species_name ), true );
-                thisSpecies->velocityProfile[2] = new Profile( profile3, params.nDim_field, Tools::merge( "mean_velocity[2] ", species_name ), true );
+            if( PyTools::extract3Profiles( "mean_velocity", "Species", ispec, profile1, profile2, profile3 ) ) {
+                thisSpecies->velocity_profile_[0] = new Profile( profile1, params.nDim_field, Tools::merge( "mean_velocity[0] ", species_name ), true );
+                thisSpecies->velocity_profile_[1] = new Profile( profile2, params.nDim_field, Tools::merge( "mean_velocity[1] ", species_name ), true );
+                thisSpecies->velocity_profile_[2] = new Profile( profile3, params.nDim_field, Tools::merge( "mean_velocity[2] ", species_name ), true );
             }
 
             // Temperature
-            if( PyTools::extract3Profiles( "temperature", ispec, profile1, profile2, profile3 ) ) {
-                thisSpecies->temperatureProfile[0] = new Profile( profile1, params.nDim_field, Tools::merge( "temperature[0] ", species_name ), true );
-                thisSpecies->temperatureProfile[1] = new Profile( profile2, params.nDim_field, Tools::merge( "temperature[1] ", species_name ), true );
-                thisSpecies->temperatureProfile[2] = new Profile( profile3, params.nDim_field, Tools::merge( "temperature[2] ", species_name ), true );
+            if( PyTools::extract3Profiles( "temperature", "Species", ispec, profile1, profile2, profile3 ) ) {
+                thisSpecies->temperature_profile_[0] = new Profile( profile1, params.nDim_field, Tools::merge( "temperature[0] ", species_name ), true );
+                thisSpecies->temperature_profile_[1] = new Profile( profile2, params.nDim_field, Tools::merge( "temperature[1] ", species_name ), true );
+                thisSpecies->temperature_profile_[2] = new Profile( profile3, params.nDim_field, Tools::merge( "temperature[2] ", species_name ), true );
             }
         } else {
-            ok1 = PyTools::extract3Profiles( "mean_velocity", ispec, profile1, profile2, profile3 ) ;
-            ok2 = PyTools::extract3Profiles( "temperature", ispec, profile1, profile2, profile3 ) ;
+            ok1 = PyTools::extract3Profiles( "mean_velocity", "Species", ispec, profile1, profile2, profile3 ) ;
+            ok2 = PyTools::extract3Profiles( "temperature", "Species", ispec, profile1, profile2, profile3 ) ;
             if( ok1 ) {
                 ERROR( "For species '" << species_name << "', cannot define both `mean_velocity` and `momentum_initialization` array." );
             }
@@ -898,7 +902,13 @@ public:
         if( !params.restart ) {
             // does a loop over all cells in the simulation
             // considering a 3d volume with size n_space[0]*n_space[1]*n_space[2]
-            thisSpecies->createParticles( params.n_space, params, patch, 0 );
+            // Particle creator object
+            ParticleCreator particle_creator;
+            particle_creator.associate(thisSpecies);
+            particle_creator.create( params.n_space, params, patch, 0, 0 );
+            
+            // thisSpecies->ParticleCreator(params.n_space, params, patch, 0 );
+
             //MESSAGE(" PARTICLES");
         } else {
             thisSpecies->particles->initialize( 0, params.nDim_particle );
@@ -940,16 +950,16 @@ public:
         newSpecies->radiation_photon_sampling_               = species->radiation_photon_sampling_;
         newSpecies->radiation_photon_gamma_threshold_        = species->radiation_photon_gamma_threshold_;
         newSpecies->photon_species                           = species->photon_species;
-        newSpecies->speciesNumber                            = species->speciesNumber;
-        newSpecies->position_initialization_on_species       = species->position_initialization_on_species;
+        newSpecies->species_number_                            = species->species_number_;
+        newSpecies->position_initialization_on_species_       = species->position_initialization_on_species_;
         newSpecies->position_initialization_on_species_index = species->position_initialization_on_species_index;
-        newSpecies->position_initialization                  = species->position_initialization;
-        newSpecies->position_initialization_array            = species->position_initialization_array;
-        newSpecies->regular_number_array                     = species->regular_number_array;
-        newSpecies->n_numpy_particles                        = species->n_numpy_particles            ;
-        newSpecies->momentum_initialization                  = species->momentum_initialization;
-        newSpecies->momentum_initialization_array            = species->momentum_initialization_array;
-        newSpecies->c_part_max                               = species->c_part_max;
+        newSpecies->position_initialization_                  = species->position_initialization_;
+        newSpecies->position_initialization_array_            = species->position_initialization_array_;
+        newSpecies->regular_number_array_                     = species->regular_number_array_;
+        newSpecies->n_numpy_particles_                        = species->n_numpy_particles_            ;
+        newSpecies->momentum_initialization_                  = species->momentum_initialization_;
+        newSpecies->momentum_initialization_array_            = species->momentum_initialization_array_;
+        newSpecies->c_part_max_                               = species->c_part_max_;
         newSpecies->mass                                     = species->mass;
         newSpecies->time_frozen                              = species->time_frozen;
         newSpecies->radiating                                = species->radiating;
@@ -967,7 +977,7 @@ public:
             Py_INCREF( newSpecies->ionization_rate );
         }
         newSpecies->ionization_model                         = species->ionization_model;
-        newSpecies->densityProfileType                       = species->densityProfileType;
+        newSpecies->density_profile_type_                       = species->density_profile_type_;
         newSpecies->vectorized_operators                     = species->vectorized_operators;
         newSpecies->merging_method_                          = species->merging_method_;
         newSpecies->has_merging_                             = species->has_merging_;
@@ -987,22 +997,22 @@ public:
         
 
         newSpecies->chargeProfile                            = new Profile( species->chargeProfile );
-        if( species->densityProfile ) {
-            newSpecies->densityProfile                       = new Profile( species->densityProfile );
-            newSpecies->ppcProfile                           = new Profile( species->ppcProfile );
+        if( species->density_profile_ ) {
+            newSpecies->density_profile_                     = new Profile( species->density_profile_ );
+            newSpecies->particles_per_cell_profile_          = new Profile( species->particles_per_cell_profile_ );
         }
-        newSpecies->velocityProfile.resize( 3 );
-        newSpecies->temperatureProfile.resize( 3 );
+        newSpecies->velocity_profile_.resize( 3 );
+        newSpecies->temperature_profile_.resize( 3 );
 
-        if( species->velocityProfile[0] ) {
-            newSpecies->velocityProfile[0]                   = new Profile( species->velocityProfile[0] );
-            newSpecies->velocityProfile[1]                   = new Profile( species->velocityProfile[1] );
-            newSpecies->velocityProfile[2]                   = new Profile( species->velocityProfile[2] );
+        if( species->velocity_profile_[0] ) {
+            newSpecies->velocity_profile_[0]                 = new Profile( species->velocity_profile_[0] );
+            newSpecies->velocity_profile_[1]                 = new Profile( species->velocity_profile_[1] );
+            newSpecies->velocity_profile_[2]                 = new Profile( species->velocity_profile_[2] );
         }
-        if( species->temperatureProfile[0] ) {
-            newSpecies->temperatureProfile[0]                = new Profile( species->temperatureProfile[0] );
-            newSpecies->temperatureProfile[1]                = new Profile( species->temperatureProfile[1] );
-            newSpecies->temperatureProfile[2]                = new Profile( species->temperatureProfile[2] );
+        if( species->temperature_profile_[0] ) {
+            newSpecies->temperature_profile_[0]              = new Profile( species->temperature_profile_[0] );
+            newSpecies->temperature_profile_[1]              = new Profile( species->temperature_profile_[1] );
+            newSpecies->temperature_profile_[2]              = new Profile( species->temperature_profile_[2] );
         }
         newSpecies->max_charge                               = species->max_charge;
         newSpecies->tracking_diagnostic                      = species->tracking_diagnostic;
@@ -1023,7 +1033,12 @@ public:
 
         // \todo : NOT SURE HOW THIS BEHAVES WITH RESTART
         if( ( !params.restart ) && ( with_particles ) ) {
-            newSpecies->createParticles( params.n_space, params, patch, 0 );
+            ParticleCreator particle_creator;
+            particle_creator.associate(newSpecies);
+            particle_creator.create( params.n_space, params, patch, 0, 0 );
+            
+            // newSpecies->ParticleCreator( params.n_space, params, patch, 0 );
+
         } else {
             newSpecies->particles->initialize( 0, ( *species->particles ) );
         }
@@ -1056,7 +1071,7 @@ public:
 
         // Loop species to find species which their particles positions is on another species
         for( unsigned int ispec1 = 0; ispec1<retSpecies.size(); ispec1++ ) {
-            if( retSpecies[ispec1]->position_initialization_on_species==true ) {
+            if( retSpecies[ispec1]->position_initialization_on_species_==true ) {
                 // If true then position_initialization of spec1 is not 'centered', 'regular' or 'random'
                 // So we have to check if :
                 // - 'position_initialization' of spec1 is another already created specie name;
@@ -1066,11 +1081,11 @@ public:
 
                 // Loop all other species
                 for( unsigned int ispec2 = 0; ispec2<retSpecies.size(); ispec2++ ) {
-                    if( retSpecies[ispec1]->position_initialization == retSpecies[ispec2]->name ) {
-                        if( retSpecies[ispec1]->position_initialization==retSpecies[ispec1]->name ) {
+                    if( retSpecies[ispec1]->position_initialization_ == retSpecies[ispec2]->name ) {
+                        if( retSpecies[ispec1]->position_initialization_==retSpecies[ispec1]->name ) {
                             ERROR( "For species '"<<retSpecies[ispec1]->name<<"' position_initialization must be different from '"<<retSpecies[ispec1]->name<<"'." );
                         }
-                        if( retSpecies[ispec2]->position_initialization_on_species==true ) {
+                        if( retSpecies[ispec2]->position_initialization_on_species_==true ) {
                             ERROR( "For species '"<<retSpecies[ispec2]->name<<"' position_initialization must be 'centered', 'regular' or 'random' (pre-defined position) in order to attach '"<<retSpecies[ispec1]->name<<"' to its initial position." );
                         }
                         if( retSpecies[ispec1]->getNbrOfParticles() != retSpecies[ispec2]->getNbrOfParticles() ) {
@@ -1083,7 +1098,7 @@ public:
                     }
                 }
                 if( retSpecies[ispec1]->position_initialization_on_species_index==-1 ) {
-                    ERROR( "Specie '"<<retSpecies[ispec1]->position_initialization<<"' doesn't exist. We can't initialize position on this species. Choose an already created specie or 'centered', 'regular', 'random'." )
+                    ERROR( "Specie '"<<retSpecies[ispec1]->position_initialization_<<"' doesn't exist. We can't initialize position on this species. Choose an already created specie or 'centered', 'regular', 'random'." )
                 }
             }
         }

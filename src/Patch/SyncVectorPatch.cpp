@@ -40,7 +40,7 @@ void SyncVectorPatch::exchangeParticles( VectorPatch &vecPatches, int ispec, Par
 }
 
 
-void SyncVectorPatch::finalize_and_sort_parts( VectorPatch &vecPatches, int ispec, Params &params, SmileiMPI *smpi, Timers &timers, int itime )
+void SyncVectorPatch::finalizeAndSortParticles( VectorPatch &vecPatches, int ispec, Params &params, SmileiMPI *smpi, Timers &timers, int itime )
 {
     SyncVectorPatch::finalizeExchangeParticles( vecPatches, ispec, 0, params, smpi, timers, itime );
 
@@ -60,7 +60,7 @@ void SyncVectorPatch::finalize_and_sort_parts( VectorPatch &vecPatches, int ispe
 
     #pragma omp for schedule(runtime)
     for( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ ) {
-        vecPatches( ipatch )->injectParticles( smpi, ispec, params, &vecPatches );
+        vecPatches( ipatch )->importAndSortParticles( smpi, ispec, params, &vecPatches );
     }
 
 
