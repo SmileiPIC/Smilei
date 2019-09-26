@@ -27,7 +27,9 @@ private:
     std::vector<unsigned int> rewrite_patches_x, rewrite_patches_y;
     
     std::vector<std::complex<double>> idata_reread, idata_rewrite, idata;
-    
+
+    int factor_;
+
 };
 
 #endif

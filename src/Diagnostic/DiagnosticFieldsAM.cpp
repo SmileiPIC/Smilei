@@ -16,6 +16,31 @@ using namespace std;
 DiagnosticFieldsAM::DiagnosticFieldsAM( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, int ndiag, OpenPMDparams &openPMD )
     : DiagnosticFields( params, smpi, vecPatches, ndiag, openPMD )
 {
+    factor_ = 2;
+    // Be able to dump Env_Chi
+
+    // Default : AM diag fields are complex
+    vector<bool> isReal;
+    // 1. Check if real or complex :
+    Field* field = NULL;
+    for( unsigned int ifield=0; ifield < fields_indexes.size(); ifield++ ) {
+        if( time_average>1 ) {
+            field = vecPatches(0)->EMfields->allFields_avg[diag_n][ifield];
+        } else {
+            field = vecPatches(0)->EMfields->allFields[fields_indexes[ifield]];
+        }
+        if ( !dynamic_cast<cField*>( field ) )
+            isReal.push_back( true );
+        else
+            isReal.push_back( false );
+    }
+    // 2. convert to double :
+    int nRealFields = std::count( isReal.begin(), isReal.end(), true );
+    if ( nRealFields == fields_indexes.size() )
+        factor_ /= 2;
+    else if ( nRealFields != 0 ) {
+        ERROR( "Mixing types in diag field : " << ndiag );
+    }
 
     // Calculate the offset in the local grid
     patch_offset_in_grid.resize( 2 );
@@ -33,7 +58,7 @@ DiagnosticFieldsAM::DiagnosticFieldsAM( Params &params, SmileiMPI *smpi, VectorP
     hsize_t global_size[1];
     global_size[0] = tot_number_of_patches * one_patch_buffer_size;
     hsize_t iglobal_size[1];
-    iglobal_size[0] = 2 * global_size[0];
+    iglobal_size[0] = factor_ * global_size[0];
     filespace_firstwrite = H5Screate_simple( 1, iglobal_size, NULL );
     memspace_firstwrite = H5Screate_simple( 1, iglobal_size, NULL ); // redefined later
     
@@ -58,8 +83,8 @@ DiagnosticFieldsAM::DiagnosticFieldsAM( Params &params, SmileiMPI *smpi, VectorP
     filespace_reread = H5Screate_simple( 1, iglobal_size, NULL );
     offset[0] = one_patch_buffer_size * first_patch_of_this_proc;
     block [0] = one_patch_buffer_size * npatch_local;
-    ioffset[0] = 2 * offset[0];
-    iblock [0] = 2 * block [0];
+    ioffset[0] = factor_ * offset[0];
+    iblock [0] = factor_ * block [0];
     count [0] = 1;
     H5Sselect_hyperslab( filespace_reread, H5S_SELECT_SET, ioffset, NULL, count, iblock );
     // Define space in memory for re-reading
@@ -97,7 +122,7 @@ DiagnosticFieldsAM::DiagnosticFieldsAM( Params &params, SmileiMPI *smpi, VectorP
     final_array_size[0] = params.number_of_patches[0] * params.n_space[0] + 1;
     final_array_size[1] = params.number_of_patches[1] * params.n_space[1] + 1;
     ifinal_array_size[0] =     final_array_size[0];
-    ifinal_array_size[1] = 2 * final_array_size[1];
+    ifinal_array_size[1] = factor_ * final_array_size[1];
     total_dataset_size = ifinal_array_size[0] * ifinal_array_size[1];
     filespace = H5Screate_simple( 2, ifinal_array_size, NULL );
     offset2[0] = rewrite_xmin * params.n_space[0] + ( ( rewrite_xmin==0 )?0:1 );
@@ -105,9 +130,9 @@ DiagnosticFieldsAM::DiagnosticFieldsAM( Params &params, SmileiMPI *smpi, VectorP
     block2 [0] = rewrite_npatchx * params.n_space[0] + ( ( rewrite_xmin==0 )?1:0 );
     block2 [1] = rewrite_npatchy * params.n_space[1] + ( ( rewrite_ymin==0 )?1:0 );
     ioffset2[0] = offset2[0];
-    ioffset2[1] = 2 * offset2[1];
+    ioffset2[1] = factor_ * offset2[1];
     iblock2 [0] = block2 [0];
-    iblock2 [1] = 2 * block2 [1];
+    iblock2 [1] = factor_ * block2 [1];
     count2 [0] = 1;
     count2 [1] = 1;
     H5Sselect_hyperslab( filespace, H5S_SELECT_SET, ioffset2, NULL, count2, iblock2 );
@@ -137,8 +162,8 @@ void DiagnosticFieldsAM::setFileSplitting( SmileiMPI *smpi, VectorPatch &vecPatc
     block [0] = total_vecPatches_size;
     count [0] = 1;
     hsize_t ioffset[1], iblock[1];
-    ioffset[0] = 2 * offset[0];
-    iblock [0] = 2 * block [0];
+    ioffset[0] = factor_ * offset[0];
+    iblock [0] = factor_ * block [0];
     // Select portion of the file where this MPI will write to
     H5Sselect_hyperslab( filespace_firstwrite, H5S_SELECT_SET, ioffset, NULL, count, iblock );
     // define space in memory
@@ -161,40 +186,61 @@ void DiagnosticFieldsAM::setFileSplitting( SmileiMPI *smpi, VectorPatch &vecPatc
 // Copy patch field to current "data" buffer
 void DiagnosticFieldsAM::getField( Patch *patch, unsigned int ifield )
 {
-    // Get current field
-    cField2D *field;
-    if( time_average>1 ) {
-        field = static_cast<cField2D *>( patch->EMfields->allFields_avg[diag_n][ifield] );
-    } else {
-        field = static_cast<cField2D *>( patch->EMfields->allFields[fields_indexes[ifield]] );
-    }
     // Copy field to the "data" buffer
-    
-    unsigned int ix = patch_offset_in_grid[0];
-    unsigned int ix_max = ix + patch_size[0];
-    unsigned int iy;
-    unsigned int iy_max = patch_offset_in_grid[1] + patch_size[1];
-    unsigned int iout = one_patch_buffer_size * ( patch->Hindex()-refHindex );
-    while( ix < ix_max ) {
-        iy = patch_offset_in_grid[1];
-        while( iy < iy_max ) {
-            idata[iout] = ( *field )( ix, iy ) * time_average_inv;
-            iout++;
-            iy++;
+    if (factor_==2) { // Complex
+        // Get current field
+        cField2D *field;
+        if( time_average>1 ) {
+            field = static_cast<cField2D *>( patch->EMfields->allFields_avg[diag_n][ifield] );
+        } else {
+            field = static_cast<cField2D *>( patch->EMfields->allFields[fields_indexes[ifield]] );
         }
-        ix++;
-    }
-//    unsigned int ix_max = patch_offset_in_grid[0] + patch_size[0];
-//    unsigned int iy= patch_offset_in_grid[1];
-//    double * data_pt = &(data[one_patch_buffer_size * (patch->Hindex()-refHindex)]);
-//    for (unsigned int ix = patch_offset_in_grid[0]; ix < ix_max; ix++){
-//        memcpy( data_pt, &((*field)(ix, iy)), patch_size[1]*sizeof(double));
-//        data_pt += patch_size[1];
-//    }
 
-    if( time_average>1 ) {
-        field->put_to( 0.0 );
+        unsigned int ix = patch_offset_in_grid[0];
+        unsigned int ix_max = ix + patch_size[0];
+        unsigned int iy;
+        unsigned int iy_max = patch_offset_in_grid[1] + patch_size[1];
+        unsigned int iout = one_patch_buffer_size * ( patch->Hindex()-refHindex );
+        while( ix < ix_max ) {
+            iy = patch_offset_in_grid[1];
+            while( iy < iy_max ) {
+                idata[iout] = ( *field )( ix, iy ) * time_average_inv;
+                iout++;
+                iy++;
+            }
+            ix++;
+        }
+        if( time_average>1 ) {
+            field->put_to( 0.0 );
+        }
     }
+    else {  // Double
+        // Get current field
+        Field2D *field;
+        if( time_average>1 ) {
+            field = static_cast<Field2D *>( patch->EMfields->allFields_avg[diag_n][ifield] );
+        } else {
+            field = static_cast<Field2D *>( patch->EMfields->allFields[fields_indexes[ifield]] );
+        }
+        unsigned int ix = patch_offset_in_grid[0];
+        unsigned int ix_max = ix + patch_size[0];
+        unsigned int iy;
+        unsigned int iy_max = patch_offset_in_grid[1] + patch_size[1];
+        unsigned int iout = one_patch_buffer_size * ( patch->Hindex()-refHindex );
+        while( ix < ix_max ) {
+            iy = patch_offset_in_grid[1];
+            while( iy < iy_max ) {
+                idata[iout] = ( *field )( ix, iy ) * time_average_inv;
+                iout++;
+                iy++;
+            }
+            ix++;
+        }
+        if( time_average>1 ) {
+            field->put_to( 0.0 );
+        }
+    }
+
 }
 
 
