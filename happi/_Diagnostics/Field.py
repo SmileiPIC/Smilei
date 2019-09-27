@@ -56,6 +56,7 @@ class Field(Diagnostic):
 		if self.cylindrical:
 			all_fields = list(self._fields)
 			self._fields = {}
+                        self._is_complex = True
 			for f in all_fields:
 				try:
 					if f[:5] in ["Bl_m_","Br_m_","Bt_m_"]:
@@ -67,6 +68,16 @@ class Field(Diagnostic):
 					elif f[:3] in ["El_","Er_","Et_","Bl_","Br_","Bt_","Jl_","Jr_","Jt_"]:
 						fname = f[:2]
 						f = f[3:]
+					elif f[:10] in ["Env_A_abs_","Env_E_abs_"]:
+						fname = f#[:9] 
+                                                f = f[10:]
+                                                self._is_complex = False
+                                                build3d = None
+					elif f[:8] in ["Env_Chi_"]:
+						fname = f#[:7] 
+                                                f = f[8:]
+                                                self._is_complex = False
+                                                build3d = None
 					else:
 						raise
 					try:
@@ -143,7 +154,7 @@ class Field(Diagnostic):
 		
 		# Case of a cylindrical geometry
 		# Check whether "theta" or "build3d" option is chosen
-		if self.cylindrical:
+		if self.cylindrical and self._is_complex:
 			theta   = kwargs.pop("theta"  , None)
 			build3d = kwargs.pop("build3d", None)
 			modes   = kwargs.pop("modes"  , None)
@@ -199,7 +210,7 @@ class Field(Diagnostic):
 		axis_start = self._offset
 		axis_stop  = self._offset + (self._initialShape-0.5)*self._spacing
 		axis_step  = self._spacing
-		if self.cylindrical:
+		if self.cylindrical and self._is_complex:
 			if build3d is not None:
 				self._initialShape = [int(self._np.ceil( (s[1]-s[0])/float(s[2]) )) for s in build3d]
 				axis_start = build3d[:,0]
@@ -237,7 +248,7 @@ class Field(Diagnostic):
 		self._selection = [self._np.s_[:]]*self._naxes
 		self._offset  = fields[0].attrs['gridGlobalOffset']
 		self._spacing = fields[0].attrs['gridSpacing']
-		axis_name = "xyz" if not self.cylindrical or build3d is not None else "xr"
+		axis_name = "xyz" if not self.cylindrical or not self._is_complex or build3d is not None else "xr"
 		for iaxis in range(self._naxes):
 			centers = self._np.arange(axis_start[iaxis], axis_stop[iaxis], axis_step[iaxis])
 			label = axis_name[iaxis]
@@ -407,6 +418,7 @@ class Field(Diagnostic):
 		
 		 # for each field in operation, obtain the data
 		for field in self._fieldname:
+                        print field
 			B = self._np.empty(self._finalShape)
 			try:
 				h5item[field].read_direct(B, source_sel=self._selection) # get array
