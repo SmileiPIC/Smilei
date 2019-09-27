@@ -68,9 +68,9 @@ Checkpoints(
 )
 
 
-#DiagFields(
-#    every = 100,
-#)
+DiagFields(
+   every = 100,
+)
 
 DiagProbe(
         every = 20,

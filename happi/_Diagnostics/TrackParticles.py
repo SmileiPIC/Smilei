@@ -610,7 +610,7 @@ class TrackParticles(Diagnostic):
 				self._rawData = {}
 
 			if self._verbose: print("Loading data ...")
-			properties = {"Id":"id", "x":"position/x", "y":"position/y", "z":"position/z",
+			properties = {"Id":"id", "moving_x":"position/x", "x":"position/x", "y":"position/y", "z":"position/z",
 			              "px":"momentum/x", "py":"momentum/y", "pz":"momentum/z",
 			              "q":"charge", "w":"weight","chi":"chi",
 			              "Ex":"E/x", "Ey":"E/y", "Ez":"E/z",
