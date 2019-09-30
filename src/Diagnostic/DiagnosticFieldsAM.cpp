@@ -89,7 +89,11 @@ DiagnosticFieldsAM::DiagnosticFieldsAM( Params &params, SmileiMPI *smpi, VectorP
     H5Sselect_hyperslab( filespace_reread, H5S_SELECT_SET, ioffset, NULL, count, iblock );
     // Define space in memory for re-reading
     memspace_reread = H5Screate_simple( 1, iblock, NULL );
-    idata_reread.resize( block[0] );
+    if (factor_==2)
+        idata_reread.resize( block[0] );
+    else if (factor_==1)
+        data_reread.resize( block[0] );
+
     // Define the list of patches for re-writing
     rewrite_npatch = ( unsigned int )npatch_local;
     rewrite_patches_x.resize( rewrite_npatch );
@@ -138,7 +142,10 @@ DiagnosticFieldsAM::DiagnosticFieldsAM( Params &params, SmileiMPI *smpi, VectorP
     H5Sselect_hyperslab( filespace, H5S_SELECT_SET, ioffset2, NULL, count2, iblock2 );
     // Define space in memory for re-writing
     memspace = H5Screate_simple( 2, iblock2, NULL );
-    idata_rewrite.resize( block2[0]*block2[1] );
+    if (factor_==2)
+        idata_rewrite.resize( block2[0]*block2[1] );
+    else if (factor_==1)
+        data_rewrite.resize( block2[0]*block2[1] );
     
     tmp_dset_id=0;
 }
@@ -154,7 +161,10 @@ void DiagnosticFieldsAM::setFileSplitting( SmileiMPI *smpi, VectorPatch &vecPatc
     unsigned int total_vecPatches_size = one_patch_buffer_size * vecPatches.size();
     
     // Resize the data
-    idata.resize( total_vecPatches_size );
+    if (factor_==2)
+        idata.resize( total_vecPatches_size );
+    else if (factor_==1)
+        data.resize( total_vecPatches_size );
     
     // Define offset and size for HDF5 file
     hsize_t offset[1], block[1], count[1];
@@ -230,7 +240,7 @@ void DiagnosticFieldsAM::getField( Patch *patch, unsigned int ifield )
         while( ix < ix_max ) {
             iy = patch_offset_in_grid[1];
             while( iy < iy_max ) {
-                idata[iout] = ( *field )( ix, iy ) * time_average_inv;
+                data[iout] = ( *field )( ix, iy ) * time_average_inv;
                 iout++;
                 iy++;
             }
@@ -248,60 +258,118 @@ void DiagnosticFieldsAM::getField( Patch *patch, unsigned int ifield )
 void DiagnosticFieldsAM::writeField( hid_t dset_id, int itime )
 {
 
-    // Write the buffer in a temporary location
-    H5Dwrite( tmp_dset_id, H5T_NATIVE_DOUBLE, memspace_firstwrite, filespace_firstwrite, write_plist, &( idata[0] ) );
+    if (factor_==2) {
+        // Write the buffer in a temporary location
+        H5Dwrite( tmp_dset_id, H5T_NATIVE_DOUBLE, memspace_firstwrite, filespace_firstwrite, write_plist, &( idata[0] ) );
+
+        // Read the file with the previously defined partition
+        H5Dread( tmp_dset_id, H5T_NATIVE_DOUBLE, memspace_reread, filespace_reread, write_plist, &( idata_reread[0] ) );
     
-    // Read the file with the previously defined partition
-    H5Dread( tmp_dset_id, H5T_NATIVE_DOUBLE, memspace_reread, filespace_reread, write_plist, &( idata_reread[0] ) );
+        // Fold the data according to the Hilbert curve
+        unsigned int read_position, write_position, write_skip_y, sx, sy;
     
-    // Fold the data according to the Hilbert curve
-    unsigned int read_position, write_position, write_skip_y, sx, sy;
+        unsigned int write_sizey  = ( rewrite_npatchy*( patch_size[1]-1 ) + ( ( rewrite_ymin==0 )?1:0 ) );
     
-    unsigned int write_sizey  = ( rewrite_npatchy*( patch_size[1]-1 ) + ( ( rewrite_ymin==0 )?1:0 ) );
-    
-    read_position = 0;
-    for( unsigned int h=0; h<rewrite_npatch; h++ ) {
-        int write_position0 = ( rewrite_patches_y[h]-rewrite_ymin )*( patch_size[1]-1 )
-                              + write_sizey *( ( rewrite_patches_x[h]-rewrite_xmin )*( patch_size[0]-1 ) );
+        read_position = 0;
+        for( unsigned int h=0; h<rewrite_npatch; h++ ) {
+            int write_position0 = ( rewrite_patches_y[h]-rewrite_ymin )*( patch_size[1]-1 )
+                + write_sizey *( ( rewrite_patches_x[h]-rewrite_xmin )*( patch_size[0]-1 ) );
                               
-        write_skip_y = ( rewrite_npatchy - 1 )*( patch_size[1]-1 );
+            write_skip_y = ( rewrite_npatchy - 1 )*( patch_size[1]-1 );
         
-        sx = patch_size[0];
-        sy = patch_size[1];
+            sx = patch_size[0];
+            sy = patch_size[1];
         
-        if( rewrite_patches_y[h]!=0 ) {
-            if( rewrite_ymin==0 ) {
-                write_position0++;
-                write_skip_y++;
-            }
-            sy--;
-        }
-        if( rewrite_patches_x[h]!=0 ) {
-            read_position += patch_size[1];
-            if( rewrite_xmin==0 ) {
-                write_position0 += write_sizey;
-            }
-            sx--;
-        }
-        
-        write_position = write_position0;
-        for( unsigned int ix=0; ix<sx; ix++ ) {
             if( rewrite_patches_y[h]!=0 ) {
-                read_position ++;
+                if( rewrite_ymin==0 ) {
+                    write_position0++;
+                    write_skip_y++;
+                }
+                sy--;
             }
-            for( unsigned int iy=0; iy<sy; iy++ ) {
-                //data_rewrite[write_position] += h+1;
-                idata_rewrite[write_position] = idata_reread[read_position];
-                read_position ++;
-                write_position++;
-                
+            if( rewrite_patches_x[h]!=0 ) {
+                read_position += patch_size[1];
+                if( rewrite_xmin==0 ) {
+                    write_position0 += write_sizey;
+                }
+                sx--;
             }
-            write_position += write_skip_y;
+
+            write_position = write_position0;
+            for( unsigned int ix=0; ix<sx; ix++ ) {
+                if( rewrite_patches_y[h]!=0 ) {
+                    read_position ++;
+                }
+                for( unsigned int iy=0; iy<sy; iy++ ) {
+                    //data_rewrite[write_position] += h+1;
+                    idata_rewrite[write_position] = idata_reread[read_position];
+                    read_position ++;
+                    write_position++;
+
+                }
+                write_position += write_skip_y;
+            }
         }
+        
+        // Rewrite the file with the previously defined partition
+        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &( idata_rewrite[0] ) );
     }
+    else if (factor_==1) {
+        // Write the buffer in a temporary location
+        H5Dwrite( tmp_dset_id, H5T_NATIVE_DOUBLE, memspace_firstwrite, filespace_firstwrite, write_plist, &( data[0] ) );
+
+        // Read the file with the previously defined partition
+        H5Dread( tmp_dset_id, H5T_NATIVE_DOUBLE, memspace_reread, filespace_reread, write_plist, &( data_reread[0] ) );
+
+        // Fold the data according to the Hilbert curve
+        unsigned int read_position, write_position, write_skip_y, sx, sy;
+
+        unsigned int write_sizey  = ( rewrite_npatchy*( patch_size[1]-1 ) + ( ( rewrite_ymin==0 )?1:0 ) );
+
+        read_position = 0;
+        for( unsigned int h=0; h<rewrite_npatch; h++ ) {
+            int write_position0 = ( rewrite_patches_y[h]-rewrite_ymin )*( patch_size[1]-1 )
+                + write_sizey *( ( rewrite_patches_x[h]-rewrite_xmin )*( patch_size[0]-1 ) );
+
+            write_skip_y = ( rewrite_npatchy - 1 )*( patch_size[1]-1 );
+
+            sx = patch_size[0];
+            sy = patch_size[1];
+
+            if( rewrite_patches_y[h]!=0 ) {
+                if( rewrite_ymin==0 ) {
+                    write_position0++;
+                    write_skip_y++;
+                }
+                sy--;
+            }
+            if( rewrite_patches_x[h]!=0 ) {
+                read_position += patch_size[1];
+                if( rewrite_xmin==0 ) {
+                    write_position0 += write_sizey;
+                }
+                sx--;
+            }
+
+            write_position = write_position0;
+            for( unsigned int ix=0; ix<sx; ix++ ) {
+                if( rewrite_patches_y[h]!=0 ) {
+                    read_position ++;
+                }
+                for( unsigned int iy=0; iy<sy; iy++ ) {
+                    //data_rewrite[write_position] += h+1;
+                    data_rewrite[write_position] = data_reread[read_position];
+                    read_position ++;
+                    write_position++;
+                
+                }
+                write_position += write_skip_y;
+            }
+        }
     
-    // Rewrite the file with the previously defined partition
-    H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &( idata_rewrite[0] ) );
+        // Rewrite the file with the previously defined partition
+        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &( data_rewrite[0] ) );
+    }
     
 }
 
