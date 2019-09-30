@@ -21,7 +21,8 @@ public:
     template<typename T, typename F>  void getField( Patch *patch, unsigned int, F& out_data );
 
     void writeField( hid_t, int ) override;
-    
+    template<typename F> void writeField( hid_t dset_id, int itime, F& linearized_data, F& read_data, F& final_data );
+
 private:
 
     unsigned int rewrite_npatch, rewrite_xmin, rewrite_ymin, rewrite_npatchx, rewrite_npatchy;
