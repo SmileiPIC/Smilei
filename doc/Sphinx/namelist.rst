@@ -1332,12 +1332,9 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 Laser envelope model
 ^^^^^^^^^^^^^^^^^^^^^^
 
-In the geometries ``"1Dcartesian"``, ``"2Dcartesian"``, ``"3Dcartesian"``
-it is possible to model a laser pulse propagating in the ``x`` direction
+In all the available geometries, it is possible to model a laser pulse propagating in the ``x`` direction
 using an envelope model (see :doc:`laser_envelope` for the advantages
-and limits of this approximation). In the geometry ``"AMcylindrical"`` it is possible as well,
-but only limiting the number of azimuthal modes to one (``number_of_AM = 1``). 
-This is equivalent to perfect cylindrical symmetry, i.e. retaining only the azimuthal mode zero (see :doc:`algorithms`).
+and limits of this approximation).
 The fast oscillations of the laser are neglected and all the physical
 quantities of the simulation, including the electromagnetic fields and
 their source terms, as well as the particles positions and momenta, are
@@ -1346,75 +1343,60 @@ Effects involving characteristic lengths comparable to the laser central
 wavelength (i.e. sharp plasma density profiles) cannot be modeled with
 this option.
 
-For the moment the only way to specify a laser pulse through this model
-in :program:`Smilei` is through a gaussian beam (cylindrically symmetric
-for the geometries ``"2Dcartesian"``, ``"3Dcartesian"`` and ``"AMcylindrical"``). Currently only
-one laser pulse can be specified through the envelope model in a simulation,
-thus multi-pulse set-ups cannot be defined.
+.. note::
+
+  The envelope model in ``"AMcylindrical"`` geometry is implemented only in the hypothesis of  
+  cylindrical symmetry, i.e. only one azimuthal mode. Therefore, to use it the user must choose
+  ``number_of_AM = 1``.
+
 Contrarily to a standard Laser initialized with the Silver-Müller
 boundary conditions, the laser envelope will be entirely initialized inside
-the simulation box at the start of the simulation.
+the simulation box at the start of the simulation. 
 
-Following is the laser envelope creator in 1D ::
+Currently only one laser pulse of a given frequency propagating in the positive
+`x` direction can be speficified. However, a multi-pulse set-up can be initialized 
+if a multi-pulse profile is specified, e.g. if the temporal profile is given by two adjacents gaussian functions.
+The whole multi-pulse profile would have the same carrier frequency and would propagate in the positive
+`x` direction. For the moment it is not possible to specify more than one laser envelope profile, e.g. 
+two counterpropagating lasers, or two lasers with different carrier frequency.
 
-    LaserEnvelopePlanar1D(
-        a0              = 1.,
-        time_envelope   = tgaussian(center=150., fwhm=40.),
+
+Please note that describing a laser through its complex envelope loses physical accuracy if its
+characteristic space-time variation scales are too small, i.e. of the order of the laser central wavelength (see :doc:`laser_envelope`).
+Thus, space-time profiles with variation scales larger than this length should be used.
+
+.. rubric:: 1. Defining a generic laser envelope
+
+..
+
+Following is the generic laser envelope creator ::
+
+    LaserEnvelope(
+        omega          = 1.,
         envelope_solver = 'explicit',
-        Envelope_boundary_conditions = [ ["reflective"] ],
+        envelope_profile = envelope_profile,
+        Envelope_boundary_conditions = [["reflective"]]
     )
 
-Following is the laser envelope creator in 2D ::
 
-    LaserEnvelopeGaussian2D(
-        a0              = 1.,
-        focus           = [150., 40.],
-        waist           = 30.,
-        time_envelope   = tgaussian(center=150., fwhm=40.),
-        envelope_solver = 'explicit',
-        Envelope_boundary_conditions = [ ["reflective"] ],
-    )
+.. py:data:: omega
 
-Following is the laser envelope creator in 3D ::
+   :default: ``1.``
+ 
+   For the moment only a value of 1 is supported.
 
-    LaserEnvelopeGaussian3D(
-        a0              = 1.,
-        focus           = [150., 40., 40.],
-        waist           = 30.,
-        time_envelope   = tgaussian(center=150., fwhm=40.),
-        envelope_solver = 'explicit',
-        Envelope_boundary_conditions = [ ["reflective"] ],
-    )
+.. py:data:: envelope_profile
 
-Following is the laser envelope creator in ``AMcylindrical`` geometry ::
+   :type: a *python* function or a :ref:`python profile <profiles>`
+   :default: None
 
-    LaserEnvelopeGaussianAM(
-        a0              = 1.,
-        focus           = [150., 40.],
-        waist           = 30.,
-        time_envelope   = tgaussian(center=150., fwhm=40.),
-        envelope_solver = 'explicit',
-        Envelope_boundary_conditions = [ ["reflective"] ],
-    )
-
-The arguments appearing ``LaserEnvelopePlanar1D``, ``LaserEnvelopeGaussian2D``, 
-``LaserEnvelopeGaussian3D`` and ``LaserEnvelopeGaussianAM`` have the same meaning they would have in a
-normal ``LaserPlanar1D``, ``LaserGaussian2D``, ``LaserGaussian3D`` and ``LaserGaussianAM``
-with some differences:
-
-.. py:data:: waist
-
-   Please note that a waist size comparable to the laser wavelength does not
-   satisfy the assumptions of the envelope model.
-
-.. py:data:: time_envelope
-
-   Since the envelope will be entirely initialized in the simulation box
-   already at the start of the simulation, the time envelope will be applied
-   in the ``x`` direction instead of time. It is recommended to initialize the
+   The laser space-time profile, so if the geometry is ``3Dcartesian`` a function of 4 arguments (3 for space, 1 for time) is necessary. 
+   Please note that the envelope will be entirely initialized in the simulation box
+   already at the start of the simulation, so the time coordinate will be applied
+   to the ``x`` direction instead of time. It is recommended to initialize the
    laser envelope in vacuum, separated from the plasma, to avoid unphysical
    results.
-   Temporal envelopes with variation scales near to the laser wavelength do not
+   Envelopes with variation scales near to the laser wavelength do not
    satisfy the assumptions of the envelope model (see :doc:`laser_envelope`),
    yielding inaccurate results.
 
@@ -1433,9 +1415,90 @@ with some differences:
   For the moment, only reflective boundary conditions are implemented in the
   resolution of the envelope equation.
 
+.. rubric:: 2. Defining a 1D laser envelope
+
+..
+
+Following is the simplified laser envelope creator in 1D ::
+
+    LaserEnvelopePlanar1D(
+        a0              = 1.,
+        time_envelope   = tgaussian(center=150., fwhm=40.),
+        envelope_solver = 'explicit',
+        Envelope_boundary_conditions = [ ["reflective"] ],
+    )
+
+.. rubric:: 3. Defining a 2D gaussian laser envelope
+
+..
+
+Following is the simplified gaussian laser envelope creator in 2D ::
+
+    LaserEnvelopeGaussian2D(
+        a0              = 1.,
+        focus           = [150., 40.],
+        waist           = 30.,
+        time_envelope   = tgaussian(center=150., fwhm=40.),
+        envelope_solver = 'explicit',
+        Envelope_boundary_conditions = [ ["reflective"] ],
+    )
+
+.. rubric:: 4. Defining a 3D gaussian laser envelope
+
+..
+
+Following is the simplified laser envelope creator in 3D ::
+
+    LaserEnvelopeGaussian3D(
+        a0              = 1.,
+        focus           = [150., 40., 40.],
+        waist           = 30.,
+        time_envelope   = tgaussian(center=150., fwhm=40.),
+        envelope_solver = 'explicit',
+        Envelope_boundary_conditions = [ ["reflective"] ],
+    )
+
+.. rubric:: 5. Defining a cylindrical gaussian laser envelope
+
+..
+
+Following is the simplified laser envelope creator in ``"AMcylindrical"`` geometry (remember that 
+in this geometry the envelope model can be used only if ``number_of_AM = 1``) ::
+
+    LaserEnvelopeGaussianAM(
+        a0              = 1.,
+        focus           = [150., 40.],
+        waist           = 30.,
+        time_envelope   = tgaussian(center=150., fwhm=40.),
+        envelope_solver = 'explicit',
+        Envelope_boundary_conditions = [ ["reflective"] ],
+    )
+
+
+The arguments appearing ``LaserEnvelopePlanar1D``, ``LaserEnvelopeGaussian2D``,
+``LaserEnvelopeGaussian3D`` and ``LaserEnvelopeGaussianAM`` have the same meaning they would have in a
+normal ``LaserPlanar1D``, ``LaserGaussian2D``, ``LaserGaussian3D`` and ``LaserGaussianAM``,
+with some differences:
+
+.. py:data:: time_envelope
+
+   Since the envelope will be entirely initialized in the simulation box
+   already at the start of the simulation, the time envelope will be applied
+   in the ``x`` direction instead of time. It is recommended to initialize the
+   laser envelope in vacuum, separated from the plasma, to avoid unphysical
+   results.
+   Temporal envelopes with variation scales near to the laser wavelength do not
+   satisfy the assumptions of the envelope model (see :doc:`laser_envelope`),
+   yielding inaccurate results.
+
+.. py:data:: waist
+
+   Please note that a waist size comparable to the laser wavelength does not
+   satisfy the assumptions of the envelope model.
+
 
 It is important to remember that the profile defined through the blocks
-``LaserEnvelopePlanar1D``, ``LaserEnvelopeGaussian2D``, ``LaserEnvelopeGaussian3D`` and ``LaserEnvelopeGaussianAM``
+``LaserEnvelopePlanar1D``, ``LaserEnvelopeGaussian2D``, ``LaserEnvelopeGaussian3D``
 correspond to the complex envelope of the laser vector potential component
 :math:`\tilde{A}` in the polarization direction.
 The calculation of the correspondent complex envelope for the laser electric field
