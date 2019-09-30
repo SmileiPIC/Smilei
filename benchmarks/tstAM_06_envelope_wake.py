@@ -2,7 +2,7 @@
 dx = 0.69 
 dr = 5. 
 dt = 0.57#0.8*dx
-nx = 256
+nx = 512
 nr = 60
 Lx = nx * dx
 Lr = nr*dr
@@ -108,7 +108,7 @@ DiagFields(
 
 DiagFields(
     every = 100,
-    fields = ['El' ]
+    fields = ['El_mode_0' ]
 )
 
 DiagProbe(
