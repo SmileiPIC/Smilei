@@ -18,7 +18,8 @@ public:
     
     //! Copy patch field to current "data" buffer
     void getField( Patch *patch, unsigned int ) override;
-    
+    template<typename T, typename F>  void getField( Patch *patch, unsigned int, F& out_data );
+
     void writeField( hid_t, int ) override;
     
 private:

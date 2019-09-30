@@ -198,61 +198,43 @@ void DiagnosticFieldsAM::getField( Patch *patch, unsigned int ifield )
 {
     // Copy field to the "data" buffer
     if (factor_==2) { // Complex
-        // Get current field
-        cField2D *field;
-        if( time_average>1 ) {
-            field = static_cast<cField2D *>( patch->EMfields->allFields_avg[diag_n][ifield] );
-        } else {
-            field = static_cast<cField2D *>( patch->EMfields->allFields[fields_indexes[ifield]] );
-        }
-
-        unsigned int ix = patch_offset_in_grid[0];
-        unsigned int ix_max = ix + patch_size[0];
-        unsigned int iy;
-        unsigned int iy_max = patch_offset_in_grid[1] + patch_size[1];
-        unsigned int iout = one_patch_buffer_size * ( patch->Hindex()-refHindex );
-        while( ix < ix_max ) {
-            iy = patch_offset_in_grid[1];
-            while( iy < iy_max ) {
-                idata[iout] = ( *field )( ix, iy ) * time_average_inv;
-                iout++;
-                iy++;
-            }
-            ix++;
-        }
-        if( time_average>1 ) {
-            field->put_to( 0.0 );
-        }
+        // Get current field (complex)
+        getField<cField2D,std::vector<complex<double>>>( patch, ifield, data );
     }
     else {  // Double
-        // Get current field
-        Field2D *field;
-        if( time_average>1 ) {
-            field = static_cast<Field2D *>( patch->EMfields->allFields_avg[diag_n][ifield] );
-        } else {
-            field = static_cast<Field2D *>( patch->EMfields->allFields[fields_indexes[ifield]] );
-        }
-        unsigned int ix = patch_offset_in_grid[0];
-        unsigned int ix_max = ix + patch_size[0];
-        unsigned int iy;
-        unsigned int iy_max = patch_offset_in_grid[1] + patch_size[1];
-        unsigned int iout = one_patch_buffer_size * ( patch->Hindex()-refHindex );
-        while( ix < ix_max ) {
-            iy = patch_offset_in_grid[1];
-            while( iy < iy_max ) {
-                data[iout] = ( *field )( ix, iy ) * time_average_inv;
-                iout++;
-                iy++;
-            }
-            ix++;
-        }
-        if( time_average>1 ) {
-            field->put_to( 0.0 );
-        }
+        // Get current field (double)
+        getField<Field2D,std::vector<double>>( patch, ifield, data );
     }
 
 }
 
+template<typename T, typename F>
+void DiagnosticFieldsAM::getField( Patch *patch, unsigned int ifield, F& out_data )
+{
+    T* field;
+    if( time_average>1 ) {
+        field = static_cast<T*>( patch->EMfields->allFields_avg[diag_n][ifield] );
+    } else {
+        field = static_cast<T*>( patch->EMfields->allFields[fields_indexes[ifield]] );
+    }
+    unsigned int ix = patch_offset_in_grid[0];
+    unsigned int ix_max = ix + patch_size[0];
+    unsigned int iy;
+    unsigned int iy_max = patch_offset_in_grid[1] + patch_size[1];
+    unsigned int iout = one_patch_buffer_size * ( patch->Hindex()-refHindex );
+    while( ix < ix_max ) {
+        iy = patch_offset_in_grid[1];
+        while( iy < iy_max ) {
+            out_data[iout] = ( *field )( ix, iy ) * time_average_inv;
+            iout++;
+            iy++;
+        }
+        ix++;
+    }
+    if( time_average>1 ) {
+        field->put_to( 0.0 );
+    }
+}
 
 // Write current buffer to file
 void DiagnosticFieldsAM::writeField( hid_t dset_id, int itime )
