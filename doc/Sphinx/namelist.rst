@@ -1268,13 +1268,14 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
         box_side         = "xmin",
         a0               = 1.,
         omega            = 1.,
-        focus            = [50., 40., 40.],
+        focus            = [50., 0.],
         waist            = 3.,
         polarization_phi = 0.,
         ellipticity      = 0.,
         time_envelope    = tconstant()
     )
 
+  Note that here, the focus is given in [x,r] coordinates. 
 
 .. rubric:: 7. Defining a generic wave at some distance from the boundary
 
