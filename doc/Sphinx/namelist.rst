@@ -2393,6 +2393,9 @@ This is done by including a block ``DiagFields``::
   | |              | | direction)                                          |
   +----------------+-------------------------------------------------------+
 
+.. Note:: To write these last three envelope fields with this diagnostics in ``"AMcylindrical"`` geometry, 
+          a dedicated block ``DiagFields`` must be defined, e.g. with ``fields = ["Env_A_abs_mode_0", "Env_Chi_mode_0"]``.
+
 .. py:data:: subgrid
 
   :default: ``None`` *(the whole grid is used)*
