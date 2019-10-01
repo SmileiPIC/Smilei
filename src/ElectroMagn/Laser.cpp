@@ -53,10 +53,9 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
     unsigned int space_dims     = ( params.geometry=="3Dcartesian" ? 2 : 1 );
     unsigned int spacetime_size = ( has_space_time_AM ? 2*params.nmodes+1 : 2 );//+1 to force spacetime_size to be always >2 in AM geometry.
 
+    spacetime.resize( spacetime_size, false ); //Needs to be resized even if non separable profiles are not used.
 
     if( has_space_time || has_space_time_AM ) {
-
-        spacetime.resize( spacetime_size, false );
 
         info << "\t\t" << errorPrefix << ": space-time profile " << endl;
         if( has_time || has_space || has_omega || has_chirp || has_phase ) {
