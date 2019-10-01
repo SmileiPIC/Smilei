@@ -51,7 +51,7 @@ Laser::Laser( Params &params, int ilaser, Patch *patch )
     }
 
     unsigned int space_dims     = ( params.geometry=="3Dcartesian" ? 2 : 1 );
-    unsigned int spacetime_size = ( has_space_time_AM ? 2*params.nmodes : 2 );
+    unsigned int spacetime_size = ( has_space_time_AM ? 2*params.nmodes+1 : 2 );//+1 to force spacetime_size to be always >2 in AM geometry.
 
 
     if( has_space_time || has_space_time_AM ) {
