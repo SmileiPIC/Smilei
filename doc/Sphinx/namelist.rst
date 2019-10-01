@@ -916,6 +916,110 @@ Each species has to be defined in a ``Species`` block::
 
 ----
 
+.. _Particle_injector:
+
+Particle Injector
+^^^^^^^^^^^^^^^^^
+
+Injectors enable to inject macro-particles in the simulation domain from the boundaries.
+By default, some parameters that are not specified are inherited from the associated :py:data:`species`.
+
+Each particle injector has to be defined in a ``ParticleInjector`` block::
+
+    ParticleInjector(
+        name      = "injector1",
+        species   = "electrons1",
+        box_side  = "xmin",
+        
+        # Parameters inherited from the associated `species` by default
+        
+        position_initialization = "species",
+        momentum_initialization = "rectangular",
+        mean_velocity = [0.5,0.,0.],
+        temperature = [1e-30],
+        number_density = 1,
+        time_envelope = tgaussian(start=0, duration=10., order=4),
+        particles_per_cell = 16,
+    )
+
+.. py:data:: name
+
+    The name you want to give to this injector.
+    If you do not specify a name, it will be attributed automatically.
+    The name is useful if you want to inject particles at the same position of another injector.
+
+.. py:data:: species
+
+    The name of the species in which to inject the new particles
+
+.. py:data:: box_side
+
+    From where the macro-particles are injected. Options are:
+    
+    * ``"xmin"``
+    * ``"xmax"``
+    
+.. py:data:: position_initialization
+
+    The method for initialization of particle positions. Options are:
+
+    * ``"species"`` or empty ``""``: injector uses the option of the specified :py:data:`species`.
+    * ``"regular"`` for regularly spaced
+    * ``"random"`` for randomly distributed
+    * ``"centered"`` for centered in each cell
+    * The :py:data:`name` of another injector from which the positions are copied.
+      This option requires (1) that the *target* injector' positions are initialized
+      using one of the three other options above.
+
+    By default, injector uses the parameters provided with :py:data:`species`.
+
+.. py:data:: momentum_initialization
+
+    The method for initialization of particle momenta. Options are:
+
+    * ``"species"`` or empty ``""``: injector uses the option of the specified :py:data:`species`.
+    * ``"maxwell-juettner"`` for a relativistic maxwellian (see :doc:`how it is done<maxwell-juttner>`)
+    * ``"rectangular"`` for a rectangular distribution
+    
+    By default, injector uses the parameters provided with :py:data:`species`.
+
+.. py:data:: mean_velocity
+
+    :type: a list of 3 floats or *python* functions (see section :ref:`profiles`)
+
+    The initial drift velocity of the particles, in units of the speed of light :math:`c`.
+    By default (nothing specified), injector uses the parameters provided with :py:data:`species`.
+
+    **WARNING**: For massless particles, this is actually the momentum in units of :math:`m_e c`.
+
+.. py:data:: temperature
+
+    :type: a list of 3 floats or *python* functions (see section :ref:`profiles`)
+
+    The initial temperature of the particles, in units of :math:`m_ec^2`.
+    By default (nothing specified), injector uses the parameters provided with :py:data:`species`.
+    
+.. py:data:: particles_per_cell
+
+    :type: float or *python* function (see section :ref:`profiles`)
+
+    The number of particles per cell to use for the injector.
+    
+.. py:data:: number_density
+             charge_density
+
+    :type: float or *python* function (see section :ref:`profiles`)
+
+    The absolute value of the number density or charge density (choose one only)
+    of the particle distribution, in units of the reference density :math:`N_r` (see :doc:`units`)
+    
+.. py:data:: time_envelope
+
+    :type: a *python* function or a :ref:`time profile <profiles>`
+    :default:  ``tconstant()``
+
+    The temporal envelope of the injector.
+     
 .. _Particle_merging:
 
 Particle Merging
@@ -1036,14 +1140,14 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
         space_time_profile = [ By_profile, Bz_profile ]
     )
 
-  .. py:data:: box_side
+.. py:data:: box_side
 
     :default: ``"xmin"``
 
     Side of the box from which the laser originates: at the moment, only ``"xmin"`` and
     ``"xmax"`` are supported.
 
-  .. py:data:: space_time_profile
+.. py:data:: space_time_profile
 
     :type: A list of two *python* functions
 
@@ -1354,65 +1458,54 @@ Effects involving characteristic lengths comparable to the laser central
 wavelength (i.e. sharp plasma density profiles) cannot be modeled with
 this option.
 
-For the moment the only way to specify a laser pulse through this model
-in :program:`Smilei` is through a gaussian beam (cylindrically symmetric
-for the geometries ``"2Dcartesian"``, ``"3Dcartesian"``). Currently only
-one laser pulse can be specified through the envelope model in a simulation,
-thus multi-pulse set-ups cannot be defined.
 Contrarily to a standard Laser initialized with the Silver-Müller
 boundary conditions, the laser envelope will be entirely initialized inside
-the simulation box at the start of the simulation.
+the simulation box at the start of the simulation. 
 
-Following is the laser envelope creator in 1D ::
+Currently only one laser pulse of a given frequency propagating in the positive
+`x` direction can be speficified. However, a multi-pulse set-up can be initialized 
+if a multi-pulse profile is specified, e.g. if the temporal profile is given by two adjacents gaussian functions.
+The whole multi-pulse profile would have the same carrier frequency and would propagate in the positive
+`x` direction. For the moment it is not possible to specify more than one laser envelope profile, e.g. 
+two counterpropagating lasers, or two lasers with different carrier frequency.
 
-    LaserEnvelopePlanar1D(
-        a0              = 1.,
-        time_envelope   = tgaussian(center=150., fwhm=40.),
+
+Please note that describing a laser through its complex envelope loses physical accuracy if its
+characteristic space-time variation scales are too small, i.e. of the order of the laser central wavelength (see :doc:`laser_envelope`).
+Thus, space-time profiles with variation scales larger than this length should be used.
+
+.. rubric:: 1. Defining a generic laser envelope
+
+..
+
+Following is the generic laser envelope creator ::
+
+    LaserEnvelope(
+        omega          = 1.,
         envelope_solver = 'explicit',
-        Envelope_boundary_conditions = [ ["reflective"] ],
-    )
-
-Following is the laser envelope creator in 2D ::
-
-    LaserEnvelopeGaussian2D(
-        a0              = 1.,
-        focus           = [150., 40.],
-        waist           = 30.,
-        time_envelope   = tgaussian(center=150., fwhm=40.),
-        envelope_solver = 'explicit',
-        Envelope_boundary_conditions = [ ["reflective"] ],
-    )
-
-Following is the laser envelope creator in 3D ::
-
-    LaserEnvelopeGaussian3D(
-        a0              = 1.,
-        focus           = [150., 40., 40.],
-        waist           = 30.,
-        time_envelope   = tgaussian(center=150., fwhm=40.),
-        envelope_solver = 'explicit',
-        Envelope_boundary_conditions = [ ["reflective"] ],
+        envelope_profile = envelope_profile,
+        Envelope_boundary_conditions = [["reflective"]]
     )
 
 
-The arguments appearing ``LaserEnvelopePlanar1D``, ``LaserEnvelopeGaussian2D``
-and ``LaserEnvelopeGaussian3D`` have the same meaning they would have in a
-normal ``LaserPlanar1D``, ``LaserGaussian2D`` and ``LaserGaussian3D``,
-with some differences:
+.. py:data:: omega
 
-.. py:data:: waist
+   :default: ``1.``
+ 
+   For the moment only a value of 1 is supported.
 
-   Please note that a waist size comparable to the laser wavelength does not
-   satisfy the assumptions of the envelope model.
+.. py:data:: envelope_profile
 
-.. py:data:: time_envelope
+   :type: a *python* function or a :ref:`python profile <profiles>`
+   :default: None
 
-   Since the envelope will be entirely initialized in the simulation box
-   already at the start of the simulation, the time envelope will be applied
-   in the ``x`` direction instead of time. It is recommended to initialize the
+   The laser space-time profile, so if the geometry is ``3Dcartesian`` a function of 4 arguments (3 for space, 1 for time) is necessary. 
+   Please note that the envelope will be entirely initialized in the simulation box
+   already at the start of the simulation, so the time coordinate will be applied
+   to the ``x`` direction instead of time. It is recommended to initialize the
    laser envelope in vacuum, separated from the plasma, to avoid unphysical
    results.
-   Temporal envelopes with variation scales near to the laser wavelength do not
+   Envelopes with variation scales near to the laser wavelength do not
    satisfy the assumptions of the envelope model (see :doc:`laser_envelope`),
    yielding inaccurate results.
 
@@ -1430,6 +1523,72 @@ with some differences:
 
   For the moment, only reflective boundary conditions are implemented in the
   resolution of the envelope equation.
+
+.. rubric:: 2. Defining a 1D laser envelope
+
+..
+
+Following is the simplified laser envelope creator in 1D ::
+
+    LaserEnvelopePlanar1D(
+        a0              = 1.,
+        time_envelope   = tgaussian(center=150., fwhm=40.),
+        envelope_solver = 'explicit',
+        Envelope_boundary_conditions = [ ["reflective"] ],
+    )
+
+.. rubric:: 3. Defining a 2D gaussian laser envelope
+
+..
+
+Following is the simplified gaussian laser envelope creator in 2D ::
+
+    LaserEnvelopeGaussian2D(
+        a0              = 1.,
+        focus           = [150., 40.],
+        waist           = 30.,
+        time_envelope   = tgaussian(center=150., fwhm=40.),
+        envelope_solver = 'explicit',
+        Envelope_boundary_conditions = [ ["reflective"] ],
+    )
+
+.. rubric:: 4. Defining a 3D gaussian laser envelope
+
+..
+
+Following is the simplified laser envelope creator in 3D ::
+
+    LaserEnvelopeGaussian3D(
+        a0              = 1.,
+        focus           = [150., 40., 40.],
+        waist           = 30.,
+        time_envelope   = tgaussian(center=150., fwhm=40.),
+        envelope_solver = 'explicit',
+        Envelope_boundary_conditions = [ ["reflective"] ],
+    )
+
+
+
+The arguments appearing ``LaserEnvelopePlanar1D``, ``LaserEnvelopeGaussian2D``
+and ``LaserEnvelopeGaussian3D`` have the same meaning they would have in a
+normal ``LaserPlanar1D``, ``LaserGaussian2D`` and ``LaserGaussian3D``,
+with some differences:
+
+.. py:data:: time_envelope
+
+   Since the envelope will be entirely initialized in the simulation box
+   already at the start of the simulation, the time envelope will be applied
+   in the ``x`` direction instead of time. It is recommended to initialize the
+   laser envelope in vacuum, separated from the plasma, to avoid unphysical
+   results.
+   Temporal envelopes with variation scales near to the laser wavelength do not
+   satisfy the assumptions of the envelope model (see :doc:`laser_envelope`),
+   yielding inaccurate results.
+
+.. py:data:: waist
+
+   Please note that a waist size comparable to the laser wavelength does not
+   satisfy the assumptions of the envelope model.
 
 
 It is important to remember that the profile defined through the blocks

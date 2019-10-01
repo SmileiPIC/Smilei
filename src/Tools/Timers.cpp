@@ -14,14 +14,16 @@ Timers::Timers( SmileiMPI *smpi ) :
     maxwell( "Maxwell" ),         // Maxwell
     diags( "Diagnostics" ),       // Diags.runAllDiags + MPI & Patch sync
     densities( "Densities" ),     // Local sum of rho, Jxyz
-    collisions( "Collisions" ),   // Call to Collisions methods
-    movWindow( "Mov window" ),    // Moving Window
-    loadBal( "Load balancing" ),   // Load balancing
-    syncPart( "Sync Particles" ), // Call exchangeParticles (MPI & Patch sync)
-    syncField( "Sync Fields" ),   // Call sumRhoJ(s), exchangeB (MPI & Patch sync)
-    syncDens( "Sync Densities" ),  // If necessary the following timers can be reintroduced
-    diagsNEW( "DiagnosticsNEW" ),  // Diags.runAllDiags + MPI & Patch sync
-    reconfiguration( "Reconfiguration" ),
+    collisions( "Collisions" ),             // Call to Collisions methods
+    movWindow( "Mov window" ),              // Moving Window
+    loadBal( "Load balancing" ),            // Load balancing
+    syncPart( "Sync Particles" ),           // Call exchangeParticles (MPI & Patch sync)
+    syncField( "Sync Fields" ),             // Call sumRhoJ(s), exchangeB (MPI & Patch sync)
+    syncDens( "Sync Densities" ),           // If necessary the following timers can be reintroduced
+    particleMerging( "Part Merging" ),      // Particle merging
+    particleInjection( "Part Injection" ),  // Particle injection
+    diagsNEW( "DiagnosticsNEW" ),           // Diags.runAllDiags + MPI & Patch sync
+    reconfiguration( "Reconfiguration" ),   // Patch reconfiguration
     envelope( "Envelope" ),
     susceptibility( "Sync Susceptibility" )
 #ifdef __DETAILED_TIMERS
@@ -41,8 +43,7 @@ Timers::Timers( SmileiMPI *smpi ) :
     proj_currents( "Proj Currents" ),
     push_pos( "Push Pos" ),
     // Details of Sync Particles
-    sorting( "Sorting" ),
-    merging( "Merging" )
+    sorting( "Sorting" )
 #endif
 {
     timers.resize( 0 );
@@ -57,6 +58,8 @@ Timers::Timers( SmileiMPI *smpi ) :
     timers.push_back( &syncPart );
     timers.push_back( &syncField );
     timers.push_back( &syncDens );
+    timers.push_back( &particleMerging );
+    timers.push_back( &particleInjection );
     timers.push_back( &diagsNEW );
     timers.push_back( &reconfiguration );
     timers.push_back( &envelope );
@@ -95,8 +98,6 @@ Timers::Timers( SmileiMPI *smpi ) :
     // Details of Sync Particles
     timers.push_back( &sorting ) ;
     timers.back()->patch_timer_id = 13;
-    timers.push_back( &merging ) ;
-    timers.back()->patch_timer_id = 14;
 #endif
     
     for( unsigned int i=0; i<timers.size(); i++ ) {

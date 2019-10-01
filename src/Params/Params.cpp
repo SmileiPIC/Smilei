@@ -620,7 +620,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     ;
     PyTools::extract( "cell_sorting", cell_sorting, "Main" );
-    MESSAGE("Sorting per cell : " << cell_sorting );
+    //MESSAGE("Sorting per cell : " << cell_sorting );
     //if (cell_sorting)
     //    vectorization_mode = "on";
     

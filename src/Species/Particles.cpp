@@ -318,7 +318,6 @@ void Particles::cp_particles( unsigned int iPart, unsigned int nPart, Particles 
     for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
         dest_parts.uint64_prop[iprop]->insert( dest_parts.uint64_prop[iprop]->begin() + dest_id, uint64_prop[iprop]->begin()+iPart, uint64_prop[iprop]->begin()+iPart+nPart );
     }
-
 }
 
 
@@ -753,12 +752,6 @@ void Particles::compressParticles( int istart, int iend, vector <int> & mask ) {
                 overwrite_part( isrc, idest);
                 mask[idest] = 1;
                 mask[isrc] = -1;
-                // std::cerr << " idest: " << idest
-                //           << " iend: " << iend
-                //           << " ip: " << ip
-                //           << " mask[idest]: " << mask[idest]
-                //           << std::endl;
-                //cell_keys[idest] = cell_keys[ip];
                 idest++;
             } else {
                 isrc++;
@@ -800,6 +793,64 @@ void Particles::compressParticles( int istart, int iend) {
     // At the end we resize particles
     resize(idest);
     cell_keys.resize(idest);
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! This method erases particles according to the provided mask
+//! between istart and iend
+// ---------------------------------------------------------------------------------------------------------------------
+// void Particles::eraseParticlesWithMask( int istart, int iend, vector <bool> & to_be_erased) {
+//     int last_index = iend;
+//     for (int ip = iend ; ip >= istart ; ip-- )
+//     {
+//         if (to_be_erased[ip]) {
+//             if (last_index != ip) {
+//                 overwrite_part( last_index, ip);
+//             }
+//             last_index--;
+//         }
+//     }
+// }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Create nParticles new particles at the end of vectors
+// ---------------------------------------------------------------------------------------------------------------------
+void Particles::create_particles( int nAdditionalParticles, int pstart )
+{
+    int nParticles = size();
+    for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
+        ( *double_prop[iprop] ).insert( ( *double_prop[iprop] ).begin()+pstart, nAdditionalParticles, 0. );
+    }
+    
+    for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
+        ( *short_prop[iprop] ).insert( ( *short_prop[iprop] ).begin()+pstart, nAdditionalParticles, 0 );
+    }
+    
+    for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
+        ( *uint64_prop[iprop] ).insert( ( *uint64_prop[iprop] ).begin()+pstart, nAdditionalParticles, 0 );
+    }
+    
+//MESSAGE("create2");
+}
+
+// ---------------------------------------------------------------------------------------------------------------------
+//! Move ipart at new_pos in the particles data structure
+// ---------------------------------------------------------------------------------------------------------------------
+void Particles::mv_particles( int iPart, int new_pos )
+{
+    for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
+        ( *double_prop[iprop] ).insert( ( *double_prop[iprop] ).begin()+new_pos,( *double_prop[iprop] )[iPart]  );
+    }
+    
+    for( unsigned int iprop=0 ; iprop<short_prop.size() ; iprop++ ) {
+        ( *short_prop[iprop] ).insert( ( *short_prop[iprop] ).begin()+new_pos, ( *short_prop[iprop] )[iPart] );
+    }
+    
+    for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
+        ( *uint64_prop[iprop] ).insert( ( *uint64_prop[iprop] ).begin()+new_pos,( *uint64_prop[iprop] )[iPart]  );
+    }
+  
+    erase_particle( iPart+1 );
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

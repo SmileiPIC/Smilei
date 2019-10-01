@@ -5,29 +5,29 @@ using namespace std;
 
 
 PeekAtSpecies::PeekAtSpecies( Params &p, unsigned int species_id ) :
-    densityProfile( NULL ),
-    ppcProfile( NULL ),
+    density_profile_( NULL ),
+    particles_per_cell_profile_( NULL ),
     params( &p )
 {
     // Obtain the profiles of the species
     std::string species_name( "" );
     PyTools::extract( "name", species_name, "Species", species_id );
     PyObject *profile1=nullptr;
-    std::string densityProfileType( "" );
+    std::string density_profile_type( "" );
     std::string peek_position_initialization;
     PyObject *py_pos_init = PyTools::extract_py( "position_initialization", "Species", species_id );
     if( PyTools::convert( py_pos_init, peek_position_initialization ) ) {
         bool ok1 = PyTools::extract_pyProfile( "number_density", profile1, "Species", species_id );
         bool ok2 = PyTools::extract_pyProfile( "charge_density", profile1, "Species", species_id );
         if( ok1 ) {
-            densityProfileType = "nb";
+            density_profile_type = "nb";
         }
         if( ok2 ) {
-            densityProfileType = "charge";
+            density_profile_type = "charge";
         }
-        densityProfile = new Profile( profile1, params->nDim_field, Tools::merge( densityProfileType, "_density ", species_name ) );
+        density_profile_ = new Profile( profile1, params->nDim_field, Tools::merge( density_profile_type, "_density ", species_name ) );
         PyTools::extract_pyProfile( "particles_per_cell", profile1, "Species", species_id );
-        ppcProfile = new Profile( profile1, params->nDim_field, Tools::merge( "particles_per_cell ", species_name ) );
+        particles_per_cell_profile_ = new Profile( profile1, params->nDim_field, Tools::merge( "particles_per_cell ", species_name ) );
     }
     Py_DECREF( py_pos_init );
 }
@@ -35,8 +35,8 @@ PeekAtSpecies::PeekAtSpecies( Params &p, unsigned int species_id ) :
 
 PeekAtSpecies::~PeekAtSpecies()
 {
-    delete densityProfile;
-    delete ppcProfile;
+    delete density_profile_;
+    delete particles_per_cell_profile_;
 }
 
 
@@ -50,9 +50,9 @@ double PeekAtSpecies::numberOfParticlesInPatch( unsigned int hindex )
         x_cell[i] = ( ( double )( Pcoordinates[i] )+0.5 ) * params->patch_dimensions[i];
     }
     // Evaluate the profile at that location
-    if( ppcProfile ) {
-        double n_part_in_cell = floor( ppcProfile->valueAt( x_cell ) );
-        if( n_part_in_cell<=0. || densityProfile->valueAt( x_cell )==0. ) {
+    if( particles_per_cell_profile_ ) {
+        double n_part_in_cell = floor( particles_per_cell_profile_->valueAt( x_cell ) );
+        if( n_part_in_cell<=0. || density_profile_->valueAt( x_cell )==0. ) {
             n_part_in_cell = 0.;
         }
         return n_part_in_cell * params->n_cell_per_patch;
@@ -65,9 +65,9 @@ double PeekAtSpecies::numberOfParticlesInPatch( unsigned int hindex )
 double PeekAtSpecies::numberOfParticlesInPatch( vector<double> x_cell )
 {
     // Evaluate the profile at that location
-    if( ppcProfile ) {
-        double n_part_in_cell = floor( ppcProfile->valueAt( x_cell ) );
-        if( n_part_in_cell<=0. || densityProfile->valueAt( x_cell )==0. ) {
+    if( particles_per_cell_profile_ ) {
+        double n_part_in_cell = floor( particles_per_cell_profile_->valueAt( x_cell ) );
+        if( n_part_in_cell<=0. || density_profile_->valueAt( x_cell )==0. ) {
             n_part_in_cell = 0.;
         }
         return n_part_in_cell * params->n_cell_per_patch;
@@ -82,7 +82,7 @@ double PeekAtSpecies::totalNumberofParticles()
     // Loop over the box to obtain an approximate number of particles
     vector<unsigned int> i_cell( params->nDim_field, 0 );
     vector<double> x_cell( params->nDim_field, 0. );
-    if( ppcProfile ) {
+    if( particles_per_cell_profile_ ) {
         for( unsigned int idim=0; idim<params->nDim_field; idim++ ) {
             i_cell[idim] = 0;
             x_cell[idim] = params->patch_dimensions[idim] * 0.5;
@@ -91,8 +91,8 @@ double PeekAtSpecies::totalNumberofParticles()
         double npart_total = 0.;
         for( unsigned int k=0; k<params->tot_number_of_patches; k++ ) {
             // Find the approximate number of particles in this patch
-            double n_part_in_cell = floor( ppcProfile->valueAt( x_cell ) );
-            if( n_part_in_cell>0. && densityProfile->valueAt( x_cell )!=0. ) {
+            double n_part_in_cell = floor( particles_per_cell_profile_->valueAt( x_cell ) );
+            if( n_part_in_cell>0. && density_profile_->valueAt( x_cell )!=0. ) {
                 npart_total += n_part_in_cell * params->n_cell_per_patch;
             }
             // Find next patch position
