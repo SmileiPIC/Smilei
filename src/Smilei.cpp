@@ -206,7 +206,7 @@ int main( int argc, char *argv[] )
         } // end condition if Laser Envelope Model is used
 
         // Project charge and current densities (and susceptibility if envelope is used) only for diags at t=0
-        vecPatches.projection_for_diags( params, &smpi, simWindow, time_dual, timers, 0 );
+        vecPatches.projectionForDiags( params, &smpi, simWindow, time_dual, timers, 0 );
 
         // If Laser Envelope is used, comm and synch susceptibility at t=0
         if( params.Laser_Envelope_model ) {

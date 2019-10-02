@@ -411,7 +411,7 @@ void SpeciesV::computeCharge( unsigned int ispec, ElectroMagn *EMfields )
 // ---------------------------------------------------------------------------------------------------------------------
 // Sort particles
 // ---------------------------------------------------------------------------------------------------------------------
-void SpeciesV::sort_part( Params &params )
+void SpeciesV::sortParticles( Params &params )
 {
     unsigned int npart, ncell;
     int ip_dest, cell_target;
@@ -579,7 +579,7 @@ void SpeciesV::sort_part( Params &params )
 }
 
 
-void SpeciesV::compute_part_cell_keys( Params &params )
+void SpeciesV::computeParticleCellKeys( Params &params )
 {
     //Compute part_cell_keys at patch creation. This operation is normally done in the pusher to avoid additional particles pass.
 
@@ -699,7 +699,7 @@ void SpeciesV::importParticles( Params &params, Patch *patch, Particles &source_
 
     // Set place for new particles in species->particles->cell_keys
     for (int ip=0;ip<npart ; ip++ )
-        add_space_for_a_particle();
+        addSpaceForOneParticle();
 
     source_particles.clear();
 
@@ -882,7 +882,7 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
 //   - deposit susceptibility
 //   - calculate the new momentum
 // ---------------------------------------------------------------------------------------------------------------------
-void SpeciesV::ponderomotive_update_susceptibility_and_momentum( double time_dual, unsigned int ispec,
+void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag,
         Patch *patch, SmileiMPI *smpi,
@@ -966,14 +966,14 @@ void SpeciesV::ponderomotive_update_susceptibility_and_momentum( double time_dua
 
     }//END if time vs. time_frozen
 
-} // end ponderomotive_update_susceptibility_and_momentum
+} // end ponderomotiveUpdateSusceptibilityAndMomentum
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all particles of the species reacting to laser envelope
 //   - interpolate the fields at the particle position
 //   - deposit susceptibility
 // ---------------------------------------------------------------------------------------------------------------------
-void SpeciesV::ponderomotive_project_susceptibility( double time_dual, unsigned int ispec,
+void SpeciesV::ponderomotiveProjectSusceptibility( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag,
         Patch *patch, SmileiMPI *smpi,
@@ -1049,7 +1049,7 @@ void SpeciesV::ponderomotive_project_susceptibility( double time_dual, unsigned 
 
     }//END if time vs. time_frozen
 
-} // end ponderomotive_project_susceptibility
+} // end ponderomotiveProjectSusceptibility
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all particles of the species reacting to laser envelope
@@ -1058,7 +1058,7 @@ void SpeciesV::ponderomotive_project_susceptibility( double time_dual, unsigned 
 //   - particles BC
 //   - project charge and current density
 // ---------------------------------------------------------------------------------------------------------------------
-void SpeciesV::ponderomotive_update_position_and_currents( double time_dual, unsigned int ispec,
+void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag, PartWalls *partWalls,
         Patch *patch, SmileiMPI *smpi,
@@ -1203,4 +1203,4 @@ void SpeciesV::ponderomotive_update_position_and_currents( double time_dual, uns
         }
     }//END if time vs. time_frozen
 
-} // end ponderomotive_update_position_and_currents
+} // end ponderomotiveUpdatePositionAndCurrents

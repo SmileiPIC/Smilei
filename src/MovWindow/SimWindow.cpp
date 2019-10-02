@@ -333,8 +333,8 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                                                     if (params.vectorization_mode == "on")
                                                     {
                                                         if ( dynamic_cast<SpeciesV*>(mypatch->vecSpecies[ispec]) )
-                                                            dynamic_cast<SpeciesV*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
-                                                        mypatch->vecSpecies[ispec]->sort_part(params);
+                                                            dynamic_cast<SpeciesV*>(mypatch->vecSpecies[ispec])->computeParticleCellKeys(params);
+                                                        mypatch->vecSpecies[ispec]->sortParticles(params);
                                                     }
                                                     // First adaptive vectorization mode
                                                     else if (params.vectorization_mode == "adaptive_mixed_sort")
@@ -348,8 +348,8 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                                                     else if (params.vectorization_mode == "adaptive")
                                                     {
                                                         if ( dynamic_cast<SpeciesVAdaptive*>(mypatch->vecSpecies[ispec]) )
-                                                            dynamic_cast<SpeciesVAdaptive*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
-                                                        mypatch->vecSpecies[ispec]->sort_part(params);
+                                                            dynamic_cast<SpeciesVAdaptive*>(mypatch->vecSpecies[ispec])->computeParticleCellKeys(params);
+                                                        mypatch->vecSpecies[ispec]->sortParticles(params);
                                                     }
                                                 }
                             #endif
@@ -371,7 +371,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                                                     if (params.vectorization_mode == "adaptive_mixed_sort") {
                                                         if ( dynamic_cast<SpeciesVAdaptiveMixedSort*>(mypatch->vecSpecies[ispec]) )
                                                         {
-                                                            dynamic_cast<SpeciesVAdaptiveMixedSort*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
+                                                            dynamic_cast<SpeciesVAdaptiveMixedSort*>(mypatch->vecSpecies[ispec])->computeParticleCellKeys(params);
                                                             dynamic_cast<SpeciesVAdaptiveMixedSort*>(mypatch->vecSpecies[ispec])->reconfigure_operators(params, mypatch);
                                                         }
                                                     }
@@ -380,7 +380,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                                                     {
                                                         if ( dynamic_cast<SpeciesVAdaptive*>(mypatch->vecSpecies[ispec]) )
                                                         {
-                                                            dynamic_cast<SpeciesVAdaptive*>(mypatch->vecSpecies[ispec])->compute_part_cell_keys(params);
+                                                            dynamic_cast<SpeciesVAdaptive*>(mypatch->vecSpecies[ispec])->computeParticleCellKeys(params);
                                                         }
                                                     }
                             #endif*/
@@ -417,8 +417,8 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                     // If new particles are required
                     if( patch_particle_created[ithread][j] ) {
                         for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
-                            mypatch->vecSpecies[ispec]->compute_part_cell_keys( params );
-                            mypatch->vecSpecies[ispec]->sort_part( params );
+                            mypatch->vecSpecies[ispec]->computeParticleCellKeys( params );
+                            mypatch->vecSpecies[ispec]->sortParticles( params );
                         }
                     } // end test patch_particle_created[ithread][j]
                 } // end j loop
@@ -449,10 +449,10 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                         for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
                             // For the adaptive vectorization, we partially reconfigure the patch
                             // We do not have to sort, but operators may have to be reconfigured
-                            mypatch->vecSpecies[ispec]->compute_part_cell_keys( params );
+                            mypatch->vecSpecies[ispec]->computeParticleCellKeys( params );
                             dynamic_cast<SpeciesVAdaptiveMixedSort *>( mypatch->vecSpecies[ispec] )->reconfigure_operators( params, mypatch );
                             // sorting will be necessary when clrw compatible
-                            //mypatch->vecSpecies[ispec]->sort_part(params);
+                            //mypatch->vecSpecies[ispec]->sortParticles(params);
                         }
                     } // end test patch_particle_created[ithread][j]
                 } // end j loop
@@ -474,9 +474,9 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                     // If new particles are required
                     if( patch_particle_created[ithread][j] ) {
                         for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
-                            mypatch->vecSpecies[ispec]->compute_part_cell_keys( params );
+                            mypatch->vecSpecies[ispec]->computeParticleCellKeys( params );
                             mypatch->vecSpecies[ispec]->configuration( params, mypatch );
-                            mypatch->vecSpecies[ispec]->sort_part( params );
+                            mypatch->vecSpecies[ispec]->sortParticles( params );
                             
                         }
                     }
@@ -486,7 +486,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                         for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
                             // For the adaptive vectorization, we partially reconfigure the patch
                             // We do not have to sort, but operators may have to be reconfigured
-                            mypatch->vecSpecies[ispec]->compute_part_cell_keys( params );
+                            mypatch->vecSpecies[ispec]->computeParticleCellKeys( params );
                             dynamic_cast<SpeciesVAdaptive *>( mypatch->vecSpecies[ispec] )->reconfigure_operators( params, mypatch );
                         }
                     } // end test patch_particle_created[ithread][j]

@@ -582,7 +582,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 //   - apply the boundary conditions
 //   - increment the currents (projection)
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::scalar_dynamics( double time_dual, unsigned int ispec,
+void Species::scalarDynamics( double time_dual, unsigned int ispec,
                                ElectroMagn *EMfields,
                                Params &params, bool diag_flag,
                                PartWalls *partWalls,
@@ -594,7 +594,7 @@ void Species::scalar_dynamics( double time_dual, unsigned int ispec,
 
 }
 
-void Species::projection_for_diags( double time_dual, unsigned int ispec,
+void Species::projectionForDiags( double time_dual, unsigned int ispec,
                                     ElectroMagn *EMfields,
                                     Params &params, bool diag_flag,
                                     Patch *patch, SmileiMPI *smpi )
@@ -650,7 +650,7 @@ void Species::projection_for_diags( double time_dual, unsigned int ispec,
 //! - radiation reaction
 //! - multiphoton Breit-Wheeler
 // -----------------------------------------------------------------------------
-void Species::dynamics_import_particles( double time_dual, unsigned int ispec,
+void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
         Params &params,
         Patch *patch, SmileiMPI *smpi,
         vector<Diagnostic *> &localDiags )
@@ -729,7 +729,7 @@ void Species::computeCharge( unsigned int ispec, ElectroMagn *EMfields )
 // ---------------------------------------------------------------------------------------------------------------------
 // Sort particles
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::sort_part( Params &params )
+void Species::sortParticles( Params &params )
 {
 
     int ndim = params.nDim_field;
@@ -934,7 +934,7 @@ void Species::sort_part( Params &params )
     }
 }
 
-void Species::initial_configuration( Params &param, Patch *patch )
+void Species::defaultConfigure( Params &param, Patch *patch )
 {
 }
 
@@ -949,7 +949,7 @@ void Species::reconfiguration( Params &param, Patch *patch )
 // ---------------------------------------------------------------------------------------------------------------------
 // Sort particles
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::count_sort_part( Params &params )
+void Species::count_sortParticles( Params &params )
 {
     unsigned int ip, npart, ixy, tot, oc, nxy, token;
     int ix, iy;
@@ -1143,7 +1143,7 @@ void Species::mergeParticles( double time_dual, unsigned int ispec,
 //   - deposit susceptibility
 //   - calculate the new momentum
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::ponderomotive_update_susceptibility_and_momentum( double time_dual, unsigned int ispec,
+void Species::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag,
         Patch *patch, SmileiMPI *smpi,
@@ -1201,14 +1201,14 @@ void Species::ponderomotive_update_susceptibility_and_momentum( double time_dual
         } // end loop on ibin
     } else { // immobile particle
     } //END if time vs. time_frozen
-} // ponderomotive_update_susceptibility_and_momentum
+} // ponderomotiveUpdateSusceptibilityAndMomentum
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all particles of the species reacting to laser envelope
 //   - interpolate the fields at the particle position
 //   - deposit susceptibility
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::ponderomotive_project_susceptibility( double time_dual, unsigned int ispec,
+void Species::ponderomotiveProjectSusceptibility( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag,
         Patch *patch, SmileiMPI *smpi,
@@ -1257,7 +1257,7 @@ void Species::ponderomotive_project_susceptibility( double time_dual, unsigned i
         } // end loop on ibin
     } else { // immobile particle
     } //END if time vs. time_frozen
-} // ponderomotive_project_susceptibility
+} // ponderomotiveProjectSusceptibility
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1267,7 +1267,7 @@ void Species::ponderomotive_project_susceptibility( double time_dual, unsigned i
 //   - particles BC
 //   - project charge and current density
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::ponderomotive_update_position_and_currents( double time_dual, unsigned int ispec,
+void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag, PartWalls *partWalls,
         Patch *patch, SmileiMPI *smpi,

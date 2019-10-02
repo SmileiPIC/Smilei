@@ -357,13 +357,13 @@ public:
                            std::vector<Diagnostic *> &localDiags );
 
     //! Method projecting susceptibility and calculating the particles updated momentum (interpolation, momentum pusher), only particles interacting with envelope
-    virtual void ponderomotive_update_susceptibility_and_momentum( double time_dual, unsigned int ispec,
+    virtual void ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, unsigned int ispec,
             ElectroMagn *EMfields,
             Params &params, bool diag_flag,
             Patch *patch, SmileiMPI *smpi,
             std::vector<Diagnostic *> &localDiags );
     //! Method projecting susceptibility, only particles interacting with envelope
-    virtual void ponderomotive_project_susceptibility( double time_dual, unsigned int ispec,
+    virtual void ponderomotiveProjectSusceptibility( double time_dual, unsigned int ispec,
             ElectroMagn *EMfields,
             Params &params, bool diag_flag,
             Patch *patch, SmileiMPI *smpi,
@@ -371,14 +371,14 @@ public:
 
     //! Method calculating the Particle updated position (interpolation, position pusher, only particles interacting with envelope)
     // and projecting charge density and thus current density (through Esirkepov method) for Maxwell's Equations
-    virtual void ponderomotive_update_position_and_currents( double time_dual, unsigned int ispec,
+    virtual void ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned int ispec,
             ElectroMagn *EMfields,
             Params &params, bool diag_flag, PartWalls *partWalls,
             Patch *patch, SmileiMPI *smpi,
             std::vector<Diagnostic *> &localDiags );
 
     //! Method calculating the Particle dynamics with scalar operators (interpolation, pusher, projection)
-    virtual void scalar_dynamics( double time, unsigned int ispec,
+    virtual void scalarDynamics( double time, unsigned int ispec,
                                   ElectroMagn *EMfields,
                                   Params &params, bool diag_flag,
                                   PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
@@ -386,26 +386,26 @@ public:
                                   MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
                                   std::vector<Diagnostic *> &localDiags );
 
-    virtual void scalar_ponderomotive_update_susceptibility_and_momentum( double time_dual, unsigned int ispec,
+    virtual void scalarPonderomotiveUpdateSusceptibilityAndMomentum( double time_dual, unsigned int ispec,
             ElectroMagn *EMfields,
             Params &params, bool diag_flag,
             Patch *patch, SmileiMPI *smpi,
             std::vector<Diagnostic *> &localDiags ) {};
 
-    virtual void scalar_ponderomotive_update_position_and_currents( double time_dual, unsigned int ispec,
+    virtual void scalarPonderomotiveUpdatePositionAndCurrents( double time_dual, unsigned int ispec,
             ElectroMagn *EMfields,
             Params &params, bool diag_flag, PartWalls *partWalls,
             Patch *patch, SmileiMPI *smpi,
             std::vector<Diagnostic *> &localDiags ) {};
 
 
-    virtual void projection_for_diags( double time, unsigned int ispec,
+    virtual void projectionForDiags( double time, unsigned int ispec,
                                        ElectroMagn *EMfields,
                                        Params &params, bool diag_flag,
                                        Patch *patch, SmileiMPI *smpi );
 
     //! Method performing the importation of new particles
-    virtual void dynamics_import_particles( double time, unsigned int ispec,
+    virtual void dynamicsImportParticles( double time, unsigned int ispec,
                                             Params &params,
                                             Patch *patch, SmileiMPI *smpi,
                                             std::vector<Diagnostic *> &localDiags );
@@ -421,13 +421,13 @@ public:
     virtual void computeCharge( unsigned int ispec, ElectroMagn *EMfields );
 
     //! Method used to sort particles
-    virtual void sort_part( Params &param );
+    virtual void sortParticles( Params &param );
 
-    virtual void compute_part_cell_keys( Params &params ) {};
+    virtual void computeParticleCellKeys( Params &params ) {};
 
     //! This function configures the type of species according to the default mode
     //! regardless the number of particles per cell
-    virtual void initial_configuration( Params &params, Patch *patch ) ;
+    virtual void defaultConfigure( Params &params, Patch *patch ) ;
 
     //! This function configures the species according to the vectorization mode
     virtual void configuration( Params &params, Patch *patch ) ;
@@ -436,10 +436,10 @@ public:
     //! the best mode from the particle distribution
     virtual void reconfiguration( Params &param, Patch   *patch );
 
-    void count_sort_part( Params &param );
+    void count_sortParticles( Params &param );
 
     //!
-    virtual void add_space_for_a_particle()
+    virtual void addSpaceForOneParticle()
     {
         last_index[last_index.size()-1]++;
     }
@@ -556,7 +556,7 @@ public:
     void check( Patch *patch, std::string title );
 
     //! Perform the sum of all Lorentz factor
-    double sum_gamma()
+    double sumGamma()
     {
         double s_gamma( 0. );
         for( unsigned int ipart = 0 ; ipart < getNbrOfParticles() ; ipart++ ) {
