@@ -11,7 +11,7 @@ class CollisionalFusionDD : public CollisionalNuclearReaction
 
 public:
     //! Constructor
-    CollisionalFusionDD( double, Params *, int, Particles* );
+    CollisionalFusionDD( Params*, std::vector<Particles*>, std::vector<unsigned int> );
     //! Cloning Constructor
     CollisionalFusionDD( CollisionalNuclearReaction * );
     //! Destructor
@@ -22,6 +22,8 @@ public:
     //! Method to prepare the products of the reaction
     void makeProducts( double U, double etot, double log_ekin, double q, Particles *&p3, Particles *&p4, double &p3_COM, double &p4_COM, double &q3, double &q4, double &cosX ) override;
     
+    std::string name() override { return "D-D fusion"; };
+    
     //! static parameters to read the database
     static const double a1, a2, a3, npointsm1;
     static const int npoints;
@@ -29,7 +31,6 @@ public:
     
 private:
     
-    double mass_;
     
 };
 

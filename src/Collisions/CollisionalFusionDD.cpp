@@ -26,18 +26,15 @@ const double CollisionalFusionDD::DB_log_crossSection[50] = {
 };
 
 // Constructor
-CollisionalFusionDD::CollisionalFusionDD( double mass, Params *params, int product_species, Particles* particles )
-: CollisionalNuclearReaction(params, product_species, particles)
+CollisionalFusionDD::CollisionalFusionDD( Params *params, vector<Particles*> product_particles, std::vector<unsigned int> product_species )
+: CollisionalNuclearReaction(params, &product_particles, &product_species)
 {
-    mass_ = mass;
 }
 
 // Cloning constructor
 CollisionalFusionDD::CollisionalFusionDD( CollisionalNuclearReaction *NR )
 : CollisionalNuclearReaction( NR )
 {
-    CollisionalFusionDD *fusion = dynamic_cast<CollisionalFusionDD*>(NR);
-    mass_ = fusion->mass_;
 }
 
 
@@ -104,5 +101,5 @@ void CollisionalFusionDD::makeProducts(
     
     // Other properties
     q3 = q;
-    p3 = &product_particles;
+    p3 = product_particles_[0]; // helium3
 }

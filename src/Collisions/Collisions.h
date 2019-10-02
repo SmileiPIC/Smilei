@@ -106,12 +106,7 @@ protected:
                newpx_COM, newpy_COM, newpz_COM, vcp;
         
         // If one weight is zero, then skip. Can happen after nuclear reaction
-        double minW;
-        if( p2->weight(i2) < p1->weight(i1) ) {
-            minW = p2->weight(i2);
-        } else {
-            minW = p1->weight(i1);
-        }
+        double minW = std::min( p1->weight(i1), p2->weight(i2) );
         if( minW <= 0. ) return 0.;
         
         // Get momenta and calculate gammas
@@ -166,7 +161,6 @@ protected:
         // If succesful, then no need to do a collision
         double E, logE;
         if( NuclearReaction->occurs( U1, vrel*coeff3, m1, m2, gamma1_COM, gamma2_COM, E, logE, minW ) ) {
-            
             // Reduce the weight of both reactants
             // If becomes zero, then the particle will be discarded later
             p1->weight(i1) -= minW;

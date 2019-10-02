@@ -74,6 +74,7 @@ Collisions::Collisions( Collisions *coll )
 Collisions::~Collisions()
 {
     delete Ionization;
+    delete NuclearReaction;
 }
 
 // Declare other static variables here

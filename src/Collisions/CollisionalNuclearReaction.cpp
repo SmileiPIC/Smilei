@@ -2,6 +2,7 @@
 
 #include "Collisions.h"
 #include "Species.h"
+#include "Particles.h"
 #include "Patch.h"
 
 #include <cmath>
@@ -10,13 +11,20 @@
 using namespace std;
 
 // Constructor
-CollisionalNuclearReaction::CollisionalNuclearReaction( Params *params, int product_species, Particles* particles )
+CollisionalNuclearReaction::CollisionalNuclearReaction( Params *params, vector<Particles*> *product_particles, std::vector<unsigned int> *product_species )
 {
-    product_species_ = product_species;
     rate_multiplier_ = 1.;
     n_reactions_ = 0;
+    product_particles_.resize(0);
+    product_species_.resize(0);
     if( params ) {
-        product_particles.initialize( 0, *particles );
+        for( unsigned int i=0; i<product_particles->size(); i++ ) {
+            if( product_particles->at(i) != NULL ) {
+                product_particles_.push_back( new Particles() );
+                product_particles_.back()->initialize( 0, *product_particles->at(i) );
+                product_species_.push_back(product_species->at(i));
+            }
+        }
     }
 }
 
@@ -26,7 +34,20 @@ CollisionalNuclearReaction::CollisionalNuclearReaction( CollisionalNuclearReacti
     product_species_ = CNR->product_species_;
     rate_multiplier_ = CNR->rate_multiplier_;
     n_reactions_ = CNR->n_reactions_;
-    product_particles.initialize( 0, CNR->product_particles );
+    product_particles_.resize( CNR->product_particles_.size(), NULL );
+    for( unsigned int i=0; i<CNR->product_particles_.size(); i++ ) {
+        product_particles_[i] = new Particles();
+        product_particles_[i]->initialize( 0, *CNR->product_particles_[i] );
+    }
+}
+
+// Cloning Constructor
+CollisionalNuclearReaction::~CollisionalNuclearReaction()
+{
+    for( unsigned int i=0; i<product_particles_.size(); i++ ) {
+        delete product_particles_[i];
+    }
+    product_particles_.clear();
 }
 
 // Finish the reaction
@@ -36,7 +57,9 @@ void CollisionalNuclearReaction::finish(
     double npairs, int itime
 ) {
     // Move new particles in place
-    patch->vecSpecies[product_species_]->importParticles( params, patch, product_particles, localDiags );
+    for( unsigned int i=0; i<product_particles_.size(); i++ ) {
+        patch->vecSpecies[product_species_[i]]->importParticles( params, patch, *product_particles_[i], localDiags );
+    }
     
     // Remove reactants that have been (very rare)
     for( unsigned int is = 0; is < sg1.size(); is++ ) {
