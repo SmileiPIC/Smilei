@@ -181,8 +181,6 @@ class Probe(Diagnostic):
 		# Special case in 1D: we convert the point locations to scalar distances
 		if len(self._centers) == 1:
 			self._centers[0] = self._np.sqrt(self._np.sum((self._centers[0]-self._centers[0][0])**2,axis=1))
-			self._centers[0] = self._np.maximum( self._centers[0], 0.)
-			self._centers[0] = self._np.minimum( self._centers[0], self._ncels[0]*self._cell_length[0])
 		# Special case in 2D: we have to prepare for pcolormesh instead of imshow
 		elif len(self._centers) == 2:
 			p1 = self._centers[0] # locations of grid points along first dimension
