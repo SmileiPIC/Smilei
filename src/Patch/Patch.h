@@ -72,7 +72,7 @@ public:
     std::vector<Collisions *> vecCollisions;
     
     //! Injectors of the current patch
-    std::vector<ParticleInjector *> particle_injector_vector;
+    std::vector<ParticleInjector *> particle_injector_vector_;
     
     //! "fake" particles for the probe diagnostics
     std::vector<ProbeParticles *> probes;

@@ -35,4 +35,5 @@ They are put in the patch list of macro-particles for the next timestep.
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - Although the code can inject a single species, we recommend to use injectors to inject neutral plasmas.
-This means that positive and negative species should be simultaneously injected.
+This means that positive and negative species should be simultaneously injected at the same boundary.
+To strengthen neutrality, species can be created at the same position.

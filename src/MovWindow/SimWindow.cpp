@@ -47,6 +47,8 @@ SimWindow::SimWindow( Params &params )
     if( PyTools::nComponents( "MovingWindow" ) ) {
         active = true;
         
+        TITLE( "Initializing moving window" );
+        
         PyTools::extract( "time_start", time_start, "MovingWindow" );
         PyTools::extract( "velocity_x", velocity_x, "MovingWindow" );
         PyTools::extract( "number_of_additional_shifts", number_of_additional_shifts, "MovingWindow" );
