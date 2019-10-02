@@ -48,6 +48,7 @@ public:
 
         PyTools::extract( "name", species_name, "Species", ispec );
         if( patch->isMaster() ) {
+            MESSAGE( 1,"");
             MESSAGE( 1, "Creating Species : " << species_name );
         }
 
@@ -827,7 +828,7 @@ public:
             }
 
             thisSpecies->density_profile_ = new Profile( profile1, params.nDim_field, Tools::merge( thisSpecies->density_profile_type_, "_density ", species_name ), true );
-            MESSAGE(2, "Density profile: " << thisSpecies->density_profile_->getInfo());
+            MESSAGE(2, "> Density profile: " << thisSpecies->density_profile_->getInfo());
             
             // Number of particles per cell
             if( !PyTools::extract_pyProfile( "particles_per_cell", profile1, "Species", ispec ) ) {
@@ -1057,6 +1058,9 @@ public:
 
         // read from python namelist
         unsigned int tot_species_number = PyTools::nComponents( "Species" );
+        if (tot_species_number > 0) {
+            TITLE("Initializing species");
+        }
         for( unsigned int ispec = 0; ispec < tot_species_number; ispec++ ) {
             Species *thisSpecies = SpeciesFactory::create( params, ispec, patch );
             // Verify the new species does not have the same name as a previous one

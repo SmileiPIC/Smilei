@@ -109,7 +109,7 @@ public :
     void reconfiguration( Params &params, Timers &timers, int itime );
     
     //! Particle sorting for all patches
-    void sort_all_particles( Params &params );
+    void sortAllParticles( Params &params );
     
     //! For all patch, move particles (restartRhoJ(s), dynamics and exchangeParticles)
     void dynamics( Params &params,

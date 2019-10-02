@@ -274,6 +274,9 @@ public:
         
         // read from python namelist
         unsigned int tot_injector_number = PyTools::nComponents( "ParticleInjector" );
+        if (tot_injector_number > 0) {
+            TITLE("Initializing particle injectors")
+        }
         for( unsigned int i_inj = 0; i_inj < tot_injector_number; i_inj++ ) {
             ParticleInjector *this_particle_injector = ParticleInjectorFactory::create( params, patch, species_vector, i_inj );
             // Verify the new injector does not have the same name as a previous one

@@ -159,7 +159,7 @@ void Patch::finishCreation( Params &params, SmileiMPI *smpi, DomainDecomposition
     vecCollisions = CollisionsFactory::create( params, this, vecSpecies );
 
     // Initialize the particle injector
-    particle_injector_vector = ParticleInjectorFactory::createVector( params, this, vecSpecies );
+    particle_injector_vector_ = ParticleInjectorFactory::createVector( params, this, vecSpecies );
 
     // Initialize the particle walls
     partWalls = new PartWalls( params, this );
@@ -188,7 +188,7 @@ void Patch::finishCloning( Patch *patch, Params &params, SmileiMPI *smpi, unsign
     vecCollisions = CollisionsFactory::clone( patch->vecCollisions, params );
 
     // Clone the particle injector
-    particle_injector_vector = ParticleInjectorFactory::cloneVector( patch->particle_injector_vector, params, patch);
+    particle_injector_vector_ = ParticleInjectorFactory::cloneVector( patch->particle_injector_vector_, params, patch);
 
     // clone the particle walls
     partWalls = new PartWalls( patch->partWalls, this );
