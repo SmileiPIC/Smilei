@@ -14,7 +14,7 @@ class CollisionalNuclearReaction
 
 public:
     //! Constructor
-    CollisionalNuclearReaction( Params *, std::vector<Particles*>*, std::vector<unsigned int>* );
+    CollisionalNuclearReaction( Params *, std::vector<Particles*>*, std::vector<unsigned int>*, double );
     //! Cloning Constructor
     CollisionalNuclearReaction( CollisionalNuclearReaction * );
     //! Destructor
@@ -35,8 +35,11 @@ public:
     //! New electrons temporary species
     std::vector<Particles *> product_particles_;
     
-    //! Coefficient to adapt the rate of create of new particles. Automatically adjusted
+    //! Coefficient to adapt the rate of create of new particles
     double rate_multiplier_;
+    
+    //! True if rate multiplier isn't automatically adjusted
+    double auto_multiplier_;
     
     //! Number of succesfull reactions since the beginning (in this patch)
     unsigned int n_reactions_;
@@ -52,7 +55,7 @@ private:
 class CollisionalNoNuclearReaction : public CollisionalNuclearReaction
 {
 public:
-    CollisionalNoNuclearReaction() : CollisionalNuclearReaction( NULL, NULL, NULL ) {};
+    CollisionalNoNuclearReaction() : CollisionalNuclearReaction( NULL, NULL, NULL, 0. ) {};
     ~CollisionalNoNuclearReaction() {};
     
     void prepare() override {};

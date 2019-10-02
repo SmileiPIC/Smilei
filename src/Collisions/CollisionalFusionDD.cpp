@@ -26,8 +26,13 @@ const double CollisionalFusionDD::DB_log_crossSection[50] = {
 };
 
 // Constructor
-CollisionalFusionDD::CollisionalFusionDD( Params *params, vector<Particles*> product_particles, std::vector<unsigned int> product_species )
-: CollisionalNuclearReaction(params, &product_particles, &product_species)
+CollisionalFusionDD::CollisionalFusionDD(
+    Params *params,
+    vector<Particles*> product_particles,
+    vector<unsigned int> product_species,
+    double rate_multiplier
+)
+: CollisionalNuclearReaction(params, &product_particles, &product_species, rate_multiplier)
 {
 }
 

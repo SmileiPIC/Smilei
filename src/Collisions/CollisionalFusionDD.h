@@ -11,7 +11,7 @@ class CollisionalFusionDD : public CollisionalNuclearReaction
 
 public:
     //! Constructor
-    CollisionalFusionDD( Params*, std::vector<Particles*>, std::vector<unsigned int> );
+    CollisionalFusionDD( Params*, std::vector<Particles*>, std::vector<unsigned int>, double );
     //! Cloning Constructor
     CollisionalFusionDD( CollisionalNuclearReaction * );
     //! Destructor

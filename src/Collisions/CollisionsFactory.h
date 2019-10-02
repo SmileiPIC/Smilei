@@ -204,6 +204,10 @@ public:
                 }
             }
             
+            // Rate multiplier
+            double rate_multiplier = 0.;
+            PyTools::extract( "nuclear_reaction_multiplier", rate_multiplier, "Collisions", n_collisions );
+            
             // Find products
             std::vector<unsigned int> products = params.FindSpecies( vecSpecies, nuclear_reaction );
             
@@ -220,7 +224,7 @@ public:
                 std::vector<std::string> name(2); name[0] = "helium3"; name[1] = "neutron";
                 findProducts( vecSpecies, products, Z, A, name, product_particles, product_species, n_collisions );
                 
-                NuclearReaction = new CollisionalFusionDD( &params, product_particles, product_species );
+                NuclearReaction = new CollisionalFusionDD( &params, product_particles, product_species, rate_multiplier );
                 
             // Unknown types
             } else {
