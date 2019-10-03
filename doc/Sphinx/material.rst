@@ -20,6 +20,14 @@ Publications
 
 .. rst-class:: bigcitation
 
+.. [MassimoPPCF2019]
+
+  F. Massimo, A. Beck, J. Derouillat, M. Grech, M. Lobet, F. Pérez, I. Zemzemi and A. Specka
+  `Efficient start-to-end 3D envelope modeling for two-stage laser wakefield acceleration experiments`,
+  `Plasma Phys. Control. Fusion (2019) <https://iopscience.iop.org/article/10.1088/1361-6587/ab49cf>`_
+
+.. rst-class:: bigcitation
+
 .. [Thiele]
 
   I. Thiele and E. Siminos,

@@ -10,6 +10,7 @@
 #include "Params.h"
 #include "SmileiMPI.h"
 #include "PartWall.h"
+#include "ParticleInjector.h"
 #include "Interpolator.h"
 #include "Projector.h"
 
@@ -51,7 +52,7 @@ public:
     
     void set( Params &params, DomainDecomposition *domain_decomposition, VectorPatch &vecPatch );
    
-    //Copy positions of particles from source species to species which are initialized on top of another one. 
+    //Copy positions of particles from source species to species which are initialized on top of another one.
     void copy_positions( std::vector<Species *> vecSpecies_to_update);
 
     //! Destructor for Patch
@@ -69,6 +70,9 @@ public:
     PartWalls *partWalls;
     //! Optional binary collisions operators
     std::vector<Collisions *> vecCollisions;
+    
+    //! Injectors of the current patch
+    std::vector<ParticleInjector *> particle_injector_vector_;
     
     //! "fake" particles for the probe diagnostics
     std::vector<ProbeParticles *> probes;
@@ -129,7 +133,7 @@ public:
     //! Treat diagonalParticles
     void cornersParticles( SmileiMPI *smpi, int ispec, Params &params, int iDim, VectorPatch *vecPatch );
     //! inject particles received in main data structure and particles sorting
-    void injectParticles( SmileiMPI *smpi, int ispec, Params &params, VectorPatch *vecPatch );
+    void importAndSortParticles( SmileiMPI *smpi, int ispec, Params &params, VectorPatch *vecPatch );
     //! clean memory resizing particles structure
     void cleanParticlesOverhead( Params &params );
     //! delete Particles included in the index of particles to exchange. Assumes indexes are sorted.
@@ -200,6 +204,15 @@ public:
     inline bool isZmax()
     {
         return locateOnBorders( 2, 1 );
+    }
+    //! Determine wether the patch is at the domain boundary
+    inline bool isBoundary()
+    {
+        bool flag = false;
+        for (int i = 0 ; i < nDim_fields_ ; i++) {
+            flag = flag || locateOnBorders( i, 0 ) || locateOnBorders( i, 1 ) ;
+        }
+        return flag;
     }
     //! Define old xmax patch for moiving window,(non periodic eature)
     inline bool wasXmax( Params &params )

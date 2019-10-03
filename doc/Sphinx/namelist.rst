@@ -916,6 +916,110 @@ Each species has to be defined in a ``Species`` block::
 
 ----
 
+.. _Particle_injector:
+
+Particle Injector
+^^^^^^^^^^^^^^^^^
+
+Injectors enable to inject macro-particles in the simulation domain from the boundaries.
+By default, some parameters that are not specified are inherited from the associated :py:data:`species`.
+
+Each particle injector has to be defined in a ``ParticleInjector`` block::
+
+    ParticleInjector(
+        name      = "injector1",
+        species   = "electrons1",
+        box_side  = "xmin",
+        
+        # Parameters inherited from the associated `species` by default
+        
+        position_initialization = "species",
+        momentum_initialization = "rectangular",
+        mean_velocity = [0.5,0.,0.],
+        temperature = [1e-30],
+        number_density = 1,
+        time_envelope = tgaussian(start=0, duration=10., order=4),
+        particles_per_cell = 16,
+    )
+
+.. py:data:: name
+
+    The name you want to give to this injector.
+    If you do not specify a name, it will be attributed automatically.
+    The name is useful if you want to inject particles at the same position of another injector.
+
+.. py:data:: species
+
+    The name of the species in which to inject the new particles
+
+.. py:data:: box_side
+
+    From where the macro-particles are injected. Options are:
+    
+    * ``"xmin"``
+    * ``"xmax"``
+    
+.. py:data:: position_initialization
+
+    The method for initialization of particle positions. Options are:
+
+    * ``"species"`` or empty ``""``: injector uses the option of the specified :py:data:`species`.
+    * ``"regular"`` for regularly spaced
+    * ``"random"`` for randomly distributed
+    * ``"centered"`` for centered in each cell
+    * The :py:data:`name` of another injector from which the positions are copied.
+      This option requires (1) that the *target* injector' positions are initialized
+      using one of the three other options above.
+
+    By default, injector uses the parameters provided with :py:data:`species`.
+
+.. py:data:: momentum_initialization
+
+    The method for initialization of particle momenta. Options are:
+
+    * ``"species"`` or empty ``""``: injector uses the option of the specified :py:data:`species`.
+    * ``"maxwell-juettner"`` for a relativistic maxwellian (see :doc:`how it is done<maxwell-juttner>`)
+    * ``"rectangular"`` for a rectangular distribution
+    
+    By default, injector uses the parameters provided with :py:data:`species`.
+
+.. py:data:: mean_velocity
+
+    :type: a list of 3 floats or *python* functions (see section :ref:`profiles`)
+
+    The initial drift velocity of the particles, in units of the speed of light :math:`c`.
+    By default (nothing specified), injector uses the parameters provided with :py:data:`species`.
+
+    **WARNING**: For massless particles, this is actually the momentum in units of :math:`m_e c`.
+
+.. py:data:: temperature
+
+    :type: a list of 3 floats or *python* functions (see section :ref:`profiles`)
+
+    The initial temperature of the particles, in units of :math:`m_ec^2`.
+    By default (nothing specified), injector uses the parameters provided with :py:data:`species`.
+    
+.. py:data:: particles_per_cell
+
+    :type: float or *python* function (see section :ref:`profiles`)
+
+    The number of particles per cell to use for the injector.
+    
+.. py:data:: number_density
+             charge_density
+
+    :type: float or *python* function (see section :ref:`profiles`)
+
+    The absolute value of the number density or charge density (choose one only)
+    of the particle distribution, in units of the reference density :math:`N_r` (see :doc:`units`)
+    
+.. py:data:: time_envelope
+
+    :type: a *python* function or a :ref:`time profile <profiles>`
+    :default:  ``tconstant()``
+
+    The temporal envelope of the injector.
+     
 .. _Particle_merging:
 
 Particle Merging
@@ -1036,14 +1140,14 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
         space_time_profile = [ By_profile, Bz_profile ]
     )
 
-  .. py:data:: box_side
+.. py:data:: box_side
 
     :default: ``"xmin"``
 
     Side of the box from which the laser originates: at the moment, only ``"xmin"`` and
     ``"xmax"`` are supported.
 
-  .. py:data:: space_time_profile
+.. py:data:: space_time_profile
 
     :type: A list of two *python* functions
 
