@@ -127,7 +127,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
         {
             if( n_moved == 0 ) {
                 MESSAGE( ">>> Window starts moving" );
-            }             
+            }
 
             vecPatches_old.resize( nPatches );
             n_moved += params.n_space[0];
@@ -319,7 +319,12 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                     // If new particles are required
                     if( patch_particle_created[ithread][j] ) {
                         for( unsigned int ispec=0 ; ispec<nSpecies ; ispec++ ) {
-                            mypatch->vecSpecies[ispec]->createParticles( params.n_space, params, mypatch, 0 );
+                            
+                            ParticleCreator particle_creator;
+                            particle_creator.associate(mypatch->vecSpecies[ispec]);
+                            particle_creator.create( params.n_space, params, mypatch, 0, 0 );
+                            
+                            // mypatch->vecSpecies[ispec]->ParticleCreator( params.n_space, params, mypatch, 0 );
 
                             /*#ifdef _VECTO
                                                     // Classical vectorized mode

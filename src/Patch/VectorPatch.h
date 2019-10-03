@@ -18,6 +18,7 @@
 #include "SimWindow.h"
 #include "Timers.h"
 #include "RadiationTables.h"
+#include "ParticleCreator.h"
 
 class Field;
 class Timer;
@@ -107,6 +108,7 @@ public :
     //! Reconfigure all patches for the new time step
     void reconfiguration( Params &params, Timers &timers, int itime );
     
+    //! Particle sorting for all patches
     void sort_all_particles( Params &params );
     
     //! For all patch, move particles (restartRhoJ(s), dynamics and exchangeParticles)
@@ -118,12 +120,22 @@ public :
                    double time_dual,
                    Timers &timers, int itime );
                    
-    void finalize_and_sort_parts( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
+    void finalizeAndSortParticles( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
                                   double time_dual,
                                   Timers &timers, int itime );
     void finalize_sync_and_bc_fields( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
                                       double time_dual, Timers &timers, int itime );
+
+    //! Particle merging
+    void mergeParticles(Params &params, SmileiMPI *smpi, double time_dual,Timers &timers, int itime );
+
+    //! Clean MPI buffers and resize particle arrays to save memory
+    void cleanParticlesOverhead(Params &params, Timers &timers, int itime );
+                              
+    //! Particle injection from the boundaries
+    void injectParticlesFromBoundaries( Params &params, Timers &timers, unsigned int itime );
                                       
+    //! Computation of the total charge
     void computeCharge();
     
     void projection_for_diags( Params &params,

@@ -74,6 +74,7 @@ Collisions::Collisions( Collisions *coll )
 Collisions::~Collisions()
 {
     delete Ionization;
+    delete NuclearReaction;
 }
 
 // Declare other static variables here
@@ -384,7 +385,8 @@ void Collisions::debug( Params &params, int itime, unsigned int icoll, VectorPat
         vector<double> smean( npatch, 0. );
         vector<double> logLmean( npatch, 0. );
         //vector<double>  temperature=(npatch, 0.);
-        vector<double> debye_length_squared( npatch, 0. );
+        vector<double> debye_length( npatch, 0. );
+        vector<double> nuclear_reaction_multiplier( npatch, 0. );
         
         // Collect info for all patches
         for( unsigned int ipatch=0; ipatch<npatch; ipatch++ ) {
@@ -392,11 +394,12 @@ void Collisions::debug( Params &params, int itime, unsigned int icoll, VectorPat
             smean      [ipatch] = vecPatches( ipatch )->vecCollisions[icoll]->smean_      ;
             logLmean   [ipatch] = vecPatches( ipatch )->vecCollisions[icoll]->logLmean_   ;
             //temperature[ipatch] = vecPatches(ipatch)->vecCollisions[icoll]->temperature;
-            debye_length_squared[ipatch] = 0.;
             unsigned int nbin = vecPatches( ipatch )->debye_length_squared.size();
             for( unsigned int ibin=0; ibin<nbin; ibin++ ) {
-                debye_length_squared[ipatch] += vecPatches( ipatch )->debye_length_squared[ibin];
+                debye_length[ipatch] += vecPatches( ipatch )->debye_length_squared[ibin];
             }
+            debye_length[ipatch] = sqrt( debye_length[ipatch] / nbin );
+            nuclear_reaction_multiplier[ipatch] = vecPatches( ipatch )->vecCollisions[icoll]->NuclearReaction->rate_multiplier_;
         }
         
         // Open the HDF5 file
@@ -434,7 +437,10 @@ void Collisions::debug( Params &params, int itime, unsigned int icoll, VectorPat
         //H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &temperature[0] );
         //H5Dclose(dset_id);
         dset_id  = H5Dcreate( group, "debyelength", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT );
-        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &debye_length_squared[0] );
+        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &debye_length[0] );
+        H5Dclose( dset_id );
+        dset_id  = H5Dcreate( group, "nuclear_reaction_multiplier", H5T_NATIVE_DOUBLE, filespace, H5P_DEFAULT, plist_id, H5P_DEFAULT );
+        H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, transfer, &nuclear_reaction_multiplier[0] );
         H5Dclose( dset_id );
         // Close all
         H5Pclose( plist_id );

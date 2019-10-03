@@ -106,12 +106,7 @@ protected:
                newpx_COM, newpy_COM, newpz_COM, vcp;
         
         // If one weight is zero, then skip. Can happen after nuclear reaction
-        double minW;
-        if( p2->weight(i2) < p1->weight(i1) ) {
-            minW = p2->weight(i2);
-        } else {
-            minW = p1->weight(i1);
-        }
+        double minW = std::min( p1->weight(i1), p2->weight(i2) );
         if( minW <= 0. ) return 0.;
         
         // Get momenta and calculate gammas
@@ -166,7 +161,6 @@ protected:
         // If succesful, then no need to do a collision
         double E, logE;
         if( NuclearReaction->occurs( U1, vrel*coeff3, m1, m2, gamma1_COM, gamma2_COM, E, logE, minW ) ) {
-            
             // Reduce the weight of both reactants
             // If becomes zero, then the particle will be discarded later
             p1->weight(i1) -= minW;
@@ -218,9 +212,6 @@ protected:
                 double newpx = momentum_ratio * newpx_COM + COM_vx * term6;
                 double newpy = momentum_ratio * newpy_COM + COM_vy * term6;
                 double newpz = momentum_ratio * newpz_COM + COM_vz * term6;
-                //MESSAGE( std::setprecision(10)<< 
-                //    (sqrt((newpx_COM*newpx_COM+newpy_COM*newpy_COM+newpz_COM*newpz_COM)*momentum_ratio*momentum_ratio+1.)-1.)*0.511*5500. << " " <<
-                //    (sqrt(newpx*newpx+newpy*newpy+newpz*newpz+1.)-1.)*0.511*5500.);
                 // Make new particle at position of particle 1
                 if( newW1 > 0. ) {
                     p1->cp_particle_safe( i1, *p3 );
@@ -266,91 +257,91 @@ protected:
                 }
             }
             
-            return 0.; // no collision
-            
-        } else {
-            
-            // Calculate stuff
-            double qqm  = p1->charge( i1 ) * p2->charge( i2 ) / m1;
-            double qqm2 = qqm * qqm;
-            
-            // Calculate coulomb log if necessary
-            if( logL <= 0. ) { // if auto-calculation requested
-                double bmin = std::max( coeff1/m1/p_COM, std::abs( coeff2*qqm*term3*term5 ) ); // min impact parameter
-                logL = 0.5*log( 1.+debye2/( bmin*bmin ) );
-                if( logL < 2. ) {
-                    logL = 2.;
-                }
+            if( p1->weight(i1) == 0. || p2->weight(i2) == 0. ) {
+                return 0.; // no collision
             }
             
-            // Calculate the collision parameter s12 (similar to number of real collisions)
-            double s = coeff3 * logL * qqm2 * term3 * p_COM * term5*term5 / ( gamma1*gamma2 );
-            
-            // Low-temperature correction
-            double smax = coeff4 * ( m12+1. ) * vrel / std::max( m12*n123, n223 );
-            if( s>smax ) {
-                s = smax;
+        } // end nuclear reaction
+        
+        // Calculate stuff
+        double qqm  = p1->charge( i1 ) * p2->charge( i2 ) / m1;
+        double qqm2 = qqm * qqm;
+        
+        // Calculate coulomb log if necessary
+        if( logL <= 0. ) { // if auto-calculation requested
+            double bmin = std::max( coeff1/m1/p_COM, std::abs( coeff2*qqm*term3*term5 ) ); // min impact parameter
+            logL = 0.5*log( 1.+debye2/( bmin*bmin ) );
+            if( logL < 2. ) {
+                logL = 2.;
             }
-            
-            // Pick the deflection angles
-            // Technique given by Nanbu in http://dx.doi.org/10.1103/PhysRevE.55.4642
-            //   to pick randomly the deflection angle cosine, in the center-of-mass frame.
-            // Technique slightly modified in http://dx.doi.org/10.1063/1.4742167
-            if( s < 0.1 ) {
-                if( U1<0.0001 ) {
-                    U1=0.0001;    // ensures cos_chi > 0
-                }
-                cosX = 1. + s*log( U1 );
-            } else if( s < 3. ) {
-                // the polynomial has been modified from the article in order to have a better form
-                double invA = 0.00569578 +( 0.95602 + ( -0.508139 + ( 0.479139 + ( -0.12789 + 0.0238957*s )*s )*s )*s )*s;
-                double A = 1./invA;
-                cosX = invA  * log( exp( -A ) + 2.*U1*sinh( A ) );
-            } else if( s < 6. ) {
-                double A = 3.*exp( -s );
-                cosX = ( 1./A ) * log( exp( -A ) + 2.*U1*sinh( A ) );
-            } else {
-                cosX = 2.*U1 - 1.;
-            }
-            sinX = sqrt( 1. - cosX*cosX );
-            
-            // Calculate combination of angles
-            sinXcosPhi = sinX*cos( phi );
-            sinXsinPhi = sinX*sin( phi );
-            
-            // Apply the deflection
-            p_perp = sqrt( px_COM*px_COM + py_COM*py_COM );
-            if( p_perp > 1.e-10*p_COM ) { // make sure p_perp is not too small
-                inv_p_perp = 1./p_perp;
-                newpx_COM = ( px_COM * pz_COM * sinXcosPhi - py_COM * p_COM * sinXsinPhi ) * inv_p_perp + px_COM * cosX;
-                newpy_COM = ( py_COM * pz_COM * sinXcosPhi + px_COM * p_COM * sinXsinPhi ) * inv_p_perp + py_COM * cosX;
-                newpz_COM = -p_perp * sinXcosPhi  +  pz_COM * cosX;
-            } else { // if p_perp is too small, we use the limit px->0, py=0
-                newpx_COM = p_COM * sinXcosPhi;
-                newpy_COM = p_COM * sinXsinPhi;
-                newpz_COM = p_COM * cosX;
-            }
-            
-            // Go back to the lab frame and store the results in the particle array
-            vcp = COM_vx * newpx_COM + COM_vy * newpy_COM + COM_vz * newpz_COM;
-            if( U2 < p2->weight( i2 )/p1->weight( i1 ) ) { // deflect particle 1 only with some probability
-                term6 = term1*vcp + gamma1_COM * COM_gamma;
-                p1->momentum( 0, i1 ) = newpx_COM + COM_vx * term6;
-                p1->momentum( 1, i1 ) = newpy_COM + COM_vy * term6;
-                p1->momentum( 2, i1 ) = newpz_COM + COM_vz * term6;
-            }
-            if( U2 < p1->weight( i1 )/p2->weight( i2 ) ) { // deflect particle 2 only with some probability
-                term6 = -m12 * term1*vcp + gamma2_COM * COM_gamma;
-                p2->momentum( 0, i2 ) = -m12 * newpx_COM + COM_vx * term6;
-                p2->momentum( 1, i2 ) = -m12 * newpy_COM + COM_vy * term6;
-                p2->momentum( 2, i2 ) = -m12 * newpz_COM + COM_vz * term6;
-            }
-            
-            return s;
-            
         }
         
-    }
+        // Calculate the collision parameter s12 (similar to number of real collisions)
+        double s = coeff3 * logL * qqm2 * term3 * p_COM * term5*term5 / ( gamma1*gamma2 );
+        
+        // Low-temperature correction
+        double smax = coeff4 * ( m12+1. ) * vrel / std::max( m12*n123, n223 );
+        if( s>smax ) {
+            s = smax;
+        }
+        
+        // Pick the deflection angles
+        // Technique given by Nanbu in http://dx.doi.org/10.1103/PhysRevE.55.4642
+        //   to pick randomly the deflection angle cosine, in the center-of-mass frame.
+        // Technique slightly modified in http://dx.doi.org/10.1063/1.4742167
+        if( s < 0.1 ) {
+            if( U1<0.0001 ) {
+                U1=0.0001;    // ensures cos_chi > 0
+            }
+            cosX = 1. + s*log( U1 );
+        } else if( s < 3. ) {
+            // the polynomial has been modified from the article in order to have a better form
+            double invA = 0.00569578 +( 0.95602 + ( -0.508139 + ( 0.479139 + ( -0.12789 + 0.0238957*s )*s )*s )*s )*s;
+            double A = 1./invA;
+            cosX = invA  * log( exp( -A ) + 2.*U1*sinh( A ) );
+        } else if( s < 6. ) {
+            double A = 3.*exp( -s );
+            cosX = ( 1./A ) * log( exp( -A ) + 2.*U1*sinh( A ) );
+        } else {
+            cosX = 2.*U1 - 1.;
+        }
+        sinX = sqrt( 1. - cosX*cosX );
+        
+        // Calculate combination of angles
+        sinXcosPhi = sinX*cos( phi );
+        sinXsinPhi = sinX*sin( phi );
+        
+        // Apply the deflection
+        p_perp = sqrt( px_COM*px_COM + py_COM*py_COM );
+        if( p_perp > 1.e-10*p_COM ) { // make sure p_perp is not too small
+            inv_p_perp = 1./p_perp;
+            newpx_COM = ( px_COM * pz_COM * sinXcosPhi - py_COM * p_COM * sinXsinPhi ) * inv_p_perp + px_COM * cosX;
+            newpy_COM = ( py_COM * pz_COM * sinXcosPhi + px_COM * p_COM * sinXsinPhi ) * inv_p_perp + py_COM * cosX;
+            newpz_COM = -p_perp * sinXcosPhi  +  pz_COM * cosX;
+        } else { // if p_perp is too small, we use the limit px->0, py=0
+            newpx_COM = p_COM * sinXcosPhi;
+            newpy_COM = p_COM * sinXsinPhi;
+            newpz_COM = p_COM * cosX;
+        }
+        
+        // Go back to the lab frame and store the results in the particle array
+        vcp = COM_vx * newpx_COM + COM_vy * newpy_COM + COM_vz * newpz_COM;
+        if( U2 < p2->weight( i2 )/p1->weight( i1 ) ) { // deflect particle 1 only with some probability
+            term6 = term1*vcp + gamma1_COM * COM_gamma;
+            p1->momentum( 0, i1 ) = newpx_COM + COM_vx * term6;
+            p1->momentum( 1, i1 ) = newpy_COM + COM_vy * term6;
+            p1->momentum( 2, i1 ) = newpz_COM + COM_vz * term6;
+        }
+        if( U2 < p1->weight( i1 )/p2->weight( i2 ) ) { // deflect particle 2 only with some probability
+            term6 = -m12 * term1*vcp + gamma2_COM * COM_gamma;
+            p2->momentum( 0, i2 ) = -m12 * newpx_COM + COM_vx * term6;
+            p2->momentum( 1, i2 ) = -m12 * newpy_COM + COM_vy * term6;
+            p2->momentum( 2, i2 ) = -m12 * newpz_COM + COM_vz * term6;
+        }
+        
+        return s;
+        
+    };
 };
 
 

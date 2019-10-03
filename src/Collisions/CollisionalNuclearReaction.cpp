@@ -2,6 +2,7 @@
 
 #include "Collisions.h"
 #include "Species.h"
+#include "Particles.h"
 #include "Patch.h"
 
 #include <cmath>
@@ -10,13 +11,31 @@
 using namespace std;
 
 // Constructor
-CollisionalNuclearReaction::CollisionalNuclearReaction( Params *params, int product_species, Particles* particles )
+CollisionalNuclearReaction::CollisionalNuclearReaction(
+    Params *params,
+    vector<Particles*> *product_particles,
+    vector<unsigned int> *product_species,
+    double rate_multiplier
+    )
 {
-    product_species_ = product_species;
-    rate_multiplier_ = 1.;
+    if( rate_multiplier == 0. ) {
+        auto_multiplier_ = true;
+        rate_multiplier_ = 1.;
+    } else {
+        auto_multiplier_ = false;
+        rate_multiplier_ = rate_multiplier;
+    }
     n_reactions_ = 0;
+    product_particles_.resize(0);
+    product_species_.resize(0);
     if( params ) {
-        product_particles.initialize( 0, *particles );
+        for( unsigned int i=0; i<product_particles->size(); i++ ) {
+            if( product_particles->at(i) != NULL ) {
+                product_particles_.push_back( new Particles() );
+                product_particles_.back()->initialize( 0, *product_particles->at(i) );
+                product_species_.push_back(product_species->at(i));
+            }
+        }
     }
 }
 
@@ -25,8 +44,22 @@ CollisionalNuclearReaction::CollisionalNuclearReaction( CollisionalNuclearReacti
 {
     product_species_ = CNR->product_species_;
     rate_multiplier_ = CNR->rate_multiplier_;
+    auto_multiplier_ = CNR->auto_multiplier_;
     n_reactions_ = CNR->n_reactions_;
-    product_particles.initialize( 0, CNR->product_particles );
+    product_particles_.resize( CNR->product_particles_.size(), NULL );
+    for( unsigned int i=0; i<CNR->product_particles_.size(); i++ ) {
+        product_particles_[i] = new Particles();
+        product_particles_[i]->initialize( 0, *CNR->product_particles_[i] );
+    }
+}
+
+// Cloning Constructor
+CollisionalNuclearReaction::~CollisionalNuclearReaction()
+{
+    for( unsigned int i=0; i<product_particles_.size(); i++ ) {
+        delete product_particles_[i];
+    }
+    product_particles_.clear();
 }
 
 // Finish the reaction
@@ -36,7 +69,9 @@ void CollisionalNuclearReaction::finish(
     double npairs, int itime
 ) {
     // Move new particles in place
-    patch->vecSpecies[product_species_]->importParticles( params, patch, product_particles, localDiags );
+    for( unsigned int i=0; i<product_particles_.size(); i++ ) {
+        patch->vecSpecies[product_species_[i]]->importParticles( params, patch, *product_particles_[i], localDiags );
+    }
     
     // Remove reactants that have been (very rare)
     for( unsigned int is = 0; is < sg1.size(); is++ ) {
@@ -48,20 +83,21 @@ void CollisionalNuclearReaction::finish(
         }
     }
     
-    // Update the rate multiplier
-    double goal = (double) params.n_time * (double) n_reactions_ / ( (double) itime * npairs );
-    //double goal = 1000000. * (double) n_reactions_ / ( (double) itime * npairs );
-    if( goal > 2. ) {
-        rate_multiplier_ *= 0.01;
-    } else if( goal > 1.5 ) {
-        rate_multiplier_ *= 0.1;
-    } else if( goal > 1. ) {
-        rate_multiplier_ *= 0.3;
-    } else if( rate_multiplier_ < 1.e14 ) {
-        if( goal < 0.01 ) {
-            rate_multiplier_ *= 10.;
-        } else if( goal < 0.1 ) {
-            rate_multiplier_ *= 2.;
-        } 
+    if( auto_multiplier_ ) {
+        // Update the rate multiplier
+        double goal = (double) params.n_time * (double) n_reactions_ / ( (double) itime * npairs );
+        if( goal > 2. ) {
+            rate_multiplier_ *= 0.01;
+        } else if( goal > 1.5 ) {
+            rate_multiplier_ *= 0.1;
+        } else if( goal > 1. ) {
+            rate_multiplier_ *= 0.3;
+        } else if( rate_multiplier_ < 1.e14 ) {
+            if( goal < 0.01 ) {
+                rate_multiplier_ *= 10.;
+            } else if( goal < 0.1 ) {
+                rate_multiplier_ *= 2.;
+            } 
+        }
     }
 }

@@ -139,5 +139,3 @@ PartWalls::~PartWalls()
     }
     clear();
 }
-
-

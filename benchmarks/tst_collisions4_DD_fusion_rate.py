@@ -56,6 +56,7 @@ for Da_nppc, Db_nppc, v in [
 		position_initialization = "regular",
 		momentum_initialization = "maxwell-juettner",
 		particles_per_cell= Da_nppc,
+		atomic_number = 1,
 		mass = 3870.5,
 		charge = 0.,
 		number_density = 100.,
@@ -72,6 +73,7 @@ for Da_nppc, Db_nppc, v in [
 		position_initialization = "regular",
 		momentum_initialization = "maxwell-juettner",
 		particles_per_cell= Db_nppc,
+		atomic_number = 1,
 		mass = 3870.5,
 		charge = 0.,
 		number_density = 100.,
@@ -88,6 +90,7 @@ for Da_nppc, Db_nppc, v in [
 		position_initialization = "regular",
 		momentum_initialization = "maxwell-juettner",
 		particles_per_cell= 0,
+		atomic_number = 2,
 		mass = 5497.9,
 		charge = 0.,
 		number_density = 0.,
@@ -101,7 +104,8 @@ for Da_nppc, Db_nppc, v in [
 		species1 = [Da],
 		species2 = [Db],
 		coulomb_log = 0.001,
-		nuclear_reaction = ["D-D", He],
+		nuclear_reaction = [He],
+		debug_every = 10
 	)
 	
 	DiagParticleBinning(
