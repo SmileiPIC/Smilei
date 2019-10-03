@@ -272,4 +272,4 @@ Adaptive vectorization brinds a small additional speed-up in some cases.
 References
 ^^^^^^^^^^
 
-.. [Beck2019] `A. Beck et al., ArXiV 1810.03949 (2019) <https://arxiv.org/abs/1810.03949>`_
+.. [Beck2019] `A. Beck et al., CPC volume 244, pages 246-263 (2019) <https://doi.org/10.1016/j.cpc.2019.05.001>`_

@@ -314,8 +314,10 @@ Profile::Profile( PyObject *py_profile, unsigned int nvariables, string name, bo
             }
         }
     }
-    
     info = info_.str();
+    if (function) {
+        info += function->getInfo();
+    }
 }
 
 
@@ -409,6 +411,3 @@ Profile::~Profile()
 {
     delete function;
 }
-
-
-

@@ -50,19 +50,19 @@ public:
     //  2. Species parameters
 
     //! number of the species
-    unsigned int speciesNumber;
+    unsigned int species_number_;
 
     //! kind/name of species
     std::string name;
 
     //! position initialization type, possible values: "regular" or "random"
-    std::string position_initialization;
+    std::string position_initialization_;
 
     //! momentum initialization type, possible values: "cold" or "maxwell-juettner"
-    std::string momentum_initialization;
+    std::string momentum_initialization_;
 
     //! coefficient on the maximum number of particles for the species
-    double c_part_max;
+    double c_part_max_;
 
     //! mass [electron mass]
     double mass;
@@ -114,22 +114,22 @@ public:
     std::string ionization_model;
 
     //! Type of density profile ("nb" or "charge")
-    std::string densityProfileType;
+    std::string density_profile_type_;
 
     //! charge profile
     Profile *chargeProfile;
 
     //! density profile
-    Profile *densityProfile;
+    Profile *density_profile_;
 
     //! vector of velocity profiles (vx, vy, vz)
-    std::vector<Profile *> velocityProfile;
+    std::vector<Profile *> velocity_profile_;
 
     //! vector of temperature profiles (Tx, Ty, Tz)
-    std::vector<Profile *> temperatureProfile;
+    std::vector<Profile *> temperature_profile_;
 
     //! number-of-particle-per-cell profile
-    Profile *ppcProfile;
+    Profile *particles_per_cell_profile_;
 
     // -----------------------------------------------------------------------------
     //  3. Variables for species processing
@@ -145,13 +145,15 @@ public:
     //std::vector<int> index_of_particles_to_exchange;
 
     //! Pointer toward position array
-    double *position_initialization_array;
+    double *position_initialization_array_;
+    //! Pointer toward regular number of particles array
+    std::vector<int> regular_number_array_;
     //! Number of particles in the init array
-    double *momentum_initialization_array;
+    double *momentum_initialization_array_;
     //! Number of particles in the init array
-    unsigned int n_numpy_particles;
+    unsigned int n_numpy_particles_;
     //! Boolean to know if we initialize particles one specie on another species
-    bool position_initialization_on_species;
+    bool position_initialization_on_species_;
     //! Index of the species where position initialization is made
     int position_initialization_on_species_index;
     //! Boolean to know if species follows ponderomotive loop (laser modeled with envelope)
@@ -222,6 +224,9 @@ public:
     //! Number of spatial dimension for the fields
     unsigned int nDim_field;
 
+    //! Inverse of the number of spatial dimension for the fields
+    double inv_nDim_field;
+
     //! sub primal dimensions of fields
     unsigned int f_dim0, f_dim1, f_dim2;
 
@@ -230,7 +235,7 @@ public:
     //! Accumulate energy lost with moving window
     double nrj_mw_lost;
     //! Accumulate energy added with new particles
-    double nrj_new_particles;
+    double new_particles_energy_;
     //! Accumulate energy lost by the particle with the radiation
     double nrj_radiation;
 
@@ -272,6 +277,12 @@ public:
     
     //! Minimum momentum value in log scale
     double merge_min_momentum_log_scale_;
+
+    //! Local minimum of MPI domain
+    double min_loc;
+
+    //! Inverse of the number of spatial dimension for the particles
+    double inv_nDim_particles;
 
     // -----------------------------------------------------------------------------
     //  4. Operators
@@ -346,13 +357,13 @@ public:
                            std::vector<Diagnostic *> &localDiags );
 
     //! Method projecting susceptibility and calculating the particles updated momentum (interpolation, momentum pusher), only particles interacting with envelope
-    virtual void ponderomotive_update_susceptibility_and_momentum( double time_dual, unsigned int ispec,
+    virtual void ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, unsigned int ispec,
             ElectroMagn *EMfields,
             Params &params, bool diag_flag,
             Patch *patch, SmileiMPI *smpi,
             std::vector<Diagnostic *> &localDiags );
     //! Method projecting susceptibility, only particles interacting with envelope
-    virtual void ponderomotive_project_susceptibility( double time_dual, unsigned int ispec,
+    virtual void ponderomotiveProjectSusceptibility( double time_dual, unsigned int ispec,
             ElectroMagn *EMfields,
             Params &params, bool diag_flag,
             Patch *patch, SmileiMPI *smpi,
@@ -360,14 +371,14 @@ public:
 
     //! Method calculating the Particle updated position (interpolation, position pusher, only particles interacting with envelope)
     // and projecting charge density and thus current density (through Esirkepov method) for Maxwell's Equations
-    virtual void ponderomotive_update_position_and_currents( double time_dual, unsigned int ispec,
+    virtual void ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned int ispec,
             ElectroMagn *EMfields,
             Params &params, bool diag_flag, PartWalls *partWalls,
             Patch *patch, SmileiMPI *smpi,
             std::vector<Diagnostic *> &localDiags );
 
     //! Method calculating the Particle dynamics with scalar operators (interpolation, pusher, projection)
-    virtual void scalar_dynamics( double time, unsigned int ispec,
+    virtual void scalarDynamics( double time, unsigned int ispec,
                                   ElectroMagn *EMfields,
                                   Params &params, bool diag_flag,
                                   PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
@@ -375,26 +386,26 @@ public:
                                   MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
                                   std::vector<Diagnostic *> &localDiags );
 
-    virtual void scalar_ponderomotive_update_susceptibility_and_momentum( double time_dual, unsigned int ispec,
+    virtual void scalarPonderomotiveUpdateSusceptibilityAndMomentum( double time_dual, unsigned int ispec,
             ElectroMagn *EMfields,
             Params &params, bool diag_flag,
             Patch *patch, SmileiMPI *smpi,
             std::vector<Diagnostic *> &localDiags ) {};
 
-    virtual void scalar_ponderomotive_update_position_and_currents( double time_dual, unsigned int ispec,
+    virtual void scalarPonderomotiveUpdatePositionAndCurrents( double time_dual, unsigned int ispec,
             ElectroMagn *EMfields,
             Params &params, bool diag_flag, PartWalls *partWalls,
             Patch *patch, SmileiMPI *smpi,
             std::vector<Diagnostic *> &localDiags ) {};
 
 
-    virtual void projection_for_diags( double time, unsigned int ispec,
+    virtual void projectionForDiags( double time, unsigned int ispec,
                                        ElectroMagn *EMfields,
                                        Params &params, bool diag_flag,
                                        Patch *patch, SmileiMPI *smpi );
 
     //! Method performing the importation of new particles
-    virtual void dynamics_import_particles( double time, unsigned int ispec,
+    virtual void dynamicsImportParticles( double time, unsigned int ispec,
                                             Params &params,
                                             Patch *patch, SmileiMPI *smpi,
                                             std::vector<Diagnostic *> &localDiags );
@@ -409,26 +420,14 @@ public:
     //! Method calculating the Particle charge on the grid (projection)
     virtual void computeCharge( unsigned int ispec, ElectroMagn *EMfields );
 
-    //! Method used to initialize the Particle position in a given cell
-    void initPosition( unsigned int, unsigned int, double *, Params & );
-
-    //! Method used to initialize the Particle 3d momentum in a given cell
-    void initMomentum( unsigned int, unsigned int, double *, double * );
-
-    //! Method used to initialize the Particle weight (equivalent to a charge density) in a given cell
-    void initWeight( unsigned int,  unsigned int, double );
-
-    //! Method used to initialize the Particle charge
-    void initCharge( unsigned int, unsigned int, double );
-
     //! Method used to sort particles
-    virtual void sort_part( Params &param );
+    virtual void sortParticles( Params &param );
 
-    virtual void compute_part_cell_keys( Params &params ) {};
+    virtual void computeParticleCellKeys( Params &params ) {};
 
     //! This function configures the type of species according to the default mode
     //! regardless the number of particles per cell
-    virtual void initial_configuration( Params &params, Patch *patch ) ;
+    virtual void defaultConfigure( Params &params, Patch *patch ) ;
 
     //! This function configures the species according to the vectorization mode
     virtual void configuration( Params &params, Patch *patch ) ;
@@ -437,10 +436,10 @@ public:
     //! the best mode from the particle distribution
     virtual void reconfiguration( Params &param, Patch   *patch );
 
-    void count_sort_part( Params &param );
+    void count_sortParticles( Params &param );
 
     //!
-    virtual void add_space_for_a_particle()
+    virtual void addSpaceForOneParticle()
     {
         last_index[last_index.size()-1]++;
     }
@@ -499,7 +498,7 @@ public:
     //! Get energy gained via new particles
     double getNewParticlesNRJ() const
     {
-        return mass*nrj_new_particles;
+        return mass*new_particles_energy_;
     }
 
     //! Reinitialize the scalar diagnostics buffer
@@ -507,7 +506,7 @@ public:
     {
         //nrj_bc_lost = 0;
         nrj_mw_lost = 0;
-        nrj_new_particles = 0;
+        new_particles_energy_ = 0;
         //nrj_radiation = 0;
     }
 
@@ -545,9 +544,6 @@ public:
         return speciesSize;
     }
 
-    //! Method to create new particles.
-    int  createParticles( std::vector<unsigned int> n_space_to_create, Params &params, Patch *patch, int new_bin_idx );
-
     //! Method to import particles in this species while conserving the sorting among bins
     virtual void importParticles( Params &, Patch *, Particles &, std::vector<Diagnostic *> & );
 
@@ -560,7 +556,7 @@ public:
     void check( Patch *patch, std::string title );
 
     //! Perform the sum of all Lorentz factor
-    double sum_gamma()
+    double sumGamma()
     {
         double s_gamma( 0. );
         for( unsigned int ipart = 0 ; ipart < getNbrOfParticles() ; ipart++ ) {
@@ -589,19 +585,6 @@ private:
 
     //! Parameter used when defining the Maxwell-Juettner function (corresponds to a discretization step in energy)
 //    double dE;
-
-    //! Inverse of the number of spatial dimension for the fields
-    double inv_nDim_field;
-
-    //! Local minimum of MPI domain
-    double min_loc;
-
-    //! Samples npoints values of energies in a Maxwell-Juttner distribution
-    std::vector<double> maxwellJuttner( unsigned int npoints, double temperature );
-    //! Array used in the Maxwell-Juttner sampling (see doc)
-    static const double lnInvF[1000];
-    //! Array used in the Maxwell-Juttner sampling (see doc)
-    static const double lnInvH[1000];
 
 };
 

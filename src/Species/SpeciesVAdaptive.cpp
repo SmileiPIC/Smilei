@@ -62,7 +62,7 @@ SpeciesVAdaptive::~SpeciesVAdaptive()
 
 //! Method calculating the Particle dynamics (interpolation, pusher, projection)
 //! without vectorized operators but with the cell sorting algorithm
-void SpeciesVAdaptive::scalar_dynamics( double time_dual, unsigned int ispec,
+void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields, Params &params, bool diag_flag,
         PartWalls *partWalls,
         Patch *patch, SmileiMPI *smpi,
@@ -306,14 +306,14 @@ void SpeciesVAdaptive::scalar_dynamics( double time_dual, unsigned int ispec,
         }
     }
 
-}//END scalar_dynamics
+}//END scalarDynamics
 
 
 // -----------------------------------------------------------------------------
 //! Compute part_cell_keys at patch creation.
 //! This operation is normally done in the pusher to avoid additional particles pass.
 // -----------------------------------------------------------------------------
-/*void SpeciesVAdaptive::compute_part_cell_keys(Params &params)
+/*void SpeciesVAdaptive::computeParticleCellKeys(Params &params)
 {
 
     unsigned int ip, nparts;
@@ -413,7 +413,7 @@ void SpeciesVAdaptive::reconfiguration( Params &params, Patch *patch )
 //! This function configures the type of species according to the default mode
 //! regardless the number of particles per cell
 // -----------------------------------------------------------------------------
-void SpeciesVAdaptive::initial_configuration( Params &params, Patch *patch )
+void SpeciesVAdaptive::defaultConfigure( Params &params, Patch *patch )
 {
 
     // Setup the species state regardless the number of particles per cell
@@ -480,7 +480,7 @@ void SpeciesVAdaptive::reconfigure_operators( Params &params, Patch *patch )
 }
 
 
-void SpeciesVAdaptive::scalar_ponderomotive_update_susceptibility_and_momentum( double time_dual, unsigned int ispec,
+void SpeciesVAdaptive::scalarPonderomotiveUpdateSusceptibilityAndMomentum( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag,
         Patch *patch, SmileiMPI *smpi,
@@ -535,10 +535,10 @@ void SpeciesVAdaptive::scalar_ponderomotive_update_susceptibility_and_momentum( 
 
     } else { // immobile particle
     } //END if time vs. time_frozen
-} // ponderomotive_update_susceptibility_and_momentum
+} // ponderomotiveUpdateSusceptibilityAndMomentum
 
 
-void SpeciesVAdaptive::scalar_ponderomotive_update_position_and_currents( double time_dual, unsigned int ispec,
+void SpeciesVAdaptive::scalarPonderomotiveUpdatePositionAndCurrents( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag, PartWalls *partWalls,
         Patch *patch, SmileiMPI *smpi,

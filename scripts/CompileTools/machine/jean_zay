@@ -7,8 +7,8 @@
 #
 # Load the correct modules:
 #
-# module load intel-compilers-19/19.0.4.243
-# module load intel-mpi-19/19.0.4.243
+# module load intel-compilers/19.0.4
+# module load intel-mpi/19.0.4
 # module load hdf5/1.8.21/intel-19.0.4-mpi
 # module load python/2.7.16
 #

@@ -18,6 +18,7 @@
 #include "SimWindow.h"
 #include "Timers.h"
 #include "RadiationTables.h"
+#include "ParticleCreator.h"
 
 class Field;
 class Timer;
@@ -107,7 +108,8 @@ public :
     //! Reconfigure all patches for the new time step
     void reconfiguration( Params &params, Timers &timers, int itime );
     
-    void sort_all_particles( Params &params );
+    //! Particle sorting for all patches
+    void sortAllParticles( Params &params );
     
     //! For all patch, move particles (restartRhoJ(s), dynamics and exchangeParticles)
     void dynamics( Params &params,
@@ -118,15 +120,25 @@ public :
                    double time_dual,
                    Timers &timers, int itime );
                    
-    void finalize_and_sort_parts( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
+    void finalizeAndSortParticles( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
                                   double time_dual,
                                   Timers &timers, int itime );
     void finalize_sync_and_bc_fields( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
                                       double time_dual, Timers &timers, int itime );
+
+    //! Particle merging
+    void mergeParticles(Params &params, SmileiMPI *smpi, double time_dual,Timers &timers, int itime );
+
+    //! Clean MPI buffers and resize particle arrays to save memory
+    void cleanParticlesOverhead(Params &params, Timers &timers, int itime );
+                              
+    //! Particle injection from the boundaries
+    void injectParticlesFromBoundaries( Params &params, Timers &timers, unsigned int itime );
                                       
+    //! Computation of the total charge
     void computeCharge();
     
-    void projection_for_diags( Params &params,
+    void projectionForDiags( Params &params,
                                SmileiMPI *smpi,
                                SimWindow *simWindow,
                                double time_dual,
@@ -141,12 +153,12 @@ public :
             SimWindow *simWindow,
             double time_dual, Timers &timers, int itime );
     //! For all patches, deposit susceptibility, then advance momentum of particles interacting with envelope
-    void ponderomotive_update_susceptibility_and_momentum( Params &params,
+    void ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
             SmileiMPI *smpi,
             SimWindow *simWindow,
             double time_dual, Timers &timers, int itime );
     //! For all patches, advance position of particles interacting with envelope, comm particles, project charge and current density
-    void ponderomotive_update_position_and_currents( Params &params,
+    void ponderomotiveUpdatePositionAndCurrents( Params &params,
             SmileiMPI *smpi,
             SimWindow *simWindow,
             double time_dual, Timers &timers, int itime );

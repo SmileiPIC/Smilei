@@ -235,10 +235,13 @@ class Main(SmileiSingleton):
 
                 # Yee solver
                 if Main.maxwell_solver == 'Yee':
-                    dim = int(Main.geometry[0])
-                    if dim<1 or dim>3:
-                        raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
-                    Main.timestep = Main.timestep_over_CFL / math.sqrt(sum([1./l**2 for l in Main.cell_length]))
+                    if (Main.geometry=="AMcylindrical"):
+                        Main.timestep = Main.timestep_over_CFL / math.sqrt(1./Main.cell_length[0]**2 + ((Main.number_of_modes-1)/Main.cell_length[1])**2 )
+                    else:
+                        dim = int(Main.geometry[0])
+                        if dim<1 or dim>3:
+                            raise Exception("timestep_over_CFL not implemented in geometry "+Main.geometry)
+                        Main.timestep = Main.timestep_over_CFL / math.sqrt(sum([1./l**2 for l in Main.cell_length]))
 
                 # Grassi
                 elif Main.maxwell_solver == 'Grassi':
@@ -310,6 +313,8 @@ class MovingWindow(SmileiSingleton):
 
     time_start = 0.
     velocity_x = 1.
+    number_of_additional_shifts = 0.
+    additional_shifts_time = 0.
 
 
 class Checkpoints(SmileiSingleton):
@@ -341,13 +346,14 @@ class Species(SmileiComponent):
     position_initialization = None
     momentum_initialization = ""
     particles_per_cell = None
+    regular_number = []
     c_part_max = 1.0
     mass = None
     charge = None
     charge_density = None
     number_density = None
-    mean_velocity = []  # Default value is     0, set in createParticles function in species.cpp
-    temperature = []    # Default value is 1e-10, set in createParticles function in species.cpp
+    mean_velocity = []  # Default value is     0, set in ParticleCreator function in species.cpp
+    temperature = []    # Default value is 1e-10, set in ParticleCreator function in species.cpp
     thermal_boundary_temperature = []
     thermal_boundary_velocity = [0.,0.,0.]
     pusher = "boris"
@@ -388,6 +394,21 @@ class Species(SmileiComponent):
     relativistic_field_initialization = False
     ponderomotive_dynamics = False
 
+class ParticleInjector(SmileiComponent):
+    """Parameters for particle injection at boundaries"""
+    name = None,
+    species = None,
+    box_side = "xmin"
+    position_initialization = "species"
+    momentum_initialization = "species"
+    mean_velocity = []  # Default value is     0, set in ParticleCreator function
+    temperature = []    # Default value is 1e-10, set in ParticleCreator function
+    charge_density = None
+    number_density = None
+    particles_per_cell = None
+    time_envelope = 1
+    
+    
 class Laser(SmileiComponent):
     """Laser parameters"""
     box_side = "xmin"
