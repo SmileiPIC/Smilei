@@ -293,12 +293,9 @@ void VectorPatch::dynamics( Params &params,
 {
 
     #pragma omp single
-	{
-	// apply external time fields if requested
-	applyExternalTimeFields(time_dual);
-    
-    diag_flag = needsRhoJsNow( itime );
-	}    
+    {
+        diag_flag = needsRhoJsNow( itime );
+    }
 	
     timers.particles.restart();
     ostringstream t;
@@ -369,9 +366,6 @@ void VectorPatch::dynamics( Params &params,
     //MESSAGE("exchange particles");
     timers.syncPart.update( params.printNow( itime ) );
     
-    // de-apply external time fields if requested
-	resetExternalTimeFields(); 
-
 #ifdef __DETAILED_TIMERS
     timers.sorting.update( *this, params.printNow( itime ) );
     timers.merging.update( *this, params.printNow( itime ) );
@@ -657,6 +651,9 @@ void VectorPatch::sumSusceptibility( Params &params, double time_dual, Timers &t
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime, double time_dual, Timers &timers, SmileiMPI *smpi )
 {
+    // de-apply external time fields if requested
+    resetExternalTimeFields();
+
     timers.maxwell.restart();
 
     for( unsigned int ipassfilter=0 ; ipassfilter<params.currentFilter_passes ; ipassfilter++ ) {
@@ -818,6 +815,13 @@ void VectorPatch::finalize_sync_and_bc_fields( Params &params, SmileiMPI *smpi, 
             ( *this )( ipatch )->EMfields->centerMagneticFields();
         }
     }
+
+    #pragma omp single
+    {
+	// apply external time fields if requested
+	applyExternalTimeFields(time_dual);
+    }
+
 #endif
 
 } // END finalize_sync_and_bc_fields
