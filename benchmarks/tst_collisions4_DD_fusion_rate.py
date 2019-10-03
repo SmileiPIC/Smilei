@@ -105,6 +105,7 @@ for Da_nppc, Db_nppc, v in [
 		species2 = [Db],
 		coulomb_log = 0.001,
 		nuclear_reaction = [He],
+		debug_every = 10
 	)
 	
 	DiagParticleBinning(
