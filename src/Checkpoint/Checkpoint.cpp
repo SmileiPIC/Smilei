@@ -446,13 +446,10 @@ void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpe
     
     // Manage some collisions parameters
     std::vector<double> rate_multiplier( vecCollisions.size() );
-    std::vector<double> n_reactions    ( vecCollisions.size() );
     for( unsigned int icoll = 0; icoll<vecCollisions.size(); icoll++ ) {
         rate_multiplier[icoll] = vecCollisions[icoll]->NuclearReaction->rate_multiplier_;
-        n_reactions    [icoll] = vecCollisions[icoll]->NuclearReaction->n_reactions_;
     }
     H5::vect( patch_gid, "collisions_rate_multiplier", rate_multiplier );
-    H5::vect( patch_gid, "collisions_n_reactions", n_reactions );
 };
 
 
@@ -766,13 +763,12 @@ void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &ve
     }
     
     // Manage some collisions parameters
-    std::vector<double> rate_multiplier;
-    std::vector<double> n_reactions    ;
-    H5::getVect( patch_gid, "collisions_rate_multiplier", rate_multiplier, true );
-    H5::getVect( patch_gid, "collisions_n_reactions", n_reactions, true );
-    for( unsigned int icoll = 0; icoll<rate_multiplier.size(); icoll++ ) {
-        vecCollisions[icoll]->NuclearReaction->rate_multiplier_ = rate_multiplier[icoll];
-        vecCollisions[icoll]->NuclearReaction->n_reactions_     = n_reactions    [icoll];
+    if( H5::getVectSize( patch_gid, "collisions_rate_multiplier" ) > 0 ) {
+        std::vector<double> rate_multiplier;
+        H5::getVect( patch_gid, "collisions_rate_multiplier", rate_multiplier, true );
+        for( unsigned int icoll = 0; icoll<rate_multiplier.size(); icoll++ ) {
+            vecCollisions[icoll]->NuclearReaction->rate_multiplier_ = rate_multiplier[icoll];
+        }
     }
 }
 

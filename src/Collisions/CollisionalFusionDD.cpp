@@ -71,10 +71,10 @@ bool CollisionalFusionDD::occurs( double U, double coeff, double m1, double m2, 
     }
     
     // Calculate probability for fusion
-    double prob = exp( -coeff * cs * rate_multiplier_ );
-    if( U > prob ) {
+    double prob = coeff * cs * rate_multiplier_;
+    tot_probability_ += prob;
+    if( U > exp( -prob ) ) {
         W /= rate_multiplier_;
-        n_reactions_ ++;
         return true;
     } else {
         return false;

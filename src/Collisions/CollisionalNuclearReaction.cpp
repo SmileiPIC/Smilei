@@ -25,7 +25,6 @@ CollisionalNuclearReaction::CollisionalNuclearReaction(
         auto_multiplier_ = false;
         rate_multiplier_ = rate_multiplier;
     }
-    n_reactions_ = 0;
     product_particles_.resize(0);
     product_species_.resize(0);
     if( params ) {
@@ -45,7 +44,6 @@ CollisionalNuclearReaction::CollisionalNuclearReaction( CollisionalNuclearReacti
     product_species_ = CNR->product_species_;
     rate_multiplier_ = CNR->rate_multiplier_;
     auto_multiplier_ = CNR->auto_multiplier_;
-    n_reactions_ = CNR->n_reactions_;
     product_particles_.resize( CNR->product_particles_.size(), NULL );
     for( unsigned int i=0; i<CNR->product_particles_.size(); i++ ) {
         product_particles_[i] = new Particles();
@@ -85,19 +83,24 @@ void CollisionalNuclearReaction::finish(
     
     if( auto_multiplier_ ) {
         // Update the rate multiplier
-        double goal = (double) params.n_time * (double) n_reactions_ / ( (double) itime * npairs );
-        if( goal > 2. ) {
-            rate_multiplier_ *= 0.01;
-        } else if( goal > 1.5 ) {
-            rate_multiplier_ *= 0.1;
-        } else if( goal > 1. ) {
-            rate_multiplier_ *= 0.3;
-        } else if( rate_multiplier_ < 1.e14 ) {
-            if( goal < 0.01 ) {
-                rate_multiplier_ *= 10.;
-            } else if( goal < 0.1 ) {
-                rate_multiplier_ *= 2.;
-            } 
+        double goal = tot_probability_ * (double) params.n_time / npairs;
+        if( goal > 0. ) {
+            if( goal > 2. ) {
+                rate_multiplier_ *= 0.01;
+            } else if( goal > 1.5 ) {
+                rate_multiplier_ *= 0.1;
+            } else if( goal > 1. ) {
+                rate_multiplier_ *= 0.3;
+            } else if( rate_multiplier_ < 1.e14 ) {
+                if( goal < 0.01 ) {
+                    rate_multiplier_ *= 8.;
+                } else if( goal < 0.1 ) {
+                    rate_multiplier_ *= 2.;
+                }
+            }
+            if( rate_multiplier_ < 1. ) {
+                rate_multiplier_ = 1.;
+            }
         }
     }
 }

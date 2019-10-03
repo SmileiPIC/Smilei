@@ -21,7 +21,9 @@ public:
     virtual ~CollisionalNuclearReaction();
     
     //! Prepare the nuclear reaction
-    virtual void prepare() {};
+    virtual void prepare() {
+        tot_probability_ = 0.;
+    };
     //! Test the occurence of the nuclear reaction
     virtual bool occurs( double U, double coeff, double m1, double m2, double g1, double g2, double &etot, double &log_ekin, double &W ) = 0;
     //! Prepare the products of the reaction
@@ -41,8 +43,8 @@ public:
     //! True if rate multiplier isn't automatically adjusted
     double auto_multiplier_;
     
-    //! Number of succesfull reactions since the beginning (in this patch)
-    unsigned int n_reactions_;
+    //! sum of probabilities in this patch
+    double tot_probability_;
     
 private:
     

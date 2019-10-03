@@ -192,6 +192,8 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
     logLmean_    = 0.;
     //temperature = 0.;
     
+    NuclearReaction->prepare();
+    
     // Loop bins of particles (typically, cells, but may also be clusters)
     unsigned int nbin = patch->vecSpecies[0]->first_index.size();
     for( unsigned int ibin = 0 ; ibin < nbin ; ibin++ ) {
@@ -317,7 +319,6 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
         
         // Prepare the ionization & nuclear reaction
         Ionization->prepare3( params.timestep, inv_cell_volume );
-        NuclearReaction->prepare();
         
         // Now start the real loop on pairs of particles
         // See equations in http://dx.doi.org/10.1063/1.4742167
