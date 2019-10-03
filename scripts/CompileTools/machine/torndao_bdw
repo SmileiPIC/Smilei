@@ -1,0 +1,9 @@
+CXXFLAGS +=  -xCORE-AVX2 -O3 -inline-factor=1000 -D__INTEL_BDW_E5_2697_V4 -fno-alias -ipo
+
+#PLIB8_DIR = /opt/exp_soft/vo.llr.in2p3.fr/plibs8/gcc492-py363/
+#CXXFLAGS += -I${PLIB8_DIR}include/PLIBS_8/PLIB_MATH/PMathAlgebra/POperands
+#CXXFLAGS += -I${PLIB8_DIR}include/PLIBS_8/PLIB_VECTORIZE
+#CXXFLAGS += -I${PLIB8_DIR}include/PLIBS_8
+#LDFLAGS += -L${PLIB8_DIR}lib
+#LDFLAGS += -L${PLIB8_DIR}
+#LDFLAGS += -lplib8_math -lplib8_vectorize -lplib8_core
