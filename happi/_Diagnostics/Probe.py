@@ -221,8 +221,6 @@ class Probe(Diagnostic):
 			#Y = self._np.maximum( Y, 0.)
 			#Y = self._np.minimum( Y, self._ncels[1]*self._cell_length[1])
 			self._edges = [X, Y]
-			self._label = ["axis1", ""]
-			self._units = [axisunits, axisunits]
 
 		# Prepare the reordering of the points for patches disorder
 		positions = self._h5probe[0]["positions"][()] # actual probe points positions
