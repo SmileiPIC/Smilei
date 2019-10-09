@@ -11,7 +11,7 @@ Publications
 
   .. [Derouillat2018]
 
-     J. Derouillat, A. Beck, F. Pérez, T. Vinci, M. Chiaramello, A. Grassi, M. Flé, G. Bouchard, I. Plotnikov, N. Aunai, J. Dargent, C. Riconda, M. Grech,
+     J. Derouillat, A. Beck, F. Pérez, T. Vinci, M. Chiaramello, A. Grassi, M. Flé, G. Bouchard, I. Plotnikov, N. Aunai, J. Dargent, C. Riconda and M. Grech,
      `SMILEI: a collaborative, open-source, multi-purpose particle-in-cell code for plasma simulation`,
      `Comput. Phys. Commun. 222, 351-373 (2018) <https://doi.org/10.1016/j.cpc.2017.09.024>`_,
      `arXiv:1702.05128 <https://arxiv.org/abs/1702.05128>`_
@@ -20,11 +20,35 @@ Publications
 
 .. rst-class:: bigcitation
 
-.. [MassimoPPCF2019]
+.. [Fang]
 
-  F. Massimo, A. Beck, J. Derouillat, M. Grech, M. Lobet, F. Pérez, I. Zemzemi and A. Specka
+  Jun Fang, Chun-Yan Lu, Jing-Wen Yan and Huan Yu,
+  `Early acceleration of electrons and protons at the nonrelativistic quasiparallel shocks with different obliquity angles`,
+  `arXiv:1908.08170 <https://arxiv.org/abs/1908.08170>`_
+
+.. rst-class:: bigcitation
+
+.. [Gelfer]
+
+  E. Gelfer, A. Fedotov and S. Weber,
+  `Radiation induced acceleration of ions`,
+  `arXiv:1907.02621 <https://arxiv.org/abs/1907.02621>`_
+
+.. rst-class:: bigcitation
+
+.. [Gelfer]
+
+  E. Gelfer, A. Fedotov, O. Klimo and S. Weber,
+  `Absorption and opacity threshold for a thin foil in a strong circularly polarized laser field`,
+  `arXiv:1906.05902 <https://arxiv.org/abs/1906.05902>`_
+
+.. rst-class:: bigcitation
+
+.. [Massimo]
+
+  F. Massimo, A. Beck, J. Derouillat, M. Grech, M. Lobet, F. Pérez, I. Zemzemi and A. Specka,
   `Efficient start-to-end 3D envelope modeling for two-stage laser wakefield acceleration experiments`,
-  `Plasma Phys. Control. Fusion (2019) <https://iopscience.iop.org/article/10.1088/1361-6587/ab49cf>`_
+  `accepted in Plasma Phys. Control. Fusion <https://doi.org/10.1088/1361-6587/ab49cf>`_
 
 .. rst-class:: bigcitation
 
@@ -34,21 +58,16 @@ Publications
   `Laser wakefield driven generation of isolated CEP-tunable intense sub-cycle pulses`,
   `arXiv:1902.05014 <https://arxiv.org/abs/1902.05014>`_
 
-.. rst-class:: bigcitation
-
-.. [Massimo2018]
-
-  F. Massimo, A. Beck, J. Dérouillat, M. Grech., F. Perez, I. Zemzemi and A. Specka,
-  `Efficient modeling of Laser Wakefield Acceleration through the PIC code SMILEI in CILEX project`,
-  `Proceedings of the International Computational Accelerator Physics Conference (ICAP 2018), JACoW pre-release <http://icap2018.vrws.de/papers/mopag02.pdf>`_
+----
 
 .. rst-class:: bigcitation
 
-.. [Beck]
+.. [Beck2019]
 
-  A. Beck, J. Dérouillat, M. Lobet, A. Farjallah, F. Massimo, I. Zemzemi, F. Perez, T. Vinci, M. Grech,
+  A. Beck, J. Dérouillat, M. Lobet, A. Farjallah, F. Massimo, I. Zemzemi, F. Perez, T. Vinci and M. Grech,
   `Adaptive SIMD optimizations in particle-in-cell codes with fine-grain particle sorting`,
-  `Comput. Phys. Commun.  <https://doi.org/10.1016/j.cpc.2019.05.001>`_
+  `Comput. Phys. Commun. 244, 246 (2019) <https://doi.org/10.1016/j.cpc.2019.05.001>`_,
+  `arXiv:1810.03949 <https://arxiv.org/abs/1810.03949>`_
 
 .. rst-class:: bigcitation
 
