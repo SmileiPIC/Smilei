@@ -212,7 +212,8 @@ Financial support from the *Laboratoires d'Excellence*:
 .. rst-class:: noborder
 
 +------------+-----------------------------------------------------------------------------+
-| |plasapar| | | `Plas@Par <http://www.plasapar.com>`_, providing grants for 2 PhD thesis. |
+| |plasapar| | | `Plas@Par <http://www.plasapar.com>`_ provided grants for 2 PhD thesis.   |
+|            | | and 1 post-doc.                                                           |
 +------------+-----------------------------------------------------------------------------+
 
 .. rst-class:: noborder
@@ -228,4 +229,3 @@ Financial support from the *Laboratoires d'Excellence*:
 | |P2IO|     | | Francesco Massimo's 2 years post-doc was funded by the                    |
 |            | | labex `P2IO <http://www.labex-p2io.fr>`_.                                 |
 +------------+-----------------------------------------------------------------------------+
-
