@@ -27,6 +27,7 @@
 #include "Hilbert_functions.h"
 #include "PatchesFactory.h"
 #include "SpeciesFactory.h"
+#include "ParticleInjectorFactory.h"
 #include "Particles.h"
 #include "ElectroMagnFactory.h"
 #include "ElectroMagnBC_Factory.h"
@@ -165,6 +166,9 @@ void Patch::finishCreation( Params &params, SmileiMPI *smpi, DomainDecomposition
     // Initialize the collisions
     vecCollisions = CollisionsFactory::create( params, this, vecSpecies );
 
+    // Initialize the particle injector
+    particle_injector_vector_ = ParticleInjectorFactory::createVector( params, this, vecSpecies );
+
     // Initialize the particle walls
     partWalls = new PartWalls( params, this );
 
@@ -190,6 +194,9 @@ void Patch::finishCloning( Patch *patch, Params &params, SmileiMPI *smpi, unsign
 
     // clone the collisions
     vecCollisions = CollisionsFactory::clone( patch->vecCollisions, params );
+
+    // Clone the particle injector
+    particle_injector_vector_ = ParticleInjectorFactory::cloneVector( patch->particle_injector_vector_, params, patch);
 
     // clone the particle walls
     partWalls = new PartWalls( patch->partWalls, this );
@@ -1028,10 +1035,6 @@ void Patch::exchParticles( SmileiMPI *smpi, int ispec, Params &params, int iDim,
 void Patch::finalizeExchParticles( SmileiMPI *smpi, int ispec, Params &params, int iDim, VectorPatch *vecPatch )
 {
 
-#ifdef  __DETAILED_TIMERS
-    double timer;
-#endif
-
     int n_part_send, n_part_recv;
 
     /********************************************************************************/
@@ -1091,7 +1094,7 @@ void Patch::cornersParticles( SmileiMPI *smpi, int ispec, Params &params, int iD
                                     //... copy it at the back of the local particle vector ...
                                     ( vecSpecies[ispec]->MPIbuff.partRecv[iDim][( iNeighbor+1 )%2] ).cp_particle( iPart, cuParticles );
                                     //...adjust last_index or cell_keys ...
-                                    vecSpecies[ispec]->add_space_for_a_particle();
+                                    vecSpecies[ispec]->addSpaceForOneParticle();
                                     //... and add its index to the particles to be sent later...
                                     vecSpecies[ispec]->MPIbuff.part_index_send[idim][0].push_back( cuParticles.size()-1 );
                                     //..without forgeting to add it to the list of particles to clean.
@@ -1107,7 +1110,7 @@ void Patch::cornersParticles( SmileiMPI *smpi, int ispec, Params &params, int iD
                                 if( neighbor_[idim][1]!=MPI_PROC_NULL ) { //if neighbour exists
                                     ( vecSpecies[ispec]->MPIbuff.partRecv[iDim][( iNeighbor+1 )%2] ).cp_particle( iPart, cuParticles );
                                     //...adjust last_index or cell_keys ...
-                                    vecSpecies[ispec]->add_space_for_a_particle();
+                                    vecSpecies[ispec]->addSpaceForOneParticle();
                                     vecSpecies[ispec]->MPIbuff.part_index_send[idim][1].push_back( cuParticles.size()-1 );
                                     vecSpecies[ispec]->addPartInExchList( cuParticles.size()-1 );
                                 }
@@ -1130,7 +1133,7 @@ void Patch::cornersParticles( SmileiMPI *smpi, int ispec, Params &params, int iD
                                 //... copy it at the back of the local particle vector ...
                                 ( vecSpecies[ispec]->MPIbuff.partRecv[0][( iNeighbor+1 )%2] ).cp_particle( iPart, cuParticles );
                                 //...adjust last_index or cell_keys ...
-                                vecSpecies[ispec]->add_space_for_a_particle();
+                                vecSpecies[ispec]->addSpaceForOneParticle();
                                 //... and add its index to the particles to be sent later...
                                 vecSpecies[ispec]->MPIbuff.part_index_send[1][0].push_back( cuParticles.size()-1 );
                                 //..without forgeting to add it to the list of particles to clean.
@@ -1146,7 +1149,7 @@ void Patch::cornersParticles( SmileiMPI *smpi, int ispec, Params &params, int iD
                                 //MESSAGE("particle diag +R");
                                 ( vecSpecies[ispec]->MPIbuff.partRecv[0][( iNeighbor+1 )%2] ).cp_particle( iPart, cuParticles );
                                 //...adjust last_index or cell_keys ...
-                                vecSpecies[ispec]->add_space_for_a_particle();
+                                vecSpecies[ispec]->addSpaceForOneParticle();
                                 vecSpecies[ispec]->MPIbuff.part_index_send[1][1].push_back( cuParticles.size()-1 );
                                 vecSpecies[ispec]->addPartInExchList( cuParticles.size()-1 );
                             }
@@ -1160,7 +1163,8 @@ void Patch::cornersParticles( SmileiMPI *smpi, int ispec, Params &params, int iD
     } //loop i Neighbor
 }
 
-void Patch::injectParticles( SmileiMPI *smpi, int ispec, Params &params, VectorPatch *vecPatch )
+//! Import particles exchanged with surrounding patches/mpi and sort at the same time
+void Patch::importAndSortParticles( SmileiMPI *smpi, int ispec, Params &params, VectorPatch *vecPatch )
 {
 
 #ifdef  __DETAILED_TIMERS
@@ -1168,7 +1172,7 @@ void Patch::injectParticles( SmileiMPI *smpi, int ispec, Params &params, VectorP
     timer = MPI_Wtime();
 #endif
 
-    vecSpecies[ispec]->sort_part( params );
+    vecSpecies[ispec]->sortParticles( params );
 
 #ifdef  __DETAILED_TIMERS
     this->patch_timers[13] += MPI_Wtime() - timer;
@@ -1260,9 +1264,9 @@ void Patch::cleanup_sent_particles( int ispec, std::vector<int> *indexes_of_part
 void Patch::copy_positions( std::vector<Species *> vecSpecies_to_update )
 {
     for( unsigned int i=0; i<vecSpecies_to_update.size(); i++ ) {
-        if( vecSpecies_to_update[i]->position_initialization_on_species==false )
+        if( vecSpecies_to_update[i]->position_initialization_on_species_==false )
             continue;
-        unsigned int target_species = vecSpecies_to_update[i]->position_initialization_on_species_index; 
+        unsigned int target_species = vecSpecies_to_update[i]->position_initialization_on_species_index;
         if( vecSpecies_to_update[i]->getNbrOfParticles() != vecSpecies_to_update[target_species]->getNbrOfParticles() ) {
             ERROR( "Number of particles in species '"<<vecSpecies_to_update[i]->name<<"' is not equal to the number of particles in species '"<<vecSpecies_to_update[target_species]->name<<"'." );
         }
@@ -1271,5 +1275,3 @@ void Patch::copy_positions( std::vector<Species *> vecSpecies_to_update )
     }
     return;
 }
-
-

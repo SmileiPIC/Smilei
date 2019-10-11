@@ -13,7 +13,7 @@ In these cases, if the laser pulse is much longer than :math:`\lambda_0`, the co
 
 The description of the physical system in terms of the complex envelope of the laser vector potential, neglecting its fast oscillations, is the essence of the envelope approximation. We remark that all the equations involved in the envelope model do not take into account the laser polarization. This is a main limit of the envelope approximation, as well as the impossibility to model phenomena at the scale of :math:`\lambda_0`.
 
-In the following, the equations of the envelope model are presented, following mainly [Cowan2011]_, [Terzani]_. Their numerical solution is briefly described as well.
+In the following, the equations of the envelope model are presented, following mainly [Cowan2011]_, [Terzani]_, [MassimoPPCF2019]_ . Their numerical solution is briefly described as well.
 
 ----
 
@@ -247,5 +247,6 @@ References
 
 .. [Terzani] `D. Terzani and P. Londrillo, Computer Physics Communications 242, 49 (2019) <https://doi.org/10.1016/j.cpc.2019.04.007>`_ 
 
+.. [MassimoPPCF2019] `F. Massimo et al., Plasma Phys. Control. Fusion (2019) <https://iopscience.iop.org/article/10.1088/1361-6587/ab49cf>`_
 
 

@@ -14,9 +14,16 @@ PYTHONEXE ?= python
 #-----------------------------------------------------
 # check whether to use a machine specific definitions
 ifneq ($(machine),)
-	ifneq ($(wildcard scripts/CompileTools/machine/$(machine)),)
-	-include scripts/CompileTools/machine/$(machine)
-	endif
+    ifneq ($(wildcard scripts/CompileTools/machine/$(machine)),)
+    -include scripts/CompileTools/machine/$(machine)
+    else
+define errormsg
+ERROR: Cannot find machine file for "$(machine)"
+Available machines are:
+$(shell ls -1 scripts/CompileTools/machine)
+endef
+    $(error $(errormsg))
+    endif
 endif
 
 PYTHONCONFIG := $(PYTHONEXE) scripts/CompileTools/python-config.py

@@ -30,6 +30,8 @@ public:
     Timer syncPart  ;
     Timer syncField ;
     Timer syncDens  ;
+    Timer particleMerging;
+    Timer particleInjection;
     Timer diagsNEW  ;
     Timer reconfiguration  ;
     Timer envelope  ;
@@ -52,7 +54,6 @@ public:
     Timer push_pos ;
     
     Timer sorting ;
-    Timer merging ;
     
 #endif
     

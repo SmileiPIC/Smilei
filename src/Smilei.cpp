@@ -104,7 +104,6 @@ int main( int argc, char *argv[] )
     // --------------------
     // Define Moving Window
     // --------------------
-    TITLE( "Initializing moving window" );
     SimWindow *simWindow = new SimWindow( params );
 
     // ------------------------------------------------------------------------
@@ -121,10 +120,8 @@ int main( int argc, char *argv[] )
     // ---------------------------------------------------
     // Initialize patches (including particles and fields)
     // ---------------------------------------------------
-    TITLE( "Initializing particles & fields" );
-
     if( smpi.test_mode ) {
-        execute_test_mode( vecPatches, &smpi, simWindow, params, checkpoint, openPMD );
+        executeTestMode( vecPatches, &smpi, simWindow, params, checkpoint, openPMD );
         return 0;
     }
 
@@ -152,7 +149,7 @@ int main( int argc, char *argv[] )
         PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, checkpoint.this_run_start_step+1, simWindow->getNmoved() );
         // vecPatches data read in restartAll according to smpi.patch_count
         checkpoint.restartAll( vecPatches, &smpi, simWindow, params, openPMD );
-        vecPatches.sort_all_particles( params );
+        vecPatches.sortAllParticles( params );
 
         // Patch reconfiguration for the adaptive vectorization
         if( params.has_adaptive_vectorization ) {
@@ -170,7 +167,7 @@ int main( int argc, char *argv[] )
     } else {
 
         PatchesFactory::createVector( vecPatches, params, &smpi, openPMD, 0 );
-        vecPatches.sort_all_particles( params );
+        vecPatches.sortAllParticles( params );
         //MESSAGE ("create vector");
         // Initialize the electromagnetic fields
         // -------------------------------------
@@ -210,7 +207,7 @@ int main( int argc, char *argv[] )
         } // end condition if Laser Envelope Model is used
 
         // Project charge and current densities (and susceptibility if envelope is used) only for diags at t=0
-        vecPatches.projection_for_diags( params, &smpi, simWindow, time_dual, timers, 0 );
+        vecPatches.projectionForDiags( params, &smpi, simWindow, time_dual, timers, 0 );
 
         // If Laser Envelope is used, comm and synch susceptibility at t=0
         if( params.Laser_Envelope_model ) {
@@ -361,8 +358,9 @@ int main( int argc, char *argv[] )
                 vecPatches.runEnvelopeModule( params, &smpi, simWindow, time_dual, timers, itime );
             } // end condition if Laser Envelope Model is used
 
-            vecPatches.finalize_and_sort_parts( params, &smpi, simWindow,
-                                                time_dual, timers, itime );
+            // finalize particle exchanges and sort particles
+            vecPatches.finalizeAndSortParticles( params, &smpi, simWindow,
+                                                 time_dual, timers, itime );
             
             // Sum densities
             vecPatches.sumDensities( params, time_dual, timers, itime, simWindow, &smpi );
@@ -418,11 +416,21 @@ int main( int argc, char *argv[] )
 
         #pragma omp parallel shared (time_dual,smpi,params, vecPatches, domain, simWindow, checkpoint, itime)
         {
+            // Particle merging
+            vecPatches.mergeParticles(params, &smpi, time_dual,timers, itime );
+
+            // Particle injection from the boundaries
+            vecPatches.injectParticlesFromBoundaries(params, timers, itime );
+
+            // Clean buffers and resize arrays
+            vecPatches.cleanParticlesOverhead(params, timers, itime );
+
+            // Finalize field synchronization and exchanges
             vecPatches.finalize_sync_and_bc_fields( params, &smpi, simWindow, time_dual, timers, itime );
             
             // call the various diagnostics
             vecPatches.runAllDiags( params, &smpi, itime, timers, simWindow );
-
+            
             timers.movWindow.restart();
             simWindow->shift( vecPatches, &smpi, params, itime, time_dual, domain );
 
@@ -548,7 +556,7 @@ int main( int argc, char *argv[] )
 // ---------------------------------------------------------------------------------------------------------------------
 
 
-int execute_test_mode( VectorPatch &vecPatches, SmileiMPI *smpi, SimWindow *simWindow, Params &params, Checkpoint &checkpoint, OpenPMDparams &openPMD )
+int executeTestMode( VectorPatch &vecPatches, SmileiMPI *smpi, SimWindow *simWindow, Params &params, Checkpoint &checkpoint, OpenPMDparams &openPMD )
 {
     int itime = 0;
     int moving_window_movement = 0;

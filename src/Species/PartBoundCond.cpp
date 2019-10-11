@@ -273,4 +273,3 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
 PartBoundCond::~PartBoundCond()
 {
 }
-

@@ -45,10 +45,10 @@ public:
         // -----------------
         // Lasers properties
         // -----------------
-        if( patch->isMaster() ) {
-            MESSAGE( 1, "Laser parameters :" );
-        }
         int nlaser = PyTools::nComponents( "Laser" );
+        if( patch->isMaster() && nlaser > 0) {
+            TITLE("Initializing laser parameters" );
+        }
         for( int ilaser = 0; ilaser < nlaser; ilaser++ ) {
             Laser *laser = new Laser( params, ilaser, patch );
             if( laser->box_side == "xmin" && EMfields->emBoundCond[0] ) {
@@ -70,6 +70,9 @@ public:
         // ExtFields properties
         // -----------------
         unsigned int numExtFields=PyTools::nComponents( "ExternalField" );
+        if( patch->isMaster() && numExtFields > 0) {
+            TITLE("Initializing External fields" );
+        }
         for( unsigned int n_extfield = 0; n_extfield < numExtFields; n_extfield++ ) {
             ExtField extField;
             PyObject *profile;
@@ -103,6 +106,10 @@ public:
         // -----------------
         // ExtTimeFields properties
         // -----------------
+        unsigned int external_time_field_number =PyTools::nComponents( "ExternalTimeField" );
+        if( patch->isMaster() && external_time_field_number > 0) {
+            TITLE("Initializing External Time Fields" );
+        }
         for( unsigned int n_extfield = 0; n_extfield < PyTools::nComponents( "ExternalTimeField" ); n_extfield++ ) {
             ExtTimeField extField;
             PyObject *profile;
@@ -129,10 +136,10 @@ public:
                 		extField.savedField = new Field2D(EMfields->allFields[ifield]->dims());
                 	} else if (params.nDim_field == 3){
                 		extField.savedField = new Field3D(EMfields->allFields[ifield]->dims());
-                	}                	
+                	}
                     extField.savedField->copyFrom(EMfields->allFields[ifield]);
-                    extField.savedField->name = EMfields->allFields[ifield]->name;  
-                    extField.index =  ifield;            
+                    extField.savedField->name = EMfields->allFields[ifield]->name;
+                    extField.index =  ifield;
                     break;
                 }
             }
@@ -148,8 +155,11 @@ public:
         // -----------------
         // Antenna properties
         // -----------------
-        unsigned int numAntenna=PyTools::nComponents( "Antenna" );
-        for( unsigned int n_antenna = 0; n_antenna < numAntenna; n_antenna++ ) {
+        unsigned int antenna_number=PyTools::nComponents( "Antenna" );
+        if( patch->isMaster() && antenna_number > 0) {
+            TITLE("Initializing Antenna" );
+        }
+        for( unsigned int n_antenna = 0; n_antenna < antenna_number; n_antenna++ ) {
             Antenna antenna;
             PyObject *profile;
             std::ostringstream name;

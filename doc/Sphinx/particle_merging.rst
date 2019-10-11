@@ -297,7 +297,8 @@ For both methods, the implemented algorithm is very similar.
 
     Then, for each momentum cell:
 
-    1. Division of the macro-particles of the momentum cell in small packs according to the user parameters
+    1. Division of the macro-particles of the momentum cell into packets (size depends on the
+    user parameters `merge_min_packet_size` and `merge_max_packet_size`)
     2. Merge of the packs using the previously described Vranic algorithm. Partly vectorized.
     3. Creation of the merged macro-particles at the position of the previous ones
     4. Tag of the macro-particles to be removed
@@ -634,7 +635,7 @@ It first happens in the plane y-z near the center of the domain and then expand 
 
 .. raw:: html
 
-  <video style="display:block; margin: 0 auto; width: 100%;" controls src="http://www.maisondelasimulation.fr/projects/Smilei/uploads/videos/qed_cascade.mp4" width="100%">
+  <video style="display:block; margin: 0 auto; width: 100%;" controls src="http://mdls-internet.extra.cea.fr/projects/Smilei/uploads/videos/qed_cascade.mp4" width="100%">
   </video>
 
 --------------------------------------------------------------------------------
