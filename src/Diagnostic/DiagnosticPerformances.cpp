@@ -6,7 +6,7 @@
 
 using namespace std;
 
-const unsigned int n_quantities_double = 14;
+const unsigned int n_quantities_double = 15;
 const unsigned int n_quantities_uint   = 4;
 
 // Constructor
@@ -110,8 +110,9 @@ void DiagnosticPerformances::openFile( Params &params, SmileiMPI *smpi, bool new
         quantities_double[ 9] = "timer_syncField" ;
         quantities_double[10] = "timer_syncDens"  ;
         quantities_double[11] = "timer_diags"     ;
-        quantities_double[12] = "timer_total"     ;
-        quantities_double[13] = "memory_total"     ;
+        quantities_double[12] = "timer_grids"     ;
+        quantities_double[13] = "timer_total"     ;
+        quantities_double[14] = "memory_total"    ;
         H5::attr( fileId_, "quantities_double", quantities_double );
         
     } else {
@@ -243,15 +244,16 @@ void DiagnosticPerformances::run( SmileiMPI *smpi, VectorPatch &vecPatches, int 
         // Specific for diags timer because we are within a diag
         double timer_diags = MPI_Wtime() - timers.diags.last_start_ + timers.diags.time_acc_;
         quantities_double[11] = timer_diags;
+        quantities_double[12] = timers.grids     .getTime();
         // All timers are summed in timer_total
         double timer_total =
             quantities_double[ 2] + quantities_double[3] + quantities_double[ 4]
             + quantities_double[ 5] + quantities_double[6] + quantities_double[ 7]
             + quantities_double[ 8] + quantities_double[9] + quantities_double[10]
-            + quantities_double[11];
-        quantities_double[12] = timer_total;
+            + quantities_double[11] + quantities_double[12];
+        quantities_double[13] = timer_total;
         
-        quantities_double[13] = Tools::getMemFootPrint();
+        quantities_double[14] = Tools::getMemFootPrint();
         
         // Write doubles to file
         hid_t dset_double  = H5Dcreate( iteration_group_id, "quantities_double", H5T_NATIVE_DOUBLE, filespace_double, H5P_DEFAULT, create_plist, H5P_DEFAULT );
