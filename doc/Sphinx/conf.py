@@ -230,6 +230,7 @@ htmlhelp_basename = 'Smileidoc'
 # Select charset that is compatible with travis or maisondelasimulation.fr
 #if 'TRAVIS' in os.environ:
 html_output_encoding = 'utf-8'
+html_math_renderer = 'mathjax'
 #else:
 #    html_output_encoding = 'ISO-8859-1'
 
