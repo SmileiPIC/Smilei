@@ -5,6 +5,7 @@ stages:
 compile:
   stage: compile
   only:
+    - Nmodes_SM
     - develop
     - sync_integration
     - dev_injector
@@ -28,6 +29,7 @@ compile:
 makerun1D:
   stage: makerun
   only:
+    - Nmodes_SM
     - develop
     - sync_integration
     - dev_injector
@@ -41,6 +43,7 @@ makerun1D:
 makerun2D:
   stage: makerun
   only:
+    - Nmodes_SM
     - develop
     - sync_integration
     - dev_injector
@@ -54,6 +57,7 @@ makerun2D:
 makerun3D:
   stage: makerun
   only:
+    - Nmodes_SM
     - develop
     - sync_integration
     - dev_injector
@@ -67,6 +71,7 @@ makerun3D:
 makerunAM:
   stage: makerun
   only:
+    - Nmodes_SM
     - develop
     - dev_injector
     
@@ -79,6 +84,7 @@ makerunAM:
 makerunV:
   stage: makerun
   only:
+    - Nmodes_SM
     - develop
     - multisteps_movwin
     - dev_injector
@@ -92,6 +98,7 @@ makerunV:
 makerunCollisions:
   stage: makerun
   only:
+    - Nmodes_SM
     - develop
     - dev_injector
     
