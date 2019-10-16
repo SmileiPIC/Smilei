@@ -419,6 +419,7 @@ class Laser(SmileiComponent):
     phase = [0., 0.]
     delay_phase = [0., 0.]
     space_time_profile = None
+    space_time_profile_AM = None
     file = None
     _offset = None
 
