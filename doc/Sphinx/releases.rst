@@ -14,7 +14,7 @@ Upcoming changes
 * Additional prescribed fields that only contribute to pushing particles
 * More control over the moving window movement
 * More control over the regular position initialization in Cartesian geometries
-* AMcylindrical now supports almost all features of the code (Poisson solver and scalar diaasg still missing)
+* AMcylindrical now supports almost all features of the code (Poisson solver and scalar diags still missing)
 * Bugfix: particle binning was not following the moving window
 * Bugfix: gaussian profile with order 0 was incorrect
 
