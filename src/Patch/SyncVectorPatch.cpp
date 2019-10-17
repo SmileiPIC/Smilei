@@ -588,32 +588,32 @@ void SyncVectorPatch::exchangeB( Params &params, VectorPatch &vecPatches, int im
 {
 
     SyncVectorPatch::exchange_along_all_directions<complex<double>,cField>( vecPatches.listBl_[imode], vecPatches, smpi );
+    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listBl_[imode], vecPatches );
     SyncVectorPatch::exchange_along_all_directions<complex<double>,cField>( vecPatches.listBr_[imode], vecPatches, smpi );
+    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listBr_[imode], vecPatches );
     SyncVectorPatch::exchange_along_all_directions<complex<double>,cField>( vecPatches.listBt_[imode], vecPatches, smpi );
+    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listBt_[imode], vecPatches );
 }
 
 void SyncVectorPatch::exchangeE( Params &params, VectorPatch &vecPatches, int imode, SmileiMPI *smpi )
 {
 
     SyncVectorPatch::exchange_along_all_directions<complex<double>,cField>( vecPatches.listEl_[imode], vecPatches, smpi );
+    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listEl_[imode], vecPatches );
     SyncVectorPatch::exchange_along_all_directions<complex<double>,cField>( vecPatches.listEr_[imode], vecPatches, smpi );
+    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listEr_[imode], vecPatches );
     SyncVectorPatch::exchange_along_all_directions<complex<double>,cField>( vecPatches.listEt_[imode], vecPatches, smpi );
+    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listEt_[imode], vecPatches );
 }
 
 void SyncVectorPatch::finalizeexchangeB( Params &params, VectorPatch &vecPatches, int imode )
 {
 
-    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listBl_[imode], vecPatches );
-    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listBr_[imode], vecPatches );
-    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listBt_[imode], vecPatches );
 }
 
 void SyncVectorPatch::finalizeexchangeE( Params &params, VectorPatch &vecPatches, int imode )
 {
 
-    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listEl_[imode], vecPatches );
-    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listEr_[imode], vecPatches );
-    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listEt_[imode], vecPatches );
 }
 
 
