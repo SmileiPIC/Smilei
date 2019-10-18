@@ -122,6 +122,8 @@ def _keep_python_running():
         profiles += [las.chirp_profile]
         if type(las.space_time_profile) is list:
             profiles += las.space_time_profile
+        if type(las.space_time_profile_AM) is list:
+            profiles += las.space_time_profile_AM
         if hasattr(las, "_extra_envelope"):
             profiles += [las._extra_envelope]
     profiles += [ant.time_profile for ant in Antenna]

@@ -28,6 +28,11 @@ public:
     {
         return 0.;
     };
+    virtual std::complex<double> getAmplitudecomplex( std::vector<double> pos, double t, int j, int k )
+    {
+        return 0.;
+    };
+
     virtual std::string getInfo()
     {
         return "?";
@@ -62,6 +67,11 @@ public:
     {
         return profiles[1]->getAmplitude( pos, t, j, k );
     }
+
+    inline std::complex<double> getAmplitudecomplexN( std::vector<double> pos, double t, int j, int k, int imode )
+    {
+        return profiles[imode]->getAmplitudecomplex( pos, t, j, k );
+    }
     
     void createFields( Params &params, Patch *patch )
     {
@@ -79,14 +89,15 @@ public:
     
     //! Disables the laser
     void disable();
+
+    //! True if spatio-temporal profile (Bx and By)
+    std::vector<bool> spacetime;
     
 protected:
     //! Space and time profiles (Bx and By)
     std::vector<LaserProfile *> profiles;
     
 private:
-    //! True if spatio-temporal profile (Bx and By)
-    std::vector<bool> spacetime;
     
     //! Non empty if laser profile read from a file
     std::string file;
@@ -133,6 +144,15 @@ public:
         amp = spaceAndTimeProfile_->valueAt( pos, t );
         return amp;
     }
+
+    inline std::complex<double> getAmplitudecomplex( std::vector<double> pos, double t, int j, int k )
+    {
+        std::complex<double> amp;
+        #pragma omp critical
+        amp = spaceAndTimeProfile_->complexValueAt( pos, t );
+        return amp;
+    }
+
 private:
     Profile *spaceAndTimeProfile_;
 };

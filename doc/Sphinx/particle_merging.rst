@@ -635,7 +635,7 @@ It first happens in the plane y-z near the center of the domain and then expand 
 
 .. raw:: html
 
-  <video style="display:block; margin: 0 auto; width: 100%;" controls src="http://www.maisondelasimulation.fr/projects/Smilei/uploads/videos/qed_cascade.mp4" width="100%">
+  <video style="display:block; margin: 0 auto; width: 100%;" controls src="http://mdls-internet.extra.cea.fr/projects/Smilei/uploads/videos/qed_cascade.mp4" width="100%">
   </video>
 
 --------------------------------------------------------------------------------
