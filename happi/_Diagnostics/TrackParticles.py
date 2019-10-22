@@ -236,10 +236,23 @@ class TrackParticles(Diagnostic):
 					return
 
 			# Remove particles that are not actually tracked during the requested timesteps
+			print("Removing dead particles ...")
 			if type(self.selectedParticles) is not slice and len(self.selectedParticles) > 0:
 				first_time = self._locationForTime[self._timesteps[ 0]]
 				last_time  = self._locationForTime[self._timesteps[-1]]+1
-				IDs = self._h5items["Id"][first_time:last_time,self.selectedParticles]
+				# Note: the following h5py operation scales very poorly, so we do it by chunks instead
+				#IDs = self._h5items["Id"][first_time:last_time,self.selectedParticles]
+				cs = 1000
+				n = len(self.selectedParticles)
+				IDs = self._np.empty(( last_time - first_time, n ))
+				chunksize = min(cs,n)
+				nchunks = int(n/cs)
+				chunksize = int(n / nchunks)
+				chunkstop = 0
+				for ichunk in range(nchunks):
+					chunkstart = chunkstop
+					chunkstop  = min(chunkstart + chunksize, n)
+					IDs[:,chunkstart:chunkstop] = self._h5items["Id"][first_time:last_time,self.selectedParticles[chunkstart:chunkstop]]
 				dead_particles = self._np.flatnonzero(self._np.all( self._np.isnan(IDs) + (IDs==0), axis=0 ))
 				self.selectedParticles = self._np.delete( self.selectedParticles, dead_particles )
 
