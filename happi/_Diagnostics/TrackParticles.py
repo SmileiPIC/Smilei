@@ -361,11 +361,11 @@ class TrackParticles(Diagnostic):
 	def _readUnstructuredH5(self, dataset, indices, first_time, last_time=None):
 		if last_time is None:
 			last_time = first_time + 1
-		if type(indices) is slice:
+		n = len(indices)
+		cs = 1000
+		if type(indices) is slice or n < cs:
 			return dataset[first_time:last_time, indices]
 		else:
-			cs = 1000
-			n = len(indices)
 			result = self._np.empty(( last_time - first_time, n ), dtype=dataset.dtype)
 			chunksize = min(cs,n)
 			nchunks = int(n/cs)
