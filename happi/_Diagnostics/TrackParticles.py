@@ -236,7 +236,7 @@ class TrackParticles(Diagnostic):
 					return
 
 			# Remove particles that are not actually tracked during the requested timesteps
-			print("Removing dead particles ...")
+			if self._verbose: print("Removing dead particles ...")
 			if type(self.selectedParticles) is not slice and len(self.selectedParticles) > 0:
 				first_time = self._locationForTime[self._timesteps[ 0]]
 				last_time  = self._locationForTime[self._timesteps[-1]]+1
@@ -357,7 +357,7 @@ class TrackParticles(Diagnostic):
 				info += "\n                with selection of "+str(self.nselectedParticles)+" particles"
 		return info
 
-	# Read hdf5 dataset faster with unstrusctured list indices
+	# Read hdf5 dataset faster with unstrusctured list of indices
 	def _readUnstructuredH5(self, dataset, indices, first_time, last_time=None):
 		if last_time is None:
 			last_time = first_time + 1
@@ -562,24 +562,25 @@ class TrackParticles(Diagnostic):
 		if self._sort:
 			if self._rawData is None:
 				self._rawData = {}
-				ntimes = len(self._timesteps)
+				first_time = self._locationForTime[self._timesteps[0]]
+				last_time  = self._locationForTime[self._timesteps[-1]] + 1
 				if self._verbose: print("Loading data ...")
 				# fill up the data
-				ID = self._readUnstructuredH5(self._h5items["Id"], self.selectedParticles, 0, len(self._timesteps))
+				ID = self._readUnstructuredH5(self._h5items["Id"], self.selectedParticles, first_time, last_time)
 				deadParticles = (ID==0).nonzero()
 				for axis in self.axes:
 					if self._verbose: print("   axis: "+axis)
 					if axis == "Id":
-						self._rawData[axis] = ID.squeeze()
+						self._rawData[axis] = ID
 					else:
 						if axis=="moving_x":
-							data = self._readUnstructuredH5(self._h5items["x"], self.selectedParticles, 0, len(self._timesteps))
+							data = self._readUnstructuredH5(self._h5items["x"], self.selectedParticles, first_time, last_time)
 							for it, time in enumerate(self._timesteps):
 								data[it,:] -= self._XmovedForTime[time]
 						else:
-							data = self._readUnstructuredH5(self._h5items[axis], self.selectedParticles, 0, len(self._timesteps))
+							data = self._readUnstructuredH5(self._h5items[axis], self.selectedParticles, first_time, last_time)
 						data[deadParticles] = self._np.nan
-						self._rawData[axis] = data.squeeze()
+						self._rawData[axis] = data
 
 				if self._verbose: print("Process broken lines ...")
 				# Add the lineBreaks array which indicates where lines are broken (e.g. loop around the box)
