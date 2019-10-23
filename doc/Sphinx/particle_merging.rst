@@ -32,8 +32,8 @@ The merging method of M. Vranic
 The method of M. Vranic consists of 3 main steps and is schematically described (in 2D) in Fig. :numref:`fig_vranic_particle_merging`:
 
 1. To Decompose macro-particles into groups according to their location so that they share close positions.
-  In :program:`Smilei`, macro-particles are sorted by field cells.
-  In the article of M. Vranic *et al.*, the decomposition can be larger than just a cell.
+   In :program:`Smilei`, macro-particles are sorted by field cells.
+   In the article of M. Vranic *et al.*, the decomposition can be larger than just a cell.
 
 2. Then, to subdivide the macro-particles into sub-groups in the momentum space so that they share close kinetic properties.
 
@@ -241,7 +241,7 @@ Finally, the new macro-particle momentums are:
 
 The method is summarized graphically in :numref:`fig_3d_schematic`.
 It has been generated using Python with Matplotlib.
-The Python script in available `here <_static/vranic_geometry.py>`_.
+The Python script is `available here <_static/vranic_geometry.py>`_.
 
 .. _fig_3d_schematic:
 
@@ -293,12 +293,12 @@ For both methods, the implemented algorithm is very similar.
     4. Computation of the number of particles per momentum cell.  Not vectorizable because of random memory accesses.
     5. Computation of the cell index of each momentum cell in the sorted array of particles (only the particle indexes are sorted). Not vectorizable.
     6. Sorting of the macro-particles per momentum cells, the cell index previously computed determine where
-    starts each momentum cell. Not vectorizable.
+       starts each momentum cell. Not vectorizable.
 
     Then, for each momentum cell:
 
     1. Division of the macro-particles of the momentum cell into packets (size depends on the
-    user parameters `merge_min_packet_size` and `merge_max_packet_size`)
+       user parameters `merge_min_packet_size` and `merge_max_packet_size`)
     2. Merge of the packs using the previously described Vranic algorithm. Partly vectorized.
     3. Creation of the merged macro-particles at the position of the previous ones
     4. Tag of the macro-particles to be removed
@@ -306,7 +306,7 @@ For both methods, the implemented algorithm is very similar.
     Then, once the merging finished for a given patch:
 
     1. Compression of the macro-particle list (remove hole in arrays let by removed and tagged particles).
-    By cleaning the particle vector at the end, we limit the computational impact of this step.
+       By cleaning the particle vector at the end, we limit the computational impact of this step.
 
 2.1 Cartesian momentum Cell discretization
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -500,7 +500,7 @@ Furthermore, the lasers have infinite duration.
 They simply start with a short ramp of :math:`\lambda / 4`.
 
 Some simulation parameters are given in the following table and the Smilei
-namelist is avalaible `here <_static/scripts/qed_pair_cascade.py>`_.
+namelist `is avalaible here <_static/scripts/qed_pair_cascade.py>`_.
 
 .. _table_qed_cascade_parameters:
 
