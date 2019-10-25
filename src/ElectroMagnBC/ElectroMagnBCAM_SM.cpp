@@ -206,7 +206,7 @@ void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             for( unsigned int j=3*isYmin ; j<nr_p ; j++ ) {
             
                 std::complex<double> byW = 0.;
-                yp[0] = patch->getDomainLocalMin( 1 ) +( j - EMfields->oversize[1] )*dr;
+                yp[0] = patch->getDomainLocalMin( 1 ) +( (double)j - (double)EMfields->oversize[1] )*dr;
                 // Lasers
                 for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
                     if (vecLaser[ilaser]->spacetime.size() > 2){
@@ -233,7 +233,7 @@ void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             for( unsigned int j=3*isYmin; j<nr_d ; j++ ) {
             
                 std::complex<double> bzW = 0.;
-                yd[0] = patch->getDomainLocalMin( 1 ) + ( j - 0.5 - EMfields->oversize[1] )*dr;
+                yd[0] = patch->getDomainLocalMin( 1 ) + ( (double)j - 0.5 - (double)EMfields->oversize[1] )*dr;
                 // Lasers
                 for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
                     if (vecLaser[ilaser]->spacetime.size() > 2){
