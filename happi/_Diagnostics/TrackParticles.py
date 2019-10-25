@@ -236,23 +236,11 @@ class TrackParticles(Diagnostic):
 					return
 
 			# Remove particles that are not actually tracked during the requested timesteps
-			print("Removing dead particles ...")
+			if self._verbose: print("Removing dead particles ...")
 			if type(self.selectedParticles) is not slice and len(self.selectedParticles) > 0:
 				first_time = self._locationForTime[self._timesteps[ 0]]
 				last_time  = self._locationForTime[self._timesteps[-1]]+1
-				# Note: the following h5py operation scales very poorly, so we do it by chunks instead
-				#IDs = self._h5items["Id"][first_time:last_time,self.selectedParticles]
-				cs = 1000
-				n = len(self.selectedParticles)
-				IDs = self._np.empty(( last_time - first_time, n ))
-				chunksize = min(cs,n)
-				nchunks = int(n/cs)
-				chunksize = int(n / nchunks)
-				chunkstop = 0
-				for ichunk in range(nchunks):
-					chunkstart = chunkstop
-					chunkstop  = min(chunkstart + chunksize, n)
-					IDs[:,chunkstart:chunkstop] = self._h5items["Id"][first_time:last_time,self.selectedParticles[chunkstart:chunkstop]]
+				IDs = self._readUnstructuredH5(self._h5items["Id"], self.selectedParticles, first_time, last_time)
 				dead_particles = self._np.flatnonzero(self._np.all( self._np.isnan(IDs) + (IDs==0), axis=0 ))
 				self.selectedParticles = self._np.delete( self.selectedParticles, dead_particles )
 
@@ -368,6 +356,26 @@ class TrackParticles(Diagnostic):
 			if self.nselectedParticles != self.nParticles:
 				info += "\n                with selection of "+str(self.nselectedParticles)+" particles"
 		return info
+
+	# Read hdf5 dataset faster with unstrusctured list of indices
+	def _readUnstructuredH5(self, dataset, indices, first_time, last_time=None):
+		if last_time is None:
+			last_time = first_time + 1
+		cs = 1000
+		if type(indices) is slice or len(indices) < cs:
+			return dataset[first_time:last_time, indices]
+		else:
+			n = len(indices)
+			result = self._np.empty(( last_time - first_time, n ), dtype=dataset.dtype)
+			chunksize = min(cs,n)
+			nchunks = int(n/cs)
+			chunksize = int(n / nchunks)
+			chunkstop = 0
+			for ichunk in range(nchunks):
+				chunkstart = chunkstop
+				chunkstop  = min(chunkstart + chunksize, n)
+				result[:,chunkstart:chunkstop] = dataset[first_time:last_time, indices[chunkstart:chunkstop]]
+			return result
 
 	# get all available tracked species
 	def getTrackSpecies(self):
@@ -554,45 +562,26 @@ class TrackParticles(Diagnostic):
 		if self._sort:
 			if self._rawData is None:
 				self._rawData = {}
-
-				if self._verbose: print("Preparing data ...")
-				# create dictionary with info on the axes
-				ntimes = len(self._timesteps)
-				for axis in self.axes:
-					if axis == "Id":
-						self._rawData[axis] = self._np.empty((ntimes, self.nselectedParticles), dtype=(self._np.uint64))
-						self._rawData[axis].fill(0)
-					elif axis == "q":
-						self._rawData[axis] = self._np.empty((ntimes, self.nselectedParticles), dtype=(self._np.int16 ))
-						self._rawData[axis].fill(0)
-					else:
-						self._rawData[axis] = self._np.empty((ntimes, self.nselectedParticles), dtype=(self._np.double))
-						self._rawData[axis].fill(self._np.nan)
+				first_time = self._locationForTime[self._timesteps[0]]
+				last_time  = self._locationForTime[self._timesteps[-1]] + 1
 				if self._verbose: print("Loading data ...")
-				# loop times and fill up the data
-				ID = self._np.zeros((self.nselectedParticles,), dtype=self._np.uint64)
-				data_double = self._np.zeros((self.nselectedParticles,), dtype=self._np.double)
-				data_int16  = self._np.zeros((self.nselectedParticles,), dtype=self._np.int16 )
-				for it, time in enumerate(self._timesteps):
-					if self._verbose: print("     iteration "+str(it+1)+"/"+str(ntimes)+"  (timestep "+str(time)+")")
-					timeIndex = self._locationForTime[time]
-					self._h5items["Id"].read_direct(ID, source_sel=self._np.s_[timeIndex,self.selectedParticles]) # read the particle Ids
-					deadParticles = (ID==0).nonzero()
-					for axis in self.axes:
-						if axis == "Id":
-							self._rawData[axis][it, :] = ID.squeeze()
-						elif axis == "q":
-							self._h5items[axis].read_direct(data_int16, source_sel=self._np.s_[timeIndex,self.selectedParticles])
-							self._rawData[axis][it, :] = data_int16.squeeze()
-						elif axis == "moving_x":
-							self._h5items["x"].read_direct(data_double, source_sel=self._np.s_[timeIndex,self.selectedParticles])
-							data_double -= self._XmovedForTime[time]
-							data_double[deadParticles]=self._np.nan
-							self._rawData[axis][it, :] = data_double.squeeze()
+				# fill up the data
+				ID = self._readUnstructuredH5(self._h5items["Id"], self.selectedParticles, first_time, last_time)
+				deadParticles = (ID==0).nonzero()
+				for axis in self.axes:
+					if self._verbose: print("   axis: "+axis)
+					if axis == "Id":
+						self._rawData[axis] = ID
+					else:
+						if axis=="moving_x":
+							data = self._readUnstructuredH5(self._h5items["x"], self.selectedParticles, first_time, last_time)
+							for it, time in enumerate(self._timesteps):
+								data[it,:] -= self._XmovedForTime[time]
 						else:
-							self._h5items[axis].read_direct(data_double, source_sel=self._np.s_[timeIndex,self.selectedParticles])
-							data_double[deadParticles]=self._np.nan
-							self._rawData[axis][it, :] = data_double.squeeze()
+							data = self._readUnstructuredH5(self._h5items[axis], self.selectedParticles, first_time, last_time)
+						data[deadParticles] = self._np.nan
+						self._rawData[axis] = data
+
 				if self._verbose: print("Process broken lines ...")
 				# Add the lineBreaks array which indicates where lines are broken (e.g. loop around the box)
 				self._rawData['brokenLine'] = self._np.zeros((self.nselectedParticles,), dtype=bool)

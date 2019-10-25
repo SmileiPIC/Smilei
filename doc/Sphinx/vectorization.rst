@@ -266,10 +266,3 @@ The following video shows how the patches are dynamically switched in vectorized
 
 For this specific benchmark, the speed-up obtained with vectorization is of x2.
 Adaptive vectorization brinds a small additional speed-up in some cases.
-
-----
-
-References
-^^^^^^^^^^
-
-.. [Beck2019] `A. Beck et al., CPC volume 244, pages 246-263 (2019) <https://doi.org/10.1016/j.cpc.2019.05.001>`_

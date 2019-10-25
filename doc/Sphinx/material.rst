@@ -28,7 +28,7 @@ Publications
 
 .. rst-class:: bigcitation
 
-.. [Gelfer]
+.. [Gelfer_a]
 
   E. Gelfer, A. Fedotov and S. Weber,
   `Radiation induced acceleration of ions`,
@@ -36,7 +36,7 @@ Publications
 
 .. rst-class:: bigcitation
 
-.. [Gelfer]
+.. [Gelfer_b]
 
   E. Gelfer, A. Fedotov, O. Klimo and S. Weber,
   `Absorption and opacity threshold for a thin foil in a strong circularly polarized laser field`,
