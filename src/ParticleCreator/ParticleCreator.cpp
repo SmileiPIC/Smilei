@@ -540,6 +540,19 @@ void ParticleCreator::createPosition( std::string position_initialization,
 {
     if( position_initialization == "regular" ) {
 
+        if ( species->regular_number_array_.size()!=0){
+            if ( species->regular_number_array_.size() != species->nDim_particle){
+                ERROR( "The number of particles required per cell per dimension (regular_number) must be of length " << species->nDim_particle << " in this geometry." );
+            }
+            int npart_check=1;
+            for( unsigned int idim=0; idim<species->nDim_particle; idim++ ) {
+                npart_check *= species->regular_number_array_[idim];
+            }
+            if( nPart != npart_check) {
+                ERROR( "The number of particles required per cell and per dimension is not coherent with the total number of particles per cell." );
+            }
+        }
+
         if( params.geometry != "AMcylindrical" ) {
             double inv_coeff_array[3];
             int    coeff_array[3];
@@ -554,18 +567,10 @@ void ParticleCreator::createPosition( std::string position_initialization,
                     inv_coeff_array[idim] = 1./coeff;
                 }
             } else{
-               int npart_check=1;
-               for( unsigned int idim=0; idim<species->nDim_particle; idim++ ) {
-                   npart_check *= species->regular_number_array_[idim];
-               }
-               if( nPart != npart_check) {
-                   ERROR( "The number of particles required per cell and per dimension is not coherent with the total number of particles per cell." );
-               }
                for( unsigned int idim=0; idim<species->nDim_particle; idim++ ) {
                    coeff_array[idim] = species->regular_number_array_[idim];
                    inv_coeff_array[idim] = 1./(double)coeff_array[idim];
                }
-
             }
 
             for( unsigned int  p=iPart; p<iPart+nPart; p++ ) {
@@ -575,29 +580,38 @@ void ParticleCreator::createPosition( std::string position_initialization,
                     i /= coeff_array[idim]; // integer division
                 }
             }
-        } else {
+        } else { // AM geometry
 
-            //Trick to derive number of particles per dimension from total number of particles per cell
             unsigned int Np_array[species->nDim_particle];
-            int Np = nPart;
-            int counter = 0;
-            unsigned int prime = 2;
             double dx, dr, dtheta, theta_offset;
-            for( unsigned int idim=0; idim<species->nDim_particle; idim++ ) {
-                Np_array[idim] = 1;
-            }
 
-            while( prime <= 23 && Np > 1 ) {
-                if( Np%prime == 0 ) {
-                    Np = Np/prime;
-                    Np_array[counter%species->nDim_particle] *= prime;
-                    counter++;
-                } else {
-                    prime++;
+            if ( species->regular_number_array_.size()==0){
+                //Trick to derive number of particles per dimension from total number of particles per cell
+                int Np = nPart;
+                int counter = 0;
+                unsigned int prime = 2;
+                for( unsigned int idim=0; idim<species->nDim_particle; idim++ ) {
+                    Np_array[idim] = 1;
+                }
+
+                while( prime <= 23 && Np > 1 ) {
+                    if( Np%prime == 0 ) {
+                        Np = Np/prime;
+                        Np_array[counter%species->nDim_particle] *= prime;
+                        counter++;
+                    } else {
+                        prime++;
+                    }
+                }
+                Np_array[counter%species->nDim_particle] *= Np; //At that point, if Np is not equal to 1, it means that nPart has a prime divisor greater than 23.
+                std::sort( Np_array, Np_array + species->nDim_particle ); //sort so that the largest number of particles per dimension is used along theta.
+
+            } else{
+
+                for( unsigned int idim=0; idim<species->nDim_particle; idim++ ) {
+                    Np_array[idim] = species->regular_number_array_[idim];
                 }
             }
-            Np_array[counter%species->nDim_particle] *= Np; //At that point, if Np is not equal to 1, it means that nPart has a prime divisor greater than 23.
-            std::sort( Np_array, Np_array + species->nDim_particle ); //sort so that the largest number of particles per dimension is used along theta.
 
             dx = species->cell_length[0]/Np_array[0];
             dr = species->cell_length[1]/Np_array[1];
