@@ -324,6 +324,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   :default: 2
 
   The number of azimuthal modes used for the Fourier decomposition in ``"AMcylindrical"`` geometry.
+  The modes range from mode 0 to mode `"number_of_AM-1"`.
 
 .. py:data:: number_of_AM_relativistic_field_initialization
 
@@ -646,7 +647,7 @@ Each species has to be defined in a ``Species`` block::
    The product of the elements of the provided list must be equal to `particles_per_cell`.
    This list sets the number of evenly spaced particles per cell per dimension at their initial positions.
    The numbers are given in the order [`Nx`, `Ny`, `Nz`] in cartesian geometries and [`Nx`, `Nr`, `Ntheta`] in `AMcylindrical` in which
-   case we advise to use :math:`Ntheta \geq  4\times Nmodes`.
+   case we advise to use :math:`Ntheta \geq  4\times (number\_of\_AM-1)`.
 
 .. py:data:: momentum_initialization
 
