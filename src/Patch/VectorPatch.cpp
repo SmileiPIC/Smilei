@@ -3352,3 +3352,17 @@ void VectorPatch::init_new_envelope( Params &params )
         } // end loop on patches
     }
 } // END init_new_envelope
+
+
+void  VectorPatch::reflectRhoMode0OnAxis( Params &params )
+{
+    for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+        if (params.geometry == "AMcylindrical"){
+            for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+                ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+                emAM->reflectRhoMode0OnAxis( );
+            }
+        }
+    }
+} // END  reflectRhoMode0OnAxis
+

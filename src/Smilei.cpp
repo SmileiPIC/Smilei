@@ -1,4 +1,4 @@
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////                                                                                                                ////
 ////                                                                                                                ////
@@ -187,6 +187,8 @@ int main( int argc, char *argv[] )
 
         vecPatches.computeCharge();
         vecPatches.sumDensities( params, time_dual, timers, 0, simWindow, &smpi );
+        if( (params.symmetric_rho_mode_0) && (!params.is_spectral) ) {
+        vecPatches.reflectRhoMode0OnAxis( params );}
         
         // Apply antennas
         // --------------
@@ -219,6 +221,8 @@ int main( int argc, char *argv[] )
 
         // Comm and synch charge and current densities
         vecPatches.sumDensities( params, time_dual, timers, 0, simWindow, &smpi );
+        if( (params.symmetric_rho_mode_0) && (!params.is_spectral) ) {
+        vecPatches.reflectRhoMode0OnAxis( params );}
 
         TITLE( "Initializing diagnostics" );
         vecPatches.initAllDiags( params, &smpi );
@@ -319,6 +323,8 @@ int main( int argc, char *argv[] )
 
             // Sum densities
             vecPatches.sumDensities( params, time_dual, timers, itime, simWindow, &smpi );
+            if( (params.symmetric_rho_mode_0) && (!params.is_spectral) ) {
+        vecPatches.reflectRhoMode0OnAxis( params );}
 
             // apply currents from antennas
             vecPatches.applyAntennas( time_dual );
