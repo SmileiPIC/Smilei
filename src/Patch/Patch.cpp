@@ -159,7 +159,7 @@ void Patch::finishCreation( Params &params, SmileiMPI *smpi, DomainDecomposition
     vecCollisions = CollisionsFactory::create( params, this, vecSpecies );
 
     // Initialize the particle injector
-    particle_injector_vector = ParticleInjectorFactory::createVector( params, this, vecSpecies );
+    particle_injector_vector_ = ParticleInjectorFactory::createVector( params, this, vecSpecies );
 
     // Initialize the particle walls
     partWalls = new PartWalls( params, this );
@@ -188,7 +188,7 @@ void Patch::finishCloning( Patch *patch, Params &params, SmileiMPI *smpi, unsign
     vecCollisions = CollisionsFactory::clone( patch->vecCollisions );
 
     // Clone the particle injector
-    particle_injector_vector = ParticleInjectorFactory::cloneVector( patch->particle_injector_vector, params, patch);
+    particle_injector_vector_ = ParticleInjectorFactory::cloneVector( patch->particle_injector_vector_, params, patch);
 
     // clone the particle walls
     partWalls = new PartWalls( patch->partWalls, this );
@@ -748,7 +748,7 @@ void Patch::cornersParticles( SmileiMPI *smpi, int ispec, Params &params, int iD
                                     //... copy it at the back of the local particle vector ...
                                     ( vecSpecies[ispec]->MPIbuff.partRecv[iDim][( iNeighbor+1 )%2] ).cp_particle( iPart, cuParticles );
                                     //...adjust last_index or cell_keys ...
-                                    vecSpecies[ispec]->add_space_for_a_particle();
+                                    vecSpecies[ispec]->addSpaceForOneParticle();
                                     //... and add its index to the particles to be sent later...
                                     vecSpecies[ispec]->MPIbuff.part_index_send[idim][0].push_back( cuParticles.size()-1 );
                                     //..without forgeting to add it to the list of particles to clean.
@@ -764,7 +764,7 @@ void Patch::cornersParticles( SmileiMPI *smpi, int ispec, Params &params, int iD
                                 if( neighbor_[idim][1]!=MPI_PROC_NULL ) { //if neighbour exists
                                     ( vecSpecies[ispec]->MPIbuff.partRecv[iDim][( iNeighbor+1 )%2] ).cp_particle( iPart, cuParticles );
                                     //...adjust last_index or cell_keys ...
-                                    vecSpecies[ispec]->add_space_for_a_particle();
+                                    vecSpecies[ispec]->addSpaceForOneParticle();
                                     vecSpecies[ispec]->MPIbuff.part_index_send[idim][1].push_back( cuParticles.size()-1 );
                                     vecSpecies[ispec]->addPartInExchList( cuParticles.size()-1 );
                                 }
@@ -787,7 +787,7 @@ void Patch::cornersParticles( SmileiMPI *smpi, int ispec, Params &params, int iD
                                 //... copy it at the back of the local particle vector ...
                                 ( vecSpecies[ispec]->MPIbuff.partRecv[0][( iNeighbor+1 )%2] ).cp_particle( iPart, cuParticles );
                                 //...adjust last_index or cell_keys ...
-                                vecSpecies[ispec]->add_space_for_a_particle();
+                                vecSpecies[ispec]->addSpaceForOneParticle();
                                 //... and add its index to the particles to be sent later...
                                 vecSpecies[ispec]->MPIbuff.part_index_send[1][0].push_back( cuParticles.size()-1 );
                                 //..without forgeting to add it to the list of particles to clean.
@@ -803,7 +803,7 @@ void Patch::cornersParticles( SmileiMPI *smpi, int ispec, Params &params, int iD
                                 //MESSAGE("particle diag +R");
                                 ( vecSpecies[ispec]->MPIbuff.partRecv[0][( iNeighbor+1 )%2] ).cp_particle( iPart, cuParticles );
                                 //...adjust last_index or cell_keys ...
-                                vecSpecies[ispec]->add_space_for_a_particle();
+                                vecSpecies[ispec]->addSpaceForOneParticle();
                                 vecSpecies[ispec]->MPIbuff.part_index_send[1][1].push_back( cuParticles.size()-1 );
                                 vecSpecies[ispec]->addPartInExchList( cuParticles.size()-1 );
                             }
@@ -826,7 +826,7 @@ void Patch::importAndSortParticles( SmileiMPI *smpi, int ispec, Params &params, 
     timer = MPI_Wtime();
 #endif
 
-    vecSpecies[ispec]->sort_part( params );
+    vecSpecies[ispec]->sortParticles( params );
 
 #ifdef  __DETAILED_TIMERS
     this->patch_timers[13] += MPI_Wtime() - timer;

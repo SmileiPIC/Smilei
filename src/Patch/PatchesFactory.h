@@ -72,6 +72,7 @@ public:
         
         // Create patches (create patch#0 then clone it)
         vecPatches.resize( npatches );
+        
         vecPatches.patches_[0] = create( params, smpi, vecPatches.domain_decomposition_, firstpatch, n_moved );
         
         TITLE( "Initializing Patches" );

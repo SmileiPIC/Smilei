@@ -109,7 +109,7 @@ public :
     void reconfiguration( Params &params, Timers &timers, int itime );
     
     //! Particle sorting for all patches
-    void sort_all_particles( Params &params );
+    void sortAllParticles( Params &params );
     
     //! For all patch, move particles (restartRhoJ(s), dynamics and exchangeParticles)
     void dynamics( Params &params,
@@ -138,7 +138,7 @@ public :
     //! Computation of the total charge
     void computeCharge();
     
-    void projection_for_diags( Params &params,
+    void projectionForDiags( Params &params,
                                SmileiMPI *smpi,
                                SimWindow *simWindow,
                                double time_dual,
@@ -153,12 +153,12 @@ public :
             SimWindow *simWindow,
             double time_dual, Timers &timers, int itime );
     //! For all patches, deposit susceptibility, then advance momentum of particles interacting with envelope
-    void ponderomotive_update_susceptibility_and_momentum( Params &params,
+    void ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
             SmileiMPI *smpi,
             SimWindow *simWindow,
             double time_dual, Timers &timers, int itime );
     //! For all patches, advance position of particles interacting with envelope, comm particles, project charge and current density
-    void ponderomotive_update_position_and_currents( Params &params,
+    void ponderomotiveUpdatePositionAndCurrents( Params &params,
             SmileiMPI *smpi,
             SimWindow *simWindow,
             double time_dual, Timers &timers, int itime );

@@ -42,6 +42,7 @@ public:
         std::vector<double> test_value = {1.2, 1.4};
         std::vector<uint64_t> test_id = {3, 4};
         std::vector<short> test_charge = {3, 4};
+        std::vector<double> test_chi = {0.01, 0.2};
         setVectorAttr( test_value, "x" );
         if( nDim_particle > 1 ) {
             setVectorAttr( test_value, "y" );
@@ -55,6 +56,7 @@ public:
         setVectorAttr( test_value, "weight" );
         setVectorAttr( test_charge, "charge" );
         setVectorAttr( test_id, "id" );
+        setVectorAttr( test_chi, "chi" );
         // Verify the return value of the function
         PyObject *ret( nullptr );
         ret = PyObject_CallFunctionObjArgs( function, particles, NULL );
@@ -137,6 +139,9 @@ public:
         setVectorAttr( p->Weight, "weight" );
         setVectorAttr( p->Charge, "charge" );
         setVectorAttr( p->Id, "id" );
+        if( p->isQuantumParameter ) {
+            setVectorAttr( p->Chi, "chi" );
+        }
     };
     
     inline PyObject *get()

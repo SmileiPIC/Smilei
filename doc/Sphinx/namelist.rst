@@ -389,7 +389,7 @@ Vectorization
 
 The block ``Vectorization`` is optional.
 It controls the SIMD operations that can enhance the performance of some computations.
-The technique is detailed in Ref. [Beck]_ and summarized in :doc:`this doc <vectorization>`.
+The technique is detailed in Ref. [Beck2019]_ and summarized in :doc:`this doc <vectorization>`.
 It requires :ref:`additional compilation options<vectorization_flags>` to be actived.
 
 .. code-block:: python
@@ -1138,6 +1138,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     Laser(
         box_side = "xmin",
         space_time_profile = [ By_profile, Bz_profile ]
+        space_time_profile_AM = [ Br_mode0, Bt_mode0, Br_mode1, Bt_mode1, ... ]
     )
 
 .. py:data:: box_side
@@ -1155,6 +1156,16 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     functions taking several arguments depending on the simulation dimension:
     :math:`(t)` for a 1-D simulation, :math:`(y,t)` for a 2-D simulation (etc.)
     The two functions represent :math:`B_y` and :math:`B_z`, respectively.
+    This can be used only in `Cartesian` geometries.
+
+.. py:data:: space_time_profile_AM
+
+    :type: A list of maximum 2*`number_of_AM` *python* functions.
+    
+    These profiles define the first modes of `Br` and `Bt` in the order shown in the above example.
+    Undefined modes are considered zero.
+    This can be used only in `AMcylindrical` geometry.
+
 
 
 .. rubric:: 2. Defining the wave envelopes
@@ -1372,13 +1383,14 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
         box_side         = "xmin",
         a0               = 1.,
         omega            = 1.,
-        focus            = [50., 40., 40.],
+        focus            = [50., 0.],
         waist            = 3.,
         polarization_phi = 0.,
         ellipticity      = 0.,
         time_envelope    = tconstant()
     )
 
+  Note that here, the focus is given in [x,r] coordinates. 
 
 .. rubric:: 7. Defining a generic wave at some distance from the boundary
 
@@ -2707,7 +2719,7 @@ for instance::
   * with a user-defined python function, an arbitrary quantity can be calculated (the *numpy*
     module is necessary). This function should take one argument, for instance
     ``particles``, which contains the attributes ``x``, ``y``, ``z``, ``px``, ``py``,
-    ``pz``, ``charge``, ``weight`` and ``id``. Each of these attributes is a *numpy* array
+    ``pz``, ``charge``, ``weight``, ``chi`` and ``id``. Each of these attributes is a *numpy* array
     containing the data of all particles in one patch. The function must return a *numpy*
     array of the same shape, containing the desired deposition of each particle. For example,
     defining the following function::

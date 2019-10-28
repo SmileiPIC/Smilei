@@ -206,12 +206,16 @@ void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             for( unsigned int j=3*isYmin ; j<nr_p ; j++ ) {
             
                 std::complex<double> byW = 0.;
-                if( imode==1 ) {
-                    yp[0] = patch->getDomainLocalMin( 1 ) +( j - EMfields->oversize[1] )*dr;
-                    // Lasers
-                    for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
-                        byW +=          vecLaser[ilaser]->getAmplitude0( yp, time_dual, 1+2*j, 0 )
-                                        + Icpx * vecLaser[ilaser]->getAmplitude1( yp, time_dual, 1+2*j, 0 );
+                yp[0] = patch->getDomainLocalMin( 1 ) +( (double)j - (double)EMfields->oversize[1] )*dr;
+                // Lasers
+                for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
+                    if (vecLaser[ilaser]->spacetime.size() > 2){
+                        byW +=          vecLaser[ilaser]->getAmplitudecomplexN(yp, time_dual, 0, 0, 2*imode);
+                    } else {                        
+                        if( imode==1 ) {
+                            byW +=          vecLaser[ilaser]->getAmplitude0( yp, time_dual, 1+2*j, 0 )
+                                            + Icpx * vecLaser[ilaser]->getAmplitude1( yp, time_dual, 1+2*j, 0 );
+                        }
                     }
                 }
                 
@@ -229,12 +233,16 @@ void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             for( unsigned int j=3*isYmin; j<nr_d ; j++ ) {
             
                 std::complex<double> bzW = 0.;
-                if( imode==1 ) {
-                    yd[0] = patch->getDomainLocalMin( 1 ) + ( j - 0.5 - EMfields->oversize[1] )*dr;
-                    // Lasers
-                    for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
-                        bzW +=          vecLaser[ilaser]->getAmplitude1( yd, time_dual, 2*j, 0 )
-                                        - Icpx * vecLaser[ilaser]->getAmplitude0( yd, time_dual, 2*j, 0 );
+                yd[0] = patch->getDomainLocalMin( 1 ) + ( (double)j - 0.5 - (double)EMfields->oversize[1] )*dr;
+                // Lasers
+                for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
+                    if (vecLaser[ilaser]->spacetime.size() > 2){
+                        bzW +=          vecLaser[ilaser]->getAmplitudecomplexN(yd, time_dual, 0, 0, 2*imode+1);
+                    } else {                        
+                        if( imode==1 ) {
+                            bzW +=          vecLaser[ilaser]->getAmplitude1( yd, time_dual, 2*j, 0 )
+                                           - Icpx * vecLaser[ilaser]->getAmplitude0( yd, time_dual, 2*j, 0 );
+                        }
                     }
                 }
                 //x=Xmin
@@ -260,7 +268,7 @@ void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
                 std::complex<double> byE = 0.;
                 // Lasers
                 if( imode==1 ) {
-                    yp[0] = patch->getDomainLocalMin( 1 ) + ( j - EMfields->oversize[1] )*dr;
+                    yp[0] = patch->getDomainLocalMin( 1 ) + ( (double)j - (double)EMfields->oversize[1] )*dr;
                     for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
                         byE +=          vecLaser[ilaser]->getAmplitude0( yp, time_dual, 1+2*j, 0 )
                                         + Icpx * vecLaser[ilaser]->getAmplitude1( yp, time_dual, 1+2*j, 0 );
@@ -280,7 +288,7 @@ void ElectroMagnBCAM_SM::apply( ElectroMagn *EMfields, double time_dual, Patch *
             
                 std::complex<double> bzE = 0.;
                 if( imode==1 ) {
-                    yd[0] = patch->getDomainLocalMin( 1 ) + ( j - 0.5  - EMfields->oversize[1] )*dr;
+                    yd[0] = patch->getDomainLocalMin( 1 ) + ( (double)j - 0.5  - (double)EMfields->oversize[1] )*dr;
                     // Lasers
                     for( unsigned int ilaser=0; ilaser< vecLaser.size(); ilaser++ ) {
                         bzE +=         vecLaser[ilaser]->getAmplitude1( yd, time_dual, 2*j, 0 )

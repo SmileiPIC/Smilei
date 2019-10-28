@@ -214,7 +214,7 @@ void VectorPatch::configuration( Params &params, Timers &timers, int itime )
     for( unsigned int ipatch=0 ; ipatch<npatches ; ipatch++ ) {
         // Particle importation for all species
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
-            species( ipatch, ispec )->initial_configuration( params, ( *this )( ipatch ) );
+            species( ipatch, ispec )->defaultConfigure( params, ( *this )( ipatch ) );
         }
     }
 
@@ -266,15 +266,15 @@ void VectorPatch::reconfiguration( Params &params, Timers &timers, int itime )
 // ---------------------------------------------------------------------------------------------------------------------
 // Sort all patches for the new time step
 // ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::sort_all_particles( Params &params )
+void VectorPatch::sortAllParticles( Params &params )
 {
 #ifdef _VECTO
     if((  params.vectorization_mode != "off" ) || (params.cell_sorting) ) {
         //Need to sort because particles are not well sorted at creation
         for( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
             for( unsigned int ispec=0 ; ispec<patches_[ipatch]->vecSpecies.size(); ispec++ ) {
-                patches_[ipatch]->vecSpecies[ispec]->compute_part_cell_keys( params );
-                patches_[ipatch]->vecSpecies[ispec]->sort_part( params );
+                patches_[ipatch]->vecSpecies[ispec]->computeParticleCellKeys( params );
+                patches_[ipatch]->vecSpecies[ispec]->sortParticles( params );
             }
         }
     }
@@ -326,7 +326,7 @@ void VectorPatch::dynamics( Params &params,
                 // Dynamics with scalar operators
                 else {
                     if( params.vectorization_mode == "adaptive" ) {
-                        spec->scalar_dynamics( time_dual, ispec,
+                        spec->scalarDynamics( time_dual, ispec,
                                                emfields( ipatch ),
                                                params, diag_flag, partwalls( ipatch ),
                                                ( *this )( ipatch ), smpi,
@@ -364,7 +364,7 @@ void VectorPatch::dynamics( Params &params,
     for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size(); ispec++ ) {
         Species *spec = species( 0, ispec );
         if( !spec->ponderomotive_dynamics && spec->isProj( time_dual, simWindow ) ) {
-            SyncVectorPatch::exchangeParticles( ( *this ), ispec, params, smpi, timers, itime ); // Included sort_part
+            SyncVectorPatch::exchangeParticles( ( *this ), ispec, params, smpi, timers, itime ); // Included sortParticles
         } // end condition on species
     } // end loop on species
     //MESSAGE("exchange particles");
@@ -382,7 +382,7 @@ void VectorPatch::dynamics( Params &params,
 // ---------------------------------------------------------------------------------------------------------------------
 // For all patches, project charge and current densities with standard scheme for diag purposes at t=0
 // ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::projection_for_diags( Params &params,
+void VectorPatch::projectionForDiags( Params &params,
                                         SmileiMPI *smpi,
                                         SimWindow *simWindow,
                                         double time_dual, Timers &timers, int itime )
@@ -396,7 +396,7 @@ void VectorPatch::projection_for_diags( Params &params,
         ( *this )( ipatch )->EMfields->restartRhoJ();
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
-                species( ipatch, ispec )->projection_for_diags( time_dual, ispec,
+                species( ipatch, ispec )->projectionForDiags( time_dual, ispec,
                         emfields( ipatch ),
                         params, diag_flag,
                         ( *this )( ipatch ), smpi );
@@ -413,7 +413,7 @@ void VectorPatch::projection_for_diags( Params &params,
             for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
                 if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
                     if( species( ipatch, ispec )->ponderomotive_dynamics ) {
-                        species( ipatch, ispec )->ponderomotive_project_susceptibility( time_dual, ispec,
+                        species( ipatch, ispec )->ponderomotiveProjectSusceptibility( time_dual, ispec,
                                 emfields( ipatch ),
                                 params, diag_flag,
                                 ( *this )( ipatch ), smpi,
@@ -437,7 +437,7 @@ void VectorPatch::finalizeAndSortParticles( Params &params, SmileiMPI *smpi, Sim
 
     for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size(); ispec++ ) {
         if( ( *this )( 0 )->vecSpecies[ispec]->isProj( time_dual, simWindow ) ) {
-            SyncVectorPatch::finalizeAndSortParticles( ( *this ), ispec, params, smpi, timers, itime ); // Included sort_part
+            SyncVectorPatch::finalizeAndSortParticles( ( *this ), ispec, params, smpi, timers, itime ); // Included sortParticles
         }
 
     }
@@ -450,7 +450,7 @@ void VectorPatch::finalizeAndSortParticles( Params &params, SmileiMPI *smpi, Sim
         // Particle importation for all species
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
-                species( ipatch, ispec )->dynamics_import_particles( time_dual, ispec,
+                species( ipatch, ispec )->dynamicsImportParticles( time_dual, ispec,
                         params,
                         ( *this )( ipatch ), smpi,
                         localDiags );
@@ -530,10 +530,10 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
             init_space[2] = params.n_space[2];
             
             vector<int>  previous_particle_number_per_species(patch->vecSpecies.size(),0);
-            vector<unsigned int>  particle_index(patch->particle_injector_vector.size(),0);
+            vector<unsigned int>  particle_index(patch->particle_injector_vector_.size(),0);
             
             // Local buffer of particles
-            vector<Particles> local_particles_vector(patch->particle_injector_vector.size());
+            vector<Particles> local_particles_vector(patch->particle_injector_vector_.size());
             
             // Pointer to the current particle injector
             ParticleInjector * particle_injector;
@@ -558,10 +558,10 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
 
             // Creation of the new particles for all injectors
             // Create particles as if t0 with ParticleCreator
-            for (unsigned int i_injector=0 ; i_injector<patch->particle_injector_vector.size() ; i_injector++) {
+            for (unsigned int i_injector=0 ; i_injector<patch->particle_injector_vector_.size() ; i_injector++) {
                 
                 // Pointer to the current particle injector
-                particle_injector = patch->particle_injector_vector[i_injector];
+                particle_injector = patch->particle_injector_vector_[i_injector];
                 
                 if ( (patch->isXmin() && particle_injector->isXmin()) ||
                      (patch->isXmax() && particle_injector->isXmax()) ) {
@@ -622,10 +622,10 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
             
             
             // Update positions from momentum
-            for (unsigned int i_injector=0 ; i_injector<patch->particle_injector_vector.size() ; i_injector++) {
+            for (unsigned int i_injector=0 ; i_injector<patch->particle_injector_vector_.size() ; i_injector++) {
                 
                 // Pointer to the current particle injector
-                particle_injector = patch->particle_injector_vector[i_injector];
+                particle_injector = patch->particle_injector_vector_[i_injector];
                 
                 // Particle created at the same position of another species
                 if (!particle_injector->position_initialization_on_injector_) {
@@ -646,10 +646,10 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
             }
             
             // Update positions with copy from another species
-            for (unsigned int i_injector=0 ; i_injector<patch->particle_injector_vector.size() ; i_injector++) {
+            for (unsigned int i_injector=0 ; i_injector<patch->particle_injector_vector_.size() ; i_injector++) {
                 
                 // Pointer to the current particle injector
-                particle_injector = patch->particle_injector_vector[i_injector];
+                particle_injector = patch->particle_injector_vector_[i_injector];
                 
                 // Particle created at the same position of another species
                 if (particle_injector->position_initialization_on_injector_) {
@@ -673,12 +673,12 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
             int new_particle_number;
             
             // Filter particles when initialized on different position
-            for (unsigned int i_injector=0 ; i_injector<patch->particle_injector_vector.size() ; i_injector++) {
+            for (unsigned int i_injector=0 ; i_injector<patch->particle_injector_vector_.size() ; i_injector++) {
 
                 if (local_particles_vector[i_injector].size() > 0) {
 
                     // We first get the species id associated to this injector
-                    i_species = patch->particle_injector_vector[i_injector]->getSpeciesNumber();
+                    i_species = patch->particle_injector_vector_[i_injector]->getSpeciesNumber();
                     
                     // species pointer
                     injector_species = species( ipatch, i_species );
@@ -1592,7 +1592,7 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
         if( species( 0, ispec )->relativistic_field_initialization ) {
             for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
                 if( time_primal==species( ipatch, ispec )->time_relativistic_initialization ) {
-                    s_gamma += species( ipatch, ispec )->sum_gamma();
+                    s_gamma += species( ipatch, ispec )->sumGamma();
                     nparticles += species( ipatch, ispec )->getNbrOfParticles();
                 }
             }
@@ -2025,7 +2025,7 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
         if( species( 0, ispec )->relativistic_field_initialization ) {
             for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
                 if( time_primal==species( ipatch, ispec )->time_relativistic_initialization ) {
-                    s_gamma += species( ipatch, ispec )->sum_gamma();
+                    s_gamma += species( ipatch, ispec )->sumGamma();
                     nparticles += species( ipatch, ispec )->getNbrOfParticles();
                 }
             }
@@ -2571,7 +2571,7 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
         for( unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++ ) {
             for( unsigned int ispec=0 ; ispec< recv_patches_[ipatch]->vecSpecies.size() ; ispec++ ) {
                 if( dynamic_cast<SpeciesVAdaptiveMixedSort *>( recv_patches_[ipatch]->vecSpecies[ispec] ) ) {
-                    dynamic_cast<SpeciesVAdaptiveMixedSort *>( recv_patches_[ipatch]->vecSpecies[ispec] )->compute_part_cell_keys( params );
+                    dynamic_cast<SpeciesVAdaptiveMixedSort *>( recv_patches_[ipatch]->vecSpecies[ispec] )->computeParticleCellKeys( params );
                     dynamic_cast<SpeciesVAdaptiveMixedSort *>( recv_patches_[ipatch]->vecSpecies[ispec] )->reconfigure_operators( params, recv_patches_[ipatch] );
                 }
             }
@@ -2582,7 +2582,7 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
         for( unsigned int ipatch=0 ; ipatch<recv_patch_id_.size() ; ipatch++ ) {
             for( unsigned int ispec=0 ; ispec< recv_patches_[ipatch]->vecSpecies.size() ; ispec++ ) {
                 if( dynamic_cast<SpeciesVAdaptive *>( recv_patches_[ipatch]->vecSpecies[ispec] ) ) {
-                    dynamic_cast<SpeciesVAdaptive *>( recv_patches_[ipatch]->vecSpecies[ispec] )->compute_part_cell_keys( params );
+                    dynamic_cast<SpeciesVAdaptive *>( recv_patches_[ipatch]->vecSpecies[ispec] )->computeParticleCellKeys( params );
                     dynamic_cast<SpeciesVAdaptive *>( recv_patches_[ipatch]->vecSpecies[ispec] )->reconfigure_operators( params, recv_patches_[ipatch] );
                 }
             }
@@ -3425,7 +3425,7 @@ void VectorPatch::runEnvelopeModule( Params &params,
         double time_dual, Timers &timers, int itime )
 {
     // interpolate envelope for susceptibility deposition, project susceptibility for envelope equation, momentum advance
-    ponderomotive_update_susceptibility_and_momentum( params, smpi, simWindow, time_dual, timers, itime );
+    ponderomotiveUpdateSusceptibilityAndMomentum( params, smpi, simWindow, time_dual, timers, itime );
 
     // comm and sum susceptibility
     sumSusceptibility( params, time_dual, timers, itime, simWindow, smpi );
@@ -3434,14 +3434,14 @@ void VectorPatch::runEnvelopeModule( Params &params,
     solveEnvelope( params, simWindow, itime, time_dual, timers, smpi );
 
     // interp updated envelope for position advance, update positions and currents for Maxwell's equations
-    ponderomotive_update_position_and_currents( params, smpi, simWindow, time_dual, timers, itime );
+    ponderomotiveUpdatePositionAndCurrents( params, smpi, simWindow, time_dual, timers, itime );
 
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all patch, update momentum for particles interacting with envelope
 // ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::ponderomotive_update_susceptibility_and_momentum( Params &params,
+void VectorPatch::ponderomotiveUpdateSusceptibilityAndMomentum( Params &params,
         SmileiMPI *smpi,
         SimWindow *simWindow,
         double time_dual, Timers &timers, int itime )
@@ -3459,20 +3459,20 @@ void VectorPatch::ponderomotive_update_susceptibility_and_momentum( Params &para
             if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
                 if( species( ipatch, ispec )->ponderomotive_dynamics ) {
                     if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators || params.cell_sorting )
-                        species( ipatch, ispec )->ponderomotive_update_susceptibility_and_momentum( time_dual, ispec,
+                        species( ipatch, ispec )->ponderomotiveUpdateSusceptibilityAndMomentum( time_dual, ispec,
                                 emfields( ipatch ),
                                 params, diag_flag,
                                 ( *this )( ipatch ), smpi,
                                 localDiags );
                     else {
                         if( params.vectorization_mode == "adaptive" ) {
-                            species( ipatch, ispec )->scalar_ponderomotive_update_susceptibility_and_momentum( time_dual, ispec,
+                            species( ipatch, ispec )->scalarPonderomotiveUpdateSusceptibilityAndMomentum( time_dual, ispec,
                                     emfields( ipatch ),
                                     params, diag_flag,
                                     ( *this )( ipatch ), smpi,
                                     localDiags );
                         } else {
-                            species( ipatch, ispec )->Species::ponderomotive_update_susceptibility_and_momentum( time_dual, ispec,
+                            species( ipatch, ispec )->Species::ponderomotiveUpdateSusceptibilityAndMomentum( time_dual, ispec,
                                     emfields( ipatch ),
                                     params, diag_flag,
                                     ( *this )( ipatch ), smpi,
@@ -3492,9 +3492,9 @@ void VectorPatch::ponderomotive_update_susceptibility_and_momentum( Params &para
     timers.push_mom.update( *this, params.printNow( itime ) );
 #endif
 
-} // END ponderomotive_update_susceptibility_and_momentum
+} // END ponderomotiveUpdateSusceptibilityAndMomentum
 
-void VectorPatch::ponderomotive_update_position_and_currents( Params &params,
+void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
         SmileiMPI *smpi,
         SimWindow *simWindow,
         double time_dual, Timers &timers, int itime )
@@ -3511,7 +3511,7 @@ void VectorPatch::ponderomotive_update_position_and_currents( Params &params,
             if( ( *this )( ipatch )->vecSpecies[ispec]->isProj( time_dual, simWindow ) || diag_flag ) {
                 if( species( ipatch, ispec )->ponderomotive_dynamics ) {
                     if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators || params.cell_sorting )
-                        species( ipatch, ispec )->ponderomotive_update_position_and_currents( time_dual, ispec,
+                        species( ipatch, ispec )->ponderomotiveUpdatePositionAndCurrents( time_dual, ispec,
                                 emfields( ipatch ),
                                 params, diag_flag, partwalls( ipatch ),
                                 ( *this )( ipatch ), smpi,
@@ -3519,13 +3519,13 @@ void VectorPatch::ponderomotive_update_position_and_currents( Params &params,
                     else {
 
                         if( params.vectorization_mode == "adaptive" ) {
-                            species( ipatch, ispec )->scalar_ponderomotive_update_position_and_currents( time_dual, ispec,
+                            species( ipatch, ispec )->scalarPonderomotiveUpdatePositionAndCurrents( time_dual, ispec,
                                     emfields( ipatch ),
                                     params, diag_flag, partwalls( ipatch ),
                                     ( *this )( ipatch ), smpi,
                                     localDiags );
                         } else {
-                            species( ipatch, ispec )->Species::ponderomotive_update_position_and_currents( time_dual, ispec,
+                            species( ipatch, ispec )->Species::ponderomotiveUpdatePositionAndCurrents( time_dual, ispec,
                                     emfields( ipatch ),
                                     params, diag_flag, partwalls( ipatch ),
                                     ( *this )( ipatch ), smpi,
@@ -3550,7 +3550,7 @@ void VectorPatch::ponderomotive_update_position_and_currents( Params &params,
     for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size(); ispec++ ) {
         if( ( *this )( 0 )->vecSpecies[ispec]->ponderomotive_dynamics ) {
             if( ( *this )( 0 )->vecSpecies[ispec]->isProj( time_dual, simWindow ) ) {
-                SyncVectorPatch::exchangeParticles( ( *this ), ispec, params, smpi, timers, itime ); // Included sort_part
+                SyncVectorPatch::exchangeParticles( ( *this ), ispec, params, smpi, timers, itime ); // Included sortParticles
             } // end condition on species
         } // end condition on envelope dynamics
     } // end loop on species
@@ -3558,7 +3558,7 @@ void VectorPatch::ponderomotive_update_position_and_currents( Params &params,
 
 
 
-} // END ponderomotive_update_position_and_currents
+} // END ponderomotiveUpdatePositionAndCurrents
 
 
 void VectorPatch::init_new_envelope( Params &params )
