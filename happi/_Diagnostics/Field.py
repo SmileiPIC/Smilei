@@ -69,7 +69,7 @@ class Field(Diagnostic):
 						fname = f[:2]
 						f = f[3:]
 					elif f[:10] in ["Env_A_abs_","Env_E_abs_"]:
-						fname = f#[:9] 
+						fname = f[:9]
                                                 f = f[10:]
                                                 self._is_complex = False
                                                 build3d = None
@@ -418,13 +418,17 @@ class Field(Diagnostic):
 		
 		 # for each field in operation, obtain the data
 		for field in self._fieldname:
-                        print field
+                        fieldname = field
 			B = self._np.empty(self._finalShape)
+
+                        if self.cylindrical: # // = envelope mode 0 is real
+                                fieldname=field+"_mode_0"
+
 			try:
-				h5item[field].read_direct(B, source_sel=self._selection) # get array
+				h5item[fieldname].read_direct(B, source_sel=self._selection) # get array
 			except:
 				B = self._np.squeeze(B)
-				h5item[field].read_direct(B, source_sel=self._selection) # get array
+				h5item[fieldname].read_direct(B, source_sel=self._selection) # get array
 				B = self._np.reshape(B, self._finalShape)
 			C.update({ field:B })
 		
