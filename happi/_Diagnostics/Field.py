@@ -154,7 +154,7 @@ class Field(Diagnostic):
 		
 		# Case of a cylindrical geometry
 		# Check whether "theta" or "build3d" option is chosen
-		if self.cylindrical and self._is_complex:
+		if self.cylindrical :
 			theta   = kwargs.pop("theta"  , None)
 			build3d = kwargs.pop("build3d", None)
 			modes   = kwargs.pop("modes"  , None)
@@ -210,14 +210,15 @@ class Field(Diagnostic):
 		axis_start = self._offset
 		axis_stop  = self._offset + (self._initialShape-0.5)*self._spacing
 		axis_step  = self._spacing
-		if self.cylindrical and self._is_complex:
+		if self.cylindrical :
 			if build3d is not None:
 				self._initialShape = [int(self._np.ceil( (s[1]-s[0])/float(s[2]) )) for s in build3d]
 				axis_start = build3d[:,0]
 				axis_stop  = build3d[:,1]
 				axis_step  = build3d[:,2]
 			else:
-				self._initialShape[1] /= 2
+                                if self._is_complex:
+                                        self._initialShape[1] /= 2
 				axis_stop = self._offset + (self._initialShape-0.5)*self._spacing
 		
 		# 2 - Manage timesteps
@@ -291,20 +292,23 @@ class Field(Diagnostic):
 		if self.cylindrical:
 			self._complex_selection_real = list(self._selection)
 			self._complex_selection_imag = list(self._selection)
+                        complex_factor = 2 #cylindrical default is complex
+                        if not self._is_complex :
+                                complex_factor = 1
 			if type(self._selection[1]) is slice:
 				self._complex_selection_real[1] = slice(
-					None if self._selection[1].start is None else self._selection[1].start*2,
-					None if self._selection[1].stop  is None else self._selection[1].stop *2,
-					(self._selection[1].step  or 1)*2
+					None if self._selection[1].start is None else self._selection[1].start*complex_factor,
+					None if self._selection[1].stop  is None else self._selection[1].stop *complex_factor,
+					(self._selection[1].step  or 1)*complex_factor
 				)
 				self._complex_selection_imag[1] = slice(
-					(self._selection[1].start or 0)*2 + 1,
-					None if self._selection[1].stop is None else self._selection[1].stop*2 + 1,
-					(self._selection[1].step  or 1)*2
+					(self._selection[1].start or 0)*complex_factor + 1,
+					None if self._selection[1].stop is None else self._selection[1].stop*complex_factor + 1,
+					(self._selection[1].step  or 1)*complex_factor
 				)
 			else:
-				self._complex_selection_real[1] = self._selection[1]*2
-				self._complex_selection_imag[1] = self._selection[1]*2 + 1
+				self._complex_selection_real[1] = self._selection[1]*complex_factor
+				self._complex_selection_imag[1] = self._selection[1]*complex_factor + 1
 			self._complex_selection_real = tuple(self._complex_selection_real)
 			self._complex_selection_imag = tuple(self._complex_selection_imag)
 			
@@ -313,7 +317,7 @@ class Field(Diagnostic):
 				# Calculate the raw data positions
 				self._raw_positions = (
 					self._np.arange(self._offset[0], self._offset[0] + (self._raw_shape[0]  -0.5)*self._spacing[0], self._spacing[0] ),
-					self._np.arange(self._offset[1], self._offset[1] + (self._raw_shape[1]/2-0.5)*self._spacing[1], self._spacing[1] ),
+					self._np.arange(self._offset[1], self._offset[1] + (self._raw_shape[1]/complex_factor-0.5)*self._spacing[1], self._spacing[1] ),
 				)
 				# Calculate the positions of points in the final box
 				x = self._np.arange(*build3d[0])
@@ -418,17 +422,12 @@ class Field(Diagnostic):
 		
 		 # for each field in operation, obtain the data
 		for field in self._fieldname:
-                        fieldname = field
 			B = self._np.empty(self._finalShape)
-
-                        if self.cylindrical: # // = envelope mode 0 is real
-                                fieldname=field+"_mode_0"
-
 			try:
-				h5item[fieldname].read_direct(B, source_sel=self._selection) # get array
+				h5item[field].read_direct(B, source_sel=self._selection) # get array
 			except:
 				B = self._np.squeeze(B)
-				h5item[fieldname].read_direct(B, source_sel=self._selection) # get array
+				h5item[field].read_direct(B, source_sel=self._selection) # get array
 				B = self._np.reshape(B, self._finalShape)
 			C.update({ field:B })
 		
