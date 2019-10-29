@@ -420,9 +420,6 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     PyTools::extract( "relativistic_poisson_max_iteration", relativistic_poisson_max_iteration, "Main" );
     PyTools::extract( "relativistic_poisson_max_error", relativistic_poisson_max_error, "Main" );
 
-    // Symmetry for Rho mode 0 in AM (only affects output)
-    PyTools::extract( "symmetric_rho_mode_0", symmetric_rho_mode_0, "Main" );
-
     // PXR parameters
     PyTools::extract( "is_spectral", is_spectral, "Main" );
     if( is_spectral ) {

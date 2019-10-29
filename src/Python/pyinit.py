@@ -203,9 +203,6 @@ class Main(SmileiSingleton):
     relativistic_poisson_max_iteration = 50000
     relativistic_poisson_max_error = 1.e-22
 
-    # Symmetry for Rho mode 0 in AM (only affects output)
-    symmetric_rho_mode_0 = False
-
     # Default fields
     maxwell_solver = 'Yee'
     EM_boundary_conditions = [["periodic"]]

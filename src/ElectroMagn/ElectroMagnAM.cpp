@@ -1479,35 +1479,3 @@ void ElectroMagnAM::initAntennas( Patch *patch )
     
 }
 
-void ElectroMagnAM::reflectRhoMode0OnAxis()
-{
-
-    // This function is meant to symmetrize the charge density rho around the Axis, 
-    // only for the mode 0. Since Rho does not play a role in the evolution of
-    // the electromagnetic fields in FDTD schemes, this  change affects only
-    // the output
-
-    // static cast of the total charge density
-    cField2D *rho    = rho_AM_[0];
-    
-    // Remember that j = 2 corresponds to r=0 for Rho, j=3 to r=DeltaR
-    if (isYmin){
-        for( unsigned int i=0 ; i<nl_p ; i++ ){
-            (*rho)(i,2) = (*rho)(i,3);
-            (*rho)(i,1) = (*rho)(i,3);
-            (*rho)(i,0) = (*rho)(i,4);
-        }
-        for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
-            if( rho_AM_s[ispec] ) {
-                cField2D *rhoAM_s  = rho_AM_s[ispec];
-                for( unsigned int i=0 ; i<nl_p ; i++ ){
-                    (*rhoAM_s)(i,2) = (*rhoAM_s)(i,3);
-                    (*rhoAM_s)(i,1) = (*rhoAM_s)(i,3);
-                    (*rhoAM_s)(i,0) = (*rhoAM_s)(i,4);
-                }
-            }
-        }
-    }
-  
-}  // ReflectRhoMode0OnAxis
-

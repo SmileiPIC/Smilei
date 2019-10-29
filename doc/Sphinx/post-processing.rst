@@ -156,6 +156,13 @@ Open a Field diagnostic
   * ``modes``: An integer or a list of integers
      | Only these modes numbers will be used in the calculation. If omited, all modes are used.
 
+.. note::
+
+  The Fields of the envelope-related quantities in ``AMcylindrical`` geometry, 
+  working only with one azimuthal mode (perfect cylindrical symmetry), 
+  are treated in a special way. They don't need an angle ``theta`` to be opened. 
+  These quantities are ``Env_A_abs_mode_0``, ``Env_E_abs_mode_0``, ``Env_Chi_mode_0``. 
+
 **Example**::
 
   S = happi.Open("path/to/my/results")
