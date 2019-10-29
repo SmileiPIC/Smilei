@@ -326,9 +326,21 @@ int main( int argc, char *argv[] )
             //    especially to compare solvers
             //if ( global_factor==1 )
             {
+                // de-apply external time fields if requested
+                if ( vecPatches(0)->EMfields->extTimeFields.size() )
+                    vecPatches.resetExternalTimeFields();
+
                 if( time_dual > params.time_fields_frozen ) {
                     vecPatches.solveMaxwell( params, simWindow, itime, time_dual, timers, &smpi );
                 }
+
+                #pragma omp single
+                {
+                    // apply external time fields if requested
+                    if ( vecPatches(0)->EMfields->extTimeFields.size() )
+                        vecPatches.applyExternalTimeFields(time_dual);
+                }
+
             }
 #else
             // Force temporary usage of double grids, even if global_factor = 1

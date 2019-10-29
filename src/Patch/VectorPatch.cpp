@@ -928,10 +928,6 @@ void VectorPatch::sumSusceptibility( Params &params, double time_dual, Timers &t
 // ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime, double time_dual, Timers &timers, SmileiMPI *smpi )
 {
-    // de-apply external time fields if requested
-    if ( emfields(0)->extTimeFields.size() )
-        resetExternalTimeFields();
-
     timers.maxwell.restart();
 
     for( unsigned int ipassfilter=0 ; ipassfilter<params.currentFilter_passes ; ipassfilter++ ) {
@@ -1094,13 +1090,6 @@ void VectorPatch::finalize_sync_and_bc_fields( Params &params, SmileiMPI *smpi, 
             // Computes B at time n using B and B_m.
             ( *this )( ipatch )->EMfields->centerMagneticFields();
         }
-    }
-
-    #pragma omp single
-    {
-	// apply external time fields if requested
-        if ( emfields(0)->extTimeFields.size() )
-            applyExternalTimeFields(time_dual);
     }
 
 #endif
