@@ -153,10 +153,7 @@ public:
     unsigned int relativistic_poisson_max_iteration;
     //! Maxium relativistic poisson error tolerated
     double relativistic_poisson_max_error;
-
-    // Symmetry for Rho mode 0 in AM (only affects output)
-    bool symmetric_rho_mode_0;    
-
+    
     //! Do we need to exchange full B (default=0 <=> only 2 components are exchanged by dimension)
     bool full_B_exchange;
     

@@ -217,8 +217,6 @@ public:
     
     //!Pointers toward R inverse values stored in patch
     double *invR, *invRd; 
-
-    void reflectRhoMode0OnAxis();
 };
 
 #endif
