@@ -74,7 +74,7 @@ class Field(Diagnostic):
                                                 self._is_complex = False
                                                 build3d = None
 					elif f[:8] in ["Env_Chi_"]:
-						fname = f#[:7] 
+						fname = f[:7]
                                                 f = f[8:]
                                                 self._is_complex = False
                                                 build3d = None
