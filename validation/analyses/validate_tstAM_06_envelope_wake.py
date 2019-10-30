@@ -4,7 +4,7 @@ import happi
 S = happi.Open(["./restart*"], verbose=False)
 
 # COMPARE THE Env_A_abs FIELD
-Env_A_abs = S.Field(0, "Env_A_abs_mode_0", timesteps=1700.).getData()[0]
+Env_A_abs = S.Field(0, "Env_A_abs", theta=0, timesteps=1700.).getData()[0]
 Validate("Env_A_abs field at iteration 1700", Env_A_abs, 0.01)
 
 # COMPARE THE Ex FIELD
@@ -12,7 +12,7 @@ El = S.Field(1, "El", theta=0, timesteps=1700.).getData()[0]
 Validate("El field at iteration 1700", El, 0.01)
 
 # COMPARE THE Env_Chi FIELD
-Env_Chi = S.Field(0, "Env_Chi_mode_0", timesteps=1700.).getData()[0]
+Env_Chi = S.Field(0, "Env_Chi", theta=0, timesteps=1700.).getData()[0]
 Validate("Env_Chi field at iteration 1700", Env_Chi, 0.01)
 
 
