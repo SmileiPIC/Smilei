@@ -414,6 +414,8 @@ class LaserEnvelope(SmileiSingleton):
     envelope_solver = "explicit"
     envelope_profile = None
     Envelope_boundary_conditions = [["reflective"]]
+    polarization_phi = 0.
+    ellipticity = 0.
 
 
 class Collisions(SmileiComponent):
