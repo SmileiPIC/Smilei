@@ -32,6 +32,8 @@ public:
     Profile *profile_;
     const std::vector<double> cell_length;
     const double timestep;
+    double polarization_phi;
+    double ellipticity;
     
     Field *A_;         // envelope value at timestep n
     Field *A0_;        // envelope value at timestep n-1

@@ -44,6 +44,13 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
     std:: string envelope_solver  = "explicit"; // default value
     
     PyTools::extract( "envelope_solver", envelope_solver, "LaserEnvelope" );
+   
+    if (params.envelope_ionization_is_active){
+        info << "\t\tpolarization angle (only for ionization) : " << polarization_phi << endl;
+        info << "\t\tellipticity (only for ionization)        : " << ellipticity << endl;
+        params.envelope_ellipticity = ellipticity;
+        params.envelope_polarization_phi = polarization_phi;
+    }
     
     std::complex<double>     i1 = std::complex<double>( 0., 1 ); // imaginary unit
     double k0 = 1.; // laser wavenumber
