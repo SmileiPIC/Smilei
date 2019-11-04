@@ -35,13 +35,13 @@ Physical model for field ionization
 This scheme relies on the quasi-static rate for tunnel ionization derived in
 [Perelomov1966]_, [Perelomov1967]_ and [Ammosov1986]_.
 Considering an ion with atomic number :math:`Z` being ionized from charge state
-:math:`Z^\star-1` to :math:`Z^\star \le Z` in an electric field :math:`\mathbf{E}`
+:math:`Z^\star-1` to :math:`Z^\star \le Z` in a constant electric field :math:`\mathbf{E}`
 of magnitude :math:`\vert E\vert`, the ionization rate reads:
 
 .. math::
   :label: ionizationRate
 
-  \Gamma_{\rm qs} = A_{n^\star,l^\star}\,B_{l,\vert m\vert}\,
+  \Gamma_{\rm ADK, DC} = A_{n^\star,l^\star}\,B_{l,\vert m\vert}\,
   I_p\,\left( \frac{2 (2 I_p)^{3/2}}{\vert E\vert} \right)^{2n^\star-\vert m \vert -1}\,
   \exp\!\left( -\frac{2 (2 I_p)^{3/2}}{3 \vert E\vert}  \right)\,,
 
@@ -50,7 +50,7 @@ where :math:`I_p` is the :math:`Z^{\star}-1` ionization potential of the ion,
 the effective principal quantum number and angular momentum,
 and :math:`l` and :math:`m` denote the angular momentum and its projection on
 the laser polarization direction, respectively.
-:math:`\Gamma_{\rm qs}`, :math:`I_p` and :math:`E` are here expressed in atomic units
+:math:`\Gamma_{\rm ADK, DC}`, :math:`I_p` and :math:`E` are here expressed in atomic units
 The coefficients :math:`A_{n^\star,l^\star}` and :math:`B_{l,\vert m\vert}` are given by:
 
 .. math::
@@ -68,7 +68,7 @@ over a period :math:`2\pi/\omega` leads to the well-known cycle-averaged ionizat
 .. math::
   :label: ADKrate
 
-  \Gamma_{\rm ADK} = \sqrt{\frac{6}{\pi}}A_{n^\star,l^\star}\,B_{l,\vert m\vert}
+  \Gamma_{\rm ADK, AC} = \sqrt{\frac{3}{\pi}}A_{n^\star,l^\star}\,B_{l,\vert m\vert}
   \,I_p\,\left( \frac{2 (2 I_p)^{3/2}}{\vert E\vert} \right)^{2n^\star-\vert m \vert -3/2}\,
   \exp\!\left( -\frac{2 (2 I_p)^{3/2}}{3 \vert E\vert}  \right)\,.
 
@@ -95,6 +95,9 @@ up to a few tens of thousands of eV (for electrons on the internal shell
 of high-Z atoms). As a consequence, :math:`R\gg1`, and the probability
 of ionization of an electron with magnetic quantum number :math:`\vert m \vert=0`
 greatly exceeds that of an electron with :math:`\vert m \vert = 1`.
+
+The initial velocity of the electrons newly created by ionization is chosen as equal to the ion velocity.
+This constitutes a minor violation of momentum conservation, as the ion mass is not decreased after ionization.
 
 
 Monte-Carlo scheme
@@ -133,6 +136,7 @@ Finally, to ensure energy conservation, an ionization current
 :math:`{\bf J}_{\rm ion}` is projected onto the simulation grid such that
 
 .. math::
+  :label: EnergyConservation
 
   {\bf J}_{\rm ion} \cdot {\bf E} = \Delta t^{-1}\,\sum_{j=1}^k I_p(Z^{\star}-1+k)\,.
 
@@ -193,6 +197,80 @@ in our simulations.
 
 
 ----
+
+.. _field_ionization_envelope:
+
+Field ionization with a laser envelope
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+In a typical PIC simulation, the laser oscillation is sampled frequently in time, 
+thus the electric field can be considered static and the ionization rate in 
+DC (:math:`\Gamma_{\rm ADK, DC}` from Eq. :eq:`ionizationRate`) can be used at 
+each timestep. 
+
+Instead, in presence of a laser envelope (see :doc:`laser_envelope`) an ad hoc treatment of the 
+ionization process averaged over the scales of the optical cycle may be necessary if the
+integration timestep is much greater than the laser oscillation period [Chen2013]_.
+Thus, in this case a ionization rate :math:`\Gamma_{\rm ADK, AC}` averaged over the laser oscillations 
+should be used at each timestep to have a better agreement with a correspondent standard laser simulation.
+Given a laser with ellipticity :math:`\varepsilon`, the averaged ionization rate is [Perelomov1966]_
+
+.. math::
+  :label: ionizationRateAveraged
+
+  \Gamma_{\rm ADK, AC} = \left[\frac{\varepsilon(1+\varepsilon)}{2}\right]^{-1/2}
+  a\left(\frac{1-\varepsilon}{3\varepsilon}\frac{\|\tilde{E}\|}{(2I_p)^{3/2}}\right)\Gamma_{\rm ADK, DC} \,, 
+
+where :math:`\tilde{E}` is the envelope of the electric field to which the ion is subject and
+
+.. math::
+
+  a(x) = e^{-x}I_0(x) \,,
+
+where :math:`I_0(x)` is the zeroth order modified Bessel function. For circular polarization, 
+i.e. :math:`\varepsilon=1`, 
+:math:`\Gamma_{\rm ADK, AC}=\Gamma_{\rm ADK, DC}`, since the field does not change 
+its magnitude over the laser oscillations.
+For linear polarization, i.e. :math:`\varepsilon=0`:
+
+.. math::
+  :label: ionizationRate
+
+  \Gamma_{\rm ADK, AC} = \left(\frac{3}{\pi}\frac{\|\tilde{E}\|}{(2I_p)^{3/2}}\right)^{-1/2}\Gamma_{\rm ADK, DC} .
+
+If the integration timestep is not much greater than the laser oscillation period, 
+using the DC ionization rate will yield results more in agreement with a standard 
+laser simulation. It is possible to choose which ionization rate to use through 
+the ``ionization_model`` parameter for a given ``Species`` in the namelist, which 
+can be set to ``"tunnel_envelope"`` for the DC ionization rate :math:`\Gamma_{\rm ADK, DC}` 
+(Eq. :eq:`ionizationRate`) or to ``"tunnel_envelope_averaged"`` for the AC 
+ionization rate :math:`\Gamma_{\rm ADK, AC}` (Eq. :eq:`ionizationRateAveraged`). 
+
+Normally the laser is intense enough to be the main cause of ionization, 
+but to allow possible high fields :math:`E` not described by an envelope, 
+in :program:`Smilei` a combination :math:`\hat{E}=\sqrt{\|E\|^{1/2}+\|\tilde{E}\|^{1/2}}` 
+is used instead of  :math:`\tilde{E}` in the above formulas.
+
+The transverse momentum of the newly created electrons will be set taking into account the
+polarization of the laser (including the polarization angle and the polarization ellipticity).
+Since the envelope does not keep memory on the phase of laser oscillations, for this procedure  the phase is chosen randomly. 
+
+Note that when a laser envelope model is used, the polarization of the laser plays a role 
+only in the equations related to ionization (see :doc:`laser_envelope`),
+since it is absent from the particles equations of motion and from the envelope equation.
+
+Apart from the different ionization rate and the different momentum initialization, 
+the implementation of the field ionization with a laser envelope follows the same procedure 
+described in the above section treating the usual field ionization.
+
+In presence of a laser envelope, an energy conservation equation analogous to :eq:`EnergyConservation` 
+cannot be written, since the information about the direction of the ionizing field is lost with the envelope
+description. However, in many situations where the envelope approximation is valid the ion current can be 
+neglected and the error on energy conservation is negligible.
+
+
+
+----
  
 .. _rate_ionization:
 
@@ -243,3 +321,5 @@ References
 .. [Perelomov1966] `A. M. Perelomov, V. S. Popov, and M. V. Terent’ev, Sov. Phys. JETP 23, 924 (1966) <http://www.jetp.ac.ru/cgi-bin/dn/e_023_05_0924.pdf>`_
 
 .. [Perelomov1967] `A. M. Perelomov, V. S. Popov, and M. V. Terent’ev, Sov. Phys. JETP 24, 207 (1967) <http://www.jetp.ac.ru/cgi-bin/dn/e_024_01_0207.pdf>`_
+
+.. [Chen2013] `M. Chen, E. Cormier-Michel, C. G. R. Geddes, D. L. Bruwhiler, L. L. Yu, E. Esarey, C. B. Schroeder, W. P. Leemans, Journ. Comput. Phys. 236, 220 (2013) <https://doi.org/10.1016/j.jcp.2012.11.029>`_

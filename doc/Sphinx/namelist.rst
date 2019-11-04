@@ -753,6 +753,8 @@ Each species has to be defined in a ``Species`` block::
   The model for ionization:
 
   * ``"tunnel"`` for :ref:`field ionization <field_ionization>` (requires species with an :py:data:`atomic_number`)
+  * ``"tunnel_envelope"`` for :ref:`field ionization with a laser envelope <field_ionization_envelope>` (requires species with an :py:data:`atomic_number` and :py:data:`ponderomotive_dynamics=True`)
+  * ``"tunnel_envelope_averaged"`` for :ref:`field ionization with a laser envelope <field_ionization_envelope>`, averaged ionization rate (requires species with an :py:data:`atomic_number` and :py:data:`ponderomotive_dynamics=True`)
   * ``"from_rate"``, relying on a :ref:`user-defined ionization rate <rate_ionization>` (requires species with a :py:data:`maximum_charge_state`).
 
 .. py:data:: ionization_rate
@@ -800,7 +802,7 @@ Each species has to be defined in a ``Species`` block::
   Flag for particles interacting with an envelope model for the laser, if present.
   If ``True``, this species will project its susceptibility and be influenced by the laser envelope field.
   See :doc:`laser_envelope` for details on the dynamics of particles in presence of a laser envelope field.
-.. note:: Ionization, Radiation and Multiphoton Breit-Wheeler pair creation are not yet implemented for species interacting with an envelope model for the laser.
+.. note:: Radiation and Multiphoton Breit-Wheeler pair creation are not yet implemented for species interacting with an envelope model for the laser.
 
 
 .. py:data:: c_part_max
@@ -1376,6 +1378,8 @@ Following is the generic laser envelope creator ::
         envelope_solver = 'explicit',
         envelope_profile = envelope_profile,
         Envelope_boundary_conditions = [["reflective"]]
+        polarization_phi = 0.,
+        ellipticity      = 0.
     )
 
 
@@ -1415,6 +1419,18 @@ Following is the generic laser envelope creator ::
   For the moment, only reflective boundary conditions are implemented in the
   resolution of the envelope equation.
 
+.. py:data:: polarization_phi
+
+  :default: 0.
+
+  The angle of the polarization ellipse major axis relative to the X-Y plane, in radians. Needed only for ionization.
+
+.. py:data:: ellipticity
+
+  :default: 0.
+
+  The polarization ellipticity: 0 for linear and :math:`\pm 1` for circular. Needed only for ionization.
+
 .. rubric:: 2. Defining a 1D laser envelope
 
 ..
@@ -1426,6 +1442,8 @@ Following is the simplified laser envelope creator in 1D ::
         time_envelope   = tgaussian(center=150., fwhm=40.),
         envelope_solver = 'explicit',
         Envelope_boundary_conditions = [ ["reflective"] ],
+        polarization_phi = 0.,
+        ellipticity      = 0.
     )
 
 .. rubric:: 3. Defining a 2D gaussian laser envelope
@@ -1441,6 +1459,8 @@ Following is the simplified gaussian laser envelope creator in 2D ::
         time_envelope   = tgaussian(center=150., fwhm=40.),
         envelope_solver = 'explicit',
         Envelope_boundary_conditions = [ ["reflective"] ],
+        polarization_phi = 0.,
+        ellipticity      = 0.
     )
 
 .. rubric:: 4. Defining a 3D gaussian laser envelope
@@ -1456,6 +1476,8 @@ Following is the simplified laser envelope creator in 3D ::
         time_envelope   = tgaussian(center=150., fwhm=40.),
         envelope_solver = 'explicit',
         Envelope_boundary_conditions = [ ["reflective"] ],
+        polarization_phi = 0.,
+        ellipticity      = 0.
     )
 
 .. rubric:: 5. Defining a cylindrical gaussian laser envelope
@@ -1472,6 +1494,8 @@ in this geometry the envelope model can be used only if ``number_of_AM = 1``) ::
         time_envelope   = tgaussian(center=150., fwhm=40.),
         envelope_solver = 'explicit',
         Envelope_boundary_conditions = [ ["reflective"] ],
+        polarization_phi = 0.,
+        ellipticity      = 0.
     )
 
 
@@ -1503,8 +1527,15 @@ correspond to the complex envelope of the laser vector potential component
 :math:`\tilde{A}` in the polarization direction.
 The calculation of the correspondent complex envelope for the laser electric field
 component in that direction is described in :doc:`laser_envelope`.
+
 Note that only order 2 interpolation and projection are supported in presence of
 the envelope model for the laser.
+
+The parameters ``polarization_phi`` and ``ellipticity`` specify the polarization state of the laser. In envelope model implemented in :program:`Smilei`, 
+they are only used to compute the rate of ionization and the initial momentum of the electrons newly created by ionization, 
+where the polarization of the laser plays an important role (see :doc:`ionization`). 
+For all other purposes (e.g. the particles equations of motions, the computation of the ponderomotive force, 
+the evolution of the laser), the polarization of the laser plays no role in the envelope model.
 
 
 ----
