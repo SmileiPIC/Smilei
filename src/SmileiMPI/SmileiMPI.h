@@ -173,6 +173,8 @@ public:
     std::vector<std::vector<double>> dynamics_PHI_mpart;
     //! inverse of the ponderomotive gamma, used in susceptibility and ponderomotive momentum Pusher
     std::vector<std::vector<double>> dynamics_inv_gamma_ponderomotive;
+    //! value of the EnvEabs used for envelope ionization
+    std::vector<std::vector<double>> dynamics_EnvEabs_part;
     
     
     
@@ -194,6 +196,9 @@ public:
             dynamics_PHIpart[ithread].resize( npart );
             dynamics_PHI_mpart[ithread].resize( npart );
             dynamics_inv_gamma_ponderomotive[ithread].resize( npart );
+            if ( dynamics_EnvEabs_part.size() > 0 ){
+                dynamics_EnvEabs_part[ithread].resize( npart );
+            }
         }
     }
     
