@@ -926,6 +926,26 @@ void SpeciesV::ponderomotive_update_susceptibility_and_momentum( double time_dua
             patch->patch_timers[7] += MPI_Wtime() - timer;
 #endif
 
+            // Ionization
+            if( Ionize ) {
+            
+#ifdef  __DETAILED_TIMERS
+                timer = MPI_Wtime();
+#endif
+                vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
+                vector<double> *EnvEabs_part = &( smpi->dynamics_EnvEabs_part[ithread] );
+                vector<double> *Phipart = &( smpi->dynamics_PHIpart[ithread] );
+                for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
+                    Interp->envelopeFieldForIonization( EMfields, *particles, smpi, &( first_index[ipack*packsize_+scell]), &( last_index[ipack*packsize_+scell] ), ithread );
+                    Ionize->envelopeIonization( particles, first_index[ipack*packsize_+scell], last_index[ipack*packsize_+scell], Epart, EnvEabs_part, Phipart, patch, Proj );
+                }
+#ifdef  __DETAILED_TIMERS
+                patch->patch_timers[4] += MPI_Wtime() - timer;
+#endif            
+            }
+
+
+
             // Project susceptibility, the source term of envelope equation
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
@@ -1014,7 +1034,7 @@ void SpeciesV::ponderomotive_project_susceptibility( double time_dual, unsigned 
                 Interp->fieldsAndEnvelope( EMfields, *particles, smpi, &( first_index[ipack*packsize_+scell] ), &( last_index[ipack*packsize_+scell] ), ithread, first_index[ipack*packsize_] );
             }
 #ifdef  __DETAILED_TIMERS
-            patch->patch_timers[7] += MPI_Wtime() - timer;
+            patch->patch_timers[4] += MPI_Wtime() - timer;
 #endif
 
             // Project susceptibility, the source term of envelope equation
