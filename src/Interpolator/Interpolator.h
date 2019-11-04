@@ -38,6 +38,11 @@ public:
     {
         ERROR( "Envelope not implemented with this geometry and this order" );
     };
+ 
+    virtual void envelopeFieldForIonization( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref = 0 )
+    {
+        ERROR( "Envelope not implemented with this geometry and this order" );
+    };
     
 private:
 

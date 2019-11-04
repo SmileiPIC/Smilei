@@ -314,3 +314,23 @@ void Interpolator1D2Order::envelopeAndSusceptibility( ElectroMagn *EMfields, Par
     
 } // END Interpolator1D2Order
 
+
+void Interpolator1D2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Particles &particles, SmileiMPI *smpi, int *istart, int *iend, int ithread, int ipart_ref )
+{
+    // Static cast of the envelope fields
+    Field1D *Env_Eabs = static_cast<Field1D *>( EMfields->Env_E_abs_ );
+    
+    std::vector<double> *Env_Eabs_part = &( smpi->dynamics_EnvEabs_part[ithread] );
+    
+    //Loop on bin particles
+    for( int ipart=*istart ; ipart<*iend; ipart++ ) {
+    
+        // ---------------------------------
+        // Interpolation of Env_E_abs^(p)
+        // ---------------------------------
+        ( *Env_Eabs_part )[ipart] = compute( &coeffp_[1], Env_Eabs, ip_ );
+        
+    }    
+    
+} // END Interpolator1D2Order
+
