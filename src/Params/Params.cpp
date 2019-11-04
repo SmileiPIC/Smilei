@@ -351,6 +351,19 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
             //    else if ( (Env_BCs[iDim][0] != Env_BCs[iDim][1]) &&  (Env_BCs[iDim][0] == "periodic" || Env_BCs[iDim][1] == "periodic") )
             //        ERROR("Envelope_boundary_conditions along "<<"xyz"[iDim]<<" cannot be periodic only on one side");
         }
+
+        // Find if at least one species is ionized by envelope
+        int n_species = PyTools::nComponents( "Species" );
+        std:: string ionization_model;
+        for (int i_species=0;i_species<n_species;i_species++){
+            if(PyTools::extract( "ionization_model", ionization_model, "Species", i_species )){
+                if (ionization_model=="tunnel_envelope" || ionization_model=="tunnel_envelope_averaged" ){
+                    envelope_ionization_is_active = true;
+                    break;
+                }
+                
+            }
+        }
     }
 
     for( unsigned int iDim = 0 ; iDim < nDim_field; iDim++ ) {

@@ -137,6 +137,10 @@ public:
     
     //! Define if laser envelope model is used (default = false)
     bool Laser_Envelope_model=false;
+    //! Define if there is at least one species ionized by envelope
+    bool envelope_ionization_is_active = false;
+    double envelope_ellipticity = 0.; // used only for envelope ionization (0: linear polarization, 1: circular polarization)
+    double envelope_polarization_phi = 0.; // used only for envelope ionization; in radians, angle with the xy plane
     
     //Poisson solver
     //! Do we solve poisson
