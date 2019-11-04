@@ -34,6 +34,13 @@ They are put in the patch list of macro-particles for the next timestep.
 2. Recommendation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- Although the code can inject a single species, we recommend to use injectors to inject neutral plasmas.
-  This means that positive and negative species should be simultaneously injected at the same boundary.
-  To strengthen neutrality, species can be created at the same position.
+- Although the code can inject a single species, we recommend to use injectors to inject neutral plasmas. This means that positive and negative species should be simultaneously injected at the same boundary. To strengthen neutrality, species can be created at the same position.
+
+3. Implementation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The particle injector algorithm is coded in the file `Patch/VectorPatch.cpp` in the function `injectParticlesFromBoundaries`.
+
+The class `ParticleInjector` enables to manage the different injector parameters and properties.
+
+Particle injectors use the class `ParticleCreator` to initialize the macro-particles.
