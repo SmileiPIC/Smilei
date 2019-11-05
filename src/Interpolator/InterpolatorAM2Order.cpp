@@ -454,9 +454,21 @@ void InterpolatorAM2Order::envelopeFieldForIonization( ElectroMagn *EMfields, Pa
     Field2D *EnvEabs = static_cast<Field2D*>( EMfields->Env_E_abs_ );
     
     std::vector<double> *EnvEabs_part = &( smpi->dynamics_EnvEabs_part[ithread] );
-    
+ 
+    double xpn,rpn,r;
+   
     //Loop on bin particles
     for( int ipart=*istart ; ipart<*iend; ipart++ ) {
+
+        // Normalized particle position
+        xpn = particles.position( 0, ipart ) * dl_inv_;
+        r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
+        rpn = r * dr_inv_;
+                                     
+        // Compute coefficients
+        coeffs( xpn, rpn );
+ 
+        // only mode 0 is used
     
         // ---------------------------------
         // Interpolation of Env_E_abs^(p,p)
