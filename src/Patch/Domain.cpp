@@ -22,7 +22,8 @@ Domain::Domain( Params &params ) :
     decomposition_( NULL ),
     patch_( NULL ),
     diag_( NULL ),
-    fake_patch( NULL )
+    fake_patch( NULL ),
+    coupled_( false )
 {
 }
 
@@ -108,7 +109,7 @@ void Domain::coupling( Params &params, bool global_domain )
     vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, vecPatch_( 0 )->EMfields, global_domain );
     if ( ( params.geometry == "AMcylindrical" ) && ( global_domain ) )
         vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->divergence_cleaning( vecPatch_( 0 )->EMfields );
-
+    coupled_ = true;
 }
 
 Domain::~Domain()
@@ -117,7 +118,7 @@ Domain::~Domain()
 
 void Domain::clean()
 {
-    if (vecPatch_.patches_.size())
+    if ( (vecPatch_.patches_.size()) && (coupled_) )
         vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->uncoupling();
 
     if( diag_ !=NULL ) {
