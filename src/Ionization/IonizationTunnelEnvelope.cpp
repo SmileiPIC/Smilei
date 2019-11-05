@@ -99,9 +99,8 @@ void IonizationTunnelEnvelope::envelopeIonization( Particles *particles, unsigne
         Aabs    = sqrt(2. * (*(Phi_env+ipart-ipart_ref))  );  // because Phi = |A|^2/2
 
         // Effective electric field for ionization:
-        // sqrt(E_plasma^2+E_envelope^2)
         E = sqrt(E_sq+EnvE_sq);
-    
+       
         if( E<1e-10 ) {
             continue;
         }
