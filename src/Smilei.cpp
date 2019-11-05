@@ -476,6 +476,9 @@ int main( int argc, char *argv[] )
                     domain.reset_mapping();
 
                     domain.build( params, &smpi, vecPatches, openPMD, false );
+                    if( params.is_pxr ){
+                        domain.coupling( params, false );
+                    }
                     domain.identify_additional_patches( &smpi, vecPatches, params, simWindow );
                     domain.identify_missing_patches( &smpi, vecPatches, params );
 
