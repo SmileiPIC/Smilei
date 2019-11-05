@@ -714,10 +714,10 @@ public:
                     ERROR( "For species '" << species_name << ": undefined atomic_number & maximum_charge_state (required for ionization)" );
                 }
 
-                if( (model == "tunnel") and (params.Laser_Envelope_model) ){
-
-                    ERROR("An envelope is present, so tunnel_envelope or tunnel_envelope_averaged ionization model should be selected for species "<<species_name);
-
+                if( model == "tunnel" ){
+                    if (params.Laser_Envelope_model){
+                        ERROR("An envelope is present, so tunnel_envelope or tunnel_envelope_averaged ionization model should be selected for species "<<species_name);
+                    }
                 }else if ( (model == "tunnel_envelope") or (model == "tunnel_envelope_averaged") ){
 
                     if (!params.Laser_Envelope_model) ERROR("An envelope ionization model has been selected but no envelope is present");
