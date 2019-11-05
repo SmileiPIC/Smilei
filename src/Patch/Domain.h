@@ -42,7 +42,8 @@ public:
     void reset_mapping();
 
     Patch* fake_patch;
-    
+private:
+    bool coupled_;
 };
 
 #endif
