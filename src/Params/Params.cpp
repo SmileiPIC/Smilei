@@ -901,7 +901,7 @@ void Params::compute()
    
     //Define number of cells per patch and number of ghost cells 
     for( unsigned int i=0; i<nDim_field; i++ ) {
-        oversize[i]  = max( interpolation_order, ( unsigned int )( norder[i]/2+1 ) ) + ( exchange_particles_each-1 );;
+        oversize[i]  = interpolation_order + ( exchange_particles_each-1 );
         n_space_global[i] = n_space[i];
         n_space[i] /= number_of_patches[i];
         if( n_space_global[i]%number_of_patches[i] !=0 ) {
@@ -917,7 +917,11 @@ void Params::compute()
         //Force ghost cells number in L when spectral
         oversize[0] = pseudo_spectral_guardells;
         //Force zero ghost cells in R when spectral
-        oversize[1] = 0;
+        //oversize[1] = 0;
+    }
+    else if ( is_spectral ) {
+        for( unsigned int i=0; i<nDim_field; i++ )
+            oversize[i]  = max( interpolation_order, ( unsigned int )( norder[i]/2+1 ) ) + ( exchange_particles_each-1 );
     }
     
     // Set clrw if not set by the user
@@ -1374,21 +1378,32 @@ void Params::uncoupled_decomposition_2D()
     MPI_Comm_rank( MPI_COMM_WORLD, &rk );
     MPI_Comm_size( MPI_COMM_WORLD, &sz );
 
-    // Number of domain in 2D
-    double tmp(0.);
-    tmp  = number_of_patches[0] / number_of_patches[1];
 
-    number_of_domain[0] = min( sz, max(1, (int)sqrt ( (double)sz*tmp) ) );
-    number_of_domain[1] = (int)(sz / number_of_domain[0]);
+    if ( ( geometry != "AMcylindrical" ) || (!is_spectral) ) {
+        // Number of domain in 2D
+        double tmp(0.);
+        tmp  = number_of_patches[0] / number_of_patches[1];
 
-    while ( number_of_domain[0]*number_of_domain[1] != sz ) {
-        if (number_of_domain[0]>=number_of_domain[1] ) {
-            number_of_domain[0]++;
-            number_of_domain[1] = (int)(sz / number_of_domain[0]);
+        number_of_domain[0] = min( sz, max(1, (int)sqrt ( (double)sz*tmp) ) );
+        number_of_domain[1] = (int)(sz / number_of_domain[0]);
+
+        while ( number_of_domain[0]*number_of_domain[1] != sz ) {
+            if (number_of_domain[0]>=number_of_domain[1] ) {
+                number_of_domain[0]++;
+                number_of_domain[1] = (int)(sz / number_of_domain[0]);
+            }
+            else {
+                number_of_domain[1]++;
+                number_of_domain[0] = (int)(sz / number_of_domain[1]);
+            }
         }
-        else {
-            number_of_domain[1]++;
-            number_of_domain[0] = (int)(sz / number_of_domain[1]);
+    }
+    else { // AM and spectral
+        number_of_domain[0] = sz;
+        number_of_domain[1] = 1;
+        if (number_of_patches[0]<sz) {
+            ERROR( "In AM, the number of patches in dimension 0, here " << number_of_patches[0]
+                   << ",  must be at least equal to the number of MPI process which is here " << sz );
         }
     }
     //cout << "ndomain : " << number_of_domain[0] << " " << number_of_domain[1] << " " << number_of_domain[2] << endl;
