@@ -1876,6 +1876,22 @@ void Species::ponderomotive_update_susceptibility_and_momentum( double time_dual
             patch->patch_timers[7] += MPI_Wtime() - timer;
 #endif
 
+            // Ionization
+            if( Ionize ) {
+            
+#ifdef  __DETAILED_TIMERS
+                timer = MPI_Wtime();
+#endif
+                vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
+                vector<double> *EnvEabs_part = &( smpi->dynamics_EnvEabs_part[ithread] );
+                vector<double> *Phipart = &( smpi->dynamics_PHIpart[ithread] );
+                Interp->envelopeFieldForIonization( EMfields, *particles, smpi, &( first_index[ibin] ), &( last_index[ibin] ), ithread );
+                Ionize->envelopeIonization( particles, first_index[ibin], last_index[ibin], Epart, EnvEabs_part, Phipart, patch, Proj );
+                
+#ifdef  __DETAILED_TIMERS
+                patch->patch_timers[4] += MPI_Wtime() - timer;
+#endif            
+            }
 
             // Project susceptibility, the source term of envelope equation
 #ifdef  __DETAILED_TIMERS
@@ -1940,25 +1956,6 @@ void Species::ponderomotive_project_susceptibility( double time_dual, unsigned i
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[7] += MPI_Wtime() - timer;
 #endif
-
-            // Ionization
-            if( Ionize ) {
-            
-#ifdef  __DETAILED_TIMERS
-                timer = MPI_Wtime();
-#endif
-                vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
-                vector<double> *EnvEabs_part = &( smpi->dynamics_EnvEabs_part[ithread] );
-                vector<double> *Phipart = &( smpi->dynamics_PHIpart[ithread] );
-                Interp->envelopeFieldForIonization( EMfields, *particles, smpi, &( first_index[ibin] ), &( last_index[ibin] ), ithread );
-                Ionize->envelopeIonization( particles, first_index[ibin], last_index[ibin], Epart, EnvEabs_part, Phipart, patch, Proj );
-                
-#ifdef  __DETAILED_TIMERS
-                patch->patch_timers[4] += MPI_Wtime() - timer;
-#endif            
-            }
-
-
 
             // Project susceptibility, the source term of envelope equation
 #ifdef  __DETAILED_TIMERS
