@@ -56,6 +56,13 @@ Patch::Patch( Params &params, SmileiMPI *smpi, DomainDecomposition *domain_decom
     // 4 - ionization
     // 5 - radiation
     // 6 - Breit-Wheeler
+    // 7 - Interp Fields_Env
+    // 8 - Proj Susceptibility
+    // 9 - Push Momentum
+    // 10 - Interp Env_Old
+    // 11 - Proj Currents
+    // 12 - Push Pos
+    // 13 - Sorting
     patch_timers.resize( 15, 0. );
 #endif
 
