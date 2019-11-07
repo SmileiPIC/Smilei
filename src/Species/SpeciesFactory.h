@@ -636,7 +636,7 @@ public:
             ERROR( "For species '" << species_name << "', boundary_conditions not defined" );
         }
 
-        int number_of_boundaries = (params.geometry=="AMcylindrical") ? 2 : params.nDim_particle;
+        unsigned int number_of_boundaries = (params.geometry=="AMcylindrical") ? 2 : params.nDim_particle;
 
         if( thisSpecies->boundary_conditions.size() == 0 ) {
             ERROR( "For species '" << species_name << "', boundary_conditions cannot be empty" );
