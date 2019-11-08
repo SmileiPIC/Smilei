@@ -66,9 +66,9 @@ SimWindow::SimWindow( Params &params )
     
     
     if( active ) {
-        if( velocity_x != 0. && params.EM_BCs[0][0] == "periodic" ) {
-            ERROR( "Periodic topology in the moving window direction is neither encouraged nor supported" );
-        }
+        //if( velocity_x != 0. && params.EM_BCs[0][0] == "periodic" ) {
+        //    ERROR( "Periodic topology in the moving window direction is neither encouraged nor supported" );
+        //}
         
         MESSAGE( 1, "Moving window is active:" );
         MESSAGE( 2, "velocity_x : " << velocity_x );
@@ -644,9 +644,11 @@ void SimWindow::operate(Domain& domain,  VectorPatch& vecPatches, SmileiMPI* smp
     domain.patch_->exchangeField_movewin( domain_fields->Br_[imode], params.n_space[0] );
     domain.patch_->exchangeField_movewin( domain_fields->Bt_[imode], params.n_space[0] );
     
-    domain.patch_->exchangeField_movewin( domain_fields->Bl_m[imode], params.n_space[0] );
-    domain.patch_->exchangeField_movewin( domain_fields->Br_m[imode], params.n_space[0] );
-    domain.patch_->exchangeField_movewin( domain_fields->Bt_m[imode], params.n_space[0] );
+    if (!params.is_spectral) {
+        domain.patch_->exchangeField_movewin( domain_fields->Bl_m[imode], params.n_space[0] );
+        domain.patch_->exchangeField_movewin( domain_fields->Br_m[imode], params.n_space[0] );
+        domain.patch_->exchangeField_movewin( domain_fields->Bt_m[imode], params.n_space[0] );
+    }
 
     if (params.is_spectral) {
         domain.patch_->exchangeField_movewin( domain_fields->rho_AM_[imode], params.n_space[0] );
