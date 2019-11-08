@@ -271,8 +271,13 @@ int main( int argc, char *argv[] )
         //     <<  "\t - additional : " << domain.additional_patches_.size() << endl;
 
         if ( params.apply_divergence_cleaning ) { // Need to upload corrected data on Domain
-            for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
+            for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  ) {
                 DoubleGridsAM::syncFieldsOnDomain( vecPatches, domain, params, &smpi, imode );
+                // Need to fill all ghost zones, not covered by patches ghost zones
+                SyncVectorPatch::exchangeE( params, domain.vecPatch_, imode, &smpi );
+                SyncVectorPatch::exchangeB( params, domain.vecPatch_, imode, &smpi );
+            }
+
         }
         if( params.is_pxr ){
             domain.coupling( params, false );
