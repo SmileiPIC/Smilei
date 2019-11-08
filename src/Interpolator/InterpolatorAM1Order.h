@@ -90,7 +90,7 @@ private:
     {
         // Indexes of the central nodes
         ip_ = floor( xpn );
-        jp_ = floor( rpn - 0.5 );
+        jp_ = floor( rpn );
         
         // Declaration and calculation of the coefficient for interpolation
         
@@ -98,7 +98,7 @@ private:
         coeffxp_[0] = 1. - deltax;
         coeffxp_[1] = deltax;
         
-        deltar   = rpn - 0.5 - ( double )jp_;
+        deltar   = rpn - ( double )jp_;
         coeffyp_[0] = 1. - deltar;
         coeffyp_[1] = deltar;
         coeffyp_[2] = coeffyp_[0];
