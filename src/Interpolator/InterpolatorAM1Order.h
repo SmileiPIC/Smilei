@@ -90,7 +90,7 @@ private:
     {
         // Indexes of the central nodes
         ip_ = floor( xpn );
-        jp_ = floor( rpn );
+        jp_ = floor( rpn - 0.5 );
         
         // Declaration and calculation of the coefficient for interpolation
         
@@ -98,7 +98,7 @@ private:
         coeffxp_[0] = 1. - deltax;
         coeffxp_[1] = deltax;
         
-        deltar   = rpn - ( double )jp_;
+        deltar   = rpn - 0.5 - ( double )jp_;
         coeffyp_[0] = 1. - deltar;
         coeffyp_[1] = deltar;
         coeffyp_[2] = coeffyp_[0];
@@ -106,7 +106,7 @@ private:
 
         // First index for summation
         ip_ = ip_ - i_domain_begin;
-        // j_domain_begin should always be zero in spectral since no paralellization along r.
+        jp_ = jp_ - j_domain_begin;
         if (jp_ == -1){ // If particle is between 0 and dr/2 initial jp_=-1
             jp_ = 0;
             // coeffs 2-3 are used when F(-dr/2) = - F(dr/2) <==> when field mode is zero on axis
