@@ -51,6 +51,8 @@ ElectroMagn::ElectroMagn( Params &params, DomainDecomposition *domain_decomposit
     }
     else { //NULL (Global domain)
         n_space = params.n_space_global;
+        for ( unsigned int i = 0 ; i < nDim_field ; i++ )
+            oversize[i] = params.region_oversize[i];
     }
 
     if ( dynamic_cast<PatchAM *>( patch ) ) {

@@ -918,7 +918,7 @@ void Params::compute()
         //Force ghost cells number in L when spectral
         region_oversize[0] = pseudo_spectral_guardells;
         //Force zero ghost cells in R when spectral
-        region_oversize[1] = 0;
+        region_oversize[1] = oversize[1];
     }
     else if ( is_spectral ) {
         for( unsigned int i=0; i<nDim_field; i++ )
