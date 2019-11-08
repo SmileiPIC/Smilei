@@ -877,6 +877,7 @@ void Params::compute()
     cell_length.resize( 3 );
     n_space_global.resize( 3, 1 ); //! \todo{3 but not real size !!! Pbs in Species::Species}
     oversize.resize( 3, 0 );
+    region_oversize.resize( 3, 0 );
     patch_dimensions.resize( 3, 0. );
     cell_volume=1.0;
     n_cell_per_patch = 1;
@@ -915,13 +916,13 @@ void Params::compute()
     }
     if ( is_spectral && geometry == "AMcylindrical" )  {
         //Force ghost cells number in L when spectral
-        oversize[0] = pseudo_spectral_guardells;
+        region_oversize[0] = pseudo_spectral_guardells;
         //Force zero ghost cells in R when spectral
-        oversize[1] = 0;
+        region_oversize[1] = 0;
     }
     else if ( is_spectral ) {
         for( unsigned int i=0; i<nDim_field; i++ )
-            oversize[i]  = max( interpolation_order, ( unsigned int )( norder[i]/2+1 ) ) + ( exchange_particles_each-1 );
+            regin_oversize[i]  = max( interpolation_order, ( unsigned int )( norder[i]/2+1 ) ) + ( exchange_particles_each-1 );
     }
     
     // Set clrw if not set by the user
