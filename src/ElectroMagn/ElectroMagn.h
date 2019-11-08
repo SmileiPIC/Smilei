@@ -241,7 +241,7 @@ public:
     
     //!\todo should this be just an integer???
     //! Oversize domain to exchange less particles (from params)
-    const std::vector<unsigned int> oversize;
+    std::vector<unsigned int> oversize;
     
     //! Constructor for Electromagn
     ElectroMagn( Params &params, Patch *patch );
