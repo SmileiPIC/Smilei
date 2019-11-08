@@ -922,7 +922,7 @@ void Params::compute()
     }
     else if ( is_spectral ) {
         for( unsigned int i=0; i<nDim_field; i++ )
-            regin_oversize[i]  = max( interpolation_order, ( unsigned int )( norder[i]/2+1 ) ) + ( exchange_particles_each-1 );
+            region_oversize[i]  = max( interpolation_order, ( unsigned int )( norder[i]/2+1 ) ) + ( exchange_particles_each-1 );
     }
     
     // Set clrw if not set by the user

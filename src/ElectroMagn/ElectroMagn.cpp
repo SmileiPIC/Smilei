@@ -46,6 +46,7 @@ ElectroMagn::ElectroMagn( Params &params, DomainDecomposition *domain_decomposit
     else if ( dynamic_cast<CartesianDomainDecomposition*>( domain_decomposition ) ) {
         for ( unsigned int i = 0 ; i < nDim_field ; i++ ) {
             n_space[i] = params.n_space_domain[i];
+            oversize[i] = params.region_oversize[i];
         }
     }
     else { //NULL (Global domain)
