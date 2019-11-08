@@ -58,18 +58,24 @@ void PXR_SolverAM_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool f
     nl=( int ) (0 + n_space[0]);
     nr=( int ) (0 + n_space[1]);
     
-    ovl=( int ) params.oversize[0];
-    ovr=( int ) params.oversize[1];
-    
-
-
+    if (params.uncoupled_grids) {
+        ovl=( int ) params.region_oversize[0];
+        ovr=( int ) params.region_oversize[1];
+    }
+    else {
+        ovl=( int ) params.oversize[0];
+        ovr=( int ) params.oversize[1];
+    }
 
     std::vector<unsigned int> dimPrim( 3 );
     // Dimension of the primal and dual grids
     for( size_t i=0 ; i<params.nDim_field ; i++ ) {
         // Standard scheme
         dimPrim[i+1] = n_space[i]+1;
-        dimPrim[i+1] += 2*params.oversize[i];
+        if (params.uncoupled_grids)
+            dimPrim[i+1] += 2*params.region_oversize[i];
+        else
+            dimPrim[i+1] += 2*params.oversize[i];
     }
     dimPrim[0] = params.nmodes;
 
