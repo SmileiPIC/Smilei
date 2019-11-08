@@ -76,7 +76,10 @@ ElectroMagnBCAM_SM::ElectroMagnBCAM_SM( Params &params, Patch *patch, unsigned i
     
     
     if (params.is_pxr)
-        pxr_offset = params.oversize[0];
+        if (!params.uncoupled_grids)
+            pxr_offset = params.oversize[0];
+        else
+            pxr_offset = params.region_oversize[0];
     else
         pxr_offset = 0;
    

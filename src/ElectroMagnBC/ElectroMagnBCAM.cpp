@@ -11,14 +11,17 @@ ElectroMagnBCAM::ElectroMagnBCAM( Params &params, Patch *patch, unsigned int _mi
     : ElectroMagnBC( params, patch, _min_max )
 {
     std::vector<unsigned int> n_space(params.n_space);
-    if (params.uncoupled_grids)
+    std::vector<unsigned int> oversize(params.oversize);
+    if (params.uncoupled_grids) {
         n_space = params.n_space_domain;
+        oversize = params.region_oversize;
+    }
 
     // number of nodes of the primal and dual grid in the l-direction
-    nl_p = n_space[0]+1+2*params.oversize[0];
+    nl_p = n_space[0]+1+2*oversize[0];
     nl_d = nl_p+1-params.is_pxr;
     // number of nodes of the primal and dual grid in the r-direction
-    nr_p = n_space[1]+1+2*params.oversize[1];
+    nr_p = n_space[1]+1+2*oversize[1];
     nr_d = nr_p+1-params.is_pxr;
     
     // spatial-step and ratios time-step by spatial-step & spatial-step by time-step (in the l-direction)
