@@ -274,6 +274,10 @@ void Patch::finalizeMPIenvironment( Params &params )
 
 void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *domain_decomposition, VectorPatch &vecPatch )
 {
+    for( int iDim = 0 ; iDim < nDim_fields_; iDim++ ) {
+        oversize[iDim] = params.region_oversize[iDim];
+    }
+
     Pcoordinates.resize( params.nDim_field );
 
 
@@ -359,7 +363,7 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
             neighbor_[0][0] = MPI_neighbor_[0][0];
             neighbor_[0][1] = MPI_neighbor_[0][1];
 
-            cell_starting_global_index[0] -= params.oversize[0];
+            cell_starting_global_index[0] -= oversize[0];
         } // Fin 1D
     
         if (nDim_fields_==2) {
@@ -469,8 +473,8 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
             //cout << MPI_neighbor_[0][0] << "\t mpi_me \t" << MPI_neighbor_[0][1] << endl;
             //cout << "\t"<< MPI_neighbor_[1][0] << endl;
 
-            cell_starting_global_index[0] -= params.oversize[0];
-            cell_starting_global_index[1] -= params.oversize[1];
+            cell_starting_global_index[0] -= oversize[0];
+            cell_starting_global_index[1] -= oversize[1];
         } // Fin 2D
 
 
@@ -613,9 +617,9 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
 
 
 
-            cell_starting_global_index[0] -= params.oversize[0];
-            cell_starting_global_index[1] -= params.oversize[1];
-            cell_starting_global_index[2] -= params.oversize[2];
+            cell_starting_global_index[0] -= oversize[0];
+            cell_starting_global_index[1] -= oversize[1];
+            cell_starting_global_index[2] -= oversize[2];
         } // Fin 3D
 
     } // ENd if 
@@ -631,7 +635,7 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
             center[iDim] = ( min_local[iDim]+max_local[iDim] )*0.5;
             radius += pow( max_local[iDim] - center[iDim] + params.cell_length[iDim], 2 );
 
-            cell_starting_global_index[iDim] = -params.oversize[iDim];
+            cell_starting_global_index[iDim] = -oversize[iDim];
 
             if (params.EM_BCs[iDim][0]=="periodic") {
                 MPI_neighbor_[iDim][0] = rk;
