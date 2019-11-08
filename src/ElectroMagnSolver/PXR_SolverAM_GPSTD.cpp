@@ -240,18 +240,18 @@ void PXR_SolverAM_GPSTD::_2Dvectors_to_3D( ElectroMagn *fields )
         rhoold = ( static_cast<ElectroMagnAM *>( fields ) )->rho_old_AM_[imode];
 
         for (int il=0;il<El->dims_[0];il++) {
-            for (int ir=2;ir<El->dims_[1]-2;ir++) {
-                (*El_pxr)(imode,il,ir-2) = (*El)(il,ir); 
-                (*Er_pxr)(imode,il,ir-2) = (*Er)(il,ir); 
-                (*Et_pxr)(imode,il,ir-2) = (*Et)(il,ir); 
-                (*Bl_pxr)(imode,il,ir-2) = (*Bl)(il,ir); 
-                (*Br_pxr)(imode,il,ir-2) = (*Br)(il,ir); 
-                (*Bt_pxr)(imode,il,ir-2) = (*Bt)(il,ir); 
-                (*Jl_pxr)(imode,il,ir-2) = (*Jl)(il,ir); 
-                (*Jr_pxr)(imode,il,ir-2) = (*Jr)(il,ir); 
-                (*Jt_pxr)(imode,il,ir-2) = (*Jt)(il,ir); 
-                (*rho_pxr)(imode,il,ir-2) = (*rho)(il,ir); 
-                (*rhoold_pxr)(imode,il,ir-2) = (*rhoold)(il,ir); 
+            for (int ir=fields->oversize[1];ir<El->dims_[1]-fields->oversize[1];ir++) {
+                (*El_pxr)(imode,il,ir-fields->oversize[1]) = (*El)(il,ir);
+                (*Er_pxr)(imode,il,ir-fields->oversize[1]) = (*Er)(il,ir);
+                (*Et_pxr)(imode,il,ir-fields->oversize[1]) = (*Et)(il,ir);
+                (*Bl_pxr)(imode,il,ir-fields->oversize[1]) = (*Bl)(il,ir);
+                (*Br_pxr)(imode,il,ir-fields->oversize[1]) = (*Br)(il,ir);
+                (*Bt_pxr)(imode,il,ir-fields->oversize[1]) = (*Bt)(il,ir);
+                (*Jl_pxr)(imode,il,ir-fields->oversize[1]) = (*Jl)(il,ir);
+                (*Jr_pxr)(imode,il,ir-fields->oversize[1]) = (*Jr)(il,ir);
+                (*Jt_pxr)(imode,il,ir-fields->oversize[1]) = (*Jt)(il,ir);
+                (*rho_pxr)(imode,il,ir-fields->oversize[1]) = (*rho)(il,ir);
+                (*rhoold_pxr)(imode,il,ir-fields->oversize[1]) = (*rhoold)(il,ir);
             }
         }
     }
@@ -286,18 +286,18 @@ void PXR_SolverAM_GPSTD::_3D_to_2Dvectors( ElectroMagn *fields )
         rhoold = ( static_cast<ElectroMagnAM *>( fields ) )->rho_old_AM_[imode];
 
         for (int il=0;il<El->dims_[0];il++) {
-            for (int ir=2;ir<El->dims_[1]-2;ir++) {
-                (*El)(il,ir) = (*El_pxr)(imode,il,ir-2); 
-                (*Er)(il,ir) = (*Er_pxr)(imode,il,ir-2); 
-                (*Et)(il,ir) = (*Et_pxr)(imode,il,ir-2); 
-                (*Bl)(il,ir) = (*Bl_pxr)(imode,il,ir-2); 
-                (*Br)(il,ir) = (*Br_pxr)(imode,il,ir-2); 
-                (*Bt)(il,ir) = (*Bt_pxr)(imode,il,ir-2); 
-                (*Jl)(il,ir) = (*Jl_pxr)(imode,il,ir-2); 
-                (*Jr)(il,ir) = (*Jr_pxr)(imode,il,ir-2); 
-                (*Jt)(il,ir) = (*Jt_pxr)(imode,il,ir-2); 
-                (*rho)(il,ir) = (*rho_pxr)(imode,il,ir-2); 
-                (*rhoold)(il,ir) = (*rhoold_pxr)(imode,il,ir-2); 
+            for (int ir=fields->oversize[1];ir<El->dims_[1]-fields->oversize[1];ir++) {
+                (*El)(il,ir) = (*El_pxr)(imode,il,ir-fields->oversize[1]);
+                (*Er)(il,ir) = (*Er_pxr)(imode,il,ir-fields->oversize[1]);
+                (*Et)(il,ir) = (*Et_pxr)(imode,il,ir-fields->oversize[1]);
+                (*Bl)(il,ir) = (*Bl_pxr)(imode,il,ir-fields->oversize[1]);
+                (*Br)(il,ir) = (*Br_pxr)(imode,il,ir-fields->oversize[1]);
+                (*Bt)(il,ir) = (*Bt_pxr)(imode,il,ir-fields->oversize[1]);
+                (*Jl)(il,ir) = (*Jl_pxr)(imode,il,ir-fields->oversize[1]);
+                (*Jr)(il,ir) = (*Jr_pxr)(imode,il,ir-fields->oversize[1]);
+                (*Jt)(il,ir) = (*Jt_pxr)(imode,il,ir-fields->oversize[1]);
+                (*rho)(il,ir) = (*rho_pxr)(imode,il,ir-fields->oversize[1]);
+                (*rhoold)(il,ir) = (*rhoold_pxr)(imode,il,ir-fields->oversize[1]);
             }
         }
     }
