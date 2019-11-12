@@ -147,11 +147,11 @@ void Patch::initStep3( Params &params, SmileiMPI *smpi, unsigned int n_moved )
     center   [0] += n_moved*params.cell_length[0];
 
     //Shift point position by dr/2 for the AM spectral geometry
-    if ( (params.is_spectral) && (params.geometry== "AMcylindrical") ) {
-        min_local[1] += params.cell_length[1]/2.;
-        max_local[1] += params.cell_length[1]/2.;
-        center   [1] += params.cell_length[1]/2.;
-    }
+    //if ( (params.is_spectral) && (params.geometry== "AMcylindrical") ) {
+    //    min_local[1] += params.cell_length[1]/2.;
+    //    max_local[1] += params.cell_length[1]/2.;
+    //    center   [1] += params.cell_length[1]/2.;
+    //}
     
 }
 
@@ -387,11 +387,11 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                             radius += pow( max_local[1] - center[1] + params.cell_length[1], 2 );
 
                             //Shift point position by dr/2 for the AM spectral geometry
-                            if ( (params.is_spectral) && (params.geometry== "AMcylindrical") ) {
-                                min_local[1] += params.cell_length[1]/2.;
-                                max_local[1] += params.cell_length[1]/2.;
-                                center   [1] += params.cell_length[1]/2.;
-                            }
+                            //if ( (params.is_spectral) && (params.geometry== "AMcylindrical") ) {
+                            //    min_local[1] += params.cell_length[1]/2.;
+                            //    max_local[1] += params.cell_length[1]/2.;
+                            //    center   [1] += params.cell_length[1]/2.;
+                            //}
  
                             cell_starting_global_index[0] = params.offset_map[0][xDom];
                             cell_starting_global_index[1] = params.offset_map[1][yDom];
@@ -645,11 +645,11 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                 MPI_neighbor_[iDim][1] = MPI_PROC_NULL;
 
         }
-        if ( (params.is_spectral) && (params.geometry== "AMcylindrical") ) {
-            min_local[1] += params.cell_length[1]/2.;
-            max_local[1] += params.cell_length[1]/2.;
-            center   [1] += params.cell_length[1]/2.;
-        }
+        //if ( (params.is_spectral) && (params.geometry== "AMcylindrical") ) {
+        //    min_local[1] += params.cell_length[1]/2.;
+        //    max_local[1] += params.cell_length[1]/2.;
+        //    center   [1] += params.cell_length[1]/2.;
+        //}
 
     }
     else {
