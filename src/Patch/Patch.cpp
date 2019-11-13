@@ -847,11 +847,17 @@ void Patch::initExchParticles( SmileiMPI *smpi, int ispec, Params &params )
             //Put indexes of particles in the first direction they will be exchanged and correct their position according to periodicity for the first exchange only.
             if( cuParticles.position( 0, iPart ) < min_local[0] ) {
                 if( neighbor_[0][0]!=MPI_PROC_NULL ) {
+                    if ( (Pcoordinates[0]==0) && ( vecSpecies[ispec]->boundary_conditions[0][0]!="periodic" ) ) {
+                        continue;
+                    }
                     vecSpecies[ispec]->MPIbuff.part_index_send[0][0].push_back( iPart );
                     //MESSAGE("Sending particle to the left x= " << cuParticles.position(0,iPart) <<  " xmin = " <<  min_local[0] );
                 }
                 //If particle is outside of the global domain (has no neighbor), it will not be put in a send buffer and will simply be deleted.
             } else if( cuParticles.position( 0, iPart ) >= max_local[0] ) {
+                if ( (Pcoordinates[0]==params.number_of_patches[0]-1) && ( vecSpecies[ispec]->boundary_conditions[0][1]!="periodic" ) ) {
+                    continue;
+                }
                 if( neighbor_[0][1]!=MPI_PROC_NULL ) {
                     vecSpecies[ispec]->MPIbuff.part_index_send[0][1].push_back( iPart );
                     // MESSAGE("Sending particle to the right x= " << cuParticles.position(0,iPart) <<  " xmax = " <<  max_local[0] );

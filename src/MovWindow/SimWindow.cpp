@@ -169,8 +169,10 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                 delete_patches_.push_back( mypatch ); // Stores pointers to patches to be deleted later
                 //... I might have to MPI send myself to the left...
                 if( mypatch->MPI_neighbor_[0][0] != MPI_PROC_NULL ) {
-                    send_patches_.push_back( mypatch ); // Stores pointers to patches to be sent later
-                    smpi->isend( vecPatches_old[ipatch], vecPatches_old[ipatch]->MPI_neighbor_[0][0], ( vecPatches_old[ipatch]->neighbor_[0][0] ) * nmessage, params );
+                    if ( vecPatches_old[ipatch]->Pcoordinates[0]!=0 ) {
+                        send_patches_.push_back( mypatch ); // Stores pointers to patches to be sent later
+                        smpi->isend( vecPatches_old[ipatch], vecPatches_old[ipatch]->MPI_neighbor_[0][0], ( vecPatches_old[ipatch]->neighbor_[0][0] ) * nmessage, params );
+                    }
                 }
             } else { //In case my left neighbor belongs to me:
                 // I become my left neighbor.
@@ -221,8 +223,10 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
             vecPatches.patches_[patch_to_be_created[my_thread][j]] = mypatch ;
             //Receive Patch if necessary
             if( mypatch->MPI_neighbor_[0][1] != MPI_PROC_NULL ) {
-                smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], ( mypatch->hindex )*nmessage, params );
-                patch_particle_created[my_thread][j] = false ; //Mark no needs of particles
+                if ( mypatch->Pcoordinates[0]!=params.number_of_patches[0]-1 ) {
+                    smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], ( mypatch->hindex )*nmessage, params );
+                    patch_particle_created[my_thread][j] = false ; //Mark no needs of particles
+                }
             }
             
             // Create Xmin condition which could not be received
