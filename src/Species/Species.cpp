@@ -1838,6 +1838,7 @@ void Species::mergeParticles( double time_dual, unsigned int ispec,
 // ---------------------------------------------------------------------------------------------------------------------
 // For all particles of the species reacting to laser envelope
 //   - interpolate the fields at the particle position
+//   - perform ionization
 //   - deposit susceptibility
 //   - calculate the new momentum
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1859,10 +1860,7 @@ void Species::ponderomotive_update_susceptibility_and_momentum( double time_dual
     double timer;
 #endif
 
-    // -------------------------------
-    // calculate the particle updated momentum
-    // -------------------------------
-    if( time_dual>time_frozen ) { // moving particle
+    if( time_dual>time_frozen || Ionize) { // moving particle
 
         smpi->dynamics_resize( ithread, nDim_field, last_index.back(), params.geometry=="AMcylindrical" );
 
@@ -1891,7 +1889,15 @@ void Species::ponderomotive_update_susceptibility_and_momentum( double time_dual
 #ifdef  __DETAILED_TIMERS
                 patch->patch_timers[4] += MPI_Wtime() - timer;
 #endif            
-            }
+            } // end Ionize
+
+            if( time_dual<=time_frozen ) continue; // Do not push nor project frozen particles
+
+            // Radiation losses 
+            if( Radiate ) ERROR("Radiation losses are not implemented for particles interacting with an envelope");
+
+            // Multiphoton Breit-Wheeler
+            if( Multiphoton_Breit_Wheeler_process ) ERROR("Multiphoton Breit-Wheeler pair creation is not implemented for particles interacting with an envelope");
 
             // Project susceptibility, the source term of envelope equation
 #ifdef  __DETAILED_TIMERS
@@ -1900,8 +1906,7 @@ void Species::ponderomotive_update_susceptibility_and_momentum( double time_dual
             Proj->susceptibility( EMfields, *particles, mass, smpi, first_index[ibin], last_index[ibin], ithread );
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[8] += MPI_Wtime() - timer;
-#endif
-
+#endif            
 
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
@@ -1912,9 +1917,11 @@ void Species::ponderomotive_update_susceptibility_and_momentum( double time_dual
             patch->patch_timers[9] += MPI_Wtime() - timer;
 #endif
 
-        } // end loop on ibin
-    } else { // immobile particle
-    } //END if time vs. time_frozen
+         } // end loop on ibin
+
+
+    } // end if moving particle or ionization
+
 } // ponderomotive_update_susceptibility_and_momentum
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1956,6 +1963,25 @@ void Species::ponderomotive_project_susceptibility( double time_dual, unsigned i
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[7] += MPI_Wtime() - timer;
 #endif
+
+            // Ionization
+            if( Ionize ) {
+            
+#ifdef  __DETAILED_TIMERS
+                timer = MPI_Wtime();
+#endif
+                vector<double> *Epart = &( smpi->dynamics_Epart[ithread] );
+                vector<double> *EnvEabs_part = &( smpi->dynamics_EnvEabs_part[ithread] );
+                vector<double> *Phipart = &( smpi->dynamics_PHIpart[ithread] );
+                Interp->envelopeFieldForIonization( EMfields, *particles, smpi, &( first_index[ibin] ), &( last_index[ibin] ), ithread );
+                Ionize->envelopeIonization( particles, first_index[ibin], last_index[ibin], Epart, EnvEabs_part, Phipart, patch, Proj );
+                
+#ifdef  __DETAILED_TIMERS
+                patch->patch_timers[4] += MPI_Wtime() - timer;
+#endif            
+            }
+
+
 
             // Project susceptibility, the source term of envelope equation
 #ifdef  __DETAILED_TIMERS
