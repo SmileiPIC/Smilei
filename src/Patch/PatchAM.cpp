@@ -130,7 +130,7 @@ void PatchAM::initStep2( Params &params, DomainDecomposition *domain_decompositi
         }
      } else { // if spectral, primal grid shifted by half cell length
         for( int j = 0; j< nr_p; j++ ) {
-            invR[j] = 1./( ((double)j + 0.5)*dr);
+            invR[j] = 1./( ( (double)j_glob_ +(double)j + 0.5)*dr);
         }
      }
     
