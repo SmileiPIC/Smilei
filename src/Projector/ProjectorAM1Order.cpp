@@ -112,6 +112,7 @@ void ProjectorAM1Order::basicForComplex( complex<double> *rhoj, Particles &parti
     }
  
     ip -= i_domain_begin ;
+    jp -= j_domain_begin ;
     // j_domain_begin should always be zero in spectral since no paralellization along r.
     
     for( unsigned int i=0 ; i<2 ; i++ ) {
@@ -170,6 +171,7 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
 
 
     ip  -= i_domain_begin ;
+    jp  -= j_domain_begin ;
 
     double *invR_local  = &(invR[jp]);
 
