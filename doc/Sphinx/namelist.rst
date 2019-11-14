@@ -755,9 +755,10 @@ Each species has to be defined in a ``Species`` block::
   :default: 0.
 
   The time during which the particles are "frozen", in units of :math:`T_r`.
-  Frozen particles do not move and therefore do not deposit any current either.
+  Frozen particles do not move and therefore do not deposit any charge or current density either.
   They are computationally much cheaper than non-frozen particles and oblivious to any EM-fields
-  in the simulation.
+  in the simulation. Note that frozen particles can be ionized (this is computationally much cheaper 
+  if ion motion is not relevant).
 
 .. py:data:: ionization_model
 
