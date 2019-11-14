@@ -39,7 +39,12 @@ void SyncVectorPatch::exchangeParticles( VectorPatch &vecPatches, int ispec, Par
     }
 }
 
-
+// ---------------------------------------------------------------------------------------------------------------------
+//! This function performs:
+//! - the exhcange of particles for each direction using the diagonal trick.
+//! - the importation of the new particles in the particle property arrays
+//! - the sorting of particles
+// ---------------------------------------------------------------------------------------------------------------------
 void SyncVectorPatch::finalizeAndSortParticles( VectorPatch &vecPatches, int ispec, Params &params, SmileiMPI *smpi, Timers &timers, int itime )
 {
     SyncVectorPatch::finalizeExchangeParticles( vecPatches, ispec, 0, params, smpi, timers, itime );
@@ -147,7 +152,7 @@ void SyncVectorPatch::finalizeExchangeParticles( VectorPatch &vecPatches, int is
 void SyncVectorPatch::sumRhoJ( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime )
 {
     // Sum Jx, Jy and Jz
-    SyncVectorPatch::sum_all_components( vecPatches.densities, vecPatches, smpi, timers, itime );
+    SyncVectorPatch::sumAllComponents( vecPatches.densities, vecPatches, smpi, timers, itime );
     // Sum rho
     if( ( vecPatches.diag_flag ) || ( params.is_spectral ) ) {
         SyncVectorPatch::sum<double,Field>( vecPatches.listrho_, vecPatches, smpi, timers, itime );
@@ -223,7 +228,7 @@ void SyncVectorPatch::sumRhoJs( Params &params, VectorPatch &vecPatches, int imo
 //         - ... for Y and Z
 //     - These fields are identified with lists of index MPIxIdx and LocalxIdx (... for Y and Z)
 // timers and itime were here introduced for debugging
-void SyncVectorPatch::sum_all_components( std::vector<Field *> &fields, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime )
+void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime )
 {
     unsigned int h0, oversize[3], n_space[3];
     double *pt1, *pt2;

@@ -426,6 +426,9 @@ void VectorPatch::projectionForDiags( Params &params,
 
 } // END projection for diags
 
+// ---------------------------------------------------------------------------------------------------------------------
+//! For all patches, exchange particles and sort them.
+// ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::finalizeAndSortParticles( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
         double time_dual, Timers &timers, int itime )
 {

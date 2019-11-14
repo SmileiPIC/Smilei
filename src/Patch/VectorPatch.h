@@ -119,7 +119,8 @@ public :
                    MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
                    double time_dual,
                    Timers &timers, int itime );
-                   
+    
+    //! For all patches, exchange particles and sort them.
     void finalizeAndSortParticles( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
                                   double time_dual,
                                   Timers &timers, int itime );
