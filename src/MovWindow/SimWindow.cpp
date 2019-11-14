@@ -66,9 +66,9 @@ SimWindow::SimWindow( Params &params )
     
     
     if( active ) {
-        if( velocity_x != 0. && params.EM_BCs[0][0] == "periodic" ) {
-            ERROR( "Periodic topology in the moving window direction is neither encouraged nor supported" );
-        }
+        //if( velocity_x != 0. && params.EM_BCs[0][0] == "periodic" ) {
+        //    ERROR( "Periodic topology in the moving window direction is neither encouraged nor supported" );
+        //}
         
         MESSAGE( 1, "Moving window is active:" );
         MESSAGE( 2, "velocity_x : " << velocity_x );
@@ -169,8 +169,10 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                 delete_patches_.push_back( mypatch ); // Stores pointers to patches to be deleted later
                 //... I might have to MPI send myself to the left...
                 if( mypatch->MPI_neighbor_[0][0] != MPI_PROC_NULL ) {
-                    send_patches_.push_back( mypatch ); // Stores pointers to patches to be sent later
-                    smpi->isend( vecPatches_old[ipatch], vecPatches_old[ipatch]->MPI_neighbor_[0][0], ( vecPatches_old[ipatch]->neighbor_[0][0] ) * nmessage, params );
+                    if ( vecPatches_old[ipatch]->Pcoordinates[0]!=0 ) {
+                        send_patches_.push_back( mypatch ); // Stores pointers to patches to be sent later
+                        smpi->isend( vecPatches_old[ipatch], vecPatches_old[ipatch]->MPI_neighbor_[0][0], ( vecPatches_old[ipatch]->neighbor_[0][0] ) * nmessage, params );
+                    }
                 }
             } else { //In case my left neighbor belongs to me:
                 // I become my left neighbor.
@@ -221,8 +223,10 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
             vecPatches.patches_[patch_to_be_created[my_thread][j]] = mypatch ;
             //Receive Patch if necessary
             if( mypatch->MPI_neighbor_[0][1] != MPI_PROC_NULL ) {
-                smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], ( mypatch->hindex )*nmessage, params );
-                patch_particle_created[my_thread][j] = false ; //Mark no needs of particles
+                if ( mypatch->Pcoordinates[0]!=params.number_of_patches[0]-1 ) {
+                    smpi->recv( mypatch, mypatch->MPI_neighbor_[0][1], ( mypatch->hindex )*nmessage, params );
+                    patch_particle_created[my_thread][j] = false ; //Mark no needs of particles
+                }
             }
             
             // Create Xmin condition which could not be received
@@ -644,9 +648,11 @@ void SimWindow::operate(Domain& domain,  VectorPatch& vecPatches, SmileiMPI* smp
     domain.patch_->exchangeField_movewin( domain_fields->Br_[imode], params.n_space[0] );
     domain.patch_->exchangeField_movewin( domain_fields->Bt_[imode], params.n_space[0] );
     
-    domain.patch_->exchangeField_movewin( domain_fields->Bl_m[imode], params.n_space[0] );
-    domain.patch_->exchangeField_movewin( domain_fields->Br_m[imode], params.n_space[0] );
-    domain.patch_->exchangeField_movewin( domain_fields->Bt_m[imode], params.n_space[0] );
+    if (!params.is_spectral) {
+        domain.patch_->exchangeField_movewin( domain_fields->Bl_m[imode], params.n_space[0] );
+        domain.patch_->exchangeField_movewin( domain_fields->Br_m[imode], params.n_space[0] );
+        domain.patch_->exchangeField_movewin( domain_fields->Bt_m[imode], params.n_space[0] );
+    }
 
     if (params.is_spectral) {
         domain.patch_->exchangeField_movewin( domain_fields->rho_AM_[imode], params.n_space[0] );

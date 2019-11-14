@@ -147,11 +147,11 @@ void Patch::initStep3( Params &params, SmileiMPI *smpi, unsigned int n_moved )
     center   [0] += n_moved*params.cell_length[0];
 
     //Shift point position by dr/2 for the AM spectral geometry
-    if ( (params.is_spectral) && (params.geometry== "AMcylindrical") ) {
-        min_local[1] += params.cell_length[1]/2.;
-        max_local[1] += params.cell_length[1]/2.;
-        center   [1] += params.cell_length[1]/2.;
-    }
+    //if ( (params.is_spectral) && (params.geometry== "AMcylindrical") ) {
+    //    min_local[1] += params.cell_length[1]/2.;
+    //    max_local[1] += params.cell_length[1]/2.;
+    //    center   [1] += params.cell_length[1]/2.;
+    //}
     
 }
 
@@ -391,11 +391,11 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                             radius += pow( max_local[1] - center[1] + params.cell_length[1], 2 );
 
                             //Shift point position by dr/2 for the AM spectral geometry
-                            if ( (params.is_spectral) && (params.geometry== "AMcylindrical") ) {
-                                min_local[1] += params.cell_length[1]/2.;
-                                max_local[1] += params.cell_length[1]/2.;
-                                center   [1] += params.cell_length[1]/2.;
-                            }
+                            //if ( (params.is_spectral) && (params.geometry== "AMcylindrical") ) {
+                            //    min_local[1] += params.cell_length[1]/2.;
+                            //    max_local[1] += params.cell_length[1]/2.;
+                            //    center   [1] += params.cell_length[1]/2.;
+                            //}
  
                             cell_starting_global_index[0] = params.offset_map[0][xDom];
                             cell_starting_global_index[1] = params.offset_map[1][yDom];
@@ -649,11 +649,11 @@ void Patch::setLocationAndAllocateFields( Params &params, DomainDecomposition *d
                 MPI_neighbor_[iDim][1] = MPI_PROC_NULL;
 
         }
-        if ( (params.is_spectral) && (params.geometry== "AMcylindrical") ) {
-            min_local[1] += params.cell_length[1]/2.;
-            max_local[1] += params.cell_length[1]/2.;
-            center   [1] += params.cell_length[1]/2.;
-        }
+        //if ( (params.is_spectral) && (params.geometry== "AMcylindrical") ) {
+        //    min_local[1] += params.cell_length[1]/2.;
+        //    max_local[1] += params.cell_length[1]/2.;
+        //    center   [1] += params.cell_length[1]/2.;
+        //}
 
     }
     else {
@@ -851,11 +851,17 @@ void Patch::initExchParticles( SmileiMPI *smpi, int ispec, Params &params )
             //Put indexes of particles in the first direction they will be exchanged and correct their position according to periodicity for the first exchange only.
             if( cuParticles.position( 0, iPart ) < min_local[0] ) {
                 if( neighbor_[0][0]!=MPI_PROC_NULL ) {
+                    if ( (Pcoordinates[0]==0) && ( vecSpecies[ispec]->boundary_conditions[0][0]!="periodic" ) ) {
+                        continue;
+                    }
                     vecSpecies[ispec]->MPIbuff.part_index_send[0][0].push_back( iPart );
                     //MESSAGE("Sending particle to the left x= " << cuParticles.position(0,iPart) <<  " xmin = " <<  min_local[0] );
                 }
                 //If particle is outside of the global domain (has no neighbor), it will not be put in a send buffer and will simply be deleted.
             } else if( cuParticles.position( 0, iPart ) >= max_local[0] ) {
+                if ( (Pcoordinates[0]==params.number_of_patches[0]-1) && ( vecSpecies[ispec]->boundary_conditions[0][1]!="periodic" ) ) {
+                    continue;
+                }
                 if( neighbor_[0][1]!=MPI_PROC_NULL ) {
                     vecSpecies[ispec]->MPIbuff.part_index_send[0][1].push_back( iPart );
                     // MESSAGE("Sending particle to the right x= " << cuParticles.position(0,iPart) <<  " xmax = " <<  max_local[0] );

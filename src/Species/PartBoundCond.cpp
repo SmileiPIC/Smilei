@@ -79,7 +79,7 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
         for( unsigned int iDim=0; iDim<( unsigned int )nDim_field; iDim++ ) {
             if( ( ( params.EM_BCs[iDim][0]=="periodic" )&&( species->boundary_conditions[iDim][0]!="periodic" ) )
                     || ( ( params.EM_BCs[iDim][1]=="periodic" )&&( species->boundary_conditions[iDim][1]!="periodic" ) ) ) {
-                ERROR( "For species " << species->name << ", periodic EM "<<"xyz"[iDim]<<"-boundary conditions require particle BCs to be periodic." );
+                WARNING( "For species " << species->name << ", periodic EM "<<"xyz"[iDim]<<"-boundary conditions require particle BCs to be periodic." );
             }
         }
     }

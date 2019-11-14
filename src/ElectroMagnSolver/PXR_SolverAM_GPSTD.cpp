@@ -66,7 +66,7 @@ void PXR_SolverAM_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool f
         ovl=( int ) params.oversize[0];
         ovr=( int ) params.oversize[1];
     }
-    ovr = 0;
+    ovr=0;
 
     std::vector<unsigned int> dimPrim( 3 );
     // Dimension of the primal and dual grids
@@ -241,17 +241,17 @@ void PXR_SolverAM_GPSTD::_2Dvectors_to_3D( ElectroMagn *fields )
 
         for (int il=0;il<El->dims_[0];il++) {
             for (int ir=fields->oversize[1];ir<El->dims_[1]-fields->oversize[1];ir++) {
-                (*El_pxr)(imode,il,ir-fields->oversize[1]) = (*El)(il,ir);
-                (*Er_pxr)(imode,il,ir-fields->oversize[1]) = (*Er)(il,ir);
-                (*Et_pxr)(imode,il,ir-fields->oversize[1]) = (*Et)(il,ir);
-                (*Bl_pxr)(imode,il,ir-fields->oversize[1]) = (*Bl)(il,ir);
-                (*Br_pxr)(imode,il,ir-fields->oversize[1]) = (*Br)(il,ir);
-                (*Bt_pxr)(imode,il,ir-fields->oversize[1]) = (*Bt)(il,ir);
-                (*Jl_pxr)(imode,il,ir-fields->oversize[1]) = (*Jl)(il,ir);
-                (*Jr_pxr)(imode,il,ir-fields->oversize[1]) = (*Jr)(il,ir);
-                (*Jt_pxr)(imode,il,ir-fields->oversize[1]) = (*Jt)(il,ir);
-                (*rho_pxr)(imode,il,ir-fields->oversize[1]) = (*rho)(il,ir);
-                (*rhoold_pxr)(imode,il,ir-fields->oversize[1]) = (*rhoold)(il,ir);
+                (*El_pxr)(imode,il,ir-fields->oversize[1]) = (*El)(il,ir); 
+                (*Er_pxr)(imode,il,ir-fields->oversize[1]) = (*Er)(il,ir); 
+                (*Et_pxr)(imode,il,ir-fields->oversize[1]) = (*Et)(il,ir); 
+                (*Bl_pxr)(imode,il,ir-fields->oversize[1]) = (*Bl)(il,ir); 
+                (*Br_pxr)(imode,il,ir-fields->oversize[1]) = (*Br)(il,ir); 
+                (*Bt_pxr)(imode,il,ir-fields->oversize[1]) = (*Bt)(il,ir); 
+                (*Jl_pxr)(imode,il,ir-fields->oversize[1]) = (*Jl)(il,ir); 
+                (*Jr_pxr)(imode,il,ir-fields->oversize[1]) = (*Jr)(il,ir); 
+                (*Jt_pxr)(imode,il,ir-fields->oversize[1]) = (*Jt)(il,ir); 
+                (*rho_pxr)(imode,il,ir-fields->oversize[1]) = (*rho)(il,ir); 
+                (*rhoold_pxr)(imode,il,ir-fields->oversize[1]) = (*rhoold)(il,ir); 
             }
         }
     }
@@ -287,17 +287,17 @@ void PXR_SolverAM_GPSTD::_3D_to_2Dvectors( ElectroMagn *fields )
 
         for (int il=0;il<El->dims_[0];il++) {
             for (int ir=fields->oversize[1];ir<El->dims_[1]-fields->oversize[1];ir++) {
-                (*El)(il,ir) = (*El_pxr)(imode,il,ir-fields->oversize[1]);
-                (*Er)(il,ir) = (*Er_pxr)(imode,il,ir-fields->oversize[1]);
-                (*Et)(il,ir) = (*Et_pxr)(imode,il,ir-fields->oversize[1]);
-                (*Bl)(il,ir) = (*Bl_pxr)(imode,il,ir-fields->oversize[1]);
-                (*Br)(il,ir) = (*Br_pxr)(imode,il,ir-fields->oversize[1]);
-                (*Bt)(il,ir) = (*Bt_pxr)(imode,il,ir-fields->oversize[1]);
-                (*Jl)(il,ir) = (*Jl_pxr)(imode,il,ir-fields->oversize[1]);
-                (*Jr)(il,ir) = (*Jr_pxr)(imode,il,ir-fields->oversize[1]);
-                (*Jt)(il,ir) = (*Jt_pxr)(imode,il,ir-fields->oversize[1]);
-                (*rho)(il,ir) = (*rho_pxr)(imode,il,ir-fields->oversize[1]);
-                (*rhoold)(il,ir) = (*rhoold_pxr)(imode,il,ir-fields->oversize[1]);
+                (*El)(il,ir) = (*El_pxr)(imode,il,ir-fields->oversize[1]); 
+                (*Er)(il,ir) = (*Er_pxr)(imode,il,ir-fields->oversize[1]); 
+                (*Et)(il,ir) = (*Et_pxr)(imode,il,ir-fields->oversize[1]); 
+                (*Bl)(il,ir) = (*Bl_pxr)(imode,il,ir-fields->oversize[1]); 
+                (*Br)(il,ir) = (*Br_pxr)(imode,il,ir-fields->oversize[1]); 
+                (*Bt)(il,ir) = (*Bt_pxr)(imode,il,ir-fields->oversize[1]); 
+                (*Jl)(il,ir) = (*Jl_pxr)(imode,il,ir-fields->oversize[1]); 
+                (*Jr)(il,ir) = (*Jr_pxr)(imode,il,ir-fields->oversize[1]); 
+                (*Jt)(il,ir) = (*Jt_pxr)(imode,il,ir-fields->oversize[1]); 
+                (*rho)(il,ir) = (*rho_pxr)(imode,il,ir-fields->oversize[1]); 
+                (*rhoold)(il,ir) = (*rhoold_pxr)(imode,il,ir-fields->oversize[1]); 
             }
         }
     }

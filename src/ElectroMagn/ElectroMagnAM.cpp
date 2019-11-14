@@ -1335,7 +1335,7 @@ void ElectroMagnAM::applyExternalField( Field *my_field,  Profile *profile, Patc
      
      vector<double> pos( 2 );
      pos[0]      = patch->getDomainLocalMin(0) + dl*( (field2D->isDual( 0 )?-0.5:0.) - oversize[0]);
-     double pos1 = patch->getDomainLocalMin(1) + dr*( (field2D->isDual( 1 )?-0.5:0.) - oversize[1]);
+     double pos1 = patch->getDomainLocalMin(1) + dr*( (field2D->isDual( 1 )?-0.5:0.) - oversize[1])+is_pxr*dr/2.;
      int N0 = ( int )field2D->dims()[0];
      int N1 = ( int )field2D->dims()[1];
      

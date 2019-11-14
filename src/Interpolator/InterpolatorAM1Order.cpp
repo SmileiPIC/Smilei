@@ -46,7 +46,7 @@ void InterpolatorAM1Order::fields( ElectroMagn *EMfields, Particles &particles, 
     // Spectral grids are shifted by a half cell length along r.
     double xpn = particles.position( 0, ipart ) * dl_inv_ ;
     double r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) ) ;
-    double rpn = r * dr_inv_ - 0.5;
+    double rpn = r * dr_inv_;
     exp_m_theta = ( particles.position( 1, ipart ) - Icpx * particles.position( 2, ipart ) ) / r ; //exp(-i theta)
     complex<double> exp_mm_theta = 1. ;                                                          //exp(-i m theta)
     // Calculate coeffs

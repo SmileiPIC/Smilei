@@ -37,6 +37,11 @@ ProjectorAM1Order::ProjectorAM1Order( Params &params, Patch *patch ) : Projector
 
     invR = &((static_cast<PatchAM *>( patch )->invR)[0]);
     invRd = &((static_cast<PatchAM *>( patch )->invRd)[0]);
+
+    if (!params.is_pxr)
+        staggered = true;
+    else
+        staggered = false;
 }
 
 
@@ -107,6 +112,7 @@ void ProjectorAM1Order::basicForComplex( complex<double> *rhoj, Particles &parti
     }
  
     ip -= i_domain_begin ;
+    jp -= j_domain_begin ;
     // j_domain_begin should always be zero in spectral since no paralellization along r.
     
     for( unsigned int i=0 ; i<2 ; i++ ) {
@@ -165,6 +171,7 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
 
 
     ip  -= i_domain_begin ;
+    jp  -= j_domain_begin ;
 
     double *invR_local  = &(invR[jp]);
 
@@ -267,7 +274,7 @@ void ProjectorAM1Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
             //}//i
             // Fold dual quantities along r
             for( unsigned int i=0 ; i<npriml; i++ ) {
-                int iloc = i*(nprimr+1);
+                int iloc = i*(nprimr+staggered);
                 for( unsigned int j=0 ; j<= oversizeR; j++ ) {
                     Jr [iloc+3] += sign * Jr [iloc+2];
                 }
@@ -288,8 +295,8 @@ void ProjectorAM1Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
             if (imode == 1){
                 for( unsigned int i=0 ; i<npriml; i++ ) {
                     int iloc = i*nprimr;
-                    int ilocr = i*(nprimr+1);
-                    Jt [iloc+j] = -1./3.*(4.*Icpx*Jr[ilocr+j+1] + Jt[iloc+j+1]) ;
+                    int ilocr = i*(nprimr+staggered);
+                    Jt [iloc+j] = -1./3.*(4.*Icpx*Jr[ilocr+j+staggered] + Jt[iloc+j+staggered]) ;
                 }//i
             } else{
                 for( unsigned int i=0 ; i<npriml; i++ ) {

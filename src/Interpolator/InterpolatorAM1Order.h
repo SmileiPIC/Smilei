@@ -106,7 +106,7 @@ private:
 
         // First index for summation
         ip_ = ip_ - i_domain_begin;
-        // j_domain_begin should always be zero in spectral since no paralellization along r.
+        jp_ = jp_ - j_domain_begin;
         if (jp_ == -1){ // If particle is between 0 and dr/2 initial jp_=-1
             jp_ = 0;
             // coeffs 2-3 are used when F(-dr/2) = - F(dr/2) <==> when field mode is zero on axis

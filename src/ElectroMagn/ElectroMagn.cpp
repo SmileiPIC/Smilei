@@ -77,7 +77,8 @@ ElectroMagn::ElectroMagn( Params &params, DomainDecomposition *domain_decomposit
             }
         } else { // if spectral, primal grid shifted by half cell length
             for( int j = 0; j< nr_p; j++ ) {
-                patchAM->invR[j] = 1./( ((double)j + 0.5)*dr);
+                //patchAM->invR[j] = 1./( ((double)j + 0.5)*dr);
+                patchAM->invR[j] = 1./abs(((double)j_glob_ + (double)j+ 0.5)*dr);
             }
         }
     }
@@ -110,6 +111,35 @@ ElectroMagn::ElectroMagn( ElectroMagn *emFields, Params &params, Patch *patch ) 
     nrj_mw_lost( 0. ),
     nrj_new_fields( 0. )
 {
+
+    if ( dynamic_cast<PatchAM *>( patch ) ) {
+        PatchAM *patchAM = static_cast<PatchAM *>( patch );
+        int j_glob_ = patchAM->Pcoordinates[1]*n_space[1]-params.oversize[1]; //cell_starting_global_index is only define later during patch creation.
+        int nr_p = n_space[1]+1+2*params.oversize[1];
+        double dr = params.cell_length[1];
+        patchAM->invR.resize( nr_p );
+
+        if (!params.is_spectral){
+            patchAM->invRd.resize( nr_p+1 );
+            for( int j = 0; j< nr_p; j++ ) {
+                if( j_glob_ + j == 0 ) {
+                    patchAM->invR[j] = 8./dr; // No Verboncoeur correction
+                    //invR[j] = 64./(13.*dr); // Order 2 Verboncoeur correction
+                } else {
+                    patchAM->invR[j] = 1./abs(((double)j_glob_ + (double)j)*dr);
+                }
+            }
+            for( int j = 0; j< nr_p + 1; j++ ) {
+                patchAM->invRd[j] = 1./abs(((double)j_glob_ + (double)j - 0.5)*dr);
+            }
+        } else { // if spectral, primal grid shifted by half cell length
+            for( int j = 0; j< nr_p; j++ ) {
+                //patchAM->invR[j] = 1./( ((double)j + 0.5)*dr);
+                patchAM->invR[j] = 1./abs(((double)j_glob_ + (double)j+ 0.5)*dr);
+            }
+        }
+    }
+
 
     initElectroMagnQuantities();
     
