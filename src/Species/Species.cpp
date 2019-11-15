@@ -963,14 +963,14 @@ void Species::dynamics_import_particles( double time_dual, unsigned int ispec,
         Params &params,
         Patch *patch, SmileiMPI *smpi,
         vector<Diagnostic *> &localDiags )
-{   
-    // Add the ionized electrons to the electron species (possible even if ion is frozen)
-    if( Ionize ) {
-        electron_species->importParticles( params, patch, Ionize->new_electrons, localDiags );
-                 }
-
+{
     // if moving particle
     if( time_dual>time_frozen ) { // moving particle
+
+        // Add the ionized electrons to the electron species
+        if( Ionize ) {
+            electron_species->importParticles( params, patch, Ionize->new_electrons, localDiags );
+        }
 
         // Radiation losses
         if( Radiate ) {
@@ -1862,7 +1862,7 @@ void Species::ponderomotive_update_susceptibility_and_momentum( double time_dual
     // -------------------------------
     // calculate the particle updated momentum
     // -------------------------------
-    if( time_dual>time_frozen ) { // moving particle
+    if( time_dual>time_frozen || Ionize) { // moving particle
 
         smpi->dynamics_resize( ithread, nDim_field, last_index.back(), params.geometry=="AMcylindrical" );
 
@@ -1892,6 +1892,8 @@ void Species::ponderomotive_update_susceptibility_and_momentum( double time_dual
                 patch->patch_timers[4] += MPI_Wtime() - timer;
 #endif            
             }
+            
+            if( time_dual<=time_frozen ) continue; // Do not push nor project frozen particles
 
             // Project susceptibility, the source term of envelope equation
 #ifdef  __DETAILED_TIMERS
@@ -2102,21 +2104,28 @@ void Species::ponderomotive_update_position_and_currents( double time_dual, unsi
     else { // immobile particle
 
         if( diag_flag &&( !particles->is_test ) ) {
-            double *b_rho=nullptr;
-            for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
-                // only 3D is implemented actually
-                if( nDim_field==2 ) {
+            if( params.geometry != "AMcylindrical" ) {
+                double *b_rho=nullptr;
+                for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
                     b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
+                    for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
+                        Proj->basic( b_rho, ( *particles ), iPart, 0 );
+                    }
                 }
-                if( nDim_field==3 ) {
-                    b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
-                } else if( nDim_field==1 ) {
-                    b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
+            } else {
+                int n_species = patch->vecSpecies.size();
+                complex<double> *b_rho=nullptr;
+                ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+                for( unsigned int imode = 0; imode<params.nmodes; imode++ ) {
+                    int ifield = imode*n_species+ispec;
+                    for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
+                        b_rho = emAM->rho_AM_s[ifield] ? &( *emAM->rho_AM_s[ifield] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
+                        for( int iPart=first_index[ibin] ; iPart<last_index[ibin]; iPart++ ) {
+                            Proj->basicForComplex( b_rho, ( *particles ), iPart, 0, imode );
+                        }
+                    }
                 }
-                for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
-                    Proj->basic( b_rho, ( *particles ), iPart, 0 );
-                } //End loop on particles
-            }//End loop on bins
+            }
         } // end condition on diag and not particle test
 
     }//END if time vs. time_frozen
