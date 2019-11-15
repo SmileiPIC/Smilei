@@ -964,13 +964,14 @@ void Species::dynamics_import_particles( double time_dual, unsigned int ispec,
         Patch *patch, SmileiMPI *smpi,
         vector<Diagnostic *> &localDiags )
 {
-    // if moving particle
-    if( time_dual>time_frozen ) { // moving particle
 
-        // Add the ionized electrons to the electron species
-        if( Ionize ) {
-            electron_species->importParticles( params, patch, Ionize->new_electrons, localDiags );
-        }
+    // Add the ionized electrons to the electron species
+    if( Ionize ) {
+        electron_species->importParticles( params, patch, Ionize->new_electrons, localDiags );
+    }
+
+   
+    if( time_dual>time_frozen ) { // moving particle
 
         // Radiation losses
         if( Radiate ) {
