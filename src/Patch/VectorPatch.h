@@ -124,7 +124,7 @@ public :
     void finalizeAndSortParticles( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
                                   double time_dual,
                                   Timers &timers, int itime );
-    void finalize_sync_and_bc_fields( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
+    void finalizeSyncAndBCFields( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
                                       double time_dual, Timers &timers, int itime );
 
     //! Particle merging

@@ -1083,7 +1083,7 @@ void VectorPatch::solveEnvelope( Params &params, SimWindow *simWindow, int itime
 
 } // END solveEnvelope
 
-void VectorPatch::finalize_sync_and_bc_fields( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
+void VectorPatch::finalizeSyncAndBCFields( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
         double time_dual, Timers &timers, int itime )
 {
 #ifndef _PICSAR
@@ -1104,7 +1104,7 @@ void VectorPatch::finalize_sync_and_bc_fields( Params &params, SmileiMPI *smpi, 
     }
 #endif
 
-} // END finalize_sync_and_bc_fields
+} // END finalizeSyncAndBCFields
 
 
 void VectorPatch::initExternals( Params &params )

@@ -1331,7 +1331,7 @@ void SyncVectorPatch::finalize_exchange_all_components_along_Z( std::vector<Fiel
 // ---------------------------------------------------------------------------------------------------------------------
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SyncVectorPatch::exchange_along_X( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
+void SyncVectorPatch::exchangeAlongX( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
 {
 #ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
@@ -1379,7 +1379,7 @@ void SyncVectorPatch::exchange_along_X( std::vector<Field *> fields, VectorPatch
 
 }
 
-void SyncVectorPatch::finalize_exchange_along_X( std::vector<Field *> fields, VectorPatch &vecPatches )
+void SyncVectorPatch::finalizeExchangeAlongX( std::vector<Field *> fields, VectorPatch &vecPatches )
 {
 #ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
@@ -1392,7 +1392,7 @@ void SyncVectorPatch::finalize_exchange_along_X( std::vector<Field *> fields, Ve
 
 }
 
-void SyncVectorPatch::exchange_along_Y( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
+void SyncVectorPatch::exchangeAlongY( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
 {
 #ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
@@ -1439,7 +1439,7 @@ void SyncVectorPatch::exchange_along_Y( std::vector<Field *> fields, VectorPatch
 
 }
 
-void SyncVectorPatch::finalize_exchange_along_Y( std::vector<Field *> fields, VectorPatch &vecPatches )
+void SyncVectorPatch::finalizeExchangeAlongY( std::vector<Field *> fields, VectorPatch &vecPatches )
 {
 #ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
@@ -1452,7 +1452,7 @@ void SyncVectorPatch::finalize_exchange_along_Y( std::vector<Field *> fields, Ve
 
 }
 
-void SyncVectorPatch::exchange_along_Z( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
+void SyncVectorPatch::exchangeAlongZ( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
 {
 #ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
@@ -1497,7 +1497,7 @@ void SyncVectorPatch::exchange_along_Z( std::vector<Field *> fields, VectorPatch
     } // End for( ipatch )
 }
 
-void SyncVectorPatch::finalize_exchange_along_Z( std::vector<Field *> fields, VectorPatch &vecPatches )
+void SyncVectorPatch::finalizeExchangeAlongZ( std::vector<Field *> fields, VectorPatch &vecPatches )
 {
 #ifndef _NO_MPI_TM
     #pragma omp for schedule(static)

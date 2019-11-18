@@ -357,7 +357,7 @@ int main( int argc, char *argv[] )
             vecPatches.cleanParticlesOverhead(params, timers, itime );
 
             // Finalize field synchronization and exchanges
-            vecPatches.finalize_sync_and_bc_fields( params, &smpi, simWindow, time_dual, timers, itime );
+            vecPatches.finalizeSyncAndBCFields( params, &smpi, simWindow, time_dual, timers, itime );
             
             // call the various diagnostics
             vecPatches.runAllDiags( params, &smpi, itime, timers, simWindow );
