@@ -234,7 +234,7 @@ public :
     void outputExchanges( SmileiMPI *smpi );
     
     //! Init new envelope from input namelist
-    void init_new_envelope( Params &params );
+    void initNewEnvelope( Params &params );
     
     // Lists of fields
     std::vector<Field *> densities;

@@ -248,7 +248,7 @@ public :
 
     static void sumAllComponents( std::vector<Field *> &fields, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime );
 
-    void template_generator();
+    void templateGenerator();
 
     //! Fields synchronization
     static void exchangeE( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );

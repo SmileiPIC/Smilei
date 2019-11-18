@@ -202,7 +202,7 @@ int main( int argc, char *argv[] )
         // if Laser Envelope is used, execute particles and envelope sections of ponderomotive loop
         if( params.Laser_Envelope_model ) {
             // initialize new envelope from scratch, following the input namelist
-            vecPatches.init_new_envelope( params );
+            vecPatches.initNewEnvelope( params );
         } // end condition if Laser Envelope Model is used
 
         // Project charge and current densities (and susceptibility if envelope is used) only for diags at t=0

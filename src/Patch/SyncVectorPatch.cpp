@@ -694,7 +694,7 @@ void SyncVectorPatch::exchangeEnvChi( Params &params, VectorPatch &vecPatches, S
 }
 
 
-void SyncVectorPatch::template_generator()
+void SyncVectorPatch::templateGenerator()
 {
     SmileiMPI* smpi = NULL;
     VectorPatch patches;

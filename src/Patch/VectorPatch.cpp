@@ -3562,7 +3562,7 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
 } // END ponderomotiveUpdatePositionAndCurrents
 
 
-void VectorPatch::init_new_envelope( Params &params )
+void VectorPatch::initNewEnvelope( Params &params )
 {
     if( ( *this )( 0 )->EMfields->envelope!=NULL ) {
         // for all patches, init new envelope from input namelist parameters
@@ -3570,4 +3570,4 @@ void VectorPatch::init_new_envelope( Params &params )
             ( *this )( ipatch )->EMfields->envelope->initEnvelope( ( *this )( ipatch ), ( *this )( ipatch )->EMfields );
         } // end loop on patches
     }
-} // END init_new_envelope
+} // END initNewEnvelope
