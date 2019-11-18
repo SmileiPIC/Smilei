@@ -53,7 +53,7 @@ public:
     void set( Params &params, DomainDecomposition *domain_decomposition, VectorPatch &vecPatch );
    
     //Copy positions of particles from source species to species which are initialized on top of another one.
-    void copy_positions( std::vector<Species *> vecSpecies_to_update);
+    void copyPositions( std::vector<Species *> vecSpecies_to_update);
 
     //! Destructor for Patch
     virtual ~Patch();

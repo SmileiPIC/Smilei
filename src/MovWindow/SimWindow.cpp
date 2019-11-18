@@ -385,7 +385,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
                                                     }
                             #endif*/
                         }
-                        mypatch->copy_positions(mypatch->vecSpecies);
+                        mypatch->copyPositions(mypatch->vecSpecies);
                         
                         mypatch->EMfields->applyExternalFields( mypatch );
                         if( params.save_magnectic_fields_for_SM ) {

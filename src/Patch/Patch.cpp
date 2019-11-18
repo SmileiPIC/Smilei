@@ -922,7 +922,7 @@ void Patch::cleanupSentParticles( int ispec, std::vector<int> *indexes_of_partic
 
 //Copy positions of all particles of the target species to the positions of the species to update.
 //Used for particle initialization on top of another species
-void Patch::copy_positions( std::vector<Species *> vecSpecies_to_update )
+void Patch::copyPositions( std::vector<Species *> vecSpecies_to_update )
 {
     for( unsigned int i=0; i<vecSpecies_to_update.size(); i++ ) {
         if( vecSpecies_to_update[i]->position_initialization_on_species_==false )

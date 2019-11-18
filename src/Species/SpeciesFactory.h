@@ -1243,7 +1243,7 @@ public:
             Species *newSpecies = SpeciesFactory::clone( vecSpecies[ispec], params, patch, with_particles );
             retSpecies.push_back( newSpecies );
         }
-        patch->copy_positions(retSpecies);
+        patch->copyPositions(retSpecies);
 
         // Ionization
         for( unsigned int i=0; i<retSpecies.size(); i++ ) {
