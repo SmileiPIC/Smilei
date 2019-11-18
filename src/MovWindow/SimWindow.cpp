@@ -520,7 +520,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
 #endif
         {
             x_moved += cell_length_x_*params.n_space[0];
-            vecPatches.update_field_list( smpi ) ;
+            vecPatches.updateFieldList( smpi ) ;
             //update list fields for species diag too ??
             
             // Tell that the patches moved this iteration (needed for probes)

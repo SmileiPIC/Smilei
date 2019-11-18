@@ -71,8 +71,8 @@ public :
         refHindex_ = patches_[0]->Hindex();
     }
     //! Resize vector of field*
-    void update_field_list( SmileiMPI *smpi );
-    void update_field_list( int ispec, SmileiMPI *smpi );
+    void updateFieldList( SmileiMPI *smpi );
+    void updateFieldList( int ispec, SmileiMPI *smpi );
     
     void createDiags( Params &params, SmileiMPI *smpi, OpenPMDparams & );
     
@@ -231,7 +231,7 @@ public :
     void exchangePatches( SmileiMPI *smpi, Params &params );
     
     //! Write in a file patches communications
-    void output_exchanges( SmileiMPI *smpi );
+    void outputExchanges( SmileiMPI *smpi );
     
     //! Init new envelope from input namelist
     void init_new_envelope( Params &params );

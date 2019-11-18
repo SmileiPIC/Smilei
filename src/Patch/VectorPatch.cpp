@@ -866,7 +866,7 @@ void VectorPatch::sumDensities( Params &params, double time_dual, Timers &timers
     if( diag_flag ) {
         for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size(); ispec++ ) {
             if( !( *this )( 0 )->vecSpecies[ispec]->particles->is_test ) {
-                update_field_list( ispec, smpi );
+                updateFieldList( ispec, smpi );
                 if( params.geometry != "AMcylindrical" ) {
                     SyncVectorPatch::sumRhoJs( params, ( *this ), ispec, smpi, timers, itime ); // MPI
                 } else {
@@ -909,7 +909,7 @@ void VectorPatch::sumSusceptibility( Params &params, double time_dual, Timers &t
         for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size(); ispec++ ) {
             if( !( *this )( 0 )->vecSpecies[ispec]->particles->is_test ) {
                 if( species( 0, ispec )->ponderomotive_dynamics ) {
-                    update_field_list( ispec, smpi );
+                    updateFieldList( ispec, smpi );
                     SyncVectorPatch::sumEnvChis( params, ( *this ), ispec, smpi, timers, itime );
                 } // MPI
             }
@@ -2613,7 +2613,7 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
         }
     }
     this->set_refHindex() ;
-    update_field_list( smpi ) ;
+    updateFieldList( smpi ) ;
 
 } // END exchangePatches
 
@@ -2622,7 +2622,7 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
 //   - Send/Recv MPI rank
 //   - Send/Recv patch Id
 // ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::output_exchanges( SmileiMPI *smpi )
+void VectorPatch::outputExchanges( SmileiMPI *smpi )
 {
     ofstream output_file;
     ostringstream name( "" );
@@ -2649,10 +2649,10 @@ void VectorPatch::output_exchanges( SmileiMPI *smpi )
     }
     output_file << "NEXT" << endl;
     output_file.close();
-} // END output_exchanges
+} // END outputExchanges
 
 //! Resize vector of field*
-void VectorPatch::update_field_list( SmileiMPI *smpi )
+void VectorPatch::updateFieldList( SmileiMPI *smpi )
 {
     int nDim( 0 );
     if( !dynamic_cast<ElectroMagnAM *>( patches_[0]->EMfields ) ) {
@@ -2966,7 +2966,7 @@ void VectorPatch::update_field_list( SmileiMPI *smpi )
 
 
 
-void VectorPatch::update_field_list( int ispec, SmileiMPI *smpi )
+void VectorPatch::updateFieldList( int ispec, SmileiMPI *smpi )
 {
     #pragma omp barrier
     if( !dynamic_cast<ElectroMagnAM *>( patches_[0]->EMfields ) ) {
