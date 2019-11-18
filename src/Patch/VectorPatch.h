@@ -35,7 +35,7 @@ public :
     VectorPatch();
     VectorPatch( Params &params );
     ~VectorPatch();
-    void save_old_rho( Params &params );
+    void saveOldRho( Params &params );
     
     void close( SmileiMPI * );
     
@@ -332,7 +332,7 @@ public :
         }
     }
     
-    void check_memory_consumption( SmileiMPI *smpi );
+    void checkMemoryConsumption( SmileiMPI *smpi );
     
     void check_expected_disk_usage( SmileiMPI *smpi, Params &params, Checkpoint &checkpoint );
     

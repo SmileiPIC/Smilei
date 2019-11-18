@@ -248,7 +248,7 @@ int main( int argc, char *argv[] )
     // Check memory consumption & expected disk usage
     // ------------------------------------------------------------------------
     TITLE( "Memory consumption" );
-    vecPatches.check_memory_consumption( &smpi );
+    vecPatches.checkMemoryConsumption( &smpi );
 
     TITLE( "Expected disk usage (approximate)" );
     vecPatches.check_expected_disk_usage( &smpi, params, checkpoint );

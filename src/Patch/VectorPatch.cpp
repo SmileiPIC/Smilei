@@ -1025,7 +1025,7 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
             }
         }
         if( params.is_spectral ) {
-            save_old_rho( params );
+            saveOldRho( params );
         }
     }
 #endif
@@ -3226,7 +3226,7 @@ void VectorPatch::saveExternalFields( Params &params )
 
 
 // Print information on the memory consumption
-void VectorPatch::check_memory_consumption( SmileiMPI *smpi )
+void VectorPatch::checkMemoryConsumption( SmileiMPI *smpi )
 {
     long int particlesMem( 0 );
     for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ )
@@ -3298,7 +3298,7 @@ void VectorPatch::check_memory_consumption( SmileiMPI *smpi )
 }
 
 
-void VectorPatch::save_old_rho( Params &params )
+void VectorPatch::saveOldRho( Params &params )
 {
     int n=0;
     #pragma omp for schedule(static)
