@@ -654,7 +654,7 @@ void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
         Params &params,
         Patch *patch, SmileiMPI *smpi,
         vector<Diagnostic *> &localDiags )
-{   
+{
     // Add the ionized electrons to the electron species (possible even if ion is frozen)
     if( Ionize ) {
         electron_species->importParticles( params, patch, Ionize->new_electrons, localDiags );
@@ -734,7 +734,7 @@ void Species::sortParticles( Params &params )
 
     int ndim = params.nDim_field;
     int idim;
-    //cleanup_sent_particles(ispec, indexes_of_particles_to_exchange);
+    //cleanupSentParticles(ispec, indexes_of_particles_to_exchange);
 
     //We have stored in indexes_of_particles_to_exchange the list of all particles that needs to be removed.
     /********************************************************************************/

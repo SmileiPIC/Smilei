@@ -689,7 +689,7 @@ void Patch::exchParticles( SmileiMPI *smpi, int ispec, Params &params, int iDim,
 // ---------------------------------------------------------------------------------------------------------------------
 // For direction iDim, finalize receive of particles, temporary store particles if diagonalParticles
 // And store recv particles at their definitive place.
-// Call Patch::cleanup_sent_particles
+// Call Patch::cleanupSentParticles
 //   - vecPatch : used for intra-MPI process comm (direct copy using Particels::cp_particles)
 //   - smpi     : used smpi->periods_
 // ---------------------------------------------------------------------------------------------------------------------
@@ -867,7 +867,7 @@ void Patch::cleanParticlesOverhead( Params &params )
 // ---------------------------------------------------------------------------------------------------------------------
 // Clear vecSpecies[]->indexes_of_particles_to_exchange, suppress particles send and manage memory
 // ---------------------------------------------------------------------------------------------------------------------
-void Patch::cleanup_sent_particles( int ispec, std::vector<int> *indexes_of_particles_to_exchange )
+void Patch::cleanupSentParticles( int ispec, std::vector<int> *indexes_of_particles_to_exchange )
 {
     /********************************************************************************/
     // Delete Particles included in the index of particles to exchange. Assumes indexes are sorted.
@@ -918,7 +918,7 @@ void Patch::cleanup_sent_particles( int ispec, std::vector<int> *indexes_of_part
         ( *cufirst_index )[ibin] = ( *culast_index )[ibin-1];
     }
 
-} // END cleanup_sent_particles
+} // END cleanupSentParticles
 
 //Copy positions of all particles of the target species to the positions of the species to update.
 //Used for particle initialization on top of another species

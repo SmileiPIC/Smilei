@@ -137,7 +137,7 @@ public:
     //! clean memory resizing particles structure
     void cleanParticlesOverhead( Params &params );
     //! delete Particles included in the index of particles to exchange. Assumes indexes are sorted.
-    void cleanup_sent_particles( int ispec, std::vector<int> *indexes_of_particles_to_exchange );
+    void cleanupSentParticles( int ispec, std::vector<int> *indexes_of_particles_to_exchange );
     
     //! init comm / sum densities
     virtual void initSumField( Field *field, int iDim, SmileiMPI *smpi ) = 0;
