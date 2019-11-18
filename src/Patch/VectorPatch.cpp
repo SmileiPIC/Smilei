@@ -2373,7 +2373,7 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
 // ---------------------------------------------------------------------------------------------------------------------
 
 
-void VectorPatch::load_balance( Params &params, double time_dual, SmileiMPI *smpi, SimWindow *simWindow, unsigned int itime )
+void VectorPatch::loadBalance( Params &params, double time_dual, SmileiMPI *smpi, SimWindow *simWindow, unsigned int itime )
 {
 
     // Compute new patch distribution

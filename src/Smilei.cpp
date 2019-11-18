@@ -384,7 +384,7 @@ int main( int argc, char *argv[] )
                 if( params.load_balancing_time_selection->theTimeIsNow( itime ) ) {
                     timers.loadBal.restart();
                     #pragma omp single
-                    vecPatches.load_balance( params, time_dual, &smpi, simWindow, itime );
+                    vecPatches.loadBalance( params, time_dual, &smpi, simWindow, itime );
                     timers.loadBal.update( params.printNow( itime ) );
                 }
             }
