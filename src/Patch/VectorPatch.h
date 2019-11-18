@@ -334,7 +334,7 @@ public :
     
     void checkMemoryConsumption( SmileiMPI *smpi );
     
-    void check_expected_disk_usage( SmileiMPI *smpi, Params &params, Checkpoint &checkpoint );
+    void checkExpectedDiskUsage( SmileiMPI *smpi, Params &params, Checkpoint &checkpoint );
     
     // Keep track if we need the needsRhoJsNow
     int diag_flag;

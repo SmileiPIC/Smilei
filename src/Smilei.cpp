@@ -251,7 +251,7 @@ int main( int argc, char *argv[] )
     vecPatches.checkMemoryConsumption( &smpi );
 
     TITLE( "Expected disk usage (approximate)" );
-    vecPatches.check_expected_disk_usage( &smpi, params, checkpoint );
+    vecPatches.checkExpectedDiskUsage( &smpi, params, checkpoint );
 
     // ------------------------------------------------------------------------
     // check here if we can close the python interpreter
@@ -469,7 +469,7 @@ int executeTestMode( VectorPatch &vecPatches, SmileiMPI *smpi, SimWindow *simWin
 
     if( params.print_expected_disk_usage ) {
         TITLE( "Expected disk usage (approximate)" );
-        vecPatches.check_expected_disk_usage( smpi, params, checkpoint );
+        vecPatches.checkExpectedDiskUsage( smpi, params, checkpoint );
     }
 
     // If test mode enable, code stops here

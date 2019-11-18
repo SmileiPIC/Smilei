@@ -3314,7 +3314,7 @@ void VectorPatch::saveOldRho( Params &params )
 
 
 // Print information on the memory consumption
-void VectorPatch::check_expected_disk_usage( SmileiMPI *smpi, Params &params, Checkpoint &checkpoint )
+void VectorPatch::checkExpectedDiskUsage( SmileiMPI *smpi, Params &params, Checkpoint &checkpoint )
 {
     if( smpi->isMaster() ) {
 
