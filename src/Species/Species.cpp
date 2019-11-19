@@ -1024,7 +1024,7 @@ void Species::importParticles( Params &params, Patch *patch, Particles &source_p
     double inv_cell_length = 1./ params.cell_length[0];
 
     // std::cerr << "Species::importParticles "
-    //           << " for "<< this->name
+    //           << " for "<< this->name_
     //           << " in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ") "
     //           << " mpi process " << patch->MPI_me_ << " - "
     //           << " mode: " << this->vectorized_operators << " - "
@@ -1441,7 +1441,7 @@ void Species::check( Patch *patch, std::string title )
         sum_ck += particles->cell_keys[ip];
     }
     std::cerr << "Check sum at " << title
-              << " for "<< this->name
+              << " for "<< this->name_
               << " in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ") "
               << " mpi process " << patch->MPI_me_
               << " - mode: " << this->vectorized_operators

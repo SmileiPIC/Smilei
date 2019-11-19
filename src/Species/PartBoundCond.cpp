@@ -81,7 +81,7 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
         for( unsigned int iDim=0; iDim<( unsigned int )nDim_field; iDim++ ) {
             if( ( ( params.EM_BCs[iDim][0]=="periodic" )&&( species->boundary_conditions[iDim][0]!="periodic" ) )
                     || ( ( params.EM_BCs[iDim][1]=="periodic" )&&( species->boundary_conditions[iDim][1]!="periodic" ) ) ) {
-                ERROR( "For species " << species->name << ", periodic EM "<<"xyz"[iDim]<<"-boundary conditions require particle BCs to be periodic." );
+                ERROR( "For species " << species->name_ << ", periodic EM "<<"xyz"[iDim]<<"-boundary conditions require particle BCs to be periodic." );
             }
         }
     }
@@ -240,7 +240,7 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
         //    if (patch->isYmin()) bc_ymin = &stop_particle_AM;
         //}
         //else if ( species->boundary_conditions[1][0] == "none" ) {
-        //    if (patch->isMaster()) MESSAGE(2,"Ymin boundary condition for species " << species->name << " is 'none', which means the same as fields");
+        //    if (patch->isMaster()) MESSAGE(2,"Ymin boundary condition for species " << species->name_ << " is 'none', which means the same as fields");
         //}
         //else {
         //    ERROR( "Ymin boundary condition undefined : " << species->boundary_conditions[1][0]  );
@@ -260,7 +260,7 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
         //    if (patch->isYmax()) bc_ymax = &stop_particle_AM;
         //}
         //else if ( species->boundary_conditions[1][1] == "none" ) {
-        //    if (patch->isMaster()) MESSAGE(2,"Ymax boundary condition for species " << species->name << " is 'none', which means the same as fields");
+        //    if (patch->isMaster()) MESSAGE(2,"Ymax boundary condition for species " << species->name_ << " is 'none', which means the same as fields");
         //}
         else {
             //ERROR( "Ymax boundary condition undefined : " << species->boundary_conditions[1][1]  );

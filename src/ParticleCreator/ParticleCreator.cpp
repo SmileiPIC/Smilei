@@ -887,7 +887,7 @@ void ParticleCreator::createCharge( Particles * particles, Species * species,
         }
         diff = q - ( ( double )tot )/( ( double )nPart ); // missing charge
         if( diff != 0. ) {
-            WARNING( "Could not match exactly charge="<<q<<" for species "<< species->name
+            WARNING( "Could not match exactly charge="<<q<<" for species "<< species->name_
                   << " (difference of "<<diff<<"). Try to add particles." );
         }
     }

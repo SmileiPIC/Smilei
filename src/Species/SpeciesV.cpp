@@ -862,7 +862,7 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
         //
         // if (fabs(weight_before - weight_after)/weight_before > 1e-3 || fabs(energy_before - energy_after)/energy_before > 1e-3) {
         //     std::cerr << std::scientific << std::setprecision(15)
-        //               << " " << this->name
+        //               << " " << this->name_
         //               << " Weight before: " << weight_before
         //               << " Weight after: " << weight_after
         //               << " Energy before: " << energy_before

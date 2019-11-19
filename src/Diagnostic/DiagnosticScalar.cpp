@@ -190,7 +190,7 @@ void DiagnosticScalar::init( Params &params, SmileiMPI *smpi, VectorPatch &vecPa
     string species_name;
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
         if( ! vecPatches( 0 )->vecSpecies[ispec]->particles->is_test ) {
-            species_name = vecPatches( 0 )->vecSpecies[ispec]->name;
+            species_name = vecPatches( 0 )->vecSpecies[ispec]->name_;
             necessary_species[ispec] = necessary_Ukin || allowedKey( Tools::merge( "Dens_", species_name ) )
                                        || allowedKey( Tools::merge( "Ntot_", species_name ) )
                                        || allowedKey( Tools::merge( "Zavg_", species_name ) )
@@ -272,7 +272,7 @@ void DiagnosticScalar::init( Params &params, SmileiMPI *smpi, VectorPatch &vecPa
     sUrad.resize( nspec, NULL );
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
         if( ! vecPatches( 0 )->vecSpecies[ispec]->particles->is_test ) {
-            species_name = vecPatches( 0 )->vecSpecies[ispec]->name;
+            species_name = vecPatches( 0 )->vecSpecies[ispec]->name_;
             sDens[ispec] = newScalar_SUM( Tools::merge( "Dens_", species_name ) );
             sNtot[ispec] = newScalar_SUM( Tools::merge( "Ntot_", species_name ) );
             sZavg[ispec] = newScalar_SUM( Tools::merge( "Zavg_", species_name ) );
@@ -758,7 +758,7 @@ uint64_t DiagnosticScalar::getDiskFootPrint( int istart, int istop, Patch *patch
     unsigned int nspec = patch->vecSpecies.size();
     for( unsigned int ispec=0; ispec<nspec; ispec++ ) {
         if( ! patch->vecSpecies[ispec]->particles->is_test ) {
-            string species_name = patch->vecSpecies[ispec]->name;
+            string species_name = patch->vecSpecies[ispec]->name_;
             scalars.push_back( Tools::merge( "Dens_", species_name ) );
             scalars.push_back( Tools::merge( "Ntot_", species_name ) );
             scalars.push_back( Tools::merge( "Zavg_", species_name ) );

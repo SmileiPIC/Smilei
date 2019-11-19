@@ -311,7 +311,7 @@ void DiagnosticTrack::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, 
         t << setfill( '0' ) << setw( 10 ) << itime;
         iteration_group = H5::group( data_group_id, t.str().c_str() );
         particles_group = H5::group( iteration_group, "particles" );
-        species_group = H5::group( particles_group, vecPatches( 0 )->vecSpecies[speciesId_]->name.c_str() );
+        species_group = H5::group( particles_group, vecPatches( 0 )->vecSpecies[speciesId_]->name_.c_str() );
         
         // Add openPMD attributes ( "basePath" )
         openPMD_->writeBasePathAttributes( iteration_group, itime );

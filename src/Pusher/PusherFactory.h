@@ -90,7 +90,7 @@ public:
             } else if( species->pusher == "higueracary" ) {
                 Push = new PusherHigueraCary( params, species );
             } else {
-                ERROR( "For species " << species->name
+                ERROR( "For species " << species->name_
                        << ": unknown pusher `"
                        << species->pusher << "`" );
             }
@@ -100,7 +100,7 @@ public:
             if( species->pusher == "norm" ) {
                 Push = new PusherPhoton( params, species );
             } else {
-                ERROR( "For photon species " << species->name
+                ERROR( "For photon species " << species->name_
                        << ": unknown pusher `"
                        << species->pusher << "`" );
             }
@@ -108,7 +108,7 @@ public:
         
         if( species->ponderomotive_dynamics ) {
             if( species->pusher != "ponderomotive_boris" ) {
-                ERROR( "For species " << species->name << " the flag ponderomotive_dynamics is True - the only pusher available to interact with the envelope is ponderomotive_boris" );
+                ERROR( "For species " << species->name_ << " the flag ponderomotive_dynamics is True - the only pusher available to interact with the envelope is ponderomotive_boris" );
             }
         }
         return Push;
@@ -133,7 +133,7 @@ public:
             }
             
             else {
-                ERROR( "For species " << species->name
+                ERROR( "For species " << species->name_
                        << ": unknown pusher `"
                        << species->pusher << "`" );
             }

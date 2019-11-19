@@ -212,7 +212,7 @@ public:
             MESSAGE( 2, "> Pusher set to norm." );
         }
 
-        thisSpecies->name = species_name;
+        thisSpecies->name_ = species_name;
         thisSpecies->mass = mass;
         thisSpecies->species_number_ = ispec;
 
@@ -313,19 +313,19 @@ public:
             if( ( thisSpecies->merging_method_ != "vranic_spherical" ) &&
                 ( thisSpecies->merging_method_ != "vranic_cartesian" ) &&
                 ( thisSpecies->merging_method_ != "none" ) ) {
-                ERROR( "In Species " << thisSpecies->name
+                ERROR( "In Species " << thisSpecies->name_
                        << ": merging method not valid, must be `vranic_spherical`, `vranic_cartesian` or `none`" );
             }
 
             // if( params.vectorization_mode == "off" && thisSpecies->merging_method_ != "none" ) {
-            //     ERROR( "In Species " << thisSpecies->name
+            //     ERROR( "In Species " << thisSpecies->name_
             //            << ": particle merging only available with `vectorization_mode` = `on` or `adaptive`" );
             // }
 
             if ( thisSpecies->merging_method_ != "none" ) {
 
                 if (!params.cell_sorting || !thisSpecies->vectorized_operators) {
-                    ERROR( "In Species " << thisSpecies->name
+                    ERROR( "In Species " << thisSpecies->name_
                            << ": merging required cell sorting to be "
                            << "activated (`cell_sorting = True` in the mains or vectorization on).");
                 }
@@ -342,14 +342,14 @@ public:
                 if( PyTools::extract( "merge_min_packet_size", thisSpecies->merge_min_packet_size_ , "Species", ispec ) ) {
                     if (thisSpecies->merge_min_packet_size_ < 4 && thisSpecies->mass > 0)
                     {
-                        ERROR( "In Species " << thisSpecies->name
+                        ERROR( "In Species " << thisSpecies->name_
                                << ": minimum number of particles per merging packet "
                                << "(`merge_min_packet_size`)"
                                << "must be above or equal to 4.");
                     }
                     if (thisSpecies->merge_min_packet_size_ < 4 && thisSpecies->mass > 0)
                     {
-                        ERROR( "In Species " << thisSpecies->name
+                        ERROR( "In Species " << thisSpecies->name_
                                << " of type photon"
                                << ": minimum number of particles per merging packet "
                                << "(`merge_min_packet_size`)"
@@ -360,21 +360,21 @@ public:
                 if( PyTools::extract( "merge_max_packet_size", thisSpecies->merge_max_packet_size_ , "Species", ispec ) ) {
                     if (thisSpecies->merge_max_packet_size_ < 4 && thisSpecies->mass > 0)
                     {
-                        ERROR( "In Species " << thisSpecies->name
+                        ERROR( "In Species " << thisSpecies->name_
                                << ": maximum number of particles per merging packet "
                                << "(`merge_max_packet_size`)"
                                << "must be above or equal to 4.");
                     }
                     if (thisSpecies->merge_max_packet_size_ < 4 && thisSpecies->mass == 0)
                     {
-                        ERROR( "In Species " << thisSpecies->name
+                        ERROR( "In Species " << thisSpecies->name_
                                << " of type photon"
                                << ": maximum number of particles per merging packet "
                                << "(`merge_max_packet_size`)"
                                << "must be above or equal to 4.");
                     }
                     if (thisSpecies->merge_max_packet_size_ < thisSpecies->merge_min_packet_size_) {
-                        ERROR( "In Species " << thisSpecies->name
+                        ERROR( "In Species " << thisSpecies->name_
                                << ": maximum number of particles per merging packet "
                                << "(`merge_max_packet_size`)"
                                << "must be below or equal to the minimum particle number"
@@ -387,7 +387,7 @@ public:
                                       "Species", ispec ) ) {
                     for (unsigned int i = 0 ; i < 3 ; i++) {
                         if (thisSpecies->merge_min_momentum_cell_length_[i] <= 0) {
-                            ERROR( "In Species " << thisSpecies->name
+                            ERROR( "In Species " << thisSpecies->name_
                                      << ": The minimal momentum cell length "
                                      << "(`merge_min_particles_per_cell`)"
                                      << " must be above 0 ("
@@ -400,7 +400,7 @@ public:
                 // Read and check the threshold on the number of particles per cell
                 if( PyTools::extract( "merge_min_particles_per_cell", thisSpecies->merge_min_particles_per_cell_ , "Species", ispec ) ) {
                     if (thisSpecies->merge_min_particles_per_cell_ < 4) {
-                        ERROR( "In Species " << thisSpecies->name
+                        ERROR( "In Species " << thisSpecies->name_
                                << ": The threshold on the number of particles per cell "
                                << "(`merge_min_particles_per_cell`)"
                                << "must be above or equal to 4");
@@ -417,7 +417,7 @@ public:
                                       "Species", ispec ) ) {
                     for (unsigned int i = 0 ; i < 3 ; i++) {
                         if (thisSpecies->merge_momentum_cell_size_[i] <= 0) {
-                            ERROR( "In Species " << thisSpecies->name
+                            ERROR( "In Species " << thisSpecies->name_
                                    << ": The momentum cell discretization can not be equal or below 0 "
                                    << "(`merge_momentum_cell_size_`).");
                         }
@@ -438,7 +438,7 @@ public:
                             thisSpecies->merge_accumulation_correction_ = false;
                         }
                     } else {
-                        ERROR( "In Species " << thisSpecies->name
+                        ERROR( "In Species " << thisSpecies->name_
                                << ": The discretization scale (`discretization_scale`) must be `linear` "
                                << "or `log`.");
                     }
@@ -449,7 +449,7 @@ public:
                                       thisSpecies->merge_min_momentum_log_scale_,
                                       "Species", ispec ) ) {
                     if (thisSpecies->merge_min_momentum_log_scale_ <= 0) {
-                        ERROR( "In Species " << thisSpecies->name
+                        ERROR( "In Species " << thisSpecies->name_
                                << ": The minimum momentum for log discretization scale (`merge_min_momentum`) "
                                << "must be above 0.");
                     }
@@ -944,7 +944,7 @@ public:
 #endif
 
         // Copy members
-        newSpecies->name                                     = species->name;
+        newSpecies->name_                                     = species->name_;
         newSpecies->pusher                                   = species->pusher;
         newSpecies->radiation_model                          = species->radiation_model;
         newSpecies->radiation_photon_species                 = species->radiation_photon_species;
@@ -1065,8 +1065,8 @@ public:
             Species *thisSpecies = SpeciesFactory::create( params, ispec, patch );
             // Verify the new species does not have the same name as a previous one
             for( unsigned int i = 0; i < ispec; i++ ) {
-                if( thisSpecies->name == retSpecies[i]->name ) {
-                    ERROR("Two species cannot have the same name `"<<thisSpecies->name<<"`");
+                if( thisSpecies->name_ == retSpecies[i]->name_ ) {
+                    ERROR("Two species cannot have the same name `"<<thisSpecies->name_<<"`");
                 }
             }
             // Put the newly created species in the vector of species
@@ -1085,15 +1085,15 @@ public:
 
                 // Loop all other species
                 for( unsigned int ispec2 = 0; ispec2<retSpecies.size(); ispec2++ ) {
-                    if( retSpecies[ispec1]->position_initialization_ == retSpecies[ispec2]->name ) {
-                        if( retSpecies[ispec1]->position_initialization_==retSpecies[ispec1]->name ) {
-                            ERROR( "For species '"<<retSpecies[ispec1]->name<<"' position_initialization must be different from '"<<retSpecies[ispec1]->name<<"'." );
+                    if( retSpecies[ispec1]->position_initialization_ == retSpecies[ispec2]->name_ ) {
+                        if( retSpecies[ispec1]->position_initialization_==retSpecies[ispec1]->name_ ) {
+                            ERROR( "For species '"<<retSpecies[ispec1]->name_<<"' position_initialization must be different from '"<<retSpecies[ispec1]->name_<<"'." );
                         }
                         if( retSpecies[ispec2]->position_initialization_on_species_==true ) {
-                            ERROR( "For species '"<<retSpecies[ispec2]->name<<"' position_initialization must be 'centered', 'regular' or 'random' (pre-defined position) in order to attach '"<<retSpecies[ispec1]->name<<"' to its initial position." );
+                            ERROR( "For species '"<<retSpecies[ispec2]->name_<<"' position_initialization must be 'centered', 'regular' or 'random' (pre-defined position) in order to attach '"<<retSpecies[ispec1]->name_<<"' to its initial position." );
                         }
                         if( retSpecies[ispec1]->getNbrOfParticles() != retSpecies[ispec2]->getNbrOfParticles() ) {
-                            ERROR( "Number of particles in species '"<<retSpecies[ispec1]->name<<"' is not equal to the number of particles in species '"<<retSpecies[ispec2]->name<<"'." );
+                            ERROR( "Number of particles in species '"<<retSpecies[ispec1]->name_<<"' is not equal to the number of particles in species '"<<retSpecies[ispec2]->name_<<"'." );
                         }
                         // We copy ispec2 which is the index of the species, already created, on which initialize particle of the new created species
                         retSpecies[ispec1]->position_initialization_on_species_index=ispec2;
@@ -1115,12 +1115,12 @@ public:
 
             // Loop all other species
             for( unsigned int ispec2 = 0; ispec2<retSpecies.size(); ispec2++ ) {
-                if( retSpecies[ispec1]->ionization_electrons == retSpecies[ispec2]->name ) {
+                if( retSpecies[ispec1]->ionization_electrons == retSpecies[ispec2]->name_ ) {
                     if( ispec1==ispec2 ) {
-                        ERROR( "For species '"<<retSpecies[ispec1]->name<<"' ionization_electrons must be a distinct species" );
+                        ERROR( "For species '"<<retSpecies[ispec1]->name_<<"' ionization_electrons must be a distinct species" );
                     }
                     if( retSpecies[ispec2]->mass!=1 ) {
-                        ERROR( "For species '"<<retSpecies[ispec1]->name<<"' ionization_electrons must be a species with mass==1" );
+                        ERROR( "For species '"<<retSpecies[ispec1]->name_<<"' ionization_electrons must be a species with mass==1" );
                     }
                     retSpecies[ispec1]->electron_species_index = ispec2;
                     retSpecies[ispec1]->electron_species = retSpecies[ispec2];
@@ -1141,7 +1141,7 @@ public:
                 }
             }
             if( retSpecies[ispec1]->electron_species_index==-1 ) {
-                ERROR( "For species '"<<retSpecies[ispec1]->name<<"' ionization_electrons named " << retSpecies[ispec1]->ionization_electrons << " could not be found" );
+                ERROR( "For species '"<<retSpecies[ispec1]->name_<<"' ionization_electrons named " << retSpecies[ispec1]->ionization_electrons << " could not be found" );
             }
         }
 
@@ -1160,12 +1160,12 @@ public:
             else {
                 unsigned int ispec2 = 0;
                 for( ispec2 = 0; ispec2<retSpecies.size(); ispec2++ ) {
-                    if( retSpecies[ispec1]->radiation_photon_species == retSpecies[ispec2]->name ) {
+                    if( retSpecies[ispec1]->radiation_photon_species == retSpecies[ispec2]->name_ ) {
                         if( ispec1==ispec2 ) {
-                            ERROR( "For species '"<<retSpecies[ispec1]->name<<"' radiation_photon_species must be a distinct photon species" );
+                            ERROR( "For species '"<<retSpecies[ispec1]->name_<<"' radiation_photon_species must be a distinct photon species" );
                         }
                         if( retSpecies[ispec2]->mass!=0 ) {
-                            ERROR( "For species '"<<retSpecies[ispec1]->name<<"' radiation_photon_species must be a photon species with mass==0" );
+                            ERROR( "For species '"<<retSpecies[ispec1]->name_<<"' radiation_photon_species must be a photon species with mass==0" );
                         }
                         retSpecies[ispec1]->photon_species_index = ispec2;
                         retSpecies[ispec1]->photon_species = retSpecies[ispec2];
@@ -1198,13 +1198,13 @@ public:
                     ispec2 = 0;
                     while( ispec2<retSpecies.size()) {
                         // We llok for the pair species multiphoton_Breit_Wheeler[k]
-                        if( retSpecies[ispec1]->multiphoton_Breit_Wheeler[k] == retSpecies[ispec2]->name ) {
+                        if( retSpecies[ispec1]->multiphoton_Breit_Wheeler[k] == retSpecies[ispec2]->name_ ) {
                             if( ispec1==ispec2 ) {
-                                ERROR( "For species '" << retSpecies[ispec1]->name
+                                ERROR( "For species '" << retSpecies[ispec1]->name_
                                        << "' pair species must be a distinct particle species" );
                             }
                             if( retSpecies[ispec2]->mass != 1 ) {
-                                ERROR( "For species '"<<retSpecies[ispec1]->name
+                                ERROR( "For species '"<<retSpecies[ispec1]->name_
                                   <<"' pair species must be an electron and positron species (mass = 1)" );
                             }
                             retSpecies[ispec1]->mBW_pair_species_index[k] = ispec2;
@@ -1222,7 +1222,7 @@ public:
                     }
                     // This means that one of the pair species has not been fould
                     if( ispec2 == retSpecies.size() ) {
-                        ERROR( "In Species `" << retSpecies[ispec1]->name << "`"
+                        ERROR( "In Species `" << retSpecies[ispec1]->name_ << "`"
                            << " the pair species `" << retSpecies[ispec1]->multiphoton_Breit_Wheeler[k]
                            << "` does not exist." )
                     }

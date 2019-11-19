@@ -292,7 +292,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
             nrj_bc_lost += nrj_lost_per_thd[tid];
         }
 
-    } 
+    }
 
     if(time_dual <= time_frozen && diag_flag &&( !particles->is_test ) ) { //immobile particle (at the moment only project density)
 
@@ -302,7 +302,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
             b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
             for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
                 Proj->basic( b_rho, ( *particles ), iPart, 0 );
-            } 
+            }
         }
     }
 
@@ -395,7 +395,7 @@ void SpeciesVAdaptive::reconfiguration( Params &params, Patch *patch )
         // The type of operator is changed
         this->vectorized_operators = !this->vectorized_operators;
 
-        /*MESSAGE(1,"> Species " << this->name << " reconfiguration (" << this->vectorized_operators
+        /*MESSAGE(1,"> Species " << this->name_ << " reconfiguration (" << this->vectorized_operators
                   << ") in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ")"
                   << " of MPI process "<< patch->MPI_me_);*/
 

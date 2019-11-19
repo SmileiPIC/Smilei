@@ -328,7 +328,7 @@ public :
         for( unsigned int ispec = 0 ; ispec < nSpecies ; ispec++ ) {
             uint64_t tmp( 0 );
             MPI_Reduce( &( nParticles[ispec] ), &tmp, 1, MPI_UINT64_T, MPI_SUM, 0, smpi->SMILEI_COMM_WORLD );
-            MESSAGE( 2, "Species " << ispec << " (" << ( *this )( 0 )->vecSpecies[ispec]->name << ") created with " << tmp << " particles" );
+            MESSAGE( 2, "Species " << ispec << " (" << ( *this )( 0 )->vecSpecies[ispec]->name_ << ") created with " << tmp << " particles" );
         }
     }
     

@@ -929,7 +929,7 @@ void Patch::copyPositions( std::vector<Species *> vecSpecies_to_update )
             continue;
         unsigned int target_species = vecSpecies_to_update[i]->position_initialization_on_species_index;
         if( vecSpecies_to_update[i]->getNbrOfParticles() != vecSpecies_to_update[target_species]->getNbrOfParticles() ) {
-            ERROR( "Number of particles in species '"<<vecSpecies_to_update[i]->name<<"' is not equal to the number of particles in species '"<<vecSpecies_to_update[target_species]->name<<"'." );
+            ERROR( "Number of particles in species '"<<vecSpecies_to_update[i]->name_<<"' is not equal to the number of particles in species '"<<vecSpecies_to_update[target_species]->name_<<"'." );
         }
         // We copy target_species which is the index of the species, already created, from which species_to_update particles positions are copied.
         vecSpecies_to_update[i]->particles->Position = vecSpecies_to_update[target_species]->particles->Position;

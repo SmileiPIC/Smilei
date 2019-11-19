@@ -57,7 +57,7 @@ public:
         bool species_defined = false;
         unsigned int species_number = 0;
         while( (species_number < species_vector.size()) and (!species_defined)) {
-            if (species_name == species_vector[species_number]->name) {
+            if (species_name == species_vector[species_number]->name_) {
                 species_defined = true;
             } else {
                 species_number++;

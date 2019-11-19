@@ -83,7 +83,7 @@ public:
         if( PyTools::convert( ionizing, ionization_electrons_name ) ) {
             
             for( int i=0; i<(int)vecSpecies.size(); i++ ) {
-                if( vecSpecies[i]->name == ionization_electrons_name ) {
+                if( vecSpecies[i]->name_ == ionization_electrons_name ) {
                     ionization_electrons = i;
                     break;
                 }
@@ -171,7 +171,7 @@ public:
         }
         mystream.str( "" ); // clear
         if( ionization_electrons>0 ) {
-            MESSAGE( 2, "Collisional ionization with atomic number "<<Z<<" towards species `"<<vecSpecies[ionization_electrons]->name << "`" );
+            MESSAGE( 2, "Collisional ionization with atomic number "<<Z<<" towards species `"<<vecSpecies[ionization_electrons]->name_ << "`" );
         }
         
         // If debugging log requested

@@ -53,7 +53,7 @@ public:
     unsigned int species_number_;
 
     //! kind/name of species
-    std::string name;
+    std::string name_;
 
     //! position initialization type, possible values: "regular" or "random"
     std::string position_initialization_;
