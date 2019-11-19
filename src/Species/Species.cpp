@@ -934,22 +934,33 @@ void Species::sortParticles( Params &params )
     }
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//! This function configures the type of species according to the default mode
+//! regardless the number of particles per cell
+// ---------------------------------------------------------------------------------------------------------------------
 void Species::defaultConfigure( Params &param, Patch *patch )
 {
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//! This function configures the species according to the vectorization mode
+// ---------------------------------------------------------------------------------------------------------------------
 void Species::configuration( Params &param, Patch *patch )
 {
 }
 
+// ---------------------------------------------------------------------------------------------------------------------
+//! This function reconfigures the species operators after evaluating
+//! the best mode from the particle distribution
+// ---------------------------------------------------------------------------------------------------------------------
 void Species::reconfiguration( Params &param, Patch *patch )
 {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Sort particles
+//! Sort particles using the count sort method
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::count_sortParticles( Params &params )
+void Species::countSortParticles( Params &params )
 {
     unsigned int ip, npart, ixy, tot, oc, nxy, token;
     int ix, iy;

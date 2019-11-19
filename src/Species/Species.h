@@ -398,7 +398,7 @@ public:
             Patch *patch, SmileiMPI *smpi,
             std::vector<Diagnostic *> &localDiags ) {};
 
-
+    //! Projection method used specifically for the diagnotics
     virtual void projectionForDiags( double time, unsigned int ispec,
                                        ElectroMagn *EMfields,
                                        Params &params, bool diag_flag,
@@ -436,7 +436,8 @@ public:
     //! the best mode from the particle distribution
     virtual void reconfiguration( Params &param, Patch   *patch );
 
-    void count_sortParticles( Params &param );
+    //! Counting sort method for particles
+    void countSortParticles( Params &param );
 
     //!
     virtual void addSpaceForOneParticle()
