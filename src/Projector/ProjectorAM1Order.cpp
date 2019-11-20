@@ -107,8 +107,12 @@ void ProjectorAM1Order::basicForComplex( complex<double> *rhoj, Particles &parti
    
     if (jp == -1){ // If particle is between 0 and dr/2.
         jp = 0;
-        Sr1[0] = Sr1[1];
-        Sr1[1] = 0.; // Only account for deposition above axis. Symetry is handled in interpolation.
+        Sr1[1] = 0.; 
+        if(imode%2 == 0){ 
+            Sr1[0] = 1.;
+        } else {
+            Sr1[0] = 2.*delta - 1.; 
+        }
     }
  
     ip -= i_domain_begin ;
@@ -163,9 +167,8 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     Sr1[0] = 1. - delta;
     Sr1[1] = delta;
 
-    if (jp == -1){ // If particle is between 0 and dr/2.
+    if (ypn < 0.){ // If particle is between 0 and dr/2.
         jp = 0;
-        Sr1[0] = Sr1[1];
         Sr1[1] = 0.; // Only account for deposition above axis. Symetry is handled in interpolation.
     }
 
@@ -181,6 +184,14 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
         }
         if( imode > 0 ) {
             C_m *= e_theta;
+        }
+
+        if (ypn < 0.){ // If particle is between 0 and dr/2.
+            if(imode%2 == 0){ 
+                Sr1[0] = 1.;
+            } else {
+                Sr1[0] = 2.*delta - 1.; 
+            }
         }
         
         if (!diag_flag){
