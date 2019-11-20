@@ -247,66 +247,6 @@ void ProjectorAM1Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
     for( int ipart=istart ; ipart<iend; ipart++ ) {
         currents( emAM, particles,  ipart, ( *invgf )[ipart], diag_flag, ispec);
     }
-
-    //Boundary conditions for currents on axis
-    if (emAM->isYmin ) {
-        double sign = -1. ;
-        unsigned int n_species = emAM->Jl_.size() / Nmode;
-        for ( unsigned int imode = 0; imode < Nmode; imode++){
-            unsigned int ifield = imode*n_species+ispec;
-            complex<double> *Jl  = emAM->Jl_s    [ifield] ? &( * ( emAM->Jl_s    [ifield] ) )( 0 ) : &( *emAM->Jl_    [imode] )( 0 ) ;
-            complex<double> *Jr  = emAM->Jr_s    [ifield] ? &( * ( emAM->Jr_s    [ifield] ) )( 0 ) : &( *emAM->Jr_    [imode] )( 0 ) ;
-            complex<double> *Jt  = emAM->Jt_s    [ifield] ? &( * ( emAM->Jt_s    [ifield] ) )( 0 ) : &( *emAM->Jt_    [imode] )( 0 ) ;
-            complex<double> *rho = emAM->rho_AM_s[ifield] ? &( * ( emAM->rho_AM_s[ifield] ) )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
-            sign *= -1.;
-
-            // Fold primal quantities along r
-            //for( unsigned int i=0 ; i<npriml; i++ ) {
-            //    int iloc = i*nprimr;
-            //    for( unsigned int j=1 ; j<= oversizeR; j++ ) {
-            //        Jt [iloc+oversizeR+j] +=  sign * Jt [iloc+oversizeR-j];
-            //        Jt [iloc+oversizeR-j] = 0.; 
-            //        Jl [iloc+oversizeR+j] +=  sign * Jl [iloc+oversizeR-j];
-            //        Jl [iloc+oversizeR-j] = 0.; 
-            //        rho[iloc+oversizeR+j] +=  sign * rho[iloc+oversizeR-j];
-            //        rho[iloc+oversizeR-j] = 0.; 
-            //    }
-            //}//i
-            // Fold dual quantities along r
-            for( unsigned int i=0 ; i<npriml; i++ ) {
-                int iloc = i*(nprimr+staggered);
-                for( unsigned int j=0 ; j<= oversizeR; j++ ) {
-                    Jr [iloc+3] += sign * Jr [iloc+2];
-                }
-            }//i
-
-
-            // Jl and Jt on axis (primal)
-
-            int j = oversizeR; //axis position
-            if (imode > 0){
-                // All Jl = zero on axis for imode > 0. Mode 0 is treated in general case.
-                for( unsigned int i=0 ; i<npriml; i++ ) {
-                    int iloc = i*nprimr;
-                    Jl [iloc+j] = 0. ;
-                    rho[iloc+j] = 0. ;
-                }//i
-            }
-            if (imode == 1){
-                for( unsigned int i=0 ; i<npriml; i++ ) {
-                    int iloc = i*nprimr;
-                    int ilocr = i*(nprimr+staggered);
-                    Jt [iloc+j] = -1./3.*(4.*Icpx*Jr[ilocr+j+staggered] + Jt[iloc+j+staggered]) ;
-                }//i
-            } else{
-                for( unsigned int i=0 ; i<npriml; i++ ) {
-                    int iloc = i*nprimr;
-                    Jt [iloc+j] = 0. ;
-                }
-            }
-        }
-
-    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

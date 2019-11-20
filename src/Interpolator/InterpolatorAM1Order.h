@@ -42,11 +42,11 @@ public:
         std::complex<double> interp_res( 0. );
         for( int iloc=0 ; iloc<2 ; iloc++ ) {
             for( int jloc=0 ; jloc<2 ; jloc++ ) {
-                if( jloc+idy+j_domain_begin==0 ) {
-                    interp_res -= *( coeffx+iloc ) * *( coeffy+jloc ) * ( ( *f )( idx+iloc, idy+jloc ) ) ;
-                } else {
+                //if( jloc+idy+j_domain_begin==0 ) {
+                //    interp_res -= *( coeffx+iloc ) * *( coeffy+jloc ) * ( ( *f )( idx+iloc, idy+jloc ) ) ;
+                //} else {
                     interp_res += *( coeffx+iloc ) * *( coeffy+jloc ) * ( ( *f )( idx+iloc, idy+jloc ) ) ;
-                }
+                //}
             }
         }
         return interp_res;
@@ -76,11 +76,11 @@ public:
         std::complex<double> interp_res( 0. );
         for( int iloc=0 ; iloc<2 ; iloc++ ) {
             for( int jloc=0 ; jloc<2 ; jloc++ ) {
-                if( jloc+idy+j_domain_begin==0 ) {
-                    interp_res -= *( coeffx+iloc ) * *( coeffy+jloc ) * ( ( *f )( idx+iloc, idy+jloc ) ) ;
-                } else {
+                //if( jloc+idy+j_domain_begin==0 ) {
+                //    interp_res -= *( coeffx+iloc ) * *( coeffy+jloc ) * ( ( *f )( idx+iloc, idy+jloc ) ) ;
+                //} else {
                     interp_res += *( coeffx+iloc ) * *( coeffy+jloc ) * ( ( *f )( idx+iloc, idy+jloc ) )*( *exptheta );
-                }
+                //}
             }
         }
         return interp_res;
@@ -104,9 +104,6 @@ private:
         coeffyp_[2] = coeffyp_[0];
         coeffyp_[3] = coeffyp_[1];
 
-        // First index for summation
-        ip_ = ip_ - i_domain_begin;
-        jp_ = jp_ - j_domain_begin;
         if (jp_ == -1){ // If particle is between 0 and dr/2 initial jp_=-1
             jp_ = 0;
             // coeffs 2-3 are used when F(-dr/2) = - F(dr/2) <==> when field mode is zero on axis
@@ -116,6 +113,10 @@ private:
             coeffyp_[0] = 1.; // = coeffyp_[1] + coeffyp_[0];    
             coeffyp_[1] = 0.; // Terms are already acuumulated in coeffyp_[0] 
         }
+        
+        // First index for summation
+        ip_ = ip_ - i_domain_begin;
+        jp_ = jp_ - j_domain_begin;
     };
     
     // Last prim index computed
