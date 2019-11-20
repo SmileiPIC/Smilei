@@ -114,7 +114,7 @@ public:
                 s0 = vecSpecies[sgroup[g][0]]; // first species of this group
                 for( unsigned int i=1; i<sgroup[g].size(); i++ ) { // loop other species of same group
                     s = vecSpecies[sgroup[g][i]]; // current species
-                    if( s->mass != s0->mass )
+                    if( s->mass_ != s0->mass_ )
                         ERROR( "In collisions #" << n_collisions << ": species in group `species"
                                << g+1 << "` must all have same masses for ionization" );
                                

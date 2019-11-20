@@ -65,7 +65,7 @@ public:
     double c_part_max_;
 
     //! mass [electron mass]
-    double mass;
+    double mass_;
 
     //! atomic number
     unsigned int atomic_number;
@@ -469,13 +469,13 @@ public:
     //! Get the energy lost in the boundary conditions
     double getLostNrjBC() const
     {
-        return mass*nrj_bc_lost;
+        return mass_*nrj_bc_lost;
     }
 
     //! Get energy lost with moving window (fields)
     double getLostNrjMW() const
     {
-        return mass*nrj_mw_lost;
+        return mass_*nrj_mw_lost;
     }
 
     //! Get the energy radiated away by the particles
@@ -499,7 +499,7 @@ public:
     //! Get energy gained via new particles
     double getNewParticlesNRJ() const
     {
-        return mass*new_particles_energy_;
+        return mass_*new_particles_energy_;
     }
 
     //! Reinitialize the scalar diagnostics buffer
@@ -519,11 +519,11 @@ public:
     inline double computeNRJ()
     {
         double nrj( 0. );
-        if( this->mass > 0 ) {
+        if( this->mass_ > 0 ) {
             for( unsigned int iPart=0 ; iPart<getNbrOfParticles() ; iPart++ ) {
                 nrj += particles->weight( iPart )*( particles->lor_fac( iPart )-1.0 );
             }
-        } else if( this->mass == 0 ) {
+        } else if( this->mass_ == 0 ) {
             for( unsigned int iPart=0 ; iPart<getNbrOfParticles() ; iPart++ ) {
                 nrj += particles->weight( iPart )*( particles->momentum_norm( iPart ) );
             }

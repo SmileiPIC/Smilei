@@ -90,7 +90,7 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
     // ----------------------------------------------
     
     int ( *remove )( Particles &, int, int, double, Species *, double & );
-    if( species->mass == 0 ) {
+    if( species->mass_ == 0 ) {
         remove = &remove_photon;
     } else {
         remove = &remove_particle;

@@ -48,7 +48,7 @@ public:
         Pusher *Push = NULL;
         
         // Particle of matter
-        if( species->mass > 0 ) {
+        if( species->mass_ > 0 ) {
             // assign the correct Pusher to Push
             if( species->pusher == "boris" ) {
                 if( !species->vectorized_operators && !params.cell_sorting ) {
@@ -96,7 +96,7 @@ public:
             }
         }
         // Photon
-        else if( species->mass == 0 ) {
+        else if( species->mass_ == 0 ) {
             if( species->pusher == "norm" ) {
                 Push = new PusherPhoton( params, species );
             } else {
@@ -119,7 +119,7 @@ public:
         Pusher *Push_ponderomotive_position = NULL;
         
         // Particle of matter
-        if( species->mass > 0 ) {
+        if( species->mass_ > 0 ) {
             // assign the correct Pusher to Push_ponderomotive_position
             if( species->pusher == "ponderomotive_boris" ) {
                 if( !species->vectorized_operators && !params.cell_sorting ) {

@@ -129,7 +129,7 @@ public:
             this_particle_injector->momentum_initialization_ = species->momentum_initialization_;
         }
         // Matter particles
-        if( species_vector[this_particle_injector->species_number_]->mass > 0 ) {
+        if( species_vector[this_particle_injector->species_number_]->mass_ > 0 ) {
             if( ( this_particle_injector->momentum_initialization_!="cold" )
                     && ( this_particle_injector->momentum_initialization_!="maxwell-juettner" )
                     && ( this_particle_injector->momentum_initialization_!="rectangular" ) ) {
@@ -139,7 +139,7 @@ public:
             }
         }
         // Photons
-        else if( species_vector[this_particle_injector->species_number_]->mass == 0 ) {
+        else if( species_vector[this_particle_injector->species_number_]->mass_ == 0 ) {
             if ( this_particle_injector->momentum_initialization_ == "maxwell-juettner" ) {
                 ERROR( "For photon injector '" << injector_name
                        << "' Maxwell-Juettner is not valid.");
@@ -202,7 +202,7 @@ public:
         // If nothing specified, similar to the species
         // First for mass particles:
         bool ok1, ok2;
-        if( species->mass > 0 ) {
+        if( species->mass_ > 0 ) {
             ok1 = PyTools::extract_pyProfile( "number_density", profile1, "ParticleInjector", injector_index );
             ok2 = PyTools::extract_pyProfile( "charge_density", profile1, "ParticleInjector", injector_index );
             if (ok1 && ok2) {
@@ -227,7 +227,7 @@ public:
             }
         }
         // Photons
-        else if( species->mass == 0 ) {
+        else if( species->mass_ == 0 ) {
             ok1 = PyTools::extract_pyProfile( "number_density", profile1, "ParticleInjector", injector_index );
             ok2 = PyTools::extract_pyProfile( "charge_density", profile1, "ParticleInjector", injector_index );
             if( ok2 ) {

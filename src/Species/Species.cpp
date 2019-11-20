@@ -441,12 +441,12 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #endif
 
             // Apply wall and boundary conditions
-            if( mass>0 ) {
+            if( mass_>0 ) {
                 for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
                     for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
                         double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
                         if( !( *partWalls )[iwall]->apply( *particles, iPart, this, dtgf, ener_iPart ) ) {
-                            nrj_lost_per_thd[tid] += mass * ener_iPart;
+                            nrj_lost_per_thd[tid] += mass_ * ener_iPart;
                         }
                     }
                 }
@@ -456,14 +456,14 @@ void Species::dynamics( double time_dual, unsigned int ispec,
                 for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
                     if( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
                         addPartInExchList( iPart );
-                        nrj_lost_per_thd[tid] += mass * ener_iPart;
+                        nrj_lost_per_thd[tid] += mass_ * ener_iPart;
                         //}
                         //else if ( partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
                         //std::cout<<"removed particle position"<< particles->position(0,iPart)<<" , "<<particles->position(1,iPart)<<" ,"<<particles->position(2,iPart)<<std::endl;
                     }
                 }
 
-            } else if( mass==0 ) {
+            } else if( mass_==0 ) {
                 for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
                     for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
                         double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
@@ -497,7 +497,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 
             // Project currents if not a Test species and charges as well if a diag is needed.
             // Do not project if a photon
-            if( ( !particles->is_test ) && ( mass > 0 ) ) {
+            if( ( !particles->is_test ) && ( mass_ > 0 ) ) {
                 Proj->currentsAndDensityWrapper( EMfields, *particles, smpi, first_index[ibin], last_index[ibin], ithread, diag_flag, params.is_spectral, ispec );
             }
 
@@ -1194,7 +1194,7 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, un
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
-            Proj->susceptibility( EMfields, *particles, mass, smpi, first_index[ibin], last_index[ibin], ithread );
+            Proj->susceptibility( EMfields, *particles, mass_, smpi, first_index[ibin], last_index[ibin], ithread );
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[8] += MPI_Wtime() - timer;
 #endif
@@ -1259,7 +1259,7 @@ void Species::ponderomotiveProjectSusceptibility( double time_dual, unsigned int
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
-            Proj->susceptibility( EMfields, *particles, mass, smpi, first_index[ibin], last_index[ibin], ithread );
+            Proj->susceptibility( EMfields, *particles, mass_, smpi, first_index[ibin], last_index[ibin], ithread );
 #ifdef  __DETAILED_TIMERS
             patch->patch_timers[8] += MPI_Wtime() - timer;
 #endif
@@ -1333,12 +1333,12 @@ void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned
 #endif
 
             // Apply wall and boundary conditions
-            if( mass>0 ) {
+            if( mass_>0 ) {
                 for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
                     for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
                         double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
                         if( !( *partWalls )[iwall]->apply( *particles, iPart, this, dtgf, ener_iPart ) ) {
-                            nrj_lost_per_thd[tid] += mass * ener_iPart;
+                            nrj_lost_per_thd[tid] += mass_ * ener_iPart;
                         }
                     }
                 }
@@ -1349,11 +1349,11 @@ void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned
                 for( iPart=first_index[ibin] ; ( int )iPart<last_index[ibin]; iPart++ ) {
                     if( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
                         addPartInExchList( iPart );
-                        nrj_lost_per_thd[tid] += mass * ener_iPart;
+                        nrj_lost_per_thd[tid] += mass_ * ener_iPart;
                     }
                 }
 
-            } else if( mass==0 ) {
+            } else if( mass_==0 ) {
                 ERROR( "Particles with zero mass cannot interact with envelope" );
                 // for(unsigned int iwall=0; iwall<partWalls->size(); iwall++) {
                 //     for (iPart=first_index[ibin] ; (int)iPart<last_index[ibin]; iPart++ ) {
@@ -1374,7 +1374,7 @@ void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned
                 //     }
                 //  }
 
-            } // end mass = 0? condition
+            } // end mass_ = 0? condition
 
             //START EXCHANGE PARTICLES OF THE CURRENT BIN ?
 
@@ -1383,7 +1383,7 @@ void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
-            if( ( !particles->is_test ) && ( mass > 0 ) ) {
+            if( ( !particles->is_test ) && ( mass_ > 0 ) ) {
                 Proj->currentsAndDensityWrapper( EMfields, *particles, smpi, first_index[ibin], last_index[ibin], ithread, diag_flag, params.is_spectral, ispec );
             }
 #ifdef  __DETAILED_TIMERS

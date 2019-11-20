@@ -432,7 +432,7 @@ void DiagnosticScalar::compute( Patch *patch, int timestep )
             
             unsigned int nPart=vecSpecies[ispec]->getNbrOfParticles(); // number of particles
             
-            if( vecSpecies[ispec]->mass > 0 ) {
+            if( vecSpecies[ispec]->mass_ > 0 ) {
             
                 for( unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
                 
@@ -442,8 +442,8 @@ void DiagnosticScalar::compute( Patch *patch, int timestep )
                     ener_tot += vecSpecies[ispec]->particles->weight( iPart )
                                 * ( vecSpecies[ispec]->particles->lor_fac( iPart )-1.0 );
                 }
-                ener_tot *= vecSpecies[ispec]->mass;
-            } else if( vecSpecies[ispec]->mass == 0 ) {
+                ener_tot *= vecSpecies[ispec]->mass_;
+            } else if( vecSpecies[ispec]->mass_ == 0 ) {
                 for( unsigned int iPart=0 ; iPart<nPart; iPart++ ) {
                 
                     density  += vecSpecies[ispec]->particles->weight( iPart );

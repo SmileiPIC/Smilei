@@ -76,7 +76,7 @@ inline int remove_particle( Particles &particles, int ipart, int direction, doub
     return 0;
 }
 
-//! Delete photon (mass==0) at the boundary and keep the energy for diagnostics
+//! Delete photon (mass_==0) at the boundary and keep the energy for diagnostics
 inline int remove_photon( Particles &particles, int ipart, int direction, double limit_pos, Species *species,
                           double &nrj_iPart )
 {
