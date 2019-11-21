@@ -145,14 +145,14 @@ inline int thermalize_particle( Particles &particles, int ipart, int direction, 
             if( i==direction ) {
                 // change of velocity in the direction normal to the reflection plane
                 double sign_vel = -particles.momentum( i, ipart )/std::abs( particles.momentum( i, ipart ) );
-                particles.momentum( i, ipart ) = sign_vel * species->thermalMomentum[i]
+                particles.momentum( i, ipart ) = sign_vel * species->thermal_momentum_[i]
                                                  *                             std::sqrt( -std::log( 1.0-Rand::uniform1() ) );
                                                  
             } else {
                 // change of momentum in the direction(s) along the reflection plane
                 double sign_rnd = Rand::uniform() - 0.5;
                 sign_rnd = ( sign_rnd )/std::abs( sign_rnd );
-                particles.momentum( i, ipart ) = sign_rnd * species->thermalMomentum[i]
+                particles.momentum( i, ipart ) = sign_rnd * species->thermal_momentum_[i]
                                                  *                             userFunctions::erfinv( Rand::uniform1() );
             }//if
             

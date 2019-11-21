@@ -84,7 +84,7 @@ public:
     //! thermal velocity [\f$c\f$]
     std::vector<double> thermal_velocity_;
     //! thermal momentum [\f$m_e c\f$]
-    std::vector<double> thermalMomentum;
+    std::vector<double> thermal_momentum_;
 
     //! pusher name
     std::string pusher;
