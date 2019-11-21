@@ -68,7 +68,7 @@ public:
     double mass_;
 
     //! atomic number
-    unsigned int atomic_number;
+    unsigned int atomic_number_;
 
     //! maximum charge state
     unsigned int maximum_charge_state;

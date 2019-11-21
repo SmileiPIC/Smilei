@@ -22,7 +22,7 @@ public:
         
         if( model == "tunnel" ) {
             
-            if( species->max_charge > ( int )species->atomic_number ) {
+            if( species->max_charge > ( int )species->atomic_number_ ) {
                 ERROR( "Charge > atomic_number for species " << species->name_ );
             }
             

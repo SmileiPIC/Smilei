@@ -710,8 +710,8 @@ public:
         
         // Manage the ionization parameters
         if( thisSpecies->mass_ > 0 ) {
-            thisSpecies->atomic_number = 0;
-            PyTools::extract( "atomic_number", thisSpecies->atomic_number, "Species", ispec );
+            thisSpecies->atomic_number_ = 0;
+            PyTools::extract( "atomic_number", thisSpecies->atomic_number_, "Species", ispec );
             
             thisSpecies->maximum_charge_state = 0;
             PyTools::extract( "maximum_charge_state", thisSpecies->maximum_charge_state, "Species", ispec );
@@ -725,7 +725,7 @@ public:
                     ERROR( "For species '" << species_name << ": cannot ionize test species" );
                 }
                 
-                if( ( thisSpecies->atomic_number==0 )&&( thisSpecies->maximum_charge_state==0 ) ) {
+                if( ( thisSpecies->atomic_number_==0 )&&( thisSpecies->maximum_charge_state==0 ) ) {
                     ERROR( "For species '" << species_name << ": undefined atomic_number & maximum_charge_state (required for ionization)" );
                 }
                 
@@ -738,7 +738,7 @@ public:
                 } else if( model == "from_rate" ) {
                     
                     if( thisSpecies->maximum_charge_state == 0 ) {
-                        thisSpecies->maximum_charge_state = thisSpecies->atomic_number;
+                        thisSpecies->maximum_charge_state = thisSpecies->atomic_number_;
                         WARNING( "For species '" << species_name << ": ionization 'from_rate' is used with maximum_charge_state = "<<thisSpecies->maximum_charge_state << " taken from atomic_number" );
                     }
                     thisSpecies->ionization_rate = PyTools::extract_py( "ionization_rate", "Species", ispec );
@@ -971,7 +971,7 @@ public:
         newSpecies->thermal_boundary_velocity                = species->thermal_boundary_velocity;
         newSpecies->thermalVelocity                          = species->thermalVelocity;
         newSpecies->thermalMomentum                          = species->thermalMomentum;
-        newSpecies->atomic_number                            = species->atomic_number;
+        newSpecies->atomic_number_                            = species->atomic_number_;
         newSpecies->maximum_charge_state                     = species->maximum_charge_state;
         newSpecies->ionization_rate                          = species->ionization_rate;
         if( newSpecies->ionization_rate!=Py_None ) {
@@ -1129,8 +1129,8 @@ public:
                     retSpecies[ispec1]->Ionize->new_electrons.isMonteCarlo       = retSpecies[ispec1]->electron_species->particles->isMonteCarlo;
                     retSpecies[ispec1]->Ionize->new_electrons.initialize( 0, params.nDim_particle );
                     if( ( !retSpecies[ispec1]->getNbrOfParticles() ) && ( !retSpecies[ispec2]->getNbrOfParticles() ) ) {
-                        if( retSpecies[ispec1]->atomic_number!=0 ) {
-                            int max_eon_number = retSpecies[ispec1]->getNbrOfParticles() * retSpecies[ispec1]->atomic_number;
+                        if( retSpecies[ispec1]->atomic_number_!=0 ) {
+                            int max_eon_number = retSpecies[ispec1]->getNbrOfParticles() * retSpecies[ispec1]->atomic_number_;
                             retSpecies[ispec2]->particles->reserve( max_eon_number, retSpecies[ispec2]->particles->dimension() );
                         } else if( retSpecies[ispec1]->maximum_charge_state!=0 ) {
                             int max_eon_number = retSpecies[ispec1]->getNbrOfParticles() * retSpecies[ispec1]->maximum_charge_state;
