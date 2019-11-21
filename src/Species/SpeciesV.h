@@ -70,7 +70,7 @@ public:
 
     //! Method used to sort particles
     void sortParticles( Params &params ) override;
-    //void count_sortParticles(Params& param);
+    //void countSortParticles(Params& param);
 
     //! Compute cell_keys for all particles of the current species
     void computeParticleCellKeys( Params &params ) override;

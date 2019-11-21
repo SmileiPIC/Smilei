@@ -324,6 +324,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   :default: 2
 
   The number of azimuthal modes used for the Fourier decomposition in ``"AMcylindrical"`` geometry.
+  The modes range from mode 0 to mode `"number_of_AM-1"`.
 
 .. py:data:: number_of_AM_relativistic_field_initialization
 
@@ -389,7 +390,7 @@ Vectorization
 
 The block ``Vectorization`` is optional.
 It controls the SIMD operations that can enhance the performance of some computations.
-The technique is detailed in Ref. [Beck]_ and summarized in :doc:`this doc <vectorization>`.
+The technique is detailed in Ref. [Beck2019]_ and summarized in :doc:`this doc <vectorization>`.
 It requires :ref:`additional compilation options<vectorization_flags>` to be actived.
 
 .. code-block:: python
@@ -642,9 +643,11 @@ Each species has to be defined in a ``Species`` block::
 
    :type: A python list of integers.
 
-   The size of the list must be the simulation particle dimension. It can be used only if `position_initialization` is set to `regular`
-   and not in `AMcylindrical` geometry. The product of the elements of the provided list must be equal to `particles_per_cell`.
+   The size of the list must be the simulation particle dimension. It can be used only if `position_initialization` is set to `regular`.
+   The product of the elements of the provided list must be equal to `particles_per_cell`.
    This list sets the number of evenly spaced particles per cell per dimension at their initial positions.
+   The numbers are given in the order [`Nx`, `Ny`, `Nz`] in cartesian geometries and [`Nx`, `Nr`, `Ntheta`] in `AMcylindrical` in which
+   case we advise to use :math:`Ntheta \geq  4\times (number\_of\_AM-1)`.
 
 .. py:data:: momentum_initialization
 
@@ -752,9 +755,11 @@ Each species has to be defined in a ``Species`` block::
   :default: 0.
 
   The time during which the particles are "frozen", in units of :math:`T_r`.
-  Frozen particles do not move and therefore do not deposit any current either.
+  Frozen particles do not move and therefore do not deposit any current density either. 
+  Nonetheless, they deposit a charge density.
   They are computationally much cheaper than non-frozen particles and oblivious to any EM-fields
-  in the simulation.
+  in the simulation. Note that frozen particles can be ionized (this is computationally much cheaper 
+  if ion motion is not relevant).
 
 .. py:data:: ionization_model
 
@@ -1158,9 +1163,10 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     The two functions represent :math:`B_y` and :math:`B_z`, respectively.
     This can be used only in `Cartesian` geometries.
 
-  .. py:data:: space_time_profile_AM
+.. py:data:: space_time_profile_AM
 
     :type: A list of maximum 2*`number_of_AM` *python* functions.
+    
     These profiles define the first modes of `Br` and `Bt` in the order shown in the above example.
     Undefined modes are considered zero.
     This can be used only in `AMcylindrical` geometry.
@@ -2718,7 +2724,7 @@ for instance::
   * with a user-defined python function, an arbitrary quantity can be calculated (the *numpy*
     module is necessary). This function should take one argument, for instance
     ``particles``, which contains the attributes ``x``, ``y``, ``z``, ``px``, ``py``,
-    ``pz``, ``charge``, ``weight`` and ``id``. Each of these attributes is a *numpy* array
+    ``pz``, ``charge``, ``weight``, ``chi`` and ``id``. Each of these attributes is a *numpy* array
     containing the data of all particles in one patch. The function must return a *numpy*
     array of the same shape, containing the desired deposition of each particle. For example,
     defining the following function::

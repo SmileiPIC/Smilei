@@ -35,7 +35,7 @@ ElectroMagnAM::ElectroMagnAM( Params &params, DomainDecomposition *domain_decomp
     for( unsigned int imode=0; imode<nmodes; imode++ ) {
         for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
             ostringstream species_mode_name( "" );
-            species_mode_name << vecSpecies[ispec]->name << "_mode_" << imode;
+            species_mode_name << vecSpecies[ispec]->name_ << "_mode_" << imode;
             Jl_s[imode*n_species+ispec]  = new cField2D( ( "Jl_" + species_mode_name.str() ).c_str(), dimPrim );
             Jr_s[imode*n_species+ispec]  = new cField2D( ( "Jr_" + species_mode_name.str() ).c_str(), dimPrim );
             Jt_s[imode*n_species+ispec]  = new cField2D( ( "Jt_" + species_mode_name.str() ).c_str(), dimPrim );

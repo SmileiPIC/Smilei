@@ -269,7 +269,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
     for( unsigned int idiag=0; idiag<vecPatches.localDiags.size(); idiag++ ) {
         if( DiagnosticTrack *track = dynamic_cast<DiagnosticTrack *>( vecPatches.localDiags[idiag] ) ) {
             ostringstream n( "" );
-            n<< "latest_ID_" << vecPatches( 0 )->vecSpecies[track->speciesId_]->name;
+            n<< "latest_ID_" << vecPatches( 0 )->vecSpecies[track->speciesId_]->name_;
             H5::attr( fid, n.str().c_str(), track->latest_Id, H5T_NATIVE_UINT64 );
         }
     }
@@ -404,7 +404,7 @@ void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpe
     for( unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++ ) {
         ostringstream name( "" );
         name << setfill( '0' ) << setw( 2 ) << ispec;
-        string groupName=Tools::merge( "species-", name.str(), "-", vecSpecies[ispec]->name );
+        string groupName=Tools::merge( "species-", name.str(), "-", vecSpecies[ispec]->name_ );
         hid_t gid = H5::group( patch_gid, groupName );
         
         H5::attr( gid, "partCapacity", vecSpecies[ispec]->particles->capacity() );
@@ -552,7 +552,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI *smpi, SimWindo
     for( unsigned int idiag=0; idiag<vecPatches.localDiags.size(); idiag++ ) {
         if( DiagnosticTrack *track = dynamic_cast<DiagnosticTrack *>( vecPatches.localDiags[idiag] ) ) {
             ostringstream n( "" );
-            n<< "latest_ID_" << vecPatches( 0 )->vecSpecies[track->speciesId_]->name;
+            n<< "latest_ID_" << vecPatches( 0 )->vecSpecies[track->speciesId_]->name_;
             if( H5::hasAttr( fid, n.str() ) ) {
                 H5::getAttr( fid, n.str(), track->latest_Id, H5T_NATIVE_UINT64 );
             } else {
@@ -704,7 +704,7 @@ void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &ve
     for( unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++ ) {
         ostringstream name( "" );
         name << setfill( '0' ) << setw( 2 ) << ispec;
-        string groupName=Tools::merge( "species-", name.str(), "-", vecSpecies[ispec]->name );
+        string groupName=Tools::merge( "species-", name.str(), "-", vecSpecies[ispec]->name_ );
         hid_t gid = H5Gopen( patch_gid, groupName.c_str(), H5P_DEFAULT );
         
         unsigned int partCapacity=0;

@@ -83,7 +83,7 @@ public:
         if( PyTools::convert( ionizing, ionization_electrons_name ) ) {
             
             for( int i=0; i<(int)vecSpecies.size(); i++ ) {
-                if( vecSpecies[i]->name == ionization_electrons_name ) {
+                if( vecSpecies[i]->name_ == ionization_electrons_name ) {
                     ionization_electrons = i;
                     break;
                 }
@@ -114,7 +114,7 @@ public:
                 s0 = vecSpecies[sgroup[g][0]]; // first species of this group
                 for( unsigned int i=1; i<sgroup[g].size(); i++ ) { // loop other species of same group
                     s = vecSpecies[sgroup[g][i]]; // current species
-                    if( s->mass != s0->mass )
+                    if( s->mass_ != s0->mass_ )
                         ERROR( "In collisions #" << n_collisions << ": species in group `species"
                                << g+1 << "` must all have same masses for ionization" );
                                
@@ -171,7 +171,7 @@ public:
         }
         mystream.str( "" ); // clear
         if( ionization_electrons>0 ) {
-            MESSAGE( 2, "Collisional ionization with atomic number "<<Z<<" towards species `"<<vecSpecies[ionization_electrons]->name << "`" );
+            MESSAGE( 2, "Collisional ionization with atomic number "<<Z<<" towards species `"<<vecSpecies[ionization_electrons]->name_ << "`" );
         }
         
         // If debugging log requested

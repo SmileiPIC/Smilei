@@ -48,7 +48,7 @@ public:
         Pusher *Push = NULL;
         
         // Particle of matter
-        if( species->mass > 0 ) {
+        if( species->mass_ > 0 ) {
             // assign the correct Pusher to Push
             if( species->pusher == "boris" ) {
                 if( !species->vectorized_operators && !params.cell_sorting ) {
@@ -90,17 +90,17 @@ public:
             } else if( species->pusher == "higueracary" ) {
                 Push = new PusherHigueraCary( params, species );
             } else {
-                ERROR( "For species " << species->name
+                ERROR( "For species " << species->name_
                        << ": unknown pusher `"
                        << species->pusher << "`" );
             }
         }
         // Photon
-        else if( species->mass == 0 ) {
+        else if( species->mass_ == 0 ) {
             if( species->pusher == "norm" ) {
                 Push = new PusherPhoton( params, species );
             } else {
-                ERROR( "For photon species " << species->name
+                ERROR( "For photon species " << species->name_
                        << ": unknown pusher `"
                        << species->pusher << "`" );
             }
@@ -108,7 +108,7 @@ public:
         
         if( species->ponderomotive_dynamics ) {
             if( species->pusher != "ponderomotive_boris" ) {
-                ERROR( "For species " << species->name << " the flag ponderomotive_dynamics is True - the only pusher available to interact with the envelope is ponderomotive_boris" );
+                ERROR( "For species " << species->name_ << " the flag ponderomotive_dynamics is True - the only pusher available to interact with the envelope is ponderomotive_boris" );
             }
         }
         return Push;
@@ -119,7 +119,7 @@ public:
         Pusher *Push_ponderomotive_position = NULL;
         
         // Particle of matter
-        if( species->mass > 0 ) {
+        if( species->mass_ > 0 ) {
             // assign the correct Pusher to Push_ponderomotive_position
             if( species->pusher == "ponderomotive_boris" ) {
                 if( !species->vectorized_operators && !params.cell_sorting ) {
@@ -133,7 +133,7 @@ public:
             }
             
             else {
-                ERROR( "For species " << species->name
+                ERROR( "For species " << species->name_
                        << ": unknown pusher `"
                        << species->pusher << "`" );
             }

@@ -426,6 +426,9 @@ void VectorPatch::projectionForDiags( Params &params,
 
 } // END projection for diags
 
+// ---------------------------------------------------------------------------------------------------------------------
+//! For all patches, exchange particles and sort them.
+// ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::finalizeAndSortParticles( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
         double time_dual, Timers &timers, int itime )
 {
@@ -747,14 +750,14 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     // New energy from particles
                     if( patch->isXmax() ) {
                         // Matter particle case
-                        if( injector_species->mass > 0 ) {
+                        if( injector_species->mass_ > 0 ) {
                             for( int ip = 0; ip<new_particle_number; ip++ ) {
                                 injector_species->new_particles_energy_ += particles->weight( ip )
                                 *( particles->lor_fac( ip )-1.0 );
                             }
                         }
                         // Photon case
-                        else if( injector_species->mass == 0 ) {
+                        else if( injector_species->mass_ == 0 ) {
                             for( int ip=0; ip<new_particle_number; ip++ ) {
                                 injector_species->new_particles_energy_ += particles->weight( ip )
                                 *( particles->momentum_norm( ip ) );
@@ -863,7 +866,7 @@ void VectorPatch::sumDensities( Params &params, double time_dual, Timers &timers
     if( diag_flag ) {
         for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size(); ispec++ ) {
             if( !( *this )( 0 )->vecSpecies[ispec]->particles->is_test ) {
-                update_field_list( ispec, smpi );
+                updateFieldList( ispec, smpi );
                 if( params.geometry != "AMcylindrical" ) {
                     SyncVectorPatch::sumRhoJs( params, ( *this ), ispec, smpi, timers, itime ); // MPI
                 } else {
@@ -906,7 +909,7 @@ void VectorPatch::sumSusceptibility( Params &params, double time_dual, Timers &t
         for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size(); ispec++ ) {
             if( !( *this )( 0 )->vecSpecies[ispec]->particles->is_test ) {
                 if( species( 0, ispec )->ponderomotive_dynamics ) {
-                    update_field_list( ispec, smpi );
+                    updateFieldList( ispec, smpi );
                     SyncVectorPatch::sumEnvChis( params, ( *this ), ispec, smpi, timers, itime );
                 } // MPI
             }
@@ -1022,7 +1025,7 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
             }
         }
         if( params.is_spectral ) {
-            save_old_rho( params );
+            saveOldRho( params );
         }
     }
 #endif
@@ -1080,7 +1083,7 @@ void VectorPatch::solveEnvelope( Params &params, SimWindow *simWindow, int itime
 
 } // END solveEnvelope
 
-void VectorPatch::finalize_sync_and_bc_fields( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
+void VectorPatch::finalizeSyncAndBCFields( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
         double time_dual, Timers &timers, int itime )
 {
 #ifndef _PICSAR
@@ -1101,7 +1104,7 @@ void VectorPatch::finalize_sync_and_bc_fields( Params &params, SmileiMPI *smpi, 
     }
 #endif
 
-} // END finalize_sync_and_bc_fields
+} // END finalizeSyncAndBCFields
 
 
 void VectorPatch::initExternals( Params &params )
@@ -2370,7 +2373,7 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
 // ---------------------------------------------------------------------------------------------------------------------
 
 
-void VectorPatch::load_balance( Params &params, double time_dual, SmileiMPI *smpi, SimWindow *simWindow, unsigned int itime )
+void VectorPatch::loadBalance( Params &params, double time_dual, SmileiMPI *smpi, SimWindow *simWindow, unsigned int itime )
 {
 
     // Compute new patch distribution
@@ -2610,7 +2613,7 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
         }
     }
     this->set_refHindex() ;
-    update_field_list( smpi ) ;
+    updateFieldList( smpi ) ;
 
 } // END exchangePatches
 
@@ -2619,7 +2622,7 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
 //   - Send/Recv MPI rank
 //   - Send/Recv patch Id
 // ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::output_exchanges( SmileiMPI *smpi )
+void VectorPatch::outputExchanges( SmileiMPI *smpi )
 {
     ofstream output_file;
     ostringstream name( "" );
@@ -2646,10 +2649,10 @@ void VectorPatch::output_exchanges( SmileiMPI *smpi )
     }
     output_file << "NEXT" << endl;
     output_file.close();
-} // END output_exchanges
+} // END outputExchanges
 
 //! Resize vector of field*
-void VectorPatch::update_field_list( SmileiMPI *smpi )
+void VectorPatch::updateFieldList( SmileiMPI *smpi )
 {
     int nDim( 0 );
     if( !dynamic_cast<ElectroMagnAM *>( patches_[0]->EMfields ) ) {
@@ -2963,7 +2966,7 @@ void VectorPatch::update_field_list( SmileiMPI *smpi )
 
 
 
-void VectorPatch::update_field_list( int ispec, SmileiMPI *smpi )
+void VectorPatch::updateFieldList( int ispec, SmileiMPI *smpi )
 {
     #pragma omp barrier
     if( !dynamic_cast<ElectroMagnAM *>( patches_[0]->EMfields ) ) {
@@ -3223,7 +3226,7 @@ void VectorPatch::saveExternalFields( Params &params )
 
 
 // Print information on the memory consumption
-void VectorPatch::check_memory_consumption( SmileiMPI *smpi )
+void VectorPatch::checkMemoryConsumption( SmileiMPI *smpi )
 {
     long int particlesMem( 0 );
     for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ )
@@ -3295,7 +3298,7 @@ void VectorPatch::check_memory_consumption( SmileiMPI *smpi )
 }
 
 
-void VectorPatch::save_old_rho( Params &params )
+void VectorPatch::saveOldRho( Params &params )
 {
     int n=0;
     #pragma omp for schedule(static)
@@ -3311,7 +3314,7 @@ void VectorPatch::save_old_rho( Params &params )
 
 
 // Print information on the memory consumption
-void VectorPatch::check_expected_disk_usage( SmileiMPI *smpi, Params &params, Checkpoint &checkpoint )
+void VectorPatch::checkExpectedDiskUsage( SmileiMPI *smpi, Params &params, Checkpoint &checkpoint )
 {
     if( smpi->isMaster() ) {
 
@@ -3559,7 +3562,7 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
 } // END ponderomotiveUpdatePositionAndCurrents
 
 
-void VectorPatch::init_new_envelope( Params &params )
+void VectorPatch::initNewEnvelope( Params &params )
 {
     if( ( *this )( 0 )->EMfields->envelope!=NULL ) {
         // for all patches, init new envelope from input namelist parameters
@@ -3567,4 +3570,4 @@ void VectorPatch::init_new_envelope( Params &params )
             ( *this )( ipatch )->EMfields->envelope->initEnvelope( ( *this )( ipatch ), ( *this )( ipatch )->EMfields );
         } // end loop on patches
     }
-} // END init_new_envelope
+} // END initNewEnvelope

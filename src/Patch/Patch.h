@@ -53,7 +53,7 @@ public:
     void set( Params &params, DomainDecomposition *domain_decomposition, VectorPatch &vecPatch );
    
     //Copy positions of particles from source species to species which are initialized on top of another one.
-    void copy_positions( std::vector<Species *> vecSpecies_to_update);
+    void copyPositions( std::vector<Species *> vecSpecies_to_update);
 
     //! Destructor for Patch
     virtual ~Patch();
@@ -137,7 +137,7 @@ public:
     //! clean memory resizing particles structure
     void cleanParticlesOverhead( Params &params );
     //! delete Particles included in the index of particles to exchange. Assumes indexes are sorted.
-    void cleanup_sent_particles( int ispec, std::vector<int> *indexes_of_particles_to_exchange );
+    void cleanupSentParticles( int ispec, std::vector<int> *indexes_of_particles_to_exchange );
     
     //! init comm / sum densities
     virtual void initSumField( Field *field, int iDim, SmileiMPI *smpi ) = 0;
