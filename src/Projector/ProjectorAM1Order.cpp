@@ -105,7 +105,7 @@ void ProjectorAM1Order::basicForComplex( complex<double> *rhoj, Particles &parti
     Sr1[0] = 1. - delta;
     Sr1[1] = delta;
    
-    if (jp == -1){ // If particle is between 0 and dr/2.
+    if (rpn < 0.){ // If particle is between 0 and dr/2.
         jp = 0;
         Sr1[1] = 0.; 
         if(imode%2 == 0){ 
