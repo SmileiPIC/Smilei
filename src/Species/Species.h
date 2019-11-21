@@ -82,7 +82,7 @@ public:
     std::vector<double> thermal_boundary_velocity;
 
     //! thermal velocity [\f$c\f$]
-    std::vector<double> thermalVelocity;
+    std::vector<double> thermal_velocity_;
     //! thermal momentum [\f$m_e c\f$]
     std::vector<double> thermalMomentum;
 

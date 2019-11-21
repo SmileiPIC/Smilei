@@ -695,14 +695,14 @@ public:
                 thisSpecies->thermal_boundary_temperature[2] = thisSpecies->thermal_boundary_temperature[0];
             }
 
-            // Compute the thermalVelocity & Momentum for thermalizing bcs
-            thisSpecies->thermalVelocity.resize( 3 );
+            // Compute the thermal_velocity_ & Momentum for thermalizing bcs
+            thisSpecies->thermal_velocity_.resize( 3 );
             thisSpecies->thermalMomentum.resize( 3 );
             for( unsigned int i=0; i<3; i++ ) {
-                thisSpecies->thermalVelocity[i] = sqrt( 2.*thisSpecies->thermal_boundary_temperature[i]/thisSpecies->mass_ );
-                thisSpecies->thermalMomentum[i] = thisSpecies->thermalVelocity[i];
+                thisSpecies->thermal_velocity_[i] = sqrt( 2.*thisSpecies->thermal_boundary_temperature[i]/thisSpecies->mass_ );
+                thisSpecies->thermalMomentum[i] = thisSpecies->thermal_velocity_[i];
                 // Caution: momentum in SMILEI actually correspond to p/m
-                if( thisSpecies->thermalVelocity[i]>0.3 ) {
+                if( thisSpecies->thermal_velocity_[i]>0.3 ) {
                     ERROR( "For species '" << species_name << "' Thermalizing BCs require non-relativistic thermal_boundary_temperature" );
                 }
             }
@@ -969,7 +969,7 @@ public:
         newSpecies->boundary_conditions                      = species->boundary_conditions;
         newSpecies->thermal_boundary_temperature             = species->thermal_boundary_temperature;
         newSpecies->thermal_boundary_velocity                = species->thermal_boundary_velocity;
-        newSpecies->thermalVelocity                          = species->thermalVelocity;
+        newSpecies->thermal_velocity_                          = species->thermal_velocity_;
         newSpecies->thermalMomentum                          = species->thermalMomentum;
         newSpecies->atomic_number_                            = species->atomic_number_;
         newSpecies->maximum_charge_state                     = species->maximum_charge_state;
