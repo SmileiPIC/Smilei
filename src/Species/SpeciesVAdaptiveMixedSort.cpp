@@ -102,7 +102,7 @@ void SpeciesVAdaptiveMixedSort::resizeCluster( Params &params )
 //! Compute part_cell_keys at patch creation.
 //! This operation is normally done in the pusher to avoid additional particles pass.
 // -----------------------------------------------------------------------------
-void SpeciesVAdaptiveMixedSort::compute_part_cell_keys( Params &params )
+void SpeciesVAdaptiveMixedSort::computeParticleCellKeys( Params &params )
 {
 
     unsigned int ip, nparts;
@@ -147,12 +147,12 @@ void SpeciesVAdaptiveMixedSort::importParticles( Params &params, Patch *patch, P
     }
 }
 
-void SpeciesVAdaptiveMixedSort::sort_part( Params &params )
+void SpeciesVAdaptiveMixedSort::sortParticles( Params &params )
 {
     if( vectorized_operators ) {
-        SpeciesV::sort_part( params );
+        SpeciesV::sortParticles( params );
     } else {
-        Species::sort_part( params );
+        Species::sortParticles( params );
     }
 }
 
@@ -162,7 +162,7 @@ void SpeciesVAdaptiveMixedSort::sort_part( Params &params )
 //! params object containing global Parameters
 //! patch object containing the current patch data and properties
 // -----------------------------------------------------------------------------
-void SpeciesVAdaptiveMixedSort::initial_configuration( Params &params, Patch *patch )
+void SpeciesVAdaptiveMixedSort::defaultConfigure( Params &params, Patch *patch )
 {
     // Setup the vectorization state
     this->vectorized_operators = ( params.adaptive_default_mode == "on" );
@@ -178,7 +178,7 @@ void SpeciesVAdaptiveMixedSort::initial_configuration( Params &params, Patch *pa
     resizeCluster( params );
 
     // We perform the sorting
-    this->sort_part( params );
+    this->sortParticles( params );
 
     // Reconfigure species to be imported
     this->reconfigure_particle_importation();
@@ -198,7 +198,7 @@ void SpeciesVAdaptiveMixedSort::configuration( Params &params, Patch *patch )
     float scalar_time = 0.;
 
     // We first compute cell_keys: the number of particles per cell
-    this->compute_part_cell_keys( params );
+    this->computeParticleCellKeys( params );
 
     // Species with particles
     if( particles->size() > 0 ) {
@@ -223,7 +223,7 @@ void SpeciesVAdaptiveMixedSort::configuration( Params &params, Patch *patch )
     // --------------------------------------------------------------------
 
 #ifdef  __DEBUG
-    std::cerr << "  > Species " << this->name << " configuration (" << this->vectorized_operators
+    std::cerr << "  > Species " << this->name_ << " configuration (" << this->vectorized_operators
               << ") default: " << params.adaptive_default_mode
               << " in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ")"
               << " of MPI process " << patch->MPI_me_
@@ -243,7 +243,7 @@ void SpeciesVAdaptiveMixedSort::configuration( Params &params, Patch *patch )
     resizeCluster( params );
 
     // We perform the sorting
-    this->sort_part( params );
+    this->sortParticles( params );
 
     // Reconfigure species to be imported
     this->reconfigure_particle_importation();
@@ -272,7 +272,7 @@ void SpeciesVAdaptiveMixedSort::reconfiguration( Params &params, Patch *patch )
     // We first compute cell_keys: the number of particles per cell
     // if the current mode is without vectorization
     if( !this->vectorized_operators ) {
-        this->compute_part_cell_keys( params );
+        this->computeParticleCellKeys( params );
     }
 
     // --------------------------------------------------------------------
@@ -307,7 +307,7 @@ void SpeciesVAdaptiveMixedSort::reconfiguration( Params &params, Patch *patch )
         this->vectorized_operators = !this->vectorized_operators;
 
 #ifdef  __DEBUG
-        std::cerr << "  > Species " << this->name << " reconfiguration (" << this->vectorized_operators
+        std::cerr << "  > Species " << this->name_ << " reconfiguration (" << this->vectorized_operators
                   << ") in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ")"
                   << " of MPI process " << patch->MPI_me_
                   << " (vecto time: " << vecto_time
@@ -326,7 +326,7 @@ void SpeciesVAdaptiveMixedSort::reconfiguration( Params &params, Patch *patch )
         resizeCluster( params );
 
         // We perform the sorting
-        this->sort_part( params );
+        this->sortParticles( params );
 
         // Reconfigure species to be imported
         this->reconfigure_particle_importation();

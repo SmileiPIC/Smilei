@@ -492,6 +492,11 @@ Obtain the data
   the diagnostic's units defined by the ``units`` argument, if provided.
 
   * ``axis``: the name of the requested axis.
+  
+    * For ``Field``: this is ``"x"``, ``"y"`` or ``"z"``
+    * For ``Probe``: this is ``"axis1"``, ``"axis2"`` or ``"axis3"``
+    * For ``ParticleBinning`` and ``Screen``: this is the ``type`` of the :py:data:`axes`
+      defined in the namelist
 
 
 .. py:method:: TrackParticles.iterParticles(timestep, chunksize=1)

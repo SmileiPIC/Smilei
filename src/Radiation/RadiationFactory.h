@@ -53,7 +53,7 @@ public:
         else if( species->radiation_model == "ll" ) {
             Radiate = new RadiationLandauLifshitz( params, species );
         } else if( species->radiation_model != "none" ) {
-            ERROR( "For species " << species->name
+            ERROR( "For species " << species->name_
                    << ": unknown radiation_model `"
                    << species->radiation_model << "`" );
         }

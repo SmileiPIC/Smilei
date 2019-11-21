@@ -181,8 +181,6 @@ class Probe(Diagnostic):
 		# Special case in 1D: we convert the point locations to scalar distances
 		if len(self._centers) == 1:
 			self._centers[0] = self._np.sqrt(self._np.sum((self._centers[0]-self._centers[0][0])**2,axis=1))
-			self._centers[0] = self._np.maximum( self._centers[0], 0.)
-			self._centers[0] = self._np.minimum( self._centers[0], self._ncels[0]*self._cell_length[0])
 		# Special case in 2D: we have to prepare for pcolormesh instead of imshow
 		elif len(self._centers) == 2:
 			p1 = self._centers[0] # locations of grid points along first dimension
@@ -223,8 +221,6 @@ class Probe(Diagnostic):
 			#Y = self._np.maximum( Y, 0.)
 			#Y = self._np.minimum( Y, self._ncels[1]*self._cell_length[1])
 			self._edges = [X, Y]
-			self._label = ["axis1", ""]
-			self._units = [axisunits, axisunits]
 
 		# Prepare the reordering of the points for patches disorder
 		positions = self._h5probe[0]["positions"][()] # actual probe points positions

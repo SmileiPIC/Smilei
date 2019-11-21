@@ -102,7 +102,7 @@ void SpeciesV::initCluster( Params &params )
     //ener_tot = 0.;
     nrj_bc_lost = 0.;
     nrj_mw_lost = 0.;
-    nrj_new_particles = 0.;
+    new_particles_energy_ = 0.;
 
 }//END initCluster
 
@@ -281,12 +281,12 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
 
             for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
                 // Apply wall and boundary conditions
-                if( mass>0 ) {
+                if( mass_>0 ) {
                     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
                         for( iPart=first_index[scell] ; ( int )iPart<last_index[scell]; iPart++ ) {
                             double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
                             if( !( *partWalls )[iwall]->apply( *particles, iPart, this, dtgf, ener_iPart ) ) {
-                                nrj_lost_per_thd[tid] += mass * ener_iPart;
+                                nrj_lost_per_thd[tid] += mass_ * ener_iPart;
                             }
                         }
                     }
@@ -297,7 +297,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                     for( iPart=first_index[ipack*packsize_+scell] ; ( int )iPart<last_index[ipack*packsize_+scell]; iPart++ ) {
                         if( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
                             addPartInExchList( iPart );
-                            nrj_lost_per_thd[tid] += mass * ener_iPart;
+                            nrj_lost_per_thd[tid] += mass_ * ener_iPart;
                             particles->cell_keys[iPart] = -1;
                         } else {
                             //Compute cell_keys of remaining particles
@@ -310,7 +310,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                         }
                     }
 
-                } else if( mass==0 ) {
+                } else if( mass_==0 ) {
 
                     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
                         for( iPart=first_index[scell] ; ( int )iPart<last_index[scell]; iPart++ ) {
@@ -348,7 +348,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
 
             // Project currents if not a Test species and charges as well if a diag is needed.
             // Do not project if a photon
-            if( ( !particles->is_test ) && ( mass > 0 ) )
+            if( ( !particles->is_test ) && ( mass_ > 0 ) )
 #ifdef  __DETAILED_TIMERS
                 timer = MPI_Wtime();
 #endif
@@ -411,7 +411,7 @@ void SpeciesV::computeCharge( unsigned int ispec, ElectroMagn *EMfields )
 // ---------------------------------------------------------------------------------------------------------------------
 // Sort particles
 // ---------------------------------------------------------------------------------------------------------------------
-void SpeciesV::sort_part( Params &params )
+void SpeciesV::sortParticles( Params &params )
 {
     unsigned int npart, ncell;
     int ip_dest, cell_target;
@@ -579,7 +579,7 @@ void SpeciesV::sort_part( Params &params )
 }
 
 
-void SpeciesV::compute_part_cell_keys( Params &params )
+void SpeciesV::computeParticleCellKeys( Params &params )
 {
     //Compute part_cell_keys at patch creation. This operation is normally done in the pusher to avoid additional particles pass.
 
@@ -628,7 +628,7 @@ void SpeciesV::compute_bin_cell_keys( Params &params, int istart, int iend )
 void SpeciesV::importParticles( Params &params, Patch *patch, Particles &source_particles, vector<Diagnostic *> &localDiags )
 {
 
-    unsigned int npart = source_particles.size(), scell, ii, nbin=first_index.size();
+    unsigned int npart = source_particles.size(), scell, ii, ncells=first_index.size();
 
     // If this species is tracked, set the particle IDs
     if( particles->tracked ) {
@@ -643,46 +643,70 @@ void SpeciesV::importParticles( Params &params, Patch *patch, Particles &source_
     int IX;
     double X;
 
-    // std::cerr << "SpeciesV::importParticles "
-    //           << " for "<< this->name
-    //           << " in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ") "
-    //           << " mpi process " << patch->MPI_me_ << " - "
-    //           << " mode: " << this->vectorized_operators << " - "
-    //           << " nb bin: " << first_index.size() << " - "
-    //           << " nbp: " << npart
-    //           << std::endl;
-
-    // Move particles
-    for( unsigned int i=0; i<npart; i++ ) {
-
-        // Compute the receiving bin index
-        scell = 0;
+    // compute cell keys of new parts
+    vector<int> src_cell_keys( npart, 0 );
+    for ( int ip = 0 ; ip < npart ; ip++ ) {
         for( unsigned int ipos=0; ipos < nDim_particle ; ipos++ ) {
-            X = source_particles.position( ipos, i )-min_loc_vec[ipos];
-            IX = round( X * dx_inv_[ipos] );
-            scell = scell * length[ipos] + IX;
+            double X = source_particles.position( ipos, ip ) - min_loc_vec[ipos];
+            int IX = round( X * dx_inv_[ipos] );
+            src_cell_keys[ip] = src_cell_keys[ip] * length[ipos] + IX;
         }
-
-        // Copy particle to the correct bin
-        source_particles.cp_particle( i, *particles, last_index[scell] );
-
-        // Update the bin counts
-        last_index[scell]++;
-        for( ii=scell+1; ii<nbin; ii++ ) {
-            first_index[ii]++;
-            last_index[ii]++;
-        }
-
-        particles->cell_keys.insert( particles->cell_keys.begin() + first_index[scell] + count[scell], scell );
-        count[scell] ++ ;
-
     }
+    vector<int> src_count( ncells, 0 );
+    for( unsigned int ip=0; ip < npart ; ip++ )
+        src_count[src_cell_keys[ip]] ++;
+
+    // sort new parts par cells
+    int istart = 0;
+    int istop  = src_count[0];
+
+    for ( int icell = 0 ; icell < ncells ; icell++ ) {
+        if (src_count[icell]!=0) {
+            for( unsigned int ip=istart; ip < istop ; ip++ ) {
+                if ( src_cell_keys[ip] == icell )
+                    continue;
+                else { // rearrange particles
+                    int ip_swap = istop;
+                    while (( src_cell_keys[ip_swap] != icell ) && (ip_swap<npart))
+                        ip_swap++;
+                    source_particles.swap_part(ip, ip_swap);
+                    int tmp = src_cell_keys[ip];
+                    src_cell_keys[ip] = src_cell_keys[ip_swap];
+                    src_cell_keys[ip_swap] = tmp;
+                } // rearrange particles
+            } // end loop on particles of a cell
+
+            // inject in main data structure per cell
+            source_particles.cp_particles( istart, src_count[icell],
+                                        *particles,
+                                        first_index[icell] );
+            last_index[icell] += src_count[icell];
+            for ( int idx=icell+1 ; idx<last_index.size() ; idx++ ) {
+                first_index[idx] += src_count[icell];
+                last_index[idx]  += src_count[icell];
+            }
+
+        }
+        // update istart/istop fot the next cell
+        istart += src_count[icell];
+        if ( icell != ncells-1  )
+            istop  += src_count[icell+1];
+        else
+            istop = npart;
+
+    } // End cell loop
+    //source_particles.clear();
+
+    // Set place for new particles in species->particles->cell_keys
+    for (int ip=0;ip<npart ; ip++ )
+        addSpaceForOneParticle();
 
     source_particles.clear();
+
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// Particle merging cell by cell
+//! Particle merging cell by cell
 // ---------------------------------------------------------------------------------------------------------------------
 void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
                                Params &params,
@@ -695,11 +719,6 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
 // #else
 //     ithread = 0;
 // #endif
-
-#ifdef  __DETAILED_TIMERS
-    double timer;
-    timer = MPI_Wtime();
-#endif
 
 
     // Only for moving particles
@@ -754,7 +773,7 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
 
         // For each cell, we apply independently the merging process
         for( scell = 0 ; scell < first_index.size() ; scell++ ) {
-            ( *Merge )( mass, *particles, particles->cell_keys, smpi, first_index[scell],
+            ( *Merge )( mass_, *particles, particles->cell_keys, smpi, first_index[scell],
                         last_index[scell], count[scell]);
         }
 
@@ -843,7 +862,7 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
         //
         // if (fabs(weight_before - weight_after)/weight_before > 1e-3 || fabs(energy_before - energy_after)/energy_before > 1e-3) {
         //     std::cerr << std::scientific << std::setprecision(15)
-        //               << " " << this->name
+        //               << " " << this->name_
         //               << " Weight before: " << weight_before
         //               << " Weight after: " << weight_after
         //               << " Energy before: " << energy_before
@@ -854,11 +873,6 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
 
 
     }
-
-#ifdef  __DETAILED_TIMERS
-    patch->patch_timers[14] += MPI_Wtime() - timer;
-#endif
-
 }
 
 
@@ -868,7 +882,7 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
 //   - deposit susceptibility
 //   - calculate the new momentum
 // ---------------------------------------------------------------------------------------------------------------------
-void SpeciesV::ponderomotive_update_susceptibility_and_momentum( double time_dual, unsigned int ispec,
+void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag,
         Patch *patch, SmileiMPI *smpi,
@@ -931,7 +945,7 @@ void SpeciesV::ponderomotive_update_susceptibility_and_momentum( double time_dua
             timer = MPI_Wtime();
 #endif
             for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
-                Proj->susceptibility( EMfields, *particles, mass, smpi, first_index[ipack*packsize_+scell], last_index[ipack*packsize_+scell], ithread, ipack*packsize_+scell, first_index[ipack*packsize_] );
+                Proj->susceptibility( EMfields, *particles, mass_, smpi, first_index[ipack*packsize_+scell], last_index[ipack*packsize_+scell], ithread, ipack*packsize_+scell, first_index[ipack*packsize_] );
             }
 
 #ifdef  __DETAILED_TIMERS
@@ -952,14 +966,14 @@ void SpeciesV::ponderomotive_update_susceptibility_and_momentum( double time_dua
 
     }//END if time vs. time_frozen
 
-} // end ponderomotive_update_susceptibility_and_momentum
+} // end ponderomotiveUpdateSusceptibilityAndMomentum
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all particles of the species reacting to laser envelope
 //   - interpolate the fields at the particle position
 //   - deposit susceptibility
 // ---------------------------------------------------------------------------------------------------------------------
-void SpeciesV::ponderomotive_project_susceptibility( double time_dual, unsigned int ispec,
+void SpeciesV::ponderomotiveProjectSusceptibility( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag,
         Patch *patch, SmileiMPI *smpi,
@@ -1022,7 +1036,7 @@ void SpeciesV::ponderomotive_project_susceptibility( double time_dual, unsigned 
             timer = MPI_Wtime();
 #endif
             for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
-                Proj->susceptibility( EMfields, *particles, mass, smpi, first_index[ipack*packsize_+scell], last_index[ipack*packsize_+scell], ithread, ipack*packsize_+scell, first_index[ipack*packsize_] );
+                Proj->susceptibility( EMfields, *particles, mass_, smpi, first_index[ipack*packsize_+scell], last_index[ipack*packsize_+scell], ithread, ipack*packsize_+scell, first_index[ipack*packsize_] );
             }
 
 #ifdef  __DETAILED_TIMERS
@@ -1035,7 +1049,7 @@ void SpeciesV::ponderomotive_project_susceptibility( double time_dual, unsigned 
 
     }//END if time vs. time_frozen
 
-} // end ponderomotive_project_susceptibility
+} // end ponderomotiveProjectSusceptibility
 
 // ---------------------------------------------------------------------------------------------------------------------
 // For all particles of the species reacting to laser envelope
@@ -1044,7 +1058,7 @@ void SpeciesV::ponderomotive_project_susceptibility( double time_dual, unsigned 
 //   - particles BC
 //   - project charge and current density
 // ---------------------------------------------------------------------------------------------------------------------
-void SpeciesV::ponderomotive_update_position_and_currents( double time_dual, unsigned int ispec,
+void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned int ispec,
         ElectroMagn *EMfields,
         Params &params, bool diag_flag, PartWalls *partWalls,
         Patch *patch, SmileiMPI *smpi,
@@ -1115,12 +1129,12 @@ void SpeciesV::ponderomotive_update_position_and_currents( double time_dual, uns
 
             for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
                 // Apply wall and boundary conditions
-                if( mass>0 ) { // condition mass>0
+                if( mass_>0 ) { // condition mass_>0
                     for( unsigned int iwall=0; iwall<partWalls->size(); iwall++ ) {
                         for( iPart=first_index[scell] ; ( int )iPart<last_index[scell]; iPart++ ) {
                             double dtgf = params.timestep * smpi->dynamics_invgf[ithread][iPart];
                             if( !( *partWalls )[iwall]->apply( *particles, iPart, this, dtgf, ener_iPart ) ) {
-                                nrj_lost_per_thd[tid] += mass * ener_iPart;
+                                nrj_lost_per_thd[tid] += mass_ * ener_iPart;
                             }
                         }
                     }
@@ -1130,7 +1144,7 @@ void SpeciesV::ponderomotive_update_position_and_currents( double time_dual, uns
                     for( iPart=first_index[ipack*packsize_+scell] ; ( int )iPart<last_index[ipack*packsize_+scell]; iPart++ ) {
                         if( !partBoundCond->apply( *particles, iPart, this, ener_iPart ) ) {
                             addPartInExchList( iPart );
-                            nrj_lost_per_thd[tid] += mass * ener_iPart;
+                            nrj_lost_per_thd[tid] += mass_ * ener_iPart;
                             particles->cell_keys[iPart] = -1;
                         } else {
                             //First reduction of the count sort algorithm. Lost particles are not included.
@@ -1141,7 +1155,7 @@ void SpeciesV::ponderomotive_update_position_and_currents( double time_dual, uns
                             count[particles->cell_keys[iPart]] ++; //First reduction of the count sort algorithm. Lost particles are not included.
                         }
                     }
-                } else if( mass==0 ) { // condition mass=0
+                } else if( mass_==0 ) { // condition mass_=0
                     ERROR( "Particles with zero mass cannot interact with envelope" );
                 }
             }
@@ -1155,7 +1169,7 @@ void SpeciesV::ponderomotive_update_position_and_currents( double time_dual, uns
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
 #endif
-            if( ( !particles->is_test ) && ( mass > 0 ) )
+            if( ( !particles->is_test ) && ( mass_ > 0 ) )
                 for( unsigned int scell = 0 ; scell < packsize_ ; scell++ ) {
                     Proj->currentsAndDensityWrapper( EMfields, *particles, smpi, first_index[ipack*packsize_+scell], last_index[ipack*packsize_+scell], ithread, diag_flag, params.is_spectral, ispec, ipack*packsize_+scell, first_index[ipack*packsize_] );
                 }
@@ -1189,4 +1203,4 @@ void SpeciesV::ponderomotive_update_position_and_currents( double time_dual, uns
         }
     }//END if time vs. time_frozen
 
-} // end ponderomotive_update_position_and_currents
+} // end ponderomotiveUpdatePositionAndCurrents
