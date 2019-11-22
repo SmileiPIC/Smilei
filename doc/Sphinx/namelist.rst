@@ -1463,8 +1463,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 Laser envelope model
 ^^^^^^^^^^^^^^^^^^^^^^
 
-In the geometries ``"1Dcartesian"``, ``"2Dcartesian"``, ``"3Dcartesian"``
-it is possible to model a laser pulse propagating in the ``x`` direction
+In all the available geometries, it is possible to model a laser pulse propagating in the ``x`` direction
 using an envelope model (see :doc:`laser_envelope` for the advantages
 and limits of this approximation).
 The fast oscillations of the laser are neglected and all the physical
@@ -1474,6 +1473,12 @@ meant as an average over one or more optical cycles.
 Effects involving characteristic lengths comparable to the laser central
 wavelength (i.e. sharp plasma density profiles) cannot be modeled with
 this option.
+
+.. note::
+
+  The envelope model in ``"AMcylindrical"`` geometry is implemented only in the hypothesis of  
+  cylindrical symmetry, i.e. only one azimuthal mode. Therefore, to use it the user must choose
+  ``number_of_AM = 1``.
 
 Contrarily to a standard Laser initialized with the Silver-Müller
 boundary conditions, the laser envelope will be entirely initialized inside
@@ -1584,11 +1589,26 @@ Following is the simplified laser envelope creator in 3D ::
         Envelope_boundary_conditions = [ ["reflective"] ],
     )
 
+.. rubric:: 5. Defining a cylindrical gaussian laser envelope
+
+..
+
+Following is the simplified laser envelope creator in ``"AMcylindrical"`` geometry (remember that 
+in this geometry the envelope model can be used only if ``number_of_AM = 1``) ::
+
+    LaserEnvelopeGaussianAM(
+        a0              = 1.,
+        focus           = [150., 40.],
+        waist           = 30.,
+        time_envelope   = tgaussian(center=150., fwhm=40.),
+        envelope_solver = 'explicit',
+        Envelope_boundary_conditions = [ ["reflective"] ],
+    )
 
 
-The arguments appearing ``LaserEnvelopePlanar1D``, ``LaserEnvelopeGaussian2D``
-and ``LaserEnvelopeGaussian3D`` have the same meaning they would have in a
-normal ``LaserPlanar1D``, ``LaserGaussian2D`` and ``LaserGaussian3D``,
+The arguments appearing ``LaserEnvelopePlanar1D``, ``LaserEnvelopeGaussian2D``,
+``LaserEnvelopeGaussian3D`` and ``LaserEnvelopeGaussianAM`` have the same meaning they would have in a
+normal ``LaserPlanar1D``, ``LaserGaussian2D``, ``LaserGaussian3D`` and ``LaserGaussianAM``,
 with some differences:
 
 .. py:data:: time_envelope
@@ -2503,6 +2523,9 @@ This is done by including a block ``DiagFields``::
   | | Env_E_abs    | | :math:`\tilde{E}` (component along the polarization |
   | |              | | direction)                                          |
   +----------------+-------------------------------------------------------+
+
+.. Note:: To write these last three envelope fields with this diagnostics in ``"AMcylindrical"`` geometry, 
+          a dedicated block ``DiagFields`` must be defined, e.g. with ``fields = ["Env_A_abs_mode_0", "Env_Chi_mode_0"]``.
 
 .. py:data:: subgrid
 

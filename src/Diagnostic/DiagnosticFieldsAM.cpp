@@ -16,6 +16,31 @@ using namespace std;
 DiagnosticFieldsAM::DiagnosticFieldsAM( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, int ndiag, OpenPMDparams &openPMD )
     : DiagnosticFields( params, smpi, vecPatches, ndiag, openPMD )
 {
+    factor_ = 2;
+    // Be able to dump Env_Chi
+
+    // Default : AM diag fields are complex
+    vector<bool> isReal;
+    // 1. Check if real or complex :
+    Field* field = NULL;
+    for( unsigned int ifield=0; ifield < fields_indexes.size(); ifield++ ) {
+        if( time_average>1 ) {
+            field = vecPatches(0)->EMfields->allFields_avg[diag_n][ifield];
+        } else {
+            field = vecPatches(0)->EMfields->allFields[fields_indexes[ifield]];
+        }
+        if ( !dynamic_cast<cField*>( field ) )
+            isReal.push_back( true );
+        else
+            isReal.push_back( false );
+    }
+    // 2. convert to double :
+    int nRealFields = std::count( isReal.begin(), isReal.end(), true );
+    if ( nRealFields == fields_indexes.size() )
+        factor_ /= 2;
+    else if ( nRealFields != 0 ) {
+        ERROR( "Mixing types in diag field : " << ndiag );
+    }
 
     // Calculate the offset in the local grid
     patch_offset_in_grid.resize( 2 );
@@ -33,7 +58,7 @@ DiagnosticFieldsAM::DiagnosticFieldsAM( Params &params, SmileiMPI *smpi, VectorP
     hsize_t global_size[1];
     global_size[0] = tot_number_of_patches * one_patch_buffer_size;
     hsize_t iglobal_size[1];
-    iglobal_size[0] = 2 * global_size[0];
+    iglobal_size[0] = factor_ * global_size[0];
     filespace_firstwrite = H5Screate_simple( 1, iglobal_size, NULL );
     memspace_firstwrite = H5Screate_simple( 1, iglobal_size, NULL ); // redefined later
     
@@ -58,13 +83,17 @@ DiagnosticFieldsAM::DiagnosticFieldsAM( Params &params, SmileiMPI *smpi, VectorP
     filespace_reread = H5Screate_simple( 1, iglobal_size, NULL );
     offset[0] = one_patch_buffer_size * first_patch_of_this_proc;
     block [0] = one_patch_buffer_size * npatch_local;
-    ioffset[0] = 2 * offset[0];
-    iblock [0] = 2 * block [0];
+    ioffset[0] = factor_ * offset[0];
+    iblock [0] = factor_ * block [0];
     count [0] = 1;
     H5Sselect_hyperslab( filespace_reread, H5S_SELECT_SET, ioffset, NULL, count, iblock );
     // Define space in memory for re-reading
     memspace_reread = H5Screate_simple( 1, iblock, NULL );
-    idata_reread.resize( block[0] );
+    if (factor_==2)
+        idata_reread.resize( block[0] );
+    else if (factor_==1)
+        data_reread.resize( block[0] );
+
     // Define the list of patches for re-writing
     rewrite_npatch = ( unsigned int )npatch_local;
     rewrite_patches_x.resize( rewrite_npatch );
@@ -97,7 +126,7 @@ DiagnosticFieldsAM::DiagnosticFieldsAM( Params &params, SmileiMPI *smpi, VectorP
     final_array_size[0] = params.number_of_patches[0] * params.n_space[0] + 1;
     final_array_size[1] = params.number_of_patches[1] * params.n_space[1] + 1;
     ifinal_array_size[0] =     final_array_size[0];
-    ifinal_array_size[1] = 2 * final_array_size[1];
+    ifinal_array_size[1] = factor_ * final_array_size[1];
     total_dataset_size = ifinal_array_size[0] * ifinal_array_size[1];
     filespace = H5Screate_simple( 2, ifinal_array_size, NULL );
     offset2[0] = rewrite_xmin * params.n_space[0] + ( ( rewrite_xmin==0 )?0:1 );
@@ -105,15 +134,18 @@ DiagnosticFieldsAM::DiagnosticFieldsAM( Params &params, SmileiMPI *smpi, VectorP
     block2 [0] = rewrite_npatchx * params.n_space[0] + ( ( rewrite_xmin==0 )?1:0 );
     block2 [1] = rewrite_npatchy * params.n_space[1] + ( ( rewrite_ymin==0 )?1:0 );
     ioffset2[0] = offset2[0];
-    ioffset2[1] = 2 * offset2[1];
+    ioffset2[1] = factor_ * offset2[1];
     iblock2 [0] = block2 [0];
-    iblock2 [1] = 2 * block2 [1];
+    iblock2 [1] = factor_ * block2 [1];
     count2 [0] = 1;
     count2 [1] = 1;
     H5Sselect_hyperslab( filespace, H5S_SELECT_SET, ioffset2, NULL, count2, iblock2 );
     // Define space in memory for re-writing
     memspace = H5Screate_simple( 2, iblock2, NULL );
-    idata_rewrite.resize( block2[0]*block2[1] );
+    if (factor_==2)
+        idata_rewrite.resize( block2[0]*block2[1] );
+    else if (factor_==1)
+        data_rewrite.resize( block2[0]*block2[1] );
     
     tmp_dset_id=0;
 }
@@ -129,7 +161,10 @@ void DiagnosticFieldsAM::setFileSplitting( SmileiMPI *smpi, VectorPatch &vecPatc
     unsigned int total_vecPatches_size = one_patch_buffer_size * vecPatches.size();
     
     // Resize the data
-    idata.resize( total_vecPatches_size );
+    if (factor_==2)
+        idata.resize( total_vecPatches_size );
+    else if (factor_==1)
+        data.resize( total_vecPatches_size );
     
     // Define offset and size for HDF5 file
     hsize_t offset[1], block[1], count[1];
@@ -137,8 +172,8 @@ void DiagnosticFieldsAM::setFileSplitting( SmileiMPI *smpi, VectorPatch &vecPatc
     block [0] = total_vecPatches_size;
     count [0] = 1;
     hsize_t ioffset[1], iblock[1];
-    ioffset[0] = 2 * offset[0];
-    iblock [0] = 2 * block [0];
+    ioffset[0] = factor_ * offset[0];
+    iblock [0] = factor_ * block [0];
     // Select portion of the file where this MPI will write to
     H5Sselect_hyperslab( filespace_firstwrite, H5S_SELECT_SET, ioffset, NULL, count, iblock );
     // define space in memory
@@ -161,15 +196,27 @@ void DiagnosticFieldsAM::setFileSplitting( SmileiMPI *smpi, VectorPatch &vecPatc
 // Copy patch field to current "data" buffer
 void DiagnosticFieldsAM::getField( Patch *patch, unsigned int ifield )
 {
-    // Get current field
-    cField2D *field;
-    if( time_average>1 ) {
-        field = static_cast<cField2D *>( patch->EMfields->allFields_avg[diag_n][ifield] );
-    } else {
-        field = static_cast<cField2D *>( patch->EMfields->allFields[fields_indexes[ifield]] );
-    }
     // Copy field to the "data" buffer
-    
+    if (factor_==2) { // Complex
+        // Get current field (complex)
+        getField<cField2D,std::vector<complex<double>>>( patch, ifield, idata );
+    }
+    else {  // Double
+        // Get current field (double)
+        getField<Field2D,std::vector<double>>( patch, ifield, data );
+    }
+
+}
+
+template<typename T, typename F>
+void DiagnosticFieldsAM::getField( Patch *patch, unsigned int ifield, F& out_data )
+{
+    T* field;
+    if( time_average>1 ) {
+        field = static_cast<T*>( patch->EMfields->allFields_avg[diag_n][ifield] );
+    } else {
+        field = static_cast<T*>( patch->EMfields->allFields[fields_indexes[ifield]] );
+    }
     unsigned int ix = patch_offset_in_grid[0];
     unsigned int ix_max = ix + patch_size[0];
     unsigned int iy;
@@ -178,35 +225,40 @@ void DiagnosticFieldsAM::getField( Patch *patch, unsigned int ifield )
     while( ix < ix_max ) {
         iy = patch_offset_in_grid[1];
         while( iy < iy_max ) {
-            idata[iout] = ( *field )( ix, iy ) * time_average_inv;
+            out_data[iout] = ( *field )( ix, iy ) * time_average_inv;
             iout++;
             iy++;
         }
         ix++;
     }
-//    unsigned int ix_max = patch_offset_in_grid[0] + patch_size[0];
-//    unsigned int iy= patch_offset_in_grid[1];
-//    double * data_pt = &(data[one_patch_buffer_size * (patch->Hindex()-refHindex)]);
-//    for (unsigned int ix = patch_offset_in_grid[0]; ix < ix_max; ix++){
-//        memcpy( data_pt, &((*field)(ix, iy)), patch_size[1]*sizeof(double));
-//        data_pt += patch_size[1];
-//    }
-
     if( time_average>1 ) {
         field->put_to( 0.0 );
     }
 }
 
-
 // Write current buffer to file
 void DiagnosticFieldsAM::writeField( hid_t dset_id, int itime )
 {
 
+    if (factor_==2) {
+        writeField< std::vector< std::complex<double> > >( dset_id, itime, idata, idata_reread, idata_rewrite );
+    }
+    else if (factor_==1) {
+        writeField< std::vector< double > >( dset_id, itime, data, data_reread, data_rewrite );
+    }
+
+}
+
+// Write current buffer to file
+template<typename F>
+void DiagnosticFieldsAM::writeField( hid_t dset_id, int itime, F& linearized_data, F& read_data, F& final_data )
+{
+
     // Write the buffer in a temporary location
-    H5Dwrite( tmp_dset_id, H5T_NATIVE_DOUBLE, memspace_firstwrite, filespace_firstwrite, write_plist, &( idata[0] ) );
-    
+    H5Dwrite( tmp_dset_id, H5T_NATIVE_DOUBLE, memspace_firstwrite, filespace_firstwrite, write_plist, &( linearized_data[0] ) );
+
     // Read the file with the previously defined partition
-    H5Dread( tmp_dset_id, H5T_NATIVE_DOUBLE, memspace_reread, filespace_reread, write_plist, &( idata_reread[0] ) );
+    H5Dread( tmp_dset_id, H5T_NATIVE_DOUBLE, memspace_reread, filespace_reread, write_plist, &( read_data[0] ) );
     
     // Fold the data according to the Hilbert curve
     unsigned int read_position, write_position, write_skip_y, sx, sy;
@@ -216,7 +268,7 @@ void DiagnosticFieldsAM::writeField( hid_t dset_id, int itime )
     read_position = 0;
     for( unsigned int h=0; h<rewrite_npatch; h++ ) {
         int write_position0 = ( rewrite_patches_y[h]-rewrite_ymin )*( patch_size[1]-1 )
-                              + write_sizey *( ( rewrite_patches_x[h]-rewrite_xmin )*( patch_size[0]-1 ) );
+            + write_sizey *( ( rewrite_patches_x[h]-rewrite_xmin )*( patch_size[0]-1 ) );
                               
         write_skip_y = ( rewrite_npatchy - 1 )*( patch_size[1]-1 );
         
@@ -237,7 +289,7 @@ void DiagnosticFieldsAM::writeField( hid_t dset_id, int itime )
             }
             sx--;
         }
-        
+
         write_position = write_position0;
         for( unsigned int ix=0; ix<sx; ix++ ) {
             if( rewrite_patches_y[h]!=0 ) {
@@ -245,17 +297,17 @@ void DiagnosticFieldsAM::writeField( hid_t dset_id, int itime )
             }
             for( unsigned int iy=0; iy<sy; iy++ ) {
                 //data_rewrite[write_position] += h+1;
-                idata_rewrite[write_position] = idata_reread[read_position];
+                final_data[write_position] = read_data[read_position];
                 read_position ++;
                 write_position++;
-                
+
             }
             write_position += write_skip_y;
         }
     }
-    
+
     // Rewrite the file with the previously defined partition
-    H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &( idata_rewrite[0] ) );
+    H5Dwrite( dset_id, H5T_NATIVE_DOUBLE, memspace, filespace, write_plist, &( final_data[0] ) );
     
 }
 
