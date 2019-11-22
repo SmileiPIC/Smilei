@@ -127,12 +127,11 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   .. warning::
 
-    The ``"AMcylindrical"`` geometry is currently proposed in alpha version.
-    It has not been thoroughly tested and only Fields diagnostics are available.
+    The ``"AMcylindrical"`` geometry is currently proposed in beta version.
     Boundary conditions must be set to ``"remove"`` for particles,
     ``"silver-muller"`` for longitudinal EM boundaries and
     ``"buneman"`` for transverse EM boundaries.
-    Vectorization, checkpoints, load balancing, ionization, collisions and
+    Vectorization, collisions, scalar diagnostics, Poisson solver and
     order-4 interpolation are not supported yet.
 
 .. py:data:: interpolation_order
@@ -325,6 +324,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   :default: 2
 
   The number of azimuthal modes used for the Fourier decomposition in ``"AMcylindrical"`` geometry.
+  The modes range from mode 0 to mode `"number_of_AM-1"`.
 
 .. py:data:: number_of_AM_relativistic_field_initialization
 
@@ -390,7 +390,7 @@ Vectorization
 
 The block ``Vectorization`` is optional.
 It controls the SIMD operations that can enhance the performance of some computations.
-The technique is detailed in Ref. [Beck]_ and summarized in :doc:`this doc <vectorization>`.
+The technique is detailed in Ref. [Beck2019]_ and summarized in :doc:`this doc <vectorization>`.
 It requires :ref:`additional compilation options<vectorization_flags>` to be actived.
 
 .. code-block:: python
@@ -441,11 +441,16 @@ It requires :ref:`additional compilation options<vectorization_flags>` to be act
 Moving window
 ^^^^^^^^^^^^^
 
-The simulated box can move relative to the initial plasma position. This "moving window"
-basically consists in removing periodically some plasma from the ``x_min`` border and
-adding new plasma after the ``x_max`` border, thus changing the physical domain that the
+The simulated domain can move relatively to its the initial position. The "moving window"
+is (almost) periodically shifted in the ``x_max`` direction.
+Each "shift" consists in removing a column of patches from the ``x_min`` border and
+adding a new one after the ``x_max`` border, thus changing the physical domain that the
 simulation represents but keeping the same box size. This is particularly useful to
-*follow* plasma moving at high speed.
+*follow* waves or plasma moving at high speed.
+The frequency of the shifts is adjusted so that the average displacement velocity over many shifts matches the velocity
+given by the user.
+The user may ask for a given number of additional shifts at a given time.
+These additional shifts are not taken into account for the evaluation of the average velocity of the moving window.
 
 The block ``MovingWindow`` is optional. The window does not move it you do not define it.
 
@@ -454,6 +459,8 @@ The block ``MovingWindow`` is optional. The window does not move it you do not d
   MovingWindow(
       time_start = 0.,
       velocity_x = 1.,
+      number_of_additional_shifts = 0.,
+      additional_shifts_time = 0.,
   )
 
 
@@ -468,7 +475,20 @@ The block ``MovingWindow`` is optional. The window does not move it you do not d
 
   :default: 0.
 
-  The velocity of the moving window in the `x` direction.
+  The average velocity of the moving window in the `x_max` direction. It muste be between 0 and 1.
+
+.. py:data:: number_of_additional_shifts
+
+  :default: 0.
+
+  The number of additional shifts of the moving window.
+
+.. py:data:: additional_shifts_time
+
+  :default: 0.
+
+  The time at which the additional shifts are done.
+
 
 .. note::
 
@@ -545,6 +565,7 @@ Each species has to be defined in a ``Species`` block::
       name      = "electrons1",
       position_initialization = "random",
       momentum_initialization = "maxwell-juettner",
+      regular_number = [],
       particles_per_cell = 100,
       mass = 1.,
       atomic_number = None,
@@ -586,7 +607,7 @@ Each species has to be defined in a ``Species`` block::
       # Merging
       merging_method = "vranic_spherical",
       merge_every = 5,
-      merge_min_particles_per_cell = 16,
+      merge_min_particles_per_cell = 16,:q
       merge_max_packet_size = 4,
       merge_min_packet_size = 2,
       merge_momentum_cell_size = [32,16,16],
@@ -600,7 +621,9 @@ Each species has to be defined in a ``Species`` block::
 
    The method for initialization of particle positions. Options are:
 
-   * ``"regular"`` for regularly spaced
+   * ``"regular"`` for regularly spaced. In that case the number of particles per cell per dimension can be set by using `regular_number`.
+     Otherwise, the number of particles per cell per dimension is the same in all dimensions and therefore the `particles_per_cell` must be
+     an integer to the power of the simulation dimension ( i.e. a square number in dimension 2).
    * ``"random"`` for randomly distributed
    * ``"centered"`` for centered in each cell
    * The :py:data:`name` of another species from which the positions are copied.
@@ -615,6 +638,16 @@ Each species has to be defined in a ``Species`` block::
      This initialization is incompatible with :py:data:`number_density`, :py:data:`charge_density`
      and :py:data:`particles_per_cell`. Particles initialized outside of the initial simulation domain
      will not be created. This initalization is disregarded when running a `restart`.
+
+.. py:data:: regular_number
+
+   :type: A python list of integers.
+
+   The size of the list must be the simulation particle dimension. It can be used only if `position_initialization` is set to `regular`.
+   The product of the elements of the provided list must be equal to `particles_per_cell`.
+   This list sets the number of evenly spaced particles per cell per dimension at their initial positions.
+   The numbers are given in the order [`Nx`, `Ny`, `Nz`] in cartesian geometries and [`Nx`, `Nr`, `Ntheta`] in `AMcylindrical` in which
+   case we advise to use :math:`Ntheta \geq  4\times (number\_of\_AM-1)`.
 
 .. py:data:: momentum_initialization
 
@@ -722,9 +755,11 @@ Each species has to be defined in a ``Species`` block::
   :default: 0.
 
   The time during which the particles are "frozen", in units of :math:`T_r`.
-  Frozen particles do not move and therefore do not deposit any current either.
+  Frozen particles do not move and therefore do not deposit any current density either. 
+  Nonetheless, they deposit a charge density.
   They are computationally much cheaper than non-frozen particles and oblivious to any EM-fields
-  in the simulation.
+  in the simulation. Note that frozen particles can be ionized (this is computationally much cheaper 
+  if ion motion is not relevant).
 
 .. py:data:: ionization_model
 
@@ -886,6 +921,110 @@ Each species has to be defined in a ``Species`` block::
 
 ----
 
+.. _Particle_injector:
+
+Particle Injector
+^^^^^^^^^^^^^^^^^
+
+Injectors enable to inject macro-particles in the simulation domain from the boundaries.
+By default, some parameters that are not specified are inherited from the associated :py:data:`species`.
+
+Each particle injector has to be defined in a ``ParticleInjector`` block::
+
+    ParticleInjector(
+        name      = "injector1",
+        species   = "electrons1",
+        box_side  = "xmin",
+        
+        # Parameters inherited from the associated `species` by default
+        
+        position_initialization = "species",
+        momentum_initialization = "rectangular",
+        mean_velocity = [0.5,0.,0.],
+        temperature = [1e-30],
+        number_density = 1,
+        time_envelope = tgaussian(start=0, duration=10., order=4),
+        particles_per_cell = 16,
+    )
+
+.. py:data:: name
+
+    The name you want to give to this injector.
+    If you do not specify a name, it will be attributed automatically.
+    The name is useful if you want to inject particles at the same position of another injector.
+
+.. py:data:: species
+
+    The name of the species in which to inject the new particles
+
+.. py:data:: box_side
+
+    From where the macro-particles are injected. Options are:
+    
+    * ``"xmin"``
+    * ``"xmax"``
+    
+.. py:data:: position_initialization
+
+    The method for initialization of particle positions. Options are:
+
+    * ``"species"`` or empty ``""``: injector uses the option of the specified :py:data:`species`.
+    * ``"regular"`` for regularly spaced
+    * ``"random"`` for randomly distributed
+    * ``"centered"`` for centered in each cell
+    * The :py:data:`name` of another injector from which the positions are copied.
+      This option requires (1) that the *target* injector' positions are initialized
+      using one of the three other options above.
+
+    By default, injector uses the parameters provided with :py:data:`species`.
+
+.. py:data:: momentum_initialization
+
+    The method for initialization of particle momenta. Options are:
+
+    * ``"species"`` or empty ``""``: injector uses the option of the specified :py:data:`species`.
+    * ``"maxwell-juettner"`` for a relativistic maxwellian (see :doc:`how it is done<maxwell-juttner>`)
+    * ``"rectangular"`` for a rectangular distribution
+    
+    By default, injector uses the parameters provided with :py:data:`species`.
+
+.. py:data:: mean_velocity
+
+    :type: a list of 3 floats or *python* functions (see section :ref:`profiles`)
+
+    The initial drift velocity of the particles, in units of the speed of light :math:`c`.
+    By default (nothing specified), injector uses the parameters provided with :py:data:`species`.
+
+    **WARNING**: For massless particles, this is actually the momentum in units of :math:`m_e c`.
+
+.. py:data:: temperature
+
+    :type: a list of 3 floats or *python* functions (see section :ref:`profiles`)
+
+    The initial temperature of the particles, in units of :math:`m_ec^2`.
+    By default (nothing specified), injector uses the parameters provided with :py:data:`species`.
+    
+.. py:data:: particles_per_cell
+
+    :type: float or *python* function (see section :ref:`profiles`)
+
+    The number of particles per cell to use for the injector.
+    
+.. py:data:: number_density
+             charge_density
+
+    :type: float or *python* function (see section :ref:`profiles`)
+
+    The absolute value of the number density or charge density (choose one only)
+    of the particle distribution, in units of the reference density :math:`N_r` (see :doc:`units`)
+    
+.. py:data:: time_envelope
+
+    :type: a *python* function or a :ref:`time profile <profiles>`
+    :default:  ``tconstant()``
+
+    The temporal envelope of the injector.
+     
 .. _Particle_merging:
 
 Particle Merging
@@ -1004,16 +1143,17 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     Laser(
         box_side = "xmin",
         space_time_profile = [ By_profile, Bz_profile ]
+        space_time_profile_AM = [ Br_mode0, Bt_mode0, Br_mode1, Bt_mode1, ... ]
     )
 
-  .. py:data:: box_side
+.. py:data:: box_side
 
     :default: ``"xmin"``
 
     Side of the box from which the laser originates: at the moment, only ``"xmin"`` and
     ``"xmax"`` are supported.
 
-  .. py:data:: space_time_profile
+.. py:data:: space_time_profile
 
     :type: A list of two *python* functions
 
@@ -1021,6 +1161,16 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
     functions taking several arguments depending on the simulation dimension:
     :math:`(t)` for a 1-D simulation, :math:`(y,t)` for a 2-D simulation (etc.)
     The two functions represent :math:`B_y` and :math:`B_z`, respectively.
+    This can be used only in `Cartesian` geometries.
+
+.. py:data:: space_time_profile_AM
+
+    :type: A list of maximum 2*`number_of_AM` *python* functions.
+    
+    These profiles define the first modes of `Br` and `Bt` in the order shown in the above example.
+    Undefined modes are considered zero.
+    This can be used only in `AMcylindrical` geometry.
+
 
 
 .. rubric:: 2. Defining the wave envelopes
@@ -1238,13 +1388,14 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
         box_side         = "xmin",
         a0               = 1.,
         omega            = 1.,
-        focus            = [50., 40., 40.],
+        focus            = [50., 0.],
         waist            = 3.,
         polarization_phi = 0.,
         ellipticity      = 0.,
         time_envelope    = tconstant()
     )
 
+  Note that here, the focus is given in [x,r] coordinates. 
 
 .. rubric:: 7. Defining a generic wave at some distance from the boundary
 
@@ -1324,65 +1475,54 @@ Effects involving characteristic lengths comparable to the laser central
 wavelength (i.e. sharp plasma density profiles) cannot be modeled with
 this option.
 
-For the moment the only way to specify a laser pulse through this model
-in :program:`Smilei` is through a gaussian beam (cylindrically symmetric
-for the geometries ``"2Dcartesian"``, ``"3Dcartesian"``). Currently only
-one laser pulse can be specified through the envelope model in a simulation,
-thus multi-pulse set-ups cannot be defined.
 Contrarily to a standard Laser initialized with the Silver-Müller
 boundary conditions, the laser envelope will be entirely initialized inside
-the simulation box at the start of the simulation.
+the simulation box at the start of the simulation. 
 
-Following is the laser envelope creator in 1D ::
+Currently only one laser pulse of a given frequency propagating in the positive
+`x` direction can be speficified. However, a multi-pulse set-up can be initialized 
+if a multi-pulse profile is specified, e.g. if the temporal profile is given by two adjacents gaussian functions.
+The whole multi-pulse profile would have the same carrier frequency and would propagate in the positive
+`x` direction. For the moment it is not possible to specify more than one laser envelope profile, e.g. 
+two counterpropagating lasers, or two lasers with different carrier frequency.
 
-    LaserEnvelopePlanar1D(
-        a0              = 1.,
-        time_envelope   = tgaussian(center=150., fwhm=40.),
+
+Please note that describing a laser through its complex envelope loses physical accuracy if its
+characteristic space-time variation scales are too small, i.e. of the order of the laser central wavelength (see :doc:`laser_envelope`).
+Thus, space-time profiles with variation scales larger than this length should be used.
+
+.. rubric:: 1. Defining a generic laser envelope
+
+..
+
+Following is the generic laser envelope creator ::
+
+    LaserEnvelope(
+        omega          = 1.,
         envelope_solver = 'explicit',
-        Envelope_boundary_conditions = [ ["reflective"] ],
-    )
-
-Following is the laser envelope creator in 2D ::
-
-    LaserEnvelopeGaussian2D(
-        a0              = 1.,
-        focus           = [150., 40.],
-        waist           = 30.,
-        time_envelope   = tgaussian(center=150., fwhm=40.),
-        envelope_solver = 'explicit',
-        Envelope_boundary_conditions = [ ["reflective"] ],
-    )
-
-Following is the laser envelope creator in 3D ::
-
-    LaserEnvelopeGaussian3D(
-        a0              = 1.,
-        focus           = [150., 40., 40.],
-        waist           = 30.,
-        time_envelope   = tgaussian(center=150., fwhm=40.),
-        envelope_solver = 'explicit',
-        Envelope_boundary_conditions = [ ["reflective"] ],
+        envelope_profile = envelope_profile,
+        Envelope_boundary_conditions = [["reflective"]]
     )
 
 
-The arguments appearing ``LaserEnvelopePlanar1D``, ``LaserEnvelopeGaussian2D``
-and ``LaserEnvelopeGaussian3D`` have the same meaning they would have in a
-normal ``LaserPlanar1D``, ``LaserGaussian2D`` and ``LaserGaussian3D``,
-with some differences:
+.. py:data:: omega
 
-.. py:data:: waist
+   :default: ``1.``
+ 
+   For the moment only a value of 1 is supported.
 
-   Please note that a waist size comparable to the laser wavelength does not
-   satisfy the assumptions of the envelope model.
+.. py:data:: envelope_profile
 
-.. py:data:: time_envelope
+   :type: a *python* function or a :ref:`python profile <profiles>`
+   :default: None
 
-   Since the envelope will be entirely initialized in the simulation box
-   already at the start of the simulation, the time envelope will be applied
-   in the ``x`` direction instead of time. It is recommended to initialize the
+   The laser space-time profile, so if the geometry is ``3Dcartesian`` a function of 4 arguments (3 for space, 1 for time) is necessary. 
+   Please note that the envelope will be entirely initialized in the simulation box
+   already at the start of the simulation, so the time coordinate will be applied
+   to the ``x`` direction instead of time. It is recommended to initialize the
    laser envelope in vacuum, separated from the plasma, to avoid unphysical
    results.
-   Temporal envelopes with variation scales near to the laser wavelength do not
+   Envelopes with variation scales near to the laser wavelength do not
    satisfy the assumptions of the envelope model (see :doc:`laser_envelope`),
    yielding inaccurate results.
 
@@ -1400,6 +1540,72 @@ with some differences:
 
   For the moment, only reflective boundary conditions are implemented in the
   resolution of the envelope equation.
+
+.. rubric:: 2. Defining a 1D laser envelope
+
+..
+
+Following is the simplified laser envelope creator in 1D ::
+
+    LaserEnvelopePlanar1D(
+        a0              = 1.,
+        time_envelope   = tgaussian(center=150., fwhm=40.),
+        envelope_solver = 'explicit',
+        Envelope_boundary_conditions = [ ["reflective"] ],
+    )
+
+.. rubric:: 3. Defining a 2D gaussian laser envelope
+
+..
+
+Following is the simplified gaussian laser envelope creator in 2D ::
+
+    LaserEnvelopeGaussian2D(
+        a0              = 1.,
+        focus           = [150., 40.],
+        waist           = 30.,
+        time_envelope   = tgaussian(center=150., fwhm=40.),
+        envelope_solver = 'explicit',
+        Envelope_boundary_conditions = [ ["reflective"] ],
+    )
+
+.. rubric:: 4. Defining a 3D gaussian laser envelope
+
+..
+
+Following is the simplified laser envelope creator in 3D ::
+
+    LaserEnvelopeGaussian3D(
+        a0              = 1.,
+        focus           = [150., 40., 40.],
+        waist           = 30.,
+        time_envelope   = tgaussian(center=150., fwhm=40.),
+        envelope_solver = 'explicit',
+        Envelope_boundary_conditions = [ ["reflective"] ],
+    )
+
+
+
+The arguments appearing ``LaserEnvelopePlanar1D``, ``LaserEnvelopeGaussian2D``
+and ``LaserEnvelopeGaussian3D`` have the same meaning they would have in a
+normal ``LaserPlanar1D``, ``LaserGaussian2D`` and ``LaserGaussian3D``,
+with some differences:
+
+.. py:data:: time_envelope
+
+   Since the envelope will be entirely initialized in the simulation box
+   already at the start of the simulation, the time envelope will be applied
+   in the ``x`` direction instead of time. It is recommended to initialize the
+   laser envelope in vacuum, separated from the plasma, to avoid unphysical
+   results.
+   Temporal envelopes with variation scales near to the laser wavelength do not
+   satisfy the assumptions of the envelope model (see :doc:`laser_envelope`),
+   yielding inaccurate results.
+
+.. py:data:: waist
+
+   Please note that a waist size comparable to the laser wavelength does not
+   satisfy the assumptions of the envelope model.
 
 
 It is important to remember that the profile defined through the blocks
@@ -2342,6 +2548,13 @@ A probe interpolates the fields at either one point (0-D),
 several points arranged in a line (1-D),
 or several points arranged in a 2-D or 3-D grid.
 
+.. note::
+
+  Probes follow the moving window.
+  To obtain the fields at fixed points in the plasma instead, create a cold,
+  chargeless species, and :ref:`track the particles <DiagTrackParticles>`.
+  
+
 To add one probe diagnostic, include the block ``DiagProbe``::
 
   DiagProbe(
@@ -2409,7 +2622,8 @@ To add one probe diagnostic, include the block ``DiagProbe``::
   In the case of an envelope model for the laser (see :doc:`laser_envelope`),
   the following fields are also available: ``"Env_A_abs"``, ``"Env_Chi"``, ``"Env_E_abs"``.
 
-  Note that when running a simulation in cylindrical geometry, contrary to the Field diagnostic, Probes are defined as in a
+  Note that when running a simulation in cylindrical geometry,
+  contrary to the Field diagnostic, Probes are defined as in a
   3D Cartesian geometry and return Cartesian fields.
 
 
@@ -2510,7 +2724,7 @@ for instance::
   * with a user-defined python function, an arbitrary quantity can be calculated (the *numpy*
     module is necessary). This function should take one argument, for instance
     ``particles``, which contains the attributes ``x``, ``y``, ``z``, ``px``, ``py``,
-    ``pz``, ``charge``, ``weight`` and ``id``. Each of these attributes is a *numpy* array
+    ``pz``, ``charge``, ``weight``, ``chi`` and ``id``. Each of these attributes is a *numpy* array
     containing the data of all particles in one patch. The function must return a *numpy*
     array of the same shape, containing the desired deposition of each particle. For example,
     defining the following function::
@@ -2940,79 +3154,96 @@ A few things are important to know when you need dumps and restarts.
 
 * Do not restart the simulation in the same directory as the previous one. Files will be
   overwritten, and errors may occur. Create a new directory for your restarted simulation.
-* Manage your memory: each MPI process dumps one file, and the total can be significant.
-* The file written by a particular MPI process has the format
-  ``dump-XXXXX-YYYYYYYYYY.h5`` where ``XXXXX`` is the *dump number* that can be chosen
-  using :py:data:`restart_number` and ``YYYYYYYYYY`` is the MPI process number.
+* Manage your disk space: each MPI process dumps one file, and the total can be significant.
+* The restarted runs must have the same namelist as the initial simulation, except the
+  :ref:`Checkpoints` block, which can be modified.
 
 ::
 
   Checkpoints(
-      restart_dir = "dump1",
+      # restart_dir = "dump1",
       dump_step = 10000,
       dump_minutes = 240.,
-      dump_deflate = 0,
       exit_after_dump = True,
       keep_n_dumps = 2,
   )
 
-.. py:data:: restart_dir
-
-  :default: None
-
-  The directory of a previous simulation from which :program:`Smilei` should restart.
-  If not defined, it does not restart from a previous simulation.
-
-  **WARNING:** this path must either absolute or be relative to the current directory.
-
-.. py:data:: restart_number
-
-  :default: None
-
-  The number of the dump (from the previous run in :py:data:`restart_dir`)
-  that should be used for the restart.
-  Note that the dump number is reset to 0 for each new run. In a given run, the first dump has
-  number 0, the second dump number 1, etc.
-
-.. py:data:: dump_step
-
-  :default: 0
-
-  The number of timesteps between each dump of the full simulation.
-  If ``0``, no dump is done.
-
-.. py:data:: dump_minutes
-
-  :default: 0.
-
-  The number of minutes between each dump of the full simulation (combines with
-  :py:data:`dump_step`).
-  If ``0.``, no dump is done.
-
-.. py:data:: dump_deflate
-
-  :red:`to do`
-
-.. py:data:: exit_after_dump
-
-  :default: ``True``
-
-  If ``True``, the code stops after the first dump.
-
-.. py:data:: keep_n_dumps
-
-  :default: 2
-
-  This tells :program:`Smilei` to keep the last ``n`` dumps for a later restart.
-  The default value, 2, saves one extra dump in case of a crash during the file dump.
-
-.. py:data:: file_grouping
-
-  :default: None
-
-  The maximum number of checkpoint files that can be stored in one directory.
-  Subdirectories are created to accomodate for all files.
-  This is useful on filesystem with a limited number of files per directory.
+**Parameters to save the state of the current simulation**
+  
+  .. py:data:: dump_step
+  
+    :default: ``0``
+  
+    The number of timesteps between each dump.
+    If ``0``, no dump is done.
+  
+  .. py:data:: dump_minutes
+  
+    :default: ``0.``
+  
+    The number of minutes between each dump.
+    If ``0.``, no dump is done.
+    
+    May be used in combination with :py:data:`dump_step`.
+  
+  .. py:data:: exit_after_dump
+  
+    :default: ``True``
+  
+    If ``True``, the code stops after the first dump. If ``False``, the simulation continues.
+  
+  .. py:data:: keep_n_dumps
+  
+    :default: ``2``
+  
+    This tells :program:`Smilei` to keep, in the current run,  only the last ``n`` dumps.
+    Older dumps will be overwritten.
+    
+    The default value, ``2``, saves one extra dump in case of a crash during the next dump.
+  
+  .. py:data:: file_grouping
+  
+    :default: ``None``
+  
+    The maximum number of checkpoint files that can be stored in one directory.
+    Subdirectories are created to accomodate for all files.
+    This is useful on filesystem with a limited number of files per directory.
+  
+  .. py:data:: dump_deflate
+  
+    :red:`to do`
+  
+**Parameters to restart from a previous simulation**
+  
+  .. py:data:: restart_dir
+  
+    :default: ``None``
+  
+    The directory of a previous run from which :program:`Smilei` should restart.
+    For the first run, do not specify this parameter.
+  
+    **This path must either absolute or be relative to the current directory.**
+    
+    .. Note::
+    
+      In many situations, the restarted runs will have the exact same namelist as the initial
+      simulation, except this ``restart_dir`` parameter, which points to the previous simulation
+      folder.
+      You can use the same namelist file, and simply add an extra argument when you launch the
+      restart:
+      
+      ``mpirun ... ./smilei mynamelist.py "Checkpoints.restart_dir='/path/to/previous/run'"``
+  
+  .. py:data:: restart_number
+  
+    :default: ``None``
+  
+    The number of the dump (in the previous run) that should be used for the restart.
+    For the first run, do not specify this parameter.
+    
+    In a previous run, the simulation state may have been dumped several times.
+    These dumps are numbered 0, 1, 2, etc. until the number :py:data:`keep_n_dumps`.
+  
 
 ----
 

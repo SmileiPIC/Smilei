@@ -449,18 +449,18 @@ public:
     }
     
     // extract 3 profiles from namelist (used for part mean velocity and temperature)
-    static bool extract3Profiles( std::string varname, int ispec, PyObject *&profx, PyObject *&profy, PyObject *&profz )
+    static bool extract3Profiles( std::string varname, std::string component, int element_index, PyObject *&profx, PyObject *&profy, PyObject *&profz )
     {
-        std::vector<PyObject *> pvec = PyTools::extract_pyVec( varname, "Species", ispec );
+        std::vector<PyObject *> pvec = PyTools::extract_pyVec( varname, component, element_index );
         if( pvec.size()==1 ) {
             if( !PyCallable_Check( pvec[0] ) ) {
-                ERROR( "For species #" << ispec << ", "<<varname<<" not understood" );
+                ERROR( "For " << component << " #" << element_index << ", "<<varname<<" not understood" );
             }
             profx =  profy =  profz = pvec[0];
             return true;
         } else if( pvec.size()==3 ) {
             if( !PyCallable_Check( pvec[0] ) || !PyCallable_Check( pvec[1] ) || !PyCallable_Check( pvec[2] ) ) {
-                ERROR( "For species #" << ispec << ", "<<varname<<" not understood" );
+                ERROR( "For " << component << " #" << element_index << ", "<<varname<<" not understood" );
             }
             profx = pvec[0];
             profy = pvec[1];
@@ -469,7 +469,7 @@ public:
         } else if( pvec.size()==0 ) {
             return false;
         } else {
-            ERROR( "For species #" << ispec << ", "<<varname<<" needs 1 or 3 components." );
+            ERROR( "For " << component << " #" << element_index << ", "<<varname<<" needs 1 or 3 components." );
             return false;
         }
     }
@@ -502,30 +502,39 @@ public:
         
         return true;
     }
+
+    // extract 2N profiles from namelist (used for laser profile)
+    static bool extract2NProfiles( std::string varname, int ilaser, std::vector<PyObject *> &profiles )
+    {
+        PyObject *py_obj = extract_py( varname, "Laser", ilaser );
+        // Return false if None
+        if( py_obj==Py_None ) {
+            return false;
+        }
+        
+        // Error if not list
+        if( ! convert( py_obj, profiles ) ) {
+            ERROR( "For laser #" << ilaser << ": " << varname << " must be a list of 2N profiles (2 per AM)" );
+        }
+       
+ 
+        // Error if wrong size
+        if( profiles.size()%2!=0 ) {
+            ERROR( "For Laser #" << ilaser << ": "<<varname<<" needs a pair number of profiles." );
+        }
+        
+        int profile_number_of_modes = profiles.size()/2;
+
+        // Error if not callable
+        for( int i=0; i<2*profile_number_of_modes; i++ ) {
+            if( !PyCallable_Check( profiles[i] ) ) {
+                ERROR( "For Laser #" << ilaser << ": "<<varname<<"["<<i<<"] not understood" );
+            }
+        }
+        
+        return true;
+    }
     
-    // extract 2 envelope profiles from namelist (used for laser profile)
-    // static bool extract2EnvelopeProfiles(std::string varname, int ienvlaser, std::vector<PyObject*> &profiles )
-    // {
-    //     PyObject* py_obj = extract_py(varname,"LaserEnvelope",ienvlaser);
-    //     // Return false if None
-    //     if( py_obj==Py_None ) return false;
-    //
-    //     // Error if not list
-    //     if( ! convert(py_obj, profiles) )
-    //         ERROR("For laser envelope #" << ienvlaser << ": " << varname << " must be a list of 2 profiles");
-    //
-    //     // Error if wrong size
-    //     if( profiles.size()!=2 )
-    //         ERROR("For Laser Envelope #" << ienvlaser << ": "<<varname<<" needs 2 profiles.");
-    //
-    //     // Error if not callable
-    //     for( int i=0; i<2; i++) {
-    //         if ( !PyCallable_Check(profiles[i]) )
-    //             ERROR("For Laser Envelope #" << ienvlaser << ": "<<varname<<"["<<i<<"] not understood");
-    //     }
-    //
-    //     return true;
-    // }
     
     //! return the number of components (see pyinit.py)
     static unsigned int nComponents( std::string componentName )

@@ -101,15 +101,20 @@ void Collisions::calculate_debye_length( Params &params, Patch *patch )
     double mean_debye_length = 0.;
     for( unsigned int ibin = 0 ; ibin < nbin ; ibin++ ) {
         density_max = 0.;
-        double inv_cell_volume = 1. /
-                                 patch->getCellVolume(
-                                     patch->vecSpecies[0]->particles,
-                                     patch->vecSpecies[0]->first_index[ibin]
-                                 );
-                                 
+        
+        double inv_cell_volume = 0.;
+        
         for( unsigned int ispec=0 ; ispec<nspec ; ispec++ ) { // loop all species
             s  = patch->vecSpecies[ispec];
             p  = s->particles;
+            
+            // Skip when no particles
+            if( s->last_index[ibin] <= s->first_index[ibin] ) continue;
+            
+            if( inv_cell_volume == 0. ) {
+                inv_cell_volume = 1. / patch->getPrimalCellVolume( p, s->first_index[ibin], params );
+            }
+            
             // Calculation of particles density, mean charge, and temperature
             // Density is the sum of weights
             // Temperature definition is the average <v*p> divided by 3
@@ -129,7 +134,7 @@ void Collisions::calculate_debye_length( Params &params, Patch *patch )
                 continue;
             }
             charge /= density; // average charge
-            temperature *= s->mass / ( 3.*density ); // Te in units of me*c^2
+            temperature *= s->mass_ / ( 3.*density ); // Te in units of me*c^2
             density *= inv_cell_volume; // density in units of critical density
             // compute inverse debye length squared
             if( temperature>0. ) {
@@ -303,7 +308,7 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
         }
         
         // Pre-calculate some numbers before the big loop
-        double inv_cell_volume = 1./patch->getCellVolume( p1, i1 );
+        double inv_cell_volume = 1./patch->getPrimalCellVolume( p1, i1, params );
         n1  *= inv_cell_volume;
         n2  *= inv_cell_volume;
         n12 *= inv_cell_volume;
@@ -339,13 +344,13 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
             p1 = s1->particles;
             p2 = s2->particles;
             
-            m12  = s1->mass / s2->mass; // mass ratio
+            m12  = s1->mass_ / s2->mass_; // mass ratio
             
             logL = coulomb_log_;
             double U1  = patch->xorshift32() * patch->xorshift32_invmax;
             double U2  = patch->xorshift32() * patch->xorshift32_invmax;
             double phi = patch->xorshift32() * patch->xorshift32_invmax * twoPi;
-            s = one_collision( p1, i1, s1->mass, p2, i2, m12, coeff1_, coeff2_, coeff3, coeff4, n123, n223, debye2, logL, U1, U2, phi );
+            s = one_collision( p1, i1, s1->mass_, p2, i2, m12, coeff1_, coeff2_, coeff3, coeff4, n123, n223, debye2, logL, U1, U2, phi );
             
             // Handle ionization
             Ionization->apply( patch, p1, i1, p2, i2 );

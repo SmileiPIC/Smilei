@@ -119,7 +119,7 @@ void CollisionsSingle::collide( Params &params, Patch *patch, int itime, vector<
         }
         
         // Pre-calculate some numbers before the big loop
-        double inv_cell_volume = 1./patch->getCellVolume( p1, i1 );
+        double inv_cell_volume = 1./patch->getPrimalCellVolume( p1, i1, params );
         n1  *= inv_cell_volume;
         n2  *= inv_cell_volume;
         n12 *= inv_cell_volume;
@@ -128,7 +128,7 @@ void CollisionsSingle::collide( Params &params, Patch *patch, int itime, vector<
         coeff3 = params.timestep * n1*n2/n12;
         coeff4 = pow( 3.*coeff2_, -1./3. ) * coeff3;
         coeff3 *= coeff2_;
-        m12  = s1->mass / s2->mass; // mass ratio
+        m12  = s1->mass_ / s2->mass_; // mass ratio
         
         // Prepare the ionization
         Ionization->prepare3( params.timestep, inv_cell_volume );
@@ -144,7 +144,7 @@ void CollisionsSingle::collide( Params &params, Patch *patch, int itime, vector<
             double U2  = patch->xorshift32() * patch->xorshift32_invmax;
             double phi = patch->xorshift32() * patch->xorshift32_invmax * twoPi;
             
-            s = one_collision( p1, i1, s1->mass, p2, i2, m12, coeff1_, coeff2_, coeff3, coeff4, n123, n223, debye2, logL, U1, U2, phi );
+            s = one_collision( p1, i1, s1->mass_, p2, i2, m12, coeff1_, coeff2_, coeff3, coeff4, n123, n223, debye2, logL, U1, U2, phi );
             
             // Handle ionization
             Ionization->apply( patch, p1, i1, p2, i2 );

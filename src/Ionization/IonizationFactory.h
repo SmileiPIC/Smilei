@@ -23,7 +23,7 @@ public:
         if( model == "tunnel" ) {
             
             if( species->max_charge > ( int )species->atomic_number ) {
-                ERROR( "Charge > atomic_number for species " << species->name );
+                ERROR( "Charge > atomic_number for species " << species->name_ );
             }
             
             Ionize = new IonizationTunnel( params, species );
@@ -31,7 +31,7 @@ public:
         } else if( model == "from_rate" ) {
             
             if( species->max_charge > ( int )species->maximum_charge_state ) {
-                ERROR( "For species '" << species->name << ": charge > maximum_charge_state" );
+                ERROR( "For species '" << species->name_ << ": charge > maximum_charge_state" );
             }
             
             Ionize = new IonizationFromRate( params, species );

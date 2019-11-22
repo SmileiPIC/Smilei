@@ -190,16 +190,16 @@ class HistogramAxis_px : public HistogramAxis
     void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
     {
         // Matter Particles
-        if( s->mass > 0 ) {
+        if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
                 }
-                array[ipart] = s->mass * s->particles->Momentum[0][ipart];
+                array[ipart] = s->mass_ * s->particles->Momentum[0][ipart];
             }
         }
         // Photons
-        else if( s->mass == 0 ) {
+        else if( s->mass_ == 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
@@ -214,16 +214,16 @@ class HistogramAxis_py : public HistogramAxis
     void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
     {
         // Matter Particles
-        if( s->mass > 0 ) {
+        if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
                 }
-                array[ipart] = s->mass * s->particles->Momentum[1][ipart];
+                array[ipart] = s->mass_ * s->particles->Momentum[1][ipart];
             }
         }
         // Photons
-        else if( s->mass == 0 ) {
+        else if( s->mass_ == 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
@@ -238,16 +238,16 @@ class HistogramAxis_pz : public HistogramAxis
     void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
     {
         // Matter Particles
-        if( s->mass > 0 ) {
+        if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
                 }
-                array[ipart] = s->mass * s->particles->Momentum[2][ipart];
+                array[ipart] = s->mass_ * s->particles->Momentum[2][ipart];
             }
         }
         // Photons
-        else if( s->mass == 0 ) {
+        else if( s->mass_ == 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
@@ -262,18 +262,18 @@ class HistogramAxis_p : public HistogramAxis
     void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
     {
         // Matter Particles
-        if( s->mass > 0 ) {
+        if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
                 }
-                array[ipart] = s->mass * sqrt( pow( s->particles->Momentum[0][ipart], 2 )
+                array[ipart] = s->mass_ * sqrt( pow( s->particles->Momentum[0][ipart], 2 )
                                                + pow( s->particles->Momentum[1][ipart], 2 )
                                                + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
         // Photons
-        else if( s->mass == 0 ) {
+        else if( s->mass_ == 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
@@ -290,7 +290,7 @@ class HistogramAxis_gamma : public HistogramAxis
     void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
     {
         // Matter Particles
-        if( s->mass > 0 ) {
+        if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
@@ -301,7 +301,7 @@ class HistogramAxis_gamma : public HistogramAxis
             }
         }
         // Photons
-        else if( s->mass == 0 ) {
+        else if( s->mass_ == 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
@@ -318,18 +318,18 @@ class HistogramAxis_ekin : public HistogramAxis
     void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
     {
         // Matter Particles
-        if( s->mass > 0 ) {
+        if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
                 }
-                array[ipart] = s->mass * ( sqrt( 1. + pow( s->particles->Momentum[0][ipart], 2 )
+                array[ipart] = s->mass_ * ( sqrt( 1. + pow( s->particles->Momentum[0][ipart], 2 )
                                                  + pow( s->particles->Momentum[1][ipart], 2 )
                                                  + pow( s->particles->Momentum[2][ipart], 2 ) ) - 1. );
             }
         }
         // Photons
-        else if( s->mass == 0 ) {
+        else if( s->mass_ == 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
@@ -346,7 +346,7 @@ class HistogramAxis_vx : public HistogramAxis
     void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
     {
         // Matter Particles
-        if( s->mass > 0 ) {
+        if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
@@ -358,7 +358,7 @@ class HistogramAxis_vx : public HistogramAxis
             }
         }
         // Photons
-        else if( s->mass == 0 ) {
+        else if( s->mass_ == 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
@@ -376,7 +376,7 @@ class HistogramAxis_vy : public HistogramAxis
     void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
     {
         // Matter Particles
-        if( s->mass > 0 ) {
+        if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
@@ -388,7 +388,7 @@ class HistogramAxis_vy : public HistogramAxis
             }
         }
         // Photons
-        else if( s->mass == 0 ) {
+        else if( s->mass_ == 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
@@ -406,7 +406,7 @@ class HistogramAxis_vz : public HistogramAxis
     void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
     {
         // Matter Particles
-        if( s->mass > 0 ) {
+        if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
@@ -418,7 +418,7 @@ class HistogramAxis_vz : public HistogramAxis
             }
         }
         // Photons
-        else if( s->mass == 0 ) {
+        else if( s->mass_ == 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
@@ -450,7 +450,7 @@ class HistogramAxis_vperp2 : public HistogramAxis
     void digitize( Species *s, std::vector<double> &array, std::vector<int> &index, unsigned int npart, SimWindow *simWindow )
     {
         // Matter Particles
-        if( s->mass > 0 ) {
+        if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
@@ -463,7 +463,7 @@ class HistogramAxis_vperp2 : public HistogramAxis
             }
         }
         // Photons
-        else if( s->mass == 0 ) {
+        else if( s->mass_ == 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
@@ -577,7 +577,7 @@ class Histogram_jx : public Histogram
     {
         unsigned int npart = array.size();
         // Matter Particles
-        if( s->mass > 0 ) {
+        if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
@@ -590,7 +590,7 @@ class Histogram_jx : public Histogram
             }
         }
         // Photons
-        else if( s->mass == 0 ) {
+        else if( s->mass_ == 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
@@ -610,7 +610,7 @@ class Histogram_jy : public Histogram
     {
         unsigned int npart = array.size();
         // Matter Particles
-        if( s->mass > 0 ) {
+        if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
@@ -623,7 +623,7 @@ class Histogram_jy : public Histogram
             }
         }
         // Photons
-        else if( s->mass == 0 ) {
+        else if( s->mass_ == 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
@@ -643,7 +643,7 @@ class Histogram_jz : public Histogram
     {
         unsigned int npart = array.size();
         // Matter Particles
-        if( s->mass > 0 ) {
+        if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
@@ -656,7 +656,7 @@ class Histogram_jz : public Histogram
             }
         }
         // Photons
-        else if( s->mass == 0 ) {
+        else if( s->mass_ == 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
@@ -676,19 +676,19 @@ class Histogram_ekin : public Histogram
     {
         unsigned int npart = array.size();
         // Matter Particles
-        if( s->mass > 0 ) {
+        if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
                 }
-                array[ipart] = s->mass * s->particles->Weight[ipart]
+                array[ipart] = s->mass_ * s->particles->Weight[ipart]
                                * ( sqrt( 1. + pow( s->particles->Momentum[0][ipart], 2 )
                                          + pow( s->particles->Momentum[1][ipart], 2 )
                                          + pow( s->particles->Momentum[2][ipart], 2 ) ) - 1. );
             }
         }
         // Photons
-        else if( s->mass == 0 ) {
+        else if( s->mass_ == 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
@@ -734,19 +734,19 @@ class Histogram_p : public Histogram
     {
         unsigned int npart = array.size();
         // Matter Particles
-        if( s->mass > 0 ) {
+        if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
                 }
-                array[ipart] = s->mass * s->particles->Weight[ipart]
+                array[ipart] = s->mass_ * s->particles->Weight[ipart]
                                * sqrt( pow( s->particles->Momentum[0][ipart], 2 )
                                        + pow( s->particles->Momentum[1][ipart], 2 )
                                        + pow( s->particles->Momentum[2][ipart], 2 ) );
             }
         }
         // Photons
-        else if( s->mass == 0 ) {
+        else if( s->mass_ == 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
@@ -765,16 +765,16 @@ class Histogram_px : public Histogram
     {
         unsigned int npart = array.size();
         // Matter Particles
-        if( s->mass > 0 ) {
+        if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
                 }
-                array[ipart] = s->mass * s->particles->Weight[ipart] * s->particles->Momentum[0][ipart];
+                array[ipart] = s->mass_ * s->particles->Weight[ipart] * s->particles->Momentum[0][ipart];
             }
         }
         // Photons
-        else if( s->mass == 0 ) {
+        else if( s->mass_ == 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
@@ -790,16 +790,16 @@ class Histogram_py : public Histogram
     {
         unsigned int npart = array.size();
         // Matter Particles
-        if( s->mass > 0 ) {
+        if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
                 }
-                array[ipart] = s->mass * s->particles->Weight[ipart] * s->particles->Momentum[1][ipart];
+                array[ipart] = s->mass_ * s->particles->Weight[ipart] * s->particles->Momentum[1][ipart];
             }
         }
         // Photons
-        else if( s->mass == 0 ) {
+        else if( s->mass_ == 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
@@ -815,16 +815,16 @@ class Histogram_pz : public Histogram
     {
         unsigned int npart = array.size();
         // Matter Particles
-        if( s->mass > 0 ) {
+        if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
                 }
-                array[ipart] = s->mass * s->particles->Weight[ipart] * s->particles->Momentum[2][ipart];
+                array[ipart] = s->mass_ * s->particles->Weight[ipart] * s->particles->Momentum[2][ipart];
             }
         }
         // Photons
-        else if( s->mass == 0 ) {
+        else if( s->mass_ == 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
@@ -840,12 +840,12 @@ class Histogram_pressure_xx : public Histogram
     {
         unsigned int npart = array.size();
         // Matter Particles
-        if( s->mass > 0 ) {
+        if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
                 }
-                array[ipart] = s->mass * s->particles->Weight[ipart]
+                array[ipart] = s->mass_ * s->particles->Weight[ipart]
                                * pow( s->particles->Momentum[0][ipart], 2 )
                                / sqrt( 1. + pow( s->particles->Momentum[0][ipart], 2 )
                                        + pow( s->particles->Momentum[1][ipart], 2 )
@@ -853,7 +853,7 @@ class Histogram_pressure_xx : public Histogram
             }
         }
         // Photons
-        else if( s->mass == 0 ) {
+        else if( s->mass_ == 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
@@ -873,12 +873,12 @@ class Histogram_pressure_yy : public Histogram
     {
         unsigned int npart = array.size();
         // Matter Particles
-        if( s->mass > 0 ) {
+        if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
                 }
-                array[ipart] = s->mass * s->particles->Weight[ipart]
+                array[ipart] = s->mass_ * s->particles->Weight[ipart]
                                * pow( s->particles->Momentum[1][ipart], 2 )
                                / sqrt( 1. + pow( s->particles->Momentum[0][ipart], 2 )
                                        + pow( s->particles->Momentum[1][ipart], 2 )
@@ -886,7 +886,7 @@ class Histogram_pressure_yy : public Histogram
             }
         }
         // Photons
-        else if( s->mass == 0 ) {
+        else if( s->mass_ == 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
@@ -906,12 +906,12 @@ class Histogram_pressure_zz : public Histogram
     {
         unsigned int npart = array.size();
         // Matter Particles
-        if( s->mass > 0 ) {
+        if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
                 }
-                array[ipart] = s->mass * s->particles->Weight[ipart]
+                array[ipart] = s->mass_ * s->particles->Weight[ipart]
                                * pow( s->particles->Momentum[2][ipart], 2 )
                                / sqrt( 1. + pow( s->particles->Momentum[0][ipart], 2 )
                                        + pow( s->particles->Momentum[1][ipart], 2 )
@@ -919,7 +919,7 @@ class Histogram_pressure_zz : public Histogram
             }
         }
         // Photons
-        else if( s->mass == 0 ) {
+        else if( s->mass_ == 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
@@ -939,12 +939,12 @@ class Histogram_pressure_xy : public Histogram
     {
         unsigned int npart = array.size();
         // Matter Particles
-        if( s->mass > 0 ) {
+        if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
                 }
-                array[ipart] = s->mass * s->particles->Weight[ipart]
+                array[ipart] = s->mass_ * s->particles->Weight[ipart]
                                * s->particles->Momentum[0][ipart]
                                * s->particles->Momentum[1][ipart]
                                / sqrt( 1. + pow( s->particles->Momentum[0][ipart], 2 )
@@ -953,7 +953,7 @@ class Histogram_pressure_xy : public Histogram
             }
         }
         // Photons
-        else if( s->mass == 0 ) {
+        else if( s->mass_ == 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
@@ -974,12 +974,12 @@ class Histogram_pressure_xz : public Histogram
     {
         unsigned int npart = array.size();
         // Matter Particles
-        if( s->mass > 0 ) {
+        if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
                 }
-                array[ipart] = s->mass * s->particles->Weight[ipart]
+                array[ipart] = s->mass_ * s->particles->Weight[ipart]
                                * s->particles->Momentum[0][ipart]
                                * s->particles->Momentum[2][ipart]
                                / sqrt( 1. + pow( s->particles->Momentum[0][ipart], 2 )
@@ -988,7 +988,7 @@ class Histogram_pressure_xz : public Histogram
             }
         }
         // Photons
-        else if( s->mass == 0 ) {
+        else if( s->mass_ == 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
@@ -1009,12 +1009,12 @@ class Histogram_pressure_yz : public Histogram
     {
         unsigned int npart = array.size();
         // Matter Particles
-        if( s->mass > 0 ) {
+        if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
                 }
-                array[ipart] = s->mass * s->particles->Weight[ipart]
+                array[ipart] = s->mass_ * s->particles->Weight[ipart]
                                * s->particles->Momentum[1][ipart]
                                * s->particles->Momentum[2][ipart]
                                / sqrt( 1. + pow( s->particles->Momentum[0][ipart], 2 )
@@ -1023,7 +1023,7 @@ class Histogram_pressure_yz : public Histogram
             }
         }
         // Photons
-        else if( s->mass == 0 ) {
+        else if( s->mass_ == 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
@@ -1044,12 +1044,12 @@ class Histogram_ekin_vx : public Histogram
     {
         unsigned int npart = array.size();
         // Matter Particles
-        if( s->mass > 0 ) {
+        if( s->mass_ > 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;
                 }
-                array[ipart] = s->mass * s->particles->Weight[ipart]
+                array[ipart] = s->mass_ * s->particles->Weight[ipart]
                                * s->particles->Momentum[0][ipart]
                                * ( 1. - 1./sqrt( 1. + pow( s->particles->Momentum[0][ipart], 2 )
                                                  + pow( s->particles->Momentum[1][ipart], 2 )
@@ -1057,7 +1057,7 @@ class Histogram_ekin_vx : public Histogram
             }
         }
         // Photons
-        else if( s->mass == 0 ) {
+        else if( s->mass_ == 0 ) {
             for( unsigned int ipart = 0 ; ipart < npart ; ipart++ ) {
                 if( index[ipart]<0 ) {
                     continue;

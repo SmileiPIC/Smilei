@@ -23,7 +23,7 @@ Radiation::Radiation( Params &params, Species *species )
     dt_   = params.timestep;
     
     // Inverse of the species mass
-    one_over_mass_ = 1./species->mass;
+    one_over_mass_ = 1./species->mass_;
     
     // Normalized Schwinger Electric Field
     norm_E_Schwinger_ = params.electron_mass*params.c_vacuum*params.c_vacuum

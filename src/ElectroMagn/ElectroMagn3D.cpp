@@ -32,13 +32,13 @@ ElectroMagn3D::ElectroMagn3D( Params &params, DomainDecomposition *domain_decomp
     
     // Charge currents currents and density for each species
     for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
-        Jx_s[ispec]  = new Field3D( Tools::merge( "Jx_", vecSpecies[ispec]->name ).c_str(), dimPrim );
-        Jy_s[ispec]  = new Field3D( Tools::merge( "Jy_", vecSpecies[ispec]->name ).c_str(), dimPrim );
-        Jz_s[ispec]  = new Field3D( Tools::merge( "Jz_", vecSpecies[ispec]->name ).c_str(), dimPrim );
-        rho_s[ispec] = new Field3D( Tools::merge( "Rho_", vecSpecies[ispec]->name ).c_str(), dimPrim );
+        Jx_s[ispec]  = new Field3D( Tools::merge( "Jx_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
+        Jy_s[ispec]  = new Field3D( Tools::merge( "Jy_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
+        Jz_s[ispec]  = new Field3D( Tools::merge( "Jz_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
+        rho_s[ispec] = new Field3D( Tools::merge( "Rho_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
         
         if( params.Laser_Envelope_model ) {
-            Env_Chi_s[ispec] = new Field3D( Tools::merge( "Env_Chi_", vecSpecies[ispec]->name ).c_str(), dimPrim );
+            Env_Chi_s[ispec] = new Field3D( Tools::merge( "Env_Chi_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
         }
         
     }
@@ -604,7 +604,7 @@ void ElectroMagn3D::initE( Patch *patch )
             for( unsigned int k=0; k<nz_p; k++ ) {
                 ( *Ex3D )( nx_d-1, j, k ) = ( *Ex3D )( nx_d-2, j, k ) + dx*( *rho3D )( nx_p-1, j, k )
                                             - ( ( *Ey3D )( nx_p-1, j+1, k )-( *Ey3D )( nx_p-1, j, k ) )*dx/dy
-                                            - ( ( *Ey3D )( nx_p-1, j, k+1 )-( *Ez3D )( nx_p-1, j, k ) )*dx/dz;
+                                            - ( ( *Ez3D )( nx_p-1, j, k+1 )-( *Ez3D )( nx_p-1, j, k ) )*dx/dz;
             }
         }
     }

@@ -28,7 +28,7 @@ public:
     
     //! Method calculating the Particle dynamics (interpolation, pusher, projection)
     //! without vectorized operators but with the cell sorting algorithm
-    void scalar_dynamics( double time, unsigned int ispec,
+    void scalarDynamics( double time, unsigned int ispec,
                           ElectroMagn *EMfields,
                           Params &params, bool diag_flag,
                           PartWalls *partWalls, Patch *patch, SmileiMPI *smpi,
@@ -38,7 +38,7 @@ public:
                           
     //! This function configures the type of species according to the default mode
     //! regardless the number of particles per cell
-    void initial_configuration( Params &params, Patch *patch ) override;
+    void defaultConfigure( Params &params, Patch *patch ) override;
     
     //! This function configures the species according to the vectorization mode
     void configuration( Params &params, Patch *patch ) override;
@@ -49,16 +49,16 @@ public:
     //! This function reconfigures the species operators
     void reconfigure_operators( Params &param, Patch   *patch );
     
-    //void count_sort_part(Params& param);
-    //void compute_part_cell_keys(Params &params);
+    //void countSortParticles(Params& param);
+    //void computeParticleCellKeys(Params &params);
     
-    void scalar_ponderomotive_update_susceptibility_and_momentum( double time_dual, unsigned int ispec,
+    void scalarPonderomotiveUpdateSusceptibilityAndMomentum( double time_dual, unsigned int ispec,
             ElectroMagn *EMfields,
             Params &params, bool diag_flag,
             Patch *patch, SmileiMPI *smpi,
             std::vector<Diagnostic *> &localDiags ) override;
             
-    void scalar_ponderomotive_update_position_and_currents( double time_dual, unsigned int ispec,
+    void scalarPonderomotiveUpdatePositionAndCurrents( double time_dual, unsigned int ispec,
             ElectroMagn *EMfields,
             Params &params, bool diag_flag, PartWalls *partWalls,
             Patch *patch, SmileiMPI *smpi,
