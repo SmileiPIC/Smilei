@@ -30,7 +30,7 @@ public:
             
         } else if( model == "from_rate" ) {
             
-            if( species->max_charge > ( int )species->maximum_charge_state ) {
+            if( species->max_charge > ( int )species->maximum_charge_state_ ) {
                 ERROR( "For species '" << species->name_ << ": charge > maximum_charge_state" );
             }
             

@@ -135,8 +135,8 @@ public:
             } else {
                 ERROR( "For species `" << species_name << "`, pusher must be 'boris', 'borisnr', 'vay', 'higueracary', 'ponderomotive_boris'" );
             }
-            thisSpecies->pusher = pusher;
-            MESSAGE( 2, "> Pusher: " << thisSpecies->pusher );
+            thisSpecies->pusher_name_ = pusher;
+            MESSAGE( 2, "> Pusher: " << thisSpecies->pusher_name_ );
 
             // Radiation model of the species
             // Species with a Monte-Carlo process for the radiation loss
@@ -205,7 +205,7 @@ public:
 #endif
             // Photon can not radiate
             thisSpecies->radiation_model = "none";
-            thisSpecies-> pusher = "norm";
+            thisSpecies-> pusher_name_ = "norm";
 
             MESSAGE( 2, "> " <<species_name <<" is a photon species (mass==0)." );
             //MESSAGE( 2, "> Radiation model set to none." );
@@ -676,7 +676,7 @@ public:
         }
 
         // for thermalizing BCs on particles check if thermal_boundary_temperature is correctly defined
-        bool has_temperature = PyTools::extract( "thermal_boundary_temperature", thisSpecies->thermal_boundary_temperature, "Species", ispec );
+        bool has_temperature = PyTools::extract( "thermal_boundary_temperature", thisSpecies->thermal_boundary_temperature_, "Species", ispec );
         bool has_velocity    = PyTools::extract( "thermal_boundary_velocity", thisSpecies->thermal_boundary_velocity, "Species", ispec );
         if( has_thermalize ) {
             if( !has_temperature ) {
@@ -688,18 +688,18 @@ public:
             if( thisSpecies->thermal_boundary_velocity.size()!=3 ) {
                 ERROR( "For species '" << species_name << "' thermal_boundary_velocity (thermalizing BC) should have 3 components" );
             }
-            if( thisSpecies->thermal_boundary_temperature.size()==1 ) {
+            if( thisSpecies->thermal_boundary_temperature_.size()==1 ) {
                 WARNING( "For species '" << species_name << "' Using thermal_boundary_temperature[0] in all directions" );
-                thisSpecies->thermal_boundary_temperature.resize( 3 );
-                thisSpecies->thermal_boundary_temperature[1] = thisSpecies->thermal_boundary_temperature[0];
-                thisSpecies->thermal_boundary_temperature[2] = thisSpecies->thermal_boundary_temperature[0];
+                thisSpecies->thermal_boundary_temperature_.resize( 3 );
+                thisSpecies->thermal_boundary_temperature_[1] = thisSpecies->thermal_boundary_temperature_[0];
+                thisSpecies->thermal_boundary_temperature_[2] = thisSpecies->thermal_boundary_temperature_[0];
             }
 
             // Compute the thermal_velocity_ & Momentum for thermalizing bcs
             thisSpecies->thermal_velocity_.resize( 3 );
             thisSpecies->thermal_momentum_.resize( 3 );
             for( unsigned int i=0; i<3; i++ ) {
-                thisSpecies->thermal_velocity_[i] = sqrt( 2.*thisSpecies->thermal_boundary_temperature[i]/thisSpecies->mass_ );
+                thisSpecies->thermal_velocity_[i] = sqrt( 2.*thisSpecies->thermal_boundary_temperature_[i]/thisSpecies->mass_ );
                 thisSpecies->thermal_momentum_[i] = thisSpecies->thermal_velocity_[i];
                 // Caution: momentum in SMILEI actually correspond to p/m
                 if( thisSpecies->thermal_velocity_[i]>0.3 ) {
@@ -713,8 +713,8 @@ public:
             thisSpecies->atomic_number_ = 0;
             PyTools::extract( "atomic_number", thisSpecies->atomic_number_, "Species", ispec );
             
-            thisSpecies->maximum_charge_state = 0;
-            PyTools::extract( "maximum_charge_state", thisSpecies->maximum_charge_state, "Species", ispec );
+            thisSpecies->maximum_charge_state_ = 0;
+            PyTools::extract( "maximum_charge_state", thisSpecies->maximum_charge_state_, "Species", ispec );
             
             std::string model;
             if( PyTools::extract( "ionization_model", model, "Species", ispec ) && model!="none" ) {
@@ -725,7 +725,7 @@ public:
                     ERROR( "For species '" << species_name << ": cannot ionize test species" );
                 }
                 
-                if( ( thisSpecies->atomic_number_==0 )&&( thisSpecies->maximum_charge_state==0 ) ) {
+                if( ( thisSpecies->atomic_number_==0 )&&( thisSpecies->maximum_charge_state_==0 ) ) {
                     ERROR( "For species '" << species_name << ": undefined atomic_number & maximum_charge_state (required for ionization)" );
                 }
                 
@@ -737,12 +737,12 @@ public:
                 
                 } else if( model == "from_rate" ) {
                     
-                    if( thisSpecies->maximum_charge_state == 0 ) {
-                        thisSpecies->maximum_charge_state = thisSpecies->atomic_number_;
-                        WARNING( "For species '" << species_name << ": ionization 'from_rate' is used with maximum_charge_state = "<<thisSpecies->maximum_charge_state << " taken from atomic_number" );
+                    if( thisSpecies->maximum_charge_state_ == 0 ) {
+                        thisSpecies->maximum_charge_state_ = thisSpecies->atomic_number_;
+                        WARNING( "For species '" << species_name << ": ionization 'from_rate' is used with maximum_charge_state = "<<thisSpecies->maximum_charge_state_ << " taken from atomic_number" );
                     }
-                    thisSpecies->ionization_rate = PyTools::extract_py( "ionization_rate", "Species", ispec );
-                    if( thisSpecies->ionization_rate == Py_None ) {
+                    thisSpecies->ionization_rate_ = PyTools::extract_py( "ionization_rate", "Species", ispec );
+                    if( thisSpecies->ionization_rate_ == Py_None ) {
                         ERROR( "For species '" << species_name << " ionization 'from_rate' requires 'ionization_rate' " );
                     } else {
 #ifdef SMILEI_USE_NUMPY
@@ -751,7 +751,7 @@ public:
                         std::ostringstream name( "" );
                         name << " ionization_rate:";
                         double *dummy = NULL;
-                        ParticleData test( params.nDim_particle, thisSpecies->ionization_rate, name.str(), dummy );
+                        ParticleData test( params.nDim_particle, thisSpecies->ionization_rate_, name.str(), dummy );
 #else
                         ERROR( "For species '" << species_name << " ionization 'from_rate' requires Numpy" );
 #endif
@@ -945,7 +945,7 @@ public:
 
         // Copy members
         newSpecies->name_                                     = species->name_;
-        newSpecies->pusher                                   = species->pusher;
+        newSpecies->pusher_name_                                   = species->pusher_name_;
         newSpecies->radiation_model                          = species->radiation_model;
         newSpecies->radiation_photon_species                 = species->radiation_photon_species;
         newSpecies->radiation_photon_sampling_               = species->radiation_photon_sampling_;
@@ -967,15 +967,15 @@ public:
         newSpecies->relativistic_field_initialization        = species->relativistic_field_initialization;
         newSpecies->time_relativistic_initialization         = species->time_relativistic_initialization;
         newSpecies->boundary_conditions                      = species->boundary_conditions;
-        newSpecies->thermal_boundary_temperature             = species->thermal_boundary_temperature;
+        newSpecies->thermal_boundary_temperature_             = species->thermal_boundary_temperature_;
         newSpecies->thermal_boundary_velocity                = species->thermal_boundary_velocity;
         newSpecies->thermal_velocity_                          = species->thermal_velocity_;
         newSpecies->thermal_momentum_                          = species->thermal_momentum_;
         newSpecies->atomic_number_                            = species->atomic_number_;
-        newSpecies->maximum_charge_state                     = species->maximum_charge_state;
-        newSpecies->ionization_rate                          = species->ionization_rate;
-        if( newSpecies->ionization_rate!=Py_None ) {
-            Py_INCREF( newSpecies->ionization_rate );
+        newSpecies->maximum_charge_state_                     = species->maximum_charge_state_;
+        newSpecies->ionization_rate_                          = species->ionization_rate_;
+        if( newSpecies->ionization_rate_!=Py_None ) {
+            Py_INCREF( newSpecies->ionization_rate_ );
         }
         newSpecies->ionization_model                         = species->ionization_model;
         newSpecies->density_profile_type_                       = species->density_profile_type_;
@@ -1132,8 +1132,8 @@ public:
                         if( retSpecies[ispec1]->atomic_number_!=0 ) {
                             int max_eon_number = retSpecies[ispec1]->getNbrOfParticles() * retSpecies[ispec1]->atomic_number_;
                             retSpecies[ispec2]->particles->reserve( max_eon_number, retSpecies[ispec2]->particles->dimension() );
-                        } else if( retSpecies[ispec1]->maximum_charge_state!=0 ) {
-                            int max_eon_number = retSpecies[ispec1]->getNbrOfParticles() * retSpecies[ispec1]->maximum_charge_state;
+                        } else if( retSpecies[ispec1]->maximum_charge_state_!=0 ) {
+                            int max_eon_number = retSpecies[ispec1]->getNbrOfParticles() * retSpecies[ispec1]->maximum_charge_state_;
                             retSpecies[ispec2]->particles->reserve( max_eon_number, retSpecies[ispec2]->particles->dimension() );
                         }
                     }

@@ -71,13 +71,13 @@ public:
     unsigned int atomic_number_;
 
     //! maximum charge state
-    unsigned int maximum_charge_state;
+    unsigned int maximum_charge_state_;
 
     //! user defined ionization rate profile
-    PyObject *ionization_rate;
+    PyObject *ionization_rate_;
 
     //! thermalizing temperature for thermalizing BCs [\f$m_e c^2\f$]
-    std::vector<double> thermal_boundary_temperature;
+    std::vector<double> thermal_boundary_temperature_;
     //! mean velocity used when thermalizing BCs are used [\f$c\f$]
     std::vector<double> thermal_boundary_velocity;
 
@@ -87,7 +87,7 @@ public:
     std::vector<double> thermal_momentum_;
 
     //! pusher name
-    std::string pusher;
+    std::string pusher_name_;
 
     //! radiation model
     std::string radiation_model;

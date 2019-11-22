@@ -51,8 +51,8 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 Species::Species( Params &params, Patch *patch ) :
     c_part_max_( 1 ),
-    ionization_rate( Py_None ),
-    pusher( "boris" ),
+    ionization_rate_( Py_None ),
+    pusher_name_( "boris" ),
     radiation_model( "none" ),
     time_frozen( 0 ),
     radiating( false ),
@@ -278,8 +278,8 @@ Species::~Species()
     for( unsigned int i=0; i<temperature_profile_.size(); i++ ) {
         delete temperature_profile_[i];
     }
-    if( ionization_rate!=Py_None ) {
-        Py_DECREF( ionization_rate );
+    if( ionization_rate_!=Py_None ) {
+        Py_DECREF( ionization_rate_ );
     }
 
 }
