@@ -35,6 +35,9 @@ ProjectorAM2Order::ProjectorAM2Order( Params &params, Patch *patch ) : Projector
 
     invR = &((static_cast<PatchAM *>( patch )->invR)[0]);
     invRd = &((static_cast<PatchAM *>( patch )->invRd)[0]);
+
+    dts2           = params.timestep/2.;
+    dts4           = params.timestep/4.;
 }
 
 
@@ -518,4 +521,118 @@ void ProjectorAM2Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
         }
 
     }
+}
+
+
+// Projector for susceptibility used as source term in envelope equation
+void ProjectorAM2Order::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
+
+{
+    // -------------------------------------
+    // Variable declaration & initialization
+    // -------------------------------------
+
+    double *Chi_envelope = &( *EMfields->Env_Chi_ )( 0 );
+    
+    std::vector<double> *Epart       = &( smpi->dynamics_Epart[ithread] );
+    std::vector<double> *Phipart     = &( smpi->dynamics_PHIpart[ithread] );
+    std::vector<double> *GradPhipart = &( smpi->dynamics_GradPHIpart[ithread] );
+    std::vector<double> *inv_gamma_ponderomotive = &( smpi->dynamics_inv_gamma_ponderomotive[ithread] );
+    
+
+    double gamma_ponderomotive, gamma0, gamma0_sq;
+    double charge_over_mass_dts2, charge_sq_over_mass_sq_dts4, charge_sq_over_mass_sq;
+    double pxsm, pysm, pzsm;
+    double one_over_mass=1./species_mass;
+    double momentum[3];
+    
+    int nparts = particles.size();
+    double *Ex       = &( ( *Epart )[0*nparts] );
+    double *Ey       = &( ( *Epart )[1*nparts] );
+    double *Ez       = &( ( *Epart )[2*nparts] );
+    double *Phi      = &( ( *Phipart )[0*nparts] );
+    double *GradPhix = &( ( *GradPhipart )[0*nparts] );
+    double *GradPhiy = &( ( *GradPhipart )[1*nparts] );
+    double *GradPhiz = &( ( *GradPhipart )[2*nparts] );
+
+    for( int ipart=istart ; ipart<iend; ipart++ ) {//Loop on bin particles
+        charge_over_mass_dts2       = ( double )( particles.charge( ipart ) )*dts2*one_over_mass;
+        // ! ponderomotive force is proportional to charge squared and the field is divided by 4 instead of 2
+        charge_sq_over_mass_sq_dts4 = ( double )( particles.charge( ipart ) )*( double )( particles.charge( ipart ) )*dts4*one_over_mass*one_over_mass;
+        // (charge over mass)^2
+        charge_sq_over_mass_sq      = ( double )( particles.charge( ipart ) )*( double )( particles.charge( ipart ) )*one_over_mass*one_over_mass;
+
+        int iloc, nr( nprimr );
+    
+        double r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
+    
+        for( int i = 0 ; i<3 ; i++ ) {
+            momentum[i] = particles.momentum( i, ipart );
+        }
+    
+        // compute initial ponderomotive gamma
+        gamma0_sq = 1. + momentum[0]*momentum[0]+ momentum[1]*momentum[1] + momentum[2]*momentum[2] + *( Phi+ipart )*charge_sq_over_mass_sq ;
+        gamma0    = sqrt( gamma0_sq ) ;
+    
+        // ( electric field + ponderomotive force for ponderomotive gamma advance ) scalar multiplied by momentum
+        pxsm = ( gamma0 * charge_over_mass_dts2*( *( Ex+ipart ) ) - charge_sq_over_mass_sq_dts4*( *( GradPhix+ipart ) ) ) * momentum[0] / gamma0_sq;
+        pysm = ( gamma0 * charge_over_mass_dts2*( *( Ey+ipart ) ) - charge_sq_over_mass_sq_dts4*( *( GradPhiy+ipart ) ) ) * momentum[1] / gamma0_sq;
+        pzsm = ( gamma0 * charge_over_mass_dts2*( *( Ez+ipart ) ) - charge_sq_over_mass_sq_dts4*( *( GradPhiz+ipart ) ) ) * momentum[2] / gamma0_sq;
+    
+        // update of gamma ponderomotive
+        gamma_ponderomotive = gamma0 + ( pxsm+pysm+pzsm )*0.5 ;
+        // buffer inverse of ponderomotive gamma to use it in ponderomotive momentum pusher
+        ( *inv_gamma_ponderomotive )[ipart] = 1./gamma_ponderomotive;
+    
+        // susceptibility for the macro-particle
+        double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*( double )( particles.charge( ipart ) )*particles.weight( ipart )*one_over_mass/gamma_ponderomotive;
+
+        //complex<double> e_theta = ( particles.position( 1, ipart ) + Icpx*particles.position( 2, ipart ) )/r;
+        double C_m = 1.; // only mode 0
+    
+    
+        double xpn, ypn;
+        double delta, delta2;
+        double Sl1[5], Sr1[5];
+        
+        
+        // locate the particle on the primal grid at current time-step & calculate coeff. S1
+        xpn = particles.position( 0, ipart ) * dl_inv_;
+        int ip = round( xpn );
+        delta  = xpn - ( double )ip;
+        delta2 = delta*delta;
+        Sl1[1] = 0.5 * ( delta2-delta+0.25 );
+        Sl1[2] = 0.75-delta2;
+        Sl1[3] = 0.5 * ( delta2+delta+0.25 );
+        ypn = r * dr_inv_ ;
+        int jp = round( ypn );
+        delta  = ypn - ( double )jp;
+        delta2 = delta*delta;
+        Sr1[1] = 0.5 * ( delta2-delta+0.25 );
+        Sr1[2] = 0.75-delta2;
+        Sr1[3] = 0.5 * ( delta2+delta+0.25 );
+        
+        // ---------------------------
+        // Calculate the total charge
+        // ---------------------------
+        ip -= i_domain_begin + 2;
+        jp -= j_domain_begin + 2;
+    
+    
+        for( unsigned int i=1 ; i<4 ; i++ ) {
+            iloc = ( i+ip )*nr+jp;
+            for( unsigned int j=1 ; j<4 ; j++ ) {
+                    Chi_envelope [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invR[j+jp];
+            }
+        }//i
+    
+
+
+    }
+
+
+
+
+  
+    
 }

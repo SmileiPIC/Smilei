@@ -47,7 +47,8 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
     
     std::complex<double>     i1 = std::complex<double>( 0., 1 ); // imaginary unit
     double k0 = 1.; // laser wavenumber
-    i1_2k0_over_2dx = i1*2.*k0/2./cell_length[0];;
+    i1_2k0_over_2dx = i1*2.*k0/2./cell_length[0];
+    i1_2k0_over_2dl = i1_2k0_over_2dx;
     one_plus_ik0dt  = 1.+i1*k0*timestep;
     one_plus_ik0dt_ov_one_plus_k0sq_dtsq = ( 1.+i1*k0*timestep )/( 1.+k0*k0*timestep*timestep );
     
@@ -75,17 +76,41 @@ LaserEnvelope::LaserEnvelope( Params &params, Patch *patch, ElectroMagn *EMfield
             MESSAGE( 1, "\t- Envelope boundary conditions: " << "(" << params.Env_BCs[i][0] << ", " << params.Env_BCs[i][1] << ")" );
         }
     }
+
+    GradPhix_  = NULL;
+    GradPhix_m = NULL;
+    GradPhiy_  = NULL;
+    GradPhiy_m = NULL;
+    GradPhiz_  = NULL;
+    GradPhiz_m = NULL;
+    GradPhil_  = NULL;
+    GradPhil_m = NULL;
+    GradPhir_  = NULL;
+    GradPhir_m = NULL;
+
 }
 
 // Cloning constructor
 LaserEnvelope::LaserEnvelope( LaserEnvelope *envelope, Patch *patch, ElectroMagn *EMfields, Params &params, unsigned int n_moved ) :
-    cell_length( envelope->cell_length ), timestep( envelope->timestep ), i1_2k0_over_2dx( envelope->i1_2k0_over_2dx ),
+    cell_length( envelope->cell_length ), timestep( envelope->timestep ), i1_2k0_over_2dx( envelope->i1_2k0_over_2dx ), i1_2k0_over_2dl( envelope->i1_2k0_over_2dl ),
     one_plus_ik0dt( envelope->one_plus_ik0dt ), one_plus_ik0dt_ov_one_plus_k0sq_dtsq( envelope->one_plus_ik0dt_ov_one_plus_k0sq_dtsq )
 {
     if( n_moved ==0 ) {
         profile_ = new Profile( envelope->profile_ );
     }
     EnvBoundCond = EnvelopeBC_Factory::create( params, patch );
+
+    GradPhix_  = NULL;
+    GradPhix_m = NULL;
+    GradPhiy_  = NULL;
+    GradPhiy_m = NULL;
+    GradPhiz_  = NULL;
+    GradPhiz_m = NULL;
+    GradPhil_  = NULL;
+    GradPhil_m = NULL;
+    GradPhir_  = NULL;
+    GradPhir_m = NULL;
+
 }
 
 
@@ -123,14 +148,26 @@ LaserEnvelope::~LaserEnvelope()
     }
     if( GradPhiy_m ) {
         delete GradPhiy_m;
-    }
-    
+    }  
     if( GradPhiz_ ) {
         delete GradPhiz_;
     }
     if( GradPhiz_m ) {
         delete GradPhiz_m;
     }
+    if( GradPhil_ ) {
+        delete GradPhil_;
+    }
+    if( GradPhil_m ) {
+        delete GradPhil_m;
+    }
+    if( GradPhir_ ) {
+        delete GradPhir_;
+    }
+    if( GradPhir_m ) {
+        delete GradPhir_m;
+    }
+    
     
     int nBC = EnvBoundCond.size();
     for( int i=0 ; i<nBC ; i++ )

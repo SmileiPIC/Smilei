@@ -146,11 +146,19 @@ void VectorPatch::createDiags( Params &params, SmileiMPI *smpi, OpenPMDparams &o
                     EMfields->rho_AM_s[ifield]=NULL;
                 }
             }
-
+      
+            if (params.Laser_Envelope_model){
+                for( unsigned int ifield=0 ; ifield<EMfields->Env_Chi_s.size(); ifield++ ) {
+                if( EMfields->Env_Chi_s[ifield]->data_ == NULL ) {
+                    delete EMfields->Env_Chi_s[ifield];
+                    EMfields->Env_Chi_s[ifield]=NULL;
+                    }
+                }
+            }
         }
 
 
-        if( params.Laser_Envelope_model ) {
+        if( (params.Laser_Envelope_model) && (params.geometry != "AMcylindrical")) {
             for( unsigned int ifield=0 ; ifield<( *this )( ipatch )->EMfields->Env_Chi_s.size(); ifield++ ) {
                 if( ( *this )( ipatch )->EMfields->Env_Chi_s[ifield]->data_ == NULL ) {
                     delete( *this )( ipatch )->EMfields->Env_Chi_s[ifield];
@@ -919,14 +927,9 @@ void VectorPatch::sumSusceptibility( Params &params, double time_dual, Timers &t
     timers.susceptibility.update();
 
     timers.susceptibility.restart();
-    if( ( params.geometry == "1Dcartesian" ) or ( params.geometry == "2Dcartesian" ) or ( params.geometry == "3Dcartesian" ) ) {
-        SyncVectorPatch::sumEnvChi( params, ( *this ), smpi, timers, itime ); // MPI
-    } else {
-        ERROR( "Envelope model not yet implemented in this geometry" );
-        // for (unsigned int imode = 0 ; imode < static_cast<ElectroMagnAM*>(patches_[0]->EMfields)->Jl_.size() ; imode++  ) {
-        //     SyncVectorPatch::sumRhoJ( params, (*this), imode, timers, itime );
-        // }
-    }
+    
+    SyncVectorPatch::sumEnvChi( params, ( *this ), smpi, timers, itime ); // MPI
+    
 
     timers.susceptibility.update();
 
@@ -2776,6 +2779,34 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
                 listBt_[imode][ipatch]     = static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->Bt_[imode] ;
             }
         }
+
+        if( patches_[0]->EMfields->envelope != NULL ) {
+            listA_.resize( size() ) ;
+            listA0_.resize( size() ) ;
+            listPhi_.resize( size() ) ;
+            listPhi0_.resize( size() ) ;
+            listGradPhil_.resize( size() ) ;
+            listGradPhir_.resize( size() ) ;
+            listGradPhil0_.resize( size() ) ;
+            listGradPhir0_.resize( size() ) ;
+            listEnv_Chi_.resize( size() ) ;
+        }
+
+
+        if( patches_[0]->EMfields->envelope != NULL ) {
+            for( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+                listA_[ipatch]         = patches_[ipatch]->EMfields->envelope->A_ ;
+                listA0_[ipatch]        = patches_[ipatch]->EMfields->envelope->A0_ ;
+                listPhi_[ipatch]       = patches_[ipatch]->EMfields->envelope->Phi_ ;
+                listPhi0_[ipatch]      = patches_[ipatch]->EMfields->envelope->Phi_m ;
+                listGradPhil_[ipatch]  = patches_[ipatch]->EMfields->envelope->GradPhil_ ;
+                listGradPhir_[ipatch]  = patches_[ipatch]->EMfields->envelope->GradPhir_ ;
+                listGradPhil0_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhil_m ;
+                listGradPhir0_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhir_m ;
+                listEnv_Chi_[ipatch]   = patches_[ipatch]->EMfields->Env_Chi_ ;
+            }
+        }
+
     }
 
     B_localx.clear();
@@ -2961,6 +2992,20 @@ void VectorPatch::updateFieldList( SmileiMPI *smpi )
                 listrho_AM_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
             }
         }
+        if( patches_[0]->EMfields->envelope != NULL ) {
+            for( unsigned int ipatch = 0 ; ipatch < size() ; ipatch++ ) {
+                listA_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                listA0_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                listPhi_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                listPhi0_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                listGradPhil_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                listGradPhir_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                listGradPhil0_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                listGradPhir0_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                listEnv_Chi_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+            }
+
+        }
     }
 }
 
@@ -3066,6 +3111,15 @@ void VectorPatch::updateFieldList( int ispec, SmileiMPI *smpi )
                     listrhos_AM_[imode].clear();
                 }
             }
+            if( patches_[0]->EMfields->envelope != NULL )
+            {
+                if( patches_[0]->EMfields->Env_Chi_s[ispec] ) {
+                    listEnv_Chis_.resize( size() ) ;
+                } else {
+                    listEnv_Chis_.clear();
+                }
+            }
+            
         }
         for( unsigned int imode=0 ; imode < nmodes ; imode++ ) {
             unsigned int ifield = imode*n_species + ispec ;
@@ -3090,7 +3144,14 @@ void VectorPatch::updateFieldList( int ispec, SmileiMPI *smpi )
                 }
             }
         }
-
+        for( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            if( patches_[0]->EMfields->envelope != NULL ) {
+                if( patches_[ipatch]->EMfields->Env_Chi_s[ispec] ) {
+                    listEnv_Chis_[ipatch] = patches_[ipatch]->EMfields->Env_Chi_s[ispec];
+                    listEnv_Chis_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                }
+            }
+        }
     }
 
 
