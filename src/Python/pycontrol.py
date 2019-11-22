@@ -150,7 +150,7 @@ def _keep_python_running():
             if type(ax[0]) is not str:
                 return True
     # Verify the radiation spectrum having a function for deposited_quantity or axis type
-    for d in DiagRadiationSpectrum._list + DiagScreen._list:
+    for d in DiagRadiationSpectrum._list:
         if type(d.photon_energy_axis[0]) is not str:
             return True
         for ax in d.axes:
