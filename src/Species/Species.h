@@ -79,7 +79,7 @@ public:
     //! thermalizing temperature for thermalizing BCs [\f$m_e c^2\f$]
     std::vector<double> thermal_boundary_temperature_;
     //! mean velocity used when thermalizing BCs are used [\f$c\f$]
-    std::vector<double> thermal_boundary_velocity;
+    std::vector<double> thermal_boundary_velocity_;
 
     //! thermal velocity [\f$c\f$]
     std::vector<double> thermal_velocity_;

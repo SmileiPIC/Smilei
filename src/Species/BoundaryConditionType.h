@@ -161,9 +161,9 @@ inline int thermalize_particle( Particles &particles, int ipart, int direction, 
         // Adding the mean velocity (using relativistic composition)
         double vx, vy, vz, v2, g, gm1, Lxx, Lyy, Lzz, Lxy, Lxz, Lyz, gp, px, py, pz;
         // mean-velocity
-        vx  = -species->thermal_boundary_velocity[0];
-        vy  = -species->thermal_boundary_velocity[1];
-        vz  = -species->thermal_boundary_velocity[2];
+        vx  = -species->thermal_boundary_velocity_[0];
+        vy  = -species->thermal_boundary_velocity_[1];
+        vz  = -species->thermal_boundary_velocity_[2];
         v2  = vx*vx + vy*vy + vz*vz;
         if( v2>0. ) {
         

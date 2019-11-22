@@ -677,7 +677,7 @@ public:
 
         // for thermalizing BCs on particles check if thermal_boundary_temperature is correctly defined
         bool has_temperature = PyTools::extract( "thermal_boundary_temperature", thisSpecies->thermal_boundary_temperature_, "Species", ispec );
-        bool has_velocity    = PyTools::extract( "thermal_boundary_velocity", thisSpecies->thermal_boundary_velocity, "Species", ispec );
+        bool has_velocity    = PyTools::extract( "thermal_boundary_velocity", thisSpecies->thermal_boundary_velocity_, "Species", ispec );
         if( has_thermalize ) {
             if( !has_temperature ) {
                 ERROR( "For species '" << species_name << "' thermal_boundary_temperature (thermalizing BC) should be a list of floats" );
@@ -685,7 +685,7 @@ public:
             if( !has_velocity ) {
                 ERROR( "For species '" << species_name << "' thermal_boundary_velocity (thermalizing BC) should be a list of floats" );
             }
-            if( thisSpecies->thermal_boundary_velocity.size()!=3 ) {
+            if( thisSpecies->thermal_boundary_velocity_.size()!=3 ) {
                 ERROR( "For species '" << species_name << "' thermal_boundary_velocity (thermalizing BC) should have 3 components" );
             }
             if( thisSpecies->thermal_boundary_temperature_.size()==1 ) {
@@ -968,7 +968,7 @@ public:
         newSpecies->time_relativistic_initialization         = species->time_relativistic_initialization;
         newSpecies->boundary_conditions                      = species->boundary_conditions;
         newSpecies->thermal_boundary_temperature_             = species->thermal_boundary_temperature_;
-        newSpecies->thermal_boundary_velocity                = species->thermal_boundary_velocity;
+        newSpecies->thermal_boundary_velocity_                = species->thermal_boundary_velocity_;
         newSpecies->thermal_velocity_                          = species->thermal_velocity_;
         newSpecies->thermal_momentum_                          = species->thermal_momentum_;
         newSpecies->atomic_number_                            = species->atomic_number_;
