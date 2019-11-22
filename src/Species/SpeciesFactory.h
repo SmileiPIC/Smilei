@@ -552,9 +552,7 @@ public:
         }
 
         PyTools::extract( "ponderomotive_dynamics", thisSpecies->ponderomotive_dynamics, "Species", ispec );
-        if( thisSpecies->ponderomotive_dynamics && ( params.geometry != "1Dcartesian" ) && ( params.geometry != "2Dcartesian" ) && ( params.geometry != "3Dcartesian" ) ) {
-            ERROR( "Ponderomotive/Envelope model only available in 1D, 2D, 3D cartesian geometry" );
-        }
+      
         if( thisSpecies->ponderomotive_dynamics && ! params.Laser_Envelope_model ) {
             MESSAGE( "No Laser Envelope is specified - Standard PIC dynamics will be used for all species" );
             thisSpecies->ponderomotive_dynamics = false;
@@ -695,14 +693,14 @@ public:
                 thisSpecies->thermal_boundary_temperature[2] = thisSpecies->thermal_boundary_temperature[0];
             }
 
-            // Compute the thermalVelocity & Momentum for thermalizing bcs
-            thisSpecies->thermalVelocity.resize( 3 );
-            thisSpecies->thermalMomentum.resize( 3 );
+            // Compute the thermal_velocity_ & Momentum for thermalizing bcs
+            thisSpecies->thermal_velocity_.resize( 3 );
+            thisSpecies->thermal_momentum_.resize( 3 );
             for( unsigned int i=0; i<3; i++ ) {
-                thisSpecies->thermalVelocity[i] = sqrt( 2.*thisSpecies->thermal_boundary_temperature[i]/thisSpecies->mass_ );
-                thisSpecies->thermalMomentum[i] = thisSpecies->thermalVelocity[i];
+                thisSpecies->thermal_velocity_[i] = sqrt( 2.*thisSpecies->thermal_boundary_temperature[i]/thisSpecies->mass_ );
+                thisSpecies->thermal_momentum_[i] = thisSpecies->thermal_velocity_[i];
                 // Caution: momentum in SMILEI actually correspond to p/m
-                if( thisSpecies->thermalVelocity[i]>0.3 ) {
+                if( thisSpecies->thermal_velocity_[i]>0.3 ) {
                     ERROR( "For species '" << species_name << "' Thermalizing BCs require non-relativistic thermal_boundary_temperature" );
                 }
             }
@@ -710,8 +708,8 @@ public:
         
         // Manage the ionization parameters
         if( thisSpecies->mass_ > 0 ) {
-            thisSpecies->atomic_number = 0;
-            PyTools::extract( "atomic_number", thisSpecies->atomic_number, "Species", ispec );
+            thisSpecies->atomic_number_ = 0;
+            PyTools::extract( "atomic_number", thisSpecies->atomic_number_, "Species", ispec );
             
             thisSpecies->maximum_charge_state = 0;
             PyTools::extract( "maximum_charge_state", thisSpecies->maximum_charge_state, "Species", ispec );
@@ -725,7 +723,7 @@ public:
                     ERROR( "For species '" << species_name << ": cannot ionize test species" );
                 }
                 
-                if( ( thisSpecies->atomic_number==0 )&&( thisSpecies->maximum_charge_state==0 ) ) {
+                if( ( thisSpecies->atomic_number_==0 )&&( thisSpecies->maximum_charge_state==0 ) ) {
                     ERROR( "For species '" << species_name << ": undefined atomic_number & maximum_charge_state (required for ionization)" );
                 }
                 
@@ -738,7 +736,7 @@ public:
                 } else if( model == "from_rate" ) {
                     
                     if( thisSpecies->maximum_charge_state == 0 ) {
-                        thisSpecies->maximum_charge_state = thisSpecies->atomic_number;
+                        thisSpecies->maximum_charge_state = thisSpecies->atomic_number_;
                         WARNING( "For species '" << species_name << ": ionization 'from_rate' is used with maximum_charge_state = "<<thisSpecies->maximum_charge_state << " taken from atomic_number" );
                     }
                     thisSpecies->ionization_rate = PyTools::extract_py( "ionization_rate", "Species", ispec );
@@ -969,9 +967,9 @@ public:
         newSpecies->boundary_conditions                      = species->boundary_conditions;
         newSpecies->thermal_boundary_temperature             = species->thermal_boundary_temperature;
         newSpecies->thermal_boundary_velocity                = species->thermal_boundary_velocity;
-        newSpecies->thermalVelocity                          = species->thermalVelocity;
-        newSpecies->thermalMomentum                          = species->thermalMomentum;
-        newSpecies->atomic_number                            = species->atomic_number;
+        newSpecies->thermal_velocity_                          = species->thermal_velocity_;
+        newSpecies->thermal_momentum_                          = species->thermal_momentum_;
+        newSpecies->atomic_number_                            = species->atomic_number_;
         newSpecies->maximum_charge_state                     = species->maximum_charge_state;
         newSpecies->ionization_rate                          = species->ionization_rate;
         if( newSpecies->ionization_rate!=Py_None ) {
@@ -1129,8 +1127,8 @@ public:
                     retSpecies[ispec1]->Ionize->new_electrons.isMonteCarlo       = retSpecies[ispec1]->electron_species->particles->isMonteCarlo;
                     retSpecies[ispec1]->Ionize->new_electrons.initialize( 0, params.nDim_particle );
                     if( ( !retSpecies[ispec1]->getNbrOfParticles() ) && ( !retSpecies[ispec2]->getNbrOfParticles() ) ) {
-                        if( retSpecies[ispec1]->atomic_number!=0 ) {
-                            int max_eon_number = retSpecies[ispec1]->getNbrOfParticles() * retSpecies[ispec1]->atomic_number;
+                        if( retSpecies[ispec1]->atomic_number_!=0 ) {
+                            int max_eon_number = retSpecies[ispec1]->getNbrOfParticles() * retSpecies[ispec1]->atomic_number_;
                             retSpecies[ispec2]->particles->reserve( max_eon_number, retSpecies[ispec2]->particles->dimension() );
                         } else if( retSpecies[ispec1]->maximum_charge_state!=0 ) {
                             int max_eon_number = retSpecies[ispec1]->getNbrOfParticles() * retSpecies[ispec1]->maximum_charge_state;

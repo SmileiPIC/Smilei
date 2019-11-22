@@ -91,7 +91,7 @@ public:
             if( ionization_electrons < 0 ) {
                 ERROR( "In collisions #" << n_collisions << ": ionizing in unknown species `" << ionization_electrons_name << "`" );
             }
-            if( vecSpecies[ionization_electrons]->atomic_number != 0 ) {
+            if( vecSpecies[ionization_electrons]->atomic_number_ != 0 ) {
                 ERROR( "In collisions #" << n_collisions << ": ionization species are not electrons (atomic_number>0)" );
             }
             ionization = true;
@@ -118,8 +118,8 @@ public:
                         ERROR( "In collisions #" << n_collisions << ": species in group `species"
                                << g+1 << "` must all have same masses for ionization" );
                                
-                    if( s->atomic_number != s0->atomic_number ) {
-                        if( s->atomic_number * s0->atomic_number ==0 ) {
+                    if( s->atomic_number_ != s0->atomic_number_ ) {
+                        if( s->atomic_number_ * s0->atomic_number_ ==0 ) {
                             ERROR( "In collisions #" << n_collisions << ": species in group `species"
                                    << g+1 << "` cannot be mixed electrons and ions for ionization" );
                         } else {
@@ -130,8 +130,8 @@ public:
                 }
             }
             // atomic number
-            Z0 = vecSpecies[sgroup[0][0]]->atomic_number;
-            Z1 = vecSpecies[sgroup[1][0]]->atomic_number;
+            Z0 = vecSpecies[sgroup[0][0]]->atomic_number_;
+            Z1 = vecSpecies[sgroup[1][0]]->atomic_number_;
             Z = ( int )( Z0>Z1 ? Z0 : Z1 );
             if( Z0*Z1!=0 ) {
                 ERROR( "In collisions #" << n_collisions << ": ionization requires electrons (no or null atomic_number)" );

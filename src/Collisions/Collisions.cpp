@@ -267,7 +267,7 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
         }
         
         // Prepare the ionization
-        Ionization->prepare1( patch->vecSpecies[( *sg1 )[0]]->atomic_number );
+        Ionization->prepare1( patch->vecSpecies[( *sg1 )[0]]->atomic_number_ );
         
         // Calculate the densities
         n1  = 0.; // density of group 1

@@ -74,8 +74,6 @@ double userFunctions::erfinv2( double x )
 //! \details This function computes the first and second kind Bessel function.
 //! See http://mathworld.wolfram.com/ModifiedBesselFunctionoftheSecondKind.html
 //
-//! This function is adapted from the Numerical Recipe.
-//
 //! \param n Bessel function order
 //! \param x input Bessel parameter
 //! \param K Value of the Bessel function of second kind
@@ -85,14 +83,14 @@ double userFunctions::erfinv2( double x )
 //! \param maxit maximal number of iteration for convergence
 //! \param esp epsilon, accuracy threhold for convergence
 // ----------------------------------------------------------------------------
-void userFunctions::modified_bessel_IK( double n, double x,
+void userFunctions::modifiedBesselIK( double n, double x,
                                         double &I, double &dI,
                                         double &K, double &dK,
                                         long maxit, double eps,
                                         bool warning )
 {
 
-    //std::cout << "userFunctions::modified_bessel_IK("
+    //std::cout << "userFunctions::modifiedBesselIK("
     //          << n << ", " << x << ", " << maxit << ")" << std::endl;
     
     const double xmin=2.0;
@@ -115,16 +113,16 @@ void userFunctions::modified_bessel_IK( double n, double x,
                          
     // Checks
     if( x <= 0.0 ) {
-        ERROR( "In userFunctions::modified_bessel_IK:\n" << "Argument x is negative in modified_bessel_IK" );
+        ERROR( "In userFunctions::modifiedBesselIK:\n" << "Argument x is negative in modifiedBesselIK" );
     }
     if( n <= 0 ) {
-        ERROR( "In userFunctions::modified_bessel_IK:\n" << "Argument n is negative in modified_bessel_IK" );
+        ERROR( "In userFunctions::modifiedBesselIK:\n" << "Argument n is negative in modifiedBesselIK" );
     }
     if( maxit <= 0 ) {
-        ERROR( "In userFunctions::modified_bessel_IK:\n" << "Maximal number of iteration is null in modified_bessel_IK" );
+        ERROR( "In userFunctions::modifiedBesselIK:\n" << "Maximal number of iteration is null in modifiedBesselIK" );
     }
     if( eps <= 0 ) {
-        ERROR( "In userFunctions::modified_bessel_IK:\n" << "Accuracy threshold, epsilon, <= 0 in modified_bessel_IK" );
+        ERROR( "In userFunctions::modifiedBesselIK:\n" << "Accuracy threshold, epsilon, <= 0 in modifiedBesselIK" );
     }
     nl=long( n+0.5 );
     xmu=n-nl;
@@ -150,8 +148,8 @@ void userFunctions::modified_bessel_IK( double n, double x,
         }
     }
     
-    if( i >= maxit && warning ) WARNING( "In userFunctions::modified_bessel_IK:\n"
-                                             << "x too large in modified_bessel_IK; try asymptotic expansion" );
+    if( i >= maxit && warning ) WARNING( "In userFunctions::modifiedBesselIK:\n"
+                                             << "x too large in modifiedBesselIK; try asymptotic expansion" );
                                              
     ril=fpmin;
     ripl=h*ril;
@@ -174,8 +172,8 @@ void userFunctions::modified_bessel_IK( double n, double x,
         e=xmu*d;
         fact2 = ( abs( e ) < eps ? 1.0 : sinh( e )/e );
         xx=8.0*xmu*xmu-1.0;
-        gam1=chebychev_eval( c1, 7, xx );
-        gam2=chebychev_eval( c2, 8, xx );
+        gam1=chebychevEval( c1, 7, xx );
+        gam2=chebychevEval( c2, 8, xx );
         gampl= gam2-xmu*gam1;
         gammi= gam2+xmu*gam1;
         ff=fact*( gam1*cosh( e )+gam2*fact2*d );
@@ -200,8 +198,8 @@ void userFunctions::modified_bessel_IK( double n, double x,
                 break;
             }
         }
-        if( i > maxit && warning ) WARNING( "In userFunctions::modified_bessel_IK:\n"
-                                                << "Series failed to converge in modified_bessel_IK" );
+        if( i > maxit && warning ) WARNING( "In userFunctions::modifiedBesselIK:\n"
+                                                << "Series failed to converge in modifiedBesselIK" );
         rkmu=sum;
         rk1=sum1*xi2;
     } else {
@@ -232,7 +230,7 @@ void userFunctions::modified_bessel_IK( double n, double x,
             }
         }
         if( i >= maxit && warning ) {
-            WARNING( "In userFunctions::modified_bessel_IK:\n" << "Failure to converge in cf2 in modified_bessel_IK" );
+            WARNING( "In userFunctions::modifiedBesselIK:\n" << "Failure to converge in cf2 in modifiedBesselIK" );
         }
         h=a1*h;
         rkmu=sqrt( M_PI/( 2.0*x ) )*exp( -x )/s;
@@ -258,19 +256,17 @@ void userFunctions::modified_bessel_IK( double n, double x,
 //! \details This function computes the first and second kind Bessel function.
 //! See http://mathworld.wolfram.com/ModifiedBesselFunctionoftheSecondKind.html
 //
-//! This function is adapted from the Numerical Recipe.
-//
 //! \param n Bessel function order
 //! \param x input Bessel parameter
 //! \param maxit maximal number of iteration for convergence
 //! \param esp epsilon, accuracy threhold for convergence
 // ----------------------------------------------------------------------------
-double userFunctions::modified_bessel_K( double n, double x,
+double userFunctions::modifiedBesselK( double n, double x,
         long maxit, double eps,
         bool warning )
 {
 
-    //std::cout << "userFunctions::modified_bessel_K("
+    //std::cout << "userFunctions::modifiedBesselK("
     //          << n << ", " << x << ", " << maxit << ")" << std::endl;
     
     const double xmin=2.0;
@@ -297,16 +293,16 @@ double userFunctions::modified_bessel_K( double n, double x,
                          
     // Checks
     if( x <= 0.0 ) {
-        ERROR( "Argument x is negative in modified_bessel_K" );
+        ERROR( "Argument x is negative in modifiedBesselK" );
     }
     if( n <= 0 ) {
-        ERROR( "Argument n is negative in modified_bessel_K" );
+        ERROR( "Argument n is negative in modifiedBesselK" );
     }
     if( maxit <= 0 ) {
-        ERROR( "Maximal number of iteration is null in modified_bessel_K" );
+        ERROR( "Maximal number of iteration is null in modifiedBesselK" );
     }
     if( eps <= 0 ) {
-        ERROR( "Accuracy threshold, epsilon, <= 0 in modified_bessel_K" );
+        ERROR( "Accuracy threshold, epsilon, <= 0 in modifiedBesselK" );
     }
     nl=long( n+0.5 );
     xmu=n-nl;
@@ -333,7 +329,7 @@ double userFunctions::modified_bessel_K( double n, double x,
     }
     
     if( i >= maxit && warning ) {
-        ERROR( "x too large in modified_bessel_K; try asymptotic expansion" );
+        ERROR( "x too large in modifiedBesselK; try asymptotic expansion" );
     }
     
     ril=fpmin;
@@ -357,8 +353,8 @@ double userFunctions::modified_bessel_K( double n, double x,
         e=xmu*d;
         fact2 = ( abs( e ) < eps ? 1.0 : sinh( e )/e );
         xx=8.0*xmu*xmu-1.0;
-        gam1=chebychev_eval( c1, 7, xx );
-        gam2=chebychev_eval( c2, 8, xx );
+        gam1=chebychevEval( c1, 7, xx );
+        gam2=chebychevEval( c2, 8, xx );
         gampl= gam2-xmu*gam1;
         gammi= gam2+xmu*gam1;
         ff=fact*( gam1*cosh( e )+gam2*fact2*d );
@@ -383,7 +379,7 @@ double userFunctions::modified_bessel_K( double n, double x,
             }
         }
         if( i > maxit && warning ) {
-            WARNING( "Series failed to converge in modified_bessel_K" );
+            WARNING( "Series failed to converge in modifiedBesselK" );
         }
         rkmu=sum;
         rk1=sum1*xi2;
@@ -415,7 +411,7 @@ double userFunctions::modified_bessel_K( double n, double x,
             }
         }
         if( i >= maxit && warning ) {
-            WARNING( "Failure to converge in cf2 in modified_bessel_K" );
+            WARNING( "Failure to converge in cf2 in modifiedBesselK" );
         }
         h=a1*h;
         rkmu=sqrt( M_PI/( 2.0*x ) )*exp( -x )/s;
@@ -439,9 +435,9 @@ double userFunctions::modified_bessel_K( double n, double x,
 
 
 // ----------------------------------------------------------------------------
-//! \brief Chebychev evaluation adapted from the Numerical Recipes
+//! \brief Chebychev evaluation
 // ----------------------------------------------------------------------------
-double userFunctions::chebychev_eval( const double *c, const int m,
+double userFunctions::chebychevEval( const double *c, const int m,
                                       const double x )
 {
     double d=0.0, dd=0.0, sv;
@@ -458,8 +454,6 @@ double userFunctions::chebychev_eval( const double *c, const int m,
 //! \brief Computation of the abscissa and weight for the
 //! Gauss-Legendre Integration between xmin and xmax.
 //
-//! \details This code is adpated from the Numerical Recipes.
-//
 //! \param xmin minimum integration boundary
 //! \param xmax maximum integration boundary
 //! \param x array of abscissa
@@ -467,24 +461,24 @@ double userFunctions::chebychev_eval( const double *c, const int m,
 //! \param nb_iterations number of iteration for integration (array size)
 //! \param eps accuracy threshold for coef computation
 // ----------------------------------------------------------------------------
-void userFunctions::gauss_legendre_coef( double xmin, double xmax, double *x,
+void userFunctions::gaussLegendreCoef( double xmin, double xmax, double *x,
         double *w, int nb_iterations, double eps )
 {
 
-    //std::cout << "userFunctions::gauss_legendre_coef" << std::endl;
+    //std::cout << "userFunctions::gaussLegendreCoef" << std::endl;
     
     int m, j, i;
     double z1, z, xm, xl, pp, p3, p2, p1;
     
     // Checks
     if( nb_iterations <= 0 ) {
-        ERROR( "Number of iteration <= 0 in gauss_legendre_coef" );
+        ERROR( "Number of iteration <= 0 in gaussLegendreCoef" );
     }
     if( xmax < xmin ) {
-        ERROR( "xmax < xmin in gauss_legendre_coef" );
+        ERROR( "xmax < xmin in gaussLegendreCoef" );
     }
     if( eps <= 0 ) {
-        ERROR( "accuracy threshold epsilon <= 0 in gauss_legendre_coef" );
+        ERROR( "accuracy threshold epsilon <= 0 in gaussLegendreCoef" );
     }
     // The roots are symmetric, so we only find half of them.
     m=( nb_iterations+1 )/2;
@@ -515,30 +509,31 @@ void userFunctions::gauss_legendre_coef( double xmin, double xmax, double *x,
         w[nb_iterations-1-i]=w[i];                 /* and its symmetric counterpart. */
         //std::cout << x[i] << " " << w[i] << " " << x[nb_iterations-1-i]<< std::endl;
     }
-    //std::cout << "leaving userFunctions::gauss_legendre_coef" << std::endl;
+    //std::cout << "leaving userFunctions::gaussLegendreCoef" << std::endl;
 }
 
 
 // ----------------------------------------------------------------------------
-//! \brief Load repartition in 1d between MPI processes
+//! \brief Distribute equally the load into chunk of an array
+//! and return the number of elements for the specified chunk number.
 //
-//! \param rank MPI process rank number
-//! \param nb_ranks Total number of MPI tasks
+//! \param chunk number
+//! \param nb_chunks Total number of MPI tasks
 //! \param nb_elems Total number of element to be distributed
-//! \param imin Index of the first element for rank
-//! \param nb_loc_elems Number of element for rank
+//! \param imin Index of the first element for chunk
+//! \param nb_loc_elems Number of element for chunk
 // ----------------------------------------------------------------------------
-void userFunctions::distribute_load_1d( int rank,
-                                        int nb_ranks,
+void userFunctions::distributeArray( int chunk,
+                                        int nb_chunks,
                                         int nb_elems,
                                         int &imin,
                                         int &nb_loc_elems )
 {
     // If more ranks than elements,
     // only a part of the processes will work
-    if( nb_ranks >= nb_elems ) {
-        if( rank < nb_elems ) {
-            imin = rank;
+    if( nb_chunks >= nb_elems ) {
+        if( chunk < nb_elems ) {
+            imin = chunk;
             nb_loc_elems = 1;
         } else {
             imin = nb_elems;
@@ -550,49 +545,49 @@ void userFunctions::distribute_load_1d( int rank,
         int remainder;
         
         // Part of the load equally distributed
-        quotient = nb_elems/nb_ranks;
+        quotient = nb_elems/nb_chunks;
         
         // Remaining load to be distributed after balanced repartition
-        remainder = nb_elems%nb_ranks;
+        remainder = nb_elems%nb_chunks;
         
-        if( rank < remainder ) {
-            imin =  rank*quotient+rank;
+        if( chunk < remainder ) {
+            imin =  chunk*quotient+chunk;
             nb_loc_elems = quotient + 1;
         } else {
-            imin = remainder + rank*quotient;
+            imin = remainder + chunk*quotient;
             nb_loc_elems = quotient;
         }
     }
 }
 
 // ----------------------------------------------------------------------------
-//! \brief Load repartition in 1d between MPI processes.
-//! This function returns tables of indexes and length for all rank
+//! \brief Distribute equally 1D array into chunks
+//! This function returns tables of indexes and length for each chunk
 //
-//! \param nb_ranks Total number of MPI tasks
+//! \param nb_chunks Total number of chunks
 //! \param nb_elems Total number of element to be distributed
-//! \param imin_table Index of the first element for rank
-//! \param length_table Number of element for rank
+//! \param imin_table Index of the first element for each chunk
+//! \param length_table Number of element for each chunk
 // ----------------------------------------------------------------------------
-void userFunctions::distribute_load_1d_table(
-    int nb_ranks,
+void userFunctions::distributeArray(
+    int nb_chunks,
     int nb_elems,
     int *imin_table,
     int *length_table )
 {
 
-    // If more ranks than elements,
+    // If more chunks than elements,
     // only a part of the processes will work
-    if( nb_ranks >= nb_elems ) {
+    if( nb_chunks >= nb_elems ) {
         #pragma omp simd
-        for( int rank = 0 ; rank < nb_elems ; rank ++ ) {
-            imin_table[rank] = rank;
-            length_table[rank] = 1;
+        for( int chunk = 0 ; chunk < nb_elems ; chunk ++ ) {
+            imin_table[chunk] = chunk;
+            length_table[chunk] = 1;
         }
         #pragma omp simd
-        for( int rank = nb_elems ; rank < nb_ranks ; rank ++ ) {
-            imin_table[rank] = nb_elems;
-            length_table[rank] = 0;
+        for( int chunk = nb_elems ; chunk < nb_chunks ; chunk ++ ) {
+            imin_table[chunk] = nb_elems;
+            length_table[chunk] = 0;
         }
     } else {
     
@@ -600,28 +595,27 @@ void userFunctions::distribute_load_1d_table(
         int remainder;
         
         // Part of the load equally distributed
-        quotient = nb_elems/nb_ranks;
+        quotient = nb_elems/nb_chunks;
         
         // Remaining load to be distributed after balanced repartition
-        remainder = nb_elems%nb_ranks;
+        remainder = nb_elems%nb_chunks;
         
         #pragma omp simd
-        for( int rank = 0 ; rank < remainder ; rank ++ ) {
-            imin_table[rank] =  rank*quotient+rank;
-            length_table[rank] = quotient + 1;
+        for( int chunk = 0 ; chunk < remainder ; chunk ++ ) {
+            imin_table[chunk] =  chunk*quotient+chunk;
+            length_table[chunk] = quotient + 1;
         }
         #pragma omp simd
-        for( int rank = remainder ; rank < nb_ranks ; rank ++ ) {
-            imin_table[rank] = remainder + rank*quotient;
-            length_table[rank] = quotient;
+        for( int chunk = remainder ; chunk < nb_chunks ; chunk ++ ) {
+            imin_table[chunk] = remainder + chunk*quotient;
+            length_table[chunk] = quotient;
         }
     }
 }
 
 
 // ----------------------------------------------------------------------------
-//! \brief Equivalent of the function locate in the Numerical Recipes.
-//! This function uses a bijection algorithm in a monotonic double array
+//! \brief This function uses a bijection algorithm in a monotonic double array
 //! to find the corresponding index i so that elem is between array[i]
 //! and array[i+1].
 //
@@ -629,15 +623,13 @@ void userFunctions::distribute_load_1d_table(
 //! \param elem element to be found
 //! \param nb_elem number of elements
 // ----------------------------------------------------------------------------
-int userFunctions::search_elem_in_array( double *array,
+int userFunctions::searchValuesInMonotonicArray( double *array,
         double elem,
         int nb_elems )
 {
     int imin = 0; // lower bound
     int imax = nb_elems-1; // upper bound
     int imid = 0;
-    
-    //std::cerr << " userFunctions::search_elem_in_array " << std::endl;
     
     if( elem == array[0] ) {
         return 0;
@@ -647,18 +639,12 @@ int userFunctions::search_elem_in_array( double *array,
         while( imax - imin > 1 ) {
             imid= ( imin + imax )/2;
             //imid= (imin + imax)>>1;
-            
             if( elem >= array[imid] ) {
                 imin = imid;
-                /*std::cerr << "elem >= array[imid]: "
-                            << imin << " " << imid << " " << imax << " "
-                            << elem << " > " << array[imid]  << std::endl;*/
             } else {
                 imax = imid;
-                //std::cerr << "elem < array[imid]: " << imin << " " << imid << " " << imax << " " << elem << " < " << array[imid] << std::endl;
             }
         }
-        //std::cerr << " end userFunctions::search_elem_in_array " << std::endl;
         return imin;
     }
 }
