@@ -93,7 +93,7 @@ public:
     std::string radiation_model_;
 
     //! Time for which the species is frozen
-    double time_frozen;
+    double time_frozen_;
 
     //! logical true if particles radiate
     bool radiating;

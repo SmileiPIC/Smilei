@@ -54,7 +54,7 @@ Species::Species( Params &params, Patch *patch ) :
     ionization_rate_( Py_None ),
     pusher_name_( "boris" ),
     radiation_model_( "none" ),
-    time_frozen( 0 ),
+    time_frozen_( 0 ),
     radiating( false ),
     relativistic_field_initialization( false ),
     time_relativistic_initialization( 0 ),
@@ -325,7 +325,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
-    if( time_dual>time_frozen || Ionize) { // moving particle
+    if( time_dual>time_frozen_ || Ionize) { // moving particle
     
         smpi->dynamics_resize( ithread, nDim_field, last_index.back(), params.geometry=="AMcylindrical" );
         //Point to local thread dedicated buffers
@@ -359,7 +359,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #endif
             }
             
-            if( time_dual<=time_frozen ) continue; // Do not push nor project frozen particles
+            if( time_dual<=time_frozen_ ) continue; // Do not push nor project frozen particles
 
             // Radiation losses
             if( Radiate ) {
@@ -544,7 +544,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 
     } //End if moving or ionized particles
 
-    if(time_dual <= time_frozen && diag_flag &&( !particles->is_test ) ) { //immobile particle (at the moment only project density)
+    if(time_dual <= time_frozen_ && diag_flag &&( !particles->is_test ) ) { //immobile particle (at the moment only project density)
         if( params.geometry != "AMcylindrical" ) {
             double *b_rho=nullptr;
             for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
@@ -661,7 +661,7 @@ void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
                  }
 
     // if moving particle
-    if( time_dual>time_frozen ) { // moving particle
+    if( time_dual>time_frozen_ ) { // moving particle
 
         // Radiation losses
         if( Radiate ) {
@@ -684,7 +684,7 @@ void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
                                                       localDiags );
             }
         }
-    }//END if time vs. time_frozen
+    }//END if time vs. time_frozen_
 }
 
 
@@ -1109,11 +1109,11 @@ void Species::importParticles( Params &params, Patch *patch, Particles &source_p
 bool Species::isProj( double time_dual, SimWindow *simWindow )
 {
 
-    return time_dual > time_frozen  || ( simWindow->isMoving( time_dual ) || Ionize ) ;
+    return time_dual > time_frozen_  || ( simWindow->isMoving( time_dual ) || Ionize ) ;
 
     //Recompute frozen particles density if
     //moving window is activated, actually moving at this time step, and we are not in a density slope.
-    /*    bool isproj =(time_dual > species_param.time_frozen  ||
+    /*    bool isproj =(time_dual > species_param.time_frozen_  ||
                  (simWindow && simWindow->isMoving(time_dual) &&
                      (species_param.species_geometry == "gaussian" ||
                          (species_param.species_geometry == "trapezoidal" &&
@@ -1127,7 +1127,7 @@ bool Species::isProj( double time_dual, SimWindow *simWindow )
                 )
             );
             return isproj;*/
-    //return time_dual > species_param.time_frozen  || (simWindow && simWindow->isMoving(time_dual)) ;
+    //return time_dual > species_param.time_frozen_  || (simWindow && simWindow->isMoving(time_dual)) ;
 }
 
 void Species::disableXmax()
@@ -1175,7 +1175,7 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, un
     // -------------------------------
     // calculate the particle updated momentum
     // -------------------------------
-    if( time_dual>time_frozen ) { // moving particle
+    if( time_dual>time_frozen_ ) { // moving particle
 
         smpi->dynamics_resize( ithread, nDim_field, last_index.back(), params.geometry=="AMcylindrical" );
 
@@ -1211,7 +1211,7 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, un
 
         } // end loop on ibin
     } else { // immobile particle
-    } //END if time vs. time_frozen
+    } //END if time vs. time_frozen_
 } // ponderomotiveUpdateSusceptibilityAndMomentum
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1240,7 +1240,7 @@ void Species::ponderomotiveProjectSusceptibility( double time_dual, unsigned int
     // -------------------------------
     // calculate the particle updated momentum
     // -------------------------------
-    if( time_dual>time_frozen ) { // moving particle
+    if( time_dual>time_frozen_ ) { // moving particle
 
         smpi->dynamics_resize( ithread, nDim_particle, last_index.back(), false );
 
@@ -1267,7 +1267,7 @@ void Species::ponderomotiveProjectSusceptibility( double time_dual, unsigned int
 
         } // end loop on ibin
     } else { // immobile particle
-    } //END if time vs. time_frozen
+    } //END if time vs. time_frozen_
 } // ponderomotiveProjectSusceptibility
 
 
@@ -1308,7 +1308,7 @@ void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned
     // -------------------------------
     // calculate the particle updated position
     // -------------------------------
-    if( time_dual>time_frozen ) { // moving particle
+    if( time_dual>time_frozen_ ) { // moving particle
 
         smpi->dynamics_resize( ithread, nDim_field, last_index.back(), params.geometry=="AMcylindrical" );
 
@@ -1417,7 +1417,7 @@ void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned
             }//End loop on bins
         } // end condition on diag and not particle test
 
-    }//END if time vs. time_frozen
+    }//END if time vs. time_frozen_
 } // End ponderomotive_position_update
 
 void Species::check( Patch *patch, std::string title )

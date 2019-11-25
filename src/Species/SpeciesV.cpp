@@ -152,7 +152,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
-    if( time_dual>time_frozen || Ionize ) { // moving particle
+    if( time_dual>time_frozen_ || Ionize ) { // moving particle
     
         smpi->dynamics_resize( ithread, nDim_field, last_index.back(), params.geometry=="AMcylindrical" );
 
@@ -197,7 +197,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
 #endif
             }
             
-            if ( time_dual <= time_frozen ) continue;
+            if ( time_dual <= time_frozen_ ) continue;
 
             // Radiation losses
             if( Radiate ) {
@@ -372,7 +372,7 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
         } // End loop on packs
     } //End if moving or ionized particles
 
-    if(time_dual <= time_frozen && diag_flag &&( !particles->is_test ) ) { //immobile particle (at the moment only project density)
+    if(time_dual <= time_frozen_ && diag_flag &&( !particles->is_test ) ) { //immobile particle (at the moment only project density)
 
         double *b_rho=nullptr;
         for( unsigned int scell = 0 ; scell < first_index.size() ; scell ++ ) { //Loop for projection on buffer_proj
@@ -722,7 +722,7 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
 
 
     // Only for moving particles
-    if( time_dual>time_frozen ) {
+    if( time_dual>time_frozen_ ) {
 
         unsigned int scell ;
         double weight_before = 0;
@@ -919,7 +919,7 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, u
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
-    if( time_dual>time_frozen ) { // advance particle momentum
+    if( time_dual>time_frozen_ ) { // advance particle momentum
 
         for( unsigned int ipack = 0 ; ipack < npack_ ; ipack++ ) {
 
@@ -964,7 +964,7 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, u
 
     } else { // immobile particle (at the moment only project density)
 
-    }//END if time vs. time_frozen
+    }//END if time vs. time_frozen_
 
 } // end ponderomotiveUpdateSusceptibilityAndMomentum
 
@@ -1010,7 +1010,7 @@ void SpeciesV::ponderomotiveProjectSusceptibility( double time_dual, unsigned in
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
-    if( time_dual>time_frozen ) { // advance particle momentum
+    if( time_dual>time_frozen_ ) { // advance particle momentum
 
         for( unsigned int ipack = 0 ; ipack < npack_ ; ipack++ ) {
 
@@ -1047,7 +1047,7 @@ void SpeciesV::ponderomotiveProjectSusceptibility( double time_dual, unsigned in
 
     } else { // immobile particle (at the moment only project density)
 
-    }//END if time vs. time_frozen
+    }//END if time vs. time_frozen_
 
 } // end ponderomotiveProjectSusceptibility
 
@@ -1089,7 +1089,7 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
-    if( time_dual>time_frozen ) { // moving particle
+    if( time_dual>time_frozen_ ) { // moving particle
 
         //Prepare for sorting
         for( unsigned int i=0; i<count.size(); i++ ) {
@@ -1201,6 +1201,6 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
                 } //End loop on particles
             }
         }
-    }//END if time vs. time_frozen
+    }//END if time vs. time_frozen_
 
 } // end ponderomotiveUpdatePositionAndCurrents
