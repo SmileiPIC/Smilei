@@ -127,12 +127,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   .. warning::
 
-<<<<<<< HEAD
-    The ``"AMcylindrical"`` geometry is currently proposed in alpha version.
-    It has not been thoroughly tested and only Fields diagnostics are available.
-=======
     The ``"AMcylindrical"`` geometry has some restrictions.
->>>>>>> 02323067... avoid field repetition in diag fields for AM geometry
     Boundary conditions must be set to ``"remove"`` for particles,
     ``"silver-muller"`` for longitudinal EM boundaries and
     ``"buneman"`` for transverse EM boundaries.
