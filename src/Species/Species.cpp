@@ -53,7 +53,7 @@ Species::Species( Params &params, Patch *patch ) :
     c_part_max_( 1 ),
     ionization_rate_( Py_None ),
     pusher_name_( "boris" ),
-    radiation_model( "none" ),
+    radiation_model_( "none" ),
     time_frozen( 0 ),
     radiating( false ),
     relativistic_field_initialization( false ),

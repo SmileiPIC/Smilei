@@ -159,7 +159,7 @@ public:
                        << " 'Niel' ('niel') or 'Monte-Carlo' ('mc')" );
             }
 
-            thisSpecies->radiation_model = radiation_model;
+            thisSpecies->radiation_model_ = radiation_model;
 
             if( radiation_model == "ll" ) {
                 MESSAGE( 2, "> Radiating species with the classical Landau-Lifshitz radiating model" );
@@ -204,7 +204,7 @@ public:
             }
 #endif
             // Photon can not radiate
-            thisSpecies->radiation_model = "none";
+            thisSpecies->radiation_model_ = "none";
             thisSpecies-> pusher_name_ = "norm";
 
             MESSAGE( 2, "> " <<species_name <<" is a photon species (mass==0)." );
@@ -227,7 +227,7 @@ public:
 
         // Monte-Carlo Photon emission properties
         if( mass > 0. ) {
-            if( thisSpecies->radiation_model == "mc" ) {
+            if( thisSpecies->radiation_model_ == "mc" ) {
                 if( PyTools::extract( "radiation_photon_species", thisSpecies->radiation_photon_species, "Species", ispec ) ) {
 
                     MESSAGE( 3, "| Macro-photon emission activated" );
@@ -944,7 +944,7 @@ public:
         // Copy members
         newSpecies->name_                                     = species->name_;
         newSpecies->pusher_name_                                   = species->pusher_name_;
-        newSpecies->radiation_model                          = species->radiation_model;
+        newSpecies->radiation_model_                          = species->radiation_model_;
         newSpecies->radiation_photon_species                 = species->radiation_photon_species;
         newSpecies->radiation_photon_sampling_               = species->radiation_photon_sampling_;
         newSpecies->radiation_photon_gamma_threshold_        = species->radiation_photon_gamma_threshold_;

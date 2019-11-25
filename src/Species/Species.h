@@ -90,7 +90,7 @@ public:
     std::string pusher_name_;
 
     //! radiation model
-    std::string radiation_model;
+    std::string radiation_model_;
 
     //! Time for which the species is frozen
     double time_frozen;
