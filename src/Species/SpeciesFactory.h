@@ -143,14 +143,14 @@ public:
             if( radiation_model=="mc" ) {
                 this_species->particles->isQuantumParameter = true;
                 this_species->particles->isMonteCarlo = true;
-                this_species->radiating = true;
+                this_species->radiating_ = true;
             }
             // Species with another radiation loss model
             else if( ( radiation_model=="ll" )
                      || ( radiation_model=="cll" )
                      || ( radiation_model=="niel" ) ) {
                 this_species->particles->isQuantumParameter = true;
-                this_species->radiating = true;
+                this_species->radiating_ = true;
             } else if( radiation_model != "none" ) {
                 ERROR( "For species `" << species_name
                        << " radiation_model must be 'none',"
@@ -961,7 +961,7 @@ public:
         new_species->c_part_max_                               = species->c_part_max_;
         new_species->mass_                                     = species->mass_;
         new_species->time_frozen_                              = species->time_frozen_;
-        new_species->radiating                                = species->radiating;
+        new_species->radiating_                                = species->radiating_;
         new_species->relativistic_field_initialization        = species->relativistic_field_initialization;
         new_species->time_relativistic_initialization         = species->time_relativistic_initialization;
         new_species->boundary_conditions                      = species->boundary_conditions;

@@ -96,7 +96,7 @@ public:
     double time_frozen_;
 
     //! logical true if particles radiate
-    bool radiating;
+    bool radiating_;
 
     //! logical true if particles are relativistic and require proper electromagnetic field initialization
     bool relativistic_field_initialization;
