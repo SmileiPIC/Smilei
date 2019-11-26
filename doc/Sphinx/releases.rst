@@ -9,19 +9,9 @@ get the latest version of Smilei on `GitHub <https://github.com/SmileiPIC/Smilei
 Upcoming changes
 ^^^^^^^^^^^^^^^^
 
-* Particle merging (beta version)
 * Additional prescribed fields that only contribute to pushing particles
 * Nuclear reactions (beta version)
-* AMcylindrical now supports almost all features of the code
-  (Poisson solver and scalar diags still missing)
 * Interface with the PICSAR library (currently experimental)
-* More control over the moving window movement
-* More control over the regular position initialization in Cartesian geometries
-* Bugfixes:
-
- * particle binning was not following the moving window
- * gaussian profile with order 0 was incorrect
- * tracked particles post-processing was incorrect above 20M particles
 
 ----
 
@@ -33,6 +23,27 @@ Latest version
 The latest version tarball can be donwloaded here:
 
 **Download**: `Smilei latest <_downloads/Smilei.tar.gz>`_
+
+
+----
+
+Release 4.3
+^^^^^^^^^^^^^^^^^^^^^
+
+**Download**: `Smilei v4.3 <_downloads/smilei-v4.3.tar.gz>`_
+
+
+* *AMcylindrical* : envelope, ionization, additional diagnotics
+* Particle merging (beta version)
+* Particle injector
+* More control over the moving window movement
+* More control over the regular position initialization in Cartesian geometries
+* Bugfixes:
+ * particle binning was not following the moving window
+ * gaussian profile with order 0 was incorrect
+ * tracked particles post-processing was incorrect above 20M particles
+ * better management of particle binning in collisions
+ * Intel 19 optimizations
 
 
 ----
