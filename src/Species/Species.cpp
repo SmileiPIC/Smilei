@@ -58,7 +58,7 @@ Species::Species( Params &params, Patch *patch ) :
     radiating_( false ),
     relativistic_field_initialization_( false ),
     time_relativistic_initialization_( 0 ),
-    multiphoton_Breit_Wheeler( 2, "" ),
+    multiphoton_Breit_Wheeler_( 2, "" ),
     ionization_model( "none" ),
     density_profile_type_( "none" ),
     chargeProfile( NULL ),

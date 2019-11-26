@@ -105,7 +105,7 @@ public:
     double time_relativistic_initialization_;
 
     //! electron and positron Species for the multiphoton Breit-Wheeler
-    std::vector<std::string> multiphoton_Breit_Wheeler;
+    std::vector<std::string> multiphoton_Breit_Wheeler_;
 
     //! Boundary conditions for particules
     std::vector<std::vector<std::string> > boundary_conditions;
