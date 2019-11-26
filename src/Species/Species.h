@@ -134,7 +134,7 @@ public:
     // -----------------------------------------------------------------------------
     //  3. Variables for species processing
 
-    SpeciesMPIbuffers MPIbuff;
+    SpeciesMPIbuffers MPI_buffer_;
 
     //! Maximum charge at initialization
     double max_charge;

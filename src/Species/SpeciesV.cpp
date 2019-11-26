@@ -97,7 +97,7 @@ void SpeciesV::initCluster( Params &params )
     }
 
     //Initialize specMPI
-    MPIbuff.allocate( nDim_particle );
+    MPI_buffer_.allocate( nDim_particle );
 
     //ener_tot = 0.;
     nrj_bc_lost = 0.;
@@ -436,17 +436,17 @@ void SpeciesV::sortParticles( Params &params )
     //Loop over just arrived particles to compute their cell keys and contribution to count
     for( unsigned int idim=0; idim < nDim_particle ; idim++ ) {
         for( unsigned int ineighbor=0 ; ineighbor < 2 ; ineighbor++ ) {
-            buf_cell_keys[idim][ineighbor].resize( MPIbuff.part_index_recv_sz[idim][ineighbor] );
+            buf_cell_keys[idim][ineighbor].resize( MPI_buffer_.part_index_recv_sz[idim][ineighbor] );
             #pragma omp simd
-            for( unsigned int ip=0; ip < MPIbuff.part_index_recv_sz[idim][ineighbor]; ip++ ) {
+            for( unsigned int ip=0; ip < MPI_buffer_.part_index_recv_sz[idim][ineighbor]; ip++ ) {
                 for( unsigned int ipos=0; ipos < nDim_particle ; ipos++ ) {
-                    double X = MPIbuff.partRecv[idim][ineighbor].position( ipos, ip )-min_loc_vec[ipos];
+                    double X = MPI_buffer_.partRecv[idim][ineighbor].position( ipos, ip )-min_loc_vec[ipos];
                     int IX = round( X * dx_inv_[ipos] );
                     buf_cell_keys[idim][ineighbor][ip] = buf_cell_keys[idim][ineighbor][ip] * length[ipos] + IX;
                 }
             }
             //Can we vectorize this reduction ?
-            for( unsigned int ip=0; ip < MPIbuff.part_index_recv_sz[idim][ineighbor]; ip++ ) {
+            for( unsigned int ip=0; ip < MPI_buffer_.part_index_recv_sz[idim][ineighbor]; ip++ ) {
                 count[buf_cell_keys[idim][ineighbor][ip]] ++;
             }
         }
@@ -464,8 +464,8 @@ void SpeciesV::sortParticles( Params &params )
 
     //Now proceed to the cycle sort
 
-    if( MPIbuff.partRecv[0][0].size() == 0 ) {
-        MPIbuff.partRecv[0][0].initialize( 0, *particles );    //Is this correct ?
+    if( MPI_buffer_.partRecv[0][0].size() == 0 ) {
+        MPI_buffer_.partRecv[0][0].initialize( 0, *particles );    //Is this correct ?
     }
 
     // Resize the particle vector
@@ -480,7 +480,7 @@ void SpeciesV::sortParticles( Params &params )
     //Copy all particles from MPI buffers back to the writable particles via cycle sort pass.
     for( unsigned int idim=0; idim < nDim_particle ; idim++ ) {
         for( unsigned int ineighbor=0 ; ineighbor < 2 ; ineighbor++ ) {
-            for( unsigned int ip=0; ip < MPIbuff.part_index_recv_sz[idim][ineighbor]; ip++ ) {
+            for( unsigned int ip=0; ip < MPI_buffer_.part_index_recv_sz[idim][ineighbor]; ip++ ) {
                 cycle.resize( 1 );
                 cell_target = buf_cell_keys[idim][ineighbor][ip];
                 ip_dest = first_index[cell_target];
@@ -503,7 +503,7 @@ void SpeciesV::sortParticles( Params &params )
                 //Last target_cell is -1, the particle must be erased:
                 particles->translate_parts( cycle );
                 //Eventually copy particle from the MPI buffer into the particle vector.
-                MPIbuff.partRecv[idim][ineighbor].overwrite_part( ip, *particles, cycle[0] );
+                MPI_buffer_.partRecv[idim][ineighbor].overwrite_part( ip, *particles, cycle[0] );
             }
         }
     }

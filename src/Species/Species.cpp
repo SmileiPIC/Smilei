@@ -145,7 +145,7 @@ void Species::initCluster( Params &params )
     }
 
     //Initialize specMPI
-    MPIbuff.allocate( nDim_particle );
+    MPI_buffer_.allocate( nDim_particle );
 
     //ener_tot = 0.;
     nrj_bc_lost = 0.;
@@ -225,11 +225,11 @@ void Species::initOperators( Params &params, Patch *patch )
     partBoundCond = new PartBoundCond( params, this, patch );
     for( unsigned int iDim=0 ; iDim < nDim_particle ; iDim++ ) {
         for( unsigned int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++ ) {
-            MPIbuff.partRecv[iDim][iNeighbor].initialize( 0, ( *particles ) );
-            MPIbuff.partSend[iDim][iNeighbor].initialize( 0, ( *particles ) );
-            MPIbuff.part_index_send[iDim][iNeighbor].resize( 0 );
-            MPIbuff.part_index_recv_sz[iDim][iNeighbor] = 0;
-            MPIbuff.part_index_send_sz[iDim][iNeighbor] = 0;
+            MPI_buffer_.partRecv[iDim][iNeighbor].initialize( 0, ( *particles ) );
+            MPI_buffer_.partSend[iDim][iNeighbor].initialize( 0, ( *particles ) );
+            MPI_buffer_.part_index_send[iDim][iNeighbor].resize( 0 );
+            MPI_buffer_.part_index_recv_sz[iDim][iNeighbor] = 0;
+            MPI_buffer_.part_index_send_sz[iDim][iNeighbor] = 0;
         }
     }
     typePartSend.resize( nDim_particle*2, MPI_DATATYPE_NULL );
@@ -807,15 +807,15 @@ void Species::sortParticles( Params &params )
     }
 
     //idim=0
-    shift[1] += MPIbuff.part_index_recv_sz[0][0];//Particles coming from xmin all go to bin 0 and shift all the other bins.
-    shift[last_index.size()] += MPIbuff.part_index_recv_sz[0][1];//Used only to count the total number of particles arrived.
+    shift[1] += MPI_buffer_.part_index_recv_sz[0][0];//Particles coming from xmin all go to bin 0 and shift all the other bins.
+    shift[last_index.size()] += MPI_buffer_.part_index_recv_sz[0][1];//Used only to count the total number of particles arrived.
     //idim>0
     for( idim = 1; idim < ndim; idim++ ) {
         for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
-            n_part_recv = MPIbuff.part_index_recv_sz[idim][iNeighbor];
+            n_part_recv = MPI_buffer_.part_index_recv_sz[idim][iNeighbor];
             for( unsigned int j=0; j<( unsigned int )n_part_recv ; j++ ) {
                 //We first evaluate how many particles arrive in each bin.
-                ii = int( ( MPIbuff.partRecv[idim][iNeighbor].position( 0, j )-min_loc )/dbin ); //bin in which the particle goes.
+                ii = int( ( MPI_buffer_.partRecv[idim][iNeighbor].position( 0, j )-min_loc )/dbin ); //bin in which the particle goes.
                 shift[ii+1]++; // It makes the next bins shift.
             }
         }
@@ -850,11 +850,11 @@ void Species::sortParticles( Params &params )
     //Space has been made now to write the arriving particles into the correct bins
     //idim == 0  is the easy case, when particles arrive either in first or last bin.
     for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
-        n_part_recv = MPIbuff.part_index_recv_sz[0][iNeighbor];
+        n_part_recv = MPI_buffer_.part_index_recv_sz[0][iNeighbor];
         //if ( (neighbor_[0][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
         if( ( n_part_recv!=0 ) ) {
             ii = iNeighbor*( last_index.size()-1 ); //0 if iNeighbor=0(particles coming from Xmin) and last_index.size()-1 otherwise.
-            MPIbuff.partRecv[0][iNeighbor].overwrite_part( 0, *particles, last_index[ii], n_part_recv );
+            MPI_buffer_.partRecv[0][iNeighbor].overwrite_part( 0, *particles, last_index[ii], n_part_recv );
             last_index[ii] += n_part_recv ;
         }
     }
@@ -862,12 +862,12 @@ void Species::sortParticles( Params &params )
     for( idim = 1; idim < ndim; idim++ ) {
         //if (idim!=iDim) continue;
         for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
-            n_part_recv = MPIbuff.part_index_recv_sz[idim][iNeighbor];
+            n_part_recv = MPI_buffer_.part_index_recv_sz[idim][iNeighbor];
             //if ( (neighbor_[idim][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
             if( ( n_part_recv!=0 ) ) {
                 for( unsigned int j=0; j<( unsigned int )n_part_recv; j++ ) {
-                    ii = int( ( MPIbuff.partRecv[idim][iNeighbor].position( 0, j )-min_loc )/dbin ); //bin in which the particle goes.
-                    MPIbuff.partRecv[idim][iNeighbor].overwrite_part( j, *particles, last_index[ii] );
+                    ii = int( ( MPI_buffer_.partRecv[idim][iNeighbor].position( 0, j )-min_loc )/dbin ); //bin in which the particle goes.
+                    MPI_buffer_.partRecv[idim][iNeighbor].overwrite_part( j, *particles, last_index[ii] );
                     last_index[ii] ++ ;
                 }
             }
