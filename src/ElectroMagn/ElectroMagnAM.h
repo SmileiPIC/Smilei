@@ -41,7 +41,7 @@ public:
     std::vector<cField2D *> rho_AM_s;
     void restartRhoJ() override;
     void restartRhoJs() override;
-    
+
     void initPoisson( Patch *patch ) override;
     double compute_r();
     void compute_Ap( Patch *patch ) override;
@@ -162,22 +162,22 @@ public:
     //! Number of nodes on the dual grid in the y-direction
     unsigned int nr_d;
     
-    //! Spatial step dl for 3D3V cartesian simulations
+    //! Spatial step dl for 2D3V cylindrical simulations
     double dl;
     
-    //! Spatial step dr for 3D3V cartesian simulations
+    //! Spatial step dr for 2D3V cylindrical simulations
     double dr;
     
-    //! Ratio of the time-step by the spatial-step dt/dl for 3D3V cartesian simulations
+    //! Ratio of the time-step by the spatial-step dt/dl for 2D3V cylindrical simulations
     double dt_ov_dl;
     
-    //! Ratio of the time-step by the spatial-step dt/dr for 3D3V cartesian simulations
+    //! Ratio of the time-step by the spatial-step dt/dr for 2D3V cylindrical simulations
     double dt_ov_dr;
     
-    //! Ratio of the spatial-step by the time-step dl/dt for 3D3V cartesian simulations
+    //! Ratio of the spatial-step by the time-step dl/dt for 2D3V cylindrical simulations
     double dl_ov_dt;
     
-    //! Ratio of the spatial-step by the time-step dr/dt for 3D3V cartesian simulations
+    //! Ratio of the spatial-step by the time-step dr/dt for 2D3V cylindrical simulations
     double dr_ov_dt;
     //! Minimum radius in the current patch
     int j_glob_;

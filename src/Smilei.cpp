@@ -203,7 +203,7 @@ int main( int argc, char *argv[] )
         // if Laser Envelope is used, execute particles and envelope sections of ponderomotive loop
         if( params.Laser_Envelope_model ) {
             // initialize new envelope from scratch, following the input namelist
-            vecPatches.init_new_envelope( params );
+            vecPatches.initNewEnvelope( params );
         } // end condition if Laser Envelope Model is used
 
         // Project charge and current densities (and susceptibility if envelope is used) only for diags at t=0
@@ -290,10 +290,10 @@ int main( int argc, char *argv[] )
     // Check memory consumption & expected disk usage
     // ------------------------------------------------------------------------
     TITLE( "Memory consumption" );
-    vecPatches.check_memory_consumption( &smpi );
+    vecPatches.checkMemoryConsumption( &smpi );
 
     TITLE( "Expected disk usage (approximate)" );
-    vecPatches.check_expected_disk_usage( &smpi, params, checkpoint );
+    vecPatches.checkExpectedDiskUsage( &smpi, params, checkpoint );
 
     // ------------------------------------------------------------------------
     // check here if we can close the python interpreter
@@ -426,7 +426,7 @@ int main( int argc, char *argv[] )
             vecPatches.cleanParticlesOverhead(params, timers, itime );
 
             // Finalize field synchronization and exchanges
-            vecPatches.finalize_sync_and_bc_fields( params, &smpi, simWindow, time_dual, timers, itime );
+            vecPatches.finalizeSyncAndBCFields( params, &smpi, simWindow, time_dual, timers, itime );
             
             // call the various diagnostics
             vecPatches.runAllDiags( params, &smpi, itime, timers, simWindow );
@@ -465,7 +465,7 @@ int main( int argc, char *argv[] )
 
                 timers.loadBal.restart();
                 #pragma omp single
-                vecPatches.load_balance( params, time_dual, &smpi, simWindow, itime );
+                vecPatches.loadBalance( params, time_dual, &smpi, simWindow, itime );
                 timers.loadBal.update( params.printNow( itime ) );
 
                 if (params.uncoupled_grids && ((count_dlb%5)==0)) {
@@ -578,7 +578,7 @@ int executeTestMode( VectorPatch &vecPatches, SmileiMPI *smpi, SimWindow *simWin
 
     if( params.print_expected_disk_usage ) {
         TITLE( "Expected disk usage (approximate)" );
-        vecPatches.check_expected_disk_usage( smpi, params, checkpoint );
+        vecPatches.checkExpectedDiskUsage( smpi, params, checkpoint );
     }
 
     // If test mode enable, code stops here

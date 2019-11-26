@@ -67,7 +67,10 @@ public :
     #endif
         for( unsigned int ifield=0 ; ifield<fields.size() ; ifield++ ) {
             unsigned int ipatch = ifield%nPatches;
-            vecPatches( ipatch )->initSumField( fields[ifield], 0, smpi );
+            if ( !dynamic_cast<cField*>( fields[ipatch] ) )                            
+                vecPatches( ipatch )->initSumField( fields[ifield], 0, smpi );
+            else 
+                vecPatches( ipatch )->initSumFieldComplex( fields[ifield], 0, smpi );
         }
 
         // iDim = 0, local
@@ -109,7 +112,10 @@ public :
     #endif
         for( unsigned int ifield=0 ; ifield<fields.size() ; ifield++ ) {
             unsigned int ipatch = ifield%nPatches;
-            vecPatches( ipatch )->finalizeSumField( fields[ifield], 0 );
+            if ( !dynamic_cast<cField*>( fields[ipatch] ) )
+                vecPatches( ipatch )->finalizeSumField( fields[ifield], 0 );
+            else
+                vecPatches( ipatch )->finalizeSumFieldComplex( fields[ifield], 0 );
         }
         // END iDim = 0 sync
         // -----------------
@@ -126,7 +132,10 @@ public :
     #endif
             for( unsigned int ifield=0 ; ifield<fields.size() ; ifield++ ) {
                 unsigned int ipatch = ifield%nPatches;
-                vecPatches( ipatch )->initSumField( fields[ifield], 1, smpi );
+                if ( !dynamic_cast<cField*>( fields[ipatch] ) )
+                    vecPatches( ipatch )->initSumField( fields[ifield], 1, smpi );
+                else
+                    vecPatches( ipatch )->initSumFieldComplex( fields[ifield], 1, smpi );
             }
 
             // iDim = 1, local
@@ -172,7 +181,10 @@ public :
     #endif
             for( unsigned int ifield=0 ; ifield<fields.size() ; ifield++ ) {
                 unsigned int ipatch = ifield%nPatches;
-                vecPatches( ipatch )->finalizeSumField( fields[ifield], 1 );
+                if ( !dynamic_cast<cField*>( fields[ipatch] ) )
+                    vecPatches( ipatch )->finalizeSumField( fields[ifield], 1 );
+                else
+                    vecPatches( ipatch )->finalizeSumFieldComplex( fields[ifield], 1 );
             }
             // END iDim = 1 sync
             // -----------------
@@ -246,9 +258,9 @@ public :
 
     }
 
-    static void sum_all_components( std::vector<Field *> &fields, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime );
+    static void sumAllComponents( std::vector<Field *> &fields, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime );
 
-    void template_generator();
+    void templateGenerator();
 
     //! Fields synchronization
     static void exchangeE( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
@@ -288,12 +300,12 @@ public :
     static void finalize_exchange_all_components_along_Z( std::vector<Field *> fields, VectorPatch &vecPatches );
 
     //! Deprecated field functions
-    static void exchange_along_X( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
-    static void finalize_exchange_along_X( std::vector<Field *> fields, VectorPatch &vecPatches );
-    static void exchange_along_Y( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
-    static void finalize_exchange_along_Y( std::vector<Field *> fields, VectorPatch &vecPatches );
-    static void exchange_along_Z( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
-    static void finalize_exchange_along_Z( std::vector<Field *> fields, VectorPatch &vecPatches );
+    static void exchangeAlongX( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
+    static void finalizeExchangeAlongX( std::vector<Field *> fields, VectorPatch &vecPatches );
+    static void exchangeAlongY( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
+    static void finalizeExchangeAlongY( std::vector<Field *> fields, VectorPatch &vecPatches );
+    static void exchangeAlongZ( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
+    static void finalizeExchangeAlongZ( std::vector<Field *> fields, VectorPatch &vecPatches );
 
 };
 

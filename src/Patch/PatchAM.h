@@ -34,11 +34,13 @@ public:
     // --------------------------------------------------------------
     
     //! init comm / sum densities
+    void initSumFieldComplex( Field *field, int iDim, SmileiMPI *smpi ) override final;
+    //! finalize comm / sum densities
+    void finalizeSumFieldComplex( Field *field, int iDim ) override final;
+    //! init comm / sum densities
     void initSumField( Field *field, int iDim, SmileiMPI *smpi ) override final;
-    void reallyinitSumField( Field *field, int iDim ) override final;
     //! finalize comm / sum densities
     void finalizeSumField( Field *field, int iDim ) override final;
-    void reallyfinalizeSumField( Field *field, int iDim ) override final;
     
     //! init comm / exchange fields in direction iDim only
     void initExchange( Field *field, int iDim, SmileiMPI *smpi ) override final;
@@ -58,6 +60,8 @@ public:
     
     //! MPI_Datatype to sum [ndims_][iDim=0 prim/dial][iDim=1 prim/dial]
     MPI_Datatype ntypeSum_[2][2][2];
+    //! MPI_Datatype to sum [ndims_][iDim=0 prim/dial][iDim=1 prim/dial]
+    MPI_Datatype ntypeSum_complex_[2][2][2];
     //! MPI_Datatype to exchange [ndims_+1][iDim=0 prim/dial][iDim=1 prim/dial]
     MPI_Datatype ntype_[3][2][2];
     //! MPI_Datatype to exchange [ndims_+1][iDim=0 prim/dial][iDim=1 prim/dial]

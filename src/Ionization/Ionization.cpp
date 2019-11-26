@@ -10,7 +10,7 @@ Ionization::Ionization( Params &params, Species *species )
     invdt                   = 1./dt;
     nDim_field              = params.nDim_field;
     nDim_particle           = params.nDim_particle;
-    ionized_species_invmass = 1./species->mass;
+    ionized_species_invmass = 1./species->mass_;
     
     // Normalization constant from Smilei normalization to/from atomic units
     eV_to_au   = 1.0 / 27.2116;
