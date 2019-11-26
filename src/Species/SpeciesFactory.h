@@ -628,7 +628,7 @@ public:
         }
         // time when the relativistic field initialization is applied, if enabled
         int n_timesteps_relativistic_initialization   = ( int )( this_species->time_frozen_/params.timestep );
-        this_species->time_relativistic_initialization = ( double )( n_timesteps_relativistic_initialization ) * params.timestep;
+        this_species->time_relativistic_initialization_ = ( double )( n_timesteps_relativistic_initialization ) * params.timestep;
 
         if( !PyTools::extract( "boundary_conditions", this_species->boundary_conditions, "Species", ispec ) ) {
             ERROR( "For species '" << species_name << "', boundary_conditions not defined" );
@@ -779,7 +779,7 @@ public:
                 WARNING( "For species '" << species_name << "', relativistic_field_initialization not defined: assumed = 'false'." );
             }
         }
-        this_species->relativistic_field_initialization = relativistic_field_initialization;
+        this_species->relativistic_field_initialization_ = relativistic_field_initialization;
 
 
 
@@ -962,8 +962,8 @@ public:
         new_species->mass_                                     = species->mass_;
         new_species->time_frozen_                              = species->time_frozen_;
         new_species->radiating_                                = species->radiating_;
-        new_species->relativistic_field_initialization        = species->relativistic_field_initialization;
-        new_species->time_relativistic_initialization         = species->time_relativistic_initialization;
+        new_species->relativistic_field_initialization_        = species->relativistic_field_initialization_;
+        new_species->time_relativistic_initialization_         = species->time_relativistic_initialization_;
         new_species->boundary_conditions                      = species->boundary_conditions;
         new_species->thermal_boundary_temperature_             = species->thermal_boundary_temperature_;
         new_species->thermal_boundary_velocity_                = species->thermal_boundary_velocity_;
