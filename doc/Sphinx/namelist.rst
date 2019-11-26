@@ -1025,6 +1025,10 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
 
     The temporal envelope of the injector.
      
+----
+
+.. rst-class:: experimental
+
 .. _Particle_merging:
 
 Particle Merging
