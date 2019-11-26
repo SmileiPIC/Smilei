@@ -117,7 +117,7 @@ public:
     std::string density_profile_type_;
 
     //! charge profile
-    Profile *chargeProfile;
+    Profile *charge_profile_;
 
     //! density profile
     Profile *density_profile_;

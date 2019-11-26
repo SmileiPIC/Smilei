@@ -61,7 +61,7 @@ Species::Species( Params &params, Patch *patch ) :
     multiphoton_Breit_Wheeler_( 2, "" ),
     ionization_model( "none" ),
     density_profile_type_( "none" ),
-    chargeProfile( NULL ),
+    charge_profile_( NULL ),
     density_profile_( NULL ),
     velocity_profile_( 3, NULL ),
     temperature_profile_( 3, NULL ),
@@ -266,8 +266,8 @@ Species::~Species()
     if( particles_per_cell_profile_ ) {
         delete particles_per_cell_profile_;
     }
-    if( chargeProfile ) {
-        delete chargeProfile;
+    if( charge_profile_ ) {
+        delete charge_profile_;
     }
     if( density_profile_ ) {
         delete density_profile_;

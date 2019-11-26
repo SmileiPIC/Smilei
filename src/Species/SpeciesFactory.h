@@ -848,7 +848,7 @@ public:
         if( !PyTools::extract_pyProfile( "charge", profile1, "Species", ispec ) ) {
             ERROR( "For species '" << species_name << "', charge not found or not understood" );
         }
-        this_species->chargeProfile = new Profile( profile1, params.nDim_field, Tools::merge( "charge ", species_name ), true );
+        this_species->charge_profile_ = new Profile( profile1, params.nDim_field, Tools::merge( "charge ", species_name ), true );
 
         if( this_species->momentum_initialization_array_ == NULL ) {
             // Mean velocity
@@ -995,7 +995,7 @@ public:
         new_species->merge_min_momentum_cell_length_[2]       = species->merge_min_momentum_cell_length_[2];
         
 
-        new_species->chargeProfile                            = new Profile( species->chargeProfile );
+        new_species->charge_profile_                            = new Profile( species->charge_profile_ );
         if( species->density_profile_ ) {
             new_species->density_profile_                     = new Profile( species->density_profile_ );
             new_species->particles_per_cell_profile_          = new Profile( species->particles_per_cell_profile_ );
