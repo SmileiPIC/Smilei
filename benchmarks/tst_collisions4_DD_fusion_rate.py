@@ -9,7 +9,7 @@ L0 = 2.*math.pi # conversion from normalization length to wavelength
 Main(
 	geometry = "1Dcartesian",
 	
-	number_of_patches = [ 4 ],
+	number_of_patches = [ 8 ],
 	
 	interpolation_order = 2,
 	
@@ -19,7 +19,7 @@ Main(
 	
 	time_fields_frozen = 100000000000.,
 	
-	cell_length = [20.*L0],
+	cell_length = [5.*L0],
 	grid_length = [1600.*L0],
 	
 	EM_boundary_conditions = [ ["periodic"] ],

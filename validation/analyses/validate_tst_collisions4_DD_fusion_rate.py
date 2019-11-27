@@ -14,7 +14,7 @@ for i in range(0,len(S.namelist.DiagParticleBinning),2):
     Npart += [S.Scalar("Ntot_He_%d"%(i//2)).getData()[-1]]
 
 Validate("log10 of created helium3 density", log10(array(N)+1e-40), 0.2)
-Validate("number of created helium3", Npart, 50.)
+Validate("number of created helium3", Npart, 200.)
 
 
 # # Some ploting to compare w theory
