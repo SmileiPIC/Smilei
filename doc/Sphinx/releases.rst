@@ -33,7 +33,7 @@ Release 4.3
 **Download**: `Smilei v4.3 <_downloads/smilei-v4.3.tar.gz>`_
 
 
-* *AMcylindrical* : envelope, ionization, additional diagnotics,number of ppc per direction, binomial current filter, poisson solver, non-separable laser initialization per mode
+* *AMcylindrical* : envelope, ionization, additional diagnotics,number of ppc per direction, binomial current filter, poisson solver, non-separable laser initialization per mode, improved diag field nomenclature
 * Particle merging (beta version)
 * Particle injector
 * More control over the moving window movement
