@@ -33,8 +33,8 @@ Projector3D4OrderV::Projector3D4OrderV( Params &params, Patch *patch ) : Project
     oversize[0] = params.oversize[0];
     oversize[1] = params.oversize[1];
     oversize[2] = params.oversize[2];
-    nprimy = nscelly + oversize[1];
-    nprimz = nscellz + oversize[2];
+    nprimy = nscelly + 2*oversize[1];
+    nprimz = nscellz + 2*oversize[2];
     dq_inv[0] = dx_inv_;
     dq_inv[1] = dy_inv_;
     dq_inv[2] = dz_inv_;

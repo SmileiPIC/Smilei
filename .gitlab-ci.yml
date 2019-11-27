@@ -5,10 +5,8 @@ stages:
 compile:
   stage: compile
   only:
-    - Nmodes_SM
     - develop
-    - sync_integration
-    - dev_injector
+    - DDfusion
 
   script:
     # Force workdir cleaning in case of retried
@@ -29,10 +27,8 @@ compile:
 makerun1D:
   stage: makerun
   only:
-    - Nmodes_SM
     - develop
-    - sync_integration
-    - dev_injector
+    - DDfusion
 
   script:
     # Move in test dir
@@ -43,10 +39,8 @@ makerun1D:
 makerun2D:
   stage: makerun
   only:
-    - Nmodes_SM
     - develop
-    - sync_integration
-    - dev_injector
+    - DDfusion
 
   script:
     # Move in test dir
@@ -57,10 +51,8 @@ makerun2D:
 makerun3D:
   stage: makerun
   only:
-    - Nmodes_SM
     - develop
-    - sync_integration
-    - dev_injector
+    - DDfusion
 
   script:
     # Move in test dir
@@ -71,9 +63,8 @@ makerun3D:
 makerunAM:
   stage: makerun
   only:
-    - Nmodes_SM
     - develop
-    - dev_injector
+    - DDfusion
     
   script:
     # Move in test dir
@@ -84,10 +75,8 @@ makerunAM:
 makerunV:
   stage: makerun
   only:
-    - Nmodes_SM
     - develop
-    - multisteps_movwin
-    - dev_injector
+    - DDfusion
 
   script:
     # Move in test dir
@@ -98,9 +87,8 @@ makerunV:
 makerunCollisions:
   stage: makerun
   only:
-    - Nmodes_SM
     - develop
-    - dev_injector
+    - DDfusion
     
   script:
     # Move in test dir

@@ -324,6 +324,7 @@ The block ``Main`` is **mandatory** and has the following syntax::
   :default: 2
 
   The number of azimuthal modes used for the Fourier decomposition in ``"AMcylindrical"`` geometry.
+  The modes range from mode 0 to mode `"number_of_AM-1"`.
 
 .. py:data:: number_of_AM_relativistic_field_initialization
 
@@ -642,9 +643,11 @@ Each species has to be defined in a ``Species`` block::
 
    :type: A python list of integers.
 
-   The size of the list must be the simulation particle dimension. It can be used only if `position_initialization` is set to `regular`
-   and not in `AMcylindrical` geometry. The product of the elements of the provided list must be equal to `particles_per_cell`.
+   The size of the list must be the simulation particle dimension. It can be used only if `position_initialization` is set to `regular`.
+   The product of the elements of the provided list must be equal to `particles_per_cell`.
    This list sets the number of evenly spaced particles per cell per dimension at their initial positions.
+   The numbers are given in the order [`Nx`, `Ny`, `Nz`] in cartesian geometries and [`Nx`, `Nr`, `Ntheta`] in `AMcylindrical` in which
+   case we advise to use :math:`Ntheta \geq  4\times (number\_of\_AM-1)`.
 
 .. py:data:: momentum_initialization
 
@@ -752,9 +755,11 @@ Each species has to be defined in a ``Species`` block::
   :default: 0.
 
   The time during which the particles are "frozen", in units of :math:`T_r`.
-  Frozen particles do not move and therefore do not deposit any current either.
+  Frozen particles do not move and therefore do not deposit any current density either. 
+  Nonetheless, they deposit a charge density.
   They are computationally much cheaper than non-frozen particles and oblivious to any EM-fields
-  in the simulation.
+  in the simulation. Note that frozen particles can be ionized (this is computationally much cheaper 
+  if ion motion is not relevant).
 
 .. py:data:: ionization_model
 
@@ -1020,6 +1025,10 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
 
     The temporal envelope of the injector.
      
+----
+
+.. rst-class:: experimental
+
 .. _Particle_merging:
 
 Particle Merging
@@ -1458,8 +1467,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 Laser envelope model
 ^^^^^^^^^^^^^^^^^^^^^^
 
-In the geometries ``"1Dcartesian"``, ``"2Dcartesian"``, ``"3Dcartesian"``
-it is possible to model a laser pulse propagating in the ``x`` direction
+In all the available geometries, it is possible to model a laser pulse propagating in the ``x`` direction
 using an envelope model (see :doc:`laser_envelope` for the advantages
 and limits of this approximation).
 The fast oscillations of the laser are neglected and all the physical
@@ -1469,6 +1477,12 @@ meant as an average over one or more optical cycles.
 Effects involving characteristic lengths comparable to the laser central
 wavelength (i.e. sharp plasma density profiles) cannot be modeled with
 this option.
+
+.. note::
+
+  The envelope model in ``"AMcylindrical"`` geometry is implemented only in the hypothesis of  
+  cylindrical symmetry, i.e. only one azimuthal mode. Therefore, to use it the user must choose
+  ``number_of_AM = 1``.
 
 Contrarily to a standard Laser initialized with the Silver-Müller
 boundary conditions, the laser envelope will be entirely initialized inside
@@ -1579,11 +1593,26 @@ Following is the simplified laser envelope creator in 3D ::
         Envelope_boundary_conditions = [ ["reflective"] ],
     )
 
+.. rubric:: 5. Defining a cylindrical gaussian laser envelope
+
+..
+
+Following is the simplified laser envelope creator in ``"AMcylindrical"`` geometry (remember that 
+in this geometry the envelope model can be used only if ``number_of_AM = 1``) ::
+
+    LaserEnvelopeGaussianAM(
+        a0              = 1.,
+        focus           = [150., 40.],
+        waist           = 30.,
+        time_envelope   = tgaussian(center=150., fwhm=40.),
+        envelope_solver = 'explicit',
+        Envelope_boundary_conditions = [ ["reflective"] ],
+    )
 
 
-The arguments appearing ``LaserEnvelopePlanar1D``, ``LaserEnvelopeGaussian2D``
-and ``LaserEnvelopeGaussian3D`` have the same meaning they would have in a
-normal ``LaserPlanar1D``, ``LaserGaussian2D`` and ``LaserGaussian3D``,
+The arguments appearing ``LaserEnvelopePlanar1D``, ``LaserEnvelopeGaussian2D``,
+``LaserEnvelopeGaussian3D`` and ``LaserEnvelopeGaussianAM`` have the same meaning they would have in a
+normal ``LaserPlanar1D``, ``LaserGaussian2D``, ``LaserGaussian3D`` and ``LaserGaussianAM``,
 with some differences:
 
 .. py:data:: time_envelope
@@ -2498,6 +2527,9 @@ This is done by including a block ``DiagFields``::
   | | Env_E_abs    | | :math:`\tilde{E}` (component along the polarization |
   | |              | | direction)                                          |
   +----------------+-------------------------------------------------------+
+
+.. Note:: To write these last three envelope fields with this diagnostics in ``"AMcylindrical"`` geometry, 
+          a dedicated block ``DiagFields`` must be defined, e.g. with ``fields = ["Env_A_abs_mode_0", "Env_Chi_mode_0"]``.
 
 .. py:data:: subgrid
 

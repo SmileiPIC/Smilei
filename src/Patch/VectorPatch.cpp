@@ -146,11 +146,19 @@ void VectorPatch::createDiags( Params &params, SmileiMPI *smpi, OpenPMDparams &o
                     EMfields->rho_AM_s[ifield]=NULL;
                 }
             }
-
+      
+            if (params.Laser_Envelope_model){
+                for( unsigned int ifield=0 ; ifield<EMfields->Env_Chi_s.size(); ifield++ ) {
+                if( EMfields->Env_Chi_s[ifield]->data_ == NULL ) {
+                    delete EMfields->Env_Chi_s[ifield];
+                    EMfields->Env_Chi_s[ifield]=NULL;
+                    }
+                }
+            }
         }
 
 
-        if( params.Laser_Envelope_model ) {
+        if( (params.Laser_Envelope_model) && (params.geometry != "AMcylindrical")) {
             for( unsigned int ifield=0 ; ifield<( *this )( ipatch )->EMfields->Env_Chi_s.size(); ifield++ ) {
                 if( ( *this )( ipatch )->EMfields->Env_Chi_s[ifield]->data_ == NULL ) {
                     delete( *this )( ipatch )->EMfields->Env_Chi_s[ifield];
@@ -426,6 +434,9 @@ void VectorPatch::projectionForDiags( Params &params,
 
 } // END projection for diags
 
+// ---------------------------------------------------------------------------------------------------------------------
+//! For all patches, exchange particles and sort them.
+// ---------------------------------------------------------------------------------------------------------------------
 void VectorPatch::finalizeAndSortParticles( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
         double time_dual, Timers &timers, int itime )
 {
@@ -747,14 +758,14 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     // New energy from particles
                     if( patch->isXmax() ) {
                         // Matter particle case
-                        if( injector_species->mass > 0 ) {
+                        if( injector_species->mass_ > 0 ) {
                             for( int ip = 0; ip<new_particle_number; ip++ ) {
                                 injector_species->new_particles_energy_ += particles->weight( ip )
                                 *( particles->lor_fac( ip )-1.0 );
                             }
                         }
                         // Photon case
-                        else if( injector_species->mass == 0 ) {
+                        else if( injector_species->mass_ == 0 ) {
                             for( int ip=0; ip<new_particle_number; ip++ ) {
                                 injector_species->new_particles_energy_ += particles->weight( ip )
                                 *( particles->momentum_norm( ip ) );
@@ -805,8 +816,8 @@ void VectorPatch::computeChargeRelativisticSpecies( double time_primal )
         ( *this )( ipatch )->EMfields->restartRhoJ();
         for( unsigned int ispec=0 ; ispec<( *this )( ipatch )->vecSpecies.size() ; ispec++ ) {
             // project only if species needs relativistic initialization and it is the right time to initialize its fields
-            if( ( species( ipatch, ispec )->relativistic_field_initialization ) &&
-                    ( time_primal == species( ipatch, ispec )->time_relativistic_initialization ) ) {
+            if( ( species( ipatch, ispec )->relativistic_field_initialization_ ) &&
+                    ( time_primal == species( ipatch, ispec )->time_relativistic_initialization_ ) ) {
                 if( ( *this )( ipatch )->vecSpecies[ispec]->vectorized_operators ) {
                     species( ipatch, ispec )->computeCharge( ispec, emfields( ipatch ) );
                 } else {
@@ -863,7 +874,7 @@ void VectorPatch::sumDensities( Params &params, double time_dual, Timers &timers
     if( diag_flag ) {
         for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size(); ispec++ ) {
             if( !( *this )( 0 )->vecSpecies[ispec]->particles->is_test ) {
-                update_field_list( ispec, smpi );
+                updateFieldList( ispec, smpi );
                 if( params.geometry != "AMcylindrical" ) {
                     SyncVectorPatch::sumRhoJs( params, ( *this ), ispec, smpi, timers, itime ); // MPI
                 } else {
@@ -906,7 +917,7 @@ void VectorPatch::sumSusceptibility( Params &params, double time_dual, Timers &t
         for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size(); ispec++ ) {
             if( !( *this )( 0 )->vecSpecies[ispec]->particles->is_test ) {
                 if( species( 0, ispec )->ponderomotive_dynamics ) {
-                    update_field_list( ispec, smpi );
+                    updateFieldList( ispec, smpi );
                     SyncVectorPatch::sumEnvChis( params, ( *this ), ispec, smpi, timers, itime );
                 } // MPI
             }
@@ -916,14 +927,9 @@ void VectorPatch::sumSusceptibility( Params &params, double time_dual, Timers &t
     timers.susceptibility.update();
 
     timers.susceptibility.restart();
-    if( ( params.geometry == "1Dcartesian" ) or ( params.geometry == "2Dcartesian" ) or ( params.geometry == "3Dcartesian" ) ) {
-        SyncVectorPatch::sumEnvChi( params, ( *this ), smpi, timers, itime ); // MPI
-    } else {
-        ERROR( "Envelope model not yet implemented in this geometry" );
-        // for (unsigned int imode = 0 ; imode < static_cast<ElectroMagnAM*>(patches_[0]->EMfields)->Jl_.size() ; imode++  ) {
-        //     SyncVectorPatch::sumRhoJ( params, (*this), imode, timers, itime );
-        // }
-    }
+    
+    SyncVectorPatch::sumEnvChi( params, ( *this ), smpi, timers, itime ); // MPI
+    
 
     timers.susceptibility.update();
 
@@ -1022,7 +1028,7 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
             }
         }
         if( params.is_spectral ) {
-            save_old_rho( params );
+            saveOldRho( params );
         }
     }
 #endif
@@ -1080,7 +1086,7 @@ void VectorPatch::solveEnvelope( Params &params, SimWindow *simWindow, int itime
 
 } // END solveEnvelope
 
-void VectorPatch::finalize_sync_and_bc_fields( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
+void VectorPatch::finalizeSyncAndBCFields( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
         double time_dual, Timers &timers, int itime )
 {
 #ifndef _PICSAR
@@ -1101,7 +1107,7 @@ void VectorPatch::finalize_sync_and_bc_fields( Params &params, SmileiMPI *smpi, 
     }
 #endif
 
-} // END finalize_sync_and_bc_fields
+} // END finalizeSyncAndBCFields
 
 
 void VectorPatch::initExternals( Params &params )
@@ -1589,9 +1595,9 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
     double s_gamma( 0. );
     uint64_t nparticles( 0 );
     for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size() ; ispec++ ) {
-        if( species( 0, ispec )->relativistic_field_initialization ) {
+        if( species( 0, ispec )->relativistic_field_initialization_ ) {
             for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-                if( time_primal==species( ipatch, ispec )->time_relativistic_initialization ) {
+                if( time_primal==species( ipatch, ispec )->time_relativistic_initialization_ ) {
                     s_gamma += species( ipatch, ispec )->sumGamma();
                     nparticles += species( ipatch, ispec )->getNbrOfParticles();
                 }
@@ -2022,9 +2028,9 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
     double s_gamma( 0. );
     uint64_t nparticles( 0 );
     for( unsigned int ispec=0 ; ispec<( *this )( 0 )->vecSpecies.size() ; ispec++ ) {
-        if( species( 0, ispec )->relativistic_field_initialization ) {
+        if( species( 0, ispec )->relativistic_field_initialization_ ) {
             for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
-                if( time_primal==species( ipatch, ispec )->time_relativistic_initialization ) {
+                if( time_primal==species( ipatch, ispec )->time_relativistic_initialization_ ) {
                     s_gamma += species( ipatch, ispec )->sumGamma();
                     nparticles += species( ipatch, ispec )->getNbrOfParticles();
                 }
@@ -2370,7 +2376,7 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
 // ---------------------------------------------------------------------------------------------------------------------
 
 
-void VectorPatch::load_balance( Params &params, double time_dual, SmileiMPI *smpi, SimWindow *simWindow, unsigned int itime )
+void VectorPatch::loadBalance( Params &params, double time_dual, SmileiMPI *smpi, SimWindow *simWindow, unsigned int itime )
 {
 
     // Compute new patch distribution
@@ -2610,7 +2616,7 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
         }
     }
     this->set_refHindex() ;
-    update_field_list( smpi ) ;
+    updateFieldList( smpi ) ;
 
 } // END exchangePatches
 
@@ -2619,7 +2625,7 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
 //   - Send/Recv MPI rank
 //   - Send/Recv patch Id
 // ---------------------------------------------------------------------------------------------------------------------
-void VectorPatch::output_exchanges( SmileiMPI *smpi )
+void VectorPatch::outputExchanges( SmileiMPI *smpi )
 {
     ofstream output_file;
     ostringstream name( "" );
@@ -2646,10 +2652,10 @@ void VectorPatch::output_exchanges( SmileiMPI *smpi )
     }
     output_file << "NEXT" << endl;
     output_file.close();
-} // END output_exchanges
+} // END outputExchanges
 
 //! Resize vector of field*
-void VectorPatch::update_field_list( SmileiMPI *smpi )
+void VectorPatch::updateFieldList( SmileiMPI *smpi )
 {
     int nDim( 0 );
     if( !dynamic_cast<ElectroMagnAM *>( patches_[0]->EMfields ) ) {
@@ -2773,6 +2779,34 @@ void VectorPatch::update_field_list( SmileiMPI *smpi )
                 listBt_[imode][ipatch]     = static_cast<ElectroMagnAM *>( patches_[ipatch]->EMfields )->Bt_[imode] ;
             }
         }
+
+        if( patches_[0]->EMfields->envelope != NULL ) {
+            listA_.resize( size() ) ;
+            listA0_.resize( size() ) ;
+            listPhi_.resize( size() ) ;
+            listPhi0_.resize( size() ) ;
+            listGradPhil_.resize( size() ) ;
+            listGradPhir_.resize( size() ) ;
+            listGradPhil0_.resize( size() ) ;
+            listGradPhir0_.resize( size() ) ;
+            listEnv_Chi_.resize( size() ) ;
+        }
+
+
+        if( patches_[0]->EMfields->envelope != NULL ) {
+            for( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+                listA_[ipatch]         = patches_[ipatch]->EMfields->envelope->A_ ;
+                listA0_[ipatch]        = patches_[ipatch]->EMfields->envelope->A0_ ;
+                listPhi_[ipatch]       = patches_[ipatch]->EMfields->envelope->Phi_ ;
+                listPhi0_[ipatch]      = patches_[ipatch]->EMfields->envelope->Phi_m ;
+                listGradPhil_[ipatch]  = patches_[ipatch]->EMfields->envelope->GradPhil_ ;
+                listGradPhir_[ipatch]  = patches_[ipatch]->EMfields->envelope->GradPhir_ ;
+                listGradPhil0_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhil_m ;
+                listGradPhir0_[ipatch] = patches_[ipatch]->EMfields->envelope->GradPhir_m ;
+                listEnv_Chi_[ipatch]   = patches_[ipatch]->EMfields->Env_Chi_ ;
+            }
+        }
+
     }
 
     B_localx.clear();
@@ -2958,12 +2992,26 @@ void VectorPatch::update_field_list( SmileiMPI *smpi )
                 listrho_AM_[imode][ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
             }
         }
+        if( patches_[0]->EMfields->envelope != NULL ) {
+            for( unsigned int ipatch = 0 ; ipatch < size() ; ipatch++ ) {
+                listA_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                listA0_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                listPhi_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                listPhi0_ [ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                listGradPhil_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                listGradPhir_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                listGradPhil0_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                listGradPhir0_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+                listEnv_Chi_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 ) ;
+            }
+
+        }
     }
 }
 
 
 
-void VectorPatch::update_field_list( int ispec, SmileiMPI *smpi )
+void VectorPatch::updateFieldList( int ispec, SmileiMPI *smpi )
 {
     #pragma omp barrier
     if( !dynamic_cast<ElectroMagnAM *>( patches_[0]->EMfields ) ) {
@@ -3063,6 +3111,15 @@ void VectorPatch::update_field_list( int ispec, SmileiMPI *smpi )
                     listrhos_AM_[imode].clear();
                 }
             }
+            if( patches_[0]->EMfields->envelope != NULL )
+            {
+                if( patches_[0]->EMfields->Env_Chi_s[ispec] ) {
+                    listEnv_Chis_.resize( size() ) ;
+                } else {
+                    listEnv_Chis_.clear();
+                }
+            }
+            
         }
         for( unsigned int imode=0 ; imode < nmodes ; imode++ ) {
             unsigned int ifield = imode*n_species + ispec ;
@@ -3087,7 +3144,14 @@ void VectorPatch::update_field_list( int ispec, SmileiMPI *smpi )
                 }
             }
         }
-
+        for( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
+            if( patches_[0]->EMfields->envelope != NULL ) {
+                if( patches_[ipatch]->EMfields->Env_Chi_s[ispec] ) {
+                    listEnv_Chis_[ipatch] = patches_[ipatch]->EMfields->Env_Chi_s[ispec];
+                    listEnv_Chis_[ipatch]->MPIbuff.defineTags( patches_[ipatch], smpi, 0 );
+                }
+            }
+        }
     }
 
 
@@ -3225,7 +3289,7 @@ void VectorPatch::saveExternalFields( Params &params )
 
 
 // Print information on the memory consumption
-void VectorPatch::check_memory_consumption( SmileiMPI *smpi )
+void VectorPatch::checkMemoryConsumption( SmileiMPI *smpi )
 {
     long int particlesMem( 0 );
     for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ )
@@ -3297,7 +3361,7 @@ void VectorPatch::check_memory_consumption( SmileiMPI *smpi )
 }
 
 
-void VectorPatch::save_old_rho( Params &params )
+void VectorPatch::saveOldRho( Params &params )
 {
     int n=0;
     #pragma omp for schedule(static)
@@ -3313,7 +3377,7 @@ void VectorPatch::save_old_rho( Params &params )
 
 
 // Print information on the memory consumption
-void VectorPatch::check_expected_disk_usage( SmileiMPI *smpi, Params &params, Checkpoint &checkpoint )
+void VectorPatch::checkExpectedDiskUsage( SmileiMPI *smpi, Params &params, Checkpoint &checkpoint )
 {
     if( smpi->isMaster() ) {
 
@@ -3561,7 +3625,7 @@ void VectorPatch::ponderomotiveUpdatePositionAndCurrents( Params &params,
 } // END ponderomotiveUpdatePositionAndCurrents
 
 
-void VectorPatch::init_new_envelope( Params &params )
+void VectorPatch::initNewEnvelope( Params &params )
 {
     if( ( *this )( 0 )->EMfields->envelope!=NULL ) {
         // for all patches, init new envelope from input namelist parameters
@@ -3569,4 +3633,4 @@ void VectorPatch::init_new_envelope( Params &params )
             ( *this )( ipatch )->EMfields->envelope->initEnvelope( ( *this )( ipatch ), ( *this )( ipatch )->EMfields );
         } // end loop on patches
     }
-} // END init_new_envelope
+} // END initNewEnvelope

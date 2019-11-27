@@ -14,7 +14,7 @@ Pusher::Pusher( Params &params, Species *species ) :
     nspace[1] = params.n_space[1]+1;
     nspace[2] = params.n_space[2]+1;
     
-    mass_          = species->mass;
+    mass_          = species->mass_;
     if( mass_ > 0. ) {
         one_over_mass_ = 1.0/mass_;
     } else {

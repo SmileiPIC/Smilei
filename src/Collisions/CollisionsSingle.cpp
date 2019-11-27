@@ -97,7 +97,7 @@ void CollisionsSingle::collide( Params &params, Patch *patch, int itime, vector<
         p1->swap_parts( index1 ); // exchange particles along the cycle defined by the shuffle
         
         // Prepare the ionization
-        Ionization->prepare1( s1->atomic_number );
+        Ionization->prepare1( s1->atomic_number_ );
         
         // Calculate the densities
         n1  = 0.; // density of species 1
@@ -145,7 +145,7 @@ void CollisionsSingle::collide( Params &params, Patch *patch, int itime, vector<
             double U2  = patch->xorshift32() * patch->xorshift32_invmax;
             double phi = patch->xorshift32() * patch->xorshift32_invmax * twoPi;
             
-            s = one_collision( p1, i1, s1->mass, p2, i2, s2->mass, coeff1_, coeff2_, coeff3, coeff4, n123, n223, debye2, logL, U1, U2, phi );
+            s = one_collision( p1, i1, s1->mass_, p2, i2, s2->mass_, coeff1_, coeff2_, coeff3, coeff4, n123, n223, debye2, logL, U1, U2, phi );
             
             // Handle ionization
             Ionization->apply( patch, p1, i1, p2, i2 );

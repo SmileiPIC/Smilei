@@ -291,7 +291,7 @@ void RadiationTables::computeHTable( SmileiMPI *smpi )
     h_chipa_inv_delta = 1./h_chipa_delta;
 
     // Load repartition
-    userFunctions::distribute_load_1d_table( nb_ranks,
+    userFunctions::distributeArray( nb_ranks,
             h_dim,
             imin_table,
             length_table );
@@ -404,7 +404,7 @@ void RadiationTables::computeIntegfochiTable( SmileiMPI *smpi )
     integfochi_chipa_inv_delta = 1./integfochi_chipa_delta;
 
     // Load repartition
-    userFunctions::distribute_load_1d_table( nb_ranks,
+    userFunctions::distributeArray( nb_ranks,
             integfochi_dim,
             imin_table,
             length_table );
@@ -523,7 +523,7 @@ void RadiationTables::computeXipTable( SmileiMPI *smpi )
     xip_chipa_inv_delta = 1./xip_chipa_delta;
 
     // Load repartition
-    userFunctions::distribute_load_1d_table( nb_ranks,
+    userFunctions::distributeArray( nb_ranks,
             xip_chipa_dim,
             imin_table,
             length_table );
@@ -1166,7 +1166,7 @@ double RadiationTables::computeRandomPhotonChi( double particle_chi )
         // If nearest point: ichiph = xip_chiph_dim-1
     } else {
         // Search for the corresponding index ichiph for xip
-        ichiph = userFunctions::search_elem_in_array(
+        ichiph = userFunctions::searchValuesInMonotonicArray(
                      &xip_table[ichipa*xip_chiph_dim], xip, xip_chiph_dim );
     }
 
@@ -1294,7 +1294,7 @@ double RadiationTables::integrateSynchrotronEmissivity( double particle_chi,
     int i;
 
     // gauss Legendre coefficients
-    userFunctions::gauss_legendre_coef( log10( min_photon_chi ), log10( max_photon_chi ),
+    userFunctions::gaussLegendreCoef( log10( min_photon_chi ), log10( max_photon_chi ),
                                         gauleg_x, gauleg_w, nb_iterations, eps );
 
     // Integration loop
@@ -1344,20 +1344,20 @@ double RadiationTables::computeRitusSynchrotronEmissivity( double particle_chi,
 
         // Computation of Part. 1
         // Call the modified Bessel function to get K
-        userFunctions::modified_bessel_IK( 2./3., 2*y, I, dI, K, dK, 50000, eps, false );
+        userFunctions::modifiedBesselIK( 2./3., 2*y, I, dI, K, dK, 50000, eps, false );
 
         part1 = ( 2. + 3.*photon_chi*y )*( K );
 
         // Computation of Part. 2
         // Using Gauss Legendre integration
 
-        userFunctions::gauss_legendre_coef( log10( 2*y ), log10( y )+50., gauleg_x,
+        userFunctions::gaussLegendreCoef( log10( 2*y ), log10( y )+50., gauleg_x,
                                             gauleg_w, nb_iterations, eps );
 
         part2 = 0;
         for( i=0 ; i< nb_iterations ; i++ ) {
             y = pow( 10., gauleg_x[i] );
-            userFunctions::modified_bessel_IK( 1./3., y, I, dI, K, dK, 50000, eps, false );
+            userFunctions::modifiedBesselIK( 1./3., y, I, dI, K, dK, 50000, eps, false );
             part2 += gauleg_w[i]*K*y*log( 10. );
         }
 
@@ -1402,16 +1402,16 @@ double RadiationTables::computeHNiel( double particle_chi,
 
     // Gauss-Legendre coefs between log10(1E-20)
     // and log10(50.) = 1.6989700043360187
-    userFunctions::gauss_legendre_coef( -20., log10( 50. ), gauleg_x,
+    userFunctions::gaussLegendreCoef( -20., log10( 50. ), gauleg_x,
                                         gauleg_w, nb_iterations, eps );
 
     for( i=0 ; i< nb_iterations ; i++ ) {
 
         nu = pow( 10., gauleg_x[i] );
 
-        userFunctions::modified_bessel_IK( 5./3., nu, I, dI, K53, dK, 50000, eps, false );
+        userFunctions::modifiedBesselIK( 5./3., nu, I, dI, K53, dK, 50000, eps, false );
 
-        userFunctions::modified_bessel_IK( 2./3., nu, I, dI, K23, dK, 50000, eps, false );
+        userFunctions::modifiedBesselIK( 2./3., nu, I, dI, K23, dK, 50000, eps, false );
 
         h += gauleg_w[i]*log( 10. )*nu
              * ( ( 2.*pow( particle_chi*nu, 3 ) / pow( 2. + 3.*nu*particle_chi, 3 )*K53 )
