@@ -33,12 +33,13 @@ Release 4.3
 **Download**: `Smilei v4.3 <_downloads/smilei-v4.3.tar.gz>`_
 
 
-* *AMcylindrical* : envelope, ionization, additional diagnotics
+* *AMcylindrical* : envelope, ionization, additional diagnotics,number of ppc per direction, binomial current filter, poisson solver
 * Particle merging (beta version)
 * Particle injector
 * More control over the moving window movement
 * More control over the regular position initialization in Cartesian geometries
 * Bugfixes:
+ * ionization of frozen species
  * particle binning was not following the moving window
  * gaussian profile with order 0 was incorrect
  * tracked particles post-processing was incorrect above 20M particles
