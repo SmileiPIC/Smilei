@@ -1959,6 +1959,7 @@ Collisions
       coulomb_log = 5.,
       debug_every = 1000,
       ionizing = False,
+  #      nuclear_reaction = [],
   )
 
 
@@ -2011,7 +2012,7 @@ Collisions
 
 .. py:data:: ionizing
 
-  :default: False
+  :default: ``False``
 
   :ref:`Collisional ionization <CollIonization>` is set when this parameter is not ``False``.
   It can either be set to the name of a pre-existing electron species (where the ionized
@@ -2021,7 +2022,36 @@ Collisions
   One of the species groups must be all electrons (:py:data:`mass` = 1), and the other
   one all ions of the same :py:data:`atomic_number`.
   
+.. rst-class:: experimental
+
+.. py:data:: nuclear_reaction
   
+  :type: a list of strings
+  :default: ``None`` (no nuclear reaction)
+  
+  A list of the species names for the products of nuclear reactions
+  that may occur during collisions. You may omit product species if they are not necessary
+  for the simulation.
+  
+  All members of :py:data:`species1` must be the same type of atoms, which is automatically
+  recognized by their :py:data:`mass` and :py:data:`atomic_number`. The same applies for
+  all members of :py:data:`species2`.
+  
+  In the current version, only the reaction D(d,n)He³ is available.
+
+.. rst-class:: experimental
+
+.. py:data:: nuclear_reaction_multiplier
+  
+  :type: a float
+  :default: 0. (automatically adjusted)
+  
+  The rate multiplier for nuclear reactions. It is a positive number that artificially
+  increases the occurence of reactions so that a good statistics is obtained. The number
+  of actual reaction products is adjusted by changing their weights in order to provide
+  a physically correct number of reactions. Leave this number to ``0.`` for an automatic
+  rate multiplier: the final number of produced macro-particles will be of the same order
+  as that of reactants.
 
 
 
