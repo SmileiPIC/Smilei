@@ -11,7 +11,8 @@ Upcoming changes
 
 * Additional prescribed fields that only contribute to pushing particles
 * Nuclear reactions (beta version)
-* Interface with the PICSAR library (currently experimental)
+* Interface with the PICSAR library for AM spectral solver (currently experimental)
+* Single Domain Multiple Decomposition
 
 ----
 
