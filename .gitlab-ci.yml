@@ -5,7 +5,6 @@ stages:
 compile:
   stage: compile
   only:
-    - Nmodes_SM
     - develop
     - develop_externaltimefields
 
@@ -28,7 +27,6 @@ compile:
 makerun1D:
   stage: makerun
   only:
-    - Nmodes_SM
     - develop
     - develop_externaltimefields
 
@@ -41,7 +39,6 @@ makerun1D:
 makerun2D:
   stage: makerun
   only:
-    - Nmodes_SM
     - develop
     - develop_externaltimefields
 
@@ -54,7 +51,6 @@ makerun2D:
 makerun3D:
   stage: makerun
   only:
-    - Nmodes_SM
     - develop
     - develop_externaltimefields
 
@@ -67,7 +63,6 @@ makerun3D:
 makerunAM:
   stage: makerun
   only:
-    - Nmodes_SM
     - develop
     - develop_externaltimefields
 
@@ -80,7 +75,6 @@ makerunAM:
 makerunV:
   stage: makerun
   only:
-    - Nmodes_SM
     - develop
     - develop_externaltimefields
 
@@ -93,7 +87,6 @@ makerunV:
 makerunCollisions:
   stage: makerun
   only:
-    - Nmodes_SM
     - develop
     - develop_externaltimefields
     

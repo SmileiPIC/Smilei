@@ -9,14 +9,16 @@ get the latest version of Smilei on `GitHub <https://github.com/SmileiPIC/Smilei
 Upcoming changes
 ^^^^^^^^^^^^^^^^
 
-* Interface with the PICSAR library (currently experimental)
-* Particle merging (beta version)
-* Additional prescribed fields that only contribute to pushing particles
-* More control over the moving window movement
-* More control over the regular position initialization in Cartesian geometries
-* AMcylindrical now supports almost all features of the code (Poisson solver and scalar diaasg still missing)
-* Bugfix: particle binning was not following the moving window
-* Bugfix: gaussian profile with order 0 was incorrect
+* Already available, but experimental:
+
+  * Particle merging
+  * Nuclear reactions
+  * Interface with the PICSAR library for AM spectral solver
+
+* In the future:
+
+  * Single Domain Multiple Decomposition
+  * Additional prescribed fields that only contribute to pushing particles
 
 ----
 
@@ -32,25 +34,49 @@ The latest version tarball can be donwloaded here:
 
 ----
 
+Release 4.3
+^^^^^^^^^^^^^^^^^^^^^
+
+**Download**: `Smilei v4.3 <_downloads/smilei-v4.3.tar.gz>`_
+
+
+* ``AMcylindrical`` : envelope, ionization, additional diagnotics,
+  number of ppc per direction, binomial current filter, poisson solver,
+  non-separable laser initialization per mode, improved diag field nomenclature
+* Particle injector
+* More control over the moving window movement
+* More control over the regular position initialization in Cartesian geometries
+* Bugfixes:
+
+ * ionization of frozen species
+ * particle binning was not following the moving window
+ * gaussian profile with order 0 was incorrect
+ * tracked particles post-processing was incorrect above 20M particles
+ * better management of particle binning in collisions
+ * Intel 19 optimizations
+
+
+----
+
 Release 4.2
 ^^^^^^^^^^^^^^^^^^^^^
 
 **Download**: `Smilei v4.2 <_downloads/smilei-v4.2.tar.gz>`_
 
-
+* ``AMcylindrical`` geometry with azimuthal Fourier decomposition (beta version)
 * Different convention for circular polarization amplitude
-* Binomial filter in Cartesian 3D bug fix in parallel implementation
 * 1D and 2D laser envelope model
-* Cylindrical geometry with azimuthal Fourier decomposition (beta version)
 * Compatibility between various ionization and QED models
 * Bugfixes:
-   * Various crashes linked to vectorization
-   * `LaserGaussian2D` when focused far from boundary
-   * Laser :py:data:`a0` normalization to :py:data:`omega`
-   * Frozen particles are now properly ionized
-   * Position initialization over another species with moving window
-   * Tracked particles output was missing the mass factor for momenta
-   * Breit-Wheeler pair production with fine grain sorted particles
+
+  * Binomial filter in Cartesian 3D parallel implementation
+  * Various crashes linked to vectorization
+  * ``LaserGaussian2D`` when focused far from boundary
+  * Laser :py:data:`a0` normalization to :py:data:`omega`
+  * Frozen particles are now properly ionized
+  * Position initialization over another species with moving window
+  * Tracked particles output was missing the mass factor for momenta
+  * Breit-Wheeler pair production with fine grain sorted particles
 
 
 ----
@@ -67,11 +93,13 @@ Release 4.1
  * collisions (badly affected by vectorization)
  * adaptive vectorization with dynamic load balancing
  * memory leak in the laser envelope model
- 
-* Disable usage of `-ipo` to compile on supercomputers despite of saving time simulation
+
+* Disable usage of `-ipo` to compile on supercomputers
+  despite of saving time simulation
 
  * it needs too many resources (time and memory) to link
- * it is recommended to do some tests on a new supercomputer without and then to re-establish it
+ * it is recommended to do some tests on a new supercomputer
+   without and then to re-establish it
 
 .. warning::
 
@@ -102,7 +130,8 @@ Release 3.5
 **Download**: `Smilei v3.5 <_downloads/smilei-v3.5.tar.gz>`_
 
 * :doc:`Laser defined in tilted plane<laser_offset>`
-* Bugfixes: Field diagnostic subgrid, Scalar diagnostic PoyInst, MPI tags for large number of patches
+* Bugfixes: Field diagnostic subgrid, Scalar diagnostic PoyInst,
+  MPI tags for large number of patches
 
 ----
 
@@ -143,7 +172,8 @@ Release 3.3
 * QED radiation reaction
 * Monte-Carlo QED photon emission
 * *Test mode* to quickly check the namelist consistency
-* *ParticleBinning* and *Screen* diagnostics accept a python function as their ``deposited_quantity`` and ``axis``.
+* *ParticleBinning* and *Screen* diagnostics accept a python function as their
+  ``deposited_quantity`` and ``axis``.
 * Bugfixes: 4th order, field ionization
 
 ----
@@ -156,7 +186,8 @@ Release 3.2
 * New pushers (Vay's and Higuera-Cary's)
 * *Numpy* used for filtering track particles
 * Fourth order in 3D
-* Add some missing 3D features: external fields management, boundary conditions and non-neutral plasma initialization
+* Add some missing 3D features: external fields management, boundary conditions
+  and non-neutral plasma initialization
 * OpenMP support in moving window
 * Tracked particles post-processing improved for large files
 * Bugfixes: energy computation in 3D or with moving window, random number seed

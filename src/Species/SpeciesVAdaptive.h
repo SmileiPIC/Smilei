@@ -49,7 +49,7 @@ public:
     //! This function reconfigures the species operators
     void reconfigure_operators( Params &param, Patch   *patch );
     
-    //void count_sortParticles(Params& param);
+    //void countSortParticles(Params& param);
     //void computeParticleCellKeys(Params &params);
     
     void scalarPonderomotiveUpdateSusceptibilityAndMomentum( double time_dual, unsigned int ispec,

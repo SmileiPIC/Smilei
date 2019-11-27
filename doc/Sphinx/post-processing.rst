@@ -156,6 +156,7 @@ Open a Field diagnostic
   * ``modes``: An integer or a list of integers
      | Only these modes numbers will be used in the calculation. If omited, all modes are used.
 
+
 **Example**::
 
   S = happi.Open("path/to/my/results")

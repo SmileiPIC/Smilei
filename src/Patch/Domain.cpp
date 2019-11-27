@@ -31,9 +31,9 @@ void Domain::build( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, Op
     vecPatch_.patches_.push_back( patch_ );
     
     vecPatch_.refHindex_ = vecPatches.refHindex_ / vecPatches.size();
-    vecPatch_.update_field_list( smpi );
+    vecPatch_.updateFieldList( smpi );
     
-    //vecPatch_.update_field_list(0, smpi);
+    //vecPatch_.updateFieldList(0, smpi);
     vecPatch_.patches_[0]->finalizeMPIenvironment( params );
     vecPatch_.nrequests = vecPatches( 0 )->requests_.size();
     vecPatch_.nAntennas = vecPatch_( 0 )->EMfields->antennas.size();

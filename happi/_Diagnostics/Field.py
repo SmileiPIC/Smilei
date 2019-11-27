@@ -56,17 +56,32 @@ class Field(Diagnostic):
 		if self.cylindrical:
 			all_fields = list(self._fields)
 			self._fields = {}
+			self._is_complex = True
+			has_complex = False
 			for f in all_fields:
 				try:
 					if f[:5] in ["Bl_m_","Br_m_","Bt_m_"]:
 						fname = f[:4]
 						f = f[5:]
+						has_complex = True
 					elif f[:4] in ["Rho_"]:
 						fname = f[:3]
 						f = f[4:]
+						has_complex = True
 					elif f[:3] in ["El_","Er_","Et_","Bl_","Br_","Bt_","Jl_","Jr_","Jt_"]:
 						fname = f[:2]
 						f = f[3:]
+						has_complex = True
+					elif f[:10] in ["Env_A_abs_","Env_E_abs_"]:
+						fname = f[:9]
+						f = f[10:]
+						self._is_complex = False
+						build3d = None
+					elif f[:8] in ["Env_Chi_"]:
+						fname = f[:7]
+						f = f[8:]
+						self._is_complex = False
+						build3d = None
 					else:
 						raise
 					try:
@@ -86,6 +101,9 @@ class Field(Diagnostic):
 				except:
 					print('WARNING: found unknown field '+f)
 					continue
+			if has_complex and not self._is_complex:
+				self._error += ["Cannot use both envelope and normal fields"]
+				return
 		
 		# If no field selected, print available fields and leave
 		if field is None:
@@ -143,7 +161,7 @@ class Field(Diagnostic):
 		
 		# Case of a cylindrical geometry
 		# Check whether "theta" or "build3d" option is chosen
-		if self.cylindrical:
+		if self.cylindrical :
 			theta   = kwargs.pop("theta"  , None)
 			build3d = kwargs.pop("build3d", None)
 			modes   = kwargs.pop("modes"  , None)
@@ -199,14 +217,15 @@ class Field(Diagnostic):
 		axis_start = self._offset
 		axis_stop  = self._offset + (self._initialShape-0.5)*self._spacing
 		axis_step  = self._spacing
-		if self.cylindrical:
+		if self.cylindrical :
 			if build3d is not None:
 				self._initialShape = [int(self._np.ceil( (s[1]-s[0])/float(s[2]) )) for s in build3d]
 				axis_start = build3d[:,0]
 				axis_stop  = build3d[:,1]
 				axis_step  = build3d[:,2]
 			else:
-				self._initialShape[1] /= 2
+				if self._is_complex:
+					self._initialShape[1] /= 2
 				axis_stop = self._offset + (self._initialShape-0.5)*self._spacing
 		
 		# 2 - Manage timesteps
@@ -237,7 +256,7 @@ class Field(Diagnostic):
 		self._selection = [self._np.s_[:]]*self._naxes
 		self._offset  = fields[0].attrs['gridGlobalOffset']
 		self._spacing = fields[0].attrs['gridSpacing']
-		axis_name = "xyz" if not self.cylindrical or build3d is not None else "xr"
+		axis_name = "xyz" if not self.cylindrical or not self._is_complex or build3d is not None else "xr"
 		for iaxis in range(self._naxes):
 			centers = self._np.arange(axis_start[iaxis], axis_stop[iaxis], axis_step[iaxis])
 			label = axis_name[iaxis]
@@ -280,20 +299,23 @@ class Field(Diagnostic):
 		if self.cylindrical:
 			self._complex_selection_real = list(self._selection)
 			self._complex_selection_imag = list(self._selection)
+			complex_factor = 2 #cylindrical default is complex
+			if not self._is_complex :
+				complex_factor = 1
 			if type(self._selection[1]) is slice:
 				self._complex_selection_real[1] = slice(
-					None if self._selection[1].start is None else self._selection[1].start*2,
-					None if self._selection[1].stop  is None else self._selection[1].stop *2,
-					(self._selection[1].step  or 1)*2
+					None if self._selection[1].start is None else self._selection[1].start*complex_factor,
+					None if self._selection[1].stop  is None else self._selection[1].stop *complex_factor,
+					(self._selection[1].step  or 1)*complex_factor
 				)
 				self._complex_selection_imag[1] = slice(
-					(self._selection[1].start or 0)*2 + 1,
-					None if self._selection[1].stop is None else self._selection[1].stop*2 + 1,
-					(self._selection[1].step  or 1)*2
+					(self._selection[1].start or 0)*complex_factor + 1,
+					None if self._selection[1].stop is None else self._selection[1].stop*complex_factor + 1,
+					(self._selection[1].step  or 1)*complex_factor
 				)
 			else:
-				self._complex_selection_real[1] = self._selection[1]*2
-				self._complex_selection_imag[1] = self._selection[1]*2 + 1
+				self._complex_selection_real[1] = self._selection[1]*complex_factor
+				self._complex_selection_imag[1] = self._selection[1]*complex_factor + 1
 			self._complex_selection_real = tuple(self._complex_selection_real)
 			self._complex_selection_imag = tuple(self._complex_selection_imag)
 			
@@ -302,7 +324,7 @@ class Field(Diagnostic):
 				# Calculate the raw data positions
 				self._raw_positions = (
 					self._np.arange(self._offset[0], self._offset[0] + (self._raw_shape[0]  -0.5)*self._spacing[0], self._spacing[0] ),
-					self._np.arange(self._offset[1], self._offset[1] + (self._raw_shape[1]/2-0.5)*self._spacing[1], self._spacing[1] ),
+					self._np.arange(self._offset[1], self._offset[1] + (self._raw_shape[1]/complex_factor-0.5)*self._spacing[1], self._spacing[1] ),
 				)
 				# Calculate the positions of points in the final box
 				x = self._np.arange(*build3d[0])
@@ -491,6 +513,7 @@ class Field(Diagnostic):
 		index = self._data[t]
 		C = {}
 		h5item = self._h5items[index]
+		step = 2 if self._is_complex else 1
 		for field in self._fieldname: # for each field in operation
 			available_modes = self._fields[field]
 			F = self._np.zeros(self._finalShape)
@@ -504,10 +527,10 @@ class Field(Diagnostic):
 					B = self._np.squeeze(B)
 					h5item[f+str(imode)].read_direct(B)
 					B = self._np.reshape(B, self._raw_shape)
-				B_real = RegularGridInterpolator(self._raw_positions, B[:,0::2], bounds_error=False, fill_value=0.)(self._xr)
+				B_real = RegularGridInterpolator(self._raw_positions, B[:,0::step], bounds_error=False, fill_value=0.)(self._xr)
 				F += self._np.cos(imode*self._theta) * B_real[self._selection]
 				if imode > 0.:
-					B_imag = RegularGridInterpolator(self._raw_positions, B[:,1::2], bounds_error=False, fill_value=0.)(self._xr)
+					B_imag = RegularGridInterpolator(self._raw_positions, B[:,1::step], bounds_error=False, fill_value=0.)(self._xr)
 					F += self._np.sin(imode*self._theta) * B_imag[self._selection]
 				
 			C.update({ field:F })

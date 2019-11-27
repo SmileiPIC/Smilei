@@ -14,7 +14,7 @@ IonizationTunnel::IonizationTunnel( Params &params, Species *species ) : Ionizat
 {
     DEBUG( "Creating the Tunnel Ionizaton class" );
     
-    atomic_number_          = species->atomic_number;
+    atomic_number_          = species->atomic_number_;
     
     // Ionization potential & quantum numbers (all in atomic units 1 au = 27.2116 eV)
     Potential.resize( atomic_number_ );

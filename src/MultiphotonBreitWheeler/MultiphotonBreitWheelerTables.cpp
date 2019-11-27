@@ -211,8 +211,8 @@ double MultiphotonBreitWheelerTables::compute_Erber_T( double photon_chi, int nb
     //double I,dI;
     double K;
 
-    //userFunctions::modified_bessel_IK(1./3.,4./(3.*photon_chi),I,dI,K,dK,nb_iterations,eps);
-    K = userFunctions::modified_bessel_K( 1./3., 4./( 3.*photon_chi ), nb_iterations, eps, false );
+    //userFunctions::modifiedBesselIK(1./3.,4./(3.*photon_chi),I,dI,K,dK,nb_iterations,eps);
+    K = userFunctions::modifiedBesselK( 1./3., 4./( 3.*photon_chi ), nb_iterations, eps, false );
 
     return 0.16*K*K/photon_chi;
 }
@@ -240,7 +240,7 @@ double MultiphotonBreitWheelerTables::compute_integration_Ritus_dTdchi( double p
     double T;
 
     // gauss Legendre coefficients
-    userFunctions::gauss_legendre_coef( log10( particle_chi )-50., log10( particle_chi ),
+    userFunctions::gaussLegendreCoef( log10( particle_chi )-50., log10( particle_chi ),
                                         gauleg_x, gauleg_w, nb_iterations, eps );
 
     T = 0;
@@ -322,7 +322,7 @@ double *MultiphotonBreitWheelerTables::compute_pair_chi( double photon_chi )
         ichipa = xip_chipa_dim-2;
     } else {
         // Search for the corresponding index ichipa for xip
-        ichipa = userFunctions::search_elem_in_array(
+        ichipa = userFunctions::searchValuesInMonotonicArray(
                      &xip_table[ichiph*xip_chipa_dim], xipp, xip_chipa_dim );
     }
 
@@ -381,13 +381,13 @@ double MultiphotonBreitWheelerTables::compute_Ritus_dTdchi( double photon_chi,
 
     y = ( photon_chi/( 3.*particle_chi*( photon_chi-particle_chi ) ) );
 
-    //userFunctions::modified_bessel_IK(2./3.,2.*y,I,dI,K,dK,500,1e-16);
+    //userFunctions::modifiedBesselIK(2./3.,2.*y,I,dI,K,dK,500,1e-16);
     //p1 = (2. - 3.*photon_chi*y)*K;
 
-    p1 = ( 2. - 3.*photon_chi*y )*userFunctions::modified_bessel_K( 2./3., 2*y, 500, 1e-16, false );
+    p1 = ( 2. - 3.*photon_chi*y )*userFunctions::modifiedBesselK( 2./3., 2*y, 500, 1e-16, false );
 
     // gauss Legendre coefficients
-    userFunctions::gauss_legendre_coef( log10( 2*y ), log10( 2*y )+50.,
+    userFunctions::gaussLegendreCoef( log10( 2*y ), log10( 2*y )+50.,
                                         gauleg_x, gauleg_w, nb_iterations, eps );
 
     // Integration loop
@@ -395,8 +395,8 @@ double MultiphotonBreitWheelerTables::compute_Ritus_dTdchi( double photon_chi,
     //#pragma omp parallel for reduction(+:p2) private(u) shared(gauleg_w,gauleg_x)
     for( i=0 ; i< nb_iterations ; i++ ) {
         u = pow( 10., gauleg_x[i] );
-        p2 += gauleg_w[i]*userFunctions::modified_bessel_K( 1./3., u, 500, 1e-16, false )*u*log( 10. );
-        //userFunctions::modified_bessel_IK(1./3.,u,I,dI,K,dK,500,1e-16);
+        p2 += gauleg_w[i]*userFunctions::modifiedBesselK( 1./3., u, 500, 1e-16, false )*u*log( 10. );
+        //userFunctions::modifiedBesselIK(1./3.,u,I,dI,K,dK,500,1e-16);
         //p2 += gauleg_w[i]*K*u*log(10.);
     }
 
@@ -459,7 +459,7 @@ void MultiphotonBreitWheelerTables::computeTtable( SmileiMPI *smpi )
     T_chiph_inv_delta = 1./T_chiph_delta;
 
     // Load repartition
-    userFunctions::distribute_load_1d_table( nb_ranks,
+    userFunctions::distributeArray( nb_ranks,
             T_dim,
             imin_table,
             length_table );
@@ -581,7 +581,7 @@ void MultiphotonBreitWheelerTables::computeXipTable( SmileiMPI *smpi )
     xip_chiph_inv_delta = 1./xip_chiph_delta;
 
     // Load repartition
-    userFunctions::distribute_load_1d_table( nb_ranks,
+    userFunctions::distributeArray( nb_ranks,
             xip_chiph_dim,
             imin_table,
             length_table );

@@ -43,6 +43,25 @@ def updateMatplotLibColormaps():
 			'blue' :((0.000,0.284,0.284),(0.033,0.272,0.272),(0.067,0.206,0.206),(0.100,0.119,0.119),(0.133,0.199,0.199),(0.167,0.323,0.323),(0.200,0.419,0.419),(0.233,0.503,0.503),(0.267,0.581,0.581),(0.300,0.654,0.654),(0.333,0.723,0.723),(0.367,0.789,0.789),(0.400,0.853,0.853),(0.433,0.914,0.914),(0.467,0.971,0.971),(0.500,1.000,1.000),(0.533,0.960,0.960),(0.567,0.939,0.939),(0.600,0.921,0.921),(0.633,0.906,0.906),(0.667,0.894,0.894),(0.700,0.885,0.885),(0.733,0.877,0.877),(0.767,0.872,0.872),(0.800,0.867,0.867),(0.833,0.861,0.861),(0.867,0.854,0.854),(0.900,0.834,0.834),(0.933,0.736,0.736),(0.967,0.701,0.701),(1.000,0.681,0.681),),
 		})
 
+class ChunkedRange:
+	def __init__(self, size, chunksize):
+		self.size = size
+		self.nchunks = int( (size-1) // chunksize + 1 )
+		self.adjustedchunksize = int( (size-1) // self.nchunks + 1 )
+		self.ichunk = 0
+	def __iter__(self):
+		return self
+	def __next__(self):
+		if self.ichunk < self.nchunks:
+			first = self.ichunk * self.adjustedchunksize
+			last  = min( first + self.adjustedchunksize, self.size )
+			self.ichunk += 1
+			return (first, last, last-first)
+		else:
+			raise StopIteration
+	def next(self): # for python 2
+		return self.__next__()
+
 
 def openNamelist(namelist):
 	"""
