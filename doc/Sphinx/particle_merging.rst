@@ -59,40 +59,34 @@ This method has several advantages:
   This assumes that the parameters are adequately tuned.
   Otherwise, the macro-particle merging can affect the final simulation results.
 
-1. Momentum cell decomposition
+1. Momentum sub-groups
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Let us define some notations. Momentum norm is called :math:`p` and momentum components
-:math:`p_{\alpha}` with :math:`\alpha` equal to x, y or z for each particle.
-The number of cells in the direction :math:`\alpha` for the discretization is :math:`N_{\alpha}`.
-The discretization step in the direction :math:`\alpha` is called :math:`\Delta_{\alpha}`.
+The momentum (:math:`\mathbf p`) space may be decomposed either in
+cartesian (:math:`p_x`, :math:`p_y`, :math:`p_z`)
+or spherical (:math:`p`, :math:`\theta`, :math:`\phi`) coordinates.
 
-In a position merge cell, step 2 starts by the computation of the minimum :math:`p_{\alpha,min}` and maximum :math:`p_{\alpha,max}` momentum boundaries (also given in :numref:`fig_vranic_particle_merging`).
-The momentum boundaries define the limits of the momentum space that we use and discretize.
-The momentum space is divided into momentum cells (of size :math:`\Delta_{\alpha}`) following the discretization (:math:`N_{\alpha}`) given by the user.
+In each cell, for each coordinate :math:`\alpha`:
 
-In :program:`Smilei`, we use both a spherical discretization geometry for the momentum
-discretization and  a Cartesian one as it is the case in :numref:`fig_vranic_particle_merging`.
-The momentum space decomposition is basically the same except that the boundaries now concern
-the directions :math:`p`, :math:`\theta` and :math:`\phi` in 3D as shown in :numref:`fig_vranic_momentum_discretization`.
+* we compute the overall limits in momentum space.
+* This space is divided in :math:`N_{\alpha}` sub-groups (as prescribed by the
+  user) of length :math:`\Delta_{\alpha}`.
 
 .. _fig_vranic_momentum_discretization:
 
 .. figure:: _static/vranic_momentum_discretization.png
   :width: 100%
 
-  2D Cartesian and spherical momentum discretization.
+  Cartesian and spherical momentum discretizations, in 2D.
 
 The spherical components are related to the Cartesian momentum components by:
 
 .. math::
   :label: spherical_discretization
 
-  p = \sqrt{ p_x^2 + p_y^2 + p_z^2 }\ ;
-  \theta = \arctan{ \left( p_y / p_x \right)}\ ;
-  \phi = \arcsin{\left( pz / p \right)}
-
-This corresponds to :numref:`fig_spherical_coordinates`.
+  p = \sqrt{ p_x^2 + p_y^2 + p_z^2 }\\
+  \theta = \arctan{ \left( p_y / p_x \right)}\\
+  \phi = \arcsin{\left( p_z / p \right)}
 
 .. _fig_spherical_coordinates:
 
@@ -101,52 +95,46 @@ This corresponds to :numref:`fig_spherical_coordinates`.
 
   Spherical coordinates used for the momentum cell discretization.
 
-Since macro-particle momentum components are defined in the Cartesian geometry
-by default, considering a spherical discretization induces small additional computation.
+Since macro-particle momentum components are defined in Cartesian geometry
+by default, the spherical discretization induces small additional computation.
 However, it makes the merging process more accurate.
 Indeed, in the Cartesian discretization, the maximum angle between the momentum
-directions of two macro-particle located in the same momentum cell
-(i.e. :math:`\theta` and :math:`\phi`) depends on the momentum cell.
-For instance, two macro-particles can make an angle up to :math:`\pi / 2` in the cell
-adjacent to the origin :math:`p_x = p_y = p_z = 0` whatever the discretization.
-In general, this angle diminishes with the distance to the origin.
-This issue is therefore negligible for high-energy particles but not
-anymore for cold ones.
+directions of two macro-particles located in the same sub-group
+depends on the sub-group.
+For instance, in the cell adjacent to the origin :math:`p_x = p_y = p_z = 0`,
+this angle equal up to :math:`\pi / 2` whatever the discretization.
 The spherical geometry ensures that the merging accuracy depends
 on the discretization and is similar for all momentum cells.
-The overhead induced by the change of geometry is a small fraction of the entire process.
+The overhead induced by the change of geometry is
+a small fraction of the entire process.
 
-2. Merging algorithm for mass macro-particles
+2. Merging algorithm for massive macro-particles
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Step 3 starts after the momentum space discretization.
-For each momentum cell with more than 4 macro-particles,
-the algorithm enables to merge them into 2.
-Let us call :math:`\mathrm{M}` the macro-particles in a given momentum cell,
-:math:`k` is an index to list each macro-particles of :math:`\mathrm{M}`.
-The macro-particle weight is called :math:`w`, the energy :math:`\varepsilon`,
-the momentum :math:`\mathbf{p}`.
-We start by computing total quantities for the weight :math:`w_t`,
-the energy :math:`\varepsilon_t`,
-the momentum :math:`\mathbf{p}_t`:
+In step 3, for each sub-group containing more than 4 macro-particles,
+the algorithm merges them into 2 macro-particles.
+Let us denote by :math:`k` the macro-particles in a given sub-group
+:math:`\mathrm{M}`, their weights by :math:`w_k`, their energies
+by :math:`\varepsilon_k` and their momenta by :math:`\mathbf{p}_k`.
+We start by computing total quantities:
 
 .. math::
   :label: total_quantities
 
-  w_t = \sum_{k \in \mathrm{M}}{w_k}\ ;
-  \varepsilon_t = \sum_{k \in \mathrm{M}}{w_k \varepsilon_k}\ ;
-  \mathbf{p}_t = \sum_{k \in \mathrm{M}}{w_k \mathbf{p}_k}\ ;
+  w_t = \sum_{k \in \mathrm{M}}{w_k}\\
+  \varepsilon_t = \sum_{k \in \mathrm{M}}{w_k \varepsilon_k}\\
+  \mathbf{p}_t = \sum_{k \in \mathrm{M}}{w_k \mathbf{p}_k}\\
 
-In spherical geometry, the total angles can also be defined:
+In spherical geometry, the total angles are also defined:
 
 .. math::
   :label: total_angles
 
-  \theta_t = \sum_{k \in \mathrm{M}}{w_k \theta_k}\ ;
+  \theta_t = \sum_{k \in \mathrm{M}}{w_k \theta_k}\\
   \phi_t = \sum_{k \in \mathrm{M}}{w_k \phi_k}
 
-To merge all the macro-particles into just one does not allow to locally
-conserve weight, energy and momentum. Vranic *et al.* proposes to merge to 2 macro-particles:
+Merging all the macro-particles into one cannot always conserve weight,
+energy and momentum. Vranic *et al.* propose to merge into 2 macro-particles:
 
 .. math::
   :label: merged_particle_relation
@@ -155,7 +143,8 @@ conserve weight, energy and momentum. Vranic *et al.* proposes to merge to 2 mac
   \mathbf{p}_t = w_a \mathbf{p}_a + w_b \mathbf{p}_b \\
   \varepsilon_t = w_a \varepsilon_a + w_b \varepsilon_b
 
-The following energy-momentum relation has to be satisfied for macro-particles a and b:
+The following energy-momentum relation has to be satisfied
+for both macro-particles a and b:
 
 .. math::
   :label: energy_momentum_relation
@@ -183,30 +172,31 @@ As illustrated in :numref:`fig_vranic_planar_merging`, it follows that:
   \mathbf{p}_{a,\perp} = - \mathbf{p}_{b,\perp} \\
   \mathbf{p}_{a,\parallel} = \mathbf{p}_{b,\parallel} = \mathbf{p_t} / w_t
 
-We call :math:`\omega` the angle between :math:`\mathbf{p_a}` and :math:`\mathbf{p_t}`
-so that:
+We denote by :math:`\omega` the angle between
+:math:`\mathbf{p_a}` and :math:`\mathbf{p_t}` so that:
 
 .. math::
   :label: angle_omega
 
   \cos{\omega} = \frac{\mathbf{p_t}}{w_t \mathbf{p_a}}
 
-We define :math:`\mathbf{d}` the cell direction (also refered to as coordinate vector of the cell).
-It represents the location (or the direction in spherical coordinates) of the momentum cell where the macro-particles are located
-as shown in :numref:`fig_momentum_cell_vector`.
+We denote by :math:`\mathbf{d}` the coordinate vector of the sub-group
+where the macro-particles are located.
 
 .. _fig_momentum_cell_vector:
 
 .. figure:: _static/vranic_momentum_cell_vector.png
   :width: 100%
 
-  Momentum cell vector in Cartesian and spherical geometries.
+  Sub-group coordinate vector in Cartesian and spherical geometries.
 
-The plane :math:`(\mathbf{e_1},\mathbf{e_2})` is the plane made by the vector :math:`\mathbf{p_t}` and :math:`\mathbf{d}`.
-We decide that it contains :math:`\mathbf{p_a}` and :math:`\mathbf{p_b}` so that we have only one possible solution.
+The plane :math:`(\mathbf{e_1},\mathbf{e_2})` is the plane made by
+the vectors :math:`\mathbf{p_t}` and :math:`\mathbf{d}`.
+We choose that it contains :math:`\mathbf{p_a}` and :math:`\mathbf{p_b}`
+so that we have only one possible solution.
 
-Now, it is just necessary to determine :math:`\mathbf{e_1}` and :math:`\mathbf{e_2}` in the momentum frame used by the PIC code.
-They are given by the following formula:
+The vectors :math:`\mathbf{e_1}` and :math:`\mathbf{e_2}` are given by the
+following formula in the PIC code's momentum frame:
 
 .. math::
   :label: planar_coordinates_e1
@@ -216,24 +206,11 @@ They are given by the following formula:
 .. math::
   :label: planar_coordinates_e3
 
-  \mathbf{e_3} & = &  \frac{ \mathbf{d} \times \mathbf{e_1} }{d} \\
-               & = & \frac{ 1 }{d.p_t}
-   \begin{array}{|l}
-      p_{t,z} \cdot d_y - p_{t,y} \cdot d_z \\
-      p_{t,x} \cdot d_z - p_{t,z} \cdot d_x \\
-      p_{t,y} \cdot d_x - p_{t,x} \cdot d_y
-   \end{array}
-
+  \mathbf{e_3} = \frac{ \mathbf{d} \times \mathbf{e_1} }{d}
 .. math::
   :label: planar_coordinates_e2
 
-  \mathbf{e_2} & = & \mathbf{e_1} \times \mathbf{e_3} \\
-               & = & \frac{1}{p_t^2 . d}
-   \begin{array}{|l}
-      p_{t,y}^2 .d_x - p_{t,x}(d_y.p_{t,y} + d_z.p_{t,z}) + p_{t,z}^2.d_x \\
-      p_{t,z}^2 .d_y - p_{t,y}(d_z.p_{t,z} + d_x.p_{t,x}) + p_{t,x}^2.d_y \\
-      p_{t,x}^2 .d_z - p_{t,z}(d_x.p_{t,x} + d_y.p_{t,y}) + p_{t,y}^2.d_z
-   \end{array}
+  \mathbf{e_2} = \mathbf{e_1} \times \mathbf{e_3}
 
 Finally, the new macro-particle momentums are:
 
@@ -243,37 +220,36 @@ Finally, the new macro-particle momentums are:
   \mathbf{p_a} = p_a \left( \cos{\left( \omega \right)} \mathbf{e_1} +  \sin{\left(\omega\right)} \mathbf{e_2} \right) \\
   \mathbf{p_b} = p_b \left( \cos{\left( \omega \right)} \mathbf{e_1} -  \sin{\left(\omega\right)} \mathbf{e_2} \right)
 
-The method is summarized graphically in :numref:`fig_3d_schematic`.
-It has been generated using Python with Matplotlib.
-The Python script is `available here <_static/vranic_geometry.py>`_.
-
 .. _fig_3d_schematic:
 
 .. figure:: _static/vranic_3d_schematics.png
   :width: 100%
 
   3D view of the different vectors involved in the merging method.
+  Generated by `this python script <_static/vranic_geometry.py>`_.
 
-The new macro-particle positions are assigned at the position of one of
+
+The new macro-particle positions are assigned the position of one of
 the merged macro-particles.
 We have tested to assign them randomly
 or to the first macro-particles of the merged list and we did
 not observe any difference.
 
-This algorithm does not work when the total momentum :math:`\mathbf{p}_t` of the macro-particles to be merged
-is in the direction of :math:`\mathbf{d}`.
-In this case :math:`|| \mathbf{e_3} || = 0` and it is not
-possible to determine the system :math:`(\mathbf{e}_1, \mathbf{e}_2, \mathbf{e}_3)`.
-In this specific case, the merging is not proceeded.
+This algorithm does not work when the total momentum :math:`\mathbf{p}_t`
+of the macro-particles to be merged is in the direction of :math:`\mathbf{d}`.
+In this case :math:`|| \mathbf{e_3} || = 0` and the system cannot be solved.
+In this specific case, the merging is not performed.
 
 3. Merging algorithm for macro-photons
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Macro-photons can be merged with the same algorithm.
-The only difference is that the momentum norm is equal to the energy :math:`\varepsilon = p`.
+Macro-photons can be merged with the same algorithm, the only difference
+being that the momentum norm is equal to the energy :math:`\varepsilon = p`.
 
-When the total momentum :math:`\mathbf{p}_t` is in the direction of :math:`\mathbf{d}`, macro-photons can be merged
-into a single one contrary to the mass macro-particles since :math:`\varepsilon_t = || \mathbf{p}_t ||`.
+When the total momentum :math:`\mathbf{p}_t` is in the direction
+of :math:`\mathbf{d}`, macro-photons can be merged into a single one,
+contrary to the massive macro-particles case,
+since :math:`\varepsilon_t = || \mathbf{p}_t ||`.
 This specific situation is implemented in the code.
 
 .. _vranic_implementation:
@@ -281,42 +257,56 @@ This specific situation is implemented in the code.
 Implementation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The Vranic merging method is implemented with the Cartesian
-and the Spherical momentum discretization in the source directory ``Merging``.
-It is considered as a particle operator and the merging algorithm is managed with a factory (``MergingFactory.h``) as
+The Vranic merging method is implemented with both Cartesian
+and the spherical discretizations in the directory ``src/Merging``.
+It is considered as a particle operator and the merging algorithm is
+managed with a factory (``MergingFactory.h``) as
 any operator with multiple implementations.
-The Cartesian implementation is done in the class ``MergingVranicCartesian`` and the spherical one in ``MergingVranicSpherical``.
+The Cartesian implementation is done in the class ``MergingVranicCartesian``
+and the spherical one in ``MergingVranicSpherical``.
 
 For both methods, the implemented algorithm is very similar.
 
     For each cells (in the real space):
 
-    1. Initialization of the momentum cell discretization
-    2. Computation of the cell direction vectors (:math:`\mathbf{d}`): this step depends on the discretization and can be efficiently vectorized.
-    3. Computation of the momentum cell indexes for each macro-particle. Efficiently Vectorizable.
-    4. Computation of the number of particles per momentum cell.  Not vectorizable because of random memory accesses.
-    5. Computation of the cell index of each momentum cell in the sorted array of particles (only the particle indexes are sorted). Not vectorizable.
-    6. Sorting of the macro-particles per momentum cells, the cell index previously computed determine where
-       starts each momentum cell. Not vectorizable.
+    1. Initialization of the sub-group discretization
+    2. Computation of the direction vectors (:math:`\mathbf{d}`):
+       this step depends on the discretization and
+       can be efficiently vectorized.
+    3. Computation of the sub-group indexes for each macro-particle.
+       Efficiently Vectorizable.
+    4. Computation of the number of particles per sub-group.
+       Not vectorizable because of random memory accesses.
+    5. Computation of the cell index of each sub-group in the
+       sorted array of particles (only the particle indexes are sorted).
+       Not vectorizable.
+    6. Sorting of the macro-particles per sub-groups, the cell index
+       previously computed determine where
+       starts each sub-group. Not vectorizable.
 
-    Then, for each momentum cell:
+    Then, for each sub-group:
 
-    1. Division of the macro-particles of the momentum cell into packets (size depends on the
-       user parameters `merge_min_packet_size` and `merge_max_packet_size`)
-    2. Merge of the packs using the previously described Vranic algorithm. Partly vectorized.
-    3. Creation of the merged macro-particles at the position of the previous ones
+    1. Division of the macro-particles of the sub-groupinto
+       packets (size depends on the user parameters `merge_min_packet_size`
+       and `merge_max_packet_size`)
+    2. Merge of the packs using the previously described Vranic algorithm.
+       Partly vectorized.
+    3. Creation of the merged macro-particles at the position
+       of the previous ones
     4. Tag of the macro-particles to be removed
 
     Then, once the merging finished for a given patch:
 
-    1. Compression of the macro-particle list (remove hole in arrays let by removed and tagged particles).
-       By cleaning the particle vector at the end, we limit the computational impact of this step.
+    1. Compression of the macro-particle list (remove hole in arrays let
+       by removed and tagged particles).
+       By cleaning the particle vector at the end, we limit the computational
+       impact of this step.
 
-1. Cartesian momentum Cell discretization
+1. Cartesian sub-group discretization
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-How to discretize the momentum space is in fact one of the most important point.
-The user gives :math:`N_x`, :math:`N_y` and :math:`N_z` via the namelist.
+How to discretize momentum space is in fact one of the most important points.
+The user provies :math:`N_x`, :math:`N_y` and :math:`N_z` via the namelist.
 The momentum space boundary corresponds to :math:`p_{\alpha,min}` and :math:`p_{\alpha,max}` with :math:`\alpha` equal to x, y or z.
 For this discretization, we force the origin (:math:`p_x = p_y = p_z = 0`) to not be contained in a cell and be one of the grid node
 so that there is not in the same cell particles with positive and negative momenta.
