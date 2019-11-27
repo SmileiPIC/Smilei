@@ -1,64 +1,68 @@
+.. rst-class:: experimental
+
 Particle Merging
 ================================================================================
 
-:red:`BETA: be careful when using this module and read carefully  the documentation.`
+  :red:`Be careful when using this module and read
+  carefully the documentation.`
 
 The ability to merge macro-particles can speed-up the code efficiency
-and reduce the memory footprint in some specific simulation senarios:
+and reduce the memory footprint in some specific simulation scenarii:
 
 * When macro-particles accumulate in a fraction of the simulation domain
   hence strongly worsening the load imbalance (ex: Weibel collision shocks,
   laser wakefield electron acceleration).
 * When macro-particles are generated in a large quantity due to some
-  additional physical mechanisms (ionization, macro-photon emission, QED pair production...)
-* When macro-particles travel in large quantities outside interesting physical regions.
+  additional physical mechanisms (ionization, macro-photon emission,
+  QED pair production...)
+* When macro-particles travel in large quantities outside interesting
+  physical regions.
 
-Available implemented methods:
-
-* M. Vranic merging method (`M. Vranic et al., CPC, 191 65-73 (2015) <https://doi.org/10.1016/j.cpc.2015.01.020>`_)
-
---------------------------------------------------------------------------------
-
-.. _ref_vranic_method:
-
-The merging method of M. Vranic
---------------------------------------------------------------------------------
+Currently, the merging method from M. Vranic is implemented in Smilei
+(`M. Vranic et al., CPC, 191 65-73 (2015) <https://doi.org/10.1016/j.cpc.2015.01.020>`_).
 
 .. _ref_understand_vranic_method:
 
-1. Understand the method
+Understand the method
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The method of M. Vranic consists of 3 main steps and is schematically described (in 2D) in Fig. :numref:`fig_vranic_particle_merging`:
+The method of M. Vranic, illustrated (in 2D) in
+Fig. :numref:`fig_vranic_particle_merging`, consists in 3 main steps:
 
-1. To Decompose macro-particles into groups according to their location so that they share close positions.
-   In :program:`Smilei`, macro-particles are sorted by field cells.
-   In the article of M. Vranic *et al.*, the decomposition can be larger than just a cell.
+1. Decompose macro-particles into groups according to their location so that
+   they have nearby positions.
+   In :program:`Smilei`, macro-particles are sorted by field cells,
+   even though, in Vranic *et al.*, the decomposition can be larger
+   than just one cell.
 
-2. Then, to subdivide the macro-particles into sub-groups in the momentum space so that they share close kinetic properties.
+2. Subdivide groups into sub-groups in momentum space so that macro-particles
+   share close kinetic properties.
 
-3. To merge macro-particles located in the same groups in 2 new macro-particles to respect the charge, energy and momentum conserving laws.
+3. Merge macro-particles located in the same sub-group into 2 new
+   macro-particles, while conserving charge, energy and momentum.
 
 .. _fig_vranic_particle_merging:
 
 .. figure:: _static/vranic_particle_merging.png
   :width: 100%
 
-  Basic description of M. Vranic merging method in 2D geometry. In 3D, the idea is strictly the same.
+  Basic description of M. Vranic merging method in 2D geometry.
 
-This method has several advantages.
-It is relatively easy to understand and to implement.
-It has a relatively low computational costs and is efficient without impacting significantly the physical results.
+This method has several advantages:
+
+* it is relatively easy to understand and implement,
+* it has a relatively low computational cost,
+* it is efficient without impacting significantly the physical results.
 
 .. warning::
 
-  This suppose that the parameters are adequately tuned.
+  This assumes that the parameters are adequately tuned.
   Otherwise, the macro-particle merging can affect the final simulation results.
 
-1.1 Momentum cell decomposition
+1. Momentum cell decomposition
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
-Let us defined some notations first. Momentum norm is called :math:`p` and momentum components
+Let us define some notations. Momentum norm is called :math:`p` and momentum components
 :math:`p_{\alpha}` with :math:`\alpha` equal to x, y or z for each particle.
 The number of cells in the direction :math:`\alpha` for the discretization is :math:`N_{\alpha}`.
 The discretization step in the direction :math:`\alpha` is called :math:`\Delta_{\alpha}`.
@@ -112,7 +116,7 @@ The spherical geometry ensures that the merging accuracy depends
 on the discretization and is similar for all momentum cells.
 The overhead induced by the change of geometry is a small fraction of the entire process.
 
-1.2 Merging algorithm for mass macro-particles
+2. Merging algorithm for mass macro-particles
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 Step 3 starts after the momentum space discretization.
@@ -262,7 +266,7 @@ In this case :math:`|| \mathbf{e_3} || = 0` and it is not
 possible to determine the system :math:`(\mathbf{e}_1, \mathbf{e}_2, \mathbf{e}_3)`.
 In this specific case, the merging is not proceeded.
 
-1.3 Merging algorithm for macro-photons
+3. Merging algorithm for macro-photons
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 Macro-photons can be merged with the same algorithm.
@@ -274,7 +278,7 @@ This specific situation is implemented in the code.
 
 .. _vranic_implementation:
 
-2. Implementation
+Implementation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The Vranic merging method is implemented with the Cartesian
@@ -308,7 +312,7 @@ For both methods, the implemented algorithm is very similar.
     1. Compression of the macro-particle list (remove hole in arrays let by removed and tagged particles).
        By cleaning the particle vector at the end, we limit the computational impact of this step.
 
-2.1 Cartesian momentum Cell discretization
+1. Cartesian momentum Cell discretization
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 How to discretize the momentum space is in fact one of the most important point.
@@ -337,7 +341,7 @@ The user-defined discretization can be slightly adjusted for algorithmic reasons
                 At the end, there is an additional cell than requested (:math:`N_\alpha` = :math:`N_\alpha` + 1).
                 
 
-2.2 Spherical momentum Cell discretization
+2. Spherical momentum Cell discretization
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 The user gives :math:`N_r`, :math:`N_\theta` and :math:`N_\phi` via the namelist.
@@ -357,7 +361,7 @@ The momentum space boundary corresponds to :math:`p_{r,min}`, :math:`p_{r,max}`,
                 (the multiplication by 1.01 enables to include :math:`\alpha_{max}`).
                 
                 
-2.3 Solid angle correction
+3. Solid angle correction
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 With the classical spherical discretization, the solid angle that represents the surface crossed by
@@ -385,7 +389,7 @@ An example of such a discretization is shown in :numref:`fig_spherical_discretiz
 
 .. _vranic_accululation_effect:
 
-2.4 Accumulation effect
+4. Accumulation effect
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 When several macro-particles are merged, the contribution of each of them to the properties of the final ones depends on their weights.
@@ -430,7 +434,7 @@ a) due to the accumulation effects.
 
 .. _vranic_log_scale:
 
-2.5 Logarithmic scale
+5. Logarithmic scale
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 Only for the **spherical discretization**, we have implemented the possibility to have a logarithmic
@@ -456,17 +460,17 @@ but is not working with the current accumulation correction.
 
 .. _vranic_namelist:
 
-3. Namelist
+Namelist
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Please refer to :ref:`that doc <Particle_merging>` for an explanation of how to configure the merging in the namelist file.
 
 .. _vranic_simulation results:
 
-4. Simulation results
+Simulation results
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-4.1 3D QED cascade
+1. 3D QED cascade
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 In this section, the particle merging is tested with a simulation scenario of QED pair cascading.
