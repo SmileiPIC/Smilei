@@ -1581,7 +1581,7 @@ void SmileiMPI::irecvComplex( Field *field, int from, int hindex, MPI_Request &r
 
 void SmileiMPI::irecv(Field* field, int from, int hindex, MPI_Request& request)
 {
-    MPI_Irecv( &((*field)(0)),field->globalDims_, MPI_DOUBLE, from, hindex, MPI_COMM_WORLD, &request );
+    MPI_Irecv( &((*field)(0)),2*field->globalDims_, MPI_DOUBLE, from, hindex, MPI_COMM_WORLD, &request );
 
 } // End recv ( Field )
 

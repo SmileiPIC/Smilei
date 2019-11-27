@@ -532,7 +532,7 @@ void PatchAM::initExchangeComplex( Field *field, int iDim, SmileiMPI *smpi )
     
     int istart, ix, iy;
     
-    MPI_Datatype ntype = ntype_[iDim][isDual[0]][isDual[1]]; //ntype_[iDim][isDual[0]][isDual[1]];
+    MPI_Datatype ntype = ntype_complex_[iDim][isDual[0]][isDual[1]]; //ntype_[iDim][isDual[0]][isDual[1]];
     for( int iNeighbor=0 ; iNeighbor<patch_nbNeighbors_ ; iNeighbor++ ) {
     
         if( is_a_MPI_neighbor( iDim, iNeighbor ) ) {
@@ -616,7 +616,6 @@ void PatchAM::createType( Params &params )
     
     int nx0 = params.n_space[0] + 1 + 2*params.oversize[0];
     int ny0 = params.n_space[1] + 1 + 2*params.oversize[1];
-    unsigned int clrw = params.clrw;
     
     // MPI_Datatype ntype_[nDim][primDual][primDual]
     int nx, ny;
@@ -638,11 +637,6 @@ void PatchAM::createType( Params &params )
                              MPI_DOUBLE, &( ntype_[1][ix_isPrim][iy_isPrim] ) );
             MPI_Type_commit( &( ntype_[1][ix_isPrim][iy_isPrim] ) );
 
-            // Still used ???
-            ntype_[2][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            MPI_Type_contiguous( 2*ny*clrw, MPI_DOUBLE, &( ntype_[2][ix_isPrim][iy_isPrim] ) ); //clrw lines
-            MPI_Type_commit( &( ntype_[2][ix_isPrim][iy_isPrim] ) );
-            
             
             nx_sum = 1 + 2*params.oversize[0] + ix_isPrim;
             ny_sum = 1 + 2*params.oversize[1] + iy_isPrim;
