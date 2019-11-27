@@ -643,9 +643,9 @@ Each species has to be defined in a ``Species`` block::
 
    :type: A python list of integers.
 
+   This list sets the number of evenly spaced particles per cell per dimension at their initial positions.
    The size of the list must be the simulation particle dimension. It can be used only if `position_initialization` is set to `regular`.
    The product of the elements of the provided list must be equal to `particles_per_cell`.
-   This list sets the number of evenly spaced particles per cell per dimension at their initial positions.
    The numbers are given in the order [`Nx`, `Ny`, `Nz`] in cartesian geometries and [`Nx`, `Nr`, `Ntheta`] in `AMcylindrical` in which
    case we advise to use :math:`Ntheta \geq  4\times (number\_of\_AM-1)`.
 
