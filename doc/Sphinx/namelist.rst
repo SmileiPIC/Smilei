@@ -127,11 +127,11 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   .. warning::
 
-    The ``"AMcylindrical"`` geometry is currently proposed in beta version.
+    The ``"AMcylindrical"`` geometry has some restrictions.
     Boundary conditions must be set to ``"remove"`` for particles,
     ``"silver-muller"`` for longitudinal EM boundaries and
     ``"buneman"`` for transverse EM boundaries.
-    Vectorization, collisions, scalar diagnostics, Poisson solver and
+    Vectorization, collisions, scalar diagnostics and
     order-4 interpolation are not supported yet.
 
 .. py:data:: interpolation_order
@@ -1025,10 +1025,6 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
 
     The temporal envelope of the injector.
      
-----
-
-.. rst-class:: experimental
-
 .. _Particle_merging:
 
 Particle Merging
@@ -2495,7 +2491,9 @@ This is done by including a block ``DiagFields``::
   In ``AMcylindrical`` geometry, the ``x``, ``y`` and ``z``
   indices are replaced by ``l`` (longitudinal), ``r`` (radial) and ``t`` (theta). In addition,
   the angular Fourier modes are denoted by the suffix ``_mode_i`` where ``i``
-  is the mode number. In summary, the list of fields reads as follows.
+  is the mode number.
+  If a field is specified without its associated mode number, all available modes will be included.
+  In summary, the list of fields reads as follows.
 
   .. rst-class:: nowrap
 
