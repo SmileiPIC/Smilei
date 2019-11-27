@@ -95,7 +95,7 @@ void CollisionsSingle::collide( Params &params, Patch *patch, int itime, vector<
         p1->swap_parts( index1 ); // exchange particles along the cycle defined by the shuffle
         
         // Prepare the ionization
-        Ionization->prepare1( s1->atomic_number );
+        Ionization->prepare1( s1->atomic_number_ );
         
         // Calculate the densities
         n1  = 0.; // density of species 1

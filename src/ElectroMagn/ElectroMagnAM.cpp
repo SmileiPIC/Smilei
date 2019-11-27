@@ -40,9 +40,11 @@ ElectroMagnAM::ElectroMagnAM( Params &params, DomainDecomposition *domain_decomp
             Jr_s[imode*n_species+ispec]  = new cField2D( ( "Jr_" + species_mode_name.str() ).c_str(), dimPrim );
             Jt_s[imode*n_species+ispec]  = new cField2D( ( "Jt_" + species_mode_name.str() ).c_str(), dimPrim );
             rho_AM_s[imode*n_species+ispec] = new cField2D( ( "Rho_"+ species_mode_name.str() ).c_str(), dimPrim );
+            if ((imode == 0) && (params.Laser_Envelope_model )){
+                Env_Chi_s[ispec] = new Field2D( ( "Env_Chi_"+ species_mode_name.str() ).c_str(), dimPrim );
+            }
         }
     }
-    
 }//END constructor Electromagn3D
 
 
@@ -88,6 +90,15 @@ ElectroMagnAM::ElectroMagnAM( ElectroMagnAM *emFields, Params &params, Patch *pa
                     rho_AM_s[ifield]  = new cField2D( emFields->rho_AM_s[ifield]->name, dimPrim );
                 }
             }
+
+            if( (imode==0) && (params.Laser_Envelope_model) && (emFields->Env_Chi_s[ifield] != NULL) ) {
+                if( emFields->Env_Chi_s[ifield]->data_ != NULL ) {
+                    Env_Chi_s[ifield] = new Field2D( dimPrim, emFields->Env_Chi_s[ifield]->name );
+                } else {
+                    Env_Chi_s[ifield]  = new Field2D( emFields->Env_Chi_s[ifield]->name, dimPrim );
+                }    
+            }
+
         }
         
     }
@@ -117,6 +128,13 @@ void ElectroMagnAM::initElectroMagnAMQuantities( Params &params, Patch *patch )
         Jr_s[ispec]  = NULL;
         Jt_s[ispec]  = NULL;
         rho_AM_s[ispec] = NULL;
+    }
+
+    if (params.Laser_Envelope_model){
+        Env_Chi_s.resize( n_species );
+        for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
+        Env_Chi_s[ispec]  = NULL;
+        }
     }
     
     // --------------------------------------------------
@@ -195,6 +213,12 @@ void ElectroMagnAM::initElectroMagnAMQuantities( Params &params, Patch *patch )
         Jr_[imode]   = new cField2D( dimPrim, 1, false, ( "Jr"+mode_id.str() ).c_str() );
         Jt_[imode]   = new cField2D( dimPrim, 2, false, ( "Jt"+mode_id.str() ).c_str() );
         rho_AM_[imode]  = new cField2D( dimPrim, ( "Rho"+mode_id.str() ).c_str() );
+    }
+
+    if( params.Laser_Envelope_model ) {
+        Env_A_abs_ = new Field2D( dimPrim, "Env_A_abs_mode_0" );
+        Env_Chi_   = new Field2D( dimPrim, "Env_Chi_mode_0" );
+        Env_E_abs_ = new Field2D( dimPrim, "Env_E_abs_mode_0" );
     }
     
     // ----------------------------------------------------------------
@@ -275,6 +299,11 @@ void ElectroMagnAM::finishInitialization( int nspecies, Patch *patch )
         allFields.push_back( Jr_[imode] );
         allFields.push_back( Jt_[imode] );
         allFields.push_back( rho_AM_[imode] );
+        if( (imode ==0) && (Env_A_abs_ != NULL) ) {
+            allFields.push_back( Env_A_abs_ );
+            allFields.push_back( Env_Chi_ );
+            allFields.push_back( Env_E_abs_ );
+        }
     }
     
     for( int ispec=0; ispec<nspecies*( int )nmodes; ispec++ ) {
@@ -282,7 +311,11 @@ void ElectroMagnAM::finishInitialization( int nspecies, Patch *patch )
         allFields.push_back( Jr_s[ispec] );
         allFields.push_back( Jt_s[ispec] );
         allFields.push_back( rho_AM_s[ispec] );
+        if ((ispec<nspecies) && (Env_A_abs_ != NULL) ){ // only mode 0
+            allFields.push_back( Env_Chi_s[ispec] );
+        }
     }
+
     
 }
 
@@ -314,6 +347,7 @@ ElectroMagnAM::~ElectroMagnAM()
             delete Jt_s[ifield];
             delete rho_AM_s[ifield];            
         }
+     
     }
     
 }//END ElectroMagnAM
@@ -1049,6 +1083,12 @@ Field *ElectroMagnAM::createField( string fieldname )
         return new cField2D( dimPrim, 2, false, fieldname );
     } else if( fieldname.substr( 0, 3 )=="Rho" ) {
         return new cField2D( dimPrim, fieldname );
+    } else if( fieldname.substr( 0, 9 )=="Env_A_abs" ) {
+        return new Field2D( dimPrim, 0, false, fieldname );
+    } else if( fieldname.substr( 0, 7 )=="Env_Chi" ) {
+        return new Field2D( dimPrim, 0, false, fieldname );
+    } else if( fieldname.substr( 0, 9 )=="Env_E_abs" ) {
+        return new Field2D( dimPrim, 0, false, fieldname );
     }
     
     ERROR( "Cannot create field "<<fieldname );
@@ -1217,7 +1257,26 @@ void ElectroMagnAM::computeTotalRhoJ()
 // Compute the total susceptibility from species susceptibility
 // ---------------------------------------------------------------------------------------------------------------------
 void ElectroMagnAM::computeTotalEnvChi()
-{ } //END computeTotalEnvChi
+{ 
+    // static cast of the total susceptibility
+    Field2D *Env_Chi2Dcyl   = static_cast<Field2D *>( Env_Chi_);
+    
+    // -----------------------------------
+    // Species susceptibility
+    // -----------------------------------
+    for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
+        if( Env_Chi_s[ispec] ) {
+            Field2D *Env_Chi2Dcyl_s  = static_cast<Field2D *>( Env_Chi_s[ispec] );
+            for( unsigned int i=0 ; i<nl_p ; i++ ) {
+                for( unsigned int j=0 ; j<nr_p ; j++ ) {
+                    ( *Env_Chi2Dcyl )( i, j ) += ( *Env_Chi2Dcyl_s )( i, j );
+                }
+            }
+        }
+    }//END loop on species ispec
+
+
+} //END computeTotalEnvChi
 
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1270,44 +1329,42 @@ void ElectroMagnAM::applyExternalTimeFields( Patch *patch, double time )
 
 #ifdef _TODO_AM
 #endif
-//tommaso: not sure what to do in AM
-//     int Nmodes = El_.size();
-//     
-//     Field *field;
-// 
-//     for (int imode=0;imode<Nmodes;imode++){
-//         for( vector<ExtField>::iterator extfield=extFields.begin(); extfield!=extFields.end(); extfield++ ) {
-//             string name = LowerCase( extfield->field );
-//             if( El_[imode] && name==LowerCase( El_[imode]->name ) ) {
-//                 field = El_[imode];
-//             } else if( Er_[imode] && name==LowerCase( Er_[imode]->name ) ) {
-//                 field = Er_[imode];
-//             } else if( Et_[imode] && name==LowerCase( Et_[imode]->name ) ) {
-//                 field = Et_[imode];
-//             } else if( Bl_[imode] && name==LowerCase( Bl_[imode]->name ) ) {
-//                 field = Bl_[imode];
-//             } else if( Br_[imode] && name==LowerCase( Br_[imode]->name ) ) {
-//                 field = Br_[imode];
-//             } else if( Bt_[imode] && name==LowerCase( Bt_[imode]->name ) ) {
-//                 field = Bt_[imode];
-//             } else {
-//                 field = NULL;
-//             }
-//             
-//             if( field ){ 
-//                 applyExternalTimeField( field, extfield->profile, patch, time );
-//             };
-//         }
-//         Bl_m[imode]->copyFrom( Bl_[imode] );
-//         Br_m[imode]->copyFrom( Br_[imode] );
-//         Bt_m[imode]->copyFrom( Bt_[imode] );
-//     }
+    int Nmodes = El_.size();
+    
+    Field *field;
+
+    for (int imode=0;imode<Nmodes;imode++){
+        for( vector<ExtTimeField>::iterator extfield=extTimeFields.begin(); extfield!=extTimeFields.end(); extfield++ ) {
+			string name = LowerCase( extfield->savedField->name );
+			if( El_[imode] && name==LowerCase( El_[imode]->name ) ) {
+				field = El_[imode];
+			} else if( Er_[imode] && name==LowerCase( Er_[imode]->name ) ) {
+				field = Er_[imode];
+			} else if( Et_[imode] && name==LowerCase( Et_[imode]->name ) ) {
+				field = Et_[imode];
+			} else if( Bl_[imode] && name==LowerCase( Bl_[imode]->name ) ) {
+				field = Bl_[imode];
+			} else if( Br_[imode] && name==LowerCase( Br_[imode]->name ) ) {
+				field = Br_[imode];
+			} else if( Bt_[imode] && name==LowerCase( Bt_[imode]->name ) ) {
+				field = Bt_[imode];
+			} else {
+				field = NULL;
+			}
+		
+			if( field ){ 
+				applyExternalTimeField( field, extfield->profile, patch, time );
+			}
+        }
+        Bl_m[imode]->copyFrom( Bl_[imode] );
+        Br_m[imode]->copyFrom( Br_[imode] );
+        Bt_m[imode]->copyFrom( Bt_[imode] );
+    }
 
 }
 
 void ElectroMagnAM::applyExternalField( Field *my_field,  Profile *profile, Patch *patch )
 {
-
      cField2D *field2D=static_cast<cField2D *>( my_field );
      
      vector<double> pos( 2 );
@@ -1352,48 +1409,45 @@ void ElectroMagnAM::applyExternalField( Field *my_field,  Profile *profile, Patc
 
 void ElectroMagnAM::applyExternalTimeField( Field *my_field,  Profile *profile, Patch *patch, double time )
 {
-
-//tommaso: not sure what to do in AM
-//    cField2D *field2D=static_cast<cField2D *>( my_field );
-//    
-//    vector<double> pos( 2 );
-//    pos[0]      = dl*( ( double )( patch->getCellStartingGlobalIndex( 0 ) )+( field2D->isDual( 0 )?-0.5:0. ) );
-//    double pos1 = dr*( ( double )( patch->getCellStartingGlobalIndex( 1 ) )+( field2D->isDual( 1 )?-0.5:0. ) );
-//    int N0 = ( int )field2D->dims()[0];
-//    int N1 = ( int )field2D->dims()[1];
-//    
-//    vector<Field *> xr( 2 );
-//    vector<unsigned int> n_space_to_create( 2 );
-//    n_space_to_create[0] = N0;
-//    n_space_to_create[1] = N1;
-//
-//    for( unsigned int idim=0 ; idim<2 ; idim++ ) {
-//        xr[idim] = new Field2D( n_space_to_create );
-//    }
-//
-//    for( int i=0 ; i<N0 ; i++ ) {
-//        pos[1] = pos1;
-//        for( int j=0 ; j<N1 ; j++ ) {
-//            for( unsigned int idim=0 ; idim<2 ; idim++ ) {
-//                ( *xr[idim] )( i, j ) = pos[idim];
-//            }
-//            pos[1] += dr;
-//        }
-//        pos[0] += dl;
-//    }
-//
-//    profile->complexValuesAt( xr, *field2D );
-//
-//    for( unsigned int idim=0 ; idim<2 ; idim++ ) {
-//        delete xr[idim];
-//    }
-//
-//    //for( auto &embc: emBoundCond ) {
-//    //    if( embc ) {
-//    //        embc->save_fields( my_field, patch );
-//    //    }
-//    //}
+    cField2D *field2D=static_cast<cField2D *>( my_field );
     
+    vector<double> pos( 2 );
+    pos[0]      = dl*( ( double )( patch->getCellStartingGlobalIndex( 0 ) )+( field2D->isDual( 0 )?-0.5:0. ) );
+    double pos1 = dr*( ( double )( patch->getCellStartingGlobalIndex( 1 ) )+( field2D->isDual( 1 )?-0.5:0. ) );
+    int N0 = ( int )field2D->dims()[0];
+    int N1 = ( int )field2D->dims()[1];
+    
+    vector<Field *> xr( 2 );
+    vector<unsigned int> n_space_to_create( 2 );
+    n_space_to_create[0] = N0;
+    n_space_to_create[1] = N1;
+
+    for( unsigned int idim=0 ; idim<2 ; idim++ ) {
+        xr[idim] = new Field2D( n_space_to_create );
+    }
+
+    for( int i=0 ; i<N0 ; i++ ) {
+        pos[1] = pos1;
+        for( int j=0 ; j<N1 ; j++ ) {
+            for( unsigned int idim=0 ; idim<2 ; idim++ ) {
+                ( *xr[idim] )( i, j ) = pos[idim];
+            }
+            pos[1] += dr;
+        }
+        pos[0] += dl;
+    }
+
+    profile->complexValuesAtTime( xr, time, *field2D );
+
+    for( unsigned int idim=0 ; idim<2 ; idim++ ) {
+        delete xr[idim];
+    }
+
+    //for( auto &embc: emBoundCond ) {
+    //    if( embc ) {
+    //        embc->save_fields( my_field, patch );
+    //    }
+    //}    
 }
 
 

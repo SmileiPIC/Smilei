@@ -67,7 +67,10 @@ public :
     #endif
         for( unsigned int ifield=0 ; ifield<fields.size() ; ifield++ ) {
             unsigned int ipatch = ifield%nPatches;
-            vecPatches( ipatch )->initSumField( fields[ifield], 0, smpi );
+            if ( !dynamic_cast<cField*>( fields[ipatch] ) )                            
+                vecPatches( ipatch )->initSumField( fields[ifield], 0, smpi );
+            else 
+                vecPatches( ipatch )->initSumFieldComplex( fields[ifield], 0, smpi );
         }
 
         // iDim = 0, local
@@ -109,7 +112,10 @@ public :
     #endif
         for( unsigned int ifield=0 ; ifield<fields.size() ; ifield++ ) {
             unsigned int ipatch = ifield%nPatches;
-            vecPatches( ipatch )->finalizeSumField( fields[ifield], 0 );
+            if ( !dynamic_cast<cField*>( fields[ipatch] ) )
+                vecPatches( ipatch )->finalizeSumField( fields[ifield], 0 );
+            else
+                vecPatches( ipatch )->finalizeSumFieldComplex( fields[ifield], 0 );
         }
         // END iDim = 0 sync
         // -----------------
@@ -126,7 +132,10 @@ public :
     #endif
             for( unsigned int ifield=0 ; ifield<fields.size() ; ifield++ ) {
                 unsigned int ipatch = ifield%nPatches;
-                vecPatches( ipatch )->initSumField( fields[ifield], 1, smpi );
+                if ( !dynamic_cast<cField*>( fields[ipatch] ) )
+                    vecPatches( ipatch )->initSumField( fields[ifield], 1, smpi );
+                else
+                    vecPatches( ipatch )->initSumFieldComplex( fields[ifield], 1, smpi );
             }
 
             // iDim = 1, local
@@ -172,7 +181,10 @@ public :
     #endif
             for( unsigned int ifield=0 ; ifield<fields.size() ; ifield++ ) {
                 unsigned int ipatch = ifield%nPatches;
-                vecPatches( ipatch )->finalizeSumField( fields[ifield], 1 );
+                if ( !dynamic_cast<cField*>( fields[ipatch] ) )
+                    vecPatches( ipatch )->finalizeSumField( fields[ifield], 1 );
+                else
+                    vecPatches( ipatch )->finalizeSumFieldComplex( fields[ifield], 1 );
             }
             // END iDim = 1 sync
             // -----------------

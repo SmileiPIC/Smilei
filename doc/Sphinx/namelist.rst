@@ -127,11 +127,11 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   .. warning::
 
-    The ``"AMcylindrical"`` geometry is currently proposed in beta version.
+    The ``"AMcylindrical"`` geometry has some restrictions.
     Boundary conditions must be set to ``"remove"`` for particles,
     ``"silver-muller"`` for longitudinal EM boundaries and
     ``"buneman"`` for transverse EM boundaries.
-    Vectorization, collisions, scalar diagnostics, Poisson solver and
+    Vectorization, collisions, scalar diagnostics and
     order-4 interpolation are not supported yet.
 
 .. py:data:: interpolation_order
@@ -643,9 +643,9 @@ Each species has to be defined in a ``Species`` block::
 
    :type: A python list of integers.
 
+   This list sets the number of evenly spaced particles per cell per dimension at their initial positions.
    The size of the list must be the simulation particle dimension. It can be used only if `position_initialization` is set to `regular`.
    The product of the elements of the provided list must be equal to `particles_per_cell`.
-   This list sets the number of evenly spaced particles per cell per dimension at their initial positions.
    The numbers are given in the order [`Nx`, `Ny`, `Nz`] in cartesian geometries and [`Nx`, `Nr`, `Ntheta`] in `AMcylindrical` in which
    case we advise to use :math:`Ntheta \geq  4\times (number\_of\_AM-1)`.
 
@@ -1024,7 +1024,11 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
     :default:  ``tconstant()``
 
     The temporal envelope of the injector.
-     
+    
+----
+
+.. rst-class:: experimental
+
 .. _Particle_merging:
 
 Particle Merging
@@ -1463,8 +1467,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 Laser envelope model
 ^^^^^^^^^^^^^^^^^^^^^^
 
-In the geometries ``"1Dcartesian"``, ``"2Dcartesian"``, ``"3Dcartesian"``
-it is possible to model a laser pulse propagating in the ``x`` direction
+In all the available geometries, it is possible to model a laser pulse propagating in the ``x`` direction
 using an envelope model (see :doc:`laser_envelope` for the advantages
 and limits of this approximation).
 The fast oscillations of the laser are neglected and all the physical
@@ -1474,6 +1477,12 @@ meant as an average over one or more optical cycles.
 Effects involving characteristic lengths comparable to the laser central
 wavelength (i.e. sharp plasma density profiles) cannot be modeled with
 this option.
+
+.. note::
+
+  The envelope model in ``"AMcylindrical"`` geometry is implemented only in the hypothesis of  
+  cylindrical symmetry, i.e. only one azimuthal mode. Therefore, to use it the user must choose
+  ``number_of_AM = 1``.
 
 Contrarily to a standard Laser initialized with the Silver-Müller
 boundary conditions, the laser envelope will be entirely initialized inside
@@ -1584,11 +1593,26 @@ Following is the simplified laser envelope creator in 3D ::
         Envelope_boundary_conditions = [ ["reflective"] ],
     )
 
+.. rubric:: 5. Defining a cylindrical gaussian laser envelope
+
+..
+
+Following is the simplified laser envelope creator in ``"AMcylindrical"`` geometry (remember that 
+in this geometry the envelope model can be used only if ``number_of_AM = 1``) ::
+
+    LaserEnvelopeGaussianAM(
+        a0              = 1.,
+        focus           = [150., 40.],
+        waist           = 30.,
+        time_envelope   = tgaussian(center=150., fwhm=40.),
+        envelope_solver = 'explicit',
+        Envelope_boundary_conditions = [ ["reflective"] ],
+    )
 
 
-The arguments appearing ``LaserEnvelopePlanar1D``, ``LaserEnvelopeGaussian2D``
-and ``LaserEnvelopeGaussian3D`` have the same meaning they would have in a
-normal ``LaserPlanar1D``, ``LaserGaussian2D`` and ``LaserGaussian3D``,
+The arguments appearing ``LaserEnvelopePlanar1D``, ``LaserEnvelopeGaussian2D``,
+``LaserEnvelopeGaussian3D`` and ``LaserEnvelopeGaussianAM`` have the same meaning they would have in a
+normal ``LaserPlanar1D``, ``LaserGaussian2D``, ``LaserGaussian3D`` and ``LaserGaussianAM``,
 with some differences:
 
 .. py:data:: time_envelope
@@ -1642,6 +1666,37 @@ An external field can be applied using an ``ExternalField`` block::
 
   The initial spatial profile of the applied field.
   Refer to :doc:`units` to understand the units of this field.
+
+
+----
+
+.. _ExternalTimeField:
+
+External time dependent fields
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+An time dependent external field can be applied using an ``ExternalTimeField`` block::
+
+  def myExtProfile(x,t):
+  	return np.cos(x)*np.sin(x)
+  	
+  ExternalTimeField(
+      field = "Ex",
+      profile = myExtProfile
+  )
+
+.. py:data:: field
+
+  Field name: ``"Ex"``, ``"Ey"``, ``"Ez"``, ``"Bx"``, ``"By"`` or ``"Bz"``.
+
+.. py:data:: profile
+
+  :type: float or *python* function (see section :ref:`profiles`)
+
+  The spatio-temporal profile of the applied field.
+  Refer to :doc:`units` to understand the units of this field.
+
+.. note:: These fields will only be used to push particles but Maxwell solver will keep using original
 
 
 ----
@@ -2471,7 +2526,9 @@ This is done by including a block ``DiagFields``::
   In ``AMcylindrical`` geometry, the ``x``, ``y`` and ``z``
   indices are replaced by ``l`` (longitudinal), ``r`` (radial) and ``t`` (theta). In addition,
   the angular Fourier modes are denoted by the suffix ``_mode_i`` where ``i``
-  is the mode number. In summary, the list of fields reads as follows.
+  is the mode number.
+  If a field is specified without its associated mode number, all available modes will be included.
+  In summary, the list of fields reads as follows.
 
   .. rst-class:: nowrap
 
@@ -2503,6 +2560,9 @@ This is done by including a block ``DiagFields``::
   | | Env_E_abs    | | :math:`\tilde{E}` (component along the polarization |
   | |              | | direction)                                          |
   +----------------+-------------------------------------------------------+
+
+.. Note:: To write these last three envelope fields with this diagnostics in ``"AMcylindrical"`` geometry, 
+          a dedicated block ``DiagFields`` must be defined, e.g. with ``fields = ["Env_A_abs_mode_0", "Env_Chi_mode_0"]``.
 
 .. py:data:: subgrid
 

@@ -93,7 +93,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
-    if( time_dual>time_frozen || Ionize ) {
+    if( time_dual>time_frozen_ || Ionize ) {
         // moving particle
 
         smpi->dynamics_resize( ithread, nDim_particle, last_index.back() );
@@ -134,7 +134,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
 #endif
             }
 
-            if( time_dual<=time_frozen ) continue; // Do not push nor project frozen particles
+            if( time_dual<=time_frozen_ ) continue; // Do not push nor project frozen particles
 
             // Radiation losses
             if( Radiate ) {
@@ -294,7 +294,7 @@ void SpeciesVAdaptive::scalarDynamics( double time_dual, unsigned int ispec,
 
     }
 
-    if(time_dual <= time_frozen && diag_flag &&( !particles->is_test ) ) { //immobile particle (at the moment only project density)
+    if(time_dual <= time_frozen_ && diag_flag &&( !particles->is_test ) ) { //immobile particle (at the moment only project density)
 
         double *b_rho=nullptr;
         for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
@@ -501,7 +501,7 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdateSusceptibilityAndMomentum( doubl
     // -------------------------------
     // calculate the particle updated momentum
     // -------------------------------
-    if( time_dual>time_frozen ) { // moving particle
+    if( time_dual>time_frozen_ ) { // moving particle
 
         smpi->dynamics_resize( ithread, nDim_field, last_index.back(), params.geometry=="AMcylindrical" );
 
@@ -534,7 +534,7 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdateSusceptibilityAndMomentum( doubl
 #endif
 
     } else { // immobile particle
-    } //END if time vs. time_frozen
+    } //END if time vs. time_frozen_
 } // ponderomotiveUpdateSusceptibilityAndMomentum
 
 
@@ -568,7 +568,7 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdatePositionAndCurrents( double time
     // -------------------------------
     // calculate the particle updated position
     // -------------------------------
-    if( time_dual>time_frozen ) { // moving particle
+    if( time_dual>time_frozen_ ) { // moving particle
 
         smpi->dynamics_resize( ithread, nDim_field, last_index.back(), params.geometry=="AMcylindrical" );
 
@@ -703,5 +703,5 @@ void SpeciesVAdaptive::scalarPonderomotiveUpdatePositionAndCurrents( double time
             }//End loop on bins
         } // end condition on diag and not particle test
 
-    }//END if time vs. time_frozen
+    }//END if time vs. time_frozen_
 } // End ponderomotive_position_update

@@ -430,7 +430,7 @@ void SmileiMPI::recompute_patch_count( Params &params, VectorPatch &vecpatches, 
         //Compute particle contribution to Local Loads of each Patch (Lp)
         for( unsigned int ipatch=0; ipatch < ( unsigned int )patch_count[smilei_rk]; ipatch++ ) {
             for( unsigned int ispecies = 0; ispecies < tot_species_number; ispecies++ ) {
-                Lp[ipatch] += vecpatches( ipatch )->vecSpecies[ispecies]->getNbrOfParticles()*( 1+( params.frozen_particle_load-1 )*( time_dual < vecpatches( ipatch )->vecSpecies[ispecies]->time_frozen ) ) ;
+                Lp[ipatch] += vecpatches( ipatch )->vecSpecies[ispecies]->getNbrOfParticles()*( 1+( params.frozen_particle_load-1 )*( time_dual < vecpatches( ipatch )->vecSpecies[ispecies]->time_frozen_ ) ) ;
             }
             Tload_loc += Lp[ipatch];
         }
@@ -1159,6 +1159,28 @@ void SmileiMPI::isend( ElectroMagn *EM, int to, int tag, vector<MPI_Request> &re
         tag++;
     }
 
+    // if laser envelope is present, send it
+    // send also Phi, Phi_m, GradPhi, GradPhi_m
+    if( EM->envelope!=NULL ) {
+        isendComplex( EM->envelope->A_, to, mpi_tag+tag, requests[tag] );
+        tag++;
+        isendComplex( EM->envelope->A0_, to, mpi_tag+tag, requests[tag] );
+        tag++;
+        isend( EM->envelope->Phi_, to, mpi_tag+tag, requests[tag] );
+        tag++;
+        isend( EM->envelope->Phi_m, to, mpi_tag+tag, requests[tag] );
+        tag++;
+        isend( EM->envelope->GradPhil_, to, mpi_tag+tag, requests[tag] );
+        tag++;
+        isend( EM->envelope->GradPhil_m, to, mpi_tag+tag, requests[tag] );
+        tag++;
+        isend( EM->envelope->GradPhir_, to, mpi_tag+tag, requests[tag] );
+        tag++;
+        isend( EM->envelope->GradPhir_m, to, mpi_tag+tag, requests[tag] );
+        tag++;
+
+    }
+
     for( unsigned int idiag=0; idiag<EM->allFields_avg.size(); idiag++ ) {
         for( unsigned int ifield=0; ifield<EM->allFields_avg[idiag].size(); ifield++ ) {
             isend( EM->allFields_avg[idiag][ifield], to, mpi_tag+tag, requests[tag] );
@@ -1398,6 +1420,25 @@ void SmileiMPI::recv( ElectroMagn *EM, int from, int tag, unsigned int nmodes )
         recvComplex( EMAM->Br_m[imode], from, tag );
         tag++;
         recvComplex( EMAM->Bt_m[imode], from, tag );
+        tag++;
+    }
+
+    if( EM->envelope!=NULL ) {
+        recvComplex( EM->envelope->A_, from, tag );
+        tag++;
+        recvComplex( EM->envelope->A0_, from, tag );
+        tag++;
+        recv( EM->envelope->Phi_, from, tag );
+        tag++;
+        recv( EM->envelope->Phi_m, from, tag );
+        tag++;
+        recv( EM->envelope->GradPhil_, from, tag );
+        tag++;
+        recv( EM->envelope->GradPhil_m, from, tag );
+        tag++;
+        recv( EM->envelope->GradPhir_, from, tag );
+        tag++;
+        recv( EM->envelope->GradPhir_m, from, tag );
         tag++;
     }
 

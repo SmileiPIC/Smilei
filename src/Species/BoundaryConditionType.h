@@ -136,7 +136,7 @@ inline int thermalize_particle( Particles &particles, int ipart, int direction, 
     
     // Apply bcs depending on the particle velocity
     // --------------------------------------------
-    if( v>3.0*species->thermalVelocity[0] ) {     //IF VELOCITY > 3*THERMAL VELOCITY THEN THERMALIZE IT
+    if( v>3.0*species->thermal_velocity_[0] ) {     //IF VELOCITY > 3*THERMAL VELOCITY THEN THERMALIZE IT
     
         // velocity of the particle after thermalization/reflection
         //for (int i=0; i<species->nDim_fields; i++) {
@@ -145,14 +145,14 @@ inline int thermalize_particle( Particles &particles, int ipart, int direction, 
             if( i==direction ) {
                 // change of velocity in the direction normal to the reflection plane
                 double sign_vel = -particles.momentum( i, ipart )/std::abs( particles.momentum( i, ipart ) );
-                particles.momentum( i, ipart ) = sign_vel * species->thermalMomentum[i]
+                particles.momentum( i, ipart ) = sign_vel * species->thermal_momentum_[i]
                                                  *                             std::sqrt( -std::log( 1.0-Rand::uniform1() ) );
                                                  
             } else {
                 // change of momentum in the direction(s) along the reflection plane
                 double sign_rnd = Rand::uniform() - 0.5;
                 sign_rnd = ( sign_rnd )/std::abs( sign_rnd );
-                particles.momentum( i, ipart ) = sign_rnd * species->thermalMomentum[i]
+                particles.momentum( i, ipart ) = sign_rnd * species->thermal_momentum_[i]
                                                  *                             userFunctions::erfinv( Rand::uniform1() );
             }//if
             
@@ -161,9 +161,9 @@ inline int thermalize_particle( Particles &particles, int ipart, int direction, 
         // Adding the mean velocity (using relativistic composition)
         double vx, vy, vz, v2, g, gm1, Lxx, Lyy, Lzz, Lxy, Lxz, Lyz, gp, px, py, pz;
         // mean-velocity
-        vx  = -species->thermal_boundary_velocity[0];
-        vy  = -species->thermal_boundary_velocity[1];
-        vz  = -species->thermal_boundary_velocity[2];
+        vx  = -species->thermal_boundary_velocity_[0];
+        vy  = -species->thermal_boundary_velocity_[1];
+        vz  = -species->thermal_boundary_velocity_[2];
         v2  = vx*vx + vy*vy + vz*vz;
         if( v2>0. ) {
         
@@ -193,7 +193,7 @@ inline int thermalize_particle( Particles &particles, int ipart, int direction, 
     } else {                                    // IF VELOCITY < 3*THERMAL SIMPLY REFLECT IT
         particles.momentum( direction, ipart ) = -particles.momentum( direction, ipart );
         
-    }// endif on v vs. thermalVelocity
+    }// endif on v vs. thermal_velocity_
     
     // position of the particle after reflection
     particles.position( direction, ipart ) = limit_pos - particles.position( direction, ipart );
@@ -208,7 +208,7 @@ inline int thermalize_particle( Particles &particles, int ipart, int direction, 
     if ( ( particles.position(1,ipart) >= val_min ) && ( particles.position(1,ipart) <= val_max ) ) {
         // nrj computed during diagnostics
         particles.position(direction, ipart) = limit_pos - particles.position(direction, ipart);
-        particles.momentum(direction, ipart) = sqrt(params.thermalVelocity[direction]) * tabFcts.erfinv( Rand::uniform() );
+        particles.momentum(direction, ipart) = sqrt(params.thermal_velocity_[direction]) * tabFcts.erfinv( Rand::uniform() );
     }
     else {
         stop_particle( particles, ipart, direction, limit_pos, params, nrj_iPart );

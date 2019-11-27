@@ -51,17 +51,17 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 Species::Species( Params &params, Patch *patch ) :
     c_part_max_( 1 ),
-    ionization_rate( Py_None ),
-    pusher( "boris" ),
-    radiation_model( "none" ),
-    time_frozen( 0 ),
-    radiating( false ),
-    relativistic_field_initialization( false ),
-    time_relativistic_initialization( 0 ),
-    multiphoton_Breit_Wheeler( 2, "" ),
+    ionization_rate_( Py_None ),
+    pusher_name_( "boris" ),
+    radiation_model_( "none" ),
+    time_frozen_( 0 ),
+    radiating_( false ),
+    relativistic_field_initialization_( false ),
+    time_relativistic_initialization_( 0 ),
+    multiphoton_Breit_Wheeler_( 2, "" ),
     ionization_model( "none" ),
     density_profile_type_( "none" ),
-    chargeProfile( NULL ),
+    charge_profile_( NULL ),
     density_profile_( NULL ),
     velocity_profile_( 3, NULL ),
     temperature_profile_( 3, NULL ),
@@ -145,7 +145,7 @@ void Species::initCluster( Params &params )
     }
 
     //Initialize specMPI
-    MPIbuff.allocate( nDim_particle );
+    MPI_buffer_.allocate( nDim_particle );
 
     //ener_tot = 0.;
     nrj_bc_lost = 0.;
@@ -225,11 +225,11 @@ void Species::initOperators( Params &params, Patch *patch )
     partBoundCond = new PartBoundCond( params, this, patch );
     for( unsigned int iDim=0 ; iDim < nDim_particle ; iDim++ ) {
         for( unsigned int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++ ) {
-            MPIbuff.partRecv[iDim][iNeighbor].initialize( 0, ( *particles ) );
-            MPIbuff.partSend[iDim][iNeighbor].initialize( 0, ( *particles ) );
-            MPIbuff.part_index_send[iDim][iNeighbor].resize( 0 );
-            MPIbuff.part_index_recv_sz[iDim][iNeighbor] = 0;
-            MPIbuff.part_index_send_sz[iDim][iNeighbor] = 0;
+            MPI_buffer_.partRecv[iDim][iNeighbor].initialize( 0, ( *particles ) );
+            MPI_buffer_.partSend[iDim][iNeighbor].initialize( 0, ( *particles ) );
+            MPI_buffer_.part_index_send[iDim][iNeighbor].resize( 0 );
+            MPI_buffer_.part_index_recv_sz[iDim][iNeighbor] = 0;
+            MPI_buffer_.part_index_send_sz[iDim][iNeighbor] = 0;
         }
     }
     typePartSend.resize( nDim_particle*2, MPI_DATATYPE_NULL );
@@ -266,8 +266,8 @@ Species::~Species()
     if( particles_per_cell_profile_ ) {
         delete particles_per_cell_profile_;
     }
-    if( chargeProfile ) {
-        delete chargeProfile;
+    if( charge_profile_ ) {
+        delete charge_profile_;
     }
     if( density_profile_ ) {
         delete density_profile_;
@@ -278,8 +278,8 @@ Species::~Species()
     for( unsigned int i=0; i<temperature_profile_.size(); i++ ) {
         delete temperature_profile_[i];
     }
-    if( ionization_rate!=Py_None ) {
-        Py_DECREF( ionization_rate );
+    if( ionization_rate_!=Py_None ) {
+        Py_DECREF( ionization_rate_ );
     }
 
 }
@@ -325,7 +325,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
     // -------------------------------
     // calculate the particle dynamics
     // -------------------------------
-    if( time_dual>time_frozen || Ionize) { // moving particle
+    if( time_dual>time_frozen_ || Ionize) { // moving particle
     
         smpi->dynamics_resize( ithread, nDim_field, last_index.back(), params.geometry=="AMcylindrical" );
         //Point to local thread dedicated buffers
@@ -359,7 +359,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 #endif
             }
             
-            if( time_dual<=time_frozen ) continue; // Do not push nor project frozen particles
+            if( time_dual<=time_frozen_ ) continue; // Do not push nor project frozen particles
 
             // Radiation losses
             if( Radiate ) {
@@ -544,7 +544,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 
     } //End if moving or ionized particles
 
-    if(time_dual <= time_frozen && diag_flag &&( !particles->is_test ) ) { //immobile particle (at the moment only project density)
+    if(time_dual <= time_frozen_ && diag_flag &&( !particles->is_test ) ) { //immobile particle (at the moment only project density)
         if( params.geometry != "AMcylindrical" ) {
             double *b_rho=nullptr;
             for( unsigned int ibin = 0 ; ibin < first_index.size() ; ibin ++ ) { //Loop for projection on buffer_proj
@@ -661,7 +661,7 @@ void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
                  }
 
     // if moving particle
-    if( time_dual>time_frozen ) { // moving particle
+    if( time_dual>time_frozen_ ) { // moving particle
 
         // Radiation losses
         if( Radiate ) {
@@ -684,7 +684,7 @@ void Species::dynamicsImportParticles( double time_dual, unsigned int ispec,
                                                       localDiags );
             }
         }
-    }//END if time vs. time_frozen
+    }//END if time vs. time_frozen_
 }
 
 
@@ -807,15 +807,15 @@ void Species::sortParticles( Params &params )
     }
 
     //idim=0
-    shift[1] += MPIbuff.part_index_recv_sz[0][0];//Particles coming from xmin all go to bin 0 and shift all the other bins.
-    shift[last_index.size()] += MPIbuff.part_index_recv_sz[0][1];//Used only to count the total number of particles arrived.
+    shift[1] += MPI_buffer_.part_index_recv_sz[0][0];//Particles coming from xmin all go to bin 0 and shift all the other bins.
+    shift[last_index.size()] += MPI_buffer_.part_index_recv_sz[0][1];//Used only to count the total number of particles arrived.
     //idim>0
     for( idim = 1; idim < ndim; idim++ ) {
         for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
-            n_part_recv = MPIbuff.part_index_recv_sz[idim][iNeighbor];
+            n_part_recv = MPI_buffer_.part_index_recv_sz[idim][iNeighbor];
             for( unsigned int j=0; j<( unsigned int )n_part_recv ; j++ ) {
                 //We first evaluate how many particles arrive in each bin.
-                ii = int( ( MPIbuff.partRecv[idim][iNeighbor].position( 0, j )-min_loc )/dbin ); //bin in which the particle goes.
+                ii = int( ( MPI_buffer_.partRecv[idim][iNeighbor].position( 0, j )-min_loc )/dbin ); //bin in which the particle goes.
                 shift[ii+1]++; // It makes the next bins shift.
             }
         }
@@ -850,11 +850,11 @@ void Species::sortParticles( Params &params )
     //Space has been made now to write the arriving particles into the correct bins
     //idim == 0  is the easy case, when particles arrive either in first or last bin.
     for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
-        n_part_recv = MPIbuff.part_index_recv_sz[0][iNeighbor];
+        n_part_recv = MPI_buffer_.part_index_recv_sz[0][iNeighbor];
         //if ( (neighbor_[0][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
         if( ( n_part_recv!=0 ) ) {
             ii = iNeighbor*( last_index.size()-1 ); //0 if iNeighbor=0(particles coming from Xmin) and last_index.size()-1 otherwise.
-            MPIbuff.partRecv[0][iNeighbor].overwrite_part( 0, *particles, last_index[ii], n_part_recv );
+            MPI_buffer_.partRecv[0][iNeighbor].overwrite_part( 0, *particles, last_index[ii], n_part_recv );
             last_index[ii] += n_part_recv ;
         }
     }
@@ -862,12 +862,12 @@ void Species::sortParticles( Params &params )
     for( idim = 1; idim < ndim; idim++ ) {
         //if (idim!=iDim) continue;
         for( int iNeighbor=0 ; iNeighbor<nbNeighbors_ ; iNeighbor++ ) {
-            n_part_recv = MPIbuff.part_index_recv_sz[idim][iNeighbor];
+            n_part_recv = MPI_buffer_.part_index_recv_sz[idim][iNeighbor];
             //if ( (neighbor_[idim][iNeighbor]!=MPI_PROC_NULL) && (n_part_recv!=0) ) {
             if( ( n_part_recv!=0 ) ) {
                 for( unsigned int j=0; j<( unsigned int )n_part_recv; j++ ) {
-                    ii = int( ( MPIbuff.partRecv[idim][iNeighbor].position( 0, j )-min_loc )/dbin ); //bin in which the particle goes.
-                    MPIbuff.partRecv[idim][iNeighbor].overwrite_part( j, *particles, last_index[ii] );
+                    ii = int( ( MPI_buffer_.partRecv[idim][iNeighbor].position( 0, j )-min_loc )/dbin ); //bin in which the particle goes.
+                    MPI_buffer_.partRecv[idim][iNeighbor].overwrite_part( j, *particles, last_index[ii] );
                     last_index[ii] ++ ;
                 }
             }
@@ -1109,11 +1109,11 @@ void Species::importParticles( Params &params, Patch *patch, Particles &source_p
 bool Species::isProj( double time_dual, SimWindow *simWindow )
 {
 
-    return time_dual > time_frozen  || ( simWindow->isMoving( time_dual ) || Ionize ) ;
+    return time_dual > time_frozen_  || ( simWindow->isMoving( time_dual ) || Ionize ) ;
 
     //Recompute frozen particles density if
     //moving window is activated, actually moving at this time step, and we are not in a density slope.
-    /*    bool isproj =(time_dual > species_param.time_frozen  ||
+    /*    bool isproj =(time_dual > species_param.time_frozen_  ||
                  (simWindow && simWindow->isMoving(time_dual) &&
                      (species_param.species_geometry == "gaussian" ||
                          (species_param.species_geometry == "trapezoidal" &&
@@ -1127,7 +1127,7 @@ bool Species::isProj( double time_dual, SimWindow *simWindow )
                 )
             );
             return isproj;*/
-    //return time_dual > species_param.time_frozen  || (simWindow && simWindow->isMoving(time_dual)) ;
+    //return time_dual > species_param.time_frozen_  || (simWindow && simWindow->isMoving(time_dual)) ;
 }
 
 void Species::disableXmax()
@@ -1175,7 +1175,7 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, un
     // -------------------------------
     // calculate the particle updated momentum
     // -------------------------------
-    if( time_dual>time_frozen ) { // moving particle
+    if( time_dual>time_frozen_ ) { // moving particle
 
         smpi->dynamics_resize( ithread, nDim_field, last_index.back(), params.geometry=="AMcylindrical" );
 
@@ -1211,7 +1211,7 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, un
 
         } // end loop on ibin
     } else { // immobile particle
-    } //END if time vs. time_frozen
+    } //END if time vs. time_frozen_
 } // ponderomotiveUpdateSusceptibilityAndMomentum
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1240,7 +1240,7 @@ void Species::ponderomotiveProjectSusceptibility( double time_dual, unsigned int
     // -------------------------------
     // calculate the particle updated momentum
     // -------------------------------
-    if( time_dual>time_frozen ) { // moving particle
+    if( time_dual>time_frozen_ ) { // moving particle
 
         smpi->dynamics_resize( ithread, nDim_particle, last_index.back(), false );
 
@@ -1267,7 +1267,7 @@ void Species::ponderomotiveProjectSusceptibility( double time_dual, unsigned int
 
         } // end loop on ibin
     } else { // immobile particle
-    } //END if time vs. time_frozen
+    } //END if time vs. time_frozen_
 } // ponderomotiveProjectSusceptibility
 
 
@@ -1308,7 +1308,7 @@ void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned
     // -------------------------------
     // calculate the particle updated position
     // -------------------------------
-    if( time_dual>time_frozen ) { // moving particle
+    if( time_dual>time_frozen_ ) { // moving particle
 
         smpi->dynamics_resize( ithread, nDim_field, last_index.back(), params.geometry=="AMcylindrical" );
 
@@ -1417,7 +1417,7 @@ void Species::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigned
             }//End loop on bins
         } // end condition on diag and not particle test
 
-    }//END if time vs. time_frozen
+    }//END if time vs. time_frozen_
 } // End ponderomotive_position_update
 
 void Species::check( Patch *patch, std::string title )
