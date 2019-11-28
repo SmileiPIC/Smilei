@@ -189,6 +189,8 @@ public :
     
     //! Solve Poisson to initialize E
     void solvePoisson( Params &params, SmileiMPI *smpi );
+    void runNonRelativisticPoissonModule(params, &smpi,  timers &timers);
+    void solvePoissonAM( Params &params, SmileiMPI *smpi);
     
     //! Solve relativistic Poisson problem to initialize E and B of a relativistic bunch
     void runRelativisticModule( double time_prim, Params &params, SmileiMPI* smpi,  Timers &timers );
