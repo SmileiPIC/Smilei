@@ -40,12 +40,18 @@ public:
     std::vector<cField2D *> rho_AM_s;
     void restartRhoJ() override;
     void restartRhoJs() override;
+    
+    // fields for Poisson solver
+    cField2D *El_Poisson_;
+    cField2D *Er_Poisson_;
+    cField2D *Et_Poisson_;
 
     void initPoisson( Patch *patch ) override;
     double compute_r();
     void compute_Ap( Patch *patch ) override;
     void compute_Ap_relativistic_Poisson( Patch *patch, double gamma_mean ) override {;}
     void compute_Ap_relativistic_Poisson_AM( Patch *patch, double gamma_mean, unsigned int imode );
+    void compute_Ap_Poisson_AM( Patch *patch, unsigned int imode );
     //Access to Ap
     double compute_pAp() override {return 0.;};
     std::complex<double> compute_pAp_AM();
@@ -55,16 +61,20 @@ public:
     void initE( Patch *patch ) override;
     void delete_phi_r_p_Ap( Patch *patch );
     void delete_relativistic_fields( Patch *patch );
+    void delete_Poisson_fields( Patch *patch );
     void initE_relativistic_Poisson( Patch *patch, double gamma_mean ) override {;}
     void initE_relativistic_Poisson_AM( Patch *patch, double gamma_mean, unsigned int imode );
+    void initE_Poisson_AM( Patch *patch, unsigned int imode );
     void initB_relativistic_Poisson( Patch *patch, double gamma_mean ) override {;}
     void initB_relativistic_Poisson_AM( Patch *patch, double gamma_mean );
     void center_fields_from_relativistic_Poisson( Patch *patch ) override {;}
     void center_fields_from_relativistic_Poisson_AM( Patch *patch );
     void initRelativisticPoissonFields( Patch *patch ) override;
+    void initPoissonFields( Patch *patch ) override;
     void initPoisson_init_phi_r_p_Ap( Patch *patch, unsigned int imode );
     void sum_rel_fields_to_em_fields( Patch *patch ) override {;}
     void sum_rel_fields_to_em_fields_AM( Patch *patch, Params &params, unsigned int imode );
+    void sum_Poisson_fields_to_em_fields_AM( Patch *patch, Params &params, unsigned int imode );
     void centeringE( std::vector<double> E_Add ) override;
     void centeringErel( std::vector<double> E_Add ) override {;}
     
