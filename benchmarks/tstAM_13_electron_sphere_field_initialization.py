@@ -49,8 +49,6 @@ Main(
         ["silver-muller","silver-muller"],
         ["buneman","buneman"],
     ],
-
-    solve_poisson = False,
     
     solve_poisson = True,
     poisson_max_iteration = 50000,    
