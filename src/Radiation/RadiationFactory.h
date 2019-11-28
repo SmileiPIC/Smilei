@@ -38,28 +38,28 @@ public:
         Radiation *Radiate = NULL;
         
         // assign the correct Radiation model to Radiate
-        if( species->radiation_model == "mc" ) {
+        if( species->radiation_model_ == "mc" ) {
             Radiate = new RadiationMonteCarlo( params, species );
         }
         // Corrected LL + stochastic diffusive operator
-        else if( species->radiation_model == "niel" ) {
+        else if( species->radiation_model_ == "niel" ) {
             Radiate = new RadiationNiel( params, species );
         }
         // Corrected continuous radiation loss model
-        else if( species->radiation_model == "cll" ) {
+        else if( species->radiation_model_ == "cll" ) {
             Radiate = new RadiationCorrLandauLifshitz( params, species );
         }
         // Classical continuous radiation loss model from Landau-Lifshitz (LL)
-        else if( species->radiation_model == "ll" ) {
+        else if( species->radiation_model_ == "ll" ) {
             Radiate = new RadiationLandauLifshitz( params, species );
-        } else if( species->radiation_model != "none" ) {
+        } else if( species->radiation_model_ != "none" ) {
             ERROR( "For species " << species->name_
                    << ": unknown radiation_model `"
-                   << species->radiation_model << "`" );
+                   << species->radiation_model_ << "`" );
         }
         
         int n_envlaser = params.Laser_Envelope_model;
-        if( ( n_envlaser >=1 ) & ( species->ponderomotive_dynamics ) & ( species->radiation_model != "none" ) ) {
+        if( ( n_envlaser >=1 ) & ( species->ponderomotive_dynamics ) & ( species->radiation_model_ != "none" ) ) {
             ERROR( "Radiation model is not yet implemented for species interacting with Laser Envelope model." );
         }
         

@@ -71,15 +71,15 @@ public:
     unsigned int atomic_number_;
 
     //! maximum charge state
-    unsigned int maximum_charge_state;
+    unsigned int maximum_charge_state_;
 
     //! user defined ionization rate profile
-    PyObject *ionization_rate;
+    PyObject *ionization_rate_;
 
     //! thermalizing temperature for thermalizing BCs [\f$m_e c^2\f$]
-    std::vector<double> thermal_boundary_temperature;
+    std::vector<double> thermal_boundary_temperature_;
     //! mean velocity used when thermalizing BCs are used [\f$c\f$]
-    std::vector<double> thermal_boundary_velocity;
+    std::vector<double> thermal_boundary_velocity_;
 
     //! thermal velocity [\f$c\f$]
     std::vector<double> thermal_velocity_;
@@ -87,25 +87,25 @@ public:
     std::vector<double> thermal_momentum_;
 
     //! pusher name
-    std::string pusher;
+    std::string pusher_name_;
 
     //! radiation model
-    std::string radiation_model;
+    std::string radiation_model_;
 
     //! Time for which the species is frozen
-    double time_frozen;
+    double time_frozen_;
 
     //! logical true if particles radiate
-    bool radiating;
+    bool radiating_;
 
     //! logical true if particles are relativistic and require proper electromagnetic field initialization
-    bool relativistic_field_initialization;
+    bool relativistic_field_initialization_;
 
     //! Time for which the species field is initialized in case of relativistic initialization
-    double time_relativistic_initialization;
+    double time_relativistic_initialization_;
 
     //! electron and positron Species for the multiphoton Breit-Wheeler
-    std::vector<std::string> multiphoton_Breit_Wheeler;
+    std::vector<std::string> multiphoton_Breit_Wheeler_;
 
     //! Boundary conditions for particules
     std::vector<std::vector<std::string> > boundary_conditions;
@@ -117,7 +117,7 @@ public:
     std::string density_profile_type_;
 
     //! charge profile
-    Profile *chargeProfile;
+    Profile *charge_profile_;
 
     //! density profile
     Profile *density_profile_;
@@ -134,7 +134,7 @@ public:
     // -----------------------------------------------------------------------------
     //  3. Variables for species processing
 
-    SpeciesMPIbuffers MPIbuff;
+    SpeciesMPIbuffers MPI_buffer_;
 
     //! Maximum charge at initialization
     double max_charge;

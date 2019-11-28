@@ -201,7 +201,7 @@ void DiagnosticPerformances::run( SmileiMPI *smpi, VectorPatch &vecPatches, int 
         double time = itime * timestep;
         for( unsigned int ipatch=0; ipatch < number_of_patches; ipatch++ ) {
             for( unsigned int ispecies = 0; ispecies < number_of_species; ispecies++ ) {
-                if( time < vecPatches( ipatch )->vecSpecies[ispecies]->time_frozen ) {
+                if( time < vecPatches( ipatch )->vecSpecies[ispecies]->time_frozen_ ) {
                     number_of_frozen_particles += vecPatches( ipatch )->vecSpecies[ispecies]->getNbrOfParticles();
                 } else {
                     number_of_particles += vecPatches( ipatch )->vecSpecies[ispecies]->getNbrOfParticles();

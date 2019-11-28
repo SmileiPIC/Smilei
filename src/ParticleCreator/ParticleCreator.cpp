@@ -198,7 +198,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
     
     // Initialize charge profile
     if( species_->mass_ > 0 ) {
-        species_->chargeProfile ->valuesAt( xyz, charge );
+        species_->charge_profile_->valuesAt( xyz, charge );
     }
     if( species_->position_initialization_array_ != NULL ) {
         for( unsigned int idim = 0; idim < species_->nDim_particle; idim++ ) {
