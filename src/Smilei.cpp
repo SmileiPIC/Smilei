@@ -191,7 +191,7 @@ int main( int argc, char *argv[] )
         // Init electric field (Ex/1D, + Ey/2D)
         if( params.solve_poisson == true && !vecPatches.isRhoNull( &smpi ) ) {
             TITLE( "Solving Poisson at time t = 0" );
-            vecPatches.runRelativisticModule( params, &smpi,  timers );
+            vecPatches.runNonRelativisticPoissonModule( params, &smpi,  timers );
         }
 
         // Patch reconfiguration

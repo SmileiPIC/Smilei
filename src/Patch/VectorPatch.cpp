@@ -1551,7 +1551,8 @@ void VectorPatch::solvePoissonAM( Params &params, SmileiMPI *smpi )
     for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
         ( *this )( ipatch )->EMfields->initPoisson( ( *this )( ipatch ) );
         //cout << std::scientific << "rnew_dot_rnew_local = " << rnew_dot_rnew_local << endl;
-        ( *this )( ipatch )->EMfields->initPoissonFields( ( *this )( ipatch ) );
+        ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+        emAM->initPoissonFields( ( *this )( ipatch ) );
     }
     // //cout << std::scientific << "rnew_dot_rnew_local = " << rnew_dot_rnew_local << endl;
 
