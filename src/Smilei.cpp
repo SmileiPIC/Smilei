@@ -412,6 +412,19 @@ int main( int argc, char *argv[] )
                         DoubleGridsAM::syncFieldsOnPatches( domain, vecPatches, params, &smpi, timers, itime, imode );
                 }
             }
+            if( vecPatches.diag_flag ) {
+                #pragma omp parallel shared (time_dual,smpi,params, vecPatches, domain, simWindow, checkpoint, itime)
+                {
+                    if( params.geometry != "AMcylindrical" ) {
+                        SyncVectorPatch::sumRhoJ( params, vecPatches, &smpi, timers, itime ); // MPI
+                    }
+                    else {
+                        for( unsigned int imode = 0 ; imode < params.nmodes ; imode++ ) {
+                            SyncVectorPatch::sumRhoJ( params, vecPatches, imode, &smpi, timers, itime );
+                        }
+                    }
+                }
+            }
         }
 
         #pragma omp parallel shared (time_dual,smpi,params, vecPatches, domain, simWindow, checkpoint, itime)
