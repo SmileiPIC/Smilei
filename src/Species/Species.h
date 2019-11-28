@@ -569,6 +569,21 @@ public:
         return s_gamma;
     }
 
+    typedef double (Species::*fptr)(Particles*, int, int);
+    fptr distance[3];
+
+    //double (*distance[3]) (int x, int y);
+
+    double cartesian_distance(Particles *part, int idim, int ipart){
+        return part->position(idim, ipart) - min_loc_vec[idim];
+    }
+
+    double radial_distance(Particles *part, int idim, int ipart){
+        return sqrt(  part->position(idim  , ipart) * part->position(idim  , ipart)
+                    + part->position(idim+1, ipart) * part->position(idim+1, ipart))
+               - min_loc_vec[idim];
+    }
+
 
 protected:
 
