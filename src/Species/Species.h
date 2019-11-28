@@ -570,9 +570,8 @@ public:
     }
 
     typedef double (Species::*fptr)(Particles*, int, int);
+    //Array of pointers to functions measuring distance along each dimension.
     fptr distance[3];
-
-    //double (*distance[3]) (int x, int y);
 
     double cartesian_distance(Particles *part, int idim, int ipart){
         return part->position(idim, ipart) - min_loc_vec[idim];

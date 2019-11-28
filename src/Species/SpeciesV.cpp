@@ -807,7 +807,7 @@ void SpeciesV::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, u
             // ipack end   @ last_index [ ipack * packsize_ + packsize_ - 1 ]
             //int nparts_in_pack = last_index[ (ipack+1) * packsize_-1 ] - first_index [ ipack * packsize_ ];
             int nparts_in_pack = last_index[( ipack+1 ) * packsize_-1 ];
-            smpi->dynamics_resize( ithread, nDim_particle, nparts_in_pack );
+            smpi->dynamics_resize( ithread, nDim_field, nparts_in_pack );
 
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
@@ -898,7 +898,7 @@ void SpeciesV::ponderomotiveProjectSusceptibility( double time_dual, unsigned in
             // ipack end   @ last_index [ ipack * packsize_ + packsize_ - 1 ]
             //int nparts_in_pack = last_index[ (ipack+1) * packsize_-1 ] - first_index [ ipack * packsize_ ];
             int nparts_in_pack = last_index[( ipack+1 ) * packsize_-1 ];
-            smpi->dynamics_resize( ithread, nDim_particle, nparts_in_pack );
+            smpi->dynamics_resize( ithread, nDim_field, nparts_in_pack );
 
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
@@ -980,7 +980,7 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
 
             //int nparts_in_pack = last_index[ (ipack+1) * packsize_-1 ] - first_index [ ipack * packsize_ ];
             int nparts_in_pack = last_index[( ipack+1 ) * packsize_-1 ];
-            smpi->dynamics_resize( ithread, nDim_particle, nparts_in_pack );
+            smpi->dynamics_resize( ithread, nDim_field, nparts_in_pack );
 
 #ifdef  __DETAILED_TIMERS
             timer = MPI_Wtime();
@@ -1028,9 +1028,9 @@ void SpeciesV::ponderomotiveUpdatePositionAndCurrents( double time_dual, unsigne
                             particles->cell_keys[iPart] = -1;
                         } else {
                             //First reduction of the count sort algorithm. Lost particles are not included.
-                            for( int i = 0 ; i<( int )nDim_particle; i++ ) {
+                            for( int i = 0 ; i<( int )nDim_field; i++ ) {
                                 particles->cell_keys[iPart] *= length[i];
-                                particles->cell_keys[iPart] += round( ( particles->position( i, iPart )-min_loc_vec[i] ) * dx_inv_[i] );
+                                particles->cell_keys[iPart] += round( ((this)->*(distance[i]))(particles, i, iPart) * dx_inv_[i] );
                             }
                             count[particles->cell_keys[iPart]] ++; //First reduction of the count sort algorithm. Lost particles are not included.
                         }
