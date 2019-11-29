@@ -810,7 +810,7 @@ class Diagnostic(object):
 		self._mkdir(self._exportDir)
 		fileprefix = self._exportDir + self._exportPrefix
 
-		spacings = [c[1]-c[0] for c in self._centers]
+		spacings = [self._np.linalg.norm(c[1]-c[0]) for c in self._centers]
 		extent = []
 		for i in range(self.dim): extent += [0,self._shape[i]-1]
 		origin = [0.] * self.dim
