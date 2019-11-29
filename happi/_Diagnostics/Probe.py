@@ -293,8 +293,8 @@ class Probe(Diagnostic):
 			while "p"+str(i) in info:
 				printedInfo += "p"+str(i)+" = "+" ".join(info["p"+str(i)].astype(str).tolist())+"\n"
 				i += 1
-				if info["shape"].size>0:
-					printedInfo += "number = "+" ".join(info["shape"].astype(str).tolist())+"\n"
+			if info["shape"].size>0:
+				printedInfo += "number = "+" ".join(info["shape"].astype(str).tolist())+"\n"
 		else:
 			printedInfo += "File not found or not readable"
 		return printedInfo
