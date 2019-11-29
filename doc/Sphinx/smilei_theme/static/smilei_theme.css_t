@@ -631,7 +631,10 @@ div.header > * {
 	font-size:1.3em;
 }
 
-div.experimental h2:first-of-type::after, dl.experimental dt:first-of-type::after {
+div.experimental > h1:first-of-type::after,
+div.experimental > h2:first-of-type::after,
+dl.experimental dt:first-of-type::after
+{
 	content: "experimental";
 	background:red;
 	color:white;

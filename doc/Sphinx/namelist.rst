@@ -1034,8 +1034,9 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
 Particle Merging
 ^^^^^^^^^^^^^^^^
 
-The macro-particle merging method is documented in the :doc:`corresponding page <particle_merging>`.
-It is defined in the ``Species`` block::
+The macro-particle merging method is documented in
+the :doc:`corresponding page <particle_merging>`.
+It is optionnally specified in the ``Species`` block::
 
   Species(
       ....
@@ -1055,19 +1056,20 @@ It is defined in the ``Species`` block::
 
 .. py:data:: merging_method
 
-  :default: ``None``
+  :default: ``"none"``
 
   The particle merging method to use:
 
-  * ``none``: the merging process is not activated
-  * ``vranic_cartesian``: merging process using the method of M. Vranic with a cartesian momentum space decomposition
-  * ``vranic_spherical``: merging process using the method of M. Vranic with a spherical momentum space decomposition
+  * ``"none"``: no merging
+  * ``"vranic_cartesian"``: method of M. Vranic with a cartesian momentum-space decomposition
+  * ``"vranic_spherical"``: method of M. Vranic with a spherical momentum-space decomposition
 
 .. py:data:: merge_every
 
   :default: ``0``
 
-  The particle merging time selection (:ref:`time selection <TimeSelections>`).
+  Number of timesteps between each merging event
+  **or** a :ref:`time selection <TimeSelections>`.
 
 .. py:data:: min_particles_per_cell
 
@@ -1091,38 +1093,38 @@ It is defined in the ``Species`` block::
 
   :default: ``[16,16,16]``
 
-  The momentum space discretization.
+  A list of 3 integers defining the number of sub-groups in each direction
+  for the momentum-space discretization.
 
 .. py:data:: merge_discretization_scale
 
-  :default: ``linear``
+  :default: ``"linear"``
 
-  The momentum discretization scale. The scale can be ``linear`` or ``log``.
-  The ``log`` scale only works with the spherical discretization for the moment.
-  In logarithmic scale, Smilei needs a minimum momentum value to avoid 0.
-  This value is provided by the parameter ``merge_min_momentum``.
-  By default, this value is set to :math:`10^{-5}`.
+  The momentum discretization scale:: ``"linear"`` or ``"log"``.
+  The ``"log"`` scale only works with the spherical discretization at the moment.
 
 .. py:data:: merge_min_momentum
 
   :default: ``1e-5``
 
-  :red:`[for experts]` The minimum momentum value when the log scale is chosen (``merge_discretization_scale = log``).
-  To set a minimum value is compulsory to avoid the potential 0 value in the log domain.
+  :red:`[for experts]` The minimum momentum value when the log scale
+  is chosen (``merge_discretization_scale = log``).
+  This avoids a potential 0 value in the log domain.
 
 .. py:data:: merge_min_momentum_cell_length
 
   :default: ``[1e-10,1e-10,1e-10]``
 
-  :red:`[for experts]` The minimum momentum cell length for the discretization.
-  If the specified discretization induces smaller momentum cell length,
-  then the number of momentum cell (momentum cell size) is set to 1 in this direction.
+  :red:`[for experts]` The minimum sub-group length for the momentum-space
+  discretization (below which the number of sub-groups is set to 1).
 
 .. py:data:: merge_accumulation_correction
 
   :default: ``True``
 
-  :red:`[for experts]` Activation of the accumulation correction (see :ref:`vranic_accululation_effect` for more information). The correction only works in linear scale.
+  :red:`[for experts]` Activates the accumulation correction
+  (see :ref:`vranic_accululation_effect` for more information).
+  The correction only works in linear scale.
 
 
 
