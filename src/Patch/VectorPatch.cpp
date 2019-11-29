@@ -1536,6 +1536,241 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI *smpi )
 
 } // END solvePoisson
 
+void VectorPatch::solvePoissonAM( Params &params, SmileiMPI *smpi )
+{
+    
+    unsigned int iteration_max = params.poisson_max_iteration;
+    double           error_max = params.poisson_max_error;
+    unsigned int iteration=0;
+    
+    // Init & Store internal data (phi, r, p, Ap) per patch
+    double rnew_dot_rnew_localAM_( 0. );
+    double rnew_dot_rnewAM_( 0. );
+
+
+    for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+        ( *this )( ipatch )->EMfields->initPoisson( ( *this )( ipatch ) );
+        //cout << std::scientific << "rnew_dot_rnew_local = " << rnew_dot_rnew_local << endl;
+        ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+        emAM->initPoissonFields( ( *this )( ipatch ) );
+    }
+    // //cout << std::scientific << "rnew_dot_rnew_local = " << rnew_dot_rnew_local << endl;
+
+    std::vector<Field *> El_;
+    std::vector<Field *> Er_;
+    std::vector<Field *> Et_;
+    
+    std::vector<Field *> El_Poisson_;
+    std::vector<Field *> Er_Poisson_;
+    std::vector<Field *> Et_Poisson_;
+    
+    std::vector<Field *> Ap_AM_;
+    
+    // For each mode, repeat the initialization procedure
+    // (the relativistic Poisson equation is linear, so it can be decomposed in azimuthal modes)
+    for( unsigned int imode=0 ; imode<params.nmodes ; imode++ ) {
+        
+        // init Phi, r, p values
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+            emAM->initPoisson_init_phi_r_p_Ap( ( *this )( ipatch ), imode );
+            rnew_dot_rnew_localAM_ += emAM->compute_r();
+        }
+        
+        MPI_Allreduce( &rnew_dot_rnew_localAM_, &rnew_dot_rnewAM_, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+            El_.push_back( emAM->El_[imode] );
+            Er_.push_back( emAM->Er_[imode] );
+            Et_.push_back( emAM->Et_[imode] );
+            El_Poisson_.push_back( emAM->El_Poisson_ );
+            Er_Poisson_.push_back( emAM->Er_Poisson_ );
+            Et_Poisson_.push_back( emAM->Et_Poisson_ );
+            
+            Ap_AM_.push_back( emAM->Ap_AM_ );
+        }
+
+        unsigned int nx_p2_global = ( params.n_space_global[0]+1 );
+        //if ( Ex_[0]->dims_.size()>1 ) {
+        if( El_Poisson_[0]->dims_.size()>1 ) {
+            nx_p2_global *= ( params.n_space_global[1]+1 );
+            if( El_Poisson_[0]->dims_.size()>2 ) {
+                nx_p2_global *= ( params.n_space_global[2]+1 );
+            }
+        }
+
+        // compute control parameter
+        double norm2_source_term = sqrt( std::abs(rnew_dot_rnewAM_) );
+        //double ctrl = rnew_dot_rnew / (double)(nx_p2_global);
+        double ctrl = sqrt( std::abs(rnew_dot_rnewAM_) ) / norm2_source_term; // initially is equal to one
+        
+        // ---------------------------------------------------------
+        // Starting iterative loop for the conjugate gradient method
+        // ---------------------------------------------------------
+        if( smpi->isMaster() ) {
+            DEBUG( "Starting iterative loop for CG method for the mode "<<imode );
+        }
+        
+        iteration = 0;//MESSAGE("Initial error parameter (must be 1) : "<<ctrl);
+        //cout << std::scientific << ctrl << "\t" << error_max << "\t" << iteration << "\t" << iteration_max << endl;
+        while( ( ctrl > error_max ) && ( iteration<iteration_max ) ) {
+            iteration++;
+        
+            if( ( smpi->isMaster() ) && ( iteration%1000==0 ) ) {
+                MESSAGE( "iteration " << iteration << " started with control parameter ctrl = " << 1.0e22*ctrl << " x 1.e-22" );
+            }
+        
+            // scalar product of the residual
+            double r_dot_rAM_ = rnew_dot_rnewAM_;
+        
+            for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+                ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+                emAM->compute_Ap_Poisson_AM( ( *this )( ipatch ), imode );
+            }
+        
+            // Exchange Ap_ (intra & extra MPI)
+            SyncVectorPatch::exchange_along_all_directions_noomp<complex<double>,cField>( Ap_AM_, *this, smpi );
+            SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Ap_AM_, *this );
+        
+        
+            // scalar product p.Ap
+            std::complex<double> p_dot_ApAM_       = 0.0;
+            std::complex<double> p_dot_Ap_localAM_ = 0.0;
+            for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+                ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+                p_dot_Ap_localAM_ += emAM->compute_pAp_AM();
+            }
+            MPI_Allreduce( &p_dot_Ap_localAM_, &p_dot_ApAM_, 2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+        
+        
+            // compute new potential and residual
+            for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+                ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+                emAM->update_pand_r_AM( r_dot_rAM_, p_dot_ApAM_ );
+            }
+        
+            // compute new residual norm
+            rnew_dot_rnewAM_       = 0.0;
+            rnew_dot_rnew_localAM_ = 0.0;
+            for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+                ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+                rnew_dot_rnew_localAM_ += emAM->compute_r();
+            }
+            MPI_Allreduce( &rnew_dot_rnew_localAM_, &rnew_dot_rnewAM_, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD );
+            if( smpi->isMaster() ) {
+                DEBUG( "new residual norm: rnew_dot_rnew = " << rnew_dot_rnewAM_ );
+            }
+        
+            // compute new direction
+            for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+                ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+                emAM->update_p( rnew_dot_rnewAM_, r_dot_rAM_ );
+            }
+        
+            // compute control parameter
+            ctrl = sqrt( std::abs(rnew_dot_rnewAM_) )/norm2_source_term;
+            if( smpi->isMaster() ) {
+                DEBUG( "iteration " << iteration << " done, exiting with control parameter ctrl = " << 1.0e22*ctrl << " x 1.e-22" );
+            }
+        
+        }//End of the iterative loop
+
+
+        // --------------------------------
+        // Status of the solver convergence
+        // --------------------------------
+        if( iteration_max>0 && iteration == iteration_max ) {
+            if( smpi->isMaster() )
+                WARNING( "Poisson equation solver did not converge: reached maximum iteration number: " << iteration
+                         << ", relative err is ctrl = " << 1.0e22*ctrl << "x 1.e-22" );
+        } else {
+            if( smpi->isMaster() )
+                MESSAGE( 1, "Poisson equation solver converged at iteration: " << iteration
+                         << ", relative err is ctrl = " << 1.0e22*ctrl << " x 1.e-22" );
+        }
+
+        // ------------------------------------------
+        // Compute the electric field E 
+        // ------------------------------------------
+        
+        
+        // compute E and sync
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+            // begin loop on patches
+            emAM->initE_Poisson_AM( ( *this )( ipatch ), imode );
+        } // end loop on patches
+        
+        SyncVectorPatch::exchange_along_all_directions_noomp<complex<double>,cField>( El_Poisson_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions_noomp( El_Poisson_, *this );
+        SyncVectorPatch::exchange_along_all_directions_noomp<complex<double>,cField>( Er_Poisson_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Er_Poisson_, *this );
+        SyncVectorPatch::exchange_along_all_directions_noomp<complex<double>,cField>( Et_Poisson_, *this, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Et_Poisson_, *this );
+        
+        
+        MESSAGE( 0, "Summing fields computed with the Poisson solver to the grid fields" );
+        // sum the fields found  by Poisson solver to the existing em fields
+        // E  = E  + E_Poisson_
+        
+        
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            // begin loop on patches
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+            emAM->sum_Poisson_fields_to_em_fields_AM( ( *this )( ipatch ), params, imode );
+        } // end loop on patches
+        
+        
+        // clean the auxiliary vectors for the present azimuthal mode
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            
+            El_.pop_back();
+            Er_.pop_back();
+            Et_.pop_back();
+            
+            Ap_AM_.pop_back();
+
+        }
+        
+    }  // end loop on the modes
+
+    for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+        ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields );
+        emAM->delete_phi_r_p_Ap( ( *this )( ipatch ) );
+        emAM->delete_Poisson_fields( ( *this )( ipatch ) );
+    }
+
+    // // Exchange the fields after the addition of the relativistic species fields
+    for( unsigned int imode = 0 ; imode < params.nmodes_rel_field_init ; imode++ ) {
+        SyncVectorPatch::exchangeE( params, ( *this ), imode, smpi );
+        SyncVectorPatch::finalizeexchangeE( params, ( *this ), imode ); // disable async, because of tags which is the same for all modes
+    }
+    
+    MESSAGE( "Poisson equation solved" );
+
+}  // solvePoissonAM
+
+
+void VectorPatch::runNonRelativisticPoissonModule( Params &params, SmileiMPI* smpi,  Timers &timers )
+{
+    // at this point the charge should be projected on the grid
+
+    #pragma omp master
+    {
+        // Initialize the fields for these species
+        if( !isRhoNull( smpi ) ) {
+            TITLE( "Initializing E field through Poisson solver" );
+            if (params.geometry != "AMcylindrical"){
+                solvePoisson( params, smpi );
+            } else {
+                solvePoissonAM( params, smpi );
+            }
+        }
+    }
+    #pragma omp barrier
+
+}
 
 void VectorPatch::runRelativisticModule( double time_prim, Params &params, SmileiMPI* smpi,  Timers &timers )
 {

@@ -127,11 +127,11 @@ The block ``Main`` is **mandatory** and has the following syntax::
 
   .. warning::
 
-    The ``"AMcylindrical"`` geometry is currently proposed in beta version.
+    The ``"AMcylindrical"`` geometry has some restrictions.
     Boundary conditions must be set to ``"remove"`` for particles,
     ``"silver-muller"`` for longitudinal EM boundaries and
     ``"buneman"`` for transverse EM boundaries.
-    Vectorization, collisions, scalar diagnostics, Poisson solver and
+    Vectorization, collisions, scalar diagnostics and
     order-4 interpolation are not supported yet.
 
 .. py:data:: interpolation_order
@@ -643,9 +643,9 @@ Each species has to be defined in a ``Species`` block::
 
    :type: A python list of integers.
 
+   This list sets the number of evenly spaced particles per cell per dimension at their initial positions.
    The size of the list must be the simulation particle dimension. It can be used only if `position_initialization` is set to `regular`.
    The product of the elements of the provided list must be equal to `particles_per_cell`.
-   This list sets the number of evenly spaced particles per cell per dimension at their initial positions.
    The numbers are given in the order [`Nx`, `Ny`, `Nz`] in cartesian geometries and [`Nx`, `Nr`, `Ntheta`] in `AMcylindrical` in which
    case we advise to use :math:`Ntheta \geq  4\times (number\_of\_AM-1)`.
 
@@ -1024,7 +1024,7 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
     :default:  ``tconstant()``
 
     The temporal envelope of the injector.
-     
+    
 ----
 
 .. rst-class:: experimental
@@ -1034,8 +1034,9 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
 Particle Merging
 ^^^^^^^^^^^^^^^^
 
-The macro-particle merging method is documented in the :doc:`corresponding page <particle_merging>`.
-It is defined in the ``Species`` block::
+The macro-particle merging method is documented in
+the :doc:`corresponding page <particle_merging>`.
+It is optionnally specified in the ``Species`` block::
 
   Species(
       ....
@@ -1055,19 +1056,20 @@ It is defined in the ``Species`` block::
 
 .. py:data:: merging_method
 
-  :default: ``None``
+  :default: ``"none"``
 
   The particle merging method to use:
 
-  * ``none``: the merging process is not activated
-  * ``vranic_cartesian``: merging process using the method of M. Vranic with a cartesian momentum space decomposition
-  * ``vranic_spherical``: merging process using the method of M. Vranic with a spherical momentum space decomposition
+  * ``"none"``: no merging
+  * ``"vranic_cartesian"``: method of M. Vranic with a cartesian momentum-space decomposition
+  * ``"vranic_spherical"``: method of M. Vranic with a spherical momentum-space decomposition
 
 .. py:data:: merge_every
 
   :default: ``0``
 
-  The particle merging time selection (:ref:`time selection <TimeSelections>`).
+  Number of timesteps between each merging event
+  **or** a :ref:`time selection <TimeSelections>`.
 
 .. py:data:: min_particles_per_cell
 
@@ -1091,38 +1093,38 @@ It is defined in the ``Species`` block::
 
   :default: ``[16,16,16]``
 
-  The momentum space discretization.
+  A list of 3 integers defining the number of sub-groups in each direction
+  for the momentum-space discretization.
 
 .. py:data:: merge_discretization_scale
 
-  :default: ``linear``
+  :default: ``"linear"``
 
-  The momentum discretization scale. The scale can be ``linear`` or ``log``.
-  The ``log`` scale only works with the spherical discretization for the moment.
-  In logarithmic scale, Smilei needs a minimum momentum value to avoid 0.
-  This value is provided by the parameter ``merge_min_momentum``.
-  By default, this value is set to :math:`10^{-5}`.
+  The momentum discretization scale:: ``"linear"`` or ``"log"``.
+  The ``"log"`` scale only works with the spherical discretization at the moment.
 
 .. py:data:: merge_min_momentum
 
   :default: ``1e-5``
 
-  :red:`[for experts]` The minimum momentum value when the log scale is chosen (``merge_discretization_scale = log``).
-  To set a minimum value is compulsory to avoid the potential 0 value in the log domain.
+  :red:`[for experts]` The minimum momentum value when the log scale
+  is chosen (``merge_discretization_scale = log``).
+  This avoids a potential 0 value in the log domain.
 
 .. py:data:: merge_min_momentum_cell_length
 
   :default: ``[1e-10,1e-10,1e-10]``
 
-  :red:`[for experts]` The minimum momentum cell length for the discretization.
-  If the specified discretization induces smaller momentum cell length,
-  then the number of momentum cell (momentum cell size) is set to 1 in this direction.
+  :red:`[for experts]` The minimum sub-group length for the momentum-space
+  discretization (below which the number of sub-groups is set to 1).
 
 .. py:data:: merge_accumulation_correction
 
   :default: ``True``
 
-  :red:`[for experts]` Activation of the accumulation correction (see :ref:`vranic_accululation_effect` for more information). The correction only works in linear scale.
+  :red:`[for experts]` Activates the accumulation correction
+  (see :ref:`vranic_accululation_effect` for more information).
+  The correction only works in linear scale.
 
 
 
@@ -2422,8 +2424,8 @@ The full list of available scalars is given in the table below.
 +----------------+---------------------------------------------------------------------------+
 | **Space- & time-integrated Energies lost/gained at boundaries**                            |
 +----------------+---------------------------------------------------------------------------+
-| | Ukin_bnd     | | Kinetic contribution exchanged at the boundaries during the timestep    |
-| | Uelm_bnd     | | EM contribution exchanged at boundaries during the timestep             |
+| | Ukin_bnd     | | Time-accumulated kinetic energy exchanged at the boundaries             |
+| | Uelm_bnd     | | Time-accumulated EM energy exchanged at boundaries                      |
 | |              | |                                                                         |
 | | PoyXminInst  | | Poynting contribution through xmin boundary during the timestep         |
 | | PoyXmin      | | Time-accumulated Poynting contribution through xmin boundary            |
@@ -2525,7 +2527,9 @@ This is done by including a block ``DiagFields``::
   In ``AMcylindrical`` geometry, the ``x``, ``y`` and ``z``
   indices are replaced by ``l`` (longitudinal), ``r`` (radial) and ``t`` (theta). In addition,
   the angular Fourier modes are denoted by the suffix ``_mode_i`` where ``i``
-  is the mode number. In summary, the list of fields reads as follows.
+  is the mode number.
+  If a field is specified without its associated mode number, all available modes will be included.
+  In summary, the list of fields reads as follows.
 
   .. rst-class:: nowrap
 
