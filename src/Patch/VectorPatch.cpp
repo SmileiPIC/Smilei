@@ -3424,20 +3424,22 @@ void VectorPatch::applyCollisions( Params &params, int itime, Timers &timers )
 {
     timers.collisions.restart();
 
-    if( Collisions::debye_length_required )
+    if( Collisions::debye_length_required ) {
         #pragma omp for schedule(runtime)
         for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
             Collisions::calculate_debye_length( params, patches_[ipatch] );
         }
-
+    }
+    
     unsigned int ncoll = patches_[0]->vecCollisions.size();
-
+    
     #pragma omp for schedule(runtime)
-    for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ )
+    for( unsigned int ipatch=0 ; ipatch<size() ; ipatch++ ) {
         for( unsigned int icoll=0 ; icoll<ncoll; icoll++ ) {
             patches_[ipatch]->vecCollisions[icoll]->collide( params, patches_[ipatch], itime, localDiags );
         }
-
+    }
+    
     #pragma omp single
     for( unsigned int icoll=0 ; icoll<ncoll; icoll++ ) {
         Collisions::debug( params, itime, icoll, *this );

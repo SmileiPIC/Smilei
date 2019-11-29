@@ -15,7 +15,7 @@ class CollisionalIonization
 
 public:
     //! Constructor
-    CollisionalIonization( int, int, double, int, Particles* );
+    CollisionalIonization( int, Params*, int, Particles* );
     //! Cloning Constructor
     CollisionalIonization( CollisionalIonization * );
     //! Destructor
@@ -62,9 +62,6 @@ public:
     unsigned int dataBaseIndex;
     
 private:
-
-    //! Simulation dimension
-    int nDim;
     
     //! Atomic number
     int atomic_number;
@@ -107,7 +104,7 @@ private:
 class CollisionalNoIonization : public CollisionalIonization
 {
 public:
-    CollisionalNoIonization() : CollisionalIonization( 0, 0, 0., -1, NULL ) {};
+    CollisionalNoIonization() : CollisionalIonization( 0, NULL, -1, NULL ) {};
     ~CollisionalNoIonization() {};
     
     unsigned int createDatabase( double ) override
@@ -123,7 +120,5 @@ public:
     void finish( Params &, Patch *, std::vector<Diagnostic *> & ) override {};
 };
 
-
-//! Class to hold the databases
 
 #endif

@@ -192,7 +192,7 @@ void Patch::finishCloning( Patch *patch, Params &params, SmileiMPI *smpi, unsign
     EMfields   = ElectroMagnFactory::clone( patch->EMfields, params, vecSpecies, this, n_moved );
 
     // clone the collisions
-    vecCollisions = CollisionsFactory::clone( patch->vecCollisions, params );
+    vecCollisions = CollisionsFactory::clone( patch->vecCollisions );
 
     // Clone the particle injector
     particle_injector_vector_ = ParticleInjectorFactory::cloneVector( patch->particle_injector_vector_, params, patch);
