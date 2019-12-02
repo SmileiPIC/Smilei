@@ -57,6 +57,13 @@ Patch::Patch( Params &params, SmileiMPI *smpi, DomainDecomposition *domain_decom
     // 4 - ionization
     // 5 - radiation
     // 6 - Breit-Wheeler
+    // 7 - Interp Fields_Env
+    // 8 - Proj Susceptibility
+    // 9 - Push Momentum
+    // 10 - Interp Env_Old
+    // 11 - Proj Currents
+    // 12 - Push Pos
+    // 13 - Sorting
     patch_timers.resize( 15, 0. );
 #endif
 
@@ -1038,7 +1045,7 @@ void Patch::exchParticles( SmileiMPI *smpi, int ispec, Params &params, int iDim,
 // ---------------------------------------------------------------------------------------------------------------------
 // For direction iDim, finalize receive of particles, temporary store particles if diagonalParticles
 // And store recv particles at their definitive place.
-// Call Patch::cleanup_sent_particles
+// Call Patch::cleanupSentParticles
 //   - vecPatch : used for intra-MPI process comm (direct copy using Particels::cp_particles)
 //   - smpi     : used smpi->periods_
 // ---------------------------------------------------------------------------------------------------------------------
@@ -1216,7 +1223,7 @@ void Patch::cleanParticlesOverhead( Params &params )
 // ---------------------------------------------------------------------------------------------------------------------
 // Clear vecSpecies[]->indexes_of_particles_to_exchange, suppress particles send and manage memory
 // ---------------------------------------------------------------------------------------------------------------------
-void Patch::cleanup_sent_particles( int ispec, std::vector<int> *indexes_of_particles_to_exchange )
+void Patch::cleanupSentParticles( int ispec, std::vector<int> *indexes_of_particles_to_exchange )
 {
     /********************************************************************************/
     // Delete Particles included in the index of particles to exchange. Assumes indexes are sorted.
@@ -1267,18 +1274,18 @@ void Patch::cleanup_sent_particles( int ispec, std::vector<int> *indexes_of_part
         ( *cufirst_index )[ibin] = ( *culast_index )[ibin-1];
     }
 
-} // END cleanup_sent_particles
+} // END cleanupSentParticles
 
 //Copy positions of all particles of the target species to the positions of the species to update.
 //Used for particle initialization on top of another species
-void Patch::copy_positions( std::vector<Species *> vecSpecies_to_update )
+void Patch::copyPositions( std::vector<Species *> vecSpecies_to_update )
 {
     for( unsigned int i=0; i<vecSpecies_to_update.size(); i++ ) {
         if( vecSpecies_to_update[i]->position_initialization_on_species_==false )
             continue;
         unsigned int target_species = vecSpecies_to_update[i]->position_initialization_on_species_index;
         if( vecSpecies_to_update[i]->getNbrOfParticles() != vecSpecies_to_update[target_species]->getNbrOfParticles() ) {
-            ERROR( "Number of particles in species '"<<vecSpecies_to_update[i]->name<<"' is not equal to the number of particles in species '"<<vecSpecies_to_update[target_species]->name<<"'." );
+            ERROR( "Number of particles in species '"<<vecSpecies_to_update[i]->name_<<"' is not equal to the number of particles in species '"<<vecSpecies_to_update[target_species]->name_<<"'." );
         }
         // We copy target_species which is the index of the species, already created, from which species_to_update particles positions are copied.
         vecSpecies_to_update[i]->particles->Position = vecSpecies_to_update[target_species]->particles->Position;

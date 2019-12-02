@@ -40,18 +40,22 @@ public:
     Field *GradPhix_;  // x component of the gradient of Phi at timestep n
     Field *GradPhiy_;  // y component of the gradient of Phi at timestep n
     Field *GradPhiz_;  // z component of the gradient of Phi at timestep n
+    Field *GradPhil_;  // l component of the gradient of Phi at timestep n
+    Field *GradPhir_;  // r component of the gradient of Phi at timestep n
     
     // Correspondent time-centered quantities
     Field *Phi_m;
     Field *GradPhix_m;
     Field *GradPhiy_m;
     Field *GradPhiz_m;
+    Field *GradPhil_m;
+    Field *GradPhir_m;
     
     //! Vector of boundary-condition per side for the envelope field
     std::vector<EnvelopeBC *> EnvBoundCond;
     //EnvBoundCond = EnvelopeBC_Factory::create(params, patch);
     
-    std::complex<double> i1_2k0_over_2dx, one_plus_ik0dt, one_plus_ik0dt_ov_one_plus_k0sq_dtsq;
+    std::complex<double> i1_2k0_over_2dx, one_plus_ik0dt, one_plus_ik0dt_ov_one_plus_k0sq_dtsq,i1_2k0_over_2dl;
 };
 
 // Class for envelope
@@ -92,6 +96,21 @@ public:
     LaserEnvelope3D( LaserEnvelope *envelope, Patch *patch, ElectroMagn *EMfields, Params &params, unsigned int n_moved );
     void initEnvelope( Patch *patch, ElectroMagn *EMfields ) override final;
     ~LaserEnvelope3D();
+    void compute( ElectroMagn *EMfields ) override final;
+    void compute_Phi( ElectroMagn *EMfields ) override final;
+    void compute_gradient_Phi( ElectroMagn *EMfields ) override final;
+    void savePhi_and_GradPhi() override final;
+    void centerPhi_and_GradPhi() override final;
+};
+
+// Class for envelope with cylindrical symmetry
+class LaserEnvelopeAM : public LaserEnvelope
+{
+public:
+    LaserEnvelopeAM( Params &params, Patch *patch, ElectroMagn *EMfields );
+    LaserEnvelopeAM( LaserEnvelope *envelope, Patch *patch, ElectroMagn *EMfields, Params &params, unsigned int n_moved );
+    void initEnvelope( Patch *patch, ElectroMagn *EMfields ) override final;
+    ~LaserEnvelopeAM();
     void compute( ElectroMagn *EMfields ) override final;
     void compute_Phi( ElectroMagn *EMfields ) override final;
     void compute_gradient_Phi( ElectroMagn *EMfields ) override final;

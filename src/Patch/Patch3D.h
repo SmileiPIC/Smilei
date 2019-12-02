@@ -55,10 +55,12 @@ public:
     
     //! init comm / sum densities
     void initSumField( Field *field, int iDim, SmileiMPI *smpi ) override final;
-    void reallyinitSumField( Field *field, int iDim ) override final;
     //! finalize comm / sum densities
     void finalizeSumField( Field *field, int iDim ) override final;
-    void reallyfinalizeSumField( Field *field, int iDim ) override final;
+    //! init comm / sum densities
+    void initSumFieldComplex( Field *field, int iDim, SmileiMPI *smpi ) override final {};
+    //! finalize comm / sum densities
+    void finalizeSumFieldComplex( Field *field, int iDim ) override final {};
     
     //! init comm / exchange fields in direction iDim only
     void initExchange( Field *field, int iDim, SmileiMPI *smpi ) override final;

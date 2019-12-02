@@ -31,13 +31,13 @@ ElectroMagn2D::ElectroMagn2D( Params &params, DomainDecomposition *domain_decomp
     
     // Charge currents currents and density for each species
     for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
-        Jx_s[ispec]  = FieldFactory::create(Tools::merge("Jx_" ,vecSpecies[ispec]->name).c_str(), dimPrim, params);
-        Jy_s[ispec]  = FieldFactory::create(Tools::merge("Jy_" ,vecSpecies[ispec]->name).c_str(), dimPrim, params);
-        Jz_s[ispec]  = FieldFactory::create(Tools::merge("Jz_" ,vecSpecies[ispec]->name).c_str(), dimPrim, params);
-        rho_s[ispec] = new Field2D( Tools::merge( "Rho_", vecSpecies[ispec]->name ).c_str(), dimPrim );
+        Jx_s[ispec]  = FieldFactory::create(Tools::merge("Jx_" ,vecSpecies[ispec]->name_).c_str(), dimPrim, params);
+        Jy_s[ispec]  = FieldFactory::create(Tools::merge("Jy_" ,vecSpecies[ispec]->name_).c_str(), dimPrim, params);
+        Jz_s[ispec]  = FieldFactory::create(Tools::merge("Jz_" ,vecSpecies[ispec]->name_).c_str(), dimPrim, params);
+        rho_s[ispec] = new Field2D( Tools::merge( "Rho_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
         
         if( params.Laser_Envelope_model ) {
-            Env_Chi_s[ispec] = new Field2D( Tools::merge( "Env_Chi_", vecSpecies[ispec]->name ).c_str(), dimPrim );
+            Env_Chi_s[ispec] = new Field2D( Tools::merge( "Env_Chi_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
         }
         
     }
@@ -1095,29 +1095,29 @@ void ElectroMagn2D::computeTotalRhoJ()
     for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
         if( Jx_s[ispec] ) {
             Field2D *Jx2D_s  = static_cast<Field2D *>( Jx_s[ispec] );
-            for( unsigned int i=0 ; i<=nx_p ; i++ )
-                for( unsigned int j=0 ; j<ny_p ; j++ ) {
+            for( unsigned int i=0 ; i<Jx2D->dims_[0] ; i++ )
+                for( unsigned int j=0 ; j<Jx2D->dims_[1] ; j++ ) {
                     ( *Jx2D )( i, j ) += ( *Jx2D_s )( i, j );
                 }
         }
         if( Jy_s[ispec] ) {
             Field2D *Jy2D_s  = static_cast<Field2D *>( Jy_s[ispec] );
-            for( unsigned int i=0 ; i<nx_p ; i++ )
-                for( unsigned int j=0 ; j<=ny_p ; j++ ) {
+            for( unsigned int i=0 ; i<Jy2D->dims_[0] ; i++ )
+                for( unsigned int j=0 ; j<Jy2D->dims_[1] ; j++ ) {
                     ( *Jy2D )( i, j ) += ( *Jy2D_s )( i, j );
                 }
         }
         if( Jz_s[ispec] ) {
             Field2D *Jz2D_s  = static_cast<Field2D *>( Jz_s[ispec] );
-            for( unsigned int i=0 ; i<nx_p ; i++ )
-                for( unsigned int j=0 ; j<ny_p ; j++ ) {
+            for( unsigned int i=0 ; i<Jz2D->dims_[0] ; i++ )
+                for( unsigned int j=0 ; j<Jz2D->dims_[1] ; j++ ) {
                     ( *Jz2D )( i, j ) += ( *Jz2D_s )( i, j );
                 }
         }
         if( rho_s[ispec] ) {
             Field2D *rho2D_s  = static_cast<Field2D *>( rho_s[ispec] );
-            for( unsigned int i=0 ; i<nx_p ; i++ )
-                for( unsigned int j=0 ; j<ny_p ; j++ ) {
+            for( unsigned int i=0 ; i<rho2D->dims_[0] ; i++ )
+                for( unsigned int j=0 ; j<rho2D->dims_[1] ; j++ ) {
                     ( *rho2D )( i, j ) += ( *rho2D_s )( i, j );
                 }
         }

@@ -197,7 +197,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
     } // end if momentum_initialization_array_
     
     // Initialize charge profile
-    if( species_->mass > 0 ) {
+    if( species_->mass_ > 0 ) {
         species_->chargeProfile ->valuesAt( xyz, charge );
     }
     if( species_->position_initialization_array_ != NULL ) {
@@ -259,7 +259,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
                     }
 
                     // assign charge its correct value in the cell
-                    if( species_->mass > 0 ) {
+                    if( species_->mass_ > 0 ) {
                         if( charge( i, j, k )>species_->max_charge ) {
                             species_->max_charge=charge( i, j, k );
                         }
@@ -476,7 +476,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
                 ParticleCreator::createMomentum( momentum_initialization_, particles_, species_, 1, ip, temp, vel );
             } else {
                 for( unsigned int idim=0; idim < 3; idim++ ) {
-                    particles_->momentum( idim, ip ) = momentum[idim][ippy]/species_->mass ;
+                    particles_->momentum( idim, ip ) = momentum[idim][ippy]/species_->mass_ ;
                 }
             }
 
@@ -500,7 +500,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
         // (necessary to calculate currents at time t=0 using the Esirkepov projection scheme)
         if( patch->isXmax() ) {
             // Matter particle case
-            if( species_->mass > 0 ) {
+            if( species_->mass_ > 0 ) {
                 for( iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++ ) {
                     /*897 for (int i=0; i<(int)species_->nDim_particle; i++) {
                       particles->position_old(i,iPart) -= particles->momentum(i,iPart)/particles->lor_fac(iPart) * params.timestep;
@@ -509,7 +509,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
                 }
             }
             // Photon case
-            else if( species_->mass == 0 ) {
+            else if( species_->mass_ == 0 ) {
                 for( iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++ ) {
                     /*897 for (int i=0; i<(int)species_->nDim_particle; i++) {
                       particles_->position_old(i,iPart) -= particles_->momentum(i,iPart)/particles_->lor_fac(iPart) * params.timestep;
@@ -540,6 +540,19 @@ void ParticleCreator::createPosition( std::string position_initialization,
 {
     if( position_initialization == "regular" ) {
 
+        if ( species->regular_number_array_.size()!=0){
+            if ( species->regular_number_array_.size() != species->nDim_particle){
+                ERROR( "The number of particles required per cell per dimension (regular_number) must be of length " << species->nDim_particle << " in this geometry." );
+            }
+            int npart_check=1;
+            for( unsigned int idim=0; idim<species->nDim_particle; idim++ ) {
+                npart_check *= species->regular_number_array_[idim];
+            }
+            if( nPart != npart_check) {
+                ERROR( "The number of particles required per cell and per dimension is not coherent with the total number of particles per cell." );
+            }
+        }
+
         if( params.geometry != "AMcylindrical" ) {
             double inv_coeff_array[3];
             int    coeff_array[3];
@@ -554,18 +567,10 @@ void ParticleCreator::createPosition( std::string position_initialization,
                     inv_coeff_array[idim] = 1./coeff;
                 }
             } else{
-               int npart_check=1;
-               for( unsigned int idim=0; idim<species->nDim_particle; idim++ ) {
-                   npart_check *= species->regular_number_array_[idim];
-               }
-               if( nPart != npart_check) {
-                   ERROR( "The number of particles required per cell and per dimension is not coherent with the total number of particles per cell." );
-               }
                for( unsigned int idim=0; idim<species->nDim_particle; idim++ ) {
                    coeff_array[idim] = species->regular_number_array_[idim];
                    inv_coeff_array[idim] = 1./(double)coeff_array[idim];
                }
-
             }
 
             for( unsigned int  p=iPart; p<iPart+nPart; p++ ) {
@@ -575,29 +580,38 @@ void ParticleCreator::createPosition( std::string position_initialization,
                     i /= coeff_array[idim]; // integer division
                 }
             }
-        } else {
+        } else { // AM geometry
 
-            //Trick to derive number of particles per dimension from total number of particles per cell
             unsigned int Np_array[species->nDim_particle];
-            int Np = nPart;
-            int counter = 0;
-            unsigned int prime = 2;
             double dx, dr, dtheta, theta_offset;
-            for( unsigned int idim=0; idim<species->nDim_particle; idim++ ) {
-                Np_array[idim] = 1;
-            }
 
-            while( prime <= 23 && Np > 1 ) {
-                if( Np%prime == 0 ) {
-                    Np = Np/prime;
-                    Np_array[counter%species->nDim_particle] *= prime;
-                    counter++;
-                } else {
-                    prime++;
+            if ( species->regular_number_array_.size()==0){
+                //Trick to derive number of particles per dimension from total number of particles per cell
+                int Np = nPart;
+                int counter = 0;
+                unsigned int prime = 2;
+                for( unsigned int idim=0; idim<species->nDim_particle; idim++ ) {
+                    Np_array[idim] = 1;
+                }
+
+                while( prime <= 23 && Np > 1 ) {
+                    if( Np%prime == 0 ) {
+                        Np = Np/prime;
+                        Np_array[counter%species->nDim_particle] *= prime;
+                        counter++;
+                    } else {
+                        prime++;
+                    }
+                }
+                Np_array[counter%species->nDim_particle] *= Np; //At that point, if Np is not equal to 1, it means that nPart has a prime divisor greater than 23.
+                std::sort( Np_array, Np_array + species->nDim_particle ); //sort so that the largest number of particles per dimension is used along theta.
+
+            } else{
+
+                for( unsigned int idim=0; idim<species->nDim_particle; idim++ ) {
+                    Np_array[idim] = species->regular_number_array_[idim];
                 }
             }
-            Np_array[counter%species->nDim_particle] *= Np; //At that point, if Np is not equal to 1, it means that nPart has a prime divisor greater than 23.
-            std::sort( Np_array, Np_array + species->nDim_particle ); //sort so that the largest number of particles per dimension is used along theta.
 
             dx = species->cell_length[0]/Np_array[0];
             dr = species->cell_length[1]/Np_array[1];
@@ -664,7 +678,7 @@ void ParticleCreator::createMomentum( std::string momentum_initialization,
     // -------------------------------------------------------------------------
     // Particles
     // -------------------------------------------------------------------------
-    if( species->mass > 0 ) {
+    if( species->mass_ > 0 ) {
 
         // Cold distribution
         if( momentum_initialization == "cold" ) {
@@ -679,7 +693,7 @@ void ParticleCreator::createMomentum( std::string momentum_initialization,
         } else if( momentum_initialization == "maxwell-juettner" ) {
 
             // Sample the energies in the MJ distribution
-            std::vector<double> energies = maxwellJuttner( species, nPart, temp[0]/species->mass );
+            std::vector<double> energies = maxwellJuttner( species, nPart, temp[0]/species->mass_ );
 
             // Sample angles randomly and calculate the momentum
             for( unsigned int p=iPart; p<iPart+nPart; p++ ) {
@@ -704,7 +718,7 @@ void ParticleCreator::createMomentum( std::string momentum_initialization,
             // Rectangular distribution
         } else if( momentum_initialization == "rectangular" ) {
 
-            double t0 = sqrt( temp[0]/species->mass ), t1 = sqrt( temp[1]/species->mass ), t2 = sqrt( temp[2]/species->mass );
+            double t0 = sqrt( temp[0]/species->mass_ ), t1 = sqrt( temp[1]/species->mass_ ), t2 = sqrt( temp[2]/species->mass_ );
             for( unsigned int p= iPart; p<iPart+nPart; p++ ) {
                 particles->momentum( 0, p ) = Rand::uniform2() * t0;
                 particles->momentum( 1, p ) = Rand::uniform2() * t1;
@@ -794,7 +808,7 @@ void ParticleCreator::createMomentum( std::string momentum_initialization,
     // -------------------------------------------------------------------------
     // Photons
     // -------------------------------------------------------------------------
-    else if( species->mass == 0 ) {
+    else if( species->mass_ == 0 ) {
         // Cold distribution
         if( momentum_initialization == "cold" ) {
 
@@ -873,7 +887,7 @@ void ParticleCreator::createCharge( Particles * particles, Species * species,
         }
         diff = q - ( ( double )tot )/( ( double )nPart ); // missing charge
         if( diff != 0. ) {
-            WARNING( "Could not match exactly charge="<<q<<" for species "<< species->name
+            WARNING( "Could not match exactly charge="<<q<<" for species "<< species->name_
                   << " (difference of "<<diff<<"). Try to add particles." );
         }
     }

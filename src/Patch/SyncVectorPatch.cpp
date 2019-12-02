@@ -39,7 +39,12 @@ void SyncVectorPatch::exchangeParticles( VectorPatch &vecPatches, int ispec, Par
     }
 }
 
-
+// ---------------------------------------------------------------------------------------------------------------------
+//! This function performs:
+//! - the exhcange of particles for each direction using the diagonal trick.
+//! - the importation of the new particles in the particle property arrays
+//! - the sorting of particles
+// ---------------------------------------------------------------------------------------------------------------------
 void SyncVectorPatch::finalizeAndSortParticles( VectorPatch &vecPatches, int ispec, Params &params, SmileiMPI *smpi, Timers &timers, int itime )
 {
     SyncVectorPatch::finalizeExchangeParticles( vecPatches, ispec, 0, params, smpi, timers, itime );
@@ -147,7 +152,7 @@ void SyncVectorPatch::finalizeExchangeParticles( VectorPatch &vecPatches, int is
 void SyncVectorPatch::sumRhoJ( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime )
 {
     // Sum Jx, Jy and Jz
-    SyncVectorPatch::sum_all_components( vecPatches.densities, vecPatches, smpi, timers, itime );
+    SyncVectorPatch::sumAllComponents( vecPatches.densities, vecPatches, smpi, timers, itime );
     // Sum rho
     if( ( vecPatches.diag_flag ) || ( params.is_spectral ) ) {
         SyncVectorPatch::sum<double,Field>( vecPatches.listrho_, vecPatches, smpi, timers, itime );
@@ -223,7 +228,7 @@ void SyncVectorPatch::sumRhoJs( Params &params, VectorPatch &vecPatches, int imo
 //         - ... for Y and Z
 //     - These fields are identified with lists of index MPIxIdx and LocalxIdx (... for Y and Z)
 // timers and itime were here introduced for debugging
-void SyncVectorPatch::sum_all_components( std::vector<Field *> &fields, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime )
+void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime )
 {
     unsigned int h0, oversize[3], n_space[3];
     double *pt1, *pt2;
@@ -672,22 +677,36 @@ void SyncVectorPatch::finalizeexchangePhi( Params &params, VectorPatch &vecPatch
 
 
 void SyncVectorPatch::exchangeGradPhi( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi )
-{
-    // current Gradient value
-    SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhix_, vecPatches, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhix_, vecPatches );
-    SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhiy_, vecPatches, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhiy_, vecPatches );
-    SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhiz_, vecPatches, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhiz_, vecPatches );
+{   
+    if (  params.geometry != "AMcylindrical" ) {
+        // current Gradient value
+        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhix_, vecPatches, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhix_, vecPatches );
+        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhiy_, vecPatches, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhiy_, vecPatches );
+        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhiz_, vecPatches, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhiz_, vecPatches );
 
-    // value of Gradient at previous timestep
-    SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhix0_, vecPatches, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhix0_, vecPatches );
-    SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhiy0_, vecPatches, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhiy0_, vecPatches );
-    SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhiz0_, vecPatches, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhiz0_, vecPatches );
+        // value of Gradient at previous timestep
+        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhix0_, vecPatches, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhix0_, vecPatches );
+        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhiy0_, vecPatches, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhiy0_, vecPatches );
+        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhiz0_, vecPatches, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhiz0_, vecPatches );
+    } else {
+        // current Gradient value
+        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhil_, vecPatches, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhil_, vecPatches );
+        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhir_, vecPatches, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhir_, vecPatches );
+
+        // value of Gradient at previous timestep
+        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhil0_, vecPatches, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhil0_, vecPatches );
+        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhir0_, vecPatches, smpi );
+        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhir0_, vecPatches );
+    }
 }
 
 void SyncVectorPatch::finalizeexchangeGradPhi( Params &params, VectorPatch &vecPatches )
@@ -705,7 +724,7 @@ void SyncVectorPatch::exchangeEnvChi( Params &params, VectorPatch &vecPatches, S
 }
 
 
-void SyncVectorPatch::template_generator()
+void SyncVectorPatch::templateGenerator()
 {
     SmileiMPI* smpi = NULL;
     VectorPatch patches;
@@ -1342,7 +1361,7 @@ void SyncVectorPatch::finalize_exchange_all_components_along_Z( std::vector<Fiel
 // ---------------------------------------------------------------------------------------------------------------------
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SyncVectorPatch::exchange_along_X( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
+void SyncVectorPatch::exchangeAlongX( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
 {
 #ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
@@ -1390,7 +1409,7 @@ void SyncVectorPatch::exchange_along_X( std::vector<Field *> fields, VectorPatch
 
 }
 
-void SyncVectorPatch::finalize_exchange_along_X( std::vector<Field *> fields, VectorPatch &vecPatches )
+void SyncVectorPatch::finalizeExchangeAlongX( std::vector<Field *> fields, VectorPatch &vecPatches )
 {
 #ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
@@ -1403,7 +1422,7 @@ void SyncVectorPatch::finalize_exchange_along_X( std::vector<Field *> fields, Ve
 
 }
 
-void SyncVectorPatch::exchange_along_Y( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
+void SyncVectorPatch::exchangeAlongY( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
 {
 #ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
@@ -1450,7 +1469,7 @@ void SyncVectorPatch::exchange_along_Y( std::vector<Field *> fields, VectorPatch
 
 }
 
-void SyncVectorPatch::finalize_exchange_along_Y( std::vector<Field *> fields, VectorPatch &vecPatches )
+void SyncVectorPatch::finalizeExchangeAlongY( std::vector<Field *> fields, VectorPatch &vecPatches )
 {
 #ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
@@ -1463,7 +1482,7 @@ void SyncVectorPatch::finalize_exchange_along_Y( std::vector<Field *> fields, Ve
 
 }
 
-void SyncVectorPatch::exchange_along_Z( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
+void SyncVectorPatch::exchangeAlongZ( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
 {
 #ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
@@ -1508,7 +1527,7 @@ void SyncVectorPatch::exchange_along_Z( std::vector<Field *> fields, VectorPatch
     } // End for( ipatch )
 }
 
-void SyncVectorPatch::finalize_exchange_along_Z( std::vector<Field *> fields, VectorPatch &vecPatches )
+void SyncVectorPatch::finalizeExchangeAlongZ( std::vector<Field *> fields, VectorPatch &vecPatches )
 {
 #ifndef _NO_MPI_TM
     #pragma omp for schedule(static)

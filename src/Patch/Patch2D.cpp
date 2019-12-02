@@ -125,10 +125,6 @@ Patch2D::~Patch2D()
 }
 
 
-void Patch2D::reallyinitSumField( Field *field, int iDim )
-{
-}
-
 // ---------------------------------------------------------------------------------------------------------------------
 // Initialize current patch sum Fields communications through MPI in direction iDim
 // Intra-MPI process communications managed by memcpy in SyncVectorPatch::sum()
@@ -270,11 +266,6 @@ void Patch2D::finalizeSumField( Field *field, int iDim )
     } // END for iNeighbor
     
 }
-
-void Patch2D::reallyfinalizeSumField( Field *field, int iDim )
-{
-
-} // END finalizeSumField
 
 
 // ---------------------------------------------------------------------------------------------------------------------

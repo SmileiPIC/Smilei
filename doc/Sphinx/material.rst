@@ -28,7 +28,7 @@ Publications
 
 .. rst-class:: bigcitation
 
-.. [Gelfer]
+.. [Gelfer_a]
 
   E. Gelfer, A. Fedotov and S. Weber,
   `Radiation induced acceleration of ions`,
@@ -36,7 +36,7 @@ Publications
 
 .. rst-class:: bigcitation
 
-.. [Gelfer]
+.. [Gelfer_b]
 
   E. Gelfer, A. Fedotov, O. Klimo and S. Weber,
   `Absorption and opacity threshold for a thin foil in a strong circularly polarized laser field`,
@@ -48,7 +48,7 @@ Publications
 
   F. Massimo, A. Beck, J. Derouillat, M. Grech, M. Lobet, F. Pérez, I. Zemzemi and A. Specka,
   `Efficient start-to-end 3D envelope modeling for two-stage laser wakefield acceleration experiments`,
-  `accepted in Plasma Phys. Control. Fusion <https://doi.org/10.1088/1361-6587/ab49cf>`_
+  `Plasma Phys. Control. Fusion 61, 124001 (2019) <https://dx.doi.org/10.1088/1361-6587/ab49cf>`_
 
 .. rst-class:: bigcitation
 

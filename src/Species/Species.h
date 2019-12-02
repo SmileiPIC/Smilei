@@ -53,7 +53,7 @@ public:
     unsigned int species_number_;
 
     //! kind/name of species
-    std::string name;
+    std::string name_;
 
     //! position initialization type, possible values: "regular" or "random"
     std::string position_initialization_;
@@ -65,35 +65,35 @@ public:
     double c_part_max_;
 
     //! mass [electron mass]
-    double mass;
+    double mass_;
 
     //! atomic number
-    unsigned int atomic_number;
+    unsigned int atomic_number_;
 
     //! maximum charge state
-    unsigned int maximum_charge_state;
+    unsigned int maximum_charge_state_;
 
     //! user defined ionization rate profile
-    PyObject *ionization_rate;
+    PyObject *ionization_rate_;
 
     //! thermalizing temperature for thermalizing BCs [\f$m_e c^2\f$]
-    std::vector<double> thermal_boundary_temperature;
+    std::vector<double> thermal_boundary_temperature_;
     //! mean velocity used when thermalizing BCs are used [\f$c\f$]
-    std::vector<double> thermal_boundary_velocity;
+    std::vector<double> thermal_boundary_velocity_;
 
     //! thermal velocity [\f$c\f$]
-    std::vector<double> thermalVelocity;
+    std::vector<double> thermal_velocity_;
     //! thermal momentum [\f$m_e c\f$]
-    std::vector<double> thermalMomentum;
+    std::vector<double> thermal_momentum_;
 
     //! pusher name
-    std::string pusher;
+    std::string pusher_name_;
 
     //! radiation model
-    std::string radiation_model;
+    std::string radiation_model_;
 
     //! Time for which the species is frozen
-    double time_frozen;
+    double time_frozen_;
 
     //! logical true if particles radiate
     bool radiating;
@@ -398,7 +398,7 @@ public:
             Patch *patch, SmileiMPI *smpi,
             std::vector<Diagnostic *> &localDiags ) {};
 
-
+    //! Projection method used specifically for the diagnotics
     virtual void projectionForDiags( double time, unsigned int ispec,
                                        ElectroMagn *EMfields,
                                        Params &params, bool diag_flag,
@@ -436,7 +436,8 @@ public:
     //! the best mode from the particle distribution
     virtual void reconfiguration( Params &param, Patch   *patch );
 
-    void count_sortParticles( Params &param );
+    //! Counting sort method for particles
+    void countSortParticles( Params &param );
 
     //!
     virtual void addSpaceForOneParticle()
@@ -468,13 +469,13 @@ public:
     //! Get the energy lost in the boundary conditions
     double getLostNrjBC() const
     {
-        return mass*nrj_bc_lost;
+        return mass_*nrj_bc_lost;
     }
 
     //! Get energy lost with moving window (fields)
     double getLostNrjMW() const
     {
-        return mass*nrj_mw_lost;
+        return mass_*nrj_mw_lost;
     }
 
     //! Get the energy radiated away by the particles
@@ -498,7 +499,7 @@ public:
     //! Get energy gained via new particles
     double getNewParticlesNRJ() const
     {
-        return mass*new_particles_energy_;
+        return mass_*new_particles_energy_;
     }
 
     //! Reinitialize the scalar diagnostics buffer
@@ -518,11 +519,11 @@ public:
     inline double computeNRJ()
     {
         double nrj( 0. );
-        if( this->mass > 0 ) {
+        if( this->mass_ > 0 ) {
             for( unsigned int iPart=0 ; iPart<getNbrOfParticles() ; iPart++ ) {
                 nrj += particles->weight( iPart )*( particles->lor_fac( iPart )-1.0 );
             }
-        } else if( this->mass == 0 ) {
+        } else if( this->mass_ == 0 ) {
             for( unsigned int iPart=0 ; iPart<getNbrOfParticles() ; iPart++ ) {
                 nrj += particles->weight( iPart )*( particles->momentum_norm( iPart ) );
             }

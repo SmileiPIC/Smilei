@@ -134,7 +134,7 @@ void Collisions::calculate_debye_length( Params &params, Patch *patch )
                 continue;
             }
             charge /= density; // average charge
-            temperature *= s->mass / ( 3.*density ); // Te in units of me*c^2
+            temperature *= s->mass_ / ( 3.*density ); // Te in units of me*c^2
             density *= inv_cell_volume; // density in units of critical density
             // compute inverse debye length squared
             if( temperature>0. ) {
@@ -267,7 +267,7 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
         }
         
         // Prepare the ionization
-        Ionization->prepare1( patch->vecSpecies[( *sg1 )[0]]->atomic_number );
+        Ionization->prepare1( patch->vecSpecies[( *sg1 )[0]]->atomic_number_ );
         
         // Calculate the densities
         n1  = 0.; // density of group 1
@@ -344,13 +344,13 @@ void Collisions::collide( Params &params, Patch *patch, int itime, vector<Diagno
             p1 = s1->particles;
             p2 = s2->particles;
             
-            m12  = s1->mass / s2->mass; // mass ratio
+            m12  = s1->mass_ / s2->mass_; // mass ratio
             
             logL = coulomb_log_;
             double U1  = patch->xorshift32() * patch->xorshift32_invmax;
             double U2  = patch->xorshift32() * patch->xorshift32_invmax;
             double phi = patch->xorshift32() * patch->xorshift32_invmax * twoPi;
-            s = one_collision( p1, i1, s1->mass, p2, i2, m12, coeff1_, coeff2_, coeff3, coeff4, n123, n223, debye2, logL, U1, U2, phi );
+            s = one_collision( p1, i1, s1->mass_, p2, i2, m12, coeff1_, coeff2_, coeff3, coeff4, n123, n223, debye2, logL, U1, U2, phi );
             
             // Handle ionization
             Ionization->apply( patch, p1, i1, p2, i2 );

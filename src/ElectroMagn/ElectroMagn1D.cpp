@@ -29,13 +29,13 @@ ElectroMagn1D::ElectroMagn1D( Params &params, DomainDecomposition *domain_decomp
     
     // Charge and current densities for each species
     for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
-        Jx_s[ispec]  = new Field1D( Tools::merge( "Jx_", vecSpecies[ispec]->name ).c_str(), dimPrim );
-        Jy_s[ispec]  = new Field1D( Tools::merge( "Jy_", vecSpecies[ispec]->name ).c_str(), dimPrim );
-        Jz_s[ispec]  = new Field1D( Tools::merge( "Jz_", vecSpecies[ispec]->name ).c_str(), dimPrim );
-        rho_s[ispec] = new Field1D( Tools::merge( "Rho_", vecSpecies[ispec]->name ).c_str(), dimPrim );
+        Jx_s[ispec]  = new Field1D( Tools::merge( "Jx_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
+        Jy_s[ispec]  = new Field1D( Tools::merge( "Jy_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
+        Jz_s[ispec]  = new Field1D( Tools::merge( "Jz_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
+        rho_s[ispec] = new Field1D( Tools::merge( "Rho_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
         
         if( params.Laser_Envelope_model ) {
-            Env_Chi_s[ispec] = new Field1D( Tools::merge( "Env_Chi_", vecSpecies[ispec]->name ).c_str(), dimPrim );
+            Env_Chi_s[ispec] = new Field1D( Tools::merge( "Env_Chi_", vecSpecies[ispec]->name_ ).c_str(), dimPrim );
         }
     }
     

@@ -7,12 +7,17 @@
 #
 # Load the correct modules:
 #
-# module load intel-compilers/19.0.4
-# module load intel-mpi/19.0.4
-# module load hdf5/1.8.21/intel-19.0.4-mpi
-# module load python/2.7.16
+# module purge
+# module load anaconda-py2/2019.03
+# export PYTHONHOME=/gpfslocalsup/pub/anaconda-py2/2019.03
+# export LD_LIBRARY_PATH=$PYTHONHOME/lib:$LD_LIBRARY_PATH
+#
+# module load intel-compilers/18.0.5
+# module load intel-mpi/18.0.5
+# module load hdf5/1.10.5/intel-18.0.5-mpi
+# export SMILEICXX=mpiicpc
 #
 # HDF5
-# export HDF5_ROOT_DIR=/gpfslocalsup/spack_soft/hdf5/1.8.21/intel-19.0.4-ze52g22lxxwb7ezsvxepmcixo6lmotwe
+# export HDF5_ROOT_DIR=/gpfslocalsup/spack_soft/hdf5/1.10.5/intel-18.0.5-gw6sb6itlnr2ayboj35ssjmshwi77e52
 
 CXXFLAGS += -xCOMMON-AVX512 -ip -inline-factor=1000 -D__INTEL_CASCADELAKE_6248 -qopt-zmm-usage=high -fno-alias -ipo

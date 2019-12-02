@@ -223,7 +223,7 @@ void SpeciesVAdaptiveMixedSort::configuration( Params &params, Patch *patch )
     // --------------------------------------------------------------------
 
 #ifdef  __DEBUG
-    std::cerr << "  > Species " << this->name << " configuration (" << this->vectorized_operators
+    std::cerr << "  > Species " << this->name_ << " configuration (" << this->vectorized_operators
               << ") default: " << params.adaptive_default_mode
               << " in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ")"
               << " of MPI process " << patch->MPI_me_
@@ -307,7 +307,7 @@ void SpeciesVAdaptiveMixedSort::reconfiguration( Params &params, Patch *patch )
         this->vectorized_operators = !this->vectorized_operators;
 
 #ifdef  __DEBUG
-        std::cerr << "  > Species " << this->name << " reconfiguration (" << this->vectorized_operators
+        std::cerr << "  > Species " << this->name_ << " reconfiguration (" << this->vectorized_operators
                   << ") in patch (" << patch->Pcoordinates[0] << "," <<  patch->Pcoordinates[1] << "," <<  patch->Pcoordinates[2] << ")"
                   << " of MPI process " << patch->MPI_me_
                   << " (vecto time: " << vecto_time

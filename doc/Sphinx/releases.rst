@@ -9,14 +9,19 @@ get the latest version of Smilei on `GitHub <https://github.com/SmileiPIC/Smilei
 Upcoming changes
 ^^^^^^^^^^^^^^^^
 
-* Interface with the PICSAR library (currently experimental)
 * Particle merging (beta version)
 * Additional prescribed fields that only contribute to pushing particles
+* Nuclear reactions (beta version)
+* AMcylindrical now supports almost all features of the code
+  (Poisson solver and scalar diags still missing)
+* Interface with the PICSAR library (currently experimental)
 * More control over the moving window movement
 * More control over the regular position initialization in Cartesian geometries
-* AMcylindrical now supports almost all features of the code (Poisson solver and scalar diaasg still missing)
-* Bugfix: particle binning was not following the moving window
-* Bugfix: gaussian profile with order 0 was incorrect
+* Bugfixes:
+
+ * particle binning was not following the moving window
+ * gaussian profile with order 0 was incorrect
+ * tracked particles post-processing was incorrect above 20M particles
 
 ----
 
@@ -38,12 +43,13 @@ Release 4.2
 **Download**: `Smilei v4.2 <_downloads/smilei-v4.2.tar.gz>`_
 
 
+* *AMcylindrical* geometry with azimuthal Fourier decomposition (beta version)
 * Different convention for circular polarization amplitude
-* Binomial filter in Cartesian 3D bug fix in parallel implementation
 * 1D and 2D laser envelope model
-* Cylindrical geometry with azimuthal Fourier decomposition (beta version)
 * Compatibility between various ionization and QED models
 * Bugfixes:
+
+   * Binomial filter in Cartesian 3D parallel implementation
    * Various crashes linked to vectorization
    * `LaserGaussian2D` when focused far from boundary
    * Laser :py:data:`a0` normalization to :py:data:`omega`

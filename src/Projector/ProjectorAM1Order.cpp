@@ -42,6 +42,9 @@ ProjectorAM1Order::ProjectorAM1Order( Params &params, Patch *patch ) : Projector
         staggered = true;
     else
         staggered = false;
+    dts2           = params.timestep/2.;
+    dts4           = params.timestep/4.;
+
 }
 
 
@@ -105,10 +108,14 @@ void ProjectorAM1Order::basicForComplex( complex<double> *rhoj, Particles &parti
     Sr1[0] = 1. - delta;
     Sr1[1] = delta;
    
-    if (jp == -1){ // If particle is between 0 and dr/2.
+    if (rpn < 0.){ // If particle is between 0 and dr/2.
         jp = 0;
-        Sr1[0] = Sr1[1];
-        Sr1[1] = 0.; // Only account for deposition above axis. Symetry is handled in interpolation.
+        Sr1[1] = 0.; 
+        if(imode%2 == 0){ 
+            Sr1[0] = 1.;
+        } else {
+            Sr1[0] = 2.*delta - 1.; 
+        }
     }
  
     ip -= i_domain_begin ;
@@ -163,9 +170,8 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
     Sr1[0] = 1. - delta;
     Sr1[1] = delta;
 
-    if (jp == -1){ // If particle is between 0 and dr/2.
+    if (ypn < 0.){ // If particle is between 0 and dr/2.
         jp = 0;
-        Sr1[0] = Sr1[1];
         Sr1[1] = 0.; // Only account for deposition above axis. Symetry is handled in interpolation.
     }
 
@@ -181,6 +187,14 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
         }
         if( imode > 0 ) {
             C_m *= e_theta;
+        }
+
+        if (ypn < 0.){ // If particle is between 0 and dr/2.
+            if(imode%2 == 0){ 
+                Sr1[0] = 1.;
+            } else {
+                Sr1[0] = 2.*delta - 1.; 
+            }
         }
         
         if (!diag_flag){
@@ -247,66 +261,6 @@ void ProjectorAM1Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
     for( int ipart=istart ; ipart<iend; ipart++ ) {
         currents( emAM, particles,  ipart, ( *invgf )[ipart], diag_flag, ispec);
     }
-
-    //Boundary conditions for currents on axis
-    if (emAM->isYmin ) {
-        double sign = -1. ;
-        unsigned int n_species = emAM->Jl_.size() / Nmode;
-        for ( unsigned int imode = 0; imode < Nmode; imode++){
-            unsigned int ifield = imode*n_species+ispec;
-            complex<double> *Jl  = emAM->Jl_s    [ifield] ? &( * ( emAM->Jl_s    [ifield] ) )( 0 ) : &( *emAM->Jl_    [imode] )( 0 ) ;
-            complex<double> *Jr  = emAM->Jr_s    [ifield] ? &( * ( emAM->Jr_s    [ifield] ) )( 0 ) : &( *emAM->Jr_    [imode] )( 0 ) ;
-            complex<double> *Jt  = emAM->Jt_s    [ifield] ? &( * ( emAM->Jt_s    [ifield] ) )( 0 ) : &( *emAM->Jt_    [imode] )( 0 ) ;
-            complex<double> *rho = emAM->rho_AM_s[ifield] ? &( * ( emAM->rho_AM_s[ifield] ) )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
-            sign *= -1.;
-
-            // Fold primal quantities along r
-            //for( unsigned int i=0 ; i<npriml; i++ ) {
-            //    int iloc = i*nprimr;
-            //    for( unsigned int j=1 ; j<= oversizeR; j++ ) {
-            //        Jt [iloc+oversizeR+j] +=  sign * Jt [iloc+oversizeR-j];
-            //        Jt [iloc+oversizeR-j] = 0.; 
-            //        Jl [iloc+oversizeR+j] +=  sign * Jl [iloc+oversizeR-j];
-            //        Jl [iloc+oversizeR-j] = 0.; 
-            //        rho[iloc+oversizeR+j] +=  sign * rho[iloc+oversizeR-j];
-            //        rho[iloc+oversizeR-j] = 0.; 
-            //    }
-            //}//i
-            // Fold dual quantities along r
-            for( unsigned int i=0 ; i<npriml; i++ ) {
-                int iloc = i*(nprimr+staggered);
-                for( unsigned int j=0 ; j<= oversizeR; j++ ) {
-                    Jr [iloc+3] += sign * Jr [iloc+2];
-                }
-            }//i
-
-
-            // Jl and Jt on axis (primal)
-
-            int j = oversizeR; //axis position
-            if (imode > 0){
-                // All Jl = zero on axis for imode > 0. Mode 0 is treated in general case.
-                for( unsigned int i=0 ; i<npriml; i++ ) {
-                    int iloc = i*nprimr;
-                    Jl [iloc+j] = 0. ;
-                    rho[iloc+j] = 0. ;
-                }//i
-            }
-            if (imode == 1){
-                for( unsigned int i=0 ; i<npriml; i++ ) {
-                    int iloc = i*nprimr;
-                    int ilocr = i*(nprimr+staggered);
-                    Jt [iloc+j] = -1./3.*(4.*Icpx*Jr[ilocr+j+staggered] + Jt[iloc+j+staggered]) ;
-                }//i
-            } else{
-                for( unsigned int i=0 ; i<npriml; i++ ) {
-                    int iloc = i*nprimr;
-                    Jt [iloc+j] = 0. ;
-                }
-            }
-        }
-
-    }
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -315,3 +269,110 @@ void ProjectorAM1Order::currentsAndDensityWrapper( ElectroMagn *EMfields, Partic
 void ProjectorAM1Order::ionizationCurrents( Field *Jl, Field *Jr, Field *Jt, Particles &particles, int ipart, LocalFields Jion )
 {
 }
+
+
+// Projector for susceptibility used as source term in envelope equation
+void ProjectorAM1Order::susceptibility( ElectroMagn *EMfields, Particles &particles, double species_mass, SmileiMPI *smpi, int istart, int iend,  int ithread, int icell, int ipart_ref )
+
+{
+    // -------------------------------------
+    // Variable declaration & initialization
+    // -------------------------------------
+
+    double *Chi_envelope = &( *EMfields->Env_Chi_ )( 0 );
+    
+    std::vector<double> *Epart       = &( smpi->dynamics_Epart[ithread] );
+    std::vector<double> *Phipart     = &( smpi->dynamics_PHIpart[ithread] );
+    std::vector<double> *GradPhipart = &( smpi->dynamics_GradPHIpart[ithread] );
+    std::vector<double> *inv_gamma_ponderomotive = &( smpi->dynamics_inv_gamma_ponderomotive[ithread] );
+    
+
+    double gamma_ponderomotive, gamma0, gamma0_sq;
+    double charge_over_mass_dts2, charge_sq_over_mass_sq_dts4, charge_sq_over_mass_sq;
+    double pxsm, pysm, pzsm;
+    double one_over_mass=1./species_mass;
+    double momentum[3];
+    
+    int nparts = particles.size();
+    double *Ex       = &( ( *Epart )[0*nparts] );
+    double *Ey       = &( ( *Epart )[1*nparts] );
+    double *Ez       = &( ( *Epart )[2*nparts] );
+    double *Phi      = &( ( *Phipart )[0*nparts] );
+    double *GradPhix = &( ( *GradPhipart )[0*nparts] );
+    double *GradPhiy = &( ( *GradPhipart )[1*nparts] );
+    double *GradPhiz = &( ( *GradPhipart )[2*nparts] );
+
+    for( int ipart=istart ; ipart<iend; ipart++ ) {//Loop on bin particles
+        charge_over_mass_dts2       = ( double )( particles.charge( ipart ) )*dts2*one_over_mass;
+        // ! ponderomotive force is proportional to charge squared and the field is divided by 4 instead of 2
+        charge_sq_over_mass_sq_dts4 = ( double )( particles.charge( ipart ) )*( double )( particles.charge( ipart ) )*dts4*one_over_mass*one_over_mass;
+        // (charge over mass)^2
+        charge_sq_over_mass_sq      = ( double )( particles.charge( ipart ) )*( double )( particles.charge( ipart ) )*one_over_mass*one_over_mass;
+
+        int iloc, nr( nprimr );
+    
+        double r = sqrt( particles.position( 1, ipart )*particles.position( 1, ipart )+particles.position( 2, ipart )*particles.position( 2, ipart ) );
+    
+        for( int i = 0 ; i<3 ; i++ ) {
+            momentum[i] = particles.momentum( i, ipart );
+        }
+    
+        // compute initial ponderomotive gamma
+        gamma0_sq = 1. + momentum[0]*momentum[0]+ momentum[1]*momentum[1] + momentum[2]*momentum[2] + *( Phi+ipart )*charge_sq_over_mass_sq ;
+        gamma0    = sqrt( gamma0_sq ) ;
+    
+        // ( electric field + ponderomotive force for ponderomotive gamma advance ) scalar multiplied by momentum
+        pxsm = ( gamma0 * charge_over_mass_dts2*( *( Ex+ipart ) ) - charge_sq_over_mass_sq_dts4*( *( GradPhix+ipart ) ) ) * momentum[0] / gamma0_sq;
+        pysm = ( gamma0 * charge_over_mass_dts2*( *( Ey+ipart ) ) - charge_sq_over_mass_sq_dts4*( *( GradPhiy+ipart ) ) ) * momentum[1] / gamma0_sq;
+        pzsm = ( gamma0 * charge_over_mass_dts2*( *( Ez+ipart ) ) - charge_sq_over_mass_sq_dts4*( *( GradPhiz+ipart ) ) ) * momentum[2] / gamma0_sq;
+    
+        // update of gamma ponderomotive
+        gamma_ponderomotive = gamma0 + ( pxsm+pysm+pzsm )*0.5 ;
+        // buffer inverse of ponderomotive gamma to use it in ponderomotive momentum pusher
+        ( *inv_gamma_ponderomotive )[ipart] = 1./gamma_ponderomotive;
+    
+        // susceptibility for the macro-particle
+        double charge_weight = inv_cell_volume * ( double )( particles.charge( ipart ) )*( double )( particles.charge( ipart ) )*particles.weight( ipart )*one_over_mass/gamma_ponderomotive;
+
+        //complex<double> e_theta = ( particles.position( 1, ipart ) + Icpx*particles.position( 2, ipart ) )/r;
+        double C_m = 1.; // only mode 0
+    
+    
+        double xpn, rpn;
+        double delta;
+        double Sl1[2], Sr1[2];
+    
+    
+        // locate the particle on the primal and dual grid at current time-step & calculate coeff. S1
+        xpn = particles.position( 0, ipart ) * dl_inv_;
+        int ip = int( xpn );
+        delta  = xpn - ( double )ip;
+        Sl1[0] = delta ;
+        Sl1[1] = 1.-delta;
+        rpn = r * dr_inv_ ;
+        int jp = int( rpn );
+        delta  = rpn - ( double )jp;
+        Sr1[0] = delta;
+        Sr1[1] = 1.-delta;
+    
+        ip -= i_domain_begin ;
+        jp -= j_domain_begin ;
+    
+    
+        for( unsigned int i=0 ; i<2 ; i++ ) {
+            iloc = ( i+ip )*nr+jp;
+            for( unsigned int j=0 ; j<2 ; j++ ) {
+                    Chi_envelope [iloc+j] += C_m*charge_weight* Sl1[i]*Sr1[j] * invR[j+jp];
+            }
+        }//i
+    
+
+
+    }
+
+
+
+
+    
+}
+
