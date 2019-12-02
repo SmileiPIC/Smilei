@@ -3254,13 +3254,13 @@ void VectorPatch::allocateField( unsigned int ifield, Params &params )
             if( field->cdata_ != NULL ) {
                 continue;
             }
-            if( field->name.substr( 0, 2 )=="Jl" ) {
+            if( ( field->name.substr( 0, 2 )=="Jl" ) && (!params.is_pxr) ) {
                 field->allocateDims( 0, false );
-            } else if( field->name.substr( 0, 2 )=="Jr" ) {
+            } else if( ( field->name.substr( 0, 2 )=="Jr" ) && (!params.is_pxr) ) {
                 field->allocateDims( 1, false );
-            } else if( field->name.substr( 0, 2 )=="Jt" ) {
+            } else if( ( field->name.substr( 0, 2 )=="Jt" ) && (!params.is_pxr) ) {
                 field->allocateDims( 2, false );
-            } else if( field->name.substr( 0, 2 )=="Rh" ) {
+            } else if( ( field->name.substr( 0, 2 )=="Rh" ) || (params.is_pxr) ) {
                 field->allocateDims();
             }
         }
