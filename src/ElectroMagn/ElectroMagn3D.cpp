@@ -1374,7 +1374,7 @@ void ElectroMagn3D::computeTotalRhoJ()
         if( Jx_s[ispec] ) {
             Field3D *Jx3D_s  = static_cast<Field3D *>( Jx_s[ispec] );
             for( unsigned int i=0 ; i<Jx3D->dims_[0] ; i++ )
-                for( unsigned int j=0 ; j<Jx3D->dims_[0] ; j++ )
+                for( unsigned int j=0 ; j<Jx3D->dims_[1] ; j++ )
                     for( unsigned int k=0 ; k<Jx3D->dims_[2] ; k++ ) {
                         ( *Jx3D )( i, j, k ) += ( *Jx3D_s )( i, j, k );
                     }
@@ -1390,16 +1390,16 @@ void ElectroMagn3D::computeTotalRhoJ()
         if( Jz_s[ispec] ) {
             Field3D *Jz3D_s  = static_cast<Field3D *>( Jz_s[ispec] );
             for( unsigned int i=0 ; i<Jz3D->dims_[0] ; i++ )
-                for( unsigned int j=0 ; j<Jy3D->dims_[1] ; j++ )
-                    for( unsigned int k=0 ; k<Jy3D->dims_[2] ; k++ ) {
+                for( unsigned int j=0 ; j<Jz3D->dims_[1] ; j++ )
+                    for( unsigned int k=0 ; k<Jz3D->dims_[2] ; k++ ) {
                         ( *Jz3D )( i, j, k ) += ( *Jz3D_s )( i, j, k );
                     }
         }
         if( rho_s[ispec] ) {
             Field3D *rho3D_s  = static_cast<Field3D *>( rho_s[ispec] );
-            for( unsigned int i=0 ; i<Jz3D->dims_[0] ; i++ )
-                for( unsigned int j=0 ; j<Jz3D->dims_[1] ; j++ )
-                    for( unsigned int k=0 ; k<Jz3D->dims_[2] ; k++ ) {
+            for( unsigned int i=0 ; i<rho3D->dims_[0] ; i++ )
+                for( unsigned int j=0 ; j<rho3D->dims_[1] ; j++ )
+                    for( unsigned int k=0 ; k<rho3D->dims_[2] ; k++ ) {
                         ( *rho3D )( i, j, k ) += ( *rho3D_s )( i, j, k );
                     }
         }
