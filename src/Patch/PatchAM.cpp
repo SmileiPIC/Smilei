@@ -107,6 +107,9 @@ void PatchAM::initStep2( Params &params, DomainDecomposition *domain_decompositi
             ntype_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
             ntype_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
             ntype_[2][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+            ntype_complex_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+            ntype_complex_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+            ntype_complex_[2][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
             ntypeSum_complex_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
             ntypeSum_complex_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
             ntypeSum_[0][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
@@ -763,14 +766,15 @@ void PatchAM::cleanType()
         for( int iy_isPrim=0 ; iy_isPrim<2 ; iy_isPrim++ ) {
             MPI_Type_free( &( ntype_[0][ix_isPrim][iy_isPrim] ) );
             MPI_Type_free( &( ntype_[1][ix_isPrim][iy_isPrim] ) );
+
+            MPI_Type_free( &( ntypeSum_[0][ix_isPrim][iy_isPrim] ) );
+            MPI_Type_free( &( ntypeSum_[1][ix_isPrim][iy_isPrim] ) );
+
+            MPI_Type_free( &( ntype_complex_[0][ix_isPrim][iy_isPrim] ) );
+            MPI_Type_free( &( ntype_complex_[1][ix_isPrim][iy_isPrim] ) );
+            //MPI_Type_free( &(ntype_complex_[2][ix_isPrim][iy_isPrim]) );
             MPI_Type_free( &( ntypeSum_complex_[0][ix_isPrim][iy_isPrim] ) );
             MPI_Type_free( &( ntypeSum_complex_[1][ix_isPrim][iy_isPrim] ) );
-      
-            if (ntype_complex_[0][ix_isPrim][iy_isPrim] != MPI_DATATYPE_NULL) {
-                MPI_Type_free( &( ntype_complex_[0][ix_isPrim][iy_isPrim] ) );
-                MPI_Type_free( &( ntype_complex_[1][ix_isPrim][iy_isPrim] ) );
-                //MPI_Type_free( &(ntype_complex_[2][ix_isPrim][iy_isPrim]) );
-            }
         }
     }
 }
