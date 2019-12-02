@@ -145,7 +145,7 @@ void Species::initCluster( Params &params )
     }
 
     //Initialize specMPI
-    MPI_buffer_.allocate( nDim_particle );
+    MPI_buffer_.allocate( nDim_field );
 
     //ener_tot = 0.;
     nrj_bc_lost = 0.;
@@ -223,7 +223,7 @@ void Species::initOperators( Params &params, Patch *patch )
 
     // define limits for BC and functions applied and for domain decomposition
     partBoundCond = new PartBoundCond( params, this, patch );
-    for( unsigned int iDim=0 ; iDim < nDim_particle ; iDim++ ) {
+    for( unsigned int iDim=0 ; iDim < nDim_field ; iDim++ ) {
         for( unsigned int iNeighbor=0 ; iNeighbor<2 ; iNeighbor++ ) {
             MPI_buffer_.partRecv[iDim][iNeighbor].initialize( 0, ( *particles ) );
             MPI_buffer_.partSend[iDim][iNeighbor].initialize( 0, ( *particles ) );
