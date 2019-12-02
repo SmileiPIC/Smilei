@@ -381,13 +381,30 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
 
     if(time_dual <= time_frozen_ && diag_flag &&( !particles->is_test ) ) { //immobile particle (at the moment only project density)
 
-        double *b_rho=nullptr;
-        for( unsigned int scell = 0 ; scell < first_index.size() ; scell ++ ) { //Loop for projection on buffer_proj
-            b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
-            for( iPart=first_index[scell] ; ( int )iPart<last_index[scell]; iPart++ ) {
-                Proj->basic( b_rho, ( *particles ), iPart, 0 );
-            } //End loop on particles
-        }//End loop on scells
+        if( params.geometry != "AMcylindrical" ) {
+            double *b_rho = EMfields->rho_s[ispec] ? &( *EMfields->rho_s[ispec] )( 0 ) : &( *EMfields->rho_ )( 0 ) ;
+            for( unsigned int scell = 0 ; scell < first_index.size() ; scell ++ ) { //Loop for projection on buffer_proj
+                for( iPart=first_index[scell] ; ( int )iPart<last_index[scell]; iPart++ ) {
+                    Proj->basic( b_rho, ( *particles ), iPart, 0 );
+                } //End loop on particles
+            }//End loop on scells
+
+        } else { // AM case
+            complex<double> *b_rho=nullptr;
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+            int n_species = patch->vecSpecies.size();
+            for( unsigned int imode = 0; imode<params.nmodes; imode++ ) {
+                int ifield = imode*n_species+ispec;
+                complex<double> *b_rho = emAM->rho_AM_s[ifield] ? &( *emAM->rho_AM_s[ifield] )( 0 ) : &( *emAM->rho_AM_[imode] )( 0 ) ;
+                for( unsigned int scell = 0 ; scell < first_index.size() ; scell ++ ) { //Loop for projection on buffer_proj
+                    for( int iPart=first_index[scell] ; iPart<last_index[scell]; iPart++ ) {
+                        Proj->basicForComplex( b_rho, ( *particles ), iPart, 0, imode );
+                    }
+                }
+            }
+        }
+
+
     } // End projection for frozen particles
 
 }//END dynamics
