@@ -1373,33 +1373,33 @@ void ElectroMagn3D::computeTotalRhoJ()
     for( unsigned int ispec=0; ispec<n_species; ispec++ ) {
         if( Jx_s[ispec] ) {
             Field3D *Jx3D_s  = static_cast<Field3D *>( Jx_s[ispec] );
-            for( unsigned int i=0 ; i<=nx_p ; i++ )
-                for( unsigned int j=0 ; j<ny_p ; j++ )
-                    for( unsigned int k=0 ; k<nz_p ; k++ ) {
+            for( unsigned int i=0 ; i<Jx3D->dims_[0] ; i++ )
+                for( unsigned int j=0 ; j<Jx3D->dims_[0] ; j++ )
+                    for( unsigned int k=0 ; k<Jx3D->dims_[2] ; k++ ) {
                         ( *Jx3D )( i, j, k ) += ( *Jx3D_s )( i, j, k );
                     }
         }
         if( Jy_s[ispec] ) {
             Field3D *Jy3D_s  = static_cast<Field3D *>( Jy_s[ispec] );
-            for( unsigned int i=0 ; i<nx_p ; i++ )
-                for( unsigned int j=0 ; j<=ny_p ; j++ )
-                    for( unsigned int k=0 ; k<nz_p ; k++ ) {
+            for( unsigned int i=0 ; i<Jy3D->dims_[0] ; i++ )
+                for( unsigned int j=0 ; j<Jy3D->dims_[1] ; j++ )
+                    for( unsigned int k=0 ; k<Jy3D->dims_[2] ; k++ ) {
                         ( *Jy3D )( i, j, k ) += ( *Jy3D_s )( i, j, k );
                     }
         }
         if( Jz_s[ispec] ) {
             Field3D *Jz3D_s  = static_cast<Field3D *>( Jz_s[ispec] );
-            for( unsigned int i=0 ; i<nx_p ; i++ )
-                for( unsigned int j=0 ; j<ny_p ; j++ )
-                    for( unsigned int k=0 ; k<=nz_p ; k++ ) {
+            for( unsigned int i=0 ; i<Jz3D->dims_[0] ; i++ )
+                for( unsigned int j=0 ; j<Jy3D->dims_[1] ; j++ )
+                    for( unsigned int k=0 ; k<Jy3D->dims_[2] ; k++ ) {
                         ( *Jz3D )( i, j, k ) += ( *Jz3D_s )( i, j, k );
                     }
         }
         if( rho_s[ispec] ) {
             Field3D *rho3D_s  = static_cast<Field3D *>( rho_s[ispec] );
-            for( unsigned int i=0 ; i<nx_p ; i++ )
-                for( unsigned int j=0 ; j<ny_p ; j++ )
-                    for( unsigned int k=0 ; k<nz_p ; k++ ) {
+            for( unsigned int i=0 ; i<Jz3D->dims_[0] ; i++ )
+                for( unsigned int j=0 ; j<Jz3D->dims_[1] ; j++ )
+                    for( unsigned int k=0 ; k<Jz3D->dims_[2] ; k++ ) {
                         ( *rho3D )( i, j, k ) += ( *rho3D_s )( i, j, k );
                     }
         }

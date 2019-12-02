@@ -3239,13 +3239,13 @@ void VectorPatch::allocateField( unsigned int ifield, Params &params )
             if( field->data_ != NULL ) {
                 continue;
             }
-            if( field->name.substr( 0, 2 )=="Jx" ) {
+            if( ( field->name.substr( 0, 2 )=="Jx" ) && (!params.is_pxr) ) {
                 field->allocateDims( 0, false );
-            } else if( field->name.substr( 0, 2 )=="Jy" ) {
+            } else if( ( field->name.substr( 0, 2 )=="Jy" ) && (!params.is_pxr) ) {
                 field->allocateDims( 1, false );
-            } else if( field->name.substr( 0, 2 )=="Jz" ) {
+            } else if( ( field->name.substr( 0, 2 )=="Jz" ) && (!params.is_pxr) ) {
                 field->allocateDims( 2, false );
-            } else if( field->name.substr( 0, 2 )=="Rh" ) {
+            } else if( ( field->name.substr( 0, 2 )=="Rh" ) || (params.is_pxr) ) {
                 field->allocateDims();
             }
             //MESSAGE("HNA4");
