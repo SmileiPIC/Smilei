@@ -404,13 +404,22 @@ void SpeciesV::computeCharge( unsigned int ispec, ElectroMagn *EMfields )
     // calculate the particle charge
     // -------------------------------
     if( ( !particles->is_test ) ) {
-        double *b_rho=&( *EMfields->rho_ )( 0 );
-
-        for( unsigned int iPart=first_index[0] ; ( int )iPart<last_index[last_index.size()-1]; iPart++ ) {
-            Proj->basic( b_rho, ( *particles ), iPart, 0 );
-        }
-
-    }
+        if( !dynamic_cast<ElectroMagnAM *>( EMfields ) ) {
+            double *b_rho=&( *EMfields->rho_ )( 0 );
+            for( unsigned int iPart=first_index[0] ; ( int )iPart<last_index[last_index.size()-1]; iPart++ ) {
+                Proj->basic( b_rho, ( *particles ), iPart, 0 );
+            }
+        } else {
+            ElectroMagnAM *emAM = static_cast<ElectroMagnAM *>( EMfields );
+            unsigned int Nmode = emAM->rho_AM_.size();
+            for( unsigned int imode=0; imode<Nmode; imode++ ) {
+                complex<double> *b_rho = &( *emAM->rho_AM_[imode] )( 0 );
+                for( unsigned int iPart=first_index[0] ; ( int )iPart<last_index[last_index.size()-1]; iPart++ ) {
+                    Proj->basicForComplex( b_rho, ( *particles ), iPart, 0, imode );
+                }
+             }
+       }
+   }
 
 }//END computeCharge
 
