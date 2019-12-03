@@ -517,15 +517,15 @@ void Patch::initExchParticles( SmileiMPI *smpi, int ispec, Params &params )
                     vecSpecies[ispec]->MPI_buffer_.part_index_send[0][1].push_back( iPart );
                     // MESSAGE("Sending particle to the right x= " << cuParticles.position(0,iPart) <<  " xmax = " <<  max_local[0] );
                 }
-            } else if( cuParticles.distance2_to_axis( iPart ) < r_min2 ) {
+            } else if( cuParticles.distance2ToAxis( iPart ) < r_min2 ) {
                 if( neighbor_[1][0]!=MPI_PROC_NULL ) {
                     vecSpecies[ispec]->MPI_buffer_.part_index_send[1][0].push_back( iPart );
-                    //MESSAGE("Sending particle to the south r= " << cuParticles.distance2_to_axis(iPart) <<  " rmin2 = " <<  r_min2 );
+                    //MESSAGE("Sending particle to the south r= " << cuParticles.distance2ToAxis(iPart) <<  " rmin2 = " <<  r_min2 );
                 }
-            } else if( cuParticles.distance2_to_axis( iPart ) >= r_max2 ) {
+            } else if( cuParticles.distance2ToAxis( iPart ) >= r_max2 ) {
                 if( neighbor_[1][1]!=MPI_PROC_NULL ) {
                     vecSpecies[ispec]->MPI_buffer_.part_index_send[1][1].push_back( iPart );
-                    //MESSAGE("Sending particle to the north r= " << cuParticles.distance2_to_axis(iPart) <<  " rmax2 = " <<  r_max2 << " rmin2= " << r_min2 );
+                    //MESSAGE("Sending particle to the north r= " << cuParticles.distance2ToAxis(iPart) <<  " rmax2 = " <<  r_max2 << " rmin2= " << r_min2 );
                 }
             }
 
@@ -788,8 +788,8 @@ void Patch::cornersParticles( SmileiMPI *smpi, int ispec, Params &params, int iD
                     r_min2 = min_local[1]*min_local[1];
                     r_max2 = max_local[1]*max_local[1];
                     for( int iPart=n_part_recv-1 ; iPart>=0; iPart-- ) {
-                        //MESSAGE("test particle diag r2 = " << (vecSpecies[ispec]->MPI_buffer_.partRecv[0][(iNeighbor+1)%2]).distance2_to_axis(iPart) << "rmin2 = " << r_min2 << " rmax2 = " << r_max2 );
-                        if( ( vecSpecies[ispec]->MPI_buffer_.partRecv[0][( iNeighbor+1 )%2] ).distance2_to_axis( iPart ) < r_min2 ) {
+                        //MESSAGE("test particle diag r2 = " << (vecSpecies[ispec]->MPI_buffer_.partRecv[0][(iNeighbor+1)%2]).distance2ToAxis(iPart) << "rmin2 = " << r_min2 << " rmax2 = " << r_max2 );
+                        if( ( vecSpecies[ispec]->MPI_buffer_.partRecv[0][( iNeighbor+1 )%2] ).distance2ToAxis( iPart ) < r_min2 ) {
                             if( neighbor_[1][0]!=MPI_PROC_NULL ) { //if neighbour exists
                                 //... copy it at the back of the local particle vector ...
                                 ( vecSpecies[ispec]->MPI_buffer_.partRecv[0][( iNeighbor+1 )%2] ).copyParticle( iPart, cuParticles );
@@ -805,7 +805,7 @@ void Patch::cornersParticles( SmileiMPI *smpi, int ispec, Params &params, int iD
                             vecSpecies[ispec]->MPI_buffer_.part_index_recv_sz[0][( iNeighbor+1 )%2]--;
                         }
                         //Other side of idim
-                        else if( ( vecSpecies[ispec]->MPI_buffer_.partRecv[0][( iNeighbor+1 )%2] ).distance2_to_axis( iPart ) >= r_max2 ) {
+                        else if( ( vecSpecies[ispec]->MPI_buffer_.partRecv[0][( iNeighbor+1 )%2] ).distance2ToAxis( iPart ) >= r_max2 ) {
                             if( neighbor_[1][1]!=MPI_PROC_NULL ) { //if neighbour exists
                                 //MESSAGE("particle diag +R");
                                 ( vecSpecies[ispec]->MPI_buffer_.partRecv[0][( iNeighbor+1 )%2] ).copyParticle( iPart, cuParticles );

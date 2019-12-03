@@ -649,7 +649,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                         #pragma omp simd
                         for ( unsigned int ip = 0; ip < particles->size() ; ip++ ) {
                             particles->Position[i][ip] += ( params.timestep*particles->Momentum[i][ip]
-                                                        * particles->inv_lor_fac(ip) + position_shift[i]);
+                                                        * particles->inverseLorentzFactor(ip) + position_shift[i]);
                         }
                     }
                     
@@ -761,14 +761,14 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                         if( injector_species->mass_ > 0 ) {
                             for( int ip = 0; ip<new_particle_number; ip++ ) {
                                 injector_species->new_particles_energy_ += particles->weight( ip )
-                                *( particles->lor_fac( ip )-1.0 );
+                                *( particles->LorentzFactor( ip )-1.0 );
                             }
                         }
                         // Photon case
                         else if( injector_species->mass_ == 0 ) {
                             for( int ip=0; ip<new_particle_number; ip++ ) {
                                 injector_species->new_particles_energy_ += particles->weight( ip )
-                                *( particles->momentum_norm( ip ) );
+                                *( particles->momentumNorm( ip ) );
                             }
                         }
                     }

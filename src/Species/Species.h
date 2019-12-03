@@ -521,11 +521,11 @@ public:
         double nrj( 0. );
         if( this->mass_ > 0 ) {
             for( unsigned int iPart=0 ; iPart<getNbrOfParticles() ; iPart++ ) {
-                nrj += particles->weight( iPart )*( particles->lor_fac( iPart )-1.0 );
+                nrj += particles->weight( iPart )*( particles->LorentzFactor( iPart )-1.0 );
             }
         } else if( this->mass_ == 0 ) {
             for( unsigned int iPart=0 ; iPart<getNbrOfParticles() ; iPart++ ) {
-                nrj += particles->weight( iPart )*( particles->momentum_norm( iPart ) );
+                nrj += particles->weight( iPart )*( particles->momentumNorm( iPart ) );
             }
         }
         return nrj;

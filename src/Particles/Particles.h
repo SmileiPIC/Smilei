@@ -162,7 +162,7 @@ public:
     }
 
     //! Method used to get the Particle position
-    inline double distance2_to_axis( unsigned int ipart ) const
+    inline double distance2ToAxis( unsigned int ipart ) const
     {
         return Position[1][ipart] * Position[1][ipart] + Position[2][ipart] * Position[2][ipart];
     }
@@ -234,19 +234,19 @@ public:
 
 
     //! Method used to get the Particle Lorentz factor
-    inline double lor_fac( unsigned int ipart )
+    inline double LorentzFactor( unsigned int ipart )
     {
         return sqrt( 1.+pow( momentum( 0, ipart ), 2 )+pow( momentum( 1, ipart ), 2 )+pow( momentum( 2, ipart ), 2 ) );
     }
 
     //! Method used to get the inverse Particle Lorentz factor
-    inline double inv_lor_fac( unsigned int ipart )
+    inline double inverseLorentzFactor( unsigned int ipart )
     {
         return 1./sqrt( 1.+pow( momentum( 0, ipart ), 2 )+pow( momentum( 1, ipart ), 2 )+pow( momentum( 2, ipart ), 2 ) );
     }
 
     //! Method used to get the momentum norm which is also the normalized photon energy
-    inline double momentum_norm( unsigned int ipart )
+    inline double momentumNorm( unsigned int ipart )
     {
         return sqrt( pow( momentum( 0, ipart ), 2 )+pow( momentum( 1, ipart ), 2 )+pow( momentum( 2, ipart ), 2 ) );
     }
