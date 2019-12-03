@@ -157,7 +157,7 @@ class RadiationTools {
         static double inline compute_bessel_parts_radiated_power(double nu, double cst)
         {
             double f1, f2;
-            if (nu<0.05)
+            if (nu<0.1)
             {
                 f2 = 1.074764120720013*pow(nu,-0.6666666666666667);
                 f1 = 2*f2 - 1.813799364234217;
@@ -192,7 +192,7 @@ class RadiationTools {
                 lognu_power_n *= lognu;
                 f1 -= 7.892740572869308e-03 * lognu_power_n; //n=5
                 f2 -= 7.694562217592761e-03 * lognu_power_n; //n=5
-                
+
 
                 return exp(f1)+cst*exp(f2);
             }
