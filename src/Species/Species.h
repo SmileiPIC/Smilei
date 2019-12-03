@@ -137,7 +137,7 @@ public:
     SpeciesMPIbuffers MPI_buffer_;
 
     //! Maximum charge at initialization
-    double max_charge;
+    double max_charge_;
 
     //! Vector containing all Particles of the considered Species
     Particles *particles;

@@ -155,7 +155,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
 
     // field containing the charge distribution (always 3d)
     Field3D charge( n_space_to_create_generalized );
-    species_->max_charge = 0.;
+    species_->max_charge_ = 0.;
 
     // field containing the number of particles in each cell
     Field3D n_part_in_cell( n_space_to_create_generalized );
@@ -260,8 +260,8 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
 
                     // assign charge its correct value in the cell
                     if( species_->mass_ > 0 ) {
-                        if( charge( i, j, k )>species_->max_charge ) {
-                            species_->max_charge=charge( i, j, k );
+                        if( charge( i, j, k )>species_->max_charge_ ) {
+                            species_->max_charge_=charge( i, j, k );
                         }
                     }
 
@@ -340,7 +340,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
                         //        first_index[idx] += nPart;
                         //        last_index[idx] += nPart;
                         //    }
-                        //    particles->create_particles( nPart, iPart );
+                        //    particles->createParticles( nPart, iPart );
                         //
                         //}
 
@@ -371,7 +371,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
                         //        if ( patch->isXmin() ) {
                         //            if ( ( X < 0. ) ) {
                         //                nPart--; // ne sert à rien ici
-                        //                particles->erase_particle(iPart+ip);
+                        //                particles->eraseParticle(iPart+ip);
                         //                last_index[(new_cell_idx+i)/clrw]--;
                         //                for ( int idx=(new_cell_idx+i)/clrw+1 ; idx<last_index.size() ; idx++ ) {
                         //                    first_index[idx]--;
@@ -387,7 +387,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
                         //                //cout << "params.grid_length[0]+ cell_length[0]*vel[0] = " << params.grid_length[0]+ cell_length[0]*vel[0] << endl;
                         //                //cout << "params.grid_length[0]                        = " << params.grid_length[0] << endl;
                         //                nPart--; // ne sert à rien ici
-                        //                particles->erase_particle(iPart+ip);
+                        //                particles->eraseParticle(iPart+ip);
                         //                last_index[(new_cell_idx+i)/clrw]--;
                         //                for ( int idx=(new_cell_idx+i)/clrw+1 ; idx<last_index.size() ; idx++ ) {
                         //                    first_index[idx]--;

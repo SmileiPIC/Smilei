@@ -706,7 +706,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                         for ( int ip = new_particle_number ; ip >= 0 ; ip-- ){
                             if ( particles->Position[0][ip] < 0. ) {
                                 if (new_particle_number != ip) {
-                                    particles->overwrite_part(new_particle_number,ip);
+                                    particles->overwriteParticle(new_particle_number,ip);
                                 }
                                 new_particle_number--;
                             }
@@ -717,7 +717,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                         for ( int ip = new_particle_number ; ip >= 0 ; ip-- ){
                             if ( particles->Position[0][ip] > params.grid_length[0] ) {
                                 if (new_particle_number != ip) {
-                                    particles->overwrite_part(new_particle_number,ip);
+                                    particles->overwriteParticle(new_particle_number,ip);
                                 }
                                 new_particle_number--;
                             }
@@ -731,7 +731,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                                 ( patch->isYmax() && ( particles->Position[1][ip] > params.grid_length[1]) )) {
                                 // particle_in_domain = false;
                                 if (new_particle_number != ip) {
-                                    particles->overwrite_part(new_particle_number,ip);
+                                    particles->overwriteParticle(new_particle_number,ip);
                                 }
                                 new_particle_number--;
                             }
@@ -744,9 +744,9 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                             if (( patch->isZmin() && ( particles->Position[2][ip] < 0.) ) ||
                                 ( patch->isZmax() && ( particles->Position[2][ip] > params.grid_length[2]) )) {
                                 // particle_in_domain = false;
-                                //particles->erase_particle(ip);
+                                //particles->eraseParticle(ip);
                                 if (new_particle_number > ip) {
-                                    particles->overwrite_part(new_particle_number,ip);
+                                    particles->overwriteParticle(new_particle_number,ip);
                                 }
                                 new_particle_number--;
                             }
@@ -776,7 +776,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     // Insertion of the particles as a group in the vector of species
                     if (new_particle_number > 0) {
 
-                        particles->erase_particle_trail(new_particle_number);
+                        particles->eraseParticleTrail(new_particle_number);
                         injector_species->importParticles( params, patches_[ipatch], *particles, localDiags );
 
                     }
@@ -1691,7 +1691,7 @@ void VectorPatch::solvePoissonAM( Params &params, SmileiMPI *smpi )
         }
 
         // ------------------------------------------
-        // Compute the electric field E 
+        // Compute the electric field E
         // ------------------------------------------
         
         

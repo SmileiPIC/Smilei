@@ -94,7 +94,7 @@ void CollisionsSingle::collide( Params &params, Patch *patch, int itime, vector<
             unsigned int p = patch->xorshift32() % i;
             swap( index1[i-1], index1[p] );
         }
-        p1->swap_parts( index1 ); // exchange particles along the cycle defined by the shuffle
+        p1->swapParticles( index1 ); // exchange particles along the cycle defined by the shuffle
         
         // Prepare the ionization
         Ionization->prepare1( s1->atomic_number_ );
