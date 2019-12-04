@@ -151,10 +151,12 @@ private:
     int nDim_particle;
     //! Space dimension of field
     int nDim_field;
-
+//<<<<<<< HEAD
     bool isAM;
     
+//=======
 
+//>>>>>>> develop
 };
 
 #endif

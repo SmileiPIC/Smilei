@@ -635,16 +635,6 @@ Each species has to be defined in a ``Species`` block::
      and :py:data:`particles_per_cell`. Particles initialized outside of the initial simulation domain
      will not be created. This initalization is disregarded when running a `restart`.
 
-.. py:data:: regular_number
-
-   :type: A python list of integers.
-
-   The size of the list must be the simulation particle dimension. It can be used only if `position_initialization` is set to `regular`.
-   The product of the elements of the provided list must be equal to `particles_per_cell`.
-   This list sets the number of evenly spaced particles per cell per dimension at their initial positions.
-   The numbers are given in the order [`Nx`, `Ny`, `Nz`] in cartesian geometries and [`Nx`, `Nr`, `Ntheta`] in `AMcylindrical` in which
-   case we advise to use :math:`Ntheta \geq  4\times Nmodes`.
-
 .. py:data:: momentum_initialization
 
   The method for initialization of particle momenta. Options are:
