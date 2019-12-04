@@ -252,6 +252,8 @@ class Probe(Diagnostic):
 			p0 = self._myinfo["p0"]
 			for first, last, npart in ChunkedRange(self.numpoints, chunksize):
 				positions = self._h5probe[0]["positions"][first:last,:].T # actual probe points positions
+				if self._verbose and last < self.numpoints:
+					print("\tOrdering points: %d/%d"%(last, self.numpoints))
 				# Subtract by p0
 				for i in range(p0.size):
 					positions[i,:] -= p0[i]
