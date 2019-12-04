@@ -1128,7 +1128,7 @@ public:
                         int max_eon_number =
                             returned_species[ispec1]->getNbrOfParticles()
                             * ( returned_species[ispec1]->atomic_number_ || returned_species[ispec1]->maximum_charge_state_ );
-                        returned_species[ispec1]->Ionize->new_electrons.initializeReserve(
+                        returned_species[ispec1]->Ionize->new_electrons.initialize_reserve(
                             max_eon_number, *returned_species[ispec1]->electron_species->particles
                         );
                         break;
@@ -1159,7 +1159,7 @@ public:
                             }
                             returned_species[ispec1]->photon_species_index = ispec2;
                             returned_species[ispec1]->photon_species = returned_species[ispec2];
-                            returned_species[ispec1]->Radiate->new_photons_.initializeReserve(
+                            returned_species[ispec1]->Radiate->new_photons_.initialize_reserve(
                                 returned_species[ispec1]->getNbrOfParticles(),
                                 *returned_species[ispec1]->photon_species->particles
                             );
@@ -1190,7 +1190,7 @@ public:
                             }
                             returned_species[ispec1]->mBW_pair_species_index[k] = ispec2;
                             returned_species[ispec1]->mBW_pair_species[k] = returned_species[ispec2];
-                            returned_species[ispec1]->Multiphoton_Breit_Wheeler_process->new_pair[k].initializeReserve(
+                            returned_species[ispec1]->Multiphoton_Breit_Wheeler_process->new_pair[k].initialize_reserve(
                                 returned_species[ispec1]->getNbrOfParticles(),
                                 *returned_species[ispec1]->mBW_pair_species[k]->particles
                             );

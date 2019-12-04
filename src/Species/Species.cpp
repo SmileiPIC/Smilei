@@ -1175,7 +1175,7 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, un
     // -------------------------------
     // calculate the particle updated momentum
     // -------------------------------
-    if( time_dual>time_frozen || Ionize) { // moving particle
+    if( time_dual>time_frozen_ || Ionize) { // moving particle
 
         smpi->dynamics_resize( ithread, nDim_field, last_index.back(), params.geometry=="AMcylindrical" );
 
@@ -1206,7 +1206,7 @@ void Species::ponderomotiveUpdateSusceptibilityAndMomentum( double time_dual, un
 #endif            
             }
             
-            if( time_dual<=time_frozen ) continue; // Do not push nor project frozen particles
+            if( time_dual<=time_frozen_ ) continue; // Do not push nor project frozen particles
 
             // Project susceptibility, the source term of envelope equation
 #ifdef  __DETAILED_TIMERS

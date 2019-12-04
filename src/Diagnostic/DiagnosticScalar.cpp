@@ -440,7 +440,7 @@ void DiagnosticScalar::compute( Patch *patch, int timestep )
                     charge   += vecSpecies[ispec]->particles->weight( iPart )
                                 * ( double )vecSpecies[ispec]->particles->charge( iPart );
                     ener_tot += vecSpecies[ispec]->particles->weight( iPart )
-                                * ( vecSpecies[ispec]->particles->LorentzFactor( iPart )-1.0 );
+                                * ( vecSpecies[ispec]->particles->lor_fac( iPart )-1.0 );
                 }
                 ener_tot *= vecSpecies[ispec]->mass_;
             } else if( vecSpecies[ispec]->mass_ == 0 ) {
@@ -448,7 +448,7 @@ void DiagnosticScalar::compute( Patch *patch, int timestep )
                 
                     density  += vecSpecies[ispec]->particles->weight( iPart );
                     ener_tot += vecSpecies[ispec]->particles->weight( iPart )
-                                * ( vecSpecies[ispec]->particles->momentumNorm( iPart ) );
+                                * ( vecSpecies[ispec]->particles->momentum_norm( iPart ) );
                 }
             }
             

@@ -14,7 +14,7 @@ IonizationTunnelEnvelope::IonizationTunnelEnvelope( Params &params, Species *spe
 {
     DEBUG( "Creating the Tunnel Envelope Ionizaton class" );
     
-    atomic_number_          = species->atomic_number;
+    atomic_number_          = species->atomic_number_;
     
     // Ionization potential & quantum numbers (all in atomic units 1 au = 27.2116 eV)
     Potential.resize( atomic_number_ );
@@ -182,7 +182,7 @@ void IonizationTunnelEnvelope::envelopeIonization( Particles *particles, unsigne
         momentum_minor_axis = ellipticity * Aabs * sin(ran_p_times_2pi);
     
         if( k_times !=0 ) {
-            new_electrons.create_particle();
+            new_electrons.createParticle();
             //new_electrons.initialize( new_electrons.size()+1, new_electrons.dimension() );
             int idNew = new_electrons.size() - 1;
             for( unsigned int i=0; i<new_electrons.dimension(); i++ ) {

@@ -35,7 +35,7 @@ public:
             Ionize = new IonizationTunnel( params, species );
             
         } else if( model == "tunnel_envelope" ) {
-            if( species->max_charge > ( int )species->atomic_number_ ) {
+            if( species->max_charge_ > ( int )species->atomic_number_ ) {
                 ERROR( "Charge > atomic_number for species " << species->name_ );
             }
             if( species->particles->is_test ) {
