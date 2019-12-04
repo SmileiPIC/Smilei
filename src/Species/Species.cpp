@@ -429,7 +429,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 
             // Push the particles and the photons
             ( *Push )( *particles, smpi, first_index[ibin], last_index[ibin], ithread );
-            //particles->test_move( first_index[ibin], last_index[ibin], params );
+            //particles->testMove( first_index[ibin], last_index[ibin], params );
 
         } //ibin
         
