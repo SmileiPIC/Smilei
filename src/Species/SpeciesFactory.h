@@ -735,7 +735,7 @@ public:
 
                     if (!params.Laser_Envelope_model) ERROR("An envelope ionization model has been selected but no envelope is present");
 
-                    if (!thisSpecies->ponderomotive_dynamics) ERROR("An envelope ionization model has been selected, but species" <<species_name<<" has ponderomotive_dynamics = False ");
+                    if (!this_species->ponderomotive_dynamics) ERROR("An envelope ionization model has been selected, but species" <<species_name<<" has ponderomotive_dynamics = False ");
                 }else if( model == "from_rate" ) {
                     
                     if( this_species->maximum_charge_state_ == 0 ) {

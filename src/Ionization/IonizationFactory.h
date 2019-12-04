@@ -35,11 +35,11 @@ public:
             Ionize = new IonizationTunnel( params, species );
             
         } else if( model == "tunnel_envelope" ) {
-            if( species->max_charge > ( int )species->atomic_number ) {
-                ERROR( "Charge > atomic_number for species " << species->name );
+            if( species->max_charge > ( int )species->atomic_number_ ) {
+                ERROR( "Charge > atomic_number for species " << species->name_ );
             }
             if( species->particles->is_test ) {
-                ERROR( "Cannot ionize test species " << species->name );
+                ERROR( "Cannot ionize test species " << species->name_ );
             }
             
             Ionize = new IonizationTunnelEnvelope( params, species );
@@ -49,11 +49,11 @@ public:
             }
 
         } else if( model == "tunnel_envelope_averaged" ) {
-            if( species->max_charge > ( int )species->atomic_number ) {
-                ERROR( "Charge > atomic_number for species " << species->name );
+            if( species->max_charge_ > ( int )species->atomic_number_ ) {
+                ERROR( "Charge > atomic_number for species " << species->name_ );
             }
             if( species->particles->is_test ) {
-                ERROR( "Cannot ionize test species " << species->name );
+                ERROR( "Cannot ionize test species " << species->name_ );
             }
             
             Ionize = new IonizationTunnelEnvelopeAveraged( params, species );
