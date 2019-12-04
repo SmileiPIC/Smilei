@@ -633,7 +633,7 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
 
     ;
     PyTools::extract( "cell_sorting", cell_sorting, "Main" );
-    MESSAGE("Sorting per cell : " << cell_sorting );
+    //MESSAGE("Sorting per cell : " << cell_sorting );
     //if (cell_sorting)
     //    vectorization_mode = "on";
     
@@ -1147,7 +1147,7 @@ vector<unsigned int> Params::FindSpecies( vector<Species *> &vecSpecies, vector<
     // Make an array of the existing species names
     existing_species.resize( 0 );
     for( unsigned int ispec=0 ; ispec<vecSpecies.size() ; ispec++ ) {
-        existing_species.push_back( vecSpecies[ispec]->name );
+        existing_species.push_back( vecSpecies[ispec]->name_ );
     }
 
     // Loop over group of requested species

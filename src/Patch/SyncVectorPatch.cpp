@@ -15,6 +15,12 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 // ---------------------------------------------------------------------------------------------------------------------
 
+
+template void SyncVectorPatch::exchange_along_all_directions<double,Field>( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
+template void SyncVectorPatch::exchange_along_all_directions<complex<double>,cField>( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
+template void SyncVectorPatch::exchange_along_all_directions_noomp<double,Field>( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
+template void SyncVectorPatch::exchange_along_all_directions_noomp<complex<double>,cField>( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
+
 void SyncVectorPatch::exchangeParticles( VectorPatch &vecPatches, int ispec, Params &params, SmileiMPI *smpi, Timers &timers, int itime )
 {
     #pragma omp for schedule(runtime)
@@ -33,8 +39,13 @@ void SyncVectorPatch::exchangeParticles( VectorPatch &vecPatches, int ispec, Par
     }
 }
 
-
-void SyncVectorPatch::finalize_and_sort_parts( VectorPatch &vecPatches, int ispec, Params &params, SmileiMPI *smpi, Timers &timers, int itime )
+// ---------------------------------------------------------------------------------------------------------------------
+//! This function performs:
+//! - the exhcange of particles for each direction using the diagonal trick.
+//! - the importation of the new particles in the particle property arrays
+//! - the sorting of particles
+// ---------------------------------------------------------------------------------------------------------------------
+void SyncVectorPatch::finalizeAndSortParticles( VectorPatch &vecPatches, int ispec, Params &params, SmileiMPI *smpi, Timers &timers, int itime )
 {
     SyncVectorPatch::finalizeExchangeParticles( vecPatches, ispec, 0, params, smpi, timers, itime );
 
@@ -54,7 +65,7 @@ void SyncVectorPatch::finalize_and_sort_parts( VectorPatch &vecPatches, int ispe
 
     #pragma omp for schedule(runtime)
     for( unsigned int ipatch=0 ; ipatch<vecPatches.size() ; ipatch++ ) {
-        vecPatches( ipatch )->injectParticles( smpi, ispec, params, &vecPatches );
+        vecPatches( ipatch )->importAndSortParticles( smpi, ispec, params, &vecPatches );
     }
 
 
@@ -141,7 +152,7 @@ void SyncVectorPatch::finalizeExchangeParticles( VectorPatch &vecPatches, int is
 void SyncVectorPatch::sumRhoJ( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime )
 {
     // Sum Jx, Jy and Jz
-    SyncVectorPatch::sum_all_components( vecPatches.densities, vecPatches, smpi, timers, itime );
+    SyncVectorPatch::sumAllComponents( vecPatches.densities, vecPatches, smpi, timers, itime );
     // Sum rho
     if( ( vecPatches.diag_flag ) || ( params.is_spectral ) ) {
         SyncVectorPatch::sum<double,Field>( vecPatches.listrho_, vecPatches, smpi, timers, itime );
@@ -217,7 +228,7 @@ void SyncVectorPatch::sumRhoJs( Params &params, VectorPatch &vecPatches, int imo
 //         - ... for Y and Z
 //     - These fields are identified with lists of index MPIxIdx and LocalxIdx (... for Y and Z)
 // timers and itime were here introduced for debugging
-void SyncVectorPatch::sum_all_components( std::vector<Field *> &fields, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime )
+void SyncVectorPatch::sumAllComponents( std::vector<Field *> &fields, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime )
 {
     unsigned int h0, oversize[3], n_space[3];
     double *pt1, *pt2;
@@ -697,7 +708,7 @@ void SyncVectorPatch::exchangeEnvChi( Params &params, VectorPatch &vecPatches, S
 }
 
 
-void SyncVectorPatch::template_generator()
+void SyncVectorPatch::templateGenerator()
 {
     SmileiMPI* smpi = NULL;
     VectorPatch patches;
@@ -1334,7 +1345,7 @@ void SyncVectorPatch::finalize_exchange_all_components_along_Z( std::vector<Fiel
 // ---------------------------------------------------------------------------------------------------------------------
 // ---------------------------------------------------------------------------------------------------------------------
 
-void SyncVectorPatch::exchange_along_X( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
+void SyncVectorPatch::exchangeAlongX( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
 {
 #ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
@@ -1382,7 +1393,7 @@ void SyncVectorPatch::exchange_along_X( std::vector<Field *> fields, VectorPatch
 
 }
 
-void SyncVectorPatch::finalize_exchange_along_X( std::vector<Field *> fields, VectorPatch &vecPatches )
+void SyncVectorPatch::finalizeExchangeAlongX( std::vector<Field *> fields, VectorPatch &vecPatches )
 {
 #ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
@@ -1395,7 +1406,7 @@ void SyncVectorPatch::finalize_exchange_along_X( std::vector<Field *> fields, Ve
 
 }
 
-void SyncVectorPatch::exchange_along_Y( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
+void SyncVectorPatch::exchangeAlongY( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
 {
 #ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
@@ -1442,7 +1453,7 @@ void SyncVectorPatch::exchange_along_Y( std::vector<Field *> fields, VectorPatch
 
 }
 
-void SyncVectorPatch::finalize_exchange_along_Y( std::vector<Field *> fields, VectorPatch &vecPatches )
+void SyncVectorPatch::finalizeExchangeAlongY( std::vector<Field *> fields, VectorPatch &vecPatches )
 {
 #ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
@@ -1455,7 +1466,7 @@ void SyncVectorPatch::finalize_exchange_along_Y( std::vector<Field *> fields, Ve
 
 }
 
-void SyncVectorPatch::exchange_along_Z( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
+void SyncVectorPatch::exchangeAlongZ( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
 {
 #ifndef _NO_MPI_TM
     #pragma omp for schedule(static)
@@ -1500,7 +1511,7 @@ void SyncVectorPatch::exchange_along_Z( std::vector<Field *> fields, VectorPatch
     } // End for( ipatch )
 }
 
-void SyncVectorPatch::finalize_exchange_along_Z( std::vector<Field *> fields, VectorPatch &vecPatches )
+void SyncVectorPatch::finalizeExchangeAlongZ( std::vector<Field *> fields, VectorPatch &vecPatches )
 {
 #ifndef _NO_MPI_TM
     #pragma omp for schedule(static)

@@ -311,7 +311,7 @@ void DiagnosticTrack::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, 
         t << setfill( '0' ) << setw( 10 ) << itime;
         iteration_group = H5::group( data_group_id, t.str().c_str() );
         particles_group = H5::group( iteration_group, "particles" );
-        species_group = H5::group( particles_group, vecPatches( 0 )->vecSpecies[speciesId_]->name.c_str() );
+        species_group = H5::group( particles_group, vecPatches( 0 )->vecSpecies[speciesId_]->name_.c_str() );
         
         // Add openPMD attributes ( "basePath" )
         openPMD_->writeBasePathAttributes( iteration_group, itime );
@@ -433,10 +433,10 @@ void DiagnosticTrack::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime, 
                 #pragma omp master
                 {
                     // Multiply by the mass to obtain an actual momentum (except for photons (mass = 0))
-                    if( vecPatches( 0 )->vecSpecies[speciesId_]->mass != 1. &&
-                        vecPatches( 0 )->vecSpecies[speciesId_]->mass > 0) {
+                    if( vecPatches( 0 )->vecSpecies[speciesId_]->mass_ != 1. &&
+                        vecPatches( 0 )->vecSpecies[speciesId_]->mass_ > 0) {
                         for( unsigned int ip=0; ip<nParticles_local; ip++ ) {
-                            data_double[ip] *= vecPatches( 0 )->vecSpecies[speciesId_]->mass;
+                            data_double[ip] *= vecPatches( 0 )->vecSpecies[speciesId_]->mass_;
                         }
                     }
                     write_component( momentum_group, xyz.substr( idim, 1 ).c_str(), data_double[0], H5T_NATIVE_DOUBLE, file_space, mem_space, plist, SMILEI_UNIT_MOMENTUM, nParticles_global );

@@ -662,13 +662,13 @@ def LaserEnvelopeGaussian3D( a0=1., omega=1., focus=None, waist=3., time_envelop
 def LaserGaussianAM( box_side="xmin", a0=1., omega=1., focus=None, waist=3.,
         polarization_phi=0., ellipticity=0., time_envelope=tconstant(), phaseZero=0.):
     from math import cos, sin, tan, atan, sqrt, exp
+    assert len(focus)==2, "LaserGaussianAM: focus must be a list of length 2."
     # Polarization and amplitude
     [dephasing, amplitudeY, amplitudeZ] = transformPolarization(polarization_phi, ellipticity)
     amplitudeY *= a0 * omega
     amplitudeZ *= a0 * omega
     # Space and phase envelopes
     Zr = omega * waist**2/2.
-    Y1 = focus[1]
     w  = sqrt(1./(1.+(focus[0]/Zr)**2))
     invWaist2 = (w/waist)**2
     coeff = -omega * focus[0] * w**2 / (2.*Zr**2)

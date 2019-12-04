@@ -201,7 +201,7 @@ void DiagnosticPerformances::run( SmileiMPI *smpi, VectorPatch &vecPatches, int 
         double time = itime * timestep;
         for( unsigned int ipatch=0; ipatch < number_of_patches; ipatch++ ) {
             for( unsigned int ispecies = 0; ispecies < number_of_species; ispecies++ ) {
-                if( time < vecPatches( ipatch )->vecSpecies[ispecies]->time_frozen ) {
+                if( time < vecPatches( ipatch )->vecSpecies[ispecies]->time_frozen_ ) {
                     number_of_frozen_particles += vecPatches( ipatch )->vecSpecies[ispecies]->getNbrOfParticles();
                 } else {
                     number_of_particles += vecPatches( ipatch )->vecSpecies[ispecies]->getNbrOfParticles();
@@ -320,7 +320,7 @@ void DiagnosticPerformances::run( SmileiMPI *smpi, VectorPatch &vecPatches, int 
             // Creation and treatment of the species groups
             hid_t species_group;
             for( unsigned int ispecies = 0; ispecies < number_of_species; ispecies++ ) {
-                species_group = H5::group( patch_group, vecPatches( 0 )->vecSpecies[ispecies]->name );
+                species_group = H5::group( patch_group, vecPatches( 0 )->vecSpecies[ispecies]->name_ );
                 
                 // Vectorization properties
                 if( has_adaptive_vectorization ) {

@@ -38,6 +38,9 @@ public:
 
     //! Set capacity of Particles vectors
     void reserve( unsigned int n_part_max, unsigned int nDim );
+    
+    //! Initialize like another particle, but only reserve space
+    void initializeReserve( unsigned int n_part_max, Particles &part );
 
     //! Resize Particles vectors
     void resize( unsigned int nParticles, unsigned int nDim );
@@ -46,7 +49,7 @@ public:
     void resize( unsigned int nParticles);
 
     //! Remove extra capacity of Particles vectors
-    void shrink_to_fit();
+    void shrinkToFit();
 
     //! Reset Particles vectors
     void clear();
@@ -70,26 +73,25 @@ public:
     }
 
     //! Copy particle iPart at the end of dest_parts
-    void cp_particle( unsigned int iPart, Particles &dest_parts );
-
-    void cp_particle( unsigned int iPart );
-
+    void copyParticle( unsigned int iPart, Particles &dest_parts );
+    //! Copy particle iPart at the end of the current array
+    void copyParticle( unsigned int iPart );
+    //! Insert particle iPart at dest_id in dest_parts
+    void copyParticle( unsigned int ipart, Particles &dest_parts, int dest_id );
 
     //! Insert nPart particles starting at ipart to dest_id in dest_parts
-    void cp_particles( unsigned int iPart, unsigned int nPart, Particles &dest_parts, int dest_id );
-    //! Insert particle iPart at dest_id in dest_parts
-    void cp_particle( unsigned int ipart, Particles &dest_parts, int dest_id );
+    void copyParticles( unsigned int iPart, unsigned int nPart, Particles &dest_parts, int dest_id );
     
     //! Copy particle iPart at the end of dest_parts -- safe
-    void cp_particle_safe( unsigned int ipart, Particles &dest_parts );
+    void copyParticleSafe( unsigned int ipart, Particles &dest_parts );
     
     //! Suppress particle iPart
-    void erase_particle( unsigned int iPart );
+    void eraseParticle( unsigned int iPart );
     //! Suppress nPart particles from iPart
-    void erase_particle( unsigned int iPart, unsigned int nPart );
+    void eraseParticle( unsigned int iPart, unsigned int nPart );
 
     //! Suppress all particles from iPart to the end of particle array
-    void erase_particle_trail( unsigned int iPart );
+    void eraseParticleTrail( unsigned int iPart );
 
     //! Print parameters of particle iPart
     void print( unsigned int iPart );
@@ -97,36 +99,41 @@ public:
     friend std::ostream &operator << ( std::ostream &, const Particles &particle );
 
     //! Exchange particles part1 & part2 memory location
-    void swap_part( unsigned int part1, unsigned int part2 );
-    void swap_parts( std::vector<unsigned int> parts );
-    void translate_parts( std::vector<unsigned int> parts );
-    void swap_part3( unsigned int part1, unsigned int part2, unsigned int part3 );
-    void swap_part4( unsigned int part1, unsigned int part2, unsigned int part3, unsigned int part4 );
+    void swapParticle( unsigned int part1, unsigned int part2 );
+    void swapParticles( std::vector<unsigned int> parts );
+    void translateParticles( std::vector<unsigned int> parts );
+    void swapParticle3( unsigned int part1, unsigned int part2, unsigned int part3 );
+    void swapParticle4( unsigned int part1, unsigned int part2, unsigned int part3, unsigned int part4 );
 
     //! Exchange particles part1 & part2 memory location
-    void swap_part( unsigned int part1, unsigned int part2, unsigned int N );
+    void swapParticle( unsigned int part1, unsigned int part2, unsigned int N );
 
     //! Overwrite particle part1 into part2 memory location. Erasing part2
-    void overwrite_part( unsigned int part1, unsigned int part2 );
+    void overwriteParticle( unsigned int part1, unsigned int part2 );
 
     //! Overwrite particle part1->part1+N into part2->part2+N memory location. Erasing part2->part2+N
-    void overwrite_part( unsigned int part1, unsigned int part2, unsigned int N );
+    void overwriteParticle( unsigned int part1, unsigned int part2, unsigned int N );
 
     //! Overwrite particle part1->part1+N into part2->part2+N of dest_parts memory location. Erasing part2->part2+N
-    void overwrite_part( unsigned int part1, Particles &dest_parts, unsigned int part2, unsigned int N );
+    void overwriteParticle( unsigned int part1, Particles &dest_parts, unsigned int part2, unsigned int N );
 
     //! Overwrite particle part1 into part2 of dest_parts memory location. Erasing part2
-    void overwrite_part( unsigned int part1, Particles &dest_parts, unsigned int part2 );
-
+    void overwriteParticle( unsigned int part1, Particles &dest_parts, unsigned int part2 );
 
     //! Move iPart at the end of vectors
-    void push_to_end( unsigned int iPart );
+    void pushToEnd( unsigned int iPart );
 
     //! Create new particle
-    void create_particle();
+    void createParticle();
 
     //! Create nParticles new particles
-    void create_particles( int nAdditionalParticles );
+    void createParticles( int nAdditionalParticles );
+    
+    //! Create nParticles new particles at position pstart in the particles data structure
+    void createParticles( int nAdditionalParticles, int pstart );
+
+    //! Move ipart at new_pos in the particles data structure
+    void moveParticles( int iPart, int new_pos );
 
     //! Compress the particles vectors according to the provided mask
     //! between istart and iend
@@ -136,8 +143,12 @@ public:
     //! between istart and iend
     void compressParticles( int istart, int iend);
 
+    //! This method erases particles according to the provided mask
+    //! between istart and iend
+    // void eraseParticlesWithMask( int istart, int iend, vector <bool> & to_be_erased);
+
     //! Test if ipart is in the local patch
-    bool is_part_in_domain( unsigned int ipart, Patch *patch );
+    bool isParticleInDomain( unsigned int ipart, Patch *patch );
 
     //! Method used to get the Particle position
     inline double  position( unsigned int idim, unsigned int ipart ) const
@@ -151,7 +162,7 @@ public:
     }
 
     //! Method used to get the Particle position
-    inline double distance2_to_axis( unsigned int ipart ) const
+    inline double distance2ToAxis( unsigned int ipart ) const
     {
         return Position[1][ipart] * Position[1][ipart] + Position[2][ipart] * Position[2][ipart];
     }
@@ -223,19 +234,19 @@ public:
 
 
     //! Method used to get the Particle Lorentz factor
-    inline double lor_fac( unsigned int ipart )
+    inline double LorentzFactor( unsigned int ipart )
     {
         return sqrt( 1.+pow( momentum( 0, ipart ), 2 )+pow( momentum( 1, ipart ), 2 )+pow( momentum( 2, ipart ), 2 ) );
     }
 
     //! Method used to get the inverse Particle Lorentz factor
-    inline double inv_lor_fac( unsigned int ipart )
+    inline double inverseLorentzFactor( unsigned int ipart )
     {
         return 1./sqrt( 1.+pow( momentum( 0, ipart ), 2 )+pow( momentum( 1, ipart ), 2 )+pow( momentum( 2, ipart ), 2 ) );
     }
 
     //! Method used to get the momentum norm which is also the normalized photon energy
-    inline double momentum_norm( unsigned int ipart )
+    inline double momentumNorm( unsigned int ipart )
     {
         return sqrt( pow( momentum( 0, ipart ), 2 )+pow( momentum( 1, ipart ), 2 )+pow( momentum( 2, ipart ), 2 ) );
     }

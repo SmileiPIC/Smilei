@@ -18,7 +18,7 @@ public :
 
     //! Particles synchronization
     static void exchangeParticles( VectorPatch &vecPatches, int ispec, Params &params, SmileiMPI *smpi, Timers &timers, int itime );
-    static void finalize_and_sort_parts( VectorPatch &vecPatches, int ispec, Params &params, SmileiMPI *smpi, Timers &timers, int itime );
+    static void finalizeAndSortParticles( VectorPatch &vecPatches, int ispec, Params &params, SmileiMPI *smpi, Timers &timers, int itime );
     static void finalizeExchangeParticles( VectorPatch &vecPatches, int ispec, int iDim, Params &params, SmileiMPI *smpi, Timers &timers, int itime );
 
     //! Densities synchronization
@@ -258,9 +258,9 @@ public :
 
     }
 
-    static void sum_all_components( std::vector<Field *> &fields, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime );
+    static void sumAllComponents( std::vector<Field *> &fields, VectorPatch &vecPatches, SmileiMPI *smpi, Timers &timers, int itime );
 
-    void template_generator();
+    void templateGenerator();
 
     //! Fields synchronization
     static void exchangeE( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi );
@@ -299,12 +299,12 @@ public :
     static void finalize_exchange_all_components_along_Z( std::vector<Field *> fields, VectorPatch &vecPatches );
 
     //! Deprecated field functions
-    static void exchange_along_X( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
-    static void finalize_exchange_along_X( std::vector<Field *> fields, VectorPatch &vecPatches );
-    static void exchange_along_Y( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
-    static void finalize_exchange_along_Y( std::vector<Field *> fields, VectorPatch &vecPatches );
-    static void exchange_along_Z( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
-    static void finalize_exchange_along_Z( std::vector<Field *> fields, VectorPatch &vecPatches );
+    static void exchangeAlongX( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
+    static void finalizeExchangeAlongX( std::vector<Field *> fields, VectorPatch &vecPatches );
+    static void exchangeAlongY( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
+    static void finalizeExchangeAlongY( std::vector<Field *> fields, VectorPatch &vecPatches );
+    static void exchangeAlongZ( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
+    static void finalizeExchangeAlongZ( std::vector<Field *> fields, VectorPatch &vecPatches );
 
 };
 

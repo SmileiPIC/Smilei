@@ -447,7 +447,7 @@ References
 
 .. [Desjarlais2001] `M. Desjarlais, Contrib. Plasma Phys. 41, 267 (2001) <http://dx.doi.org/10.1002/1521-3986%28200103%2941%3A2%2F3%3C267%3A%3AAID-CTPP267%3E3.0.CO%3B2-P>`_
 
-.. [Frankel1979] `N. E. Frankel, K. C. Hines, and R. L. Dewar, Phys. Rev. A 20, 2120 (1979) <http://dx.doi.org/10.1143/JPSJ.67.4084>`_
+.. [Frankel1979] `N. E. Frankel, K. C. Hines, and R. L. Dewar, Phys. Rev. A 20, 2120 (1979) <https://doi.org/10.1103/PhysRevA.20.2120>`_
 
 .. [Lee1984] `Y. T. Lee and R. M. More, Phys. Fluids 27, 1273 (1984) <http://dx.doi.org/10.1063/1.864744>`_
 

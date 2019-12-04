@@ -18,33 +18,32 @@ class CollisionsSingle : public Collisions
 
 public:
     //! Constructor for Collisions between two species
-    CollisionsSingle( Params &params,
-                      unsigned int n_collisions,
-                      std::vector<unsigned int> sg1,
-                      std::vector<unsigned int> sg2,
-                      double coulomb_log,
-                      bool intra_collisions,
-                      int debug_every,
-                      int Z,
-                      int ionization_electrons,
-                      Particles * ionization_particles,
-                      int nDim,
-                      std::string fname
-                    ) : Collisions( params,
-                                        n_collisions,
-                                        sg1,
-                                        sg2,
-                                        coulomb_log,
-                                        intra_collisions,
-                                        debug_every,
-                                        Z,
-                                        ionization_electrons,
-                                        ionization_particles,
-                                        nDim,
-                                        fname
-                                      ) {} ;
+    CollisionsSingle(
+        Params &params,
+        unsigned int n_collisions,
+        std::vector<unsigned int> sg1,
+        std::vector<unsigned int> sg2,
+        double coulomb_log,
+        bool intra_collisions,
+        int debug_every,
+        CollisionalIonization *ionization,
+        CollisionalNuclearReaction *nuclear_reaction,
+        std::string fname
+    ) : Collisions(
+        params,
+        n_collisions,
+        sg1,
+        sg2,
+        coulomb_log,
+        intra_collisions,
+        debug_every,
+        ionization,
+        nuclear_reaction,
+        fname
+    ) {} ;
+    
     //! Cloning Constructor
-    CollisionsSingle( Collisions *coll, int ndim ) : Collisions( coll, ndim ) {};
+    CollisionsSingle( Collisions *coll ) : Collisions( coll ) {};
     //! destructor
     ~CollisionsSingle() {};
     

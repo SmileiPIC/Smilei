@@ -176,8 +176,6 @@ public:
     //! value of the EnvEabs used for envelope ionization
     std::vector<std::vector<double>> dynamics_EnvEabs_part;
     
-    
-    
     // Resize buffers for a given number of particles
     inline void dynamics_resize( int ithread, int ndim_field, int npart, bool isAM = false )
     {
@@ -202,6 +200,15 @@ public:
         }
     }
     
+    // Resize buffers for old properties only
+    inline void resizeOldPropertiesBuffer( int ithread, int ndim_field, int npart, bool isAM = false )
+    {
+        dynamics_iold[ithread].resize( ndim_field*npart );
+        dynamics_deltaold[ithread].resize( ndim_field*npart );
+        if( isAM ) {
+            dynamics_thetaold[ithread].resize( npart );
+        }
+    }
     
     // Compute global number of particles
     //     - deprecated with patch introduction

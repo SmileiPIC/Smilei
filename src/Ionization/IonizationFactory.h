@@ -24,8 +24,8 @@ public:
         
         if( model == "tunnel" ) {
             
-            if( species->max_charge > ( int )species->atomic_number ) {
-                ERROR( "Charge > atomic_number for species " << species->name );
+            if( species->max_charge_ > ( int )species->atomic_number_ ) {
+                ERROR( "Charge > atomic_number for species " << species->name_ );
             }
 
             if( (params.Laser_Envelope_model) & ( species->ponderomotive_dynamics ) ) {
@@ -64,8 +64,8 @@ public:
 
          } else if( model == "from_rate" ) {
             
-            if( species->max_charge > ( int )species->maximum_charge_state ) {
-                ERROR( "For species '" << species->name << ": charge > maximum_charge_state" );
+            if( species->max_charge_ > ( int )species->maximum_charge_state_ ) {
+                ERROR( "For species '" << species->name_ << ": charge > maximum_charge_state" );
             }
             
             Ionize = new IonizationFromRate( params, species );

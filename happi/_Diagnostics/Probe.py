@@ -4,10 +4,12 @@ from .._Utils import *
 class Probe(Diagnostic):
 	"""Class for loading a Probe diagnostic"""
 
-	def _init(self, probeNumber=None, field=None, timesteps=None, subset=None, average=None, data_log=False, **kwargs):
+	def _init(self, probeNumber=None, field=None, timesteps=None, subset=None, average=None, data_log=False, chunksize=10000000, **kwargs):
 
 		self._h5probe = []
 		self._alltimesteps = []
+		self._chunksize = chunksize
+		self._subsetinfo = {}
 
 		# If no probeNumber, print available probes
 		if probeNumber is None:
@@ -102,7 +104,7 @@ class Probe(Diagnostic):
 		# Get the shape of the probe
 		self._myinfo = self._getMyInfo()
 		self._initialShape = self._myinfo["shape"]
-		if self._initialShape.prod()==1: self._initialShape=self._np.array([])
+		if self._initialShape.prod()==1: self._initialShape=self._np.array([], dtype=int)
 		self.numpoints = self._h5probe[0]["positions"].shape[0]
 
 		# 2 - Manage timesteps
@@ -125,7 +127,6 @@ class Probe(Diagnostic):
 		# -------------------------------------------------------------------
 		# Fabricate all axes values
 		self._naxes = self._initialShape.size
-		self._subsetinfo = {}
 		self._finalShape = self._np.copy(self._initialShape)
 		self._averages = [False]*self._naxes
 		self._selection = [self._np.s_[:]]*self._naxes
@@ -153,9 +154,12 @@ class Probe(Diagnostic):
 
 				distances = self._np.sqrt(self._np.sum((centers-centers[0])**2,axis=1))
 				try:
-					self._averageinfo[label], self._selection[iaxis], self._finalShape[iaxis] \
+					self._subsetinfo[label], self._selection[iaxis], self._finalShape[iaxis] \
 						= self._selectRange(average[label], distances, label, axisunits, "average")
-				except:
+				except Exception as e:
+					if not self._error:
+						self._error += ["Error handling average:"]
+						self._error += [str(e)]
 					return
 			# Otherwise
 			else:
@@ -165,7 +169,10 @@ class Probe(Diagnostic):
 					try:
 						self._subsetinfo[label], self._selection[iaxis], self._finalShape[iaxis] \
 							= self._selectSubset(subset[label], distances, label, axisunits, "subset")
-					except:
+					except Exception as e:
+						if not self._error:
+							self._error += ["Error handling subset:"]
+							self._error += [str(e)]
 						return
 				# If subset has more than 1 point (or no subset), use this axis in the plot
 				if type(self._selection[iaxis]) is slice:
@@ -175,14 +182,12 @@ class Probe(Diagnostic):
 					self._label  .append(label)
 					self._units  .append(axisunits)
 					self._log    .append(False)
-
-		self._selection = tuple(self._selection)
-
+		
+		self._selection = tuple(s if type(s) is slice else slice(s,s+1) for s in self._selection)
+		
 		# Special case in 1D: we convert the point locations to scalar distances
 		if len(self._centers) == 1:
 			self._centers[0] = self._np.sqrt(self._np.sum((self._centers[0]-self._centers[0][0])**2,axis=1))
-			self._centers[0] = self._np.maximum( self._centers[0], 0.)
-			self._centers[0] = self._np.minimum( self._centers[0], self._ncels[0]*self._cell_length[0])
 		# Special case in 2D: we have to prepare for pcolormesh instead of imshow
 		elif len(self._centers) == 2:
 			p1 = self._centers[0] # locations of grid points along first dimension
@@ -223,42 +228,56 @@ class Probe(Diagnostic):
 			#Y = self._np.maximum( Y, 0.)
 			#Y = self._np.minimum( Y, self._ncels[1]*self._cell_length[1])
 			self._edges = [X, Y]
-			self._label = ["axis1", ""]
-			self._units = [axisunits, axisunits]
 
 		# Prepare the reordering of the points for patches disorder
-		positions = self._h5probe[0]["positions"][()] # actual probe points positions
-		self._ordering = None
 		tmpShape = self._initialShape
-		if self._naxes>0:
-			# Subtract by p0
-			p0 = self._myinfo["p0"]
-			for i in range(p0.size):
-				positions[:,i] -= p0[i]
-			# If 1D probe, convert positions to distances
+		if self._naxes == 0:
+			self._ordering = self._np.array([0.], dtype=int)
+		
+		else:
+			self._ordering = self._np.zeros((self._finalShape.prod(),), dtype=int)-1
+			
+			# calculate matrix inverse
 			if self._naxes==1:
 				p  = self._np.sqrt(self._np.sum(self._np.array(p)**2))
-				invp = self._np.array(1./p, ndmin=1)
-				positions = self._np.sqrt(self._np.sum(positions**2,1))
-			# If 2D or 3D probe, must calculate matrix inverse
+				invp = self._np.array(1./p, ndmin=2)
 			else:
 				if (self._naxes==2 and self._ndim_particles==3):
 					pp = self._np.cross(p[0],p[1])
 					p.append(pp/self._np.linalg.norm(pp))
 					tmpShape = self._np.hstack((tmpShape, 1))
 				invp = self._np.linalg.inv(self._np.array(p).transpose())
-			# Make the ordering vector
-			self._ordering = self._np.zeros((self._initialShape.prod(),), dtype=int)-1
-			for indexInFile in range(positions.shape[0]):
-				posInFile = positions[indexInFile]
-				ijk = self._np.dot(invp, posInFile)*(tmpShape-1) # find the indices of the point
+			
+			# calculate ordering
+			p0 = self._myinfo["p0"]
+			for first, last, npart in ChunkedRange(self.numpoints, chunksize):
+				positions = self._h5probe[0]["positions"][first:last,:].T # actual probe points positions
+				# Subtract by p0
+				for i in range(p0.size):
+					positions[i,:] -= p0[i]
+				# In 1D convert positions to distances
+				if self._naxes==1:
+					positions = self._np.sqrt(self._np.sum(positions**2,0))[self._np.newaxis,:]
+				# Find the indices of the points
+				ijk = (self._np.dot(invp, positions)*(tmpShape-1)[:,self._np.newaxis]).round().astype(int)
+				keep = self._np.ones( (npart,), dtype=bool )
+				for d,sel in enumerate(self._selection): # keep only points in selection
+					start = sel.start or 0
+					stop = sel.stop or tmpShape[d]
+					step = sel.step or 1
+					keep *= (ijk[d] >= start) * (ijk[d] < stop) * ((ijk[d]-start) % step == 0)
+				ijk = ijk[:,keep]
+				indexInFile = self._np.arange(first, last, dtype=int)[keep]
+				# Convert to indices in the selection
+				for d,sel in enumerate(self._selection):
+					ijk[d] = (ijk[d] - (sel.start or 0)) // (sel.step or 1)
+				# Linearize index
 				indexInArray = ijk[0]
-				for l in range(1,len(ijk)): indexInArray = indexInArray*tmpShape[l]+ijk[l] # linearized index
-				indexInArray = int(round(indexInArray))
-				#print indexInFile, indexInArray, posInFile, ijk
-				try   : self._ordering[indexInArray] = indexInFile
-				except: pass
-
+				for d in range(1,len(self._finalShape)):
+					indexInArray = indexInArray*self._finalShape[d] + ijk[d]
+				# Store ordering
+				self._ordering[indexInArray] = indexInFile
+		
 		# Build units
 		titles = {}
 		fieldunits = {}
@@ -292,15 +311,17 @@ class Probe(Diagnostic):
 		if info is None: info = self._getMyInfo()
 		printedInfo = "Probe #%s: "%info["probeNumber"]
 		if "dimension" in info:
-			printedInfo += str(info["dimension"])+"-dimensional,"+" with fields "+bytes.decode(info["fields"])+"\n"
+			printedInfo += str(info["dimension"])+"-dimensional,"+" with fields "+bytes.decode(info["fields"])
 			i = 0
 			while "p"+str(i) in info:
-				printedInfo += "p"+str(i)+" = "+" ".join(info["p"+str(i)].astype(str).tolist())+"\n"
+				printedInfo += "\n\tp"+str(i)+" = "+" ".join(info["p"+str(i)].astype(str).tolist())
 				i += 1
-				if info["shape"].size>0:
-					printedInfo += "number = "+" ".join(info["shape"].astype(str).tolist())+"\n"
+			if info["shape"].size>0:
+				printedInfo += "\n\tnumber = "+" ".join(info["shape"].astype(str).tolist())
 		else:
-			printedInfo += "File not found or not readable"
+			printedInfo += "\n\tFile not found or not readable"
+		for l in self._subsetinfo:
+			printedInfo += "\n\t"+self._subsetinfo[l]
 		return printedInfo
 
 	# Method to get info on a given probe
@@ -314,7 +335,7 @@ class Probe(Diagnostic):
 			self._error += ["\tWarning: Cannot open file "+file]
 			return out
 		out["dimension"] = probe.attrs["dimension"]
-		out["shape"] = self._np.array(probe["number"])
+		out["shape"] = self._np.array(probe["number"], dtype=int)
 		out["fields"] = probe.attrs["fields"]
 		i = 0
 		while "p"+str(i) in probe.keys():
@@ -372,18 +393,18 @@ class Probe(Diagnostic):
 		C = {}
 		op = self.operation
 		for n in reversed(self._fieldn): # for each field in operation
-			buffer = self._np.empty((self.numpoints,), dtype="double")
-			self._dataForTime[t].read_direct(buffer, source_sel=self._np.s_[n,:])
+			buffer = self._np.zeros((self._ordering.size,), dtype="double")
+			for first, last, npart in ChunkedRange(self.numpoints, self._chunksize):
+				o = self._ordering - first
+				keep = self._np.flatnonzero((o>=0) * (o<npart))
+				data = self._dataForTime[t][n,first:last]
+				buffer[keep] = data[o[keep]]
 			C.update({ n:buffer })
 			op = op.replace("#"+str(n), "C["+str(n)+"]")
 		# Calculate the operation
 		A = eval(op)
-		# Reorder probes for patch disorder
-		if self._ordering is not None: A = A[self._ordering]
 		# Reshape array because it is flattened in the file
-		A = self._np.reshape(A, self._initialShape)
-		# Extract the selection
-		A = self._np.reshape(A[self._selection], self._finalShape)
+		A = self._np.reshape(A, self._finalShape)
 		# Apply the averaging
 		for iaxis in range(self._naxes):
 			if self._averages[iaxis]:

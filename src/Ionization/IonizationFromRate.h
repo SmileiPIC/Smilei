@@ -25,7 +25,7 @@ private:
 
     int itime;
     unsigned int maximum_charge_state_;
-    PyObject *ionization_rate;
+    PyObject *ionization_rate_;
     
 };
 

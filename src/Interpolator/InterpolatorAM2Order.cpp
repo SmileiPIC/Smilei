@@ -243,7 +243,20 @@ void InterpolatorAM2Order::fieldsWrapper( ElectroMagn *EMfields, Particles &part
 // Interpolator specific to tracked particles. A selection of particles may be provided
 void InterpolatorAM2Order::fieldsSelection( ElectroMagn *EMfields, Particles &particles, double *buffer, int offset, vector<unsigned int> *selection )
 {
-    ERROR( "To Do" );
+    if( selection ) {
+    
+        int nsel_tot = selection->size();
+        for( int isel=0 ; isel<nsel_tot; isel++ ) {
+            fields( EMfields, particles, ( *selection )[isel], offset, buffer+isel, buffer+isel+3*offset );
+        }
+        
+    } else {
+    
+        int npart_tot = particles.size();
+        for( int ipart=0 ; ipart<npart_tot; ipart++ ) {
+            fields( EMfields, particles, ipart, offset, buffer+ipart, buffer+ipart+3*offset );
+        }
+    }
 }
 
 

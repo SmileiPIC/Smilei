@@ -23,6 +23,7 @@ class Field;
 class cField;
 class Species;
 class VectorPatch;
+class Collisions;
 
 #include <csignal>
 
@@ -42,7 +43,7 @@ public:
     //! restart everything to file per processor
     void readPatchDistribution( SmileiMPI *smpi, SimWindow *simWin );
     void restartAll( VectorPatch &vecPatches,  SmileiMPI *smpi, SimWindow *simWin, Params &params, OpenPMDparams &openPMD );
-    void restartPatch( ElectroMagn *EMfields, std::vector<Species *> &vecSpecies, Params &params, hid_t patch_gid );
+    void restartPatch( ElectroMagn *EMfields, std::vector<Species *> &vecSpecies, std::vector<Collisions *> &vecCollisions, Params &params, hid_t patch_gid );
     
     //! restart field per proc
     void restartFieldsPerProc( hid_t fid, Field *field );
@@ -58,7 +59,7 @@ public:
     
     //! dump everything to file per processor
     void dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMPI *smpi, SimWindow *simWin, Params &params );
-    void dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpecies, Params &params, hid_t patch_gid );
+    void dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpecies, std::vector<Collisions *> &vecCollisions, Params &params, hid_t patch_gid );
     
     //! incremental number of times we've done a dump
     unsigned int dump_number;

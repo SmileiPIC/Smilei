@@ -29,7 +29,7 @@ import shlex
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-mathjax_path = 'https://www.gitcdn.xyz/repo/mathjax/MathJax/master/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
+mathjax_path = 'https://www.gitcdn.xyz/cdn/mathjax/MathJax/2.7.6/MathJax.js?config=TeX-AMS-MML_HTMLorMML'
 extensions = [
     'sphinx.ext.mathjax',
 # In order to generate the doc in pdf:
@@ -228,10 +228,11 @@ html_show_copyright = False
 htmlhelp_basename = 'Smileidoc'
 
 # Select charset that is compatible with travis or maisondelasimulation.fr
-if 'TRAVIS' in os.environ:
-    html_output_encoding = 'utf-8'
-else:
-    html_output_encoding = 'ISO-8859-1'
+#if 'TRAVIS' in os.environ:
+html_output_encoding = 'utf-8'
+html_math_renderer = 'mathjax'
+#else:
+#    html_output_encoding = 'ISO-8859-1'
 
 # -- Options for LaTeX output ---------------------------------------------
 

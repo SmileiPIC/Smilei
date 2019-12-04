@@ -435,7 +435,7 @@ void SmileiMPI::recompute_patch_count( Params &params, VectorPatch &vecpatches, 
         //Compute particle contribution to Local Loads of each Patch (Lp)
         for( unsigned int ipatch=0; ipatch < ( unsigned int )patch_count[smilei_rk]; ipatch++ ) {
             for( unsigned int ispecies = 0; ispecies < tot_species_number; ispecies++ ) {
-                Lp[ipatch] += vecpatches( ipatch )->vecSpecies[ispecies]->getNbrOfParticles()*( 1+( params.frozen_particle_load-1 )*( time_dual < vecpatches( ipatch )->vecSpecies[ispecies]->time_frozen ) ) ;
+                Lp[ipatch] += vecpatches( ipatch )->vecSpecies[ispecies]->getNbrOfParticles()*( 1+( params.frozen_particle_load-1 )*( time_dual < vecpatches( ipatch )->vecSpecies[ispecies]->time_frozen_ ) ) ;
             }
             Tload_loc += Lp[ipatch];
         }
@@ -1699,7 +1699,7 @@ void SmileiMPI::computeGlobalDiags( DiagnosticScalar *scalars, int timestep )
             double Urad = *scalars->Urad;
             // expected total energy
             double Uexp = scalars->Energy_time_zero + Uelm_bnd + Ukin_inj_mvw
-                          + Uelm_inj_mvw + Urad
+                          + Uelm_inj_mvw
                           - ( Ukin_bnd + Ukin_out_mvw + Uelm_out_mvw );
             *scalars->Uexp = Uexp;
         }
