@@ -82,7 +82,7 @@ DiagFields(
 DiagProbe(
     every = every,
     origin = [0],
-    corners = [[L]],
+    corners = [[0.99999*L]],
     number = [100],
     fields = ['Ex', 'Rho_eon1', 'Rho_eon2']
 )
