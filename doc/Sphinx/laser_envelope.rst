@@ -250,6 +250,13 @@ or equivalently neglecting all the derivatives along the azimuthal angle in Maxw
 As in a typical :program:`Smilei` simulation in cylindrical coordinates, the particles evolve in the 3D space, 
 with their positions and momenta described in cartesian coordinates.
 
+The envelope approximation coupled to the cylindrical symmetry assumption can greatly speed-up a simulation of a physical set-up where these assumptions are suited.
+Compared to a 3D envelope simulation with the same number of particles, a cylindrical envelope simulation has a speed-up which scales linearly 
+as the double of the transverse number of cells of the window. This speed-up can arrive to at least a factor 100 for lasers with transverse sizes of the order of tens of microns.
+Compared to a 3D standard laser simulation with the same number of particles, 
+the speed-up of a cylindrical envelope simulation can arrive to at least a factor 1000 for lasers of durations of the order of tens of femtoseconds. 
+These comparisons assume the same longitudinal window size and the same transverse size for the simulated physical space.
+  
 
 ----
 
