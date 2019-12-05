@@ -155,7 +155,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
 
     // field containing the charge distribution (always 3d)
     Field3D charge( n_space_to_create_generalized );
-    species_->max_charge_ = 0.;
+    species_->max_charge = 0.;
 
     // field containing the number of particles in each cell
     Field3D n_part_in_cell( n_space_to_create_generalized );
@@ -198,7 +198,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
     
     // Initialize charge profile
     if( species_->mass_ > 0 ) {
-        species_->charge_profile_ ->valuesAt( xyz, charge );
+        species_->charge_profile_->valuesAt( xyz, charge );
     }
     if( species_->position_initialization_array_ != NULL ) {
         for( unsigned int idim = 0; idim < species_->nDim_particle; idim++ ) {
@@ -260,8 +260,8 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
 
                     // assign charge its correct value in the cell
                     if( species_->mass_ > 0 ) {
-                        if( charge( i, j, k )>species_->max_charge_ ) {
-                            species_->max_charge_=charge( i, j, k );
+                        if( charge( i, j, k )>species_->max_charge ) {
+                            species_->max_charge=charge( i, j, k );
                         }
                     }
 
@@ -505,7 +505,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
                     /*897 for (int i=0; i<(int)species_->nDim_particle; i++) {
                       particles->position_old(i,iPart) -= particles->momentum(i,iPart)/particles->lor_fac(iPart) * params.timestep;
                       }897*/
-                    species_->new_particles_energy_ += particles_->weight( iPart )*( particles_->LorentzFactor( iPart )-1.0 );
+                    species_->new_particles_energy_ += particles_->weight( iPart )*( particles_->lor_fac( iPart )-1.0 );
                 }
             }
             // Photon case
@@ -514,7 +514,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
                     /*897 for (int i=0; i<(int)species_->nDim_particle; i++) {
                       particles_->position_old(i,iPart) -= particles_->momentum(i,iPart)/particles_->lor_fac(iPart) * params.timestep;
                       }897*/
-                    species_->new_particles_energy_ += particles_->weight( iPart )*( particles_->momentumNorm( iPart ) );
+                    species_->new_particles_energy_ += particles_->weight( iPart )*( particles_->momentum_norm( iPart ) );
                 }
             }
         }

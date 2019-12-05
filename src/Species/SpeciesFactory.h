@@ -1016,7 +1016,7 @@ public:
             new_species->temperature_profile_[1]              = new Profile( species->temperature_profile_[1] );
             new_species->temperature_profile_[2]              = new Profile( species->temperature_profile_[2] );
         }
-        new_species->max_charge_                               = species->max_charge_;
+        new_species->max_charge                               = species->max_charge;
         new_species->tracking_diagnostic                      = species->tracking_diagnostic;
         new_species->ponderomotive_dynamics                   = species->ponderomotive_dynamics;
 
