@@ -131,7 +131,7 @@ class RadiationSpectrum(Diagnostic):
 		# -------------------------------------------------------------------
 		# Fabricate all axes values for all diags
 		plot_diff = []
-		cell_volume = self._cell_length.prod()
+		#cell_volume = self._cell_length.prod()
 		coeff = 1.
 		unitsa = [0,0,0,0]
 		spatialaxes = {"x":False, "y":False, "z":False}
@@ -249,9 +249,11 @@ class RadiationSpectrum(Diagnostic):
 			self._title  = self._title .replace("#"+str(d), titles[d])
 
 		# If any spatial dimension did not appear, then count it for calculating the correct density
-		if self._ndim_particles>=1 and not spatialaxes["x"]: coeff /= self._ncels[ 0]*self._cell_length[ 0]
-		if self._ndim_particles>=2 and not spatialaxes["y"]: coeff /= self._ncels[ 1]*self._cell_length[ 1]
-		if self._ndim_particles==3 and not spatialaxes["z"]: coeff /= self._ncels[-1]*self._cell_length[-1]
+		# MG/2019/12/05 --- I don't think we need these last lines for the RadiationSpectrumDiag
+		#                   Fred, can you check this???
+		#if self._ndim_particles>=1 and not spatialaxes["x"]: coeff /= self._ncels[ 0]*self._cell_length[ 0]
+		#if self._ndim_particles>=2 and not spatialaxes["y"]: coeff /= self._ncels[ 1]*self._cell_length[ 1]
+		#if self._ndim_particles==3 and not spatialaxes["z"]: coeff /= self._ncels[-1]*self._cell_length[-1]
 
 		# Calculate the array that represents the bins sizes in order to get units right.
 		# This array will be the same size as the plotted array
