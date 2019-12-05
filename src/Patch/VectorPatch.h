@@ -35,7 +35,7 @@ public :
     VectorPatch();
     VectorPatch( Params &params );
     ~VectorPatch();
-    void save_old_rho( Params &params );
+    void saveOldRho( Params &params );
     
     void close( SmileiMPI * );
     
@@ -71,8 +71,8 @@ public :
         refHindex_ = patches_[0]->Hindex();
     }
     //! Resize vector of field*
-    void update_field_list( SmileiMPI *smpi );
-    void update_field_list( int ispec, SmileiMPI *smpi );
+    void updateFieldList( SmileiMPI *smpi );
+    void updateFieldList( int ispec, SmileiMPI *smpi );
     
     void createDiags( Params &params, SmileiMPI *smpi, OpenPMDparams & );
     
@@ -119,11 +119,12 @@ public :
                    MultiphotonBreitWheelerTables &MultiphotonBreitWheelerTables,
                    double time_dual,
                    Timers &timers, int itime );
-                   
+    
+    //! For all patches, exchange particles and sort them.
     void finalizeAndSortParticles( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
                                   double time_dual,
                                   Timers &timers, int itime );
-    void finalize_sync_and_bc_fields( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
+    void finalizeSyncAndBCFields( Params &params, SmileiMPI *smpi, SimWindow *simWindow,
                                       double time_dual, Timers &timers, int itime );
 
     //! Particle merging
@@ -188,6 +189,8 @@ public :
     
     //! Solve Poisson to initialize E
     void solvePoisson( Params &params, SmileiMPI *smpi );
+    void runNonRelativisticPoissonModule( Params &params, SmileiMPI* smpi,  Timers &timers );
+    void solvePoissonAM( Params &params, SmileiMPI *smpi);
     
     //! Solve relativistic Poisson problem to initialize E and B of a relativistic bunch
     void runRelativisticModule( double time_prim, Params &params, SmileiMPI* smpi,  Timers &timers );
@@ -221,7 +224,7 @@ public :
     // ------------------
     
     //! Wrapper of load balancing methods, including SmileiMPI::recompute_patch_count. Called from main program
-    void load_balance( Params &params, double time_dual, SmileiMPI *smpi, SimWindow *simWindow, unsigned int itime );
+    void loadBalance( Params &params, double time_dual, SmileiMPI *smpi, SimWindow *simWindow, unsigned int itime );
     
     //! Explicits patch movement regarding new patch distribution stored in smpi->patch_count
     void createPatches( Params &params, SmileiMPI *smpi, SimWindow *simWindow );
@@ -230,10 +233,10 @@ public :
     void exchangePatches( SmileiMPI *smpi, Params &params );
     
     //! Write in a file patches communications
-    void output_exchanges( SmileiMPI *smpi );
+    void outputExchanges( SmileiMPI *smpi );
     
     //! Init new envelope from input namelist
-    void init_new_envelope( Params &params );
+    void initNewEnvelope( Params &params );
     
     // Lists of fields
     std::vector<Field *> densities;
@@ -286,9 +289,13 @@ public :
     std::vector<Field *> listGradPhix_;
     std::vector<Field *> listGradPhiy_;
     std::vector<Field *> listGradPhiz_;
+    std::vector<Field *> listGradPhil_;
+    std::vector<Field *> listGradPhir_;
     std::vector<Field *> listGradPhix0_;
     std::vector<Field *> listGradPhiy0_;
     std::vector<Field *> listGradPhiz0_;
+    std::vector<Field *> listGradPhil0_;
+    std::vector<Field *> listGradPhir0_;
     std::vector<Field *> listEnv_Chi_;
     std::vector<Field *> listEnv_Chis_;
     
@@ -327,13 +334,13 @@ public :
         for( unsigned int ispec = 0 ; ispec < nSpecies ; ispec++ ) {
             uint64_t tmp( 0 );
             MPI_Reduce( &( nParticles[ispec] ), &tmp, 1, MPI_UINT64_T, MPI_SUM, 0, smpi->SMILEI_COMM_WORLD );
-            MESSAGE( 2, "Species " << ispec << " (" << ( *this )( 0 )->vecSpecies[ispec]->name << ") created with " << tmp << " particles" );
+            MESSAGE( 2, "Species " << ispec << " (" << ( *this )( 0 )->vecSpecies[ispec]->name_ << ") created with " << tmp << " particles" );
         }
     }
     
-    void check_memory_consumption( SmileiMPI *smpi );
+    void checkMemoryConsumption( SmileiMPI *smpi );
     
-    void check_expected_disk_usage( SmileiMPI *smpi, Params &params, Checkpoint &checkpoint );
+    void checkExpectedDiskUsage( SmileiMPI *smpi, Params &params, Checkpoint &checkpoint );
     
     // Keep track if we need the needsRhoJsNow
     int diag_flag;

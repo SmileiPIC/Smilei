@@ -15,8 +15,8 @@ IonizationFromRate::IonizationFromRate( Params &params, Species *species ) : Ion
 
     DEBUG( "Creating the FromRate Ionizaton class" );
     
-    maximum_charge_state_ = species->maximum_charge_state;
-    ionization_rate = species->ionization_rate;
+    maximum_charge_state_ = species->maximum_charge_state_;
+    ionization_rate_ = species->ionization_rate_;
     
     DEBUG( "Finished Creating the FromRate Ionizaton class" );
     
@@ -46,7 +46,7 @@ void IonizationFromRate::operator()( Particles *particles, unsigned int ipart_mi
         particleData.startAt( ipart_min );
         PyTools::setIteration( itime );
         particleData.set( particles );
-        ret = ( PyArrayObject * )PyObject_CallFunctionObjArgs( ionization_rate, particleData.get(), NULL );
+        ret = ( PyArrayObject * )PyObject_CallFunctionObjArgs( ionization_rate_, particleData.get(), NULL );
         PyTools::checkPyError();
         if( ret == NULL ) {
             ERROR( "ionization_rate profile has not provided a correct result" );
@@ -84,7 +84,7 @@ void IonizationFromRate::operator()( Particles *particles, unsigned int ipart_mi
         // (variable weights are used)
         // -----------------------------
         if( k_times!=0 ) {
-            new_electrons.create_particle();
+            new_electrons.createParticle();
             //new_electrons.initialize( new_electrons.size()+1, new_electrons.dimension() );
             int idNew = new_electrons.size() - 1;
             for( unsigned int i=0; i<new_electrons.dimension(); i++ ) {

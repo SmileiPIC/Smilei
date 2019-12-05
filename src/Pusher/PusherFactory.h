@@ -48,9 +48,9 @@ public:
         Pusher *Push = NULL;
         
         // Particle of matter
-        if( species->mass > 0 ) {
+        if( species->mass_ > 0 ) {
             // assign the correct Pusher to Push
-            if( species->pusher == "boris" ) {
+            if( species->pusher_name_ == "boris" ) {
                 if( !species->vectorized_operators && !params.cell_sorting ) {
                     Push = new PusherBoris( params, species );
                 }
@@ -59,7 +59,7 @@ public:
                     Push = new PusherBorisV( params, species );
                 }
 #endif
-            } else if( species->pusher == "ponderomotive_boris" ) {
+            } else if( species->pusher_name_ == "ponderomotive_boris" ) {
             
                 int n_envlaser = params.Laser_Envelope_model;
                 if( n_envlaser <1 ) {
@@ -78,37 +78,37 @@ public:
                     Push = new PusherPonderomotiveBorisV( params, species );
                 }
 #endif
-            } else if( species->pusher == "borisnr" ) {
+            } else if( species->pusher_name_ == "borisnr" ) {
                 Push = new PusherBorisNR( params, species );
             }
-            /*else if ( species->pusher == "rrll" )
+            /*else if ( species->pusher_name_ == "rrll" )
             {
                 Push = new PusherRRLL( params, species );
             }*/
-            else if( species->pusher == "vay" ) {
+            else if( species->pusher_name_ == "vay" ) {
                 Push = new PusherVay( params, species );
-            } else if( species->pusher == "higueracary" ) {
+            } else if( species->pusher_name_ == "higueracary" ) {
                 Push = new PusherHigueraCary( params, species );
             } else {
-                ERROR( "For species " << species->name
+                ERROR( "For species " << species->name_
                        << ": unknown pusher `"
-                       << species->pusher << "`" );
+                       << species->pusher_name_ << "`" );
             }
         }
         // Photon
-        else if( species->mass == 0 ) {
-            if( species->pusher == "norm" ) {
+        else if( species->mass_ == 0 ) {
+            if( species->pusher_name_ == "norm" ) {
                 Push = new PusherPhoton( params, species );
             } else {
-                ERROR( "For photon species " << species->name
+                ERROR( "For photon species " << species->name_
                        << ": unknown pusher `"
-                       << species->pusher << "`" );
+                       << species->pusher_name_ << "`" );
             }
         }
         
         if( species->ponderomotive_dynamics ) {
-            if( species->pusher != "ponderomotive_boris" ) {
-                ERROR( "For species " << species->name << " the flag ponderomotive_dynamics is True - the only pusher available to interact with the envelope is ponderomotive_boris" );
+            if( species->pusher_name_ != "ponderomotive_boris" ) {
+                ERROR( "For species " << species->name_ << " the flag ponderomotive_dynamics is True - the only pusher available to interact with the envelope is ponderomotive_boris" );
             }
         }
         return Push;
@@ -119,9 +119,9 @@ public:
         Pusher *Push_ponderomotive_position = NULL;
         
         // Particle of matter
-        if( species->mass > 0 ) {
+        if( species->mass_ > 0 ) {
             // assign the correct Pusher to Push_ponderomotive_position
-            if( species->pusher == "ponderomotive_boris" ) {
+            if( species->pusher_name_ == "ponderomotive_boris" ) {
                 if( !species->vectorized_operators && !params.cell_sorting ) {
                     Push_ponderomotive_position = new PusherPonderomotivePositionBoris( params, species );
                 }
@@ -133,9 +133,9 @@ public:
             }
             
             else {
-                ERROR( "For species " << species->name
+                ERROR( "For species " << species->name_
                        << ": unknown pusher `"
-                       << species->pusher << "`" );
+                       << species->pusher_name_ << "`" );
             }
         } else {
             ERROR( "Ponderomotive pusher is not a valid choice for photons" );

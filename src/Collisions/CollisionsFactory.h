@@ -1,4 +1,3 @@
-
 #ifndef COLLISIONSFACTORY_H
 #define COLLISIONSFACTORY_H
 
@@ -83,7 +82,7 @@ public:
         if( PyTools::convert( ionizing, ionization_electrons_name ) ) {
             
             for( int i=0; i<(int)vecSpecies.size(); i++ ) {
-                if( vecSpecies[i]->name == ionization_electrons_name ) {
+                if( vecSpecies[i]->name_ == ionization_electrons_name ) {
                     ionization_electrons = i;
                     break;
                 }
@@ -91,7 +90,7 @@ public:
             if( ionization_electrons < 0 ) {
                 ERROR( "In collisions #" << n_collisions << ": ionizing in unknown species `" << ionization_electrons_name << "`" );
             }
-            if( vecSpecies[ionization_electrons]->atomic_number != 0 ) {
+            if( vecSpecies[ionization_electrons]->atomic_number_ != 0 ) {
                 ERROR( "In collisions #" << n_collisions << ": ionization species are not electrons (atomic_number>0)" );
             }
             ionization = true;
@@ -104,6 +103,7 @@ public:
             ERROR( "In collisions #" << n_collisions << ": `ionizing` must be True, False, or the name of an electron species" );
         }
         
+        CollisionalIonization *Ionization;
         if( ionization ) {
             
             if( intra ) {
@@ -114,12 +114,12 @@ public:
                 s0 = vecSpecies[sgroup[g][0]]; // first species of this group
                 for( unsigned int i=1; i<sgroup[g].size(); i++ ) { // loop other species of same group
                     s = vecSpecies[sgroup[g][i]]; // current species
-                    if( s->mass != s0->mass )
+                    if( s->mass_ != s0->mass_ )
                         ERROR( "In collisions #" << n_collisions << ": species in group `species"
                                << g+1 << "` must all have same masses for ionization" );
                                
-                    if( s->atomic_number != s0->atomic_number ) {
-                        if( s->atomic_number * s0->atomic_number ==0 ) {
+                    if( s->atomic_number_ != s0->atomic_number_ ) {
+                        if( s->atomic_number_ * s0->atomic_number_ ==0 ) {
                             ERROR( "In collisions #" << n_collisions << ": species in group `species"
                                    << g+1 << "` cannot be mixed electrons and ions for ionization" );
                         } else {
@@ -130,8 +130,8 @@ public:
                 }
             }
             // atomic number
-            Z0 = vecSpecies[sgroup[0][0]]->atomic_number;
-            Z1 = vecSpecies[sgroup[1][0]]->atomic_number;
+            Z0 = vecSpecies[sgroup[0][0]]->atomic_number_;
+            Z1 = vecSpecies[sgroup[1][0]]->atomic_number_;
             Z = ( int )( Z0>Z1 ? Z0 : Z1 );
             if( Z0*Z1!=0 ) {
                 ERROR( "In collisions #" << n_collisions << ": ionization requires electrons (no or null atomic_number)" );
@@ -148,7 +148,91 @@ public:
                 }
             }
             ionization_particles = vecSpecies[ionization_electrons]->particles;
+            
+            // Create the ionization object
+            Ionization = new CollisionalIonization( Z, &params, ionization_electrons, ionization_particles );
+            
+        } else {
+            
+            Ionization = new CollisionalNoIonization();
+            
         }
+        
+        // D-D fusion
+        std::vector<std::string> nuclear_reaction(0);
+        PyObject * py_nuclear_reaction = PyTools::extract_py( "nuclear_reaction", "Collisions", n_collisions );
+        CollisionalNuclearReaction *NuclearReaction;
+        // If fusion, verify parameters
+        if( py_nuclear_reaction == Py_None ) {
+            
+            NuclearReaction = new CollisionalNoNuclearReaction();
+            
+        } else {
+            
+            // Extract the content of the list nuclear_reaction
+            std::vector<PyObject *> py_list;
+            if( ! PyTools::convert( py_nuclear_reaction, py_list ) ) {
+                ERROR( "In collisions #" << n_collisions << ": nuclear_reaction should be a list" );
+            }
+            std::vector<std::string> nuclear_reaction( 0 );
+            if( py_list.size() ) {
+                PyTools::convert( py_list, nuclear_reaction );
+                for( unsigned int i=0; i<py_list.size(); i++ ) {
+                    Py_DECREF( py_list[i] );
+                }
+            }
+            
+            // Verify the atomic number has been set
+            if( ! PyTools::extract( "atomic_number", Z0, "Species", sgroup[0][0] )
+             || ! PyTools::extract( "atomic_number", Z1, "Species", sgroup[1][0] ) ) {
+                ERROR( "In collisions #" << n_collisions << ": nuclear_reaction requires all species have an atomic_number" );
+            }
+            
+            // Verify each group has consistent atomic number and mass number
+            for( int g=0; g<2; g++ ) { // do sgroup[0], then sgroup[1]
+                s0 = vecSpecies[sgroup[g][0]]; // first species of this group
+                for( unsigned int i=1; i<sgroup[g].size(); i++ ) { // loop other species of same group
+                    s = vecSpecies[sgroup[g][i]]; // current species
+                    if( s->mass_ != s0->mass_ ) {
+                        ERROR( "In collisions #" << n_collisions << ": nuclear_reaction requires all `species"
+                               << g+1 << "` to have equal masses" );
+                    }
+                    if( s->atomic_number_ != s0->atomic_number_ ) {
+                        ERROR( "In collisions #" << n_collisions << ": nuclear_reaction requires all `species"
+                               << g+1 << "` to have equal atomic_number" );
+                    }
+                }
+            }
+            
+            // Rate multiplier
+            double rate_multiplier = 0.;
+            PyTools::extract( "nuclear_reaction_multiplier", rate_multiplier, "Collisions", n_collisions );
+            
+            // Find products
+            std::vector<unsigned int> products = params.FindSpecies( vecSpecies, nuclear_reaction );
+            
+            // Type of reaction
+            unsigned int A0 = round( vecSpecies[sgroup[0][0]]->mass_ / 1822.89 );
+            unsigned int A1 = round( vecSpecies[sgroup[1][0]]->mass_ / 1822.89 );
+            std::vector<Particles *> product_particles;
+            std::vector<unsigned int> product_species;
+            // D-D fusion
+            if( Z0 == 1 && Z1 == 1 && A0 == 2 && A1 == 2 ) {
+                
+                std::vector<unsigned int> Z(2); Z[0] = 2; Z[1] = 0;
+                std::vector<unsigned int> A(2); A[0] = 3; A[1] = 1;
+                std::vector<std::string> name(2); name[0] = "helium3"; name[1] = "neutron";
+                findProducts( vecSpecies, products, Z, A, name, product_particles, product_species, n_collisions );
+                
+                NuclearReaction = new CollisionalFusionDD( &params, product_particles, product_species, rate_multiplier );
+                
+            // Unknown types
+            } else {
+                ERROR( "In collisions #" << n_collisions << ": nuclear_reaction not available between (Z="<<Z0<<",A="<<A0<<") and (Z="<<Z1<<",A="<<A1<<")" );
+            }
+            
+        }
+        Py_DECREF( py_nuclear_reaction );
         
         // Print collisions parameters
         mystream.str( "" ); // clear
@@ -171,7 +255,10 @@ public:
         }
         mystream.str( "" ); // clear
         if( ionization_electrons>0 ) {
-            MESSAGE( 2, "Collisional ionization with atomic number "<<Z<<" towards species `"<<vecSpecies[ionization_electrons]->name << "`" );
+            MESSAGE( 2, "Collisional ionization with atomic number "<<Z<<" towards species `"<<vecSpecies[ionization_electrons]->name_ << "`" );
+        }
+        if( py_nuclear_reaction != Py_None ) {
+            MESSAGE( 2, "Collisional nuclear reaction "<< NuclearReaction->name() );
         }
         
         // If debugging log requested
@@ -218,10 +305,8 @@ public:
                        sgroup[1],
                        clog, intra,
                        debug_every,
-                       Z,
-                       ionization_electrons,
-                       ionization_particles,
-                       params.nDim_particle,
+                       Ionization,
+                       NuclearReaction,
                        filename
                    );
         } else {
@@ -232,10 +317,8 @@ public:
                        sgroup[1],
                        clog, intra,
                        debug_every,
-                       Z,
-                       ionization_electrons,
-                       ionization_particles,
-                       params.nDim_particle,
+                       Ionization,
+                       NuclearReaction,
                        filename
                    );
         }
@@ -273,21 +356,64 @@ public:
     
     
     //! Clone a vector of Collisions objects
-    static std::vector<Collisions *> clone( std::vector<Collisions *> vecCollisions, Params &params )
+    static std::vector<Collisions *> clone( std::vector<Collisions *> vecCollisions )
     {
         std::vector<Collisions *> newVecCollisions( 0 );
         
         for( unsigned int i=0; i<vecCollisions.size(); i++ ) {
             if( dynamic_cast<CollisionsSingle *>( vecCollisions[i] ) ) {
-                newVecCollisions.push_back( new CollisionsSingle( vecCollisions[i], params.nDim_particle ) );
+                newVecCollisions.push_back( new CollisionsSingle( vecCollisions[i] ) );
             } else {
-                newVecCollisions.push_back( new Collisions( vecCollisions[i], params.nDim_particle ) );
+                newVecCollisions.push_back( new Collisions( vecCollisions[i] ) );
             }
         }
         
         return newVecCollisions;
     }
     
+    //! Utility for nuclear reactions: find products in the provided list
+    static void findProducts( 
+        std::vector<Species*> vecSpecies,
+        std::vector<unsigned int> products,
+        std::vector<unsigned int> Z,
+        std::vector<unsigned int> A,
+        std::vector<std::string> name,
+        std::vector<Particles *> &product_particles,
+        std::vector<unsigned int> &product_species,
+        unsigned int n_coll
+        )
+    {
+        unsigned int n = Z.size();
+        product_particles.resize( n, NULL );
+        product_species.resize( n, 0 );
+        
+        std::ostringstream list("");
+        list << name[0];
+        for( unsigned int i=1; i<n; i++ ) {
+            list << ", " << name[i];
+        }
+        
+        for( unsigned int j=0; j<products.size(); j++ ) {
+            Species * s = vecSpecies[products[j]];
+            unsigned int Zj = s->atomic_number_;
+            unsigned int Aj = round( s->mass_ / 1822.89 );
+            
+            bool product_found = false;
+            for( unsigned int i=0; i<n; i++ ) {
+                if( Zj == Z[i] && Aj == A[i] ) {
+                    if( product_particles[i] ) {
+                        ERROR( "In collisions #" << n_coll << ", nuclear_reaction : should have only 1 "<<name[i]<<" species" );
+                    }
+                    product_species[i] = products[j];
+                    product_particles[i] = s->particles;
+                    product_found = true;
+                }
+            }
+            if( ! product_found ) {
+                ERROR( "In collisions #" << n_coll << ", nuclear_reaction : species `"<<s->name_<<"` is not one of "<<list.str() );
+            }
+        }
+    }
     
 };
 

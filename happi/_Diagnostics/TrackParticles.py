@@ -433,7 +433,7 @@ class TrackParticles(Diagnostic):
 			number_of_particles = (f["data"][tname]["latest_IDs"].value % (2**32)).astype('uint32')
 			if self._verbose: print("Number of particles: "+str(number_of_particles.sum()))
 			# Calculate the offset that each MPI needs
-			offset = self._np.cumsum(number_of_particles)
+			offset = self._np.cumsum(number_of_particles, dtype='uint64')
 			total_number_of_particles = offset[-1]
 			offset = self._np.roll(offset, 1)
 			offset[0] = 0
@@ -482,45 +482,28 @@ class TrackParticles(Diagnostic):
 
 				# If too many particles, sort by chunks
 				else:
-					nchunks = int(float(total_number_of_particles)/(chunksize+1) + 1)
-					adjustedchunksize = int(math.ceil(float(total_number_of_particles)/nchunks))
-					ID = self._np.empty((adjustedchunksize,), dtype=self._np.uint64)
 					data = {}
 					for k, name in properties.items():
-						if k == "charge":
-							data[k] = self._np.empty((adjustedchunksize,), dtype=self._np.int16)
-						else:
-							data[k] = self._np.empty((adjustedchunksize,), dtype=self._np.double)
-					data_double = self._np.empty((adjustedchunksize,), dtype=self._np.double)
-					data_int16  = self._np.empty((adjustedchunksize,), dtype=self._np.int16 )
+						data[k] = self._np.empty((chunksize,), dtype=self._np.int16 if k == "charge" else self._np.double)
 					# Loop chunks of the output
-					for ichunk_o in range(nchunks):
-						first_o = ichunk_o * adjustedchunksize
-						last_o  = min( first_o + adjustedchunksize, total_number_of_particles )
-						npart_o = last_o-first_o
+					for first_o, last_o, npart_o in ChunkedRange(total_number_of_particles, chunksize):
 						# Loop chunks of the input
-						for ichunk_i in range(nchunks):
-							first_i = ichunk_i * adjustedchunksize
-							last_i  = min( first_i + adjustedchunksize, nparticles )
-							npart_i = last_i-first_i
+						for first_i, last_i, npart_i in ChunkedRange(nparticles, chunksize):
 							# Obtain IDs
-							group["id"].read_direct( ID, source_sel=self._np.s_[first_i:last_i], dest_sel=self._np.s_[:npart_i] )
+							ID = group["id"][first_i:last_i]
 							# Extract useful IDs for this output chunk
-							loc_in_output = ID[:npart_i] + offset[ (ID[:npart_i]>>32) & 16777215 ] - 1
+							loc_in_output = ID.astype("uint32") + offset[ (ID>>32) & 16777215 ] - 1
 							keep = self._np.flatnonzero((loc_in_output >= first_o) * (loc_in_output < last_o))
 							loc_in_output = loc_in_output[keep] - first_o
 							# Loop datasets
 							for k, name in properties.items():
 								if k not in group: continue
 								# Accumulate the data for this chunk
-								if k == "charge": data_in = data_int16
-								else            : data_in = data_double
-								group[k].read_direct( data_in, source_sel=self._np.s_[first_i:last_i], dest_sel=self._np.s_[:npart_i] )
-								data[k][loc_in_output] = data_in[keep]
+								data[k][loc_in_output] = group[k][first_i:last_i][keep]
 						# Accumulated data is written out
 						for k, name in properties.items():
 							if k not in group: continue
-							f0[name].write_direct( data[k], source_sel=self._np.s_[:npart_o], dest_sel=self._np.s_[it, first_o:last_o] )
+							f0[name][it, first_o:last_o] = data[k][:npart_o]
 						
 				# Indicate that this iteration was succesfully ordered
 				f0.attrs["latestOrdered"] = it
@@ -530,21 +513,11 @@ class TrackParticles(Diagnostic):
 			# Create the "Times" dataset
 			f0.create_dataset("Times", data=times)
 			# Create the "unique_Ids" dataset
-			limitedchunksize = int(chunksize / len(times))
-			if total_number_of_particles < limitedchunksize:
-				f0.create_dataset("unique_Ids", data=self._np.max(f0["Id"], axis=0))
-			else:
-				f0.create_dataset("unique_Ids", (total_number_of_particles,), f0["Id"].dtype)
-				nchunks = int(float(total_number_of_particles)/(limitedchunksize+1) + 1)
-				limitedchunksize = int(math.ceil(float(total_number_of_particles)/nchunks))
-				ID = self._np.empty((len(times),limitedchunksize), dtype=self._np.uint64)
-				for ichunk in range(nchunks):
-					first = ichunk * limitedchunksize
-					last  = int(min( first + limitedchunksize, total_number_of_particles ))
-					npart = last-first
-					if npart <= 0: break
-					f0["Id"].read_direct( ID, source_sel=self._np.s_[:, first:last], dest_sel=self._np.s_[:,:npart] )
-					f0["unique_Ids"].write_direct( self._np.max(ID[:,:npart], axis=0), source_sel=self._np.s_[:npart], dest_sel=self._np.s_[first:last] )
+			f0.create_dataset("unique_Ids", (total_number_of_particles,), f0["Id"].dtype)
+			for iMPI in range(number_of_particles.size):
+				for first, last, npart in ChunkedRange(number_of_particles[iMPI], chunksize):
+					o = int(offset[iMPI])
+					f0["unique_Ids"][o+first : o+last] = ((iMPI<<32) + 1) + self._np.arange(first,last,dtype='uint64')
 			# Indicate that the ordering is finished
 			f0.attrs["finished_ordering"] = True
 			# Close file
