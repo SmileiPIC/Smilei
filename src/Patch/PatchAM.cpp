@@ -713,11 +713,6 @@ void PatchAM::createType2( Params &params )
                              MPI_DOUBLE, &( ntype_[1][ix_isPrim][iy_isPrim] ) );
             MPI_Type_commit( &( ntype_[1][ix_isPrim][iy_isPrim] ) );
             
-            // Still used ??? Yes, for moving window and SDMD
-            ntype_[2][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
-            MPI_Type_contiguous(ny*params.n_space[0], MPI_DOUBLE, &(ntype_[2][ix_isPrim][iy_isPrim]));   //clrw lines
-            MPI_Type_commit( &( ntype_[2][ix_isPrim][iy_isPrim] ) );
-
             
             nx_sum = 1 + 2*params.oversize[0] + ix_isPrim;
             ny_sum = 1 + 2*params.oversize[1] + iy_isPrim;
@@ -750,6 +745,12 @@ void PatchAM::createType2( Params &params )
             ntype_complex_[1][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
             MPI_Type_vector( nx, 2*params.oversize[1], 2*ny, MPI_DOUBLE, &( ntype_complex_[1][ix_isPrim][iy_isPrim] ) ); // column
             MPI_Type_commit( &( ntype_complex_[1][ix_isPrim][iy_isPrim] ) );
+            // Still used ??? Yes, for moving window and SDMD
+            ntype_complex_[2][ix_isPrim][iy_isPrim] = MPI_DATATYPE_NULL;
+            MPI_Type_contiguous(2*ny*params.n_space[0], MPI_DOUBLE, &(ntype_complex_[2][ix_isPrim][iy_isPrim]));   //clrw lines
+            MPI_Type_commit( &( ntype_complex_[2][ix_isPrim][iy_isPrim] ) );
+
+
 
         }
     }
@@ -793,7 +794,7 @@ void PatchAM::exchangeField_movewin( Field* field, int clrw )
     iDim = 0; // We exchange only in the X direction for movewin.
     iNeighbor = 0; // We send only towards the West and receive from the East.
 
-    MPI_Datatype ntype = ntype_[2][isDual[0]][isDual[1]]; //ntype_[2] is clrw columns.
+    MPI_Datatype ntype = ntype_complex_[2][isDual[0]][isDual[1]]; //ntype_[2] is clrw columns.
     MPI_Status rstat    ;
     MPI_Request rrequest;
 
