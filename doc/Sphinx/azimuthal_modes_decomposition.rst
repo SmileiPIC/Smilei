@@ -31,12 +31,21 @@ If we decomposed a physical scalar field in azimuthal modes, the Fourier coeffic
 on the longitudinal and radial coordinates :math:`(x,r)`. The azimuthal Fourier decomposition of a scalar field :math:`F(x,r,\theta)` would thus look like:
 
 .. math::
-    :label: AzimuthalDecomposition
+    :label: AzimuthalDecomposition1
 
     F\left(x,r,\theta\right) = \textrm{Re}\left[\sum_{m=0}^{+\infty}\tilde{F}^{m}\left(x,r\right)\exp{\left(-im\theta\right)}\right],
 
-where :math:`m` is the azimuthal mode :math:`\tilde{F}^{m}` the :math:`m^{th}` Fourier mode of :math:`F`.
-The coefficients :math:`\tilde{F}^{m}` of the azimuthal decomposition are given as follows:
+where :math:`m` is the azimuthal mode :math:`\tilde{F}^{m}` the :math:`m^{th}` Fourier azimuthal mode of :math:`F`.
+
+Expanding the series in Eq. :eq:`AzimuthalDecomposition1` yields:
+
+.. math::
+    :label: AzimuthalDecomposition2
+
+    F\left(x,r,\theta\right) = \tilde{F}^{0}_{real} + \tilde{F}^{1}_{real}cos(\theta) + \tilde{F}^{1}_{imag}sin(\theta) + \tilde{F}^{2}_{real}cos(2\theta) + \tilde{F}^{2}_{imag}sin(2\theta) + ...
+
+
+The complex coefficients :math:`\tilde{F}^{m}` of the azimuthal decomposition are given as follows:
 
 .. math::
 
@@ -57,7 +66,7 @@ can be written as
 
     \mathbf{E}_\perp(x,r,\theta, t) = E_y(x,r,\theta, t) e_y = E_r (x,r,\theta, t) e_r + E_{\theta}(x,r,\theta, t) e_{\theta} = E_y(x,r,t) [cos(\theta) e_r - sin(\theta) e_{\theta}].
 
-Thus, referring to Eq :eq:`AzimuthalDecomposition`, each of the cylindrical components of the mentioned laser at a given instant would be composed of a pure azimuthal mode of order :math:`m=1`, 
+Thus, referring to Eq :eq:`AzimuthalDecomposition2`, each of the cylindrical components of the mentioned laser at a given instant would be composed of a pure azimuthal mode of order :math:`m=1`, 
 multiplied by its Fourier coefficient :math:`\tilde{E}^1(x,r,t)`:
 
 .. math::
@@ -74,11 +83,13 @@ Physical phenomena with a high degree cylindrical symmetry, where the use of sim
 the low order azimuthal modes, since the Fourier coefficients of the higher order modes (representing a high degree of cylindrical asymmetry) are zero or negligible.
 
 For example, in a basic Laser Wakefield Acceleration set-up a laser pulse with cylindrically symmetric envelope could be described only by the mode :math:`m=1` and the cylindrically symmetric wave
-in its wake by the mode :math:`m=0`. Thus, a simulation of this phenomenon would need only two azimuthal modes (`number_of_AM=2` in the input namelist). 
+in its wake by the mode :math:`m=0`. This because the shape of the wake wave is mainly determined by the ponderomotive force of the laser, which depends on its cylindrically symmetric envelope. 
+Thus, a simulation of this phenomenon would in principle need only two azimuthal modes. In the namelist of the corresponding simulation with azimuthal modes decomposition (`geometry=AMcylindrical`), 
+the user would then choose `number_of_AM=2` in this case.  
 
-In the azimuthal modes decomposition simulations, only the :math:`\tilde{F}^{m}` of Eq. :eq:`AzimuthalDecomposition`, for each scalar field and for all the components of the vector fields, 
+In the azimuthal modes decomposition simulations, only the :math:`\tilde{F}^{m}` of Eq. :eq:`AzimuthalDecomposition1`, for each scalar field and for all the components of the vector fields, 
 are computed and stored. Each of them is a complex field defined in the :math:`(x,r)` space.
-In other words, for all the physical grid fields only the azimuthal modes from 0 to `(number_of_AM-1)`, the latter parameter defined by the user in the namelist, are considered. 
+In other words, for all the physical grid fields only the azimuthal modes from 0 to `(number_of_AM-1)` are considered. 
 
 In vacuum, the azimuthal modes of the cylindrical components of the electromagnetic fields would evolve independently. 
 Due to the linearity of Maxwell's Equations, we can write and solve them separately for each mode.
@@ -94,20 +105,40 @@ The resulting equations describing the mode :math:`m` evolution in presence of c
     \partial_t \tilde{E}^m_r = -\frac{im}{r}\tilde{B}^m_x-\partial_x \tilde{B}^m_{\theta}-\tilde{J}^m_{r},\\
     \partial_t \tilde{E}^m_{\theta} =\partial_x \tilde{B}^m_{r} - \partial_r \tilde{B}^m_{x}-\tilde{J}^m_{\theta}.
 
-Even in presence of a plasma, at each timestep these equations are solved independently. 
-The coupling between the modes occurs when the electromagnetic fields (the superposition of their the modes) interact with the particles, 
+Thus even in presence of a plasma (i.e. non zero current densities), at each timestep these equations are solved independently. 
+The coupling between the modes occurs when the electromagnetic fields (the superposition of their the modes obtained from Eq. :eq:`AzimuthalDecomposition1`) interact with the particles, 
 which in turn create the sources for Eqs. :eq:`MaxwellEqsAzimuthalModes`, i.e. the azimuthal components :math:`\tilde{J}^m` of their current density.  
 
 Indeed, the azimuthal decomposition concerns only the grid quantities (EM fields and current densities), but particles evolve in a full three dimensional space.
 Their positions and momenta are defined with 3D cartesian coordinates. 
-At each iteration, they are evolved in the phase space as in a 3D simulation, using the 3D cartesian electromagnetic fields reconstructed from Eq. :eq:`AzimuthalDecomposition`.
-Then, depending on their position :math:`(x,r,\theta)`, their azimuthal contribution to the current densities :math:`(J_x,J_r,J_{\theta})` are computed 
+At each iteration, they are evolved in the phase space as in a 3D simulation, using the 3D cartesian electromagnetic fields reconstructed from Eq. :eq:`AzimuthalDecomposition1`.
+The angle :math:`\theta` of each particle is computed from its position to know the total electromagnetic field acting on it (reconstructed from Eq. :eq:`AzimuthalDecomposition1` ).
+Then, again depending on their position :math:`(x,r,\theta)`, their azimuthal contribution to the current densities :math:`(J_x,J_r,J_{\theta})` are computed 
 to evolve the electromagnetic fields at the next PIC iteration solving Eqs :eq:`MaxwellEqsAzimuthalModes`.
 
 The same reconstruction can be done through the :program:`Smilei` post processing tool :program:`Happi`.  
 Note that each mode :math:`\tilde{F}^{m}` is a function of :math:`x`, the longitudinal coordinate and :math:`r`, the radial coordinate.
-Therefore, each of them is only two dimensional. The computational cost of simulations with azimuthal decompositions in principle scales then approximately as 
+Therefore, each of them is only two dimensional. Thus, the computational cost of simulations with azimuthal decompositions in principle scales approximately as 
 `number_of_AM` simulations in 2D, but obtaining results with 3D accuracy if a suitable number of modes is used. 
+Note although that, due to the cylindrical geometry, a higher number of particles than in a 2D  or 3D cartesian simulation could be necessary to obtain convergence of the results.
+In this geometry, always check the convergence of your results trying to increase the number of particles and of retained modes.
+
+
+----
+
+Defining diagnostics and initializing Profiles with s cylindrical geometry
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If in doubt on how to initialize particles or a `Profile`, bear in mind how the quantities are defined in this geometry and the reference axes of the simulation (first Figure of this page).
+
+Particles are defined in the 3D space, so if you want to initialize a `Species` with a numpy array you will still need to provide their coordinates
+in the 3D cartesian space, but remembering that the :math:`y` and :math:`z` axes have their origins on the propagation axis (which is normally not the case in 2D and 3D cartesian simulations).
+`Probes` diagnostics are like particles interpolating the reconstructed grid fields (including all the retained modes), so the same axes convention must be followed in defining their `origin` and `corners`.
+
+Grid quantities instead are defined on the :math:`(x,r)` grid. Thus, `ExternalFields` and density/charge `Profiles` must be defined with functions of the :math:`(x,r)` coordinates.
+Remember that `ExternalFields` are defined by mode. 
+
+
 
 
 
