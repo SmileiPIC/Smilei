@@ -197,7 +197,11 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
     
     
     hid_t fid = H5Fcreate( dumpName.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT );
-    dump_number++;
+    if (fid<0) {
+        ERROR("Can't open file for writing checkpoint " << dumpName.c_str())
+    } else {
+        dump_number++;
+    }
     
 #ifdef  __DEBUG
     MESSAGEALL( "Step " << itime << " : DUMP fields and particles " << dumpName );
@@ -279,7 +283,10 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
         dumpMovingWindow( fid, simWin );
     }
     
-    H5Fclose( fid );
+    herr_t tclose = H5Fclose( fid );
+    if (tclose < 0) {
+        ERROR("Can't close file " << dumpName.c_str())
+    }
     
 }
 
