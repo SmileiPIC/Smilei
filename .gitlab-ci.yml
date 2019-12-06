@@ -105,9 +105,5 @@ use_picsar:
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
     - make clean
-    - module load fftw/3.3.7-opm-1.6.5-icc-17
-    - ls /home/llr/galop/derouil/applications/picsar/lib
-    - export LIBPXR=/home/llr/galop/derouil/applications/picsar/lib
-    - export LD_LIBRARY_PATH=$LIBPXR:$LD_LIBRARY_PATH
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     - python validation.py -c -v -k picsar
