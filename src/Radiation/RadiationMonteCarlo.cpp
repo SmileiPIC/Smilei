@@ -317,7 +317,7 @@ void RadiationMonteCarlo::photonEmission( int ipart,
         // First method: emission of a single photon
 
         // Creation of the new photon in the temporary array new_photons_
-        new_photons_.create_particle();
+        new_photons_.createParticle();
 
         int idNew = new_photons_.size() - 1;
 
@@ -342,7 +342,7 @@ void RadiationMonteCarlo::photonEmission( int ipart,
         // the parameter radiation_photon_sampling_
 
         // Creation of new photons in the temporary array new_photons_
-        new_photons_.create_particles( radiation_photon_sampling_ );
+        new_photons_.createParticles( radiation_photon_sampling_ );
 
         // Final size
         int npart = new_photons_.size();

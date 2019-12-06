@@ -216,8 +216,8 @@ void CollisionalIonization::prepare3( double timestep, double inv_cell_volume )
 // Method to apply the ionization
 void CollisionalIonization::apply( Patch *patch, Particles *p1, int i1, Particles *p2, int i2 )
 {
-    double gamma1 = p1->lor_fac( i1 );
-    double gamma2 = p2->lor_fac( i2 );
+    double gamma1 = p1->LorentzFactor( i1 );
+    double gamma2 = p2->LorentzFactor( i2 );
     // Calculate lorentz factor in the frame of ion
     double gamma_s = gamma1*gamma2
                      - p1->momentum( 0, i1 )*p2->momentum( 0, i2 )
@@ -325,7 +325,7 @@ void CollisionalIonization::calculate( double gamma_s, double gammae, double gam
         // Ionize the atom and create electron
         if( U2 < WeWi ) {
             pi->charge( ii )++; // increase ion charge
-            pe->cp_particle_safe( ie, new_electrons ); // duplicate electron
+            pe->copyParticleSafe( ie, new_electrons ); // duplicate electron
             new_electrons.Weight.back() = Wi; // new electron has ion weight
             // Calculate the new electron momentum
             pr = sqrt( w*( w+2. )/p2 );

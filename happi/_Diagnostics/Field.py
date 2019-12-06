@@ -7,6 +7,7 @@ class Field(Diagnostic):
 	def _init(self, diagNumber=None, field=None, timesteps=None, subset=None, average=None, data_log=False, moving=False, **kwargs):
 		
 		self.moving = moving
+		self._subsetinfo = {}
 		
 		self.cylindrical = self.namelist.Main.geometry == "AMcylindrical"
 		
@@ -250,7 +251,6 @@ class Field(Diagnostic):
 		# 3 - Manage axes
 		# -------------------------------------------------------------------
 		self._naxes = len(self._initialShape)
-		self._subsetinfo = {}
 		self._finalShape = self._np.copy(self._initialShape)
 		self._averages = [False]*self._naxes
 		self._selection = [self._np.s_[:]]*self._naxes
@@ -273,7 +273,10 @@ class Field(Diagnostic):
 				try:
 					self._subsetinfo[label], self._selection[iaxis], self._finalShape[iaxis] \
 						= self._selectRange(average[label], centers, label, axisunits, "average")
-				except:
+				except Exception as e:
+					if not self._error:
+						self._error += ["Error handling average:"]
+						self._error += [str(e)]
 					return
 			# Otherwise
 			else:
@@ -282,7 +285,10 @@ class Field(Diagnostic):
 					try:
 						self._subsetinfo[label], self._selection[iaxis], self._finalShape[iaxis] \
 							= self._selectSubset(subset[label], centers, label, axisunits, "subset")
-					except:
+					except Exception as e:
+						if not self._error:
+							self._error += ["Error handling subset:"]
+							self._error += [str(e)]
 						return
 				# If subset has more than 1 point (or no subset), use this axis in the plot
 				if type(self._selection[iaxis]) is slice:
@@ -371,6 +377,8 @@ class Field(Diagnostic):
 			s += "\n\tGrid offset: " + ", ".join([str(a) for a in self._offset])
 		if any(self._spacing != self._cell_length):
 			s += "\n\tGrid spacing: " + ", ".join([str(a) for a in self._spacing])
+		for l in self._subsetinfo:
+			s += "\n\t"+self._subsetinfo[l]
 		return s
 	
 	# get all available field diagnostics

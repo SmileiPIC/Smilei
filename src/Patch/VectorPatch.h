@@ -66,7 +66,7 @@ public :
     
     //! Set Id of the 1st patch stored on the current MPI process
     //!   used during balancing
-    inline void set_refHindex()
+    inline void setRefHindex()
     {
         refHindex_ = patches_[0]->Hindex();
     }

@@ -539,7 +539,7 @@ void DiagnosticProbes::createPoints( SmileiMPI *smpi, VectorPatch &vecPatches, b
 
         // Resize the array with only particles in this patch
         particles->resize( ipart_local, nDim_particle );
-        particles->shrink_to_fit();
+        particles->shrinkToFit();
 
         // Add the local offset
         offset_in_MPI[ipatch] = nPart_MPI;
