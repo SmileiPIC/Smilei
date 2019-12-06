@@ -7,7 +7,7 @@ compile:
   stage: compile
   only:
     - develop
-    - merge_sdmd_dev
+    #- merge_sdmd_dev
 
   script:
     # Force workdir cleaning in case of retried
@@ -106,6 +106,7 @@ use_picsar:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
     - make clean
     - module load fftw/3.3.7-opm-1.6.5-icc-17
+    - ls /home/llr/galop/derouil/applications/picsar/lib
     - export LIBPXR=/home/llr/galop/derouil/applications/picsar/lib
     - export LD_LIBRARY_PATH=$LIBPXR:$LD_LIBRARY_PATH
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
