@@ -51,7 +51,7 @@ Main(
     solve_poisson = False,
     cell_length = [dx, dr],
     grid_length  = Lsim,
-    number_of_patches = [2, 1 ],
+    number_of_patches = [32, 4 ],
     timestep = dt,
     simulation_time = nstep*dt,
      
@@ -65,8 +65,8 @@ Main(
     is_spectral=True,
     uncoupled_grids = True,
     is_pxr = True,
-    norder = [0,0],
-    pseudo_spectral_guardells = 20,
+    norder = [32,0],
+    pseudo_spectral_guardells = 64,
     apply_divergence_cleaning = True
 )
 
