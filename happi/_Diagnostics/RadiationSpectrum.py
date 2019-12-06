@@ -250,7 +250,7 @@ class RadiationSpectrum(Diagnostic):
 
 		# If any spatial dimension did not appear, then count it for calculating the correct density
 		# MG/2019/12/05 --- I don't think we need these last lines for the RadiationSpectrumDiag
-		#                   Fred, can you check this???
+		#                   After discussion with Fred this departs from ParticleBinning but is ok
 		#if self._ndim_particles>=1 and not spatialaxes["x"]: coeff /= self._ncels[ 0]*self._cell_length[ 0]
 		#if self._ndim_particles>=2 and not spatialaxes["y"]: coeff /= self._ncels[ 1]*self._cell_length[ 1]
 		#if self._ndim_particles==3 and not spatialaxes["z"]: coeff /= self._ncels[-1]*self._cell_length[-1]
