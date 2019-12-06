@@ -125,17 +125,18 @@ COMPILE_ONLY = False
 GENERATE = False
 SHOWDIFF = False
 nb_restarts = 0
+COMPILE_MODE=""
 
 # TO PRINT USAGE
 def usage():
-	print( 'Usage: validation.py [-c] [-h] [-v] [-b <bench_case>] [-o <nb_OMPThreads>] [-m <nb_MPIProcs>] [-g | -s] [-r <nb_restarts>]' )
+	print( 'Usage: validation.py [-c] [-h] [-v] [-b <bench_case>] [-o <nb_OMPThreads>] [-m <nb_MPIProcs>] [-g | -s] [-r <nb_restarts>] [-k <compile_mode>]' )
 
 # GET COMMAND-LINE OPTIONS
 try:
 	options, remainder = getopt.getopt(
 		sys.argv[1:],
-		'o:m:b:r:gshvc',
-		['OMP=', 'MPI=', 'BENCH=', 'COMPILE_ONLY=', 'GENERATE=', 'HELP=', 'VERBOSE=', 'RESTARTS='])
+		'o:m:b:r:k:gshvc',
+		['OMP=', 'MPI=', 'BENCH=', 'COMPILE_ONLY=', 'GENERATE=', 'HELP=', 'VERBOSE=', 'RESTARTS=', 'COMPILE_MODE='])
 except getopt.GetoptError as err:
 	usage()
 	sys.exit(4)
@@ -150,8 +151,10 @@ for opt, arg in options:
 		MPI = int(arg)
 	elif opt in ('-b', '--BENCH'):
 		BENCH = arg
-	elif opt in ('-c', '--COMPILEONLY'):
+	elif opt in ('-c', '--COMPILE_ONLY'):
 		COMPILE_ONLY=True
+	elif opt in ('-k', '--COMPILE_MODE'):
+		COMPILE_MODE=arg
 	elif opt in ('-h', '--HELP'):
 		print( "-b")
 		print( "     -b <bench_case>")
@@ -176,6 +179,8 @@ for opt, arg in options:
 		print( "     DEFAULT : 0 (meaning no restarts, only one simulation)")
 		print( "-c")
 		print( "     Compilation only")
+		print( "-k")
+		print( "     Compilation using config=... See make help for details")
 		print( "-v")
 		print( "     Verbose mode")
 		sys.exit(0)
@@ -402,6 +407,10 @@ COMPILE_ERRORS=WORKDIR_BASE+s+'compilation_errors'
 COMPILE_OUT=WORKDIR_BASE+s+'compilation_out'
 COMPILE_OUT_TMP=WORKDIR_BASE+s+'compilation_out_temp'
 
+MAKE='make'
+if COMPILE_MODE:
+        MAKE += " config="+COMPILE_MODE
+
 # Find commands according to the host
 if JOLLYJUMPER in HOSTNAME :
 	if 12 % OMP != 0:
@@ -409,7 +418,7 @@ if JOLLYJUMPER in HOSTNAME :
 		sys.exit(4)
 	NODES=((int(MPI)*int(OMP)-1)/24)+1
 	NPERSOCKET = int(math.ceil(MPI/NODES/2.))
-	COMPILE_COMMAND = 'make -j 12 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+	COMPILE_COMMAND = str(MAKE)+' -j 12 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
 	SMILEI_DATABASE = SMILEI_ROOT + '/databases/'
 	RUN_COMMAND = "mpirun -mca orte_num_sockets 2 -mca orte_num_cores 12 -cpus-per-proc "+str(OMP)+" --npersocket "+str(NPERSOCKET)+" -n "+str(MPI)+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"
@@ -417,7 +426,7 @@ if JOLLYJUMPER in HOSTNAME :
 elif POINCARE in HOSTNAME :
 	#COMPILE_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make -j 6 > compilation_out_temp 2>'+COMPILE_ERRORS
 	#CLEAN_COMMAND = 'module load intel/15.0.0 openmpi hdf5/1.8.10_intel_openmpi python gnu > /dev/null 2>&1;make clean > /dev/null 2>&1'
-	COMPILE_COMMAND = 'make -j 6 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+	COMPILE_COMMAND = str(MAKE)+' -j 6 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'module load intel/15.0.0 intelmpi/5.0.1 hdf5/1.8.16_intel_intelmpi_mt python/anaconda-2.1.0 gnu gnu ; unset LD_PRELOAD ; export PYTHONHOME=/gpfslocal/pub/python/anaconda/Anaconda-2.1.0 > /dev/null 2>&1;make clean > /dev/null 2>&1'
 	SMILEI_DATABASE = SMILEI_ROOT + '/databases/'
 	RUN_COMMAND = "mpirun -np "+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
@@ -436,7 +445,7 @@ else:
 	else:
 		MPIRUN = "mpirun -np "
 
-	COMPILE_COMMAND = 'make -j4 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+	COMPILE_COMMAND = str(MAKE)+' -j4 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
 	SMILEI_DATABASE = SMILEI_ROOT + '/databases/'
 	RUN_COMMAND = "export OMP_NUM_THREADS="+str(OMP)+"; "+MPIRUN+str(MPI)+" "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT
@@ -469,6 +478,7 @@ try :
 	else:
 		if COMPILE_ONLY :
 			if VERBOSE:
+                                print SMILEI_R, SMILEI_W, STAT_SMILEI_R_OLD
 				print(  "Smilei validation not needed.")
 			exit(0)
 except CalledProcessError as e:
