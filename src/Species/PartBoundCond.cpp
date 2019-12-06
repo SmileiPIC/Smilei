@@ -77,8 +77,9 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
     // Check for inconsistencies between EM and particle BCs
     if( ! species->particles->tracked ) {
         for( unsigned int iDim=0; iDim<( unsigned int )nDim_field; iDim++ ) {
-            if( ( ( params.EM_BCs[iDim][0]=="periodic" )&&( species->boundary_conditions[iDim][0]!="periodic" ) )
-                    || ( ( params.EM_BCs[iDim][1]=="periodic" )&&( species->boundary_conditions[iDim][1]!="periodic" ) ) ) {
+            if(     (  ( ( params.EM_BCs[iDim][0]=="periodic" )&&( species->boundary_conditions[iDim][0]!="periodic" ) )
+                    || ( ( params.EM_BCs[iDim][1]=="periodic" )&&( species->boundary_conditions[iDim][1]!="periodic" ) )) 
+                 && (params.is_spectral==false)) {
                 WARNING( "For species " << species->name_ << ", periodic EM "<<"xyz"[iDim]<<"-boundary conditions require particle BCs to be periodic." );
             }
         }
