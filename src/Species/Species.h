@@ -582,7 +582,9 @@ public:
                     + part->position(idim+1, ipart) * part->position(idim+1, ipart))
                - min_loc_vec[idim];
     }
-
+    
+    //! Erase all particles with zero weight
+    void eraseWeightlessParticles();
 
 protected:
 

@@ -144,6 +144,14 @@ void Particles::reserve( unsigned int n_part_max, unsigned int nDim )
 
 }
 
+void Particles::initialize_reserve( unsigned int npart_max, Particles &part )
+{
+    initialize( 0, part );
+    reserve( npart_max, part.dimension() );
+}
+
+
+
 // ---------------------------------------------------------------------------------------------------------------------
 //Resize Particle vectors
 // ---------------------------------------------------------------------------------------------------------------------
@@ -318,12 +326,16 @@ void Particles::cp_particles( unsigned int iPart, unsigned int nPart, Particles 
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::cp_particle_safe( unsigned int ipart, Particles &dest_parts )
 {
-    unsigned int nprop = double_prop.size();
-    if( dest_parts.double_prop.size() < nprop ) {
-        nprop = dest_parts.double_prop.size();
+    unsigned int ndouble = double_prop.size();
+    if( dest_parts.double_prop.size() < ndouble ) {
+        ndouble = dest_parts.double_prop.size();
+    }
+    unsigned int nuint = uint64_prop.size();
+    if( dest_parts.uint64_prop.size() < nuint ) {
+        nuint = dest_parts.uint64_prop.size();
     }
     
-    for( unsigned int iprop=0 ; iprop<nprop ; iprop++ ) {
+    for( unsigned int iprop=0 ; iprop<ndouble ; iprop++ ) {
         dest_parts.double_prop[iprop]->push_back( ( *double_prop[iprop] )[ipart] );
     }
     
@@ -331,7 +343,7 @@ void Particles::cp_particle_safe( unsigned int ipart, Particles &dest_parts )
         dest_parts.short_prop[iprop]->push_back( ( *short_prop[iprop] )[ipart] );
     }
     
-    for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
+    for( unsigned int iprop=0 ; iprop<nuint ; iprop++ ) {
         dest_parts.uint64_prop[iprop]->push_back( ( *uint64_prop[iprop] )[ipart] );
     }
 }

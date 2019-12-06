@@ -38,6 +38,9 @@ public:
 
     //! Set capacity of Particles vectors
     void reserve( unsigned int n_part_max, unsigned int nDim );
+    
+    //! Initialize like another particle, but only reserve space
+    void initialize_reserve( unsigned int n_part_max, Particles &part );
 
     //! Resize Particles vectors
     void resize( unsigned int nParticles, unsigned int nDim );

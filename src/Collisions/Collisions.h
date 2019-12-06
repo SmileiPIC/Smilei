@@ -7,6 +7,8 @@
 #include "Tools.h"
 #include "H5.h"
 #include "CollisionalIonization.h"
+#include "CollisionalNuclearReaction.h"
+#include "CollisionalFusionDD.h"
 
 class Patch;
 class Params;
@@ -18,12 +20,20 @@ class Collisions
 
 public:
     //! Constructor for Collisions between two species
-    Collisions( Params &params, unsigned int n_collisions, std::vector<unsigned int>,
-                std::vector<unsigned int>, double coulomb_log, bool intra_collisions,
-                int debug_every, int Z, int ionization_electrons, Particles * ionization_particles,
-                int nDim, std::string );
+    Collisions(
+        Params &params,
+        unsigned int n_collisions,
+        std::vector<unsigned int>,
+        std::vector<unsigned int>,
+        double coulomb_log,
+        bool intra_collisions,
+        int debug_every,
+        CollisionalIonization *ionization,
+        CollisionalNuclearReaction *nuclear_reaction,
+        std::string
+    );
     //! Cloning Constructor
-    Collisions( Collisions *, int );
+    Collisions( Collisions * );
     //! destructor
     virtual ~Collisions();
     
@@ -42,6 +52,8 @@ public:
     //! CollisionalIonization object, created if ionization required
     CollisionalIonization *Ionization;
     
+    CollisionalNuclearReaction *NuclearReaction;
+    
 protected:
 
     //! Identification number of the Collisions object
@@ -58,9 +70,6 @@ protected:
     
     //! Number of timesteps between each dump of collisions debugging
     int debug_every_;
-    
-    //! Species atomic number, in case of ionization
-    int atomic_number;
     
     //! Hdf5 file name
     std::string filename_;
@@ -79,7 +88,7 @@ protected:
         double m1,
         Particles *p2,
         unsigned int i2,
-        double m12,
+        double m2,
         double coeff1,
         double coeff2,
         double coeff3,
@@ -93,34 +102,31 @@ protected:
         double phi
     )
     {
-        double qqm, qqm2, gamma1, gamma2, gamma12, gamma12_inv,
-               COM_vx, COM_vy, COM_vz, COM_vsquare, COM_gamma,
-               term1, term2, term3, term4, term5, term6,
-               vcv1, vcv2, px_COM, py_COM, pz_COM, p2_COM, p_COM, gamma1_COM, gamma2_COM,
-               bmin, s, vrel, smax,
-               cosX, sinX, sinXcosPhi, sinXsinPhi, p_perp, inv_p_perp,
+        double term6, cosX, sinX, sinXcosPhi, sinXsinPhi, p_perp, inv_p_perp,
                newpx_COM, newpy_COM, newpz_COM, vcp;
-               
-        // Calculate stuff
-        qqm  = p1->charge( i1 ) * p2->charge( i2 ) / m1;
-        qqm2 = qqm * qqm;
+        
+        // If one weight is zero, then skip. Can happen after nuclear reaction
+        double minW = std::min( p1->weight(i1), p2->weight(i2) );
+        if( minW <= 0. ) return 0.;
         
         // Get momenta and calculate gammas
-        gamma1 = sqrt( 1. + p1->momentum( 0, i1 )*p1->momentum( 0, i1 ) + p1->momentum( 1, i1 )*p1->momentum( 1, i1 ) + p1->momentum( 2, i1 )*p1->momentum( 2, i1 ) );
-        gamma2 = sqrt( 1. + p2->momentum( 0, i2 )*p2->momentum( 0, i2 ) + p2->momentum( 1, i2 )*p2->momentum( 1, i2 ) + p2->momentum( 2, i2 )*p2->momentum( 2, i2 ) );
-        gamma12 = m12 * gamma1 + gamma2;
-        gamma12_inv = 1./gamma12;
+        double m12 = m1 / m2;
+        double gamma1 = sqrt( 1. + p1->momentum( 0, i1 )*p1->momentum( 0, i1 ) + p1->momentum( 1, i1 )*p1->momentum( 1, i1 ) + p1->momentum( 2, i1 )*p1->momentum( 2, i1 ) );
+        double gamma2 = sqrt( 1. + p2->momentum( 0, i2 )*p2->momentum( 0, i2 ) + p2->momentum( 1, i2 )*p2->momentum( 1, i2 ) + p2->momentum( 2, i2 )*p2->momentum( 2, i2 ) );
+        double gamma12 = m12 * gamma1 + gamma2;
+        double gamma12_inv = 1./gamma12;
         
         // Calculate the center-of-mass (COM) frame
         // Quantities starting with "COM" are those of the COM itself, expressed in the lab frame.
         // They are NOT quantities relative to the COM.
-        COM_vx = ( m12 * ( p1->momentum( 0, i1 ) ) + p2->momentum( 0, i2 ) ) * gamma12_inv;
-        COM_vy = ( m12 * ( p1->momentum( 1, i1 ) ) + p2->momentum( 1, i2 ) ) * gamma12_inv;
-        COM_vz = ( m12 * ( p1->momentum( 2, i1 ) ) + p2->momentum( 2, i2 ) ) * gamma12_inv;
-        COM_vsquare = COM_vx*COM_vx + COM_vy*COM_vy + COM_vz*COM_vz;
+        double COM_vx = ( m12 * ( p1->momentum( 0, i1 ) ) + p2->momentum( 0, i2 ) ) * gamma12_inv;
+        double COM_vy = ( m12 * ( p1->momentum( 1, i1 ) ) + p2->momentum( 1, i2 ) ) * gamma12_inv;
+        double COM_vz = ( m12 * ( p1->momentum( 2, i1 ) ) + p2->momentum( 2, i2 ) ) * gamma12_inv;
+        double COM_vsquare = COM_vx*COM_vx + COM_vy*COM_vy + COM_vz*COM_vz;
         
         // Change the momentum to the COM frame (we work only on particle 1)
         // Quantities ending with "COM" are quantities of the particle expressed in the COM frame.
+        double COM_gamma, term1, term2, vcv1, vcv2, px_COM, py_COM, pz_COM, gamma1_COM, gamma2_COM;
         if( COM_vsquare != 0. ) {
             COM_gamma = 1./sqrt( 1.-COM_vsquare );
             term1 = ( COM_gamma - 1. ) / COM_vsquare;
@@ -142,17 +148,128 @@ protected:
             gamma1_COM = gamma1;
             gamma2_COM = gamma2;
         }
-        p2_COM = px_COM*px_COM + py_COM*py_COM + pz_COM*pz_COM;
-        p_COM  = sqrt( p2_COM );
+        double p2_COM = px_COM*px_COM + py_COM*py_COM + pz_COM*pz_COM;
+        double p_COM  = sqrt( p2_COM );
         
         // Calculate some intermediate quantities
-        term3 = COM_gamma * gamma12_inv;
-        term4 = gamma1_COM * gamma2_COM;
-        term5 = term4/p2_COM + m12;
+        double term3 = COM_gamma * gamma12_inv;
+        double term4 = gamma1_COM * gamma2_COM;
+        double term5 = term4/p2_COM + m12;
+        double vrel = p_COM/term3/term4; // relative velocity
+        
+        // We first try to do a nuclear reaction
+        // If succesful, then no need to do a collision
+        double E, logE;
+        if( NuclearReaction->occurs( U1, vrel*coeff3, m1, m2, gamma1_COM, gamma2_COM, E, logE, minW ) ) {
+            // Reduce the weight of both reactants
+            // If becomes zero, then the particle will be discarded later
+            p1->weight(i1) -= minW;
+            p2->weight(i2) -= minW;
+            
+            // Get the magnitude and the angle of the outgoing products in the COM frame
+            Particles *p3 = NULL, *p4 = NULL;
+            double p3_COM, p4_COM, q3, q4;
+            double tot_charge = p1->charge( i1 ) + p2->charge( i2 );
+            U2 = 2*U2 - 1.;
+            if( U2 > 0. ) {
+                NuclearReaction->makeProducts( abs(U2), E, logE, tot_charge, p3, p4, p3_COM, p4_COM, q3, q4, cosX );
+            } else {
+                NuclearReaction->makeProducts( abs(U2), E, logE, tot_charge, p4, p3, p4_COM, p3_COM, q4, q3, cosX );
+            }
+            
+            // Calculate combination of angles 
+            sinX = sqrt( 1. - cosX*cosX );
+            sinXcosPhi = sinX*cos( phi );
+            sinXsinPhi = sinX*sin( phi );
+            
+            // Calculate the deflection in the COM frame
+            p_perp = sqrt( px_COM*px_COM + py_COM*py_COM );
+            if( p_perp > 1.e-10*p_COM ) { // make sure p_perp is not too small
+                inv_p_perp = 1./p_perp;
+                newpx_COM = ( px_COM * pz_COM * sinXcosPhi - py_COM * p_COM * sinXsinPhi ) * inv_p_perp + px_COM * cosX;
+                newpy_COM = ( py_COM * pz_COM * sinXcosPhi + px_COM * p_COM * sinXsinPhi ) * inv_p_perp + py_COM * cosX;
+                newpz_COM = -p_perp * sinXcosPhi  +  pz_COM * cosX;
+            } else { // if p_perp is too small, we use the limit px->0, py=0
+                newpx_COM = p_COM * sinXcosPhi;
+                newpy_COM = p_COM * sinXsinPhi;
+                newpz_COM = p_COM * cosX;
+            }
+            
+            // Go back to the lab frame and store the results in the particle array
+            vcp = COM_vx * newpx_COM + COM_vy * newpy_COM + COM_vz * newpz_COM;
+            double newW1, newW2;
+            if( p1->charge(i1) != 0. || p2->charge(i2) != 0. ) {
+                double weight_factor = minW / tot_charge;
+                newW1 = p1->charge( i1 ) * weight_factor;
+                newW2 = p2->charge( i2 ) * weight_factor;
+            } else {
+                newW1 = minW;
+                newW2 = 0.;
+            }
+            if( p3 ) {
+                double momentum_ratio = p3_COM / p_COM;
+                term6 = momentum_ratio*term1*vcp + sqrt( p3_COM*p3_COM + 1. ) * COM_gamma;
+                double newpx = momentum_ratio * newpx_COM + COM_vx * term6;
+                double newpy = momentum_ratio * newpy_COM + COM_vy * term6;
+                double newpz = momentum_ratio * newpz_COM + COM_vz * term6;
+                // Make new particle at position of particle 1
+                if( newW1 > 0. ) {
+                    p1->cp_particle_safe( i1, *p3 );
+                    p3->Weight.back() = newW1;
+                    p3->Charge.back() = q3;
+                    p3->Momentum[0].back() = newpx;
+                    p3->Momentum[1].back() = newpy;
+                    p3->Momentum[2].back() = newpz;
+                }
+                // Make new particle at position of particle 2
+                if( newW2 > 0. ) {
+                    p2->cp_particle_safe( i2, *p3 );
+                    p3->Weight.back() = newW2;
+                    p3->Charge.back() = q3;
+                    p3->Momentum[0].back() = newpx;
+                    p3->Momentum[1].back() = newpy;
+                    p3->Momentum[2].back() = newpz;
+                }
+            }
+            if( p4 ) {
+                double momentum_ratio = p4_COM / p_COM;
+                term6 = -momentum_ratio*term1*vcp + sqrt( p4_COM*p4_COM + 1. ) * COM_gamma;
+                double newpx = -momentum_ratio * newpx_COM + COM_vx * term6;
+                double newpy = -momentum_ratio * newpy_COM + COM_vy * term6;
+                double newpz = -momentum_ratio * newpz_COM + COM_vz * term6;
+                // Make new particle at position of particle 1
+                if( newW1 > 0. ) {
+                    p1->cp_particle_safe( i1, *p4 );
+                    p4->Weight.back() = newW1;
+                    p4->Charge.back() = q4;
+                    p4->Momentum[0].back() = newpx;
+                    p4->Momentum[1].back() = newpy;
+                    p4->Momentum[2].back() = newpz;
+                }
+                // Make new particle at position of particle 2
+                if( newW2 > 0. ) {
+                    p2->cp_particle_safe( i2, *p4 );
+                    p4->Weight.back() = newW2;
+                    p4->Charge.back() = q4;
+                    p4->Momentum[0].back() = newpx;
+                    p4->Momentum[1].back() = newpy;
+                    p4->Momentum[2].back() = newpz;
+                }
+            }
+            
+            if( p1->weight(i1) == 0. || p2->weight(i2) == 0. ) {
+                return 0.; // no collision
+            }
+            
+        } // end nuclear reaction
+        
+        // Calculate stuff
+        double qqm  = p1->charge( i1 ) * p2->charge( i2 ) / m1;
+        double qqm2 = qqm * qqm;
         
         // Calculate coulomb log if necessary
         if( logL <= 0. ) { // if auto-calculation requested
-            bmin = std::max( coeff1/m1/p_COM, std::abs( coeff2*qqm*term3*term5 ) ); // min impact parameter
+            double bmin = std::max( coeff1/m1/p_COM, std::abs( coeff2*qqm*term3*term5 ) ); // min impact parameter
             logL = 0.5*log( 1.+debye2/( bmin*bmin ) );
             if( logL < 2. ) {
                 logL = 2.;
@@ -160,11 +277,10 @@ protected:
         }
         
         // Calculate the collision parameter s12 (similar to number of real collisions)
-        s = coeff3 * logL * qqm2 * term3 * p_COM * term5*term5 / ( gamma1*gamma2 );
+        double s = coeff3 * logL * qqm2 * term3 * p_COM * term5*term5 / ( gamma1*gamma2 );
         
         // Low-temperature correction
-        vrel = p_COM/term3/term4; // relative velocity
-        smax = coeff4 * ( m12+1. ) * vrel / std::max( m12*n123, n223 );
+        double smax = coeff4 * ( m12+1. ) * vrel / std::max( m12*n123, n223 );
         if( s>smax ) {
             s = smax;
         }
@@ -224,7 +340,8 @@ protected:
         }
         
         return s;
-    }
+        
+    };
 };
 
 

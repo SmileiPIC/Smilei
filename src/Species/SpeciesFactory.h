@@ -82,7 +82,7 @@ public:
             }
         } else {
             // Cancelation of the letter case for `radiation_model`
-            std::transform( radiation_model.begin(), radiation_model.end(), radiation_model.begin(), tolower );
+            std::transform( radiation_model.begin(), radiation_model.end(), radiation_model.begin(), ::tolower );
 
             // Name simplification
             if( radiation_model=="monte-carlo" ) {
@@ -308,7 +308,7 @@ public:
             // Cancelation of the letter case for `merging_method_`
             std::transform( this_species->merging_method_.begin(),
                             this_species->merging_method_.end(),
-                            this_species->merging_method_.begin(), tolower );
+                            this_species->merging_method_.begin(), ::tolower );
 
             if( ( this_species->merging_method_ != "vranic_spherical" ) &&
                 ( this_species->merging_method_ != "vranic_cartesian" ) &&
@@ -347,7 +347,7 @@ public:
                                << "(`merge_min_packet_size`)"
                                << "must be above or equal to 4.");
                     }
-                    if (this_species->merge_min_packet_size_ < 4 && this_species->mass_ > 0)
+                    if (this_species->merge_min_packet_size_ < 4 && this_species->mass_ == 0)
                     {
                         ERROR( "In Species " << this_species->name_
                                << " of type photon"
@@ -1105,97 +1105,77 @@ public:
             }
         }
 
-        // Loop species to find the electron species for ionizable species
+        // Loop species to find related species
         for( unsigned int ispec1 = 0; ispec1<returned_species.size(); ispec1++ ) {
-            if( ! returned_species[ispec1]->Ionize ) {
-                continue;
-            }
-
-            // Loop all other species
-            for( unsigned int ispec2 = 0; ispec2<returned_species.size(); ispec2++ ) {
-                if( returned_species[ispec1]->ionization_electrons == returned_species[ispec2]->name_ ) {
-                    if( ispec1==ispec2 ) {
-                        ERROR( "For species '"<<returned_species[ispec1]->name_<<"' ionization_electrons must be a distinct species" );
-                    }
-                    if( returned_species[ispec2]->mass_!=1 ) {
-                        ERROR( "For species '"<<returned_species[ispec1]->name_<<"' ionization_electrons must be a species with mass==1" );
-                    }
-                    returned_species[ispec1]->electron_species_index = ispec2;
-                    returned_species[ispec1]->electron_species = returned_species[ispec2];
-                    returned_species[ispec1]->Ionize->new_electrons.tracked            = returned_species[ispec1]->electron_species->particles->tracked;
-                    returned_species[ispec1]->Ionize->new_electrons.isQuantumParameter = returned_species[ispec1]->electron_species->particles->isQuantumParameter;
-                    returned_species[ispec1]->Ionize->new_electrons.isMonteCarlo       = returned_species[ispec1]->electron_species->particles->isMonteCarlo;
-                    returned_species[ispec1]->Ionize->new_electrons.initialize( 0, params.nDim_particle );
-                    if( ( !returned_species[ispec1]->getNbrOfParticles() ) && ( !returned_species[ispec2]->getNbrOfParticles() ) ) {
-                        if( returned_species[ispec1]->atomic_number_!=0 ) {
-                            int max_eon_number = returned_species[ispec1]->getNbrOfParticles() * returned_species[ispec1]->atomic_number_;
-                            returned_species[ispec2]->particles->reserve( max_eon_number, returned_species[ispec2]->particles->dimension() );
-                        } else if( returned_species[ispec1]->maximum_charge_state_!=0 ) {
-                            int max_eon_number = returned_species[ispec1]->getNbrOfParticles() * returned_species[ispec1]->maximum_charge_state_;
-                            returned_species[ispec2]->particles->reserve( max_eon_number, returned_species[ispec2]->particles->dimension() );
-                        }
-                    }
-                    break;
-                }
-            }
-            if( returned_species[ispec1]->electron_species_index==-1 ) {
-                ERROR( "For species '"<<returned_species[ispec1]->name_<<"' ionization_electrons named " << returned_species[ispec1]->ionization_electrons << " could not be found" );
-            }
-        }
-
-        // Loop species to find the photon species for radiation species
-        for( unsigned int ispec1 = 0; ispec1<returned_species.size(); ispec1++ ) {
-            if( ! returned_species[ispec1]->Radiate ) {
-                continue;
-            }
-
-            // No emission of discrete photon, only scalar diagnostics are updated
-            if( returned_species[ispec1]->radiation_photon_species.empty() ) {
-                returned_species[ispec1]->photon_species_index = -1;
-                returned_species[ispec1]->photon_species = NULL;
-            }
-            // Else, there will be emission of macro-photons.
-            else {
-                unsigned int ispec2 = 0;
-                for( ispec2 = 0; ispec2<returned_species.size(); ispec2++ ) {
-                    if( returned_species[ispec1]->radiation_photon_species == returned_species[ispec2]->name_ ) {
+            
+            // Ionizable species
+            if( returned_species[ispec1]->Ionize ) {
+                // Loop all other species
+                for( unsigned int ispec2 = 0; ispec2<returned_species.size(); ispec2++ ) {
+                    if( returned_species[ispec1]->ionization_electrons == returned_species[ispec2]->name_ ) {
                         if( ispec1==ispec2 ) {
-                            ERROR( "For species '"<<returned_species[ispec1]->name_<<"' radiation_photon_species must be a distinct photon species" );
+                            ERROR( "For species '"<<returned_species[ispec1]->name_<<"' ionization_electrons must be a distinct species" );
                         }
-                        if( returned_species[ispec2]->mass_!=0 ) {
-                            ERROR( "For species '"<<returned_species[ispec1]->name_<<"' radiation_photon_species must be a photon species with mass==0" );
+                        if( returned_species[ispec2]->mass_!=1 ) {
+                            ERROR( "For species '"<<returned_species[ispec1]->name_<<"' ionization_electrons must be a species with mass==1" );
                         }
-                        returned_species[ispec1]->photon_species_index = ispec2;
-                        returned_species[ispec1]->photon_species = returned_species[ispec2];
-                        returned_species[ispec1]->Radiate->new_photons_.tracked = returned_species[ispec1]->photon_species->particles->tracked;
-                        returned_species[ispec1]->Radiate->new_photons_.isQuantumParameter = returned_species[ispec1]->photon_species->particles->isQuantumParameter;
-                        returned_species[ispec1]->Radiate->new_photons_.isMonteCarlo = returned_species[ispec1]->photon_species->particles->isMonteCarlo;
-                        returned_species[ispec1]->Radiate->new_photons_.initialize( 0,
-                                params.nDim_particle );
-                        //returned_species[ispec1]->Radiate->new_photons_.initialize(returned_species[ispec1]->getNbrOfParticles(),
-                        //                                                    params.nDim_particle );
-                        returned_species[ispec2]->particles->reserve( returned_species[ispec1]->getNbrOfParticles(),
-                                                                returned_species[ispec2]->particles->dimension() );
+                        returned_species[ispec1]->electron_species_index = ispec2;
+                        returned_species[ispec1]->electron_species = returned_species[ispec2];
+                        
+                        int max_eon_number =
+                            returned_species[ispec1]->getNbrOfParticles()
+                            * ( returned_species[ispec1]->atomic_number_ || returned_species[ispec1]->maximum_charge_state_ );
+                        returned_species[ispec1]->Ionize->new_electrons.initialize_reserve(
+                            max_eon_number, *returned_species[ispec1]->electron_species->particles
+                        );
                         break;
                     }
                 }
-                if( ispec2 == returned_species.size() ) {
-                    ERROR( "Species '" << returned_species[ispec1]->radiation_photon_species << "' does not exist." )
+                if( returned_species[ispec1]->electron_species_index==-1 ) {
+                    ERROR( "For species '"<<returned_species[ispec1]->name_<<"' ionization_electrons named " << returned_species[ispec1]->ionization_electrons << " could not be found" );
                 }
             }
-        }
-
-        // Loop species to find the electron and positron
-        // species for multiphoton Breit-wheeler
-        for( unsigned int ispec1 = 0; ispec1<returned_species.size(); ispec1++ ) {
-            if( !returned_species[ispec1]->Multiphoton_Breit_Wheeler_process ) {
-                continue;
-            } else {
+            
+            // Radiating species
+            if( returned_species[ispec1]->Radiate ) {
+                // No emission of discrete photon, only scalar diagnostics are updated
+                if( returned_species[ispec1]->radiation_photon_species.empty() ) {
+                    returned_species[ispec1]->photon_species_index = -1;
+                    returned_species[ispec1]->photon_species = NULL;
+                }
+                // Else, there will be emission of macro-photons.
+                else {
+                    unsigned int ispec2 = 0;
+                    for( ispec2 = 0; ispec2<returned_species.size(); ispec2++ ) {
+                        if( returned_species[ispec1]->radiation_photon_species == returned_species[ispec2]->name_ ) {
+                            if( ispec1==ispec2 ) {
+                                ERROR( "For species '"<<returned_species[ispec1]->name_<<"' radiation_photon_species must be a distinct photon species" );
+                            }
+                            if( returned_species[ispec2]->mass_!=0 ) {
+                                ERROR( "For species '"<<returned_species[ispec1]->name_<<"' radiation_photon_species must be a photon species with mass==0" );
+                            }
+                            returned_species[ispec1]->photon_species_index = ispec2;
+                            returned_species[ispec1]->photon_species = returned_species[ispec2];
+                            returned_species[ispec1]->Radiate->new_photons_.initialize_reserve(
+                                returned_species[ispec1]->getNbrOfParticles(),
+                                *returned_species[ispec1]->photon_species->particles
+                            );
+                            break;
+                        }
+                    }
+                    if( ispec2 == returned_species.size() ) {
+                        ERROR( "Species '" << returned_species[ispec1]->radiation_photon_species << "' does not exist." )
+                    }
+                }
+            }
+            
+            // Breit-Wheeler species
+            if( returned_species[ispec1]->Multiphoton_Breit_Wheeler_process ) {
                 unsigned int ispec2;
                 for( int k=0; k<2; k++ ) {
                     ispec2 = 0;
                     while( ispec2<returned_species.size()) {
-                        // We llok for the pair species multiphoton_Breit_Wheeler_[k]
+                        // We look for the pair species multiphoton_Breit_Wheeler_[k]
                         if( returned_species[ispec1]->multiphoton_Breit_Wheeler_[k] == returned_species[ispec2]->name_ ) {
                             if( ispec1==ispec2 ) {
                                 ERROR( "For species '" << returned_species[ispec1]->name_
@@ -1207,13 +1187,10 @@ public:
                             }
                             returned_species[ispec1]->mBW_pair_species_index[k] = ispec2;
                             returned_species[ispec1]->mBW_pair_species[k] = returned_species[ispec2];
-                            returned_species[ispec1]->Multiphoton_Breit_Wheeler_process->new_pair[k].tracked = returned_species[ispec1]->mBW_pair_species[k]->particles->tracked;
-                            returned_species[ispec1]->Multiphoton_Breit_Wheeler_process->new_pair[k].isQuantumParameter = returned_species[ispec1]->mBW_pair_species[k]->particles->isQuantumParameter;
-                            returned_species[ispec1]->Multiphoton_Breit_Wheeler_process->new_pair[k].isMonteCarlo = returned_species[ispec1]->mBW_pair_species[k]->particles->isMonteCarlo;
-                            returned_species[ispec1]->Multiphoton_Breit_Wheeler_process->new_pair[k].initialize( 0,
-                                    params.nDim_particle );
-                            returned_species[ispec2]->particles->reserve( returned_species[ispec1]->getNbrOfParticles(),
-                                                                    returned_species[ispec2]->particles->dimension() );
+                            returned_species[ispec1]->Multiphoton_Breit_Wheeler_process->new_pair[k].initialize_reserve(
+                                returned_species[ispec1]->getNbrOfParticles(),
+                                *returned_species[ispec1]->mBW_pair_species[k]->particles
+                            );
                             ispec2 = returned_species.size() + 1;
                         }
                         ispec2++ ;
