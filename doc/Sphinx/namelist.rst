@@ -755,10 +755,10 @@ Each species has to be defined in a ``Species`` block::
   :default: 0.
 
   The time during which the particles are "frozen", in units of :math:`T_r`.
-  Frozen particles do not move and therefore do not deposit any current density either. 
+  Frozen particles do not move and therefore do not deposit any current density either.
   Nonetheless, they deposit a charge density.
   They are computationally much cheaper than non-frozen particles and oblivious to any EM-fields
-  in the simulation. Note that frozen particles can be ionized (this is computationally much cheaper 
+  in the simulation. Note that frozen particles can be ionized (this is computationally much cheaper
   if ion motion is not relevant).
 
 .. py:data:: ionization_model
@@ -935,9 +935,9 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
         name      = "injector1",
         species   = "electrons1",
         box_side  = "xmin",
-        
+
         # Parameters inherited from the associated `species` by default
-        
+
         position_initialization = "species",
         momentum_initialization = "rectangular",
         mean_velocity = [0.5,0.,0.],
@@ -960,10 +960,10 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
 .. py:data:: box_side
 
     From where the macro-particles are injected. Options are:
-    
+
     * ``"xmin"``
     * ``"xmax"``
-    
+
 .. py:data:: position_initialization
 
     The method for initialization of particle positions. Options are:
@@ -985,7 +985,7 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
     * ``"species"`` or empty ``""``: injector uses the option of the specified :py:data:`species`.
     * ``"maxwell-juettner"`` for a relativistic maxwellian (see :doc:`how it is done<maxwell-juttner>`)
     * ``"rectangular"`` for a rectangular distribution
-    
+
     By default, injector uses the parameters provided with :py:data:`species`.
 
 .. py:data:: mean_velocity
@@ -1003,13 +1003,13 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
 
     The initial temperature of the particles, in units of :math:`m_ec^2`.
     By default (nothing specified), injector uses the parameters provided with :py:data:`species`.
-    
+
 .. py:data:: particles_per_cell
 
     :type: float or *python* function (see section :ref:`profiles`)
 
     The number of particles per cell to use for the injector.
-    
+
 .. py:data:: number_density
              charge_density
 
@@ -1017,14 +1017,14 @@ Each particle injector has to be defined in a ``ParticleInjector`` block::
 
     The absolute value of the number density or charge density (choose one only)
     of the particle distribution, in units of the reference density :math:`N_r` (see :doc:`units`)
-    
+
 .. py:data:: time_envelope
 
     :type: a *python* function or a :ref:`time profile <profiles>`
     :default:  ``tconstant()``
 
     The temporal envelope of the injector.
-    
+
 ----
 
 .. rst-class:: experimental
@@ -1170,7 +1170,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
 .. py:data:: space_time_profile_AM
 
     :type: A list of maximum 2*`number_of_AM` *python* functions.
-    
+
     These profiles define the first modes of `Br` and `Bt` in the order shown in the above example.
     Undefined modes are considered zero.
     This can be used only in `AMcylindrical` geometry.
@@ -1399,7 +1399,7 @@ There are several syntaxes to introduce a laser in :program:`Smilei`:
         time_envelope    = tconstant()
     )
 
-  Note that here, the focus is given in [x,r] coordinates. 
+  Note that here, the focus is given in [x,r] coordinates.
 
 .. rubric:: 7. Defining a generic wave at some distance from the boundary
 
@@ -1480,19 +1480,19 @@ this option.
 
 .. note::
 
-  The envelope model in ``"AMcylindrical"`` geometry is implemented only in the hypothesis of  
+  The envelope model in ``"AMcylindrical"`` geometry is implemented only in the hypothesis of
   cylindrical symmetry, i.e. only one azimuthal mode. Therefore, to use it the user must choose
   ``number_of_AM = 1``.
 
 Contrarily to a standard Laser initialized with the Silver-Müller
 boundary conditions, the laser envelope will be entirely initialized inside
-the simulation box at the start of the simulation. 
+the simulation box at the start of the simulation.
 
 Currently only one laser pulse of a given frequency propagating in the positive
-`x` direction can be speficified. However, a multi-pulse set-up can be initialized 
+`x` direction can be speficified. However, a multi-pulse set-up can be initialized
 if a multi-pulse profile is specified, e.g. if the temporal profile is given by two adjacents gaussian functions.
 The whole multi-pulse profile would have the same carrier frequency and would propagate in the positive
-`x` direction. For the moment it is not possible to specify more than one laser envelope profile, e.g. 
+`x` direction. For the moment it is not possible to specify more than one laser envelope profile, e.g.
 two counterpropagating lasers, or two lasers with different carrier frequency.
 
 
@@ -1517,7 +1517,7 @@ Following is the generic laser envelope creator ::
 .. py:data:: omega
 
    :default: ``1.``
- 
+
    For the moment only a value of 1 is supported.
 
 .. py:data:: envelope_profile
@@ -1525,7 +1525,7 @@ Following is the generic laser envelope creator ::
    :type: a *python* function or a :ref:`python profile <profiles>`
    :default: None
 
-   The laser space-time profile, so if the geometry is ``3Dcartesian`` a function of 4 arguments (3 for space, 1 for time) is necessary. 
+   The laser space-time profile, so if the geometry is ``3Dcartesian`` a function of 4 arguments (3 for space, 1 for time) is necessary.
    Please note that the envelope will be entirely initialized in the simulation box
    already at the start of the simulation, so the time coordinate will be applied
    to the ``x`` direction instead of time. It is recommended to initialize the
@@ -1597,7 +1597,7 @@ Following is the simplified laser envelope creator in 3D ::
 
 ..
 
-Following is the simplified laser envelope creator in ``"AMcylindrical"`` geometry (remember that 
+Following is the simplified laser envelope creator in ``"AMcylindrical"`` geometry (remember that
 in this geometry the envelope model can be used only if ``number_of_AM = 1``) ::
 
     LaserEnvelopeGaussianAM(
@@ -1679,7 +1679,7 @@ An time dependent external field can be applied using an ``ExternalTimeField`` b
 
   def myExtProfile(x,t):
   	return np.cos(x)*np.sin(x)
-  	
+
   ExternalTimeField(
       field = "Ex",
       profile = myExtProfile
@@ -2048,11 +2048,11 @@ Collisions
   It can either be set to the name of a pre-existing electron species (where the ionized
   electrons are created), or to ``True`` (the first electron species in :py:data:`species1`
   or :py:data:`species2` is then chosen for ionized electrons).
-  
+
   One of the species groups must be all electrons (:py:data:`mass` = 1), and the other
   one all ions of the same :py:data:`atomic_number`.
-  
-  
+
+
 
 
 
@@ -2561,7 +2561,7 @@ This is done by including a block ``DiagFields``::
   | |              | | direction)                                          |
   +----------------+-------------------------------------------------------+
 
-.. Note:: To write these last three envelope fields with this diagnostics in ``"AMcylindrical"`` geometry, 
+.. Note:: To write these last three envelope fields with this diagnostics in ``"AMcylindrical"`` geometry,
           a dedicated block ``DiagFields`` must be defined, e.g. with ``fields = ["Env_A_abs_mode_0", "Env_Chi_mode_0"]``.
 
 .. py:data:: subgrid
@@ -2613,7 +2613,7 @@ or several points arranged in a 2-D or 3-D grid.
   Probes follow the moving window.
   To obtain the fields at fixed points in the plasma instead, create a cold,
   chargeless species, and :ref:`track the particles <DiagTrackParticles>`.
-  
+
 
 To add one probe diagnostic, include the block ``DiagProbe``::
 
@@ -3030,6 +3030,98 @@ for instance::
   * If ``shape="plane"``, then ``"a"`` and ``"b"`` are the axes perpendicular to the ``vector``.
   * If ``shape="sphere"``, then ``"theta"`` and ``"phi"`` are the angles with respect to the ``vector``.
 
+
+----
+
+.. _DiagRadiationSpectrum:
+
+*RadiationSpectrum* diagnostics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A *radiation spectrum diagnostic* computes (at a given time) the instantaneous power energy-spectrum
+following from the incoherent emission of high-energy photons by accelerated charge (see :doc:`radiation_loss`
+for more details on the emission process and its implementation in :program:`Smilei`).
+
+The instantaneous power energy-spectrum is computed as a function of the emitted photon energy defined on a grid.
+Otherwise, the diagnostics is quite similar to :ref:`particle binning diagnostics <DiagParticleBinning>`.
+In particular, the emitted power spectrum can be further discretized onto a "grid" chosen by the user.
+This grid may be of any dimension, and is defined by as many axes as defined by the user.
+
+You can add a radiation spectrum diagnostic by including a block ``RadiationSpectrum()`` in the namelist,
+for instance::
+  DiagRadiationSpectrum(
+      every = 5,
+      flush_every = 1,
+      time_average = 1,
+      species = ["electrons1", "electrons2"],
+      photon_energy_axis = [0., 1000., 100, 'logscale'],
+      axes = []
+  )
+
+.. py:data:: every
+
+  The number of time-steps between each output, **or** a :ref:`time selection <TimeSelections>`.
+
+.. py:data:: flush_every
+
+  :default: 1
+
+  Number of timesteps **or** a :ref:`time selection <TimeSelections>`.
+
+  When `flush_every` coincides with `every`, the output
+  file is actually written ("flushed" from the buffer). Flushing
+  too often can *dramatically* slow down the simulation.
+
+.. py:data:: time_average
+
+  :default: 1
+
+  The number of time-steps during which the data is averaged before output.
+
+
+.. py:data:: species
+
+  A list of one or several species' :py:data:`name`.
+  All these species are combined into the same diagnostic.
+
+.. py:data:: photon_energy_axis
+
+  The axis of photon energies (in units of :math:`m_e c^2`) onto which the radiation power spectrum is projected.
+  Syntax of the axis: ``[min, max, nsteps, "logscale"]``
+
+.. py:data:: axes
+
+  An additional list of "axes" that define the grid.
+  There may be as many axes as wanted (there may be zero axes).
+  Their syntax is the same that for "axes" of a :ref:`particle binning diagnostics <DiagParticleBinning>`.
+
+  Syntax of one axis: ``[type, min, max, nsteps, "logscale", "edge_inclusive"]``
+
+
+**Examples of radiation spectrum diagnostics**
+
+* Time-integrated radiation spectrum.
+  Here the diagnostic is integrated over the full duration of the simulation (``Nt`` time-steps)::
+    DiagRadiationSpectrum(
+        every = Nt,
+        time_average = Nt,
+        species = ["electrons"],
+        photon_energy_axis = [0., 1000., 100, 'logscale'],
+        axes = []
+    )
+* Angularly-resolved instantaneous radiation spectrum.
+  Here the diagnostic is considers that all electrons emit radiation in the direction of their velocity::
+    def angle(p):
+        return numpy.arctan2(p.py,p.px)
+
+    DiagRadiationSpectrum(
+        every = 10,
+        species = ["electrons"],
+        photon_energy_axis = [0., 1000., 100, 'logscale'],
+        axes = [
+            [angle,-numpy.pi,numpy.pi,90]
+        ]
+    )
 ----
 
 .. _DiagTrackParticles:
@@ -3229,81 +3321,81 @@ A few things are important to know when you need dumps and restarts.
   )
 
 **Parameters to save the state of the current simulation**
-  
+
   .. py:data:: dump_step
-  
+
     :default: ``0``
-  
+
     The number of timesteps between each dump.
     If ``0``, no dump is done.
-  
+
   .. py:data:: dump_minutes
-  
+
     :default: ``0.``
-  
+
     The number of minutes between each dump.
     If ``0.``, no dump is done.
-    
+
     May be used in combination with :py:data:`dump_step`.
-  
+
   .. py:data:: exit_after_dump
-  
+
     :default: ``True``
-  
+
     If ``True``, the code stops after the first dump. If ``False``, the simulation continues.
-  
+
   .. py:data:: keep_n_dumps
-  
+
     :default: ``2``
-  
+
     This tells :program:`Smilei` to keep, in the current run,  only the last ``n`` dumps.
     Older dumps will be overwritten.
-    
+
     The default value, ``2``, saves one extra dump in case of a crash during the next dump.
-  
+
   .. py:data:: file_grouping
-  
+
     :default: ``None``
-  
+
     The maximum number of checkpoint files that can be stored in one directory.
     Subdirectories are created to accomodate for all files.
     This is useful on filesystem with a limited number of files per directory.
-  
+
   .. py:data:: dump_deflate
-  
+
     :red:`to do`
-  
+
 **Parameters to restart from a previous simulation**
-  
+
   .. py:data:: restart_dir
-  
+
     :default: ``None``
-  
+
     The directory of a previous run from which :program:`Smilei` should restart.
     For the first run, do not specify this parameter.
-  
+
     **This path must either absolute or be relative to the current directory.**
-    
+
     .. Note::
-    
+
       In many situations, the restarted runs will have the exact same namelist as the initial
       simulation, except this ``restart_dir`` parameter, which points to the previous simulation
       folder.
       You can use the same namelist file, and simply add an extra argument when you launch the
       restart:
-      
+
       ``mpirun ... ./smilei mynamelist.py "Checkpoints.restart_dir='/path/to/previous/run'"``
-  
+
   .. py:data:: restart_number
-  
+
     :default: ``None``
-  
+
     The number of the dump (in the previous run) that should be used for the restart.
     For the first run, do not specify this parameter.
-    
+
     In a previous run, the simulation state may have been dumped several times.
     These dumps are numbered 0, 1, 2, etc. until the number :py:data:`keep_n_dumps`.
-  
+
 
 ----
 
