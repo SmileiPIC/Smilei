@@ -364,7 +364,7 @@ public:
 
 
 #ifdef __DEBUG
-    bool test_move( int iPartStart, int iPartEnd, Params &params );
+    bool testMove( int iPartStart, int iPartEnd, Params &params );
 
     inline double dist2( unsigned int iPart )
     {
