@@ -332,6 +332,7 @@ def RUN_JOLLYJUMPER(command, dir):
                         +"module load fftw/3.3.7-opm-1.6.5-icc-17 \n"
                         +"export LIBPXR=/home/llr/galop/derouil/applications/picsar/lib \n"
                         +"export LD_LIBRARY_PATH=$LIBPXR:$LD_LIBRARY_PATH \n"
+                        +"ulimit -s unlimited \n"
 			+"#Specify the number of sockets per node in -mca orte_num_sockets \n"
 			+"#Specify the number of cores per sockets in -mca orte_num_cores \n"
 			+"cd "+dir+" \n"
