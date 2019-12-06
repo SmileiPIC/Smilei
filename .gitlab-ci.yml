@@ -7,7 +7,7 @@ compile:
   stage: compile
   only:
     - develop
-    #- merge_sdmd_dev
+    - merge_sdmd_dev
 
   script:
     # Force workdir cleaning in case of retried
@@ -23,7 +23,7 @@ compile:
     - make happi
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -c  -v
+    #- python validation.py -c  -v
 
 makerun1D:
   stage: makerun
