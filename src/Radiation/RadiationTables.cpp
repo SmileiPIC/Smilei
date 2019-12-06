@@ -59,8 +59,8 @@ void RadiationTables::initializeParameters( Params &params , SmileiMPI *smpi )
 {
 
     if( params.hasMCRadiation ||
-            params.hasLLRadiation ||
-            params.hasNielRadiation ) {
+        params.hasLLRadiation ||
+        params.hasNielRadiation ) {
         TITLE( "Initializing radiation reaction" )
 
         // Preliminary checks
@@ -70,9 +70,25 @@ void RadiationTables::initializeParameters( Params &params , SmileiMPI *smpi )
 
     }
 
+    if( params.hasLLRadiation ) {
+        MESSAGE( 1,"A continuous radiation reaction module"
+                 << " is requested by some species." );
+                 MESSAGE( 2,"default minimum chi for continuous radiation module is "
+                          <<std::setprecision(6)<<minimum_chi_continuous_<<",");
+                 PyTools::extract( "minimum_chi_continuous", minimum_chi_continuous_, "RadiationReaction" );
+                 MESSAGE( 2,"applied minimum chi for continuous radiation module is "
+                          <<std::setprecision(6)<<minimum_chi_continuous_<<".\n");
+    }
+
     if( params.hasMCRadiation ) {
         MESSAGE( 1,"The Monte-Carlo Compton radiation module"
-                 << " is requested by some species.\n" );
+                 << " is requested by some species." );
+        MESSAGE( 2,"default minimum chi for MC radiation module is "
+                 <<std::setprecision(6)<<minimum_chi_discontinuous_<<",");
+        PyTools::extract( "minimum_chi_discontinuous", minimum_chi_discontinuous_, "RadiationReaction" );
+        MESSAGE( 2,"applied minimum chi for MC radiation module is "
+                 <<std::setprecision(6)<<minimum_chi_discontinuous_<<".\n");
+
     }
     if( params.hasNielRadiation ) {
         MESSAGE( 1,"The synchrotron-like stochastic radiation module"
@@ -104,7 +120,7 @@ void RadiationTables::initializeParameters( Params &params , SmileiMPI *smpi )
 
             // If Monte-Carlo radiation loss is requested
             if( params.hasMCRadiation ) {
-
+                std::cout << "Ok > I'm in hasMCRadiation" << std::endl;
                 // Extraction of the parameter from the input file
                 PyTools::extract( "integfochi_chipa_min", integfochi_chipa_min, "RadiationReaction" );
                 PyTools::extract( "integfochi_chipa_max", integfochi_chipa_max, "RadiationReaction" );
@@ -118,8 +134,7 @@ void RadiationTables::initializeParameters( Params &params , SmileiMPI *smpi )
                 PyTools::extract( "xip_chiph_dim", xip_chiph_dim, "RadiationReaction" );
 
                 // Discontinuous minimum threshold
-                PyTools::extract( "minimum_chi_discontinuous",
-                                  minimum_chi_discontinuous_, "RadiationReaction" );
+                PyTools::extract( "minimum_chi_discontinuous", minimum_chi_discontinuous_, "RadiationReaction" );
 
                 // Additional regularly used parameters
                 xip_log10_chipa_min = log10( xip_chipa_min );
