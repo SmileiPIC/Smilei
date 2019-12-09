@@ -2,10 +2,10 @@
 
 import math
 dx = 0.2 
-dtrans = 1.
+dtrans = 2.
 dt = 0.18
 nx = 1280
-ntrans = 200
+ntrans = 100
 Lx = nx * dx
 Ltrans = ntrans*dtrans
 npatch_x = 128
@@ -81,7 +81,7 @@ Species(
 )
 
 
-list_fields = ['Ex','Ey','Ez','Rho','Jx','Jy','Jz','Bx','By','Bz']
+list_fields = ['Ex','Ey','Ez','Bx','By','Bz']
 
 DiagFields(
     every = 1,
