@@ -1,14 +1,14 @@
 ###### Namelist for the field initialization of a relativistic electron bunch, with cylindrical uniform density
 
 import math
-dx = 0.2 
-dtrans = 2.
-dt = 0.18
-nx = 1280
-ntrans = 100
+dx = 0.8 
+dtrans = 4.
+dt = 0.75
+nx = 320
+ntrans = 48
 Lx = nx * dx
 Ltrans = ntrans*dtrans
-npatch_x = 128
+npatch_x = 32
 
 ###################################
 
@@ -43,7 +43,7 @@ Main(
     cell_length  = [dx, dtrans, dtrans],
     grid_length = [ Lx,  Ltrans, Ltrans],
 
-    number_of_patches = [npatch_x, 4, 4],
+    number_of_patches = [npatch_x, 8, 8],
     
     clrw = nx/npatch_x,
 
