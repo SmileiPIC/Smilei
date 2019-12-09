@@ -501,9 +501,9 @@ void SpeciesV::sortParticles( Params &params )
                     cell_target = particles->cell_keys[ip_dest];
                 }
                 //Last target_cell is -1, the particle must be erased:
-                particles->translate_parts( cycle );
+                particles->translateParticles( cycle );
                 //Eventually copy particle from the MPI buffer into the particle vector.
-                MPI_buffer_.partRecv[idim][ineighbor].overwrite_part( ip, *particles, cycle[0] );
+                MPI_buffer_.partRecv[idim][ineighbor].overwriteParticle( ip, *particles, cycle[0] );
             }
         }
     }
@@ -527,7 +527,7 @@ void SpeciesV::sortParticles( Params &params )
             cell_target = particles->cell_keys[ip_dest];
         }
         //Last target_cell is -1, the particle must be erased:
-        particles->translate_parts( cycle );
+        particles->translateParticles( cycle );
     }
 
     // Resize the particle vector
@@ -559,7 +559,7 @@ void SpeciesV::sortParticles( Params &params )
                     ip_src = ip_dest; //Destination becomes source for the next iteration
                 }
                 //swap parts
-                particles->swap_parts( cycle );
+                particles->swapParticles( cycle );
             }
         }
     } //end loop on cells
@@ -669,7 +669,7 @@ void SpeciesV::importParticles( Params &params, Patch *patch, Particles &source_
                     int ip_swap = istop;
                     while (( src_cell_keys[ip_swap] != icell ) && (ip_swap<npart))
                         ip_swap++;
-                    source_particles.swap_part(ip, ip_swap);
+                    source_particles.swapParticle(ip, ip_swap);
                     int tmp = src_cell_keys[ip];
                     src_cell_keys[ip] = src_cell_keys[ip_swap];
                     src_cell_keys[ip_swap] = tmp;
@@ -677,7 +677,7 @@ void SpeciesV::importParticles( Params &params, Patch *patch, Particles &source_
             } // end loop on particles of a cell
 
             // inject in main data structure per cell
-            source_particles.cp_particles( istart, src_count[icell],
+            source_particles.copyParticles( istart, src_count[icell],
                                         *particles,
                                         first_index[icell] );
             last_index[icell] += src_count[icell];
@@ -808,7 +808,7 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
         //         //           << " cell_keys[ip]: " << particles->cell_keys[ip]
         //         //           << std::endl;
         //         if (particles->cell_keys[ip] < 0) {
-        //             particles->erase_particle(ip);
+        //             particles->eraseParticle(ip);
         //             //mask.erase(mask.begin() + ip);
         //             particles->cell_keys.erase(particles->cell_keys.begin() + ip);
         //             //count[scell] --;

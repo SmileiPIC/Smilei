@@ -112,7 +112,7 @@ public:
         
         MESSAGE( 1, "All patches created" );
         
-        vecPatches.set_refHindex();
+        vecPatches.setRefHindex();
         
         vecPatches.updateFieldList( smpi );
         

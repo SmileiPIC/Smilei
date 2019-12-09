@@ -214,7 +214,7 @@ protected:
                 double newpz = momentum_ratio * newpz_COM + COM_vz * term6;
                 // Make new particle at position of particle 1
                 if( newW1 > 0. ) {
-                    p1->cp_particle_safe( i1, *p3 );
+                    p1->copyParticleSafe( i1, *p3 );
                     p3->Weight.back() = newW1;
                     p3->Charge.back() = q3;
                     p3->Momentum[0].back() = newpx;
@@ -223,7 +223,7 @@ protected:
                 }
                 // Make new particle at position of particle 2
                 if( newW2 > 0. ) {
-                    p2->cp_particle_safe( i2, *p3 );
+                    p2->copyParticleSafe( i2, *p3 );
                     p3->Weight.back() = newW2;
                     p3->Charge.back() = q3;
                     p3->Momentum[0].back() = newpx;
@@ -239,7 +239,7 @@ protected:
                 double newpz = -momentum_ratio * newpz_COM + COM_vz * term6;
                 // Make new particle at position of particle 1
                 if( newW1 > 0. ) {
-                    p1->cp_particle_safe( i1, *p4 );
+                    p1->copyParticleSafe( i1, *p4 );
                     p4->Weight.back() = newW1;
                     p4->Charge.back() = q4;
                     p4->Momentum[0].back() = newpx;
@@ -248,7 +248,7 @@ protected:
                 }
                 // Make new particle at position of particle 2
                 if( newW2 > 0. ) {
-                    p2->cp_particle_safe( i2, *p4 );
+                    p2->copyParticleSafe( i2, *p4 );
                     p4->Weight.back() = newW2;
                     p4->Charge.back() = q4;
                     p4->Momentum[0].back() = newpx;
