@@ -914,6 +914,7 @@ void Params::compute()
         patch_dimensions[i] = n_space[i] * cell_length[i];
         n_cell_per_patch *= n_space[i];
     }
+    region_oversize = oversize;
     if ( is_spectral && geometry == "AMcylindrical" )  {
         //Force ghost cells number in L when spectral
         region_oversize[0] = pseudo_spectral_guardells;

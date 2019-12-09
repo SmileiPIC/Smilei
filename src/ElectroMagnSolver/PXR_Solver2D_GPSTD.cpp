@@ -33,12 +33,12 @@ void PXR_Solver2D_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool f
     
     n2=0;
     if (params.uncoupled_grids) {
-        ov0=( int ) params.oversize[0];
-        ov1=( int ) params.oversize[1];
-    }
-    else {
         ov0=( int ) params.region_oversize[0];
         ov1=( int ) params.region_oversize[1];
+    }
+    else {
+        ov0=( int ) params.oversize[0];
+        ov1=( int ) params.oversize[1];
     }
     ov2=0;
     double dzz = std::numeric_limits<double>::infinity() ;
