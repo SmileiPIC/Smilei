@@ -4,7 +4,7 @@ import happi
 S = happi.Open(["./restart*"], verbose=False)
 
 
-# COMPARE THE Er FIELD in polarization direction
-Er = S.Field(0, "Er", timesteps=200., theta=0.).getData()[0]
-Validate("Er field at iteration 200", Er, 0.01)
+# COMPARE THE Ey FIELD in polarization direction
+Ey = S.Probe(0, "Ey", timesteps=200.).getData()[0]
+Validate("Ey field at iteration 200", Ey, 0.01)
 
