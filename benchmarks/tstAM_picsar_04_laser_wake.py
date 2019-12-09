@@ -51,7 +51,7 @@ Main(
     solve_poisson = False,
     cell_length = [dx, dr],
     grid_length  = Lsim,
-    number_of_patches = [2, 1 ],
+    number_of_patches = [32, 4 ],
     timestep = dt,
     simulation_time = nstep*dt,
      
@@ -65,8 +65,8 @@ Main(
     is_spectral=True,
     uncoupled_grids = True,
     is_pxr = True,
-    norder = [0,0],
-    pseudo_spectral_guardells = 20,
+    norder = [32,0],
+    pseudo_spectral_guardells = 64,
     apply_divergence_cleaning = True
 )
 
@@ -135,3 +135,13 @@ DiagFields(
     every = 10,
     fields = ["Br_m_mode_0", "Br_m_mode_1","Bl_m_mode_0","Bl_m_mode_1","Bt_m_mode_0","Bt_m_mode_1","Bt_mode_0","Bt_mode_1","Bl_mode_0","Bl_mode_1","Br_mode_0","Br_mode_1","Er_mode_0","Er_mode_1","Et_mode_0","Et_mode_1","El_mode_0","El_mode_1" ]
 )
+
+DiagProbe(
+	every = 10,
+	origin = [0., 2*dr, 0.],
+	corners = [
+              [Main.grid_length[0], 2*dr, 0.]
+                  ],
+	number = [nx],
+)
+

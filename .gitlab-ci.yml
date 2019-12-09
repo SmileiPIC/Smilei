@@ -1,6 +1,7 @@
 stages:
     - compile
     - makerun
+    - use_picsar
 
 compile:
   stage: compile
@@ -95,3 +96,15 @@ makerunCollisions:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run checking script
     - python validation.py -b "tst_collisions*.py" -m 4 -o 4 -v -r 1
+
+use_picsar:
+  stage: use_picsar
+  only:
+    - merge_sdmd_dev
+
+  script:
+    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei
+    - make clean
+    - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
+    - python validation.py -c -v -k picsar
+    - python validation.py -b "tstAM_picsar_04_laser_wake.py" -m 4 -o 4 -v
