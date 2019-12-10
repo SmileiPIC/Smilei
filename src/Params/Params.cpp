@@ -1061,6 +1061,7 @@ void Params::print_init()
     if( Friedman_filter ) {
         MESSAGE( 1, "Friedman field filtering : theta = " << Friedman_theta );
     }
+    full_B_exchange = true;
     if( full_B_exchange ) {
         MESSAGE( 1, "All components of B are exchanged at synchronization" );
     }

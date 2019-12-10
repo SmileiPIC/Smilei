@@ -16,13 +16,17 @@ public:
         std::vector<unsigned int> n_space(params.n_space);
         if (params.uncoupled_grids)
             n_space = params.n_space_domain;
+
+        std::vector<unsigned int> oversize(params.oversize);
+        if (params.uncoupled_grids)
+            oversize = params.region_oversize;
         
-	nx_p = n_space[0] +1+2*params.oversize[0];
-	nx_d = n_space[0] +2+2*params.oversize[0]-(params.is_pxr);
-	ny_p = n_space[1] +1+2*params.oversize[1];
-	ny_d = n_space[1] +2+2*params.oversize[1]-(params.is_pxr);
-	nz_p = n_space[2] +1+2*params.oversize[2];
-	nz_d = n_space[2] +2+2*params.oversize[2]-(params.is_pxr);
+	nx_p = n_space[0] +1+2*oversize[0];
+	nx_d = n_space[0] +2+2*oversize[0]-(params.is_pxr);
+	ny_p = n_space[1] +1+2*oversize[1];
+	ny_d = n_space[1] +2+2*oversize[1]-(params.is_pxr);
+	nz_p = n_space[2] +1+2*oversize[2];
+	nz_d = n_space[2] +2+2*oversize[2]-(params.is_pxr);
         
         dt = params.timestep;
         dt_ov_dx = params.timestep / params.cell_length[0];

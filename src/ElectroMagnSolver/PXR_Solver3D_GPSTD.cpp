@@ -24,18 +24,23 @@ void PXR_Solver3D_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool f
     // unable to convert unsigned int to an iso_c_binding supported type
     
     std::vector<unsigned int> n_space(params.n_space);
-    if (full_domain)
+    std::vector<unsigned int> oversize(params.oversize);
+    if (full_domain) {
         n_space = params.n_space_global;
-    else if (params.uncoupled_grids)
+        oversize = params.region_oversize;
+    }
+    else if (params.uncoupled_grids) {
         n_space = params.n_space_domain;
+        oversize = params.region_oversize;
+    }
     
     n0=( int ) (0 + n_space[0]);
     n1=( int ) (0 + n_space[1]);
     n2=( int ) (0 + n_space[2]);
     
-    ov0=( int ) params.oversize[0];
-    ov1=( int ) params.oversize[1];
-    ov2=( int ) params.oversize[2];
+    ov0=( int ) oversize[0];
+    ov1=( int ) oversize[1];
+    ov2=( int ) oversize[2];
     
     params.norderx = params.norder[0];
     params.nordery = params.norder[1];
