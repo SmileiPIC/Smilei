@@ -593,7 +593,7 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
     #pragma omp barrier
 
 
-    if (params.uncoupled_grids)
+    if (params.uncoupled_grids) {
         if ( params.geometry != "AMcylindrical" ) {
             // warkaround for !params.full_B_exchange (in 3D, with SM some border elements are not computed)
             SyncVectorPatch::exchangeE( params, domain.vecPatch_, smpi );
@@ -601,6 +601,13 @@ void SimWindow::shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &params,
             SyncVectorPatch::exchangeB( params, domain.vecPatch_, smpi );
             SyncVectorPatch::finalizeexchangeB( params, domain.vecPatch_ );
         }
+        else {
+            for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  ) {
+                SyncVectorPatch::exchangeE( params, domain.vecPatch_, imode, smpi );
+                SyncVectorPatch::exchangeB( params, domain.vecPatch_, imode, smpi );
+            }
+        }
+    }
 
 }
 

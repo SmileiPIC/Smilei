@@ -57,8 +57,8 @@ ElectroMagn::ElectroMagn( Params &params, DomainDecomposition *domain_decomposit
 
     if ( dynamic_cast<PatchAM *>( patch ) ) {
         PatchAM *patchAM = static_cast<PatchAM *>( patch );
-        int j_glob_ = patchAM->Pcoordinates[1]*n_space[1]-params.oversize[1]; //cell_starting_global_index is only define later during patch creation.
-        int nr_p = n_space[1]+1+2*params.oversize[1];
+        int j_glob_ = patchAM->Pcoordinates[1]*n_space[1]-oversize[1]; //cell_starting_global_index is only define later during patch creation.
+        int nr_p = n_space[1]+1+2*oversize[1];
         double dr = params.cell_length[1];
         patchAM->invR.resize( nr_p );
 
@@ -114,8 +114,8 @@ ElectroMagn::ElectroMagn( ElectroMagn *emFields, Params &params, Patch *patch ) 
 
     if ( dynamic_cast<PatchAM *>( patch ) ) {
         PatchAM *patchAM = static_cast<PatchAM *>( patch );
-        int j_glob_ = patchAM->Pcoordinates[1]*n_space[1]-params.oversize[1]; //cell_starting_global_index is only define later during patch creation.
-        int nr_p = n_space[1]+1+2*params.oversize[1];
+        int j_glob_ = patchAM->Pcoordinates[1]*n_space[1]-oversize[1]; //cell_starting_global_index is only define later during patch creation.
+        int nr_p = n_space[1]+1+2*oversize[1];
         double dr = params.cell_length[1];
         patchAM->invR.resize( nr_p );
 
