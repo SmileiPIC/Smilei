@@ -298,10 +298,10 @@ void Field3D::get( Field *inField, Params &params, SmileiMPI *smpi, Patch *inPat
     int jin = thisPatch->Pcoordinates[1]*params.n_space[1] - ( inPatch->getCellStartingGlobalIndex(1) + params.region_oversize[1] );
     int kin = thisPatch->Pcoordinates[2]*params.n_space[2] - ( inPatch->getCellStartingGlobalIndex(2) + params.region_oversize[2] );
     
-    for( unsigned int i = 0 ; i < params.n_space[0]+1+dual[0] ; i++ ) {
-        for( unsigned int j = 0 ; j < params.n_space[1]+1+dual[1] ; j++ ) {
-            for( unsigned int k = 0 ; k < params.n_space[2]+1+dual[2] ; k++ ) {
-                ( *this )( i+params.oversize[0], j+params.oversize[1], k+params.oversize[2] ) = ( *in3D )( iin+i+params.region_oversize[0], jin+j+params.region_oversize[1], kin+k+params.region_oversize[2] );
+    for( unsigned int i = 0 ; i < params.n_space[0]+1+dual[0]+2*params.oversize[0] ; i++ ) {
+        for( unsigned int j = 0 ; j < params.n_space[1]+1+dual[1]+2*params.oversize[1] ; j++ ) {
+            for( unsigned int k = 0 ; k < params.n_space[2]+1+dual[2]+2*params.oversize[2] ; k++ ) {
+                ( *this )( i, j, k ) = ( *in3D )( iin+i+params.region_oversize[0]-params.oversize[0], jin+j+params.region_oversize[1]-params.oversize[1], kin+k+params.region_oversize[2]-params.oversize[2] );
             }
         }
     }

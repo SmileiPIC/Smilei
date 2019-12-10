@@ -243,9 +243,9 @@ void Field2D::get( Field *inField, Params &params, SmileiMPI *smpi, Patch *inPat
     
     //for ( unsigned int i = params.oversize[0] ; i < out2D->dims_[0]-params.oversize[0] ; i++ ) {
     //    for ( unsigned int j = params.oversize[1] ; j < out2D->dims_[1]-params.oversize[1] ; j++ ) {
-    for( unsigned int i = 0 ; i < params.n_space[0]+1+dual[0] ; i++ ) {
-        for( unsigned int j = 0 ; j < params.n_space[1]+1+dual[1] ; j++ ) {
-            ( *this )( i+params.oversize[0], j+params.oversize[1] ) = ( *in2D )( iin+i+params.region_oversize[0], jin+j+params.region_oversize[1] );
+    for( unsigned int i = 0 ; i < params.n_space[0]+1+dual[0]+2*params.oversize[0] ; i++ ) {
+        for( unsigned int j = 0 ; j < params.n_space[1]+1+dual[1]+2*params.oversize[1] ; j++ ) {
+            ( *this )( i, j ) = ( *in2D )( iin+i+params.region_oversize[0]-params.oversize[0], jin+j+params.region_oversize[1]-params.oversize[1] );
             //( *out2D )( i, j ) = in2D->hindex;
         }
     }
