@@ -48,7 +48,8 @@ Publications
 
   F. Massimo, A. Beck, J. Derouillat, M. Grech, M. Lobet, F. Pérez, I. Zemzemi and A. Specka,
   `Efficient start-to-end 3D envelope modeling for two-stage laser wakefield acceleration experiments`,
-  `Plasma Phys. Control. Fusion 61, 124001 (2019) <https://dx.doi.org/10.1088/1361-6587/ab49cf>`_
+  `Plasma Phys. Control. Fusion 61, 124001 (2019) <https://dx.doi.org/10.1088/1361-6587/ab49cf>`_,
+  `arXiv:1912.04127 <http://arxiv.org/abs/1912.04127>`_
 
 .. rst-class:: bigcitation
 
