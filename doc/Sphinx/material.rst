@@ -59,6 +59,14 @@ Publications
   `Laser wakefield driven generation of isolated CEP-tunable intense sub-cycle pulses`,
   `arXiv:1902.05014 <https://arxiv.org/abs/1902.05014>`_
 
+.. rst-class:: bigcitation
+
+.. [Derouillat2020]
+
+  J. Derouillat and A. Beck,
+  'Single Domain Multiple Decompositions for Particle-in-Cell simulations',
+  `arXiv:1912.04064 <https://arxiv.org/abs/1912.04064>`_
+
 ----
 
 .. rst-class:: bigcitation
