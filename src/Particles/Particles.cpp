@@ -919,7 +919,7 @@ void Particles::sortById()
 }
 
 #ifdef __DEBUG
-bool Particles::test_move( int iPartStart, int iPartEnd, Params &params )
+bool Particles::testMove( int iPartStart, int iPartEnd, Params &params )
 {
     for( int iDim = 0 ; iDim < Position.size() ; iDim++ ) {
         double dx2 = params.cell_length[iDim];//*params.cell_length[iDim];

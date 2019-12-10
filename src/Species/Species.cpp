@@ -429,7 +429,7 @@ void Species::dynamics( double time_dual, unsigned int ispec,
 
             // Push the particles and the photons
             ( *Push )( *particles, smpi, first_index[ibin], last_index[ibin], ithread );
-            //particles->test_move( first_index[ibin], last_index[ibin], params );
+            //particles->testMove( first_index[ibin], last_index[ibin], params );
 
         } //ibin
         
@@ -802,10 +802,6 @@ void Species::sortParticles( Params &params )
     particles->eraseParticleTrail( last_index.back() );
 
     //Evaluation of the necessary shift of all bins.2
-    for( unsigned int j=0; j<last_index.size()+1 ; j++ ) {
-        shift[j]=0;
-    }
-
     //idim=0
     shift[1] += MPI_buffer_.part_index_recv_sz[0][0];//Particles coming from xmin all go to bin 0 and shift all the other bins.
     shift[last_index.size()] += MPI_buffer_.part_index_recv_sz[0][1];//Used only to count the total number of particles arrived.
