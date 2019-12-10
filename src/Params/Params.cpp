@@ -973,6 +973,7 @@ void Params::compute()
     // Define domain decomposition if double grids are used for particles and fields
     if ( uncoupled_grids ) {
         uncoupled_decomposition();
+        full_B_exchange = true;
     }
     
 }
