@@ -55,14 +55,22 @@ Publications
 .. [Derouillat2020]
 
   J. Derouillat and A. Beck,
-  'Single Domain Multiple Decompositions for Particle-in-Cell simulations',
+  `Single Domain Multiple Decompositions for Particle-in-Cell simulations`,
   `arXiv:1912.04064 <https://arxiv.org/abs/1912.04064>`_
+
+.. rst-class:: bigcitation
+
+.. [Massimo2020]
+
+  F. Massimo, I. Zemzemi, A. Beck, J. Derouillat and A. Specka,
+  `Efficient cylindrical envelope modeling for laser wakefield acceleration`,
+  `arXiv:1912.04674 <http://arxiv.org/abs/1912.04674>`_
 
 ----
 
 .. rst-class:: bigcitation
 
-.. [Massimo]
+.. [Massimo2019]
 
   F. Massimo, A. Beck, J. Derouillat, M. Grech, M. Lobet, F. Pérez, I. Zemzemi and A. Specka,
   `Efficient start-to-end 3D envelope modeling for two-stage laser wakefield acceleration experiments`,
