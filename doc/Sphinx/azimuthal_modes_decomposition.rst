@@ -8,7 +8,7 @@ Here we briefly review the method to give the necessary information to properly 
 In many physical situations of interest, a propagation axis can be defined (e.g. referred to a laser pulse, a relativistic particle beam, ...). 
 In :program:`Smilei` this axis is the `x` axis.
 
-For a scalar field, e.g. a  density, perfect cylindrical symmetry referred to this propagation axis is defined as the invariance along the azimuthal angle :math:`\theta`, 
+For a scalar field, e.g. a  density, perfect cylindrical symmetry around this propagation axis is defined as the invariance along the azimuthal angle :math:`\theta`, 
 defined as in the following figure.
 
 .. figure:: _static/Coordinate_Reference_AMcylindrical.png
@@ -16,26 +16,27 @@ defined as in the following figure.
    
   Black axes: 3D cartesian reference for the particles coordinates and momenta. In blue the definition of the radial distance `r` and the angle :math:`\theta`
 
-We can define an azimuthal mode, or azimuthal harmonic as a complex exponential :math:`exp(-im\theta)`. 
-The perfect cylindrical symmetry corresponds to :math:`m=0`, a constant. For the sake of illustration, in the following figure the scalar fields defined through the real part of the azimuthal modes 
-for :math:`m=0,1,2,3` are shown. 
-
-
-.. figure:: _static/AM_modes.png
-  :width: 15cm
-   
-  Real part of the first four pure azimuthal modes :math:`exp(-im\theta)` on the `yz` plane, with no radial dependence.  
-
-
-If we decomposed a physical scalar field in azimuthal modes, the Fourier coefficients for the azimuthal modes would depend also
-on the longitudinal and radial coordinates :math:`(x,r)`. The azimuthal Fourier decomposition of a scalar field :math:`F(x,r,\theta)` would thus look like:
+An azimuthal mode, or azimuthal harmonic, is defined as a complex exponential :math:`exp(-im\theta)`. 
+Any scalar field can be decomposed into a basis of azimuthal modes.
+The coordinates in this basis are Fourier coefficients and depend on the longitudinal and radial coordinates :math:`(x,r)`.
+This azimuthal Fourier decomposition of a scalar field :math:`F(x,r,\theta)` would thus look like:
 
 .. math::
     :label: AzimuthalDecomposition1
 
     F\left(x,r,\theta\right) = \textrm{Re}\left[\sum_{m=0}^{+\infty}\tilde{F}^{m}\left(x,r\right)\exp{\left(-im\theta\right)}\right],
 
-where :math:`m` is the azimuthal mode :math:`\tilde{F}^{m}` the :math:`m^{th}` Fourier azimuthal mode of :math:`F`.
+where :math:`m` is the order of the azimuthal mode, :math:`\tilde{F}^{m}` the :math:`m^{th}` Fourier azimuthal mode of :math:`F`.
+
+The perfectly cylindrical part of :math:`F`, constant along :math:`\theta` is given by the mode :math:`m=0`. 
+The following figure shows the scalar fields defined through the real part of the azimuthal modes 
+for :math:`m=0,1,2,3`. 
+
+
+.. figure:: _static/AM_modes.png
+  :width: 15cm
+   
+  Real part of the first four pure azimuthal modes :math:`exp(-im\theta)` on the `yz` plane.  
 
 Expanding the series in Eq. :eq:`AzimuthalDecomposition1` yields:
 
@@ -45,13 +46,13 @@ Expanding the series in Eq. :eq:`AzimuthalDecomposition1` yields:
     F\left(x,r,\theta\right) = \tilde{F}^{0}_{real} + \tilde{F}^{1}_{real}cos(\theta) + \tilde{F}^{1}_{imag}sin(\theta) + \tilde{F}^{2}_{real}cos(2\theta) + \tilde{F}^{2}_{imag}sin(2\theta) + ...
 
 
-The complex coefficients :math:`\tilde{F}^{m}` of the azimuthal decomposition are given as follows:
+The complex coefficients :math:`\tilde{F}^{m}` of the azimuthal decomposition are given as follows for all modes of order :math:`m>0`:
 
 .. math::
 
-    \tilde{F}^{m} = \frac{1}{\pi}\int_0^{2\pi}F\left(x,r,\theta\right)\exp{\left(-im\theta\right)}d\theta,
+    \tilde{F}^{m>0} = \frac{1}{\pi}\int_0^{2\pi}F\left(x,r,\theta\right)\exp{\left(-im\theta\right)}d\theta,
 
-for all modes of order :math:`m>0`. The coefficient for the mode :math:`m=0` is given by:
+The coefficient for the mode :math:`m=0` is given by:
 
 .. math::
 
@@ -79,10 +80,10 @@ Similarly, an elliptically (or cilindrically) polarized laser would be given by 
 with only the mode :math:`m=1`. Indeed, a laser with elliptical polarization can be seen as the linear superposition of two linearly polarized lasers,
 with different phases and amplitudes. The difference in phase would be equivalent to the multiplication of the Fourier coefficient by a complex exponential.
 
-Physical phenomena with a high degree cylindrical symmetry, where the use of simulations with this technique is most suited, can in principle be characterised only by the presence of
-the low order azimuthal modes, since the Fourier coefficients of the higher order modes (representing a high degree of cylindrical asymmetry) are zero or negligible.
+Physical phenomena close to cylindrical symmetry, where the use of simulations with this technique is most suited, can in principle be characterised only by the presence of
+the low order azimuthal modes, since the Fourier coefficients of the higher order modes (representing stronger cylindrical asymmetry) are zero or negligible.
 
-For example, in a basic Laser Wakefield Acceleration set-up a laser pulse with cylindrically symmetric envelope could be described only by the mode :math:`m=1` and the cylindrically symmetric wave
+For example, in a basic Laser Wakefield Acceleration setup, a laser pulse with cylindrically symmetric envelope could be described only by the mode :math:`m=1` and the cylindrically symmetric wave
 in its wake by the mode :math:`m=0`. This because the shape of the wake wave is mainly determined by the ponderomotive force of the laser, which depends on its cylindrically symmetric envelope. 
 Thus, a simulation of this phenomenon would in principle need only two azimuthal modes. In the namelist of the corresponding simulation with azimuthal modes decomposition (`geometry=AMcylindrical`), 
 the user would then choose `number_of_AM=2` in this case.  
@@ -109,7 +110,7 @@ Thus even in presence of a plasma (i.e. non zero current densities), at each tim
 The coupling between the modes occurs when the electromagnetic fields (the superposition of their the modes obtained from Eq. :eq:`AzimuthalDecomposition1`) interact with the particles, 
 which in turn create the sources for Eqs. :eq:`MaxwellEqsAzimuthalModes`, i.e. the azimuthal components :math:`\tilde{J}^m` of their current density.  
 
-Indeed, the azimuthal decomposition concerns only the grid quantities (EM fields and current densities), but particles evolve in a full three dimensional space.
+Indeed, the azimuthal decomposition concerns only the grid quantities (EM fields and current densities), but macro-particles evolve in a full three dimensional space.
 Their positions and momenta are defined with 3D cartesian coordinates. 
 At each iteration, they are evolved in the phase space as in a 3D simulation, using the 3D cartesian electromagnetic fields reconstructed from Eq. :eq:`AzimuthalDecomposition1`.
 The angle :math:`\theta` of each particle is computed from its position to know the total electromagnetic field acting on it (reconstructed from Eq. :eq:`AzimuthalDecomposition1` ).
@@ -121,7 +122,8 @@ Note that each mode :math:`\tilde{F}^{m}` is a function of :math:`x`, the longit
 Therefore, each of them is only two dimensional. Thus, the computational cost of simulations with azimuthal decompositions in principle scales approximately as 
 `number_of_AM` simulations in 2D, but obtaining results with 3D accuracy if a suitable number of modes is used. 
 Note although that, due to the cylindrical geometry, a higher number of particles than in a 2D  or 3D cartesian simulation could be necessary to obtain convergence of the results.
-In this geometry, always check the convergence of your results trying to increase the number of particles and of retained modes.
+In this geometry, always check the convergence of your results trying to increase the number of macro-particles and of retained modes.
+A rule of thumb is to use at least :math:`4\times number\_of\_AM` macro-particles along :math:`\theta`.
 
 
 ----
