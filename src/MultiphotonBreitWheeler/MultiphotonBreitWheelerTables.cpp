@@ -178,7 +178,7 @@ double MultiphotonBreitWheelerTables::compute_dNBWdt( double photon_chi, double 
     // An asymptotic approximation is used
     if( ichiph < 0 ) {
         ichiph = 0;
-        dNBWdt = 0.46*exp( -8./( 3.*photon_chi ) );
+        dNBWdt = 0.2296*exp( -8./( 3.*photon_chi ) );
     }
     // If photon_chi is above the upper bound of the table
     // An asymptotic approximation is used
