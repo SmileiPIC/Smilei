@@ -11,6 +11,7 @@
 #include "ElectroMagnBC3D_refl.h"
 #include "ElectroMagnBC3D_BM.h"
 #include "ElectroMagnBCAM_SM.h"
+#include "ElectroMagnBCAM_zero.h"
 #include "ElectroMagnBCAM_Axis.h"
 #include "ElectroMagnBCAM_BM.h"
 
@@ -171,9 +172,10 @@ public:
                 //MESSAGE(params.EM_BCs[0][ii]);
                 if( params.EM_BCs[0][ii] == "silver-muller" ) {
                     emBoundCond[ii] = new ElectroMagnBCAM_SM( params, patch, ii );
-                    
                 }
-                
+                else if( params.EM_BCs[0][ii] == "zero" ) {
+                    emBoundCond[ii] = new ElectroMagnBCAM_zero( params, patch, ii );
+                }
                 else if( params.EM_BCs[0][ii] != "periodic" ) {
                     ERROR( "Unknown EM x-boundary condition `" << params.EM_BCs[0][ii] << "`" );
                 }
