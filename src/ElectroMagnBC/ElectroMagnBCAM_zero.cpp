@@ -41,7 +41,6 @@ void ElectroMagnBCAM_zero::apply( ElectroMagn *EMfields, double time_dual, Patch
         }
     }
 
-
     // Loop on imode
     for( unsigned int imode=0 ; imode<Nmode ; imode++ ) {
         // Static cast of the fields
@@ -50,7 +49,6 @@ void ElectroMagnBCAM_zero::apply( ElectroMagn *EMfields, double time_dual, Patch
         cField2D *Bl = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bl_[imode];
         cField2D *Br = ( static_cast<ElectroMagnAM *>( EMfields ) )->Br_[imode];
         cField2D *Bt = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_[imode];
-        bool isYmin = ( static_cast<ElectroMagnAM *>( EMfields ) )->isYmin;
         
         if( min_max == 0 && patch->isXmin() ) {
             for( unsigned int j=0 ; j<nr_p ; j++ ) {
