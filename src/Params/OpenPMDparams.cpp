@@ -99,6 +99,9 @@ OpenPMDparams::OpenPMDparams( Params &p ):
             } else if( params->EM_BCs[i][j] == "buneman" ) {
                 fieldBoundary          .addString( "open" );
                 fieldBoundaryParameters.addString( "buneman" );
+            } else if( params->EM_BCs[i][j] == "zero" ) {
+                fieldBoundary          .addString( "open" );
+                fieldBoundaryParameters.addString( "zero" );
             } else {
                 ERROR( " impossible boundary condition " );
             }
