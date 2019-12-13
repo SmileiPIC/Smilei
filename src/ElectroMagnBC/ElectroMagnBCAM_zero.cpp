@@ -52,26 +52,28 @@ void ElectroMagnBCAM_zero::apply( ElectroMagn *EMfields, double time_dual, Patch
         cField2D *Bt = ( static_cast<ElectroMagnAM *>( EMfields ) )->Bt_[imode];
         
         if( min_max == 0 && patch->isXmin() ) {
-            for( unsigned int j=0 ; j<nr_p ; j++ ) {
                 //x= Xmin
-                unsigned int i=0;
-                ( *El )( i, j ) = 0.;
-                ( *Er )( i, j ) = 0.;
-                ( *Et )( i, j ) = 0.;
-                ( *Bl )( i, j ) = 0.;
-                ( *Br )( i, j ) = 0.;
-                ( *Bt )( i, j ) = 0.;
+            for (unsigned int i=0; i < params.oversize[0]; i++){
+                for ( unsigned int j=0 ; j<nr_p ; j++ ) {
+                    ( *El )( i, j ) = 0.;
+                    ( *Er )( i, j ) = 0.;
+                    ( *Et )( i, j ) = 0.;
+                    ( *Bl )( i, j ) = 0.;
+                    ( *Br )( i, j ) = 0.;
+                    ( *Bt )( i, j ) = 0.;
+                }
             }
 
         } else if( min_max == 1 && patch->isXmax() ) {
-            for( unsigned int j=0. ; j<nr_p ; j++ ) {
-                unsigned int i= nl_p;
-                ( *El )( i, j ) = 0.;
-                ( *Er )( i, j ) = 0.;
-                ( *Et )( i, j ) = 0.;
-                ( *Bl )( i, j ) = 0.;
-                ( *Br )( i, j ) = 0.;
-                ( *Bt )( i, j ) = 0.;
+            for (unsigned int i=nl_p-params.oversize[0]; i < nl_p; i++){
+                for( unsigned int j=0. ; j<nr_p ; j++ ) {
+                    ( *El )( i, j ) = 0.;
+                    ( *Er )( i, j ) = 0.;
+                    ( *Et )( i, j ) = 0.;
+                    ( *Bl )( i, j ) = 0.;
+                    ( *Br )( i, j ) = 0.;
+                    ( *Bt )( i, j ) = 0.;
+                }
             }
         }
     }
