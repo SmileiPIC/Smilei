@@ -442,13 +442,7 @@ int main( int argc, char *argv[] )
             vecPatches.finalizeSyncAndBCFields( params, &smpi, simWindow, time_dual, timers, itime );
             
             // call the various diagnostics
-            #pragma omp master
-            smpi.barrier();
-            #pragma omp barrier
             vecPatches.runAllDiags( params, &smpi, itime, timers, simWindow );
-            #pragma omp master
-            smpi.barrier();
-            #pragma omp barrier
             
             timers.movWindow.restart();
             simWindow->shift( vecPatches, &smpi, params, itime, time_dual, domain );
