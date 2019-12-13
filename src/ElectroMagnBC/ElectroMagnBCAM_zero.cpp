@@ -53,7 +53,7 @@ void ElectroMagnBCAM_zero::apply( ElectroMagn *EMfields, double time_dual, Patch
         
         if( min_max == 0 && patch->isXmin() ) {
                 //x= Xmin
-            for (unsigned int i=0; i < params.oversize[0]; i++){
+            for (unsigned int i=0; i < pxr_offset; i++){
                 for ( unsigned int j=0 ; j<nr_p ; j++ ) {
                     ( *El )( i, j ) = 0.;
                     ( *Er )( i, j ) = 0.;
@@ -65,7 +65,7 @@ void ElectroMagnBCAM_zero::apply( ElectroMagn *EMfields, double time_dual, Patch
             }
 
         } else if( min_max == 1 && patch->isXmax() ) {
-            for (unsigned int i=nl_p-params.oversize[0]; i < nl_p; i++){
+            for (unsigned int i=nl_p - pxr_offset; i < nl_p; i++){
                 for( unsigned int j=0. ; j<nr_p ; j++ ) {
                     ( *El )( i, j ) = 0.;
                     ( *Er )( i, j ) = 0.;
