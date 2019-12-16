@@ -1031,16 +1031,11 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
         #pragma omp for schedule(static)
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
             // Applies boundary conditions on B
-            if ( (!params.is_spectral) || (params.geometry!= "AMcylindrical") )
-                ( *this )( ipatch )->EMfields->boundaryConditions( itime, time_dual, ( *this )( ipatch ), params, simWindow );
+            ( *this )( ipatch )->EMfields->boundaryConditions( itime, time_dual, ( *this )( ipatch ), params, simWindow );
             // Computes B at time n using B and B_m.
             if( !params.is_spectral ) {
                 ( *this )( ipatch )->EMfields->centerMagneticFields();
             }
-            //Done at domain initializtion
-            //else {
-            //    ( *this )( ipatch )->EMfields->saveMagneticFields( params.is_spectral );
-            //}
         }
         if( params.is_spectral ) {
             saveOldRho( params );

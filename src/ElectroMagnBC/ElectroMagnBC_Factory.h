@@ -161,7 +161,7 @@ public:
         }//3Dcartesian
         
         // -----------------
-        // For theta mode Geometry
+        // For AM cylindrical Geometry
         // -----------------
         else if( params.geometry == "AMcylindrical" ) {
         
@@ -169,7 +169,6 @@ public:
             
                 // X DIRECTION
                 // silver-muller (injecting/absorbing bcs)
-                //MESSAGE(params.EM_BCs[0][ii]);
                 if( params.EM_BCs[0][ii] == "silver-muller" ) {
                     emBoundCond[ii] = new ElectroMagnBCAM_SM( params, patch, ii );
                 }
@@ -182,17 +181,13 @@ public:
             }
             
             // R DIRECTION
-            emBoundCond[2] = new ElectroMagnBCAM_Axis( params, patch, 2 );
-            // silver-muller bcs (injecting/absorbin)
-            //MESSAGE("bc AXIS");
+            emBoundCond[2] = NULL ; //Axis BC are handeled directly in solvers.
             if( params.EM_BCs[1][1] == "buneman" ) {
                 emBoundCond[3] = new ElectroMagnBCAM_BM( params, patch, 3 );
-                //MESSAGE("create BM BC");
-            }
-            
-            // else: error
-            else  {
-                ERROR( "Unknown EM y-boundary condition `" << params.EM_BCs[1][1] << "`" );
+            } else if (params.is_spectral) {
+                emBoundCond[3] = NULL ;
+            } else  {
+                ERROR( "Unknown EM Rmax-boundary condition `" << params.EM_BCs[1][1] << "`" );
             }
             //MESSAGE( params.EM_BCs[1][1]);
             
