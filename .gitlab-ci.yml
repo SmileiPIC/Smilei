@@ -7,7 +7,7 @@ compile:
   stage: compile
   only:
     - develop
-    - merge_sdmd_dev
+    - sdmd_ghostcells
 
   script:
     # Force workdir cleaning in case of retried
@@ -29,7 +29,7 @@ makerun1D:
   stage: makerun
   only:
     - develop
-    - merge_sdmd_dev
+    - sdmd_ghostcells
 
   script:
     # Move in test dir
@@ -41,7 +41,7 @@ makerun2D:
   stage: makerun
   only:
     - develop
-    - merge_sdmd_dev
+    - sdmd_ghostcells
 
   script:
     # Move in test dir
@@ -53,7 +53,7 @@ makerun3D:
   stage: makerun
   only:
     - develop
-    - merge_sdmd_dev
+    - sdmd_ghostcells
 
   script:
     # Move in test dir
@@ -65,7 +65,7 @@ makerunAM:
   stage: makerun
   only:
     - develop
-    - merge_sdmd_dev
+    - sdmd_ghostcells
 
   script:
     # Move in test dir
@@ -77,7 +77,7 @@ makerunV:
   stage: makerun
   only:
     - develop
-    - merge_sdmd_dev
+    - sdmd_ghostcells
 
   script:
     # Move in test dir
@@ -89,7 +89,7 @@ makerunCollisions:
   stage: makerun
   only:
     - develop
-    - merge_sdmd_dev
+    - sdmd_ghostcells
     
   script:
     # Move in test dir
@@ -100,7 +100,7 @@ makerunCollisions:
 use_picsar:
   stage: use_picsar
   only:
-    - merge_sdmd_dev
+    - sdmd_ghostcells
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei

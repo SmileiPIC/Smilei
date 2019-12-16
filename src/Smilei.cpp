@@ -503,10 +503,10 @@ int main( int argc, char *argv[] )
                     if ( params.geometry != "AMcylindrical" ) {
                         DoubleGrids::syncFieldsOnDomain( vecPatches, domain, params, &smpi );
 
-                        SyncVectorPatch::exchangeE( params, domain.vecPatch_, &smpi );
-                        SyncVectorPatch::finalizeexchangeE( params, domain.vecPatch_ );
-                        SyncVectorPatch::exchangeB( params, domain.vecPatch_, &smpi );
-                        SyncVectorPatch::finalizeexchangeB( params, domain.vecPatch_ );
+                        //SyncVectorPatch::exchangeE( params, domain.vecPatch_, &smpi );
+                        //SyncVectorPatch::finalizeexchangeE( params, domain.vecPatch_ );
+                        //SyncVectorPatch::exchangeB( params, domain.vecPatch_, &smpi );
+                        //SyncVectorPatch::finalizeexchangeB( params, domain.vecPatch_ );
                     }
                     else {
                         for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )

@@ -204,9 +204,9 @@ void Field2D::put( Field *outField, Params &params, SmileiMPI *smpi, Patch *this
     
     //for ( unsigned int i = params.oversize[0] ; i < this->dims_[0]-params.oversize[0] ; i++ ) {
     //    for ( unsigned int j = params.oversize[1] ; j < this->dims_[1]-params.oversize[1] ; j++ ) {
-    for( unsigned int i = 0 ; i < params.n_space[0]+1+dual[0] ; i++ ) {
-        for( unsigned int j = 0 ; j < params.n_space[1]+1+dual[1] ; j++ ) {
-            ( *out2D )( iout+i+params.region_oversize[0], jout+j+params.region_oversize[1] ) = ( *this )( i+params.oversize[0], j+params.oversize[1] );
+    for( unsigned int i = 0 ; i < params.n_space[0]+1+dual[0]+2*params.oversize[0] ; i++ ) {
+        for( unsigned int j = 0 ; j < params.n_space[1]+1+dual[1]+2*params.oversize[1] ; j++ ) {
+            ( *out2D )( iout+i+params.region_oversize[0]-params.oversize[0], jout+j+params.region_oversize[1]-params.oversize[1] ) = ( *this )( i, j );
         }
     }
     
