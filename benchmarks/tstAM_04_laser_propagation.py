@@ -89,13 +89,7 @@ DiagProbe(
 	number = [nx],
 )
 
-#DiagProbe(
-#	every = 1000,
-#	origin = [0., -Main.grid_length[1], 0.],
-#	corners =  [
-#           [Main.grid_length[0], -Main.grid_length[1], 0.],
-#	   [0., Main.grid_length[1], 0.],
-#                   ],
-#	number = [nx,2*ntrans],
-#)
+DiagPerformances(
+	every = 1000,
+)
 
