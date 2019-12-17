@@ -221,41 +221,6 @@ Maxwell solvers
 Now that the averaged currents are known at time-step :math:`n+\tfrac{1}{2}`, the averaged electromagnetic
 fields can be advanced solving Maxwell's equations :eq:`Maxwell_envelope`. Their solution is identical to the one described in :doc:`algorithms` for the corresponding non-averaged quantities.
 
-
-----
-
-The envelope model in cylindrical coordinates
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-In :program:`Smilei` the envelope model described in [Terzani]_, [MassimoPPCF2019]_ for cartesian geometries has been implemented also in cylindrical geometry.
-
-The :doc:`azimuthal_modes_decomposition` technique is used in this case, but only the mode :math:`m=0` can be retained in the present implementation, 
-i.e. the electromagnetic fields and the envelope fields will have perfect cylindrical symmetry with respect to the envelope propagation axis :math:`x`.
-
-The main difference compared to the cartesian geometry lies in the envelope equation, Eq. :eq:`envelope_equation`. 
-While the Laplacian operator :math:`\nabla^2` is defined as
-:math:`\partial_x^2`, :math:`\partial_x^2+\partial_y^2` and :math:`\partial_x^2+\partial_y^2+\partial_z^2` 
-in 1D, 2D and 3D cartesian coordinates respectively, the envelope equation in `AMcylindrical` geometry of course uses the Laplacian in 
-cylindrical coordinates. Additionally, due to the assumption of cylindrical symmetry, the derivatives with respect to the azimuthal angle are all zero by definition.
-Thus, in this geometry the envelope equation solved in :program:`Smilei` is:
-
-.. math::
-  :label: envelope_equation
-
-  \partial^2_x\tilde{A}+\frac{1}{r}\partial_r(r\partial_r\tilde{A})+2i\left(\partial_x \tilde{A} + \partial_t \tilde{A}\right)-\partial^2_t\tilde{A}=\chi \tilde{A}.
-
-The electromagnetic fields evolve as described in :doc:`azimuthal_modes_decomposition` with only the mode :math:`m=0`, 
-or equivalently neglecting all the derivatives along the azimuthal angle in Maxwell's Equations written in cylindrical coordinates.
-
-As in a typical :program:`Smilei` simulation in cylindrical coordinates, the particles evolve in the 3D space, 
-with their positions and momenta described in cartesian coordinates.
-
-The envelope approximation coupled to the cylindrical symmetry assumption can greatly speed-up a simulation of a physical set-up where these assumptions are suited.
-Compared to a 3D envelope simulation with the same number of particles, a cylindrical envelope simulation has a speed-up which scales linearly 
-as the double of the transverse number of cells of the window. This speed-up can arrive to at least a factor 100 for lasers with transverse sizes of the order of tens of microns.
-Compared to a 3D standard laser simulation with the same number of particles, 
-the speed-up of a cylindrical envelope simulation can arrive to at least a factor 1000 for lasers of durations of the order of tens of femtoseconds. 
-These comparisons assume the same longitudinal window size and the same transverse size for the simulated physical space.
   
 
 ----

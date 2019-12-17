@@ -58,6 +58,15 @@ Publications
   `Laser wakefield driven generation of isolated CEP-tunable intense sub-cycle pulses`,
   `arXiv:1902.05014 <https://arxiv.org/abs/1902.05014>`_
 
+.. rst-class:: bigcitation
+
+.. [Massimo2020]
+
+  F. Massimo, I. Zemzemi, A. Beck, J. Derouillat and A. Specka,
+  `Efficient cylindrical envelope modeling for laser wakefield acceleration`,
+  `arXiv:1912.04674 <http://arxiv.org/abs/1912.04674>`_
+
+
 ----
 
 .. rst-class:: bigcitation
