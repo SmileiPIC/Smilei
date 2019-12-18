@@ -262,11 +262,30 @@ As in a typical :program:`Smilei` simulation in cylindrical coordinates, the par
 with their positions and momenta described in cartesian coordinates.
 
 The envelope approximation coupled to the cylindrical symmetry assumption can greatly speed-up a simulation of a physical set-up where these assumptions are suited.
-Compared to a 3D envelope simulation with the same number of particles, a cylindrical envelope simulation has a speed-up which scales linearly 
-as the double of the transverse number of cells of the window. This speed-up can arrive to at least a factor 100 for lasers with transverse sizes of the order of tens of microns.
-Compared to a 3D standard laser simulation with the same number of particles, 
-the speed-up of a cylindrical envelope simulation can arrive to at least a factor 1000 for lasers of durations of the order of tens of femtoseconds. 
-These comparisons assume the same longitudinal window size and the same transverse size for the simulated physical space.
+The following considerations about the speed-up assume comparisons between simulations where the size of the simulated physical domain is the same.
+
+Compared to a standard simulation of the same physical case, 
+an envelope simulation in cartesian geometry has a speed-up that increases with the laser pulse duration, 
+since the envelope characteristic scales need to be sampled, and not the high frequency oscillations of the laser.
+:program:`Smilei` envelope simulations with laser pulses of 30 fs have shown speed-ups of the order of 20 compared 
+to standard simulations in 3D cartesian geometry.
+
+Compared to a 3D simulation without envelope, the azimuthal modes decomposition without envelope can theoretically yield a speedup 
+that scales with the number of cells in the transverse direction. However, normally this speed-up is a little lower,
+since the high frequency oscillations of the laser generate noise that, to be reduced, demands a higher number of particles per cell
+than in a 3D simulation. Similar comparisons yield speed-ups of the order of 50 for lasers with waist sizes of the order of tens of microns.
+
+Finally, the use of both techniques, i.e. the envelope approximation and the 
+azimuthal modes decomposition, can yield speed-ups that are higher than the product of the two speed-ups, 
+compared to 3D simulations without envelope. This because the absence of the high frequency laser oscillations reduces the noise
+and the necessary number of particles for convergence is normally lower than in a usual simulation with azimuthal modes decomposition.
+With laser pulses of durations of 30 fs and waist size 40 microns a speed-up of 1200 of magnitude has been observed [Massimo2020]_ .
+
+
+
+ 
+
+
 
 
 
