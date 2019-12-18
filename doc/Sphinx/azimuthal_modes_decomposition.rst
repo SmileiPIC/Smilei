@@ -145,7 +145,7 @@ The azimuthal decomposition concerns only the grid quantities
 but macro-particles evolve in a full three-dimensional
 space with cartesian coordinates.
 
-.. figure:: _static/AM_grid_particles.png
+.. figure:: _static/AM_grid_particles.jpg
   :width: 10cm
 
   Blue arrows: the `x` and `r` axes of the 2D grid (red)
@@ -178,58 +178,77 @@ macro-particles along :math:`\theta`.
 
 ----
 
-Defining diagnostics and initializing Profiles with a cylindrical geometry
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Conventions for the namelist
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If in doubt on how to initialize particles or a `Profile`, bear in mind how the quantities are defined in this geometry and the reference axes of the simulation (first Figure of this page).
+Several differences appear in the notations and definitions between
+the AM and 3D geometries:
 
-Note also in the following figure the difference in the origin of the reference axes between a simulation with azimuthal modes decomposition and a 3D Cartesian simulation.
-In the figure, the red ellipsoid can represent a laser pulse or a relativistic particle beam, whose propagation axis is the red dashed arrow. In the case of the simulation with azimuthal modes, this propagation axis is the `x` axis. In a 3D simulation for the same physical case,
-this axis would be parallel to the `x` axis. If this is not the case, probably the azimuthal modes decomposition technique is not suited for the simulation, since too many azimuthal modes
-would be necessary for an accurate representation.
+* The origin of the coordinates is on the axis of the cylinder
+  (see figure below).
 
-.. figure:: _static/AMcylindrical_vs_cartesian.pdf
-  :width: 22cm
-   
-  Comparison between a simulation with azimuthal modes decomposition and a 3D Cartesian simulation for the same physical case. The blue point is the origin of the reference axes. 
-  The radial grid size (`grid_length[1]`) of the former is half the size of the `y-z` grid sizes (`grid_length[1]=grid_length[2]`) of the latter.
+.. figure:: _static/AMcylindrical_vs_cartesian.png
 
-Particles are defined in the 3D space, so if you want to initialize a `Species` with a numpy array you will still need to provide their coordinates
-in the 3D cartesian space.
-`Probes` diagnostics with azimuthal modes are like particles interpolating the reconstructed grid fields (including all the retained modes), so the same axes convention of the previous figure must be followed in defining their `origin` and `corners`.
+  Origin of coordinates in AM cylindrical and 3D cartesian.
 
-Grid quantities instead are defined on the :math:`(x,r)` grid. Thus, `ExternalFields` and density/charge `Profiles` must be defined with functions of the :math:`(x,r)` coordinates.
-Remember that `ExternalFields` are defined by mode. 
+* The AM radial grid size (``grid_length[1]``) represents the radius
+  of the cylinder; not its diameter. Thus, it is half the size of
+  the 3D transverse grid.
+
+* Particles are defined 3D space, so their coordinates should be
+  provided in terms of *x*, *y*, *z* if needed (e.g. a `Species`
+  initialized with a numpy array).
+  However, the density profiles of particles are assimilated to
+  scalar fields defined on the :math:`(x,r)` grid.
+
+* ``Field`` diagnostics really correspond to the complex fields
+  of each mode on :math:`(x,r)` grids. However, ``Probes``
+  diagnostics are defined in 3D space just like the particles:
+  all fields are interpolated at their 3D positions, and reconstructed
+  by summing over the modes.
+
+* ``ExternalFields`` are grid quantities in :math:`(x,r)` coordinates.
+  One must be defined for each mode.
 
 
 
 ----
 
-Poisson's equation and relativistic Poisson's equation with azimuthal modes decomposition
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Classical and relativistic Poisson's equation
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In a simulation with azimuthal modes decomposition, given the linearity of the relativistic Poisson's equation described in :doc:`relativistic_fields_initialization`, the full equation
-can be decomposed in azimuthal modes, with the correspondent mode component of the charge density :math:`-\tilde{\rho}^m` as source term.
-
-The relativistic Poisson equation for the potential component :math:`\tilde{\Phi}^m` of the mode :math:`m` in this  geometry is thus:
+Given the linearity of the relativistic Poisson's equation
+described in :doc:`relativistic_fields_initialization`,
+it can be decomposed in azimuthal modes
+with the corresponding mode of the charge density
+:math:`-\tilde{\rho}^m` as source term.
+For the mode *m* of the potential :math:`\Phi`,
+it writes:
 
 .. math::
   :label: RelPoissonModes
 
-  \left[ \frac{1}{\gamma^2_0}\partial^2_x\tilde{\Phi}^m+\frac{1}{r}\partial_r\left(r\partial_r\tilde{\Phi}^m\right)-\frac{m^2}{r^2}\tilde{\Phi}^m \right] = -\tilde{\rho}^m.
+  \left[
+    \frac{1}{\gamma^2_0}\partial^2_x\tilde{\Phi}^m
+    +\frac{1}{r}\partial_r\left(r\partial_r\tilde{\Phi}^m\right)
+    -\frac{m^2}{r^2}\tilde{\Phi}^m
+  \right] = -\tilde{\rho}^m.
 
-Solving each of these relativistic Poisson's equations allows to initialize the azimuthal components of the electromagnetic fields:
+By solving each of these relativistic Poisson's equations
+we initialize the azimuthal components of the electromagnetic fields:
 
 .. math::
-  \begin{eqnarray} 
-  \tilde{E}^m_x &=& -\frac{1}{\gamma_0^2}\partial_x \tilde{\Phi}^m,\\ 
-  \tilde{E}^m_r &=& -\partial_r \tilde{\Phi}^m, \\ 
-  \tilde{E}^m_{\theta} &=& \frac{im}{r} \tilde{\Phi}^m,\newline\\
+  \begin{eqnarray}
+  \tilde{E}^m_x &=& -\frac{1}{\gamma_0^2}\partial_x \tilde{\Phi}^m,\\
+  \tilde{E}^m_r &=& -\partial_r \tilde{\Phi}^m, \\
+  \tilde{E}^m_{\theta} &=& \frac{im}{r} \tilde{\Phi}^m, \\
   \tilde{\mathbf{B}}^m &=& \beta_0\mathbf{\hat{x}}\times\tilde{\mathbf{E}}^m.
-  \end{eqnarray} 
+  \end{eqnarray}
 
-The initialization of the electric field with the non relativistic Poisson's equation is performed similarly, and the underlying equations reduce simply
-to the previous equations, but with :math:`\gamma_0 = 1` and :math:`\beta_0 = 0` (i.e. an immobile Species).
+The initialization of the electric field with the non-relativistic
+Poisson's equation is performed similarly, and the underlying equations simply
+reduce to the previous equations, with :math:`\gamma_0 = 1` and
+:math:`\beta_0 = 0` (i.e. an immobile Species).
 
 
 ----
@@ -237,36 +256,37 @@ to the previous equations, but with :math:`\gamma_0 = 1` and :math:`\beta_0 = 0`
 The envelope model in cylindrical coordinates
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-In :program:`Smilei` the :doc:`laser_envelope` described in [Terzani]_, [MassimoPPCF2019]_ for cartesian geometries has been implemented also in cylindrical geometry,
-as described in [Massimo2020]_.
+The :doc:`laser_envelope` for cartesian geometries has been
+implemented also in cylindrical geometry, as described in [Massimo2020]_.
 
-The azimuthal decomposition technique is used in this case, but only the mode :math:`m=0` can be retained in the present implementation, 
-i.e. the electromagnetic fields and the envelope fields will have perfect cylindrical symmetry with respect to the envelope propagation axis :math:`x`.
+Only the mode :math:`m=0` is available for the envelope
+in the present implementation, i.e. the electromagnetic and
+envelope fields have perfect cylindrical symmetry with respect
+to the envelope propagation axis :math:`x`.
 
-The main difference compared to the cartesian geometry lies in the envelope equation, Eq. :eq:`envelope_equation` of the page :doc:`laser_envelope`. 
-While the Laplacian operator :math:`\nabla^2` is defined as
-:math:`\partial_x^2`, :math:`\partial_x^2+\partial_y^2` and :math:`\partial_x^2+\partial_y^2+\partial_z^2` 
-in 1D, 2D and 3D cartesian coordinates respectively, the envelope equation in `AMcylindrical` geometry of course uses the Laplacian in 
-cylindrical coordinates. Additionally, due to the assumption of cylindrical symmetry, the derivatives with respect to the azimuthal angle are all zero by definition.
-Thus, in this geometry the envelope equation solved in :program:`Smilei` is:
+The main difference compared to the cartesian geometry lies in the envelope
+equation (see Eq. :eq:`envelope_equation`). The assumption of cylindrical
+symmetry removes derivatives with respect :math:`\theta`, leading to:
 
 .. math::
-  :label: envelope_equation
+  :label: envelope_equation_AM
 
-  \partial^2_x\tilde{A}+\frac{1}{r}\partial_r(r\partial_r\tilde{A})+2i\left(\partial_x \tilde{A} + \partial_t \tilde{A}\right)-\partial^2_t\tilde{A}=\chi \tilde{A}.
+  \partial^2_x\tilde{A}
+  +\frac{1}{r}\partial_r(r\partial_r\tilde{A})
+  +2i\left(\partial_x \tilde{A} + \partial_t \tilde{A}\right)
+  -\partial^2_t\tilde{A}
+  =   \chi \tilde{A}.
 
-The electromagnetic fields evolve as described in :doc:`azimuthal_modes_decomposition` with only the mode :math:`m=0`, 
-or equivalently neglecting all the derivatives along the azimuthal angle in Maxwell's Equations written in cylindrical coordinates.
-
-As in a typical :program:`Smilei` simulation in cylindrical coordinates, the particles evolve in the 3D space, 
-with their positions and momenta described in cartesian coordinates.
-
-The envelope approximation coupled to the cylindrical symmetry assumption can greatly speed-up a simulation of a physical set-up where these assumptions are suited.
-Compared to a 3D envelope simulation with the same number of particles, a cylindrical envelope simulation has a speed-up which scales linearly 
-as the double of the transverse number of cells of the window. This speed-up can arrive to at least a factor 100 for lasers with transverse sizes of the order of tens of microns.
-Compared to a 3D standard laser simulation with the same number of particles, 
-the speed-up of a cylindrical envelope simulation can arrive to at least a factor 1000 for lasers of durations of the order of tens of femtoseconds. 
-These comparisons assume the same longitudinal window size and the same transverse size for the simulated physical space.
+The envelope approximation coupled to the cylindrical symmetry
+can greatly speed-up the simulation: compared to a 3D envelope simulation
+with the same number of particles, it has a speed-up which scales linearly
+as twice the transverse number of cells.
+This speed-up can reach 100 for lasers with transverse sizes of the order
+of tens of microns. Compared to a standard 3D laser simulation with the
+same number of particles, the speed-up of a cylindrical envelope simulation
+can reach 1000 for lasers of durations of the order of tens of femtoseconds.
+These comparisons assume the same longitudinal window size and the same
+transverse size for the simulated physical space.
 
 
 
