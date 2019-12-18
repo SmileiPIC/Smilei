@@ -405,6 +405,8 @@ void DiagnosticFields::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime,
             // Close dataset
             H5Dclose( dset_id );
         }
+        #pragma omp barrier
+
     }
     
     #pragma omp master
@@ -422,6 +424,7 @@ void DiagnosticFields::run( SmileiMPI *smpi, VectorPatch &vecPatches, int itime,
             H5Fflush( fileId_, H5F_SCOPE_GLOBAL );
         }
     }
+    #pragma omp barrier
 }
 
 bool DiagnosticFields::needsRhoJs( int itime )
