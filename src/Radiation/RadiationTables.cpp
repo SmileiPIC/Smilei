@@ -36,9 +36,6 @@ RadiationTables::RadiationTables()
     h_computed = false;
     integfochi_computed = false;
     xip_computed = false;
-
-    minimum_chi_continuous_ = 1e-3;
-    minimum_chi_discontinuous_ = 1e-2;
 }
 
 // -----------------------------------------------------------------------------
@@ -120,7 +117,7 @@ void RadiationTables::initializeParameters( Params &params , SmileiMPI *smpi )
 
             // If Monte-Carlo radiation loss is requested
             if( params.hasMCRadiation ) {
-                std::cout << "Ok > I'm in hasMCRadiation" << std::endl;
+
                 // Extraction of the parameter from the input file
                 PyTools::extract( "integfochi_chipa_min", integfochi_chipa_min, "RadiationReaction" );
                 PyTools::extract( "integfochi_chipa_max", integfochi_chipa_max, "RadiationReaction" );
