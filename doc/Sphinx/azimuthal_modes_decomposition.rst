@@ -30,7 +30,7 @@ as :math:`\tilde{F}^{m}` leads to:
 
 The mode :math:`m=0` has cylindrical symmetry (no dependence
 on :math:`\theta`). The following figure shows the real part
-of some azimuthal modes.
+of the first four azimuthal modes.
 
 .. figure:: _static/AM_modes.png
   :width: 15cm
@@ -131,13 +131,13 @@ evolution of the mode :math:`m`:
 Thus, even in presence of a plasma, at each timestep,
 these equations are solved independently.
 The coupling between the modes occurs when the total electromagnetic fields
-push the particles, creating, in turn, the currents :math:`\tilde{J}^m`
+push the macro-particles, creating, in turn, the currents :math:`\tilde{J}^m`
 of their current density.
 
 
 ----
 
-Interaction with particles
+Interaction with the macro-particles
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The azimuthal decomposition concerns only the grid quantities
@@ -150,9 +150,9 @@ space with cartesian coordinates.
 
   Blue arrows: the `x` and `r` axes of the 2D grid (red)
   where the electromagnetic fields are defined.
-  Particle positions and momenta are defined in 3D.
+  Macro-particle positions and momenta are defined in 3D.
 
-During each iteration, the particles are pushed in phase space
+During each iteration, the macro-particles are pushed in phase space
 using reconstructed 3D cartesian electromagnetic fields
 at their position :math:`(x,r,\theta)` (see Eq. :eq:`AzimuthalDecomposition1`).
 Then, their contribution to the current densities :math:`(J_x,J_r,J_{\theta})`
@@ -169,7 +169,7 @@ Note that each mode :math:`\tilde{F}^{m}` is a function of :math:`x`,
 the longitudinal coordinate and :math:`r`, the radial coordinate.
 Therefore, each of them is only two dimensional. Thus, the computational cost
 of AM simulations scales approximately as 2D simulations multiplied by the
-number of modes. However, a higher number of particles might be necessary
+number of modes. However, a higher number of macro-particles might be necessary
 to obtain convergence of the results (always check the convergence of your
 results by increasing the number of macro-particles and modes).
 A rule of thumb is to use at least 4 times the number of modes as
@@ -181,7 +181,7 @@ macro-particles along :math:`\theta`.
 Defining diagnostics and initializing Profiles with a cylindrical geometry
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-If in doubt on how to initialize particles or a `Profile`, bear in mind how the quantities are defined in this geometry and the reference axes of the simulation (first Figure of this page).
+If in doubt on how to initialize the macro-particles or a `Profile`, bear in mind how the quantities are defined in this geometry and the reference axes of the simulation (first Figure of this page).
 
 Note also in the following figure the difference in the origin of the reference axes between a simulation with azimuthal modes decomposition and a 3D Cartesian simulation.
 In the figure, the red ellipsoid can represent a laser pulse or a relativistic particle beam, whose propagation axis is the red dashed arrow. In the case of the simulation with azimuthal modes, this propagation axis is the `x` axis. In a 3D simulation for the same physical case,
@@ -194,9 +194,9 @@ would be necessary for an accurate representation.
   Comparison between a simulation with azimuthal modes decomposition and a 3D Cartesian simulation for the same physical case. The blue point is the origin of the reference axes. 
   The radial grid size (`grid_length[1]`) of the former is half the size of the `y-z` grid sizes (`grid_length[1]=grid_length[2]`) of the latter.
 
-Particles are defined in the 3D space, so if you want to initialize a `Species` with a numpy array you will still need to provide their coordinates
+Macro-particles are defined in the 3D space, so if you want to initialize a `Species` with a numpy array you will still need to provide their coordinates
 in the 3D cartesian space.
-`Probes` diagnostics with azimuthal modes are like particles interpolating the reconstructed grid fields (including all the retained modes), so the same axes convention of the previous figure must be followed in defining their `origin` and `corners`.
+`Probes` diagnostics with azimuthal modes are like macro-particles interpolating the reconstructed grid fields (including all the retained modes), so the same axes convention of the previous figure must be followed in defining their `origin` and `corners`.
 
 Grid quantities instead are defined on the :math:`(x,r)` grid. Thus, `ExternalFields` and density/charge `Profiles` must be defined with functions of the :math:`(x,r)` coordinates.
 Remember that `ExternalFields` are defined by mode. 
@@ -258,7 +258,7 @@ Thus, in this geometry the envelope equation solved in :program:`Smilei` is:
 The electromagnetic fields evolve as described in :doc:`azimuthal_modes_decomposition` with only the mode :math:`m=0`, 
 or equivalently neglecting all the derivatives along the azimuthal angle in Maxwell's Equations written in cylindrical coordinates.
 
-As in a typical :program:`Smilei` simulation in cylindrical coordinates, the particles evolve in the 3D space, 
+As in a typical :program:`Smilei` simulation in cylindrical coordinates, the macro-particles evolve in the 3D space, 
 with their positions and momenta described in cartesian coordinates.
 
 The envelope approximation coupled to the cylindrical symmetry assumption can greatly speed-up a simulation of a physical set-up where these assumptions are suited.
@@ -272,14 +272,20 @@ to standard simulations in 3D cartesian geometry.
 
 Compared to a 3D simulation without envelope, the azimuthal modes decomposition without envelope can theoretically yield a speedup 
 that scales with the number of cells in the transverse direction. However, normally this speed-up is a little lower,
-since the high frequency oscillations of the laser generate noise that, to be reduced, demands a higher number of particles per cell
+since the number of macro-particles per cell necessary for convergence is higher 
 than in a 3D simulation. Similar comparisons yield speed-ups of the order of 50 for lasers with waist sizes of the order of tens of microns.
 
 Finally, the use of both techniques, i.e. the envelope approximation and the 
 azimuthal modes decomposition, can yield speed-ups that are higher than the product of the two speed-ups, 
-compared to 3D simulations without envelope. This because the absence of the high frequency laser oscillations reduces the noise
-and the necessary number of particles for convergence is normally lower than in a usual simulation with azimuthal modes decomposition.
-With laser pulses of durations of 30 fs and waist size 40 microns a speed-up of 1200 of magnitude has been observed [Massimo2020]_ .
+compared to 3D simulations without envelope. This because envelope simulations in cylindrical geometry need
+less macro-particles than standard laser simulations with azimuthal decomposition to reach convergence.
+Indeed, the former have only one azimuthal mode, while the latter have at least two modes. 
+Thus, since at least 4 macro-particles along the angle :math:`\theta` for each mode are normally necessary, 
+the cylindrically symmetric envelope simulations can use at half the number of particles in principle.
+
+
+With laser pulses of durations of 30 fs and waist size 40 microns, a speed-up of 1200 has been observed 
+between an envelope simulation in cylindrical geometry and a 3D simulation of a laser wakefield acceleration case [Massimo2020]_.
 
 
 
