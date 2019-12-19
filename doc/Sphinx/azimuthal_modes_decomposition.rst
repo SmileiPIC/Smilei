@@ -285,7 +285,7 @@ the cylindrically symmetric envelope simulations can use at half the number of p
 
 
 With laser pulses of durations of 30 fs and waist size 40 microns, a speed-up of 1200 has been observed 
-between an envelope simulation in cylindrical geometry and a 3D simulation of a laser wakefield acceleration case [Massimo2020]_.
+between an envelope simulation in cylindrical geometry and a 3D envelope simulation of a laser wakefield acceleration case [Massimo2020]_.
 
 
 
