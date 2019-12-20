@@ -14,6 +14,7 @@
 class RadiationTools {
 
     public:
+	static double minimum_chi_discontinuous_;
 
         // -----------------------------------------------------------------------------
         //! Return the value of the function h(chipa) of Niel et al.

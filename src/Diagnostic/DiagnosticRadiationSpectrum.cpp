@@ -290,6 +290,7 @@ bool DiagnosticRadiationSpectrum::prepare( int timestep )
 // run one particle binning diagnostic
 void DiagnosticRadiationSpectrum::run( Patch* patch, int timestep, SimWindow* simWindow )
 {
+    double tmp = RadiationTools::minimum_chi_discontinuous_;
 
     vector<int> int_buffer;
     vector<double> double_buffer;

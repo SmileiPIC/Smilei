@@ -132,6 +132,7 @@ int main( int argc, char *argv[] )
     RadiationTables.initializeParameters( params, &smpi);
     //RadiationTables.computeTables( params, &smpi );
     //RadiationTables.outputTables( &smpi );
+    RadiationTools::minimum_chi_discontinuous_ = RadiationTables.getMinimumChiContinuous();
 
     // ---------------------------------------------------------------------
     // Init and compute tables for multiphoton Breit-Wheeler pair creation
