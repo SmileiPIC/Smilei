@@ -1,11 +1,13 @@
 .. _radiationReactionPage:
 
-Synchrotron-like radiation reaction
---------------------------------------------------------------------------------
+High-energy photon emission & radiation reaction
+------------------------------------------------
 
+Accelerated charges emit electromagnetic radiation, and by doing so, lose some of their energy and momentum.
+This process is particularly important for high-energy particles traveling in a strong electromagnetic field
+where it can strongly influence the dynamics of the radiating charge, a problem known as radiation reaction.
 
-High-energy particles traveling in a strong electromagnetic field lose energy by
-radiation. Depending on the field strength and the particle energy, radiation
+Depending on the field strength and the particle energy, radiation
 losses pertain to different regimes and occur smoothly or in brutal steps, with
 diffusive and stochastic consequences.
 Physicists usually refer to this phenomenon as *synchrotron-like radiation emission*
@@ -275,14 +277,14 @@ the previous ones and can be divided into several steps ([Duclous2011]_,
 
 2. The optical depth :math:`\tau` evolves according to the field and particle
    energy variations following this integral:
-   
+
    .. math::
      :label: MCDtauDt
-   
+
        \frac{d\tau}{dt} = \int_0^{\chi_{\pm}}{ \frac{d^2N}{d\chi dt}  d\chi }
        = \frac{2}{3} \frac{\alpha^2}{\tau_e} \int_0^{\chi_{\pm}}{ \frac{S(\chi_\pm, \chi)}{\chi}  d\chi }
        = \frac{2}{3} \frac{\alpha^2}{\tau_e} K (\chi_\pm)
-   
+
    that simply is the production rate of photons
    (integration of Eq. :eq:`PhotonProdRate`).
    Here, :math:`\chi_{\pm}` is the emitting electron (or positron) quantum parameter and
@@ -290,27 +292,27 @@ the previous ones and can be divided into several steps ([Duclous2011]_,
 
 3. The emitted photon's quantum parameter :math:`\chi_{\gamma}` is computed by
    inverting the cumulative distribution function:
-   
+
    .. math::
      :label: CumulativeDistr
-   
+
        \xi = P(\chi_\pm,\chi_{\gamma}) = \frac{\displaystyle{\int_0^{\chi_\gamma}{S(\chi_\pm, \chi) / \chi
        d\chi}}}{\displaystyle{\int_0^{\chi_\pm}{S(\chi_\pm, \chi) / \chi d\chi}}}
-   
+
    where :math:`S` is the so-called synchrotron emissivity function so that
-   
+
    .. math::
      :label: MCF
-   
+
        \frac{d^2 N}{dt d\chi} = \frac{2}{3} \frac{\alpha^2}{\tau_e} \frac{S (\chi_\pm, \chi)}{\chi}
-   
+
    The inversion of  :math:`\xi = P(\chi_\pm,\chi_{\gamma})` is done after drawing
    a second random number
    :math:`\phi \in \left[ 0,1\right]` to find :math:`\chi_{\gamma}` by solving :
-   
+
    .. math::
      :label: inverse_xi
-   
+
      \xi^{-1} = P^{-1}(\chi_\pm, \chi_{\gamma}) = \phi
 
 4. The energy of the emitted photon is then computed:
@@ -319,12 +321,12 @@ the previous ones and can be divided into several steps ([Duclous2011]_,
 
 5. The particle momentum is then updated using momentum conservation
    considering forward emission (valid when :math:`\gamma_\pm \gg 1`).
-   
+
    .. math::
      :label: momentumUpdate
-   
+
        F_{rad} = - \frac{\varepsilon_\gamma}{c} \frac{\mathbf{p_\pm}}{\| \mathbf{p_\pm} \|}
-   
+
    The radiated force is the recoil induced by the photon emission.
    Radiation reaction is therefore a discrete process.
    Note that momentum conservation does not exactly conserve energy.
@@ -333,7 +335,7 @@ the previous ones and can be divided into several steps ([Duclous2011]_,
    :math:`\varepsilon_\pm \gg 1` and :math:`\varepsilon_\gamma \ll \varepsilon_\pm`.
    Between emission events, the electron dynamics is still governed by the
    Lorentz force.
-   
+
    If the photon is emitted as a macro-photon, initial position is the same as
    for the emitting particle. The weight is also conserved.
 
