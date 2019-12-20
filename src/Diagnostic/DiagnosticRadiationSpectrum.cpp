@@ -3,9 +3,8 @@
 
 #include "DiagnosticRadiationSpectrum.h"
 #include "HistogramFactory.h"
-#include "RadiationTables.h"
 #include "RadiationTools.h"
-
+////#include "RadiationTables.h"
 
 using namespace std;
 
@@ -20,12 +19,15 @@ DiagnosticRadiationSpectrum::DiagnosticRadiationSpectrum( Params &params, Smilei
     // Check that reference_angular_frequency_SI is correctly defined
     if (params.reference_angular_frequency_SI<=0.) ERROR("DiagnosticRadiationSpectrum requires 'reference_angular_frequency_SI' to be defined.");
 
+    // minimum chi beyond which the radiation spectrum is computed (uses minimum_chi_continuous)
+    minimum_chi_continuous_ = RadiationTables::getMinimumChiContinuous();
+
     // Normalization parameters
     two_third = 2./3.;
     double squared_fine_structure_constant = 5.325135447834466e-5;
     double normalized_classical_electron_time = 9.399637140638142e-24*params.reference_angular_frequency_SI;
-    factor  = two_third*squared_fine_structure_constant/normalized_classical_electron_time;//*MG*params.timestep;
-    factor *= 0.2756644477108960; //sqrt(3.)/2./M_PI;
+    factor  = two_third*squared_fine_structure_constant/normalized_classical_electron_time;
+    factor *= sqrt(3.)/2./M_PI;
 
 
     ostringstream name("");
@@ -342,7 +344,7 @@ void DiagnosticRadiationSpectrum::run( Patch* patch, int timestep, SimWindow* si
             chi = s->particles->chi(ipart);
 
             // Update the spectrum only if the quantum parameter is sufficiently high
-            if (chi > 1e-5)
+            if (chi > minimum_chi_continuous_)
             {
 
                 // Emitting particle energy (maximum of the spectrum)
@@ -355,7 +357,9 @@ void DiagnosticRadiationSpectrum::run( Patch* patch, int timestep, SimWindow* si
 
                 increment0 = gamma_inv * s->particles->weight(ipart);
 
-                // Comput the maximum iteration of the loop on bins
+                // Compute the maximum iteration of the loop on bins
+                // ensures that xi<1;
+                // that is no radiation corresponds to photon energy larger than the radiating particle energy
                 if (photon_energy_logscale)
                 {
                     iphoton_energy_max = int((log10(gamma) - emin)/spacing);
@@ -372,16 +376,13 @@ void DiagnosticRadiationSpectrum::run( Patch* patch, int timestep, SimWindow* si
                 for (int i=0; i<iphoton_energy_max; i++) {
 
                     xi   = photon_energies[i] * gamma_inv;
-                    //if ( xi<1.) {
-                    zeta = xi/ (1.-xi);
+                    zeta = xi/ (1.-xi); // xi<1 is ensured above
                     nu   = two_third_ov_chi * zeta;
                     cst  = xi*zeta;
                     increment = increment0 * delta_energies[i]
-                    //*           xi * ( RadiationTools::compute_f1_nu(nu) + cst*RadiationTools::compute_f2_nu(nu) );
                     *             xi * RadiationTools::compute_bessel_parts_radiated_power(nu,cst);
                     #pragma omp atomic
                     data_sum[ind+i] += increment;
-                    //}
                 }
             }
         }

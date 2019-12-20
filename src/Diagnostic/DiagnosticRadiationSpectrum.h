@@ -67,6 +67,9 @@ private :
     std::vector<double> spatial_min, spatial_max;
 
     //! Minimum photon energy for radiation spectrum
+    double minimum_chi_continuous_;
+
+    //! Minimum photon energy for radiation spectrum
     double photon_energy_min;
 
     //! Maximum photon energy for radiation spectrum
