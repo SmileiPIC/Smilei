@@ -4,23 +4,100 @@ High-energy photon emission & radiation reaction
 ------------------------------------------------
 
 Accelerated charges emit electromagnetic radiation, and by doing so, lose some of their energy and momentum.
-This process is particularly important for high-energy particles traveling in a strong electromagnetic field
-where it can strongly influence the dynamics of the radiating charge, a problem known as radiation reaction.
+This process is particularly important for high-energy particles traveling in strong electromagnetic fields
+where it can strongly influence the dynamics of the radiating charges, a problem known as radiation reaction.
 
-Depending on the field strength and the particle energy, radiation
-losses pertain to different regimes and occur smoothly or in brutal steps, with
-diffusive and stochastic consequences.
-Physicists usually refer to this phenomenon as *synchrotron-like radiation emission*
-(in reference to the emission process occurring in synchrotron facilities
-with a constant magnetic field)
-or *nonlinear inverse Compton scattering* (in an arbitrary electromagnetic field).
+In :program:`Smilei`, different modules treating high-energy photon emission & its back-reaction have been implemented.
+We first give a short overview of the physics (and assumptions) underlying these modules, before giving more pratical
+information on what each module does. We then give examples & benchmarks, while the last two sections give additional
+information on the implementation of the various modules and their performances.
 
-In extremely intense laser fields, with intensities above
-:math:`10^{21}\ \mathrm{Wcm^{-2}}`, high-energy radiation emission strongly influences
-the dynamics of charged particles and the overall energy balance of laser-plasma
-interaction.
-In our regime of interaction, only light charge particles such as electrons
-and positrons can radiate.
+.. warning::
+  The processes discussed in this section bring into a play a characteristic length
+  [the classical radius of the electron :math:`r_e = e^2/(4\pi \epsilon_0 m_e c^2)` in classical electrodynamics (CED)
+  or the standard Compton wavelength :math:`\lambda_C=\hbar/(m_e c)` in quantum electrodynamics (QED)].
+  As a result, a simulation will require the user to define the absolute scale of the system by defining
+  the ``reference_angular_frequency_SI`` parameter (see :doc:`units` for more details).
+
+  Also note that, unless specified otherwise, SI units are used throughout this section, and we use standard notations
+  with :math:`m_e`, :math:`e`, :math:`c` and :math:`\hbar` are the electron  mass, elementary charge, speed of light
+  and reduced Planck constant, respectively, and :math:`\epsilon_0` is the permittivity of vacuum.
+
+--------------------------------------------------------------------------------
+
+Inverse Compton scattering
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This paragraph describes the physical models and assumptions behind the different modules
+for high-energy photon emission & radiation reaction that have been implemented in :program:`Smilei`.
+The presentation is based on the research article [Niel2018a]_.
+
+All the modules developed so far assume that:
+
+- the radiating particles (either electrons or positrons) are ultra-relativistic (:math:`\gamma \gg 1`),
+  which allows us to consider that radiation is emitted in the direction given by the emitting particle velocity,
+- the electromagnetic field varies slowly over the formation time of a radiated photon, which requires
+  relativistic field strengths [i.e., the field vector potential is :math:`e\vert A^{\mu}\vert/(mc^2) \gg 1`],
+  and allows us to use quasi-static models for high-energy photon emission (*locally-constant cross-field approximation*),
+- the electromagnetic fields are small with respect to the critical fields of Quantum Electrodynamics (QED),
+  and more precisely both field invariants :math:`\sqrt{c^2{\bf B}^2-{\bf E}^2}` and :math:`\sqrt{c{\bf B}\cdot{\bf E}}` are small with
+  respect to the Schwinger field :math:`E_s = m^2 c^3 / \hbar e \simeq 1.3 \times 10^{18}\ \mathrm{V/m}`,
+- all (real) particles radiate independently of their neighbors (incoherent emission), which requires the emitted radiation
+  wavelength to be much shorter than the typical distance between (real) particles :math:`\propto n_e^{-1/3}`.
+
+Under these assumptions, high-energy photon emission reduces to the incoherent process of
+**nonlinear inverse Compton scattering**.
+The corresponding rate of high-energy photon emission is given by [Ritus1985]_:
+
+.. math::
+  :label: photonProductionRate
+
+  \frac{d^2 N_{\gamma}}{d\tau d\chi_{\gamma}} = \frac{2}{3}\frac{\alpha^2}{\tau_e}\,\frac{S(\chi,\chi_{\gamma}/\chi)}{\chi_{\gamma}}
+
+with :math:`\tau_e = r_e/c` the time for light to cross the classical radius of the electron,
+and :math:`\alpha` the fine-structure constant.
+This rate depends on two Lorentz invariants, the *electron quantum parameter*:
+
+.. math::
+  :label: particleQuantumParameter
+
+  \chi = \frac{\gamma}{E_s} \sqrt{ \left({\bf E} + {\bf v} \times {\bf B}\right)^2 - ({\bf v }\cdot{\bf E})^2/c^2 }
+
+and the *photon quantum parameter* (at the time of photon emission):
+
+.. math::
+  :label: photonQuantumParameter
+
+  \chi_{\gamma} = \frac{\gamma_{\gamma}}{E_s} \sqrt{ \left({\bf E} + {\bf c} \times {\bf B}\right)^2 - ({\bf c }\cdot{\bf E})^2/c^2 }
+
+where :math:`\gamma = \varepsilon / (m_e c^2)` and :math:`\gamma_{\gamma} = \varepsilon_{\gamma} / (m_e c^2)` are
+the normalized energies of the radiating particle and emitted photon, respectively, and :math:`{\bf v}` and
+:math:`{\bf c}` their respective velocities.
+
+Note that considering ultra-relativistic (radiating) particles, both parameters are related by:
+
+.. math::
+  :label: xi_definition
+
+  \xi = \frac{\chi_{\gamma}}{\chi} = \frac{\gamma_{\gamma}}{\gamma}\,.
+
+In the photon production rate Eq. :eq:`photonProductionRate` appears the quantum emissivity:
+
+.. math::
+  :label: particleQuantumParameter
+
+  S(\chi,\xi) = \frac{\sqrt{3}}{2\pi}\,\xi\,\left[\int_{\nu}^{+\infty} {\rm K}_{5/3}(y) dy
+  + \frac{\xi^2}{1-\xi}\,{\rm K}_{2/3}(\nu)\right]
+
+Note also
+
+
+In :numref:`radiationRegimes`,
+:math:`\varepsilon_\gamma = \gamma_\gamma mc^2` is the photon energy.
+
+Different regimes of radiation reaction have been identified (for a discussion of these different regimes,
+see [Niel2018]_), that largely depend on both the field strength and particle energies.
+
 
 Different approaches have been implemented in :program:`Smilei` as summarized
 in :numref:`radiationRegimes` to deal with different regimes of emission.
@@ -28,22 +105,9 @@ These regimes can be characterized via the quantum Lorentz invariant parameter
 :math:`\chi` which is an indicator of how strong is the radiation emission
 process.
 
-.. math::
-  :label: particleQuantumParameter
 
-  \chi = \frac{\gamma}{E_s} \left| \left( \beta \cdot \mathbf{E}
-  \right)^2 - \left( \mathbf{E} + \mathbf{v} \times \mathbf{B} \right)^2
-  \right|^{1/2}
 
-where :math:`E_s = m^2 c^3 / \hbar e \simeq 1.3 \times 10^{18}\ \mathrm{V/m}` is
-the Schwinger field, :math:`e` is the electron charge,
-:math:`m` is the electron mass, :math:`c` the speed of light in vacuum,
-:math:`\hbar` the reduced Planck constant. :math:`\mathbf{E} = (E_x, E_y, E_z)`
-and :math:`\mathbf{B} = (B_x, B_y, B_z)` are respectively the electric and
-the magnetic fields. :math:`\gamma = \varepsilon / m c^2` is the particle
-Lorentz factor (and the normalized particle energy). :math:`\beta = v/c` is
-the normalized particle velocity. In :numref:`radiationRegimes`,
-:math:`\varepsilon_\gamma = \gamma_\gamma mc^2` is the photon energy.
+
 
 .. _radiationRegimes:
 
@@ -821,6 +885,8 @@ in the synchrotron case run on KNL.
 
 References
 ^^^^^^^^^^
+
+.. [Niel2018a] `F. Niel et al., Phys. Rev. E 97, 043209 (2018) <https://doi.org/10.1103/PhysRevE.97.043209>`_
 
 .. [Duclous2011] `R. Duclous, J. G. Kirk, and A. R. Bell (2011), Plasma Physics and Controlled Fusion, 53 (1), 015009 <http://stacks.iop.org/0741-3335/53/i=1/a=015009>`_
 
