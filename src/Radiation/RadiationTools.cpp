@@ -7,3 +7,5 @@
 // ----------------------------------------------------------------------------
 
 #include "RadiationTools.h"
+double RadiationTools::minimum_chi_discontinuous_;
+
