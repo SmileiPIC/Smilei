@@ -4,7 +4,6 @@
 #include "DiagnosticRadiationSpectrum.h"
 #include "HistogramFactory.h"
 #include "RadiationTools.h"
-////#include "RadiationTables.h"
 
 using namespace std;
 
@@ -20,7 +19,7 @@ DiagnosticRadiationSpectrum::DiagnosticRadiationSpectrum( Params &params, Smilei
     if (params.reference_angular_frequency_SI<=0.) ERROR("DiagnosticRadiationSpectrum requires 'reference_angular_frequency_SI' to be defined.");
 
     // minimum chi beyond which the radiation spectrum is computed (uses minimum_chi_continuous)
-    minimum_chi_continuous_ = RadiationTables::getMinimumChiContinuous();
+    minimum_chi_continuous_ = RadiationTools::minimum_chi_continuous_;
 
     // Normalization parameters
     two_third = 2./3.;
@@ -290,7 +289,6 @@ bool DiagnosticRadiationSpectrum::prepare( int timestep )
 // run one particle binning diagnostic
 void DiagnosticRadiationSpectrum::run( Patch* patch, int timestep, SimWindow* simWindow )
 {
-    double tmp = RadiationTools::minimum_chi_discontinuous_;
 
     vector<int> int_buffer;
     vector<double> double_buffer;

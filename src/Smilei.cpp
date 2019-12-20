@@ -130,9 +130,8 @@ int main( int argc, char *argv[] )
     // (nonlinear inverse Compton scattering)
     // ---------------------------------------------------------------------
     RadiationTables.initializeParameters( params, &smpi);
-    //RadiationTables.computeTables( params, &smpi );
-    //RadiationTables.outputTables( &smpi );
-    RadiationTools::minimum_chi_discontinuous_ = RadiationTables.getMinimumChiContinuous();
+    RadiationTools::minimum_chi_continuous_    = RadiationTables.getMinimumChiContinuous();    //MG/19/12/20 temporary
+    RadiationTools::minimum_chi_discontinuous_ = RadiationTables.getMinimumChiDiscontinuous(); //will need cleaning (see RadiationTools.h) 
 
     // ---------------------------------------------------------------------
     // Init and compute tables for multiphoton Breit-Wheeler pair creation
@@ -185,7 +184,7 @@ int main( int argc, char *argv[] )
 
         vecPatches.computeCharge();
         vecPatches.sumDensities( params, time_dual, timers, 0, simWindow, &smpi );
-        
+
         // Apply antennas
         // --------------
         vecPatches.applyAntennas( 0.5 * params.timestep );
@@ -371,13 +370,13 @@ int main( int argc, char *argv[] )
 
             // Finalize field synchronization and exchanges
             vecPatches.finalizeSyncAndBCFields( params, &smpi, simWindow, time_dual, timers, itime );
-            
+
             // call the various diagnostics
             vecPatches.runAllDiags( params, &smpi, itime, timers, simWindow );
-            
+
             timers.movWindow.restart();
             simWindow->shift( vecPatches, &smpi, params, itime, time_dual );
-            
+
             if (itime == simWindow->getAdditionalShiftsIteration() ) {
                 int adjust = simWindow->isMoving(time_dual)?0:1;
                 for (unsigned int n=0;n < simWindow->getNumberOfAdditionalShifts()-adjust; n++)

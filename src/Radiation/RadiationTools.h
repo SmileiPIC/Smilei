@@ -14,7 +14,8 @@
 class RadiationTools {
 
     public:
-	static double minimum_chi_discontinuous_;
+      static double minimum_chi_continuous_;    //MG/19/12/20 - Temporary!
+      static double minimum_chi_discontinuous_; //              will need to be cleaned (see .h)
 
         // -----------------------------------------------------------------------------
         //! Return the value of the function h(chipa) of Niel et al.

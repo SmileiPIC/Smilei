@@ -57,8 +57,9 @@ void RadiationTables::initializeParameters( Params &params , SmileiMPI *smpi )
 
     if( params.hasMCRadiation ||
         params.hasLLRadiation ||
-        params.hasNielRadiation ) {
-        TITLE( "Initializing radiation reaction" )
+        params.hasNielRadiation||
+        params.hasDiagRadiationSpectrum) {
+        TITLE( "Initializing radiation reaction (or RadiationSpectrum parameters)" )
 
         // Preliminary checks
         if( params.reference_angular_frequency_SI <= 0. )
@@ -67,29 +68,29 @@ void RadiationTables::initializeParameters( Params &params , SmileiMPI *smpi )
 
     }
 
-    if( params.hasLLRadiation ) {
+    if( params.hasLLRadiation || params.hasDiagRadiationSpectrum ) {
         MESSAGE( 1,"A continuous radiation reaction module"
-                 << " is requested by some species." );
-                 MESSAGE( 2,"default minimum chi for continuous radiation module is "
-                          <<std::setprecision(6)<<minimum_chi_continuous_<<",");
-                 PyTools::extract( "minimum_chi_continuous", minimum_chi_continuous_, "RadiationReaction" );
-                 MESSAGE( 2,"applied minimum chi for continuous radiation module is "
-                          <<std::setprecision(6)<<minimum_chi_continuous_<<".\n");
+                 << " is requested by some species:" );
+        PyTools::extract( "minimum_chi_continuous", minimum_chi_continuous_, "RadiationReaction" );
+        MESSAGE( 2,"applied minimum chi for continuous radiation module is "
+                <<std::setprecision(6)<<minimum_chi_continuous_<<".\n");
+    }
+
+    if( params.hasNielRadiation ) {
+        MESSAGE( 1,"The Fokker-Planck radiation reaction module 'Niel'"
+                 << " is requested by some species:" );
+        PyTools::extract( "minimum_chi_continuous", minimum_chi_continuous_, "RadiationReaction" );
+        MESSAGE( 2,"applied minimum chi for Niel's radiation module is "
+                <<std::setprecision(6)<<minimum_chi_continuous_<<".\n");
     }
 
     if( params.hasMCRadiation ) {
         MESSAGE( 1,"The Monte-Carlo Compton radiation module"
-                 << " is requested by some species." );
-        MESSAGE( 2,"default minimum chi for MC radiation module is "
-                 <<std::setprecision(6)<<minimum_chi_discontinuous_<<",");
+                 << " is requested by some species:" );
         PyTools::extract( "minimum_chi_discontinuous", minimum_chi_discontinuous_, "RadiationReaction" );
         MESSAGE( 2,"applied minimum chi for MC radiation module is "
                  <<std::setprecision(6)<<minimum_chi_discontinuous_<<".\n");
 
-    }
-    if( params.hasNielRadiation ) {
-        MESSAGE( 1,"The synchrotron-like stochastic radiation module"
-                 << " of Niel et al. is requested by some species.\n" );
     }
 
     // If the namelist for Nonlinear Inverse Compton Scattering exists
