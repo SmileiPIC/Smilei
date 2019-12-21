@@ -5,7 +5,7 @@ High-energy photon emission & radiation reaction
 
 Accelerated charges emit electromagnetic radiation, and by doing so, lose some of their energy and momentum.
 This process is particularly important for high-energy particles traveling in strong electromagnetic fields
-where it can strongly influence the dynamics of the radiating charges, a problem known as radiation reaction.
+where it can strongly influence the dynamics of the radiating charges, a process known as radiation reaction.
 
 In :program:`Smilei`, different modules treating high-energy photon emission & its back-reaction have been implemented.
 We first give a short overview of the physics (and assumptions) underlying these modules, before giving more pratical
@@ -32,6 +32,9 @@ This paragraph describes the physical models and assumptions behind the differen
 for high-energy photon emission & radiation reaction that have been implemented in :program:`Smilei`.
 The presentation is based on the research article [Niel2018a]_.
 
+Basics
+""""""
+
 All the modules developed so far assume that:
 
 - the radiating particles (either electrons or positrons) are ultra-relativistic (:math:`\gamma \gg 1`),
@@ -41,7 +44,7 @@ All the modules developed so far assume that:
   and allows us to use quasi-static models for high-energy photon emission (*locally-constant cross-field approximation*),
 - the electromagnetic fields are small with respect to the critical fields of Quantum Electrodynamics (QED),
   and more precisely both field invariants :math:`\sqrt{c^2{\bf B}^2-{\bf E}^2}` and :math:`\sqrt{c{\bf B}\cdot{\bf E}}` are small with
-  respect to the Schwinger field :math:`E_s = m^2 c^3 / \hbar e \simeq 1.3 \times 10^{18}\ \mathrm{V/m}`,
+  respect to the Schwinger field :math:`E_s = m^2 c^3 / (\hbar e) \simeq 1.3 \times 10^{18}\ \mathrm{V/m}`,
 - all (real) particles radiate independently of their neighbors (incoherent emission), which requires the emitted radiation
   wavelength to be much shorter than the typical distance between (real) particles :math:`\propto n_e^{-1/3}`.
 
@@ -87,76 +90,98 @@ In the photon production rate Eq. :eq:`photonProductionRate` appears the quantum
   :label: particleQuantumParameter
 
   S(\chi,\xi) = \frac{\sqrt{3}}{2\pi}\,\xi\,\left[\int_{\nu}^{+\infty} {\rm K}_{5/3}(y) dy
-  + \frac{\xi^2}{1-\xi}\,{\rm K}_{2/3}(\nu)\right]
+  + \frac{\xi^2}{1-\xi}\,{\rm K}_{2/3}(\nu)\right]\,,
 
-Note also
+with :math:`\nu = 2\xi/[\chi(1-\xi)]`.
+
+Finally, the *instantaneous radiated power energy-spectrum* reads:
+
+.. math::
+  :label: radiatedPowerSpectrum
+
+  \frac{dP_{\rm inst}}{d\gamma_{\gamma}} = P_{\alpha}\,\gamma^{-1}\,S(\chi,\chi_{\gamma}/\chi)\,,
+
+with :math:`P_{\alpha}=2\alpha^2 m_e c^2/(3\tau_e)`, and the *instantaneous radiated power*:
+
+.. math::
+  :label: radiatedPower
+
+  P_{\rm inst} = P_{\alpha}\,\chi^2\,g(\chi)\,,
+
+with :math:`g(\chi)` the so-called *quantum correction*:
+
+.. math::
+  :label: g
+
+  g(\chi) = \frac{9 \sqrt{3} }{8 \pi} \int_0^{+\infty}{d\nu
+  \left[  \frac{2\nu^2 }{\left( 2 + 3 \nu \chi \right) ^2}K_{5/3}(\nu) +
+  \frac{4 \nu \left( 3 \nu \chi\right)^2 }{\left( 2 + 3 \nu \chi \right)^4}K_{2/3}(\nu) \right]}\,.
 
 
-In :numref:`radiationRegimes`,
-:math:`\varepsilon_\gamma = \gamma_\gamma mc^2` is the photon energy.
+Regimes & models of radiation reaction
+""""""""""""""""""""""""""""""""""""""
 
-Different regimes of radiation reaction have been identified (for a discussion of these different regimes,
-see [Niel2018]_), that largely depend on both the field strength and particle energies.
+**Classical radiation reaction** :math:`\chi \ll 1`
 
+Quantum electrodynamics (QED) effects are negligible (classical regime).
+Radiation reaction can be treated as a continuous friction force acting on the particles.
+Several models for the radiation friction force have been proposed (see [DiPiazza2012]_).
+The ones used in :program:`Smilei` are based on the Landau-Lifshitz model [Landau1947]_
+approximated for high Lorentz factors (:math:`\gamma \gg 1`).
 
-Different approaches have been implemented in :program:`Smilei` as summarized
-in :numref:`radiationRegimes` to deal with different regimes of emission.
-These regimes can be characterized via the quantum Lorentz invariant parameter
-:math:`\chi` which is an indicator of how strong is the radiation emission
-process.
+.. note::
 
+  for :math:`\chi \rightarrow 0`, the quantum correction :math:`g(\chi) \rightarrow 1`,
+  :math:`P_{\rm inst} \rightarrow P_{\alpha}\,\chi^2` (which is the Larmor power)
+  and :math:`dP_{\rm inst}/d\gamma_{\gamma}` reduces to the classical spectrum of *synchrotron* radiation.
 
+**Quantum radiation reaction** :math:`\chi \gtrsim 1`
 
+In the quantum regime, photons with energies of the order of the energies of the emitting electron can be produced.
+The stochastic nature of high-energy photon emission is important,
+and a continuous friction force can not be used anymore.
+A Monte-Carlo description of discrete high-energy photon emission is then used
+(see [Timokhin2010]_, [Elkina2011]_, [Duclous2011]_, and [Lobet2013]_).
 
+**Intermediate regime** :math:`\chi \lesssim 1`
+
+In the intermediate regime (:math:`\chi \sim 1`), the energy of the emitted photons remains
+small with respect to that of the emitting electrons, the stochastic nature of photon emission cannot be neglected.
+The electron dynamics is described by a stochastic differential equation derived from a Fokker-Planck
+expansion [Niel2018]_.
+
+**Choosing the good model for your simulation**
+
+The next sections describe in more details the different models implemented in :program:`Smilei`.
+For the user convenience, :numref:`radiationRegimes` briefly summarises the models and how to choose
+the most appropriate radiation reaction model for your simulation.
+
+.. Note::
+
+  In [Niel2018]_, an extensive study of the links between the different models for radiation reaction and their domain
+  of applicability is presented. The following table is mainly informative.
 
 .. _radiationRegimes:
 
 +-------------------------------------+--------------------------+------------------------------------------------+---------------------------+
 | Regime                              | :math:`\chi` value       | Description                                    | Models                    |
 +=====================================+==========================+================================================+===========================+
-| Classical radiation emission        | :math:`\chi \sim 10^{-3}`| :math:`\varepsilon_\gamma  \ll \varepsilon`    | Landau-Lifshitz           |
-|                                     |                          | , radiated energy overestimated for            |                           |
+| Classical radiation emission        | :math:`\chi \sim 10^{-3}`| :math:`\gamma_\gamma  \ll \gamma`,             | Landau-Lifshitz           |
+|                                     |                          | radiated energy overestimated for              |                           |
 |                                     |                          | :math:`\chi > 10^{-2}`                         |                           |
 +-------------------------------------+--------------------------+------------------------------------------------+---------------------------+
-| Semi-classical radiation emission   | :math:`\chi \sim 10^{-2}`| :math:`\varepsilon_\gamma  \ll \varepsilon`    | Corrected Landau-Lifshitz |
-|                                     |                          | , no stochastic effects                        |                           |
+| Semi-classical radiation emission   | :math:`\chi \sim 10^{-2}`| :math:`\gamma_\gamma  \ll \gamma`,             | Corrected Landau-Lifshitz |
+|                                     |                          | no stochastic effects                          |                           |
 +-------------------------------------+--------------------------+------------------------------------------------+---------------------------+
-| Weak quantum regime                 | :math:`\chi \sim 10^{-1}`| :math:`\varepsilon_\gamma  < \varepsilon`,     | Stochastic model of       |
-|                                     |                          | :math:`\varepsilon_\gamma / mc^2  \gg 1`       | Niel `et al` / Monte-Carlo|
+| Weak quantum regime                 | :math:`\chi \sim 10^{-1}`| :math:`\gamma_\gamma < \gamma`,                | Stochastic model of       |
+|                                     |                          | :math:`\gamma_\gamma \gg mc^2`                 | Niel `et al` / Monte-Carlo|
 +-------------------------------------+--------------------------+------------------------------------------------+---------------------------+
-| Quantum regime                      | :math:`\chi \sim 1`      | :math:`\varepsilon_\gamma \sim \varepsilon`    | Monte-Carlo               |
+| Quantum regime                      | :math:`\chi \sim 1`      | :math:`\gamma_\gamma \gtrsim \gamma`           | Monte-Carlo               |
 |                                     |                          |                                                |                           |
 +-------------------------------------+--------------------------+------------------------------------------------+---------------------------+
 
 
-When quantum electrodynamics (QED) effects are negligible (classical regime),
-the radiation reaction can be treated as a
-continuous friction force acting on the particles.
-Several models have been published (e.g. LAD,
-[Landau1947]_, Sokolov, Capdessus).
-The ones used in :program:`Smilei` are
-based on the Landau-Lifshitz model approximated for high Lorentz factors
-(:math:`\gamma \gg 1`).
 
-In the quantum regime, photons with energies of the order of the energies of
-the emitting electron can be produced (:math:`\varepsilon_\gamma \sim \varepsilon_\pm`).
-A continuous friction force can not be used anymore.
-This is treated using a Monte-Carlo
-description of discrete high-energy photon emissions
-(see [Timokhin2010]_, [Elkina2011]_, [Duclous2011]_, and [Lobet2013]_).
-
-In the intermediate regime (:math:`\chi \sim 1`), where the energy of the emitted photons remains
-small with respect to that of the emitting electrons, but for which the
-stochastic nature of photon emission cannot be neglected, the electron dynamics
-is described by the addition of a stochastic term derived from a Fokker-Planck
-expansion ([Niel2018]_).
-
-Use :numref:`radiationRegimes` to choose properly
-the most appropriate radiation reaction model
-in :program:`Smilei` (see :ref:`the radiation configuration in Species <Species>`).
-
-The next sections describe in more details the models implemented
-in :program:`Smilei` to deal with the different regimes of emission.
 
 --------------------------------------------------------------------------------
 
