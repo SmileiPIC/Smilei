@@ -171,12 +171,11 @@ void DoubleGridsAM::syncFieldsOnPatches( Domain &domain, VectorPatch &vecPatches
         patch_fields->El_[imode]->get( domain_fields->El_[imode], params, smpi, domain.patch_, vecPatches(ipatch) );
         patch_fields->Er_[imode]->get( domain_fields->Er_[imode], params, smpi, domain.patch_, vecPatches(ipatch) );
         patch_fields->Et_[imode]->get( domain_fields->Et_[imode], params, smpi, domain.patch_, vecPatches(ipatch) );
-        
-        if (!params.is_spectral) {
-            patch_fields->Bl_m[imode]->get( domain_fields->Bl_m[imode], params, smpi, domain.patch_, vecPatches(ipatch) );
-            patch_fields->Br_m[imode]->get( domain_fields->Br_m[imode], params, smpi, domain.patch_, vecPatches(ipatch) );
-            patch_fields->Bt_m[imode]->get( domain_fields->Bt_m[imode], params, smpi, domain.patch_, vecPatches(ipatch) );
-        }
+       
+        //Temporary synchronize B_m even if it is not necessary since Bm = B 
+        patch_fields->Bl_m[imode]->get( domain_fields->Bl_m[imode], params, smpi, domain.patch_, vecPatches(ipatch) );
+        patch_fields->Br_m[imode]->get( domain_fields->Br_m[imode], params, smpi, domain.patch_, vecPatches(ipatch) );
+        patch_fields->Bt_m[imode]->get( domain_fields->Bt_m[imode], params, smpi, domain.patch_, vecPatches(ipatch) );
 
         patch_fields->Bl_[imode]->get( domain_fields->Bl_[imode], params, smpi, domain.patch_, vecPatches(ipatch) );
         patch_fields->Br_[imode]->get( domain_fields->Br_[imode], params, smpi, domain.patch_, vecPatches(ipatch) );
