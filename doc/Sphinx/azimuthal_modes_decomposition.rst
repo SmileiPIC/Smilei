@@ -30,7 +30,7 @@ as :math:`\tilde{F}^{m}` leads to:
 
 The mode :math:`m=0` has cylindrical symmetry (no dependence
 on :math:`\theta`). The following figure shows the real part
-of some azimuthal modes.
+of the first four azimuthal modes.
 
 .. figure:: _static/AM_modes.png
   :width: 15cm
@@ -131,13 +131,13 @@ evolution of the mode :math:`m`:
 Thus, even in presence of a plasma, at each timestep,
 these equations are solved independently.
 The coupling between the modes occurs when the total electromagnetic fields
-push the particles, creating, in turn, the currents :math:`\tilde{J}^m`
+push the macro-particles, creating, in turn, the currents :math:`\tilde{J}^m`
 of their current density.
 
 
 ----
 
-Interaction with particles
+Interaction with the macro-particles
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The azimuthal decomposition concerns only the grid quantities
@@ -150,9 +150,9 @@ space with cartesian coordinates.
 
   Blue arrows: the `x` and `r` axes of the 2D grid (red)
   where the electromagnetic fields are defined.
-  Particle positions and momenta are defined in 3D.
+  Macro-particle positions and momenta are defined in 3D.
 
-During each iteration, the particles are pushed in phase space
+During each iteration, the macro-particles are pushed in phase space
 using reconstructed 3D cartesian electromagnetic fields
 at their position :math:`(x,r,\theta)` (see Eq. :eq:`AzimuthalDecomposition1`).
 Then, their contribution to the current densities :math:`(J_x,J_r,J_{\theta})`
@@ -169,7 +169,7 @@ Note that each mode :math:`\tilde{F}^{m}` is a function of :math:`x`,
 the longitudinal coordinate and :math:`r`, the radial coordinate.
 Therefore, each of them is only two dimensional. Thus, the computational cost
 of AM simulations scales approximately as 2D simulations multiplied by the
-number of modes. However, a higher number of particles might be necessary
+number of modes. However, a higher number of macro-particles might be necessary
 to obtain convergence of the results (always check the convergence of your
 results by increasing the number of macro-particles and modes).
 A rule of thumb is to use at least 4 times the number of modes as

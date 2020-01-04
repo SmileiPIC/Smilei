@@ -20,9 +20,9 @@ In the following, the equations of the envelope model are presented, following m
 The envelope approximation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The use of envelope models to describe a laser pulse is well known in PIC codes [Mora1997]_, [Quesnel1998]_, [Gordon2000]_, [Huang2006]_, [Cowan2011]_, [Benedetti2012]_. The basic blocks of a PIC code using an envelope description for the laser are an envelope equation, to describe the evolution of the laser, and equations of motion for the macroparticles, to take into account their interactions with the laser. 
+The use of envelope models to describe a laser pulse is well known in PIC codes [Mora1997]_, [Quesnel1998]_, [Gordon2000]_, [Huang2006]_, [Cowan2011]_, [Benedetti2012]_. The basic blocks of a PIC code using an envelope description for the laser are an envelope equation, to describe the evolution of the laser, and equations of motion for the macro-particles, to take into account their interactions with the laser. 
 The effect of the plasma on laser propagation is taken into account in the envelope equation through the plasma susceptibility, as described in the following section.
-The various PIC codes using an envelope model for the laser solve different versions of the envelope equation, depending mostly on which terms are retained and which ones are neglected, or the set of coordinates used to derive the envelope equation. Also the numerical schemes used to solve the envelope equation and the equations of motion of the particles vary accordingly.
+The various PIC codes using an envelope model for the laser solve different versions of the envelope equation, depending mostly on which terms are retained and which ones are neglected, or the set of coordinates used to derive the envelope equation. Also the numerical schemes used to solve the envelope equation and the equations of motion of the macro-particles vary accordingly.
 In :program:`Smilei`, the version of the envelope model written in laboratory frame coordinates, first demonstrated in the PIC code :program:`ALaDyn` [Benedetti2008]_, [ALaDynZenodo]_, [Terzani]_ is implemented, including the same numerical scheme to solve the lab frame coordinates envelope equation.
 
 The basic assumption of the model is the description of the laser pulse vector potential in the complex polarization direction :math:`\hat{A}(\mathbf{x},t)` as a slowly varying envelope :math:`\tilde{A}(\mathbf{x},t)` modulated by fast oscillations at wavelength :math:`\lambda_0`, moving at the speed of light :math:`c`:
@@ -39,7 +39,7 @@ where :math:`k_0=2\pi/\lambda_0`. In the language of signal processing, :math:`\
   A=\bar{A} + \hat{A}
 
 In the envelope model context, "slowly varying" means that the spatial and temporal variations of :math:`\bar{A}` and :math:`\tilde{A}` are small enough to be treated perturbatively with respect to the ratio :math:`\epsilon=\lambda_0/\lambda_p`, as described in detail in [Mora1997]_, [Quesnel1998]_, [Cowan2011]_. The laser envelope transverse size :math:`R` and longitudinal size :math:`L` are thus assumed to scale as :math:`R \approx L \approx \lambda_0 / \epsilon` [Mora1997]_, [Quesnel1998]_.
-As described thoroughly in the same references, the coupling between the laser envelope and the plasma particles can be modeled through the addiction of a ponderomotive force term in the particles equations of motion. This term, not representing a real force, is a term rising from an averaging process in the perturbative treatment of the particles motion over the laser optical cycles. 
+As described thoroughly in the same references, the coupling between the laser envelope and the plasma macro-particles can be modeled through the addiction of a ponderomotive force term in the macro-particles equations of motion. This term, not representing a real force, is a term rising from an averaging process in the perturbative treatment of the macro-particles motion over the laser optical cycles. 
 
 Modeling the laser through a complex envelope and its coupling with the plasma through the ponderomotive force will yield physically meaningful results only if the variation scales in space and time are greater than :math:`\lambda_0`, :math:`1/\omega_0`. Examples violating these hypotheses include, but are not limited to, tightly focused lasers, few optical cycles lasers, sharp gradients in the plasma density. 
 
@@ -90,7 +90,7 @@ which describes the evolution of the laser pulse only in terms of the laser enve
 
   \chi(\mathbf{x}) = \sum_s\,\frac{q^2_s}{m_s}\,\sum_p\,\frac{w_p}{\bar{\gamma}_p}\,S\big(\mathbf{x}-\mathbf{\bar{x}}_p\big)\,
 
-where :math:`\bar{\gamma}_p` is the averaged Lorentz factor of the particle :math:`p`. This averaged quantity is computed from the averaged particle momentum :math:`\mathbf{\bar{u}}_p=\mathbf{\bar{p}}_p/m_s` and the envelope :math:`\tilde{A}`:
+where :math:`\bar{\gamma}_p` is the averaged Lorentz factor of the macro-particle :math:`p`. This averaged quantity is computed from the averaged macro-particle momentum :math:`\mathbf{\bar{u}}_p=\mathbf{\bar{p}}_p/m_s` and the envelope :math:`\tilde{A}`:
 
 .. math::
   :label: gamma_ponderomotive
@@ -113,8 +113,8 @@ In :program:`Smilei`, none of these assumptions are made and the full version of
 The ponderomotive equations of motion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The process of averaging over the time scale of a laser oscillation period yields a simple result for the particles equations of motion. 
-The averaged position :math:`\mathbf{\bar{x}}_p` and momentum :math:`\mathbf{\bar{u}}_p` of the particle :math:`p` are related to the averaged electromagnetic fields :math:`\mathbf{\bar{E}}_p=\mathbf{\bar{E}}(\mathbf{\bar{x}}_p)`, :math:`\mathbf{\bar{B}}_p=\mathbf{\bar{B}}(\mathbf{\bar{x}}_p)` through the usual equations of motion, with the addition of a ponderomotive force term which models the interaction with the laser:
+The process of averaging over the time scale of a laser oscillation period yields a simple result for the macro-particles equations of motion. 
+The averaged position :math:`\mathbf{\bar{x}}_p` and momentum :math:`\mathbf{\bar{u}}_p` of the macro-particle :math:`p` are related to the averaged electromagnetic fields :math:`\mathbf{\bar{E}}_p=\mathbf{\bar{E}}(\mathbf{\bar{x}}_p)`, :math:`\mathbf{\bar{B}}_p=\mathbf{\bar{B}}(\mathbf{\bar{x}}_p)` through the usual equations of motion, with the addition of a ponderomotive force term which models the interaction with the laser:
 
 .. math::
   :label: ponderomotive_equations_of_motion
@@ -155,11 +155,11 @@ Since Maxwell's equations :eq:`Maxwell_envelope` remain unaltered, their solutio
 For example, in the envelope equations, the source term involves the unknown envelope :math:`\tilde{A}` itself and :math:`\chi`, which depends on the envelope. The equations of motion contain the term :math:`\bar{\gamma}`, which depends on the envelope :math:`\tilde{A}`.
 The PIC loop described in :doc:`algorithms` is thus modified to self-consistently solve the envelope model equations. At each timestep, the code performs the following operations
 
-#. interpolating the electromagnetic fields and the ponderomotive potential at the particle positions,
+#. interpolating the electromagnetic fields and the ponderomotive potential at the macro-particle positions,
 #. projecting the new plasma susceptibility on the grid,
-#. computing the new particle velocities, 
+#. computing the new macro-particle velocities, 
 #. computing the new envelope values on the grid, 
-#. computing the new particle positions, 
+#. computing the new macro-particle positions, 
 #. projecting the new charge and current densities on the grid,
 #. computing the new electromagnetic fields on the grid.
 
@@ -169,7 +169,7 @@ In this section, we describe these steps which advance the time from time-step :
 
 Field interpolation
 """""""""""""""""""
-The electromagnetic fields and ponderomotive potential interpolation at the particle position at time-step :math:`(n)` follow the same technique described in :doc:`algorithms`:
+The electromagnetic fields and ponderomotive potential interpolation at the macro-particle position at time-step :math:`(n)` follow the same technique described in :doc:`algorithms`:
 
 .. math::
 
@@ -185,12 +185,12 @@ and :math:`V_c` denotes the volume of a cell.
 
 Susceptibility deposition
 """"""""""""""""""""""""""""
-The particle averaged positions :math:`\mathbf{\bar{x}}_p^{(n)}` and averaged momenta :math:`\mathbf{\bar{p}}_p^{(n)}` and the ponderomotive potential :math:`\mathbf{\Phi}_p^{(n)}` are used to compute the ponderomotive Lorentz factor :math:`\bar{\gamma}_p` :eq:`gamma_ponderomotive` and deposit the susceptibility on the grid through Eq. :eq:`susceptibility`.
+The macro-particle averaged positions :math:`\mathbf{\bar{x}}_p^{(n)}` and averaged momenta :math:`\mathbf{\bar{p}}_p^{(n)}` and the ponderomotive potential :math:`\mathbf{\Phi}_p^{(n)}` are used to compute the ponderomotive Lorentz factor :math:`\bar{\gamma}_p` :eq:`gamma_ponderomotive` and deposit the susceptibility on the grid through Eq. :eq:`susceptibility`.
 
 Ponderomotive momentum push
 """"""""""""""""""""""""""""
 The momentum push is performed through a modified version of the well-known `Boris Pusher <https://archive.org/stream/DTIC_ADA023511#page/n7/mode/2up>`_, first implemented in :program:`ALaDyn` [ALaDynZenodo]_.
-The plasma electric, magnetic and ponderomotive potential fields at the particle position :math:`\mathbf{\bar{E}}_p^{(n)}`, :math:`\mathbf{\bar{B}}_p^{(n)}`, :math:`\mathbf{\Phi}_p^{(n)}` are used to advance the momentum :math:`\mathbf{\bar{p}}_p^{(n-1/2)}` from time-step :math:`n−1/2` to time-step :math:`n + 1/2`, solving the momentum equation in Eqs. :eq:`ponderomotive_equations_of_motion`
+The plasma electric, magnetic and ponderomotive potential fields at the macro-particle position :math:`\mathbf{\bar{E}}_p^{(n)}`, :math:`\mathbf{\bar{B}}_p^{(n)}`, :math:`\mathbf{\Phi}_p^{(n)}` are used to advance the momentum :math:`\mathbf{\bar{p}}_p^{(n-1/2)}` from time-step :math:`n−1/2` to time-step :math:`n + 1/2`, solving the momentum equation in Eqs. :eq:`ponderomotive_equations_of_motion`
 
 Envelope equation solution
 """"""""""""""""""""""""""""
@@ -200,9 +200,9 @@ A main advantage of this numerical scheme is its straightforward parallelization
 
 Ponderomotive position push
 """"""""""""""""""""""""""""
-The updated ponderomotive potential is interpolated at particle positions to obtain :math:`\mathbf{\Phi}_p^{(n+1)}`. 
+The updated ponderomotive potential is interpolated at macro-particle positions to obtain :math:`\mathbf{\Phi}_p^{(n+1)}`. 
 Afterwards, the temporal interpolation :math:`\mathbf{\Phi}_p^{(n+1/2)}=\left(\mathbf{\Phi}_p^{(n)}+\mathbf{\Phi}_p^{(n+1)}\right)/2` is performed. 
-The updated ponderomotive Lorentz factor :math:`\bar{\gamma}_p^{(n+1/2)}` can be computed and the averaged position of each particle can be advanced solving the last of Eqs. :eq:`ponderomotive_equations_of_motion`:
+The updated ponderomotive Lorentz factor :math:`\bar{\gamma}_p^{(n+1/2)}` can be computed and the averaged position of each macro-particle can be advanced solving the last of Eqs. :eq:`ponderomotive_equations_of_motion`:
 
 .. math::
 

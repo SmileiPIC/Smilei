@@ -126,7 +126,7 @@ A complete absence of boundary effects in this case would be provided by perfect
 If the relativistic species propagates in a plasma, these border effects could be partially screened by the plasma.
 
 A relativistic mean velocity in the :math:`x` direction and a negligible energy spread are assumed in the hypotheses of this procedure, so the user must ensure these conditions when defining the species requiring field initialization in the namelist. 
-The procedure could be extended to non-monoenergetic species, dividing the species particles in monoenergetic energy bins and then superimposing the fields by each of the monoenergetic bins, computed with the same procedure. 
+The procedure could be extended to non-monoenergetic species, dividing the species macro-particles in monoenergetic energy bins and then superimposing the fields by each of the monoenergetic bins, computed with the same procedure. 
 At the moment, this energy binning technique is not available in :program:`Smilei`.  
 
 
