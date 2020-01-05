@@ -91,8 +91,8 @@ and :math:`E_\theta`, with the Fourier coefficients:
 
 Similarly, an elliptically (or cylindrically) polarized laser
 is described by a pure mode :math:`m=1`, as it can be seen as the linear
-superposition of two linearly polarized lasers. A difference in phase
-corresponds to a complex exponential in the Fourier coefficients.
+superposition of two linearly polarized lasers. A difference in phase or in the polarization direction simply
+corresponds to a multiplication of the Fourier coefficients by a complex exponential.
 
 The AM decomposition is most suited for
 physical phenomena close to cylindrical symmetry as a low number
