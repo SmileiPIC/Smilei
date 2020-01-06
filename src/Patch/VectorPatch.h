@@ -36,6 +36,7 @@ public :
     VectorPatch( Params &params );
     ~VectorPatch();
     void saveOldRho( Params &params );
+    void setMagneticFieldsForDiagnostic( Params &params );
     
     void close( SmileiMPI * );
     

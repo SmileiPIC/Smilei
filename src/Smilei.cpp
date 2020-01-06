@@ -418,6 +418,20 @@ int main( int argc, char *argv[] )
                 }
             }
             if( vecPatches.diag_flag ) {
+
+                if (!params.is_spectral) {
+                    if ( params.geometry != "AMcylindrical" )
+                        DoubleGrids::syncBOnPatches( domain, vecPatches, params, &smpi, timers, itime );
+                    else {
+                        for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
+                            DoubleGridsAM::syncBOnPatches( domain, vecPatches, params, &smpi, timers, itime, imode );
+                    }
+                }
+                else {
+                    // Just need to cp Bm in B for all patches
+                    vecPatches.setMagneticFieldsForDiagnostic( params );
+                }
+
                 #pragma omp parallel shared (time_dual,smpi,params, vecPatches, domain, simWindow, checkpoint, itime)
                 {
                     if( params.geometry != "AMcylindrical" ) {
