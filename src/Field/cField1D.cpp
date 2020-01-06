@@ -85,10 +85,13 @@ void cField1D::allocateDims()
     
 }
 
-void cField1D::deallocateDims()
+void cField1D::deallocateDataAndSetTo( Field* f )
 {
     delete [] cdata_;
     cdata_=NULL;
+
+    cdata_ = (static_cast<cField *>(f))->cdata_;
+
 }
 
 

@@ -75,7 +75,7 @@ public:
     virtual void allocateDims( std::vector<unsigned int> dims, unsigned int mainDim, bool isPrimal ) = 0;
     
     //! Virtual method to deallocate Field
-    virtual void deallocateDims() = 0;
+    virtual void deallocateDataAndSetTo( Field* f ) = 0;
     
     //! Virtual method to shift field in space
     virtual void shift_x( unsigned int delta ) = 0;

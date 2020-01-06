@@ -106,7 +106,7 @@ void Field3D::allocateDims()
     
 }
 
-void Field3D::deallocateDims()
+void Field3D::deallocateDataAndSetTo( Field* f )
 {
     delete [] data_;
     data_ = NULL;
@@ -115,6 +115,9 @@ void Field3D::deallocateDims()
     }
     delete [] data_3D;
     data_3D = NULL;
+
+    data_   = f->data_;
+    data_3D = (static_cast<Field3D *>(f))->data_3D;
     
 }
 

@@ -85,10 +85,12 @@ void Field1D::allocateDims()
     
 }
 
-void Field1D::deallocateDims()
+void Field1D::deallocateDataAndSetTo( Field* f )
 {
     delete [] data_;
     data_=NULL;
+
+    data_ = f->data_;
 }
 
 

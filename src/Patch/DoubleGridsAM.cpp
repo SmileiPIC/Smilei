@@ -177,10 +177,6 @@ void DoubleGridsAM::syncFieldsOnPatches( Domain &domain, VectorPatch &vecPatches
         patch_fields->Br_m[imode]->get( domain_fields->Br_m[imode], params, smpi, domain.patch_, vecPatches(ipatch) );
         patch_fields->Bt_m[imode]->get( domain_fields->Bt_m[imode], params, smpi, domain.patch_, vecPatches(ipatch) );
 
-        patch_fields->Bl_[imode]->get( domain_fields->Bl_[imode], params, smpi, domain.patch_, vecPatches(ipatch) );
-        patch_fields->Br_[imode]->get( domain_fields->Br_[imode], params, smpi, domain.patch_, vecPatches(ipatch) );
-        patch_fields->Bt_[imode]->get( domain_fields->Bt_[imode], params, smpi, domain.patch_, vecPatches(ipatch) );
-
     }
 
     timers.grids.update();
@@ -196,15 +192,9 @@ void DoubleGridsAM::fieldsOnPatchesRecv( ElectroMagnAM* localfields, unsigned in
     smpi->irecvComplex( localfields->Er_[imode], recv_from_global_patch_rank, hindex*9+1, patch->requests_[1] );
     smpi->irecvComplex( localfields->Et_[imode], recv_from_global_patch_rank, hindex*9+2, patch->requests_[2] );
    
-    smpi->irecvComplex( localfields->Bl_[imode], recv_from_global_patch_rank, hindex*9+3, patch->requests_[3] );
-    smpi->irecvComplex( localfields->Br_[imode], recv_from_global_patch_rank, hindex*9+4, patch->requests_[4] );
-    smpi->irecvComplex( localfields->Bt_[imode], recv_from_global_patch_rank, hindex*9+5, patch->requests_[5] );
-
-    if (!params.is_spectral) {
-        smpi->irecvComplex( localfields->Bl_m[imode], recv_from_global_patch_rank, hindex*9+6, patch->requests_[6] );
-        smpi->irecvComplex( localfields->Br_m[imode], recv_from_global_patch_rank, hindex*9+7, patch->requests_[7] );
-        smpi->irecvComplex( localfields->Bt_m[imode], recv_from_global_patch_rank, hindex*9+8, patch->requests_[8] );
-    }
+    smpi->irecvComplex( localfields->Bl_m[imode], recv_from_global_patch_rank, hindex*9+6, patch->requests_[6] );
+    smpi->irecvComplex( localfields->Br_m[imode], recv_from_global_patch_rank, hindex*9+7, patch->requests_[7] );
+    smpi->irecvComplex( localfields->Bt_m[imode], recv_from_global_patch_rank, hindex*9+8, patch->requests_[8] );
 
 }
 
@@ -244,25 +234,14 @@ void DoubleGridsAM::fieldsOnPatchesSend( ElectroMagnAM* globalfields, unsigned i
     fake_fields->Et_[imode]->get( globalfields->Et_[imode], params, smpi, domain.patch_, domain.fake_patch );
     smpi->sendComplex( fake_fields->Et_[imode], local_patch_rank, hindex*9+2 );
 
-    fake_fields->Bl_[imode]->get( globalfields->Bl_[imode], params, smpi, domain.patch_, domain.fake_patch );
-    smpi->sendComplex( fake_fields->Bl_[imode], local_patch_rank, hindex*9+3 );
-
-    fake_fields->Br_[imode]->get( globalfields->Br_[imode], params, smpi, domain.patch_, domain.fake_patch );
-    smpi->sendComplex( fake_fields->Br_[imode], local_patch_rank, hindex*9+4 );
-
-    fake_fields->Bt_[imode]->get( globalfields->Bt_[imode], params, smpi, domain.patch_, domain.fake_patch );
-    smpi->sendComplex( fake_fields->Bt_[imode], local_patch_rank, hindex*9+5 );
-
-    if (!params.is_spectral) {
-       fake_fields->Bl_m[imode]->get( globalfields->Bl_m[imode], params, smpi, domain.patch_, domain.fake_patch );
-       smpi->sendComplex( fake_fields->Bl_m[imode], local_patch_rank, hindex*9+6 );
+    fake_fields->Bl_m[imode]->get( globalfields->Bl_m[imode], params, smpi, domain.patch_, domain.fake_patch );
+    smpi->sendComplex( fake_fields->Bl_m[imode], local_patch_rank, hindex*9+6 );
        
-       fake_fields->Br_m[imode]->get( globalfields->Br_m[imode], params, smpi, domain.patch_, domain.fake_patch );
-       smpi->sendComplex( fake_fields->Br_m[imode], local_patch_rank, hindex*9+7 );
+    fake_fields->Br_m[imode]->get( globalfields->Br_m[imode], params, smpi, domain.patch_, domain.fake_patch );
+    smpi->sendComplex( fake_fields->Br_m[imode], local_patch_rank, hindex*9+7 );
        
-       fake_fields->Bt_m[imode]->get( globalfields->Bt_m[imode], params, smpi, domain.patch_, domain.fake_patch );
-       smpi->sendComplex( fake_fields->Bt_m[imode], local_patch_rank, hindex*9+8 );
-    }
+    fake_fields->Bt_m[imode]->get( globalfields->Bt_m[imode], params, smpi, domain.patch_, domain.fake_patch );
+    smpi->sendComplex( fake_fields->Bt_m[imode], local_patch_rank, hindex*9+8 );
 
 }
 

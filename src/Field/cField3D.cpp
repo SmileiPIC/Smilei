@@ -103,13 +103,16 @@ void cField3D::allocateDims()
     
 }
 
-void cField3D::deallocateDims()
+void cField3D::deallocateDataAndSetTo( Field* f )
 {
     delete [] cdata_;
     cdata_ = NULL;
     delete [] data_3D;
     data_3D = NULL;
     
+    cdata_ = (static_cast<cField3D *>(f))->cdata_;
+    data_3D = (static_cast<cField3D *>(f))->data_3D;
+
 }
 
 void cField3D::allocateDims( unsigned int dims1, unsigned int dims2, unsigned int dims3 )

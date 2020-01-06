@@ -102,12 +102,15 @@ void cField2D::allocateDims()
     
 }
 
-void cField2D::deallocateDims()
+void cField2D::deallocateDataAndSetTo( Field* f )
 {
     delete [] cdata_;
     cdata_ = NULL;
     delete [] data_2D;
     data_2D = NULL;
+
+    cdata_ = (static_cast<cField2D *>(f))->cdata_;
+    data_2D = (static_cast<cField2D *>(f))->data_2D;
     
 }
 
