@@ -8,6 +8,9 @@ get the latest version of Smilei on `GitHub <https://github.com/SmileiPIC/Smilei
 
 Upcoming changes
 ^^^^^^^^^^^^^^^^
+* Bug fix:
+  * Correct a weight initialization bug that was causing incoherent behaviour in AM geometry when a species was initialized on top of 
+    a regularly initialized species.
 
 * Already available, but experimental:
 
