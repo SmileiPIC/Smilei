@@ -866,10 +866,10 @@ void VectorPatch::sumDensities( Params &params, double time_dual, Timers &timers
 
     timers.syncDens.restart();
     if( params.geometry != "AMcylindrical" ) {
-        if (!params.uncoupled_grids)
+        if ( (!params.uncoupled_grids)||(itime==0) )
             SyncVectorPatch::sumRhoJ( params, ( *this ), smpi, timers, itime ); // MPI
     } else {
-        if (!params.uncoupled_grids)
+        if ( (!params.uncoupled_grids)||(itime==0) )
             for( unsigned int imode = 0 ; imode < static_cast<ElectroMagnAM *>( patches_[0]->EMfields )->Jl_.size() ; imode++ ) {
                 SyncVectorPatch::sumRhoJ( params, ( *this ), imode, smpi, timers, itime );
             }
