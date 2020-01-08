@@ -182,7 +182,9 @@ public:
             
             // R DIRECTION
             emBoundCond[2] = NULL ; //Axis BC are handeled directly in solvers.
-            if( params.EM_BCs[1][1] == "buneman" ) {
+            if( params.EM_BCs[1][1] == "periodic" ) {
+                ERROR( "Periodic EM Rmax-boundary condition is not supported`" );
+            } else if( params.EM_BCs[1][1] == "buneman" ) {
                 emBoundCond[3] = new ElectroMagnBCAM_BM( params, patch, 3 );
             } else if (params.is_spectral) {
                 emBoundCond[3] = NULL ;
