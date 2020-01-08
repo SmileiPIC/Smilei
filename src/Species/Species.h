@@ -96,16 +96,16 @@ public:
     double time_frozen_;
 
     //! logical true if particles radiate
-    bool radiating;
+    bool radiating_;
 
     //! logical true if particles are relativistic and require proper electromagnetic field initialization
-    bool relativistic_field_initialization;
+    bool relativistic_field_initialization_;
 
     //! Time for which the species field is initialized in case of relativistic initialization
-    double time_relativistic_initialization;
+    double time_relativistic_initialization_;
 
     //! electron and positron Species for the multiphoton Breit-Wheeler
-    std::vector<std::string> multiphoton_Breit_Wheeler;
+    std::vector<std::string> multiphoton_Breit_Wheeler_;
 
     //! Boundary conditions for particules
     std::vector<std::vector<std::string> > boundary_conditions;
@@ -117,7 +117,7 @@ public:
     std::string density_profile_type_;
 
     //! charge profile
-    Profile *chargeProfile;
+    Profile *charge_profile_;
 
     //! density profile
     Profile *density_profile_;
@@ -134,10 +134,10 @@ public:
     // -----------------------------------------------------------------------------
     //  3. Variables for species processing
 
-    SpeciesMPIbuffers MPIbuff;
+    SpeciesMPIbuffers MPI_buffer_;
 
     //! Maximum charge at initialization
-    double max_charge;
+    double max_charge_;
 
     //! Vector containing all Particles of the considered Species
     Particles *particles;
@@ -521,11 +521,11 @@ public:
         double nrj( 0. );
         if( this->mass_ > 0 ) {
             for( unsigned int iPart=0 ; iPart<getNbrOfParticles() ; iPart++ ) {
-                nrj += particles->weight( iPart )*( particles->lor_fac( iPart )-1.0 );
+                nrj += particles->weight( iPart )*( particles->LorentzFactor( iPart )-1.0 );
             }
         } else if( this->mass_ == 0 ) {
             for( unsigned int iPart=0 ; iPart<getNbrOfParticles() ; iPart++ ) {
-                nrj += particles->weight( iPart )*( particles->momentum_norm( iPart ) );
+                nrj += particles->weight( iPart )*( particles->momentumNorm( iPart ) );
             }
         }
         return nrj;
@@ -569,6 +569,22 @@ public:
         return s_gamma;
     }
 
+    typedef double (Species::*fptr)(Particles*, int, int);
+    //Array of pointers to functions measuring distance along each dimension.
+    fptr distance[3];
+
+    double cartesian_distance(Particles *part, int idim, int ipart){
+        return part->position(idim, ipart) - min_loc_vec[idim];
+    }
+
+    double radial_distance(Particles *part, int idim, int ipart){
+        return sqrt(  part->position(idim  , ipart) * part->position(idim  , ipart)
+                    + part->position(idim+1, ipart) * part->position(idim+1, ipart))
+               - min_loc_vec[idim];
+    }
+    
+    //! Erase all particles with zero weight
+    void eraseWeightlessParticles();
 
 protected:
 

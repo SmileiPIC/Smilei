@@ -16,10 +16,10 @@ using namespace std;
 // ---------------------------------------------------------------------------------------------------------------------
 
 
-template void SyncVectorPatch::exchange_along_all_directions<double,Field>( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
-template void SyncVectorPatch::exchange_along_all_directions<complex<double>,cField>( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
-template void SyncVectorPatch::exchange_along_all_directions_noomp<double,Field>( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
-template void SyncVectorPatch::exchange_along_all_directions_noomp<complex<double>,cField>( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
+template void SyncVectorPatch::exchangeAlongAllDirections<double,Field>( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
+template void SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
+template void SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
+template void SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi );
 
 void SyncVectorPatch::exchangeParticles( VectorPatch &vecPatches, int ispec, Params &params, SmileiMPI *smpi, Timers &timers, int itime )
 {
@@ -482,13 +482,13 @@ void SyncVectorPatch::exchangeE( Params &params, VectorPatch &vecPatches, Smilei
     // E is exchange if spectral solver and/or at the end of initialisation of non-neutral plasma
 
     if( !params.full_B_exchange ) {
-        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listEx_, vecPatches, smpi );
-        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listEy_, vecPatches, smpi );
-        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listEz_, vecPatches, smpi );
+        SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listEx_, vecPatches, smpi );
+        SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listEy_, vecPatches, smpi );
+        SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listEz_, vecPatches, smpi );
     } else {
-        SyncVectorPatch::exchange_synchronized_per_direction( vecPatches.listEx_, vecPatches, smpi );
-        SyncVectorPatch::exchange_synchronized_per_direction( vecPatches.listEy_, vecPatches, smpi );
-        SyncVectorPatch::exchange_synchronized_per_direction( vecPatches.listEz_, vecPatches, smpi );
+        SyncVectorPatch::exchangeSynchronizedPerDirection( vecPatches.listEx_, vecPatches, smpi );
+        SyncVectorPatch::exchangeSynchronizedPerDirection( vecPatches.listEy_, vecPatches, smpi );
+        SyncVectorPatch::exchangeSynchronizedPerDirection( vecPatches.listEz_, vecPatches, smpi );
     }
 
 }
@@ -499,12 +499,12 @@ void SyncVectorPatch::finalizeexchangeE( Params &params, VectorPatch &vecPatches
     // E is exchange if spectral solver and/or at the end of initialisation of non-neutral plasma
 
     if( !params.full_B_exchange ) {
-        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listEx_, vecPatches );
-        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listEy_, vecPatches );
-        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listEz_, vecPatches );
+        SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listEx_, vecPatches );
+        SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listEy_, vecPatches );
+        SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listEz_, vecPatches );
     }
     //else
-    //    done in exchange_synchronized_per_direction
+    //    done in exchangeSynchronizedPerDirection
 }
 
 void SyncVectorPatch::exchangeB( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi )
@@ -513,29 +513,29 @@ void SyncVectorPatch::exchangeB( Params &params, VectorPatch &vecPatches, Smilei
 
     if( vecPatches.listBx_[0]->dims_.size()==1 ) {
         // Exchange Bs0 : By_ and Bz_ (dual in X)
-        SyncVectorPatch::exchange_all_components_along_X( vecPatches.Bs0, vecPatches, smpi );
+        SyncVectorPatch::exchangeAllComponentsAlongX( vecPatches.Bs0, vecPatches, smpi );
     } else {
         if( params.full_B_exchange ) {
             // Exchange Bx_ in Y then X
-            SyncVectorPatch::exchange_synchronized_per_direction( vecPatches.listBx_, vecPatches, smpi );
+            SyncVectorPatch::exchangeSynchronizedPerDirection( vecPatches.listBx_, vecPatches, smpi );
             // Exchange By_ in Y then X
-            SyncVectorPatch::exchange_synchronized_per_direction( vecPatches.listBy_, vecPatches, smpi );
+            SyncVectorPatch::exchangeSynchronizedPerDirection( vecPatches.listBy_, vecPatches, smpi );
             // Exchange Bz_ in Y then X
-            SyncVectorPatch::exchange_synchronized_per_direction( vecPatches.listBz_, vecPatches, smpi );
+            SyncVectorPatch::exchangeSynchronizedPerDirection( vecPatches.listBz_, vecPatches, smpi );
 
         } else {
             if( vecPatches.listBx_[0]->dims_.size()==2 ) {
                 // Exchange Bs0 : By_ and Bz_ (dual in X)
-                SyncVectorPatch::exchange_all_components_along_X( vecPatches.Bs0, vecPatches, smpi );
+                SyncVectorPatch::exchangeAllComponentsAlongX( vecPatches.Bs0, vecPatches, smpi );
                 // Exchange Bs1 : Bx_ and Bz_ (dual in Y)
-                SyncVectorPatch::exchange_all_components_along_Y( vecPatches.Bs1, vecPatches, smpi );
+                SyncVectorPatch::exchangeAllComponentsAlongY( vecPatches.Bs1, vecPatches, smpi );
             } else if( vecPatches.listBx_[0]->dims_.size()==3 ) {
                 // Exchange Bs0 : By_ and Bz_ (dual in X)
-                SyncVectorPatch::exchange_all_components_along_X( vecPatches.Bs0, vecPatches, smpi );
+                SyncVectorPatch::exchangeAllComponentsAlongX( vecPatches.Bs0, vecPatches, smpi );
                 // Exchange Bs1 : Bx_ and Bz_ (dual in Y)
-                SyncVectorPatch::exchange_all_components_along_Y( vecPatches.Bs1, vecPatches, smpi );
+                SyncVectorPatch::exchangeAllComponentsAlongY( vecPatches.Bs1, vecPatches, smpi );
                 // Exchange Bs2 : Bx_ and By_ (dual in Z)
-                SyncVectorPatch::exchange_all_components_along_Z( vecPatches.Bs2, vecPatches, smpi );
+                SyncVectorPatch::exchangeAllComponentsAlongZ( vecPatches.Bs2, vecPatches, smpi );
             }
         }
     }
@@ -547,27 +547,27 @@ void SyncVectorPatch::finalizeexchangeB( Params &params, VectorPatch &vecPatches
 
     if( vecPatches.listBx_[0]->dims_.size()==1 ) {
         // Finalize exchange Bs0 : By_ and Bz_ (dual in X)
-        SyncVectorPatch::finalize_exchange_all_components_along_X( vecPatches.Bs0, vecPatches );
+        SyncVectorPatch::finalizeExchangeAllComponentsAlongX( vecPatches.Bs0, vecPatches );
     } else if( vecPatches.listBx_[0]->dims_.size()==2 ) {
         if( !params.full_B_exchange ) {
             // Finalize exchange Bs0 : By_ and Bz_ (dual in X)
-            SyncVectorPatch::finalize_exchange_all_components_along_X( vecPatches.Bs0, vecPatches );
+            SyncVectorPatch::finalizeExchangeAllComponentsAlongX( vecPatches.Bs0, vecPatches );
             // Finalize exchange Bs1 : Bx_ and Bz_ (dual in Y)
-            SyncVectorPatch::finalize_exchange_all_components_along_Y( vecPatches.Bs1, vecPatches );
+            SyncVectorPatch::finalizeExchangeAllComponentsAlongY( vecPatches.Bs1, vecPatches );
         }
         //else
-        //    done in exchange_synchronized_per_direction
+        //    done in exchangeSynchronizedPerDirection
     } else if( vecPatches.listBx_[0]->dims_.size()==3 ) {
         if( !params.full_B_exchange ) {
             // Finalize exchange Bs0 : By_ and Bz_ (dual in X)
-            SyncVectorPatch::finalize_exchange_all_components_along_X( vecPatches.Bs0, vecPatches );
+            SyncVectorPatch::finalizeExchangeAllComponentsAlongX( vecPatches.Bs0, vecPatches );
             // Finalize exchange Bs1 : Bx_ and Bz_ (dual in Y)
-            SyncVectorPatch::finalize_exchange_all_components_along_Y( vecPatches.Bs1, vecPatches );
+            SyncVectorPatch::finalizeExchangeAllComponentsAlongY( vecPatches.Bs1, vecPatches );
             // Finalize exchange Bs2 : Bx_ and By_ (dual in Z)
-            SyncVectorPatch::finalize_exchange_all_components_along_Z( vecPatches.Bs2, vecPatches );
+            SyncVectorPatch::finalizeExchangeAllComponentsAlongZ( vecPatches.Bs2, vecPatches );
         }
         //else
-        //    done in exchange_synchronized_per_direction
+        //    done in exchangeSynchronizedPerDirection
     }
 
 }
@@ -575,50 +575,46 @@ void SyncVectorPatch::finalizeexchangeB( Params &params, VectorPatch &vecPatches
 void SyncVectorPatch::exchangeJ( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi )
 {
 
-    SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listJx_, vecPatches, smpi );
-    SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listJy_, vecPatches, smpi );
-    SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listJz_, vecPatches, smpi );
+    SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listJx_, vecPatches, smpi );
+    SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listJy_, vecPatches, smpi );
+    SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listJz_, vecPatches, smpi );
 }
 
 void SyncVectorPatch::finalizeexchangeJ( Params &params, VectorPatch &vecPatches )
 {
 
-    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listJx_, vecPatches );
-    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listJy_, vecPatches );
-    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listJz_, vecPatches );
+    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listJx_, vecPatches );
+    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listJy_, vecPatches );
+    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listJz_, vecPatches );
 }
 
 
 void SyncVectorPatch::exchangeB( Params &params, VectorPatch &vecPatches, int imode, SmileiMPI *smpi )
 {
-
-    SyncVectorPatch::exchange_along_all_directions<complex<double>,cField>( vecPatches.listBl_[imode], vecPatches, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listBl_[imode], vecPatches );
-    SyncVectorPatch::exchange_along_all_directions<complex<double>,cField>( vecPatches.listBr_[imode], vecPatches, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listBr_[imode], vecPatches );
-    SyncVectorPatch::exchange_along_all_directions<complex<double>,cField>( vecPatches.listBt_[imode], vecPatches, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listBt_[imode], vecPatches );
+    SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( vecPatches.listBl_[imode], vecPatches, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listBl_[imode], vecPatches );
+    SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( vecPatches.listBr_[imode], vecPatches, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listBr_[imode], vecPatches );
+    SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( vecPatches.listBt_[imode], vecPatches, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listBt_[imode], vecPatches );
 }
 
 void SyncVectorPatch::exchangeE( Params &params, VectorPatch &vecPatches, int imode, SmileiMPI *smpi )
 {
-
-    SyncVectorPatch::exchange_along_all_directions<complex<double>,cField>( vecPatches.listEl_[imode], vecPatches, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listEl_[imode], vecPatches );
-    SyncVectorPatch::exchange_along_all_directions<complex<double>,cField>( vecPatches.listEr_[imode], vecPatches, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listEr_[imode], vecPatches );
-    SyncVectorPatch::exchange_along_all_directions<complex<double>,cField>( vecPatches.listEt_[imode], vecPatches, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listEt_[imode], vecPatches );
+    SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( vecPatches.listEl_[imode], vecPatches, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listEl_[imode], vecPatches );
+    SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( vecPatches.listEr_[imode], vecPatches, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listEr_[imode], vecPatches );
+    SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( vecPatches.listEt_[imode], vecPatches, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listEt_[imode], vecPatches );
 }
 
 void SyncVectorPatch::finalizeexchangeB( Params &params, VectorPatch &vecPatches, int imode )
 {
-
 }
 
 void SyncVectorPatch::finalizeexchangeE( Params &params, VectorPatch &vecPatches, int imode )
 {
-
 }
 
 
@@ -641,31 +637,31 @@ void SyncVectorPatch::finalizeexchangeE( Params &params, VectorPatch &vecPatches
 void SyncVectorPatch::exchangeA( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi )
 {
     // current envelope value
-    SyncVectorPatch::exchange_along_all_directions<complex<double>,cField>( vecPatches.listA_, vecPatches, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listA_, vecPatches );
+    SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( vecPatches.listA_, vecPatches, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listA_, vecPatches );
     // value of envelope at previous timestep
-    SyncVectorPatch::exchange_along_all_directions<complex<double>,cField>( vecPatches.listA0_, vecPatches, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listA0_, vecPatches );
+    SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( vecPatches.listA0_, vecPatches, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listA0_, vecPatches );
 }
 
 void SyncVectorPatch::finalizeexchangeA( Params &params, VectorPatch &vecPatches )
 {
 //    // current envelope value
-//    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listA_, vecPatches );
+//    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listA_, vecPatches );
 //    // current envelope value
-//    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listA0_, vecPatches );
+//    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listA0_, vecPatches );
 }
 
 
 void SyncVectorPatch::exchangePhi( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi )
 {
     // current ponderomotive potential
-    SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listPhi_, vecPatches, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listPhi_, vecPatches );
+    SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listPhi_, vecPatches, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listPhi_, vecPatches );
 
     // value of ponderomotive potential at previous timestep
-    SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listPhi0_, vecPatches, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listPhi0_, vecPatches );
+    SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listPhi0_, vecPatches, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listPhi0_, vecPatches );
 }
 
 void SyncVectorPatch::finalizeexchangePhi( Params &params, VectorPatch &vecPatches )
@@ -677,50 +673,50 @@ void SyncVectorPatch::finalizeexchangePhi( Params &params, VectorPatch &vecPatch
 
 
 void SyncVectorPatch::exchangeGradPhi( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi )
-{   
+{
     if (  params.geometry != "AMcylindrical" ) {
         // current Gradient value
-        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhix_, vecPatches, smpi );
-        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhix_, vecPatches );
-        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhiy_, vecPatches, smpi );
-        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhiy_, vecPatches );
-        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhiz_, vecPatches, smpi );
-        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhiz_, vecPatches );
+        SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listGradPhix_, vecPatches, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhix_, vecPatches );
+        SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listGradPhiy_, vecPatches, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhiy_, vecPatches );
+        SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listGradPhiz_, vecPatches, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhiz_, vecPatches );
 
         // value of Gradient at previous timestep
-        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhix0_, vecPatches, smpi );
-        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhix0_, vecPatches );
-        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhiy0_, vecPatches, smpi );
-        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhiy0_, vecPatches );
-        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhiz0_, vecPatches, smpi );
-        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhiz0_, vecPatches );
+        SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listGradPhix0_, vecPatches, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhix0_, vecPatches );
+        SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listGradPhiy0_, vecPatches, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhiy0_, vecPatches );
+        SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listGradPhiz0_, vecPatches, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhiz0_, vecPatches );
     } else {
         // current Gradient value
-        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhil_, vecPatches, smpi );
-        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhil_, vecPatches );
-        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhir_, vecPatches, smpi );
-        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhir_, vecPatches );
+        SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listGradPhil_, vecPatches, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhil_, vecPatches );
+        SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listGradPhir_, vecPatches, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhir_, vecPatches );
 
         // value of Gradient at previous timestep
-        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhil0_, vecPatches, smpi );
-        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhil0_, vecPatches );
-        SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listGradPhir0_, vecPatches, smpi );
-        SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhir0_, vecPatches );
+        SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listGradPhil0_, vecPatches, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhil0_, vecPatches );
+        SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listGradPhir0_, vecPatches, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhir0_, vecPatches );
     }
 }
 
 void SyncVectorPatch::finalizeexchangeGradPhi( Params &params, VectorPatch &vecPatches )
 {
     // current Gradient value
-//    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhix_, vecPatches );
-//    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhiy_, vecPatches );
-//    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listGradPhiz_, vecPatches );
+//    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhix_, vecPatches );
+//    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhiy_, vecPatches );
+//    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listGradPhiz_, vecPatches );
 }
 
 void SyncVectorPatch::exchangeEnvChi( Params &params, VectorPatch &vecPatches, SmileiMPI *smpi )
 {
-    SyncVectorPatch::exchange_along_all_directions<double,Field>( vecPatches.listEnv_Chi_, vecPatches, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions( vecPatches.listEnv_Chi_, vecPatches );
+    SyncVectorPatch::exchangeAlongAllDirections<double,Field>( vecPatches.listEnv_Chi_, vecPatches, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirections( vecPatches.listEnv_Chi_, vecPatches );
 }
 
 
@@ -728,16 +724,16 @@ void SyncVectorPatch::templateGenerator()
 {
     SmileiMPI* smpi = NULL;
     VectorPatch patches;
-    SyncVectorPatch::exchange_along_all_directions_noomp<double         ,Field >( patches.listEx_, patches, smpi );
-    SyncVectorPatch::exchange_along_all_directions_noomp<complex<double>,cField>( patches.listEx_, patches, smpi );
-    SyncVectorPatch::exchange_along_all_directions_noomp<double         ,Field >( patches.listEx_, patches, smpi );
-    SyncVectorPatch::exchange_along_all_directions_noomp<double         ,Field >( patches.listEx_, patches, smpi );
+    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double         ,Field >( patches.listEx_, patches, smpi );
+    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( patches.listEx_, patches, smpi );
+    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double         ,Field >( patches.listEx_, patches, smpi );
+    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double         ,Field >( patches.listEx_, patches, smpi );
 }
 
 // fields : contains a single field component (X, Y or Z) for all patches of vecPatches
 // timers and itime were here introduced for debugging
 template<typename T, typename F>
-void SyncVectorPatch::exchange_along_all_directions( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
+void SyncVectorPatch::exchangeAlongAllDirections( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
 {
     for( unsigned int iDim=0 ; iDim<fields[0]->dims_.size() ; iDim++ ) {
 #ifndef _NO_MPI_TM
@@ -828,8 +824,8 @@ void SyncVectorPatch::exchange_along_all_directions( std::vector<Field *> fields
 
 }
 
-// MPI_Wait for all communications initialised in exchange_along_all_directions
-void SyncVectorPatch::finalize_exchange_along_all_directions( std::vector<Field *> fields, VectorPatch &vecPatches )
+// MPI_Wait for all communications initialised in exchangeAlongAllDirections
+void SyncVectorPatch::finalizeExchangeAlongAllDirections( std::vector<Field *> fields, VectorPatch &vecPatches )
 {
     for( unsigned int iDim=0 ; iDim<fields[0]->dims_.size() ; iDim++ ) {
 #ifndef _NO_MPI_TM
@@ -851,7 +847,7 @@ void SyncVectorPatch::finalize_exchange_along_all_directions( std::vector<Field 
 // fields : contains a single field component (X, Y or Z) for all patches of vecPatches
 // timers and itime were here introduced for debugging
 template<typename T, typename F>
-void SyncVectorPatch::exchange_along_all_directions_noomp( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
+void SyncVectorPatch::exchangeAlongAllDirectionsNoOMP( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
 {
     for( unsigned int iDim=0 ; iDim<fields[0]->dims_.size() ; iDim++ ) {
         for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
@@ -937,8 +933,8 @@ void SyncVectorPatch::exchange_along_all_directions_noomp( std::vector<Field *> 
 }
 
 
-// MPI_Wait for all communications initialised in exchange_along_all_directions
-void SyncVectorPatch::finalize_exchange_along_all_directions_noomp( std::vector<Field *> fields, VectorPatch &vecPatches )
+// MPI_Wait for all communications initialised in exchangeAlongAllDirections
+void SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( std::vector<Field *> fields, VectorPatch &vecPatches )
 {
     for( unsigned int iDim=0 ; iDim<fields[0]->dims_.size() ; iDim++ ) {
         for( unsigned int ipatch=0 ; ipatch<fields.size() ; ipatch++ ) {
@@ -954,7 +950,7 @@ void SyncVectorPatch::finalize_exchange_along_all_directions_noomp( std::vector<
 
 //Proceed to the synchronization of field including corner ghost cells.
 //This is done by exchanging one dimension at a time
-void SyncVectorPatch::exchange_synchronized_per_direction( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
+void SyncVectorPatch::exchangeSynchronizedPerDirection( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
 {
 
     unsigned int nx_, ny_( 1 ), nz_( 1 ), h0, oversize[3], n_space[3], gsp[3];
@@ -1106,7 +1102,7 @@ void SyncVectorPatch::exchange_synchronized_per_direction( std::vector<Field *> 
 //         - B_MPIx   : fields which have MPI   neighbor along X
 //         - B_Localx : fields which have local neighbor along X (a same field can be adressed by both)
 //     - These fields are identified with lists of index MPIxIdx and LocalxIdx
-void SyncVectorPatch::exchange_all_components_along_X( std::vector<Field *> &fields, VectorPatch &vecPatches, SmileiMPI *smpi )
+void SyncVectorPatch::exchangeAllComponentsAlongX( std::vector<Field *> &fields, VectorPatch &vecPatches, SmileiMPI *smpi )
 {
     unsigned int nMPIx = vecPatches.MPIxIdx.size();
 #ifndef _NO_MPI_TM
@@ -1166,8 +1162,8 @@ void SyncVectorPatch::exchange_all_components_along_X( std::vector<Field *> &fie
 
 }
 
-// MPI_Wait for all communications initialised in exchange_all_components_along_X
-void SyncVectorPatch::finalize_exchange_all_components_along_X( std::vector<Field *> &fields, VectorPatch &vecPatches )
+// MPI_Wait for all communications initialised in exchangeAllComponentsAlongX
+void SyncVectorPatch::finalizeExchangeAllComponentsAlongX( std::vector<Field *> &fields, VectorPatch &vecPatches )
 {
     unsigned int nMPIx = vecPatches.MPIxIdx.size();
 #ifndef _NO_MPI_TM
@@ -1190,7 +1186,7 @@ void SyncVectorPatch::finalize_exchange_all_components_along_X( std::vector<Fiel
 //         - B_MPIy   : fields which have MPI   neighbor along Y
 //         - B_Localy : fields which have local neighbor along Y (a same field can be adressed by both)
 //     - These fields are identified with lists of index MPIyIdx and LocalyIdx
-void SyncVectorPatch::exchange_all_components_along_Y( std::vector<Field *> &fields, VectorPatch &vecPatches, SmileiMPI *smpi )
+void SyncVectorPatch::exchangeAllComponentsAlongY( std::vector<Field *> &fields, VectorPatch &vecPatches, SmileiMPI *smpi )
 {
     unsigned int nMPIy = vecPatches.MPIyIdx.size();
 #ifndef _NO_MPI_TM
@@ -1252,8 +1248,8 @@ void SyncVectorPatch::exchange_all_components_along_Y( std::vector<Field *> &fie
 }
 
 
-// MPI_Wait for all communications initialised in exchange_all_components_along_Y
-void SyncVectorPatch::finalize_exchange_all_components_along_Y( std::vector<Field *> &fields, VectorPatch &vecPatches )
+// MPI_Wait for all communications initialised in exchangeAllComponentsAlongY
+void SyncVectorPatch::finalizeExchangeAllComponentsAlongY( std::vector<Field *> &fields, VectorPatch &vecPatches )
 {
     unsigned int nMPIy = vecPatches.MPIyIdx.size();
 #ifndef _NO_MPI_TM
@@ -1278,7 +1274,7 @@ void SyncVectorPatch::finalize_exchange_all_components_along_Y( std::vector<Fiel
 //         - B_MPIz   : fields which have MPI   neighbor along Z
 //         - B_Localz : fields which have local neighbor along Z (a same field can be adressed by both)
 //     - These fields are identified with lists of index MPIzIdx and LocalzIdx
-void SyncVectorPatch::exchange_all_components_along_Z( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
+void SyncVectorPatch::exchangeAllComponentsAlongZ( std::vector<Field *> fields, VectorPatch &vecPatches, SmileiMPI *smpi )
 {
     unsigned int nMPIz = vecPatches.MPIzIdx.size();
 #ifndef _NO_MPI_TM
@@ -1337,8 +1333,8 @@ void SyncVectorPatch::exchange_all_components_along_Z( std::vector<Field *> fiel
     }
 }
 
-// MPI_Wait for all communications initialised in exchange_all_components_along_Z
-void SyncVectorPatch::finalize_exchange_all_components_along_Z( std::vector<Field *> fields, VectorPatch &vecPatches )
+// MPI_Wait for all communications initialised in exchangeAllComponentsAlongZ
+void SyncVectorPatch::finalizeExchangeAllComponentsAlongZ( std::vector<Field *> fields, VectorPatch &vecPatches )
 {
     unsigned int nMPIz = vecPatches.MPIzIdx.size();
 #ifndef _NO_MPI_TM

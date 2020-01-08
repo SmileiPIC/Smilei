@@ -66,7 +66,7 @@ public :
     
     //! Set Id of the 1st patch stored on the current MPI process
     //!   used during balancing
-    inline void set_refHindex()
+    inline void setRefHindex()
     {
         refHindex_ = patches_[0]->Hindex();
     }
@@ -189,6 +189,8 @@ public :
     
     //! Solve Poisson to initialize E
     void solvePoisson( Params &params, SmileiMPI *smpi );
+    void runNonRelativisticPoissonModule( Params &params, SmileiMPI* smpi,  Timers &timers );
+    void solvePoissonAM( Params &params, SmileiMPI *smpi);
     
     //! Solve relativistic Poisson problem to initialize E and B of a relativistic bunch
     void runRelativisticModule( double time_prim, Params &params, SmileiMPI* smpi,  Timers &timers );

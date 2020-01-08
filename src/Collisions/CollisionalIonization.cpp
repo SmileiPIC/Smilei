@@ -19,23 +19,18 @@ const double CollisionalIonization::a1 = 510998.9 ; // = me*c^2/Emin
 const double CollisionalIonization::a2 = 6.142165 ; // = (npoints-1) / ln( Emax/Emin )
 
 // Constructor
-CollisionalIonization::CollisionalIonization( int Z, int nDim_, double reference_angular_frequency_SI, int ionization_electrons, Particles* particles )
+CollisionalIonization::CollisionalIonization( int Z, Params *params, int ionization_electrons, Particles* particles )
 {
-    nDim = nDim_;
     atomic_number = Z;
     rate .resize( Z );
     irate.resize( Z );
     prob .resize( Z );
     ionization_electrons_ = ionization_electrons;
-    if( particles ) {
-        new_electrons.tracked            = particles->tracked;
-        new_electrons.isQuantumParameter = particles->isQuantumParameter;
-        new_electrons.isMonteCarlo       = particles->isMonteCarlo;
+    if( params ) {
+        new_electrons.initialize( 0, *particles );
     }
-    new_electrons.initialize( 0, nDim );
-    
     if( Z>0 ) {
-        dataBaseIndex = createDatabase( reference_angular_frequency_SI );
+        dataBaseIndex = createDatabase( params->reference_angular_frequency_SI );
         assignDatabase( dataBaseIndex );
     }
 }
@@ -44,16 +39,12 @@ CollisionalIonization::CollisionalIonization( int Z, int nDim_, double reference
 CollisionalIonization::CollisionalIonization( CollisionalIonization *CI )
 {
 
-    nDim          = CI->nDim;
     atomic_number = CI->atomic_number;
     rate .resize( atomic_number );
     irate.resize( atomic_number );
     prob .resize( atomic_number );
-    ionization_electrons_            = CI->ionization_electrons_;
-    new_electrons.tracked            = CI->new_electrons.tracked;
-    new_electrons.isQuantumParameter = CI->new_electrons.isQuantumParameter;
-    new_electrons.isMonteCarlo       = CI->new_electrons.isMonteCarlo;
-    new_electrons.initialize( 0, nDim );
+    ionization_electrons_ = CI->ionization_electrons_;
+    new_electrons.initialize( 0, CI->new_electrons );
     
     dataBaseIndex = CI->dataBaseIndex;
     assignDatabase( dataBaseIndex );
@@ -225,8 +216,8 @@ void CollisionalIonization::prepare3( double timestep, double inv_cell_volume )
 // Method to apply the ionization
 void CollisionalIonization::apply( Patch *patch, Particles *p1, int i1, Particles *p2, int i2 )
 {
-    double gamma1 = p1->lor_fac( i1 );
-    double gamma2 = p2->lor_fac( i2 );
+    double gamma1 = p1->LorentzFactor( i1 );
+    double gamma2 = p2->LorentzFactor( i2 );
     // Calculate lorentz factor in the frame of ion
     double gamma_s = gamma1*gamma2
                      - p1->momentum( 0, i1 )*p2->momentum( 0, i2 )
@@ -285,9 +276,9 @@ void CollisionalIonization::calculate( double gamma_s, double gammae, double gam
             e  = ( ( *lostEnergy )[Zstar][i+1]-( *lostEnergy )[Zstar][i] )*a + ( *lostEnergy )[Zstar][i];
         } else { // if energy above table range, extrapolate
             a = x - npointsm1;
-            cs = ( ( *crossSection )[Zstar][npointsm1]-( *crossSection )[Zstar][npointsm1-1] )*a + ( *crossSection )[Zstar][npointsm1];
-            w  = ( *transferredEnergy )[Zstar][npointsm1];
-            e  = ( *lostEnergy )[Zstar][npointsm1];
+            cs = ( ( *crossSection )[Zstar][npoints-1]-( *crossSection )[Zstar][npoints-2] )*a + ( *crossSection )[Zstar][npoints-1];
+            w  = ( *transferredEnergy )[Zstar][npoints-1];
+            e  = ( *lostEnergy )[Zstar][npoints-1];
         }
         if( e > gamma_s-1. ) {
             break;
@@ -334,7 +325,7 @@ void CollisionalIonization::calculate( double gamma_s, double gammae, double gam
         // Ionize the atom and create electron
         if( U2 < WeWi ) {
             pi->charge( ii )++; // increase ion charge
-            pe->cp_particle_safe( ie, new_electrons ); // duplicate electron
+            pe->copyParticleSafe( ie, new_electrons ); // duplicate electron
             new_electrons.Weight.back() = Wi; // new electron has ion weight
             // Calculate the new electron momentum
             pr = sqrt( w*( w+2. )/p2 );

@@ -26,6 +26,7 @@
 #include "DiagnosticScreen.h"
 #include "DiagnosticTrack.h"
 #include "LaserEnvelope.h"
+#include "Collisions.h"
 
 using namespace std;
 
@@ -197,7 +198,11 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
     
     
     hid_t fid = H5Fcreate( dumpName.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT );
-    dump_number++;
+    if (fid<0) {
+        ERROR("Can't open file for writing checkpoint " << dumpName.c_str())
+    } else {
+        dump_number++;
+    }
     
 #ifdef  __DEBUG
     MESSAGEALL( "Step " << itime << " : DUMP fields and particles " << dumpName );
@@ -255,7 +260,7 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
         string patchName=Tools::merge( "patch-", patch_name.str() );
         hid_t patch_gid = H5::group( fid, patchName.c_str() );
         
-        dumpPatch( vecPatches( ipatch )->EMfields, vecPatches( ipatch )->vecSpecies, params, patch_gid );
+        dumpPatch( vecPatches( ipatch )->EMfields, vecPatches( ipatch )->vecSpecies, vecPatches( ipatch )->vecCollisions, params, patch_gid );
         
         // Random number generator state
         H5::attr( patch_gid, "xorshift32_state", vecPatches( ipatch )->xorshift32_state );
@@ -279,11 +284,14 @@ void Checkpoint::dumpAll( VectorPatch &vecPatches, unsigned int itime,  SmileiMP
         dumpMovingWindow( fid, simWin );
     }
     
-    H5Fclose( fid );
+    herr_t tclose = H5Fclose( fid );
+    if (tclose < 0) {
+        ERROR("Can't close file " << dumpName.c_str())
+    }
     
 }
 
-void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpecies, Params &params, hid_t patch_gid )
+void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpecies, std::vector<Collisions *> &vecCollisions, Params &params, hid_t patch_gid )
 {
     if (  params.geometry != "AMcylindrical" ) {
         dumpFieldsPerProc( patch_gid, EMfields->Ex_ );
@@ -446,6 +454,13 @@ void Checkpoint::dumpPatch( ElectroMagn *EMfields, std::vector<Species *> vecSpe
         H5Gclose( gid );
         
     } // End for ispec
+    
+    // Manage some collisions parameters
+    std::vector<double> rate_multiplier( vecCollisions.size() );
+    for( unsigned int icoll = 0; icoll<vecCollisions.size(); icoll++ ) {
+        rate_multiplier[icoll] = vecCollisions[icoll]->NuclearReaction->rate_multiplier_;
+    }
+    H5::vect( patch_gid, "collisions_rate_multiplier", rate_multiplier );
 };
 
 
@@ -543,7 +558,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI *smpi, SimWindo
         string patchName=Tools::merge( "patch-", patch_name.str() );
         hid_t patch_gid = H5Gopen( fid, patchName.c_str(), H5P_DEFAULT );
         
-        restartPatch( vecPatches( ipatch )->EMfields, vecPatches( ipatch )->vecSpecies, params, patch_gid );
+        restartPatch( vecPatches( ipatch )->EMfields, vecPatches( ipatch )->vecSpecies, vecPatches( ipatch )->vecCollisions, params, patch_gid );
         
         // Random number generator state
         H5::getAttr( patch_gid, "xorshift32_state", vecPatches( ipatch )->xorshift32_state );
@@ -570,7 +585,7 @@ void Checkpoint::restartAll( VectorPatch &vecPatches,  SmileiMPI *smpi, SimWindo
 }
 
 
-void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &vecSpecies, Params &params, hid_t patch_gid )
+void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &vecSpecies, std::vector<Collisions *> &vecCollisions, Params &params, hid_t patch_gid )
 {
     if ( params.geometry != "AMcylindrical" ) {
         restartFieldsPerProc( patch_gid, EMfields->Ex_ );
@@ -762,6 +777,14 @@ void Checkpoint::restartPatch( ElectroMagn *EMfields, std::vector<Species *> &ve
         H5Gclose( gid );
     }
     
+    // Manage some collisions parameters
+    if( H5::getVectSize( patch_gid, "collisions_rate_multiplier" ) > 0 ) {
+        std::vector<double> rate_multiplier;
+        H5::getVect( patch_gid, "collisions_rate_multiplier", rate_multiplier, true );
+        for( unsigned int icoll = 0; icoll<rate_multiplier.size(); icoll++ ) {
+            vecCollisions[icoll]->NuclearReaction->rate_multiplier_ = rate_multiplier[icoll];
+        }
+    }
 }
 
 void Checkpoint::dumpFieldsPerProc( hid_t fid, Field *field )

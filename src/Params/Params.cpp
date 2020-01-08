@@ -983,7 +983,7 @@ void Params::check_consistency()
 {
     if( vectorization_mode != "off" ) {
 
-        if( ( geometry=="1Dcartesian" ) || ( geometry=="AMcylindrical" ) ) {
+        if( ( geometry=="1Dcartesian" ) ) {
             ERROR( "Vectorized algorithms not implemented for this geometry" );
         }
 

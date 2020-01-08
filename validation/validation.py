@@ -311,7 +311,8 @@ def RUN_JOLLYJUMPER(command, dir):
 	exit_status_fd.close()
 	# Create script
 	with open(EXEC_SCRIPT, 'w') as exec_script_desc:
-		NODES=((int(MPI)*int(OMP)-1)/24)+1
+		#NODES=((int(MPI)*int(OMP)-1)/24)+1
+		NODES=int(math.ceil(MPI/2.))
 		exec_script_desc.write(
 			"#PBS -l nodes="+str(NODES)+":ppn=24 \n"
 			+"#PBS -q default \n"
@@ -420,9 +421,9 @@ if JOLLYJUMPER in HOSTNAME :
 	if 12 % OMP != 0:
 		print(  "Smilei cannot be run with "+str(OMP)+" threads on "+HOSTNAME)
 		sys.exit(4)
-	NODES=((int(MPI)*int(OMP)-1)/24)+1
-	NPERSOCKET = int(math.ceil(MPI/NODES/2.))
-	COMPILE_COMMAND = str(MAKE)+' -j 12 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+        NODES=int(math.ceil(MPI/2.))
+	NPERSOCKET = 1
+	COMPILE_COMMAND = 'make -j 12 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
 	SMILEI_DATABASE = SMILEI_ROOT + '/databases/'
 	RUN_COMMAND = "mpirun -mca orte_num_sockets 2 -mca orte_num_cores 12 -cpus-per-proc "+str(OMP)+" --npersocket "+str(NPERSOCKET)+" -n "+str(MPI)+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"

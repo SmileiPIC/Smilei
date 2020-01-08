@@ -29,19 +29,21 @@ void CollisionsSingle::collide( Params &params, Patch *patch, int itime, vector<
     unsigned int i1=0, i2, N2max, first_index1, first_index2;
     Species   *s1, *s2;
     Particles *p1=NULL, *p2;
-    double m12, coeff3, coeff4, logL, s, ncol, debye2=0.;
+    double coeff3, coeff4, logL, s, ncol, debye2=0.;
     
     s1 = patch->vecSpecies[species_group1_[0]];
     s2 = patch->vecSpecies[species_group2_[0]];
     
     bool debug = ( debug_every_ > 0 && itime % debug_every_ == 0 ); // debug only every N timesteps
     
+    ncol = 0;
     if( debug ) {
-        ncol = 0.;
         smean_       = 0.;
         logLmean_    = 0.;
         //temperature = 0.;
     }
+    
+    NuclearReaction->prepare();
     
     // Loop bins of particles (typically, cells, but may also be clusters)
     unsigned int nbin = patch->vecSpecies[0]->first_index.size();
@@ -92,7 +94,7 @@ void CollisionsSingle::collide( Params &params, Patch *patch, int itime, vector<
             unsigned int p = patch->xorshift32() % i;
             swap( index1[i-1], index1[p] );
         }
-        p1->swap_parts( index1 ); // exchange particles along the cycle defined by the shuffle
+        p1->swapParticles( index1 ); // exchange particles along the cycle defined by the shuffle
         
         // Prepare the ionization
         Ionization->prepare1( s1->atomic_number_ );
@@ -128,7 +130,6 @@ void CollisionsSingle::collide( Params &params, Patch *patch, int itime, vector<
         coeff3 = params.timestep * n1*n2/n12;
         coeff4 = pow( 3.*coeff2_, -1./3. ) * coeff3;
         coeff3 *= coeff2_;
-        m12  = s1->mass_ / s2->mass_; // mass ratio
         
         // Prepare the ionization
         Ionization->prepare3( params.timestep, inv_cell_volume );
@@ -144,13 +145,13 @@ void CollisionsSingle::collide( Params &params, Patch *patch, int itime, vector<
             double U2  = patch->xorshift32() * patch->xorshift32_invmax;
             double phi = patch->xorshift32() * patch->xorshift32_invmax * twoPi;
             
-            s = one_collision( p1, i1, s1->mass_, p2, i2, m12, coeff1_, coeff2_, coeff3, coeff4, n123, n223, debye2, logL, U1, U2, phi );
+            s = one_collision( p1, i1, s1->mass_, p2, i2, s2->mass_, coeff1_, coeff2_, coeff3, coeff4, n123, n223, debye2, logL, U1, U2, phi );
             
             // Handle ionization
             Ionization->apply( patch, p1, i1, p2, i2 );
             
+            ncol ++;
             if( debug ) {
-                ncol     += 1;
                 smean_    += s;
                 logLmean_ += logL;
                 //temperature += m1 * (sqrt(1.+pow(p1->momentum(0,i1),2)+pow(p1->momentum(1,i1),2)+pow(p1->momentum(2,i1),2))-1.);
@@ -161,6 +162,7 @@ void CollisionsSingle::collide( Params &params, Patch *patch, int itime, vector<
     } // end loop on bins
     
     Ionization->finish( params, patch, localDiags );
+    NuclearReaction->finish( params, patch, localDiags, intra_collisions_, species_group1_, species_group2_, ncol, itime );
     
     if( debug && ncol>0. ) {
         smean_    /= ncol;

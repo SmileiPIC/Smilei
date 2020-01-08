@@ -7,7 +7,7 @@ compile:
   stage: compile
   only:
     - develop
-    - sdmd_ghostcells
+    - merge_sdmd_dev
 
   script:
     # Force workdir cleaning in case of retried
@@ -29,7 +29,7 @@ makerun1D:
   stage: makerun
   only:
     - develop
-    - sdmd_ghostcells
+    - merge_sdmd_dev
 
   script:
     # Move in test dir
@@ -41,7 +41,7 @@ makerun2D:
   stage: makerun
   only:
     - develop
-    - sdmd_ghostcells
+    - merge_sdmd_dev
 
   script:
     # Move in test dir
@@ -53,31 +53,31 @@ makerun3D:
   stage: makerun
   only:
     - develop
-    - sdmd_ghostcells
+    - merge_sdmd_dev
 
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -b "tst3d_??_*.py" -m 4 -o 4 -v -r 1
+    - python validation.py -b "tst3d_??_*.py" -m 8 -o 12 -v -r 1
 
 makerunAM:
   stage: makerun
   only:
     - develop
-    - sdmd_ghostcells
+    - merge_sdmd_dev
 
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -b "tstAM_??_*.py" -m 4 -o 4 -v
+    - python validation.py -b "tstAM_??_*.py" -m 8 -o 12 -v
 
 makerunV:
   stage: makerun
   only:
     - develop
-    - sdmd_ghostcells
+    - merge_sdmd_dev
 
   script:
     # Move in test dir
@@ -89,7 +89,7 @@ makerunCollisions:
   stage: makerun
   only:
     - develop
-    - sdmd_ghostcells
+    - merge_sdmd_dev
     
   script:
     # Move in test dir
@@ -100,7 +100,7 @@ makerunCollisions:
 use_picsar:
   stage: use_picsar
   only:
-    - sdmd_ghostcells
+    - merge_sdmd_dev
 
   script:
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei

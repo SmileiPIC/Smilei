@@ -71,7 +71,7 @@ inline int refl_particle_AM( Particles &particles, int ipart, int direction, dou
 inline int remove_particle( Particles &particles, int ipart, int direction, double limit_pos, Species *species,
                             double &nrj_iPart )
 {
-    nrj_iPart = particles.weight( ipart )*( particles.lor_fac( ipart )-1.0 ); // energy lost
+    nrj_iPart = particles.weight( ipart )*( particles.LorentzFactor( ipart )-1.0 ); // energy lost
     particles.charge( ipart ) = 0;
     return 0;
 }
@@ -80,7 +80,7 @@ inline int remove_particle( Particles &particles, int ipart, int direction, doub
 inline int remove_photon( Particles &particles, int ipart, int direction, double limit_pos, Species *species,
                           double &nrj_iPart )
 {
-    nrj_iPart = particles.weight( ipart )*( particles.momentum_norm( ipart ) ); // energy lost
+    nrj_iPart = particles.weight( ipart )*( particles.momentumNorm( ipart ) ); // energy lost
     particles.charge( ipart ) = 0;
     return 0;
 }
@@ -88,7 +88,7 @@ inline int remove_photon( Particles &particles, int ipart, int direction, double
 inline int stop_particle( Particles &particles, int ipart, int direction, double limit_pos, Species *species,
                           double &nrj_iPart )
 {
-    nrj_iPart = particles.weight( ipart )*( particles.lor_fac( ipart )-1.0 ); // energy lost
+    nrj_iPart = particles.weight( ipart )*( particles.LorentzFactor( ipart )-1.0 ); // energy lost
     particles.position( direction, ipart ) = limit_pos - particles.position( direction, ipart );
     particles.momentum( 0, ipart ) = 0.;
     particles.momentum( 1, ipart ) = 0.;
@@ -99,8 +99,8 @@ inline int stop_particle( Particles &particles, int ipart, int direction, double
 inline int stop_particle_AM( Particles &particles, int ipart, int direction, double limit_pos, Species *species,
                              double &nrj_iPart )
 {
-    nrj_iPart = particles.weight( ipart )*( particles.lor_fac( ipart )-1.0 ); // energy lost
-    double distance_to_axis = sqrt( particles.distance2_to_axis( ipart ) );
+    nrj_iPart = particles.weight( ipart )*( particles.LorentzFactor( ipart )-1.0 ); // energy lost
+    double distance_to_axis = sqrt( particles.distance2ToAxis( ipart ) );
     // limit_pos = 2*limit_pos
     double new_dist_to_axis = limit_pos - distance_to_axis;
     
@@ -129,10 +129,10 @@ inline int thermalize_particle( Particles &particles, int ipart, int direction, 
     for( unsigned int i=0; i<3; i++ ) {
         p2 += particles.momentum( i, ipart )*particles.momentum( i, ipart );
     }
-    double v = sqrt( p2 )/particles.lor_fac( ipart );
+    double v = sqrt( p2 )/particles.LorentzFactor( ipart );
     
     // energy before thermalization
-    nrj_iPart = particles.weight( ipart )*( particles.lor_fac( ipart )-1.0 );
+    nrj_iPart = particles.weight( ipart )*( particles.LorentzFactor( ipart )-1.0 );
     
     // Apply bcs depending on the particle velocity
     // --------------------------------------------
@@ -199,7 +199,7 @@ inline int thermalize_particle( Particles &particles, int ipart, int direction, 
     particles.position( direction, ipart ) = limit_pos - particles.position( direction, ipart );
     
     // energy lost during thermalization
-    nrj_iPart -= particles.weight( ipart )*( particles.lor_fac( ipart )-1.0 );
+    nrj_iPart -= particles.weight( ipart )*( particles.LorentzFactor( ipart )-1.0 );
     
     
     /* HERE IS AN ATTEMPT TO INTRODUCE A SPACE DEPENDENCE ON THE BCs
