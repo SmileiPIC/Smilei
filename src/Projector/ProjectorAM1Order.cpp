@@ -203,7 +203,7 @@ void ProjectorAM1Order::currents( ElectroMagnAM *emAM, Particles &particles, uns
             Jt =  &( *emAM->Jt_[imode] )( 0 );
             rho = &( *emAM->rho_AM_[imode] )( 0 ) ; // In spectral, always project density
         } else {
-            unsigned int n_species = emAM->Jl_.size() / Nmode;
+            unsigned int n_species = emAM->Jl_s.size() / Nmode;
             unsigned int ifield = imode*n_species+ispec;
             Jl  = emAM->Jl_s    [ifield] ? &( * ( emAM->Jl_s    [ifield] ) )( 0 ) : &( *emAM->Jl_    [imode] )( 0 ) ;
             Jr  = emAM->Jr_s    [ifield] ? &( * ( emAM->Jr_s    [ifield] ) )( 0 ) : &( *emAM->Jr_    [imode] )( 0 ) ;
