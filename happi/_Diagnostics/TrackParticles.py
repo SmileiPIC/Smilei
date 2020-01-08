@@ -430,7 +430,7 @@ class TrackParticles(Diagnostic):
 			# Open the last file and get the number of particles from each MPI
 			last_file_index, tname = time_locations[times[-1]]
 			f = self._h5py.File(filesDisordered[last_file_index], "r")
-			number_of_particles = (f["data"][tname]["latest_IDs"].value % (2**32)).astype('uint32')
+			number_of_particles = (f["data"][tname]["latest_IDs"][()] % (2**32)).astype('uint32')
 			if self._verbose: print("Number of particles: "+str(number_of_particles.sum()))
 			# Calculate the offset that each MPI needs
 			offset = self._np.cumsum(number_of_particles, dtype='uint64')
@@ -468,14 +468,14 @@ class TrackParticles(Diagnostic):
 				if total_number_of_particles < chunksize:
 					# Get the Ids and find where they should be stored in the final file
 					locs = (
-						group["id"].value.astype("uint32") # takes the second hald of id (meaning particle number)
-						+ offset[ (group["id"].value>>32).astype("uint32") & 16777215 ]# 0b111111111111111111111111
+						group["id"][()].astype("uint32") # takes the second hald of id (meaning particle number)
+						+ offset[ (group["id"][()]>>32).astype("uint32") & 16777215 ]# 0b111111111111111111111111
 						-1
 					)
 					# Loop datasets and order them
 					for k, name in properties.items():
 						if k not in group: continue
-						disordered = group[k].value
+						disordered = group[k][()]
 						ordered = self._np.zeros((total_number_of_particles, ), dtype=disordered.dtype)
 						ordered[locs] = disordered
 						f0[name].write_direct(ordered, dest_sel=self._np.s_[it,:])
@@ -513,11 +513,12 @@ class TrackParticles(Diagnostic):
 			# Create the "Times" dataset
 			f0.create_dataset("Times", data=times)
 			# Create the "unique_Ids" dataset
-			f0.create_dataset("unique_Ids", (total_number_of_particles,), f0["Id"].dtype)
+			unique_Ids = self._np.empty((total_number_of_particles,), dtype=f0["Id"].dtype)
 			for iMPI in range(number_of_particles.size):
 				for first, last, npart in ChunkedRange(number_of_particles[iMPI], chunksize):
 					o = int(offset[iMPI])
-					f0["unique_Ids"][o+first : o+last] = ((iMPI<<32) + 1) + self._np.arange(first,last,dtype='uint64')
+					unique_Ids[o+first : o+last] = ((iMPI<<32) + 1) + self._np.arange(first,last,dtype='uint64')
+			f0.create_dataset("unique_Ids", data=unique_Ids)
 			# Indicate that the ordering is finished
 			f0.attrs["finished_ordering"] = True
 			# Close file
@@ -597,7 +598,7 @@ class TrackParticles(Diagnostic):
 				group = f["data/"+"%010i"%time+"/particles/"+self.species]
 				self._rawData[time] = {}
 				for axis in self.axes:
-					self._rawData[time][axis] = group[properties[axis]].value
+					self._rawData[time][axis] = group[properties[axis]][()]
 				if "moving_x" in self.axes:
 					self._rawData[time]["moving_x"] -= self._XmovedForTime[time]
 
