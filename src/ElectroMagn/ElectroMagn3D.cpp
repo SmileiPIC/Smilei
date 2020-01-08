@@ -1034,10 +1034,9 @@ void ElectroMagn3D::saveMagneticFields( bool is_spectral )
         // Magnetic field Bz^(d,d,p)
         memcpy( &( ( *Bz3D_m )( 0, 0, 0 ) ), &( ( *Bz3D )( 0, 0, 0 ) ), nx_d*ny_d*nz_p*sizeof( double ) );
     } else {
-        Bx_m = Bx_;
-        By_m = By_;
-        Bz_m = Bz_;
-        
+        Bx_m->deallocateDataAndSetTo( Bx_ );
+        By_m->deallocateDataAndSetTo( By_ );
+        Bz_m->deallocateDataAndSetTo( Bz_ );
     }
 }//END saveMagneticFields
 

@@ -101,12 +101,15 @@ void Field2D::allocateDims()
     
 }
 
-void Field2D::deallocateDims()
+void Field2D::deallocateDataAndSetTo( Field* f )
 {
     delete [] data_;
     data_ = NULL;
     delete [] data_2D;
     data_2D = NULL;
+
+    data_   = f->data_;
+    data_2D = (static_cast<Field2D *>(f))->data_2D;
     
 }
 

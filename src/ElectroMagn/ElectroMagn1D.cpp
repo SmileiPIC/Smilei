@@ -502,10 +502,9 @@ void ElectroMagn1D::saveMagneticFields( bool is_spectral )
             ( *Bz1D_m )( i ) = ( *Bz1D )( i );
         }
     } else {
-        Bx_m = Bx_;
-        By_m = By_;
-        Bz_m = Bz_;
-        
+        Bx_m->deallocateDataAndSetTo( Bx_ );
+        By_m->deallocateDataAndSetTo( By_ );
+        Bz_m->deallocateDataAndSetTo( Bz_ );
     }
     
 }//END saveMagneticFields

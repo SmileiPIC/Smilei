@@ -40,7 +40,7 @@ public:
     
     //! Method used to allocate a Field1D
     void allocateDims();
-    void deallocateDims();
+    void deallocateDataAndSetTo( Field* f ) override;
     //! a Field1D can also be initialized win an unsigned int
     void allocateDims( unsigned int dims1 );
     //! 1D method used to allocate Field, isPrimal define if mainDim is Primal or Dual

@@ -617,9 +617,11 @@ void SimWindow::operate(Domain& domain,  VectorPatch& vecPatches, SmileiMPI* smp
     domain.patch_->exchangeField_movewin( domain.patch_->EMfields->Ey_, params.n_space[0] );
     domain.patch_->exchangeField_movewin( domain.patch_->EMfields->Ez_, params.n_space[0] );
     
-    domain.patch_->exchangeField_movewin( domain.patch_->EMfields->Bx_, params.n_space[0] );
-    domain.patch_->exchangeField_movewin( domain.patch_->EMfields->By_, params.n_space[0] );
-    domain.patch_->exchangeField_movewin( domain.patch_->EMfields->Bz_, params.n_space[0] );
+    if (domain.patch_->EMfields->Bx_->data_!= domain.patch_->EMfields->Bx_m->data_) {
+        domain.patch_->exchangeField_movewin( domain.patch_->EMfields->Bx_, params.n_space[0] );
+        domain.patch_->exchangeField_movewin( domain.patch_->EMfields->By_, params.n_space[0] );
+        domain.patch_->exchangeField_movewin( domain.patch_->EMfields->Bz_, params.n_space[0] );
+    }
     
     domain.patch_->exchangeField_movewin( domain.patch_->EMfields->Bx_m, params.n_space[0] );
     domain.patch_->exchangeField_movewin( domain.patch_->EMfields->By_m, params.n_space[0] );
@@ -657,18 +659,19 @@ void SimWindow::operate(Domain& domain,  VectorPatch& vecPatches, SmileiMPI* smp
     domain.patch_->exchangeField_movewin( domain_fields->Er_[imode], params.n_space[0] );
     domain.patch_->exchangeField_movewin( domain_fields->Et_[imode], params.n_space[0] );
     
-    domain.patch_->exchangeField_movewin( domain_fields->Bl_[imode], params.n_space[0] );
-    domain.patch_->exchangeField_movewin( domain_fields->Br_[imode], params.n_space[0] );
-    domain.patch_->exchangeField_movewin( domain_fields->Bt_[imode], params.n_space[0] );
-    
-    if (!params.is_spectral) {
-        domain.patch_->exchangeField_movewin( domain_fields->Bl_m[imode], params.n_space[0] );
-        domain.patch_->exchangeField_movewin( domain_fields->Br_m[imode], params.n_space[0] );
-        domain.patch_->exchangeField_movewin( domain_fields->Bt_m[imode], params.n_space[0] );
+    if (domain_fields->Bl_[imode]->cdata_!= domain_fields->Bl_m[imode]->cdata_) {
+        domain.patch_->exchangeField_movewin( domain_fields->Bl_[imode], params.n_space[0] );
+        domain.patch_->exchangeField_movewin( domain_fields->Br_[imode], params.n_space[0] );
+        domain.patch_->exchangeField_movewin( domain_fields->Bt_[imode], params.n_space[0] );
     }
+
+    domain.patch_->exchangeField_movewin( domain_fields->Bl_m[imode], params.n_space[0] );
+    domain.patch_->exchangeField_movewin( domain_fields->Br_m[imode], params.n_space[0] );
+    domain.patch_->exchangeField_movewin( domain_fields->Bt_m[imode], params.n_space[0] );
 
     if (params.is_spectral) {
         domain.patch_->exchangeField_movewin( domain_fields->rho_AM_[imode], params.n_space[0] );
+        domain.patch_->exchangeField_movewin( domain_fields->rho_old_AM_[imode], params.n_space[0] );
     }
 
     //DoubleGrids::syncFieldsOnDomain( vecPatches, domain, params, smpi );

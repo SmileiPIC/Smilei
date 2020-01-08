@@ -3639,6 +3639,39 @@ void VectorPatch::saveOldRho( Params &params )
 }
 
 
+void VectorPatch::setMagneticFieldsForDiagnostic( Params &params )
+{
+    if ( !params.is_spectral ) {
+        ERROR( "Should not come here for non spectral solver" );
+    }
+
+    if ( params.geometry!="AMcylindrical" ) {
+        #pragma omp for schedule(static)
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            ElectroMagn* emfield = static_cast<ElectroMagn *>( ( *this )( ipatch )->EMfields);
+            if ( emfield->Bx_->data_ != emfield->Bx_m->data_ ) {
+                emfield->Bx_->deallocateDataAndSetTo( emfield->Bx_m );
+                emfield->By_->deallocateDataAndSetTo( emfield->By_m );
+                emfield->Bz_->deallocateDataAndSetTo( emfield->Bz_m );
+            }
+        }
+    }
+    else {
+        #pragma omp for schedule(static)
+        for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
+            ElectroMagnAM* amfield = static_cast<ElectroMagnAM *>( ( *this )( ipatch )->EMfields);
+            if ( amfield->Bl_[0]->cdata_ != amfield->Bl_m[0]->cdata_ ) {
+                for( unsigned int imode=0 ; imode < params.nmodes ; imode++ ) {
+                    amfield->Bl_[imode]->deallocateDataAndSetTo( amfield->Bl_m[imode] );
+                    amfield->Br_[imode]->deallocateDataAndSetTo( amfield->Br_m[imode] );
+                    amfield->Bt_[imode]->deallocateDataAndSetTo( amfield->Bt_m[imode] );
+                }
+            }
+        }
+    }
+
+}
+
 
 // Print information on the memory consumption
 void VectorPatch::checkExpectedDiskUsage( SmileiMPI *smpi, Params &params, Checkpoint &checkpoint )

@@ -37,7 +37,7 @@ public:
     
     //! Method used to allocate a Field2D
     void allocateDims() override;
-    void deallocateDims() override;
+    void deallocateDataAndSetTo( Field* f ) override;
     //! a Field2D can also be initialized win two unsigned int
     void allocateDims( unsigned int dims1, unsigned int dims2 );
     //! allocate dimensions for field2D isPrimal define if mainDim is Primal or Dual
