@@ -423,7 +423,7 @@ if JOLLYJUMPER in HOSTNAME :
 		sys.exit(4)
         NODES=int(math.ceil(MPI/2.))
 	NPERSOCKET = 1
-	COMPILE_COMMAND = 'make -j 12 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
+	COMPILE_COMMAND = str(MAKE)+' -j 12 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
 	CLEAN_COMMAND = 'make clean > /dev/null 2>&1'
 	SMILEI_DATABASE = SMILEI_ROOT + '/databases/'
 	RUN_COMMAND = "mpirun -mca orte_num_sockets 2 -mca orte_num_cores 12 -cpus-per-proc "+str(OMP)+" --npersocket "+str(NPERSOCKET)+" -n "+str(MPI)+" -x OMP_NUM_THREADS -x OMP_SCHEDULE "+WORKDIR_BASE+s+"smilei %s >"+SMILEI_EXE_OUT+" 2>&1"

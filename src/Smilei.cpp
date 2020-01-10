@@ -243,6 +243,7 @@ int main( int argc, char *argv[] )
         }
         for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  )
             DoubleGridsAM::syncFieldsOnPatches( domain_global, vecPatches, params, &smpi, timers, 0, imode );
+        vecPatches.setMagneticFieldsForDiagnostic( params );
         domain_global.clean();
     }
     
