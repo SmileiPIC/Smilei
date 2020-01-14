@@ -7,7 +7,7 @@
 // Patches decomposition along a linearized curve
 #include "LinearizedDomainDecomposition.h"
 // Domain decomposition (linearized)
-#include "CartesianDomainDecomposition.h"
+#include "RegionDomainDecomposition.h"
 
 class DomainDecompositionFactory
 {
@@ -95,11 +95,11 @@ public:
         DomainDecomposition *domain_decomposition = NULL;
         
         if( ( params.geometry == "1Dcartesian" ) ) {
-            domain_decomposition = new CartesianDomainDecomposition1D( params );
+            domain_decomposition = new RegionDomainDecomposition1D( params );
         } else if( ( params.geometry == "2Dcartesian" ) || ( params.geometry == "AMcylindrical" ) ) {
-            domain_decomposition = new CartesianDomainDecomposition2D( params );
+            domain_decomposition = new RegionDomainDecomposition2D( params );
         } else if( ( params.geometry == "3Dcartesian" ) ) {
-            domain_decomposition = new CartesianDomainDecomposition3D( params );
+            domain_decomposition = new RegionDomainDecomposition3D( params );
         } else {
             ERROR( "Unknown geometry" );
         }

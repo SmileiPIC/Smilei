@@ -548,8 +548,8 @@ void Patch2D::createType2( Params &params )
         return;
     }
     
-    int nx0 = params.n_space_domain[0] + 1 + 2*oversize[0];
-    int ny0 = params.n_space_domain[1] + 1 + 2*oversize[1];
+    int nx0 = params.n_space_region[0] + 1 + 2*oversize[0];
+    int ny0 = params.n_space_region[1] + 1 + 2*oversize[1];
     unsigned int clrw = params.clrw;
     
     // MPI_Datatype ntype_[nDim][primDual][primDual]

@@ -15,7 +15,7 @@ public:
     {
         std::vector<unsigned int> n_space(params.n_space);
         if (params.uncoupled_grids)
-            n_space = params.n_space_domain;
+            n_space = params.n_space_region;
 
         std::vector<unsigned int> oversize(params.oversize);
         if (params.uncoupled_grids)

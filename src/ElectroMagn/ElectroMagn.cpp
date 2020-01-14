@@ -43,9 +43,9 @@ ElectroMagn::ElectroMagn( Params &params, DomainDecomposition *domain_decomposit
         || ( dynamic_cast<LinearizedDomainDecomposition *>( domain_decomposition ) ) ) {
         n_space = params.n_space;
     }
-    else if ( dynamic_cast<CartesianDomainDecomposition*>( domain_decomposition ) ) {
+    else if ( dynamic_cast<RegionDomainDecomposition*>( domain_decomposition ) ) {
         for ( unsigned int i = 0 ; i < nDim_field ; i++ ) {
-            n_space[i] = params.n_space_domain[i];
+            n_space[i] = params.n_space_region[i];
             oversize[i] = params.region_oversize[i];
         }
     }

@@ -495,9 +495,9 @@ void Patch3D::createType2( Params &params )
         return;
     }
     
-    int nx0 = params.n_space_domain[0] + 1 + 2*oversize[0];
-    int ny0 = params.n_space_domain[1] + 1 + 2*oversize[1];
-    int nz0 = params.n_space_domain[2] + 1 + 2*oversize[2];
+    int nx0 = params.n_space_region[0] + 1 + 2*oversize[0];
+    int ny0 = params.n_space_region[1] + 1 + 2*oversize[1];
+    int nz0 = params.n_space_region[2] + 1 + 2*oversize[2];
     
     // MPI_Datatype ntype_[nDim][primDual][primDual]
     int nx, ny, nz;

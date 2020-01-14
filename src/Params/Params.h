@@ -197,9 +197,9 @@ public:
     std::vector<unsigned int> n_space;
     
     //! number of cells in every direction of the local domain (can be different from 1 MPI process to another)
-    std::vector<unsigned int> n_space_domain;
+    std::vector<unsigned int> n_space_region;
     
-    std::vector<unsigned int> number_of_domain;
+    std::vector<unsigned int> number_of_region;
     std::vector< std::vector<int> > offset_map;
     std::vector< std::vector< std::vector<int> > > map_rank;
     std::vector<int> coordinates;

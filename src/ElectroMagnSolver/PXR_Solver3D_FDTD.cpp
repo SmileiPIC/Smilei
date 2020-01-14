@@ -30,7 +30,7 @@ void PXR_Solver3D_FDTD::coupling( Params &params, ElectroMagn *EMfields, bool fu
         oversize = params.region_oversize;
     }
     else if (params.uncoupled_grids) {
-        n_space = params.n_space_domain;
+        n_space = params.n_space_region;
         oversize = params.region_oversize;
     }
 

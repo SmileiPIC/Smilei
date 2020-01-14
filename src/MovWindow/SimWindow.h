@@ -11,7 +11,7 @@ class ElectroMagn;
 class Interpolator;
 class Projector;
 class SmileiMPI;
-class Domain;
+class Region;
 
 //  --------------------------------------------------------------------------------------------------------------------
 //! Class SimWindow
@@ -26,10 +26,10 @@ public:
     ~SimWindow();
     //! Move the simulation window (particles, fields, MPI environment & operator related to the grid)
 
-    void shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &param, unsigned int itime, double time_dual, Domain& domain );
+    void shift( VectorPatch &vecPatches, SmileiMPI *smpi, Params &param, unsigned int itime, double time_dual, Region& region );
     
-    void operate( Domain& domain,  VectorPatch& vecPatches, SmileiMPI* smpi, Params& param, double time_dual );
-    void operate( Domain& domain,  VectorPatch& vecPatches, SmileiMPI* smpi, Params& param, double time_dual, unsigned int imode );
+    void operate( Region& region,  VectorPatch& vecPatches, SmileiMPI* smpi, Params& param, double time_dual );
+    void operate( Region& region,  VectorPatch& vecPatches, SmileiMPI* smpi, Params& param, double time_dual, unsigned int imode );
 
     //! Tells whether there is a moving window or not
     inline bool isActive()

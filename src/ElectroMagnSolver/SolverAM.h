@@ -23,7 +23,7 @@ public:
         
         std::vector<unsigned int> n_space(params.n_space);
         if (params.uncoupled_grids)
-            n_space = params.n_space_domain;
+            n_space = params.n_space_region;
 
         nl_p = n_space[0] +1+2*oversize[0];
         nl_d = n_space[0] +2+2*oversize[0]-(params.is_pxr);

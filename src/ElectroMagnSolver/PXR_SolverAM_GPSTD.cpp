@@ -53,7 +53,7 @@ void PXR_SolverAM_GPSTD::coupling( Params &params, ElectroMagn *EMfields, bool f
     if (full_domain)
         n_space = params.n_space_global;
     else if (params.uncoupled_grids)
-        n_space = params.n_space_domain;
+        n_space = params.n_space_region;
     
     nl=( int ) (0 + n_space[0]);
     nr=( int ) (0 + n_space[1]);

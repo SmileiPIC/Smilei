@@ -313,7 +313,7 @@ void LaserProfileSeparable::createFields( Params &params, Patch *patch )
 {
     std::vector<unsigned int> n_space(params.n_space);
     if (params.uncoupled_grids && (patch->vecSpecies.size() == 0) ) // If not species on the patch, cartesian decomposition
-        n_space = params.n_space_domain;
+        n_space = params.n_space_region;
 
     std::vector<unsigned int> oversize(params.oversize);
     if (params.uncoupled_grids && (patch->vecSpecies.size() == 0) ) // If not species on the patch, cartesian decomposition
@@ -357,7 +357,7 @@ void LaserProfileSeparable::initFields( Params &params, Patch *patch )
 {
     std::vector<unsigned int> n_space(params.n_space);
     if (params.uncoupled_grids && (patch->vecSpecies.size() == 0) ) // If not species on the patch, cartesian decomposition
-        n_space = params.n_space_domain;
+        n_space = params.n_space_region;
 
     std::vector<unsigned int> oversize(params.oversize);
     if (params.uncoupled_grids && (patch->vecSpecies.size() == 0) ) // If not species on the patch, cartesian decomposition
@@ -466,7 +466,7 @@ void LaserProfileFile::initFields( Params &params, Patch *patch )
 {
     std::vector<unsigned int> n_space(params.n_space);
     if (params.uncoupled_grids && (patch->vecSpecies.size() == 0) ) // If not species on the patch, cartesian decomposition
-        n_space = params.n_space_domain;
+        n_space = params.n_space_region;
 
     std::vector<unsigned int> oversize(params.oversize);
     if (params.uncoupled_grids && (patch->vecSpecies.size() == 0) ) // If not species on the patch, cartesian decomposition
