@@ -29,7 +29,7 @@ extern  "C"
     void free_params_picsar_AM();
     void push_psatd_ebfield_();
     void solve_maxwell_fdtd_pxr();
-    void divergence_cleaning();
+    void rotational_cleaning();
 };
 
 }

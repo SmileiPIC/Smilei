@@ -192,7 +192,7 @@ class Main(SmileiSingleton):
     global_factor = []
     norder = []
     pseudo_spectral_guardells = 0
-    apply_divergence_cleaning = False
+    apply_rotational_cleaning = False
     is_spectral = False
     is_pxr = False
 

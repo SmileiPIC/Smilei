@@ -224,7 +224,7 @@ public:
     std::vector<unsigned int> region_oversize;
 
     unsigned int pseudo_spectral_guardells;
-    bool apply_divergence_cleaning;
+    bool apply_rotational_cleaning;
     
     //! True if restart requested
     bool restart;

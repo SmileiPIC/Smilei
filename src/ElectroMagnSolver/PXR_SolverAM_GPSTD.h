@@ -17,7 +17,7 @@ public:
     
     void coupling( Params &params, ElectroMagn *EMfields, bool full_domain = false ) override;
     void uncoupling() override;
-    void divergence_cleaning( ElectroMagn *fields ) override;
+    void rotational_cleaning( ElectroMagn *fields ) override;
     //! Overloading of () operator
     virtual void operator()( ElectroMagn *fields ) override;
     void _2Dvectors_to_3D( ElectroMagn *fields );

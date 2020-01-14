@@ -534,14 +534,14 @@ Params::Params( SmileiMPI *smpi, std::vector<std::string> namelistsFiles ) :
     //nordery=norder[1];
     //norderz=norder[2];
 
-    apply_divergence_cleaning = false;
+    apply_rotational_cleaning = false;
     if ( is_spectral && geometry == "AMcylindrical" ) {
         PyTools::extract( "pseudo_spectral_guardells", pseudo_spectral_guardells, "Main" );
         if (!pseudo_spectral_guardells) {
             ERROR( "You must specify Main.pseudo_spectral_guardells with is_spectral=True in AM" );
         }
-        PyTools::extract( "apply_divergence_cleaning", apply_divergence_cleaning, "Main" );
-        if ( ( apply_divergence_cleaning ) && ( smpi->getSize() > 1 ) ) {
+        PyTools::extract( "apply_rotational_cleaning", apply_rotational_cleaning, "Main" );
+        if ( ( apply_rotational_cleaning ) && ( smpi->getSize() > 1 ) ) {
             WARNING("Divergence cleaning not parallelized for now");
         }
         

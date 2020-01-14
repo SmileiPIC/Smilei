@@ -231,7 +231,7 @@ int main( int argc, char *argv[] )
     
 
     // divergence cleaning
-    if ( params.apply_divergence_cleaning ) {
+    if ( params.apply_rotational_cleaning ) {
         Region region_global( params );
         region_global.build( params, &smpi, vecPatches, openPMD, true );
         region_global.identify_additional_patches( &smpi, vecPatches, params, simWindow );
@@ -271,7 +271,7 @@ int main( int argc, char *argv[] )
         //     <<  "\t - missing : " << region.missing_patches_.size()
         //     <<  "\t - additional : " << region.additional_patches_.size() << endl;
 
-        if ( params.apply_divergence_cleaning ) { // Need to upload corrected data on Region
+        if ( params.apply_rotational_cleaning ) { // Need to upload corrected data on Region
             for (unsigned int imode = 0 ; imode < params.nmodes ; imode++  ) {
                 DoubleGridsAM::syncFieldsOnRegion( vecPatches, region, params, &smpi, imode );
                 // Need to fill all ghost zones, not covered by patches ghost zones

@@ -55,7 +55,7 @@ void Region::build( Params &params, SmileiMPI *smpi, VectorPatch &vecPatches, Op
     vecPatch_.nrequests = vecPatches( 0 )->requests_.size();
     vecPatch_.nAntennas = vecPatch_( 0 )->EMfields->antennas.size();
     vecPatch_.initExternals( params );
-    if (!params.apply_divergence_cleaning)
+    if (!params.apply_rotational_cleaning)
         vecPatch_.applyExternalFields();
     
     fake_patch = PatchesFactory::clone(vecPatches(0), params, smpi, vecPatches.domain_decomposition_, 0, 0, false);
@@ -108,7 +108,7 @@ void Region::coupling( Params &params, bool global_region )
 {
     vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->coupling( params, vecPatch_( 0 )->EMfields, global_region );
     if ( ( params.geometry == "AMcylindrical" ) && ( global_region ) )
-        vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->divergence_cleaning( vecPatch_( 0 )->EMfields );
+        vecPatch_( 0 )->EMfields->MaxwellAmpereSolver_->rotational_cleaning( vecPatch_( 0 )->EMfields );
     coupled_ = true;
 }
 
@@ -246,7 +246,7 @@ void Region::identify_missing_patches(SmileiMPI* smpi, VectorPatch& vecPatches, 
             npatch_domain *= params.n_space_region[iDim] / params.n_space[iDim];
         }
     }
-    else { // Global mode for divergence cleaningx
+    else { // Global mode for rotational cleaning
         for ( int iDim = 0 ; iDim < patch_->getDomainLocalMin().size() ; iDim++ ) {
             patch_min_coord[iDim] = (int)( patch_->getDomainLocalMin(iDim) / params.cell_length[iDim] / (double)params.n_space[iDim] );
             patch_max_coord[iDim] = (int)( patch_->getDomainLocalMax(iDim) / params.cell_length[iDim] / (double)params.n_space[iDim] ) - 1;

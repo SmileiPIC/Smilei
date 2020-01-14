@@ -18,7 +18,7 @@ public:
     
     virtual void coupling( Params &params, ElectroMagn *EMfields, bool full_domain = false ) {};
     virtual void uncoupling() {};
-    virtual void divergence_cleaning( ElectroMagn *EMfields ) {};
+    virtual void rotational_cleaning( ElectroMagn *EMfields ) {};
     //! Overloading of () operator
     virtual void operator()( ElectroMagn *fields ) = 0;
     
