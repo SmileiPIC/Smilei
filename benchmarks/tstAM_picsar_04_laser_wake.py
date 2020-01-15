@@ -67,7 +67,7 @@ Main(
     is_pxr = True,
     norder = [32,0],
     pseudo_spectral_guardells = 64,
-    apply_divergence_cleaning = True
+    apply_rotational_cleaning = True
 )
 
 ################ Laser gaussian pulse, defined through external fields ###################
