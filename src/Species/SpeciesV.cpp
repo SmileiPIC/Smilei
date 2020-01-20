@@ -335,7 +335,6 @@ void SpeciesV::dynamics( double time_dual, unsigned int ispec,
                             addPartInExchList( iPart );
                             nrj_lost_per_thd[tid] += ener_iPart;
                             particles->cell_keys[iPart] = -1;
-                            // std::cerr << "cell keys: " << particles->cell_keys[iPart] << std::endl;
                         } else {
                             //Compute cell_keys of remaining particles
                             for( unsigned int i = 0 ; i<nDim_field; i++ ) {
@@ -444,7 +443,7 @@ void SpeciesV::computeCharge( unsigned int ispec, ElectroMagn *EMfields )
 // ---------------------------------------------------------------------------------------------------------------------
 // Sort particles
 // ---------------------------------------------------------------------------------------------------------------------
-void SpeciesV::sortParticles( Params &params )
+void SpeciesV::sortParticles( Params &params, Patch *patch )
 {
     unsigned int npart, ncell;
     int ip_dest, cell_target;
@@ -541,17 +540,99 @@ void SpeciesV::sortParticles( Params &params )
         }
     }
 
+    // -------------------------------------------------------------------------------------
+    // Checkpoint for debugging
+    
+    // for( unsigned int scell = 0 ; scell < first_index.size(); scell++ ) {
+    //     for (unsigned int ip = first_index[scell] ; ip  < last_index[scell] ; ip ++) {
+    //
+    //         double xmin = patch->getDomainLocalMin(0);
+    //         double xmax = patch->getDomainLocalMax(0);
+    //         double ymin = patch->getDomainLocalMin(1);
+    //         double ymax = patch->getDomainLocalMax(1);
+    //
+    //         double x = particles->position(0,ip);
+    //         double y = particles->position(1,ip);
+    //         double mx = particles->momentum(0,ip);
+    //         double my = particles->momentum(1,ip);
+    //         double mz = particles->momentum(2,ip);
+    //         double v = sqrt(mx*mx+my*my+mz*mz)/sqrt(1+mx*mx+my*my+mz*mz);
+    //         //if (particles->cell_keys[ip] < 0) {
+    //         std::cerr
+    //         << " Np: " << last_index[scell] - first_index[scell]
+    //         << " Cell keys size: " << particles->cell_keys.size()
+    //         << " ip: "<< ip
+    //         << " cell_keys: " << particles->cell_keys[ip]
+    //         << ", x: " << xmin
+    //         << " < " << x
+    //         << " < " << xmax
+    //         << ", y: " << ymin
+    //         << " < " << y
+    //         << " < " << ymax
+    //         << ", mx: " << mx
+    //         << ", my: " << my
+    //         << ", mz: " << mz
+    //         << setprecision(10)
+    //         << ", v: " << v
+    //         << std::endl;
+    //
+    //         if (x <= xmin
+    //             || x >= xmax
+    //             || y <= ymin
+    //             || y >= ymax
+    //             || v >= 1) {
+    //             ERROR("error")
+    //         }
+    //         //}
+    //     }
+    // }
+
     //Copy valid particles siting over last_index.back() back into the real particles array (happens when more particles are lost than received)
     for( unsigned int ip=( unsigned int )last_index.back(); ip < npart; ip++ ) {
         cell_target = particles->cell_keys[ip];
+        
+        // double xmin = patch->getDomainLocalMin(0);
+        // double xmax = patch->getDomainLocalMax(0);
+        // double ymin = patch->getDomainLocalMin(1);
+        // double ymax = patch->getDomainLocalMax(1);
+        // //
+        // double x = particles->position(0,ip);
+        // double y = particles->position(1,ip);
+        // double w = particles->weight(ip);
+        // double mx = particles->momentum(0,ip);
+        // double my = particles->momentum(1,ip);
+        // double mz = particles->momentum(2,ip);
+        // double v = sqrt(mx*mx+my*my+mz*mz)/sqrt(1+mx*mx+my*my+mz*mz);
+        // //if (particles->cell_keys[ip] < 0) {
+        // std::cerr << cell_target << " " << first_index[cell_target] <<  std::endl;
+        // std::cerr
+        // << " Cell keys size: " << particles->cell_keys.size()
+        // << " ip: "<< ip
+        // << " cell_keys: " << particles->cell_keys[ip]
+        // << ", x: " << xmin
+        // << " < " << x
+        // << " < " << xmax
+        // << ", y: " << ymin
+        // << " < " << y
+        // << " < " << ymax
+        // << ", mx: " << mx
+        // << ", my: " << my
+        // << ", mz: " << mz
+        // << setprecision(10)
+        // << ", v: " << v
+        // << std::endl;
+        
         if( cell_target == -1 ) {
             continue;
         }
         cycle.resize( 0 );
         cycle.push_back( ip );
+        
         //As long as the particle is not erased, we can build up the cycle.
         while( cell_target != -1 ) {
+
             ip_dest = first_index[cell_target];
+
             while( particles->cell_keys[ip_dest] == cell_target ) {
                 ip_dest++;
             }
@@ -754,22 +835,32 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
         double weight_after = 0;
         double energy_before = 0;
         double energy_after = 0;
-        //std::vector <int> mask(last_index.back(), 1);
+        std::vector <int> mask(last_index.back(), 1);
 
         // Resize the cell_keys
-        particles->cell_keys.resize( last_index.back(), 1 );
-        #pragma omp simd
-        for (unsigned int ip = 0; ip < (unsigned int)(last_index.back()) ; ip++) {
-                particles->cell_keys[ip] = 1;
-        }
+        // particles->cell_keys.resize( last_index.back(), 1 );
+        // #pragma omp simd
+        // for (unsigned int ip = 0; ip < (unsigned int)(last_index.back()) ; ip++) {
+        //         particles->cell_keys[ip] = 1;
+        // }
+
+        // for (unsigned int ip = 0; ip < (unsigned int)(last_index.back()) ; ip++) {
+        //         weight_before += particles->weight(ip);
+        //         energy_before += sqrt(1 + pow(particles->momentum(0,ip),2) + pow(particles->momentum(1,ip),2) + pow(particles->momentum(2,ip),2));
+        // }
 
         // For each cell, we apply independently the merging process
         for( scell = 0 ; scell < first_index.size() ; scell++ ) {
-            ( *Merge )( mass_, *particles, particles->cell_keys, smpi, first_index[scell],
+            
+            count[scell] = last_index[scell] - first_index[scell];
+            
+            ( *Merge )( mass_, *particles, mask, smpi, first_index[scell],
                         last_index[scell], count[scell]);
+                        
         }
 
-        particles->compressParticles(0, last_index.back(), particles->cell_keys);
+        // We remove empty space in an optimized manner
+        particles->eraseParticlesWithMask(0, last_index.back(), mask);
 
         // Update of first and last cell indexes
         first_index[0] = 0;
@@ -778,6 +869,79 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
             first_index[scell] = last_index[scell-1];
             last_index[scell] = first_index[scell] + count[scell];
         }
+        
+        //particles->cell_keys.resize(last_index.back());
+        
+        // -------------------------------------------------------------------------------------
+        // Checkpoint for debugging
+        
+        // for (unsigned int ip = 0; ip < (unsigned int)(last_index.back()) ; ip++) {
+        //         weight_after += particles->weight(ip);
+        //         energy_after += sqrt(1 + pow(particles->momentum(0,ip),2)
+        //                      + pow(particles->momentum(1,ip),2)
+        //                      + pow(particles->momentum(2,ip),2));
+        // }
+        //
+        // if (weight_before != weight_after) {
+        //     std::cerr
+        //     << " Weight before: " << weight_before
+        //     << " Weight after: " << weight_after
+        //     << " Energy before: " << energy_before
+        //     << " Energy after: " << energy_after
+        //     << std::endl;
+        // }
+        // -------------------------------------------------------------------------------------
+        
+        // -------------------------------------------------------------------------------------
+        // Checkpoint for debugging
+        
+        // for( scell = 0 ; scell < first_index.size(); scell++ ) {
+        //     for (unsigned int ip = first_index[scell] ; ip  < last_index[scell] ; ip ++) {
+        //
+        //         double xmin = patch->getDomainLocalMin(0);
+        //         double xmax = patch->getDomainLocalMax(0);
+        //         double ymin = patch->getDomainLocalMin(1);
+        //         double ymax = patch->getDomainLocalMax(1);
+        //
+        //         double x = particles->position(0,ip);
+        //         double y = particles->position(1,ip);
+        //         double mx = particles->momentum(0,ip);
+        //         double my = particles->momentum(1,ip);
+        //         double mz = particles->momentum(2,ip);
+        //         double v = sqrt(mx*mx+my*my+mz*mz)/sqrt(1+mx*mx+my*my+mz*mz);
+        //         if (particles->cell_keys[ip] < 0 || particles->cell_keys[ip] > last_index.back()) {
+        //         std::cerr
+        //         << " Npc: " << last_index[scell] - first_index[scell]
+        //         << " Cell keys size: " << particles->cell_keys.size()
+        //         << " ip: "<< ip
+        //         << " cell_keys: " << particles->cell_keys[ip]
+        //         << ", x: " << xmin
+        //         << " < " << x
+        //         << " < " << xmax
+        //         << ", y: " << ymin
+        //         << " < " << y
+        //         << " < " << ymax
+        //         << ", mx: " << mx
+        //         << ", my: " << my
+        //         << ", mz: " << mz
+        //         << setprecision(10)
+        //         << ", v: " << v
+        //         << std::endl;
+        //         ERROR("")
+        //
+        //         if (x <= xmin
+        //             || x >= xmax
+        //             || y <= ymin
+        //             || y >= ymax
+        //             || v >= 1) {
+        //             ERROR("")
+        //         }
+        //         }
+        //     }
+        // }
+        
+        // -------------------------------------------------------------------------------------
+        
     }
 }
 

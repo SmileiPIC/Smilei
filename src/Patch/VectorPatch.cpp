@@ -282,7 +282,7 @@ void VectorPatch::sortAllParticles( Params &params )
         for( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
             for( unsigned int ispec=0 ; ispec<patches_[ipatch]->vecSpecies.size(); ispec++ ) {
                 patches_[ipatch]->vecSpecies[ispec]->computeParticleCellKeys( params );
-                patches_[ipatch]->vecSpecies[ispec]->sortParticles( params );
+                patches_[ipatch]->vecSpecies[ispec]->sortParticles( params, patches_[ipatch] );
             }
         }
     }

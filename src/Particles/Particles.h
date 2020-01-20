@@ -137,11 +137,11 @@ public:
 
     //! Compress the particles vectors according to the provided mask
     //! between istart and iend
-    void compressParticles( int istart, int iend, std::vector <int> & mask );
+    void eraseParticlesWithMask( int istart, int iend, std::vector <int> & mask );
 
     //! Compress the particles vectors using cell_keys as a mask
     //! between istart and iend
-    void compressParticles( int istart, int iend);
+    void eraseParticlesWithMask( int istart, int iend);
 
     //! This method erases particles according to the provided mask
     //! between istart and iend

@@ -421,7 +421,7 @@ public:
     virtual void computeCharge( unsigned int ispec, ElectroMagn *EMfields );
 
     //! Method used to sort particles
-    virtual void sortParticles( Params &param );
+    virtual void sortParticles( Params &param, Patch * patch );
 
     virtual void computeParticleCellKeys( Params &params ) {};
 

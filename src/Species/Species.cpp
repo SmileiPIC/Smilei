@@ -729,7 +729,7 @@ void Species::computeCharge( unsigned int ispec, ElectroMagn *EMfields )
 // ---------------------------------------------------------------------------------------------------------------------
 // Sort particles
 // ---------------------------------------------------------------------------------------------------------------------
-void Species::sortParticles( Params &params )
+void Species::sortParticles( Params &params, Patch * patch )
 {
 
     int ndim = params.nDim_field;
