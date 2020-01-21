@@ -199,6 +199,10 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
                 if( patch->isZmin() ) {
                     bc_zmin = &stop_particle;
                 }
+            } else if( species->boundary_conditions[2][0] == "thermalize" ) {
+                if( patch->isZmin() ) {
+                    bc_zmin = &thermalize_particle;
+                }
             } else if( species->boundary_conditions[2][0] == "periodic" ) {
             } else {
                 ERROR( "Zmin boundary condition `"<< species->boundary_conditions[2][0] << "` unknown" );
@@ -215,6 +219,10 @@ PartBoundCond::PartBoundCond( Params &params, Species *species, Patch *patch ) :
             } else if( species->boundary_conditions[2][1] == "stop" ) {
                 if( patch->isZmax() ) {
                     bc_zmax = &stop_particle;
+                }
+            } else if( species->boundary_conditions[2][1] == "thermalize" ) {
+                if( patch->isZmax() ) {
+                    bc_zmax = &thermalize_particle;
                 }
             } else if( species->boundary_conditions[2][1] == "periodic" ) {
             } else {
