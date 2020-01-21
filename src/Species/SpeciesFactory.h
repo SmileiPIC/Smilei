@@ -324,7 +324,7 @@ public:
 
             if ( this_species->merging_method_ != "none" ) {
 
-                if (!params.cell_sorting || !this_species->vectorized_operators) {
+                if (!params.cell_sorting && !this_species->vectorized_operators) {
                     ERROR( "In Species " << this_species->name_
                            << ": merging required cell sorting to be "
                            << "activated (`cell_sorting = True` in the mains or vectorization on).");
