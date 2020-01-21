@@ -30,6 +30,7 @@ makerun1D:
   only:
     - develop
     - AMsorting
+    - particle_merging_correction
 
   script:
     # Move in test dir
@@ -42,7 +43,6 @@ makerun2D:
   only:
     - develop
     - AMsorting
-    - particle_merging_correction
 
   script:
     # Move in test dir
