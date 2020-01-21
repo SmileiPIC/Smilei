@@ -817,7 +817,6 @@ void Particles::compressParticles( int istart, int iend) {
 // ---------------------------------------------------------------------------------------------------------------------
 void Particles::createParticles( int nAdditionalParticles, int pstart )
 {
-    int nParticles = size();
     for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
         ( *double_prop[iprop] ).insert( ( *double_prop[iprop] ).begin()+pstart, nAdditionalParticles, 0. );
     }
@@ -829,8 +828,6 @@ void Particles::createParticles( int nAdditionalParticles, int pstart )
     for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
         ( *uint64_prop[iprop] ).insert( ( *uint64_prop[iprop] ).begin()+pstart, nAdditionalParticles, 0 );
     }
-    
-//MESSAGE("create2");
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

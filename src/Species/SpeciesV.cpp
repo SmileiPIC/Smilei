@@ -665,9 +665,6 @@ void SpeciesV::importParticles( Params &params, Patch *patch, Particles &source_
     length[1]=params.n_space[1]+1;
     length[2]=params.n_space[2]+1;
 
-    int IX;
-    double X;
-
     // compute cell keys of new parts
     vector<int> src_cell_keys( npart, 0 );
     for ( int ip = 0 ; ip < npart ; ip++ ) {
@@ -750,11 +747,6 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
     if( time_dual>time_frozen_ ) {
 
         unsigned int scell ;
-        double weight_before = 0;
-        double weight_after = 0;
-        double energy_before = 0;
-        double energy_after = 0;
-        //std::vector <int> mask(last_index.back(), 1);
 
         // Resize the cell_keys
         particles->cell_keys.resize( last_index.back(), 1 );
