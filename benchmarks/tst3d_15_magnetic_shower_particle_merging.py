@@ -22,7 +22,7 @@ Schwinger_E_field= 1.3E18
 Enorm = 3.2E12
 
 # Parameters for QED
-chi = 20.
+chi = 10.
 B_field_amplitude = 1000
 gamma = chi* Schwinger_E_field/(Enorm*B_field_amplitude)
 synchrotron_radius = math.sqrt(gamma**2 - 1.)/B_field_amplitude
@@ -47,7 +47,7 @@ n0 = 1e-5
 # nb of cells in one synchrotron radius
 res = 32.
 # Initial number of particles per cell
-particles_per_cell = 8
+particles_per_cell = 1
 
 dt_factor = 0.95
 dx = synchrotron_radius/res                            # space step
@@ -56,7 +56,7 @@ dz = synchrotron_radius/res                            # space step
 dt  = 1./math.sqrt(1./(dx*dx) + 1./(dy*dy) + 1./(dz*dz)) # timestep (CFL)
 dt *= dt_factor
 # duration of the simulation
-simulation_time = 80*dt
+simulation_time = 50*dt
 
 pusher = "vay"                         # dynamic type
 radiation = "Monte-Carlo"
@@ -127,11 +127,11 @@ Species(
     
     # Merging parameters
     merging_method = "vranic_spherical",
-    merge_every = 5,
+    merge_every = 2,
     merge_min_particles_per_cell = 16,
     merge_max_packet_size = 4,
     merge_min_packet_size = 4,
-    merge_momentum_cell_size = [16,16,16],
+    merge_momentum_cell_size = [8,8,8],
     merge_accumulation_correction = False,
     merge_discretization_scale = "log",
     # merge_min_momentum = 1e-5,
@@ -163,11 +163,11 @@ Species(
 
     # Merging parameters
     merging_method = "vranic_spherical",
-    merge_every = 5,
+    merge_every = 2,
     merge_min_particles_per_cell = 16,
     merge_max_packet_size = 4,
     merge_min_packet_size = 4,
-    merge_momentum_cell_size = [16,16,16],
+    merge_momentum_cell_size = [8,8,8],
     merge_accumulation_correction = False,
     merge_discretization_scale = "log",
     # merge_min_momentum = 1e-5,
@@ -195,11 +195,11 @@ Species(
     
     # Merging parameters
     merging_method = "vranic_spherical",
-    merge_every = 5,
+    merge_every = 2,
     merge_min_particles_per_cell = 8,
     merge_max_packet_size = 4,
     merge_min_packet_size = 4,
-    merge_momentum_cell_size = [16,16,16],
+    merge_momentum_cell_size = [8,8,8],
     merge_accumulation_correction = False,
     merge_discretization_scale = "log",
     # merge_min_momentum = 1e-5,
