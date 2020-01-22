@@ -220,22 +220,22 @@ void MergingVranicSpherical::operator() (
         reduction(max:mr_max) reduction(max:theta_max_ref) reduction(max:phi_max)
 //         aligned(momentum_norm, particles_theta, particles_phi: 64)
         for (ipr=1 ; ipr < number_of_particles; ipr++ ) {
-            mr_min = fmin(mr_min,momentum_norm[ipr]);
-            mr_max = fmax(mr_max,momentum_norm[ipr]);
+            mr_min = std::min(mr_min,momentum_norm[ipr]);
+            mr_max = std::max(mr_max,momentum_norm[ipr]);
 
-            theta_min_ref = fmin(theta_min_ref,particles_theta[ipr]);
-            theta_max_ref = fmax(theta_max_ref,particles_theta[ipr]);
+            theta_min_ref = std::min(theta_min_ref,particles_theta[ipr]);
+            theta_max_ref = std::max(theta_max_ref,particles_theta[ipr]);
 
-            phi_min = fmin(phi_min,particles_phi[ipr]);
-            phi_max = fmax(phi_max,particles_phi[ipr]);
+            phi_min = std::min(phi_min,particles_phi[ipr]);
+            phi_max = std::max(phi_max,particles_phi[ipr]);
         }
 
         // Computation of the deltas (discretization steps)
         // Check if min and max boundaries are very close
         // Log scale
         if (log_scale_) {
-            mr_min = fmax(mr_min,min_momentum_log_scale_);
-            mr_max = fmax(mr_max,min_momentum_log_scale_);
+            mr_min = std::max(mr_min,min_momentum_log_scale_);
+            mr_max = std::max(mr_max,min_momentum_log_scale_);
             mr_interval = std::abs(mr_max - mr_min);
             // mr_min and mr_max are very close
             if (mr_interval < min_momentum_cell_length_[0]) {
@@ -341,7 +341,7 @@ void MergingVranicSpherical::operator() (
         // Phi value that corresponds to the largest solid angle
         double absolute_phi_min = 0.5*M_PI;
         for(phi_i=0 ; phi_i < phi_dim ; phi_i++) {
-            absolute_phi_min = fmin(std::abs((phi_i + 0.5)*phi_delta + phi_min),absolute_phi_min);
+            absolute_phi_min = std::min(std::abs((phi_i + 0.5)*phi_delta + phi_min),absolute_phi_min);
         }
         // Then we use the reference to compute all the theta discretization
         // that depends on phi for the solid angle compensation
@@ -358,7 +358,7 @@ void MergingVranicSpherical::operator() (
                 // If the corrected theta delta is lower than the theta interval
                 // (means that sin(phi) is not too close to zero)
                 if (std::abs(sin(phi)) > theta_delta_ref / theta_interval) {
-                    theta_delta[phi_i] = fmin(theta_delta_ref / std::abs(sin(phi)),theta_interval);
+                    theta_delta[phi_i] = std::min(theta_delta_ref / std::abs(sin(phi)),theta_interval);
                     theta_dim[phi_i]   = std::max((unsigned int)(round(theta_interval / theta_delta[phi_i])), theta_dim_min);
                     if (accumulation_correction_) {
                         theta_delta[phi_i] = theta_interval / (theta_dim[phi_i]-1);

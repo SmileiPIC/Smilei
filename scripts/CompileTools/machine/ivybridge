@@ -1,0 +1,6 @@
+#
+# Machine file for Intel Broadwell processors
+# Compilation with the Intel compiler
+# __________________________________________________________
+
+CXXFLAGS +=  -xAVX -O3 -inline-factor=1000 -fno-alias
