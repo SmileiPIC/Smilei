@@ -21,11 +21,11 @@ for ispecies,species in enumerate(species_list):
     Scalar[name] = np.array(S.Scalar(name).getData())
     for index,value in enumerate(Scalar[name][species_first_iteration[ispecies]:]):
         Validate("Scalar {}[{}]".format(name,index) , value, value*relative_error)
-#
-#     name = "Ukin_{}".format(species)
-#     Scalar[name] = np.array(S.Scalar(name).getData())
-#     for index,value in enumerate(Scalar[name][species_first_iteration[ispecies]:]):
-#         Validate("Scalar {}[{}]".format(name,index) , value, value*relative_error)
+
+    name = "Ukin_{}".format(species)
+    Scalar[name] = np.array(S.Scalar(name).getData())
+    for index,value in enumerate(Scalar[name][species_first_iteration[ispecies]:]):
+        Validate("Scalar {}[{}]".format(name,index) , value, value*relative_error)
 #
 #     name = "Dens_{}".format(species)
 #     Scalar[name] = np.array(S.Scalar(name).getData())
