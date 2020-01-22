@@ -10,7 +10,7 @@ simulation_time = S.namelist.Main.simulation_time
 # List of species
 species_list = ["electron","positron","photon"]
 # First iteration used to validate the diag scalars
-species_first_iteration = [150,150,150]
+species_first_iteration = [200,200,200]
 # Large relative error because of stochasticity
 relative_error = 0.5
 

@@ -225,7 +225,7 @@ MultiphotonBreitWheeler(
 
 
 DiagScalar(
-    every = 20,
+    every = [3000*dt,20],
     vars=['Uelm','Ukin','Utot','Uexp','Ubal',
           'Urad',
           'Ukin_bnd',

@@ -38,14 +38,24 @@ for icase,case in enumerate(cases):
 
     spectrum = S.ParticleBinning(diagNumber=icase,timesteps=50)
     data = np.array(spectrum.getData()[0])
+    gamma = np.array(spectrum.get()["gamma"])
+    integration = np.sum(data*gamma)*(gamma[1] - gamma[0])
 
-    for index,value in enumerate(data):
-       Validate("Proton spectrum for {} at {}: ".format(case,index) , value, value*relative_error)
+    Validate("Integrated positron gamma spectrum for {}: ".format(case),integration,integration*relative_error)
+    print("Integrated positron gamma spectrum for {}: {}.".format(case,integration))
+
+    # for index,value in enumerate(data):
+    #    Validate("Proton spectrum for {} at {}: ".format(case,index) , value, value*relative_error)
 
 for icase,case in enumerate(cases):
 
     spectrum = S.ParticleBinning(diagNumber=icase+3,timesteps=50)
     data = np.array(spectrum.getData()[0])
+    gamma = np.array(spectrum.get()["gamma"])
+    integration = np.sum(data*gamma)*(gamma[1] - gamma[0])
 
-    for index,value in enumerate(data):
-       Validate("Electron spectrum for {} at {}: ".format(case,index) , value, value*relative_error)
+    Validate("Integrated electron gamma spectrum for {}: ".format(case),integration,integration*relative_error)
+    print("Integrated electron gamma spectrum for {}: {}.".format(case,integration))
+
+    # for index,value in enumerate(data):
+    #    Validate("Electron spectrum for {} at {}: ".format(case,index) , value, value*relative_error)
