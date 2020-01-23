@@ -44,19 +44,19 @@ Publications
 
 .. rst-class:: bigcitation
 
-.. [Massimo]
-
-  F. Massimo, A. Beck, J. Derouillat, M. Grech, M. Lobet, F. Pérez, I. Zemzemi and A. Specka,
-  `Efficient start-to-end 3D envelope modeling for two-stage laser wakefield acceleration experiments`,
-  `Plasma Phys. Control. Fusion 61, 124001 (2019) <https://dx.doi.org/10.1088/1361-6587/ab49cf>`_
-
-.. rst-class:: bigcitation
-
 .. [Thiele]
 
   I. Thiele and E. Siminos,
   `Laser wakefield driven generation of isolated CEP-tunable intense sub-cycle pulses`,
   `arXiv:1902.05014 <https://arxiv.org/abs/1902.05014>`_
+
+.. rst-class:: bigcitation
+
+.. [Derouillat2020]
+
+  J. Derouillat and A. Beck,
+  `Single Domain Multiple Decompositions for Particle-in-Cell simulations`,
+  `arXiv:1912.04064 <https://arxiv.org/abs/1912.04064>`_
 
 .. rst-class:: bigcitation
 
@@ -66,8 +66,16 @@ Publications
   `Efficient cylindrical envelope modeling for laser wakefield acceleration`,
   `arXiv:1912.04674 <http://arxiv.org/abs/1912.04674>`_
 
-
 ----
+
+.. rst-class:: bigcitation
+
+.. [Massimo2019]
+
+  F. Massimo, A. Beck, J. Derouillat, M. Grech, M. Lobet, F. Pérez, I. Zemzemi and A. Specka,
+  `Efficient start-to-end 3D envelope modeling for two-stage laser wakefield acceleration experiments`,
+  `Plasma Phys. Control. Fusion 61, 124001 (2019) <https://dx.doi.org/10.1088/1361-6587/ab49cf>`_,
+  `arXiv:1912.04127 <http://arxiv.org/abs/1912.04127>`_
 
 .. rst-class:: bigcitation
 

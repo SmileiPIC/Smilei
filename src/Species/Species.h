@@ -137,7 +137,7 @@ public:
     SpeciesMPIbuffers MPI_buffer_;
 
     //! Maximum charge at initialization
-    double max_charge;
+    double max_charge_;
 
     //! Vector containing all Particles of the considered Species
     Particles *particles;
@@ -421,7 +421,7 @@ public:
     virtual void computeCharge( unsigned int ispec, ElectroMagn *EMfields );
 
     //! Method used to sort particles
-    virtual void sortParticles( Params &param );
+    virtual void sortParticles( Params &param, Patch * patch );
 
     virtual void computeParticleCellKeys( Params &params ) {};
 
@@ -521,11 +521,11 @@ public:
         double nrj( 0. );
         if( this->mass_ > 0 ) {
             for( unsigned int iPart=0 ; iPart<getNbrOfParticles() ; iPart++ ) {
-                nrj += particles->weight( iPart )*( particles->lor_fac( iPart )-1.0 );
+                nrj += particles->weight( iPart )*( particles->LorentzFactor( iPart )-1.0 );
             }
         } else if( this->mass_ == 0 ) {
             for( unsigned int iPart=0 ; iPart<getNbrOfParticles() ; iPart++ ) {
-                nrj += particles->weight( iPart )*( particles->momentum_norm( iPart ) );
+                nrj += particles->weight( iPart )*( particles->momentumNorm( iPart ) );
             }
         }
         return nrj;
@@ -567,6 +567,20 @@ public:
         }
 
         return s_gamma;
+    }
+
+    typedef double (Species::*fptr)(Particles*, int, int);
+    //Array of pointers to functions measuring distance along each dimension.
+    fptr distance[3];
+
+    double cartesian_distance(Particles *part, int idim, int ipart){
+        return part->position(idim, ipart) - min_loc_vec[idim];
+    }
+
+    double radial_distance(Particles *part, int idim, int ipart){
+        return sqrt(  part->position(idim  , ipart) * part->position(idim  , ipart)
+                    + part->position(idim+1, ipart) * part->position(idim+1, ipart))
+               - min_loc_vec[idim];
     }
     
     //! Erase all particles with zero weight

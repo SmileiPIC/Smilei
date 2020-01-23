@@ -225,9 +225,9 @@ void LaserEnvelope3D::compute( ElectroMagn *EMfields )
     
     //// auxiliary quantities
     //! laser wavenumber, i.e. omega0/c
-    double              k0 = 1.;
+    //double              k0 = 1.;
     //! laser wavenumber times the temporal step, i.e. omega0/c * dt
-    double           k0_dt = 1.*timestep;
+    //double           k0_dt = 1.*timestep;
     //! 1/dt^2, where dt is the temporal step
     double           dt_sq = timestep*timestep;
     // imaginary unit
@@ -243,10 +243,6 @@ void LaserEnvelope3D::compute( ElectroMagn *EMfields )
     Field3D *Env_Chi3D     = static_cast<Field3D *>( EMfields->Env_Chi_ ); // source term of envelope equation
     Field3D *Env_Aabs3D    = static_cast<Field3D *>( EMfields->Env_A_abs_ ); // field for diagnostic
     Field3D *Env_Eabs3D    = static_cast<Field3D *>( EMfields->Env_E_abs_ ); // field for diagnostic
-    
-    
-    //! 1/(2dx), where dx is the spatial step dx for 3D3V cartesian simulations
-    double one_ov_2dx      = 1./2./cell_length[0];
     
     //! 1/(2dx), where dx is the spatial step dx for 3D3V cartesian simulations
     double one_ov_2dt      = 1./2./timestep;

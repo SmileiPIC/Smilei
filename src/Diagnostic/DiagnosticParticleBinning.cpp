@@ -220,7 +220,7 @@ void DiagnosticParticleBinning::run( Patch *patch, int timestep, SimWindow *simW
 
     vector<int> int_buffer;
     vector<double> double_buffer;
-    unsigned int npart, ndim = spatial_min.size();
+    unsigned int npart;
     
     // Update spatial_min and spatial_max if needed
     if( simWindow ) {

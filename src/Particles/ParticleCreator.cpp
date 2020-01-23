@@ -155,7 +155,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
 
     // field containing the charge distribution (always 3d)
     Field3D charge( n_space_to_create_generalized );
-    species_->max_charge = 0.;
+    species_->max_charge_ = 0.;
 
     // field containing the number of particles in each cell
     Field3D n_part_in_cell( n_space_to_create_generalized );
@@ -260,8 +260,8 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
 
                     // assign charge its correct value in the cell
                     if( species_->mass_ > 0 ) {
-                        if( charge( i, j, k )>species_->max_charge ) {
-                            species_->max_charge=charge( i, j, k );
+                        if( charge( i, j, k )>species_->max_charge_ ) {
+                            species_->max_charge_=charge( i, j, k );
                         }
                     }
 
@@ -287,7 +287,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
                     
                     // multiply by the cell volume
                     density( i, j, k ) *= params.cell_volume;
-                    if( params.geometry=="AMcylindrical" && position_initialization_ != "regular" ) {
+                    if( params.geometry=="AMcylindrical") {
                         //Particles weight in regular is normalized later.
                         density( i, j, k ) *= ( *xyz[1] )( i, j, k );
                     }
@@ -340,7 +340,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
                         //        first_index[idx] += nPart;
                         //        last_index[idx] += nPart;
                         //    }
-                        //    particles->create_particles( nPart, iPart );
+                        //    particles->createParticles( nPart, iPart );
                         //
                         //}
 
@@ -371,7 +371,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
                         //        if ( patch->isXmin() ) {
                         //            if ( ( X < 0. ) ) {
                         //                nPart--; // ne sert à rien ici
-                        //                particles->erase_particle(iPart+ip);
+                        //                particles->eraseParticle(iPart+ip);
                         //                last_index[(new_cell_idx+i)/clrw]--;
                         //                for ( int idx=(new_cell_idx+i)/clrw+1 ; idx<last_index.size() ; idx++ ) {
                         //                    first_index[idx]--;
@@ -387,7 +387,7 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
                         //                //cout << "params.grid_length[0]+ cell_length[0]*vel[0] = " << params.grid_length[0]+ cell_length[0]*vel[0] << endl;
                         //                //cout << "params.grid_length[0]                        = " << params.grid_length[0] << endl;
                         //                nPart--; // ne sert à rien ici
-                        //                particles->erase_particle(iPart+ip);
+                        //                particles->eraseParticle(iPart+ip);
                         //                last_index[(new_cell_idx+i)/clrw]--;
                         //                for ( int idx=(new_cell_idx+i)/clrw+1 ; idx<last_index.size() ; idx++ ) {
                         //                    first_index[idx]--;
@@ -503,18 +503,18 @@ int ParticleCreator::create( std::vector<unsigned int> n_space_to_create,
             if( species_->mass_ > 0 ) {
                 for( iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++ ) {
                     /*897 for (int i=0; i<(int)species_->nDim_particle; i++) {
-                      particles->position_old(i,iPart) -= particles->momentum(i,iPart)/particles->lor_fac(iPart) * params.timestep;
+                      particles->position_old(i,iPart) -= particles->momentum(i,iPart)/particles->LorentzFactor(iPart) * params.timestep;
                       }897*/
-                    species_->new_particles_energy_ += particles_->weight( iPart )*( particles_->lor_fac( iPart )-1.0 );
+                    species_->new_particles_energy_ += particles_->weight( iPart )*( particles_->LorentzFactor( iPart )-1.0 );
                 }
             }
             // Photon case
             else if( species_->mass_ == 0 ) {
                 for( iPart=n_existing_particles; iPart<n_existing_particles+npart_effective; iPart++ ) {
                     /*897 for (int i=0; i<(int)species_->nDim_particle; i++) {
-                      particles_->position_old(i,iPart) -= particles_->momentum(i,iPart)/particles_->lor_fac(iPart) * params.timestep;
+                      particles_->position_old(i,iPart) -= particles_->momentum(i,iPart)/particles_->LorentzFactor(iPart) * params.timestep;
                       }897*/
-                    species_->new_particles_energy_ += particles_->weight( iPart )*( particles_->momentum_norm( iPart ) );
+                    species_->new_particles_energy_ += particles_->weight( iPart )*( particles_->momentumNorm( iPart ) );
                 }
             }
         }
@@ -845,14 +845,6 @@ void ParticleCreator::createWeight( std::string position_initialization,
     for( unsigned  p= iPart; p<iPart+nPart; p++ ) {
         particles->weight( p ) = w ;
     }
-    
-    if( params.geometry=="AMcylindrical" && position_initialization == "regular" ) {
-        //Particles in regular have a weight proportional to their position along r.
-        for (unsigned int ipart=iPart; ipart < iPart+nPart; ipart++){
-            particles->weight(ipart) *= sqrt(particles->position(1,ipart)*particles->position(1,ipart) + particles->position(2,ipart)*particles->position(2,ipart));
-        }
-    }
-    
 }
 
 // ---------------------------------------------------------------------------------------------------------------------

@@ -220,7 +220,7 @@ public:
     //! frequency of exchange particles (default = 1, disabled for now, incompatible with sort)
     int exchange_particles_each;
     
-    //! frequency to apply shrink_to_fit on particles structure
+    //! frequency to apply shrinkToFit on particles structure
     int every_clean_particles_overhead;
     
     //! Total number of patches

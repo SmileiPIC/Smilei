@@ -282,7 +282,7 @@ void VectorPatch::sortAllParticles( Params &params )
         for( unsigned int ipatch=0 ; ipatch < size() ; ipatch++ ) {
             for( unsigned int ispec=0 ; ispec<patches_[ipatch]->vecSpecies.size(); ispec++ ) {
                 patches_[ipatch]->vecSpecies[ispec]->computeParticleCellKeys( params );
-                patches_[ipatch]->vecSpecies[ispec]->sortParticles( params );
+                patches_[ipatch]->vecSpecies[ispec]->sortParticles( params, patches_[ipatch] );
             }
         }
     }
@@ -649,7 +649,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                         #pragma omp simd
                         for ( unsigned int ip = 0; ip < particles->size() ; ip++ ) {
                             particles->Position[i][ip] += ( params.timestep*particles->Momentum[i][ip]
-                                                        * particles->inv_lor_fac(ip) + position_shift[i]);
+                                                        * particles->inverseLorentzFactor(ip) + position_shift[i]);
                         }
                     }
                     
@@ -706,7 +706,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                         for ( int ip = new_particle_number ; ip >= 0 ; ip-- ){
                             if ( particles->Position[0][ip] < 0. ) {
                                 if (new_particle_number != ip) {
-                                    particles->overwrite_part(new_particle_number,ip);
+                                    particles->overwriteParticle(new_particle_number,ip);
                                 }
                                 new_particle_number--;
                             }
@@ -717,7 +717,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                         for ( int ip = new_particle_number ; ip >= 0 ; ip-- ){
                             if ( particles->Position[0][ip] > params.grid_length[0] ) {
                                 if (new_particle_number != ip) {
-                                    particles->overwrite_part(new_particle_number,ip);
+                                    particles->overwriteParticle(new_particle_number,ip);
                                 }
                                 new_particle_number--;
                             }
@@ -731,7 +731,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                                 ( patch->isYmax() && ( particles->Position[1][ip] > params.grid_length[1]) )) {
                                 // particle_in_domain = false;
                                 if (new_particle_number != ip) {
-                                    particles->overwrite_part(new_particle_number,ip);
+                                    particles->overwriteParticle(new_particle_number,ip);
                                 }
                                 new_particle_number--;
                             }
@@ -744,9 +744,9 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                             if (( patch->isZmin() && ( particles->Position[2][ip] < 0.) ) ||
                                 ( patch->isZmax() && ( particles->Position[2][ip] > params.grid_length[2]) )) {
                                 // particle_in_domain = false;
-                                //particles->erase_particle(ip);
+                                //particles->eraseParticle(ip);
                                 if (new_particle_number > ip) {
-                                    particles->overwrite_part(new_particle_number,ip);
+                                    particles->overwriteParticle(new_particle_number,ip);
                                 }
                                 new_particle_number--;
                             }
@@ -761,14 +761,14 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                         if( injector_species->mass_ > 0 ) {
                             for( int ip = 0; ip<new_particle_number; ip++ ) {
                                 injector_species->new_particles_energy_ += particles->weight( ip )
-                                *( particles->lor_fac( ip )-1.0 );
+                                *( particles->LorentzFactor( ip )-1.0 );
                             }
                         }
                         // Photon case
                         else if( injector_species->mass_ == 0 ) {
                             for( int ip=0; ip<new_particle_number; ip++ ) {
                                 injector_species->new_particles_energy_ += particles->weight( ip )
-                                *( particles->momentum_norm( ip ) );
+                                *( particles->momentumNorm( ip ) );
                             }
                         }
                     }
@@ -776,7 +776,7 @@ void VectorPatch::injectParticlesFromBoundaries(Params &params, Timers &timers, 
                     // Insertion of the particles as a group in the vector of species
                     if (new_particle_number > 0) {
 
-                        particles->erase_particle_trail(new_particle_number);
+                        particles->eraseParticleTrail(new_particle_number);
                         injector_species->importParticles( params, patches_[ipatch], *particles, localDiags );
 
                     }
@@ -951,20 +951,20 @@ void VectorPatch::solveMaxwell( Params &params, SimWindow *simWindow, int itime,
             ( *this )( ipatch )->EMfields->binomialCurrentFilter();
         }
         if (params.geometry != "AMcylindrical"){
-            SyncVectorPatch::exchange_along_all_directions<double,Field>( listJx_, *this, smpi );
-            SyncVectorPatch::finalize_exchange_along_all_directions( listJx_, *this );
-            SyncVectorPatch::exchange_along_all_directions<double,Field>( listJy_, *this, smpi );
-            SyncVectorPatch::finalize_exchange_along_all_directions( listJy_, *this );
-            SyncVectorPatch::exchange_along_all_directions<double,Field>( listJz_, *this, smpi );
-            SyncVectorPatch::finalize_exchange_along_all_directions( listJz_, *this );
+            SyncVectorPatch::exchangeAlongAllDirections<double,Field>( listJx_, *this, smpi );
+            SyncVectorPatch::finalizeExchangeAlongAllDirections( listJx_, *this );
+            SyncVectorPatch::exchangeAlongAllDirections<double,Field>( listJy_, *this, smpi );
+            SyncVectorPatch::finalizeExchangeAlongAllDirections( listJy_, *this );
+            SyncVectorPatch::exchangeAlongAllDirections<double,Field>( listJz_, *this, smpi );
+            SyncVectorPatch::finalizeExchangeAlongAllDirections( listJz_, *this );
         } else {
             for (unsigned int imode=0 ; imode < params.nmodes; imode++) {
-                SyncVectorPatch::exchange_along_all_directions<complex<double>,cField>( listJl_[imode], *this, smpi );
-                SyncVectorPatch::finalize_exchange_along_all_directions( listJl_[imode], *this );
-                SyncVectorPatch::exchange_along_all_directions<complex<double>,cField>( listJr_[imode], *this, smpi );
-                SyncVectorPatch::finalize_exchange_along_all_directions( listJr_[imode], *this );
-                SyncVectorPatch::exchange_along_all_directions<complex<double>,cField>( listJt_[imode], *this, smpi );
-                SyncVectorPatch::finalize_exchange_along_all_directions( listJt_[imode], *this );
+                SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listJl_[imode], *this, smpi );
+                SyncVectorPatch::finalizeExchangeAlongAllDirections( listJl_[imode], *this );
+                SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listJr_[imode], *this, smpi );
+                SyncVectorPatch::finalizeExchangeAlongAllDirections( listJr_[imode], *this );
+                SyncVectorPatch::exchangeAlongAllDirections<complex<double>,cField>( listJt_[imode], *this, smpi );
+                SyncVectorPatch::finalizeExchangeAlongAllDirections( listJt_[imode], *this );
             }
         }
     }
@@ -1332,8 +1332,8 @@ void VectorPatch::solvePoisson( Params &params, SmileiMPI *smpi )
         }
 
         // Exchange Ap_ (intra & extra MPI)
-        SyncVectorPatch::exchange_along_all_directions<double,Field>( Ap_, *this, smpi );
-        SyncVectorPatch::finalize_exchange_along_all_directions( Ap_, *this );
+        SyncVectorPatch::exchangeAlongAllDirections<double,Field>( Ap_, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirections( Ap_, *this );
 
         // scalar product p.Ap
         double p_dot_Ap       = 0.0;
@@ -1630,8 +1630,8 @@ void VectorPatch::solvePoissonAM( Params &params, SmileiMPI *smpi )
             }
         
             // Exchange Ap_ (intra & extra MPI)
-            SyncVectorPatch::exchange_along_all_directions_noomp<complex<double>,cField>( Ap_AM_, *this, smpi );
-            SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Ap_AM_, *this );
+            SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( Ap_AM_, *this, smpi );
+            SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Ap_AM_, *this );
         
         
             // scalar product p.Ap
@@ -1691,7 +1691,7 @@ void VectorPatch::solvePoissonAM( Params &params, SmileiMPI *smpi )
         }
 
         // ------------------------------------------
-        // Compute the electric field E 
+        // Compute the electric field E
         // ------------------------------------------
         
         
@@ -1702,12 +1702,12 @@ void VectorPatch::solvePoissonAM( Params &params, SmileiMPI *smpi )
             emAM->initE_Poisson_AM( ( *this )( ipatch ), imode );
         } // end loop on patches
         
-        SyncVectorPatch::exchange_along_all_directions_noomp<complex<double>,cField>( El_Poisson_, *this, smpi );
-        SyncVectorPatch::finalize_exchange_along_all_directions_noomp( El_Poisson_, *this );
-        SyncVectorPatch::exchange_along_all_directions_noomp<complex<double>,cField>( Er_Poisson_, *this, smpi );
-        SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Er_Poisson_, *this );
-        SyncVectorPatch::exchange_along_all_directions_noomp<complex<double>,cField>( Et_Poisson_, *this, smpi );
-        SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Et_Poisson_, *this );
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( El_Poisson_, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( El_Poisson_, *this );
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( Er_Poisson_, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Er_Poisson_, *this );
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( Et_Poisson_, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Et_Poisson_, *this );
         
         
         MESSAGE( 0, "Summing fields computed with the Poisson solver to the grid fields" );
@@ -1957,8 +1957,8 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
         }
 
         // Exchange Ap_ (intra & extra MPI)
-        SyncVectorPatch::exchange_along_all_directions_noomp<double,Field>( Ap_, *this, smpi );
-        SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Ap_, *this );
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( Ap_, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Ap_, *this );
 
 
         // scalar product p.Ap
@@ -2028,12 +2028,12 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
         ( *this )( ipatch )->EMfields->initE_relativistic_Poisson( ( *this )( ipatch ), gamma_mean );
     } // end loop on patches
     
-    SyncVectorPatch::exchange_along_all_directions_noomp<double,Field>( Ex_rel_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Ex_rel_, *this );
-    SyncVectorPatch::exchange_along_all_directions_noomp<double,Field>( Ey_rel_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Ey_rel_, *this );
-    SyncVectorPatch::exchange_along_all_directions_noomp<double,Field>( Ez_rel_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Ez_rel_, *this );
+    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( Ex_rel_, *this, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Ex_rel_, *this );
+    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( Ey_rel_, *this, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Ey_rel_, *this );
+    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( Ez_rel_, *this, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Ez_rel_, *this );
     //SyncVectorPatch::exchangeE( params, *this, smpi );
     //SyncVectorPatch::finalizeexchangeE( params, *this );
 
@@ -2159,12 +2159,12 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
         ( *this )( ipatch )->EMfields->initB_relativistic_Poisson( ( *this )( ipatch ), gamma_mean );
     } // end loop on patches
     
-    SyncVectorPatch::exchange_along_all_directions_noomp<double,Field>( Bx_rel_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Bx_rel_, *this );
-    SyncVectorPatch::exchange_along_all_directions_noomp<double,Field>( By_rel_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp( By_rel_, *this );
-    SyncVectorPatch::exchange_along_all_directions_noomp<double,Field>( Bz_rel_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Bz_rel_, *this );
+    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( Bx_rel_, *this, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Bx_rel_, *this );
+    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( By_rel_, *this, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( By_rel_, *this );
+    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( Bz_rel_, *this, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Bz_rel_, *this );
 
 
     // Proper spatial centering of the B fields in the Yee Cell through interpolation
@@ -2175,19 +2175,19 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
     } // end loop on patches
 
     // Re-exchange the properly spatially centered B field
-    SyncVectorPatch::exchange_along_all_directions_noomp<double,Field>( Bx_rel_t_plus_halfdt_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Bx_rel_t_plus_halfdt_, *this );
-    SyncVectorPatch::exchange_along_all_directions_noomp<double,Field>( By_rel_t_plus_halfdt_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp( By_rel_t_plus_halfdt_, *this );
-    SyncVectorPatch::exchange_along_all_directions_noomp<double,Field>( Bz_rel_t_plus_halfdt_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Bz_rel_t_plus_halfdt_, *this );
+    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( Bx_rel_t_plus_halfdt_, *this, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Bx_rel_t_plus_halfdt_, *this );
+    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( By_rel_t_plus_halfdt_, *this, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( By_rel_t_plus_halfdt_, *this );
+    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( Bz_rel_t_plus_halfdt_, *this, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Bz_rel_t_plus_halfdt_, *this );
     
-    SyncVectorPatch::exchange_along_all_directions_noomp<double,Field>( Bx_rel_t_minus_halfdt_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Bx_rel_t_minus_halfdt_, *this );
-    SyncVectorPatch::exchange_along_all_directions_noomp<double,Field>( By_rel_t_minus_halfdt_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp( By_rel_t_minus_halfdt_, *this );
-    SyncVectorPatch::exchange_along_all_directions_noomp<double,Field>( Bz_rel_t_minus_halfdt_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Bz_rel_t_minus_halfdt_, *this );
+    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( Bx_rel_t_minus_halfdt_, *this, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Bx_rel_t_minus_halfdt_, *this );
+    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( By_rel_t_minus_halfdt_, *this, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( By_rel_t_minus_halfdt_, *this );
+    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( Bz_rel_t_minus_halfdt_, *this, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Bz_rel_t_minus_halfdt_, *this );
 
 
 
@@ -2203,24 +2203,24 @@ void VectorPatch::solveRelativisticPoisson( Params &params, SmileiMPI *smpi, dou
     } // end loop on patches
 
     // Exchange the fields after the addition of the relativistic species fields
-    SyncVectorPatch::exchange_along_all_directions_noomp<double,Field>( Ex_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Ex_, *this );
-    SyncVectorPatch::exchange_along_all_directions_noomp<double,Field>( Ey_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Ey_, *this );
-    SyncVectorPatch::exchange_along_all_directions_noomp<double,Field>( Ez_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Ez_, *this );
-    SyncVectorPatch::exchange_along_all_directions_noomp<double,Field>( Bx_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Bx_, *this );
-    SyncVectorPatch::exchange_along_all_directions_noomp<double,Field>( By_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp( By_, *this );
-    SyncVectorPatch::exchange_along_all_directions_noomp<double,Field>( Bz_, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Bz_, *this );
-    SyncVectorPatch::exchange_along_all_directions_noomp<double,Field>( Bx_m, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Bx_m, *this );
-    SyncVectorPatch::exchange_along_all_directions_noomp<double,Field>( By_m, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp( By_m, *this );
-    SyncVectorPatch::exchange_along_all_directions_noomp<double,Field>( Bz_m, *this, smpi );
-    SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Bz_m, *this );
+    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( Ex_, *this, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Ex_, *this );
+    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( Ey_, *this, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Ey_, *this );
+    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( Ez_, *this, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Ez_, *this );
+    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( Bx_, *this, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Bx_, *this );
+    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( By_, *this, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( By_, *this );
+    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( Bz_, *this, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Bz_, *this );
+    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( Bx_m, *this, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Bx_m, *this );
+    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( By_m, *this, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( By_m, *this );
+    SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<double,Field>( Bz_m, *this, smpi );
+    SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Bz_m, *this );
 
     MESSAGE( 0, "Fields of relativistic species initialized" );
     //!\todo Reduce to find global max
@@ -2405,8 +2405,8 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
             }
         
             // Exchange Ap_ (intra & extra MPI)
-            SyncVectorPatch::exchange_along_all_directions_noomp<complex<double>,cField>( Ap_AM_, *this, smpi );
-            SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Ap_AM_, *this );
+            SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( Ap_AM_, *this, smpi );
+            SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Ap_AM_, *this );
         
         
             // scalar product p.Ap
@@ -2481,12 +2481,12 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
             emAM->initE_relativistic_Poisson_AM( ( *this )( ipatch ), gamma_mean, imode );
         } // end loop on patches
         
-        SyncVectorPatch::exchange_along_all_directions_noomp<complex<double>,cField>( El_rel_, *this, smpi );
-        SyncVectorPatch::finalize_exchange_along_all_directions_noomp( El_rel_, *this );
-        SyncVectorPatch::exchange_along_all_directions_noomp<complex<double>,cField>( Er_rel_, *this, smpi );
-        SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Er_rel_, *this );
-        SyncVectorPatch::exchange_along_all_directions_noomp<complex<double>,cField>( Et_rel_, *this, smpi );
-        SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Et_rel_, *this );
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( El_rel_, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( El_rel_, *this );
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( Er_rel_, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Er_rel_, *this );
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( Et_rel_, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Et_rel_, *this );
 
         // compute B and sync
         for( unsigned int ipatch=0 ; ipatch<this->size() ; ipatch++ ) {
@@ -2495,12 +2495,12 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
             emAM->initB_relativistic_Poisson_AM( ( *this )( ipatch ), gamma_mean );
         } // end loop on patches
       
-        SyncVectorPatch::exchange_along_all_directions_noomp<complex<double>,cField>( Bl_rel_, *this, smpi );
-        SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Bl_rel_, *this );
-        SyncVectorPatch::exchange_along_all_directions_noomp<complex<double>,cField>( Br_rel_, *this, smpi );
-        SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Br_rel_, *this );
-        SyncVectorPatch::exchange_along_all_directions_noomp<complex<double>,cField>( Bt_rel_, *this, smpi );
-        SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Bt_rel_, *this );
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( Bl_rel_, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Bl_rel_, *this );
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( Br_rel_, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Br_rel_, *this );
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( Bt_rel_, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Bt_rel_, *this );
         
         
         // Proper spatial centering of the B fields in the Yee Cell through interpolation
@@ -2512,19 +2512,19 @@ void VectorPatch::solveRelativisticPoissonAM( Params &params, SmileiMPI *smpi, d
         } // end loop on patches
         
         // Re-exchange the properly spatially centered B field
-        SyncVectorPatch::exchange_along_all_directions_noomp<complex<double>,cField>( Bl_rel_t_plus_halfdt_, *this, smpi );
-        SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Bl_rel_t_plus_halfdt_, *this );
-        SyncVectorPatch::exchange_along_all_directions_noomp<complex<double>,cField>( Br_rel_t_plus_halfdt_, *this, smpi );
-        SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Br_rel_t_plus_halfdt_, *this );
-        SyncVectorPatch::exchange_along_all_directions_noomp<complex<double>,cField>( Bt_rel_t_plus_halfdt_, *this, smpi );
-        SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Bt_rel_t_plus_halfdt_, *this );
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( Bl_rel_t_plus_halfdt_, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Bl_rel_t_plus_halfdt_, *this );
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( Br_rel_t_plus_halfdt_, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Br_rel_t_plus_halfdt_, *this );
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( Bt_rel_t_plus_halfdt_, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Bt_rel_t_plus_halfdt_, *this );
         
-        SyncVectorPatch::exchange_along_all_directions_noomp<complex<double>,cField>( Bl_rel_t_minus_halfdt_, *this, smpi );
-        SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Bl_rel_t_minus_halfdt_, *this );
-        SyncVectorPatch::exchange_along_all_directions_noomp<complex<double>,cField>( Br_rel_t_minus_halfdt_, *this, smpi );
-        SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Br_rel_t_minus_halfdt_, *this );
-        SyncVectorPatch::exchange_along_all_directions_noomp<complex<double>,cField>( Bt_rel_t_minus_halfdt_, *this, smpi );
-        SyncVectorPatch::finalize_exchange_along_all_directions_noomp( Bt_rel_t_minus_halfdt_, *this );
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( Bl_rel_t_minus_halfdt_, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Bl_rel_t_minus_halfdt_, *this );
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( Br_rel_t_minus_halfdt_, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Br_rel_t_minus_halfdt_, *this );
+        SyncVectorPatch::exchangeAlongAllDirectionsNoOMP<complex<double>,cField>( Bt_rel_t_minus_halfdt_, *this, smpi );
+        SyncVectorPatch::finalizeExchangeAlongAllDirectionsNoOMP( Bt_rel_t_minus_halfdt_, *this );
         
         
         MESSAGE( 0, "Summing fields of relativistic species to the grid fields" );
@@ -2850,7 +2850,7 @@ void VectorPatch::exchangePatches( SmileiMPI *smpi, Params &params )
             ( *this )( ipatch )->cleanType();
         }
     }
-    this->set_refHindex() ;
+    this->setRefHindex() ;
     updateFieldList( smpi ) ;
 
 } // END exchangePatches

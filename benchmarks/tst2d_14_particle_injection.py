@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------------------
-# 					SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
+# SIMULATION PARAMETERS FOR THE PIC-CODE SMILEI
 #
 # Particle injection from the Xmin and Xmax boundaries
 #

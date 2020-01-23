@@ -144,7 +144,7 @@ void Particles::reserve( unsigned int n_part_max, unsigned int nDim )
 
 }
 
-void Particles::initialize_reserve( unsigned int npart_max, Particles &part )
+void Particles::initializeReserve( unsigned int npart_max, Particles &part )
 {
     initialize( 0, part );
     reserve( npart_max, part.dimension() );
@@ -213,7 +213,7 @@ void Particles::resize( unsigned int nParticles)
 // ---------------------------------------------------------------------------------------------------------------------
 // Remove extra capacity of Particles vectors
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::shrink_to_fit()
+void Particles::shrinkToFit()
 {
 
     for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
@@ -249,7 +249,7 @@ void Particles::clear()
 }
 
 
-void Particles::cp_particle( unsigned int ipart )
+void Particles::copyParticle( unsigned int ipart )
 {
     for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
         double_prop[iprop]->push_back( ( *double_prop[iprop] )[ipart] );
@@ -268,7 +268,7 @@ void Particles::cp_particle( unsigned int ipart )
 // ---------------------------------------------------------------------------------------------------------------------
 // Copy particle iPart at the end of dest_parts
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::cp_particle( unsigned int ipart, Particles &dest_parts )
+void Particles::copyParticle( unsigned int ipart, Particles &dest_parts )
 {
     for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
         dest_parts.double_prop[iprop]->push_back( ( *double_prop[iprop] )[ipart] );
@@ -286,7 +286,7 @@ void Particles::cp_particle( unsigned int ipart, Particles &dest_parts )
 // ---------------------------------------------------------------------------------------------------------------------
 // Insert particle iPart at dest_id in dest_parts
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::cp_particle( unsigned int ipart, Particles &dest_parts, int dest_id )
+void Particles::copyParticle( unsigned int ipart, Particles &dest_parts, int dest_id )
 {
     for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
         dest_parts.double_prop[iprop]->insert( dest_parts.double_prop[iprop]->begin() + dest_id, ( *double_prop[iprop] )[ipart] );
@@ -305,7 +305,7 @@ void Particles::cp_particle( unsigned int ipart, Particles &dest_parts, int dest
 // ---------------------------------------------------------------------------------------------------------------------
 // Insert nPart particles starting at ipart to dest_id in dest_parts
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::cp_particles( unsigned int iPart, unsigned int nPart, Particles &dest_parts, int dest_id )
+void Particles::copyParticles( unsigned int iPart, unsigned int nPart, Particles &dest_parts, int dest_id )
 {
     for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
         dest_parts.double_prop[iprop]->insert( dest_parts.double_prop[iprop]->begin() + dest_id, double_prop[iprop]->begin()+iPart, double_prop[iprop]->begin()+iPart+nPart );
@@ -324,7 +324,7 @@ void Particles::cp_particles( unsigned int iPart, unsigned int nPart, Particles 
 // ---------------------------------------------------------------------------------------------------------------------
 // Copy particle iPart at the end of dest_parts -- safe
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::cp_particle_safe( unsigned int ipart, Particles &dest_parts )
+void Particles::copyParticleSafe( unsigned int ipart, Particles &dest_parts )
 {
     unsigned int ndouble = double_prop.size();
     if( dest_parts.double_prop.size() < ndouble ) {
@@ -352,7 +352,7 @@ void Particles::cp_particle_safe( unsigned int ipart, Particles &dest_parts )
 // ---------------------------------------------------------------------------------------------------------------------
 // Suppress particle iPart
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::erase_particle( unsigned int ipart )
+void Particles::eraseParticle( unsigned int ipart )
 {
     for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
         ( *double_prop[iprop] ).erase( ( *double_prop[iprop] ).begin()+ipart );
@@ -371,7 +371,7 @@ void Particles::erase_particle( unsigned int ipart )
 // ---------------------------------------------------------------------------------------------------------------------
 // Suppress all particles from iPart to the end of particle array
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::erase_particle_trail( unsigned int ipart )
+void Particles::eraseParticleTrail( unsigned int ipart )
 {
     for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
         ( *double_prop[iprop] ).erase( ( *double_prop[iprop] ).begin()+ipart, ( *double_prop[iprop] ).end() );
@@ -389,7 +389,7 @@ void Particles::erase_particle_trail( unsigned int ipart )
 // ---------------------------------------------------------------------------------------------------------------------
 // Suppress npart particles from ipart
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::erase_particle( unsigned int ipart, unsigned int npart )
+void Particles::eraseParticle( unsigned int ipart, unsigned int npart )
 {
     for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
         ( *double_prop[iprop] ).erase( ( *double_prop[iprop] ).begin()+ipart, ( *double_prop[iprop] ).begin()+ipart+npart );
@@ -471,7 +471,7 @@ ostream &operator << ( ostream &out, const Particles &particles )
 // ---------------------------------------------------------------------------------------------------------------------
 // Exchange particles part1 & part2 memory location
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::swap_part( unsigned int part1, unsigned int part2 )
+void Particles::swapParticle( unsigned int part1, unsigned int part2 )
 {
     for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
         std::swap( ( *double_prop[iprop] )[part1], ( *double_prop[iprop] )[part2] );
@@ -487,7 +487,7 @@ void Particles::swap_part( unsigned int part1, unsigned int part2 )
 }
 
 
-void Particles::swap_part3( unsigned int part1, unsigned int part2, unsigned int part3 )
+void Particles::swapParticle3( unsigned int part1, unsigned int part2, unsigned int part3 )
 {
     // 1 ==> 2 ==> 3 ==> 1
     double temp;
@@ -517,7 +517,7 @@ void Particles::swap_part3( unsigned int part1, unsigned int part2, unsigned int
 }
 
 
-void Particles::swap_part4( unsigned int part1, unsigned int part2, unsigned int part3, unsigned int part4 )
+void Particles::swapParticle4( unsigned int part1, unsigned int part2, unsigned int part3, unsigned int part4 )
 {
     double temp;
     // 1 ==> 2 ==> 3 ==> 4 ==> 1
@@ -550,24 +550,24 @@ void Particles::swap_part4( unsigned int part1, unsigned int part2, unsigned int
 }
 
 
-void Particles::swap_parts( std::vector<unsigned int> parts )
+void Particles::swapParticles( std::vector<unsigned int> parts )
 {
     // parts[0] ==> parts[1] ==> parts[2] ==> parts[parts.size()-1] ==> parts[0]
 
-    cp_particle( parts.back() );
-    translate_parts( parts );
-    overwrite_part( size()-1, parts[0] );
-    erase_particle( size()-1 );
+    copyParticle( parts.back() );
+    translateParticles( parts );
+    overwriteParticle( size()-1, parts[0] );
+    eraseParticle( size()-1 );
 
 }
 
 
-void Particles::translate_parts( std::vector<unsigned int> parts )
+void Particles::translateParticles( std::vector<unsigned int> parts )
 {
     // parts[0] ==> parts[1] ==> parts[2] ==> parts[parts.size()-1]
 
     for( int icycle = parts.size()-2; icycle >=0; icycle-- ) {
-        overwrite_part( parts[icycle], parts[icycle+1] );
+        overwriteParticle( parts[icycle], parts[icycle+1] );
     }
 
 }
@@ -576,7 +576,7 @@ void Particles::translate_parts( std::vector<unsigned int> parts )
 // ---------------------------------------------------------------------------------------------------------------------
 // Move particle src_particle into dest_particle memory location, erasing dest_particle.
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::overwrite_part( unsigned int src_particle, unsigned int dest_particle )
+void Particles::overwriteParticle( unsigned int src_particle, unsigned int dest_particle )
 {
     for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
         ( *double_prop[iprop] )[dest_particle] = ( *double_prop[iprop] )[src_particle];
@@ -595,7 +595,7 @@ void Particles::overwrite_part( unsigned int src_particle, unsigned int dest_par
 // ---------------------------------------------------------------------------------------------------------------------
 // Move particle part1->part1+N into part2->part2+N memory location erasing part2->part2+N.
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::overwrite_part( unsigned int part1, unsigned int part2, unsigned int N )
+void Particles::overwriteParticle( unsigned int part1, unsigned int part2, unsigned int N )
 {
     unsigned int sizepart = N*sizeof( Position[0][0] );
     unsigned int sizecharge = N*sizeof( Charge[0] );
@@ -617,7 +617,7 @@ void Particles::overwrite_part( unsigned int part1, unsigned int part2, unsigned
 // ---------------------------------------------------------------------------------------------------------------------
 // Move particle part1 into part2 memory location of dest vector, erasing part2.
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::overwrite_part( unsigned int part1, Particles &dest_parts, unsigned int part2 )
+void Particles::overwriteParticle( unsigned int part1, Particles &dest_parts, unsigned int part2 )
 {
     for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
         ( *dest_parts.double_prop[iprop] )[part2] = ( *double_prop[iprop] )[part1];
@@ -635,7 +635,7 @@ void Particles::overwrite_part( unsigned int part1, Particles &dest_parts, unsig
 // ---------------------------------------------------------------------------------------------------------------------
 // Move particle part1->part1+N into part2->part2+N memory location of dest vector, erasing part2->part2+N.
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::overwrite_part( unsigned int part1, Particles &dest_parts, unsigned int part2, unsigned int N )
+void Particles::overwriteParticle( unsigned int part1, Particles &dest_parts, unsigned int part2, unsigned int N )
 {
     unsigned int sizepart = N*sizeof( Position[0][0] );
     unsigned int sizecharge = N*sizeof( Charge[0] );
@@ -659,7 +659,7 @@ void Particles::overwrite_part( unsigned int part1, Particles &dest_parts, unsig
 // ---------------------------------------------------------------------------------------------------------------------
 // Exchange N particles part1->part1+N & part2->part2+N memory location
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::swap_part( unsigned int part1, unsigned int part2, unsigned int N )
+void Particles::swapParticle( unsigned int part1, unsigned int part2, unsigned int N )
 {
     double *buffer[N];
 
@@ -690,7 +690,7 @@ void Particles::swap_part( unsigned int part1, unsigned int part2, unsigned int 
 // ---------------------------------------------------------------------------------------------------------------------
 // Move iPart at the end of vectors (to do for MPI)
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::push_to_end( unsigned int iPart )
+void Particles::pushToEnd( unsigned int iPart )
 {
 
 }
@@ -698,7 +698,7 @@ void Particles::push_to_end( unsigned int iPart )
 // ---------------------------------------------------------------------------------------------------------------------
 // Create a new particle at the end of vectors
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::create_particle()
+void Particles::createParticle()
 {
     for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
         ( *double_prop[iprop] ).push_back( 0. );
@@ -717,7 +717,7 @@ void Particles::create_particle()
 // ---------------------------------------------------------------------------------------------------------------------
 // Create nParticles new particles at the end of vectors
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::create_particles( int nAdditionalParticles )
+void Particles::createParticles( int nAdditionalParticles )
 {
     int nParticles = size();
     for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
@@ -736,20 +736,21 @@ void Particles::create_particles( int nAdditionalParticles )
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! This method compresses the particles vectors according to the provided mask
-//! between istart and iend
+//! This method erases some particles of the particles vector using a mask vector between istart and iend.
+//! This function is optimized.
 //! The mask determines which particles to keep (>= 0) and which to delete (< 0)
 //! Particle order is kept in case the vector is sorted
 //! Warning: This method do not update count, first_index and last_index in Species
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::compressParticles( int istart, int iend, vector <int> & mask ) {
+void Particles::eraseParticlesWithMask( int istart, int iend, vector <int> & mask ) {
 
     unsigned int idest = (unsigned int) istart;
     unsigned int isrc = (unsigned int) istart;
     while (isrc < (unsigned int) iend) {
         if (mask[idest] < 0) {
             if (mask[isrc] >= 0) {
-                overwrite_part( isrc, idest);
+                overwriteParticle( isrc, idest);
+                cell_keys[idest] = cell_keys[isrc];
                 mask[idest] = 1;
                 mask[isrc] = -1;
                 idest++;
@@ -768,17 +769,18 @@ void Particles::compressParticles( int istart, int iend, vector <int> & mask ) {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-//! This method compresses the particles vectors according to cell_keys as a mask
-//! between istart and iend
+//! This method erases some particles of the particles vector using cell_keys as a mask vector between istart and iend.
+//! This function is optimized.
+//! Warning: This method do not update count, first_index and last_index in Species
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::compressParticles( int istart, int iend) {
+void Particles::eraseParticlesWithMask( int istart, int iend) {
 
     unsigned int idest = (unsigned int) istart;
     unsigned int isrc = (unsigned int) istart;
     while (isrc < (unsigned int) iend) {
         if (cell_keys[idest] < 0) {
             if (cell_keys[isrc] >= 0) {
-                overwrite_part( isrc, idest);
+                overwriteParticle( isrc, idest);
                 cell_keys[idest] = cell_keys[isrc];
                 idest++;
             } else {
@@ -796,6 +798,25 @@ void Particles::compressParticles( int istart, int iend) {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
+//! This method erases some particles of the particles vector using a mask vector.
+//! This function is not optimized.
+//! If the value of the mask is negative, then the particle is deleted.
+//! Warning: This method do not update count, first_index and last_index in Species
+// ---------------------------------------------------------------------------------------------------------------------
+// void Particles::eraseParticlesWithMask( int istart, int iend, vector <int> & mask) {
+//
+//     //unsigned int deleted_particles = 0;
+//
+//     for (int ip = istart ; ip < iend ; ip++) {
+//         if (mask[ip] < 0) {
+//             eraseParticle(ip);
+//             cell_keys.erase(cell_keys.begin()+ip);
+//             //deleted_particles += 1;
+//         }
+//     }
+// }
+
+// ---------------------------------------------------------------------------------------------------------------------
 //! This method erases particles according to the provided mask
 //! between istart and iend
 // ---------------------------------------------------------------------------------------------------------------------
@@ -805,7 +826,7 @@ void Particles::compressParticles( int istart, int iend) {
 //     {
 //         if (to_be_erased[ip]) {
 //             if (last_index != ip) {
-//                 overwrite_part( last_index, ip);
+//                 overwriteParticle( last_index, ip);
 //             }
 //             last_index--;
 //         }
@@ -815,9 +836,8 @@ void Particles::compressParticles( int istart, int iend) {
 // ---------------------------------------------------------------------------------------------------------------------
 // Create nParticles new particles at the end of vectors
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::create_particles( int nAdditionalParticles, int pstart )
+void Particles::createParticles( int nAdditionalParticles, int pstart )
 {
-    int nParticles = size();
     for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
         ( *double_prop[iprop] ).insert( ( *double_prop[iprop] ).begin()+pstart, nAdditionalParticles, 0. );
     }
@@ -829,14 +849,12 @@ void Particles::create_particles( int nAdditionalParticles, int pstart )
     for( unsigned int iprop=0 ; iprop<uint64_prop.size() ; iprop++ ) {
         ( *uint64_prop[iprop] ).insert( ( *uint64_prop[iprop] ).begin()+pstart, nAdditionalParticles, 0 );
     }
-    
-//MESSAGE("create2");
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 //! Move ipart at new_pos in the particles data structure
 // ---------------------------------------------------------------------------------------------------------------------
-void Particles::mv_particles( int iPart, int new_pos )
+void Particles::moveParticles( int iPart, int new_pos )
 {
     for( unsigned int iprop=0 ; iprop<double_prop.size() ; iprop++ ) {
         ( *double_prop[iprop] ).insert( ( *double_prop[iprop] ).begin()+new_pos,( *double_prop[iprop] )[iPart]  );
@@ -850,13 +868,13 @@ void Particles::mv_particles( int iPart, int new_pos )
         ( *uint64_prop[iprop] ).insert( ( *uint64_prop[iprop] ).begin()+new_pos,( *uint64_prop[iprop] )[iPart]  );
     }
   
-    erase_particle( iPart+1 );
+    eraseParticle( iPart+1 );
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // Create nParticles new particles at the end of vectors
 // ---------------------------------------------------------------------------------------------------------------------
-//void Particles::create_particles(int nAdditionalParticles )
+//void Particles::createParticles(int nAdditionalParticles )
 //{
 //    int nParticles = size();
 //    for (unsigned int i=0; i<Position.size(); i++) {
@@ -881,7 +899,7 @@ void Particles::mv_particles( int iPart, int new_pos )
 // ---------------------------------------------------------------------------------------------------------------------
 // Test if ipart is in the local patch
 //---------------------------------------------------------------------------------------------------------------------
-bool Particles::is_part_in_domain( unsigned int ipart, Patch *patch )
+bool Particles::isParticleInDomain( unsigned int ipart, Patch *patch )
 {
     for( unsigned int i=0; i<Position.size(); i++ ) {
         if( Position[i][ipart] <  patch->getDomainLocalMin( i ) ) {
@@ -909,7 +927,7 @@ void Particles::sortById()
         stop = true;
         for( int iPart = nParticles-1 ; iPart > jPart ; --iPart ) {
             if( Id[iPart] < Id[iPart-1] ) {
-                swap_part( iPart, jPart );
+                swapParticle( iPart, jPart );
                 stop = false;
             }
         }
@@ -919,7 +937,7 @@ void Particles::sortById()
 }
 
 #ifdef __DEBUG
-bool Particles::test_move( int iPartStart, int iPartEnd, Params &params )
+bool Particles::testMove( int iPartStart, int iPartEnd, Params &params )
 {
     for( int iDim = 0 ; iDim < Position.size() ; iDim++ ) {
         double dx2 = params.cell_length[iDim];//*params.cell_length[iDim];
