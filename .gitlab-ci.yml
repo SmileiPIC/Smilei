@@ -30,7 +30,8 @@ makerun1D:
   only:
     - develop
     - AMsorting
-
+    - particle_merging_correction
+    
   script:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
@@ -42,6 +43,7 @@ makerun2D:
   only:
     - develop
     - AMsorting
+    - particle_merging_correction
     
   script:
     # Move in test dir
