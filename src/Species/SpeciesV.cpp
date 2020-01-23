@@ -788,6 +788,7 @@ void SpeciesV::importParticles( Params &params, Patch *patch, Particles &source_
                 first_index[idx] += src_count[icell];
                 last_index[idx]  += src_count[icell];
             }
+            count[icell] += src_count[icell];
 
         }
         // update istart/istop fot the next cell
@@ -848,8 +849,6 @@ void SpeciesV::mergeParticles( double time_dual, unsigned int ispec,
 
         // For each cell, we apply independently the merging process
         for( scell = 0 ; scell < first_index.size() ; scell++ ) {
-            
-            count[scell] = last_index[scell] - first_index[scell];
             
             ( *Merge )( mass_, *particles, mask, smpi, first_index[scell],
                         last_index[scell], count[scell]);

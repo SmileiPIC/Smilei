@@ -110,25 +110,6 @@ or in more compact form: :math:`\mathbf{E}=\left( -\frac{1}{\gamma_0^2}\partial_
 From the previous equations, it can be inferred that, in a 1D cartesian geometry, the fields computed through this procedure equal those obtained through the standard Poisson's problem. 
 This can also be inferred from the relativistic transformations of fields, which conserve the :math:`x` components of the electromagnetic fields for boosts in the :math:`x` direction. 
 
-In the case of azimuthal Fourier decomposition (``geometry = "AMcylindrical"`` in the namelist - see :doc:`namelist`, :doc:`algorithms`), given the linearity of the relativistic Poisson equation, the full equation
-can be decomposed in azimuthal modes, with the correspondent mode component of the charge density :math:`-\tilde{\rho}^m` as source term.
-
-The relativistic Poisson equation for the potential component :math:`\tilde{\Phi}^m` of the mode :math:`m` in this  geometry is thus:
-
-.. math::
-  :label: RelPoissonModes
-
-  \left[ \frac{1}{\gamma^2_0}\partial^2_x\tilde{\Phi}^m+\frac{1}{r}\partial_r\left(r\partial_r\tilde{\Phi}^m\right)-\frac{m^2}{r^2}\tilde{\Phi}^m \right] = -\tilde{\rho}^m.
-
-Solving each of these relativistic Poisson's equations allows to initialize the azimuthal components of the electromagnetic fields:
-
-.. math::
-  \begin{eqnarray}
-  \tilde{E}^m_x &=& -\frac{1}{\gamma_0^2}\partial_x \tilde{\Phi}^m,\\ 
-  \tilde{E}^m_r &=& -\partial_r \tilde{\Phi}^m, \\ 
-  \tilde{E}^m_{\theta} &=& \frac{im}{r} \tilde{\Phi}^m,\newline\\
-  \tilde{\mathbf{B}}^m &=& \beta_0\mathbf{\hat{x}}\times\tilde{\mathbf{E}}^m.
-  \end{eqnarray} 
 
 
 ----
@@ -145,7 +126,7 @@ A complete absence of boundary effects in this case would be provided by perfect
 If the relativistic species propagates in a plasma, these border effects could be partially screened by the plasma.
 
 A relativistic mean velocity in the :math:`x` direction and a negligible energy spread are assumed in the hypotheses of this procedure, so the user must ensure these conditions when defining the species requiring field initialization in the namelist. 
-The procedure could be extended to non-monoenergetic species, dividing the species particles in monoenergetic energy bins and then superimposing the fields by each of the monoenergetic bins, computed with the same procedure. 
+The procedure could be extended to non-monoenergetic species, dividing the species macro-particles in monoenergetic energy bins and then superimposing the fields by each of the monoenergetic bins, computed with the same procedure. 
 At the moment, this energy binning technique is not available in :program:`Smilei`.  
 
 
