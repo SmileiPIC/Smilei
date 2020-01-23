@@ -54,6 +54,7 @@ makerun3D:
   only:
     - develop
     - AMsorting
+    - particle_merging_correction
 
   script:
     # Move in test dir
