@@ -49,7 +49,7 @@ makerun2D:
     # Move in test dir
     - cd /sps2/gitlab-runner/$CI_PIPELINE_ID/smilei/validation
     # Run validation script
-    - python validation.py -b "tst2d_*_*.py" -m 4 -o 4  -v -r 1
+    - python validation.py -b "tst2d_??_*.py" -m 4 -o 4  -v -r 1
 
 makerun3D:
   stage: makerun
