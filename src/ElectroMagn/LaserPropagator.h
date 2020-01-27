@@ -59,6 +59,7 @@ private:
     
     //! Physical oversize
     std::vector<double> o;
+    double ox;
     
     //! Array size that relates to the parallel decomposition
     std::vector<unsigned int> Nlocal;
