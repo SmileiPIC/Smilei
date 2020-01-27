@@ -537,7 +537,7 @@ double LaserProfileFile::getAmplitude( std::vector<double> pos, double t, int j,
     double amp = 0;
     unsigned int n = omega.size();
     for( unsigned int i=0; i<n; i++ ) {
-        amp += ( *magnitude )( j, k, i ) * sin( omega[i] * t + ( *phase )( j, k, i ) );
+        amp += ( *magnitude )( j, k, i ) * cos( omega[i] * t + ( *phase )( j, k, i ) );
     }
     #pragma omp critical
     {

@@ -409,7 +409,7 @@ if JOLLYJUMPER in HOSTNAME :
 		print(  "Smilei cannot be run with "+str(OMP)+" threads on "+HOSTNAME)
 		sys.exit(4)
 	#NODES=((int(MPI)*int(OMP)-1)/24)+1
-        NODES=int(math.ceil(MPI/2.))
+	NODES=int(math.ceil(MPI/2.))
 	#NPERSOCKET = int(math.ceil(MPI/NODES/2.))
 	NPERSOCKET = 1
 	COMPILE_COMMAND = 'make -j 12 > '+COMPILE_OUT_TMP+' 2>'+COMPILE_ERRORS
