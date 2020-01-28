@@ -214,11 +214,6 @@ public:
     // TABLE COMPUTATION
     // ---------------------------------------------------------------------
 
-    //! Computation of the table h that is a discetization of the h function
-    //! in the stochastic model of Niel.
-    //! \param smpi Object of class SmileiMPI containing MPI properties
-    void computeHTable( SmileiMPI *smpi );
-
     //! Generate table values for Integration of F/chi: integfochi_table
     //! \param smpi Object of class SmileiMPI containing MPI properties
     void computeIntegfochiTable( SmileiMPI *smpi );
@@ -227,9 +222,6 @@ public:
     //! xip (xip_chiphmin) and computation of the xip array.
     //! \param smpi Object of class SmileiMPI containing MPI properties
     void computeXipTable( SmileiMPI *smpi );
-
-    //! Compute all the tables
-    void computeAndOutputTables( Params &params, SmileiMPI *smpi );
 
     // ---------------------------------------------------------------------
     // TABLE OUTPUTS
@@ -264,7 +256,7 @@ public:
 
     //! Read the external table xip_chiphmin and xip
     //! \param smpi Object of class SmileiMPI containing MPI properties
-    void readXipTable( SmileiMPI *smpi );
+    void readXiTable( SmileiMPI *smpi );
 
     //! Read the external all external tables for the radiation
     //! \param smpi Object of class SmileiMPI containing MPI properties

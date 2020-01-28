@@ -57,7 +57,7 @@ double Tools::getMemFootPrint()
     
     sprintf( filename, "/proc/%ld/status", ( long )numpro );
     
-    if( ! file_exists( filename ) ) {
+    if( ! fileExists( filename ) ) {
         return 0;
     }
     
@@ -104,7 +104,7 @@ std::string Tools::printBytes( uint64_t nbytes )
 //! This function returns true/flase whether the file exists or not
 //! \param file file name to test
 // ---------------------------------------------------------------------------------------------------------------------
-bool Tools::file_exists( const std::string &filename )
+bool Tools::fileExists( const std::string &filename )
 {
     std::ifstream file( filename.c_str() );
     return !file.fail();

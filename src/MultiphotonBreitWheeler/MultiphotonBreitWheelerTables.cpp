@@ -727,7 +727,7 @@ void MultiphotonBreitWheelerTables::outputTableT()
 
         // We first check whether the file already exists
         // If yes, we simply open the file
-        if( Tools::file_exists( buffer ) ) {
+        if( Tools::fileExists( buffer ) ) {
             fileId = H5Fopen( buffer.c_str(),
                               H5F_ACC_RDWR,
                               H5P_DEFAULT );
@@ -860,7 +860,7 @@ void MultiphotonBreitWheelerTables::readTableT( SmileiMPI *smpi )
 
     // Test if an external table exists, if yes we read the table...
     // Binary table
-    if( Tools::file_exists( table_path_ + "/tab_T.bin" ) ) {
+    if( Tools::fileExists( table_path_ + "/tab_T.bin" ) ) {
 
         if( smpi->getRank()==0 ) {
 
@@ -891,7 +891,7 @@ void MultiphotonBreitWheelerTables::readTableT( SmileiMPI *smpi )
 
     }
     // HDF5 format
-    else if( Tools::file_exists( table_path_ + "/multiphoton_Breit_Wheeler_tables.h5" ) ) {
+    else if( Tools::fileExists( table_path_ + "/multiphoton_Breit_Wheeler_tables.h5" ) ) {
         hid_t       fileId;
         hid_t       dataset_id;
         std::string buffer;
@@ -958,7 +958,7 @@ void MultiphotonBreitWheelerTables::readTableXip( SmileiMPI *smpi )
 {
 
     // Test if an external table exists, we read the table...
-    if( Tools::file_exists( table_path_ + "/tab_mBW_xip.bin" ) ) {
+    if( Tools::fileExists( table_path_ + "/tab_mBW_xip.bin" ) ) {
 
         if( smpi->getRank()==0 ) {
 
@@ -990,7 +990,7 @@ void MultiphotonBreitWheelerTables::readTableXip( SmileiMPI *smpi )
         }
     }
     // HDF5 format
-    else if( Tools::file_exists( table_path_ + "/multiphoton_Breit_Wheeler_tables.h5" ) ) {
+    else if( Tools::fileExists( table_path_ + "/multiphoton_Breit_Wheeler_tables.h5" ) ) {
         if( smpi->getRank()==0 ) {
 
             hid_t       fileId;
