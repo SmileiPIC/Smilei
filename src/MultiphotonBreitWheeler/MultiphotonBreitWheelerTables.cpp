@@ -410,111 +410,6 @@ double MultiphotonBreitWheelerTables::compute_Ritus_dTdchi( double photon_chi,
 // TABLE COMPUTATION
 // -----------------------------------------------------------------------------
 
-//! Computation of the table T_table that is a discetization of the T function
-//! for the multiphoton Breit-Wheeler process
-//! \param smpi Object of class SmileiMPI containing MPI properties
-void MultiphotonBreitWheelerTables::computeTtable( SmileiMPI *smpi )
-{
-    // Parameters
-    int rank; // Rank number
-    // timers
-    double t0, t1;
-
-    // Get the MPI rank
-    rank = smpi->getRank();
-
-    MESSAGE( 1,"--- T table:" );
-
-    // Initial timer
-    t0 = MPI_Wtime();
-
-    // Temporary photon chi value
-    double photon_chi;
-    // For percentages
-    double pct = 0.;
-    double dpct = 10.;
-    // table load repartition
-    int *imin_table;
-    int *length_table;
-    // Local array
-    double *buffer;
-    int nb_ranks; // Number of ranks
-    //int err;  // error MPI
-
-    // Get the number of ranks
-    nb_ranks = smpi->getSize();
-
-    // Allocation of the array T_table
-    T_table.resize( T_dim );
-
-    // Allocation of the table for load repartition
-    imin_table = new int[nb_ranks];
-    length_table = new int[nb_ranks];
-
-    // Computation of the delta
-    T_chiph_delta = ( log10( T_chiph_max )
-                      - T_log10_chiph_min )/( T_dim-1 );
-
-    // Inverse delta
-    T_chiph_inv_delta = 1./T_chiph_delta;
-
-    // Load repartition
-    userFunctions::distributeArray( nb_ranks,
-            T_dim,
-            imin_table,
-            length_table );
-
-    // Allocation of the local buffer
-    buffer = new double [length_table[rank]];
-
-
-    MESSAGE( 2,"MPI repartition:" );
-    // Print repartition
-    if( rank==0 ) {
-        for( int i =0 ; i < nb_ranks ; i++ ) {
-            MESSAGE( 2,"Rank: " << i
-                     << " imin: " << imin_table[i]
-                     << " length: " << length_table[i] );
-        }
-    }
-
-    MESSAGE( 2,"Computation:" );
-    dpct = std::max( dpct, 100./length_table[rank] );
-    // Loop over the table values
-    for( int i = 0 ; i < length_table[rank] ; i++ ) {
-        photon_chi = pow( 10., ( imin_table[rank] + i )*T_chiph_delta
-                          + T_log10_chiph_min );
-
-        buffer[i] = 2.*MultiphotonBreitWheelerTables::compute_integration_Ritus_dTdchi( photon_chi, 0.5*photon_chi, 200, 1e-15 );
-        //buffer[i] = MultiphotonBreitWheelerTables::compute_Erber_T(photon_chi,500000,1e-10);
-
-        if( 100.*i >= length_table[rank]*pct ) {
-            pct += dpct;
-            MESSAGE( 3,i + 1<< "/" << length_table[rank]
-                     << " - " << ( int )( std::round( pct ) )
-                     << "%" );
-        }
-    }
-
-    // Communication of the data
-    MPI_Allgatherv( &buffer[0], length_table[rank], MPI_DOUBLE,
-                    &T_table[0], &length_table[0], &imin_table[0],
-                    MPI_DOUBLE, smpi->getGlobalComm() );
-
-    // flag computed at true
-    T_computed = true;
-
-    // Free memory
-    delete[] length_table;
-    delete[] buffer;
-    delete[] imin_table;
-
-
-    // Final timer
-    t1 = MPI_Wtime();
-    MESSAGE( 2,"Done in " << ( t1 - t0 ) << "s" );
-}
-
 // -----------------------------------------------------------------------------
 //! Computation of the minimum particle quantum parameter chipamin
 //! for the photon xip array and computation of the photon xip array.
@@ -761,7 +656,6 @@ void MultiphotonBreitWheelerTables::computeTables( Params &params, SmileiMPI *sm
 {
     // These tables are loaded only if if one species has Monte-Carlo Compton radiation
     if( params.hasMultiphotonBreitWheeler ) {
-        MultiphotonBreitWheelerTables::computeTtable( smpi );
         MultiphotonBreitWheelerTables::computeXipTable( smpi );
     }
 }
@@ -824,7 +718,7 @@ void MultiphotonBreitWheelerTables::outputTableT()
     else if( output_format_ == "hdf5" ) {
 
         hid_t       fileId;
-        hid_t       datasetId;
+        hid_t       dataset_id;
         hid_t       dataspaceId;
         hsize_t     dims;
         std::string buffer;
@@ -852,24 +746,24 @@ void MultiphotonBreitWheelerTables::outputTableT()
         dataspaceId = H5Screate_simple( 1, &dims, NULL );
 
         // Creation of the dataset
-        datasetId = H5Dcreate( fileId,
+        dataset_id = H5Dcreate( fileId,
                                "h",
                                H5T_NATIVE_DOUBLE,
                                dataspaceId,
                                H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
 
         // Fill the dataset
-        H5Dwrite( datasetId, H5T_NATIVE_DOUBLE,
+        H5Dwrite( dataset_id, H5T_NATIVE_DOUBLE,
                   H5S_ALL, H5S_ALL, H5P_DEFAULT,
                   &T_table[0] );
 
         // Create attributes
-        H5::attr( datasetId, "chiph_min", T_chiph_min );
-        H5::attr( datasetId, "chiph_max", T_chiph_max );
-        H5::attr( datasetId, "chiph_dim", T_dim );
+        H5::attr( dataset_id, "chiph_min", T_chiph_min );
+        H5::attr( dataset_id, "chiph_max", T_chiph_max );
+        H5::attr( dataset_id, "chiph_dim", T_dim );
 
         // Close everything
-        H5Dclose( datasetId );
+        H5Dclose( dataset_id );
         H5Sclose( dataspaceId );
         H5Fclose( fileId );
 
@@ -885,133 +779,46 @@ void MultiphotonBreitWheelerTables::outputTableT()
 // -----------------------------------------------------------------------------
 void MultiphotonBreitWheelerTables::outputXipTable()
 {
-
-    if( output_format_ == "ascii" ) {
-        std::ofstream file;
-        file.open( table_path_ + "/tab_mBW_xip.dat" );
-
-        if( file.is_open() ) {
-
-            file.precision( 12 );
-
-            file << "Table xip_chipamin and xip for multiphoton Breit-Wheeler \n";
-
-            file << "Dimension photon_chi - Dimension particle_chi - photon_chi min - photon_chi max \n";
-
-            file << xip_chiph_dim << " "
-                 << xip_chipa_dim << " "
-                 << xip_chiph_min << " "
-                 << xip_chiph_max << "\n";;
-
-            // Loop over the xip values
-            for( int ichiph = 0 ; ichiph < xip_chiph_dim ; ichiph++ ) {
-                for( int ichipa = 0 ; ichipa < xip_chipa_dim ; ichipa++ ) {
-                    file <<  xip_table[ichiph*xip_chipa_dim+ichipa] << " ";
-                }
-                file << "\n";
-            }
-
-            file.close();
-        }
-    } else if( output_format_ == "binary" ) {
-        std::ofstream file;
-        file.open( table_path_ + "/tab_mBW_xip.bin", std::ios::binary );
-
-        if( file.is_open() ) {
-
-            double temp0, temp1;
-
-            temp0 = xip_chiph_min;
-            temp1 = xip_chiph_max;
-
-            file.write( ( char * )&xip_chiph_dim, sizeof( int ) );
-            file.write( ( char * )&xip_chipa_dim, sizeof( int ) );
-            file.write( ( char * )&temp0, sizeof( double ) );
-            file.write( ( char * )&temp1, sizeof( double ) );
-
-            // Write all table values of xip_chimin_table
-            file.write( ( char * )&xip_chipamin_table[0], sizeof( double )*xip_chiph_dim );
-
-            // Write all table values of xip_table
-            file.write( ( char * )&xip_table[0], sizeof( double )*xip_chipa_dim*xip_chiph_dim );
-
-            file.close();
-        }
-    }
-    // HDF5
-    // The table is written as a dataset
-    else if( output_format_ == "hdf5" ) {
+    if( output_format_ == "hdf5" ) {
 
         hid_t       fileId;
-        hid_t       datasetId;
+        hid_t       dataset_id;
         hid_t       dataspaceId;
         hsize_t     dims[2];
         std::string buffer;
 
-        buffer = table_path_ + "/multiphoton_Breit_Wheeler_tables.h5";
-
-        // We first check whether the file already exists
-        // If yes, we simply open the file
-        if( Tools::file_exists( buffer ) ) {
-            fileId = H5Fopen( buffer.c_str(),
-                              H5F_ACC_RDWR,
-                              H5P_DEFAULT );
-
-        }
-        // Else, we create the file
-        else {
-            fileId  = H5Fcreate( buffer.c_str(),
-                                 H5F_ACC_TRUNC,
-                                 H5P_DEFAULT,
-                                 H5P_DEFAULT );
-        }
-
-        // Creation of the datasat chiphmin
-        dims[0] = xip_chiph_dim;
-        dataspaceId = H5Screate_simple( 1, dims, NULL );
-        datasetId = H5Dcreate( fileId,
-                               "xip_chipamin",
-                               H5T_NATIVE_DOUBLE,
-                               dataspaceId,
-                               H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
-
-        // Fill the dataset chiphmin
-        H5Dwrite( datasetId, H5T_NATIVE_DOUBLE,
-                  H5S_ALL, H5S_ALL, H5P_DEFAULT,
-                  &xip_chipamin_table[0] );
-
         // Attribute creation
-        H5::attr( datasetId, "chiph_min", xip_chiph_min );
-        H5::attr( datasetId, "chiph_max", xip_chiph_max );
-        H5::attr( datasetId, "chiph_dim", xip_chiph_dim );
-        H5::attr( datasetId, "power", xip_power );
-        H5::attr( datasetId, "threshold", xip_threshold );
+        H5::attr( dataset_id, "chiph_min", xip_chiph_min );
+        H5::attr( dataset_id, "chiph_max", xip_chiph_max );
+        H5::attr( dataset_id, "chiph_dim", xip_chiph_dim );
+        H5::attr( dataset_id, "power", xip_power );
+        H5::attr( dataset_id, "threshold", xip_threshold );
 
         // Creation of the datasat chiphmin xip
         dims[0] = xip_chiph_dim;
         dims[1] = xip_chipa_dim;
         dataspaceId = H5Screate_simple( 2, dims, NULL );
-        datasetId = H5Dcreate( fileId,
+        dataset_id = H5Dcreate( fileId,
                                "xip",
                                H5T_NATIVE_DOUBLE,
                                dataspaceId,
                                H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
 
         // Fill the dataset
-        H5Dwrite( datasetId, H5T_NATIVE_DOUBLE,
+        H5Dwrite( dataset_id, H5T_NATIVE_DOUBLE,
                   H5S_ALL, H5S_ALL, H5P_DEFAULT,
                   &xip_table[0] );
 
         // Attribute creation
-        H5::attr( datasetId, "chiph_min", xip_chiph_min );
-        H5::attr( datasetId, "chiph_max", xip_chiph_max );
-        H5::attr( datasetId, "chiph_dim", xip_chiph_dim );
-        H5::attr( datasetId, "chipa_dim", xip_chipa_dim );
-        H5::attr( datasetId, "power", xip_power );
-        H5::attr( datasetId, "threshold", xip_threshold );
+        H5::attr( dataset_id, "chiph_min", xip_chiph_min );
+        H5::attr( dataset_id, "chiph_max", xip_chiph_max );
+        H5::attr( dataset_id, "chiph_dim", xip_chiph_dim );
+        H5::attr( dataset_id, "chipa_dim", xip_chipa_dim );
+        H5::attr( dataset_id, "power", xip_power );
+        H5::attr( dataset_id, "threshold", xip_threshold );
 
         // Close everything
-        H5Dclose( datasetId );
+        H5Dclose( dataset_id );
         H5Sclose( dataspaceId );
         H5Fclose( fileId );
     } else {
@@ -1086,7 +893,7 @@ void MultiphotonBreitWheelerTables::readTableT( SmileiMPI *smpi )
     // HDF5 format
     else if( Tools::file_exists( table_path_ + "/multiphoton_Breit_Wheeler_tables.h5" ) ) {
         hid_t       fileId;
-        hid_t       datasetId;
+        hid_t       dataset_id;
         std::string buffer;
 
         if( smpi->getRank()==0 ) {
@@ -1095,26 +902,26 @@ void MultiphotonBreitWheelerTables::readTableT( SmileiMPI *smpi )
 
             fileId = H5Fopen( buffer.c_str(), H5F_ACC_RDWR, H5P_DEFAULT );
 
-            datasetId = H5Dopen2( fileId, "h", H5P_DEFAULT );
+            dataset_id = H5Dopen2( fileId, "h", H5P_DEFAULT );
 
             // If this dataset exists, we read it
-            if( datasetId > 0 ) {
+            if( dataset_id > 0 ) {
 
                 // First, we read attributes
-                H5::getAttr( datasetId, "chiph_dim", T_dim );
-                H5::getAttr( datasetId, "chiph_min", T_chiph_min );
-                H5::getAttr( datasetId, "chiph_max", T_chiph_max );
+                H5::getAttr( dataset_id, "chiph_dim", T_dim );
+                H5::getAttr( dataset_id, "chiph_min", T_chiph_min );
+                H5::getAttr( dataset_id, "chiph_max", T_chiph_max );
 
                 // Resize of the array integfochi_table before reading
                 T_table.resize( T_dim );
 
                 // then the dataset
-                H5Dread( datasetId,
+                H5Dread( dataset_id,
                          H5T_NATIVE_DOUBLE, H5S_ALL,
                          H5S_ALL, H5P_DEFAULT,
                          &T_table[0] );
 
-                H5Dclose( datasetId );
+                H5Dclose( dataset_id );
                 H5Fclose( fileId );
             }
             else {
@@ -1187,44 +994,44 @@ void MultiphotonBreitWheelerTables::readTableXip( SmileiMPI *smpi )
         if( smpi->getRank()==0 ) {
 
             hid_t       fileId;
-            hid_t       datasetId_chipamin;
-            hid_t       datasetId_xip;
+            hid_t       dataset_id_chipamin;
+            hid_t       dataset_id_xip;
             std::string buffer;
 
             buffer = table_path_ + "/multiphoton_Breit_Wheeler_tables.h5";
 
             fileId = H5Fopen( buffer.c_str(), H5F_ACC_RDWR, H5P_DEFAULT );
 
-            datasetId_chipamin = H5Dopen2( fileId, "xip_chipamin", H5P_DEFAULT );
-            datasetId_xip = H5Dopen2( fileId, "xip", H5P_DEFAULT );
+            dataset_id_chipamin = H5Dopen2( fileId, "xip_chipamin", H5P_DEFAULT );
+            dataset_id_xip = H5Dopen2( fileId, "xip", H5P_DEFAULT );
 
             // If this dataset exists, we read it
-            if( datasetId_chipamin > 0 && datasetId_xip > 0 ) {
+            if( dataset_id_chipamin > 0 && dataset_id_xip > 0 ) {
 
                 // First, we read attributes
-                H5::getAttr( datasetId_xip, "chiph_dim", xip_chiph_dim );
-                H5::getAttr( datasetId_xip, "chipa_dim", xip_chipa_dim );
-                H5::getAttr( datasetId_xip, "chiph_min", xip_chiph_min );
-                H5::getAttr( datasetId_xip, "chiph_max", xip_chiph_max );
+                H5::getAttr( dataset_id_xip, "chiph_dim", xip_chiph_dim );
+                H5::getAttr( dataset_id_xip, "chipa_dim", xip_chipa_dim );
+                H5::getAttr( dataset_id_xip, "chiph_min", xip_chiph_min );
+                H5::getAttr( dataset_id_xip, "chiph_max", xip_chiph_max );
 
                 // Allocation of the array xip
                 xip_chipamin_table.resize( xip_chiph_dim );
                 xip_table.resize( xip_chipa_dim*xip_chiph_dim );
 
                 // then the dataset for chipamin
-                H5Dread( datasetId_chipamin,
+                H5Dread( dataset_id_chipamin,
                          H5T_NATIVE_DOUBLE, H5S_ALL,
                          H5S_ALL, H5P_DEFAULT,
                          &xip_chipamin_table[0] );
 
                 // then the dataset for xip
-                H5Dread( datasetId_xip,
+                H5Dread( dataset_id_xip,
                          H5T_NATIVE_DOUBLE, H5S_ALL,
                          H5S_ALL, H5P_DEFAULT,
                          &xip_table[0] );
 
-                H5Dclose( datasetId_xip );
-                H5Dclose( datasetId_chipamin );
+                H5Dclose( dataset_id_xip );
+                H5Dclose( dataset_id_chipamin );
                 H5Fclose( fileId );
             }
             else {

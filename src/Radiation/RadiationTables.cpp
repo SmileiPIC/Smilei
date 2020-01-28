@@ -83,74 +83,17 @@ void RadiationTables::initializeParameters( Params &params , SmileiMPI *smpi )
     // We read the properties
     if( PyTools::nComponents( "RadiationReaction" ) != 0 ) {
 
-        // Flag to activate the table computation
-        PyTools::extract( "compute_table", compute_table_, "RadiationReaction" );
+        if( params.hasNielRadiation ) {
+            // How to handle the h function (table or fit)
+            PyTools::extract( "h_computation_method", h_computation_method, "RadiationReaction" );
+        }
 
-        // How to handle the h function (table or fit)
-        PyTools::extract( "h_computation_method", h_computation_method, "RadiationReaction" );
+        // If Monte-Carlo radiation loss is requested
+        if( params.hasMCRadiation ) {
 
-        // If we compute the table, we read the table parameters
-        if (compute_table_)
-        {
-            // If stochastic radiation loss is requested
-            if( params.hasNielRadiation ) {
-                // Extraction of the parameter from the input file
-                PyTools::extract( "h_chipa_min", h_chipa_min, "RadiationReaction" );
-                PyTools::extract( "h_chipa_max", h_chipa_max, "RadiationReaction" );
-                PyTools::extract( "h_dim", h_dim, "RadiationReaction" );
-
-                h_log10_chipa_min = log10( h_chipa_min );
-            }
-
-            // If Monte-Carlo radiation loss is requested
-            if( params.hasMCRadiation ) {
-
-                // Extraction of the parameter from the input file
-                PyTools::extract( "integfochi_chipa_min", integfochi_chipa_min, "RadiationReaction" );
-                PyTools::extract( "integfochi_chipa_max", integfochi_chipa_max, "RadiationReaction" );
-                PyTools::extract( "integfochi_dim", integfochi_dim, "RadiationReaction" );
-
-                PyTools::extract( "xip_chipa_min", xip_chipa_min, "RadiationReaction" );
-                PyTools::extract( "xip_chipa_max", xip_chipa_max, "RadiationReaction" );
-                PyTools::extract( "xip_power", xip_power, "RadiationReaction" );
-                PyTools::extract( "xip_threshold", xip_threshold, "RadiationReaction" );
-                PyTools::extract( "xip_chipa_dim", xip_chipa_dim, "RadiationReaction" );
-                PyTools::extract( "xip_chiph_dim", xip_chiph_dim, "RadiationReaction" );
-
-                // Discontinuous minimum threshold
-                PyTools::extract( "minimum_chi_discontinuous",
-                                  minimum_chi_discontinuous_, "RadiationReaction" );
-
-                // Additional regularly used parameters
-                xip_log10_chipa_min = log10( xip_chipa_min );
-                integfochi_log10_chipa_min = log10( integfochi_chipa_min );
-                xip_inv_chiph_dim_minus_one = 1./( xip_chiph_dim - 1. );
-            }
-
-            // With any radiation model
-            if( params.hasNielRadiation || params.hasMCRadiation ) {
-                // Format of the tables
-                PyTools::extract( "output_format", output_format_, "RadiationReaction" );
-            }
-
-            // Some checks for the table parameters
-            if( params.hasMCRadiation ) {
-                if( integfochi_chipa_min >= integfochi_chipa_max ) {
-                    ERROR( "integfochi_chipa_min (" << integfochi_chipa_min
-                           << ") >= integfochi_chipa_max (" << integfochi_chipa_max << ")" )
-                }
-                if( xip_chipa_min >= xip_chipa_max ) {
-                    ERROR( "xip_chipa_min (" << xip_chipa_min
-                           << ") >= xip_chipa_max (" << xip_chipa_max << ")" )
-                }
-            }
-            if( params.hasNielRadiation ) {
-                if( h_chipa_min >= h_chipa_max ) {
-                    ERROR( "h_chipa_min (" << h_chipa_min
-                           << ") >= h_chipa_max (" << h_chipa_max << ")" )
-                }
-            }
-
+            // Discontinuous minimum threshold
+            PyTools::extract( "minimum_chi_discontinuous",
+                              minimum_chi_discontinuous_, "RadiationReaction" );
         }
 
         // With any radiation model whatever the table computation
@@ -199,7 +142,9 @@ void RadiationTables::initializeParameters( Params &params , SmileiMPI *smpi )
     }
     if( params.hasMCRadiation ||
             params.hasNielRadiation ) {
-        MESSAGE( 1,"Table path: " << table_path_ );
+        if (table_path_.size() > 0) {
+            MESSAGE( 1,"Table path: " << table_path_ );
+        }
     }
     if( params.hasNielRadiation ) {
         if( h_computation_method == "table" ||
@@ -214,15 +159,9 @@ void RadiationTables::initializeParameters( Params &params , SmileiMPI *smpi )
 
     MESSAGE( "" )
 
-
-    // If the user does not request to compute the tables, then we read them
-    if (!compute_table_) {
+    // We read the table only if specified
+    if (table_path_.size() > 0) {
         readTables( params, smpi );
-    }
-    // Else, the tables are computed and store in the provided path `table_path_`
-    else {
-        computeAndOutputTables( params, smpi );
-        //outputTables( smpi );
     }
 
 }
@@ -766,7 +705,7 @@ void RadiationTables::outputHTable(SmileiMPI *smpi)
         else if( output_format_ == "hdf5" ) {
 
             hid_t       fileId;
-            hid_t       datasetId;
+            hid_t       dataset_id;
             hid_t       dataspaceId;
             hsize_t     dims;
             std::string buffer;
@@ -794,24 +733,24 @@ void RadiationTables::outputHTable(SmileiMPI *smpi)
             dataspaceId = H5Screate_simple( 1, &dims, NULL );
 
             // Creation of the dataset
-            datasetId = H5Dcreate( fileId,
+            dataset_id = H5Dcreate( fileId,
                                    "h",
                                    H5T_NATIVE_DOUBLE,
                                    dataspaceId,
                                    H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
 
             // Fill the dataset
-            H5Dwrite( datasetId, H5T_NATIVE_DOUBLE,
+            H5Dwrite( dataset_id, H5T_NATIVE_DOUBLE,
                       H5S_ALL, H5S_ALL, H5P_DEFAULT,
                       &h_table[0] );
 
             // Create attributes
-            H5::attr( datasetId, "chipa_min", h_chipa_min );
-            H5::attr( datasetId, "chipa_max", h_chipa_max );
-            H5::attr( datasetId, "chipa_dim", h_dim );
+            H5::attr( dataset_id, "chipa_min", h_chipa_min );
+            H5::attr( dataset_id, "chipa_max", h_chipa_max );
+            H5::attr( dataset_id, "chipa_dim", h_dim );
 
             // Close everything
-            H5Dclose( datasetId );
+            H5Dclose( dataset_id );
             H5Sclose( dataspaceId );
             H5Fclose( fileId );
 
@@ -883,7 +822,7 @@ void RadiationTables::outputIntegfochiTable(SmileiMPI *smpi)
         else if( output_format_ == "hdf5" ) {
 
             hid_t       fileId;
-            hid_t       datasetId;
+            hid_t       dataset_id;
             hid_t       dataspaceId;
             hsize_t     dims;
             std::string buffer;
@@ -911,24 +850,24 @@ void RadiationTables::outputIntegfochiTable(SmileiMPI *smpi)
             dataspaceId = H5Screate_simple( 1, &dims, NULL );
 
             // Creation of the dataset
-            datasetId = H5Dcreate( fileId,
+            dataset_id = H5Dcreate( fileId,
                                    "integfochi",
                                    H5T_NATIVE_DOUBLE,
                                    dataspaceId,
                                    H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
 
             // Fill the dataset
-            H5Dwrite( datasetId, H5T_NATIVE_DOUBLE,
+            H5Dwrite( dataset_id, H5T_NATIVE_DOUBLE,
                       H5S_ALL, H5S_ALL, H5P_DEFAULT,
                       &integfochi_table[0] );
 
             // Create attributes
-            H5::attr( datasetId, "chipa_min", integfochi_chipa_min );
-            H5::attr( datasetId, "chipa_max", integfochi_chipa_max );
-            H5::attr( datasetId, "chipa_dim", integfochi_dim );
+            H5::attr( dataset_id, "chipa_min", integfochi_chipa_min );
+            H5::attr( dataset_id, "chipa_max", integfochi_chipa_max );
+            H5::attr( dataset_id, "chipa_dim", integfochi_dim );
 
             // Close everything
-            H5Dclose( datasetId );
+            H5Dclose( dataset_id );
             H5Sclose( dataspaceId );
             H5Fclose( fileId );
 
@@ -1005,7 +944,7 @@ void RadiationTables::outputXipTable(SmileiMPI *smpi)
     else if( output_format_ == "hdf5" ) {
 
         hid_t       fileId;
-        hid_t       datasetId;
+        hid_t       dataset_id;
         hid_t       dataspaceId;
         hsize_t     dims[2];
         std::string buffer;
@@ -1031,49 +970,49 @@ void RadiationTables::outputXipTable(SmileiMPI *smpi)
         // Creation of the datasat chiphmin
         dims[0] = xip_chipa_dim;
         dataspaceId = H5Screate_simple( 1, dims, NULL );
-        datasetId = H5Dcreate( fileId,
+        dataset_id = H5Dcreate( fileId,
                                "xip_chiphmin",
                                H5T_NATIVE_DOUBLE,
                                dataspaceId,
                                H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
 
         // Fill the dataset chiphmin
-        H5Dwrite( datasetId, H5T_NATIVE_DOUBLE,
+        H5Dwrite( dataset_id, H5T_NATIVE_DOUBLE,
                   H5S_ALL, H5S_ALL, H5P_DEFAULT,
                   &xip_chiphmin_table[0] );
 
         // Attribute creation
-        H5::attr( datasetId, "chipa_min", xip_chipa_min );
-        H5::attr( datasetId, "chipa_max", xip_chipa_max );
-        H5::attr( datasetId, "chipa_dim", xip_chipa_dim );
-        H5::attr( datasetId, "power", xip_power );
-        H5::attr( datasetId, "threshold", xip_threshold );
+        H5::attr( dataset_id, "chipa_min", xip_chipa_min );
+        H5::attr( dataset_id, "chipa_max", xip_chipa_max );
+        H5::attr( dataset_id, "chipa_dim", xip_chipa_dim );
+        H5::attr( dataset_id, "power", xip_power );
+        H5::attr( dataset_id, "threshold", xip_threshold );
 
         // Creation of the datasat chiphmin xip
         dims[0] = xip_chipa_dim;
         dims[1] = xip_chiph_dim;
         dataspaceId = H5Screate_simple( 2, dims, NULL );
-        datasetId = H5Dcreate( fileId,
+        dataset_id = H5Dcreate( fileId,
                                "xip",
                                H5T_NATIVE_DOUBLE,
                                dataspaceId,
                                H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT );
 
         // Fill the dataset
-        H5Dwrite( datasetId, H5T_NATIVE_DOUBLE,
+        H5Dwrite( dataset_id, H5T_NATIVE_DOUBLE,
                   H5S_ALL, H5S_ALL, H5P_DEFAULT,
                   &xip_table[0] );
 
         // Attribute creation
-        H5::attr( datasetId, "chipa_min", xip_chipa_min );
-        H5::attr( datasetId, "chipa_max", xip_chipa_max );
-        H5::attr( datasetId, "chipa_dim", xip_chipa_dim );
-        H5::attr( datasetId, "chiph_dim", xip_chiph_dim );
-        H5::attr( datasetId, "power", xip_power );
-        H5::attr( datasetId, "threshold", xip_threshold );
+        H5::attr( dataset_id, "chipa_min", xip_chipa_min );
+        H5::attr( dataset_id, "chipa_max", xip_chipa_max );
+        H5::attr( dataset_id, "chipa_dim", xip_chipa_dim );
+        H5::attr( dataset_id, "chiph_dim", xip_chiph_dim );
+        H5::attr( dataset_id, "power", xip_power );
+        H5::attr( dataset_id, "threshold", xip_threshold );
 
         // Close everything
-        H5Dclose( datasetId );
+        H5Dclose( dataset_id );
         H5Sclose( dataspaceId );
         H5Fclose( fileId );
     } else {
@@ -1521,7 +1460,7 @@ void RadiationTables::readHTable( SmileiMPI *smpi )
     // HDF5 format
     else if( Tools::file_exists( table_path_ + "/radiation_tables.h5" ) ) {
         hid_t       fileId;
-        hid_t       datasetId;
+        hid_t       dataset_id;
         std::string buffer;
 
         if( smpi->getRank()==0 ) {
@@ -1530,26 +1469,26 @@ void RadiationTables::readHTable( SmileiMPI *smpi )
 
             fileId = H5Fopen( buffer.c_str(), H5F_ACC_RDWR, H5P_DEFAULT );
 
-            datasetId = H5Dopen2( fileId, "h", H5P_DEFAULT );
+            dataset_id = H5Dopen2( fileId, "h", H5P_DEFAULT );
 
             // If this dataset exists, we read it
-            if( datasetId > 0 ) {
+            if( dataset_id > 0 ) {
 
                 // First, we read attributes
-                H5::getAttr( datasetId, "chipa_dim", h_dim );
-                H5::getAttr( datasetId, "chipa_min", h_chipa_min );
-                H5::getAttr( datasetId, "chipa_max", h_chipa_max );
+                H5::getAttr( dataset_id, "chipa_dim", h_dim );
+                H5::getAttr( dataset_id, "chipa_min", h_chipa_min );
+                H5::getAttr( dataset_id, "chipa_max", h_chipa_max );
 
                 // Resize of the array integfochi_table before reading
                 h_table.resize( h_dim );
 
                 // then the dataset
-                H5Dread( datasetId,
+                H5Dread( dataset_id,
                          H5T_NATIVE_DOUBLE, H5S_ALL,
                          H5S_ALL, H5P_DEFAULT,
                          &h_table[0] );
 
-                H5Dclose( datasetId );
+                H5Dclose( dataset_id );
                 H5Fclose( fileId );
             }
             else {
@@ -1592,46 +1531,11 @@ void RadiationTables::readHTable( SmileiMPI *smpi )
 // -----------------------------------------------------------------------------
 void RadiationTables::readIntegfochiTable( SmileiMPI *smpi )
 {
-    // Flag database available
-    bool table_exists = false;
 
-    // Test if an external table exists, if yes we read the table...
-    // Binary table
-    if( Tools::file_exists( table_path_ + "/tab_integfochi.bin" ) ) {
-
-        table_exists = true;
-
-        if( smpi->getRank()==0 ) {
-
-            // Reading of the table file
-            std::ifstream file;
-            file.open( table_path_ + "/tab_integfochi.bin", std::ios::binary );
-
-            if( file.is_open() ) {
-
-                // Read the header
-                file.read( ( char * )&integfochi_dim, sizeof( integfochi_dim ) );
-                file.read( ( char * )&integfochi_chipa_min,
-                           sizeof( integfochi_chipa_min ) );
-                file.read( ( char * )&integfochi_chipa_max,
-                           sizeof( integfochi_chipa_max ) );
-
-                // Resize of the array integfochi_table before reading
-                integfochi_table.resize( integfochi_dim );
-
-                // Read the table values
-                file.read( ( char * )&integfochi_table[0], sizeof( double )*integfochi_dim );
-
-                file.close();
-            }
-
-        }
-
-    }
-    // HDF5 format
-    else if( Tools::file_exists( table_path_ + "/radiation_tables.h5" ) ) {
+    if( Tools::file_exists( table_path_ + "/radiation_tables.h5" ) ) {
+        
         hid_t       fileId;
-        hid_t       datasetId;
+        hid_t       dataset_id;
         std::string buffer;
 
         if( smpi->getRank()==0 ) {
@@ -1640,45 +1544,32 @@ void RadiationTables::readIntegfochiTable( SmileiMPI *smpi )
 
             fileId = H5Fopen( buffer.c_str(), H5F_ACC_RDWR, H5P_DEFAULT );
 
-            datasetId = H5Dopen2( fileId, "integfochi", H5P_DEFAULT );
+            dataset_id = H5Dopen2( fileId, "integfochi", H5P_DEFAULT );
 
             // If this dataset exists, we read it
-            if( datasetId > 0 ) {
-
-                table_exists = true;
+            if( dataset_id > 0 ) {
 
                 // First, we read attributes
-                H5::getAttr( datasetId, "chipa_dim", integfochi_dim );
-                H5::getAttr( datasetId, "chipa_min", integfochi_chipa_min );
-                H5::getAttr( datasetId, "chipa_max", integfochi_chipa_max );
+                H5::getAttr( dataset_id, "size_particle_chi", integfochi_dim );
+                H5::getAttr( dataset_id, "min_particle_chi", integfochi_chipa_min );
+                H5::getAttr( dataset_id, "max_particle_chi", integfochi_chipa_max );
 
                 // Resize of the array integfochi_table before reading
                 integfochi_table.resize( integfochi_dim );
 
                 // then the dataset
-                H5Dread( datasetId,
+                H5Dread( dataset_id,
                          H5T_NATIVE_DOUBLE, H5S_ALL,
                          H5S_ALL, H5P_DEFAULT,
                          &integfochi_table[0] );
 
-                H5Dclose( datasetId );
+                H5Dclose( dataset_id );
                 H5Fclose( fileId );
+            } else {
+                ERROR(" Dataset `integfochi` does not exist in "<< table_path_ << "radiation_tables.h5");
             }
-            // Else, we will have to compute it
-            else {
-                table_exists = false;
-            }
+            
         }
-
-        // Bcast table_exists
-        int TE = table_exists;
-        MPI_Bcast( &TE, 1, MPI_INT, 0, smpi->getGlobalComm() );
-        table_exists = TE;
-
-    }
-
-    // If the table exists, they have been read...
-    if( table_exists ) {
 
         MESSAGE( 1,"--- Integration F/particle_chi table:" );
         MESSAGE( 2,"Reading of the external database" );
@@ -1704,103 +1595,64 @@ void RadiationTables::readIntegfochiTable( SmileiMPI *smpi )
 // -----------------------------------------------------------------------------
 void RadiationTables::readXipTable( SmileiMPI *smpi )
 {
-    // Flag database available
-    bool table_exists = false;
 
-    // Test if an external table exists, we read the table...
-    if( Tools::file_exists( table_path_ + "/tab_xip.bin" ) ) {
-
-        table_exists = true;
-
-        if( smpi->getRank()==0 ) {
-
-            // Reading of the table file
-            std::ifstream file;
-            file.open( table_path_ + "/tab_xip.bin", std::ios::binary );
-
-            if( file.is_open() ) {
-
-                // Read the header
-                file.read( ( char * )&xip_chipa_dim, sizeof( xip_chipa_dim ) );
-                file.read( ( char * )&xip_chiph_dim, sizeof( xip_chiph_dim ) );
-                file.read( ( char * )&xip_chipa_min, sizeof( xip_chipa_min ) );
-                file.read( ( char * )&xip_chipa_max, sizeof( xip_chipa_max ) );
-
-                // Allocation of the array xip
-                xip_chiphmin_table.resize( xip_chipa_dim );
-                xip_table.resize( xip_chipa_dim*xip_chiph_dim );
-
-                // Read the table values
-                file.read( ( char * )&xip_chiphmin_table[0], sizeof( double )*xip_chipa_dim );
-
-                // Read the table values
-                file.read( ( char * )&xip_table[0], sizeof( double )*xip_chipa_dim*xip_chiph_dim );
-
-                file.close();
-            }
-
-        }
-    }
-    // HDF5 format
-    else if( Tools::file_exists( table_path_ + "/radiation_tables.h5" ) ) {
+    if( Tools::file_exists( table_path_ + "/radiation_tables.h5" ) ) {
+        
         if( smpi->getRank()==0 ) {
 
             hid_t       fileId;
-            hid_t       datasetId_chiphmin;
-            hid_t       datasetId_xip;
+            hid_t       dataset_id_chiphmin;
+            hid_t       dataset_id_xip;
             std::string buffer;
 
             buffer = table_path_ + "/radiation_tables.h5";
 
             fileId = H5Fopen( buffer.c_str(), H5F_ACC_RDWR, H5P_DEFAULT );
 
-            datasetId_chiphmin = H5Dopen2( fileId, "xip_chiphmin", H5P_DEFAULT );
-            datasetId_xip = H5Dopen2( fileId, "xip", H5P_DEFAULT );
+            dataset_id_chiphmin = H5Dopen2( fileId, "min_photon_chi_for_xi", H5P_DEFAULT );
+            dataset_id_xip = H5Dopen2( fileId, "xi", H5P_DEFAULT );
+
+            if( dataset_id_chiphmin <= 0) {
+                ERROR(" Dataset `min_photon_chi_for_xi` does not exist in "<< table_path_ << "radiation_tables.h5");
+            }
+
+            if( dataset_id_xip <= 0) {
+                ERROR(" Dataset `xi` does not exist in "<< table_path_ << "radiation_tables.h5");
+            }
 
             // If this dataset exists, we read it
-            if( datasetId_chiphmin > 0 && datasetId_xip > 0 ) {
-
-                table_exists = true;
+            if( dataset_id_chiphmin > 0 && dataset_id_xip > 0 ) {
 
                 // First, we read attributes
-                H5::getAttr( datasetId_xip, "chipa_dim", xip_chipa_dim );
-                H5::getAttr( datasetId_xip, "chiph_dim", xip_chiph_dim );
-                H5::getAttr( datasetId_xip, "chipa_min", xip_chipa_min );
-                H5::getAttr( datasetId_xip, "chipa_max", xip_chipa_max );
+                H5::getAttr( dataset_id_xip, "size_particle_chi", xip_chipa_dim );
+                H5::getAttr( dataset_id_xip, "size_photon_chi", xip_chiph_dim );
+                H5::getAttr( dataset_id_xip, "min_particle_chi", xip_chipa_min );
+                H5::getAttr( dataset_id_xip, "max_particle_chi", xip_chipa_max );
 
                 // Allocation of the array xip
                 xip_chiphmin_table.resize( xip_chipa_dim );
                 xip_table.resize( xip_chipa_dim*xip_chiph_dim );
 
                 // then the dataset for chiphmin
-                H5Dread( datasetId_chiphmin,
+                H5Dread( dataset_id_chiphmin,
                          H5T_NATIVE_DOUBLE, H5S_ALL,
                          H5S_ALL, H5P_DEFAULT,
                          &xip_chiphmin_table[0] );
 
                 // then the dataset for xip
-                H5Dread( datasetId_xip,
+                H5Dread( dataset_id_xip,
                          H5T_NATIVE_DOUBLE, H5S_ALL,
                          H5S_ALL, H5P_DEFAULT,
                          &xip_table[0] );
 
-                H5Dclose( datasetId_xip );
-                H5Dclose( datasetId_chiphmin );
+                H5Dclose( dataset_id_xip );
+                H5Dclose( dataset_id_chiphmin );
                 H5Fclose( fileId );
-            }
-            // Else, we will have to compute it
-            else {
-                table_exists = false;
             }
         }
 
         // Bcast table_exists
-        MPI_Bcast( &table_exists, 1, MPI_INT, 0, smpi->getGlobalComm() );
-
-    }
-
-    // If the table exists, they have been read...
-    if( table_exists ) {
+        // MPI_Bcast( &table_exists, 1, MPI_INT, 0, smpi->getGlobalComm() );
 
         MESSAGE( 1,"--- Table chiphmin and xip:" );
         MESSAGE( 2,"Reading of the external database" );
@@ -1811,6 +1663,7 @@ void RadiationTables::readXipTable( SmileiMPI *smpi )
 
         // Bcast the table to all MPI ranks
         RadiationTables::bcastTableXip( smpi );
+        
     }
     // Else, the table can not be found, we throw an error
     else {

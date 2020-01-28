@@ -86,12 +86,6 @@ public:
     // TABLE COMPUTATION
     // ---------------------------------------------------------------------
 
-    //! Computation of the table T_table that is a discetization of the
-    //! T function for the multiphoton Breit-Wheeler process
-    //! \param smpi Object of class SmileiMPI containing MPI properties
-    void computeTtable( SmileiMPI *smpi );
-
-
     //! Computation of the minimum particle quantum parameter chipamin
     //! for the photon xip array and computation of the photon xip array.
     //! \details Under the minimum particle_chi value, the particle kinetic energy is
