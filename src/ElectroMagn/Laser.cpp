@@ -442,13 +442,18 @@ void LaserProfileFile::createFields( Params &params, Patch *patch )
     if( params.geometry!="2Dcartesian" && params.geometry!="3Dcartesian" ) {
         ERROR( "Unknown geometry in LaserOffset (cartesian 2D or 3D only)" );
     }
-
+    
     magnitude = new Field3D();
     phase     = new Field3D();
 }
 
 void LaserProfileFile::initFields( Params &params, Patch *patch )
 {
+    // This is handled in checkpoints when restarting
+    if( params.restart ) {
+        return;
+    }
+    
     unsigned int ndim = 2;
     if( params.geometry=="3Dcartesian" ) {
         ndim = 3;
