@@ -177,7 +177,6 @@ Species(
 
 RadiationReaction(
     minimum_chi_discontinuous = 1e-2,
-    table_path = "./"
 )
 
 MultiphotonBreitWheeler(

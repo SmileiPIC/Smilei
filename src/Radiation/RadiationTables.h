@@ -69,7 +69,7 @@ public:
     double computeHNiel( double particle_chi, int nb_iterations, double eps );
 
     //! Return the value of the function h(particle_chi) of Niel et al.
-    //! from the computed table h_table
+    //! from the computed table niel.table
     //! \param particle_chi particle quantum parameter
     double getHNielFromTable( double particle_chi );
 
@@ -253,12 +253,6 @@ private:
     // stochastic diffusive operator of Niel et al.
     // ---------------------------------------------
 
-    //! Array containing tabulated values of the function h for the
-    //! stochastic diffusive operator of Niel et al.
-    std::vector<double > h_table;
-
-    //! Minimum boundary of the table h
-    double h_chipa_min;
 
     //! Log10 of the minimum boundary of the table h
     double h_log10_chipa_min;
@@ -277,6 +271,20 @@ private:
 
     //! Method to be used to get the h values (table, fit5, fit10)
     std::string h_computation_method;
+
+    
+    struct Niel {
+        
+        //! Array containing tabulated values of the function h for the
+        //! stochastic diffusive operator of Niel et al.
+        std::vector<double > table;
+        
+        //! Minimum boundary of the table h
+        double chipa_min;
+        
+    };
+    
+    struct Niel niel;
 
     // ---------------------------------------------
     // Table integfochi

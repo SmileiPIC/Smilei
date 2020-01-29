@@ -2081,37 +2081,13 @@ tables.
     minimum_chi_continuous = 1e-3,
     minimum_chi_discontinuous = 1e-2,
     table_path = "../databases/",
-    compute_table = False,
 
-    # Following parameters are only if you want to compute the tables
-
-    output_format = "hdf5",
-
-    # Parameters to generate the table h used by Niel et al.
-    h_chipa_min = 1E-3,
-    h_chipa_max = 1E1,
-    h_dim = 128,
+    # Parameters for Niel et al.
     h_computation_method = "table",
 
-    # Parameter to generate the table integfochi used by the Monte-Carlo model
-    integfochi_chipa_min = 1e-4,
-    integfochi_chipa_max = 1e1,
-    integfochi_dim = 128,
-
-    # Parameter to generate the table xip used by the Monte-Carlo model
-    xip_chipa_min = 1e-4,
-    xip_chipa_max = 1e1,
-    xip_power = 4,
-    xip_threshold = 1e-3,
-    xip_chipa_dim = 128,
-    xip_chiph_dim = 128,
   )
 
-.. py:data:: output_format
 
-  :default: ``"hdf5"``
-
-  Output format of the tables: ``"hdf5"``, ``"binary"`` or ``"ascii"``.
 
 .. py:data:: minimum_chi_continuous
 
@@ -2134,19 +2110,6 @@ tables.
 
   Path to the external tables for the radiation losses.
   Default tables are located in ``databases``.
-
-.. py:data:: compute_table
-
-  :default: False
-
-  If True, the tables for the selected radiation model are computed
-  with the requested parameters and stored at the path `table_path`.
-
-.. py:data:: h_chipa_min
-
-  :default: 1e-3
-
-  Minimum value of the quantum parameter :math:`\chi` for the table *h* of Niel `et al`.
 
 .. py:data:: h_chipa_max
 
