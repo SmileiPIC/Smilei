@@ -198,26 +198,6 @@ double MultiphotonBreitWheelerTables::compute_dNBWdt( double photon_chi, double 
 }
 
 // -----------------------------------------------------------------------------
-//! Computation of the value T(photon_chi) using the approximated
-//! formula of Erber
-//! \param photon_chi photon quantum parameter
-//! \param nb_iterations number of iteration for the Bessel evaluation
-//! \param eps epsilon for the Bessel evaluation
-// -----------------------------------------------------------------------------
-double MultiphotonBreitWheelerTables::compute_Erber_T( double photon_chi, int nb_iterations,
-        double eps )
-{
-    // Values for Bessel results
-    //double I,dI;
-    double K;
-
-    //userFunctions::modifiedBesselIK(1./3.,4./(3.*photon_chi),I,dI,K,dK,nb_iterations,eps);
-    K = userFunctions::modifiedBesselK( 1./3., 4./( 3.*photon_chi ), nb_iterations, eps, false );
-
-    return 0.16*K*K/photon_chi;
-}
-
-// -----------------------------------------------------------------------------
 //! Computation of the value of the integration of  dT(photon_chi)/dhicpa
 //! using the formula of Ritus.
 //! \param photon_chi photon quantum parameter

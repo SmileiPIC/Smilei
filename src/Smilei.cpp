@@ -124,21 +124,16 @@ int main( int argc, char *argv[] )
         return 0;
     }
 
-
     // ---------------------------------------------------------------------
     // Init and compute tables for radiation effects
     // (nonlinear inverse Compton scattering)
     // ---------------------------------------------------------------------
     RadiationTables.initializeParameters( params, &smpi);
-    //RadiationTables.computeTables( params, &smpi );
-    //RadiationTables.outputTables( &smpi );
 
     // ---------------------------------------------------------------------
     // Init and compute tables for multiphoton Breit-Wheeler pair creation
     // ---------------------------------------------------------------------
     MultiphotonBreitWheelerTables.initialization( params, &smpi );
-    //MultiphotonBreitWheelerTables.computeTables( params, &smpi );
-    //MultiphotonBreitWheelerTables.outputTables( &smpi );
 
     // reading from dumped file the restart values
     if( params.restart ) {

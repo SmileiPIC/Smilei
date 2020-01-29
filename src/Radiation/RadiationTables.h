@@ -16,7 +16,10 @@
 #include <fstream>
 #include <vector>
 #include <string>
-
+#include <cstring>
+#include <iomanip>
+#include <cmath>
+#include "userFunctions.h"
 #include "Params.h"
 #include "H5.h"
 
@@ -45,32 +48,10 @@ public:
     // ---------------------------------------------------------------------
     // PHYSICAL COMPUTATION
     // ---------------------------------------------------------------------
-
-    //! Synchrotron emissivity from Ritus
-    //! \param particle_chi particle quantum parameter
-    //! \param photon_chi photon quantum parameter
-    //! \param nb_iterations number of iterations for the Gauss-Legendre integration
-    //! \param eps epsilon for the modified bessel function
-    static double computeRitusSynchrotronEmissivity( double particle_chi,
-            double photon_chi,
-            int nb_iterations,
-            double eps );
-
+    
     //! Computation of the photon production yield dNph/dt which is
     //! also the cross-section for the Monte-Carlo
     double computePhotonProductionYield( double particle_chi, double particle_gamma );
-
-    //! Compute the integration of the synchrotron emissivity S/chi
-    //! refered to as K in the documentation
-    //! between min_photon_chi and max_photon_chi
-    //! using Gauss-Legendre for a given particle_chi value
-    //! \param nb_iterations number of iteration for the Gauss-Legendre
-    //! \param eps relative error on the integration
-    static double integrateSynchrotronEmissivity( double particle_chi,
-            double min_photon_chi,
-            double max_photon_chi,
-            int nb_iterations,
-            double eps );
 
     //! Determine randomly a photon quantum parameter photon_chi
     //! for an emission process
@@ -209,39 +190,6 @@ public:
         return factor_classical_radiated_power_;
     }
 
-
-    // ---------------------------------------------------------------------
-    // TABLE COMPUTATION
-    // ---------------------------------------------------------------------
-
-    //! Generate table values for Integration of F/chi: integfochi_table
-    //! \param smpi Object of class SmileiMPI containing MPI properties
-    void computeIntegfochiTable( SmileiMPI *smpi );
-
-    //! Computation of the minimum photon quantum parameter for the array
-    //! xip (xip_chiphmin) and computation of the xip array.
-    //! \param smpi Object of class SmileiMPI containing MPI properties
-    void computeXipTable( SmileiMPI *smpi );
-
-    // ---------------------------------------------------------------------
-    // TABLE OUTPUTS
-    // ---------------------------------------------------------------------
-
-    //! Write in a file table values of the h table
-    void outputHTable(SmileiMPI *smpi);
-
-    //! Write in a file table values for Integration of F/chi: integfochi_table
-    void outputIntegfochiTable(SmileiMPI *smpi);
-
-    //! Write in a file the table xip_chiphmin and xip
-    void outputXipTable(SmileiMPI *smpi);
-
-    //! Output all computed tables so that they can be
-    //! read at the next run
-    //! Table output by the master MPI rank
-    //! \param smpi Object of class SmileiMPI containing MPI properties
-    void outputTables( SmileiMPI *smpi );
-
     // ---------------------------------------------------------------------
     // TABLE READING
     // ---------------------------------------------------------------------
@@ -327,9 +275,6 @@ private:
     //! Inverse delta chi for the table h
     double h_chipa_inv_delta;
 
-    //! This variable is true if the table is computed, false if read
-    bool h_computed;
-
     //! Method to be used to get the h values (table, fit5, fit10)
     std::string h_computation_method;
 
@@ -337,33 +282,36 @@ private:
     // Table integfochi
     // ---------------------------------------------
 
-    //! Array containing tabulated values for the computation
-    //! of the photon production rate dN_{\gamma}/dt
-    //! (which is also the optical depth for the Monte-Carlo process).
-    //! This table is the integration of the Synchrotron emissivity
-    //! refers to as F over the quantum parameter Chi.
-    std::vector<double > integfochi_table;
+    struct IntegrationFoverChi {
+        
+        //! Array containing tabulated values for the computation
+        //! of the photon production rate dN_{\gamma}/dt
+        //! (which is also the optical depth for the Monte-Carlo process).
+        //! This table is the integration of the Synchrotron emissivity
+        //! refers to as F over the quantum parameter Chi.
+        std::vector<double > table;
+        
+        //! Minimum boundary of the table integfochi_table
+        double chipa_min;
+        
+        //! Maximum boundary of the table integfochi_table
+        double chipa_max;
+        
+        //! Minimum boundary of the table integfochi_table
+        double chipa_dim;
+        
+        //! Log10 of the minimum boundary of the table integfochi_table
+        double log10_chipa_min;
 
-    //! Minimum boundary of the table integfochi_table
-    double integfochi_chipa_min;
+        //! Delta chi for the table integfochi_table
+        double chipa_delta;
 
-    //! Log10 of the minimum boundary of the table integfochi_table
-    double integfochi_log10_chipa_min;
-
-    //! Maximum boundary of the table integfochi_table
-    double integfochi_chipa_max;
-
-    //! Delta chi for the table integfochi_table
-    double integfochi_chipa_delta;
-
-    //! Inverse delta chi for the table integfochi_table
-    double integfochi_chipa_inv_delta;
-
-    //! Dimension of the array integfochi_table
-    int integfochi_dim;
-
-    //! This variable is true if the table is computed, false if read
-    bool integfochi_computed;
+        //! Inverse delta chi for the table integfochi_table
+        double chipa_inv_delta;
+        
+    };
+    
+    struct IntegrationFoverChi integfochi;
 
     // ---------------------------------------------
     // Table photon_chi min for xip table
@@ -380,7 +328,7 @@ private:
 
     //! Table containing the cumulative distribution function \f$P(0 \rightarrow \chi_{\gamma})\f$
     //! that gives gives the probability for a photon emission in the range \f$[0, \chi_{\gamma}]\f$
-    std::vector<double> xip_table;
+    std::vector<double> xip_table ;
 
     //! Minimum boundary for particle_chi in the table xip and xip_chiphmin
     double xip_chipa_min;
@@ -414,9 +362,6 @@ private:
     //! xip threshold
     double xip_threshold;
 
-    //! This variable is true if the table is computed, false if read
-    bool xip_computed;
-
     // ---------------------------------------------
     // Factors
     // ---------------------------------------------
@@ -430,7 +375,6 @@ private:
 
     //! Normalized reduced Compton wavelength
     double normalized_Compton_wavelength_;
-
 
 };
 
